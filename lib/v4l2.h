@@ -1,6 +1,4 @@
-/* Copyright (C) 1993, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
-   Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>
-   This file is part of the GNU C Library.
+/* Copyright (C) 2006 Hans Verkuil <hverkuil@xs4all.nl>
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
