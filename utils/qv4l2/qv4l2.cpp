@@ -246,8 +246,8 @@ void ApplicationWindow::addGeneralTab()
 		QLabel *label = new QLabel("Frequency Tables", grid);
 		label->setAlignment(Qt::AlignRight);
 		freqTable = new QComboBox(grid);
-		for (int i = 0; chanlists[i].name; i++) {
-			freqTable->insertItem(chanlists[i].name);
+		for (int i = 0; v4l2_channel_lists[i].name; i++) {
+			freqTable->insertItem(v4l2_channel_lists[i].name);
 		}
 		connect(freqTable, SIGNAL(activated(int)), SLOT(freqTableChanged(int)));
 
@@ -920,7 +920,7 @@ void ApplicationWindow::freqTableChanged(int)
 
 void ApplicationWindow::freqChannelChanged(int idx)
 {
-	freq->setValue((int)(chanlists[freqTable->currentItem()].list[idx].freq / 62.5));
+	freq->setValue((int)(v4l2_channel_lists[freqTable->currentItem()].list[idx].freq / 62.5));
 }
 
 void ApplicationWindow::freqChanged(int val)
@@ -1013,8 +1013,8 @@ void ApplicationWindow::updateFreqChannel()
 {
 	freqChannel->clear();
 	int tbl = freqTable->currentItem();
-	struct CHANLIST *list = chanlists[tbl].list;
-	for (int i = 0; i < chanlists[tbl].count; i++)
+	const struct v4l2_channel_list *list = v4l2_channel_lists[tbl].list;
+	for (unsigned i = 0; i < v4l2_channel_lists[tbl].count; i++)
 		freqChannel->insertItem(list[i].name);
 }
 
