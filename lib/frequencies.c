@@ -1,13 +1,35 @@
-#include <stdlib.h>
-#include <sys/time.h>
-#include <pthread.h>
+/* Copyright (C) 1993, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
+   Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>
+   This file is part of the GNU C Library.
 
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, write to the Free
+   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+   02111-1307 USA.  */
+
+#include <stdlib.h>
+
+#include "linux/videodev2.h"
 #include "v4l2.h"
+
+/* This source was originally written by Nathan Laredo <laredo@gnu.org>.
+   He kindly gave permission to release this source under the LGPL
+   license. */
 
 /* --------------------------------------------------------------------- */
 
 /* US broadcast */
-static struct CHANLIST ntsc_bcast[] = {
+static const struct v4l2_channel_list ntsc_bcast[] = {
     { "2",	 55250 },
     { "3",	 61250 },
     { "4",	 67250 },
@@ -94,7 +116,7 @@ static struct CHANLIST ntsc_bcast[] = {
 };
 
 /* US cable */
-static struct CHANLIST ntsc_cable[] = {
+static const struct v4l2_channel_list ntsc_cable[] = {
     { "1",	 73250 },
     { "2",	 55250 },
     { "3",	 61250 },
@@ -235,7 +257,7 @@ static struct CHANLIST ntsc_cable[] = {
 };
 
 /* US HRC */
-static struct CHANLIST ntsc_hrc[] = {
+static const struct v4l2_channel_list ntsc_hrc[] = {
     { "1",	  72000 },
 
     { "2",	  54000 },
@@ -378,7 +400,7 @@ static struct CHANLIST ntsc_hrc[] = {
 };
 
 /* US IRC */
-static struct CHANLIST ntsc_irc[] = {
+static const struct v4l2_channel_list ntsc_irc[] = {
     { "1",      73250 },
     { "2",      55250 },
     { "3",      61250 },
@@ -522,7 +544,7 @@ static struct CHANLIST ntsc_irc[] = {
 /* --------------------------------------------------------------------- */
 
 /* JP broadcast */
-static struct CHANLIST ntsc_bcast_jp[] = {
+static const struct v4l2_channel_list ntsc_bcast_jp[] = {
     { "1",   91250 },
     { "2",   97250 },
     { "3",  103250 },
@@ -590,7 +612,7 @@ static struct CHANLIST ntsc_bcast_jp[] = {
 };
 
 /* JP cable */
-static struct CHANLIST ntsc_cable_jp[] = {
+static const struct v4l2_channel_list ntsc_cable_jp[] = {
     { "13",	109250 },
     { "14",	115250 },
     { "15",	121250 },
@@ -648,7 +670,7 @@ static struct CHANLIST ntsc_cable_jp[] = {
 /* --------------------------------------------------------------------- */
 
 /* australia */
-static struct CHANLIST pal_australia[] = {
+static const struct v4l2_channel_list pal_australia[] = {
     { "0",	 46250 },
     { "1",	 57250 },
     { "2",	 64250 },
@@ -704,7 +726,7 @@ static struct CHANLIST pal_australia[] = {
     { "69",	814250 },
 };
 
-static struct CHANLIST pal_australia_optus[] = {
+static const struct v4l2_channel_list pal_australia_optus[] = {
    { "1",  138250 },
    { "2",  147250 },
    { "3",  154250 },
@@ -921,14 +943,14 @@ static struct CHANLIST pal_australia_optus[] = {
     { "68",  847250 },	\
     { "69",  855250 }
 
-static struct CHANLIST europe_west[] = {
+static const struct v4l2_channel_list europe_west[] = {
     FREQ_CCIR_I_III,
     FREQ_CCIR_SL_SH,
     FREQ_CCIR_H,
     FREQ_UHF
 };
 
-static struct CHANLIST europe_east[] = {
+static const struct v4l2_channel_list europe_east[] = {
     FREQ_OIRT_I_III,
     FREQ_OIRT_SL_SH,
     FREQ_CCIR_I_III,
@@ -937,7 +959,7 @@ static struct CHANLIST europe_east[] = {
     FREQ_UHF
 };
 
-static struct CHANLIST pal_italy[] = {
+static const struct v4l2_channel_list pal_italy[] = {
     { "A",	 53750 },
     { "B",	 62250 },
     { "C",	 82250 },
@@ -951,7 +973,7 @@ static struct CHANLIST pal_italy[] = {
     FREQ_UHF
 };
 
-static struct CHANLIST pal_ireland[] = {
+static const struct v4l2_channel_list pal_ireland[] = {
     { "A0",    45750 },
     { "A1",    48000 },
     { "A2",    53750 },
@@ -992,7 +1014,7 @@ static struct CHANLIST pal_ireland[] = {
     FREQ_UHF,
 };
 
-static struct CHANLIST secam_france[] = {
+static const struct v4l2_channel_list secam_france[] = {
     { "K01",    47750 },
     { "K02",    55750 },
     { "K03",    60500 },
@@ -1043,7 +1065,7 @@ static struct CHANLIST secam_france[] = {
 
 /* --------------------------------------------------------------------- */
 
-static struct CHANLIST pal_newzealand[] = {
+static const struct v4l2_channel_list pal_newzealand[] = {
     { "1", 	  45250 },
     { "2",	  55250 },
     { "3",	  62250 },
@@ -1061,7 +1083,7 @@ static struct CHANLIST pal_newzealand[] = {
 /* --------------------------------------------------------------------- */
 
 /* China broadcast */
-static struct CHANLIST pal_bcast_cn[] = {
+static const struct v4l2_channel_list pal_bcast_cn[] = {
     { "1",	49750 },
     { "2",	57750 },
     { "3",	65750 },
@@ -1161,7 +1183,7 @@ static struct CHANLIST pal_bcast_cn[] = {
 /* --------------------------------------------------------------------- */
 /* South Africa Broadcast */
 
-static struct CHANLIST pal_bcast_za[] ={
+static const struct v4l2_channel_list pal_bcast_za[] ={
     { "1", 175250 },
     { "2", 183250 },
     { "3", 191250 },
@@ -1180,7 +1202,7 @@ static struct CHANLIST pal_bcast_za[] ={
 
 /* --------------------------------------------------------------------- */
 
-static struct CHANLIST argentina[] = {
+static const struct v4l2_channel_list argentina[] = {
     { "001",   56250 },
     { "002",   62250 },
     { "003",   68250 },
@@ -1278,23 +1300,204 @@ static struct CHANLIST argentina[] = {
 
 /* --------------------------------------------------------------------- */
 
-struct CHANLISTS chanlists[] = {
-    { "us-bcast",         ntsc_bcast,        CHAN_COUNT(ntsc_bcast)        },
-    { "us-cable",         ntsc_cable,        CHAN_COUNT(ntsc_cable)        },
-    { "us-cable-hrc",     ntsc_hrc,          CHAN_COUNT(ntsc_hrc)          },
-    { "us-cable-irc",     ntsc_irc,          CHAN_COUNT(ntsc_irc)          },
-    { "japan-bcast",      ntsc_bcast_jp,     CHAN_COUNT(ntsc_bcast_jp)     },
-    { "japan-cable",      ntsc_cable_jp,     CHAN_COUNT(ntsc_cable_jp)     },
-    { "europe-west",      europe_west,       CHAN_COUNT(europe_west)       },
-    { "europe-east",      europe_east,       CHAN_COUNT(europe_east)       },
-    { "italy",		  pal_italy,         CHAN_COUNT(pal_italy)         },
-    { "newzealand",       pal_newzealand,    CHAN_COUNT(pal_newzealand)    },
-    { "australia",        pal_australia,     CHAN_COUNT(pal_australia)     },
-    { "ireland",          pal_ireland,       CHAN_COUNT(pal_ireland)       },
-    { "france",           secam_france,      CHAN_COUNT(secam_france)      },
-    { "china-bcast",      pal_bcast_cn,      CHAN_COUNT(pal_bcast_cn)      },
-    { "southafrica",      pal_bcast_za,      CHAN_COUNT(pal_bcast_za)      },
-    { "argentina",        argentina,         CHAN_COUNT(argentina)         },
-    { "australia-optus",  pal_australia_optus, CHAN_COUNT(pal_australia_optus) },
+#define CHAN_COUNT(x) (sizeof(x)/sizeof(struct v4l2_channel_list))
+
+const struct v4l2_channel_lists v4l2_channel_lists[] = {
+    { "us-bcast",         ntsc_bcast,        	CHAN_COUNT(ntsc_bcast)        	},
+    { "us-cable",         ntsc_cable,        	CHAN_COUNT(ntsc_cable)        	},
+    { "us-cable-hrc",     ntsc_hrc,          	CHAN_COUNT(ntsc_hrc)          	},
+    { "us-cable-irc",     ntsc_irc,          	CHAN_COUNT(ntsc_irc)          	},
+    { "japan-bcast",      ntsc_bcast_jp,     	CHAN_COUNT(ntsc_bcast_jp)     	},
+    { "japan-cable",      ntsc_cable_jp,     	CHAN_COUNT(ntsc_cable_jp)     	},
+    { "europe-west",      europe_west,       	CHAN_COUNT(europe_west)       	},
+    { "europe-east",      europe_east,       	CHAN_COUNT(europe_east)       	},
+    { "italy",		  pal_italy,         	CHAN_COUNT(pal_italy)         	},
+    { "newzealand",       pal_newzealand,    	CHAN_COUNT(pal_newzealand)    	},
+    { "australia",        pal_australia,     	CHAN_COUNT(pal_australia)     	},
+    { "ireland",          pal_ireland,       	CHAN_COUNT(pal_ireland)       	},
+    { "france",           secam_france,      	CHAN_COUNT(secam_france)      	},
+    { "china-bcast",      pal_bcast_cn,      	CHAN_COUNT(pal_bcast_cn)      	},
+    { "southafrica",      pal_bcast_za,      	CHAN_COUNT(pal_bcast_za)      	},
+    { "argentina",        argentina,         	CHAN_COUNT(argentina)         	},
+    { "australia-optus",  pal_australia_optus, 	CHAN_COUNT(pal_australia_optus) },
     { NULL, NULL, 0 } /* EOF */
+};
+
+/* This list contains omissions and almost certainly incorrect information.
+   Please provide me (Hans Verkuil, <hverkuil@xs4all.nl>) with corrections. */
+const struct v4l2_country_std_map v4l2_country_std_map[] = {
+	{ "AE", V4L2_STD_PAL_BG   }, /* United Arab Emirates */
+	{ "AF", V4L2_STD_SECAM_D  }, /* Afghanistan */
+	{ "AG", V4L2_STD_NTSC_M   }, /* Antigua */
+	{ "AL", V4L2_STD_PAL_BG   }, /* Albania */
+	{ "AM", V4L2_STD_SECAM_DK }, /* Armenia */
+	{ "AN", V4L2_STD_NTSC_M   }, /* Netherlands Antilles */
+	{ "AO", V4L2_STD_PAL_I    }, /* Angola */
+	{ "AR", V4L2_STD_PAL_Nc   }, /* Argentina */
+	{ "AT", V4L2_STD_PAL_BG   }, /* Austria */
+	{ "AU", V4L2_STD_PAL_B    }, /* Australia */
+	{ "AW", V4L2_STD_NTSC_M   }, /* Aruba */
+	{ "AZ", V4L2_STD_SECAM_DK }, /* Azerbaijan */
+	{ "BA", V4L2_STD_PAL_BG   }, /* Bosnia and Herzegovina */
+	{ "BB", V4L2_STD_NTSC_M   }, /* Barbados */
+	{ "BD", V4L2_STD_PAL_B    }, /* Bangladesh */
+	{ "BE", V4L2_STD_PAL_B | V4L2_STD_PAL_H }, /* Belgium */
+	{ "BF", V4L2_STD_SECAM_K1 }, /* Burkina Faso */
+	{ "BG", V4L2_STD_SECAM_DK }, /* Bulgaria */
+	{ "BH", V4L2_STD_PAL_BG   }, /* Bahrain */
+	{ "BI", V4L2_STD_SECAM_K1 }, /* Burundi */
+	{ "BJ", V4L2_STD_SECAM_K1 }, /* Benin */
+	{ "BM", V4L2_STD_NTSC_M   }, /* Bermuda */
+	{ "BN", V4L2_STD_PAL_B    }, /* Brunei Darussalam */
+	{ "BO", V4L2_STD_NTSC_M   }, /* Bolivia */
+	{ "BR", V4L2_STD_PAL_M    }, /* Brazil */
+	{ "BS", V4L2_STD_NTSC_M   }, /* Bahamas */
+	{ "BW", V4L2_STD_PAL_I    }, /* Botswana */
+	{ "BY", V4L2_STD_SECAM_D  }, /* Belarus */
+	{ "BZ", V4L2_STD_NTSC_M   }, /* Belize */
+	{ "CA", V4L2_STD_NTSC_M   }, /* Canada */
+	{ "CD", V4L2_STD_SECAM_K1 }, /* The Democratic Republic of the Congo */
+	{ "CF", V4L2_STD_SECAM_K1 }, /* Central African Republic */
+	{ "CG", V4L2_STD_SECAM_K1 }, /* Republic of the Congo */
+	{ "CH", V4L2_STD_PAL_BG   }, /* Switzerland */
+	{ "CL", V4L2_STD_NTSC_M   }, /* Chile */
+	{ "CM", V4L2_STD_PAL_BG   }, /* Cameroon */
+	{ "CN", V4L2_STD_PAL_D    }, /* China */
+	{ "CO", V4L2_STD_NTSC_M   }, /* Colombia */
+	{ "CR", V4L2_STD_NTSC_M   }, /* Costa Rica */
+	{ "CU", V4L2_STD_NTSC_M   }, /* Cuba */
+	{ "CY", V4L2_STD_PAL_BG   }, /* Cyprus */
+	{ "CZ", V4L2_STD_PAL_D    }, /* Czech Republic */
+	{ "DE", V4L2_STD_PAL_BG   }, /* Germany */
+	{ "DJ", V4L2_STD_SECAM_B  }, /* Djibouti */
+	{ "DK", V4L2_STD_PAL_BG   }, /* Denmark */
+	{ "DO", V4L2_STD_NTSC_M   }, /* Dominican Republic */
+	{ "DZ", V4L2_STD_PAL_BG   }, /* Algeria */
+	{ "EC", V4L2_STD_NTSC_M   }, /* Ecuador */
+	{ "EE", V4L2_STD_SECAM_DK }, /* Estonia */
+	{ "EG", V4L2_STD_PAL_BG   }, /* Egypt */
+	{ "ES", V4L2_STD_PAL_BG   }, /* Spain */
+	{ "ET", V4L2_STD_PAL_BG   }, /* Ethiopia */
+	{ "FI", V4L2_STD_PAL_BG   }, /* Finland */
+	{ "FR", V4L2_STD_SECAM_L  }, /* France */
+	{ "GA", V4L2_STD_SECAM_K1 }, /* Gabon */
+	{ "GB", V4L2_STD_PAL_I    }, /* United Kingdom */
+	{ "GE", V4L2_STD_SECAM_DK }, /* Georgia */
+	{ "GH", V4L2_STD_PAL_B    }, /* Ghana */
+	{ "GI", V4L2_STD_PAL_BG   }, /* Gibraltar */
+	{ "GL", V4L2_STD_PAL_BG   }, /* Greenland */
+	{ "GM", V4L2_STD_PAL_I    }, /* Gambia */
+	{ "GQ", V4L2_STD_PAL_BG   }, /* Equatorial Guinea */
+	{ "GR", V4L2_STD_SECAM_B  }, /* Greece */
+	{ "GR", V4L2_STD_SECAM_G  }, /* Greece */
+	{ "GT", V4L2_STD_NTSC_M   }, /* Guatemala */
+	{ "GU", V4L2_STD_NTSC_M   }, /* Guam */
+	{ "GW", V4L2_STD_PAL_I    }, /* Guinea-Bissau */
+	{ "HK", V4L2_STD_PAL_I    }, /* Hong Kong */
+	{ "HN", V4L2_STD_NTSC_M   }, /* Honduras */
+	{ "HR", V4L2_STD_PAL_BG   }, /* Croatia */
+	{ "HU", V4L2_STD_SECAM_DK }, /* Hungary */
+	{ "ID", V4L2_STD_PAL_B    }, /* Indonesia */
+	{ "IE", V4L2_STD_PAL_I    }, /* Ireland */
+	{ "IL", V4L2_STD_PAL_BG   }, /* Israel */
+	{ "IN", V4L2_STD_PAL_B    }, /* India */
+	{ "IQ", V4L2_STD_SECAM_B | V4L2_STD_SECAM_G }, /* Iraq */
+	{ "IR", V4L2_STD_SECAM_B | V4L2_STD_SECAM_G }, /* Iran */
+	{ "IS", V4L2_STD_PAL_BG   }, /* Iceland */
+	{ "IT", V4L2_STD_PAL_BG   }, /* Italy */
+	{ "JM", V4L2_STD_NTSC_M   }, /* Jamaica */
+	{ "JO", V4L2_STD_PAL_BG   }, /* Jordan */
+	{ "JP", V4L2_STD_NTSC_M_JP }, /* Japan */
+	{ "KE", V4L2_STD_PAL_BG   }, /* Kenya */
+	{ "KH", V4L2_STD_PAL_BG   }, /* Cambodia */
+	{ "KM", V4L2_STD_SECAM_K1 }, /* Comoros */
+	{ "KN", V4L2_STD_NTSC_M   }, /* Saint Kitts and Nevis */
+	{ "KP", V4L2_STD_PAL_D    }, /* North Korea */
+	{ "KR", V4L2_STD_NTSC_M_KR }, /* South Korea */
+	{ "KW", V4L2_STD_PAL_BG   }, /* Kuwait */
+	{ "KZ", V4L2_STD_SECAM_D  }, /* Kazakhstan */
+	{ "KZ", V4L2_STD_SECAM_K  }, /* Kazakhstan */
+	{ "LB", V4L2_STD_SECAM_B  }, /* Lebanon */
+	{ "LK", V4L2_STD_PAL_BG   }, /* Sri Lanka */
+	{ "LR", V4L2_STD_PAL_BG   }, /* Liberia */
+	{ "LS", V4L2_STD_PAL_I    }, /* Lesotho */
+	{ "LT", V4L2_STD_SECAM_DK }, /* Lithuania */
+	{ "LU", V4L2_STD_PAL_BG   }, /* Luxembourg */
+	{ "LY", V4L2_STD_PAL_BG   }, /* Libya */
+	{ "MA", V4L2_STD_SECAM_B | V4L2_STD_SECAM_G }, /* Morocco */
+	{ "MC", V4L2_STD_PAL_G    }, /* Monaco */
+	{ "MD", V4L2_STD_SECAM_DK }, /* Moldova */
+	{ "MG", V4L2_STD_SECAM_K | V4L2_STD_SECAM_K1 }, /* Madagascar */
+	{ "ML", V4L2_STD_SECAM_B | V4L2_STD_SECAM_G }, /* Mali */
+	{ "MM", V4L2_STD_NTSC_M   }, /* Myanmar */
+	{ "MN", V4L2_STD_SECAM_D  }, /* Mongolia */
+	{ "MR", V4L2_STD_SECAM_B  }, /* Mauritania */
+	{ "MS", V4L2_STD_NTSC_M   }, /* Montserrat */
+	{ "MT", V4L2_STD_PAL_B    }, /* Malta */
+	{ "MU", V4L2_STD_SECAM_B | V4L2_STD_SECAM_G }, /* Mauritius */
+	{ "MV", V4L2_STD_PAL_B    }, /* Maldives */
+	{ "MW", V4L2_STD_PAL_I    }, /* Malawi */
+	{ "MX", V4L2_STD_NTSC_M   }, /* Mexico */
+	{ "MY", V4L2_STD_PAL_BG   }, /* Malaysia */
+	{ "MZ", V4L2_STD_PAL_G    }, /* Mozambique */
+	{ "NA", V4L2_STD_PAL_I    }, /* Namibia */
+	{ "NE", V4L2_STD_SECAM_K1 }, /* Niger */
+	{ "NG", V4L2_STD_PAL_BG   }, /* Nigeria */
+	{ "NI", V4L2_STD_NTSC_M   }, /* Nicaragua */
+	{ "NL", V4L2_STD_PAL_BG   }, /* Netherlands */
+	{ "NO", V4L2_STD_PAL_BG   }, /* Norway */
+	{ "NP", V4L2_STD_PAL_B    }, /* Nepal */
+	{ "NZ", V4L2_STD_PAL_BG   }, /* New Zealand */
+	{ "OM", V4L2_STD_PAL_BG   }, /* Oman */
+	{ "PA", V4L2_STD_NTSC_M   }, /* Panama */
+	{ "PE", V4L2_STD_NTSC_M   }, /* Peru */
+	{ "PG", V4L2_STD_PAL_BG   }, /* Papua New Guinea */
+	{ "PH", V4L2_STD_NTSC_M   }, /* Philippines */
+	{ "PK", V4L2_STD_PAL_BG   }, /* Pakistan */
+	{ "PL", V4L2_STD_SECAM_K  }, /* Poland */
+	{ "PR", V4L2_STD_NTSC_M   }, /* Puerto Rico */
+	{ "PT", V4L2_STD_PAL_BG   }, /* Portugal */
+	{ "PY", V4L2_STD_PAL_N    }, /* Paraguay */
+	{ "QA", V4L2_STD_PAL_BG   }, /* Qatar */
+	{ "RO", V4L2_STD_PAL_DK   }, /* Romania */
+	{ "RU", V4L2_STD_SECAM_DK }, /* Russia */
+	{ "RW", V4L2_STD_SECAM_K1 }, /* Rwanda */
+	{ "SA", V4L2_STD_PAL_BG | V4L2_STD_SECAM_B | V4L2_STD_SECAM_G }, /* Saudi Arabia */
+	{ "SC", V4L2_STD_PAL_B    }, /* Seychelles */
+	{ "SD", V4L2_STD_PAL_BG   }, /* Sudan */
+	{ "SE", V4L2_STD_PAL_BG   }, /* Sweden */
+	{ "SG", V4L2_STD_PAL_BG   }, /* Singapore */
+	{ "SI", V4L2_STD_PAL_BG   }, /* Slovenia */
+	{ "SK", V4L2_STD_SECAM_DK }, /* Slovak Republic */
+	{ "SL", V4L2_STD_PAL_BG   }, /* Sierra Leone */
+	{ "SN", V4L2_STD_SECAM_K1 }, /* Senegal */
+	{ "SO", V4L2_STD_PAL_BG   }, /* Somalia */
+	{ "SR", V4L2_STD_NTSC_M   }, /* Suriname */
+	{ "ST", V4L2_STD_PAL_B    }, /* Sao Tome and Principe */
+	{ "SV", V4L2_STD_NTSC_M   }, /* El Salvador */
+	{ "SY", V4L2_STD_PAL_BG   }, /* Syria */
+	{ "SZ", V4L2_STD_PAL_BG   }, /* Swaziland */
+	{ "TD", V4L2_STD_SECAM_K1 }, /* Chad */
+	{ "TG", V4L2_STD_SECAM_K1 }, /* Togo */
+	{ "TH", V4L2_STD_PAL_BG   }, /* Thailand */
+	{ "TN", V4L2_STD_PAL_BG   }, /* Tunisia */
+	{ "TR", V4L2_STD_PAL_BG   }, /* Turkey */
+	{ "TT", V4L2_STD_NTSC_M   }, /* Trinidad and Tobago */
+	{ "TW", V4L2_STD_NTSC_M   }, /* Taiwan */
+	{ "TZ", V4L2_STD_PAL_I    }, /* Tanzania */
+	{ "UA", V4L2_STD_SECAM_DK }, /* Ukraine */
+	{ "UG", V4L2_STD_PAL_B    }, /* Uganda */
+	{ "US", V4L2_STD_NTSC_M   }, /* United States */
+	{ "UY", V4L2_STD_PAL_N    }, /* Uruguay */
+	{ "VC", V4L2_STD_SECAM_K1 }, /* Cape Verde */
+	{ "VE", V4L2_STD_NTSC_M   }, /* Venezuela */
+	{ "VG", V4L2_STD_NTSC_M   }, /* Virgin Islands, British */
+	{ "VI", V4L2_STD_NTSC_M   }, /* Virgin Islands, U.S. */
+	{ "VN", V4L2_STD_SECAM_DK }, /* Vietnam */
+	{ "WS", V4L2_STD_NTSC_M   }, /* Samoa */
+	{ "YE", V4L2_STD_PAL_BG   }, /* Yemen */
+	{ "ZA", V4L2_STD_PAL_I    }, /* South Africa */
+	{ "ZM", V4L2_STD_PAL_G    }, /* Zambia */
+	{ "ZW", V4L2_STD_PAL_G    }, /* Zimbabwe */
+	{ NULL, 0 }
 };

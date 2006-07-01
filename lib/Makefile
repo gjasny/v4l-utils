@@ -1,6 +1,6 @@
 # Makefile for linuxtv.org v4l2-apps/lib
 
-CPPFLAGS += -I../../include -I..
+CPPFLAGS += -I../../linux/include -I..
 
 includes = v4l2.h
 
