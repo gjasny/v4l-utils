@@ -4,8 +4,9 @@
 
 TEMPLATE = app
 INCLUDEPATH += . ../../../linux/include ../../lib
+CONFIG += debug
 
 # Input
-HEADERS += qv4l2.h
-SOURCES += qv4l2.cpp
+HEADERS += qv4l2.h general-tab.h
+SOURCES += qv4l2.cpp general-tab.cpp ctrl-tab.cpp
 LIBS += -lv4l2 -L../../lib

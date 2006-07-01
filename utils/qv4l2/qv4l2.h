@@ -1,15 +1,24 @@
-/****************************************************************************
-** $Id: qt/application.h   3.3.6   edited Aug 31 2005 $
-**
-** Copyright (C) 1992-2005 Trolltech AS.  All rights reserved.
-**
-** This file is part of an example program for Qt.  This example
-** program may be used, distributed and modified without limitation.
-**
-*****************************************************************************/
+/* qv4l2: a control panel controlling v4l2 devices.
+ *
+ * Copyright (C) 2006 Hans Verkuil <hverkuil@xs4all.nl>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 
-#ifndef APPLICATION_H
-#define APPLICATION_H
+#ifndef QV4L2_H
+#define QV4L2_H
 
 #include <qmainwindow.h>
 #include <qtabwidget.h>
@@ -18,7 +27,6 @@
 #include <map>
 #include <vector>
 
-#define __user
 #include <linux/videodev2.h>
 
 class QComboBox;
@@ -45,6 +53,7 @@ public:
     ~ApplicationWindow();
 
     void setDevice(const QString &device);
+    bool doIoctl(QString descr, unsigned cmd, void *arg);
 
 protected:
     void closeEvent( QCloseEvent* );
@@ -52,20 +61,11 @@ protected:
 private slots:
     void choose();
     void ctrlAction(int);
-    void inputChanged(int);
-    void outputChanged(int);
-    void inputAudioChanged(int);
-    void outputAudioChanged(int);
-    void standardChanged(int);
-    void freqTableChanged(int);
-    void freqChannelChanged(int);
-    void freqChanged(int);
 
     void about();
 
 private:
     void addTabs();
-    void addGeneralTab();
     void finishGrid(QWidget *vbox, QGrid *grid, unsigned ctrl_class, bool odd);
     void addCtrl(QGrid *grid, const struct v4l2_queryctrl &qctrl);
     void updateCtrl(unsigned id);
@@ -77,7 +77,6 @@ private:
     void setVal64(unsigned id, long long v);
     QString getCtrlFlags(unsigned flags);
     void setWhat(QWidget *w, unsigned id, long long v);
-    bool doIoctl(QString descr, unsigned cmd, void *arg);
     void updateVideoInput();
     void updateVideoOutput();
     void updateAudioInput();
@@ -93,18 +92,8 @@ private:
     CtrlMap ctrlMap;
     WidgetMap widgetMap;
     ClassMap classMap;
-    struct v4l2_tuner tuner;
-
-    // General tab
-    QComboBox *videoInput;
-    QComboBox *videoOutput;
-    QComboBox *audioInput;
-    QComboBox *audioOutput;
-    QComboBox *tvStandard;
-    QSpinBox  *freq;
-    QComboBox *freqTable;
-    QComboBox *freqChannel;
 };
 
+extern ApplicationWindow *g_mw;
 
 #endif
