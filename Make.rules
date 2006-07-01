@@ -1,0 +1,47 @@
+# dvb-apps common build rules
+
+ifeq ($(origin CC),default)
+CC := gcc
+endif
+export CC
+
+ifeq ($(origin CFLAGS),undefined)
+CFLAGS := -g -O1
+endif
+CFLAGS += -Wall -W -Wshadow -Wpointer-arith -Wstrict-prototypes
+CFLAGS += -fPIC
+export CFLAGS
+
+ifeq ($(V),1)
+%.o: %.c
+	$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<
+%: %.o
+	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
+%: %.c
+	$(CC) -MMD $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(filter %.o %.c,$^) $(LOADLIBES) $(LDLIBS) -o $@
+%.so:
+	$(LD) -shared -o $@ $^
+%.a:
+	$(AR) rcs $@ $^
+else
+%.o: %.c
+	@echo CC $@
+	@$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<
+%: %.o
+	@echo LD $@
+	@$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
+%: %.c
+	@echo CC $@
+	@$(CC) -MMD $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(filter %.o %.c,$^) $(LOADLIBES) $(LDLIBS) -o $@
+%.so:
+	@echo LD $@
+	@$(LD) -shared -o $@ $^
+%.a:
+	@echo AR $@
+	@$(AR) rcs $@ $^
+endif
+
+clean::
+	rm -f *.d
+
+-include *.d ...dummy

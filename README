@@ -1,0 +1,14 @@
+linuxtv-v4l2-apps-0.0.1
+=======================
+
+Linux V4L2 API test/demo applications, utilities and library.
+
+You find a README in each subdirectory explaining what the code there does.
+
+The v4l2 library uses the GNU Lesser General Public License, all other code is
+released under the GNU General Public License.
+
+This code is still in its infancy and is not yet suitable for general
+use. However, it is a start.
+
+Hans Verkuil <hverkuil@xs4all.nl>

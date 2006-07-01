@@ -1,0 +1,12 @@
+Building:
+
+simply type
+$ make
+
+Installing:
+
+$ make install
+installs libraries and utils to /usr/[bin,include,lib]
+
+$ make install prefix=<path>
+installs libraries and utils to <path>/[bin,include,lib]
