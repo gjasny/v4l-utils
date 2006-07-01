@@ -2,7 +2,7 @@
 #include <sys/time.h>
 #include <pthread.h>
 
-#include "frequencies.h"
+#include "v4l2.h"
 
 /* --------------------------------------------------------------------- */
 

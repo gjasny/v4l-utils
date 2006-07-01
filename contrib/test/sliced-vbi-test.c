@@ -455,7 +455,7 @@ int main(int argc, char **argv)
 	buf = malloc(fmt.fmt.sliced.io_size);
 	for (;;) {
 		int size = read(fh, buf, fmt.fmt.sliced.io_size);
-		int i;
+		unsigned i;
 
 		if (size <= 0)
 			break;

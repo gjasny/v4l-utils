@@ -8,7 +8,7 @@ export CC
 ifeq ($(origin CFLAGS),undefined)
 CFLAGS := -g -O1
 endif
-CFLAGS += -Wall -W -Wshadow -Wpointer-arith -Wstrict-prototypes
+CFLAGS += -Wall -W -Wno-unused -Wshadow -Wpointer-arith -Wstrict-prototypes
 CFLAGS += -fPIC
 export CFLAGS
 
@@ -42,6 +42,7 @@ else
 endif
 
 clean::
+	-rm -f core core.[0123456789]* *~ *.o
 	rm -f *.d
 
 -include *.d ...dummy

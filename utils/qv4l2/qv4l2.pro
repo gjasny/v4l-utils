@@ -3,8 +3,9 @@
 ######################################################################
 
 TEMPLATE = app
-INCLUDEPATH += . ../../linux/include
+INCLUDEPATH += . ../../../linux/include ../../lib
 
 # Input
 HEADERS += qv4l2.h
-SOURCES += qv4l2.cpp frequencies.c
+SOURCES += qv4l2.cpp
+LIBS += -lv4l2 -L../../lib

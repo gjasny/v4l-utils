@@ -36,7 +36,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
-#include "../linux/include/linux/videodev.h"
+#include "linux/videodev.h"
 
 #ifdef INTERNAL
 typedef __u8 u8;
@@ -201,7 +201,8 @@ int ioctls[] = {
 /********************************************************************/
 int main (void)
 {
-	int fd=0, ret=0,i;
+	int fd=0, ret=0;
+	unsigned i;
 	char *device="/dev/video0";
 	union v4l_parms p;
 

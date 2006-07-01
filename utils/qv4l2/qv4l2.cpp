@@ -1,6 +1,6 @@
 
 #include "qv4l2.h"
-#include "frequencies.h"
+#include "v4l2.h"
 
 #include <qimage.h>
 #include <qpixmap.h>

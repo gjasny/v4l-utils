@@ -49,7 +49,7 @@ static void detect(int fh, struct v4l2_sliced_vbi_format *fmt)
 
 	for (cnt = 0; cnt < 5; cnt++) {
 		int size = read(fh, buf, fmt->io_size);
-		int i;
+		unsigned i;
 
 		if (size <= 0) {
 			printf("size = %d\n", size);
