@@ -78,17 +78,31 @@ enum Option {
 	OptSetTuner = 't',
 	OptGetVideoFormat = 'V',
 	OptSetVideoFormat = 'v',
-	OptLast = 128
+
+	OptGetSlicedVbiFormat = 128,
+	OptSetSlicedVbiFormat,
+	OptGetSlicedVbiOutFormat,
+	OptSetSlicedVbiOutFormat,
+	OptGetOverlayFormat,
+	//OptSetOverlayFormat, TODO
+	OptGetVbiFormat,
+	//OptSetVbiFormat, TODO
+	OptGetVbiOutFormat,
+	//OptSetVbiOutFormat, TODO
+	OptAll,
+	OptStreamOff,
+	OptStreamOn,
+	OptListStandards,
+	OptLogStatus,
+	OptVerbose,
+	OptGetVideoOutFormat,
+	OptSetVideoOutFormat,
+	OptGetSlicedVbiCap,
+	OptGetSlicedVbiOutCap,
+	OptLast = 256
 };
 
 static char options[OptLast];
-static int option_all = 0;
-static int option_streamoff = 0;
-static int option_streamon = 0;
-static int option_list_stds = 0;
-static int option_version = 0;
-static int option_log_status = 0;
-static int option_verbose = 0;
 
 typedef std::vector<struct v4l2_ext_control> ctrl_list;
 static ctrl_list user_ctrls;
@@ -105,6 +119,19 @@ static ctrl_get_list get_ctrls;
 typedef std::map<std::string,std::string> ctrl_set_map;
 static ctrl_set_map set_ctrls;
 
+typedef struct {
+	unsigned flag;
+	const char *str;
+} flag_def;
+
+static const flag_def service_def[] = {
+	{ V4L2_SLICED_TELETEXT_B,  "teletext" },
+	{ V4L2_SLICED_VPS,         "vps" },
+	{ V4L2_SLICED_CAPTION_525, "cc" },
+	{ V4L2_SLICED_WSS_625,     "wss" },
+	{ 0, NULL }
+};
+
 /* fmts specified */
 #define FMTWidth		(1L<<0)
 #define FMTHeight		(1L<<1)
@@ -112,10 +139,12 @@ static ctrl_set_map set_ctrls;
 static struct option long_options[] = {
 	{"list-audio-inputs", no_argument, 0, OptListAudioInputs},
 	{"list-audio-outputs", no_argument, 0, OptListAudioOutputs},
-	{"all", no_argument, &option_all, 1},
+	{"all", no_argument, 0, OptAll},
 	{"device", required_argument, 0, OptSetDevice},
-	{"get-format", no_argument, 0, OptGetVideoFormat},
-	{"set-format", required_argument, 0, OptSetVideoFormat},
+	{"get-fmt-video", no_argument, 0, OptGetVideoFormat},
+	{"set-fmt-video", required_argument, 0, OptSetVideoFormat},
+	{"get-fmt-video-out", no_argument, 0, OptGetVideoOutFormat},
+	{"set-fmt-video-out", required_argument, 0, OptSetVideoOutFormat},
 	{"help", no_argument, 0, OptHelp},
 	{"get-output", no_argument, 0, OptGetOutput},
 	{"set-output", required_argument, 0, OptSetOutput},
@@ -129,9 +158,9 @@ static struct option long_options[] = {
 	{"set-audio-output", required_argument, 0, OptSetAudioOutput},
 	{"get-freq", no_argument, 0, OptGetFreq},
 	{"set-freq", required_argument, 0, OptSetFreq},
-	{"streamoff", no_argument, &option_streamoff, 1},
-	{"streamon", no_argument, &option_streamon, 1},
-	{"list-standards", no_argument, &option_list_stds, 1},
+	{"streamoff", no_argument, 0, OptStreamOff},
+	{"streamon", no_argument, 0, OptStreamOn},
+	{"list-standards", no_argument, 0, OptListStandards},
 	{"get-standard", no_argument, 0, OptGetStandard},
 	{"set-standard", required_argument, 0, OptSetStandard},
 	{"info", no_argument, 0, OptGetDriverInfo},
@@ -141,24 +170,32 @@ static struct option long_options[] = {
 	{"get-ctrl", required_argument, 0, OptGetCtrl},
 	{"get-tuner", no_argument, 0, OptGetTuner},
 	{"set-tuner", required_argument, 0, OptSetTuner},
-	{"version", no_argument, &option_version, 1},
-	{"verbose", no_argument, &option_verbose, 1},
-	{"log-status", no_argument, &option_log_status, 1},
+	{"verbose", no_argument, 0, OptVerbose},
+	{"log-status", no_argument, 0, OptLogStatus},
+	{"get-fmt-overlay", no_argument, 0, OptGetOverlayFormat},
+	{"get-fmt-sliced-vbi", no_argument, 0, OptGetSlicedVbiFormat},
+	{"set-fmt-sliced-vbi", required_argument, 0, OptSetSlicedVbiFormat},
+	{"get-fmt-sliced-vbi-out", no_argument, 0, OptGetSlicedVbiOutFormat},
+	{"set-fmt-sliced-vbi-out", required_argument, 0, OptSetSlicedVbiOutFormat},
+	{"get-fmt-vbi", no_argument, 0, OptGetVbiFormat},
+	{"get-fmt-vbi-out", no_argument, 0, OptGetVbiOutFormat},
+	{"get-sliced-vbi-cap", no_argument, 0, OptGetSlicedVbiCap},
+	{"get-sliced-vbi-out-cap", no_argument, 0, OptGetSlicedVbiOutCap},
 	{0, 0, 0, 0}
 };
 
-void usage(void)
+static void usage(void)
 {
 	printf("Usage:\n");
 	printf("  --all              display all information available\n");
 	printf("  -A, --get-audio-input\n");
-	printf("                     query the current audio input [VIDIOC_G_AUDIO]\n");
+	printf("                     query the audio input [VIDIOC_G_AUDIO]\n");
 	printf("  -a, --set-audio-input=<num>\n");
-	printf("                     set the current audio input to <num> [VIDIOC_S_AUDIO]\n");
+	printf("                     set the audio input to <num> [VIDIOC_S_AUDIO]\n");
 	printf("  -B, --get-audio-output\n");
-	printf("                     query the current audio output [VIDIOC_G_AUDOUT]\n");
+	printf("                     query the audio output [VIDIOC_G_AUDOUT]\n");
 	printf("  -b, --set-audio-output=<num>\n");
-	printf("                     set the current audio output to <num> [VIDIOC_S_AUDOUT]\n");
+	printf("                     set the audio output to <num> [VIDIOC_S_AUDOUT]\n");
 	printf("  -C, --get-ctrl=<ctrl>[,<ctrl>...]\n");
 	printf("                     get the value of the controls [VIDIOC_G_EXT_CTRLS]\n");
 	printf("  -c, --set-ctrl=<ctrl>=<val>[,<ctrl>=<val>...]\n");
@@ -166,43 +203,75 @@ void usage(void)
 	printf("  -D, --info         show driver info [VIDIOC_QUERYCAP]\n");
 	printf("  -d, --device=<dev> use device <dev> instead of /dev/video0\n");
 	printf("                     if <dev> is a single digit, then /dev/video<dev> is used\n");
-	printf("  -F, --get-freq     query the current frequency [VIDIOC_G_FREQUENCY]\n");
+	printf("  -F, --get-freq     query the frequency [VIDIOC_G_FREQUENCY]\n");
 	printf("  -f, --set-freq=<freq>\n");
-	printf("                     set the current frequency to <freq> MHz [VIDIOC_S_FREQUENCY]\n");
+	printf("                     set the frequency to <freq> MHz [VIDIOC_S_FREQUENCY]\n");
 	printf("  -h, --help         display this help message\n");
-	printf("  -I, --get-input    query the current video input [VIDIOC_G_INPUT]\n");
+	printf("  -I, --get-input    query the video input [VIDIOC_G_INPUT]\n");
 	printf("  -i, --set-input=<num>\n");
-	printf("                     set the current video input to <num> [VIDIOC_S_INPUT]\n");
+	printf("                     set the video input to <num> [VIDIOC_S_INPUT]\n");
 	printf("  -l, --list-ctrls   display all controls and their values [VIDIOC_QUERYCTRL]\n");
 	printf("  -L, --list-ctrls-menus\n");
 	printf("		     display all controls, their values and the menus [VIDIOC_QUERYMENU]\n");
 	printf("  -N, --list-outputs display video outputs [VIDIOC_ENUMOUTPUT]\n");
 	printf("  -n, --list-inputs  display video inputs [VIDIOC_ENUMINPUT]\n");
-	printf("  -O, --get-output   query the current video output [VIDIOC_G_OUTPUT]\n");
+	printf("  -O, --get-output   query the video output [VIDIOC_G_OUTPUT]\n");
 	printf("  -o, --set-output=<num>\n");
-	printf("                     set the current video output to <num> [VIDIOC_S_OUTPUT]\n");
+	printf("                     set the video output to <num> [VIDIOC_S_OUTPUT]\n");
 	printf("  -Q, --list-audio-outputs\n");
 	printf("                     display audio outputs [VIDIOC_ENUMAUDOUT]\n");
 	printf("  -q, --list-audio-inputs\n");
 	printf("                     display audio inputs [VIDIOC_ENUMAUDIO]\n");
 	printf("  -S, --get-standard\n");
-	printf("                     query the current video standard [VIDIOC_G_STD]\n");
+	printf("                     query the video standard [VIDIOC_G_STD]\n");
 	printf("  -s, --set-standard=<num>\n");
-	printf("                     set the current video standard to <num> [VIDIOC_S_STD]\n");
+	printf("                     set the video standard to <num> [VIDIOC_S_STD]\n");
 	printf("                     <num> can be a numerical v4l2_std value, or it can be one of:\n");
 	printf("                     pal-X (X = B/G/H/N/Nc/I/D/K/M) or just 'pal' (V4L2_STD_PAL)\n");
 	printf("                     ntsc-X (X = M/J/K) or just 'ntsc' (V4L2_STD_NTSC)\n");
 	printf("                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n");
 	printf("  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n");
-	printf("  -T, --get-tuner    query the current tuner settings [VIDIOC_G_TUNER]\n");
+	printf("  -T, --get-tuner    query the tuner settings [VIDIOC_G_TUNER]\n");
 	printf("  -t, --set-tuner=<mode>\n");
 	printf("                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n");
-	printf("  -V, --get-format   query the current data format [VIDIOC_G_FMT]\n");
-	printf("  -v, --set-format=width=<x>,height=<y>\n");
-	printf("                     set the current data format [VIDIOC_S_FMT]\n");
 	printf("                     Possible values: 0 (mono), 1 (stereo), 2 (lang2), 3 (lang1), 4 (both)\n");
+	printf("  -V, --get-fmt-video\n");
+	printf("     		     query the video capture format [VIDIOC_G_FMT]\n");
+	printf("  -v, --set-fmt-video=width=<x>,height=<y>\n");
+	printf("                     set the video capture format [VIDIOC_S_FMT]\n");
+	printf("  --get-fmt-video-out\n");
+	printf("     		     query the video output format [VIDIOC_G_FMT]\n");
+	printf("  --set-fmt-video-out=width=<x>,height=<y>\n");
+	printf("                     set the video output format [VIDIOC_S_FMT]\n");
+	printf("  --get-fmt-overlay\n");
+	printf("     		     query the video overlay format [VIDIOC_G_FMT]\n");
+	printf("  --get-sliced-vbi-cap\n");
+        printf("		     query the sliced VBI capture capabilities [VIDIOC_G_SLICED_VBI_CAP]\n");
+	printf("  --get-sliced-vbi-out-cap\n");
+        printf("		     query the sliced VBI output capabilities [VIDIOC_G_SLICED_VBI_CAP]\n");
+	printf("  --get-fmt-sliced-vbi\n");
+        printf("		     query the sliced VBI capture format [VIDIOC_G_FMT]\n");
+	printf("  --set-fmt-sliced-vbi=<mode>\n");
+	printf("                     set the sliced VBI capture format to <mode> [VIDIOC_S_FMT]\n");
+	printf("                     <mode> is a comma separated list of:\n");
+	printf("                     off:      turn off sliced VBI (cannot be combined with other modes)\n");
+	printf("                     teletext: teletext (PAL/SECAM)\n");
+	printf("                     cc:       closed caption (NTSC)\n");
+	printf("                     wss:      widescreen signal (PAL/SECAM)\n");
+	printf("                     vps:      VPS (PAL/SECAM)\n");
+	printf("  --get-fmt-sliced-vbi-out\n");
+        printf("		     query the sliced VBI output format [VIDIOC_G_FMT]\n");
+	printf("  --set-fmt-sliced-vbi-out=<mode>\n");
+	printf("                     set the sliced VBI output format to <mode> [VIDIOC_S_FMT]\n");
+	printf("                     <mode> is a comma separated list of:\n");
+	printf("                     off:      turn off sliced VBI (cannot be combined with other modes)\n");
+	printf("                     teletext: teletext (PAL/SECAM)\n");
+	printf("                     cc:       closed caption (NTSC)\n");
+	printf("                     wss:      widescreen signal (PAL/SECAM)\n");
+	printf("                     vps:      VPS (PAL/SECAM)\n");
+	printf("  --get-fmt-vbi      query the VBI capture format [VIDIOC_G_FMT]\n");
+	printf("  --get-fmt-vbi-out  query the VBI output format [VIDIOC_G_FMT]\n");
 	printf("  --verbose          turn on verbose ioctl error reporting.\n");
-	printf("  --version          shows the version number of this utility.\n");
 	printf("\n");
 	printf("Expert options:\n");
 	printf("  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n");
@@ -211,6 +280,122 @@ void usage(void)
 	exit(0);
 }
 
+static std::string num2s(unsigned num)
+{
+	char buf[10];
+
+	sprintf(buf, "%08x", num);
+	return buf;
+}
+
+static std::string buftype2s(int type)
+{
+	switch (type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		return "Video Capture";
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		return "Video Output";
+	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+		return "Video Overlay";
+	case V4L2_BUF_TYPE_VBI_CAPTURE:
+		return "VBI Capture";
+	case V4L2_BUF_TYPE_VBI_OUTPUT:
+		return "VBI Output";
+	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+		return "Sliced VBI Capture";
+	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+		return "Sliced VBI Output";
+	case V4L2_BUF_TYPE_PRIVATE:
+		return "Private";
+	default:
+		return "Unknown (" + num2s(type) + ")";
+	}
+}
+
+static std::string fcc2s(unsigned int val)
+{
+	std::string s;
+
+	s += val & 0xff;
+	s += (val >> 8) & 0xff;
+	s += (val >> 16) & 0xff;
+	s += (val >> 24) & 0xff;
+	return s;
+}
+
+static std::string field2s(int val)
+{
+	switch (val) {
+	case V4L2_FIELD_ANY:
+		return "Any";
+	case V4L2_FIELD_NONE:
+		return "None";
+	case V4L2_FIELD_TOP:
+		return "Top";
+	case V4L2_FIELD_BOTTOM:
+		return "Bottom";
+	case V4L2_FIELD_INTERLACED:
+		return "Interlaced";
+	case V4L2_FIELD_SEQ_TB:
+		return "Sequential Top-Bottom";
+	case V4L2_FIELD_SEQ_BT:
+		return "Sequential Bottom-Top";
+	case V4L2_FIELD_ALTERNATE:
+		return "Alternating";
+	default:
+		return "Unknown (" + num2s(val) + ")";
+	}
+}
+
+static std::string colorspace2s(int val)
+{
+	switch (val) {
+	case V4L2_COLORSPACE_SMPTE170M:
+		return "Broadcast NTSC/PAL (SMPTE170M/ITU601)";
+	case V4L2_COLORSPACE_SMPTE240M:
+		return "1125-Line (US) HDTV (SMPTE240M)";
+	case V4L2_COLORSPACE_REC709:
+		return "HDTV and modern devices (ITU709)";
+	case V4L2_COLORSPACE_BT878:
+		return "Broken Bt878";
+	case V4L2_COLORSPACE_470_SYSTEM_M:
+		return "NTSC/M (ITU470/ITU601)";
+	case V4L2_COLORSPACE_470_SYSTEM_BG:
+		return "PAL/SECAM BG (ITU470/ITU601)";
+	case V4L2_COLORSPACE_JPEG:
+		return "JPEG (JFIF/ITU601)";
+	case V4L2_COLORSPACE_SRGB:
+		return "SRGB";
+	default:
+		return "Unknown (" + num2s(val) + ")";
+	}
+}
+
+static std::string flags2s(unsigned val, const flag_def *def)
+{
+	std::string s;
+
+	while (def->flag) {
+		if (val & def->flag) {
+			if (s.length()) s += " ";
+			s += def->str;
+		}
+		def++;
+	}
+	return s;
+}
+
+static void print_sliced_vbi_cap(struct v4l2_sliced_vbi_cap &cap)
+{
+//	printf("\tType           : %s\n", buftype2s(vfmt.type).c_str());
+	printf("\tService Set    : %s\n", 
+			flags2s(cap.service_set, service_def).c_str());
+	for (int i = 0; i < 24; i++) {
+		printf("\tService Line %2d: %8s / %-8s\n", i,
+				flags2s(cap.service_lines[0][i], service_def).c_str(),
+				flags2s(cap.service_lines[1][i], service_def).c_str());
+	}
+}
 
 static std::string name2var(unsigned char *name)
 {
@@ -260,17 +445,15 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 	default: break;
 	}
 	if (queryctrl->flags) {
-		printf(" flags=");
-		if (queryctrl->flags & V4L2_CTRL_FLAG_GRABBED)
-			printf("grabbed ");
-		if (queryctrl->flags & V4L2_CTRL_FLAG_READ_ONLY)
-			printf("readonly ");
-		if (queryctrl->flags & V4L2_CTRL_FLAG_UPDATE)
-			printf("update ");
-		if (queryctrl->flags & V4L2_CTRL_FLAG_INACTIVE)
-			printf("inactive ");
-		if (queryctrl->flags & V4L2_CTRL_FLAG_SLIDER)
-			printf("slider ");
+		const flag_def def[] = {
+			{ V4L2_CTRL_FLAG_GRABBED,   "grabbed" },
+			{ V4L2_CTRL_FLAG_READ_ONLY, "readonly" },
+			{ V4L2_CTRL_FLAG_UPDATE,    "update" },
+			{ V4L2_CTRL_FLAG_INACTIVE,  "inactive" },
+			{ V4L2_CTRL_FLAG_SLIDER,    "slider" },
+			{ 0, NULL }
+		};
+		printf(" flags=%s", flags2s(queryctrl->flags, def).c_str());
 	}
 	printf("\n");
 	if (queryctrl->type == V4L2_CTRL_TYPE_MENU && show_menus) {
@@ -367,40 +550,78 @@ static void find_controls(int fd)
 	}
 }
 
-int printfmt(struct v4l2_format vfmt)
+static int printfmt(struct v4l2_format vfmt)
 {
+	const flag_def vbi_def[] = {
+		{ V4L2_VBI_UNSYNC,     "unsynchronized" },
+		{ V4L2_VBI_INTERLACED, "interlaced" },
+		{ 0, NULL }
+	};
 	printf("Format:\n");
 
 	switch (vfmt.type) {
-	case 1:
-		printf("\tType   : Video Capture\n");
-		printf("\tWidth  : %d\n", vfmt.fmt.pix.width);
-		printf("\tHeight : %d\n", vfmt.fmt.pix.height);
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		printf("\tType          : %s\n", buftype2s(vfmt.type).c_str());
+		printf("\tWidth/Height  : %u/%u\n", vfmt.fmt.pix.width, vfmt.fmt.pix.height);
+		printf("\tPixel Format  : %s\n", fcc2s(vfmt.fmt.pix.pixelformat).c_str());
+		printf("\tField         : %s\n", field2s(vfmt.fmt.pix.field).c_str());
+		printf("\tBytes per Line: %u\n", vfmt.fmt.pix.bytesperline);
+		printf("\tSize Image    : %u\n", vfmt.fmt.pix.sizeimage);
+		printf("\tColorspace    : %s\n", colorspace2s(vfmt.fmt.pix.colorspace).c_str());
+		if (vfmt.fmt.pix.priv)
+			printf("\tCustom Info   : %08x\n", vfmt.fmt.pix.priv);
 		break;
-	case 2:
-		printf("\tType   : Video Output\n");
+	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+		printf("\tType        : %s\n", buftype2s(vfmt.type).c_str());
+		printf("\tLeft/Top    : %d/%d\n",
+			       	vfmt.fmt.win.w.left, vfmt.fmt.win.w.top);
+		printf("\tWidth/Height: %d/%d\n",
+			       	vfmt.fmt.win.w.width, vfmt.fmt.win.w.height);
+		printf("\tField       : %s\n", field2s(vfmt.fmt.win.field).c_str());
+		// TODO: check G_FBUF capabilities
+		printf("\tChroma Key  : %08x\n", vfmt.fmt.win.chromakey);
+		printf("\tClip Count  : %u\n", vfmt.fmt.win.clipcount);
 		break;
-	case 3:
-		printf("\tType   : Video Overlay\n");
+	case V4L2_BUF_TYPE_VBI_CAPTURE:
+	case V4L2_BUF_TYPE_VBI_OUTPUT:
+		printf("\tType            : %s\n", buftype2s(vfmt.type).c_str());
+		printf("\tSampling Rate   : %u Hz\n", vfmt.fmt.vbi.sampling_rate);
+		printf("\tOffset          : %u samples (%g secs after leading edge)\n",
+			       	vfmt.fmt.vbi.offset,
+			       	(double)vfmt.fmt.vbi.offset / (double)vfmt.fmt.vbi.sampling_rate);
+		printf("\tSamples per Line: %u\n", vfmt.fmt.vbi.samples_per_line);
+		printf("\tSample Format   : %s\n", fcc2s(vfmt.fmt.vbi.sample_format).c_str());
+		printf("\tStart 1st Field : %u\n", vfmt.fmt.vbi.start[0]);
+		printf("\tCount 1st Field : %u\n", vfmt.fmt.vbi.count[0]);
+		printf("\tStart 2nd Field : %u\n", vfmt.fmt.vbi.start[1]);
+		printf("\tCount 2nd Field : %u\n", vfmt.fmt.vbi.count[1]);
+		if (vfmt.fmt.vbi.flags)
+			printf("\tFlags           : %s\n", flags2s(vfmt.fmt.vbi.flags, vbi_def).c_str());
 		break;
-	case 4:
-		printf("\tType   : VBI Capture\n");
+	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+		printf("\tType           : %s\n", buftype2s(vfmt.type).c_str());
+		printf("\tService Set    : %s\n", 
+				flags2s(vfmt.fmt.sliced.service_set, service_def).c_str());
+		for (int i = 0; i < 24; i++) {
+			printf("\tService Line %2d: %8s / %-8s\n", i,
+			       flags2s(vfmt.fmt.sliced.service_lines[0][i], service_def).c_str(),
+			       flags2s(vfmt.fmt.sliced.service_lines[1][i], service_def).c_str());
+		}
+		printf("\tI/O Size       : %u\n", vfmt.fmt.sliced.io_size);
 		break;
-	case 5:
-		printf("\tType   : VBI Output\n");
-		break;
-	case 0x80:
-		printf("\tType   : Private\n");
+	case V4L2_BUF_TYPE_PRIVATE:
+		printf("\tType: %s\n", buftype2s(vfmt.type).c_str());
 		break;
 	default:
-		printf("\tType   : Unknown: %d\n", vfmt.type);
+		printf("\tType: %s\n", buftype2s(vfmt.type).c_str());
 		return -1;
-		break;
 	}
 	return 0;
 }
 
-char *pts_to_string(char *str, unsigned long pts)
+static char *pts_to_string(char *str, unsigned long pts)
 {
 	static char buf[256];
 	int hours, minutes, seconds, fracsec;
@@ -597,7 +818,7 @@ static int doioctl(int fd, int request, void *parm, const char *name)
 {
 	int retVal;
 
-	if (!option_verbose) return ioctl(fd, request, parm);
+	if (!options[OptVerbose]) return ioctl(fd, request, parm);
 	retVal = ioctl(fd, request, parm);
 	printf("%s: ", name);
 	if (retVal < 0)
@@ -668,18 +889,25 @@ int main(int argc, char **argv)
 
 	/* bitfield for fmts */
 	unsigned int set_fmts = 0;
+	unsigned int set_fmts_out = 0;
 
 	int mode = V4L2_TUNER_MODE_STEREO;	/* set audio mode */
 
 	/* command args */
-	char ch, *device = strdup("/dev/video0");	/* -d device */
-	struct v4l2_format vfmt;	/* set_format/get_format */
-	struct v4l2_tuner tuner = { 0 };/* set_tuner/get_tuner */
+	int ch;
+	char *device = strdup("/dev/video0");	/* -d device */
+	struct v4l2_format vfmt;	/* set_format/get_format for video */
+	struct v4l2_format vfmt_out;	/* set_format/get_format video output */
+	struct v4l2_format vbi_fmt;	/* set_format/get_format for sliced VBI */
+	struct v4l2_format vbi_fmt_out;	/* set_format/get_format for sliced VBI output */
+	struct v4l2_format raw_fmt;	/* set_format/get_format for VBI */
+	struct v4l2_format raw_fmt_out;	/* set_format/get_format for VBI output */
+	struct v4l2_tuner tuner;        /* set_tuner/get_tuner */
 	struct v4l2_capability vcap;	/* list_cap */
 	struct v4l2_input vin;		/* list_inputs */
 	struct v4l2_output vout;	/* list_outputs */
 	struct v4l2_audio vaudio;	/* list audio inputs */
-	struct v4l2_audioout vaudout = { 0 }; /* audio outputs */
+	struct v4l2_audioout vaudout;   /* audio outputs */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
 	v4l2_std_id std;		/* get_std/set_std */
@@ -688,6 +916,21 @@ int main(int argc, char **argv)
 	struct v4l2_standard vs;	/* list_std */
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
+
+	memset(&vfmt, 0, sizeof(vfmt));
+	memset(&vbi_fmt, 0, sizeof(vbi_fmt));
+	memset(&raw_fmt, 0, sizeof(raw_fmt));
+	memset(&vfmt_out, 0, sizeof(vfmt_out));
+	memset(&vbi_fmt_out, 0, sizeof(vbi_fmt_out));
+	memset(&raw_fmt_out, 0, sizeof(raw_fmt_out));
+	memset(&tuner, 0, sizeof(tuner));
+	memset(&vcap, 0, sizeof(vcap));
+	memset(&vin, 0, sizeof(vin));
+	memset(&vout, 0, sizeof(vout));
+	memset(&vaudio, 0, sizeof(vaudio));
+	memset(&vaudout, 0, sizeof(vaudout));
+	memset(&vf, 0, sizeof(vf));
+	memset(&vs, 0, sizeof(vs));
 
 	if (argc == 1) {
 		usage();
@@ -739,6 +982,27 @@ int main(int argc, char **argv)
 				case 1:
 					vfmt.fmt.pix.height = strtol(value, 0L, 0);
 					set_fmts |= FMTHeight;
+					break;
+				}
+			}
+			break;
+		case OptSetVideoOutFormat:
+			subs = optarg;
+			while (*subs != '\0') {
+				static char *const subopts[] = {
+					"width",
+					"height",
+					NULL
+				};
+
+				switch (parse_subopt(&subs, subopts, &value)) {
+				case 0:
+					vfmt_out.fmt.pix.width = strtol(value, 0L, 0);
+					set_fmts_out |= FMTWidth;
+					break;
+				case 1:
+					vfmt_out.fmt.pix.height = strtol(value, 0L, 0);
+					set_fmts_out |= FMTHeight;
 					break;
 				}
 			}
@@ -824,6 +1088,55 @@ int main(int argc, char **argv)
 				return 1;
 			}
 			break;
+		case OptSetSlicedVbiFormat:
+		case OptSetSlicedVbiOutFormat:
+		{
+			bool foundOff = false;
+			v4l2_format *fmt = &vbi_fmt;
+
+			if (ch == OptSetSlicedVbiOutFormat)
+				fmt = &vbi_fmt_out;
+			fmt->fmt.sliced.service_set = 0;
+			subs = optarg;
+			while (*subs != '\0') {
+				static char *const subopts[] = {
+					"off",
+					"teletext",
+					"cc",
+					"wss",
+					"vps",
+					NULL
+				};
+
+				switch (parse_subopt(&subs, subopts, &value)) {
+				case 0:
+					foundOff = true;
+					break;
+				case 1:
+					fmt->fmt.sliced.service_set |=
+					    V4L2_SLICED_TELETEXT_B;
+					break;
+				case 2:
+					fmt->fmt.sliced.service_set |=
+					    V4L2_SLICED_CAPTION_525;
+					break;
+				case 3:
+					fmt->fmt.sliced.service_set |=
+					    V4L2_SLICED_WSS_625;
+					break;
+				case 4:
+					fmt->fmt.sliced.service_set |=
+					    V4L2_SLICED_VPS;
+					break;
+				}
+			}
+			if (foundOff && fmt->fmt.sliced.service_set) {
+				fprintf(stderr, "Sliced VBI mode 'off' cannot be combined with other modes\n");
+				usage();
+				return 1;
+			}
+			break;
+		}
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",
 				argv[optind]);
@@ -852,6 +1165,7 @@ int main(int argc, char **argv)
 	}
 	free(device);
 
+	doioctl(fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP");
 	find_controls(fd);
 	for (ctrl_get_list::iterator iter = get_ctrls.begin(); iter != get_ctrls.end(); ++iter) {
 	    if (ctrl_str2id.find(*iter) == ctrl_str2id.end()) {
@@ -866,8 +1180,9 @@ int main(int argc, char **argv)
 	    }
 	}
 
-	if (option_all) {
+	if (options[OptAll]) {
 		options[OptGetVideoFormat] = 1;
+		options[OptGetVideoOutFormat] = 1;
 		options[OptGetDriverInfo] = 1;
 		options[OptGetInput] = 1;
 		options[OptGetOutput] = 1;
@@ -876,40 +1191,28 @@ int main(int argc, char **argv)
 		options[OptGetStandard] = 1;
 		options[OptGetFreq] = 1;
 		options[OptGetTuner] = 1;
+		options[OptGetOverlayFormat] = 1;
+		options[OptGetVbiFormat] = 1;
+		options[OptGetVbiOutFormat] = 1;
+		options[OptGetSlicedVbiFormat] = 1;
+		options[OptGetSlicedVbiOutFormat] = 1;
 	}
 
+	/* Information Opts */
 
-	/* Setting Opts */
-
-	if (options[OptSetVideoFormat]) {
-		struct v4l2_format in_vfmt;
-		printf("ioctl: VIDIOC_S_FMT\n");
-		in_vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		if (ioctl(fd, VIDIOC_G_FMT, &in_vfmt) < 0)
-			fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
-		else {
-			printf("\tBefore:\n");
-			if (printfmt(in_vfmt) != 0)
-				fprintf(stderr, "error printing result\n");
-			if (set_fmts & FMTWidth)
-				in_vfmt.fmt.pix.width = vfmt.fmt.pix.width;
-			if (set_fmts & FMTHeight)
-				in_vfmt.fmt.pix.height = vfmt.fmt.pix.height;
-			if (ioctl(fd, VIDIOC_S_FMT, &in_vfmt) < 0)
-				fprintf(stderr, "ioctl: VIDIOC_S_FMT failed\n");
-			vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-			if (ioctl(fd, VIDIOC_G_FMT, &vfmt) < 0)
-				fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
-			else {
-				printf("\n\tAfter:\n");
-				if (printfmt(vfmt) != 0)
-					fprintf(stderr,
-						"error printing result\n");
-			}
-		}
+	if (options[OptGetDriverInfo]) {
+		printf("Driver info:\n");
+		printf("\tDriver name   : %s\n", vcap.driver);
+		printf("\tCard type     : %s\n", vcap.card);
+		printf("\tBus info      : %s\n", vcap.bus_info);
+		printf("\tDriver version: %d\n", vcap.version);
+		printf("\tCapabilities  : 0x%08X\n", vcap.capabilities);
+		printf("%s", cap2s(vcap.capabilities).c_str());
 	}
 
-	if (option_streamoff) {
+	/* Set options */
+
+	if (options[OptStreamOff]) {
 		int dummy = 0;
 		doioctl(fd, VIDIOC_STREAMOFF, &dummy, "VIDIOC_STREAMOFF");
 	}
@@ -940,6 +1243,105 @@ int main(int argc, char **argv)
 			printf("Standard set to %08llx\n", (unsigned long long)std);
 	}
 
+	if (options[OptSetInput]) {
+		if (doioctl(fd, VIDIOC_S_INPUT, &input, "VIDIOC_S_INPUT") == 0) {
+			printf("Video input set to %d", input);
+			vin.index = input;
+			if (ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0)
+				printf(" (%s)", vin.name);
+			printf("\n");
+		}
+	}
+
+	if (options[OptSetOutput]) {
+		if (doioctl(fd, VIDIOC_S_OUTPUT, &output, "VIDIOC_S_OUTPUT") == 0)
+			printf("Output set to %d\n", output);
+	}
+
+	if (options[OptSetAudioInput]) {
+		if (doioctl(fd, VIDIOC_S_AUDIO, &vaudio, "VIDIOC_S_AUDIO") == 0)
+			printf("Audio input set to %d\n", vaudio.index);
+	}
+
+	if (options[OptSetAudioOutput]) {
+		if (doioctl(fd, VIDIOC_S_AUDOUT, &vaudout, "VIDIOC_S_AUDOUT") == 0)
+			printf("Audio output set to %d\n", vaudout.index);
+	}
+	
+	if (options[OptSetTuner]) {
+		struct v4l2_tuner vt;
+
+		memset(&vt, 0, sizeof(struct v4l2_tuner));
+		if (ioctl(fd, VIDIOC_G_TUNER, &vt) < 0) {
+			fprintf(stderr, "ioctl: VIDIOC_G_TUNER failed\n");
+			exit(1);
+		}
+		vt.audmode = mode;
+		doioctl(fd, VIDIOC_S_TUNER, &vt, "VIDIOC_S_TUNER");
+	}
+
+	if (options[OptSetVideoFormat]) {
+		struct v4l2_format in_vfmt;
+		printf("ioctl: VIDIOC_S_FMT\n");
+		in_vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (ioctl(fd, VIDIOC_G_FMT, &in_vfmt) < 0)
+			fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
+		else {
+			if (set_fmts & FMTWidth)
+				in_vfmt.fmt.pix.width = vfmt.fmt.pix.width;
+			if (set_fmts & FMTHeight)
+				in_vfmt.fmt.pix.height = vfmt.fmt.pix.height;
+			if (ioctl(fd, VIDIOC_S_FMT, &in_vfmt) < 0)
+				fprintf(stderr, "ioctl: VIDIOC_S_FMT failed\n");
+			vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			if (ioctl(fd, VIDIOC_G_FMT, &vfmt) < 0)
+				fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
+		}
+	}
+
+	if (options[OptSetVideoOutFormat]) {
+		struct v4l2_format in_vfmt;
+		printf("ioctl: VIDIOC_S_FMT\n");
+		in_vfmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+		if (ioctl(fd, VIDIOC_G_FMT, &in_vfmt) < 0)
+			fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
+		else {
+			if (set_fmts & FMTWidth)
+				in_vfmt.fmt.pix.width = vfmt.fmt.pix.width;
+			if (set_fmts & FMTHeight)
+				in_vfmt.fmt.pix.height = vfmt.fmt.pix.height;
+			if (ioctl(fd, VIDIOC_S_FMT, &in_vfmt) < 0)
+				fprintf(stderr, "ioctl: VIDIOC_S_FMT failed\n");
+			vfmt_out.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+			if (ioctl(fd, VIDIOC_G_FMT, &vfmt_out) < 0)
+				fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
+		}
+	}
+	
+	if (options[OptSetSlicedVbiFormat]) {
+                if (vbi_fmt.fmt.sliced.service_set == 0) {
+                        // switch to raw mode
+                        vbi_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
+		        if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt, "VIDIOC_G_FMT") == 0)
+                        	doioctl(fd, VIDIOC_S_FMT, &vbi_fmt, "VIDIOC_S_FMT");
+                } else {
+                        vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+                        doioctl(fd, VIDIOC_S_FMT, &vbi_fmt, "VIDIOC_S_FMT");
+                }
+	}
+	
+	if (options[OptSetSlicedVbiOutFormat]) {
+                if (vbi_fmt_out.fmt.sliced.service_set == 0) {
+                        // switch to raw mode
+                        vbi_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
+		        if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out, "VIDIOC_G_FMT") == 0)
+                        	doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out, "VIDIOC_S_FMT");
+                } else {
+                        vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
+                        doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out, "VIDIOC_S_FMT");
+                }
+	}
+
 	if (options[OptSetCtrl] && !set_ctrls.empty()) {
 		struct v4l2_ext_controls ctrls = { 0 };
 
@@ -959,7 +1361,7 @@ int main(int argc, char **argv)
 
 			ctrl.id = user_ctrls[i].id;
 			ctrl.value = user_ctrls[i].value;
-			if (ioctl(fd, VIDIOC_S_CTRL, &ctrl)) {
+			if (doioctl(fd, VIDIOC_S_CTRL, &ctrl, "VIDIOC_S_CTRL")) {
 				fprintf(stderr, "%s: %s\n",
 					ctrl_id2str[ctrl.id].c_str(),
 					strerror(errno));
@@ -969,7 +1371,7 @@ int main(int argc, char **argv)
 			ctrls.ctrl_class = V4L2_CTRL_CLASS_MPEG;
 			ctrls.count = mpeg_ctrls.size();
 			ctrls.controls = &mpeg_ctrls[0];
-			if (ioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls)) {
+			if (doioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls, "VIDIOC_S_EXT_CTRLS")) {
 				if (ctrls.error_idx >= ctrls.count) {
 					fprintf(stderr, "Error setting MPEG controls: %s\n",
 						strerror(errno));
@@ -982,20 +1384,8 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-
-	/* informational opts */
-
-	if (options[OptGetDriverInfo]) {
-		if (doioctl(fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP") == 0) {
-			printf("Driver info:\n");
-			printf("\tDriver name   : %s\n", vcap.driver);
-			printf("\tCard type     : %s\n", vcap.card);
-			printf("\tBus info      : %s\n", vcap.bus_info);
-			printf("\tDriver version: %d\n", vcap.version);
-			printf("\tCapabilities  : 0x%08X\n", vcap.capabilities);
-			printf("%s", cap2s(vcap.capabilities).c_str());
-		}
-	}
+	
+	/* Get options */
 
 	if (options[OptGetVideoFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -1004,38 +1394,56 @@ int main(int argc, char **argv)
 				fprintf(stderr, "error printing result\n");
 	}
 
-	if (options[OptListInputs]) {
-		vin.index = 0;
-		printf("ioctl: VIDIOC_ENUMINPUT\n");
-		while (ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0) {
-			if (vin.index)
-				printf("\n");
-			printf("\tInput   : %d\n", vin.index);
-			printf("\tName    : %s\n", vin.name);
-			printf("\tType    : 0x%08X\n", vin.type);
-			printf("\tAudioset: 0x%08X\n", vin.audioset);
-			printf("\tTuner   : 0x%08X\n", vin.tuner);
-			printf("\tStandard: 0x%016llX ( ", (unsigned long long)vin.std);
-			if (vin.std & 0x000FFF)
-				printf("PAL ");	// hack
-			if (vin.std & 0x00F000)
-				printf("NTSC ");	// hack
-			if (vin.std & 0x7F0000)
-				printf("SECAM ");	// hack
-			printf(")\n");
-			printf("\tStatus  : %d\n", vin.status);
-			vin.index++;
-		}
+	if (options[OptGetVideoOutFormat]) {
+		vfmt_out.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+		if (doioctl(fd, VIDIOC_G_FMT, &vfmt_out, "VIDIOC_G_FMT") == 0)
+			if (printfmt(vfmt_out) != 0)
+				fprintf(stderr, "error printing result\n");
 	}
 
-	if (options[OptSetInput]) {
-		if (doioctl(fd, VIDIOC_S_INPUT, &input, "VIDIOC_S_INPUT") == 0) {
-			printf("Video input set to %d", input);
-			vin.index = input;
-			if (ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0)
-				printf(" (%s)", vin.name);
-			printf("\n");
-		}
+	if (options[OptGetOverlayFormat]) {
+		struct v4l2_format fmt;
+		memset(&fmt, 0, sizeof(fmt));
+		fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
+		if (doioctl(fd, VIDIOC_G_FMT, &fmt, "VIDIOC_G_FMT") == 0)
+			if (printfmt(fmt) != 0)
+				fprintf(stderr, "error printing result\n");
+	}
+
+	if (options[OptGetSlicedVbiFormat]) {
+                vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt, 
+			"VIDIOC_G_FMT") == 0)
+			if (printfmt(vbi_fmt) != 0)
+				fprintf(stderr,
+					"error printing result\n");
+	}
+	
+	if (options[OptGetSlicedVbiOutFormat]) {
+                vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
+		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out, 
+			"VIDIOC_G_FMT") == 0)
+			if (printfmt(vbi_fmt_out) != 0)
+				fprintf(stderr,
+					"error printing result\n");
+	}
+
+	if (options[OptGetVbiFormat]) {
+                raw_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
+		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt, 
+			"VIDIOC_G_FMT") == 0)
+			if (printfmt(raw_fmt) != 0)
+				fprintf(stderr,
+					"error printing result\n");
+	}
+	
+	if (options[OptGetVbiOutFormat]) {
+                raw_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
+		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt_out, 
+			"VIDIOC_G_FMT") == 0)
+			if (printfmt(raw_fmt_out) != 0)
+				fprintf(stderr,
+					"error printing result\n");
 	}
 
 	if (options[OptGetInput]) {
@@ -1046,33 +1454,6 @@ int main(int argc, char **argv)
 				printf(" (%s)", vin.name);
 			printf("\n");
 		}
-	}
-
-	if (options[OptListOutputs]) {
-		vout.index = 0;
-		printf("ioctl: VIDIOC_ENUMOUTPUT\n");
-		while (ioctl(fd, VIDIOC_ENUMOUTPUT, &vout) >= 0) {
-			if (vout.index)
-				printf("\n");
-			printf("\tOutput  : %d\n", vout.index);
-			printf("\tName    : %s\n", vout.name);
-			printf("\tType    : 0x%08X\n", vout.type);
-			printf("\tAudioset: 0x%08X\n", vout.audioset);
-			printf("\tStandard: 0x%016llX ( ", (unsigned long long)vout.std);
-			if (vout.std & 0x000FFF)
-				printf("PAL ");	// hack
-			if (vout.std & 0x00F000)
-				printf("NTSC ");	// hack
-			if (vout.std & 0x7F0000)
-				printf("SECAM ");	// hack
-			printf(")\n");
-			vout.index++;
-		}
-	}
-
-	if (options[OptSetOutput]) {
-		if (doioctl(fd, VIDIOC_S_OUTPUT, &output, "VIDIOC_S_OUTPUT") == 0)
-			printf("Output set to %d\n", output);
 	}
 
 	if (options[OptGetOutput]) {
@@ -1086,45 +1467,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (options[OptListAudioInputs]) {
-		struct v4l2_audio vaudio;	/* list audio inputs */
-		vaudio.index = 0;
-		printf("ioctl: VIDIOC_ENUMAUDIO\n");
-		while (ioctl(fd, VIDIOC_ENUMAUDIO, &vaudio) >= 0) {
-			if (vaudio.index)
-				printf("\n");
-			printf("\tInput   : %d\n", vaudio.index);
-			printf("\tName    : %s\n", vaudio.name);
-			vaudio.index++;
-		}
-	}
-
-	if (options[OptListAudioOutputs]) {
-		struct v4l2_audioout vaudio;	/* list audio outputs */
-		vaudio.index = 0;
-		printf("ioctl: VIDIOC_ENUMAUDOUT\n");
-		while (ioctl(fd, VIDIOC_ENUMAUDOUT, &vaudio) >= 0) {
-			if (vaudio.index)
-				printf("\n");
-			printf("\tOutput  : %d\n", vaudio.index);
-			printf("\tName    : %s\n", vaudio.name);
-			vaudio.index++;
-		}
-	}
-
-	if (options[OptSetAudioInput]) {
-		if (doioctl(fd, VIDIOC_S_AUDIO, &vaudio, "VIDIOC_S_AUDIO") == 0)
-			printf("Audio input set to %d\n", vaudio.index);
-	}
-
 	if (options[OptGetAudioInput]) {
 		if (doioctl(fd, VIDIOC_G_AUDIO, &vaudio, "VIDIOC_G_AUDIO") == 0)
 			printf("Audio input : %d (%s)\n", vaudio.index, vaudio.name);
-	}
-
-	if (options[OptSetAudioOutput]) {
-		if (doioctl(fd, VIDIOC_S_AUDOUT, &vaudout, "VIDIOC_S_AUDOUT") == 0)
-			printf("Audio output set to %d\n", vaudout.index);
 	}
 
 	if (options[OptGetAudioOutput]) {
@@ -1142,23 +1487,6 @@ int main(int argc, char **argv)
 		if (doioctl(fd, VIDIOC_G_FREQUENCY, &vf, "VIDIOC_G_FREQUENCY") == 0)
 			printf("Frequency: %d (%f MHz)\n", vf.frequency,
 					vf.frequency / fac);
-	}
-
-	if (option_list_stds) {
-		printf("ioctl: VIDIOC_ENUMSTD\n");
-		vs.index = 0;
-		while (ioctl(fd, VIDIOC_ENUMSTD, &vs) >= 0) {
-			if (vs.index)
-				printf("\n");
-			printf("\tindex       : %d\n", vs.index);
-			printf("\tID          : 0x%016llX\n", (unsigned long long)vs.id);
-			printf("\tName        : %s\n", vs.name);
-			printf("\tFrame period: %d/%d\n",
-			       vs.frameperiod.numerator,
-			       vs.frameperiod.denominator);
-			printf("\tFrame lines : %d\n", vs.framelines);
-			vs.index++;
-		}
 	}
 
 	if (options[OptGetStandard]) {
@@ -1197,10 +1525,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (options[OptListCtrlsMenus]) {
-		list_controls(fd, 1);
-	}
-
 	if (options[OptGetCtrl] && !get_ctrls.empty()) {
 		struct v4l2_ext_controls ctrls = { 0 };
 
@@ -1227,7 +1551,7 @@ int main(int argc, char **argv)
 			ctrls.ctrl_class = V4L2_CTRL_CLASS_MPEG;
 			ctrls.count = mpeg_ctrls.size();
 			ctrls.controls = &mpeg_ctrls[0];
-			doioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls, "VIDIOC_S_EXT_CTRLS");
+			doioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls, "VIDIOC_G_EXT_CTRLS");
 			for (unsigned i = 0; i < mpeg_ctrls.size(); i++) {
 				struct v4l2_ext_control ctrl = mpeg_ctrls[i];
 
@@ -1254,27 +1578,8 @@ int main(int argc, char **argv)
 					rxsubchans2s(vt.rxsubchans).c_str());
 		}
 	}
-	if (options[OptSetTuner]) {
-		struct v4l2_tuner vt;
 
-		memset(&vt, 0, sizeof(struct v4l2_tuner));
-		if (ioctl(fd, VIDIOC_G_TUNER, &vt) < 0) {
-			fprintf(stderr, "ioctl: VIDIOC_G_TUNER failed\n");
-			exit(1);
-		}
-		vt.audmode = mode;
-		doioctl(fd, VIDIOC_S_TUNER, &vt, "VIDIOC_S_TUNER");
-	}
-
-	if (option_version) {
-		//printf("ivtvctl version " IVTV_VERSION "\n");
-	}
-
-	if (options[OptListCtrls]) {
-		list_controls(fd, 0);
-	}
-
-	if (option_log_status) {
+	if (options[OptLogStatus]) {
 		static char buf[40960];
 		int len;
 
@@ -1301,7 +1606,122 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (option_streamon) {
+	/* List options */
+
+	if (options[OptListInputs]) {
+		vin.index = 0;
+		printf("ioctl: VIDIOC_ENUMINPUT\n");
+		while (ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0) {
+			if (vin.index)
+				printf("\n");
+			printf("\tInput   : %d\n", vin.index);
+			printf("\tName    : %s\n", vin.name);
+			printf("\tType    : 0x%08X\n", vin.type);
+			printf("\tAudioset: 0x%08X\n", vin.audioset);
+			printf("\tTuner   : 0x%08X\n", vin.tuner);
+			printf("\tStandard: 0x%016llX ( ", (unsigned long long)vin.std);
+			if (vin.std & 0x000FFF)
+				printf("PAL ");	// hack
+			if (vin.std & 0x00F000)
+				printf("NTSC ");	// hack
+			if (vin.std & 0x7F0000)
+				printf("SECAM ");	// hack
+			printf(")\n");
+			printf("\tStatus  : %d\n", vin.status);
+			vin.index++;
+		}
+	}
+
+	if (options[OptListOutputs]) {
+		vout.index = 0;
+		printf("ioctl: VIDIOC_ENUMOUTPUT\n");
+		while (ioctl(fd, VIDIOC_ENUMOUTPUT, &vout) >= 0) {
+			if (vout.index)
+				printf("\n");
+			printf("\tOutput  : %d\n", vout.index);
+			printf("\tName    : %s\n", vout.name);
+			printf("\tType    : 0x%08X\n", vout.type);
+			printf("\tAudioset: 0x%08X\n", vout.audioset);
+			printf("\tStandard: 0x%016llX ( ", (unsigned long long)vout.std);
+			if (vout.std & 0x000FFF)
+				printf("PAL ");	// hack
+			if (vout.std & 0x00F000)
+				printf("NTSC ");	// hack
+			if (vout.std & 0x7F0000)
+				printf("SECAM ");	// hack
+			printf(")\n");
+			vout.index++;
+		}
+	}
+
+	if (options[OptListAudioInputs]) {
+		struct v4l2_audio vaudio;	/* list audio inputs */
+		vaudio.index = 0;
+		printf("ioctl: VIDIOC_ENUMAUDIO\n");
+		while (ioctl(fd, VIDIOC_ENUMAUDIO, &vaudio) >= 0) {
+			if (vaudio.index)
+				printf("\n");
+			printf("\tInput   : %d\n", vaudio.index);
+			printf("\tName    : %s\n", vaudio.name);
+			vaudio.index++;
+		}
+	}
+
+	if (options[OptListAudioOutputs]) {
+		struct v4l2_audioout vaudio;	/* list audio outputs */
+		vaudio.index = 0;
+		printf("ioctl: VIDIOC_ENUMAUDOUT\n");
+		while (ioctl(fd, VIDIOC_ENUMAUDOUT, &vaudio) >= 0) {
+			if (vaudio.index)
+				printf("\n");
+			printf("\tOutput  : %d\n", vaudio.index);
+			printf("\tName    : %s\n", vaudio.name);
+			vaudio.index++;
+		}
+	}
+
+	if (options[OptListStandards]) {
+		printf("ioctl: VIDIOC_ENUMSTD\n");
+		vs.index = 0;
+		while (ioctl(fd, VIDIOC_ENUMSTD, &vs) >= 0) {
+			if (vs.index)
+				printf("\n");
+			printf("\tindex       : %d\n", vs.index);
+			printf("\tID          : 0x%016llX\n", (unsigned long long)vs.id);
+			printf("\tName        : %s\n", vs.name);
+			printf("\tFrame period: %d/%d\n",
+			       vs.frameperiod.numerator,
+			       vs.frameperiod.denominator);
+			printf("\tFrame lines : %d\n", vs.framelines);
+			vs.index++;
+		}
+	}
+
+	if (options[OptGetSlicedVbiCap]) {
+		struct v4l2_sliced_vbi_cap cap;
+
+		if (doioctl(fd, VIDIOC_G_SLICED_VBI_CAP, &cap, "VIDIOC_G_SLICED_VBI_CAP") == 0) {
+			print_sliced_vbi_cap(cap);
+		}
+	}
+
+	if (options[OptGetSlicedVbiOutCap]) {
+		struct v4l2_sliced_vbi_cap cap;
+
+		if (doioctl(fd, VIDIOC_G_SLICED_VBI_CAP, &cap, "VIDIOC_G_SLICED_VBI_CAP") == 0) {
+			print_sliced_vbi_cap(cap);
+		}
+	}
+
+	if (options[OptListCtrlsMenus]) {
+		list_controls(fd, 1);
+	}
+
+	if (options[OptListCtrls]) {
+		list_controls(fd, 0);
+	}
+
+	if (options[OptStreamOn]) {
 		int dummy = 0;
 		doioctl(fd, VIDIOC_STREAMON, &dummy, "VIDIOC_STREAMON");
 	}
