@@ -54,6 +54,7 @@ union v4l_parms {
 	unsigned long	l;
 	u32		u_32;
 
+#ifdef CONFIG_VIDEO_V4L1_COMPAT
 	/* V4L1 structs */
 	struct vbi_format p_vbi_format;
 	struct video_audio p_video_audio;
@@ -71,6 +72,7 @@ union v4l_parms {
 	struct video_tuner p_video_tuner;
 	struct video_unit p_video_unit;
 	struct video_window p_video_window;
+#endif
 
 	/* V4L2 structs */
 	struct v4l2_audioout p_v4l2_audioout;
@@ -106,8 +108,8 @@ union v4l_parms {
 
 /* All defined ioctls */
 int ioctls[] = {
+#ifdef CONFIG_VIDEO_V4L1_COMPAT
 	/* V4L ioctls */
-
 	VIDIOCCAPTURE,/* int */
 	VIDIOCGAUDIO,/* struct video_audio */
 	VIDIOCGCAP,/* struct video_capability */
@@ -137,7 +139,7 @@ int ioctls[] = {
 	VIDIOCSWIN,/* struct video_window */
 	VIDIOCSWRITEMODE,/* int */
 	VIDIOCSYNC,/* int */
-
+#endif
 	/* V4L2 ioctls */
 
 	VIDIOC_CROPCAP,/* struct v4l2_cropcap */

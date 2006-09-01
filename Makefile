@@ -4,5 +4,5 @@
 
 all clean install:
 	$(MAKE) -C lib $@
-	$(MAKE) -C test $@
 	$(MAKE) -C util $@
+	$(MAKE) -C test $@

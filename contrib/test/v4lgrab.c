@@ -91,6 +91,7 @@ int get_brightness_adj(unsigned char *image, long size, int *brightness)
 
 int main(int argc, char **argv)
 {
+#ifdef CONFIG_VIDEO_V4L1_COMPAT
 	int fd = open(FILE, O_RDONLY), f;
 	struct video_capability cap;
 	struct video_window win;
@@ -190,5 +191,8 @@ int main(int argc, char **argv)
 	}
 
 	close(fd);
+#else
+	fprintf(stderr, "V4L1 API is not configured!\n");
+#endif
 	return 0;
 }

@@ -99,6 +99,8 @@ enum Option {
 	OptSetVideoOutFormat,
 	OptGetSlicedVbiCap,
 	OptGetSlicedVbiOutCap,
+	OptGetVideoCrop,
+	OptSetVideoCrop,
 	OptLast = 256
 };
 
@@ -135,6 +137,12 @@ static const flag_def service_def[] = {
 /* fmts specified */
 #define FMTWidth		(1L<<0)
 #define FMTHeight		(1L<<1)
+
+/* crop specified */
+#define CropWidth		(1L<<0)
+#define CropHeight		(1L<<1)
+#define CropLeft		(1L<<2)
+#define CropTop 		(1L<<3)
 
 static struct option long_options[] = {
 	{"list-audio-inputs", no_argument, 0, OptListAudioInputs},
@@ -181,6 +189,8 @@ static struct option long_options[] = {
 	{"get-fmt-vbi-out", no_argument, 0, OptGetVbiOutFormat},
 	{"get-sliced-vbi-cap", no_argument, 0, OptGetSlicedVbiCap},
 	{"get-sliced-vbi-out-cap", no_argument, 0, OptGetSlicedVbiOutCap},
+	{"get-crop-video", no_argument, 0, OptGetVideoCrop},
+	{"set-crop-video", required_argument, 0, OptSetVideoCrop},
 	{0, 0, 0, 0}
 };
 
@@ -245,12 +255,16 @@ static void usage(void)
 	printf("                     set the video output format [VIDIOC_S_FMT]\n");
 	printf("  --get-fmt-overlay\n");
 	printf("     		     query the video overlay format [VIDIOC_G_FMT]\n");
+	printf("  --get-crop-video\n");
+	printf("     		     query the video capture crop window [VIDIOC_G_CROP]\n");
+	printf("  --set-crop-video=top=<x>,left=<y>,width=<w>,height=<h>\n");
+	printf("                     set the video capture crop window [VIDIOC_S_CROP]\n");
 	printf("  --get-sliced-vbi-cap\n");
-        printf("		     query the sliced VBI capture capabilities [VIDIOC_G_SLICED_VBI_CAP]\n");
+	printf("		     query the sliced VBI capture capabilities [VIDIOC_G_SLICED_VBI_CAP]\n");
 	printf("  --get-sliced-vbi-out-cap\n");
-        printf("		     query the sliced VBI output capabilities [VIDIOC_G_SLICED_VBI_CAP]\n");
+	printf("		     query the sliced VBI output capabilities [VIDIOC_G_SLICED_VBI_CAP]\n");
 	printf("  --get-fmt-sliced-vbi\n");
-        printf("		     query the sliced VBI capture format [VIDIOC_G_FMT]\n");
+	printf("		     query the sliced VBI capture format [VIDIOC_G_FMT]\n");
 	printf("  --set-fmt-sliced-vbi=<mode>\n");
 	printf("                     set the sliced VBI capture format to <mode> [VIDIOC_S_FMT]\n");
 	printf("                     <mode> is a comma separated list of:\n");
@@ -260,7 +274,7 @@ static void usage(void)
 	printf("                     wss:      widescreen signal (PAL/SECAM)\n");
 	printf("                     vps:      VPS (PAL/SECAM)\n");
 	printf("  --get-fmt-sliced-vbi-out\n");
-        printf("		     query the sliced VBI output format [VIDIOC_G_FMT]\n");
+	printf("		     query the sliced VBI output format [VIDIOC_G_FMT]\n");
 	printf("  --set-fmt-sliced-vbi-out=<mode>\n");
 	printf("                     set the sliced VBI output format to <mode> [VIDIOC_S_FMT]\n");
 	printf("                     <mode> is a comma separated list of:\n");
@@ -388,7 +402,7 @@ static std::string flags2s(unsigned val, const flag_def *def)
 static void print_sliced_vbi_cap(struct v4l2_sliced_vbi_cap &cap)
 {
 //	printf("\tType           : %s\n", buftype2s(vfmt.type).c_str());
-	printf("\tService Set    : %s\n", 
+	printf("\tService Set    : %s\n",
 			flags2s(cap.service_set, service_def).c_str());
 	for (int i = 0; i < 24; i++) {
 		printf("\tService Line %2d: %8s / %-8s\n", i,
@@ -550,6 +564,12 @@ static void find_controls(int fd)
 	}
 }
 
+static void printcrop(const struct v4l2_crop &crop)
+{
+	printf("Crop: Left %d, Top %d, Width %d, Height %d\n",
+			crop.c.left, crop.c.top, crop.c.width, crop.c.height);
+}
+
 static int printfmt(struct v4l2_format vfmt)
 {
 	const flag_def vbi_def[] = {
@@ -575,9 +595,9 @@ static int printfmt(struct v4l2_format vfmt)
 	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
 		printf("\tType        : %s\n", buftype2s(vfmt.type).c_str());
 		printf("\tLeft/Top    : %d/%d\n",
-			       	vfmt.fmt.win.w.left, vfmt.fmt.win.w.top);
+				vfmt.fmt.win.w.left, vfmt.fmt.win.w.top);
 		printf("\tWidth/Height: %d/%d\n",
-			       	vfmt.fmt.win.w.width, vfmt.fmt.win.w.height);
+				vfmt.fmt.win.w.width, vfmt.fmt.win.w.height);
 		printf("\tField       : %s\n", field2s(vfmt.fmt.win.field).c_str());
 		// TODO: check G_FBUF capabilities
 		printf("\tChroma Key  : %08x\n", vfmt.fmt.win.chromakey);
@@ -588,8 +608,8 @@ static int printfmt(struct v4l2_format vfmt)
 		printf("\tType            : %s\n", buftype2s(vfmt.type).c_str());
 		printf("\tSampling Rate   : %u Hz\n", vfmt.fmt.vbi.sampling_rate);
 		printf("\tOffset          : %u samples (%g secs after leading edge)\n",
-			       	vfmt.fmt.vbi.offset,
-			       	(double)vfmt.fmt.vbi.offset / (double)vfmt.fmt.vbi.sampling_rate);
+				vfmt.fmt.vbi.offset,
+				(double)vfmt.fmt.vbi.offset / (double)vfmt.fmt.vbi.sampling_rate);
 		printf("\tSamples per Line: %u\n", vfmt.fmt.vbi.samples_per_line);
 		printf("\tSample Format   : %s\n", fcc2s(vfmt.fmt.vbi.sample_format).c_str());
 		printf("\tStart 1st Field : %u\n", vfmt.fmt.vbi.start[0]);
@@ -602,7 +622,7 @@ static int printfmt(struct v4l2_format vfmt)
 	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
 		printf("\tType           : %s\n", buftype2s(vfmt.type).c_str());
-		printf("\tService Set    : %s\n", 
+		printf("\tService Set    : %s\n",
 				flags2s(vfmt.fmt.sliced.service_set, service_def).c_str());
 		for (int i = 0; i < 24; i++) {
 			printf("\tService Line %2d: %8s / %-8s\n", i,
@@ -890,6 +910,7 @@ int main(int argc, char **argv)
 	/* bitfield for fmts */
 	unsigned int set_fmts = 0;
 	unsigned int set_fmts_out = 0;
+	unsigned int set_crop = 0;
 
 	int mode = V4L2_TUNER_MODE_STEREO;	/* set audio mode */
 
@@ -908,6 +929,7 @@ int main(int argc, char **argv)
 	struct v4l2_output vout;	/* list_outputs */
 	struct v4l2_audio vaudio;	/* list audio inputs */
 	struct v4l2_audioout vaudout;   /* audio outputs */
+	struct v4l2_rect vcrop; 	/* crop rect */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
 	v4l2_std_id std;		/* get_std/set_std */
@@ -929,6 +951,7 @@ int main(int argc, char **argv)
 	memset(&vout, 0, sizeof(vout));
 	memset(&vaudio, 0, sizeof(vaudio));
 	memset(&vaudout, 0, sizeof(vaudout));
+	memset(&vcrop, 0, sizeof(vcrop));
 	memset(&vf, 0, sizeof(vf));
 	memset(&vs, 0, sizeof(vs));
 
@@ -1003,6 +1026,37 @@ int main(int argc, char **argv)
 				case 1:
 					vfmt_out.fmt.pix.height = strtol(value, 0L, 0);
 					set_fmts_out |= FMTHeight;
+					break;
+				}
+			}
+			break;
+		case OptSetVideoCrop:
+			subs = optarg;
+			while (*subs != '\0') {
+				static char *const subopts[] = {
+					"left",
+					"top",
+					"width",
+					"height",
+					NULL
+				};
+
+				switch (parse_subopt(&subs, subopts, &value)) {
+				case 0:
+					vcrop.left = strtol(value, 0L, 0);
+					set_crop |= CropLeft;
+					break;
+				case 1:
+					vcrop.top = strtol(value, 0L, 0);
+					set_crop |= CropTop;
+					break;
+				case 2:
+					vcrop.width = strtol(value, 0L, 0);
+					set_crop |= CropWidth;
+					break;
+				case 3:
+					vcrop.height = strtol(value, 0L, 0);
+					set_crop |= CropHeight;
 					break;
 				}
 			}
@@ -1182,6 +1236,7 @@ int main(int argc, char **argv)
 
 	if (options[OptAll]) {
 		options[OptGetVideoFormat] = 1;
+		options[OptGetVideoCrop] = 1;
 		options[OptGetVideoOutFormat] = 1;
 		options[OptGetDriverInfo] = 1;
 		options[OptGetInput] = 1;
@@ -1267,7 +1322,7 @@ int main(int argc, char **argv)
 		if (doioctl(fd, VIDIOC_S_AUDOUT, &vaudout, "VIDIOC_S_AUDOUT") == 0)
 			printf("Audio output set to %d\n", vaudout.index);
 	}
-	
+
 	if (options[OptSetTuner]) {
 		struct v4l2_tuner vt;
 
@@ -1293,9 +1348,6 @@ int main(int argc, char **argv)
 				in_vfmt.fmt.pix.height = vfmt.fmt.pix.height;
 			if (ioctl(fd, VIDIOC_S_FMT, &in_vfmt) < 0)
 				fprintf(stderr, "ioctl: VIDIOC_S_FMT failed\n");
-			vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-			if (ioctl(fd, VIDIOC_G_FMT, &vfmt) < 0)
-				fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
 		}
 	}
 
@@ -1312,34 +1364,51 @@ int main(int argc, char **argv)
 				in_vfmt.fmt.pix.height = vfmt.fmt.pix.height;
 			if (ioctl(fd, VIDIOC_S_FMT, &in_vfmt) < 0)
 				fprintf(stderr, "ioctl: VIDIOC_S_FMT failed\n");
-			vfmt_out.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-			if (ioctl(fd, VIDIOC_G_FMT, &vfmt_out) < 0)
-				fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
 		}
 	}
-	
+
 	if (options[OptSetSlicedVbiFormat]) {
-                if (vbi_fmt.fmt.sliced.service_set == 0) {
-                        // switch to raw mode
-                        vbi_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
-		        if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt, "VIDIOC_G_FMT") == 0)
-                        	doioctl(fd, VIDIOC_S_FMT, &vbi_fmt, "VIDIOC_S_FMT");
-                } else {
-                        vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-                        doioctl(fd, VIDIOC_S_FMT, &vbi_fmt, "VIDIOC_S_FMT");
-                }
+		if (vbi_fmt.fmt.sliced.service_set == 0) {
+			// switch to raw mode
+			vbi_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
+			if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt, "VIDIOC_G_FMT") == 0)
+				doioctl(fd, VIDIOC_S_FMT, &vbi_fmt, "VIDIOC_S_FMT");
+		} else {
+			vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+			doioctl(fd, VIDIOC_S_FMT, &vbi_fmt, "VIDIOC_S_FMT");
+		}
 	}
-	
+
 	if (options[OptSetSlicedVbiOutFormat]) {
-                if (vbi_fmt_out.fmt.sliced.service_set == 0) {
-                        // switch to raw mode
-                        vbi_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
-		        if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out, "VIDIOC_G_FMT") == 0)
-                        	doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out, "VIDIOC_S_FMT");
-                } else {
-                        vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
-                        doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out, "VIDIOC_S_FMT");
-                }
+		if (vbi_fmt_out.fmt.sliced.service_set == 0) {
+			// switch to raw mode
+			vbi_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
+			if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out, "VIDIOC_G_FMT") == 0)
+				doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out, "VIDIOC_S_FMT");
+		} else {
+			vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
+			doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out, "VIDIOC_S_FMT");
+		}
+	}
+
+	if (options[OptSetVideoCrop]) {
+		struct v4l2_crop in_crop;
+		printf("ioctl: VIDIOC_S_CROP\n");
+		in_crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (ioctl(fd, VIDIOC_G_CROP, &in_crop) < 0)
+			fprintf(stderr, "ioctl: VIDIOC_G_CROP failed\n");
+		else {
+			if (set_crop & CropWidth)
+				in_crop.c.width = vcrop.width;
+			if (set_crop & CropHeight)
+				in_crop.c.height = vcrop.height;
+			if (set_crop & CropLeft)
+				in_crop.c.left = vcrop.left;
+			if (set_crop & CropTop)
+				in_crop.c.top = vcrop.top;
+			if (ioctl(fd, VIDIOC_S_CROP, &in_crop) < 0)
+				fprintf(stderr, "ioctl: VIDIOC_S_CROP failed\n");
+		}
 	}
 
 	if (options[OptSetCtrl] && !set_ctrls.empty()) {
@@ -1384,7 +1453,7 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	
+
 	/* Get options */
 
 	if (options[OptGetVideoFormat]) {
@@ -1411,17 +1480,17 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptGetSlicedVbiFormat]) {
-                vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt, 
+		vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt,
 			"VIDIOC_G_FMT") == 0)
 			if (printfmt(vbi_fmt) != 0)
 				fprintf(stderr,
 					"error printing result\n");
 	}
-	
+
 	if (options[OptGetSlicedVbiOutFormat]) {
-                vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
-		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out, 
+		vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
+		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out,
 			"VIDIOC_G_FMT") == 0)
 			if (printfmt(vbi_fmt_out) != 0)
 				fprintf(stderr,
@@ -1429,21 +1498,29 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptGetVbiFormat]) {
-                raw_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt, 
+		raw_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
+		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt,
 			"VIDIOC_G_FMT") == 0)
 			if (printfmt(raw_fmt) != 0)
 				fprintf(stderr,
 					"error printing result\n");
 	}
-	
+
 	if (options[OptGetVbiOutFormat]) {
-                raw_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
-		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt_out, 
+		raw_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
+		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt_out,
 			"VIDIOC_G_FMT") == 0)
 			if (printfmt(raw_fmt_out) != 0)
 				fprintf(stderr,
 					"error printing result\n");
+	}
+
+	if (options[OptGetVideoCrop]) {
+		struct v4l2_crop crop;
+
+		crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (doioctl(fd, VIDIOC_G_CROP, &crop, "VIDIOC_G_CROP") == 0)
+			printcrop(crop);
 	}
 
 	if (options[OptGetInput]) {
@@ -1700,6 +1777,7 @@ int main(int argc, char **argv)
 	if (options[OptGetSlicedVbiCap]) {
 		struct v4l2_sliced_vbi_cap cap;
 
+		cap.type = V4L2_BUF_TYPE_VBI_CAPTURE;
 		if (doioctl(fd, VIDIOC_G_SLICED_VBI_CAP, &cap, "VIDIOC_G_SLICED_VBI_CAP") == 0) {
 			print_sliced_vbi_cap(cap);
 		}
@@ -1708,6 +1786,7 @@ int main(int argc, char **argv)
 	if (options[OptGetSlicedVbiOutCap]) {
 		struct v4l2_sliced_vbi_cap cap;
 
+		cap.type = V4L2_BUF_TYPE_VBI_OUTPUT;
 		if (doioctl(fd, VIDIOC_G_SLICED_VBI_CAP, &cap, "VIDIOC_G_SLICED_VBI_CAP") == 0) {
 			print_sliced_vbi_cap(cap);
 		}

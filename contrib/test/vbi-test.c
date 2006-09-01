@@ -29,8 +29,10 @@
 
 /* All possible parameters used on v4l ioctls */
 union v4l_parms {
+#ifdef CONFIG_VIDEO_V4L1_COMPAT
 	/* V4L1 structs */
 	struct vbi_format v1;
+#endif
 
 	/* V4L2 structs */
 	struct v4l2_format v2;
@@ -38,9 +40,11 @@ union v4l_parms {
 
 /* All defined ioctls */
 int ioctls[] = {
+#ifdef CONFIG_VIDEO_V4L1_COMPAT
 	/* V4L ioctls */
 
 	VIDIOCGVBIFMT,/* struct vbi_format */
+#endif
 
 	/* V4L2 ioctls */
 
@@ -61,6 +65,7 @@ int main (void)
 	}
 
 
+#ifdef CONFIG_VIDEO_V4L1_COMPAT
 	/* V4L1 call */
 	memset(&p,0,sizeof(p));
 	ret=ioctl(fd,VIDIOCGVBIFMT, (void *) &p);
@@ -69,6 +74,7 @@ int main (void)
 		"sample_format=%d, start=%d/%d, count=%d/%d, flags=%d\n", ret,
 		p.v1.sampling_rate,p.v1.samples_per_line, p.v1.sample_format,
 		p.v1.start[0],p.v1.start[1],p.v1.count[0],p.v1.count[1],p.v1.flags);
+#endif
 
 
 	/* V4L2 call */
