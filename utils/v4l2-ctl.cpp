@@ -93,6 +93,7 @@ enum Option {
 	OptStreamOff,
 	OptStreamOn,
 	OptListStandards,
+	OptListFormats,
 	OptLogStatus,
 	OptVerbose,
 	OptGetVideoOutFormat,
@@ -169,6 +170,7 @@ static struct option long_options[] = {
 	{"streamoff", no_argument, 0, OptStreamOff},
 	{"streamon", no_argument, 0, OptStreamOn},
 	{"list-standards", no_argument, 0, OptListStandards},
+	{"list-formats", no_argument, 0, OptListFormats},
 	{"get-standard", no_argument, 0, OptGetStandard},
 	{"set-standard", required_argument, 0, OptSetStandard},
 	{"info", no_argument, 0, OptGetDriverInfo},
@@ -245,6 +247,7 @@ static void usage(void)
 	printf("  -t, --set-tuner=<mode>\n");
 	printf("                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n");
 	printf("                     Possible values: 0 (mono), 1 (stereo), 2 (lang2), 3 (lang1), 4 (both)\n");
+	printf("  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n");
 	printf("  -V, --get-fmt-video\n");
 	printf("     		     query the video capture format [VIDIOC_G_FMT]\n");
 	printf("  -v, --set-fmt-video=width=<x>,height=<y>\n");
@@ -639,6 +642,24 @@ static int printfmt(struct v4l2_format vfmt)
 		return -1;
 	}
 	return 0;
+}
+
+static void print_video_formats(int fd, enum v4l2_buf_type type)
+{
+	struct v4l2_fmtdesc fmt;
+
+	fmt.index = 0;
+	fmt.type = type;
+	while (ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
+		printf("\tType        : %s\n", buftype2s(type).c_str());
+		printf("\tPixelformat : %s", fcc2s(fmt.pixelformat).c_str());
+		if (fmt.flags)
+			printf(" (compressed)");
+		printf("\n");
+		printf("\tName        : %s\n", fmt.description);
+		printf("\n");
+		fmt.index++;
+	}
 }
 
 static char *pts_to_string(char *str, unsigned long pts)
@@ -1772,6 +1793,13 @@ int main(int argc, char **argv)
 			printf("\tFrame lines : %d\n", vs.framelines);
 			vs.index++;
 		}
+	}
+
+	if (options[OptListFormats]) {
+		printf("ioctl: VIDIOC_ENUM_FMT\n");
+		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE);
+		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OUTPUT);
+		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OVERLAY);
 	}
 
 	if (options[OptGetSlicedVbiCap]) {
