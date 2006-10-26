@@ -246,7 +246,7 @@ static void usage(void)
 	printf("  -T, --get-tuner    query the tuner settings [VIDIOC_G_TUNER]\n");
 	printf("  -t, --set-tuner=<mode>\n");
 	printf("                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n");
-	printf("                     Possible values: 0 (mono), 1 (stereo), 2 (lang2), 3 (lang1), 4 (both)\n");
+	printf("                     Possible values: mono, stereo, lang2, lang1, bilingual\n");
 	printf("  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n");
 	printf("  -V, --get-fmt-video\n");
 	printf("     		     query the video capture format [VIDIOC_G_FMT]\n");
