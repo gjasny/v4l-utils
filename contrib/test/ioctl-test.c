@@ -51,8 +51,9 @@ typedef u_int32_t u32;
 /* All possible parameters used on v4l ioctls */
 union v4l_parms {
 	int		i;
-	unsigned long	l;
-	u32		u_32;
+	unsigned long	u64;
+	u32		u32;
+	v4l2_std_id	id;
 
 #ifdef CONFIG_VIDEO_V4L1_COMPAT
 	/* V4L1 structs */
@@ -148,10 +149,12 @@ int ioctls[] = {
 	VIDIOC_ENUMAUDOUT,/* struct v4l2_audioout */
 	VIDIOC_ENUM_FMT,/* struct v4l2_fmtdesc */
 	VIDIOC_ENUMINPUT,/* struct v4l2_input */
+	VIDIOC_G_INPUT,/* int */
+	VIDIOC_S_INPUT,/* int */
 	VIDIOC_ENUMOUTPUT,/* struct v4l2_output */
 	VIDIOC_ENUMSTD,/* struct v4l2_standard */
-//	VIDIOC_G_AUDIO_OLD,/* struct v4l2_audio */
-//	VIDIOC_G_AUDOUT_OLD,/* struct v4l2_audioout */
+	VIDIOC_G_STD, /*v4l2_std_id */
+	VIDIOC_S_STD, /*v4l2_std_id */
 	VIDIOC_G_CROP,/* struct v4l2_crop */
 	VIDIOC_G_CTRL,/* struct v4l2_control */
 	VIDIOC_G_FMT,/* struct v4l2_format */
@@ -159,7 +162,6 @@ int ioctls[] = {
 	VIDIOC_G_MODULATOR,/* struct v4l2_modulator */
 	VIDIOC_G_PARM,/* struct v4l2_streamparm */
 	VIDIOC_G_TUNER,/* struct v4l2_tuner */
-//	VIDIOC_OVERLAY_OLD,/* int */
 	VIDIOC_QBUF,/* struct v4l2_buffer */
 	VIDIOC_QUERYBUF,/* struct v4l2_buffer */
 	VIDIOC_QUERYCTRL,/* struct v4l2_queryctrl */
@@ -171,6 +173,12 @@ int ioctls[] = {
 	VIDIOC_S_OUTPUT,/* int */
 	VIDIOC_S_PARM,/* struct v4l2_streamparm */
 	VIDIOC_TRY_FMT,/* struct v4l2_format */
+
+#if 0
+	VIDIOC_G_AUDIO_OLD,/* struct v4l2_audio */
+	VIDIOC_G_AUDOUT_OLD,/* struct v4l2_audioout */
+	VIDIOC_OVERLAY_OLD,/* int */
+#endif
 
 #ifdef INTERNAL
 	/* V4L2 internal ioctls */
@@ -201,6 +209,193 @@ int ioctls[] = {
 #define S_IOCTLS sizeof(ioctls)/sizeof(ioctls[0])
 
 /********************************************************************/
+
+int get_capabilities (int fd, union v4l_parms *p)
+{
+	int ret;
+
+	ret=ioctl(fd,VIDIOC_QUERYCAP,(void *) &p);
+	if (ret>=0) {
+		struct v4l2_capability *pq= (struct v4l2_capability *)&p;
+		printf ("driver=%s, card=%s, bus=%s, version=0x%08x, "
+			"capabilities=0x%08x\n",
+				pq->driver,pq->card,pq->bus_info,
+				pq->version,
+				pq->capabilities);
+	}
+	return ret;
+}
+
+#define ERR "*** ERROR "
+#define WARN "* Warning  "
+
+int get_set_stds (int fd, union v4l_parms *p)
+{
+	struct v4l2_standard	*pq=(void *)p;
+	int			ok=0,ret,i;
+	v4l2_std_id		id;
+
+	for (i=0; ok==0; i++) {
+		pq->index=i;
+		ok=ioctl(fd,VIDIOC_ENUMSTD,pq);
+		if (ok>=0) {
+			printf ("STANDARD: index=%d, id=%Ld, name=%s, fps=%.3f, "
+				"framelines=%d\n", pq->index,
+				(unsigned long long)pq->id, pq->name,
+				1.*pq->frameperiod.denominator/pq->frameperiod.numerator,
+				pq->framelines);
+		} else
+			break;
+		id=pq->id;
+		p->id=id;
+		ret=ioctl(fd,VIDIOC_S_STD,p);
+		if (ret) {
+			printf (ERR "%i while trying to set STD to %08x\n",ret,
+								(unsigned int) id);
+		}
+		ret=ioctl(fd,VIDIOC_G_STD,p);
+		if (ret) {
+			printf (ERR "%i while trying to get STD id\n",ret);
+		}
+		if (id & p->id) {
+			if (id != p->id) {
+				printf (WARN "Received a std subset (%08x std) while trying to adjust to %08x\n",
+						(unsigned int) p->id,(unsigned int) id);
+			}
+		} else
+			printf (ERR "Received %08x std while trying to adjust to %08x\n",
+						(unsigned int) p->id,(unsigned int) id);
+
+	}
+	return ok;
+}
+
+int get_set_inputs (int fd, union v4l_parms *arg)
+{
+	struct v4l2_input	*p=(void *)arg;
+	int			ok=0,ret,i;
+	int			input;
+
+	for (i=0; ok==0; i++) {
+		p->index=i;
+		ok=ioctl(fd,VIDIOC_ENUMINPUT,p);
+		if (ok>=0) {
+
+		printf ("INPUT: index=%d, name=%s, type=%d, audioset=%d, "
+			"tuner=%d, std=%08x, status=%d\n",
+				p->index,p->name,p->type,p->audioset,
+				p->tuner,
+				(unsigned int)p->std,
+				p->status);
+
+		} else
+			break;
+		input=p->index;
+		arg->i=input;
+		ret=ioctl(fd,VIDIOC_S_INPUT,arg);
+		if (ret) {
+			printf (ERR "%i while trying to set INPUT to %d\n",ret,
+								input);
+		}
+		ret=ioctl(fd,VIDIOC_G_INPUT,arg);
+		if (ret) {
+			printf (ERR "%i while trying to get INPUT id\n",ret);
+		}
+		if (input != arg->i) {
+			printf ("Input is different than expected (received %i, set %i)\n",
+						input, p->index);
+		}
+	}
+	return ok;
+}
+
+int get_set_formats (int fd, union v4l_parms *arg)
+{
+	struct v4l2_fmtdesc 	*p=(void *)arg;
+	int			ok=0,ret,i;
+	struct v4l2_format	fmt;
+	struct v4l2_streamparm	parm;
+	struct v4l2_captureparm *c;
+
+
+	for (i=0; ok==0; i++) {
+		p->index=i;
+		p->type=V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+		ok=ioctl(fd,VIDIOC_ENUM_FMT,p);
+		if (ok>=0) {
+			printf ("FORMAT: index=%d, type=%d, flags=%d, description=%s\n\t"
+				"pixelformat=0x%08x\n",
+				p->index, p->type, p->flags,p->description,
+				p->pixelformat);
+		} else
+			break;
+
+		parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (ioctl(fd,VIDIOC_G_PARM,&parm)>=0) {
+			c=&parm.parm.capture;
+			printf ("PARM: capability=%d, capturemode=%d, frame time =%.3f ns "
+				"ext=%x, readbuf=%d\n",
+				c->capability,
+				c->capturemode,
+				100.*c->timeperframe.numerator/c->timeperframe.denominator,
+				c->extendedmode, c->readbuffers);
+		} else
+			perror ("VIDIOC_G_PARM");
+
+#if 0
+		fmt.type=p->type;
+		fmt.pixelformat=p->pixelformat;
+
+		ret=ioctl(fd,VIDIOC_G_FMT,arg);
+		if (ret < 0) {
+			printf("VIDIOC_G_FMT failed\n");
+			continue;
+		}
+
+		switch (f->type) {
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+
+			err = cx8800_try_fmt(dev,fh,f);
+			if (0 != err)
+				return err;
+
+			fmt.pixelformat=p->pixelformat;
+			fmt.
+			fh->fmt        = format_by_fourcc(f->fmt.pix.pixelformat);
+			fh->width      = f->fmt.pix.width;
+			fh->height     = f->fmt.pix.height;
+			fh->vidq.field = f->fmt.pix.field;
+			return 0;
+		case V4L2_BUF_TYPE_VBI_CAPTURE:
+			cx8800_vbi_fmt(dev, f);
+			return 0;
+		default:
+			printf(WARN "format type not implemented\n");
+			continue;
+		}
+
+
+		input=p->index;
+		arg->i=input;
+		ret=ioctl(fd,VIDIOC_S_INPUT,arg);
+		if (ret) {
+			printf (ERR "%i while trying to set INPUT to %d\n",ret,
+								input);
+		}
+		ret=ioctl(fd,VIDIOC_G_INPUT,arg);
+		if (ret) {
+			printf (ERR "%i while trying to get INPUT id\n",ret);
+		}
+		if (input != arg->i) {
+			printf ("Input is different than expected (received %i, set %i)\n",
+						input, p->index);
+		}
+#endif
+	}
+	return ok;
+}
+
 int main (void)
 {
 	int fd=0, ret=0;
@@ -213,11 +408,18 @@ int main (void)
 		return(-1);
 	}
 
+	get_capabilities (fd, &p);
+	get_set_stds (fd, &p);
+	get_set_inputs (fd, &p);
+	get_set_formats (fd, &p);
+
+#if 0
 	for (i=0;i<S_IOCTLS;i++) {
 		memset(&p,0,sizeof(p));
 		ret=ioctl(fd,ioctls[i], (void *) &p);
 		printf("%i: ioctl=0x%08x, return=%d\n",i, ioctls[i], ret);
 	}
+#endif
 
 	close (fd);
 
