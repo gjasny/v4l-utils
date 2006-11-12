@@ -51,10 +51,8 @@
    In general the lower case is used to set something and the upper
    case is used to retrieve a setting. */
 enum Option {
-	OptGetAudioInput = 'A',
-	OptSetAudioInput = 'a',
-	OptGetAudioOutput = 'B',
-	OptSetAudioOutput = 'b',
+	OptGetSlicedVbiFormat = 'B',
+	OptSetSlicedVbiFormat = 'b',
 	OptGetCtrl = 'C',
 	OptSetCtrl = 'c',
 	OptSetDevice = 'd',
@@ -70,8 +68,6 @@ enum Option {
 	OptListInputs = 'n',
 	OptGetOutput = 'O',
 	OptSetOutput = 'o',
-	OptListAudioOutputs = 'Q',
-	OptListAudioInputs = 'q',
 	OptGetStandard = 'S',
 	OptSetStandard = 's',
 	OptGetTuner = 'T',
@@ -79,9 +75,7 @@ enum Option {
 	OptGetVideoFormat = 'V',
 	OptSetVideoFormat = 'v',
 
-	OptGetSlicedVbiFormat = 128,
-	OptSetSlicedVbiFormat,
-	OptGetSlicedVbiOutFormat,
+	OptGetSlicedVbiOutFormat = 128,
 	OptSetSlicedVbiOutFormat,
 	OptGetOverlayFormat,
 	//OptSetOverlayFormat, TODO
@@ -102,6 +96,12 @@ enum Option {
 	OptGetSlicedVbiOutCap,
 	OptGetVideoCrop,
 	OptSetVideoCrop,
+	OptGetAudioInput,
+	OptSetAudioInput,
+	OptGetAudioOutput,
+	OptSetAudioOutput,
+	OptListAudioOutputs,
+	OptListAudioInputs,
 	OptLast = 256
 };
 
@@ -199,15 +199,18 @@ static struct option long_options[] = {
 static void usage(void)
 {
 	printf("Usage:\n");
+	printf("Common options:\n");
 	printf("  --all              display all information available\n");
-	printf("  -A, --get-audio-input\n");
-	printf("                     query the audio input [VIDIOC_G_AUDIO]\n");
-	printf("  -a, --set-audio-input=<num>\n");
-	printf("                     set the audio input to <num> [VIDIOC_S_AUDIO]\n");
-	printf("  -B, --get-audio-output\n");
-	printf("                     query the audio output [VIDIOC_G_AUDOUT]\n");
-	printf("  -b, --set-audio-output=<num>\n");
-	printf("                     set the audio output to <num> [VIDIOC_S_AUDOUT]\n");
+	printf("  -B, --get-fmt-sliced-vbi\n");
+	printf("		     query the sliced VBI capture format [VIDIOC_G_FMT]\n");
+	printf("  -b, --set-fmt-sliced-vbi=<mode>\n");
+	printf("                     set the sliced VBI capture format to <mode> [VIDIOC_S_FMT]\n");
+	printf("                     <mode> is a comma separated list of:\n");
+	printf("                     off:      turn off sliced VBI (cannot be combined with other modes)\n");
+	printf("                     teletext: teletext (PAL/SECAM)\n");
+	printf("                     cc:       closed caption (NTSC)\n");
+	printf("                     wss:      widescreen signal (PAL/SECAM)\n");
+	printf("                     vps:      VPS (PAL/SECAM)\n");
 	printf("  -C, --get-ctrl=<ctrl>[,<ctrl>...]\n");
 	printf("                     get the value of the controls [VIDIOC_G_EXT_CTRLS]\n");
 	printf("  -c, --set-ctrl=<ctrl>=<val>[,<ctrl>=<val>...]\n");
@@ -252,30 +255,19 @@ static void usage(void)
 	printf("     		     query the video capture format [VIDIOC_G_FMT]\n");
 	printf("  -v, --set-fmt-video=width=<x>,height=<y>\n");
 	printf("                     set the video capture format [VIDIOC_S_FMT]\n");
+	printf("  --verbose          turn on verbose ioctl error reporting.\n");
+	printf("\n");
+	printf("Uncommon options:\n");
 	printf("  --get-fmt-video-out\n");
 	printf("     		     query the video output format [VIDIOC_G_FMT]\n");
 	printf("  --set-fmt-video-out=width=<x>,height=<y>\n");
 	printf("                     set the video output format [VIDIOC_S_FMT]\n");
 	printf("  --get-fmt-overlay\n");
 	printf("     		     query the video overlay format [VIDIOC_G_FMT]\n");
-	printf("  --get-crop-video\n");
-	printf("     		     query the video capture crop window [VIDIOC_G_CROP]\n");
-	printf("  --set-crop-video=top=<x>,left=<y>,width=<w>,height=<h>\n");
-	printf("                     set the video capture crop window [VIDIOC_S_CROP]\n");
 	printf("  --get-sliced-vbi-cap\n");
 	printf("		     query the sliced VBI capture capabilities [VIDIOC_G_SLICED_VBI_CAP]\n");
 	printf("  --get-sliced-vbi-out-cap\n");
 	printf("		     query the sliced VBI output capabilities [VIDIOC_G_SLICED_VBI_CAP]\n");
-	printf("  --get-fmt-sliced-vbi\n");
-	printf("		     query the sliced VBI capture format [VIDIOC_G_FMT]\n");
-	printf("  --set-fmt-sliced-vbi=<mode>\n");
-	printf("                     set the sliced VBI capture format to <mode> [VIDIOC_S_FMT]\n");
-	printf("                     <mode> is a comma separated list of:\n");
-	printf("                     off:      turn off sliced VBI (cannot be combined with other modes)\n");
-	printf("                     teletext: teletext (PAL/SECAM)\n");
-	printf("                     cc:       closed caption (NTSC)\n");
-	printf("                     wss:      widescreen signal (PAL/SECAM)\n");
-	printf("                     vps:      VPS (PAL/SECAM)\n");
 	printf("  --get-fmt-sliced-vbi-out\n");
 	printf("		     query the sliced VBI output format [VIDIOC_G_FMT]\n");
 	printf("  --set-fmt-sliced-vbi-out=<mode>\n");
@@ -288,7 +280,20 @@ static void usage(void)
 	printf("                     vps:      VPS (PAL/SECAM)\n");
 	printf("  --get-fmt-vbi      query the VBI capture format [VIDIOC_G_FMT]\n");
 	printf("  --get-fmt-vbi-out  query the VBI output format [VIDIOC_G_FMT]\n");
-	printf("  --verbose          turn on verbose ioctl error reporting.\n");
+	printf("  --get-crop-video\n");
+	printf("     		     query the video capture crop window [VIDIOC_G_CROP]\n");
+	printf("  --set-crop-video=top=<x>,left=<y>,width=<w>,height=<h>\n");
+	printf("                     set the video capture crop window [VIDIOC_S_CROP]\n");
+	printf("  --get-audio-input  query the audio input [VIDIOC_G_AUDIO]\n");
+	printf("  --set-audio-input=<num>\n");
+	printf("                     set the audio input to <num> [VIDIOC_S_AUDIO]\n");
+	printf("  --get-audio-output query the audio output [VIDIOC_G_AUDOUT]\n");
+	printf("  --set-audio-output=<num>\n");
+	printf("                     set the audio output to <num> [VIDIOC_S_AUDOUT]\n");
+	printf("  --list-audio-outputs\n");
+	printf("                     display audio outputs [VIDIOC_ENUMAUDOUT]\n");
+	printf("  --list-audio-inputs\n");
+	printf("                     display audio inputs [VIDIOC_ENUMAUDIO]\n");
 	printf("\n");
 	printf("Expert options:\n");
 	printf("  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n");
