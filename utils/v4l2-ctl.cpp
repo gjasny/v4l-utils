@@ -409,7 +409,7 @@ static std::string flags2s(unsigned val, const flag_def *def)
 
 static void print_sliced_vbi_cap(struct v4l2_sliced_vbi_cap &cap)
 {
-//	printf("\tType           : %s\n", buftype2s(vfmt.type).c_str());
+	printf("\tType           : %s\n", buftype2s(cap.type).c_str());
 	printf("\tService Set    : %s\n",
 			flags2s(cap.service_set, service_def).c_str());
 	for (int i = 0; i < 24; i++) {
