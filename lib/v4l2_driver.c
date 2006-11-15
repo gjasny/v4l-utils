@@ -68,10 +68,13 @@ int v4l2_open (char *device, int debug, struct v4l2_driver *drv)
 
 	ret=ioctl(drv->fd,VIDIOC_QUERYCAP,(void *) &drv->cap);
 	if (ret>=0 && drv->debug) {
-		printf ("driver=%s, card=%s, bus=%s, version=0x%08x, "
+		printf ("driver=%s, card=%s, bus=%s, version=%d.%d.%d, "
 			"capabilities=0x%08x\n",
 			drv->cap.driver,drv->cap.card,drv->cap.bus_info,
-			drv->cap.version,drv->cap.capabilities);
+			(drv->cap.version >> 16) & 0xff,
+			(drv->cap.version >>  8) & 0xff,
+			drv->cap.version         & 0xff,
+			drv->cap.capabilities);
 	}
 	return ret;
 }
@@ -164,7 +167,7 @@ int v4l2_enum_input (struct v4l2_driver *drv)
 	return ok;
 }
 
-int v4l2_enum_fmt_cap (struct v4l2_driver *drv)
+int v4l2_enum_fmt (struct v4l2_driver *drv, enum v4l2_buf_type type)
 {
 	struct v4l2_fmtdesc 	*p=NULL;
 	struct v4l2_format	fmt;
@@ -179,7 +182,7 @@ int v4l2_enum_fmt_cap (struct v4l2_driver *drv)
 	for (i=0; ok==0; i++) {
 		p=calloc(1,sizeof(*p));
 		p->index=i;
-		p->type =V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		p->type =type;
 
 		ok=ioctl(drv->fd,VIDIOC_ENUM_FMT,p);
 		if (ok<0) {
@@ -278,6 +281,88 @@ int v4l2_setget_input (struct v4l2_driver *drv, enum v4l2_direction dir, struct 
 	}
 
 	return ok;
+}
+
+int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
+		      struct v4l2_format *fmt,uint32_t width, uint32_t height,
+		      uint32_t pixelformat, enum v4l2_field field)
+{
+	struct v4l2_pix_format  *pix=&(fmt->fmt.pix);
+	int			ret=0;
+
+	fmt->type=V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (dir == V4L2_GET) {
+		ret=ioctl(drv->fd,VIDIOC_G_FMT,fmt);
+		if (ret < 0) {
+			ret=errno;
+			perror("VIDIOC_G_FMT failed\n");
+		}
+		return ret;
+	} else if (dir & (~(V4L2_TRY|V4L2_SET)) ) {
+		perror ("Invalid direction\n");
+		return EINVAL;
+	}
+
+	if (dir & (V4L2_TRY|V4L2_SET)) {
+		pix->width       = width;
+		pix->height      = height;
+		pix->pixelformat = pixelformat;
+		pix->field       = field;
+	/*
+		enum v4l2_colorspace	colorspace;
+	*/
+
+		if (dir & V4L2_TRY) {
+			ret=ioctl(drv->fd,VIDIOC_TRY_FMT,fmt);
+			if (ret < 0) {
+				perror("VIDIOC_TRY_FMT failed\n");
+			}
+		}
+
+		if (dir & V4L2_SET) {
+			ret=ioctl(drv->fd,VIDIOC_S_FMT,fmt);
+			if (ret < 0) {
+				perror("VIDIOC_S_FMT failed\n");
+			}
+		}
+
+		if (pix->pixelformat != pixelformat) {
+			fprintf(stderr,"Error: asked for format %d, received %d",pixelformat,
+				pix->pixelformat);
+		}
+
+		if (pix->width != width) {
+			fprintf(stderr,"Error: asked for format %d, received %d\n",width,
+				pix->width);
+		}
+
+		if (pix->height != height) {
+			fprintf(stderr,"Error: asked for format %d, received %d\n",height,
+				pix->height);
+		}
+
+		if (pix->bytesperline == 0 ) {
+			fprintf(stderr,"Error: bytesperline = 0\n");
+		}
+
+		if (pix->sizeimage == 0 ) {
+			fprintf(stderr,"Error: sizeimage = 0\n");
+		}
+	}
+
+	if (drv->debug)
+		printf( "FMT SET: %dx%d, fourcc=%c%c%c%c, %d bytes/line,"
+			" %d bytes/frame, colorspace=0x%08x\n",
+			pix->width,pix->height,
+			pix->pixelformat & 0xff,
+			(pix->pixelformat >>  8) & 0xff,
+			(pix->pixelformat >> 16) & 0xff,
+			(pix->pixelformat >> 24) & 0xff,
+			pix->bytesperline,
+			pix->sizeimage,
+			pix->colorspace);
+
+	return 0;
 }
 
 /****************************************************************************

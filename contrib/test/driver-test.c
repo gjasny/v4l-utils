@@ -51,9 +51,21 @@ int main(void)
 				perror("set_input");
 	}
 
-	if (v4l2_enum_fmt_cap (&drv)<0) {
+	if (v4l2_enum_fmt (&drv,V4L2_BUF_TYPE_VIDEO_CAPTURE)<0) {
 		perror("enum_fmt_cap");
 	}
+
+	/* Tries all formats */
+	for (cur=drv.fmt_caps;cur!=NULL;cur=cur->next) {
+		struct v4l2_format fmt;
+		uint32_t	   pixelformat=((struct v4l2_fmtdesc *)cur->curr)->pixelformat;
+		if (cur->curr) {
+			if (v4l2_gettryset_fmt_cap (&drv,V4L2_SET,&fmt, 640, 480,
+						pixelformat,V4L2_FIELD_ANY))
+				perror("set_input");
+		}
+	}
+
 	if (v4l2_get_parm (&drv)<0) {
 		perror("get_parm");
 	}
