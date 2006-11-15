@@ -295,7 +295,7 @@ void GeneralTab::updateStandard()
 			tvStandard->setCurrentItem(vs.index);
 			what.sprintf("TV Standard (0x%llX)\n"
 				"Frame period: %f (%d/%d)\n"
-				"Frame lines: %d\n", std,
+				"Frame lines: %d\n", (long long int)std,
 				(double)vs.frameperiod.numerator / vs.frameperiod.denominator,
 				vs.frameperiod.numerator, vs.frameperiod.denominator,
 				vs.framelines);

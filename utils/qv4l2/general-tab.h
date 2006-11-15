@@ -21,6 +21,7 @@
 #ifndef GENERAL_TAB_H
 #define GENERAL_TAB_H
 
+#include <sys/time.h>
 #include <linux/videodev2.h>
 #include <qgrid.h>
 
