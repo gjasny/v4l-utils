@@ -4,7 +4,7 @@ CPPFLAGS += -I../../linux/include -I..
 
 includes = v4l2.h
 
-objects  = frequencies.o
+objects  = frequencies.o v4l2_driver.o
 
 sharedlib = libv4l2.so
 staticlib = libv4l2.a
