@@ -10,8 +10,9 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Lesser General Public License for more details.
-
   */
+
+/* FIXME: Add checks at calloc for out-of-memory errors */
 
 #include <errno.h>
 #include <fcntl.h>
@@ -20,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -51,6 +53,74 @@ static void free_list(struct drv_list **list_ptr)
 }
 
 /****************************************************************************
+	Auxiliary Arrays to aid debug messages
+ ****************************************************************************/
+char *v4l2_field_names[] = {
+	[V4L2_FIELD_ANY]        = "any",
+	[V4L2_FIELD_NONE]       = "none",
+	[V4L2_FIELD_TOP]        = "top",
+	[V4L2_FIELD_BOTTOM]     = "bottom",
+	[V4L2_FIELD_INTERLACED] = "interlaced",
+	[V4L2_FIELD_SEQ_TB]     = "seq-tb",
+	[V4L2_FIELD_SEQ_BT]     = "seq-bt",
+	[V4L2_FIELD_ALTERNATE]  = "alternate",
+};
+
+char *v4l2_type_names[] = {
+	[V4L2_BUF_TYPE_VIDEO_CAPTURE]      = "video-cap",
+	[V4L2_BUF_TYPE_VIDEO_OVERLAY]      = "video-over",
+	[V4L2_BUF_TYPE_VIDEO_OUTPUT]       = "video-out",
+	[V4L2_BUF_TYPE_VBI_CAPTURE]        = "vbi-cap",
+	[V4L2_BUF_TYPE_VBI_OUTPUT]         = "vbi-out",
+	[V4L2_BUF_TYPE_SLICED_VBI_CAPTURE] = "sliced-vbi-cap",
+	[V4L2_BUF_TYPE_SLICED_VBI_OUTPUT]  = "slicec-vbi-out",
+};
+
+static char *v4l2_memory_names[] = {
+	[V4L2_MEMORY_MMAP]    = "mmap",
+	[V4L2_MEMORY_USERPTR] = "userptr",
+	[V4L2_MEMORY_OVERLAY] = "overlay",
+};
+
+#define ARRAY_SIZE(arr) (sizeof(arr)/sizeof(*arr))
+#define prt_names(a,arr) (((a)<ARRAY_SIZE(arr))?arr[a]:"unknown")
+
+char *prt_caps(uint32_t caps)
+{
+	static char s[4096]="";
+
+	if (V4L2_CAP_VIDEO_CAPTURE & caps)
+		strcat (s,"CAPTURE ");
+	if (V4L2_CAP_VIDEO_OUTPUT & caps)
+		strcat (s,"OUTPUT ");
+	if (V4L2_CAP_VIDEO_OVERLAY & caps)
+		strcat (s,"OVERLAY ");
+	if (V4L2_CAP_VBI_CAPTURE & caps)
+		strcat (s,"VBI_CAPTURE ");
+	if (V4L2_CAP_VBI_OUTPUT & caps)
+		strcat (s,"VBI_OUTPUT ");
+	if (V4L2_CAP_SLICED_VBI_CAPTURE & caps)
+		strcat (s,"SLICED_VBI_CAPTURE ");
+	if (V4L2_CAP_SLICED_VBI_OUTPUT & caps)
+		strcat (s,"SLICED_VBI_OUTPUT ");
+	if (V4L2_CAP_RDS_CAPTURE & caps)
+		strcat (s,"RDS_CAPTURE ");
+	if (V4L2_CAP_TUNER & caps)
+		strcat (s,"TUNER ");
+	if (V4L2_CAP_AUDIO & caps)
+		strcat (s,"AUDIO ");
+	if (V4L2_CAP_RADIO & caps)
+		strcat (s,"RADIO ");
+	if (V4L2_CAP_READWRITE & caps)
+		strcat (s,"READWRITE ");
+	if (V4L2_CAP_ASYNCIO & caps)
+		strcat (s,"ASYNCIO ");
+	if (V4L2_CAP_STREAMING & caps)
+		strcat (s,"STREAMING ");
+
+	return s;
+}
+/****************************************************************************
 	Open/Close V4L2 devices
  ****************************************************************************/
 int v4l2_open (char *device, int debug, struct v4l2_driver *drv)
@@ -69,12 +139,14 @@ int v4l2_open (char *device, int debug, struct v4l2_driver *drv)
 	ret=ioctl(drv->fd,VIDIOC_QUERYCAP,(void *) &drv->cap);
 	if (ret>=0 && drv->debug) {
 		printf ("driver=%s, card=%s, bus=%s, version=%d.%d.%d, "
-			"capabilities=0x%08x\n",
+			"capabilities=%s\n",
 			drv->cap.driver,drv->cap.card,drv->cap.bus_info,
 			(drv->cap.version >> 16) & 0xff,
 			(drv->cap.version >>  8) & 0xff,
 			drv->cap.version         & 0xff,
-			drv->cap.capabilities);
+			prt_caps(drv->cap.capabilities));
+
+
 	}
 	return ret;
 }
@@ -324,6 +396,7 @@ int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
 			if (ret < 0) {
 				perror("VIDIOC_S_FMT failed\n");
 			}
+			drv->sizeimage=pix->sizeimage;
 		}
 
 		if (pix->pixelformat != pixelformat) {
@@ -389,4 +462,101 @@ int v4l2_get_parm (struct v4l2_driver *drv)
 	}
 
 	return ret;
+}
+
+/****************************************************************************
+	Queue Control
+ ****************************************************************************/
+
+int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
+{
+	uint32_t	i;
+
+	if (drv->sizeimage==0) {
+		fprintf(stderr,"Image size is zero! Can't proceed\n");
+		return -1;
+	}
+	/* Requests the specified number of buffers */
+	drv->reqbuf.count  = num_buffers;
+	drv->reqbuf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	drv->reqbuf.memory = V4L2_MEMORY_MMAP;
+
+	if (ioctl(drv->fd,VIDIOC_REQBUFS,&drv->reqbuf)<0) {
+		perror("reqbufs");
+		return errno;
+	}
+
+	if (drv->debug)
+		printf ("REQBUFS: count=%d, type=%s, memory=%s\n",
+				drv->reqbuf.count,
+				prt_names(drv->reqbuf.type,v4l2_type_names),
+				prt_names(drv->reqbuf.memory,v4l2_memory_names));
+
+	/* Frees previous allocations, if required */
+	if (drv->v4l2_bufs)
+		free(drv->v4l2_bufs);
+	if (drv->bufs)
+		free(drv->bufs);
+
+	/* Allocates the required number of buffers */
+	drv->v4l2_bufs=calloc(drv->reqbuf.count, sizeof(drv->v4l2_bufs));
+	drv->bufs=calloc(drv->reqbuf.count, drv->sizeimage);
+
+	for (i = 0; i < drv->reqbuf.count; i++) {
+		struct v4l2_buffer *p=drv->v4l2_bufs[i];
+		struct v4l2_timecode *tc;
+
+		/* Requests kernel buffers to be mmapped */
+		p=calloc(1,sizeof(*p));
+		p->index  = i;
+		p->type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		p->memory = V4L2_MEMORY_MMAP;
+		if (ioctl(drv->fd,VIDIOC_QUERYBUF,p)<0) {
+			int ret=errno;
+			perror("querybuf");
+
+			free(drv->v4l2_bufs);
+			free(drv->bufs);
+
+			drv->v4l2_bufs=NULL;
+			drv->bufs=NULL;
+			return ret;
+		}
+
+		if (drv->debug) {
+			printf ("QUERYBUF: %02ld:%02d:%02d.%08ld index=%d, type=%s, "
+				"bytesused=%d, flags=0x%08x, "
+				"field=%s, sequence=%d, memory=%s, offset/userptr=0x%08lx\n",
+				(p->timestamp.tv_sec/3600),
+				(int)(p->timestamp.tv_sec/60)%60,
+				(int)(p->timestamp.tv_sec%60),
+				p->timestamp.tv_usec,
+				p->index,
+				prt_names(p->type,v4l2_type_names),
+				p->bytesused,p->flags,
+				prt_names(p->field,v4l2_field_names),
+				p->sequence,
+				prt_names(p->memory,v4l2_memory_names),
+				p->m.userptr);
+			tc=&p->timecode;
+			printf ("TIMECODE: %02d:%02d:%02d type=%d, "
+				"flags=0x%08x, frames=%d, userbits=0x%08x\n",
+				tc->hours,tc->minutes,tc->seconds,
+				tc->type, tc->flags, tc->frames, *(uint32_t *) tc->userbits);
+		}
+
+		drv->bufs = mmap(NULL, drv->sizeimage, PROT_READ | PROT_WRITE,
+			MAP_SHARED, drv->fd, p->m.offset);
+		if (MAP_FAILED == drv->bufs) {
+			perror("mmap");
+
+//			free(drv->v4l2_bufs);
+//			free(drv->bufs);
+
+//			drv->v4l2_bufs=NULL;
+//			drv->bufs=NULL;
+			return errno;
+		}
+	}
+	return 0;
 }

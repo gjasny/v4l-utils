@@ -22,15 +22,25 @@ struct drv_list {
 };
 
 struct v4l2_driver {
-	int			fd;	/* Driver descriptor */
+	int				fd;	/* Driver descriptor */
 
-	int			debug;
+	int				debug;
 
-	struct v4l2_capability	cap;
+	/* V4L2 structs */
+	struct v4l2_capability		cap;
+	struct v4l2_streamparm		parm;
 
-	struct v4l2_streamparm	parm;
+	/* Several lists to be used to store enumbered values */
+	struct drv_list			*stds,*inputs,*fmt_caps;
 
-	struct drv_list		*stds,*inputs,*fmt_caps;
+	/* Stream control */
+	struct v4l2_requestbuffers	reqbuf;
+	struct v4l2_buffer		**v4l2_bufs;
+	uint8_t				**bufs;
+	uint32_t			sizeimage;
+
+	/* Queue control */
+	uint32_t			waitq, currq;
 };
 
 enum v4l2_direction {
@@ -53,4 +63,5 @@ int v4l2_setget_input (struct v4l2_driver *drv, enum v4l2_direction dir, struct 
 int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
 		      struct v4l2_format *fmt,uint32_t width, uint32_t height,
 		      uint32_t pixelformat, enum v4l2_field field);
+int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers);
 

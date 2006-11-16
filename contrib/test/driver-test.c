@@ -69,6 +69,9 @@ int main(void)
 	if (v4l2_get_parm (&drv)<0) {
 		perror("get_parm");
 	}
+
+	v4l2_mmap_bufs(&drv, 2);
+
 	if (v4l2_close (&drv)<0) {
 		perror("close");
 		return -1;
