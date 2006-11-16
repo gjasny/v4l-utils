@@ -12,8 +12,7 @@
    Lesser General Public License for more details.
   */
 
-/* FIXME: Add checks at calloc for out-of-memory errors */
-
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <malloc.h>
@@ -173,9 +172,12 @@ int v4l2_enum_stds (struct v4l2_driver *drv)
 	free_list(&drv->stds);
 
 	list=drv->stds=calloc(1,sizeof(drv->stds));
+	assert (list!=NULL);
 
 	for (i=0; ok==0; i++) {
 		p=calloc(1,sizeof(*p));
+		assert (p);
+
 		p->index=i;
 		ok=ioctl(drv->fd,VIDIOC_ENUMSTD,p);
 		if (ok<0) {
@@ -193,6 +195,7 @@ int v4l2_enum_stds (struct v4l2_driver *drv)
 		if (list->curr) {
 			list->next=calloc(1,sizeof(*list->next));
 			list=list->next;
+			assert (list!=NULL);
 		}
 		list->curr=p;
 	}
@@ -212,9 +215,11 @@ int v4l2_enum_input (struct v4l2_driver *drv)
 	free_list(&drv->inputs);
 
 	list=drv->inputs=calloc(1,sizeof(drv->inputs));
+	assert (list!=NULL);
 
 	for (i=0; ok==0; i++) {
 		p=calloc(1,sizeof(*p));
+		assert (p);
 		p->index=i;
 		ok=ioctl(drv->fd,VIDIOC_ENUMINPUT,p);
 		if (ok<0) {
@@ -231,6 +236,7 @@ int v4l2_enum_input (struct v4l2_driver *drv)
 		if (list->curr) {
 			list->next=calloc(1,sizeof(*list->next));
 			list=list->next;
+			assert (list!=NULL);
 		}
 		list->curr=p;
 	}
@@ -250,9 +256,12 @@ int v4l2_enum_fmt (struct v4l2_driver *drv, enum v4l2_buf_type type)
 	free_list(&drv->fmt_caps);
 
 	list=drv->fmt_caps=calloc(1,sizeof(drv->fmt_caps));
+	assert (list!=NULL);
 
 	for (i=0; ok==0; i++) {
 		p=calloc(1,sizeof(*p));
+		assert (p!=NULL);
+
 		p->index=i;
 		p->type =type;
 
@@ -271,6 +280,7 @@ int v4l2_enum_fmt (struct v4l2_driver *drv, enum v4l2_buf_type type)
 		if (list->curr) {
 			list->next=calloc(1,sizeof(*list->next));
 			list=list->next;
+			assert (list!=NULL);
 		}
 		list->curr=p;
 	}
@@ -294,7 +304,7 @@ int v4l2_setget_std (struct v4l2_driver *drv, enum v4l2_direction dir, v4l2_std_
 			ret=errno;
 
 			sprintf (s,"while trying to set STD to %08x",
-								(unsigned int) id);
+								(unsigned int) *id);
 			perror(s);
 		}
 	}
@@ -500,7 +510,9 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 
 	/* Allocates the required number of buffers */
 	drv->v4l2_bufs=calloc(drv->reqbuf.count, sizeof(drv->v4l2_bufs));
+	assert(drv->v4l2_bufs!=NULL);
 	drv->bufs=calloc(drv->reqbuf.count, drv->sizeimage);
+	assert(drv->bufs);
 
 	for (i = 0; i < drv->reqbuf.count; i++) {
 		struct v4l2_buffer *p=drv->v4l2_bufs[i];
@@ -508,8 +520,9 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 
 		/* Requests kernel buffers to be mmapped */
 		p=calloc(1,sizeof(*p));
+		assert (p!=NULL);
 		p->index  = i;
-		p->type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		p->type   = drv->reqbuf.type;
 		p->memory = V4L2_MEMORY_MMAP;
 		if (ioctl(drv->fd,VIDIOC_QUERYBUF,p)<0) {
 			int ret=errno;
@@ -526,7 +539,7 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 		if (drv->debug) {
 			printf ("QUERYBUF: %02ld:%02d:%02d.%08ld index=%d, type=%s, "
 				"bytesused=%d, flags=0x%08x, "
-				"field=%s, sequence=%d, memory=%s, offset/userptr=0x%08lx\n",
+				"field=%s, sequence=%d, memory=%s, offset=0x%08x\n",
 				(p->timestamp.tv_sec/3600),
 				(int)(p->timestamp.tv_sec/60)%60,
 				(int)(p->timestamp.tv_sec%60),
@@ -537,7 +550,7 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 				prt_names(p->field,v4l2_field_names),
 				p->sequence,
 				prt_names(p->memory,v4l2_memory_names),
-				p->m.userptr);
+				p->m.offset);
 			tc=&p->timecode;
 			printf ("TIMECODE: %02d:%02d:%02d type=%d, "
 				"flags=0x%08x, frames=%d, userbits=0x%08x\n",
@@ -545,8 +558,10 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 				tc->type, tc->flags, tc->frames, *(uint32_t *) tc->userbits);
 		}
 
-		drv->bufs = mmap(NULL, drv->sizeimage, PROT_READ | PROT_WRITE,
-			MAP_SHARED, drv->fd, p->m.offset);
+printf("offset=0x%08x\n",p->m.offset);
+		drv->bufs[i].length = drv->sizeimage;
+		drv->bufs[i].start = mmap(NULL, drv->bufs[i].length, PROT_READ | PROT_WRITE,
+						MAP_SHARED, drv->fd, p->m.offset);
 		if (MAP_FAILED == drv->bufs) {
 			perror("mmap");
 

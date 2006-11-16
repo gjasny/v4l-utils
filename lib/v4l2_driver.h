@@ -21,6 +21,11 @@ struct drv_list {
 	struct drv_list	*next;
 };
 
+struct v4l2_t_buf {
+	void		*start;
+	size_t		length;
+};
+
 struct v4l2_driver {
 	int				fd;	/* Driver descriptor */
 
@@ -36,7 +41,7 @@ struct v4l2_driver {
 	/* Stream control */
 	struct v4l2_requestbuffers	reqbuf;
 	struct v4l2_buffer		**v4l2_bufs;
-	uint8_t				**bufs;
+	struct v4l2_t_buf 		*bufs;
 	uint32_t			sizeimage;
 
 	/* Queue control */
