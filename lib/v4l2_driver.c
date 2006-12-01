@@ -494,11 +494,11 @@ int v4l2_get_parm (struct v4l2_driver *drv)
 	drv->parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if ((ret=xioctl(drv->fd,VIDIOC_G_PARM,&drv->parm))>=0) {
 		c=&drv->parm.parm.capture;
-		printf ("PARM: capability=%d, capturemode=%d, frame time =%.3f ns "
+		printf ("PARM: capability=%d, capturemode=%d, %.3f fps "
 			"ext=%x, readbuf=%d\n",
 			c->capability,
 			c->capturemode,
-			100.*c->timeperframe.numerator/c->timeperframe.denominator,
+			c->timeperframe.denominator*1./c->timeperframe.numerator,
 			c->extendedmode, c->readbuffers);
 	} else {
 		ret=errno;
