@@ -69,4 +69,6 @@ int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
 		      struct v4l2_format *fmt,uint32_t width, uint32_t height,
 		      uint32_t pixelformat, enum v4l2_field field);
 int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers);
-void v4l2_free_bufs(struct v4l2_driver *drv);
+int v4l2_free_bufs(struct v4l2_driver *drv);
+int v4l2_start_streaming(struct v4l2_driver *drv);
+int v4l2_stop_streaming(struct v4l2_driver *drv);

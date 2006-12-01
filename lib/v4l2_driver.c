@@ -24,6 +24,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <stdlib.h>
+
 #include "v4l2_driver.h"
 
 /****************************************************************************
@@ -119,8 +121,35 @@ char *prt_caps(uint32_t caps)
 
 	return s;
 }
+
+static void prt_buf_info(char *name,struct v4l2_buffer *p)
+{
+	struct v4l2_timecode *tc=&p->timecode;
+
+	printf ("%s: %02ld:%02d:%02d.%08ld index=%d, type=%s, "
+		"bytesused=%d, flags=0x%08x, "
+		"field=%s, sequence=%d, memory=%s, offset=0x%08x, length=%d\n",
+		name, (p->timestamp.tv_sec/3600),
+		(int)(p->timestamp.tv_sec/60)%60,
+		(int)(p->timestamp.tv_sec%60),
+		p->timestamp.tv_usec,
+		p->index,
+		prt_names(p->type,v4l2_type_names),
+		p->bytesused,p->flags,
+		prt_names(p->field,v4l2_field_names),
+		p->sequence,
+		prt_names(p->memory,v4l2_memory_names),
+		p->m.offset,
+		p->length);
+	tc=&p->timecode;
+	printf ("\tTIMECODE: %02d:%02d:%02d type=%d, "
+		"flags=0x%08x, frames=%d, userbits=0x%08x\n",
+		tc->hours,tc->minutes,tc->seconds,
+		tc->type, tc->flags, tc->frames, *(uint32_t *) tc->userbits);
+}
+
 /****************************************************************************
-	Open/Close V4L2 devices
+	Open V4L2 devices
  ****************************************************************************/
 int v4l2_open (char *device, int debug, struct v4l2_driver *drv)
 {
@@ -130,7 +159,7 @@ int v4l2_open (char *device, int debug, struct v4l2_driver *drv)
 
 	drv->debug=debug;
 
-	if ((drv->fd = open(device, O_RDONLY)) < 0) {
+	if ((drv->fd = open(device, O_RDWR | O_NONBLOCK )) < 0) {
 		perror("Couldn't open video0");
 		return(errno);
 	}
@@ -163,7 +192,7 @@ int v4l2_enum_stds (struct v4l2_driver *drv)
 
 	free_list(&drv->stds);
 
-	list=drv->stds=calloc(1,sizeof(drv->stds));
+	list=drv->stds=calloc(1,sizeof(*drv->stds));
 	assert (list!=NULL);
 
 	for (i=0; ok==0; i++) {
@@ -206,7 +235,7 @@ int v4l2_enum_input (struct v4l2_driver *drv)
 
 	free_list(&drv->inputs);
 
-	list=drv->inputs=calloc(1,sizeof(drv->inputs));
+	list=drv->inputs=calloc(1,sizeof(*drv->inputs));
 	assert (list!=NULL);
 
 	for (i=0; ok==0; i++) {
@@ -247,7 +276,7 @@ int v4l2_enum_fmt (struct v4l2_driver *drv, enum v4l2_buf_type type)
 
 	free_list(&drv->fmt_caps);
 
-	list=drv->fmt_caps=calloc(1,sizeof(drv->fmt_caps));
+	list=drv->fmt_caps=calloc(1,sizeof(*drv->fmt_caps));
 	assert (list!=NULL);
 
 	for (i=0; ok==0; i++) {
@@ -264,10 +293,14 @@ int v4l2_enum_fmt (struct v4l2_driver *drv, enum v4l2_buf_type type)
 			break;
 		}
 		if (drv->debug) {
-			printf ("FORMAT: index=%d, type=%d, flags=%d, description=%s\n\t"
-				"pixelformat=0x%08x\n",
+			printf ("FORMAT: index=%d, type=%d, flags=%d, description='%s'\n\t"
+				"fourcc=%c%c%c%c\n",
 				p->index, p->type, p->flags,p->description,
-				p->pixelformat);
+				p->pixelformat & 0xff,
+				(p->pixelformat >>  8) & 0xff,
+				(p->pixelformat >> 16) & 0xff,
+				(p->pixelformat >> 24) & 0xff
+				);
 		}
 		if (list->curr) {
 			list->next=calloc(1,sizeof(*list->next));
@@ -467,12 +500,30 @@ int v4l2_get_parm (struct v4l2_driver *drv)
 }
 
 /****************************************************************************
-	Queue Control
+	Queue and stream control
  ****************************************************************************/
 
-void v4l2_free_bufs(struct v4l2_driver *drv)
+int v4l2_free_bufs(struct v4l2_driver *drv)
 {
 	unsigned int i;
+
+	if (!drv->n_bufs)
+		return 0;
+
+	/* Requests the driver to free all buffers */
+	drv->reqbuf.count  = 0;
+	drv->reqbuf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	drv->reqbuf.memory = V4L2_MEMORY_MMAP;
+
+	if (ioctl(drv->fd,VIDIOC_REQBUFS,&drv->reqbuf)<0) {
+		perror("reqbufs while freeing buffers");
+		return errno;
+	}
+
+	if (drv->reqbuf.count != 0) {
+		fprintf(stderr,"REQBUFS returned %d buffers while asking for freeing it!\n",
+			drv->reqbuf.count);
+	}
 
 	for (i = 0; i < drv->n_bufs; i++) {
 		if (drv->bufs[i].length)
@@ -487,11 +538,14 @@ void v4l2_free_bufs(struct v4l2_driver *drv)
 	drv->v4l2_bufs=NULL;
 	drv->bufs=NULL;
 	drv->n_bufs=0;
+
+	return 0;
 }
 
 int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 {
-	uint32_t	i;
+	/* Frees previous allocations, if required */
+	v4l2_free_bufs(drv);
 
 	if (drv->sizeimage==0) {
 		fprintf(stderr,"Image size is zero! Can't proceed\n");
@@ -513,67 +567,130 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 				prt_names(drv->reqbuf.type,v4l2_type_names),
 				prt_names(drv->reqbuf.memory,v4l2_memory_names));
 
-	/* Frees previous allocations, if required */
-	v4l2_free_bufs(drv);
-
 	/* Allocates the required number of buffers */
-	drv->v4l2_bufs=calloc(drv->reqbuf.count, sizeof(drv->v4l2_bufs));
+	drv->v4l2_bufs=calloc(drv->reqbuf.count, sizeof(*drv->v4l2_bufs));
 	assert(drv->v4l2_bufs!=NULL);
-	drv->bufs=calloc(drv->reqbuf.count, drv->sizeimage);
-	assert(drv->bufs);
+	drv->bufs=calloc(drv->reqbuf.count, sizeof(*drv->bufs));
+	assert(drv->bufs!=NULL);
 
-	for (i = 0; i < drv->reqbuf.count; i++) {
-		struct v4l2_buffer *p=drv->v4l2_bufs[i];
+	for (drv->n_bufs = 0; drv->n_bufs < drv->reqbuf.count; drv->n_bufs++) {
+		struct v4l2_buffer *p;
 		struct v4l2_timecode *tc;
 
 		/* Requests kernel buffers to be mmapped */
-		p=calloc(1,sizeof(*p));
-		drv->n_bufs++;
+		p=drv->v4l2_bufs[drv->n_bufs]=calloc(1,sizeof(*p));
 		assert (p!=NULL);
-		p->index  = i;
-		p->type   = drv->reqbuf.type;
+		p->index  = drv->n_bufs;
+		p->type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		p->memory = V4L2_MEMORY_MMAP;
 		if (ioctl(drv->fd,VIDIOC_QUERYBUF,p)<0) {
 			int ret=errno;
 			perror("querybuf");
 
+			free (drv->v4l2_bufs[drv->n_bufs]);
+
 			v4l2_free_bufs(drv);
 			return ret;
 		}
 
-		if (drv->debug) {
-			printf ("QUERYBUF: %02ld:%02d:%02d.%08ld index=%d, type=%s, "
-				"bytesused=%d, flags=0x%08x, "
-				"field=%s, sequence=%d, memory=%s, offset=0x%08x\n",
-				(p->timestamp.tv_sec/3600),
-				(int)(p->timestamp.tv_sec/60)%60,
-				(int)(p->timestamp.tv_sec%60),
-				p->timestamp.tv_usec,
-				p->index,
-				prt_names(p->type,v4l2_type_names),
-				p->bytesused,p->flags,
-				prt_names(p->field,v4l2_field_names),
-				p->sequence,
-				prt_names(p->memory,v4l2_memory_names),
-				p->m.offset);
-			tc=&p->timecode;
-			printf ("TIMECODE: %02d:%02d:%02d type=%d, "
-				"flags=0x%08x, frames=%d, userbits=0x%08x\n",
-				tc->hours,tc->minutes,tc->seconds,
-				tc->type, tc->flags, tc->frames, *(uint32_t *) tc->userbits);
+		if (drv->debug)
+			prt_buf_info("QUERYBUF",p);
+
+		if (drv->sizeimage != p->length) {
+			if (drv->sizeimage < p->length) {
+				fprintf (stderr, "QUERYBUF: Expecting %d size, received %d buff length (LESS THAN ALLOCATED!)\n",
+					drv->sizeimage, p->length);
+
+				free (drv->v4l2_bufs[drv->n_bufs]);
+				v4l2_free_bufs(drv);
+
+				return -1;
+			} else {
+				fprintf (stderr, "QUERYBUF: Expecting %d size, received %d buff length\n",
+					drv->sizeimage, p->length);
+			}
 		}
 
-printf("offset=0x%08x\n",p->m.offset);
-		drv->bufs[i].length = drv->sizeimage;
-		drv->bufs[i].start = mmap(NULL, drv->bufs[i].length, PROT_READ | PROT_WRITE,
-						MAP_SHARED, drv->fd, p->m.offset);
-		if (MAP_FAILED == drv->bufs) {
+		drv->bufs[drv->n_bufs].length = p->length;
+		drv->bufs[drv->n_bufs].start = 	mmap (NULL,	/* start anywhere */
+			      p->length,
+			      PROT_READ | PROT_WRITE,		/* required */
+			      MAP_SHARED,			/* recommended */
+			      drv->fd, p->m.offset);
+
+
+		if (MAP_FAILED == drv->bufs[drv->n_bufs].start) {
 			perror("mmap");
 
+			free (drv->v4l2_bufs[drv->n_bufs]);
 			v4l2_free_bufs(drv);
 			return errno;
 		}
 	}
+
+	return 0;
+}
+
+/* Returns -1 if all buffers are being used, 0 if ok and errno if error */
+int v4l2_qbuf(struct v4l2_driver *drv)
+{
+	if (((drv->currq+1) % drv->reqbuf.count) == drv->waitq)
+		return -1;
+
+	if (ioctl(drv->fd,VIDIOC_QBUF,&drv->v4l2_bufs[(drv->currq) % drv->reqbuf.count])<0)
+		return errno;
+
+	return 0;
+}
+
+int v4l2_start_streaming(struct v4l2_driver *drv)
+{
+	uint32_t	i;
+        struct v4l2_buffer buf;
+
+	for (i = 0; i < drv->n_bufs; i++) {
+		int res;
+
+		memset(&buf, 0, sizeof(buf));
+		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		buf.memory = V4L2_MEMORY_MMAP;
+		buf.index  = i;
+
+		res = ioctl (drv->fd, VIDIOC_QBUF, &buf);
+prt_buf_info("***QBUF",&buf);
+printf("res=%d, errno=%d\n", res,errno);
+	}
+#if 0
+printf("Activating %d queues\n", drv->n_bufs);
+	/* Put all buffers int queue state */
+	for (i = 0; i < drv->n_bufs; i++) {
+prt_buf_info("***QBUF",drv->v4l2_bufs[i]);
+
+		if (ioctl(drv->fd,VIDIOC_QBUF,drv->v4l2_bufs[i])<0) {
+			perror ("qbuf");
+			return errno;
+		}
+		if (drv->debug)
+			prt_buf_info("QBUF",drv->v4l2_bufs[i]);
+	}
+#endif
+	/* Activates stream */
+	if (ioctl(drv->fd,VIDIOC_STREAMON,&drv->reqbuf.type)<0)
+		return errno;
+
+	return 0;
+}
+
+int v4l2_stop_streaming(struct v4l2_driver *drv)
+{
+	/* stop capture */
+	if (ioctl(drv->fd,VIDIOC_STREAMOFF,&drv->reqbuf.type)<0)
+		return errno;
+
+	sleep (1);	// FIXME: Should check if all buffers are stopped
+
+	v4l2_free_bufs(drv);
+
 	return 0;
 }
 

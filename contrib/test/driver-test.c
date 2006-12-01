@@ -16,6 +16,8 @@
 
 #include "../lib/v4l2_driver.h"
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 int main(void)
 {
@@ -58,6 +60,8 @@ int main(void)
 	/* Tries all formats */
 	for (cur=drv.fmt_caps;cur!=NULL;cur=cur->next) {
 		struct v4l2_format fmt;
+		memset (&fmt,0,sizeof(fmt));
+
 		uint32_t	   pixelformat=((struct v4l2_fmtdesc *)cur->curr)->pixelformat;
 		if (cur->curr) {
 			if (v4l2_gettryset_fmt_cap (&drv,V4L2_SET,&fmt, 640, 480,
@@ -71,6 +75,13 @@ int main(void)
 	}
 
 	v4l2_mmap_bufs(&drv, 2);
+
+//	v4l2_start_streaming(&drv);
+
+//sleep (1);
+
+//	v4l2_stop_streaming(&drv);
+
 
 	if (v4l2_close (&drv)<0) {
 		perror("close");
