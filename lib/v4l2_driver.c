@@ -525,10 +525,21 @@ int v4l2_free_bufs(struct v4l2_driver *drv)
 	drv->reqbuf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	drv->reqbuf.memory = V4L2_MEMORY_MMAP;
 
+	/* stop capture */
+	if (xioctl(drv->fd,VIDIOC_STREAMOFF,&drv->reqbuf.type)<0)
+		return errno;
+
+	sleep (1);	// FIXME: Should check if all buffers are stopped
+
+/* V4L2 API says REQBUFS with count=0 should be used to release buffer.
+   However, video-buf.c doesn't implement it.
+ */
+#if 0
 	if (xioctl(drv->fd,VIDIOC_REQBUFS,&drv->reqbuf)<0) {
 		perror("reqbufs while freeing buffers");
 		return errno;
 	}
+#endif
 
 	if (drv->reqbuf.count != 0) {
 		fprintf(stderr,"REQBUFS returned %d buffers while asking for freeing it!\n",
@@ -693,12 +704,6 @@ prt_buf_info("***QBUF",drv->v4l2_bufs[i]);
 
 int v4l2_stop_streaming(struct v4l2_driver *drv)
 {
-	/* stop capture */
-	if (xioctl(drv->fd,VIDIOC_STREAMOFF,&drv->reqbuf.type)<0)
-		return errno;
-
-	sleep (1);	// FIXME: Should check if all buffers are stopped
-
 	v4l2_free_bufs(drv);
 
 	return 0;
