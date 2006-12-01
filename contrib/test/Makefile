@@ -7,7 +7,8 @@ binaries = ioctl-test 		\
 	   sliced-vbi-detect 	\
 	   vbi-test 		\
 	   v4lgrab		\
-	   driver-test
+	   driver-test		\
+	   capture_example
 
 .PHONY: all clean install
 
