@@ -619,13 +619,8 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 
 		if (drv->sizeimage != p->length) {
 			if (drv->sizeimage < p->length) {
-				fprintf (stderr, "QUERYBUF: Expecting %d size, received %d buff length (LESS THAN ALLOCATED!)\n",
+				fprintf (stderr, "QUERYBUF: ERROR: VIDIOC_S_FMT said buffer should have %d size, but received %d from QUERYBUF!\n",
 					drv->sizeimage, p->length);
-
-				free (drv->v4l2_bufs[drv->n_bufs]);
-				v4l2_free_bufs(drv);
-
-				return -1;
 			} else {
 				fprintf (stderr, "QUERYBUF: Expecting %d size, received %d buff length\n",
 					drv->sizeimage, p->length);
@@ -699,7 +694,7 @@ int v4l2_rcvbuf(struct v4l2_driver *drv, v4l2_recebe_buffer *rec_buf)
 int v4l2_start_streaming(struct v4l2_driver *drv)
 {
 	uint32_t	i;
-        struct v4l2_buffer buf;
+	struct v4l2_buffer buf;
 
 	if (drv->debug)
 		printf("Activating %d queues\n", drv->n_bufs);
