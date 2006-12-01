@@ -31,6 +31,16 @@
 /****************************************************************************
 	Auxiliary routines
  ****************************************************************************/
+static int xioctl (int fd, int request, void *arg)
+{
+	int r;
+
+	do r = ioctl (fd, request, arg);
+	while (-1 == r && EINTR == errno);
+
+	return r;
+}
+
 static void free_list(struct drv_list **list_ptr)
 {
 	struct drv_list *prev,*cur;
@@ -164,7 +174,7 @@ int v4l2_open (char *device, int debug, struct v4l2_driver *drv)
 		return(errno);
 	}
 
-	ret=ioctl(drv->fd,VIDIOC_QUERYCAP,(void *) &drv->cap);
+	ret=xioctl(drv->fd,VIDIOC_QUERYCAP,(void *) &drv->cap);
 	if (ret>=0 && drv->debug) {
 		printf ("driver=%s, card=%s, bus=%s, version=%d.%d.%d, "
 			"capabilities=%s\n",
@@ -200,7 +210,7 @@ int v4l2_enum_stds (struct v4l2_driver *drv)
 		assert (p);
 
 		p->index=i;
-		ok=ioctl(drv->fd,VIDIOC_ENUMSTD,p);
+		ok=xioctl(drv->fd,VIDIOC_ENUMSTD,p);
 		if (ok<0) {
 			ok=errno;
 			free(p);
@@ -242,7 +252,7 @@ int v4l2_enum_input (struct v4l2_driver *drv)
 		p=calloc(1,sizeof(*p));
 		assert (p);
 		p->index=i;
-		ok=ioctl(drv->fd,VIDIOC_ENUMINPUT,p);
+		ok=xioctl(drv->fd,VIDIOC_ENUMINPUT,p);
 		if (ok<0) {
 			ok=errno;
 			free(p);
@@ -286,7 +296,7 @@ int v4l2_enum_fmt (struct v4l2_driver *drv, enum v4l2_buf_type type)
 		p->index=i;
 		p->type =type;
 
-		ok=ioctl(drv->fd,VIDIOC_ENUM_FMT,p);
+		ok=xioctl(drv->fd,VIDIOC_ENUM_FMT,p);
 		if (ok<0) {
 			ok=errno;
 			free(p);
@@ -324,7 +334,7 @@ int v4l2_setget_std (struct v4l2_driver *drv, enum v4l2_direction dir, v4l2_std_
 	char			s[256];
 
 	if (dir & V4L2_SET) {
-		ret=ioctl(drv->fd,VIDIOC_S_STD,&s_id);
+		ret=xioctl(drv->fd,VIDIOC_S_STD,&s_id);
 		if (ret<0) {
 			ret=errno;
 
@@ -335,7 +345,7 @@ int v4l2_setget_std (struct v4l2_driver *drv, enum v4l2_direction dir, v4l2_std_
 	}
 
 	if (dir & V4L2_GET) {
-		ret=ioctl(drv->fd,VIDIOC_G_STD,&s_id);
+		ret=xioctl(drv->fd,VIDIOC_G_STD,&s_id);
 		if (ret<0) {
 			ret=errno;
 			perror ("while trying to get STD id");
@@ -365,7 +375,7 @@ int v4l2_setget_input (struct v4l2_driver *drv, enum v4l2_direction dir, struct 
 	char			s[256];
 
 	if (dir & V4L2_SET) {
-		ret=ioctl(drv->fd,VIDIOC_S_INPUT,input);
+		ret=xioctl(drv->fd,VIDIOC_S_INPUT,input);
 		if (ret<0) {
 			ret=errno;
 			sprintf (s,"while trying to set INPUT to %d\n", inp);
@@ -374,7 +384,7 @@ int v4l2_setget_input (struct v4l2_driver *drv, enum v4l2_direction dir, struct 
 	}
 
 	if (dir & V4L2_GET) {
-		ret=ioctl(drv->fd,VIDIOC_G_INPUT,input);
+		ret=xioctl(drv->fd,VIDIOC_G_INPUT,input);
 		if (ret<0) {
 			perror ("while trying to get INPUT id\n");
 		}
@@ -399,7 +409,7 @@ int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
 
 	fmt->type=V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (dir == V4L2_GET) {
-		ret=ioctl(drv->fd,VIDIOC_G_FMT,fmt);
+		ret=xioctl(drv->fd,VIDIOC_G_FMT,fmt);
 		if (ret < 0) {
 			ret=errno;
 			perror("VIDIOC_G_FMT failed\n");
@@ -420,14 +430,14 @@ int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
 	*/
 
 		if (dir & V4L2_TRY) {
-			ret=ioctl(drv->fd,VIDIOC_TRY_FMT,fmt);
+			ret=xioctl(drv->fd,VIDIOC_TRY_FMT,fmt);
 			if (ret < 0) {
 				perror("VIDIOC_TRY_FMT failed\n");
 			}
 		}
 
 		if (dir & V4L2_SET) {
-			ret=ioctl(drv->fd,VIDIOC_S_FMT,fmt);
+			ret=xioctl(drv->fd,VIDIOC_S_FMT,fmt);
 			if (ret < 0) {
 				perror("VIDIOC_S_FMT failed\n");
 			}
@@ -482,7 +492,7 @@ int v4l2_get_parm (struct v4l2_driver *drv)
 	struct v4l2_captureparm *c;
 
 	drv->parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if ((ret=ioctl(drv->fd,VIDIOC_G_PARM,&drv->parm))>=0) {
+	if ((ret=xioctl(drv->fd,VIDIOC_G_PARM,&drv->parm))>=0) {
 		c=&drv->parm.parm.capture;
 		printf ("PARM: capability=%d, capturemode=%d, frame time =%.3f ns "
 			"ext=%x, readbuf=%d\n",
@@ -515,7 +525,7 @@ int v4l2_free_bufs(struct v4l2_driver *drv)
 	drv->reqbuf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	drv->reqbuf.memory = V4L2_MEMORY_MMAP;
 
-	if (ioctl(drv->fd,VIDIOC_REQBUFS,&drv->reqbuf)<0) {
+	if (xioctl(drv->fd,VIDIOC_REQBUFS,&drv->reqbuf)<0) {
 		perror("reqbufs while freeing buffers");
 		return errno;
 	}
@@ -556,7 +566,7 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 	drv->reqbuf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	drv->reqbuf.memory = V4L2_MEMORY_MMAP;
 
-	if (ioctl(drv->fd,VIDIOC_REQBUFS,&drv->reqbuf)<0) {
+	if (xioctl(drv->fd,VIDIOC_REQBUFS,&drv->reqbuf)<0) {
 		perror("reqbufs");
 		return errno;
 	}
@@ -583,7 +593,7 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 		p->index  = drv->n_bufs;
 		p->type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		p->memory = V4L2_MEMORY_MMAP;
-		if (ioctl(drv->fd,VIDIOC_QUERYBUF,p)<0) {
+		if (xioctl(drv->fd,VIDIOC_QUERYBUF,p)<0) {
 			int ret=errno;
 			perror("querybuf");
 
@@ -637,7 +647,7 @@ int v4l2_qbuf(struct v4l2_driver *drv)
 	if (((drv->currq+1) % drv->reqbuf.count) == drv->waitq)
 		return -1;
 
-	if (ioctl(drv->fd,VIDIOC_QBUF,&drv->v4l2_bufs[(drv->currq) % drv->reqbuf.count])<0)
+	if (xioctl(drv->fd,VIDIOC_QBUF,&drv->v4l2_bufs[(drv->currq) % drv->reqbuf.count])<0)
 		return errno;
 
 	return 0;
@@ -656,7 +666,7 @@ int v4l2_start_streaming(struct v4l2_driver *drv)
 		buf.memory = V4L2_MEMORY_MMAP;
 		buf.index  = i;
 
-		res = ioctl (drv->fd, VIDIOC_QBUF, &buf);
+		res = xioctl (drv->fd, VIDIOC_QBUF, &buf);
 prt_buf_info("***QBUF",&buf);
 printf("res=%d, errno=%d\n", res,errno);
 	}
@@ -666,7 +676,7 @@ printf("Activating %d queues\n", drv->n_bufs);
 	for (i = 0; i < drv->n_bufs; i++) {
 prt_buf_info("***QBUF",drv->v4l2_bufs[i]);
 
-		if (ioctl(drv->fd,VIDIOC_QBUF,drv->v4l2_bufs[i])<0) {
+		if (xioctl(drv->fd,VIDIOC_QBUF,drv->v4l2_bufs[i])<0) {
 			perror ("qbuf");
 			return errno;
 		}
@@ -675,7 +685,7 @@ prt_buf_info("***QBUF",drv->v4l2_bufs[i]);
 	}
 #endif
 	/* Activates stream */
-	if (ioctl(drv->fd,VIDIOC_STREAMON,&drv->reqbuf.type)<0)
+	if (xioctl(drv->fd,VIDIOC_STREAMON,&drv->reqbuf.type)<0)
 		return errno;
 
 	return 0;
@@ -684,7 +694,7 @@ prt_buf_info("***QBUF",drv->v4l2_bufs[i]);
 int v4l2_stop_streaming(struct v4l2_driver *drv)
 {
 	/* stop capture */
-	if (ioctl(drv->fd,VIDIOC_STREAMOFF,&drv->reqbuf.type)<0)
+	if (xioctl(drv->fd,VIDIOC_STREAMOFF,&drv->reqbuf.type)<0)
 		return errno;
 
 	sleep (1);	// FIXME: Should check if all buffers are stopped
