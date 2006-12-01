@@ -6,3 +6,6 @@ all clean install:
 	$(MAKE) -C lib $@
 	$(MAKE) -C util $@
 	$(MAKE) -C test $@
+
+%:
+	make -C .. $(MAKECMDGOALS)

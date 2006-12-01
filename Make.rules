@@ -46,3 +46,8 @@ clean::
 	rm -f *.d
 
 -include *.d ...dummy
+
+commit update pull push insmod rmmod whitespace:
+	make -C ../.. $(MAKECMDGOALS)
+
+
