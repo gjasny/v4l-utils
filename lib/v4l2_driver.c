@@ -150,14 +150,6 @@ int v4l2_open (char *device, int debug, struct v4l2_driver *drv)
 	return ret;
 }
 
-int v4l2_close (struct v4l2_driver *drv)
-{
-	free_list(&drv->stds);
-	free_list(&drv->inputs);
-	free_list(&drv->fmt_caps);
-
-	return (close(drv->fd));
-}
 
 /****************************************************************************
 	V4L2 Eumberations
@@ -478,6 +470,25 @@ int v4l2_get_parm (struct v4l2_driver *drv)
 	Queue Control
  ****************************************************************************/
 
+void v4l2_free_bufs(struct v4l2_driver *drv)
+{
+	unsigned int i;
+
+	for (i = 0; i < drv->n_bufs; i++) {
+		if (drv->bufs[i].length)
+			munmap(drv->bufs[i].start, drv->bufs[i].length);
+		if (drv->v4l2_bufs[i])
+			free (drv->v4l2_bufs[i]);
+	}
+
+	free(drv->v4l2_bufs);
+	free(drv->bufs);
+
+	drv->v4l2_bufs=NULL;
+	drv->bufs=NULL;
+	drv->n_bufs=0;
+}
+
 int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 {
 	uint32_t	i;
@@ -503,10 +514,7 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 				prt_names(drv->reqbuf.memory,v4l2_memory_names));
 
 	/* Frees previous allocations, if required */
-	if (drv->v4l2_bufs)
-		free(drv->v4l2_bufs);
-	if (drv->bufs)
-		free(drv->bufs);
+	v4l2_free_bufs(drv);
 
 	/* Allocates the required number of buffers */
 	drv->v4l2_bufs=calloc(drv->reqbuf.count, sizeof(drv->v4l2_bufs));
@@ -520,6 +528,7 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 
 		/* Requests kernel buffers to be mmapped */
 		p=calloc(1,sizeof(*p));
+		drv->n_bufs++;
 		assert (p!=NULL);
 		p->index  = i;
 		p->type   = drv->reqbuf.type;
@@ -528,11 +537,7 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 			int ret=errno;
 			perror("querybuf");
 
-			free(drv->v4l2_bufs);
-			free(drv->bufs);
-
-			drv->v4l2_bufs=NULL;
-			drv->bufs=NULL;
+			v4l2_free_bufs(drv);
 			return ret;
 		}
 
@@ -565,13 +570,23 @@ printf("offset=0x%08x\n",p->m.offset);
 		if (MAP_FAILED == drv->bufs) {
 			perror("mmap");
 
-//			free(drv->v4l2_bufs);
-//			free(drv->bufs);
-
-//			drv->v4l2_bufs=NULL;
-//			drv->bufs=NULL;
+			v4l2_free_bufs(drv);
 			return errno;
 		}
 	}
 	return 0;
+}
+
+/****************************************************************************
+	Close V4L2, disallocating all structs
+ ****************************************************************************/
+int v4l2_close (struct v4l2_driver *drv)
+{
+	v4l2_free_bufs(drv);
+
+	free_list(&drv->stds);
+	free_list(&drv->inputs);
+	free_list(&drv->fmt_caps);
+
+	return (close(drv->fd));
 }

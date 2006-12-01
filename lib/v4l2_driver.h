@@ -42,7 +42,7 @@ struct v4l2_driver {
 	struct v4l2_requestbuffers	reqbuf;
 	struct v4l2_buffer		**v4l2_bufs;
 	struct v4l2_t_buf 		*bufs;
-	uint32_t			sizeimage;
+	uint32_t			sizeimage,n_bufs;
 
 	/* Queue control */
 	uint32_t			waitq, currq;
@@ -69,4 +69,4 @@ int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
 		      struct v4l2_format *fmt,uint32_t width, uint32_t height,
 		      uint32_t pixelformat, enum v4l2_field field);
 int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers);
-
+void v4l2_free_bufs(struct v4l2_driver *drv);
