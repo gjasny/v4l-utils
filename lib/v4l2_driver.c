@@ -169,7 +169,7 @@ int v4l2_open (char *device, int debug, struct v4l2_driver *drv)
 
 	drv->debug=debug;
 
-	if ((drv->fd = open(device, O_RDWR | O_NONBLOCK )) < 0) {
+	if ((drv->fd = open(device, O_RDWR )) < 0) {
 		perror("Couldn't open video0");
 		return(errno);
 	}
@@ -652,23 +652,57 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 	return 0;
 }
 
-/* Returns -1 if all buffers are being used, 0 if ok and errno if error */
-int v4l2_qbuf(struct v4l2_driver *drv)
+int v4l2_rcvbuf(struct v4l2_driver *drv, v4l2_recebe_buffer *rec_buf)
 {
-	if (((drv->currq+1) % drv->reqbuf.count) == drv->waitq)
-		return -1;
+	int ret;
 
-	if (xioctl(drv->fd,VIDIOC_QBUF,&drv->v4l2_bufs[(drv->currq) % drv->reqbuf.count])<0)
+	struct v4l2_buffer buf;
+	memset (&buf, 0, sizeof(buf));
+
+	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	buf.memory = V4L2_MEMORY_MMAP;
+
+	if (-1 == xioctl (drv->fd, VIDIOC_DQBUF, &buf)) {
+		switch (errno) {
+		case EAGAIN:
+			return 0;
+
+		case EIO:
+			/* Could ignore EIO, see spec. */
+
+			/* fall through */
+
+		default:
+			perror ("dqbuf");
+			return errno;
+		}
+	}
+	prt_buf_info("DQBUF",&buf);
+
+	assert (buf.index < drv->n_bufs);
+
+	ret = rec_buf (&buf,&drv->bufs[buf.index]);
+
+	if (ret) {
+		v4l2_free_bufs(drv);
+		return ret;
+	}
+
+	if (-1 == xioctl (drv->fd, VIDIOC_QBUF, &buf)) {
+		perror ("qbuf");
 		return errno;
-
+	}
 	return 0;
 }
+
 
 int v4l2_start_streaming(struct v4l2_driver *drv)
 {
 	uint32_t	i;
         struct v4l2_buffer buf;
 
+	if (drv->debug)
+		printf("Activating %d queues\n", drv->n_bufs);
 	for (i = 0; i < drv->n_bufs; i++) {
 		int res;
 
@@ -678,24 +712,19 @@ int v4l2_start_streaming(struct v4l2_driver *drv)
 		buf.index  = i;
 
 		res = xioctl (drv->fd, VIDIOC_QBUF, &buf);
-prt_buf_info("***QBUF",&buf);
-printf("res=%d, errno=%d\n", res,errno);
-	}
-#if 0
-printf("Activating %d queues\n", drv->n_bufs);
-	/* Put all buffers int queue state */
-	for (i = 0; i < drv->n_bufs; i++) {
-prt_buf_info("***QBUF",drv->v4l2_bufs[i]);
 
-		if (xioctl(drv->fd,VIDIOC_QBUF,drv->v4l2_bufs[i])<0) {
-			perror ("qbuf");
+		if (!res)
+			prt_buf_info("QBUF",&buf);
+		else {
+			perror("qbuf");
 			return errno;
 		}
-		if (drv->debug)
-			prt_buf_info("QBUF",drv->v4l2_bufs[i]);
 	}
-#endif
+
 	/* Activates stream */
+	if (drv->debug)
+		printf("Enabling streaming\n");
+
 	if (xioctl(drv->fd,VIDIOC_STREAMON,&drv->reqbuf.type)<0)
 		return errno;
 

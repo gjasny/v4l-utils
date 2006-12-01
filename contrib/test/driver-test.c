@@ -18,11 +18,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+
+int recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf)
+{
+
+	return 0;
+}
 
 int main(void)
 {
 	struct v4l2_driver drv;
 	struct drv_list *cur;
+	unsigned int count = 10, i;
 
 	if (v4l2_open ("/dev/video0", 1,&drv)<0) {
 		perror("open");
@@ -76,12 +84,42 @@ int main(void)
 
 	v4l2_mmap_bufs(&drv, 2);
 
-//	v4l2_start_streaming(&drv);
+	v4l2_start_streaming(&drv);
 
-//sleep (1);
+	printf("Waiting for frames...\n");
 
-//	v4l2_stop_streaming(&drv);
+	for (i=0;i<count;i++) {
+		fd_set fds;
+		struct timeval tv;
+		int r;
 
+		FD_ZERO (&fds);
+		FD_SET (drv.fd, &fds);
+
+		/* Timeout. */
+		tv.tv_sec = 2;
+		tv.tv_usec = 0;
+
+		r = select (drv.fd + 1, &fds, NULL, NULL, &tv);
+		if (-1 == r) {
+			if (EINTR == errno)
+				continue;
+
+			perror ("select");
+			return errno;
+		}
+
+		if (0 == r) {
+			fprintf (stderr, "select timeout\n");
+			return errno;
+		}
+
+		if (v4l2_rcvbuf(&drv, recebe_buffer))
+			break;
+	}
+
+	printf("stopping streaming\n");
+	v4l2_stop_streaming(&drv);
 
 	if (v4l2_close (&drv)<0) {
 		perror("close");

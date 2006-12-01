@@ -26,6 +26,8 @@ struct v4l2_t_buf {
 	size_t		length;
 };
 
+typedef int v4l2_recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf);
+
 struct v4l2_driver {
 	int				fd;	/* Driver descriptor */
 
@@ -72,3 +74,4 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers);
 int v4l2_free_bufs(struct v4l2_driver *drv);
 int v4l2_start_streaming(struct v4l2_driver *drv);
 int v4l2_stop_streaming(struct v4l2_driver *drv);
+int v4l2_rcvbuf(struct v4l2_driver *drv, v4l2_recebe_buffer *v4l2_rec_buf);
