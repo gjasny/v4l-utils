@@ -242,7 +242,7 @@ static void usage(void)
 	printf("  -s, --set-standard=<num>\n");
 	printf("                     set the video standard to <num> [VIDIOC_S_STD]\n");
 	printf("                     <num> can be a numerical v4l2_std value, or it can be one of:\n");
-	printf("                     pal-X (X = B/G/H/N/Nc/I/D/K/M) or just 'pal' (V4L2_STD_PAL)\n");
+	printf("                     pal-X (X = B/G/H/N/Nc/I/D/K/M/60) or just 'pal' (V4L2_STD_PAL)\n");
 	printf("                     ntsc-X (X = M/J/K) or just 'ntsc' (V4L2_STD_NTSC)\n");
 	printf("                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n");
 	printf("  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n");
@@ -778,6 +778,8 @@ static v4l2_std_id parse_pal(const char *pal)
 {
 	if (pal[0] == '-') {
 		switch (pal[1]) {
+			case '6':
+				return V4L2_STD_PAL_60;
 			case 'b':
 			case 'B':
 			case 'g':
