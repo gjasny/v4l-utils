@@ -170,12 +170,11 @@ int v4l2_open (char *device, int debug, struct v4l2_driver *drv)
 	drv->debug=debug;
 
 	if ((drv->fd = open(device, O_RDWR )) < 0) {
-		perror("Couldn't open video0");
-		return(errno);
+		return(-errno);
 	}
 
 	ret=xioctl(drv->fd,VIDIOC_QUERYCAP,(void *) &drv->cap);
-	if (ret>=0 && drv->debug) {
+	if (!ret && drv->debug) {
 		printf ("driver=%s, card=%s, bus=%s, version=%d.%d.%d, "
 			"capabilities=%s\n",
 			drv->cap.driver,drv->cap.card,drv->cap.bus_info,

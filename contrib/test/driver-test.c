@@ -33,19 +33,20 @@ int main(void)
 	unsigned int count = 10, i;
 
 	if (v4l2_open ("/dev/video0", 1,&drv)<0) {
-		perror("open");
+		perror("open /dev/video0");
 		return -1;
 	}
 	if (v4l2_enum_stds (&drv)<0) {
 		perror("enum_stds");
-	}
-
-	/* Tries all video standards */
-	for (cur=drv.stds;cur!=NULL;cur=cur->next) {
-		v4l2_std_id id=((struct v4l2_standard *)cur->curr)->id;
-		if (cur->curr)
-			if (v4l2_setget_std (&drv, V4L2_SET_GET, &id))
-				perror("set_std");
+		printf("Error! Driver is not reporting supported STD, frames/sec and number of lines!\n Trying to continue anyway...\n");
+	} else {
+		/* Tries all video standards */
+		for (cur=drv.stds;cur!=NULL;cur=cur->next) {
+			v4l2_std_id id=((struct v4l2_standard *)cur->curr)->id;
+			if (cur->curr)
+				if (v4l2_setget_std (&drv, V4L2_SET_GET, &id))
+					perror("set_std");
+		}
 	}
 
 	if (v4l2_enum_input (&drv)<0) {
