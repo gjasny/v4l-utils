@@ -6,7 +6,7 @@ binaries = v4l2-ctl
 
 .PHONY: all clean install qv4l2
 
-all: $(binaries) qv4l2
+all: $(binaries) qv4l2 keytable
 
 clean::
 	rm -f $(binaries)
