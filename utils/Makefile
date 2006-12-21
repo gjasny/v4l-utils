@@ -36,6 +36,6 @@ parse.h: /usr/include/linux/input.h
 
 keytables:
 	-mkdir keycodes
-	./gen_keytables.pl ../../v4l/ir-keymaps.c
+	./gen_keytables.pl ../../linux/drivers/media/common/ir-keymaps.c
 
 keytable: keytable.c parse.h keytables
