@@ -35,6 +35,7 @@ parse.h: /usr/include/linux/input.h
 	@echo -en "\t{ NULL, 0}\n};\n" >>parse.h
 
 keytables:
+	-mkdir keycodes
 	./gen_keytables.pl ../../v4l/ir-keymaps.c
 
 keytable: keytable.c parse.h keytables
