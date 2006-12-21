@@ -13,11 +13,15 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <linux/input.h>
 #include <sys/ioctl.h>
+
+#include "parse.h"
 
 void prtcode (int *codes)
 {
@@ -27,41 +31,118 @@ void prtcode (int *codes)
 		printf("scancode %d = 0x%02x\n", codes[0], codes[1]);
 }
 
+int parse_code(char *string)
+{
+	struct parse_key *p;
+
+	for (p=keynames;p->name!=NULL;p++) {
+		if (!strcasecmp(p->name, string)) {
+			return p->value;
+		}
+	}
+	return -1;
+}
+
 int main (int argc, char *argv[])
 {
 	int fd;
 	unsigned int i;
 	int codes[2];
 
-	if (argc!=2 && argc!=4) {
+	if (argc<2 || argc>4) {
 		printf ("usage: %s <device> to get table; or\n"
-			"       %s <device> <scancode> <keycode>\n",*argv,*argv);
+			"       %s <device> <scancode> <keycode>\n"
+			"       %s <device> <keycode_file>\n",*argv,*argv,*argv);
 		return -1;
 	}
 
-        if ((fd = open(argv[1], O_RDONLY)) < 0) {
-                perror("Couldn't open input device");
-                return(-1);
-        }
+	if ((fd = open(argv[1], O_RDONLY)) < 0) {
+		perror("Couldn't open input device");
+		return(-1);
+	}
 
-	if (argc==2) {
-		/* Get scancode table */
-		for (i=0;i<256;i++) {
-			codes[0] = i;
-			if(ioctl(fd, EVIOCGKEYCODE, codes)==0)
-				prtcode(codes);
-//			else perror ("EVIOGCKEYCODE");
+	if (argc==4) {
+		int value;
+
+		value=parse_code(argv[3]);
+
+		if (value==-1) {
+			value = strtol(argv[3], NULL, 0);
+			if (errno)
+				perror("value");
 		}
-	} else {
-		codes[0] = (unsigned) strtol(argv[2], NULL, 0);
-		codes[1] = (unsigned) strtol(argv[3], NULL, 0);
+
+		codes [0] = (unsigned) strtol(argv[2], NULL, 0);
+		codes [1] = (unsigned) value;
 
 		if(ioctl(fd, EVIOCSKEYCODE, codes))
 			perror ("EVIOCSKEYCODE");
 
 		if(ioctl(fd, EVIOCGKEYCODE, codes)==0)
 			prtcode(codes);
+		return 0;
+	}
+
+	if (argc==3) {
+		FILE *fin;
+		int value;
+		char *scancode, *keycode, s[2048];
+
+		fin=fopen(argv[2],"r");
+		if (fin==NULL) {
+			perror ("opening keycode file");
+			return -1;
+		}
+
+		/* Clears old table */
+		for (i=0;i<256;i++) {
+			codes[0] = i;
+			codes[1] = 0;
+			ioctl(fd, EVIOCSKEYCODE, codes);
+		}
+
+		while (fgets(s,sizeof(s),fin)) {
+			scancode=strtok(s,"\n\t =:");
+			if (!scancode) {
+				perror ("parsing input file scancode");
+				return -1;
+			}
+
+			keycode=strtok(NULL,"\n\t ");
+			if (!keycode) {
+				perror ("parsing input file keycode");
+				return -1;
+			}
+
+			// printf ("parsing %s=%s:",scancode,keycode);
+			value=parse_code(keycode);
+			// printf ("\tvalue=%d\n",value);
+
+			if (value==-1) {
+				value = strtol(keycode, NULL, 0);
+				if (errno)
+					perror("value");
+			}
+
+			codes [0] = (unsigned) strtol(scancode, NULL, 0);
+			codes [1] = (unsigned) value;
+
+			if(ioctl(fd, EVIOCSKEYCODE, codes))
+				perror ("EVIOCSKEYCODE");
+
+			if(ioctl(fd, EVIOCGKEYCODE, codes)==0)
+				prtcode(codes);
+		}
+		return 0;
+	}
+
+	/* Get scancode table */
+	for (i=0;i<256;i++) {
+		codes[0] = i;
+		if(ioctl(fd, EVIOCGKEYCODE, codes)==0)
+			prtcode(codes);
 	}
 
 	return 0;
 }
+
