@@ -25,6 +25,15 @@
 
 void prtcode (int *codes)
 {
+	struct parse_key *p;
+
+	for (p=keynames;p->name!=NULL;p++) {
+		if (p->value == (unsigned)codes[1]) {
+			printf("scancode %d = %s (0x%02x)\n", codes[0], p->name, codes[1]);
+			return;
+		}
+	}
+
 	if (isprint (codes[1]))
 		printf("scancode %d = '%c' (0x%02x)\n", codes[0], codes[1], codes[1]);
 	else
