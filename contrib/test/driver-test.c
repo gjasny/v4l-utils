@@ -36,7 +36,7 @@ int main(void)
 		perror("open /dev/video0");
 		return -1;
 	}
-	if (v4l2_enum_stds (&drv)<0) {
+	if (v4l2_enum_stds (&drv)) {
 		perror("enum_stds");
 		printf("Error! Driver is not reporting supported STD, frames/sec and number of lines!\n Trying to continue anyway...\n");
 	} else {
