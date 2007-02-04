@@ -553,7 +553,8 @@ static void find_controls(int fd)
 	int id;
 
 	while (ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
-		if (qctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS) {
+		if (qctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS &&
+		    !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)) {
 			ctrl_str2id[name2var(qctrl.name)] = qctrl.id;
 			ctrl_id2str[qctrl.id] = name2var(qctrl.name);
 		}
@@ -563,12 +564,14 @@ static void find_controls(int fd)
 		return;
 	for (id = V4L2_CID_USER_BASE; id < V4L2_CID_LASTP1; id++) {
 		qctrl.id = id;
-		if (ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0)
+		if (ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0 &&
+		    !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED))
 			ctrl_str2id[name2var(qctrl.name)] = qctrl.id;
 	}
 	for (qctrl.id = V4L2_CID_PRIVATE_BASE;
 			ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0; qctrl.id++) {
-		ctrl_str2id[name2var(qctrl.name)] = qctrl.id;
+		if (!(qctrl.flags & V4L2_CTRL_FLAG_DISABLED))
+			ctrl_str2id[name2var(qctrl.name)] = qctrl.id;
 	}
 }
 
