@@ -1450,7 +1450,7 @@ int main(int argc, char **argv)
 			struct v4l2_ext_control ctrl = { 0 };
 
 			ctrl.id = ctrl_str2id[iter->first];
-			ctrl.value = atol(iter->second.c_str());
+			ctrl.value = strtol(iter->second.c_str(), NULL, 0);
 			if (V4L2_CTRL_ID2CLASS(ctrl.id) == V4L2_CTRL_CLASS_MPEG)
 				mpeg_ctrls.push_back(ctrl);
 			else
