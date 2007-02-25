@@ -2,7 +2,7 @@
 
 CPPFLAGS += -I../../linux/include
 
-binaries = v4l2-ctl
+binaries = v4l2-ctl v4l2-dbg
 
 .PHONY: all clean install qv4l2
 
