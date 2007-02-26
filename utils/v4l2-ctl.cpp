@@ -647,6 +647,8 @@ static void printfbuf(const struct v4l2_framebuffer &fb)
 
 	printf("Capability    : %s", fbufcap2s(fb.capability).c_str() + 2);
 	printf("Flags         : %s", fbufflags2s(fb.flags).c_str() + 2);
+	if (fb.base)
+		printf("Base          : 0x%p\n", fb.base);
 	printf("Width         : %d\n", fb.fmt.width);
 	printf("Height        : %d\n", fb.fmt.height);
 	printf("Pixel Format  : %s\n", fcc2s(fb.fmt.pixelformat).c_str());
