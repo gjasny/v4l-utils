@@ -9,13 +9,16 @@ binaries = v4l2-ctl v4l2-dbg
 all: $(binaries) qv4l2 keytable
 
 clean::
-	rm -f $(binaries)
+	rm -f $(binaries) v4l2-driverids.cpp v4l2-chipids.cpp
 	-if [ -f qv4l2/Makefile ]; then make -C qv4l2 $@; fi
 	-rm -f qv4l2/qv4l2 qv4l2/Makefile
 
 qv4l2:
 	if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; qmake); fi
 	make -C qv4l2
+
+v4l2-dbg: v4l2-dbg.o v4l2-driverids.o v4l2-chipids.o
+	$(CXX) $^ -o $@
 
 install:
 
@@ -39,3 +42,13 @@ keytables:
 	./gen_keytables.pl ../../linux/drivers/media/common/ir-keymaps.c
 
 keytable: keytable.c parse.h keytables
+
+v4l2-driverids.cpp: ../../linux/include/linux/i2c-id.h
+	@echo "struct driverid { const char *name; unsigned id; } driverids[] = {" >$@
+	@grep I2C_DRIVERID_ $^ | sed -e 's/.*I2C_DRIVERID_\([0-9A-Z_]*\)[^0-9]*\([0-9]*\).*/{ "\1", \2 },/' | tr A-Z a-z >>$@
+	@echo "{ 0, 0 }};" >>$@
+
+v4l2-chipids.cpp: ../../linux/include/media/v4l2-chip-ident.h
+	@echo "struct chipid { const char *name; unsigned id; } chipids[] = {" >$@
+	@grep V4L2_IDENT_ $^ | sed -e 's/.*V4L2_IDENT_\([0-9A-Z_]*\)[^=]*=[^0-9]*\([0-9]*\).*/{ "\1", \2 },/' | tr A-Z a-z >>$@
+	@echo "{ 0, 0 }};" >>$@
