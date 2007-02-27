@@ -222,9 +222,9 @@ static void print_chip(struct v4l2_chip_ident *chip)
 		}
 	}
 	if (name)
-		printf("Chip %s, revision 0x%08x\n", name, chip->revision);
+		printf("%-10s revision 0x%08x\n", name, chip->revision);
 	else
-		printf("Chip %d, revision 0x%08x\n", chip->ident, chip->revision);
+		printf("%-10d revision 0x%08x\n", chip->ident, chip->revision);
 }
 
 static int doioctl(int fd, int request, void *parm, const char *name)
@@ -463,7 +463,7 @@ int main(int argc, char **argv)
 		for (i = 0; i < 128; i++) {
 			chip_id.match_chip = i;
 			if (doioctl(fd, VIDIOC_G_CHIP_IDENT, &chip_id, "VIDIOC_G_CHIP_IDENT") == 0 && chip_id.ident) {
-				printf("I2C 0x%02x: ", i);
+				printf("i2c 0x%02x: ", i);
 				print_chip(&chip_id);
 			}
 		}
