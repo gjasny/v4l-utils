@@ -211,7 +211,7 @@ int v4l2_enum_stds (struct v4l2_driver *drv)
 		p->index=i;
 		ok=xioctl(drv->fd,VIDIOC_ENUMSTD,p);
 		if (ok<0) {
-			ok=errno;
+			ok=-errno;
 			free(p);
 			break;
 		}
