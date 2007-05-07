@@ -745,3 +745,60 @@ int v4l2_close (struct v4l2_driver *drv)
 
 	return (close(drv->fd));
 }
+
+/****************************************************************************
+	Get/Set frequency
+ ****************************************************************************/
+
+int v4l2_getset_freq (struct v4l2_driver *drv, enum v4l2_direction dir,
+		      double *freq)
+{
+	struct v4l2_tuner     tun;
+	struct v4l2_frequency frq;
+	double d = 62500;
+	unsigned int counter;
+
+	memset(&tun, 0, sizeof(tun));
+
+	if (-1 == xioctl (drv->fd, VIDIOC_G_TUNER, &tun)) {
+		perror ("g_tuner");
+		printf("Assuming 62.5 kHz step\n");
+	} else {
+		if (tun.capability & V4L2_TUNER_CAP_LOW)
+			d=62.5;
+	}
+
+	if (drv->debug) {
+		if (tun.capability & V4L2_TUNER_CAP_LOW)
+			printf("62.5 Hz step\n");
+		else
+			printf("62.5 kHz step\n");
+	}
+
+	memset(&frq, 0, sizeof(frq));
+
+	frq.type = V4L2_TUNER_ANALOG_TV;
+
+	if (dir & V4L2_GET) {
+		if (-1 == xioctl (drv->fd, VIDIOC_G_FREQUENCY, &frq)) {
+			perror ("s_frequency");
+			return errno;
+		}
+		*freq = frq.frequency * d;
+		if (drv->debug)
+			printf("board is at freq %4.3f MHz (%d)\n",
+				*freq/1000000, frq.frequency);
+	} else {
+		frq.frequency = (uint32_t)(((*freq)+d/2) / d);
+
+		if (-1 == xioctl (drv->fd, VIDIOC_S_FREQUENCY, &frq)) {
+			perror ("s_frequency");
+			return errno;
+		}
+		if (drv->debug)
+			printf("board set to freq %4.3f MHz (%d)\n",
+				*freq/1000000, frq.frequency);
+
+	}
+	return 0;
+}

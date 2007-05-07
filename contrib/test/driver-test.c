@@ -31,12 +31,13 @@ int main(void)
 	struct v4l2_driver drv;
 	struct drv_list *cur;
 	unsigned int count = 10, i;
+	double freq;
 
 	if (v4l2_open ("/dev/video0", 1,&drv)<0) {
 		perror("open /dev/video0");
 		return -1;
 	}
-	if (v4l2_enum_stds (&drv)) {
+	if (v4l2_enum_stds (&drv)<0) {
 		perror("enum_stds");
 		printf("Error! Driver is not reporting supported STD, frames/sec and number of lines!\n Trying to continue anyway...\n");
 	} else {
@@ -82,6 +83,19 @@ int main(void)
 	if (v4l2_get_parm (&drv)<0) {
 		perror("get_parm");
 	}
+
+
+	v4l2_getset_freq (&drv,V4L2_GET, &freq);
+
+	freq=0;
+	v4l2_getset_freq (&drv,V4L2_SET, &freq);
+
+	freq=121250000; /* 121.250 MHz */
+	v4l2_getset_freq (&drv,V4L2_SET, &freq);
+
+	printf("Preparing for frames...\n");
+	fflush (stdout);
+	sleep(1);
 
 	v4l2_mmap_bufs(&drv, 2);
 

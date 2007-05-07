@@ -75,3 +75,6 @@ int v4l2_free_bufs(struct v4l2_driver *drv);
 int v4l2_start_streaming(struct v4l2_driver *drv);
 int v4l2_stop_streaming(struct v4l2_driver *drv);
 int v4l2_rcvbuf(struct v4l2_driver *drv, v4l2_recebe_buffer *v4l2_rec_buf);
+int v4l2_getset_freq (struct v4l2_driver *drv, enum v4l2_direction dir,
+		      double *freq);
+
