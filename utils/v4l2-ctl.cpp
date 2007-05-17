@@ -686,11 +686,14 @@ static int printfmt(struct v4l2_format vfmt)
 		printf("\tBytes per Line: %u\n", vfmt.fmt.pix.bytesperline);
 		printf("\tSize Image    : %u\n", vfmt.fmt.pix.sizeimage);
 		printf("\tColorspace    : %s\n", colorspace2s(vfmt.fmt.pix.colorspace).c_str());
+#if 0
+		/* Comment out until ABI breakage is resolved */
 		if (vfmt.type == V4L2_BUF_TYPE_VIDEO_OUTPUT &&
 				(capabilities & V4L2_CAP_VIDEO_OUTPUT_POS)) {
 			printf("\tLeft/Top      : %d/%d\n",
 				vfmt.fmt.pix.left, vfmt.fmt.pix.top);
 		}
+#endif
 		if (vfmt.fmt.pix.priv)
 			printf("\tCustom Info   : %08x\n", vfmt.fmt.pix.priv);
 		break;
@@ -1155,6 +1158,8 @@ int main(int argc, char **argv)
 				};
 
 				switch (parse_subopt(&subs, subopts, &value)) {
+#if 0
+		/* Comment out until ABI breakage is resolved */
 				case 0:
 					vfmt_out.fmt.pix.top = strtol(value, 0L, 0);
 					set_fmts_out |= FmtTop;
@@ -1163,6 +1168,7 @@ int main(int argc, char **argv)
 					vfmt_out.fmt.pix.left = strtol(value, 0L, 0);
 					set_fmts_out |= FmtLeft;
 					break;
+#endif
 				case 2:
 					vfmt_out.fmt.pix.width = strtol(value, 0L, 0);
 					set_fmts_out |= FmtWidth;
@@ -1552,10 +1558,13 @@ int main(int argc, char **argv)
 		if (ioctl(fd, VIDIOC_G_FMT, &in_vfmt) < 0)
 			fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
 		else {
+#if 0
+		/* Comment out until ABI breakage is resolved */
 			if (set_fmts_out & FmtTop)
 				in_vfmt.fmt.pix.top = vfmt_out.fmt.pix.top;
 			if (set_fmts_out & FmtLeft)
 				in_vfmt.fmt.pix.left = vfmt_out.fmt.pix.left;
+#endif
 			if (set_fmts_out & FmtWidth)
 				in_vfmt.fmt.pix.width = vfmt_out.fmt.pix.width;
 			if (set_fmts_out & FmtHeight)
