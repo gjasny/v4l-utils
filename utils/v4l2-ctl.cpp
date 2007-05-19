@@ -678,7 +678,6 @@ static int printfmt(struct v4l2_format vfmt)
 
 	switch (vfmt.type) {
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		printf("\tType          : %s\n", buftype2s(vfmt.type).c_str());
 		printf("\tWidth/Height  : %u/%u\n", vfmt.fmt.pix.width, vfmt.fmt.pix.height);
 		printf("\tPixel Format  : %s\n", fcc2s(vfmt.fmt.pix.pixelformat).c_str());
@@ -686,16 +685,20 @@ static int printfmt(struct v4l2_format vfmt)
 		printf("\tBytes per Line: %u\n", vfmt.fmt.pix.bytesperline);
 		printf("\tSize Image    : %u\n", vfmt.fmt.pix.sizeimage);
 		printf("\tColorspace    : %s\n", colorspace2s(vfmt.fmt.pix.colorspace).c_str());
-#if 0
-		/* Comment out until ABI breakage is resolved */
-		if (vfmt.type == V4L2_BUF_TYPE_VIDEO_OUTPUT &&
-				(capabilities & V4L2_CAP_VIDEO_OUTPUT_POS)) {
-			printf("\tLeft/Top      : %d/%d\n",
-				vfmt.fmt.pix.left, vfmt.fmt.pix.top);
-		}
-#endif
 		if (vfmt.fmt.pix.priv)
 			printf("\tCustom Info   : %08x\n", vfmt.fmt.pix.priv);
+		break;
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		printf("\tType          : %s\n", buftype2s(vfmt.type).c_str());
+		printf("\tWidth/Height  : %u/%u\n", vfmt.fmt.pix_out.width, vfmt.fmt.pix_out.height);
+		printf("\tPixel Format  : %s\n", fcc2s(vfmt.fmt.pix_out.pixelformat).c_str());
+		printf("\tField         : %s\n", field2s(vfmt.fmt.pix_out.field).c_str());
+		printf("\tBytes per Line: %u\n", vfmt.fmt.pix_out.bytesperline);
+		printf("\tSize Image    : %u\n", vfmt.fmt.pix_out.sizeimage);
+		printf("\tColorspace    : %s\n", colorspace2s(vfmt.fmt.pix_out.colorspace).c_str());
+		printf("\tLeft/Top      : %d/%d\n", vfmt.fmt.pix_out.left, vfmt.fmt.pix_out.top);
+		if (vfmt.fmt.pix_out.priv)
+			printf("\tCustom Info   : %08x\n", vfmt.fmt.pix_out.priv);
 		break;
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
@@ -860,8 +863,6 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tSliced VBI Output\n";
 	if (cap & V4L2_CAP_RDS_CAPTURE)
 		s += "\t\tRDS Capture\n";
-	if (cap & V4L2_CAP_VIDEO_OUTPUT_POS)
-		s += "\t\tVideo Output Position\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
 	if (cap & V4L2_CAP_AUDIO)
@@ -1158,23 +1159,20 @@ int main(int argc, char **argv)
 				};
 
 				switch (parse_subopt(&subs, subopts, &value)) {
-#if 0
-		/* Comment out until ABI breakage is resolved */
 				case 0:
-					vfmt_out.fmt.pix.top = strtol(value, 0L, 0);
+					vfmt_out.fmt.pix_out.top = strtol(value, 0L, 0);
 					set_fmts_out |= FmtTop;
 					break;
 				case 1:
-					vfmt_out.fmt.pix.left = strtol(value, 0L, 0);
+					vfmt_out.fmt.pix_out.left = strtol(value, 0L, 0);
 					set_fmts_out |= FmtLeft;
 					break;
-#endif
 				case 2:
-					vfmt_out.fmt.pix.width = strtol(value, 0L, 0);
+					vfmt_out.fmt.pix_out.width = strtol(value, 0L, 0);
 					set_fmts_out |= FmtWidth;
 					break;
 				case 3:
-					vfmt_out.fmt.pix.height = strtol(value, 0L, 0);
+					vfmt_out.fmt.pix_out.height = strtol(value, 0L, 0);
 					set_fmts_out |= FmtHeight;
 					break;
 				}
@@ -1558,17 +1556,14 @@ int main(int argc, char **argv)
 		if (ioctl(fd, VIDIOC_G_FMT, &in_vfmt) < 0)
 			fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
 		else {
-#if 0
-		/* Comment out until ABI breakage is resolved */
 			if (set_fmts_out & FmtTop)
-				in_vfmt.fmt.pix.top = vfmt_out.fmt.pix.top;
+				in_vfmt.fmt.pix_out.top = vfmt_out.fmt.pix_out.top;
 			if (set_fmts_out & FmtLeft)
-				in_vfmt.fmt.pix.left = vfmt_out.fmt.pix.left;
-#endif
+				in_vfmt.fmt.pix_out.left = vfmt_out.fmt.pix_out.left;
 			if (set_fmts_out & FmtWidth)
-				in_vfmt.fmt.pix.width = vfmt_out.fmt.pix.width;
+				in_vfmt.fmt.pix_out.width = vfmt_out.fmt.pix_out.width;
 			if (set_fmts_out & FmtHeight)
-				in_vfmt.fmt.pix.height = vfmt_out.fmt.pix.height;
+				in_vfmt.fmt.pix_out.height = vfmt_out.fmt.pix_out.height;
 			if (ioctl(fd, VIDIOC_S_FMT, &in_vfmt) < 0)
 				fprintf(stderr, "ioctl: VIDIOC_S_FMT failed\n");
 		}
