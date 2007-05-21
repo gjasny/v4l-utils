@@ -160,6 +160,8 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tSliced VBI Output\n";
 	if (cap & V4L2_CAP_RDS_CAPTURE)
 		s += "\t\tRDS Capture\n";
+	if (cap & V4L2_CAP_VIDEO_OUTPUT_POS)
+		s += "\t\tVideo Output Position\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
 	if (cap & V4L2_CAP_AUDIO)
