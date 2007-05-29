@@ -99,14 +99,24 @@ enum Option {
 	OptGetSlicedVbiOutCap,
 	OptGetFBuf,
 	OptSetFBuf,
-	OptGetVideoCrop,
-	OptSetVideoCrop,
+	OptGetCrop,
+	OptSetCrop,
+	OptGetOutputCrop,
+	OptSetOutputCrop,
+	OptGetOverlayCrop,
+	OptSetOverlayCrop,
+	OptGetOutputOverlayCrop,
+	OptSetOutputOverlayCrop,
 	OptGetAudioInput,
 	OptSetAudioInput,
 	OptGetAudioOutput,
 	OptSetAudioOutput,
 	OptListAudioOutputs,
 	OptListAudioInputs,
+	OptGetCropCap,
+	OptGetOutputCropCap,
+	OptGetOverlayCropCap,
+	OptGetOutputOverlayCropCap,
 	OptLast = 256
 };
 
@@ -143,12 +153,10 @@ static const flag_def service_def[] = {
 };
 
 /* fmts specified */
-#define FmtTop			(1L<<0)
-#define FmtLeft			(1L<<1)
-#define FmtWidth		(1L<<2)
-#define FmtHeight		(1L<<3)
-#define FmtChromaKey		(1L<<4)
-#define FmtGlobalAlpha		(1L<<5)
+#define FmtWidth		(1L<<0)
+#define FmtHeight		(1L<<1)
+#define FmtChromaKey		(1L<<2)
+#define FmtGlobalAlpha		(1L<<3)
 
 /* crop specified */
 #define CropWidth		(1L<<0)
@@ -206,8 +214,18 @@ static struct option long_options[] = {
 	{"get-sliced-vbi-out-cap", no_argument, 0, OptGetSlicedVbiOutCap},
 	{"get-fbuf", no_argument, 0, OptGetFBuf},
 	{"set-fbuf", required_argument, 0, OptSetFBuf},
-	{"get-crop-video", no_argument, 0, OptGetVideoCrop},
-	{"set-crop-video", required_argument, 0, OptSetVideoCrop},
+	{"get-cropcap", no_argument, 0, OptGetCropCap},
+	{"get-crop", no_argument, 0, OptGetCrop},
+	{"set-crop", required_argument, 0, OptSetCrop},
+	{"get-cropcap-output", no_argument, 0, OptGetOutputCropCap},
+	{"get-crop-output", no_argument, 0, OptGetOutputCrop},
+	{"set-crop-output", required_argument, 0, OptSetOutputCrop},
+	{"get-cropcap-overlay", no_argument, 0, OptGetOverlayCropCap},
+	{"get-crop-overlay", no_argument, 0, OptGetOverlayCrop},
+	{"set-crop-overlay", required_argument, 0, OptSetOverlayCrop},
+	{"get-cropcap-output-overlay", no_argument, 0, OptGetOutputOverlayCropCap},
+	{"get-crop-output-overlay", no_argument, 0, OptGetOutputOverlayCrop},
+	{"set-crop-output-overlay", required_argument, 0, OptSetOutputOverlayCrop},
 	{0, 0, 0, 0}
 };
 
@@ -302,10 +320,26 @@ static void usage(void)
 	printf("  --get-fbuf         query the overlay framebuffer data [VIDIOC_G_FBUF]\n");
 	printf("  --set-fbuf=chromakey=<0/1>,global_alpha=<0/1>,local_alpha=<0/1>\n");
 	printf("		     set the overlay framebuffer [VIDIOC_S_FBUF]\n");
-	printf("  --get-crop-video\n");
-	printf("     		     query the video capture crop window [VIDIOC_G_CROP]\n");
-	printf("  --set-crop-video=top=<x>,left=<y>,width=<w>,height=<h>\n");
+	printf("  --get-cropcap      query the crop capabilities [VIDIOC_CROPCAP]\n");
+	printf("  --get-crop	     query the video capture crop window [VIDIOC_G_CROP]\n");
+	printf("  --set-crop=top=<x>,left=<y>,width=<w>,height=<h>\n");
 	printf("                     set the video capture crop window [VIDIOC_S_CROP]\n");
+	printf("  --get-cropcap-output\n");
+	printf("                     query the crop capabilities for video output [VIDIOC_CROPCAP]\n");
+	printf("  --get-crop-output  query the video output crop window [VIDIOC_G_CROP]\n");
+	printf("  --set-crop-output=top=<x>,left=<y>,width=<w>,height=<h>\n");
+	printf("                     set the video output crop window [VIDIOC_S_CROP]\n");
+	printf("  --get-cropcap-overlay\n");
+	printf("                     query the crop capabilities for video overlay [VIDIOC_CROPCAP]\n");
+	printf("  --get-crop-overlay query the video overlay crop window [VIDIOC_G_CROP]\n");
+	printf("  --set-crop-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n");
+	printf("                     set the video overlay crop window [VIDIOC_S_CROP]\n");
+	printf("  --get-cropcap-output-overlay\n");
+	printf("                     query the crop capabilities for video output overlays [VIDIOC_CROPCAP]\n");
+	printf("  --get-crop-output-overlay\n");
+	printf("                     query the video output overlay crop window [VIDIOC_G_CROP]\n");
+	printf("  --set-crop-output-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n");
+	printf("                     set the video output overlay crop window [VIDIOC_S_CROP]\n");
 	printf("  --get-audio-input  query the audio input [VIDIOC_G_AUDIO]\n");
 	printf("  --set-audio-input=<num>\n");
 	printf("                     set the audio input to <num> [VIDIOC_S_AUDIO]\n");
@@ -667,6 +701,17 @@ static void printcrop(const struct v4l2_crop &crop)
 			crop.c.left, crop.c.top, crop.c.width, crop.c.height);
 }
 
+static void printcropcap(const struct v4l2_cropcap &cropcap)
+{
+	printf("Crop Capability:\n");
+	printf("\tType          : %s\n", buftype2s(cropcap.type).c_str());
+	printf("\tBounds: Left %d, Top %d, Width %d, Height %d\n",
+			cropcap.bounds.left, cropcap.bounds.top, cropcap.bounds.width, cropcap.bounds.height);
+	printf("\tDefault: Left %d, Top %d, Width %d, Height %d\n",
+			cropcap.defrect.left, cropcap.defrect.top, cropcap.defrect.width, cropcap.defrect.height);
+	printf("\tPixel Aspect: %u/%u\n", cropcap.pixelaspect.numerator, cropcap.pixelaspect.denominator);
+}
+
 static int printfmt(struct v4l2_format vfmt)
 {
 	const flag_def vbi_def[] = {
@@ -686,14 +731,6 @@ static int printfmt(struct v4l2_format vfmt)
 		printf("\tBytes per Line: %u\n", vfmt.fmt.pix.bytesperline);
 		printf("\tSize Image    : %u\n", vfmt.fmt.pix.sizeimage);
 		printf("\tColorspace    : %s\n", colorspace2s(vfmt.fmt.pix.colorspace).c_str());
-#if 0
-		/* Comment out until ABI breakage is resolved */
-		if (vfmt.type == V4L2_BUF_TYPE_VIDEO_OUTPUT &&
-				(capabilities & V4L2_CAP_VIDEO_OUTPUT_POS)) {
-			printf("\tLeft/Top      : %d/%d\n",
-				vfmt.fmt.pix.left, vfmt.fmt.pix.top);
-		}
-#endif
 		if (vfmt.fmt.pix.priv)
 			printf("\tCustom Info   : %08x\n", vfmt.fmt.pix.priv);
 		break;
@@ -860,8 +897,6 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tSliced VBI Output\n";
 	if (cap & V4L2_CAP_RDS_CAPTURE)
 		s += "\t\tRDS Capture\n";
-	if (cap & V4L2_CAP_VIDEO_OUTPUT_POS)
-		s += "\t\tVideo Output Position\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
 	if (cap & V4L2_CAP_AUDIO)
@@ -1031,6 +1066,62 @@ static void print_std(const char *prefix, const char *stds[], unsigned long long
 	printf("\n");
 }
 
+static void do_crop(int fd, unsigned int set_crop, struct v4l2_rect &vcrop, v4l2_buf_type type)
+{
+    struct v4l2_crop in_crop;
+
+    in_crop.type = type;
+    if (ioctl(fd, VIDIOC_G_CROP, &in_crop) < 0)
+	fprintf(stderr, "ioctl: VIDIOC_G_CROP failed\n");
+    else {
+	if (set_crop & CropWidth)
+	    in_crop.c.width = vcrop.width;
+	if (set_crop & CropHeight)
+	    in_crop.c.height = vcrop.height;
+	if (set_crop & CropLeft)
+	    in_crop.c.left = vcrop.left;
+	if (set_crop & CropTop)
+	    in_crop.c.top = vcrop.top;
+	if (ioctl(fd, VIDIOC_S_CROP, &in_crop) < 0)
+	    fprintf(stderr, "ioctl: VIDIOC_S_CROP failed\n");
+    }
+}
+
+static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
+{
+    char *value;
+    char *subs = optarg;
+
+    while (*subs != '\0') {
+	static char *const subopts[] = {
+	    "left",
+	    "top",
+	    "width",
+	    "height",
+	    NULL
+	};
+
+	switch (parse_subopt(&subs, subopts, &value)) {
+	    case 0:
+		vcrop.left = strtol(value, 0L, 0);
+		set_crop |= CropLeft;
+		break;
+	    case 1:
+		vcrop.top = strtol(value, 0L, 0);
+		set_crop |= CropTop;
+		break;
+	    case 2:
+		vcrop.width = strtol(value, 0L, 0);
+		set_crop |= CropWidth;
+		break;
+	    case 3:
+		vcrop.height = strtol(value, 0L, 0);
+		set_crop |= CropHeight;
+		break;
+	}
+    }
+}
+
 int main(int argc, char **argv)
 {
 	char *value, *subs;
@@ -1042,6 +1133,9 @@ int main(int argc, char **argv)
 	unsigned int set_fmts = 0;
 	unsigned int set_fmts_out = 0;
 	unsigned int set_crop = 0;
+	unsigned int set_crop_out = 0;
+	unsigned int set_crop_overlay = 0;
+	unsigned int set_crop_out_overlay = 0;
 	unsigned int set_fbuf = 0;
 	unsigned int set_overlay_fmt_out = 0;
 
@@ -1064,6 +1158,9 @@ int main(int argc, char **argv)
 	struct v4l2_audio vaudio;	/* list audio inputs */
 	struct v4l2_audioout vaudout;   /* audio outputs */
 	struct v4l2_rect vcrop; 	/* crop rect */
+	struct v4l2_rect vcrop_out; 	/* crop rect */
+	struct v4l2_rect vcrop_overlay; 	/* crop rect */
+	struct v4l2_rect vcrop_out_overlay; 	/* crop rect */
 	struct v4l2_framebuffer fbuf;   /* fbuf */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
@@ -1088,6 +1185,9 @@ int main(int argc, char **argv)
 	memset(&vaudio, 0, sizeof(vaudio));
 	memset(&vaudout, 0, sizeof(vaudout));
 	memset(&vcrop, 0, sizeof(vcrop));
+	memset(&vcrop_out, 0, sizeof(vcrop_out));
+	memset(&vcrop_overlay, 0, sizeof(vcrop_overlay));
+	memset(&vcrop_out_overlay, 0, sizeof(vcrop_out_overlay));
 	memset(&vf, 0, sizeof(vf));
 	memset(&vs, 0, sizeof(vs));
 	memset(&fbuf, 0, sizeof(fbuf));
@@ -1150,30 +1250,17 @@ int main(int argc, char **argv)
 			subs = optarg;
 			while (*subs != '\0') {
 				static char *const subopts[] = {
-					"top",
-					"left",
 					"width",
 					"height",
 					NULL
 				};
 
 				switch (parse_subopt(&subs, subopts, &value)) {
-#if 0
-		/* Comment out until ABI breakage is resolved */
 				case 0:
-					vfmt_out.fmt.pix.top = strtol(value, 0L, 0);
-					set_fmts_out |= FmtTop;
-					break;
-				case 1:
-					vfmt_out.fmt.pix.left = strtol(value, 0L, 0);
-					set_fmts_out |= FmtLeft;
-					break;
-#endif
-				case 2:
 					vfmt_out.fmt.pix.width = strtol(value, 0L, 0);
 					set_fmts_out |= FmtWidth;
 					break;
-				case 3:
+				case 1:
 					vfmt_out.fmt.pix.height = strtol(value, 0L, 0);
 					set_fmts_out |= FmtHeight;
 					break;
@@ -1227,36 +1314,17 @@ int main(int argc, char **argv)
 				}
 			}
 			break;
-		case OptSetVideoCrop:
-			subs = optarg;
-			while (*subs != '\0') {
-				static char *const subopts[] = {
-					"left",
-					"top",
-					"width",
-					"height",
-					NULL
-				};
-
-				switch (parse_subopt(&subs, subopts, &value)) {
-				case 0:
-					vcrop.left = strtol(value, 0L, 0);
-					set_crop |= CropLeft;
-					break;
-				case 1:
-					vcrop.top = strtol(value, 0L, 0);
-					set_crop |= CropTop;
-					break;
-				case 2:
-					vcrop.width = strtol(value, 0L, 0);
-					set_crop |= CropWidth;
-					break;
-				case 3:
-					vcrop.height = strtol(value, 0L, 0);
-					set_crop |= CropHeight;
-					break;
-				}
-			}
+		case OptSetCrop:
+			parse_crop(optarg, set_crop, vcrop);
+			break;
+		case OptSetOutputCrop:
+			parse_crop(optarg, set_crop_out, vcrop_out);
+			break;
+		case OptSetOverlayCrop:
+			parse_crop(optarg, set_crop_overlay, vcrop_overlay);
+			break;
+		case OptSetOutputOverlayCrop:
+			parse_crop(optarg, set_crop_out_overlay, vcrop_out_overlay);
 			break;
 		case OptSetInput:
 			input = strtol(optarg, 0L, 0);
@@ -1434,7 +1502,7 @@ int main(int argc, char **argv)
 
 	if (options[OptAll]) {
 		options[OptGetVideoFormat] = 1;
-		options[OptGetVideoCrop] = 1;
+		options[OptGetCrop] = 1;
 		options[OptGetVideoOutFormat] = 1;
 		options[OptGetDriverInfo] = 1;
 		options[OptGetInput] = 1;
@@ -1451,6 +1519,8 @@ int main(int argc, char **argv)
 		options[OptGetSlicedVbiFormat] = 1;
 		options[OptGetSlicedVbiOutFormat] = 1;
 		options[OptGetFBuf] = 1;
+		options[OptGetCropCap] = 1;
+		options[OptGetOutputCropCap] = 1;
 	}
 
 	/* Information Opts */
@@ -1558,13 +1628,6 @@ int main(int argc, char **argv)
 		if (ioctl(fd, VIDIOC_G_FMT, &in_vfmt) < 0)
 			fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
 		else {
-#if 0
-		/* Comment out until ABI breakage is resolved */
-			if (set_fmts_out & FmtTop)
-				in_vfmt.fmt.pix.top = vfmt_out.fmt.pix.top;
-			if (set_fmts_out & FmtLeft)
-				in_vfmt.fmt.pix.left = vfmt_out.fmt.pix.left;
-#endif
 			if (set_fmts_out & FmtWidth)
 				in_vfmt.fmt.pix.width = vfmt_out.fmt.pix.width;
 			if (set_fmts_out & FmtHeight)
@@ -1626,24 +1689,20 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (options[OptSetVideoCrop]) {
-		struct v4l2_crop in_crop;
+	if (options[OptSetCrop]) {
+		do_crop(fd, set_crop, vcrop, V4L2_BUF_TYPE_VIDEO_CAPTURE);
+	}
 
-		in_crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		if (ioctl(fd, VIDIOC_G_CROP, &in_crop) < 0)
-			fprintf(stderr, "ioctl: VIDIOC_G_CROP failed\n");
-		else {
-			if (set_crop & CropWidth)
-				in_crop.c.width = vcrop.width;
-			if (set_crop & CropHeight)
-				in_crop.c.height = vcrop.height;
-			if (set_crop & CropLeft)
-				in_crop.c.left = vcrop.left;
-			if (set_crop & CropTop)
-				in_crop.c.top = vcrop.top;
-			if (ioctl(fd, VIDIOC_S_CROP, &in_crop) < 0)
-				fprintf(stderr, "ioctl: VIDIOC_S_CROP failed\n");
-		}
+	if (options[OptSetOutputCrop]) {
+		do_crop(fd, set_crop_out, vcrop_out, V4L2_BUF_TYPE_VIDEO_OUTPUT);
+	}
+
+	if (options[OptSetOverlayCrop]) {
+		do_crop(fd, set_crop_overlay, vcrop_overlay, V4L2_BUF_TYPE_VIDEO_OVERLAY);
+	}
+
+	if (options[OptSetOutputOverlayCrop]) {
+		do_crop(fd, set_crop_out_overlay, vcrop_out_overlay, V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY);
 	}
 
 	if (options[OptSetCtrl] && !set_ctrls.empty()) {
@@ -1765,10 +1824,66 @@ int main(int argc, char **argv)
 			printfbuf(fb);
 	}
 
-	if (options[OptGetVideoCrop]) {
+	if (options[OptGetCropCap]) {
+		struct v4l2_cropcap cropcap;
+
+		cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (doioctl(fd, VIDIOC_CROPCAP, &cropcap, "VIDIOC_CROPCAP") == 0)
+			printcropcap(cropcap);
+	}
+
+	if (options[OptGetOutputCropCap]) {
+		struct v4l2_cropcap cropcap;
+
+		cropcap.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+		if (doioctl(fd, VIDIOC_CROPCAP, &cropcap, "VIDIOC_CROPCAP") == 0)
+			printcropcap(cropcap);
+	}
+
+	if (options[OptGetOverlayCropCap]) {
+		struct v4l2_cropcap cropcap;
+
+		cropcap.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
+		if (doioctl(fd, VIDIOC_CROPCAP, &cropcap, "VIDIOC_CROPCAP") == 0)
+			printcropcap(cropcap);
+	}
+
+	if (options[OptGetOutputOverlayCropCap]) {
+		struct v4l2_cropcap cropcap;
+
+		cropcap.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY;
+		if (doioctl(fd, VIDIOC_CROPCAP, &cropcap, "VIDIOC_CROPCAP") == 0)
+			printcropcap(cropcap);
+	}
+
+	if (options[OptGetCrop]) {
 		struct v4l2_crop crop;
 
 		crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (doioctl(fd, VIDIOC_G_CROP, &crop, "VIDIOC_G_CROP") == 0)
+			printcrop(crop);
+	}
+
+	if (options[OptGetOutputCrop]) {
+		struct v4l2_crop crop;
+
+		crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+		if (doioctl(fd, VIDIOC_G_CROP, &crop, "VIDIOC_G_CROP") == 0)
+			printcrop(crop);
+	}
+
+	if (options[OptGetOverlayCrop]) {
+		struct v4l2_crop crop;
+
+		crop.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
+		if (doioctl(fd, VIDIOC_G_CROP, &crop, "VIDIOC_G_CROP") == 0)
+			printcrop(crop);
+	}
+
+	if (options[OptGetOutputOverlayCrop]) {
+		struct v4l2_crop crop;
+
+		crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY;
 		if (doioctl(fd, VIDIOC_G_CROP, &crop, "VIDIOC_G_CROP") == 0)
 			printcrop(crop);
 	}
