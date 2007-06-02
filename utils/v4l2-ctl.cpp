@@ -293,7 +293,7 @@ static void usage(void)
 	printf("Uncommon options:\n");
 	printf("  --get-fmt-video-out\n");
 	printf("     		     query the video output format [VIDIOC_G_FMT]\n");
-	printf("  --set-fmt-video-out=left=<x>,top=<y>,width=<w>,height=<h>\n");
+	printf("  --set-fmt-video-out=width=<w>,height=<h>\n");
 	printf("                     set the video output format [VIDIOC_S_FMT]\n");
 	printf("  --get-fmt-overlay\n");
 	printf("     		     query the video overlay format [VIDIOC_G_FMT]\n");
@@ -642,18 +642,18 @@ static std::string fbufcap2s(unsigned cap)
 	std::string s;
 
 	if (cap & V4L2_FBUF_CAP_EXTERNOVERLAY)
-		s += "\t\tExtern Overlay\n";
+		s += "\t\t\tExtern Overlay\n";
 	if (cap & V4L2_FBUF_CAP_CHROMAKEY)
-		s += "\t\tChromakey\n";
+		s += "\t\t\tChromakey\n";
 	if (cap & V4L2_FBUF_CAP_GLOBAL_ALPHA)
-		s += "\t\tGlobal Alpha\n";
+		s += "\t\t\tGlobal Alpha\n";
 	if (cap & V4L2_FBUF_CAP_LOCAL_ALPHA)
-		s += "\t\tLocal Alpha\n";
+		s += "\t\t\tLocal Alpha\n";
 	if (cap & V4L2_FBUF_CAP_LIST_CLIPPING)
-		s += "\t\tClipping List\n";
+		s += "\t\t\tClipping List\n";
 	if (cap & V4L2_FBUF_CAP_BITMAP_CLIPPING)
-		s += "\t\tClipping Bitmap\n";
-	if (s.empty()) s += "\t\t\n";
+		s += "\t\t\tClipping Bitmap\n";
+	if (s.empty()) s += "\t\t\t\n";
 	return s;
 }
 
@@ -662,16 +662,16 @@ static std::string fbufflags2s(unsigned fl)
 	std::string s;
 
 	if (fl & V4L2_FBUF_FLAG_PRIMARY)
-		s += "\t\tPrimary Graphics Surface\n";
+		s += "\t\t\tPrimary Graphics Surface\n";
 	if (fl & V4L2_FBUF_FLAG_OVERLAY)
-		s += "\t\tOverlay Matches Capture/Output Size\n";
+		s += "\t\t\tOverlay Matches Capture/Output Size\n";
 	if (fl & V4L2_FBUF_FLAG_CHROMAKEY)
-		s += "\t\tChromakey\n";
+		s += "\t\t\tChromakey\n";
 	if (fl & V4L2_FBUF_FLAG_GLOBAL_ALPHA)
-		s += "\t\tGlobal Alpha\n";
+		s += "\t\t\tGlobal Alpha\n";
 	if (fl & V4L2_FBUF_FLAG_LOCAL_ALPHA)
-		s += "\t\tLocal Alpha\n";
-	if (s.empty()) s += "\t\t\n";
+		s += "\t\t\tLocal Alpha\n";
+	if (s.empty()) s += "\t\t\t\n";
 	return s;
 }
 
@@ -679,19 +679,20 @@ static void printfbuf(const struct v4l2_framebuffer &fb)
 {
 	int is_ext = fb.capability & V4L2_FBUF_CAP_EXTERNOVERLAY;
 
-	printf("Capability    : %s", fbufcap2s(fb.capability).c_str() + 2);
-	printf("Flags         : %s", fbufflags2s(fb.flags).c_str() + 2);
+	printf("Framebuffer Format:\n");
+	printf("\tCapability    : %s", fbufcap2s(fb.capability).c_str() + 3);
+	printf("\tFlags         : %s", fbufflags2s(fb.flags).c_str() + 3);
 	if (fb.base)
-		printf("Base          : 0x%p\n", fb.base);
-	printf("Width         : %d\n", fb.fmt.width);
-	printf("Height        : %d\n", fb.fmt.height);
-	printf("Pixel Format  : %s\n", fcc2s(fb.fmt.pixelformat).c_str());
+		printf("\tBase          : 0x%p\n", fb.base);
+	printf("\tWidth         : %d\n", fb.fmt.width);
+	printf("\tHeight        : %d\n", fb.fmt.height);
+	printf("\tPixel Format  : %s\n", fcc2s(fb.fmt.pixelformat).c_str());
 	if (!is_ext) {
-		printf("Bytes per Line: %d\n", fb.fmt.bytesperline);
-		printf("Size image    : %d\n", fb.fmt.sizeimage);
-		printf("Colorspace    : %s\n", colorspace2s(fb.fmt.colorspace).c_str());
+		printf("\tBytes per Line: %d\n", fb.fmt.bytesperline);
+		printf("\tSize image    : %d\n", fb.fmt.sizeimage);
+		printf("\tColorspace    : %s\n", colorspace2s(fb.fmt.colorspace).c_str());
 		if (fb.fmt.priv)
-			printf("Custom Info   : %08x\n", fb.fmt.priv);
+			printf("\tCustom Info   : %08x\n", fb.fmt.priv);
 	}
 }
 
@@ -703,11 +704,10 @@ static void printcrop(const struct v4l2_crop &crop)
 
 static void printcropcap(const struct v4l2_cropcap &cropcap)
 {
-	printf("Crop Capability:\n");
-	printf("\tType          : %s\n", buftype2s(cropcap.type).c_str());
-	printf("\tBounds: Left %d, Top %d, Width %d, Height %d\n",
+	printf("Crop Capability %s:\n", buftype2s(cropcap.type).c_str());
+	printf("\tBounds      : Left %d, Top %d, Width %d, Height %d\n",
 			cropcap.bounds.left, cropcap.bounds.top, cropcap.bounds.width, cropcap.bounds.height);
-	printf("\tDefault: Left %d, Top %d, Width %d, Height %d\n",
+	printf("\tDefault     : Left %d, Top %d, Width %d, Height %d\n",
 			cropcap.defrect.left, cropcap.defrect.top, cropcap.defrect.width, cropcap.defrect.height);
 	printf("\tPixel Aspect: %u/%u\n", cropcap.pixelaspect.numerator, cropcap.pixelaspect.denominator);
 }
@@ -719,12 +719,11 @@ static int printfmt(struct v4l2_format vfmt)
 		{ V4L2_VBI_INTERLACED, "interlaced" },
 		{ 0, NULL }
 	};
-	printf("Format:\n");
+	printf("Format %s:\n", buftype2s(vfmt.type).c_str());
 
 	switch (vfmt.type) {
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-		printf("\tType          : %s\n", buftype2s(vfmt.type).c_str());
 		printf("\tWidth/Height  : %u/%u\n", vfmt.fmt.pix.width, vfmt.fmt.pix.height);
 		printf("\tPixel Format  : %s\n", fcc2s(vfmt.fmt.pix.pixelformat).c_str());
 		printf("\tField         : %s\n", field2s(vfmt.fmt.pix.field).c_str());
@@ -736,7 +735,6 @@ static int printfmt(struct v4l2_format vfmt)
 		break;
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
-		printf("\tType        : %s\n", buftype2s(vfmt.type).c_str());
 		printf("\tLeft/Top    : %d/%d\n",
 				vfmt.fmt.win.w.left, vfmt.fmt.win.w.top);
 		printf("\tWidth/Height: %d/%d\n",
@@ -749,7 +747,6 @@ static int printfmt(struct v4l2_format vfmt)
 		break;
 	case V4L2_BUF_TYPE_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_VBI_OUTPUT:
-		printf("\tType            : %s\n", buftype2s(vfmt.type).c_str());
 		printf("\tSampling Rate   : %u Hz\n", vfmt.fmt.vbi.sampling_rate);
 		printf("\tOffset          : %u samples (%g secs after leading edge)\n",
 				vfmt.fmt.vbi.offset,
@@ -765,7 +762,6 @@ static int printfmt(struct v4l2_format vfmt)
 		break;
 	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
-		printf("\tType           : %s\n", buftype2s(vfmt.type).c_str());
 		printf("\tService Set    : %s\n",
 				flags2s(vfmt.fmt.sliced.service_set, service_def).c_str());
 		for (int i = 0; i < 24; i++) {
@@ -776,10 +772,8 @@ static int printfmt(struct v4l2_format vfmt)
 		printf("\tI/O Size       : %u\n", vfmt.fmt.sliced.io_size);
 		break;
 	case V4L2_BUF_TYPE_PRIVATE:
-		printf("\tType: %s\n", buftype2s(vfmt.type).c_str());
 		break;
 	default:
-		printf("\tType: %s\n", buftype2s(vfmt.type).c_str());
 		return -1;
 	}
 	return 0;
@@ -1526,7 +1520,7 @@ int main(int argc, char **argv)
 	/* Information Opts */
 
 	if (options[OptGetDriverInfo]) {
-		printf("Driver info:\n");
+		printf("Driver Info:\n");
 		printf("\tDriver name   : %s\n", vcap.driver);
 		printf("\tCard type     : %s\n", vcap.card);
 		printf("\tBus info      : %s\n", vcap.bus_info);
@@ -1951,7 +1945,7 @@ int main(int argc, char **argv)
 				NULL
 			};
 
-			printf("Video standard = 0x%08llx\n", (unsigned long long)std);
+			printf("Video Standard = 0x%08llx\n", (unsigned long long)std);
 			if (std & 0xfff) {
 				print_std("PAL", pal, std);
 			}
