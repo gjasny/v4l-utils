@@ -318,7 +318,8 @@ static void usage(void)
 	printf("  --get-fmt-vbi      query the VBI capture format [VIDIOC_G_FMT]\n");
 	printf("  --get-fmt-vbi-out  query the VBI output format [VIDIOC_G_FMT]\n");
 	printf("  --get-fbuf         query the overlay framebuffer data [VIDIOC_G_FBUF]\n");
-	printf("  --set-fbuf=chromakey=<0/1>,global_alpha=<0/1>,local_alpha=<0/1>\n");
+	printf("  --set-fbuf=chromakey=<0/1>,global_alpha=<0/1>,local_alpha=<0/1>,\n");
+	printf("             global_inv_alpha=<0/1>,local_inv_alpha=<0/1>\n");
 	printf("		     set the overlay framebuffer [VIDIOC_S_FBUF]\n");
 	printf("  --get-cropcap      query the crop capabilities [VIDIOC_CROPCAP]\n");
 	printf("  --get-crop	     query the video capture crop window [VIDIOC_G_CROP]\n");
@@ -649,6 +650,10 @@ static std::string fbufcap2s(unsigned cap)
 		s += "\t\t\tGlobal Alpha\n";
 	if (cap & V4L2_FBUF_CAP_LOCAL_ALPHA)
 		s += "\t\t\tLocal Alpha\n";
+	if (cap & V4L2_FBUF_CAP_GLOBAL_INV_ALPHA)
+		s += "\t\t\tGlobal Inverted Alpha\n";
+	if (cap & V4L2_FBUF_CAP_LOCAL_INV_ALPHA)
+		s += "\t\t\tLocal Inverted Alpha\n";
 	if (cap & V4L2_FBUF_CAP_LIST_CLIPPING)
 		s += "\t\t\tClipping List\n";
 	if (cap & V4L2_FBUF_CAP_BITMAP_CLIPPING)
@@ -671,6 +676,10 @@ static std::string fbufflags2s(unsigned fl)
 		s += "\t\t\tGlobal Alpha\n";
 	if (fl & V4L2_FBUF_FLAG_LOCAL_ALPHA)
 		s += "\t\t\tLocal Alpha\n";
+	if (fl & V4L2_FBUF_FLAG_GLOBAL_INV_ALPHA)
+		s += "\t\t\tGlobal Inverted Alpha\n";
+	if (fl & V4L2_FBUF_FLAG_LOCAL_INV_ALPHA)
+		s += "\t\t\tLocal Inverted Alpha\n";
 	if (s.empty()) s += "\t\t\t\n";
 	return s;
 }
@@ -1289,6 +1298,8 @@ int main(int argc, char **argv)
 					"chromakey",
 					"global_alpha",
 					"local_alpha",
+					"global_inv_alpha",
+					"local_inv_alpha",
 					NULL
 				};
 
@@ -1304,6 +1315,14 @@ int main(int argc, char **argv)
 				case 2:
 					fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_LOCAL_ALPHA : 0;
 					set_fbuf |= V4L2_FBUF_FLAG_LOCAL_ALPHA;
+					break;
+				case 3:
+					fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_GLOBAL_INV_ALPHA : 0;
+					set_fbuf |= V4L2_FBUF_FLAG_GLOBAL_INV_ALPHA;
+					break;
+				case 4:
+					fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_LOCAL_INV_ALPHA : 0;
+					set_fbuf |= V4L2_FBUF_FLAG_LOCAL_INV_ALPHA;
 					break;
 				}
 			}
