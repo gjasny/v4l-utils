@@ -8,6 +8,7 @@ binaries = ioctl-test 		\
 	   vbi-test 		\
 	   v4lgrab		\
 	   driver-test		\
+	   pixfmt-test		\
 	   capture_example
 
 .PHONY: all clean install
@@ -23,5 +24,8 @@ install:
 	make -C ../lib libv4l2.a
 
 driver-test: driver-test.o ../lib/libv4l2.a
+
+pixfmt-test: pixfmt-test.o
+	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@ -lX11
 
 include ../Make.rules
