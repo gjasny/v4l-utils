@@ -41,6 +41,8 @@ GeneralTab::GeneralTab(int _fd, int n, QWidget *parent) :
 
 	memset(&tuner, 0, sizeof(tuner));
 	ioctl(fd, VIDIOC_G_TUNER, &tuner);
+	if (tuner.rangehigh>INT_MAX)
+		tuner.rangehigh=INT_MAX;
 
 	struct v4l2_input vin;
 	memset(&vin, 0, sizeof(vin));
