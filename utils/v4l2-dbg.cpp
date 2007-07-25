@@ -358,7 +358,7 @@ int main(int argc, char **argv)
 					get_reg.match_type = parse_type(value);
 					break;
 				case 1:
-					get_reg.match_chip = parse_chip(set_reg.match_type, value);
+					get_reg.match_chip = parse_chip(get_reg.match_type, value);
 					break;
 				case 2:
 					reg_min = strtoull(value, 0L, 0);
@@ -384,7 +384,7 @@ int main(int argc, char **argv)
 					chip_id.match_type = parse_type(value);
 					break;
 				case 1:
-					chip_id.match_chip = parse_chip(set_reg.match_type, value);
+					chip_id.match_chip = parse_chip(chip_id.match_type, value);
 					break;
 				}
 			}
