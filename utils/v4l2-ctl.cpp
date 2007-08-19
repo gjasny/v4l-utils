@@ -117,6 +117,7 @@ enum Option {
 	OptGetOutputCropCap,
 	OptGetOverlayCropCap,
 	OptGetOutputOverlayCropCap,
+	OptOverlay,
 	OptLast = 256
 };
 
@@ -226,6 +227,7 @@ static struct option long_options[] = {
 	{"get-cropcap-output-overlay", no_argument, 0, OptGetOutputOverlayCropCap},
 	{"get-crop-output-overlay", no_argument, 0, OptGetOutputOverlayCrop},
 	{"set-crop-output-overlay", required_argument, 0, OptSetOutputOverlayCrop},
+	{"overlay", required_argument, 0, OptOverlay},
 	{0, 0, 0, 0}
 };
 
@@ -317,6 +319,7 @@ static void usage(void)
 	printf("                     vps:      VPS (PAL/SECAM)\n");
 	printf("  --get-fmt-vbi      query the VBI capture format [VIDIOC_G_FMT]\n");
 	printf("  --get-fmt-vbi-out  query the VBI output format [VIDIOC_G_FMT]\n");
+	printf("  --overlay=<on>     turn overlay on (1) or off (0) (VIDIOC_OVERLAY)\n");
 	printf("  --get-fbuf         query the overlay framebuffer data [VIDIOC_G_FBUF]\n");
 	printf("  --set-fbuf=chromakey=<0/1>,global_alpha=<0/1>,local_alpha=<0/1>,local_inv_alpha=<0/1>\n");
 	printf("		     set the overlay framebuffer [VIDIOC_S_FBUF]\n");
@@ -1166,6 +1169,7 @@ int main(int argc, char **argv)
 	double freq = 0;		/* get/set frequency */
 	struct v4l2_frequency vf;	/* get_freq/set_freq */
 	struct v4l2_standard vs;	/* list_std */
+	int overlay;			/* overlay */
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
 
@@ -1316,6 +1320,9 @@ int main(int argc, char **argv)
 					break;
 				}
 			}
+			break;
+		case OptOverlay:
+			overlay = strtol(optarg, 0L, 0);
 			break;
 		case OptSetCrop:
 			parse_crop(optarg, set_crop, vcrop);
@@ -1690,6 +1697,10 @@ int main(int argc, char **argv)
 			if (ioctl(fd, VIDIOC_S_FBUF, &fb) < 0)
 				fprintf(stderr, "ioctl: VIDIOC_S_FBUF failed\n");
 		}
+	}
+
+	if (options[OptOverlay]) {
+		doioctl(fd, VIDIOC_OVERLAY, &overlay, "VIDIOC_OVERLAY");
 	}
 
 	if (options[OptSetCrop]) {
