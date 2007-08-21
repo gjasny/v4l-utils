@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <argp.h>
+#include <unistd.h>
 
 const char *argp_program_version="decode_tm6000 version 0.0.1";
 const char *argp_program_bug_address="Mauro Carvalho Chehab <mchehab@infradead.org>";
@@ -30,10 +31,11 @@ const struct argp_option options[] = {
 	{"output",	'o',	"FILE",	0,	"outputs raw stream to a file", 0},
 	{"input",	'i',	"FILE",	0,	"parses a file, instead of a device", 0},
 	{"audio",	'a',	0,	0,	"outputs audio on stdout", 0},
+	{"read",	'r',	0,	0,	"use read() instead of mmap method", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
-static int debug=0, audio=0;
+static int debug=0, audio=0, use_mmap=1;
 static char *devname="/dev/video0";
 static char *filename=NULL;
 static enum {
@@ -42,6 +44,8 @@ static enum {
 	OUTPUT
 } mode = NORMAL;
 
+static FILE *fout;
+
 //const char args_doc[]="ARG1 ARG2";
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
@@ -49,6 +53,9 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
 	switch (key) {
 	case 'a':
 		audio++;
+		break;
+	case 'r':
+		use_mmap=0;
 		break;
 	case 'v':
 		debug++;
@@ -105,6 +112,61 @@ const char *tm6000_msg_type[]= {
 #define dprintf(fmt,arg...) \
 	if (debug) fprintf(stderr, fmt, ##arg)
 
+int recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf)
+{
+	fwrite (buf->start,buf->length,1,fout);
+	return 0;
+}
+
+
+int read_mmap(struct v4l2_driver *drv)
+{
+	double freq;
+
+	freq=193.25 * 1000 * 1000;
+	v4l2_getset_freq (drv,V4L2_SET, &freq);
+
+	printf("Preparing for frames...\n");
+	fflush (stdout);
+	sleep(1);
+
+	v4l2_mmap_bufs(drv, 2);
+
+	v4l2_start_streaming(drv);
+
+	printf("Waiting for frames...\n");
+	while (1) {
+		fd_set fds;
+		struct timeval tv;
+		int r;
+
+		FD_ZERO (&fds);
+		FD_SET (drv->fd, &fds);
+
+		/* Timeout. */
+		tv.tv_sec = 2;
+		tv.tv_usec = 0;
+
+		r = select (drv->fd + 1, &fds, NULL, NULL, &tv);
+		if (-1 == r) {
+			if (EINTR == errno)
+
+			perror ("select");
+			return errno;
+		}
+
+		if (0 == r) {
+			fprintf (stderr, "select timeout\n");
+			return errno;
+		}
+
+		if (v4l2_rcvbuf(drv, recebe_buffer))
+			break;
+	}
+	return 0;
+}
+
+
 int main (int argc, char*argv[])
 {
 	FILE *fp;
@@ -150,7 +212,6 @@ int main (int argc, char*argv[])
 
 	if (mode==OUTPUT) {
 		char outbuf[2<<18];
-		FILE *fout;
 
 		fout=fopen(filename,"w");
 		if (!fout) {
@@ -158,6 +219,11 @@ int main (int argc, char*argv[])
 			return -1;
 		}
 		dprintf("file %s opened for output\n",filename);
+
+		if (use_mmap) {
+			return (read_mmap(&drv));
+		}
+
 		do {
 			size=fread(outbuf,1, sizeof(outbuf), fp);
 			if (!size) {
