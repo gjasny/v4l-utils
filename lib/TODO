@@ -64,8 +64,6 @@ Missing V4L2 ioctls to be implemented at library:
 	Those are unlikely to be implemented at API (legacy stuff, debug stuff or private):
 		VIDIOC_G_JPEGCOMP
 		VIDIOC_S_JPEGCOMP
-		VIDIOC_G_MPEGCOMP
-		VIDIOC_S_MPEGCOMP
 		VIDIOC_LOG_STATUS
 		VIDIOC_PRIVATE
 		VIDIOC_RESERVED
