@@ -268,10 +268,6 @@ static void usage(void)
 	printf("  -O, --get-output   query the video output [VIDIOC_G_OUTPUT]\n");
 	printf("  -o, --set-output=<num>\n");
 	printf("                     set the video output to <num> [VIDIOC_S_OUTPUT]\n");
-	printf("  -Q, --list-audio-outputs\n");
-	printf("                     display audio outputs [VIDIOC_ENUMAUDOUT]\n");
-	printf("  -q, --list-audio-inputs\n");
-	printf("                     display audio inputs [VIDIOC_ENUMAUDIO]\n");
 	printf("  -S, --get-standard\n");
 	printf("                     query the video standard [VIDIOC_G_STD]\n");
 	printf("  -s, --set-standard=<num>\n");
