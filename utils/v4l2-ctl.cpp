@@ -509,7 +509,7 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 				ctrl->value);
 		break;
 	case V4L2_CTRL_TYPE_INTEGER64:
-		printf("%31s (int64): value=%lld", queryctrl->name, ctrl->value64);
+		printf("%31s (int64): value=%lld", s.c_str(), ctrl->value64);
 		break;
 	case V4L2_CTRL_TYPE_BOOLEAN:
 		printf("%31s (bool) : default=%d value=%d",
