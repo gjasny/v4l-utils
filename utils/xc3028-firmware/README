@@ -1,0 +1,3 @@
+Firmware dumps must be in ASCII format and each line corresponds to an I2C instruction sent to the chip. Each line
+must either be a special instruction like RESET_CLK, RESET_TUNER (see standards.c) or be a sequence of bytes
+represented in hexadecimal format xx separated by a space character ' '.

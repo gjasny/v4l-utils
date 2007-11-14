@@ -12,6 +12,7 @@ clean::
 	rm -f $(binaries) v4l2-driverids.cpp v4l2-chipids.cpp
 	-if [ -f qv4l2/Makefile ]; then make -C qv4l2 $@; fi
 	-rm -f qv4l2/qv4l2 qv4l2/Makefile
+	make -C xc3028-firmware $@
 
 qv4l2:
 	if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; qmake); fi
