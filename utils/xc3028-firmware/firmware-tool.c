@@ -28,6 +28,8 @@
 #include <asm/byteorder.h>
 #include <asm/types.h>
 
+#include "../../../linux/drivers/media/video/tuner-xc2028-types.h"
+
 #include "standards.h"
 
 #define LIST_ACTION		(1<<0)
@@ -277,6 +279,67 @@ void write_firmware_file(const char* filename, struct firmware *f) {
 	close(fd);
 }
 
+void dump_firm_type(unsigned int type)
+{
+	 if (type & BASE)
+		printf("BASE ");
+	 if (type & F8MHZ)
+		printf("F8MHZ ");
+	 if (type & MTS)
+		printf("MTS ");
+	 if (type & D2620)
+		printf("D2620 ");
+	 if (type & D2633)
+		printf("D2633 ");
+	 if (type & DTV6)
+		printf("DTV6 ");
+	 if (type & QAM)
+		printf("QAM ");
+	 if (type & DTV7)
+		printf("DTV7 ");
+	 if (type & DTV78)
+		printf("DTV78 ");
+	 if (type & DTV8)
+		printf("DTV8 ");
+	 if (type & FM)
+		printf("FM ");
+	 if (type & INPUT1)
+		printf("INPUT1 ");
+	 if (type & LCD)
+		printf("LCD ");
+	 if (type & NOGD)
+		printf("NOGD ");
+	 if (type & MONO)
+		printf("MONO ");
+	 if (type & ATSC)
+		printf("ATSC ");
+	 if (type & IF)
+		printf("IF ");
+	 if (type & LG60)
+		printf("LG60 ");
+	 if (type & ATI638)
+		printf("ATI638 ");
+	 if (type & OREN538)
+		printf("OREN538 ");
+	 if (type & OREN36)
+		printf("OREN36 ");
+	 if (type & TOYOTA388)
+		printf("TOYOTA388 ");
+	 if (type & TOYOTA794)
+		printf("TOYOTA794 ");
+	 if (type & DIBCOM52)
+		printf("DIBCOM52 ");
+	 if (type & ZARLINK456)
+		printf("ZARLINK456 ");
+	 if (type & CHINA)
+		printf("CHINA ");
+	 if (type & F6MHZ)
+		printf("F6MHZ ");
+	 if (type & INPUT2)
+		printf("INPUT2 ");
+	 if (type & SCODE)
+		printf("SCODE ");
+}
 
 void list_firmware(struct firmware *f) {
 	unsigned int i = 0;
@@ -288,8 +351,10 @@ void list_firmware(struct firmware *f) {
 	for(i = 0; i < f->nr_desc; ++i) {
 		printf("\n");
 		printf("standard firmware %u\n", i);
-		printf("type:\t%u\n", f->desc[i].type);
-		printf("id:\t%llu\n", f->desc[i].id);
+		printf("type:\t");
+		dump_firm_type(f->desc[i].type);
+		printf("(0x%08x)\n", f->desc[i].type);
+		printf("id:\t%016llx\n", f->desc[i].id);
 		printf("size:\t%u\n", f->desc[i].size);
 	}
 }
