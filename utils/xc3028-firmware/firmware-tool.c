@@ -29,6 +29,7 @@
 #include <asm/types.h>
 
 #include "../../../linux/drivers/media/video/tuner-xc2028-types.h"
+#include "../../../linux/include/linux/videodev2.h"
 
 #include "standards.h"
 
@@ -341,6 +342,144 @@ void dump_firm_type(unsigned int type)
 		printf("SCODE ");
 }
 
+void dump_firm_std(v4l2_std_id id)
+{
+	v4l2_std_id old=-1, curr_id;
+
+	/* Dumps video standards */
+	while (old!=id) {
+		old=id;
+		if ( (id & V4L2_STD_PAL) == V4L2_STD_PAL) {
+			printf ("PAL ");
+			curr_id = V4L2_STD_PAL;
+		} else if ( (id & V4L2_STD_MN) == V4L2_STD_MN) {
+			printf ("NTSC PAL/M PAL/N ");
+			curr_id = V4L2_STD_PAL;
+		} else if ( (id & V4L2_STD_PAL_BG) == V4L2_STD_PAL_BG) {
+			printf ("PAL/BG ");
+			curr_id = V4L2_STD_PAL_BG;
+		} else if ( (id & V4L2_STD_PAL_DK) == V4L2_STD_PAL_DK) {
+			printf ("PAL/DK ");
+			curr_id = V4L2_STD_PAL_DK;
+		} else if ( (id & V4L2_STD_PAL_B) == V4L2_STD_PAL_B) {
+			printf ("PAL/B ");
+			curr_id = V4L2_STD_PAL_B;
+		} else if ( (id & V4L2_STD_PAL_B1) == V4L2_STD_PAL_B1) {
+			printf ("PAL/B1 ");
+			curr_id = V4L2_STD_PAL_B1;
+		} else if ( (id & V4L2_STD_PAL_G) == V4L2_STD_PAL_G) {
+			printf ("PAL/G ");
+			curr_id = V4L2_STD_PAL_G;
+		} else if ( (id & V4L2_STD_PAL_H) == V4L2_STD_PAL_H) {
+			printf ("PAL/H ");
+			curr_id = V4L2_STD_PAL_H;
+		} else if ( (id & V4L2_STD_PAL_I) == V4L2_STD_PAL_I) {
+			printf ("PAL/I ");
+			curr_id = V4L2_STD_PAL_I;
+		} else if ( (id & V4L2_STD_PAL_D) == V4L2_STD_PAL_D) {
+			printf ("PAL/D ");
+			curr_id = V4L2_STD_PAL_D;
+		} else if ( (id & V4L2_STD_PAL_D1) == V4L2_STD_PAL_D1) {
+			printf ("PAL/D1 ");
+			curr_id = V4L2_STD_PAL_D1;
+		} else if ( (id & V4L2_STD_PAL_K) == V4L2_STD_PAL_K) {
+			printf ("PAL/K ");
+			curr_id = V4L2_STD_PAL_K;
+		} else if ( (id & V4L2_STD_PAL_M) == V4L2_STD_PAL_M) {
+			printf ("PAL/M ");
+			curr_id = V4L2_STD_PAL_M;
+		} else if ( (id & V4L2_STD_PAL_N) == V4L2_STD_PAL_N) {
+			printf ("PAL/N ");
+			curr_id = V4L2_STD_PAL_N;
+		} else if ( (id & V4L2_STD_PAL_Nc) == V4L2_STD_PAL_Nc) {
+			printf ("PAL/Nc ");
+			curr_id = V4L2_STD_PAL_Nc;
+		} else if ( (id & V4L2_STD_PAL_60) == V4L2_STD_PAL_60) {
+			printf ("PAL/60 ");
+			curr_id = V4L2_STD_PAL_60;
+		} else if ( (id & V4L2_STD_NTSC) == V4L2_STD_NTSC) {
+			printf ("NTSC ");
+			curr_id = V4L2_STD_NTSC;
+		} else if ( (id & V4L2_STD_NTSC_M) == V4L2_STD_NTSC_M) {
+			printf ("NTSC/M ");
+			curr_id = V4L2_STD_NTSC_M;
+		} else if ( (id & V4L2_STD_NTSC_M_JP) == V4L2_STD_NTSC_M_JP) {
+			printf ("NTSC/M Jp ");
+			curr_id = V4L2_STD_NTSC_M_JP;
+		} else if ( (id & V4L2_STD_NTSC_443) == V4L2_STD_NTSC_443) {
+			printf ("NTSC 443 ");
+			curr_id = V4L2_STD_NTSC_443;
+		} else if ( (id & V4L2_STD_NTSC_M_KR) == V4L2_STD_NTSC_M_KR) {
+			printf ("NTSC/M Kr ");
+			curr_id = V4L2_STD_NTSC_M_KR;
+		} else if ( (id & V4L2_STD_SECAM) == V4L2_STD_SECAM) {
+			printf ("SECAM ");
+			curr_id = V4L2_STD_SECAM;
+		} else if ( (id & V4L2_STD_SECAM_DK) == V4L2_STD_SECAM_DK) {
+			printf ("SECAM/DK ");
+			curr_id = V4L2_STD_SECAM_DK;
+		} else if ( (id & V4L2_STD_SECAM_B) == V4L2_STD_SECAM_B) {
+			printf ("SECAM/B ");
+			curr_id = V4L2_STD_SECAM_B;
+		} else if ( (id & V4L2_STD_SECAM_D) == V4L2_STD_SECAM_D) {
+			printf ("SECAM/D ");
+			curr_id = V4L2_STD_SECAM_D;
+		} else if ( (id & V4L2_STD_SECAM_G) == V4L2_STD_SECAM_G) {
+			printf ("SECAM/G ");
+			curr_id = V4L2_STD_SECAM_G;
+		} else if ( (id & V4L2_STD_SECAM_H) == V4L2_STD_SECAM_H) {
+			printf ("SECAM/H ");
+			curr_id = V4L2_STD_SECAM_H;
+		} else if ( (id & V4L2_STD_SECAM_K) == V4L2_STD_SECAM_K) {
+			printf ("SECAM/K ");
+			curr_id = V4L2_STD_SECAM_K;
+		} else if ( (id & V4L2_STD_SECAM_K1) == V4L2_STD_SECAM_K1) {
+			printf ("SECAM/K1 ");
+			curr_id = V4L2_STD_SECAM_K1;
+		} else if ( (id & V4L2_STD_SECAM_K3) == V4L2_STD_SECAM_K3) {
+			printf ("SECAM/K3 ");
+			curr_id = V4L2_STD_SECAM_K3;
+		} else if ( (id & V4L2_STD_SECAM_L) == V4L2_STD_SECAM_L) {
+			printf ("SECAM/L ");
+			curr_id = V4L2_STD_SECAM_L;
+		} else if ( (id & V4L2_STD_SECAM_LC) == V4L2_STD_SECAM_LC) {
+			printf ("SECAM/Lc ");
+			curr_id = V4L2_STD_SECAM_LC;
+		} else if ( (id & V4L2_STD_A2) == V4L2_STD_A2) {
+			printf ("A2 ");
+			curr_id = V4L2_STD_A2;
+		} else if ( (id & V4L2_STD_A2_A) == V4L2_STD_A2_A) {
+			printf ("A2/A ");
+			curr_id = V4L2_STD_A2_A;
+		} else if ( (id & V4L2_STD_A2_B) == V4L2_STD_A2_B) {
+			printf ("A2/A ");
+			curr_id = V4L2_STD_A2_B;
+		} else if ( (id & V4L2_STD_NICAM) == V4L2_STD_NICAM) {
+			printf ("NICAM ");
+			curr_id = V4L2_STD_NICAM;
+		} else if ( (id & V4L2_STD_NICAM_A) == V4L2_STD_NICAM_A) {
+			printf ("NICAM/A ");
+			curr_id = V4L2_STD_NICAM_A;
+		} else if ( (id & V4L2_STD_NICAM_B) == V4L2_STD_NICAM_B) {
+			printf ("NICAM/B ");
+			curr_id = V4L2_STD_NICAM_B;
+		} else if ( (id & V4L2_STD_AM) == V4L2_STD_AM) {
+			printf ("AM ");
+			curr_id = V4L2_STD_AM;
+		} else if ( (id & V4L2_STD_BTSC) == V4L2_STD_BTSC) {
+			printf ("BTSC ");
+			curr_id = V4L2_STD_BTSC;
+		} else if ( (id & V4L2_STD_EIAJ) == V4L2_STD_EIAJ) {
+			printf ("EIAJ ");
+			curr_id = V4L2_STD_EIAJ;
+		} else {
+			curr_id = 0;
+			break;
+		}
+		id &= ~curr_id;
+	}
+}
+
 void list_firmware(struct firmware *f) {
 	unsigned int i = 0;
 
@@ -354,7 +493,9 @@ void list_firmware(struct firmware *f) {
 		printf("type:\t");
 		dump_firm_type(f->desc[i].type);
 		printf("(0x%08x)\n", f->desc[i].type);
-		printf("id:\t%016llx\n", f->desc[i].id);
+		printf("id:\t");
+		dump_firm_std(f->desc[i].id);
+		printf("(%016llx)\n", f->desc[i].id);
 		printf("size:\t%u\n", f->desc[i].size);
 	}
 }
