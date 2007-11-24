@@ -488,15 +488,14 @@ void list_firmware(struct firmware *f) {
 					  f->version);
 	printf("standards:\t%u\n", f->nr_desc);
 	for(i = 0; i < f->nr_desc; ++i) {
-		printf("\n");
-		printf("standard firmware %u\n", i);
-		printf("type:\t");
+		printf("Firmware %u, ", i);
+		printf("type: ");
 		dump_firm_type(f->desc[i].type);
-		printf("(0x%08x)\n", f->desc[i].type);
-		printf("id:\t");
+		printf("(0x%08x), ", f->desc[i].type);
+		printf("id: ");
 		dump_firm_std(f->desc[i].id);
-		printf("(%016llx)\n", f->desc[i].id);
-		printf("size:\t%u\n", f->desc[i].size);
+		printf("(%016llx), ", f->desc[i].id);
+		printf("size: %u\n", f->desc[i].size);
 	}
 }
 
