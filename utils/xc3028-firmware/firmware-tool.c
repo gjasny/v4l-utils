@@ -289,12 +289,13 @@ void write_firmware_file(const char* filename, struct firmware *f) {
 
 void dump_firm_type(unsigned int type)
 {
-	if (!type) {
-		printf("STD FIRM ");
-		return;
-	}
-	if (type & BASE)
-		printf("BASE ");
+	if (type & SCODE)
+		printf("SCODE FW  ");
+	else if (type & BASE)
+		printf("BASE FW   ");
+	else
+		printf("STD FW    ");
+
 	if (type & F8MHZ)
 		printf("F8MHZ ");
 	if (type & MTS)
@@ -349,8 +350,6 @@ void dump_firm_type(unsigned int type)
 		printf("F6MHZ ");
 	if (type & INPUT2)
 		printf("INPUT2 ");
-	if (type & SCODE)
-		printf("SCODE ");
 	if (type & HAS_IF)
 		printf("HAS IF ");
 }
@@ -501,7 +500,7 @@ void list_firmware(struct firmware *f) {
 					  f->version);
 	printf("standards:\t%u\n", f->nr_desc);
 	for(i = 0; i < f->nr_desc; ++i) {
-		printf("Firmware %u, ", i);
+		printf("Firmware %2u, ", i);
 		printf("type: ");
 		dump_firm_type(f->desc[i].type);
 		printf("(0x%08x), ", f->desc[i].type);
