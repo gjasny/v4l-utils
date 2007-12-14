@@ -458,31 +458,31 @@ void dump_firm_std(v4l2_std_id id)
 		} else if ( (id & V4L2_STD_SECAM_LC) == V4L2_STD_SECAM_LC) {
 			printf ("SECAM/Lc ");
 			curr_id = V4L2_STD_SECAM_LC;
-		} else if ( (id & V4L2_STD_A2)) {
+		} else if ( (id & V4L2_STD_A2) == V4L2_STD_A2) {
 			printf ("A2 ");
 			curr_id = V4L2_STD_A2;
-		} else if ( (id & V4L2_STD_A2_A)) {
+		} else if ( (id & V4L2_STD_A2_A) == V4L2_STD_A2_A) {
 			printf ("A2/A ");
 			curr_id = V4L2_STD_A2_A;
-		} else if ( (id & V4L2_STD_A2_B)) {
-			printf ("A2/A ");
+		} else if ( (id & V4L2_STD_A2_B) == V4L2_STD_A2_B) {
+			printf ("A2/B ");
 			curr_id = V4L2_STD_A2_B;
-		} else if ( (id & V4L2_STD_NICAM)) {
+		} else if ( (id & V4L2_STD_NICAM) == V4L2_STD_NICAM) {
 			printf ("NICAM ");
 			curr_id = V4L2_STD_NICAM;
-		} else if ( (id & V4L2_STD_NICAM_A)) {
+		} else if ( (id & V4L2_STD_NICAM_A) == V4L2_STD_NICAM_A) {
 			printf ("NICAM/A ");
 			curr_id = V4L2_STD_NICAM_A;
-		} else if ( (id & V4L2_STD_NICAM_B)) {
+		} else if ( (id & V4L2_STD_NICAM_B) == V4L2_STD_NICAM_B) {
 			printf ("NICAM/B ");
 			curr_id = V4L2_STD_NICAM_B;
-		} else if ( (id & V4L2_STD_AM)) {
+		} else if ( (id & V4L2_STD_AM) == V4L2_STD_AM) {
 			printf ("AM ");
 			curr_id = V4L2_STD_AM;
-		} else if ( (id & V4L2_STD_BTSC)) {
+		} else if ( (id & V4L2_STD_BTSC) == V4L2_STD_BTSC) {
 			printf ("BTSC ");
 			curr_id = V4L2_STD_BTSC;
-		} else if ( (id & V4L2_STD_EIAJ)) {
+		} else if ( (id & V4L2_STD_EIAJ) == V4L2_STD_EIAJ) {
 			printf ("EIAJ ");
 			curr_id = V4L2_STD_EIAJ;
 		} else {
