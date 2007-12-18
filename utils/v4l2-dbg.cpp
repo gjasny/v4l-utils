@@ -35,6 +35,7 @@
 
 #include <linux/videodev2.h>
 #include <linux/i2c-id.h>
+#include <media/v4l2-chip-ident.h>
 
 #include <list>
 #include <vector>
@@ -472,34 +473,63 @@ int main(int argc, char **argv)
 
 		if (get_reg.match_type == V4L2_CHIP_MATCH_HOST) stride = 4;
 		printf("ioctl: VIDIOC_DBG_G_REGISTER\n");
-		if (reg_max == 0) {
-			switch (get_reg.match_chip) {
-			case I2C_DRIVERID_SAA711X:
-				print_regs(fd, &get_reg, 0, 0xff, stride);
-				break;
-			case I2C_DRIVERID_SAA717X:
-				// FIXME: use correct reg regions
-				print_regs(fd, &get_reg, 0, 0xff, stride);
-				break;
-			case I2C_DRIVERID_SAA7127:
-				print_regs(fd, &get_reg, 0, 0x7f, stride);
-				break;
-			case I2C_DRIVERID_CX25840:
-				print_regs(fd, &get_reg, 0, 2, stride);
-				print_regs(fd, &get_reg, 0x100, 0x15f, stride);
-				print_regs(fd, &get_reg, 0x200, 0x23f, stride);
-				print_regs(fd, &get_reg, 0x400, 0x4bf, stride);
-				print_regs(fd, &get_reg, 0x800, 0x9af, stride);
-				break;
-			case 0:
-				print_regs(fd, &get_reg, 0x02000000, 0x020000ff, stride);
-				break;
-			}
-		}
-		else {
+
+		if (reg_max != 0) {
+			/* Explicit memory range: just do it */
 			print_regs(fd, &get_reg, reg_min, reg_max, stride);
+			goto list_done;
+		}
+		/* try to match the i2c chip */
+		switch (get_reg.match_chip) {
+		case I2C_DRIVERID_SAA711X:
+			print_regs(fd, &get_reg, 0, 0xff, stride);
+			break;
+		case I2C_DRIVERID_SAA717X:
+			// FIXME: use correct reg regions
+			print_regs(fd, &get_reg, 0, 0xff, stride);
+			break;
+		case I2C_DRIVERID_SAA7127:
+			print_regs(fd, &get_reg, 0, 0x7f, stride);
+			break;
+		case I2C_DRIVERID_CX25840:
+			print_regs(fd, &get_reg, 0, 2, stride);
+			print_regs(fd, &get_reg, 0x100, 0x15f, stride);
+			print_regs(fd, &get_reg, 0x200, 0x23f, stride);
+			print_regs(fd, &get_reg, 0x400, 0x4bf, stride);
+			print_regs(fd, &get_reg, 0x800, 0x9af, stride);
+			break;
+		case I2C_DRIVERID_CS5345:
+			print_regs(fd, &get_reg, 1, 0x10, stride);
+			break;
+		case 0:
+			/* host chip, handle later */
+			break;
+		default:
+			/* unknown i2c chip, dump 0-0xff by default */
+			print_regs(fd, &get_reg, 0, 0xff, stride);
+			break;
+		}
+		if (get_reg.match_chip != 0) {
+			/* found i2c chip, we're done */
+			goto list_done;
+		}
+		/* try to figure out which host chip it is */
+		if (doioctl(fd, VIDIOC_G_CHIP_IDENT, &chip_id, "VIDIOC_G_CHIP_IDENT") != 0) {
+			chip_id.ident = V4L2_IDENT_NONE;
+		}
+
+		switch (chip_id.ident) {
+		case V4L2_IDENT_CX23415:
+		case V4L2_IDENT_CX23416:
+			print_regs(fd, &get_reg, 0x02000000, 0x020000ff, stride);
+			break;
+		default:
+			/* By default print range 0-0xff */
+			print_regs(fd, &get_reg, 0, 0xff, stride);
+			break;
 		}
 	}
+list_done:
 
 	if (options[OptLogStatus]) {
 		static char buf[40960];
