@@ -43,6 +43,7 @@ struct firmware_description {
 	__u32 type;
 	__u64 id;
 	unsigned char *data;
+	__u16 int_freq;
 	__u32 size;
 };
 
@@ -150,6 +151,12 @@ int read_firmware(unsigned char* data, off_t size, struct firmware** f_res) {
 		p += sizeof(f->desc[i].type);
 		f->desc[i].id = __le64_to_cpu(*(__u64*) p);
 		p += sizeof(f->desc[i].id);
+
+		if (f->desc[i].type & HAS_IF) {
+			f->desc[i].int_freq = __le16_to_cpu(*(__u16 *) p);
+			p += sizeof(f->desc[i].int_freq);
+		}
+
 		f->desc[i].size = __le32_to_cpu(*(__u32*) p);
 		p += sizeof(f->desc[i].size);
 
@@ -282,64 +289,69 @@ void write_firmware_file(const char* filename, struct firmware *f) {
 
 void dump_firm_type(unsigned int type)
 {
-	 if (type & BASE)
-		printf("BASE ");
-	 if (type & F8MHZ)
+	if (type & SCODE)
+		printf("SCODE FW  ");
+	else if (type & BASE)
+		printf("BASE FW   ");
+	else
+		printf("STD FW    ");
+
+	if (type & F8MHZ)
 		printf("F8MHZ ");
-	 if (type & MTS)
+	if (type & MTS)
 		printf("MTS ");
-	 if (type & D2620)
+	if (type & D2620)
 		printf("D2620 ");
-	 if (type & D2633)
+	if (type & D2633)
 		printf("D2633 ");
-	 if (type & DTV6)
+	if (type & DTV6)
 		printf("DTV6 ");
-	 if (type & QAM)
+	if (type & QAM)
 		printf("QAM ");
-	 if (type & DTV7)
+	if (type & DTV7)
 		printf("DTV7 ");
-	 if (type & DTV78)
+	if (type & DTV78)
 		printf("DTV78 ");
-	 if (type & DTV8)
+	if (type & DTV8)
 		printf("DTV8 ");
-	 if (type & FM)
+	if (type & FM)
 		printf("FM ");
-	 if (type & INPUT1)
+	if (type & INPUT1)
 		printf("INPUT1 ");
-	 if (type & LCD)
+	if (type & LCD)
 		printf("LCD ");
-	 if (type & NOGD)
+	if (type & NOGD)
 		printf("NOGD ");
-	 if (type & MONO)
+	if (type & MONO)
 		printf("MONO ");
-	 if (type & ATSC)
+	if (type & ATSC)
 		printf("ATSC ");
-	 if (type & IF)
+	if (type & IF)
 		printf("IF ");
-	 if (type & LG60)
+	if (type & LG60)
 		printf("LG60 ");
-	 if (type & ATI638)
+	if (type & ATI638)
 		printf("ATI638 ");
-	 if (type & OREN538)
+	if (type & OREN538)
 		printf("OREN538 ");
-	 if (type & OREN36)
+	if (type & OREN36)
 		printf("OREN36 ");
-	 if (type & TOYOTA388)
+	if (type & TOYOTA388)
 		printf("TOYOTA388 ");
-	 if (type & TOYOTA794)
+	if (type & TOYOTA794)
 		printf("TOYOTA794 ");
-	 if (type & DIBCOM52)
+	if (type & DIBCOM52)
 		printf("DIBCOM52 ");
-	 if (type & ZARLINK456)
+	if (type & ZARLINK456)
 		printf("ZARLINK456 ");
-	 if (type & CHINA)
+	if (type & CHINA)
 		printf("CHINA ");
-	 if (type & F6MHZ)
+	if (type & F6MHZ)
 		printf("F6MHZ ");
-	 if (type & INPUT2)
+	if (type & INPUT2)
 		printf("INPUT2 ");
-	 if (type & SCODE)
-		printf("SCODE ");
+	if (type & HAS_IF)
+		printf("HAS IF ");
 }
 
 void dump_firm_std(v4l2_std_id id)
@@ -452,7 +464,7 @@ void dump_firm_std(v4l2_std_id id)
 			printf ("A2/A ");
 			curr_id = V4L2_STD_A2_A;
 		} else if ( (id & V4L2_STD_A2_B) == V4L2_STD_A2_B) {
-			printf ("A2/A ");
+			printf ("A2/B ");
 			curr_id = V4L2_STD_A2_B;
 		} else if ( (id & V4L2_STD_NICAM) == V4L2_STD_NICAM) {
 			printf ("NICAM ");
@@ -488,10 +500,12 @@ void list_firmware(struct firmware *f) {
 					  f->version);
 	printf("standards:\t%u\n", f->nr_desc);
 	for(i = 0; i < f->nr_desc; ++i) {
-		printf("Firmware %u, ", i);
+		printf("Firmware %2u, ", i);
 		printf("type: ");
 		dump_firm_type(f->desc[i].type);
 		printf("(0x%08x), ", f->desc[i].type);
+		if (f->desc[i].type & HAS_IF)
+			printf("IF = %.2f MHz ", f->desc[i].int_freq/1000.0);
 		printf("id: ");
 		dump_firm_std(f->desc[i].id);
 		printf("(%016llx), ", f->desc[i].id);
