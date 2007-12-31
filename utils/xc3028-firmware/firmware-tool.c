@@ -585,7 +585,6 @@ int seek_chunks(struct chunk_hunk *hunk,
 				break;
 		}
 		if (p2 == endf) {
-			printf("Firmware found at %ld\n", p - seek);
 			hunk->data = NULL;
 			hunk->pos = p - seek;
 			hunk->size = endf - fdata;
@@ -601,15 +600,15 @@ int seek_chunks(struct chunk_hunk *hunk,
 	memcpy(temp_data, fdata, fsize);
 
 	/* Try again, changing endian */
-	for (p2 = temp_data; p2 < temp_data + fsize; p2++) {
+	for (p2 = temp_data; p2 < temp_data + fsize;) {
+		unsigned char c;
 		int size = *p2 + (*(p2 + 1) << 8);
-		if ((size > 0) && (size < 0x8000)) {
-			unsigned char c = *p2;
-			*p2 = *(p2 + 1);
-			*(p2 + 1) = c;
-			p2 += size + 1;
-
-		}
+		c = *p2;
+		*p2 = *(p2 + 1);
+		*(p2 + 1) = c;
+		p2+=2;
+		if ((size > 0) && (size < 0x8000))
+			p2 += size;
 	}
 
 	/* Method 1b: Seek for a complete firmware with changed endians */
@@ -620,8 +619,6 @@ int seek_chunks(struct chunk_hunk *hunk,
 				break;
 		}
 		if (p2 == temp_data + fsize) {
-			printf("Firmware found at %ld (fix_endian)\n",
-				p - seek);
 			hunk->data = NULL;
 			hunk->pos = p - seek;
 			hunk->size = endf - fdata;
@@ -666,8 +663,6 @@ int seek_chunks(struct chunk_hunk *hunk,
 					hunk->next = calloc(1, sizeof(hunk));
 					hunk->need_fix_endian = 0;
 					hunk = hunk->next;
-					printf("Firmware hunk found at %ld \n",
-						p - seek);
 
 					break;
 				}
@@ -679,15 +674,14 @@ int seek_chunks(struct chunk_hunk *hunk,
 		}
 	}
 
-	printf ("Firmware found by using method 3\n");
-	return 1;
+	return 2;
 
 not_found:
-	printf("method 2 couldn't find firmware\n");
+	printf("Couldn't find firmware\n");
 return 0;
 
 	/* Method 3: Seek for first firmware chunks */
-
+#if 0
 seek_next:
 	for (p = seek; p < endp; p++) {
 		fpos = p;
@@ -723,6 +717,7 @@ seek_next:
 	printf ("NOT FOUND: %02x\n", *fdata);
 	fdata++;
 	goto seek_next;
+#endif
 }
 
 void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
@@ -777,11 +772,13 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 			     seek, endp, f->desc[i].data, endp2);
 
 		if (!found) {
-			printf("Firmware %d Not found: ", i);
+			printf("NOT FOUND: Firmware %d ", i);
+			list_firmware_desc(stdout, &f->desc[i]);
+		} else {
+			nfound++;
+			printf("Found with method %d: Firmware %d ", found, i);
 			list_firmware_desc(stdout, &f->desc[i]);
 		}
-
-		nfound += found;
 	}
 	printf ("Found %d complete firmwares\n", nfound);
 
