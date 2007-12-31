@@ -31,6 +31,7 @@
 #include "../../../linux/drivers/media/video/tuner-xc2028-types.h"
 #include "../../../linux/include/linux/videodev2.h"
 
+#include "extract_head.h"
 #include "standards.h"
 
 #define LIST_ACTION		(1<<0)
@@ -38,6 +39,7 @@
 #define DELETE_ACTION		(1<<2)
 #define SET_TYPE_ACTION		(1<<3)
 #define SET_ID_ACTION		(1<<4)
+#define SEEK_FIRM_ACTION	(1<<5)
 
 struct firmware_description {
 	__u32 type;
@@ -287,74 +289,74 @@ void write_firmware_file(const char* filename, struct firmware *f) {
 	close(fd);
 }
 
-void dump_firm_type(unsigned int type)
+void dump_firm_type(FILE *fp, unsigned int type)
 {
 	if (type & SCODE)
-		printf("SCODE FW  ");
+		fprintf(fp, "SCODE FW  ");
 	else if (type & BASE)
-		printf("BASE FW   ");
+		fprintf(fp, "BASE FW   ");
 	else
-		printf("STD FW    ");
+		fprintf(fp, "STD FW    ");
 
 	if (type & F8MHZ)
-		printf("F8MHZ ");
+		fprintf(fp, "F8MHZ ");
 	if (type & MTS)
-		printf("MTS ");
+		fprintf(fp, "MTS ");
 	if (type & D2620)
-		printf("D2620 ");
+		fprintf(fp, "D2620 ");
 	if (type & D2633)
-		printf("D2633 ");
+		fprintf(fp, "D2633 ");
 	if (type & DTV6)
-		printf("DTV6 ");
+		fprintf(fp, "DTV6 ");
 	if (type & QAM)
-		printf("QAM ");
+		fprintf(fp, "QAM ");
 	if (type & DTV7)
-		printf("DTV7 ");
+		fprintf(fp, "DTV7 ");
 	if (type & DTV78)
-		printf("DTV78 ");
+		fprintf(fp, "DTV78 ");
 	if (type & DTV8)
-		printf("DTV8 ");
+		fprintf(fp, "DTV8 ");
 	if (type & FM)
-		printf("FM ");
+		fprintf(fp, "FM ");
 	if (type & INPUT1)
-		printf("INPUT1 ");
+		fprintf(fp, "INPUT1 ");
 	if (type & LCD)
-		printf("LCD ");
+		fprintf(fp, "LCD ");
 	if (type & NOGD)
-		printf("NOGD ");
+		fprintf(fp, "NOGD ");
 	if (type & MONO)
-		printf("MONO ");
+		fprintf(fp, "MONO ");
 	if (type & ATSC)
-		printf("ATSC ");
+		fprintf(fp, "ATSC ");
 	if (type & IF)
-		printf("IF ");
+		fprintf(fp, "IF ");
 	if (type & LG60)
-		printf("LG60 ");
+		fprintf(fp, "LG60 ");
 	if (type & ATI638)
-		printf("ATI638 ");
+		fprintf(fp, "ATI638 ");
 	if (type & OREN538)
-		printf("OREN538 ");
+		fprintf(fp, "OREN538 ");
 	if (type & OREN36)
-		printf("OREN36 ");
+		fprintf(fp, "OREN36 ");
 	if (type & TOYOTA388)
-		printf("TOYOTA388 ");
+		fprintf(fp, "TOYOTA388 ");
 	if (type & TOYOTA794)
-		printf("TOYOTA794 ");
+		fprintf(fp, "TOYOTA794 ");
 	if (type & DIBCOM52)
-		printf("DIBCOM52 ");
+		fprintf(fp, "DIBCOM52 ");
 	if (type & ZARLINK456)
-		printf("ZARLINK456 ");
+		fprintf(fp, "ZARLINK456 ");
 	if (type & CHINA)
-		printf("CHINA ");
+		fprintf(fp, "CHINA ");
 	if (type & F6MHZ)
-		printf("F6MHZ ");
+		fprintf(fp, "F6MHZ ");
 	if (type & INPUT2)
-		printf("INPUT2 ");
+		fprintf(fp, "INPUT2 ");
 	if (type & HAS_IF)
-		printf("HAS IF ");
+		fprintf(fp, "HAS IF ");
 }
 
-void dump_firm_std(v4l2_std_id id)
+void dump_firm_std(FILE *fp, v4l2_std_id id)
 {
 	v4l2_std_id old=-1, curr_id;
 
@@ -362,127 +364,127 @@ void dump_firm_std(v4l2_std_id id)
 	while (old!=id) {
 		old=id;
 		if ( (id & V4L2_STD_PAL) == V4L2_STD_PAL) {
-			printf ("PAL ");
+			fprintf (fp, "PAL ");
 			curr_id = V4L2_STD_PAL;
 		} else if ( (id & V4L2_STD_MN) == V4L2_STD_MN) {
-			printf ("NTSC PAL/M PAL/N ");
+			fprintf (fp, "NTSC PAL/M PAL/N ");
 			curr_id = V4L2_STD_PAL;
 		} else if ( (id & V4L2_STD_PAL_BG) == V4L2_STD_PAL_BG) {
-			printf ("PAL/BG ");
+			fprintf (fp, "PAL/BG ");
 			curr_id = V4L2_STD_PAL_BG;
 		} else if ( (id & V4L2_STD_PAL_DK) == V4L2_STD_PAL_DK) {
-			printf ("PAL/DK ");
+			fprintf (fp, "PAL/DK ");
 			curr_id = V4L2_STD_PAL_DK;
 		} else if ( (id & V4L2_STD_PAL_B) == V4L2_STD_PAL_B) {
-			printf ("PAL/B ");
+			fprintf (fp, "PAL/B ");
 			curr_id = V4L2_STD_PAL_B;
 		} else if ( (id & V4L2_STD_PAL_B1) == V4L2_STD_PAL_B1) {
-			printf ("PAL/B1 ");
+			fprintf (fp, "PAL/B1 ");
 			curr_id = V4L2_STD_PAL_B1;
 		} else if ( (id & V4L2_STD_PAL_G) == V4L2_STD_PAL_G) {
-			printf ("PAL/G ");
+			fprintf (fp, "PAL/G ");
 			curr_id = V4L2_STD_PAL_G;
 		} else if ( (id & V4L2_STD_PAL_H) == V4L2_STD_PAL_H) {
-			printf ("PAL/H ");
+			fprintf (fp, "PAL/H ");
 			curr_id = V4L2_STD_PAL_H;
 		} else if ( (id & V4L2_STD_PAL_I) == V4L2_STD_PAL_I) {
-			printf ("PAL/I ");
+			fprintf (fp, "PAL/I ");
 			curr_id = V4L2_STD_PAL_I;
 		} else if ( (id & V4L2_STD_PAL_D) == V4L2_STD_PAL_D) {
-			printf ("PAL/D ");
+			fprintf (fp, "PAL/D ");
 			curr_id = V4L2_STD_PAL_D;
 		} else if ( (id & V4L2_STD_PAL_D1) == V4L2_STD_PAL_D1) {
-			printf ("PAL/D1 ");
+			fprintf (fp, "PAL/D1 ");
 			curr_id = V4L2_STD_PAL_D1;
 		} else if ( (id & V4L2_STD_PAL_K) == V4L2_STD_PAL_K) {
-			printf ("PAL/K ");
+			fprintf (fp, "PAL/K ");
 			curr_id = V4L2_STD_PAL_K;
 		} else if ( (id & V4L2_STD_PAL_M) == V4L2_STD_PAL_M) {
-			printf ("PAL/M ");
+			fprintf (fp, "PAL/M ");
 			curr_id = V4L2_STD_PAL_M;
 		} else if ( (id & V4L2_STD_PAL_N) == V4L2_STD_PAL_N) {
-			printf ("PAL/N ");
+			fprintf (fp, "PAL/N ");
 			curr_id = V4L2_STD_PAL_N;
 		} else if ( (id & V4L2_STD_PAL_Nc) == V4L2_STD_PAL_Nc) {
-			printf ("PAL/Nc ");
+			fprintf (fp, "PAL/Nc ");
 			curr_id = V4L2_STD_PAL_Nc;
 		} else if ( (id & V4L2_STD_PAL_60) == V4L2_STD_PAL_60) {
-			printf ("PAL/60 ");
+			fprintf (fp, "PAL/60 ");
 			curr_id = V4L2_STD_PAL_60;
 		} else if ( (id & V4L2_STD_NTSC) == V4L2_STD_NTSC) {
-			printf ("NTSC ");
+			fprintf (fp, "NTSC ");
 			curr_id = V4L2_STD_NTSC;
 		} else if ( (id & V4L2_STD_NTSC_M) == V4L2_STD_NTSC_M) {
-			printf ("NTSC/M ");
+			fprintf (fp, "NTSC/M ");
 			curr_id = V4L2_STD_NTSC_M;
 		} else if ( (id & V4L2_STD_NTSC_M_JP) == V4L2_STD_NTSC_M_JP) {
-			printf ("NTSC/M Jp ");
+			fprintf (fp, "NTSC/M Jp ");
 			curr_id = V4L2_STD_NTSC_M_JP;
 		} else if ( (id & V4L2_STD_NTSC_443) == V4L2_STD_NTSC_443) {
-			printf ("NTSC 443 ");
+			fprintf (fp, "NTSC 443 ");
 			curr_id = V4L2_STD_NTSC_443;
 		} else if ( (id & V4L2_STD_NTSC_M_KR) == V4L2_STD_NTSC_M_KR) {
-			printf ("NTSC/M Kr ");
+			fprintf (fp, "NTSC/M Kr ");
 			curr_id = V4L2_STD_NTSC_M_KR;
 		} else if ( (id & V4L2_STD_SECAM) == V4L2_STD_SECAM) {
-			printf ("SECAM ");
+			fprintf (fp, "SECAM ");
 			curr_id = V4L2_STD_SECAM;
 		} else if ( (id & V4L2_STD_SECAM_DK) == V4L2_STD_SECAM_DK) {
-			printf ("SECAM/DK ");
+			fprintf (fp, "SECAM/DK ");
 			curr_id = V4L2_STD_SECAM_DK;
 		} else if ( (id & V4L2_STD_SECAM_B) == V4L2_STD_SECAM_B) {
-			printf ("SECAM/B ");
+			fprintf (fp, "SECAM/B ");
 			curr_id = V4L2_STD_SECAM_B;
 		} else if ( (id & V4L2_STD_SECAM_D) == V4L2_STD_SECAM_D) {
-			printf ("SECAM/D ");
+			fprintf (fp, "SECAM/D ");
 			curr_id = V4L2_STD_SECAM_D;
 		} else if ( (id & V4L2_STD_SECAM_G) == V4L2_STD_SECAM_G) {
-			printf ("SECAM/G ");
+			fprintf (fp, "SECAM/G ");
 			curr_id = V4L2_STD_SECAM_G;
 		} else if ( (id & V4L2_STD_SECAM_H) == V4L2_STD_SECAM_H) {
-			printf ("SECAM/H ");
+			fprintf (fp, "SECAM/H ");
 			curr_id = V4L2_STD_SECAM_H;
 		} else if ( (id & V4L2_STD_SECAM_K) == V4L2_STD_SECAM_K) {
-			printf ("SECAM/K ");
+			fprintf (fp, "SECAM/K ");
 			curr_id = V4L2_STD_SECAM_K;
 		} else if ( (id & V4L2_STD_SECAM_K1) == V4L2_STD_SECAM_K1) {
-			printf ("SECAM/K1 ");
+			fprintf (fp, "SECAM/K1 ");
 			curr_id = V4L2_STD_SECAM_K1;
 		} else if ( (id & V4L2_STD_SECAM_K3) == V4L2_STD_SECAM_K3) {
-			printf ("SECAM/K3 ");
+			fprintf (fp, "SECAM/K3 ");
 			curr_id = V4L2_STD_SECAM_K3;
 		} else if ( (id & V4L2_STD_SECAM_L) == V4L2_STD_SECAM_L) {
-			printf ("SECAM/L ");
+			fprintf (fp, "SECAM/L ");
 			curr_id = V4L2_STD_SECAM_L;
 		} else if ( (id & V4L2_STD_SECAM_LC) == V4L2_STD_SECAM_LC) {
-			printf ("SECAM/Lc ");
+			fprintf (fp, "SECAM/Lc ");
 			curr_id = V4L2_STD_SECAM_LC;
 		} else if ( (id & V4L2_STD_A2) == V4L2_STD_A2) {
-			printf ("A2 ");
+			fprintf (fp, "A2 ");
 			curr_id = V4L2_STD_A2;
 		} else if ( (id & V4L2_STD_A2_A) == V4L2_STD_A2_A) {
-			printf ("A2/A ");
+			fprintf (fp, "A2/A ");
 			curr_id = V4L2_STD_A2_A;
 		} else if ( (id & V4L2_STD_A2_B) == V4L2_STD_A2_B) {
-			printf ("A2/B ");
+			fprintf (fp, "A2/B ");
 			curr_id = V4L2_STD_A2_B;
 		} else if ( (id & V4L2_STD_NICAM) == V4L2_STD_NICAM) {
-			printf ("NICAM ");
+			fprintf (fp, "NICAM ");
 			curr_id = V4L2_STD_NICAM;
 		} else if ( (id & V4L2_STD_NICAM_A) == V4L2_STD_NICAM_A) {
-			printf ("NICAM/A ");
+			fprintf (fp, "NICAM/A ");
 			curr_id = V4L2_STD_NICAM_A;
 		} else if ( (id & V4L2_STD_NICAM_B) == V4L2_STD_NICAM_B) {
-			printf ("NICAM/B ");
+			fprintf (fp, "NICAM/B ");
 			curr_id = V4L2_STD_NICAM_B;
 		} else if ( (id & V4L2_STD_AM) == V4L2_STD_AM) {
-			printf ("AM ");
+			fprintf (fp, "AM ");
 			curr_id = V4L2_STD_AM;
 		} else if ( (id & V4L2_STD_BTSC) == V4L2_STD_BTSC) {
-			printf ("BTSC ");
+			fprintf (fp, "BTSC ");
 			curr_id = V4L2_STD_BTSC;
 		} else if ( (id & V4L2_STD_EIAJ) == V4L2_STD_EIAJ) {
-			printf ("EIAJ ");
+			fprintf (fp, "EIAJ ");
 			curr_id = V4L2_STD_EIAJ;
 		} else {
 			curr_id = 0;
@@ -490,6 +492,19 @@ void dump_firm_std(v4l2_std_id id)
 		}
 		id &= ~curr_id;
 	}
+}
+
+void list_firmware_desc(FILE *fp, struct firmware_description *desc)
+{
+	fprintf(fp, "type: ");
+	dump_firm_type(fp, desc->type);
+	fprintf(fp, "(0x%08x), ", desc->type);
+	if (desc->type & HAS_IF)
+		fprintf(fp, "IF = %.2f MHz ", desc->int_freq/1000.0);
+	fprintf(fp, "id: ");
+	dump_firm_std(fp, desc->id);
+	fprintf(fp, "(%016llx), ", desc->id);
+	fprintf(fp, "size: %u\n", desc->size);
 }
 
 void list_firmware(struct firmware *f) {
@@ -501,15 +516,7 @@ void list_firmware(struct firmware *f) {
 	printf("standards:\t%u\n", f->nr_desc);
 	for(i = 0; i < f->nr_desc; ++i) {
 		printf("Firmware %2u, ", i);
-		printf("type: ");
-		dump_firm_type(f->desc[i].type);
-		printf("(0x%08x), ", f->desc[i].type);
-		if (f->desc[i].type & HAS_IF)
-			printf("IF = %.2f MHz ", f->desc[i].int_freq/1000.0);
-		printf("id: ");
-		dump_firm_std(f->desc[i].id);
-		printf("(%016llx), ", f->desc[i].id);
-		printf("size: %u\n", f->desc[i].size);
+		list_firmware_desc(stdout, &f->desc[i]);
 	}
 }
 
@@ -552,6 +559,285 @@ void set_standard_id(struct firmware* f, char* firmware_file, __u16 i, __u32 id)
 	write_firmware_file(firmware_file, f);
 }
 
+struct chunk_hunk;
+
+struct chunk_hunk {
+	unsigned char *data;
+	long pos;
+	int size;
+	int need_fix_endian;
+	struct chunk_hunk *next;
+};
+
+int seek_chunks(struct chunk_hunk *hunk,
+		unsigned char *seek, unsigned char *endp,	/* File to seek */
+		unsigned char *fdata, unsigned char *endf)	/* Firmware */
+{
+	unsigned char *fpos, *p, *p2, *lastp;
+	int rc, fsize;
+	unsigned char *temp_data;
+
+	/* Method 1a: Seek for a complete firmware */
+	for (p = seek; p < endp; p++) {
+		fpos = p;
+		for (p2 = fdata; p2 < endf; p2++, fpos++) {
+			if (*fpos != *p2)
+				break;
+		}
+		if (p2 == endf) {
+			printf("Firmware found at %ld\n", p - seek);
+			hunk->data = NULL;
+			hunk->pos = p - seek;
+			hunk->size = endf - fdata;
+			hunk->next = NULL;
+			hunk->need_fix_endian = 0;
+
+			return 1;
+		}
+	}
+
+	fsize = endf - fdata;
+	temp_data = malloc(fsize);
+	memcpy(temp_data, fdata, fsize);
+
+	/* Try again, changing endian */
+	for (p2 = temp_data; p2 < temp_data + fsize; p2++) {
+		int size = *p2 + (*(p2 + 1) << 8);
+		if ((size > 0) && (size < 0x8000)) {
+			unsigned char c = *p2;
+			*p2 = *(p2 + 1);
+			*(p2 + 1) = c;
+			p2 += size + 1;
+
+		}
+	}
+
+	/* Method 1b: Seek for a complete firmware with changed endians */
+	for (p = seek; p < endp; p++) {
+		fpos = p;
+		for (p2 = temp_data; p2 < temp_data + fsize; p2++, fpos++) {
+			if (*fpos != *p2)
+				break;
+		}
+		if (p2 == temp_data + fsize) {
+			printf("Firmware found at %ld (fix_endian)\n",
+				p - seek);
+			hunk->data = NULL;
+			hunk->pos = p - seek;
+			hunk->size = endf - fdata;
+			hunk->next = NULL;
+			hunk->need_fix_endian = 1;
+			return 1;
+		}
+	}
+
+	free(temp_data);
+
+	/* Method 2: Seek for each firmware chunk */
+	p = seek;
+	for (p2 = fdata; p2 < endf;) {
+		int size = *p2 + (*(p2 + 1) << 8);
+
+		/* Encode size/reset/sleep directly */
+		hunk->size = 2;
+		hunk->data = malloc(hunk->size);
+		memcpy(hunk->data, p2, hunk->size);
+		hunk->pos = -1;
+		hunk->next = calloc(1, sizeof(hunk));
+		hunk->need_fix_endian = 0;
+		hunk = hunk->next;
+		p2 += 2;
+
+		if ((size > 0) && (size < 0x8000)) {
+			unsigned char *ep;
+			int	found = 0;
+			ep = p2 + size;
+			///////////////////
+			for (; p < endp; p++) {
+				unsigned char *p3;
+				fpos = p;
+				for (p3 = p2; p3 < ep; p3++, fpos++)
+					if (*fpos != *p3)
+						break;
+				if (p3 == ep) {
+					found = 1;
+					hunk->pos = p - seek;
+					hunk->size = size;
+					hunk->next = calloc(1, sizeof(hunk));
+					hunk->need_fix_endian = 0;
+					hunk = hunk->next;
+					printf("Firmware hunk found at %ld \n",
+						p - seek);
+
+					break;
+				}
+			}
+			if (!found) {
+				goto not_found;
+			}
+			p2 += size;
+		}
+	}
+
+	printf ("Firmware found by using method 3\n");
+	return 1;
+
+not_found:
+	printf("method 2 couldn't find firmware\n");
+return 0;
+
+	/* Method 3: Seek for first firmware chunks */
+
+seek_next:
+	for (p = seek; p < endp; p++) {
+		fpos = p;
+		for (p2 = fdata; p2 < endf; p2++, fpos++) {
+			if (*fpos != *p2)
+				break;
+		}
+		if (p2 > fdata + 2) {
+			int i = 0;
+			printf("Found %ld equal bytes at %ld:\n",
+				p2 - fdata, p - seek);
+			fpos = p;
+			lastp = fpos;
+			for (p2 = fdata; p2 < endf; p2++, fpos++) {
+				if (*fpos != *p2)
+					break;
+				printf("%02x ",*p2);
+			}
+			for (i=0; p2 < endf && i <5 ; p2++, fpos++, i++) {
+				printf("%02x(%02x) ",*p2 , *fpos);
+			}
+			printf("\n");
+			/* Seek for the next chunk */
+			fdata = p2;
+
+			if (fdata == endf) {
+				printf ("Found all chunks.\n");
+				return 1;
+			}
+		}
+	}
+
+	printf ("NOT FOUND: %02x\n", *fdata);
+	fdata++;
+	goto seek_next;
+}
+
+void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
+	unsigned int i = 0, nfound = 0;
+	long size, rd = 0;
+	unsigned char *seek, *p, *endp, *p2, *endp2, *fpos;
+	/*FIXME: Calculate it, instead of using a hardcode value */
+	char *md5 = "0e44dbf63bb0169d57446aec21881ff2";
+	FILE *fp;
+
+	struct chunk_hunk hunks[f->nr_desc];
+	memset (hunks, 0, sizeof(hunks));
+
+	fp=fopen(seek_file, "r");
+	if (!fp) {
+		perror("Opening seek file");
+		exit(-1);
+	}
+	fseek(fp, 0L, SEEK_END);
+	size = ftell(fp);
+	rewind(fp);
+	seek = malloc(size);
+	p = seek;
+
+	do {
+		i = fread(p, 1, 16768, fp);
+		if (i > 0) {
+			rd += i;
+			p += i;
+		}
+	} while (i > 0);
+
+	fclose(fp);
+
+	if (rd != size) {
+		fprintf(stderr, "Error while reading the seek file: "
+				"should read %ld, instead of %ld ", size, rd);
+		exit (-1);
+	}
+	endp = p;
+
+	printf("firmware name:\t%s\n", f->name);
+	printf("version:\t%d.%d (%u)\n", f->version >> 8, f->version & 0xff,
+					  f->version);
+	printf("number of standards:\t%u\n", f->nr_desc);
+	for(i = 0; i < f->nr_desc; ++i) {
+		int found;
+
+		endp2 = f->desc[i].data + f->desc[i].size;
+
+		found = seek_chunks (&hunks[i],
+			     seek, endp, f->desc[i].data, endp2);
+
+		if (!found) {
+			printf("Firmware %d Not found: ", i);
+			list_firmware_desc(stdout, &f->desc[i]);
+		}
+
+		nfound += found;
+	}
+	printf ("Found %d complete firmwares\n", nfound);
+
+	if (!write_file)
+		return;
+
+	fp = fopen(write_file, "w");
+	if (!fp) {
+		perror("Writing firmware file");
+		exit(-1);
+	}
+
+	fprintf(fp, "%s", extract_header);
+	for (i = 0; i < f->nr_desc; ++i) {
+		struct chunk_hunk *hunk = &hunks[i];
+
+		fprintf(fp, "\n\t#\n\t# Firmware %d, ", i);
+		list_firmware_desc(fp, &f->desc[i]);
+		fprintf(fp, "\t#\n\n");
+
+		fprintf(fp, "\twrite_le32(%d);\n", f->desc[i].type);
+		fprintf(fp, "\twrite_le64(%Ld);\n", f->desc[i].id);
+		if (f->desc[i].type & HAS_IF)
+			fprintf(fp, "\twrite_le16(%d);\n",
+				f->desc[i].int_freq);
+		fprintf(fp, "\twrite_le32(%d);\n", f->desc[i].size);
+
+		while (hunk) {
+			if (hunk->data) {
+				int j;
+				fprintf(fp, "\tsyswrite(OUTFILE, ");
+				for (j = 0; j < hunk->size; j++) {
+					fprintf(fp, "chr(%d)", hunk->data[j]);
+					if (j < hunk->size-1)
+						fprintf(fp,".");
+				}
+				fprintf(fp,");\n");
+			} else {
+				if (!hunk->size)
+					break;
+
+				if (hunk->need_fix_endian)
+					fprintf(fp, write_hunk_fix_endian,
+						hunk->pos, hunk->size);
+				else
+					fprintf(fp, write_hunk,
+						hunk->pos, hunk->size);
+			}
+			hunk = hunk->next;
+		}
+	}
+
+	fprintf(fp, end_extract, seek_file, md5, "xc3028-v27.fw",
+		f->name, f->version, f->nr_desc);
+}
+
 void print_usage(void)
 {
 	printf("firmware-tool usage:\n");
@@ -560,6 +846,7 @@ void print_usage(void)
 	printf("\t firmware-tool --delete <index> <firmware-file>\n");
 	printf("\t firmware-tool --type <type> --index <i> <firmware-file>\n");
 	printf("\t firmware-tool --id <type> --index <i> <firmware-file>\n");
+	printf("\t firmware-tool --seek <seek-file> [--write <write-file>] <firmware-file>\n");
 }
 
 int main(int argc, char* argv[])
@@ -568,6 +855,7 @@ int main(int argc, char* argv[])
 	int nr_args;
 	unsigned int action = 0;
 	char* firmware_file, *file = NULL, *nr_str = NULL, *index_str = NULL;
+	char *seek_file = NULL, *write_file = NULL;
 	struct firmware *f;
 	__u64 nr;
 
@@ -579,6 +867,8 @@ int main(int argc, char* argv[])
 			{"type",  required_argument, 0, 't'},
 			{"id",  required_argument, 0, 's'},
 			{"index",  required_argument, 0, 'i'},
+			{"seek", required_argument, 0, 'k'},
+			{"write", required_argument , 0, 'w'},
 			{0, 0, 0, 0}
 		};
 		int option_index = 0;
@@ -632,6 +922,14 @@ int main(int argc, char* argv[])
 			case 'i':
 				index_str = optarg;
 				break;
+			case 'k':
+				puts("seek firmwares\n");
+				action = SEEK_FIRM_ACTION;
+				seek_file = optarg;
+				break;
+			case 'w':
+				write_file = optarg;
+				break;
 			default:
 				print_usage();
 				return 0;
@@ -680,6 +978,9 @@ int main(int argc, char* argv[])
 
 		case SET_ID_ACTION:
 			set_standard_id(f, firmware_file, strtoul(index_str, NULL, 10), strtoul(nr_str, NULL, 10));
+
+		case SEEK_FIRM_ACTION:
+			seek_firmware(f, seek_file, write_file);
 		break;
 	}
 	return 0;
