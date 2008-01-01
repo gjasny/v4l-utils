@@ -3,6 +3,10 @@
 
    Copyright (C) 2007 Michel Ludwig <michel.ludwig@gmail.com>
 
+   Copyright (C) 2007, 2008 Mauro Carvalho Chehab <mchehab@infradead.org>
+	- Improve --list command
+	- Add --seek command
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation version 2
@@ -799,12 +803,15 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 		list_firmware_desc(fp, &f->desc[i]);
 		fprintf(fp, "\t#\n\n");
 
-		fprintf(fp, "\twrite_le32(%d);\n", f->desc[i].type);
-		fprintf(fp, "\twrite_le64(%Ld);\n", f->desc[i].id);
+		fprintf(fp, "\twrite_le32(0x%08x);\t\t\t# Type\n",
+			f->desc[i].type);
+		fprintf(fp, "\twrite_le64(0x%08Lx, 0x%08Lx);\t# ID\n",
+			f->desc[i].id>>32, f->desc[i].id & 0xffffffff);
 		if (f->desc[i].type & HAS_IF)
-			fprintf(fp, "\twrite_le16(%d);\n",
+			fprintf(fp, "\twrite_le16(%d);\t\t\t# IF\n",
 				f->desc[i].int_freq);
-		fprintf(fp, "\twrite_le32(%d);\n", f->desc[i].size);
+		fprintf(fp, "\twrite_le32(%d);\t\t\t# Size\n",
+			f->desc[i].size);
 
 		while (hunk) {
 			if (hunk->data) {
