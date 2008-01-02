@@ -39,6 +39,28 @@ GeneralTab::GeneralTab(int _fd, int n, QWidget *parent) :
 
 	setSpacing(3);
 
+	memset(&querycap, 0, sizeof(querycap));
+	if (ioctl(fd, VIDIOC_QUERYCAP, &querycap) >=0) {
+		QLabel *l1 = new QLabel("Driver:", this);
+		l1->setAlignment(Qt::AlignRight);
+
+		QLabel *l1t = new QLabel((char *)querycap.driver, this);
+
+		QLabel *l2 = new QLabel("Card: ", this);
+		l2->setAlignment(Qt::AlignRight);
+
+		QLabel *l2t = new QLabel((char *)querycap.card, this);
+
+		QLabel *l3 = new QLabel("Bus: ", this);
+		l3->setAlignment(Qt::AlignRight);
+
+		QLabel *l3t = new QLabel((char *)querycap.bus_info, this);
+
+		QLabel *l4 = new QLabel("", this);
+		QLabel *l4t = new QLabel("", this);
+
+	}
+
 	memset(&tuner, 0, sizeof(tuner));
 	ioctl(fd, VIDIOC_G_TUNER, &tuner);
 	if (tuner.rangehigh>INT_MAX)

@@ -57,6 +57,7 @@ private:
 
     int fd;
     struct v4l2_tuner tuner;
+    struct v4l2_capability querycap;
 
     // General tab
     QComboBox *videoInput;
