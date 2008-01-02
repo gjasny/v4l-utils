@@ -31,7 +31,7 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
-GeneralTab::GeneralTab(int _fd, int n, QWidget *parent) :
+GeneralTab::GeneralTab(const char *device, int _fd, int n, QWidget *parent) :
 	QGrid(n, parent),
 	fd(_fd)
 {
@@ -41,24 +41,24 @@ GeneralTab::GeneralTab(int _fd, int n, QWidget *parent) :
 
 	memset(&querycap, 0, sizeof(querycap));
 	if (ioctl(fd, VIDIOC_QUERYCAP, &querycap) >=0) {
-		QLabel *l1 = new QLabel("Driver:", this);
+		QLabel *l1 = new QLabel("Device:", this);
+		QLabel *l1t = new QLabel(device, this);
 		l1->setAlignment(Qt::AlignRight);
 
-		QLabel *l1t = new QLabel((char *)querycap.driver, this);
-
-		QLabel *l2 = new QLabel("Card: ", this);
+		QLabel *l2 = new QLabel("Driver:", this);
 		l2->setAlignment(Qt::AlignRight);
 
-		QLabel *l2t = new QLabel((char *)querycap.card, this);
+		QLabel *l2t = new QLabel((char *)querycap.driver, this);
 
-		QLabel *l3 = new QLabel("Bus: ", this);
+		QLabel *l3 = new QLabel("Card:", this);
 		l3->setAlignment(Qt::AlignRight);
 
-		QLabel *l3t = new QLabel((char *)querycap.bus_info, this);
+		QLabel *l3t = new QLabel((char *)querycap.card, this);
 
-		QLabel *l4 = new QLabel("", this);
-		QLabel *l4t = new QLabel("", this);
+		QLabel *l4 = new QLabel("Bus:", this);
+		l4->setAlignment(Qt::AlignRight);
 
+		QLabel *l4t = new QLabel((char *)querycap.bus_info, this);
 	}
 
 	memset(&tuner, 0, sizeof(tuner));

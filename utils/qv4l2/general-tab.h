@@ -33,7 +33,7 @@ class GeneralTab: public QGrid
     Q_OBJECT
 
 public:
-    GeneralTab(int fd, int n, QWidget *parent = 0);
+    GeneralTab(const char *device, int fd, int n, QWidget *parent = 0);
     virtual ~GeneralTab() {}
 
 private slots:

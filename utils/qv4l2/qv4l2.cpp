@@ -118,7 +118,7 @@ void ApplicationWindow::setDevice(const QString &device)
 
 	fd = ::open(device, O_RDONLY);
 	if (fd >= 0) {
-		tabs->addTab(new GeneralTab(fd, 4, tabs), "General");
+		tabs->addTab(new GeneralTab(device, fd, 4, tabs), "General");
 		addTabs();
 	}
 	if (QWidget *current = tabs->currentPage()) {
