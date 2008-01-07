@@ -12,7 +12,7 @@ clean::
 	rm -f $(binaries)
 
 firmware-tool: firmware-tool.o standards.o
-	$(CXX) $^ -o $@
+	$(CC) $^ -o $@
 
 install:
 
