@@ -511,7 +511,8 @@ void list_firmware_desc(FILE *fp, struct firmware_description *desc)
 	fprintf(fp, "size: %u\n", desc->size);
 }
 
-void list_firmware(struct firmware *f) {
+void list_firmware(struct firmware *f, unsigned int dump)
+{
 	unsigned int i = 0;
 
 	printf("firmware name:\t%s\n", f->name);
@@ -521,6 +522,21 @@ void list_firmware(struct firmware *f) {
 	for(i = 0; i < f->nr_desc; ++i) {
 		printf("Firmware %2u, ", i);
 		list_firmware_desc(stdout, &f->desc[i]);
+		if (dump) {
+			printf("\t");
+			unsigned j, k = 0;
+			for (j = 0; j < f->desc[i].size; j++) {
+				printf("%02x", f->desc[i].data[j]);
+
+				k++;
+				if (k >= 32) {
+					printf("\n\t");
+					k = 0;
+				} else if (!(k % 2))
+					printf(" ");
+			}
+			printf("\n");
+		}
 	}
 }
 
@@ -845,7 +861,7 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 void print_usage(void)
 {
 	printf("firmware-tool usage:\n");
-	printf("\t firmware-tool --list <firmware-file>\n");
+	printf("\t firmware-tool --list [--dump] <firmware-file>\n");
 	printf("\t firmware-tool --add <firmware-dump> <firmware-file>\n");
 	printf("\t firmware-tool --delete <index> <firmware-file>\n");
 	printf("\t firmware-tool --type <type> --index <i> <firmware-file>\n");
@@ -857,7 +873,7 @@ int main(int argc, char* argv[])
 {
 	int c;
 	int nr_args;
-	unsigned int action = 0;
+	unsigned int action = 0, dump = 0;
 	char* firmware_file, *file = NULL, *nr_str = NULL, *index_str = NULL;
 	char *seek_file = NULL, *write_file = NULL;
 	struct firmware *f;
@@ -873,6 +889,7 @@ int main(int argc, char* argv[])
 			{"index",  required_argument, 0, 'i'},
 			{"seek", required_argument, 0, 'k'},
 			{"write", required_argument , 0, 'w'},
+			{"dump", no_argument, 0, 'm'},
 			{0, 0, 0, 0}
 		};
 		int option_index = 0;
@@ -890,6 +907,9 @@ int main(int argc, char* argv[])
 					printf("Please specify only one action.\n");
 				}
 				action |= LIST_ACTION;
+				break;
+			case 'm':
+				dump = 1;
 				break;
 			case 'a':
 				puts("add action\n");
@@ -965,7 +985,7 @@ int main(int argc, char* argv[])
 
 	switch(action) {
 		case LIST_ACTION:
-			list_firmware(f);
+			list_firmware(f, dump);
 		break;
 
 		case ADD_ACTION:
