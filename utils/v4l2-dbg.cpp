@@ -71,6 +71,7 @@ enum Option {
 	OptGetDriverInfo = 'D',
 	OptScanChipIdents = 'C',
 	OptGetChipIdent = 'c',
+	OptSetStride = 'w',
 	OptHelp = 'h',
 
 	OptLogStatus = 128,
@@ -94,6 +95,7 @@ static struct option long_options[] = {
 	{"verbose", no_argument, 0, OptVerbose},
 	{"log-status", no_argument, 0, OptLogStatus},
 	{"list-driverids", no_argument, 0, OptListDriverIDs},
+	{"wide", required_argument, 0, OptSetStride},
 	{0, 0, 0, 0}
 };
 
@@ -113,6 +115,8 @@ static void usage(void)
 	printf("		     Scan the available host and i2c chips [VIDIOC_G_CHIP_IDENT]\n");
 	printf("  -c, --get-chip-ident=type=<host/i2cdrv/i2caddr>,chip=<chip>\n");
 	printf("		     Get the chip identifier [VIDIOC_G_CHIP_IDENT]\n");
+	printf("  -w, --wide=<reg length>\n");
+	printf("		     Sets step between two registers\n");
 	printf("  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n");
 	printf("  --list-driverids   list the known I2C driver IDs for use with the i2cdrv type\n");
 	printf("\n");
@@ -262,7 +266,7 @@ static int parse_subopt(char **subs, char * const *subopts, char **value)
 int main(int argc, char **argv)
 {
 	char *value, *subs;
-	int i;
+	int i, forcedstride = 0;
 
 	int fd = -1;
 
@@ -341,6 +345,8 @@ int main(int argc, char **argv)
 					break;
 				}
 			}
+		case OptSetStride:
+			forcedstride = strtoull(optarg, 0L, 0);
 			break;
 		case OptListRegisters:
 			subs = optarg;
@@ -470,8 +476,12 @@ int main(int argc, char **argv)
 
 	if (options[OptListRegisters]) {
 		int stride = 1;
-
-		if (get_reg.match_type == V4L2_CHIP_MATCH_HOST) stride = 4;
+		if (forcedstride) {
+			stride = forcedstride;
+		} else {
+			if (get_reg.match_type == V4L2_CHIP_MATCH_HOST)
+				stride = 4;
+		}
 		printf("ioctl: VIDIOC_DBG_G_REGISTER\n");
 
 		if (reg_max != 0) {
