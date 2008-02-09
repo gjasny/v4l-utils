@@ -667,8 +667,8 @@ int seek_chunks(struct chunk_hunk *fhunk,
 
 	for (p = base_start; p < endp; p++) {
 		fpos = p;
-		for (p2 = fdata + ini_sig; 
-		     p2 < fdata + ini_sig + sig_len; p2++, 
+		for (p2 = fdata + ini_sig;
+		     p2 < fdata + ini_sig + sig_len; p2++,
 		     fpos++) {
 			if (*fpos != *p2)
 				break;
@@ -878,7 +878,7 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 		if (!hunk->size)
 			continue;
 
-		if (hunk->hint_method) 
+		if (hunk->hint_method)
 			fprintf(fp, "\n\t#\n\t# Guessed format ");
 
 		fprintf(fp, "\n\t#\n\t# Firmware %d, ", i);
@@ -892,9 +892,12 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 		if (f->desc[i].type & HAS_IF)
 			fprintf(fp, "\twrite_le16(%d);\t\t\t# IF\n",
 				f->desc[i].int_freq);
-		fprintf(fp, "\twrite_le32(%d);\t\t\t# Size\n",
-			f->desc[i].size);
-fflush(fp);
+		if (hunk->hint_method == 3)
+			fprintf(fp, "\twrite_le32(%d);\t\t\t# Size\n",
+				hunk->size);
+		else
+			fprintf(fp, "\twrite_le32(%d);\t\t\t# Size\n",
+				f->desc[i].size);
 		while (hunk) {
 			if (hunk->data) {
 				int j;
@@ -921,7 +924,7 @@ fflush(fp);
 	}
 
 	fprintf(fp, end_extract, seek_file, md5, "xc3028-v27.fw",
-		f->name, f->version, f->nr_desc);
+		f->name, f->version, nfound);
 }
 
 void print_usage(void)
