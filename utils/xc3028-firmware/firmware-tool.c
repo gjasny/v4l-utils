@@ -20,11 +20,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#define __USE_GNU
+#include <string.h>
 #include <getopt.h>
 #include <string.h>
 #include <unistd.h>
@@ -586,16 +587,21 @@ struct chunk_hunk {
 	long pos;
 	int size;
 	int need_fix_endian;
+	int hint_method;
 	struct chunk_hunk *next;
 };
 
-int seek_chunks(struct chunk_hunk *hunk,
+int seek_chunks(struct chunk_hunk *fhunk,
 		unsigned char *seek, unsigned char *endp,	/* File to seek */
 		unsigned char *fdata, unsigned char *endf)	/* Firmware */
 {
 	unsigned char *fpos, *p, *p2, *lastp;
 	int rc, fsize;
 	unsigned char *temp_data;
+	struct chunk_hunk *hunk = fhunk;
+	/* Method 3 vars */
+	static unsigned char *base_start = 0;
+	int ini_sig = 8, sig_len = 14, end_sig = 10;
 
 	/* Method 1a: Seek for a complete firmware */
 	for (p = seek; p < endp; p++) {
@@ -610,7 +616,7 @@ int seek_chunks(struct chunk_hunk *hunk,
 			hunk->size = endf - fdata;
 			hunk->next = NULL;
 			hunk->need_fix_endian = 0;
-
+			hunk->hint_method = 0;
 			return 1;
 		}
 	}
@@ -644,13 +650,64 @@ int seek_chunks(struct chunk_hunk *hunk,
 			hunk->size = endf - fdata;
 			hunk->next = NULL;
 			hunk->need_fix_endian = 1;
+			hunk->hint_method = 0;
 			return 1;
 		}
 	}
 
 	free(temp_data);
 
-	/* Method 2: Seek for each firmware chunk */
+	/* Method 2: seek for base firmware */
+	if (!base_start)
+		base_start = seek;
+
+	/* Skip if firmware is not a base firmware */
+	if (endf - fdata < 1000)
+		goto method3;
+
+	for (p = base_start; p < endp; p++) {
+		fpos = p;
+		for (p2 = fdata + ini_sig; 
+		     p2 < fdata + ini_sig + sig_len; p2++, 
+		     fpos++) {
+			if (*fpos != *p2)
+				break;
+		}
+		if (p2 == fdata + ini_sig + sig_len) {
+			base_start = p - ini_sig;
+
+			p = memmem (base_start, endp-base_start,
+				temp_data + fsize - end_sig, end_sig);
+
+			if (!p) {
+				printf("Method3: found something that looks like a firmware start at %x\n",
+					base_start - seek);
+
+				base_start += ini_sig + sig_len;
+				goto method3;
+			}
+
+			p += end_sig;
+
+			printf("Method3: found firmware at %x, size = %d\n",
+				base_start - seek, p - base_start);
+
+			hunk->data = NULL;
+			hunk->pos = base_start - seek;
+			hunk->size = p - base_start;
+			hunk->next = NULL;
+			hunk->need_fix_endian = 1;
+			hunk->hint_method = 3;
+
+			base_start = p;
+
+			return 2;
+		}
+	}
+
+method3:
+#if 0
+	/* Method 3: Seek for each firmware chunk */
 	p = seek;
 	for (p2 = fdata; p2 < endf;) {
 		int size = *p2 + (*(p2 + 1) << 8);
@@ -662,6 +719,8 @@ int seek_chunks(struct chunk_hunk *hunk,
 		hunk->pos = -1;
 		hunk->next = calloc(1, sizeof(hunk));
 		hunk->need_fix_endian = 0;
+		hunk->hint_method = 0;
+
 		hunk = hunk->next;
 		p2 += 2;
 
@@ -682,8 +741,9 @@ int seek_chunks(struct chunk_hunk *hunk,
 					hunk->size = size;
 					hunk->next = calloc(1, sizeof(hunk));
 					hunk->need_fix_endian = 0;
-					hunk = hunk->next;
+					hunk->hint_method = 0;
 
+					hunk = hunk->next;
 					break;
 				}
 			}
@@ -693,14 +753,14 @@ int seek_chunks(struct chunk_hunk *hunk,
 			p2 += size;
 		}
 	}
-
-	return 2;
-
+	return 3;
+#endif
 not_found:
+	memset(fhunk, 0, sizeof(struct chunk_hunk));
 	printf("Couldn't find firmware\n");
-return 0;
+	return 0;
 
-	/* Method 3: Seek for first firmware chunks */
+	/* Method 4: Seek for first firmware chunks */
 #if 0
 seek_next:
 	for (p = seek; p < endp; p++) {
@@ -709,9 +769,9 @@ seek_next:
 			if (*fpos != *p2)
 				break;
 		}
-		if (p2 > fdata + 2) {
+		if (p2 > fdata + 3) {
 			int i = 0;
-			printf("Found %ld equal bytes at %ld:\n",
+			printf("Found %ld equal bytes at %06x:\n",
 				p2 - fdata, p - seek);
 			fpos = p;
 			lastp = fpos;
@@ -729,7 +789,7 @@ seek_next:
 
 			if (fdata == endf) {
 				printf ("Found all chunks.\n");
-				return 1;
+				return 4;
 			}
 		}
 	}
@@ -749,7 +809,7 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 	FILE *fp;
 
 	struct chunk_hunk hunks[f->nr_desc];
-	memset (hunks, 0, sizeof(hunks));
+	memset (hunks, 0, sizeof(struct chunk_hunk) * f->nr_desc);
 
 	fp=fopen(seek_file, "r");
 	if (!fp) {
@@ -815,6 +875,12 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 	for (i = 0; i < f->nr_desc; ++i) {
 		struct chunk_hunk *hunk = &hunks[i];
 
+		if (!hunk->size)
+			continue;
+
+		if (hunk->hint_method) 
+			fprintf(fp, "\n\t#\n\t# Guessed format ");
+
 		fprintf(fp, "\n\t#\n\t# Firmware %d, ", i);
 		list_firmware_desc(fp, &f->desc[i]);
 		fprintf(fp, "\t#\n\n");
@@ -828,7 +894,7 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 				f->desc[i].int_freq);
 		fprintf(fp, "\twrite_le32(%d);\t\t\t# Size\n",
 			f->desc[i].size);
-
+fflush(fp);
 		while (hunk) {
 			if (hunk->data) {
 				int j;
