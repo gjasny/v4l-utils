@@ -512,7 +512,7 @@ void list_firmware_desc(FILE *fp, struct firmware_description *desc)
 	fprintf(fp, "size: %u\n", desc->size);
 }
 
-void list_firmware(struct firmware *f, unsigned int dump)
+void list_firmware(struct firmware *f, unsigned int dump, char *binfile)
 {
 	unsigned int i = 0;
 
@@ -537,6 +537,28 @@ void list_firmware(struct firmware *f, unsigned int dump)
 					printf(" ");
 			}
 			printf("\n");
+		}
+		if (binfile) {
+			char name[strlen(binfile)+4], *p;
+			p = strrchr(binfile,'.');
+			if (p) {
+				int n = p - binfile;
+				strncpy(name, binfile, n);
+				sprintf(name + n, "%03i", i);
+				strcat(name, p);
+			} else {
+				strcpy(name, binfile);
+				sprintf(name + strlen(name), "%03i", i);
+			}
+			FILE *fp;
+
+			fp = fopen(name,"w");
+			if (!fp) {
+				perror("Opening file to write");
+				return;
+			}
+			fwrite(f->desc[i].data, f->desc[i].size, 1, fp);
+			fclose(fp);
 		}
 	}
 }
@@ -903,11 +925,11 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 			f->desc[i].size);
 		while (hunk) {
 			if (hunk->data) {
-				int j;
+				int k;
 				fprintf(fp, "\tsyswrite(OUTFILE, ");
-				for (j = 0; j < hunk->size; j++) {
-					fprintf(fp, "chr(%d)", hunk->data[j]);
-					if (j < hunk->size-1)
+				for (k = 0; k < hunk->size; k++) {
+					fprintf(fp, "chr(%d)", hunk->data[k]);
+					if (k < hunk->size-1)
 						fprintf(fp,".");
 				}
 				fprintf(fp,");\n");
@@ -933,7 +955,7 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 void print_usage(void)
 {
 	printf("firmware-tool usage:\n");
-	printf("\t firmware-tool --list [--dump] <firmware-file>\n");
+	printf("\t firmware-tool --list [--dump] [--write <bin-file>] <firmware-file>\n");
 	printf("\t firmware-tool --add <firmware-dump> <firmware-file>\n");
 	printf("\t firmware-tool --delete <index> <firmware-file>\n");
 	printf("\t firmware-tool --type <type> --index <i> <firmware-file>\n");
@@ -1057,7 +1079,7 @@ int main(int argc, char* argv[])
 
 	switch(action) {
 		case LIST_ACTION:
-			list_firmware(f, dump);
+			list_firmware(f, dump, write_file);
 		break;
 
 		case ADD_ACTION:
