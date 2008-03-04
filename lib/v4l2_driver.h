@@ -12,6 +12,7 @@
    Lesser General Public License for more details.
   */
 
+#include <stddef.h>
 #include <stdint.h>
 #include <sys/time.h>
 #include <linux/videodev2.h>
