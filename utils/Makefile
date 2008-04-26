@@ -1,8 +1,13 @@
 # Makefile for linuxtv.org v4l2-apps/util
 
-CPPFLAGS += -I../../linux/include
+CPPFLAGS += -I../../linux/include -D_GNU_SOURCE
+LDFLAGS += -lm
 
-binaries = v4l2-ctl v4l2-dbg
+binaries = v4l2-ctl v4l2-dbg ivtv-ctl
+
+ifeq ($(prefix),)
+prefix = /usr
+endif
 
 .PHONY: all clean install qv4l2
 
@@ -22,6 +27,8 @@ v4l2-dbg: v4l2-dbg.o v4l2-driverids.o v4l2-chipids.o
 	$(CXX) $^ -o $@
 
 install:
+	mkdir -p $(prefix)/bin
+	cp $(binaries) $(prefix)/bin
 
 include ../Make.rules
 
