@@ -533,6 +533,9 @@ int main(int argc, char **argv)
 		case V4L2_IDENT_CX23416:
 			print_regs(fd, &get_reg, 0x02000000, 0x020000ff, stride);
 			break;
+		case V4L2_IDENT_CX23418:
+			print_regs(fd, &get_reg, 0x02c40000, 0x02c409c7, stride);
+			break;
 		default:
 			/* By default print range 0-0xff */
 			print_regs(fd, &get_reg, 0, 0xff, stride);
