@@ -123,6 +123,8 @@ enum Option {
 
 static char options[OptLast];
 
+static int app_result;
+
 static unsigned capabilities;
 
 typedef std::vector<struct v4l2_ext_control> ctrl_list;
@@ -715,7 +717,7 @@ static void printcropcap(const struct v4l2_cropcap &cropcap)
 	printf("\tPixel Aspect: %u/%u\n", cropcap.pixelaspect.numerator, cropcap.pixelaspect.denominator);
 }
 
-static int printfmt(struct v4l2_format vfmt)
+static void printfmt(struct v4l2_format vfmt)
 {
 	const flag_def vbi_def[] = {
 		{ V4L2_VBI_UNSYNC,     "unsynchronized" },
@@ -776,10 +778,7 @@ static int printfmt(struct v4l2_format vfmt)
 		break;
 	case V4L2_BUF_TYPE_PRIVATE:
 		break;
-	default:
-		return -1;
 	}
-	return 0;
 }
 
 static void print_video_formats(int fd, enum v4l2_buf_type type)
@@ -999,10 +998,12 @@ static v4l2_std_id parse_ntsc(const char *ntsc)
 
 static int doioctl(int fd, int request, void *parm, const char *name)
 {
-	int retVal;
+	int retVal = ioctl(fd, request, parm);
 
-	if (!options[OptVerbose]) return ioctl(fd, request, parm);
-	retVal = ioctl(fd, request, parm);
+	if (retVal < 0) {
+		app_result = -1;
+	}
+	if (!options[OptVerbose]) return retVal;
 	printf("%s: ", name);
 	if (retVal < 0)
 		printf("failed: %s\n", strerror(errno));
@@ -1068,9 +1069,7 @@ static void do_crop(int fd, unsigned int set_crop, struct v4l2_rect &vcrop, v4l2
     struct v4l2_crop in_crop;
 
     in_crop.type = type;
-    if (ioctl(fd, VIDIOC_G_CROP, &in_crop) < 0)
-	fprintf(stderr, "ioctl: VIDIOC_G_CROP failed\n");
-    else {
+    if (doioctl(fd, VIDIOC_G_CROP, &in_crop, "VIDIOC_G_CROP") == 0) {
 	if (set_crop & CropWidth)
 	    in_crop.c.width = vcrop.width;
 	if (set_crop & CropHeight)
@@ -1079,8 +1078,7 @@ static void do_crop(int fd, unsigned int set_crop, struct v4l2_rect &vcrop, v4l2
 	    in_crop.c.left = vcrop.left;
 	if (set_crop & CropTop)
 	    in_crop.c.top = vcrop.top;
-	if (ioctl(fd, VIDIOC_S_CROP, &in_crop) < 0)
-	    fprintf(stderr, "ioctl: VIDIOC_S_CROP failed\n");
+	doioctl(fd, VIDIOC_S_CROP, &in_crop, "VIDIOC_S_CROP");
     }
 }
 
@@ -1603,43 +1601,35 @@ int main(int argc, char **argv)
 		struct v4l2_tuner vt;
 
 		memset(&vt, 0, sizeof(struct v4l2_tuner));
-		if (ioctl(fd, VIDIOC_G_TUNER, &vt) < 0) {
-			fprintf(stderr, "ioctl: VIDIOC_G_TUNER failed\n");
-			exit(1);
+		if (doioctl(fd, VIDIOC_G_TUNER, &vt, "VIDIOC_G_TUNER") == 0) {
+			vt.audmode = mode;
+			doioctl(fd, VIDIOC_S_TUNER, &vt, "VIDIOC_S_TUNER");
 		}
-		vt.audmode = mode;
-		doioctl(fd, VIDIOC_S_TUNER, &vt, "VIDIOC_S_TUNER");
 	}
 
 	if (options[OptSetVideoFormat]) {
 		struct v4l2_format in_vfmt;
-		printf("ioctl: VIDIOC_S_FMT\n");
+
 		in_vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		if (ioctl(fd, VIDIOC_G_FMT, &in_vfmt) < 0)
-			fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
-		else {
+		if (doioctl(fd, VIDIOC_G_FMT, &in_vfmt, "VIDIOC_G_FMT") == 0) {
 			if (set_fmts & FmtWidth)
 				in_vfmt.fmt.pix.width = vfmt.fmt.pix.width;
 			if (set_fmts & FmtHeight)
 				in_vfmt.fmt.pix.height = vfmt.fmt.pix.height;
-			if (ioctl(fd, VIDIOC_S_FMT, &in_vfmt) < 0)
-				fprintf(stderr, "ioctl: VIDIOC_S_FMT failed\n");
+			doioctl(fd, VIDIOC_S_FMT, &in_vfmt, "VIDIOC_S_FMT");
 		}
 	}
 
 	if (options[OptSetVideoOutFormat]) {
 		struct v4l2_format in_vfmt;
-		printf("ioctl: VIDIOC_S_FMT\n");
+
 		in_vfmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-		if (ioctl(fd, VIDIOC_G_FMT, &in_vfmt) < 0)
-			fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
-		else {
+		if (doioctl(fd, VIDIOC_G_FMT, &in_vfmt, "VIDIOC_G_FMT") == 0) {
 			if (set_fmts_out & FmtWidth)
 				in_vfmt.fmt.pix.width = vfmt_out.fmt.pix.width;
 			if (set_fmts_out & FmtHeight)
 				in_vfmt.fmt.pix.height = vfmt_out.fmt.pix.height;
-			if (ioctl(fd, VIDIOC_S_FMT, &in_vfmt) < 0)
-				fprintf(stderr, "ioctl: VIDIOC_S_FMT failed\n");
+			doioctl(fd, VIDIOC_S_FMT, &in_vfmt, "VIDIOC_S_FMT");
 		}
 	}
 
@@ -1669,29 +1659,24 @@ int main(int argc, char **argv)
 
 	if (options[OptSetOutputOverlayFormat]) {
 		struct v4l2_format fmt;
-		memset(&fmt, 0, sizeof(fmt));
+
 		fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY;
-		if (ioctl(fd, VIDIOC_G_FMT, &fmt, "VIDIOC_G_FMT") < 0)
-			fprintf(stderr, "ioctl: VIDIOC_G_FMT failed\n");
-		else {
+		if (doioctl(fd, VIDIOC_G_FMT, &fmt, "VIDIOC_G_FMT") == 0) {
 			if (set_overlay_fmt_out & FmtChromaKey)
 				fmt.fmt.win.chromakey = overlay_fmt_out.fmt.win.chromakey;
 			if (set_overlay_fmt_out & FmtGlobalAlpha)
 				fmt.fmt.win.global_alpha = overlay_fmt_out.fmt.win.global_alpha;
-			if (ioctl(fd, VIDIOC_S_FMT, &fmt, "VIDIOC_S_FMT") < 0)
-				fprintf(stderr, "ioctl: VIDIOC_S_FMT failed\n");
+			doioctl(fd, VIDIOC_S_FMT, &fmt, "VIDIOC_S_FMT");
 		}
 	}
 
 	if (options[OptSetFBuf]) {
 		struct v4l2_framebuffer fb;
-		if (ioctl(fd, VIDIOC_G_FBUF, &fb, "VIDIOC_G_FBUF") < 0)
-			fprintf(stderr, "ioctl: VIDIOC_G_FBUF failed\n");
-		else {
+
+		if (doioctl(fd, VIDIOC_G_FBUF, &fb, "VIDIOC_G_FBUF") == 0) {
 			fb.flags &= ~set_fbuf;
 			fb.flags |= fbuf.flags;
-			if (ioctl(fd, VIDIOC_S_FBUF, &fb) < 0)
-				fprintf(stderr, "ioctl: VIDIOC_S_FBUF failed\n");
+			doioctl(fd, VIDIOC_S_FBUF, &fb, "VIDIOC_S_FBUF");
 		}
 	}
 
@@ -1763,69 +1748,53 @@ int main(int argc, char **argv)
 	if (options[OptGetVideoFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		if (doioctl(fd, VIDIOC_G_FMT, &vfmt, "VIDIOC_G_FMT") == 0)
-			if (printfmt(vfmt) != 0)
-				fprintf(stderr, "error printing result\n");
+			printfmt(vfmt);
 	}
 
 	if (options[OptGetVideoOutFormat]) {
 		vfmt_out.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 		if (doioctl(fd, VIDIOC_G_FMT, &vfmt_out, "VIDIOC_G_FMT") == 0)
-			if (printfmt(vfmt_out) != 0)
-				fprintf(stderr, "error printing result\n");
+			printfmt(vfmt_out);
 	}
 
 	if (options[OptGetOverlayFormat]) {
 		struct v4l2_format fmt;
-		memset(&fmt, 0, sizeof(fmt));
+
 		fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
 		if (doioctl(fd, VIDIOC_G_FMT, &fmt, "VIDIOC_G_FMT") == 0)
-			if (printfmt(fmt) != 0)
-				fprintf(stderr, "error printing result\n");
+			printfmt(fmt);
 	}
 
 	if (options[OptGetOutputOverlayFormat]) {
 		struct v4l2_format fmt;
-		memset(&fmt, 0, sizeof(fmt));
+
 		fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY;
 		if (doioctl(fd, VIDIOC_G_FMT, &fmt, "VIDIOC_G_FMT") == 0)
-			if (printfmt(fmt) != 0)
-				fprintf(stderr, "error printing result\n");
+			printfmt(fmt);
 	}
 
 	if (options[OptGetSlicedVbiFormat]) {
 		vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt,
-			"VIDIOC_G_FMT") == 0)
-			if (printfmt(vbi_fmt) != 0)
-				fprintf(stderr,
-					"error printing result\n");
+		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt, "VIDIOC_G_FMT") == 0)
+			printfmt(vbi_fmt);
 	}
 
 	if (options[OptGetSlicedVbiOutFormat]) {
 		vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
-		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out,
-			"VIDIOC_G_FMT") == 0)
-			if (printfmt(vbi_fmt_out) != 0)
-				fprintf(stderr,
-					"error printing result\n");
+		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out, "VIDIOC_G_FMT") == 0)
+			printfmt(vbi_fmt_out);
 	}
 
 	if (options[OptGetVbiFormat]) {
 		raw_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt,
-			"VIDIOC_G_FMT") == 0)
-			if (printfmt(raw_fmt) != 0)
-				fprintf(stderr,
-					"error printing result\n");
+		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt, "VIDIOC_G_FMT") == 0)
+			printfmt(raw_fmt);
 	}
 
 	if (options[OptGetVbiOutFormat]) {
 		raw_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
-		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt_out,
-			"VIDIOC_G_FMT") == 0)
-			if (printfmt(raw_fmt_out) != 0)
-				fprintf(stderr,
-					"error printing result\n");
+		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt_out, "VIDIOC_G_FMT") == 0)
+			printfmt(raw_fmt_out);
 	}
 
 	if (options[OptGetFBuf]) {
@@ -2188,5 +2157,5 @@ int main(int argc, char **argv)
 	}
 
 	close(fd);
-	exit(0);
+	exit(app_result);
 }
