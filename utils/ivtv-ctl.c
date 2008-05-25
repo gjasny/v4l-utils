@@ -39,6 +39,7 @@
 
 #include <linux/videodev2.h>
 #include <linux/dvb/video.h>
+#include <linux/dvb/audio.h>
 
 /* copied from ivtv-driver.h */
 #define IVTV_DBGFLG_WARN    (1 << 0)
@@ -84,10 +85,15 @@ enum Option {
 	OptReset = 128,
 	OptSetYuvMode,
 	OptGetYuvMode,
+	OptSetAudioMute,
+	OptSetStereoMode,
+	OptSetBilingualMode,
 	OptLast = 256
 };
 
 static char options[OptLast];
+
+static int app_result;
 
 static struct option long_options[] = {
 	/* Please keep in alphabetical order of the short option.
@@ -104,6 +110,9 @@ static struct option long_options[] = {
 	{"reset", required_argument, 0, OptReset},
 	{"get-yuv-mode", no_argument, 0, OptGetYuvMode},
 	{"set-yuv-mode", required_argument, 0, OptSetYuvMode},
+	{"set-audio-mute", required_argument, 0, OptSetAudioMute},
+	{"set-stereo-mode", required_argument, 0, OptSetStereoMode},
+	{"set-bilingual-mode", required_argument, 0, OptSetBilingualMode},
 	{0, 0, 0, 0}
 };
 
@@ -121,6 +130,21 @@ static void usage(void)
 	printf("       		     mode 1: interlaced (bottom transmitted first)\n");
 	printf("       		     mode 2: progressive\n");
 	printf("       		     mode 3: auto\n");
+	printf("  --set-audio-mute <mute>\n");
+	printf("       		     0=enable audio during 1.5x and 0.5x playback\n");
+	printf("       		     1=mute audio during 1.5x and 0.5x playback\n");
+	printf("  --set-stereo-mode <mode>\n");
+	printf("       		     mode 0: playback stereo as stereo\n");
+	printf("       		     mode 1: playback left stereo channel as mono\n");
+	printf("       		     mode 2: playback right stereo channel as mono\n");
+	printf("       		     mode 3: playback stereo as mono\n");
+	printf("       		     mode 4: playback stereo as swapped stereo\n");
+	printf("  --set-bilingual-mode <mode>\n");
+	printf("       		     mode 0: playback bilingual as stereo\n");
+	printf("       		     mode 1: playback left bilingual channel as mono\n");
+	printf("       		     mode 2: playback right bilingual channel as mono\n");
+	printf("       		     mode 3: playback bilingual as mono\n");
+	printf("       		     mode 4: playback bilingual as swapped stereo\n");
 	printf("  --reset <mask>     reset the infrared receiver (1) or digitizer (2) [VIDIOC_INT_RESET]\n");
 	printf("\n");
 	printf("Expert options:\n");
@@ -285,8 +309,10 @@ static int doioctl(int fd, int request, void *parm, const char *name)
 
 	printf("ioctl %s ", name);
 	retVal = ioctl(fd, request, parm);
-	if (retVal < 0)
+	if (retVal < 0) {
+		app_result = -1;
 		printf("failed: %s\n", strerror(errno));
+	}
 	else
 		printf("ok\n");
 
@@ -325,6 +351,9 @@ int main(int argc, char **argv)
 	unsigned short gpio_dir = 0x0;	/* GPIO direction bits */
 	int gpio_set_dir = 0;
 	int passthrough = 0;
+	int audio_mute = 0;
+	int stereo_mode = 0;
+	int bilingual_mode = 0;
 	int debug_level = 0;
 	__u32 reset = 0;
 	int new_debug_level, gdebug_level;
@@ -426,6 +455,15 @@ int main(int argc, char **argv)
 			break;
 		case OptPassThrough:
 			passthrough = strtol(optarg, 0L, 0);
+			break;
+		case OptSetAudioMute:
+			audio_mute = strtol(optarg, 0L, 0);
+			break;
+		case OptSetStereoMode:
+			stereo_mode = strtol(optarg, 0L, 0);
+			break;
+		case OptSetBilingualMode:
+			bilingual_mode = strtol(optarg, 0L, 0);
 			break;
 		case OptSetGPIO:
 			subs = optarg;
@@ -588,6 +626,20 @@ int main(int argc, char **argv)
 				"IVTV_IOC_PASSTHROUGH");
 	}
 
+	if (options[OptSetAudioMute]) {
+		doioctl(fd, AUDIO_SET_MUTE, (void *)audio_mute, "AUDIO_SET_MUTE");
+	}
+
+	if (options[OptSetStereoMode]) {
+		doioctl(fd, AUDIO_CHANNEL_SELECT,
+			(void *)stereo_mode, "AUDIO_CHANNEL_SELECT");
+	}
+
+	if (options[OptSetBilingualMode]) {
+		doioctl(fd, AUDIO_BILINGUAL_CHANNEL_SELECT,
+			(void *)bilingual_mode, "AUDIO_BILINGUAL_CHANNEL_SELECT");
+	}
+
 	if (options[OptReset])
 		doioctl(fd, VIDIOC_INT_RESET, &reset, "VIDIOC_INT_RESET");
 
@@ -631,5 +683,5 @@ int main(int argc, char **argv)
 	}
 
 	close(fd);
-	exit(0);
+	exit(app_result);
 }
