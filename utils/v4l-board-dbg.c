@@ -43,7 +43,7 @@ struct board_list {
 struct board_list boards[] = {
 	[0] = {				/* From bttv-dbg.h */
 		.name          = BTTV_IDENT,
-		.prefix        = sizeof (BTTV_PREFIX),
+		.prefix        = sizeof(BTTV_PREFIX) - 1,
 		.regs          = bt8xx_regs,
 		.regs_size     = ARRAY_SIZE(bt8xx_regs),
 		.alt_regs      = bt8xx_regs_other,
@@ -51,7 +51,7 @@ struct board_list boards[] = {
 	},
 	[1] = {				/* From saa7134-dbg.h */
 		.name          = SAA7134_IDENT,
-		.prefix        = sizeof (SAA7134_PREFIX),
+		.prefix        = sizeof(SAA7134_PREFIX) - 1,
 		.regs          = saa7134_regs,
 		.regs_size     = ARRAY_SIZE(saa7134_regs),
 		.alt_regs      = NULL,
@@ -127,10 +127,6 @@ int main(int argc, char **argv)
 		{0, 0, 0, 0}
 	};
 
-	/* FIXME: need to check for 'board' */
-board=1;
-	curr_bd = &boards[board];
-
 	/* command args */
 	if (argc == 1) {
 		usage();
@@ -193,6 +189,8 @@ board=1;
 		exit(3);
 	}
 
+	curr_bd = &boards[board];
+
 	reg.match_type = V4L2_CHIP_MATCH_HOST;
 	reg.match_chip = 0;
 
@@ -238,7 +236,6 @@ board=1;
 			return -1;
 		}
 
-
 		for (i = curr_bd->regs_size - 1; i >=0 ; i--) {
 			if (!strcasecmp(reg_name, curr_bd->regs[i].name)) {
 				bd_reg = &curr_bd->regs[i];
@@ -280,7 +277,6 @@ board=1;
 				}
 			}
 		}
-
 
 		if (i < 0) {
 			printf("Register not found\n");
