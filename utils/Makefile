@@ -54,6 +54,7 @@ keytables:
 	./gen_keytables.pl ../../linux/drivers/media/common/ir-keymaps.c
 
 keytable: keytable.c parse.h keytables
+v4l-board-dbg: v4l-board-dbg.c bttv-dbg.h saa7134-dbg.h
 
 v4l2-driverids.cpp: ../../linux/include/linux/i2c-id.h
 	@echo "struct driverid { const char *name; unsigned id; } driverids[] = {" >$@
@@ -64,3 +65,5 @@ v4l2-chipids.cpp: ../../linux/include/media/v4l2-chip-ident.h
 	@echo "struct chipid { const char *name; unsigned id; } chipids[] = {" >$@
 	@grep V4L2_IDENT_ $^ | sed -e 's/.*V4L2_IDENT_\([0-9A-Z_]*\)[^=]*=[^0-9]*\([0-9]*\).*/{ "\1", \2 },/' | tr A-Z a-z >>$@
 	@echo "{ 0, 0 }};" >>$@
+
+

@@ -27,11 +27,12 @@
 #include <linux/videodev2.h>
 
 #include "bttv-dbg.h"
+#include "saa7134-dbg.h"
 
 #define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
 
 struct board_list {
-	char *queryname;
+	char *name;
 	int prefix; 		/* Register prefix size */
 	struct board_regs *regs;
 	int regs_size;
@@ -41,12 +42,20 @@ struct board_list {
 
 struct board_list boards[] = {
 	[0] = {				/* From bttv-dbg.h */
-		.queryname     = BTTV_IDENT,
+		.name          = BTTV_IDENT,
 		.prefix        = sizeof (BTTV_PREFIX),
 		.regs          = bt8xx_regs,
 		.regs_size     = ARRAY_SIZE(bt8xx_regs),
 		.alt_regs      = bt8xx_regs_other,
 		.alt_regs_size = ARRAY_SIZE(bt8xx_regs_other),
+	},
+	[1] = {				/* From saa7134-dbg.h */
+		.name          = SAA7134_IDENT,
+		.prefix        = sizeof (SAA7134_PREFIX),
+		.regs          = saa7134_regs,
+		.regs_size     = ARRAY_SIZE(saa7134_regs),
+		.alt_regs      = NULL,
+		.alt_regs_size = 0,
 	},
 };
 
@@ -106,6 +115,7 @@ int main(int argc, char **argv)
 	int i;
 	int fd = -1;
 	struct v4l2_register reg;
+	struct v4l2_capability cap;
 	struct board_list *curr_bd;
 	int board = 0;
 	struct option long_options[] = {
@@ -118,6 +128,7 @@ int main(int argc, char **argv)
 	};
 
 	/* FIXME: need to check for 'board' */
+board=1;
 	curr_bd = &boards[board];
 
 	/* command args */
@@ -168,6 +179,20 @@ int main(int argc, char **argv)
 	}
 	free(device);
 
+	if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0) {
+		printf("Error while reading capabilities\n");
+		exit(2);
+	}
+
+	for (board = ARRAY_SIZE(boards)-1; board >= 0; board--) {
+		if (!strcasecmp((char *)cap.driver, boards[board].name))
+			break;
+	}
+	if (board < 0) {
+		printf("This software doesn't support %s yet\n", cap.driver);
+		exit(3);
+	}
+
 	reg.match_type = V4L2_CHIP_MATCH_HOST;
 	reg.match_chip = 0;
 
@@ -176,7 +201,7 @@ int main(int argc, char **argv)
 			char name[256];
 			reg.reg = curr_bd->regs[i].reg;
 			if (ioctl(fd, VIDIOC_DBG_G_REGISTER, &reg) < 0) {
-				printf("Error while reading\n");
+				printf("Error while reading. Maybe you're not root?\n");
 				continue;
 			}
 			sprintf(name, "%s:", curr_bd->regs[i].name);
