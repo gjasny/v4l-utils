@@ -1,9 +1,13 @@
 # Makefile for linuxtv.org v4l2-apps/util
 
+ifeq ($(KERNEL_DIR),)
+	KERNEL_DIR = /usr
+endif
+
 CPPFLAGS += -I../../linux/include -D_GNU_SOURCE
 LDFLAGS += -lm
 
-binaries = v4l2-ctl v4l2-dbg ivtv-ctl cx18-ctl
+binaries = v4l2-ctl v4l2-dbg ivtv-ctl cx18-ctl bttv-dbg
 
 ifeq ($(prefix),)
 prefix = /usr
@@ -32,12 +36,12 @@ install:
 
 include ../Make.rules
 
-parse.h: /usr/include/linux/input.h
+parse.h: $(KERNEL_DIR)/include/linux/input.h
 	@echo generating parse.h
 	@echo -en "struct parse_key {\n\tchar *name;\n\tunsigned int value;\n} " >parse.h
 	@echo -en "keynames[] = {\n" >>parse.h
 
-	@more /usr/include/linux/input.h |perl -n \
+	@more $(KERNEL_DIR)/linux/input.h |perl -n \
 	-e 'if (m/^\#define\s+(KEY_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
 	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
 	-e 'if (m/^\#define\s+(BTN_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
