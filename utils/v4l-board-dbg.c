@@ -30,6 +30,26 @@
 
 #define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
 
+struct board_list {
+	char *queryname;
+	int prefix; 		/* Register prefix size */
+	struct board_regs *regs;
+	int regs_size;
+	struct board_regs *alt_regs;
+	int alt_regs_size;
+};
+
+struct board_list boards[] = {
+	[0] = {				/* From bttv-dbg.h */
+		.queryname     = BTTV_IDENT,
+		.prefix        = sizeof (BTTV_PREFIX),
+		.regs          = bt8xx_regs,
+		.regs_size     = ARRAY_SIZE(bt8xx_regs),
+		.alt_regs      = bt8xx_regs_other,
+		.alt_regs_size = ARRAY_SIZE(bt8xx_regs_other),
+	},
+};
+
 static int is_get=0, is_set=0;
 
 static int doioctl(int fd, int request, void *parm, const char *name)
@@ -86,6 +106,8 @@ int main(int argc, char **argv)
 	int i;
 	int fd = -1;
 	struct v4l2_register reg;
+	struct board_list *curr_bd;
+	int board = 0;
 	struct option long_options[] = {
 		/* Please keep in alphabetical order of the short option.
 		That makes it easier to see which options are still free. */
@@ -94,6 +116,9 @@ int main(int argc, char **argv)
 		{"help",    no_argument, 0, OptHelp},
 		{0, 0, 0, 0}
 	};
+
+	/* FIXME: need to check for 'board' */
+	curr_bd = &boards[board];
 
 	/* command args */
 	if (argc == 1) {
@@ -147,16 +172,16 @@ int main(int argc, char **argv)
 	reg.match_chip = 0;
 
 	if (is_get) {
-		for (i = 0; i < ARRAY_SIZE(bt8xx_regs); i++) {
+		for (i = 0; i < curr_bd->regs_size; i++) {
 			char name[256];
-			reg.reg = bt8xx_regs[i].reg;
+			reg.reg = curr_bd->regs[i].reg;
 			if (ioctl(fd, VIDIOC_DBG_G_REGISTER, &reg) < 0) {
 				printf("Error while reading\n");
 				continue;
 			}
-			sprintf(name, "%s:", bt8xx_regs[i].name);
+			sprintf(name, "%s:", curr_bd->regs[i].name);
 
-			switch (bt8xx_regs[i].size) {
+			switch (curr_bd->regs[i].size) {
 			case 1:
 				printf("%-32s %02llx         ", name, reg.val & 0xff);
 				break;
@@ -167,7 +192,7 @@ int main(int argc, char **argv)
 				printf("%-32s %08llx   ", name, reg.val & 0xffffffff);
 				break;
 			}
-			print_bin (reg.val, bt8xx_regs[i].size);
+			print_bin (reg.val, curr_bd->regs[i].size);
 			printf("\n");
 		}
 		return 0;
@@ -178,7 +203,7 @@ int main(int argc, char **argv)
 		int  val;
 		int r, size;
 		unsigned prev;
-		struct board_regs *bt_reg;
+		struct board_regs *bd_reg;
 
 		reg_name = strtok(reg_set, "=:");
 		val = strtol(strtok(NULL, "=:"), 0L, 0);
@@ -189,43 +214,43 @@ int main(int argc, char **argv)
 		}
 
 
-		for (i = ARRAY_SIZE(bt8xx_regs) - 1; i >=0 ; i--) {
-			if (!strcasecmp(reg_name, bt8xx_regs[i].name)) {
-				bt_reg = &bt8xx_regs[i];
-				r    = bt8xx_regs[i].reg;
-				size = bt8xx_regs[i].size;
+		for (i = curr_bd->regs_size - 1; i >=0 ; i--) {
+			if (!strcasecmp(reg_name, curr_bd->regs[i].name)) {
+				bd_reg = &curr_bd->regs[i];
+				r      = bd_reg->reg;
+				size   = bd_reg->size;
 				break;
 			}
 		}
 
 		if (i < 0) {
-			for (i = ARRAY_SIZE(bt8xx_regs_other) - 1; i >=0 ; i--) {
-				if (!strcasecmp(reg_name, bt8xx_regs_other[i].name)) {
-					bt_reg = &bt8xx_regs_other[i];
-					r    = bt8xx_regs_other[i].reg;
-					size = bt8xx_regs_other[i].size;
+			for (i = curr_bd->alt_regs_size - 1; i >=0 ; i--) {
+				if (!strcasecmp(reg_name, curr_bd->alt_regs[i].name)) {
+					bd_reg = &curr_bd->alt_regs[i];
+					r      = bd_reg->reg;
+					size   = bd_reg->size;
 					break;
 				}
 			}
 		}
 
 		if (i < 0) {
-			for (i = ARRAY_SIZE(bt8xx_regs) - 1; i >=0 ; i--) {
-				if (!strcasecmp(reg_name, bt8xx_regs[i].name+6)) {
-					bt_reg = &bt8xx_regs[i];
-					r    = bt8xx_regs[i].reg;
-					size = bt8xx_regs[i].size;
+			for (i = curr_bd->regs_size - 1; i >=0 ; i--) {
+				if (!strcasecmp(reg_name, curr_bd->regs[i].name + curr_bd->prefix)) {
+					bd_reg = &curr_bd->regs[i];
+					r      = bd_reg->reg;
+					size   = bd_reg->size;
 					break;
 				}
 			}
 		}
 
 		if (i < 0) {
-			for (i = ARRAY_SIZE(bt8xx_regs_other) - 1; i >=0 ; i--) {
-				if (!strcasecmp(reg_name, bt8xx_regs_other[i].name+6)) {
-					bt_reg = &bt8xx_regs_other[i];
-					r    = bt8xx_regs_other[i].reg;
-					size = bt8xx_regs_other[i].size;
+			for (i = curr_bd->alt_regs_size - 1; i >=0 ; i--) {
+				if (!strcasecmp(reg_name, curr_bd->alt_regs[i].name + curr_bd->prefix)) {
+					bd_reg = &curr_bd->regs[i];
+					r      = bd_reg->reg;
+					size   = bd_reg->size;
 					break;
 				}
 			}
@@ -257,7 +282,7 @@ int main(int argc, char **argv)
 		}
 
 		printf("Changing value of register %s(0x%x) from 0x%02x to 0x%02x\n",
-			bt_reg->name, r, prev, (unsigned int)reg.val);
+			bd_reg->name, r, prev, (unsigned int)reg.val);
 
 		prev = reg.val;
 
@@ -271,9 +296,8 @@ int main(int argc, char **argv)
 		}
 		if (reg.val != prev) {
 			printf("Value of register %s(0x%x) is now 0x%02x\n",
-			bt_reg->name, r, (unsigned int)reg.val);
+			bd_reg->name, r, (unsigned int)reg.val);
 		}
-
 	}
 
 	close(fd);
