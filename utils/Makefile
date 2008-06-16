@@ -7,7 +7,7 @@ endif
 CPPFLAGS += -I../../linux/include -D_GNU_SOURCE
 LDFLAGS += -lm
 
-binaries = v4l2-ctl v4l2-dbg ivtv-ctl cx18-ctl bttv-dbg
+binaries = v4l2-ctl v4l2-dbg ivtv-ctl cx18-ctl v4l-board-dbg
 
 ifeq ($(prefix),)
 prefix = /usr
