@@ -54,7 +54,8 @@ keytables:
 	./gen_keytables.pl ../../linux/drivers/media/common/ir-keymaps.c
 
 keytable: keytable.c parse.h keytables
-v4l-board-dbg: v4l-board-dbg.c bttv-dbg.h saa7134-dbg.h
+
+v4l-board-dbg: v4l-board-dbg.c bttv-dbg.h saa7134-dbg.h em28xx-dbg.h
 
 v4l2-driverids.cpp: ../../linux/include/linux/i2c-id.h
 	@echo "struct driverid { const char *name; unsigned id; } driverids[] = {" >$@

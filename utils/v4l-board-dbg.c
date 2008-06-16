@@ -28,6 +28,7 @@
 
 #include "bttv-dbg.h"
 #include "saa7134-dbg.h"
+#include "em28xx-dbg.h"
 
 #define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
 
@@ -54,6 +55,14 @@ struct board_list boards[] = {
 		.prefix        = sizeof(SAA7134_PREFIX) - 1,
 		.regs          = saa7134_regs,
 		.regs_size     = ARRAY_SIZE(saa7134_regs),
+		.alt_regs      = NULL,
+		.alt_regs_size = 0,
+	},
+	[2] = {				/* From em28xx-dbg.h */
+		.name          = EM28XX_IDENT,
+		.prefix        = sizeof(EM28XX_PREFIX) - 1,
+		.regs          = em28xx_regs,
+		.regs_size     = ARRAY_SIZE(em28xx_regs),
 		.alt_regs      = NULL,
 		.alt_regs_size = 0,
 	},
