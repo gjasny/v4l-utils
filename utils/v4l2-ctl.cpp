@@ -1365,7 +1365,7 @@ int main(int argc, char **argv)
 					std = V4L2_STD_SECAM;
 			}
 			else {
-				std = strtol(optarg, 0L, 0);
+				std = strtol(optarg, 0L, 0) | (1ULL << 63);
 			}
 			break;
 		case OptGetCtrl:
@@ -1562,8 +1562,8 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptSetStandard]) {
-		if (std < 16) {
-			vs.index = std;
+		if (std & (1ULL << 63)) {
+			vs.index = std & 0xffff;
 			if (ioctl(fd, VIDIOC_ENUMSTD, &vs) >= 0) {
 				std = vs.id;
 			}
