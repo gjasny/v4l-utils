@@ -1,7 +1,7 @@
 /*
     V4L2 pixfmt test
 
-    Copyright (C) 2007 Michael H. Schimek <mschimek@gmx.at>
+    Copyright (C) 2007, 2008 Michael H. Schimek <mschimek@gmx.at>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -100,14 +100,23 @@ typedef enum {
 
 	/* Bayer formats. */
 
-	BGGR,			/* bbbbbbbb gggggggg */
+	BGGR8,			/* bbbbbbbb gggggggg */
 				/* gggggggg rrrrrrrr */
-	GBRG,			/* gggggggg bbbbbbbb */
+	GBRG8,			/* gggggggg bbbbbbbb */
 				/* rrrrrrrr gggggggg */
-	RGGB,			/* rrrrrrrr gggggggg */
+	RGGB8,			/* rrrrrrrr gggggggg */
 				/* gggggggg bbbbbbbb */
-	GRBG,			/* gggggggg rrrrrrrr */
+	GRBG8,			/* gggggggg rrrrrrrr */
 				/* bbbbbbbb gggggggg */
+
+	BGGR16,			/* b7...b0 b15...b8 g7...g0 g15...g8 */
+				/* g7...g0 g15...g8 r7...r0 r15...r8 */
+	GBRG16,			/* g7...g0 g15...g8 b7...b0 b15...b8 */
+				/* r7...r0 r15...r8 g7...g0 g15...g8 */
+	RGGB16,			/* r7...r0 r15...r8 g7...g0 g15...g8 */
+				/* g7...g0 g15...g8 b7...b0 b15...b8 */
+	GRBG16,			/* g7...g0 g15...g8 r7...r0 r15...r8 */
+				/* b7...b0 b15...b8 g7...g0 g15...g8 */
 } pixfmt;
 
 /* A pixfmt set would be nicer, but I doubt all
@@ -219,7 +228,7 @@ typedef struct {
 #define PF_RGB24 PF_RGB16
 #define PF_RGB32 PF_RGB16
 
-#define PF_BAYER(pf, pfxrb, vpf)					\
+#define PF_BAYER(pf, pfxrb, bpp, vpf)					\
 	[pf] = {							\
 		.name = # pf,						\
 		.v4l2_fourcc_name = (0 == vpf) ? NULL : # vpf,		\
@@ -230,8 +239,8 @@ typedef struct {
 		.pixfmt_class = BAYER,					\
 		.v4l2_fourcc = vpf,					\
 		.byte_order = LE,					\
-		.bits_per_pixel = 8,					\
-		.color_depth = 24 /* sort of */				\
+		.bits_per_pixel = bpp,					\
+		.color_depth = bpp * 3 /* sort of */			\
 	}
 
 static const pixel_format
@@ -298,10 +307,15 @@ pixel_formats [] = {
 	PF_RGB8 (RGB332, BGR233,
 		 0, 0xE0, 0x1C, 0x03, 0),
 
-	PF_BAYER (BGGR, RGGB, V4L2_PIX_FMT_SBGGR8),
-	PF_BAYER (RGGB, BGGR, 0),
-	PF_BAYER (GBRG, GRBG, 0),
-	PF_BAYER (GRBG, GBRG, 0),
+	PF_BAYER (BGGR8, RGGB8, 8, V4L2_PIX_FMT_SBGGR8),
+	PF_BAYER (RGGB8, BGGR8, 8, 0),
+	PF_BAYER (GBRG8, GRBG8, 8, 0),
+	PF_BAYER (GRBG8, GBRG8, 8, 0),
+
+	PF_BAYER (BGGR16, RGGB16, 16, V4L2_PIX_FMT_SBGGR16),
+	PF_BAYER (RGGB16, BGGR16, 16, 0),
+	PF_BAYER (GBRG16, GRBG16, 16, 0),
+	PF_BAYER (GRBG16, GBRG16, 16, 0),
 };
 
 static const pixel_format *
@@ -364,7 +378,7 @@ static const char *		my_name;
 
 static const char *		dev_name = "/dev/video";
 
-static int			fd;
+static int			dev_fd;
 static v4l2_std_id		std_id;
 static io_methods		io_method;
 static struct v4l2_format	fmt;
@@ -406,13 +420,16 @@ write_rgb_pixel			(uint8_t *		dst,
 				 const pixel_format *	dst_pf,
 				 unsigned int		b,
 				 unsigned int		g,
-				 unsigned int		r)
+				 unsigned int		r,
+				 unsigned int		depth)
 {
 	unsigned int dst_pixel;
+	unsigned int shl;
 
-	dst_pixel  = ((b << 24) >> dst_pf->shr[0]) & dst_pf->mask[0];
-	dst_pixel |= ((g << 24) >> dst_pf->shr[1]) & dst_pf->mask[1];
-	dst_pixel |= ((r << 24) >> dst_pf->shr[2]) & dst_pf->mask[2];
+	shl = 32 - depth;
+	dst_pixel  = ((b << shl) >> dst_pf->shr[0]) & dst_pf->mask[0];
+	dst_pixel |= ((g << shl) >> dst_pf->shr[1]) & dst_pf->mask[1];
+	dst_pixel |= ((r << shl) >> dst_pf->shr[2]) & dst_pf->mask[2];
 
 	switch (dst_pf->byte_order * 256 + dst_pf->bits_per_pixel) {
 	case LE * 256 + 32:
@@ -443,7 +460,7 @@ write_rgb_pixel			(uint8_t *		dst,
 }
 
 static void
-convert_bayer_image		(uint8_t *		dst,
+convert_bayer8_image		(uint8_t *		dst,
 				 const pixel_format *	dst_pf,
 				 unsigned long		dst_bpl,
 				 const uint8_t *	src,
@@ -466,19 +483,19 @@ convert_bayer_image		(uint8_t *		dst,
 	assert ((long) dst_padding >= 0);
 
 	switch (src_pf->pixfmt) {
-	case BGGR:
+	case BGGR8:
 		tile = 0;
 		break;
 
-	case GBRG:
+	case GBRG8:
 		tile = 1;
 		break;
 
-	case RGGB:
+	case RGGB8:
 		tile = 2;
 		break;
 
-	case GRBG:
+	case GRBG8:
 		tile = 3;
 		break;
 
@@ -490,7 +507,7 @@ convert_bayer_image		(uint8_t *		dst,
 	for (y = 0; y < height; ++y) {
 		const uint8_t *srcm;
 		const uint8_t *srcp;
-		int x;
+		unsigned int x;
 
 		srcm = srcp = src - src_bpl;
 
@@ -518,7 +535,8 @@ convert_bayer_image		(uint8_t *		dst,
 						 /* r */ (srcm[xm] +
 							  srcm[xp] +
 							  srcp[xm] +
-							  srcp[xp] + 2) >> 2);
+							  srcp[xp] + 2) >> 2,
+						 /* depth */ 8);
 				break;
 
 			case 1: /* GB
@@ -528,7 +546,8 @@ convert_bayer_image		(uint8_t *		dst,
 							  src[xp] + 1) >> 1,
 						 /* g */ src[x],
 						 /* r */ (srcm[x] +
-							  srcp[x] + 1) >> 1);
+							  srcp[x] + 1) >> 1,
+						 /* depth */ 8);
 				break;
 
 			case 2: /* GR
@@ -538,7 +557,8 @@ convert_bayer_image		(uint8_t *		dst,
 							  srcp[x] + 1) >> 1,
 						 /* g */ src[x],
 						 /* r */ (src[xm] +
-							  src[xp] + 1) >> 1);
+							  src[xp] + 1) >> 1,
+						 /* depth */ 8);
 				break;
 
 			case 3: /* RG
@@ -552,7 +572,8 @@ convert_bayer_image		(uint8_t *		dst,
 							  src[xp] +
 							  srcm[x] +
 							  srcp[x] + 2) >> 2,
-						 /* r */ src[x]);
+						 /* r */ src[x],
+						 /* depth */ 8);
 				break;
 
 			default:
@@ -569,6 +590,143 @@ convert_bayer_image		(uint8_t *		dst,
 
 		dst += dst_padding;
 		src += src_bpl;
+	}
+}
+
+static void
+convert_bayer16_image		(uint8_t *		dst,
+				 const pixel_format *	dst_pf,
+				 unsigned long		dst_bpl,
+				 const uint16_t *	src,
+				 const pixel_format *	src_pf,
+				 unsigned long		src_bpl,
+				 unsigned int		width,
+				 unsigned int		height)
+{
+	unsigned long dst_padding;
+	unsigned int tile;
+	unsigned int y;
+
+	assert (PACKED_RGB == dst_pf->pixfmt_class);
+	assert (BAYER == src_pf->pixfmt_class);
+
+	assert (width >= 2 && 0 == (width & 1));
+	assert (height >= 2 && 0 == (height & 1));
+
+	dst_padding = dst_bpl - width * (dst_pf->bits_per_pixel >> 3);
+	assert ((long) dst_padding >= 0);
+
+	switch (src_pf->pixfmt) {
+	case BGGR16:
+		tile = 0;
+		break;
+
+	case GBRG16:
+		tile = 1;
+		break;
+
+	case RGGB16:
+		tile = 2;
+		break;
+
+	case GRBG16:
+		tile = 3;
+		break;
+
+	default:
+		assert (0);
+		break;
+	}
+
+	for (y = 0; y < height; ++y) {
+		const uint16_t *srcm;
+		const uint16_t *srcp;
+		unsigned int x;
+
+		srcm = srcp = (const uint16_t *)
+			((char *) src - src_bpl);
+
+		if (0 == y)
+			srcm = (const uint16_t *)
+				((char *) srcm + src_bpl * 2);
+
+		if (y != height - 1)
+			srcp = (const uint16_t *)
+				((char *) srcp + src_bpl * 2);
+
+		for (x = 0; x < width; ++x) {
+			int xm, xp;
+
+			xm = (((0 == x) - 1) | 1) + x;
+			xp = (((x != width - 1) - 1) | 1) + x;
+
+			switch (tile) {
+			case 0: /* BG
+				   GR */
+				write_rgb_pixel (dst, dst_pf,
+						 /* b */ src[x],
+						 /* g */ (src[xm] +
+							  src[xp] +
+							  srcm[x] +
+							  srcp[x] + 2) >> 2,
+						 /* r */ (srcm[xm] +
+							  srcm[xp] +
+							  srcp[xm] +
+							  srcp[xp] + 2) >> 2,
+						 /* depth */ 10);
+				break;
+
+			case 1: /* GB
+				   RG */
+				write_rgb_pixel (dst, dst_pf,
+						 /* b */ (src[xm] +
+							  src[xp] + 1) >> 1,
+						 /* g */ src[x],
+						 /* r */ (srcm[x] +
+							  srcp[x] + 1) >> 1,
+						 /* depth */ 10);
+				break;
+
+			case 2: /* GR
+				   BG */
+				write_rgb_pixel (dst, dst_pf,
+						 /* b */ (srcm[x] +
+							  srcp[x] + 1) >> 1,
+						 /* g */ src[x],
+						 /* r */ (src[xm] +
+							  src[xp] + 1) >> 1,
+						 /* depth */ 10);
+				break;
+
+			case 3: /* RG
+				   GB */
+				write_rgb_pixel (dst, dst_pf,
+						 /* b */ (srcm[xm] +
+							  srcm[xp] +
+							  srcp[xm] +
+							  srcp[xp] + 2) >> 2,
+						 /* g */ (src[xm] +
+							  src[xp] +
+							  srcm[x] +
+							  srcp[x] + 2) >> 2,
+						 /* r */ src[x],
+						 /* depth */ 10);
+				break;
+
+			default:
+				assert (0);
+				break;
+			}
+
+			tile ^= 1;
+
+			dst += dst_pf->bits_per_pixel >> 3;
+		}
+
+		tile ^= 2;
+
+		dst += dst_padding;
+		src = (const uint16_t *)((char *) src + src_bpl);
 	}
 }
 
@@ -669,9 +827,16 @@ convert_rgb_image		(uint8_t *		dst,
 	assert (PACKED_RGB == dst_pf->pixfmt_class);
 
 	if (BAYER == src_pf->pixfmt_class) {
-		convert_bayer_image (dst, dst_pf, dst_bpl,
-				     src, src_pf, src_bpl,
-				     width, height);
+		if (8 == src_pf->bits_per_pixel) {
+			convert_bayer8_image (dst, dst_pf, dst_bpl,
+					      src, src_pf, src_bpl,
+					      width, height);
+		} else {
+			convert_bayer16_image (dst, dst_pf, dst_bpl,
+					       (const uint16_t *) src,
+					       src_pf, src_bpl,
+					       width, height);
+		}
 		return;
 	}
 
@@ -751,13 +916,13 @@ create_ximage			(const pixel_format **	pf,
 				 unsigned int		width,
 				 unsigned int		height)
 {
-	XImage *ximage;
+	XImage *xi;
 	unsigned int image_size;
 	unsigned int i;
 
 	assert (NULL != display);
 
-	ximage = XCreateImage (display,
+	xi = XCreateImage (display,
 			       DefaultVisual (display, screen),
 			       DefaultDepth (display, screen),
 			       ZPixmap,
@@ -767,24 +932,24 @@ create_ximage			(const pixel_format **	pf,
 			       height,
 			       /* bitmap_pad (n/a) */ 8,
 			       /* bytes_per_line: auto */ 0);
-	if (NULL == ximage) {
+	if (NULL == xi) {
 		error_exit ("Cannot allocate XImage.\n");
 	}
 
 	for (i = 0; i < N_ELEMENTS (pixel_formats); ++i) {
 		if (PACKED_RGB != pixel_formats[i].pixfmt_class)
 			continue;
-		if ((LSBFirst == ximage->byte_order)
+		if ((LSBFirst == xi->byte_order)
 		    != (LE == pixel_formats[i].byte_order))
 			continue;
-		if (ximage->bits_per_pixel
+		if (xi->bits_per_pixel
 		    != pixel_formats[i].bits_per_pixel)
 			continue;
-		if (ximage->blue_mask != pixel_formats[i].mask[0])
+		if (xi->blue_mask != pixel_formats[i].mask[0])
 			continue;
-		if (ximage->green_mask != pixel_formats[i].mask[1])
+		if (xi->green_mask != pixel_formats[i].mask[1])
 			continue;
-		if (ximage->red_mask != pixel_formats[i].mask[2])
+		if (xi->red_mask != pixel_formats[i].mask[2])
 			continue;
 		break;
 	}
@@ -792,27 +957,27 @@ create_ximage			(const pixel_format **	pf,
 	if (i >= N_ELEMENTS (pixel_formats)) {
 		error_exit ("Unknown XImage pixel format "
 			    "(bpp=%u %s b=0x%08x g=0x%08x r=0x%08x).\n",
-			    ximage->bits_per_pixel,
-			    (LSBFirst == ximage->byte_order) ?
+			    xi->bits_per_pixel,
+			    (LSBFirst == xi->byte_order) ?
 			    "LSBFirst" : "MSBFirst",
-			    ximage->blue_mask,
-			    ximage->green_mask,
-			    ximage->red_mask);
+			    xi->blue_mask,
+			    xi->green_mask,
+			    xi->red_mask);
 	}
 
 	if (NULL != pf)
 		*pf = pixel_formats + i;
 
-	image_size = (ximage->bytes_per_line * ximage->height);
+	image_size = (xi->bytes_per_line * xi->height);
 
-	ximage->data = malloc (image_size);
-	if (NULL == ximage->data) {
+	xi->data = malloc (image_size);
+	if (NULL == xi->data) {
 		error_exit ("Cannot allocate XImage data (%u bytes).\n",
 			    image_size);
 		exit (EXIT_FAILURE);
 	}
 
-	return ximage;
+	return xi;
 }
 
 static void
@@ -901,10 +1066,10 @@ display_image			(const uint8_t *	image,
 	font = XQueryFont (display, XGContextFromGC (gc));
 	text_height = font->max_bounds.ascent + font->max_bounds.descent;
 
-	if (image_width > ximage->width
-	    || image_width != wa.width
-	    || image_height > ximage->height
-	    || image_height + text_height != wa.height) {
+	if (image_width > (unsigned int) ximage->width
+	    || image_width != (unsigned int) wa.width
+	    || image_height > (unsigned int) ximage->height
+	    || image_height + text_height != (unsigned int) wa.height) {
 		resize_window (image_width,
 			       image_height,
 			       /* text_width */ image_width,
@@ -978,6 +1143,10 @@ display_image			(const uint8_t *	image,
 		   /* y */ image_height + font->max_bounds.ascent,
 		   &xti,
 		   /* n_items */ 1);
+
+	free (xti.chars);
+
+	XFreeFontInfo (/* names */ NULL, font, 1);
 }
 
 static void
@@ -1062,7 +1231,8 @@ read_and_display_frame		(const pixel_format *	conv_pf)
 
 	switch (io_method) {
 	case IO_METHOD_READ:
-		if (-1 == read (fd, buffers[0].start, buffers[0].length)) {
+		if (-1 == read (dev_fd, buffers[0].start,
+				buffers[0].length)) {
 			switch (errno) {
 			case EAGAIN:
 				return false;
@@ -1087,7 +1257,7 @@ read_and_display_frame		(const pixel_format *	conv_pf)
 		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory = V4L2_MEMORY_MMAP;
 
-		if (-1 == xioctl (fd, VIDIOC_DQBUF, &buf)) {
+		if (-1 == xioctl (dev_fd, VIDIOC_DQBUF, &buf)) {
 			switch (errno) {
 			case EAGAIN:
 				return false;
@@ -1111,7 +1281,7 @@ read_and_display_frame		(const pixel_format *	conv_pf)
 			       fmt.fmt.pix.width,
 			       fmt.fmt.pix.height);
 
-		if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
+		if (-1 == xioctl (dev_fd, VIDIOC_QBUF, &buf))
 			errno_exit ("VIDIOC_QBUF");
 
 		break;
@@ -1129,13 +1299,12 @@ wait_for_next_frame		(void)
 		int r;
 
 		FD_ZERO (&fds);
-		FD_SET (fd, &fds);
+		FD_SET (dev_fd, &fds);
 
 		timeout.tv_sec = 2;
 		timeout.tv_usec = 0;
 
-		r = select (fd + 1, &fds, NULL, NULL, &timeout);
-
+		r = select (dev_fd + 1, &fds, NULL, NULL, &timeout);
 		if (-1 == r) {
 			if (EINTR == errno)
 				continue;
@@ -1166,7 +1335,7 @@ flush_capture_queue		(void)
 			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 			buf.memory = V4L2_MEMORY_MMAP;
 
-			if (-1 == xioctl (fd, VIDIOC_DQBUF, &buf)) {
+			if (-1 == xioctl (dev_fd, VIDIOC_DQBUF, &buf)) {
 				switch (errno) {
 				case EAGAIN:
 					return;
@@ -1176,7 +1345,7 @@ flush_capture_queue		(void)
 				}
 			}
 
-			if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
+			if (-1 == xioctl (dev_fd, VIDIOC_QBUF, &buf))
 				errno_exit ("VIDIOC_QBUF");
 
 			break;
@@ -1232,7 +1401,7 @@ stop_capturing			(void)
 	case IO_METHOD_MMAP:
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-		if (-1 == xioctl (fd, VIDIOC_STREAMOFF, &type))
+		if (-1 == xioctl (dev_fd, VIDIOC_STREAMOFF, &type))
 			errno_exit ("VIDIOC_STREAMOFF");
 
 		break;
@@ -1260,13 +1429,13 @@ start_capturing			(void)
 			buf.memory	= V4L2_MEMORY_MMAP;
 			buf.index	= i;
 
-			if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
+			if (-1 == xioctl (dev_fd, VIDIOC_QBUF, &buf))
 				errno_exit ("VIDIOC_QBUF");
 		}
 
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-		if (-1 == xioctl (fd, VIDIOC_STREAMON, &type))
+		if (-1 == xioctl (dev_fd, VIDIOC_STREAMON, &type))
 			errno_exit ("VIDIOC_STREAMON");
 
 		break;
@@ -1336,7 +1505,7 @@ init_mmap_io			(void)
 	req.type	= V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	req.memory	= V4L2_MEMORY_MMAP;
 
-	if (-1 == xioctl (fd, VIDIOC_REQBUFS, &req)) {
+	if (-1 == xioctl (dev_fd, VIDIOC_REQBUFS, &req)) {
 		if (EINVAL == errno) {
 			error_exit ("%s does not support "
 				    "memory mapping.\n", dev_name);
@@ -1365,7 +1534,7 @@ init_mmap_io			(void)
 		buf.memory	= V4L2_MEMORY_MMAP;
 		buf.index	= n_buffers;
 
-		if (-1 == xioctl (fd, VIDIOC_QUERYBUF, &buf))
+		if (-1 == xioctl (dev_fd, VIDIOC_QUERYBUF, &buf))
 			errno_exit ("VIDIOC_QUERYBUF");
 
 		buffers[n_buffers].length = buf.length;
@@ -1374,7 +1543,7 @@ init_mmap_io			(void)
 			      buf.length,
 			      PROT_READ | PROT_WRITE /* required */,
 			      MAP_SHARED /* recommended */,
-			      fd, buf.m.offset);
+			      dev_fd, buf.m.offset);
 
 		if (MAP_FAILED == buffers[n_buffers].start)
 			errno_exit ("mmap");
@@ -1427,7 +1596,7 @@ mainloop			(void)
 
 		fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
 
-		if (-1 == xioctl (fd, VIDIOC_S_FMT, &fmt)) {
+		if (-1 == xioctl (dev_fd, VIDIOC_S_FMT, &fmt)) {
 			if (EINVAL != errno) {
 				errno_exit ("VIDIOC_S_FMT");
 			}
@@ -1518,7 +1687,7 @@ init_device			(void)
 	struct v4l2_cropcap cropcap;
 	struct v4l2_crop crop;
 
-	if (-1 == xioctl (fd, VIDIOC_QUERYCAP, &cap)) {
+	if (-1 == xioctl (dev_fd, VIDIOC_QUERYCAP, &cap)) {
 		if (EINVAL == errno) {
 			error_exit ("%s is not a V4L2 device.\n");
 		} else {
@@ -1562,17 +1731,17 @@ init_device			(void)
 
 	cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-	if (0 == xioctl (fd, VIDIOC_CROPCAP, &cropcap)) {
+	if (0 == xioctl (dev_fd, VIDIOC_CROPCAP, &cropcap)) {
 		crop.type = cropcap.type;
 		crop.c = cropcap.defrect; /* reset to default */
 
 		/* Errors ignored. */
-		xioctl (fd, VIDIOC_S_CROP, &crop);
+		xioctl (dev_fd, VIDIOC_S_CROP, &crop);
 	} else {
 		/* Errors ignored. */
 	}
 
-	if (-1 == xioctl (fd, VIDIOC_G_STD, &std_id))
+	if (-1 == xioctl (dev_fd, VIDIOC_G_STD, &std_id))
 		errno_exit ("VIDIOC_G_STD");
 }
 
@@ -1590,9 +1759,8 @@ open_device			(void)
 		error_exit ("%s is not a device file.\n", dev_name);
 	}
 
-	fd = open (dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
-
-	if (-1 == fd) {
+	dev_fd = open (dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
+	if (-1 == dev_fd) {
 		error_exit ("Cannot open %s. %s.\n",
 			    dev_name, strerror (errno));
 	}
@@ -1655,7 +1823,7 @@ do {									\
 			for (i = 0; i < N_ELEMENTS (pf->mask); ++i) {
 				pf_assert (pf->n_bits[i] + pf->shr[i] <= 32);
 				pf_assert (pf->mask[i]
-					   == (((1 << pf->n_bits[i]) - 1)
+					   == (((1u << pf->n_bits[i]) - 1)
 					       << (32 - pf->n_bits[i]
 						   - pf->shr[i])));
 			}
@@ -1732,12 +1900,12 @@ main				(int			argc,
 	self_test ();
 
 	for (;;) {
-		int index;
+		int opt_index;
 		int c;
 
 		c = getopt_long (argc, argv,
 				 short_options, long_options,
-				 &index);
+				 &opt_index);
 
 		if (-1 == c)
 			break;
