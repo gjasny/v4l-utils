@@ -369,6 +369,8 @@ int main(int argc, char **argv)
 					break;
 				case 2:
 					reg_min = strtoull(value, 0L, 0);
+					if (reg_max == 0)
+						reg_max = reg_min + 0xff;
 					break;
 				case 3:
 					reg_max = strtoull(value, 0L, 0);
