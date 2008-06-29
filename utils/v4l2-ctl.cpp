@@ -485,10 +485,16 @@ static void print_sliced_vbi_cap(struct v4l2_sliced_vbi_cap &cap)
 static std::string name2var(unsigned char *name)
 {
 	std::string s;
+	int add_underscore = 0;
 
 	while (*name) {
-		if (*name == ' ') s += "_";
-		else s += std::string(1, tolower(*name));
+		if (isalnum(*name)) {
+			if (add_underscore)
+				s += '_';
+			add_underscore = 0;
+			s += std::string(1, tolower(*name));
+		}
+		else if (s.length()) add_underscore = 1;
 		name++;
 	}
 	return s;
