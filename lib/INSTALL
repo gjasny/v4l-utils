@@ -1,0 +1,4 @@
+To compile simply type "make" after that you can find the compiled libraries
+and wrappers under the lib dir, public headers are under the include dir.
+
+Sorry no make install target for now.

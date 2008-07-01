@@ -1,33 +1,16 @@
-# Makefile for linuxtv.org v4l2-apps/lib
+LIB_RELEASE=0
+V4L2_LIB_VERSION=$(LIB_RELEASE).3
 
-CPPFLAGS += -I../../linux/include -I..
+all clean install:
+	$(MAKE) -C libv4lconvert $@
+	$(MAKE) -C libv4l2 $@
+	$(MAKE) -C libv4l1 $@
 
-includes = v4l2.h
-
-objects  = frequencies.o v4l2_driver.o
-
-sharedlib = libv4l2.so
-staticlib = libv4l2.a
-
-ifeq ($(prefix),)
-prefix = /usr
-endif
-
-.PHONY: all clean install
-
-all: $(sharedlib) $(staticlib)
-
-$(sharedlib): $(objects)
-
-$(staticlib): $(objects)
-
-clean::
-	rm -f $(objects) $(sharedlib) $(staticlib)
-
-install:
-	mkdir -p $(prefix)/include
-	cp $(includes) $(prefix)/include
-	mkdir -p $(prefix)/lib
-	cp $(sharedlib) $(staticlib) $(prefix)/lib
-
-include ../Make.rules
+export: clean
+	mkdir /tmp/libv4l-$(V4L2_LIB_VERSION)
+	cp -a . /tmp/libv4l-$(V4L2_LIB_VERSION)/
+	cd /tmp/ && \
+		tar cvf /tmp/libv4l-$(V4L2_LIB_VERSION).tar\
+		libv4l-$(V4L2_LIB_VERSION)
+	gzip /tmp/libv4l-$(V4L2_LIB_VERSION).tar
+	rm -rf /tmp/libv4l-$(V4L2_LIB_VERSION)

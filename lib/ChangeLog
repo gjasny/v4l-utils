@@ -1,0 +1,107 @@
+libv4l-0.3
+----------
+* add extern "C" magic to public header files for c++ usage (Gregor Jasny)
+* Make libv4l1 and libv4l2 multithread use safe, see README.multi-threading
+* Add v4lx_dup() calls (and intercept dup() from the wrappers) this fixes
+  use with gstreamer's v4l2 plugin (tested with cheese)
+* Hopefully definitely fix compile errors on systems with a broken videodev2.h
+
+libv4l-0.2
+----------
+*** API change ***
+* Change v4lconvert api so that the v4lconvert struct always gets allocated
+  by the library, this to make it opaque, so that we can avoid future API
+  and ABI changes
+* Add support for yuv420 -> bgr24 conversion
+* When converting from v4l2 pixelformat to v4l12 palette return
+  VIDEO_PALETTE_YUV420P instead of VIDEO_PALETTE_YUV420 for
+  V4L2_PIX_FMT_YUV420 as that is what most apps seem to expect
+* override kernel v4l1 compat min / max size with our own more accurate values
+* fix v4l1 munmap bug where it didn't recognise the buffer being unmapped was
+  our fake buffer (fixes gstreamer v4l1 support, checked with cheese)
+* add support for reporting the emulated pixelformats with ENUM_FMT, this
+  defaults to off, and can be activated by passing a flag to enable it to
+  v4l2_fd_open. This gets enabled by default the wrappers.
+* v4l2: mmap the real device buffers before doing conversion when DQBUF gets
+  called before the application has called mmap (avoid crash).
+
+
+libv4l-0.1
+----------
+* major shuffle / rewrite now split into libv4l1, libv4l2, libv4lconvert
+  and 2 wrappers for binary compatibility
+* rewritten LGPL bayer decoding
+* many many other changes and fixes
+
+
+v4l1-compat-0.6 (V4L2 apps stay working)
+----------------------------------------
+* Do not go into emulation mode of rgb24 immediately, but only after a
+  GPICT ioctl which has not been preceded by a SPICT ioctl, AKA do not get
+  in the way of V4L2 read calls by doing conversion on them
+* Do not get in the way of mmap calls made by V4L2 applications
+* Fix swapping of red and blue in bayer -> bgr24 decode routine
+* Remember the v4l1 palette asked for with SPICT and return that, as
+  otherwise we loose information when going v4l1 -> v4l2 -> v4l1, for example
+  YUV420P becomes YUV420, which are separate in v4l1.
+
+
+v4l1-compat-0.5 (perfect camorama)
+----------------------------------
+* Allow changing of format after the buffers have been mapped, by tearing
+  down the entire house, changing the fundament and then rebuilding it.
+  Now changing the capture resolution in camorama works!
+* Fix jpeg decoding error reporting
+* Allow jpeg's with a height which is a multiple of 8 (was 16)
+* Remove a number of pretty new VIDIOCXXX -> string mappings from log.c,
+  fixing compiling with somewhat older kernels
+
+
+v4l1-compat 0.4
+---------------
+* Do not even try to change the format in v4l1_compat_set_format(), unless
+  _really_ necessary.
+* Cleanup ambigious use of src_format (no functional changes)
+* Drop the mmap hack for zerocopy access under certain conditions, one of them
+  that the cam can deliver the requested format. Although avoiding the
+  memcpy in this scenarios is a good thing todo, there were several issues
+  with the 0.3 implementation of this, fixing all these means adding lots of
+  special cases all over the code. So instead we just drop support and
+  always do atleast a memcpy (or a conversion). If an application cannot
+  live with the speed penalty this imposes it should be ported to v4l2.
+* Now that we've gotten rid of the zerocopy mmap hack, we can safely allow
+  mixing read and mmap based IO.
+* Explictly include linux/ioctl.h, to fix compile with kernel headers where
+  linux/videodev.h doesn't.
+
+
+v4l1-compat 0.3
+---------------
+* Don't allow multiple opens, in theory our code can handle it, but not all
+  v4l2 devices like it (ekiga does it and uvc doesn't like it).
+
+
+v4l1-compat 0.2
+---------------
+* When mmap gets passed an fd of -1 (anonymous map) don't look for it in our
+  list of managed fds, as we use -1 to mark unused entries (fixes ekiga
+  crashing). Also check for an fd of -1 in the other calls we intercept.
+* In close() start with removing the fd from our list of managed fds, this must
+  be done first, because as soon as we've done the actual close syscall, the
+  fd maybe returned by an open in another thread and we don't want to intercept
+  calls to this new fd.
+* Make unknown v4l1 palette types a normal level log messages instead of an
+  error.
+* When an applicaiton changes the width / height through the CMCAPTURE ioctl
+  remember the new width and height.
+* If the devices initial v4l2 pixformat has no corresponding v4l1 palette, try
+  setting a format which does (and which we emulate when necessary) so that
+  applicactions which just query the current format (GPICT) and then take
+  whatever they get will work (partially fixes camorama)
+* Implement our own SWIN instead of using kernel compat layer, for more
+  flexibility and better error checking
+
+
+v4l1-compat 0.1
+---------------
+* Initial public release.

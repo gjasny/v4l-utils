@@ -1,81 +1,26 @@
-The only capture method implemented currently is mmap.
+-protect open() against being called from different threads simultaniously,
+ we are then thread safe except for the jpeg decompression under the following
+ assumption:
+ * We assume all device setup (for a single device) is done from a single
+   thread
+ * We assume that at the time an videodev fd gets closed all other threads
+   which may have been using it have stopped using it.
 
-Missing V4L2 ioctls to be implemented at library:
-	Methods to change controls at V4L devices:
-		VIDIOC_QUERYCTRL
-		VIDIOC_QUERYMENU
-		VIDIOC_G_CTRL
-		VIDIOC_S_CTRL
-		VIDIOC_TRY_EXT_CTRLS
-		VIDIOC_G_EXT_CTRLS
-		VIDIOC_S_EXT_CTRLS
+-add support for setting / getting the number of read buffers
 
-	Tuner control methods:
-		VIDIOC_G_TUNER
-		VIDIOC_S_TUNER
-		VIDIOC_S_FREQUENCY
-		VIDIOC_G_FREQUENCY
+-add code to v4l2_read to not return frames more then say 5 seconds old
 
-	Crop methods:
-		VIDIOC_CROPCAP
-		VIDIOC_S_CROP
-		VIDIOC_G_CROP
+-add support for libv4l1 for non pure capture (combined capture and overlay)
+ devices so that atleast CGMBUF emulation (but no conversion, as thats
+ impossible for overlays) can be done, so that it will no longer be
+ necessary to implement CGMBUF in the kernel for each driver.
 
-	Audio input/output:
-		VIDIOC_ENUMAUDIO
-		VIDIOC_ENUMAUDOUT
-		VIDIOC_G_AUDIO
-		VIDIOC_S_AUDIO
-		VIDIOC_G_AUDOUT
-		VIDIOC_S_AUDOUT
+-add (configurable) support for alsa faking enum_fmt to libv4l2 ?
 
-	Video output:
-		VIDIOC_ENUMOUTPUT
-		VIDIOC_G_OUTPUT
-		VIDIOC_S_OUTPUT
+-check v4l2_field during conversion
 
-	Priority control:
-		VIDIOC_G_PRIORITY
-		VIDIOC_S_PRIORITY
+-add make install target
 
-	Sliced VBI control:
-		VIDIOC_G_SLICED_VBI_CAP
+-add conversion from bgr24 to yuv420
 
-	The received video STD:
-		VIDIOC_QUERYSTD
-
-	Streaming parameters:
-		VIDIOC_G_PARM
-		VIDIOC_S_PARM
-
-	Output modulator (generally for TV):
-		VIDIOC_G_MODULATOR
-		VIDIOC_S_MODULATOR
-
-	Those methods are brand new. Not yet used on drivers:
-		VIDIOC_ENUM_FRAMEINTERVALS
-		VIDIOC_ENUM_FRAMESIZES
-
-	Overlay is somewhat legacy stuff those days:
-		VIDIOC_OVERLAY
-		VIDIOC_G_FBUF
-		VIDIOC_S_FBUF
-
-	Those are unlikely to be implemented at API (legacy stuff, debug stuff or private):
-		VIDIOC_G_JPEGCOMP
-		VIDIOC_S_JPEGCOMP
-		VIDIOC_LOG_STATUS
-		VIDIOC_PRIVATE
-		VIDIOC_RESERVED
-		VIDIOC_OVERLAY_OLD
-		VIDIOC_S_PARM_OLD
-		VIDIOC_S_CTRL_OLD
-		VIDIOC_G_AUDIO_OLD
-		VIDIOC_G_AUDOUT_OLD
-		VIDIOC_CROPCAP_OLD
-
-Also missing V4L1 mmap method:
-	VIDIOCGMBUF
-
-	This method is interesting only to be used by driver-test to check
-API compliance to the legacy method.
+-add v4l2_dup, make re-entrant safe (for gstreamer v4l2 support)
