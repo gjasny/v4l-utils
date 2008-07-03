@@ -71,6 +71,9 @@ void v4lconvert_spca501_to_bgr24(const unsigned char *src, unsigned char *dst,
 void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
+void v4lconvert_decode_sn9c10x(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
 void v4lconvert_bayer_to_bgr24(const unsigned char *bayer,
   unsigned char *rgb, int width, int height, unsigned int pixfmt);
 

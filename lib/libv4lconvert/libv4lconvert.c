@@ -37,6 +37,7 @@ static const unsigned int supported_src_pixfmts[] = {
   V4L2_PIX_FMT_SRGGB8,
   V4L2_PIX_FMT_SPCA501,
   V4L2_PIX_FMT_SPCA561,
+  V4L2_PIX_FMT_SN9C10X,
   -1
 };
 
@@ -314,23 +315,40 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 				     dest_fmt->fmt.pix.height);
       break;
 
+    /* compressed bayer formats */
     case V4L2_PIX_FMT_SPCA561:
+    case V4L2_PIX_FMT_SN9C10X:
     {
-      static unsigned char tmpbuf[640 * 480];
-      v4lconvert_decode_spca561(src, tmpbuf, dest_fmt->fmt.pix.width,
-				dest_fmt->fmt.pix.height);
+      unsigned char tmpbuf[dest_fmt->fmt.pix.width*dest_fmt->fmt.pix.height];
+      unsigned int bayer_fmt;
+
+      switch (src_fmt->fmt.pix.pixelformat) {
+	case V4L2_PIX_FMT_SPCA561:
+	  v4lconvert_decode_spca561(src, tmpbuf, dest_fmt->fmt.pix.width,
+				    dest_fmt->fmt.pix.height);
+	  bayer_fmt = V4L2_PIX_FMT_SGBRG8;
+	  break;
+	case V4L2_PIX_FMT_SN9C10X:
+	  v4lconvert_decode_sn9c10x(src, tmpbuf, dest_fmt->fmt.pix.width,
+				    dest_fmt->fmt.pix.height);
+	  bayer_fmt = V4L2_PIX_FMT_SGBRG8;
+	  break;
+      }
+
       if (dest_fmt->fmt.pix.pixelformat == V4L2_PIX_FMT_BGR24)
 	v4lconvert_bayer_to_bgr24(tmpbuf, dest, dest_fmt->fmt.pix.width,
-		    dest_fmt->fmt.pix.height, V4L2_PIX_FMT_SGBRG8);
+		    dest_fmt->fmt.pix.height, bayer_fmt);
       else
 	v4lconvert_bayer_to_yuv420(tmpbuf, dest, dest_fmt->fmt.pix.width,
-		    dest_fmt->fmt.pix.height, V4L2_PIX_FMT_SGBRG8);
+		    dest_fmt->fmt.pix.height, bayer_fmt);
       break;
     }
+
     case V4L2_PIX_FMT_BGR24:
       /* dest must be V4L2_PIX_FMT_YUV420 then */
       printf("FIXME add bgr24 -> yuv420 conversion\n");
       break;
+
     case V4L2_PIX_FMT_YUV420:
       /* dest must be V4L2_PIX_FMT_BGR24 then */
       v4lconvert_yuv420_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
