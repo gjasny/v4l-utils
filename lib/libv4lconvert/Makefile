@@ -9,7 +9,7 @@ CFLAGS += -Wall -W -Wno-unused -Wpointer-arith -Wstrict-prototypes
 LDFLAGS       = -shared
 
 CONVERT_LIB   = libv4lconvert.so
-CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o \
+CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o pac207.o \
 		jidctflt.o spca561-decompress.o rgbyuv.o spca501.o bayer.o
 TARGETS       = $(CONVERT_LIB)
 INCLUDES      = ../include/libv4lconvert.h

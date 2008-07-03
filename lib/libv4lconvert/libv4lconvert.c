@@ -38,6 +38,7 @@ static const unsigned int supported_src_pixfmts[] = {
   V4L2_PIX_FMT_SPCA501,
   V4L2_PIX_FMT_SPCA561,
   V4L2_PIX_FMT_SN9C10X,
+  V4L2_PIX_FMT_PAC207,
   -1
 };
 
@@ -318,6 +319,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     /* compressed bayer formats */
     case V4L2_PIX_FMT_SPCA561:
     case V4L2_PIX_FMT_SN9C10X:
+    case V4L2_PIX_FMT_PAC207:
     {
       unsigned char tmpbuf[dest_fmt->fmt.pix.width*dest_fmt->fmt.pix.height];
       unsigned int bayer_fmt;
@@ -332,6 +334,11 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	  v4lconvert_decode_sn9c10x(src, tmpbuf, dest_fmt->fmt.pix.width,
 				    dest_fmt->fmt.pix.height);
 	  bayer_fmt = V4L2_PIX_FMT_SGBRG8;
+	  break;
+	case V4L2_PIX_FMT_PAC207:
+	  v4lconvert_decode_pac207(src, tmpbuf, dest_fmt->fmt.pix.width,
+				    dest_fmt->fmt.pix.height);
+	  bayer_fmt = V4L2_PIX_FMT_SBGGR8;
 	  break;
       }
 
