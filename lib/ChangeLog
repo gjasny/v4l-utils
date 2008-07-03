@@ -1,3 +1,20 @@
+libv4l-0.3.1
+------------
+* Only serialize V4L2_BUF_TYPE_VIDEO_CAPTURE type ioctls
+* Do not return an uninitialized variable as result code for GPICT
+  (fixes vlc, but see below)
+* Add an apps-patches directory which includes:
+  * vlc-0.8.6-libv4l1.patch, modify vlc's v4l1 plugin to directly call into
+    libv4l1, in the end we want all apps todo this as its better then
+    LD_PRELOAD tricks, but for vlc this is needed as vlc's plugin system
+    causes LD_PRELOAD to not work on symbols in the plugins
+  * camorama-0.19-fixes.patch, small bugfixes to camorama's v4l1 support,
+    this patch only fixes _real_ bugs in camorama and does not change it to
+    work with v4l1compat. Although it does work better with these bugs fixed
+    :) With this patch and LD_PRELOAD=<path>/v4l1compat.so it works
+    flawless.
+
+
 libv4l-0.3
 ----------
 * add extern "C" magic to public header files for c++ usage (Gregor Jasny)

@@ -527,31 +527,13 @@ int v4l2_dup(int fd)
   return fd;
 }
 
-static int v4l2_buf_ioctl_pre_check(int index, unsigned long int request,
-  struct v4l2_buffer *buf, int *result)
-{
-  if (buf->type != V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-    *result = syscall(SYS_ioctl, devices[index].fd, request, buf);
-    return 1;
-  }
-
-  /* IMPROVEME (maybe?) add support for userptr's? */
-  if (devices[index].io != v4l2_io_mmap ||
-      buf->memory != V4L2_MEMORY_MMAP ||
-      buf->index  >= devices[index].no_frames) {
-    errno = EINVAL;
-    *result = -1;
-    return 1;
-  }
-
-  return 0;
-}
 
 int v4l2_ioctl (int fd, unsigned long int request, ...)
 {
   void *arg;
   va_list ap;
-  int result, converting, index, saved_err, stream_locked = 0;
+  int result, converting, index, saved_err;
+  int is_capture_request = 0, stream_needs_locking = 0;
 
   va_start (ap, request);
   arg = va_arg (ap, void *);
@@ -560,19 +542,52 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
   if ((index = v4l2_get_index(fd)) == -1)
     return syscall(SYS_ioctl, fd, request, arg);
 
-  /* do we need to take the stream lock for this ioctl? */
+  /* Is this a capture request and do we need to take the stream lock? */
   switch (request) {
+    case VIDIOC_ENUM_FMT:
+      if (((struct v4l2_fmtdesc *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+	is_capture_request = 1;
+      break;
+    case VIDIOC_TRY_FMT:
+      if (((struct v4l2_format *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+	is_capture_request = 1;
+      break;
     case VIDIOC_S_FMT:
     case VIDIOC_G_FMT:
+      if (((struct v4l2_format *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+	is_capture_request = 1;
+	stream_needs_locking = 1;
+      }
+      break;
     case VIDIOC_REQBUFS:
+      if (((struct v4l2_requestbuffers *)arg)->type ==
+	  V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+	is_capture_request = 1;
+	stream_needs_locking = 1;
+      }
+      break;
     case VIDIOC_QUERYBUF:
     case VIDIOC_QBUF:
     case VIDIOC_DQBUF:
+      if (((struct v4l2_buffer *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+	is_capture_request = 1;
+	stream_needs_locking = 1;
+      }
+      break;
     case VIDIOC_STREAMON:
     case VIDIOC_STREAMOFF:
-      pthread_mutex_lock(&devices[index].stream_lock);
-      stream_locked = 1;
+      if (*((enum v4l2_buf_type *)arg) == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+	is_capture_request = 1;
+	stream_needs_locking = 1;
+      }
   }
+
+  if (!is_capture_request)
+    return syscall(SYS_ioctl, fd, request, arg);
+
+
+  if (stream_needs_locking)
+    pthread_mutex_lock(&devices[index].stream_lock);
 
   converting = devices[index].src_fmt.fmt.pix.pixelformat !=
 	       devices[index].dest_fmt.fmt.pix.pixelformat;
@@ -580,40 +595,16 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
   switch (request) {
     case VIDIOC_ENUM_FMT:
-      {
-	struct v4l2_fmtdesc *fmtdesc = arg;
-
-	if (fmtdesc->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
-	    !(devices[index].flags & V4L2_ENABLE_ENUM_FMT_EMULATION))
-	  result = syscall(SYS_ioctl, devices[index].fd, request, arg);
-	else
-	  result = v4lconvert_enum_fmt(devices[index].convert, fmtdesc);
-      }
+      result = v4lconvert_enum_fmt(devices[index].convert, arg);
       break;
 
     case VIDIOC_TRY_FMT:
-      {
-	struct v4l2_format *fmt = arg;
-
-	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
-	    (devices[index].flags & V4L2_DISABLE_CONVERSION)) {
-	  result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_TRY_FMT, fmt);
-	  break;
-	}
-
-	result = v4lconvert_try_format(devices[index].convert, fmt, NULL);
-      }
+      result = v4lconvert_try_format(devices[index].convert, arg, NULL);
       break;
 
     case VIDIOC_S_FMT:
       {
 	struct v4l2_format src_fmt, *dest_fmt = arg;
-
-	if (dest_fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-	  result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_S_FMT,
-			   dest_fmt);
-	  break;
-	}
 
 	if (!memcmp(&devices[index].dest_fmt, dest_fmt, sizeof(*dest_fmt))) {
 	  result = 0;
@@ -658,7 +649,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	    if (v4l2_activate_read_stream(index))
 	      V4L2_LOG_ERR(
 		"reactivating stream after deactivate failure (AAIIEEEE)\n");
-	    return result;
+	    break;
 	  }
 	}
 
@@ -681,11 +672,6 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       {
 	struct v4l2_format* fmt = arg;
 
-	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-	  result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_G_FMT, fmt);
-	  break;
-	}
-
 	*fmt = devices[index].dest_fmt;
 	result = 0;
       }
@@ -694,11 +680,6 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
     case VIDIOC_REQBUFS:
       {
 	struct v4l2_requestbuffers *req = arg;
-
-	if (req->type != V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-	  result = syscall(SYS_ioctl, devices[index].fd, request, arg);
-	  return 1;
-	}
 
 	/* Don't allow mixing read / mmap io, either we control the buffers
 	   (read based io), or the app does */
@@ -753,9 +734,6 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       {
 	struct v4l2_buffer *buf = arg;
 
-	if (v4l2_buf_ioctl_pre_check(index, request, buf, &result))
-	  break;
-
 	/* Do a real query even when converting to let the driver fill in
 	   things like buf->field */
 	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_QUERYBUF, buf);
@@ -768,22 +746,12 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       break;
 
     case VIDIOC_QBUF:
-      {
-	struct v4l2_buffer *buf = arg;
-
-	if (v4l2_buf_ioctl_pre_check(index, request, buf, &result))
-	  break;
-
-	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_QBUF, buf);
-      }
+      result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_QBUF, arg);
       break;
 
     case VIDIOC_DQBUF:
       {
 	struct v4l2_buffer *buf = arg;
-
-	if (v4l2_buf_ioctl_pre_check(index, request, buf, &result))
-	  break;
 
 	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_DQBUF, buf);
 	if (result || !converting)
@@ -832,32 +800,23 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
     case VIDIOC_STREAMON:
     case VIDIOC_STREAMOFF:
-      {
-	enum v4l2_buf_type *type = arg;
-
-	if (*type != V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-	  result = syscall(SYS_ioctl, devices[index].fd, request, type);
-	  break;
-	}
-
-	if (devices[index].io != v4l2_io_mmap) {
-	  errno = EINVAL;
-	  result = -1;
-	  break;
-	}
-
-	if (request == VIDIOC_STREAMON)
-	  result = v4l2_streamon(index);
-	else
-	  result = v4l2_streamoff(index);
+      if (devices[index].io != v4l2_io_mmap) {
+	errno = EINVAL;
+	result = -1;
+	break;
       }
+
+      if (request == VIDIOC_STREAMON)
+	result = v4l2_streamon(index);
+      else
+	result = v4l2_streamoff(index);
       break;
 
     default:
       result = syscall(SYS_ioctl, fd, request, arg);
   }
 
-  if (stream_locked)
+  if (stream_needs_locking)
     pthread_mutex_unlock(&devices[index].stream_lock);
 
   saved_err = errno;

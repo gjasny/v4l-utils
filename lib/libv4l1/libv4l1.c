@@ -532,6 +532,8 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
 					   V4L2_CID_WHITENESS);
 	pic->brightness = v4l2_get_control(devices[index].fd,
 					   V4L2_CID_BRIGHTNESS);
+
+	result = 0;
       }
       break;
 
