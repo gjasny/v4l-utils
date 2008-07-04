@@ -92,7 +92,7 @@ static inline unsigned char descale_and_clamp(int x, int shift)
       "\tcmpl %4,%1\n"
       "\tcmovg %4,%1\n"
       : "=r"(x)
-      : "0"(x), "Ir"(shift), "ir"(1UL<<(shift-1)), "r" (0xff), "r" (0)
+      : "0"(x), "Ic"((unsigned char)shift), "ir"(1UL<<(shift-1)), "r" (0xff), "r" (0)
       );
   return x;
 }
