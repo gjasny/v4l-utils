@@ -1,11 +1,3 @@
--protect open() against being called from different threads simultaniously,
- we are then thread safe except for the jpeg decompression under the following
- assumption:
- * We assume all device setup (for a single device) is done from a single
-   thread
- * We assume that at the time an videodev fd gets closed all other threads
-   which may have been using it have stopped using it.
-
 -add support for setting / getting the number of read buffers
 
 -add code to v4l2_read to not return frames more then say 5 seconds old
@@ -15,12 +7,6 @@
  impossible for overlays) can be done, so that it will no longer be
  necessary to implement CGMBUF in the kernel for each driver.
 
--add (configurable) support for alsa faking enum_fmt to libv4l2 ?
-
 -check v4l2_field during conversion
 
--add make install target
-
 -add conversion from bgr24 to yuv420
-
--add v4l2_dup, make re-entrant safe (for gstreamer v4l2 support)

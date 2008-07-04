@@ -62,10 +62,18 @@ The preloadable libv4l1 wrapper which adds v4l2 device compatibility to v4l1
 applications is called v4l1compat.so. The preloadable libv4l1 wrapper which
 adds v4l2 device compatibility to v4l1 applications is called v4l2convert.so
 
-Example usage:
-$ export LD_LIBRARY_PATH=`pwd`/lib
-$ export LD_PRELOAD=`pwd`/lib/v4l1compat.so
+Example usage (after install in default location):
+$ export LD_PRELOAD=/usr/local/lib/v4l1compat.so
 $ camorama
+
+
+Installation Instructions
+-------------------------
+
+Simple type the following commands from the libv4l-x.y.z directory
+(adjusting DESTDIR as desired):
+make
+make install DESTDIR=/usr/local
 
 
 FAQ
