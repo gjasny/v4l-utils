@@ -1,3 +1,9 @@
+libv4l-0.3.2
+------------
+* Add support for converting from sn9c10x compressed data
+* Add support for converting from pac207 compressed data
+* Add "make install" Makefile target
+
 libv4l-0.3.1
 ------------
 * Only serialize V4L2_BUF_TYPE_VIDEO_CAPTURE type ioctls

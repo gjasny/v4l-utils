@@ -1,5 +1,5 @@
 LIB_RELEASE=0
-V4L2_LIB_VERSION=$(LIB_RELEASE).3
+V4L2_LIB_VERSION=$(LIB_RELEASE).3.2
 
 all clean install:
 	$(MAKE) -C libv4lconvert $@
