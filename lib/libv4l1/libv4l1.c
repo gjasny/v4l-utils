@@ -70,9 +70,10 @@
 #define V4L1_PIX_SIZE_TOUCHED   0x08
 
 static pthread_mutex_t v4l1_open_mutex = PTHREAD_MUTEX_INITIALIZER;
-static struct v4l1_dev_info devices[V4L1_MAX_DEVICES] = { {-1}, {-1}, {-1},
-  {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1},
-  {-1} };
+static struct v4l1_dev_info devices[V4L1_MAX_DEVICES] = { { .fd = -1 },
+  { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 },
+  { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 },
+  { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 }};
 static int devices_used = 0;
 
 static unsigned int palette_to_pixelformat(unsigned int palette)
@@ -135,8 +136,8 @@ static unsigned int pixelformat_to_palette(unsigned int pixelformat)
   return 0;
 }
 
-static int v4l1_set_format(int index, int width, int height,
-  int v4l1_pal, int width_height_may_differ)
+static int v4l1_set_format(int index, unsigned int width,
+  unsigned int height, int v4l1_pal, int width_height_may_differ)
 {
   int result;
   unsigned int v4l2_pixfmt;
@@ -748,7 +749,7 @@ ssize_t v4l1_read(int fd, void* buffer, size_t n)
 
 
 void *v4l1_mmap(void *start, size_t length, int prot, int flags, int fd,
-  off_t offset)
+  __off_t offset)
 {
   int index;
   void *result;

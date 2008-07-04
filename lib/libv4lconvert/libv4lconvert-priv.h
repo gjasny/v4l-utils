@@ -57,7 +57,7 @@
 struct v4lconvert_data {
   int fd;
   int supported_src_formats; /* bitfield */
-  int no_formats;
+  unsigned int no_formats;
   char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
   struct jdec_private *jdec;
 };

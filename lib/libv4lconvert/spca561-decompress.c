@@ -307,7 +307,7 @@ static int internal_spca561_decode(int width, int height,
 	static int accum[8 * 8 * 8];
 	static int i_hits[8 * 8 * 8];
 
-	const static int nbits_A[] =
+	const int nbits_A[] =
 	    { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		    1, 1,
@@ -335,7 +335,7 @@ static int internal_spca561_decode(int width, int height,
 		3, 3, 3, 3, 3,
 		3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	};
-	const static int tab_A[] =
+	const int tab_A[] =
 	    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		    0, 0,
@@ -370,7 +370,7 @@ static int internal_spca561_decode(int width, int height,
 		1
 	};
 
-	const static int nbits_B[] =
+	const int nbits_B[] =
 	    { 0, 8, 7, 7, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4,
 		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3,
 		    3, 3,
@@ -398,7 +398,7 @@ static int internal_spca561_decode(int width, int height,
 		1, 1, 1, 1, 1,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	};
-	const static int tab_B[] =
+	const int tab_B[] =
 	    { 0xff, -4, 3, 3, -3, -3, -3, -3, 2, 2, 2, 2, 2, 2, 2, 2, -2,
 		-2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2,
 		    1, 1,
@@ -433,7 +433,7 @@ static int internal_spca561_decode(int width, int height,
 		0, 0, 0, 0, 0, 0, 0,
 	};
 
-	const static int nbits_C[] =
+	const int nbits_C[] =
 	    { 0, 0, 8, 8, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5,
 		5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
 		    4, 4,
@@ -461,7 +461,7 @@ static int internal_spca561_decode(int width, int height,
 		2, 2, 2, 2, 2,
 		2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 	};
-	const static int tab_C[] =
+	const int tab_C[] =
 	    { 0xff, 0xfe, 6, -7, 5, 5, -6, -6, 4, 4, 4, 4, -5, -5, -5, -5,
 		3, 3, 3, 3, 3, 3, 3, 3, -4, -4, -4, -4, -4, -4, -4, -4, 2,
 		    2, 2, 2,
@@ -497,7 +497,7 @@ static int internal_spca561_decode(int width, int height,
 		    -1,
 	};
 
-	const static int nbits_D[] =
+	const int nbits_D[] =
 	    { 0, 0, 0, 0, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6,
 		6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5,
 		    5, 5,
@@ -525,7 +525,7 @@ static int internal_spca561_decode(int width, int height,
 		3, 3, 3, 3, 3,
 		3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
 	};
-	const static int tab_D[] =
+	const int tab_D[] =
 	    { 0xff, 0xfe, 0xfd, 0xfc, 10, -11, 11, -12, 8, 8, -9, -9, 9, 9,
 		-10, -10, 6, 6, 6, 6, -7, -7, -7, -7, 7, 7, 7, 7, -8, -8,
 		    -8, -8,
@@ -563,7 +563,7 @@ static int internal_spca561_decode(int width, int height,
 	};
 
 	/* a_curve[19 + i] = ... [-19..19] => [-160..160] */
-	const static int a_curve[] =
+	const int a_curve[] =
 	    { -160, -144, -128, -112, -98, -88, -80, -72, -64, -56, -48,
 		-40, -32, -24, -18, -12, -8, -5, -2, 0, 2, 5, 8, 12, 18,
 		    24, 32,
@@ -571,7 +571,7 @@ static int internal_spca561_decode(int width, int height,
 		72, 80, 88, 98, 112, 128, 144, 160
 	};
 	/* clamp0_255[256 + i] = min(max(i,255),0) */
-	const static unsigned char clamp0_255[] =
+	const unsigned char clamp0_255[] =
 	    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		    0, 0,
@@ -680,14 +680,14 @@ static int internal_spca561_decode(int width, int height,
 		255
 	};
 	/* abs_clamp15[19 + i] = min(abs(i), 15) */
-	const static int abs_clamp15[] =
+	const int abs_clamp15[] =
 	    { 15, 15, 15, 15, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3,
 		2, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 		    15, 15,
 		15
 	};
 	/* diff_encoding[256 + i] = ... */
-	const static int diff_encoding[] =
+	const int diff_encoding[] =
 	    { 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
 		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
 		    7, 7,

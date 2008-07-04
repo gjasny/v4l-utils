@@ -77,7 +77,7 @@ ssize_t read(int fd, void* buffer, size_t n)
 }
 
 void mmap(void *start, size_t length, int prot, int flags, int fd,
-  off_t offset)
+  __off_t offset)
 {
   return v4l1_mmap(start, length, prot, flags, fd, offset);
 }

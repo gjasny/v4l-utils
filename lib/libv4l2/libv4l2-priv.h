@@ -27,7 +27,7 @@
 /* Warning when making this larger the frame_queued and frame_mapped members of
    the v4l2_dev_info struct can no longer be a bitfield, so the code needs to
    be adjusted! */
-#define V4L2_MAX_NO_FRAMES 32u
+#define V4L2_MAX_NO_FRAMES 32
 #define V4L2_DEFAULT_NREADBUFFERS 4
 #define V4L2_FRAME_BUF_SIZE (4096 * 4096)
 

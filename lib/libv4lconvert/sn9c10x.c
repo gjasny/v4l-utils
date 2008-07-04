@@ -139,7 +139,7 @@ void v4lconvert_decode_sn9c10x(const unsigned char *inp, unsigned char *outp,
 	int val;
 	int bitpos;
 	unsigned char code;
-	unsigned char *addr;
+	const unsigned char *addr;
 
 	if (!init_done)
 		sonix_decompress_init();

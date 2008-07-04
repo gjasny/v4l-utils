@@ -25,6 +25,7 @@
 #include "libv4lconvert-priv.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
+#define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
 static const unsigned int supported_src_pixfmts[] = {
   V4L2_PIX_FMT_BGR24,
@@ -39,13 +40,11 @@ static const unsigned int supported_src_pixfmts[] = {
   V4L2_PIX_FMT_SPCA561,
   V4L2_PIX_FMT_SN9C10X,
   V4L2_PIX_FMT_PAC207,
-  -1
 };
 
 static const unsigned int supported_dst_pixfmts[] = {
   V4L2_PIX_FMT_BGR24,
   V4L2_PIX_FMT_YUV420,
-  -1
 };
 
 
@@ -69,7 +68,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
     if (syscall(SYS_ioctl, fd, VIDIOC_ENUM_FMT, &fmt))
       break;
 
-    for (j = 0; supported_src_pixfmts[j] != -1; j++)
+    for (j = 0; j < ARRAY_SIZE(supported_src_pixfmts); j++)
       if (fmt.pixelformat == supported_src_pixfmts[j]) {
 	data->supported_src_formats |= 1 << j;
 	break;
@@ -100,7 +99,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
     return syscall(SYS_ioctl, data->fd, VIDIOC_ENUM_FMT, fmt);
 
   fmt->flags = 0;
-  fmt->pixelformat = -1;
+  fmt->pixelformat = 0;
   memset(fmt->reserved, 0, 4);
 
   /* Note bgr24 and yuv420 are the first 2 in our mask of supported formats */
@@ -121,7 +120,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
       }
       break;
   }
-  if (fmt->pixelformat == -1) {
+  if (fmt->pixelformat == 0) {
     errno = EINVAL;
     return -1;
   }
@@ -134,16 +133,16 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
   struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
 {
   int i;
-  unsigned int try_pixfmt, closest_fmt_size_diff = -1;
+  unsigned int closest_fmt_size_diff = -1;
   unsigned int desired_pixfmt = dest_fmt->fmt.pix.pixelformat;
-  struct v4l2_format try_fmt, closest_fmt = { .type = -1 };
+  struct v4l2_format try_fmt, closest_fmt = { .type = 0 };
 
-  for (i = 0; supported_dst_pixfmts[i] != -1; i++)
+  for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
     if (supported_dst_pixfmts[i] == desired_pixfmt)
       break;
 
   /* Can we do conversion to the requested format & type? */
-  if (supported_dst_pixfmts[i] == -1 ||
+  if (i == ARRAY_SIZE(supported_dst_pixfmts) ||
       dest_fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE) {
     int ret = syscall(SYS_ioctl, data->fd, VIDIOC_TRY_FMT, dest_fmt);
     if (src_fmt)
@@ -151,17 +150,17 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
     return ret;
   }
 
-  for (i = 0; (try_pixfmt = supported_src_pixfmts[i]) != -1; i++) {
+  for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
     /* is this format supported? */
     if (!(data->supported_src_formats & (1 << i)))
       continue;
 
     try_fmt = *dest_fmt;
-    try_fmt.fmt.pix.pixelformat = try_pixfmt;
+    try_fmt.fmt.pix.pixelformat = supported_src_pixfmts[i];
 
     if (!syscall(SYS_ioctl, data->fd, VIDIOC_TRY_FMT, &try_fmt))
     {
-      if (try_fmt.fmt.pix.pixelformat == try_pixfmt) {
+      if (try_fmt.fmt.pix.pixelformat == supported_src_pixfmts[i]) {
 	int size_x_diff = abs((int)try_fmt.fmt.pix.width -
 			      (int)dest_fmt->fmt.pix.width);
 	int size_y_diff = abs((int)try_fmt.fmt.pix.height -
@@ -176,7 +175,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
     }
   }
 
-  if (closest_fmt.type == -1) {
+  if (closest_fmt.type == 0) {
     errno = EINVAL;
     return -1;
   }
@@ -322,7 +321,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_PAC207:
     {
       unsigned char tmpbuf[dest_fmt->fmt.pix.width*dest_fmt->fmt.pix.height];
-      unsigned int bayer_fmt;
+      unsigned int bayer_fmt = 0;
 
       switch (src_fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_SPCA561:

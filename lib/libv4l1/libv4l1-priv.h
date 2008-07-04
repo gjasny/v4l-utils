@@ -64,7 +64,7 @@ struct v4l1_dev_info {
   unsigned int v4l1_pal;    /* VIDEO_PALETTE */
   unsigned int v4l2_pixfmt; /* V4L2_PIX_FMT */
   unsigned int min_width, min_height, max_width, max_height;
-  int width, height;
+  unsigned int width, height;
   unsigned char *v4l1_frame_pointer;
 };
 

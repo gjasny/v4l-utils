@@ -80,9 +80,10 @@
 #define V4L2_MMAP_OFFSET_MAGIC      0xABCDEF00u
 
 static pthread_mutex_t v4l2_open_mutex = PTHREAD_MUTEX_INITIALIZER;
-static struct v4l2_dev_info devices[V4L2_MAX_DEVICES] = { {-1}, {-1},
-    {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1}, {-1},
-    {-1}, {-1}};
+static struct v4l2_dev_info devices[V4L2_MAX_DEVICES] = { { .fd = -1 },
+  { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 },
+  { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 },
+  { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 }, { .fd = -1 }};
 static int devices_used = 0;
 
 
@@ -830,7 +831,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 ssize_t v4l2_read (int fd, void* buffer, size_t n)
 {
   ssize_t result;
-  int index, bytesused, frame_index;
+  int index, bytesused = 0, frame_index;
 
   if ((index = v4l2_get_index(fd)) == -1)
     return syscall(SYS_read, fd, buffer, n);
@@ -867,7 +868,7 @@ leave:
 }
 
 void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
-  off_t offset)
+  __off_t offset)
 {
   int index;
   unsigned int buffer_index;
@@ -877,7 +878,7 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
       /* Check if the mmap data matches our answer to QUERY_BUF, if it doesn't
 	 let the kernel handle it (to allow for mmap based non capture use) */
       start || length != V4L2_FRAME_BUF_SIZE ||
-      (offset & ~0xff) != V4L2_MMAP_OFFSET_MAGIC) {
+      ((unsigned int)offset & ~0xFFu) != V4L2_MMAP_OFFSET_MAGIC) {
     if (index != -1)
       V4L2_LOG("Passing mmap(%p, %d, ..., %x, through to the driver\n",
 	start, (int)length, (int)offset);
