@@ -170,15 +170,12 @@ or 0x1e 0xe1 for compressed line*/
 	    inp += pac_decompress_row(inp, outp, width);
 	    break;
 
-	default:
+	case 0x2DD2: /* prefix for "stronger" compressed lines, currently the
+			kernel driver programs the cam so that we should not
+			get any of these */
+
+	default: /* corrupt frame */
 	    /* FIXME add error reporting */
-	    /* Notice this seems to happen with high framerates (low exposure
-	       setting due to much light and bad compressible images, so most
-	       likely the usb just cannot keep us and we miss parts of some
-	       frames (sometimes of many frames in a row) messing things up
-	       completely. It might be worth to try changing the compression
-	       balance setting to see if that can compensate for this.
-	       However currently I cannot reproduce this (no daylight) */
 	    return;
 	}
 	outp += width;
