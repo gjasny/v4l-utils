@@ -19,8 +19,12 @@ ifeq ($(LIB_RELEASE),)
 LIB_RELEASE = 0
 endif
 
-ifeq ($(DESTDIR),)
-DESTDIR = /usr/local
+ifeq ($(PREFIX),)
+PREFIX = /usr/local
+endif
+
+ifeq ($(LIBDIR),)
+LIBDIR = $(PREFIX)/lib
 endif
 
 all: $(TARGETS)
@@ -31,15 +35,14 @@ $(V4L1_LIB): $(V4L1_OBJS)
 $(V4L1COMPAT): $(V4L1COMPAT_O) $(V4L1_LIB)
 
 install: all
-	mkdir -p $(DESTDIR)/include
-	cp $(INCLUDES) $(DESTDIR)/include
-	mkdir -p $(DESTDIR)/lib
-	cp $(V4L1_LIB).$(LIB_RELEASE) $(DESTDIR)/lib
-	cd $(DESTDIR)/lib && \
+	mkdir -p $(DESTDIR)$(PREFIX)/include
+	install -p -m 644 $(INCLUDES) $(DESTDIR)$(PREFIX)/include
+	mkdir -p $(DESTDIR)$(LIBDIR)/libv4l
+	install -m 755 $(V4L1_LIB).$(LIB_RELEASE) $(DESTDIR)$(LIBDIR)
+	cd $(DESTDIR)$(LIBDIR) && \
 	  ln -f -s $(V4L1_LIB).$(LIB_RELEASE) $(V4L1_LIB)
-	cp $(V4L1COMPAT).$(LIB_RELEASE) $(DESTDIR)/lib
-	cd $(DESTDIR)/lib && \
-	  ln -f -s $(V4L1COMPAT).$(LIB_RELEASE) $(V4L1COMPAT)
+	install -m 755 $(V4L1COMPAT).$(LIB_RELEASE) \
+	  $(DESTDIR)$(LIBDIR)/libv4l/$(V4L1COMPAT)
 
 clean::
 	rm -f *.so* *.o log *~

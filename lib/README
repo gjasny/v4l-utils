@@ -59,11 +59,12 @@ towards a video device the wrapper will redirect the call to the libv4lX
 counterparts.
 
 The preloadable libv4l1 wrapper which adds v4l2 device compatibility to v4l1
-applications is called v4l1compat.so. The preloadable libv4l1 wrapper which
-adds v4l2 device compatibility to v4l1 applications is called v4l2convert.so
+applications is called v4l1compat.so. The preloadable libv4l2 wrapper which
+adds support for various pixelformats to v4l2 applications is called
+v4l2convert.so.
 
 Example usage (after install in default location):
-$ export LD_PRELOAD=/usr/local/lib/v4l1compat.so
+$ export LD_PRELOAD=/usr/local/lib/libv4l/v4l1compat.so
 $ camorama
 
 
@@ -71,9 +72,12 @@ Installation Instructions
 -------------------------
 
 Simple type the following commands from the libv4l-x.y.z directory
-(adjusting DESTDIR as desired):
+(adjusting PREFIX as desired):
 make
-make install DESTDIR=/usr/local
+make install PREFIX=/usr/local
+
+Note: make install also supports the DESTDIR=... paramter for installation
+into chroots.
 
 
 FAQ

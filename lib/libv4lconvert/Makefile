@@ -18,8 +18,12 @@ ifeq ($(LIB_RELEASE),)
 LIB_RELEASE = 0
 endif
 
-ifeq ($(DESTDIR),)
-DESTDIR = /usr/local
+ifeq ($(PREFIX),)
+PREFIX = /usr/local
+endif
+
+ifeq ($(LIBDIR),)
+LIBDIR = $(PREFIX)/lib
 endif
 
 all: $(TARGETS)
@@ -27,11 +31,11 @@ all: $(TARGETS)
 $(CONVERT_LIB): $(CONVERT_OBJS)
 
 install: all
-	mkdir -p $(DESTDIR)/include
-	cp $(INCLUDES) $(DESTDIR)/include
-	mkdir -p $(DESTDIR)/lib
-	cp $(CONVERT_LIB).$(LIB_RELEASE) $(DESTDIR)/lib
-	cd $(DESTDIR)/lib && \
+	mkdir -p $(DESTDIR)$(PREFIX)/include
+	install -p -m 644 $(INCLUDES) $(DESTDIR)$(PREFIX)/include
+	mkdir -p $(DESTDIR)$(LIBDIR)
+	install -m 755 $(CONVERT_LIB).$(LIB_RELEASE) $(DESTDIR)$(LIBDIR)
+	cd $(DESTDIR)$(LIBDIR) && \
 	  ln -f -s $(CONVERT_LIB).$(LIB_RELEASE) $(CONVERT_LIB)
 
 clean::
