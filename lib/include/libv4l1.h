@@ -57,7 +57,7 @@ int v4l1_dup(int fd);
 int v4l1_ioctl (int fd, unsigned long int request, ...);
 ssize_t v4l1_read (int fd, void* buffer, size_t n);
 void *v4l1_mmap(void *start, size_t length, int prot, int flags, int fd,
-  off_t offset);
+  __off64_t offset);
 int v4l1_munmap(void *_start, size_t length);
 
 #ifdef __cplusplus

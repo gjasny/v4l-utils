@@ -1,3 +1,20 @@
+libv4l-0.3.3
+------------
+* Add open64 and mmap64 wrappers to the LD_PRELOAD wrapper libs, so that
+  they also work for applications compiled with FILE_OFFSET_BITS=64, this
+  fixes using them with v4l-info
+* While looking at xawtv in general, found a few bugs in xawtv itself, added
+  a patch to fix those to the appl-patches dir
+* Talking about the appl-patches dir, restore that as it accidentally got
+  dropped from 0.3.2
+* Be more verbose in various places when it comes to logging (esp errors)
+* Change v4lconvert_enum_fmt code a bit, so that it is easier to add more
+  supported destination formats to libv4lconvert
+* Don't return -EINVAL from try_fmt when we cannot convert because the cam
+  doesn't have any formats we know. Instead just return as format whatever the
+  cam returns from try_fmt, this new behavior is compliant with the v4l2
+  api as documented
+
 libv4l-0.3.2
 ------------
 * Add support for converting from sn9c10x compressed data

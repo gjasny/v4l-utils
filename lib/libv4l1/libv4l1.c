@@ -40,9 +40,6 @@
       in turn will call v4l1_open, so therefor v4l1_open (for example) may not
       use the regular open()!
 */
-
-#define _LARGEFILE64_SOURCE 1
-
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -642,7 +639,8 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
 	}
 
 	if (devices[index].v4l1_frame_pointer == MAP_FAILED) {
-	  devices[index].v4l1_frame_pointer = mmap64(NULL, mbuf->size,
+	  devices[index].v4l1_frame_pointer = (void *)syscall(SYS_mmap, NULL,
+				      (size_t)mbuf->size,
 				      PROT_READ|PROT_WRITE,
 				      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
 	  if (devices[index].v4l1_frame_pointer == MAP_FAILED) {
@@ -749,7 +747,7 @@ ssize_t v4l1_read(int fd, void* buffer, size_t n)
 
 
 void *v4l1_mmap(void *start, size_t length, int prot, int flags, int fd,
-  __off_t offset)
+  __off64_t offset)
 {
   int index;
   void *result;

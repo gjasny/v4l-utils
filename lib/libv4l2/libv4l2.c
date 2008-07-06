@@ -55,9 +55,6 @@
    When modifications are made, one should be carefull that this behavior is
    preserved.
 */
-
-#define _LARGEFILE64_SOURCE 1
-
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -161,8 +158,9 @@ static int v4l2_map_buffers(int index)
       break;
     }
 
-    devices[index].frame_pointers[i] = mmap64(NULL, buf.length,
-      PROT_READ, MAP_SHARED, devices[index].fd, buf.m.offset);
+    devices[index].frame_pointers[i] = (void *)syscall(SYS_mmap2, NULL,
+      (size_t)buf.length, PROT_READ, MAP_SHARED, devices[index].fd,
+      (__off_t)(buf.m.offset >> MMAP2_PAGE_SHIFT));
     if (devices[index].frame_pointers[i] == MAP_FAILED) {
       int saved_err = errno;
       V4L2_LOG_ERR("mmapping buffer %u: %s\n", i, strerror(errno));
@@ -583,8 +581,13 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       }
   }
 
-  if (!is_capture_request)
-    return syscall(SYS_ioctl, fd, request, arg);
+  if (!is_capture_request) {
+    result = syscall(SYS_ioctl, fd, request, arg);
+    saved_err = errno;
+    v4l2_log_ioctl(request, arg, result);
+    errno = saved_err;
+    return result;
+  }
 
 
   if (stream_needs_locking)
@@ -755,16 +758,22 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	struct v4l2_buffer *buf = arg;
 
 	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_DQBUF, buf);
-	if (result || !converting)
+	if (result) {
+	  V4L2_LOG_ERR("dequeing buffer: %s\n", strerror(errno));
+	  break;
+	}
+
+	if (!converting)
 	  break;
 
 	/* An application can do a DQBUF before mmap-ing in the buffer,
 	   but we need the buffer _now_ to write our converted data
 	   to it! */
 	if (devices[index].convert_mmap_buf == MAP_FAILED) {
-	  devices[index].convert_mmap_buf = mmap64(NULL,
-						   devices[index].no_frames *
-						     V4L2_FRAME_BUF_SIZE,
+	  devices[index].convert_mmap_buf = (void *)syscall(SYS_mmap2,
+						   (size_t)(
+						     devices[index].no_frames *
+						     V4L2_FRAME_BUF_SIZE),
 						   PROT_READ|PROT_WRITE,
 						   MAP_ANONYMOUS|MAP_PRIVATE,
 						   -1, 0);
@@ -789,8 +798,11 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 		   devices[index].convert_mmap_buf +
 		     buf->index * V4L2_FRAME_BUF_SIZE,
 		   V4L2_FRAME_BUF_SIZE);
-	if (result < 0)
+	if (result < 0) {
+	  V4L2_LOG_ERR("converting / decoding frame data: %s\n",
+			v4lconvert_get_error_message(devices[index].convert));
 	  break;
+	}
 
 	buf->bytesused = result;
 	buf->length = V4L2_FRAME_BUF_SIZE;
@@ -861,6 +873,10 @@ ssize_t v4l2_read (int fd, void* buffer, size_t n)
 
   v4l2_queue_read_buffer(index, frame_index);
 
+  if (result < 0)
+    V4L2_LOG_ERR("converting / decoding frame data: %s\n",
+		 v4lconvert_get_error_message(devices[index].convert));
+
 leave:
   pthread_mutex_unlock(&devices[index].stream_lock);
 
@@ -868,7 +884,7 @@ leave:
 }
 
 void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
-  __off_t offset)
+  __off64_t offset)
 {
   int index;
   unsigned int buffer_index;
@@ -882,7 +898,14 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
     if (index != -1)
       V4L2_LOG("Passing mmap(%p, %d, ..., %x, through to the driver\n",
 	start, (int)length, (int)offset);
-    return mmap64(start, length, prot, flags, fd, offset);
+
+    if (offset & ((1 << MMAP2_PAGE_SHIFT) - 1)) {
+      errno = EINVAL;
+      return MAP_FAILED;
+    }
+
+    return (void *)syscall(SYS_mmap2, start, length, prot, flags, fd,
+			   (__off_t)(offset >> MMAP2_PAGE_SHIFT));
   }
 
   pthread_mutex_lock(&devices[index].stream_lock);
@@ -899,9 +922,10 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
   }
 
   if (devices[index].convert_mmap_buf == MAP_FAILED) {
-    devices[index].convert_mmap_buf = mmap64(NULL,
-					     devices[index].no_frames *
-					       V4L2_FRAME_BUF_SIZE,
+    devices[index].convert_mmap_buf = (void *)syscall(SYS_mmap2, NULL,
+					     (size_t)(
+					       devices[index].no_frames *
+					       V4L2_FRAME_BUF_SIZE),
 					     PROT_READ|PROT_WRITE,
 					     MAP_ANONYMOUS|MAP_PRIVATE,
 					     -1, 0);

@@ -20,6 +20,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#define _LARGEFILE64_SOURCE 1
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <syscall.h>
@@ -82,6 +84,29 @@ int open (const char *file, int oflag, ...)
   return fd;
 }
 
+int open64(const char *file, int oflag, ...)
+{
+  int fd;
+
+  /* original open code */
+  if (oflag & O_CREAT)
+  {
+    va_list ap;
+    mode_t mode;
+
+    va_start (ap, oflag);
+    mode = va_arg (ap, mode_t);
+
+    fd = open(file, oflag | O_LARGEFILE, mode);
+
+    va_end(ap);
+  } else
+    fd = open(file, oflag | O_LARGEFILE);
+  /* end of original open code */
+
+  return fd;
+}
+
 int close(int fd)
 {
   return v4l2_close(fd);
@@ -111,6 +136,12 @@ ssize_t read (int fd, void* buffer, size_t n)
 
 void mmap(void *start, size_t length, int prot, int flags, int fd,
   __off_t offset)
+{
+  return v4l2_mmap(start, length, prot, flags, fd, offset);
+}
+
+void mmap64(void *start, size_t length, int prot, int flags, int fd,
+  __off64_t offset)
 {
   return v4l2_mmap(start, length, prot, flags, fd, offset);
 }

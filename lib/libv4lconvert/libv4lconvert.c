@@ -27,9 +27,14 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
+/* Note for proper functioning of v4lconvert_enum_fmt the first entries in
+  supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
+#define SUPPORTED_DST_PIXFMTS \
+  V4L2_PIX_FMT_BGR24, \
+  V4L2_PIX_FMT_YUV420
+
 static const unsigned int supported_src_pixfmts[] = {
-  V4L2_PIX_FMT_BGR24,
-  V4L2_PIX_FMT_YUV420,
+  SUPPORTED_DST_PIXFMTS,
   V4L2_PIX_FMT_MJPEG,
   V4L2_PIX_FMT_JPEG,
   V4L2_PIX_FMT_SBGGR8,
@@ -43,8 +48,7 @@ static const unsigned int supported_src_pixfmts[] = {
 };
 
 static const unsigned int supported_dst_pixfmts[] = {
-  V4L2_PIX_FMT_BGR24,
-  V4L2_PIX_FMT_YUV420,
+  SUPPORTED_DST_PIXFMTS
 };
 
 
@@ -93,37 +97,34 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
 /* See libv4lconvert.h for description of in / out parameters */
 int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
 {
+  int i, no_faked_fmts = 0;
+  unsigned int faked_fmts[ARRAY_SIZE(supported_dst_pixfmts)];
+
   if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
       fmt->index < data->no_formats ||
       !data->supported_src_formats)
     return syscall(SYS_ioctl, data->fd, VIDIOC_ENUM_FMT, fmt);
 
-  fmt->flags = 0;
-  fmt->pixelformat = 0;
-  memset(fmt->reserved, 0, 4);
+  for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
+    if (!(data->supported_src_formats & (1 << i))) {
+      faked_fmts[no_faked_fmts] = supported_dst_pixfmts[i];
+      no_faked_fmts++;
+    }
 
-  /* Note bgr24 and yuv420 are the first 2 in our mask of supported formats */
-  switch (fmt->index - data->no_formats) {
-    case 0:
-      if (!(data->supported_src_formats & 1)) {
-	strcpy((char *)fmt->description, "BGR24");
-	fmt->pixelformat = V4L2_PIX_FMT_BGR24;
-      } else if (!(data->supported_src_formats & 2)) {
-	strcpy((char *)fmt->description, "YUV420");
-	fmt->pixelformat = V4L2_PIX_FMT_YUV420;
-      }
-      break;
-    case 1:
-      if (!(data->supported_src_formats & 3)) {
-	strcpy((char *)fmt->description, "YUV420");
-	fmt->pixelformat = V4L2_PIX_FMT_YUV420;
-      }
-      break;
-  }
-  if (fmt->pixelformat == 0) {
+  i = fmt->index - data->no_formats;
+  if (i >= no_faked_fmts) {
     errno = EINVAL;
     return -1;
   }
+
+  fmt->flags = 0;
+  fmt->pixelformat = faked_fmts[i];
+  fmt->description[0] = faked_fmts[i] & 0xff;
+  fmt->description[1] = (faked_fmts[i] >> 8) & 0xff;
+  fmt->description[2] = (faked_fmts[i] >> 16) & 0xff;
+  fmt->description[3] = faked_fmts[i] >> 24;
+  fmt->description[4] = '\0';
+  memset(fmt->reserved, 0, 4);
 
   return 0;
 }
@@ -176,8 +177,10 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
   }
 
   if (closest_fmt.type == 0) {
-    errno = EINVAL;
-    return -1;
+    int ret = syscall(SYS_ioctl, data->fd, VIDIOC_TRY_FMT, dest_fmt);
+    if (src_fmt)
+      *src_fmt = *dest_fmt;
+    return ret;
   }
 
   *dest_fmt = closest_fmt;
