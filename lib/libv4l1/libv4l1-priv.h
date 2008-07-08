@@ -22,6 +22,15 @@
 #include <stdio.h>
 #include <pthread.h>
 
+/* On 32 bits archs we always use mmap2, on 64 bits archs there is no mmap2 */
+#ifdef __NR_mmap2
+#define SYS_mmap2 __NR_mmap2
+#define MMAP2_PAGE_SHIFT 12
+#else
+#define SYS_mmap2 SYS_mmap
+#define MMAP2_PAGE_SHIFT 0
+#endif
+
 #define V4L1_MAX_DEVICES 16
 #define V4L1_NO_FRAMES 4
 #define V4L1_FRAME_BUF_SIZE (4096 * 4096)

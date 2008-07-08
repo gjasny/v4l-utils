@@ -644,7 +644,7 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
 	}
 
 	if (devices[index].v4l1_frame_pointer == MAP_FAILED) {
-	  devices[index].v4l1_frame_pointer = (void *)syscall(SYS_mmap, NULL,
+	  devices[index].v4l1_frame_pointer = (void *)syscall(SYS_mmap2, NULL,
 				      (size_t)mbuf->size,
 				      PROT_READ|PROT_WRITE,
 				      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
