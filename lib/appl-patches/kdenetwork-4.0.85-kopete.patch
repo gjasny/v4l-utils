@@ -1,0 +1,12 @@
+diff -up kdenetwork-4.0.85/kopete/libkopete/avdevice/videodevice.cpp~ kdenetwork-4.0.85/kopete/libkopete/avdevice/videodevice.cpp
+--- kdenetwork-4.0.85/kopete/libkopete/avdevice/videodevice.cpp~	2008-07-07 22:40:56.000000000 +0200
++++ kdenetwork-4.0.85/kopete/libkopete/avdevice/videodevice.cpp	2008-07-07 22:40:56.000000000 +0200
+@@ -679,6 +679,8 @@ kDebug() << "VIDIOC_S_FMT worked (" << e
+ 					if (fmt.fmt.pix.sizeimage < min)
+ 						fmt.fmt.pix.sizeimage = min;
+ 					m_buffer_size=fmt.fmt.pix.sizeimage ;
++					currentwidth = fmt.fmt.pix.width;
++					currentheight = fmt.fmt.pix.height;
+ 				}
+ 				break;
+ #endif

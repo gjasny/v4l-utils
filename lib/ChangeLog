@@ -1,3 +1,21 @@
+libv4l-0.3.4
+------------
+* The mmap64 support in 0.3.3, has caused a bug in libv4l1 when running on
+  32 bit systems (who uses those now a days?), this bug caused v4l1
+  compatibility to not work at all, this release fixes this
+* Some apps (xawtv, kopete) use an ioctl wrapper internally for various
+  reasons. This wrappers request argument is an int, but the real ioctl's
+  request argument is an unsigned long. Passing the VIDIOC_xxx defines through
+  to the wrapper, and then to the real ioctl, causes the request to get sign
+  extended on 64 bit args. The kernel seems to ignore the upper 32 bits,
+  causing the sign extension to not make a difference. libv4l now also
+  ignores the upper 32 bits of the libv4lx_ioctl request argument on 64 bit
+  archs
+* Add a bugfix patch for kopete in the appl-patches dir, currently it assumes
+  that it got the width and height it asked for when doing a S_FMT, which is a
+  wrong assumption
+
+
 libv4l-0.3.3
 ------------
 * Add open64 and mmap64 wrappers to the LD_PRELOAD wrapper libs, so that

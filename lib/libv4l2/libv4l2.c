@@ -541,6 +541,11 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
   if ((index = v4l2_get_index(fd)) == -1)
     return syscall(SYS_ioctl, fd, request, arg);
 
+  /* Appearantly the kernel and / or glibc ignore the 32 most significant bits
+     when long = 64 bits, and some applications pass an int holding the req to
+     ioctl, causing it to get sign extended, depending upon this behavior */
+  request = (unsigned int)request;
+
   /* Is this a capture request and do we need to take the stream lock? */
   switch (request) {
     case VIDIOC_ENUM_FMT:
