@@ -45,6 +45,7 @@ static io_method        io              = IO_METHOD_MMAP;
 static int              fd              = -1;
 struct buffer *         buffers         = NULL;
 static unsigned int     n_buffers       = 0;
+static int		out_buf		= 0;
 
 static void
 errno_exit                      (const char *           s)
@@ -69,9 +70,14 @@ xioctl                          (int                    fd,
 }
 
 static void
-process_image                   (const void *           p)
+process_image                   (const void *           p,
+				 int size)
 {
-	fputc ('.', stdout);
+	if (!out_buf)
+		fputc ('.', stdout);
+	else
+		fwrite (p, size, 1, stdout);
+
 	fflush (stdout);
 }
 
@@ -98,7 +104,7 @@ read_frame                      (void)
 			}
 		}
 
-		process_image (buffers[0].start);
+		process_image (buffers[0].start, buffers[0].length);
 
 		break;
 
@@ -125,7 +131,7 @@ read_frame                      (void)
 
 		assert (buf.index < n_buffers);
 
-		process_image (buffers[buf.index].start);
+		process_image (buffers[buf.index].start, buffers[buf.index].length);
 
 		if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
 			errno_exit ("VIDIOC_QBUF");
@@ -160,7 +166,7 @@ read_frame                      (void)
 
 		assert (i < n_buffers);
 
-		process_image ((void *) buf.m.userptr);
+		process_image ((void *) buf.m.userptr, buf.length);
 
 		if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
 			errno_exit ("VIDIOC_QBUF");
@@ -176,7 +182,7 @@ mainloop                        (void)
 {
 	unsigned int count;
 
-	count = 100;
+	count = 1000;
 
 	while (count-- > 0) {
 		for (;;) {
@@ -589,11 +595,12 @@ usage                           (FILE *                 fp,
 		 "-m | --mmap          Use memory mapped buffers\n"
 		 "-r | --read          Use read() calls\n"
 		 "-u | --userp         Use application allocated buffers\n"
+		 "-o | --output        Outputs stream to stdout\n"
 		 "",
 		 argv[0]);
 }
 
-static const char short_options [] = "d:hmru";
+static const char short_options [] = "d:hmruo";
 
 static const struct option
 long_options [] = {
@@ -602,6 +609,7 @@ long_options [] = {
 	{ "mmap",       no_argument,            NULL,           'm' },
 	{ "read",       no_argument,            NULL,           'r' },
 	{ "userp",      no_argument,            NULL,           'u' },
+	{ "output",     no_argument,            NULL,           'o' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -644,6 +652,10 @@ main                            (int                    argc,
 
 		case 'u':
 			io = IO_METHOD_USERPTR;
+			break;
+
+		case 'o':
+			out_buf++;
 			break;
 
 		default:
