@@ -289,12 +289,13 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_YUV420P);
       }
 
-      if (result) {
-	V4LCONVERT_ERR("decompressing JPEG: %s\n",
+      /* If the JPEG header checked out ok and we get an error during actual
+	 decompression, log the error, but don't return an errorcode to the
+	 application, so that the user gets what we managed to decompress */
+      if (result)
+	fprintf(stderr, "libv4lconvert: Error decompressing JPEG: %s",
 	  tinyjpeg_get_errorstring(data->jdec));
-	errno = EIO;
-	return -1;
-      }
+
       break;
 
     case V4L2_PIX_FMT_SBGGR8:
@@ -363,6 +364,11 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       v4lconvert_yuv420_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
 				 dest_fmt->fmt.pix.height);
       break;
+
+    default:
+      V4LCONVERT_ERR("Unknown src format in conversion\n");
+      errno = EINVAL;
+      return -1;
   }
 
   return needed;

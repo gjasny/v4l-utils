@@ -1,3 +1,8 @@
+libv4l-0.3.5
+------------
+* Make JPEG decoding more robust
+
+
 libv4l-0.3.4 (the brownpaperbag release)
 ----------------------------------------
 * The mmap64 support in 0.3.3, has caused a bug in libv4l1 when running on

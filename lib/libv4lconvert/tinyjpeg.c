@@ -244,8 +244,12 @@ static const unsigned char val_ac_chrominance[] =
    while (nbits_in_reservoir<nbits_wanted) \
     { \
       unsigned char c; \
-      if (stream >= priv->stream_end) \
+      if (stream >= priv->stream_end) { \
+	snprintf(priv->error_string, sizeof(priv->error_string), \
+	  "fill_nbits error: need %d more bits\n", \
+	  nbits_wanted - nbits_in_reservoir); \
 	longjmp(priv->jump_state, -EIO); \
+      } \
       c = *stream++; \
       reservoir <<= 8; \
       if (c == 0xff && *stream == 0x00) \
@@ -1588,8 +1592,9 @@ static int parse_DQT(struct jdec_private *priv, const unsigned char *stream)
 #if SANITY_CHECK
      if (qi>>4)
        error("16 bits quantization table is not supported\n");
-     if (qi>4)
-       error("No more 4 quantization table is supported (got %d)\n", qi);
+     if (qi >= COMPONENTS)
+       error("No more than %d quantization tables supported (got %d)\n",
+	 COMPONENTS, qi + 1);
 #endif
      table = priv->Q_tables[qi];
      build_quantization_table(table, stream);
@@ -1664,10 +1669,12 @@ static int parse_SOS(struct jdec_private *priv, const unsigned char *stream)
      cid = *stream++;
      table = *stream++;
 #if SANITY_CHECK
-     if ((table&0xf)>=4)
-	error("We do not support more than 2 AC Huffman table\n");
-     if ((table>>4)>=4)
-	error("We do not support more than 2 DC Huffman table\n");
+     if ((table&0xf) >= HUFFMAN_TABLES)
+	error("We do not support more than %d AC Huffman table\n",
+	  HUFFMAN_TABLES);
+     if ((table>>4) >= HUFFMAN_TABLES)
+	error("We do not support more than %d DC Huffman table\n",
+	  HUFFMAN_TABLES);
      if (cid != priv->component_infos[i].cid)
 	error("SOS cid order (%d:%d) isn't compatible with the SOF marker (%d:%d)\n",
 	      i, cid, i, priv->component_infos[i].cid);
@@ -1709,7 +1716,7 @@ static int parse_DHT(struct jdec_private *priv, const unsigned char *stream)
      }
 #if SANITY_CHECK
      if (count > 1024)
-       error("No more than 1024 bytes is allowed to describe a huffman table");
+       error("No more than 1024 bytes is allowed to describe a huffman table\n");
      if ( (index &0xf) >= HUFFMAN_TABLES)
        error("No mode than %d Huffman tables is supported\n", HUFFMAN_TABLES);
      trace("Huffman table %s n%d\n", (index&0xf0)?"AC":"DC", index&0xf);
@@ -1784,7 +1791,7 @@ static int find_next_rst_marker(struct jdec_private *priv)
      while (*stream++ != 0xff)
       {
 	if (stream >= priv->stream_end)
-	  error("EOF while search for a RST marker.");
+	  error("EOF while search for a RST marker.\n");
       }
      /* Skip any padding ff byte (this is normal) */
      while (*stream == 0xff)
@@ -1794,7 +1801,7 @@ static int find_next_rst_marker(struct jdec_private *priv)
      if ((RST+priv->last_rst_marker_seen) == marker)
        rst_marker_found = 1;
      else if (marker >= RST && marker <= RST7)
-       error("Wrong Reset marker found, abording");
+       error("Wrong Reset marker found, abording\n");
      else if (marker == EOI)
        return 0;
    }
@@ -1874,7 +1881,7 @@ static int parse_JFIF(struct jdec_private *priv, const unsigned char *stream)
       || (priv->component_infos[cCr].Hfactor!=1)
       || (priv->component_infos[cCb].Vfactor!=1)
       || (priv->component_infos[cCr].Vfactor!=1))
-    error("Sampling other than 1x1 for Cr and Cb is not supported");
+    error("Sampling other than 1x1 for Cr and Cb is not supported\n");
 #endif
 
   return 0;
