@@ -1,3 +1,8 @@
+libv4l-0.3.6
+------------
+* Add missing COPYING.LIB file
+
+
 libv4l-0.3.5
 ------------
 * Make JPEG decoding more robust
