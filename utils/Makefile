@@ -22,6 +22,8 @@ clean::
 	-if [ -f qv4l2/Makefile ]; then make -C qv4l2 $@; fi
 	-rm -f qv4l2/qv4l2 qv4l2/Makefile
 	make -C xc3028-firmware $@
+	rm -f v4l2-driverids.cpp v4l2-chipids.cpp
+	rm -rf keycodes parse.h keytable
 
 qv4l2:
 	if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; qmake); fi
@@ -41,7 +43,7 @@ parse.h: $(KERNEL_DIR)/include/linux/input.h
 	@echo -en "struct parse_key {\n\tchar *name;\n\tunsigned int value;\n} " >parse.h
 	@echo -en "keynames[] = {\n" >>parse.h
 
-	@more $(KERNEL_DIR)/linux/input.h |perl -n \
+	@more $(KERNEL_DIR)/include/linux/input.h |perl -n \
 	-e 'if (m/^\#define\s+(KEY_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
 	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
 	-e 'if (m/^\#define\s+(BTN_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
@@ -50,7 +52,7 @@ parse.h: $(KERNEL_DIR)/include/linux/input.h
 	@echo -en "\t{ NULL, 0}\n};\n" >>parse.h
 
 keytables:
-	-mkdir keycodes
+	-mkdir -p keycodes
 	./gen_keytables.pl ../../linux/drivers/media/common/ir-keymaps.c
 
 keytable: keytable.c parse.h keytables

@@ -1019,9 +1019,9 @@ static int doioctl(int fd, int request, void *parm, const char *name)
 	return retVal;
 }
 
-static int parse_subopt(char **subs, char * const *subopts, char **value)
+static int parse_subopt(char **subs, const char * const *subopts, char **value)
 {
-	int opt = getsubopt(subs, subopts, value);
+	int opt = getsubopt(subs, (char * const *)subopts, value);
 
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");
@@ -1094,7 +1094,7 @@ static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
     char *subs = optarg;
 
     while (*subs != '\0') {
-	static char *const subopts[] = {
+	static const char *const subopts[] = {
 	    "left",
 	    "top",
 	    "width",
@@ -1230,7 +1230,7 @@ int main(int argc, char **argv)
 		case OptSetVideoFormat:
 			subs = optarg;
 			while (*subs != '\0') {
-				static char *const subopts[] = {
+				static const char *const subopts[] = {
 					"width",
 					"height",
 					NULL
@@ -1251,7 +1251,7 @@ int main(int argc, char **argv)
 		case OptSetVideoOutFormat:
 			subs = optarg;
 			while (*subs != '\0') {
-				static char *const subopts[] = {
+				static const char *const subopts[] = {
 					"width",
 					"height",
 					NULL
@@ -1272,7 +1272,7 @@ int main(int argc, char **argv)
 		case OptSetOutputOverlayFormat:
 			subs = optarg;
 			while (*subs != '\0') {
-				static char *const subopts[] = {
+				static const char *const subopts[] = {
 					"chromakey",
 					"global_alpha",
 					NULL
@@ -1293,7 +1293,7 @@ int main(int argc, char **argv)
 		case OptSetFBuf:
 			subs = optarg;
 			while (*subs != '\0') {
-				static char *const subopts[] = {
+				static const char *const subopts[] = {
 					"chromakey",
 					"global_alpha",
 					"local_alpha",
@@ -1428,7 +1428,7 @@ int main(int argc, char **argv)
 			fmt->fmt.sliced.service_set = 0;
 			subs = optarg;
 			while (*subs != '\0') {
-				static char *const subopts[] = {
+				static const char *const subopts[] = {
 					"off",
 					"teletext",
 					"cc",

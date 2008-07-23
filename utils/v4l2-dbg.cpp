@@ -245,9 +245,9 @@ static int doioctl(int fd, int request, void *parm, const char *name)
 	return retVal;
 }
 
-static int parse_subopt(char **subs, char * const *subopts, char **value)
+static int parse_subopt(char **subs, const char * const *subopts, char **value)
 {
-	int opt = getsubopt(subs, subopts, value);
+	int opt = getsubopt(subs, (char * const *)subopts, value);
 
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");
@@ -322,7 +322,7 @@ int main(int argc, char **argv)
 			subs = optarg;
 			set_reg.match_type = V4L2_CHIP_MATCH_I2C_DRIVER;
 			while (*subs != '\0') {
-				static char *const subopts[] = {
+				static const char * const subopts[] = {
 					"type",
 					"chip",
 					"reg",
@@ -352,7 +352,7 @@ int main(int argc, char **argv)
 			subs = optarg;
 			get_reg.match_type = V4L2_CHIP_MATCH_I2C_DRIVER;
 			while (*subs != '\0') {
-				static char *const subopts[] = {
+				static const char * const subopts[] = {
 					"type",
 					"chip",
 					"min",
@@ -382,7 +382,7 @@ int main(int argc, char **argv)
 			subs = optarg;
 			set_reg.match_type = V4L2_CHIP_MATCH_I2C_DRIVER;
 			while (*subs != '\0') {
-				static char *const subopts[] = {
+				static const char *const subopts[] = {
 					"type",
 					"chip",
 					NULL

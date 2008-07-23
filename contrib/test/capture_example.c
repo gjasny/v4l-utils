@@ -27,7 +27,7 @@
 
 #include <linux/videodev2.h>
 
-#define CLEAR(x) memset (&(x), 0, sizeof (x))
+#define CLEAR(x) memset(&(x), 0, sizeof(x))
 
 typedef enum {
 	IO_METHOD_READ,
@@ -47,49 +47,43 @@ struct buffer *         buffers         = NULL;
 static unsigned int     n_buffers       = 0;
 static int		out_buf		= 0;
 
-static void
-errno_exit                      (const char *           s)
+static void errno_exit(const char *s)
 {
-	fprintf (stderr, "%s error %d, %s\n",
-		 s, errno, strerror (errno));
+	fprintf(stderr, "%s error %d, %s\n",
+		 s, errno, strerror(errno));
 
-	exit (EXIT_FAILURE);
+	exit(EXIT_FAILURE);
 }
 
-static int
-xioctl                          (int                    fd,
-				 int                    request,
-				 void *                 arg)
+static int xioctl(int fh, int request, void *arg)
 {
 	int r;
 
-	do r = ioctl (fd, request, arg);
-	while (-1 == r && EINTR == errno);
+	do {
+		r = ioctl(fh, request, arg);
+	} while (-1 == r && EINTR == errno);
 
 	return r;
 }
 
-static void
-process_image                   (const void *           p,
-				 int size)
+static void process_image(const void *p, int size)
 {
 	if (!out_buf)
-		fputc ('.', stdout);
+		fputc('.', stdout);
 	else
-		fwrite (p, size, 1, stdout);
+		fwrite(p, size, 1, stdout);
 
-	fflush (stdout);
+	fflush(stdout);
 }
 
-static int
-read_frame                      (void)
+static int read_frame(void)
 {
 	struct v4l2_buffer buf;
 	unsigned int i;
 
 	switch (io) {
 	case IO_METHOD_READ:
-		if (-1 == read (fd, buffers[0].start, buffers[0].length)) {
+		if (-1 == read(fd, buffers[0].start, buffers[0].length)) {
 			switch (errno) {
 			case EAGAIN:
 				return 0;
@@ -100,21 +94,21 @@ read_frame                      (void)
 				/* fall through */
 
 			default:
-				errno_exit ("read");
+				errno_exit("read");
 			}
 		}
 
-		process_image (buffers[0].start, buffers[0].length);
+		process_image(buffers[0].start, buffers[0].length);
 
 		break;
 
 	case IO_METHOD_MMAP:
-		CLEAR (buf);
+		CLEAR(buf);
 
 		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory = V4L2_MEMORY_MMAP;
 
-		if (-1 == xioctl (fd, VIDIOC_DQBUF, &buf)) {
+		if (-1 == xioctl(fd, VIDIOC_DQBUF, &buf)) {
 			switch (errno) {
 			case EAGAIN:
 				return 0;
@@ -125,26 +119,26 @@ read_frame                      (void)
 				/* fall through */
 
 			default:
-				errno_exit ("VIDIOC_DQBUF");
+				errno_exit("VIDIOC_DQBUF");
 			}
 		}
 
-		assert (buf.index < n_buffers);
+		assert(buf.index < n_buffers);
 
-		process_image (buffers[buf.index].start, buffers[buf.index].length);
+		process_image(buffers[buf.index].start, buffers[buf.index].length);
 
-		if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
-			errno_exit ("VIDIOC_QBUF");
+		if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
+			errno_exit("VIDIOC_QBUF");
 
 		break;
 
 	case IO_METHOD_USERPTR:
-		CLEAR (buf);
+		CLEAR(buf);
 
 		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory = V4L2_MEMORY_USERPTR;
 
-		if (-1 == xioctl (fd, VIDIOC_DQBUF, &buf)) {
+		if (-1 == xioctl(fd, VIDIOC_DQBUF, &buf)) {
 			switch (errno) {
 			case EAGAIN:
 				return 0;
@@ -155,7 +149,7 @@ read_frame                      (void)
 				/* fall through */
 
 			default:
-				errno_exit ("VIDIOC_DQBUF");
+				errno_exit("VIDIOC_DQBUF");
 			}
 		}
 
@@ -164,12 +158,12 @@ read_frame                      (void)
 			    && buf.length == buffers[i].length)
 				break;
 
-		assert (i < n_buffers);
+		assert(i < n_buffers);
 
-		process_image ((void *) buf.m.userptr, buf.length);
+		process_image((void *) buf.m.userptr, buf.length);
 
-		if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
-			errno_exit ("VIDIOC_QBUF");
+		if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
+			errno_exit("VIDIOC_QBUF");
 
 		break;
 	}
@@ -177,8 +171,7 @@ read_frame                      (void)
 	return 1;
 }
 
-static void
-mainloop                        (void)
+static void mainloop(void)
 {
 	unsigned int count;
 
@@ -190,28 +183,28 @@ mainloop                        (void)
 			struct timeval tv;
 			int r;
 
-			FD_ZERO (&fds);
-			FD_SET (fd, &fds);
+			FD_ZERO(&fds);
+			FD_SET(fd, &fds);
 
 			/* Timeout. */
 			tv.tv_sec = 2;
 			tv.tv_usec = 0;
 
-			r = select (fd + 1, &fds, NULL, NULL, &tv);
+			r = select(fd + 1, &fds, NULL, NULL, &tv);
 
 			if (-1 == r) {
 				if (EINTR == errno)
 					continue;
 
-				errno_exit ("select");
+				errno_exit("select");
 			}
 
 			if (0 == r) {
-				fprintf (stderr, "select timeout\n");
-				exit (EXIT_FAILURE);
+				fprintf(stderr, "select timeout\n");
+				exit(EXIT_FAILURE);
 			}
 
-			if (read_frame ())
+			if (read_frame())
 				break;
 
 			/* EAGAIN - continue select loop. */
@@ -219,8 +212,7 @@ mainloop                        (void)
 	}
 }
 
-static void
-stop_capturing                  (void)
+static void stop_capturing(void)
 {
 	enum v4l2_buf_type type;
 
@@ -233,15 +225,14 @@ stop_capturing                  (void)
 	case IO_METHOD_USERPTR:
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-		if (-1 == xioctl (fd, VIDIOC_STREAMOFF, &type))
-			errno_exit ("VIDIOC_STREAMOFF");
+		if (-1 == xioctl(fd, VIDIOC_STREAMOFF, &type))
+			errno_exit("VIDIOC_STREAMOFF");
 
 		break;
 	}
 }
 
-static void
-start_capturing                 (void)
+static void start_capturing(void)
 {
 	unsigned int i;
 	enum v4l2_buf_type type;
@@ -255,20 +246,20 @@ start_capturing                 (void)
 		for (i = 0; i < n_buffers; ++i) {
 			struct v4l2_buffer buf;
 
-			CLEAR (buf);
+			CLEAR(buf);
 
 			buf.type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 			buf.memory      = V4L2_MEMORY_MMAP;
 			buf.index       = i;
 
-			if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
-				errno_exit ("VIDIOC_QBUF");
+			if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
+				errno_exit("VIDIOC_QBUF");
 		}
 
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-		if (-1 == xioctl (fd, VIDIOC_STREAMON, &type))
-			errno_exit ("VIDIOC_STREAMON");
+		if (-1 == xioctl(fd, VIDIOC_STREAMON, &type))
+			errno_exit("VIDIOC_STREAMON");
 
 		break;
 
@@ -276,7 +267,7 @@ start_capturing                 (void)
 		for (i = 0; i < n_buffers; ++i) {
 			struct v4l2_buffer buf;
 
-			CLEAR (buf);
+			CLEAR(buf);
 
 			buf.type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 			buf.memory      = V4L2_MEMORY_USERPTR;
@@ -284,163 +275,158 @@ start_capturing                 (void)
 			buf.m.userptr   = (unsigned long) buffers[i].start;
 			buf.length      = buffers[i].length;
 
-			if (-1 == xioctl (fd, VIDIOC_QBUF, &buf))
-				errno_exit ("VIDIOC_QBUF");
+			if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
+				errno_exit("VIDIOC_QBUF");
 		}
 
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-		if (-1 == xioctl (fd, VIDIOC_STREAMON, &type))
-			errno_exit ("VIDIOC_STREAMON");
+		if (-1 == xioctl(fd, VIDIOC_STREAMON, &type))
+			errno_exit("VIDIOC_STREAMON");
 
 		break;
 	}
 }
 
-static void
-uninit_device                   (void)
+static void uninit_device(void)
 {
 	unsigned int i;
 
 	switch (io) {
 	case IO_METHOD_READ:
-		free (buffers[0].start);
+		free(buffers[0].start);
 		break;
 
 	case IO_METHOD_MMAP:
 		for (i = 0; i < n_buffers; ++i)
-			if (-1 == munmap (buffers[i].start, buffers[i].length))
-				errno_exit ("munmap");
+			if (-1 == munmap(buffers[i].start, buffers[i].length))
+				errno_exit("munmap");
 		break;
 
 	case IO_METHOD_USERPTR:
 		for (i = 0; i < n_buffers; ++i)
-			free (buffers[i].start);
+			free(buffers[i].start);
 		break;
 	}
 
-	free (buffers);
+	free(buffers);
 }
 
-static void
-init_read                       (unsigned int           buffer_size)
+static void init_read(unsigned int buffer_size)
 {
-	buffers = calloc (1, sizeof (*buffers));
+	buffers = calloc(1, sizeof(*buffers));
 
 	if (!buffers) {
-		fprintf (stderr, "Out of memory\n");
-		exit (EXIT_FAILURE);
+		fprintf(stderr, "Out of memory\n");
+		exit(EXIT_FAILURE);
 	}
 
 	buffers[0].length = buffer_size;
-	buffers[0].start = malloc (buffer_size);
+	buffers[0].start = malloc(buffer_size);
 
 	if (!buffers[0].start) {
-		fprintf (stderr, "Out of memory\n");
-		exit (EXIT_FAILURE);
+		fprintf(stderr, "Out of memory\n");
+		exit(EXIT_FAILURE);
 	}
 }
 
-static void
-init_mmap                       (void)
+static void init_mmap(void)
 {
 	struct v4l2_requestbuffers req;
 
-	CLEAR (req);
+	CLEAR(req);
 
 	req.count               = 4;
 	req.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	req.memory              = V4L2_MEMORY_MMAP;
 
-	if (-1 == xioctl (fd, VIDIOC_REQBUFS, &req)) {
+	if (-1 == xioctl(fd, VIDIOC_REQBUFS, &req)) {
 		if (EINVAL == errno) {
-			fprintf (stderr, "%s does not support "
+			fprintf(stderr, "%s does not support "
 				 "memory mapping\n", dev_name);
-			exit (EXIT_FAILURE);
+			exit(EXIT_FAILURE);
 		} else {
-			errno_exit ("VIDIOC_REQBUFS");
+			errno_exit("VIDIOC_REQBUFS");
 		}
 	}
 
 	if (req.count < 2) {
-		fprintf (stderr, "Insufficient buffer memory on %s\n",
+		fprintf(stderr, "Insufficient buffer memory on %s\n",
 			 dev_name);
-		exit (EXIT_FAILURE);
+		exit(EXIT_FAILURE);
 	}
 
-	buffers = calloc (req.count, sizeof (*buffers));
+	buffers = calloc(req.count, sizeof(*buffers));
 
 	if (!buffers) {
-		fprintf (stderr, "Out of memory\n");
-		exit (EXIT_FAILURE);
+		fprintf(stderr, "Out of memory\n");
+		exit(EXIT_FAILURE);
 	}
 
 	for (n_buffers = 0; n_buffers < req.count; ++n_buffers) {
 		struct v4l2_buffer buf;
 
-		CLEAR (buf);
+		CLEAR(buf);
 
 		buf.type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory      = V4L2_MEMORY_MMAP;
 		buf.index       = n_buffers;
 
-		if (-1 == xioctl (fd, VIDIOC_QUERYBUF, &buf))
-			errno_exit ("VIDIOC_QUERYBUF");
+		if (-1 == xioctl(fd, VIDIOC_QUERYBUF, &buf))
+			errno_exit("VIDIOC_QUERYBUF");
 
 		buffers[n_buffers].length = buf.length;
 		buffers[n_buffers].start =
-			mmap (NULL /* start anywhere */,
+			mmap(NULL /* start anywhere */,
 			      buf.length,
 			      PROT_READ | PROT_WRITE /* required */,
 			      MAP_SHARED /* recommended */,
 			      fd, buf.m.offset);
 
 		if (MAP_FAILED == buffers[n_buffers].start)
-			errno_exit ("mmap");
+			errno_exit("mmap");
 	}
 }
 
-static void
-init_userp                      (unsigned int           buffer_size)
+static void init_userp(unsigned int buffer_size)
 {
 	struct v4l2_requestbuffers req;
 
-	CLEAR (req);
+	CLEAR(req);
 
-	req.count               = 4;
-	req.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	req.memory              = V4L2_MEMORY_USERPTR;
+	req.count  = 4;
+	req.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	req.memory = V4L2_MEMORY_USERPTR;
 
-	if (-1 == xioctl (fd, VIDIOC_REQBUFS, &req)) {
+	if (-1 == xioctl(fd, VIDIOC_REQBUFS, &req)) {
 		if (EINVAL == errno) {
-			fprintf (stderr, "%s does not support "
+			fprintf(stderr, "%s does not support "
 				 "user pointer i/o\n", dev_name);
-			exit (EXIT_FAILURE);
+			exit(EXIT_FAILURE);
 		} else {
-			errno_exit ("VIDIOC_REQBUFS");
+			errno_exit("VIDIOC_REQBUFS");
 		}
 	}
 
-	buffers = calloc (4, sizeof (*buffers));
+	buffers = calloc(4, sizeof(*buffers));
 
 	if (!buffers) {
-		fprintf (stderr, "Out of memory\n");
-		exit (EXIT_FAILURE);
+		fprintf(stderr, "Out of memory\n");
+		exit(EXIT_FAILURE);
 	}
 
 	for (n_buffers = 0; n_buffers < 4; ++n_buffers) {
 		buffers[n_buffers].length = buffer_size;
-		buffers[n_buffers].start = malloc (buffer_size);
+		buffers[n_buffers].start = malloc(buffer_size);
 
 		if (!buffers[n_buffers].start) {
-			fprintf (stderr, "Out of memory\n");
-			exit (EXIT_FAILURE);
+			fprintf(stderr, "Out of memory\n");
+			exit(EXIT_FAILURE);
 		}
 	}
 }
 
-static void
-init_device                     (void)
+static void init_device(void)
 {
 	struct v4l2_capability cap;
 	struct v4l2_cropcap cropcap;
@@ -448,28 +434,28 @@ init_device                     (void)
 	struct v4l2_format fmt;
 	unsigned int min;
 
-	if (-1 == xioctl (fd, VIDIOC_QUERYCAP, &cap)) {
+	if (-1 == xioctl(fd, VIDIOC_QUERYCAP, &cap)) {
 		if (EINVAL == errno) {
-			fprintf (stderr, "%s is no V4L2 device\n",
+			fprintf(stderr, "%s is no V4L2 device\n",
 				 dev_name);
-			exit (EXIT_FAILURE);
+			exit(EXIT_FAILURE);
 		} else {
-			errno_exit ("VIDIOC_QUERYCAP");
+			errno_exit("VIDIOC_QUERYCAP");
 		}
 	}
 
 	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-		fprintf (stderr, "%s is no video capture device\n",
+		fprintf(stderr, "%s is no video capture device\n",
 			 dev_name);
-		exit (EXIT_FAILURE);
+		exit(EXIT_FAILURE);
 	}
 
 	switch (io) {
 	case IO_METHOD_READ:
 		if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
-			fprintf (stderr, "%s does not support read i/o\n",
+			fprintf(stderr, "%s does not support read i/o\n",
 				 dev_name);
-			exit (EXIT_FAILURE);
+			exit(EXIT_FAILURE);
 		}
 
 		break;
@@ -477,9 +463,9 @@ init_device                     (void)
 	case IO_METHOD_MMAP:
 	case IO_METHOD_USERPTR:
 		if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-			fprintf (stderr, "%s does not support streaming i/o\n",
+			fprintf(stderr, "%s does not support streaming i/o\n",
 				 dev_name);
-			exit (EXIT_FAILURE);
+			exit(EXIT_FAILURE);
 		}
 
 		break;
@@ -489,15 +475,15 @@ init_device                     (void)
 	/* Select video input, video standard and tune here. */
 
 
-	CLEAR (cropcap);
+	CLEAR(cropcap);
 
 	cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-	if (0 == xioctl (fd, VIDIOC_CROPCAP, &cropcap)) {
+	if (0 == xioctl(fd, VIDIOC_CROPCAP, &cropcap)) {
 		crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		crop.c = cropcap.defrect; /* reset to default */
 
-		if (-1 == xioctl (fd, VIDIOC_S_CROP, &crop)) {
+		if (-1 == xioctl(fd, VIDIOC_S_CROP, &crop)) {
 			switch (errno) {
 			case EINVAL:
 				/* Cropping not supported. */
@@ -512,7 +498,7 @@ init_device                     (void)
 	}
 
 
-	CLEAR (fmt);
+	CLEAR(fmt);
 
 	fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmt.fmt.pix.width       = 640;
@@ -520,8 +506,8 @@ init_device                     (void)
 	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
 	fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 
-	if (-1 == xioctl (fd, VIDIOC_S_FMT, &fmt))
-		errno_exit ("VIDIOC_S_FMT");
+	if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt))
+		errno_exit("VIDIOC_S_FMT");
 
 	/* Note VIDIOC_S_FMT may change width and height. */
 
@@ -535,59 +521,54 @@ init_device                     (void)
 
 	switch (io) {
 	case IO_METHOD_READ:
-		init_read (fmt.fmt.pix.sizeimage);
+		init_read(fmt.fmt.pix.sizeimage);
 		break;
 
 	case IO_METHOD_MMAP:
-		init_mmap ();
+		init_mmap();
 		break;
 
 	case IO_METHOD_USERPTR:
-		init_userp (fmt.fmt.pix.sizeimage);
+		init_userp(fmt.fmt.pix.sizeimage);
 		break;
 	}
 }
 
-static void
-close_device                    (void)
+static void close_device(void)
 {
-	if (-1 == close (fd))
-		errno_exit ("close");
+	if (-1 == close(fd))
+		errno_exit("close");
 
 	fd = -1;
 }
 
-static void
-open_device                     (void)
+static void open_device(void)
 {
 	struct stat st;
 
-	if (-1 == stat (dev_name, &st)) {
-		fprintf (stderr, "Cannot identify '%s': %d, %s\n",
-			 dev_name, errno, strerror (errno));
-		exit (EXIT_FAILURE);
+	if (-1 == stat(dev_name, &st)) {
+		fprintf(stderr, "Cannot identify '%s': %d, %s\n",
+			 dev_name, errno, strerror(errno));
+		exit(EXIT_FAILURE);
 	}
 
-	if (!S_ISCHR (st.st_mode)) {
-		fprintf (stderr, "%s is no device\n", dev_name);
-		exit (EXIT_FAILURE);
+	if (!S_ISCHR(st.st_mode)) {
+		fprintf(stderr, "%s is no device\n", dev_name);
+		exit(EXIT_FAILURE);
 	}
 
-	fd = open (dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
+	fd = open(dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
 
 	if (-1 == fd) {
-		fprintf (stderr, "Cannot open '%s': %d, %s\n",
-			 dev_name, errno, strerror (errno));
-		exit (EXIT_FAILURE);
+		fprintf(stderr, "Cannot open '%s': %d, %s\n",
+			 dev_name, errno, strerror(errno));
+		exit(EXIT_FAILURE);
 	}
 }
 
-static void
-usage                           (FILE *                 fp,
-				 int                    argc,
-				 char **                argv)
+static void usage(FILE *fp, int argc, char **argv)
 {
-	fprintf (fp,
+	fprintf(fp,
 		 "Usage: %s [options]\n\n"
 		 "Options:\n"
 		 "-d | --device name   Video device name [/dev/video]\n"
@@ -613,19 +594,17 @@ long_options [] = {
 	{ 0, 0, 0, 0 }
 };
 
-int
-main                            (int                    argc,
-				 char **                argv)
+int main(int argc, char **argv)
 {
 	dev_name = "/dev/video";
 
 	for (;;) {
-		int index;
+		int idx;
 		int c;
 
-		c = getopt_long (argc, argv,
+		c = getopt_long(argc, argv,
 				 short_options, long_options,
-				 &index);
+				 &idx);
 
 		if (-1 == c)
 			break;
@@ -639,8 +618,8 @@ main                            (int                    argc,
 			break;
 
 		case 'h':
-			usage (stdout, argc, argv);
-			exit (EXIT_SUCCESS);
+			usage(stdout, argc, argv);
+			exit(EXIT_SUCCESS);
 
 		case 'm':
 			io = IO_METHOD_MMAP;
@@ -659,26 +638,17 @@ main                            (int                    argc,
 			break;
 
 		default:
-			usage (stderr, argc, argv);
-			exit (EXIT_FAILURE);
+			usage(stderr, argc, argv);
+			exit(EXIT_FAILURE);
 		}
 	}
 
-	open_device ();
-
-	init_device ();
-
-	start_capturing ();
-
-	mainloop ();
-
-	stop_capturing ();
-
-	uninit_device ();
-
-	close_device ();
-
-	exit (EXIT_SUCCESS);
-
+	open_device();
+	init_device();
+	start_capturing();
+	mainloop();
+	stop_capturing();
+	uninit_device();
+	close_device();
 	return 0;
 }

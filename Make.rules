@@ -35,7 +35,7 @@ else
 	@$(CC) -MMD $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(filter %.o %.c,$^) $(LOADLIBES) $(LDLIBS) -o $@
 %.so:
 	@echo LD $@
-	@$(LD) -shared -o $@ $^
+	@$(CC) -shared -o $@ $^
 %.a:
 	@echo AR $@
 	@$(AR) rcs $@ $^
