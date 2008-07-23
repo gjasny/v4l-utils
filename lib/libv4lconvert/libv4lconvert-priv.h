@@ -24,7 +24,15 @@
 #include "tinyjpeg.h"
 
 #ifndef V4L2_PIX_FMT_SPCA501
-#define V4L2_PIX_FMT_SPCA501 v4l2_fourcc('S','5','0','1')
+#define V4L2_PIX_FMT_SPCA501 v4l2_fourcc('S','5','0','1') /* YUYV per line */
+#endif
+
+#ifndef V4L2_PIX_FMT_SPCA505
+#define V4L2_PIX_FMT_SPCA505 v4l2_fourcc('S','5','0','5') /* YYUV per line */
+#endif
+
+#ifndef V4L2_PIX_FMT_SPCA508
+#define V4L2_PIX_FMT_SPCA508 v4l2_fourcc('S','5','0','8') /* YUVY per line */
 #endif
 
 #ifndef V4L2_PIX_FMT_SPCA561
@@ -69,7 +77,10 @@ void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dst,
 void v4lconvert_spca501_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
-void v4lconvert_spca501_to_bgr24(const unsigned char *src, unsigned char *dst,
+void v4lconvert_spca505_to_yuv420(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,

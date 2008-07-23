@@ -1,3 +1,8 @@
+libv4l-0.3.7
+------------
+* Add spca505/6 and spca508 cam specific formats (YUYV per line variations)
+
+
 libv4l-0.3.6
 ------------
 * Add missing COPYING.LIB file
