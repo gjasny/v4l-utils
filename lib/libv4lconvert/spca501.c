@@ -18,14 +18,14 @@
 
 #include "libv4lconvert-priv.h"
 
+/* YUYV per line */
 void v4lconvert_spca501_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height)
 {
   int i,j;
+  unsigned long *lsrc = (unsigned long *)src;
 
   for (i = 0; i < height; i += 2) {
-    unsigned long *lsrc = (unsigned long *)(src + (i / 2) * 3 * width);
-
     /* -128 - 127 --> 0 - 255 and copy first line Y */
     unsigned long *ldst = (unsigned long *)(dst + i * width);
     for (j = 0; j < width; j += sizeof(long)) {
@@ -56,12 +56,71 @@ void v4lconvert_spca501_to_yuv420(const unsigned char *src, unsigned char *dst,
   }
 }
 
-/* IMPROVEME (maybe?) make this convert in one go?? */
-void v4lconvert_spca501_to_bgr24(const unsigned char *src, unsigned char *dst,
+/* YYUV per line */
+void v4lconvert_spca505_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height)
 {
-  unsigned char buf[(width * height * 6) / 4];
+  int i,j;
+  unsigned long *lsrc = (unsigned long *)src;
 
-  v4lconvert_spca501_to_yuv420(src, buf, width, height);
-  v4lconvert_yuv420_to_bgr24(buf, dst, width, height);
+  for (i = 0; i < height; i += 2) {
+    /* -128 - 127 --> 0 - 255 and copy 2 lines of Y */
+    unsigned long *ldst = (unsigned long *)(dst + i * width);
+    for (j = 0; j < width*2; j += sizeof(long)) {
+      *ldst = *lsrc++;
+      *ldst++ ^= 0x8080808080808080ULL;
+    }
+
+    /* -128 - 127 --> 0 - 255 and copy 1 line U */
+    ldst = (unsigned long *)(dst + width * height + i * width / 4);
+    for (j = 0; j < width/2; j += sizeof(long)) {
+      *ldst = *lsrc++;
+      *ldst++ ^= 0x8080808080808080ULL;
+    }
+
+    /* -128 - 127 --> 0 - 255 and copy 1 line V */
+    ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
+    for (j = 0; j < width/2; j += sizeof(long)) {
+      *ldst = *lsrc++;
+      *ldst++ ^= 0x8080808080808080ULL;
+    }
+  }
+}
+
+/* YUVY per line */
+void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
+  int width, int height)
+{
+  int i,j;
+  unsigned long *lsrc = (unsigned long *)src;
+
+  for (i = 0; i < height; i += 2) {
+    /* -128 - 127 --> 0 - 255 and copy first line Y */
+    unsigned long *ldst = (unsigned long *)(dst + i * width);
+    for (j = 0; j < width; j += sizeof(long)) {
+      *ldst = *lsrc++;
+      *ldst++ ^= 0x8080808080808080ULL;
+    }
+
+    /* -128 - 127 --> 0 - 255 and copy 1 line U */
+    ldst = (unsigned long *)(dst + width * height + i * width / 4);
+    for (j = 0; j < width/2; j += sizeof(long)) {
+      *ldst = *lsrc++;
+      *ldst++ ^= 0x8080808080808080ULL;
+    }
+
+    /* -128 - 127 --> 0 - 255 and copy 1 line V */
+    ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
+    for (j = 0; j < width/2; j += sizeof(long)) {
+      *ldst = *lsrc++;
+      *ldst++ ^= 0x8080808080808080ULL;
+    }
+
+    /* -128 - 127 --> 0 - 255 and copy second line Y */
+    ldst = (unsigned long *)(dst + i * width + width);
+    for (j = 0; j < width; j += sizeof(long)) {
+      *ldst = *lsrc++;
+      *ldst++ ^= 0x8080808080808080ULL;
+    }
+  }
 }

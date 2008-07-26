@@ -42,6 +42,8 @@ static const unsigned int supported_src_pixfmts[] = {
   V4L2_PIX_FMT_SGRBG8,
   V4L2_PIX_FMT_SRGGB8,
   V4L2_PIX_FMT_SPCA501,
+  V4L2_PIX_FMT_SPCA505,
+  V4L2_PIX_FMT_SPCA508,
   V4L2_PIX_FMT_SPCA561,
   V4L2_PIX_FMT_SN9C10X,
   V4L2_PIX_FMT_PAC207,
@@ -310,14 +312,37 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 		    dest_fmt->fmt.pix.height, src_fmt->fmt.pix.pixelformat);
       break;
 
+    /* YUYV line by line formats */
     case V4L2_PIX_FMT_SPCA501:
+    case V4L2_PIX_FMT_SPCA505:
+    case V4L2_PIX_FMT_SPCA508:
+    {
+      unsigned char tmpbuf[dest_fmt->fmt.pix.width * dest_fmt->fmt.pix.height *
+			   3 / 2];
+      unsigned char *my_dst = (dest_fmt->fmt.pix.pixelformat ==
+			       V4L2_PIX_FMT_BGR24) ? tmpbuf : dest;
+
+      switch (src_fmt->fmt.pix.pixelformat) {
+	case V4L2_PIX_FMT_SPCA501:
+	  v4lconvert_spca501_to_yuv420(src, my_dst, dest_fmt->fmt.pix.width,
+				       dest_fmt->fmt.pix.height);
+	  break;
+	case V4L2_PIX_FMT_SPCA505:
+	  v4lconvert_spca505_to_yuv420(src, my_dst, dest_fmt->fmt.pix.width,
+				       dest_fmt->fmt.pix.height);
+	  break;
+	case V4L2_PIX_FMT_SPCA508:
+	  v4lconvert_spca508_to_yuv420(src, my_dst, dest_fmt->fmt.pix.width,
+				       dest_fmt->fmt.pix.height);
+	  break;
+      }
+
       if (dest_fmt->fmt.pix.pixelformat == V4L2_PIX_FMT_BGR24)
-	v4lconvert_spca501_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
-				    dest_fmt->fmt.pix.height);
-      else
-	v4lconvert_spca501_to_yuv420(src, dest, dest_fmt->fmt.pix.width,
-				     dest_fmt->fmt.pix.height);
+	v4lconvert_yuv420_to_bgr24(tmpbuf, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+
       break;
+    }
 
     /* compressed bayer formats */
     case V4L2_PIX_FMT_SPCA561:
