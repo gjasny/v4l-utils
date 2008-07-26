@@ -16,7 +16,7 @@ $std=shift or $std='PAL-M';
 $dev=shift or $dev="/dev/video1";
 
 ##############################################
-# Those stuff bellow are currently "hardcoded"
+# Those stuff below are currently "hardcoded"
 
 my $acard=0;
 my $rec_ctrl="Aux,0";
@@ -25,7 +25,7 @@ my $vbitrate=1500;
 my $abitrate=224;
 
 ##############################################
-# Those stuff bellow are NTSC / PAL-M specific
+# Those stuff below are NTSC / PAL-M specific
 
 my $list="/usr/share/xawtv/ntsc-cable.list";
 my $fps=30000/1001;
