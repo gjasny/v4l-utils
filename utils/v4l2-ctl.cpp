@@ -1997,6 +1997,7 @@ int main(int argc, char **argv)
 		memset(&vt, 0, sizeof(struct v4l2_tuner));
 		if (doioctl(fd, VIDIOC_G_TUNER, &vt, "VIDIOC_G_TUNER") == 0) {
 			printf("Tuner:\n");
+			printf("\tName                 : %s\n", vt.name);
 			printf("\tCapabilities         : %s\n", tcap2s(vt.capability).c_str());
 			if (vt.capability & V4L2_TUNER_CAP_LOW)
 				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
@@ -2004,7 +2005,7 @@ int main(int argc, char **argv)
 			else
 				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
 				     vt.rangelow / 16.0, vt.rangehigh / 16.0);
-			printf("\tSignal strength      : %d%%\n", (int)(vt.signal / 655.35));
+			printf("\tSignal strength/AFC  : %d%%/%d\n", (int)(vt.signal / 655.35), vt.afc);
 			printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode));
 			printf("\tAvailable subchannels: %s\n",
 					rxsubchans2s(vt.rxsubchans).c_str());
