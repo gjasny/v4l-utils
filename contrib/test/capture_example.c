@@ -68,11 +68,11 @@ static int xioctl(int fh, int request, void *arg)
 
 static void process_image(const void *p, int size)
 {
-	if (!out_buf)
-		fputc('.', stdout);
-	else
+	if (out_buf)
 		fwrite(p, size, 1, stdout);
 
+	fflush(stderr);
+	fprintf(stderr, ".");
 	fflush(stdout);
 }
 
@@ -125,7 +125,7 @@ static int read_frame(void)
 
 		assert(buf.index < n_buffers);
 
-		process_image(buffers[buf.index].start, buffers[buf.index].length);
+		process_image(buffers[buf.index].start, buf.bytesused);
 
 		if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
 			errno_exit("VIDIOC_QBUF");
@@ -160,7 +160,7 @@ static int read_frame(void)
 
 		assert(i < n_buffers);
 
-		process_image((void *) buf.m.userptr, buf.length);
+		process_image((void *) buf.m.userptr, buf.bytesused);
 
 		if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
 			errno_exit("VIDIOC_QBUF");
@@ -571,7 +571,7 @@ static void usage(FILE *fp, int argc, char **argv)
 	fprintf(fp,
 		 "Usage: %s [options]\n\n"
 		 "Options:\n"
-		 "-d | --device name   Video device name [/dev/video]\n"
+		 "-d | --device name   Video device name [/dev/video0]\n"
 		 "-h | --help          Print this message\n"
 		 "-m | --mmap          Use memory mapped buffers\n"
 		 "-r | --read          Use read() calls\n"
@@ -596,7 +596,7 @@ long_options [] = {
 
 int main(int argc, char **argv)
 {
-	dev_name = "/dev/video";
+	dev_name = "/dev/video0";
 
 	for (;;) {
 		int idx;
@@ -650,5 +650,6 @@ int main(int argc, char **argv)
 	stop_capturing();
 	uninit_device();
 	close_device();
+	fprintf(stderr, "\n");
 	return 0;
 }
