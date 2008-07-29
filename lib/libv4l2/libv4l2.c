@@ -386,8 +386,10 @@ int v4l2_fd_open(int fd, int v4l2_flags)
     return -1;
   }
 
-  /* we only add functionality for video capture devices */
-  if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
+  /* we only add functionality for video capture devices, and we do not
+     handle devices which don't do mmap */
+  if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) ||
+      !(cap.capabilities & V4L2_CAP_STREAMING))
     return fd;
 
   /* Get current cam format */

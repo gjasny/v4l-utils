@@ -2,6 +2,8 @@ libv4l-0.3.8
 ------------
 * work around wrong REQUEST_BUFFERS ioctl return code from certain drivers
 * add pkg-config (.pc) files for easier detection if libv4l is available
+* check capabilities for streaming, if the driver cannot do streaming don't
+  insert ourselves between the application and the driver
 
 
 libv4l-0.3.7
