@@ -1,10 +1,10 @@
 LIB_RELEASE=0
-V4L2_LIB_VERSION=$(LIB_RELEASE).3.7
+V4L2_LIB_VERSION=$(LIB_RELEASE).3.8
 
 all clean install:
-	$(MAKE) -C libv4lconvert $@
-	$(MAKE) -C libv4l2 $@
-	$(MAKE) -C libv4l1 $@
+	$(MAKE) -C libv4lconvert V4L2_LIB_VERSION=$(V4L2_LIB_VERSION) $@
+	$(MAKE) -C libv4l2 V4L2_LIB_VERSION=$(V4L2_LIB_VERSION) $@
+	$(MAKE) -C libv4l1 V4L2_LIB_VERSION=$(V4L2_LIB_VERSION) $@
 
 export: clean
 	mkdir /tmp/libv4l-$(V4L2_LIB_VERSION)

@@ -11,7 +11,7 @@ LDFLAGS       = -shared
 CONVERT_LIB   = libv4lconvert.so
 CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o pac207.o \
 		jidctflt.o spca561-decompress.o rgbyuv.o spca501.o bayer.o
-TARGETS       = $(CONVERT_LIB)
+TARGETS       = $(CONVERT_LIB) libv4lconvert.pc
 INCLUDES      = ../include/libv4lconvert.h
 
 ifeq ($(LIB_RELEASE),)
@@ -30,6 +30,16 @@ all: $(TARGETS)
 
 $(CONVERT_LIB): $(CONVERT_OBJS)
 
+libv4lconvert.pc:
+	echo prefix=$(PREFIX) > libv4lconvert.pc
+	echo libdir=$(LIBDIR) >> libv4lconvert.pc
+	echo >> libv4lconvert.pc
+	echo 'Name: libv4lconvert' >> libv4lconvert.pc
+	echo 'Description: v4l format conversion library' >> libv4lconvert.pc
+	echo 'Version: '$(V4L2_LIB_VERSION) >> libv4lconvert.pc
+	echo 'Libs: -L$${libdir} -lv4lconvert' >> libv4lconvert.pc
+	echo 'Cflags: -I$${prefix}/include' >> libv4lconvert.pc
+
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/include
 	install -p -m 644 $(INCLUDES) $(DESTDIR)$(PREFIX)/include
@@ -37,10 +47,11 @@ install: all
 	install -m 755 $(CONVERT_LIB).$(LIB_RELEASE) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR) && \
 	  ln -f -s $(CONVERT_LIB).$(LIB_RELEASE) $(CONVERT_LIB)
+	mkdir -p $(DESTDIR)$(LIBDIR)/pkgconfig
+	install -m 644 libv4lconvert.pc $(DESTDIR)$(LIBDIR)/pkgconfig
 
 clean::
-	rm -f *.so* *.o log *~
-	rm -f *.d
+	rm -f *.so* *.o *.d libv4lconvert.pc log *~
 
 %.o: %.c
 	$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<
