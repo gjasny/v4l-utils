@@ -550,6 +550,9 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
   /* Is this a capture request and do we need to take the stream lock? */
   switch (request) {
+    case VIDIOC_QUERYCAP:
+      is_capture_request = 1;
+      break;
     case VIDIOC_ENUM_FMT:
       if (((struct v4l2_fmtdesc *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
 	is_capture_request = 1;
@@ -605,6 +608,17 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
 
   switch (request) {
+    case VIDIOC_QUERYCAP:
+      {
+	struct v4l2_capability *cap = arg;
+
+	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_QUERYCAP, cap);
+	if (result == 0)
+	  /* We always support read() as we fake it using mmap mode */
+	  cap->capabilities |= V4L2_CAP_READWRITE;
+      }
+      break;
+
     case VIDIOC_ENUM_FMT:
       result = v4lconvert_enum_fmt(devices[index].convert, arg);
       break;
@@ -727,7 +741,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_REQBUFS, req);
 	if (result < 0)
 	  break;
-	result = 0; // some drivers return the number of buffers on success
+	result = 0; /* some drivers return the number of buffers on success */
 
 	/* If we got more frames then we can handle lie to the app */
 	if (req->count > V4L2_MAX_NO_FRAMES)

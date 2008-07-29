@@ -4,6 +4,7 @@ libv4l-0.3.8
 * add pkg-config (.pc) files for easier detection if libv4l is available
 * check capabilities for streaming, if the driver cannot do streaming don't
   insert ourselves between the application and the driver
+* intercept get capabilites and report read capability (which we always offer)
 
 
 libv4l-0.3.7
