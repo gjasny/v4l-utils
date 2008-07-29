@@ -97,7 +97,7 @@ static int v4l2_request_read_buffers(int index)
   req.count = devices[index].nreadbuffers;
   req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   req.memory = V4L2_MEMORY_MMAP;
-  if ((result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_REQBUFS, &req))){
+  if ((result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_REQBUFS, &req)) < 0){
     int saved_err = errno;
     V4L2_LOG_ERR("requesting buffers: %s\n", strerror(errno));
     errno = saved_err;
@@ -121,7 +121,7 @@ static int v4l2_unrequest_read_buffers(int index)
   req.count = 0;
   req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   req.memory = V4L2_MEMORY_MMAP;
-  if ((result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_REQBUFS, &req))) {
+  if ((result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_REQBUFS, &req)) < 0) {
     int saved_err = errno;
     V4L2_LOG_ERR("unrequesting buffers: %s\n", strerror(errno));
     errno = saved_err;
@@ -723,8 +723,9 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	v4l2_unmap_buffers(index);
 
 	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_REQBUFS, req);
-	if (result)
+	if (result < 0)
 	  break;
+	result = 0; // some drivers return the number of buffers on success
 
 	/* If we got more frames then we can handle lie to the app */
 	if (req->count > V4L2_MAX_NO_FRAMES)
