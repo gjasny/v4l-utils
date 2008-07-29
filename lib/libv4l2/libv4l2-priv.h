@@ -88,13 +88,8 @@ struct v4l2_dev_info {
   unsigned char *frame_pointers[V4L2_MAX_NO_FRAMES];
   int frame_sizes[V4L2_MAX_NO_FRAMES];
   int frame_queued; /* 1 status bit per frame */
-  /* mapping tracking of our fake (converting mmap) frame buffers, todo this
-     perfect we should use a map counter per frame, this is a good
-     approximation but there are scenarios thinkable where this doesn't work.
-     However no normal application not even a buggy one is likely to exhibit
-     the patterns needed to fail this somewhat simplified tracking */
-  int frame_mapped; /* 1 status bit per frame */
-  int frame_map_count; /* total number of maps of (fake) buffers combined */
+  /* mapping tracking of our fake (converting mmap) frame buffers */
+  unsigned char frame_map_count[V4L2_MAX_NO_FRAMES];
 };
 
 /* From log.c */

@@ -435,10 +435,9 @@ int v4l2_fd_open(int fd, int v4l2_flags)
   devices[index].convert_mmap_buf = MAP_FAILED;
   for (i = 0; i < V4L2_MAX_NO_FRAMES; i++) {
     devices[index].frame_pointers[i] = MAP_FAILED;
+    devices[index].frame_map_count[i] = 0;
   }
   devices[index].frame_queued = 0;
-  devices[index].frame_mapped = 0;
-  devices[index].frame_map_count = 0;
 
   if (index >= devices_used)
     devices_used = index + 1;
@@ -470,7 +469,7 @@ static int v4l2_get_index(int fd)
 
 int v4l2_close(int fd)
 {
-  int index, result;
+  int index, result, i;
 
   if ((index = v4l2_get_index(fd)) == -1)
     return syscall(SYS_close, fd);
@@ -489,11 +488,12 @@ int v4l2_close(int fd)
   v4l2_unmap_buffers(index);
   v4lconvert_destroy(devices[index].convert);
   if (devices[index].convert_mmap_buf != MAP_FAILED) {
-    if (devices[index].frame_mapped || devices[index].frame_map_count)
-      V4L2_LOG(
-	"v4l2 mmap buffers still mapped on close(), mask: %08x, count: %d\n",
-	(unsigned int)devices[index].frame_mapped,
-	devices[index].frame_map_count);
+    for (i = 0; i < V4L2_MAX_NO_FRAMES; i++)
+      if (devices[index].frame_map_count[i])
+	break;
+
+    if (i != V4L2_MAX_NO_FRAMES)
+      V4L2_LOG("v4l2 mmap buffers still mapped on close()\n");
     else
       syscall(SYS_munmap, devices[index].convert_mmap_buf,
 	      devices[index].no_frames * V4L2_FRAME_BUF_SIZE);
@@ -704,6 +704,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
     case VIDIOC_REQBUFS:
       {
+	int i;
 	struct v4l2_requestbuffers *req = arg;
 
 	/* Don't allow mixing read / mmap io, either we control the buffers
@@ -716,7 +717,11 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	}
 
 	/* Are any of our fake (convert_mmap_buf) buffers still mapped ? */
-	if (devices[index].frame_mapped || devices[index].frame_map_count) {
+	for (i = 0; i < V4L2_MAX_NO_FRAMES; i++)
+	  if (devices[index].frame_map_count[i])
+	    break;
+
+	if (i != V4L2_MAX_NO_FRAMES) {
 	  errno = EBUSY;
 	  result = -1;
 	  break;
@@ -960,8 +965,7 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
     }
   }
 
-  devices[index].frame_mapped |= 1 << buffer_index;
-  devices[index].frame_map_count++;
+  devices[index].frame_map_count[buffer_index]++;
 
   result = devices[index].convert_mmap_buf +
     buffer_index * V4L2_FRAME_BUF_SIZE;
@@ -1002,9 +1006,8 @@ int v4l2_munmap(void *_start, size_t length)
 	  start >= devices[index].convert_mmap_buf &&
 	  (start - devices[index].convert_mmap_buf) % length == 0 &&
 	  buffer_index < devices[index].no_frames) {
-	devices[index].frame_mapped &= ~(1 << buffer_index);
-	if (devices[index].frame_map_count > 0)
-	  devices[index].frame_map_count--;
+	if (devices[index].frame_map_count[buffer_index] > 0)
+	  devices[index].frame_map_count[buffer_index]--;
 	unmapped = 1;
       }
 
