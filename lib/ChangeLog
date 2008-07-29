@@ -5,6 +5,7 @@ libv4l-0.3.8
 * check capabilities for streaming, if the driver cannot do streaming don't
   insert ourselves between the application and the driver
 * intercept get capabilites and report read capability (which we always offer)
+* query buffer: indicate the mapping state of our (fake) buffer in the flags
 
 
 libv4l-0.3.7

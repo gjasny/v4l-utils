@@ -773,6 +773,10 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
 	buf->m.offset = V4L2_MMAP_OFFSET_MAGIC | buf->index;
 	buf->length = V4L2_FRAME_BUF_SIZE;
+	if (devices[index].frame_map_count[buf->index])
+	  buf->flags |= V4L2_BUF_FLAG_MAPPED;
+	else
+	  buf->flags &= ~V4L2_BUF_FLAG_MAPPED;
       }
       break;
 
@@ -832,7 +836,12 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	}
 
 	buf->bytesused = result;
+	buf->m.offset = V4L2_MMAP_OFFSET_MAGIC | buf->index;
 	buf->length = V4L2_FRAME_BUF_SIZE;
+	if (devices[index].frame_map_count[buf->index])
+	  buf->flags |= V4L2_BUF_FLAG_MAPPED;
+	else
+	  buf->flags &= ~V4L2_BUF_FLAG_MAPPED;
 
 	result = 0;
       }
