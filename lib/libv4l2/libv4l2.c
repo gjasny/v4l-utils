@@ -35,12 +35,12 @@
       capture devices.
    2) libv4l2 is the base of the v4l2convert.so wrapper lib, which is a .so
       which can be LD_PRELOAD-ed and the overrules the libc's open/close/etc,
-      and when opening /dev/videoX calls v4l2_open. Because we behave as the
-      regular counterpart when the fd is not known (instead of say throwing
-      an error), v4l2convert.so can simply call the v4l2_ prefixed function
-      for all wrapped functions (except for v4l2_open which will fail when not
-      called on a v4l2 device). This way the wrapper does not have to keep
-      track of which fd's are being handled by libv4l2, as libv4l2 already
+      and when opening /dev/videoX or /dev/v4l/ calls v4l2_open.  Because we
+      behave as the regular counterpart when the fd is not known (instead of say
+      throwing an error), v4l2convert.so can simply call the v4l2_ prefixed
+      function for all wrapped functions (except for v4l2_open which will fail
+      when not called on a v4l2 device). This way the wrapper does not have to
+      keep track of which fd's are being handled by libv4l2, as libv4l2 already
       keeps track of this itself.
 
       This also means that libv4l2 may not use any of the regular functions

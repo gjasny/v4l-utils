@@ -66,7 +66,7 @@ int open (const char *file, int oflag, ...)
     return fd;
 
   /* check if we're opening a video4linux2 device */
-  if (strncmp(file, "/dev/video", 10))
+  if (strncmp(file, "/dev/video", 10) && strncmp(file, "/dev/v4l/", 9))
     return fd;
 
   /* check that this is an v4l2 device, libv4l2 only supports v4l2 devices */

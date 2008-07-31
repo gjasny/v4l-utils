@@ -28,12 +28,12 @@
       capture only devices, or non v4l2 devices.
    2) libv4l1 is the base of the v4l1compat.so wrapper lib, which is a .so
       which can be LD_PRELOAD-ed and the overrules the libc's open/close/etc,
-      and when opening /dev/videoX calls v4l1_open. Because we behave as the
-      regular counterpart when the fd is not known (instead of say throwing
-      an error), v4l1compat.so can simply call the v4l1_ prefixed function
-      for all wrapped functions. This way the wrapper does not have to keep
-      track of which fd's are being handled by libv4l1, as libv4l1 already
-      keeps track of this itself.
+      and when opening /dev/videoX or /dev/v4l/ calls v4l1_open. Because we
+      behave as the regular counterpart when the fd is not known (instead of
+      say throwing an error), v4l1compat.so can simply call the v4l1_ prefixed
+      function for all wrapped functions. This way the wrapper does not have
+      to keep track of which fd's are being handled by libv4l1, as libv4l1
+      already keeps track of this itself.
 
       This also means that libv4l1 may not use any of the regular functions
       it mimics, as for example open could be a symbol in v4l1compat.so, which
@@ -279,7 +279,7 @@ int v4l1_open (const char *file, int oflag, ...)
     return fd;
 
   /* check if we're opening a video4linux2 device */
-  if (strncmp(file, "/dev/video", 10))
+  if (strncmp(file, "/dev/video", 10) && strncmp(file, "/dev/v4l/", 9))
     return fd;
 
   /* check that this is an v4l2 device, no need to emulate v4l1 on
