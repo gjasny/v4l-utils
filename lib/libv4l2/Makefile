@@ -34,14 +34,14 @@ $(V4L2_LIB): $(V4L2_OBJS)
 $(V4L2CONVERT): $(V4L2CONVERT_O) $(V4L2_LIB)
 
 libv4l2.pc:
-	echo prefix=$(PREFIX) > libv4l2.pc
-	echo libdir=$(LIBDIR) >> libv4l2.pc
-	echo >> libv4l2.pc
-	echo 'Name: libv4l2' >> libv4l2.pc
-	echo 'Description: v4l2 device access library' >> libv4l2.pc
-	echo 'Version: '$(V4L2_LIB_VERSION) >> libv4l2.pc
-	echo 'Libs: -L$${libdir} -lv4l2' >> libv4l2.pc
-	echo 'Cflags: -I$${prefix}/include' >> libv4l2.pc
+	@echo prefix=$(PREFIX) > libv4l2.pc
+	@echo libdir=$(LIBDIR) >> libv4l2.pc
+	@echo >> libv4l2.pc
+	@echo 'Name: libv4l2' >> libv4l2.pc
+	@echo 'Description: v4l2 device access library' >> libv4l2.pc
+	@echo 'Version: '$(V4L2_LIB_VERSION) >> libv4l2.pc
+	@echo 'Libs: -L$${libdir} -lv4l2' >> libv4l2.pc
+	@echo 'Cflags: -I$${prefix}/include' >> libv4l2.pc
 
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/include

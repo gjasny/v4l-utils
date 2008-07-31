@@ -35,14 +35,14 @@ $(V4L1_LIB): $(V4L1_OBJS)
 $(V4L1COMPAT): $(V4L1COMPAT_O) $(V4L1_LIB)
 
 libv4l1.pc:
-	echo prefix=$(PREFIX) > libv4l1.pc
-	echo libdir=$(LIBDIR) >> libv4l1.pc
-	echo >> libv4l1.pc
-	echo 'Name: libv4l1' >> libv4l1.pc
-	echo 'Description: v4l1 compatibility library' >> libv4l1.pc
-	echo 'Version: '$(V4L2_LIB_VERSION) >> libv4l1.pc
-	echo 'Libs: -L$${libdir} -lv4l1' >> libv4l1.pc
-	echo 'Cflags: -I$${prefix}/include' >> libv4l1.pc
+	@echo prefix=$(PREFIX) > libv4l1.pc
+	@echo libdir=$(LIBDIR) >> libv4l1.pc
+	@echo >> libv4l1.pc
+	@echo 'Name: libv4l1' >> libv4l1.pc
+	@echo 'Description: v4l1 compatibility library' >> libv4l1.pc
+	@echo 'Version: '$(V4L2_LIB_VERSION) >> libv4l1.pc
+	@echo 'Libs: -L$${libdir} -lv4l1' >> libv4l1.pc
+	@echo 'Cflags: -I$${prefix}/include' >> libv4l1.pc
 
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/include
