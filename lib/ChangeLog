@@ -1,3 +1,12 @@
+libv4l-0.3.9
+------------
+* Not only see /dev/video* but also /dev/v4l/* as video devices
+  (only affects libv4l1 and the wrappers) patch from Brandon Philips
+* Silence the creation of the .pc files in the Makefiles (Brandon Philips)
+* Part of the copyright headers refered GPL instead of LGPL due to a copy
+  and paste error (Brandon Philips)
+
+
 libv4l-0.3.8
 ------------
 * work around wrong REQUEST_BUFFERS ioctl return code from certain drivers
