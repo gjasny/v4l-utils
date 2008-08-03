@@ -1,3 +1,9 @@
+libv4l-0.4.1
+------------
+* When the driver supports read() and we are not converting let the driver
+  handle read() instead of emulating it with mmap mode
+
+
 libv4l-0.4.0
 ------------
 * Be more relaxed in our checks for mixing read and mmap access, we were

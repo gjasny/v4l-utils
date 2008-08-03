@@ -75,6 +75,7 @@
 #define V4L2_STREAMON			0x0100
 #define V4L2_BUFFERS_REQUESTED_BY_READ	0x0200
 #define V4L2_STREAM_CONTROLLED_BY_READ	0x0400
+#define V4L2_SUPPORTS_READ		0x0800
 
 #define V4L2_MMAP_OFFSET_MAGIC      0xABCDEF00u
 
@@ -456,6 +457,8 @@ int v4l2_fd_open(int fd, int v4l2_flags)
   }
 
   devices[index].flags = v4l2_flags;
+  if (cap.capabilities & V4L2_CAP_READWRITE)
+    devices[index].flags |= V4L2_SUPPORTS_READ;
   devices[index].open_count = 1;
   devices[index].src_fmt = fmt;
   devices[index].dest_fmt = fmt;
@@ -907,6 +910,15 @@ ssize_t v4l2_read (int fd, void* buffer, size_t n)
     return syscall(SYS_read, fd, buffer, n);
 
   pthread_mutex_lock(&devices[index].stream_lock);
+
+  /* When not converting and the device supports read let the kernel handle
+     it */
+  if ((devices[index].flags & V4L2_SUPPORTS_READ) &&
+      devices[index].src_fmt.fmt.pix.pixelformat ==
+      devices[index].dest_fmt.fmt.pix.pixelformat) {
+    result = syscall(SYS_read, fd, buffer, n);
+    goto leave;
+  }
 
   if (!(devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ)) {
     if ((devices[index].flags & V4L2_STREAMON) ||
