@@ -113,7 +113,6 @@ static int v4l2_request_read_buffers(int index)
 
 static void v4l2_unrequest_read_buffers(int index)
 {
-  int result;
   struct v4l2_requestbuffers req;
 
   if (!(devices[index].flags & V4L2_BUFFERS_REQUESTED_BY_READ) ||
@@ -743,7 +742,6 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
     case VIDIOC_REQBUFS:
       {
-	int i;
 	struct v4l2_requestbuffers *req = arg;
 
 	/* IMPROVEME (maybe?) add support for userptr's? */
