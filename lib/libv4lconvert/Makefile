@@ -1,14 +1,15 @@
-CC            = gcc
-LD            = gcc
-
-CPPFLAGS      = -fPIC -I../include -I../../../../linux/include
+CPPFLAGS      = -I../include -I../../../../linux/include
 
 CFLAGS := -g -O1
 CFLAGS += -Wall -W -Wno-unused -Wpointer-arith -Wstrict-prototypes
 
-LDFLAGS       = -shared
-
+ifeq ($(LINKTYPE),static)
+CONVERT_LIB   = libv4lconvert.a
+else
 CONVERT_LIB   = libv4lconvert.so
+CPPFLAGS     += -fPIC
+endif
+
 CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o pac207.o \
 		jidctflt.o spca561-decompress.o rgbyuv.o spca501.o bayer.o
 TARGETS       = $(CONVERT_LIB) libv4lconvert.pc
@@ -44,18 +45,26 @@ install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/include
 	install -p -m 644 $(INCLUDES) $(DESTDIR)$(PREFIX)/include
 	mkdir -p $(DESTDIR)$(LIBDIR)
+ifeq ($(LINKTYPE),static)
+	mkdir -p $(DESTDIR)$(LIBDIR)
+	install -m 644 $(CONVERT_LIB) $(DESTDIR)$(LIBDIR)
+else
 	install -m 755 $(CONVERT_LIB).$(LIB_RELEASE) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR) && \
 	  ln -f -s $(CONVERT_LIB).$(LIB_RELEASE) $(CONVERT_LIB)
+endif
 	mkdir -p $(DESTDIR)$(LIBDIR)/pkgconfig
 	install -m 644 libv4lconvert.pc $(DESTDIR)$(LIBDIR)/pkgconfig
 
 clean::
-	rm -f *.so* *.o *.d libv4lconvert.pc log *~
+	rm -f *.a *.so* *.o *.d libv4lconvert.pc log *~
 
 %.o: %.c
 	$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 %.so:
-	$(CC) $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^
+	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^
 	ln -f -s $@.$(LIB_RELEASE) $@
+
+%.a:
+	$(AR) cqs $@ $^

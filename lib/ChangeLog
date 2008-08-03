@@ -3,8 +3,10 @@ libv4l-0.4.0
 * Be more relaxed in our checks for mixing read and mmap access, we were
   being more strict in this then certain kernel drivers (bttv) making xawtv
   unhappy
-* Add support for conversion to RGB24 (before we only support BGR24) based
+* Add support for conversion to RGB24 (before we only supported BGR24) based
   on a patch by Jean-Francois Moine
+* Various Makefile and pkgconfig file improvements by Gregor Jasny (Debian)
+
 
 libv4l-0.3.9
 ------------
