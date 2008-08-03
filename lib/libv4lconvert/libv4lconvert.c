@@ -171,7 +171,9 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
 			      (int)dest_fmt->fmt.pix.height);
 	unsigned int size_diff = size_x_diff * size_x_diff +
 				 size_y_diff * size_y_diff;
-	if (size_diff < closest_fmt_size_diff) {
+	if (size_diff < closest_fmt_size_diff ||
+	    (size_diff == closest_fmt_size_diff &&
+	     try_fmt.fmt.pix.pixelformat == desired_pixfmt)) {
 	  closest_fmt_size_diff = size_diff;
 	  closest_fmt = try_fmt;
 	}

@@ -7,6 +7,8 @@ libv4l-0.4.0
   converting map the (real) buffers before calling the qbuf ioctl
 * Add support for conversion to RGB24 (before we only supported BGR24) based
   on a patch by Jean-Francois Moine
+* When the hardware supports a format natively prefer using the native
+  version over converting from another supported format
 * Various Makefile and pkgconfig file improvements by Gregor Jasny (Debian)
 
 
