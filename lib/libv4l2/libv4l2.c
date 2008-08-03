@@ -72,7 +72,9 @@
 /* Note these flags are stored together with the flags passed to v4l2_fd_open()
    in v4l2_dev_info's flags member, so care should be taken that the do not
    use the same bits! */
-#define V4L2_STREAMON        0x0100
+#define V4L2_STREAMON			0x0100
+#define V4L2_BUFFERS_REQUESTED_BY_READ	0x0200
+#define V4L2_STREAM_CONTROLLED_BY_READ	0x0400
 
 #define V4L2_MMAP_OFFSET_MAGIC      0xABCDEF00u
 
@@ -89,52 +91,46 @@ static int v4l2_request_read_buffers(int index)
   int result;
   struct v4l2_requestbuffers req;
 
-  /* No-op if already done */
-  if (devices[index].no_frames)
-    return 0;
-
-  /* Request buffers */
-  req.count = devices[index].nreadbuffers;
+  /* Note we re-request the buffers if they are already requested as the format
+     and thus the needed buffersize may have changed. */
+  req.count = (devices[index].no_frames)? devices[index].no_frames:
+					  devices[index].nreadbuffers;
   req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   req.memory = V4L2_MEMORY_MMAP;
   if ((result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_REQBUFS, &req)) < 0){
     int saved_err = errno;
-    V4L2_LOG_ERR("requesting buffers: %s\n", strerror(errno));
+    V4L2_LOG_ERR("requesting %u buffers: %s\n", req.count, strerror(errno));
     errno = saved_err;
     return result;
   }
+
+  if (!devices[index].no_frames && req.count)
+    devices[index].flags |= V4L2_BUFFERS_REQUESTED_BY_READ;
 
   devices[index].no_frames = MIN(req.count, V4L2_MAX_NO_FRAMES);
   return 0;
 }
 
-static int v4l2_unrequest_read_buffers(int index)
+static void v4l2_unrequest_read_buffers(int index)
 {
   int result;
   struct v4l2_requestbuffers req;
 
-  /* No-op of already done */
-  if (devices[index].no_frames == 0)
-    return 0;
+  if (!(devices[index].flags & V4L2_BUFFERS_REQUESTED_BY_READ) ||
+      devices[index].no_frames == 0)
+    return;
 
-  /* (Un)Request buffers */
+  /* (Un)Request buffers, note not all driver support this, and those
+     who do not support it don't need it. */
   req.count = 0;
   req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   req.memory = V4L2_MEMORY_MMAP;
-  if ((result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_REQBUFS, &req)) < 0) {
-    int saved_err = errno;
-    V4L2_LOG_ERR("unrequesting buffers: %s\n", strerror(errno));
-    errno = saved_err;
-    return result;
-  }
+  if(syscall(SYS_ioctl, devices[index].fd, VIDIOC_REQBUFS, &req) < 0)
+    return;
 
   devices[index].no_frames = MIN(req.count, V4L2_MAX_NO_FRAMES);
-  if (devices[index].no_frames) {
-    V4L2_LOG_ERR("number of buffers > 0 after requesting 0 buffers\n");
-    errno = EBUSY;
-    return -1;
-  }
-  return 0;
+  if (devices[index].no_frames == 0)
+    devices[index].flags &= ~V4L2_BUFFERS_REQUESTED_BY_READ;
 }
 
 static int v4l2_map_buffers(int index)
@@ -159,7 +155,7 @@ static int v4l2_map_buffers(int index)
     }
 
     devices[index].frame_pointers[i] = (void *)syscall(SYS_mmap2, NULL,
-      (size_t)buf.length, PROT_READ, MAP_SHARED, devices[index].fd,
+      (size_t)buf.length, PROT_READ|PROT_WRITE, MAP_SHARED, devices[index].fd,
       (__off_t)(buf.m.offset >> MMAP2_PAGE_SHIFT));
     if (devices[index].frame_pointers[i] == MAP_FAILED) {
       int saved_err = errno;
@@ -241,6 +237,7 @@ static int v4l2_queue_read_buffer(int index, int buffer_index)
   if (devices[index].frame_queued & (1 << buffer_index))
     return 0;
 
+  memset(&buf, 0, sizeof(buf));
   buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   buf.memory = V4L2_MEMORY_MMAP;
   buf.index  = buffer_index;
@@ -310,6 +307,8 @@ static int v4l2_activate_read_stream(int index)
   if ((result = v4l2_queue_read_buffers(index)))
     return result;
 
+  devices[index].flags |= V4L2_STREAM_CONTROLLED_BY_READ;
+
   return result = v4l2_streamon(index);
 }
 
@@ -324,10 +323,46 @@ static int v4l2_deactivate_read_stream(int index)
 
   v4l2_unmap_buffers(index);
 
-  if ((result = v4l2_unrequest_read_buffers(index)))
-    return result;
+  v4l2_unrequest_read_buffers(index);
+
+  devices[index].flags &= ~V4L2_STREAM_CONTROLLED_BY_READ;
 
   return 0;
+}
+
+static int v4l2_buffers_mapped(int index)
+{
+  unsigned int i;
+
+  if (devices[index].src_fmt.fmt.pix.pixelformat ==
+      devices[index].dest_fmt.fmt.pix.pixelformat) {
+    /* Normal (no conversion) mode */
+    struct v4l2_buffer buf;
+
+    for (i = 0; i < devices[index].no_frames; i++) {
+      buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+      buf.memory = V4L2_MEMORY_MMAP;
+      buf.index = i;
+      if (syscall(SYS_ioctl, devices[index].fd, VIDIOC_QUERYBUF, &buf)) {
+	int saved_err = errno;
+	V4L2_LOG_ERR("querying buffer %u: %s\n", i, strerror(errno));
+	errno = saved_err;
+	break;
+      }
+      if (buf.flags & V4L2_BUF_FLAG_MAPPED)
+	break;
+    }
+  } else {
+    /* Conversion mode */
+    for (i = 0; i < devices[index].no_frames; i++)
+      if (devices[index].frame_map_count[i])
+	break;
+  }
+
+  if (i != devices[index].no_frames)
+    V4L2_LOG("v4l2_buffers_mapped(): buffers still mapped\n");
+
+  return i != devices[index].no_frames;
 }
 
 
@@ -430,7 +465,6 @@ int v4l2_fd_open(int fd, int v4l2_flags)
 
   devices[index].no_frames = 0;
   devices[index].nreadbuffers = V4L2_DEFAULT_NREADBUFFERS;
-  devices[index].io = v4l2_io_none;
   devices[index].convert = convert;
   devices[index].convert_mmap_buf = MAP_FAILED;
   for (i = 0; i < V4L2_MAX_NO_FRAMES; i++) {
@@ -469,7 +503,7 @@ static int v4l2_get_index(int fd)
 
 int v4l2_close(int fd)
 {
-  int index, result, i;
+  int index, result;
 
   if ((index = v4l2_get_index(fd)) == -1)
     return syscall(SYS_close, fd);
@@ -488,12 +522,8 @@ int v4l2_close(int fd)
   v4l2_unmap_buffers(index);
   v4lconvert_destroy(devices[index].convert);
   if (devices[index].convert_mmap_buf != MAP_FAILED) {
-    for (i = 0; i < V4L2_MAX_NO_FRAMES; i++)
-      if (devices[index].frame_map_count[i])
-	break;
-
-    if (i != V4L2_MAX_NO_FRAMES)
-      V4L2_LOG("v4l2 mmap buffers still mapped on close()\n");
+    if (v4l2_buffers_mapped(index))
+      V4L2_LOG_WARN("v4l2 mmap buffers still mapped on close()\n");
     else
       syscall(SYS_munmap, devices[index].convert_mmap_buf,
 	      devices[index].no_frames * V4L2_FRAME_BUF_SIZE);
@@ -528,6 +558,34 @@ int v4l2_dup(int fd)
   return fd;
 }
 
+static int v4l2_check_buffer_change_ok(int index)
+{
+  v4l2_unmap_buffers(index);
+
+  /* Check if the app itself still is using the stream */
+  if (v4l2_buffers_mapped(index) ||
+       (!(devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ) &&
+	 ((devices[index].flags & V4L2_STREAMON) ||
+	   devices[index].frame_queued))) {
+    V4L2_LOG("v4l2_check_buffer_change_ok(): stream busy\n");
+    errno = EBUSY;
+    return -1;
+  }
+
+  /* We may change from convert to non conversion mode and
+     v4l2_unrequest_read_buffers may change the no_frames, so free the
+     convert mmap buffer */
+  syscall(SYS_munmap, devices[index].convert_mmap_buf,
+    devices[index].no_frames * V4L2_FRAME_BUF_SIZE);
+  devices[index].convert_mmap_buf = MAP_FAILED;
+
+  if (devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ) {
+    V4L2_LOG("deactivating read-stream for settings change\n");
+    return v4l2_deactivate_read_stream(index);
+  }
+
+  return 0;
+}
 
 int v4l2_ioctl (int fd, unsigned long int request, ...)
 {
@@ -636,17 +694,6 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	  break;
 	}
 
-	/* Don't allow changing the format when mmap-ed IO is active, we could
-	   allow this to happen in certain special circumstances, but it is
-	   best to consistently deny this so that application developers do not
-	   go expect this to work, because in their test setup it happens to
-	   work. This also keeps the code much saner. */
-	if (devices[index].io == v4l2_io_mmap) {
-	  errno = EBUSY;
-	  result = -1;
-	  break;
-	}
-
 	if (devices[index].flags & V4L2_DISABLE_CONVERSION) {
 	  result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_TRY_FMT,
 			   dest_fmt);
@@ -667,16 +714,8 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	  break;
 	}
 
-	if (devices[index].io == v4l2_io_read) {
-	  V4L2_LOG("deactivating read-stream for format change\n");
-	  if ((result = v4l2_deactivate_read_stream(index))) {
-	    /* Undo what we've done to leave things in a consisten state */
-	    if (v4l2_activate_read_stream(index))
-	      V4L2_LOG_ERR(
-		"reactivating stream after deactivate failure (AAIIEEEE)\n");
-	    break;
-	  }
-	}
+	if ((result = v4l2_check_buffer_change_ok(index)))
+	  break;
 
 	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_S_FMT, &src_fmt);
 	if (result) {
@@ -707,26 +746,6 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	int i;
 	struct v4l2_requestbuffers *req = arg;
 
-	/* Don't allow mixing read / mmap io, either we control the buffers
-	   (read based io), or the app does */
-	if (devices[index].io == v4l2_io_read) {
-	  V4L2_LOG_ERR("to change from read io to mmap io open and close the device first!\n");
-	  errno = EBUSY;
-	  result = -1;
-	  break;
-	}
-
-	/* Are any of our fake (convert_mmap_buf) buffers still mapped ? */
-	for (i = 0; i < V4L2_MAX_NO_FRAMES; i++)
-	  if (devices[index].frame_map_count[i])
-	    break;
-
-	if (i != V4L2_MAX_NO_FRAMES) {
-	  errno = EBUSY;
-	  result = -1;
-	  break;
-	}
-
 	/* IMPROVEME (maybe?) add support for userptr's? */
 	if (req->memory != V4L2_MEMORY_MMAP) {
 	  errno = EINVAL;
@@ -734,36 +753,30 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	  break;
 	}
 
+	if ((result = v4l2_check_buffer_change_ok(index)))
+	  break;
+
 	/* No more buffers then we can manage please */
 	if (req->count > V4L2_MAX_NO_FRAMES)
 	  req->count = V4L2_MAX_NO_FRAMES;
-
-	/* Stop stream and unmap our real mapping of the buffers
-	   (only relevant when we're converting, otherwise a no-op) */
-	v4l2_streamoff(index);
-	v4l2_unmap_buffers(index);
 
 	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_REQBUFS, req);
 	if (result < 0)
 	  break;
 	result = 0; /* some drivers return the number of buffers on success */
 
-	/* If we got more frames then we can handle lie to the app */
-	if (req->count > V4L2_MAX_NO_FRAMES)
-	  req->count = V4L2_MAX_NO_FRAMES;
-
-	/* Force reallocation of convert_mmap_buf to fit the new no_frames */
-	syscall(SYS_munmap, devices[index].convert_mmap_buf,
-		devices[index].no_frames * V4L2_FRAME_BUF_SIZE);
-	devices[index].convert_mmap_buf = MAP_FAILED;
-	devices[index].no_frames = req->count;
-	devices[index].io = req->count? v4l2_io_mmap:v4l2_io_none;
+	devices[index].no_frames = MIN(req->count, V4L2_MAX_NO_FRAMES);
+	devices[index].flags &= ~V4L2_BUFFERS_REQUESTED_BY_READ;
       }
       break;
 
     case VIDIOC_QUERYBUF:
       {
 	struct v4l2_buffer *buf = arg;
+
+	if (devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ)
+	  if ((result = v4l2_deactivate_read_stream(index)))
+	    break;
 
 	/* Do a real query even when converting to let the driver fill in
 	   things like buf->field */
@@ -781,12 +794,20 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       break;
 
     case VIDIOC_QBUF:
+      if (devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ)
+	if ((result = v4l2_deactivate_read_stream(index)))
+	  break;
+
       result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_QBUF, arg);
       break;
 
     case VIDIOC_DQBUF:
       {
 	struct v4l2_buffer *buf = arg;
+
+	if (devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ)
+	  if ((result = v4l2_deactivate_read_stream(index)))
+	    break;
 
 	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_DQBUF, buf);
 	if (result) {
@@ -849,11 +870,9 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
     case VIDIOC_STREAMON:
     case VIDIOC_STREAMOFF:
-      if (devices[index].io != v4l2_io_mmap) {
-	errno = EINVAL;
-	result = -1;
-	break;
-      }
+      if (devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ)
+	if ((result = v4l2_deactivate_read_stream(index)))
+	  break;
 
       if (request == VIDIOC_STREAMON)
 	result = v4l2_streamon(index);
@@ -886,21 +905,26 @@ ssize_t v4l2_read (int fd, void* buffer, size_t n)
 
   pthread_mutex_lock(&devices[index].stream_lock);
 
-  if (devices[index].io == v4l2_io_mmap) {
-    V4L2_LOG_ERR("to change from mmap io to read io first do request_buffers with a count of 0\n");
-    errno = EBUSY;
-    result = -1;
-    goto leave;
+  if (!(devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ)) {
+    if ((devices[index].flags & V4L2_STREAMON) ||
+	devices[index].frame_queued) {
+      errno = EBUSY;
+      result = -1;
+      goto leave;
+    }
+    if ((result = v4l2_activate_read_stream(index)))
+      goto leave;
   }
-  devices[index].io = v4l2_io_read;
-
-  if ((result = v4l2_activate_read_stream(index)))
-    goto leave;
 
   if ((frame_index = v4l2_dequeue_read_buffer(index, &bytesused)) < 0) {
     result = -1;
     goto leave;
   }
+
+  /* ensure buffers are mapped before using them (they could have been
+     unmapped by a s_fmt ioctl) */
+  if ((result = v4l2_map_buffers(index)))
+    goto leave;
 
   result = v4lconvert_convert(devices[index].convert,
 	       &devices[index].src_fmt, &devices[index].dest_fmt,
@@ -948,7 +972,6 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
 
   buffer_index = offset & 0xff;
   if (buffer_index >= devices[index].no_frames ||
-      devices[index].io != v4l2_io_mmap ||
       /* Got magic offset and not converting ?? */
       devices[index].src_fmt.fmt.pix.pixelformat ==
       devices[index].dest_fmt.fmt.pix.pixelformat) {

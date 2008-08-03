@@ -1,3 +1,9 @@
+libv4l-0.4.0
+------------
+* Be more relaxed in our checks for mixing read and mmap access, we were
+  being more strict in this then certain kernel drivers (bttv) making xawtv
+  unhappy
+
 libv4l-0.3.9
 ------------
 * Not only see /dev/video* but also /dev/v4l/* as video devices

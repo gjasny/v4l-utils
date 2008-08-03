@@ -131,6 +131,14 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 	}
       }
       break;
+    case VIDIOC_REQBUFS:
+      {
+	struct v4l2_requestbuffers *req = arg;
+
+	fprintf(v4l2_log_file, "  count: %u type: %d memory: %d\n",
+	  req->count, req->type, req->memory);
+      }
+      break;
   }
 
   fprintf(v4l2_log_file, "result == %d\n", result);

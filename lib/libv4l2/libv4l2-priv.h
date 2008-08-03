@@ -68,8 +68,6 @@
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
-enum v4l2_io { v4l2_io_none, v4l2_io_read, v4l2_io_mmap };
-
 struct v4l2_dev_info {
   int fd;
   int flags;
@@ -81,7 +79,6 @@ struct v4l2_dev_info {
   pthread_mutex_t stream_lock;
   unsigned int no_frames;
   unsigned int nreadbuffers;
-  enum v4l2_io io;
   struct v4lconvert_data *convert;
   unsigned char *convert_mmap_buf;
   /* Frame bookkeeping is only done when in read or mmap-conversion mode */
