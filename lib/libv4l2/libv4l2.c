@@ -798,6 +798,11 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	if ((result = v4l2_deactivate_read_stream(index)))
 	  break;
 
+      /* With some drivers the buffers must be mapped before queuing */
+      if (converting)
+	if ((result = v4l2_map_buffers(index)))
+	  break;
+
       result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_QBUF, arg);
       break;
 

@@ -3,6 +3,8 @@ libv4l-0.4.0
 * Be more relaxed in our checks for mixing read and mmap access, we were
   being more strict in this then certain kernel drivers (bttv) making xawtv
   unhappy
+* With some drivers the buffers must be mapped before queuing, so when
+  converting map the (real) buffers before calling the qbuf ioctl
 * Add support for conversion to RGB24 (before we only supported BGR24) based
   on a patch by Jean-Francois Moine
 * Various Makefile and pkgconfig file improvements by Gregor Jasny (Debian)
