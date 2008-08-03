@@ -10,6 +10,8 @@ libv4l-0.4.0
 * When the hardware supports a format natively prefer using the native
   version over converting from another supported format
 * Various Makefile and pkgconfig file improvements by Gregor Jasny (Debian)
+* Drop the appl-patches dir, all application patches are now available and
+  tracked here: http://linuxtv.org/v4lwiki/index.php/Libv4l_Progress
 
 
 libv4l-0.3.9
