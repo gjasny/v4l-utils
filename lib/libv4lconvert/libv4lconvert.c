@@ -414,8 +414,26 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     }
 
     case V4L2_PIX_FMT_RGB24:
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_swap_rgb(src, dest, dest_fmt->fmt.pix.width,
+			    dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	printf("FIXME add rgb24 -> yuv420 conversion\n");
+	break;
+      }
+      break;
     case V4L2_PIX_FMT_BGR24:
-      printf("FIXME add rgb24/bgr24 -> yuv420 conversion\n");
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_swap_rgb(src, dest, dest_fmt->fmt.pix.width,
+			    dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	printf("FIXME add bgr24 -> yuv420 conversion\n");
+	break;
+      }
       break;
 
     case V4L2_PIX_FMT_YUV420:

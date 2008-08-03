@@ -127,3 +127,18 @@ void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dest,
     }
   }
 }
+
+void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst,
+  int width, int height)
+{
+  int i;
+
+  for (i = 0; i < (width * height); i++) {
+    unsigned char tmp0, tmp1;
+    tmp0 = *src++;
+    tmp1 = *src++;
+    *dst++ = *src++;
+    *dst++ = tmp1;
+    *dst++ = tmp0;
+  }
+}

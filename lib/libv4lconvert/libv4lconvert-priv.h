@@ -77,6 +77,9 @@ void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dst,
 void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
+void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
 void v4lconvert_spca501_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
