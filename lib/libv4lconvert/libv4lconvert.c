@@ -30,6 +30,7 @@
 /* Note for proper functioning of v4lconvert_enum_fmt the first entries in
   supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
 #define SUPPORTED_DST_PIXFMTS \
+  V4L2_PIX_FMT_RGB24, \
   V4L2_PIX_FMT_BGR24, \
   V4L2_PIX_FMT_YUV420
 
@@ -191,6 +192,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
   if (closest_fmt.fmt.pix.pixelformat != desired_pixfmt) {
     dest_fmt->fmt.pix.pixelformat = desired_pixfmt;
     switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
       case V4L2_PIX_FMT_BGR24:
 	dest_fmt->fmt.pix.bytesperline = dest_fmt->fmt.pix.width * 3;
 	dest_fmt->fmt.pix.sizeimage = dest_fmt->fmt.pix.width *
@@ -228,6 +230,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 
   /* sanity check, is the dest buffer large enough? */
   switch (dest_fmt->fmt.pix.pixelformat) {
+    case V4L2_PIX_FMT_RGB24:
     case V4L2_PIX_FMT_BGR24:
       needed = dest_fmt->fmt.pix.width * dest_fmt->fmt.pix.height * 3;
       break;
@@ -283,12 +286,19 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       components[2] = components[1] + (dest_fmt->fmt.pix.width *
 				       dest_fmt->fmt.pix.height) / 4;
 
-      if (dest_fmt->fmt.pix.pixelformat == V4L2_PIX_FMT_BGR24) {
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+	tinyjpeg_set_components(data->jdec, components, 1);
+	result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_RGB24);
+	break;
+      case V4L2_PIX_FMT_BGR24:
 	tinyjpeg_set_components(data->jdec, components, 1);
 	result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_BGR24);
-      } else {
+	break;
+      default:
 	tinyjpeg_set_components(data->jdec, components, 3);
 	result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_YUV420P);
+	break;
       }
 
       /* If the JPEG header checked out ok and we get an error during actual
@@ -304,12 +314,20 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SGBRG8:
     case V4L2_PIX_FMT_SGRBG8:
     case V4L2_PIX_FMT_SRGGB8:
-      if (dest_fmt->fmt.pix.pixelformat == V4L2_PIX_FMT_BGR24)
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_bayer_to_rgb24(src, dest, dest_fmt->fmt.pix.width,
+		    dest_fmt->fmt.pix.height, src_fmt->fmt.pix.pixelformat);
+	break;
+      case V4L2_PIX_FMT_BGR24:
 	v4lconvert_bayer_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
 		    dest_fmt->fmt.pix.height, src_fmt->fmt.pix.pixelformat);
-      else
+	break;
+      default:
 	v4lconvert_bayer_to_yuv420(src, dest, dest_fmt->fmt.pix.width,
 		    dest_fmt->fmt.pix.height, src_fmt->fmt.pix.pixelformat);
+	break;
+      }
       break;
 
     /* YUYV line by line formats */
@@ -319,8 +337,8 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     {
       unsigned char tmpbuf[dest_fmt->fmt.pix.width * dest_fmt->fmt.pix.height *
 			   3 / 2];
-      unsigned char *my_dst = (dest_fmt->fmt.pix.pixelformat ==
-			       V4L2_PIX_FMT_BGR24) ? tmpbuf : dest;
+      unsigned char *my_dst = (dest_fmt->fmt.pix.pixelformat !=
+			       V4L2_PIX_FMT_YUV420) ? tmpbuf : dest;
 
       switch (src_fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_SPCA501:
@@ -337,10 +355,16 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	  break;
       }
 
-      if (dest_fmt->fmt.pix.pixelformat == V4L2_PIX_FMT_BGR24)
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_yuv420_to_rgb24(tmpbuf, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_BGR24:
 	v4lconvert_yuv420_to_bgr24(tmpbuf, dest, dest_fmt->fmt.pix.width,
 				   dest_fmt->fmt.pix.height);
-
+	break;
+      }
       break;
     }
 
@@ -370,24 +394,39 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	  break;
       }
 
-      if (dest_fmt->fmt.pix.pixelformat == V4L2_PIX_FMT_BGR24)
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_bayer_to_rgb24(tmpbuf, dest, dest_fmt->fmt.pix.width,
+		    dest_fmt->fmt.pix.height, bayer_fmt);
+	break;
+      case V4L2_PIX_FMT_BGR24:
 	v4lconvert_bayer_to_bgr24(tmpbuf, dest, dest_fmt->fmt.pix.width,
 		    dest_fmt->fmt.pix.height, bayer_fmt);
-      else
+	break;
+      default:
 	v4lconvert_bayer_to_yuv420(tmpbuf, dest, dest_fmt->fmt.pix.width,
 		    dest_fmt->fmt.pix.height, bayer_fmt);
+	break;
+      }
       break;
     }
 
+    case V4L2_PIX_FMT_RGB24:
     case V4L2_PIX_FMT_BGR24:
-      /* dest must be V4L2_PIX_FMT_YUV420 then */
-      printf("FIXME add bgr24 -> yuv420 conversion\n");
+      printf("FIXME add rgb24/bgr24 -> yuv420 conversion\n");
       break;
 
     case V4L2_PIX_FMT_YUV420:
-      /* dest must be V4L2_PIX_FMT_BGR24 then */
-      v4lconvert_yuv420_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
-				 dest_fmt->fmt.pix.height);
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_yuv420_to_rgb24(src, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_yuv420_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      }
       break;
 
     default:

@@ -163,14 +163,10 @@ static void v4lconvert_border_bayer_line_to_bgr24(
 }
 
 /* From libdc1394, which on turn was based on OpenCV's Bayer decoding */
-void v4lconvert_bayer_to_bgr24(const unsigned char *bayer,
-  unsigned char *bgr, int width, int height, unsigned int pixfmt)
+static void bayer_to_rgbbgr24(const unsigned char *bayer,
+  unsigned char *bgr, int width, int height, unsigned int pixfmt,
+	int start_with_green, int blue_line)
 {
-    int blue_line = pixfmt == V4L2_PIX_FMT_SBGGR8
-	|| pixfmt == V4L2_PIX_FMT_SGBRG8;
-    int start_with_green = pixfmt == V4L2_PIX_FMT_SGBRG8
-	|| pixfmt == V4L2_PIX_FMT_SGRBG8;
-
     /* render the first line */
     v4lconvert_border_bayer_line_to_bgr24(bayer, bayer + width, bgr, width,
       start_with_green, blue_line);
@@ -315,6 +311,26 @@ void v4lconvert_bayer_to_bgr24(const unsigned char *bayer,
     /* render the last line */
     v4lconvert_border_bayer_line_to_bgr24(bayer + width, bayer, bgr, width,
       !start_with_green, !blue_line);
+}
+
+void v4lconvert_bayer_to_rgb24(const unsigned char *bayer,
+  unsigned char *bgr, int width, int height, unsigned int pixfmt)
+{
+	bayer_to_rgbbgr24(bayer, bgr, width, height, pixfmt,
+		pixfmt == V4L2_PIX_FMT_SGBRG8		/* start with green */
+			|| pixfmt == V4L2_PIX_FMT_SGRBG8,
+		pixfmt != V4L2_PIX_FMT_SBGGR8		/* blue line */
+			&& pixfmt != V4L2_PIX_FMT_SGBRG8);
+}
+
+void v4lconvert_bayer_to_bgr24(const unsigned char *bayer,
+  unsigned char *bgr, int width, int height, unsigned int pixfmt)
+{
+	bayer_to_rgbbgr24(bayer, bgr, width, height, pixfmt,
+		pixfmt == V4L2_PIX_FMT_SGBRG8		/* start with green */
+			|| pixfmt == V4L2_PIX_FMT_SGRBG8,
+		pixfmt == V4L2_PIX_FMT_SBGGR8		/* blue line */
+			|| pixfmt == V4L2_PIX_FMT_SGBRG8);
 }
 
 static void v4lconvert_border_bayer_line_to_y(

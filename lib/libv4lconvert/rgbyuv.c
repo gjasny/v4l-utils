@@ -80,3 +80,50 @@ void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dest,
     }
   }
 }
+
+void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dest,
+  int width, int height)
+{
+  int i,j;
+
+  const unsigned char *ysrc = src;
+  const unsigned char *usrc = src + width * height;
+  const unsigned char *vsrc = usrc + (width * height) / 4;
+
+  for (i = 0; i < height; i++) {
+    for (j = 0; j < width; j += 2) {
+#if 1 /* fast slightly less accurate multiplication free code */
+      int u1 = (((*usrc - 128) << 7) +  (*usrc - 128)) >> 6;
+      int rg = (((*usrc - 128) << 1) +  (*usrc - 128) +
+		((*vsrc - 128) << 2) + ((*vsrc - 128) << 1)) >> 3;
+      int v1 = (((*vsrc - 128) << 1) +  (*vsrc - 128)) >> 1;
+
+      *dest++ = CLIP(*ysrc + v1);
+      *dest++ = CLIP(*ysrc - rg);
+      *dest++ = CLIP(*ysrc + u1);
+      ysrc++;
+
+      *dest++ = CLIP(*ysrc + v1);
+      *dest++ = CLIP(*ysrc - rg);
+      *dest++ = CLIP(*ysrc + u1);
+#else
+      *dest++ = YUV2R(*ysrc, *usrc, *vsrc);
+      *dest++ = YUV2G(*ysrc, *usrc, *vsrc);
+      *dest++ = YUV2B(*ysrc, *usrc, *vsrc);
+      ysrc++;
+
+      *dest++ = YUV2R(*ysrc, *usrc, *vsrc);
+      *dest++ = YUV2G(*ysrc, *usrc, *vsrc);
+      *dest++ = YUV2B(*ysrc, *usrc, *vsrc);
+#endif
+      ysrc++;
+      usrc++;
+      vsrc++;
+    }
+    /* Rewind u and v for next line */
+    if (i&1) {
+      usrc -= width / 2;
+      vsrc -= width / 2;
+    }
+  }
+}
