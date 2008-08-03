@@ -3,6 +3,8 @@ CPPFLAGS      = -I../include -I../../../../linux/include
 CFLAGS := -g -O1
 CFLAGS += -Wall -W -Wno-unused -Wpointer-arith -Wstrict-prototypes
 
+LIBS = -lpthread
+
 V4L2_OBJS     = libv4l2.o log.o
 V4L2CONVERT   = v4l2convert.so
 V4L2CONVERT_O = v4l2convert.o libv4l2.so
@@ -72,7 +74,7 @@ clean::
 	$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 %.so:
-	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^
+	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^ $(LIBS)
 	ln -f -s $@.$(LIB_RELEASE) $@
 
 %.a:
