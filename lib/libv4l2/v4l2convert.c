@@ -134,13 +134,13 @@ ssize_t read (int fd, void* buffer, size_t n)
   return v4l2_read (fd, buffer, n);
 }
 
-void mmap(void *start, size_t length, int prot, int flags, int fd,
+void *mmap(void *start, size_t length, int prot, int flags, int fd,
   __off_t offset)
 {
   return v4l2_mmap(start, length, prot, flags, fd, offset);
 }
 
-void mmap64(void *start, size_t length, int prot, int flags, int fd,
+void *mmap64(void *start, size_t length, int prot, int flags, int fd,
   __off64_t offset)
 {
   return v4l2_mmap(start, length, prot, flags, fd, offset);
