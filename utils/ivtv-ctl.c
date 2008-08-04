@@ -343,7 +343,7 @@ int main(int argc, char **argv)
 	/* bitfield for OptSetCodec */
 
 	/* command args */
-	char *device = strdup("/dev/video0");	/* -d device */
+	const char *device = "/dev/video0";	/* -d device */
 	int ch;
 	int yuv_mode = 0;
 	struct v4l2_routing route;	/* audio_route */
@@ -415,11 +415,13 @@ int main(int argc, char **argv)
 			break;
 		}
 		case OptSetDevice:
-			device = strdup(optarg);
+			device = optarg;
 			if (device[0] >= '0' && device[0] <= '9' && device[1] == 0) {
+				static char newdev[20];
 				char dev = device[0];
 
-				sprintf(device, "/dev/video%c", dev);
+				sprintf(newdev, "/dev/video%c", dev);
+				device = newdev;
 			}
 			break;
 		case OptSetAudioRoute:
@@ -524,7 +526,6 @@ int main(int argc, char **argv)
 			strerror(errno));
 		exit(1);
 	}
-	free(device);
 
 	/* Setting Opts */
 
