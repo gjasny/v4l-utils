@@ -272,7 +272,7 @@ int main(int argc, char **argv)
 
 	/* command args */
 	int ch;
-	char *device = strdup("/dev/video0");	/* -d device */
+	const char *device = "/dev/video0";	/* -d device */
 	struct v4l2_capability vcap;	/* list_cap */
 	struct v4l2_register set_reg;
 	struct v4l2_register get_reg;
@@ -311,11 +311,13 @@ int main(int argc, char **argv)
 			usage();
 			return 0;
 		case OptSetDevice:
-			device = strdup(optarg);
+			device = optarg;
 			if (device[0] >= '0' && device[0] <= '9' && device[1] == 0) {
+				static char newdev[20];
 				char dev = device[0];
 
-				sprintf(device, "/dev/video%c", dev);
+				sprintf(newdev, "/dev/video%c", dev);
+				device = newdev;
 			}
 			break;
 		case OptSetRegister:
@@ -424,7 +426,6 @@ int main(int argc, char **argv)
 			strerror(errno));
 		exit(1);
 	}
-	free(device);
 
 	doioctl(fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP");
 	capabilities = vcap.capabilities;

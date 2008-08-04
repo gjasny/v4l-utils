@@ -1148,7 +1148,7 @@ int main(int argc, char **argv)
 
 	/* command args */
 	int ch;
-	char *device = strdup("/dev/video0");	/* -d device */
+	const char *device = "/dev/video0";	/* -d device */
 	struct v4l2_format vfmt;	/* set_format/get_format for video */
 	struct v4l2_format vfmt_out;	/* set_format/get_format video output */
 	struct v4l2_format vbi_fmt;	/* set_format/get_format for sliced VBI */
@@ -1224,11 +1224,13 @@ int main(int argc, char **argv)
 			usage();
 			return 0;
 		case OptSetDevice:
-			device = strdup(optarg);
+			device = optarg;
 			if (device[0] >= '0' && device[0] <= '9' && device[1] == 0) {
+				static char newdev[20];
 				char dev = device[0];
 
-				sprintf(device, "/dev/video%c", dev);
+				sprintf(newdev, "/dev/video%c", dev);
+				device = newdev;
 			}
 			break;
 		case OptSetVideoFormat:
@@ -1496,7 +1498,6 @@ int main(int argc, char **argv)
 			strerror(errno));
 		exit(1);
 	}
-	free(device);
 
 	doioctl(fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP");
 	capabilities = vcap.capabilities;
