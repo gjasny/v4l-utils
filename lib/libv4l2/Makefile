@@ -1,4 +1,4 @@
-CPPFLAGS      = -I../include -I../../../../linux/include
+override CPPFLAGS += -I../include -I../../../../linux/include
 
 CFLAGS := -g -O1
 CFLAGS += -Wall -W -Wno-unused -Wpointer-arith -Wstrict-prototypes
@@ -17,7 +17,7 @@ else
 V4L2_LIB      = libv4l2.so
 V4L2_OBJS    += ../libv4lconvert/libv4lconvert.so
 TARGETS      += $(V4L2CONVERT)
-CPPFLAGS     += -fPIC
+override CPPFLAGS += -fPIC
 endif
 
 ifeq ($(LIB_RELEASE),)
