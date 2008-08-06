@@ -27,6 +27,8 @@
 #include <syscall.h>
 #include <fcntl.h>
 #include <string.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
 /* These headers are not needed by us, but by linux/videodev2.h,
    which is broken on some systems and doesn't include them itself :( */
 #include <sys/time.h>

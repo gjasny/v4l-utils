@@ -59,6 +59,7 @@
 #include <linux/videodev.h>
 #include <linux/videodev2.h>
 #include <libv4l2.h>
+#include "libv4l1.h"
 #include "libv4l1-priv.h"
 
 #define V4L1_SUPPORTS_ENUMINPUT 0x01
@@ -582,7 +583,7 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
 	  input2.index = chan->channel;
 	  result = v4l2_ioctl(fd, VIDIOC_ENUMINPUT, &input2);
 	  if (result == 0) {
-	    snprintf(chan->name, sizeof(chan->name), "%s", input2.name);
+	    snprintf(chan->name, sizeof(chan->name), "%s", (char*)input2.name);
 	    if (input2.type == V4L2_INPUT_TYPE_TUNER) {
 	      chan->tuners = 1;
 	      chan->type = VIDEO_TYPE_TV;

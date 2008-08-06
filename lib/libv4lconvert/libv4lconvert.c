@@ -275,7 +275,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 
       if (header_width != dest_fmt->fmt.pix.width || header_height != dest_fmt->fmt.pix.height) {
 	V4LCONVERT_ERR("unexpected width / height in JPEG header\n");
-	V4LCONVERT_ERR("expected: %dx%d, header: %ux%u\n",
+	V4LCONVERT_ERR("expected: %ux%u, header: %ux%u\n",
 	  dest_fmt->fmt.pix.width, dest_fmt->fmt.pix.height,
 	  header_width, header_height);
 	errno = EIO;

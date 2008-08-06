@@ -28,6 +28,7 @@
  *	but it might work with other spca561 cameras
  */
 #include <string.h>
+#include "libv4lconvert-priv.h"
 
 /*fixme: not reentrant */
 static unsigned int bit_bucket;

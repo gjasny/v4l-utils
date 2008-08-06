@@ -26,6 +26,9 @@
 #include <fcntl.h>
 #include <libv4l1.h>
 
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+
 /* Check that open/read/mmap is not a define */
 #if defined open || defined read || defined mmap
 #error open/read/mmap is a prepocessor macro !!

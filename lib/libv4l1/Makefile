@@ -1,7 +1,7 @@
 override CPPFLAGS += -I../include -I../../../../linux/include
 
 CFLAGS := -g -O1
-CFLAGS += -Wall -W -Wno-unused -Wpointer-arith -Wstrict-prototypes
+CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
 
 LIBS = -lpthread
 

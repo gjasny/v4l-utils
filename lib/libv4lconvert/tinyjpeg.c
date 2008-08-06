@@ -246,7 +246,7 @@ static const unsigned char val_ac_chrominance[] =
       unsigned char c; \
       if (stream >= priv->stream_end) { \
 	snprintf(priv->error_string, sizeof(priv->error_string), \
-	  "fill_nbits error: need %d more bits\n", \
+	  "fill_nbits error: need %u more bits\n", \
 	  nbits_wanted - nbits_in_reservoir); \
 	longjmp(priv->jump_state, -EIO); \
       } \
@@ -1676,9 +1676,9 @@ static int parse_SOS(struct jdec_private *priv, const unsigned char *stream)
 	error("We do not support more than %d DC Huffman table\n",
 	  HUFFMAN_TABLES);
      if (cid != priv->component_infos[i].cid)
-	error("SOS cid order (%d:%d) isn't compatible with the SOF marker (%d:%d)\n",
+	error("SOS cid order (%u:%u) isn't compatible with the SOF marker (%u:%u)\n",
 	      i, cid, i, priv->component_infos[i].cid);
-     trace("ComponentId:%d  tableAC:%d tableDC:%d\n", cid, table&0xf, table>>4);
+     trace("ComponentId:%u  tableAC:%d tableDC:%d\n", cid, table&0xf, table>>4);
 #endif
      priv->component_infos[i].AC_table = &priv->HTAC[table&0xf];
      priv->component_infos[i].DC_table = &priv->HTDC[table>>4];

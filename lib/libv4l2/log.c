@@ -25,6 +25,7 @@
 #include <asm/types.h>
 /* end broken header workaround includes */
 #include <linux/videodev2.h>
+#include "libv4l2-priv.h"
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
@@ -116,7 +117,7 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 	int pixfmt = fmt->fmt.pix.pixelformat;
 
 	if (fmt->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-	  fprintf(v4l2_log_file, "  pixelformat: %c%c%c%c %dx%d\n",
+	  fprintf(v4l2_log_file, "  pixelformat: %c%c%c%c %ux%u\n",
 	    pixfmt & 0xff,
 	    (pixfmt >> 8) & 0xff,
 	    (pixfmt >> 16) & 0xff,
@@ -136,7 +137,7 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 	struct v4l2_requestbuffers *req = arg;
 
 	fprintf(v4l2_log_file, "  count: %u type: %d memory: %d\n",
-	  req->count, req->type, req->memory);
+	  req->count, (int)req->type, (int)req->memory);
       }
       break;
   }
