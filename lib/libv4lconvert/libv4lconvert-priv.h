@@ -55,6 +55,10 @@
 #define V4L2_PIX_FMT_SRGGB8 v4l2_fourcc('R','G','G','B')
 #endif
 
+#ifndef V4L2_FMT_FLAG_UPSIDEDOWN
+#define V4L2_FMT_FLAG_UPSIDEDOWN 0x0002
+#endif
+
 #define V4LCONVERT_ERROR_MSG_SIZE 256
 
 #define V4LCONVERT_ERR(...) \
@@ -65,6 +69,7 @@
 struct v4lconvert_data {
   int fd;
   int supported_src_formats; /* bitfield */
+  int format_needs_flip;     /* bitfield */
   unsigned int no_formats;
   char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
   struct jdec_private *jdec;
@@ -106,5 +111,11 @@ void v4lconvert_bayer_to_bgr24(const unsigned char *bayer,
 
 void v4lconvert_bayer_to_yuv420(const unsigned char *bayer,
   unsigned char *yuv, int width, int height, unsigned int pixfmt);
+
+void v4lconvert_flip_rgbbgr24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_flip_yuv420(const unsigned char *src, unsigned char *dst,
+  int width, int height);
 
 #endif

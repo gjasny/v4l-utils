@@ -78,6 +78,8 @@ struct v4lconvert_data *v4lconvert_create(int fd)
     for (j = 0; j < ARRAY_SIZE(supported_src_pixfmts); j++)
       if (fmt.pixelformat == supported_src_pixfmts[j]) {
 	data->supported_src_formats |= 1 << j;
+	if (fmt.flags & V4L2_FMT_FLAG_UPSIDEDOWN)
+	  data->format_needs_flip |= 1 << j;
 	break;
       }
   }
@@ -214,17 +216,55 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
   return 0;
 }
 
+static int v4lconvert_needs_flip(struct v4lconvert_data *data,
+  const struct v4l2_format *src_fmt)
+{
+  int i;
+
+  for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++)
+    if (src_fmt->fmt.pix.pixelformat == supported_src_pixfmts[i] &&
+	(data->format_needs_flip & (1 << i)))
+      return 1;
+
+  return 0;
+}
+
+/* Is conversion necessary ? */
+int v4lconvert_needs_conversion(struct v4lconvert_data *data,
+  const struct v4l2_format *src_fmt,  /* in */
+  const struct v4l2_format *dest_fmt) /* in */
+{
+  int i;
+
+  if(memcmp(src_fmt, dest_fmt, sizeof(*src_fmt)))
+    return 1; /* Formats differ */
+
+  if (!v4lconvert_needs_flip(data, src_fmt))
+    return 0; /* Formats identical and we don't need flip */
+
+  /* Formats are identical, but we need flip, do we support the dest_fmt? */
+  for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
+    if (supported_dst_pixfmts[i] == dest_fmt->fmt.pix.pixelformat)
+      break;
+
+  if (i == ARRAY_SIZE(supported_dst_pixfmts))
+    return 0; /* Needs flip but we cannot do it :( */
+  else
+    return 1; /* Needs flip and thus conversion */
+}
+
 int v4lconvert_convert(struct v4lconvert_data *data,
   const struct v4l2_format *src_fmt,  /* in */
   const struct v4l2_format *dest_fmt, /* in */
-  unsigned char *src, int src_size, unsigned char *dest, int dest_size)
+  unsigned char *src, int src_size, unsigned char *_dest, int dest_size)
 {
   unsigned int header_width, header_height;
-  int result, needed;
+  int result, needed, needs_flip = 0;
   unsigned char *components[3];
+  unsigned char *dest = _dest;
 
   /* Special case when no conversion is needed */
-  if(!memcmp(src_fmt, dest_fmt, sizeof(*src_fmt))) {
+  if (!v4lconvert_needs_conversion(data, src_fmt, dest_fmt)) {
     int to_copy = MIN(dest_size, src_size);
     memcpy(dest, src, to_copy);
     return to_copy;
@@ -249,6 +289,11 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     V4LCONVERT_ERR("destination buffer too small\n");
     errno = EFAULT;
     return -1;
+  }
+
+  if (v4lconvert_needs_flip(data, src_fmt)) {
+    needs_flip = 1;
+    dest = alloca(needed);
   }
 
   switch (src_fmt->fmt.pix.pixelformat) {
@@ -453,6 +498,27 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       V4LCONVERT_ERR("Unknown src format in conversion\n");
       errno = EINVAL;
       return -1;
+  }
+
+  if (needs_flip) {
+    /* Note dest is our temporary buffer to which our conversion was done and
+       _dest is the real dest! */
+
+    /* If the formats are identical no conversion has been done! */
+    if (dest_fmt->fmt.pix.pixelformat == src_fmt->fmt.pix.pixelformat)
+      dest = src;
+
+    switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_flip_rgbbgr24(dest, _dest, dest_fmt->fmt.pix.width,
+				 dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_flip_yuv420(dest, _dest, dest_fmt->fmt.pix.width,
+			       dest_fmt->fmt.pix.height);
+	break;
+    }
   }
 
   return needed;

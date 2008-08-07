@@ -614,7 +614,8 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       is_capture_request = 1;
       break;
     case VIDIOC_ENUM_FMT:
-      if (((struct v4l2_fmtdesc *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+      if (((struct v4l2_fmtdesc *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE &&
+	  (devices[index].flags & V4L2_ENABLE_ENUM_FMT_EMULATION))
 	is_capture_request = 1;
       break;
     case VIDIOC_TRY_FMT:
@@ -663,9 +664,8 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
   if (stream_needs_locking)
     pthread_mutex_lock(&devices[index].stream_lock);
 
-  converting = devices[index].src_fmt.fmt.pix.pixelformat !=
-	       devices[index].dest_fmt.fmt.pix.pixelformat;
-
+  converting = v4lconvert_needs_conversion(devices[index].convert,
+			 &devices[index].src_fmt, &devices[index].dest_fmt);
 
   switch (request) {
     case VIDIOC_QUERYCAP:
@@ -914,8 +914,8 @@ ssize_t v4l2_read (int fd, void* buffer, size_t n)
   /* When not converting and the device supports read let the kernel handle
      it */
   if ((devices[index].flags & V4L2_SUPPORTS_READ) &&
-      devices[index].src_fmt.fmt.pix.pixelformat ==
-      devices[index].dest_fmt.fmt.pix.pixelformat) {
+      !v4lconvert_needs_conversion(devices[index].convert,
+		   &devices[index].src_fmt, &devices[index].dest_fmt)) {
     result = syscall(SYS_read, fd, buffer, n);
     goto leave;
   }
@@ -988,8 +988,8 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
   buffer_index = offset & 0xff;
   if (buffer_index >= devices[index].no_frames ||
       /* Got magic offset and not converting ?? */
-      devices[index].src_fmt.fmt.pix.pixelformat ==
-      devices[index].dest_fmt.fmt.pix.pixelformat) {
+      !v4lconvert_needs_conversion(devices[index].convert,
+		   &devices[index].src_fmt, &devices[index].dest_fmt)) {
     errno = EINVAL;
     result = MAP_FAILED;
     goto leave;

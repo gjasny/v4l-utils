@@ -2,6 +2,11 @@ libv4l-0.4.1
 ------------
 * When the driver supports read() and we are not converting let the driver
   handle read() instead of emulating it with mmap mode
+* Fix errors and warnings when compiling with ICC (Gregor Jasny)
+* Add support to libv4lconvert to flipping the image for upside down mounted
+  sensors, libv4lconvert will do this automatically if the webcam sets a
+  flag in its query_fmt reply indicating that this is necessary, this fixes
+  the upside down image on Philips SPC200NC images
 
 
 libv4l-0.4.0
