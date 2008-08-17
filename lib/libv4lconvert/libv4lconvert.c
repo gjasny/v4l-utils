@@ -59,6 +59,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 {
   int i, j;
   struct v4lconvert_data *data = calloc(1, sizeof(struct v4lconvert_data));
+  struct v4l2_capability cap;
 
   if (!data)
     return NULL;
@@ -78,13 +79,15 @@ struct v4lconvert_data *v4lconvert_create(int fd)
     for (j = 0; j < ARRAY_SIZE(supported_src_pixfmts); j++)
       if (fmt.pixelformat == supported_src_pixfmts[j]) {
 	data->supported_src_formats |= 1 << j;
-	if (fmt.flags & V4L2_FMT_FLAG_UPSIDEDOWN)
-	  data->format_needs_flip |= 1 << j;
 	break;
       }
   }
 
   data->no_formats = i;
+
+  /* Get capabilities */
+  if (syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap) == 0)
+    data->capabilities = cap.capabilities;
 
   return data;
 }
@@ -216,19 +219,6 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
   return 0;
 }
 
-static int v4lconvert_needs_flip(struct v4lconvert_data *data,
-  const struct v4l2_format *src_fmt)
-{
-  int i;
-
-  for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++)
-    if (src_fmt->fmt.pix.pixelformat == supported_src_pixfmts[i] &&
-	(data->format_needs_flip & (1 << i)))
-      return 1;
-
-  return 0;
-}
-
 /* Is conversion necessary ? */
 int v4lconvert_needs_conversion(struct v4lconvert_data *data,
   const struct v4l2_format *src_fmt,  /* in */
@@ -239,7 +229,7 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
   if(memcmp(src_fmt, dest_fmt, sizeof(*src_fmt)))
     return 1; /* Formats differ */
 
-  if (!v4lconvert_needs_flip(data, src_fmt))
+  if (!(data->capabilities & V4L2_CAP_SENSOR_UPSIDE_DOWN))
     return 0; /* Formats identical and we don't need flip */
 
   /* Formats are identical, but we need flip, do we support the dest_fmt? */
@@ -259,7 +249,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
   unsigned char *src, int src_size, unsigned char *_dest, int dest_size)
 {
   unsigned int header_width, header_height;
-  int result, needed, needs_flip = 0;
+  int result, needed;
   unsigned char *components[3];
   unsigned char *dest = _dest;
 
@@ -291,10 +281,8 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     return -1;
   }
 
-  if (v4lconvert_needs_flip(data, src_fmt)) {
-    needs_flip = 1;
+  if (data->capabilities & V4L2_CAP_SENSOR_UPSIDE_DOWN)
     dest = alloca(needed);
-  }
 
   switch (src_fmt->fmt.pix.pixelformat) {
     case V4L2_PIX_FMT_MJPEG:
@@ -500,7 +488,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       return -1;
   }
 
-  if (needs_flip) {
+  if (data->capabilities & V4L2_CAP_SENSOR_UPSIDE_DOWN) {
     /* Note dest is our temporary buffer to which our conversion was done and
        _dest is the real dest! */
 

@@ -55,8 +55,8 @@
 #define V4L2_PIX_FMT_SRGGB8 v4l2_fourcc('R','G','G','B')
 #endif
 
-#ifndef V4L2_FMT_FLAG_UPSIDEDOWN
-#define V4L2_FMT_FLAG_UPSIDEDOWN 0x0002
+#ifndef V4L2_CAP_SENSOR_UPSIDE_DOWN
+#define V4L2_CAP_SENSOR_UPSIDE_DOWN 0x10000000
 #endif
 
 #define V4LCONVERT_ERROR_MSG_SIZE 256
@@ -69,7 +69,7 @@
 struct v4lconvert_data {
   int fd;
   int supported_src_formats; /* bitfield */
-  int format_needs_flip;     /* bitfield */
+  unsigned int capabilities;
   unsigned int no_formats;
   char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
   struct jdec_private *jdec;
