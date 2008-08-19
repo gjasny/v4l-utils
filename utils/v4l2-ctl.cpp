@@ -160,6 +160,7 @@ static const flag_def service_def[] = {
 #define FmtHeight		(1L<<1)
 #define FmtChromaKey		(1L<<2)
 #define FmtGlobalAlpha		(1L<<3)
+#define FmtPixelFormat		(1L<<4)
 
 /* crop specified */
 #define CropWidth		(1L<<0)
@@ -286,8 +287,10 @@ static void usage(void)
 	printf("  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n");
 	printf("  -V, --get-fmt-video\n");
 	printf("     		     query the video capture format [VIDIOC_G_FMT]\n");
-	printf("  -v, --set-fmt-video=width=<w>,height=<h>\n");
+	printf("  -v, --set-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n");
 	printf("                     set the video capture format [VIDIOC_S_FMT]\n");
+	printf("                     pixelformat is either the format index as reported by\n");
+	printf("                     --list-formats, or the fourcc value as a string\n");
 	printf("  --verbose          turn on verbose ioctl error reporting.\n");
 	printf("\n");
 	printf("Uncommon options:\n");
@@ -701,7 +704,7 @@ static void printfbuf(const struct v4l2_framebuffer &fb)
 		printf("\tBase          : 0x%p\n", fb.base);
 	printf("\tWidth         : %d\n", fb.fmt.width);
 	printf("\tHeight        : %d\n", fb.fmt.height);
-	printf("\tPixel Format  : %s\n", fcc2s(fb.fmt.pixelformat).c_str());
+	printf("\tPixel Format  : '%s'\n", fcc2s(fb.fmt.pixelformat).c_str());
 	if (!is_ext) {
 		printf("\tBytes per Line: %d\n", fb.fmt.bytesperline);
 		printf("\tSize image    : %d\n", fb.fmt.sizeimage);
@@ -740,7 +743,7 @@ static void printfmt(struct v4l2_format vfmt)
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		printf("\tWidth/Height  : %u/%u\n", vfmt.fmt.pix.width, vfmt.fmt.pix.height);
-		printf("\tPixel Format  : %s\n", fcc2s(vfmt.fmt.pix.pixelformat).c_str());
+		printf("\tPixel Format  : '%s'\n", fcc2s(vfmt.fmt.pix.pixelformat).c_str());
 		printf("\tField         : %s\n", field2s(vfmt.fmt.pix.field).c_str());
 		printf("\tBytes per Line: %u\n", vfmt.fmt.pix.bytesperline);
 		printf("\tSize Image    : %u\n", vfmt.fmt.pix.sizeimage);
@@ -798,8 +801,9 @@ static void print_video_formats(int fd, enum v4l2_buf_type type)
 	fmt.index = 0;
 	fmt.type = type;
 	while (ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
+		printf("\tIndex       : %d\n", fmt.index);
 		printf("\tType        : %s\n", buftype2s(type).c_str());
-		printf("\tPixelformat : %s", fcc2s(fmt.pixelformat).c_str());
+		printf("\tPixel Format: '%s'", fcc2s(fmt.pixelformat).c_str());
 		if (fmt.flags)
 			printf(" (compressed)");
 		printf("\n");
@@ -1239,6 +1243,7 @@ int main(int argc, char **argv)
 				static const char *const subopts[] = {
 					"width",
 					"height",
+					"pixelformat",
 					NULL
 				};
 
@@ -1250,6 +1255,15 @@ int main(int argc, char **argv)
 				case 1:
 					vfmt.fmt.pix.height = strtol(value, 0L, 0);
 					set_fmts |= FmtHeight;
+					break;
+				case 2:
+					if (strlen(value) == 4)
+						vfmt.fmt.pix.pixelformat =
+						    v4l2_fourcc(value[0], value[1],
+							    value[2], value[3]);
+					else
+						vfmt.fmt.pix.pixelformat = strtol(value, 0L, 0);
+					set_fmts |= FmtPixelFormat;
 					break;
 				}
 			}
@@ -1627,9 +1641,22 @@ int main(int argc, char **argv)
 				in_vfmt.fmt.pix.width = vfmt.fmt.pix.width;
 			if (set_fmts & FmtHeight)
 				in_vfmt.fmt.pix.height = vfmt.fmt.pix.height;
+			if (set_fmts & FmtPixelFormat) {
+				in_vfmt.fmt.pix.pixelformat = vfmt.fmt.pix.pixelformat;
+				if (in_vfmt.fmt.pix.pixelformat < 256) {
+					struct v4l2_fmtdesc fmt;
+
+					fmt.index = in_vfmt.fmt.pix.pixelformat;
+					fmt.type = in_vfmt.type;
+					if (doioctl(fd, VIDIOC_ENUM_FMT, &fmt, "VIDIOC_ENUM_FMT"))
+						goto set_vid_fmt_error;
+					in_vfmt.fmt.pix.pixelformat = fmt.pixelformat;
+				}
+			}
 			doioctl(fd, VIDIOC_S_FMT, &in_vfmt, "VIDIOC_S_FMT");
 		}
 	}
+set_vid_fmt_error:
 
 	if (options[OptSetVideoOutFormat]) {
 		struct v4l2_format in_vfmt;
@@ -2119,7 +2146,7 @@ int main(int argc, char **argv)
 		while (ioctl(fd, VIDIOC_ENUMSTD, &vs) >= 0) {
 			if (vs.index)
 				printf("\n");
-			printf("\tindex       : %d\n", vs.index);
+			printf("\tIndex       : %d\n", vs.index);
 			printf("\tID          : 0x%016llX\n", (unsigned long long)vs.id);
 			printf("\tName        : %s\n", vs.name);
 			printf("\tFrame period: %d/%d\n",
