@@ -237,128 +237,128 @@ static struct option long_options[] = {
 static void usage(void)
 {
 	printf("Usage:\n");
-	printf("Common options:\n");
-	printf("  --all              display all information available\n");
-	printf("  -B, --get-fmt-sliced-vbi\n");
-	printf("		     query the sliced VBI capture format [VIDIOC_G_FMT]\n");
-	printf("  -b, --set-fmt-sliced-vbi=<mode>\n");
-	printf("                     set the sliced VBI capture format to <mode> [VIDIOC_S_FMT]\n");
-	printf("                     <mode> is a comma separated list of:\n");
-	printf("                     off:      turn off sliced VBI (cannot be combined with other modes)\n");
-	printf("                     teletext: teletext (PAL/SECAM)\n");
-	printf("                     cc:       closed caption (NTSC)\n");
-	printf("                     wss:      widescreen signal (PAL/SECAM)\n");
-	printf("                     vps:      VPS (PAL/SECAM)\n");
-	printf("  -C, --get-ctrl=<ctrl>[,<ctrl>...]\n");
-	printf("                     get the value of the controls [VIDIOC_G_EXT_CTRLS]\n");
-	printf("  -c, --set-ctrl=<ctrl>=<val>[,<ctrl>=<val>...]\n");
-	printf("                     set the controls to the values specified [VIDIOC_S_EXT_CTRLS]\n");
-	printf("  -D, --info         show driver info [VIDIOC_QUERYCAP]\n");
-	printf("  -d, --device=<dev> use device <dev> instead of /dev/video0\n");
-	printf("                     if <dev> is a single digit, then /dev/video<dev> is used\n");
-	printf("  -F, --get-freq     query the frequency [VIDIOC_G_FREQUENCY]\n");
-	printf("  -f, --set-freq=<freq>\n");
-	printf("                     set the frequency to <freq> MHz [VIDIOC_S_FREQUENCY]\n");
-	printf("  -h, --help         display this help message\n");
-	printf("  -I, --get-input    query the video input [VIDIOC_G_INPUT]\n");
-	printf("  -i, --set-input=<num>\n");
-	printf("                     set the video input to <num> [VIDIOC_S_INPUT]\n");
-	printf("  -l, --list-ctrls   display all controls and their values [VIDIOC_QUERYCTRL]\n");
-	printf("  -L, --list-ctrls-menus\n");
-	printf("		     display all controls, their values and the menus [VIDIOC_QUERYMENU]\n");
-	printf("  -N, --list-outputs display video outputs [VIDIOC_ENUMOUTPUT]\n");
-	printf("  -n, --list-inputs  display video inputs [VIDIOC_ENUMINPUT]\n");
-	printf("  -O, --get-output   query the video output [VIDIOC_G_OUTPUT]\n");
-	printf("  -o, --set-output=<num>\n");
-	printf("                     set the video output to <num> [VIDIOC_S_OUTPUT]\n");
-	printf("  -S, --get-standard\n");
-	printf("                     query the video standard [VIDIOC_G_STD]\n");
-	printf("  -s, --set-standard=<num>\n");
-	printf("                     set the video standard to <num> [VIDIOC_S_STD]\n");
-	printf("                     <num> can be a numerical v4l2_std value, or it can be one of:\n");
-	printf("                     pal-X (X = B/G/H/N/Nc/I/D/K/M/60) or just 'pal' (V4L2_STD_PAL)\n");
-	printf("                     ntsc-X (X = M/J/K) or just 'ntsc' (V4L2_STD_NTSC)\n");
-	printf("                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n");
-	printf("  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n");
-	printf("  -T, --get-tuner    query the tuner settings [VIDIOC_G_TUNER]\n");
-	printf("  -t, --set-tuner=<mode>\n");
-	printf("                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n");
-	printf("                     Possible values: mono, stereo, lang2, lang1, bilingual\n");
-	printf("  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n");
-	printf("  -V, --get-fmt-video\n");
-	printf("     		     query the video capture format [VIDIOC_G_FMT]\n");
-	printf("  -v, --set-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n");
-	printf("                     set the video capture format [VIDIOC_S_FMT]\n");
-	printf("                     pixelformat is either the format index as reported by\n");
-	printf("                     --list-formats, or the fourcc value as a string\n");
-	printf("  --verbose          turn on verbose ioctl error reporting.\n");
-	printf("\n");
-	printf("Uncommon options:\n");
-	printf("  --get-fmt-video-out\n");
-	printf("     		     query the video output format [VIDIOC_G_FMT]\n");
-	printf("  --set-fmt-video-out=width=<w>,height=<h>\n");
-	printf("                     set the video output format [VIDIOC_S_FMT]\n");
-	printf("  --get-fmt-overlay\n");
-	printf("     		     query the video overlay format [VIDIOC_G_FMT]\n");
-	printf("  --get-fmt-output-overlay\n");
-	printf("     		     query the video output overlay format [VIDIOC_G_FMT]\n");
-	printf("  --set-fmt-output-overlay=chromakey=<key>,global_alpha=<alpha>\n");
-	printf("     		     set the video output overlay format [VIDIOC_S_FMT]\n");
-	printf("  --get-sliced-vbi-cap\n");
-	printf("		     query the sliced VBI capture capabilities [VIDIOC_G_SLICED_VBI_CAP]\n");
-	printf("  --get-sliced-vbi-out-cap\n");
-	printf("		     query the sliced VBI output capabilities [VIDIOC_G_SLICED_VBI_CAP]\n");
-	printf("  --get-fmt-sliced-vbi-out\n");
-	printf("		     query the sliced VBI output format [VIDIOC_G_FMT]\n");
-	printf("  --set-fmt-sliced-vbi-out=<mode>\n");
-	printf("                     set the sliced VBI output format to <mode> [VIDIOC_S_FMT]\n");
-	printf("                     <mode> is a comma separated list of:\n");
-	printf("                     off:      turn off sliced VBI (cannot be combined with other modes)\n");
-	printf("                     teletext: teletext (PAL/SECAM)\n");
-	printf("                     cc:       closed caption (NTSC)\n");
-	printf("                     wss:      widescreen signal (PAL/SECAM)\n");
-	printf("                     vps:      VPS (PAL/SECAM)\n");
-	printf("  --get-fmt-vbi      query the VBI capture format [VIDIOC_G_FMT]\n");
-	printf("  --get-fmt-vbi-out  query the VBI output format [VIDIOC_G_FMT]\n");
-	printf("  --overlay=<on>     turn overlay on (1) or off (0) (VIDIOC_OVERLAY)\n");
-	printf("  --get-fbuf         query the overlay framebuffer data [VIDIOC_G_FBUF]\n");
-	printf("  --set-fbuf=chromakey=<0/1>,global_alpha=<0/1>,local_alpha=<0/1>,local_inv_alpha=<0/1>\n");
-	printf("		     set the overlay framebuffer [VIDIOC_S_FBUF]\n");
-	printf("  --get-cropcap      query the crop capabilities [VIDIOC_CROPCAP]\n");
-	printf("  --get-crop	     query the video capture crop window [VIDIOC_G_CROP]\n");
-	printf("  --set-crop=top=<x>,left=<y>,width=<w>,height=<h>\n");
-	printf("                     set the video capture crop window [VIDIOC_S_CROP]\n");
-	printf("  --get-cropcap-output\n");
-	printf("                     query the crop capabilities for video output [VIDIOC_CROPCAP]\n");
-	printf("  --get-crop-output  query the video output crop window [VIDIOC_G_CROP]\n");
-	printf("  --set-crop-output=top=<x>,left=<y>,width=<w>,height=<h>\n");
-	printf("                     set the video output crop window [VIDIOC_S_CROP]\n");
-	printf("  --get-cropcap-overlay\n");
-	printf("                     query the crop capabilities for video overlay [VIDIOC_CROPCAP]\n");
-	printf("  --get-crop-overlay query the video overlay crop window [VIDIOC_G_CROP]\n");
-	printf("  --set-crop-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n");
-	printf("                     set the video overlay crop window [VIDIOC_S_CROP]\n");
-	printf("  --get-cropcap-output-overlay\n");
-	printf("                     query the crop capabilities for video output overlays [VIDIOC_CROPCAP]\n");
-	printf("  --get-crop-output-overlay\n");
-	printf("                     query the video output overlay crop window [VIDIOC_G_CROP]\n");
-	printf("  --set-crop-output-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n");
-	printf("                     set the video output overlay crop window [VIDIOC_S_CROP]\n");
-	printf("  --get-audio-input  query the audio input [VIDIOC_G_AUDIO]\n");
-	printf("  --set-audio-input=<num>\n");
-	printf("                     set the audio input to <num> [VIDIOC_S_AUDIO]\n");
-	printf("  --get-audio-output query the audio output [VIDIOC_G_AUDOUT]\n");
-	printf("  --set-audio-output=<num>\n");
-	printf("                     set the audio output to <num> [VIDIOC_S_AUDOUT]\n");
-	printf("  --list-audio-outputs\n");
-	printf("                     display audio outputs [VIDIOC_ENUMAUDOUT]\n");
-	printf("  --list-audio-inputs\n");
-	printf("                     display audio inputs [VIDIOC_ENUMAUDIO]\n");
-	printf("\n");
-	printf("Expert options:\n");
-	printf("  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n");
-	printf("  --streamon         turn the stream on [VIDIOC_STREAMOFF]\n");
-	printf("  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n");
+	printf("Common options:\n"
+	       "  --all              display all information available\n"
+	       "  -B, --get-fmt-sliced-vbi\n"
+	       "		     query the sliced VBI capture format [VIDIOC_G_FMT]\n"
+	       "  -b, --set-fmt-sliced-vbi=<mode>\n"
+	       "                     set the sliced VBI capture format to <mode> [VIDIOC_S_FMT]\n"
+	       "                     <mode> is a comma separated list of:\n"
+	       "                     off:      turn off sliced VBI (cannot be combined with other modes)\n"
+	       "                     teletext: teletext (PAL/SECAM)\n"
+	       "                     cc:       closed caption (NTSC)\n"
+	       "                     wss:      widescreen signal (PAL/SECAM)\n"
+	       "                     vps:      VPS (PAL/SECAM)\n"
+	       "  -C, --get-ctrl=<ctrl>[,<ctrl>...]\n"
+	       "                     get the value of the controls [VIDIOC_G_EXT_CTRLS]\n"
+	       "  -c, --set-ctrl=<ctrl>=<val>[,<ctrl>=<val>...]\n"
+	       "                     set the controls to the values specified [VIDIOC_S_EXT_CTRLS]\n"
+	       "  -D, --info         show driver info [VIDIOC_QUERYCAP]\n"
+	       "  -d, --device=<dev> use device <dev> instead of /dev/video0\n"
+	       "                     if <dev> is a single digit, then /dev/video<dev> is used\n"
+	       "  -F, --get-freq     query the frequency [VIDIOC_G_FREQUENCY]\n"
+	       "  -f, --set-freq=<freq>\n"
+	       "                     set the frequency to <freq> MHz [VIDIOC_S_FREQUENCY]\n"
+	       "  -h, --help         display this help message\n"
+	       "  -I, --get-input    query the video input [VIDIOC_G_INPUT]\n"
+	       "  -i, --set-input=<num>\n"
+	       "                     set the video input to <num> [VIDIOC_S_INPUT]\n"
+	       "  -l, --list-ctrls   display all controls and their values [VIDIOC_QUERYCTRL]\n"
+	       "  -L, --list-ctrls-menus\n"
+	       "		     display all controls, their values and the menus [VIDIOC_QUERYMENU]\n"
+	       "  -N, --list-outputs display video outputs [VIDIOC_ENUMOUTPUT]\n"
+	       "  -n, --list-inputs  display video inputs [VIDIOC_ENUMINPUT]\n"
+	       "  -O, --get-output   query the video output [VIDIOC_G_OUTPUT]\n"
+	       "  -o, --set-output=<num>\n"
+	       "                     set the video output to <num> [VIDIOC_S_OUTPUT]\n"
+	       "  -S, --get-standard\n"
+	       "                     query the video standard [VIDIOC_G_STD]\n"
+	       "  -s, --set-standard=<num>\n"
+	       "                     set the video standard to <num> [VIDIOC_S_STD]\n"
+	       "                     <num> can be a numerical v4l2_std value, or it can be one of:\n"
+	       "                     pal-X (X = B/G/H/N/Nc/I/D/K/M/60) or just 'pal' (V4L2_STD_PAL)\n"
+	       "                     ntsc-X (X = M/J/K) or just 'ntsc' (V4L2_STD_NTSC)\n"
+	       "                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n"
+	       "  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n"
+	       "  -T, --get-tuner    query the tuner settings [VIDIOC_G_TUNER]\n"
+	       "  -t, --set-tuner=<mode>\n"
+	       "                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n"
+	       "                     Possible values: mono, stereo, lang2, lang1, bilingual\n"
+	       "  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n"
+	       "  -V, --get-fmt-video\n"
+	       "     		     query the video capture format [VIDIOC_G_FMT]\n"
+	       "  -v, --set-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "                     set the video capture format [VIDIOC_S_FMT]\n"
+	       "                     pixelformat is either the format index as reported by\n"
+	       "                     --list-formats, or the fourcc value as a string\n"
+	       "  --verbose          turn on verbose ioctl error reporting.\n"
+	       "\n");
+	printf("Uncommon options:\n"
+	       "  --get-fmt-video-out\n"
+	       "     		     query the video output format [VIDIOC_G_FMT]\n"
+	       "  --set-fmt-video-out=width=<w>,height=<h>\n"
+	       "                     set the video output format [VIDIOC_S_FMT]\n"
+	       "  --get-fmt-overlay\n"
+	       "     		     query the video overlay format [VIDIOC_G_FMT]\n"
+	       "  --get-fmt-output-overlay\n"
+	       "     		     query the video output overlay format [VIDIOC_G_FMT]\n"
+	       "  --set-fmt-output-overlay=chromakey=<key>,global_alpha=<alpha>\n"
+	       "     		     set the video output overlay format [VIDIOC_S_FMT]\n"
+	       "  --get-sliced-vbi-cap\n"
+	       "		     query the sliced VBI capture capabilities [VIDIOC_G_SLICED_VBI_CAP]\n"
+	       "  --get-sliced-vbi-out-cap\n"
+	       "		     query the sliced VBI output capabilities [VIDIOC_G_SLICED_VBI_CAP]\n"
+	       "  --get-fmt-sliced-vbi-out\n"
+	       "		     query the sliced VBI output format [VIDIOC_G_FMT]\n"
+	       "  --set-fmt-sliced-vbi-out=<mode>\n"
+	       "                     set the sliced VBI output format to <mode> [VIDIOC_S_FMT]\n"
+	       "                     <mode> is a comma separated list of:\n"
+	       "                     off:      turn off sliced VBI (cannot be combined with other modes)\n"
+	       "                     teletext: teletext (PAL/SECAM)\n"
+	       "                     cc:       closed caption (NTSC)\n"
+	       "                     wss:      widescreen signal (PAL/SECAM)\n"
+	       "                     vps:      VPS (PAL/SECAM)\n"
+	       "  --get-fmt-vbi      query the VBI capture format [VIDIOC_G_FMT]\n"
+	       "  --get-fmt-vbi-out  query the VBI output format [VIDIOC_G_FMT]\n"
+	       "  --overlay=<on>     turn overlay on (1) or off (0) (VIDIOC_OVERLAY)\n"
+	       "  --get-fbuf         query the overlay framebuffer data [VIDIOC_G_FBUF]\n"
+	       "  --set-fbuf=chromakey=<0/1>,global_alpha=<0/1>,local_alpha=<0/1>,local_inv_alpha=<0/1>\n"
+	       "		     set the overlay framebuffer [VIDIOC_S_FBUF]\n"
+	       "  --get-cropcap      query the crop capabilities [VIDIOC_CROPCAP]\n"
+	       "  --get-crop	     query the video capture crop window [VIDIOC_G_CROP]\n"
+	       "  --set-crop=top=<x>,left=<y>,width=<w>,height=<h>\n"
+	       "                     set the video capture crop window [VIDIOC_S_CROP]\n"
+	       "  --get-cropcap-output\n"
+	       "                     query the crop capabilities for video output [VIDIOC_CROPCAP]\n"
+	       "  --get-crop-output  query the video output crop window [VIDIOC_G_CROP]\n"
+	       "  --set-crop-output=top=<x>,left=<y>,width=<w>,height=<h>\n"
+	       "                     set the video output crop window [VIDIOC_S_CROP]\n"
+	       "  --get-cropcap-overlay\n"
+	       "                     query the crop capabilities for video overlay [VIDIOC_CROPCAP]\n"
+	       "  --get-crop-overlay query the video overlay crop window [VIDIOC_G_CROP]\n"
+	       "  --set-crop-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n"
+	       "                     set the video overlay crop window [VIDIOC_S_CROP]\n"
+	       "  --get-cropcap-output-overlay\n"
+	       "                     query the crop capabilities for video output overlays [VIDIOC_CROPCAP]\n"
+	       "  --get-crop-output-overlay\n"
+	       "                     query the video output overlay crop window [VIDIOC_G_CROP]\n"
+	       "  --set-crop-output-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n"
+	       "                     set the video output overlay crop window [VIDIOC_S_CROP]\n"
+	       "  --get-audio-input  query the audio input [VIDIOC_G_AUDIO]\n"
+	       "  --set-audio-input=<num>\n"
+	       "                     set the audio input to <num> [VIDIOC_S_AUDIO]\n"
+	       "  --get-audio-output query the audio output [VIDIOC_G_AUDOUT]\n"
+	       "  --set-audio-output=<num>\n"
+	       "                     set the audio output to <num> [VIDIOC_S_AUDOUT]\n"
+	       "  --list-audio-outputs\n"
+	       "                     display audio outputs [VIDIOC_ENUMAUDOUT]\n"
+	       "  --list-audio-inputs\n"
+	       "                     display audio inputs [VIDIOC_ENUMAUDIO]\n"
+	       "\n");
+	printf("Expert options:\n"
+	       "  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n"
+	       "  --streamon         turn the stream on [VIDIOC_STREAMOFF]\n"
+	       "  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n");
 	exit(0);
 }
 
