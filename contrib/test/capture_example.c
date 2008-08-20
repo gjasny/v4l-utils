@@ -36,23 +36,21 @@ typedef enum {
 } io_method;
 
 struct buffer {
-	void *                  start;
-	size_t                  length;
+	void   *start;
+	size_t  length;
 };
 
-static char *           dev_name        = NULL;
-static io_method        io              = IO_METHOD_MMAP;
-static int              fd              = -1;
-struct buffer *         buffers         = NULL;
-static unsigned int     n_buffers       = 0;
-static int		out_buf		= 0;
+static char            *dev_name;
+static io_method        io = IO_METHOD_MMAP;
+static int              fd = -1;
+struct buffer          *buffers;
+static unsigned int     n_buffers;
+static int		out_buf;
 static int              force_format;
 
 static void errno_exit(const char *s)
 {
-	fprintf(stderr, "%s error %d, %s\n",
-		 s, errno, strerror(errno));
-
+	fprintf(stderr, "%s error %d, %s\n", s, errno, strerror(errno));
 	exit(EXIT_FAILURE);
 }
 
@@ -100,7 +98,6 @@ static int read_frame(void)
 		}
 
 		process_image(buffers[0].start, buffers[0].length);
-
 		break;
 
 	case IO_METHOD_MMAP:
@@ -130,7 +127,6 @@ static int read_frame(void)
 
 		if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
 			errno_exit("VIDIOC_QBUF");
-
 		break;
 
 	case IO_METHOD_USERPTR:
@@ -155,17 +151,16 @@ static int read_frame(void)
 		}
 
 		for (i = 0; i < n_buffers; ++i)
-			if (buf.m.userptr == (unsigned long) buffers[i].start
+			if (buf.m.userptr == (unsigned long)buffers[i].start
 			    && buf.length == buffers[i].length)
 				break;
 
 		assert(i < n_buffers);
 
-		process_image((void *) buf.m.userptr, buf.bytesused);
+		process_image((void *)buf.m.userptr, buf.bytesused);
 
 		if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
 			errno_exit("VIDIOC_QBUF");
-
 		break;
 	}
 
@@ -196,7 +191,6 @@ static void mainloop(void)
 			if (-1 == r) {
 				if (EINTR == errno)
 					continue;
-
 				errno_exit("select");
 			}
 
@@ -207,7 +201,6 @@ static void mainloop(void)
 
 			if (read_frame())
 				break;
-
 			/* EAGAIN - continue select loop. */
 		}
 	}
@@ -225,10 +218,8 @@ static void stop_capturing(void)
 	case IO_METHOD_MMAP:
 	case IO_METHOD_USERPTR:
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-
 		if (-1 == xioctl(fd, VIDIOC_STREAMOFF, &type))
 			errno_exit("VIDIOC_STREAMOFF");
-
 		break;
 	}
 }
@@ -248,20 +239,16 @@ static void start_capturing(void)
 			struct v4l2_buffer buf;
 
 			CLEAR(buf);
-
-			buf.type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-			buf.memory      = V4L2_MEMORY_MMAP;
-			buf.index       = i;
+			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			buf.memory = V4L2_MEMORY_MMAP;
+			buf.index = i;
 
 			if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
 				errno_exit("VIDIOC_QBUF");
 		}
-
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-
 		if (-1 == xioctl(fd, VIDIOC_STREAMON, &type))
 			errno_exit("VIDIOC_STREAMON");
-
 		break;
 
 	case IO_METHOD_USERPTR:
@@ -269,22 +256,18 @@ static void start_capturing(void)
 			struct v4l2_buffer buf;
 
 			CLEAR(buf);
-
-			buf.type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-			buf.memory      = V4L2_MEMORY_USERPTR;
-			buf.index       = i;
-			buf.m.userptr   = (unsigned long) buffers[i].start;
-			buf.length      = buffers[i].length;
+			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			buf.memory = V4L2_MEMORY_USERPTR;
+			buf.index = i;
+			buf.m.userptr = (unsigned long)buffers[i].start;
+			buf.length = buffers[i].length;
 
 			if (-1 == xioctl(fd, VIDIOC_QBUF, &buf))
 				errno_exit("VIDIOC_QBUF");
 		}
-
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-
 		if (-1 == xioctl(fd, VIDIOC_STREAMON, &type))
 			errno_exit("VIDIOC_STREAMON");
-
 		break;
 	}
 }
@@ -337,9 +320,9 @@ static void init_mmap(void)
 
 	CLEAR(req);
 
-	req.count               = 4;
-	req.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	req.memory              = V4L2_MEMORY_MMAP;
+	req.count = 4;
+	req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	req.memory = V4L2_MEMORY_MMAP;
 
 	if (-1 == xioctl(fd, VIDIOC_REQBUFS, &req)) {
 		if (EINVAL == errno) {
@@ -458,7 +441,6 @@ static void init_device(void)
 				 dev_name);
 			exit(EXIT_FAILURE);
 		}
-
 		break;
 
 	case IO_METHOD_MMAP:
@@ -468,7 +450,6 @@ static void init_device(void)
 				 dev_name);
 			exit(EXIT_FAILURE);
 		}
-
 		break;
 	}
 
@@ -592,14 +573,14 @@ static void usage(FILE *fp, int argc, char **argv)
 static const char short_options[] = "d:hmruof";
 
 static const struct option
-long_options [] = {
-	{ "device",     required_argument,      NULL,           'd' },
-	{ "help",       no_argument,            NULL,           'h' },
-	{ "mmap",       no_argument,            NULL,           'm' },
-	{ "read",       no_argument,            NULL,           'r' },
-	{ "userp",      no_argument,            NULL,           'u' },
-	{ "output",     no_argument,            NULL,           'o' },
-	{ "format",     no_argument,            NULL,           'f' },
+long_options[] = {
+	{ "device", required_argument, NULL, 'd' },
+	{ "help",   no_argument,       NULL, 'h' },
+	{ "mmap",   no_argument,       NULL, 'm' },
+	{ "read",   no_argument,       NULL, 'r' },
+	{ "userp",  no_argument,       NULL, 'u' },
+	{ "output", no_argument,       NULL, 'o' },
+	{ "format", no_argument,       NULL, 'f' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -612,8 +593,7 @@ int main(int argc, char **argv)
 		int c;
 
 		c = getopt_long(argc, argv,
-				 short_options, long_options,
-				 &idx);
+				short_options, long_options, &idx);
 
 		if (-1 == c)
 			break;
