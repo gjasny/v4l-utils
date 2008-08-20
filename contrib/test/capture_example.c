@@ -46,6 +46,7 @@ static int              fd              = -1;
 struct buffer *         buffers         = NULL;
 static unsigned int     n_buffers       = 0;
 static int		out_buf		= 0;
+static int              force_format;
 
 static void errno_exit(const char *s)
 {
@@ -500,16 +501,22 @@ static void init_device(void)
 
 	CLEAR(fmt);
 
-	fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmt.fmt.pix.width       = 640;
-	fmt.fmt.pix.height      = 480;
-	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
-	fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
+	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (force_format) {
+		fmt.fmt.pix.width       = 640;
+		fmt.fmt.pix.height      = 480;
+		fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+		fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 
-	if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt))
-		errno_exit("VIDIOC_S_FMT");
+		if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt))
+			errno_exit("VIDIOC_S_FMT");
 
-	/* Note VIDIOC_S_FMT may change width and height. */
+		/* Note VIDIOC_S_FMT may change width and height. */
+	} else {
+		/* Preserve original settings as set by v4l2-ctl for example */
+		if (-1 == xioctl(fd, VIDIOC_G_FMT, &fmt))
+			errno_exit("VIDIOC_G_FMT");
+	}
 
 	/* Buggy driver paranoia. */
 	min = fmt.fmt.pix.width * 2;
@@ -577,11 +584,12 @@ static void usage(FILE *fp, int argc, char **argv)
 		 "-r | --read          Use read() calls\n"
 		 "-u | --userp         Use application allocated buffers\n"
 		 "-o | --output        Outputs stream to stdout\n"
+		 "-f | --format        Force format to 640x480 YUYV\n"
 		 "",
 		 argv[0]);
 }
 
-static const char short_options [] = "d:hmruo";
+static const char short_options[] = "d:hmruof";
 
 static const struct option
 long_options [] = {
@@ -591,6 +599,7 @@ long_options [] = {
 	{ "read",       no_argument,            NULL,           'r' },
 	{ "userp",      no_argument,            NULL,           'u' },
 	{ "output",     no_argument,            NULL,           'o' },
+	{ "format",     no_argument,            NULL,           'f' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -635,6 +644,10 @@ int main(int argc, char **argv)
 
 		case 'o':
 			out_buf++;
+			break;
+
+		case 'f':
+			force_format++;
 			break;
 
 		default:
