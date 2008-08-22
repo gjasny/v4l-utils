@@ -351,9 +351,9 @@ int main(int argc, char **argv)
 	unsigned short gpio_dir = 0x0;	/* GPIO direction bits */
 	int gpio_set_dir = 0;
 	int passthrough = 0;
-	int audio_mute = 0;
-	int stereo_mode = 0;
-	int bilingual_mode = 0;
+	long audio_mute = 0;
+	long stereo_mode = 0;
+	long bilingual_mode = 0;
 	int debug_level = 0;
 	__u32 reset = 0;
 	int new_debug_level, gdebug_level;
@@ -621,7 +621,7 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptPassThrough]) {
-		int source = passthrough ? VIDEO_SOURCE_DEMUX : VIDEO_SOURCE_MEMORY;
+		long source = passthrough ? VIDEO_SOURCE_DEMUX : VIDEO_SOURCE_MEMORY;
 
 		doioctl(fd, VIDEO_SELECT_SOURCE, (void *)source,
 				"IVTV_IOC_PASSTHROUGH");
