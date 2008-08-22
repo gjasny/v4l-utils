@@ -43,6 +43,10 @@
 #define V4L2_PIX_FMT_PAC207 v4l2_fourcc('P','2','0','7')
 #endif
 
+#ifndef V4L2_PIX_FMT_PJPG
+#define V4L2_PIX_FMT_PJPG v4l2_fourcc('P', 'J', 'P', 'G')
+#endif
+
 #ifndef V4L2_PIX_FMT_SGBRG8
 #define V4L2_PIX_FMT_SGBRG8 v4l2_fourcc('G','B','R','G')
 #endif
@@ -112,10 +116,16 @@ void v4lconvert_bayer_to_bgr24(const unsigned char *bayer,
 void v4lconvert_bayer_to_yuv420(const unsigned char *bayer,
   unsigned char *yuv, int width, int height, unsigned int pixfmt);
 
-void v4lconvert_flip_rgbbgr24(const unsigned char *src, unsigned char *dst,
+void v4lconvert_rotate90_rgbbgr24(const unsigned char *src, unsigned char *dst,
+  int destwidth, int destheight);
+
+void v4lconvert_rotate90_yuv420(const unsigned char *src, unsigned char *dst,
+  int destwidth, int destheight);
+
+void v4lconvert_rotate180_rgbbgr24(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
-void v4lconvert_flip_yuv420(const unsigned char *src, unsigned char *dst,
+void v4lconvert_rotate180_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 #endif

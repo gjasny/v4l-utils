@@ -1,6 +1,6 @@
 /*
 
-# RGB / YUV flip routines
+# RGB / YUV flip/rotate routines
 
 #             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
 
@@ -22,7 +22,7 @@
 
 #include "libv4lconvert-priv.h"
 
-void v4lconvert_flip_rgbbgr24(const unsigned char *src, unsigned char *dst,
+void v4lconvert_rotate180_rgbbgr24(const unsigned char *src, unsigned char *dst,
   int width, int height)
 {
   int i;
@@ -38,7 +38,7 @@ void v4lconvert_flip_rgbbgr24(const unsigned char *src, unsigned char *dst,
   }
 }
 
-void v4lconvert_flip_yuv420(const unsigned char *src, unsigned char *dst,
+void v4lconvert_rotate180_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height)
 {
   int i;
@@ -57,4 +57,51 @@ void v4lconvert_flip_yuv420(const unsigned char *src, unsigned char *dst,
   src += width * height / 2;
   for (i = 0; i < width * height / 4; i++)
     *dst++ = *src--;
+}
+
+void v4lconvert_rotate90_rgbbgr24(const unsigned char *src, unsigned char *dst,
+  int destwidth, int destheight)
+{
+  int x, y;
+#define srcwidth destheight
+#define srcheight destwidth
+
+  for (y = 0; y < destheight; y++)
+    for (x = 0; x < destwidth; x++) {
+      int offset = ((srcheight - x - 1) * srcwidth + y) * 3;
+      *dst++ = src[offset++];
+      *dst++ = src[offset++];
+      *dst++ = src[offset];
+    }
+}
+
+void v4lconvert_rotate90_yuv420(const unsigned char *src, unsigned char *dst,
+  int destwidth, int destheight)
+{
+  int x, y;
+
+  /* Y-plane */
+  for (y = 0; y < destheight; y++)
+    for (x = 0; x < destwidth; x++) {
+      int offset = (srcheight - x - 1) * srcwidth + y;
+      *dst++ = src[offset];
+    }
+
+  /* U-plane */
+  src += srcwidth * srcheight;
+  destwidth /= 2;
+  destheight /= 2;
+  for (y = 0; y < destheight; y++)
+    for (x = 0; x < destwidth; x++) {
+      int offset = (srcheight - x - 1) * srcwidth + y;
+      *dst++ = src[offset];
+    }
+
+  /* V-plane */
+  src += srcwidth * srcheight;
+  for (y = 0; y < destheight; y++)
+    for (x = 0; x < destwidth; x++) {
+      int offset = (srcheight - x - 1) * srcwidth + y;
+      *dst++ = src[offset];
+    }
 }
