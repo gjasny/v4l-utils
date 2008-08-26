@@ -59,26 +59,27 @@
 #define V4L2_PIX_FMT_SRGGB8 v4l2_fourcc('R','G','G','B')
 #endif
 
-#ifndef V4L2_CAP_SENSOR_UPSIDE_DOWN
-#define V4L2_CAP_SENSOR_UPSIDE_DOWN 0x10000000
-#endif
-
 #define V4LCONVERT_ERROR_MSG_SIZE 256
 
 #define V4LCONVERT_ERR(...) \
   snprintf(data->error_msg, V4LCONVERT_ERROR_MSG_SIZE, \
   "v4l-convert: error " __VA_ARGS__)
 
+#define V4LCONVERT_UPSIDE_DOWN 0x01
 
 struct v4lconvert_data {
   int fd;
+  int flags; /* bitfield */
   int supported_src_formats; /* bitfield */
-  unsigned int capabilities;
   unsigned int no_formats;
   char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
   struct jdec_private *jdec;
 };
 
+struct v4lconvert_flags_info {
+  const char *card;
+  int flags;
+};
 
 void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dst,
   int width, int height);

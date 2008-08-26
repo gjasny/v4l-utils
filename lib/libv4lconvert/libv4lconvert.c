@@ -55,6 +55,13 @@ static const unsigned int supported_dst_pixfmts[] = {
   SUPPORTED_DST_PIXFMTS
 };
 
+/* List of cams which need special flags */
+static const struct v4lconvert_flags_info v4lconvert_flags[] = {
+  { "USB Camera (0471:0325)", V4LCONVERT_UPSIDE_DOWN }, /* SPC200NC */
+  { "USB Camera (0471:0326)", V4LCONVERT_UPSIDE_DOWN }, /* SPC300NC */
+  { "SPC 200NC      ", V4LCONVERT_UPSIDE_DOWN },
+  { "SPC 300NC      ", V4LCONVERT_UPSIDE_DOWN },
+};
 
 struct v4lconvert_data *v4lconvert_create(int fd)
 {
@@ -86,9 +93,14 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 
   data->no_formats = i;
 
-  /* Get capabilities */
-  if (syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap) == 0)
-    data->capabilities = cap.capabilities;
+  /* Check if this cam has any special flags */
+  if (syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap) == 0) {
+    for (i = 0; i < ARRAY_SIZE(v4lconvert_flags); i++)
+      if (!strcmp((const char *)v4lconvert_flags[i].card, (char *)cap.card)) {
+	data->flags = v4lconvert_flags[i].flags;
+	break;
+      }
+  }
 
   return data;
 }
@@ -230,7 +242,7 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
   if(memcmp(src_fmt, dest_fmt, sizeof(*src_fmt)))
     return 1; /* Formats differ */
 
-  if (!(data->capabilities & V4L2_CAP_SENSOR_UPSIDE_DOWN))
+  if (!(data->flags & V4LCONVERT_UPSIDE_DOWN))
     return 0; /* Formats identical and we don't need flip */
 
   /* Formats are identical, but we need flip, do we support the dest_fmt? */
@@ -282,7 +294,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     return -1;
   }
 
-  if (data->capabilities & V4L2_CAP_SENSOR_UPSIDE_DOWN) {
+  if (data->flags & V4LCONVERT_UPSIDE_DOWN) {
     rotate = 180;
     dest = alloca(needed);
   }
