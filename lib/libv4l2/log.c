@@ -25,6 +25,7 @@
 #include <asm/types.h>
 /* end broken header workaround includes */
 #include <linux/videodev2.h>
+#include "libv4l2.h"
 #include "libv4l2-priv.h"
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))

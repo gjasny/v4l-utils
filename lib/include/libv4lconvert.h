@@ -31,39 +31,45 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#if __GNUC__ >= 4
+#define LIBV4L_PUBLIC __attribute__ ((visibility("default")))
+#else
+#define LIBV4L_PUBLIC
+#endif
+
 struct v4lconvert_data;
 
-struct v4lconvert_data *v4lconvert_create(int fd);
-void v4lconvert_destroy(struct v4lconvert_data *data);
+LIBV4L_PUBLIC struct v4lconvert_data *v4lconvert_create(int fd);
+LIBV4L_PUBLIC void v4lconvert_destroy(struct v4lconvert_data *data);
 
 /* With regards to dest_fmt just like VIDIOC_TRY_FMT, except that the try
    format will succeed and return the requested V4L2_PIX_FMT_foo in dest_fmt if
    the cam has a format from which v4lconvert can convert to dest_fmt.
    The real format to which the cam should be set is returned through src_fmt
    when not NULL. */
-int v4lconvert_try_format(struct v4lconvert_data *data,
+LIBV4L_PUBLIC int v4lconvert_try_format(struct v4lconvert_data *data,
   struct v4l2_format *dest_fmt, /* in / out */
   struct v4l2_format *src_fmt /* out */
 );
 
 /* Just like VIDIOC_ENUM_FMT, except that the emulated formats are added at
    the end of the list */
-int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt);
+LIBV4L_PUBLIC int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt);
 
 /* Is conversion necessary or can the app use the data directly? */
-int v4lconvert_needs_conversion(struct v4lconvert_data *data,
+LIBV4L_PUBLIC int v4lconvert_needs_conversion(struct v4lconvert_data *data,
   const struct v4l2_format *src_fmt,   /* in */
   const struct v4l2_format *dest_fmt); /* in */
 
 /* return value of -1 on error, otherwise the amount of bytes written to
    dest */
-int v4lconvert_convert(struct v4lconvert_data *data,
+LIBV4L_PUBLIC int v4lconvert_convert(struct v4lconvert_data *data,
   const struct v4l2_format *src_fmt,  /* in */
   const struct v4l2_format *dest_fmt, /* in */
   unsigned char *src, int src_size, unsigned char *dest, int dest_size);
 
 /* get a string describing the last error*/
-const char *v4lconvert_get_error_message(struct v4lconvert_data *data);
+LIBV4L_PUBLIC const char *v4lconvert_get_error_message(struct v4lconvert_data *data);
 
 #ifdef __cplusplus
 }

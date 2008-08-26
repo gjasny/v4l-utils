@@ -43,7 +43,13 @@
 #error open/read/mmap is a prepocessor macro !!
 #endif
 
-int open (const char *file, int oflag, ...)
+#if __GNUC__ >= 4
+#define LIBV4L_PUBLIC __attribute__ ((visibility("default")))
+#else
+#define LIBV4L_PUBLIC
+#endif
+
+LIBV4L_PUBLIC int open (const char *file, int oflag, ...)
 {
   int fd;
   struct v4l2_capability cap;
@@ -86,7 +92,7 @@ int open (const char *file, int oflag, ...)
   return fd;
 }
 
-int open64(const char *file, int oflag, ...)
+LIBV4L_PUBLIC int open64(const char *file, int oflag, ...)
 {
   int fd;
 
@@ -109,17 +115,17 @@ int open64(const char *file, int oflag, ...)
   return fd;
 }
 
-int close(int fd)
+LIBV4L_PUBLIC int close(int fd)
 {
   return v4l2_close(fd);
 }
 
-int dup(int fd)
+LIBV4L_PUBLIC int dup(int fd)
 {
   return v4l2_dup(fd);
 }
 
-int ioctl (int fd, unsigned long int request, ...)
+LIBV4L_PUBLIC int ioctl (int fd, unsigned long int request, ...)
 {
   void *arg;
   va_list ap;
@@ -131,24 +137,25 @@ int ioctl (int fd, unsigned long int request, ...)
   return v4l2_ioctl (fd, request, arg);
 }
 
-ssize_t read (int fd, void* buffer, size_t n)
+LIBV4L_PUBLIC ssize_t read (int fd, void* buffer, size_t n)
 {
   return v4l2_read (fd, buffer, n);
 }
 
-void *mmap(void *start, size_t length, int prot, int flags, int fd,
+LIBV4L_PUBLIC void *mmap(void *start, size_t length, int prot, int flags, int fd,
   __off_t offset)
 {
   return v4l2_mmap(start, length, prot, flags, fd, offset);
 }
 
-void *mmap64(void *start, size_t length, int prot, int flags, int fd,
+LIBV4L_PUBLIC void *mmap64(void *start, size_t length, int prot, int flags, int fd,
   __off64_t offset)
 {
   return v4l2_mmap(start, length, prot, flags, fd, offset);
 }
 
-int munmap(void *start, size_t length)
+LIBV4L_PUBLIC int munmap(void *start, size_t length)
 {
   return v4l2_munmap(start, length);
 }
+

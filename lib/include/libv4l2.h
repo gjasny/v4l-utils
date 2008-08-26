@@ -26,9 +26,15 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#if __GNUC__ >= 4
+#define LIBV4L_PUBLIC __attribute__ ((visibility("default")))
+#else
+#define LIBV4L_PUBLIC
+#endif
+
 /* Point this to a FILE opened for writing when you want to log error and
    status messages to a file, when NULL errors will get send to stderr */
-extern FILE *v4l2_log_file;
+LIBV4L_PUBLIC extern FILE *v4l2_log_file;
 
 /* Just like your regular open/close/etc, except that format conversion is
    done if necessary when capturing. That is if you (try to) set a capture
@@ -52,14 +58,14 @@ extern FILE *v4l2_log_file;
    fail.
 */
 
-int v4l2_open (const char *file, int oflag, ...);
-int v4l2_close(int fd);
-int v4l2_dup(int fd);
-int v4l2_ioctl (int fd, unsigned long int request, ...);
-ssize_t v4l2_read (int fd, void* buffer, size_t n);
-void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
+LIBV4L_PUBLIC int v4l2_open (const char *file, int oflag, ...);
+LIBV4L_PUBLIC int v4l2_close(int fd);
+LIBV4L_PUBLIC int v4l2_dup(int fd);
+LIBV4L_PUBLIC int v4l2_ioctl (int fd, unsigned long int request, ...);
+LIBV4L_PUBLIC ssize_t v4l2_read (int fd, void* buffer, size_t n);
+LIBV4L_PUBLIC void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
   __off64_t offset);
-int v4l2_munmap(void *_start, size_t length);
+LIBV4L_PUBLIC int v4l2_munmap(void *_start, size_t length);
 
 
 /* Misc utility functions */
@@ -70,12 +76,12 @@ int v4l2_munmap(void *_start, size_t length);
 
    Normally returns 0, even if the cid did not exist or was locked, returns
    non 0 when an other error occured. */
-int v4l2_set_control(int fd, int cid, int value);
+LIBV4L_PUBLIC int v4l2_set_control(int fd, int cid, int value);
 
 /* This function returns a value of 0 - 65535, scaled to from the actual range
    of the given v4l control id. when the cid does not exist, could not be
    accessed for some reason, or some error occured 0 is returned. */
-int v4l2_get_control(int fd, int cid);
+LIBV4L_PUBLIC int v4l2_get_control(int fd, int cid);
 
 
 /* "low level" access functions, these functions allow somewhat lower level
@@ -95,7 +101,7 @@ int v4l2_get_control(int fd, int cid);
 
    Returns fd on success, -1 if the fd is not suitable for use through libv4l2
    (note the fd is left open in this case). */
-int v4l2_fd_open(int fd, int v4l2_flags);
+LIBV4L_PUBLIC int v4l2_fd_open(int fd, int v4l2_flags);
 
 #ifdef __cplusplus
 }

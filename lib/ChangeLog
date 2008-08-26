@@ -6,6 +6,8 @@ libv4l-0.4.1
 * Add support to libv4lconvert for rotating images 90 (for Pixart 7302 cams)
   or 180 (Philips SPC200NC / Philips SPC300NC) degrees
 * Add support for Pixart custom JPEG format
+* Hide non public symbols (Gregor Jasny)
+* Fix and enable x86_64 asm jpeg decompress helper functions (Gregor Jasny)
 
 libv4l-0.4.0
 ------------
