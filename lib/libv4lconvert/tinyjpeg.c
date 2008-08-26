@@ -437,7 +437,6 @@ static int pixart_get_next_huffman_code(struct jdec_private *priv,
   int value, hcode;
   unsigned int extra_nbits, nbits;
   uint16_t *slowtable;
-  int i;
 
   pixart_look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, HUFFMAN_HASH_NBITS, hcode);
   value = huffman_table->lookup[hcode];

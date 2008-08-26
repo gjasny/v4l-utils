@@ -922,7 +922,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 ssize_t v4l2_read (int fd, void* dest, size_t n)
 {
   ssize_t result;
-  int index, bytesused = 0, frame_index;
+  int index;
   struct v4l2_buffer buf;
 
   if ((index = v4l2_get_index(fd)) == -1)
