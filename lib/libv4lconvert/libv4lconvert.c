@@ -456,7 +456,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_SN9C10X:
 	  v4lconvert_decode_sn9c10x(src, tmpbuf, dest_fmt->fmt.pix.width,
 				    dest_fmt->fmt.pix.height);
-	  bayer_fmt = V4L2_PIX_FMT_SGBRG8;
+	  bayer_fmt = V4L2_PIX_FMT_SBGGR8;
 	  break;
 	case V4L2_PIX_FMT_PAC207:
 	  v4lconvert_decode_pac207(src, tmpbuf, dest_fmt->fmt.pix.width,
