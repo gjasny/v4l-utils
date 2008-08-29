@@ -25,6 +25,7 @@
 #include <asm/types.h>
 /* end broken header workaround includes */
 #include <linux/videodev.h>
+#include "libv4l1-priv.h"
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
@@ -92,9 +93,9 @@ void v4l1_log_ioctl(unsigned long int request, void *arg, int result)
 			  break;
     case VIDIOCGWIN:
     case VIDIOCSWIN:
-      fprintf(v4l1_log_file,"width\t%d\n",
+      fprintf(v4l1_log_file,"width\t%u\n",
 	((struct video_window *)arg)->width);
-      fprintf(v4l1_log_file,"height\t%d\n",
+      fprintf(v4l1_log_file,"height\t%u\n",
 	((struct video_window *)arg)->height);
       break;
 
@@ -115,7 +116,7 @@ void v4l1_log_ioctl(unsigned long int request, void *arg, int result)
 			  fprintf(v4l1_log_file,"palette 	%d\n",(	(int)((struct video_picture*)arg)->palette)	);
 			  break;
 
-	  case VIDIOCCAPTURE: fprintf(v4l1_log_file,"on/of? 	%d\n",	*((int *)arg) 					);
+	  case VIDIOCCAPTURE: fprintf(v4l1_log_file,"on/off? 	%d\n",	*((int *)arg) 					);
 			  break;
 
 	  case VIDIOCSYNC: fprintf(v4l1_log_file,"sync 	%d\n",	*((int *)arg)					);

@@ -1,7 +1,7 @@
-CPPFLAGS      = -I../include -I../../../../linux/include
+override CPPFLAGS += -I../include -I../../../../linux/include -fvisibility=hidden
 
 CFLAGS := -g -O1
-CFLAGS += -Wall -W -Wno-unused -Wpointer-arith -Wstrict-prototypes
+CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
 
 LIBS = -lpthread
 
@@ -17,7 +17,7 @@ else
 V4L1_LIB      = libv4l1.so
 V4L1_OBJS    += ../libv4l2/libv4l2.so
 TARGETS      += $(V4L1COMPAT)
-CPPFLAGS     += -fPIC
+override CPPFLAGS += -fPIC
 endif
 
 ifeq ($(LIB_RELEASE),)

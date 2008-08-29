@@ -26,9 +26,15 @@ extern "C" {
 #include <stdio.h>
 #include <unistd.h>
 
+#if __GNUC__ >= 4
+#define LIBV4L_PUBLIC __attribute__ ((visibility("default")))
+#else
+#define LIBV4L_PUBLIC
+#endif
+
 /* Point this to a FILE opened for writing when you want to log error and
    status messages to a file, when NULL errors will get send to stderr */
-extern FILE *v4l1_log_file;
+LIBV4L_PUBLIC extern FILE *v4l1_log_file;
 
 /* Just like your regular open/close/etc, except that when opening a v4l2
    capture only device, full v4l1 emulation is done including emulating the
@@ -51,14 +57,14 @@ extern FILE *v4l1_log_file;
    capture formats, like hw specific bayer compression methods).
 */
 
-int v4l1_open (const char *file, int oflag, ...);
-int v4l1_close(int fd);
-int v4l1_dup(int fd);
-int v4l1_ioctl (int fd, unsigned long int request, ...);
-ssize_t v4l1_read (int fd, void* buffer, size_t n);
-void *v4l1_mmap(void *start, size_t length, int prot, int flags, int fd,
+LIBV4L_PUBLIC int v4l1_open (const char *file, int oflag, ...);
+LIBV4L_PUBLIC int v4l1_close(int fd);
+LIBV4L_PUBLIC int v4l1_dup(int fd);
+LIBV4L_PUBLIC int v4l1_ioctl (int fd, unsigned long int request, ...);
+LIBV4L_PUBLIC ssize_t v4l1_read (int fd, void* buffer, size_t n);
+LIBV4L_PUBLIC void *v4l1_mmap(void *start, size_t length, int prot, int flags, int fd,
   __off64_t offset);
-int v4l1_munmap(void *_start, size_t length);
+LIBV4L_PUBLIC int v4l1_munmap(void *_start, size_t length);
 
 #ifdef __cplusplus
 }

@@ -38,7 +38,7 @@ static struct {
 	signed char val;
 } table[256];
 
-void init_pixart_decoder(void)
+static void init_pixart_decoder(void)
 {
     int i;
     int is_abs, val, len;

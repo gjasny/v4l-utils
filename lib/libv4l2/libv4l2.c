@@ -252,23 +252,54 @@ static int v4l2_queue_read_buffer(int index, int buffer_index)
   return 0;
 }
 
-static int v4l2_dequeue_read_buffer(int index, int *bytesused)
+static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
+  unsigned char *dest, int dest_size)
 {
-  int result;
-  struct v4l2_buffer buf;
+  const int max_tries = 10;
+  int result, tries = max_tries;
 
-  buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  buf.memory = V4L2_MEMORY_MMAP;
-  if ((result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_DQBUF, &buf))) {
-    int saved_err = errno;
-    V4L2_LOG_ERR("dequeuing buf: %s\n", strerror(errno));
-    errno = saved_err;
+  /* Make sure we have the real v4l2 buffers mapped */
+  if ((result = v4l2_map_buffers(index)))
     return result;
+
+  do {
+    if ((result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_DQBUF, buf))) {
+      int saved_err = errno;
+      V4L2_LOG_ERR("dequeuing buf: %s\n", strerror(errno));
+      errno = saved_err;
+      return result;
+    }
+
+    devices[index].frame_queued &= ~(1 << buf->index);
+
+    result = v4lconvert_convert(devices[index].convert,
+	   &devices[index].src_fmt, &devices[index].dest_fmt,
+	   devices[index].frame_pointers[buf->index],
+	   buf->bytesused, dest ? dest : (devices[index].convert_mmap_buf +
+	     buf->index * V4L2_FRAME_BUF_SIZE), dest_size);
+
+    if (result < 0) {
+      int saved_err = errno;
+
+      if(errno == EAGAIN)
+	V4L2_LOG("warning error while converting frame data: %s\n",
+	  v4lconvert_get_error_message(devices[index].convert));
+      else
+	V4L2_LOG_ERR("converting / decoding frame data: %s\n",
+	  v4lconvert_get_error_message(devices[index].convert));
+
+      v4l2_queue_read_buffer(index, buf->index);
+      errno = saved_err;
+    }
+    tries--;
+  } while (result < 0 && errno == EAGAIN && tries);
+
+  if (result < 0 && errno == EAGAIN) {
+    V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s\n",
+      max_tries, v4lconvert_get_error_message(devices[index].convert));
   }
 
-  devices[index].frame_queued &= ~(1 << buf.index);
-  *bytesused = buf.bytesused;
-  return buf.index;
+  return result;
 }
 
 static int v4l2_queue_read_buffers(int index)
@@ -614,7 +645,8 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       is_capture_request = 1;
       break;
     case VIDIOC_ENUM_FMT:
-      if (((struct v4l2_fmtdesc *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+      if (((struct v4l2_fmtdesc *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE &&
+	  (devices[index].flags & V4L2_ENABLE_ENUM_FMT_EMULATION))
 	is_capture_request = 1;
       break;
     case VIDIOC_TRY_FMT:
@@ -663,9 +695,8 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
   if (stream_needs_locking)
     pthread_mutex_lock(&devices[index].stream_lock);
 
-  converting = devices[index].src_fmt.fmt.pix.pixelformat !=
-	       devices[index].dest_fmt.fmt.pix.pixelformat;
-
+  converting = v4lconvert_needs_conversion(devices[index].convert,
+			 &devices[index].src_fmt, &devices[index].dest_fmt);
 
   switch (request) {
     case VIDIOC_QUERYCAP:
@@ -815,14 +846,15 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	  if ((result = v4l2_deactivate_read_stream(index)))
 	    break;
 
-	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_DQBUF, buf);
-	if (result) {
-	  V4L2_LOG_ERR("dequeing buffer: %s\n", strerror(errno));
+	if (!converting) {
+	  result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_DQBUF, buf);
+	  if (result) {
+	    int saved_err = errno;
+	    V4L2_LOG_ERR("dequeuing buf: %s\n", strerror(errno));
+	    errno = saved_err;
+	  }
 	  break;
 	}
-
-	if (!converting)
-	  break;
 
 	/* An application can do a DQBUF before mmap-ing in the buffer,
 	   but we need the buffer _now_ to write our converted data
@@ -844,23 +876,9 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	  }
 	}
 
-	/* Make sure we have the real v4l2 buffers mapped before trying to
-	   read from them */
-	if ((result = v4l2_map_buffers(index)))
+	result = v4l2_dequeue_and_convert(index, buf, 0, V4L2_FRAME_BUF_SIZE);
+	if (result < 0)
 	  break;
-
-	result = v4lconvert_convert(devices[index].convert,
-		   &devices[index].src_fmt, &devices[index].dest_fmt,
-		   devices[index].frame_pointers[buf->index],
-		   buf->bytesused,
-		   devices[index].convert_mmap_buf +
-		     buf->index * V4L2_FRAME_BUF_SIZE,
-		   V4L2_FRAME_BUF_SIZE);
-	if (result < 0) {
-	  V4L2_LOG_ERR("converting / decoding frame data: %s\n",
-			v4lconvert_get_error_message(devices[index].convert));
-	  break;
-	}
 
 	buf->bytesused = result;
 	buf->m.offset = V4L2_MMAP_OFFSET_MAGIC | buf->index;
@@ -901,22 +919,23 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 }
 
 
-ssize_t v4l2_read (int fd, void* buffer, size_t n)
+ssize_t v4l2_read (int fd, void* dest, size_t n)
 {
   ssize_t result;
-  int index, bytesused = 0, frame_index;
+  int index;
+  struct v4l2_buffer buf;
 
   if ((index = v4l2_get_index(fd)) == -1)
-    return syscall(SYS_read, fd, buffer, n);
+    return syscall(SYS_read, fd, dest, n);
 
   pthread_mutex_lock(&devices[index].stream_lock);
 
   /* When not converting and the device supports read let the kernel handle
      it */
   if ((devices[index].flags & V4L2_SUPPORTS_READ) &&
-      devices[index].src_fmt.fmt.pix.pixelformat ==
-      devices[index].dest_fmt.fmt.pix.pixelformat) {
-    result = syscall(SYS_read, fd, buffer, n);
+      !v4lconvert_needs_conversion(devices[index].convert,
+		   &devices[index].src_fmt, &devices[index].dest_fmt)) {
+    result = syscall(SYS_read, fd, dest, n);
     goto leave;
   }
 
@@ -931,26 +950,12 @@ ssize_t v4l2_read (int fd, void* buffer, size_t n)
       goto leave;
   }
 
-  if ((frame_index = v4l2_dequeue_read_buffer(index, &bytesused)) < 0) {
-    result = -1;
-    goto leave;
-  }
+  buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  buf.memory = V4L2_MEMORY_MMAP;
+  result = v4l2_dequeue_and_convert(index, &buf, dest, n);
 
-  /* ensure buffers are mapped before using them (they could have been
-     unmapped by a s_fmt ioctl) */
-  if ((result = v4l2_map_buffers(index)))
-    goto leave;
-
-  result = v4lconvert_convert(devices[index].convert,
-	       &devices[index].src_fmt, &devices[index].dest_fmt,
-	       devices[index].frame_pointers[frame_index], bytesused,
-	       buffer, n);
-
-  v4l2_queue_read_buffer(index, frame_index);
-
-  if (result < 0)
-    V4L2_LOG_ERR("converting / decoding frame data: %s\n",
-		 v4lconvert_get_error_message(devices[index].convert));
+  if (result >= 0)
+    v4l2_queue_read_buffer(index, buf.index);
 
 leave:
   pthread_mutex_unlock(&devices[index].stream_lock);
@@ -988,8 +993,8 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
   buffer_index = offset & 0xff;
   if (buffer_index >= devices[index].no_frames ||
       /* Got magic offset and not converting ?? */
-      devices[index].src_fmt.fmt.pix.pixelformat ==
-      devices[index].dest_fmt.fmt.pix.pixelformat) {
+      !v4lconvert_needs_conversion(devices[index].convert,
+		   &devices[index].src_fmt, &devices[index].dest_fmt)) {
     errno = EINVAL;
     result = MAP_FAILED;
     goto leave;

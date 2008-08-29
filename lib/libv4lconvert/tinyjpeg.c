@@ -214,6 +214,28 @@ static const unsigned char val_ac_chrominance[] =
   0xf9, 0xfa
 };
 
+const unsigned char pixart_quantization[][64] = {
+  {
+  0x07, 0x07, 0x08, 0x0a, 0x09, 0x07, 0x0d, 0x0b,
+  0x0c, 0x0d, 0x11, 0x10, 0x0f, 0x12, 0x17, 0x27,
+  0x1a, 0x18, 0x16, 0x16, 0x18, 0x31, 0x23, 0x25,
+  0x1d, 0x28, 0x3a, 0x33, 0x3d, 0x3c, 0x39, 0x33,
+  0x38, 0x37, 0x40, 0x48, 0x5c, 0x4e, 0x40, 0x44,
+  0x57, 0x45, 0x37, 0x38, 0x50, 0x6d, 0x51, 0x57,
+  0x5f, 0x62, 0x67, 0x68, 0x67, 0x3e, 0x4d, 0x71,
+  0x79, 0x70, 0x64, 0x78, 0x5c, 0x65, 0x67, 0x63,
+  },
+  {
+  0x11, 0x12, 0x12, 0x18, 0x15, 0x18, 0x2f, 0x1a,
+  0x1a, 0x2f, 0x63, 0x42, 0x38, 0x42, 0x63, 0x63,
+  0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
+  0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
+  0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
+  0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
+  0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
+  0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
+  },
+};
 
 /*
  * 4 functions to manage the stream
@@ -246,7 +268,7 @@ static const unsigned char val_ac_chrominance[] =
       unsigned char c; \
       if (stream >= priv->stream_end) { \
 	snprintf(priv->error_string, sizeof(priv->error_string), \
-	  "fill_nbits error: need %d more bits\n", \
+	  "fill_nbits error: need %u more bits\n", \
 	  nbits_wanted - nbits_in_reservoir); \
 	longjmp(priv->jump_state, -EIO); \
       } \
@@ -286,6 +308,74 @@ static const unsigned char val_ac_chrominance[] =
    nbits_in_reservoir -= (nbits_wanted); \
    reservoir &= ((1U<<nbits_in_reservoir)-1); \
 }  while(0);
+
+
+/* Special Pixart versions of the *_nbits functions, these remove the special
+   ff ff ff xx sequences pixart cams insert from the bitstream */
+#define pixart_fill_nbits(reservoir,nbits_in_reservoir,stream,nbits_wanted) \
+do { \
+   while (nbits_in_reservoir<nbits_wanted) \
+    { \
+      unsigned char c; \
+      if (stream >= priv->stream_end) { \
+	snprintf(priv->error_string, sizeof(priv->error_string), \
+	  "fill_nbits error: need %u more bits\n", \
+	  nbits_wanted - nbits_in_reservoir); \
+	longjmp(priv->jump_state, -EIO); \
+      } \
+      c = *stream++; \
+      reservoir <<= 8; \
+      if (c == 0xff) { \
+	switch (stream[0]) { \
+	  case 0x00: \
+	    stream++; \
+	    break; \
+	  case 0xd9: /* EOF marker */ \
+	    stream++; \
+	    if (stream != priv->stream_end) { \
+	      snprintf(priv->error_string, sizeof(priv->error_string), \
+		"Pixart JPEG error: premature EOF\n"); \
+	      longjmp(priv->jump_state, -EIO); \
+	    } \
+	    break; \
+	  case 0xff: \
+	    if (stream[1] == 0xff && (stream[2] < 7 || stream[2] == 0xff)) { \
+	      stream += 3; \
+	      c = *stream++; \
+	      break; \
+	    } \
+	    /* Error fall through */ \
+	  default: \
+	    snprintf(priv->error_string, sizeof(priv->error_string), \
+	      "Pixart JPEG error: invalid JPEG marker: 0xff 0x%02x 0x%02x 0x%02x\n", \
+		(unsigned int)stream[0], (unsigned int)stream[1], \
+		(unsigned int)stream[2]); \
+	    longjmp(priv->jump_state, -EIO); \
+	} \
+      } \
+      reservoir |= c; \
+      nbits_in_reservoir+=8; \
+    } \
+}  while(0);
+
+/* Signed version !!!! */
+#define pixart_get_nbits(reservoir,nbits_in_reservoir,stream,nbits_wanted,result) \
+do { \
+   pixart_fill_nbits(reservoir,nbits_in_reservoir,stream,(nbits_wanted)); \
+   result = ((reservoir)>>(nbits_in_reservoir-(nbits_wanted))); \
+   nbits_in_reservoir -= (nbits_wanted);  \
+   reservoir &= ((1U<<nbits_in_reservoir)-1); \
+   if ((unsigned int)result < (1UL<<((nbits_wanted)-1))) \
+       result += (0xFFFFFFFFUL<<(nbits_wanted))+1; \
+}  while(0);
+
+#define pixart_look_nbits(reservoir,nbits_in_reservoir,stream,nbits_wanted,result) \
+do { \
+   pixart_fill_nbits(reservoir,nbits_in_reservoir,stream,(nbits_wanted)); \
+   result = ((reservoir)>>(nbits_in_reservoir-(nbits_wanted))); \
+}  while(0);
+
+/* Note skip_nbits is identical for both */
 
 
 #define be16_to_cpu(x) (((x)[0]<<8)|(x)[1])
@@ -334,9 +424,50 @@ static int get_next_huffman_code(struct jdec_private *priv, struct huffman_table
 	slowtable+=2;
      }
    }
+  snprintf(priv->error_string, sizeof(priv->error_string),
+    "unknown huffman code: %08x\n", (unsigned int)hcode);
+  longjmp(priv->jump_state, -EIO);
   return 0;
 }
 
+/* identical as above but with *_nbits replaced with pixart_*_nbits */
+static int pixart_get_next_huffman_code(struct jdec_private *priv,
+  struct huffman_table *huffman_table)
+{
+  int value, hcode;
+  unsigned int extra_nbits, nbits;
+  uint16_t *slowtable;
+
+  pixart_look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, HUFFMAN_HASH_NBITS, hcode);
+  value = huffman_table->lookup[hcode];
+  if (value >= 0)
+  {
+     unsigned int code_size = huffman_table->code_size[value];
+     skip_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, code_size);
+     return value;
+  }
+
+  /* Decode more bits each time ... */
+  for (extra_nbits=0; extra_nbits<16-HUFFMAN_HASH_NBITS; extra_nbits++)
+   {
+     nbits = HUFFMAN_HASH_NBITS + 1 + extra_nbits;
+
+     pixart_look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, nbits, hcode);
+     slowtable = huffman_table->slowtable[extra_nbits];
+     /* Search if the code is in this array */
+     while (slowtable[0]) {
+	if (slowtable[0] == hcode) {
+	   skip_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, nbits);
+	   return slowtable[1];
+	}
+	slowtable+=2;
+     }
+   }
+  snprintf(priv->error_string, sizeof(priv->error_string),
+    "unknown huffman code: %08x\n", (unsigned int)hcode);
+  longjmp(priv->jump_state, -EIO);
+  return 0;
+}
 
 
 
@@ -388,14 +519,83 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component)
      else
       {
 	j += count_0;	/* skip count_0 zeroes */
-	get_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, size_val, DCT[j]);
-	j++;
+	if (j < 64) {
+	  get_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, size_val, DCT[j]);
+	  j++;
+	}
       }
    }
+
+  if (j > 64) {
+    snprintf(priv->error_string, sizeof(priv->error_string),
+      "error: more then 63 AC components (%d) in huffman unit\n", (int)j);
+    longjmp(priv->jump_state, -EIO);
+  }
 
   for (j = 0; j < 64; j++)
     c->DCT[j] = DCT[zigzag[j]];
 }
+
+/* identical as above both with *_nbits replaced with pixart_*_nbits */
+static void pixart_process_Huffman_data_unit(struct jdec_private *priv, int component)
+{
+  unsigned char j;
+  unsigned int huff_code;
+  unsigned char size_val, count_0;
+
+  struct component *c = &priv->component_infos[component];
+  short int DCT[64];
+
+  /* Initialize the DCT coef table */
+  memset(DCT, 0, sizeof(DCT));
+
+  /* DC coefficient decoding */
+  huff_code = pixart_get_next_huffman_code(priv, c->DC_table);
+  if (huff_code) {
+     pixart_get_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, huff_code, DCT[0]);
+     DCT[0] += c->previous_DC;
+     c->previous_DC = DCT[0];
+  } else {
+     DCT[0] = c->previous_DC;
+  }
+
+
+  /* AC coefficient decoding */
+  j = 1;
+  while (j<64)
+   {
+     huff_code = pixart_get_next_huffman_code(priv, c->AC_table);
+
+     size_val = huff_code & 0xF;
+     count_0 = huff_code >> 4;
+
+     if (size_val == 0)
+      { /* RLE */
+	if (count_0 == 0)
+	  break;	/* EOB found, go out */
+	else if (count_0 == 0xF)
+	  j += 16;	/* skip 16 zeros */
+      }
+     else
+      {
+	j += count_0;	/* skip count_0 zeroes */
+	if (j < 64 ) {
+	  pixart_get_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, size_val, DCT[j]);
+	  j++;
+	}
+      }
+   }
+
+  if (j > 64) {
+    snprintf(priv->error_string, sizeof(priv->error_string),
+      "error: more then 63 AC components (%d) in huffman unit\n", (int)j);
+    longjmp(priv->jump_state, -EIO);
+  }
+
+  for (j = 0; j < 64; j++)
+    c->DCT[j] = DCT[zigzag[j]];
+}
+
 
 /*
  * Takes two array of bits, and build the huffman table for size, and code
@@ -404,12 +604,13 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component)
  * code_size will be used to known how many bits this symbol is encoded.
  * slowtable will be used when the first lookup didn't give the result.
  */
-static void build_huffman_table(const unsigned char *bits, const unsigned char *vals, struct huffman_table *table)
+static int build_huffman_table(struct jdec_private *priv, const unsigned char *bits, const unsigned char *vals, struct huffman_table *table)
 {
   unsigned int i, j, code, code_size, val, nbits;
   unsigned char huffsize[257], *hz;
   unsigned int huffcode[257], *hc;
   int next_free_entry;
+  int slowtable_used[16-HUFFMAN_HASH_NBITS];
 
   /*
    * Build a temp array
@@ -425,7 +626,7 @@ static void build_huffman_table(const unsigned char *bits, const unsigned char *
 
   memset(table->lookup, 0xff, sizeof(table->lookup));
   for (i=0; i<(16-HUFFMAN_HASH_NBITS); i++)
-    table->slowtable[i][0] = 0;
+    slowtable_used[i] = 0;
 
   /* Build a temp array
    *   huffcode[X] => code used to write vals[X]
@@ -472,32 +673,43 @@ static void build_huffman_table(const unsigned char *bits, const unsigned char *
      else
       {
 	/* Perhaps sorting the array will be an optimization */
-	uint16_t *slowtable = table->slowtable[code_size-HUFFMAN_HASH_NBITS-1];
-	while(slowtable[0])
-	  slowtable+=2;
-	slowtable[0] = code;
-	slowtable[1] = val;
-	slowtable[2] = 0;
-	/* TODO: NEED TO CHECK FOR AN OVERFLOW OF THE TABLE */
-      }
+	int slowtable_index = code_size-HUFFMAN_HASH_NBITS-1;
 
+	if (slowtable_used[slowtable_index] == 254)
+	  error("slow Huffman table overflow\n");
+
+	table->slowtable[slowtable_index][slowtable_used[slowtable_index]]
+	  = code;
+	table->slowtable[slowtable_index][slowtable_used[slowtable_index] + 1]
+	  = val;
+	slowtable_used[slowtable_index] += 2;
+      }
    }
 
+   for (i=0; i<(16-HUFFMAN_HASH_NBITS); i++)
+     table->slowtable[i][slowtable_used[i]] = 0;
+
+   return 0;
 }
 
-static void build_default_huffman_tables(struct jdec_private *priv)
+static int build_default_huffman_tables(struct jdec_private *priv)
 {
   if (   (priv->flags & TINYJPEG_FLAGS_MJPEG_TABLE)
       && priv->default_huffman_table_initialized)
-    return;
+    return 0;
 
-  build_huffman_table(bits_dc_luminance, val_dc_luminance, &priv->HTDC[0]);
-  build_huffman_table(bits_ac_luminance, val_ac_luminance, &priv->HTAC[0]);
+  if (build_huffman_table(priv, bits_dc_luminance, val_dc_luminance, &priv->HTDC[0]))
+    return -1;
+  if (build_huffman_table(priv, bits_ac_luminance, val_ac_luminance, &priv->HTAC[0]))
+    return -1;
 
-  build_huffman_table(bits_dc_chrominance, val_dc_chrominance, &priv->HTDC[1]);
-  build_huffman_table(bits_ac_chrominance, val_ac_chrominance, &priv->HTAC[1]);
+  if (build_huffman_table(priv, bits_dc_chrominance, val_dc_chrominance, &priv->HTDC[1]))
+    return -1;
+  if (build_huffman_table(priv, bits_ac_chrominance, val_ac_chrominance, &priv->HTAC[1]))
+    return -1;
 
   priv->default_huffman_table_initialized = 1;
+  return 0;
 }
 
 
@@ -1390,6 +1602,44 @@ static void decode_MCU_2x1_3planes(struct jdec_private *priv)
   IDCT(&priv->component_infos[cCr], priv->Cr, 8);
 }
 
+static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
+{
+  unsigned char marker;
+
+  pixart_look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream,
+		    8, marker);
+  /* I think the marker indicates which quantization table to use, iow
+     a Pixart JPEG may have a different quantization table per MCU, most
+     MCU's have 0x44 as marker for which our special Pixart quantization
+     tables are correct. Unfortunately with a 7302 some blocks also have 0x48,
+     and sometimes even other values. As 0x48 is quite common too, we really
+     need to find out the correct table for that, as currently the blocks
+     with a 0x48 marker look wrong. During normal operation the marker stays
+     within the range below, if it gets out of this range we're most likely
+     decoding garbage */
+  if (marker < 0x20 || marker > 0x7f) {
+    snprintf(priv->error_string, sizeof(priv->error_string),
+      "Pixart JPEG error: invalid MCU marker: 0x%02x\n",
+	(unsigned int)marker);
+    longjmp(priv->jump_state, -EIO);
+  }
+  skip_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, 8);
+
+  // Y
+  pixart_process_Huffman_data_unit(priv, cY);
+  IDCT(&priv->component_infos[cY], priv->Y, 16);
+  pixart_process_Huffman_data_unit(priv, cY);
+  IDCT(&priv->component_infos[cY], priv->Y+8, 16);
+
+  // Cb
+  pixart_process_Huffman_data_unit(priv, cCb);
+  IDCT(&priv->component_infos[cCb], priv->Cb, 8);
+
+  // Cr
+  pixart_process_Huffman_data_unit(priv, cCr);
+  IDCT(&priv->component_infos[cCr], priv->Cr, 8);
+}
+
 /*
  * Decode a 2x1
  *  .-------.
@@ -1676,9 +1926,9 @@ static int parse_SOS(struct jdec_private *priv, const unsigned char *stream)
 	error("We do not support more than %d DC Huffman table\n",
 	  HUFFMAN_TABLES);
      if (cid != priv->component_infos[i].cid)
-	error("SOS cid order (%d:%d) isn't compatible with the SOF marker (%d:%d)\n",
+	error("SOS cid order (%u:%u) isn't compatible with the SOF marker (%u:%u)\n",
 	      i, cid, i, priv->component_infos[i].cid);
-     trace("ComponentId:%d  tableAC:%d tableDC:%d\n", cid, table&0xf, table>>4);
+     trace("ComponentId:%u  tableAC:%d tableDC:%d\n", cid, table&0xf, table>>4);
 #endif
      priv->component_infos[i].AC_table = &priv->HTAC[table&0xf];
      priv->component_infos[i].DC_table = &priv->HTDC[table>>4];
@@ -1723,10 +1973,13 @@ static int parse_DHT(struct jdec_private *priv, const unsigned char *stream)
      trace("Length of the table: %d\n", count);
 #endif
 
-     if (index & 0xf0 )
-       build_huffman_table(huff_bits, stream, &priv->HTAC[index&0xf]);
-     else
-       build_huffman_table(huff_bits, stream, &priv->HTDC[index&0xf]);
+     if (index & 0xf0 ) {
+       if (build_huffman_table(priv, huff_bits, stream, &priv->HTAC[index&0xf]))
+	 return -1;
+     } else {
+       if (build_huffman_table(priv, huff_bits, stream, &priv->HTDC[index&0xf]))
+	 return -1;
+     }
 
      length -= 1;
      length -= 16;
@@ -1817,6 +2070,8 @@ static int parse_JFIF(struct jdec_private *priv, const unsigned char *stream)
 {
   int chuck_len;
   int marker;
+  int sof_marker_found = 0;
+  int dqt_marker_found = 0;
   int sos_marker_found = 0;
   int dht_marker_found = 0;
   const unsigned char *next_chunck;
@@ -1838,10 +2093,12 @@ static int parse_JFIF(struct jdec_private *priv, const unsigned char *stream)
        case SOF:
 	 if (parse_SOF(priv, stream) < 0)
 	   return -1;
+	 sof_marker_found = 1;
 	 break;
        case DQT:
 	 if (parse_DQT(priv, stream) < 0)
 	   return -1;
+	 dqt_marker_found = 1;
 	 break;
        case SOS:
 	 if (parse_SOS(priv, stream) < 0)
@@ -1865,9 +2122,24 @@ static int parse_JFIF(struct jdec_private *priv, const unsigned char *stream)
      stream = next_chunck;
    }
 
+  if ( !sof_marker_found ||
+      (!dqt_marker_found && !(priv->flags & TINYJPEG_FLAGS_PIXART_JPEG)))
+    goto bogus_jpeg_format;
+
+  if (priv->flags & TINYJPEG_FLAGS_PIXART_JPEG) {
+    if (!priv->default_huffman_table_initialized) {
+      build_quantization_table(priv->Q_tables[0], pixart_quantization[0]);
+      build_quantization_table(priv->Q_tables[1], pixart_quantization[1]);
+    }
+
+    /* Pixart JPEG data starts with one unknown / unused byte */
+    priv->stream++;
+  }
+
   if (!dht_marker_found) {
     trace("No Huffman table loaded, using the default one\n");
-    build_default_huffman_tables(priv);
+    if (build_default_huffman_tables(priv))
+      return -1;
   }
 
 #ifdef SANITY_CHECK
@@ -1962,6 +2234,13 @@ static const decode_MCU_fct decode_mcu_3comp_table[4] = {
    decode_MCU_2x2_3planes,
 };
 
+static const decode_MCU_fct pixart_decode_mcu_3comp_table[4] = {
+   NULL,
+   NULL,
+   pixart_decode_MCU_2x1_3planes,
+   NULL,
+};
+
 static const decode_MCU_fct decode_mcu_1comp_table[4] = {
    decode_MCU_1x1_1plane,
    decode_MCU_1x2_1plane,
@@ -2021,6 +2300,9 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
   bytes_per_blocklines[2] = 0;
 
   decode_mcu_table = decode_mcu_3comp_table;
+  if (priv->flags & TINYJPEG_FLAGS_PIXART_JPEG)
+    decode_mcu_table = pixart_decode_mcu_3comp_table;
+
   switch (pixfmt) {
      case TINYJPEG_FMT_YUV420P:
        colorspace_array_conv = convert_colorspace_yuv420p;
@@ -2056,6 +2338,8 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
 
      case TINYJPEG_FMT_GREY:
        decode_mcu_table = decode_mcu_1comp_table;
+       if (priv->flags & TINYJPEG_FLAGS_PIXART_JPEG)
+	 error("Greyscale output not support for PIXART JPEG's\n");
        colorspace_array_conv = convert_colorspace_grey;
        if (priv->components[0] == NULL)
 	 priv->components[0] = (uint8_t *)malloc(priv->width * priv->height);
@@ -2064,8 +2348,7 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
        break;
 
      default:
-       trace("Bad pixel format\n");
-       return -1;
+       error("Bad pixel format\n");
   }
 
   xstride_by_mcu = ystride_by_mcu = 8;
@@ -2090,6 +2373,9 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
      xstride_by_mcu = 16;
      trace("Use decode 2x1 sampling\n");
   }
+
+  if (decode_MCU == NULL)
+    error("no decode MCU function for this JPEG format (PIXART?)\n");
 
   resync(priv);
 
@@ -2129,6 +2415,12 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
 	 }
       }
    }
+
+  if (priv->flags & TINYJPEG_FLAGS_PIXART_JPEG) {
+    /* Additional sanity check for funky Pixart format */
+    if ((priv->stream_end - priv->stream) > 5)
+      error("Pixart JPEG error, stream does not end with EOF marker\n");
+  }
 
   return 0;
 }

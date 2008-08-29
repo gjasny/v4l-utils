@@ -1,16 +1,16 @@
-CPPFLAGS      = -I../include -I../../../../linux/include
+override CPPFLAGS += -I../include -I../../../../linux/include -fvisibility=hidden
 
 CFLAGS := -g -O1
-CFLAGS += -Wall -W -Wno-unused -Wpointer-arith -Wstrict-prototypes
+CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
 
 ifeq ($(LINKTYPE),static)
 CONVERT_LIB   = libv4lconvert.a
 else
 CONVERT_LIB   = libv4lconvert.so
-CPPFLAGS     += -fPIC
+override CPPFLAGS += -fPIC
 endif
 
-CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o pac207.o \
+CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o pac207.o flip.o \
 		jidctflt.o spca561-decompress.o rgbyuv.o spca501.o bayer.o
 TARGETS       = $(CONVERT_LIB) libv4lconvert.pc
 INCLUDES      = ../include/libv4lconvert.h

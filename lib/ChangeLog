@@ -1,8 +1,20 @@
+libv4l-0.4.2
+------------
+* The bayer pixel order in gspca's sonixb driver was different from that in
+  the sn9c102 driver from the mainline kernel, a recent gspca patch fixes
+  this, adjust libv4l to match (and make it work properly with the sn9c102
+  driver).
+
 libv4l-0.4.1
 ------------
 * When the driver supports read() and we are not converting let the driver
   handle read() instead of emulating it with mmap mode
-
+* Fix errors and warnings when compiling with ICC (Gregor Jasny)
+* Add support to libv4lconvert for rotating images 90 (for Pixart 7302 cams)
+  or 180 (Philips SPC200NC / Philips SPC300NC) degrees
+* Add support for Pixart custom JPEG format
+* Hide non public symbols (Gregor Jasny)
+* Fix and enable x86_64 asm jpeg decompress helper functions (Gregor Jasny)
 
 libv4l-0.4.0
 ------------

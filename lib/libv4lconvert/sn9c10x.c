@@ -50,7 +50,7 @@ static int sonix_unknown = 0;
 	present at the MSB of byte x.
 
 */
-void sonix_decompress_init(void)
+static void sonix_decompress_init(void)
 {
 	int i;
 	int is_abs, val, len, unk;

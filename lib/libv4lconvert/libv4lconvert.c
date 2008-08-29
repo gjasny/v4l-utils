@@ -48,17 +48,26 @@ static const unsigned int supported_src_pixfmts[] = {
   V4L2_PIX_FMT_SPCA561,
   V4L2_PIX_FMT_SN9C10X,
   V4L2_PIX_FMT_PAC207,
+  V4L2_PIX_FMT_PJPG,
 };
 
 static const unsigned int supported_dst_pixfmts[] = {
   SUPPORTED_DST_PIXFMTS
 };
 
+/* List of cams which need special flags */
+static const struct v4lconvert_flags_info v4lconvert_flags[] = {
+  { "USB Camera (0471:0325)", V4LCONVERT_UPSIDE_DOWN }, /* SPC200NC */
+  { "USB Camera (0471:0326)", V4LCONVERT_UPSIDE_DOWN }, /* SPC300NC */
+  { "SPC 200NC      ", V4LCONVERT_UPSIDE_DOWN },
+  { "SPC 300NC      ", V4LCONVERT_UPSIDE_DOWN },
+};
 
 struct v4lconvert_data *v4lconvert_create(int fd)
 {
   int i, j;
   struct v4lconvert_data *data = calloc(1, sizeof(struct v4lconvert_data));
+  struct v4l2_capability cap;
 
   if (!data)
     return NULL;
@@ -83,6 +92,15 @@ struct v4lconvert_data *v4lconvert_create(int fd)
   }
 
   data->no_formats = i;
+
+  /* Check if this cam has any special flags */
+  if (syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap) == 0) {
+    for (i = 0; i < ARRAY_SIZE(v4lconvert_flags); i++)
+      if (!strcmp((const char *)v4lconvert_flags[i].card, (char *)cap.card)) {
+	data->flags = v4lconvert_flags[i].flags;
+	break;
+      }
+  }
 
   return data;
 }
@@ -214,17 +232,42 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
   return 0;
 }
 
+/* Is conversion necessary ? */
+int v4lconvert_needs_conversion(struct v4lconvert_data *data,
+  const struct v4l2_format *src_fmt,  /* in */
+  const struct v4l2_format *dest_fmt) /* in */
+{
+  int i;
+
+  if(memcmp(src_fmt, dest_fmt, sizeof(*src_fmt)))
+    return 1; /* Formats differ */
+
+  if (!(data->flags & V4LCONVERT_UPSIDE_DOWN))
+    return 0; /* Formats identical and we don't need flip */
+
+  /* Formats are identical, but we need flip, do we support the dest_fmt? */
+  for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
+    if (supported_dst_pixfmts[i] == dest_fmt->fmt.pix.pixelformat)
+      break;
+
+  if (i == ARRAY_SIZE(supported_dst_pixfmts))
+    return 0; /* Needs flip but we cannot do it :( */
+  else
+    return 1; /* Needs flip and thus conversion */
+}
+
 int v4lconvert_convert(struct v4lconvert_data *data,
   const struct v4l2_format *src_fmt,  /* in */
   const struct v4l2_format *dest_fmt, /* in */
-  unsigned char *src, int src_size, unsigned char *dest, int dest_size)
+  unsigned char *src, int src_size, unsigned char *_dest, int dest_size)
 {
   unsigned int header_width, header_height;
-  int result, needed;
+  int result, needed, rotate = 0, jpeg_flags = TINYJPEG_FLAGS_MJPEG_TABLE;
   unsigned char *components[3];
+  unsigned char *dest = _dest;
 
   /* Special case when no conversion is needed */
-  if(!memcmp(src_fmt, dest_fmt, sizeof(*src_fmt))) {
+  if (!v4lconvert_needs_conversion(data, src_fmt, dest_fmt)) {
     int to_copy = MIN(dest_size, src_size);
     memcpy(dest, src, to_copy);
     return to_copy;
@@ -251,7 +294,15 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     return -1;
   }
 
+  if (data->flags & V4LCONVERT_UPSIDE_DOWN) {
+    rotate = 180;
+    dest = alloca(needed);
+  }
+
   switch (src_fmt->fmt.pix.pixelformat) {
+    case V4L2_PIX_FMT_PJPG:
+      jpeg_flags |= TINYJPEG_FLAGS_PIXART_JPEG;
+      /* Fall through */
     case V4L2_PIX_FMT_MJPEG:
     case V4L2_PIX_FMT_JPEG:
       if (!data->jdec) {
@@ -262,9 +313,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	  return -1;
 	}
       }
-      tinyjpeg_set_flags(data->jdec,
-			 (src_fmt->fmt.pix.pixelformat == V4L2_PIX_FMT_MJPEG)?
-			 TINYJPEG_FLAGS_MJPEG_TABLE : 0);
+      tinyjpeg_set_flags(data->jdec, jpeg_flags);
       if (tinyjpeg_parse_header(data->jdec, src, src_size)) {
 	V4LCONVERT_ERR("parsing JPEG header: %s\n",
 	  tinyjpeg_get_errorstring(data->jdec));
@@ -273,13 +322,22 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       }
       tinyjpeg_get_size(data->jdec, &header_width, &header_height);
 
-      if (header_width != dest_fmt->fmt.pix.width || header_height != dest_fmt->fmt.pix.height) {
-	V4LCONVERT_ERR("unexpected width / height in JPEG header\n");
-	V4LCONVERT_ERR("expected: %dx%d, header: %ux%u\n",
-	  dest_fmt->fmt.pix.width, dest_fmt->fmt.pix.height,
-	  header_width, header_height);
-	errno = EIO;
-	return -1;
+      if (header_width != dest_fmt->fmt.pix.width ||
+	  header_height != dest_fmt->fmt.pix.height) {
+	/* Check for (pixart) rotated JPEG */
+	if (header_width == dest_fmt->fmt.pix.height ||
+	    header_height == dest_fmt->fmt.pix.width) {
+	  if (!rotate)
+	    dest = alloca(needed);
+	  rotate += 90;
+	} else {
+	  V4LCONVERT_ERR("unexpected width / height in JPEG header"
+			 "expected: %ux%u, header: %ux%u\n",
+	    dest_fmt->fmt.pix.width, dest_fmt->fmt.pix.height,
+	    header_width, header_height);
+	  errno = EIO;
+	  return -1;
+	}
       }
 
       components[0] = dest;
@@ -303,13 +361,24 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	break;
       }
 
-      /* If the JPEG header checked out ok and we get an error during actual
-	 decompression, log the error, but don't return an errorcode to the
-	 application, so that the user gets what we managed to decompress */
-      if (result)
-	fprintf(stderr, "libv4lconvert: Error decompressing JPEG: %s",
-	  tinyjpeg_get_errorstring(data->jdec));
-
+      if (result) {
+	/* Pixart webcam's seem to regulary generate corrupt frames, which
+	   are best thrown away to avoid flashes in the video stream. Tell
+	   the upper layer this is an intermediate fault and it should try
+	   again with a new buffer by setting errno to EAGAIN */
+	if (src_fmt->fmt.pix.pixelformat == V4L2_PIX_FMT_PJPG) {
+	  V4LCONVERT_ERR("Error decompressing JPEG: %s",
+	    tinyjpeg_get_errorstring(data->jdec));
+	  errno = EAGAIN;
+	  return -1;
+	} else {
+	/* If the JPEG header checked out ok and we get an error during actual
+	   decompression, log the error, but don't return an errorcode to the
+	   application, so that the user gets what we managed to decompress */
+	  fprintf(stderr, "libv4lconvert: Error decompressing JPEG: %s",
+	    tinyjpeg_get_errorstring(data->jdec));
+	}
+      }
       break;
 
     case V4L2_PIX_FMT_SBGGR8:
@@ -387,7 +456,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_SN9C10X:
 	  v4lconvert_decode_sn9c10x(src, tmpbuf, dest_fmt->fmt.pix.width,
 				    dest_fmt->fmt.pix.height);
-	  bayer_fmt = V4L2_PIX_FMT_SGBRG8;
+	  bayer_fmt = V4L2_PIX_FMT_SBGGR8;
 	  break;
 	case V4L2_PIX_FMT_PAC207:
 	  v4lconvert_decode_pac207(src, tmpbuf, dest_fmt->fmt.pix.width,
@@ -453,6 +522,45 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       V4LCONVERT_ERR("Unknown src format in conversion\n");
       errno = EINVAL;
       return -1;
+  }
+
+  /* Note when rotating dest is our temporary buffer to which our conversion
+     was done and _dest is the real dest! If the formats are identical no
+     conversion has been done! */
+  if (rotate && dest_fmt->fmt.pix.pixelformat == src_fmt->fmt.pix.pixelformat)
+    dest = src;
+
+  switch (rotate) {
+  case 0:
+    break;
+  case 90:
+    switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_rotate90_rgbbgr24(dest, _dest, dest_fmt->fmt.pix.width,
+				 dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_rotate90_yuv420(dest, _dest, dest_fmt->fmt.pix.width,
+			       dest_fmt->fmt.pix.height);
+	break;
+    }
+    break;
+  case 180:
+    switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_rotate180_rgbbgr24(dest, _dest, dest_fmt->fmt.pix.width,
+				 dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_rotate180_yuv420(dest, _dest, dest_fmt->fmt.pix.width,
+			       dest_fmt->fmt.pix.height);
+	break;
+    }
+    break;
+  default:
+    printf("FIXME add %d degrees rotation\n", rotate);
   }
 
   return needed;
