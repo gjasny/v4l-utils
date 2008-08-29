@@ -1,4 +1,4 @@
-override CPPFLAGS += -I../include -I../../../../linux/include -fvisibility=hidden
+override CPPFLAGS += -I../include -I../../../include -fvisibility=hidden
 
 CFLAGS := -g -O1
 CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes

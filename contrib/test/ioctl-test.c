@@ -42,7 +42,7 @@
 typedef __u8 u8;
 typedef __u32 u32;
 #include <linux/version.h>
-#include "../linux/include/media/v4l2-common.h"
+#include <media/v4l2-common.h>
 #include <linux/video_decoder.h>
 #else
 typedef u_int32_t u32;

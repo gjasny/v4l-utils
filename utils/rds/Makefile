@@ -1,6 +1,6 @@
 # Makefile for linuxtv.org v4l2-apps/util/xc3028-firmware
 
-CPPFLAGS += -I../../../linux/include
+CPPFLAGS += -I../../include
 
 binaries = rds-saa6588
 

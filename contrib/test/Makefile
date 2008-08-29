@@ -1,6 +1,6 @@
 # Makefile for linuxtv.org v4l2-apps/test
 
-CPPFLAGS += -I../../linux/include
+CPPFLAGS += -I../include
 
 binaries = ioctl-test 		\
 	   sliced-vbi-test 	\

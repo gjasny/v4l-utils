@@ -4,7 +4,7 @@ ifeq ($(KERNEL_DIR),)
 	KERNEL_DIR = /usr
 endif
 
-CPPFLAGS += -I../../linux/include -D_GNU_SOURCE
+CPPFLAGS += -I../include -D_GNU_SOURCE
 LDFLAGS += -lm
 
 binaries = v4l2-ctl v4l2-dbg ivtv-ctl cx18-ctl v4l-board-dbg
@@ -26,8 +26,8 @@ clean::
 	rm -rf keycodes parse.h keytable
 
 qv4l2:
-	if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; qmake); fi
-	make -C qv4l2
+	-if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; qmake); fi
+	$(MAKE) -C qv4l2
 
 v4l2-dbg: v4l2-dbg.o v4l2-driverids.o v4l2-chipids.o
 	$(CXX) $^ -o $@
@@ -59,12 +59,12 @@ keytable: keytable.c parse.h keytables
 
 v4l-board-dbg: v4l-board-dbg.c bttv-dbg.h saa7134-dbg.h em28xx-dbg.h
 
-v4l2-driverids.cpp: ../../linux/include/linux/i2c-id.h
+v4l2-driverids.cpp: ../include/linux/i2c-id.h
 	@echo "struct driverid { const char *name; unsigned id; } driverids[] = {" >$@
 	@grep I2C_DRIVERID_ $^ | sed -e 's/.*I2C_DRIVERID_\([0-9A-Z_]*\)[^0-9]*\([0-9]*\).*/{ "\1", \2 },/' | tr A-Z a-z >>$@
 	@echo "{ 0, 0 }};" >>$@
 
-v4l2-chipids.cpp: ../../linux/include/media/v4l2-chip-ident.h
+v4l2-chipids.cpp: ../include/media/v4l2-chip-ident.h
 	@echo "struct chipid { const char *name; unsigned id; } chipids[] = {" >$@
 	@grep V4L2_IDENT_ $^ | sed -e 's/.*V4L2_IDENT_\([0-9A-Z_]*\)[^=]*=[^0-9]*\([0-9]*\).*/{ "\1", \2 },/' | tr A-Z a-z >>$@
 	@echo "{ 0, 0 }};" >>$@

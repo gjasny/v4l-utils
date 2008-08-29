@@ -3,7 +3,7 @@
 ######################################################################
 
 TEMPLATE = app
-INCLUDEPATH += . ../../../linux/include ../../lib
+INCLUDEPATH += . ../../include ../../lib
 CONFIG += debug
 
 # Input

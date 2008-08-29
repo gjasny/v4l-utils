@@ -21,7 +21,7 @@
 
 #include <stdlib.h>
 
-#include "linux/videodev2.h"
+#include <linux/videodev2.h>
 #include "v4l2.h"
 
 /* This source was originally written by Nathan Laredo <laredo@gnu.org>.
