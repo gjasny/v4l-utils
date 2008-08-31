@@ -64,13 +64,14 @@ extern struct chipid chipids[];
    In general the lower case is used to set something and the upper
    case is used to retrieve a setting. */
 enum Option {
-	OptListRegisters = 'R',
-	OptSetRegister = 'r',
-	OptSetSlicedVbiFormat = 'b',
+	OptListRegisters = 'l',
+	OptGetRegister = 'g',
+	OptSetRegister = 's',
 	OptSetDevice = 'd',
 	OptGetDriverInfo = 'D',
-	OptScanChipIdents = 'C',
-	OptGetChipIdent = 'c',
+	OptChip = 'c',
+	OptScanChipIdents = 'S',
+	OptGetChipIdent = 'i',
 	OptSetStride = 'w',
 	OptHelp = 'h',
 
@@ -87,8 +88,10 @@ static unsigned capabilities;
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
 	{"help", no_argument, 0, OptHelp},
-	{"list-registers", required_argument, 0, OptListRegisters},
+	{"list-registers", optional_argument, 0, OptListRegisters},
+	{"get-register", required_argument, 0, OptGetRegister},
 	{"set-register", required_argument, 0, OptSetRegister},
+	{"chip", required_argument, 0, OptChip},
 	{"scan-chip-idents", no_argument, 0, OptScanChipIdents},
 	{"get-chip-ident", required_argument, 0, OptGetChipIdent},
 	{"info", no_argument, 0, OptGetDriverInfo},
@@ -101,42 +104,38 @@ static struct option long_options[] = {
 
 static void usage(void)
 {
-	printf("Usage:\n"
-	       "  -D, --info         show driver info [VIDIOC_QUERYCAP]\n"
-	       "  -d, --device=<dev> use device <dev> instead of /dev/video0\n"
-	       "                     if <dev> is a single digit, then /dev/video<dev> is used\n"
-	       "  -h, --help         display this help message\n"
-	       "  --verbose          turn on verbose ioctl error reporting.\n"
-	       "  -R, --list-registers=type=<host/i2cdrv/i2caddr>,chip=<chip>[,min=<addr>,max=<addr>] \n"
-	       "		     dump registers from <min> to <max> [VIDIOC_DBG_G_REGISTER]\n"
-	       "  -r, --set-register=type=<host/i2cdrv/i2caddr>,chip=<chip>,reg=<addr>,val=<val>\n"
-	       "		     set the register [VIDIOC_DBG_S_REGISTER]\n"
-	       "  -C, --scan-chip-idents\n"
+	printf("Usage: v4l2-dbg [options] [values]\n"
+	       "  -D, --info         Show driver info [VIDIOC_QUERYCAP]\n"
+	       "  -d, --device=<dev> Use device <dev> instead of /dev/video0\n"
+	       "                     If <dev> is a single digit, then /dev/video<dev> is used\n"
+	       "  -h, --help         Display this help message\n"
+	       "  --verbose          Turn on verbose ioctl error reporting\n"
+	       "  -c, --chip=<chip>  The chip identifier to use with other commands\n"
+	       "                     It can be one of:\n"
+	       "                         I2C driver ID (see --list-driverids)\n"
+	       "                         I2C 7-bit address\n"
+	       "                         host<num>: host chip number <num>\n"
+	       "                         host (default): same as host0\n"
+	       "  -l, --list-registers[=min=<addr>[,max=<addr>]]\n"
+	       "		     Dump registers from <min> to <max> [VIDIOC_DBG_G_REGISTER]\n"
+	       "  -g, --get-register=<addr>\n"
+	       "		     Get the specified register [VIDIOC_DBG_G_REGISTER]\n"
+	       "  -s, --set-register=<addr>\n"
+	       "		     Set the register with the commandline arguments\n"
+	       "                     The register will autoincrement [VIDIOC_DBG_S_REGISTER]\n"
+	       "  -S, --scan-chip-idents\n"
 	       "		     Scan the available host and i2c chips [VIDIOC_G_CHIP_IDENT]\n"
-	       "  -c, --get-chip-ident=type=<host/i2cdrv/i2caddr>,chip=<chip>\n"
+	       "  -i, --get-chip-ident\n"
 	       "		     Get the chip identifier [VIDIOC_G_CHIP_IDENT]\n"
 	       "  -w, --wide=<reg length>\n"
 	       "		     Sets step between two registers\n"
-	       "  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n"
-	       "  --list-driverids   list the known I2C driver IDs for use with the i2cdrv type\n"
-	       "\n"
-	       "  if type == host, then <chip> is the host's chip ID (default 0)\n"
-	       "  if type == i2cdrv (default), then <chip> is the I2C driver name or ID\n"
-	       "  if type == i2caddr, then <chip> is the 7-bit I2C address\n");
+	       "  --log-status       Log the board status in the kernel log [VIDIOC_LOG_STATUS]\n"
+	       "  --list-driverids   List the known I2C driver IDs for use with the i2cdrv type\n");
 	exit(0);
 }
 
-static unsigned parse_type(const std::string &s)
+static unsigned parse_chip(const std::string &s)
 {
-	if (s == "host") return V4L2_CHIP_MATCH_HOST;
-	if (s == "i2caddr") return V4L2_CHIP_MATCH_I2C_ADDR;
-	return V4L2_CHIP_MATCH_I2C_DRIVER;
-}
-
-static unsigned parse_chip(int type, const std::string &s)
-{
-	if (type == V4L2_CHIP_MATCH_HOST || type == V4L2_CHIP_MATCH_I2C_ADDR || isdigit(s[0]))
-		return strtoul(s.c_str(), 0, 0);
 	for (int i = 0; driverids[i].name; i++)
 		if (!strcasecmp(s.c_str(), driverids[i].name))
 			return driverids[i].id;
@@ -230,6 +229,37 @@ static void print_chip(struct v4l2_chip_ident *chip)
 		printf("%-10d revision 0x%08x\n", chip->ident, chip->revision);
 }
 
+static const char *binary(unsigned long long val)
+{
+	static char bin[80];
+	char *p = bin;
+	int i, j;
+	int bits = 64;
+
+	if ((val & 0xffffffff00000000LL) == 0) {
+		if ((val & 0xffff0000) == 0) {
+			if ((val & 0xff00) == 0)
+				bits = 8;
+			else
+				bits= 16;
+		}
+		else
+			bits = 32;
+	}
+
+	for (i = bits - 1; i >= 0; i -= 8) {
+		for (j = i; j >= i - 7; j--) {
+			if (val & (1LL << j))
+				*p++ = '1';
+			else
+				*p++ = '0';
+		}
+		*p++ = ' ';
+	}
+	p[-1] = 0;
+	return bin;
+}
+
 static int doioctl(int fd, int request, void *parm, const char *name)
 {
 	int retVal;
@@ -280,6 +310,9 @@ int main(int argc, char **argv)
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
 	unsigned long long reg_min = 0, reg_max = 0;
+	std::vector<unsigned long long> get_regs;
+	int match_type = V4L2_CHIP_MATCH_HOST;
+	int match_chip = 0;
 
 	memset(&set_reg, 0, sizeof(set_reg));
 	memset(&get_reg, 0, sizeof(get_reg));
@@ -310,6 +343,7 @@ int main(int argc, char **argv)
 		case OptHelp:
 			usage();
 			return 0;
+
 		case OptSetDevice:
 			device = optarg;
 			if (device[0] >= '0' && device[0] <= '9' && device[1] == 0) {
@@ -320,43 +354,44 @@ int main(int argc, char **argv)
 				device = newdev;
 			}
 			break;
-		case OptSetRegister:
-			subs = optarg;
-			set_reg.match_type = V4L2_CHIP_MATCH_I2C_DRIVER;
-			while (*subs != '\0') {
-				static const char * const subopts[] = {
-					"type",
-					"chip",
-					"reg",
-					"val",
-					NULL
-				};
 
-				switch (parse_subopt(&subs, subopts, &value)) {
-				case 0:
-					set_reg.match_type = parse_type(value);
-					break;
-				case 1:
-					set_reg.match_chip = parse_chip(set_reg.match_type, value);
-					break;
-				case 2:
-					set_reg.reg = strtoull(value, 0L, 0);
-					break;
-				case 3:
-					set_reg.val = strtoull(value, 0L, 0);
-					break;
-				}
+		case OptChip:
+			if (isdigit(optarg[0])) {
+				match_type = V4L2_CHIP_MATCH_I2C_ADDR;
+				match_chip = strtoul(optarg, NULL, 0);
+				break;
 			}
+			if (!memcmp(optarg, "host", 4)) {
+				match_type = V4L2_CHIP_MATCH_HOST;
+				match_chip = strtoul(optarg + 4, NULL, 0);
+				break;
+			}
+			match_type = V4L2_CHIP_MATCH_I2C_DRIVER;
+			match_chip = parse_chip(optarg);
+			if (!match_chip) {
+				fprintf(stderr, "unknown driver ID %s\n", optarg);
+				exit(-1);
+			}
+			break;
+
+		case OptSetRegister:
+			set_reg.reg = strtoull(optarg, 0L, 0);
+			break;
+
+		case OptGetRegister:
+			get_regs.push_back(strtoull(optarg, 0L, 0));
+			break;
+
 		case OptSetStride:
 			forcedstride = strtoull(optarg, 0L, 0);
 			break;
+
 		case OptListRegisters:
 			subs = optarg;
-			get_reg.match_type = V4L2_CHIP_MATCH_I2C_DRIVER;
+			if (subs == NULL)
+				break;
 			while (*subs != '\0') {
 				static const char * const subopts[] = {
-					"type",
-					"chip",
 					"min",
 					"max",
 					NULL
@@ -364,61 +399,32 @@ int main(int argc, char **argv)
 
 				switch (parse_subopt(&subs, subopts, &value)) {
 				case 0:
-					get_reg.match_type = parse_type(value);
-					break;
-				case 1:
-					get_reg.match_chip = parse_chip(get_reg.match_type, value);
-					break;
-				case 2:
 					reg_min = strtoull(value, 0L, 0);
 					if (reg_max == 0)
 						reg_max = reg_min + 0xff;
 					break;
-				case 3:
+				case 1:
 					reg_max = strtoull(value, 0L, 0);
 					break;
 				}
 			}
 			break;
-		case OptGetChipIdent:
-			subs = optarg;
-			set_reg.match_type = V4L2_CHIP_MATCH_I2C_DRIVER;
-			while (*subs != '\0') {
-				static const char *const subopts[] = {
-					"type",
-					"chip",
-					NULL
-				};
 
-				switch (parse_subopt(&subs, subopts, &value)) {
-				case 0:
-					chip_id.match_type = parse_type(value);
-					break;
-				case 1:
-					chip_id.match_chip = parse_chip(chip_id.match_type, value);
-					break;
-				}
-			}
+		case OptGetChipIdent:
 			break;
+
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",
 				argv[optind]);
 			usage();
 			return 1;
+
 		case '?':
 			fprintf(stderr, "Unknown argument `%s'\n",
 				argv[optind]);
 			usage();
 			return 1;
 		}
-	}
-	if (optind < argc) {
-		printf("unknown arguments: ");
-		while (optind < argc)
-			printf("%s ", argv[optind++]);
-		printf("\n");
-		usage();
-		return 1;
 	}
 
 	if ((fd = open(device, O_RDWR)) < 0) {
@@ -445,12 +451,22 @@ int main(int argc, char **argv)
 	/* Set options */
 
 	if (options[OptSetRegister]) {
-		if (doioctl(fd, VIDIOC_DBG_S_REGISTER, &set_reg,
-			"VIDIOC_DBG_S_REGISTER") == 0)
-			printf("register 0x%llx set to 0x%llx\n", set_reg.reg, set_reg.val);
+		set_reg.match_type = match_type;
+		set_reg.match_chip = match_chip;
+		if (optind >= argc)
+			usage();
+		while (optind < argc) {
+			set_reg.val = strtoull(argv[optind++], NULL, 0);
+			if (doioctl(fd, VIDIOC_DBG_S_REGISTER, &set_reg,
+						"VIDIOC_DBG_S_REGISTER") == 0)
+				printf("register 0x%llx set to 0x%llx\n", set_reg.reg, set_reg.val);
+			set_reg.reg++;
+		}
 	}
 
 	if (options[OptGetChipIdent]) {
+		chip_id.match_type = match_type;
+		chip_id.match_chip = match_chip;
 		if (doioctl(fd, VIDIOC_G_CHIP_IDENT, &chip_id, "VIDIOC_G_CHIP_IDENT") == 0)
 			print_chip(&chip_id);
 	}
@@ -462,7 +478,7 @@ int main(int argc, char **argv)
 		chip_id.match_chip = 0;
 
 		while (doioctl(fd, VIDIOC_G_CHIP_IDENT, &chip_id, "VIDIOC_G_CHIP_IDENT") == 0 && chip_id.ident) {
-			printf("host 0x%x: ", chip_id.match_chip);
+			printf("host%d: ", chip_id.match_chip);
 			print_chip(&chip_id);
 			chip_id.match_chip++;
 		}
@@ -477,8 +493,30 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (options[OptGetRegister]) {
+		int stride = 1;
+
+		get_reg.match_type = match_type;
+		get_reg.match_chip = match_chip;
+		printf("ioctl: VIDIOC_DBG_G_REGISTER\n");
+
+		for (std::vector<unsigned long long>::iterator iter = get_regs.begin();
+				iter != get_regs.end(); ++iter) {
+			get_reg.reg = *iter;
+			if (ioctl(fd, VIDIOC_DBG_G_REGISTER, &get_reg) < 0)
+				fprintf(stderr, "ioctl: VIDIOC_DBG_G_REGISTER "
+						"failed for 0x%llx\n", get_reg.reg);
+			else
+				printf("%llx = %llxh = %lldd = %sb\n", get_reg.reg,
+					get_reg.val, get_reg.val, binary(get_reg.val));
+		}
+	}
+
 	if (options[OptListRegisters]) {
 		int stride = 1;
+
+		get_reg.match_type = match_type;
+		get_reg.match_chip = match_chip;
 		if (forcedstride) {
 			stride = forcedstride;
 		} else {
