@@ -42,6 +42,48 @@
 #include <map>
 #include <string>
 
+#include "v4l2-dbg-bttv.h"
+#include "v4l2-dbg-saa7134.h"
+#include "v4l2-dbg-em28xx.h"
+
+#define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
+
+struct board_list {
+	const char *name;
+	int prefix; 		/* Register prefix size */
+	const struct board_regs *regs;
+	int regs_size;
+	const struct board_regs *alt_regs;
+	int alt_regs_size;
+};
+
+static const struct board_list boards[] = {
+	{				/* From bttv-dbg.h */
+		BTTV_IDENT,
+		sizeof(BTTV_PREFIX) - 1,
+		bt8xx_regs,
+		ARRAY_SIZE(bt8xx_regs),
+		bt8xx_regs_other,
+		ARRAY_SIZE(bt8xx_regs_other),
+	},
+	{				/* From saa7134-dbg.h */
+		SAA7134_IDENT,
+		sizeof(SAA7134_PREFIX) - 1,
+		saa7134_regs,
+		ARRAY_SIZE(saa7134_regs),
+		NULL,
+		0,
+	},
+	{				/* From em28xx-dbg.h */
+		EM28XX_IDENT,
+		sizeof(EM28XX_PREFIX) - 1,
+		em28xx_regs,
+		ARRAY_SIZE(em28xx_regs),
+		NULL,
+		0,
+	},
+};
+
 struct driverid {
 	const char *name;
 	unsigned id;
@@ -78,6 +120,7 @@ enum Option {
 	OptLogStatus = 128,
 	OptVerbose,
 	OptListDriverIDs,
+	OptListSymbols,
 	OptLast = 256
 };
 
@@ -98,6 +141,7 @@ static struct option long_options[] = {
 	{"verbose", no_argument, 0, OptVerbose},
 	{"log-status", no_argument, 0, OptLogStatus},
 	{"list-driverids", no_argument, 0, OptListDriverIDs},
+	{"list-symbols", no_argument, 0, OptListSymbols},
 	{"wide", required_argument, 0, OptSetStride},
 	{0, 0, 0, 0}
 };
@@ -129,6 +173,7 @@ static void usage(void)
 	       "		     Get the chip identifier [VIDIOC_G_CHIP_IDENT]\n"
 	       "  -w, --wide=<reg length>\n"
 	       "		     Sets step between two registers\n"
+	       "  --list-symbols     List the symbolic register names you can use, if any\n"
 	       "  --log-status       Log the board status in the kernel log [VIDIOC_LOG_STATUS]\n"
 	       "  --list-driverids   List the known I2C driver IDs for use with the i2cdrv type\n");
 	exit(0);
@@ -229,6 +274,25 @@ static void print_chip(struct v4l2_chip_ident *chip)
 		printf("%-10d revision 0x%08x\n", chip->ident, chip->revision);
 }
 
+static unsigned long long parse_reg(const struct board_list *curr_bd, const std::string &reg)
+{
+	if (curr_bd) {
+		for (int i = 0; i < curr_bd->regs_size; i++) {
+			if (!strcasecmp(reg.c_str(), curr_bd->regs[i].name) ||
+			    !strcasecmp(reg.c_str(), curr_bd->regs[i].name + curr_bd->prefix)) {
+				return curr_bd->regs[i].reg;
+			}
+		}
+		for (int i = 0; i < curr_bd->alt_regs_size; i++) {
+			if (!strcasecmp(reg.c_str(), curr_bd->alt_regs[i].name) ||
+			    !strcasecmp(reg.c_str(), curr_bd->alt_regs[i].name + curr_bd->prefix)) {
+				return curr_bd->alt_regs[i].reg;
+			}
+		}
+	}
+	return strtoull(reg.c_str(), NULL, 0);
+}
+
 static const char *binary(unsigned long long val)
 {
 	static char bin[80];
@@ -307,10 +371,13 @@ int main(int argc, char **argv)
 	struct v4l2_register set_reg;
 	struct v4l2_register get_reg;
 	struct v4l2_chip_ident chip_id;
+	const struct board_list *curr_bd = NULL;
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
+	std::string reg_min_arg, reg_max_arg;
+	std::string reg_set_arg;
 	unsigned long long reg_min = 0, reg_max = 0;
-	std::vector<unsigned long long> get_regs;
+	std::vector<std::string> get_regs;
 	int match_type = V4L2_CHIP_MATCH_HOST;
 	int match_chip = 0;
 
@@ -375,11 +442,11 @@ int main(int argc, char **argv)
 			break;
 
 		case OptSetRegister:
-			set_reg.reg = strtoull(optarg, 0L, 0);
+			reg_set_arg = optarg;
 			break;
 
 		case OptGetRegister:
-			get_regs.push_back(strtoull(optarg, 0L, 0));
+			get_regs.push_back(optarg);
 			break;
 
 		case OptSetStride:
@@ -399,18 +466,19 @@ int main(int argc, char **argv)
 
 				switch (parse_subopt(&subs, subopts, &value)) {
 				case 0:
-					reg_min = strtoull(value, 0L, 0);
-					if (reg_max == 0)
-						reg_max = reg_min + 0xff;
+					reg_min_arg = value;
+					//if (reg_max == 0)
+					//	reg_max = reg_min + 0xff;
 					break;
 				case 1:
-					reg_max = strtoull(value, 0L, 0);
+					reg_max_arg = value;
 					break;
 				}
 			}
 			break;
 
 		case OptGetChipIdent:
+		case OptListSymbols:
 			break;
 
 		case ':':
@@ -448,6 +516,13 @@ int main(int argc, char **argv)
 		printf("%s", cap2s(vcap.capabilities).c_str());
 	}
 
+	for (int board = ARRAY_SIZE(boards) - 1; board >= 0; board--) {
+		if (!strcasecmp((char *)vcap.driver, boards[board].name)) {
+			curr_bd = &boards[board];
+			break;
+		}
+	}
+
 	/* Set options */
 
 	if (options[OptSetRegister]) {
@@ -455,6 +530,7 @@ int main(int argc, char **argv)
 		set_reg.match_chip = match_chip;
 		if (optind >= argc)
 			usage();
+		set_reg.reg = parse_reg(curr_bd, reg_set_arg);
 		while (optind < argc) {
 			set_reg.val = strtoull(argv[optind++], NULL, 0);
 			if (doioctl(fd, VIDIOC_DBG_S_REGISTER, &set_reg,
@@ -500,9 +576,9 @@ int main(int argc, char **argv)
 		get_reg.match_chip = match_chip;
 		printf("ioctl: VIDIOC_DBG_G_REGISTER\n");
 
-		for (std::vector<unsigned long long>::iterator iter = get_regs.begin();
+		for (std::vector<std::string>::iterator iter = get_regs.begin();
 				iter != get_regs.end(); ++iter) {
-			get_reg.reg = *iter;
+			get_reg.reg = parse_reg(curr_bd, *iter);
 			if (ioctl(fd, VIDIOC_DBG_G_REGISTER, &get_reg) < 0)
 				fprintf(stderr, "ioctl: VIDIOC_DBG_G_REGISTER "
 						"failed for 0x%llx\n", get_reg.reg);
@@ -525,7 +601,12 @@ int main(int argc, char **argv)
 		}
 		printf("ioctl: VIDIOC_DBG_G_REGISTER\n");
 
-		if (reg_max != 0) {
+		if (!reg_min_arg.empty()) {
+			reg_min = parse_reg(curr_bd, reg_min_arg);
+			if (reg_max_arg.empty())
+				reg_max = reg_min + 0xff;
+			else
+				reg_max = parse_reg(curr_bd, reg_max_arg);
 			/* Explicit memory range: just do it */
 			print_regs(fd, &get_reg, reg_min, reg_max, stride);
 			goto list_done;
@@ -616,6 +697,19 @@ list_done:
 		printf("Known I2C driver IDs:\n");
 		for (int i = 0; driverids[i].name; i++)
 			printf("%s\n", driverids[i].name);
+	}
+
+	if (options[OptListSymbols]) {
+		if (curr_bd == NULL) {
+			printf("No symbols found for driver %s\n", vcap.driver);
+		}
+		else {
+			printf("Symbols for driver %s:\n", vcap.driver);
+			for (int i = 0; i < curr_bd->regs_size; i++)
+				printf("0x%08x: %s\n", curr_bd->regs[i], curr_bd->regs[i].name);
+			for (int i = 0; i < curr_bd->alt_regs_size; i++)
+				printf("0x%08x: %s\n", curr_bd->alt_regs[i], curr_bd->alt_regs[i].name);
+		}
 	}
 
 	close(fd);

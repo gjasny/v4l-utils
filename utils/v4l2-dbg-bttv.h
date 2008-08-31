@@ -14,7 +14,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "v4l-board-dbg.h"
+#include "v4l2-dbg.h"
 
 #define BTTV_IDENT "bttv"
 

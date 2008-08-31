@@ -7,7 +7,7 @@ endif
 CPPFLAGS += -I../include -D_GNU_SOURCE
 LDFLAGS += -lm
 
-binaries = v4l2-ctl v4l2-dbg ivtv-ctl cx18-ctl v4l-board-dbg
+binaries = v4l2-ctl v4l2-dbg ivtv-ctl cx18-ctl
 
 ifeq ($(prefix),)
 prefix = /usr
@@ -31,6 +31,8 @@ qv4l2:
 
 v4l2-dbg: v4l2-dbg.o v4l2-driverids.o v4l2-chipids.o
 	$(CXX) $^ -o $@
+
+v4l2-dbg.o: v4l2-dbg.h v4l2-dbg-bttv.h v4l2-dbg-em28xx.h v4l2-dbg-saa7134.h
 
 install:
 	mkdir -p $(prefix)/bin
@@ -56,8 +58,6 @@ keytables:
 	./gen_keytables.pl ../../linux/drivers/media/common/ir-keymaps.c
 
 keytable: keytable.c parse.h keytables
-
-v4l-board-dbg: v4l-board-dbg.c bttv-dbg.h saa7134-dbg.h em28xx-dbg.h
 
 v4l2-driverids.cpp: ../include/linux/i2c-id.h
 	@echo "struct driverid { const char *name; unsigned id; } driverids[] = {" >$@

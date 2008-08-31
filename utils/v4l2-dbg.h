@@ -14,11 +14,13 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _V4L_BOARD_DBG
-#define _V4L_BOARD_DBG
+#ifndef _V4L2_DBG_H_
+#define _V4L2_DBG_H_
+
 struct board_regs {
 	unsigned int reg;
-	char *name;
+	const char *name;
 	int size;
 };
+
 #endif
