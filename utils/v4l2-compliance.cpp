@@ -998,7 +998,7 @@ int main(int argc, char **argv)
 
 	/* command args */
 	int ch;
-	char *device = strdup("/dev/video0");	/* -d device */
+	const char *device = "/dev/video0";	/* -d device */
 	struct v4l2_capability vcap;	/* list_cap */
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
@@ -1034,11 +1034,13 @@ int main(int argc, char **argv)
 			tests++;
 			break;
 		case OptSetDevice:
-			device = strdup(optarg);
+			device = optarg;
 			if (device[0] >= '0' && device[0] <= '9' && device[1] == 0) {
+				static char newdev[20];
 				char dev = device[0];
 
-				sprintf(device, "/dev/video%c", dev);
+				sprintf(newdev, "/dev/video%c", dev);
+				device = newdev;
 			}
 			break;
 		case ':':
