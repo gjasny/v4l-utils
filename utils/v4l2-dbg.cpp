@@ -101,28 +101,28 @@ static struct option long_options[] = {
 
 static void usage(void)
 {
-	printf("Usage:\n");
-	printf("  -D, --info         show driver info [VIDIOC_QUERYCAP]\n");
-	printf("  -d, --device=<dev> use device <dev> instead of /dev/video0\n");
-	printf("                     if <dev> is a single digit, then /dev/video<dev> is used\n");
-	printf("  -h, --help         display this help message\n");
-	printf("  --verbose          turn on verbose ioctl error reporting.\n");
-	printf("  -R, --list-registers=type=<host/i2cdrv/i2caddr>,chip=<chip>[,min=<addr>,max=<addr>] \n");
-	printf("		     dump registers from <min> to <max> [VIDIOC_DBG_G_REGISTER]\n");
-	printf("  -r, --set-register=type=<host/i2cdrv/i2caddr>,chip=<chip>,reg=<addr>,val=<val>\n");
-	printf("		     set the register [VIDIOC_DBG_S_REGISTER]\n");
-	printf("  -C, --scan-chip-idents\n");
-	printf("		     Scan the available host and i2c chips [VIDIOC_G_CHIP_IDENT]\n");
-	printf("  -c, --get-chip-ident=type=<host/i2cdrv/i2caddr>,chip=<chip>\n");
-	printf("		     Get the chip identifier [VIDIOC_G_CHIP_IDENT]\n");
-	printf("  -w, --wide=<reg length>\n");
-	printf("		     Sets step between two registers\n");
-	printf("  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n");
-	printf("  --list-driverids   list the known I2C driver IDs for use with the i2cdrv type\n");
-	printf("\n");
-	printf("  if type == host, then <chip> is the host's chip ID (default 0)\n");
-	printf("  if type == i2cdrv (default), then <chip> is the I2C driver name or ID\n");
-	printf("  if type == i2caddr, then <chip> is the 7-bit I2C address\n");
+	printf("Usage:\n"
+	       "  -D, --info         show driver info [VIDIOC_QUERYCAP]\n"
+	       "  -d, --device=<dev> use device <dev> instead of /dev/video0\n"
+	       "                     if <dev> is a single digit, then /dev/video<dev> is used\n"
+	       "  -h, --help         display this help message\n"
+	       "  --verbose          turn on verbose ioctl error reporting.\n"
+	       "  -R, --list-registers=type=<host/i2cdrv/i2caddr>,chip=<chip>[,min=<addr>,max=<addr>] \n"
+	       "		     dump registers from <min> to <max> [VIDIOC_DBG_G_REGISTER]\n"
+	       "  -r, --set-register=type=<host/i2cdrv/i2caddr>,chip=<chip>,reg=<addr>,val=<val>\n"
+	       "		     set the register [VIDIOC_DBG_S_REGISTER]\n"
+	       "  -C, --scan-chip-idents\n"
+	       "		     Scan the available host and i2c chips [VIDIOC_G_CHIP_IDENT]\n"
+	       "  -c, --get-chip-ident=type=<host/i2cdrv/i2caddr>,chip=<chip>\n"
+	       "		     Get the chip identifier [VIDIOC_G_CHIP_IDENT]\n"
+	       "  -w, --wide=<reg length>\n"
+	       "		     Sets step between two registers\n"
+	       "  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n"
+	       "  --list-driverids   list the known I2C driver IDs for use with the i2cdrv type\n"
+	       "\n"
+	       "  if type == host, then <chip> is the host's chip ID (default 0)\n"
+	       "  if type == i2cdrv (default), then <chip> is the I2C driver name or ID\n"
+	       "  if type == i2caddr, then <chip> is the 7-bit I2C address\n");
 	exit(0);
 }
 
