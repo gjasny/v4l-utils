@@ -69,7 +69,11 @@
   snprintf(data->error_msg, V4LCONVERT_ERROR_MSG_SIZE, \
   "v4l-convert: error " __VA_ARGS__)
 
+/* Card flags */
 #define V4LCONVERT_UPSIDE_DOWN 0x01
+
+/* Pixformat flags */
+#define V4LCONVERT_COMPRESSED 0x01
 
 struct v4lconvert_data {
   int fd;
@@ -82,6 +86,11 @@ struct v4lconvert_data {
 
 struct v4lconvert_flags_info {
   const char *card;
+  int flags;
+};
+
+struct v4lconvert_pixfmt {
+  unsigned int fmt;
   int flags;
 };
 

@@ -30,30 +30,32 @@
 /* Note for proper functioning of v4lconvert_enum_fmt the first entries in
   supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
 #define SUPPORTED_DST_PIXFMTS \
-  V4L2_PIX_FMT_RGB24, \
-  V4L2_PIX_FMT_BGR24, \
-  V4L2_PIX_FMT_YUV420
+  { V4L2_PIX_FMT_RGB24,  0 }, \
+  { V4L2_PIX_FMT_BGR24,  0 }, \
+  { V4L2_PIX_FMT_YUV420, 0 }
 
-static const unsigned int supported_src_pixfmts[] = {
+/* Note uncompressed formats must go first so that they are prefered by
+   v4lconvert_try_format for low resolutions */
+static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   SUPPORTED_DST_PIXFMTS,
-  V4L2_PIX_FMT_MJPEG,
-  V4L2_PIX_FMT_JPEG,
-  V4L2_PIX_FMT_YUYV,
-  V4L2_PIX_FMT_YVYU,
-  V4L2_PIX_FMT_SBGGR8,
-  V4L2_PIX_FMT_SGBRG8,
-  V4L2_PIX_FMT_SGRBG8,
-  V4L2_PIX_FMT_SRGGB8,
-  V4L2_PIX_FMT_SPCA501,
-  V4L2_PIX_FMT_SPCA505,
-  V4L2_PIX_FMT_SPCA508,
-  V4L2_PIX_FMT_SPCA561,
-  V4L2_PIX_FMT_SN9C10X,
-  V4L2_PIX_FMT_PAC207,
-  V4L2_PIX_FMT_PJPG,
+  { V4L2_PIX_FMT_YUYV,    0 },
+  { V4L2_PIX_FMT_YVYU,    0 },
+  { V4L2_PIX_FMT_SBGGR8,  0 },
+  { V4L2_PIX_FMT_SGBRG8,  0 },
+  { V4L2_PIX_FMT_SGRBG8,  0 },
+  { V4L2_PIX_FMT_SRGGB8,  0 },
+  { V4L2_PIX_FMT_SPCA501, 0 },
+  { V4L2_PIX_FMT_SPCA505, 0 },
+  { V4L2_PIX_FMT_SPCA508, 0 },
+  { V4L2_PIX_FMT_MJPEG,   V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_JPEG,    V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_SPCA561, V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_SN9C10X, V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_PAC207,  V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_PJPG,    V4LCONVERT_COMPRESSED },
 };
 
-static const unsigned int supported_dst_pixfmts[] = {
+static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
   SUPPORTED_DST_PIXFMTS
 };
 
@@ -87,7 +89,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
       break;
 
     for (j = 0; j < ARRAY_SIZE(supported_src_pixfmts); j++)
-      if (fmt.pixelformat == supported_src_pixfmts[j]) {
+      if (fmt.pixelformat == supported_src_pixfmts[j].fmt) {
 	data->supported_src_formats |= 1 << j;
 	break;
       }
@@ -130,7 +132,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
 
   for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
     if (!(data->supported_src_formats & (1 << i))) {
-      faked_fmts[no_faked_fmts] = supported_dst_pixfmts[i];
+      faked_fmts[no_faked_fmts] = supported_dst_pixfmts[i].fmt;
       no_faked_fmts++;
     }
 
@@ -162,7 +164,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
   struct v4l2_format try_fmt, closest_fmt = { .type = 0 };
 
   for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
-    if (supported_dst_pixfmts[i] == desired_pixfmt)
+    if (supported_dst_pixfmts[i].fmt == desired_pixfmt)
       break;
 
   /* Can we do conversion to the requested format & type? */
@@ -180,11 +182,11 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
       continue;
 
     try_fmt = *dest_fmt;
-    try_fmt.fmt.pix.pixelformat = supported_src_pixfmts[i];
+    try_fmt.fmt.pix.pixelformat = supported_src_pixfmts[i].fmt;
 
     if (!syscall(SYS_ioctl, data->fd, VIDIOC_TRY_FMT, &try_fmt))
     {
-      if (try_fmt.fmt.pix.pixelformat == supported_src_pixfmts[i]) {
+      if (try_fmt.fmt.pix.pixelformat == supported_src_pixfmts[i].fmt) {
 	int size_x_diff = abs((int)try_fmt.fmt.pix.width -
 			      (int)dest_fmt->fmt.pix.width);
 	int size_y_diff = abs((int)try_fmt.fmt.pix.height -
@@ -193,7 +195,9 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
 				 size_y_diff * size_y_diff;
 	if (size_diff < closest_fmt_size_diff ||
 	    (size_diff == closest_fmt_size_diff &&
-	     try_fmt.fmt.pix.pixelformat == desired_pixfmt)) {
+	     (supported_src_pixfmts[i].fmt == desired_pixfmt ||
+	      ((try_fmt.fmt.pix.width > 176 || try_fmt.fmt.pix.height > 144) &&
+	       (supported_src_pixfmts[i].flags & V4LCONVERT_COMPRESSED))))) {
 	  closest_fmt_size_diff = size_diff;
 	  closest_fmt = try_fmt;
 	}
@@ -249,7 +253,7 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
 
   /* Formats are identical, but we need flip, do we support the dest_fmt? */
   for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
-    if (supported_dst_pixfmts[i] == dest_fmt->fmt.pix.pixelformat)
+    if (supported_dst_pixfmts[i].fmt == dest_fmt->fmt.pix.pixelformat)
       break;
 
   if (i == ARRAY_SIZE(supported_dst_pixfmts))

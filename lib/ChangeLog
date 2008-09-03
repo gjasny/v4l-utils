@@ -1,6 +1,7 @@
 libv4l-0.4.3
 ------------
 * Add suport for YUYV and YVYU packed pixel formats (Jean-Francois Moine)
+* Prefer compressed pixformats for resolutions > 176x144
 
 libv4l-0.4.2
 ------------

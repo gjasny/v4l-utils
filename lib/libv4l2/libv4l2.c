@@ -739,6 +739,17 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	if (result)
 	  break;
 
+	if (src_fmt.fmt.pix.pixelformat != dest_fmt->fmt.pix.pixelformat &&
+	    v4l2_log_file) {
+	  int pixfmt = src_fmt.fmt.pix.pixelformat;
+
+	  fprintf(v4l2_log_file, "VIDIOC_S_FMT converting from: %c%c%c%c\n",
+	    pixfmt & 0xff,
+	    (pixfmt >> 8) & 0xff,
+	    (pixfmt >> 16) & 0xff,
+	    pixfmt >> 24);
+	}
+
 	/* Maybe after try format has adjusted width/height etc, to whats
 	   available nothing has changed (on the cam side) ? */
 	if (!memcmp(&devices[index].src_fmt, &src_fmt, sizeof(src_fmt))) {
