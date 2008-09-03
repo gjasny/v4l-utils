@@ -38,6 +38,8 @@ static const unsigned int supported_src_pixfmts[] = {
   SUPPORTED_DST_PIXFMTS,
   V4L2_PIX_FMT_MJPEG,
   V4L2_PIX_FMT_JPEG,
+  V4L2_PIX_FMT_YUYV,
+  V4L2_PIX_FMT_YVYU,
   V4L2_PIX_FMT_SBGGR8,
   V4L2_PIX_FMT_SGBRG8,
   V4L2_PIX_FMT_SGRBG8,
@@ -514,6 +516,40 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       case V4L2_PIX_FMT_BGR24:
 	v4lconvert_yuv420_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
 				   dest_fmt->fmt.pix.height);
+	break;
+      }
+      break;
+
+    case V4L2_PIX_FMT_YUYV:
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_yuyv_to_rgb24(src, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_yuyv_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      default:
+	v4lconvert_yuyv_to_yuv420(src, dest, dest_fmt->fmt.pix.width,
+		    dest_fmt->fmt.pix.height);
+	break;
+      }
+      break;
+
+    case V4L2_PIX_FMT_YVYU:
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_yvyu_to_rgb24(src, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_yvyu_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      default:
+	v4lconvert_yvyu_to_yuv420(src, dest, dest_fmt->fmt.pix.width,
+		    dest_fmt->fmt.pix.height);
 	break;
       }
       break;

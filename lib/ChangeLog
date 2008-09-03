@@ -1,3 +1,7 @@
+libv4l-0.4.3
+------------
+* Add suport for YUYV and YVYU packed pixel formats (Jean-Francois Moine)
+
 libv4l-0.4.2
 ------------
 * The bayer pixel order in gspca's sonixb driver was different from that in

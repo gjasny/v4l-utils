@@ -59,6 +59,10 @@
 #define V4L2_PIX_FMT_SRGGB8 v4l2_fourcc('R','G','G','B')
 #endif
 
+#ifndef V4L2_PIX_FMT_YVYU
+#define V4L2_PIX_FMT_YVYU v4l2_fourcc('Y', 'V', 'Y', 'U')
+#endif
+
 #define V4LCONVERT_ERROR_MSG_SIZE 256
 
 #define V4LCONVERT_ERR(...) \
@@ -85,6 +89,24 @@ void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yuyv_to_rgb24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yuyv_to_bgr24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yvyu_to_bgr24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yvyu_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst,
