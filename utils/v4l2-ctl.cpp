@@ -93,6 +93,7 @@ enum Option {
 	OptListFormats,
 	OptLogStatus,
 	OptVerbose,
+	OptSilent,
 	OptGetVideoOutFormat,
 	OptSetVideoOutFormat,
 	OptGetSlicedVbiCap,
@@ -291,15 +292,15 @@ static void usage(void)
 	       "                     set the video capture format [VIDIOC_S_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
 	       "                     --list-formats, or the fourcc value as a string\n"
-	       "  --verbose          turn on verbose ioctl error reporting.\n"
+	       "  --silent           only set the result code, do not print any messages\n"
+	       "  --verbose          turn on verbose ioctl status reporting\n"
 	       "\n");
 	printf("Uncommon options:\n"
 	       "  --get-fmt-video-out\n"
 	       "     		     query the video output format [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-video-out=width=<w>,height=<h>\n"
 	       "                     set the video output format [VIDIOC_S_FMT]\n"
-	       "  --get-fmt-overlay\n"
-	       "     		     query the video overlay format [VIDIOC_G_FMT]\n"
+	       "  --get-fmt-overlay  query the video overlay format [VIDIOC_G_FMT]\n"
 	       "  --get-fmt-output-overlay\n"
 	       "     		     query the video output overlay format [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-output-overlay=chromakey=<key>,global_alpha=<alpha>\n"
@@ -1017,12 +1018,11 @@ static int doioctl(int fd, int request, void *parm, const char *name)
 	if (retVal < 0) {
 		app_result = -1;
 	}
-	if (!options[OptVerbose]) return retVal;
-	printf("%s: ", name);
+	if (options[OptSilent]) return retVal;
 	if (retVal < 0)
-		printf("failed: %s\n", strerror(errno));
-	else
-		printf("ok\n");
+		printf("%s: failed: %s\n", name, strerror(errno));
+	else if (options[OptVerbose])
+		printf("%s: ok\n", name);
 
 	return retVal;
 }
