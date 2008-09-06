@@ -77,15 +77,25 @@ enum Option {
 	OptSetVideoFormat = 'v',
 
 	OptGetSlicedVbiOutFormat = 128,
-	OptSetSlicedVbiOutFormat,
 	OptGetOverlayFormat,
-	//OptSetOverlayFormat, TODO
 	OptGetOutputOverlayFormat,
-	OptSetOutputOverlayFormat,
 	OptGetVbiFormat,
-	//OptSetVbiFormat, TODO
 	OptGetVbiOutFormat,
+	OptGetVideoOutFormat,
+	OptSetSlicedVbiOutFormat,
+	OptSetOutputOverlayFormat,
+	OptSetOverlayFormat,
+	//OptSetVbiFormat, TODO
 	//OptSetVbiOutFormat, TODO
+	OptSetVideoOutFormat,
+	OptTryVideoOutFormat,
+	OptTrySlicedVbiOutFormat,
+	OptTrySlicedVbiFormat,
+	OptTryVideoFormat,
+	OptTryOutputOverlayFormat,
+	OptTryOverlayFormat,
+	//OptTryVbiFormat, TODO
+	//OptTryVbiOutFormat, TODO
 	OptAll,
 	OptStreamOff,
 	OptStreamOn,
@@ -94,8 +104,6 @@ enum Option {
 	OptLogStatus,
 	OptVerbose,
 	OptSilent,
-	OptGetVideoOutFormat,
-	OptSetVideoOutFormat,
 	OptGetSlicedVbiCap,
 	OptGetSlicedVbiOutCap,
 	OptGetFBuf,
@@ -125,6 +133,7 @@ enum Option {
 static char options[OptLast];
 
 static int app_result;
+static int verbose;
 
 static unsigned capabilities;
 
@@ -162,6 +171,9 @@ static const flag_def service_def[] = {
 #define FmtChromaKey		(1L<<2)
 #define FmtGlobalAlpha		(1L<<3)
 #define FmtPixelFormat		(1L<<4)
+#define FmtLeft			(1L<<5)
+#define FmtTop			(1L<<6)
+#define FmtField		(1L<<7)
 
 /* crop specified */
 #define CropWidth		(1L<<0)
@@ -176,8 +188,10 @@ static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
 	{"get-fmt-video", no_argument, 0, OptGetVideoFormat},
 	{"set-fmt-video", required_argument, 0, OptSetVideoFormat},
+	{"try-fmt-video", required_argument, 0, OptTryVideoFormat},
 	{"get-fmt-video-out", no_argument, 0, OptGetVideoOutFormat},
 	{"set-fmt-video-out", required_argument, 0, OptSetVideoOutFormat},
+	{"try-fmt-video-out", required_argument, 0, OptTryVideoOutFormat},
 	{"help", no_argument, 0, OptHelp},
 	{"get-output", no_argument, 0, OptGetOutput},
 	{"set-output", required_argument, 0, OptSetOutput},
@@ -207,12 +221,17 @@ static struct option long_options[] = {
 	{"verbose", no_argument, 0, OptVerbose},
 	{"log-status", no_argument, 0, OptLogStatus},
 	{"get-fmt-overlay", no_argument, 0, OptGetOverlayFormat},
+	{"set-fmt-overlay", required_argument, 0, OptSetOverlayFormat},
+	{"try-fmt-overlay", required_argument, 0, OptTryOverlayFormat},
 	{"get-fmt-output-overlay", no_argument, 0, OptGetOutputOverlayFormat},
 	{"set-fmt-output-overlay", required_argument, 0, OptSetOutputOverlayFormat},
+	{"try-fmt-output-overlay", required_argument, 0, OptTryOutputOverlayFormat},
 	{"get-fmt-sliced-vbi", no_argument, 0, OptGetSlicedVbiFormat},
 	{"set-fmt-sliced-vbi", required_argument, 0, OptSetSlicedVbiFormat},
+	{"try-fmt-sliced-vbi", required_argument, 0, OptTrySlicedVbiFormat},
 	{"get-fmt-sliced-vbi-out", no_argument, 0, OptGetSlicedVbiOutFormat},
 	{"set-fmt-sliced-vbi-out", required_argument, 0, OptSetSlicedVbiOutFormat},
+	{"try-fmt-sliced-vbi-out", required_argument, 0, OptTrySlicedVbiOutFormat},
 	{"get-fmt-vbi", no_argument, 0, OptGetVbiFormat},
 	{"get-fmt-vbi-out", no_argument, 0, OptGetVbiOutFormat},
 	{"get-sliced-vbi-cap", no_argument, 0, OptGetSlicedVbiCap},
@@ -240,16 +259,6 @@ static void usage(void)
 	printf("Usage:\n");
 	printf("Common options:\n"
 	       "  --all              display all information available\n"
-	       "  -B, --get-fmt-sliced-vbi\n"
-	       "		     query the sliced VBI capture format [VIDIOC_G_FMT]\n"
-	       "  -b, --set-fmt-sliced-vbi=<mode>\n"
-	       "                     set the sliced VBI capture format to <mode> [VIDIOC_S_FMT]\n"
-	       "                     <mode> is a comma separated list of:\n"
-	       "                     off:      turn off sliced VBI (cannot be combined with other modes)\n"
-	       "                     teletext: teletext (PAL/SECAM)\n"
-	       "                     cc:       closed caption (NTSC)\n"
-	       "                     wss:      widescreen signal (PAL/SECAM)\n"
-	       "                     vps:      VPS (PAL/SECAM)\n"
 	       "  -C, --get-ctrl=<ctrl>[,<ctrl>...]\n"
 	       "                     get the value of the controls [VIDIOC_G_EXT_CTRLS]\n"
 	       "  -c, --set-ctrl=<ctrl>=<val>[,<ctrl>=<val>...]\n"
@@ -296,23 +305,41 @@ static void usage(void)
 	       "  --verbose          turn on verbose ioctl status reporting\n"
 	       "\n");
 	printf("Uncommon options:\n"
+	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "                     try the video capture format [VIDIOC_TRY_FMT]\n"
+	       "                     pixelformat is either the format index as reported by\n"
+	       "                     --list-formats, or the fourcc value as a string\n"
 	       "  --get-fmt-video-out\n"
 	       "     		     query the video output format [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-video-out=width=<w>,height=<h>\n"
 	       "                     set the video output format [VIDIOC_S_FMT]\n"
+	       "  --try-fmt-video-out=width=<w>,height=<h>\n"
+	       "                     try the video output format [VIDIOC_TRY_FMT]\n"
 	       "  --get-fmt-overlay  query the video overlay format [VIDIOC_G_FMT]\n"
 	       "  --get-fmt-output-overlay\n"
 	       "     		     query the video output overlay format [VIDIOC_G_FMT]\n"
-	       "  --set-fmt-output-overlay=chromakey=<key>,global_alpha=<alpha>\n"
-	       "     		     set the video output overlay format [VIDIOC_S_FMT]\n"
+	       "  --set-fmt-overlay\n"
+	       "  --try-fmt-overlay\n"
+	       "  --set-fmt-output-overlay\n"
+	       "  --try-fmt-output-overlay=chromakey=<key>,global_alpha=<alpha>,\n"
+	       "                           top=<t>,left=<l>,width=<w>,height=<h>,field=<f>\n"
+	       "     		     set/try the video or video output overlay format [VIDIOC_TRY_FMT]\n"
+	       "                     <f> can be one of:\n"
+	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt, alternate,\n"
+	       "                     interlaced_tb, interlaced_bt\n"
 	       "  --get-sliced-vbi-cap\n"
 	       "		     query the sliced VBI capture capabilities [VIDIOC_G_SLICED_VBI_CAP]\n"
 	       "  --get-sliced-vbi-out-cap\n"
 	       "		     query the sliced VBI output capabilities [VIDIOC_G_SLICED_VBI_CAP]\n"
+	       "  -B, --get-fmt-sliced-vbi\n"
+	       "		     query the sliced VBI capture format [VIDIOC_G_FMT]\n"
 	       "  --get-fmt-sliced-vbi-out\n"
 	       "		     query the sliced VBI output format [VIDIOC_G_FMT]\n"
-	       "  --set-fmt-sliced-vbi-out=<mode>\n"
-	       "                     set the sliced VBI output format to <mode> [VIDIOC_S_FMT]\n"
+	       "  -b, --set-fmt-sliced-vbi\n"
+	       "  --try-fmt-sliced-vbi\n"
+	       "  --set-fmt-sliced-vbi-out\n"
+	       "  --try-fmt-sliced-vbi-out=<mode>\n"
+	       "                     (try to) set the sliced VBI capture/output format to <mode> [VIDIOC_S/TRY_FMT]\n"
 	       "                     <mode> is a comma separated list of:\n"
 	       "                     off:      turn off sliced VBI (cannot be combined with other modes)\n"
 	       "                     teletext: teletext (PAL/SECAM)\n"
@@ -1021,7 +1048,7 @@ static int doioctl(int fd, int request, void *parm, const char *name)
 	if (options[OptSilent]) return retVal;
 	if (retVal < 0)
 		printf("%s: failed: %s\n", name, strerror(errno));
-	else if (options[OptVerbose])
+	else if (verbose)
 		printf("%s: ok\n", name);
 
 	return retVal;
@@ -1131,6 +1158,21 @@ static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
     }
 }
 
+static enum v4l2_field parse_field(const char *s)
+{
+	if (!strcmp(s, "any")) return V4L2_FIELD_ANY;
+	if (!strcmp(s, "none")) return V4L2_FIELD_NONE;
+	if (!strcmp(s, "top")) return V4L2_FIELD_TOP;
+	if (!strcmp(s, "bottom")) return V4L2_FIELD_BOTTOM;
+	if (!strcmp(s, "interlaced")) return V4L2_FIELD_INTERLACED;
+	if (!strcmp(s, "seq_tb")) return V4L2_FIELD_SEQ_TB;
+	if (!strcmp(s, "seq_bt")) return V4L2_FIELD_SEQ_BT;
+	if (!strcmp(s, "alternate")) return V4L2_FIELD_ALTERNATE;
+	if (!strcmp(s, "interlaced_tb")) return V4L2_FIELD_INTERLACED_TB;
+	if (!strcmp(s, "interlaced_bt")) return V4L2_FIELD_INTERLACED_BT;
+	return V4L2_FIELD_ANY;
+}
+
 int main(int argc, char **argv)
 {
 	char *value, *subs;
@@ -1146,6 +1188,7 @@ int main(int argc, char **argv)
 	unsigned int set_crop_overlay = 0;
 	unsigned int set_crop_out_overlay = 0;
 	unsigned int set_fbuf = 0;
+	unsigned int set_overlay_fmt = 0;
 	unsigned int set_overlay_fmt_out = 0;
 
 	int mode = V4L2_TUNER_MODE_STEREO;	/* set audio mode */
@@ -1159,6 +1202,7 @@ int main(int argc, char **argv)
 	struct v4l2_format vbi_fmt_out;	/* set_format/get_format for sliced VBI output */
 	struct v4l2_format raw_fmt;	/* set_format/get_format for VBI */
 	struct v4l2_format raw_fmt_out;	/* set_format/get_format for VBI output */
+	struct v4l2_format overlay_fmt;	/* set_format/get_format video overlay */
 	struct v4l2_format overlay_fmt_out;	/* set_format/get_format video overlay output */
 	struct v4l2_tuner tuner;        /* set_tuner/get_tuner */
 	struct v4l2_capability vcap;	/* list_cap */
@@ -1178,14 +1222,18 @@ int main(int argc, char **argv)
 	struct v4l2_frequency vf;	/* get_freq/set_freq */
 	struct v4l2_standard vs;	/* list_std */
 	int overlay;			/* overlay */
+	unsigned int *set_overlay_fmt_ptr;
+	struct v4l2_format *overlay_fmt_ptr;
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
+	int ret;
 
 	memset(&vfmt, 0, sizeof(vfmt));
 	memset(&vbi_fmt, 0, sizeof(vbi_fmt));
 	memset(&raw_fmt, 0, sizeof(raw_fmt));
 	memset(&vfmt_out, 0, sizeof(vfmt_out));
 	memset(&vbi_fmt_out, 0, sizeof(vbi_fmt_out));
+	memset(&overlay_fmt, 0, sizeof(overlay_fmt));
 	memset(&overlay_fmt_out, 0, sizeof(overlay_fmt_out));
 	memset(&raw_fmt_out, 0, sizeof(raw_fmt_out));
 	memset(&tuner, 0, sizeof(tuner));
@@ -1238,6 +1286,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case OptSetVideoFormat:
+		case OptTryVideoFormat:
 			subs = optarg;
 			while (*subs != '\0') {
 				static const char *const subopts[] = {
@@ -1269,6 +1318,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case OptSetVideoOutFormat:
+		case OptTryVideoOutFormat:
 			subs = optarg;
 			while (*subs != '\0') {
 				static const char *const subopts[] = {
@@ -1289,23 +1339,63 @@ int main(int argc, char **argv)
 				}
 			}
 			break;
+		case OptSetOverlayFormat:
+		case OptTryOverlayFormat:
 		case OptSetOutputOverlayFormat:
+		case OptTryOutputOverlayFormat:
+			switch (ch) {
+			case OptSetOverlayFormat:
+			case OptTryOverlayFormat:
+				set_overlay_fmt_ptr = &set_overlay_fmt;
+				overlay_fmt_ptr = &overlay_fmt;
+				break;
+			case OptSetOutputOverlayFormat:
+			case OptTryOutputOverlayFormat:
+				set_overlay_fmt_ptr = &set_overlay_fmt_out;
+				overlay_fmt_ptr = &overlay_fmt_out;
+				break;
+			}
 			subs = optarg;
 			while (*subs != '\0') {
 				static const char *const subopts[] = {
 					"chromakey",
 					"global_alpha",
+					"left",
+					"top",
+					"width",
+					"height",
+					"field",
 					NULL
 				};
 
 				switch (parse_subopt(&subs, subopts, &value)) {
 				case 0:
-					overlay_fmt_out.fmt.win.chromakey = strtol(value, 0L, 0);
-					set_overlay_fmt_out |= FmtChromaKey;
+					overlay_fmt_ptr->fmt.win.chromakey = strtol(value, 0L, 0);
+					*set_overlay_fmt_ptr |= FmtChromaKey;
 					break;
 				case 1:
-					overlay_fmt_out.fmt.win.global_alpha = strtol(value, 0L, 0);
-					set_overlay_fmt_out |= FmtGlobalAlpha;
+					overlay_fmt_ptr->fmt.win.global_alpha = strtol(value, 0L, 0);
+					*set_overlay_fmt_ptr |= FmtGlobalAlpha;
+					break;
+				case 2:
+					overlay_fmt_ptr->fmt.win.w.left = strtol(value, 0L, 0);
+					*set_overlay_fmt_ptr |= FmtLeft;
+					break;
+				case 3:
+					overlay_fmt_ptr->fmt.win.w.top = strtol(value, 0L, 0);
+					*set_overlay_fmt_ptr |= FmtTop;
+					break;
+				case 4:
+					overlay_fmt_ptr->fmt.win.w.width = strtol(value, 0L, 0);
+					*set_overlay_fmt_ptr |= FmtWidth;
+					break;
+				case 5:
+					overlay_fmt_ptr->fmt.win.w.height = strtol(value, 0L, 0);
+					*set_overlay_fmt_ptr |= FmtHeight;
+					break;
+				case 6:
+					overlay_fmt_ptr->fmt.win.field = parse_field(value);
+					*set_overlay_fmt_ptr |= FmtField;
 					break;
 				}
 			}
@@ -1439,11 +1529,13 @@ int main(int argc, char **argv)
 			break;
 		case OptSetSlicedVbiFormat:
 		case OptSetSlicedVbiOutFormat:
+		case OptTrySlicedVbiFormat:
+		case OptTrySlicedVbiOutFormat:
 		{
 			bool foundOff = false;
 			v4l2_format *fmt = &vbi_fmt;
 
-			if (ch == OptSetSlicedVbiOutFormat)
+			if (ch == OptSetSlicedVbiOutFormat || ch == OptTrySlicedVbiOutFormat)
 				fmt = &vbi_fmt_out;
 			fmt->fmt.sliced.service_set = 0;
 			subs = optarg;
@@ -1513,6 +1605,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	verbose = options[OptVerbose];
 	doioctl(fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP");
 	capabilities = vcap.capabilities;
 	find_controls(fd);
@@ -1632,7 +1725,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (options[OptSetVideoFormat]) {
+	if (options[OptSetVideoFormat] || options[OptTryVideoFormat]) {
 		struct v4l2_format in_vfmt;
 
 		in_vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -1653,12 +1746,17 @@ int main(int argc, char **argv)
 					in_vfmt.fmt.pix.pixelformat = fmt.pixelformat;
 				}
 			}
-			doioctl(fd, VIDIOC_S_FMT, &in_vfmt, "VIDIOC_S_FMT");
+			if (options[OptSetVideoFormat])
+				ret = doioctl(fd, VIDIOC_S_FMT, &in_vfmt, "VIDIOC_S_FMT");
+			else
+				ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt, "VIDIOC_TRY_FMT");
+			if (ret == 0 && verbose)
+				printfmt(in_vfmt);
 		}
 	}
 set_vid_fmt_error:
 
-	if (options[OptSetVideoOutFormat]) {
+	if (options[OptSetVideoOutFormat] || options[OptTryVideoOutFormat]) {
 		struct v4l2_format in_vfmt;
 
 		in_vfmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
@@ -1667,35 +1765,65 @@ set_vid_fmt_error:
 				in_vfmt.fmt.pix.width = vfmt_out.fmt.pix.width;
 			if (set_fmts_out & FmtHeight)
 				in_vfmt.fmt.pix.height = vfmt_out.fmt.pix.height;
-			doioctl(fd, VIDIOC_S_FMT, &in_vfmt, "VIDIOC_S_FMT");
+
+			if (options[OptSetVideoOutFormat])
+				ret = doioctl(fd, VIDIOC_S_FMT, &in_vfmt, "VIDIOC_S_FMT");
+			else
+				ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt, "VIDIOC_TRY_FMT");
+			if (ret == 0 && verbose)
+				printfmt(in_vfmt);
 		}
 	}
 
-	if (options[OptSetSlicedVbiFormat]) {
-		if (vbi_fmt.fmt.sliced.service_set == 0) {
-			// switch to raw mode
-			vbi_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
-			if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt, "VIDIOC_G_FMT") == 0)
-				doioctl(fd, VIDIOC_S_FMT, &vbi_fmt, "VIDIOC_S_FMT");
-		} else {
-			vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-			doioctl(fd, VIDIOC_S_FMT, &vbi_fmt, "VIDIOC_S_FMT");
+	if (options[OptSetSlicedVbiFormat] || options[OptTrySlicedVbiFormat]) {
+		vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+		if (options[OptSetSlicedVbiFormat])
+			ret = doioctl(fd, VIDIOC_S_FMT, &vbi_fmt, "VIDIOC_S_FMT");
+		else
+			ret = doioctl(fd, VIDIOC_TRY_FMT, &vbi_fmt, "VIDIOC_TRY_FMT");
+		if (ret == 0 && verbose)
+			printfmt(vbi_fmt);
+	}
+
+	if (options[OptSetSlicedVbiOutFormat] || options[OptTrySlicedVbiOutFormat]) {
+		vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
+		if (options[OptSetSlicedVbiOutFormat])
+			ret = doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out, "VIDIOC_S_FMT");
+		else
+			ret = doioctl(fd, VIDIOC_TRY_FMT, &vbi_fmt_out, "VIDIOC_TRY_FMT");
+		if (ret == 0 && verbose)
+			printfmt(vbi_fmt_out);
+	}
+
+	if (options[OptSetOverlayFormat] || options[OptTryOverlayFormat]) {
+		struct v4l2_format fmt;
+
+		fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
+		if (doioctl(fd, VIDIOC_G_FMT, &fmt, "VIDIOC_G_FMT") == 0) {
+			if (set_overlay_fmt & FmtChromaKey)
+				fmt.fmt.win.chromakey = overlay_fmt.fmt.win.chromakey;
+			if (set_overlay_fmt & FmtGlobalAlpha)
+				fmt.fmt.win.global_alpha = overlay_fmt.fmt.win.global_alpha;
+			if (set_overlay_fmt & FmtLeft)
+				fmt.fmt.win.w.left = overlay_fmt.fmt.win.w.left;
+			if (set_overlay_fmt & FmtTop)
+				fmt.fmt.win.w.top = overlay_fmt.fmt.win.w.top;
+			if (set_overlay_fmt & FmtWidth)
+				fmt.fmt.win.w.width = overlay_fmt.fmt.win.w.width;
+			if (set_overlay_fmt & FmtHeight)
+				fmt.fmt.win.w.height = overlay_fmt.fmt.win.w.height;
+			if (set_overlay_fmt & FmtField)
+				fmt.fmt.win.field = overlay_fmt.fmt.win.field;
+			if (options[OptSetOverlayFormat])
+				ret = doioctl(fd, VIDIOC_S_FMT, &fmt, "VIDIOC_S_FMT");
+			else
+				ret = doioctl(fd, VIDIOC_TRY_FMT, &fmt, "VIDIOC_TRY_FMT");
+			if (ret == 0 && verbose)
+				printfmt(fmt);
 		}
 	}
 
-	if (options[OptSetSlicedVbiOutFormat]) {
-		if (vbi_fmt_out.fmt.sliced.service_set == 0) {
-			// switch to raw mode
-			vbi_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
-			if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out, "VIDIOC_G_FMT") == 0)
-				doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out, "VIDIOC_S_FMT");
-		} else {
-			vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
-			doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out, "VIDIOC_S_FMT");
-		}
-	}
-
-	if (options[OptSetOutputOverlayFormat]) {
+	if (options[OptSetOutputOverlayFormat] || options[OptTryOutputOverlayFormat]) {
 		struct v4l2_format fmt;
 
 		fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY;
@@ -1704,7 +1832,22 @@ set_vid_fmt_error:
 				fmt.fmt.win.chromakey = overlay_fmt_out.fmt.win.chromakey;
 			if (set_overlay_fmt_out & FmtGlobalAlpha)
 				fmt.fmt.win.global_alpha = overlay_fmt_out.fmt.win.global_alpha;
-			doioctl(fd, VIDIOC_S_FMT, &fmt, "VIDIOC_S_FMT");
+			if (set_overlay_fmt_out & FmtLeft)
+				fmt.fmt.win.w.left = overlay_fmt_out.fmt.win.w.left;
+			if (set_overlay_fmt_out & FmtTop)
+				fmt.fmt.win.w.top = overlay_fmt_out.fmt.win.w.top;
+			if (set_overlay_fmt_out & FmtWidth)
+				fmt.fmt.win.w.width = overlay_fmt_out.fmt.win.w.width;
+			if (set_overlay_fmt_out & FmtHeight)
+				fmt.fmt.win.w.height = overlay_fmt_out.fmt.win.w.height;
+			if (set_overlay_fmt_out & FmtField)
+				fmt.fmt.win.field = overlay_fmt_out.fmt.win.field;
+			if (options[OptSetOutputOverlayFormat])
+				ret = doioctl(fd, VIDIOC_S_FMT, &fmt, "VIDIOC_S_FMT");
+			else
+				ret = doioctl(fd, VIDIOC_TRY_FMT, &fmt, "VIDIOC_TRY_FMT");
+			if (ret == 0 && verbose)
+				printfmt(fmt);
 		}
 	}
 
