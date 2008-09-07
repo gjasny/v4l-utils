@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <dirent.h>
 #include <math.h>
 #include <sys/klog.h>
 
@@ -43,6 +44,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <algorithm>
 
 /* Short option list
 
@@ -127,6 +129,7 @@ enum Option {
 	OptGetOverlayCropCap,
 	OptGetOutputOverlayCropCap,
 	OptOverlay,
+	OptListDevices,
 	OptLast = 256
 };
 
@@ -151,6 +154,9 @@ static ctrl_get_list get_ctrls;
 
 typedef std::map<std::string,std::string> ctrl_set_map;
 static ctrl_set_map set_ctrls;
+
+typedef std::vector<std::string> dev_vec;
+typedef std::map<std::string, std::string> dev_map;
 
 typedef struct {
 	unsigned flag;
@@ -251,6 +257,7 @@ static struct option long_options[] = {
 	{"get-crop-output-overlay", no_argument, 0, OptGetOutputOverlayCrop},
 	{"set-crop-output-overlay", required_argument, 0, OptSetOutputOverlayCrop},
 	{"overlay", required_argument, 0, OptOverlay},
+	{"list-devices", no_argument, 0, OptListDevices},
 	{0, 0, 0, 0}
 };
 
@@ -301,6 +308,7 @@ static void usage(void)
 	       "                     set the video capture format [VIDIOC_S_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
 	       "                     --list-formats, or the fourcc value as a string\n"
+	       "  --list-devices     list all v4l devices\n"
 	       "  --silent           only set the result code, do not print any messages\n"
 	       "  --verbose          turn on verbose ioctl status reporting\n"
 	       "\n");
@@ -1054,6 +1062,85 @@ static int doioctl(int fd, int request, void *parm, const char *name)
 	return retVal;
 }
 
+static bool is_v4l_dev(const char *name)
+{
+	return !memcmp(name, "vtx", 3) ||
+		!memcmp(name, "video", 5) ||
+		!memcmp(name, "radio", 5) ||
+		!memcmp(name, "vbi", 3);
+}
+
+static int calc_node_val(const char *s)
+{
+	int n = 0;
+
+	s = strrchr(s, '/') + 1;
+	if (!memcmp(s, "video", 5)) n = 0;
+	else if (!memcmp(s, "radio", 5)) n = 0x100;
+	else if (!memcmp(s, "vbi", 3)) n = 0x200;
+	else if (!memcmp(s, "vtx", 3)) n = 0x300;
+	n += atol(s + (n >= 0x200 ? 3 : 5));
+	return n;
+}
+
+static bool sort_on_device_name(const std::string &s1, const std::string &s2)
+{
+	int n1 = calc_node_val(s1.c_str());
+	int n2 = calc_node_val(s2.c_str());
+
+	return n1 < n2;
+}
+
+static void list_devices()
+{
+	DIR *dp;
+	struct dirent *ep;
+	dev_vec files;
+	dev_map cards;
+	struct v4l2_capability vcap;
+
+	dp = opendir("/dev");
+	if (dp == NULL) {
+		perror ("Couldn't open the directory");
+		return;
+	}
+	while (ep = readdir(dp))
+		if (is_v4l_dev(ep->d_name))
+			files.push_back(std::string("/dev/") + ep->d_name);
+	closedir(dp);
+
+#if 0
+	dp = opendir("/dev/v4l");
+	if (dp) {
+		while (ep = readdir(dp))
+			if (is_v4l_dev(ep->d_name))
+				files.push_back(std::string("/dev/v4l/") + ep->d_name);
+		closedir(dp);
+	}
+#endif
+
+	std::sort(files.begin(), files.end(), sort_on_device_name);
+
+	for (dev_vec::iterator iter = files.begin();
+			iter != files.end(); ++iter) {
+		int fd = open(iter->c_str(), O_RDWR);
+		std::string bus_info;
+
+		if (fd < 0)
+			continue;
+		doioctl(fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP");
+		close(fd);
+		bus_info = (const char *)vcap.bus_info;
+		if (cards[bus_info].empty())
+			cards[bus_info] += std::string((char *)vcap.card) + " (" + bus_info + "):\n";
+		cards[bus_info] += "\t" + (*iter) + "\n";
+	}
+	for (dev_map::iterator iter = cards.begin();
+			iter != cards.end(); ++iter) {
+		printf("%s\n", iter->second.c_str());
+	}
+}
+
 static int parse_subopt(char **subs, const char * const *subopts, char **value)
 {
 	int opt = getsubopt(subs, (char * const *)subopts, value);
@@ -1578,6 +1665,9 @@ int main(int argc, char **argv)
 			}
 			break;
 		}
+		case OptListDevices:
+			list_devices();
+			break;
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",
 				argv[optind]);
@@ -1643,6 +1733,7 @@ int main(int argc, char **argv)
 		options[OptGetFBuf] = 1;
 		options[OptGetCropCap] = 1;
 		options[OptGetOutputCropCap] = 1;
+		options[OptSilent] = 1;
 	}
 
 	/* Information Opts */
