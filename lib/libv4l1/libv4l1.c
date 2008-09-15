@@ -259,6 +259,15 @@ int v4l1_open (const char *file, int oflag, ...)
   struct v4l2_format fmt2;
   struct v4l2_input input2;
   struct v4l2_standard standard2;
+  int v4l_device = 0;
+
+  /* check if we're opening a video4linux2 device */
+  if (!strncmp(file, "/dev/video", 10) || !strncmp(file, "/dev/v4l/", 9)) {
+    /* Some apps open the device read only, but we need rw rights as the
+       buffers *MUST* be mapped rw */
+    oflag = (oflag & ~O_ACCMODE) | O_RDWR;
+    v4l_device = 1;
+  }
 
   /* original open code */
   if (oflag & O_CREAT)
@@ -276,11 +285,7 @@ int v4l1_open (const char *file, int oflag, ...)
     fd = syscall(SYS_open, file, oflag);
   /* end of original open code */
 
-  if (fd == -1)
-    return fd;
-
-  /* check if we're opening a video4linux2 device */
-  if (strncmp(file, "/dev/video", 10) && strncmp(file, "/dev/v4l/", 9))
+  if (fd == -1 || !v4l_device)
     return fd;
 
   /* check that this is an v4l2 device, no need to emulate v4l1 on

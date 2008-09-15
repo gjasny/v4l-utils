@@ -1,3 +1,12 @@
+libv4l-0.5.0
+------------
+* Add support for enumerating framesizes and frameintervals of emulated
+  formats when the driver supports it for the real format
+* Make sure the video device always gets opened RW even if the application
+  asks for RO
+* Add Genius E-Messenger 112 (093a:2476) to list of cams which have their
+  sensor upside down
+
 libv4l-0.4.3
 ------------
 * Add suport for YUYV and YVYU packed pixel formats (Jean-Francois Moine)

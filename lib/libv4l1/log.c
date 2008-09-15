@@ -66,6 +66,7 @@ static const char *v4l1_ioctls[] = {
 void v4l1_log_ioctl(unsigned long int request, void *arg, int result)
 {
   const char *ioctl_str = "unknown";
+  char buf[40];
 
   if (!v4l1_log_file)
     return;
@@ -77,6 +78,11 @@ void v4l1_log_ioctl(unsigned long int request, void *arg, int result)
 
   if (_IOC_TYPE(request) == 'v' && _IOC_NR(request) < ARRAY_SIZE(v4l1_ioctls))
     ioctl_str = v4l1_ioctls[_IOC_NR(request)];
+  else {
+    snprintf(buf, sizeof(buf), "unknown request: %c %d\n",
+      (int)_IOC_TYPE(request), (int)_IOC_NR(request));
+    ioctl_str = buf;
+  }
 
   fprintf(v4l1_log_file, "request == %s\n", ioctl_str);
 

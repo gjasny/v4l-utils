@@ -64,6 +64,7 @@
 #endif
 
 #define V4LCONVERT_ERROR_MSG_SIZE 256
+#define V4LCONVERT_MAX_FRAMESIZES 16
 
 #define V4LCONVERT_ERR(...) \
   snprintf(data->error_msg, V4LCONVERT_ERROR_MSG_SIZE, \
@@ -82,6 +83,8 @@ struct v4lconvert_data {
   unsigned int no_formats;
   char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
   struct jdec_private *jdec;
+  struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
+  unsigned int no_framesizes;
 };
 
 struct v4lconvert_flags_info {
