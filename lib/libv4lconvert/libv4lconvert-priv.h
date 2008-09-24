@@ -59,13 +59,22 @@
 #define V4L2_PIX_FMT_SRGGB8 v4l2_fourcc('R','G','G','B')
 #endif
 
+#ifndef V4L2_PIX_FMT_YVYU
+#define V4L2_PIX_FMT_YVYU v4l2_fourcc('Y', 'V', 'Y', 'U')
+#endif
+
 #define V4LCONVERT_ERROR_MSG_SIZE 256
+#define V4LCONVERT_MAX_FRAMESIZES 16
 
 #define V4LCONVERT_ERR(...) \
   snprintf(data->error_msg, V4LCONVERT_ERROR_MSG_SIZE, \
   "v4l-convert: error " __VA_ARGS__)
 
+/* Card flags */
 #define V4LCONVERT_UPSIDE_DOWN 0x01
+
+/* Pixformat flags */
+#define V4LCONVERT_COMPRESSED 0x01
 
 struct v4lconvert_data {
   int fd;
@@ -74,6 +83,8 @@ struct v4lconvert_data {
   unsigned int no_formats;
   char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
   struct jdec_private *jdec;
+  struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
+  unsigned int no_framesizes;
 };
 
 struct v4lconvert_flags_info {
@@ -81,10 +92,33 @@ struct v4lconvert_flags_info {
   int flags;
 };
 
+struct v4lconvert_pixfmt {
+  unsigned int fmt;
+  int flags;
+};
+
 void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yuyv_to_rgb24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yuyv_to_bgr24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yvyu_to_bgr24(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_yvyu_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst,

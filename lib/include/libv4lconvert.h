@@ -71,6 +71,16 @@ LIBV4L_PUBLIC int v4lconvert_convert(struct v4lconvert_data *data,
 /* get a string describing the last error*/
 LIBV4L_PUBLIC const char *v4lconvert_get_error_message(struct v4lconvert_data *data);
 
+/* Just like VIDIOC_ENUM_FRAMESIZE, except that the framesizes of emulated
+   formats can be enumerated as well. */
+LIBV4L_PUBLIC int v4lconvert_enum_framesizes(struct v4lconvert_data *data,
+  struct v4l2_frmsizeenum *frmsize);
+
+/* Just like VIDIOC_ENUM_FRAMEINTERVALS, except that the intervals of emulated
+   formats can be enumerated as well. */
+LIBV4L_PUBLIC int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
+  struct v4l2_frmivalenum *frmival);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

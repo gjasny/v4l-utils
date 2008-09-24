@@ -53,6 +53,15 @@ LIBV4L_PUBLIC int open (const char *file, int oflag, ...)
 {
   int fd;
   struct v4l2_capability cap;
+  int v4l_device = 0;
+
+  /* check if we're opening a video4linux2 device */
+  if (!strncmp(file, "/dev/video", 10) || !strncmp(file, "/dev/v4l/", 9)) {
+    /* Some apps open the device read only, but we need rw rights as the
+       buffers *MUST* be mapped rw */
+    oflag = (oflag & ~O_ACCMODE) | O_RDWR;
+    v4l_device = 1;
+  }
 
   /* original open code */
   if (oflag & O_CREAT)
@@ -70,11 +79,7 @@ LIBV4L_PUBLIC int open (const char *file, int oflag, ...)
     fd = syscall(SYS_open, file, oflag);
   /* end of original open code */
 
-  if (fd == -1)
-    return fd;
-
-  /* check if we're opening a video4linux2 device */
-  if (strncmp(file, "/dev/video", 10) && strncmp(file, "/dev/v4l/", 9))
+  if (fd == -1 || !v4l_device)
     return fd;
 
   /* check that this is an v4l2 device, libv4l2 only supports v4l2 devices */

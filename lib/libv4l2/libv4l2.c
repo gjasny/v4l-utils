@@ -649,6 +649,11 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	  (devices[index].flags & V4L2_ENABLE_ENUM_FMT_EMULATION))
 	is_capture_request = 1;
       break;
+    case VIDIOC_ENUM_FRAMESIZES:
+    case VIDIOC_ENUM_FRAMEINTERVALS:
+      if (devices[index].flags & V4L2_ENABLE_ENUM_FMT_EMULATION)
+	is_capture_request = 1;
+      break;
     case VIDIOC_TRY_FMT:
       if (((struct v4l2_format *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
 	is_capture_request = 1;
@@ -714,6 +719,14 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       result = v4lconvert_enum_fmt(devices[index].convert, arg);
       break;
 
+    case VIDIOC_ENUM_FRAMESIZES:
+      result = v4lconvert_enum_framesizes(devices[index].convert, arg);
+      break;
+
+    case VIDIOC_ENUM_FRAMEINTERVALS:
+      result = v4lconvert_enum_frameintervals(devices[index].convert, arg);
+      break;
+
     case VIDIOC_TRY_FMT:
       result = v4lconvert_try_format(devices[index].convert, arg, NULL);
       break;
@@ -738,6 +751,17 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
 	if (result)
 	  break;
+
+	if (src_fmt.fmt.pix.pixelformat != dest_fmt->fmt.pix.pixelformat &&
+	    v4l2_log_file) {
+	  int pixfmt = src_fmt.fmt.pix.pixelformat;
+
+	  fprintf(v4l2_log_file, "VIDIOC_S_FMT converting from: %c%c%c%c\n",
+	    pixfmt & 0xff,
+	    (pixfmt >> 8) & 0xff,
+	    (pixfmt >> 16) & 0xff,
+	    pixfmt >> 24);
+	}
 
 	/* Maybe after try format has adjusted width/height etc, to whats
 	   available nothing has changed (on the cam side) ? */

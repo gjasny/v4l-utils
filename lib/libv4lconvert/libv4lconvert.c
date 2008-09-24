@@ -30,37 +30,45 @@
 /* Note for proper functioning of v4lconvert_enum_fmt the first entries in
   supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
 #define SUPPORTED_DST_PIXFMTS \
-  V4L2_PIX_FMT_RGB24, \
-  V4L2_PIX_FMT_BGR24, \
-  V4L2_PIX_FMT_YUV420
+  { V4L2_PIX_FMT_RGB24,  0 }, \
+  { V4L2_PIX_FMT_BGR24,  0 }, \
+  { V4L2_PIX_FMT_YUV420, 0 }
 
-static const unsigned int supported_src_pixfmts[] = {
+static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
+  unsigned int pixelformat);
+
+/* Note uncompressed formats must go first so that they are prefered by
+   v4lconvert_try_format for low resolutions */
+static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   SUPPORTED_DST_PIXFMTS,
-  V4L2_PIX_FMT_MJPEG,
-  V4L2_PIX_FMT_JPEG,
-  V4L2_PIX_FMT_SBGGR8,
-  V4L2_PIX_FMT_SGBRG8,
-  V4L2_PIX_FMT_SGRBG8,
-  V4L2_PIX_FMT_SRGGB8,
-  V4L2_PIX_FMT_SPCA501,
-  V4L2_PIX_FMT_SPCA505,
-  V4L2_PIX_FMT_SPCA508,
-  V4L2_PIX_FMT_SPCA561,
-  V4L2_PIX_FMT_SN9C10X,
-  V4L2_PIX_FMT_PAC207,
-  V4L2_PIX_FMT_PJPG,
+  { V4L2_PIX_FMT_YUYV,    0 },
+  { V4L2_PIX_FMT_YVYU,    0 },
+  { V4L2_PIX_FMT_SBGGR8,  0 },
+  { V4L2_PIX_FMT_SGBRG8,  0 },
+  { V4L2_PIX_FMT_SGRBG8,  0 },
+  { V4L2_PIX_FMT_SRGGB8,  0 },
+  { V4L2_PIX_FMT_SPCA501, 0 },
+  { V4L2_PIX_FMT_SPCA505, 0 },
+  { V4L2_PIX_FMT_SPCA508, 0 },
+  { V4L2_PIX_FMT_MJPEG,   V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_JPEG,    V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_SPCA561, V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_SN9C10X, V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_PAC207,  V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_PJPG,    V4LCONVERT_COMPRESSED },
 };
 
-static const unsigned int supported_dst_pixfmts[] = {
+static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
   SUPPORTED_DST_PIXFMTS
 };
 
 /* List of cams which need special flags */
 static const struct v4lconvert_flags_info v4lconvert_flags[] = {
-  { "USB Camera (0471:0325)", V4LCONVERT_UPSIDE_DOWN }, /* SPC200NC */
-  { "USB Camera (0471:0326)", V4LCONVERT_UPSIDE_DOWN }, /* SPC300NC */
   { "SPC 200NC      ", V4LCONVERT_UPSIDE_DOWN },
   { "SPC 300NC      ", V4LCONVERT_UPSIDE_DOWN },
+  { "USB Camera (0471:0325)", V4LCONVERT_UPSIDE_DOWN }, /* SPC200NC */
+  { "USB Camera (0471:0326)", V4LCONVERT_UPSIDE_DOWN }, /* SPC300NC */
+  { "USB Camera (093a:2476)", V4LCONVERT_UPSIDE_DOWN }, /* Genius E-M 112 */
 };
 
 struct v4lconvert_data *v4lconvert_create(int fd)
@@ -85,10 +93,12 @@ struct v4lconvert_data *v4lconvert_create(int fd)
       break;
 
     for (j = 0; j < ARRAY_SIZE(supported_src_pixfmts); j++)
-      if (fmt.pixelformat == supported_src_pixfmts[j]) {
+      if (fmt.pixelformat == supported_src_pixfmts[j].fmt) {
 	data->supported_src_formats |= 1 << j;
 	break;
       }
+
+    v4lconvert_get_framesizes(data, fmt.pixelformat);
   }
 
   data->no_formats = i;
@@ -115,6 +125,17 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
   free(data);
 }
 
+static int v4lconvert_supported_dst_format(unsigned int pixelformat)
+{
+  int i;
+
+  for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
+    if (supported_dst_pixfmts[i].fmt == pixelformat)
+      break;
+
+  return i != ARRAY_SIZE(supported_dst_pixfmts);
+}
+
 /* See libv4lconvert.h for description of in / out parameters */
 int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
 {
@@ -128,7 +149,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
 
   for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
     if (!(data->supported_src_formats & (1 << i))) {
-      faked_fmts[no_faked_fmts] = supported_dst_pixfmts[i];
+      faked_fmts[no_faked_fmts] = supported_dst_pixfmts[i].fmt;
       no_faked_fmts++;
     }
 
@@ -159,12 +180,8 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
   unsigned int desired_pixfmt = dest_fmt->fmt.pix.pixelformat;
   struct v4l2_format try_fmt, closest_fmt = { .type = 0 };
 
-  for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
-    if (supported_dst_pixfmts[i] == desired_pixfmt)
-      break;
-
   /* Can we do conversion to the requested format & type? */
-  if (i == ARRAY_SIZE(supported_dst_pixfmts) ||
+  if (!v4lconvert_supported_dst_format(desired_pixfmt) ||
       dest_fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE) {
     int ret = syscall(SYS_ioctl, data->fd, VIDIOC_TRY_FMT, dest_fmt);
     if (src_fmt)
@@ -178,11 +195,11 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
       continue;
 
     try_fmt = *dest_fmt;
-    try_fmt.fmt.pix.pixelformat = supported_src_pixfmts[i];
+    try_fmt.fmt.pix.pixelformat = supported_src_pixfmts[i].fmt;
 
     if (!syscall(SYS_ioctl, data->fd, VIDIOC_TRY_FMT, &try_fmt))
     {
-      if (try_fmt.fmt.pix.pixelformat == supported_src_pixfmts[i]) {
+      if (try_fmt.fmt.pix.pixelformat == supported_src_pixfmts[i].fmt) {
 	int size_x_diff = abs((int)try_fmt.fmt.pix.width -
 			      (int)dest_fmt->fmt.pix.width);
 	int size_y_diff = abs((int)try_fmt.fmt.pix.height -
@@ -191,7 +208,9 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
 				 size_y_diff * size_y_diff;
 	if (size_diff < closest_fmt_size_diff ||
 	    (size_diff == closest_fmt_size_diff &&
-	     try_fmt.fmt.pix.pixelformat == desired_pixfmt)) {
+	     (supported_src_pixfmts[i].fmt == desired_pixfmt ||
+	      ((try_fmt.fmt.pix.width > 176 || try_fmt.fmt.pix.height > 144) &&
+	       (supported_src_pixfmts[i].flags & V4LCONVERT_COMPRESSED))))) {
 	  closest_fmt_size_diff = size_diff;
 	  closest_fmt = try_fmt;
 	}
@@ -237,8 +256,6 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
   const struct v4l2_format *src_fmt,  /* in */
   const struct v4l2_format *dest_fmt) /* in */
 {
-  int i;
-
   if(memcmp(src_fmt, dest_fmt, sizeof(*src_fmt)))
     return 1; /* Formats differ */
 
@@ -246,11 +263,7 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
     return 0; /* Formats identical and we don't need flip */
 
   /* Formats are identical, but we need flip, do we support the dest_fmt? */
-  for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
-    if (supported_dst_pixfmts[i] == dest_fmt->fmt.pix.pixelformat)
-      break;
-
-  if (i == ARRAY_SIZE(supported_dst_pixfmts))
+  if (!v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat))
     return 0; /* Needs flip but we cannot do it :( */
   else
     return 1; /* Needs flip and thus conversion */
@@ -518,6 +531,40 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       }
       break;
 
+    case V4L2_PIX_FMT_YUYV:
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_yuyv_to_rgb24(src, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_yuyv_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      default:
+	v4lconvert_yuyv_to_yuv420(src, dest, dest_fmt->fmt.pix.width,
+		    dest_fmt->fmt.pix.height);
+	break;
+      }
+      break;
+
+    case V4L2_PIX_FMT_YVYU:
+      switch (dest_fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_yvyu_to_rgb24(src, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_yvyu_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
+				   dest_fmt->fmt.pix.height);
+	break;
+      default:
+	v4lconvert_yvyu_to_yuv420(src, dest, dest_fmt->fmt.pix.width,
+		    dest_fmt->fmt.pix.height);
+	break;
+      }
+      break;
+
     default:
       V4LCONVERT_ERR("Unknown src format in conversion\n");
       errno = EINVAL;
@@ -569,4 +616,122 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 const char *v4lconvert_get_error_message(struct v4lconvert_data *data)
 {
   return data->error_msg;
+}
+
+static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
+  unsigned int pixelformat)
+{
+  int i, j, match;
+  struct v4l2_frmsizeenum frmsize = { .pixel_format = pixelformat };
+
+  for (i = 0; ; i++) {
+    frmsize.index = i;
+    if (syscall(SYS_ioctl, data->fd, VIDIOC_ENUM_FRAMESIZES, &frmsize))
+      break;
+
+    /* We got a framesize, check we don't have the same one already */
+    match = 0;
+    for (j = 0; j < data->no_framesizes && !match; j++) {
+      if (frmsize.type != data->framesizes[j].type)
+	continue;
+
+      switch(frmsize.type) {
+	case V4L2_FRMSIZE_TYPE_DISCRETE:
+	  if(!memcmp(&frmsize.discrete, &data->framesizes[j].discrete,
+		     sizeof(frmsize.discrete)))
+	    match = 1;
+	  break;
+	case V4L2_FRMSIZE_TYPE_CONTINUOUS:
+	case V4L2_FRMSIZE_TYPE_STEPWISE:
+	  if(!memcmp(&frmsize.stepwise, &data->framesizes[j].stepwise,
+		     sizeof(frmsize.stepwise)))
+	    match = 1;
+	  break;
+      }
+    }
+    /* Add this framesize if it is not already in our list */
+    if (!match) {
+      if (data->no_framesizes == V4LCONVERT_MAX_FRAMESIZES) {
+	fprintf(stderr,
+	  "libv4lconvert: warning more framesizes then I can handle!\n");
+	return;
+      }
+      data->framesizes[data->no_framesizes].type = frmsize.type;
+      switch(frmsize.type) {
+	case V4L2_FRMSIZE_TYPE_DISCRETE:
+	  data->framesizes[data->no_framesizes].discrete = frmsize.discrete;
+	  break;
+	case V4L2_FRMSIZE_TYPE_CONTINUOUS:
+	case V4L2_FRMSIZE_TYPE_STEPWISE:
+	  data->framesizes[data->no_framesizes].stepwise = frmsize.stepwise;
+	  break;
+      }
+      data->no_framesizes++;
+    }
+  }
+}
+
+int v4lconvert_enum_framesizes(struct v4lconvert_data *data,
+  struct v4l2_frmsizeenum *frmsize)
+{
+  if (!v4lconvert_supported_dst_format(frmsize->pixel_format))
+    return syscall(SYS_ioctl, data->fd, VIDIOC_ENUM_FRAMESIZES, frmsize);
+
+  if (frmsize->index >= data->no_framesizes) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  frmsize->type = data->framesizes[frmsize->index].type;
+  switch(frmsize->type) {
+    case V4L2_FRMSIZE_TYPE_DISCRETE:
+      frmsize->discrete = data->framesizes[frmsize->index].discrete;
+      break;
+    case V4L2_FRMSIZE_TYPE_CONTINUOUS:
+    case V4L2_FRMSIZE_TYPE_STEPWISE:
+      frmsize->stepwise = data->framesizes[frmsize->index].stepwise;
+      break;
+  }
+
+  return 0;
+}
+
+int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
+  struct v4l2_frmivalenum *frmival)
+{
+  int res;
+  struct v4l2_format src_fmt, dest_fmt;
+
+  if (!v4lconvert_supported_dst_format(frmival->pixel_format))
+    return syscall(SYS_ioctl, data->fd, VIDIOC_ENUM_FRAMEINTERVALS, frmival);
+
+  /* Check which format we will be using to convert to frmival->pixel_format */
+  memset(&dest_fmt, 0, sizeof(dest_fmt));
+  dest_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  dest_fmt.fmt.pix.pixelformat = frmival->pixel_format;
+  dest_fmt.fmt.pix.width = frmival->width;
+  dest_fmt.fmt.pix.height = frmival->height;
+  if ((res = v4lconvert_try_format(data, &dest_fmt, &src_fmt)))
+    return res;
+
+  /* Check the requested format is supported exactly as requested */
+  if (dest_fmt.fmt.pix.pixelformat != frmival->pixel_format ||
+      dest_fmt.fmt.pix.width  != frmival->width ||
+      dest_fmt.fmt.pix.height != frmival->height) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  /* Enumerate the frameintervals of the source format we will be using */
+  frmival->pixel_format = src_fmt.fmt.pix.pixelformat;
+  frmival->width = src_fmt.fmt.pix.width;
+  frmival->height = src_fmt.fmt.pix.height;
+  res = syscall(SYS_ioctl, data->fd, VIDIOC_ENUM_FRAMEINTERVALS, frmival);
+
+  /* Restore the requested format in the frmival struct */
+  frmival->pixel_format = dest_fmt.fmt.pix.pixelformat;
+  frmival->width = dest_fmt.fmt.pix.width;
+  frmival->height = dest_fmt.fmt.pix.height;
+
+  return res;
 }
