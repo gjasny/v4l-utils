@@ -42,8 +42,8 @@ include ../Make.rules
 
 parse.h: $(KERNEL_DIR)/include/linux/input.h
 	@echo generating parse.h
-	@echo -en "struct parse_key {\n\tchar *name;\n\tunsigned int value;\n} " >parse.h
-	@echo -en "keynames[] = {\n" >>parse.h
+	@printf "struct parse_key {\n\tchar *name;\n\tunsigned int value;\n} " >parse.h
+	@printf "keynames[] = {\n" >>parse.h
 
 	@more $(KERNEL_DIR)/include/linux/input.h |perl -n \
 	-e 'if (m/^\#define\s+(KEY_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
@@ -51,7 +51,7 @@ parse.h: $(KERNEL_DIR)/include/linux/input.h
 	-e 'if (m/^\#define\s+(BTN_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
 	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
 	>> parse.h
-	@echo -en "\t{ NULL, 0}\n};\n" >>parse.h
+	@printf "\t{ NULL, 0}\n};\n" >>parse.h
 
 keytables:
 	-mkdir -p keycodes
