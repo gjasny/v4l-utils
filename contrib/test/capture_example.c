@@ -47,6 +47,7 @@ struct buffer          *buffers;
 static unsigned int     n_buffers;
 static int		out_buf;
 static int              force_format;
+static int              frame_count = 70;
 
 static void errno_exit(const char *s)
 {
@@ -171,7 +172,7 @@ static void mainloop(void)
 {
 	unsigned int count;
 
-	count = 1000;
+	count = frame_count;
 
 	while (count-- > 0) {
 		for (;;) {
@@ -558,19 +559,21 @@ static void usage(FILE *fp, int argc, char **argv)
 {
 	fprintf(fp,
 		 "Usage: %s [options]\n\n"
+		 "Version 1.3\n"
 		 "Options:\n"
-		 "-d | --device name   Video device name [/dev/video0]\n"
+		 "-d | --device name   Video device name [%s]\n"
 		 "-h | --help          Print this message\n"
-		 "-m | --mmap          Use memory mapped buffers\n"
+		 "-m | --mmap          Use memory mapped buffers [default]\n"
 		 "-r | --read          Use read() calls\n"
 		 "-u | --userp         Use application allocated buffers\n"
 		 "-o | --output        Outputs stream to stdout\n"
 		 "-f | --format        Force format to 640x480 YUYV\n"
+		 "-c | --count         Number of frames to grab [%i]\n"
 		 "",
-		 argv[0]);
+		 argv[0],dev_name,frame_count );
 }
 
-static const char short_options[] = "d:hmruof";
+static const char short_options[] = "d:hmruofc:";
 
 static const struct option
 long_options[] = {
@@ -581,6 +584,7 @@ long_options[] = {
 	{ "userp",  no_argument,       NULL, 'u' },
 	{ "output", no_argument,       NULL, 'o' },
 	{ "format", no_argument,       NULL, 'f' },
+	{ "count",  required_argument, NULL, 'c' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -628,6 +632,13 @@ int main(int argc, char **argv)
 
 		case 'f':
 			force_format++;
+			break;
+
+		case 'c':
+			errno = 0;
+			frame_count = strtol(optarg, NULL, 0);
+			if (errno)
+				errno_exit(optarg);
 			break;
 
 		default:
