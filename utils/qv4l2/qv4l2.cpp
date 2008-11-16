@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <dirent.h>
 
 #include "fileopen.xpm"
 
@@ -41,6 +42,7 @@ ApplicationWindow::ApplicationWindow()
 
     fd = -1;
 
+    videoDevice = NULL;
     sigMapper = NULL;
     QToolBar * fileTools = new QToolBar( this, "file operations" );
     fileTools->setLabel( "File Operations" );
@@ -129,17 +131,57 @@ void ApplicationWindow::setDevice(const QString &device)
 	setCentralWidget(tabs);
 }
 
-void ApplicationWindow::choose()
+void ApplicationWindow::selectdev(int index)
 {
-    QString fn = QFileDialog::getOpenFileName( "/dev/v4l", QString::null,
-					       this);
-    if ( !fn.isEmpty() ) {
-	    setDevice(fn);
-    }
-    else
-	statusBar()->message( "Loading aborted", 2000 );
+	setDevice(videoDevice->text(index));
 }
 
+void ApplicationWindow::add_dirVideoDevice(char *dirname)
+{
+	DIR		*dir;
+	struct dirent	*entry;
+	char		*vid = "video";
+	char		*rad = "radio";
+	char		*vbi = "vbi";
+	char		name[512], *p;
+
+	dir = opendir(dirname);
+	if (!dir)
+		return;
+
+	strcpy(name, dirname);
+	strcat(name, "/");
+	p = name + strlen(name);
+
+	entry = readdir(dir);
+	while (entry) {
+		if (!strncmp(entry->d_name, vid, strlen(vid)) ||
+		    !strncmp(entry->d_name, rad, strlen(rad)) ||
+		    !strncmp(entry->d_name, vbi, strlen(vbi))) {
+			strcpy(p, entry->d_name);
+
+			videoDevice->insertItem(name);
+		}
+		entry = readdir(dir);
+	}
+	closedir(dir);
+}
+
+void ApplicationWindow::choose()
+{
+	if (videoDevice)
+		delete videoDevice;
+
+	videoDevice = new QPopupMenu(this);
+
+	add_dirVideoDevice("/dev");
+	add_dirVideoDevice("/dev/v4l");
+
+	connect(videoDevice, SIGNAL(activated(int)), this, SLOT(selectdev(int)));
+
+	videoDevice->show();
+	videoDevice->setFocus();
+}
 
 void ApplicationWindow::closeEvent( QCloseEvent* ce )
 {

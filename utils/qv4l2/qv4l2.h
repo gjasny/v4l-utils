@@ -59,12 +59,14 @@ protected:
     void closeEvent( QCloseEvent* );
 
 private slots:
+    void selectdev(int);
     void choose();
     void ctrlAction(int);
 
     void about();
 
 private:
+    void add_dirVideoDevice(char *dirname);
     void addTabs();
     void finishGrid(QWidget *vbox, QGrid *grid, unsigned ctrl_class, bool odd);
     void addCtrl(QGrid *grid, const struct v4l2_queryctrl &qctrl);
@@ -88,6 +90,7 @@ private:
     QString filename;
     QSignalMapper *sigMapper;
     QTabWidget *tabs;
+    QPopupMenu *videoDevice;
     int fd;
     CtrlMap ctrlMap;
     WidgetMap widgetMap;
