@@ -66,7 +66,7 @@ private slots:
     void about();
 
 private:
-    void add_dirVideoDevice(char *dirname);
+    void add_dirVideoDevice(const char *dirname);
     void addTabs();
     void finishGrid(QWidget *vbox, QGrid *grid, unsigned ctrl_class, bool odd);
     void addCtrl(QGrid *grid, const struct v4l2_queryctrl &qctrl);

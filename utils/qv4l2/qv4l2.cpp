@@ -136,13 +136,13 @@ void ApplicationWindow::selectdev(int index)
 	setDevice(videoDevice->text(index));
 }
 
-void ApplicationWindow::add_dirVideoDevice(char *dirname)
+void ApplicationWindow::add_dirVideoDevice(const char *dirname)
 {
 	DIR		*dir;
 	struct dirent	*entry;
-	char		*vid = "video";
-	char		*rad = "radio";
-	char		*vbi = "vbi";
+	const char	*vid = "video";
+	const char	*rad = "radio";
+	const char	*vbi = "vbi";
 	char		name[512], *p;
 
 	dir = opendir(dirname);
