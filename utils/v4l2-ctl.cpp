@@ -1096,6 +1096,7 @@ static void list_devices()
 	DIR *dp;
 	struct dirent *ep;
 	dev_vec files;
+	dev_map links;
 	dev_map cards;
 	struct v4l2_capability vcap;
 
@@ -1119,6 +1120,37 @@ static void list_devices()
 	}
 #endif
 
+	/* Find device nodes which are links to other device nodes */
+	for (dev_vec::iterator iter = files.begin();
+			iter != files.end(); ) {
+		char link[64+1];
+		int link_len;
+		std::string target;
+
+		link_len = readlink(iter->c_str(), link, 64);
+		if (link_len < 0) {	/* Not a link or error */
+			iter++;
+			continue;
+		}
+		link[link_len] = '\0';
+
+		/* Only remove from files list if target itself is in list */
+		if (link[0] != '/')	/* Relative link */
+			target = std::string("/dev/");
+		target += link;
+		if (find(files.begin(), files.end(), target) == files.end()) {
+			iter++;
+			continue;
+		}
+
+		/* Move the device node from files to links */
+		if (links[target].empty())
+			links[target] = *iter;
+		else
+			links[target] += ", " + *iter;
+		files.erase(iter);
+	}
+
 	std::sort(files.begin(), files.end(), sort_on_device_name);
 
 	for (dev_vec::iterator iter = files.begin();
@@ -1133,7 +1165,10 @@ static void list_devices()
 		bus_info = (const char *)vcap.bus_info;
 		if (cards[bus_info].empty())
 			cards[bus_info] += std::string((char *)vcap.card) + " (" + bus_info + "):\n";
-		cards[bus_info] += "\t" + (*iter) + "\n";
+		cards[bus_info] += "\t" + (*iter);
+		if (!(links[*iter].empty()))
+			cards[bus_info] += " <- " + links[*iter];
+		cards[bus_info] += "\n";
 	}
 	for (dev_map::iterator iter = cards.begin();
 			iter != cards.end(); ++iter) {
