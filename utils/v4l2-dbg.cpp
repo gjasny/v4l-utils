@@ -136,7 +136,7 @@ static struct option long_options[] = {
 	{"set-register", required_argument, 0, OptSetRegister},
 	{"chip", required_argument, 0, OptChip},
 	{"scan-chip-idents", no_argument, 0, OptScanChipIdents},
-	{"get-chip-ident", required_argument, 0, OptGetChipIdent},
+	{"get-chip-ident", no_argument, 0, OptGetChipIdent},
 	{"info", no_argument, 0, OptGetDriverInfo},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"log-status", no_argument, 0, OptLogStatus},
