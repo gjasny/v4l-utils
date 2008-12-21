@@ -2,9 +2,6 @@
    v4l-ioctl-test - This small utility sends dumb v4l2 ioctl to a device.
    It is meant to check ioctl debug messages generated and to check
 	if a function is implemented by that device.
-   flag INTERNAL will send v4l internal messages, defined at v4l2-common.h
-	and v4l_decoder.h. These messages shouldn't be handled by video
-   driver itself, but for internal video and/or audio decoders.
 
    Copyright (C) 2005 Mauro Carvalho Chehab <mchehab@infradead.org>
 
@@ -23,212 +20,247 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/*
- * Internal ioctl doesn't work anymore, due to the changes at
- * v4l2-dev.h.
- */
-//#define INTERNAL 1 /* meant for testing ioctl debug msgs */
-
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
-#include "linux/videodev.h"
 
-#ifdef INTERNAL
-typedef __u8 u8;
-typedef __u32 u32;
-#include <linux/version.h>
-#include <media/v4l2-common.h>
-#include <linux/video_decoder.h>
-#else
-typedef u_int32_t u32;
-#endif
+#define __OLD_VIDIOC_
+#include "linux/videodev.h"
 
 /* All possible parameters used on v4l ioctls */
 union v4l_parms {
 	int		i;
-	unsigned long	u64;
-	u32		u32;
+	unsigned long	ulong;
+	u_int32_t	u32;
 	v4l2_std_id	id;
+	enum v4l2_priority prio;
 
 #ifdef CONFIG_VIDEO_V4L1_COMPAT
 	/* V4L1 structs */
-	struct vbi_format p_vbi_format;
-	struct video_audio p_video_audio;
-	struct video_buffer p_video_buffer;
 	struct video_capability p_video_capability;
-	struct video_capture p_video_capture;
 	struct video_channel p_video_channel;
-	struct video_code p_video_code;
-	struct video_info p_video_info;
-	struct video_key p_video_key;
-	struct video_mbuf p_video_mbuf;
-	struct video_mmap p_video_mmap;
-	struct video_picture p_video_picture;
-	struct video_play_mode p_video_play_mode;
 	struct video_tuner p_video_tuner;
-	struct video_unit p_video_unit;
+	struct video_picture p_video_picture;
 	struct video_window p_video_window;
+	struct video_buffer p_video_buffer;
+	struct video_key p_video_key;
+	struct video_audio p_video_audio;
+	struct video_mmap p_video_mmap;
+	struct video_mbuf p_video_mbuf;
+	struct video_unit p_video_unit;
+	struct video_capture p_video_capture;
+	struct video_play_mode p_video_play_mode;
+	struct video_info p_video_info;
+	struct video_code p_video_code;
+	struct vbi_format p_vbi_format;
 #endif
 
 	/* V4L2 structs */
-	struct v4l2_audioout p_v4l2_audioout;
-	struct v4l2_audio p_v4l2_audio;
-	struct v4l2_buffer p_v4l2_buffer;
-	struct v4l2_control p_v4l2_control;
-	struct v4l2_cropcap p_v4l2_cropcap;
-	struct v4l2_crop p_v4l2_crop;
+	struct v4l2_capability p_v4l2_capability;
 	struct v4l2_fmtdesc p_v4l2_fmtdesc;
 	struct v4l2_format p_v4l2_format;
-	struct v4l2_frequency p_v4l2_frequency;
+	struct v4l2_requestbuffers p_v4l2_requestbuffers;
+	struct v4l2_buffer p_v4l2_buffer;
+	struct v4l2_framebuffer p_v4l2_framebuffer;
+	struct v4l2_streamparm p_v4l2_streamparm;
+	struct v4l2_standard p_v4l2_standard;
 	struct v4l2_input p_v4l2_input;
-	struct v4l2_modulator p_v4l2_modulator;
-	struct v4l2_output p_v4l2_output;
+	struct v4l2_control p_v4l2_control;
+	struct v4l2_tuner p_v4l2_tuner;
+	struct v4l2_audio p_v4l2_audio;
 	struct v4l2_queryctrl p_v4l2_queryctrl;
 	struct v4l2_querymenu p_v4l2_querymenu;
-	struct v4l2_requestbuffers p_v4l2_requestbuffers;
-	struct v4l2_standard p_v4l2_standard;
-	struct v4l2_streamparm p_v4l2_streamparm;
-	struct v4l2_tuner p_v4l2_tuner;
-
-#ifdef INTERNAL
-	/* Decoder structs */
-
-	struct video_decoder_capability p_video_decoder_capability;
-	struct video_decoder_init p_video_decoder_init;
-
-	/* Internal V4L2 structs */
+	struct v4l2_output p_v4l2_output;
+	struct v4l2_audioout p_v4l2_audioout;
+	struct v4l2_modulator p_v4l2_modulator;
+	struct v4l2_frequency p_v4l2_frequency;
+	struct v4l2_cropcap p_v4l2_cropcap;
+	struct v4l2_crop p_v4l2_crop;
+	struct v4l2_jpegcompression p_v4l2_jpegcompression;
+	struct v4l2_sliced_vbi_cap p_v4l2_sliced_vbi_cap;
+	struct v4l2_ext_controls p_v4l2_ext_controls;
+	struct v4l2_frmsizeenum p_v4l2_frmsizeenum;
+	struct v4l2_frmivalenum p_v4l2_frmivalenum;
+	struct v4l2_enc_idx p_v4l2_enc_idx;
+	struct v4l2_encoder_cmd p_v4l2_encoder_cmd;
 	struct v4l2_register p_v4l2_register;
-	struct v4l2_sliced_vbi_data p_v4l2_sliced_vbi_data;
-#endif
+	struct v4l2_chip_ident p_v4l2_chip_ident;
+	struct v4l2_hw_freq_seek p_v4l2_hw_freq_seek;
 };
 
+#define ioc(cmd) { cmd, #cmd }
+
 /* All defined ioctls */
-int ioctls[] = {
+static const struct {
+	u_int32_t cmd;
+	const char *name;
+} ioctls[] = {
 #ifdef CONFIG_VIDEO_V4L1_COMPAT
-	/* V4L ioctls */
-	VIDIOCCAPTURE,/* int */
-	VIDIOCGAUDIO,/* struct video_audio */
-	VIDIOCGCAP,/* struct video_capability */
-	VIDIOCGCAPTURE,/* struct video_capture */
-	VIDIOCGCHAN,/* struct video_channel */
-	VIDIOCGFBUF,/* struct video_buffer */
-	VIDIOCGFREQ,/* unsigned long */
-	VIDIOCGMBUF,/* struct video_mbuf */
-	VIDIOCGPICT,/* struct video_picture */
-	VIDIOCGPLAYINFO,/* struct video_info */
-	VIDIOCGTUNER,/* struct video_tuner */
-	VIDIOCGUNIT,/* struct video_unit */
-	VIDIOCGVBIFMT,/* struct vbi_format */
-	VIDIOCGWIN,/* struct video_window */
-	VIDIOCKEY,/* struct video_key */
-	VIDIOCMCAPTURE,/* struct video_mmap */
-	VIDIOCSAUDIO,/* struct video_audio */
-	VIDIOCSCAPTURE,/* struct video_capture */
-	VIDIOCSCHAN,/* struct video_channel */
-	VIDIOCSFBUF,/* struct video_buffer */
-	VIDIOCSFREQ,/* unsigned long */
-	VIDIOCSMICROCODE,/* struct video_code */
-	VIDIOCSPICT,/* struct video_picture */
-	VIDIOCSPLAYMODE,/* struct video_play_mode */
-	VIDIOCSTUNER,/* struct video_tuner */
-	VIDIOCSVBIFMT,/* struct vbi_format */
-	VIDIOCSWIN,/* struct video_window */
-	VIDIOCSWRITEMODE,/* int */
-	VIDIOCSYNC,/* int */
+	/* V4L1 ioctls */
+	ioc(VIDIOCGCAP),		/* struct video_capability */
+	ioc(VIDIOCGCHAN),		/* struct video_channel */
+	ioc(VIDIOCSCHAN),		/* struct video_channel */
+	ioc(VIDIOCGTUNER),		/* struct video_tuner */
+	ioc(VIDIOCSTUNER),		/* struct video_tuner */
+	ioc(VIDIOCGPICT),		/* struct video_picture */
+	ioc(VIDIOCSPICT),		/* struct video_picture */
+	ioc(VIDIOCCAPTURE),		/* int */
+	ioc(VIDIOCGWIN),		/* struct video_window */
+	ioc(VIDIOCSWIN),		/* struct video_window */
+	ioc(VIDIOCGFBUF),		/* struct video_buffer */
+	ioc(VIDIOCSFBUF),		/* struct video_buffer */
+	ioc(VIDIOCKEY),			/* struct video_key */
+	ioc(VIDIOCGFREQ),		/* unsigned long */
+	ioc(VIDIOCSFREQ),		/* unsigned long */
+	ioc(VIDIOCGAUDIO),		/* struct video_audio */
+	ioc(VIDIOCSAUDIO),		/* struct video_audio */
+	ioc(VIDIOCSYNC),		/* int */
+	ioc(VIDIOCMCAPTURE),		/* struct video_mmap */
+	ioc(VIDIOCGMBUF),		/* struct video_mbuf */
+	ioc(VIDIOCGUNIT),		/* struct video_unit */
+	ioc(VIDIOCGCAPTURE),		/* struct video_capture */
+	ioc(VIDIOCSCAPTURE),		/* struct video_capture */
+	ioc(VIDIOCSPLAYMODE),		/* struct video_play_mode */
+	ioc(VIDIOCSWRITEMODE),		/* int */
+	ioc(VIDIOCGPLAYINFO),		/* struct video_info */
+	ioc(VIDIOCSMICROCODE),		/* struct video_code */
+	ioc(VIDIOCGVBIFMT),		/* struct vbi_format */
+	ioc(VIDIOCSVBIFMT),		/* struct vbi_format */
 #endif
 	/* V4L2 ioctls */
-
-	VIDIOC_CROPCAP,/* struct v4l2_cropcap */
-	VIDIOC_DQBUF,/* struct v4l2_buffer */
-	VIDIOC_ENUMAUDIO,/* struct v4l2_audio */
-	VIDIOC_ENUMAUDOUT,/* struct v4l2_audioout */
-	VIDIOC_ENUM_FMT,/* struct v4l2_fmtdesc */
-	VIDIOC_ENUMINPUT,/* struct v4l2_input */
-	VIDIOC_G_INPUT,/* int */
-	VIDIOC_S_INPUT,/* int */
-	VIDIOC_ENUMOUTPUT,/* struct v4l2_output */
-	VIDIOC_ENUMSTD,/* struct v4l2_standard */
-	VIDIOC_G_STD, /*v4l2_std_id */
-	VIDIOC_S_STD, /*v4l2_std_id */
-	VIDIOC_G_CROP,/* struct v4l2_crop */
-	VIDIOC_G_CTRL,/* struct v4l2_control */
-	VIDIOC_G_FMT,/* struct v4l2_format */
-	VIDIOC_G_FREQUENCY,/* struct v4l2_frequency */
-	VIDIOC_G_MODULATOR,/* struct v4l2_modulator */
-	VIDIOC_G_PARM,/* struct v4l2_streamparm */
-	VIDIOC_G_TUNER,/* struct v4l2_tuner */
-	VIDIOC_QBUF,/* struct v4l2_buffer */
-	VIDIOC_QUERYBUF,/* struct v4l2_buffer */
-	VIDIOC_QUERYCTRL,/* struct v4l2_queryctrl */
-	VIDIOC_QUERYMENU,/* struct v4l2_querymenu */
-	VIDIOC_REQBUFS,/* struct v4l2_requestbuffers */
-	VIDIOC_S_CTRL,/* struct v4l2_control */
-	VIDIOC_S_FMT,/* struct v4l2_format */
-	VIDIOC_S_INPUT,/* int */
-	VIDIOC_S_OUTPUT,/* int */
-	VIDIOC_S_PARM,/* struct v4l2_streamparm */
-	VIDIOC_TRY_FMT,/* struct v4l2_format */
-
-#if 0
-	VIDIOC_G_AUDIO_OLD,/* struct v4l2_audio */
-	VIDIOC_G_AUDOUT_OLD,/* struct v4l2_audioout */
-	VIDIOC_OVERLAY_OLD,/* int */
-#endif
-
-#ifdef INTERNAL
-	/* V4L2 internal ioctls */
-	AUDC_SET_RADIO,/* no args */
-	TDA9887_SET_CONFIG,/* int */
-	TUNER_SET_STANDBY,/* int */
-	TUNER_SET_TYPE_ADDR,/* int */
-
-	VIDIOC_INT_AUDIO_CLOCK_FREQ,/* u32 */
-	VIDIOC_INT_G_CHIP_IDENT,/* enum v4l2_chip_ident * */
-	VIDIOC_INT_I2S_CLOCK_FREQ,/* u32 */
-	VIDIOC_INT_S_REGISTER,/* struct v4l2_register */
-	VIDIOC_INT_S_VBI_DATA,/* struct v4l2_sliced_vbi_data */
-
-	/* Decoder ioctls */
-	 DECODER_ENABLE_OUTPUT,/* int */
-	 DECODER_GET_CAPABILITIES,/* struct video_decoder_capability */
-	 DECODER_GET_STATUS,/* int */
-	 DECODER_INIT,/* struct video_decoder_init */
-	 DECODER_SET_GPIO,/* int */
-	 DECODER_SET_INPUT,/* int */
-	 DECODER_SET_NORM,/* int */
-	 DECODER_SET_OUTPUT,/* int */
-	 DECODER_SET_PICTURE,/* struct video_picture */
-	 DECODER_SET_VBI_BYPASS,/* int */
+	ioc(VIDIOC_QUERYCAP),		/* struct v4l2_capability */
+	ioc(VIDIOC_RESERVED),
+	ioc(VIDIOC_ENUM_FMT),		/* struct v4l2_fmtdesc */
+	ioc(VIDIOC_G_FMT),		/* struct v4l2_format */
+	ioc(VIDIOC_S_FMT),		/* struct v4l2_format */
+	ioc(VIDIOC_REQBUFS),		/* struct v4l2_requestbuffers */
+	ioc(VIDIOC_QUERYBUF),		/* struct v4l2_buffer */
+	ioc(VIDIOC_G_FBUF),		/* struct v4l2_framebuffer */
+	ioc(VIDIOC_S_FBUF),		/* struct v4l2_framebuffer */
+	ioc(VIDIOC_OVERLAY),		/* int */
+	ioc(VIDIOC_QBUF),		/* struct v4l2_buffer */
+	ioc(VIDIOC_DQBUF),		/* struct v4l2_buffer */
+	ioc(VIDIOC_STREAMON),		/* int */
+	ioc(VIDIOC_STREAMOFF),		/* int */
+	ioc(VIDIOC_G_PARM),		/* struct v4l2_streamparm */
+	ioc(VIDIOC_S_PARM),		/* struct v4l2_streamparm */
+	ioc(VIDIOC_G_STD),		/* v4l2_std_id */
+	ioc(VIDIOC_S_STD),		/* v4l2_std_id */
+	ioc(VIDIOC_ENUMSTD),		/* struct v4l2_standard */
+	ioc(VIDIOC_ENUMINPUT),		/* struct v4l2_input */
+	ioc(VIDIOC_G_CTRL),		/* struct v4l2_control */
+	ioc(VIDIOC_S_CTRL),		/* struct v4l2_control */
+	ioc(VIDIOC_G_TUNER),		/* struct v4l2_tuner */
+	ioc(VIDIOC_S_TUNER),		/* struct v4l2_tuner */
+	ioc(VIDIOC_G_AUDIO),		/* struct v4l2_audio */
+	ioc(VIDIOC_S_AUDIO),		/* struct v4l2_audio */
+	ioc(VIDIOC_QUERYCTRL),		/* struct v4l2_queryctrl */
+	ioc(VIDIOC_QUERYMENU),		/* struct v4l2_querymenu */
+	ioc(VIDIOC_G_INPUT),		/* int */
+	ioc(VIDIOC_S_INPUT),		/* int */
+	ioc(VIDIOC_G_OUTPUT),		/* int */
+	ioc(VIDIOC_S_OUTPUT),		/* int */
+	ioc(VIDIOC_ENUMOUTPUT),		/* struct v4l2_output */
+	ioc(VIDIOC_G_AUDOUT),		/* struct v4l2_audioout */
+	ioc(VIDIOC_S_AUDOUT),		/* struct v4l2_audioout */
+	ioc(VIDIOC_G_MODULATOR),	/* struct v4l2_modulator */
+	ioc(VIDIOC_S_MODULATOR),	/* struct v4l2_modulator */
+	ioc(VIDIOC_G_FREQUENCY),	/* struct v4l2_frequency */
+	ioc(VIDIOC_S_FREQUENCY),	/* struct v4l2_frequency */
+	ioc(VIDIOC_CROPCAP),		/* struct v4l2_cropcap */
+	ioc(VIDIOC_G_CROP),		/* struct v4l2_crop */
+	ioc(VIDIOC_S_CROP),		/* struct v4l2_crop */
+	ioc(VIDIOC_G_JPEGCOMP),		/* struct v4l2_jpegcompression */
+	ioc(VIDIOC_S_JPEGCOMP),		/* struct v4l2_jpegcompression */
+	ioc(VIDIOC_QUERYSTD),		/* v4l2_std_id */
+	ioc(VIDIOC_TRY_FMT),		/* struct v4l2_format */
+	ioc(VIDIOC_ENUMAUDIO),		/* struct v4l2_audio */
+	ioc(VIDIOC_ENUMAUDOUT),		/* struct v4l2_audioout */
+	ioc(VIDIOC_G_PRIORITY),		/* enum v4l2_priority */
+	ioc(VIDIOC_S_PRIORITY),		/* enum v4l2_priority */
+	ioc(VIDIOC_G_SLICED_VBI_CAP),	/* struct v4l2_sliced_vbi_cap */
+	ioc(VIDIOC_LOG_STATUS),
+	ioc(VIDIOC_G_EXT_CTRLS),	/* struct v4l2_ext_controls */
+	ioc(VIDIOC_S_EXT_CTRLS),	/* struct v4l2_ext_controls */
+	ioc(VIDIOC_TRY_EXT_CTRLS),	/* struct v4l2_ext_controls */
+	ioc(VIDIOC_ENUM_FRAMESIZES),	/* struct v4l2_frmsizeenum */
+	ioc(VIDIOC_ENUM_FRAMEINTERVALS),/* struct v4l2_frmivalenum */
+	ioc(VIDIOC_G_ENC_INDEX),	/* struct v4l2_enc_idx */
+	ioc(VIDIOC_ENCODER_CMD),	/* struct v4l2_encoder_cmd */
+	ioc(VIDIOC_TRY_ENCODER_CMD),	/* struct v4l2_encoder_cmd */
+	ioc(VIDIOC_DBG_S_REGISTER),	/* struct v4l2_register */
+	ioc(VIDIOC_DBG_G_REGISTER),	/* struct v4l2_register */
+	ioc(VIDIOC_G_CHIP_IDENT),	/* struct v4l2_chip_ident */
+	ioc(VIDIOC_S_HW_FREQ_SEEK),	/* struct v4l2_hw_freq_seek */
+#ifdef __OLD_VIDIOC_
+	ioc(VIDIOC_OVERLAY_OLD),	/* int */
+	ioc(VIDIOC_S_PARM_OLD),		/* struct v4l2_streamparm */
+	ioc(VIDIOC_S_CTRL_OLD),		/* struct v4l2_control */
+	ioc(VIDIOC_G_AUDIO_OLD),	/* struct v4l2_audio */
+	ioc(VIDIOC_G_AUDOUT_OLD),	/* struct v4l2_audioout */
+	ioc(VIDIOC_CROPCAP_OLD),	/* struct v4l2_cropcap */
 #endif
 };
 #define S_IOCTLS sizeof(ioctls)/sizeof(ioctls[0])
 
 /********************************************************************/
 
-int main (void)
+int main(int argc, char **argv)
 {
-	int fd=0, ret=0;
+	int fd = 0, ret = 0;
 	unsigned i;
-	char *device="/dev/video0";
-	union v4l_parms p;
+	unsigned maxlen = 0;
+	char *device = "/dev/video0";
+	char marker[8] = { 0xde, 0xad, 0xbe, 0xef, 0xad, 0xbc, 0xcb, 0xda };
+	char p[sizeof(union v4l_parms) + 2 * sizeof(marker)];
+	static const char *dirs[] = {
+		"  IO",
+		" IOW",
+		" IOR",
+		"IOWR"
+	};
 
+	if (argv[1])
+		device = argv[1];
 	if ((fd = open(device, O_RDONLY)) < 0) {
-		perror("Couldn't open video0");
-		return(-1);
+		fprintf(stderr, "Couldn't open %s\n", device);
+		return -1;
 	}
 
-	for (i=0;i<S_IOCTLS;i++) {
-		memset(&p,0,sizeof(p));
-		ret=ioctl(fd,ioctls[i], (void *) &p);
-		printf("%i: ioctl=0x%08x, return=%d\n",i, ioctls[i], ret);
+	for (i = 0; i < S_IOCTLS; i++) {
+		if (strlen(ioctls[i].name) > maxlen)
+			maxlen = strlen(ioctls[i].name);
 	}
 
+	for (i = 0; i < S_IOCTLS; i++) {
+		char buf[maxlen + 100];
+		const char *name = ioctls[i].name;
+		u_int32_t cmd = ioctls[i].cmd;
+		int dir = _IOC_DIR(cmd);
+		char type = _IOC_TYPE(cmd);
+		int nr = _IOC_NR(cmd);
+		int sz = _IOC_SIZE(cmd);
+
+		/* Check whether the front and back markers aren't overwritten.
+		   Useful to verify the compat32 code. */
+		memset(&p, 0, sizeof(p));
+		memcpy(p, marker, sizeof(marker));
+		memcpy(p + sz + sizeof(marker), marker, sizeof(marker));
+		sprintf(buf, "ioctl 0x%08x = %s('%c', %2d, %4d) = %-*s",
+			cmd, dirs[dir], type, nr, sz, maxlen, name);
+		errno = 0;
+		ret = ioctl(fd, cmd, (void *)&p[sizeof(marker)]);
+		perror(buf);
+		if (memcmp(p, marker, sizeof(marker)))
+			fprintf(stderr, "%s: front marker overwritten!\n", name);
+		if (memcmp(p + sizeof(marker) + sz, marker, sizeof(marker)))
+			fprintf(stderr, "%s: back marker overwritten!\n", name);
+	}
 	close (fd);
-
-	return (0);
+	return 0;
 }
