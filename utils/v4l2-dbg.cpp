@@ -706,9 +706,9 @@ list_done:
 		else {
 			printf("Symbols for driver %s:\n", vcap.driver);
 			for (int i = 0; i < curr_bd->regs_size; i++)
-				printf("0x%08x: %s\n", curr_bd->regs[i], curr_bd->regs[i].name);
+				printf("0x%08x: %s\n", curr_bd->regs[i].reg, curr_bd->regs[i].name);
 			for (int i = 0; i < curr_bd->alt_regs_size; i++)
-				printf("0x%08x: %s\n", curr_bd->alt_regs[i], curr_bd->alt_regs[i].name);
+				printf("0x%08x: %s\n", curr_bd->alt_regs[i].reg, curr_bd->alt_regs[i].name);
 		}
 	}
 
