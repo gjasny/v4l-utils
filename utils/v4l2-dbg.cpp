@@ -45,6 +45,7 @@
 #include "v4l2-dbg-bttv.h"
 #include "v4l2-dbg-saa7134.h"
 #include "v4l2-dbg-em28xx.h"
+#include "v4l2-dbg-ac97.h"
 
 #define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
 
@@ -58,6 +59,15 @@ struct board_list {
 };
 
 static const struct board_list boards[] = {
+#define AC97_BOARD 0
+	{				/* From ac97-dbg.h */
+		AC97_IDENT,
+		sizeof(AC97_PREFIX) - 1,
+		ac97_regs,
+		ARRAY_SIZE(ac97_regs),
+		NULL,
+		0,
+	},
 	{				/* From bttv-dbg.h */
 		BTTV_IDENT,
 		sizeof(BTTV_PREFIX) - 1,
@@ -451,7 +461,6 @@ int main(int argc, char **argv)
 			}
 			if (!strcasecmp(optarg, "ac97")) {
 				match_type = V4L2_CHIP_MATCH_AC97;
-				match_chip = strtoul(optarg + 4, NULL, 0);
 				break;
 			}
 			match_type = V4L2_CHIP_MATCH_I2C_DRIVER;
@@ -537,10 +546,14 @@ int main(int argc, char **argv)
 		printf("%s", cap2s(vcap.capabilities).c_str());
 	}
 
-	for (int board = ARRAY_SIZE(boards) - 1; board >= 0; board--) {
-		if (!strcasecmp((char *)vcap.driver, boards[board].name)) {
-			curr_bd = &boards[board];
-			break;
+	if (match_type == V4L2_CHIP_MATCH_AC97) {
+		curr_bd = &boards[AC97_BOARD];
+	} else {
+		for (int board = ARRAY_SIZE(boards) - 1; board >= 0; board--) {
+			if (!strcasecmp((char *)vcap.driver, boards[board].name)) {
+				curr_bd = &boards[board];
+				break;
+			}
 		}
 	}
 
