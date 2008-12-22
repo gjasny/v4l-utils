@@ -293,6 +293,21 @@ static unsigned long long parse_reg(const struct board_list *curr_bd, const std:
 	return strtoull(reg.c_str(), NULL, 0);
 }
 
+static const char *reg_name(const struct board_list *curr_bd, unsigned long long reg)
+{
+	if (curr_bd) {
+		for (int i = 0; i < curr_bd->regs_size; i++) {
+			if (reg == curr_bd->regs[i].reg)
+				return curr_bd->regs[i].name;
+		}
+		for (int i = 0; i < curr_bd->alt_regs_size; i++) {
+			if (reg == curr_bd->regs[i].reg)
+				return curr_bd->regs[i].name;
+		}
+	}
+	return NULL;
+}
+
 static const char *binary(unsigned long long val)
 {
 	static char bin[80];
@@ -582,9 +597,19 @@ int main(int argc, char **argv)
 			if (ioctl(fd, VIDIOC_DBG_G_REGISTER, &get_reg) < 0)
 				fprintf(stderr, "ioctl: VIDIOC_DBG_G_REGISTER "
 						"failed for 0x%llx\n", get_reg.reg);
-			else
-				printf("%llx = %llxh = %lldd = %sb\n", get_reg.reg,
+			else {
+				const char *name = reg_name(curr_bd, get_reg.reg);
+
+				printf("Register ");
+
+				if (name)
+					printf("%s", name);
+				else
+					printf("0x%08llx", get_reg.reg);
+
+				printf(" = %llxh (%lldd  %sb)\n",
 					get_reg.val, get_reg.val, binary(get_reg.val));
+			}
 		}
 	}
 
