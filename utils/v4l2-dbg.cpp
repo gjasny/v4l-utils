@@ -487,6 +487,7 @@ int main(int argc, char **argv)
 			subs = optarg;
 			if (subs == NULL)
 				break;
+
 			while (*subs != '\0') {
 				static const char * const subopts[] = {
 					"min",
@@ -658,6 +659,43 @@ int main(int argc, char **argv)
 		}
 		printf("ioctl: VIDIOC_DBG_G_REGISTER\n");
 
+		if (curr_bd) {
+			if (reg_min_arg.empty())
+				reg_min = 0;
+			else
+				reg_min = parse_reg(curr_bd, reg_min_arg);
+
+
+			if (reg_max_arg.empty())
+				reg_max = 1<<31 - 1;
+			else
+				reg_max = parse_reg(curr_bd, reg_max_arg);
+
+			for (int i = 0; i < curr_bd->regs_size; i++) {
+				if (reg_min_arg.empty() || ((curr_bd->regs[i].reg >= reg_min) && curr_bd->regs[i].reg <= reg_max)) {
+					get_reg.reg = curr_bd->regs[i].reg;
+
+					if (ioctl(fd, VIDIOC_DBG_G_REGISTER, &get_reg) < 0)
+						fprintf(stderr, "ioctl: VIDIOC_DBG_G_REGISTER "
+								"failed for 0x%llx\n", get_reg.reg);
+					else {
+						const char *name = reg_name(curr_bd, get_reg.reg);
+
+						printf("Register ");
+
+						if (name)
+							printf("%s (0x%08llx)", name, get_reg.reg);
+						else
+							printf("0x%08llx", get_reg.reg);
+
+						printf(" = %llxh (%lldd  %sb)\n",
+							get_reg.val, get_reg.val, binary(get_reg.val));
+					}
+				}
+			}
+			goto list_done;
+		}
+
 		if (!reg_min_arg.empty()) {
 			reg_min = parse_reg(curr_bd, reg_min_arg);
 			if (reg_max_arg.empty())
@@ -668,6 +706,7 @@ int main(int argc, char **argv)
 			print_regs(fd, &get_reg, reg_min, reg_max, stride);
 			goto list_done;
 		}
+
 		/* try to match the i2c chip */
 		switch (get_reg.match_chip) {
 		case I2C_DRIVERID_SAA711X:
