@@ -549,8 +549,21 @@ int main(int argc, char **argv)
 		while (optind < argc) {
 			set_reg.val = strtoull(argv[optind++], NULL, 0);
 			if (doioctl(fd, VIDIOC_DBG_S_REGISTER, &set_reg,
-						"VIDIOC_DBG_S_REGISTER") == 0)
-				printf("register 0x%llx set to 0x%llx\n", set_reg.reg, set_reg.val);
+						"VIDIOC_DBG_S_REGISTER") >= 0) {
+				const char *name = reg_name(curr_bd, set_reg.reg);
+
+				printf("Register ");
+
+				if (name)
+					printf("%s", name);
+				else
+					printf("0x%08llx", set_reg.reg);
+
+				printf(" set to 0x%llx\n", set_reg.val);
+			} else {
+				printf("Failed to set register 0x%08llx value 0x%llx\n",
+					set_reg.reg, set_reg.val);
+			}
 			set_reg.reg++;
 		}
 	}
