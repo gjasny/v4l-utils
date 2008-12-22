@@ -555,7 +555,7 @@ int main(int argc, char **argv)
 				printf("Register ");
 
 				if (name)
-					printf("%s", name);
+					printf("%s (0x%08llx)", name, set_reg.reg);
 				else
 					printf("0x%08llx", set_reg.reg);
 
@@ -616,7 +616,7 @@ int main(int argc, char **argv)
 				printf("Register ");
 
 				if (name)
-					printf("%s", name);
+					printf("%s (0x%08llx)", name, get_reg.reg);
 				else
 					printf("0x%08llx", get_reg.reg);
 
