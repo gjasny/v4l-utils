@@ -158,6 +158,7 @@ static void usage(void)
 	       "                     It can be one of:\n"
 	       "                         I2C driver ID (see --list-driverids)\n"
 	       "                         I2C 7-bit address\n"
+	       "                         AC97: for ac97 anciliary mixer\n"
 	       "                         host<num>: host chip number <num>\n"
 	       "                         host (default): same as host0\n"
 	       "  -l, --list-registers[=min=<addr>[,max=<addr>]]\n"
@@ -445,6 +446,11 @@ int main(int argc, char **argv)
 			}
 			if (!memcmp(optarg, "host", 4)) {
 				match_type = V4L2_CHIP_MATCH_HOST;
+				match_chip = strtoul(optarg + 4, NULL, 0);
+				break;
+			}
+			if (!strcasecmp(optarg, "ac97")) {
+				match_type = V4L2_CHIP_MATCH_AC97;
 				match_chip = strtoul(optarg + 4, NULL, 0);
 				break;
 			}

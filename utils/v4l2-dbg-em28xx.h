@@ -20,10 +20,13 @@
 
 /* Register name prefix */
 #define EM2800_PREFIX "EM2800_"
+#define EM2874_PREFIX "EM2874_"
 #define EM2880_PREFIX "EM2880_"
 #define EM28XX_PREFIX "EM28XX_"
 
 static struct board_regs em28xx_regs[] = {
+	{0x00, EM28XX_PREFIX "CHIPCFG", 1},
+	{0x04, EM2880_PREFIX "GPO", 1},
 	{0x08, EM28XX_PREFIX "GPIO", 1},
 
 	{0x06, EM28XX_PREFIX "I2C_CLK", 1},
@@ -76,12 +79,14 @@ static struct board_regs em28xx_regs[] = {
 	{0x42, EM28XX_PREFIX "AC97ADDR", 1},
 	{0x43, EM28XX_PREFIX "AC97BUSY", 1},
 
-	{0x02, EM28XX_PREFIX "MASTER_AC97", 1},
-	{0x10, EM28XX_PREFIX "LINE_IN_AC97", 1},
-	{0x14, EM28XX_PREFIX "VIDEO_AC97", 1},
+	{0x45, EM28XX_PREFIX "IR", 1},
+
+	{0x50, EM2874_PREFIX "IR_CONFIG", 1},
+	{0x51, EM2874_PREFIX "IR", 1},
+	{0x5f, EM2874_PREFIX "TS_ENABLE", 1},
+	{0x80, EM2874_PREFIX "GPIO", 1},
 };
 
 static struct board_regs em28xx_alt_regs[] = {
 	{0x08, EM2800_PREFIX "AUDIOSRC", 1},
-	{0x04, EM2880_PREFIX "GPO", 1},
 };
