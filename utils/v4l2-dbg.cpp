@@ -79,8 +79,8 @@ static const struct board_list boards[] = {
 		sizeof(EM28XX_PREFIX) - 1,
 		em28xx_regs,
 		ARRAY_SIZE(em28xx_regs),
-		NULL,
-		0,
+		em28xx_alt_regs,
+		ARRAY_SIZE(em28xx_alt_regs),
 	},
 };
 

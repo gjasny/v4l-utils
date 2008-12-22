@@ -24,8 +24,6 @@
 #define EM28XX_PREFIX "EM28XX_"
 
 static struct board_regs em28xx_regs[] = {
-	{0x08, EM2800_PREFIX "AUDIOSRC", 1},
-	{0x04, EM2880_PREFIX "GPO", 1},
 	{0x08, EM28XX_PREFIX "GPIO", 1},
 
 	{0x06, EM28XX_PREFIX "I2C_CLK", 1},
@@ -81,4 +79,9 @@ static struct board_regs em28xx_regs[] = {
 	{0x02, EM28XX_PREFIX "MASTER_AC97", 1},
 	{0x10, EM28XX_PREFIX "LINE_IN_AC97", 1},
 	{0x14, EM28XX_PREFIX "VIDEO_AC97", 1},
+};
+
+static struct board_regs em28xx_alt_regs[] = {
+	{0x08, EM2800_PREFIX "AUDIOSRC", 1},
+	{0x04, EM2880_PREFIX "GPO", 1},
 };
