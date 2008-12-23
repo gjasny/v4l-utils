@@ -46,6 +46,7 @@
 #include "v4l2-dbg-saa7134.h"
 #include "v4l2-dbg-em28xx.h"
 #include "v4l2-dbg-ac97.h"
+#include "v4l2-dbg-tvp5150.h"
 
 #define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
 
@@ -91,6 +92,14 @@ static const struct board_list boards[] = {
 		ARRAY_SIZE(em28xx_regs),
 		em28xx_alt_regs,
 		ARRAY_SIZE(em28xx_alt_regs),
+	},
+	{				/* From tvp5150-dbg.h */
+		TVP5150_IDENT,
+		sizeof(TVP5150_PREFIX) - 1,
+		tvp5150_regs,
+		ARRAY_SIZE(tvp5150_regs),
+		NULL,
+		0,
 	},
 };
 
@@ -406,6 +415,7 @@ int main(int argc, char **argv)
 	std::vector<std::string> get_regs;
 	int match_type = V4L2_CHIP_MATCH_HOST;
 	int match_chip = 0;
+	char driver[255];
 
 	memset(&set_reg, 0, sizeof(set_reg));
 	memset(&get_reg, 0, sizeof(get_reg));
@@ -464,6 +474,7 @@ int main(int argc, char **argv)
 				break;
 			}
 			match_type = V4L2_CHIP_MATCH_I2C_DRIVER;
+			strcpy(driver, optarg);
 			match_chip = parse_chip(optarg);
 			if (!match_chip) {
 				fprintf(stderr, "unknown driver ID %s\n", optarg);
@@ -549,9 +560,16 @@ int main(int argc, char **argv)
 
 	if (match_type == V4L2_CHIP_MATCH_AC97) {
 		curr_bd = &boards[AC97_BOARD];
-	} else {
+	} else if (match_type == V4L2_CHIP_MATCH_HOST) {
 		for (int board = ARRAY_SIZE(boards) - 1; board >= 0; board--) {
 			if (!strcasecmp((char *)vcap.driver, boards[board].name)) {
+				curr_bd = &boards[board];
+				break;
+			}
+		}
+	} else if (match_type == V4L2_CHIP_MATCH_I2C_DRIVER) {
+		for (int board = ARRAY_SIZE(boards) - 1; board >= 0; board--) {
+			if (!strcasecmp(driver, boards[board].name)) {
 				curr_bd = &boards[board];
 				break;
 			}
@@ -651,6 +669,7 @@ int main(int argc, char **argv)
 
 		get_reg.match_type = match_type;
 		get_reg.match_chip = match_chip;
+
 		if (forcedstride) {
 			stride = forcedstride;
 		} else {
