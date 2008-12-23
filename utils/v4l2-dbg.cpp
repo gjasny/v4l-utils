@@ -395,7 +395,6 @@ int main(int argc, char **argv)
 	std::string reg_set_arg;
 	unsigned long long reg_min = 0, reg_max = 0;
 	std::vector<std::string> get_regs;
-	char driver[255];
 	struct v4l2_dbg_match match;
 
 	match.type = V4L2_CHIP_MATCH_HOST;
@@ -549,7 +548,7 @@ int main(int argc, char **argv)
 		}
 	} else if (match.type == V4L2_CHIP_MATCH_I2C_DRIVER) {
 		for (int board = ARRAY_SIZE(boards) - 1; board >= 0; board--) {
-			if (!strcasecmp(driver, boards[board].name)) {
+			if (!strcasecmp(match.name, boards[board].name)) {
 				curr_bd = &boards[board];
 				break;
 			}
@@ -778,7 +777,7 @@ list_done:
 			printf("No symbols found for driver %s\n", vcap.driver);
 		}
 		else {
-			printf("Symbols for driver %s:\n", vcap.driver);
+			printf("Symbols for driver %s:\n", curr_bd->name);
 			for (int i = 0; i < curr_bd->regs_size; i++)
 				printf("0x%08x: %s\n", curr_bd->regs[i].reg, curr_bd->regs[i].name);
 			for (int i = 0; i < curr_bd->alt_regs_size; i++)
