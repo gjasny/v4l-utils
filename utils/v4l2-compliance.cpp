@@ -910,23 +910,25 @@ static int testCap(int fd)
 
 static int testChipIdent(int fd)
 {
-	struct v4l2_chip_ident chip;
+	struct v4l2_dbg_chip_ident chip;
 	int ret;
 
-	chip.match_type = V4L2_CHIP_MATCH_HOST;
-	chip.match_chip = 0;
-	ret = doioctl(fd, VIDIOC_G_CHIP_IDENT, &chip, "VIDIOC_G_CHIP_IDENT");
+	memset(&chip, 0, sizeof(chip));
+	chip.match.type = V4L2_CHIP_MATCH_HOST;
+	chip.match.addr = 0;
+	ret = doioctl(fd, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT");
 	// Must return either 0 (OK) or EINVAL (not supported)
 	if (ret == 0) {
-		struct v4l2_chip_ident orig;
+		struct v4l2_dbg_chip_ident orig;
 
+		memset(&orig, 0, sizeof(orig));
 		// set invalid match_type
-		chip.match_type = V4L2_CHIP_MATCH_I2C_ADDR + 1;
-		chip.match_chip = 0xdeadbeef;
+		chip.match.type = V4L2_CHIP_MATCH_I2C_ADDR + 1;
+		chip.match.addr = 0xdeadbeef;
 		chip.ident = 0xdeadbeef;
 		chip.revision = 0xdeadbeef;
 		orig = chip;
-		ret = doioctl(fd, VIDIOC_G_CHIP_IDENT, &chip, "VIDIOC_G_CHIP_IDENT");
+		ret = doioctl(fd, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT");
 		if (ret != EINVAL) {
 			if (verbose)
 				printf("Invalid match_type accepted\n");
@@ -944,13 +946,13 @@ static int testChipIdent(int fd)
 
 static int testRegister(int fd)
 {
-	struct v4l2_register reg;
-	struct v4l2_chip_ident chip;
+	struct v4l2_dbg_register reg;
+	struct v4l2_dbg_chip_ident chip;
 	int ret;
 	int uid = getuid();
 
-	reg.match_type = V4L2_CHIP_MATCH_HOST;
-	reg.match_chip = 0;
+	reg.match.type = V4L2_CHIP_MATCH_HOST;
+	reg.match.addr = 0;
 	reg.reg = 0;
 	ret = doioctl(fd, VIDIOC_DBG_G_REGISTER, &reg, "VIDIOC_DBG_G_REGISTER");
 	if (ret == EINVAL)
@@ -963,10 +965,10 @@ static int testRegister(int fd)
 		printf("Not allowed to call VIDIOC_DBG_G_REGISTER even though we are root\n");
 		return -1;
 	}
-	chip.match_type = V4L2_CHIP_MATCH_HOST;
-	chip.match_chip = 0;
-	if (doioctl(fd, VIDIOC_G_CHIP_IDENT, &chip, "VIDIOC_G_CHIP_IDENT")) {
-		printf("Must support VIDIOC_G_CHIP_IDENT\n");
+	chip.match.type = V4L2_CHIP_MATCH_HOST;
+	chip.match.addr = 0;
+	if (doioctl(fd, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT")) {
+		printf("Must support VIDIOC_DBG_G_CHIP_IDENT\n");
 		return -1;
 	}
 	if (uid) {
@@ -1111,7 +1113,7 @@ int main(int argc, char **argv)
 
 	printf("Debug ioctls:\n");
 	if (test[TestChipIdent])
-		printf("\ttest VIDIOC_G_CHIP_IDENT: %s\n", ok(testChipIdent(fd)));
+		printf("\ttest VIDIOC_DBG_G_CHIP_IDENT: %s\n", ok(testChipIdent(fd)));
 	if (test[TestRegister])
 		printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(fd)));
 	if (test[TestLogStatus])

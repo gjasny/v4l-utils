@@ -419,10 +419,10 @@ int main(int argc, char **argv)
 		doioctl(fd, VIDIOC_INT_S_AUDIO_ROUTING, &route, "VIDIOC_INT_S_AUDIO_ROUTING");
 
 	if (options[OptSetGPIO]) {
-		struct v4l2_register reg;
+		struct v4l2_dbg_register reg;
 
-		reg.match_type = V4L2_CHIP_MATCH_HOST;
-		reg.match_chip = 0;
+		reg.match.type = V4L2_CHIP_MATCH_HOST;
+		reg.match.addr = 0;
 		reg.reg = CX18_REG_GPIO_DIR1;
 		reg.val = (unsigned)((gpio_dir & 0xffff) << 16);
 		if (gpio_set_dir && doioctl(fd, VIDIOC_DBG_S_REGISTER, &reg,
@@ -446,10 +446,10 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptListGPIO]) {
-		struct v4l2_register reg;
+		struct v4l2_dbg_register reg;
 
-		reg.match_type = V4L2_CHIP_MATCH_HOST;
-		reg.match_chip = 0;
+		reg.match.type = V4L2_CHIP_MATCH_HOST;
+		reg.match.addr = 0;
 		reg.reg = CX18_REG_GPIO_IN;
 		if (ioctl(fd, VIDIOC_DBG_G_REGISTER, &reg) == 0)
 			printf("GPIO in:  0x%04llx\n", reg.val);

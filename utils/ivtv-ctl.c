@@ -564,10 +564,10 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptSetGPIO]) {
-		struct v4l2_register reg;
+		struct v4l2_dbg_register reg;
 
-		reg.match_type = V4L2_CHIP_MATCH_HOST;
-		reg.match_chip = 0;
+		reg.match.type = V4L2_CHIP_MATCH_HOST;
+		reg.match.addr = 0;
 		reg.reg = IVTV_REG_GPIO_DIR_OFFSET;
 		reg.val = gpio_dir;
 		if (gpio_set_dir && doioctl(fd, VIDIOC_DBG_S_REGISTER, &reg,
@@ -581,10 +581,10 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptListGPIO]) {
-		struct v4l2_register reg;
+		struct v4l2_dbg_register reg;
 
-		reg.match_type = V4L2_CHIP_MATCH_HOST;
-		reg.match_chip = 0;
+		reg.match.type = V4L2_CHIP_MATCH_HOST;
+		reg.match.addr = 0;
 		reg.reg = IVTV_REG_GPIO_IN_OFFSET;
 		if (ioctl(fd, VIDIOC_DBG_G_REGISTER, &reg) == 0)
 			printf("GPIO in:  0x%04llx\n", reg.val);

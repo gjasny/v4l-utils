@@ -18,18 +18,18 @@ endif
 all: $(binaries) qv4l2 keytable
 
 clean::
-	rm -f $(binaries) v4l2-driverids.cpp v4l2-chipids.cpp
+	rm -f $(binaries) v4l2-chipids.cpp
 	-if [ -f qv4l2/Makefile ]; then make -C qv4l2 $@; fi
 	-rm -f qv4l2/qv4l2 qv4l2/Makefile
 	make -C xc3028-firmware $@
-	rm -f v4l2-driverids.cpp v4l2-chipids.cpp
+	rm -f v4l2-chipids.cpp
 	rm -rf keycodes parse.h keytable
 
 qv4l2:
 	-if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; qmake); fi
 	$(MAKE) -C qv4l2
 
-v4l2-dbg: v4l2-dbg.o v4l2-driverids.o v4l2-chipids.o
+v4l2-dbg: v4l2-dbg.o v4l2-chipids.o
 	$(CXX) $^ -o $@
 
 v4l2-dbg.o: v4l2-dbg.h v4l2-dbg-bttv.h v4l2-dbg-em28xx.h v4l2-dbg-saa7134.h
@@ -58,11 +58,6 @@ keytables:
 	./gen_keytables.pl ../../linux/drivers/media/common/ir-keymaps.c
 
 keytable: keytable.c parse.h keytables
-
-v4l2-driverids.cpp: ../include/linux/i2c-id.h
-	@echo "struct driverid { const char *name; unsigned id; } driverids[] = {" >$@
-	@grep I2C_DRIVERID_ $^ | sed -e 's/.*I2C_DRIVERID_\([0-9A-Z_]*\)[^0-9]*\([0-9]*\).*/{ "\1", \2 },/' | tr A-Z a-z >>$@
-	@echo "{ 0, 0 }};" >>$@
 
 v4l2-chipids.cpp: ../include/media/v4l2-chip-ident.h
 	@echo "struct chipid { const char *name; unsigned id; } chipids[] = {" >$@
