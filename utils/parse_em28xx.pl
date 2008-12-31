@@ -62,7 +62,7 @@
 # This way, it is easier to understand what the em28xx driver is doing.
 #
 # Known limitations:
-#   - Currently, the tool only parses em28xx, ac97 and em202 registers.
+#   - Currently, the tool only parses em28xx, i2c, ac97 and em202 registers.
 #   - It is limited to read/write operations with 1 or 2 bytes of
 #     arguments;
 #   - Not all registers are documented;
@@ -274,5 +274,12 @@ while (<>) {
 		printf "em28xx_write_reg16(dev, %s,0x%s%s);\n",
 			$reg, $3, $2;
 		next;
+	}
+
+	if (m/40 02 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\>]+\s+([0-9a-f ]+)/) {
+ 		printf "i2c_master_send(0x$1>>1, { $3 }, 0x$2);\n";
+	}
+	if (m/c0 02 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\>]+\s+([0-9a-f ]+)/) {
+ 		printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* $3 */\n";
 	}
 }
