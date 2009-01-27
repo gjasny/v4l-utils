@@ -7,7 +7,7 @@ endif
 CPPFLAGS += -I../include -D_GNU_SOURCE
 LDFLAGS += -lm
 
-binaries = v4l2-ctl v4l2-dbg v4l2-compliance ivtv-ctl cx18-ctl
+binaries = v4l2-ctl v4l2-dbg v4l2-compliance ivtv-ctl cx18-ctl v4l2_sysfs_path
 
 ifeq ($(prefix),)
 prefix = /usr
@@ -33,6 +33,14 @@ v4l2-dbg: v4l2-dbg.o v4l2-chipids.o
 	$(CXX) $^ -o $@
 
 v4l2-dbg.o: v4l2-dbg.h v4l2-dbg-bttv.h v4l2-dbg-em28xx.h v4l2-dbg-saa7134.h
+
+v4l2_sysfs_path.o: v4l2_sysfs_path.c ../lib/v4l2_driver.h
+
+v4l2_sysfs_path: v4l2_sysfs_path.o ../lib/libv4l2.a
+	$(CC) $^ -o $@ -lsysfs
+
+../lib/libv4l2.a:
+	$(MAKE) -C ../lib libv4l2.a
 
 install:
 	mkdir -p $(prefix)/bin
