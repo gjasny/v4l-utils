@@ -149,7 +149,7 @@ int main(void)
 	printf("bus info = %s\n", drv.cap.bus_info);
 	path = obtain_bus_sysfs_path((char *)drv.cap.bus_info);
 	if (path) {
-		printf("bus path = %s\n", path);
+		printf("sysfs path = %s\n", path);
 		free(path);
 	}
 
