@@ -16,20 +16,19 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-
-
 #include "../lib/v4l2_driver.h"
 #include <sysfs/libsysfs.h>
 #include <errno.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
 
 #define USB_ID "usb-"
 #define PCI_ID "PCI:"
 #define PCIe_ID "PCIe:"
 
-char *obtain_bus_sysfs_path(const char *bus_info)
+char *obtain_bus_sysfs_path(char *bus_info)
 {
 	struct sysfs_device *pcictl = NULL;
 	struct sysfs_bus *bus = NULL;
@@ -136,24 +135,57 @@ err:
 	return NULL;
 }
 
-int main(void)
+void get_sysfs(char *fname)
 {
 	struct v4l2_driver drv;
 	char *path;
-
-	if (v4l2_open("/dev/video0", 0, &drv) < 0) {
-		perror("open /dev/video0");
-		return -1;
+	if (v4l2_open(fname, 0, &drv) < 0) {
+		perror(fname);
+		return;
 	}
 
-	printf("bus info = %s\n", drv.cap.bus_info);
+	printf("device     = %s\n", fname);
+	printf("bus info   = %s\n", drv.cap.bus_info);
 	path = obtain_bus_sysfs_path((char *)drv.cap.bus_info);
 	if (path) {
-		printf("sysfs path = %s\n", path);
+		printf("sysfs path = %s\n\n", path);
 		free(path);
 	}
 
 	v4l2_close(&drv);
+}
 
+void read_dir(char *dirname)
+{
+	DIR             *dir;
+	struct dirent   *entry;
+	const char      *vid = "video";
+	const char      *rad = "radio";
+	char		*p, name[512];
+
+	dir = opendir(dirname);
+	if (!dir)
+		return;
+
+	strcpy(name, dirname);
+	strcat(name, "/");
+	p = name + strlen(name);
+
+	entry = readdir(dir);
+	while (entry) {
+		if (!strncmp(entry->d_name, vid, strlen(vid)) ||
+		    !strncmp(entry->d_name, rad, strlen(rad))) {
+			strcpy(p, entry->d_name);
+
+			get_sysfs(name);
+		}
+		entry = readdir(dir);
+	}
+	closedir(dir);
+}
+
+int main(void)
+{
+	read_dir("/dev");
 	return 0;
 }
