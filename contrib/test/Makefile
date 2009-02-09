@@ -9,6 +9,7 @@ binaries = ioctl-test 		\
 	   v4lgrab		\
 	   driver-test		\
 	   pixfmt-test		\
+	   stress-buffer	\
 	   capture_example
 
 .PHONY: all clean install
