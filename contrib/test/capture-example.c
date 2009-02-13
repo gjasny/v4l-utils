@@ -23,17 +23,15 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 
-#include <asm/types.h>          /* for videodev2.h */
-
 #include <linux/videodev2.h>
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
-typedef enum {
+enum io_method {
 	IO_METHOD_READ,
 	IO_METHOD_MMAP,
 	IO_METHOD_USERPTR,
-} io_method;
+};
 
 struct buffer {
 	void   *start;
@@ -41,7 +39,7 @@ struct buffer {
 };
 
 static char            *dev_name;
-static io_method        io = IO_METHOD_MMAP;
+static enum io_method   io = IO_METHOD_MMAP;
 static int              fd = -1;
 struct buffer          *buffers;
 static unsigned int     n_buffers;
@@ -570,7 +568,7 @@ static void usage(FILE *fp, int argc, char **argv)
 		 "-f | --format        Force format to 640x480 YUYV\n"
 		 "-c | --count         Number of frames to grab [%i]\n"
 		 "",
-		 argv[0],dev_name,frame_count );
+		 argv[0], dev_name, frame_count);
 }
 
 static const char short_options[] = "d:hmruofc:";

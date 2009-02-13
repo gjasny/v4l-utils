@@ -10,7 +10,7 @@ binaries = ioctl-test 		\
 	   driver-test		\
 	   pixfmt-test		\
 	   stress-buffer	\
-	   capture_example
+	   capture-example
 
 .PHONY: all clean install
 
