@@ -1,6 +1,6 @@
 
 #include "qv4l2.h"
-#include "v4l2.h"
+#include "libv4l2util.h"
 
 #include <qstatusbar.h>
 #include <qlineedit.h>

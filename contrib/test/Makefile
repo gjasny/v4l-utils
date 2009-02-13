@@ -21,10 +21,10 @@ clean::
 
 install:
 
-../lib/libv4l2.a: ../lib/v4l2_driver.c ../lib/frequencies.c
-	make -C ../lib libv4l2.a
+../lib/libv4l2util.a: ../lib/v4l2_driver.c ../lib/frequencies.c
+	make -C ../lib libv4l2util.a
 
-driver-test: driver-test.o ../lib/libv4l2.a
+driver-test: driver-test.o ../lib/libv4l2util.a
 
 pixfmt-test: pixfmt-test.o
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@ -lX11

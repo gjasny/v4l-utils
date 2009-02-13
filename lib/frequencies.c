@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 #include <linux/videodev2.h>
-#include "v4l2.h"
+#include "libv4l2util.h"
 
 /* This source was originally written by Nathan Laredo <laredo@gnu.org>.
    He kindly gave permission to release this source under the LGPL

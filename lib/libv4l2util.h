@@ -15,8 +15,8 @@
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
    02111-1307 USA.  */
 
-#ifndef _V4L2_H_
-#define _V4L2_H_
+#ifndef _V4L2UTIL_H_
+#define _V4L2UTIL_H_
 
 /* --------------------------------------------------------------------- */
 

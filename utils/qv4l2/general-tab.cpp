@@ -20,7 +20,7 @@
 
 #include "qv4l2.h"
 #include "general-tab.h"
-#include "v4l2.h"
+#include "libv4l2util.h"
 
 #include <qlabel.h>
 #include <qspinbox.h>
