@@ -5,7 +5,8 @@
 all:: prepare-includes
 
 all clean install::
-	$(MAKE) -C lib $@
+	$(MAKE) -C libv4l $@
+	$(MAKE) -C libv4l2util $@
 	$(MAKE) -C util $@
 	$(MAKE) -C test $@
 

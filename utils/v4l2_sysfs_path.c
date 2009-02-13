@@ -16,7 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  */
 
-#include "../lib/v4l2_driver.h"
+#include "../libv4l2util/v4l2_driver.h"
 #include <sysfs/libsysfs.h>
 #include <errno.h>
 #include <malloc.h>

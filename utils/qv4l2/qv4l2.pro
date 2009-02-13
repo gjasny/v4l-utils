@@ -3,10 +3,10 @@
 ######################################################################
 
 TEMPLATE = app
-INCLUDEPATH += . ../../include ../../lib
+INCLUDEPATH += . ../../include ../../libv4l2util
 CONFIG += debug
 
 # Input
 HEADERS += qv4l2.h general-tab.h
 SOURCES += qv4l2.cpp general-tab.cpp ctrl-tab.cpp
-LIBS += -lv4l2util -L../../lib
+LIBS += -lv4l2util -L../../libv4l2util

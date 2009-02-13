@@ -1,0 +1,81 @@
+The only capture method implemented currently is mmap.
+
+Missing V4L2 ioctls to be implemented at library:
+	Methods to change controls at V4L devices:
+		VIDIOC_QUERYCTRL
+		VIDIOC_QUERYMENU
+		VIDIOC_G_CTRL
+		VIDIOC_S_CTRL
+		VIDIOC_TRY_EXT_CTRLS
+		VIDIOC_G_EXT_CTRLS
+		VIDIOC_S_EXT_CTRLS
+
+	Tuner control methods:
+		VIDIOC_G_TUNER
+		VIDIOC_S_TUNER
+		VIDIOC_S_FREQUENCY
+		VIDIOC_G_FREQUENCY
+
+	Crop methods:
+		VIDIOC_CROPCAP
+		VIDIOC_S_CROP
+		VIDIOC_G_CROP
+
+	Audio input/output:
+		VIDIOC_ENUMAUDIO
+		VIDIOC_ENUMAUDOUT
+		VIDIOC_G_AUDIO
+		VIDIOC_S_AUDIO
+		VIDIOC_G_AUDOUT
+		VIDIOC_S_AUDOUT
+
+	Video output:
+		VIDIOC_ENUMOUTPUT
+		VIDIOC_G_OUTPUT
+		VIDIOC_S_OUTPUT
+
+	Priority control:
+		VIDIOC_G_PRIORITY
+		VIDIOC_S_PRIORITY
+
+	Sliced VBI control:
+		VIDIOC_G_SLICED_VBI_CAP
+
+	The received video STD:
+		VIDIOC_QUERYSTD
+
+	Streaming parameters:
+		VIDIOC_G_PARM
+		VIDIOC_S_PARM
+
+	Output modulator (generally for TV):
+		VIDIOC_G_MODULATOR
+		VIDIOC_S_MODULATOR
+
+	Those methods are brand new. Not yet used on drivers:
+		VIDIOC_ENUM_FRAMEINTERVALS
+		VIDIOC_ENUM_FRAMESIZES
+
+	Overlay is somewhat legacy stuff those days:
+		VIDIOC_OVERLAY
+		VIDIOC_G_FBUF
+		VIDIOC_S_FBUF
+
+	Those are unlikely to be implemented at API (legacy stuff, debug stuff or private):
+		VIDIOC_G_JPEGCOMP
+		VIDIOC_S_JPEGCOMP
+		VIDIOC_LOG_STATUS
+		VIDIOC_PRIVATE
+		VIDIOC_RESERVED
+		VIDIOC_OVERLAY_OLD
+		VIDIOC_S_PARM_OLD
+		VIDIOC_S_CTRL_OLD
+		VIDIOC_G_AUDIO_OLD
+		VIDIOC_G_AUDOUT_OLD
+		VIDIOC_CROPCAP_OLD
+
+Also missing V4L1 mmap method:
+	VIDIOCGMBUF
+
+	This method is interesting only to be used by driver-test to check
+API compliance to the legacy method.

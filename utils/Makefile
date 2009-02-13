@@ -34,13 +34,13 @@ v4l2-dbg: v4l2-dbg.o v4l2-chipids.o
 
 v4l2-dbg.o: v4l2-dbg.h v4l2-dbg-bttv.h v4l2-dbg-em28xx.h v4l2-dbg-saa7134.h
 
-v4l2_sysfs_path.o: v4l2_sysfs_path.c ../lib/v4l2_driver.h
+v4l2_sysfs_path.o: v4l2_sysfs_path.c ../libv4l2util/v4l2_driver.h
 
-v4l2_sysfs_path: v4l2_sysfs_path.o ../lib/libv4l2util.a
+v4l2_sysfs_path: v4l2_sysfs_path.o ../libv4l2util/libv4l2util.a
 	$(CC) $^ -o $@ -lsysfs
 
-../lib/libv4l2util.a:
-	$(MAKE) -C ../lib libv4l2util.a
+../libv4l2util/libv4l2util.a:
+	$(MAKE) -C ../libv4l2util libv4l2util.a
 
 install:
 	mkdir -p $(prefix)/bin

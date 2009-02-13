@@ -14,7 +14,7 @@
    GNU General Public License for more details.
  */
 
-#include "../lib/v4l2_driver.h"
+#include "../libv4l2util/v4l2_driver.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
