@@ -770,28 +770,28 @@ static std::string markers2s(unsigned markers)
 	std::string s;
 
 	if (markers & V4L2_JPEG_MARKER_DHT)
-		s += "\t\t\tDefine Huffman Tables\n";
+		s += "\t\tDefine Huffman Tables\n";
 	if (markers & V4L2_JPEG_MARKER_DQT)
-		s += "\t\t\tDefine Quantization Tables\n";
+		s += "\t\tDefine Quantization Tables\n";
 	if (markers & V4L2_JPEG_MARKER_DRI)
-		s += "\t\t\tDefine Restart Interval\n";
+		s += "\t\tDefine Restart Interval\n";
 	if (markers & V4L2_JPEG_MARKER_COM)
-		s += "\t\t\tDefine Comment\n";
+		s += "\t\tDefine Comment\n";
 	if (markers & V4L2_JPEG_MARKER_APP)
-		s += "\t\t\tDefine APP segment\n";
-	if (s.empty()) s += "\t\t\t\n";
+		s += "\t\tDefine APP segment\n";
 	return s;
 }
 
 static void printjpegcomp(const struct v4l2_jpegcompression &jc)
 {
 	printf("JPEG compression:\n");
-	printf("\tQuality       : %d\n", jc.quality);
+	printf("\tQuality: %d\n", jc.quality);
 	if (jc.COM_len)
-		printf("\tComment       : '%s'\n", jc.COM_data);
+		printf("\tComment: '%s'\n", jc.COM_data);
 	if (jc.APP_len)
-		printf("\tAPP%x          : '%s'\n", jc.APPn, jc.APP_data);
-	printf("\tMarkers       : %s", markers2s(jc.jpeg_markers).c_str() + 3);
+		printf("\tAPP%x   : '%s'\n", jc.APPn, jc.APP_data);
+	printf("\tMarkers: 0x%08lx\n", jc.jpeg_markers);
+	printf("%s", markers2s(jc.jpeg_markers).c_str());
 }
 
 static void printcrop(const struct v4l2_crop &crop)
