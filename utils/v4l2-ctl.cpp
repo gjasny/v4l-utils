@@ -129,6 +129,8 @@ enum Option {
 	OptGetOverlayCropCap,
 	OptGetOutputOverlayCropCap,
 	OptOverlay,
+	OptGetJpegComp,
+	OptSetJpegComp,
 	OptListDevices,
 	OptLast = 256
 };
@@ -256,6 +258,8 @@ static struct option long_options[] = {
 	{"get-cropcap-output-overlay", no_argument, 0, OptGetOutputOverlayCropCap},
 	{"get-crop-output-overlay", no_argument, 0, OptGetOutputOverlayCrop},
 	{"set-crop-output-overlay", required_argument, 0, OptSetOutputOverlayCrop},
+	{"get-jpeg-comp", no_argument, 0, OptGetJpegComp},
+	{"set-jpeg-comp", required_argument, 0, OptSetJpegComp},
 	{"overlay", required_argument, 0, OptOverlay},
 	{"list-devices", no_argument, 0, OptListDevices},
 	{0, 0, 0, 0}
@@ -380,6 +384,16 @@ static void usage(void)
 	       "                     query the video output overlay crop window [VIDIOC_G_CROP]\n"
 	       "  --set-crop-output-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n"
 	       "                     set the video output overlay crop window [VIDIOC_S_CROP]\n"
+	       "  --get-jpeg-comp    query the JPEG compression [VIDIOC_G_JPEGCOMP]\n"
+	       "  --set-jpeg-comp=quality=<q>,markers=<markers>,comment=<c>,app<n>=<a>\n"
+	       "                     set the JPEG compression [VIDIOC_S_JPEGCOMP]\n"
+	       "                     <n> is the app segment: 0-9 or a-f, <a> is the actual string.\n"
+	       "                     <markers> is a colon separated list of:\n"
+	       "                     dht:      Define Huffman Tables\n"
+	       "                     dqt:      Define Quantization Tables\n"
+	       "                     dri:      Define Restart Interval\n"
+	       "  --set-audio-output=<num>\n"
+	       "                     set the audio output to <num> [VIDIOC_S_AUDOUT]\n"
 	       "  --get-audio-input  query the audio input [VIDIOC_G_AUDIO]\n"
 	       "  --set-audio-input=<num>\n"
 	       "                     set the audio input to <num> [VIDIOC_S_AUDIO]\n"
@@ -576,11 +590,12 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 	}
 	if (queryctrl->flags) {
 		const flag_def def[] = {
-			{ V4L2_CTRL_FLAG_GRABBED,   "grabbed" },
-			{ V4L2_CTRL_FLAG_READ_ONLY, "readonly" },
-			{ V4L2_CTRL_FLAG_UPDATE,    "update" },
-			{ V4L2_CTRL_FLAG_INACTIVE,  "inactive" },
-			{ V4L2_CTRL_FLAG_SLIDER,    "slider" },
+			{ V4L2_CTRL_FLAG_GRABBED,    "grabbed" },
+			{ V4L2_CTRL_FLAG_READ_ONLY,  "read-only" },
+			{ V4L2_CTRL_FLAG_UPDATE,     "update" },
+			{ V4L2_CTRL_FLAG_INACTIVE,   "inactive" },
+			{ V4L2_CTRL_FLAG_SLIDER,     "slider" },
+			{ V4L2_CTRL_FLAG_WRITE_ONLY, "write-only" },
 			{ 0, NULL }
 		};
 		printf(" flags=%s", flags2s(queryctrl->flags, def).c_str());
@@ -748,6 +763,35 @@ static void printfbuf(const struct v4l2_framebuffer &fb)
 		if (fb.fmt.priv)
 			printf("\tCustom Info   : %08x\n", fb.fmt.priv);
 	}
+}
+
+static std::string markers2s(unsigned markers)
+{
+	std::string s;
+
+	if (markers & V4L2_JPEG_MARKER_DHT)
+		s += "\t\tDefine Huffman Tables\n";
+	if (markers & V4L2_JPEG_MARKER_DQT)
+		s += "\t\tDefine Quantization Tables\n";
+	if (markers & V4L2_JPEG_MARKER_DRI)
+		s += "\t\tDefine Restart Interval\n";
+	if (markers & V4L2_JPEG_MARKER_COM)
+		s += "\t\tDefine Comment\n";
+	if (markers & V4L2_JPEG_MARKER_APP)
+		s += "\t\tDefine APP segment\n";
+	return s;
+}
+
+static void printjpegcomp(const struct v4l2_jpegcompression &jc)
+{
+	printf("JPEG compression:\n");
+	printf("\tQuality: %d\n", jc.quality);
+	if (jc.COM_len)
+		printf("\tComment: '%s'\n", jc.COM_data);
+	if (jc.APP_len)
+		printf("\tAPP%x   : '%s'\n", jc.APPn, jc.APP_data);
+	printf("\tMarkers: 0x%08lx\n", jc.jpeg_markers);
+	printf("%s", markers2s(jc.jpeg_markers).c_str());
 }
 
 static void printcrop(const struct v4l2_crop &crop)
@@ -1337,6 +1381,7 @@ int main(int argc, char **argv)
 	struct v4l2_rect vcrop_overlay; 	/* crop rect */
 	struct v4l2_rect vcrop_out_overlay; 	/* crop rect */
 	struct v4l2_framebuffer fbuf;   /* fbuf */
+	struct v4l2_jpegcompression jpegcomp; /* jpeg compression */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
 	v4l2_std_id std;		/* get_std/set_std */
@@ -1371,6 +1416,7 @@ int main(int argc, char **argv)
 	memset(&vf, 0, sizeof(vf));
 	memset(&vs, 0, sizeof(vs));
 	memset(&fbuf, 0, sizeof(fbuf));
+	memset(&jpegcomp, 0, sizeof(jpegcomp));
 
 	if (argc == 1) {
 		usage();
@@ -1700,6 +1746,62 @@ int main(int argc, char **argv)
 			}
 			break;
 		}
+		case OptSetJpegComp:
+		{
+			subs = optarg;
+			while (*subs != '\0') {
+				static const char *const subopts[] = {
+					"app0", "app1", "app2", "app3",
+					"app4", "app5", "app6", "app7",
+					"app8", "app9", "appa", "appb",
+					"appc", "appd", "appe", "appf",
+					"quality",
+					"markers",
+					"comment",
+					NULL
+				};
+				int len;
+				int opt = parse_subopt(&subs, subopts, &value);
+
+				switch (opt) {
+				case 16:
+					jpegcomp.quality = strtol(value, 0L, 0);
+					break;
+				case 17:
+					if (strstr(value, "dht"))
+						jpegcomp.jpeg_markers |= V4L2_JPEG_MARKER_DHT;
+					if (strstr(value, "dqt"))
+						jpegcomp.jpeg_markers |= V4L2_JPEG_MARKER_DQT;
+					if (strstr(value, "dri"))
+						jpegcomp.jpeg_markers |= V4L2_JPEG_MARKER_DRI;
+					break;
+				case 18:
+					len = strlen(value);
+					if (len > sizeof(jpegcomp.COM_data) - 1)
+						len = sizeof(jpegcomp.COM_data) - 1;
+					jpegcomp.COM_len = len;
+					memcpy(jpegcomp.COM_data, value, len);
+					jpegcomp.COM_data[len] = '\0';
+					break;
+				default:
+					if (opt < 0 || opt > 15)
+						break;
+					len = strlen(value);
+					if (len > sizeof(jpegcomp.APP_data) - 1)
+						len = sizeof(jpegcomp.APP_data) - 1;
+					if (jpegcomp.APP_len) {
+						fprintf(stderr, "Only one APP segment can be set\n");
+						break;
+					}
+					jpegcomp.APP_len = len;
+					memcpy(jpegcomp.APP_data, value, len);
+					jpegcomp.APP_data[len] = '\0';
+					jpegcomp.APPn = opt;
+					break;
+				}
+			}
+			break;
+		}
 		case OptListDevices:
 			list_devices();
 			break;
@@ -1768,6 +1870,7 @@ int main(int argc, char **argv)
 		options[OptGetFBuf] = 1;
 		options[OptGetCropCap] = 1;
 		options[OptGetOutputCropCap] = 1;
+		options[OptGetJpegComp] = 1;
 		options[OptSilent] = 1;
 	}
 
@@ -1987,6 +2090,10 @@ set_vid_fmt_error:
 		}
 	}
 
+	if (options[OptSetJpegComp]) {
+		doioctl(fd, VIDIOC_S_JPEGCOMP, &jpegcomp, "VIDIOC_S_JPEGCOMP");
+	}
+
 	if (options[OptOverlay]) {
 		doioctl(fd, VIDIOC_OVERLAY, &overlay, "VIDIOC_OVERLAY");
 	}
@@ -2108,6 +2215,12 @@ set_vid_fmt_error:
 		struct v4l2_framebuffer fb;
 		if (doioctl(fd, VIDIOC_G_FBUF, &fb, "VIDIOC_G_FBUF") == 0)
 			printfbuf(fb);
+	}
+
+	if (options[OptGetJpegComp]) {
+		struct v4l2_jpegcompression jc;
+		if (doioctl(fd, VIDIOC_G_JPEGCOMP, &jc, "VIDIOC_G_JPEGCOMP") == 0)
+			printjpegcomp(jc);
 	}
 
 	if (options[OptGetCropCap]) {
