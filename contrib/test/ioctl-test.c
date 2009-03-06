@@ -90,7 +90,6 @@ union v4l_parms {
 	struct v4l2_encoder_cmd p_v4l2_encoder_cmd;
 	struct v4l2_dbg_register p_v4l2_dbg_register;
 	struct v4l2_dbg_chip_ident p_v4l2_dbg_chip_ident;
-	struct v4l2_chip_ident_old p_v4l2_chip_ident_old;
 	struct v4l2_hw_freq_seek p_v4l2_hw_freq_seek;
 };
 
@@ -197,7 +196,6 @@ static const struct {
 	ioc(VIDIOC_DBG_S_REGISTER),	/* struct v4l2_register */
 	ioc(VIDIOC_DBG_G_REGISTER),	/* struct v4l2_register */
 	ioc(VIDIOC_DBG_G_CHIP_IDENT),	/* struct v4l2_dbg_chip_ident */
-	ioc(VIDIOC_G_CHIP_IDENT_OLD),	/* struct v4l2_chip_ident_old */
 	ioc(VIDIOC_S_HW_FREQ_SEEK),	/* struct v4l2_hw_freq_seek */
 #ifdef __OLD_VIDIOC_
 	ioc(VIDIOC_OVERLAY_OLD),	/* int */
