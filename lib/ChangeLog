@@ -2,6 +2,8 @@ libv4l-0.5.8
 ------------
 * Add support for UYVY (for USB Apple iSight) patch by Julien BLACHE
   <jb@jblache.org>
+* Remove v4lconvert_yvyu_to_yuv420 function as its functionality is
+  duplicate with v4lconvert_yuyv_to_yuv420
 
 libv4l-0.5.7
 ------------

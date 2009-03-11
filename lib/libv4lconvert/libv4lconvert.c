@@ -711,10 +711,12 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	v4lconvert_yvyu_to_bgr24(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_YUV420:
-	v4lconvert_yvyu_to_yuv420(src, dest, width, height, 0);
+	/* Note we use yuyv_to_yuv420 not v4lconvert_yvyu_to_yuv420,
+	   with the last argument reversed to make it have as we want */
+	v4lconvert_yuyv_to_yuv420(src, dest, width, height, 1);
 	break;
       case V4L2_PIX_FMT_YVU420:
-	v4lconvert_yvyu_to_yuv420(src, dest, width, height, 1);
+	v4lconvert_yuyv_to_yuv420(src, dest, width, height, 0);
 	break;
       }
       break;

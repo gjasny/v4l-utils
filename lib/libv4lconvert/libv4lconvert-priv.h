@@ -129,9 +129,6 @@ void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dst,
 void v4lconvert_yvyu_to_bgr24(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
-void v4lconvert_yvyu_to_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height, int yvu);
-
 void v4lconvert_uyvy_to_rgb24(const unsigned char *src, unsigned char *dst,
   int width, int height);
 

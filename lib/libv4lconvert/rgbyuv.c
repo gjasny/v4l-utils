@@ -339,45 +339,6 @@ void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dest,
   }
 }
 
-void v4lconvert_yvyu_to_yuv420(const unsigned char *src, unsigned char *dest,
-  int width, int height, int yvu)
-{
-  int i, j;
-  const unsigned char *src1;
-  unsigned char *udest, *vdest;
-
-  /* copy the Y values */
-  src1 = src;
-  for (i = 0; i < height; i++) {
-    for (j = 0; j < width; j += 2) {
-      *dest++ = src1[0];
-      *dest++ = src1[2];
-      src1 += 4;
-    }
-  }
-
-  /* copy the U and V values */
-  src++;				/* point to V */
-  src1 = src + width * 2;		/* next line */
-  if (yvu) {
-    vdest = dest;
-    udest = dest + width * height / 4;
-  } else {
-    udest = dest;
-    vdest = dest + width * height / 4;
-  }
-  for (i = 0; i < height; i += 2) {
-    for (j = 0; j < width; j += 2) {
-      *udest++ = ((int) src[2] + src1[2]) / 2;	/* U */
-      *vdest++ = ((int) src[0] + src1[0]) / 2;	/* V */
-      src += 4;
-      src1 += 4;
-    }
-    src = src1;
-    src1 += width * 2;
-  }
-}
-
 void v4lconvert_uyvy_to_bgr24(const unsigned char *src, unsigned char *dest,
   int width, int height)
 {
