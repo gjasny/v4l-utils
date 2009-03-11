@@ -45,7 +45,7 @@ libv4l2.pc:
 	@echo 'Name: libv4l2' >> libv4l2.pc
 	@echo 'Description: v4l2 device access library' >> libv4l2.pc
 	@echo 'Version: '$(V4L2_LIB_VERSION) >> libv4l2.pc
-	@echo 'Requires: libv4lconvert' >> libv4l2.pc
+	@echo 'Requires.private: libv4lconvert' >> libv4l2.pc
 	@echo 'Libs: -L$${libdir} -lv4l2' >> libv4l2.pc
 	@echo 'Libs.private: -lpthread' >> libv4l2.pc
 	@echo 'Cflags: -I$${prefix}/include' >> libv4l2.pc

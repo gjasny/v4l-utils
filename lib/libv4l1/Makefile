@@ -46,7 +46,7 @@ libv4l1.pc:
 	@echo 'Name: libv4l1' >> libv4l1.pc
 	@echo 'Description: v4l1 compatibility library' >> libv4l1.pc
 	@echo 'Version: '$(V4L2_LIB_VERSION) >> libv4l1.pc
-	@echo 'Requires: libv4l2' >> libv4l1.pc
+	@echo 'Requires.private: libv4l2' >> libv4l1.pc
 	@echo 'Libs: -L$${libdir} -lv4l1' >> libv4l1.pc
 	@echo 'Libs.private: -lpthread' >> libv4l1.pc
 	@echo 'Cflags: -I$${prefix}/include' >> libv4l1.pc
