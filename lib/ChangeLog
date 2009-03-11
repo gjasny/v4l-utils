@@ -4,6 +4,8 @@ libv4l-0.5.2
   Rieker Flaik
 * Work around some drivers (pwc) not properly reflecting what one gets after a
   s_fmt in their try_fmt answer
+* Check that s_fmt atleast gives us the width, height and pixelformat try_fmt
+  promised us, and if not disable conversion
 
 libv4l-0.5.1
 ------------

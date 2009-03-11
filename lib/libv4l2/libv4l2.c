@@ -764,6 +764,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
     case VIDIOC_S_FMT:
       {
 	struct v4l2_format src_fmt, *dest_fmt = arg;
+	struct v4l2_pix_format req_pix_fmt;
 
 	if (v4l2_pix_fmt_identical(&devices[index].dest_fmt, dest_fmt)) {
 	  *dest_fmt = devices[index].dest_fmt;
@@ -816,6 +817,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	if ((result = v4l2_check_buffer_change_ok(index)))
 	  break;
 
+	req_pix_fmt = src_fmt.fmt.pix;
 	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_S_FMT, &src_fmt);
 	if (result) {
 	  saved_err = errno;
@@ -824,6 +826,15 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	  *dest_fmt = devices[index].dest_fmt;
 	  errno = saved_err;
 	  break;
+	}
+	/* See if we've gotten what try_fmt promised us
+	   (this check should never fail) */
+	if (src_fmt.fmt.pix.width != req_pix_fmt.width ||
+	    src_fmt.fmt.pix.height != req_pix_fmt.height ||
+	    src_fmt.fmt.pix.pixelformat != req_pix_fmt.pixelformat) {
+	  V4L2_LOG_ERR("set_fmt gave us a different result then try_fmt!\n");
+	  /* Not what we expected / wanted, disable conversion */
+	  *dest_fmt = src_fmt;
 	}
 
 	v4l2_set_src_and_dest_format(index, &src_fmt, dest_fmt);
