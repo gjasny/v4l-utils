@@ -793,8 +793,12 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 					 &src_fmt);
 	}
 
-	if (result)
+	if (result) {
+	  saved_err = errno;
+	  V4L2_LOG("S_FMT error trying format: %s\n", strerror(errno));
+	  errno = saved_err;
 	  break;
+	}
 
 	if (src_fmt.fmt.pix.pixelformat != dest_fmt->fmt.pix.pixelformat &&
 	    v4l2_log_file) {

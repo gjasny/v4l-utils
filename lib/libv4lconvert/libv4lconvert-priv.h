@@ -73,6 +73,7 @@
 /* Card flags */
 #define V4LCONVERT_ROTATE_90  0x01
 #define V4LCONVERT_ROTATE_180 0x02
+#define V4LCONVERT_IS_UVC     0x04
 
 /* Pixformat flags */
 #define V4LCONVERT_COMPRESSED 0x01

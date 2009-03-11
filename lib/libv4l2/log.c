@@ -18,6 +18,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 #include <linux/ioctl.h>
 /* These headers are not needed by us, but by linux/videodev2.h,
    which is broken on some systems and doesn't include them itself :( */
@@ -95,6 +97,7 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 {
   const char *ioctl_str;
   char buf[40];
+  int saved_errno = errno;
 
   if (!v4l2_log_file)
     return;
@@ -143,6 +146,10 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
       break;
   }
 
-  fprintf(v4l2_log_file, "result == %d\n", result);
+  if (result < 0)
+    fprintf(v4l2_log_file, "result == %d (%s)\n", result, strerror(saved_errno));
+  else
+    fprintf(v4l2_log_file, "result == %d\n", result);
+
   fflush(v4l2_log_file);
 }

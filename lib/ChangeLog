@@ -1,3 +1,12 @@
+libv4l-0.5.5
+------------
+* Avoid the use of try_fmt as much as possible on UVC cams, instead use the
+  results of the enum_framesizes ioctl. This is because:
+  1) try_fmt actually causes IO with UVC cams making apps which do lot of
+     querrying of device capabilities slow (cheese)
+  2) some buggy cams don't like getting lots of UVC video probes and crash
+     when they do
+
 libv4l-0.5.4
 ------------
 * Don't report DQBUF errors when errno is EAGAIN, this fixes flooding the

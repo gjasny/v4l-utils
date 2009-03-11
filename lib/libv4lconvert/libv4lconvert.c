@@ -36,7 +36,7 @@
   { V4L2_PIX_FMT_YVU420, 0 }
 
 static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
-  unsigned int pixelformat);
+  unsigned int pixelformat, int index);
 
 /* Note uncompressed formats must go first so that they are prefered by
    v4lconvert_try_format for low resolutions */
@@ -108,10 +108,9 @@ struct v4lconvert_data *v4lconvert_create(int fd)
     for (j = 0; j < ARRAY_SIZE(supported_src_pixfmts); j++)
       if (fmt.pixelformat == supported_src_pixfmts[j].fmt) {
 	data->supported_src_formats |= 1 << j;
+	v4lconvert_get_framesizes(data, fmt.pixelformat, j);
 	break;
       }
-
-    v4lconvert_get_framesizes(data, fmt.pixelformat);
   }
 
   data->no_formats = i;
@@ -123,6 +122,8 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 	data->flags = v4lconvert_flags[i].flags;
 	break;
       }
+    if (!strcmp((char *)cap.driver, "uvcvideo"))
+      data->flags |= V4LCONVERT_IS_UVC;
   }
 
   return data;
@@ -187,6 +188,61 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
   return 0;
 }
 
+/* Find out what format to use based on the (cached) results of enum
+   framesizes instead of doing a zillion try_fmt calls. This function
+   currently is intended for use with UVC cams only. This is esp.
+   important for UVC based cams as doing try_fmt there actually causes I/O */
+static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
+  struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
+{
+  int i;
+  unsigned int closest_fmt_size_diff = -1;
+  int best_framesize = 0;/* Just use the first format if no small enough one */
+  int best_format = 0;
+
+  for (i = 0; i < data->no_framesizes; i++) {
+    if (data->framesizes[i].discrete.width <= dest_fmt->fmt.pix.width &&
+	data->framesizes[i].discrete.height <= dest_fmt->fmt.pix.height) {
+      int size_x_diff = dest_fmt->fmt.pix.width -
+			data->framesizes[i].discrete.width;
+      int size_y_diff = dest_fmt->fmt.pix.height -
+			data->framesizes[i].discrete.height;
+      unsigned int size_diff = size_x_diff * size_x_diff +
+			       size_y_diff * size_y_diff;
+      if (size_diff < closest_fmt_size_diff)
+	best_framesize = i;
+    }
+  }
+
+  for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
+    /* is this format supported? */
+    if (!(data->framesizes[best_framesize].pixel_format & (1 << i)))
+      continue;
+
+    if (!best_format ||
+	supported_src_pixfmts[i].fmt == dest_fmt->fmt.pix.pixelformat ||
+	((data->framesizes[best_framesize].discrete.width > 180 ||
+	  data->framesizes[best_framesize].discrete.height > 148) &&
+	 (supported_src_pixfmts[i].flags & V4LCONVERT_COMPRESSED)))
+      best_format = supported_src_pixfmts[i].fmt;
+  }
+
+  dest_fmt->fmt.pix.width = data->framesizes[best_framesize].discrete.width;
+  dest_fmt->fmt.pix.height = data->framesizes[best_framesize].discrete.height;
+  dest_fmt->fmt.pix.field = V4L2_FIELD_NONE; /* UVC has no fields */
+  /* Not pretty, the pwc driver doesn't fill these in try_fmt either though,
+     so we should be able to get away with this. */
+  dest_fmt->fmt.pix.bytesperline = 0;
+  dest_fmt->fmt.pix.sizeimage = 0;
+  dest_fmt->fmt.pix.colorspace = 0;
+  dest_fmt->fmt.pix.priv = 0;
+
+  *src_fmt = *dest_fmt;
+  src_fmt->fmt.pix.pixelformat = best_format;
+
+  return 0;
+}
+
 static int v4lconvert_do_try_format(struct v4lconvert_data *data,
   struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
 {
@@ -194,6 +250,9 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
   unsigned int closest_fmt_size_diff = -1;
   unsigned int desired_pixfmt = dest_fmt->fmt.pix.pixelformat;
   struct v4l2_format try_fmt, closest_fmt = { .type = 0 };
+
+  if (data->flags & V4LCONVERT_IS_UVC)
+    return v4lconvert_do_try_format_uvc(data, dest_fmt, src_fmt);
 
   for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
     /* is this format supported? */
@@ -774,7 +833,7 @@ const char *v4lconvert_get_error_message(struct v4lconvert_data *data)
 }
 
 static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
-  unsigned int pixelformat)
+  unsigned int pixelformat, int index)
 {
   int i, j, match;
   struct v4l2_frmsizeenum frmsize = { .pixel_format = pixelformat };
@@ -786,7 +845,7 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
 
     /* We got a framesize, check we don't have the same one already */
     match = 0;
-    for (j = 0; j < data->no_framesizes && !match; j++) {
+    for (j = 0; j < data->no_framesizes; j++) {
       if (frmsize.type != data->framesizes[j].type)
 	continue;
 
@@ -803,6 +862,8 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
 	    match = 1;
 	  break;
       }
+      if (match)
+	break;
     }
     /* Add this framesize if it is not already in our list */
     if (!match) {
@@ -812,6 +873,9 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
 	return;
       }
       data->framesizes[data->no_framesizes].type = frmsize.type;
+      /* We use the pixel_format member to store a bitmask of all
+	 supported src_formats which can do this size */
+      data->framesizes[data->no_framesizes].pixel_format = 1 << index;
       switch(frmsize.type) {
 	case V4L2_FRMSIZE_TYPE_DISCRETE:
 	  data->framesizes[data->no_framesizes].discrete = frmsize.discrete;
@@ -823,6 +887,8 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
       }
       data->no_framesizes++;
     }
+    else
+      data->framesizes[j].pixel_format |= 1 << index;
   }
 }
 
