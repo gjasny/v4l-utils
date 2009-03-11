@@ -2,6 +2,9 @@ libv4l-0.5.4
 ------------
 * Don't report DQBUF errors when errno is EAGAIN, this fixes flooding the
   screen with errors when applications use non blocking mode
+* Add support for downscaling to make apps which want low resolutions
+  (skype, spcaview) happy when used with cams which can only do high
+  resolutions (by Lukáš Karas <lukas.karas@centrum.cz>).
 
 libv4l-0.5.3
 ------------

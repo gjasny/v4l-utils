@@ -268,29 +268,30 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
     return result;
   }
 
-  /* In case of a non exact resolution match, see if this is a resolution we
-     can support by cropping a slightly larger resolution to give the app
-     exactly what it asked for */
+  /* In case of a non exact resolution match, see if this is a well known
+     resolution some apps are hardcoded too and try to give the app what it
+     asked for by cropping a slightly larger resolution */
   if (try_dest.fmt.pix.width != desired_width ||
       try_dest.fmt.pix.height != desired_height) {
     for (i = 0; i < ARRAY_SIZE(v4lconvert_crop_res); i++) {
       if (v4lconvert_crop_res[i][0] == desired_width &&
 	  v4lconvert_crop_res[i][1] == desired_height) {
-	struct v4l2_format try2_dest, try2_src;
+	struct v4l2_format try2_src, try2_dest = *dest_fmt;
+
 	/* Note these are chosen so that cropping to vga res just works for
 	   vv6410 sensor cams, which have 356x292 and 180x148 */
-	unsigned int max_width = desired_width * 113 / 100;
-	unsigned int max_height = desired_height * 124 / 100;
-
-	try2_dest = *dest_fmt;
-	try2_dest.fmt.pix.width = max_width;
-	try2_dest.fmt.pix.height = max_height;
+	try2_dest.fmt.pix.width = desired_width * 113 / 100;
+	try2_dest.fmt.pix.height = desired_height * 124 / 100;
 	result = v4lconvert_do_try_format(data, &try2_dest, &try2_src);
 	if (result == 0 &&
-	    try2_dest.fmt.pix.width >= desired_width &&
-	    try2_dest.fmt.pix.width <= max_width &&
-	    try2_dest.fmt.pix.height >= desired_height &&
-	    try2_dest.fmt.pix.height <= max_height) {
+	    ((try2_dest.fmt.pix.width >= desired_width &&
+	      try2_dest.fmt.pix.width <= desired_width * 5 / 4 &&
+	      try2_dest.fmt.pix.height >= desired_height &&
+	      try2_dest.fmt.pix.height <= desired_height * 5 / 4) ||
+	     (try2_dest.fmt.pix.width >= desired_width * 2 &&
+	      try2_dest.fmt.pix.width <= desired_width * 5 / 2 &&
+	      try2_dest.fmt.pix.height >= desired_height &&
+	      try2_dest.fmt.pix.height <= desired_height * 5 / 2))) {
 	  /* Success! */
 	  try2_dest.fmt.pix.width = desired_width;
 	  try2_dest.fmt.pix.height = desired_height;

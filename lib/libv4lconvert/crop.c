@@ -23,6 +23,29 @@
 #include <string.h>
 #include "libv4lconvert-priv.h"
 
+
+static void v4lconvert_reduceandcrop_rgbbgr24(
+  unsigned char *src, unsigned char *dest,
+  const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
+{
+  int x, y;
+  int startx = src_fmt->fmt.pix.width / 2 - dest_fmt->fmt.pix.width;
+  int starty = src_fmt->fmt.pix.height / 2 - dest_fmt->fmt.pix.height;
+
+  src += starty * src_fmt->fmt.pix.bytesperline + 3 * startx;
+
+  for (y = 0; y < dest_fmt->fmt.pix.height; y++) {
+    unsigned char *mysrc = src;
+    for (x = 0; x < dest_fmt->fmt.pix.width; x++) {
+      *(dest++) = *(mysrc++);
+      *(dest++) = *(mysrc++);
+      *(dest++) = *(mysrc++);
+      mysrc += 3; /* skip one pixel */
+    }
+    src += 2 * src_fmt->fmt.pix.bytesperline; /* skip one line */
+  }
+}
+
 static void v4lconvert_crop_rgbbgr24(unsigned char *src, unsigned char *dest,
   const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
 {
@@ -36,6 +59,53 @@ static void v4lconvert_crop_rgbbgr24(unsigned char *src, unsigned char *dest,
     memcpy(dest, src, dest_fmt->fmt.pix.width * 3);
     src += src_fmt->fmt.pix.bytesperline;
     dest += dest_fmt->fmt.pix.bytesperline;
+  }
+}
+
+static void v4lconvert_reduceandcrop_yuv420(
+  unsigned char *src, unsigned char *dest,
+  const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt)
+{
+  int x,y;
+  int dest_height_half = dest_fmt->fmt.pix.height / 2;
+  int dest_width_half = dest_fmt->fmt.pix.width / 2;
+  int startx = src_fmt->fmt.pix.width / 2 - dest_fmt->fmt.pix.width;
+  int starty = src_fmt->fmt.pix.height / 2 - dest_fmt->fmt.pix.height;
+  unsigned char *mysrc, *mysrc2;
+
+  /* Y */
+  mysrc = src + starty * src_fmt->fmt.pix.bytesperline + startx;
+  for (y = 0; y < dest_fmt->fmt.pix.height; y++){
+    mysrc2 = mysrc;
+    for (x = 0; x < dest_fmt->fmt.pix.width; x++){
+      *(dest++) = *mysrc2;
+      mysrc2 += 2; /* skip one pixel */
+    }
+    mysrc += 2 * src_fmt->fmt.pix.bytesperline; /* skip one line */
+  }
+
+  /* U */
+  mysrc = src + src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline +
+      (starty / 2) * src_fmt->fmt.pix.bytesperline / 2 + startx / 2;
+  for (y = 0; y < dest_height_half; y++){
+    mysrc2 = mysrc;
+    for (x = 0; x < dest_width_half; x++){
+      *(dest++) = *mysrc2;
+      mysrc2 += 2; /* skip one pixel */
+    }
+    mysrc += src_fmt->fmt.pix.bytesperline ; /* skip one line */
+  }
+
+  /* V */
+  mysrc = src + src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline * 5 / 4
+      + (starty / 2) * src_fmt->fmt.pix.bytesperline / 2 + startx / 2;
+  for (y = 0; y < dest_height_half; y++){
+    mysrc2 = mysrc;
+    for (x = 0; x < dest_width_half; x++){
+      *(dest++) = *mysrc2;
+      mysrc2 += 2; /* skip one pixel */
+    }
+    mysrc += src_fmt->fmt.pix.bytesperline ; /* skip one line */
   }
 }
 
@@ -79,10 +149,19 @@ void v4lconvert_crop(unsigned char *src, unsigned char *dest,
   switch (dest_fmt->fmt.pix.pixelformat) {
     case V4L2_PIX_FMT_RGB24:
     case V4L2_PIX_FMT_BGR24:
-      v4lconvert_crop_rgbbgr24(src, dest, src_fmt, dest_fmt);
+      if (src_fmt->fmt.pix.width  >= 2 * dest_fmt->fmt.pix.width &&
+	  src_fmt->fmt.pix.height >= 2 * dest_fmt->fmt.pix.height)
+	v4lconvert_reduceandcrop_rgbbgr24(src, dest, src_fmt, dest_fmt);
+      else
+	v4lconvert_crop_rgbbgr24(src, dest, src_fmt, dest_fmt);
       break;
     case V4L2_PIX_FMT_YUV420:
-      v4lconvert_crop_yuv420(src, dest, src_fmt, dest_fmt);
+      if (src_fmt->fmt.pix.width  >= 2 * dest_fmt->fmt.pix.width &&
+	  src_fmt->fmt.pix.height >= 2 * dest_fmt->fmt.pix.height)
+	v4lconvert_reduceandcrop_yuv420(src, dest, src_fmt, dest_fmt);
+      else
+	v4lconvert_crop_yuv420(src, dest, src_fmt, dest_fmt);
+
       break;
   }
 }
