@@ -20,12 +20,64 @@
 
 */
 
+#include <string.h>
 #include "libv4lconvert-priv.h"
 
-#define RGB2YUV(r,g,b,y,u,v) \
-    (y) = ((  8453*(r) + 16594*(g) +  3223*(b) +  524288) >> 15); \
+#define RGB2Y(r,g,b,y) \
+    (y) = ((  8453*(r) + 16594*(g) +  3223*(b) +  524288) >> 15)
+
+#define RGB2UV(r,g,b,u,v) \
     (u) = (( -4878*(r) -  9578*(g) + 14456*(b) + 4210688) >> 15); \
     (v) = (( 14456*(r) - 12105*(g) -  2351*(b) + 4210688) >> 15)
+
+void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
+  const struct v4l2_format *src_fmt, int bgr, int yvu)
+{
+  int x, y;
+  unsigned char *udest, *vdest;
+
+  /* Y */
+  for (y = 0; y < src_fmt->fmt.pix.height; y++) {
+    for (x = 0; x < src_fmt->fmt.pix.width; x++) {
+      if (bgr) {
+	RGB2Y(src[2], src[1], src[0], *dest++);
+      } else {
+	RGB2Y(src[0], src[1], src[2], *dest++);
+      }
+      src += 3;
+    }
+    src += src_fmt->fmt.pix.bytesperline - 3 * src_fmt->fmt.pix.width;
+  }
+  src -= src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline;
+
+  /* U + V */
+  if (yvu) {
+    vdest = dest;
+    udest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
+  } else {
+    udest = dest;
+    vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
+  }
+
+  for (y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
+    for (x = 0; x < src_fmt->fmt.pix.width / 2; x++) {
+      int avg_src[3];
+      avg_src[0] = (src[0] + src[3] + src[src_fmt->fmt.pix.bytesperline] +
+		    src[src_fmt->fmt.pix.bytesperline + 3]) / 4;
+      avg_src[1] = (src[1] + src[4] + src[src_fmt->fmt.pix.bytesperline + 1] +
+		    src[src_fmt->fmt.pix.bytesperline + 4]) / 4;
+      avg_src[2] = (src[2] + src[5] + src[src_fmt->fmt.pix.bytesperline + 2] +
+		    src[src_fmt->fmt.pix.bytesperline + 5]) / 4;
+      if (bgr) {
+	RGB2UV(avg_src[2], avg_src[1], avg_src[0], *udest++, *vdest++);
+      } else {
+	RGB2UV(avg_src[0], avg_src[1], avg_src[2], *udest++, *vdest++);
+      }
+      src += 6;
+    }
+    src += 2 * src_fmt->fmt.pix.bytesperline - 3 * src_fmt->fmt.pix.width;
+  }
+}
 
 #define YUV2R(y, u, v) ({ \
   int r = (y) + ((((v)-128)*1436) >> 10); r > 255 ? 255 : r < 0 ? 0 : r; })
@@ -37,13 +89,20 @@
 #define CLIP(color) (unsigned char)(((color)>0xFF)?0xff:(((color)<0)?0:(color)))
 
 void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dest,
-  int width, int height)
+  int width, int height, int yvu)
 {
   int i,j;
 
   const unsigned char *ysrc = src;
-  const unsigned char *usrc = src + width * height;
-  const unsigned char *vsrc = usrc + (width * height) / 4;
+  const unsigned char *usrc, *vsrc;
+
+  if (yvu) {
+    vsrc = src + width * height;
+    usrc = vsrc + (width * height) / 4;
+  } else {
+    usrc = src + width * height;
+    vsrc = usrc + (width * height) / 4;
+  }
 
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j += 2) {
@@ -84,13 +143,20 @@ void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dest,
 }
 
 void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dest,
-  int width, int height)
+  int width, int height, int yvu)
 {
   int i,j;
 
   const unsigned char *ysrc = src;
-  const unsigned char *usrc = src + width * height;
-  const unsigned char *vsrc = usrc + (width * height) / 4;
+  const unsigned char *usrc, *vsrc;
+
+  if (yvu) {
+    vsrc = src + width * height;
+    usrc = vsrc + (width * height) / 4;
+  } else {
+    usrc = src + width * height;
+    vsrc = usrc + (width * height) / 4;
+  }
 
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j += 2) {
@@ -183,11 +249,11 @@ void v4lconvert_yuyv_to_rgb24(const unsigned char *src, unsigned char *dest,
 }
 
 void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dest,
-  int width, int height)
+  int width, int height, int yvu)
 {
   int i, j;
   const unsigned char *src1;
-  unsigned char *vdest;
+  unsigned char *udest, *vdest;
 
   /* copy the Y values */
   src1 = src;
@@ -202,10 +268,16 @@ void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dest,
   /* copy the U and V values */
   src++;				/* point to V */
   src1 = src + width * 2;		/* next line */
-  vdest = dest + width * height / 4;
+  if (yvu) {
+    vdest = dest;
+    udest = dest + width * height / 4;
+  } else {
+    udest = dest;
+    vdest = dest + width * height / 4;
+  }
   for (i = 0; i < height; i += 2) {
     for (j = 0; j < width; j += 2) {
-      *dest++  = ((int) src[0] + src1[0]) / 2;	/* U */
+      *udest++ = ((int) src[0] + src1[0]) / 2;	/* U */
       *vdest++ = ((int) src[2] + src1[2]) / 2;	/* V */
       src += 4;
       src1 += 4;
@@ -268,11 +340,11 @@ void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dest,
 }
 
 void v4lconvert_yvyu_to_yuv420(const unsigned char *src, unsigned char *dest,
-  int width, int height)
+  int width, int height, int yvu)
 {
   int i, j;
   const unsigned char *src1;
-  unsigned char *vdest;
+  unsigned char *udest, *vdest;
 
   /* copy the Y values */
   src1 = src;
@@ -287,10 +359,16 @@ void v4lconvert_yvyu_to_yuv420(const unsigned char *src, unsigned char *dest,
   /* copy the U and V values */
   src++;				/* point to V */
   src1 = src + width * 2;		/* next line */
-  vdest = dest + width * height / 4;
+  if (yvu) {
+    vdest = dest;
+    udest = dest + width * height / 4;
+  } else {
+    udest = dest;
+    vdest = dest + width * height / 4;
+  }
   for (i = 0; i < height; i += 2) {
     for (j = 0; j < width; j += 2) {
-      *dest++  = ((int) src[2] + src1[2]) / 2;	/* U */
+      *udest++ = ((int) src[2] + src1[2]) / 2;	/* U */
       *vdest++ = ((int) src[0] + src1[0]) / 2;	/* V */
       src += 4;
       src1 += 4;
@@ -312,5 +390,34 @@ void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst,
     *dst++ = *src++;
     *dst++ = tmp1;
     *dst++ = tmp0;
+  }
+}
+
+void v4lconvert_swap_uv(const unsigned char *src, unsigned char *dest,
+  const struct v4l2_format *src_fmt)
+{
+  int y;
+
+  /* Copy Y */
+  for (y = 0; y < src_fmt->fmt.pix.height; y++) {
+    memcpy(dest, src, src_fmt->fmt.pix.width);
+    dest += src_fmt->fmt.pix.width;
+    src += src_fmt->fmt.pix.bytesperline;
+  }
+
+  /* Copy component 2 */
+  src += src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline / 4;
+  for (y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
+    memcpy(dest, src, src_fmt->fmt.pix.width / 2);
+    dest += src_fmt->fmt.pix.width / 2;
+    src += src_fmt->fmt.pix.bytesperline / 2;
+  }
+
+  /* Copy component 1 */
+  src -= src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline / 2;
+  for (y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
+    memcpy(dest, src, src_fmt->fmt.pix.width / 2);
+    dest += src_fmt->fmt.pix.width / 2;
+    src += src_fmt->fmt.pix.bytesperline / 2;
   }
 }

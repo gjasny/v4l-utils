@@ -20,7 +20,7 @@
 
 /* YUYV per line */
 void v4lconvert_spca501_to_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height)
+  int width, int height, int yvu)
 {
   int i,j;
   unsigned long *lsrc = (unsigned long *)src;
@@ -34,7 +34,10 @@ void v4lconvert_spca501_to_yuv420(const unsigned char *src, unsigned char *dst,
     }
 
     /* -128 - 127 --> 0 - 255 and copy 1 line U */
-    ldst = (unsigned long *)(dst + width * height + i * width / 4);
+    if (yvu)
+      ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
+    else
+      ldst = (unsigned long *)(dst + width * height + i * width / 4);
     for (j = 0; j < width/2; j += sizeof(long)) {
       *ldst = *lsrc++;
       *ldst++ ^= 0x8080808080808080ULL;
@@ -48,7 +51,10 @@ void v4lconvert_spca501_to_yuv420(const unsigned char *src, unsigned char *dst,
     }
 
     /* -128 - 127 --> 0 - 255 and copy 1 line V */
-    ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
+    if (yvu)
+      ldst = (unsigned long *)(dst + width * height + i * width / 4);
+    else
+      ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
     for (j = 0; j < width/2; j += sizeof(long)) {
       *ldst = *lsrc++;
       *ldst++ ^= 0x8080808080808080ULL;
@@ -58,7 +64,7 @@ void v4lconvert_spca501_to_yuv420(const unsigned char *src, unsigned char *dst,
 
 /* YYUV per line */
 void v4lconvert_spca505_to_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height)
+  int width, int height, int yvu)
 {
   int i,j;
   unsigned long *lsrc = (unsigned long *)src;
@@ -72,14 +78,20 @@ void v4lconvert_spca505_to_yuv420(const unsigned char *src, unsigned char *dst,
     }
 
     /* -128 - 127 --> 0 - 255 and copy 1 line U */
-    ldst = (unsigned long *)(dst + width * height + i * width / 4);
+    if (yvu)
+      ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
+    else
+      ldst = (unsigned long *)(dst + width * height + i * width / 4);
     for (j = 0; j < width/2; j += sizeof(long)) {
       *ldst = *lsrc++;
       *ldst++ ^= 0x8080808080808080ULL;
     }
 
     /* -128 - 127 --> 0 - 255 and copy 1 line V */
-    ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
+    if (yvu)
+      ldst = (unsigned long *)(dst + width * height + i * width / 4);
+    else
+      ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
     for (j = 0; j < width/2; j += sizeof(long)) {
       *ldst = *lsrc++;
       *ldst++ ^= 0x8080808080808080ULL;
@@ -89,7 +101,7 @@ void v4lconvert_spca505_to_yuv420(const unsigned char *src, unsigned char *dst,
 
 /* YUVY per line */
 void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height)
+  int width, int height, int yvu)
 {
   int i,j;
   unsigned long *lsrc = (unsigned long *)src;
@@ -103,14 +115,20 @@ void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
     }
 
     /* -128 - 127 --> 0 - 255 and copy 1 line U */
-    ldst = (unsigned long *)(dst + width * height + i * width / 4);
+    if (yvu)
+      ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
+    else
+      ldst = (unsigned long *)(dst + width * height + i * width / 4);
     for (j = 0; j < width/2; j += sizeof(long)) {
       *ldst = *lsrc++;
       *ldst++ ^= 0x8080808080808080ULL;
     }
 
     /* -128 - 127 --> 0 - 255 and copy 1 line V */
-    ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
+    if (yvu)
+      ldst = (unsigned long *)(dst + width * height + i * width / 4);
+    else
+      ldst = (unsigned long *)(dst + (width * height * 5) / 4 + i * width / 4);
     for (j = 0; j < width/2; j += sizeof(long)) {
       *ldst = *lsrc++;
       *ldst++ ^= 0x8080808080808080ULL;

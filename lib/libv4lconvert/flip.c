@@ -119,6 +119,7 @@ void v4lconvert_rotate(unsigned char *src, unsigned char *dest,
 	v4lconvert_rotate90_rgbbgr24(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_YUV420:
+      case V4L2_PIX_FMT_YVU420:
 	v4lconvert_rotate90_yuv420(src, dest, width, height);
 	break;
     }
@@ -130,6 +131,7 @@ void v4lconvert_rotate(unsigned char *src, unsigned char *dest,
 	v4lconvert_rotate180_rgbbgr24(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_YUV420:
+      case V4L2_PIX_FMT_YVU420:
 	v4lconvert_rotate180_yuv420(src, dest, width, height);
 	break;
     }

@@ -104,11 +104,14 @@ struct v4lconvert_pixfmt {
   int flags;
 };
 
+void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
+  const struct v4l2_format *src_fmt, int bgr, int yvu);
+
 void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dst,
-  int width, int height);
+  int width, int height, int yvu);
 
 void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dst,
-  int width, int height);
+  int width, int height, int yvu);
 
 void v4lconvert_yuyv_to_rgb24(const unsigned char *src, unsigned char *dst,
   int width, int height);
@@ -117,7 +120,7 @@ void v4lconvert_yuyv_to_bgr24(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height);
+  int width, int height, int yvu);
 
 void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dst,
   int width, int height);
@@ -126,19 +129,22 @@ void v4lconvert_yvyu_to_bgr24(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_yvyu_to_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height);
+  int width, int height, int yvu);
 
 void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
+void v4lconvert_swap_uv(const unsigned char *src, unsigned char *dst,
+  const struct v4l2_format *src_fmt);
+
 void v4lconvert_spca501_to_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height);
+  int width, int height, int yvu);
 
 void v4lconvert_spca505_to_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height);
+  int width, int height, int yvu);
 
 void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height);
+  int width, int height, int yvu);
 
 void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,
   int width, int height);
@@ -155,8 +161,8 @@ void v4lconvert_bayer_to_rgb24(const unsigned char *bayer,
 void v4lconvert_bayer_to_bgr24(const unsigned char *bayer,
   unsigned char *rgb, int width, int height, unsigned int pixfmt);
 
-void v4lconvert_bayer_to_yuv420(const unsigned char *bayer,
-  unsigned char *yuv, int width, int height, unsigned int pixfmt);
+void v4lconvert_bayer_to_yuv420(const unsigned char *bayer, unsigned char *yuv,
+  int width, int height, unsigned int src_pixfmt, int yvu);
 
 void v4lconvert_rotate(unsigned char *src, unsigned char *dest,
   int width, int height, unsigned int pix_fmt, int rotate);

@@ -32,7 +32,8 @@
 #define SUPPORTED_DST_PIXFMTS \
   { V4L2_PIX_FMT_RGB24,  0 }, \
   { V4L2_PIX_FMT_BGR24,  0 }, \
-  { V4L2_PIX_FMT_YUV420, 0 }
+  { V4L2_PIX_FMT_YUV420, 0 }, \
+  { V4L2_PIX_FMT_YVU420, 0 }
 
 static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
   unsigned int pixelformat);
@@ -243,6 +244,7 @@ static void v4lconvert_fixup_fmt(struct v4l2_format *fmt)
     fmt->fmt.pix.sizeimage = fmt->fmt.pix.width * fmt->fmt.pix.height * 3;
     break;
   case V4L2_PIX_FMT_YUV420:
+  case V4L2_PIX_FMT_YVU420:
     fmt->fmt.pix.bytesperline = fmt->fmt.pix.width;
     fmt->fmt.pix.sizeimage = fmt->fmt.pix.width * fmt->fmt.pix.height * 3 / 2;
     break;
@@ -354,13 +356,15 @@ static unsigned char *v4lconvert_alloc_buffer(struct v4lconvert_data *data,
 }
 
 static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
-  unsigned int src_pix_fmt, unsigned int dest_pix_fmt,
-  unsigned int width, unsigned int height,
-  unsigned char *src, int src_size, unsigned char *dest)
+  unsigned char *src, int src_size, unsigned char *dest,
+  const struct v4l2_format *src_fmt, unsigned int dest_pix_fmt)
 {
   unsigned int header_width, header_height;
   int result = 0, jpeg_flags = TINYJPEG_FLAGS_MJPEG_TABLE;
   unsigned char *components[3];
+  unsigned int src_pix_fmt = src_fmt->fmt.pix.pixelformat;
+  unsigned int width  = src_fmt->fmt.pix.width;
+  unsigned int height = src_fmt->fmt.pix.height;
 
   switch (src_pix_fmt) {
     case V4L2_PIX_FMT_PJPG:
@@ -404,8 +408,6 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
       }
 
       components[0] = dest;
-      components[1] = components[0] + width * height;
-      components[2] = components[1] + width * height / 4;
 
       switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
@@ -417,6 +419,14 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_BGR24);
 	break;
       case V4L2_PIX_FMT_YUV420:
+	components[1] = components[0] + width * height;
+	components[2] = components[1] + width * height / 4;
+	tinyjpeg_set_components(data->jdec, components, 3);
+	result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_YUV420P);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	components[2] = components[0] + width * height;
+	components[1] = components[2] + width * height / 4;
 	tinyjpeg_set_components(data->jdec, components, 3);
 	result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_YUV420P);
 	break;
@@ -454,7 +464,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	v4lconvert_bayer_to_bgr24(src, dest, width, height, src_pix_fmt);
 	break;
       case V4L2_PIX_FMT_YUV420:
-	v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt);
+	v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 1);
 	break;
       }
       break;
@@ -465,8 +478,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SPCA508:
     {
       unsigned char *d;
+      int yvu = 0;
 
-      if (dest_pix_fmt != V4L2_PIX_FMT_YUV420) {
+      if (dest_pix_fmt != V4L2_PIX_FMT_YUV420 &&
+	  dest_pix_fmt != V4L2_PIX_FMT_YVU420) {
 	d = v4lconvert_alloc_buffer(data, width * height * 3 / 2,
 	      &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
 	if (!d)
@@ -474,26 +489,29 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
       } else
 	d = dest;
 
+      if (dest_pix_fmt == V4L2_PIX_FMT_YVU420)
+	yvu = 1;
+
       switch (src_pix_fmt) {
 	case V4L2_PIX_FMT_SPCA501:
-	  v4lconvert_spca501_to_yuv420(src, d, width, height);
+	  v4lconvert_spca501_to_yuv420(src, d, width, height, yvu);
 	  break;
 	case V4L2_PIX_FMT_SPCA505:
-	  v4lconvert_spca505_to_yuv420(src, d, width, height);
+	  v4lconvert_spca505_to_yuv420(src, d, width, height, yvu);
 	  break;
 	case V4L2_PIX_FMT_SPCA508:
-	  v4lconvert_spca508_to_yuv420(src, d, width, height);
+	  v4lconvert_spca508_to_yuv420(src, d, width, height, yvu);
 	  break;
       }
 
       switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
 	v4lconvert_yuv420_to_rgb24(data->convert_pixfmt_buf, dest, width,
-				   height);
+				   height, yvu);
 	break;
       case V4L2_PIX_FMT_BGR24:
 	v4lconvert_yuv420_to_bgr24(data->convert_pixfmt_buf, dest, width,
-				   height);
+				   height, yvu);
 	break;
       }
       break;
@@ -535,7 +553,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	v4lconvert_bayer_to_bgr24(tmpbuf, dest, width, height, bayer_fmt);
 	break;
       case V4L2_PIX_FMT_YUV420:
-	v4lconvert_bayer_to_yuv420(tmpbuf, dest, width, height, bayer_fmt);
+	v4lconvert_bayer_to_yuv420(tmpbuf, dest, width, height, bayer_fmt, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_bayer_to_yuv420(tmpbuf, dest, width, height, bayer_fmt, 1);
 	break;
       }
       break;
@@ -547,7 +568,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	v4lconvert_swap_rgb(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_YUV420:
-	printf("FIXME add rgb24 -> yuv420 conversion\n");
+	v4lconvert_rgb24_to_yuv420(src, dest, src_fmt, 0, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_rgb24_to_yuv420(src, dest, src_fmt, 0, 1);
 	break;
       }
       break;
@@ -558,7 +582,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	v4lconvert_swap_rgb(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_YUV420:
-	printf("FIXME add bgr24 -> yuv420 conversion\n");
+	v4lconvert_rgb24_to_yuv420(src, dest, src_fmt, 1, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_rgb24_to_yuv420(src, dest, src_fmt, 1, 1);
 	break;
       }
       break;
@@ -567,11 +594,30 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
       switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
 	v4lconvert_yuv420_to_rgb24(src, dest, width,
-				   height);
+				   height, 0);
 	break;
       case V4L2_PIX_FMT_BGR24:
 	v4lconvert_yuv420_to_bgr24(src, dest, width,
-				   height);
+				   height, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_swap_uv(src, dest, src_fmt);
+	break;
+      }
+      break;
+
+    case V4L2_PIX_FMT_YVU420:
+      switch (dest_pix_fmt) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_yuv420_to_rgb24(src, dest, width,
+				   height, 1);
+	break;
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_yuv420_to_bgr24(src, dest, width,
+				   height, 1);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_swap_uv(src, dest, src_fmt);
 	break;
       }
       break;
@@ -585,7 +631,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	v4lconvert_yuyv_to_bgr24(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_YUV420:
-	v4lconvert_yuyv_to_yuv420(src, dest, width, height);
+	v4lconvert_yuyv_to_yuv420(src, dest, width, height, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_yuyv_to_yuv420(src, dest, width, height, 1);
 	break;
       }
       break;
@@ -599,7 +648,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	v4lconvert_yvyu_to_bgr24(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_YUV420:
-	v4lconvert_yvyu_to_yuv420(src, dest, width, height);
+	v4lconvert_yvyu_to_yuv420(src, dest, width, height, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_yvyu_to_yuv420(src, dest, width, height, 1);
 	break;
       }
       break;
@@ -645,6 +697,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       temp_needed = my_src_fmt.fmt.pix.width * my_src_fmt.fmt.pix.height * 3;
       break;
     case V4L2_PIX_FMT_YUV420:
+    case V4L2_PIX_FMT_YVU420:
       dest_needed =
 	my_dest_fmt.fmt.pix.width * my_dest_fmt.fmt.pix.height * 3 / 2;
       temp_needed =
@@ -694,11 +747,9 @@ int v4lconvert_convert(struct v4lconvert_data *data,
   }
 
   if (convert) {
-    res = v4lconvert_convert_pixfmt(data, my_src_fmt.fmt.pix.pixelformat,
-			      my_dest_fmt.fmt.pix.pixelformat,
-			      my_src_fmt.fmt.pix.width,
-			      my_src_fmt.fmt.pix.height,
-			      src, src_size, convert_dest);
+    res = v4lconvert_convert_pixfmt(data, src, src_size, convert_dest,
+				    &my_src_fmt,
+				    my_dest_fmt.fmt.pix.pixelformat);
     if (res)
       return res;
 

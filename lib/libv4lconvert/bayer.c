@@ -433,16 +433,23 @@ static void v4lconvert_border_bayer_line_to_y(
   }
 }
 
-void v4lconvert_bayer_to_yuv420(const unsigned char *bayer,
-  unsigned char *yuv, int width, int height, unsigned int pixfmt)
+void v4lconvert_bayer_to_yuv420(const unsigned char *bayer, unsigned char *yuv,
+  int width, int height, unsigned int src_pixfmt, int yvu)
 {
   int blue_line = 0, start_with_green = 0, x, y;
   unsigned char *ydst = yuv;
-  unsigned char *udst = yuv + width * height;
-  unsigned char *vdst = udst + width * height / 4;
+  unsigned char *udst, *vdst;
+
+  if (yvu) {
+    vdst = yuv + width * height;
+    udst = vdst + width * height / 4;
+  } else {
+    udst = yuv + width * height;
+    vdst = udst + width * height / 4;
+  }
 
   /* First calculate the u and v planes 2x2 pixels at a time */
-  switch (pixfmt) {
+  switch (src_pixfmt) {
     case V4L2_PIX_FMT_SBGGR8:
       for (y = 0; y < height; y += 2) {
 	for (x = 0; x < width; x += 2) {

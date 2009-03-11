@@ -156,6 +156,7 @@ void v4lconvert_crop(unsigned char *src, unsigned char *dest,
 	v4lconvert_crop_rgbbgr24(src, dest, src_fmt, dest_fmt);
       break;
     case V4L2_PIX_FMT_YUV420:
+    case V4L2_PIX_FMT_YVU420:
       if (src_fmt->fmt.pix.width  >= 2 * dest_fmt->fmt.pix.width &&
 	  src_fmt->fmt.pix.height >= 2 * dest_fmt->fmt.pix.height)
 	v4lconvert_reduceandcrop_yuv420(src, dest, src_fmt, dest_fmt);

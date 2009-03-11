@@ -7,6 +7,4 @@
  impossible for overlays) can be done, so that it will no longer be
  necessary to implement CGMBUF in the kernel for each driver.
 
--check v4l2_field during conversion
-
--add conversion from bgr24 to yuv420
+-take the possibility of pitch != width into account everywhere
