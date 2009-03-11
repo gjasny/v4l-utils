@@ -32,7 +32,7 @@
 
 
 static int
-sq905c_first_decompress(unsigned char *output, unsigned char *input,
+sq905c_first_decompress(unsigned char *output, const unsigned char *input,
 			unsigned int outputsize)
 {
     unsigned char parity = 0;
@@ -203,7 +203,7 @@ void v4lconvert_decode_sq905c(const unsigned char *src, unsigned char *dst,
 {
     int size;
     unsigned char *temp_data;
-    unsigned char *raw;
+    const unsigned char *raw;
     /* here we get rid of the 0x50 bytes of header in src. */
     raw = src + 0x50;
     size = width*height/2;
