@@ -44,6 +44,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   SUPPORTED_DST_PIXFMTS,
   { V4L2_PIX_FMT_YUYV,    0 },
   { V4L2_PIX_FMT_YVYU,    0 },
+  { V4L2_PIX_FMT_UYVY,    0 },
   { V4L2_PIX_FMT_SBGGR8,  0 },
   { V4L2_PIX_FMT_SGBRG8,  0 },
   { V4L2_PIX_FMT_SGRBG8,  0 },
@@ -714,6 +715,23 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	break;
       case V4L2_PIX_FMT_YVU420:
 	v4lconvert_yvyu_to_yuv420(src, dest, width, height, 1);
+	break;
+      }
+      break;
+
+    case V4L2_PIX_FMT_UYVY:
+      switch (dest_pix_fmt) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_uyvy_to_rgb24(src, dest, width, height);
+	break;
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_uyvy_to_bgr24(src, dest, width, height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_uyvy_to_yuv420(src, dest, width, height, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_uyvy_to_yuv420(src, dest, width, height, 1);
 	break;
       }
       break;

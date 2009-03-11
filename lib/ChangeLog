@@ -1,3 +1,8 @@
+libv4l-0.5.8
+------------
+* Add support for UYVY (for USB Apple iSight) patch by Julien BLACHE
+  <jb@jblache.org>
+
 libv4l-0.5.7
 ------------
 * Fix a nasty (and stupid) bug in the special try_fmt handling for UVC cams

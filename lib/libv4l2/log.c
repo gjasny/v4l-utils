@@ -121,7 +121,7 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
       {
 	struct v4l2_fmtdesc *fmt = arg;
 	fprintf(v4l2_log_file, "  index: %u, description: %s\n",
-	  fmt->index, (result < 0) ? "" : fmt->description);
+	  fmt->index, (result < 0) ? "" : (const char *)fmt->description);
       }
       break;
     case VIDIOC_G_FMT:
