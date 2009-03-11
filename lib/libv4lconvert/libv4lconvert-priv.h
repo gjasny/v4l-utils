@@ -86,6 +86,12 @@ struct v4lconvert_data {
   struct jdec_private *jdec;
   struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
   unsigned int no_framesizes;
+  int convert_buf_size;
+  int rotate_buf_size;
+  int convert_pixfmt_buf_size;
+  unsigned char *convert_buf;
+  unsigned char *rotate_buf;
+  unsigned char *convert_pixfmt_buf;
 };
 
 struct v4lconvert_flags_info {

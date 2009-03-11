@@ -1,3 +1,9 @@
+libv4l-0.5.3
+------------
+* When conversion requires multiple passes don't alloc the needed temporary
+  buffer on the stack, as some apps (ekiga) use so much stack themselves
+  this causes us to run out of stack space
+
 libv4l-0.5.2
 ------------
 * Add Philips SPC210NC to list of cams with upside down sensor, reported by

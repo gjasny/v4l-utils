@@ -94,7 +94,6 @@ struct v4lconvert_data *v4lconvert_create(int fd)
     return NULL;
 
   data->fd = fd;
-  data->jdec = NULL;
 
   /* Check supported formats */
   for (i = 0; ; i++) {
@@ -135,6 +134,9 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
     tinyjpeg_set_components(data->jdec, comps, 3);
     tinyjpeg_free(data->jdec);
   }
+  free(data->convert_buf);
+  free(data->rotate_buf);
+  free(data->convert_pixfmt_buf);
   free(data);
 }
 
@@ -333,6 +335,23 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
     return 1; /* Needs flip and thus conversion */
 }
 
+static unsigned char *v4lconvert_alloc_buffer(struct v4lconvert_data *data,
+  int needed, unsigned char **buf, int *buf_size)
+{
+  if (*buf_size < needed) {
+    free(*buf);
+    *buf = malloc(needed);
+    if (*buf == NULL) {
+      *buf_size = 0;
+      V4LCONVERT_ERR("could not allocate memory\n");
+      errno = ENOMEM;
+      return NULL;
+    }
+    *buf_size = needed;
+  }
+  return *buf;
+}
+
 static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
   unsigned int src_pix_fmt, unsigned int dest_pix_fmt,
   unsigned int width, unsigned int height,
@@ -444,8 +463,15 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SPCA505:
     case V4L2_PIX_FMT_SPCA508:
     {
-      unsigned char tmpbuf[width * height * 3 / 2];
-      unsigned char *d = (dest_pix_fmt != V4L2_PIX_FMT_YUV420) ? tmpbuf : dest;
+      unsigned char *d;
+
+      if (dest_pix_fmt != V4L2_PIX_FMT_YUV420) {
+	d = v4lconvert_alloc_buffer(data, width * height * 3 / 2,
+	      &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
+	if (!d)
+	  return -1;
+      } else
+	d = dest;
 
       switch (src_pix_fmt) {
 	case V4L2_PIX_FMT_SPCA501:
@@ -461,10 +487,12 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 
       switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
-	v4lconvert_yuv420_to_rgb24(tmpbuf, dest, width, height);
+	v4lconvert_yuv420_to_rgb24(data->convert_pixfmt_buf, dest, width,
+				   height);
 	break;
       case V4L2_PIX_FMT_BGR24:
-	v4lconvert_yuv420_to_bgr24(tmpbuf, dest, width, height);
+	v4lconvert_yuv420_to_bgr24(data->convert_pixfmt_buf, dest, width,
+				   height);
 	break;
       }
       break;
@@ -475,8 +503,13 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SN9C10X:
     case V4L2_PIX_FMT_PAC207:
     {
-      unsigned char tmpbuf[width * height];
+      unsigned char *tmpbuf;
       unsigned int bayer_fmt = 0;
+
+      tmpbuf = v4lconvert_alloc_buffer(data, width * height,
+	    &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
+      if (!tmpbuf)
+	return -1;
 
       switch (src_pix_fmt) {
 	case V4L2_PIX_FMT_SPCA561:
@@ -642,12 +675,20 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 
   /* convert_pixfmt -> rotate -> crop, all steps are optional */
   if (convert && (rotate || crop)) {
-    convert_dest = alloca(temp_needed);
+    convert_dest = v4lconvert_alloc_buffer(data, temp_needed,
+		     &data->convert_buf, &data->convert_buf_size);
+    if (!convert_dest)
+      return -1;
+
     rotate_src = crop_src = convert_dest;
   }
 
   if (rotate && crop) {
-    rotate_dest = alloca(temp_needed);
+    rotate_dest = v4lconvert_alloc_buffer(data, temp_needed,
+		    &data->rotate_buf, &data->rotate_buf_size);
+    if (!rotate_dest)
+      return -1;
+
     crop_src = rotate_dest;
   }
 
