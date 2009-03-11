@@ -9,6 +9,8 @@ libv4l-0.5.2
 * Only check width, height and pixelformat when checking if we are doing
   conversion, instead of doing a memcmp, as that are the only things which
   the convert code checks
+* Take into account that the buffers only contain half of the lines when
+  field is V4L2_FIELD_ALTERNATE
 
 libv4l-0.5.1
 ------------
