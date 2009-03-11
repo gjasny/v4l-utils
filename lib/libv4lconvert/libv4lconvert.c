@@ -61,6 +61,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_SN9C10X,      V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_PAC207,       V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_MR97310A,     V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_SQ905C,       V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_PJPG,         V4LCONVERT_COMPRESSED },
 };
 
@@ -608,6 +609,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SN9C10X:
     case V4L2_PIX_FMT_PAC207:
     case V4L2_PIX_FMT_MR97310A:
+    case V4L2_PIX_FMT_SQ905C:
     {
       unsigned char *tmpbuf;
 
@@ -632,6 +634,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_MR97310A:
 	  v4lconvert_decode_mr97310a(src, tmpbuf, width, height);
 	  src_pix_fmt = V4L2_PIX_FMT_SBGGR8;
+	  break;
+	case V4L2_PIX_FMT_SQ905C:
+	  v4lconvert_decode_sq905c(src, tmpbuf, width, height);
+	  src_pix_fmt = V4L2_PIX_FMT_SRGGB8;
 	  break;
       }
       src = tmpbuf;
