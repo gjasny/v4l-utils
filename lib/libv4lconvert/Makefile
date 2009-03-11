@@ -57,7 +57,7 @@ endif
 	install -m 644 libv4lconvert.pc $(DESTDIR)$(LIBDIR)/pkgconfig
 
 clean::
-	rm -f *.a *.so* *.o *.d libv4lconvert.pc log *~
+	rm -f *.a *.so* *.o *.d libv4lconvert.pc log *~ *.orig *.rej
 
 %.o: %.c
 	$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<

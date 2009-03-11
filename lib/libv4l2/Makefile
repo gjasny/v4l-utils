@@ -68,7 +68,7 @@ endif
 	install -m 644 libv4l2.pc $(DESTDIR)$(LIBDIR)/pkgconfig
 
 clean::
-	rm -f *.a *.so* *.o *.d libv4l2.pc log *~
+	rm -f *.a *.so* *.o *.d libv4l2.pc log *~ *.orig *.rej
 
 %.o: %.c
 	$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<

@@ -13,10 +13,5 @@ clean:
 	$(MAKE) -C libv4l1 V4L2_LIB_VERSION=$(V4L2_LIB_VERSION) $@
 
 export: clean
-	mkdir /tmp/libv4l-$(V4L2_LIB_VERSION)
-	cp -a . /tmp/libv4l-$(V4L2_LIB_VERSION)/
-	cd /tmp/ && \
-		tar cvf /tmp/libv4l-$(V4L2_LIB_VERSION).tar\
-		libv4l-$(V4L2_LIB_VERSION)
-	gzip /tmp/libv4l-$(V4L2_LIB_VERSION).tar
-	rm -rf /tmp/libv4l-$(V4L2_LIB_VERSION)
+	tar --transform s/^\./libv4l-$(V4L2_LIB_VERSION)/g -zcvf \
+		/tmp/libv4l-$(V4L2_LIB_VERSION).tar.gz .
