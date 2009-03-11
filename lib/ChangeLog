@@ -1,3 +1,9 @@
+libv4l-0.5.7
+------------
+* Fix a nasty (and stupid) bug in the special try_fmt handling for UVC cams
+* Add some more verbose logging of various calls when asking libv4l to log
+  calls to a file, to assist in (future) debugging
+
 libv4l-0.5.6
 ------------
 * Always do a s_fmt on uvc cams even if this changes nothing, as not doing

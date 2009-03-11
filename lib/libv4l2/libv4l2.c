@@ -760,6 +760,9 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
     case VIDIOC_ENUM_FRAMEINTERVALS:
       result = v4lconvert_enum_frameintervals(devices[index].convert, arg);
+      if (result)
+	V4L2_LOG("ENUM_FRAMEINTERVALS Error: %s",
+	  v4lconvert_get_error_message(devices[index].convert));
       break;
 
     case VIDIOC_TRY_FMT:
@@ -949,7 +952,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	   but we need the buffer _now_ to write our converted data
 	   to it! */
 	if (devices[index].convert_mmap_buf == MAP_FAILED) {
-	  devices[index].convert_mmap_buf = (void *)syscall(SYS_mmap2,
+	  devices[index].convert_mmap_buf = (void *)syscall(SYS_mmap2, NULL,
 						   (size_t)(
 						     devices[index].no_frames *
 						     V4L2_FRAME_BUF_SIZE),

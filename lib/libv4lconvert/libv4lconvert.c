@@ -209,8 +209,11 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 			data->framesizes[i].discrete.height;
       unsigned int size_diff = size_x_diff * size_x_diff +
 			       size_y_diff * size_y_diff;
-      if (size_diff < closest_fmt_size_diff)
+
+      if (size_diff < closest_fmt_size_diff) {
+	closest_fmt_size_diff = size_diff;
 	best_framesize = i;
+      }
     }
   }
 
@@ -452,7 +455,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	/* Check for (pixart) rotated JPEG */
 	if (header_width == height && header_height == width) {
 	  if (!(data->flags & V4LCONVERT_ROTATE_90)) {
-	    V4LCONVERT_ERR("JPEG needs 90 degree rotation");
+	    V4LCONVERT_ERR("JPEG needs 90 degree rotation\n");
 	    data->flags |= V4LCONVERT_ROTATE_90;
 	    errno = EAGAIN;
 	    return -1;
@@ -497,7 +500,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	   the upper layer this is an intermediate fault and it should try
 	   again with a new buffer by setting errno to EAGAIN */
 	if (src_pix_fmt == V4L2_PIX_FMT_PJPG) {
-	  V4LCONVERT_ERR("Error decompressing JPEG: %s",
+	  V4LCONVERT_ERR("decompressing JPEG: %s",
 	    tinyjpeg_get_errorstring(data->jdec));
 	  errno = EAGAIN;
 	  return -1;
@@ -923,8 +926,12 @@ int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
   int res;
   struct v4l2_format src_fmt, dest_fmt;
 
-  if (!v4lconvert_supported_dst_format(frmival->pixel_format))
-    return syscall(SYS_ioctl, data->fd, VIDIOC_ENUM_FRAMEINTERVALS, frmival);
+  if (!v4lconvert_supported_dst_format(frmival->pixel_format)) {
+    res = syscall(SYS_ioctl, data->fd, VIDIOC_ENUM_FRAMEINTERVALS, frmival);
+    if (res)
+      V4LCONVERT_ERR("%s\n", strerror(errno));
+    return res;
+  }
 
   /* Check which format we will be using to convert to frmival->pixel_format */
   memset(&dest_fmt, 0, sizeof(dest_fmt));
@@ -932,13 +939,30 @@ int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
   dest_fmt.fmt.pix.pixelformat = frmival->pixel_format;
   dest_fmt.fmt.pix.width = frmival->width;
   dest_fmt.fmt.pix.height = frmival->height;
-  if ((res = v4lconvert_try_format(data, &dest_fmt, &src_fmt)))
+  if ((res = v4lconvert_try_format(data, &dest_fmt, &src_fmt))) {
+    if (res)
+      V4LCONVERT_ERR("trying format: %s\n", strerror(errno));
     return res;
+  }
 
   /* Check the requested format is supported exactly as requested */
   if (dest_fmt.fmt.pix.pixelformat != frmival->pixel_format ||
       dest_fmt.fmt.pix.width  != frmival->width ||
       dest_fmt.fmt.pix.height != frmival->height) {
+    int frmival_pixformat = frmival->pixel_format;
+    int dest_pixformat = dest_fmt.fmt.pix.pixelformat;
+    V4LCONVERT_ERR("Could not find matching framesize for: %c%c%c%c %dx%d "
+	    "closest match: %c%c%c%c %dx%d\n",
+	    frmival_pixformat & 0xff,
+	    (frmival_pixformat >> 8) & 0xff,
+	    (frmival_pixformat >> 16) & 0xff,
+	    frmival_pixformat >> 24,
+	    frmival->width, frmival->height,
+	    dest_pixformat & 0xff,
+	    (dest_pixformat >> 8) & 0xff,
+	    (dest_pixformat >> 16) & 0xff,
+	    dest_pixformat >> 24,
+	    dest_fmt.fmt.pix.width , dest_fmt.fmt.pix.height);
     errno = EINVAL;
     return -1;
   }
@@ -948,6 +972,23 @@ int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
   frmival->width = src_fmt.fmt.pix.width;
   frmival->height = src_fmt.fmt.pix.height;
   res = syscall(SYS_ioctl, data->fd, VIDIOC_ENUM_FRAMEINTERVALS, frmival);
+  if (res) {
+    int dest_pixfmt = dest_fmt.fmt.pix.pixelformat;
+    int src_pixfmt  = src_fmt.fmt.pix.pixelformat;
+    V4LCONVERT_ERR("Could not enum frameival index: %d for: %c%c%c%c %dx%d "
+	    "using src: %c%c%c%c %dx%d, error: %s\n",
+	    frmival->index,
+	    dest_pixfmt & 0xff,
+	    (dest_pixfmt >> 8) & 0xff,
+	    (dest_pixfmt >> 16) & 0xff,
+	    dest_pixfmt >> 24,
+	    dest_fmt.fmt.pix.width , dest_fmt.fmt.pix.height,
+	    src_pixfmt & 0xff,
+	    (src_pixfmt >> 8) & 0xff,
+	    (src_pixfmt >> 16) & 0xff,
+	    src_pixfmt >> 24,
+	    src_fmt.fmt.pix.width, src_fmt.fmt.pix.height, strerror(errno));
+  }
 
   /* Restore the requested format in the frmival struct */
   frmival->pixel_format = dest_fmt.fmt.pix.pixelformat;

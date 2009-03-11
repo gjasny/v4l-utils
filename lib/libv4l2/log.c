@@ -91,6 +91,10 @@ static const char *v4l2_ioctls[] = {
 	[_IOC_NR(VIDIOC_G_EXT_CTRLS)]      = "VIDIOC_G_EXT_CTRLS",
 	[_IOC_NR(VIDIOC_S_EXT_CTRLS)]      = "VIDIOC_S_EXT_CTRLS",
 	[_IOC_NR(VIDIOC_TRY_EXT_CTRLS)]    = "VIDIOC_TRY_EXT_CTRLS",
+#ifdef VIDIOC_ENUM_FRAMESIZES
+	[_IOC_NR(VIDIOC_ENUM_FRAMESIZES)]  = "VIDIOC_ENUM_FRAMESIZES",
+	[_IOC_NR(VIDIOC_ENUM_FRAMEINTERVALS)] = "VIDIOC_ENUM_FRAMEINTERVALS",
+#endif
 };
 
 void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
@@ -105,7 +109,7 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
   if (_IOC_TYPE(request) == 'V' && _IOC_NR(request) < ARRAY_SIZE(v4l2_ioctls))
     ioctl_str = v4l2_ioctls[_IOC_NR(request)];
   else {
-    snprintf(buf, sizeof(buf), "unknown request: %c %d\n",
+    snprintf(buf, sizeof(buf), "unknown request: %c %d",
       (int)_IOC_TYPE(request), (int)_IOC_NR(request));
     ioctl_str = buf;
   }
@@ -113,11 +117,18 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
   fprintf(v4l2_log_file, "request == %s\n", ioctl_str);
 
   switch (request) {
+    case VIDIOC_ENUM_FMT:
+      {
+	struct v4l2_fmtdesc *fmt = arg;
+	fprintf(v4l2_log_file, "  index: %u, description: %s\n",
+	  fmt->index, (result < 0) ? "" : fmt->description);
+      }
+      break;
     case VIDIOC_G_FMT:
     case VIDIOC_S_FMT:
     case VIDIOC_TRY_FMT:
       {
-	struct v4l2_format* fmt = arg;
+	struct v4l2_format *fmt = arg;
 	int pixfmt = fmt->fmt.pix.pixelformat;
 
 	if (fmt->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
@@ -144,6 +155,62 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 	  req->count, (int)req->type, (int)req->memory);
       }
       break;
+#ifdef VIDIOC_ENUM_FRAMESIZES
+    case VIDIOC_ENUM_FRAMESIZES:
+      {
+	struct v4l2_frmsizeenum *frmsize = arg;
+	int pixfmt = frmsize->pixel_format;
+
+	fprintf(v4l2_log_file, "  index: %u pixelformat: %c%c%c%c",
+	  frmsize->index,
+	  pixfmt & 0xff,
+	  (pixfmt >> 8) & 0xff,
+	  (pixfmt >> 16) & 0xff,
+	  pixfmt >> 24);
+	switch (frmsize->type) {
+	  case V4L2_FRMSIZE_TYPE_DISCRETE:
+	    fprintf(v4l2_log_file, " %ux%u\n", frmsize->discrete.width,
+	      frmsize->discrete.height);
+	    break;
+	  case V4L2_FRMSIZE_TYPE_CONTINUOUS:
+	  case V4L2_FRMSIZE_TYPE_STEPWISE:
+	    fprintf(v4l2_log_file, " %ux%u -> %ux%u\n",
+	      frmsize->stepwise.min_width, frmsize->stepwise.min_height,
+	      frmsize->stepwise.max_width, frmsize->stepwise.max_height);
+	    break;
+	}
+      }
+      break;
+    case VIDIOC_ENUM_FRAMEINTERVALS:
+      {
+	struct v4l2_frmivalenum *frmival = arg;
+	int pixfmt = frmival->pixel_format;
+
+	fprintf(v4l2_log_file, "  index: %u pixelformat: %c%c%c%c %ux%u: ",
+	  frmival->index,
+	  pixfmt & 0xff,
+	  (pixfmt >> 8) & 0xff,
+	  (pixfmt >> 16) & 0xff,
+	  pixfmt >> 24,
+	  frmival->width,
+	  frmival->height);
+	switch (frmival->type) {
+	  case V4L2_FRMIVAL_TYPE_DISCRETE:
+	    fprintf(v4l2_log_file, "%u/%u\n", frmival->discrete.numerator,
+	      frmival->discrete.denominator);
+	    break;
+	  case V4L2_FRMIVAL_TYPE_CONTINUOUS:
+	  case V4L2_FRMIVAL_TYPE_STEPWISE:
+	    fprintf(v4l2_log_file, "%u/%u -> %u/%u\n",
+	      frmival->stepwise.min.numerator,
+	      frmival->stepwise.min.denominator,
+	      frmival->stepwise.max.numerator,
+	      frmival->stepwise.max.denominator);
+	    break;
+	}
+      }
+      break;
+#endif
   }
 
   if (result < 0)
