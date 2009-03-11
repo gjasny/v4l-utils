@@ -1,3 +1,8 @@
+libv4l-0.5.4
+------------
+* Don't report DQBUF errors when errno is EAGAIN, this fixes flooding the
+  screen with errors when applications use non blocking mode
+
 libv4l-0.5.3
 ------------
 * When conversion requires multiple passes don't alloc the needed temporary

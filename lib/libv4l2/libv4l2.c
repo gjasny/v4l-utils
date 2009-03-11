@@ -264,9 +264,11 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 
   do {
     if ((result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_DQBUF, buf))) {
-      int saved_err = errno;
-      V4L2_LOG_ERR("dequeuing buf: %s\n", strerror(errno));
-      errno = saved_err;
+      if (errno != EAGAIN) {
+	int saved_err = errno;
+	V4L2_LOG_ERR("dequeuing buf: %s\n", strerror(errno));
+	errno = saved_err;
+      }
       return result;
     }
 
