@@ -63,6 +63,10 @@
 #define V4L2_PIX_FMT_YVYU v4l2_fourcc('Y', 'V', 'Y', 'U')
 #endif
 
+#ifndef V4L2_PIX_FMT_SN9C20X_I420
+#define V4L2_PIX_FMT_SN9C20X_I420  v4l2_fourcc('S', '9', '2', '0')
+#endif
+
 #define V4LCONVERT_ERROR_MSG_SIZE 256
 #define V4LCONVERT_MAX_FRAMESIZES 16
 
@@ -155,6 +159,9 @@ void v4lconvert_spca505_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height, int yvu);
 
 void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
+  int width, int height, int yvu);
+
+void v4lconvert_sn9c20x_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height, int yvu);
 
 void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,

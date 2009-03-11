@@ -8,6 +8,8 @@ libv4l-0.5.8
 * Switch to using USB-id's instead of USB product string, as not all devices
   set a unique product string. This fixes the upside down issues with
   genius e-messenger 112 cams
+* Add support for sn9c20x-i420 format patch by Vasily Khoruzhick
+  <anarsoul@gmail.com>
 
 libv4l-0.5.7
 ------------

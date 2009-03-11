@@ -47,6 +47,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_YUYV,    0 },
   { V4L2_PIX_FMT_YVYU,    0 },
   { V4L2_PIX_FMT_UYVY,    0 },
+  { V4L2_PIX_FMT_SN9C20X_I420, 0 },
   { V4L2_PIX_FMT_SBGGR8,  0 },
   { V4L2_PIX_FMT_SGBRG8,  0 },
   { V4L2_PIX_FMT_SGRBG8,  0 },
@@ -572,10 +573,11 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
       }
       break;
 
-    /* YUYV line by line formats */
+    /* Custom cam specific YUV formats */
     case V4L2_PIX_FMT_SPCA501:
     case V4L2_PIX_FMT_SPCA505:
     case V4L2_PIX_FMT_SPCA508:
+    case V4L2_PIX_FMT_SN9C20X_I420:
     {
       unsigned char *d;
       int yvu = 0;
@@ -601,6 +603,9 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  break;
 	case V4L2_PIX_FMT_SPCA508:
 	  v4lconvert_spca508_to_yuv420(src, d, width, height, yvu);
+	  break;
+	case V4L2_PIX_FMT_SN9C20X_I420:
+	  v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);
 	  break;
       }
 
