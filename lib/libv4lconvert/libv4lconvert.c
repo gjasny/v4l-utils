@@ -553,26 +553,6 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
       }
       break;
 
-    case V4L2_PIX_FMT_SBGGR8:
-    case V4L2_PIX_FMT_SGBRG8:
-    case V4L2_PIX_FMT_SGRBG8:
-    case V4L2_PIX_FMT_SRGGB8:
-      switch (dest_pix_fmt) {
-      case V4L2_PIX_FMT_RGB24:
-	v4lconvert_bayer_to_rgb24(src, dest, width, height, src_pix_fmt);
-	break;
-      case V4L2_PIX_FMT_BGR24:
-	v4lconvert_bayer_to_bgr24(src, dest, width, height, src_pix_fmt);
-	break;
-      case V4L2_PIX_FMT_YUV420:
-	v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 0);
-	break;
-      case V4L2_PIX_FMT_YVU420:
-	v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 1);
-	break;
-      }
-      break;
-
     /* Custom cam specific YUV formats */
     case V4L2_PIX_FMT_SPCA501:
     case V4L2_PIX_FMT_SPCA505:
@@ -628,7 +608,6 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_PAC207:
     {
       unsigned char *tmpbuf;
-      unsigned int bayer_fmt = 0;
 
       tmpbuf = v4lconvert_alloc_buffer(data, width * height,
 	    &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
@@ -638,34 +617,41 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
       switch (src_pix_fmt) {
 	case V4L2_PIX_FMT_SPCA561:
 	  v4lconvert_decode_spca561(src, tmpbuf, width, height);
-	  bayer_fmt = V4L2_PIX_FMT_SGBRG8;
+	  src_pix_fmt = V4L2_PIX_FMT_SGBRG8;
 	  break;
 	case V4L2_PIX_FMT_SN9C10X:
 	  v4lconvert_decode_sn9c10x(src, tmpbuf, width, height);
-	  bayer_fmt = V4L2_PIX_FMT_SBGGR8;
+	  src_pix_fmt = V4L2_PIX_FMT_SBGGR8;
 	  break;
 	case V4L2_PIX_FMT_PAC207:
 	  v4lconvert_decode_pac207(src, tmpbuf, width, height);
-	  bayer_fmt = V4L2_PIX_FMT_SBGGR8;
+	  src_pix_fmt = V4L2_PIX_FMT_SBGGR8;
 	  break;
       }
+      src = tmpbuf;
+      /* Deliberate fall through to raw bayer fmt code! */
+    }
 
+    /* Raw bayer formats */
+    case V4L2_PIX_FMT_SBGGR8:
+    case V4L2_PIX_FMT_SGBRG8:
+    case V4L2_PIX_FMT_SGRBG8:
+    case V4L2_PIX_FMT_SRGGB8:
       switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
-	v4lconvert_bayer_to_rgb24(tmpbuf, dest, width, height, bayer_fmt);
+	v4lconvert_bayer_to_rgb24(src, dest, width, height, src_pix_fmt);
 	break;
       case V4L2_PIX_FMT_BGR24:
-	v4lconvert_bayer_to_bgr24(tmpbuf, dest, width, height, bayer_fmt);
+	v4lconvert_bayer_to_bgr24(src, dest, width, height, src_pix_fmt);
 	break;
       case V4L2_PIX_FMT_YUV420:
-	v4lconvert_bayer_to_yuv420(tmpbuf, dest, width, height, bayer_fmt, 0);
+	v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 0);
 	break;
       case V4L2_PIX_FMT_YVU420:
-	v4lconvert_bayer_to_yuv420(tmpbuf, dest, width, height, bayer_fmt, 1);
+	v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 1);
 	break;
       }
       break;
-    }
 
     case V4L2_PIX_FMT_RGB24:
       switch (dest_pix_fmt) {
