@@ -43,6 +43,10 @@
 #define V4L2_PIX_FMT_PAC207 v4l2_fourcc('P','2','0','7')
 #endif
 
+#ifndef V4L2_PIX_FMT_MR97310A
+#define V4L2_PIX_FMT_MR97310A v4l2_fourcc('M','3','1','0')
+#endif
+
 #ifndef V4L2_PIX_FMT_PJPG
 #define V4L2_PIX_FMT_PJPG v4l2_fourcc('P', 'J', 'P', 'G')
 #endif
@@ -171,6 +175,9 @@ void v4lconvert_decode_sn9c10x(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_decode_pac207(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_decode_mr97310a(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_bayer_to_rgb24(const unsigned char *bayer,
