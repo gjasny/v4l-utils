@@ -2,6 +2,8 @@ libv4l-0.5.2
 ------------
 * Add Philips SPC210NC to list of cams with upside down sensor, reported by
   Rieker Flaik
+* Work around some drivers (pwc) not properly reflecting what one gets after a
+  s_fmt in their try_fmt answer
 
 libv4l-0.5.1
 ------------
