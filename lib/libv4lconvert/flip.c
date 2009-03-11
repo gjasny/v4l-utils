@@ -22,8 +22,8 @@
 
 #include "libv4lconvert-priv.h"
 
-void v4lconvert_rotate180_rgbbgr24(const unsigned char *src, unsigned char *dst,
-  int width, int height)
+static void v4lconvert_rotate180_rgbbgr24(const unsigned char *src,
+  unsigned char *dst, int width, int height)
 {
   int i;
 
@@ -38,8 +38,8 @@ void v4lconvert_rotate180_rgbbgr24(const unsigned char *src, unsigned char *dst,
   }
 }
 
-void v4lconvert_rotate180_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height)
+static void v4lconvert_rotate180_yuv420(const unsigned char *src,
+  unsigned char *dst, int width, int height)
 {
   int i;
 
@@ -59,8 +59,8 @@ void v4lconvert_rotate180_yuv420(const unsigned char *src, unsigned char *dst,
     *dst++ = *src--;
 }
 
-void v4lconvert_rotate90_rgbbgr24(const unsigned char *src, unsigned char *dst,
-  int destwidth, int destheight)
+static void v4lconvert_rotate90_rgbbgr24(const unsigned char *src,
+  unsigned char *dst, int destwidth, int destheight)
 {
   int x, y;
 #define srcwidth destheight
@@ -75,8 +75,8 @@ void v4lconvert_rotate90_rgbbgr24(const unsigned char *src, unsigned char *dst,
     }
 }
 
-void v4lconvert_rotate90_yuv420(const unsigned char *src, unsigned char *dst,
-  int destwidth, int destheight)
+static void v4lconvert_rotate90_yuv420(const unsigned char *src,
+  unsigned char *dst, int destwidth, int destheight)
 {
   int x, y;
 
@@ -104,4 +104,37 @@ void v4lconvert_rotate90_yuv420(const unsigned char *src, unsigned char *dst,
       int offset = (srcheight - x - 1) * srcwidth + y;
       *dst++ = src[offset];
     }
+}
+
+void v4lconvert_rotate(unsigned char *src, unsigned char *dest,
+  int width, int height, unsigned int pix_fmt, int rotate)
+{
+  switch (rotate) {
+  case 0:
+    break;
+  case 90:
+    switch (pix_fmt) {
+      case V4L2_PIX_FMT_RGB24:
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_rotate90_rgbbgr24(src, dest, width, height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_rotate90_yuv420(src, dest, width, height);
+	break;
+    }
+    break;
+  case 180:
+    switch (pix_fmt) {
+      case V4L2_PIX_FMT_RGB24:
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_rotate180_rgbbgr24(src, dest, width, height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_rotate180_yuv420(src, dest, width, height);
+	break;
+    }
+    break;
+  default:
+    printf("FIXME add %d degrees rotation\n", rotate);
+  }
 }

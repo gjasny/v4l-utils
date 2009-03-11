@@ -740,6 +740,16 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	  break;
 	}
 
+	if (v4l2_log_file) {
+	  int pixfmt = dest_fmt->fmt.pix.pixelformat;
+
+	  fprintf(v4l2_log_file, "VIDIOC_S_FMT app requesting: %c%c%c%c\n",
+	    pixfmt & 0xff,
+	    (pixfmt >> 8) & 0xff,
+	    (pixfmt >> 16) & 0xff,
+	    pixfmt >> 24);
+	}
+
 	if (devices[index].flags & V4L2_DISABLE_CONVERSION) {
 	  result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_TRY_FMT,
 			   dest_fmt);

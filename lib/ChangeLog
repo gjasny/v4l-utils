@@ -1,3 +1,16 @@
+libv4l-0.5.1
+------------
+* Add support for software cropping from 352x288 -> 320x240 / 176x144 ->
+  160x120, so that apps which will only work with vga resolutions like
+  320x240 (Skype!) will work with cams/drivers which do not support cropping
+  CIF resolutions to VGA resolutions in hardware. This makes all 2.6.27 gspca
+  supported cams, except for the pac7302 which only does 640x480 (and skype
+  wants 320x240), work with skype
+* The v4lconvert_convert function was becoming a bit of a mess, so split the
+  functionailiy into seperate v4lconvert_convert_pixfmt, v4lconvert_rotate and
+  v4lconvert_crop functions, and make v4lconvert_convert a frontend to
+  these
+
 libv4l-0.5.0
 ------------
 * Add support for enumerating framesizes and frameintervals of emulated

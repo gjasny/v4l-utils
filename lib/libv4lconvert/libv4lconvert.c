@@ -64,11 +64,24 @@ static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
 
 /* List of cams which need special flags */
 static const struct v4lconvert_flags_info v4lconvert_flags[] = {
-  { "SPC 200NC      ", V4LCONVERT_UPSIDE_DOWN },
-  { "SPC 300NC      ", V4LCONVERT_UPSIDE_DOWN },
-  { "USB Camera (0471:0325)", V4LCONVERT_UPSIDE_DOWN }, /* SPC200NC */
-  { "USB Camera (0471:0326)", V4LCONVERT_UPSIDE_DOWN }, /* SPC300NC */
-  { "USB Camera (093a:2476)", V4LCONVERT_UPSIDE_DOWN }, /* Genius E-M 112 */
+  { "SPC 200NC      ", V4LCONVERT_ROTATE_180 },
+  { "SPC 300NC      ", V4LCONVERT_ROTATE_180 },
+  { "USB Camera (0471:0325)", V4LCONVERT_ROTATE_180 }, /* SPC200NC */
+  { "USB Camera (0471:0326)", V4LCONVERT_ROTATE_180 }, /* SPC300NC */
+  { "USB Camera (093a:2476)", V4LCONVERT_ROTATE_180 }, /* Genius E-M 112 */
+};
+
+/* List of well known resolutions which we can get by cropping somewhat larger
+   resolutions */
+static const int v4lconvert_crop_res[][2] = {
+  /* low res VGA resolutions, can be made by software cropping SIF resolutions
+     for cam/drivers which do not support this in hardware */
+  { 320, 240 },
+  { 160, 120 },
+  /* Some CIF cams (with vv6410 sensor) have slightly larger then usual CIF
+     resolutions, make regular CIF resolutions available on these by sw crop */
+  { 352, 288 },
+  { 176, 144 },
 };
 
 struct v4lconvert_data *v4lconvert_create(int fd)
@@ -171,23 +184,13 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
   return 0;
 }
 
-/* See libv4lconvert.h for description of in / out parameters */
-int v4lconvert_try_format(struct v4lconvert_data *data,
+static int v4lconvert_do_try_format(struct v4lconvert_data *data,
   struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
 {
   int i;
   unsigned int closest_fmt_size_diff = -1;
   unsigned int desired_pixfmt = dest_fmt->fmt.pix.pixelformat;
   struct v4l2_format try_fmt, closest_fmt = { .type = 0 };
-
-  /* Can we do conversion to the requested format & type? */
-  if (!v4lconvert_supported_dst_format(desired_pixfmt) ||
-      dest_fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-    int ret = syscall(SYS_ioctl, data->fd, VIDIOC_TRY_FMT, dest_fmt);
-    if (src_fmt)
-      *src_fmt = *dest_fmt;
-    return ret;
-  }
 
   for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
     /* is this format supported? */
@@ -209,7 +212,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
 	if (size_diff < closest_fmt_size_diff ||
 	    (size_diff == closest_fmt_size_diff &&
 	     (supported_src_pixfmts[i].fmt == desired_pixfmt ||
-	      ((try_fmt.fmt.pix.width > 176 || try_fmt.fmt.pix.height > 144) &&
+	      ((try_fmt.fmt.pix.width > 180 || try_fmt.fmt.pix.height > 148) &&
 	       (supported_src_pixfmts[i].flags & V4LCONVERT_COMPRESSED))))) {
 	  closest_fmt_size_diff = size_diff;
 	  closest_fmt = try_fmt;
@@ -218,35 +221,92 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
     }
   }
 
-  if (closest_fmt.type == 0) {
-    int ret = syscall(SYS_ioctl, data->fd, VIDIOC_TRY_FMT, dest_fmt);
-    if (src_fmt)
-      *src_fmt = *dest_fmt;
-    return ret;
-  }
+  if (closest_fmt.type == 0)
+    return -1;
 
   *dest_fmt = closest_fmt;
-
-  /* Are we converting? */
-  if (closest_fmt.fmt.pix.pixelformat != desired_pixfmt) {
+  if (closest_fmt.fmt.pix.pixelformat != desired_pixfmt)
     dest_fmt->fmt.pix.pixelformat = desired_pixfmt;
-    switch (dest_fmt->fmt.pix.pixelformat) {
-      case V4L2_PIX_FMT_RGB24:
-      case V4L2_PIX_FMT_BGR24:
-	dest_fmt->fmt.pix.bytesperline = dest_fmt->fmt.pix.width * 3;
-	dest_fmt->fmt.pix.sizeimage = dest_fmt->fmt.pix.width *
-				      dest_fmt->fmt.pix.height * 3;
+  *src_fmt = closest_fmt;
+
+  return 0;
+}
+
+static void v4lconvert_fixup_fmt(struct v4l2_format *fmt)
+{
+  switch (fmt->fmt.pix.pixelformat) {
+  case V4L2_PIX_FMT_RGB24:
+  case V4L2_PIX_FMT_BGR24:
+    fmt->fmt.pix.bytesperline = fmt->fmt.pix.width * 3;
+    fmt->fmt.pix.sizeimage = fmt->fmt.pix.width * fmt->fmt.pix.height * 3;
+    break;
+  case V4L2_PIX_FMT_YUV420:
+    fmt->fmt.pix.bytesperline = fmt->fmt.pix.width;
+    fmt->fmt.pix.sizeimage = fmt->fmt.pix.width * fmt->fmt.pix.height * 3 / 2;
+    break;
+  }
+}
+
+/* See libv4lconvert.h for description of in / out parameters */
+int v4lconvert_try_format(struct v4lconvert_data *data,
+  struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
+{
+  int i, result;
+  unsigned int desired_width = dest_fmt->fmt.pix.width;
+  unsigned int desired_height = dest_fmt->fmt.pix.height;
+  struct v4l2_format try_src, try_dest = *dest_fmt;
+
+  /* Can we do conversion to the requested format & type? */
+  if (!v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat) ||
+      dest_fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+      v4lconvert_do_try_format(data, &try_dest, &try_src)) {
+    result = syscall(SYS_ioctl, data->fd, VIDIOC_TRY_FMT, dest_fmt);
+    if (src_fmt)
+      *src_fmt = *dest_fmt;
+    return result;
+  }
+
+  /* In case of a non exact resolution match, see if this is a resolution we
+     can support by cropping a slightly larger resolution to give the app
+     exactly what it asked for */
+  if (try_dest.fmt.pix.width != desired_width ||
+      try_dest.fmt.pix.height != desired_height) {
+    for (i = 0; i < ARRAY_SIZE(v4lconvert_crop_res); i++) {
+      if (v4lconvert_crop_res[i][0] == desired_width &&
+	  v4lconvert_crop_res[i][1] == desired_height) {
+	struct v4l2_format try2_dest, try2_src;
+	/* Note these are chosen so that cropping to vga res just works for
+	   vv6410 sensor cams, which have 356x292 and 180x148 */
+	unsigned int max_width = desired_width * 113 / 100;
+	unsigned int max_height = desired_height * 124 / 100;
+
+	try2_dest = *dest_fmt;
+	try2_dest.fmt.pix.width = max_width;
+	try2_dest.fmt.pix.height = max_height;
+	result = v4lconvert_do_try_format(data, &try2_dest, &try2_src);
+	if (result == 0 &&
+	    try2_dest.fmt.pix.width >= desired_width &&
+	    try2_dest.fmt.pix.width <= max_width &&
+	    try2_dest.fmt.pix.height >= desired_height &&
+	    try2_dest.fmt.pix.height <= max_height) {
+	  /* Success! */
+	  try2_dest.fmt.pix.width = desired_width;
+	  try2_dest.fmt.pix.height = desired_height;
+	  try_dest = try2_dest;
+	  try_src = try2_src;
+	}
 	break;
-      case V4L2_PIX_FMT_YUV420:
-	dest_fmt->fmt.pix.bytesperline = dest_fmt->fmt.pix.width;
-	dest_fmt->fmt.pix.sizeimage = (dest_fmt->fmt.pix.width *
-				       dest_fmt->fmt.pix.height * 3) / 2;
-	break;
+      }
     }
   }
 
+  /* Are we converting? */
+  if(memcmp(&try_src, &try_dest, sizeof(try_src)))
+    v4lconvert_fixup_fmt(&try_dest);
+
+  *dest_fmt = try_dest;
   if (src_fmt)
-    *src_fmt = closest_fmt;
+    *src_fmt = try_src;
 
   return 0;
 }
@@ -259,7 +319,7 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
   if(memcmp(src_fmt, dest_fmt, sizeof(*src_fmt)))
     return 1; /* Formats differ */
 
-  if (!(data->flags & V4LCONVERT_UPSIDE_DOWN))
+  if (!(data->flags & (V4LCONVERT_ROTATE_90|V4LCONVERT_ROTATE_180)))
     return 0; /* Formats identical and we don't need flip */
 
   /* Formats are identical, but we need flip, do we support the dest_fmt? */
@@ -269,50 +329,16 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
     return 1; /* Needs flip and thus conversion */
 }
 
-int v4lconvert_convert(struct v4lconvert_data *data,
-  const struct v4l2_format *src_fmt,  /* in */
-  const struct v4l2_format *dest_fmt, /* in */
-  unsigned char *src, int src_size, unsigned char *_dest, int dest_size)
+static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
+  unsigned int src_pix_fmt, unsigned int dest_pix_fmt,
+  unsigned int width, unsigned int height,
+  unsigned char *src, int src_size, unsigned char *dest)
 {
   unsigned int header_width, header_height;
-  int result, needed, rotate = 0, jpeg_flags = TINYJPEG_FLAGS_MJPEG_TABLE;
+  int result = 0, jpeg_flags = TINYJPEG_FLAGS_MJPEG_TABLE;
   unsigned char *components[3];
-  unsigned char *dest = _dest;
 
-  /* Special case when no conversion is needed */
-  if (!v4lconvert_needs_conversion(data, src_fmt, dest_fmt)) {
-    int to_copy = MIN(dest_size, src_size);
-    memcpy(dest, src, to_copy);
-    return to_copy;
-  }
-
-  /* sanity check, is the dest buffer large enough? */
-  switch (dest_fmt->fmt.pix.pixelformat) {
-    case V4L2_PIX_FMT_RGB24:
-    case V4L2_PIX_FMT_BGR24:
-      needed = dest_fmt->fmt.pix.width * dest_fmt->fmt.pix.height * 3;
-      break;
-    case V4L2_PIX_FMT_YUV420:
-      needed = (dest_fmt->fmt.pix.width * dest_fmt->fmt.pix.height * 3) / 2;
-      break;
-    default:
-      V4LCONVERT_ERR("Unknown dest format in conversion\n");
-      errno = EINVAL;
-      return -1;
-  }
-
-  if (dest_size < needed) {
-    V4LCONVERT_ERR("destination buffer too small\n");
-    errno = EFAULT;
-    return -1;
-  }
-
-  if (data->flags & V4LCONVERT_UPSIDE_DOWN) {
-    rotate = 180;
-    dest = alloca(needed);
-  }
-
-  switch (src_fmt->fmt.pix.pixelformat) {
+  switch (src_pix_fmt) {
     case V4L2_PIX_FMT_PJPG:
       jpeg_flags |= TINYJPEG_FLAGS_PIXART_JPEG;
       /* Fall through */
@@ -335,31 +361,29 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       }
       tinyjpeg_get_size(data->jdec, &header_width, &header_height);
 
-      if (header_width != dest_fmt->fmt.pix.width ||
-	  header_height != dest_fmt->fmt.pix.height) {
+      if (header_width != width || header_height != height) {
 	/* Check for (pixart) rotated JPEG */
-	if (header_width == dest_fmt->fmt.pix.height ||
-	    header_height == dest_fmt->fmt.pix.width) {
-	  if (!rotate)
-	    dest = alloca(needed);
-	  rotate += 90;
+	if (header_width == height && header_height == width) {
+	  if (!(data->flags & V4LCONVERT_ROTATE_90)) {
+	    V4LCONVERT_ERR("JPEG needs 90 degree rotation");
+	    data->flags |= V4LCONVERT_ROTATE_90;
+	    errno = EAGAIN;
+	    return -1;
+	  }
 	} else {
 	  V4LCONVERT_ERR("unexpected width / height in JPEG header"
-			 "expected: %ux%u, header: %ux%u\n",
-	    dest_fmt->fmt.pix.width, dest_fmt->fmt.pix.height,
-	    header_width, header_height);
+			 "expected: %ux%u, header: %ux%u\n", width, height,
+			 header_width, header_height);
 	  errno = EIO;
 	  return -1;
 	}
       }
 
       components[0] = dest;
-      components[1] = components[0] + dest_fmt->fmt.pix.width *
-				      dest_fmt->fmt.pix.height;
-      components[2] = components[1] + (dest_fmt->fmt.pix.width *
-				       dest_fmt->fmt.pix.height) / 4;
+      components[1] = components[0] + width * height;
+      components[2] = components[1] + width * height / 4;
 
-      switch (dest_fmt->fmt.pix.pixelformat) {
+      switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
 	tinyjpeg_set_components(data->jdec, components, 1);
 	result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_RGB24);
@@ -368,7 +392,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	tinyjpeg_set_components(data->jdec, components, 1);
 	result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_BGR24);
 	break;
-      default:
+      case V4L2_PIX_FMT_YUV420:
 	tinyjpeg_set_components(data->jdec, components, 3);
 	result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_YUV420P);
 	break;
@@ -379,7 +403,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 	   are best thrown away to avoid flashes in the video stream. Tell
 	   the upper layer this is an intermediate fault and it should try
 	   again with a new buffer by setting errno to EAGAIN */
-	if (src_fmt->fmt.pix.pixelformat == V4L2_PIX_FMT_PJPG) {
+	if (src_pix_fmt == V4L2_PIX_FMT_PJPG) {
 	  V4LCONVERT_ERR("Error decompressing JPEG: %s",
 	    tinyjpeg_get_errorstring(data->jdec));
 	  errno = EAGAIN;
@@ -398,18 +422,15 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SGBRG8:
     case V4L2_PIX_FMT_SGRBG8:
     case V4L2_PIX_FMT_SRGGB8:
-      switch (dest_fmt->fmt.pix.pixelformat) {
+      switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
-	v4lconvert_bayer_to_rgb24(src, dest, dest_fmt->fmt.pix.width,
-		    dest_fmt->fmt.pix.height, src_fmt->fmt.pix.pixelformat);
+	v4lconvert_bayer_to_rgb24(src, dest, width, height, src_pix_fmt);
 	break;
       case V4L2_PIX_FMT_BGR24:
-	v4lconvert_bayer_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
-		    dest_fmt->fmt.pix.height, src_fmt->fmt.pix.pixelformat);
+	v4lconvert_bayer_to_bgr24(src, dest, width, height, src_pix_fmt);
 	break;
-      default:
-	v4lconvert_bayer_to_yuv420(src, dest, dest_fmt->fmt.pix.width,
-		    dest_fmt->fmt.pix.height, src_fmt->fmt.pix.pixelformat);
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt);
 	break;
       }
       break;
@@ -419,34 +440,27 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SPCA505:
     case V4L2_PIX_FMT_SPCA508:
     {
-      unsigned char tmpbuf[dest_fmt->fmt.pix.width * dest_fmt->fmt.pix.height *
-			   3 / 2];
-      unsigned char *my_dst = (dest_fmt->fmt.pix.pixelformat !=
-			       V4L2_PIX_FMT_YUV420) ? tmpbuf : dest;
+      unsigned char tmpbuf[width * height * 3 / 2];
+      unsigned char *d = (dest_pix_fmt != V4L2_PIX_FMT_YUV420) ? tmpbuf : dest;
 
-      switch (src_fmt->fmt.pix.pixelformat) {
+      switch (src_pix_fmt) {
 	case V4L2_PIX_FMT_SPCA501:
-	  v4lconvert_spca501_to_yuv420(src, my_dst, dest_fmt->fmt.pix.width,
-				       dest_fmt->fmt.pix.height);
+	  v4lconvert_spca501_to_yuv420(src, d, width, height);
 	  break;
 	case V4L2_PIX_FMT_SPCA505:
-	  v4lconvert_spca505_to_yuv420(src, my_dst, dest_fmt->fmt.pix.width,
-				       dest_fmt->fmt.pix.height);
+	  v4lconvert_spca505_to_yuv420(src, d, width, height);
 	  break;
 	case V4L2_PIX_FMT_SPCA508:
-	  v4lconvert_spca508_to_yuv420(src, my_dst, dest_fmt->fmt.pix.width,
-				       dest_fmt->fmt.pix.height);
+	  v4lconvert_spca508_to_yuv420(src, d, width, height);
 	  break;
       }
 
-      switch (dest_fmt->fmt.pix.pixelformat) {
+      switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
-	v4lconvert_yuv420_to_rgb24(tmpbuf, dest, dest_fmt->fmt.pix.width,
-				   dest_fmt->fmt.pix.height);
+	v4lconvert_yuv420_to_rgb24(tmpbuf, dest, width, height);
 	break;
       case V4L2_PIX_FMT_BGR24:
-	v4lconvert_yuv420_to_bgr24(tmpbuf, dest, dest_fmt->fmt.pix.width,
-				   dest_fmt->fmt.pix.height);
+	v4lconvert_yuv420_to_bgr24(tmpbuf, dest, width, height);
 	break;
       }
       break;
@@ -457,60 +471,53 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SN9C10X:
     case V4L2_PIX_FMT_PAC207:
     {
-      unsigned char tmpbuf[dest_fmt->fmt.pix.width*dest_fmt->fmt.pix.height];
+      unsigned char tmpbuf[width * height];
       unsigned int bayer_fmt = 0;
 
-      switch (src_fmt->fmt.pix.pixelformat) {
+      switch (src_pix_fmt) {
 	case V4L2_PIX_FMT_SPCA561:
-	  v4lconvert_decode_spca561(src, tmpbuf, dest_fmt->fmt.pix.width,
-				    dest_fmt->fmt.pix.height);
+	  v4lconvert_decode_spca561(src, tmpbuf, width, height);
 	  bayer_fmt = V4L2_PIX_FMT_SGBRG8;
 	  break;
 	case V4L2_PIX_FMT_SN9C10X:
-	  v4lconvert_decode_sn9c10x(src, tmpbuf, dest_fmt->fmt.pix.width,
-				    dest_fmt->fmt.pix.height);
+	  v4lconvert_decode_sn9c10x(src, tmpbuf, width, height);
 	  bayer_fmt = V4L2_PIX_FMT_SBGGR8;
 	  break;
 	case V4L2_PIX_FMT_PAC207:
-	  v4lconvert_decode_pac207(src, tmpbuf, dest_fmt->fmt.pix.width,
-				    dest_fmt->fmt.pix.height);
+	  v4lconvert_decode_pac207(src, tmpbuf, width, height);
 	  bayer_fmt = V4L2_PIX_FMT_SBGGR8;
 	  break;
       }
 
-      switch (dest_fmt->fmt.pix.pixelformat) {
+      switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
-	v4lconvert_bayer_to_rgb24(tmpbuf, dest, dest_fmt->fmt.pix.width,
-		    dest_fmt->fmt.pix.height, bayer_fmt);
+	v4lconvert_bayer_to_rgb24(tmpbuf, dest, width, height, bayer_fmt);
 	break;
       case V4L2_PIX_FMT_BGR24:
-	v4lconvert_bayer_to_bgr24(tmpbuf, dest, dest_fmt->fmt.pix.width,
-		    dest_fmt->fmt.pix.height, bayer_fmt);
+	v4lconvert_bayer_to_bgr24(tmpbuf, dest, width, height, bayer_fmt);
 	break;
-      default:
-	v4lconvert_bayer_to_yuv420(tmpbuf, dest, dest_fmt->fmt.pix.width,
-		    dest_fmt->fmt.pix.height, bayer_fmt);
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_bayer_to_yuv420(tmpbuf, dest, width, height, bayer_fmt);
 	break;
       }
       break;
     }
 
     case V4L2_PIX_FMT_RGB24:
-      switch (dest_fmt->fmt.pix.pixelformat) {
+      switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_BGR24:
-	v4lconvert_swap_rgb(src, dest, dest_fmt->fmt.pix.width,
-			    dest_fmt->fmt.pix.height);
+	v4lconvert_swap_rgb(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_YUV420:
 	printf("FIXME add rgb24 -> yuv420 conversion\n");
 	break;
       }
       break;
+
     case V4L2_PIX_FMT_BGR24:
-      switch (dest_fmt->fmt.pix.pixelformat) {
+      switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
-	v4lconvert_swap_rgb(src, dest, dest_fmt->fmt.pix.width,
-			    dest_fmt->fmt.pix.height);
+	v4lconvert_swap_rgb(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_YUV420:
 	printf("FIXME add bgr24 -> yuv420 conversion\n");
@@ -519,48 +526,42 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       break;
 
     case V4L2_PIX_FMT_YUV420:
-      switch (dest_fmt->fmt.pix.pixelformat) {
+      switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
-	v4lconvert_yuv420_to_rgb24(src, dest, dest_fmt->fmt.pix.width,
-				   dest_fmt->fmt.pix.height);
+	v4lconvert_yuv420_to_rgb24(src, dest, width,
+				   height);
 	break;
       case V4L2_PIX_FMT_BGR24:
-	v4lconvert_yuv420_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
-				   dest_fmt->fmt.pix.height);
+	v4lconvert_yuv420_to_bgr24(src, dest, width,
+				   height);
 	break;
       }
       break;
 
     case V4L2_PIX_FMT_YUYV:
-      switch (dest_fmt->fmt.pix.pixelformat) {
+      switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
-	v4lconvert_yuyv_to_rgb24(src, dest, dest_fmt->fmt.pix.width,
-				   dest_fmt->fmt.pix.height);
+	v4lconvert_yuyv_to_rgb24(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_BGR24:
-	v4lconvert_yuyv_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
-				   dest_fmt->fmt.pix.height);
+	v4lconvert_yuyv_to_bgr24(src, dest, width, height);
 	break;
-      default:
-	v4lconvert_yuyv_to_yuv420(src, dest, dest_fmt->fmt.pix.width,
-		    dest_fmt->fmt.pix.height);
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_yuyv_to_yuv420(src, dest, width, height);
 	break;
       }
       break;
 
     case V4L2_PIX_FMT_YVYU:
-      switch (dest_fmt->fmt.pix.pixelformat) {
+      switch (dest_pix_fmt) {
       case V4L2_PIX_FMT_RGB24:
-	v4lconvert_yvyu_to_rgb24(src, dest, dest_fmt->fmt.pix.width,
-				   dest_fmt->fmt.pix.height);
+	v4lconvert_yvyu_to_rgb24(src, dest, width, height);
 	break;
       case V4L2_PIX_FMT_BGR24:
-	v4lconvert_yvyu_to_bgr24(src, dest, dest_fmt->fmt.pix.width,
-				   dest_fmt->fmt.pix.height);
+	v4lconvert_yvyu_to_bgr24(src, dest, width, height);
 	break;
-      default:
-	v4lconvert_yvyu_to_yuv420(src, dest, dest_fmt->fmt.pix.width,
-		    dest_fmt->fmt.pix.height);
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_yvyu_to_yuv420(src, dest, width, height);
 	break;
       }
       break;
@@ -570,47 +571,93 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       errno = EINVAL;
       return -1;
   }
+  return 0;
+}
 
-  /* Note when rotating dest is our temporary buffer to which our conversion
-     was done and _dest is the real dest! If the formats are identical no
-     conversion has been done! */
-  if (rotate && dest_fmt->fmt.pix.pixelformat == src_fmt->fmt.pix.pixelformat)
-    dest = src;
+int v4lconvert_convert(struct v4lconvert_data *data,
+  const struct v4l2_format *src_fmt,  /* in */
+  const struct v4l2_format *dest_fmt, /* in */
+  unsigned char *src, int src_size, unsigned char *dest, int dest_size)
+{
+  int res, dest_needed, temp_needed, convert = 0, rotate = 0, crop = 0;
+  unsigned char *convert_dest = dest, *rotate_src = src, *rotate_dest = dest;
+  unsigned char *crop_src = src;
+  struct v4l2_format my_src_fmt = *src_fmt;
 
-  switch (rotate) {
-  case 0:
-    break;
-  case 90:
-    switch (dest_fmt->fmt.pix.pixelformat) {
-      case V4L2_PIX_FMT_RGB24:
-      case V4L2_PIX_FMT_BGR24:
-	v4lconvert_rotate90_rgbbgr24(dest, _dest, dest_fmt->fmt.pix.width,
-				 dest_fmt->fmt.pix.height);
-	break;
-      case V4L2_PIX_FMT_YUV420:
-	v4lconvert_rotate90_yuv420(dest, _dest, dest_fmt->fmt.pix.width,
-			       dest_fmt->fmt.pix.height);
-	break;
-    }
-    break;
-  case 180:
-    switch (dest_fmt->fmt.pix.pixelformat) {
-      case V4L2_PIX_FMT_RGB24:
-      case V4L2_PIX_FMT_BGR24:
-	v4lconvert_rotate180_rgbbgr24(dest, _dest, dest_fmt->fmt.pix.width,
-				 dest_fmt->fmt.pix.height);
-	break;
-      case V4L2_PIX_FMT_YUV420:
-	v4lconvert_rotate180_yuv420(dest, _dest, dest_fmt->fmt.pix.width,
-			       dest_fmt->fmt.pix.height);
-	break;
-    }
-    break;
-  default:
-    printf("FIXME add %d degrees rotation\n", rotate);
+  /* Special case when no conversion is needed */
+  if (!v4lconvert_needs_conversion(data, src_fmt, dest_fmt)) {
+    int to_copy = MIN(dest_size, src_size);
+    memcpy(dest, src, to_copy);
+    return to_copy;
   }
 
-  return needed;
+  /* sanity check, is the dest buffer large enough? */
+  switch (dest_fmt->fmt.pix.pixelformat) {
+    case V4L2_PIX_FMT_RGB24:
+    case V4L2_PIX_FMT_BGR24:
+      dest_needed = dest_fmt->fmt.pix.width * dest_fmt->fmt.pix.height * 3;
+      temp_needed = src_fmt->fmt.pix.width * src_fmt->fmt.pix.height * 3;
+      break;
+    case V4L2_PIX_FMT_YUV420:
+      dest_needed = dest_fmt->fmt.pix.width * dest_fmt->fmt.pix.height * 3 / 2;
+      temp_needed = src_fmt->fmt.pix.width * src_fmt->fmt.pix.height * 3 / 2;
+      break;
+    default:
+      V4LCONVERT_ERR("Unknown dest format in conversion\n");
+      errno = EINVAL;
+      return -1;
+  }
+
+  if (dest_size < dest_needed) {
+    V4LCONVERT_ERR("destination buffer too small\n");
+    errno = EFAULT;
+    return -1;
+  }
+
+  if (dest_fmt->fmt.pix.pixelformat != src_fmt->fmt.pix.pixelformat)
+    convert = 1;
+
+  if (data->flags & V4LCONVERT_ROTATE_90)
+    rotate += 90;
+  if (data->flags & V4LCONVERT_ROTATE_180)
+    rotate += 180;
+
+  if (dest_fmt->fmt.pix.width != src_fmt->fmt.pix.width ||
+      dest_fmt->fmt.pix.height != src_fmt->fmt.pix.height)
+    crop = 1;
+
+  /* convert_pixfmt -> rotate -> crop, all steps are optional */
+  if (convert && (rotate || crop)) {
+    convert_dest = alloca(temp_needed);
+    rotate_src = crop_src = convert_dest;
+  }
+
+  if (rotate && crop) {
+    rotate_dest = alloca(temp_needed);
+    crop_src = rotate_dest;
+  }
+
+  if (convert) {
+    res = v4lconvert_convert_pixfmt(data, src_fmt->fmt.pix.pixelformat,
+			      dest_fmt->fmt.pix.pixelformat,
+			      src_fmt->fmt.pix.width, src_fmt->fmt.pix.height,
+			      src, src_size, convert_dest);
+    if (res)
+      return res;
+
+    my_src_fmt.fmt.pix.pixelformat = dest_fmt->fmt.pix.pixelformat;
+    v4lconvert_fixup_fmt(&my_src_fmt);
+  }
+
+  if (rotate)
+    v4lconvert_rotate(rotate_src, rotate_dest,
+		      my_src_fmt.fmt.pix.width, my_src_fmt.fmt.pix.height,
+		      my_src_fmt.fmt.pix.pixelformat, rotate);
+
+  if (crop)
+    v4lconvert_crop(crop_src, dest, &my_src_fmt, dest_fmt);
+
+  return dest_needed;
 }
 
 const char *v4lconvert_get_error_message(struct v4lconvert_data *data)

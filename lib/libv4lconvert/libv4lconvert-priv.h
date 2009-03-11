@@ -71,7 +71,8 @@
   "v4l-convert: error " __VA_ARGS__)
 
 /* Card flags */
-#define V4LCONVERT_UPSIDE_DOWN 0x01
+#define V4LCONVERT_ROTATE_90  0x01
+#define V4LCONVERT_ROTATE_180 0x02
 
 /* Pixformat flags */
 #define V4LCONVERT_COMPRESSED 0x01
@@ -151,16 +152,10 @@ void v4lconvert_bayer_to_bgr24(const unsigned char *bayer,
 void v4lconvert_bayer_to_yuv420(const unsigned char *bayer,
   unsigned char *yuv, int width, int height, unsigned int pixfmt);
 
-void v4lconvert_rotate90_rgbbgr24(const unsigned char *src, unsigned char *dst,
-  int destwidth, int destheight);
+void v4lconvert_rotate(unsigned char *src, unsigned char *dest,
+  int width, int height, unsigned int pix_fmt, int rotate);
 
-void v4lconvert_rotate90_yuv420(const unsigned char *src, unsigned char *dst,
-  int destwidth, int destheight);
-
-void v4lconvert_rotate180_rgbbgr24(const unsigned char *src, unsigned char *dst,
-  int width, int height);
-
-void v4lconvert_rotate180_yuv420(const unsigned char *src, unsigned char *dst,
-  int width, int height);
+void v4lconvert_crop(unsigned char *src, unsigned char *dest,
+  const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt);
 
 #endif
