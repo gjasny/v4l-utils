@@ -7,9 +7,10 @@ libv4l-0.5.1
   supported cams, except for the pac7302 which only does 640x480 (and skype
   wants 320x240), work with skype
 * The v4lconvert_convert function was becoming a bit of a mess, so split the
-  functionailiy into seperate v4lconvert_convert_pixfmt, v4lconvert_rotate and
+  functionailiy into separate v4lconvert_convert_pixfmt, v4lconvert_rotate and
   v4lconvert_crop functions, and make v4lconvert_convert a frontend to
   these
+* Do not link the wrapper libs against libpthread (patch from Gregor Jasny)
 
 libv4l-0.5.0
 ------------

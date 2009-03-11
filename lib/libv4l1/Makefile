@@ -3,7 +3,7 @@ override CPPFLAGS += -I../include -I../../../include -fvisibility=hidden
 CFLAGS := -g -O1
 CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
 
-LIBS = -lpthread
+LIBS_libv4l1  = -lpthread
 
 V4L1_OBJS     = libv4l1.o log.o
 V4L1COMPAT    = v4l1compat.so
@@ -75,7 +75,7 @@ clean::
 	$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 %.so:
-	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^ $(LIBS)
+	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^ $(LIBS_$*)
 	ln -f -s $@.$(LIB_RELEASE) $@
 
 %.a:
