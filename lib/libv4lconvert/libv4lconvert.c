@@ -65,8 +65,8 @@ static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
 /* List of cams which need special flags */
 static const struct v4lconvert_flags_info v4lconvert_flags[] = {
   { "SPC 200NC      ", V4LCONVERT_ROTATE_180 },
-  { "SPC 300NC      ", V4LCONVERT_ROTATE_180 },
-  { "USB Camera (0471:0325)", V4LCONVERT_ROTATE_180 }, /* SPC200NC */
+  { "SPC 300NC      ", V4LCONVERT_ROTATE_180 }, /* Unconfirmed ! */
+  { "SPC210NC       ", V4LCONVERT_ROTATE_180 },
   { "USB Camera (0471:0326)", V4LCONVERT_ROTATE_180 }, /* SPC300NC */
   { "USB Camera (093a:2476)", V4LCONVERT_ROTATE_180 }, /* Genius E-M 112 */
 };

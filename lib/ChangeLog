@@ -1,3 +1,8 @@
+libv4l-0.5.2
+------------
+* Add Philips SPC210NC to list of cams with upside down sensor, reported by
+  Rieker Flaik
+
 libv4l-0.5.1
 ------------
 * Add support for software cropping from 352x288 -> 320x240 / 176x144 ->
