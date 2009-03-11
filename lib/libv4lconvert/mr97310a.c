@@ -102,6 +102,9 @@ void v4lconvert_decode_mr97310a(const unsigned char *inp, unsigned char *outp,
 	if (!decoder_initialized)
 		init_mr97310a_decoder();
 
+	/* remove the header */
+		inp += 12;
+
 	bitpos = 0;
 
 	/* main decoding loop */
