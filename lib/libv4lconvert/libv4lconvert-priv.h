@@ -96,7 +96,11 @@ struct v4lconvert_data {
 };
 
 struct v4lconvert_flags_info {
-  const char *card;
+  unsigned short vendor_id;
+  unsigned short product_id;
+/* We could also use the USB manufacturer and product strings some devices have
+  const char *manufacturer;
+  const char *product; */
   int flags;
 };
 

@@ -5,6 +5,9 @@ libv4l-0.5.8
 * Remove v4lconvert_yvyu_to_yuv420 function as its functionality is
   duplicate with v4lconvert_yuyv_to_yuv420
 * Use Requires.private where appropiate in .pc files (patch by Gregor Jasny)
+* Switch to using USB-id's instead of USB product string, as not all devices
+  set a unique product string. This fixes the upside down issues with
+  genius e-messenger 112 cams
 
 libv4l-0.5.7
 ------------

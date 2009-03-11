@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <syscall.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "libv4lconvert.h"
 #include "libv4lconvert-priv.h"
 
@@ -66,11 +68,10 @@ static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
 
 /* List of cams which need special flags */
 static const struct v4lconvert_flags_info v4lconvert_flags[] = {
-  { "SPC 200NC      ", V4LCONVERT_ROTATE_180 },
-  { "SPC 300NC      ", V4LCONVERT_ROTATE_180 }, /* Unconfirmed ! */
-  { "SPC210NC       ", V4LCONVERT_ROTATE_180 },
-  { "USB Camera (0471:0326)", V4LCONVERT_ROTATE_180 }, /* SPC300NC */
-  { "USB Camera (093a:2476)", V4LCONVERT_ROTATE_180 }, /* Genius E-M 112 */
+  { 0x0471, 0x0325, V4LCONVERT_ROTATE_180 }, /* Philips SPC200NC */
+  { 0x0471, 0x0326, V4LCONVERT_ROTATE_180 }, /* Philips SPC300NC */
+  { 0x0471, 0x032d, V4LCONVERT_ROTATE_180 }, /* Philips SPC210NC */
+  { 0x093a, 0x2476, V4LCONVERT_ROTATE_180 }, /* Genius E-M 112 */
 };
 
 /* List of well known resolutions which we can get by cropping somewhat larger
@@ -85,6 +86,46 @@ static const int v4lconvert_crop_res[][2] = {
   { 352, 288 },
   { 176, 144 },
 };
+
+static int v4lconvert_get_flags(int fd)
+{
+  struct stat st;
+  FILE *f;
+  char sysfs_name[512];
+  unsigned short vendor_id = 0;
+  unsigned short product_id = 0;
+  int i;
+
+  if (fstat(fd, &st) || !S_ISCHR(st.st_mode))
+    return 0; /* Should never happen */
+
+  /* Get product ID */
+  snprintf(sysfs_name, sizeof(sysfs_name),
+	   "/sys/class/video4linux/video%d/device/idVendor",
+	   minor(st.st_rdev));
+  f = fopen(sysfs_name, "r");
+  if (!f)
+    return 0; /* Not an USB device (or no sysfs) */
+  i = fscanf(f, "%hx", &vendor_id);
+  fclose(f);
+
+  /* Get product ID */
+  snprintf(sysfs_name, sizeof(sysfs_name),
+	   "/sys/class/video4linux/video%d/device/idProduct",
+	   minor(st.st_rdev));
+  f = fopen(sysfs_name, "r");
+  if (!f)
+    return 0; /* Should never happen */
+  i = fscanf(f, "%hx", &product_id);
+  fclose(f);
+
+  for (i = 0; i < ARRAY_SIZE(v4lconvert_flags); i++)
+    if (v4lconvert_flags[i].vendor_id == vendor_id &&
+	v4lconvert_flags[i].product_id == product_id)
+      return v4lconvert_flags[i].flags;
+
+  return 0;
+}
 
 struct v4lconvert_data *v4lconvert_create(int fd)
 {
@@ -117,12 +158,8 @@ struct v4lconvert_data *v4lconvert_create(int fd)
   data->no_formats = i;
 
   /* Check if this cam has any special flags */
+  data->flags = v4lconvert_get_flags(data->fd);
   if (syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap) == 0) {
-    for (i = 0; i < ARRAY_SIZE(v4lconvert_flags); i++)
-      if (!strcmp((const char *)v4lconvert_flags[i].card, (char *)cap.card)) {
-	data->flags = v4lconvert_flags[i].flags;
-	break;
-      }
     if (!strcmp((char *)cap.driver, "uvcvideo"))
       data->flags |= V4LCONVERT_IS_UVC;
   }
