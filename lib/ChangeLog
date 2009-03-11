@@ -6,6 +6,9 @@ libv4l-0.5.2
   s_fmt in their try_fmt answer
 * Check that s_fmt atleast gives us the width, height and pixelformat try_fmt
   promised us, and if not disable conversion
+* Only check width, height and pixelformat when checking if we are doing
+  conversion, instead of doing a memcmp, as that are the only things which
+  the convert code checks
 
 libv4l-0.5.1
 ------------

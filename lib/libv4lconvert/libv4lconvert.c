@@ -301,7 +301,9 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
   }
 
   /* Are we converting? */
-  if(memcmp(&try_src, &try_dest, sizeof(try_src)))
+  if(try_src.fmt.pix.width != try_dest.fmt.pix.width ||
+     try_src.fmt.pix.height != try_dest.fmt.pix.height ||
+     try_src.fmt.pix.pixelformat != try_dest.fmt.pix.pixelformat)
     v4lconvert_fixup_fmt(&try_dest);
 
   *dest_fmt = try_dest;
@@ -316,7 +318,9 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
   const struct v4l2_format *src_fmt,  /* in */
   const struct v4l2_format *dest_fmt) /* in */
 {
-  if(memcmp(src_fmt, dest_fmt, sizeof(*src_fmt)))
+  if(src_fmt->fmt.pix.width != dest_fmt->fmt.pix.width ||
+     src_fmt->fmt.pix.height != dest_fmt->fmt.pix.height ||
+     src_fmt->fmt.pix.pixelformat != dest_fmt->fmt.pix.pixelformat)
     return 1; /* Formats differ */
 
   if (!(data->flags & (V4LCONVERT_ROTATE_90|V4LCONVERT_ROTATE_180)))
