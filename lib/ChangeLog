@@ -1,3 +1,9 @@
+libv4l-0.5.6
+------------
+* Always do a s_fmt on uvc cams even if this changes nothing, as not doing
+  the s_fmt triggers a bug in the uvcvideo driver in kernel <= 2.6.28
+  (with certain cams)
+
 libv4l-0.5.5
 ------------
 * Avoid the use of try_fmt as much as possible on UVC cams, instead use the

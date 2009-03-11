@@ -76,6 +76,7 @@
 #define V4L2_BUFFERS_REQUESTED_BY_READ	0x0200
 #define V4L2_STREAM_CONTROLLED_BY_READ	0x0400
 #define V4L2_SUPPORTS_READ		0x0800
+#define V4L2_IS_UVC			0x1000
 
 #define V4L2_MMAP_OFFSET_MAGIC      0xABCDEF00u
 
@@ -492,6 +493,8 @@ int v4l2_fd_open(int fd, int v4l2_flags)
   devices[index].flags = v4l2_flags;
   if (cap.capabilities & V4L2_CAP_READWRITE)
     devices[index].flags |= V4L2_SUPPORTS_READ;
+  if (!strcmp((char *)cap.driver, "uvcvideo"))
+    devices[index].flags |= V4L2_IS_UVC;
   devices[index].open_count = 1;
   devices[index].src_fmt = fmt;
   devices[index].dest_fmt = fmt;
@@ -768,7 +771,10 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	struct v4l2_format src_fmt, *dest_fmt = arg;
 	struct v4l2_pix_format req_pix_fmt;
 
-	if (v4l2_pix_fmt_identical(&devices[index].dest_fmt, dest_fmt)) {
+	/* Don't be lazy on uvc cams, as this triggers a bug in the uvcvideo
+	   driver in kernel <= 2.6.28 (with certain cams) */
+	if (!(devices[index].flags & V4L2_IS_UVC) &&
+	    v4l2_pix_fmt_identical(&devices[index].dest_fmt, dest_fmt)) {
 	  *dest_fmt = devices[index].dest_fmt;
 	  result = 0;
 	  break;
@@ -813,7 +819,8 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
 	/* Maybe after try format has adjusted width/height etc, to whats
 	   available nothing has changed (on the cam side) ? */
-	if (v4l2_pix_fmt_identical(&devices[index].src_fmt, &src_fmt)) {
+	if (!(devices[index].flags & V4L2_IS_UVC) &&
+	    v4l2_pix_fmt_identical(&devices[index].src_fmt, &src_fmt)) {
 	  v4l2_set_src_and_dest_format(index, &devices[index].src_fmt,
 				       dest_fmt);
 	  result = 0;
