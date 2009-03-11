@@ -1,3 +1,9 @@
+libv4l-0.5.9
+------------
+* Add support for MR97310A decompression by Kyle Guinn <elyk03@gmail.com>
+* Add support for sq905c decompression by Theodore Kilgore
+  <kilgota@auburn.edu>
+
 libv4l-0.5.8
 ------------
 * Add support for UYVY (for USB Apple iSight) patch by Julien BLACHE
