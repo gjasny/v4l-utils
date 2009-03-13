@@ -71,6 +71,10 @@
 #define V4L2_PIX_FMT_YVYU v4l2_fourcc('Y', 'V', 'Y', 'U')
 #endif
 
+#ifndef V4L2_PIX_FMT_HM12
+#define V4L2_PIX_FMT_HM12 v4l2_fourcc('H', 'M', '1', '2')
+#endif
+
 #ifndef V4L2_PIX_FMT_SN9C20X_I420
 #define V4L2_PIX_FMT_SN9C20X_I420  v4l2_fourcc('S', '9', '2', '0')
 #endif
@@ -195,6 +199,15 @@ void v4lconvert_bayer_to_bgr24(const unsigned char *bayer,
 
 void v4lconvert_bayer_to_yuv420(const unsigned char *bayer, unsigned char *yuv,
   int width, int height, unsigned int src_pixfmt, int yvu);
+
+void v4lconvert_hm12_to_rgb24(const unsigned char *src,
+  unsigned char *dst, int width, int height);
+
+void v4lconvert_hm12_to_bgr24(const unsigned char *src,
+  unsigned char *dst, int width, int height);
+
+void v4lconvert_hm12_to_yuv420(const unsigned char *src,
+  unsigned char *dst, int width, int height, int yvu);
 
 void v4lconvert_rotate(unsigned char *src, unsigned char *dest,
   int width, int height, unsigned int pix_fmt, int rotate);

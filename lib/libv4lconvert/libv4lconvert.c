@@ -55,6 +55,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_SPCA501,      0 },
   { V4L2_PIX_FMT_SPCA505,      0 },
   { V4L2_PIX_FMT_SPCA508,      0 },
+  { V4L2_PIX_FMT_HM12,         0 },
   { V4L2_PIX_FMT_MJPEG,        V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_JPEG,         V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_SPCA561,      V4LCONVERT_COMPRESSED },
@@ -603,6 +604,24 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
       }
       break;
     }
+
+    /* Conexant cx2341x raw video macroblock format */
+    case V4L2_PIX_FMT_HM12:
+      switch (dest_pix_fmt) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_hm12_to_rgb24(src, dest, width, height);
+	break;
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_hm12_to_bgr24(src, dest, width, height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_hm12_to_yuv420(src, dest, width, height, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_hm12_to_yuv420(src, dest, width, height, 1);
+	break;
+      }
+      break;
 
     /* compressed bayer formats */
     case V4L2_PIX_FMT_SPCA561:

@@ -12,7 +12,7 @@ endif
 
 CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
 		mr97310a.o flip.o crop.o jidctflt.o spca561-decompress.o \
-		rgbyuv.o spca501.o sq905c.o bayer.o
+		rgbyuv.o spca501.o sq905c.o bayer.o hm12.o
 TARGETS       = $(CONVERT_LIB) libv4lconvert.pc
 INCLUDES      = ../include/libv4lconvert.h
 

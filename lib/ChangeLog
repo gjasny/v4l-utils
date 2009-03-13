@@ -3,6 +3,8 @@ libv4l-0.5.9
 * Add support for MR97310A decompression by Kyle Guinn <elyk03@gmail.com>
 * Add support for sq905c decompression by Theodore Kilgore
   <kilgota@auburn.edu>
+* Add hm12 support for the cx2341x MPEG encoder devices by Hans Verkuil
+  <hverkuil@xs4all.nl>
 
 libv4l-0.5.8
 ------------
