@@ -166,6 +166,8 @@ struct v4lconvert_data *v4lconvert_create(int fd)
   if (syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap) == 0) {
     if (!strcmp((char *)cap.driver, "uvcvideo"))
       data->flags |= V4LCONVERT_IS_UVC;
+    else if (!strcmp((char *)cap.driver, "sn9c20x"))
+      data->flags |= V4LCONVERT_IS_SN9C20X;
   }
 
   return data;
@@ -541,7 +543,8 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	   are best thrown away to avoid flashes in the video stream. Tell
 	   the upper layer this is an intermediate fault and it should try
 	   again with a new buffer by setting errno to EAGAIN */
-	if (src_pix_fmt == V4L2_PIX_FMT_PJPG) {
+	if (src_pix_fmt == V4L2_PIX_FMT_PJPG ||
+	    data->flags & V4LCONVERT_IS_SN9C20X) {
 	  V4LCONVERT_ERR("decompressing JPEG: %s",
 	    tinyjpeg_get_errorstring(data->jdec));
 	  errno = EAGAIN;

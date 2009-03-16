@@ -1,3 +1,8 @@
+libv4l-0.5.10
+-------------
+* sn9c20x cams have occasional bad jpeg frames, drop these to avoid the
+  flickering effect they cause, by: Brian Johnson <brijohn@gmail.com>
+
 libv4l-0.5.9
 ------------
 * Add support for MR97310A decompression by Kyle Guinn <elyk03@gmail.com>
