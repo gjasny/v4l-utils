@@ -98,30 +98,73 @@ static int v4lconvert_get_flags(int fd)
   char sysfs_name[512];
   unsigned short vendor_id = 0;
   unsigned short product_id = 0;
-  int i;
+  int i, minor;
+  char c, *s, buf[32];
 
   if (fstat(fd, &st) || !S_ISCHR(st.st_mode))
     return 0; /* Should never happen */
 
-  /* Get product ID */
-  snprintf(sysfs_name, sizeof(sysfs_name),
-	   "/sys/class/video4linux/video%d/device/idVendor",
-	   minor(st.st_rdev));
-  f = fopen(sysfs_name, "r");
-  if (!f)
-    return 0; /* Not an USB device (or no sysfs) */
-  i = fscanf(f, "%hx", &vendor_id);
-  fclose(f);
+  /* <Sigh> find ourselve in sysfs */
+  for (i = 0; i < 256; i++) {
+    snprintf(sysfs_name, sizeof(sysfs_name),
+	     "/sys/class/video4linux/video%d/dev", i);
+    f = fopen(sysfs_name, "r");
+    if (!f)
+      continue;
 
-  /* Get product ID */
+    s = fgets(buf, sizeof(buf), f);
+    fclose(f);
+
+    if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 && c == '\n' &&
+	minor == minor(st.st_rdev))
+      break;
+  }
+  if (i == 256)
+    return 0; /* Not found, sysfs not mounted? */
+
+  /* Get vendor and product ID */
   snprintf(sysfs_name, sizeof(sysfs_name),
-	   "/sys/class/video4linux/video%d/device/idProduct",
-	   minor(st.st_rdev));
+	   "/sys/class/video4linux/video%d/device/modalias", i);
   f = fopen(sysfs_name, "r");
-  if (!f)
-    return 0; /* Should never happen */
-  i = fscanf(f, "%hx", &product_id);
-  fclose(f);
+  if (f) {
+    s = fgets(buf, sizeof(buf), f);
+    fclose(f);
+
+    if (!s ||
+	sscanf(s, "usb:v%4hxp%4hx%c", &vendor_id, &product_id, &c) != 3 ||
+	c != 'd')
+      return 0; /* Not an USB device */
+  } else {
+    /* Try again assuming the device link points to the usb
+       device instead of the usb interface (bug in older versions
+       of gspca) */
+
+    /* Get product ID */
+    snprintf(sysfs_name, sizeof(sysfs_name),
+	     "/sys/class/video4linux/video%d/device/idVendor", i);
+    f = fopen(sysfs_name, "r");
+    if (!f)
+      return 0; /* Not an USB device (or no sysfs) */
+
+    s = fgets(buf, sizeof(buf), f);
+    fclose(f);
+
+    if (!s || sscanf(s, "%04hx%c", &vendor_id, &c) != 2 || c != '\n')
+      return 0; /* Should never happen */
+
+    /* Get product ID */
+    snprintf(sysfs_name, sizeof(sysfs_name),
+	     "/sys/class/video4linux/video%d/device/idProduct", i);
+    f = fopen(sysfs_name, "r");
+    if (!f)
+      return 0; /* Should never happen */
+
+    s = fgets(buf, sizeof(buf), f);
+    fclose(f);
+
+    if (!s || sscanf(s, "%04hx%c", &product_id, &c) != 2 || c != '\n')
+      return 0; /* Should never happen */
+  }
 
   for (i = 0; i < ARRAY_SIZE(v4lconvert_flags); i++)
     if (v4lconvert_flags[i].vendor_id == vendor_id &&

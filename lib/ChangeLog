@@ -2,6 +2,9 @@ libv4l-0.5.10
 -------------
 * sn9c20x cams have occasional bad jpeg frames, drop these to avoid the
   flickering effect they cause, by: Brian Johnson <brijohn@gmail.com>
+* adjust libv4l's upside down cam detection to also work with devices
+  which have the usb interface as parent instead of the usb device
+* fix libv4l upside down detection for the new v4l minor numbering scheme
 
 libv4l-0.5.9
 ------------
