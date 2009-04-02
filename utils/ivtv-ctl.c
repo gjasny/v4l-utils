@@ -56,12 +56,6 @@
 #define IVTV_DBGFLG_HIGHVOL (1 << 10)
 
 /* Internals copied from media/v4l2-common.h */
-struct v4l2_routing {
-	__u32 input;
-	__u32 output;
-};
-#define	VIDIOC_INT_S_AUDIO_ROUTING	_IOW('d', 109, struct v4l2_routing)
-
 #define VIDIOC_INT_RESET            	_IOW('d', 102, __u32)
 
 #include <linux/ivtv.h>
@@ -81,7 +75,6 @@ enum Option {
 	OptListGPIO = 'I',
 	OptPassThrough = 'K',
 	OptFrameSync = 'k',
-	OptSetAudioRoute = 'v',
 	OptReset = 128,
 	OptSetYuvMode,
 	OptGetYuvMode,
@@ -106,7 +99,6 @@ static struct option long_options[] = {
 	{"list-gpio", no_argument, 0, OptListGPIO},
 	{"passthrough", required_argument, 0, OptPassThrough},
 	{"sync", no_argument, 0, OptFrameSync},
-	{"audio-route", required_argument, 0, OptSetAudioRoute},
 	{"reset", required_argument, 0, OptReset},
 	{"get-yuv-mode", no_argument, 0, OptGetYuvMode},
 	{"set-yuv-mode", required_argument, 0, OptSetYuvMode},
@@ -167,8 +159,6 @@ static void usage(void)
 	printf("  -i, --set-gpio [dir=<dir>,]val=<val>\n");
 	printf("                     set GPIO direction bits to <dir> and set output to <val>\n");
 	printf("  -k, --sync         test vsync's capabilities [VIDEO_GET_EVENT]\n");
-	printf("  -v, --audio-route=input=<in>,output=<out>\n");
-	printf("                     set the audio input/output routing [VIDIOC_INT_S_AUDIO_ROUTING]\n");
 	exit(0);
 }
 
@@ -330,10 +320,6 @@ int main(int argc, char **argv)
 		"mode",
 #define SUB_DIR				2
 		"dir",
-#define SUB_INPUT                       3
-		"input",
-#define SUB_OUTPUT                      4
-		"output",
 
 		NULL
 	};
@@ -346,7 +332,6 @@ int main(int argc, char **argv)
 	const char *device = "/dev/video0";	/* -d device */
 	int ch;
 	int yuv_mode = 0;
-	struct v4l2_routing route;	/* audio_route */
 	unsigned short gpio_out = 0x0;	/* GPIO output data */
 	unsigned short gpio_dir = 0x0;	/* GPIO direction bits */
 	int gpio_set_dir = 0;
@@ -422,34 +407,6 @@ int main(int argc, char **argv)
 
 				sprintf(newdev, "/dev/video%c", dev);
 				device = newdev;
-			}
-			break;
-		case OptSetAudioRoute:
-			subs = optarg;
-			while (*subs != '\0') {
-				switch (getsubopt(&subs, subopts, &value)) {
-				case SUB_INPUT:
-					if (value == NULL) {
-						printf
-						    ("No value given to suboption <input>\n");
-						usage();
-					}
-					route.input = strtol(value, 0L, 0);
-					break;
-				case SUB_OUTPUT:
-					if (value == NULL) {
-						printf
-						    ("No value given to suboption <output>\n");
-						usage();
-					}
-					route.output = strtol(value, 0L, 0);
-					break;
-				default:
-					printf
-					    ("Invalid suboptions specified\n");
-					usage();
-					break;
-				}
 			}
 			break;
 		case OptReset:
@@ -528,10 +485,6 @@ int main(int argc, char **argv)
 	}
 
 	/* Setting Opts */
-
-	if (options[OptSetAudioRoute])
-		doioctl(fd, VIDIOC_INT_S_AUDIO_ROUTING, &route,
-				"VIDIOC_INT_S_AUDIO_ROUTING");
 
 	if (options[OptFrameSync]) {
 		printf("ioctl: VIDEO_GET_EVENT\n");
