@@ -1,3 +1,9 @@
+libv4l-0.5.11
+-------------
+* Add dependency generation to libv4l by: Gilles Gigan <gilles.gigan@gmail.com>
+* Add support to use orientation from VIDIOC_ENUMINPUT by:
+  Adam Baker <linux@baker-net.org.uk>
+
 libv4l-0.5.10
 -------------
 * sn9c20x cams have occasional bad jpeg frames, drop these to avoid the

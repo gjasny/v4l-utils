@@ -29,6 +29,11 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
+/* Workaround this potentially being missing from videodev2.h */
+#ifndef V4L2_IN_ST_VFLIP
+#define V4L2_IN_ST_VFLIP       0x00000020 /* Output is flipped vertically */
+#endif
+
 /* Note for proper functioning of v4lconvert_enum_fmt the first entries in
   supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
 #define SUPPORTED_DST_PIXFMTS \
@@ -179,6 +184,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
   int i, j;
   struct v4lconvert_data *data = calloc(1, sizeof(struct v4lconvert_data));
   struct v4l2_capability cap;
+  struct v4l2_input input;
 
   if (!data)
     return NULL;
@@ -206,6 +212,13 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 
   /* Check if this cam has any special flags */
   data->flags = v4lconvert_get_flags(data->fd);
+  if ((syscall(SYS_ioctl, fd, VIDIOC_G_INPUT, &input.index) == 0) &&
+      (syscall(SYS_ioctl, fd, VIDIOC_ENUMINPUT, &input) == 0)) {
+    /* Don't yet support independent HFLIP and VFLIP so getting
+     * image the right way up is highest priority. */
+    if (input.status & V4L2_IN_ST_VFLIP)
+      data->flags |= V4LCONVERT_ROTATE_180;
+  }
   if (syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap) == 0) {
     if (!strcmp((char *)cap.driver, "uvcvideo"))
       data->flags |= V4LCONVERT_IS_UVC;
