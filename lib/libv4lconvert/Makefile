@@ -30,6 +30,8 @@ endif
 
 all: $(TARGETS)
 
+include $(CONVERT_OBJS:.o=.d)
+
 $(CONVERT_LIB): $(CONVERT_OBJS)
 
 libv4lconvert.pc:
@@ -60,8 +62,12 @@ endif
 clean::
 	rm -f *.a *.so* *.o *.d libv4lconvert.pc log *~ *.orig *.rej
 
+%.d:: %.c
+	@set -e; rm -f $@; \
+	$(CC) -MM $(CPPFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@
+
 %.o: %.c
-	$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 %.so:
 	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^

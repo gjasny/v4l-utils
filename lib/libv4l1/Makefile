@@ -13,9 +13,10 @@ INCLUDES      = ../include/libv4l1.h
 
 ifeq ($(LINKTYPE),static)
 V4L1_LIB      = libv4l1.a
+V4L1_DEPS     = $(V4L1_OBJS)
 else
 V4L1_LIB      = libv4l1.so
-V4L1_OBJS    += ../libv4l2/libv4l2.so
+V4L1_DEPS    += $(V4L1_OBJS) ../libv4l2/libv4l2.so
 TARGETS      += $(V4L1COMPAT)
 override CPPFLAGS += -fPIC
 endif
@@ -34,8 +35,9 @@ endif
 
 all: $(TARGETS)
 
+include $(V4L1_OBJS:.o=.d)
 
-$(V4L1_LIB): $(V4L1_OBJS)
+$(V4L1_LIB): $(V4L1_DEPS)
 
 $(V4L1COMPAT): $(V4L1COMPAT_O) $(V4L1_LIB)
 
@@ -71,8 +73,12 @@ endif
 clean::
 	rm -f *.a *.so* *.o *.d libv4l1.pc log *~ *.orig *.rej
 
+%.d: %.c
+	@set -e; rm -f $@; \
+	gcc -MM $(CPPFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@
+
 %.o: %.c
-	$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 %.so:
 	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^ $(LIBS_$*)

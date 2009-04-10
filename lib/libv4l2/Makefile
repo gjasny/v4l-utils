@@ -13,9 +13,10 @@ INCLUDES      = ../include/libv4l2.h
 
 ifeq ($(LINKTYPE),static)
 V4L2_LIB      = libv4l2.a
+V4L2_DEPS     = $(V4L2_OBJS)
 else
 V4L2_LIB      = libv4l2.so
-V4L2_OBJS    += ../libv4lconvert/libv4lconvert.so
+V4L2_DEPS    += $(V4L2_OBJS) ../libv4lconvert/libv4lconvert.so
 TARGETS      += $(V4L2CONVERT)
 override CPPFLAGS += -fPIC
 endif
@@ -34,7 +35,9 @@ endif
 
 all: $(TARGETS)
 
-$(V4L2_LIB): $(V4L2_OBJS)
+include $(V4L2_OBJS:.o=.d)
+
+$(V4L2_LIB): $(V4L2_DEPS)
 
 $(V4L2CONVERT): $(V4L2CONVERT_O) $(V4L2_LIB)
 
@@ -70,8 +73,12 @@ endif
 clean::
 	rm -f *.a *.so* *.o *.d libv4l2.pc log *~ *.orig *.rej
 
+%.d: %.c
+	@set -e; rm -f $@; \
+	gcc -MM $(CPPFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@
+
 %.o: %.c
-	$(CC) -c -MMD $(CPPFLAGS) $(CFLAGS) -o $@ $<
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 %.so:
 	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^ $(LIBS_$*)
