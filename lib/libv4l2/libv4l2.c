@@ -676,6 +676,9 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
   /* Is this a capture request and do we need to take the stream lock? */
   switch (request) {
+    case VIDIOC_QUERYCTRL:
+    case VIDIOC_G_CTRL:
+    case VIDIOC_S_CTRL:
     case VIDIOC_QUERYCAP:
       is_capture_request = 1;
       break;
@@ -739,6 +742,18 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 			 &devices[index].src_fmt, &devices[index].dest_fmt);
 
   switch (request) {
+    case VIDIOC_QUERYCTRL:
+      result = v4lconvert_vidioc_queryctrl(devices[index].convert, arg);
+      break;
+
+    case VIDIOC_G_CTRL:
+      result = v4lconvert_vidioc_g_ctrl(devices[index].convert, arg);
+      break;
+
+    case VIDIOC_S_CTRL:
+      result = v4lconvert_vidioc_s_ctrl(devices[index].convert, arg);
+      break;
+
     case VIDIOC_QUERYCAP:
       {
 	struct v4l2_capability *cap = arg;

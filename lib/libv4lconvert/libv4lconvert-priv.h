@@ -21,7 +21,11 @@
 
 #include <stdio.h>
 #include "libv4lconvert.h"
+#include "control/libv4lcontrol.h"
+#include "processing/libv4lprocessing.h"
 #include "tinyjpeg.h"
+
+/* Workaround these potentially missing from videodev2.h */
 
 #ifndef V4L2_PIX_FMT_SPCA501
 #define V4L2_PIX_FMT_SPCA501 v4l2_fourcc('S','5','0','1') /* YUYV per line */
@@ -79,6 +83,15 @@
 #define V4L2_PIX_FMT_SN9C20X_I420  v4l2_fourcc('S', '9', '2', '0')
 #endif
 
+#ifndef V4L2_IN_ST_HFLIP
+#define V4L2_IN_ST_HFLIP       0x00000010 /* Frames are flipped horizontally */
+#endif
+
+#ifndef V4L2_IN_ST_VFLIP
+#define V4L2_IN_ST_VFLIP       0x00000020 /* Frames are flipped vertically */
+#endif
+
+
 #define V4LCONVERT_ERROR_MSG_SIZE 256
 #define V4LCONVERT_MAX_FRAMESIZES 16
 
@@ -87,10 +100,11 @@
   "v4l-convert: error " __VA_ARGS__)
 
 /* Card flags */
-#define V4LCONVERT_ROTATE_90  0x01
-#define V4LCONVERT_ROTATE_180 0x02
-#define V4LCONVERT_IS_UVC     0x04
-#define V4LCONVERT_IS_SN9C20X 0x08
+#define V4LCONVERT_HFLIP                 0x01
+#define V4LCONVERT_VFLIP                 0x02
+#define V4LCONVERT_JPEG_ROTATE_90_HACK   0x04
+#define V4LCONVERT_IS_UVC                0x08
+#define V4LCONVERT_IS_SN9C20X            0x10
 
 /* Pixformat flags */
 #define V4LCONVERT_COMPRESSED 0x01
@@ -104,12 +118,18 @@ struct v4lconvert_data {
   struct jdec_private *jdec;
   struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
   unsigned int no_framesizes;
-  int convert_buf_size;
-  int rotate_buf_size;
+  int convert1_buf_size;
+  int convert2_buf_size;
+  int rotate90_buf_size;
+  int flip_buf_size;
   int convert_pixfmt_buf_size;
-  unsigned char *convert_buf;
-  unsigned char *rotate_buf;
+  unsigned char *convert1_buf;
+  unsigned char *convert2_buf;
+  unsigned char *rotate90_buf;
+  unsigned char *flip_buf;
   unsigned char *convert_pixfmt_buf;
+  struct v4lcontrol_data *control;
+  struct v4lprocessing_data *processing;
 };
 
 struct v4lconvert_flags_info {
@@ -210,8 +230,11 @@ void v4lconvert_hm12_to_bgr24(const unsigned char *src,
 void v4lconvert_hm12_to_yuv420(const unsigned char *src,
   unsigned char *dst, int width, int height, int yvu);
 
-void v4lconvert_rotate(unsigned char *src, unsigned char *dest,
-  int width, int height, unsigned int pix_fmt, int rotate);
+void v4lconvert_rotate90(unsigned char *src, unsigned char *dest,
+  struct v4l2_format *fmt);
+
+void v4lconvert_flip(unsigned char *src, unsigned char *dest,
+  struct v4l2_format *fmt, int flags);
 
 void v4lconvert_crop(unsigned char *src, unsigned char *dest,
   const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt);

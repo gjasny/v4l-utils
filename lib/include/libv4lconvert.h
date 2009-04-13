@@ -81,6 +81,14 @@ LIBV4L_PUBLIC int v4lconvert_enum_framesizes(struct v4lconvert_data *data,
 LIBV4L_PUBLIC int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
   struct v4l2_frmivalenum *frmival);
 
+/* Pass calls to query, get and set video controls to the libv4lcontrol class */
+LIBV4L_PUBLIC int v4lconvert_vidioc_queryctrl(struct v4lconvert_data *data,
+  void *arg);
+LIBV4L_PUBLIC int v4lconvert_vidioc_g_ctrl(struct v4lconvert_data *data,
+  void *arg);
+LIBV4L_PUBLIC int v4lconvert_vidioc_s_ctrl(struct v4lconvert_data *data,
+  void *arg);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

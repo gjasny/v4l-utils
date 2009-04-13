@@ -15,14 +15,26 @@ libv4l consists of 3 different libraries:
 libv4lconvert
 -------------
 
-libv4lconvert offers functions to convert from any (known) pixelformat
-to V4l2_PIX_FMT_BGR24 or V4l2_PIX_FMT_YUV420.
+libv4lconvert started as a library to convert from any (known) pixelformat to
+V4l2_PIX_FMT_BGR24, RGB24, YUV420 or YVU420.
 
-Currently the following source formats are supported:
-jpeg, mjpeg, bayer (all 4 variants: bggr, rggb, gbrg, grbg),
-spca501 (chip specific yuv 420 with interlaced components),
-spca561 (chip specific compressed gbrg bayer)
-For more details on the v4lconvert_ functions see libv4lconvert.h .
+The list of know source formats is large and continually growing, so instead
+of keeping an (almost always outdated) list here in the README, I refer you
+to the source, see the list of defines at the top of
+libv4lconvert/libv4lconvert.c for the full list.
+For more details on the v4lconvert_ functions see libv4lconvert.h.
+
+Later on libv4lconvert was expanded to also be able to do various video
+processing functions improve webcam video quality on a software basis. So
+the name no longer 100% covers the functionality. The video processing is
+split in to 2 parts, libv4lconvert/control and libv4lconvert/processing.
+
+The control part is used to offer video controls which can be used to control
+the video processing functions made available by libv4lconvert/processing.
+These controls are stored application wide (untill reboot) by using a
+persistent shared memory object.
+
+libv4lconvert/processing offers the actual video processing functionality.
 
 
 libv4l1

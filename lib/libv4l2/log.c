@@ -1,5 +1,7 @@
 /*
-#             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+#             (C) 2008 Elmar Kleijn <elmar_kleijn@hotmail.com>
+#             (C) 2008 Sjoerd Piepenbrink <need4weed@gmail.com>
+#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by

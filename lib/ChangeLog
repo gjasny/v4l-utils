@@ -1,11 +1,16 @@
-libv4l-0.5.11
+libv4l-0.5.97
 -------------
+* As the version number shows this is a beta release of the 0.6.x series,
+  the big change here is the addition of video processing to libv4l
+  currently this only does whitebalance and normalizing (which turns out
+  to be useless for most cams) but the basic framework for doing video
+  processing, and being able to control it through fake v4l2 controls using
+  for example v4l2ucp is there.
+  The initial version of this code was written by 3 of my computer science
+  students: Elmar Kleijn, Sjoerd Piepenbrink and Radjnies Bhansingh
 * Add dependency generation to libv4l by: Gilles Gigan <gilles.gigan@gmail.com>
 * Add support to use orientation from VIDIOC_ENUMINPUT by:
   Adam Baker <linux@baker-net.org.uk>
-
-libv4l-0.5.10
--------------
 * sn9c20x cams have occasional bad jpeg frames, drop these to avoid the
   flickering effect they cause, by: Brian Johnson <brijohn@gmail.com>
 * adjust libv4l's upside down cam detection to also work with devices

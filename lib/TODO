@@ -8,3 +8,6 @@
  necessary to implement CGMBUF in the kernel for each driver.
 
 -take the possibility of pitch != width into account everywhere
+
+-only report faked formats in list formats and only allow setting fake
+ formats when processing or flipping.
