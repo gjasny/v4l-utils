@@ -115,6 +115,9 @@ int v4lprocessing_pre_processing(struct v4lprocessing_data *data)
     v4lcontrol_get_ctrl(data->control, V4LCONTROL_WHITEBALANCE) ||
     v4lcontrol_get_ctrl(data->control, V4LCONTROL_NORMALIZE);
 
+  if (!data->do_process)
+    data->process = V4L2PROCESSING_PROCESS_NONE;
+
   return data->do_process;
 }
 
@@ -128,7 +131,6 @@ void v4lprocessing_processing(struct v4lprocessing_data *data,
 
   process = v4lprocessing_get_process(data, fmt->fmt.pix.pixelformat);
   if (process == V4L2PROCESSING_PROCESS_NONE) {
-    data->process = process;
     return;
   }
 
