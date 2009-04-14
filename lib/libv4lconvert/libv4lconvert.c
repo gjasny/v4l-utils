@@ -398,6 +398,21 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
     }
   }
 
+  /* Some applications / libs (*cough* gstreamer *cough*) will not work
+     correctly with planar YUV formats when the width is not a multiple of 8
+     or the height is not a multiple of 2 */
+  if (try_dest.fmt.pix.pixelformat == V4L2_PIX_FMT_YUV420 ||
+      try_dest.fmt.pix.pixelformat == V4L2_PIX_FMT_YVU420) {
+    try_dest.fmt.pix.width &= ~7;
+    try_dest.fmt.pix.height &= ~1;
+  }
+
+  /* Likewise the width needs to be a multiple of 4 for RGB formats
+     (although I've never seen a device with a width not a multiple of 4) */
+  if (try_dest.fmt.pix.pixelformat == V4L2_PIX_FMT_RGB24 ||
+      try_dest.fmt.pix.pixelformat == V4L2_PIX_FMT_BGR24)
+    try_dest.fmt.pix.width &= ~3;
+
   /* Are we converting? */
   if(try_src.fmt.pix.width != try_dest.fmt.pix.width ||
      try_src.fmt.pix.height != try_dest.fmt.pix.height ||
@@ -1083,6 +1098,13 @@ int v4lconvert_enum_framesizes(struct v4lconvert_data *data,
   switch(frmsize->type) {
     case V4L2_FRMSIZE_TYPE_DISCRETE:
       frmsize->discrete = data->framesizes[frmsize->index].discrete;
+      /* Apply the same rounding algorithm as v4lconvert_try_format */
+      if (frmsize->pixel_format == V4L2_PIX_FMT_YUV420 ||
+	  frmsize->pixel_format == V4L2_PIX_FMT_YVU420) {
+	frmsize->discrete.width &= ~7;
+	frmsize->discrete.height &= ~1;
+      } else
+	frmsize->discrete.width &= ~3;
       break;
     case V4L2_FRMSIZE_TYPE_CONTINUOUS:
     case V4L2_FRMSIZE_TYPE_STEPWISE:

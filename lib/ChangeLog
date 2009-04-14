@@ -16,6 +16,10 @@ libv4l-0.5.97
   can then change the settings using a v4l2 control panel like v4l2ucp
 * Only report / allow supported destination formats in enum_fmt / try_fmt /
   g_fmt / s_fmt when processing, rotating or flipping.
+* Some applications / libs (*cough* gstreamer *cough*) will not work
+  correctly with planar YUV formats when the width is not a multiple of 8,
+  so crop widths which are not a multiple of 8 to the nearest multiple of 8
+  when converting to planar YUV
 * Add dependency generation to libv4l by: Gilles Gigan <gilles.gigan@gmail.com>
 * Add support to use orientation from VIDIOC_ENUMINPUT by:
   Adam Baker <linux@baker-net.org.uk>
