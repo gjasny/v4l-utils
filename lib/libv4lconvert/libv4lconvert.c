@@ -70,14 +70,6 @@ static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
   SUPPORTED_DST_PIXFMTS
 };
 
-/* List of cams which need special flags */
-static const struct v4lconvert_flags_info v4lconvert_flags[] = {
-  { 0x0471, 0x0325, V4LCONVERT_HFLIP|V4LCONVERT_VFLIP }, /* Philips SPC200NC */
-  { 0x0471, 0x0326, V4LCONVERT_HFLIP|V4LCONVERT_VFLIP }, /* Philips SPC300NC */
-  { 0x0471, 0x032d, V4LCONVERT_HFLIP|V4LCONVERT_VFLIP }, /* Philips SPC210NC */
-  { 0x093a, 0x2476, V4LCONVERT_HFLIP|V4LCONVERT_VFLIP }, /* Genius E-M 112 */
-};
-
 /* List of well known resolutions which we can get by cropping somewhat larger
    resolutions */
 static const int v4lconvert_crop_res[][2] = {
@@ -91,95 +83,11 @@ static const int v4lconvert_crop_res[][2] = {
   { 176, 144 },
 };
 
-static int v4lconvert_get_flags(int fd)
-{
-  struct stat st;
-  FILE *f;
-  char sysfs_name[512];
-  unsigned short vendor_id = 0;
-  unsigned short product_id = 0;
-  int i, minor;
-  char c, *s, buf[32];
-
-  if (fstat(fd, &st) || !S_ISCHR(st.st_mode))
-    return 0; /* Should never happen */
-
-  /* <Sigh> find ourselve in sysfs */
-  for (i = 0; i < 256; i++) {
-    snprintf(sysfs_name, sizeof(sysfs_name),
-	     "/sys/class/video4linux/video%d/dev", i);
-    f = fopen(sysfs_name, "r");
-    if (!f)
-      continue;
-
-    s = fgets(buf, sizeof(buf), f);
-    fclose(f);
-
-    if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 && c == '\n' &&
-	minor == minor(st.st_rdev))
-      break;
-  }
-  if (i == 256)
-    return 0; /* Not found, sysfs not mounted? */
-
-  /* Get vendor and product ID */
-  snprintf(sysfs_name, sizeof(sysfs_name),
-	   "/sys/class/video4linux/video%d/device/modalias", i);
-  f = fopen(sysfs_name, "r");
-  if (f) {
-    s = fgets(buf, sizeof(buf), f);
-    fclose(f);
-
-    if (!s ||
-	sscanf(s, "usb:v%4hxp%4hx%c", &vendor_id, &product_id, &c) != 3 ||
-	c != 'd')
-      return 0; /* Not an USB device */
-  } else {
-    /* Try again assuming the device link points to the usb
-       device instead of the usb interface (bug in older versions
-       of gspca) */
-
-    /* Get product ID */
-    snprintf(sysfs_name, sizeof(sysfs_name),
-	     "/sys/class/video4linux/video%d/device/idVendor", i);
-    f = fopen(sysfs_name, "r");
-    if (!f)
-      return 0; /* Not an USB device (or no sysfs) */
-
-    s = fgets(buf, sizeof(buf), f);
-    fclose(f);
-
-    if (!s || sscanf(s, "%04hx%c", &vendor_id, &c) != 2 || c != '\n')
-      return 0; /* Should never happen */
-
-    /* Get product ID */
-    snprintf(sysfs_name, sizeof(sysfs_name),
-	     "/sys/class/video4linux/video%d/device/idProduct", i);
-    f = fopen(sysfs_name, "r");
-    if (!f)
-      return 0; /* Should never happen */
-
-    s = fgets(buf, sizeof(buf), f);
-    fclose(f);
-
-    if (!s || sscanf(s, "%04hx%c", &product_id, &c) != 2 || c != '\n')
-      return 0; /* Should never happen */
-  }
-
-  for (i = 0; i < ARRAY_SIZE(v4lconvert_flags); i++)
-    if (v4lconvert_flags[i].vendor_id == vendor_id &&
-	v4lconvert_flags[i].product_id == product_id)
-      return v4lconvert_flags[i].flags;
-
-  return 0;
-}
-
 struct v4lconvert_data *v4lconvert_create(int fd)
 {
   int i, j;
   struct v4lconvert_data *data = calloc(1, sizeof(struct v4lconvert_data));
   struct v4l2_capability cap;
-  struct v4l2_input input;
 
   if (!data)
     return NULL;
@@ -206,14 +114,6 @@ struct v4lconvert_data *v4lconvert_create(int fd)
   data->no_formats = i;
 
   /* Check if this cam has any special flags */
-  data->flags = v4lconvert_get_flags(data->fd);
-  if ((syscall(SYS_ioctl, fd, VIDIOC_G_INPUT, &input.index) == 0) &&
-      (syscall(SYS_ioctl, fd, VIDIOC_ENUMINPUT, &input) == 0)) {
-    if (input.status & V4L2_IN_ST_HFLIP)
-      data->flags |= V4LCONVERT_HFLIP;
-    if (input.status & V4L2_IN_ST_VFLIP)
-      data->flags |= V4LCONVERT_VFLIP;
-  }
   if (syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap) == 0) {
     if (!strcmp((char *)cap.driver, "uvcvideo"))
       data->flags |= V4LCONVERT_IS_UVC;
@@ -226,6 +126,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
     free(data);
     return NULL;
   }
+  data->control_flags = v4lcontrol_get_flags(data->control);
 
   data->processing = v4lprocessing_create(data->control);
   if (!data->processing) {
@@ -502,7 +403,7 @@ int v4lconvert_needs_conversion(struct v4lconvert_data *data,
      src_fmt->fmt.pix.pixelformat != dest_fmt->fmt.pix.pixelformat)
     return 1; /* Formats differ */
 
-  if (!(data->flags & (V4LCONVERT_HFLIP|V4LCONVERT_VFLIP)))
+  if (!(data->control_flags & (V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED)))
     return 0; /* Formats identical and we don't need flip */
 
   /* Formats are identical, but we need flip, do we support the dest_fmt? */
@@ -592,9 +493,12 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
       if (header_width != width || header_height != height) {
 	/* Check for (pixart) rotated JPEG */
 	if (header_width == height && header_height == width) {
-	  if (!(data->flags & V4LCONVERT_JPEG_ROTATE_90_HACK)) {
+	  if (!(data->control_flags & V4LCONTROL_ROTATED_90_JPEG)) {
+	    fprintf(stderr,
+		    "libv4lconvert: Unknown cam with 90° rotated JPEG, "
+		    "please report this to <hdegoede@redhat.com>\n");
 	    V4LCONVERT_ERR("JPEG needs 90 degree rotation\n");
-	    data->flags |= V4LCONVERT_JPEG_ROTATE_90_HACK;
+	    data->control_flags |= V4LCONTROL_ROTATED_90_JPEG;
 	    errno = EAGAIN;
 	    return -1;
 	  }
@@ -994,8 +898,8 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     convert2_src = convert1_dest;
   }
 
-  if (convert && (data->flags & (V4LCONVERT_JPEG_ROTATE_90_HACK |
-			    V4LCONVERT_VFLIP | V4LCONVERT_HFLIP) || crop)) {
+  if (convert && ((data->control_flags & (V4LCONTROL_ROTATED_90_JPEG |
+			V4LCONTROL_VFLIPPED | V4LCONTROL_HFLIPPED)) || crop)) {
     convert2_dest = v4lconvert_alloc_buffer(data, temp_needed,
 		     &data->convert2_buf, &data->convert2_buf_size);
     if (!convert2_dest)
@@ -1004,8 +908,9 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     rotate90_src = flip_src = crop_src = convert2_dest;
   }
 
-  if ((data->flags & V4LCONVERT_JPEG_ROTATE_90_HACK) &&
-      ((data->flags & (V4LCONVERT_VFLIP | V4LCONVERT_HFLIP)) || crop)) {
+  if ((data->control_flags & V4LCONTROL_ROTATED_90_JPEG) &&
+      ((data->control_flags & (V4LCONTROL_VFLIPPED | V4LCONTROL_HFLIPPED)) ||
+       crop)) {
     rotate90_dest = v4lconvert_alloc_buffer(data, temp_needed,
 		    &data->rotate90_buf, &data->rotate90_buf_size);
     if (!rotate90_dest)
@@ -1014,7 +919,8 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     flip_src = crop_src = rotate90_dest;
   }
 
-  if ((data->flags & (V4LCONVERT_VFLIP | V4LCONVERT_HFLIP)) && crop) {
+  if ((data->control_flags & (V4LCONTROL_VFLIPPED | V4LCONTROL_HFLIPPED)) &&
+      crop) {
     flip_dest = v4lconvert_alloc_buffer(data, temp_needed, &data->flip_buf,
 					&data->flip_buf_size);
     if (!flip_dest)
@@ -1054,11 +960,11 @@ int v4lconvert_convert(struct v4lconvert_data *data,
   if (processing)
     v4lprocessing_processing(data->processing, rotate90_src, &my_src_fmt);
 
-  if (data->flags & V4LCONVERT_JPEG_ROTATE_90_HACK)
+  if (data->control_flags & V4LCONTROL_ROTATED_90_JPEG)
     v4lconvert_rotate90(rotate90_src, rotate90_dest, &my_src_fmt);
 
-  if (data->flags & (V4LCONVERT_VFLIP | V4LCONVERT_HFLIP))
-    v4lconvert_flip(flip_src, flip_dest, &my_src_fmt, data->flags);
+  if (data->control_flags & (V4LCONTROL_VFLIPPED | V4LCONTROL_HFLIPPED))
+    v4lconvert_flip(flip_src, flip_dest, &my_src_fmt, data->control_flags);
 
   if (crop)
     v4lconvert_crop(crop_src, dest, &my_src_fmt, &my_dest_fmt);

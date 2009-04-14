@@ -9,5 +9,12 @@
 
 -take the possibility of pitch != width into account everywhere
 
+
 -only report faked formats in list formats and only allow setting fake
  formats when processing or flipping.
+
+-make updating of parameters happen based on time elapsed rather then
+ frames
+
+-add fake flip controls on devices where we are already limiting the
+ formats which can be set

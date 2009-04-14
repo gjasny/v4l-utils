@@ -83,14 +83,6 @@
 #define V4L2_PIX_FMT_SN9C20X_I420  v4l2_fourcc('S', '9', '2', '0')
 #endif
 
-#ifndef V4L2_IN_ST_HFLIP
-#define V4L2_IN_ST_HFLIP       0x00000010 /* Frames are flipped horizontally */
-#endif
-
-#ifndef V4L2_IN_ST_VFLIP
-#define V4L2_IN_ST_VFLIP       0x00000020 /* Frames are flipped vertically */
-#endif
-
 
 #define V4LCONVERT_ERROR_MSG_SIZE 256
 #define V4LCONVERT_MAX_FRAMESIZES 16
@@ -100,11 +92,8 @@
   "v4l-convert: error " __VA_ARGS__)
 
 /* Card flags */
-#define V4LCONVERT_HFLIP                 0x01
-#define V4LCONVERT_VFLIP                 0x02
-#define V4LCONVERT_JPEG_ROTATE_90_HACK   0x04
-#define V4LCONVERT_IS_UVC                0x08
-#define V4LCONVERT_IS_SN9C20X            0x10
+#define V4LCONVERT_IS_UVC                0x01
+#define V4LCONVERT_IS_SN9C20X            0x02
 
 /* Pixformat flags */
 #define V4LCONVERT_COMPRESSED 0x01
@@ -112,6 +101,7 @@
 struct v4lconvert_data {
   int fd;
   int flags; /* bitfield */
+  int control_flags; /* bitfield */
   int supported_src_formats; /* bitfield */
   unsigned int no_formats;
   char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
@@ -130,15 +120,6 @@ struct v4lconvert_data {
   unsigned char *convert_pixfmt_buf;
   struct v4lcontrol_data *control;
   struct v4lprocessing_data *processing;
-};
-
-struct v4lconvert_flags_info {
-  unsigned short vendor_id;
-  unsigned short product_id;
-/* We could also use the USB manufacturer and product strings some devices have
-  const char *manufacturer;
-  const char *product; */
-  int flags;
 };
 
 struct v4lconvert_pixfmt {

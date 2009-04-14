@@ -22,6 +22,12 @@
 #ifndef __LIBV4LCONTROL_H
 #define __LIBV4LCONTROL_H
 
+/* Flags */
+#define V4LCONTROL_HFLIPPED              0x01
+#define V4LCONTROL_VFLIPPED              0x02
+#define V4LCONTROL_ROTATED_90_JPEG       0x04
+
+/* Controls */
 enum { V4LCONTROL_WHITEBALANCE, V4LCONTROL_NORMALIZE,
   V4LCONTROL_NORM_LOW_BOUND, V4LCONTROL_NORM_HIGH_BOUND, V4LCONTROL_COUNT };
 
@@ -31,6 +37,7 @@ struct v4lcontrol_data* v4lcontrol_create(int fd);
 void v4lcontrol_destroy(struct v4lcontrol_data *data);
 
 /* Functions used by v4lprocessing to get the control state */
+int v4lcontrol_get_flags(struct v4lcontrol_data *data);
 int v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl);
 
 /* Functions used by v4lconvert to pass vidioc calls from libv4l2 */

@@ -40,27 +40,139 @@
 /* end broken header workaround includes */
 #include <linux/videodev2.h>
 
-static void v4lcontrol_init(struct v4lcontrol_data *data, int first_time)
-{
-  /* FIXME: Temporary spoof future communication with driver by always enabling
-     the fake controls */
-  data->controls = (1 << V4LCONTROL_WHITEBALANCE) |
-    (1 << V4LCONTROL_NORMALIZE) | (1 << V4LCONTROL_NORM_LOW_BOUND) |
-    (1 << V4LCONTROL_NORM_HIGH_BOUND);
+#define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
-  if (first_time) {
-    /* Initialize the new shm object when created */
-    memset(data->shm_values, 0, sizeof(V4LCONTROL_SHM_SIZE));
-    data->shm_values[V4LCONTROL_WHITEBALANCE] = 1;
-    data->shm_values[V4LCONTROL_NORM_HIGH_BOUND] = 255;
+/* Workaround these potentially missing from videodev2.h */
+#ifndef V4L2_IN_ST_HFLIP
+#define V4L2_IN_ST_HFLIP       0x00000010 /* Frames are flipped horizontally */
+#endif
+
+#ifndef V4L2_IN_ST_VFLIP
+#define V4L2_IN_ST_VFLIP       0x00000020 /* Frames are flipped vertically */
+#endif
+
+
+/* List of cams which need special flags */
+static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
+/* First: Upside down devices */
+  /* Philips SPC200NC */
+  { 0x0471, 0x0325, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
+  /* Philips SPC300NC */
+  { 0x0471, 0x0326, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
+  /* Philips SPC210NC */
+  { 0x0471, 0x032d, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
+  /* Genius E-M 112 */
+  { 0x093a, 0x2476, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
+/* Second: devices which can benifit from software video processing */
+  /* Pac207 based devices */
+  { 0x041e, 0x4028, 0,    0, V4LCONTROL_WANTS_WB },
+  { 0x093a, 0x2460, 0x1f, 0, V4LCONTROL_WANTS_WB },
+  { 0x145f, 0x013a, 0,    0, V4LCONTROL_WANTS_WB },
+  { 0x2001, 0xf115, 0,    0, V4LCONTROL_WANTS_WB },
+  /* Pac7302 based devices */
+  { 0x093a, 0x2620, 0x0f, V4LCONTROL_ROTATED_90_JPEG, V4LCONTROL_WANTS_WB },
+};
+
+static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
+{
+  struct stat st;
+  FILE *f;
+  char sysfs_name[512];
+  unsigned short vendor_id = 0;
+  unsigned short product_id = 0;
+  int i, minor;
+  char c, *s, buf[32];
+  struct v4l2_input input;
+
+  if ((syscall(SYS_ioctl, data->fd, VIDIOC_G_INPUT, &input.index) == 0) &&
+      (syscall(SYS_ioctl, data->fd, VIDIOC_ENUMINPUT, &input) == 0)) {
+    if (input.status & V4L2_IN_ST_HFLIP)
+      data->flags |= V4LCONTROL_HFLIPPED;
+    if (input.status & V4L2_IN_ST_VFLIP)
+      data->flags |= V4LCONTROL_VFLIPPED;
   }
+
+  if (fstat(data->fd, &st) || !S_ISCHR(st.st_mode)) {
+    return; /* Should never happen */
+  }
+
+  /* <Sigh> find ourselve in sysfs */
+  for (i = 0; i < 256; i++) {
+    snprintf(sysfs_name, sizeof(sysfs_name),
+	     "/sys/class/video4linux/video%d/dev", i);
+    f = fopen(sysfs_name, "r");
+    if (!f)
+      continue;
+
+    s = fgets(buf, sizeof(buf), f);
+    fclose(f);
+
+    if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 && c == '\n' &&
+	minor == minor(st.st_rdev))
+      break;
+  }
+  if (i == 256)
+    return; /* Not found, sysfs not mounted? */
+
+  /* Get vendor and product ID */
+  snprintf(sysfs_name, sizeof(sysfs_name),
+	   "/sys/class/video4linux/video%d/device/modalias", i);
+  f = fopen(sysfs_name, "r");
+  if (f) {
+    s = fgets(buf, sizeof(buf), f);
+    fclose(f);
+
+    if (!s ||
+	sscanf(s, "usb:v%4hxp%4hx%c", &vendor_id, &product_id, &c) != 3 ||
+	c != 'd')
+      return; /* Not an USB device */
+  } else {
+    /* Try again assuming the device link points to the usb
+       device instead of the usb interface (bug in older versions
+       of gspca) */
+
+    /* Get product ID */
+    snprintf(sysfs_name, sizeof(sysfs_name),
+	     "/sys/class/video4linux/video%d/device/idVendor", i);
+    f = fopen(sysfs_name, "r");
+    if (!f)
+      return; /* Not an USB device (or no sysfs) */
+
+    s = fgets(buf, sizeof(buf), f);
+    fclose(f);
+
+    if (!s || sscanf(s, "%04hx%c", &vendor_id, &c) != 2 || c != '\n')
+      return; /* Should never happen */
+
+    /* Get product ID */
+    snprintf(sysfs_name, sizeof(sysfs_name),
+	     "/sys/class/video4linux/video%d/device/idProduct", i);
+    f = fopen(sysfs_name, "r");
+    if (!f)
+      return; /* Should never happen */
+
+    s = fgets(buf, sizeof(buf), f);
+    fclose(f);
+
+    if (!s || sscanf(s, "%04hx%c", &product_id, &c) != 2 || c != '\n')
+      return; /* Should never happen */
+  }
+
+  for (i = 0; i < ARRAY_SIZE(v4lcontrol_flags); i++)
+    if (v4lcontrol_flags[i].vendor_id == vendor_id &&
+	v4lcontrol_flags[i].product_id ==
+	  (product_id & ~v4lcontrol_flags[i].product_mask)) {
+      data->flags |= v4lcontrol_flags[i].flags;
+      data->controls = v4lcontrol_flags[i].controls;
+      break;
+    }
 }
 
 struct v4lcontrol_data *v4lcontrol_create(int fd)
 {
   int shm_fd;
   int init = 0;
-  char shm_name[256];
+  char *s, shm_name[256];
   struct v4l2_capability cap;
 
   struct v4lcontrol_data *data = calloc(1, sizeof(struct v4lcontrol_data));
@@ -89,9 +201,23 @@ struct v4lcontrol_data *v4lcontrol_create(int fd)
   if (data->shm_values == MAP_FAILED)
     goto error;
 
-  v4lcontrol_init(data, init); /* Set the driver defined fake controls */
+  if (init) {
+    /* Initialize the new shm object we created */
+    memset(data->shm_values, 0, sizeof(V4LCONTROL_SHM_SIZE));
+    data->shm_values[V4LCONTROL_WHITEBALANCE] = 1;
+    data->shm_values[V4LCONTROL_NORM_HIGH_BOUND] = 255;
+  }
 
   data->fd = fd;
+
+  v4lcontrol_init_flags(data);
+
+  /* Allow overriding through environment */
+  if ((s = getenv("LIBV4LCONTROL_FLAGS")))
+    data->flags = strtol(s, NULL, 0);
+
+  if ((s = getenv("LIBV4LCONTROL_CONTROLS")))
+    data->controls = strtol(s, NULL, 0);
 
   return data;
 
@@ -199,6 +325,11 @@ int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
     }
 
   return syscall(SYS_ioctl, data->fd, VIDIOC_S_CTRL, arg);
+}
+
+int v4lcontrol_get_flags(struct v4lcontrol_data *data)
+{
+  return data->flags;
 }
 
 int v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl)

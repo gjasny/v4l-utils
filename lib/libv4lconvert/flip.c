@@ -20,6 +20,7 @@
 
 */
 
+#include <string.h>
 #include "libv4lconvert-priv.h"
 
 static void v4lconvert_rotate180_rgbbgr24(const unsigned char *src,
@@ -134,7 +135,7 @@ void v4lconvert_flip(unsigned char *src, unsigned char *dest,
 {
   /* FIXME implement separate vflipping and hflipping, for now we always
      rotate 180 when vflip is selected! */
-  if (flags & V4LCONVERT_VFLIP) {
+  if (flags & V4LCONTROL_VFLIPPED) {
     switch (fmt->fmt.pix.pixelformat) {
       case V4L2_PIX_FMT_RGB24:
       case V4L2_PIX_FMT_BGR24:
@@ -148,4 +149,6 @@ void v4lconvert_flip(unsigned char *src, unsigned char *dest,
 	break;
     }
   }
+  else /* FIXME and do nothing when only HFLIP is selected */
+    memcpy(dest, src, fmt->fmt.pix.sizeimage);
 }
