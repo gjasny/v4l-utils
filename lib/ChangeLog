@@ -24,6 +24,7 @@ libv4l-0.5.97
 * adjust libv4l's upside down cam detection to also work with devices
   which have the usb interface as parent instead of the usb device
 * fix libv4l upside down detection for the new v4l minor numbering scheme
+* fix reading outside of the source memory when doing yuv420->rgb conversion
 
 libv4l-0.5.9
 ------------

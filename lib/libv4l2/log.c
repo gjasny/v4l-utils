@@ -163,7 +163,7 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 	struct v4l2_frmsizeenum *frmsize = arg;
 	int pixfmt = frmsize->pixel_format;
 
-	fprintf(v4l2_log_file, "  index: %u pixelformat: %c%c%c%c",
+	fprintf(v4l2_log_file, "  index: %u pixelformat: %c%c%c%c\n",
 	  frmsize->index,
 	  pixfmt & 0xff,
 	  (pixfmt >> 8) & 0xff,
@@ -171,12 +171,12 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 	  pixfmt >> 24);
 	switch (frmsize->type) {
 	  case V4L2_FRMSIZE_TYPE_DISCRETE:
-	    fprintf(v4l2_log_file, " %ux%u\n", frmsize->discrete.width,
+	    fprintf(v4l2_log_file, "  %ux%u\n", frmsize->discrete.width,
 	      frmsize->discrete.height);
 	    break;
 	  case V4L2_FRMSIZE_TYPE_CONTINUOUS:
 	  case V4L2_FRMSIZE_TYPE_STEPWISE:
-	    fprintf(v4l2_log_file, " %ux%u -> %ux%u\n",
+	    fprintf(v4l2_log_file, "  %ux%u -> %ux%u\n",
 	      frmsize->stepwise.min_width, frmsize->stepwise.min_height,
 	      frmsize->stepwise.max_width, frmsize->stepwise.max_height);
 	    break;
@@ -188,7 +188,7 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 	struct v4l2_frmivalenum *frmival = arg;
 	int pixfmt = frmival->pixel_format;
 
-	fprintf(v4l2_log_file, "  index: %u pixelformat: %c%c%c%c %ux%u: ",
+	fprintf(v4l2_log_file, "  index: %u pixelformat: %c%c%c%c %ux%u:\n",
 	  frmival->index,
 	  pixfmt & 0xff,
 	  (pixfmt >> 8) & 0xff,
@@ -198,12 +198,12 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 	  frmival->height);
 	switch (frmival->type) {
 	  case V4L2_FRMIVAL_TYPE_DISCRETE:
-	    fprintf(v4l2_log_file, "%u/%u\n", frmival->discrete.numerator,
+	    fprintf(v4l2_log_file, "  %u/%u\n", frmival->discrete.numerator,
 	      frmival->discrete.denominator);
 	    break;
 	  case V4L2_FRMIVAL_TYPE_CONTINUOUS:
 	  case V4L2_FRMIVAL_TYPE_STEPWISE:
-	    fprintf(v4l2_log_file, "%u/%u -> %u/%u\n",
+	    fprintf(v4l2_log_file, "  %u/%u -> %u/%u\n",
 	      frmival->stepwise.min.numerator,
 	      frmival->stepwise.min.denominator,
 	      frmival->stepwise.max.numerator,
