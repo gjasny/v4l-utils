@@ -42,18 +42,30 @@ struct v4lconvert_data;
 LIBV4L_PUBLIC struct v4lconvert_data *v4lconvert_create(int fd);
 LIBV4L_PUBLIC void v4lconvert_destroy(struct v4lconvert_data *data);
 
+/* When doing flipping / rotating / video-processing, only supported
+   destination formats can be used (as flipping / rotating / video-processing
+   is not supported on other formats). This function can be used to query
+   if that is the case. */
+LIBV4L_PUBLIC int v4lconvert_supported_dst_fmt_only(
+  struct v4lconvert_data *data);
+
 /* With regards to dest_fmt just like VIDIOC_TRY_FMT, except that the try
    format will succeed and return the requested V4L2_PIX_FMT_foo in dest_fmt if
    the cam has a format from which v4lconvert can convert to dest_fmt.
    The real format to which the cam should be set is returned through src_fmt
-   when not NULL. */
+   when not NULL.
+   Note that just like the real VIDIOC_TRY_FMT this function will change the
+   dest_fmt when not supported. This includes changing it to a supported
+   destination format when trying a native format of the camera and
+   v4lconvert_supported_dst_fmt_only() returns true. */
 LIBV4L_PUBLIC int v4lconvert_try_format(struct v4lconvert_data *data,
   struct v4l2_format *dest_fmt, /* in / out */
   struct v4l2_format *src_fmt /* out */
 );
 
-/* Just like VIDIOC_ENUM_FMT, except that the emulated formats are added at
-   the end of the list */
+/* Like VIDIOC_ENUM_FMT, but the emulated formats are added at the end of the
+   list, except if flipping / processing is active for the device, then only
+   supported destination formats are listed */
 LIBV4L_PUBLIC int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt);
 
 /* Is conversion necessary or can the app use the data directly? */
@@ -88,6 +100,9 @@ LIBV4L_PUBLIC int v4lconvert_vidioc_g_ctrl(struct v4lconvert_data *data,
   void *arg);
 LIBV4L_PUBLIC int v4lconvert_vidioc_s_ctrl(struct v4lconvert_data *data,
   void *arg);
+
+/* Is the passed in pixelformat supported as destination format ? */
+LIBV4L_PUBLIC int v4lconvert_supported_dst_format(unsigned int pixelformat);
 
 #ifdef __cplusplus
 }

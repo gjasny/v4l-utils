@@ -155,8 +155,10 @@ static int v4l1_set_format(int index, unsigned int width,
 
   /* Do we need to change the resolution / format ? */
   if (width == devices[index].width && height == devices[index].height &&
-      v4l2_pixfmt == devices[index].v4l2_pixfmt)
+      v4l2_pixfmt == devices[index].v4l2_pixfmt) {
+    devices[index].v4l1_pal = v4l1_pal;
     return 0;
+  }
 
   /* Get current settings, apply our changes and try the new setting */
   if ((result = v4l2_ioctl(devices[index].fd, VIDIOC_G_FMT, &fmt2))) {
@@ -308,19 +310,18 @@ int v4l1_open (const char *file, int oflag, ...)
   if (!v4l2_log_file)
     v4l2_log_file = v4l1_log_file;
 
-  /* Get initial width, height and pixelformat */
-  fmt2.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  if (syscall(SYS_ioctl, fd, VIDIOC_G_FMT, &fmt2)) {
+  /* Register with libv4l2, as we use that todo format conversion and read()
+     emulation for us */
+  if (v4l2_fd_open(fd, V4L2_ENABLE_ENUM_FMT_EMULATION) == -1) {
     int saved_err = errno;
-    V4L1_LOG_ERR("getting pixformat: %s\n", strerror(errno));
     syscall(SYS_close, fd);
     errno = saved_err;
     return -1;
   }
 
-  /* Register with libv4l2, as we use that todo format conversion and read()
-     emulation for us */
-  if (v4l2_fd_open(fd, V4L2_ENABLE_ENUM_FMT_EMULATION) == -1) {
+  /* Get initial width, height and pixelformat */
+  fmt2.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  if (v4l2_ioctl(fd, VIDIOC_G_FMT, &fmt2)) {
     int saved_err = errno;
     syscall(SYS_close, fd);
     errno = saved_err;

@@ -8,6 +8,14 @@ libv4l-0.5.97
   for example v4l2ucp is there.
   The initial version of this code was written by 3 of my computer science
   students: Elmar Kleijn, Sjoerd Piepenbrink and Radjnies Bhansingh
+* Currently whitebalancing gets enabled based on USB-ID's and it only gets
+  enabled for Pixart webcam's. You can force it being enabled with other
+  webcams by setting the environment variable LIBV4LCONTROL_CONTROLS, this
+  sets a bitmask enabling certain v4l2 controls which control the video
+  processing set it to 15 to enable both whitebalancing and normalize. You
+  can then change the settings using a v4l2 control panel like v4l2ucp
+* Only report / allow supported destination formats in enum_fmt / try_fmt /
+  g_fmt / s_fmt when processing, rotating or flipping.
 * Add dependency generation to libv4l by: Gilles Gigan <gilles.gigan@gmail.com>
 * Add support to use orientation from VIDIOC_ENUMINPUT by:
   Adam Baker <linux@baker-net.org.uk>

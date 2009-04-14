@@ -10,11 +10,19 @@
 -take the possibility of pitch != width into account everywhere
 
 
--only report faked formats in list formats and only allow setting fake
- formats when processing or flipping.
-
 -make updating of parameters happen based on time elapsed rather then
  frames
 
 -add fake flip controls on devices where we are already limiting the
  formats which can be set
+
+-add reverse cropping (adding black borders) to get from 320x232 ->
+ 320x240, for zc3xx webcams with a broken (last row of jpeg blocks missing)
+ 320x240 mode
+
+-add software auto exposure (for spca561 cams)
+
+-change video processing to use a per component lookup table for easy combining of
+ of different effects in 1 pass
+
+-add gamma correction video processing

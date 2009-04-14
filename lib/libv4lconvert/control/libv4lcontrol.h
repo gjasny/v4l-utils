@@ -39,6 +39,11 @@ void v4lcontrol_destroy(struct v4lcontrol_data *data);
 /* Functions used by v4lprocessing to get the control state */
 int v4lcontrol_get_flags(struct v4lcontrol_data *data);
 int v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl);
+/* Check if we must go through the conversion path (and thus alloc conversion
+   buffers, etc. in libv4l2). Note this always return 1 if we *may* need
+   rotate90 / flipping / processing, as if we actually need this may change
+   on the fly while the stream is active. */
+int v4lcontrol_needs_conversion(struct v4lcontrol_data *data);
 
 /* Functions used by v4lconvert to pass vidioc calls from libv4l2 */
 int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg);

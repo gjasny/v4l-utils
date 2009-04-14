@@ -516,6 +516,14 @@ int v4l2_fd_open(int fd, int v4l2_flags)
 
   V4L2_LOG("open: %d\n", fd);
 
+  if (v4lconvert_supported_dst_fmt_only(convert) &&
+      !v4lconvert_supported_dst_format(fmt.fmt.pix.pixelformat)) {
+    V4L2_LOG("open %d: setting pixelformat to RGB24\n", fd);
+    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+    v4l2_ioctl(fd, VIDIOC_S_FMT, &fmt);
+    V4L2_LOG("open %d: done setting pixelformat\n", fd);
+  }
+
   return fd;
 }
 

@@ -339,3 +339,8 @@ int v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl)
 
   return 0;
 }
+
+/* See the comment about this in libv4lconvert.h */
+int v4lcontrol_needs_conversion(struct v4lcontrol_data *data) {
+  return data->flags || data->controls;
+}
