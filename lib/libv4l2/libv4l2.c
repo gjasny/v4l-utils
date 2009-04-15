@@ -687,6 +687,9 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
     case VIDIOC_QUERYCTRL:
     case VIDIOC_G_CTRL:
     case VIDIOC_S_CTRL:
+      if (!(devices[index].flags & V4L2_DISABLE_CONVERSION))
+	is_capture_request = 1;
+      break;
     case VIDIOC_QUERYCAP:
       is_capture_request = 1;
       break;
