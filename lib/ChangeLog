@@ -1,3 +1,7 @@
+libv4l-0.5.98
+-------------
+* Genius E-M 112 needs both upside down and whitebalance flags
+
 libv4l-0.5.97
 -------------
 * As the version number shows this is a beta release of the 0.6.x series,

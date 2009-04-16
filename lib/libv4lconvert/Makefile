@@ -3,6 +3,8 @@ override CPPFLAGS += -I../include -I../../../include -fvisibility=hidden
 CFLAGS := -g -O1
 CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
 
+LIBS_libv4lconvert = -lrt
+
 ifeq ($(LINKTYPE),static)
 CONVERT_LIB   = libv4lconvert.a
 else
@@ -73,7 +75,7 @@ clean::
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 %.so:
-	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^
+	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^ $(LIBS_$*)
 	ln -f -s $@.$(LIB_RELEASE) $@
 
 %.a:

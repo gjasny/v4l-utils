@@ -3,7 +3,7 @@ override CPPFLAGS += -I../include -I../../../include -fvisibility=hidden
 CFLAGS := -g -O1
 CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
 
-LIBS_libv4l2  = -lpthread -lrt
+LIBS_libv4l2  = -lpthread
 
 V4L2_OBJS     = libv4l2.o log.o
 V4L2CONVERT   = v4l2convert.so
@@ -86,4 +86,3 @@ clean::
 
 %.a:
 	$(AR) cqs $@ $^
-
