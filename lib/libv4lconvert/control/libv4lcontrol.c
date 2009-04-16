@@ -172,7 +172,7 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
 struct v4lcontrol_data *v4lcontrol_create(int fd)
 {
   int shm_fd;
-  int init = 0;
+  int i, init = 0;
   char *s, shm_name[256];
   struct v4l2_capability cap;
 
@@ -183,6 +183,11 @@ struct v4lcontrol_data *v4lcontrol_create(int fd)
 
   syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap);
   snprintf(shm_name, 256, "/%s:%s", cap.bus_info, cap.card);
+
+  /* / is not allowed inside shm names */
+  for (i = 1; shm_name[i]; i++)
+    if (shm_name[i] == '/')
+      shm_name[i] = '-';
 
   /* Open the shared memory object identified by shm_name */
   if ((shm_fd = shm_open(shm_name, (O_CREAT | O_EXCL | O_RDWR),

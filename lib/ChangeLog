@@ -1,6 +1,8 @@
 libv4l-0.5.98
 -------------
 * Genius E-M 112 needs both upside down and whitebalance flags
+* Some makefile improvements by Gregor Jasny
+* If the card name contains a / replace it with a - in the shm name
 
 libv4l-0.5.97
 -------------
