@@ -181,6 +181,20 @@ struct v4lcontrol_data *v4lcontrol_create(int fd)
   if (!data)
     return NULL;
 
+  data->fd = fd;
+
+  v4lcontrol_init_flags(data);
+
+  /* Allow overriding through environment */
+  if ((s = getenv("LIBV4LCONTROL_FLAGS")))
+    data->flags = strtol(s, NULL, 0);
+
+  if ((s = getenv("LIBV4LCONTROL_CONTROLS")))
+    data->controls = strtol(s, NULL, 0);
+
+  if (data->controls == 0)
+    return data; /* No need to create a shared memory segment */
+
   syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap);
   snprintf(shm_name, 256, "/%s:%s", cap.bus_info, cap.card);
 
@@ -214,17 +228,6 @@ struct v4lcontrol_data *v4lcontrol_create(int fd)
     data->shm_values[V4LCONTROL_NORM_HIGH_BOUND] = 255;
   }
 
-  data->fd = fd;
-
-  v4lcontrol_init_flags(data);
-
-  /* Allow overriding through environment */
-  if ((s = getenv("LIBV4LCONTROL_FLAGS")))
-    data->flags = strtol(s, NULL, 0);
-
-  if ((s = getenv("LIBV4LCONTROL_CONTROLS")))
-    data->controls = strtol(s, NULL, 0);
-
   return data;
 
 error:
@@ -234,7 +237,8 @@ error:
 
 void v4lcontrol_destroy(struct v4lcontrol_data *data)
 {
-  munmap(data->shm_values, V4LCONTROL_SHM_SIZE);
+  if (data->controls)
+    munmap(data->shm_values, V4LCONTROL_SHM_SIZE);
   free(data);
 }
 
