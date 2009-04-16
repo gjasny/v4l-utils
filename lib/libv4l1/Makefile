@@ -35,7 +35,7 @@ endif
 
 all: $(TARGETS)
 
-include $(V4L1_OBJS:.o=.d)
+-include $(V4L1_OBJS:.o=.d)
 
 $(V4L1_LIB): $(V4L1_DEPS)
 
@@ -73,12 +73,8 @@ endif
 clean::
 	rm -f *.a *.so* *.o *.d libv4l1.pc log *~ *.orig *.rej
 
-%.d: %.c
-	@set -e; rm -f $@; \
-	gcc -MM $(CPPFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@
-
 %.o: %.c
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+	$(CC) -Wp,-MMD,"$*.d",-MQ,"$@",-MP -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 %.so:
 	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^ $(LIBS_$*)
