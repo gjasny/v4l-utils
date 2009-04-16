@@ -61,9 +61,10 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x0471, 0x0326, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
   /* Philips SPC210NC */
   { 0x0471, 0x032d, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
-  /* Genius E-M 112 */
-  { 0x093a, 0x2476, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
-/* Second: devices which can benifit from software video processing */
+  /* Genius E-M 112 (also needs processing) */
+  { 0x093a, 0x2476, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED,
+    V4LCONTROL_WANTS_WB },
+/* Second: devices which can benefit from software video processing */
   /* Pac207 based devices */
   { 0x041e, 0x4028, 0,    0, V4LCONTROL_WANTS_WB },
   { 0x093a, 0x2460, 0x1f, 0, V4LCONTROL_WANTS_WB },
