@@ -72,6 +72,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x2001, 0xf115, 0,    0, V4LCONTROL_WANTS_WB },
   /* Pac7302 based devices */
   { 0x093a, 0x2620, 0x0f, V4LCONTROL_ROTATED_90_JPEG, V4LCONTROL_WANTS_WB },
+  /* sq905 devices */
+  { 0x2770, 0x9120, 0,    0, V4LCONTROL_WANTS_WB },
 };
 
 static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
