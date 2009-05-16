@@ -292,7 +292,10 @@ int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
 {
   int i;
   struct v4l2_queryctrl *ctrl = arg;
+  int retval;
+  __u32 orig_id=ctrl->id;
 
+  /* if we have an exact match return it */
   for (i = 0; i < V4LCONTROL_COUNT; i++)
     if ((data->controls & (1 << i)) &&
 	ctrl->id == fake_controls[i].id) {
@@ -300,7 +303,21 @@ int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
       return 0;
     }
 
-  return syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, arg);
+  /* find out what the kernel driver would respond. */
+  retval = syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, arg);
+
+  /* if any of our controls have an id > orig_id but less than
+     ctrl->id then return that control instead. */
+  if (orig_id & V4L2_CTRL_FLAG_NEXT_CTRL)
+    for (i = 0; i < V4LCONTROL_COUNT; i++)
+      if ((data->controls & (1 << i)) &&
+	  (fake_controls[i].id > (orig_id & ~V4L2_CTRL_FLAG_NEXT_CTRL)) &&
+	  (fake_controls[i].id <= ctrl->id)) {
+	memcpy(ctrl, &fake_controls[i], sizeof(struct v4l2_queryctrl));
+	retval = 0;
+      }
+
+  return retval;
 }
 
 int v4lcontrol_vidioc_g_ctrl(struct v4lcontrol_data *data, void *arg)
