@@ -56,24 +56,28 @@
 static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 /* First: Upside down devices */
   /* Philips SPC200NC */
-  { 0x0471, 0x0325, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
+  { 0x0471, 0x0325, 0, NULL, NULL, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
   /* Philips SPC300NC */
-  { 0x0471, 0x0326, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
+  { 0x0471, 0x0326, 0, NULL, NULL, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
   /* Philips SPC210NC */
-  { 0x0471, 0x032d, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
+  { 0x0471, 0x032d, 0, NULL, NULL, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
   /* Genius E-M 112 (also needs processing) */
-  { 0x093a, 0x2476, 0, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED,
+  { 0x093a, 0x2476, 0, NULL, NULL, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED,
     V4LCONTROL_WANTS_WB },
+  /* Asus N50Vn laptop */
+  { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vn      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0 },
 /* Second: devices which can benefit from software video processing */
   /* Pac207 based devices */
-  { 0x041e, 0x4028, 0,    0, V4LCONTROL_WANTS_WB },
-  { 0x093a, 0x2460, 0x1f, 0, V4LCONTROL_WANTS_WB },
-  { 0x145f, 0x013a, 0,    0, V4LCONTROL_WANTS_WB },
-  { 0x2001, 0xf115, 0,    0, V4LCONTROL_WANTS_WB },
+  { 0x041e, 0x4028, 0,    NULL, NULL, 0, V4LCONTROL_WANTS_WB },
+  { 0x093a, 0x2460, 0x1f, NULL, NULL, 0, V4LCONTROL_WANTS_WB },
+  { 0x145f, 0x013a, 0,    NULL, NULL, 0, V4LCONTROL_WANTS_WB },
+  { 0x2001, 0xf115, 0,    NULL, NULL, 0, V4LCONTROL_WANTS_WB },
   /* Pac7302 based devices */
-  { 0x093a, 0x2620, 0x0f, V4LCONTROL_ROTATED_90_JPEG, V4LCONTROL_WANTS_WB },
+  { 0x093a, 0x2620, 0x0f, NULL, NULL, V4LCONTROL_ROTATED_90_JPEG,
+    V4LCONTROL_WANTS_WB },
   /* sq905 devices */
-  { 0x2770, 0x9120, 0,    0, V4LCONTROL_WANTS_WB },
+  { 0x2770, 0x9120, 0,    NULL, NULL, 0, V4LCONTROL_WANTS_WB },
 };
 
 static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
@@ -83,6 +87,8 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
   char sysfs_name[512];
   unsigned short vendor_id = 0;
   unsigned short product_id = 0;
+  char dmi_board_vendor[512] = "";
+  char dmi_board_name[512]= "";
   int i, minor;
   char c, *s, buf[32];
   struct v4l2_input input;
@@ -161,10 +167,31 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
       return; /* Should never happen */
   }
 
+  /* Get DMI board vendor and name */
+  f = fopen("/sys/devices/virtual/dmi/id/board_vendor", "r");
+  if (f) {
+    s = fgets(dmi_board_vendor, sizeof(dmi_board_vendor), f);
+    if (s)
+      s[strlen(s) - 1] = 0;
+    fclose(f);
+  }
+
+  f = fopen("/sys/devices/virtual/dmi/id/board_name", "r");
+  if (f) {
+    s = fgets(dmi_board_name, sizeof(dmi_board_name), f);
+    if (s)
+      s[strlen(s) - 1] = 0;
+    fclose(f);
+  }
+
   for (i = 0; i < ARRAY_SIZE(v4lcontrol_flags); i++)
     if (v4lcontrol_flags[i].vendor_id == vendor_id &&
 	v4lcontrol_flags[i].product_id ==
-	  (product_id & ~v4lcontrol_flags[i].product_mask)) {
+	  (product_id & ~v4lcontrol_flags[i].product_mask) &&
+	(v4lcontrol_flags[i].dmi_board_vendor == NULL ||
+	 !strcmp(v4lcontrol_flags[i].dmi_board_vendor, dmi_board_vendor)) &&
+	(v4lcontrol_flags[i].dmi_board_name == NULL ||
+	 !strcmp(v4lcontrol_flags[i].dmi_board_name, dmi_board_name))) {
       data->flags |= v4lcontrol_flags[i].flags;
       data->controls = v4lcontrol_flags[i].controls;
       break;

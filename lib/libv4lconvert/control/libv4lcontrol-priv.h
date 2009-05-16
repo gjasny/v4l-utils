@@ -40,6 +40,8 @@ struct v4lcontrol_flags_info {
   unsigned short vendor_id;
   unsigned short product_id;
   unsigned short product_mask;
+  const char *dmi_board_vendor;
+  const char *dmi_board_name;
 /* We could also use the USB manufacturer and product strings some devices have
   const char *manufacturer;
   const char *product; */
