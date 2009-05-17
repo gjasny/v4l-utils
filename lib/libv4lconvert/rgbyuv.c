@@ -409,7 +409,6 @@ void v4lconvert_uyvy_to_yuv420(const unsigned char *src, unsigned char *dest,
   }
 
   /* copy the U and V values */
-  src++;				/* point to V */
   src1 = src + width * 2;		/* next line */
   if (yvu) {
     vdest = dest;
