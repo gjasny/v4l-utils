@@ -5,6 +5,9 @@ libv4l-0.5.98
 * If the card name contains a / replace it with a - in the shm name
 * Only created shared memory segment when we have fake v4l2 controls
 * Add sq905 to the list of devices which benefit from whitebalancing
+* Support V4L2_CTRL_FLAG_NEXT_CTRL for fake controls by Adam Baker
+* Add ability to determine upside down cams based on DMI info
+* Fix a bug in v4lconvert_uyvy_to_yuv420()
 
 libv4l-0.5.97
 -------------
