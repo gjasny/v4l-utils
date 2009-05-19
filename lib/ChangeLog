@@ -8,6 +8,7 @@ libv4l-0.5.98
 * Support V4L2_CTRL_FLAG_NEXT_CTRL for fake controls by Adam Baker
 * Add ability to determine upside down cams based on DMI info
 * Fix a bug in v4lconvert_uyvy_to_yuv420()
+* Add support for separate vflipping and hflipping
 
 libv4l-0.5.97
 -------------

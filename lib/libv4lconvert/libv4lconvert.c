@@ -321,7 +321,7 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
   return 0;
 }
 
-static void v4lconvert_fixup_fmt(struct v4l2_format *fmt)
+void v4lconvert_fixup_fmt(struct v4l2_format *fmt)
 {
   switch (fmt->fmt.pix.pixelformat) {
   case V4L2_PIX_FMT_RGB24:
