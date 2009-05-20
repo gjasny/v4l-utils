@@ -222,37 +222,9 @@ void v4lconvert_rotate90(unsigned char *src, unsigned char *dest,
 }
 
 void v4lconvert_flip(unsigned char *src, unsigned char *dest,
-  struct v4l2_format *fmt, int flags)
+  struct v4l2_format *fmt, int hflip, int vflip)
 {
-  switch (flags & (V4LCONTROL_VFLIPPED|V4LCONTROL_HFLIPPED)) {
-
-  case V4LCONTROL_VFLIPPED:
-    switch (fmt->fmt.pix.pixelformat) {
-      case V4L2_PIX_FMT_RGB24:
-      case V4L2_PIX_FMT_BGR24:
-	v4lconvert_vflip_rgbbgr24(src, dest, fmt);
-	break;
-      case V4L2_PIX_FMT_YUV420:
-      case V4L2_PIX_FMT_YVU420:
-	v4lconvert_vflip_yuv420(src, dest, fmt);
-	break;
-    }
-    break;
-
-  case V4LCONTROL_HFLIPPED:
-    switch (fmt->fmt.pix.pixelformat) {
-      case V4L2_PIX_FMT_RGB24:
-      case V4L2_PIX_FMT_BGR24:
-	v4lconvert_hflip_rgbbgr24(src, dest, fmt);
-	break;
-      case V4L2_PIX_FMT_YUV420:
-      case V4L2_PIX_FMT_YVU420:
-	v4lconvert_hflip_yuv420(src, dest, fmt);
-	break;
-    }
-    break;
-
-  case (V4LCONTROL_VFLIPPED|V4LCONTROL_HFLIPPED):
+  if (vflip && hflip) {
     switch (fmt->fmt.pix.pixelformat) {
       case V4L2_PIX_FMT_RGB24:
       case V4L2_PIX_FMT_BGR24:
@@ -265,7 +237,28 @@ void v4lconvert_flip(unsigned char *src, unsigned char *dest,
 				    fmt->fmt.pix.height);
 	break;
     }
-    break;
+  } else if (hflip) {
+    switch (fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_hflip_rgbbgr24(src, dest, fmt);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_hflip_yuv420(src, dest, fmt);
+	break;
+    }
+  } else if (vflip) {
+    switch (fmt->fmt.pix.pixelformat) {
+      case V4L2_PIX_FMT_RGB24:
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_vflip_rgbbgr24(src, dest, fmt);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_vflip_yuv420(src, dest, fmt);
+	break;
+    }
   }
 
   /* Our newly written data has no padding */

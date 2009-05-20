@@ -198,12 +198,13 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
     }
 }
 
-struct v4lcontrol_data *v4lcontrol_create(int fd)
+struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 {
   int shm_fd;
   int i, init = 0;
   char *s, shm_name[256];
   struct v4l2_capability cap;
+  struct v4l2_queryctrl ctrl;
 
   struct v4lcontrol_data *data = calloc(1, sizeof(struct v4lcontrol_data));
 
@@ -213,6 +214,17 @@ struct v4lcontrol_data *v4lcontrol_create(int fd)
   data->fd = fd;
 
   v4lcontrol_init_flags(data);
+
+  /* If the device always needs conversion, we can add fake controls at no cost
+     (no cost when not activated by the user that is) */
+  if (always_needs_conversion || v4lcontrol_needs_conversion(data)) {
+    ctrl.id = V4L2_CID_HFLIP;
+    if (syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, &ctrl) == -1)
+      data->controls |= 1 << V4LCONTROL_HFLIP;
+    ctrl.id = V4L2_CID_VFLIP;
+    if (syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, &ctrl) == -1)
+      data->controls |= 1 << V4LCONTROL_VFLIP;
+  }
 
   /* Allow overriding through environment */
   if ((s = getenv("LIBV4LCONTROL_FLAGS")))
@@ -313,6 +325,26 @@ struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
   .default_value = 255,
   .flags = 0
 },
+{
+  .id = V4L2_CID_HFLIP,
+  .type = V4L2_CTRL_TYPE_BOOLEAN,
+  .name =  "Horizontal flip",
+  .minimum = 0,
+  .maximum = 1,
+  .step = 1,
+  .default_value = 0,
+  .flags = 0
+},
+{
+  .id = V4L2_CID_VFLIP,
+  .type = V4L2_CTRL_TYPE_BOOLEAN,
+  .name =  "Vertical flip",
+  .minimum = 0,
+  .maximum = 1,
+  .step = 1,
+  .default_value = 0,
+  .flags = 0
+},
 };
 
 int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
@@ -390,8 +422,14 @@ int v4lcontrol_get_flags(struct v4lcontrol_data *data)
 
 int v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl)
 {
-  if (data->controls & (1 << ctrl))
+  if (data->controls & (1 << ctrl)) {
+    /* Special case for devices with flipped input */
+    if ((ctrl == V4LCONTROL_HFLIP && (data->flags & V4LCONTROL_HFLIPPED)) ||
+	(ctrl == V4LCONTROL_VFLIP && (data->flags & V4LCONTROL_VFLIPPED)))
+      return !data->shm_values[ctrl];
+
     return data->shm_values[ctrl];
+  }
 
   return 0;
 }

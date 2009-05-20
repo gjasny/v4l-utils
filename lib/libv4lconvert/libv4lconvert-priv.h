@@ -96,7 +96,8 @@
 #define V4LCONVERT_IS_SN9C20X            0x02
 
 /* Pixformat flags */
-#define V4LCONVERT_COMPRESSED 0x01
+#define V4LCONVERT_COMPRESSED            0x01 /* Compressed format */
+#define V4LCONVERT_NEEDS_CONVERSION      0x02 /* Apps likely wont know this */
 
 struct v4lconvert_data {
   int fd;
@@ -217,7 +218,7 @@ void v4lconvert_rotate90(unsigned char *src, unsigned char *dest,
   struct v4l2_format *fmt);
 
 void v4lconvert_flip(unsigned char *src, unsigned char *dest,
-  struct v4l2_format *fmt, int flags);
+  struct v4l2_format *fmt, int hflip, int vflip);
 
 void v4lconvert_crop(unsigned char *src, unsigned char *dest,
   const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt);

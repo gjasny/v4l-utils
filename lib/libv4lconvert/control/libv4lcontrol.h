@@ -28,12 +28,18 @@
 #define V4LCONTROL_ROTATED_90_JPEG       0x04
 
 /* Controls */
-enum { V4LCONTROL_WHITEBALANCE, V4LCONTROL_NORMALIZE,
-  V4LCONTROL_NORM_LOW_BOUND, V4LCONTROL_NORM_HIGH_BOUND, V4LCONTROL_COUNT };
+enum {
+  V4LCONTROL_WHITEBALANCE,
+  V4LCONTROL_NORMALIZE,
+  V4LCONTROL_NORM_LOW_BOUND,
+  V4LCONTROL_NORM_HIGH_BOUND,
+  V4LCONTROL_HFLIP,
+  V4LCONTROL_VFLIP,
+  V4LCONTROL_COUNT };
 
 struct v4lcontrol_data;
 
-struct v4lcontrol_data* v4lcontrol_create(int fd);
+struct v4lcontrol_data* v4lcontrol_create(int fd, int always_needs_conversion);
 void v4lcontrol_destroy(struct v4lcontrol_data *data);
 
 /* Functions used by v4lprocessing to get the control state */
