@@ -77,6 +77,7 @@
 #define V4L2_STREAM_CONTROLLED_BY_READ	0x0400
 #define V4L2_SUPPORTS_READ		0x0800
 #define V4L2_IS_UVC			0x1000
+#define V4L2_STREAM_TOUCHED		0x2000
 
 #define V4L2_MMAP_OFFSET_MAGIC      0xABCDEF00u
 
@@ -516,14 +517,6 @@ int v4l2_fd_open(int fd, int v4l2_flags)
 
   V4L2_LOG("open: %d\n", fd);
 
-  if (v4lconvert_supported_dst_fmt_only(convert) &&
-      !v4lconvert_supported_dst_format(fmt.fmt.pix.pixelformat)) {
-    V4L2_LOG("open %d: setting pixelformat to RGB24\n", fd);
-    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
-    v4l2_ioctl(fd, VIDIOC_S_FMT, &fmt);
-    V4L2_LOG("open %d: done setting pixelformat\n", fd);
-  }
-
   return fd;
 }
 
@@ -746,8 +739,27 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
   }
 
 
-  if (stream_needs_locking)
+  if (stream_needs_locking) {
+    /* If this is the first stream related ioctl, and we should only allow
+       libv4lconvert supported destination formats (so that it can do flipping,
+       processing, etc.) and the current destination format is not supported,
+       try setting the format to RGB24 (which is a supported dest. format). */
+    if (!(devices[index].flags & V4L2_STREAM_TOUCHED) &&
+	!(devices[index].flags & V4L2_DISABLE_CONVERSION) &&
+	v4lconvert_supported_dst_fmt_only(devices[index].convert) &&
+	!v4lconvert_supported_dst_format(
+			      devices[index].dest_fmt.fmt.pix.pixelformat)) {
+      struct v4l2_format fmt = devices[index].dest_fmt;
+
+      V4L2_LOG("Setting pixelformat to RGB24 (supported_dst_fmt_only)");
+      devices[index].flags |= V4L2_STREAM_TOUCHED;
+      fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+      v4l2_ioctl(fd, VIDIOC_S_FMT, &fmt);
+      V4L2_LOG("Done setting pixelformat (supported_dst_fmt_only)");
+    }
     pthread_mutex_lock(&devices[index].stream_lock);
+    devices[index].flags |= V4L2_STREAM_TOUCHED;
+  }
 
   converting = v4lconvert_needs_conversion(devices[index].convert,
 			 &devices[index].src_fmt, &devices[index].dest_fmt);
