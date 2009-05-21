@@ -365,12 +365,20 @@ static int v4l2_deactivate_read_stream(int index)
   return 0;
 }
 
+static int v4l2_needs_conversion(int index)
+{
+  if (!(devices[index].flags & V4L2_DISABLE_CONVERSION))
+    return v4lconvert_needs_conversion(devices[index].convert,
+			    &devices[index].src_fmt, &devices[index].dest_fmt);
+
+  return 0;
+}
+
 static int v4l2_buffers_mapped(int index)
 {
   unsigned int i;
 
-  if (!v4lconvert_needs_conversion(devices[index].convert,
-			 &devices[index].src_fmt, &devices[index].dest_fmt)) {
+  if (!v4l2_needs_conversion(index)) {
     /* Normal (no conversion) mode */
     struct v4l2_buffer buf;
 
@@ -660,7 +668,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 {
   void *arg;
   va_list ap;
-  int result, converting, index, saved_err;
+  int result, index, saved_err;
   int is_capture_request = 0, stream_needs_locking = 0;
 
   va_start (ap, request);
@@ -697,7 +705,8 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	is_capture_request = 1;
       break;
     case VIDIOC_TRY_FMT:
-      if (((struct v4l2_format *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+      if (((struct v4l2_format *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE &&
+	  !(devices[index].flags & V4L2_DISABLE_CONVERSION))
 	is_capture_request = 1;
       break;
     case VIDIOC_S_FMT:
@@ -760,9 +769,6 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
     pthread_mutex_lock(&devices[index].stream_lock);
     devices[index].flags |= V4L2_STREAM_TOUCHED;
   }
-
-  converting = v4lconvert_needs_conversion(devices[index].convert,
-			 &devices[index].src_fmt, &devices[index].dest_fmt);
 
   switch (request) {
     case VIDIOC_QUERYCTRL:
@@ -943,7 +949,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	/* Do a real query even when converting to let the driver fill in
 	   things like buf->field */
 	result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_QUERYBUF, buf);
-	if (result || !converting)
+	if (result || !v4l2_needs_conversion(index))
 	  break;
 
 	buf->m.offset = V4L2_MMAP_OFFSET_MAGIC | buf->index;
@@ -961,7 +967,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	  break;
 
       /* With some drivers the buffers must be mapped before queuing */
-      if (converting)
+      if (v4l2_needs_conversion(index))
 	if ((result = v4l2_map_buffers(index)))
 	  break;
 
@@ -976,7 +982,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 	  if ((result = v4l2_deactivate_read_stream(index)))
 	    break;
 
-	if (!converting) {
+	if (!v4l2_needs_conversion(index)) {
 	  result = syscall(SYS_ioctl, devices[index].fd, VIDIOC_DQBUF, buf);
 	  if (result) {
 	    int saved_err = errno;
@@ -1063,8 +1069,7 @@ ssize_t v4l2_read (int fd, void* dest, size_t n)
   /* When not converting and the device supports read let the kernel handle
      it */
   if ((devices[index].flags & V4L2_SUPPORTS_READ) &&
-      !v4lconvert_needs_conversion(devices[index].convert,
-		   &devices[index].src_fmt, &devices[index].dest_fmt)) {
+      !v4l2_needs_conversion(index)) {
     result = syscall(SYS_read, fd, dest, n);
     goto leave;
   }
@@ -1123,8 +1128,7 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
   buffer_index = offset & 0xff;
   if (buffer_index >= devices[index].no_frames ||
       /* Got magic offset and not converting ?? */
-      !v4lconvert_needs_conversion(devices[index].convert,
-		   &devices[index].src_fmt, &devices[index].dest_fmt)) {
+      !v4l2_needs_conversion(index)) {
     errno = EINVAL;
     result = MAP_FAILED;
     goto leave;
