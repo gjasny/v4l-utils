@@ -369,8 +369,8 @@ static int v4l2_buffers_mapped(int index)
 {
   unsigned int i;
 
-  if (devices[index].src_fmt.fmt.pix.pixelformat ==
-      devices[index].dest_fmt.fmt.pix.pixelformat) {
+  if (!v4lconvert_needs_conversion(devices[index].convert,
+			 &devices[index].src_fmt, &devices[index].dest_fmt)) {
     /* Normal (no conversion) mode */
     struct v4l2_buffer buf;
 
@@ -559,7 +559,6 @@ int v4l2_close(int fd)
 
   /* Free resources */
   v4l2_unmap_buffers(index);
-  v4lconvert_destroy(devices[index].convert);
   if (devices[index].convert_mmap_buf != MAP_FAILED) {
     if (v4l2_buffers_mapped(index))
       V4L2_LOG_WARN("v4l2 mmap buffers still mapped on close()\n");
@@ -568,6 +567,7 @@ int v4l2_close(int fd)
 	      devices[index].no_frames * V4L2_FRAME_BUF_SIZE);
     devices[index].convert_mmap_buf = MAP_FAILED;
   }
+  v4lconvert_destroy(devices[index].convert);
 
   /* Remove the fd from our list of managed fds before closing it, because as
      soon as we've done the actual close the fd maybe returned by an open in
