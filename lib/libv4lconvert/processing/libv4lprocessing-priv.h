@@ -23,67 +23,31 @@
 
 #include "../control/libv4lcontrol.h"
 
-#define V4L2PROCESSING_PROCESS_NONE                              0x00
-#define V4L2PROCESSING_PROCESS_NORMALIZE                         0x01
-#define V4L2PROCESSING_PROCESS_WHITEBALANCE                      0x02
-#define V4L2PROCESSING_PROCESS_NORMALIZE_WHITEBALANCE            0x03
-#define V4L2PROCESSING_PROCESS_RGB_NORMALIZE                     0x01
-#define V4L2PROCESSING_PROCESS_RGB_WHITEBALANCE                  0x02
-#define V4L2PROCESSING_PROCESS_RGB_NORMALIZE_WHITEBALANCE        0x03
-#define V4L2PROCESSING_PROCESS_BAYER_NORMALIZE                   0x11
-#define V4L2PROCESSING_PROCESS_BAYER_WHITEBALANCE                0x12
-#define V4L2PROCESSING_PROCESS_BAYER_NORMALIZE_WHITEBALANCE      0x13
-
 #define V4L2PROCESSING_UPDATE_RATE                               10
 
 struct v4lprocessing_data {
   struct v4lcontrol_data *control;
   int do_process;
-  /* Provides the current type of processing */
-  int process;
-  int norm_low_bound;
-  int norm_high_bound;
+  /* True if any of the lookup tables does not contain
+     linear 0-255 */
+  int lookup_table_active;
   /* Counts the number of processed frames until a
      V4L2PROCESSING_UPDATE_RATE overflow happens */
-  int processing_data_update;
-  /* Multiplication factors and offsets from the analyse functions */
-  int comp1;
-  int comp2;
-  int comp3;
-  int comp4;
-  int offset1;
-  int offset2;
+  int lookup_table_update_counter;
+  /* RGB/BGR lookup tables */
+  unsigned char comp1[256];
+  unsigned char green[256];
+  unsigned char comp2[256];
 };
 
-/* Processing Bayer */
-void bayer_normalize_analyse(unsigned char *src_buffer, int width, int height,
-  struct v4lprocessing_data *data);
-void bayer_whitebalance_analyse(unsigned char *src_buffer, int width,
-  int height, unsigned int pix_fmt,
-  struct v4lprocessing_data *data);
-void bayer_normalize_whitebalance_analyse(unsigned char *src_buffer,
-  int width, int height, unsigned int pix_fmt,
-  struct v4lprocessing_data *data);
-void bayer_normalize(unsigned char *src_buffer, int width, int height,
-  struct v4lprocessing_data *data);
-void bayer_whitebalance(unsigned char *src_buffer, int width, int height,
-  unsigned int pix_fmt, struct v4lprocessing_data *data);
-void bayer_normalize_whitebalance(unsigned char *src_buffer, int width,
-  int height, unsigned int pix_fmt,
-  struct v4lprocessing_data *data);
+struct v4lprocessing_filter {
+  /* Returns 1 if the filter is active */
+  int (*active)(struct v4lprocessing_data *data);
+  /* Returns 1 if any of the lookup tables was changed */
+  int (*calculate_lookup_tables)(struct v4lprocessing_data *data,
+    unsigned char *buf, const struct v4l2_format *fmt);
+};
 
-/* Processing RGB */
-void rgb_normalize_analyse(unsigned char *src_buffer, int width, int height,
-  struct v4lprocessing_data *data);
-void rgb_whitebalance_analyse(unsigned char *src_buffer, int width, int height,
-  struct v4lprocessing_data *data);
-void rgb_normalize_whitebalance_analyse(unsigned char *src_buffer,
-  int width, int height, struct v4lprocessing_data *data);
-void rgb_normalize(unsigned char *src_buffer, int width, int height,
-  struct v4lprocessing_data *data);
-void rgb_whitebalance(unsigned char *src_buffer, int width, int height,
-  struct v4lprocessing_data *data);
-void rgb_normalize_whitebalance(unsigned char *src_buffer, int width,
-  int height, struct v4lprocessing_data *data);
+extern struct v4lprocessing_filter whitebalance_filter;
 
 #endif

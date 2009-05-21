@@ -24,16 +24,12 @@
 
 #define V4LCONTROL_SHM_SIZE 4096
 
-#define V4LCONTROL_WANTS_WB    (1 << V4LCONTROL_WHITEBALANCE)
-#define V4LCONTROL_WANTS_NORM  ((1 << V4LCONTROL_NORMALIZE) | \
-				(1 << V4LCONTROL_NORM_LOW_BOUND) | \
-				(1 << V4LCONTROL_NORM_HIGH_BOUND))
-
 struct v4lcontrol_data {
   int fd;                   /* Device fd */
   int flags;                /* Special flags for this device */
   int controls;             /* Which controls to use for this device */
   unsigned int *shm_values; /* shared memory control value store */
+  unsigned int old_values[V4LCONTROL_COUNT]; /* for controls_changed() */
 };
 
 struct v4lcontrol_flags_info {
@@ -46,7 +42,6 @@ struct v4lcontrol_flags_info {
   const char *manufacturer;
   const char *product; */
   int flags;
-  int controls;
 };
 
 #endif

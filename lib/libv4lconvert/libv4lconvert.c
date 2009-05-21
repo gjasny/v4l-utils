@@ -27,7 +27,6 @@
 #include "libv4lconvert-priv.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
-#define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
 /* Note for proper functioning of v4lconvert_enum_fmt the first entries in
   supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
@@ -706,6 +705,8 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
       }
       /* Do processing on the tmp buffer, because doing it on bayer data is
 	 cheaper, and bayer == rgb and our dest_fmt may be yuv */
+      tmpfmt.fmt.pix.bytesperline = width;
+      tmpfmt.fmt.pix.sizeimage = width * height;
       v4lprocessing_processing(data->processing, tmpbuf, &tmpfmt);
       /* Deliberate fall through to raw bayer fmt code! */
       src_pix_fmt = tmpfmt.fmt.pix.pixelformat;

@@ -10,6 +10,9 @@ libv4l-0.5.98
 * Fix a bug in v4lconvert_uyvy_to_yuv420()
 * Add support for separate vflipping and hflipping
 * Add fake controls controlling the software h- and v-flipping
+* Rewrite video processing code to make it easier to add more video filters
+  (and with little extra processing cost). As part of this the normalize
+  filter has been removed as it wasn't functioning satisfactory anyways
 
 libv4l-0.5.97
 -------------

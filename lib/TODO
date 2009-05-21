@@ -19,7 +19,4 @@
 
 -add software auto exposure (for spca561 cams)
 
--change video processing to use a per component lookup table for easy combining of
- of different effects in 1 pass
-
 -add gamma correction video processing

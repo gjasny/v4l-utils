@@ -28,6 +28,10 @@
 #include "libv4lprocessing-priv.h"
 #include "../libv4lconvert-priv.h" /* for PIX_FMT defines */
 
+static struct v4lprocessing_filter *filters[] = {
+  &whitebalance_filter,
+};
+
 struct v4lprocessing_data *v4lprocessing_create(struct v4lcontrol_data* control)
 {
   struct v4lprocessing_data *data =
@@ -46,136 +50,130 @@ void v4lprocessing_destroy(struct v4lprocessing_data *data)
   free(data);
 }
 
-static int v4lprocessing_get_process(struct v4lprocessing_data *data,
-  unsigned int pix_fmt)
-{
-  int process = V4L2PROCESSING_PROCESS_NONE;
-
-  switch(pix_fmt) {
-    case V4L2_PIX_FMT_SBGGR8:
-    case V4L2_PIX_FMT_SGBRG8:
-    case V4L2_PIX_FMT_SGRBG8:
-    case V4L2_PIX_FMT_SRGGB8:
-      if (v4lcontrol_get_ctrl(data->control, V4LCONTROL_NORMALIZE)) {
-	process |= V4L2PROCESSING_PROCESS_BAYER_NORMALIZE;
-      }
-      if (v4lcontrol_get_ctrl(data->control, V4LCONTROL_WHITEBALANCE)) {
-	process |= V4L2PROCESSING_PROCESS_BAYER_WHITEBALANCE;
-      }
-      break;
-    case V4L2_PIX_FMT_RGB24:
-    case V4L2_PIX_FMT_BGR24:
-      if (v4lcontrol_get_ctrl(data->control, V4LCONTROL_NORMALIZE)) {
-	process |= V4L2PROCESSING_PROCESS_RGB_NORMALIZE;
-      }
-      if (v4lcontrol_get_ctrl(data->control, V4LCONTROL_WHITEBALANCE)) {
-	process |= V4L2PROCESSING_PROCESS_RGB_WHITEBALANCE;
-      }
-      break;
-  }
-
-  return process;
-}
-
-static void v4lprocessing_update_processing_data(
-  struct v4lprocessing_data *data,
-  unsigned int pix_fmt, unsigned char *buf, unsigned int width,
-  unsigned int height)
-{
-  switch (data->process) {
-    case V4L2PROCESSING_PROCESS_BAYER_NORMALIZE:
-      bayer_normalize_analyse(buf, width, height, data);
-      break;
-
-    case V4L2PROCESSING_PROCESS_BAYER_WHITEBALANCE:
-      bayer_whitebalance_analyse(buf, width, height, pix_fmt, data);
-      break;
-
-    case V4L2PROCESSING_PROCESS_BAYER_NORMALIZE_WHITEBALANCE:
-      bayer_normalize_whitebalance_analyse(buf, width, height, pix_fmt, data);
-      break;
-
-    case V4L2PROCESSING_PROCESS_RGB_NORMALIZE:
-      rgb_normalize_analyse(buf, width, height, data);
-      break;
-
-    case V4L2PROCESSING_PROCESS_RGB_WHITEBALANCE:
-      rgb_whitebalance_analyse(buf, width, height, data);
-      break;
-
-    case V4L2PROCESSING_PROCESS_RGB_NORMALIZE_WHITEBALANCE:
-      rgb_normalize_whitebalance_analyse(buf, width, height, data);
-      break;
-  }
-}
-
 int v4lprocessing_pre_processing(struct v4lprocessing_data *data)
 {
-  data->do_process =
-    v4lcontrol_get_ctrl(data->control, V4LCONTROL_WHITEBALANCE) ||
-    v4lcontrol_get_ctrl(data->control, V4LCONTROL_NORMALIZE);
+  int i;
 
-  if (!data->do_process)
-    data->process = V4L2PROCESSING_PROCESS_NONE;
+  data->do_process = 0;
+  for (i = 0; i < ARRAY_SIZE(filters); i++) {
+    if (filters[i]->active(data))
+      data->do_process = 1;
+  }
 
   return data->do_process;
+}
+
+static void v4lprocessing_update_lookup_tables(struct v4lprocessing_data *data,
+  unsigned char *buf, const struct v4l2_format *fmt)
+{
+  int i;
+
+  for (i = 0; i < 256; i++) {
+    data->comp1[i] = i;
+    data->green[i] = i;
+    data->comp2[i] = i;
+  }
+
+  data->lookup_table_active = 0;
+  for (i = 0; i < ARRAY_SIZE(filters); i++) {
+    if (filters[i]->active(data)) {
+      if (filters[i]->calculate_lookup_tables(data, buf, fmt))
+	data->lookup_table_active = 1;
+    }
+  }
+}
+
+static void v4lprocessing_do_processing(struct v4lprocessing_data *data,
+  unsigned char *buf, const struct v4l2_format *fmt)
+{
+  int x, y;
+
+  switch (fmt->fmt.pix.pixelformat) {
+    case V4L2_PIX_FMT_SGBRG8:
+    case V4L2_PIX_FMT_SGRBG8: /* Bayer patterns starting with green */
+      for (y = 0; y < fmt->fmt.pix.height / 2; y++) {
+	for (x = 0; x < fmt->fmt.pix.width / 2; x++) {
+	  *buf = data->green[*buf];
+	  buf++;
+	  *buf = data->comp1[*buf];
+	  buf++;
+	}
+	buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width;
+	for (x = 0; x < fmt->fmt.pix.width / 2; x++) {
+	  *buf = data->comp2[*buf];
+	  buf++;
+	  *buf = data->green[*buf];
+	  buf++;
+	}
+	buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width;
+      }
+      break;
+
+    case V4L2_PIX_FMT_SBGGR8:
+    case V4L2_PIX_FMT_SRGGB8: /* Bayer patterns *NOT* starting with green */
+      for (y = 0; y < fmt->fmt.pix.height / 2; y++) {
+	for (x = 0; x < fmt->fmt.pix.width / 2; x++) {
+	  *buf = data->comp1[*buf];
+	  buf++;
+	  *buf = data->green[*buf];
+	  buf++;
+	}
+	buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width;
+	for (x = 0; x < fmt->fmt.pix.width / 2; x++) {
+	  *buf = data->green[*buf];
+	  buf++;
+	  *buf = data->comp2[*buf];
+	  buf++;
+	}
+	buf += fmt->fmt.pix.bytesperline - fmt->fmt.pix.width;
+      }
+      break;
+
+    case V4L2_PIX_FMT_RGB24:
+    case V4L2_PIX_FMT_BGR24:
+      for (y = 0; y < fmt->fmt.pix.height; y++) {
+	for (x = 0; x < fmt->fmt.pix.width; x++) {
+	  *buf = data->comp1[*buf];
+	  buf++;
+	  *buf = data->green[*buf];
+	  buf++;
+	  *buf = data->comp2[*buf];
+	  buf++;
+	}
+	buf += fmt->fmt.pix.bytesperline - 3 * fmt->fmt.pix.width;
+      }
+      break;
+  }
 }
 
 void v4lprocessing_processing(struct v4lprocessing_data *data,
   unsigned char *buf, const struct v4l2_format *fmt)
 {
-  int low_bound, high_bound, process;
-
   if (!data->do_process)
     return;
 
-  process = v4lprocessing_get_process(data, fmt->fmt.pix.pixelformat);
-  if (process == V4L2PROCESSING_PROCESS_NONE) {
-    return;
+  /* Do we support the current pixformat? */
+  switch (fmt->fmt.pix.pixelformat) {
+    case V4L2_PIX_FMT_SGBRG8:
+    case V4L2_PIX_FMT_SGRBG8:
+    case V4L2_PIX_FMT_SBGGR8:
+    case V4L2_PIX_FMT_SRGGB8:
+    case V4L2_PIX_FMT_RGB24:
+    case V4L2_PIX_FMT_BGR24:
+      break;
+    default:
+      return; /* Non supported pix format */
   }
 
-  low_bound = v4lcontrol_get_ctrl(data->control, V4LCONTROL_NORM_LOW_BOUND);
-  high_bound = v4lcontrol_get_ctrl(data->control, V4LCONTROL_NORM_HIGH_BOUND);
-
-  if (process != data->process || low_bound != data->norm_low_bound ||
-      high_bound != data->norm_high_bound) {
-    data->process = process;
-    data->norm_low_bound  = low_bound;
-    data->norm_high_bound = high_bound;
-    data->processing_data_update = V4L2PROCESSING_UPDATE_RATE;
-  }
-
-  if (data->processing_data_update == V4L2PROCESSING_UPDATE_RATE) {
-    data->processing_data_update = 0;
-    v4lprocessing_update_processing_data(data, fmt->fmt.pix.pixelformat, buf, fmt->fmt.pix.width, fmt->fmt.pix.height);
+  if (v4lcontrol_controls_changed(data->control) ||
+      data->lookup_table_update_counter == V4L2PROCESSING_UPDATE_RATE) {
+    v4lprocessing_update_lookup_tables(data, buf, fmt);
+    data->lookup_table_update_counter = 0;
   } else
-    data->processing_data_update++;
+    data->lookup_table_update_counter++;
 
-  switch (data->process) {
-    case V4L2PROCESSING_PROCESS_BAYER_NORMALIZE:
-      bayer_normalize(buf, fmt->fmt.pix.width, fmt->fmt.pix.height, data);
-      break;
+  if (data->lookup_table_active)
+    v4lprocessing_do_processing(data, buf, fmt);
 
-    case V4L2PROCESSING_PROCESS_BAYER_WHITEBALANCE:
-      bayer_whitebalance(buf, fmt->fmt.pix.width, fmt->fmt.pix.height, fmt->fmt.pix.pixelformat, data);
-      break;
-
-    case V4L2PROCESSING_PROCESS_BAYER_NORMALIZE_WHITEBALANCE:
-      bayer_normalize_whitebalance(buf, fmt->fmt.pix.width, fmt->fmt.pix.height, fmt->fmt.pix.pixelformat,
-	data);
-      break;
-
-    case V4L2PROCESSING_PROCESS_RGB_NORMALIZE:
-      rgb_normalize(buf, fmt->fmt.pix.width, fmt->fmt.pix.height, data);
-      break;
-
-    case V4L2PROCESSING_PROCESS_RGB_WHITEBALANCE:
-      rgb_whitebalance(buf, fmt->fmt.pix.width, fmt->fmt.pix.height, data);
-      break;
-
-    case V4L2PROCESSING_PROCESS_RGB_NORMALIZE_WHITEBALANCE:
-      rgb_normalize_whitebalance(buf, fmt->fmt.pix.width, fmt->fmt.pix.height, data);
-      break;
-  }
   data->do_process = 0;
 }
