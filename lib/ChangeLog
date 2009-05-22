@@ -11,6 +11,8 @@ libv4l-0.5.98
   (and with little extra processing cost). As part of this the normalize
   filter has been removed as it wasn't functioning satisfactory anyways
 * Various small bugfixes and tweaks
+* Add the capability to provide 320x240 to apps if the cam can only
+  do 320x232 (some zc3xx cams) by adding black borders
 
 libv4l-0.5.97
 -------------

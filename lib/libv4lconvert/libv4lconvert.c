@@ -373,7 +373,8 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
 
   /* In case of a non exact resolution match, see if this is a well known
      resolution some apps are hardcoded too and try to give the app what it
-     asked for by cropping a slightly larger resolution */
+     asked for by cropping a slightly larger resolution or adding a small
+     black border to a slightly smaller resolution */
   if (try_dest.fmt.pix.width != desired_width ||
       try_dest.fmt.pix.height != desired_height) {
     for (i = 0; i < ARRAY_SIZE(v4lconvert_crop_res); i++) {
@@ -387,13 +388,20 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
 	try2_dest.fmt.pix.height = desired_height * 124 / 100;
 	result = v4lconvert_do_try_format(data, &try2_dest, &try2_src);
 	if (result == 0 &&
-	    ((try2_dest.fmt.pix.width >= desired_width &&
+	    (/* Add a small black border of max 16 pixels */
+	     (try2_dest.fmt.pix.width >= desired_width - 16 &&
+	      try2_dest.fmt.pix.width <= desired_width &&
+	      try2_dest.fmt.pix.height >= desired_height - 16 &&
+	      try2_dest.fmt.pix.height <= desired_height) ||
+	     /* Standard cropping to max 80% of actual width / height */
+	     (try2_dest.fmt.pix.width >= desired_width &&
 	      try2_dest.fmt.pix.width <= desired_width * 5 / 4 &&
 	      try2_dest.fmt.pix.height >= desired_height &&
 	      try2_dest.fmt.pix.height <= desired_height * 5 / 4) ||
+	     /* Downscale 2x + cropping to max 80% of actual width / height */
 	     (try2_dest.fmt.pix.width >= desired_width * 2 &&
 	      try2_dest.fmt.pix.width <= desired_width * 5 / 2 &&
-	      try2_dest.fmt.pix.height >= desired_height &&
+	      try2_dest.fmt.pix.height >= desired_height * 2 &&
 	      try2_dest.fmt.pix.height <= desired_height * 5 / 2))) {
 	  /* Success! */
 	  try2_dest.fmt.pix.width = desired_width;

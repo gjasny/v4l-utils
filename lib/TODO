@@ -9,13 +9,9 @@
 
 -take the possibility of pitch != width into account everywhere
 
-
 -make updating of parameters happen based on time elapsed rather then
  frames
 
--add reverse cropping (adding black borders) to get from 320x232 ->
- 320x240, for zc3xx webcams with a broken (last row of jpeg blocks missing)
- 320x240 mode
 
 -add software auto exposure (for spca561 cams)
 
