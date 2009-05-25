@@ -24,9 +24,12 @@
 
 #define V4LCONTROL_SHM_SIZE 4096
 
+#define V4LCONTROL_SUPPORTS_NEXT_CTRL 0x01
+
 struct v4lcontrol_data {
   int fd;                   /* Device fd */
-  int flags;                /* Special flags for this device */
+  int flags;                /* Flags for this device */
+  int priv_flags;           /* Internal use only flags */
   int controls;             /* Which controls to use for this device */
   unsigned int *shm_values; /* shared memory control value store */
   unsigned int old_values[V4LCONTROL_COUNT]; /* for controls_changed() */

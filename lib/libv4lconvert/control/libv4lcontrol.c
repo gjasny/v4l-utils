@@ -223,6 +223,10 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
   if ((s = getenv("LIBV4LCONTROL_FLAGS")))
     data->flags = strtol(s, NULL, 0);
 
+  ctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+  if (syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, &ctrl) == 0)
+    data->priv_flags |= V4LCONTROL_SUPPORTS_NEXT_CTRL;
+
   /* If the device always needs conversion, we can add fake controls at no cost
      (no cost when not activated by the user that is) */
   if (always_needs_conversion || v4lcontrol_needs_conversion(data)) {
@@ -350,6 +354,17 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 },
 };
 
+static void v4lcontrol_copy_queryctrl(struct v4lcontrol_data *data,
+  struct v4l2_queryctrl *ctrl, int i)
+{
+  memcpy(ctrl, &fake_controls[i], sizeof(struct v4l2_queryctrl));
+
+  /* Hmm, not pretty */
+  if (ctrl->id == V4L2_CID_AUTO_WHITE_BALANCE &&
+      (data->flags & V4LCONTROL_WANTS_WB))
+    ctrl->default_value = 1;
+}
+
 int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
 {
   int i;
@@ -361,28 +376,32 @@ int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
   for (i = 0; i < V4LCONTROL_COUNT; i++)
     if ((data->controls & (1 << i)) &&
 	ctrl->id == fake_controls[i].id) {
-      memcpy(ctrl, &fake_controls[i], sizeof(struct v4l2_queryctrl));
-      /* Hmm, not pretty */
-      if (ctrl->id == V4L2_CID_AUTO_WHITE_BALANCE &&
-	  (data->flags & V4LCONTROL_WANTS_WB))
-	ctrl->default_value = 1;
-
+      v4lcontrol_copy_queryctrl(data, ctrl, i);
       return 0;
     }
 
   /* find out what the kernel driver would respond. */
   retval = syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, arg);
 
-  /* if any of our controls have an id > orig_id but less than
-     ctrl->id then return that control instead. */
-  if (orig_id & V4L2_CTRL_FLAG_NEXT_CTRL)
+  if ((data->priv_flags & V4LCONTROL_SUPPORTS_NEXT_CTRL) &&
+      (orig_id & V4L2_CTRL_FLAG_NEXT_CTRL)) {
+    /* If the hardware has no more controls check if we still have any
+       fake controls with a higher id then the hardware's highest */
+    if (retval)
+      ctrl->id = V4L2_CTRL_FLAG_NEXT_CTRL;
+
+    /* If any of our controls have an id > orig_id but less than
+       ctrl->id then return that control instead. Note we do not
+       break when we have a match, but keep iterating, so that
+       we end up with the fake ctrl with the lowest CID > orig_id. */
     for (i = 0; i < V4LCONTROL_COUNT; i++)
       if ((data->controls & (1 << i)) &&
 	  (fake_controls[i].id > (orig_id & ~V4L2_CTRL_FLAG_NEXT_CTRL)) &&
 	  (fake_controls[i].id <= ctrl->id)) {
-	memcpy(ctrl, &fake_controls[i], sizeof(struct v4l2_queryctrl));
+	v4lcontrol_copy_queryctrl(data, ctrl, i);
 	retval = 0;
       }
+  }
 
   return retval;
 }
