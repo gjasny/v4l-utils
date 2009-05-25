@@ -127,6 +127,9 @@ struct v4lconvert_data *v4lconvert_create(int fd)
       data->flags |= V4LCONVERT_IS_UVC;
     else if (!strcmp((char *)cap.driver, "sn9c20x"))
       data->flags |= V4LCONVERT_IS_SN9C20X;
+
+    if ((cap.capabilities & 0xff) & ~V4L2_CAP_VIDEO_CAPTURE)
+      always_needs_conversion = 0;
   }
 
   data->control = v4lcontrol_create(fd, always_needs_conversion);
@@ -136,7 +139,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
   }
   data->control_flags = v4lcontrol_get_flags(data->control);
 
-  data->processing = v4lprocessing_create(data->control);
+  data->processing = v4lprocessing_create(fd, data->control);
   if (!data->processing) {
     v4lcontrol_destroy(data->control);
     free(data);

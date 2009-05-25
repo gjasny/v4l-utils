@@ -67,7 +67,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   /* Asus N50Vn laptop */
   { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vn      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
-/* Second: devices which should use sw whitebalance by default */
+/* Second: devices which should use some software processing by default */
   /* Pac207 based devices */
   { 0x041e, 0x4028, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
   { 0x093a, 0x2460, 0x1f, NULL, NULL, V4LCONTROL_WANTS_WB },
@@ -78,6 +78,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_ROTATED_90_JPEG|V4LCONTROL_WANTS_WB },
   /* sq905 devices */
   { 0x2770, 0x9120, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
+  /* spca561 revison 12a devices */
+  { 0x041e, 0x403b, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
+  { 0x046d, 0x0928, 7,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
 };
 
 static const struct v4l2_queryctrl fake_controls[];
@@ -223,12 +226,16 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
   /* If the device always needs conversion, we can add fake controls at no cost
      (no cost when not activated by the user that is) */
   if (always_needs_conversion || v4lcontrol_needs_conversion(data)) {
-    for (i = 0; i < V4LCONTROL_COUNT; i++) {
+    for (i = 0; i < V4LCONTROL_AUTO_ENABLE_COUNT; i++) {
       ctrl.id = fake_controls[i].id;
       if (syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, &ctrl) == -1)
 	data->controls |= 1 << i;
     }
   }
+
+  if (data->flags & V4LCONTROL_WANTS_AUTOGAIN)
+    data->controls |= 1 << V4LCONTROL_AUTOGAIN |
+		      1 << V4LCONTROL_AUTOGAIN_TARGET;
 
   /* Allow overriding through environment */
   if ((s = getenv("LIBV4LCONTROL_CONTROLS")))
@@ -266,6 +273,10 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
   if (init) {
     /* Initialize the new shm object we created */
     memset(data->shm_values, 0, sizeof(V4LCONTROL_SHM_SIZE));
+
+    for (i = 0; i < V4LCONTROL_COUNT; i++)
+      data->shm_values[i] = fake_controls[i].default_value;
+
     if (data->flags & V4LCONTROL_WANTS_WB)
       data->shm_values[V4LCONTROL_WHITEBALANCE] = 1;
   }
@@ -314,6 +325,27 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
   .maximum = 1,
   .step = 1,
   .default_value = 0,
+  .flags = 0
+},
+{}, /* Dummy place holder for V4LCONTROL_AUTO_ENABLE_COUNT */
+{
+  .id = V4L2_CID_AUTOGAIN,
+  .type = V4L2_CTRL_TYPE_BOOLEAN,
+  .name =  "Auto Gain (software)",
+  .minimum = 0,
+  .maximum = 1,
+  .step = 1,
+  .default_value = 1,
+  .flags = 0
+},
+{
+  .id = V4L2_CTRL_CLASS_USER + 0x2000, /* FIXME */
+  .type = V4L2_CTRL_TYPE_INTEGER,
+  .name =  "Auto Gain target",
+  .minimum = 0,
+  .maximum = 255,
+  .step = 1,
+  .default_value = 100,
   .flags = 0
 },
 };

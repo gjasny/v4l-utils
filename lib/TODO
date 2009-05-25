@@ -13,6 +13,6 @@
  frames
 
 
--add software auto exposure (for spca561 cams)
-
 -add gamma correction video processing
+
+-get standardized CID for AUTOGAIN_TARGET upstream and switch to that

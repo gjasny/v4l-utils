@@ -12,7 +12,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
@@ -27,13 +27,22 @@
 #define V4LCONTROL_VFLIPPED              0x02
 #define V4LCONTROL_ROTATED_90_JPEG       0x04
 #define V4LCONTROL_WANTS_WB              0x08
+#define V4LCONTROL_WANTS_AUTOGAIN        0x10
+
+/* Masks */
+#define V4LCONTROL_WANTS_WB_AUTOGAIN     (V4LCONTROL_WANTS_WB | V4LCONTROL_WANTS_AUTOGAIN)
 
 /* Controls */
 enum {
   V4LCONTROL_WHITEBALANCE,
   V4LCONTROL_HFLIP,
   V4LCONTROL_VFLIP,
-  V4LCONTROL_COUNT };
+  /* All fake controls above here are auto enabled when not present in hw */
+  V4LCONTROL_AUTO_ENABLE_COUNT,
+  V4LCONTROL_AUTOGAIN,
+  V4LCONTROL_AUTOGAIN_TARGET,
+  V4LCONTROL_COUNT
+  };
 
 struct v4lcontrol_data;
 

@@ -13,6 +13,7 @@ libv4l-0.5.98
 * Various small bugfixes and tweaks
 * Add the capability to provide 320x240 to apps if the cam can only
   do 320x232 (some zc3xx cams) by adding black borders
+* Add software auto gain / exposure
 
 libv4l-0.5.97
 -------------

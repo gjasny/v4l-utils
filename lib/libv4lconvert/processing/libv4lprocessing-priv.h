@@ -27,6 +27,7 @@
 
 struct v4lprocessing_data {
   struct v4lcontrol_data *control;
+  int fd;
   int do_process;
   /* True if any of the lookup tables does not contain
      linear 0-255 */
@@ -49,5 +50,6 @@ struct v4lprocessing_filter {
 };
 
 extern struct v4lprocessing_filter whitebalance_filter;
+extern struct v4lprocessing_filter autogain_filter;
 
 #endif

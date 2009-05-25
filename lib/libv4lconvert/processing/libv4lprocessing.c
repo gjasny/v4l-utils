@@ -30,9 +30,10 @@
 
 static struct v4lprocessing_filter *filters[] = {
   &whitebalance_filter,
+  &autogain_filter,
 };
 
-struct v4lprocessing_data *v4lprocessing_create(struct v4lcontrol_data* control)
+struct v4lprocessing_data *v4lprocessing_create(int fd, struct v4lcontrol_data* control)
 {
   struct v4lprocessing_data *data =
     calloc(1, sizeof(struct v4lprocessing_data));
@@ -40,6 +41,7 @@ struct v4lprocessing_data *v4lprocessing_create(struct v4lcontrol_data* control)
   if (!data)
     return NULL;
 
+  data->fd = fd;
   data->control = control;
 
   return data;
