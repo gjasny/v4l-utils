@@ -92,7 +92,7 @@ LIBV4L_PUBLIC int open (const char *file, int oflag, ...)
 
   /* Try to Register with libv4l2 (in case of failure pass the fd to the
      application as is) */
-  v4l2_fd_open(fd, V4L2_ENABLE_ENUM_FMT_EMULATION);
+  v4l2_fd_open(fd, 0);
 
   return fd;
 }

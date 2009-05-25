@@ -41,17 +41,11 @@ LIBV4L_PUBLIC extern FILE *v4l2_log_file;
    format which is not supported by the cam, but is supported by libv4lconvert,
    then the try_fmt / set_fmt will succeed as if the cam supports the format
    and on dqbuf / read the data will be converted for you and returned in
-   the request format.
+   the request format. enum_fmt will also report support for the formats to
+   which conversion is possible.
 
    Another difference is that you can make v4l2_read() calls even on devices
    which do not support the regular read() method.
-
-   Note that libv4l2 normally does not interfere with enum_fmt, so enum_fmt
-   will still return the actual formats the hardware supports, and not any
-   formats which may be emulated on top of that. If you pass the
-   V4L2_ENABLE_ENUM_FMT_EMULATION flag to v4l2_fd_open (as the v4l2convert.so
-   wrapper does) then enum_fmt will also report support for the formats to
-   which conversion is possible.
 
    Note the device name passed to v4l2_open must be of a video4linux2 device,
    if it is anything else (including a video4linux1 device), v4l2_open will
@@ -89,11 +83,14 @@ LIBV4L_PUBLIC int v4l2_get_control(int fd, int cid);
 
 /* Flags for v4l2_fd_open's v4l2_flags argument */
 
-/* Disable all format conversion done by libv4l2 (reduces libv4l2 functionality
-   to offering v4l2_read() even on devices which don't implement read()) */
+/* Disable all format conversion done by libv4l2, this includes the software
+   whitebalance, gamma correction, flipping, etc. libv4lconvert does. Use this
+   if you want raw frame data, but still want the additional error checks and
+   the read() emulation libv4l2 offers. */
 #define V4L2_DISABLE_CONVERSION 0x01
-/* Report not only real but also emulated formats with the ENUM_FMT ioctl */
-#define V4L2_ENABLE_ENUM_FMT_EMULATION 02
+/* This flag is *OBSOLETE*, since version 0.5.98 libv4l *always* reports
+   emulated formats to ENUM_FMT, except when conversion is disabled. */
+#define V4L2_ENABLE_ENUM_FMT_EMULATION 0x02
 
 /* v4l2_fd_open: open an already opened fd for further use through
    v4l2lib and possibly modify libv4l2's default behavior through the

@@ -14,6 +14,8 @@ libv4l-0.5.98
 * Add the capability to provide 320x240 to apps if the cam can only
   do 320x232 (some zc3xx cams) by adding black borders
 * Add software auto gain / exposure
+* The V4L2_ENABLE_ENUM_FMT_EMULATION v4l2_fd_open flag is obsolete, libv4l2
+  now *always* reports emulated formats through the ENUM_FMT ioctl
 
 libv4l-0.5.97
 -------------

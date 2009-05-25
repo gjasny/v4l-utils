@@ -696,12 +696,12 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       break;
     case VIDIOC_ENUM_FMT:
       if (((struct v4l2_fmtdesc *)arg)->type == V4L2_BUF_TYPE_VIDEO_CAPTURE &&
-	  (devices[index].flags & V4L2_ENABLE_ENUM_FMT_EMULATION))
+	  !(devices[index].flags & V4L2_DISABLE_CONVERSION))
 	is_capture_request = 1;
       break;
     case VIDIOC_ENUM_FRAMESIZES:
     case VIDIOC_ENUM_FRAMEINTERVALS:
-      if (devices[index].flags & V4L2_ENABLE_ENUM_FMT_EMULATION)
+      if (!(devices[index].flags & V4L2_DISABLE_CONVERSION))
 	is_capture_request = 1;
       break;
     case VIDIOC_TRY_FMT:
