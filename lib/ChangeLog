@@ -1,22 +1,20 @@
 libv4l-0.5.98
 -------------
-* Some makefile improvements by Gregor Jasny
-* If the card name contains a / replace it with a - in the shm name
-* Add sq905 to the list of devices which benefit from whitebalancing
-* Support V4L2_CTRL_FLAG_NEXT_CTRL for fake controls by Adam Baker
-* Add ability to determine upside down cams based on DMI info
+* Add software gamma correction
+* Add software auto gain / exposure
 * Add support for separate vflipping and hflipping
 * Add fake controls controlling the software h- and v-flipping
+* Add ability to determine upside down cams based on DMI info
+* Add the capability to provide 320x240 to apps if the cam can only
+  do 320x232 (some zc3xx cams) by adding black borders
 * Rewrite video processing code to make it easier to add more video filters
   (and with little extra processing cost). As part of this the normalize
   filter has been removed as it wasn't functioning satisfactory anyways
+* Support V4L2_CTRL_FLAG_NEXT_CTRL for fake controls by Adam Baker
+* Some makefile improvements by Gregor Jasny
 * Various small bugfixes and tweaks
-* Add the capability to provide 320x240 to apps if the cam can only
-  do 320x232 (some zc3xx cams) by adding black borders
-* Add software auto gain / exposure
 * The V4L2_ENABLE_ENUM_FMT_EMULATION v4l2_fd_open flag is obsolete, libv4l2
   now *always* reports emulated formats through the ENUM_FMT ioctl
-* Add software gamma correction
 
 libv4l-0.5.97
 -------------
