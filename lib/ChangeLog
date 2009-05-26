@@ -16,6 +16,7 @@ libv4l-0.5.98
 * Add software auto gain / exposure
 * The V4L2_ENABLE_ENUM_FMT_EMULATION v4l2_fd_open flag is obsolete, libv4l2
   now *always* reports emulated formats through the ENUM_FMT ioctl
+* Add software gamma correction
 
 libv4l-0.5.97
 -------------

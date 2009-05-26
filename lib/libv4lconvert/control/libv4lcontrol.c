@@ -63,16 +63,16 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x0471, 0x032d, 0, NULL, NULL, V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   /* Genius E-M 112 (also want whitebalance by default) */
   { 0x093a, 0x2476, 0, NULL, NULL,
-    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED|V4LCONTROL_WANTS_WB },
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED|V4LCONTROL_WANTS_WB, 1500 },
   /* Asus N50Vn laptop */
   { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vn      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
 /* Second: devices which should use some software processing by default */
   /* Pac207 based devices */
-  { 0x041e, 0x4028, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
-  { 0x093a, 0x2460, 0x1f, NULL, NULL, V4LCONTROL_WANTS_WB },
-  { 0x145f, 0x013a, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
-  { 0x2001, 0xf115, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
+  { 0x041e, 0x4028, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
+  { 0x093a, 0x2460, 0x1f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
+  { 0x145f, 0x013a, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
+  { 0x2001, 0xf115, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
   /* Pac7302 based devices */
   { 0x093a, 0x2620, 0x0f, NULL, NULL,
     V4LCONTROL_ROTATED_90_JPEG|V4LCONTROL_WANTS_WB },
@@ -198,6 +198,7 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
 	(v4lcontrol_flags[i].dmi_board_name == NULL ||
 	 !strcmp(v4lcontrol_flags[i].dmi_board_name, dmi_board_name))) {
       data->flags |= v4lcontrol_flags[i].flags;
+      data->flags_info = &v4lcontrol_flags[i];
       break;
     }
 }
@@ -283,6 +284,9 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 
     if (data->flags & V4LCONTROL_WANTS_WB)
       data->shm_values[V4LCONTROL_WHITEBALANCE] = 1;
+
+    if (data->flags_info && data->flags_info->default_gamma)
+      data->shm_values[V4LCONTROL_GAMMA] = data->flags_info->default_gamma;
   }
 
   return data;
@@ -331,6 +335,16 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
   .default_value = 0,
   .flags = 0
 },
+{
+  .id = V4L2_CID_GAMMA,
+  .type = V4L2_CTRL_TYPE_INTEGER,
+  .name =  "Gamma (software)",
+  .minimum = 500,  /* == 0.5 */
+  .maximum = 3000, /* == 3.0 */
+  .step = 1,
+  .default_value = 1000, /* == 1.0 */
+  .flags = 0
+},
 {}, /* Dummy place holder for V4LCONTROL_AUTO_ENABLE_COUNT */
 {
   .id = V4L2_CID_AUTOGAIN,
@@ -363,6 +377,10 @@ static void v4lcontrol_copy_queryctrl(struct v4lcontrol_data *data,
   if (ctrl->id == V4L2_CID_AUTO_WHITE_BALANCE &&
       (data->flags & V4LCONTROL_WANTS_WB))
     ctrl->default_value = 1;
+
+  if (ctrl->id == V4L2_CID_GAMMA && data->flags_info &&
+      data->flags_info->default_gamma)
+    ctrl->default_value = data->flags_info->default_gamma;
 }
 
 int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)

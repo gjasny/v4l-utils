@@ -37,6 +37,7 @@ enum {
   V4LCONTROL_WHITEBALANCE,
   V4LCONTROL_HFLIP,
   V4LCONTROL_VFLIP,
+  V4LCONTROL_GAMMA,
   /* All fake controls above here are auto enabled when not present in hw */
   V4LCONTROL_AUTO_ENABLE_COUNT,
   V4LCONTROL_AUTOGAIN,

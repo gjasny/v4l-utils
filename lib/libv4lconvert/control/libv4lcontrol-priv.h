@@ -26,6 +26,8 @@
 
 #define V4LCONTROL_SUPPORTS_NEXT_CTRL 0x01
 
+struct v4lcontrol_flags_info;
+
 struct v4lcontrol_data {
   int fd;                   /* Device fd */
   int flags;                /* Flags for this device */
@@ -33,6 +35,7 @@ struct v4lcontrol_data {
   int controls;             /* Which controls to use for this device */
   unsigned int *shm_values; /* shared memory control value store */
   unsigned int old_values[V4LCONTROL_COUNT]; /* for controls_changed() */
+  const struct v4lcontrol_flags_info *flags_info;
 };
 
 struct v4lcontrol_flags_info {
@@ -45,6 +48,7 @@ struct v4lcontrol_flags_info {
   const char *manufacturer;
   const char *product; */
   int flags;
+  int default_gamma;
 };
 
 #endif

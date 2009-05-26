@@ -12,7 +12,4 @@
 -make updating of parameters happen based on time elapsed rather then
  frames
 
-
--add gamma correction video processing
-
 -get standardized CID for AUTOGAIN_TARGET upstream and switch to that

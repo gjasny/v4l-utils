@@ -39,6 +39,9 @@ struct v4lprocessing_data {
   unsigned char comp1[256];
   unsigned char green[256];
   unsigned char comp2[256];
+  /* Filter private data for filters which need it */
+  int last_gamma;
+  unsigned char gamma_table[256];
 };
 
 struct v4lprocessing_filter {
@@ -51,5 +54,6 @@ struct v4lprocessing_filter {
 
 extern struct v4lprocessing_filter whitebalance_filter;
 extern struct v4lprocessing_filter autogain_filter;
+extern struct v4lprocessing_filter gamma_filter;
 
 #endif

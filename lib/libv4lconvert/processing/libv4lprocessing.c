@@ -31,6 +31,7 @@
 static struct v4lprocessing_filter *filters[] = {
   &whitebalance_filter,
   &autogain_filter,
+  &gamma_filter,
 };
 
 struct v4lprocessing_data *v4lprocessing_create(int fd, struct v4lcontrol_data* control)
