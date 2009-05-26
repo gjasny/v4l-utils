@@ -1008,13 +1008,13 @@ int v4lconvert_convert(struct v4lconvert_data *data,
       return res;
 
     src_size = my_src_fmt.fmt.pix.sizeimage;
-  }
 
-  /* We call processing here again in case the source format was not
-     rgb, but the dest is. v4lprocessing checks it self it only actually
-     does the processing once per frame. */
-  if (processing)
-    v4lprocessing_processing(data->processing, rotate90_src, &my_src_fmt);
+    /* We call processing here again in case the source format was not
+       rgb, but the dest is. v4lprocessing checks it self it only actually
+       does the processing once per frame. */
+    if (processing)
+      v4lprocessing_processing(data->processing, convert2_dest, &my_src_fmt);
+  }
 
   if (rotate90)
     v4lconvert_rotate90(rotate90_src, rotate90_dest, &my_src_fmt);
