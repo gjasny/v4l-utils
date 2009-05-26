@@ -76,11 +76,15 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   /* Pac7302 based devices */
   { 0x093a, 0x2620, 0x0f, NULL, NULL,
     V4LCONTROL_ROTATED_90_JPEG|V4LCONTROL_WANTS_WB },
+  /* Pac7311 based devices */
+  { 0x093a, 0x2600, 0x0f, NULL, NULL, V4LCONTROL_WANTS_WB },
   /* sq905 devices */
   { 0x2770, 0x9120, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
   /* spca561 revison 12a devices */
   { 0x041e, 0x403b, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
   { 0x046d, 0x0928, 7,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
+  /* logitech quickcam express stv06xx + pb0100 */
+  { 0x046d, 0x0840, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
 };
 
 static const struct v4l2_queryctrl fake_controls[];
