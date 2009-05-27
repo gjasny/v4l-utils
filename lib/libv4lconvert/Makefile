@@ -3,7 +3,7 @@ override CPPFLAGS += -I../include -I../../../include -fvisibility=hidden
 CFLAGS := -g -O1
 CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
 
-LIBS_libv4lconvert = -lrt
+LIBS_libv4lconvert = -lrt -lm
 
 ifeq ($(LINKTYPE),static)
 CONVERT_LIB   = libv4lconvert.a
@@ -47,7 +47,7 @@ libv4lconvert.pc:
 	@echo 'Description: v4l format conversion library' >> libv4lconvert.pc
 	@echo 'Version: '$(V4L2_LIB_VERSION) >> libv4lconvert.pc
 	@echo 'Libs: -L$${libdir} -lv4lconvert' >> libv4lconvert.pc
-	@echo 'Libs.private: -lrt' >> libv4lconvert.pc
+	@echo 'Libs.private: -lrt -lm' >> libv4lconvert.pc
 	@echo 'Cflags: -I$${prefix}/include' >> libv4lconvert.pc
 
 install: all
