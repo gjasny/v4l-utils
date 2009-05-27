@@ -23,7 +23,9 @@
 #define CLIP(color) (unsigned char)(((color)>0xff)?0xff:(((color)<0)?0:(color)))
 
 static int gamma_active(struct v4lprocessing_data *data) {
-  return v4lcontrol_get_ctrl(data->control, V4LCONTROL_GAMMA) != 1000;
+  int gamma = v4lcontrol_get_ctrl(data->control, V4LCONTROL_GAMMA);
+
+  return gamma && gamma != 1000;
 }
 
 static int gamma_calculate_lookup_tables(

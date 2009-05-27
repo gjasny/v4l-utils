@@ -1,6 +1,7 @@
 libv4l-0.6
 ----------
 * Link libv4lconvert with -lm for powf by Gregor Jasny
+* Fix black screen on devices with hardware gamma control
 
 libv4l-0.5.98
 -------------
