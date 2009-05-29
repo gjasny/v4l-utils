@@ -487,6 +487,9 @@ int v4lcontrol_controls_changed(struct v4lcontrol_data *data)
 {
   int res;
 
+  if (!data->controls)
+    return 0;
+
   res = memcmp(data->shm_values, data->old_values,
 	       V4LCONTROL_COUNT * sizeof(unsigned int));
 
