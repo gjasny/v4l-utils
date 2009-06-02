@@ -44,18 +44,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <syscall.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/mman.h>
-/* These headers are not needed by us, but by linux/videodev2.h,
-   which is broken on some systems and doesn't include them itself :( */
-#include <sys/time.h>
-#include <asm/types.h>
-#include <linux/ioctl.h>
-/* end broken header workaround includes */
+#include "../libv4lconvert/libv4lsyscall-priv.h"
 #include <linux/videodev.h>
 #include <linux/videodev2.h>
 #include <libv4l2.h>
@@ -225,14 +219,14 @@ static void v4l1_find_min_and_max_size(int index, struct v4l2_format *fmt2)
   for (i = 0; ; i++) {
     fmtdesc2.index = i;
 
-    if (syscall(SYS_ioctl, devices[index].fd, VIDIOC_ENUM_FMT, &fmtdesc2))
+    if (SYS_IOCTL(devices[index].fd, VIDIOC_ENUM_FMT, &fmtdesc2))
       break;
 
     fmt2->fmt.pix.pixelformat = fmtdesc2.pixelformat;
     fmt2->fmt.pix.width = 48;
     fmt2->fmt.pix.height = 32;
 
-    if (syscall(SYS_ioctl, devices[index].fd, VIDIOC_TRY_FMT, fmt2) == 0) {
+    if (SYS_IOCTL(devices[index].fd, VIDIOC_TRY_FMT, fmt2) == 0) {
       if (fmt2->fmt.pix.width < devices[index].min_width)
 	devices[index].min_width = fmt2->fmt.pix.width;
       if (fmt2->fmt.pix.height < devices[index].min_height)
@@ -243,7 +237,7 @@ static void v4l1_find_min_and_max_size(int index, struct v4l2_format *fmt2)
     fmt2->fmt.pix.width = 100000;
     fmt2->fmt.pix.height = 100000;
 
-    if (syscall(SYS_ioctl, devices[index].fd, VIDIOC_TRY_FMT, fmt2) == 0) {
+    if (SYS_IOCTL(devices[index].fd, VIDIOC_TRY_FMT, fmt2) == 0) {
       if (fmt2->fmt.pix.width > devices[index].max_width)
 	devices[index].max_width = fmt2->fmt.pix.width;
       if (fmt2->fmt.pix.height > devices[index].max_height)
@@ -280,11 +274,12 @@ int v4l1_open (const char *file, int oflag, ...)
     va_start (ap, oflag);
     mode = va_arg (ap, mode_t);
 
-    fd = syscall(SYS_open, file, oflag, mode);
+    fd = SYS_OPEN(file, oflag, mode);
 
     va_end(ap);
   } else
-    fd = syscall(SYS_open, file, oflag);
+    fd = SYS_OPEN(file, oflag, 0);
+
   /* end of original open code */
 
   if (fd == -1 || !v4l_device)
@@ -292,7 +287,7 @@ int v4l1_open (const char *file, int oflag, ...)
 
   /* check that this is an v4l2 device, no need to emulate v4l1 on
      a v4l1 device */
-  if (syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap2))
+  if (SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap2))
     return fd;
 
   /* IMPROVEME */
@@ -314,7 +309,7 @@ int v4l1_open (const char *file, int oflag, ...)
      emulation for us */
   if (v4l2_fd_open(fd, V4L2_ENABLE_ENUM_FMT_EMULATION) == -1) {
     int saved_err = errno;
-    syscall(SYS_close, fd);
+    SYS_CLOSE(fd);
     errno = saved_err;
     return -1;
   }
@@ -323,7 +318,7 @@ int v4l1_open (const char *file, int oflag, ...)
   fmt2.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   if (v4l2_ioctl(fd, VIDIOC_G_FMT, &fmt2)) {
     int saved_err = errno;
-    syscall(SYS_close, fd);
+    SYS_CLOSE(fd);
     errno = saved_err;
     return -1;
   }
@@ -400,7 +395,7 @@ int v4l1_close(int fd) {
   int index, result;
 
   if ((index = v4l1_get_index(fd)) == -1)
-    return syscall(SYS_close, fd);
+    return SYS_CLOSE(fd);
 
   /* Abuse stream_lock to stop 2 closes from racing and trying to free the
      resources twice */
@@ -418,7 +413,7 @@ int v4l1_close(int fd) {
       V4L1_LOG("v4l1 capture buffer still mapped: %d times on close()\n",
 	devices[index].v4l1_frame_buf_map_count);
     else
-      syscall(SYS_munmap, devices[index].v4l1_frame_pointer,
+      SYS_MUNMAP(devices[index].v4l1_frame_pointer,
 	      V4L1_NO_FRAMES * V4L1_FRAME_BUF_SIZE);
     devices[index].v4l1_frame_pointer = MAP_FAILED;
   }
@@ -447,7 +442,6 @@ int v4l1_dup(int fd)
   return v4l2_dup(fd);
 }
 
-
 int v4l1_ioctl (int fd, unsigned long int request, ...)
 {
   void *arg;
@@ -459,7 +453,7 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
   va_end (ap);
 
   if ((index = v4l1_get_index(fd)) == -1)
-    return syscall(SYS_ioctl, fd, request, arg);
+    return SYS_IOCTL(fd, request, arg);
 
   /* Appearantly the kernel and / or glibc ignore the 32 most significant bits
      when long = 64 bits, and some applications pass an int holding the req to
@@ -486,7 +480,7 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
       {
 	struct video_capability *cap = arg;
 
-	result = syscall(SYS_ioctl, fd, request, arg);
+	result = SYS_IOCTL(fd, request, arg);
 
 	/* override kernel v4l1 compat min / max size with our own more
 	   accurate values */
@@ -563,7 +557,7 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
 
     case VIDIOCGWIN:
       devices[index].flags |= V4L1_PIX_SIZE_TOUCHED;
-      result = syscall(SYS_ioctl, fd, request, arg);
+      result = SYS_IOCTL(fd, request, arg);
       break;
 
     case VIDIOCGCHAN:
@@ -573,7 +567,7 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
 
 	if ((devices[index].flags & V4L1_SUPPORTS_ENUMINPUT) &&
 	    (devices[index].flags & V4L1_SUPPORTS_ENUMSTD)) {
-	  result = syscall(SYS_ioctl, fd, request, arg);
+	  result = SYS_IOCTL(fd, request, arg);
 	  break;
 	}
 
@@ -615,7 +609,7 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
 	struct video_channel *chan = arg;
 	if ((devices[index].flags & V4L1_SUPPORTS_ENUMINPUT) &&
 	    (devices[index].flags & V4L1_SUPPORTS_ENUMSTD)) {
-	  result = syscall(SYS_ioctl, fd, request, arg);
+	  result = SYS_IOCTL(fd, request, arg);
 	  break;
 	}
 	/* In case of no ENUMSTD support, ignore the norm member of the
@@ -651,7 +645,7 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
 	}
 
 	if (devices[index].v4l1_frame_pointer == MAP_FAILED) {
-	  devices[index].v4l1_frame_pointer = (void *)syscall(SYS_mmap2, NULL,
+	  devices[index].v4l1_frame_pointer = (void *)SYS_MMAP(NULL,
 				      (size_t)mbuf->size,
 				      PROT_READ|PROT_WRITE,
 				      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
@@ -748,7 +742,7 @@ ssize_t v4l1_read(int fd, void* buffer, size_t n)
   ssize_t result;
 
   if ((index = v4l1_get_index(fd)) == -1)
-    return syscall(SYS_read, fd, buffer, n);
+    return SYS_READ(fd, buffer, n);
 
   pthread_mutex_lock(&devices[index].stream_lock);
   result = v4l2_read(fd, buffer, n);
@@ -759,7 +753,7 @@ ssize_t v4l1_read(int fd, void* buffer, size_t n)
 
 
 void *v4l1_mmap(void *start, size_t length, int prot, int flags, int fd,
-  __off64_t offset)
+  int64_t offset)
 {
   int index;
   void *result;

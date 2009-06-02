@@ -21,10 +21,21 @@
 
 /* These headers are not needed by us, but by linux/videodev2.h,
    which is broken on some systems and doesn't include them itself :( */
+
+#ifdef linux
 #include <sys/time.h>
 #include <linux/types.h>
 #include <linux/ioctl.h>
+#endif
+
+#ifdef __FreeBSD__
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#endif
+
 /* end broken header workaround includes */
+
 #include <linux/videodev2.h>
 
 #ifdef __cplusplus

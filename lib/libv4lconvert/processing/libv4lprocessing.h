@@ -21,12 +21,7 @@
 #ifndef __LIBV4LPROCESSING_H
 #define __LIBV4LPROCESSING_H
 
-/* These headers are not needed by us, but by linux/videodev2.h,
-   which is broken on some systems and doesn't include them itself :( */
-#include <sys/time.h>
-#include <linux/types.h>
-#include <linux/ioctl.h>
-/* end broken header workaround includes */
+#include "../libv4lsyscall-priv.h"
 #include <linux/videodev2.h>
 
 struct v4lprocessing_data;

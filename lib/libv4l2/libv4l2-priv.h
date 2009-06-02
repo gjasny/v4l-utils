@@ -23,14 +23,7 @@
 #include <pthread.h>
 #include <libv4lconvert.h> /* includes videodev2.h for us */
 
-/* On 32 bits archs we always use mmap2, on 64 bits archs there is no mmap2 */
-#ifdef __NR_mmap2
-#define SYS_mmap2 __NR_mmap2
-#define MMAP2_PAGE_SHIFT 12
-#else
-#define SYS_mmap2 SYS_mmap
-#define MMAP2_PAGE_SHIFT 0
-#endif
+#include "../libv4lconvert/libv4lsyscall-priv.h"
 
 #define V4L2_MAX_DEVICES 16
 /* Warning when making this larger the frame_queued and frame_mapped members of

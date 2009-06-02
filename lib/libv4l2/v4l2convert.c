@@ -24,17 +24,11 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
-#include <syscall.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-/* These headers are not needed by us, but by linux/videodev2.h,
-   which is broken on some systems and doesn't include them itself :( */
-#include <sys/time.h>
-#include <asm/types.h>
-#include <linux/ioctl.h>
-/* end broken header workaround includes */
+#include "../libv4lconvert/libv4lsyscall-priv.h"
 #include <linux/videodev2.h>
 #include <libv4l2.h>
 
@@ -72,18 +66,18 @@ LIBV4L_PUBLIC int open (const char *file, int oflag, ...)
     va_start (ap, oflag);
     mode = va_arg (ap, mode_t);
 
-    fd = syscall(SYS_open, file, oflag, mode);
+    fd = SYS_OPEN(file, oflag, mode);
 
     va_end(ap);
   } else
-    fd = syscall(SYS_open, file, oflag);
+    fd = SYS_OPEN(file, oflag, 0);
   /* end of original open code */
 
   if (fd == -1 || !v4l_device)
     return fd;
 
   /* check that this is an v4l2 device, libv4l2 only supports v4l2 devices */
-  if (syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap))
+  if (SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap))
     return fd;
 
   /* libv4l2 only adds functionality to capture capable devices */
@@ -97,6 +91,7 @@ LIBV4L_PUBLIC int open (const char *file, int oflag, ...)
   return fd;
 }
 
+#ifdef linux
 LIBV4L_PUBLIC int open64(const char *file, int oflag, ...)
 {
   int fd;
@@ -119,6 +114,7 @@ LIBV4L_PUBLIC int open64(const char *file, int oflag, ...)
 
   return fd;
 }
+#endif
 
 LIBV4L_PUBLIC int close(int fd)
 {
@@ -153,11 +149,13 @@ LIBV4L_PUBLIC void *mmap(void *start, size_t length, int prot, int flags, int fd
   return v4l2_mmap(start, length, prot, flags, fd, offset);
 }
 
+#ifdef linux
 LIBV4L_PUBLIC void *mmap64(void *start, size_t length, int prot, int flags, int fd,
   __off64_t offset)
 {
   return v4l2_mmap(start, length, prot, flags, fd, offset);
 }
+#endif
 
 LIBV4L_PUBLIC int munmap(void *start, size_t length)
 {

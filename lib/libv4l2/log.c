@@ -22,12 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <linux/ioctl.h>
-/* These headers are not needed by us, but by linux/videodev2.h,
-   which is broken on some systems and doesn't include them itself :( */
-#include <sys/time.h>
-#include <asm/types.h>
-/* end broken header workaround includes */
+#include "../libv4lconvert/libv4lsyscall-priv.h"
 #include <linux/videodev2.h>
 #include "libv4l2.h"
 #include "libv4l2-priv.h"

@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <libv4l1.h>
+#include "../libv4lconvert/libv4lsyscall-priv.h" /* for __off_t */
 
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -61,6 +62,7 @@ LIBV4L_PUBLIC int open (const char *file, int oflag, ...)
   return fd;
 }
 
+#ifdef linux
 LIBV4L_PUBLIC int open64 (const char *file, int oflag, ...)
 {
   int fd;
@@ -81,6 +83,7 @@ LIBV4L_PUBLIC int open64 (const char *file, int oflag, ...)
 
   return fd;
 }
+#endif
 
 LIBV4L_PUBLIC int close(int fd) {
   return v4l1_close(fd);
@@ -114,11 +117,13 @@ LIBV4L_PUBLIC void *mmap(void *start, size_t length, int prot, int flags, int fd
   return v4l1_mmap(start, length, prot, flags, fd, offset);
 }
 
+#ifdef linux
 LIBV4L_PUBLIC void *mmap64(void *start, size_t length, int prot, int flags, int fd,
   __off64_t offset)
 {
   return v4l1_mmap(start, length, prot, flags, fd, offset);
 }
+#endif
 
 LIBV4L_PUBLIC int munmap(void *start, size_t length)
 {

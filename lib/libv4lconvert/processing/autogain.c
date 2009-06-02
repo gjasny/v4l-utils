@@ -20,12 +20,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <syscall.h>
 #include <unistd.h>
 
 #include "libv4lprocessing.h"
 #include "libv4lprocessing-priv.h"
 #include "../libv4lconvert-priv.h" /* for PIX_FMT defines */
+#include "../libv4lsyscall-priv.h"
 
 static int autogain_active(struct v4lprocessing_data *data) {
   return v4lcontrol_get_ctrl(data->control, V4LCONTROL_AUTOGAIN);
@@ -45,15 +45,15 @@ static int autogain_calculate_lookup_tables(
 
   ctrl.id = V4L2_CID_EXPOSURE;
   expoctrl.id = V4L2_CID_EXPOSURE;
-  if (syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, &expoctrl) ||
-      syscall(SYS_ioctl, data->fd, VIDIOC_G_CTRL, &ctrl))
+  if (SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &expoctrl) ||
+      SYS_IOCTL(data->fd, VIDIOC_G_CTRL, &ctrl))
     return 0;
   exposure = orig_exposure = ctrl.value;
 
   ctrl.id = V4L2_CID_GAIN;
   gainctrl.id = V4L2_CID_GAIN;
-  if (syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, &gainctrl) ||
-      syscall(SYS_ioctl, data->fd, VIDIOC_G_CTRL, &ctrl))
+  if (SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &gainctrl) ||
+      SYS_IOCTL(data->fd, VIDIOC_G_CTRL, &ctrl))
     return 0;
   gain = orig_gain = ctrl.value;
 
@@ -125,12 +125,12 @@ static int autogain_calculate_lookup_tables(
   if (gain != orig_gain) {
     ctrl.id = V4L2_CID_GAIN;
     ctrl.value = gain;
-    syscall(SYS_ioctl, data->fd, VIDIOC_S_CTRL, &ctrl);
+    SYS_IOCTL(data->fd, VIDIOC_S_CTRL, &ctrl);
   }
   if (exposure != orig_exposure) {
     ctrl.id = V4L2_CID_EXPOSURE;
     ctrl.value = exposure;
-    syscall(SYS_ioctl, data->fd, VIDIOC_S_CTRL, &ctrl);
+    SYS_IOCTL(data->fd, VIDIOC_S_CTRL, &ctrl);
   }
 
   return 0;

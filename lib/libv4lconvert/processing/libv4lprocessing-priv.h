@@ -22,6 +22,7 @@
 #define __LIBV4LPROCESSING_PRIV_H
 
 #include "../control/libv4lcontrol.h"
+#include "../libv4lsyscall-priv.h"
 
 #define V4L2PROCESSING_UPDATE_RATE                               10
 

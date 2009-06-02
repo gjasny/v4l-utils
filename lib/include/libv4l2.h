@@ -58,7 +58,7 @@ LIBV4L_PUBLIC int v4l2_dup(int fd);
 LIBV4L_PUBLIC int v4l2_ioctl (int fd, unsigned long int request, ...);
 LIBV4L_PUBLIC ssize_t v4l2_read (int fd, void* buffer, size_t n);
 LIBV4L_PUBLIC void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
-  __off64_t offset);
+  int64_t offset);
 LIBV4L_PUBLIC int v4l2_munmap(void *_start, size_t length);
 
 

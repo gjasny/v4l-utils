@@ -28,16 +28,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <syscall.h>
 #include "libv4lcontrol.h"
 #include "libv4lcontrol-priv.h"
-
-/* These headers are not needed by us, but by linux/videodev2.h,
-   which is broken on some systems and doesn't include them itself :( */
-#include <sys/time.h>
-#include <linux/types.h>
-#include <linux/ioctl.h>
-/* end broken header workaround includes */
+#include "../libv4lsyscall-priv.h"
 #include <linux/videodev2.h>
 
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
@@ -102,8 +95,8 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
   char c, *s, buf[32];
   struct v4l2_input input;
 
-  if ((syscall(SYS_ioctl, data->fd, VIDIOC_G_INPUT, &input.index) == 0) &&
-      (syscall(SYS_ioctl, data->fd, VIDIOC_ENUMINPUT, &input) == 0)) {
+  if ((SYS_IOCTL(data->fd, VIDIOC_G_INPUT, &input.index) == 0) &&
+      (SYS_IOCTL(data->fd, VIDIOC_ENUMINPUT, &input) == 0)) {
     if (input.status & V4L2_IN_ST_HFLIP)
       data->flags |= V4LCONTROL_HFLIPPED;
     if (input.status & V4L2_IN_ST_VFLIP)
@@ -229,7 +222,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
     data->flags = strtol(s, NULL, 0);
 
   ctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-  if (syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, &ctrl) == 0)
+  if (SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl) == 0)
     data->priv_flags |= V4LCONTROL_SUPPORTS_NEXT_CTRL;
 
   /* If the device always needs conversion, we can add fake controls at no cost
@@ -237,7 +230,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
   if (always_needs_conversion || v4lcontrol_needs_conversion(data)) {
     for (i = 0; i < V4LCONTROL_AUTO_ENABLE_COUNT; i++) {
       ctrl.id = fake_controls[i].id;
-      if (syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, &ctrl) == -1)
+      if (SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl) == -1)
 	data->controls |= 1 << i;
     }
   }
@@ -253,7 +246,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
   if (data->controls == 0)
     return data; /* No need to create a shared memory segment */
 
-  syscall(SYS_ioctl, fd, VIDIOC_QUERYCAP, &cap);
+  SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap);
   snprintf(shm_name, 256, "/%s:%s", cap.bus_info, cap.card);
 
   /* / is not allowed inside shm names */
@@ -403,7 +396,7 @@ int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
     }
 
   /* find out what the kernel driver would respond. */
-  retval = syscall(SYS_ioctl, data->fd, VIDIOC_QUERYCTRL, arg);
+  retval = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, arg);
 
   if ((data->priv_flags & V4LCONTROL_SUPPORTS_NEXT_CTRL) &&
       (orig_id & V4L2_CTRL_FLAG_NEXT_CTRL)) {
@@ -440,7 +433,7 @@ int v4lcontrol_vidioc_g_ctrl(struct v4lcontrol_data *data, void *arg)
       return 0;
     }
 
-  return syscall(SYS_ioctl, data->fd, VIDIOC_G_CTRL, arg);
+  return SYS_IOCTL(data->fd, VIDIOC_G_CTRL, arg);
 }
 
 int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
@@ -461,7 +454,7 @@ int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
       return 0;
     }
 
-  return syscall(SYS_ioctl, data->fd, VIDIOC_S_CTRL, arg);
+  return SYS_IOCTL(data->fd, VIDIOC_S_CTRL, arg);
 }
 
 int v4lcontrol_get_flags(struct v4lcontrol_data *data)
