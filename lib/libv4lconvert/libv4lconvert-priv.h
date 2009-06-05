@@ -83,6 +83,10 @@
 #define V4L2_PIX_FMT_SN9C20X_I420  v4l2_fourcc('S', '9', '2', '0')
 #endif
 
+#ifndef V4L2_PIX_FMT_OV518
+#define V4L2_PIX_FMT_OV518 v4l2_fourcc('O', '5', '1', '8') /* ov518 JPEG */
+#endif
+
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
 #define V4LCONVERT_ERROR_MSG_SIZE 256
@@ -181,6 +185,10 @@ void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
 
 void v4lconvert_sn9c20x_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height, int yvu);
+
+/* Warning this one modifies its input buffer! */
+void v4lconvert_ov518_to_yuv420(unsigned char *src, unsigned char *dst,
+  int width, int height, int yvu, int src_size);
 
 void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,
   int width, int height);

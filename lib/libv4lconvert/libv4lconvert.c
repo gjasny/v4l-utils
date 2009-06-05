@@ -63,6 +63,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_MR97310A,     V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_SQ905C,       V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_PJPG,         V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_OV518,        V4LCONVERT_COMPRESSED },
 };
 
 static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
@@ -615,6 +616,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SPCA505:
     case V4L2_PIX_FMT_SPCA508:
     case V4L2_PIX_FMT_SN9C20X_I420:
+    case V4L2_PIX_FMT_OV518:
     {
       unsigned char *d;
       int yvu = 0;
@@ -643,6 +645,9 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  break;
 	case V4L2_PIX_FMT_SN9C20X_I420:
 	  v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);
+	  break;
+	case V4L2_PIX_FMT_OV518:
+	  v4lconvert_ov518_to_yuv420(src, d, width, height, yvu, src_size);
 	  break;
       }
 

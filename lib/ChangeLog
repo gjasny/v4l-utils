@@ -2,6 +2,10 @@ libv4l-0.6.0
 ------------
 * Recognize disabled controls and replace with fake equivalents where
   available
+* Add support for decompressing ov518 "JPEG", note this code is not
+  LGPL yet, I'm waiting for a license change permission. If I do not
+  get one this will be moved to an external helper and the data
+  will be piped through this, to keep libv4l2.so LGPL
 
 libv4l-0.5.99
 -------------
