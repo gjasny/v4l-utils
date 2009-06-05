@@ -203,7 +203,7 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
 struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 {
   int shm_fd;
-  int i, init = 0;
+  int i, rc, init = 0;
   char *s, shm_name[256];
   struct v4l2_capability cap;
   struct v4l2_queryctrl ctrl;
@@ -230,7 +230,8 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
   if (always_needs_conversion || v4lcontrol_needs_conversion(data)) {
     for (i = 0; i < V4LCONTROL_AUTO_ENABLE_COUNT; i++) {
       ctrl.id = fake_controls[i].id;
-      if (SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl) == -1)
+      rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+      if (rc == -1 || (rc == 0 && (ctrl.flags & V4L2_CTRL_FLAG_DISABLED)))
 	data->controls |= 1 << i;
     }
   }

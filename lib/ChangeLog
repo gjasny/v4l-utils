@@ -1,11 +1,16 @@
+libv4l-0.6.0
+------------
+* Recognize disabled controls and replace with fake equivalents where
+  available
+
 libv4l-0.5.99
-----------
+-------------
 * Link libv4lconvert with -lm for powf by Gregor Jasny
 * Fix black screen on devices with hardware gamma control
 * Fix crash with devices on which we do not emulate fake controls
 * Add a patch by Hans Petter Selasky <hselasky@freebsd.org>, which should
   lead to allowing use of libv4l (and the Linux webcam drivers ported
-  to userspace usb drivers) on FreeBSd, this is a work in progress
+  to userspace usb drivers) on FreeBSD, this is a work in progress
 
 libv4l-0.5.98
 -------------
