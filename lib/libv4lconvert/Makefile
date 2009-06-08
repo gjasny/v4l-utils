@@ -69,7 +69,7 @@ endif
 
 clean::
 	rm -f *.a *.so* *.o *.d */*.o */*.d libv4lconvert.pc log *~ */*~
-	rm -f *.orig *.rej */*.orig */*.rej
+	rm -f *.orig *.rej */*.orig */*.rej DEADJOE */DEADJOE *-decomp
 
 %.o: %.c
 	$(CC) -Wp,-MMD,"$*.d",-MQ,"$@",-MP -c $(CPPFLAGS) $(CFLAGS) -o $@ $<

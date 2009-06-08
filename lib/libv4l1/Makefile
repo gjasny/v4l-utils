@@ -71,7 +71,7 @@ endif
 	install -m 644 libv4l1.pc $(DESTDIR)$(LIBDIR)/pkgconfig
 
 clean::
-	rm -f *.a *.so* *.o *.d libv4l1.pc log *~ *.orig *.rej
+	rm -f *.a *.so* *.o *.d libv4l1.pc log *~ *.orig *.rej DEADJOE
 
 %.o: %.c
 	$(CC) -Wp,-MMD,"$*.d",-MQ,"$@",-MP -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
