@@ -316,7 +316,7 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 {
   .id = V4L2_CID_HFLIP,
   .type = V4L2_CTRL_TYPE_BOOLEAN,
-  .name =  "Horizontal flip",
+  .name =  "Horizontal flip (sw)",
   .minimum = 0,
   .maximum = 1,
   .step = 1,
@@ -326,7 +326,7 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 {
   .id = V4L2_CID_VFLIP,
   .type = V4L2_CTRL_TYPE_BOOLEAN,
-  .name =  "Vertical flip",
+  .name =  "Vertical flip (sw)",
   .minimum = 0,
   .maximum = 1,
   .step = 1,

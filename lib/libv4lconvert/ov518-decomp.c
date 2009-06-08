@@ -1,4 +1,6 @@
-/* FIXME FIXME FIXME: get permission to relicense this to LGPL !! */
+/* We would like to embed this inside libv4l, but we cannot as I've failed
+   to contact Mark W. McClelland to get permission to relicense this,
+   so this lives in an external (GPL licensed) helper */
 
 /* OV518 Decompression Support Module (No-MMX version)
  *
@@ -14,7 +16,8 @@
  */
 
 #include <string.h>
-#include "libv4lconvert-priv.h"
+#include <unistd.h>
+#include "helper-funcs.h"
 
 /******************************************************************************
  * Compile-time Options
@@ -1400,7 +1403,7 @@ Decompress400(unsigned char *pIn,
  * Output format is planar YUV420
  * Returns uncompressed data length if success, or zero if error
  */
-void v4lconvert_ov518_to_yuv420(unsigned char *src, unsigned char *dst,
+static int v4lconvert_ov518_to_yuv420(unsigned char *src, unsigned char *dst,
   int w, int h, int yvu, int inSize)
 {
 	struct comp_info cinfo;
@@ -1414,10 +1417,60 @@ void v4lconvert_ov518_to_yuv420(unsigned char *src, unsigned char *dst,
 	cinfo.rawLen = inSize;
 
 	if (get_qt_dynamic(src, &cinfo) < 0)
-		return;
+		return -1;
 
 	/* Decompress, skipping the 8-byte SOF header */
 	decompress420NoMMXOV518(src + 8, dst, pTmp, w, h, numpix, &cinfo, yvu);
 
-	return;
+	return 0;
+}
+
+int main(int argc, char *argv[])
+{
+  int width, height, yvu, src_size, dest_size;
+  unsigned char src_buf[200000];
+  unsigned char dest_buf[500000];
+
+  while (1) {
+    if (v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
+      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+
+    if (v4lconvert_helper_read(STDIN_FILENO, &height, sizeof(int), argv[0]))
+      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+
+    if (v4lconvert_helper_read(STDIN_FILENO, &yvu, sizeof(int), argv[0]))
+      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+
+    if (v4lconvert_helper_read(STDIN_FILENO, &src_size, sizeof(int), argv[0]))
+      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+
+    if (src_size > sizeof(src_buf)) {
+      fprintf(stderr, "%s: error: src_buf too small, need: %d\n",
+	      argv[0], src_size);
+      return 2;
+    }
+
+    if (v4lconvert_helper_read(STDIN_FILENO, src_buf, src_size, argv[0]))
+      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+
+
+    dest_size = width * height * 3 / 2;
+    if (dest_size > sizeof(dest_buf)) {
+      fprintf(stderr, "%s: error: dest_buf too small, need: %d\n",
+	      argv[0], dest_size);
+      dest_size = -1;
+    } else if (v4lconvert_ov518_to_yuv420(src_buf, dest_buf, width, height,
+					  yvu, src_size))
+      dest_size = -1;
+
+    if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int),
+				argv[0]))
+      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+
+    if (dest_size == -1)
+      continue;
+
+    if (v4lconvert_helper_write(STDOUT_FILENO, dest_buf, dest_size, argv[0]))
+      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+  }
 }

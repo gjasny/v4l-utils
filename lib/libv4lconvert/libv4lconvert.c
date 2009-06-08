@@ -97,6 +97,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
     return NULL;
 
   data->fd = fd;
+  data->decompress_pid = -1;
 
   /* Check supported formats */
   for (i = 0; ; i++) {
@@ -159,6 +160,7 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
     tinyjpeg_set_components(data->jdec, comps, 3);
     tinyjpeg_free(data->jdec);
   }
+  v4lconvert_helper_cleanup(data);
   free(data->convert1_buf);
   free(data->convert2_buf);
   free(data->rotate90_buf);
@@ -505,7 +507,7 @@ static unsigned char *v4lconvert_alloc_buffer(struct v4lconvert_data *data,
 }
 
 static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
-  unsigned char *src, int src_size, unsigned char *dest,
+  unsigned char *src, int src_size, unsigned char *dest, int dest_size,
   struct v4l2_format *fmt, unsigned int dest_pix_fmt)
 {
   unsigned int header_width, header_height;
@@ -619,6 +621,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_OV518:
     {
       unsigned char *d;
+      int d_size;
       int yvu = 0;
 
       if (dest_pix_fmt != V4L2_PIX_FMT_YUV420 &&
@@ -627,8 +630,11 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	      &data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
 	if (!d)
 	  return -1;
-      } else
+	d_size = width * height * 3 / 2;
+      } else {
 	d = dest;
+	d_size = dest_size;
+      }
 
       if (dest_pix_fmt == V4L2_PIX_FMT_YVU420)
 	yvu = 1;
@@ -647,7 +653,12 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);
 	  break;
 	case V4L2_PIX_FMT_OV518:
-	  v4lconvert_ov518_to_yuv420(src, d, width, height, yvu, src_size);
+	  if (v4lconvert_helper_decompress(data, LIBDIR "/libv4l/ov518-decomp",
+		     src, src_size, d, d_size, width, height, yvu)) {
+	    /* Corrupt frame, better get another one */
+	    errno = -EAGAIN;
+	    return -1;
+	  }
 	  break;
       }
 
@@ -883,7 +894,9 @@ int v4lconvert_convert(struct v4lconvert_data *data,
   int res, dest_needed, temp_needed, processing, convert = 0;
   int rotate90, vflip, hflip, crop;
   unsigned char *convert1_dest = dest;
+  int convert1_dest_size = dest_size;
   unsigned char *convert2_src = src, *convert2_dest = dest;
+  int convert2_dest_size = dest_size;
   unsigned char *rotate90_src = src, *rotate90_dest = dest;
   unsigned char *flip_src = src, *flip_dest = dest;
   unsigned char *crop_src = src;
@@ -960,6 +973,8 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     if (!convert1_dest)
       return -1;
 
+    convert1_dest_size =
+      my_src_fmt.fmt.pix.width * my_src_fmt.fmt.pix.height * 3;
     convert2_src = convert1_dest;
   }
 
@@ -969,6 +984,7 @@ int v4lconvert_convert(struct v4lconvert_data *data,
     if (!convert2_dest)
       return -1;
 
+    convert2_dest_size = temp_needed;
     rotate90_src = flip_src = crop_src = convert2_dest;
   }
 
@@ -993,7 +1009,8 @@ int v4lconvert_convert(struct v4lconvert_data *data,
   /* Done setting sources / dest and allocating intermediate buffers,
      real conversion / processing / ... starts here. */
   if (convert == 2) {
-    res = v4lconvert_convert_pixfmt(data, src, src_size, convert1_dest,
+    res = v4lconvert_convert_pixfmt(data, src, src_size,
+				    convert1_dest, convert1_dest_size,
 				    &my_src_fmt,
 				    V4L2_PIX_FMT_RGB24);
     if (res)
@@ -1007,7 +1024,8 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 
   if (convert) {
     res = v4lconvert_convert_pixfmt(data, convert2_src, src_size,
-				    convert2_dest, &my_src_fmt,
+				    convert2_dest, convert2_dest_size,
+				    &my_src_fmt,
 				    my_dest_fmt.fmt.pix.pixelformat);
     if (res)
       return res;

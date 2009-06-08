@@ -20,6 +20,7 @@
 #define __LIBV4LCONVERT_PRIV_H
 
 #include <stdio.h>
+#include <sys/types.h>
 #include "libv4lconvert.h"
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
@@ -126,6 +127,11 @@ struct v4lconvert_data {
   unsigned char *convert_pixfmt_buf;
   struct v4lcontrol_data *control;
   struct v4lprocessing_data *processing;
+
+  /* Data for external decompression helpers code */
+  pid_t decompress_pid;
+  int decompress_in_pipe[2];  /* Data from helper to us */
+  int decompress_out_pipe[2]; /* Data from us to helper */
 };
 
 struct v4lconvert_pixfmt {
@@ -186,10 +192,6 @@ void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
 void v4lconvert_sn9c20x_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height, int yvu);
 
-/* Warning this one modifies its input buffer! */
-void v4lconvert_ov518_to_yuv420(unsigned char *src, unsigned char *dst,
-  int width, int height, int yvu, int src_size);
-
 void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
@@ -231,5 +233,11 @@ void v4lconvert_flip(unsigned char *src, unsigned char *dest,
 
 void v4lconvert_crop(unsigned char *src, unsigned char *dest,
   const struct v4l2_format *src_fmt, const struct v4l2_format *dest_fmt);
+
+int v4lconvert_helper_decompress(struct v4lconvert_data *data,
+  const char *helper, const unsigned char *src, int src_size,
+  unsigned char *dest, int dest_size, int width, int height, int command);
+
+void v4lconvert_helper_cleanup(struct v4lconvert_data *data);
 
 #endif
