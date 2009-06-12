@@ -42,6 +42,9 @@ static int v4lconvert_helper_write(int fd, const void *b, size_t count,
       if (errno == EINTR)
 	continue;
 
+      if (errno == EPIPE) /* Main program has quited */
+	exit(0);
+
       fprintf(stderr, "%s: error writing: %s\n", progname, strerror(errno));
       return -1;
     }

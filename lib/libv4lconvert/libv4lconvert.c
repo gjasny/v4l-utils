@@ -63,6 +63,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_MR97310A,     V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_SQ905C,       V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_PJPG,         V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_OV511,        V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_OV518,        V4LCONVERT_COMPRESSED },
 };
 
@@ -618,6 +619,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SPCA505:
     case V4L2_PIX_FMT_SPCA508:
     case V4L2_PIX_FMT_SN9C20X_I420:
+    case V4L2_PIX_FMT_OV511:
     case V4L2_PIX_FMT_OV518:
     {
       unsigned char *d;
@@ -651,6 +653,14 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  break;
 	case V4L2_PIX_FMT_SN9C20X_I420:
 	  v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);
+	  break;
+	case V4L2_PIX_FMT_OV511:
+	  if (v4lconvert_helper_decompress(data, LIBDIR "/libv4l/ov511-decomp",
+		     src, src_size, d, d_size, width, height, yvu)) {
+	    /* Corrupt frame, better get another one */
+	    errno = -EAGAIN;
+	    return -1;
+	  }
 	  break;
 	case V4L2_PIX_FMT_OV518:
 	  if (v4lconvert_helper_decompress(data, LIBDIR "/libv4l/ov518-decomp",

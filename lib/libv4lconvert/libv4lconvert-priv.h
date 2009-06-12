@@ -84,6 +84,10 @@
 #define V4L2_PIX_FMT_SN9C20X_I420  v4l2_fourcc('S', '9', '2', '0')
 #endif
 
+#ifndef V4L2_PIX_FMT_OV511
+#define V4L2_PIX_FMT_OV511 v4l2_fourcc('O', '5', '1', '1')
+#endif
+
 #ifndef V4L2_PIX_FMT_OV518
 #define V4L2_PIX_FMT_OV518 v4l2_fourcc('O', '5', '1', '8') /* ov518 JPEG */
 #endif
