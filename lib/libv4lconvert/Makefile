@@ -33,7 +33,7 @@ ifeq ($(LIBDIR),)
 LIBDIR = $(PREFIX)/lib
 endif
 
-override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)/\"
+override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)\"
 
 all: $(TARGETS)
 

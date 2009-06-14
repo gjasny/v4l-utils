@@ -603,9 +603,10 @@ static int v4lconvert_ov511_to_yuv420(unsigned char *src, unsigned char *dest,
 
 	src_size -= 11; /* Remove footer */
 
+	remove0blocks(src, &src_size);
+
 	/* Compressed ? */
 	if (src[8] & 0x40) {
-		remove0blocks(src, &src_size);
 		rc = Decompress420HiNoMMX(src + 9, dest, w, h, src_size);
 	} else {
 		yuv420raw_to_yuv420p(src + 9, dest, w, h);
