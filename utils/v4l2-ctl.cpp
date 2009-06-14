@@ -131,6 +131,8 @@ enum Option {
 	OptOverlay,
 	OptGetJpegComp,
 	OptSetJpegComp,
+	OptGetModulator,
+	OptSetModulator,
 	OptListDevices,
 	OptLast = 256
 };
@@ -260,6 +262,8 @@ static struct option long_options[] = {
 	{"set-crop-output-overlay", required_argument, 0, OptSetOutputOverlayCrop},
 	{"get-jpeg-comp", no_argument, 0, OptGetJpegComp},
 	{"set-jpeg-comp", required_argument, 0, OptSetJpegComp},
+	{"get-modulator", no_argument, 0, OptGetModulator},
+	{"set-modulator", required_argument, 0, OptSetModulator},
 	{"overlay", required_argument, 0, OptOverlay},
 	{"list-devices", no_argument, 0, OptListDevices},
 	{0, 0, 0, 0}
@@ -404,6 +408,15 @@ static void usage(void)
 	       "                     display audio outputs [VIDIOC_ENUMAUDOUT]\n"
 	       "  --list-audio-inputs\n"
 	       "                     display audio inputs [VIDIOC_ENUMAUDIO]\n"
+	       "  --get-modulator    query the modulator settings [VIDIOC_G_MODULATOR]\n"
+	       "  --set-modulator=<txsubchans>\n"
+	       "                     set the sub-carrier modulation [VIDIOC_S_MODULATOR]\n"
+	       "                     <txsubchans> is one of:\n"
+	       "                     mono:	 Modulate as mono\n"
+	       "                     stereo:	 Modulate as stereo\n"
+	       "                     bilingual:	 Modulate as bilingual\n"
+	       "                     mono-sap:	 Modulate as mono with Second Audio Program\n"
+	       "                     stereo-sap: Modulate as stereo with Second Audio Program\n"
 	       "\n");
 	printf("Expert options:\n"
 	       "  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n"
@@ -946,6 +959,21 @@ static std::string rxsubchans2s(int rxsubchans)
 	return s;
 }
 
+static std::string txsubchans2s(int txsubchans)
+{
+	std::string s;
+
+	if (txsubchans & V4L2_TUNER_SUB_MONO)
+		s += "mono";
+	if (txsubchans & V4L2_TUNER_SUB_STEREO)
+		s += "stereo";
+	if (txsubchans & V4L2_TUNER_SUB_LANG1)
+		s += "bilingual";
+	if (txsubchans & V4L2_TUNER_SUB_SAP)
+		s += "+sap";
+	return s;
+}
+
 static std::string tcap2s(unsigned cap)
 {
 	std::string s;
@@ -1384,6 +1412,7 @@ int main(int argc, char **argv)
 	struct v4l2_jpegcompression jpegcomp; /* jpeg compression */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
+	int txsubchans;			/* set_modulator */
 	v4l2_std_id std;		/* get_std/set_std */
 	double freq = 0;		/* get/set frequency */
 	struct v4l2_frequency vf;	/* get_freq/set_freq */
@@ -1695,6 +1724,24 @@ int main(int argc, char **argv)
 				return 1;
 			}
 			break;
+		case OptSetModulator:
+			txsubchans = strtol(optarg, 0L, 0);
+			if (!strcmp(optarg, "stereo"))
+				txsubchans = V4L2_TUNER_SUB_STEREO;
+			else if (!strcmp(optarg, "stereo-sap"))
+				txsubchans = V4L2_TUNER_SUB_STEREO | V4L2_TUNER_SUB_SAP;
+			else if (!strcmp(optarg, "bilingual"))
+				txsubchans = V4L2_TUNER_SUB_LANG1;
+			else if (!strcmp(optarg, "mono"))
+				txsubchans = V4L2_TUNER_SUB_MONO;
+			else if (!strcmp(optarg, "mono-sap"))
+				txsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_SAP;
+			else {
+				fprintf(stderr, "Unknown txsubchans value\n");
+				usage();
+				return 1;
+			}
+			break;
 		case OptSetSlicedVbiFormat:
 		case OptSetSlicedVbiOutFormat:
 		case OptTrySlicedVbiFormat:
@@ -1861,6 +1908,7 @@ int main(int argc, char **argv)
 		options[OptGetStandard] = 1;
 		options[OptGetFreq] = 1;
 		options[OptGetTuner] = 1;
+		options[OptGetModulator] = 1;
 		options[OptGetOverlayFormat] = 1;
 		options[OptGetOutputOverlayFormat] = 1;
 		options[OptGetVbiFormat] = 1;
@@ -1951,6 +1999,16 @@ int main(int argc, char **argv)
 		if (doioctl(fd, VIDIOC_G_TUNER, &vt, "VIDIOC_G_TUNER") == 0) {
 			vt.audmode = mode;
 			doioctl(fd, VIDIOC_S_TUNER, &vt, "VIDIOC_S_TUNER");
+		}
+	}
+
+	if (options[OptSetModulator]) {
+		struct v4l2_modulator mt;
+
+		memset(&mt, 0, sizeof(struct v4l2_modulator));
+		if (doioctl(fd, VIDIOC_G_MODULATOR, &mt, "VIDIOC_G_MODULATOR") == 0) {
+			mt.txsubchans = txsubchans;
+			doioctl(fd, VIDIOC_S_MODULATOR, &mt, "VIDIOC_S_MODULATOR");
 		}
 	}
 
@@ -2403,6 +2461,7 @@ set_vid_fmt_error:
 
 	if (options[OptGetTuner]) {
 		struct v4l2_tuner vt;
+
 		memset(&vt, 0, sizeof(struct v4l2_tuner));
 		if (doioctl(fd, VIDIOC_G_TUNER, &vt, "VIDIOC_G_TUNER") == 0) {
 			printf("Tuner:\n");
@@ -2418,6 +2477,25 @@ set_vid_fmt_error:
 			printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode));
 			printf("\tAvailable subchannels: %s\n",
 					rxsubchans2s(vt.rxsubchans).c_str());
+		}
+	}
+
+	if (options[OptGetModulator]) {
+		struct v4l2_modulator mt;
+
+		memset(&mt, 0, sizeof(struct v4l2_modulator));
+		if (doioctl(fd, VIDIOC_G_MODULATOR, &mt, "VIDIOC_G_MODULATOR") == 0) {
+			printf("Modulator:\n");
+			printf("\tName                 : %s\n", mt.name);
+			printf("\tCapabilities         : %s\n", tcap2s(mt.capability).c_str());
+			if (mt.capability & V4L2_TUNER_CAP_LOW)
+				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
+				     mt.rangelow / 16000.0, mt.rangehigh / 16000.0);
+			else
+				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
+				     mt.rangelow / 16.0, mt.rangehigh / 16.0);
+			printf("\tSubchannel modulation: %s\n",
+					txsubchans2s(mt.txsubchans).c_str());
 		}
 	}
 
