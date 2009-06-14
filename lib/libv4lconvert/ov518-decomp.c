@@ -1325,7 +1325,7 @@ decompress420NoMMXOV518(unsigned char	 *pIn,
 		return 1;
 
 	/* Did we decode enough? */
-	if (cinfo->bytes >= cinfo->rawLen - 897)
+	if (cinfo->bytes >= cinfo->rawLen - (897 + 64))
 		return 0;
 	else
 		return 1;
@@ -1420,7 +1420,8 @@ static int v4lconvert_ov518_to_yuv420(unsigned char *src, unsigned char *dst,
 		return -1;
 
 	/* Decompress, skipping the 8-byte SOF header */
-	decompress420NoMMXOV518(src + 8, dst, pTmp, w, h, numpix, &cinfo, yvu);
+	if (decompress420NoMMXOV518(src + 8, dst, pTmp, w, h, numpix, &cinfo, yvu))
+		return -1;
 
 	return 0;
 }
