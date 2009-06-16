@@ -359,7 +359,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
   int i, result;
   unsigned int desired_width = dest_fmt->fmt.pix.width;
   unsigned int desired_height = dest_fmt->fmt.pix.height;
-  struct v4l2_format try_src, try_dest;
+  struct v4l2_format try_src, try_dest, try2_src, try2_dest;
 
   if (dest_fmt->type == V4L2_BUF_TYPE_VIDEO_CAPTURE &&
       v4lconvert_supported_dst_fmt_only(data) &&
@@ -378,6 +378,29 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
     return result;
   }
 
+  /* In case of a non exact resolution match, try again with a slightly larger
+     resolution as some weird devices are not able to crop of the number of
+     extra (border) pixels most sensors have compared to standard resolutions,
+     which we will then just crop of in software */
+  if (try_dest.fmt.pix.width != desired_width ||
+      try_dest.fmt.pix.height != desired_height) {
+    try2_dest = *dest_fmt;
+    try2_dest.fmt.pix.width  = desired_width + 7;
+    try2_dest.fmt.pix.height = desired_height + 1;
+    result = v4lconvert_do_try_format(data, &try2_dest, &try2_src);
+    if (result == 0 &&
+	try2_dest.fmt.pix.width >= desired_width &&
+	try2_dest.fmt.pix.width <= desired_width + 7 &&
+	try2_dest.fmt.pix.height >= desired_height &&
+	try2_dest.fmt.pix.height <= desired_height + 1) {
+      /* Success! */
+      try2_dest.fmt.pix.width = desired_width;
+      try2_dest.fmt.pix.height = desired_height;
+      try_dest = try2_dest;
+      try_src = try2_src;
+    }
+  }
+
   /* In case of a non exact resolution match, see if this is a well known
      resolution some apps are hardcoded too and try to give the app what it
      asked for by cropping a slightly larger resolution or adding a small
@@ -387,7 +410,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
     for (i = 0; i < ARRAY_SIZE(v4lconvert_crop_res); i++) {
       if (v4lconvert_crop_res[i][0] == desired_width &&
 	  v4lconvert_crop_res[i][1] == desired_height) {
-	struct v4l2_format try2_src, try2_dest = *dest_fmt;
+	try2_dest = *dest_fmt;
 
 	/* Note these are chosen so that cropping to vga res just works for
 	   vv6410 sensor cams, which have 356x292 and 180x148 */
@@ -423,20 +446,13 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
 
   /* Some applications / libs (*cough* gstreamer *cough*) will not work
      correctly with planar YUV formats when the width is not a multiple of 8
-     or the height is not a multiple of 2 */
-  if (try_dest.fmt.pix.pixelformat == V4L2_PIX_FMT_YUV420 ||
-      try_dest.fmt.pix.pixelformat == V4L2_PIX_FMT_YVU420) {
-    try_dest.fmt.pix.width &= ~7;
-    try_dest.fmt.pix.height &= ~1;
-  }
+     or the height is not a multiple of 2. With RGB formats these apps require
+     the width to be a multiple of 4. We apply the same rounding to all
+     formats to not end up with 2 close but different resolutions. */
+  try_dest.fmt.pix.width &= ~7;
+  try_dest.fmt.pix.height &= ~1;
 
-  /* Likewise the width needs to be a multiple of 4 for RGB formats
-     (although I've never seen a device with a width not a multiple of 4) */
-  if (try_dest.fmt.pix.pixelformat == V4L2_PIX_FMT_RGB24 ||
-      try_dest.fmt.pix.pixelformat == V4L2_PIX_FMT_BGR24)
-    try_dest.fmt.pix.width &= ~3;
-
-  /* Are we converting? */
+  /* Are we converting / cropping ? */
   if(try_src.fmt.pix.width != try_dest.fmt.pix.width ||
      try_src.fmt.pix.height != try_dest.fmt.pix.height ||
      try_src.fmt.pix.pixelformat != try_dest.fmt.pix.pixelformat)
@@ -1147,12 +1163,8 @@ int v4lconvert_enum_framesizes(struct v4lconvert_data *data,
     case V4L2_FRMSIZE_TYPE_DISCRETE:
       frmsize->discrete = data->framesizes[frmsize->index].discrete;
       /* Apply the same rounding algorithm as v4lconvert_try_format */
-      if (frmsize->pixel_format == V4L2_PIX_FMT_YUV420 ||
-	  frmsize->pixel_format == V4L2_PIX_FMT_YVU420) {
-	frmsize->discrete.width &= ~7;
-	frmsize->discrete.height &= ~1;
-      } else
-	frmsize->discrete.width &= ~3;
+      frmsize->discrete.width &= ~7;
+      frmsize->discrete.height &= ~1;
       break;
     case V4L2_FRMSIZE_TYPE_CONTINUOUS:
     case V4L2_FRMSIZE_TYPE_STEPWISE:
