@@ -78,6 +78,11 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x046d, 0x0928, 7,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
   /* logitech quickcam express stv06xx + pb0100 */
   { 0x046d, 0x0840, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
+  /* logitech quickcam messenger variants, st6422 */
+  { 0x046d, 0x08f0, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
+  { 0x046d, 0x08f5, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
+  { 0x046d, 0x08f6, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
+  { 0x046d, 0x08da, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
 };
 
 static const struct v4l2_queryctrl fake_controls[];
