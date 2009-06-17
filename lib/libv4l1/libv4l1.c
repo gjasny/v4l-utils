@@ -307,7 +307,7 @@ int v4l1_open (const char *file, int oflag, ...)
 
   /* Register with libv4l2, as we use that todo format conversion and read()
      emulation for us */
-  if (v4l2_fd_open(fd, V4L2_ENABLE_ENUM_FMT_EMULATION) == -1) {
+  if (v4l2_fd_open(fd, 0) == -1) {
     int saved_err = errno;
     SYS_CLOSE(fd);
     errno = saved_err;
@@ -542,22 +542,25 @@ int v4l1_ioctl (int fd, unsigned long int request, ...)
       break;
 
     case VIDIOCSWIN:
+    case VIDIOCGWIN:
       {
 	struct video_window *win = arg;
 
 	devices[index].flags |= V4L1_PIX_SIZE_TOUCHED;
 
-	result = v4l1_set_format(index, win->width, win->height, -1, 1);
+	if (request == VIDIOCSWIN)
+	  result = v4l1_set_format(index, win->width, win->height, -1, 1);
+	else
+	  result = 0;
+
 	if (result == 0) {
+	  win->x = 0;
+	  win->y = 0;
 	  win->width  = devices[index].width;
 	  win->height = devices[index].height;
+	  win->flags = 0;
 	}
       }
-      break;
-
-    case VIDIOCGWIN:
-      devices[index].flags |= V4L1_PIX_SIZE_TOUCHED;
-      result = SYS_IOCTL(fd, request, arg);
       break;
 
     case VIDIOCGCHAN:
