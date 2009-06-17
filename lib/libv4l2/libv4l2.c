@@ -773,7 +773,9 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       V4L2_LOG("Setting pixelformat to RGB24 (supported_dst_fmt_only)");
       devices[index].flags |= V4L2_STREAM_TOUCHED;
       fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+      pthread_mutex_unlock(&devices[index].stream_lock);
       v4l2_ioctl(fd, VIDIOC_S_FMT, &fmt);
+      pthread_mutex_lock(&devices[index].stream_lock);
       V4L2_LOG("Done setting pixelformat (supported_dst_fmt_only)");
     }
     devices[index].flags |= V4L2_STREAM_TOUCHED;
