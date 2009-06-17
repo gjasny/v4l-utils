@@ -219,14 +219,14 @@ static void v4l1_find_min_and_max_size(int index, struct v4l2_format *fmt2)
   for (i = 0; ; i++) {
     fmtdesc2.index = i;
 
-    if (SYS_IOCTL(devices[index].fd, VIDIOC_ENUM_FMT, &fmtdesc2))
+    if (v4l2_ioctl(devices[index].fd, VIDIOC_ENUM_FMT, &fmtdesc2))
       break;
 
     fmt2->fmt.pix.pixelformat = fmtdesc2.pixelformat;
     fmt2->fmt.pix.width = 48;
     fmt2->fmt.pix.height = 32;
 
-    if (SYS_IOCTL(devices[index].fd, VIDIOC_TRY_FMT, fmt2) == 0) {
+    if (v4l2_ioctl(devices[index].fd, VIDIOC_TRY_FMT, fmt2) == 0) {
       if (fmt2->fmt.pix.width < devices[index].min_width)
 	devices[index].min_width = fmt2->fmt.pix.width;
       if (fmt2->fmt.pix.height < devices[index].min_height)
@@ -237,7 +237,7 @@ static void v4l1_find_min_and_max_size(int index, struct v4l2_format *fmt2)
     fmt2->fmt.pix.width = 100000;
     fmt2->fmt.pix.height = 100000;
 
-    if (SYS_IOCTL(devices[index].fd, VIDIOC_TRY_FMT, fmt2) == 0) {
+    if (v4l2_ioctl(devices[index].fd, VIDIOC_TRY_FMT, fmt2) == 0) {
       if (fmt2->fmt.pix.width > devices[index].max_width)
 	devices[index].max_width = fmt2->fmt.pix.width;
       if (fmt2->fmt.pix.height > devices[index].max_height)
