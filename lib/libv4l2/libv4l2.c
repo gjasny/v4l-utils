@@ -507,6 +507,16 @@ int v4l2_fd_open(int fd, int v4l2_flags)
   devices[index].src_fmt = fmt;
   devices[index].dest_fmt = fmt;
 
+  /* When a user does a try_fmt with the current dest_fmt and the dest_fmt
+     is a supported one we will align the resulution (see try_fmt for why).
+     Do the same here now, so that a try_fmt on the result of a get_fmt done
+     immediately after open leaves the fmt unchanged. */
+  if (v4lconvert_supported_dst_format(
+				devices[index].dest_fmt.fmt.pix.pixelformat)) {
+    devices[index].dest_fmt.fmt.pix.width &= ~7;
+    devices[index].dest_fmt.fmt.pix.height &= ~1;
+  }
+
   pthread_mutex_init(&devices[index].stream_lock, NULL);
 
   devices[index].no_frames = 0;
@@ -748,6 +758,7 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
 
 
   if (stream_needs_locking) {
+    pthread_mutex_lock(&devices[index].stream_lock);
     /* If this is the first stream related ioctl, and we should only allow
        libv4lconvert supported destination formats (so that it can do flipping,
        processing, etc.) and the current destination format is not supported,
@@ -765,7 +776,6 @@ int v4l2_ioctl (int fd, unsigned long int request, ...)
       v4l2_ioctl(fd, VIDIOC_S_FMT, &fmt);
       V4L2_LOG("Done setting pixelformat (supported_dst_fmt_only)");
     }
-    pthread_mutex_lock(&devices[index].stream_lock);
     devices[index].flags |= V4L2_STREAM_TOUCHED;
   }
 
