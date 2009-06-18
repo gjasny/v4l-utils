@@ -713,6 +713,9 @@ int main(int argc, char **argv)
 		case V4L2_IDENT_CX23418:
 			name = "cx23418";
 			break;
+		case V4L2_IDENT_CAFE:
+			name = "cafe";
+			break;
 		default:
 			if (get_reg.match.type == V4L2_CHIP_MATCH_I2C_DRIVER)
 				name = get_reg.match.name;
@@ -726,6 +729,8 @@ int main(int argc, char **argv)
 			print_regs(fd, &get_reg, 0, 0xff, stride);
 		} else if (name == "saa7127") {
 			print_regs(fd, &get_reg, 0, 0x7f, stride);
+		} else if (name == "ov7670") {
+			print_regs(fd, &get_reg, 0, 0x89, stride);
 		} else if (name == "cx25840") {
 			print_regs(fd, &get_reg, 0, 2, stride);
 			print_regs(fd, &get_reg, 0x100, 0x15f, stride);
@@ -738,6 +743,11 @@ int main(int argc, char **argv)
 			print_regs(fd, &get_reg, 0x02000000, 0x020000ff, stride);
 		} else if (name == "cx23418") {
 			print_regs(fd, &get_reg, 0x02c40000, 0x02c409c7, stride);
+		} else if (name == "cafe") {
+			print_regs(fd, &get_reg, 0, 0x43, stride);
+			print_regs(fd, &get_reg, 0x88, 0x8f, stride);
+			print_regs(fd, &get_reg, 0xb4, 0xbb, stride);
+			print_regs(fd, &get_reg, 0x3000, 0x300c, stride);
 		} else {
 			/* unknown chip, dump 0-0xff by default */
 			print_regs(fd, &get_reg, 0, 0xff, stride);

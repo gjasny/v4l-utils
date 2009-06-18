@@ -52,12 +52,6 @@
 #define CX18_DBGFLG_HIGHVOL (1 << 8)
 
 /* Internals copied from media/v4l2-common.h */
-struct v4l2_routing {
-	__u32 input;
-	__u32 output;
-};
-#define	VIDIOC_INT_S_AUDIO_ROUTING	_IOW('d', 109, struct v4l2_routing)
-
 #define VIDIOC_INT_RESET            	_IOW('d', 102, __u32)
 
 #define __stringify_1(x)	#x
@@ -80,7 +74,6 @@ enum Option {
 	OptHelp = 'h',
 	OptSetGPIO = 'i',
 	OptListGPIO = 'I',
-	OptSetAudioRoute = 'v',
 	OptReset = 128,
 	OptVersion,
 	OptLast = 256
@@ -97,7 +90,6 @@ static struct option long_options[] = {
 	{"help", no_argument, 0, OptHelp},
 	{"set-gpio", required_argument, 0, OptSetGPIO},
 	{"list-gpio", no_argument, 0, OptListGPIO},
-	{"audio-route", required_argument, 0, OptSetAudioRoute},
 	{"reset", required_argument, 0, OptReset},
 	{"version", no_argument, 0, OptVersion},
 	{0, 0, 0, 0}
@@ -129,8 +121,6 @@ static void usage(void)
 	printf("                     show GPIO input/direction/output bits\n");
 	printf("  -i, --set-gpio [dir=<dir>,]val=<val>\n");
 	printf("                     set GPIO direction bits to <dir> and set output to <val>\n");
-	printf("  -v, --audio-route=input=<in>,output=<out>\n");
-	printf("                     set the audio input/output routing [VIDIOC_INT_S_AUDIO_ROUTING]\n");
 	exit(0);
 }
 
@@ -250,14 +240,8 @@ int main(int argc, char **argv)
 	char *subopts[] = {
 #define SUB_VAL				0
 		"val",
-#define SUB_YUV_MODE			1
-		"mode",
-#define SUB_DIR				2
+#define SUB_DIR				1
 		"dir",
-#define SUB_INPUT                       3
-		"input",
-#define SUB_OUTPUT                      4
-		"output",
 
 		NULL
 	};
@@ -270,7 +254,6 @@ int main(int argc, char **argv)
 	const char *device = "/dev/video0";	/* -d device */
 	int ch;
 	int yuv_mode = 0;
-	struct v4l2_routing route;	/* audio_route */
 	unsigned int gpio_out = 0x0;	/* GPIO output data */
 	unsigned int gpio_dir = 0x0;	/* GPIO direction bits */
 	int gpio_set_dir = 0;
@@ -319,34 +302,6 @@ int main(int argc, char **argv)
 
 				sprintf(newdev, "/dev/video%c", dev);
 				device = newdev;
-			}
-			break;
-		case OptSetAudioRoute:
-			subs = optarg;
-			while (*subs != '\0') {
-				switch (getsubopt(&subs, subopts, &value)) {
-				case SUB_INPUT:
-					if (value == NULL) {
-						printf
-						    ("No value given to suboption <input>\n");
-						usage();
-					}
-					route.input = strtol(value, 0L, 0);
-					break;
-				case SUB_OUTPUT:
-					if (value == NULL) {
-						printf
-						    ("No value given to suboption <output>\n");
-						usage();
-					}
-					route.output = strtol(value, 0L, 0);
-					break;
-				default:
-					printf
-					    ("Invalid suboptions specified\n");
-					usage();
-					break;
-				}
 			}
 			break;
 		case OptReset:
@@ -414,10 +369,6 @@ int main(int argc, char **argv)
 	}
 
 	/* Setting Opts */
-
-	if (options[OptSetAudioRoute])
-		doioctl(fd, VIDIOC_INT_S_AUDIO_ROUTING, &route, "VIDIOC_INT_S_AUDIO_ROUTING");
-
 	if (options[OptSetGPIO]) {
 		struct v4l2_dbg_register reg;
 
