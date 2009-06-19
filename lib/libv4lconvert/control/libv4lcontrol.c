@@ -57,9 +57,24 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   /* Genius E-M 112 (also want whitebalance by default) */
   { 0x093a, 0x2476, 0, NULL, NULL,
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED|V4LCONTROL_WANTS_WB, 1500 },
-  /* Asus N50Vn laptop */
-  { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vn      ",
+  /* Laptops */
+  { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vn     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "F7SR      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "W7S       ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "X55SV     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "N20A      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "F3Sr      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G1S                 ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G2S       ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+
 /* Second: devices which should use some software processing by default */
   /* Pac207 based devices */
   { 0x041e, 0x4028, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
