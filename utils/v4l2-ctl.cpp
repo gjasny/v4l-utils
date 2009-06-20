@@ -943,6 +943,8 @@ static std::string rxsubchans2s(int rxsubchans)
 		s += "lang1 ";
 	if (rxsubchans & V4L2_TUNER_SUB_LANG2)
 		s += "lang2 ";
+	if (rxsubchans & V4L2_TUNER_SUB_RDS)
+		s += "rds ";
 	return s;
 }
 
@@ -962,6 +964,8 @@ static std::string tcap2s(unsigned cap)
 		s += "lang1 ";
 	if (cap & V4L2_TUNER_CAP_LANG2)
 		s += "lang2 ";
+	if (cap & V4L2_TUNER_CAP_RDS)
+		s += "rds ";
 	return s;
 }
 
