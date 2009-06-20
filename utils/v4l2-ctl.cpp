@@ -1019,8 +1019,12 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tSliced VBI Output\n";
 	if (cap & V4L2_CAP_RDS_CAPTURE)
 		s += "\t\tRDS Capture\n";
+	if (cap & V4L2_CAP_RDS_OUTPUT)
+		s += "\t\tRDS Output\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
+	if (cap & V4L2_CAP_MODULATOR)
+		s += "\t\tModulator\n";
 	if (cap & V4L2_CAP_AUDIO)
 		s += "\t\tAudio\n";
 	if (cap & V4L2_CAP_RADIO)
