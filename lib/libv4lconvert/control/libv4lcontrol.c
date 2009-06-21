@@ -58,7 +58,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x093a, 0x2476, 0, NULL, NULL,
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED|V4LCONTROL_WANTS_WB, 1500 },
   /* Laptops */
-  { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vn     ",
+  { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vn      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N51Vg      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "F7SR      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
@@ -68,12 +70,18 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "N20A      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "F3Ke      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "F3Sr      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G1S                 ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G1Sn      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G2S       ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x5986, 0x0205, 0, "LENOVO", "Base Board Product Name",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, "Lenovo IdeaPad U330" },
 
 /* Second: devices which should use some software processing by default */
   /* Pac207 based devices */
@@ -111,6 +119,7 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
   unsigned short product_id = 0;
   char dmi_board_vendor[512] = "";
   char dmi_board_name[512]= "";
+  char dmi_system_version[512]= "";
   int i, minor;
   char c, *s, buf[32];
   struct v4l2_input input;
@@ -206,6 +215,14 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
     fclose(f);
   }
 
+  f = fopen("/sys/devices/virtual/dmi/id/product_version", "r");
+  if (f) {
+    s = fgets(dmi_system_version, sizeof(dmi_system_version), f);
+    if (s)
+      s[strlen(s) - 1] = 0;
+    fclose(f);
+  }
+
   for (i = 0; i < ARRAY_SIZE(v4lcontrol_flags); i++)
     if (v4lcontrol_flags[i].vendor_id == vendor_id &&
 	v4lcontrol_flags[i].product_id ==
@@ -213,7 +230,9 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
 	(v4lcontrol_flags[i].dmi_board_vendor == NULL ||
 	 !strcmp(v4lcontrol_flags[i].dmi_board_vendor, dmi_board_vendor)) &&
 	(v4lcontrol_flags[i].dmi_board_name == NULL ||
-	 !strcmp(v4lcontrol_flags[i].dmi_board_name, dmi_board_name))) {
+	 !strcmp(v4lcontrol_flags[i].dmi_board_name, dmi_board_name)) &&
+	(v4lcontrol_flags[i].dmi_system_version == NULL ||
+	 !strcmp(v4lcontrol_flags[i].dmi_system_version, dmi_system_version))) {
       data->flags |= v4lcontrol_flags[i].flags;
       data->flags_info = &v4lcontrol_flags[i];
       break;

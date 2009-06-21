@@ -49,6 +49,10 @@ struct v4lcontrol_flags_info {
   const char *product; */
   int flags;
   int default_gamma;
+/* Some seldom used dmi strings (for notebooks with bogus info in the board
+   entries, but usefull info elsewhere). We keep this at the end as to not
+   polute the initalizers for the normal case. */
+  const char *dmi_system_version;
 };
 
 #endif
