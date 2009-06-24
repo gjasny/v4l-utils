@@ -6,8 +6,8 @@ libv4l-0.6.0
   an external helper as I've failed to contact Mark W. McClelland to get
   permission to relicense the code. If you know a working email address for
   Mark W. McClelland, please let me know.
-* Fix a bug in the always report widths which are a multiple of 8 code added
-  in 0.5.97
+* Add various laptop models to the upside down devices table
+* Many bug fixes (see the mercurial tree for details)
 
 libv4l-0.5.99
 -------------
