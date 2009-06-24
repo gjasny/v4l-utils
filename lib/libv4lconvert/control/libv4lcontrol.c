@@ -83,6 +83,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G2S       ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  /* Asus notebook in disguise */
+  { 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG46",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x5986, 0x0205, 0, "LENOVO", "Base Board Product Name",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, "Lenovo IdeaPad U330" },
 
