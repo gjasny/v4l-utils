@@ -1,8 +1,10 @@
 /*
 
 # RGB <-> YUV conversion routines
-
 #             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+
+# RGB565 conversion routines
+#             (C) 2009 Mauro Carvalho Chehab <mchehab@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -470,5 +472,105 @@ void v4lconvert_swap_uv(const unsigned char *src, unsigned char *dest,
     memcpy(dest, src, src_fmt->fmt.pix.width / 2);
     dest += src_fmt->fmt.pix.width / 2;
     src += src_fmt->fmt.pix.bytesperline / 2;
+  }
+}
+
+void v4lconvert_rgb565_to_rgb24(const unsigned char *src, unsigned char *dest,
+  int width, int height)
+{
+  int j;
+  while (--height >= 0) {
+    for (j = 0; j < width; j++) {
+      unsigned short tmp = *(unsigned short *)src;
+
+      /* Original format: rrrrrggg gggbbbbb */
+      *dest++ = 0xf8 & (tmp >> 8);
+      *dest++ = 0xfc & (tmp >> 3);
+      *dest++ = 0xf8 & (tmp << 3);
+
+      src += 2;
+    }
+  }
+}
+
+void v4lconvert_rgb565_to_bgr24(const unsigned char *src, unsigned char *dest,
+  int width, int height)
+{
+  int j;
+  while (--height >= 0) {
+    for (j = 0; j < width; j++) {
+      unsigned short tmp = *(unsigned short *)src;
+
+      /* Original format: rrrrrggg gggbbbbb */
+      *dest++ = 0xf8 & (tmp << 3);
+      *dest++ = 0xfc & (tmp >> 3);
+      *dest++ = 0xf8 & (tmp >> 8);
+
+      src += 2;
+    }
+  }
+}
+
+void v4lconvert_rgb565_to_yuv420(const unsigned char *src, unsigned char *dest,
+  const struct v4l2_format *src_fmt, int yvu)
+{
+  int x, y;
+  unsigned short tmp;
+  unsigned char *udest, *vdest;
+  unsigned r[4], g[4], b[4];
+  int avg_src[3];
+
+  /* Y */
+  for (y = 0; y < src_fmt->fmt.pix.height; y++) {
+    for (x = 0; x < src_fmt->fmt.pix.width; x++) {
+      tmp = *(unsigned short *)src;
+      r[0] = 0xf8 & (tmp << 3);
+      g[0] = 0xfc & (tmp >> 3);
+      b[0] = 0xf8 & (tmp >> 8);
+      RGB2Y(r[0], g[0], b[0], *dest++);
+      src += 2;
+    }
+    src += src_fmt->fmt.pix.bytesperline - 2 * src_fmt->fmt.pix.width;
+  }
+  src -= src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline;
+
+  /* U + V */
+  if (yvu) {
+    vdest = dest;
+    udest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
+  } else {
+    udest = dest;
+    vdest = dest + src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 4;
+  }
+
+  for (y = 0; y < src_fmt->fmt.pix.height / 2; y++) {
+    for (x = 0; x < src_fmt->fmt.pix.width / 2; x++) {
+      tmp = *(unsigned short *)src;
+      r[0] = 0xf8 & (tmp << 3);
+      g[0] = 0xfc & (tmp >> 3);
+      b[0] = 0xf8 & (tmp >> 8);
+
+      tmp = *(((unsigned short *)src) + 1);
+      r[1] = 0xf8 & (tmp << 3);
+      g[1] = 0xfc & (tmp >> 3);
+      b[1] = 0xf8 & (tmp >> 8);
+
+      tmp = *(((unsigned short *)src) + src_fmt->fmt.pix.bytesperline);
+      r[2] = 0xf8 & (tmp << 3);
+      g[2] = 0xfc & (tmp >> 3);
+      b[2] = 0xf8 & (tmp >> 8);
+
+      tmp = *(((unsigned short *)src) + src_fmt->fmt.pix.bytesperline + 1);
+      r[3] = 0xf8 & (tmp << 3);
+      g[3] = 0xfc & (tmp >> 3);
+      b[3] = 0xf8 & (tmp >> 8);
+
+      avg_src[0] = (r[0] + r[1] + r[2] + r[3]) /4;
+      avg_src[1] = (g[0] + g[1] + g[2] + g[3]) /4;
+      avg_src[2] = (b[0] + b[1] + b[2] + b[3]) /4;
+      RGB2UV(avg_src[0], avg_src[1], avg_src[2], *udest++, *vdest++);
+      src += 4;
+    }
+    src += 2 * src_fmt->fmt.pix.bytesperline - 2 * src_fmt->fmt.pix.width;
   }
 }

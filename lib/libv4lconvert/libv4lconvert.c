@@ -46,6 +46,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_YUYV,         0 },
   { V4L2_PIX_FMT_YVYU,         0 },
   { V4L2_PIX_FMT_UYVY,         0 },
+  { V4L2_PIX_FMT_RGB565,       0 },
   { V4L2_PIX_FMT_SN9C20X_I420, V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SBGGR8,       V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SGBRG8,       V4LCONVERT_NEEDS_CONVERSION },
@@ -783,6 +784,23 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	break;
       case V4L2_PIX_FMT_YVU420:
 	v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 1);
+	break;
+      }
+      break;
+
+    case V4L2_PIX_FMT_RGB565:
+      switch (dest_pix_fmt) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_rgb565_to_rgb24(src, dest, width, height);
+	break;
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_rgb565_to_bgr24(src, dest, width, height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_rgb565_to_yuv420(src, dest, fmt, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_rgb565_to_yuv420(src, dest, fmt, 1);
 	break;
       }
       break;
