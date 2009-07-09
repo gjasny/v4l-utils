@@ -70,12 +70,20 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "X55SV     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  /* These 2 PACKARD BELL's are Asus notebook in disguise */
+  { 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG45",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG46",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "K40IJ     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "N10J      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   /* Note no whitespace padding for board vendor, this is not a typo */
   { 0x064e, 0xa111, 0, "ASUSTeK Computer Inc.", "F5RL      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  /* Another Asus laptop in disguise */
+  { 0x064e, 0xa111, 0, "PEGATRON CORPORATION         ", "F5SR    ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "N20A      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
@@ -95,11 +103,6 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G1Sn      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G2S       ",
-    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
-  /* These PACKARD BELL's are Asus notebook in disguise */
-  { 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG45",
-    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
-  { 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG46",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x5986, 0x0205, 0, "LENOVO", "Base Board Product Name",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, "Lenovo IdeaPad U330" },
