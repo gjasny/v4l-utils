@@ -9,6 +9,9 @@ libv4l-0.6.0
 * Add tons of laptop models to the upside down devices table
 * Support for rgb565 source format by Mauro Carvalho Chehab
 * Many bug fixes (see the mercurial tree for details)
+* Improved pac207 decompression code to also support higher compression
+  modes of the pac207, which enables us to use higher framerates.
+  Many many thanks to Bertrik Sikken for figuring the decompression out!
 
 libv4l-0.5.99
 -------------

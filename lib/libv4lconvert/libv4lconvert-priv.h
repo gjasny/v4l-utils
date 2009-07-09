@@ -211,7 +211,8 @@ void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,
 void v4lconvert_decode_sn9c10x(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
-void v4lconvert_decode_pac207(const unsigned char *src, unsigned char *dst,
+int v4lconvert_decode_pac207(struct v4lconvert_data *data,
+  const unsigned char *inp, int src_size, unsigned char *outp,
   int width, int height);
 
 void v4lconvert_decode_mr97310a(const unsigned char *src, unsigned char *dst,

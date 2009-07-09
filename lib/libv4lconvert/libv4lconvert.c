@@ -745,7 +745,12 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
 	  break;
 	case V4L2_PIX_FMT_PAC207:
-	  v4lconvert_decode_pac207(src, tmpbuf, width, height);
+	  if (v4lconvert_decode_pac207(data, src, src_size, tmpbuf,
+				       width, height)) {
+	    /* Corrupt frame, better get another one */
+	    errno = EAGAIN;
+	    return -1;
+	  }
 	  tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
 	  break;
 	case V4L2_PIX_FMT_MR97310A:
