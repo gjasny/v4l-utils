@@ -58,6 +58,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x093a, 0x2476, 0, NULL, NULL,
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED|V4LCONTROL_WANTS_WB, 1500 },
   /* Laptops */
+  { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vc      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vn      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N51Vg      ",
@@ -103,6 +105,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G1Sn      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G2S       ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0xa311, 0, "ASUSTeK Computer Inc.        ", "A3F       ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x5986, 0x0205, 0, "LENOVO", "Base Board Product Name",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, "Lenovo IdeaPad U330" },
