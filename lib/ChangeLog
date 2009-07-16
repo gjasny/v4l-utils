@@ -1,6 +1,7 @@
 libv4l-0.6.1
 ------------
 * Add more laptop models to the upside down devices table
+* Makefile changes to make life easier for the Debian package (Gregor Jasny)
 
 libv4l-0.6.0
 ------------

@@ -672,7 +672,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);
 	  break;
 	case V4L2_PIX_FMT_OV511:
-	  if (v4lconvert_helper_decompress(data, LIBDIR "/libv4l/ov511-decomp",
+	  if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov511-decomp",
 		     src, src_size, d, d_size, width, height, yvu)) {
 	    /* Corrupt frame, better get another one */
 	    errno = EAGAIN;
@@ -680,7 +680,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  }
 	  break;
 	case V4L2_PIX_FMT_OV518:
-	  if (v4lconvert_helper_decompress(data, LIBDIR "/libv4l/ov518-decomp",
+	  if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov518-decomp",
 		     src, src_size, d, d_size, width, height, yvu)) {
 	    /* Corrupt frame, better get another one */
 	    errno = EAGAIN;

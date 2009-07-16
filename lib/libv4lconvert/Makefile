@@ -33,7 +33,11 @@ ifeq ($(LIBDIR),)
 LIBDIR = $(PREFIX)/lib
 endif
 
-override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)\"
+ifeq ($(LIBSUBDIR),)
+LIBSUBDIR = libv4l
+endif
+
+override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBSUBDIR)\"
 
 all: $(TARGETS)
 
@@ -55,7 +59,7 @@ libv4lconvert.pc:
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/include
 	install -p -m 644 $(INCLUDES) $(DESTDIR)$(PREFIX)/include
-	mkdir -p $(DESTDIR)$(LIBDIR)/libv4l
+	mkdir -p $(DESTDIR)$(LIBDIR)/$(LIBSUBDIR)
 ifeq ($(LINKTYPE),static)
 	install -m 644 $(CONVERT_LIB) $(DESTDIR)$(LIBDIR)
 else
@@ -63,7 +67,7 @@ else
 	cd $(DESTDIR)$(LIBDIR) && \
 	  ln -f -s $(CONVERT_LIB).$(LIB_RELEASE) $(CONVERT_LIB)
 endif
-	install -m 755 *-decomp $(DESTDIR)$(LIBDIR)/libv4l
+	install -m 755 *-decomp $(DESTDIR)$(LIBDIR)/$(LIBSUBDIR)
 	mkdir -p $(DESTDIR)$(LIBDIR)/pkgconfig
 	install -m 644 libv4lconvert.pc $(DESTDIR)$(LIBDIR)/pkgconfig
 
