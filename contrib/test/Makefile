@@ -34,6 +34,6 @@ pixfmt-test: pixfmt-test.o
 	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@ -lX11
 
 v4l2grab: v4l2grab.o
-	$(CC) $(LDFLAGS) $^ -o $@ ../libv4l/libv4l2/libv4l2.so
+	$(CC) $(LDFLAGS) $^ -o $@ -L ../libv4l/libv4l2 -L ../libv4l/libv4lconvert -lv4l2 -lv4lconvert
 
 include ../Make.rules
