@@ -147,6 +147,7 @@ static unsigned capabilities;
 typedef std::vector<struct v4l2_ext_control> ctrl_list;
 static ctrl_list user_ctrls;
 static ctrl_list mpeg_ctrls;
+static ctrl_list camera_ctrls;
 
 typedef std::map<std::string, unsigned> ctrl_strmap;
 static ctrl_strmap ctrl_str2id;
@@ -2191,6 +2192,8 @@ set_vid_fmt_error:
 			ctrl.value = strtol(iter->second.c_str(), NULL, 0);
 			if (V4L2_CTRL_ID2CLASS(ctrl.id) == V4L2_CTRL_CLASS_MPEG)
 				mpeg_ctrls.push_back(ctrl);
+			else if (V4L2_CTRL_ID2CLASS(ctrl.id) == V4L2_CTRL_CLASS_CAMERA)
+				camera_ctrls.push_back(ctrl);
 			else
 				user_ctrls.push_back(ctrl);
 		}
@@ -2217,6 +2220,22 @@ set_vid_fmt_error:
 				else {
 					fprintf(stderr, "%s: %s\n",
 						ctrl_id2str[mpeg_ctrls[ctrls.error_idx].id].c_str(),
+						strerror(errno));
+				}
+			}
+		}
+		if (camera_ctrls.size()) {
+			ctrls.ctrl_class = V4L2_CTRL_CLASS_CAMERA;
+			ctrls.count = camera_ctrls.size();
+			ctrls.controls = &camera_ctrls[0];
+			if (doioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls, "VIDIOC_S_EXT_CTRLS")) {
+				if (ctrls.error_idx >= ctrls.count) {
+					fprintf(stderr, "Error setting CAMERA controls: %s\n",
+						strerror(errno));
+				}
+				else {
+					fprintf(stderr, "%s: %s\n",
+						ctrl_id2str[camera_ctrls[ctrls.error_idx].id].c_str(),
 						strerror(errno));
 				}
 			}
@@ -2436,6 +2455,7 @@ set_vid_fmt_error:
 		struct v4l2_ext_controls ctrls = { 0 };
 
 		mpeg_ctrls.clear();
+		camera_ctrls.clear();
 		user_ctrls.clear();
 		for (ctrl_get_list::iterator iter = get_ctrls.begin();
 				iter != get_ctrls.end(); ++iter) {
@@ -2444,6 +2464,8 @@ set_vid_fmt_error:
 			ctrl.id = ctrl_str2id[*iter];
 			if (V4L2_CTRL_ID2CLASS(ctrl.id) == V4L2_CTRL_CLASS_MPEG)
 				mpeg_ctrls.push_back(ctrl);
+			else if (V4L2_CTRL_ID2CLASS(ctrl.id) == V4L2_CTRL_CLASS_CAMERA)
+				camera_ctrls.push_back(ctrl);
 			else
 				user_ctrls.push_back(ctrl);
 		}
@@ -2461,6 +2483,17 @@ set_vid_fmt_error:
 			doioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls, "VIDIOC_G_EXT_CTRLS");
 			for (unsigned i = 0; i < mpeg_ctrls.size(); i++) {
 				struct v4l2_ext_control ctrl = mpeg_ctrls[i];
+
+				printf("%s: %d\n", ctrl_id2str[ctrl.id].c_str(), ctrl.value);
+			}
+		}
+		if (camera_ctrls.size()) {
+			ctrls.ctrl_class = V4L2_CTRL_CLASS_CAMERA;
+			ctrls.count = camera_ctrls.size();
+			ctrls.controls = &camera_ctrls[0];
+			doioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls, "VIDIOC_G_EXT_CTRLS");
+			for (unsigned i = 0; i < camera_ctrls.size(); i++) {
+				struct v4l2_ext_control ctrl = camera_ctrls[i];
 
 				printf("%s: %d\n", ctrl_id2str[ctrl.id].c_str(), ctrl.value);
 			}
