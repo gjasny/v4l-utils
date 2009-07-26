@@ -119,7 +119,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x174f, 0xa311, 0, "ASUSTeK Computer Inc.        ", "A3F       ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x5986, 0x0205, 0, "LENOVO", "Base Board Product Name",
-    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, "Lenovo IdeaPad U330" },
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
+    "Lenovo IdeaPad U330" },
 
 /* Second: devices which should use some software processing by default */
   /* Pac207 based devices */
@@ -148,6 +149,25 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 
 static const struct v4l2_queryctrl fake_controls[];
 
+static int v4lcontrol_get_dmi_string(const char *string, char *buf, int size)
+{
+  FILE *f;
+  char *s, sysfs_name[512];
+
+  snprintf(sysfs_name, sizeof(sysfs_name),
+	   "/sys/devices/virtual/dmi/id/%s", string);
+  f = fopen(sysfs_name, "r");
+  if (!f) {
+    buf[0] = 0;
+    return;
+  }
+
+  s = fgets(buf, size, f);
+  if (s)
+    s[strlen(s) - 1] = 0;
+  fclose(f);
+}
+
 static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
 {
   struct stat st;
@@ -155,9 +175,8 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
   char sysfs_name[512];
   unsigned short vendor_id = 0;
   unsigned short product_id = 0;
-  char dmi_board_vendor[512] = "";
-  char dmi_board_name[512]= "";
-  char dmi_system_version[512]= "";
+  char dmi_system_vendor[512], dmi_system_name[512], dmi_system_version[512];
+  char dmi_board_vendor[512], dmi_board_name[512], dmi_board_version[512];
   int i, minor;
   char c, *s, buf[32];
   struct v4l2_input input;
@@ -236,41 +255,39 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
       return; /* Should never happen */
   }
 
-  /* Get DMI board vendor and name */
-  f = fopen("/sys/devices/virtual/dmi/id/board_vendor", "r");
-  if (f) {
-    s = fgets(dmi_board_vendor, sizeof(dmi_board_vendor), f);
-    if (s)
-      s[strlen(s) - 1] = 0;
-    fclose(f);
-  }
+  /* Get DMI board and system strings */
+  v4lcontrol_get_dmi_string("sys_vendor", dmi_system_vendor,
+			    sizeof(dmi_system_vendor));
+  v4lcontrol_get_dmi_string("product_name", dmi_system_name,
+			    sizeof(dmi_system_name));
+  v4lcontrol_get_dmi_string("product_version", dmi_system_version,
+			    sizeof(dmi_system_version));
 
-  f = fopen("/sys/devices/virtual/dmi/id/board_name", "r");
-  if (f) {
-    s = fgets(dmi_board_name, sizeof(dmi_board_name), f);
-    if (s)
-      s[strlen(s) - 1] = 0;
-    fclose(f);
-  }
-
-  f = fopen("/sys/devices/virtual/dmi/id/product_version", "r");
-  if (f) {
-    s = fgets(dmi_system_version, sizeof(dmi_system_version), f);
-    if (s)
-      s[strlen(s) - 1] = 0;
-    fclose(f);
-  }
+  v4lcontrol_get_dmi_string("board_vendor", dmi_board_vendor,
+			    sizeof(dmi_board_vendor));
+  v4lcontrol_get_dmi_string("board_name", dmi_board_name,
+			    sizeof(dmi_board_name));
+  v4lcontrol_get_dmi_string("board_version", dmi_board_version,
+			    sizeof(dmi_board_version));
 
   for (i = 0; i < ARRAY_SIZE(v4lcontrol_flags); i++)
     if (v4lcontrol_flags[i].vendor_id == vendor_id &&
 	v4lcontrol_flags[i].product_id ==
 	  (product_id & ~v4lcontrol_flags[i].product_mask) &&
+
+	(v4lcontrol_flags[i].dmi_system_vendor == NULL ||
+	 !strcmp(v4lcontrol_flags[i].dmi_system_vendor, dmi_system_vendor)) &&
+	(v4lcontrol_flags[i].dmi_system_name == NULL ||
+	 !strcmp(v4lcontrol_flags[i].dmi_system_name, dmi_system_name)) &&
+	(v4lcontrol_flags[i].dmi_system_version == NULL ||
+	 !strcmp(v4lcontrol_flags[i].dmi_system_version, dmi_system_version)) &&
+
 	(v4lcontrol_flags[i].dmi_board_vendor == NULL ||
 	 !strcmp(v4lcontrol_flags[i].dmi_board_vendor, dmi_board_vendor)) &&
 	(v4lcontrol_flags[i].dmi_board_name == NULL ||
 	 !strcmp(v4lcontrol_flags[i].dmi_board_name, dmi_board_name)) &&
-	(v4lcontrol_flags[i].dmi_system_version == NULL ||
-	 !strcmp(v4lcontrol_flags[i].dmi_system_version, dmi_system_version))) {
+	(v4lcontrol_flags[i].dmi_board_version == NULL ||
+	 !strcmp(v4lcontrol_flags[i].dmi_board_version, dmi_board_version))) {
       data->flags |= v4lcontrol_flags[i].flags;
       data->flags_info = &v4lcontrol_flags[i];
       break;

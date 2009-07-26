@@ -52,6 +52,11 @@ struct v4lcontrol_flags_info {
 /* Some seldom used dmi strings (for notebooks with bogus info in the board
    entries, but usefull info elsewhere). We keep this at the end as to not
    polute the initalizers for the normal case. */
+  /* System (product) vendor / name */
+  const char *dmi_system_vendor;
+  const char *dmi_system_name;
+  /* Board and System versions */
+  const char *dmi_board_version;
   const char *dmi_system_version;
 };
 
