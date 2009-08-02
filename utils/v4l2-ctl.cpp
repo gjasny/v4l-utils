@@ -425,7 +425,9 @@ static void usage(void)
 	       "                     set the sub-carrier modulation [VIDIOC_S_MODULATOR]\n"
 	       "                     <txsubchans> is one of:\n"
 	       "                     mono:	 Modulate as mono\n"
+	       "                     mono-rds:	 Modulate as mono with RDS (radio only)\n"
 	       "                     stereo:	 Modulate as stereo\n"
+	       "                     stereo-rds: Modulate as stereo with RDS (radio only)\n"
 	       "                     bilingual:	 Modulate as bilingual\n"
 	       "                     mono-sap:	 Modulate as mono with Second Audio Program\n"
 	       "                     stereo-sap: Modulate as stereo with Second Audio Program\n"
@@ -988,6 +990,8 @@ static std::string txsubchans2s(int txsubchans)
 		s += "bilingual";
 	if (txsubchans & V4L2_TUNER_SUB_SAP)
 		s += "+sap";
+	if (txsubchans & V4L2_TUNER_SUB_RDS)
+		s += "+rds";
 	return s;
 }
 
@@ -1421,7 +1425,8 @@ int main(int argc, char **argv)
 	struct v4l2_format raw_fmt_out;	/* set_format/get_format for VBI output */
 	struct v4l2_format overlay_fmt;	/* set_format/get_format video overlay */
 	struct v4l2_format overlay_fmt_out;	/* set_format/get_format video overlay output */
-	struct v4l2_tuner tuner;        /* set_tuner/get_tuner */
+	struct v4l2_tuner tuner;        /* set_freq/get_freq */
+	struct v4l2_modulator modulator;/* set_freq/get_freq */
 	struct v4l2_capability vcap;	/* list_cap */
 	struct v4l2_input vin;		/* list_inputs */
 	struct v4l2_output vout;	/* list_outputs */
@@ -1459,6 +1464,7 @@ int main(int argc, char **argv)
 	memset(&overlay_fmt_out, 0, sizeof(overlay_fmt_out));
 	memset(&raw_fmt_out, 0, sizeof(raw_fmt_out));
 	memset(&tuner, 0, sizeof(tuner));
+	memset(&modulator, 0, sizeof(modulator));
 	memset(&vcap, 0, sizeof(vcap));
 	memset(&vin, 0, sizeof(vin));
 	memset(&vout, 0, sizeof(vout));
@@ -1768,6 +1774,10 @@ int main(int argc, char **argv)
 				txsubchans = V4L2_TUNER_SUB_MONO;
 			else if (!strcmp(optarg, "mono-sap"))
 				txsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_SAP;
+			else if (!strcmp(optarg, "stereo-rds"))
+				txsubchans = V4L2_TUNER_SUB_STEREO | V4L2_TUNER_SUB_RDS;
+			else if (!strcmp(optarg, "mono-rds"))
+				txsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_RDS;
 			else {
 				fprintf(stderr, "Unknown txsubchans value\n");
 				usage();
@@ -1978,11 +1988,17 @@ int main(int argc, char **argv)
 	if (options[OptSetFreq]) {
 		double fac = 16;
 
-		if (doioctl(fd, VIDIOC_G_TUNER, &tuner, "VIDIOC_G_TUNER") == 0) {
-			fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
+		if (capabilities & V4L2_CAP_MODULATOR) {
+			if (doioctl(fd, VIDIOC_G_MODULATOR, &modulator, "VIDIOC_G_MODULATOR") == 0)
+				fac = (modulator.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
+		} else {
+			vf.type = V4L2_TUNER_ANALOG_TV;
+			if (doioctl(fd, VIDIOC_G_TUNER, &tuner, "VIDIOC_G_TUNER") == 0) {
+				fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
+				vf.type = tuner.type;
+			}
 		}
 		vf.tuner = 0;
-		vf.type = tuner.type;
 		vf.frequency = __u32(freq * fac);
 		if (doioctl(fd, VIDIOC_S_FREQUENCY, &vf,
 			"VIDIOC_S_FREQUENCY") == 0)
@@ -2468,6 +2484,16 @@ set_vid_fmt_error:
 	if (options[OptGetFreq]) {
 		double fac = 16;
 
+		if (capabilities & V4L2_CAP_MODULATOR) {
+			if (doioctl(fd, VIDIOC_G_MODULATOR, &modulator, "VIDIOC_G_MODULATOR") == 0)
+				fac = (modulator.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
+		} else {
+			vf.type = V4L2_TUNER_ANALOG_TV;
+			if (doioctl(fd, VIDIOC_G_TUNER, &tuner, "VIDIOC_G_TUNER") == 0) {
+				fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
+				vf.type = tuner.type;
+			}
+		}
 		if (doioctl(fd, VIDIOC_G_TUNER, &tuner, "VIDIOC_G_TUNER") == 0) {
 			fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
 		}
