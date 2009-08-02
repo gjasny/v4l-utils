@@ -148,20 +148,17 @@ static int verbose;
 
 static unsigned capabilities;
 
-typedef std::vector<struct v4l2_ext_control> ctrl_list;
-static ctrl_list user_ctrls;
-static ctrl_list mpeg_ctrls;
-static ctrl_list camera_ctrls;
+typedef std::map<unsigned, std::vector<struct v4l2_ext_control> > class2ctrls_map;
 
-typedef std::map<std::string, unsigned> ctrl_strmap;
-static ctrl_strmap ctrl_str2id;
+typedef std::map<std::string, struct v4l2_queryctrl> ctrl_qmap;
+static ctrl_qmap ctrl_str2q;
 typedef std::map<unsigned, std::string> ctrl_idmap;
 static ctrl_idmap ctrl_id2str;
 
 typedef std::list<std::string> ctrl_get_list;
 static ctrl_get_list get_ctrls;
 
-typedef std::map<std::string,std::string> ctrl_set_map;
+typedef std::map<std::string, std::string> ctrl_set_map;
 static ctrl_set_map set_ctrls;
 
 typedef std::vector<std::string> dev_vec;
@@ -583,6 +580,43 @@ static std::string name2var(unsigned char *name)
 	return s;
 }
 
+static std::string safename(const unsigned char *name)
+{
+	std::string s;
+
+	while (*name) {
+		if (*name == '\n') {
+			s += "\\n";
+		}
+		else if (*name == '\r') {
+			s += "\\r";
+		}
+		else if (*name == '\f') {
+			s += "\\f";
+		}
+		else if (*name == '\\') {
+			s += "\\\\";
+		}
+		else if ((*name & 0x7f) < 0x20) {
+			char buf[3];
+
+			sprintf(buf, "%02x", *name);
+			s += "\\x";
+			s += buf;
+		}
+		else {
+			s += *name;
+		}
+		name++;
+	}
+	return s;
+}
+
+static std::string safename(const char *name)
+{
+	return safename((const unsigned char *)name);
+}
+
 static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 		struct v4l2_ext_control *ctrl, int show_menus)
 {
@@ -601,6 +635,12 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 		break;
 	case V4L2_CTRL_TYPE_INTEGER64:
 		printf("%31s (int64): value=%lld", s.c_str(), ctrl->value64);
+		break;
+	case V4L2_CTRL_TYPE_STRING:
+		printf("%31s (str)  : min=%d max=%d step=%d value='%s'",
+				s.c_str(),
+				queryctrl->minimum, queryctrl->maximum,
+				queryctrl->step, safename(ctrl->string).c_str());
 		break;
 	case V4L2_CTRL_TYPE_BOOLEAN:
 		printf("%31s (bool) : default=%d value=%d",
@@ -659,6 +699,11 @@ static int print_control(int fd, struct v4l2_queryctrl &qctrl, int show_menus)
 	ctrls.controls = &ext_ctrl;
 	if (V4L2_CTRL_ID2CLASS(qctrl.id) != V4L2_CTRL_CLASS_USER &&
 	    qctrl.id < V4L2_CID_PRIVATE_BASE) {
+		if (qctrl.type == V4L2_CTRL_TYPE_STRING) {
+		    ext_ctrl.size = qctrl.maximum + 1;
+		    ext_ctrl.string = (char *)malloc(ext_ctrl.size);
+		    ext_ctrl.string[0] = 0;
+		}
 		if (ioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls)) {
 			printf("error %d getting ext_ctrl %s\n",
 					errno, qctrl.name);
@@ -675,6 +720,8 @@ static int print_control(int fd, struct v4l2_queryctrl &qctrl, int show_menus)
 		ext_ctrl.value = ctrl.value;
 	}
 	print_qctrl(fd, &qctrl, &ext_ctrl, show_menus);
+	if (qctrl.type == V4L2_CTRL_TYPE_STRING)
+		free(ext_ctrl.string);
 	return 1;
 }
 
@@ -708,7 +755,7 @@ static void find_controls(int fd)
 	while (ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
 		if (qctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS &&
 		    !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)) {
-			ctrl_str2id[name2var(qctrl.name)] = qctrl.id;
+			ctrl_str2q[name2var(qctrl.name)] = qctrl;
 			ctrl_id2str[qctrl.id] = name2var(qctrl.name);
 		}
 		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
@@ -719,14 +766,14 @@ static void find_controls(int fd)
 		qctrl.id = id;
 		if (ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0 &&
 		    !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)) {
-			ctrl_str2id[name2var(qctrl.name)] = qctrl.id;
+			ctrl_str2q[name2var(qctrl.name)] = qctrl;
 			ctrl_id2str[qctrl.id] = name2var(qctrl.name);
 		}
 	}
 	for (qctrl.id = V4L2_CID_PRIVATE_BASE;
 			ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0; qctrl.id++) {
 		if (!(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)) {
-			ctrl_str2id[name2var(qctrl.name)] = qctrl.id;
+			ctrl_str2q[name2var(qctrl.name)] = qctrl;
 			ctrl_id2str[qctrl.id] = name2var(qctrl.name);
 		}
 	}
@@ -1926,13 +1973,13 @@ int main(int argc, char **argv)
 	capabilities = vcap.capabilities;
 	find_controls(fd);
 	for (ctrl_get_list::iterator iter = get_ctrls.begin(); iter != get_ctrls.end(); ++iter) {
-	    if (ctrl_str2id.find(*iter) == ctrl_str2id.end()) {
+	    if (ctrl_str2q.find(*iter) == ctrl_str2q.end()) {
 		fprintf(stderr, "unknown control '%s'\n", (*iter).c_str());
 		exit(1);
 	    }
 	}
 	for (ctrl_set_map::iterator iter = set_ctrls.begin(); iter != set_ctrls.end(); ++iter) {
-	    if (ctrl_str2id.find(iter->first) == ctrl_str2id.end()) {
+	    if (ctrl_str2q.find(iter->first) == ctrl_str2q.end()) {
 		fprintf(stderr, "unknown control '%s'\n", iter->first.c_str());
 		exit(1);
 	    }
@@ -2261,60 +2308,61 @@ set_vid_fmt_error:
 
 	if (options[OptSetCtrl] && !set_ctrls.empty()) {
 		struct v4l2_ext_controls ctrls = { 0 };
+		class2ctrls_map class2ctrls;
 
 		for (ctrl_set_map::iterator iter = set_ctrls.begin();
 				iter != set_ctrls.end(); ++iter) {
 			struct v4l2_ext_control ctrl = { 0 };
 
-			ctrl.id = ctrl_str2id[iter->first];
-			ctrl.value = strtol(iter->second.c_str(), NULL, 0);
-			if (V4L2_CTRL_ID2CLASS(ctrl.id) == V4L2_CTRL_CLASS_MPEG)
-				mpeg_ctrls.push_back(ctrl);
-			else if (V4L2_CTRL_ID2CLASS(ctrl.id) == V4L2_CTRL_CLASS_CAMERA)
-				camera_ctrls.push_back(ctrl);
-			else
-				user_ctrls.push_back(ctrl);
-		}
-		for (unsigned i = 0; i < user_ctrls.size(); i++) {
-			struct v4l2_control ctrl;
+			ctrl.id = ctrl_str2q[iter->first].id;
+			if (ctrl_str2q[iter->first].type == V4L2_CTRL_TYPE_STRING) {
+				unsigned len = iter->second.length();
+				unsigned maxlen = ctrl_str2q[iter->first].maximum;
 
-			ctrl.id = user_ctrls[i].id;
-			ctrl.value = user_ctrls[i].value;
-			if (doioctl(fd, VIDIOC_S_CTRL, &ctrl, "VIDIOC_S_CTRL")) {
-				fprintf(stderr, "%s: %s\n",
-					ctrl_id2str[ctrl.id].c_str(),
-					strerror(errno));
-			}
-		}
-		if (mpeg_ctrls.size()) {
-			ctrls.ctrl_class = V4L2_CTRL_CLASS_MPEG;
-			ctrls.count = mpeg_ctrls.size();
-			ctrls.controls = &mpeg_ctrls[0];
-			if (doioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls, "VIDIOC_S_EXT_CTRLS")) {
-				if (ctrls.error_idx >= ctrls.count) {
-					fprintf(stderr, "Error setting MPEG controls: %s\n",
-						strerror(errno));
+				ctrl.size = maxlen + 1;
+				ctrl.string = (char *)malloc(ctrl.size);
+				if (len > maxlen) {
+					memcpy(ctrl.string, iter->second.c_str(), maxlen);
+					ctrl.string[maxlen] = 0;
 				}
 				else {
-					fprintf(stderr, "%s: %s\n",
-						ctrl_id2str[mpeg_ctrls[ctrls.error_idx].id].c_str(),
-						strerror(errno));
+					strcpy(ctrl.string, iter->second.c_str());
 				}
+			} else {
+				ctrl.value = strtol(iter->second.c_str(), NULL, 0);
 			}
+			class2ctrls[V4L2_CTRL_ID2CLASS(ctrl.id)].push_back(ctrl);
 		}
-		if (camera_ctrls.size()) {
-			ctrls.ctrl_class = V4L2_CTRL_CLASS_CAMERA;
-			ctrls.count = camera_ctrls.size();
-			ctrls.controls = &camera_ctrls[0];
-			if (doioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls, "VIDIOC_S_EXT_CTRLS")) {
-				if (ctrls.error_idx >= ctrls.count) {
-					fprintf(stderr, "Error setting CAMERA controls: %s\n",
-						strerror(errno));
+		for (class2ctrls_map::iterator iter = class2ctrls.begin();
+				iter != class2ctrls.end(); ++iter) {
+			if (iter->first == V4L2_CTRL_CLASS_USER) {
+				for (unsigned i = 0; i < iter->second.size(); i++) {
+					struct v4l2_control ctrl;
+
+					ctrl.id = iter->second[i].id;
+					ctrl.value = iter->second[i].value;
+					if (doioctl(fd, VIDIOC_S_CTRL, &ctrl, "VIDIOC_S_CTRL")) {
+						fprintf(stderr, "%s: %s\n",
+								ctrl_id2str[ctrl.id].c_str(),
+								strerror(errno));
+					}
 				}
-				else {
-					fprintf(stderr, "%s: %s\n",
-						ctrl_id2str[camera_ctrls[ctrls.error_idx].id].c_str(),
-						strerror(errno));
+				continue;
+			}
+			if (iter->second.size()) {
+				ctrls.ctrl_class = iter->first;
+				ctrls.count = iter->second.size();
+				ctrls.controls = &iter->second[0];
+				if (doioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls, "VIDIOC_S_EXT_CTRLS")) {
+					if (ctrls.error_idx >= ctrls.count) {
+						fprintf(stderr, "Error setting MPEG controls: %s\n",
+								strerror(errno));
+					}
+					else {
+						fprintf(stderr, "%s: %s\n",
+								ctrl_id2str[iter->second[ctrls.error_idx].id].c_str(),
+								strerror(errno));
+					}
 				}
 			}
 		}
@@ -2585,49 +2633,46 @@ set_vid_fmt_error:
 
 	if (options[OptGetCtrl] && !get_ctrls.empty()) {
 		struct v4l2_ext_controls ctrls = { 0 };
+		class2ctrls_map class2ctrls;
 
-		mpeg_ctrls.clear();
-		camera_ctrls.clear();
-		user_ctrls.clear();
 		for (ctrl_get_list::iterator iter = get_ctrls.begin();
 				iter != get_ctrls.end(); ++iter) {
 			struct v4l2_ext_control ctrl = { 0 };
 
-			ctrl.id = ctrl_str2id[*iter];
-			if (V4L2_CTRL_ID2CLASS(ctrl.id) == V4L2_CTRL_CLASS_MPEG)
-				mpeg_ctrls.push_back(ctrl);
-			else if (V4L2_CTRL_ID2CLASS(ctrl.id) == V4L2_CTRL_CLASS_CAMERA)
-				camera_ctrls.push_back(ctrl);
-			else
-				user_ctrls.push_back(ctrl);
-		}
-		for (unsigned i = 0; i < user_ctrls.size(); i++) {
-			struct v4l2_control ctrl;
-
-			ctrl.id = user_ctrls[i].id;
-			doioctl(fd, VIDIOC_G_CTRL, &ctrl, "VIDIOC_G_CTRL");
-			printf("%s: %d\n", ctrl_id2str[ctrl.id].c_str(), ctrl.value);
-		}
-		if (mpeg_ctrls.size()) {
-			ctrls.ctrl_class = V4L2_CTRL_CLASS_MPEG;
-			ctrls.count = mpeg_ctrls.size();
-			ctrls.controls = &mpeg_ctrls[0];
-			doioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls, "VIDIOC_G_EXT_CTRLS");
-			for (unsigned i = 0; i < mpeg_ctrls.size(); i++) {
-				struct v4l2_ext_control ctrl = mpeg_ctrls[i];
-
-				printf("%s: %d\n", ctrl_id2str[ctrl.id].c_str(), ctrl.value);
+			ctrl.id = ctrl_str2q[*iter].id;
+			if (ctrl_str2q[*iter].type == V4L2_CTRL_TYPE_STRING) {
+				ctrl.size = ctrl_str2q[*iter].maximum + 1;
+				ctrl.string = (char *)malloc(ctrl.size);
+				ctrl.string[0] = 0;
 			}
+			class2ctrls[V4L2_CTRL_ID2CLASS(ctrl.id)].push_back(ctrl);
 		}
-		if (camera_ctrls.size()) {
-			ctrls.ctrl_class = V4L2_CTRL_CLASS_CAMERA;
-			ctrls.count = camera_ctrls.size();
-			ctrls.controls = &camera_ctrls[0];
-			doioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls, "VIDIOC_G_EXT_CTRLS");
-			for (unsigned i = 0; i < camera_ctrls.size(); i++) {
-				struct v4l2_ext_control ctrl = camera_ctrls[i];
+		for (class2ctrls_map::iterator iter = class2ctrls.begin();
+				iter != class2ctrls.end(); ++iter) {
+			if (iter->first == V4L2_CTRL_CLASS_USER) {
+				for (unsigned i = 0; i < iter->second.size(); i++) {
+					struct v4l2_control ctrl;
 
-				printf("%s: %d\n", ctrl_id2str[ctrl.id].c_str(), ctrl.value);
+					ctrl.id = iter->second[i].id;
+					doioctl(fd, VIDIOC_G_CTRL, &ctrl, "VIDIOC_G_CTRL");
+					printf("%s: %d\n", ctrl_id2str[ctrl.id].c_str(), ctrl.value);
+				}
+				continue;
+			}
+			if (iter->second.size()) {
+				ctrls.ctrl_class = iter->first;
+				ctrls.count = iter->second.size();
+				ctrls.controls = &iter->second[0];
+				doioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls, "VIDIOC_G_EXT_CTRLS");
+				for (unsigned i = 0; i < iter->second.size(); i++) {
+					struct v4l2_ext_control ctrl = iter->second[i];
+
+					if (ctrl_str2q[ctrl_id2str[ctrl.id]].type == V4L2_CTRL_TYPE_STRING)
+						printf("%s: '%s'\n", ctrl_id2str[ctrl.id].c_str(),
+							       safename(ctrl.string).c_str());
+					else
+						printf("%s: %d\n", ctrl_id2str[ctrl.id].c_str(), ctrl.value);
+				}
 			}
 		}
 	}
