@@ -2,6 +2,7 @@ libv4l-0.6.1
 ------------
 * Add more laptop models to the upside down devices table
 * Makefile changes to make life easier for the Debian package (Gregor Jasny)
+* Bugfix: fixup 320x240 output for pac7302 cameras
 
 libv4l-0.6.0
 ------------

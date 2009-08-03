@@ -219,6 +219,7 @@ void v4lconvert_rotate90(unsigned char *src, unsigned char *dest,
 				 fmt->fmt.pix.height);
       break;
   }
+  v4lconvert_fixup_fmt(fmt);
 }
 
 void v4lconvert_flip(unsigned char *src, unsigned char *dest,
