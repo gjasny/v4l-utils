@@ -129,10 +129,13 @@ So clearly this belongs in a library, and in a library with a license which
 allows this code to be used from as many different applications as possible.
 Hence libv4l was born.
 
+
 Q: Under which license may I use and distribute libv4l?
-A: All libv4l components are licensed under the GNU Library General Publishing
+A: The libv4l libraries are licensed under the GNU Library General Publishing
 License version 2 or (at your option) any later version. See the included
-COPYING.LIB file.
+COPYING.LIB file. The decompression helpers are licensed under the GNU
+Library Publishing License version 2 (as they are derived from kernel code)
+
 
 Q: Okay so I get the use of having a libv4lconvert, but why libv4l1 ?
 A: Many v4l2 drivers do not offer full v4l1 compatibility. They often do not
@@ -150,9 +153,8 @@ applications.
 
 
 Q: Why should I use libv4l2 in my app instead of direct device access
-combined with libv4lconvert?
-
-libv4l2 is mainly meant for quickly and easily adding support for more
+   combined with libv4lconvert?
+A: libv4l2 is mainly meant for quickly and easily adding support for more
 pixelformats to existing v4l2 applications. So if you feel better directly
 accessing the device in combination with libv4lconvert thats fine too.
 
@@ -163,3 +165,11 @@ zero-copy access to the captured frame, and then it can write the converted
 data directly to the buffer the application provided to v4l2_read(). Thus
 another reason to use liv4l2 is to get the no memcpy advantage of the mmap
 capture method combined with the simplicity of making a simple read() call.
+
+
+Q: Where to send bugreports / questions?
+A: Please send libv4l questions / bugreports to the:
+   Linux Media Mailing List <linux-media@vger.kernel.org>
+   Subscription is not necessary to send mail to this list. If you're not
+   subscribed please put yourself in the CC of your original mail so you
+   will receive replies.
