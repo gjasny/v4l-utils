@@ -72,7 +72,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "X55SV     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
-  /* These 2 PACKARD BELL's are Asus notebook in disguise */
+  /* These 3 PACKARD BELL's seem to be Asus notebook in disguise */
+  { 0x04f2, 0xb012, 0, "PACKARD BELL BV", "T32A      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG45",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG46",
