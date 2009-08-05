@@ -2,7 +2,7 @@
 # open/close/ioctl/mmap/munmap library call wrapper doing v4l1 api emulation
 # for v4l2 devices
 
-#             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by

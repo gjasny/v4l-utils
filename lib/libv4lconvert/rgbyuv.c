@@ -1,7 +1,7 @@
 /*
 
 # RGB <-> YUV conversion routines
-#             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # RGB565 conversion routines
 #             (C) 2009 Mauro Carvalho Chehab <mchehab@redhat.com>
