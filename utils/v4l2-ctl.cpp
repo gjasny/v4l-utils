@@ -77,6 +77,8 @@ enum Option {
 	OptSetTuner = 't',
 	OptGetVideoFormat = 'V',
 	OptSetVideoFormat = 'v',
+	OptGetParm = 'P',
+	OptSetParm = 'p',
 
 	OptGetSlicedVbiOutFormat = 128,
 	OptGetOverlayFormat,
@@ -222,6 +224,8 @@ static struct option long_options[] = {
 	{"list-formats", no_argument, 0, OptListFormats},
 	{"get-standard", no_argument, 0, OptGetStandard},
 	{"set-standard", required_argument, 0, OptSetStandard},
+	{"get-parm", no_argument, 0, OptGetParm},
+	{"set-parm", required_argument, 0, OptSetParm},
 	{"info", no_argument, 0, OptGetDriverInfo},
 	{"list-ctrls", no_argument, 0, OptListCtrls},
 	{"list-ctrls-menus", no_argument, 0, OptListCtrlsMenus},
@@ -306,6 +310,8 @@ static void usage(void)
 	       "                     ntsc-X (X = M/J/K) or just 'ntsc' (V4L2_STD_NTSC)\n"
 	       "                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n"
 	       "  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n"
+	       "  -P, --get-parm     display video parameters [VIDIOC_G_PARMS]\n"
+	       "  -p, --set-parm     set video rate in fps [VIDIOC_G_PARMS]\n"
 	       "  -T, --get-tuner    query the tuner settings [VIDIOC_G_TUNER]\n"
 	       "  -t, --set-tuner=<mode>\n"
 	       "                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n"
@@ -1419,11 +1425,13 @@ int main(int argc, char **argv)
 	struct v4l2_rect vcrop_out_overlay; 	/* crop rect */
 	struct v4l2_framebuffer fbuf;   /* fbuf */
 	struct v4l2_jpegcompression jpegcomp; /* jpeg compression */
+	struct v4l2_streamparm parm;	/* get/set parm */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
 	int txsubchans;			/* set_modulator */
 	v4l2_std_id std;		/* get_std/set_std */
 	double freq = 0;		/* get/set frequency */
+	double fps = 0;		/* set framerate speed, in fps */
 	struct v4l2_frequency vf;	/* get_freq/set_freq */
 	struct v4l2_standard vs;	/* list_std */
 	int overlay;			/* overlay */
@@ -1690,6 +1698,9 @@ int main(int argc, char **argv)
 				std = strtol(optarg, 0L, 0) | (1ULL << 63);
 			}
 			break;
+		case OptSetParm:
+			fps = strtod(optarg, NULL);
+			break;
 		case OptGetCtrl:
 			subs = optarg;
 			while (*subs != '\0') {
@@ -1915,6 +1926,7 @@ int main(int argc, char **argv)
 		options[OptGetAudioInput] = 1;
 		options[OptGetAudioOutput] = 1;
 		options[OptGetStandard] = 1;
+		options[OptGetParm] = 1;
 		options[OptGetFreq] = 1;
 		options[OptGetTuner] = 1;
 		options[OptGetModulator] = 1;
@@ -1974,6 +1986,23 @@ int main(int argc, char **argv)
 		}
 		if (doioctl(fd, VIDIOC_S_STD, &std, "VIDIOC_S_STD") == 0)
 			printf("Standard set to %08llx\n", (unsigned long long)std);
+	}
+
+
+	if (options[OptSetParm]) {
+		memset (&parm, 0, sizeof(parm));
+		parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		parm.parm.capture.timeperframe.numerator = 1000;
+		parm.parm.capture.timeperframe.denominator = (__u32)(fps * parm.parm.capture.timeperframe.numerator);
+
+		if (doioctl(fd, VIDIOC_S_PARM, &parm, "VIDIOC_S_PARM") == 0) {
+			struct v4l2_fract *tf = &parm.parm.capture.timeperframe;
+			if (!tf->denominator || !tf->numerator)
+				printf ("Invalid frame rate\n");
+			else
+				printf("Frame rate set to: %.3f fps\n",
+					1.0*tf->denominator/tf->numerator);
+		}
 	}
 
 	if (options[OptSetInput]) {
@@ -2448,6 +2477,23 @@ set_vid_fmt_error:
 			if (std & 0xf000000) {
 				print_std("ATSC/HDTV", atsc, std >> 24);
 			}
+		}
+	}
+
+	if (options[OptGetParm]) {
+		memset (&parm, 0, sizeof(parm));
+		parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (doioctl(fd, VIDIOC_G_PARM, &parm, "VIDIOC_G_PARM") == 0) {
+			struct v4l2_fract *tf = &parm.parm.capture.timeperframe;
+			if (parm.parm.capture.capability & V4L2_MODE_HIGHQUALITY)
+				printf("Has High quality imaging mode\n");
+			if (parm.parm.capture.capability && V4L2_CAP_TIMEPERFRAME)
+				printf("Has V4L2_CAP_TIMEPERFRAME\n");
+			if (!tf->denominator || !tf->numerator)
+				printf ("Invalid frame rate\n");
+			else
+				printf("Frame rate is %.3f fps\n",
+					(1.0 * tf->denominator) / tf->numerator);
 		}
 	}
 
