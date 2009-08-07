@@ -311,7 +311,7 @@ static void usage(void)
 	       "                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n"
 	       "  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n"
 	       "  -P, --get-parm     display video parameters [VIDIOC_G_PARMS]\n"
-	       "  -p, --set-parm     set video rate in fps [VIDIOC_G_PARMS]\n"
+	       "  -p, --set-parm     set video rate in fps [VIDIOC_S_PARMS]\n"
 	       "  -T, --get-tuner    query the tuner settings [VIDIOC_G_TUNER]\n"
 	       "  -t, --set-tuner=<mode>\n"
 	       "                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n"
