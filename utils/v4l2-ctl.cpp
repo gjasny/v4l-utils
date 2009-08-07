@@ -136,6 +136,8 @@ enum Option {
 	OptGetModulator,
 	OptSetModulator,
 	OptListDevices,
+	OptGetOutputParm,
+	OptSetOutputParm,
 	OptLast = 256
 };
 
@@ -226,6 +228,8 @@ static struct option long_options[] = {
 	{"set-standard", required_argument, 0, OptSetStandard},
 	{"get-parm", no_argument, 0, OptGetParm},
 	{"set-parm", required_argument, 0, OptSetParm},
+	{"get-output-parm", no_argument, 0, OptGetOutputParm},
+	{"set-output-parm", required_argument, 0, OptSetOutputParm},
 	{"info", no_argument, 0, OptGetDriverInfo},
 	{"list-ctrls", no_argument, 0, OptListCtrls},
 	{"list-ctrls-menus", no_argument, 0, OptListCtrlsMenus},
@@ -310,8 +314,9 @@ static void usage(void)
 	       "                     ntsc-X (X = M/J/K) or just 'ntsc' (V4L2_STD_NTSC)\n"
 	       "                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n"
 	       "  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n"
-	       "  -P, --get-parm     display video parameters [VIDIOC_G_PARMS]\n"
-	       "  -p, --set-parm     set video rate in fps [VIDIOC_S_PARMS]\n"
+	       "  -P, --get-parm     display video parameters [VIDIOC_G_PARM]\n"
+	       "  -p, --set-parm=<fps>\n"
+	       "                     set video framerate in <fps> [VIDIOC_S_PARM]\n"
 	       "  -T, --get-tuner    query the tuner settings [VIDIOC_G_TUNER]\n"
 	       "  -t, --set-tuner=<mode>\n"
 	       "                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n"
@@ -424,6 +429,9 @@ static void usage(void)
 	       "                     bilingual:	 Modulate as bilingual\n"
 	       "                     mono-sap:	 Modulate as mono with Second Audio Program\n"
 	       "                     stereo-sap: Modulate as stereo with Second Audio Program\n"
+	       "  --get-output-parm  display output video parameters [VIDIOC_G_PARM]\n"
+	       "  --set-output-parm=<fps>\n"
+	       "                     set output video framerate in <fps> [VIDIOC_S_PARM]\n"
 	       "\n");
 	printf("Expert options:\n"
 	       "  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n"
@@ -830,7 +838,7 @@ static void printcropcap(const struct v4l2_cropcap &cropcap)
 	printf("\tPixel Aspect: %u/%u\n", cropcap.pixelaspect.numerator, cropcap.pixelaspect.denominator);
 }
 
-static void printfmt(struct v4l2_format vfmt)
+static void printfmt(const struct v4l2_format &vfmt)
 {
 	const flag_def vbi_def[] = {
 		{ V4L2_VBI_UNSYNC,     "unsynchronized" },
@@ -1431,7 +1439,8 @@ int main(int argc, char **argv)
 	int txsubchans;			/* set_modulator */
 	v4l2_std_id std;		/* get_std/set_std */
 	double freq = 0;		/* get/set frequency */
-	double fps = 0;		/* set framerate speed, in fps */
+	double fps = 0;			/* set framerate speed, in fps */
+	double output_fps = 0;		/* set framerate speed, in fps */
 	struct v4l2_frequency vf;	/* get_freq/set_freq */
 	struct v4l2_standard vs;	/* list_std */
 	int overlay;			/* overlay */
@@ -1701,6 +1710,9 @@ int main(int argc, char **argv)
 		case OptSetParm:
 			fps = strtod(optarg, NULL);
 			break;
+		case OptSetOutputParm:
+			output_fps = strtod(optarg, NULL);
+			break;
 		case OptGetCtrl:
 			subs = optarg;
 			while (*subs != '\0') {
@@ -1927,6 +1939,7 @@ int main(int argc, char **argv)
 		options[OptGetAudioOutput] = 1;
 		options[OptGetStandard] = 1;
 		options[OptGetParm] = 1;
+		options[OptGetOutputParm] = 1;
 		options[OptGetFreq] = 1;
 		options[OptGetTuner] = 1;
 		options[OptGetModulator] = 1;
@@ -1990,18 +2003,38 @@ int main(int argc, char **argv)
 
 
 	if (options[OptSetParm]) {
-		memset (&parm, 0, sizeof(parm));
+		memset(&parm, 0, sizeof(parm));
 		parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		parm.parm.capture.timeperframe.numerator = 1000;
-		parm.parm.capture.timeperframe.denominator = (__u32)(fps * parm.parm.capture.timeperframe.numerator);
+		parm.parm.capture.timeperframe.denominator =
+			fps * parm.parm.capture.timeperframe.numerator;
 
 		if (doioctl(fd, VIDIOC_S_PARM, &parm, "VIDIOC_S_PARM") == 0) {
 			struct v4l2_fract *tf = &parm.parm.capture.timeperframe;
+
 			if (!tf->denominator || !tf->numerator)
-				printf ("Invalid frame rate\n");
+				printf("Invalid frame rate\n");
 			else
-				printf("Frame rate set to: %.3f fps\n",
-					1.0*tf->denominator/tf->numerator);
+				printf("Frame rate set to %.3f fps\n",
+					1.0 * tf->denominator / tf->numerator);
+		}
+	}
+
+	if (options[OptSetOutputParm]) {
+		memset(&parm, 0, sizeof(parm));
+		parm.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+		parm.parm.output.timeperframe.numerator = 1000;
+		parm.parm.output.timeperframe.denominator =
+			fps * parm.parm.output.timeperframe.numerator;
+
+		if (doioctl(fd, VIDIOC_S_PARM, &parm, "VIDIOC_S_PARM") == 0) {
+			struct v4l2_fract *tf = &parm.parm.output.timeperframe;
+
+			if (!tf->denominator || !tf->numerator)
+				printf("Invalid frame rate\n");
+			else
+				printf("Frame rate set to %.3f fps\n",
+					1.0 * tf->denominator / tf->numerator);
 		}
 	}
 
@@ -2481,19 +2514,46 @@ set_vid_fmt_error:
 	}
 
 	if (options[OptGetParm]) {
-		memset (&parm, 0, sizeof(parm));
+		memset(&parm, 0, sizeof(parm));
 		parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		if (doioctl(fd, VIDIOC_G_PARM, &parm, "VIDIOC_G_PARM") == 0) {
-			struct v4l2_fract *tf = &parm.parm.capture.timeperframe;
-			if (parm.parm.capture.capability & V4L2_MODE_HIGHQUALITY)
-				printf("Has High quality imaging mode\n");
-			if (parm.parm.capture.capability && V4L2_CAP_TIMEPERFRAME)
-				printf("Has V4L2_CAP_TIMEPERFRAME\n");
-			if (!tf->denominator || !tf->numerator)
-				printf ("Invalid frame rate\n");
+			const struct v4l2_fract &tf = parm.parm.capture.timeperframe;
+
+			printf("Streaming Parameters %s:\n", buftype2s(parm.type).c_str());
+			if (parm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME)
+				printf("\tCapabilities     : timeperframe\n");
+			if (parm.parm.capture.capturemode & V4L2_MODE_HIGHQUALITY)
+				printf("\tCapture mode     : high quality\n");
+			if (!tf.denominator || !tf.numerator)
+				printf("\tFrames per second: invalid (%d/%d)\n",
+						tf.denominator, tf.numerator);
 			else
-				printf("Frame rate is %.3f fps\n",
-					(1.0 * tf->denominator) / tf->numerator);
+				printf("\tFrames per second: %.3f (%d/%d)\n",
+						(1.0 * tf.denominator) / tf.numerator,
+						tf.denominator, tf.numerator);
+			printf("\tRead buffers     : %d\n", parm.parm.output.writebuffers);
+		}
+	}
+
+	if (options[OptGetOutputParm]) {
+		memset(&parm, 0, sizeof(parm));
+		parm.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+		if (doioctl(fd, VIDIOC_G_PARM, &parm, "VIDIOC_G_PARM") == 0) {
+			const struct v4l2_fract &tf = parm.parm.output.timeperframe;
+
+			printf("Streaming Parameters %s:\n", buftype2s(parm.type).c_str());
+			if (parm.parm.output.capability & V4L2_CAP_TIMEPERFRAME)
+				printf("\tCapabilities     : timeperframe\n");
+			if (parm.parm.output.outputmode & V4L2_MODE_HIGHQUALITY)
+				printf("\tOutput mode      : high quality\n");
+			if (!tf.denominator || !tf.numerator)
+				printf("\tFrames per second: invalid (%d/%d)\n",
+						tf.denominator, tf.numerator);
+			else
+				printf("\tFrames per second: %.3f (%d/%d)\n",
+						(1.0 * tf.denominator) / tf.numerator,
+						tf.denominator, tf.numerator);
+			printf("\tWrite buffers    : %d\n", parm.parm.output.writebuffers);
 		}
 	}
 
