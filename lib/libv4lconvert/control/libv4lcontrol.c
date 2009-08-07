@@ -154,7 +154,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 
 static const struct v4l2_queryctrl fake_controls[];
 
-static int v4lcontrol_get_dmi_string(const char *string, char *buf, int size)
+static void v4lcontrol_get_dmi_string(const char *string, char *buf, int size)
 {
   FILE *f;
   char *s, sysfs_name[512];
