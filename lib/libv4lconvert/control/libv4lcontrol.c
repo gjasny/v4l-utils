@@ -92,6 +92,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N51Vg      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb16b, 0, "ASUSTeK Computer Inc.        ", "U80A      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   /* Note no whitespace padding for board vendor, this is not a typo */
   { 0x064e, 0xa111, 0, "ASUSTeK Computer Inc.", "F5RL      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
