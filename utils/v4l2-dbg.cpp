@@ -47,6 +47,7 @@
 #include "v4l2-dbg-em28xx.h"
 #include "v4l2-dbg-ac97.h"
 #include "v4l2-dbg-tvp5150.h"
+#include "v4l2-dbg-micron.h"
 
 #define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
 
@@ -61,7 +62,7 @@ struct board_list {
 
 static const struct board_list boards[] = {
 #define AC97_BOARD 0
-	{				/* From ac97-dbg.h */
+	{				/* From v4l2-dbg-ac97.h */
 		AC97_IDENT,
 		sizeof(AC97_PREFIX) - 1,
 		ac97_regs,
@@ -69,7 +70,7 @@ static const struct board_list boards[] = {
 		NULL,
 		0,
 	},
-	{				/* From bttv-dbg.h */
+	{				/* From v4l2-dbg-bttv.h */
 		BTTV_IDENT,
 		sizeof(BTTV_PREFIX) - 1,
 		bt8xx_regs,
@@ -77,7 +78,7 @@ static const struct board_list boards[] = {
 		bt8xx_regs_other,
 		ARRAY_SIZE(bt8xx_regs_other),
 	},
-	{				/* From saa7134-dbg.h */
+	{				/* From v4l2-dbg-saa7134.h */
 		SAA7134_IDENT,
 		sizeof(SAA7134_PREFIX) - 1,
 		saa7134_regs,
@@ -85,7 +86,7 @@ static const struct board_list boards[] = {
 		NULL,
 		0,
 	},
-	{				/* From em28xx-dbg.h */
+	{				/* From v4l2-dbg-em28xx.h */
 		EM28XX_IDENT,
 		sizeof(EM28XX_PREFIX) - 1,
 		em28xx_regs,
@@ -93,11 +94,19 @@ static const struct board_list boards[] = {
 		em28xx_alt_regs,
 		ARRAY_SIZE(em28xx_alt_regs),
 	},
-	{				/* From tvp5150-dbg.h */
+	{				/* From v4l2-dbg-tvp5150.h */
 		TVP5150_IDENT,
 		sizeof(TVP5150_PREFIX) - 1,
 		tvp5150_regs,
 		ARRAY_SIZE(tvp5150_regs),
+		NULL,
+		0,
+	},
+	{				/* From v4l2-dbg-micron.h */
+		MT9V011_IDENT,
+		sizeof(MT9V011_PREFIX) - 1,
+		mt9v011_regs,
+		ARRAY_SIZE(mt9v011_regs),
 		NULL,
 		0,
 	},
