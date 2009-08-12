@@ -169,11 +169,19 @@ static void v4lcontrol_get_dmi_string(const char *string, char *buf, int size)
   char *s, sysfs_name[512];
 
   snprintf(sysfs_name, sizeof(sysfs_name),
-	   "/sys/devices/virtual/dmi/id/%s", string);
+	   "/sys/class/dmi/id/%s", string);
   f = fopen(sysfs_name, "r");
   if (!f) {
-    buf[0] = 0;
-    return;
+    /* Try again with a different sysfs path, not sure if this is needed
+       but we used to look under /sys/devices/virtual/dmi/id in older
+       libv4l versions, but this did not work with some kernels */
+    snprintf(sysfs_name, sizeof(sysfs_name),
+	     "/sys/devices/virtual/dmi/id/%s", string);
+    f = fopen(sysfs_name, "r");
+    if (!f) {
+      buf[0] = 0;
+      return;
+    }
   }
 
   s = fgets(buf, size, f);
