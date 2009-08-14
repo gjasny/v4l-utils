@@ -5,6 +5,8 @@ libv4l-0.6.1
 * Bugfix: fixup 320x240 output for pac7302 cameras
 * README improvements / clarifications (Bifferos)
 * Bugfix: fix reqbuf Device or Resource busy error when using v4l2_read()
+* Some applications want to use jpg format if possible, so do not hide
+  it from the apps (do not assume it always needs conversion)
 
 libv4l-0.6.0
 ------------

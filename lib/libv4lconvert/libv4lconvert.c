@@ -58,14 +58,14 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_HM12,         V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_MJPEG,        V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_JPEG,         V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_SPCA561,      V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_SN9C10X,      V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_PAC207,       V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_MR97310A,     V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_SQ905C,       V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_PJPG,         V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_OV511,        V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_OV518,        V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_SPCA561,      V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_SN9C10X,      V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_PAC207,       V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_MR97310A,     V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_SQ905C,       V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_PJPG,         V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_OV511,        V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_OV518,        V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
 };
 
 static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
@@ -114,7 +114,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
       if (fmt.pixelformat == supported_src_pixfmts[j].fmt) {
 	data->supported_src_formats |= 1 << j;
 	v4lconvert_get_framesizes(data, fmt.pixelformat, j);
-	if (!supported_src_pixfmts[j].flags)
+	if (!(supported_src_pixfmts[j].flags & V4LCONVERT_NEEDS_CONVERSION))
 	  always_needs_conversion = 0;
 	break;
       }

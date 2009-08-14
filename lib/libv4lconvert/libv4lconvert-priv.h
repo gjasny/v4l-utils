@@ -108,6 +108,7 @@
 /* Pixformat flags */
 #define V4LCONVERT_COMPRESSED            0x01 /* Compressed format */
 #define V4LCONVERT_NEEDS_CONVERSION      0x02 /* Apps likely wont know this */
+#define V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION 0x03
 
 struct v4lconvert_data {
   int fd;
