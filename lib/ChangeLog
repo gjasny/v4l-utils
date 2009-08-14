@@ -4,6 +4,7 @@ libv4l-0.6.1
 * Makefile changes to make life easier for the Debian package (Gregor Jasny)
 * Bugfix: fixup 320x240 output for pac7302 cameras
 * README improvements / clarifications (Bifferos)
+* Bugfix: fix reqbuf Device or Resource busy error when using v4l2_read()
 
 libv4l-0.6.0
 ------------

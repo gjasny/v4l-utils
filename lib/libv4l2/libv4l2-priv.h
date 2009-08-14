@@ -80,6 +80,9 @@ struct v4l2_dev_info {
   int frame_queued; /* 1 status bit per frame */
   /* mapping tracking of our fake (converting mmap) frame buffers */
   unsigned char frame_map_count[V4L2_MAX_NO_FRAMES];
+  /* buffer when doing conversion and using read() for read() */
+  int readbuf_size;
+  unsigned char *readbuf;
 };
 
 /* From log.c */
