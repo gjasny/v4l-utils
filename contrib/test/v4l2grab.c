@@ -1,5 +1,5 @@
 /* V4L2 video picture grabber
-   Copyright (C) 2006 Mauro Carvalho Chehab <mchehab@infradead.org>
+   Copyright (C) 2009 Mauro Carvalho Chehab <mchehab@infradead.org>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
