@@ -7,6 +7,8 @@ libv4l-0.6.1
 * Bugfix: fix reqbuf Device or Resource busy error when using v4l2_read()
 * Some applications want to use jpg format if possible, so do not hide
   it from the apps (do not assume it always needs conversion)
+* Change controls shm segment name to include the username, as it is only
+  writable by the user (this means libv4l controls are per user) (Gregor Jasny)
 
 libv4l-0.6.0
 ------------

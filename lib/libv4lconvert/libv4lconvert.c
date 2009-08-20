@@ -95,8 +95,10 @@ struct v4lconvert_data *v4lconvert_create(int fd)
      processing controls without a performance impact. */
   int always_needs_conversion = 1;
 
-  if (!data)
+  if (!data) {
+    fprintf(stderr, "libv4lconvert: error: out of memory!\n");
     return NULL;
+  }
 
   data->fd = fd;
   data->decompress_pid = -1;

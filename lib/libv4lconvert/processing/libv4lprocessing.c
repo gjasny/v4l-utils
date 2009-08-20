@@ -38,8 +38,10 @@ struct v4lprocessing_data *v4lprocessing_create(int fd, struct v4lcontrol_data* 
   struct v4lprocessing_data *data =
     calloc(1, sizeof(struct v4lprocessing_data));
 
-  if (!data)
+  if (!data) {
+    fprintf(stderr, "libv4lprocessing: error: out of memory!\n");
     return NULL;
+  }
 
   data->fd = fd;
   data->control = control;

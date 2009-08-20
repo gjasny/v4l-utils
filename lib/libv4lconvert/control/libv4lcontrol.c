@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <pwd.h>
 #include "libv4lcontrol.h"
 #include "libv4lcontrol-priv.h"
 #include "../libv4lsyscall-priv.h"
@@ -323,14 +324,17 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 {
   int shm_fd;
   int i, rc, init = 0;
-  char *s, shm_name[256];
+  char *s, shm_name[256], pwd_buf[1024];
   struct v4l2_capability cap;
   struct v4l2_queryctrl ctrl;
+  struct passwd pwd, *pwd_p;
 
   struct v4lcontrol_data *data = calloc(1, sizeof(struct v4lcontrol_data));
 
-  if (!data)
+  if (!data) {
+    fprintf(stderr, "libv4lcontrol: error: out of memory!\n");
     return NULL;
+  }
 
   data->fd = fd;
 
@@ -366,8 +370,19 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
   if (data->controls == 0)
     return data; /* No need to create a shared memory segment */
 
-  SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap);
-  snprintf(shm_name, 256, "/%s:%s", cap.bus_info, cap.card);
+  if (SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap)) {
+    perror("libv4lcontrol: error querying device capabilities");
+    goto error;
+  }
+
+  if (getpwuid_r(geteuid(), &pwd, pwd_buf, sizeof(pwd_buf), &pwd_p) == 0) {
+    snprintf(shm_name, 256, "/libv4l-%s:%s:%s", pwd.pw_name,
+	     cap.bus_info, cap.card);
+  } else {
+    perror("libv4lcontrol: error getting username using uid instead");
+    snprintf(shm_name, 256, "/libv4l-%lu:%s:%s", (unsigned long)geteuid(),
+	     cap.bus_info, cap.card);
+  }
 
   /* / is not allowed inside shm names */
   for (i = 1; shm_name[i]; i++)
@@ -378,23 +393,41 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
   if ((shm_fd = shm_open(shm_name, (O_CREAT | O_EXCL | O_RDWR),
 			 (S_IREAD | S_IWRITE))) >= 0)
     init = 1;
-  else if ((shm_fd = shm_open(shm_name, O_RDWR, (S_IREAD | S_IWRITE))) < 0)
-    goto error;
+  else
+    shm_fd = shm_open(shm_name, O_RDWR, (S_IREAD | S_IWRITE));
 
-  /* Set the shared memory size */
-  ftruncate(shm_fd, V4LCONTROL_SHM_SIZE);
+  if (shm_fd >= 0) {
+    /* Set the shared memory size */
+    ftruncate(shm_fd, V4LCONTROL_SHM_SIZE);
 
-  /* Retreive a pointer to the shm object */
-  data->shm_values = mmap(NULL, V4LCONTROL_SHM_SIZE, (PROT_READ | PROT_WRITE),
-			  MAP_SHARED, shm_fd, 0);
-  close(shm_fd);
+    /* Retreive a pointer to the shm object */
+    data->shm_values = mmap(NULL, V4LCONTROL_SHM_SIZE, (PROT_READ | PROT_WRITE),
+			    MAP_SHARED, shm_fd, 0);
+    close(shm_fd);
 
-  if (data->shm_values == MAP_FAILED)
-    goto error;
+    if (data->shm_values == MAP_FAILED) {
+      perror("libv4lcontrol: error shm mmap failed");
+      data->shm_values = NULL;
+    }
+  } else
+    perror("libv4lcontrol: error creating shm segment failed");
+
+  /* Fall back to malloc */
+  if (data->shm_values == NULL) {
+    fprintf(stderr,
+	    "libv4lcontrol: falling back to malloc-ed memory for controls\n");
+    data->shm_values = malloc(V4LCONTROL_SHM_SIZE);
+    if (!data->shm_values) {
+      fprintf(stderr, "libv4lcontrol: error: out of memory!\n");
+      goto error;
+    }
+    init = 1;
+    data->priv_flags |= V4LCONTROL_MEMORY_IS_MALLOCED;
+  }
 
   if (init) {
     /* Initialize the new shm object we created */
-    memset(data->shm_values, 0, sizeof(V4LCONTROL_SHM_SIZE));
+    memset(data->shm_values, 0, V4LCONTROL_SHM_SIZE);
 
     for (i = 0; i < V4LCONTROL_COUNT; i++)
       data->shm_values[i] = fake_controls[i].default_value;
@@ -415,12 +448,15 @@ error:
 
 void v4lcontrol_destroy(struct v4lcontrol_data *data)
 {
-  if (data->controls)
-    munmap(data->shm_values, V4LCONTROL_SHM_SIZE);
+  if (data->controls) {
+    if (data->priv_flags & V4LCONTROL_MEMORY_IS_MALLOCED)
+      free(data->shm_values);
+    else
+      munmap(data->shm_values, V4LCONTROL_SHM_SIZE);
+  }
   free(data);
 }
 
-/* FIXME get better CID's for normalize */
 static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 {
   .id = V4L2_CID_AUTO_WHITE_BALANCE,

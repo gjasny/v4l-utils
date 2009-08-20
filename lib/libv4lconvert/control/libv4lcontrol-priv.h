@@ -25,6 +25,7 @@
 #define V4LCONTROL_SHM_SIZE 4096
 
 #define V4LCONTROL_SUPPORTS_NEXT_CTRL 0x01
+#define V4LCONTROL_MEMORY_IS_MALLOCED 0x02
 
 struct v4lcontrol_flags_info;
 
