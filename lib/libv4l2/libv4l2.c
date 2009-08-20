@@ -1303,9 +1303,15 @@ int v4l2_set_control(int fd, int cid, int value)
 {
   struct v4l2_queryctrl qctrl = { .id = cid };
   struct v4l2_control ctrl = { .id = cid };
-  int result;
+  int index, result;
 
-  if ((result = SYS_IOCTL(fd, VIDIOC_QUERYCTRL, &qctrl)))
+  if ((index = v4l2_get_index(fd)) == -1) {
+    V4L2_LOG_ERR("v4l2_set_control called with invalid fd: %d\n", fd);
+    errno = EBADF;
+    return -1;
+  }
+
+  if ((result = v4lconvert_vidioc_queryctrl(devices[index].convert, &qctrl)))
     return result;
 
   if (!(qctrl.flags & V4L2_CTRL_FLAG_DISABLED) &&
@@ -1316,7 +1322,7 @@ int v4l2_set_control(int fd, int cid, int value)
       ctrl.value = (value * (qctrl.maximum - qctrl.minimum) + 32767) / 65535 +
 		   qctrl.minimum;
 
-    result = SYS_IOCTL(fd, VIDIOC_S_CTRL, &ctrl);
+    result = v4lconvert_vidioc_s_ctrl(devices[index].convert, &ctrl);
   }
 
   return result;
@@ -1326,14 +1332,21 @@ int v4l2_get_control(int fd, int cid)
 {
   struct v4l2_queryctrl qctrl = { .id = cid };
   struct v4l2_control ctrl = { .id = cid };
+  int index;
 
-  if (SYS_IOCTL(fd, VIDIOC_QUERYCTRL, &qctrl))
+  if ((index = v4l2_get_index(fd)) == -1) {
+    V4L2_LOG_ERR("v4l2_set_control called with invalid fd: %d\n", fd);
+    errno = EBADF;
+    return -1;
+  }
+
+  if (v4lconvert_vidioc_queryctrl(devices[index].convert, &qctrl))
     return 0;
 
   if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
     return 0;
 
-  if (SYS_IOCTL(fd, VIDIOC_G_CTRL, &ctrl))
+  if (v4lconvert_vidioc_g_ctrl(devices[index].convert, &ctrl))
     return 0;
 
   return ((ctrl.value - qctrl.minimum) * 65535 +
