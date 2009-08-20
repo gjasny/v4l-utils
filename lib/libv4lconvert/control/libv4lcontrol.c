@@ -109,6 +109,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   /* Another Asus laptop in disguise */
   { 0x064e, 0xa111, 0, "PEGATRON CORPORATION         ", "F5SR    ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "N10Jb     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "N20A      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "X58LE     ",
