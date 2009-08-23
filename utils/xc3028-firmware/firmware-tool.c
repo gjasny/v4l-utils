@@ -33,8 +33,8 @@
 #include <asm/byteorder.h>
 #include <asm/types.h>
 
-#include "../../../linux/drivers/media/video/tuner-xc2028-types.h"
-#include "../../../linux/include/linux/videodev2.h"
+#include "../../../linux/drivers/media/common/tuners/tuner-xc2028-types.h"
+#include "linux/videodev2.h"
 
 #include "extract_head.h"
 #include "standards.h"
