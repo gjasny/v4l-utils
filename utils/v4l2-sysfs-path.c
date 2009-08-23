@@ -136,6 +136,75 @@ err:
 	return NULL;
 }
 
+char *seek_name(char *path, char *match)
+{
+	DIR             *dir;
+	struct dirent   *entry;
+	struct stat	st;
+	char		*p;
+	static char     name[1024];
+	int		major, minor;
+
+	dir = opendir(path);
+	if (!dir)
+		return NULL;
+
+	strcpy(name, path);
+	strcat(name, "/");
+	p = name + strlen(name);
+
+	entry = readdir(dir);
+	while (entry) {
+		if (!strncmp(entry->d_name, match, strlen(match))) {
+
+			strcpy(name, entry->d_name);
+			closedir(dir);
+			return name;
+		}
+		entry = readdir(dir);
+	}
+	closedir(dir);
+	return NULL;
+}
+
+int get_dev(char *class, int *major, int *minor, char *extra)
+{
+	char            path[1024];
+	char		*name;
+	FILE		*fp;
+
+	name = strchr(class,':');
+	if (!name)
+		return -1;
+	*name = 0;
+	name++;
+
+	*extra = 0;
+
+	if (!strcmp(class, "input")) {
+		char *event;
+
+		sprintf(path, "/sys/class/%s/%s/", class, name);
+		event = seek_name(path, "event");
+		if (!event)
+			return -1;
+
+		strcpy(extra, event);
+
+		sprintf(path, "/sys/class/%s/%s/%s/dev", class, name, event);
+
+	} else
+		sprintf(path, "/sys/class/%s/%s/dev", class, name);
+
+	fp = fopen(path, "r");
+	if (!fp)
+		return -1;
+
+	fscanf(fp, "%d:%d", major, minor);
+
+	return 0;
+}
+
 /*
  Examples of subdevs:
 	sound:audio1
@@ -156,7 +225,8 @@ void get_subdevs(char *path)
 	DIR             *dir;
 	struct dirent   *entry;
 	struct stat	st;
-        char            *p, name[1024];
+	char            *p, name[1024], extra[20];
+	int		major, minor;
 
 	dir = opendir(path);
 	if (!dir)
@@ -166,20 +236,28 @@ void get_subdevs(char *path)
 	strcat(name, "/");
 	p = name + strlen(name);
 
-	printf("Subdevs: ");
+	printf("Associated devices:\n");
 	entry = readdir(dir);
 	while (entry) {
 		strcpy(p, entry->d_name);
-		if ((lstat(name, &st) == 0) && 
+		if ((lstat(name, &st) == 0) &&
 			!S_ISDIR(st.st_mode)) {
 			char *s = strchr(entry->d_name, ':');
-			if (s)
-				printf("%s ", entry->d_name);
+			if (s) {
+				printf("\t%s", entry->d_name);
+				if (!get_dev(entry->d_name, &major, &minor, extra))
+					if (*extra)
+						printf(":%s (dev %d,%d)",
+							extra, major, minor);
+					else
+						printf(" (dev %d,%d)",
+							major, minor);
+				printf("\n");
+			}
 		}
 		entry = readdir(dir);
 	}
 	closedir(dir);
-	printf("\n");
 }
 
 void get_sysfs(char *fname)
