@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
+#include <sys/stat.h>
 
 #define USB_ID "usb-"
 #define PCI_ID "PCI:"
@@ -135,6 +136,52 @@ err:
 	return NULL;
 }
 
+/*
+ Examples of subdevs:
+	sound:audio1
+	sound:controlC1
+	sound:dsp1
+	sound:mixer1
+	sound:pcmC1D0c
+	dvb:dvb0.demux0
+	dvb:dvb0.dvr0
+	dvb:dvb0.frontend0
+	dvb:dvb0.net0
+	i2c-adapter:i2c-4
+	input:input8
+*/
+
+void get_subdevs(char *path)
+{
+	DIR             *dir;
+	struct dirent   *entry;
+	struct stat	st;
+        char            *p, name[1024];
+
+	dir = opendir(path);
+	if (!dir)
+		return;
+
+	strcpy(name, path);
+	strcat(name, "/");
+	p = name + strlen(name);
+
+	printf("Subdevs: ");
+	entry = readdir(dir);
+	while (entry) {
+		strcpy(p, entry->d_name);
+		if ((lstat(name, &st) == 0) && 
+			!S_ISDIR(st.st_mode)) {
+			char *s = strchr(entry->d_name, ':');
+			if (s)
+				printf("%s ", entry->d_name);
+		}
+		entry = readdir(dir);
+	}
+	closedir(dir);
+	printf("\n");
+}
+
 void get_sysfs(char *fname)
 {
 	struct v4l2_driver drv;
@@ -148,9 +195,11 @@ void get_sysfs(char *fname)
 	printf("bus info   = %s\n", drv.cap.bus_info);
 	path = obtain_bus_sysfs_path((char *)drv.cap.bus_info);
 	if (path) {
-		printf("sysfs path = %s\n\n", path);
+		printf("sysfs path = %s\n", path);
+		get_subdevs(path);
 		free(path);
 	}
+	printf("\n");
 
 	v4l2_close(&drv);
 }
