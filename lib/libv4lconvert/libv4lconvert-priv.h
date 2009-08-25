@@ -52,6 +52,10 @@
 #define V4L2_PIX_FMT_MR97310A v4l2_fourcc('M','3','1','0')
 #endif
 
+#ifndef V4L2_PIX_FMT_SN9C2028
+#define V4L2_PIX_FMT_SN9C2028 v4l2_fourcc('S', 'O', 'N', 'X')
+#endif
+
 #ifndef V4L2_PIX_FMT_SQ905C
 #define V4L2_PIX_FMT_SQ905C v4l2_fourcc('9', '0', '5', 'C')
 #endif
@@ -217,6 +221,9 @@ int v4lconvert_decode_pac207(struct v4lconvert_data *data,
   int width, int height);
 
 void v4lconvert_decode_mr97310a(const unsigned char *src, unsigned char *dst,
+  int width, int height);
+
+void v4lconvert_decode_sn9c2028(const unsigned char *src, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_decode_sq905c(const unsigned char *src, unsigned char *dst,
