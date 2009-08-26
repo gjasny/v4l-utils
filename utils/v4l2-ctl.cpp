@@ -105,6 +105,9 @@ enum Option {
 	OptStreamOn,
 	OptListStandards,
 	OptListFormats,
+	OptListFormatsExt,
+	OptListFrameSizes,
+	OptListFrameIntervals,
 	OptLogStatus,
 	OptVerbose,
 	OptSilent,
@@ -221,6 +224,9 @@ static struct option long_options[] = {
 	{"streamon", no_argument, 0, OptStreamOn},
 	{"list-standards", no_argument, 0, OptListStandards},
 	{"list-formats", no_argument, 0, OptListFormats},
+	{"list-formats-ext", no_argument, 0, OptListFormatsExt},
+	{"list-framesizes", required_argument, 0, OptListFrameSizes},
+	{"list-frameintervals", required_argument, 0, OptListFrameIntervals},
 	{"get-standard", no_argument, 0, OptGetStandard},
 	{"set-standard", required_argument, 0, OptSetStandard},
 	{"get-parm", no_argument, 0, OptGetParm},
@@ -319,6 +325,18 @@ static void usage(void)
 	       "                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n"
 	       "                     Possible values: mono, stereo, lang2, lang1, bilingual\n"
 	       "  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n"
+	       "  --list-formats-ext display supported video formats including frame sizes\n"
+	       "                     and intervals\n"
+	       "  --list-framesizes=<f>\n"
+	       "                     list supported framesizes for pixelformat <f>\n"
+	       "                     [VIDIOC_ENUM_FRAMESIZES]\n"
+	       "                     pixelformat is either the format index as reported by\n"
+	       "                     --list-formats, or the fourcc value as a string\n"
+	       "  --list-frameintervals=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "                     list supported frame intervals for pixelformat <f> and\n"
+	       "                     the given width and height [VIDIOC_ENUM_FRAMEINTERVALS]\n"
+	       "                     pixelformat is either the format index as reported by\n"
+	       "                     --list-formats, or the fourcc value as a string\n"
 	       "  -V, --get-fmt-video\n"
 	       "     		     query the video capture format [VIDIOC_G_FMT]\n"
 	       "  -v, --set-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
@@ -951,6 +969,72 @@ static void printfmt(const struct v4l2_format &vfmt)
 	}
 }
 
+static std::string frmtype2s(unsigned type)
+{
+	static const char *types[] = {
+		"Unknown",
+		"Discrete",
+		"Continuous",
+		"Stepwise"
+	};
+
+	if (type > 3)
+		type = 0;
+	return types[type];
+}
+
+static std::string fract2sec(const struct v4l2_fract &f)
+{
+	char buf[100];
+
+	sprintf(buf, "%.3f s", (1.0 * f.numerator) / f.denominator);
+	return buf;
+}
+
+static std::string fract2fps(const struct v4l2_fract &f)
+{
+	char buf[100];
+
+	sprintf(buf, "%.3f fps", (1.0 * f.denominator) / f.numerator);
+	return buf;
+}
+
+static void print_frmsize(const struct v4l2_frmsizeenum &frmsize, const char *prefix)
+{
+	printf("%s\tSize: %s ", prefix, frmtype2s(frmsize.type).c_str());
+	if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
+		printf("%dx%d", frmsize.discrete.width, frmsize.discrete.height);
+	} else if (frmsize.type == V4L2_FRMSIZE_TYPE_STEPWISE) {
+		printf("%dx%d - %dx%d with step %d/%d",
+				frmsize.stepwise.min_width,
+				frmsize.stepwise.min_height,
+				frmsize.stepwise.max_width,
+				frmsize.stepwise.max_height,
+				frmsize.stepwise.step_width,
+				frmsize.stepwise.step_height);
+	}
+	printf("\n");
+}
+
+static void print_frmival(const struct v4l2_frmivalenum &frmival, const char *prefix)
+{
+	printf("%s\tInterval: %s ", prefix, frmtype2s(frmival.type).c_str());
+	if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+		printf("%s (%s)\n", fract2sec(frmival.discrete).c_str(),
+				fract2fps(frmival.discrete).c_str());
+	} else if (frmival.type == V4L2_FRMIVAL_TYPE_STEPWISE) {
+		printf("%s - %s with step %s\n",
+				fract2sec(frmival.stepwise.min).c_str(),
+				fract2sec(frmival.stepwise.max).c_str(),
+				fract2sec(frmival.stepwise.step).c_str());
+		printf("%s\t            : ", prefix);
+		printf("(%s - %s with step %s)\n",
+				fract2fps(frmival.stepwise.min).c_str(),
+				fract2fps(frmival.stepwise.max).c_str(),
+				fract2fps(frmival.stepwise.step).c_str());
+	}
+}
+
 static void print_video_formats(int fd, enum v4l2_buf_type type)
 {
 	struct v4l2_fmtdesc fmt;
@@ -965,6 +1049,43 @@ static void print_video_formats(int fd, enum v4l2_buf_type type)
 			printf(" (compressed)");
 		printf("\n");
 		printf("\tName        : %s\n", fmt.description);
+		printf("\n");
+		fmt.index++;
+	}
+}
+
+static void print_video_formats_ext(int fd, enum v4l2_buf_type type)
+{
+	struct v4l2_fmtdesc fmt;
+	struct v4l2_frmsizeenum frmsize;
+	struct v4l2_frmivalenum frmival;
+
+	fmt.index = 0;
+	fmt.type = type;
+	while (ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
+		printf("\tIndex       : %d\n", fmt.index);
+		printf("\tType        : %s\n", buftype2s(type).c_str());
+		printf("\tPixel Format: '%s'", fcc2s(fmt.pixelformat).c_str());
+		if (fmt.flags)
+			printf(" (compressed)");
+		printf("\n");
+		printf("\tName        : %s\n", fmt.description);
+		frmsize.pixel_format = fmt.pixelformat;
+		frmsize.index = 0;
+		while (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
+			print_frmsize(frmsize, "\t");
+			if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
+				frmival.index = 0;
+				frmival.pixel_format = fmt.pixelformat;
+				frmival.width = frmsize.discrete.width;
+				frmival.height = frmsize.discrete.height;
+				while (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) >= 0) {
+					print_frmival(frmival, "\t\t");
+					frmival.index++;
+				}
+			}
+			frmsize.index++;
+		}
 		printf("\n");
 		fmt.index++;
 	}
@@ -1441,6 +1562,17 @@ static enum v4l2_field parse_field(const char *s)
 	return V4L2_FIELD_ANY;
 }
 
+static __u32 find_pixel_format(int fd, unsigned index)
+{
+	struct v4l2_fmtdesc fmt;
+
+	fmt.index = index;
+	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (doioctl(fd, VIDIOC_ENUM_FMT, &fmt, "VIDIOC_ENUM_FMT"))
+		return 0;
+	return fmt.pixelformat;
+}
+
 int main(int argc, char **argv)
 {
 	char *value, *subs;
@@ -1479,6 +1611,8 @@ int main(int argc, char **argv)
 	struct v4l2_output vout;	/* list_outputs */
 	struct v4l2_audio vaudio;	/* list audio inputs */
 	struct v4l2_audioout vaudout;   /* audio outputs */
+	struct v4l2_frmsizeenum frmsize;/* list frame sizes */
+	struct v4l2_frmivalenum frmival;/* list frame intervals */
 	struct v4l2_rect vcrop; 	/* crop rect */
 	struct v4l2_rect vcrop_out; 	/* crop rect */
 	struct v4l2_rect vcrop_overlay; 	/* crop rect */
@@ -1517,6 +1651,8 @@ int main(int argc, char **argv)
 	memset(&vout, 0, sizeof(vout));
 	memset(&vaudio, 0, sizeof(vaudio));
 	memset(&vaudout, 0, sizeof(vaudout));
+	memset(&frmsize, 0, sizeof(frmsize));
+	memset(&frmival, 0, sizeof(frmival));
 	memset(&vcrop, 0, sizeof(vcrop));
 	memset(&vcrop_out, 0, sizeof(vcrop_out));
 	memset(&vcrop_overlay, 0, sizeof(vcrop_overlay));
@@ -1709,6 +1845,41 @@ int main(int argc, char **argv)
 			break;
 		case OptOverlay:
 			overlay = strtol(optarg, 0L, 0);
+			break;
+		case OptListFrameSizes:
+			if (strlen(optarg) == 4)
+			    frmsize.pixel_format = v4l2_fourcc(optarg[0], optarg[1],
+					optarg[2], optarg[3]);
+			else
+			    frmsize.pixel_format = strtol(optarg, 0L, 0);
+			break;
+		case OptListFrameIntervals:
+			subs = optarg;
+			while (*subs != '\0') {
+				static const char *const subopts[] = {
+					"width",
+					"height",
+					"pixelformat",
+					NULL
+				};
+
+				switch (parse_subopt(&subs, subopts, &value)) {
+				case 0:
+					frmival.width = strtol(value, 0L, 0);
+					break;
+				case 1:
+					frmival.height = strtol(value, 0L, 0);
+					break;
+				case 2:
+					if (strlen(value) == 4)
+						frmival.pixel_format =
+						    v4l2_fourcc(value[0], value[1],
+							    value[2], value[3]);
+					else
+						frmival.pixel_format = strtol(value, 0L, 0);
+					break;
+				}
+			}
 			break;
 		case OptSetCrop:
 			parse_crop(optarg, set_crop, vcrop);
@@ -2158,13 +2329,8 @@ int main(int argc, char **argv)
 			if (set_fmts & FmtPixelFormat) {
 				in_vfmt.fmt.pix.pixelformat = vfmt.fmt.pix.pixelformat;
 				if (in_vfmt.fmt.pix.pixelformat < 256) {
-					struct v4l2_fmtdesc fmt;
-
-					fmt.index = in_vfmt.fmt.pix.pixelformat;
-					fmt.type = in_vfmt.type;
-					if (doioctl(fd, VIDIOC_ENUM_FMT, &fmt, "VIDIOC_ENUM_FMT"))
-						goto set_vid_fmt_error;
-					in_vfmt.fmt.pix.pixelformat = fmt.pixelformat;
+					in_vfmt.fmt.pix.pixelformat =
+						find_pixel_format(fd, in_vfmt.fmt.pix.pixelformat);
 				}
 			}
 			if (options[OptSetVideoFormat])
@@ -2840,6 +3006,35 @@ set_vid_fmt_error:
 		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE);
 		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OUTPUT);
 		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OVERLAY);
+	}
+
+	if (options[OptListFormatsExt]) {
+		printf("ioctl: VIDIOC_ENUM_FMT\n");
+		print_video_formats_ext(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE);
+		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OUTPUT);
+		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OVERLAY);
+	}
+
+	if (options[OptListFrameSizes]) {
+		printf("ioctl: VIDIOC_ENUM_FRAMESIZES\n");
+		if (frmsize.pixel_format < 256)
+			frmsize.pixel_format = find_pixel_format(fd, frmsize.pixel_format);
+		frmsize.index = 0;
+		while (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
+			print_frmsize(frmsize, "");
+			frmsize.index++;
+		}
+	}
+
+	if (options[OptListFrameIntervals]) {
+		printf("ioctl: VIDIOC_ENUM_FRAMEINTERVALS\n");
+		if (frmival.pixel_format < 256)
+			frmival.pixel_format = find_pixel_format(fd, frmival.pixel_format);
+		frmival.index = 0;
+		while (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) >= 0) {
+			print_frmival(frmival, "");
+			frmival.index++;
+		}
 	}
 
 	if (options[OptGetSlicedVbiCap]) {
