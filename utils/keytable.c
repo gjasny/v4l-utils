@@ -1,6 +1,6 @@
 /* keytable.c - This program allows checking/replacing keys at IR
 
-   Copyright (C) 2006 Mauro Carvalho Chehab <mchehab@infradead.org>
+   Copyright (C) 2006-2009 Mauro Carvalho Chehab <mchehab@infradead.org>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ void prtcode (int *codes)
 
 	for (p=keynames;p->name!=NULL;p++) {
 		if (p->value == (unsigned)codes[1]) {
-			printf("scancode %d = %s (0x%02x)\n", codes[0], p->name, codes[1]);
+			printf("scancode 0x%04x = %s (0x%02x)\n", codes[0], p->name, codes[1]);
 			return;
 		}
 	}
@@ -55,7 +55,7 @@ int parse_code(char *string)
 int main (int argc, char *argv[])
 {
 	int fd;
-	unsigned int i;
+	unsigned int i, j;
 	int codes[2];
 
 	if (argc<2 || argc>4) {
@@ -104,10 +104,12 @@ int main (int argc, char *argv[])
 		}
 
 		/* Clears old table */
-		for (i=0;i<256;i++) {
-			codes[0] = i;
-			codes[1] = 0;
-			ioctl(fd, EVIOCSKEYCODE, codes);
+		for (j = 0; j < 256; j++) {
+			for (i = 0; i < 256; i++) {
+				codes[0] = (j << 8) | i;
+				codes[1] = KEY_UNKNOWN;
+				ioctl(fd, EVIOCSKEYCODE, codes);
+			}
 		}
 
 		while (fgets(s,sizeof(s),fin)) {
@@ -116,14 +118,21 @@ int main (int argc, char *argv[])
 				perror ("parsing input file scancode");
 				return -1;
 			}
+			if (!strcasecmp(scancode, "scancode")) {
+				scancode = strtok(NULL,"\n\t =:");
+				if (!scancode) {
+					perror ("parsing input file scancode");
+					return -1;
+				}
+			}
 
-			keycode=strtok(NULL,"\n\t ");
+			keycode=strtok(NULL,"\n\t =:(");
 			if (!keycode) {
 				perror ("parsing input file keycode");
 				return -1;
 			}
 
-			// printf ("parsing %s=%s:",scancode,keycode);
+			// printf ("parsing %s=%s:", scancode, keycode);
 			value=parse_code(keycode);
 			// printf ("\tvalue=%d\n",value);
 
@@ -136,6 +145,7 @@ int main (int argc, char *argv[])
 			codes [0] = (unsigned) strtol(scancode, NULL, 0);
 			codes [1] = (unsigned) value;
 
+			// printf("\t%04x=%04x\n",codes[0], codes[1]);
 			if(ioctl(fd, EVIOCSKEYCODE, codes))
 				perror ("EVIOCSKEYCODE");
 
@@ -146,12 +156,13 @@ int main (int argc, char *argv[])
 	}
 
 	/* Get scancode table */
-	for (i=0;i<256;i++) {
-		codes[0] = i;
-		if(ioctl(fd, EVIOCGKEYCODE, codes)==0)
-			prtcode(codes);
+	for (j = 0; j < 256; j++) {
+		for (i = 0; i < 256; i++) {
+			codes[0] = (j << 8) | i;
+			if(ioctl(fd, EVIOCGKEYCODE, codes)==0)
+				prtcode(codes);
+		}
 	}
-
 	return 0;
 }
 
