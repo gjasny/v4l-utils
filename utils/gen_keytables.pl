@@ -5,8 +5,7 @@ my $keyname="";
 my $debug=0;
 
 while (<>) {
-#IR_KEYTAB_TYPE ir_codes_proteus_2309[IR_KEYTAB_SIZE] = {
-	if (m/IR_KEYTAB_TYPE\s+(\w[\w\d_]+)/) {
+	if (m/struct\s+ir_scancode\s+(\w[\w\d_]+)/) {
 		$keyname = $1;
 		$keyname =~ s/^ir_codes_//;
 
