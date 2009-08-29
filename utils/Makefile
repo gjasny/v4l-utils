@@ -1,5 +1,26 @@
 # Makefile for linuxtv.org v4l2-apps/util
 
+IR_FILES = "linux/drivers/media/common/ir-keymaps.c \
+linux/drivers/media/dvb/dvb-usb/a800.c \
+linux/drivers/media/dvb/dvb-usb/af9005-remote.c \
+linux/drivers/media/dvb/dvb-usb/af9015.c \
+linux/drivers/media/dvb/dvb-usb/af9015.h \
+linux/drivers/media/dvb/dvb-usb/anysee.c \
+linux/drivers/media/dvb/dvb-usb/cinergyT2-core.c \
+linux/drivers/media/dvb/dvb-usb/cxusb.c \
+linux/drivers/media/dvb/dvb-usb/dib0700_devices.c \
+linux/drivers/media/dvb/dvb-usb/dibusb-common.c \
+linux/drivers/media/dvb/dvb-usb/digitv.c \
+linux/drivers/media/dvb/dvb-usb/dtt200u.c \
+linux/drivers/media/dvb/dvb-usb/dvb-usb-remote.c \
+linux/drivers/media/dvb/dvb-usb/dvb-usb.h \
+linux/drivers/media/dvb/dvb-usb/dw2102.c \
+linux/drivers/media/dvb/dvb-usb/m920x.c \
+linux/drivers/media/dvb/dvb-usb/nova-t-usb2.c \
+linux/drivers/media/dvb/dvb-usb/opera1.c \
+linux/drivers/media/dvb/dvb-usb/vp702x.c \
+linux/drivers/media/dvb/dvb-usb/vp7045.c "
+
 ifeq ($(KERNEL_DIR),)
 	KERNEL_DIR = /usr
 endif
@@ -62,8 +83,9 @@ parse.h: $(KERNEL_DIR)/include/linux/input.h
 	@printf "\t{ NULL, 0}\n};\n" >>parse.h
 
 keytables:
-	-mkdir -p keycodes
-	./gen_keytables.pl ../../linux/drivers/media/common/ir-keymaps.c
+	@-mkdir -p keycodes
+	@echo storing existing keycodes at keycodes/
+	@for i in `echo $(IR_FILES)`; do ./gen_keytables.pl ../../$$i; done
 
 keytable: keytable.c parse.h keytables
 
