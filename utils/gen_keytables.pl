@@ -14,7 +14,7 @@ while (<>) {
 		next;
 	}
 	if ($keyname ne "") {
-		if (m/(0x[\dA-Fa-f]+).*(KEY_[^\s\,]+)/) {
+		if (m/(0x[\dA-Fa-f]+).*(KEY_[^\s\,\}]+)/) {
 			printf OUT "%s %s\n",$1, $2;
 			next;
 		}
