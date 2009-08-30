@@ -245,13 +245,14 @@ void get_subdevs(char *path)
 			char *s = strchr(entry->d_name, ':');
 			if (s) {
 				printf("\t%s", entry->d_name);
-				if (!get_dev(entry->d_name, &major, &minor, extra))
+				if (!get_dev(entry->d_name, &major, &minor, extra)) {
 					if (*extra)
 						printf(":%s (dev %d,%d)",
 							extra, major, minor);
 					else
 						printf(" (dev %d,%d)",
 							major, minor);
+				}
 				printf("\n");
 			}
 		}
