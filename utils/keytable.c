@@ -146,8 +146,10 @@ int main (int argc, char *argv[])
 			codes [1] = (unsigned) value;
 
 			// printf("\t%04x=%04x\n",codes[0], codes[1]);
-			if(ioctl(fd, EVIOCSKEYCODE, codes))
+			if(ioctl(fd, EVIOCSKEYCODE, codes)) {
+				fprintf(stderr, "Setting scancode 0x%04x with 0x%04x via ",codes[0], codes[1]);
 				perror ("EVIOCSKEYCODE");
+			}
 
 			if(ioctl(fd, EVIOCGKEYCODE, codes)==0)
 				prtcode(codes);
