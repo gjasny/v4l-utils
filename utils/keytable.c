@@ -107,7 +107,7 @@ int main (int argc, char *argv[])
 		for (j = 0; j < 256; j++) {
 			for (i = 0; i < 256; i++) {
 				codes[0] = (j << 8) | i;
-				codes[1] = KEY_UNKNOWN;
+				codes[1] = KEY_RESERVED;
 				ioctl(fd, EVIOCSKEYCODE, codes);
 			}
 		}
@@ -161,7 +161,7 @@ int main (int argc, char *argv[])
 	for (j = 0; j < 256; j++) {
 		for (i = 0; i < 256; i++) {
 			codes[0] = (j << 8) | i;
-			if(ioctl(fd, EVIOCGKEYCODE, codes)==0)
+			if (!ioctl(fd, EVIOCGKEYCODE, codes) && codes[1] != KEY_RESERVED)
 				prtcode(codes);
 		}
 	}
