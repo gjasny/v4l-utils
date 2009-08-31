@@ -10,6 +10,7 @@ libv4l-0.6.1
 * Change controls shm segment name to include the username, as it is only
   writable by the user (this means libv4l controls are per user) (Gregor Jasny)
 * Add support for decompressing sn9c2028 compressed bayer (Theodore Kilgore)
+* Report V4L2_FMT_FLAG_EMULATED in v4l2_fmtdesc flags for emulated formats
 
 libv4l-0.6.0
 ------------

@@ -96,6 +96,10 @@
 #define V4L2_PIX_FMT_OV518 v4l2_fourcc('O', '5', '1', '8') /* ov518 JPEG */
 #endif
 
+#ifndef V4L2_FMT_FLAG_EMULATED
+#define V4L2_FMT_FLAG_EMULATED 0x0002
+#endif
+
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
 #define V4LCONVERT_ERROR_MSG_SIZE 256
