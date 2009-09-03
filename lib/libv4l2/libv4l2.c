@@ -312,7 +312,6 @@ static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
   int result, buf_size, tries = max_tries;
 
   buf_size = devices[index].dest_fmt.fmt.pix.sizeimage;
-  buf_size = (buf_size + 8191) & ~8191;
 
   if (devices[index].readbuf_size < buf_size) {
     unsigned char *new_buf;
@@ -526,10 +525,9 @@ int v4l2_fd_open(int fd, int v4l2_flags)
     return -1;
   }
 
-  /* we only add functionality for video capture devices, and we do not
-     handle devices which don't do mmap */
+  /* we only add functionality for video capture devices */
   if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) ||
-      !(cap.capabilities & V4L2_CAP_STREAMING))
+      !(cap.capabilities & (V4L2_CAP_STREAMING|V4L2_CAP_READWRITE)))
     return fd;
 
   /* Get current cam format */
@@ -564,6 +562,8 @@ int v4l2_fd_open(int fd, int v4l2_flags)
   devices[index].flags = v4l2_flags;
   if (cap.capabilities & V4L2_CAP_READWRITE)
     devices[index].flags |= V4L2_SUPPORTS_READ;
+  if (!(cap.capabilities & V4L2_CAP_STREAMING))
+    devices[index].flags |= V4L2_USE_READ_FOR_READ;
   if (!strcmp((char *)cap.driver, "uvcvideo"))
     devices[index].flags |= V4L2_IS_UVC;
   devices[index].open_count = 1;
@@ -571,7 +571,7 @@ int v4l2_fd_open(int fd, int v4l2_flags)
   devices[index].dest_fmt = fmt;
 
   /* When a user does a try_fmt with the current dest_fmt and the dest_fmt
-     is a supported one we will align the resulution (see try_fmt for why).
+     is a supported one we will align the resolution (see try_fmt for why).
      Do the same here now, so that a try_fmt on the result of a get_fmt done
      immediately after open leaves the fmt unchanged. */
   if (v4lconvert_supported_dst_format(
