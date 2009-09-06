@@ -3,6 +3,7 @@
 #             (C) 2008-2009 Sjoerd Piepenbrink <need4weed@gmail.com>
 #             (C) 2008-2009 Radjnies Bhansingh <radjnies@gmail.com>
 #             (C) 2008-2009 Hans de Goede <hdegoede@redhat.com>
+#             (C)      2009 Paul Sladen <ubuntu@paul.sladen.org>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -61,6 +62,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   /* Laptops */
   { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "F7L       ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "W7Sg      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "F7SR      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "G50VT     ",
@@ -70,6 +73,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "X55SR     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "X55SV     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  /* note different white space: http://launchpad.net/bugs/413752 */
+  { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc. ", "X71SL               ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   /* These 3 PACKARD BELL's seem to be Asus notebook in disguise */
   { 0x04f2, 0xb012, 0, "Packard Bell BV", "T32A      ",
