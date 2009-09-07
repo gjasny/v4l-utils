@@ -25,6 +25,7 @@
 #define V4LCONTROL_SHM_SIZE 4096
 
 #define V4LCONTROL_SUPPORTS_NEXT_CTRL 0x01
+#define V4LCONTROL_MEMORY_IS_MALLOCED 0x02
 
 struct v4lcontrol_flags_info;
 
@@ -49,6 +50,15 @@ struct v4lcontrol_flags_info {
   const char *product; */
   int flags;
   int default_gamma;
+/* Some seldom used dmi strings (for notebooks with bogus info in the board
+   entries, but usefull info elsewhere). We keep this at the end as to not
+   polute the initalizers for the normal case. */
+  /* System (product) vendor / name */
+  const char *dmi_system_vendor;
+  const char *dmi_system_name;
+  /* Board and System versions */
+  const char *dmi_board_version;
+  const char *dmi_system_version;
 };
 
 #endif

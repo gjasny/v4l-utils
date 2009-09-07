@@ -3,7 +3,7 @@
 # for v4l2 applications which want to be able to simply capture bgr24 / yuv420
 # from v4l2 devices with more exotic frame formats.
 
-#             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by

@@ -33,6 +33,10 @@ ifeq ($(LIBDIR),)
 LIBDIR = $(PREFIX)/lib
 endif
 
+ifeq ($(LIBSUBDIR),)
+LIBSUBDIR = libv4l
+endif
+
 all: $(TARGETS)
 
 -include $(V4L2_OBJS:.o=.d)
@@ -60,12 +64,12 @@ ifeq ($(LINKTYPE),static)
 	mkdir -p $(DESTDIR)$(LIBDIR)
 	install -m 644 $(V4L2_LIB) $(DESTDIR)$(LIBDIR)
 else
-	mkdir -p $(DESTDIR)$(LIBDIR)/libv4l
+	mkdir -p $(DESTDIR)$(LIBDIR)/$(LIBSUBDIR)
 	install -m 755 $(V4L2_LIB).$(LIB_RELEASE) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR) && \
 	  ln -f -s $(V4L2_LIB).$(LIB_RELEASE) $(V4L2_LIB)
 	install -m 755 $(V4L2CONVERT).$(LIB_RELEASE) \
-	  $(DESTDIR)$(LIBDIR)/libv4l/$(V4L2CONVERT)
+	  $(DESTDIR)$(LIBDIR)/$(LIBSUBDIR)/$(V4L2CONVERT)
 endif
 	mkdir -p $(DESTDIR)$(LIBDIR)/pkgconfig
 	install -m 644 libv4l2.pc $(DESTDIR)$(LIBDIR)/pkgconfig

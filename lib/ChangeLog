@@ -1,3 +1,21 @@
+libv4l-0.6.2
+------------
+* Add more laptop models to the upside down devices table
+
+libv4l-0.6.1
+------------
+* Add more laptop models to the upside down devices table
+* Makefile changes to make life easier for the Debian package (Gregor Jasny)
+* Bugfix: fixup 320x240 output for pac7302 cameras
+* README improvements / clarifications (Bifferos)
+* Bugfix: fix reqbuf Device or Resource busy error when using v4l2_read()
+* Some applications want to use jpg format if possible, so do not hide
+  it from the apps (do not assume it always needs conversion)
+* Change controls shm segment name to include the username, as it is only
+  writable by the user (this means libv4l controls are per user) (Gregor Jasny)
+* Add support for decompressing sn9c2028 compressed bayer (Theodore Kilgore)
+* Report V4L2_FMT_FLAG_EMULATED in v4l2_fmtdesc flags for emulated formats
+
 libv4l-0.6.0
 ------------
 * Recognize disabled controls and replace with fake equivalents where
@@ -6,8 +24,12 @@ libv4l-0.6.0
   an external helper as I've failed to contact Mark W. McClelland to get
   permission to relicense the code. If you know a working email address for
   Mark W. McClelland, please let me know.
-* Fix a bug in the always report widths which are a multiple of 8 code added
-  in 0.5.97
+* Add tons of laptop models to the upside down devices table
+* Support for rgb565 source format by Mauro Carvalho Chehab
+* Many bug fixes (see the mercurial tree for details)
+* Improved pac207 decompression code to also support higher compression
+  modes of the pac207, which enables us to use higher framerates.
+  Many many thanks to Bertrik Sikken for figuring the decompression out!
 
 libv4l-0.5.99
 -------------

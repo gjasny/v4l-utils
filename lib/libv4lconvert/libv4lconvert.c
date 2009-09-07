@@ -1,5 +1,5 @@
 /*
-#             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -46,6 +46,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_YUYV,         0 },
   { V4L2_PIX_FMT_YVYU,         0 },
   { V4L2_PIX_FMT_UYVY,         0 },
+  { V4L2_PIX_FMT_RGB565,       0 },
   { V4L2_PIX_FMT_SN9C20X_I420, V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SBGGR8,       V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SGBRG8,       V4LCONVERT_NEEDS_CONVERSION },
@@ -57,14 +58,15 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_HM12,         V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_MJPEG,        V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_JPEG,         V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_SPCA561,      V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_SN9C10X,      V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_PAC207,       V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_MR97310A,     V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_SQ905C,       V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_PJPG,         V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_OV511,        V4LCONVERT_COMPRESSED },
-  { V4L2_PIX_FMT_OV518,        V4LCONVERT_COMPRESSED },
+  { V4L2_PIX_FMT_SPCA561,      V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_SN9C10X,      V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_SN9C2028,     V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_PAC207,       V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_MR97310A,     V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_SQ905C,       V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_PJPG,         V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_OV511,        V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_OV518,        V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
 };
 
 static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
@@ -94,8 +96,10 @@ struct v4lconvert_data *v4lconvert_create(int fd)
      processing controls without a performance impact. */
   int always_needs_conversion = 1;
 
-  if (!data)
+  if (!data) {
+    fprintf(stderr, "libv4lconvert: error: out of memory!\n");
     return NULL;
+  }
 
   data->fd = fd;
   data->decompress_pid = -1;
@@ -113,7 +117,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
       if (fmt.pixelformat == supported_src_pixfmts[j].fmt) {
 	data->supported_src_formats |= 1 << j;
 	v4lconvert_get_framesizes(data, fmt.pixelformat, j);
-	if (!supported_src_pixfmts[j].flags)
+	if (!(supported_src_pixfmts[j].flags & V4LCONVERT_NEEDS_CONVERSION))
 	  always_needs_conversion = 0;
 	break;
       }
@@ -215,7 +219,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
     return -1;
   }
 
-  fmt->flags = 0;
+  fmt->flags = V4L2_FMT_FLAG_EMULATED;
   fmt->pixelformat = faked_fmts[i];
   fmt->description[0] = faked_fmts[i] & 0xff;
   fmt->description[1] = (faked_fmts[i] >> 8) & 0xff;
@@ -490,6 +494,7 @@ static int v4lconvert_processing_needs_double_conversion(
     case V4L2_PIX_FMT_SN9C10X:
     case V4L2_PIX_FMT_PAC207:
     case V4L2_PIX_FMT_MR97310A:
+    case V4L2_PIX_FMT_SN9C2028:
     case V4L2_PIX_FMT_SQ905C:
     case V4L2_PIX_FMT_SBGGR8:
     case V4L2_PIX_FMT_SGBRG8:
@@ -671,7 +676,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);
 	  break;
 	case V4L2_PIX_FMT_OV511:
-	  if (v4lconvert_helper_decompress(data, LIBDIR "/libv4l/ov511-decomp",
+	  if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov511-decomp",
 		     src, src_size, d, d_size, width, height, yvu)) {
 	    /* Corrupt frame, better get another one */
 	    errno = EAGAIN;
@@ -679,7 +684,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  }
 	  break;
 	case V4L2_PIX_FMT_OV518:
-	  if (v4lconvert_helper_decompress(data, LIBDIR "/libv4l/ov518-decomp",
+	  if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov518-decomp",
 		     src, src_size, d, d_size, width, height, yvu)) {
 	    /* Corrupt frame, better get another one */
 	    errno = EAGAIN;
@@ -724,6 +729,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SN9C10X:
     case V4L2_PIX_FMT_PAC207:
     case V4L2_PIX_FMT_MR97310A:
+    case V4L2_PIX_FMT_SN9C2028:
     case V4L2_PIX_FMT_SQ905C:
     {
       unsigned char *tmpbuf;
@@ -744,11 +750,20 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
 	  break;
 	case V4L2_PIX_FMT_PAC207:
-	  v4lconvert_decode_pac207(src, tmpbuf, width, height);
+	  if (v4lconvert_decode_pac207(data, src, src_size, tmpbuf,
+				       width, height)) {
+	    /* Corrupt frame, better get another one */
+	    errno = EAGAIN;
+	    return -1;
+	  }
 	  tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
 	  break;
 	case V4L2_PIX_FMT_MR97310A:
 	  v4lconvert_decode_mr97310a(src, tmpbuf, width, height);
+	  tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
+	  break;
+	case V4L2_PIX_FMT_SN9C2028:
+	  v4lconvert_decode_sn9c2028(src, tmpbuf, width, height);
 	  tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
 	  break;
 	case V4L2_PIX_FMT_SQ905C:
@@ -783,6 +798,23 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	break;
       case V4L2_PIX_FMT_YVU420:
 	v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 1);
+	break;
+      }
+      break;
+
+    case V4L2_PIX_FMT_RGB565:
+      switch (dest_pix_fmt) {
+      case V4L2_PIX_FMT_RGB24:
+	v4lconvert_rgb565_to_rgb24(src, dest, width, height);
+	break;
+      case V4L2_PIX_FMT_BGR24:
+	v4lconvert_rgb565_to_bgr24(src, dest, width, height);
+	break;
+      case V4L2_PIX_FMT_YUV420:
+	v4lconvert_rgb565_to_yuv420(src, dest, fmt, 0);
+	break;
+      case V4L2_PIX_FMT_YVU420:
+	v4lconvert_rgb565_to_yuv420(src, dest, fmt, 1);
 	break;
       }
       break;

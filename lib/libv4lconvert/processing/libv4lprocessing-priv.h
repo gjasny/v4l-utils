@@ -30,6 +30,7 @@ struct v4lprocessing_data {
   struct v4lcontrol_data *control;
   int fd;
   int do_process;
+  int controls_changed;
   /* True if any of the lookup tables does not contain
      linear 0-255 */
   int lookup_table_active;
@@ -41,6 +42,11 @@ struct v4lprocessing_data {
   unsigned char green[256];
   unsigned char comp2[256];
   /* Filter private data for filters which need it */
+  /* whitebalance.c data */
+  int green_avg;
+  int comp1_avg;
+  int comp2_avg;
+  /* gamma.c data */
   int last_gamma;
   unsigned char gamma_table[256];
 };

@@ -1,5 +1,5 @@
 /*
-#             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -80,6 +80,9 @@ struct v4l2_dev_info {
   int frame_queued; /* 1 status bit per frame */
   /* mapping tracking of our fake (converting mmap) frame buffers */
   unsigned char frame_map_count[V4L2_MAX_NO_FRAMES];
+  /* buffer when doing conversion and using read() for read() */
+  int readbuf_size;
+  unsigned char *readbuf;
 };
 
 /* From log.c */

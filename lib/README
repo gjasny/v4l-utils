@@ -25,13 +25,13 @@ libv4lconvert/libv4lconvert.c for the full list.
 For more details on the v4lconvert_ functions see libv4lconvert.h.
 
 Later on libv4lconvert was expanded to also be able to do various video
-processing functions improve webcam video quality on a software basis. So
+processing functions to improve webcam video quality on a software basis. So
 the name no longer 100% covers the functionality. The video processing is
 split in to 2 parts, libv4lconvert/control and libv4lconvert/processing.
 
 The control part is used to offer video controls which can be used to control
 the video processing functions made available by libv4lconvert/processing.
-These controls are stored application wide (untill reboot) by using a
+These controls are stored application wide (until reboot) by using a
 persistent shared memory object.
 
 libv4lconvert/processing offers the actual video processing functionality.
@@ -80,6 +80,12 @@ $ export LD_PRELOAD=/usr/local/lib/libv4l/v4l1compat.so
 $ camorama
 
 
+Prerequisites
+-------------
+
+libv4l requires shmem file system support in the kernel (CONFIG_SHMEM).
+
+
 Installation Instructions
 -------------------------
 
@@ -88,8 +94,14 @@ Simple type the following commands from the libv4l-x.y.z directory
 make
 make install PREFIX=/usr/local
 
-Note: make install also supports the DESTDIR=... paramter for installation
+Note: make install also supports the DESTDIR=... parameter for installation
 into chroots.
+
+If you require static libraries to also be built, these can be compiled
+along with the dynamic equivalents by defining LINKTYPE to 'static', e.g.:
+
+make LINKTYPE=static
+make install LINKTYPE=static
 
 
 FAQ
@@ -117,10 +129,13 @@ So clearly this belongs in a library, and in a library with a license which
 allows this code to be used from as many different applications as possible.
 Hence libv4l was born.
 
+
 Q: Under which license may I use and distribute libv4l?
-A: All libv4l components are licensed under the GNU Library General Publishing
+A: The libv4l libraries are licensed under the GNU Library General Publishing
 License version 2 or (at your option) any later version. See the included
-COPYING.LIB file.
+COPYING.LIB file. The decompression helpers are licensed under the GNU
+Library Publishing License version 2 (as they are derived from kernel code)
+
 
 Q: Okay so I get the use of having a libv4lconvert, but why libv4l1 ?
 A: Many v4l2 drivers do not offer full v4l1 compatibility. They often do not
@@ -138,9 +153,8 @@ applications.
 
 
 Q: Why should I use libv4l2 in my app instead of direct device access
-combined with libv4lconvert?
-
-libv4l2 is mainly meant for quickly and easily adding support for more
+   combined with libv4lconvert?
+A: libv4l2 is mainly meant for quickly and easily adding support for more
 pixelformats to existing v4l2 applications. So if you feel better directly
 accessing the device in combination with libv4lconvert thats fine too.
 
@@ -151,3 +165,11 @@ zero-copy access to the captured frame, and then it can write the converted
 data directly to the buffer the application provided to v4l2_read(). Thus
 another reason to use liv4l2 is to get the no memcpy advantage of the mmap
 capture method combined with the simplicity of making a simple read() call.
+
+
+Q: Where to send bugreports / questions?
+A: Please send libv4l questions / bugreports to the:
+   Linux Media Mailing List <linux-media@vger.kernel.org>
+   Subscription is not necessary to send mail to this list. If you're not
+   subscribed please put yourself in the CC of your original mail so you
+   will receive replies.

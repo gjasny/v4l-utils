@@ -38,8 +38,10 @@ struct v4lprocessing_data *v4lprocessing_create(int fd, struct v4lcontrol_data* 
   struct v4lprocessing_data *data =
     calloc(1, sizeof(struct v4lprocessing_data));
 
-  if (!data)
+  if (!data) {
+    fprintf(stderr, "libv4lprocessing: error: out of memory!\n");
     return NULL;
+  }
 
   data->fd = fd;
   data->control = control;
@@ -61,6 +63,8 @@ int v4lprocessing_pre_processing(struct v4lprocessing_data *data)
     if (filters[i]->active(data))
       data->do_process = 1;
   }
+
+  data->controls_changed |= v4lcontrol_controls_changed(data->control);
 
   return data->do_process;
 }
@@ -167,9 +171,10 @@ void v4lprocessing_processing(struct v4lprocessing_data *data,
       return; /* Non supported pix format */
   }
 
-  if (v4lcontrol_controls_changed(data->control) ||
+  if (data->controls_changed ||
       data->lookup_table_update_counter == V4L2PROCESSING_UPDATE_RATE) {
     v4lprocessing_update_lookup_tables(data, buf, fmt);
+    data->controls_changed = 0;
     data->lookup_table_update_counter = 0;
   } else
     data->lookup_table_update_counter++;

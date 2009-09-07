@@ -2,7 +2,7 @@
 
 # RGB / YUV flip/rotate routines
 
-#             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -219,6 +219,7 @@ void v4lconvert_rotate90(unsigned char *src, unsigned char *dest,
 				 fmt->fmt.pix.height);
       break;
   }
+  v4lconvert_fixup_fmt(fmt);
 }
 
 void v4lconvert_flip(unsigned char *src, unsigned char *dest,

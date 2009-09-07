@@ -1,5 +1,5 @@
 /*
-#             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -51,6 +51,13 @@ LIBV4L_PUBLIC extern FILE *v4l2_log_file;
    Note the device name passed to v4l2_open must be of a video4linux2 device,
    if it is anything else (including a video4linux1 device), v4l2_open will
    fail.
+
+   Note that the argument to v4l2_ioctl after the request must be a valid
+   memory address of structure of the appropriate type for the request (for
+   v4l2 requests which expect a structure address). Passing in NULL or an
+   invalid memory address will not lead to failure with errno being EFAULT,
+   as it would with a real ioctl, but will cause libv4l2 to break, and you
+   get to keep both pieces.
 */
 
 LIBV4L_PUBLIC int v4l2_open (const char *file, int oflag, ...);

@@ -1,5 +1,5 @@
 /*
-#             (C) 2008 Hans de Goede <j.w.r.degoede@hhs.nl>
+#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -77,6 +77,7 @@
 #define V4L2_SUPPORTS_READ		0x0800
 #define V4L2_IS_UVC			0x1000
 #define V4L2_STREAM_TOUCHED		0x2000
+#define V4L2_USE_READ_FOR_READ		0x4000
 
 #define V4L2_MMAP_OFFSET_MAGIC      0xABCDEF00u
 
@@ -101,7 +102,7 @@ static int v4l2_request_read_buffers(int index)
   req.memory = V4L2_MEMORY_MMAP;
   if ((result = SYS_IOCTL(devices[index].fd, VIDIOC_REQBUFS, &req)) < 0){
     int saved_err = errno;
-    V4L2_LOG_ERR("requesting %u buffers: %s\n", req.count, strerror(errno));
+    V4L2_LOG("warning reqbuf (%u) failed: %s\n", req.count, strerror(errno));
     errno = saved_err;
     return result;
   }
@@ -305,6 +306,62 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
   return result;
 }
 
+static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
+{
+  const int max_tries = 10;
+  int result, buf_size, tries = max_tries;
+
+  buf_size = devices[index].dest_fmt.fmt.pix.sizeimage;
+
+  if (devices[index].readbuf_size < buf_size) {
+    unsigned char *new_buf;
+
+    new_buf = realloc(devices[index].readbuf, buf_size);
+    if (!new_buf)
+      return -1;
+
+    devices[index].readbuf = new_buf;
+    devices[index].readbuf_size = buf_size;
+  }
+
+  do {
+    result = SYS_READ(devices[index].fd, devices[index].readbuf, buf_size);
+    if (result <= 0) {
+      if (result && errno != EAGAIN) {
+	int saved_err = errno;
+	V4L2_LOG_ERR("reading: %s\n", strerror(errno));
+	errno = saved_err;
+      }
+      return result;
+    }
+
+    result = v4lconvert_convert(devices[index].convert,
+	   &devices[index].src_fmt, &devices[index].dest_fmt,
+	   devices[index].readbuf, result, dest, dest_size);
+
+    if (result < 0) {
+      int saved_err = errno;
+
+      if(errno == EAGAIN)
+	V4L2_LOG("warning error while converting frame data: %s\n",
+	  v4lconvert_get_error_message(devices[index].convert));
+      else
+	V4L2_LOG_ERR("converting / decoding frame data: %s\n",
+	  v4lconvert_get_error_message(devices[index].convert));
+
+      errno = saved_err;
+    }
+    tries--;
+  } while (result < 0 && errno == EAGAIN && tries);
+
+  if (result < 0 && errno == EAGAIN) {
+    V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s\n",
+      max_tries, v4lconvert_get_error_message(devices[index].convert));
+  }
+
+  return result;
+}
+
 static int v4l2_queue_read_buffers(int index)
 {
   unsigned int i;
@@ -331,6 +388,11 @@ static int v4l2_queue_read_buffers(int index)
 static int v4l2_activate_read_stream(int index)
 {
   int result;
+
+  if ((devices[index].flags & V4L2_STREAMON) || devices[index].frame_queued) {
+    errno = EBUSY;
+    return -1;
+  }
 
   if ((result = v4l2_request_read_buffers(index)))
     return result;
@@ -463,10 +525,9 @@ int v4l2_fd_open(int fd, int v4l2_flags)
     return -1;
   }
 
-  /* we only add functionality for video capture devices, and we do not
-     handle devices which don't do mmap */
+  /* we only add functionality for video capture devices */
   if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) ||
-      !(cap.capabilities & V4L2_CAP_STREAMING))
+      !(cap.capabilities & (V4L2_CAP_STREAMING|V4L2_CAP_READWRITE)))
     return fd;
 
   /* Get current cam format */
@@ -501,6 +562,8 @@ int v4l2_fd_open(int fd, int v4l2_flags)
   devices[index].flags = v4l2_flags;
   if (cap.capabilities & V4L2_CAP_READWRITE)
     devices[index].flags |= V4L2_SUPPORTS_READ;
+  if (!(cap.capabilities & V4L2_CAP_STREAMING))
+    devices[index].flags |= V4L2_USE_READ_FOR_READ;
   if (!strcmp((char *)cap.driver, "uvcvideo"))
     devices[index].flags |= V4L2_IS_UVC;
   devices[index].open_count = 1;
@@ -508,7 +571,7 @@ int v4l2_fd_open(int fd, int v4l2_flags)
   devices[index].dest_fmt = fmt;
 
   /* When a user does a try_fmt with the current dest_fmt and the dest_fmt
-     is a supported one we will align the resulution (see try_fmt for why).
+     is a supported one we will align the resolution (see try_fmt for why).
      Do the same here now, so that a try_fmt on the result of a get_fmt done
      immediately after open leaves the fmt unchanged. */
   if (v4lconvert_supported_dst_format(
@@ -528,6 +591,8 @@ int v4l2_fd_open(int fd, int v4l2_flags)
     devices[index].frame_map_count[i] = 0;
   }
   devices[index].frame_queued = 0;
+  devices[index].readbuf = NULL;
+  devices[index].readbuf_size = 0;
 
   if (index >= devices_used)
     devices_used = index + 1;
@@ -585,6 +650,9 @@ int v4l2_close(int fd)
     devices[index].convert_mmap_buf = MAP_FAILED;
   }
   v4lconvert_destroy(devices[index].convert);
+  free(devices[index].readbuf);
+  devices[index].readbuf = NULL;
+  devices[index].readbuf_size = 0;
 
   /* Remove the fd from our list of managed fds before closing it, because as
      soon as we've done the actual close the fd maybe returned by an open in
@@ -1070,7 +1138,6 @@ ssize_t v4l2_read (int fd, void* dest, size_t n)
 {
   ssize_t result;
   int index;
-  struct v4l2_buffer buf;
 
   if ((index = v4l2_get_index(fd)) == -1)
     return SYS_READ(fd, dest, n);
@@ -1085,23 +1152,33 @@ ssize_t v4l2_read (int fd, void* dest, size_t n)
     goto leave;
   }
 
-  if (!(devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ)) {
-    if ((devices[index].flags & V4L2_STREAMON) ||
-	devices[index].frame_queued) {
-      errno = EBUSY;
-      result = -1;
-      goto leave;
-    }
+  /* Since we need to do conversion try to use mmap (streaming) mode under
+     the hood as that safes a memcpy for each frame read.
+
+     Note sometimes this will fail as some drivers (atleast gspca) do not allow
+     switching from read mode to mmap mode and they assume read() mode if a
+     select or poll() is done before any buffers are requested. So using mmap
+     mode under the hood will fail if a select() or poll() is done before the
+     first emulated read() call. */
+  if (!(devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ) &&
+      !(devices[index].flags & V4L2_USE_READ_FOR_READ)) {
     if ((result = v4l2_activate_read_stream(index)))
-      goto leave;
+      /* Activating mmap mode failed, use read() instead */
+      devices[index].flags |= V4L2_USE_READ_FOR_READ;
   }
 
-  buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  buf.memory = V4L2_MEMORY_MMAP;
-  result = v4l2_dequeue_and_convert(index, &buf, dest, n);
+  if (devices[index].flags & V4L2_USE_READ_FOR_READ) {
+    result = v4l2_read_and_convert(index, dest, n);
+  } else {
+    struct v4l2_buffer buf;
 
-  if (result >= 0)
-    v4l2_queue_read_buffer(index, buf.index);
+    buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    buf.memory = V4L2_MEMORY_MMAP;
+    result = v4l2_dequeue_and_convert(index, &buf, dest, n);
+
+    if (result >= 0)
+      v4l2_queue_read_buffer(index, buf.index);
+  }
 
 leave:
   pthread_mutex_unlock(&devices[index].stream_lock);
@@ -1226,9 +1303,15 @@ int v4l2_set_control(int fd, int cid, int value)
 {
   struct v4l2_queryctrl qctrl = { .id = cid };
   struct v4l2_control ctrl = { .id = cid };
-  int result;
+  int index, result;
 
-  if ((result = SYS_IOCTL(fd, VIDIOC_QUERYCTRL, &qctrl)))
+  if ((index = v4l2_get_index(fd)) == -1) {
+    V4L2_LOG_ERR("v4l2_set_control called with invalid fd: %d\n", fd);
+    errno = EBADF;
+    return -1;
+  }
+
+  if ((result = v4lconvert_vidioc_queryctrl(devices[index].convert, &qctrl)))
     return result;
 
   if (!(qctrl.flags & V4L2_CTRL_FLAG_DISABLED) &&
@@ -1239,7 +1322,7 @@ int v4l2_set_control(int fd, int cid, int value)
       ctrl.value = (value * (qctrl.maximum - qctrl.minimum) + 32767) / 65535 +
 		   qctrl.minimum;
 
-    result = SYS_IOCTL(fd, VIDIOC_S_CTRL, &ctrl);
+    result = v4lconvert_vidioc_s_ctrl(devices[index].convert, &ctrl);
   }
 
   return result;
@@ -1249,14 +1332,21 @@ int v4l2_get_control(int fd, int cid)
 {
   struct v4l2_queryctrl qctrl = { .id = cid };
   struct v4l2_control ctrl = { .id = cid };
+  int index;
 
-  if (SYS_IOCTL(fd, VIDIOC_QUERYCTRL, &qctrl))
+  if ((index = v4l2_get_index(fd)) == -1) {
+    V4L2_LOG_ERR("v4l2_set_control called with invalid fd: %d\n", fd);
+    errno = EBADF;
+    return -1;
+  }
+
+  if (v4lconvert_vidioc_queryctrl(devices[index].convert, &qctrl))
     return 0;
 
   if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
     return 0;
 
-  if (SYS_IOCTL(fd, VIDIOC_G_CTRL, &ctrl))
+  if (v4lconvert_vidioc_g_ctrl(devices[index].convert, &ctrl))
     return 0;
 
   return ((ctrl.value - qctrl.minimum) * 65535 +

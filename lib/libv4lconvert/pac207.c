@@ -52,35 +52,35 @@ static void init_pixart_decoder(void)
 	    len = 2;
 	} else if ((i & 0xC0) == 0x40) {
 	    /* code 01 */
-	    val = -5;
+	    val = -1;
 	    len = 2;
 	} else if ((i & 0xC0) == 0x80) {
 	    /* code 10 */
-	    val = +5;
+	    val = +1;
 	    len = 2;
 	} else if ((i & 0xF0) == 0xC0) {
 	    /* code 1100 */
-	    val = -10;
+	    val = -2;
 	    len = 4;
 	} else if ((i & 0xF0) == 0xD0) {
 	    /* code 1101 */
-	    val = +10;
+	    val = +2;
 	    len = 4;
 	} else if ((i & 0xF8) == 0xE0) {
 	    /* code 11100 */
-	    val = -15;
+	    val = -3;
 	    len = 5;
 	} else if ((i & 0xF8) == 0xE8) {
 	    /* code 11101 */
-	    val = +15;
+	    val = +3;
 	    len = 5;
 	} else if ((i & 0xFC) == 0xF0) {
 	    /* code 111100 */
-	    val = -20;
+	    val = -4;
 	    len = 6;
 	} else if ((i & 0xFC) == 0xF4) {
 	    /* code 111101 */
-	    val = +20;
+	    val = +4;
 	    len = 6;
 	} else if ((i & 0xF8) == 0xF8) {
 	    /* code 11111xxxxxx */
@@ -109,7 +109,8 @@ static inline unsigned short getShort(const unsigned char *pt)
 }
 
 static int
-pac_decompress_row(const unsigned char *inp, unsigned char *outp, int width)
+pac_decompress_row(const unsigned char *inp, unsigned char *outp, int width,
+    int step_size, int abs_bits)
 {
     int col;
     int val;
@@ -135,11 +136,11 @@ pac_decompress_row(const unsigned char *inp, unsigned char *outp, int width)
 	if (table[code].is_abs) {
 	    /* absolute value: get 6 more bits */
 	    code = getByte(inp, bitpos);
-	    bitpos += 6;
-	    *outp++ = code & 0xFC;
+	    bitpos += abs_bits;
+	    *outp++ = code & ~(0xff >> abs_bits);
 	} else {
 	    /* relative to left pixel */
-	    val = outp[-2] + table[code].val;
+	    val = outp[-2] + table[code].val * step_size;
 	    *outp++ = CLIP(val);
 	}
     }
@@ -148,18 +149,24 @@ pac_decompress_row(const unsigned char *inp, unsigned char *outp, int width)
     return 2 * ((bitpos + 15) / 16);
 }
 
-void v4lconvert_decode_pac207(const unsigned char *inp, unsigned char *outp,
+int v4lconvert_decode_pac207(struct v4lconvert_data *data,
+  const unsigned char *inp, int src_size, unsigned char *outp,
   int width, int height)
 {
 /* we should received a whole frame with header and EOL marker
 in myframe->data and return a GBRG pattern in frame->tmpbuffer
 remove the header then copy line by line EOL is set with 0x0f 0xf0 marker
 or 0x1e 0xe1 for compressed line*/
+    const unsigned char *end = inp + src_size;
     unsigned short word;
     int row;
 
     /* iterate over all rows */
     for (row = 0; row < height; row++) {
+	if ((inp + 2) > end) {
+	    V4LCONVERT_ERR("incomplete pac207 frame\n");
+	    return -1;
+	}
 	word = getShort(inp);
 	switch (word) {
 	case 0x0FF0:
@@ -167,21 +174,31 @@ or 0x1e 0xe1 for compressed line*/
 	    inp += (2 + width);
 	    break;
 	case 0x1EE1:
-	    inp += pac_decompress_row(inp, outp, width);
+	    inp += pac_decompress_row(inp, outp, width, 5, 6);
 	    break;
 
-	case 0x2DD2: /* prefix for "stronger" compressed lines, currently the
-			kernel driver programs the cam so that we should not
-			get any of these */
+	case 0x2DD2:
+	    inp += pac_decompress_row(inp, outp, width, 9, 5);
+	    break;
+
+	case 0x3CC3:
+	    inp += pac_decompress_row(inp, outp, width, 17, 4);
+	    break;
+
+	case 0x4BB4:
+	    /* skip or copy line? */
+	    memcpy(outp, outp - 2 * width, width);
+	    inp += 2;
+	    break;
 
 	default: /* corrupt frame */
-	    /* FIXME add error reporting */
-	    return;
+	    V4LCONVERT_ERR("unknown pac207 row header: 0x%04x\n", (int)word);
+	    return -1;
 	}
 	outp += width;
     }
 
-    return;
+    return 0;
 }
 
 
