@@ -60,6 +60,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x093a, 0x2476, 0, NULL, NULL,
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED|V4LCONTROL_WANTS_WB, 1500 },
   /* Laptops */
+  { 0x046d, 0x09b2, 0, "FUJITSU", "FJNB1C9",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0,
+    "FUJITSU SIEMENS", "LIFEBOOK P7230" },
   { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "F7L       ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "W7Sg      ",
