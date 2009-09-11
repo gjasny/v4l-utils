@@ -192,8 +192,10 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   /* spca561 revison 12a devices */
   { 0x041e, 0x403b, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
   { 0x046d, 0x0928, 7,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
-  /* logitech quickcam express stv06xx + pb0100 */
-  { 0x046d, 0x0840, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
+  /* logitech quickcam express stv06xx 2 versions:
+     pb0100   only needs whitebalance, see software autogain code enable below
+     hdcs10xx needs both whitebalance and autogain. */
+  { 0x046d, 0x0840, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN },
   /* logitech quickcam messenger variants, st6422 */
   { 0x046d, 0x08f0, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
   { 0x046d, 0x08f5, 0,    NULL, NULL, V4LCONTROL_WANTS_AUTOGAIN },
@@ -395,7 +397,14 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
     }
   }
 
-  if (data->flags & V4LCONTROL_WANTS_AUTOGAIN)
+  /* Check if a camera does not have hardware autogain, before enabling
+     software autogain, even if this is requested by flags. This is necessary
+     because some cameras share a USB-ID, but can have different sensors
+     with / without autogain (046d:0840 for example) */
+  ctrl.id = V4L2_CID_AUTOGAIN;
+  rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+  if ((data->flags & V4LCONTROL_WANTS_AUTOGAIN) &&
+      (rc == -1 || (rc == 0 && (ctrl.flags & V4L2_CTRL_FLAG_DISABLED))))
     data->controls |= 1 << V4LCONTROL_AUTOGAIN |
 		      1 << V4LCONTROL_AUTOGAIN_TARGET;
 
