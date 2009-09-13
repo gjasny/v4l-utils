@@ -1,0 +1,1 @@
+mencoder tv:// -tv driver=v4l2:input=0:norm=ntsc:width=720:height=480:outfmt=yuy2:device=/dev/video$1 -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=5000:keyint=30 -nosound -ffourcc divx -o $2

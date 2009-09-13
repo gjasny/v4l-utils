@@ -1,0 +1,2 @@
+amixer set Master,0 100% unmute
+amixer set Capture,0 90% captur

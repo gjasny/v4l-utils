@@ -1,0 +1,1 @@
+mencoder tv:// -tv driver=v4l2:input=0:norm=ntsc:width=720:height=480:outfmt=yuy2:device=/dev/video$1:forceaudio:alsa=1:adevice=hw.1:audiorate=48000:immediatemode=0:amode=1 buffersize=64 -ovc lavc -lavcopts vcodec=mpeg4:vbitrate=5000:keyint=30 -oac mp3lame -lameopts br=128:cbr:mode=3 -ffourcc divx -o $2

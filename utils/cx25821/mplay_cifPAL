@@ -1,0 +1,1 @@
+mplayer -vo x11 -tv driver=v4l2:device=/dev/video$1:input=1:norm=PAL-BG:width=352:height=288:outfmt=yuy2: tv:///0

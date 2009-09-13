@@ -1,0 +1,1 @@
+arecord -D hw:1,0 -d $2 -c 2 -r 48000 -f S16_LE > $1

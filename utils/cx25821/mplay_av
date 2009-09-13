@@ -1,0 +1,1 @@
+mplayer -vo x11 -tv driver=v4l2:device=/dev/video$1:input=1:norm=NTSC-M:width=720:height=480:outfmt=yuy2:alsa=1:adevice=hw.1:audiorate=48000:immediatemode=0:amode=1 tv:///0
