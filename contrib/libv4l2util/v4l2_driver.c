@@ -646,6 +646,9 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 	return 0;
 }
 
+/* Returns <0, if error, 0 if nothing to read and <size>, if something
+   read
+ */
 int v4l2_rcvbuf(struct v4l2_driver *drv, v4l2_recebe_buffer *rec_buf)
 {
 	int ret;
@@ -668,7 +671,7 @@ int v4l2_rcvbuf(struct v4l2_driver *drv, v4l2_recebe_buffer *rec_buf)
 
 		default:
 			perror ("dqbuf");
-			return errno;
+			return -errno;
 		}
 	}
 	prt_buf_info("DQBUF",&buf);
@@ -677,18 +680,17 @@ int v4l2_rcvbuf(struct v4l2_driver *drv, v4l2_recebe_buffer *rec_buf)
 
 	ret = rec_buf (&buf,&drv->bufs[buf.index]);
 
-	if (ret) {
+	if (ret<0) {
 		v4l2_free_bufs(drv);
 		return ret;
 	}
 
 	if (-1 == xioctl (drv->fd, VIDIOC_QBUF, &buf)) {
 		perror ("qbuf");
-		return errno;
+		return -errno;
 	}
-	return 0;
+	return ret;
 }
-
 
 int v4l2_start_streaming(struct v4l2_driver *drv)
 {
