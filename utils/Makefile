@@ -28,7 +28,7 @@ endif
 CPPFLAGS += -I../include -D_GNU_SOURCE
 LDFLAGS += -lm
 
-binaries = v4l2-ctl v4l2-dbg v4l2-compliance ivtv-ctl cx18-ctl v4l2-sysfs-path
+binaries = v4l2-ctl v4l2-dbg v4l2-compliance ivtv-ctl cx18-ctl v4l2-sysfs-path decode_tm6000
 
 ifeq ($(prefix),)
 prefix = /usr
@@ -52,6 +52,12 @@ qv4l2:
 
 v4l2-dbg: v4l2-dbg.o v4l2-chipids.o
 	$(CXX) $^ -o $@
+
+../lib/libv4l2.a: ../lib/v4l2_driver.c ../lib/frequencies.c
+	make -C ../lib libv4l2.a
+
+decode_tm6000: decode_tm6000.o ../lib/libv4l2.a
+
 
 v4l2-dbg.o: v4l2-dbg.h v4l2-dbg-bttv.h v4l2-dbg-em28xx.h v4l2-dbg-saa7134.h
 
