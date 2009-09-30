@@ -172,6 +172,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0xa311, 0, "ASUSTeK Computer Inc.        ", "A3F       ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x1d4d, 0x1002, 0, "ASUSTeK Computer Inc.        ", "B50A      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x5986, 0x0200, 0, "LENOVO", "SPEEDY    ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
     "Lenovo IdeaPad Y510" },
