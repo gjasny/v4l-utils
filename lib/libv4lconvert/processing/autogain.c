@@ -46,7 +46,7 @@ static int autogain_calculate_lookup_tables(
   unsigned char *buf, const struct v4l2_format *fmt)
 {
   int x, y, target, steps, avg_lum = 0;
-  int gain, exposure, orig_gain, orig_exposure;
+  int gain, exposure, orig_gain, orig_exposure, exposure_low;
   struct v4l2_control ctrl;
   struct v4l2_queryctrl gainctrl, expoctrl;
   const int deadzone = 6;
@@ -57,6 +57,14 @@ static int autogain_calculate_lookup_tables(
       SYS_IOCTL(data->fd, VIDIOC_G_CTRL, &ctrl))
     return 0;
   exposure = orig_exposure = ctrl.value;
+  /* Determine a value below which we try to not lower the exposure,
+     as most exposure controls tend to jump with big steps in the low
+     range, causing oscilation, so we prefer to use gain when exposure
+     has hit this value */
+  exposure_low = expoctrl.maximum / 10;
+  /* If we have a fine grained exposure control only avoid the last 10 steps */
+  if (exposure_low > 10)
+    exposure_low = 10;
 
   ctrl.id = V4L2_CID_GAIN;
   gainctrl.id = V4L2_CID_GAIN;
@@ -116,14 +124,18 @@ static int autogain_calculate_lookup_tables(
 	exposure--;
       else if (gain > gainctrl.default_value)
 	gain--;
-      else if (exposure > expoctrl.minimum)
+      else if (exposure > exposure_low)
 	exposure--;
       else if (gain > gainctrl.minimum)
 	gain--;
+      else if (exposure > expoctrl.minimum)
+	exposure--;
       else
 	break;
     } else {
-      if (gain < gainctrl.default_value)
+      if (exposure < exposure_low)
+	exposure++;
+      else if (gain < gainctrl.default_value)
 	gain++;
       else if (exposure < expoctrl.default_value)
 	exposure++;
