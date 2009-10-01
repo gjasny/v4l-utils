@@ -28,7 +28,15 @@
 #include "../libv4lsyscall-priv.h"
 
 static int autogain_active(struct v4lprocessing_data *data) {
-  return v4lcontrol_get_ctrl(data->control, V4LCONTROL_AUTOGAIN);
+  int autogain;
+
+  autogain = v4lcontrol_get_ctrl(data->control, V4LCONTROL_AUTOGAIN);
+  if (!autogain) {
+    /* Reset last_correction val */
+    data->last_gain_correction = 0;
+  }
+
+  return autogain;
 }
 
 /* auto gain and exposure algorithm based on the knee algorithm described here:
@@ -41,7 +49,7 @@ static int autogain_calculate_lookup_tables(
   int gain, exposure, orig_gain, orig_exposure;
   struct v4l2_control ctrl;
   struct v4l2_queryctrl gainctrl, expoctrl;
-  const int deadzone = 8;
+  const int deadzone = 6;
 
   ctrl.id = V4L2_CID_EXPOSURE;
   expoctrl.id = V4L2_CID_EXPOSURE;
@@ -94,9 +102,15 @@ static int autogain_calculate_lookup_tables(
   /* If we are off a multiple of deadzone, do multiple steps to reach the
      desired lumination fast (with the risc of a slight overshoot) */
   target = v4lcontrol_get_ctrl(data->control, V4LCONTROL_AUTOGAIN_TARGET);
-  steps = abs(target - avg_lum) / deadzone;
+  steps = (target - avg_lum) / deadzone;
 
-  for (x = 0; x < steps; x++) {
+  /* If we were decreasing and are now increasing, or vica versa, half the
+     number of steps to avoid overshooting and oscilating */
+  if ((steps > 0 && data->last_gain_correction < 0) ||
+      (steps < 0 && data->last_gain_correction > 0))
+    steps /= 2;
+
+  for (x = 0; x < abs(steps); x++) {
     if (avg_lum > target) {
       if (exposure > expoctrl.default_value)
 	exposure--;
@@ -121,6 +135,9 @@ static int autogain_calculate_lookup_tables(
 	break;
     }
   }
+
+  if (steps)
+    data->last_gain_correction = steps;
 
   if (gain != orig_gain) {
     ctrl.id = V4L2_CID_GAIN;

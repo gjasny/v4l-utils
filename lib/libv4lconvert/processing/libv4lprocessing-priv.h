@@ -49,6 +49,8 @@ struct v4lprocessing_data {
   /* gamma.c data */
   int last_gamma;
   unsigned char gamma_table[256];
+  /* autogain.c data */
+  int last_gain_correction;
 };
 
 struct v4lprocessing_filter {
