@@ -1,6 +1,8 @@
 libv4l-0.6.2
 ------------
 * Add more laptop models to the upside down devices table
+* Put usb id in controls shm segment name for USB devices, to better
+  distuingish between devices plugged into the same port
 
 libv4l-0.6.1
 ------------

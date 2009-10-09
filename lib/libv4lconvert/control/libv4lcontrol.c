@@ -247,29 +247,17 @@ static void v4lcontrol_get_dmi_string(const char *string, char *buf, int size)
   fclose(f);
 }
 
-static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
+static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
+  unsigned short *vendor_id, unsigned short *product_id)
 {
-  struct stat st;
   FILE *f;
-  char sysfs_name[512];
-  unsigned short vendor_id = 0;
-  unsigned short product_id = 0;
-  char dmi_system_vendor[512], dmi_system_name[512], dmi_system_version[512];
-  char dmi_board_vendor[512], dmi_board_name[512], dmi_board_version[512];
   int i, minor;
+  struct stat st;
+  char sysfs_name[512];
   char c, *s, buf[32];
-  struct v4l2_input input;
-
-  if ((SYS_IOCTL(data->fd, VIDIOC_G_INPUT, &input.index) == 0) &&
-      (SYS_IOCTL(data->fd, VIDIOC_ENUMINPUT, &input) == 0)) {
-    if (input.status & V4L2_IN_ST_HFLIP)
-      data->flags |= V4LCONTROL_HFLIPPED;
-    if (input.status & V4L2_IN_ST_VFLIP)
-      data->flags |= V4LCONTROL_VFLIPPED;
-  }
 
   if (fstat(data->fd, &st) || !S_ISCHR(st.st_mode)) {
-    return; /* Should never happen */
+    return 0; /* Should never happen */
   }
 
   /* <Sigh> find ourselve in sysfs */
@@ -288,7 +276,7 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
       break;
   }
   if (i == 256)
-    return; /* Not found, sysfs not mounted? */
+    return 0; /* Not found, sysfs not mounted? */
 
   /* Get vendor and product ID */
   snprintf(sysfs_name, sizeof(sysfs_name),
@@ -299,9 +287,9 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
     fclose(f);
 
     if (!s ||
-	sscanf(s, "usb:v%4hxp%4hx%c", &vendor_id, &product_id, &c) != 3 ||
+	sscanf(s, "usb:v%4hxp%4hx%c", vendor_id, product_id, &c) != 3 ||
 	c != 'd')
-      return; /* Not an USB device */
+      return 0; /* Not an USB device */
   } else {
     /* Try again assuming the device link points to the usb
        device instead of the usb interface (bug in older versions
@@ -312,27 +300,37 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
 	     "/sys/class/video4linux/video%d/device/idVendor", i);
     f = fopen(sysfs_name, "r");
     if (!f)
-      return; /* Not an USB device (or no sysfs) */
+      return 0; /* Not an USB device (or no sysfs) */
 
     s = fgets(buf, sizeof(buf), f);
     fclose(f);
 
-    if (!s || sscanf(s, "%04hx%c", &vendor_id, &c) != 2 || c != '\n')
-      return; /* Should never happen */
+    if (!s || sscanf(s, "%04hx%c", vendor_id, &c) != 2 || c != '\n')
+      return 0; /* Should never happen */
 
     /* Get product ID */
     snprintf(sysfs_name, sizeof(sysfs_name),
 	     "/sys/class/video4linux/video%d/device/idProduct", i);
     f = fopen(sysfs_name, "r");
     if (!f)
-      return; /* Should never happen */
+      return 0; /* Should never happen */
 
     s = fgets(buf, sizeof(buf), f);
     fclose(f);
 
-    if (!s || sscanf(s, "%04hx%c", &product_id, &c) != 2 || c != '\n')
-      return; /* Should never happen */
+    if (!s || sscanf(s, "%04hx%c", product_id, &c) != 2 || c != '\n')
+      return 0; /* Should never happen */
   }
+
+  return 1;
+}
+
+static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data,
+  unsigned short vendor_id, unsigned short product_id)
+{
+  char dmi_system_vendor[512], dmi_system_name[512], dmi_system_version[512];
+  char dmi_board_vendor[512], dmi_board_name[512], dmi_board_version[512];
+  int i;
 
   /* Get DMI board and system strings */
   v4lcontrol_get_dmi_string("sys_vendor", dmi_system_vendor,
@@ -376,11 +374,14 @@ static void v4lcontrol_init_flags(struct v4lcontrol_data *data)
 struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 {
   int shm_fd;
-  int i, rc, init = 0;
+  int i, rc, got_usb_ids, init = 0;
   char *s, shm_name[256], pwd_buf[1024];
   struct v4l2_capability cap;
   struct v4l2_queryctrl ctrl;
   struct passwd pwd, *pwd_p;
+  unsigned short vendor_id = 0;
+  unsigned short product_id = 0;
+  struct v4l2_input input;
 
   struct v4lcontrol_data *data = calloc(1, sizeof(struct v4lcontrol_data));
 
@@ -391,7 +392,18 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 
   data->fd = fd;
 
-  v4lcontrol_init_flags(data);
+  /* Check if the driver has indicated some form of flipping is needed */
+  if ((SYS_IOCTL(data->fd, VIDIOC_G_INPUT, &input.index) == 0) &&
+      (SYS_IOCTL(data->fd, VIDIOC_ENUMINPUT, &input) == 0)) {
+    if (input.status & V4L2_IN_ST_HFLIP)
+      data->flags |= V4LCONTROL_HFLIPPED;
+    if (input.status & V4L2_IN_ST_VFLIP)
+      data->flags |= V4LCONTROL_VFLIPPED;
+  }
+
+  got_usb_ids = v4lcontrol_get_usb_ids(data, &vendor_id, &product_id);
+  if (got_usb_ids)
+    v4lcontrol_get_flags_from_db(data, vendor_id, product_id);
 
   /* Allow overriding through environment */
   if ((s = getenv("LIBV4LCONTROL_FLAGS")))
@@ -450,12 +462,21 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
   }
 
   if (getpwuid_r(geteuid(), &pwd, pwd_buf, sizeof(pwd_buf), &pwd_p) == 0) {
-    snprintf(shm_name, 256, "/libv4l-%s:%s:%s", pwd.pw_name,
-	     cap.bus_info, cap.card);
+    if (got_usb_ids)
+      snprintf(shm_name, 256, "/libv4l-%s:%s:%04x:%04x:%s", pwd.pw_name,
+	       cap.bus_info, (int)vendor_id, (int)product_id, cap.card);
+    else
+      snprintf(shm_name, 256, "/libv4l-%s:%s:%s", pwd.pw_name,
+	       cap.bus_info, cap.card);
   } else {
     perror("libv4lcontrol: error getting username using uid instead");
-    snprintf(shm_name, 256, "/libv4l-%lu:%s:%s", (unsigned long)geteuid(),
-	     cap.bus_info, cap.card);
+    if (got_usb_ids)
+      snprintf(shm_name, 256, "/libv4l-%lu:%s:%04x:%04x:%s",
+	       (unsigned long)geteuid(), cap.bus_info,
+	       (int)vendor_id, (int)product_id, cap.card);
+    else
+      snprintf(shm_name, 256, "/libv4l-%lu:%s:%s", (unsigned long)geteuid(),
+	       cap.bus_info, cap.card);
   }
 
   /* / is not allowed inside shm names */
