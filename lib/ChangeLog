@@ -4,6 +4,7 @@ libv4l-0.6.2
 * Put usb id in controls shm segment name for USB devices, to better
   distuingish between devices plugged into the same port
 * Enable software whitebalance and autogain for mr97310a cameras
+* Improvements / tweaks to software autogain algorithm
 
 libv4l-0.6.1
 ------------
