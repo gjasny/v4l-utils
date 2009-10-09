@@ -3,6 +3,7 @@ libv4l-0.6.2
 * Add more laptop models to the upside down devices table
 * Put usb id in controls shm segment name for USB devices, to better
   distuingish between devices plugged into the same port
+* Enable software whitebalance and autogain for mr97310a cameras
 
 libv4l-0.6.1
 ------------
