@@ -412,16 +412,30 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
     }
   }
 
-  /* Check if a camera does not have hardware autogain, before enabling
-     software autogain, even if this is requested by flags. This is necessary
-     because some cameras share a USB-ID, but can have different sensors
-     with / without autogain (046d:0840 for example) */
-  ctrl.id = V4L2_CID_AUTOGAIN;
-  rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
-  if ((data->flags & V4LCONTROL_WANTS_AUTOGAIN) &&
-      (rc == -1 || (rc == 0 && (ctrl.flags & V4L2_CTRL_FLAG_DISABLED))))
+  /* Check if a camera does not have hardware autogain and has the necessary
+     controls, before enabling sw autogain, even if this is requested by flags.
+     This is necessary because some cameras share a USB-ID, but can have
+     different sensors with / without autogain or the necessary controls. */
+  while (data->flags & V4LCONTROL_WANTS_AUTOGAIN) {
+    ctrl.id = V4L2_CID_AUTOGAIN;
+    rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+    if (rc == 0 && !(ctrl.flags & V4L2_CTRL_FLAG_DISABLED))
+      break;
+
+    ctrl.id = V4L2_CID_EXPOSURE;
+    rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+    if (rc != 0 || (ctrl.flags & V4L2_CTRL_FLAG_DISABLED))
+      break;
+
+    ctrl.id = V4L2_CID_GAIN;
+    rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+    if (rc != 0 || (ctrl.flags & V4L2_CTRL_FLAG_DISABLED))
+      break;
+
     data->controls |= 1 << V4LCONTROL_AUTOGAIN |
 		      1 << V4LCONTROL_AUTOGAIN_TARGET;
+    break;
+  }
 
   /* Allow overriding through environment */
   if ((s = getenv("LIBV4LCONTROL_CONTROLS")))
