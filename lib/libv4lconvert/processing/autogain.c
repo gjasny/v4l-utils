@@ -65,6 +65,7 @@ static int autogain_calculate_lookup_tables(
   /* If we have a fine grained exposure control only avoid the last 10 steps */
   if (exposure_low > 10)
     exposure_low = 10;
+  exposure_low += expoctrl.minimum;
 
   ctrl.id = V4L2_CID_GAIN;
   gainctrl.id = V4L2_CID_GAIN;
