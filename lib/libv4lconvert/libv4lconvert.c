@@ -1007,7 +1007,8 @@ int v4lconvert_convert(struct v4lconvert_data *data,
   }
 
   if (dest_size < dest_needed) {
-    V4LCONVERT_ERR("destination buffer too small\n");
+    V4LCONVERT_ERR("destination buffer too small (%d < %d)\n",
+		   dest_size, dest_needed);
     errno = EFAULT;
     return -1;
   }
