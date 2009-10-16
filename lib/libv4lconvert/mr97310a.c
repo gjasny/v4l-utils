@@ -55,19 +55,19 @@ static void init_mr97310a_decoder(void)
 			len = 3;
 		} else if ((i & 0xf0) == 0x80) {
 			/* code 1000 */
-			val = +7;
+			val = +8;
 			len = 4;
 		} else if ((i & 0xf0) == 0x90) {
 			/* code 1001 */
-			val = -7;
+			val = -8;
 			len = 4;
 		} else if ((i & 0xf0) == 0xf0) {
 			/* code 1111 */
-			val = -15;
+			val = -20;
 			len = 4;
 		} else if ((i & 0xf8) == 0xe0) {
 			/* code 11100 */
-			val = +15;
+			val = +20;
 			len = 5;
 		} else if ((i & 0xf8) == 0xe8) {
 			/* code 11101xxxxx */
@@ -152,14 +152,17 @@ void v4lconvert_decode_mr97310a(const unsigned char *inp, unsigned char *outp,
 				} else if (col < 2) {
 					/* left column: relative to top pixel */
 					/* initial estimate */
-					val += (2*tp + 2*trp + 1)/4;
+					val += (tp + trp)/2;
 				} else if (col > width - 3) {
 					/* left column: relative to top pixel */
-					val += (2*tp + 2*tlp + 1)/4;
-				/* main area: average of left and top pixel */
+					val += (tp + lp + tlp + 1)/3;
+				/* main area: weighted average of tlp, trp,
+				 * lp, and tp */
 				} else {
+					tlp>>=1;
+					trp>>=1;
 					/* initial estimate for predictor */
-					val += (2*lp + tp + trp + 1)/4;
+					val += (lp + tp + tlp + trp + 1)/3;
 				}
 			}
 			/* store pixel */
@@ -167,6 +170,5 @@ void v4lconvert_decode_mr97310a(const unsigned char *inp, unsigned char *outp,
 			++col;
 		}
 	}
-
 	return;
 }

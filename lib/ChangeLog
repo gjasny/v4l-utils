@@ -1,3 +1,8 @@
+libv4l-0.6.3
+------------
+* Add more laptop models to the upside down devices table
+* Improved mr97310a decompression
+
 libv4l-0.6.2
 ------------
 * Add more laptop models to the upside down devices table
