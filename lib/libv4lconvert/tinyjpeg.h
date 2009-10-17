@@ -44,6 +44,7 @@ struct jdec_private;
 /* Flags that can be set by any applications */
 #define TINYJPEG_FLAGS_MJPEG_TABLE	(1<<1)
 #define TINYJPEG_FLAGS_PIXART_JPEG	(1<<2)
+#define TINYJPEG_FLAGS_PLANAR_JPEG	(1<<3)
 
 /* Format accepted in outout */
 enum tinyjpeg_fmt {

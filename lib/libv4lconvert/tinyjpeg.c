@@ -1910,14 +1910,37 @@ static int parse_SOS(struct jdec_private *priv, const unsigned char *stream)
   trace("> SOS marker\n");
 
 #if SANITY_CHECK
-  if (nr_components != 3)
+  if (nr_components != 3 && nr_components != 1)
     error("We only support YCbCr image\n");
+#endif
+
+  if (nr_components == 1)
+    priv->flags |= TINYJPEG_FLAGS_PLANAR_JPEG;
+#if SANITY_CHECK
+  else if (priv->flags & TINYJPEG_FLAGS_PLANAR_JPEG)
+    error("SOS with more then 1 component while decoding planar JPEG\n");
 #endif
 
   stream += 3;
   for (i=0;i<nr_components;i++) {
      cid = *stream++;
      table = *stream++;
+     if (nr_components == 1) {
+#if SANITY_CHECK
+       /* Find matching cid so we store the tables in the right component */
+       for (i = 0; i < COMPONENTS; i++)
+	 if (priv->component_infos[i].cid == cid)
+	   break;
+
+       if (i == COMPONENTS)
+	 error("Unknown cid in SOS: %u\n", cid);
+
+       priv->current_cid = cid;
+#else
+       i = cid - 1;
+#endif
+       trace("SOS cid: %u, using component_info: %u\n", cid, i);
+     }
 #if SANITY_CHECK
      if ((table&0xf) >= HUFFMAN_TABLES)
 	error("We do not support more than %d AC Huffman table\n",
@@ -2048,7 +2071,11 @@ static int find_next_rst_marker(struct jdec_private *priv)
       }
      /* Skip any padding ff byte (this is normal) */
      while (*stream == 0xff)
+      {
        stream++;
+       if (stream >= priv->stream_end)
+	 error("EOF while search for a RST marker.\n");
+      }
 
      marker = *stream++;
      if ((RST+priv->last_rst_marker_seen) == marker)
@@ -2062,6 +2089,32 @@ static int find_next_rst_marker(struct jdec_private *priv)
   priv->stream = stream;
   priv->last_rst_marker_seen++;
   priv->last_rst_marker_seen &= 7;
+
+  return 0;
+}
+
+static int find_next_sos_marker(struct jdec_private *priv)
+{
+  const unsigned char *stream = priv->stream;
+
+  /* Parse marker */
+  while (1) {
+    while (*stream++ != 0xff) {
+      if (stream >= priv->stream_end)
+	error("EOF while search for a SOS marker.\n");
+    }
+    /* Skip any padding ff byte (this is normal) */
+    while (*stream == 0xff) {
+      stream++;
+      if (stream >= priv->stream_end)
+	error("EOF while search for a SOS marker.\n");
+    }
+
+    if (*stream++ == SOS)
+      break; /* Found it ! */
+   }
+
+  priv->stream = stream;
 
   return 0;
 }
@@ -2154,6 +2207,10 @@ static int parse_JFIF(struct jdec_private *priv, const unsigned char *stream)
       || (priv->component_infos[cCb].Vfactor!=1)
       || (priv->component_infos[cCr].Vfactor!=1))
     error("Sampling other than 1x1 for Cr and Cb is not supported\n");
+  if ((priv->flags & TINYJPEG_FLAGS_PLANAR_JPEG) &&
+      (   (priv->component_infos[cY].Hfactor!=2)
+       || (priv->component_infos[cY].Hfactor!=2)))
+    error("Sampling other than 2x2 for Y is not supported with planar JPEG\n");
 #endif
 
   return 0;
@@ -2197,10 +2254,12 @@ void tinyjpeg_free(struct jdec_private *priv)
 {
   int i;
   for (i=0; i<COMPONENTS; i++) {
-     if (priv->components[i])
-       free(priv->components[i]);
+     free(priv->components[i]);
+     free(priv->tmp_buf[i]);
      priv->components[i] = NULL;
+     priv->tmp_buf[i] = NULL;
   }
+  priv->tmp_buf_y_size = 0;
   free(priv);
 }
 
@@ -2276,6 +2335,8 @@ static const convert_colorspace_fct convert_colorspace_grey[4] = {
    YCrCB_to_Grey_2x2,
 };
 
+int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt);
+
 /**
  * Decode and convert the jpeg image into @pixfmt@ image
  *
@@ -2292,6 +2353,9 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
 
   if (setjmp(priv->jump_state))
     return -1;
+
+  if (priv->flags & TINYJPEG_FLAGS_PLANAR_JPEG)
+    return tinyjpeg_decode_planar(priv, pixfmt);
 
   /* To keep gcc happy initialize some array */
   bytes_per_mcu[1] = 0;
@@ -2421,6 +2485,238 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
     if ((priv->stream_end - priv->stream) > 5)
       error("Pixart JPEG error, stream does not end with EOF marker\n");
   }
+
+  return 0;
+}
+
+int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt)
+{
+  unsigned int i, x, y;
+  uint8_t *y_buf, *u_buf, *v_buf, *p, *p2;
+
+  switch (pixfmt) {
+  case TINYJPEG_FMT_GREY:
+    error("Greyscale output not supported with planar JPEG input\n");
+    break;
+
+  case TINYJPEG_FMT_RGB24:
+  case TINYJPEG_FMT_BGR24:
+    if (priv->tmp_buf_y_size < (priv->width * priv->height)) {
+      for (i=0; i<COMPONENTS; i++) {
+	 free(priv->tmp_buf[i]);
+	 priv->tmp_buf[i] = malloc(priv->width * priv->height / (i ? 4:1));
+	 if (!priv->tmp_buf[i])
+	   error("Could not allocate memory for temporary buffers\n");
+      }
+      priv->tmp_buf_y_size = priv->width * priv->height;
+    }
+    y_buf = priv->tmp_buf[cY];
+    u_buf = priv->tmp_buf[cCb];
+    v_buf = priv->tmp_buf[cCr];
+    break;
+
+  case TINYJPEG_FMT_YUV420P:
+    y_buf = priv->components[cY];
+    u_buf = priv->components[cCb];
+    v_buf = priv->components[cCr];
+    break;
+
+  default:
+    error("Bad pixel format\n");
+  }
+
+#if SANITY_CHECK
+  if (priv->current_cid != priv->component_infos[cY].cid)
+    error("Planar jpeg first SOS cid does not match Y cid (%u:%u)\n",
+	  priv->current_cid, priv->component_infos[cY].cid);
+#endif
+
+  resync(priv);
+
+  for (y=0; y < priv->height/8; y++) {
+    for (x=0; x < priv->width/8; x++) {
+      process_Huffman_data_unit(priv, cY);
+      IDCT(&priv->component_infos[cY], y_buf, priv->width);
+      y_buf += 8;
+    }
+    y_buf += 7 * priv->width;
+  }
+
+  priv->stream -= (priv->nbits_in_reservoir/8);
+  resync(priv);
+  if (find_next_sos_marker(priv) < 0)
+    return -1;
+  if (parse_SOS(priv, priv->stream) < 0)
+    return -1;
+
+#if SANITY_CHECK
+  if (priv->current_cid != priv->component_infos[cCb].cid)
+    error("Planar jpeg second SOS cid does not match Cn cid (%u:%u)\n",
+	  priv->current_cid, priv->component_infos[cCb].cid);
+#endif
+
+  for (y=0; y < priv->height/16; y++) {
+    for (x=0; x < priv->width/16; x++) {
+      process_Huffman_data_unit(priv, cCb);
+      IDCT(&priv->component_infos[cCb], u_buf, priv->width / 2);
+      u_buf += 8;
+    }
+    u_buf += 7 * (priv->width / 2);
+  }
+
+  priv->stream -= (priv->nbits_in_reservoir/8);
+  resync(priv);
+  if (find_next_sos_marker(priv) < 0)
+    return -1;
+  if (parse_SOS(priv, priv->stream) < 0)
+    return -1;
+
+#if SANITY_CHECK
+  if (priv->current_cid != priv->component_infos[cCr].cid)
+    error("Planar jpeg third SOS cid does not match Cr cid (%u:%u)\n",
+	  priv->current_cid, priv->component_infos[cCr].cid);
+#endif
+
+  for (y=0; y < priv->height/16; y++) {
+    for (x=0; x < priv->width/16; x++) {
+      process_Huffman_data_unit(priv, cCr);
+      IDCT(&priv->component_infos[cCr], v_buf, priv->width / 2);
+      v_buf += 8;
+    }
+    v_buf += 7 * (priv->width / 2);
+  }
+
+#define SCALEBITS       10
+#define ONE_HALF        (1UL << (SCALEBITS-1))
+#define FIX(x)          ((int)((x) * (1UL<<SCALEBITS) + 0.5))
+
+  switch (pixfmt) {
+  case TINYJPEG_FMT_RGB24:
+    y_buf = priv->tmp_buf[cY];
+    u_buf = priv->tmp_buf[cCb];
+    v_buf = priv->tmp_buf[cCr];
+    p = priv->components[0];
+    p2 = priv->components[0] + priv->width * 3;
+
+    for (y = 0; y < priv->height / 2; y++) {
+      for (x = 0; x < priv->width / 2; x++) {
+	int l, cb, cr;
+	int add_r, add_g, add_b;
+	int r, g , b;
+
+	cb = *u_buf++ - 128;
+	cr = *v_buf++ - 128;
+	add_r = FIX(1.40200) * cr + ONE_HALF;
+	add_g = - FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
+	add_b = FIX(1.77200) * cb + ONE_HALF;
+
+	l  = (*y_buf) << SCALEBITS;
+	r = (l + add_r) >> SCALEBITS;
+	*p++ = clamp(r);
+	g = (l + add_g) >> SCALEBITS;
+	*p++ = clamp(g);
+	b = (l + add_b) >> SCALEBITS;
+	*p++ = clamp(b);
+
+	l  = (y_buf[priv->width]) << SCALEBITS;
+	r = (l + add_r) >> SCALEBITS;
+	*p2++ = clamp(r);
+	g = (l + add_g) >> SCALEBITS;
+	*p2++ = clamp(g);
+	b = (l + add_b) >> SCALEBITS;
+	*p2++ = clamp(b);
+
+	y_buf++;
+
+	l  = (*y_buf) << SCALEBITS;
+	r = (l + add_r) >> SCALEBITS;
+	*p++ = clamp(r);
+	g = (l + add_g) >> SCALEBITS;
+	*p++ = clamp(g);
+	b = (l + add_b) >> SCALEBITS;
+	*p++ = clamp(b);
+
+	l  = (y_buf[priv->width]) << SCALEBITS;
+	r = (l + add_r) >> SCALEBITS;
+	*p2++ = clamp(r);
+	g = (l + add_g) >> SCALEBITS;
+	*p2++ = clamp(g);
+	b = (l + add_b) >> SCALEBITS;
+	*p2++ = clamp(b);
+
+	y_buf++;
+      }
+      y_buf += priv->width;
+      p  += priv->width * 3;
+      p2 += priv->width * 3;
+    }
+    break;
+
+  case TINYJPEG_FMT_BGR24:
+    y_buf = priv->tmp_buf[cY];
+    u_buf = priv->tmp_buf[cCb];
+    v_buf = priv->tmp_buf[cCr];
+    p = priv->components[0];
+    p2 = priv->components[0] + priv->width * 3;
+
+    for (y = 0; y < priv->height / 2; y++) {
+      for (x = 0; x < priv->width / 2; x++) {
+	int l, cb, cr;
+	int add_r, add_g, add_b;
+	int r, g , b;
+
+	cb = *u_buf++ - 128;
+	cr = *v_buf++ - 128;
+	add_r = FIX(1.40200) * cr + ONE_HALF;
+	add_g = - FIX(0.34414) * cb - FIX(0.71414) * cr + ONE_HALF;
+	add_b = FIX(1.77200) * cb + ONE_HALF;
+
+	l  = (*y_buf) << SCALEBITS;
+	b = (l + add_b) >> SCALEBITS;
+	*p++ = clamp(b);
+	g = (l + add_g) >> SCALEBITS;
+	*p++ = clamp(g);
+	r = (l + add_r) >> SCALEBITS;
+	*p++ = clamp(r);
+
+	l  = (y_buf[priv->width]) << SCALEBITS;
+	b = (l + add_b) >> SCALEBITS;
+	*p2++ = clamp(b);
+	g = (l + add_g) >> SCALEBITS;
+	*p2++ = clamp(g);
+	r = (l + add_r) >> SCALEBITS;
+	*p2++ = clamp(r);
+
+	y_buf++;
+
+	l  = (*y_buf) << SCALEBITS;
+	b = (l + add_b) >> SCALEBITS;
+	*p++ = clamp(b);
+	g = (l + add_g) >> SCALEBITS;
+	*p++ = clamp(g);
+	r = (l + add_r) >> SCALEBITS;
+	*p++ = clamp(r);
+
+	l  = (y_buf[priv->width]) << SCALEBITS;
+	b = (l + add_b) >> SCALEBITS;
+	*p2++ = clamp(b);
+	g = (l + add_g) >> SCALEBITS;
+	*p2++ = clamp(g);
+	r = (l + add_r) >> SCALEBITS;
+	*p2++ = clamp(r);
+
+	y_buf++;
+      }
+      y_buf += priv->width;
+      p  += priv->width * 3;
+      p2 += priv->width * 3;
+    }
+    break;
+  }
+
+#undef SCALEBITS
+#undef ONE_HALF
+#undef FIX
 
   return 0;
 }

@@ -103,6 +103,9 @@ struct jdec_private
   int restart_interval;
   int restarts_to_go;				/* MCUs left in this restart interval */
   int last_rst_marker_seen;			/* Rst marker is incremented each time */
+#if SANITY_CHECK
+  unsigned int current_cid;			/* For planar JPEG */
+#endif
 
   /* Temp space used after the IDCT to store each components */
   uint8_t Y[64*4], Cr[64], Cb[64];
@@ -112,6 +115,10 @@ struct jdec_private
   uint8_t *plane[COMPONENTS];
 
   char error_string[256];
+
+  /* Temp buffers for multipass planar JPG -> RGB decoding */
+  int tmp_buf_y_size;
+  uint8_t *tmp_buf[COMPONENTS];
 };
 
 #define IDCT tinyjpeg_idct_float
