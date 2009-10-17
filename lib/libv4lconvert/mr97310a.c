@@ -1,7 +1,7 @@
 /*
  * MR97310A decoder
  *
- * Copyright (C) 2004 Theodore Kilgore <kilgota@auburn.edu>
+ * Copyright (C) 2004-2009 Theodore Kilgore <kilgota@auburn.edu>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
