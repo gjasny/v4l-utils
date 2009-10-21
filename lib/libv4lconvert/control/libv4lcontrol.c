@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <string.h>
 #include <pwd.h>
@@ -646,7 +647,7 @@ int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
   int i;
   struct v4l2_queryctrl *ctrl = arg;
   int retval;
-  __u32 orig_id=ctrl->id;
+  uint32_t orig_id=ctrl->id;
 
   /* if we have an exact match return it */
   for (i = 0; i < V4LCONTROL_COUNT; i++)
