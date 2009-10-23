@@ -3,7 +3,8 @@ libv4l-0.6.3
 * Add more laptop models to the upside down devices table
 * Improved mr97310a decompression
 * Add support for decompressing yuv420 planar JPEG (one component per SOS,
-  3 SOS per frame)
+  3 SOS per frame), this is needed for w9968cf based cams
+* Add support for STV0680 raw bayer data
 
 libv4l-0.6.2
 ------------

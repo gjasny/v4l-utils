@@ -52,6 +52,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_SGBRG8,       V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SGRBG8,       V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SRGGB8,       V4LCONVERT_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_STV0680,      V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SPCA501,      V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SPCA505,      V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SPCA508,      V4LCONVERT_NEEDS_CONVERSION },
@@ -500,6 +501,7 @@ static int v4lconvert_processing_needs_double_conversion(
     case V4L2_PIX_FMT_SGBRG8:
     case V4L2_PIX_FMT_SGRBG8:
     case V4L2_PIX_FMT_SRGGB8:
+    case V4L2_PIX_FMT_STV0680:
       return 0;
   }
   switch (dest_pix_fmt) {
@@ -731,6 +733,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_MR97310A:
     case V4L2_PIX_FMT_SN9C2028:
     case V4L2_PIX_FMT_SQ905C:
+    case V4L2_PIX_FMT_STV0680: /* Not compressed but needs some shuffling */
     {
       unsigned char *tmpbuf;
       struct v4l2_format tmpfmt = *fmt;
@@ -768,6 +771,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  break;
 	case V4L2_PIX_FMT_SQ905C:
 	  v4lconvert_decode_sq905c(src, tmpbuf, width, height);
+	  tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
+	  break;
+	case V4L2_PIX_FMT_STV0680:
+	  v4lconvert_decode_stv0680(src, tmpbuf, width, height);
 	  tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
 	  break;
       }
