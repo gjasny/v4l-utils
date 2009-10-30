@@ -19,9 +19,13 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#include <unistd.h>
 #include "libv4lconvert-priv.h"
+#include "libv4lsyscall-priv.h"
 
 #define CLIP(x) ((x)<0?0:((x)>0xff)?0xff:(x))
+
+#define MIN_CLOCKDIV_CID V4L2_CID_PRIVATE_BASE
 
 /* FIXME not threadsafe */
 static int decoder_initialized = 0;
@@ -90,20 +94,22 @@ static inline unsigned char get_byte(const unsigned char *inp,
 	return (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
 }
 
-void v4lconvert_decode_mr97310a(const unsigned char *inp, unsigned char *outp,
-			       int width, int height)
+int v4lconvert_decode_mr97310a(struct v4lconvert_data *data,
+			       const unsigned char *inp, int src_size,
+			       unsigned char *outp, int width, int height)
 {
 	int row, col;
 	int val;
 	int bitpos;
 	unsigned char code;
 	unsigned char lp, tp, tlp, trp;
+	struct v4l2_control min_clockdiv = { .id = MIN_CLOCKDIV_CID };
 
 	if (!decoder_initialized)
 		init_mr97310a_decoder();
 
 	/* remove the header */
-		inp += 12;
+	inp += 12;
 
 	bitpos = 0;
 
@@ -169,6 +175,34 @@ void v4lconvert_decode_mr97310a(const unsigned char *inp, unsigned char *outp,
 			*outp++ = CLIP(val);
 			++col;
 		}
+
+		/* src_size - 12 because of 12 byte footer */
+		if (((bitpos - 1) / 8) >= (src_size - 12)) {
+			data->frames_dropped++;
+			if (data->frames_dropped == 3) {
+				/* Tell the driver to go slower as
+				   the compression engine is not able to
+				   compress the image enough, we may
+				   fail to do this because older
+				   drivers don't support this */
+				SYS_IOCTL(data->fd, VIDIOC_G_CTRL,
+					  &min_clockdiv);
+				min_clockdiv.value++;
+				SYS_IOCTL(data->fd, VIDIOC_S_CTRL,
+					  &min_clockdiv);
+				/* We return success here, because if we
+				   return failure for too many frames in a row
+				   libv4l2 will return an error to the
+				   application and some applications abort
+				   on the first error received. */
+				data->frames_dropped = 0;
+				return 0;
+			}
+			V4LCONVERT_ERR("incomplete mr97310a frame\n");
+			return -1;
+		}
 	}
-	return;
+
+	data->frames_dropped = 0;
+	return 0;
 }

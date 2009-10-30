@@ -149,6 +149,9 @@ struct v4lconvert_data {
   pid_t decompress_pid;
   int decompress_in_pipe[2];  /* Data from helper to us */
   int decompress_out_pipe[2]; /* Data from us to helper */
+
+  /* For mr97310a decoder */
+  int frames_dropped;
 };
 
 struct v4lconvert_pixfmt {
@@ -228,7 +231,8 @@ int v4lconvert_decode_pac207(struct v4lconvert_data *data,
   const unsigned char *inp, int src_size, unsigned char *outp,
   int width, int height);
 
-void v4lconvert_decode_mr97310a(const unsigned char *src, unsigned char *dst,
+int v4lconvert_decode_mr97310a(struct v4lconvert_data *data,
+  const unsigned char *src, int src_size, unsigned char *dst,
   int width, int height);
 
 void v4lconvert_decode_sn9c2028(const unsigned char *src, unsigned char *dst,
