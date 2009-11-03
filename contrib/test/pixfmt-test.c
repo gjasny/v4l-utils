@@ -1741,8 +1741,10 @@ init_device			(void)
 		/* Errors ignored. */
 	}
 
+	/* Webcams may not support any standard at all, see
+	   http://v4l2spec.bytesex.org/spec/x448.htm for details */
 	if (-1 == xioctl (dev_fd, VIDIOC_G_STD, &std_id))
-		errno_exit ("VIDIOC_G_STD");
+		std_id = 0;
 }
 
 static void
