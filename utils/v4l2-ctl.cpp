@@ -566,11 +566,39 @@ static std::string flags2s(unsigned val, const flag_def *def)
 		if (val & def->flag) {
 			if (s.length()) s += " ";
 			s += def->str;
+			val &= ~def->flag;
 		}
 		def++;
 	}
+	if (val) {
+		if (s.length()) s += " ";
+		s += num2s(val);
+	}
 	return s;
 }
+
+static const flag_def in_status_def[] = {
+	{ V4L2_IN_ST_NO_POWER,    "no power" },
+	{ V4L2_IN_ST_NO_SIGNAL,   "no signal" },
+	{ V4L2_IN_ST_NO_COLOR,    "no color" },
+	{ V4L2_IN_ST_HFLIP,       "hflip" },
+	{ V4L2_IN_ST_VFLIP,       "vflip" },
+	{ V4L2_IN_ST_NO_H_LOCK,   "no hsync lock." },
+	{ V4L2_IN_ST_COLOR_KILL,  "color kill" },
+	{ V4L2_IN_ST_NO_SYNC,     "no sync lock" },
+	{ V4L2_IN_ST_NO_EQU,      "no equalizer lock" },
+	{ V4L2_IN_ST_NO_CARRIER,  "no carrier" },
+	{ V4L2_IN_ST_MACROVISION, "macrovision" },
+	{ V4L2_IN_ST_NO_ACCESS,   "no conditional access" },
+	{ V4L2_IN_ST_VTR,         "VTR time constant" },
+	{ 0, NULL }
+};
+
+static std::string status2s(__u32 status)
+{
+	return status ? flags2s(status, in_status_def) : "ok";
+}
+
 
 static void print_sliced_vbi_cap(struct v4l2_sliced_vbi_cap &cap)
 {
@@ -1480,55 +1508,77 @@ static void parse_next_subopt(char **subs, char **value)
 	}
 }
 
-static void print_std(const char *prefix, const char *stds[], unsigned long long std)
+static std::string partstd2s(const char *prefix, const char *stds[], unsigned long long std)
 {
+	std::string s = std::string(prefix) + "-";
 	int first = 1;
 
-	printf("\t%s-", prefix);
 	while (*stds) {
 		if (std & 1) {
 			if (!first)
-				printf("/");
+				s += "/";
 			first = 0;
-			printf("%s", *stds);
+			s += *stds;
 		}
 		stds++;
 		std >>= 1;
 	}
-	printf("\n");
+	return s;
 }
 
-static void print_v4lstd(unsigned long long std)
+static const char *std_pal[] = {
+	"B", "B1", "G", "H", "I", "D", "D1", "K",
+	"M", "N", "Nc", "60",
+	NULL
+};
+static const char *std_ntsc[] = {
+	"M", "M-JP", "443", "M-KR",
+	NULL
+};
+static const char *std_secam[] = {
+	"B", "D", "G", "H", "K", "K1", "L", "Lc",
+	NULL
+};
+static const char *std_atsc[] = {
+	"8-VSB", "16-VSB",
+	NULL
+};
+
+static std::string std2s(v4l2_std_id std)
 {
-	static const char *pal[] = {
-		"B", "B1", "G", "H", "I", "D", "D1", "K",
-		"M", "N", "Nc", "60",
-		NULL
-	};
-	static const char *ntsc[] = {
-		"M", "M-JP", "443", "M-KR",
-		NULL
-	};
-	static const char *secam[] = {
-		"B", "D", "G", "H", "K", "K1", "L", "Lc",
-		NULL
-	};
-	static const char *atsc[] = {
-		"ATSC-8-VSB", "ATSC-16-VSB",
-		NULL
-	};
+	std::string s;
 
 	if (std & 0xfff) {
-		print_std("PAL", pal, std);
+		s += partstd2s("PAL", std_pal, std);
 	}
 	if (std & 0xf000) {
-		print_std("NTSC", ntsc, std >> 12);
+		if (s.length()) s += " ";
+		s += partstd2s("NTSC", std_ntsc, std >> 12);
 	}
 	if (std & 0xff0000) {
-		print_std("SECAM", secam, std >> 16);
+		if (s.length()) s += " ";
+		s += partstd2s("SECAM", std_secam, std >> 16);
 	}
 	if (std & 0xf000000) {
-		print_std("ATSC/HDTV", atsc, std >> 24);
+		if (s.length()) s += " ";
+		s += partstd2s("ATSC", std_atsc, std >> 24);
+	}
+	return s;
+}
+
+static void print_v4lstd(v4l2_std_id std)
+{
+	if (std & 0xfff) {
+		printf("\t%s\n", partstd2s("PAL", std_pal, std).c_str());
+	}
+	if (std & 0xf000) {
+		printf("\t%s\n", partstd2s("NTSC", std_ntsc, std >> 12).c_str());
+	}
+	if (std & 0xff0000) {
+		printf("\t%s\n", partstd2s("SECAM", std_secam, std >> 16).c_str());
+	}
+	if (std & 0xf000000) {
+		printf("\t%s\n", partstd2s("ATSC", std_atsc, std >> 24).c_str());
 	}
 }
 
@@ -2315,7 +2365,7 @@ int main(int argc, char **argv)
 			printf("Video input set to %d", input);
 			vin.index = input;
 			if (ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0)
-				printf(" (%s)", vin.name);
+				printf(" (%s: %s)", vin.name, status2s(vin.status).c_str());
 			printf("\n");
 		}
 	}
@@ -2707,7 +2757,7 @@ set_vid_fmt_error:
 			printf("Video input : %d", input);
 			vin.index = input;
 			if (ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0)
-				printf(" (%s)", vin.name);
+				printf(" (%s: %s)", vin.name, status2s(vin.status).c_str());
 			printf("\n");
 		}
 	}
@@ -2939,15 +2989,9 @@ set_vid_fmt_error:
 			printf("\tType    : 0x%08X\n", vin.type);
 			printf("\tAudioset: 0x%08X\n", vin.audioset);
 			printf("\tTuner   : 0x%08X\n", vin.tuner);
-			printf("\tStandard: 0x%016llX ( ", (unsigned long long)vin.std);
-			if (vin.std & 0x000FFF)
-				printf("PAL ");	// hack
-			if (vin.std & 0x00F000)
-				printf("NTSC ");	// hack
-			if (vin.std & 0x7F0000)
-				printf("SECAM ");	// hack
-			printf(")\n");
-			printf("\tStatus  : %d\n", vin.status);
+			printf("\tStandard: 0x%016llX (%s)\n", (unsigned long long)vin.std,
+				std2s(vin.std).c_str());
+			printf("\tStatus  : 0x%08X (%s)\n", vin.status, status2s(vin.status).c_str());
 			vin.index++;
 		}
 	}
@@ -2962,14 +3006,8 @@ set_vid_fmt_error:
 			printf("\tName    : %s\n", vout.name);
 			printf("\tType    : 0x%08X\n", vout.type);
 			printf("\tAudioset: 0x%08X\n", vout.audioset);
-			printf("\tStandard: 0x%016llX ( ", (unsigned long long)vout.std);
-			if (vout.std & 0x000FFF)
-				printf("PAL ");	// hack
-			if (vout.std & 0x00F000)
-				printf("NTSC ");	// hack
-			if (vout.std & 0x7F0000)
-				printf("SECAM ");	// hack
-			printf(")\n");
+			printf("\tStandard: 0x%016llX (%s)\n", (unsigned long long)vout.std,
+					std2s(vout.std).c_str());
 			vout.index++;
 		}
 	}
