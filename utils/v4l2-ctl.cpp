@@ -141,6 +141,7 @@ enum Option {
 	OptListDevices,
 	OptGetOutputParm,
 	OptSetOutputParm,
+	OptQueryStandard,
 	OptLast = 256
 };
 
@@ -229,6 +230,7 @@ static struct option long_options[] = {
 	{"list-frameintervals", required_argument, 0, OptListFrameIntervals},
 	{"get-standard", no_argument, 0, OptGetStandard},
 	{"set-standard", required_argument, 0, OptSetStandard},
+	{"get-detected-standard", no_argument, 0, OptQueryStandard},
 	{"get-parm", no_argument, 0, OptGetParm},
 	{"set-parm", required_argument, 0, OptSetParm},
 	{"get-output-parm", no_argument, 0, OptGetOutputParm},
@@ -317,6 +319,8 @@ static void usage(void)
 	       "                     ntsc-X (X = M/J/K) or just 'ntsc' (V4L2_STD_NTSC)\n"
 	       "                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n"
 	       "  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n"
+	       "  --get-detected-standard\n"
+	       "                     display video detected input video standard [VIDIOC_QUERYSTD]\n"
 	       "  -P, --get-parm     display video parameters [VIDIOC_G_PARM]\n"
 	       "  -p, --set-parm=<fps>\n"
 	       "                     set video framerate in <fps> [VIDIOC_S_PARM]\n"
@@ -1492,6 +1496,40 @@ static void print_std(const char *prefix, const char *stds[], unsigned long long
 		std >>= 1;
 	}
 	printf("\n");
+}
+
+static void print_v4lstd(unsigned long long std)
+{
+	static const char *pal[] = {
+		"B", "B1", "G", "H", "I", "D", "D1", "K",
+		"M", "N", "Nc", "60",
+		NULL
+	};
+	static const char *ntsc[] = {
+		"M", "M-JP", "443", "M-KR",
+		NULL
+	};
+	static const char *secam[] = {
+		"B", "D", "G", "H", "K", "K1", "L", "Lc",
+		NULL
+	};
+	static const char *atsc[] = {
+		"ATSC-8-VSB", "ATSC-16-VSB",
+		NULL
+	};
+
+	if (std & 0xfff) {
+		print_std("PAL", pal, std);
+	}
+	if (std & 0xf000) {
+		print_std("NTSC", ntsc, std >> 12);
+	}
+	if (std & 0xff0000) {
+		print_std("SECAM", secam, std >> 16);
+	}
+	if (std & 0xf000000) {
+		print_std("ATSC/HDTV", atsc, std >> 24);
+	}
 }
 
 static void do_crop(int fd, unsigned int set_crop, struct v4l2_rect &vcrop, v4l2_buf_type type)
@@ -2719,37 +2757,15 @@ set_vid_fmt_error:
 
 	if (options[OptGetStandard]) {
 		if (doioctl(fd, VIDIOC_G_STD, &std, "VIDIOC_G_STD") == 0) {
-			static const char *pal[] = {
-				"B", "B1", "G", "H", "I", "D", "D1", "K",
-				"M", "N", "Nc", "60",
-				NULL
-			};
-			static const char *ntsc[] = {
-				"M", "M-JP", "443", "M-KR",
-				NULL
-			};
-			static const char *secam[] = {
-				"B", "D", "G", "H", "K", "K1", "L", "Lc",
-				NULL
-			};
-			static const char *atsc[] = {
-				"ATSC-8-VSB", "ATSC-16-VSB",
-				NULL
-			};
-
 			printf("Video Standard = 0x%08llx\n", (unsigned long long)std);
-			if (std & 0xfff) {
-				print_std("PAL", pal, std);
-			}
-			if (std & 0xf000) {
-				print_std("NTSC", ntsc, std >> 12);
-			}
-			if (std & 0xff0000) {
-				print_std("SECAM", secam, std >> 16);
-			}
-			if (std & 0xf000000) {
-				print_std("ATSC/HDTV", atsc, std >> 24);
-			}
+			print_v4lstd((unsigned long long)std);
+		}
+	}
+
+	if (options[OptQueryStandard]) {
+		if (doioctl(fd, VIDIOC_QUERYSTD, &std, "VIDIOC_QUERYSTD") == 0) {
+			printf("Video Standard = 0x%08llx\n", (unsigned long long)std);
+			print_v4lstd((unsigned long long)std);
 		}
 	}
 
