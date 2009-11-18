@@ -87,6 +87,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "PEGATRON CORPORATION         ", "X71SL     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "PEGATRON CORPORATION", "X71TL     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   /* These 3 PACKARD BELL's seem to be Asus notebook in disguise */
   { 0x04f2, 0xb012, 0, "Packard Bell BV", "T32A      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
