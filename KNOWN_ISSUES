@@ -1,0 +1,17 @@
+There are some known issues when compiling the V4L2 Applications.
+
+	- It doesn't check/warn if you don't have all the dependencies:
+	  qv4l2 requires qt3 development packages;
+	  v4l2-sysfs-path requires libsysfs development packages;
+
+	- qv4l2 doesn't compile with qt4 libraries;
+
+	- make only works fine if called first from /v4l2-apps, since
+	  several subdirs require that /v4l2-apps/include to be created,
+	  and only the main Makefile forces its creation before building
+	  the other files;
+
+	- libv4l doesn't use the in-tree videodev2.h. So, in order to
+	  compile, it needs to be installed at /usr/include/linux.
+
+Patches are welcome to improve the building system.
