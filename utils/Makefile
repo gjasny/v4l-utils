@@ -56,7 +56,7 @@ v4l2-dbg: v4l2-dbg.o v4l2-chipids.o
 ../lib/libv4l2.a: ../lib/v4l2_driver.c ../lib/frequencies.c
 	make -C ../lib libv4l2.a
 
-decode_tm6000: decode_tm6000.o ../lib/libv4l2.a
+decode_tm6000: decode_tm6000.o ../libv4l2util/libv4l2util.a
 
 
 v4l2-dbg.o: v4l2-dbg.h v4l2-dbg-bttv.h v4l2-dbg-em28xx.h v4l2-dbg-saa7134.h
