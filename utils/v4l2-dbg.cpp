@@ -354,14 +354,13 @@ static int doioctl(int fd, int request, void *parm, const char *name)
 {
 	int retVal;
 
+	if (!options[OptVerbose]) return ioctl(fd, request, parm);
 	retVal = ioctl(fd, request, parm);
-	if (options[OptVerbose]) {
-		printf("%s: ", name);
-		if (retVal < 0)
-			printf("failed: %s\n", strerror(errno));
-		else
-			printf("ok\n");
-	}
+	printf("%s: ", name);
+	if (retVal < 0)
+		printf("failed: %s\n", strerror(errno));
+	else
+		printf("ok\n");
 
 	return retVal;
 }
@@ -587,8 +586,8 @@ int main(int argc, char **argv)
 
 				printf(" set to 0x%llx\n", set_reg.val);
 			} else {
-				printf("Failed to set register 0x%08llx value 0x%llx: %s\n",
-					set_reg.reg, set_reg.val, strerror(errno));
+				printf("Failed to set register 0x%08llx value 0x%llx\n",
+					set_reg.reg, set_reg.val);
 			}
 			set_reg.reg++;
 		}
