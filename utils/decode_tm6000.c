@@ -130,7 +130,7 @@ const char *tm6000_msg_type[]= {
 
 int recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf)
 {
-	dprintf("Received %d bytes\n",buf->length);
+	dprintf("Received %zd bytes\n", buf->length);
 fflush(stdout);
 	memcpy (outbuf,buf->start,buf->length);
 	return buf->length;
