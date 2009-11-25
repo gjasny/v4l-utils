@@ -40,20 +40,20 @@ all: $(binaries) qv4l2 keytable
 
 clean::
 	rm -f $(binaries) v4l2-chipids.cpp
-	if [ -f qv4l2/Makefile ]; then make -C qv4l2 $@; fi
+	if [ -f qv4l2-qt3/Makefile ]; then make -C qv4l2-qt3 $@; fi
 	make -C xc3028-firmware $@
 	rm -f v4l2-chipids.cpp
 	rm -rf keycodes parse.h keytable
 
 distclean:: clean
-	if [ -f qv4l2/Makefile ]; then make -C qv4l2 $@; rm qv4l2/Makefile; fi
+	if [ -f qv4l2-qt3/Makefile ]; then make -C qv4l2-qt3 $@; rm qv4l2-qt3/Makefile; fi
 
 # Test whether qmake is installed, and whether it is for qt3.
 qv4l2:
 	@-if which qmake >/dev/null 2>&1; then \
 		if qmake --version 2>&1 | grep '3\.[0-9][0-9]*\.[0-9][0-9]*' >/dev/null; then \
-			if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; qmake); fi; \
-			$(MAKE) -C qv4l2; \
+			if [ ! -f qv4l2-qt3/Makefile ]; then (cd qv4l2-qt3; qmake); fi; \
+			$(MAKE) -C qv4l2-qt3; \
 		fi \
 	fi
 
