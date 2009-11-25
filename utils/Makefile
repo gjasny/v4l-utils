@@ -34,17 +34,19 @@ ifeq ($(prefix),)
 prefix = /usr
 endif
 
-.PHONY: all clean install qv4l2
+.PHONY: all distclean clean install qv4l2
 
 all: $(binaries) qv4l2 keytable
 
 clean::
 	rm -f $(binaries) v4l2-chipids.cpp
-	-if [ -f qv4l2/Makefile ]; then make -C qv4l2 $@; fi
-	-rm -f qv4l2/qv4l2 qv4l2/Makefile
+	if [ -f qv4l2/Makefile ]; then make -C qv4l2 $@; fi
 	make -C xc3028-firmware $@
 	rm -f v4l2-chipids.cpp
 	rm -rf keycodes parse.h keytable
+
+distclean:: clean
+	if [ -f qv4l2/Makefile ]; then make -C qv4l2 $@; rm qv4l2/Makefile; fi
 
 # Test whether qmake is installed, and whether it is for qt3.
 qv4l2:

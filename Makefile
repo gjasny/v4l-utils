@@ -13,10 +13,9 @@ all clean install::
 %:
 	make -C .. $(MAKECMDGOALS)
 
-clean::
-	-$(RM) -rf include
-
 distclean:: clean
+	$(MAKE) -C util $@
+	-$(RM) -rf include
 
 prepare-includes:
 	-if [ ! -d include ]; then \
