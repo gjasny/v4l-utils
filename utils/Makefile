@@ -46,9 +46,14 @@ clean::
 	rm -f v4l2-chipids.cpp
 	rm -rf keycodes parse.h keytable
 
+# Test whether qmake is installed, and whether it is for qt3.
 qv4l2:
-	-if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; qmake); fi
-	$(MAKE) -C qv4l2
+	@-if which qmake >/dev/null 2>&1; then \
+		if qmake --version 2>&1 | grep '3\.[0-9][0-9]*\.[0-9][0-9]*' >/dev/null; then \
+			if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; qmake); fi; \
+			$(MAKE) -C qv4l2; \
+		fi \
+	fi
 
 v4l2-dbg: v4l2-dbg.o v4l2-chipids.o
 	$(CXX) $^ -o $@
