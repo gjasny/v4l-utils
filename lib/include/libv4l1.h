@@ -24,6 +24,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #if __GNUC__ >= 4
