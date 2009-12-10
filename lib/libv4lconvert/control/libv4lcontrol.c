@@ -96,6 +96,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_BG46",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb034, 0, "ASUSTeK Computer Inc.        ", "G70Sg     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb036, 0, "ASUSTeK Computer Inc.        ", "U6S       ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb036, 0, "ASUSTeK Computer Inc.        ", "U6Sg      ",
