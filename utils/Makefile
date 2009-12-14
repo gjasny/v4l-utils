@@ -1,6 +1,6 @@
 # Makefile for linuxtv.org v4l2-apps/util
 
-IR_FILES = "linux/drivers/media/common/ir-keymaps.c \
+IR_FILES = "linux/drivers/media/IR/ir-keymaps.c \
 linux/drivers/media/dvb/dvb-usb/a800.c \
 linux/drivers/media/dvb/dvb-usb/af9005-remote.c \
 linux/drivers/media/dvb/dvb-usb/af9015.c \
