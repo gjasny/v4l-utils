@@ -137,9 +137,11 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "N61Vg     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb071, 0, "ASUS CORPORATION            ", "N90SC     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "U6Vc      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
-  /* Note no whitespace padding for these 2 models, this is not a typo */
+  /* Note no whitespace padding for these models, this is not a typo */
   { 0x04f2, 0xb071, 0, "ASUSTeK Computer INC.", "K40AB",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb071, 0, "ASUSTeK Computer INC.", "K50AB",
@@ -176,6 +178,10 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K40IJ     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K40IN      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K60IJ     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K60IN      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K70AB     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
