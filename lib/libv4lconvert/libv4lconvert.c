@@ -56,6 +56,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
   { V4L2_PIX_FMT_SPCA501,      V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SPCA505,      V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_SPCA508,      V4LCONVERT_NEEDS_CONVERSION },
+  { V4L2_PIX_FMT_CPIA1,        V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_HM12,         V4LCONVERT_NEEDS_CONVERSION },
   { V4L2_PIX_FMT_MJPEG,        V4LCONVERT_COMPRESSED },
   { V4L2_PIX_FMT_JPEG,         V4LCONVERT_COMPRESSED },
@@ -172,6 +173,7 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
   free(data->rotate90_buf);
   free(data->flip_buf);
   free(data->convert_pixfmt_buf);
+  free(data->previous_frame);
   free(data);
 }
 
@@ -642,6 +644,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
     case V4L2_PIX_FMT_SPCA505:
     case V4L2_PIX_FMT_SPCA508:
     case V4L2_PIX_FMT_SN9C20X_I420:
+    case V4L2_PIX_FMT_CPIA1:
     case V4L2_PIX_FMT_OV511:
     case V4L2_PIX_FMT_OV518:
     {
@@ -676,6 +679,14 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	  break;
 	case V4L2_PIX_FMT_SN9C20X_I420:
 	  v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);
+	  break;
+	case V4L2_PIX_FMT_CPIA1:
+	  if (v4lconvert_cpia1_to_yuv420(data, src, src_size, d,
+					 width, height, yvu)) {
+	    /* Corrupt frame, better get another one */
+	    errno = EAGAIN;
+	    return -1;
+	  }
 	  break;
 	case V4L2_PIX_FMT_OV511:
 	  if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov511-decomp",

@@ -100,6 +100,10 @@
 #define V4L2_PIX_FMT_STV0680 v4l2_fourcc('S', '6', '8', '0')
 #endif
 
+#ifndef V4L2_PIX_FMT_CPIA1
+#define V4L2_PIX_FMT_CPIA1 v4l2_fourcc('C', 'P', 'I', 'A') /* cpia1 YUV */
+#endif
+
 #ifndef V4L2_FMT_FLAG_EMULATED
 #define V4L2_FMT_FLAG_EMULATED 0x0002
 #endif
@@ -152,6 +156,9 @@ struct v4lconvert_data {
 
   /* For mr97310a decoder */
   int frames_dropped;
+
+  /* For cpia1 decoder */
+  unsigned char* previous_frame;
 };
 
 struct v4lconvert_pixfmt {
@@ -217,6 +224,10 @@ void v4lconvert_spca505_to_yuv420(const unsigned char *src, unsigned char *dst,
 
 void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height, int yvu);
+
+int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
+  const unsigned char *src, int src_size,
+  unsigned char *dst, int width, int height, int yvu);
 
 void v4lconvert_sn9c20x_to_yuv420(const unsigned char *src, unsigned char *dst,
   int width, int height, int yvu);
