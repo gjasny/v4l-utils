@@ -39,6 +39,30 @@ static int autogain_active(struct v4lprocessing_data *data) {
   return autogain;
 }
 
+/* Adjust ctrl value with steps steps, while not crossing limit */
+static int autogain_adjust(struct v4l2_queryctrl *ctrl, int *value,
+  int steps, int limit)
+{
+  int ctrl_range = (ctrl->maximum - ctrl->minimum) / ctrl->step;
+
+  /* If we are of 2 * deadzone or more, and we have a very fine grained
+     control, take larger steps, otherwise we take ages to get to the
+     right setting point. We use 256 as tripping point for determineing fine
+     grained controls here, as avg_lum has a range of 0 - 255. */
+  if (abs(steps) >= 2 && ctrl_range > 256)
+    *value += steps * ctrl->step * (ctrl_range / 256);
+  else
+    *value += steps * ctrl->step;
+
+  if (steps > 0) {
+    if (*value > limit)
+      *value = limit;
+  } else {
+    if (*value < limit)
+      *value = limit;
+  }
+}
+
 /* auto gain and exposure algorithm based on the knee algorithm described here:
    http://ytse.tricolour.net/docs/LowLightOptimization.html */
 static int autogain_calculate_lookup_tables(
@@ -63,9 +87,10 @@ static int autogain_calculate_lookup_tables(
      has hit this value */
   exposure_low = expoctrl.maximum / 10;
   /* If we have a fine grained exposure control only avoid the last 10 steps */
-  if (exposure_low > 10)
-    exposure_low = 10;
-  exposure_low += expoctrl.minimum;
+  steps = exposure_low / expoctrl.step;
+  if (steps > 10)
+    steps = 10;
+  exposure_low = steps * expoctrl.step + expoctrl.minimum;
 
   ctrl.id = V4L2_CID_GAIN;
   gainctrl.id = V4L2_CID_GAIN;
@@ -119,38 +144,43 @@ static int autogain_calculate_lookup_tables(
       (steps < 0 && data->last_gain_correction > 0))
     steps /= 2;
 
-  for (x = 0; x < abs(steps); x++) {
-    if (avg_lum > target) {
-      if (exposure > expoctrl.default_value)
-	exposure--;
-      else if (gain > gainctrl.default_value)
-	gain--;
-      else if (exposure > exposure_low)
-	exposure--;
-      else if (gain > gainctrl.minimum)
-	gain--;
-      else if (exposure > expoctrl.minimum)
-	exposure--;
-      else
-	break;
-    } else {
-      if (exposure < exposure_low)
-	exposure++;
-      else if (gain < gainctrl.default_value)
-	gain++;
-      else if (exposure < expoctrl.default_value)
-	exposure++;
-      else if (gain < gainctrl.maximum)
-	gain++;
-      else if (exposure < expoctrl.maximum)
-	exposure++;
-      else
-	break;
-    }
+  if (steps == 0)
+    return 0; /* Nothing to do */
+
+  if (steps < 0) {
+    if (exposure > expoctrl.default_value)
+      autogain_adjust(&expoctrl, &exposure, steps, expoctrl.default_value);
+    else if (gain > gainctrl.default_value)
+      autogain_adjust(&gainctrl, &gain, steps, gainctrl.default_value);
+    else if (exposure > exposure_low)
+      autogain_adjust(&expoctrl, &exposure, steps, exposure_low);
+    else if (gain > gainctrl.minimum)
+      autogain_adjust(&gainctrl, &gain, steps, gainctrl.minimum);
+    else if (exposure > expoctrl.minimum)
+      autogain_adjust(&expoctrl, &exposure, steps, expoctrl.minimum);
+    else
+      steps = 0;
+  } else {
+    if (exposure < exposure_low)
+      autogain_adjust(&expoctrl, &exposure, steps, exposure_low);
+    else if (gain < gainctrl.default_value)
+      autogain_adjust(&gainctrl, &gain, steps, gainctrl.default_value);
+    else if (exposure < expoctrl.default_value)
+      autogain_adjust(&expoctrl, &exposure, steps, expoctrl.default_value);
+    else if (gain < gainctrl.maximum)
+      autogain_adjust(&gainctrl, &gain, steps, gainctrl.maximum);
+    else if (exposure < expoctrl.maximum)
+      autogain_adjust(&expoctrl, &exposure, steps, expoctrl.maximum);
+    else
+      steps = 0;
   }
 
-  if (steps)
+  if (steps) {
     data->last_gain_correction = steps;
+    /* We are still settling down, force the next update sooner. Note we
+       skip the next frame as that is still captured with the old settings. */
+    data->lookup_table_update_counter = V4L2PROCESSING_UPDATE_RATE - 1;
+  }
 
   if (gain != orig_gain) {
     ctrl.id = V4L2_CID_GAIN;

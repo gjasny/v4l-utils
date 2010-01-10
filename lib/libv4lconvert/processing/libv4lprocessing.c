@@ -173,9 +173,11 @@ void v4lprocessing_processing(struct v4lprocessing_data *data,
 
   if (data->controls_changed ||
       data->lookup_table_update_counter == V4L2PROCESSING_UPDATE_RATE) {
-    v4lprocessing_update_lookup_tables(data, buf, fmt);
     data->controls_changed = 0;
     data->lookup_table_update_counter = 0;
+    /* Do this after resetting lookup_table_update_counter so that filters can
+       force the next update to be sooner when they changed camera settings */
+    v4lprocessing_update_lookup_tables(data, buf, fmt);
   } else
     data->lookup_table_update_counter++;
 
