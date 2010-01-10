@@ -3,6 +3,8 @@ libv4l-0.6.4
 * Add more laptop models to the upside down devices table
 * Add error checking to mr97310a decompression
 * Increase mr97310a minimum clockdiv upon 3 consecutive decoding errors
+* Add support for decompressing CPIA1 compressed YUV
+* Speed up autogain algorithm
 
 libv4l-0.6.3
 ------------
