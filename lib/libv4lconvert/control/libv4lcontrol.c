@@ -266,6 +266,10 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     "Lenovo IdeaPad U330" },
 
 /* Second: devices which should use some software processing by default */
+  /* sn9c101 / sn9c102 based devices (sonixb) */
+  { 0x0c45, 0x6001, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* TAS5110C */
+  { 0x0c45, 0x6005, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* TAS5110C */
+  { 0x0c45, 0x6007, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* TAS5110D */
   /* Pac207 based devices */
   { 0x041e, 0x4028, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
   { 0x093a, 0x2460, 0x1f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
