@@ -202,8 +202,9 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
     return -1;
   }
 
-  if (src_size != 4 ||
-      src[0] != EOI || src[1] != EOI || src[2] != EOI || src[3] != EOI) {
+  if (src_size < 4 ||
+      src[src_size - 4] != EOI || src[src_size - 3] != EOI ||
+      src[src_size - 2] != EOI || src[src_size - 1] != EOI) {
     fprintf(stderr, "cpia1 decode error: invaled EOI marker\n");
     return -1;
   }

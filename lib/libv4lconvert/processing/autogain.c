@@ -45,11 +45,11 @@ static int autogain_adjust(struct v4l2_queryctrl *ctrl, int *value,
 {
   int ctrl_range = (ctrl->maximum - ctrl->minimum) / ctrl->step;
 
-  /* If we are of 2 * deadzone or more, and we have a very fine grained
+  /* If we are of 3 * deadzone or more, and we have a very fine grained
      control, take larger steps, otherwise we take ages to get to the
      right setting point. We use 256 as tripping point for determineing fine
      grained controls here, as avg_lum has a range of 0 - 255. */
-  if (abs(steps) >= 2 && ctrl_range > 256)
+  if (abs(steps) >= 3 && ctrl_range > 256)
     *value += steps * ctrl->step * (ctrl_range / 256);
   else
     *value += steps * ctrl->step;
@@ -178,8 +178,10 @@ static int autogain_calculate_lookup_tables(
   if (steps) {
     data->last_gain_correction = steps;
     /* We are still settling down, force the next update sooner. Note we
-       skip the next frame as that is still captured with the old settings. */
-    data->lookup_table_update_counter = V4L2PROCESSING_UPDATE_RATE - 1;
+       skip the next frame as that is still captured with the old settings,
+       and another one just to be sure (because if we re-adjust based
+       on the old settings we might overshoot). */
+    data->lookup_table_update_counter = V4L2PROCESSING_UPDATE_RATE - 2;
   }
 
   if (gain != orig_gain) {
