@@ -58,7 +58,6 @@
 #define	_IOC_TYPE(cmd) IOCGROUP(cmd)
 #define	_IOC_SIZE(cmd) IOCPARM_LEN(cmd)
 #define	MAP_ANONYMOUS MAP_ANON
-#define	SYS_mmap2 SYS_mmap
 #define	MMAP2_PAGE_SHIFT 0
 typedef off_t __off_t;
 #endif
@@ -83,9 +82,17 @@ typedef off_t __off_t;
     syscall(SYS_read, (int)(fd), (void *)(buf), (size_t)(len));
 #define SYS_WRITE(fd, buf, len) \
     syscall(SYS_write, (int)(fd), (void *)(buf), (size_t)(len));
+
+#ifdef __FreeBSD__
+#define SYS_MMAP(addr, len, prot, flags, fd, off) \
+    __syscall(SYS_mmap, (void *)(addr), (size_t)(len), \
+	(int)(prot), (int)(flags), (int)(fd), (__off_t)(off))
+#else
 #define SYS_MMAP(addr, len, prot, flags, fd, off) \
     syscall(SYS_mmap2, (void *)(addr), (size_t)(len), \
 	(int)(prot), (int)(flags), (int)(fd), (__off_t)((off) >> MMAP2_PAGE_SHIFT))
+#endif
+
 #define SYS_MUNMAP(addr, len) \
     syscall(SYS_munmap, (void *)(addr), (size_t)(len))
 
