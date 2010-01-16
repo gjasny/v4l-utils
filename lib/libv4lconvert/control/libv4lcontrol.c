@@ -181,6 +181,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUS CORPORATION            ", "F70SL     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "F82Q      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K40IJ     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K40IN      ",
@@ -264,6 +266,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x5986, 0x0205, 0, "LENOVO", "Base Board Product Name",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
     "Lenovo IdeaPad U330" },
+  { 0x5986, 0x0205, 0, "LENOVO", "Base Board Product Name",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
+    "Lenovo IdeaPad Y330" },
 
 /* Second: devices which should use some software processing by default */
   /* sn9c101 / sn9c102 based devices (sonixb) */
