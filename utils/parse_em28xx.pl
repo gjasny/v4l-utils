@@ -116,6 +116,10 @@ my %reg_map = (
 	"0x31" => "EM28XX_R31_HSCALEHIGH",
 	"0x32" => "EM28XX_R32_VSCALELOW",
 	"0x33" => "EM28XX_R33_VSCALEHIGH",
+	"0x34" => "EM28XX_R34_VBI_START_H",
+	"0x35" => "EM28XX_R35_VBI_START_V",
+	"0x36" => "EM28XX_R36_VBI_WIDTH",
+	"0x37" => "EM28XX_R37_VBI_HEIGHT",
 	"0x40" => "EM28XX_R40_AC97LSB",
 	"0x41" => "EM28XX_R41_AC97MSB",
 	"0x42" => "EM28XX_R42_AC97ADDR",
@@ -277,9 +281,9 @@ while (<>) {
 	}
 
 	if (m/40 0[23] 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\>]+\s+([0-9a-f ]+)/) {
- 		printf "i2c_master_send(0x$1>>1, { $3 }, 0x$2);\n";
+		printf "i2c_master_send(0x$1>>1, { $3 }, 0x$2);\n";
 	}
 	if (m/c0 0[23] 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\<]+\s+([0-9a-f ]+)/) {
- 		printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* $3 */\n";
+		printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* $3 */\n";
 	}
 }
