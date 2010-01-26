@@ -40,7 +40,7 @@ static int autogain_active(struct v4lprocessing_data *data) {
 }
 
 /* Adjust ctrl value with steps steps, while not crossing limit */
-static int autogain_adjust(struct v4l2_queryctrl *ctrl, int *value,
+static void autogain_adjust(struct v4l2_queryctrl *ctrl, int *value,
   int steps, int limit)
 {
   int ctrl_range = (ctrl->maximum - ctrl->minimum) / ctrl->step;
