@@ -157,7 +157,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb071, 0, "PEGATRON CORP.", NULL,
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0,
-    "Philco", "S.rie PHN10050" },
+    "Philco", "S\202rie PHN10050" },
   { 0x04f2, 0xb072, 0, "ASUSTeK Computer Inc.        ", "K50IJ     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N50Vc      ",
