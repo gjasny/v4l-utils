@@ -289,7 +289,11 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x0c45, 0x6005, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* TAS5110C */
   { 0x0c45, 0x6007, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* TAS5110D */
   /* sn9c105 / sn9c120 based devices (sonixj) */
+  { 0x0c45, 0x60fe, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OV7630 */
+  { 0x0c45, 0x610e, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OV7630 */
   { 0x0c45, 0x6128, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OM6802 */
+  { 0x0c45, 0x612e, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OV7630 */
+  { 0x0c45, 0x613e, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OV7630 */
   /* Pac207 based devices */
   { 0x041e, 0x4028, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
   { 0x093a, 0x2460, 0x1f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
