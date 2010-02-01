@@ -38,9 +38,6 @@ typedef struct {
 static code_table_t table[256];
 static int init_done = 0;
 
-/* global variable */
-static int sonix_unknown = 0;
-
 /*
 	sonix_decompress_init
 	=====================
@@ -113,7 +110,6 @@ static void sonix_decompress_init(void)
 		table[i].unk = unk;
 	}
 
-	sonix_unknown = 0;
 	init_done = 1;
 }
 
@@ -172,8 +168,10 @@ void v4lconvert_decode_sn9c10x(const unsigned char *inp, unsigned char *outp,
 			/* update bit position */
 			bitpos += table[code].len;
 
-			/* update code statistics */
-			sonix_unknown += table[code].unk;
+			/* Skip unknown codes (most likely they indicate
+			   a change of the delta's the various codes encode) */
+			if (table[code].unk)
+				continue;
 
 			/* calculate pixel value */
 			val = table[code].val;
