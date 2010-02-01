@@ -285,9 +285,13 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 
 /* Second: devices which should use some software processing by default */
   /* sn9c101 / sn9c102 based devices (sonixb) */
-  { 0x0c45, 0x6001, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* TAS5110C */
-  { 0x0c45, 0x6005, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* TAS5110C */
-  { 0x0c45, 0x6007, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* TAS5110D */
+  { 0x0c45, 0x6011, 0,    NULL, NULL, 0, 1500 }, /* OV6650, no WB needed */
+  { 0x0c45, 0x6019, 0,    NULL, NULL, 0, 1500 }, /* OV7630, no WB needed */
+  { 0x0c45, 0x608f, 0,    NULL, NULL, 0, 1500 }, /* OV7630, no WB needed */
+  { 0x0c45, 0x60b0, 0,    NULL, NULL, 0, 1500 }, /* OV7630, no WB needed */
+  { 0x0c45, 0x6000, 0x1f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500 }, /* other */
+  { 0x0c45, 0x6020, 0x0f, NULL, NULL, V4LCONTROL_WANTS_WB, 1500 }, /* other */
+  { 0x0c45, 0x60af, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 }, /* PAS202 */
   /* sn9c105 / sn9c120 based devices (sonixj) */
   { 0x0c45, 0x60fe, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OV7630 */
   { 0x0c45, 0x610e, 0,    NULL, NULL, V4LCONTROL_WANTS_WB }, /* OV7630 */
