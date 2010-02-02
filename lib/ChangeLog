@@ -1,6 +1,8 @@
 libv4l-0.6.5
 ------------
 * Add more laptop models to the upside down devices table
+* Small fix to pixart jpeg decoding, this fixes the occasional corrupt
+  frame we used to get (Németh Márton)
 
 libv4l-0.6.4
 ------------

@@ -339,10 +339,15 @@ do { \
 	    } \
 	    break; \
 	  case 0xff: \
-	    if (stream[1] == 0xff && (stream[2] < 7 || stream[2] == 0xff)) { \
-	      stream += 3; \
-	      c = *stream++; \
-	      break; \
+	    if (stream[1] == 0xff) { \
+		if (stream[2] < 7) { \
+		    stream += 3; \
+		    c = *stream++; \
+		    break; \
+		} else if (stream[2] == 0xff) { \
+		    /* four 0xff in a row: the first belongs to the image data */ \
+		    break; \
+		}\
 	    } \
 	    /* Error fall through */ \
 	  default: \
