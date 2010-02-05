@@ -2098,19 +2098,13 @@ void tinyjpeg_free(struct jdec_private *priv)
  */
 int tinyjpeg_parse_header(struct jdec_private *priv, const unsigned char *buf, unsigned int size)
 {
-  int ret;
-
   /* Identify the file */
   if ((buf[0] != 0xFF) || (buf[1] != SOI))
     error("Not a JPG file ?\n");
 
-  priv->stream_begin = buf+2;
-  priv->stream_length = size-2;
-  priv->stream_end = priv->stream_begin + priv->stream_length;
+  priv->stream_end = buf + size;
 
-  ret = parse_JFIF(priv, priv->stream_begin);
-
-  return ret;
+  return parse_JFIF(priv, buf + 2);
 }
 
 static const decode_MCU_fct decode_mcu_3comp_table[4] = {

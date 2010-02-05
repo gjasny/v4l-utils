@@ -89,9 +89,7 @@ struct jdec_private
   unsigned int flags;
 
   /* Private variables */
-  const unsigned char *stream_begin, *stream_end;
-  unsigned int stream_length;
-
+  const unsigned char *stream_end;
   const unsigned char *stream;	/* Pointer to the current stream */
   unsigned char *stream_filtered;
   int stream_filtered_bufsize;
