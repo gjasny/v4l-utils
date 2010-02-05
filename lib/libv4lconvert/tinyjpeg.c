@@ -39,6 +39,7 @@
 
 #include "tinyjpeg.h"
 #include "tinyjpeg-internal.h"
+#include "libv4lconvert-priv.h"
 
 enum std_markers {
    DQT  = 0xDB, /* Define Quantization Table */
@@ -309,80 +310,6 @@ const unsigned char pixart_quantization[][64] = {
    reservoir &= ((1U<<nbits_in_reservoir)-1); \
 }  while(0);
 
-
-/* Special Pixart versions of the *_nbits functions, these remove the special
-   ff ff ff xx sequences pixart cams insert from the bitstream */
-#define pixart_fill_nbits(reservoir,nbits_in_reservoir,stream,nbits_wanted) \
-do { \
-   while (nbits_in_reservoir<nbits_wanted) \
-    { \
-      unsigned char c; \
-      if (stream >= priv->stream_end) { \
-	snprintf(priv->error_string, sizeof(priv->error_string), \
-	  "fill_nbits error: need %u more bits\n", \
-	  nbits_wanted - nbits_in_reservoir); \
-	longjmp(priv->jump_state, -EIO); \
-      } \
-      c = *stream++; \
-      reservoir <<= 8; \
-      if (c == 0xff) { \
-	switch (stream[0]) { \
-	  case 0x00: \
-	    stream++; \
-	    break; \
-	  case 0xd9: /* EOF marker */ \
-	    stream++; \
-	    if (stream != priv->stream_end) { \
-	      snprintf(priv->error_string, sizeof(priv->error_string), \
-		"Pixart JPEG error: premature EOF\n"); \
-	      longjmp(priv->jump_state, -EIO); \
-	    } \
-	    break; \
-	  case 0xff: \
-	    if (stream[1] == 0xff) { \
-		if (stream[2] < 7) { \
-		    stream += 3; \
-		    c = *stream++; \
-		    break; \
-		} else if (stream[2] == 0xff) { \
-		    /* four 0xff in a row: the first belongs to the image data */ \
-		    break; \
-		}\
-	    } \
-	    /* Error fall through */ \
-	  default: \
-	    snprintf(priv->error_string, sizeof(priv->error_string), \
-	      "Pixart JPEG error: invalid JPEG marker: 0xff 0x%02x 0x%02x 0x%02x\n", \
-		(unsigned int)stream[0], (unsigned int)stream[1], \
-		(unsigned int)stream[2]); \
-	    longjmp(priv->jump_state, -EIO); \
-	} \
-      } \
-      reservoir |= c; \
-      nbits_in_reservoir+=8; \
-    } \
-}  while(0);
-
-/* Signed version !!!! */
-#define pixart_get_nbits(reservoir,nbits_in_reservoir,stream,nbits_wanted,result) \
-do { \
-   pixart_fill_nbits(reservoir,nbits_in_reservoir,stream,(nbits_wanted)); \
-   result = ((reservoir)>>(nbits_in_reservoir-(nbits_wanted))); \
-   nbits_in_reservoir -= (nbits_wanted);  \
-   reservoir &= ((1U<<nbits_in_reservoir)-1); \
-   if ((unsigned int)result < (1UL<<((nbits_wanted)-1))) \
-       result += (0xFFFFFFFFUL<<(nbits_wanted))+1; \
-}  while(0);
-
-#define pixart_look_nbits(reservoir,nbits_in_reservoir,stream,nbits_wanted,result) \
-do { \
-   pixart_fill_nbits(reservoir,nbits_in_reservoir,stream,(nbits_wanted)); \
-   result = ((reservoir)>>(nbits_in_reservoir-(nbits_wanted))); \
-}  while(0);
-
-/* Note skip_nbits is identical for both */
-
-
 #define be16_to_cpu(x) (((x)[0]<<8)|(x)[1])
 
 static void resync(struct jdec_private *priv);
@@ -434,47 +361,6 @@ static int get_next_huffman_code(struct jdec_private *priv, struct huffman_table
   longjmp(priv->jump_state, -EIO);
   return 0;
 }
-
-/* identical as above but with *_nbits replaced with pixart_*_nbits */
-static int pixart_get_next_huffman_code(struct jdec_private *priv,
-  struct huffman_table *huffman_table)
-{
-  int value, hcode;
-  unsigned int extra_nbits, nbits;
-  uint16_t *slowtable;
-
-  pixart_look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, HUFFMAN_HASH_NBITS, hcode);
-  value = huffman_table->lookup[hcode];
-  if (value >= 0)
-  {
-     unsigned int code_size = huffman_table->code_size[value];
-     skip_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, code_size);
-     return value;
-  }
-
-  /* Decode more bits each time ... */
-  for (extra_nbits=0; extra_nbits<16-HUFFMAN_HASH_NBITS; extra_nbits++)
-   {
-     nbits = HUFFMAN_HASH_NBITS + 1 + extra_nbits;
-
-     pixart_look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, nbits, hcode);
-     slowtable = huffman_table->slowtable[extra_nbits];
-     /* Search if the code is in this array */
-     while (slowtable[0]) {
-	if (slowtable[0] == hcode) {
-	   skip_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, nbits);
-	   return slowtable[1];
-	}
-	slowtable+=2;
-     }
-   }
-  snprintf(priv->error_string, sizeof(priv->error_string),
-    "unknown huffman code: %08x\n", (unsigned int)hcode);
-  longjmp(priv->jump_state, -EIO);
-  return 0;
-}
-
-
 
 /**
  *
@@ -540,67 +426,6 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component)
   for (j = 0; j < 64; j++)
     c->DCT[j] = DCT[zigzag[j]];
 }
-
-/* identical as above both with *_nbits replaced with pixart_*_nbits */
-static void pixart_process_Huffman_data_unit(struct jdec_private *priv, int component)
-{
-  unsigned char j;
-  unsigned int huff_code;
-  unsigned char size_val, count_0;
-
-  struct component *c = &priv->component_infos[component];
-  short int DCT[64];
-
-  /* Initialize the DCT coef table */
-  memset(DCT, 0, sizeof(DCT));
-
-  /* DC coefficient decoding */
-  huff_code = pixart_get_next_huffman_code(priv, c->DC_table);
-  if (huff_code) {
-     pixart_get_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, huff_code, DCT[0]);
-     DCT[0] += c->previous_DC;
-     c->previous_DC = DCT[0];
-  } else {
-     DCT[0] = c->previous_DC;
-  }
-
-
-  /* AC coefficient decoding */
-  j = 1;
-  while (j<64)
-   {
-     huff_code = pixart_get_next_huffman_code(priv, c->AC_table);
-
-     size_val = huff_code & 0xF;
-     count_0 = huff_code >> 4;
-
-     if (size_val == 0)
-      { /* RLE */
-	if (count_0 == 0)
-	  break;	/* EOB found, go out */
-	else if (count_0 == 0xF)
-	  j += 16;	/* skip 16 zeros */
-      }
-     else
-      {
-	j += count_0;	/* skip count_0 zeroes */
-	if (j < 64 ) {
-	  pixart_get_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, size_val, DCT[j]);
-	  j++;
-	}
-      }
-   }
-
-  if (j > 64) {
-    snprintf(priv->error_string, sizeof(priv->error_string),
-      "error: more then 63 AC components (%d) in huffman unit\n", (int)j);
-    longjmp(priv->jump_state, -EIO);
-  }
-
-  for (j = 0; j < 64; j++)
-    c->DCT[j] = DCT[zigzag[j]];
-}
-
 
 /*
  * Takes two array of bits, and build the huffman table for size, and code
@@ -1611,8 +1436,7 @@ static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
 {
   unsigned char marker;
 
-  pixart_look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream,
-		    8, marker);
+  look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, 8, marker);
   /* I think the marker indicates which quantization table to use, iow
      a Pixart JPEG may have a different quantization table per MCU, most
      MCU's have 0x44 as marker for which our special Pixart quantization
@@ -1631,17 +1455,17 @@ static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
   skip_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream, 8);
 
   // Y
-  pixart_process_Huffman_data_unit(priv, cY);
+  process_Huffman_data_unit(priv, cY);
   IDCT(&priv->component_infos[cY], priv->Y, 16);
-  pixart_process_Huffman_data_unit(priv, cY);
+  process_Huffman_data_unit(priv, cY);
   IDCT(&priv->component_infos[cY], priv->Y+8, 16);
 
   // Cb
-  pixart_process_Huffman_data_unit(priv, cCb);
+  process_Huffman_data_unit(priv, cCb);
   IDCT(&priv->component_infos[cCb], priv->Cb, 8);
 
   // Cr
-  pixart_process_Huffman_data_unit(priv, cCr);
+  process_Huffman_data_unit(priv, cCr);
   IDCT(&priv->component_infos[cCr], priv->Cr, 8);
 }
 
@@ -2189,9 +2013,6 @@ static int parse_JFIF(struct jdec_private *priv, const unsigned char *stream)
       build_quantization_table(priv->Q_tables[0], pixart_quantization[0]);
       build_quantization_table(priv->Q_tables[1], pixart_quantization[1]);
     }
-
-    /* Pixart JPEG data starts with one unknown / unused byte */
-    priv->stream++;
   }
 
   if (!dht_marker_found) {
@@ -2265,6 +2086,7 @@ void tinyjpeg_free(struct jdec_private *priv)
      priv->tmp_buf[i] = NULL;
   }
   priv->tmp_buf_y_size = 0;
+  free(priv->stream_filtered);
   free(priv);
 }
 
@@ -2342,6 +2164,55 @@ static const convert_colorspace_fct convert_colorspace_grey[4] = {
 
 int tinyjpeg_decode_planar(struct jdec_private *priv, int pixfmt);
 
+/* This function parses and removes the special Pixart JPEG chunk headers */
+static int pixart_filter(struct jdec_private *priv, unsigned char *dest,
+			 const unsigned char *src, int n)
+{
+	int chunksize, copied = 0;
+
+	/* Skip mysterious first data byte */
+	src++;
+	n--;
+
+	/* The first chunk is always 1024 bytes, 5 bytes are dropped in the
+	   kernel: 0xff 0xff 0x00 0xff 0x96, and we skip one unknown byte */
+	chunksize = 1024 - 6;
+
+	while (1) {
+		if (n < chunksize)
+			break; /* Short frame */
+
+		memcpy(dest, src, chunksize);
+		dest += chunksize;
+		src += chunksize;
+		copied += chunksize;
+		n -= chunksize;
+
+		if (n < 4)
+			break; /* Short frame */
+
+		if (src[0] != 0xff || src[1] != 0xff || src[2] != 0xff)
+			error("Missing Pixart ff ff ff xx header, "
+			      "got: %02x %02x %02x %02x\n",
+			      src[0], src[1], src[2], src[3]);
+		if (src[3] > 6)
+			error("Unexpected Pixart chunk size: %d\n", src[3]);
+
+		chunksize = src[3];
+		src += 4;
+		n -= 4;
+
+		if (chunksize == 0) {
+			/* 0 indicates we are done, copy whatever remains */
+			memcpy(dest, src, n);
+			return copied + n;
+		}
+
+		chunksize = 2048 >> chunksize;
+	}
+	error("Short Pixart JPEG frame\n");
+}
+
 /**
  * Decode and convert the jpeg image into @pixfmt@ image
  *
@@ -2369,8 +2240,25 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
   bytes_per_blocklines[2] = 0;
 
   decode_mcu_table = decode_mcu_3comp_table;
-  if (priv->flags & TINYJPEG_FLAGS_PIXART_JPEG)
+  if (priv->flags & TINYJPEG_FLAGS_PIXART_JPEG) {
+    int length;
+
+    priv->stream_filtered =
+      v4lconvert_alloc_buffer(priv->stream_end - priv->stream,
+			      &priv->stream_filtered,
+			      &priv->stream_filtered_bufsize);
+    if (!priv->stream_filtered)
+      error("Out of memory!\n");
+
+    length =  pixart_filter(priv, priv->stream_filtered,
+			    priv->stream, priv->stream_end - priv->stream);
+    if (length < 0)
+      return length;
+    priv->stream = priv->stream_filtered;
+    priv->stream_end = priv->stream + length;
+
     decode_mcu_table = pixart_decode_mcu_3comp_table;
+  }
 
   switch (pixfmt) {
      case TINYJPEG_FMT_YUV420P:

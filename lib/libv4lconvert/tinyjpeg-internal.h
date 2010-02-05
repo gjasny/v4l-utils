@@ -93,6 +93,8 @@ struct jdec_private
   unsigned int stream_length;
 
   const unsigned char *stream;	/* Pointer to the current stream */
+  unsigned char *stream_filtered;
+  int stream_filtered_bufsize;
   unsigned int reservoir, nbits_in_reservoir;
 
   struct component component_infos[COMPONENTS];
