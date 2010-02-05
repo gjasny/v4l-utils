@@ -168,6 +168,9 @@ struct v4lconvert_pixfmt {
 
 void v4lconvert_fixup_fmt(struct v4l2_format *fmt);
 
+unsigned char *v4lconvert_alloc_buffer(int needed,
+  unsigned char **buf, int *buf_size);
+
 void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
   const struct v4l2_format *src_fmt, int bgr, int yvu);
 
