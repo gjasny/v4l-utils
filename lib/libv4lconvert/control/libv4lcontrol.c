@@ -237,6 +237,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "UL50Ag    ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "UL50VT    ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x090c, 0xe370, 0, "ASUSTeK Computer Inc.        ", "U6S       ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x090c, 0xe370, 0, "ASUSTeK Computer Inc.        ", "VX3       ",
@@ -262,6 +264,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "F5N       ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "F5GL       ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  /* Note no whitespace padding for vendor, this is not a typo */
+  { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.", "F5RL      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "F5SL    ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
