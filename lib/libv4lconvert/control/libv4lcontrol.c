@@ -92,6 +92,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x04f2, 0xb012, 0, "PEGATRON CORPORATION         ", "X71SL     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "X71Sr     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   /* Note no whitespace padding for board vendor, this is not a typo */
   { 0x04f2, 0xb012, 0, "PEGATRON CORPORATION", "X71TL     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
@@ -205,6 +207,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K61IC     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K70AB     ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K70IC     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K70IJ     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
