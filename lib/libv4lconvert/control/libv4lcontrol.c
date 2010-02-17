@@ -322,9 +322,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x2001, 0xf115, 0,    NULL, NULL, V4LCONTROL_WANTS_WB, 1500 },
   /* Pac7302 based devices */
   { 0x093a, 0x2620, 0x0f, NULL, NULL,
-    V4LCONTROL_ROTATED_90_JPEG|V4LCONTROL_WANTS_WB },
+    V4LCONTROL_ROTATED_90_JPEG|V4LCONTROL_WANTS_WB, 1500 },
   { 0x06f8, 0x3009, 0,    NULL, NULL,
-    V4LCONTROL_ROTATED_90_JPEG|V4LCONTROL_WANTS_WB },
+    V4LCONTROL_ROTATED_90_JPEG|V4LCONTROL_WANTS_WB, 1500 },
   /* Pac7311 based devices */
   { 0x093a, 0x2600, 0x0f, NULL, NULL, V4LCONTROL_WANTS_WB },
   /* sq905 devices */
