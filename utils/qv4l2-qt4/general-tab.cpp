@@ -198,10 +198,10 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (m_querycap.capabilities & V4L2_CAP_STREAMING) {
 		v4l2_requestbuffers reqbuf;
 
-		if (reqbufs_user_cap(reqbuf))
+		if (reqbufs_user_cap(reqbuf, 1))
 			m_capMethods->addItem("User pointer I/O", QVariant(methodUser));
 
-		if (reqbufs_mmap_cap(reqbuf))
+		if (reqbufs_mmap_cap(reqbuf, 1))
 			m_capMethods->addItem("Memory mapped I/O", QVariant(methodMmap));
 	}
 	if (m_querycap.capabilities & V4L2_CAP_READWRITE) {

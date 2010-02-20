@@ -347,11 +347,12 @@ bool v4l2::enum_frameintervals(v4l2_frmivalenum &frm, __u32 init_pixfmt, __u32 w
 	return ioctl(VIDIOC_ENUM_FRAMEINTERVALS, &frm) >= 0;
 }
 
-bool v4l2::reqbufs_user_cap(v4l2_requestbuffers &reqbuf)
+bool v4l2::reqbufs_user_cap(v4l2_requestbuffers &reqbuf, int count)
 {
 	memset(&reqbuf, 0, sizeof (reqbuf));
 	reqbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	reqbuf.memory = V4L2_MEMORY_USERPTR;
+	reqbuf.count = count;
 
 	return ioctl(VIDIOC_REQBUFS, &reqbuf) >= 0;
 }
@@ -369,7 +370,6 @@ bool v4l2::reqbufs_mmap_cap(v4l2_requestbuffers &reqbuf, int count)
 bool v4l2::dqbuf_mmap_cap(v4l2_buffer &buf)
 {
 	memset(&buf, 0, sizeof(buf));
-
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	buf.memory = V4L2_MEMORY_MMAP;
 	return ioctl(VIDIOC_DQBUF, &buf) >= 0;
@@ -378,7 +378,6 @@ bool v4l2::dqbuf_mmap_cap(v4l2_buffer &buf)
 bool v4l2::dqbuf_user_cap(v4l2_buffer &buf)
 {
 	memset(&buf, 0, sizeof(buf));
-
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	buf.memory = V4L2_MEMORY_USERPTR;
 	return ioctl(VIDIOC_DQBUF, &buf) >= 0;
@@ -393,20 +392,23 @@ bool v4l2::qbuf_mmap_cap(int index)
 {
 	v4l2_buffer buf;
 
+	memset(&buf, 0, sizeof(buf));
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	buf.memory = V4L2_MEMORY_MMAP;
 	buf.index = index;
 	return qbuf(buf);
 }
 
-bool v4l2::qbuf_user_cap(void *ptr, int length)
+bool v4l2::qbuf_user_cap(int index, void *ptr, int length)
 {
 	v4l2_buffer buf;
 
+	memset(&buf, 0, sizeof(buf));
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	buf.memory = V4L2_MEMORY_USERPTR;
 	buf.m.userptr = (unsigned long)ptr;
 	buf.length = length;
+	buf.index = index;
 	return qbuf(buf);
 }
 
@@ -446,7 +448,6 @@ bool v4l2::reqbufs_mmap_out(v4l2_requestbuffers &reqbuf, int count)
 bool v4l2::dqbuf_mmap_out(v4l2_buffer &buf)
 {
 	memset(&buf, 0, sizeof(buf));
-
 	buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	buf.memory = V4L2_MEMORY_MMAP;
 	return ioctl("dqbuf", VIDIOC_DQBUF, &buf);
@@ -455,7 +456,6 @@ bool v4l2::dqbuf_mmap_out(v4l2_buffer &buf)
 bool v4l2::dqbuf_user_out(v4l2_buffer &buf)
 {
 	memset(&buf, 0, sizeof(buf));
-
 	buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	buf.memory = V4L2_MEMORY_USERPTR;
 	return ioctl(VIDIOC_DQBUF, &buf) >= 0;
