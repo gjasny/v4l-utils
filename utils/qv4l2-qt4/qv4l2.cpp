@@ -186,6 +186,7 @@ void ApplicationWindow::capFrame()
 	case methodMmap:
 		if (!dqbuf_mmap_cap(buf)) {
 			error("dqbuf");
+			m_capStartAct->setChecked(false);
 			return;
 		}
 
@@ -199,6 +200,7 @@ void ApplicationWindow::capFrame()
 	case methodUser:
 		if (!dqbuf_user_cap(buf)) {
 			error("dqbuf");
+			m_capStartAct->setChecked(false);
 			return;
 		}
 
@@ -217,7 +219,7 @@ void ApplicationWindow::capFrame()
 	m_capture->setImage(*m_capImage);
 }
 
-void ApplicationWindow::startCapture(unsigned buffer_size)
+bool ApplicationWindow::startCapture(unsigned buffer_size)
 {
 	unsigned int i;
 	v4l2_requestbuffers req;
@@ -227,7 +229,7 @@ void ApplicationWindow::startCapture(unsigned buffer_size)
 	switch (m_capMethod) {
 	case methodRead:
 		/* Nothing to do. */
-		return;
+		return true;
 
 	case methodMmap:
 		if (!reqbufs_mmap_cap(req, 3)) {
@@ -258,24 +260,40 @@ void ApplicationWindow::startCapture(unsigned buffer_size)
 			buf.memory      = V4L2_MEMORY_MMAP;
 			buf.index       = m_nbuffers;
 
-			if (-1 == ioctl(VIDIOC_QUERYBUF, &buf))
+			if (-1 == ioctl(VIDIOC_QUERYBUF, &buf)) {
 				perror("VIDIOC_QUERYBUF");
+				goto error;
+			}
 
 			m_buffers[m_nbuffers].length = buf.length;
 			m_buffers[m_nbuffers].start = mmap(buf.length, buf.m.offset);
 
-			if (MAP_FAILED == m_buffers[m_nbuffers].start)
+			if (MAP_FAILED == m_buffers[m_nbuffers].start) {
 				perror("mmap");
+				goto error;
+			}
 		}
-		for (i = 0; i < m_nbuffers; ++i)
-			qbuf_mmap_cap(i);
-		if (!streamon_cap())
+		for (i = 0; i < m_nbuffers; ++i) {
+			if (!qbuf_mmap_cap(i)) {
+				perror("VIDIOC_QBUF");
+				goto error;
+			}
+		}
+		if (!streamon_cap()) {
 			perror("VIDIOC_STREAMON");
-		return;
+			goto error;
+		}
+		return true;
 
 	case methodUser:
-		if (!reqbufs_user_cap(req)) {
+		if (!reqbufs_user_cap(req, 4)) {
 			error("Cannot capture");
+			break;
+		}
+
+		if (req.count < 4) {
+			error("Too few buffers");
+			reqbufs_user_cap(req);
 			break;
 		}
 
@@ -292,17 +310,24 @@ void ApplicationWindow::startCapture(unsigned buffer_size)
 
 			if (!m_buffers[m_nbuffers].start) {
 				error("Out of memory");
-				break;
+				goto error;
 			}
 		}
 		for (i = 0; i < m_nbuffers; ++i)
-			qbuf_user_cap(m_buffers[i].start, m_buffers[i].length);
-		if (!streamon_cap())
+			if (!qbuf_user_cap(i, m_buffers[i].start, m_buffers[i].length)) {
+				perror("VIDIOC_QBUF");
+				goto error;
+			}
+		if (!streamon_cap()) {
 			perror("VIDIOC_STREAMON");
-		return;
+			goto error;
+		}
+		return true;
 	}
 
+error:
 	m_capStartAct->setChecked(false);
+	return false;
 }
 
 void ApplicationWindow::stopCapture()
@@ -400,9 +425,10 @@ void ApplicationWindow::capStart(bool start)
 	m_capImage->fill(0);
 	m_capture->setImage(*m_capImage, true);
 	m_capture->show();
-	startCapture(m_capSrcFormat.fmt.pix.sizeimage);
-	m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
-	connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capFrame()));
+	if (startCapture(m_capSrcFormat.fmt.pix.sizeimage)) {
+		m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
+		connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capFrame()));
+	}
 }
 
 void ApplicationWindow::closeDevice()

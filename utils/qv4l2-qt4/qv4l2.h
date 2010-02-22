@@ -81,7 +81,7 @@ public:
 private:
 	CaptureWin *m_capture;
 
-	void startCapture(unsigned buffer_size);
+	bool startCapture(unsigned buffer_size);
 	void stopCapture();
 	void startOutput(unsigned buffer_size);
 	void stopOutput();

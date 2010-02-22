@@ -83,12 +83,12 @@ public:
 	bool enum_frameintervals(v4l2_frmivalenum &frm, __u32 init_pixfmt = 0, __u32 w = 0, __u32 h = 0, int index = 0);
 
 	bool reqbufs_mmap_cap(v4l2_requestbuffers &reqbuf, int count = 0);
-	bool reqbufs_user_cap(v4l2_requestbuffers &reqbuf);
+	bool reqbufs_user_cap(v4l2_requestbuffers &reqbuf, int count = 0);
 	bool dqbuf_mmap_cap(v4l2_buffer &buf);
 	bool dqbuf_user_cap(v4l2_buffer &buf);
 	bool qbuf(v4l2_buffer &buf);
 	bool qbuf_mmap_cap(int index);
-	bool qbuf_user_cap(void *ptr, int length);
+	bool qbuf_user_cap(int index, void *ptr, int length);
 	bool streamon_cap();
 	bool streamoff_cap();
 
