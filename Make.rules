@@ -1,0 +1,32 @@
+# Global settings used by all Makefiles
+
+# These ones can be overriden from the cmdline
+
+CFLAGS := -g -O1
+CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
+
+PREFIX = /usr/local
+LIBDIR = $(PREFIX)/lib
+# subdir below LIBDIR in which to install the libv4lx libc wrappers
+LIBSUBDIR = libv4l
+
+# These ones should not be overriden from the cmdline
+
+V4L_UTILS_VERSION=0.7.90-test
+# This is the soname version
+LIB_RELEASE = 0
+
+# And last various rules
+
+%.o: %.c
+	$(CC) -Wp,-MMD,"$*.d",-MQ,"$@",-MP -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+
+%.so:
+	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^ $(LIBS_$*)
+	ln -f -s $@.$(LIB_RELEASE) $@
+
+%.a:
+	$(AR) cqs $@ $^
+
+clean::
+	rm -f core core.[0123456789]* *~ *.o *.d *.a *.so* DEADJOE *.orig *.rej
