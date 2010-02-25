@@ -55,7 +55,6 @@ endif
 
 clean::
 	rm -f */*~ */*.o */*.d */*.orig */*.rej */DEADJOE
-	rm -f libv4lconvert.pc *-decomp
 
 ov511-decomp: ov511-decomp.o
 ov518-decomp: ov518-decomp.o

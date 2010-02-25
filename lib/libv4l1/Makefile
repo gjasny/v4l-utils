@@ -55,7 +55,4 @@ endif
 	mkdir -p $(DESTDIR)$(LIBDIR)/pkgconfig
 	install -m 644 libv4l1.pc $(DESTDIR)$(LIBDIR)/pkgconfig
 
-clean::
-	rm -f libv4l1.pc
-
 include ../../Make.rules

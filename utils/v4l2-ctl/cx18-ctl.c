@@ -57,8 +57,6 @@
 #define __stringify_1(x)	#x
 #define __stringify(x)		__stringify_1(x)
 
-#include "../../linux/drivers/media/video/cx18/cx18-version.h"
-
 /* GPIO */
 #define CX18_REG_GPIO_IN     0x02c72010
 #define CX18_REG_GPIO_OUT1   0x02c78100
@@ -441,7 +439,7 @@ int main(int argc, char **argv)
 		doioctl(fd, VIDIOC_INT_RESET, &reset, "VIDIOC_INT_RESET");
 
 	if (options[OptVersion])
-		printf("cx18ctl version " CX18_VERSION "\n");
+		printf("cx18ctl version " V4L_UTILS_VERSION "\n");
 
 	close(fd);
 	exit(0);

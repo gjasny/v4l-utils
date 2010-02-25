@@ -1,8 +1,4 @@
-# Makefile for linuxtv.org v4l2-apps/test
-
-CPPFLAGS += -I../include
-
-binaries = ioctl-test 		\
+TARGETS  = ioctl-test 		\
 	   sliced-vbi-test 	\
 	   sliced-vbi-detect 	\
 	   vbi-test 		\
@@ -13,27 +9,23 @@ binaries = ioctl-test 		\
 	   stress-buffer	\
 	   capture-example
 
-.PHONY: all clean install
-
-all: $(binaries)
-
-clean::
-	rm -f $(binaries)
+all: $(TARGETS)
 
 install:
 
-../libv4l2util/libv4l2util.a: ../libv4l2util/v4l2_driver.c ../libv4l2util/frequencies.c
-	make -C ../libv4l2util libv4l2util.a
+../../utils/libv4l2util/libv4l2util.a: ../../utils/libv4l2util/v4l2_driver.c ../../utils/libv4l2util/frequencies.c
+	make -C ../../utils/libv4l2util libv4l2util.a
 
-../libv4l/libv4l2/libv4l2.so:
-	make -C ../libv4l/
+../../lib/libv4l2/libv4l2.so:
+	make -C ../../lib
 
-driver-test: driver-test.o ../libv4l2util/libv4l2util.a
+driver-test: driver-test.o ../../utils/libv4l2util/libv4l2util.a
+	$(CC) $(LDFLAGS) -o $@ $^
 
 pixfmt-test: pixfmt-test.o
-	$(CC) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@ -lX11
+	$(CC) $(LDFLAGS) -o $@ $^ -lX11
 
-v4l2grab: v4l2grab.o
-	$(CC) $(LDFLAGS) $^ -o $@ -L ../libv4l/libv4l2 -L ../libv4l/libv4lconvert -lv4l2 -lv4lconvert
+v4l2grab: v4l2grab.o ../../lib/libv4l2/libv4l2.so
+	$(CC) $(LDFLAGS) -o $@ $^ -L../../lib/libv4l2 -L../../lib/libv4lconvert -lv4l2 -lv4lconvert
 
-include ../Make.rules
+include ../../Make.rules

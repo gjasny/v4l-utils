@@ -1,18 +1,16 @@
-# Makefile for linuxtv.org v4l2-apps/util/xc3028-firmware
+TARGETS = firmware-tool
 
-CPPFLAGS += -I../../include
-
-binaries = firmware-tool
-
-.PHONY: all clean install qv4l2
-
-all: $(binaries)
-
-clean::
-	rm -f $(binaries)
+all: $(TARGETS)
 
 firmware-tool: firmware-tool.o standards.o
-	$(CC) $^ -o $@
+	$(CC) $(LDFLAGS) -o $@ $^
+
+sync-with-kernel:
+	@if [ ! -f $(KERNEL_DIR)/drivers/media/common/tuners/tuner-xc2028-types.h ]; then \
+	  echo "Error you must set KERNEL_DIR to point to an extracted kernel source dir"; \
+	  exit 1; \
+	fi
+	cp -a $(KERNEL_DIR)/drivers/media/common/tuners/tuner-xc2028-types.h .
 
 install:
 

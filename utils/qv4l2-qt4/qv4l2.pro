@@ -3,12 +3,12 @@
 ######################################################################
 
 TEMPLATE = app
-INCLUDEPATH += . ../../include ../../libv4l2util ../../libv4l/include
+INCLUDEPATH += . ../libv4l2util ../../lib/include
 CONFIG += debug
 
 # Input
 HEADERS += qv4l2.h general-tab.h v4l2-api.h capture-win.h
 SOURCES += qv4l2.cpp general-tab.cpp ctrl-tab.cpp v4l2-api.cpp capture-win.cpp
-LIBS += -L../../libv4l/libv4l2 -lv4l2 -L../../libv4l/libv4lconvert -lv4lconvert -L../../libv4l2util -lv4l2util
+LIBS += -L../../lib/libv4l2 -lv4l2 -L../../lib/libv4lconvert -lv4lconvert -L../libv4l2util -lv4l2util
 
 RESOURCES += qv4l2.qrc

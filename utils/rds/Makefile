@@ -1,16 +1,8 @@
-# Makefile for linuxtv.org v4l2-apps/util/xc3028-firmware
+TARGETS = rds-saa6588
 
-CPPFLAGS += -I../../include
+all: $(TARGETS)
 
-binaries = rds-saa6588
-
-.PHONY: all clean install qv4l2
-
-all: $(binaries)
-
-clean::
-	rm -f $(binaries)
-
-install:
+rds-saa6588: rds-saa6588.o
+	$(CC) $(LDFLAGS) -o $@ $^
 
 include ../../Make.rules

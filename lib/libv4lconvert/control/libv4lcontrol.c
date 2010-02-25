@@ -37,16 +37,6 @@
 
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
-/* Workaround these potentially missing from videodev2.h */
-#ifndef V4L2_IN_ST_HFLIP
-#define V4L2_IN_ST_HFLIP       0x00000010 /* Frames are flipped horizontally */
-#endif
-
-#ifndef V4L2_IN_ST_VFLIP
-#define V4L2_IN_ST_VFLIP       0x00000020 /* Frames are flipped vertically */
-#endif
-
-
 /* List of cams which need special flags */
 static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 /* First: Upside down devices */

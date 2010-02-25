@@ -3,7 +3,9 @@
 # These ones can be overriden from the cmdline
 
 CFLAGS := -g -O1
-CFLAGS += -Wall -Wno-unused -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS += -Wall -Wno-unused -Wpointer-arith
+CXXFLAGS := $(CFLAGS)
+CFLAGS += -Wstrict-prototypes -Wmissing-prototypes
 
 PREFIX = /usr/local
 LIBDIR = $(PREFIX)/lib
@@ -12,6 +14,8 @@ LIBSUBDIR = libv4l
 
 # These ones should not be overriden from the cmdline
 
+# Note the -I../.. this assumes all sources live in a 2 level dir hierarchy!
+override CPPFLAGS += -I../../include -D_GNU_SOURCE
 V4L_UTILS_VERSION=0.7.90-test
 # This is the soname version
 LIB_RELEASE = 0
@@ -21,6 +25,9 @@ LIB_RELEASE = 0
 %.o: %.c
 	$(CC) -Wp,-MMD,"$*.d",-MQ,"$@",-MP -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
+%.o: %.cpp
+	$(CXX) -Wp,-MMD,"$*.d",-MQ,"$@",-MP -c $(CPPFLAGS) $(CXXFLAGS) -o $@ $<
+
 %.so:
 	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@.$(LIB_RELEASE) -o $@.$(LIB_RELEASE) $^ $(LIBS_$*)
 	ln -f -s $@.$(LIB_RELEASE) $@
@@ -29,4 +36,4 @@ LIB_RELEASE = 0
 	$(AR) cqs $@ $^
 
 clean::
-	rm -f core core.[0123456789]* *~ *.o *.d *.a *.so* DEADJOE *.orig *.rej
+	rm -f core core.[0123456789]* *~ *.o *.d *.a *.so* DEADJOE *.orig *.rej $(TARGETS)
