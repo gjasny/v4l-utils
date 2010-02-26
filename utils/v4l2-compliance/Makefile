@@ -2,6 +2,8 @@ TARGETS = v4l2-compliance
 
 all: $(TARGETS)
 
+-include *.d
+
 v4l2-compliance: v4l2-compliance.o
 	$(CXX) $(LDFLAGS) -o $@ $^
 

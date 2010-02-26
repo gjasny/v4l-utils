@@ -3,6 +3,8 @@ TARGETS = libv4l2util.a
 
 all: $(TARGETS)
 
+-include $(OBJS:.o=.d)
+
 libv4l2util.a: $(OBJS)
 
 install:

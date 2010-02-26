@@ -4,6 +4,8 @@ TARGETS = cx18-ctl ivtv-ctl v4l2-ctl
 
 all: $(TARGETS)
 
+-include *.d
+
 cx18-ctl: cx18-ctl.o
 	$(CC) $(LDFLAGS) -o $@ $^
 

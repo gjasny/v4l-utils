@@ -2,6 +2,8 @@ TARGETS = v4l2-dbg
 
 all: $(TARGETS)
 
+-include *.d
+
 v4l2-dbg: v4l2-dbg.o v4l2-chipids.o
 	$(CXX) $(LDFLAGS) -o $@ $^
 

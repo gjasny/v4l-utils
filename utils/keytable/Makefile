@@ -23,6 +23,8 @@ drivers/media/dvb/dvb-usb/vp7045.c "
 
 all: $(TARGETS)
 
+-include *.d
+
 v4l-keytable: keytable.o
 	$(CC) $(LDFLAGS) -o $@ $^
 

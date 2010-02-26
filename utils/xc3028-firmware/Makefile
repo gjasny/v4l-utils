@@ -2,6 +2,8 @@ TARGETS = firmware-tool
 
 all: $(TARGETS)
 
+-include *.d
+
 firmware-tool: firmware-tool.o standards.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
