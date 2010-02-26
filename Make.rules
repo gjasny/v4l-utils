@@ -1,4 +1,4 @@
-# Global settings used by all Makefiles
+V4L_UTILS_VERSION=0.7.90
 
 # These ones can be overriden from the cmdline
 
@@ -16,7 +16,6 @@ LIBSUBDIR = libv4l
 
 # Note the -I../.. this assumes all sources live in a 2 level dir hierarchy!
 override CPPFLAGS += -I../../include -D_GNU_SOURCE
-V4L_UTILS_VERSION=0.7.90-test
 # This is the soname version
 LIB_RELEASE = 0
 
