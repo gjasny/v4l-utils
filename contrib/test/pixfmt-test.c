@@ -1213,7 +1213,7 @@ open_window			(unsigned int		width,
 
 static int
 xioctl                          (int                    fd,
-				 int                    request,
+				 unsigned long int      request,
 				 void *                 arg)
 {
 	int r;

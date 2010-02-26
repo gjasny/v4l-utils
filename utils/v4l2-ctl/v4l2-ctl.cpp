@@ -1345,7 +1345,7 @@ static v4l2_std_id parse_ntsc(const char *ntsc)
 	return 0;
 }
 
-static int doioctl(int fd, int request, void *parm, const char *name)
+static int doioctl(int fd, unsigned long int request, void *parm, const char *name)
 {
 	int retVal = ioctl(fd, request, parm);
 

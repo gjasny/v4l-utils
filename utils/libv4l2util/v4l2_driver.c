@@ -31,7 +31,7 @@
 /****************************************************************************
 	Auxiliary routines
  ****************************************************************************/
-static int xioctl (int fd, int request, void *arg)
+static int xioctl (int fd, unsigned long int request, void *arg)
 {
 	int r;
 

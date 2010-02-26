@@ -350,7 +350,7 @@ static const char *binary(unsigned long long val)
 	return bin;
 }
 
-static int doioctl(int fd, int request, void *parm, const char *name)
+static int doioctl(int fd, unsigned long int request, void *parm, const char *name)
 {
 	int retVal = ioctl(fd, request, parm);
 
