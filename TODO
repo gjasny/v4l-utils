@@ -1,3 +1,6 @@
+libv4l todo:
+------------
+
 -add support for setting / getting the number of read buffers
 
 -add code to v4l2_read to not return frames more then say 5 seconds old
@@ -13,3 +16,7 @@
  frames
 
 -get standardized CID for AUTOGAIN_TARGET upstream and switch to that
+
+
+utils todo:
+-----------

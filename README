@@ -1,14 +1,62 @@
-linuxtv-v4l2-apps-0.0.1
-=======================
+v4l-utils
+---------
 
-Linux V4L2 API test/demo applications, utilities and library.
+Linux V4L2 and DVB API utilities and v4l libraries (libv4l).
 
-You find a README in each subdirectory explaining what the code there does.
 
-The v4l2 library uses the GNU Lesser General Public License, all other code is
+v4l libraries (libv4l)
+----------------------
+
+See README.lib for more information on libv4l, libv4l is released
+under the GNU Lesser General Public License.
+
+
+v4l-utils
+---------
+The (for now for v4l-utils private use only) libv4l2util library is
+released under the GNU Lesser General Public License, all other code is
 released under the GNU General Public License.
 
-This code is still in its infancy and is not yet suitable for general
-use. However, it is a start.
+v4l-utils includes the following utilities:
 
-Hans Verkuil <hverkuil@xs4all.nl>
+decode_tm6000:
+Decodes tm6000 proprietary format streams.
+Installed by make install under <prefix>/bin.
+
+v4l-keytable:
+Dump, Load or Modify ir receiver input tables.
+The ir tables for remotes which are known by the kernel
+(and loaded by default depending on dvb card type) can be found
+under utils/keytable/keycodes.
+v4l-keytable does not get installed by make install.
+
+qv4l2:
+QT v4l2 control panel application.
+Installed by make install under <prefix>/bin.
+
+rds-saa6588:
+Poll i2c RDS receiver [Philips saa6588].
+rds-saa6588 does not get installed by make install.
+
+v4l2-compliance:
+Tool to test v4l2 API compliance of drivers.
+Installed by make install under <prefix>/bin.
+
+v4l2-ctl:
+Tool to control v4l2 controls from the cmdline.
+Installed by make install under <prefix>/bin.
+
+v4l2-dbg:
+Tool to directly get and set registers of v4l2 devices,
+this requires a kernel >= 2.6.29 with the ADV_DEBUG option
+enabled. This tool can only be used by root and is meant
+for development purposes only!
+Installed by make install under <prefix>/sbin.
+
+v4l2-sysfs-path:
+FIXME add description.
+Installed by make install under <prefix>/bin.
+
+xc3028-firmware:
+Xceive XC2028/3028 tuner module firmware manipulation tool.
+xc3028-firmware does not get installed by make install.

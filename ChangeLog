@@ -1,3 +1,14 @@
+v4l-utils-0.7.90
+----------------
+* This is the first release of v4l-utils, v4l-utils is the combination
+  of various v4l and dvb utilities which used to be part of v4l-dvb
+  mercurial kernel tree and libv4l.
+* This first version is 0.7.90, as the version numbers continue were libv4l
+  as a standalone source archive stops.
+
+Note all history below this line only applies to libv4l and not to the utils
+----------------------------------------------------------------------------
+
 libv4l-0.6.5
 ------------
 * Add more laptop models to the upside down devices table

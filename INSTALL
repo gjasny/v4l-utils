@@ -1,12 +1,30 @@
-Building:
+Requirements:
+-------------
+* make and a c and c++ compiler
+* optionally qt3 ot qt4 for building qv4l2
+* optionally libsysfs for building v4l2-sysfs-path
 
-simply type
-$ make
+
+Building:
+---------
+
+Before building decide under which PREFIX you wish to install
+(the default is /usr/local), and if you want the libraries to be installed
+under a different directory then $PREFIX/lib for example $PREFIX/lib64.
+
+To build execute "make" specifying the desired installation prefix
+and (optionally) the desired libdir, for example:
+make PREFIX=/usr LIBDIR=/usr/lib64
+
 
 Installing:
+-----------
 
-$ make install
-installs libraries and utils to /usr/[bin,include,lib]
+To install do "make install", and again specify the desired PREFIX and
+LIBDIR, note that it is important to specify the same PREFIX and LIBDIR
+as used when building, for example:
+make install PREFIX=/usr LIBDIR=/usr/lib64
 
-$ make install prefix=<path>
-installs libraries and utils to <path>/[bin,include,lib]
+Note that v4l-utils' "make install" supports DESTDIR for installing into
+a build root for example:
+make install PREFIX=/usr LIBDIR=/usr/lib64 DESTDIR=/mnt/sysimage
