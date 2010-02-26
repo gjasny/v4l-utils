@@ -14,4 +14,8 @@ sync-with-kernel:
 	@grep V4L2_IDENT_ $(KERNEL_DIR)/include/media/v4l2-chip-ident.h | sed -e 's/.*V4L2_IDENT_\([0-9A-Z_]*\)[^=]*=[^0-9]*\([0-9]*\).*/{ "\1", \2 },/' | tr A-Z a-z >> v4l2-chipids.cpp
 	@echo "{ 0, 0 }};" >> v4l2-chipids.cpp
 
+install: $(TARGETS)
+	mkdir -p $(DESTDIR)$(PREFIX)/sbin
+	install -m 755 $(TARGETS) $(DESTDIR)$(PREFIX)/sbin
+
 include ../../Make.rules

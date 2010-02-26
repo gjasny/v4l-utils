@@ -47,4 +47,6 @@ sync-with-kernel:
 	@echo storing existing keycodes at keycodes/
 	@for i in `echo $(IR_FILES)`; do ./gen_keytables.pl $(KERNEL_DIR)/$$i; done
 
+install:
+
 include ../../Make.rules

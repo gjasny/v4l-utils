@@ -13,4 +13,8 @@ ivtv-ctl: ivtv-ctl.o
 v4l2-ctl: v4l2-ctl.o
 	$(CXX) $(LDFLAGS) -o $@ $^
 
+install: $(TARGETS)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	install -m 755 $(TARGETS) $(DESTDIR)$(PREFIX)/bin
+
 include ../../Make.rules

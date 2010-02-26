@@ -19,10 +19,10 @@ all install:
 	if which $$QMAKE >/dev/null 2>&1; then \
 		if $$QMAKE --version 2>&1 | grep '3\.[0-9][0-9]*\.[0-9][0-9]*' >/dev/null; then \
 			if [ ! -f qv4l2-qt3/Makefile ]; then (cd qv4l2-qt3; $$QMAKE); fi; \
-			$(MAKE) -C qv4l2-qt3 $@; \
+			$(MAKE) -C qv4l2-qt3 -f Makefile.install $@; \
 		else \
 			if [ ! -f qv4l2-qt4/Makefile ]; then (cd qv4l2-qt4; $$QMAKE); fi; \
-			$(MAKE) -C qv4l2-qt4 $@; \
+			$(MAKE) -C qv4l2-qt4 -f Makefile.install $@; \
 		fi \
 	fi
 

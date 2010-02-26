@@ -1,0 +1,5 @@
+include Makefile
+
+install: qv4l2
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	install -m 755 qv4l2 $(DESTDIR)$(PREFIX)/bin
