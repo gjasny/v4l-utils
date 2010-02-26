@@ -5,15 +5,16 @@ v4l-utils-0.7.90
   mercurial kernel tree and libv4l.
 * This first version is 0.7.90, as the version numbers continue were libv4l
   as a standalone source archive stops.
+* libv4l changes:
+  * Add more laptop models to the upside down devices table
+  * Fix Pixart JPEG ff ff ff xx markers removal, this fixes the occasional
+    corrupt frame we used to get (thanks to Németh Márton)
+  * Enable whitebalance by default on various sonixj based cams
+  * Enable whitebalance + gamma correction by default on all sonixb cams
+  * Enable gamma correction by default on pac7302 based cams
 
 Note all history below this line only applies to libv4l and not to the utils
 ----------------------------------------------------------------------------
-
-libv4l-0.6.5
-------------
-* Add more laptop models to the upside down devices table
-* Small fix to pixart jpeg decoding, this fixes the occasional corrupt
-  frame we used to get (Németh Márton)
 
 libv4l-0.6.4
 ------------
