@@ -96,7 +96,7 @@ static char *v4l2_memory_names[] = {
 #define ARRAY_SIZE(arr) (sizeof(arr)/sizeof(*arr))
 #define prt_names(a,arr) (((a)<ARRAY_SIZE(arr))?arr[a]:"unknown")
 
-char *prt_caps(uint32_t caps)
+static char *prt_caps(uint32_t caps)
 {
 	static char s[4096]="";
 

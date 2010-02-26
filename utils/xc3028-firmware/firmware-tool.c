@@ -24,7 +24,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define __USE_GNU
 #include <string.h>
 #include <getopt.h>
 #include <string.h>
@@ -61,7 +60,7 @@ struct firmware {
 	__u16 nr_desc;
 };
 
-struct firmware_description* alloc_firmware_description(void) {
+static struct firmware_description* alloc_firmware_description(void) {
 	struct firmware_description *d = malloc(sizeof(*d));
 	d->type = 0;
 	d->id = 0;
@@ -70,12 +69,12 @@ struct firmware_description* alloc_firmware_description(void) {
 	return d;
 }
 
-void free_firmware_description(struct firmware_description *d) {
+static void free_firmware_description(struct firmware_description *d) {
 	free(d->data);
 	free(d);
 }
 
-struct firmware* alloc_firmware(void) {
+static struct firmware* alloc_firmware(void) {
 	struct firmware *f = malloc(sizeof(*f));
 	f->name = NULL;
 	f->desc = NULL;
@@ -83,7 +82,7 @@ struct firmware* alloc_firmware(void) {
 	return f;
 }
 
-void free_firmware(struct firmware *f) {
+static void free_firmware(struct firmware *f) {
 	free(f->name);
 	free(f->desc);
 	if(f->desc) {
@@ -95,7 +94,7 @@ void free_firmware(struct firmware *f) {
 	free(f);
 }
 
-void add_firmware_description(struct firmware *f,
+static void add_firmware_description(struct firmware *f,
 			      struct firmware_description *d) {
 	struct firmware_description* new_desc;
 
@@ -107,7 +106,7 @@ void add_firmware_description(struct firmware *f,
 	++f->nr_desc;
 }
 
-void delete_firmware_description(struct firmware *f, __u16 i) {
+static void delete_firmware_description(struct firmware *f, __u16 i) {
 	struct firmware_description* new_desc;
 
 	if(f->nr_desc == 0 || i >= f->nr_desc) {
@@ -127,7 +126,7 @@ void delete_firmware_description(struct firmware *f, __u16 i) {
 /* description header: 4 + 8 + 4.*/
 #define DESC_HEADER_LENGTH (4 + 8 + 4)
 
-int read_firmware(unsigned char* data, off_t size, struct firmware** f_res) {
+static int read_firmware(unsigned char* data, off_t size, struct firmware** f_res) {
 	char *name = malloc(33);
 	unsigned char *p = data;
 	struct firmware* f = alloc_firmware();
@@ -184,7 +183,7 @@ int read_firmware(unsigned char* data, off_t size, struct firmware** f_res) {
 	return 0;
 }
 
-void write_firmware(struct firmware *f, unsigned char** r_data, off_t *r_size) {
+static void write_firmware(struct firmware *f, unsigned char** r_data, off_t *r_size) {
 	off_t size;
 	unsigned int i = 0;
 	unsigned char* data;
@@ -225,7 +224,7 @@ void write_firmware(struct firmware *f, unsigned char** r_data, off_t *r_size) {
 	*r_size = size;
 }
 
-struct firmware* read_firmware_file(const char* filename) {
+static struct firmware* read_firmware_file(const char* filename) {
 	struct stat buf;
 	unsigned char *ptr;
 	struct firmware *f;
@@ -239,7 +238,6 @@ struct firmware* read_firmware_file(const char* filename) {
 	fd = open(filename, O_RDONLY);
 	if(fd < 0) {
 		perror("Error while opening the firmware file");
-		free_firmware(f);
 		return NULL;
 	}
 
@@ -265,7 +263,7 @@ struct firmware* read_firmware_file(const char* filename) {
 	return f;
 }
 
-void write_firmware_file(const char* filename, struct firmware *f) {
+static void write_firmware_file(const char* filename, struct firmware *f) {
 	int fd;
 	unsigned char* data;
 	off_t size = 0;
@@ -294,7 +292,7 @@ void write_firmware_file(const char* filename, struct firmware *f) {
 	close(fd);
 }
 
-void dump_firm_type(FILE *fp, unsigned int type)
+static void dump_firm_type(FILE *fp, unsigned int type)
 {
 	if (type & SCODE)
 		fprintf(fp, "SCODE FW  ");
@@ -361,7 +359,7 @@ void dump_firm_type(FILE *fp, unsigned int type)
 		fprintf(fp, "HAS IF ");
 }
 
-void dump_firm_std(FILE *fp, v4l2_std_id id)
+static void dump_firm_std(FILE *fp, v4l2_std_id id)
 {
 	v4l2_std_id old=-1, curr_id;
 
@@ -499,7 +497,7 @@ void dump_firm_std(FILE *fp, v4l2_std_id id)
 	}
 }
 
-void list_firmware_desc(FILE *fp, struct firmware_description *desc)
+static void list_firmware_desc(FILE *fp, struct firmware_description *desc)
 {
 	fprintf(fp, "type: ");
 	dump_firm_type(fp, desc->type);
@@ -512,7 +510,7 @@ void list_firmware_desc(FILE *fp, struct firmware_description *desc)
 	fprintf(fp, "size: %u\n", desc->size);
 }
 
-void list_firmware(struct firmware *f, unsigned int dump, char *binfile)
+static void list_firmware(struct firmware *f, unsigned int dump, char *binfile)
 {
 	unsigned int i = 0;
 
@@ -563,7 +561,7 @@ void list_firmware(struct firmware *f, unsigned int dump, char *binfile)
 	}
 }
 
-void add_standard(struct firmware* f, char* firmware_file, char* standard_file) {
+static void add_standard(struct firmware* f, char* firmware_file, char* standard_file) {
 	unsigned char* standard_data;
 	unsigned int len, i;
 	struct firmware_description desc;
@@ -581,12 +579,12 @@ void add_standard(struct firmware* f, char* firmware_file, char* standard_file) 
 	write_firmware_file(firmware_file, f);
 }
 
-void delete_standard(struct firmware* f, char* firmware_file, __u16 i) {
+static void delete_standard(struct firmware* f, char* firmware_file, __u16 i) {
 	delete_firmware_description(f, i);
 	write_firmware_file(firmware_file, f);
 }
 
-void set_standard_type(struct firmware* f, char* firmware_file, __u16 i, __u32 type) {
+static void set_standard_type(struct firmware* f, char* firmware_file, __u16 i, __u32 type) {
 	if(i > f->nr_desc) {
 		return;
 	}
@@ -594,7 +592,7 @@ void set_standard_type(struct firmware* f, char* firmware_file, __u16 i, __u32 t
 	write_firmware_file(firmware_file, f);
 }
 
-void set_standard_id(struct firmware* f, char* firmware_file, __u16 i, __u32 id) {
+static void set_standard_id(struct firmware* f, char* firmware_file, __u16 i, __u32 id) {
 	if(i > f->nr_desc) {
 		return;
 	}
@@ -613,7 +611,7 @@ struct chunk_hunk {
 	struct chunk_hunk *next;
 };
 
-int seek_chunks(struct chunk_hunk *fhunk,
+static int seek_chunks(struct chunk_hunk *fhunk,
 		unsigned char *seek, unsigned char *endp,	/* File to seek */
 		unsigned char *fdata, unsigned char *endf)	/* Firmware */
 {
@@ -706,8 +704,8 @@ int seek_chunks(struct chunk_hunk *fhunk,
 					temp_data + fsize - end_sig, end_sig);
 
 			if (!p) {
-				printf("Found something that looks like a firmware start at %x\n",
-					base_start - seek);
+				printf("Found something that looks like a firmware start at %lx\n",
+					(long)(base_start - seek));
 
 				base_start += ini_sig + sig_len;
 				goto method3;
@@ -715,8 +713,9 @@ int seek_chunks(struct chunk_hunk *fhunk,
 
 			p += end_sig;
 
-			printf("Found firmware at %x, size = %d\n",
-				base_start - seek, p - base_start);
+			printf("Found firmware at %lx, size = %ld\n",
+				(long)(base_start - seek),
+				(long)(p - base_start));
 
 			hunk->data = NULL;
 			hunk->pos = base_start - seek;
@@ -826,7 +825,7 @@ seek_next:
 #endif
 }
 
-void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
+static void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 	unsigned int i = 0, j, nfound = 0;
 	long size, rd = 0;
 	unsigned char *seek, *p, *endp, *p2, *endp2, *fpos;
@@ -952,7 +951,7 @@ void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 		f->name, f->version, nfound);
 }
 
-void print_usage(void)
+static void print_usage(void)
 {
 	printf("firmware-tool usage:\n");
 	printf("\t firmware-tool --list [--dump] [--write <bin-file>] <firmware-file>\n");

@@ -917,7 +917,7 @@ static void printjpegcomp(const struct v4l2_jpegcompression &jc)
 		printf("\tComment: '%s'\n", jc.COM_data);
 	if (jc.APP_len)
 		printf("\tAPP%x   : '%s'\n", jc.APPn, jc.APP_data);
-	printf("\tMarkers: 0x%08lx\n", jc.jpeg_markers);
+	printf("\tMarkers: 0x%08x\n", jc.jpeg_markers);
 	printf("%s", markers2s(jc.jpeg_markers).c_str());
 }
 
@@ -1404,7 +1404,7 @@ static void list_devices()
 		perror ("Couldn't open the directory");
 		return;
 	}
-	while (ep = readdir(dp))
+	while ((ep = readdir(dp)))
 		if (is_v4l_dev(ep->d_name))
 			files.push_back(std::string("/dev/") + ep->d_name);
 	closedir(dp);
@@ -1710,7 +1710,7 @@ int main(int argc, char **argv)
 	struct v4l2_streamparm parm;	/* get/set parm */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
-	int txsubchans;			/* set_modulator */
+	int txsubchans = 0;		/* set_modulator */
 	v4l2_std_id std;		/* get_std/set_std */
 	double freq = 0;		/* get/set frequency */
 	double fps = 0;			/* set framerate speed, in fps */
@@ -1718,8 +1718,8 @@ int main(int argc, char **argv)
 	struct v4l2_frequency vf;	/* get_freq/set_freq */
 	struct v4l2_standard vs;	/* list_std */
 	int overlay;			/* overlay */
-	unsigned int *set_overlay_fmt_ptr;
-	struct v4l2_format *overlay_fmt_ptr;
+	unsigned int *set_overlay_fmt_ptr = NULL;
+	struct v4l2_format *overlay_fmt_ptr = NULL;
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
 	int ret;
@@ -2155,7 +2155,7 @@ int main(int argc, char **argv)
 					"comment",
 					NULL
 				};
-				int len;
+				size_t len;
 				int opt = parse_subopt(&subs, subopts, &value);
 
 				switch (opt) {

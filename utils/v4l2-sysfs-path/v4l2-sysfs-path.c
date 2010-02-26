@@ -29,7 +29,7 @@
 #define PCI_ID "PCI:"
 #define PCIe_ID "PCIe:"
 
-char *obtain_bus_sysfs_path(char *bus_info)
+static char *obtain_bus_sysfs_path(char *bus_info)
 {
 	struct sysfs_device *pcictl = NULL;
 	struct sysfs_bus *bus = NULL;
@@ -136,7 +136,7 @@ err:
 	return NULL;
 }
 
-char *seek_name(char *path, char *match)
+static char *seek_name(char *path, char *match)
 {
 	DIR             *dir;
 	struct dirent   *entry;
@@ -167,7 +167,7 @@ char *seek_name(char *path, char *match)
 	return NULL;
 }
 
-int get_dev(char *class, int *major, int *minor, char *extra)
+static int get_dev(char *class, int *major, int *minor, char *extra)
 {
 	char            path[1024];
 	char		*name;
@@ -220,7 +220,7 @@ int get_dev(char *class, int *major, int *minor, char *extra)
 	input:input8
 */
 
-void get_subdevs(char *path)
+static void get_subdevs(char *path)
 {
 	DIR             *dir;
 	struct dirent   *entry;
@@ -261,7 +261,7 @@ void get_subdevs(char *path)
 	closedir(dir);
 }
 
-void get_sysfs(char *fname)
+static void get_sysfs(char *fname)
 {
 	struct v4l2_driver drv;
 	char *path;
@@ -283,7 +283,7 @@ void get_sysfs(char *fname)
 	v4l2_close(&drv);
 }
 
-void read_dir(char *dirname)
+static void read_dir(char *dirname)
 {
 	DIR             *dir;
 	struct dirent   *entry;

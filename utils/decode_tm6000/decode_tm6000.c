@@ -128,7 +128,7 @@ const char *tm6000_msg_type[]= {
 #define dprintf(fmt,arg...) \
 	if (debug) fprintf(stderr, fmt, ##arg)
 
-int recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf)
+static int recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf)
 {
 	dprintf("Received %zd bytes\n", buf->length);
 fflush(stdout);
@@ -137,7 +137,7 @@ fflush(stdout);
 }
 
 
-int prepare_read (struct v4l2_driver *drv)
+static int prepare_read (struct v4l2_driver *drv)
 {
 	struct v4l2_format fmt;
 	double freq;
@@ -189,7 +189,7 @@ int prepare_read (struct v4l2_driver *drv)
 	return 0;
 }
 
-int read_stream (struct v4l2_driver *drv, int fd)
+static int read_stream (struct v4l2_driver *drv, int fd)
 {
 	if (use_mmap) {
 		fd_set fds;
@@ -225,7 +225,7 @@ int read_stream (struct v4l2_driver *drv, int fd)
 	return 0;
 }
 
-int read_char (struct v4l2_driver *drv, int fd)
+static int read_char (struct v4l2_driver *drv, int fd)
 {
 	static int sizebuf=0;
 	static unsigned char *p=NULL;

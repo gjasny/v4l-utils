@@ -75,7 +75,7 @@ static void detect(int fh, struct v4l2_sliced_vbi_format *fmt)
 	free(buf);
 }
 
-void v2s(int id)
+static void v2s(int id)
 {
 	switch (id) {
 		case V4L2_SLICED_TELETEXT_B: printf(" TELETEXT"); break;

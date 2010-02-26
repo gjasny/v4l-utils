@@ -22,7 +22,7 @@ int debug;
 char rds_psn[9];
 char rds_txt[65];
 
-void rds_decode(int blkno,int b1, int b2)
+static void rds_decode(int blkno,int b1, int b2)
 {
     static int group,spare,c1,c2;
 

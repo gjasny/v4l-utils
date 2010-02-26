@@ -23,7 +23,7 @@
 
 #include "parse.h"
 
-void prtcode (int *codes)
+static void prtcode (int *codes)
 {
 	struct parse_key *p;
 
@@ -40,7 +40,7 @@ void prtcode (int *codes)
 		printf("scancode %d = 0x%02x\n", codes[0], codes[1]);
 }
 
-int parse_code(char *string)
+static int parse_code(char *string)
 {
 	struct parse_key *p;
 

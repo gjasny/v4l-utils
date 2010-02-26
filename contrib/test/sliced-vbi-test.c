@@ -75,7 +75,7 @@ static const char *subtitles[] = {
 	"?"
 };
 
-void decode_wss(struct v4l2_sliced_vbi_data *s)
+static void decode_wss(struct v4l2_sliced_vbi_data *s)
 {
 	unsigned char parity;
 	int wss;
@@ -347,7 +347,7 @@ static void dump_pil(int pil)
 		       pil, mon, day, hour, min);
 }
 
-void decode_vps(struct v4l2_sliced_vbi_data *s)
+static void decode_vps(struct v4l2_sliced_vbi_data *s)
 {
 	static char pr_label[20];
 	static char label[20];
@@ -390,7 +390,7 @@ void decode_vps(struct v4l2_sliced_vbi_data *s)
 	dump_pil(pil);
 }
 
-void process(struct v4l2_sliced_vbi_data *s)
+static void process(struct v4l2_sliced_vbi_data *s)
 {
 	if (s->id == 0)
 		return;

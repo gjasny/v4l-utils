@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-int recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf)
+static int recebe_buffer (struct v4l2_buffer *v4l2_buf, struct v4l2_t_buf *buf)
 {
 
 	return 0;

@@ -852,7 +852,7 @@ static const char *ok(int res)
 	return res ? "FAIL" : "OK";
 }
 
-static int check_string(const char *s, int len, const char *fld)
+static int check_string(const char *s, size_t len, const char *fld)
 {
 	if (strlen(s) == 0) {
 		if (verbose)

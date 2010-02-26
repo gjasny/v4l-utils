@@ -668,7 +668,7 @@ int main(int argc, char **argv)
 
 
 			if (reg_max_arg.empty())
-				reg_max = 1<<31 - 1;
+				reg_max = (1ll << 32) - 1;
 			else
 				reg_max = parse_reg(curr_bd, reg_max_arg);
 

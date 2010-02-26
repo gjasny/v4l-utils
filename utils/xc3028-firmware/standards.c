@@ -19,7 +19,6 @@
 
 #include "standards.h"
 
-#define _GNU_SOURCE
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,19 +35,19 @@ struct vector {
 	unsigned int size;
 };
 
-struct vector* alloc_vector(unsigned int size) {
+static struct vector* alloc_vector(unsigned int size) {
 	struct vector *v = malloc(sizeof(*v));
 	v->data = malloc(size);
 	v->size = size;
 	return v;
 }
 
-void free_vector(struct vector* v) {
+static void free_vector(struct vector* v) {
 	free(v->data);
 	free(v);
 }
 
-void enlarge_vector(struct vector* v, unsigned int new_size) {
+static void enlarge_vector(struct vector* v, unsigned int new_size) {
 	unsigned char *n_data;
 	unsigned int old_size = v->size;
 
@@ -59,7 +58,7 @@ void enlarge_vector(struct vector* v, unsigned int new_size) {
 	v->data = n_data;
 }
 
-void copy_vector(struct vector *v, unsigned int i,
+static void copy_vector(struct vector *v, unsigned int i,
 		 unsigned char* ptr, unsigned int len) {
 	if(i + len > v->size) {
 		enlarge_vector(v, MAX(2 * v->size, i + len));
@@ -67,14 +66,14 @@ void copy_vector(struct vector *v, unsigned int i,
 	memcpy(v->data + i, ptr, len);
 }
 
-void write_vector8(struct vector *v, unsigned int i, __u8 value) {
+static void write_vector8(struct vector *v, unsigned int i, __u8 value) {
 	__u8 buf[1];
 
 	buf[0] = value;
 	copy_vector(v, i, buf, 1);
 }
 
-void write_vector16(struct vector *v, unsigned int i, __u16 value) {
+static void write_vector16(struct vector *v, unsigned int i, __u16 value) {
 	__u8 buf[2];
 
 	buf[0] = value & 0xff;
