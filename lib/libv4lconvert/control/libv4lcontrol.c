@@ -249,7 +249,11 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x13d3, 0x5094, 0, "ASUSTeK Computer Inc.        ", "P50IJ     ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.        ", "N61Ja",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0x1408, 0, "ASUSTeK Computer Inc.        ", "K40IN      ",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
+  { 0x174f, 0x1408, 0, "ASUSTeK Computer Inc.        ", "K50IN      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
   { 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "F3Ka      ",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
@@ -295,6 +299,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
   { 0x5986, 0x0205, 0, "LENOVO", "Base Board Product Name",
     V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
     "Lenovo IdeaPad Y330" },
+  { 0xeb1a, 0x2750, 0, "CLEVO", "D900K",
+    V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED },
 
 /* Second: devices which should use some software processing by default */
   /* sn9c101 / sn9c102 based devices (sonixb) */
