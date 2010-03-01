@@ -68,7 +68,8 @@ static char *obtain_bus_sysfs_path(char *bus_info)
 	if (pci) {
 		char *name;
 
-		asprintf(&name, "%s", pcictl->path);
+		if (asprintf(&name, "%s", pcictl->path) == -1)
+			goto err;
 		return name;
 	}
 
@@ -116,8 +117,9 @@ static char *obtain_bus_sysfs_path(char *bus_info)
 		if (sscanf(tmp, "%u", &busnum) != 1)
 			goto err;
 
-		asprintf(&name, "%s/%d-%s", busdev->path,
-			 busnum, buspath);
+		if (asprintf(&name, "%s/%d-%s", busdev->path,
+			     busnum, buspath) == -1)
+			goto err;
 
 		free(tmp);
 		sysfs_close_bus(bus);
@@ -200,7 +202,8 @@ static int get_dev(char *class, int *major, int *minor, char *extra)
 	if (!fp)
 		return -1;
 
-	fscanf(fp, "%d:%d", major, minor);
+	if (fscanf(fp, "%d:%d", major, minor) != 2)
+		return -1;
 
 	return 0;
 }

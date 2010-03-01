@@ -196,7 +196,7 @@ static int dowrite(const char *buf, const char *fn)
 		printf("failed: %s\n", strerror(errno));
 		return errno;
 	}
-	fprintf(f, buf);
+	fprintf(f, "%s", buf);
 	fclose(f);
 	return 0;
 }

@@ -268,7 +268,7 @@ static void write_firmware_file(const char* filename, struct firmware *f) {
 	unsigned char* data;
 	off_t size = 0;
 
-	fd = open(filename, O_WRONLY | O_CREAT);
+	fd = open(filename, O_WRONLY | O_CREAT, 0644);
 	if(fd < 0) {
 		perror("Error while opening the firmware file");
 		return;

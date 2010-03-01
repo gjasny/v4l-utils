@@ -162,12 +162,11 @@ static void usage(void)
 	exit(0);
 }
 
-static char *pts_to_string(char *str, unsigned long pts, float fps)
+static char *pts_to_string(unsigned long pts, float fps)
 {
 	static char buf[256];
 	int hours, minutes, seconds, fracsec;
 	int frame;
-	char *p = (str) ? str : buf;
 
 	static const int MPEG_CLOCK_FREQ = 90000;
 	seconds = pts / MPEG_CLOCK_FREQ;
@@ -181,8 +180,8 @@ static char *pts_to_string(char *str, unsigned long pts, float fps)
 
 	frame = (int)ceilf(((float)fracsec / (float)MPEG_CLOCK_FREQ) * fps);
 
-	snprintf(p, sizeof(buf), "%d:%02d:%02d:%d", hours, minutes, seconds, frame);
-	return p;
+	snprintf(buf, sizeof(buf), "%d:%02d:%02d:%d", hours, minutes, seconds, frame);
+	return buf;
 }
 
 static void print_debug_mask(int mask)
@@ -244,7 +243,7 @@ static int dowrite(const char *buf, const char *fn)
 		printf("failed: %s\n", strerror(errno));
 		return errno;
 	}
-	fprintf(f, buf);
+	fprintf(f, "%s", buf);
 	fclose(f);
 	return 0;
 }
@@ -343,7 +342,7 @@ int main(int argc, char **argv)
 	__u32 reset = 0;
 	int new_debug_level, gdebug_level;
 	double timestamp;
-	char ptsstr[64];
+	char *ptsstr;
 	char short_options[26 * 2 * 2 + 1];
 
 	if (argc == 1) {
@@ -509,7 +508,7 @@ int main(int argc, char **argv)
 
 				ioctl(fd, VIDEO_GET_PTS, &pts);
 				ioctl(fd, VIDEO_GET_FRAME_COUNT, &frame);
-				pts_to_string(ptsstr, pts, fps);
+				ptsstr = pts_to_string(pts, fps);
 				printf("%10.6f: pts %-20s, %lld frames\n",
 				     timestamp, ptsstr, frame);
 			}
