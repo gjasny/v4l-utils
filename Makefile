@@ -31,4 +31,9 @@ archive-no-tag:
 
 archive: clean tag archive-no-tag
 
+export: clean
+	tar --transform s/^\./v4l-utils-$(V4L_UTILS_VERSION)/g \
+		--exclude=.git -zcvf \
+		/tmp/v4l-utils-$(V4L_UTILS_VERSION).tar.gz .
+
 include Make.rules
