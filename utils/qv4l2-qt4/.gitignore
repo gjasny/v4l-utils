@@ -1,0 +1,7 @@
+Makefile
+moc_capture-win.cpp
+moc_general-tab.cpp
+moc_qv4l2.cpp
+qrc_qv4l2.cpp
+qv4l2
+
