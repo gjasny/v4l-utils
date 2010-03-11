@@ -1,4 +1,4 @@
-TARGETS = v4l-keytable
+TARGETS = ir-keytable
 
 IR_FILES = "drivers/media/IR/ir-keymaps.c \
 drivers/media/dvb/dvb-usb/a800.c \
@@ -25,8 +25,10 @@ all: $(TARGETS)
 
 -include *.d
 
-v4l-keytable: keytable.o
+ir-keytable: keytable.o
 	$(CC) $(LDFLAGS) -o $@ $^
+
+keytable.o: keytable.c parse.h
 
 sync-with-kernel:
 	@if [ ! -f $(KERNEL_DIR)/include/linux/input.h ]; then \
