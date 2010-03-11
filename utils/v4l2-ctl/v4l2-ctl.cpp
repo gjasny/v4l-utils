@@ -2589,7 +2589,8 @@ set_vid_fmt_error:
 		}
 		for (class2ctrls_map::iterator iter = class2ctrls.begin();
 				iter != class2ctrls.end(); ++iter) {
-			if (iter->first == V4L2_CTRL_CLASS_USER) {
+			if (iter->first == V4L2_CTRL_CLASS_USER ||
+			    iter->first == V4L2_CID_PRIVATE_BASE) {
 				for (unsigned i = 0; i < iter->second.size(); i++) {
 					struct v4l2_control ctrl;
 
@@ -2881,7 +2882,8 @@ set_vid_fmt_error:
 		}
 		for (class2ctrls_map::iterator iter = class2ctrls.begin();
 				iter != class2ctrls.end(); ++iter) {
-			if (iter->first == V4L2_CTRL_CLASS_USER) {
+			if (iter->first == V4L2_CTRL_CLASS_USER ||
+			    iter->first == V4L2_CID_PRIVATE_BASE) {
 				for (unsigned i = 0; i < iter->second.size(); i++) {
 					struct v4l2_control ctrl;
 
