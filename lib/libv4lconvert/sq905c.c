@@ -71,18 +71,18 @@ sq905c_first_decompress(unsigned char *output, const unsigned char *input,
 		temp1 = (temp1 << 1) & 0xFF;
 		bit_counter++;
 		cycles++;
-		if (cycles > 9)
+		if (cycles > 8)
 		    return -1;
 		lookup = temp2 & 0xff;
 	    }
 	    temp2 = 0;
 	    for (i = 0; i < 17; i++) {
+		if (i == 16)
+		    return -1;
 		if (lookup == lookup_table[i]) {
 		    nibble_to_keep[parity] = translator[i];
 		    break;
 		}
-		if (i == 16)
-		    return -1;
 	    }
 	    cycles = 0;
 	    parity++;
