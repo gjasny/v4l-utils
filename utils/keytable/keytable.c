@@ -223,7 +223,8 @@ static char *find_device(void)
 	DIR             *dir;
 	struct dirent   *entry;
 	FILE		*fp;
-	char		dname[256], *event = "event", *name = NULL;
+	char		dname[256], *name = NULL;
+	char		*input = "input", *event = "event";
 	char		s[256];
 	int		found = 0;
 	char		*DEV = "/dev/";
@@ -231,14 +232,36 @@ static char *find_device(void)
 	/*
 	 * Get event sysfs node
 	 */
-	snprintf(dname, sizeof(dname) - 30, "/sys/class/irrcv/%s/input/",
+	snprintf(dname, sizeof(dname) - 30, "/sys/class/irrcv/%s/",
 		 devclass);
 	dir = opendir(dname);
 	if (!dir) {
 		perror(dname);
 		return NULL;
 	}
+	entry = readdir(dir);
+	while (entry) {
+		if (!strncmp(entry->d_name, input, strlen(input))) {
+			strcat(dname, entry->d_name);
+			strcat(dname, "/");
+			found = 1;
+			break;
+		}
+		entry = readdir(dir);
+	}
+	closedir(dir);
 
+	if (!found) {
+		fprintf(stderr, "Couldn't find input device. Old driver?");
+		return NULL;
+	}
+
+	found = 0;
+	dir = opendir(dname);
+	if (!dir) {
+		perror(dname);
+		return NULL;
+	}
 	entry = readdir(dir);
 	while (entry) {
 		if (!strncmp(entry->d_name, event, strlen(event))) {
@@ -251,9 +274,10 @@ static char *find_device(void)
 	closedir(dir);
 
 	if (!found) {
-		fprintf(stderr, "Couldn't find event device. Too old driver?");
+		fprintf(stderr, "Couldn't find event device. Old driver?");
 		return NULL;
 	}
+
 	if (debug)
 		fprintf(stderr, "Event sysfs node is %s\n", dname);
 
