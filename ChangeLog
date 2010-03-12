@@ -1,3 +1,12 @@
+v4l-utils-0.7.91
+----------------
+* Utils changes:
+  * Improve v4l-keytable to better support IR (mchehab)
+  * Rename v4l-keytable to ir-keytable (mchehab)
+* libv4l changes (hdegoede):
+  * Add more laptop models to the upside down devices table
+  * Ignore convert errors in the first few frames of a stream
+
 v4l-utils-0.7.90
 ----------------
 * This is the first release of v4l-utils, v4l-utils is the combination
