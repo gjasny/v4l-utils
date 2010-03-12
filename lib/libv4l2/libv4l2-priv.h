@@ -32,6 +32,7 @@
 #define V4L2_MAX_NO_FRAMES 32
 #define V4L2_DEFAULT_NREADBUFFERS 4
 #define V4L2_FRAME_BUF_SIZE (4096 * 4096)
+#define V4L2_IGNORE_FIRST_FRAME_ERRORS 3
 
 #define V4L2_LOG_ERR(...) \
   do { \
@@ -72,6 +73,7 @@ struct v4l2_dev_info {
   pthread_mutex_t stream_lock;
   unsigned int no_frames;
   unsigned int nreadbuffers;
+  int first_frame;
   struct v4lconvert_data *convert;
   unsigned char *convert_mmap_buf;
   /* Frame bookkeeping is only done when in read or mmap-conversion mode */

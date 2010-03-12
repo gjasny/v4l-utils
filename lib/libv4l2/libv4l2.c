@@ -204,6 +204,7 @@ static int v4l2_streamon(int index)
       return result;
     }
     devices[index].flags |= V4L2_STREAMON;
+    devices[index].first_frame = V4L2_IGNORE_FIRST_FRAME_ERRORS;
   }
 
   return 0;
@@ -282,6 +283,15 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 	   buf->bytesused, dest ? dest : (devices[index].convert_mmap_buf +
 	     buf->index * V4L2_FRAME_BUF_SIZE), dest_size);
 
+    if (devices[index].first_frame) {
+      /* Always treat convert errors as EAGAIN during the first few frames, as
+         some cams produce bad frames at the start of the stream
+         (hsync and vsync still syncing ??). */
+      if (result < 0)
+        errno = EAGAIN;
+      devices[index].first_frame--;
+    }
+
     if (result < 0) {
       int saved_err = errno;
 
@@ -338,6 +348,15 @@ static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
     result = v4lconvert_convert(devices[index].convert,
 	   &devices[index].src_fmt, &devices[index].dest_fmt,
 	   devices[index].readbuf, result, dest, dest_size);
+
+    if (devices[index].first_frame) {
+      /* Always treat convert errors as EAGAIN during the first few frames, as
+         some cams produce bad frames at the start of the stream
+         (hsync and vsync still syncing ??). */
+      if (result < 0)
+        errno = EAGAIN;
+      devices[index].first_frame--;
+    }
 
     if (result < 0) {
       int saved_err = errno;
@@ -562,8 +581,12 @@ int v4l2_fd_open(int fd, int v4l2_flags)
   devices[index].flags = v4l2_flags;
   if (cap.capabilities & V4L2_CAP_READWRITE)
     devices[index].flags |= V4L2_SUPPORTS_READ;
-  if (!(cap.capabilities & V4L2_CAP_STREAMING))
+  if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
     devices[index].flags |= V4L2_USE_READ_FOR_READ;
+    /* This device only supports read so the stream gets started by the
+       driver on the first read */
+    devices[index].first_frame = V4L2_IGNORE_FIRST_FRAME_ERRORS;
+  }
   if (!strcmp((char *)cap.driver, "uvcvideo"))
     devices[index].flags |= V4L2_IS_UVC;
   devices[index].open_count = 1;
@@ -1162,9 +1185,12 @@ ssize_t v4l2_read (int fd, void* dest, size_t n)
      first emulated read() call. */
   if (!(devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ) &&
       !(devices[index].flags & V4L2_USE_READ_FOR_READ)) {
-    if ((result = v4l2_activate_read_stream(index)))
+    if ((result = v4l2_activate_read_stream(index))) {
       /* Activating mmap mode failed, use read() instead */
       devices[index].flags |= V4L2_USE_READ_FOR_READ;
+      /* The read call done by v4l2_read_and_convert will start the stream */
+      devices[index].first_frame = V4L2_IGNORE_FIRST_FRAME_ERRORS;
+    }
   }
 
   if (devices[index].flags & V4L2_USE_READ_FOR_READ) {
