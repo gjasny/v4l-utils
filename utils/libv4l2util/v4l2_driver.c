@@ -1,12 +1,12 @@
 /*
    Copyright (C) 2006 Mauro Carvalho Chehab <mchehab@infradead.org>
 
-   The GNU C Library is free software; you can redistribute it and/or
+   The libv4l2util Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
    License as published by the Free Software Foundation; either
    version 2.1 of the License, or (at your option) any later version.
 
-   The GNU C Library is distributed in the hope that it will be useful,
+   The libv4l2util Library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Lesser General Public License for more details.
