@@ -34,7 +34,6 @@
 #include <sys/klog.h>
 
 #include <linux/videodev2.h>
-#include <linux/i2c-id.h>
 #include <media/v4l2-chip-ident.h>
 
 #include <list>
