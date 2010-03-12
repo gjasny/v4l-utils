@@ -7,6 +7,6 @@ all: $(TARGETS)
 
 libv4l2util.a: $(OBJS)
 
-install:
+install: $(TARGETS)
 
 include ../../Make.rules
