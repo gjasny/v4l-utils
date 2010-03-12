@@ -296,10 +296,10 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
       int saved_err = errno;
 
       if(errno == EAGAIN)
-	V4L2_LOG("warning error while converting frame data: %s\n",
+	V4L2_LOG("warning error while converting frame data: %s",
 	  v4lconvert_get_error_message(devices[index].convert));
       else
-	V4L2_LOG_ERR("converting / decoding frame data: %s\n",
+	V4L2_LOG_ERR("converting / decoding frame data: %s",
 	  v4lconvert_get_error_message(devices[index].convert));
 
       v4l2_queue_read_buffer(index, buf->index);
@@ -309,7 +309,7 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
   } while (result < 0 && errno == EAGAIN && tries);
 
   if (result < 0 && errno == EAGAIN) {
-    V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s\n",
+    V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s",
       max_tries, v4lconvert_get_error_message(devices[index].convert));
   }
 
@@ -362,10 +362,10 @@ static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
       int saved_err = errno;
 
       if(errno == EAGAIN)
-	V4L2_LOG("warning error while converting frame data: %s\n",
+	V4L2_LOG("warning error while converting frame data: %s",
 	  v4lconvert_get_error_message(devices[index].convert));
       else
-	V4L2_LOG_ERR("converting / decoding frame data: %s\n",
+	V4L2_LOG_ERR("converting / decoding frame data: %s",
 	  v4lconvert_get_error_message(devices[index].convert));
 
       errno = saved_err;
@@ -374,7 +374,7 @@ static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
   } while (result < 0 && errno == EAGAIN && tries);
 
   if (result < 0 && errno == EAGAIN) {
-    V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s\n",
+    V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s",
       max_tries, v4lconvert_get_error_message(devices[index].convert));
   }
 

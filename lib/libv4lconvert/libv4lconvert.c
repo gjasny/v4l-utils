@@ -561,7 +561,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
       }
       tinyjpeg_set_flags(data->jdec, jpeg_flags);
       if (tinyjpeg_parse_header(data->jdec, src, src_size)) {
-	V4LCONVERT_ERR("parsing JPEG header: %s\n",
+	V4LCONVERT_ERR("parsing JPEG header: %s",
 	  tinyjpeg_get_errorstring(data->jdec));
 	errno = EIO;
 	return -1;
