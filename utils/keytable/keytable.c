@@ -252,6 +252,16 @@ static int seek_sysfs_dir(char *dname, char *node_name, char **node_entry)
 	return rc;
 }
 
+static void free_uevent(struct uevents *uevent)
+{
+	struct uevents *old;
+	do {
+		old = uevent;
+		uevent = uevent->next;
+		free (old);
+	} while (uevent);
+}
+
 struct uevents *read_sysfs_uevents(char *dname)
 {
 	FILE		*fp;
@@ -282,6 +292,7 @@ struct uevents *read_sysfs_uevents(char *dname)
 		if (!next->key) {
 			perror("next->key");
 			free(file);
+			free_uevent(uevent);
 			return NULL;
 		}
 		strcpy(next->key, p);
@@ -291,12 +302,14 @@ struct uevents *read_sysfs_uevents(char *dname)
 			fprintf(stderr, "Error on uevent information\n");
 			fclose(fp);
 			free(file);
+			free_uevent(uevent);
 			return NULL;
 		}
 		next->value = malloc(strlen(p) + 1);
 		if (!next->value) {
 			perror("next->value");
 			free(file);
+			free_uevent(uevent);
 			return NULL;
 		}
 		strcpy(next->value, p);
@@ -308,6 +321,7 @@ struct uevents *read_sysfs_uevents(char *dname)
 		if (!next->next) {
 			perror("next->next");
 			free(file);
+			free_uevent(uevent);
 			return NULL;
 		}
 		next = next->next;
@@ -362,6 +376,7 @@ static char *find_device(void)
 		}
 		uevent = uevent->next;
 	}
+	free_uevent(uevent);
 
 	if (debug)
 		fprintf(stderr, "input device is %s\n", name);
