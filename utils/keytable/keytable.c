@@ -30,6 +30,12 @@ struct keytable {
 	struct keytable *next;
 };
 
+struct uevents {
+	char		*key;
+	char		*value;
+	struct uevents	*next;
+};
+
 static int parse_code(char *string)
 {
 	struct parse_key *p;
@@ -218,97 +224,144 @@ static void prtcode (int *codes)
 		printf("scancode %d = 0x%02x\n", codes[0], codes[1]);
 }
 
-static char *find_device(void)
+static int seek_sysfs_dir(char *dname, char *node_name, char **node_entry)
 {
 	DIR             *dir;
 	struct dirent   *entry;
+	int		rc;
+
+	dir = opendir(dname);
+	if (!dir) {
+		perror(dname);
+		return errno;
+	}
+	entry = readdir(dir);
+	while (entry) {
+		if (!strncmp(entry->d_name, node_name, strlen(node_name))) {
+			*node_entry = malloc(strlen(dname) + strlen(entry->d_name) + 2);
+			strcpy(*node_entry, dname);
+			strcat(*node_entry, entry->d_name);
+			strcat(*node_entry, "/");
+			rc = 1;
+			break;
+		}
+		entry = readdir(dir);
+	}
+	closedir(dir);
+
+	return rc;
+}
+
+struct uevents *read_sysfs_uevents(char *dname)
+{
 	FILE		*fp;
+	struct uevents	*next, *uevent;
+	char		*event = "uevent", *file, s[4096];
+
+	next = uevent = malloc(sizeof(*uevent));
+
+	file = malloc(strlen(dname) + strlen(event) + 1);
+	strcpy(file, dname);
+	strcat(file, event);
+
+	if (debug)
+		fprintf(stderr, "Parsing uevent %s\n", file);
+
+
+	fp = fopen (file, "r");
+	if (!fp) {
+		perror(file);
+		free(file);
+		return NULL;
+	}
+	while (fgets(s, sizeof(s), fp)) {
+		char *p = strtok(s, "=");
+		if (!p)
+			continue;
+		next->key = malloc(strlen(p) + 1);
+		if (!next->key) {
+			perror("next->key");
+			free(file);
+			return NULL;
+		}
+		strcpy(next->key, p);
+
+		p = strtok(NULL, "\n");
+		if (!next->value) {
+			fprintf(stderr, "Error on uevent information\n");
+			fclose(fp);
+			free(file);
+			return NULL;
+		}
+		next->value = malloc(strlen(p) + 1);
+		if (!next->value) {
+			perror("next->value");
+			free(file);
+			return NULL;
+		}
+		strcpy(next->value, p);
+
+		if (debug)
+			fprintf(stderr, "%s uevent %s=%s\n", file, next->key, next->value);
+
+		next->next = malloc(sizeof(*next));
+		if (!next->next) {
+			perror("next->next");
+			free(file);
+			return NULL;
+		}
+		next = next->next;
+	}
+	fclose(fp);
+	free(file);
+
+	return uevent;
+}
+
+static char *node_input, *node_event;
+
+static char *find_device(void)
+{
+	struct uevents  *uevent;
 	char		dname[256], *name = NULL;
 	char		*input = "input", *event = "event";
-	char		s[256];
-	int		found = 0;
+	int		rc;
 	char		*DEV = "/dev/";
 
 	/*
 	 * Get event sysfs node
 	 */
-	snprintf(dname, sizeof(dname) - 30, "/sys/class/irrcv/%s/",
-		 devclass);
-	dir = opendir(dname);
-	if (!dir) {
-		perror(dname);
-		return NULL;
-	}
-	entry = readdir(dir);
-	while (entry) {
-		if (!strncmp(entry->d_name, input, strlen(input))) {
-			strcat(dname, entry->d_name);
-			strcat(dname, "/");
-			found = 1;
-			break;
-		}
-		entry = readdir(dir);
-	}
-	closedir(dir);
+	snprintf(dname, sizeof(dname), "/sys/class/irrcv/%s/", devclass);
 
-	if (!found) {
+	rc = seek_sysfs_dir(dname, input, &node_input);
+	if (rc == 0)
 		fprintf(stderr, "Couldn't find input device. Old driver?");
+	if (rc <= 0)
 		return NULL;
-	}
-
-	found = 0;
-	dir = opendir(dname);
-	if (!dir) {
-		perror(dname);
-		return NULL;
-	}
-	entry = readdir(dir);
-	while (entry) {
-		if (!strncmp(entry->d_name, event, strlen(event))) {
-			strcat(dname, entry->d_name);
-			found = 1;
-			break;
-		}
-		entry = readdir(dir);
-	}
-	closedir(dir);
-
-	if (!found) {
-		fprintf(stderr, "Couldn't find event device. Old driver?");
-		return NULL;
-	}
-
 	if (debug)
-		fprintf(stderr, "Event sysfs node is %s\n", dname);
+		fprintf(stderr, "Input sysfs node is %s\n", node_input);
 
-	strcat(dname, "/uevent");
-
-	fp = fopen (dname, "r");
-	if (!fp) {
-		perror (dname);
+	rc = seek_sysfs_dir(node_input, event, &node_event);
+	if (rc == 0)
+		fprintf(stderr, "Couldn't find input device. Old driver?");
+	if (rc <= 0)
 		return NULL;
-	}
-	while (fgets(s, sizeof(s), fp)) {
-		char *p = strtok(s, "=");
-		if (!strcmp(p, "DEVNAME")) {
-			p = strtok(NULL, "\n");
-			if (!p) {
-				fprintf(stderr, "Error on uevent information\n");
-				fclose (fp);
-				return NULL;
-			}
-			name = malloc(strlen(p) + sizeof(DEV) + 1);
-			if (!name) {
-				fprintf(stderr, "No memory\n");
-				fclose (fp);
-				return NULL;
-			}
+	if (debug)
+		fprintf(stderr, "Event sysfs node is %s\n", node_event);
+
+	uevent = read_sysfs_uevents(node_event);
+	if (!uevent)
+		return NULL;
+
+	while (uevent->next) {
+		if (!strcmp(uevent->key, "DEVNAME")) {
+			name = malloc(strlen(uevent->key) + strlen(DEV) + 1);
 			strcpy(name, DEV);
-			strcat(name, p);
+			strcat(name, uevent->value);
 			break;
 		}
+		uevent = uevent->next;
 	}
-	fclose (fp);
 
 	if (debug)
 		fprintf(stderr, "input device is %s\n", name);
