@@ -85,6 +85,13 @@ struct keytable keys = {
 	{0, 0}, NULL
 };
 
+/*
+ * Values that are read only via sysfs node
+ */
+static sysfs = 0;
+static char *node_input = NULL, *node_event = NULL;
+static char *drv_name = NULL,   *keytable_name = NULL;
+
 struct keytable *nextkey = &keys;
 
 static error_t parse_keyfile(char *fname)
@@ -258,7 +265,11 @@ static void free_uevent(struct uevents *uevent)
 	do {
 		old = uevent;
 		uevent = uevent->next;
-		free (old);
+		if (old->key)
+			free(old->key);
+		if (old->value)
+			free(old->value);
+		free(old);
 	} while (uevent);
 }
 
@@ -268,7 +279,7 @@ struct uevents *read_sysfs_uevents(char *dname)
 	struct uevents	*next, *uevent;
 	char		*event = "uevent", *file, s[4096];
 
-	next = uevent = malloc(sizeof(*uevent));
+	next = uevent = calloc(1, sizeof(*uevent));
 
 	file = malloc(strlen(dname) + strlen(event) + 1);
 	strcpy(file, dname);
@@ -298,7 +309,7 @@ struct uevents *read_sysfs_uevents(char *dname)
 		strcpy(next->key, p);
 
 		p = strtok(NULL, "\n");
-		if (!next->value) {
+		if (!p) {
 			fprintf(stderr, "Error on uevent information\n");
 			fclose(fp);
 			free(file);
@@ -317,7 +328,7 @@ struct uevents *read_sysfs_uevents(char *dname)
 		if (debug)
 			fprintf(stderr, "%s uevent %s=%s\n", file, next->key, next->value);
 
-		next->next = malloc(sizeof(*next));
+		next->next = calloc(1, sizeof(*next));
 		if (!next->next) {
 			perror("next->next");
 			free(file);
@@ -331,8 +342,6 @@ struct uevents *read_sysfs_uevents(char *dname)
 
 	return uevent;
 }
-
-static char *node_input, *node_event;
 
 static char *find_device(void)
 {
@@ -369,7 +378,7 @@ static char *find_device(void)
 
 	while (uevent->next) {
 		if (!strcmp(uevent->key, "DEVNAME")) {
-			name = malloc(strlen(uevent->key) + strlen(DEV) + 1);
+			name = malloc(strlen(uevent->value) + strlen(DEV) + 1);
 			strcpy(name, DEV);
 			strcat(name, uevent->value);
 			break;
@@ -378,8 +387,26 @@ static char *find_device(void)
 	}
 	free_uevent(uevent);
 
+	uevent = read_sysfs_uevents(dname);
+	if (!uevent)
+		return NULL;
+	while (uevent->next) {
+		if (!strcmp(uevent->key, "DRV_NAME")) {
+			drv_name = malloc(strlen(uevent->value) + 1);
+			strcpy(drv_name, uevent->value);
+		}
+		if (!strcmp(uevent->key, "NAME")) {
+			keytable_name = malloc(strlen(uevent->value) + 1);
+			strcpy(keytable_name, uevent->value);
+		}
+		uevent = uevent->next;
+	}
+	free_uevent(uevent);
+
 	if (debug)
 		fprintf(stderr, "input device is %s\n", name);
+
+	sysfs++;
 
 	return name;
 }
@@ -398,6 +425,9 @@ int main (int argc, char *argv[])
 			return -1;
 		dev_from_class++;
 	}
+	if (sysfs)
+		printf("Kernel driver %s, using table %s\n", drv_name, keytable_name);
+
 	if (debug)
 		fprintf(stderr, "Opening %s\n",devname);
 	if ((fd = open(devname, O_RDONLY)) < 0) {
