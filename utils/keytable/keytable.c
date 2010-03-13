@@ -88,7 +88,7 @@ struct keytable keys = {
 /*
  * Values that are read only via sysfs node
  */
-static sysfs = 0;
+static int sysfs = 0;
 static char *node_input = NULL, *node_event = NULL;
 static char *drv_name = NULL,   *keytable_name = NULL;
 
@@ -109,18 +109,18 @@ static error_t parse_keyfile(char *fname)
 	while (fgets(s, sizeof(s), fin)) {
 		scancode = strtok(s, "\n\t =:");
 		if (!scancode) {
-			perror ("parsing input file scancode");
+			perror("parsing input file scancode");
 			return EINVAL;
 		}
 		if (!strcasecmp(scancode, "scancode")) {
-			scancode = strtok(NULL,"\n\t =:");
+			scancode = strtok(NULL, "\n\t =:");
 			if (!scancode) {
-				perror ("parsing input file scancode");
+				perror("parsing input file scancode");
 				return EINVAL;
 			}
 		}
 
-		keycode=strtok(NULL, "\n\t =:(");
+		keycode = strtok(NULL, "\n\t =:(");
 		if (!keycode) {
 			perror("parsing input file keycode");
 			return EINVAL;
@@ -128,9 +128,9 @@ static error_t parse_keyfile(char *fname)
 
 		if (debug)
 			fprintf(stderr, "parsing %s=%s:", scancode, keycode);
-		value=parse_code(keycode);
+		value = parse_code(keycode);
 		if (debug)
-			fprintf(stderr, "\tvalue=%d\n",value);
+			fprintf(stderr, "\tvalue=%d\n", value);
 
 		if (value == -1) {
 			value = strtol(keycode, NULL, 0);
@@ -150,7 +150,7 @@ static error_t parse_keyfile(char *fname)
 	return 0;
 }
 
-static error_t parse_opt (int k, char *arg, struct argp_state *state)
+static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
 	char *p;
 	long key;
@@ -163,10 +163,10 @@ static error_t parse_opt (int k, char *arg, struct argp_state *state)
 		clear++;
 		break;
 	case 'd':
-		devname=arg;
+		devname = arg;
 		break;
 	case 's':
-		devclass=arg;
+		devclass = arg;
 		break;
 	case 'g':
 		read++;
@@ -214,11 +214,11 @@ static struct argp argp = {
 	.doc = doc,
 };
 
-static void prtcode (int *codes)
+static void prtcode(int *codes)
 {
 	struct parse_key *p;
 
-	for (p=keynames;p->name!=NULL;p++) {
+	for (p = keynames; p->name != NULL; p++) {
 		if (p->value == (unsigned)codes[1]) {
 			printf("scancode 0x%04x = %s (0x%02x)\n", codes[0], p->name, codes[1]);
 			return;
@@ -289,7 +289,7 @@ struct uevents *read_sysfs_uevents(char *dname)
 		fprintf(stderr, "Parsing uevent %s\n", file);
 
 
-	fp = fopen (file, "r");
+	fp = fopen(file, "r");
 	if (!fp) {
 		perror(file);
 		free(file);
@@ -411,13 +411,13 @@ static char *find_device(void)
 	return name;
 }
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int fd;
 	unsigned int i, j;
 	int dev_from_class = 0, done = 0;
 
-	argp_parse (&argp, argc, argv, 0, 0, 0);
+	argp_parse(&argp, argc, argv, 0, 0, 0);
 
 	if (!devname) {
 		devname = find_device();
@@ -429,8 +429,9 @@ int main (int argc, char *argv[])
 		printf("Kernel driver %s, using table %s\n", drv_name, keytable_name);
 
 	if (debug)
-		fprintf(stderr, "Opening %s\n",devname);
-	if ((fd = open(devname, O_RDONLY)) < 0) {
+		fprintf(stderr, "Opening %s\n", devname);
+	fd = open(devname, O_RDONLY);
+	if (fd < 0) {
 		perror(devname);
 		return -1;
 	}
@@ -470,7 +471,7 @@ int main (int argc, char *argv[])
 			fprintf(stderr,
 				"Setting scancode 0x%04x with 0x%04x via ",
 				nextkey->codes[0], nextkey->codes[1]);
-			perror ("EVIOCSKEYCODE");
+			perror("EVIOCSKEYCODE");
 		}
 		old = nextkey;
 		nextkey = nextkey->next;
@@ -495,9 +496,8 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	if (!done) {
+	if (!done)
 		argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
-	}
 
 	return 0;
 }
