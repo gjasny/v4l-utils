@@ -352,7 +352,7 @@ void ApplicationWindow::stopCapture()
 			if (-1 == munmap(m_buffers[i].start, m_buffers[i].length))
 				perror("munmap");
 		// Free all buffers.
-		reqbufs_mmap_out(reqbufs, 0);
+		reqbufs_mmap_cap(reqbufs, 0);
 		break;
 
 	case methodUser:
@@ -360,6 +360,8 @@ void ApplicationWindow::stopCapture()
 			perror("VIDIOC_STREAMOFF");
 		for (i = 0; i < m_nbuffers; ++i)
 			free(m_buffers[i].start);
+		// Free all buffers.
+		reqbufs_user_cap(reqbufs, 0);
 		break;
 	}
 	free(m_buffers);

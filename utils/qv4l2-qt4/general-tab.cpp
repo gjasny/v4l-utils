@@ -198,11 +198,23 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (m_querycap.capabilities & V4L2_CAP_STREAMING) {
 		v4l2_requestbuffers reqbuf;
 
-		if (reqbufs_user_cap(reqbuf, 1))
+		// Yuck. The videobuf framework does not accept a count of 0.
+		// This is out-of-spec, but it means that the only way to test which
+		// method is supported is to give it a non-zero count. But non-videobuf
+		// drivers like uvc do not allow e.g. S_FMT calls after a REQBUFS call
+		// with non-zero counts unless there is a REQBUFS call with count == 0
+		// in between. This is actual proper behavior, although somewhat
+		// unexpected. So the only way at the moment to do this that works
+		// everywhere is to call REQBUFS with a count of 1, and then again with
+		// a count of 0.
+		if (reqbufs_user_cap(reqbuf, 1)) {
 			m_capMethods->addItem("User pointer I/O", QVariant(methodUser));
-
-		if (reqbufs_mmap_cap(reqbuf, 1))
+			reqbufs_user_cap(reqbuf, 0);
+		}
+		if (reqbufs_mmap_cap(reqbuf, 1)) {
 			m_capMethods->addItem("Memory mapped I/O", QVariant(methodMmap));
+			reqbufs_mmap_cap(reqbuf, 0);
+		}
 	}
 	if (m_querycap.capabilities & V4L2_CAP_READWRITE) {
 		m_capMethods->addItem("read()", QVariant(methodRead));
