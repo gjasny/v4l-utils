@@ -464,11 +464,69 @@ static char *find_device(void)
 	return name;
 }
 
+static void clear_table(int fd)
+{
+	int i, j;
+	int codes[2];
+
+	/* Clears old table */
+	for (j = 0; j < 256; j++) {
+		for (i = 0; i < 256; i++) {
+			codes[0] = (j << 8) | i;
+			codes[1] = KEY_RESERVED;
+			ioctl(fd, EVIOCSKEYCODE, codes);
+		}
+	}
+}
+
+static int add_keys(int fd)
+{
+	int write_cnt = 0;
+
+	nextkey = &keys;
+	while (nextkey->next) {
+		int value;
+		struct keytable *old;
+
+		write_cnt++;
+		if (debug)
+			fprintf(stderr, "\t%04x=%04x\n",
+			       nextkey->codes[0], nextkey->codes[1]);
+
+		if (ioctl(fd, EVIOCSKEYCODE, nextkey->codes)) {
+			fprintf(stderr,
+				"Setting scancode 0x%04x with 0x%04x via ",
+				nextkey->codes[0], nextkey->codes[1]);
+			perror("EVIOCSKEYCODE");
+		}
+		old = nextkey;
+		nextkey = nextkey->next;
+		if (old != &keys)
+			free(old);
+	}
+
+	return write_cnt;
+}
+
+static void display_table(int fd)
+{
+	unsigned int i, j;
+
+	for (j = 0; j < 256; j++) {
+		for (i = 0; i < 256; i++) {
+			int codes[2];
+
+			codes[0] = (j << 8) | i;
+			if (!ioctl(fd, EVIOCGKEYCODE, codes) && codes[1] != KEY_RESERVED)
+				prtcode(codes);
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
+	int dev_from_class = 0, write_cnt;
 	int fd;
-	unsigned int i, j;
-	int dev_from_class = 0, write_cnt = 0;
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
@@ -500,60 +558,22 @@ int main(int argc, char *argv[])
 	 * First step: clear, if --clear is specified
 	 */
 	if (clear) {
-		int codes[2];
-
-		/* Clears old table */
-		for (j = 0; j < 256; j++) {
-			for (i = 0; i < 256; i++) {
-				codes[0] = (j << 8) | i;
-				codes[1] = KEY_RESERVED;
-				ioctl(fd, EVIOCSKEYCODE, codes);
-			}
-		}
+		clear_table(fd);
 		fprintf(stderr, "Old keytable cleared\n");
 	}
 
 	/*
 	 * Second step: stores key tables from file or from commandline
 	 */
-	nextkey = &keys;
-	while (nextkey->next) {
-		int value;
-		struct keytable *old;
-
-		write_cnt++;
-		if (debug)
-			fprintf(stderr, "\t%04x=%04x\n",
-			       nextkey->codes[0], nextkey->codes[1]);
-
-		if (ioctl(fd, EVIOCSKEYCODE, nextkey->codes)) {
-			fprintf(stderr,
-				"Setting scancode 0x%04x with 0x%04x via ",
-				nextkey->codes[0], nextkey->codes[1]);
-			perror("EVIOCSKEYCODE");
-		}
-		old = nextkey;
-		nextkey = nextkey->next;
-		if (old != &keys)
-			free(old);
-	}
+	write_cnt = add_keys(fd);
 	if (write_cnt)
 		fprintf(stderr, "Wrote %d keycode(s) to driver\n", write_cnt);
 
 	/*
 	 * Third step: display current keytable
 	 */
-	if (read) {
-		for (j = 0; j < 256; j++) {
-			for (i = 0; i < 256; i++) {
-				int codes[2];
-
-				codes[0] = (j << 8) | i;
-				if (!ioctl(fd, EVIOCGKEYCODE, codes) && codes[1] != KEY_RESERVED)
-					prtcode(codes);
-			}
-		}
-	}
+	if (read)
+		display_table(fd);
 
 	return 0;
 }
