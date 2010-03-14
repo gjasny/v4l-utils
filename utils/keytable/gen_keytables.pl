@@ -3,25 +3,47 @@ use strict;
 
 my $keyname="";
 my $debug=0;
+my $out;
+my $read=0;
+
+sub flush()
+{
+	return if (!$keyname || !$out);
+	open OUT, ">keycodes/$keyname";
+	print OUT $out;
+	close OUT;
+
+	$keyname = "";
+	$out = "";
+}
 
 while (<>) {
 	if (m/struct\s+(dvb_usb_rc_key|ir_scancode)\s+(\w[\w\d_]+)/) {
+		flush();
+
 		$keyname = $2;
 		$keyname =~ s/^ir_codes_//;
-
-		print "Generating keycodes/$keyname\n" if $debug;
-		open OUT, ">keycodes/$keyname";
+		$read = 1;
 		next;
 	}
-	if ($keyname ne "") {
+	if (m/IR_TABLE\(\s*([^\,\s]+)\s*,\s*([^\,\s]+)\s*,\s*([^\,\s]+)\s*\)/) {
+		my $name = $1;
+		my $type = $2;
+		$type =~ s/IR_TYPE_//;
+		$out = "# table $name, type: $type\n$out";
+		$read = 0;
+
+		flush();
+	}
+	if ($read) {
 		if (m/(0x[\dA-Fa-f]+).*(KEY_[^\s\,\}]+)/) {
-			printf OUT "%s %s\n",$1, $2;
+			$out .= "$1 $2\n";
 			next;
 		}
 		if (m/\}/) {
-			close OUT;
-			$keyname="";
-			next;
+			$read = 0;
 		}
 	}
 }
+
+flush();
