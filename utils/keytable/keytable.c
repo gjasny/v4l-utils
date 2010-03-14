@@ -56,15 +56,16 @@ static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
 	"  DEV     - the /dev/input/event* device to control\n"
 	"  SYSDEV  - the ir class as found at /sys/class/irrcv\n"
 	"  TABLE   - a file wit a set of scancode=keycode value pairs\n"
-	"  SCANKEY - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n";
+	"  SCANKEY - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
+	"\nOptions can be combined together.";
 
 static const struct argp_option options[] = {
 	{"verbose",	'v',	0,		0,	"enables debug messages", 0},
 	{"clear",	'c',	0,		0,	"clears the old table", 0},
 	{"sysdev",	's',	"SYSDEV",	0,	"ir class device to control", 0},
 	{"device",	'd',	"DEV",		0,	"ir device to control", 0},
-	{"get-table",	'g',	0,		0,	"reads the current scancode/keycode table", 0},
-	{"put-table",	'p',	"TABLE",	0,	"adds/replaces the scancodes to a new scancode/keycode table", 0},
+	{"read",	'r',	0,		0,	"reads the current scancode/keycode table", 0},
+	{"write",	'w',	"TABLE",	0,	"write (adds) the scancodes to the device scancode/keycode table from an specified file", 0},
 	{"set-key",	'k',	"SCANKEY",	0,	"Change scan/key pairs", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
@@ -99,6 +100,9 @@ static error_t parse_keyfile(char *fname)
 	FILE *fin;
 	int value;
 	char *scancode, *keycode, s[2048];
+
+	if (debug)
+		fprintf(stderr, "Parsing %s keycode file\n", fname);
 
 	fin = fopen(fname, "r");
 	if (!fin) {
@@ -141,8 +145,10 @@ static error_t parse_keyfile(char *fname)
 		nextkey->codes[0] = (unsigned) strtol(scancode, NULL, 0);
 		nextkey->codes[1] = (unsigned) value;
 		nextkey->next = calloc(1, sizeof(keys));
-		if (!nextkey->next)
+		if (!nextkey->next) {
+			perror("No memory");
 			return ENOMEM;
+		}
 		nextkey = nextkey->next;
 	}
 	fclose(fin);
@@ -154,6 +160,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
 	char *p;
 	long key;
+	int rc;
 
 	switch (k) {
 	case 'v':
@@ -168,34 +175,43 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	case 's':
 		devclass = arg;
 		break;
-	case 'g':
+	case 'r':
 		read++;
 		break;
-	case 'p':
-		return parse_keyfile(arg);
+	case 'w':
+		rc = parse_keyfile(arg);
+		if (rc < 0)
+			goto err_inval;
+		break;
 	case 'k':
 		p = strtok(arg, ":=");
 		do {
 			if (!p)
-				return EINVAL;
+				goto err_inval;
 			nextkey->codes[0] = strtol(p, NULL, 0);
 			if (errno)
-				return EINVAL;
+				goto err_inval;
 
 			p = strtok(NULL, ",;");
 			if (!p)
-				return EINVAL;
+				goto err_inval;
 			key = parse_code(p);
 			if (key == -1) {
 				key = strtol(p, NULL, 0);
 				if (errno)
-					return EINVAL;
+					goto err_inval;
 			}
 			nextkey->codes[1] = key;
 
+			if (debug)
+				fprintf(stderr, "scancode %i=%i\n",
+					nextkey->codes[0], nextkey->codes[1]);
+
 			nextkey->next = calloc(1, sizeof(keys));
-			if (!nextkey->next)
-					return ENOMEM;
+			if (!nextkey->next) {
+				perror("No memory!\n");
+				return ENOMEM;
+			}
 			nextkey = nextkey->next;
 
 			p = strtok(NULL, ":=");
@@ -205,6 +221,11 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		return ARGP_ERR_UNKNOWN;
 	}
 	return 0;
+
+err_inval:
+	fprintf(stderr, "Invalid parameter(s)\n");
+	return EINVAL;
+
 }
 
 static struct argp argp = {
@@ -415,7 +436,7 @@ int main(int argc, char *argv[])
 {
 	int fd;
 	unsigned int i, j;
-	int dev_from_class = 0, done = 0;
+	int dev_from_class = 0, write_cnt = 0;
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
@@ -426,8 +447,13 @@ int main(int argc, char *argv[])
 		dev_from_class++;
 	}
 	if (sysfs)
-		printf("Kernel driver %s, using table %s\n", drv_name, keytable_name);
+		fprintf(stderr, "Kernel IR driver for %s is %s (using table %s)\n",
+			devclass, drv_name, keytable_name);
 
+	if (!clear && !read && !keys.next) {
+		argp_help(&argp, stderr, ARGP_HELP_SHORT_USAGE, argv[0]);
+		return -1;
+	}
 	if (debug)
 		fprintf(stderr, "Opening %s\n", devname);
 	fd = open(devname, O_RDONLY);
@@ -452,7 +478,7 @@ int main(int argc, char *argv[])
 				ioctl(fd, EVIOCSKEYCODE, codes);
 			}
 		}
-		done++;
+		fprintf(stderr, "Old keytable cleared\n");
 	}
 
 	/*
@@ -463,6 +489,7 @@ int main(int argc, char *argv[])
 		int value;
 		struct keytable *old;
 
+		write_cnt++;
 		if (debug)
 			fprintf(stderr, "\t%04x=%04x\n",
 			       nextkey->codes[0], nextkey->codes[1]);
@@ -477,14 +504,14 @@ int main(int argc, char *argv[])
 		nextkey = nextkey->next;
 		if (old != &keys)
 			free(old);
-		done++;
 	}
+	if (write_cnt)
+		fprintf(stderr, "Wrote %d keycode(s) to driver\n", write_cnt);
 
 	/*
 	 * Third step: display current keytable
 	 */
 	if (read) {
-		done++;
 		for (j = 0; j < 256; j++) {
 			for (i = 0; i < 256; i++) {
 				int codes[2];
@@ -495,9 +522,6 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-
-	if (!done)
-		argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
 
 	return 0;
 }
