@@ -1,3 +1,4 @@
+# table avermedia_cardbus, type: UNKNOWN
 0x00 KEY_POWER
 0x01 KEY_TUNER
 0x03 KEY_TEXT

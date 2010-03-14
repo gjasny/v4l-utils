@@ -243,6 +243,7 @@ struct parse_key {
 	{"KEY_BRIGHTNESS_ZERO", 244},
 	{"KEY_DISPLAY_OFF", 245},
 	{"KEY_WIMAX", 246},
+	{"KEY_RFKILL", 247},
 	{"BTN_MISC", 0x100},
 	{"BTN_0", 0x100},
 	{"BTN_1", 0x101},
