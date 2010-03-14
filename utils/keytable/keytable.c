@@ -95,10 +95,10 @@ static char *drv_name = NULL,   *keytable_name = NULL;
 
 struct keytable *nextkey = &keys;
 
-static error_t parse_keyfile(char *fname)
+static error_t parse_keyfile(char *fname, char **table, char **type)
 {
 	FILE *fin;
-	int value;
+	int value, line = 0;
 	char *scancode, *keycode, s[2048];
 
 	if (debug)
@@ -111,24 +111,44 @@ static error_t parse_keyfile(char *fname)
 	}
 
 	while (fgets(s, sizeof(s), fin)) {
-		scancode = strtok(s, "\n\t =:");
-		if (!scancode) {
-			perror("parsing input file scancode");
-			return EINVAL;
+		char *p = s;
+		while (*p == ' ' || *p == '\t')
+			p++;
+		if (!line && p[0] == '#') {
+			p++;
+			p = strtok(p, "\n\t =:");
+			do {
+				if (!strcmp(p, "table")) {
+					p = strtok(NULL,"\n, ");
+					*table = malloc(sizeof(p) + 1);
+					strcpy(*table, p);
+				} else if (!strcmp(p, "type")) {
+					p = strtok(NULL,"\n, ");
+					*type = malloc(sizeof(p) + 1);
+					strcpy(*type, p);
+				} else {
+					goto err_einval;
+				}
+				p = strtok(NULL, "\n\t =:");
+			} while (p);
+			continue;
 		}
+
+		if (*p == '\n' || *p == '#')
+			continue;
+
+		scancode = strtok(p, "\n\t =:");
+		if (!scancode)
+			goto err_einval;
 		if (!strcasecmp(scancode, "scancode")) {
 			scancode = strtok(NULL, "\n\t =:");
-			if (!scancode) {
-				perror("parsing input file scancode");
-				return EINVAL;
-			}
+			if (!scancode)
+				goto err_einval;
 		}
 
 		keycode = strtok(NULL, "\n\t =:(");
-		if (!keycode) {
-			perror("parsing input file keycode");
-			return EINVAL;
-		}
+		if (!keycode)
+			goto err_einval;
 
 		if (debug)
 			fprintf(stderr, "parsing %s=%s:", scancode, keycode);
@@ -150,10 +170,17 @@ static error_t parse_keyfile(char *fname)
 			return ENOMEM;
 		}
 		nextkey = nextkey->next;
+		line++;
 	}
 	fclose(fin);
 
 	return 0;
+
+err_einval:
+	fprintf(stderr, "Invalid parameter on line %d of %s\n",
+		line + 1, fname);
+	return EINVAL;
+
 }
 
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
@@ -178,11 +205,16 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	case 'r':
 		read++;
 		break;
-	case 'w':
-		rc = parse_keyfile(arg);
+	case 'w': {
+		char *name = NULL, *type = NULL;
+
+		rc = parse_keyfile(arg, &name, &type);
 		if (rc < 0)
 			goto err_inval;
+		if (name && type)
+			fprintf(stderr, "Read %s table, type %s\n", name, type);
 		break;
+	}
 	case 'k':
 		p = strtok(arg, ":=");
 		do {
