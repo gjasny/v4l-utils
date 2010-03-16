@@ -173,3 +173,18 @@ A: Please send libv4l questions / bugreports to the:
    Subscription is not necessary to send mail to this list. If you're not
    subscribed please put yourself in the CC of your original mail so you
    will receive replies.
+
+Q: How do I port my application to libv4l1?
+A: Just replace the open call for your device by v4l1_open and all
+   following calls concerning this device file descriptor by their
+   counterpart v4l1_xxx (for a list see libv4l1.h).
+
+Q: How do I port my application to libv4l2?
+A: Just replace the open call for your device by v4l2_open and all
+   following calls concerning this device file descriptor by their
+   counterpart v4l2_xxx (for a list see libv4l2.h).
+
+Q: I still need an example how to convert my application!
+A: Check out the patches for the VLC media player:
+   https://trac.videolan.org/vlc/attachment/ticket/1804/vlc-0.8.6-libv4l1.patch
+   https://trac.videolan.org/vlc/attachment/ticket/1804/vlc-0.8.6-libv4l2.patch
