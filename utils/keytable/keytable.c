@@ -101,6 +101,9 @@ static error_t parse_keyfile(char *fname, char **table, char **type)
 	int value, line = 0;
 	char *scancode, *keycode, s[2048];
 
+	*table = NULL;
+	*type = NULL;
+
 	if (debug)
 		fprintf(stderr, "Parsing %s keycode file\n", fname);
 
@@ -120,11 +123,11 @@ static error_t parse_keyfile(char *fname, char **table, char **type)
 			do {
 				if (!strcmp(p, "table")) {
 					p = strtok(NULL,"\n, ");
-					*table = malloc(sizeof(p) + 1);
+					*table = malloc(strlen(p) + 1);
 					strcpy(*table, p);
 				} else if (!strcmp(p, "type")) {
 					p = strtok(NULL,"\n, ");
-					*type = malloc(sizeof(p) + 1);
+					*type = malloc(strlen(p) + 1);
 					strcpy(*type, p);
 				} else {
 					goto err_einval;
@@ -164,7 +167,7 @@ static error_t parse_keyfile(char *fname, char **table, char **type)
 
 		nextkey->codes[0] = (unsigned) strtol(scancode, NULL, 0);
 		nextkey->codes[1] = (unsigned) value;
-		nextkey->next = calloc(1, sizeof(keys));
+		nextkey->next = calloc(1, sizeof(*nextkey));
 		if (!nextkey->next) {
 			perror("No memory");
 			return ENOMEM;
