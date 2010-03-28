@@ -291,12 +291,12 @@ static int seek_sysfs_dir(char *dname, char *node_name, char **node_entry)
 {
 	DIR             *dir;
 	struct dirent   *entry;
-	int		rc;
+	int		rc = 0;
 
 	dir = opendir(dname);
 	if (!dir) {
 		perror(dname);
-		return errno;
+		return -errno;
 	}
 	entry = readdir(dir);
 	while (entry) {
