@@ -54,7 +54,7 @@ static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
 	"You need to have read permissions on /dev/input for the program to work\n"
 	"\nOn the options bellow, the arguments are:\n"
 	"  DEV     - the /dev/input/event* device to control\n"
-	"  SYSDEV  - the ir class as found at /sys/class/irrcv\n"
+	"  SYSDEV  - the ir class as found at /sys/class/rc\n"
 	"  TABLE   - a file wit a set of scancode=keycode value pairs\n"
 	"  SCANKEY - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
 	"\nOptions can be combined together.";
@@ -72,11 +72,11 @@ static const struct argp_option options[] = {
 
 static const char args_doc[] =
 	"--device [/dev/input/event* device]\n"
-	"--sysdev [ir class (f. ex. irrcv0)]\n"
-	"[for using the irrcv0 sysdev]";
+	"--sysdev [ir class (f. ex. rcrcv0)]\n"
+	"[for using the rcrcv0 sysdev]";
 
 
-static char *devclass = "irrcv0";
+static char *devclass = "rcrcv0";
 static char *devname = NULL;
 static int read = 0;
 static int clear = 0;
@@ -410,7 +410,7 @@ static char *find_device(void)
 	/*
 	 * Get event sysfs node
 	 */
-	snprintf(dname, sizeof(dname), "/sys/class/irrcv/%s/", devclass);
+	snprintf(dname, sizeof(dname), "/sys/class/rc/%s/", devclass);
 
 	rc = seek_sysfs_dir(dname, input, &node_input);
 	if (rc == 0)
