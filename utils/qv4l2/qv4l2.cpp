@@ -152,7 +152,7 @@ void ApplicationWindow::opendev()
 {
 	QFileDialog d(this, "Select v4l device", "/dev", "V4L Devices (video* vbi* radio*)");
 
-	d.setFilter(QDir::Dirs | QDir::System);
+	d.setFilter(QDir::AllDirs | QDir::Files | QDir::System);
 	d.setFileMode(QFileDialog::ExistingFile);
 	if (d.exec())
 		setDevice(d.selectedFiles().first(), false);
@@ -162,7 +162,7 @@ void ApplicationWindow::openrawdev()
 {
 	QFileDialog d(this, "Select v4l device", "/dev", "V4L Devices (video* vbi* radio*)");
 
-	d.setFilter(QDir::Dirs | QDir::System);
+	d.setFilter(QDir::AllDirs | QDir::Files | QDir::System);
 	d.setFileMode(QFileDialog::ExistingFile);
 	if (d.exec())
 		setDevice(d.selectedFiles().first(), true);
@@ -483,6 +483,12 @@ void ApplicationWindow::errorCtrl(unsigned id, int err)
 {
 	error(QString("Error %1: %2")
 		.arg((const char *)m_ctrlMap[id].name).arg(strerror(err)));
+}
+
+void ApplicationWindow::errorCtrl(unsigned id, int err, const QString &v)
+{
+	error(QString("Error %1 (%2): %3")
+		.arg((const char *)m_ctrlMap[id].name).arg(v).arg(strerror(err)));
 }
 
 void ApplicationWindow::errorCtrl(unsigned id, int err, long long v)

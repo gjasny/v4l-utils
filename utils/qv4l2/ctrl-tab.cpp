@@ -87,6 +87,17 @@ void ApplicationWindow::addTabs()
 			m_classMap[V4L2_CTRL_CLASS_USER].push_back(qctrl.id);
 		}
 	}
+	
+	m_haveExtendedUserCtrls = false;
+	for (unsigned i = 0; i < m_classMap[V4L2_CTRL_CLASS_USER].size(); i++) {
+		unsigned id = m_classMap[V4L2_CTRL_CLASS_USER][i];
+
+		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64 ||
+		    m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING) {
+			m_haveExtendedUserCtrls = true;
+			break;
+		}
+	}
 
 	for (ClassMap::iterator iter = m_classMap.begin(); iter != m_classMap.end(); ++iter) {
 		ctrl_class = V4L2_CTRL_ID2CLASS(iter->second[0]);
@@ -214,8 +225,21 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 
 	case V4L2_CTRL_TYPE_INTEGER64:
 		addLabel(grid, name);
-		m_widgetMap[qctrl.id] = new QLineEdit(p);
-		addWidget(grid, m_widgetMap[qctrl.id]);
+		edit = new QLineEdit(p);
+		m_widgetMap[qctrl.id] = edit;
+		addWidget(grid, edit);
+		connect(m_widgetMap[qctrl.id], SIGNAL(lostFocus()),
+				m_sigMapper, SLOT(map()));
+		connect(m_widgetMap[qctrl.id], SIGNAL(returnPressed()),
+				m_sigMapper, SLOT(map()));
+		break;
+
+	case V4L2_CTRL_TYPE_STRING:
+		addLabel(grid, name);
+		edit = new QLineEdit(p);
+		m_widgetMap[qctrl.id] = edit;
+		edit->setMaxLength(qctrl.maximum);
+		addWidget(grid, edit);
 		connect(m_widgetMap[qctrl.id], SIGNAL(lostFocus()),
 				m_sigMapper, SLOT(map()));
 		connect(m_widgetMap[qctrl.id], SIGNAL(returnPressed()),
@@ -288,7 +312,7 @@ void ApplicationWindow::ctrlAction(int id)
 	}
 	if (!update && !all && m_ctrlMap[id].type != V4L2_CTRL_TYPE_BUTTON)
 		return;
-	if (ctrl_class == V4L2_CTRL_CLASS_USER) {
+	if (!m_haveExtendedUserCtrls && ctrl_class == V4L2_CTRL_CLASS_USER) {
 		if (!all) {
 			updateCtrl(id);
 			return;
@@ -313,8 +337,14 @@ void ApplicationWindow::ctrlAction(int id)
 		if (m_ctrlMap[id].flags & (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE))
 			continue;
 		c[idx].id = id;
+		c[idx].size = 0;
 		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64)
 			c[idx].value64 = getVal64(id);
+		else if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING) {
+			c[idx].size = m_ctrlMap[id].maximum + 1;
+			c[idx].string = (char *)malloc(c[idx].size);
+			strcpy(c[idx].string, getString(id).toLatin1());
+		}
 		else
 			c[idx].value = getVal(id);
 		idx++;
@@ -331,8 +361,29 @@ void ApplicationWindow::ctrlAction(int id)
 			errorCtrl(c[ctrls.error_idx].id, errno);
 		}
 	}
+	for (unsigned i = 0; i < ctrls.count; i++) {
+		if (c[i].size)
+			free(c[i].string);
+	}
 	delete [] c;
 	refresh(ctrl_class);
+}
+
+QString ApplicationWindow::getString(unsigned id)
+{
+	const v4l2_queryctrl &qctrl = m_ctrlMap[id];
+	QWidget *w = m_widgetMap[qctrl.id];
+	QString v;
+
+	switch (qctrl.type) {
+	case V4L2_CTRL_TYPE_STRING:
+		v = static_cast<QLineEdit *>(w)->text();
+		break;
+	default:
+		break;
+	}
+	setWhat(w, id, v);
+	return v;
 }
 
 long long ApplicationWindow::getVal64(unsigned id)
@@ -407,7 +458,7 @@ void ApplicationWindow::updateCtrl(unsigned id)
 	if (m_ctrlMap[id].flags & (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE))
 		return;
 
-	if (ctrl_class == V4L2_CTRL_CLASS_USER) {
+	if (!m_haveExtendedUserCtrls && ctrl_class == V4L2_CTRL_CLASS_USER) {
 		struct v4l2_control c;
 
 		c.id = id;
@@ -425,6 +476,11 @@ void ApplicationWindow::updateCtrl(unsigned id)
 	c.id = id;
 	if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64)
 		c.value64 = getVal64(id);
+	else if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING) {
+		c.size = m_ctrlMap[id].maximum + 1;
+		c.string = (char *)malloc(c.size);
+		strcpy(c.string, getString(id).toLatin1());
+	}
 	else
 		c.value = getVal(id);
 	ctrls.count = 1;
@@ -438,6 +494,10 @@ void ApplicationWindow::updateCtrl(unsigned id)
 	else {
 		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64)
 			setVal64(id, c.value64);
+		else if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING) {
+			setString(id, c.string);
+			free(c.string);
+		}
 		else
 			setVal(id, c.value);
 	}
@@ -445,7 +505,7 @@ void ApplicationWindow::updateCtrl(unsigned id)
 
 void ApplicationWindow::refresh(unsigned ctrl_class)
 {
-	if (ctrl_class == V4L2_CTRL_CLASS_USER) {
+	if (!m_haveExtendedUserCtrls && ctrl_class == V4L2_CTRL_CLASS_USER) {
 		for (unsigned i = 0; i < m_classMap[ctrl_class].size(); i++) {
 			unsigned id = m_classMap[ctrl_class][i];
 
@@ -460,14 +520,25 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 		return;
 	}
 	unsigned count = m_classMap[ctrl_class].size();
+	unsigned cnt = 0;
 	struct v4l2_ext_control *c = new v4l2_ext_control[count];
 	struct v4l2_ext_controls ctrls;
 
 	for (unsigned i = 0; i < count; i++) {
-		c[i].id = m_classMap[ctrl_class][i];
+		unsigned id = c[cnt].id = m_classMap[ctrl_class][i];
+		
+		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_BUTTON)
+			continue;
+		if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_WRITE_ONLY)
+			continue;
+		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING) {
+			c[cnt].size = m_ctrlMap[id].maximum + 1;
+			c[cnt].string = (char *)malloc(c[i].size);
+		}
+		cnt++;
 	}
 	memset(&ctrls, 0, sizeof(ctrls));
-	ctrls.count = count;
+	ctrls.count = cnt;
 	ctrls.ctrl_class = ctrl_class;
 	ctrls.controls = c;
 	if (ioctl(VIDIOC_G_EXT_CTRLS, &ctrls)) {
@@ -481,8 +552,13 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 	else {
 		for (unsigned i = 0; i < ctrls.count; i++) {
 			unsigned id = c[i].id;
+			
 			if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64)
 				setVal64(id, c[i].value64);
+			else if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING) {
+				setString(id, c[i].string);
+				free(c[i].string);
+			}
 			else
 				setVal(id, c[i].value);
 			queryctrl(m_ctrlMap[id]);
@@ -491,6 +567,23 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 		}
 	}
 	delete [] c;
+}
+
+void ApplicationWindow::setWhat(QWidget *w, unsigned id, const QString &v)
+{
+	const v4l2_queryctrl &qctrl = m_ctrlMap[id];
+	QString what;
+	QString flags = getCtrlFlags(qctrl.flags);
+
+	switch (qctrl.type) {
+	case V4L2_CTRL_TYPE_STRING:
+		w->setWhatsThis(QString("Type: String\n"
+					"Current: %1").arg(v) + flags);
+		w->setStatusTip(w->whatsThis());
+		break;
+	default:
+		break;
+	}
 }
 
 void ApplicationWindow::setWhat(QWidget *w, unsigned id, long long v)
@@ -596,13 +689,33 @@ void ApplicationWindow::setVal64(unsigned id, long long v)
 	setWhat(w, id, v);
 }
 
+void ApplicationWindow::setString(unsigned id, const QString &v)
+{
+	const v4l2_queryctrl &qctrl = m_ctrlMap[id];
+	QWidget *w = m_widgetMap[qctrl.id];
+
+	switch (qctrl.type) {
+	case V4L2_CTRL_TYPE_STRING:
+		static_cast<QLineEdit *>(w)->setText(v);
+		break;
+	default:
+		break;
+	}
+	setWhat(w, id, v);
+}
+
 void ApplicationWindow::setDefaults(unsigned ctrl_class)
 {
 	for (unsigned i = 0; i < m_classMap[ctrl_class].size(); i++) {
 		unsigned id = m_classMap[ctrl_class][i];
 
-		if (m_ctrlMap[id].type != V4L2_CTRL_TYPE_INTEGER64 &&
-		    m_ctrlMap[id].type != V4L2_CTRL_TYPE_BUTTON)
+		if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_READ_ONLY)
+			continue;
+		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64)
+			setVal64(id, 0);
+		else if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING)
+			setString(id, "");
+		else if (m_ctrlMap[id].type != V4L2_CTRL_TYPE_BUTTON)
 			setVal(id, m_ctrlMap[id].default_value);
 	}
 	ctrlAction(ctrl_class | CTRL_UPDATE);

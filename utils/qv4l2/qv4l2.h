@@ -110,6 +110,7 @@ public:
 	void error(int err);
 	void errorCtrl(unsigned id, int err);
 	void errorCtrl(unsigned id, int err, long long v);
+	void errorCtrl(unsigned id, int err, const QString &v);
 	void info(const QString &info);
 	virtual void closeEvent(QCloseEvent *event);
 
@@ -127,9 +128,12 @@ private:
 	void setDefaults(unsigned ctrl_class);
 	int getVal(unsigned id);
 	long long getVal64(unsigned id);
+	QString getString(unsigned id);
 	void setVal(unsigned id, int v);
 	void setVal64(unsigned id, long long v);
+	void setString(unsigned id, const QString &v);
 	QString getCtrlFlags(unsigned flags);
+	void setWhat(QWidget *w, unsigned id, const QString &v);
 	void setWhat(QWidget *w, unsigned id, long long v);
 	void updateVideoInput();
 	void updateVideoOutput();
@@ -150,6 +154,7 @@ private:
 	CtrlMap m_ctrlMap;
 	WidgetMap m_widgetMap;
 	ClassMap m_classMap;
+	bool m_haveExtendedUserCtrls;
 };
 
 extern ApplicationWindow *g_mw;
