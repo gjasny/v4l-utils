@@ -38,6 +38,8 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
+#define CTRL_FLAG_DISABLED (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE | V4L2_CTRL_FLAG_GRABBED)
+
 void ApplicationWindow::addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment align)
 {
 	grid->addWidget(w, m_row, m_col, align | Qt::AlignVCenter);
@@ -282,7 +284,7 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 		return;
 	}
 	m_sigMapper->setMapping(m_widgetMap[qctrl.id], qctrl.id);
-	if (qctrl.flags & (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE))
+	if (qctrl.flags & CTRL_FLAG_DISABLED)
 		m_widgetMap[qctrl.id]->setDisabled(true);
 }
 
@@ -334,7 +336,7 @@ void ApplicationWindow::ctrlAction(int id)
 	for (unsigned i = 0; i < count; i++) {
 		unsigned id = m_classMap[ctrl_class][i];
 
-		if (m_ctrlMap[id].flags & (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE))
+		if (m_ctrlMap[id].flags & CTRL_FLAG_DISABLED)
 			continue;
 		c[idx].id = id;
 		c[idx].size = 0;
@@ -455,7 +457,7 @@ void ApplicationWindow::updateCtrl(unsigned id)
 	if (ctrl_class == V4L2_CID_PRIVATE_BASE)
 		ctrl_class = V4L2_CTRL_CLASS_USER;
 
-	if (m_ctrlMap[id].flags & (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE))
+	if (m_ctrlMap[id].flags & CTRL_FLAG_DISABLED)
 		return;
 
 	if (!m_haveExtendedUserCtrls && ctrl_class == V4L2_CTRL_CLASS_USER) {
@@ -562,11 +564,16 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 			else
 				setVal(id, c[i].value);
 			queryctrl(m_ctrlMap[id]);
-			m_widgetMap[id]->setDisabled(m_ctrlMap[id].flags &
-				(V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE));
+			m_widgetMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
 		}
 	}
 	delete [] c;
+}
+
+void ApplicationWindow::refresh()
+{
+	for (ClassMap::iterator iter = m_classMap.begin(); iter != m_classMap.end(); ++iter)
+		refresh(iter->first);
 }
 
 void ApplicationWindow::setWhat(QWidget *w, unsigned id, const QString &v)
@@ -710,6 +717,8 @@ void ApplicationWindow::setDefaults(unsigned ctrl_class)
 		unsigned id = m_classMap[ctrl_class][i];
 
 		if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_READ_ONLY)
+			continue;
+		if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_GRABBED)
 			continue;
 		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64)
 			setVal64(id, 0);

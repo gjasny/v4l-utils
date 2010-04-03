@@ -36,6 +36,7 @@ public:
 
 	void setImage(const QImage &image, bool init = false);
 	void stop();
+	unsigned frame() const { return m_frame; }
 
 protected:
 	virtual void closeEvent(QCloseEvent *event);

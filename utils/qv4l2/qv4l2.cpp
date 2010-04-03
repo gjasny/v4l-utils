@@ -217,6 +217,8 @@ void ApplicationWindow::capFrame()
 		break;
 	}
 	m_capture->setImage(*m_capImage);
+	if (m_capture->frame() == 1)
+		refresh();
 }
 
 bool ApplicationWindow::startCapture(unsigned buffer_size)
@@ -367,6 +369,7 @@ void ApplicationWindow::stopCapture()
 	free(m_buffers);
 	m_buffers = NULL;
 	m_capture->stop();
+	refresh();
 }
 
 void ApplicationWindow::startOutput(unsigned)

@@ -125,6 +125,7 @@ private:
 	void addCtrl(QGridLayout *grid, const struct v4l2_queryctrl &qctrl);
 	void updateCtrl(unsigned id);
 	void refresh(unsigned ctrl_class);
+	void refresh();
 	void setDefaults(unsigned ctrl_class);
 	int getVal(unsigned id);
 	long long getVal64(unsigned id);
