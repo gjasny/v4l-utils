@@ -10,19 +10,16 @@ all install:
 		make -C v4l2-sysfs-path $@; \
 	fi
 
-	# Test whether qmake is installed, and whether it is for qt3.
+	# Test whether qmake is installed, and whether it is for qt4.
 	@-if which qmake-qt4 >/dev/null 2>&1; then \
 		QMAKE=qmake-qt4; \
 	else \
 		QMAKE=qmake; \
 	fi; \
 	if which $$QMAKE >/dev/null 2>&1; then \
-		if $$QMAKE --version 2>&1 | grep '3\.[0-9][0-9]*\.[0-9][0-9]*' >/dev/null; then \
-			if [ ! -f qv4l2-qt3/Makefile ]; then (cd qv4l2-qt3; $$QMAKE); fi; \
-			$(MAKE) -C qv4l2-qt3 -f Makefile.install $@; \
-		else \
-			if [ ! -f qv4l2-qt4/Makefile ]; then (cd qv4l2-qt4; $$QMAKE); fi; \
-			$(MAKE) -C qv4l2-qt4 -f Makefile.install $@; \
+		if $$QMAKE --version 2>&1 | grep '4\.[0-9][0-9]*\.[0-9][0-9]*' >/dev/null; then \
+			if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; $$QMAKE); fi; \
+			$(MAKE) -C qv4l2 -f Makefile.install $@; \
 		fi \
 	fi
 
@@ -36,8 +33,7 @@ clean::
 		make -C $$i $@; \
 	done
 	make -C v4l2-sysfs-path $@
-	if [ -f qv4l2-qt3/Makefile ]; then make -C qv4l2-qt3 $@; fi
-	if [ -f qv4l2-qt4/Makefile ]; then make -C qv4l2-qt4 $@; fi
-	rm -f qv4l2-qt?/Makefile qv4l2-qt?/qv4l2
+	if [ -f qv4l2/Makefile ]; then make -C qv4l2 $@; fi
+	rm -f qv4l2/Makefile qv4l2/qv4l2
 
 include ../Make.rules
