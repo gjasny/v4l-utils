@@ -704,7 +704,7 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 				queryctrl->default_value, ctrl->value);
 		break;
 	case V4L2_CTRL_TYPE_BUTTON:
-		printf("%31s (button)\n", s.c_str());
+		printf("%31s (btn)  :", s.c_str());
 		break;
 	default: break;
 	}
@@ -744,11 +744,18 @@ static int print_control(int fd, struct v4l2_queryctrl &qctrl, int show_menus)
 		return 1;
 	}
 	ext_ctrl.id = qctrl.id;
+	if ((qctrl.flags & V4L2_CTRL_FLAG_WRITE_ONLY) ||
+	    qctrl.type == V4L2_CTRL_TYPE_BUTTON) {
+		print_qctrl(fd, &qctrl, &ext_ctrl, show_menus);
+		return 1;
+	}
 	ctrls.ctrl_class = V4L2_CTRL_ID2CLASS(qctrl.id);
 	ctrls.count = 1;
 	ctrls.controls = &ext_ctrl;
-	if (V4L2_CTRL_ID2CLASS(qctrl.id) != V4L2_CTRL_CLASS_USER &&
-	    qctrl.id < V4L2_CID_PRIVATE_BASE) {
+	if (qctrl.type == V4L2_CTRL_TYPE_INTEGER64 ||
+	    qctrl.type == V4L2_CTRL_TYPE_STRING ||
+	    (V4L2_CTRL_ID2CLASS(qctrl.id) != V4L2_CTRL_CLASS_USER &&
+	     qctrl.id < V4L2_CID_PRIVATE_BASE)) {
 		if (qctrl.type == V4L2_CTRL_TYPE_STRING) {
 		    ext_ctrl.size = qctrl.maximum + 1;
 		    ext_ctrl.string = (char *)malloc(ext_ctrl.size);
@@ -2563,16 +2570,20 @@ set_vid_fmt_error:
 	if (options[OptSetCtrl] && !set_ctrls.empty()) {
 		struct v4l2_ext_controls ctrls = { 0 };
 		class2ctrls_map class2ctrls;
+		bool use_ext_ctrls = false;
 
 		for (ctrl_set_map::iterator iter = set_ctrls.begin();
 				iter != set_ctrls.end(); ++iter) {
 			struct v4l2_ext_control ctrl = { 0 };
 
 			ctrl.id = ctrl_str2q[iter->first].id;
+			if (ctrl_str2q[iter->first].type == V4L2_CTRL_TYPE_INTEGER64)
+				use_ext_ctrls = true;
 			if (ctrl_str2q[iter->first].type == V4L2_CTRL_TYPE_STRING) {
 				unsigned len = iter->second.length();
 				unsigned maxlen = ctrl_str2q[iter->first].maximum;
 
+				use_ext_ctrls = true;
 				ctrl.size = maxlen + 1;
 				ctrl.string = (char *)malloc(ctrl.size);
 				if (len > maxlen) {
@@ -2589,8 +2600,9 @@ set_vid_fmt_error:
 		}
 		for (class2ctrls_map::iterator iter = class2ctrls.begin();
 				iter != class2ctrls.end(); ++iter) {
-			if (iter->first == V4L2_CTRL_CLASS_USER ||
-			    iter->first == V4L2_CID_PRIVATE_BASE) {
+			if (!use_ext_ctrls &&
+			    (iter->first == V4L2_CTRL_CLASS_USER ||
+			     iter->first == V4L2_CID_PRIVATE_BASE)) {
 				for (unsigned i = 0; i < iter->second.size(); i++) {
 					struct v4l2_control ctrl;
 
@@ -2867,13 +2879,17 @@ set_vid_fmt_error:
 	if (options[OptGetCtrl] && !get_ctrls.empty()) {
 		struct v4l2_ext_controls ctrls = { 0 };
 		class2ctrls_map class2ctrls;
+		bool use_ext_ctrls = false;
 
 		for (ctrl_get_list::iterator iter = get_ctrls.begin();
 				iter != get_ctrls.end(); ++iter) {
 			struct v4l2_ext_control ctrl = { 0 };
 
 			ctrl.id = ctrl_str2q[*iter].id;
+			if (ctrl_str2q[*iter].type == V4L2_CTRL_TYPE_INTEGER64)
+				use_ext_ctrls = true;
 			if (ctrl_str2q[*iter].type == V4L2_CTRL_TYPE_STRING) {
+				use_ext_ctrls = true;
 				ctrl.size = ctrl_str2q[*iter].maximum + 1;
 				ctrl.string = (char *)malloc(ctrl.size);
 				ctrl.string[0] = 0;
@@ -2882,8 +2898,9 @@ set_vid_fmt_error:
 		}
 		for (class2ctrls_map::iterator iter = class2ctrls.begin();
 				iter != class2ctrls.end(); ++iter) {
-			if (iter->first == V4L2_CTRL_CLASS_USER ||
-			    iter->first == V4L2_CID_PRIVATE_BASE) {
+			if (!use_ext_ctrls &&
+			    (iter->first == V4L2_CTRL_CLASS_USER ||
+			     iter->first == V4L2_CID_PRIVATE_BASE)) {
 				for (unsigned i = 0; i < iter->second.size(); i++) {
 					struct v4l2_control ctrl;
 
