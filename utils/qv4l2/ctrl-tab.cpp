@@ -468,6 +468,8 @@ void ApplicationWindow::updateCtrl(unsigned id)
 		if (ioctl(VIDIOC_S_CTRL, &c)) {
 			errorCtrl(id, errno, c.value);
 		}
+		else if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_UPDATE)
+			refresh(ctrl_class);
 		return;
 	}
 	struct v4l2_ext_control c;
@@ -518,6 +520,8 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 				errorCtrl(id, errno);
 			}
 			setVal(id, c.value);
+			queryctrl(m_ctrlMap[id]);
+			m_widgetMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
 		}
 		return;
 	}
