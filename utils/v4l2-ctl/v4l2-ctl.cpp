@@ -2980,7 +2980,7 @@ set_vid_fmt_error:
 				char *q;
 
 				buf[len] = 0;
-				while ((q = strstr(p, "START STATUS CARD #"))) {
+				while ((q = strstr(p, "START STATUS"))) {
 					p = q + 1;
 				}
 				if (p) {
