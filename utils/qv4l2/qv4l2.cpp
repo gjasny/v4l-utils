@@ -438,6 +438,8 @@ void ApplicationWindow::capStart(bool start)
 
 void ApplicationWindow::closeDevice()
 {
+	delete m_sigMapper;
+	m_sigMapper = NULL;
 	m_capStartAct->setEnabled(false);
 	m_capStartAct->setChecked(false);
 	if (fd() >= 0) {
@@ -457,8 +459,6 @@ void ApplicationWindow::closeDevice()
 		m_tabs->removeTab(0);
 		delete page;
 	}
-	delete m_sigMapper;
-	m_sigMapper = NULL;
 	m_ctrlMap.clear();
 	m_widgetMap.clear();
 	m_classMap.clear();

@@ -539,7 +539,7 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 			continue;
 		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING) {
 			c[cnt].size = m_ctrlMap[id].maximum + 1;
-			c[cnt].string = (char *)malloc(c[i].size);
+			c[cnt].string = (char *)malloc(c[cnt].size);
 		}
 		cnt++;
 	}
