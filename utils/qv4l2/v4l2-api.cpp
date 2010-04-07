@@ -242,6 +242,7 @@ bool v4l2::g_fmt_out(v4l2_format &fmt)
 
 bool v4l2::try_fmt(v4l2_format &fmt)
 {
+	fmt.fmt.pix.field = V4L2_FIELD_ANY;
 	return ioctl("Try Capture Format", VIDIOC_TRY_FMT, &fmt);
 }
 
