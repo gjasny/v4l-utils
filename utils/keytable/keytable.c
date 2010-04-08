@@ -72,11 +72,11 @@ static const struct argp_option options[] = {
 
 static const char args_doc[] =
 	"--device [/dev/input/event* device]\n"
-	"--sysdev [ir class (f. ex. rcrcv0)]\n"
-	"[for using the rcrcv0 sysdev]";
+	"--sysdev [ir class (f. ex. rc0)]\n"
+	"[for using the rc0 sysdev]";
 
 
-static char *devclass = "rcrcv0";
+static char *devclass = "rc0";
 static char *devname = NULL;
 static int read = 0;
 static int clear = 0;
