@@ -363,6 +363,9 @@ static void free_uevent(struct uevents *uevent)
 	} while (uevent);
 }
 
+/* Satisfies the stupid gcc logic that implements -Wmissing-prototypes */
+struct uevents *read_sysfs_uevents(char *dname);
+
 struct uevents *read_sysfs_uevents(char *dname)
 {
 	FILE		*fp;
