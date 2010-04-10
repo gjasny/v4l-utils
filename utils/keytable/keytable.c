@@ -36,6 +36,11 @@ struct uevents {
 	struct uevents	*next;
 };
 
+struct sysfs_names  {
+	char			*name;
+	struct sysfs_names	*next;
+};
+
 static int parse_code(char *string)
 {
 	struct parse_key *p;
@@ -90,7 +95,7 @@ struct keytable keys = {
  * Values that are read only via sysfs node
  */
 static int sysfs = 0;
-static char *node_input = NULL, *node_event = NULL;
+static char *node_input = NULL;
 static char *drv_name = NULL,   *keytable_name = NULL;
 
 struct keytable *nextkey = &keys;
@@ -287,32 +292,63 @@ static void prtcode(int *codes)
 		printf("scancode %d = 0x%02x\n", codes[0], codes[1]);
 }
 
-static int seek_sysfs_dir(char *dname, char *node_name, char **node_entry)
+static void free_names(struct sysfs_names *names)
 {
-	DIR             *dir;
-	struct dirent   *entry;
-	int		rc = 0;
+	struct sysfs_names *old;
+	do {
+		old = names;
+		names = names->next;
+		if (old->name)
+			free(old->name);
+		free(old);
+	} while (names);
+}
+
+static struct sysfs_names *seek_sysfs_dir(char *dname, char *node_name)
+{
+	DIR             	*dir;
+	struct dirent   	*entry;
+	struct sysfs_names	*names, *cur_name;
+
+	names = calloc(sizeof(*names), 1);
+
+	cur_name = names;
 
 	dir = opendir(dname);
 	if (!dir) {
 		perror(dname);
-		return -errno;
+		return NULL;
 	}
 	entry = readdir(dir);
 	while (entry) {
 		if (!strncmp(entry->d_name, node_name, strlen(node_name))) {
-			*node_entry = malloc(strlen(dname) + strlen(entry->d_name) + 2);
-			strcpy(*node_entry, dname);
-			strcat(*node_entry, entry->d_name);
-			strcat(*node_entry, "/");
-			rc = 1;
-			break;
+			cur_name->name = malloc(strlen(dname) + strlen(entry->d_name) + 2);
+			if (!cur_name->name)
+				goto err;
+			strcpy(cur_name->name, dname);
+			strcat(cur_name->name, entry->d_name);
+			strcat(cur_name->name, "/");
+			cur_name->next = calloc(sizeof(*cur_name), 1);
+			if (!cur_name->next)
+				goto err;
+			cur_name = cur_name->next;
 		}
 		entry = readdir(dir);
 	}
 	closedir(dir);
 
-	return rc;
+	if (names == cur_name) {
+		fprintf(stderr, "Couldn't find any node at %s%s*.\n",
+			dname, node_name);
+		free (names);
+		names = NULL;
+	}
+	return names;
+
+err:
+	perror("Seek dir");
+	free_names(names);
+	return NULL;
 }
 
 static void free_uevent(struct uevents *uevent)
@@ -399,38 +435,102 @@ struct uevents *read_sysfs_uevents(char *dname)
 	return uevent;
 }
 
-static char *find_device(void)
+static struct sysfs_names *find_device(char *name)
 {
 	struct uevents  *uevent;
-	char		dname[256], *name = NULL;
-	char		*input = "input", *event = "event";
+	char		dname[256];
+	char		*input = "rc";
 	int		rc;
 	char		*DEV = "/dev/";
-
+	static struct sysfs_names *names, *cur;
 	/*
 	 * Get event sysfs node
 	 */
-	snprintf(dname, sizeof(dname), "/sys/class/rc/%s/", devclass);
+	snprintf(dname, sizeof(dname), "/sys/class/rc/");
 
-	rc = seek_sysfs_dir(dname, input, &node_input);
-	if (rc == 0)
-		fprintf(stderr, "Couldn't find input device. Old driver?");
-	if (rc <= 0)
+	names = seek_sysfs_dir(dname, input);
+	if (!names)
 		return NULL;
-	if (debug)
-		fprintf(stderr, "Input sysfs node is %s\n", node_input);
 
-	rc = seek_sysfs_dir(node_input, event, &node_event);
-	if (rc == 0)
-		fprintf(stderr, "Couldn't find input device. Old driver?");
-	if (rc <= 0)
+	if (debug) {
+		for (cur = names; cur->next; cur = cur->next) {
+			fprintf(stderr, "Found device %s\n", cur->name);
+		}
+	}
+
+	if (name) {
+		static struct sysfs_names *tmp;
+		char *p, *n;
+		int found = 0;
+
+		n = malloc(strlen(name) + 2);
+		strcpy(n, name);
+		strcat(n,"/");
+		for (cur = names; cur->next; cur = cur->next) {
+			if (cur->name) {
+				p = cur->name + strlen(dname);
+				if (p && !strcmp(p, n)) {
+					found = 1;
+					break;
+				}
+			}
+		}
+		free(n);
+		if (!found) {
+			free_names(names);
+			fprintf(stderr, "Not found device %s\n", name);
+			return NULL;
+		}
+		tmp = calloc(sizeof(*names), 1);
+		tmp->name = cur->name;
+		cur->name = NULL;
+		free_names(names);
+		return tmp;
+	}
+
+	return names;
+}
+
+static char *get_attribs(char *devname)
+{
+	struct uevents  *uevent;
+	char		*name = NULL;
+	char		*input = "input", *event = "event";
+	int		rc;
+	char		*DEV = "/dev/";
+	static struct sysfs_names *input_names, *event_names;
+
+	input_names = seek_sysfs_dir(devname, input);
+	if (!input_names)
 		return NULL;
+	if (input_names->next->next) {
+		fprintf(stderr, "Found more than one input interface."
+				"This is currently unsupported\n");
+		return NULL;
+	}
 	if (debug)
-		fprintf(stderr, "Event sysfs node is %s\n", node_event);
+		fprintf(stderr, "Input sysfs node is %s\n", input_names->name);
 
-	uevent = read_sysfs_uevents(node_event);
+	event_names = seek_sysfs_dir(input_names->name, event);
+	free_names(input_names);
+	if (!event_names) {
+		free_names(event_names);
+		return NULL;
+	}
+	if (event_names->next->next) {
+		free_names(event_names);
+		fprintf(stderr, "Found more than one event interface."
+				"This is currently unsupported\n");
+		return NULL;
+	}
+	if (debug)
+		fprintf(stderr, "Event sysfs node is %s\n", event_names->name);
+
+	uevent = read_sysfs_uevents(event_names->name);
+	free_names(event_names);
 	if (!uevent)
 		return NULL;
+
 
 	while (uevent->next) {
 		if (!strcmp(uevent->key, "DEVNAME")) {
@@ -443,7 +543,7 @@ static char *find_device(void)
 	}
 	free_uevent(uevent);
 
-	uevent = read_sysfs_uevents(dname);
+	uevent = read_sysfs_uevents(devname);
 	if (!uevent)
 		return NULL;
 	while (uevent->next) {
@@ -530,23 +630,41 @@ int main(int argc, char *argv[])
 {
 	int dev_from_class = 0, write_cnt;
 	int fd;
+	static struct sysfs_names *names;
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
+#if 0
+	/* Just list all devices */
+	if (!clear && !read && !keys.next) {
+		list_devices();
+		return 0;
+	}
+#endif
 	if (!devname) {
-		devname = find_device();
-		if (!devname)
+		static struct sysfs_names *names, *cur;
+
+		names = find_device(devclass);
+		if (!names)
 			return -1;
+
+		devname = get_attribs(names->name);
+		free_names(names);
 		dev_from_class++;
 	}
+
+	/* Just list all devices */
+	if (!clear && !read && !keys.next)
+		return 0;
+
 	if (sysfs)
 		fprintf(stderr, "Kernel IR driver for %s is %s (using table %s)\n",
 			devclass, drv_name, keytable_name);
 
-	if (!clear && !read && !keys.next) {
-		argp_help(&argp, stderr, ARGP_HELP_SHORT_USAGE, argv[0]);
-		return -1;
-	}
+	/* Just list all devices */
+	if (!clear && !read && !keys.next)
+		return 0;
+
 	if (debug)
 		fprintf(stderr, "Opening %s\n", devname);
 	fd = open(devname, O_RDONLY);
