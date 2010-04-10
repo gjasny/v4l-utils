@@ -80,6 +80,7 @@ static const char args_doc[] =
 	"--sysdev [ir class (f. ex. rc0)]\n"
 	"[for using the rc0 sysdev]";
 
+/* Static vars to store the parameters */
 static char *devclass = "rc0";
 static char *devname = NULL;
 static int read = 0;
@@ -94,7 +95,14 @@ struct keytable keys = {
  * Values that are read only via sysfs node
  */
 static int sysfs = 0;
-static char *drv_name = NULL,   *keytable_name = NULL;
+
+struct rc_device {
+	char *sysfs_name;	/* Device sysfs node name */
+	char *input_name;	/* Input device file name */
+	char *drv_name;		/* Kernel driver that implements it */
+	char *keytable_name;	/* Keycode table name */
+
+};
 
 struct keytable *nextkey = &keys;
 
@@ -489,21 +497,20 @@ static struct sysfs_names *find_device(char *name)
 	return names;
 }
 
-static char *get_attribs(char *devname)
+static int get_attribs(struct rc_device *rc_dev)
 {
 	struct uevents  *uevent;
-	char		*name = NULL;
 	char		*input = "input", *event = "event";
 	char		*DEV = "/dev/";
 	static struct sysfs_names *input_names, *event_names;
 
-	input_names = seek_sysfs_dir(devname, input);
+	input_names = seek_sysfs_dir(rc_dev->sysfs_name, input);
 	if (!input_names)
-		return NULL;
+		return EINVAL;
 	if (input_names->next->next) {
 		fprintf(stderr, "Found more than one input interface."
 				"This is currently unsupported\n");
-		return NULL;
+		return EINVAL;
 	}
 	if (debug)
 		fprintf(stderr, "Input sysfs node is %s\n", input_names->name);
@@ -512,13 +519,13 @@ static char *get_attribs(char *devname)
 	free_names(input_names);
 	if (!event_names) {
 		free_names(event_names);
-		return NULL;
+		return EINVAL;
 	}
 	if (event_names->next->next) {
 		free_names(event_names);
 		fprintf(stderr, "Found more than one event interface."
 				"This is currently unsupported\n");
-		return NULL;
+		return EINVAL;
 	}
 	if (debug)
 		fprintf(stderr, "Event sysfs node is %s\n", event_names->name);
@@ -526,46 +533,46 @@ static char *get_attribs(char *devname)
 	uevent = read_sysfs_uevents(event_names->name);
 	free_names(event_names);
 	if (!uevent)
-		return NULL;
+		return EINVAL;
 
 	while (uevent->next) {
 		if (!strcmp(uevent->key, "DEVNAME")) {
-			name = malloc(strlen(uevent->value) + strlen(DEV) + 1);
-			strcpy(name, DEV);
-			strcat(name, uevent->value);
+			rc_dev->input_name = malloc(strlen(uevent->value) + strlen(DEV) + 1);
+			strcpy(rc_dev->input_name, DEV);
+			strcat(rc_dev->input_name, uevent->value);
 			break;
 		}
 		uevent = uevent->next;
 	}
 	free_uevent(uevent);
 
-	if (!name) {
+	if (!rc_dev->input_name) {
 		fprintf(stderr, "Input device name not found.\n");
-		return NULL;
+		return EINVAL;
 	}
 
-	uevent = read_sysfs_uevents(devname);
+	uevent = read_sysfs_uevents(rc_dev->sysfs_name);
 	if (!uevent)
-		return NULL;
+		return EINVAL;
 	while (uevent->next) {
 		if (!strcmp(uevent->key, "DRV_NAME")) {
-			drv_name = malloc(strlen(uevent->value) + 1);
-			strcpy(drv_name, uevent->value);
+			rc_dev->drv_name = malloc(strlen(uevent->value) + 1);
+			strcpy(rc_dev->drv_name, uevent->value);
 		}
 		if (!strcmp(uevent->key, "NAME")) {
-			keytable_name = malloc(strlen(uevent->value) + 1);
-			strcpy(keytable_name, uevent->value);
+			rc_dev->keytable_name = malloc(strlen(uevent->value) + 1);
+			strcpy(rc_dev->keytable_name, uevent->value);
 		}
 		uevent = uevent->next;
 	}
 	free_uevent(uevent);
 
 	if (debug)
-		fprintf(stderr, "input device is %s\n", name);
+		fprintf(stderr, "input device is %s\n", rc_dev->input_name);
 
 	sysfs++;
 
-	return name;
+	return 0;
 }
 
 static void clear_table(int fd)
@@ -631,6 +638,7 @@ int main(int argc, char *argv[])
 	int dev_from_class = 0, write_cnt;
 	int fd;
 	static struct sysfs_names *names;
+	struct rc_device	  rc_dev;
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
@@ -641,8 +649,15 @@ int main(int argc, char *argv[])
 		names = find_device(NULL);
 		for (cur = names; cur->next; cur = cur->next) {
 			if (cur->name) {
-				devname = get_attribs(cur->name);
-				printf("Found %s: %s\n", cur->name, devname);
+				rc_dev.sysfs_name = cur->name;
+				if (!get_attribs(&rc_dev))
+					fprintf(stderr, "Kernel IR driver for %s (%s) is %s (using table %s)\n",
+						rc_dev.sysfs_name,
+						rc_dev.input_name,
+						rc_dev.drv_name,
+						rc_dev.keytable_name);
+
+
 			}
 		}
 		return 0;
@@ -652,14 +667,16 @@ int main(int argc, char *argv[])
 		names = find_device(devclass);
 		if (!names)
 			return -1;
-
-		devname = get_attribs(names->name);
+		rc_dev.sysfs_name = names->name;
+		names->name = NULL;
 		free_names(names);
+
+		if (get_attribs(&rc_dev))
+			return -1;
+		devname = rc_dev.input_name;
+
 		dev_from_class++;
 	}
-	if (sysfs)
-		fprintf(stderr, "Kernel IR driver for %s is %s (using table %s)\n",
-			devclass, drv_name, keytable_name);
 
 	if (debug)
 		fprintf(stderr, "Opening %s\n", devname);
