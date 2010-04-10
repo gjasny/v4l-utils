@@ -96,12 +96,26 @@ struct keytable keys = {
  */
 static int sysfs = 0;
 
+enum rc_type {
+	SOFTWARE_DECODER,
+	HARDWARE_DECODER,
+};
+
+enum ir_protocols {
+	RC_5		= 1 << 0,
+	RC_6		= 1 << 1,
+	NEC		= 1 << 2,
+	OTHER		= 1 << 3,
+};
+
 struct rc_device {
 	char *sysfs_name;	/* Device sysfs node name */
 	char *input_name;	/* Input device file name */
 	char *drv_name;		/* Kernel driver that implements it */
 	char *keytable_name;	/* Keycode table name */
 
+	enum rc_type type;	/* Software (raw) or hardware decoder */
+	enum ir_protocols supported, current; /* Current and supported IR protocols */
 };
 
 struct keytable *nextkey = &keys;
@@ -327,13 +341,14 @@ static struct sysfs_names *seek_sysfs_dir(char *dname, char *node_name)
 	}
 	entry = readdir(dir);
 	while (entry) {
-		if (!strncmp(entry->d_name, node_name, strlen(node_name))) {
+		if (!node_name || !strncmp(entry->d_name, node_name, strlen(node_name))) {
 			cur_name->name = malloc(strlen(dname) + strlen(entry->d_name) + 2);
 			if (!cur_name->name)
 				goto err;
 			strcpy(cur_name->name, dname);
 			strcat(cur_name->name, entry->d_name);
-			strcat(cur_name->name, "/");
+			if (node_name)
+				strcat(cur_name->name, "/");
 			cur_name->next = calloc(sizeof(*cur_name), 1);
 			if (!cur_name->next)
 				goto err;
@@ -497,12 +512,71 @@ static struct sysfs_names *find_device(char *name)
 	return names;
 }
 
-static int get_attribs(struct rc_device *rc_dev)
+/* Satisfies the stupid gcc logic that implements -Wmissing-prototypes */
+enum ir_protocols get_hw_protocols(char *name);
+
+enum ir_protocols get_hw_protocols(char *name)
+{
+	FILE *fp;
+	char *p, buf[4096];
+	enum ir_protocols proto = 0;
+
+	fp = fopen(name, "r");
+	if (!fp) {
+		perror(name);
+		return 0;
+	}
+
+	if (!fgets(buf, sizeof(buf), fp)) {
+		perror(name);
+		fclose(fp);
+		return 0;
+	}
+
+	p = strtok(buf, " \n");
+	while (p) {
+		if (debug)
+			fprintf(stderr, "%s protocol %s\n", name, p);
+		if (!strcmp(p, "rc-5"))
+			proto |= RC_5;
+		else if (!strcmp(p, "rc-6"))
+			proto |= RC_6;
+		else if (!strcmp(p, "nec"))
+			proto |= NEC;
+		else
+			proto |= OTHER;
+
+		p = strtok(NULL, " \n");
+	}
+
+	fclose(fp);
+
+	return proto;
+}
+
+static void show_proto(	enum ir_protocols proto)
+{
+	if (proto & NEC)
+		fprintf (stderr, "NEC ");
+	if (proto & RC_5)
+		fprintf (stderr, "RC-5 ");
+	if (proto & RC_6)
+		fprintf (stderr, "RC-6 ");
+	if (proto & OTHER)
+		fprintf (stderr, "other ");
+}
+
+static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 {
 	struct uevents  *uevent;
 	char		*input = "input", *event = "event";
 	char		*DEV = "/dev/";
-	static struct sysfs_names *input_names, *event_names;
+	static struct sysfs_names *input_names, *event_names, *attribs, *cur;
+
+	/* Clean the attributes */
+	memset(rc_dev, 0, sizeof(*rc_dev));
+
+	rc_dev->sysfs_name = sysfs_name;
 
 	input_names = seek_sysfs_dir(rc_dev->sysfs_name, input);
 	if (!input_names)
@@ -571,6 +645,26 @@ static int get_attribs(struct rc_device *rc_dev)
 		fprintf(stderr, "input device is %s\n", rc_dev->input_name);
 
 	sysfs++;
+
+	rc_dev->type = SOFTWARE_DECODER;
+
+	/* Get the other attribs - basically IR decoders */
+	attribs = seek_sysfs_dir(rc_dev->sysfs_name, NULL);
+	for (cur = attribs; cur->next; cur = cur->next) {
+		if (!cur->name)
+			continue;
+		if (strstr(cur->name, "/protocol")) {
+			rc_dev->type = HARDWARE_DECODER;
+			rc_dev->current = get_hw_protocols(cur->name);
+		} else if (strstr(cur->name, "/supported_protocols"))
+			rc_dev->supported = get_hw_protocols(cur->name);
+		else if (strstr(cur->name, "/nec_decoder"))
+			rc_dev->supported |= NEC;
+		else if (strstr(cur->name, "/rc5_decoder"))
+			rc_dev->supported |= RC_5;
+		else if (strstr(cur->name, "/rc6_decoder"))
+			rc_dev->supported |= RC_6;
+	}
 
 	return 0;
 }
@@ -649,15 +743,23 @@ int main(int argc, char *argv[])
 		names = find_device(NULL);
 		for (cur = names; cur->next; cur = cur->next) {
 			if (cur->name) {
-				rc_dev.sysfs_name = cur->name;
-				if (!get_attribs(&rc_dev))
-					fprintf(stderr, "Kernel IR driver for %s (%s) is %s (using table %s)\n",
-						rc_dev.sysfs_name,
-						rc_dev.input_name,
-						rc_dev.drv_name,
-						rc_dev.keytable_name);
-
-
+				if (get_attribs(&rc_dev, cur->name))
+					return -1;
+				fprintf(stderr, "Found %s (%s) with:\n",
+					rc_dev.sysfs_name,
+					rc_dev.input_name);
+				fprintf(stderr, "\tDriver %s, %s decoder, table %s\n",
+					rc_dev.drv_name,
+					(rc_dev.type == SOFTWARE_DECODER) ?
+						"raw software" : "hardware",
+					rc_dev.keytable_name);
+				fprintf(stderr, "\tSupported protocols: ");
+				show_proto(rc_dev.supported);
+				if (rc_dev.type == HARDWARE_DECODER) {
+					fprintf(stderr, "\n\tCurrent protocols: ");
+					show_proto(rc_dev.current);
+				}
+				fprintf(stderr, "\n");
 			}
 		}
 		return 0;
@@ -668,13 +770,14 @@ int main(int argc, char *argv[])
 		if (!names)
 			return -1;
 		rc_dev.sysfs_name = names->name;
+		if (get_attribs(&rc_dev, names->name)) {
+			free_names(names);
+			return -1;
+		}
 		names->name = NULL;
 		free_names(names);
 
-		if (get_attribs(&rc_dev))
-			return -1;
 		devname = rc_dev.input_name;
-
 		dev_from_class++;
 	}
 
