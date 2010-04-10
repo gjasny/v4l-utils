@@ -778,6 +778,8 @@ int main(int argc, char *argv[])
 		static struct sysfs_names *names, *cur;
 
 		names = find_device(NULL);
+		if (!names)
+			return -1;
 		for (cur = names; cur->next; cur = cur->next) {
 			if (cur->name) {
 				if (get_attribs(&rc_dev, cur->name))
