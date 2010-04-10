@@ -386,10 +386,7 @@ static void free_uevent(struct uevents *uevent)
 	} while (uevent);
 }
 
-/* Satisfies the stupid gcc logic that implements -Wmissing-prototypes */
-struct uevents *read_sysfs_uevents(char *dname);
-
-struct uevents *read_sysfs_uevents(char *dname)
+static struct uevents *read_sysfs_uevents(char *dname)
 {
 	FILE		*fp;
 	struct uevents	*next, *uevent;
@@ -512,10 +509,7 @@ static struct sysfs_names *find_device(char *name)
 	return names;
 }
 
-/* Satisfies the stupid gcc logic that implements -Wmissing-prototypes */
-enum ir_protocols get_hw_protocols(char *name);
-
-enum ir_protocols get_hw_protocols(char *name)
+static enum ir_protocols get_hw_protocols(char *name)
 {
 	FILE *fp;
 	char *p, buf[4096];
