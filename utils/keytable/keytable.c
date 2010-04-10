@@ -548,6 +548,42 @@ static enum ir_protocols get_hw_protocols(char *name)
 	return proto;
 }
 
+static int get_sw_enabled_protocol(char *dirname)
+{
+	FILE *fp;
+	char *p, buf[4096], name[512];
+	int rc;
+
+	strcpy(name, dirname);
+	strcat(name, "/enabled");
+
+	fp = fopen(name, "r");
+	if (!fp) {
+		perror(name);
+		return 0;
+	}
+
+	if (!fgets(buf, sizeof(buf), fp)) {
+		perror(name);
+		fclose(fp);
+		return 0;
+	}
+
+	p = strtok(buf, " \n");
+	rc = atoi(p);
+
+	fclose(fp);
+
+	if (debug)
+		fprintf(stderr, "protocol %s is %s\n",
+			name, rc? "enabled" : "disabled");
+
+	if (atoi(p) == 1)
+		return 1;
+
+	return 0;
+}
+
 static void show_proto(	enum ir_protocols proto)
 {
 	if (proto & NEC)
@@ -652,12 +688,19 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 			rc_dev->current = get_hw_protocols(cur->name);
 		} else if (strstr(cur->name, "/supported_protocols"))
 			rc_dev->supported = get_hw_protocols(cur->name);
-		else if (strstr(cur->name, "/nec_decoder"))
+		else if (strstr(cur->name, "/nec_decoder")) {
 			rc_dev->supported |= NEC;
-		else if (strstr(cur->name, "/rc5_decoder"))
+			if (get_sw_enabled_protocol(cur->name))
+				rc_dev->current |= NEC;
+		} else if (strstr(cur->name, "/rc5_decoder")) {
 			rc_dev->supported |= RC_5;
-		else if (strstr(cur->name, "/rc6_decoder"))
+			if (get_sw_enabled_protocol(cur->name))
+				rc_dev->current |= RC_5;
+		} else if (strstr(cur->name, "/rc6_decoder")) {
 			rc_dev->supported |= RC_6;
+			if (get_sw_enabled_protocol(cur->name))
+				rc_dev->current |= RC_6;
+		}
 	}
 
 	return 0;
@@ -749,10 +792,11 @@ int main(int argc, char *argv[])
 					rc_dev.keytable_name);
 				fprintf(stderr, "\tSupported protocols: ");
 				show_proto(rc_dev.supported);
-				if (rc_dev.type == HARDWARE_DECODER) {
+				if (rc_dev.type == HARDWARE_DECODER)
 					fprintf(stderr, "\n\tCurrent protocols: ");
-					show_proto(rc_dev.current);
-				}
+				else
+					fprintf(stderr, "\n\tEnabled protocols: ");
+				show_proto(rc_dev.current);
 				fprintf(stderr, "\n");
 			}
 		}
