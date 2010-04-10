@@ -531,7 +531,6 @@ static char *get_attribs(char *devname)
 	if (!uevent)
 		return NULL;
 
-
 	while (uevent->next) {
 		if (!strcmp(uevent->key, "DEVNAME")) {
 			name = malloc(strlen(uevent->value) + strlen(DEV) + 1);
@@ -542,6 +541,11 @@ static char *get_attribs(char *devname)
 		uevent = uevent->next;
 	}
 	free_uevent(uevent);
+
+	if (!name) {
+		fprintf(stderr, "Input device name not found.\n");
+		return NULL;
+	}
 
 	uevent = read_sysfs_uevents(devname);
 	if (!uevent)
@@ -634,13 +638,20 @@ int main(int argc, char *argv[])
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
-#if 0
 	/* Just list all devices */
 	if (!clear && !read && !keys.next) {
-		list_devices();
+		static struct sysfs_names *names, *cur;
+
+		names = find_device(NULL);
+		for (cur = names; cur->next; cur = cur->next) {
+			if (cur->name) {
+				devname = get_attribs(cur->name);
+				printf("Found %s: %s\n", cur->name, devname);
+			}
+		}
 		return 0;
 	}
-#endif
+
 	if (!devname) {
 		static struct sysfs_names *names, *cur;
 
@@ -652,18 +663,9 @@ int main(int argc, char *argv[])
 		free_names(names);
 		dev_from_class++;
 	}
-
-	/* Just list all devices */
-	if (!clear && !read && !keys.next)
-		return 0;
-
 	if (sysfs)
 		fprintf(stderr, "Kernel IR driver for %s is %s (using table %s)\n",
 			devclass, drv_name, keytable_name);
-
-	/* Just list all devices */
-	if (!clear && !read && !keys.next)
-		return 0;
 
 	if (debug)
 		fprintf(stderr, "Opening %s\n", devname);
