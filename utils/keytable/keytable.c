@@ -80,7 +80,6 @@ static const char args_doc[] =
 	"--sysdev [ir class (f. ex. rc0)]\n"
 	"[for using the rc0 sysdev]";
 
-
 static char *devclass = "rc0";
 static char *devname = NULL;
 static int read = 0;
@@ -95,7 +94,6 @@ struct keytable keys = {
  * Values that are read only via sysfs node
  */
 static int sysfs = 0;
-static char *node_input = NULL;
 static char *drv_name = NULL,   *keytable_name = NULL;
 
 struct keytable *nextkey = &keys;
@@ -437,11 +435,8 @@ struct uevents *read_sysfs_uevents(char *dname)
 
 static struct sysfs_names *find_device(char *name)
 {
-	struct uevents  *uevent;
 	char		dname[256];
 	char		*input = "rc";
-	int		rc;
-	char		*DEV = "/dev/";
 	static struct sysfs_names *names, *cur;
 	/*
 	 * Get event sysfs node
@@ -496,7 +491,6 @@ static char *get_attribs(char *devname)
 	struct uevents  *uevent;
 	char		*name = NULL;
 	char		*input = "input", *event = "event";
-	int		rc;
 	char		*DEV = "/dev/";
 	static struct sysfs_names *input_names, *event_names;
 
@@ -592,7 +586,6 @@ static int add_keys(int fd)
 
 	nextkey = &keys;
 	while (nextkey->next) {
-		int value;
 		struct keytable *old;
 
 		write_cnt++;
@@ -653,8 +646,6 @@ int main(int argc, char *argv[])
 	}
 
 	if (!devname) {
-		static struct sysfs_names *names, *cur;
-
 		names = find_device(devclass);
 		if (!names)
 			return -1;

@@ -3,7 +3,7 @@ V4L_UTILS_VERSION=0.7.92-test
 # These ones can be overriden from the cmdline
 
 CFLAGS := -g -O1
-CFLAGS += -Wall -Wno-unused -Wpointer-arith
+CFLAGS += -Wall -Wpointer-arith
 CXXFLAGS := $(CFLAGS)
 CFLAGS += -Wstrict-prototypes -Wmissing-prototypes
 
