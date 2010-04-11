@@ -1,0 +1,27 @@
+#
+# Keymaps table
+#
+# This table creates an association between a keycode file and a kernel
+# driver. It can be used to automatically override a keycode definition.
+#
+# Although not yet tested, it is mented to be added at udev.
+#
+# To use, you just need to run:
+#	./ir-keytable -a
+#
+# Or, if the remote is not the first device:
+#	./ir-keytable -a -s rc1		# for RC at rc1
+#
+
+# Format:
+#	driver - name of the driver provided via uevent - use * for any driver
+#	table -  RC keymap table, provided via uevent - use * for any table
+#	file - file name. If directory is not specified, it will default to
+#		/etc/rc_keymaps.
+
+#driver	table				file
+cx8800	*				./keycodes/rc5_hauppauge_new
+*	rc-avermedia-m135a-rm-jx	./keycodes/kworld_315u
+saa7134	rc-avermedia-m135a-rm-jx	./keycodes/keycodes/nec_terratec_cinergy_xs
+em28xx	*				./keycodes/kworld_315u
+*	*				./keycodes/rc5_hauppauge_new
