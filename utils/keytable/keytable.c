@@ -851,7 +851,17 @@ static int add_keys(int fd)
 	return write_cnt;
 }
 
-static void display_table(int fd)
+static void display_proto(struct rc_device *rc_dev)
+{
+	if (rc_dev->type == HARDWARE_DECODER)
+		fprintf(stderr, "Current protocols: ");
+	else
+		fprintf(stderr, "Enabled protocols: ");
+	show_proto(rc_dev->current);
+	fprintf(stderr, "\n");
+}
+
+static void display_table(struct rc_device *rc_dev, int fd)
 {
 	unsigned int i, j;
 
@@ -864,6 +874,7 @@ static void display_table(int fd)
 				prtcode(codes);
 		}
 	}
+	display_proto(rc_dev);
 }
 
 int main(int argc, char *argv[])
@@ -896,12 +907,8 @@ int main(int argc, char *argv[])
 					rc_dev.keytable_name);
 				fprintf(stderr, "\tSupported protocols: ");
 				show_proto(rc_dev.supported);
-				if (rc_dev.type == HARDWARE_DECODER)
-					fprintf(stderr, "\n\tCurrent protocols: ");
-				else
-					fprintf(stderr, "\n\tEnabled protocols: ");
-				show_proto(rc_dev.current);
-				fprintf(stderr, "\n");
+				fprintf(stderr, "\t");
+				display_proto(&rc_dev);
 			}
 		}
 		return 0;
@@ -966,7 +973,7 @@ int main(int argc, char *argv[])
 	 * Fourth step: display current keytable
 	 */
 	if (read)
-		display_table(fd);
+		display_table(&rc_dev, fd);
 
 	return 0;
 }
