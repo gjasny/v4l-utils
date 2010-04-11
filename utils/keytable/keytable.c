@@ -154,8 +154,14 @@ static error_t parse_keyfile(char *fname, char **table, char **type)
 					strcpy(*table, p);
 				} else if (!strcmp(p, "type")) {
 					p = strtok(NULL,"\n, ");
-					*type = malloc(strlen(p) + 1);
-					strcpy(*type, p);
+					if (!strcasecmp(p,"rc5") || !strcasecmp(p,"rc-5"))
+						ch_proto |= RC_5;
+					else if (!strcasecmp(p,"rc6") || !strcasecmp(p,"rc-6"))
+						ch_proto |= RC_6;
+					else if (!strcasecmp(p,"nec"))
+						ch_proto |= NEC;
+					else
+						goto err_einval;
 				} else {
 					goto err_einval;
 				}
