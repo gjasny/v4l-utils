@@ -153,15 +153,22 @@ static error_t parse_keyfile(char *fname, char **table, char **type)
 					*table = malloc(strlen(p) + 1);
 					strcpy(*table, p);
 				} else if (!strcmp(p, "type")) {
-					p = strtok(NULL,"\n, ");
-					if (!strcasecmp(p,"rc5") || !strcasecmp(p,"rc-5"))
-						ch_proto |= RC_5;
-					else if (!strcasecmp(p,"rc6") || !strcasecmp(p,"rc-6"))
-						ch_proto |= RC_6;
-					else if (!strcasecmp(p,"nec"))
-						ch_proto |= NEC;
-					else
-						goto err_einval;
+					p = strtok(NULL, " ,\n");
+					do {
+						if (!strcasecmp(p,"rc5") || !strcasecmp(p,"rc-5"))
+							ch_proto |= RC_5;
+						else if (!strcasecmp(p,"rc6") || !strcasecmp(p,"rc-6"))
+							ch_proto |= RC_6;
+						else if (!strcasecmp(p,"nec"))
+							ch_proto |= NEC;
+						else if (!strcasecmp(p,"other") || !strcasecmp(p,"unknown"))
+							ch_proto |= OTHER;
+						else {
+							fprintf(stderr, "Protocol %s invalid\n", p);
+							goto err_einval;
+						}
+						p = strtok(NULL, " ,\n");
+					} while (p);
 				} else {
 					goto err_einval;
 				}
