@@ -41,6 +41,17 @@ struct sysfs_names  {
 	struct sysfs_names	*next;
 };
 
+enum rc_type {
+	SOFTWARE_DECODER,
+	HARDWARE_DECODER,
+};
+
+enum ir_protocols {
+	RC_5		= 1 << 0,
+	RC_6		= 1 << 1,
+	NEC		= 1 << 2,
+	OTHER		= 1 << 3,
+};
 static int parse_code(char *string)
 {
 	struct parse_key *p;
@@ -62,6 +73,7 @@ static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
 	"  SYSDEV  - the ir class as found at /sys/class/rc\n"
 	"  TABLE   - a file wit a set of scancode=keycode value pairs\n"
 	"  SCANKEY - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
+	"  PROTOCOL - protocol name (nec, rc-5, rc-6, other) to be enabled\n"
 	"\nOptions can be combined together.";
 
 static const struct argp_option options[] = {
@@ -72,6 +84,7 @@ static const struct argp_option options[] = {
 	{"read",	'r',	0,		0,	"reads the current scancode/keycode table", 0},
 	{"write",	'w',	"TABLE",	0,	"write (adds) the scancodes to the device scancode/keycode table from an specified file", 0},
 	{"set-key",	'k',	"SCANKEY",	0,	"Change scan/key pairs", 0},
+	{"protocol",	'p',	"PROTOCOL",	0,	"Protocol to enable (the other ones will be disabled). To enable more than one, use the option more than one time", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -86,6 +99,7 @@ static char *devname = NULL;
 static int read = 0;
 static int clear = 0;
 static int debug = 0;
+static enum ir_protocols ch_proto = 0;
 
 struct keytable keys = {
 	{0, 0}, NULL
@@ -95,18 +109,6 @@ struct keytable keys = {
  * Values that are read only via sysfs node
  */
 static int sysfs = 0;
-
-enum rc_type {
-	SOFTWARE_DECODER,
-	HARDWARE_DECODER,
-};
-
-enum ir_protocols {
-	RC_5		= 1 << 0,
-	RC_6		= 1 << 1,
-	NEC		= 1 << 2,
-	OTHER		= 1 << 3,
-};
 
 struct rc_device {
 	char *sysfs_name;	/* Device sysfs node name */
@@ -275,6 +277,20 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			nextkey = nextkey->next;
 
 			p = strtok(NULL, ":=");
+		} while (p);
+		break;
+	case 'p':
+		p = strtok(arg, ",;");
+		do {
+			if (!strcasecmp(p,"rc5") || !strcasecmp(p,"rc-5"))
+				ch_proto |= RC_5;
+			else if (!strcasecmp(p,"rc6") || !strcasecmp(p,"rc-6"))
+				ch_proto |= RC_6;
+			else if (!strcasecmp(p,"nec"))
+				ch_proto |= NEC;
+			else
+				goto err_inval;
+			p = strtok(NULL, ",;");
 		} while (p);
 		break;
 	default:
@@ -548,6 +564,39 @@ static enum ir_protocols get_hw_protocols(char *name)
 	return proto;
 }
 
+static int set_hw_protocols(struct rc_device *rc_dev)
+{
+	FILE *fp;
+	char name[4096];
+
+	strcpy(name, rc_dev->sysfs_name);
+	strcat(name, "/protocol");
+
+	fp = fopen(name, "w");
+	if (!fp) {
+		perror(name);
+		return errno;
+	}
+
+	if (rc_dev->current & RC_5)
+		fprintf(fp, "rc-5 ");
+
+	if (rc_dev->current & RC_6)
+		fprintf(fp, "rc-6 ");
+
+	if (rc_dev->current & NEC)
+		fprintf(fp, "nec ");
+
+	if (rc_dev->current & OTHER)
+		fprintf(fp, "unknown ");
+
+	fprintf(fp, "\n");
+
+	fclose(fp);
+
+	return 0;
+}
+
 static int get_sw_enabled_protocol(char *dirname)
 {
 	FILE *fp;
@@ -580,6 +629,32 @@ static int get_sw_enabled_protocol(char *dirname)
 
 	if (atoi(p) == 1)
 		return 1;
+
+	return 0;
+}
+
+static int set_sw_enabled_protocol(struct rc_device *rc_dev,
+				   char *dirname, int enabled)
+{
+	FILE *fp;
+	char name[512];
+
+	strcpy(name, rc_dev->sysfs_name);
+	strcat(name, dirname);
+	strcat(name, "/enabled");
+
+	fp = fopen(name, "w");
+	if (!fp) {
+		perror(name);
+		return errno;
+	}
+
+	if (enabled)
+		fprintf(fp, "1");
+	else
+		fprintf(fp, "0");
+
+	fclose(fp);
 
 	return 0;
 }
@@ -706,6 +781,27 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 	return 0;
 }
 
+static int set_proto(struct rc_device *rc_dev)
+{
+	int rc;
+
+	if (rc_dev->type == SOFTWARE_DECODER) {
+		if (rc_dev->supported & NEC)
+			rc += set_sw_enabled_protocol(rc_dev, "/nec_decoder",
+						      rc_dev->current & NEC);
+		if (rc_dev->supported & RC_5)
+			rc += set_sw_enabled_protocol(rc_dev, "/rc5_decoder",
+						      rc_dev->current & RC_5);
+		if (rc_dev->supported & RC_6)
+			rc += set_sw_enabled_protocol(rc_dev, "/rc6_decoder",
+						      rc_dev->current & RC_6);
+	} else {
+		rc = set_hw_protocols(rc_dev);
+	}
+
+	return rc;
+}
+
 static void clear_table(int fd)
 {
 	int i, j;
@@ -774,7 +870,7 @@ int main(int argc, char *argv[])
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
 	/* Just list all devices */
-	if (!clear && !read && !keys.next) {
+	if (!clear && !read && !keys.next && !ch_proto) {
 		static struct sysfs_names *names, *cur;
 
 		names = find_device(NULL);
@@ -847,7 +943,21 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Wrote %d keycode(s) to driver\n", write_cnt);
 
 	/*
-	 * Third step: display current keytable
+	 * Third step: change protocol
+	 */
+	if (ch_proto) {
+		rc_dev.current = ch_proto;
+		if (set_proto(&rc_dev))
+			fprintf(stderr, "Couldn't change the IR protocols\n");
+		else {
+			fprintf(stderr, "Protocols changed to ");
+			show_proto(rc_dev.current);
+			fprintf(stderr, "\n");
+		}
+	}
+
+	/*
+	 * Fourth step: display current keytable
 	 */
 	if (read)
 		display_table(fd);
