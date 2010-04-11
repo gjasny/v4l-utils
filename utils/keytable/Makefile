@@ -47,10 +47,15 @@ sync-with-kernel:
 	>> parse.h
 	@printf "\t{ NULL, 0}\n};\n" >>parse.h
 
-	@-mkdir -p keycodes
-	@echo storing existing keycodes at keycodes/
+	@-mkdir -p rc_keymaps
+	@echo storing existing keymaps at rc_keymaps/
 	@for i in `echo $(IR_FILES)`; do ./gen_keytables.pl $(KERNEL_DIR)/$$i; done
 
-install:
+install: $(TARGETS)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	install -m 755 $(TARGETS) $(DESTDIR)$(PREFIX)/bin
+	install -m 644 rc_maps.cfg.example /etc
+	install -m 755 -d /etc/rc_keymaps
+	install -m 644 rc_keymaps/* /etc/rc_keymaps
 
 include ../../Make.rules
