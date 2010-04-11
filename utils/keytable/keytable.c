@@ -25,6 +25,9 @@
 
 #include "parse.h"
 
+/* Default place where the keymaps will be stored */
+#define CFGDIR "/etc/rc_keymaps"
+
 struct keytable {
 	int codes[2];
 	struct keytable *next;
@@ -34,6 +37,13 @@ struct uevents {
 	char		*key;
 	char		*value;
 	struct uevents	*next;
+};
+
+struct cfgfile {
+	char		*driver;
+	char		*table;
+	char		*fname;
+	struct cfgfile	*next;
 };
 
 struct sysfs_names  {
@@ -69,11 +79,12 @@ const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.co
 static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
 	"You need to have read permissions on /dev/input for the program to work\n"
 	"\nOn the options bellow, the arguments are:\n"
-	"  DEV     - the /dev/input/event* device to control\n"
-	"  SYSDEV  - the ir class as found at /sys/class/rc\n"
-	"  TABLE   - a file wit a set of scancode=keycode value pairs\n"
-	"  SCANKEY - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
+	"  DEV      - the /dev/input/event* device to control\n"
+	"  SYSDEV   - the ir class as found at /sys/class/rc\n"
+	"  TABLE    - a file wit a set of scancode=keycode value pairs\n"
+	"  SCANKEY  - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
 	"  PROTOCOL - protocol name (nec, rc-5, rc-6, other) to be enabled\n"
+	"  CFGFILE  - configuration file that associates a driver/table name with a keymap file\n"
 	"\nOptions can be combined together.";
 
 static const struct argp_option options[] = {
@@ -85,6 +96,7 @@ static const struct argp_option options[] = {
 	{"write",	'w',	"TABLE",	0,	"write (adds) the scancodes to the device scancode/keycode table from an specified file", 0},
 	{"set-key",	'k',	"SCANKEY",	0,	"Change scan/key pairs", 0},
 	{"protocol",	'p',	"PROTOCOL",	0,	"Protocol to enable (the other ones will be disabled). To enable more than one, use the option more than one time", 0},
+	{"auto-load",	'a',	"CFGFILE",	0,	"Auto-load a table, based on a configuration file. Only works with sysdev.", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -105,6 +117,11 @@ struct keytable keys = {
 	{0, 0}, NULL
 };
 
+
+struct cfgfile cfg = {
+	NULL, NULL, NULL, NULL
+};
+
 /*
  * Values that are read only via sysfs node
  */
@@ -122,14 +139,13 @@ struct rc_device {
 
 struct keytable *nextkey = &keys;
 
-static error_t parse_keyfile(char *fname, char **table, char **type)
+static error_t parse_keyfile(char *fname, char **table)
 {
 	FILE *fin;
 	int value, line = 0;
 	char *scancode, *keycode, s[2048];
 
 	*table = NULL;
-	*type = NULL;
 
 	if (debug)
 		fprintf(stderr, "Parsing %s keycode file\n", fname);
@@ -209,10 +225,80 @@ static error_t parse_keyfile(char *fname, char **table, char **type)
 		nextkey->codes[1] = (unsigned) value;
 		nextkey->next = calloc(1, sizeof(*nextkey));
 		if (!nextkey->next) {
-			perror("No memory");
+			perror("parse_keyfile");
 			return ENOMEM;
 		}
 		nextkey = nextkey->next;
+		line++;
+	}
+	fclose(fin);
+
+	return 0;
+
+err_einval:
+	fprintf(stderr, "Invalid parameter on line %d of %s\n",
+		line + 1, fname);
+	return EINVAL;
+
+}
+
+struct cfgfile *nextcfg = &cfg;
+
+static error_t parse_cfgfile(char *fname)
+{
+	FILE *fin;
+	int line = 0;
+	char s[2048];
+	char *driver, *table, *filename;
+
+	if (debug)
+		fprintf(stderr, "Parsing %s config file\n", fname);
+
+	fin = fopen(fname, "r");
+	if (!fin) {
+		perror("opening keycode file");
+		return errno;
+	}
+
+	while (fgets(s, sizeof(s), fin)) {
+		char *p = s;
+		while (*p == ' ' || *p == '\t')
+			p++;
+
+		if (*p == '\n' || *p == '#')
+			continue;
+
+		driver = strtok(p, "\t ");
+		if (!driver)
+			goto err_einval;
+
+		table = strtok(NULL, "\t ");
+		if (!table)
+			goto err_einval;
+
+		filename = strtok(NULL, "\t #\n");
+		if (!filename)
+			goto err_einval;
+
+		if (debug)
+			fprintf(stderr, "Driver %s, Table %s => file %s\n",
+				driver, table, filename);
+
+		nextcfg->driver = malloc(strlen(driver) + 1);
+		strcpy(nextcfg->driver, driver);
+
+		nextcfg->table = malloc(strlen(table) + 1);
+		strcpy(nextcfg->table, table);
+
+		nextcfg->fname = malloc(strlen(filename) + 1);
+		strcpy(nextcfg->fname, filename);
+
+		nextcfg->next = calloc(1, sizeof(*nextcfg));
+		if (!nextcfg->next) {
+			perror("parse_cfgfile");
+			return ENOMEM;
+		}
+		nextcfg = nextcfg->next;
 		line++;
 	}
 	fclose(fin);
@@ -249,13 +335,19 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		read++;
 		break;
 	case 'w': {
-		char *name = NULL, *type = NULL;
+		char *name = NULL;
 
-		rc = parse_keyfile(arg, &name, &type);
-		if (rc < 0)
+		rc = parse_keyfile(arg, &name);
+		if (rc)
 			goto err_inval;
-		if (name && type)
-			fprintf(stderr, "Read %s table, type %s\n", name, type);
+		if (name)
+			fprintf(stderr, "Read %s table\n", name);
+		break;
+	}
+	case 'a': {
+		rc = parse_cfgfile(arg);
+		if (rc)
+			goto err_inval;
 		break;
 	}
 	case 'k':
@@ -313,7 +405,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 
 err_inval:
 	fprintf(stderr, "Invalid parameter(s)\n");
-	return EINVAL;
+	return ARGP_ERR_UNKNOWN;
 
 }
 
@@ -894,7 +986,7 @@ int main(int argc, char *argv[])
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
 	/* Just list all devices */
-	if (!clear && !read && !keys.next && !ch_proto) {
+	if (!clear && !read && !keys.next && !ch_proto && !cfg.next) {
 		static struct sysfs_names *names, *cur;
 
 		names = find_device(NULL);
@@ -921,6 +1013,10 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	if (cfg.next && (clear || keys.next || ch_proto || devname)) {
+		fprintf (stderr, "Auto-mode can be used only with --read, --debug and --sysdev options\n");
+		return -1;
+	}
 	if (!devname) {
 		names = find_device(devclass);
 		if (!names)
@@ -935,6 +1031,45 @@ int main(int argc, char *argv[])
 
 		devname = rc_dev.input_name;
 		dev_from_class++;
+	}
+
+	if (cfg.next) {
+		struct cfgfile *cur;
+		char *fname, *name;
+		int rc;
+
+		for (cur = &cfg; cur->next; cur = cur->next) {
+			if (strcasecmp(cur->driver, rc_dev.drv_name) && strcasecmp(cur->driver, "*"))
+				continue;
+			if (strcasecmp(cur->table, rc_dev.keytable_name) && strcasecmp(cur->table, "*"))
+				continue;
+			break;
+		}
+
+		if (!cur->next) {
+			if (debug)
+				fprintf(stderr, "Table for %s, %s not found. Keep as-is\n",
+				       rc_dev.drv_name, rc_dev.keytable_name);
+			return 0;
+		}
+		if (debug)
+			fprintf(stderr, "Table for %s, %s is on %s file.\n",
+				rc_dev.drv_name, rc_dev.keytable_name,
+				cur->fname);
+		if (cur->fname[0] == '/' || ((cur->fname[0] == '.') && strchr(cur->fname, '/'))) {
+			fname = cur->fname;
+		} else {
+			fname = malloc(strlen(cur->fname) + strlen(CFGDIR) + 2);
+			strcpy(fname, CFGDIR);
+			strcat(fname, "/");
+			strcat(fname, cur->fname);
+		}
+		rc = parse_keyfile(fname, &name);
+		if (rc < 0 || !keys.next) {
+			fprintf(stderr, "Can't load %s table or empty table\n", fname);
+			return -1;
+		}
+		clear = 1;
 	}
 
 	if (debug)
