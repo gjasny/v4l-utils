@@ -60,8 +60,11 @@ enum ir_protocols {
 	RC_5		= 1 << 0,
 	RC_6		= 1 << 1,
 	NEC		= 1 << 2,
-	OTHER		= 1 << 3,
+	JVC		= 1 << 3,
+	SONY		= 1 << 4,
+	OTHER		= 1 << 31,
 };
+
 static int parse_code(char *string)
 {
 	struct parse_key *p;
@@ -177,6 +180,10 @@ static error_t parse_keyfile(char *fname, char **table)
 							ch_proto |= RC_6;
 						else if (!strcasecmp(p,"nec"))
 							ch_proto |= NEC;
+						else if (!strcasecmp(p,"jvc"))
+							ch_proto |= JVC;
+						else if (!strcasecmp(p,"sony"))
+							ch_proto |= SONY;
 						else if (!strcasecmp(p,"other") || !strcasecmp(p,"unknown"))
 							ch_proto |= OTHER;
 						else {
@@ -393,6 +400,10 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 				ch_proto |= RC_6;
 			else if (!strcasecmp(p,"nec"))
 				ch_proto |= NEC;
+			else if (!strcasecmp(p,"jvc"))
+				ch_proto |= JVC;
+			else if (!strcasecmp(p,"sony"))
+				ch_proto |= SONY;
 			else
 				goto err_inval;
 			p = strtok(NULL, ",;");
@@ -658,6 +669,10 @@ static enum ir_protocols get_hw_protocols(char *name)
 			proto |= RC_6;
 		else if (!strcmp(p, "nec"))
 			proto |= NEC;
+		else if (!strcmp(p, "jvc"))
+			proto |= JVC;
+		else if (!strcmp(p, "sony"))
+			proto |= SONY;
 		else
 			proto |= OTHER;
 
@@ -691,6 +706,12 @@ static int set_hw_protocols(struct rc_device *rc_dev)
 
 	if (rc_dev->current & NEC)
 		fprintf(fp, "nec ");
+
+	if (rc_dev->current & JVC)
+		fprintf(fp, "jvc ");
+
+	if (rc_dev->current & SONY)
+		fprintf(fp, "sony ");
 
 	if (rc_dev->current & OTHER)
 		fprintf(fp, "unknown ");
@@ -772,6 +793,10 @@ static void show_proto(	enum ir_protocols proto)
 		fprintf (stderr, "RC-5 ");
 	if (proto & RC_6)
 		fprintf (stderr, "RC-6 ");
+	if (proto & JVC)
+		fprintf (stderr, "JVC ");
+	if (proto & SONY)
+		fprintf (stderr, "SONY ");
 	if (proto & OTHER)
 		fprintf (stderr, "other ");
 }
@@ -880,6 +905,14 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 			rc_dev->supported |= RC_6;
 			if (get_sw_enabled_protocol(cur->name))
 				rc_dev->current |= RC_6;
+		} else if (strstr(cur->name, "/jvc_decoder")) {
+			rc_dev->supported |= JVC;
+			if (get_sw_enabled_protocol(cur->name))
+				rc_dev->current |= JVC;
+		} else if (strstr(cur->name, "/sony_decoder")) {
+			rc_dev->supported |= SONY;
+			if (get_sw_enabled_protocol(cur->name))
+				rc_dev->current |= SONY;
 		}
 	}
 
@@ -900,6 +933,12 @@ static int set_proto(struct rc_device *rc_dev)
 		if (rc_dev->supported & RC_6)
 			rc += set_sw_enabled_protocol(rc_dev, "/rc6_decoder",
 						      rc_dev->current & RC_6);
+		if (rc_dev->supported & JVC)
+			rc += set_sw_enabled_protocol(rc_dev, "/jvc_decoder",
+						      rc_dev->current & JVC);
+		if (rc_dev->supported & SONY)
+			rc += set_sw_enabled_protocol(rc_dev, "/sony_decoder",
+						      rc_dev->current & SONY);
 	} else {
 		rc = set_hw_protocols(rc_dev);
 	}
