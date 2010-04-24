@@ -519,8 +519,8 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 			if (ioctl(VIDIOC_G_CTRL, &c)) {
 				errorCtrl(id, errno);
 			}
-			setVal(id, c.value);
 			queryctrl(m_ctrlMap[id]);
+			setVal(id, c.value);
 			m_widgetMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
 		}
 		return;
@@ -559,6 +559,7 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 		for (unsigned i = 0; i < ctrls.count; i++) {
 			unsigned id = c[i].id;
 			
+			queryctrl(m_ctrlMap[id]);
 			if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64)
 				setVal64(id, c[i].value64);
 			else if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING) {
@@ -567,7 +568,6 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 			}
 			else
 				setVal(id, c[i].value);
-			queryctrl(m_ctrlMap[id]);
 			m_widgetMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
 		}
 	}
