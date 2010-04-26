@@ -3,8 +3,8 @@
 ######################################################################
 
 TEMPLATE = app
-INCLUDEPATH += . ../../utils/libv4l2util
-CONFIG += debug
+INCLUDEPATH += . ../../utils/libv4l2util ../../include
+CONFIG += debug thread
 
 # Input
 HEADERS += qv4l2.h general-tab.h

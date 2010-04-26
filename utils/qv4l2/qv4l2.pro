@@ -3,7 +3,7 @@
 ######################################################################
 
 TEMPLATE = app
-INCLUDEPATH += . ../libv4l2util ../../lib/include
+INCLUDEPATH += . ../libv4l2util ../../lib/include ../../include
 CONFIG += debug
 
 # Input
