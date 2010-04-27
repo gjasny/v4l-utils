@@ -30,44 +30,44 @@
 
 extern FILE *v4l1_log_file;
 
-#define V4L1_LOG_ERR(...) \
-  do { \
-    if (v4l1_log_file) { \
-      fprintf(v4l1_log_file, "libv4l1: error " __VA_ARGS__); \
-      fflush(v4l1_log_file); \
-    } else \
-      fprintf(stderr, "libv4l1: error " __VA_ARGS__); \
-  } while(0)
+#define V4L1_LOG_ERR(...) 			\
+	do {					\
+		if (v4l1_log_file) { 		\
+			fprintf(v4l1_log_file, "libv4l1: error " __VA_ARGS__); \
+			fflush(v4l1_log_file); 	\
+		} else 				\
+		fprintf(stderr, "libv4l1: error " __VA_ARGS__); \
+	} while (0)
 
-#define V4L1_LOG_WARN(...) \
-  do { \
-    if (v4l1_log_file) { \
-      fprintf(v4l1_log_file, "libv4l1: warning " __VA_ARGS__); \
-      fflush(v4l1_log_file); \
-    } else \
-      fprintf(stderr, "libv4l1: warning " __VA_ARGS__); \
-  } while(0)
+#define V4L1_LOG_WARN(...) 			\
+	do { 					\
+		if (v4l1_log_file) { 		\
+			fprintf(v4l1_log_file, "libv4l1: warning " __VA_ARGS__); \
+			fflush(v4l1_log_file); 	\
+		} else 				\
+		fprintf(stderr, "libv4l1: warning " __VA_ARGS__); \
+	} while (0)
 
-#define V4L1_LOG(...) \
-  do { \
-    if (v4l1_log_file) { \
-      fprintf(v4l1_log_file, "libv4l1: " __VA_ARGS__); \
-      fflush(v4l1_log_file); \
-    } \
-  } while(0)
+#define V4L1_LOG(...) 				\
+	do { 					\
+		if (v4l1_log_file) { 		\
+			fprintf(v4l1_log_file, "libv4l1: " __VA_ARGS__); \
+			fflush(v4l1_log_file); 	\
+		} 				\
+	} while (0)
 
 struct v4l1_dev_info {
-  int fd;
-  int flags;
-  int open_count;
-  int v4l1_frame_buf_map_count;
-  pthread_mutex_t stream_lock;
-  unsigned int depth;
-  unsigned int v4l1_pal;    /* VIDEO_PALETTE */
-  unsigned int v4l2_pixfmt; /* V4L2_PIX_FMT */
-  unsigned int min_width, min_height, max_width, max_height;
-  unsigned int width, height;
-  unsigned char *v4l1_frame_pointer;
+	int fd;
+	int flags;
+	int open_count;
+	int v4l1_frame_buf_map_count;
+	pthread_mutex_t stream_lock;
+	unsigned int depth;
+	unsigned int v4l1_pal;    /* VIDEO_PALETTE */
+	unsigned int v4l2_pixfmt; /* V4L2_PIX_FMT */
+	unsigned int min_width, min_height, max_width, max_height;
+	unsigned int width, height;
+	unsigned char *v4l1_frame_pointer;
 };
 
 /* From log.c */
