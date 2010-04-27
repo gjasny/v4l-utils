@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #ifndef __LIBV4L2_PRIV_H
 #define __LIBV4L2_PRIV_H
@@ -34,57 +34,57 @@
 #define V4L2_FRAME_BUF_SIZE (4096 * 4096)
 #define V4L2_IGNORE_FIRST_FRAME_ERRORS 3
 
-#define V4L2_LOG_ERR(...) \
-  do { \
-    if (v4l2_log_file) { \
-      fprintf(v4l2_log_file, "libv4l2: error " __VA_ARGS__); \
-      fflush(v4l2_log_file); \
-    } else \
-      fprintf(stderr, "libv4l2: error " __VA_ARGS__); \
-  } while(0)
+#define V4L2_LOG_ERR(...) 			\
+	do { 					\
+		if (v4l2_log_file) { 		\
+			fprintf(v4l2_log_file, "libv4l2: error " __VA_ARGS__); \
+			fflush(v4l2_log_file); 	\
+		} else 				\
+		fprintf(stderr, "libv4l2: error " __VA_ARGS__); \
+	} while (0)
 
-#define V4L2_LOG_WARN(...) \
-  do { \
-    if (v4l2_log_file) { \
-      fprintf(v4l2_log_file, "libv4l2: warning " __VA_ARGS__); \
-      fflush(v4l2_log_file); \
-    } else \
-      fprintf(stderr, "libv4l2: warning " __VA_ARGS__); \
-  } while(0)
+#define V4L2_LOG_WARN(...) 			\
+	do { 					\
+		if (v4l2_log_file) { 		\
+			fprintf(v4l2_log_file, "libv4l2: warning " __VA_ARGS__); \
+			fflush(v4l2_log_file); 	\
+		} else 				\
+		fprintf(stderr, "libv4l2: warning " __VA_ARGS__); \
+	} while (0)
 
-#define V4L2_LOG(...) \
-  do { \
-    if (v4l2_log_file) { \
-      fprintf(v4l2_log_file, "libv4l2: " __VA_ARGS__); \
-      fflush(v4l2_log_file); \
-    } \
-  } while(0)
+#define V4L2_LOG(...) 				\
+	do { 					\
+		if (v4l2_log_file) { 		\
+			fprintf(v4l2_log_file, "libv4l2: " __VA_ARGS__); \
+			fflush(v4l2_log_file); 	\
+		} 				\
+	} while (0)
 
-#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 struct v4l2_dev_info {
-  int fd;
-  int flags;
-  int open_count;
-  /* actually format of the cam */
-  struct v4l2_format src_fmt;
-  /* fmt as seen by the application (iow after conversion) */
-  struct v4l2_format dest_fmt;
-  pthread_mutex_t stream_lock;
-  unsigned int no_frames;
-  unsigned int nreadbuffers;
-  int first_frame;
-  struct v4lconvert_data *convert;
-  unsigned char *convert_mmap_buf;
-  /* Frame bookkeeping is only done when in read or mmap-conversion mode */
-  unsigned char *frame_pointers[V4L2_MAX_NO_FRAMES];
-  int frame_sizes[V4L2_MAX_NO_FRAMES];
-  int frame_queued; /* 1 status bit per frame */
-  /* mapping tracking of our fake (converting mmap) frame buffers */
-  unsigned char frame_map_count[V4L2_MAX_NO_FRAMES];
-  /* buffer when doing conversion and using read() for read() */
-  int readbuf_size;
-  unsigned char *readbuf;
+	int fd;
+	int flags;
+	int open_count;
+	/* actually format of the cam */
+	struct v4l2_format src_fmt;
+	/* fmt as seen by the application (iow after conversion) */
+	struct v4l2_format dest_fmt;
+	pthread_mutex_t stream_lock;
+	unsigned int no_frames;
+	unsigned int nreadbuffers;
+	int first_frame;
+	struct v4lconvert_data *convert;
+	unsigned char *convert_mmap_buf;
+	/* Frame bookkeeping is only done when in read or mmap-conversion mode */
+	unsigned char *frame_pointers[V4L2_MAX_NO_FRAMES];
+	int frame_sizes[V4L2_MAX_NO_FRAMES];
+	int frame_queued; /* 1 status bit per frame */
+	/* mapping tracking of our fake (converting mmap) frame buffers */
+	unsigned char frame_map_count[V4L2_MAX_NO_FRAMES];
+	/* buffer when doing conversion and using read() for read() */
+	int readbuf_size;
+	unsigned char *readbuf;
 };
 
 /* From log.c */
