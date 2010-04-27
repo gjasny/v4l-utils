@@ -43,122 +43,122 @@
 #define LIBV4L_PUBLIC
 #endif
 
-LIBV4L_PUBLIC int open (const char *file, int oflag, ...)
+LIBV4L_PUBLIC int open(const char *file, int oflag, ...)
 {
-  int fd;
-  struct v4l2_capability cap;
-  int v4l_device = 0;
+	int fd;
+	struct v4l2_capability cap;
+	int v4l_device = 0;
 
-  /* check if we're opening a video4linux2 device */
-  if (!strncmp(file, "/dev/video", 10) || !strncmp(file, "/dev/v4l/", 9)) {
-    /* Some apps open the device read only, but we need rw rights as the
-       buffers *MUST* be mapped rw */
-    oflag = (oflag & ~O_ACCMODE) | O_RDWR;
-    v4l_device = 1;
-  }
+	/* check if we're opening a video4linux2 device */
+	if (!strncmp(file, "/dev/video", 10) || !strncmp(file, "/dev/v4l/", 9)) {
+		/* Some apps open the device read only, but we need rw rights as the
+		   buffers *MUST* be mapped rw */
+		oflag = (oflag & ~O_ACCMODE) | O_RDWR;
+		v4l_device = 1;
+	}
 
-  /* original open code */
-  if (oflag & O_CREAT)
-  {
-    va_list ap;
-    mode_t mode;
+	/* original open code */
+	if (oflag & O_CREAT) {
+		va_list ap;
+		mode_t mode;
 
-    va_start (ap, oflag);
-    mode = va_arg (ap, mode_t);
+		va_start(ap, oflag);
+		mode = va_arg(ap, mode_t);
 
-    fd = SYS_OPEN(file, oflag, mode);
+		fd = SYS_OPEN(file, oflag, mode);
 
-    va_end(ap);
-  } else
-    fd = SYS_OPEN(file, oflag, 0);
-  /* end of original open code */
+		va_end(ap);
+	} else {
+		fd = SYS_OPEN(file, oflag, 0);
+	}
+	/* end of original open code */
 
-  if (fd == -1 || !v4l_device)
-    return fd;
+	if (fd == -1 || !v4l_device)
+		return fd;
 
-  /* check that this is an v4l2 device, libv4l2 only supports v4l2 devices */
-  if (SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap))
-    return fd;
+	/* check that this is an v4l2 device, libv4l2 only supports v4l2 devices */
+	if (SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap))
+		return fd;
 
-  /* libv4l2 only adds functionality to capture capable devices */
-  if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
-    return fd;
+	/* libv4l2 only adds functionality to capture capable devices */
+	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
+		return fd;
 
-  /* Try to Register with libv4l2 (in case of failure pass the fd to the
-     application as is) */
-  v4l2_fd_open(fd, 0);
+	/* Try to Register with libv4l2 (in case of failure pass the fd to the
+	   application as is) */
+	v4l2_fd_open(fd, 0);
 
-  return fd;
+	return fd;
 }
 
 #ifdef linux
 LIBV4L_PUBLIC int open64(const char *file, int oflag, ...)
 {
-  int fd;
+	int fd;
 
-  /* original open code */
-  if (oflag & O_CREAT)
-  {
-    va_list ap;
-    mode_t mode;
+	/* original open code */
+	if (oflag & O_CREAT) {
+		va_list ap;
+		mode_t mode;
 
-    va_start (ap, oflag);
-    mode = va_arg (ap, mode_t);
+		va_start(ap, oflag);
+		mode = va_arg(ap, mode_t);
 
-    fd = open(file, oflag | O_LARGEFILE, mode);
+		fd = open(file, oflag | O_LARGEFILE, mode);
 
-    va_end(ap);
-  } else
-    fd = open(file, oflag | O_LARGEFILE);
-  /* end of original open code */
+		va_end(ap);
+	} else {
+		fd = open(file, oflag | O_LARGEFILE);
+	}
+	/* end of original open code */
 
-  return fd;
+	return fd;
 }
 #endif
 
 LIBV4L_PUBLIC int close(int fd)
 {
-  return v4l2_close(fd);
+	return v4l2_close(fd);
 }
 
 LIBV4L_PUBLIC int dup(int fd)
 {
-  return v4l2_dup(fd);
+	return v4l2_dup(fd);
 }
 
-LIBV4L_PUBLIC int ioctl (int fd, unsigned long int request, ...)
+LIBV4L_PUBLIC int ioctl(int fd, unsigned long int request, ...)
 {
-  void *arg;
-  va_list ap;
+	void *arg;
+	va_list ap;
 
-  va_start (ap, request);
-  arg = va_arg (ap, void *);
-  va_end (ap);
+	va_start(ap, request);
+	arg = va_arg(ap, void *);
+	va_end(ap);
 
-  return v4l2_ioctl (fd, request, arg);
+	return v4l2_ioctl(fd, request, arg);
 }
 
-LIBV4L_PUBLIC ssize_t read (int fd, void* buffer, size_t n)
+LIBV4L_PUBLIC ssize_t read(int fd, void *buffer, size_t n)
 {
-  return v4l2_read (fd, buffer, n);
+	return v4l2_read(fd, buffer, n);
 }
 
 LIBV4L_PUBLIC void *mmap(void *start, size_t length, int prot, int flags, int fd,
-  __off_t offset)
+		__off_t offset)
 {
-  return v4l2_mmap(start, length, prot, flags, fd, offset);
+	return v4l2_mmap(start, length, prot, flags, fd, offset);
 }
 
 #ifdef linux
 LIBV4L_PUBLIC void *mmap64(void *start, size_t length, int prot, int flags, int fd,
-  __off64_t offset)
+		__off64_t offset)
 {
-  return v4l2_mmap(start, length, prot, flags, fd, offset);
+	return v4l2_mmap(start, length, prot, flags, fd, offset);
 }
 #endif
 
 LIBV4L_PUBLIC int munmap(void *start, size_t length)
 {
-  return v4l2_munmap(start, length);
+	return v4l2_munmap(start, length);
 }
 
