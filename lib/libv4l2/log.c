@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,124 +96,120 @@ static const char *v4l2_ioctls[] = {
 
 void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 {
-  const char *ioctl_str;
-  char buf[40];
-  int saved_errno = errno;
+	const char *ioctl_str;
+	char buf[40];
+	int saved_errno = errno;
 
-  if (!v4l2_log_file)
-    return;
+	if (!v4l2_log_file)
+		return;
 
-  if (_IOC_TYPE(request) == 'V' && _IOC_NR(request) < ARRAY_SIZE(v4l2_ioctls))
-    ioctl_str = v4l2_ioctls[_IOC_NR(request)];
-  else {
-    snprintf(buf, sizeof(buf), "unknown request: %c %d",
-      (int)_IOC_TYPE(request), (int)_IOC_NR(request));
-    ioctl_str = buf;
-  }
-
-  fprintf(v4l2_log_file, "request == %s\n", ioctl_str);
-
-  switch (request) {
-    case VIDIOC_ENUM_FMT:
-      {
-	struct v4l2_fmtdesc *fmt = arg;
-	fprintf(v4l2_log_file, "  index: %u, description: %s\n",
-	  fmt->index, (result < 0) ? "" : (const char *)fmt->description);
-      }
-      break;
-    case VIDIOC_G_FMT:
-    case VIDIOC_S_FMT:
-    case VIDIOC_TRY_FMT:
-      {
-	struct v4l2_format *fmt = arg;
-	int pixfmt = fmt->fmt.pix.pixelformat;
-
-	if (fmt->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-	  fprintf(v4l2_log_file, "  pixelformat: %c%c%c%c %ux%u\n",
-	    pixfmt & 0xff,
-	    (pixfmt >> 8) & 0xff,
-	    (pixfmt >> 16) & 0xff,
-	    pixfmt >> 24,
-	    fmt->fmt.pix.width,
-	    fmt->fmt.pix.height);
-	  fprintf(v4l2_log_file, "  field: %d bytesperline: %d imagesize%d\n",
-	    (int)fmt->fmt.pix.field, (int)fmt->fmt.pix.bytesperline,
-	    (int)fmt->fmt.pix.sizeimage);
-	  fprintf(v4l2_log_file, "  colorspace: %d, priv: %x\n",
-	    (int)fmt->fmt.pix.colorspace, (int)fmt->fmt.pix.priv);
+	if (_IOC_TYPE(request) == 'V' && _IOC_NR(request) < ARRAY_SIZE(v4l2_ioctls))
+		ioctl_str = v4l2_ioctls[_IOC_NR(request)];
+	else {
+		snprintf(buf, sizeof(buf), "unknown request: %c %d",
+				(int)_IOC_TYPE(request), (int)_IOC_NR(request));
+		ioctl_str = buf;
 	}
-      }
-      break;
-    case VIDIOC_REQBUFS:
-      {
-	struct v4l2_requestbuffers *req = arg;
 
-	fprintf(v4l2_log_file, "  count: %u type: %d memory: %d\n",
-	  req->count, (int)req->type, (int)req->memory);
-      }
-      break;
+	fprintf(v4l2_log_file, "request == %s\n", ioctl_str);
+
+	switch (request) {
+	case VIDIOC_ENUM_FMT: {
+		struct v4l2_fmtdesc *fmt = arg;
+
+		fprintf(v4l2_log_file, "  index: %u, description: %s\n",
+				fmt->index, (result < 0) ? "" : (const char *)fmt->description);
+		break;
+	}
+	case VIDIOC_G_FMT:
+	case VIDIOC_S_FMT:
+	case VIDIOC_TRY_FMT: {
+		struct v4l2_format *fmt = arg;
+		int pixfmt = fmt->fmt.pix.pixelformat;
+
+		if (fmt->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+			fprintf(v4l2_log_file, "  pixelformat: %c%c%c%c %ux%u\n",
+					pixfmt & 0xff,
+					(pixfmt >> 8) & 0xff,
+					(pixfmt >> 16) & 0xff,
+					pixfmt >> 24,
+					fmt->fmt.pix.width,
+					fmt->fmt.pix.height);
+			fprintf(v4l2_log_file, "  field: %d bytesperline: %d imagesize%d\n",
+					(int)fmt->fmt.pix.field, (int)fmt->fmt.pix.bytesperline,
+					(int)fmt->fmt.pix.sizeimage);
+			fprintf(v4l2_log_file, "  colorspace: %d, priv: %x\n",
+					(int)fmt->fmt.pix.colorspace, (int)fmt->fmt.pix.priv);
+		}
+		break;
+	}
+	case VIDIOC_REQBUFS: {
+		struct v4l2_requestbuffers *req = arg;
+
+		fprintf(v4l2_log_file, "  count: %u type: %d memory: %d\n",
+				req->count, (int)req->type, (int)req->memory);
+		break;
+	}
 #ifdef VIDIOC_ENUM_FRAMESIZES
-    case VIDIOC_ENUM_FRAMESIZES:
-      {
-	struct v4l2_frmsizeenum *frmsize = arg;
-	int pixfmt = frmsize->pixel_format;
+	case VIDIOC_ENUM_FRAMESIZES: {
+		struct v4l2_frmsizeenum *frmsize = arg;
+		int pixfmt = frmsize->pixel_format;
 
-	fprintf(v4l2_log_file, "  index: %u pixelformat: %c%c%c%c\n",
-	  frmsize->index,
-	  pixfmt & 0xff,
-	  (pixfmt >> 8) & 0xff,
-	  (pixfmt >> 16) & 0xff,
-	  pixfmt >> 24);
-	switch (frmsize->type) {
-	  case V4L2_FRMSIZE_TYPE_DISCRETE:
-	    fprintf(v4l2_log_file, "  %ux%u\n", frmsize->discrete.width,
-	      frmsize->discrete.height);
-	    break;
-	  case V4L2_FRMSIZE_TYPE_CONTINUOUS:
-	  case V4L2_FRMSIZE_TYPE_STEPWISE:
-	    fprintf(v4l2_log_file, "  %ux%u -> %ux%u\n",
-	      frmsize->stepwise.min_width, frmsize->stepwise.min_height,
-	      frmsize->stepwise.max_width, frmsize->stepwise.max_height);
-	    break;
+		fprintf(v4l2_log_file, "  index: %u pixelformat: %c%c%c%c\n",
+				frmsize->index,
+				pixfmt & 0xff,
+				(pixfmt >> 8) & 0xff,
+				(pixfmt >> 16) & 0xff,
+				pixfmt >> 24);
+		switch (frmsize->type) {
+		case V4L2_FRMSIZE_TYPE_DISCRETE:
+			fprintf(v4l2_log_file, "  %ux%u\n", frmsize->discrete.width,
+					frmsize->discrete.height);
+			break;
+		case V4L2_FRMSIZE_TYPE_CONTINUOUS:
+		case V4L2_FRMSIZE_TYPE_STEPWISE:
+			fprintf(v4l2_log_file, "  %ux%u -> %ux%u\n",
+					frmsize->stepwise.min_width, frmsize->stepwise.min_height,
+					frmsize->stepwise.max_width, frmsize->stepwise.max_height);
+			break;
+		}
+		break;
 	}
-      }
-      break;
-    case VIDIOC_ENUM_FRAMEINTERVALS:
-      {
-	struct v4l2_frmivalenum *frmival = arg;
-	int pixfmt = frmival->pixel_format;
+	case VIDIOC_ENUM_FRAMEINTERVALS: {
+		struct v4l2_frmivalenum *frmival = arg;
+		int pixfmt = frmival->pixel_format;
 
-	fprintf(v4l2_log_file, "  index: %u pixelformat: %c%c%c%c %ux%u:\n",
-	  frmival->index,
-	  pixfmt & 0xff,
-	  (pixfmt >> 8) & 0xff,
-	  (pixfmt >> 16) & 0xff,
-	  pixfmt >> 24,
-	  frmival->width,
-	  frmival->height);
-	switch (frmival->type) {
-	  case V4L2_FRMIVAL_TYPE_DISCRETE:
-	    fprintf(v4l2_log_file, "  %u/%u\n", frmival->discrete.numerator,
-	      frmival->discrete.denominator);
-	    break;
-	  case V4L2_FRMIVAL_TYPE_CONTINUOUS:
-	  case V4L2_FRMIVAL_TYPE_STEPWISE:
-	    fprintf(v4l2_log_file, "  %u/%u -> %u/%u\n",
-	      frmival->stepwise.min.numerator,
-	      frmival->stepwise.min.denominator,
-	      frmival->stepwise.max.numerator,
-	      frmival->stepwise.max.denominator);
-	    break;
+		fprintf(v4l2_log_file, "  index: %u pixelformat: %c%c%c%c %ux%u:\n",
+				frmival->index,
+				pixfmt & 0xff,
+				(pixfmt >> 8) & 0xff,
+				(pixfmt >> 16) & 0xff,
+				pixfmt >> 24,
+				frmival->width,
+				frmival->height);
+		switch (frmival->type) {
+		case V4L2_FRMIVAL_TYPE_DISCRETE:
+			fprintf(v4l2_log_file, "  %u/%u\n", frmival->discrete.numerator,
+					frmival->discrete.denominator);
+			break;
+		case V4L2_FRMIVAL_TYPE_CONTINUOUS:
+		case V4L2_FRMIVAL_TYPE_STEPWISE:
+			fprintf(v4l2_log_file, "  %u/%u -> %u/%u\n",
+					frmival->stepwise.min.numerator,
+					frmival->stepwise.min.denominator,
+					frmival->stepwise.max.numerator,
+					frmival->stepwise.max.denominator);
+			break;
+		}
+		break;
 	}
-      }
-      break;
 #endif
-  }
+	}
 
-  if (result < 0)
-    fprintf(v4l2_log_file, "result == %d (%s)\n", result, strerror(saved_errno));
-  else
-    fprintf(v4l2_log_file, "result == %d\n", result);
+	if (result < 0)
+		fprintf(v4l2_log_file, "result == %d (%s)\n", result, strerror(saved_errno));
+	else
+		fprintf(v4l2_log_file, "result == %d\n", result);
 
-  fflush(v4l2_log_file);
+	fflush(v4l2_log_file);
 }
