@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #define _LARGEFILE64_SOURCE 1
 
@@ -41,92 +41,91 @@
 #define LIBV4L_PUBLIC
 #endif
 
-LIBV4L_PUBLIC int open (const char *file, int oflag, ...)
+LIBV4L_PUBLIC int open(const char *file, int oflag, ...)
 {
-  int fd;
+	int fd;
 
-  if (oflag & O_CREAT)
-  {
-    va_list ap;
-    mode_t mode;
+	if (oflag & O_CREAT) {
+		va_list ap;
+		mode_t mode;
 
-    va_start (ap, oflag);
-    mode = va_arg (ap, mode_t);
+		va_start(ap, oflag);
+		mode = va_arg(ap, mode_t);
 
-    fd = v4l1_open(file, oflag, mode);
+		fd = v4l1_open(file, oflag, mode);
 
-    va_end(ap);
-  } else
-    fd = v4l1_open(file, oflag);
+		va_end(ap);
+	} else
+		fd = v4l1_open(file, oflag);
 
-  return fd;
+	return fd;
 }
 
 #ifdef linux
-LIBV4L_PUBLIC int open64 (const char *file, int oflag, ...)
+LIBV4L_PUBLIC int open64(const char *file, int oflag, ...)
 {
-  int fd;
+	int fd;
 
-  if (oflag & O_CREAT)
-  {
-    va_list ap;
-    mode_t mode;
+	if (oflag & O_CREAT) {
+		va_list ap;
+		mode_t mode;
 
-    va_start (ap, oflag);
-    mode = va_arg (ap, mode_t);
+		va_start(ap, oflag);
+		mode = va_arg(ap, mode_t);
 
-    fd = v4l1_open(file, oflag | O_LARGEFILE, mode);
+		fd = v4l1_open(file, oflag | O_LARGEFILE, mode);
 
-    va_end(ap);
-  } else
-    fd = v4l1_open(file, oflag | O_LARGEFILE);
+		va_end(ap);
+	} else
+		fd = v4l1_open(file, oflag | O_LARGEFILE);
 
-  return fd;
+	return fd;
 }
 #endif
 
-LIBV4L_PUBLIC int close(int fd) {
-  return v4l1_close(fd);
+LIBV4L_PUBLIC int close(int fd)
+{
+	return v4l1_close(fd);
 }
 
 LIBV4L_PUBLIC int dup(int fd)
 {
-  return v4l1_dup(fd);
+	return v4l1_dup(fd);
 }
 
-LIBV4L_PUBLIC int ioctl (int fd, unsigned long int request, ...)
+LIBV4L_PUBLIC int ioctl(int fd, unsigned long int request, ...)
 {
-  void *arg;
-  va_list ap;
+	void *arg;
+	va_list ap;
 
-  va_start (ap, request);
-  arg = va_arg (ap, void *);
-  va_end (ap);
+	va_start(ap, request);
+	arg = va_arg(ap, void *);
+	va_end(ap);
 
-  return v4l1_ioctl (fd, request, arg);
+	return v4l1_ioctl(fd, request, arg);
 }
 
-LIBV4L_PUBLIC ssize_t read(int fd, void* buffer, size_t n)
+LIBV4L_PUBLIC ssize_t read(int fd, void *buffer, size_t n)
 {
-  return v4l1_read (fd, buffer, n);
+	return v4l1_read(fd, buffer, n);
 }
 
 LIBV4L_PUBLIC void *mmap(void *start, size_t length, int prot, int flags, int fd,
-  __off_t offset)
+		__off_t offset)
 {
-  return v4l1_mmap(start, length, prot, flags, fd, offset);
+	return v4l1_mmap(start, length, prot, flags, fd, offset);
 }
 
 #ifdef linux
 LIBV4L_PUBLIC void *mmap64(void *start, size_t length, int prot, int flags, int fd,
-  __off64_t offset)
+		__off64_t offset)
 {
-  return v4l1_mmap(start, length, prot, flags, fd, offset);
+	return v4l1_mmap(start, length, prot, flags, fd, offset);
 }
 #endif
 
 LIBV4L_PUBLIC int munmap(void *start, size_t length)
 {
-  return v4l1_munmap(start, length);
+	return v4l1_munmap(start, length);
 }
 
