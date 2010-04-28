@@ -22,13 +22,12 @@
  * Decompression Functions
  ******************************************************************************/
 
-static void
-DecompressYHI(unsigned char *pIn,
-	      unsigned char *pOut,
-	      int           *iIn,	/* in/out */
-	      int           *iOut,	/* in/out */
-	      const int      w,
-	      const int      YUVFlag)
+static void DecompressYHI(unsigned char *pIn,
+		unsigned char *pOut,
+		int           *iIn,	/* in/out */
+		int           *iOut,	/* in/out */
+		const int      w,
+		const int      YUVFlag)
 {
 	short ZigZag[64];
 	int temp[64];
@@ -53,9 +52,8 @@ DecompressYHI(unsigned char *pIn,
 	int out_idx;
 
 	/* Take off every 'Zig' */
-	for (i = 0; i < 64; i++) {
+	for (i = 0; i < 64; i++)
 		ZigZag[i] = 0;
-	}
 
 	/*****************************
 	 * Read in the Y header byte *
@@ -78,16 +76,16 @@ DecompressYHI(unsigned char *pIn,
 		/* Read in ZigZag[0] */
 		ZigZag[0] = pIn[in_pos++];
 		tmpl = pIn[in_pos++];
-		tmph = tmpl<<8;
+		tmph = tmpl << 8;
 		ZigZag[0] = ZigZag[0] | tmph;
-		ZigZag[0] = ZigZag[0]<<4;
-		ZigZag[0] = ZigZag[0]>>4;
+		ZigZag[0] = ZigZag[0] << 4;
+		ZigZag[0] = ZigZag[0] >> 4;
 
 		if (Num8_Flag) { /* 8 Bits */
 			for (i = 1; i < ZigZag_length; i++) {
 				ZigZag[i] = pIn[in_pos++];
-				ZigZag[i] = ZigZag[i]<<8;
-				ZigZag[i] = ZigZag[i]>>8;
+				ZigZag[i] = ZigZag[i] << 8;
+				ZigZag[i] = ZigZag[i] >> 8;
 			}
 		} else {   /* 12 bits and has no Zero Table */
 			idx = 1;
@@ -96,58 +94,56 @@ DecompressYHI(unsigned char *pIn,
 				if (half_byte == 0) {
 					ZigZag[i] = pIn[in_pos++];
 					tmpl = pIn[in_pos++];
-					tmph = tmpl<<8;
-					tmph = tmph&0x0f00;
+					tmph = tmpl << 8;
+					tmph = tmph & 0x0f00;
 					ZigZag[i] = ZigZag[i] | tmph;
-					ZigZag[i] = ZigZag[i]<<4;
-					ZigZag[i] = ZigZag[i]>>4;
+					ZigZag[i] = ZigZag[i] << 4;
+					ZigZag[i] = ZigZag[i] >> 4;
 					half_byte = 1;
 				} else {
 					ZigZag[i] = pIn[in_pos++];
-					ZigZag[i] = ZigZag[i]<<8;
+					ZigZag[i] = ZigZag[i] << 8;
 					tmpl = tmpl & 0x00f0;
 					ZigZag[i] = ZigZag[i] | tmpl;
-					ZigZag[i] = ZigZag[i]>>4;
+					ZigZag[i] = ZigZag[i] >> 4;
 					half_byte = 0;
 				}
 			}
 		}
 	} else {  /* Has Zero Table */
 		/* Calculate Z-Table length */
-		ZT_length = ZigZag_length/8;
-		tmp = ZigZag_length%8;
+		ZT_length = ZigZag_length / 8;
+		tmp = ZigZag_length % 8;
 
-		if (tmp > 0) {
+		if (tmp > 0)
 			ZT_length = ZT_length + 1;
-		}
 
 		/* Read in Zero Table */
-		for (j = 0; j < ZT_length; j++) {
+		for (j = 0; j < ZT_length; j++)
 			ZTable[j] = pIn[in_pos++];
-		}
 
 		/* Read in ZigZag[0] */
 		ZigZag[0] = pIn[in_pos++];
 		tmpl = pIn[in_pos++];
-		tmph = tmpl<<8;
+		tmph = tmpl << 8;
 		ZigZag[0] = ZigZag[0] | tmph;
-		ZigZag[0] = ZigZag[0]<<4;
-		ZigZag[0] = ZigZag[0]>>4;
+		ZigZag[0] = ZigZag[0] << 4;
+		ZigZag[0] = ZigZag[0] >> 4;
 
 		/* Decode ZigZag */
 		idx = 0;
-		ZTable[idx] = ZTable[idx]<<1;
+		ZTable[idx] = ZTable[idx] << 1;
 		count = 7;
 
 		if (Num8_Flag) {	/* 8 Bits and has zero table */
 			for (i = 1; i < ZigZag_length; i++) {
-				if ((ZTable[idx]&0x80)) {
+				if ((ZTable[idx] & 0x80)) {
 					ZigZag[i] = pIn[in_pos++];
-					ZigZag[i] = ZigZag[i]<<8;
-					ZigZag[i] = ZigZag[i]>>8;
+					ZigZag[i] = ZigZag[i] << 8;
+					ZigZag[i] = ZigZag[i] >> 8;
 				}
 
-				ZTable[idx]=ZTable[idx]<<1;
+				ZTable[idx] = ZTable[idx]<<1;
 				count--;
 				if (count == 0)	{
 					count = 8;
@@ -157,27 +153,27 @@ DecompressYHI(unsigned char *pIn,
 		} else {	/* 12 bits and has Zero Table */
 			half_byte = 0;
 			for (i = 1; i < ZigZag_length; i++) {
-				if (ZTable[idx]&0x80) {
+				if (ZTable[idx] & 0x80) {
 					if (half_byte == 0) {
 						ZigZag[i] = pIn[in_pos++];
 						tmpl = pIn[in_pos++];
-						tmph = tmpl <<8;
+						tmph = tmpl << 8;
 						tmph = tmph & 0x0f00;
 						ZigZag[i] = ZigZag[i] | tmph;
-						ZigZag[i] = ZigZag[i]<<4;
-						ZigZag[i] = ZigZag[i]>>4;
+						ZigZag[i] = ZigZag[i] << 4;
+						ZigZag[i] = ZigZag[i] >> 4;
 						half_byte = 1;
 					} else {
 						ZigZag[i] = pIn[in_pos++];
-						ZigZag[i] = ZigZag[i]<<8;
+						ZigZag[i] = ZigZag[i] << 8;
 						tmpl = tmpl & 0x00f0;
 						ZigZag[i] = ZigZag[i] | tmpl;
-						ZigZag[i] = ZigZag[i]>>4;
+						ZigZag[i] = ZigZag[i] >> 4;
 						half_byte = 0;
 					}
 				}
 
-				ZTable[idx] = ZTable[idx]<<1;
+				ZTable[idx] = ZTable[idx] << 1;
 				count--;
 				if (count == 0)	{
 					count = 8;
@@ -191,88 +187,87 @@ DecompressYHI(unsigned char *pIn,
 	 * De-ZigZag *
 	 *************/
 
-	for (j = 0; j < 64; j++) {
+	for (j = 0; j < 64; j++)
 		DeZigZag[j] = 0;
-	}
 
 	if (YUVFlag == 1) {
 		DeZigZag[0] = ZigZag[0];
-		DeZigZag[1] = ZigZag[1]<<1;
-		DeZigZag[2] = ZigZag[5]<<1;
-		DeZigZag[3] = ZigZag[6]<<2;
+		DeZigZag[1] = ZigZag[1] << 1;
+		DeZigZag[2] = ZigZag[5] << 1;
+		DeZigZag[3] = ZigZag[6] << 2;
 
-		DeZigZag[8] = ZigZag[2]<<1;
-		DeZigZag[9] = ZigZag[4]<<1;
-		DeZigZag[10] = ZigZag[7]<<1;
-		DeZigZag[11] = ZigZag[13]<<2;
+		DeZigZag[8] = ZigZag[2] << 1;
+		DeZigZag[9] = ZigZag[4] << 1;
+		DeZigZag[10] = ZigZag[7] << 1;
+		DeZigZag[11] = ZigZag[13] << 2;
 
-		DeZigZag[16] = ZigZag[3]<<1;
-		DeZigZag[17] = ZigZag[8]<<1;
-		DeZigZag[18] = ZigZag[12]<<2;
-		DeZigZag[19] = ZigZag[17]<<2;
+		DeZigZag[16] = ZigZag[3] << 1;
+		DeZigZag[17] = ZigZag[8] << 1;
+		DeZigZag[18] = ZigZag[12] << 2;
+		DeZigZag[19] = ZigZag[17] << 2;
 
-		DeZigZag[24] = ZigZag[9]<<2;
-		DeZigZag[25] = ZigZag[11]<<2;
-		DeZigZag[26] = ZigZag[18]<<2;
-		DeZigZag[27] = ZigZag[24]<<3;
+		DeZigZag[24] = ZigZag[9] << 2;
+		DeZigZag[25] = ZigZag[11] << 2;
+		DeZigZag[26] = ZigZag[18] << 2;
+		DeZigZag[27] = ZigZag[24] << 3;
 	} else {
 		DeZigZag[0] = ZigZag[0];
-		DeZigZag[1] = ZigZag[1]<<2;
-		DeZigZag[2] = ZigZag[5]<<2;
-		DeZigZag[3] = ZigZag[6]<<3;
+		DeZigZag[1] = ZigZag[1] << 2;
+		DeZigZag[2] = ZigZag[5] << 2;
+		DeZigZag[3] = ZigZag[6] << 3;
 
-		DeZigZag[8] = ZigZag[2]<<2;
-		DeZigZag[9] = ZigZag[4]<<2;
-		DeZigZag[10] = ZigZag[7]<<2;
-		DeZigZag[11] = ZigZag[13]<<4;
+		DeZigZag[8] = ZigZag[2] << 2;
+		DeZigZag[9] = ZigZag[4] << 2;
+		DeZigZag[10] = ZigZag[7] << 2;
+		DeZigZag[11] = ZigZag[13] << 4;
 
-		DeZigZag[16] = ZigZag[3]<<2;
-		DeZigZag[17] = ZigZag[8]<<2;
-		DeZigZag[18] = ZigZag[12]<<3;
-		DeZigZag[19] = ZigZag[17]<<4;
+		DeZigZag[16] = ZigZag[3] << 2;
+		DeZigZag[17] = ZigZag[8] << 2;
+		DeZigZag[18] = ZigZag[12] << 3;
+		DeZigZag[19] = ZigZag[17] << 4;
 
-		DeZigZag[24] = ZigZag[9]<<3;
-		DeZigZag[25] = ZigZag[11]<<4;
-		DeZigZag[26] = ZigZag[18]<<4;
-		DeZigZag[27] = ZigZag[24]<<4;
+		DeZigZag[24] = ZigZag[9] << 3;
+		DeZigZag[25] = ZigZag[11] << 4;
+		DeZigZag[26] = ZigZag[18] << 4;
+		DeZigZag[27] = ZigZag[24] << 4;
 	}
 
 	/*****************
 	 **** IDCT 1D ****
 	 *****************/
 
-#define IDCT_1D(c0, c1, c2, c3, in)					\
-	do {								\
-		tmp1=((c0)*DeZigZag[in])+((c2)*DeZigZag[(in)+2]);	\
-		tmp2=(c1)*DeZigZag[(in)+1];				\
-		tmp3=(c3)*DeZigZag[(in)+3];				\
+#define IDCT_1D(c0, c1, c2, c3, in)					    \
+	do {								    \
+		tmp1 = ((c0) * DeZigZag[in]) + ((c2) * DeZigZag[(in) + 2]); \
+		tmp2 = (c1) * DeZigZag[(in) + 1];			    \
+		tmp3 = (c3) * DeZigZag[(in) + 3];			    \
 	} while (0)
 
-#define COMPOSE_1(out1, out2)		\
-	do {				\
-		tmp=tmp1+tmp2+tmp3;	\
-		temp[out1] = tmp>>15;	\
-		tmp=tmp1-tmp2-tmp3;	\
-		temp[out2] = tmp>>15;	\
+#define COMPOSE_1(out1, out2)			\
+	do {					\
+		tmp = tmp1 + tmp2 + tmp3;	\
+		temp[out1] = tmp >> 15;		\
+		tmp = tmp1 - tmp2 - tmp3;	\
+		temp[out2] = tmp >> 15;		\
 	} while (0)
 
-#define COMPOSE_2(out1, out2)		\
-	do {				\
-		tmp=tmp1+tmp2-tmp3;	\
-		temp[out1] = tmp>>15;	\
-		tmp=tmp1-tmp2+tmp3;	\
-		temp[out2] = tmp>>15;	\
+#define COMPOSE_2(out1, out2)			\
+	do {					\
+		tmp = tmp1 + tmp2 - tmp3;	\
+		temp[out1] = tmp >> 15;		\
+		tmp = tmp1 - tmp2 + tmp3;	\
+		temp[out2] = tmp >> 15;		\
 	} while (0)
 
 	/* j = 0 */
-	IDCT_1D(a, b,  c, d,  0); COMPOSE_1( 0, 56);
-	IDCT_1D(a, b,  c, d,  8); COMPOSE_1( 1, 57);
-	IDCT_1D(a, b,  c, d, 16); COMPOSE_1( 2, 58);
-	IDCT_1D(a, b,  c, d, 24); COMPOSE_1( 3, 59);
+	IDCT_1D(a, b,  c, d,  0); COMPOSE_1(0, 56);
+	IDCT_1D(a, b,  c, d,  8); COMPOSE_1(1, 57);
+	IDCT_1D(a, b,  c, d, 16); COMPOSE_1(2, 58);
+	IDCT_1D(a, b,  c, d, 24); COMPOSE_1(3, 59);
 
 	/* j = 1 */
-	IDCT_1D(a, d,  f, g,  0); COMPOSE_2( 8, 48);
-	IDCT_1D(a, d,  f, g,  8); COMPOSE_2( 9, 49);
+	IDCT_1D(a, d,  f, g,  0); COMPOSE_2(8, 48);
+	IDCT_1D(a, d,  f, g,  8); COMPOSE_2(9, 49);
 	IDCT_1D(a, d,  f, g, 16); COMPOSE_2(10, 50);
 	IDCT_1D(a, d,  f, g, 24); COMPOSE_2(11, 51);
 
@@ -296,55 +291,57 @@ DecompressYHI(unsigned char *pIn,
 	 **** IDCT 2D ****
 	 *****************/
 
-#define IDCT_2D(c0, c1, c2, c3, in)				\
-	do {							\
-		tmp = temp[in]*(c0) + temp[(in)+1]*(c1)		\
-		    + temp[(in)+2]*(c2) + temp[(in)+3]*(c3);	\
+#define IDCT_2D(c0, c1, c2, c3, in)					\
+	do {								\
+		tmp = temp[in] * (c0) + temp[(in) + 1] * (c1)		\
+		+ temp[(in) + 2] * (c2) + temp[(in) + 3] * (c3);	\
 	} while (0)
 
 #define STORE(i)				\
 	do {					\
 		tmp = tmp >> 15;		\
 		tmp = tmp + 128;		\
-		if (tmp > 255) tmp = 255;	\
-		if (tmp < 0)   tmp = 0;		\
-		pOut[i] = (unsigned char) tmp;	\
+		if (tmp > 255)			\
+			tmp = 255;		\
+		if (tmp < 0)			\
+			tmp = 0;		\
+		pOut[i] = (unsigned char)tmp;	\
 	} while (0)
 
 #define IDCT_2D_ROW(in)						\
 	do {							\
-		IDCT_2D(a,  b,  c,  d, in); STORE(0+out_idx);	\
-		IDCT_2D(a,  d,  f, -g, in); STORE(1+out_idx);	\
-		IDCT_2D(a,  e, -f, -b, in); STORE(2+out_idx);	\
-		IDCT_2D(a,  g, -c, -e, in); STORE(3+out_idx);	\
-		IDCT_2D(a, -g, -c,  e, in); STORE(4+out_idx);	\
-		IDCT_2D(a, -e, -f,  b, in); STORE(5+out_idx);	\
-		IDCT_2D(a, -d,  f,  g, in); STORE(6+out_idx);	\
-		IDCT_2D(a, -b,  c, -d, in); STORE(7+out_idx);	\
+		IDCT_2D(a,  b,  c,  d, in); STORE(0 + out_idx);	\
+		IDCT_2D(a,  d,  f, -g, in); STORE(1 + out_idx);	\
+		IDCT_2D(a,  e, -f, -b, in); STORE(2 + out_idx);	\
+		IDCT_2D(a,  g, -c, -e, in); STORE(3 + out_idx);	\
+		IDCT_2D(a, -g, -c,  e, in); STORE(4 + out_idx);	\
+		IDCT_2D(a, -e, -f,  b, in); STORE(5 + out_idx);	\
+		IDCT_2D(a, -d,  f,  g, in); STORE(6 + out_idx);	\
+		IDCT_2D(a, -b,  c, -d, in); STORE(7 + out_idx);	\
 	} while (0)
 
 
-#define IDCT_2D_FAST(c0, c1, c2, c3, in)			\
-	do {							\
-		tmp1=((c0)*temp[in])+((c2)*temp[(in)+2]);	\
-		tmp2=(c1)*temp[(in)+1];				\
-		tmp3=(c3)*temp[(in)+3];				\
+#define IDCT_2D_FAST(c0, c1, c2, c3, in)				\
+	do {								\
+		tmp1 = ((c0) * temp[in]) + ((c2) * temp[(in) + 2]);	\
+		tmp2 = (c1) * temp[(in) + 1];				\
+		tmp3 = (c3) * temp[(in) + 3];				\
 	} while (0)
 
 #define STORE_FAST_1(out1, out2)				\
 	do {							\
-		tmp=tmp1+tmp2+tmp3;				\
-		STORE((out1)+out_idx);				\
-		tmp=tmp1-tmp2-tmp3;				\
-		STORE((out2)+out_idx);				\
+		tmp = tmp1 + tmp2 + tmp3;			\
+		STORE((out1) + out_idx);			\
+		tmp = tmp1 - tmp2 - tmp3;			\
+		STORE((out2) + out_idx);			\
 	} while (0)
 
 #define STORE_FAST_2(out1, out2)				\
 	do {							\
-		tmp=tmp1+tmp2-tmp3;				\
-		STORE((out1)+out_idx);				\
-		tmp=tmp1-tmp2+tmp3;				\
-		STORE((out2)+out_idx);				\
+		tmp = tmp1 + tmp2 - tmp3;			\
+		STORE((out1) + out_idx);			\
+		tmp = tmp1 - tmp2 + tmp3;			\
+		STORE((out2) + out_idx);			\
 	} while (0)
 
 #define IDCT_2D_FAST_ROW(in)						\
@@ -371,23 +368,23 @@ DecompressYHI(unsigned char *pIn,
 }
 
 #define DECOMP_Y() DecompressYHI(pIn, pY, &iIn, &iY, w, 1)
-#define DECOMP_U() DecompressYHI(pIn, pU, &iIn, &iU, w/2, 2)
-#define DECOMP_V() DecompressYHI(pIn, pV, &iIn, &iV, w/2, 2)
+#define DECOMP_U() DecompressYHI(pIn, pU, &iIn, &iU, w / 2, 2)
+#define DECOMP_V() DecompressYHI(pIn, pV, &iIn, &iV, w / 2, 2)
 
 #if 0
-inline static int
+static inline int
 Decompress400HiNoMMX(unsigned char *pIn,
-		     unsigned char *pOut,
-		     const int      w,
-		     const int      h,
-		     const int      inSize)
+		unsigned char *pOut,
+		const int      w,
+		const int      h,
+		const int      inSize)
 {
 	unsigned char *pY = pOut;
 	int x, y, iIn, iY;
 
 	iIn = 0;
 	for (y = 0; y < h; y += 8) {
-		iY = w*y;
+		iY = w * y;
 
 		for (x = 0; x < w; x += 8)
 			DECOMP_Y();
@@ -397,44 +394,44 @@ Decompress400HiNoMMX(unsigned char *pIn,
 }
 #endif
 
-inline static int
+static inline int
 Decompress420HiNoMMX(unsigned char *pIn,
-		     unsigned char *pOut,
-		     const int      w,
-		     const int      h,
-		     const int      inSize)
+		unsigned char *pOut,
+		const int      w,
+		const int      h,
+		const int      inSize)
 {
 	unsigned char *pY = pOut;
-	unsigned char *pU = pY + w*h;
-	unsigned char *pV = pU + w*h/4;
+	unsigned char *pU = pY + w * h;
+	unsigned char *pV = pU + w * h / 4;
 	int xY, xUV, iY, iU, iV, iIn, count;
-	const int nBlocks = (w*h) / (32*8);
+	const int nBlocks = (w * h) / (32 * 8);
 
 	iIn = 0;
 	iY = iU = iV = 0;
 	xY = xUV = 0;
 
 	for (count = 0; count < nBlocks; count++) {
-			DECOMP_U();
-			DECOMP_V();	xUV += 16;
-			if (xUV >= w) {
-				iU += (w*7)/2;
-				iV += (w*7)/2;
-				xUV = 0;
-			}
+		DECOMP_U();
+		DECOMP_V();	xUV += 16;
+		if (xUV >= w) {
+			iU += (w * 7) / 2;
+			iV += (w * 7) / 2;
+			xUV = 0;
+		}
 
-			DECOMP_Y();	xY += 8;
-			DECOMP_Y();	xY += 8;
-			if (xY >= w) {
-				iY += w*7;
-				xY = 0;
-			}
-			DECOMP_Y();	xY += 8;
-			DECOMP_Y();	xY += 8;
-			if (xY >= w) {
-				iY += w*7;
-				xY = 0;
-			}
+		DECOMP_Y();	xY += 8;
+		DECOMP_Y();	xY += 8;
+		if (xY >= w) {
+			iY += w * 7;
+			xY = 0;
+		}
+		DECOMP_Y();	xY += 8;
+		DECOMP_Y();	xY += 8;
+		if (xY >= w) {
+			iY += w * 7;
+			xY = 0;
+		}
 	}
 
 	return 0;
@@ -443,7 +440,7 @@ Decompress420HiNoMMX(unsigned char *pIn,
 /* Copies a 64-byte segment at pIn to an 8x8 block at pOut. The width of the
  * image at pOut is specified by w.
  */
-static inline void
+	static inline void
 make_8x8(unsigned char *pIn, unsigned char *pOut, int w)
 {
 	unsigned char *pOut1 = pOut;
@@ -451,9 +448,8 @@ make_8x8(unsigned char *pIn, unsigned char *pOut, int w)
 
 	for (y = 0; y < 8; y++) {
 		pOut1 = pOut;
-		for (x = 0; x < 8; x++) {
+		for (x = 0; x < 8; x++)
 			*pOut1++ = *pIn++;
-		}
 		pOut += w;
 	}
 }
@@ -469,9 +465,9 @@ make_8x8(unsigned char *pIn, unsigned char *pOut, int w)
  *     56 57 ... 63   120 121 ... 127        248 249 ... 255
  *
  */
-static void
+	static void
 yuv400raw_to_yuv400p(struct ov511_frame *frame,
-		     unsigned char *pIn0, unsigned char *pOut0)
+		unsigned char *pIn0, unsigned char *pOut0)
 {
 	int x, y;
 	unsigned char *pIn, *pOut, *pOutLine;
@@ -527,9 +523,9 @@ yuv400raw_to_yuv400p(struct ov511_frame *frame,
  *
  * FIXME: Currently only handles width and height that are multiples of 16
  */
-static void
+	static void
 yuv420raw_to_yuv420p(unsigned char *pIn0, unsigned char *pOut0,
-	int width, int height)
+		int width, int height)
 {
 	int k, x, y;
 	unsigned char *pIn, *pOut, *pOutLine;
@@ -543,7 +539,7 @@ yuv420raw_to_yuv420p(unsigned char *pIn0, unsigned char *pOut0,
 		pOut = pOutLine;
 		for (x = 0; x < width - 1; x += 16) {
 			make_8x8(pIn, pOut, w);
-			make_8x8(pIn + 64, pOut + a/4, w);
+			make_8x8(pIn + 64, pOut + a / 4, w);
 			pIn += 384;
 			pOut += 8;
 		}
@@ -597,7 +593,7 @@ static void remove0blocks(unsigned char *pIn, int *inSize)
 }
 
 static int v4lconvert_ov511_to_yuv420(unsigned char *src, unsigned char *dest,
-  int w, int h, int yvu, int src_size)
+		int w, int h, int yvu, int src_size)
 {
 	int rc = 0;
 
@@ -606,61 +602,60 @@ static int v4lconvert_ov511_to_yuv420(unsigned char *src, unsigned char *dest,
 	remove0blocks(src, &src_size);
 
 	/* Compressed ? */
-	if (src[8] & 0x40) {
+	if (src[8] & 0x40)
 		rc = Decompress420HiNoMMX(src + 9, dest, w, h, src_size);
-	} else {
+	else
 		yuv420raw_to_yuv420p(src + 9, dest, w, h);
-	}
 
 	return rc;
 }
 
 int main(int argc, char *argv[])
 {
-  int width, height, yvu, src_size, dest_size;
-  unsigned char src_buf[500000];
-  unsigned char dest_buf[500000];
+	int width, height, yvu, src_size, dest_size;
+	unsigned char src_buf[500000];
+	unsigned char dest_buf[500000];
 
-  while (1) {
-    if (v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+	while (1) {
+		if (v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-    if (v4lconvert_helper_read(STDIN_FILENO, &height, sizeof(int), argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+		if (v4lconvert_helper_read(STDIN_FILENO, &height, sizeof(int), argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-    if (v4lconvert_helper_read(STDIN_FILENO, &yvu, sizeof(int), argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+		if (v4lconvert_helper_read(STDIN_FILENO, &yvu, sizeof(int), argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-    if (v4lconvert_helper_read(STDIN_FILENO, &src_size, sizeof(int), argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+		if (v4lconvert_helper_read(STDIN_FILENO, &src_size, sizeof(int), argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-    if (src_size > sizeof(src_buf)) {
-      fprintf(stderr, "%s: error: src_buf too small, need: %d\n",
-	      argv[0], src_size);
-      return 2;
-    }
+		if (src_size > sizeof(src_buf)) {
+			fprintf(stderr, "%s: error: src_buf too small, need: %d\n",
+					argv[0], src_size);
+			return 2;
+		}
 
-    if (v4lconvert_helper_read(STDIN_FILENO, src_buf, src_size, argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+		if (v4lconvert_helper_read(STDIN_FILENO, src_buf, src_size, argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
 
-    dest_size = width * height * 3 / 2;
-    if (dest_size > sizeof(dest_buf)) {
-      fprintf(stderr, "%s: error: dest_buf too small, need: %d\n",
-	      argv[0], dest_size);
-      dest_size = -1;
-    } else if (v4lconvert_ov511_to_yuv420(src_buf, dest_buf, width, height,
-					  yvu, src_size))
-      dest_size = -1;
+		dest_size = width * height * 3 / 2;
+		if (dest_size > sizeof(dest_buf)) {
+			fprintf(stderr, "%s: error: dest_buf too small, need: %d\n",
+					argv[0], dest_size);
+			dest_size = -1;
+		} else if (v4lconvert_ov511_to_yuv420(src_buf, dest_buf, width, height,
+					yvu, src_size))
+			dest_size = -1;
 
-    if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int),
-				argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+		if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int),
+					argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-    if (dest_size == -1)
-      continue;
+		if (dest_size == -1)
+			continue;
 
-    if (v4lconvert_helper_write(STDOUT_FILENO, dest_buf, dest_size, argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
-  }
+		if (v4lconvert_helper_write(STDOUT_FILENO, dest_buf, dest_size, argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
+	}
 }
