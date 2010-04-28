@@ -439,7 +439,7 @@ static const struct tree_node treeUVDC[] = {
 /* Return: Depth of node found, or -1 if invalid input code */
 static int
 getNodeAC(unsigned int in, signed char *coeffbits, signed char *skip,
-	  const struct tree_node *tree)
+		const struct tree_node *tree)
 {
 	int node = 0;
 	int i = 0;
@@ -536,11 +536,10 @@ getBytes(int *rawData, struct comp_info *cinfo)
 					b1 = in[0];
 					b2 = in[1];
 				} else {
-					if (bytes <= bufLen) {
+					if (bytes <= bufLen)
 						b1 = in[0];
-					} else {
+					else
 						b1 = 0;
-					}
 					b2 = 0;
 				}
 				b3 = 0;
@@ -566,7 +565,7 @@ getBytes(int *rawData, struct comp_info *cinfo)
 
 static int
 getACCoefficient(int *rawData, int *coeff, struct comp_info *cinfo,
-		 const struct tree_node *tree)
+		const struct tree_node *tree)
 {
 	int input, bits, bytes, tmp_c;
 	signed char coeffbits = 0;
@@ -578,7 +577,7 @@ getACCoefficient(int *rawData, int *coeff, struct comp_info *cinfo,
 	if (coeffbits) {
 		input = input << (bits - 1);
 		input &= 0x7fffffff;
-		if (! (input & 0x40000000))
+		if (!(input & 0x40000000))
 			input |= 0x80000000;
 
 		tmp_c = input >> (31 - coeffbits);
@@ -598,7 +597,7 @@ getACCoefficient(int *rawData, int *coeff, struct comp_info *cinfo,
 
 static void
 getDCCoefficient(int *rawData, int *coeff, struct comp_info *cinfo,
-		 const struct tree_node *tree)
+		const struct tree_node *tree)
 {
 	int input, bits, bytes, tmp_c;
 	signed char coeffbits = 0;
@@ -613,7 +612,7 @@ getDCCoefficient(int *rawData, int *coeff, struct comp_info *cinfo,
 
 		input = input << (bits - 1);
 		input &= 0x7fffffff;
-		if (! (input & 0x40000000))
+		if (!(input & 0x40000000))
 			input |= 0x80000000;
 
 		tmp_c = input >> (31 - coeffbits);
@@ -675,7 +674,8 @@ huffmanDecoderY(int *C, int *pIn, struct comp_info *cinfo)
 	} while (i <= 31);
 
 	if (skip == -1)
-		while (i <= 31)  C[i++] = 0;
+		while (i <= 31)
+			C[i++] = 0;
 	else
 		getACCoefficient(pIn, &coeff, cinfo, treeYAC);
 }
@@ -718,7 +718,8 @@ huffmanDecoderUV(int *C, int *pIn, struct comp_info *cinfo)
 	} while (i <= 31);
 
 	if (skip == -1)
-		while (i <= 31)  C[i++] = 0;
+		while (i <= 31)
+			C[i++] = 0;
 	else
 		getACCoefficient(pIn, &coeff, cinfo, treeUVAC);
 }
@@ -731,47 +732,47 @@ huffmanDecoderUV(int *C, int *pIn, struct comp_info *cinfo)
 
 #define IDCT_MESSAGE "iDCT with multiply"
 
-#define TIMES_16382(u)	((u)? 16382 * (u):0)
-#define TIMES_23168(u)	((u)? 23168 * (u):0)
-#define TIMES_30270(u)	((u)? 30270 * (u):0)
-#define TIMES_41986(u)	((u)? 41986 * (u):0)
-#define TIMES_35594(u)	((u)? 35594 * (u):0)
-#define TIMES_23783(u)	((u)? 23783 * (u):0)
-#define TIMES_8351(u)	((u)? 8351  * (u):0)
-#define TIMES_17391(u)	((u)? 17391 * (u):0)
-#define TIMES_14743(u)	((u)? 14743 * (u):0)
-#define TIMES_9851(u)	((u)? 9851  * (u):0)
-#define TIMES_3459(u)	((u)? 3459  * (u):0)
-#define TIMES_32134(u)	((u)? 32134 * (u):0)
-#define TIMES_27242(u)	((u)? 27242 * (u):0)
-#define TIMES_18202(u)	((u)? 18202 * (u):0)
-#define TIMES_6392(u)	((u)? 6392  * (u):0)
-#define TIMES_39550(u)	((u)? 39550 * (u):0)
-#define TIMES_6785(u)	((u)? 6785  * (u):0)
-#define TIMES_12538(u)	((u)? 12538 * (u):0)
+#define TIMES_16382(u)	((u) ? 16382 * (u) : 0)
+#define TIMES_23168(u)	((u) ? 23168 * (u) : 0)
+#define TIMES_30270(u)	((u) ? 30270 * (u) : 0)
+#define TIMES_41986(u)	((u) ? 41986 * (u) : 0)
+#define TIMES_35594(u)	((u) ? 35594 * (u) : 0)
+#define TIMES_23783(u)	((u) ? 23783 * (u) : 0)
+#define TIMES_8351(u)	((u) ? 8351  * (u) : 0)
+#define TIMES_17391(u)	((u) ? 17391 * (u) : 0)
+#define TIMES_14743(u)	((u) ? 14743 * (u) : 0)
+#define TIMES_9851(u)	((u) ? 9851  * (u) : 0)
+#define TIMES_3459(u)	((u) ? 3459  * (u) : 0)
+#define TIMES_32134(u)	((u) ? 32134 * (u) : 0)
+#define TIMES_27242(u)	((u) ? 27242 * (u) : 0)
+#define TIMES_18202(u)	((u) ? 18202 * (u) : 0)
+#define TIMES_6392(u)	((u) ? 6392  * (u) : 0)
+#define TIMES_39550(u)	((u) ? 39550 * (u) : 0)
+#define TIMES_6785(u)	((u) ? 6785  * (u) : 0)
+#define TIMES_12538(u)	((u) ? 12538 * (u) : 0)
 
 #else
 
 #define IDCT_MESSAGE "iDCT with shift"
 
-#define TIMES_16382(u) ( (u)? x=(u) , (x<<14) - (x<<1) :0 )
-#define TIMES_23168(u) ( (u)? x=(u) , (x<<14) + (x<<12) + (x<<11) + (x<<9) :0 )
-#define TIMES_30270(u) ( (u)? x=(u) , (x<<15) - (x<<11) :0 )
-#define TIMES_41986(u) ( (u)? x=(u) , (x<<15) + (x<<13) + (x<<10) :0 )
-#define TIMES_35594(u) ( (u)? x=(u) , (x<<15) + (x<<11) + (x<<9) + (x<<8) :0 )
-#define TIMES_23783(u) ( (u)? x=(u) , (x<<14) + (x<<13) - (x<<9) - (x<<8) :0 )
-#define TIMES_8351(u)  ( (u)? x=(u) , (x<<13) :0 )
-#define TIMES_17391(u) ( (u)? x=(u) , (x<<14) + (x<<10) :0 )
-#define TIMES_14743(u) ( (u)? x=(u) , (x<<14) - (x<<10) - (x<<9) :0 )
-#define TIMES_9851(u)  ( (u)? x=(u) , (x<<13) + (x<<10) + (x<<9) :0 )
-#define TIMES_3459(u)  ( (u)? x=(u) , (x<<12) - (x<<9) :0 )
-#define TIMES_32134(u) ( (u)? x=(u) , (x<<15) - (x<<9) :0 )
-#define TIMES_27242(u) ( (u)? x=(u) , (x<<14) + (x<<13) + (x<<11) + (x<<9) :0 )
-#define TIMES_18202(u) ( (u)? x=(u) , (x<<14) + (x<<11) - (x<<8) :0 )
-#define TIMES_6392(u)  ( (u)? x=(u) , (x<<13) - (x<<11) + (x<<8) :0 )
-#define TIMES_39550(u) ( (u)? x=(u) , (x<<15) + (x<<12) + (x<<11) + (x<<9) :0 )
-#define TIMES_6785(u)  ( (u)? x=(u) , (x<<12) + (x<<11) + (x<<9) :0 )
-#define TIMES_12538(u) ( (u)? x=(u) , (x<<13) + (x<<12) + (x<<8) :0 )
+#define TIMES_16382(u) ((u) ? x = (u), (x << 14) - (x << 1) : 0)
+#define TIMES_23168(u) ((u) ? x = (u), (x << 14) + (x << 12) + (x << 11) + (x << 9) : 0)
+#define TIMES_30270(u) ((u) ? x = (u), (x << 15) - (x << 11) : 0)
+#define TIMES_41986(u) ((u) ? x = (u), (x << 15) + (x << 13) + (x << 10) : 0)
+#define TIMES_35594(u) ((u) ? x = (u), (x << 15) + (x << 11) + (x << 9) + (x << 8) : 0)
+#define TIMES_23783(u) ((u) ? x = (u), (x << 14) + (x << 13) - (x << 9) - (x << 8) : 0)
+#define TIMES_8351(u)  ((u) ? x = (u), (x << 13) : 0)
+#define TIMES_17391(u) ((u) ? x = (u), (x << 14) + (x << 10) : 0)
+#define TIMES_14743(u) ((u) ? x = (u), (x << 14) - (x << 10) - (x << 9) : 0)
+#define TIMES_9851(u)  ((u) ? x = (u), (x << 13) + (x << 10) + (x << 9) : 0)
+#define TIMES_3459(u)  ((u) ? x = (u), (x << 12) - (x << 9) : 0)
+#define TIMES_32134(u) ((u) ? x = (u), (x << 15) - (x << 9) : 0)
+#define TIMES_27242(u) ((u) ? x = (u), (x << 14) + (x << 13) + (x << 11) + (x << 9) : 0)
+#define TIMES_18202(u) ((u) ? x = (u), (x << 14) + (x << 11) - (x << 8) : 0)
+#define TIMES_6392(u)  ((u) ? x = (u), (x << 13) - (x << 11) + (x << 8) : 0)
+#define TIMES_39550(u) ((u) ? x = (u), (x << 15) + (x << 12) + (x << 11) + (x << 9) : 0)
+#define TIMES_6785(u)  ((u) ? x = (u), (x << 12) + (x << 11) + (x << 9) : 0)
+#define TIMES_12538(u) ((u) ? x = (u), (x << 13) + (x << 12) + (x << 8) : 0)
 
 /*
  * The variables C0, C4, C16 and C20 can also be removed from the algorithm
@@ -783,41 +784,41 @@ huffmanDecoderUV(int *C, int *pIn, struct comp_info *cinfo)
 
 static void
 DCT_8x4(int *coeff, unsigned char *out)
-/* pre: coeff == coefficients
-   post: coeff != coefficients
-   ** DO NOT ASSUME coeff TO BE THE SAME BEFORE AND AFTER CALLING THIS FUNCTION!
-*/
+	/* pre: coeff == coefficients
+	   post: coeff != coefficients
+	 ** DO NOT ASSUME coeff TO BE THE SAME BEFORE AND AFTER CALLING THIS FUNCTION!
+	 */
 {
-	register int base,val1,val2,val3;
-	int tmp1,tmp2;
-	int C0,C4,C16,C20;
-	int C2_18,C6_22,C1_17,C3_19,C5_21,C7_23;
+	register int base, val1, val2, val3;
+	int tmp1, tmp2;
+	int C0, C4, C16, C20;
+	int C2_18, C6_22, C1_17, C3_19, C5_21, C7_23;
 	register int t;
 #ifdef APPROXIMATE_MUL_BY_SHIFT
 	register int x;
 #endif
 
-	C0=coeff[0];
-	C4=coeff[4];
-	C16=coeff[16];
-	C20=coeff[20];
+	C0 = coeff[0];
+	C4 = coeff[4];
+	C16 = coeff[16];
+	C20 = coeff[20];
 
-	coeff[0]=TIMES_23168(coeff[0]);
-	coeff[4]=TIMES_23168(coeff[4]);
-	coeff[16]=TIMES_23168(coeff[16]);
-	coeff[20]=TIMES_23168(coeff[20]);
+	coeff[0] = TIMES_23168(coeff[0]);
+	coeff[4] = TIMES_23168(coeff[4]);
+	coeff[16] = TIMES_23168(coeff[16]);
+	coeff[20] = TIMES_23168(coeff[20]);
 
-	C2_18 = coeff[2]+coeff[18];
-	C6_22 = coeff[6]+coeff[22];
-	C1_17 = coeff[1]+coeff[17];
-	C3_19 = coeff[3]+coeff[19];
-	C5_21 = coeff[5]+coeff[21];
-	C7_23 = coeff[7]+coeff[23];
+	C2_18 = coeff[2] + coeff[18];
+	C6_22 = coeff[6] + coeff[22];
+	C1_17 = coeff[1] + coeff[17];
+	C3_19 = coeff[3] + coeff[19];
+	C5_21 = coeff[5] + coeff[21];
+	C7_23 = coeff[7] + coeff[23];
 
-// 0,7,25,32
+	// 0,7,25,32
 
 	base = 0x1000000;
-	base += coeff[0]+coeff[4]+coeff[16]+coeff[20];
+	base += coeff[0] + coeff[4] + coeff[16] + coeff[20];
 	base += TIMES_30270(C2_18);
 	base += TIMES_12538(C6_22);
 
@@ -836,24 +837,24 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val2 += TIMES_6392(C7_23);
 
 	val3 = TIMES_39550(coeff[10]);
-	val3 += TIMES_16382(coeff[14]+coeff[26]);
+	val3 += TIMES_16382(coeff[14] + coeff[26]);
 	val3 += TIMES_6785(coeff[30]);
-	val3 += TIMES_30270(coeff[8]+coeff[12]);
-	val3 += TIMES_12538(coeff[24]+coeff[28]);
+	val3 += TIMES_30270(coeff[8] + coeff[12]);
+	val3 += TIMES_12538(coeff[24] + coeff[28]);
 
-	t=(base + val1 + val2 + val3) >> 17;
-	out[0]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 - val2 + val3 - C4 - C20) >> 17;
-	out[7]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 + val2 - val3 - C16- C20) >> 17;
-	out[24]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base + val1 - val2 - val3 - C4 - C16 - C20) >> 17;
-	out[31]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
+	t = (base + val1 + val2 + val3) >> 17;
+	out[0] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 - val2 + val3 - C4 - C20) >> 17;
+	out[7] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 + val2 - val3 - C16 - C20) >> 17;
+	out[24] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base + val1 - val2 - val3 - C4 - C16 - C20) >> 17;
+	out[31] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
 
-//1,6,25,30
+	//1,6,25,30
 
 	base = 0x1000000;
-	base += coeff[0]-coeff[4]+coeff[16]-coeff[20];
+	base += coeff[0] - coeff[4] + coeff[16] - coeff[20];
 	base += TIMES_12538(C2_18);
 	base -= TIMES_30270(C6_22);
 
@@ -871,22 +872,22 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val2 -= TIMES_32134(C5_21);
 	val2 -= TIMES_18202(C7_23);
 
-	val3 = TIMES_16382(coeff[10]-coeff[30]);
+	val3 = TIMES_16382(coeff[10] - coeff[30]);
 	val3 -= TIMES_39550(coeff[14]);
 	val3 += TIMES_6785(coeff[26]);
-	val3 += TIMES_12538(coeff[24]-coeff[28]);
-	val3 += TIMES_30270(coeff[8]-coeff[12]);
+	val3 += TIMES_12538(coeff[24] - coeff[28]);
+	val3 += TIMES_30270(coeff[8] - coeff[12]);
 
-	t=(base + val1 + val2 + val3 + C4 + C20) >> 17;
-	out[1]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 - val2 + val3) >> 17;
-	out[6]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 + val2 - val3 + C4 - C16 + C20) >> 17;
-	out[25]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base + val1 - val2 - val3 + C20) >> 17;
-	out[30]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
+	t = (base + val1 + val2 + val3 + C4 + C20) >> 17;
+	out[1] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 - val2 + val3) >> 17;
+	out[6] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 + val2 - val3 + C4 - C16 + C20) >> 17;
+	out[25] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base + val1 - val2 - val3 + C20) >> 17;
+	out[30] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
 
-//2,5,26,29
+	//2,5,26,29
 
 	base = 0x1000000;
 	base += coeff[0] - coeff[4] + coeff[16] - coeff[20];
@@ -913,16 +914,16 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val3 += TIMES_12538(coeff[24] - coeff[28]);
 	val3 += TIMES_30270(coeff[8] - coeff[12]);
 
-	t=(base + val1 + val2 + val3) >> 17;
-	out[2]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 - val2 + val3) >> 17;
-	out[5]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 + val2 - val3 - C16) >> 17;
-	out[26]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base + val1 - val2 - val3 + C4 - C16 + C20) >> 17;
-	out[29]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
+	t = (base + val1 + val2 + val3) >> 17;
+	out[2] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 - val2 + val3) >> 17;
+	out[5] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 + val2 - val3 - C16) >> 17;
+	out[26] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base + val1 - val2 - val3 + C4 - C16 + C20) >> 17;
+	out[29] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
 
-//3,4,27,28
+	//3,4,27,28
 
 	base = 0x1000000;
 	base += coeff[0] + coeff[4] + coeff[16] + coeff[20];
@@ -949,16 +950,16 @@ DCT_8x4(int *coeff, unsigned char *out)
 	tmp1 = TIMES_32134(C7_23);
 	tmp2 = TIMES_41986(coeff[15]) + TIMES_17391(coeff[31]);
 
-	t=(base + val1 + val2 + val3 - tmp1 - tmp2 - C4 - C20) >> 17;
-	out[3]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 - val2 + val3) >> 17;
-	out[4]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 + val2 - val3 - tmp1 + tmp2) >> 17;
-	out[27]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base + val1 - val2 - val3 - C16 - C20) >> 17;
-	out[28]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
+	t = (base + val1 + val2 + val3 - tmp1 - tmp2 - C4 - C20) >> 17;
+	out[3] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 - val2 + val3) >> 17;
+	out[4] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 + val2 - val3 - tmp1 + tmp2) >> 17;
+	out[27] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base + val1 - val2 - val3 - C16 - C20) >> 17;
+	out[28] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
 
-// Second half
+	// Second half
 	C2_18 = coeff[2] - coeff[18];
 	C6_22 = coeff[6] - coeff[22];
 	C1_17 = coeff[1] - coeff[17];
@@ -966,12 +967,12 @@ DCT_8x4(int *coeff, unsigned char *out)
 	C5_21 = coeff[5] - coeff[21];
 	C7_23 = coeff[7] - coeff[23];
 
-// 8,15,16,23
+	// 8,15,16,23
 
 	base = 0x1000000;
 	base += coeff[0] + coeff[4] - coeff[16] - coeff[20];
-	base +=TIMES_30270(C2_18);
-	base +=TIMES_12538(C6_22);
+	base += TIMES_30270(C2_18);
+	base += TIMES_12538(C6_22);
 
 	val1 = TIMES_17391(coeff[9]);
 	val1 += TIMES_14743(coeff[11]);
@@ -990,19 +991,19 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val3 = TIMES_16382(coeff[10] - coeff[30]);
 	val3 += TIMES_6785(coeff[14]);
 	val3 -= TIMES_39550(coeff[26]);
-	val3 -=TIMES_30270(coeff[24] + coeff[28]);
-	val3 +=TIMES_12538(coeff[8] + coeff[12]);
+	val3 -= TIMES_30270(coeff[24] + coeff[28]);
+	val3 += TIMES_12538(coeff[8] + coeff[12]);
 
-	t=(base + val1 + val2 + val3) >> 17;
-	out[8]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 - val2 + val3 - C4 + C16 + C20) >> 17;
-	out[15]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 + val2 - val3) >> 17;
-	out[16]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base + val1 - val2 - val3 - C4 + C20) >> 17;
-	out[23]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
+	t = (base + val1 + val2 + val3) >> 17;
+	out[8] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 - val2 + val3 - C4 + C16 + C20) >> 17;
+	out[15] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 + val2 - val3) >> 17;
+	out[16] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base + val1 - val2 - val3 - C4 + C20) >> 17;
+	out[23] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
 
-//9,14,17,22
+	//9,14,17,22
 
 	base = 0x1000000;
 	base += coeff[0] - coeff[4] - coeff[16] + coeff[20];
@@ -1029,16 +1030,16 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val3 += TIMES_12538(coeff[8] - coeff[12]);
 	val3 -= TIMES_30270(coeff[24] - coeff[28]);
 
-	t=(base + val1 + val2 + val3 + C4 + C16 - C20) >> 17;
-	out[9]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 - val2 + val3 + C16) >> 17;
-	out[14]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 + val2 - val3 + C4) >> 17;
-	out[17]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base + val1 - val2 - val3) >> 17;
-	out[22]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
+	t = (base + val1 + val2 + val3 + C4 + C16 - C20) >> 17;
+	out[9] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 - val2 + val3 + C16) >> 17;
+	out[14] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 + val2 - val3 + C4) >> 17;
+	out[17] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base + val1 - val2 - val3) >> 17;
+	out[22] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
 
-//10,13,18,21
+	//10,13,18,21
 
 	base = 0x1000000;
 	base += coeff[0] - coeff[4] - coeff[16] + coeff[20];
@@ -1060,24 +1061,24 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val2 += TIMES_27242(C7_23);
 
 	val3 = -TIMES_6785(coeff[10]);
-	val3 += TIMES_16382(coeff[14]+coeff[26]);
+	val3 += TIMES_16382(coeff[14] + coeff[26]);
 	val3 -= TIMES_39550(coeff[30]);
-	val3 += TIMES_12538(coeff[8]-coeff[12]);
-	val3 -= TIMES_30270(coeff[24]-coeff[28]);
+	val3 += TIMES_12538(coeff[8] - coeff[12]);
+	val3 -= TIMES_30270(coeff[24] - coeff[28]);
 
-	t=(base + val1 + val2 + val3) >> 17;
-	out[10]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 - val2 + val3 + C4 + C16 - C20) >> 17;
-	out[13]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 + val2 - val3) >> 17;
-	out[18]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base + val1 - val2 - val3 + C4) >> 17;
-	out[21]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
+	t = (base + val1 + val2 + val3) >> 17;
+	out[10] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 - val2 + val3 + C4 + C16 - C20) >> 17;
+	out[13] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 + val2 - val3) >> 17;
+	out[18] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base + val1 - val2 - val3 + C4) >> 17;
+	out[21] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
 
-// 11,12,19,20
+	// 11,12,19,20
 
 	base = 0x1000000;
-	base += coeff[0]+coeff[4]-coeff[16]-coeff[20];
+	base += coeff[0] + coeff[4] - coeff[16] - coeff[20];
 	base -= TIMES_30270(C2_18);
 	base -= TIMES_12538(C6_22);
 
@@ -1095,20 +1096,20 @@ DCT_8x4(int *coeff, unsigned char *out)
 	val3 = -TIMES_16382(coeff[10] - coeff[30]);
 	val3 -= TIMES_6785(coeff[14]);
 	val3 += TIMES_39550(coeff[26]);
-	val3 -= TIMES_30270(coeff[24]+coeff[28]);
-	val3 += TIMES_12538(coeff[8]+coeff[12]);
+	val3 -= TIMES_30270(coeff[24] + coeff[28]);
+	val3 += TIMES_12538(coeff[8] + coeff[12]);
 
 	tmp1 = TIMES_32134(C7_23);
 	tmp2 = -TIMES_17391(coeff[15]) + TIMES_41986(coeff[31]);
 
-	t=(base + val1 + val2 + val3 - tmp1 + tmp2 + C16 + C20) >> 17;
-	out[11]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 - val2 + val3 + C16 + C20) >> 17;
-	out[12]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base - val1 + val2 - val3 - tmp1 - tmp2 - C4 + C20) >> 17;
-	out[19]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
-	t=(base + val1 - val2 - val3) >> 17;
-	out[20]= t&0xFFFFFF00? t<0?0:255 : (unsigned char)t;
+	t = (base + val1 + val2 + val3 - tmp1 + tmp2 + C16 + C20) >> 17;
+	out[11] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 - val2 + val3 + C16 + C20) >> 17;
+	out[12] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base - val1 + val2 - val3 - tmp1 - tmp2 - C4 + C20) >> 17;
+	out[19] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
+	t = (base + val1 - val2 - val3) >> 17;
+	out[20] = t & 0xFFFFFF00 ? t < 0 ? 0 : 255 : (unsigned char)t;
 }
 
 #undef TIMES_16382
@@ -1140,10 +1141,10 @@ DCT_8x4(int *coeff, unsigned char *out)
  */
 static int
 decompress8x4(unsigned char	*pOut,
-	      unsigned char	*pIn,
-	      int		*lastDC,
-	      int		uvFlag,
-	      struct comp_info	*cinfo)
+		unsigned char	*pIn,
+		int		*lastDC,
+		int		uvFlag,
+		struct comp_info	*cinfo)
 {
 	int i, x, y, dc;
 	int coeffs[32];
@@ -1152,8 +1153,8 @@ decompress8x4(unsigned char	*pOut,
 	int *src;
 	unsigned char *qt = cinfo->qt;
 
-	if (! uvFlag) {
-		huffmanDecoderY(coeffs, (int*) pIn, cinfo);
+	if (!uvFlag) {
+		huffmanDecoderY(coeffs, (int *)pIn, cinfo);
 
 		/* iDPCM and dequantize first coefficient */
 		dc = (*lastDC) + coeffs[0];
@@ -1167,7 +1168,7 @@ decompress8x4(unsigned char	*pOut,
 		for (i = 2; i < 32; i++)
 			coeffs[i] = (qt[i] + 1) * coeffs[i];
 	} else {
-		huffmanDecoderUV(coeffs, (int*) pIn, cinfo);
+		huffmanDecoderUV(coeffs, (int *)pIn, cinfo);
 
 		/* iDPCM */
 		dc = (*lastDC) + coeffs[0];
@@ -1187,9 +1188,8 @@ decompress8x4(unsigned char	*pOut,
 	src = deZigZag;
 	dest = coeffs;
 	for (y = 0; y <= 3; ++y) {
-		for (x = 0; x <= 7; ++x) {
+		for (x = 0; x <= 7; ++x)
 			dest[x] = src[x * 4];
-		}
 		src += 1;
 		dest += 8;
 	}
@@ -1219,12 +1219,12 @@ copyBlock(unsigned char *src, unsigned char *dest, int destInc)
 #if 0
 static inline int
 decompress400NoMMXOV518(unsigned char	 *pIn,
-			unsigned char	 *pOut,
-			unsigned char	 *pTmp,
-			const int	 w,
-			const int	 h,
-			const int	 numpix,
-			struct comp_info *cinfo)
+		unsigned char	 *pOut,
+		unsigned char	 *pTmp,
+		const int	 w,
+		const int	 h,
+		const int	 numpix,
+		struct comp_info *cinfo)
 {
 	int iOutY, x, y;
 	int lastYDC = 0;
@@ -1257,13 +1257,13 @@ decompress400NoMMXOV518(unsigned char	 *pIn,
 
 static inline int
 decompress420NoMMXOV518(unsigned char	 *pIn,
-			unsigned char	 *pOut,
-			unsigned char	 *pTmp,
-			const int	 w,
-			const int	 h,
-			const int	 numpix,
-			struct comp_info *cinfo,
-			int yvu)
+		unsigned char	 *pOut,
+		unsigned char	 *pTmp,
+		const int	 w,
+		const int	 h,
+		const int	 numpix,
+		struct comp_info *cinfo,
+		int yvu)
 {
 	unsigned char *pOutU, *pOutV;
 	int iOutY, iOutU, iOutV, x, y;
@@ -1339,9 +1339,8 @@ get_qt_dynamic(unsigned char *pIn, struct comp_info *cinfo)
 	int rawLen = cinfo->rawLen;
 
 	/* Make sure input is actually big enough to hold trailer */
-	if (rawLen < 72) {
+	if (rawLen < 72)
 		return -1;
-	}
 
 	cinfo->qt = pIn + rawLen - 64;
 
@@ -1371,10 +1370,10 @@ static void remove0blocks(unsigned char *pIn, int *inSize)
  */
 static int
 Decompress400(unsigned char *pIn,
-	      unsigned char *pOut,
-	      int	     w,
-	      int	     h,
-	      int	     inSize)
+		unsigned char *pOut,
+		int	     w,
+		int	     h,
+		int	     inSize)
 {
 	struct comp_info cinfo;
 	int numpix = w * h;
@@ -1391,10 +1390,10 @@ Decompress400(unsigned char *pIn,
 
 	/* Decompress, skipping the 8-byte SOF header */
 	if (decompress400NoMMXOV518(pIn + 8, pOut, pTmp, w, h, numpix, &cinfo))
-//		return 0;
+		/*		return 0; */
 		; /* Don't return error yet */
 
-	return (numpix);
+	return numpix;
 }
 #endif
 
@@ -1404,7 +1403,7 @@ Decompress400(unsigned char *pIn,
  * Returns uncompressed data length if success, or zero if error
  */
 static int v4lconvert_ov518_to_yuv420(unsigned char *src, unsigned char *dst,
-  int w, int h, int yvu, int inSize)
+		int w, int h, int yvu, int inSize)
 {
 	struct comp_info cinfo;
 	int numpix = w * h;
@@ -1428,50 +1427,50 @@ static int v4lconvert_ov518_to_yuv420(unsigned char *src, unsigned char *dst,
 
 int main(int argc, char *argv[])
 {
-  int width, height, yvu, src_size, dest_size;
-  unsigned char src_buf[200000];
-  unsigned char dest_buf[500000];
+	int width, height, yvu, src_size, dest_size;
+	unsigned char src_buf[200000];
+	unsigned char dest_buf[500000];
 
-  while (1) {
-    if (v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+	while (1) {
+		if (v4lconvert_helper_read(STDIN_FILENO, &width, sizeof(int), argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-    if (v4lconvert_helper_read(STDIN_FILENO, &height, sizeof(int), argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+		if (v4lconvert_helper_read(STDIN_FILENO, &height, sizeof(int), argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-    if (v4lconvert_helper_read(STDIN_FILENO, &yvu, sizeof(int), argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+		if (v4lconvert_helper_read(STDIN_FILENO, &yvu, sizeof(int), argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-    if (v4lconvert_helper_read(STDIN_FILENO, &src_size, sizeof(int), argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+		if (v4lconvert_helper_read(STDIN_FILENO, &src_size, sizeof(int), argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-    if (src_size > sizeof(src_buf)) {
-      fprintf(stderr, "%s: error: src_buf too small, need: %d\n",
-	      argv[0], src_size);
-      return 2;
-    }
+		if (src_size > sizeof(src_buf)) {
+			fprintf(stderr, "%s: error: src_buf too small, need: %d\n",
+					argv[0], src_size);
+			return 2;
+		}
 
-    if (v4lconvert_helper_read(STDIN_FILENO, src_buf, src_size, argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+		if (v4lconvert_helper_read(STDIN_FILENO, src_buf, src_size, argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
 
-    dest_size = width * height * 3 / 2;
-    if (dest_size > sizeof(dest_buf)) {
-      fprintf(stderr, "%s: error: dest_buf too small, need: %d\n",
-	      argv[0], dest_size);
-      dest_size = -1;
-    } else if (v4lconvert_ov518_to_yuv420(src_buf, dest_buf, width, height,
-					  yvu, src_size))
-      dest_size = -1;
+		dest_size = width * height * 3 / 2;
+		if (dest_size > sizeof(dest_buf)) {
+			fprintf(stderr, "%s: error: dest_buf too small, need: %d\n",
+					argv[0], dest_size);
+			dest_size = -1;
+		} else if (v4lconvert_ov518_to_yuv420(src_buf, dest_buf, width, height,
+					yvu, src_size))
+			dest_size = -1;
 
-    if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int),
-				argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
+		if (v4lconvert_helper_write(STDOUT_FILENO, &dest_size, sizeof(int),
+					argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
 
-    if (dest_size == -1)
-      continue;
+		if (dest_size == -1)
+			continue;
 
-    if (v4lconvert_helper_write(STDOUT_FILENO, dest_buf, dest_size, argv[0]))
-      return 1; /* Erm, no way to recover without loosing sync with libv4l */
-  }
+		if (v4lconvert_helper_write(STDOUT_FILENO, dest_buf, dest_size, argv[0]))
+			return 1; /* Erm, no way to recover without loosing sync with libv4l */
+	}
 }
