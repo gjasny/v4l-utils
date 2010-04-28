@@ -73,28 +73,28 @@ typedef off_t __off_t;
 #ifndef CONFIG_SYS_WRAPPER
 
 #define SYS_OPEN(file, oflag, mode) \
-    syscall(SYS_open, (const char *)(file), (int)(oflag), (mode_t)(mode))
+	syscall(SYS_open, (const char *)(file), (int)(oflag), (mode_t)(mode))
 #define SYS_CLOSE(fd) \
-    syscall(SYS_close, (int)(fd))
+	syscall(SYS_close, (int)(fd))
 #define SYS_IOCTL(fd, cmd, arg) \
-    syscall(SYS_ioctl, (int)(fd), (unsigned long)(cmd), (void *)(arg))
+	syscall(SYS_ioctl, (int)(fd), (unsigned long)(cmd), (void *)(arg))
 #define SYS_READ(fd, buf, len) \
-    syscall(SYS_read, (int)(fd), (void *)(buf), (size_t)(len));
+	syscall(SYS_read, (int)(fd), (void *)(buf), (size_t)(len));
 #define SYS_WRITE(fd, buf, len) \
-    syscall(SYS_write, (int)(fd), (void *)(buf), (size_t)(len));
+	syscall(SYS_write, (int)(fd), (void *)(buf), (size_t)(len));
 
 #ifdef __FreeBSD__
 #define SYS_MMAP(addr, len, prot, flags, fd, off) \
-    __syscall(SYS_mmap, (void *)(addr), (size_t)(len), \
-	(int)(prot), (int)(flags), (int)(fd), (__off_t)(off))
+	__syscall(SYS_mmap, (void *)(addr), (size_t)(len), \
+			(int)(prot), (int)(flags), (int)(fd), (__off_t)(off))
 #else
 #define SYS_MMAP(addr, len, prot, flags, fd, off) \
-    syscall(SYS_mmap2, (void *)(addr), (size_t)(len), \
-	(int)(prot), (int)(flags), (int)(fd), (__off_t)((off) >> MMAP2_PAGE_SHIFT))
+	syscall(SYS_mmap2, (void *)(addr), (size_t)(len), \
+			(int)(prot), (int)(flags), (int)(fd), (__off_t)((off) >> MMAP2_PAGE_SHIFT))
 #endif
 
 #define SYS_MUNMAP(addr, len) \
-    syscall(SYS_munmap, (void *)(addr), (size_t)(len))
+	syscall(SYS_munmap, (void *)(addr), (size_t)(len))
 
 #else
 
