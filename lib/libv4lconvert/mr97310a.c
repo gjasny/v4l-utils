@@ -23,12 +23,12 @@
 #include "libv4lconvert-priv.h"
 #include "libv4lsyscall-priv.h"
 
-#define CLIP(x) ((x)<0?0:((x)>0xff)?0xff:(x))
+#define CLIP(x) ((x) < 0 ? 0 : ((x) > 0xff) ? 0xff : (x))
 
 #define MIN_CLOCKDIV_CID V4L2_CID_PRIVATE_BASE
 
 /* FIXME not threadsafe */
-static int decoder_initialized = 0;
+static int decoder_initialized;
 
 static struct {
 	unsigned char is_abs;
@@ -55,11 +55,11 @@ static void init_mr97310a_decoder(void)
 			len = 3;
 		} else if ((i & 0xe0) == 0xa0) {
 			/* code 101 */
-			val = +3;
+			val = 3;
 			len = 3;
 		} else if ((i & 0xf0) == 0x80) {
 			/* code 1000 */
-			val = +8;
+			val = 8;
 			len = 4;
 		} else if ((i & 0xf0) == 0x90) {
 			/* code 1001 */
@@ -71,7 +71,7 @@ static void init_mr97310a_decoder(void)
 			len = 4;
 		} else if ((i & 0xf8) == 0xe0) {
 			/* code 11100 */
-			val = +20;
+			val = 20;
 			len = 5;
 		} else if ((i & 0xf8) == 0xe8) {
 			/* code 11101xxxxx */
@@ -87,16 +87,17 @@ static void init_mr97310a_decoder(void)
 }
 
 static inline unsigned char get_byte(const unsigned char *inp,
-				     unsigned int bitpos)
+		unsigned int bitpos)
 {
 	const unsigned char *addr;
+
 	addr = inp + (bitpos >> 3);
 	return (addr[0] << (bitpos & 7)) | (addr[1] >> (8 - (bitpos & 7)));
 }
 
 int v4lconvert_decode_mr97310a(struct v4lconvert_data *data,
-			       const unsigned char *inp, int src_size,
-			       unsigned char *outp, int width, int height)
+		const unsigned char *inp, int src_size,
+		unsigned char *outp, int width, int height)
 {
 	int row, col;
 	int val;
@@ -148,9 +149,9 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data,
 				val = table[code].val;
 				lp = outp[-2];
 				if (row > 1) {
-					tlp = outp[-2*width-2];
-					tp  = outp[-2*width];
-					trp = outp[-2*width+2];
+					tlp = outp[-2 * width - 2];
+					tp  = outp[-2 * width];
+					trp = outp[-2 * width + 2];
 				}
 				if (row < 2) {
 					/* top row: relative to left pixel */
@@ -158,17 +159,17 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data,
 				} else if (col < 2) {
 					/* left column: relative to top pixel */
 					/* initial estimate */
-					val += (tp + trp)/2;
+					val += (tp + trp) / 2;
 				} else if (col > width - 3) {
 					/* left column: relative to top pixel */
-					val += (tp + lp + tlp + 1)/3;
-				/* main area: weighted average of tlp, trp,
-				 * lp, and tp */
+					val += (tp + lp + tlp + 1) / 3;
+					/* main area: weighted average of tlp, trp,
+					 * lp, and tp */
 				} else {
-					tlp>>=1;
-					trp>>=1;
+					tlp >>= 1;
+					trp >>= 1;
 					/* initial estimate for predictor */
-					val += (lp + tp + tlp + trp + 1)/3;
+					val += (lp + tp + tlp + trp + 1) / 3;
 				}
 			}
 			/* store pixel */
@@ -186,10 +187,10 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data,
 				   fail to do this because older
 				   drivers don't support this */
 				SYS_IOCTL(data->fd, VIDIOC_G_CTRL,
-					  &min_clockdiv);
+						&min_clockdiv);
 				min_clockdiv.value++;
 				SYS_IOCTL(data->fd, VIDIOC_S_CTRL,
-					  &min_clockdiv);
+						&min_clockdiv);
 				/* We return success here, because if we
 				   return failure for too many frames in a row
 				   libv4l2 will return an error to the
