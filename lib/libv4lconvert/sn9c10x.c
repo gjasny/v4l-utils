@@ -19,34 +19,34 @@
 # Note this code was originally licensed under the GNU GPL instead of the
 # GNU LGPL, its license has been changed with permission, see the permission
 # mail at the end of this file.
-*/
+ */
 
 #include "libv4lconvert-priv.h"
 
-#define CLAMP(x)	((x)<0?0:((x)>255)?255:(x))
+#define CLAMP(x)	((x) < 0 ? 0 : ((x) > 255) ? 255 : (x))
 
-typedef struct {
+struct code_table {
 	int is_abs;
 	int len;
 	int val;
 	int unk;
-} code_table_t;
+};
 
 
 /* local storage */
 /* FIXME not thread safe !! */
-static code_table_t table[256];
-static int init_done = 0;
+static struct code_table table[256];
+static int init_done;
 
 /*
-	sonix_decompress_init
-	=====================
-		pre-calculates a locally stored table for efficient huffman-decoding.
+   sonix_decompress_init
+   =====================
+   pre-calculates a locally stored table for efficient huffman-decoding.
 
-	Each entry at index x in the table represents the codeword
-	present at the MSB of byte x.
+   Each entry at index x in the table represents the codeword
+   present at the MSB of byte x.
 
-*/
+ */
 static void sonix_decompress_init(void)
 {
 	int i;
@@ -61,44 +61,36 @@ static void sonix_decompress_init(void)
 			/* code 0 */
 			val = 0;
 			len = 1;
-		}
-		else if ((i & 0xE0) == 0x80) {
+		} else if ((i & 0xE0) == 0x80) {
 			/* code 100 */
-			val = +4;
+			val = 4;
 			len = 3;
-		}
-		else if ((i & 0xE0) == 0xA0) {
+		} else if ((i & 0xE0) == 0xA0) {
 			/* code 101 */
 			val = -4;
 			len = 3;
-		}
-		else if ((i & 0xF0) == 0xD0) {
+		} else if ((i & 0xF0) == 0xD0) {
 			/* code 1101 */
-			val = +11;
+			val = 11;
 			len = 4;
-		}
-		else if ((i & 0xF0) == 0xF0) {
+		} else if ((i & 0xF0) == 0xF0) {
 			/* code 1111 */
 			val = -11;
 			len = 4;
-		}
-		else if ((i & 0xF8) == 0xC8) {
+		} else if ((i & 0xF8) == 0xC8) {
 			/* code 11001 */
-			val = +20;
+			val = 20;
 			len = 5;
-		}
-		else if ((i & 0xFC) == 0xC0) {
+		} else if ((i & 0xFC) == 0xC0) {
 			/* code 110000 */
 			val = -20;
 			len = 6;
-		}
-		else if ((i & 0xFC) == 0xC4) {
+		} else if ((i & 0xFC) == 0xC4) {
 			/* code 110001xx: unknown */
 			val = 0;
 			len = 8;
 			unk = 1;
-		}
-		else if ((i & 0xF0) == 0xE0) {
+		} else if ((i & 0xF0) == 0xE0) {
 			/* code 1110xxxx */
 			is_abs = 1;
 			val = (i & 0x0F) << 4;
@@ -115,21 +107,21 @@ static void sonix_decompress_init(void)
 
 
 /*
-	sonix_decompress
-	================
-		decompresses an image encoded by a SN9C101 camera controller chip.
+   sonix_decompress
+   ================
+   decompresses an image encoded by a SN9C101 camera controller chip.
 
-	IN	width
-		height
-		inp		pointer to compressed frame (with header already stripped)
-	OUT	outp	pointer to decompressed frame
+   IN	width
+   height
+   inp		pointer to compressed frame (with header already stripped)
+   OUT	outp	pointer to decompressed frame
 
-	Returns 0 if the operation was successful.
-	Returns <0 if operation failed.
+   Returns 0 if the operation was successful.
+   Returns <0 if operation failed.
 
-*/
+ */
 void v4lconvert_decode_sn9c10x(const unsigned char *inp, unsigned char *outp,
-	int width, int height)
+		int width, int height)
 {
 	int row, col;
 	int val;
@@ -142,7 +134,6 @@ void v4lconvert_decode_sn9c10x(const unsigned char *inp, unsigned char *outp,
 
 	bitpos = 0;
 	for (row = 0; row < height; row++) {
-
 		col = 0;
 
 		/* first two pixels in first two rows are stored as raw 8-bit */
@@ -179,15 +170,13 @@ void v4lconvert_decode_sn9c10x(const unsigned char *inp, unsigned char *outp,
 				/* value is relative to top and left pixel */
 				if (col < 2) {
 					/* left column: relative to top pixel */
-					val += outp[-2*width];
-				}
-				else if (row < 2) {
+					val += outp[-2 * width];
+				} else if (row < 2) {
 					/* top row: relative to left pixel */
 					val += outp[-2];
-				}
-				else {
+				} else {
 					/* main area: average of left pixel and top pixel */
-					val += (outp[-2] + outp[-2*width]) / 2;
+					val += (outp[-2] + outp[-2 * width]) / 2;
 				}
 			}
 
@@ -199,26 +188,26 @@ void v4lconvert_decode_sn9c10x(const unsigned char *inp, unsigned char *outp,
 }
 
 /*
-Return-Path: <bertrik@sikken.nl>
+   Return-Path: <bertrik@sikken.nl>
 Received: from koko.hhs.nl ([145.52.2.16] verified)
-  by hhs.nl (CommuniGate Pro SMTP 4.3.6)
-  with ESMTP id 89132066 for j.w.r.degoede@hhs.nl; Thu, 03 Jul 2008 15:19:55 +0200
+by hhs.nl (CommuniGate Pro SMTP 4.3.6)
+with ESMTP id 89132066 for j.w.r.degoede@hhs.nl; Thu, 03 Jul 2008 15:19:55 +0200
 Received: from exim (helo=koko)
-	by koko.hhs.nl with local-smtp (Exim 4.62)
-	(envelope-from <bertrik@sikken.nl>)
-	id 1KEOj5-0000nq-KR
-	for j.w.r.degoede@hhs.nl; Thu, 03 Jul 2008 15:19:55 +0200
+by koko.hhs.nl with local-smtp (Exim 4.62)
+(envelope-from <bertrik@sikken.nl>)
+id 1KEOj5-0000nq-KR
+for j.w.r.degoede@hhs.nl; Thu, 03 Jul 2008 15:19:55 +0200
 Received: from [192.87.102.69] (port=33783 helo=filter1-ams.mf.surf.net)
-	by koko.hhs.nl with esmtp (Exim 4.62)
-	(envelope-from <bertrik@sikken.nl>)
-	id 1KEOj5-0000nj-7r
-	for j.w.r.degoede@hhs.nl; Thu, 03 Jul 2008 15:19:55 +0200
+by koko.hhs.nl with esmtp (Exim 4.62)
+(envelope-from <bertrik@sikken.nl>)
+id 1KEOj5-0000nj-7r
+for j.w.r.degoede@hhs.nl; Thu, 03 Jul 2008 15:19:55 +0200
 Received: from cardassian.kabelfoon.nl (cardassian3.kabelfoon.nl [62.45.45.105])
-	by filter1-ams.mf.surf.net (8.13.8/8.13.8/Debian-3) with ESMTP id m63DJsKW032598
-	for <j.w.r.degoede@hhs.nl>; Thu, 3 Jul 2008 15:19:54 +0200
+by filter1-ams.mf.surf.net (8.13.8/8.13.8/Debian-3) with ESMTP id m63DJsKW032598
+for <j.w.r.degoede@hhs.nl>; Thu, 3 Jul 2008 15:19:54 +0200
 Received: from [192.168.1.1] (044-013-045-062.dynamic.caiway.nl [62.45.13.44])
-	by cardassian.kabelfoon.nl (Postfix) with ESMTP id 77761341D9A
-	for <j.w.r.degoede@hhs.nl>; Thu,  3 Jul 2008 15:19:54 +0200 (CEST)
+by cardassian.kabelfoon.nl (Postfix) with ESMTP id 77761341D9A
+for <j.w.r.degoede@hhs.nl>; Thu,  3 Jul 2008 15:19:54 +0200 (CEST)
 Message-ID: <486CD1F9.8000307@sikken.nl>
 Date: Thu, 03 Jul 2008 15:19:53 +0200
 From: Bertrik Sikken <bertrik@sikken.nl>
@@ -273,13 +262,13 @@ I hereby grant you permission to relicense the sn9c10x bayer
 decompression code under the LGPL (version 2 or later).
 
 Kind regards,
-Bertrik
------BEGIN PGP SIGNATURE-----
+     Bertrik
+	-----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.7 (MingW32)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
+	Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
 
-iD8DBQFIbNH5ETD6mlrWxPURAipvAJ9sv1ZpHyb81NMFejr6x0wqHX3i7QCfRDoB
-jZi2e5lUjEh5KvS0dqXbi9I=
-=KQfR
------END PGP SIGNATURE-----
-*/
+	iD8DBQFIbNH5ETD6mlrWxPURAipvAJ9sv1ZpHyb81NMFejr6x0wqHX3i7QCfRDoB
+	jZi2e5lUjEh5KvS0dqXbi9I=
+	=KQfR
+	-----END PGP SIGNATURE-----
+	*/
