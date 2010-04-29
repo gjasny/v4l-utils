@@ -142,6 +142,8 @@ enum Option {
 	OptGetOutputParm,
 	OptSetOutputParm,
 	OptQueryStandard,
+	OptPollForEvent,
+	OptWaitForEvent,
 	OptLast = 256
 };
 
@@ -278,6 +280,8 @@ static struct option long_options[] = {
 	{"set-jpeg-comp", required_argument, 0, OptSetJpegComp},
 	{"get-modulator", no_argument, 0, OptGetModulator},
 	{"set-modulator", required_argument, 0, OptSetModulator},
+	{"wait-for-event", required_argument, 0, OptWaitForEvent},
+	{"poll-for-event", required_argument, 0, OptPollForEvent},
 	{"overlay", required_argument, 0, OptOverlay},
 	{"list-devices", no_argument, 0, OptListDevices},
 	{0, 0, 0, 0}
@@ -453,6 +457,13 @@ static void usage(void)
 	       "  --get-output-parm  display output video parameters [VIDIOC_G_PARM]\n"
 	       "  --set-output-parm=<fps>\n"
 	       "                     set output video framerate in <fps> [VIDIOC_S_PARM]\n"
+	       "  --wait-for-event=<event>\n"
+	       "                     wait for an event [VIDIOC_DQEVENT]\n"
+	       "                     <event> is the event number or one of:\n"
+	       "                     eos, vsync\n"
+	       "  --poll-for-event=<event>\n"
+	       "                     poll for an event [VIDIOC_DQEVENT]\n"
+	       "                     see --wait-for-event for possible events\n"
 	       "\n");
 	printf("Expert options:\n"
 	       "  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n"
@@ -1130,32 +1141,6 @@ static void print_video_formats_ext(int fd, enum v4l2_buf_type type)
 	}
 }
 
-static char *pts_to_string(char *str, unsigned long pts)
-{
-	static char buf[256];
-	int hours, minutes, seconds, fracsec;
-	float fps;
-	int frame;
-	char *p = (str) ? str : buf;
-
-	static const int MPEG_CLOCK_FREQ = 90000;
-	seconds = pts / MPEG_CLOCK_FREQ;
-	fracsec = pts % MPEG_CLOCK_FREQ;
-
-	minutes = seconds / 60;
-	seconds = seconds % 60;
-
-	hours = minutes / 60;
-	minutes = minutes % 60;
-
-	fps = 30;
-	frame = (int)ceilf(((float)fracsec / (float)MPEG_CLOCK_FREQ) * fps);
-
-	snprintf(p, sizeof(buf), "%d:%02d:%02d:%d", hours, minutes, seconds,
-		 frame);
-	return p;
-}
-
 static const char *audmode2s(int audmode)
 {
 	switch (audmode) {
@@ -1657,6 +1642,45 @@ static enum v4l2_field parse_field(const char *s)
 	return V4L2_FIELD_ANY;
 }
 
+static void print_event(const struct v4l2_event *ev)
+{
+	printf("%ld.%06ld: event %u, pending %u: ",
+			ev->timestamp.tv_sec, ev->timestamp.tv_nsec / 1000,
+			ev->sequence, ev->pending);
+	switch (ev->type) {
+	case V4L2_EVENT_VSYNC:
+		printf("vsync %s\n", field2s(ev->u.vsync.field).c_str());
+		break;
+	case V4L2_EVENT_EOS:
+		printf("eos\n");
+		break;
+	default:
+		if (ev->type >= V4L2_EVENT_PRIVATE_START)
+			printf("unknown private event (%08x)\n", ev->type);
+		else
+			printf("unknown event (%08x)\n", ev->type);
+		break;
+	}
+}
+
+static __u32 parse_event(const char *e)
+{
+	__u32 event = 0;
+
+	if (isdigit(e[0]))
+		event = strtoul(e, 0L, 0);
+	else if (!strcmp(e, "eos"))
+		event = V4L2_EVENT_EOS;
+	else if (!strcmp(e, "vsync"))
+		event = V4L2_EVENT_VSYNC;
+
+	if (event == 0) {
+		fprintf(stderr, "Unknown event\n");
+		usage();
+	}
+	return event;
+}
+
 static __u32 find_pixel_format(int fd, unsigned index)
 {
 	struct v4l2_fmtdesc fmt;
@@ -1727,6 +1751,8 @@ int main(int argc, char **argv)
 	int overlay;			/* overlay */
 	unsigned int *set_overlay_fmt_ptr = NULL;
 	struct v4l2_format *overlay_fmt_ptr = NULL;
+	__u32 wait_for_event = 0;	/* wait for this event */
+	__u32 poll_for_event = 0;	/* poll for this event */
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
 	int ret;
@@ -2204,6 +2230,16 @@ int main(int argc, char **argv)
 			}
 			break;
 		}
+		case OptWaitForEvent:
+			wait_for_event = parse_event(optarg);
+			if (wait_for_event == 0)
+				return 1;
+			break;
+		case OptPollForEvent:
+			poll_for_event = parse_event(optarg);
+			if (poll_for_event == 0)
+				return 1;
+			break;
 		case OptListDevices:
 			list_devices();
 			break;
@@ -2436,7 +2472,6 @@ int main(int argc, char **argv)
 				printfmt(in_vfmt);
 		}
 	}
-set_vid_fmt_error:
 
 	if (options[OptSetVideoOutFormat] || options[OptTryVideoOutFormat]) {
 		struct v4l2_format in_vfmt;
@@ -3139,6 +3174,40 @@ set_vid_fmt_error:
 	if (options[OptStreamOn]) {
 		int dummy = 0;
 		doioctl(fd, VIDIOC_STREAMON, &dummy, "VIDIOC_STREAMON");
+	}
+
+	if (options[OptWaitForEvent]) {
+		struct v4l2_event_subscription sub = { wait_for_event };
+		struct v4l2_event ev;
+
+		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub, "VIDIOC_SUBSCRIBE_EVENT")) {
+			if (!doioctl(fd, VIDIOC_DQEVENT, &ev, "VIDIOC_DQEVENT")) {
+				print_event(&ev);
+			}
+		}
+	}
+
+	if (options[OptPollForEvent]) {
+		struct v4l2_event_subscription sub = { poll_for_event };
+		struct v4l2_event ev;
+
+		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub, "VIDIOC_SUBSCRIBE_EVENT")) {
+			fd_set fds;
+
+			fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+			while (1) {
+				int res;
+
+				FD_ZERO(&fds);
+				FD_SET(fd, &fds);
+				res = select(fd + 1, NULL, NULL, &fds, NULL);
+				if (res <= 0)
+					break;
+				if (!doioctl(fd, VIDIOC_DQEVENT, &ev, "VIDIOC_DQEVENT")) {
+					print_event(&ev);
+				}
+			}
+		}
 	}
 
 	close(fd);
