@@ -324,6 +324,7 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 	if (result < 0 && errno == EAGAIN) {
 		V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s",
 				max_tries, v4lconvert_get_error_message(devices[index].convert));
+		errno = EAGAIN;
 	}
 
 	return result;
@@ -1189,6 +1190,7 @@ int v4l2_ioctl(int fd, unsigned long int request, ...)
 ssize_t v4l2_read(int fd, void *dest, size_t n)
 {
 	ssize_t result;
+	int saved_errno;
 	int index = v4l2_get_index(fd);
 
 	if (index == -1)
@@ -1237,7 +1239,9 @@ ssize_t v4l2_read(int fd, void *dest, size_t n)
 	}
 
 leave:
+	saved_errno = errno;
 	pthread_mutex_unlock(&devices[index].stream_lock);
+	errno = saved_errno;
 
 	return result;
 }
