@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+ */
 
 #ifndef __LIBV4LCONTROL_H
 #define __LIBV4LCONTROL_H
@@ -34,20 +34,20 @@
 
 /* Controls */
 enum {
-  V4LCONTROL_WHITEBALANCE,
-  V4LCONTROL_HFLIP,
-  V4LCONTROL_VFLIP,
-  V4LCONTROL_GAMMA,
-  /* All fake controls above here are auto enabled when not present in hw */
-  V4LCONTROL_AUTO_ENABLE_COUNT,
-  V4LCONTROL_AUTOGAIN,
-  V4LCONTROL_AUTOGAIN_TARGET,
-  V4LCONTROL_COUNT
-  };
+	V4LCONTROL_WHITEBALANCE,
+	V4LCONTROL_HFLIP,
+	V4LCONTROL_VFLIP,
+	V4LCONTROL_GAMMA,
+	/* All fake controls above here are auto enabled when not present in hw */
+	V4LCONTROL_AUTO_ENABLE_COUNT,
+	V4LCONTROL_AUTOGAIN,
+	V4LCONTROL_AUTOGAIN_TARGET,
+	V4LCONTROL_COUNT
+};
 
 struct v4lcontrol_data;
 
-struct v4lcontrol_data* v4lcontrol_create(int fd, int always_needs_conversion);
+struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion);
 void v4lcontrol_destroy(struct v4lcontrol_data *data);
 
 /* Functions used by v4lprocessing to get the control state */
