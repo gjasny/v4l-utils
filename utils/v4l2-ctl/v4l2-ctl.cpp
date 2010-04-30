@@ -144,6 +144,10 @@ enum Option {
 	OptQueryStandard,
 	OptPollForEvent,
 	OptWaitForEvent,
+	OptListDvPresets,
+	OptSetDvPreset,
+	OptGetDvPreset,
+	OptQueryDvPreset,
 	OptLast = 256
 };
 
@@ -284,6 +288,10 @@ static struct option long_options[] = {
 	{"poll-for-event", required_argument, 0, OptPollForEvent},
 	{"overlay", required_argument, 0, OptOverlay},
 	{"list-devices", no_argument, 0, OptListDevices},
+	{"list-dv-presets", no_argument, 0, OptListDvPresets},
+	{"set-dv-presets", required_argument, 0, OptSetDvPreset},
+	{"get-dv-presets", no_argument, 0, OptGetDvPreset},
+	{"query-dv-presets", no_argument, 0, OptQueryDvPreset},
 	{0, 0, 0, 0}
 };
 
@@ -324,7 +332,7 @@ static void usage(void)
 	       "                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n"
 	       "  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n"
 	       "  --get-detected-standard\n"
-	       "                     display video detected input video standard [VIDIOC_QUERYSTD]\n"
+	       "                     display detected input video standard [VIDIOC_QUERYSTD]\n"
 	       "  -P, --get-parm     display video parameters [VIDIOC_G_PARM]\n"
 	       "  -p, --set-parm=<fps>\n"
 	       "                     set video framerate in <fps> [VIDIOC_S_PARM]\n"
@@ -464,6 +472,11 @@ static void usage(void)
 	       "  --poll-for-event=<event>\n"
 	       "                     poll for an event [VIDIOC_DQEVENT]\n"
 	       "                     see --wait-for-event for possible events\n"
+	       "  --list-dv-presets  list supported digital video presets [VIDIOC_ENUM_DV_PRESETS]\n"
+	       "  --set-dv-preset=<num>\n"
+	       "                     set the digital video preset to <num> [VIDIOC_S_DV_PRESET]\n"
+	       "  --get-dv-preset    query the digital video preset in use [VIDIOC_G_DV_PRESET]\n"
+	       "  --query-dv-preset  query the detected digital video preset [VIDIOC_QUERY_DV_PRESET]\n"
 	       "\n");
 	printf("Expert options:\n"
 	       "  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n"
@@ -575,14 +588,14 @@ static std::string flags2s(unsigned val, const flag_def *def)
 
 	while (def->flag) {
 		if (val & def->flag) {
-			if (s.length()) s += " ";
+			if (s.length()) s += ", ";
 			s += def->str;
 			val &= ~def->flag;
 		}
 		def++;
 	}
 	if (val) {
-		if (s.length()) s += " ";
+		if (s.length()) s += ", ";
 		s += num2s(val);
 	}
 	return s;
@@ -610,6 +623,30 @@ static std::string status2s(__u32 status)
 	return status ? flags2s(status, in_status_def) : "ok";
 }
 
+
+static const flag_def input_cap_def[] = {
+	{V4L2_IN_CAP_PRESETS, "DV presets" },
+	{V4L2_IN_CAP_CUSTOM_TIMINGS, "custom DV timings" },
+	{V4L2_IN_CAP_STD, "SD presets" },
+	{ 0, NULL }
+};
+
+static std::string input_cap2s(__u32 capabilities)
+{
+	return capabilities ? flags2s(capabilities, input_cap_def) : "not defined";
+}
+
+static const flag_def output_cap_def[] = {
+	{V4L2_OUT_CAP_PRESETS, "DV presets" },
+	{V4L2_OUT_CAP_CUSTOM_TIMINGS, "custom DV timings" },
+	{V4L2_OUT_CAP_STD, "SD presets" },
+	{ 0, NULL }
+};
+
+static std::string output_cap2s(__u32 capabilities)
+{
+	return capabilities ? flags2s(capabilities, output_cap_def) : "not defined";
+}
 
 static void print_sliced_vbi_cap(struct v4l2_sliced_vbi_cap &cap)
 {
@@ -1739,6 +1776,8 @@ int main(int argc, char **argv)
 	struct v4l2_framebuffer fbuf;   /* fbuf */
 	struct v4l2_jpegcompression jpegcomp; /* jpeg compression */
 	struct v4l2_streamparm parm;	/* get/set parm */
+	struct v4l2_dv_enum_preset dv_enum_preset; /* list_dv_preset */
+	struct v4l2_dv_preset dv_preset; /* set_dv_preset/get_dv_preset/query_dv_preset */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
 	int txsubchans = 0;		/* set_modulator */
@@ -1782,6 +1821,8 @@ int main(int argc, char **argv)
 	memset(&vs, 0, sizeof(vs));
 	memset(&fbuf, 0, sizeof(fbuf));
 	memset(&jpegcomp, 0, sizeof(jpegcomp));
+	memset(&dv_preset, 0, sizeof(dv_preset));
+	memset(&dv_enum_preset, 0, sizeof(dv_enum_preset));
 
 	if (argc == 1) {
 		usage();
@@ -2243,6 +2284,9 @@ int main(int argc, char **argv)
 		case OptListDevices:
 			list_devices();
 			break;
+		case OptSetDvPreset:
+			dv_preset.preset = atoi(optarg);
+			break;
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",
 				argv[optind]);
@@ -2312,6 +2356,7 @@ int main(int argc, char **argv)
 		options[OptGetCropCap] = 1;
 		options[OptGetOutputCropCap] = 1;
 		options[OptGetJpegComp] = 1;
+		options[OptGetDvPreset] = 1;
 		options[OptSilent] = 1;
 	}
 
@@ -2366,6 +2411,11 @@ int main(int argc, char **argv)
 			printf("Standard set to %08llx\n", (unsigned long long)std);
 	}
 
+        if (options[OptSetDvPreset]){
+		if (doioctl(fd, VIDIOC_S_DV_PRESET, &dv_preset, "VIDIOC_S_DV_PRESET") >= 0) {
+			printf("Preset set: %d\n", dv_preset.preset);
+		}
+	}
 
 	if (options[OptSetParm]) {
 		memset(&parm, 0, sizeof(parm));
@@ -2860,14 +2910,29 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (options[OptQueryStandard]) {
+	if (options[OptGetDvPreset]) {
+		if (doioctl(fd, VIDIOC_G_DV_PRESET, &dv_preset, "VIDIOC_G_DV_PRESET") >= 0) {
+			printf("Preset: %d\n", dv_preset.preset);
+		}
+	}
+
+        if (options[OptQueryStandard]) {
 		if (doioctl(fd, VIDIOC_QUERYSTD, &std, "VIDIOC_QUERYSTD") == 0) {
 			printf("Video Standard = 0x%08llx\n", (unsigned long long)std);
 			print_v4lstd((unsigned long long)std);
 		}
 	}
 
-	if (options[OptGetParm]) {
+        if (options[OptQueryDvPreset]) {
+                doioctl(fd, VIDIOC_QUERY_DV_PRESET, &dv_preset, "VIDIOC_QUERY_DV_PRESET");
+                if (dv_preset.preset != V4L2_DV_INVALID) {
+                        printf("Preset: %d\n", dv_preset.preset);
+                } else {
+                        fprintf(stderr, "No active input detected\n");
+                }
+        }
+
+        if (options[OptGetParm]) {
 		memset(&parm, 0, sizeof(parm));
 		parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		if (doioctl(fd, VIDIOC_G_PARM, &parm, "VIDIOC_G_PARM") == 0) {
@@ -3038,16 +3103,17 @@ int main(int argc, char **argv)
 		while (ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0) {
 			if (vin.index)
 				printf("\n");
-			printf("\tInput   : %d\n", vin.index);
-			printf("\tName    : %s\n", vin.name);
-			printf("\tType    : 0x%08X\n", vin.type);
-			printf("\tAudioset: 0x%08X\n", vin.audioset);
-			printf("\tTuner   : 0x%08X\n", vin.tuner);
-			printf("\tStandard: 0x%016llX (%s)\n", (unsigned long long)vin.std,
+			printf("\tInput       : %d\n", vin.index);
+			printf("\tName        : %s\n", vin.name);
+			printf("\tType        : 0x%08X\n", vin.type);
+			printf("\tAudioset    : 0x%08X\n", vin.audioset);
+			printf("\tTuner       : 0x%08X\n", vin.tuner);
+			printf("\tStandard    : 0x%016llX (%s)\n", (unsigned long long)vin.std,
 				std2s(vin.std).c_str());
-			printf("\tStatus  : 0x%08X (%s)\n", vin.status, status2s(vin.status).c_str());
-			vin.index++;
-		}
+			printf("\tStatus      : 0x%08X (%s)\n", vin.status, status2s(vin.status).c_str());
+			printf("\tCapabilities: 0x%08X (%s)\n", vin.capabilities, input_cap2s(vin.capabilities).c_str());
+                        vin.index++;
+                }
 	}
 
 	if (options[OptListOutputs]) {
@@ -3056,12 +3122,13 @@ int main(int argc, char **argv)
 		while (ioctl(fd, VIDIOC_ENUMOUTPUT, &vout) >= 0) {
 			if (vout.index)
 				printf("\n");
-			printf("\tOutput  : %d\n", vout.index);
-			printf("\tName    : %s\n", vout.name);
-			printf("\tType    : 0x%08X\n", vout.type);
-			printf("\tAudioset: 0x%08X\n", vout.audioset);
-			printf("\tStandard: 0x%016llX (%s)\n", (unsigned long long)vout.std,
+			printf("\tOutput      : %d\n", vout.index);
+			printf("\tName        : %s\n", vout.name);
+			printf("\tType        : 0x%08X\n", vout.type);
+			printf("\tAudioset    : 0x%08X\n", vout.audioset);
+			printf("\tStandard    : 0x%016llX (%s)\n", (unsigned long long)vout.std,
 					std2s(vout.std).c_str());
+			printf("\tCapabilities: 0x%08X (%s)\n", vout.capabilities, output_cap2s(vout.capabilities).c_str());
 			vout.index++;
 		}
 	}
@@ -3171,6 +3238,20 @@ int main(int argc, char **argv)
 		list_controls(fd, 0);
 	}
 
+	if (options[OptListDvPresets]) {
+		dv_enum_preset.index = 0;
+		printf("ioctl: VIDIOC_ENUM_FRAMEINTERVALS\n");
+		while (ioctl(fd, VIDIOC_ENUM_DV_PRESETS, &dv_enum_preset) >= 0) {
+			if (dv_enum_preset.index)
+				printf("\n");
+			printf("\tIndex   : %d\n", dv_enum_preset.index);
+			printf("\tPreset  : %d\n", dv_enum_preset.preset);
+			printf("\tName    : %s\n", dv_enum_preset.name);
+			printf("\tWidth   : %d\n", dv_enum_preset.width);
+			printf("\tHeight  : %d\n", dv_enum_preset.height);
+			dv_enum_preset.index++;
+		}
+	}
 	if (options[OptStreamOn]) {
 		int dummy = 0;
 		doioctl(fd, VIDIOC_STREAMON, &dummy, "VIDIOC_STREAMON");
