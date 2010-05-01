@@ -134,6 +134,7 @@ enum Option {
 	OptGetOverlayCropCap,
 	OptGetOutputOverlayCropCap,
 	OptOverlay,
+	OptSleep,
 	OptGetJpegComp,
 	OptSetJpegComp,
 	OptGetModulator,
@@ -144,6 +145,8 @@ enum Option {
 	OptQueryStandard,
 	OptPollForEvent,
 	OptWaitForEvent,
+	OptGetPriority,
+	OptSetPriority,
 	OptListDvPresets,
 	OptSetDvPreset,
 	OptGetDvPreset,
@@ -284,9 +287,12 @@ static struct option long_options[] = {
 	{"set-jpeg-comp", required_argument, 0, OptSetJpegComp},
 	{"get-modulator", no_argument, 0, OptGetModulator},
 	{"set-modulator", required_argument, 0, OptSetModulator},
+	{"get-priority", no_argument, 0, OptGetPriority},
+	{"set-priority", required_argument, 0, OptSetPriority},
 	{"wait-for-event", required_argument, 0, OptWaitForEvent},
 	{"poll-for-event", required_argument, 0, OptPollForEvent},
 	{"overlay", required_argument, 0, OptOverlay},
+	{"sleep", required_argument, 0, OptSleep},
 	{"list-devices", no_argument, 0, OptListDevices},
 	{"list-dv-presets", no_argument, 0, OptListDvPresets},
 	{"set-dv-presets", required_argument, 0, OptSetDvPreset},
@@ -462,6 +468,10 @@ static void usage(void)
 	       "                     bilingual:	 Modulate as bilingual\n"
 	       "                     mono-sap:	 Modulate as mono with Second Audio Program\n"
 	       "                     stereo-sap: Modulate as stereo with Second Audio Program\n"
+	       "  --get-priority     query the current access priority [VIDIOC_G_PRIORITY]\n"
+	       "  --set-priority=<prio>\n"
+	       "                     set the new access priority [VIDIOC_S_PRIORITY]\n"
+	       "                     <prio> is 1 (background), 2 (interactive) or 3 (record)\n"
 	       "  --get-output-parm  display output video parameters [VIDIOC_G_PARM]\n"
 	       "  --set-output-parm=<fps>\n"
 	       "                     set output video framerate in <fps> [VIDIOC_S_PARM]\n"
@@ -477,10 +487,9 @@ static void usage(void)
 	       "                     set the digital video preset to <num> [VIDIOC_S_DV_PRESET]\n"
 	       "  --get-dv-preset    query the digital video preset in use [VIDIOC_G_DV_PRESET]\n"
 	       "  --query-dv-preset  query the detected digital video preset [VIDIOC_QUERY_DV_PRESET]\n"
-	       "\n");
-	printf("Expert options:\n"
+	       "  --sleep=<secs>     sleep for <secs> seconds before closing the file handle\n"
 	       "  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n"
-	       "  --streamon         turn the stream on [VIDIOC_STREAMOFF]\n"
+	       "  --streamon         turn the stream on [VIDIOC_STREAMON]\n"
 	       "  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n");
 	exit(0);
 }
@@ -1792,6 +1801,8 @@ int main(int argc, char **argv)
 	struct v4l2_format *overlay_fmt_ptr = NULL;
 	__u32 wait_for_event = 0;	/* wait for this event */
 	__u32 poll_for_event = 0;	/* poll for this event */
+	unsigned secs = 0;
+	enum v4l2_priority prio = V4L2_PRIORITY_UNSET;
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
 	int ret;
@@ -2271,6 +2282,12 @@ int main(int argc, char **argv)
 			}
 			break;
 		}
+		case OptSleep:
+			secs = strtoul(optarg, 0L, 0);
+			break;
+		case OptSetPriority:
+			prio = (enum v4l2_priority)strtoul(optarg, 0L, 0);
+			break;
 		case OptWaitForEvent:
 			wait_for_event = parse_event(optarg);
 			if (wait_for_event == 0)
@@ -2285,7 +2302,7 @@ int main(int argc, char **argv)
 			list_devices();
 			break;
 		case OptSetDvPreset:
-			dv_preset.preset = atoi(optarg);
+			dv_preset.preset = strtoul(optarg, 0L, 0);
 			break;
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",
@@ -2357,6 +2374,7 @@ int main(int argc, char **argv)
 		options[OptGetOutputCropCap] = 1;
 		options[OptGetJpegComp] = 1;
 		options[OptGetDvPreset] = 1;
+		options[OptGetPriority] = 1;
 		options[OptSilent] = 1;
 	}
 
@@ -2377,6 +2395,12 @@ int main(int argc, char **argv)
 	if (options[OptStreamOff]) {
 		int dummy = 0;
 		doioctl(fd, VIDIOC_STREAMOFF, &dummy, "VIDIOC_STREAMOFF");
+	}
+
+	if (options[OptSetPriority]) {
+		if (doioctl(fd, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY") >= 0) {
+			printf("Priority set: %d\n", prio);
+		}
 	}
 
 	if (options[OptSetFreq]) {
@@ -3068,6 +3092,11 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (options[OptGetPriority]) {
+		if (doioctl(fd, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY") == 0)
+			printf("Priority: %d\n", prio);
+	}
+
 	if (options[OptLogStatus]) {
 		static char buf[40960];
 		int len;
@@ -3290,6 +3319,9 @@ int main(int argc, char **argv)
 			}
 		}
 	}
+
+	if (options[OptSleep])
+		sleep(secs);
 
 	close(fd);
 	exit(app_result);
