@@ -823,7 +823,7 @@ int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
 		/* If the hardware has no more controls check if we still have any
 		   fake controls with a higher id then the hardware's highest */
 		if (retval)
-			ctrl->id = V4L2_CTRL_FLAG_NEXT_CTRL;
+			ctrl->id = V4L2_CTRL_ID_MASK;
 
 		/* If any of our controls have an id > orig_id but less than
 		   ctrl->id then return that control instead. Note we do not
