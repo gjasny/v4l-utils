@@ -102,6 +102,8 @@ void ApplicationWindow::addTabs()
 	}
 
 	for (ClassMap::iterator iter = m_classMap.begin(); iter != m_classMap.end(); ++iter) {
+		if (iter->second.size() == 0)
+			continue;
 		ctrl_class = V4L2_CTRL_ID2CLASS(iter->second[0]);
 		id = ctrl_class | 1;
 		m_col = m_row = 0;
