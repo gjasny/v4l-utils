@@ -162,12 +162,22 @@ std::string cap2s(unsigned cap)
 
 const char *ok(int res)
 {
+	static char buf[100];
+
+	if (res == ENOSYS) {
+		strcpy(buf, "Not Supported");
+		res = 0;
+	} else {
+		strcpy(buf, "OK");
+	}
 	tests_total++;
-	if (res)
+	if (res) {
 		app_result = res;
-	else
+		sprintf(buf, "FAIL (%d)\n", res);
+	} else {
 		tests_ok++;
-	return res ? "FAIL" : "OK";
+	}
+	return buf;
 }
 
 int check_string(const char *s, size_t len, const char *fld)
@@ -180,7 +190,7 @@ int check_string(const char *s, size_t len, const char *fld)
 	if (strlen(s) >= len) {
 		if (verbose)
 			printf("%s field not 0-terminated\n", fld);
-		return -1;
+		return -2;
 	}
 	return 0;
 }
@@ -211,18 +221,66 @@ static int testCap(int fd)
 	if (doioctl(fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP"))
 		return -1;
 	if (check_ustring(vcap.driver, sizeof(vcap.driver), "driver"))
-		return -1;
+		return -2;
 	if (check_ustring(vcap.card, sizeof(vcap.card), "card"))
-		return -1;
+		return -3;
 	if (check_ustring(vcap.bus_info, sizeof(vcap.bus_info), "bus_info"))
-		return -1;
+		return -4;
 	if (check_0(vcap.reserved, sizeof(vcap.reserved)))
-		return -1;
+		return -5;
 	caps = vcap.capabilities;
 	if (caps == 0) {
 		if (verbose) printf("no capabilities set\n");
-		return -1;
+		return -6;
 	}
+	return 0;
+}
+
+static int check_prio(int fd, int fd2, enum v4l2_priority match)
+{
+	enum v4l2_priority prio;
+
+	if (doioctl(fd, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY"))
+		return -1;
+	if (prio != match) {
+		if (verbose) printf("wrong priority returned (%d, expected %d)\n", prio, match);
+		return -2;
+	}
+	if (doioctl(fd2, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY"))
+		return -3;
+	if (prio != match) {
+		if (verbose) printf("wrong priority returned on second fh (%d, expected %d)\n", prio, match);
+		return -4;
+	}
+	return 0;
+}
+
+static int testPrio(int fd, int fd2)
+{
+	enum v4l2_priority prio;
+
+	if (check_prio(fd, fd2, V4L2_PRIORITY_DEFAULT))
+		return -1;
+
+	prio = V4L2_PRIORITY_RECORD;
+	if (doioctl(fd, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY"))
+		return -2;
+	if (check_prio(fd, fd2, V4L2_PRIORITY_RECORD))
+		return -3;
+
+	prio = V4L2_PRIORITY_INTERACTIVE;
+	if (!doioctl(fd2, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY")) {
+		if (verbose) printf("Can lower prio on second filehandle\n");
+		return -4;
+	}
+	prio = V4L2_PRIORITY_INTERACTIVE;
+	if (doioctl(fd, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY")) {
+		if (verbose) printf("Could not lower prio\n");
+		return -5;
+	}
+	
+	if (check_prio(fd, fd2, V4L2_PRIORITY_INTERACTIVE))
+		return -3;
 	return 0;
 }
 
@@ -398,20 +456,32 @@ int main(int argc, char **argv)
 	if (video_device) {
 		printf("\ttest second video open: %s\n",
 				ok((video_fd2 = open(video_device, O_RDWR)) < 0));
-		if (video_fd2 >= 0)
+		if (video_fd2 >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(video_fd2)));
+			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+					ok(testPrio(video_fd, video_fd2)));
+			close(video_fd2);
+		}
 	}
 	if (radio_device) {
 		printf("\ttest second radio open: %s\n",
 				ok((radio_fd2 = open(radio_device, O_RDWR)) < 0));
-		if (radio_fd2 >= 0)
+		if (radio_fd2 >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(radio_fd2)));
+			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+					ok(testPrio(radio_fd, radio_fd2)));
+			close(radio_fd2);
+		}
 	}
 	if (vbi_device) {
 		printf("\ttest second vbi open: %s\n",
 				ok((vbi_fd2 = open(vbi_device, O_RDWR)) < 0));
-		if (vbi_fd2 >= 0)
+		if (vbi_fd2 >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(vbi_fd2)));
+			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+					ok(testPrio(vbi_fd, vbi_fd2)));
+			close(vbi_fd2);
+		}
 	}
 
 	printf("Debug ioctls:\n");

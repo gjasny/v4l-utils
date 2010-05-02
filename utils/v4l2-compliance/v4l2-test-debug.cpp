@@ -64,11 +64,11 @@ int testChipIdent(int fd)
 		if (memcmp(&orig, &chip, sizeof(chip))) {
 			if (verbose)
 				printf("Error, but struct modified\n");
-			return -1;
+			return -2;
 		}
 		return 0;
 	}
-	return ret != EINVAL;
+	return ret == EINVAL ? ENOSYS : ret;
 }
 
 int testRegister(int fd)
@@ -90,13 +90,13 @@ int testRegister(int fd)
 	}
 	if (uid == 0 && ret) {
 		printf("Not allowed to call VIDIOC_DBG_G_REGISTER even though we are root\n");
-		return -1;
+		return -2;
 	}
 	chip.match.type = V4L2_CHIP_MATCH_HOST;
 	chip.match.addr = 0;
 	if (doioctl(fd, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT")) {
 		printf("Must support VIDIOC_DBG_G_CHIP_IDENT\n");
-		return -1;
+		return -3;
 	}
 	if (uid) {
 		// Don't test S_REGISTER as root, don't want to risk
@@ -105,7 +105,7 @@ int testRegister(int fd)
 		ret = doioctl(fd, VIDIOC_DBG_S_REGISTER, &reg, "VIDIOC_DBG_S_REGISTER");
 		if (ret != EINVAL && ret != EPERM) {
 			printf("Invalid error calling VIDIOC_DBG_S_REGISTER as non-root\n");
-			return -1;
+			return -4;
 		}
 	}
 	return 0;
@@ -115,5 +115,5 @@ int testLogStatus(int fd)
 {
 	int ret = doioctl(fd, VIDIOC_LOG_STATUS, NULL, "VIDIOC_LOG_STATUS");
 
-	return (ret == 0 || ret == EINVAL) ? 0 : -1;
+	return (ret == EINVAL) ? ENOSYS : ret;
 }
