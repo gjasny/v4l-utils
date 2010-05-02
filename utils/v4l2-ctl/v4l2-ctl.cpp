@@ -487,7 +487,7 @@ static void usage(void)
 	       "                     set the digital video preset to <num> [VIDIOC_S_DV_PRESET]\n"
 	       "  --get-dv-preset    query the digital video preset in use [VIDIOC_G_DV_PRESET]\n"
 	       "  --query-dv-preset  query the detected digital video preset [VIDIOC_QUERY_DV_PRESET]\n"
-	       "  --sleep=<secs>     sleep for <secs> seconds before closing the file handle\n"
+	       "  --sleep=<secs>     sleep for <secs> seconds, call QUERYCAP and close the file handle\n"
 	       "  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n"
 	       "  --streamon         turn the stream on [VIDIOC_STREAMON]\n"
 	       "  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n");
@@ -3320,8 +3320,14 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (options[OptSleep])
+	if (options[OptSleep]) {
 		sleep(secs);
+		printf("Test VIDIOC_QUERYCAP:\n");
+		if (ioctl(fd, VIDIOC_QUERYCAP, &vcap) == 0)
+			printf("\tDriver name   : %s\n", vcap.driver);
+		else
+			perror("VIDIOC_QUERYCAP");
+	}
 
 	close(fd);
 	exit(app_result);
