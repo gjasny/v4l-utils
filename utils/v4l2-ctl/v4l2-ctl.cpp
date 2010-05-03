@@ -3269,7 +3269,7 @@ int main(int argc, char **argv)
 
 	if (options[OptListDvPresets]) {
 		dv_enum_preset.index = 0;
-		printf("ioctl: VIDIOC_ENUM_FRAMEINTERVALS\n");
+		printf("ioctl: VIDIOC_ENUM_DV_PRESETS\n");
 		while (ioctl(fd, VIDIOC_ENUM_DV_PRESETS, &dv_enum_preset) >= 0) {
 			if (dv_enum_preset.index)
 				printf("\n");
