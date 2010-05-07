@@ -1,3 +1,13 @@
+v4l-utils-0.8.0
+---------------
+* Utils changes:
+  * Various v4l-keytable improvements (mchehab)
+  * Various v4l2-ctl fixes (hverkuil)
+  * Various qv4l2 fixes (hverkuil)
+* libv4l changes (hdegoede):
+  * Add many more laptop models to the upside down devices table
+  * Some minor bugfixes
+
 v4l-utils-0.7.91
 ----------------
 * Utils changes:
