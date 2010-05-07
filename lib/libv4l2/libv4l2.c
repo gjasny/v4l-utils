@@ -268,7 +268,7 @@ static int v4l2_queue_read_buffer(int index, int buffer_index)
 static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 		unsigned char *dest, int dest_size)
 {
-	const int max_tries = 10;
+	const int max_tries = V4L2_IGNORE_FIRST_FRAME_ERRORS + 1;
 	int result, tries = max_tries;
 
 	/* Make sure we have the real v4l2 buffers mapped */
@@ -308,7 +308,7 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 		if (result < 0) {
 			int saved_err = errno;
 
-			if (errno == EAGAIN)
+			if (errno == EAGAIN || errno == EPIPE)
 				V4L2_LOG("warning error while converting frame data: %s",
 						v4lconvert_get_error_message(devices[index].convert));
 			else
@@ -319,7 +319,7 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 			errno = saved_err;
 		}
 		tries--;
-	} while (result < 0 && errno == EAGAIN && tries);
+	} while (result < 0 && (errno == EAGAIN || errno == EPIPE) && tries);
 
 	if (result < 0 && errno == EAGAIN) {
 		V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s",
@@ -327,12 +327,19 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 		errno = EAGAIN;
 	}
 
+	if (result < 0 && errno == EPIPE) {
+		V4L2_LOG("got %d consecutive short frame errors, "
+			 "returning short frame");
+		result = devices[index].dest_fmt.fmt.pix.sizeimage;
+		errno = 0;
+	}
+
 	return result;
 }
 
 static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
 {
-	const int max_tries = 10;
+	const int max_tries = V4L2_IGNORE_FIRST_FRAME_ERRORS + 1;
 	int result, buf_size, tries = max_tries;
 
 	buf_size = devices[index].dest_fmt.fmt.pix.sizeimage;
@@ -376,7 +383,7 @@ static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
 		if (result < 0) {
 			int saved_err = errno;
 
-			if (errno == EAGAIN)
+			if (errno == EAGAIN || errno == EPIPE)
 				V4L2_LOG("warning error while converting frame data: %s",
 						v4lconvert_get_error_message(devices[index].convert));
 			else
@@ -386,11 +393,19 @@ static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
 			errno = saved_err;
 		}
 		tries--;
-	} while (result < 0 && errno == EAGAIN && tries);
+	} while (result < 0 && (errno == EAGAIN || errno == EPIPE) && tries);
 
 	if (result < 0 && errno == EAGAIN) {
 		V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s",
 				max_tries, v4lconvert_get_error_message(devices[index].convert));
+		errno = EAGAIN;
+	}
+
+	if (result < 0 && errno == EPIPE) {
+		V4L2_LOG("got %d consecutive short frame errors, "
+			 "returning short frame");
+		result = devices[index].dest_fmt.fmt.pix.sizeimage;
+		errno = 0;
 	}
 
 	return result;

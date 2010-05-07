@@ -37,7 +37,6 @@
 
 /* Card flags */
 #define V4LCONVERT_IS_UVC                0x01
-#define V4LCONVERT_IS_SN9C20X            0x02
 
 /* Pixformat flags */
 #define V4LCONVERT_COMPRESSED            0x01 /* Compressed format */
