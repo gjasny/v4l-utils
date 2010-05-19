@@ -1,0 +1,309 @@
+Return-Path: bill@thedirks.org
+Received: from zmta01.collab.prod.int.phx2.redhat.com (LHLO
+ zmta01.collab.prod.int.phx2.redhat.com) (10.5.5.31) by
+ mail06.corp.redhat.com with LMTP; Wed, 19 May 2010 02:43:28 -0400 (EDT)
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by zmta01.collab.prod.int.phx2.redhat.com (Postfix) with ESMTP id B6AB39081C;
+	Wed, 19 May 2010 02:43:28 -0400 (EDT)
+Received: from zmta01.collab.prod.int.phx2.redhat.com ([127.0.0.1])
+	by localhost (zmta01.collab.prod.int.phx2.redhat.com [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id ieqQbA5XErco; Wed, 19 May 2010 02:43:28 -0400 (EDT)
+Received: from int-mx04.intmail.prod.int.phx2.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.17])
+	by zmta01.collab.prod.int.phx2.redhat.com (Postfix) with ESMTP id A451890805;
+	Wed, 19 May 2010 02:43:28 -0400 (EDT)
+Received: from mx1.redhat.com (ext-mx02.extmail.prod.ext.phx2.redhat.com [10.5.110.6])
+	by int-mx04.intmail.prod.int.phx2.redhat.com (8.13.8/8.13.8) with ESMTP id o4J6hSHT030087;
+	Wed, 19 May 2010 02:43:28 -0400
+Received: from gs8.inmotionhosting.com (gs8b.inmotionhosting.com [74.124.194.50])
+	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id o4J6hH34025980;
+	Wed, 19 May 2010 02:43:17 -0400
+Received: from 75-54-226-58.lightspeed.frmtca.sbcglobal.net ([75.54.226.58] helo=[192.168.1.67])
+	by gs8.inmotionhosting.com with esmtpsa (TLSv1:AES256-SHA:256)
+	(Exim 4.69)
+	(envelope-from <bill@thedirks.org>)
+	id 1OEd8K-0004wo-An; Tue, 18 May 2010 23:52:00 -0700
+Message-ID: <4BF38878.9030208@thedirks.org>
+Date: Tue, 18 May 2010 23:43:04 -0700
+From: Bill Dirks <bill@thedirks.org>
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.9) Gecko/20100317 Thunderbird/3.0.4
+MIME-Version: 1.0
+To: Hans de Goede <hdegoede@redhat.com>
+CC: Huzaifa Sidhpurwala <huzaifas@redhat.com>
+Subject: Re: License question about v4l1-compat.c
+References: <4BF2445B.2080203@redhat.com>
+In-Reply-To: <4BF2445B.2080203@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - gs8.inmotionhosting.com
+X-AntiAbuse: Original Domain - redhat.com
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - thedirks.org
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
+X-RedHat-Spam-Score: 0  ()
+X-Scanned-By: MIMEDefang 2.67 on 10.5.11.17
+X-Scanned-By: MIMEDefang 2.67 on 10.5.110.6
+
+Hi, Hans. Nice to 'meet' you.
+
+Yes, that's fine. Take what you need from my code and use it in your 
+LGPL licensed library. I'm all in favor of removing v4l1 from the kernel.
+
+Bill.
+
+
+On 5/18/2010 12:40 AM, Hans de Goede wrote:
+> Hi Bill,
+>
+> AFAIK you've been out of the v4l loop, so I assume you
+> don't know me, this let me start with a shot self introduction:
+>
+> I'm a Linux enthusiast / developer. Amongst other things I've
+> ported over many webcam drivers from v4l1 to v4l2 and I'm the
+> author and maintainer of libv4l.
+>
+> Let me also quickly introduce libv4l about 3 years ago I had
+> too much free time and was looking for a hobby project and I
+> decided that improving webcam support under Linux would be
+> a nice project. At that time there were many webcam driver but
+> most of them were out of tree, including the gspca driver
+> which is a usb webcam driver framework supporting a lot
+> of different chipsets.
+>
+> One problem with getting these merged is that a lot of webcam
+> chipsets produce proprietary (compressed) video formats, which
+> apps don't understand. The out of tree drivers all "fixed" this
+> by doing decompression and video format conversion inside the
+> kernel.
+>
+> This was not acceptable thus it was time to write a library
+> to sit between v4l2 apps and devices which could do format
+> conversion if necessary. This resulted in libv4l2 and
+> libv4lconvert being written, with libv4l2 being the glue sitting
+> in between and libv4lconvert doing the actual conversion.
+>
+> But this did not help v4l1 apps, so I also wrote libv4l1 for those.
+>
+> Both libv4l1 and libv4l2 work by emulating the raw device API, all
+> one needs to do is write v4lx_open instead of plain open when opening
+> the device and them use v4lx_ioctl, etc. on the resulting fd instead
+> of their plain versions. This serves 2 purposes:
+> 1) It makes porting of apps the the library trivial
+> 2) It allows for an LD_PRELOAD shim (used for proprietary apps such
+>    as skype).
+>
+> And now (finally) my question to you, lately we (the v4l devs) have
+> been working on removing the last bits of v4l1 from the kernel.
+> We would like to also remove the v4l1 ioctl compatibility (*), but
+> currently libv4l1 depends on the v4l1 ioctl compatibility for some
+> ioctls.
+>
+> Fixing this comes down to looking at what the kernel compat code
+> does and then implementing that in libv4l1. This will likely involve
+> some direct copying and libv4l1 is licensed under the LGPL rather
+> then the GPL. Thus my question is would it be ok to use your v4l1 compat
+> code under the LGPL inside libv4l1 ?
+>
+> Thanks & Regards,
+>
+> Hans
+>
+>
+> (*) As in practice v4l1 apps need libv4l1 anyways both for format
+> conversion and because some v4l2 drivers don't implement VIDIOCGMBUF
+> including rather important ones like the UVC driver, thus we've
+> come to the conclusion that we might just as well drop the
+> compatibility from the kernel
+>
+
+
+#############################################################################
+
+Return-Path: kraxel@redhat.com
+Received: from zmta02.collab.prod.int.phx2.redhat.com (LHLO
+ zmta02.collab.prod.int.phx2.redhat.com) (10.5.5.32) by
+ mail06.corp.redhat.com with LMTP; Wed, 19 May 2010 04:25:49 -0400 (EDT)
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by zmta02.collab.prod.int.phx2.redhat.com (Postfix) with ESMTP id BA56C9C63A
+	for <hdegoede@redhat.com>; Wed, 19 May 2010 04:25:49 -0400 (EDT)
+Received: from zmta02.collab.prod.int.phx2.redhat.com ([127.0.0.1])
+	by localhost (zmta02.collab.prod.int.phx2.redhat.com [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id JBJ9UuFZvkuv for <hdegoede@redhat.com>;
+	Wed, 19 May 2010 04:25:49 -0400 (EDT)
+Received: from int-mx08.intmail.prod.int.phx2.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by zmta02.collab.prod.int.phx2.redhat.com (Postfix) with ESMTP id 9E8119C608
+	for <hdegoede@mail.corp.redhat.com>; Wed, 19 May 2010 04:25:49 -0400 (EDT)
+Received: from zweiblum.home.kraxel.org (vpn1-7-147.ams2.redhat.com [10.36.7.147])
+	by int-mx08.intmail.prod.int.phx2.redhat.com (8.13.8/8.13.8) with ESMTP id o4J8PjFh018889
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <hdegoede@redhat.com>; Wed, 19 May 2010 04:25:47 -0400
+Message-ID: <4BF3A088.4050101@redhat.com>
+Date: Wed, 19 May 2010 10:25:44 +0200
+From: Gerd Hoffmann <kraxel@redhat.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1.9) Gecko/20100430 Fedora/3.0.4-2.fc12 Thunderbird/3.0.4
+MIME-Version: 1.0
+To: Hans de Goede <hdegoede@redhat.com>
+Subject: Re: Re-licensing v4l1-compat.c code which you wrote
+References: <4BF3A064.7080602@redhat.com>
+In-Reply-To: <4BF3A064.7080602@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.67 on 10.5.11.21
+
+   Hi,
+
+> My question to you is would it be ok to use your v4l1 compat
+> contributions under the LGPL inside libv4l1 ?
+
+Fine with me.
+
+cheers,
+   Gerd
+
+
+#############################################################################
+
+Return-Path: hverkuil@xs4all.nl
+Received: from zmta02.collab.prod.int.phx2.redhat.com (LHLO
+ zmta02.collab.prod.int.phx2.redhat.com) (10.5.5.32) by
+ mail06.corp.redhat.com with LMTP; Wed, 19 May 2010 04:28:02 -0400 (EDT)
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by zmta02.collab.prod.int.phx2.redhat.com (Postfix) with ESMTP id E3BD49C63A;
+	Wed, 19 May 2010 04:28:02 -0400 (EDT)
+Received: from zmta02.collab.prod.int.phx2.redhat.com ([127.0.0.1])
+	by localhost (zmta02.collab.prod.int.phx2.redhat.com [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id pjn9-H+iB0WI; Wed, 19 May 2010 04:28:02 -0400 (EDT)
+Received: from int-mx03.intmail.prod.int.phx2.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+	by zmta02.collab.prod.int.phx2.redhat.com (Postfix) with ESMTP id CFAC29C608;
+	Wed, 19 May 2010 04:28:02 -0400 (EDT)
+Received: from mx1.redhat.com (ext-mx10.extmail.prod.ext.phx2.redhat.com [10.5.110.14])
+	by int-mx03.intmail.prod.int.phx2.redhat.com (8.13.8/8.13.8) with ESMTP id o4J8S2bj019331;
+	Wed, 19 May 2010 04:28:02 -0400
+Received: from smtp-vbr8.xs4all.nl (smtp-vbr8.xs4all.nl [194.109.24.28])
+	by mx1.redhat.com (8.13.8/8.13.8) with ESMTP id o4J8Rp9r025653;
+	Wed, 19 May 2010 04:27:51 -0400
+Received: from webmail.xs4all.nl (dovemail13.xs4all.nl [194.109.26.15])
+	by smtp-vbr8.xs4all.nl (8.13.8/8.13.8) with ESMTP id o4J8RiZq008091;
+	Wed, 19 May 2010 10:27:45 +0200 (CEST)
+	(envelope-from hverkuil@xs4all.nl)
+Received: from 62.70.2.252
+        (SquirrelMail authenticated user hverkuil)
+        by webmail.xs4all.nl with HTTP;
+        Wed, 19 May 2010 10:27:50 +0200
+Message-ID: <3968c0dc456676eb0b1652936d795482.squirrel@webmail.xs4all.nl>
+In-Reply-To: <4BF3A064.7080602@redhat.com>
+References: <4BF3A064.7080602@redhat.com>
+Date: Wed, 19 May 2010 10:27:50 +0200
+Subject: Re: Re-licensing v4l1-compat.c code which you wrote
+From: "Hans Verkuil" <hverkuil@xs4all.nl>
+To: "Hans de Goede" <hdegoede@redhat.com>
+Cc: "Gerd Hoffmann" <kraxel@redhat.com>,
+        "Mauro Carvalho Chehab" <mchehab@redhat.com>,
+        "Trent Piepho" <xyzzy@speakeasy.org>,
+        "Huzaifa Sidhpurwala" <huzaifas@redhat.com>
+User-Agent: SquirrelMail/1.4.18
+MIME-Version: 1.0
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-Virus-Scanned: by XS4ALL Virus Scanner
+X-RedHat-Spam-Score: -0.02  (RCVD_IN_DNSWL_NONE,T_RP_MATCHES_RCVD)
+X-Scanned-By: MIMEDefang 2.67 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.67 on 10.5.110.14
+
+
+> Hi All,
+>
+> I'm writing you all because you've contributed patches
+> to the kernels v4l1 ioctl compat code living in v4l1-compat.c
+>
+> Most of you already know me, and know that I'm working on
+> making libv4l1 become independent of the kernel v4l1 ioctl
+> compat code, so that it can be removed from the kernel.
+>
+> For those who don't know me or the v4l1 cleanup effort,
+> read below for the long story.
+>
+> Making libv4l1 independent of the v4l1-compat.c code in the
+> kernel comes down to looking at what the kernel compat code
+> does and then implementing that in libv4l1. This will likely involve
+> some direct copying and libv4l1 is licensed under the LGPL rather
+> then the GPL. I already have permission from Bill Dirks who wrote
+> the initial v4l1-compat code to do this.
+>
+> My question to you is would it be ok to use your v4l1 compat
+> contributions under the LGPL inside libv4l1 ?
+
+Permission granted.
+
+Looking forward to seeing this in libv4l1 so we can kill this legacy code
+in the kernel.
+
+Regards,
+
+         Hans Verkuil
+
+>
+> Thanks & Regards,
+>
+> Hans
+>
+>
+> The long story:
+>
+> I'm a Linux enthusiast / developer. Amongst other things I've
+> ported over many webcam drivers from v4l1 to v4l2 and I'm the
+> author and maintainer of libv4l.
+>
+> Let me also quickly introduce libv4l about 3 years ago I had
+> too much free time and was looking for a hobby project and I
+> decided that improving webcam support under Linux would be
+> a nice project. At that time there were many webcam driver but
+> most of them were out of tree, including the gspca driver
+> which is a usb webcam driver framework supporting a lot
+> of different chipsets.
+>
+> One problem with getting these merged is that a lot of webcam
+> chipsets produce proprietary (compressed) video formats, which
+> apps don't understand. The out of tree drivers all "fixed" this
+> by doing decompression and video format conversion inside the
+> kernel.
+>
+> This was not acceptable thus it was time to write a library
+> to sit between v4l2 apps and devices which could do format
+> conversion if necessary. This resulted in libv4l2 and
+> libv4lconvert being written, with libv4l2 being the glue sitting
+> in between and libv4lconvert doing the actual conversion.
+>
+> But this did not help v4l1 apps, so I also wrote libv4l1 for those.
+>
+> Both libv4l1 and libv4l2 work by emulating the raw device API, all
+> one needs to do is write v4lx_open instead of plain open when opening
+> the device and them use v4lx_ioctl, etc. on the resulting fd instead
+> of their plain versions. This serves 2 purposes:
+> 1) It makes porting of apps the the library trivial
+> 2) It allows for an LD_PRELOAD shim (used for proprietary apps such
+>     as skype).
+>
+> Lately we (the v4l devs) have been working on removing the last bits
+> of v4l1 from the kernel. We would like to also remove the v4l1 ioctl
+> compatibility (*), but currently libv4l1 depends on the v4l1 ioctl
+> compatibility for some ioctls, we are working on fixing this
+> which involves re-using code from v4l1-compat.c, hence the
+> re-licensing permission question.
+>
+> (*) As in practice v4l1 apps need libv4l1 anyways both for format
+> conversion and because some v4l2 drivers don't implement VIDIOCGMBUF
+> including rather important ones like the UVC driver, thus we've
+> come to the conclusion that we might just as well drop the
+> compatibility from the kernel.
+>
+
+
+-- 
+Hans Verkuil - video4linux developer - sponsored by TANDBERG, part of Cisco
+
+
+#############################################################################
+

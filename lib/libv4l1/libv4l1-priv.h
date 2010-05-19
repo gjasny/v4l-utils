@@ -56,6 +56,10 @@ extern FILE *v4l1_log_file;
 		} 				\
 	} while (0)
 
+#ifndef min
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
 struct v4l1_dev_info {
 	int fd;
 	int flags;

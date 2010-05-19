@@ -1,7 +1,14 @@
 /*
 # libv4l1 userspace v4l1 api emulation for v4l2 devices
 
-#             (C) 2008 Hans de Goede <hdegoede@redhat.com>
+#             (C) 2008-2010 Hans de Goede <hdegoede@redhat.com>
+
+# Based in part on the kernels v4l1 ioctl compatibility code which is:
+
+#             (C) 2003-2009 Bill Dirks <bill@thedirks.org>, et al.
+
+# The code taken from the kernel has been relicensed from GPLv2+ to LGPLv2+
+# with permission from the authors see libv4l1-kernelcode-license.txt
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -128,6 +135,19 @@ static unsigned int pixelformat_to_palette(unsigned int pixelformat)
 		return VIDEO_PALETTE_YUV422P;
 	}
 	return 0;
+}
+
+static int count_inputs(int fd)
+{
+	struct v4l2_input input2;
+	int i;
+	for (i = 0;; i++) {
+		memset(&input2, 0, sizeof(input2));
+		input2.index = i;
+		if (0 != SYS_IOCTL(fd, VIDIOC_ENUMINPUT, &input2))
+			break;
+		}
+	return i;
 }
 
 static int v4l1_set_format(int index, unsigned int width,
@@ -491,11 +511,37 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 	switch (request) {
 	case VIDIOCGCAP: {
 		struct video_capability *cap = arg;
+		struct v4l2_framebuffer fbuf = { 0, };
+		struct v4l2_capability cap2 = { { 0 }, };
 
-		result = SYS_IOCTL(fd, request, arg);
+		result = SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap2);
+		if (result < 0)
+			break;
 
-		/* override kernel v4l1 compat min / max size with our own more
-		   accurate values */
+		if (cap2.capabilities & V4L2_CAP_VIDEO_OVERLAY) {
+			result = SYS_IOCTL(fd, VIDIOC_G_FBUF, &fbuf);
+			if (result < 0)
+				memset(&fbuf, 0, sizeof(fbuf));
+			result = 0;
+		}
+
+		memcpy(cap->name, cap2.card,
+		       min(sizeof(cap->name), sizeof(cap2.card)));
+
+		cap->name[sizeof(cap->name) - 1] = 0;
+
+		if (cap2.capabilities & V4L2_CAP_VIDEO_CAPTURE)
+			cap->type |= VID_TYPE_CAPTURE;
+		if (cap2.capabilities & V4L2_CAP_TUNER)
+			cap->type |= VID_TYPE_TUNER;
+		if (cap2.capabilities & V4L2_CAP_VBI_CAPTURE)
+			cap->type |= VID_TYPE_TELETEXT;
+		if (cap2.capabilities & V4L2_CAP_VIDEO_OVERLAY)
+			cap->type |= VID_TYPE_OVERLAY;
+		if (fbuf.capability & V4L2_FBUF_CAP_LIST_CLIPPING)
+			cap->type |= VID_TYPE_CLIPPING;
+
+		cap->channels  = count_inputs(fd);
 		cap->minwidth  = devices[index].min_width;
 		cap->minheight = devices[index].min_height;
 		cap->maxwidth  = devices[index].max_width;
