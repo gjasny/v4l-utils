@@ -307,3 +307,65 @@ Hans Verkuil - video4linux developer - sponsored by TANDBERG, part of Cisco
 
 #############################################################################
 
+Return-Path: mchehab@redhat.com
+Received: from zmta01.collab.prod.int.phx2.redhat.com (LHLO
+ zmta01.collab.prod.int.phx2.redhat.com) (10.5.5.31) by
+ mail06.corp.redhat.com with LMTP; Wed, 19 May 2010 10:25:02 -0400 (EDT)
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by zmta01.collab.prod.int.phx2.redhat.com (Postfix) with ESMTP id 6BC5E90C13;
+	Wed, 19 May 2010 10:25:02 -0400 (EDT)
+Received: from zmta01.collab.prod.int.phx2.redhat.com ([127.0.0.1])
+	by localhost (zmta01.collab.prod.int.phx2.redhat.com [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id 8lqJbX3fk3W4; Wed, 19 May 2010 10:25:02 -0400 (EDT)
+Received: from int-mx08.intmail.prod.int.phx2.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by zmta01.collab.prod.int.phx2.redhat.com (Postfix) with ESMTP id 5887890BAD;
+	Wed, 19 May 2010 10:25:02 -0400 (EDT)
+Received: from [10.11.10.12] (vpn-10-12.rdu.redhat.com [10.11.10.12])
+	by int-mx08.intmail.prod.int.phx2.redhat.com (8.13.8/8.13.8) with ESMTP id o4JEOv5p010028
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO);
+	Wed, 19 May 2010 10:25:00 -0400
+Message-ID: <4BF3F4B9.3060803@redhat.com>
+Date: Wed, 19 May 2010 11:24:57 -0300
+From: Mauro Carvalho Chehab <mchehab@redhat.com>
+User-Agent: Thunderbird 2.0.0.22 (X11/20090609)
+MIME-Version: 1.0
+To: Hans de Goede <hdegoede@redhat.com>
+CC: Gerd Hoffmann <kraxel@redhat.com>, Hans Verkuil <hverkuil@xs4all.nl>,
+        Trent Piepho <xyzzy@speakeasy.org>,
+        Huzaifa Sidhpurwala <huzaifas@redhat.com>
+Subject: Re: Re-licensing v4l1-compat.c code which you wrote
+References: <4BF3A064.7080602@redhat.com>
+In-Reply-To: <4BF3A064.7080602@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.67 on 10.5.11.21
+
+Hans de Goede wrote:
+> Hi All,
+> 
+> I'm writing you all because you've contributed patches
+> to the kernels v4l1 ioctl compat code living in v4l1-compat.c
+> 
+> Most of you already know me, and know that I'm working on
+> making libv4l1 become independent of the kernel v4l1 ioctl
+> compat code, so that it can be removed from the kernel.
+> 
+> For those who don't know me or the v4l1 cleanup effort,
+> read below for the long story.
+> 
+> Making libv4l1 independent of the v4l1-compat.c code in the
+> kernel comes down to looking at what the kernel compat code
+> does and then implementing that in libv4l1. This will likely involve
+> some direct copying and libv4l1 is licensed under the LGPL rather
+> then the GPL. I already have permission from Bill Dirks who wrote
+> the initial v4l1-compat code to do this.
+> 
+> My question to you is would it be ok to use your v4l1 compat
+> contributions under the LGPL inside libv4l1 ?
+
+LGPL for v4l1-compat code is fine for me.
+
+Cheers,
+Mauro
+
+#############################################################################
