@@ -624,7 +624,44 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 
 		if ((devices[index].flags & V4L1_SUPPORTS_ENUMINPUT) &&
 				(devices[index].flags & V4L1_SUPPORTS_ENUMSTD)) {
-			result = SYS_IOCTL(fd, request, arg);
+
+			v4l2_std_id sid;
+
+			input2.index = chan->channel;
+			result = SYS_IOCTL(fd, VIDIOC_ENUMINPUT, &input2);
+			if (result < 0)
+				break;
+
+			chan->channel = input2.index;
+			memcpy(chan->name, input2.name,
+				min(sizeof(chan->name), sizeof(input2.name)));
+
+			chan->name[sizeof(chan->name) - 1] = 0;
+			chan->tuners =
+				(input2.type == V4L2_INPUT_TYPE_TUNER) ? 1 : 0;
+
+			chan->flags = (chan->tuners) ? VIDEO_VC_TUNER : 0;
+			switch (input2.type) {
+			case V4L2_INPUT_TYPE_TUNER:
+				chan->type = VIDEO_TYPE_TV;
+				break;
+			default:
+			case V4L2_INPUT_TYPE_CAMERA:
+				chan->type = VIDEO_TYPE_CAMERA;
+				break;
+			}
+			chan->norm = 0;
+			if (SYS_IOCTL(fd, VIDIOC_G_STD, &sid) == 0) {
+				if (sid & V4L2_STD_PAL)
+					chan->norm = VIDEO_MODE_PAL;
+				if (sid & V4L2_STD_NTSC)
+					chan->norm = VIDEO_MODE_NTSC;
+				if (sid & V4L2_STD_SECAM)
+					chan->norm = VIDEO_MODE_SECAM;
+				if (sid == V4L2_STD_ALL)
+					chan->norm = VIDEO_MODE_AUTO;
+			}
+
 			break;
 		}
 
