@@ -702,7 +702,35 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 		struct video_channel *chan = arg;
 		if ((devices[index].flags & V4L1_SUPPORTS_ENUMINPUT) &&
 				(devices[index].flags & V4L1_SUPPORTS_ENUMSTD)) {
-			result = SYS_IOCTL(fd, request, arg);
+
+			v4l2_std_id sid = 0;
+			struct v4l2_input input2;
+
+			result = SYS_IOCTL(fd, VIDIOC_ENUMINPUT, &input2);
+			if (result < 0)
+				break;
+
+			switch (chan->norm) {
+			case VIDEO_MODE_PAL:
+				sid = V4L2_STD_PAL;
+				break;
+			case VIDEO_MODE_NTSC:
+				sid = V4L2_STD_NTSC;
+				break;
+			case VIDEO_MODE_SECAM:
+				sid = V4L2_STD_SECAM;
+				break;
+			case VIDEO_MODE_AUTO:
+				sid = V4L2_STD_ALL;
+				break;
+			}
+
+			if (0 != sid) {
+				result = SYS_IOCTL(fd, VIDIOC_S_STD, &sid);
+				if (result < 0)
+					break;
+			}
+
 			break;
 		}
 		/* In case of no ENUMSTD support, ignore the norm member of the
