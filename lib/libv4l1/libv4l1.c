@@ -144,7 +144,7 @@ static int count_inputs(int fd)
 	for (i = 0;; i++) {
 		memset(&input2, 0, sizeof(input2));
 		input2.index = i;
-		if (0 != SYS_IOCTL(fd, VIDIOC_ENUMINPUT, &input2))
+		if (0 != v4l2_ioctl(fd, VIDIOC_ENUMINPUT, &input2))
 			break;
 		}
 	return i;
@@ -514,12 +514,12 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 		struct v4l2_framebuffer fbuf = { 0, };
 		struct v4l2_capability cap2 = { { 0 }, };
 
-		result = SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap2);
+		result = v4l2_ioctl(fd, VIDIOC_QUERYCAP, &cap2);
 		if (result < 0)
 			break;
 
 		if (cap2.capabilities & V4L2_CAP_VIDEO_OVERLAY) {
-			result = SYS_IOCTL(fd, VIDIOC_G_FBUF, &fbuf);
+			result = v4l2_ioctl(fd, VIDIOC_G_FBUF, &fbuf);
 			if (result < 0)
 				memset(&fbuf, 0, sizeof(fbuf));
 			result = 0;
@@ -628,7 +628,7 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 			v4l2_std_id sid;
 
 			input2.index = chan->channel;
-			result = SYS_IOCTL(fd, VIDIOC_ENUMINPUT, &input2);
+			result = v4l2_ioctl(fd, VIDIOC_ENUMINPUT, &input2);
 			if (result < 0)
 				break;
 
@@ -651,7 +651,7 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 				break;
 			}
 			chan->norm = 0;
-			if (SYS_IOCTL(fd, VIDIOC_G_STD, &sid) == 0) {
+			if (v4l2_ioctl(fd, VIDIOC_G_STD, &sid) == 0) {
 				if (sid & V4L2_STD_PAL)
 					chan->norm = VIDEO_MODE_PAL;
 				if (sid & V4L2_STD_NTSC)
@@ -705,7 +705,7 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 
 			v4l2_std_id sid = 0;
 
-			result = SYS_IOCTL(fd, VIDIOC_S_INPUT, &chan->channel);
+			result = v4l2_ioctl(fd, VIDIOC_S_INPUT, &chan->channel);
 			if (result < 0)
 				break;
 
@@ -725,7 +725,7 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 			}
 
 			if (sid)
-				result = SYS_IOCTL(fd, VIDIOC_S_STD, &sid);
+				result = v4l2_ioctl(fd, VIDIOC_S_STD, &sid);
 			break;
 		}
 		/* In case of no ENUMSTD support, ignore the norm member of the
