@@ -619,51 +619,7 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 	}
 
 	case VIDIOCGCHAN: {
-		struct v4l2_input input2;
 		struct video_channel *chan = arg;
-
-		if ((devices[index].flags & V4L1_SUPPORTS_ENUMINPUT) &&
-				(devices[index].flags & V4L1_SUPPORTS_ENUMSTD)) {
-
-			v4l2_std_id sid;
-
-			input2.index = chan->channel;
-			result = v4l2_ioctl(fd, VIDIOC_ENUMINPUT, &input2);
-			if (result < 0)
-				break;
-
-			chan->channel = input2.index;
-			memcpy(chan->name, input2.name,
-				min(sizeof(chan->name), sizeof(input2.name)));
-
-			chan->name[sizeof(chan->name) - 1] = 0;
-			chan->tuners =
-				(input2.type == V4L2_INPUT_TYPE_TUNER) ? 1 : 0;
-
-			chan->flags = (chan->tuners) ? VIDEO_VC_TUNER : 0;
-			switch (input2.type) {
-			case V4L2_INPUT_TYPE_TUNER:
-				chan->type = VIDEO_TYPE_TV;
-				break;
-			default:
-			case V4L2_INPUT_TYPE_CAMERA:
-				chan->type = VIDEO_TYPE_CAMERA;
-				break;
-			}
-			chan->norm = 0;
-			if (v4l2_ioctl(fd, VIDIOC_G_STD, &sid) == 0) {
-				if (sid & V4L2_STD_PAL)
-					chan->norm = VIDEO_MODE_PAL;
-				if (sid & V4L2_STD_NTSC)
-					chan->norm = VIDEO_MODE_NTSC;
-				if (sid & V4L2_STD_SECAM)
-					chan->norm = VIDEO_MODE_SECAM;
-				if (sid == V4L2_STD_ALL)
-					chan->norm = VIDEO_MODE_AUTO;
-			}
-
-			break;
-		}
 
 		/* Set some defaults */
 		chan->tuners = 0;
@@ -671,29 +627,50 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 		chan->type = VIDEO_TYPE_CAMERA;
 		chan->norm = 0;
 
-		/* In case of no ENUMSTD support, ignore the norm member of the
-		   channel struct */
 		if (devices[index].flags & V4L1_SUPPORTS_ENUMINPUT) {
-			input2.index = chan->channel;
+			struct v4l2_input input2 = { .index = chan->channel };
+
 			result = v4l2_ioctl(fd, VIDIOC_ENUMINPUT, &input2);
-			if (result == 0) {
-				snprintf(chan->name, sizeof(chan->name), "%s", (char *)input2.name);
-				if (input2.type == V4L2_INPUT_TYPE_TUNER) {
-					chan->tuners = 1;
-					chan->type = VIDEO_TYPE_TV;
-					chan->flags = VIDEO_VC_TUNER;
-				}
+			if (result < 0)
+				break;
+
+			snprintf(chan->name, sizeof(chan->name), "%s",
+				 (char *)input2.name);
+			if (input2.type == V4L2_INPUT_TYPE_TUNER) {
+				chan->tuners = 1;
+				chan->type = VIDEO_TYPE_TV;
+				chan->flags = VIDEO_VC_TUNER;
 			}
-			break;
+		} else {
+			/* No ENUMINPUT support, fake it. */
+			if (chan->channel == 0) {
+				snprintf(chan->name, sizeof(chan->name),
+					 "Camera");
+				result = 0;
+			} else {
+				errno  = EINVAL;
+				result = -1;
+				break;
+			}
 		}
 
-		/* No ENUMINPUT support, fake it (assume its a Camera in this case) */
-		if (chan->channel == 0) {
-			snprintf(chan->name, sizeof(chan->name), "Camera");
-			result = 0;
-		} else {
-			errno  = EINVAL;
-			result = -1;
+		/* In case of no ENUMSTD support, ignore the norm member of the
+		   channel struct */
+		if (devices[index].flags & V4L1_SUPPORTS_ENUMSTD) {
+			v4l2_std_id sid;
+
+			result = v4l2_ioctl(fd, VIDIOC_G_STD, &sid);
+			if (result < 0)
+				break;
+
+			if (sid & V4L2_STD_PAL)
+				chan->norm = VIDEO_MODE_PAL;
+			if (sid & V4L2_STD_NTSC)
+				chan->norm = VIDEO_MODE_NTSC;
+			if (sid & V4L2_STD_SECAM)
+				chan->norm = VIDEO_MODE_SECAM;
+			if (sid == V4L2_STD_ALL)
+				chan->norm = VIDEO_MODE_AUTO;
 		}
 		break;
 	}
