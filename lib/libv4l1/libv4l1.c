@@ -700,14 +700,25 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 
 	case VIDIOCSCHAN: {
 		struct video_channel *chan = arg;
-		if ((devices[index].flags & V4L1_SUPPORTS_ENUMINPUT) &&
-				(devices[index].flags & V4L1_SUPPORTS_ENUMSTD)) {
 
-			v4l2_std_id sid = 0;
-
+		if (devices[index].flags & V4L1_SUPPORTS_ENUMINPUT) {
 			result = v4l2_ioctl(fd, VIDIOC_S_INPUT, &chan->channel);
 			if (result < 0)
 				break;
+		} else {
+			/* No ENUMINPUT support, assume a single input */
+			if (chan->channel != 0) {
+				errno  = EINVAL;
+				result = -1;
+				break;
+			}
+			result = 0;
+		}
+
+		/* In case of no ENUMSTD support, ignore the norm member of the
+		   channel struct */
+		if (devices[index].flags & V4L1_SUPPORTS_ENUMSTD) {
+			v4l2_std_id sid = 0;
 
 			switch (chan->norm) {
 			case VIDEO_MODE_PAL:
@@ -726,20 +737,6 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 
 			if (sid)
 				result = v4l2_ioctl(fd, VIDIOC_S_STD, &sid);
-			break;
-		}
-		/* In case of no ENUMSTD support, ignore the norm member of the
-		   channel struct */
-		if (devices[index].flags & V4L1_SUPPORTS_ENUMINPUT) {
-			result = v4l2_ioctl(fd, VIDIOC_S_INPUT, &chan->channel);
-			break;
-		}
-		/* No ENUMINPUT support, fake it (assume its a Camera in this case) */
-		if (chan->channel == 0) {
-			result = 0;
-		} else {
-			errno  = EINVAL;
-			result = -1;
 		}
 		break;
 	}
