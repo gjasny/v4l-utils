@@ -704,9 +704,8 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 				(devices[index].flags & V4L1_SUPPORTS_ENUMSTD)) {
 
 			v4l2_std_id sid = 0;
-			struct v4l2_input input2;
 
-			result = SYS_IOCTL(fd, VIDIOC_ENUMINPUT, &input2);
+			result = SYS_IOCTL(fd, VIDIOC_S_INPUT, &chan->channel);
 			if (result < 0)
 				break;
 
@@ -725,12 +724,8 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 				break;
 			}
 
-			if (0 != sid) {
+			if (sid)
 				result = SYS_IOCTL(fd, VIDIOC_S_STD, &sid);
-				if (result < 0)
-					break;
-			}
-
 			break;
 		}
 		/* In case of no ENUMSTD support, ignore the norm member of the
