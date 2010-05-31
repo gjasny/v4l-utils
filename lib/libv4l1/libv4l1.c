@@ -804,6 +804,51 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 		break;
 	}
 
+	case VIDIOCGFBUF: {
+		struct video_buffer *buffer = arg;
+		struct v4l2_framebuffer fbuf = { 0, };
+
+		result = v4l2_ioctl(fd, VIDIOC_G_FBUF, buffer);
+		if (result < 0)
+			break;
+
+		buffer->base = fbuf.base;
+		buffer->height = fbuf.fmt.height;
+		buffer->width = fbuf.fmt.width;
+
+		switch (fbuf.fmt.pixelformat) {
+		case V4L2_PIX_FMT_RGB332:
+			buffer->depth = 8;
+			break;
+		case V4L2_PIX_FMT_RGB555:
+			buffer->depth = 15;
+			break;
+		case V4L2_PIX_FMT_RGB565:
+			buffer->depth = 16;
+			break;
+		case V4L2_PIX_FMT_BGR24:
+			buffer->depth = 24;
+			break;
+		case V4L2_PIX_FMT_BGR32:
+			buffer->depth = 32;
+			break;
+		default:
+			buffer->depth = 0;
+		}
+
+		if (fbuf.fmt.bytesperline) {
+			buffer->bytesperline = fbuf.fmt.bytesperline;
+			if (!buffer->depth && buffer->width)
+				buffer->depth = ((fbuf.fmt.bytesperline << 3)
+						+ (buffer->width - 1))
+						/ buffer->width;
+		} else {
+			buffer->bytesperline =
+				(buffer->width * buffer->depth + 7) & 7;
+			buffer->bytesperline >>= 3;
+		}
+	}
+
 	default:
 		/* Pass through libv4l2 for applications which are using v4l2 through
 		   libv4l1 (this can happen with the v4l1compat.so wrapper preloaded */
