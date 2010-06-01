@@ -847,6 +847,38 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 				(buffer->width * buffer->depth + 7) & 7;
 			buffer->bytesperline >>= 3;
 		}
+		break;
+	}
+
+	case VIDIOCSFBUF: {
+		struct video_buffer *buffer = arg;
+		struct v4l2_framebuffer fbuf = { 0, };
+
+		fbuf.base = buffer->base;
+		fbuf.fmt.height = buffer->height;
+		fbuf.fmt.width = buffer->width;
+
+		switch (buffer->depth) {
+		case 8:
+			fbuf.fmt.pixelformat = V4L2_PIX_FMT_RGB332;
+			break;
+		case 15:
+			fbuf.fmt.pixelformat = V4L2_PIX_FMT_RGB555;
+			break;
+		case 16:
+			fbuf.fmt.pixelformat = V4L2_PIX_FMT_RGB565;
+			break;
+		case 24:
+			fbuf.fmt.pixelformat = V4L2_PIX_FMT_BGR24;
+			break;
+		case 32:
+			fbuf.fmt.pixelformat = V4L2_PIX_FMT_BGR32;
+			break;
+		}
+
+		fbuf.fmt.bytesperline = buffer->bytesperline;
+		result = v4l2_ioctl(fd, VIDIOC_S_FBUF, &fbuf);
+		break;
 	}
 
 	default:
