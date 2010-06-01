@@ -808,7 +808,7 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 		struct video_buffer *buffer = arg;
 		struct v4l2_framebuffer fbuf = { 0, };
 
-		result = v4l2_ioctl(fd, VIDIOC_G_FBUF, buffer);
+		result = v4l2_ioctl(fd, VIDIOC_G_FBUF, &fbuf);
 		if (result < 0)
 			break;
 
