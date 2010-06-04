@@ -967,6 +967,22 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 
 		break;
 	}
+
+	case VIDIOCCAPTURE: {
+		int *on = arg;
+		enum v4l2_buf_type captype = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+		if (0 == *on) {
+		/* dirty hack time.  But v4l1 has no STREAMOFF
+		* equivalent in the API, and this one at
+		* least comes close ... */
+			v4l2_ioctl(fd, VIDIOC_STREAMOFF, &captype);
+		}
+
+		result = v4l2_ioctl(fd, VIDIOC_OVERLAY, on);
+
+		break;
+	}
 	default:
 		/* Pass through libv4l2 for applications which are using v4l2 through
 		   libv4l1 (this can happen with the v4l1compat.so wrapper preloaded */
