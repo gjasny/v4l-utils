@@ -939,6 +939,34 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 		break;
 	}
 
+	case VIDIOCSFREQ: {
+		unsigned long *freq = arg;
+		struct v4l2_frequency freq2 = { 0, };
+
+		result = v4l2_ioctl(fd, VIDIOC_G_FREQUENCY, &freq2);
+		if (result < 0)
+			break;
+
+		freq2.frequency = *freq;
+
+		result = v4l2_ioctl(fd, VIDIOC_S_FREQUENCY, &freq2);
+
+		break;
+	}
+
+	case VIDIOCGFREQ: {
+		unsigned long *freq = arg;
+		struct v4l2_frequency freq2 = { 0, };
+
+		freq2.tuner = 0;
+		result = v4l2_ioctl(fd, VIDIOC_G_FREQUENCY, &freq2);
+		if (result < 0)
+			break;
+		if (0 == result)
+			*freq = freq2.frequency;
+
+		break;
+	}
 	default:
 		/* Pass through libv4l2 for applications which are using v4l2 through
 		   libv4l1 (this can happen with the v4l1compat.so wrapper preloaded */
