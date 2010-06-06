@@ -145,6 +145,10 @@ void v4lconvert_spca505_to_yuv420(const unsigned char *src, unsigned char *dst,
 void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
 		int width, int height, int yvu);
 
+void v4lconvert_cit_yyvyuy_to_yuv420(const unsigned char *src,
+		unsigned char *ydest,
+		int width, int height, int yvu);
+
 int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
 		const unsigned char *src, int src_size,
 		unsigned char *dst, int width, int height, int yvu);

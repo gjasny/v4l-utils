@@ -16,6 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <string.h>
 #include "libv4lconvert-priv.h"
 
 /* YUYV per line */
@@ -141,6 +142,40 @@ void v4lconvert_spca508_to_yuv420(const unsigned char *src, unsigned char *dst,
 		for (j = 0; j < width; j += sizeof(long)) {
 			*ldst = *lsrc++;
 			*ldst++ ^= 0x8080808080808080ULL;
+		}
+	}
+}
+
+/* Note this is not a spca specific format, bit it fits in this file in that
+   it is another funny yuv format */
+/* one line of Y then 1 line of VYUY */
+void v4lconvert_cit_yyvyuy_to_yuv420(const unsigned char *src,
+		unsigned char *ydest,
+		int width, int height, int yvu)
+{
+	int x, y;
+	unsigned char *udest, *vdest;
+
+	if (yvu) {
+		vdest = ydest + width * height;
+		udest = vdest + (width * height) / 4;
+	} else {
+		udest = ydest + width * height;
+		vdest = udest + (width * height) / 4;
+	}
+
+	for (y = 0; y < height; y += 2) {
+		/* copy 1 line of Y */
+		memcpy(ydest, src, width);
+		src += width;
+		ydest += width;
+
+		/* Split one line of VYUY */
+		for (x = 0; x < width; x += 2) {
+			*vdest++ = *src++;
+			*ydest++ = *src++;
+			*udest++ = *src++;
+			*ydest++ = *src++;
 		}
 	}
 }

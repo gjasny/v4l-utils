@@ -329,7 +329,7 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 
 	if (result < 0 && errno == EPIPE) {
 		V4L2_LOG("got %d consecutive short frame errors, "
-			 "returning short frame");
+			 "returning short frame", max_tries);
 		result = devices[index].dest_fmt.fmt.pix.sizeimage;
 		errno = 0;
 	}
@@ -403,7 +403,7 @@ static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
 
 	if (result < 0 && errno == EPIPE) {
 		V4L2_LOG("got %d consecutive short frame errors, "
-			 "returning short frame");
+			 "returning short frame", max_tries);
 		result = devices[index].dest_fmt.fmt.pix.sizeimage;
 		errno = 0;
 	}
