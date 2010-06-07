@@ -2,7 +2,7 @@
 #             (C) 2008-2009 Elmar Kleijn <elmar_kleijn@hotmail.com>
 #             (C) 2008-2009 Sjoerd Piepenbrink <need4weed@gmail.com>
 #             (C) 2008-2009 Radjnies Bhansingh <radjnies@gmail.com>
-#             (C) 2008-2009 Hans de Goede <hdegoede@redhat.com>
+#             (C) 2008-2010 Hans de Goede <hdegoede@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -116,6 +116,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "F52Q      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "K40IE     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "K40IJ     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb071, 0, "ASUSTeK Computer Inc.        ", "K40IN      ",
@@ -218,6 +220,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K51AE     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K52Jr",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K60IJ     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K60IN      ",
@@ -274,6 +278,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "UL50VT    ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x090c, 0xe370, 0, "ASUSTeK Computer Inc.        ", "U6S       ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x090c, 0xe370, 0, "ASUSTeK Computer Inc.        ", "U6Sg      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x090c, 0xe370, 0, "ASUSTeK Computer Inc.        ", "VX3       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
