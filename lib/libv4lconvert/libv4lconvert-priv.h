@@ -29,7 +29,7 @@
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
 
 #define V4LCONVERT_ERROR_MSG_SIZE 256
-#define V4LCONVERT_MAX_FRAMESIZES 16
+#define V4LCONVERT_MAX_FRAMESIZES 256
 
 #define V4LCONVERT_ERR(...) \
 	snprintf(data->error_msg, V4LCONVERT_ERROR_MSG_SIZE, \
