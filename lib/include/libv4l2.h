@@ -81,8 +81,8 @@ LIBV4L_PUBLIC int v4l2_munmap(void *_start, size_t length);
 LIBV4L_PUBLIC int v4l2_set_control(int fd, int cid, int value);
 
 /* This function returns a value of 0 - 65535, scaled to from the actual range
-   of the given v4l control id. when the cid does not exist, could not be
-   accessed for some reason, or some error occured 0 is returned. */
+   of the given v4l control id. When the cid does not exist, or could not be
+   accessed -1 is returned. */
 LIBV4L_PUBLIC int v4l2_get_control(int fd, int cid);
 
 

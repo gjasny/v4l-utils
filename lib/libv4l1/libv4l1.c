@@ -567,14 +567,15 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 
 	case VIDIOCGPICT: {
 		struct video_picture *pic = arg;
+		int i;
 
-		/* If our v4l2 pixformat has no corresponding v4l1 palette, and the
-		   app has not touched the pixformat sofar, try setting a palette which
-		   does (and which we emulate when necessary) so that applications
-		   which just query the current format and then take whatever they get
-		   will work */
+		/* If our v4l2 pixformat has no corresponding v4l1 palette, and
+		   the app has not touched the pixformat sofar, try setting a
+		   palette which does (and which we emulate when necessary) so
+		   that applications which just query the current format and
+		   then take whatever they get will work */
 		if (!(devices[index].flags & V4L1_PIX_FMT_TOUCHED) &&
-				!pixelformat_to_palette(devices[index].v4l2_pixfmt))
+		    !pixelformat_to_palette(devices[index].v4l2_pixfmt))
 			v4l1_set_format(index, devices[index].width,
 					devices[index].height,
 					VIDEO_PALETTE_RGB24,
@@ -583,15 +584,24 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 
 		devices[index].flags |= V4L1_PIX_FMT_TOUCHED;
 
+		memset(pic, 0, sizeof(*pic));
 		pic->depth = devices[index].depth;
 		pic->palette = devices[index].v4l1_pal;
-		pic->hue = v4l2_get_control(devices[index].fd, V4L2_CID_HUE);
-		pic->colour = v4l2_get_control(devices[index].fd, V4L2_CID_SATURATION);
-		pic->contrast = v4l2_get_control(devices[index].fd, V4L2_CID_CONTRAST);
-		pic->whiteness = v4l2_get_control(devices[index].fd,
-				V4L2_CID_WHITENESS);
-		pic->brightness = v4l2_get_control(devices[index].fd,
-				V4L2_CID_BRIGHTNESS);
+		i = v4l2_get_control(devices[index].fd, V4L2_CID_HUE);
+		if (i >= 0)
+			pic->hue = i;
+		i = v4l2_get_control(devices[index].fd, V4L2_CID_SATURATION);
+		if (i >= 0)
+			pic->colour = i;
+		i = v4l2_get_control(devices[index].fd, V4L2_CID_CONTRAST);
+		if (i >= 0)
+			pic->contrast = i;
+		i = v4l2_get_control(devices[index].fd, V4L2_CID_WHITENESS);
+		if (i >= 0)
+			pic->whiteness = i;
+		i = v4l2_get_control(devices[index].fd, V4L2_CID_BRIGHTNESS);
+		if (i >= 0)
+			pic->brightness = i;
 
 		result = 0;
 		break;

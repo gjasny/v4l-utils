@@ -1418,13 +1418,15 @@ int v4l2_get_control(int fd, int cid)
 	}
 
 	if (v4lconvert_vidioc_queryctrl(devices[index].convert, &qctrl))
-		return 0;
+		return -1;
 
-	if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
-		return 0;
+	if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	if (v4lconvert_vidioc_g_ctrl(devices[index].convert, &ctrl))
-		return 0;
+		return -1;
 
 	return ((ctrl.value - qctrl.minimum) * 65535 +
 			(qctrl.maximum - qctrl.minimum) / 2) /
