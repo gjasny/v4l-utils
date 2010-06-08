@@ -1006,8 +1006,6 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 			!!(aud->flags & VIDEO_AUDIO_MUTE));
 
 		result = v4l2_ioctl(fd, VIDIOC_G_TUNER, &tun2);
-		if (result < 0)
-			break;
 		if (result == 0) {
 			switch (aud->mode) {
 			default:
@@ -1024,6 +1022,8 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 			}
 			result = v4l2_ioctl(fd, VIDIOC_S_TUNER, &tun2);
 		}
+		/* Ignore errors modifying the tuner settings. */
+		result = 0;
 		break;
 	}
 
@@ -1078,8 +1078,10 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 		aud->mode = 0;
 
 		result = v4l2_ioctl(fd, VIDIOC_G_TUNER, &tun2);
-		if (result < 0)
+		if (result < 0) {
+			result = 0;
 			break;
+		}
 
 		if (tun2.rxsubchans & V4L2_TUNER_SUB_LANG2)
 			aud->mode = VIDEO_SOUND_LANG1 | VIDEO_SOUND_LANG2;
@@ -1088,6 +1090,7 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 		else if (tun2.rxsubchans & V4L2_TUNER_SUB_MONO)
 			aud->mode = VIDEO_SOUND_MONO;
 
+		break;
 	}
 
 	case VIDIOCSVBIFMT: {
@@ -1114,18 +1117,18 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 			break;
 
 		if (fmt2.fmt.vbi.samples_per_line != fmt->samples_per_line ||
-		fmt2.fmt.vbi.sampling_rate    != fmt->sampling_rate    ||
-		fmt2.fmt.vbi.sample_format    != V4L2_PIX_FMT_GREY     ||
-		fmt2.fmt.vbi.start[0]         != fmt->start[0]         ||
-		fmt2.fmt.vbi.count[0]         != fmt->count[0]         ||
-		fmt2.fmt.vbi.start[1]         != fmt->start[1]         ||
-		fmt2.fmt.vbi.count[1]         != fmt->count[1]         ||
-		fmt2.fmt.vbi.flags            != fmt->flags) {
+		    fmt2.fmt.vbi.sampling_rate    != fmt->sampling_rate    ||
+		    fmt2.fmt.vbi.sample_format    != V4L2_PIX_FMT_GREY     ||
+		    fmt2.fmt.vbi.start[0]         != fmt->start[0]         ||
+		    fmt2.fmt.vbi.count[0]         != fmt->count[0]         ||
+		    fmt2.fmt.vbi.start[1]         != fmt->start[1]         ||
+		    fmt2.fmt.vbi.count[1]         != fmt->count[1]         ||
+		    fmt2.fmt.vbi.flags            != fmt->flags) {
 			result = -EINVAL;
 			break;
 		}
 		result = v4l2_ioctl(fd, VIDIOC_S_FMT, fmt2);
-
+		break;
 	}
 
 	case VIDIOCGVBIFMT: {
