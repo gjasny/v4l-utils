@@ -52,8 +52,14 @@ struct sysfs_names  {
 };
 
 enum rc_type {
+	UNKNOWN_TYPE,
 	SOFTWARE_DECODER,
 	HARDWARE_DECODER,
+};
+
+enum sysfs_ver {
+	VERSION_1,	/* has nodes protocol, enabled */
+	VERSION_2,	/* has node protocols */
 };
 
 enum ir_protocols {
@@ -136,6 +142,7 @@ struct rc_device {
 	char *drv_name;		/* Kernel driver that implements it */
 	char *keytable_name;	/* Keycode table name */
 
+	enum sysfs_ver version; /* sysfs version */
 	enum rc_type type;	/* Software (raw) or hardware decoder */
 	enum ir_protocols supported, current; /* Current and supported IR protocols */
 };
@@ -641,7 +648,7 @@ static struct sysfs_names *find_device(char *name)
 	return names;
 }
 
-static enum ir_protocols get_hw_protocols(char *name)
+static enum ir_protocols v1_get_hw_protocols(char *name)
 {
 	FILE *fp;
 	char *p, buf[4096];
@@ -684,7 +691,7 @@ static enum ir_protocols get_hw_protocols(char *name)
 	return proto;
 }
 
-static int set_hw_protocols(struct rc_device *rc_dev)
+static int v1_set_hw_protocols(struct rc_device *rc_dev)
 {
 	FILE *fp;
 	char name[4096];
@@ -723,7 +730,7 @@ static int set_hw_protocols(struct rc_device *rc_dev)
 	return 0;
 }
 
-static int get_sw_enabled_protocol(char *dirname)
+static int v1_get_sw_enabled_protocol(char *dirname)
 {
 	FILE *fp;
 	char *p, buf[4096], name[512];
@@ -759,7 +766,7 @@ static int get_sw_enabled_protocol(char *dirname)
 	return 0;
 }
 
-static int set_sw_enabled_protocol(struct rc_device *rc_dev,
+static int v1_set_sw_enabled_protocol(struct rc_device *rc_dev,
 				   char *dirname, int enabled)
 {
 	FILE *fp;
@@ -779,6 +786,103 @@ static int set_sw_enabled_protocol(struct rc_device *rc_dev,
 		fprintf(fp, "1");
 	else
 		fprintf(fp, "0");
+
+	fclose(fp);
+
+	return 0;
+}
+
+static enum ir_protocols v2_get_protocols(struct rc_device *rc_dev, char *name)
+{
+	FILE *fp;
+	char *p, buf[4096];
+	int enabled;
+	enum ir_protocols proto;
+
+	fp = fopen(name, "r");
+	if (!fp) {
+		perror(name);
+		return 0;
+	}
+
+	if (!fgets(buf, sizeof(buf), fp)) {
+		perror(name);
+		fclose(fp);
+		return 0;
+	}
+
+	p = strtok(buf, " \n");
+	while (p) {
+		if (*p == '[') {
+			enabled = 1;
+			p++;
+			p[strlen(p)-1] = '\0';
+		} else
+			enabled = 0;
+
+		if (debug)
+			fprintf(stderr, "%s protocol %s (%s)\n", name, p,
+				enabled? "enabled" : "disabled");
+
+		if (!strcmp(p, "rc-5"))
+			proto = RC_5;
+		else if (!strcmp(p, "rc-6"))
+			proto = RC_6;
+		else if (!strcmp(p, "nec"))
+			proto = NEC;
+		else if (!strcmp(p, "jvc"))
+			proto = JVC;
+		else if (!strcmp(p, "sony"))
+			proto = SONY;
+		else
+			proto = OTHER;
+
+		rc_dev->supported |= proto;
+		if (enabled)
+			rc_dev->current |= proto;
+
+		p = strtok(NULL, " \n");
+	}
+
+	fclose(fp);
+
+	return 0;
+}
+
+static int v2_set_protocols(struct rc_device *rc_dev)
+{
+	FILE *fp;
+	char name[4096];
+
+	strcpy(name, rc_dev->sysfs_name);
+	strcat(name, "/protocols");
+
+	fp = fopen(name, "w");
+	if (!fp) {
+		perror(name);
+		return errno;
+	}
+
+	/* Disable all protocols */
+	fprintf(fp, "none\n");
+
+	if (rc_dev->current & RC_5)
+		fprintf(fp, "+rc-5\n");
+
+	if (rc_dev->current & RC_6)
+		fprintf(fp, "+rc-6\n");
+
+	if (rc_dev->current & NEC)
+		fprintf(fp, "+nec\n");
+
+	if (rc_dev->current & JVC)
+		fprintf(fp, "+jvc\n");
+
+	if (rc_dev->current & SONY)
+		fprintf(fp, "+sony\n");
+
+	if (rc_dev->current & OTHER)
+		fprintf(fp, "+unknown\n");
 
 	fclose(fp);
 
@@ -888,30 +992,36 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 	for (cur = attribs; cur->next; cur = cur->next) {
 		if (!cur->name)
 			continue;
-		if (strstr(cur->name, "/protocol")) {
+		if (strstr(cur->name, "/protocols")) {
+			rc_dev->version = VERSION_2;
+			rc_dev->type = UNKNOWN_TYPE;
+			v2_get_protocols(rc_dev, cur->name);
+		} else if (strstr(cur->name, "/protocol")) {
+			rc_dev->version = VERSION_1;
 			rc_dev->type = HARDWARE_DECODER;
-			rc_dev->current = get_hw_protocols(cur->name);
-		} else if (strstr(cur->name, "/supported_protocols"))
-			rc_dev->supported = get_hw_protocols(cur->name);
-		else if (strstr(cur->name, "/nec_decoder")) {
+			rc_dev->current = v1_get_hw_protocols(cur->name);
+		} else if (strstr(cur->name, "/supported_protocols")) {
+			rc_dev->version = VERSION_1;
+			rc_dev->supported = v1_get_hw_protocols(cur->name);
+		} else if (strstr(cur->name, "/nec_decoder")) {
 			rc_dev->supported |= NEC;
-			if (get_sw_enabled_protocol(cur->name))
+			if (v1_get_sw_enabled_protocol(cur->name))
 				rc_dev->current |= NEC;
 		} else if (strstr(cur->name, "/rc5_decoder")) {
 			rc_dev->supported |= RC_5;
-			if (get_sw_enabled_protocol(cur->name))
+			if (v1_get_sw_enabled_protocol(cur->name))
 				rc_dev->current |= RC_5;
 		} else if (strstr(cur->name, "/rc6_decoder")) {
 			rc_dev->supported |= RC_6;
-			if (get_sw_enabled_protocol(cur->name))
+			if (v1_get_sw_enabled_protocol(cur->name))
 				rc_dev->current |= RC_6;
 		} else if (strstr(cur->name, "/jvc_decoder")) {
 			rc_dev->supported |= JVC;
-			if (get_sw_enabled_protocol(cur->name))
+			if (v1_get_sw_enabled_protocol(cur->name))
 				rc_dev->current |= JVC;
 		} else if (strstr(cur->name, "/sony_decoder")) {
 			rc_dev->supported |= SONY;
-			if (get_sw_enabled_protocol(cur->name))
+			if (v1_get_sw_enabled_protocol(cur->name))
 				rc_dev->current |= SONY;
 		}
 	}
@@ -923,24 +1033,29 @@ static int set_proto(struct rc_device *rc_dev)
 {
 	int rc;
 
+	if (rc_dev->version == VERSION_2) {
+		rc = v2_set_protocols(rc_dev);
+		return rc;
+	}
+
 	if (rc_dev->type == SOFTWARE_DECODER) {
 		if (rc_dev->supported & NEC)
-			rc += set_sw_enabled_protocol(rc_dev, "/nec_decoder",
+			rc += v1_set_sw_enabled_protocol(rc_dev, "/nec_decoder",
 						      rc_dev->current & NEC);
 		if (rc_dev->supported & RC_5)
-			rc += set_sw_enabled_protocol(rc_dev, "/rc5_decoder",
+			rc += v1_set_sw_enabled_protocol(rc_dev, "/rc5_decoder",
 						      rc_dev->current & RC_5);
 		if (rc_dev->supported & RC_6)
-			rc += set_sw_enabled_protocol(rc_dev, "/rc6_decoder",
+			rc += v1_set_sw_enabled_protocol(rc_dev, "/rc6_decoder",
 						      rc_dev->current & RC_6);
 		if (rc_dev->supported & JVC)
-			rc += set_sw_enabled_protocol(rc_dev, "/jvc_decoder",
+			rc += v1_set_sw_enabled_protocol(rc_dev, "/jvc_decoder",
 						      rc_dev->current & JVC);
 		if (rc_dev->supported & SONY)
-			rc += set_sw_enabled_protocol(rc_dev, "/sony_decoder",
+			rc += v1_set_sw_enabled_protocol(rc_dev, "/sony_decoder",
 						      rc_dev->current & SONY);
 	} else {
-		rc = set_hw_protocols(rc_dev);
+		rc = v1_set_hw_protocols(rc_dev);
 	}
 
 	return rc;
@@ -1038,10 +1153,8 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Found %s (%s) with:\n",
 					rc_dev.sysfs_name,
 					rc_dev.input_name);
-				fprintf(stderr, "\tDriver %s, %s decoder, table %s\n",
+				fprintf(stderr, "\tDriver %s, table %s\n",
 					rc_dev.drv_name,
-					(rc_dev.type == SOFTWARE_DECODER) ?
-						"raw software" : "hardware",
 					rc_dev.keytable_name);
 				fprintf(stderr, "\tSupported protocols: ");
 				show_proto(rc_dev.supported);
