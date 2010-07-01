@@ -179,3 +179,42 @@ void v4lconvert_cit_yyvyuy_to_yuv420(const unsigned char *src,
 		}
 	}
 }
+
+/* Note this is not a spca specific format, but it fits in this file in that
+   it is another funny yuv format */
+/* The konica gspca subdriver using cams send data in blocks of 256 pixels
+   in YUV420 format. */
+void v4lconvert_konica_yuv420_to_yuv420(const unsigned char *src,
+		unsigned char *ydest,
+		int width, int height, int yvu)
+{
+	int i, no_blocks;
+	unsigned char *udest, *vdest;
+
+	if (yvu) {
+		vdest = ydest + width * height;
+		udest = vdest + (width * height) / 4;
+	} else {
+		udest = ydest + width * height;
+		vdest = udest + (width * height) / 4;
+	}
+
+	no_blocks = width * height * 3 / 2;
+	no_blocks /= 256;
+	for (i = 0; i < no_blocks; i++) {
+		/* copy 256 Y pixels */
+		memcpy(ydest, src, 256);
+		src += 256;
+		ydest += 256;
+
+		/* copy 64 U pixels */
+		memcpy(udest, src, 64);
+		src += 64;
+		udest += 64;
+
+		/* copy 64 V pixels */
+		memcpy(udest, src, 64);
+		src += 64;
+		udest += 64;
+	}
+}
