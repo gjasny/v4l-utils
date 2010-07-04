@@ -199,8 +199,7 @@ void v4lconvert_konica_yuv420_to_yuv420(const unsigned char *src,
 		vdest = udest + (width * height) / 4;
 	}
 
-	no_blocks = width * height * 3 / 2;
-	no_blocks /= 256;
+	no_blocks = width * height / 256;
 	for (i = 0; i < no_blocks; i++) {
 		/* copy 256 Y pixels */
 		memcpy(ydest, src, 256);
@@ -213,8 +212,8 @@ void v4lconvert_konica_yuv420_to_yuv420(const unsigned char *src,
 		udest += 64;
 
 		/* copy 64 V pixels */
-		memcpy(udest, src, 64);
+		memcpy(vdest, src, 64);
 		src += 64;
-		udest += 64;
+		vdest += 64;
 	}
 }
