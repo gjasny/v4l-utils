@@ -49,7 +49,11 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	/* Genius E-M 112 (also want whitebalance by default) */
 	{ 0x093a, 0x2476, 0, NULL, NULL,
 		V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED | V4LCONTROL_WANTS_WB, 1500 },
-	/* Laptops */
+
+	/* Laptops (and all in one PC's) */
+	{ 0x0402, 0x5606, 0, "AOpen", "i45GMt-HR R1.02 Dec.21.2009",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
+		"RM plc", "RM ONE ECOQUIET 300" },
 	{ 0x046d, 0x09b2, 0, "FUJITSU", "FJNB1C9",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
 		"FUJITSU SIEMENS", "LIFEBOOK P7230" },
@@ -189,6 +193,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N51Vg      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb106, 0, "ASUSTeK Computer Inc.        ", "N51Vn     ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1e5, 0, "ASUSTeK Computer Inc.        ", "K52Jc",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	/* Note no whitespace padding for this model, this is not a typo */
 	{ 0x04f2, 0xb106, 0, "ASUSTeK Computer INC.", "N5051Tp",
