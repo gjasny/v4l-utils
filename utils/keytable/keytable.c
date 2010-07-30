@@ -754,7 +754,10 @@ static int v1_get_sw_enabled_protocol(char *dirname)
 	p = strtok(buf, " \n");
 	rc = atoi(p);
 
-	fclose(fp);
+	if (fclose(fp)) {
+		perror(name);
+		return errno;
+	}
 
 	if (debug)
 		fprintf(stderr, "protocol %s is %s\n",
@@ -787,7 +790,10 @@ static int v1_set_sw_enabled_protocol(struct rc_device *rc_dev,
 	else
 		fprintf(fp, "0");
 
-	fclose(fp);
+	if (fclose(fp)) {
+		perror(name);
+		return errno;
+	}
 
 	return 0;
 }
@@ -884,7 +890,10 @@ static int v2_set_protocols(struct rc_device *rc_dev)
 	if (rc_dev->current & OTHER)
 		fprintf(fp, "+unknown\n");
 
-	fclose(fp);
+	if (fclose(fp)) {
+		perror(name);
+		return errno;
+	}
 
 	return 0;
 }
