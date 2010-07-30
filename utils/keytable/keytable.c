@@ -68,6 +68,7 @@ enum ir_protocols {
 	NEC		= 1 << 2,
 	JVC		= 1 << 3,
 	SONY		= 1 << 4,
+	LIRC		= 1 << 5,
 	OTHER		= 1 << 31,
 };
 
@@ -411,6 +412,8 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 				ch_proto |= JVC;
 			else if (!strcasecmp(p,"sony"))
 				ch_proto |= SONY;
+			else if (!strcasecmp(p,"lirc"))
+				ch_proto |= LIRC;
 			else
 				goto err_inval;
 			p = strtok(NULL, ",;");
@@ -840,6 +843,8 @@ static enum ir_protocols v2_get_protocols(struct rc_device *rc_dev, char *name)
 			proto = JVC;
 		else if (!strcmp(p, "sony"))
 			proto = SONY;
+		else if (!strcmp(p, "lirc"))	/* Only V2 has LIRC support */
+			proto = LIRC;
 		else
 			proto = OTHER;
 
@@ -887,6 +892,9 @@ static int v2_set_protocols(struct rc_device *rc_dev)
 	if (rc_dev->current & SONY)
 		fprintf(fp, "+sony\n");
 
+	if (rc_dev->current & LIRC)
+		fprintf(fp, "+lirc\n");
+
 	if (rc_dev->current & OTHER)
 		fprintf(fp, "+unknown\n");
 
@@ -910,6 +918,8 @@ static void show_proto(	enum ir_protocols proto)
 		fprintf (stderr, "JVC ");
 	if (proto & SONY)
 		fprintf (stderr, "SONY ");
+	if (proto & LIRC)
+		fprintf (stderr, "LIRC ");
 	if (proto & OTHER)
 		fprintf (stderr, "other ");
 }
