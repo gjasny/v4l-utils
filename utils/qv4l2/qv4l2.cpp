@@ -239,7 +239,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			break;
 		}
 
-		if (req.count < 2) {
+		if (req.count < 3) {
 			error("Too few buffers");
 			reqbufs_mmap_cap(req);
 			break;
@@ -288,25 +288,25 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 		return true;
 
 	case methodUser:
-		if (!reqbufs_user_cap(req, 4)) {
+		if (!reqbufs_user_cap(req, 3)) {
 			error("Cannot capture");
 			break;
 		}
 
-		if (req.count < 4) {
+		if (req.count < 3) {
 			error("Too few buffers");
 			reqbufs_user_cap(req);
 			break;
 		}
 
-		m_buffers = (buffer *)calloc(4, sizeof(*m_buffers));
+		m_buffers = (buffer *)calloc(req.count, sizeof(*m_buffers));
 
 		if (!m_buffers) {
 			error("Out of memory");
 			break;
 		}
 
-		for (m_nbuffers = 0; m_nbuffers < 4; ++m_nbuffers) {
+		for (m_nbuffers = 0; m_nbuffers < req.count; ++m_nbuffers) {
 			m_buffers[m_nbuffers].length = buffer_size;
 			m_buffers[m_nbuffers].start = malloc(buffer_size);
 
@@ -354,16 +354,18 @@ void ApplicationWindow::stopCapture()
 			if (-1 == munmap(m_buffers[i].start, m_buffers[i].length))
 				perror("munmap");
 		// Free all buffers.
+		reqbufs_mmap_cap(reqbufs, 1);  // videobuf workaround
 		reqbufs_mmap_cap(reqbufs, 0);
 		break;
 
 	case methodUser:
 		if (!streamoff_cap())
 			perror("VIDIOC_STREAMOFF");
+		// Free all buffers.
+		reqbufs_user_cap(reqbufs, 1);  // videobuf workaround
+		reqbufs_user_cap(reqbufs, 0);
 		for (i = 0; i < m_nbuffers; ++i)
 			free(m_buffers[i].start);
-		// Free all buffers.
-		reqbufs_user_cap(reqbufs, 0);
 		break;
 	}
 	free(m_buffers);
