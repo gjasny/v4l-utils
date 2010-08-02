@@ -33,6 +33,8 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_col(0),
 	m_cols(n),
 	m_audioInput(NULL),
+	m_tvStandard(NULL),
+	m_videoPreset(NULL),
 	m_freq(NULL),
 	m_vidCapFormats(NULL),
 	m_frameSize(NULL),
@@ -57,6 +59,30 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	g_tuner(m_tuner);
+
+	v4l2_standard vs;
+	if (enum_std(vs, true)) {
+		addLabel("TV Standard");
+		m_tvStandard = new QComboBox(parent);
+		do {
+			m_tvStandard->addItem((char *)vs.name);
+		} while (enum_std(vs));
+		addWidget(m_tvStandard);
+		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
+		updateStandard();
+	}
+
+	v4l2_dv_enum_preset preset;
+	if (enum_dv_preset(preset, true)) {
+		addLabel("Video Preset");
+		m_videoPreset = new QComboBox(parent);
+		do {
+			m_videoPreset->addItem((char *)preset.name);
+		} while (enum_dv_preset(preset));
+		addWidget(m_videoPreset);
+		connect(m_videoPreset, SIGNAL(activated(int)), SLOT(presetChanged(int)));
+		updatePreset();
+	}
 
 	v4l2_input vin;
 	if (enum_input(vin, true)) {
@@ -104,18 +130,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		addWidget(m_audioOutput);
 		connect(m_audioOutput, SIGNAL(activated(int)), SLOT(outputAudioChanged(int)));
 		updateAudioOutput();
-	}
-
-	v4l2_standard vs;
-	if (enum_std(vs, true)) {
-		addLabel("TV Standard");
-		m_tvStandard = new QComboBox(parent);
-		do {
-			m_tvStandard->addItem((char *)vs.name);
-		} while (enum_std(vs));
-		addWidget(m_tvStandard);
-		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
-		updateStandard();
 	}
 
 	if (m_tuner.type) {
@@ -279,6 +293,15 @@ void GeneralTab::standardChanged(int std)
 	updateStandard();
 }
 
+void GeneralTab::presetChanged(int index)
+{
+	v4l2_dv_enum_preset preset;
+
+	enum_dv_preset(preset, true, index);
+	s_dv_preset(preset.preset);
+	updatePreset();
+}
+
 void GeneralTab::freqTableChanged(int)
 {
 	updateFreqChannel();
@@ -381,17 +404,29 @@ void GeneralTab::vidOutFormatChanged(int idx)
 void GeneralTab::updateVideoInput()
 {
 	int input;
+	v4l2_input in;
 
 	g_input(input);
+	enum_input(in, true, input);
 	m_videoInput->setCurrentIndex(input);
+	if (m_tvStandard)
+		m_tvStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
+	if (m_videoPreset)
+		m_videoPreset->setEnabled(in.capabilities & V4L2_IN_CAP_PRESETS);
 }
 
 void GeneralTab::updateVideoOutput()
 {
 	int output;
+	v4l2_output out;
 
 	g_output(output);
+	enum_output(out, true, output);
 	m_videoOutput->setCurrentIndex(output);
+	if (m_tvStandard)
+		m_tvStandard->setEnabled(out.capabilities & V4L2_OUT_CAP_STD);
+	if (m_videoPreset)
+		m_videoPreset->setEnabled(out.capabilities & V4L2_OUT_CAP_PRESETS);
 }
 
 void GeneralTab::updateAudioInput()
@@ -451,6 +486,28 @@ void GeneralTab::updateStandard()
 		vs.frameperiod.numerator, vs.frameperiod.denominator,
 		vs.framelines);
 	m_tvStandard->setWhatsThis(what);
+}
+
+void GeneralTab::updatePreset()
+{
+	__u32 preset;
+	v4l2_dv_enum_preset p;
+	QString what;
+
+	g_dv_preset(preset);
+	if (enum_dv_preset(p, true)) {
+		do {
+			if (p.preset == preset)
+				break;
+		} while (enum_dv_preset(p));
+	}
+	if (p.preset != preset)
+		return;
+	m_videoPreset->setCurrentIndex(p.index);
+	what.sprintf("Video Preset (%u)\n"
+		"Frame %ux%u\n",
+		p.preset, p.width, p.height);
+	m_videoPreset->setWhatsThis(what);
 }
 
 void GeneralTab::updateFreq()

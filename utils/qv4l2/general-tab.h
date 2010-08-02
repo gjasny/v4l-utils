@@ -48,6 +48,7 @@ private slots:
 	void inputAudioChanged(int);
 	void outputAudioChanged(int);
 	void standardChanged(int);
+	void presetChanged(int);
 	void freqTableChanged(int);
 	void freqChannelChanged(int);
 	void freqChanged(int);
@@ -64,6 +65,7 @@ private:
 	void updateAudioInput();
 	void updateAudioOutput();
 	void updateStandard();
+	void updatePreset();
 	void updateFreq();
 	void updateFreqChannel();
 	void updateVidCapFormat();
@@ -99,6 +101,7 @@ private:
 	QComboBox *m_audioInput;
 	QComboBox *m_audioOutput;
 	QComboBox *m_tvStandard;
+	QComboBox *m_videoPreset;
 	QSpinBox  *m_freq;
 	QComboBox *m_freqTable;
 	QComboBox *m_freqChannel;

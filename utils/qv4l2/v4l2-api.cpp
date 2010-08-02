@@ -204,6 +204,27 @@ bool v4l2::s_std(v4l2_std_id std)
 	return ioctl("Set TV Standard", VIDIOC_S_STD, &std);
 }
 
+bool v4l2::g_dv_preset(__u32 &preset)
+{
+	struct v4l2_dv_preset p;
+	int err;
+
+	memset(&p, 0, sizeof(p));
+	err = ioctl(VIDIOC_G_DV_PRESET, &p);
+	preset = p.preset;
+	return err >= 0;
+}
+
+bool v4l2::s_dv_preset(__u32 preset)
+{
+	struct v4l2_dv_preset p;
+
+	memset(&p, 0, sizeof(p));
+	p.preset = preset;
+	return ioctl("Set Preset", VIDIOC_S_DV_PRESET, &p);
+}
+
+
 bool v4l2::g_frequency(v4l2_frequency &freq)
 {
 	memset(&freq, 0, sizeof(freq));
@@ -251,21 +272,25 @@ bool v4l2::s_fmt(v4l2_format &fmt)
 	return ioctl("Set Capture Format", VIDIOC_S_FMT, &fmt);
 }
 
-bool v4l2::enum_input(v4l2_input &in, bool init)
+bool v4l2::enum_input(v4l2_input &in, bool init, int index)
 {
-	if (init)
+	if (init) {
 		memset(&in, 0, sizeof(in));
-	else
+		in.index = index;
+	} else {
 		in.index++;
+	}
 	return ioctl(VIDIOC_ENUMINPUT, &in) >= 0;
 }
 
-bool v4l2::enum_output(v4l2_output &out, bool init)
+bool v4l2::enum_output(v4l2_output &out, bool init, int index)
 {
-	if (init)
+	if (init) {
 		memset(&out, 0, sizeof(out));
-	else
+		out.index = index;
+	} else {
 		out.index++;
+	}
 	return ioctl(VIDIOC_ENUMOUTPUT, &out) >= 0;
 }
 
@@ -296,6 +321,17 @@ bool v4l2::enum_std(v4l2_standard &std, bool init, int index)
 		std.index++;
 	}
 	return ioctl(VIDIOC_ENUMSTD, &std) >= 0;
+}
+
+bool v4l2::enum_dv_preset(v4l2_dv_enum_preset &preset, bool init, int index)
+{
+	if (init) {
+		memset(&preset, 0, sizeof(preset));
+		preset.index = index;
+	} else {
+		preset.index++;
+	}
+	return ioctl(VIDIOC_ENUM_DV_PRESETS, &preset) >= 0;
 }
 
 bool v4l2::enum_fmt_cap(v4l2_fmtdesc &fmt, bool init, int index)

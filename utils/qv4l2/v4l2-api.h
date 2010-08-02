@@ -65,6 +65,8 @@ public:
 	bool s_audout(int output);
 	bool s_std(v4l2_std_id std);
 	bool g_std(v4l2_std_id &std);
+	bool s_dv_preset(__u32 preset);
+	bool g_dv_preset(__u32 &preset);
 	bool g_frequency(v4l2_frequency &freq);
 	bool s_frequency(v4l2_frequency &freq);
 	bool s_frequency(int freq);
@@ -72,11 +74,12 @@ public:
 	bool g_fmt_out(v4l2_format &fmt);
 	bool try_fmt(v4l2_format &fmt);
 	bool s_fmt(v4l2_format &fmt);
-	bool enum_input(v4l2_input &in, bool init = false);
-	bool enum_output(v4l2_output &out, bool init = false);
+	bool enum_input(v4l2_input &in, bool init = false, int index = 0);
+	bool enum_output(v4l2_output &out, bool init = false, int index = 0);
 	bool enum_audio(v4l2_audio &audio, bool init = false);
 	bool enum_audout(v4l2_audioout &audout, bool init = false);
 	bool enum_std(v4l2_standard &std, bool init = false, int index = 0);
+	bool enum_dv_preset(v4l2_dv_enum_preset &preset, bool init = false, int index = 0);
 	bool enum_fmt_cap(v4l2_fmtdesc &std, bool init = false, int index = 0);
 	bool enum_fmt_out(v4l2_fmtdesc &std, bool init = false, int index = 0);
 	bool enum_framesizes(v4l2_frmsizeenum &frm, __u32 init_pixfmt = 0, int index = 0);
