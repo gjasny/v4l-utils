@@ -370,7 +370,6 @@ void ApplicationWindow::stopCapture()
 	}
 	free(m_buffers);
 	m_buffers = NULL;
-	m_capture->stop();
 	refresh();
 }
 

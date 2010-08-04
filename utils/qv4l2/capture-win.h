@@ -21,10 +21,10 @@
 #define CAPTURE_WIN_H
 
 #include <QWidget>
+#include <sys/time.h>
 
 class QImage;
 class QLabel;
-class QTimer;
 
 class CaptureWin : public QWidget
 {
@@ -35,14 +35,10 @@ public:
 	virtual ~CaptureWin() {}
 
 	void setImage(const QImage &image, bool init = false);
-	void stop();
 	unsigned frame() const { return m_frame; }
 
 protected:
 	virtual void closeEvent(QCloseEvent *event);
-
-private slots:
-	void update();
 
 signals:
 	void close();
@@ -53,7 +49,7 @@ private:
 	unsigned m_frame;
 	unsigned m_lastFrame;
 	unsigned m_fps;
-	QTimer *m_timer;
+	struct timeval m_tv;
 };
 
 #endif

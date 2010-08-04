@@ -16,10 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
+#include <stdio.h>
 #include <QLabel>
 #include <QImage>
-#include <QTimer>
 #include <QVBoxLayout>
 #include <QCloseEvent>
 
@@ -33,8 +32,6 @@ CaptureWin::CaptureWin()
 	m_frame = 0;
 	m_label = new QLabel();
 	m_msg = new QLabel("No frame");
-	m_timer = new QTimer(this);
-	connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
 
 	vbox->addWidget(m_label);
 	vbox->addWidget(m_msg);
@@ -47,23 +44,21 @@ void CaptureWin::setImage(const QImage &image, bool init)
 		m_frame = m_lastFrame = m_fps = 0;
 		m_msg->setText("No frame");
 	} else {
-		if (m_frame == 0) {
-			m_timer->start(2000);
+		struct timeval tv, res;
+
+		if (m_frame == 0)
+			gettimeofday(&m_tv, NULL);
+		gettimeofday(&tv, NULL);
+		timersub(&tv, &m_tv, &res);
+		if (res.tv_sec) {
+			m_fps = (100 * (m_frame - m_lastFrame)) /
+				(res.tv_sec * 100 + res.tv_usec / 10000);
+			m_lastFrame = m_frame;
+			m_tv = tv;
 		}
 		m_msg->setText(QString("Frame: %1 Fps: %2")
 				.arg(++m_frame).arg(m_fps));
 	}
-}
-
-void CaptureWin::stop()
-{
-	m_timer->stop();
-}
-
-void CaptureWin::update()
-{
-	m_fps = (m_frame - m_lastFrame + 1) / 2;
-	m_lastFrame = m_frame;
 }
 
 void CaptureWin::closeEvent(QCloseEvent *event)
