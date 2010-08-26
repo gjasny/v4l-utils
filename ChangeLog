@@ -1,3 +1,18 @@
+v4l-utils-0.8.1
+---------------
+* Utils changes:
+  * Various v4l-keytable improvements (mchehab)
+  * Various qv4l2 fixes (hverkuil)
+  * v4l2-ctl: Added support for s/g_dv_timings (Mats Randgaard)
+* libv4l changes (hdegoede):
+  * Add many more laptop models to the upside down devices table
+  * Detect short frames (and retry upto 3 times to get a non short frame)
+  * Support (uvc) cameras with more then 16 framesizes properly (Balint Reczey)
+  * libv4l1 no longer relies on the kernel v4l1 compat ioctl handling, many
+    thanks to Huzaifa Sidhpurwala for his work on this!
+  * Add support for Xirlink C-It YYVYUY
+  * Add support for konica yuv420 format
+
 v4l-utils-0.8.0
 ---------------
 * Utils changes:
