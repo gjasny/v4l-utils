@@ -88,10 +88,24 @@ static const char *v4l2_ioctls[] = {
 	[_IOC_NR(VIDIOC_G_EXT_CTRLS)]      = "VIDIOC_G_EXT_CTRLS",
 	[_IOC_NR(VIDIOC_S_EXT_CTRLS)]      = "VIDIOC_S_EXT_CTRLS",
 	[_IOC_NR(VIDIOC_TRY_EXT_CTRLS)]    = "VIDIOC_TRY_EXT_CTRLS",
-#ifdef VIDIOC_ENUM_FRAMESIZES
 	[_IOC_NR(VIDIOC_ENUM_FRAMESIZES)]  = "VIDIOC_ENUM_FRAMESIZES",
 	[_IOC_NR(VIDIOC_ENUM_FRAMEINTERVALS)] = "VIDIOC_ENUM_FRAMEINTERVALS",
-#endif
+	[_IOC_NR(VIDIOC_G_ENC_INDEX)]	   = "VIDIOC_G_ENC_INDEX",
+	[_IOC_NR(VIDIOC_ENCODER_CMD)]	   = "VIDIOC_ENCODER_CMD",
+	[_IOC_NR(VIDIOC_TRY_ENCODER_CMD)]  = "VIDIOC_TRY_ENCODER_CMD",
+	[_IOC_NR(VIDIOC_DBG_S_REGISTER)]   = "VIDIOC_DBG_S_REGISTER",
+	[_IOC_NR(VIDIOC_DBG_G_REGISTER)]   = "VIDIOC_DBG_G_REGISTER",
+	[_IOC_NR(VIDIOC_DBG_G_CHIP_IDENT)] = "VIDIOC_DBG_G_CHIP_IDENT",
+	[_IOC_NR(VIDIOC_S_HW_FREQ_SEEK)]   = "VIDIOC_S_HW_FREQ_SEEK",
+	[_IOC_NR(VIDIOC_ENUM_DV_PRESETS)]  = "VIDIOC_ENUM_DV_PRESETS",
+	[_IOC_NR(VIDIOC_S_DV_PRESET)]	   = "VIDIOC_S_DV_PRESET",
+	[_IOC_NR(VIDIOC_G_DV_PRESET)]	   = "VIDIOC_G_DV_PRESET",
+	[_IOC_NR(VIDIOC_QUERY_DV_PRESET)]  = "VIDIOC_QUERY_DV_PRESET",
+	[_IOC_NR(VIDIOC_S_DV_TIMINGS)]	   = "VIDIOC_S_DV_TIMINGS",
+	[_IOC_NR(VIDIOC_G_DV_TIMINGS)]	   = "VIDIOC_G_DV_TIMINGS",
+	[_IOC_NR(VIDIOC_DQEVENT)]	   = "VIDIOC_DQEVENT",
+	[_IOC_NR(VIDIOC_SUBSCRIBE_EVENT)]  = "VIDIOC_SUBSCRIBE_EVENT",
+	[_IOC_NR(VIDIOC_UNSUBSCRIBE_EVENT)] = "VIDIOC_UNSUBSCRIBE_EVENT",
 };
 
 void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
@@ -150,7 +164,6 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 				req->count, (int)req->type, (int)req->memory);
 		break;
 	}
-#ifdef VIDIOC_ENUM_FRAMESIZES
 	case VIDIOC_ENUM_FRAMESIZES: {
 		struct v4l2_frmsizeenum *frmsize = arg;
 		int pixfmt = frmsize->pixel_format;
@@ -203,7 +216,6 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 		}
 		break;
 	}
-#endif
 	}
 
 	if (result < 0)
