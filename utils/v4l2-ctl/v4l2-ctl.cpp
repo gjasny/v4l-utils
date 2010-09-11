@@ -794,7 +794,7 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 	}
 	printf("\n");
 	if (queryctrl->type == V4L2_CTRL_TYPE_MENU && show_menus) {
-		for (i = 0; i <= queryctrl->maximum; i++) {
+		for (i = queryctrl->minimum; i <= queryctrl->maximum; i++) {
 			qmenu.index = i;
 			if (ioctl(fd, VIDIOC_QUERYMENU, &qmenu))
 				continue;
