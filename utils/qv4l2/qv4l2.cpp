@@ -239,7 +239,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			break;
 		}
 
-		if (req.count < 3) {
+		if (req.count < 2) {
 			error("Too few buffers");
 			reqbufs_mmap_cap(req);
 			break;
@@ -293,7 +293,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			break;
 		}
 
-		if (req.count < 3) {
+		if (req.count < 2) {
 			error("Too few buffers");
 			reqbufs_user_cap(req);
 			break;
