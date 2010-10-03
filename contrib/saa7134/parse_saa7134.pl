@@ -11,8 +11,12 @@
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU General Public License for more details.
 #
+# FIXME: need to properly map 32 bites aligned read/writes also.
+#
 
 use strict;
+
+my $debug = 0;
 
 my %reg_map = (
 	0x101 => "SAA7134_INCR_DELAY",
@@ -131,11 +135,73 @@ my %reg_map = (
 	0x591 => "SAA7133_I2S_AUDIO_CONTROL",
 );
 
+my %i2c_status = (
+	0  => "IDLE",
+	1  => "DONE_STOP",
+	2  => "BUSY",
+	3  => "TO_SCL",
+	4  => "TO_ARB",
+	5  => "DONE_WRITE",
+	6  => "DONE_READ",
+	7  => "DONE_WRITE_TO",
+	8  => "DONE_READ_TO",
+	9  => "NO_DEVICE",
+	10 => "NO_ACKN",
+	11 => "BUS_ERR",
+	12 => "ARB_LOST",
+	13 => "SEQ_ERR",
+	14 => "ST_ERR",
+	15 => "SW_ERR",
+);
+
+my %i2c_attr = (
+	0 => "NOP",
+	1 => "STOP",
+	2 => "CONTINUE",
+	3 => "START",
+);
+
+sub parse_i2c($$$$$)
+{
+	my $time = shift;
+	my $optype = shift;
+	my $align = shift;
+	my $reg = shift;
+	my $val = shift;
+
+	if ($align ne 'l') {
+		print("FIXME: currently, parser work only with 32 bits i2c reg $optype\n");
+		return;
+	}
+
+	my $status = $i2c_status{$val & 0x0f};
+	my $attr = $i2c_attr{($val >> 6) & 0x03};
+
+	if ($debug < 1) {
+		# Avoid poluting the logs with busy msgs
+		return if ($status eq "BUSY" | $status eq "TO_SCL" | $status eq "TO_ARB");
+
+		# Avoid poluting the logs with read msgs during write
+		return if ($optype eq "read" && $status eq "DONE_WRITE");
+
+		# Avoid poluting the logs with NOP operations
+		return if ($attr eq "NOP");
+	}
+
+	# Prints I2C transaction
+	if ($optype eq "write") {
+		printf("write_i2c(%s, %s, 0x%02x)\n", $status, $attr, $val >> 8);
+	} else {
+		printf("val = read_i2c()\t/* read %s, %s, val=0x%02x */\n", $status, $attr, $val >> 8);
+	}
+}
+
 while (<>) {
 	# 1286074716 slow_bar_read.: slow_bar_readl addr=0x0000000000000180 val=0x00008182
 	if (m/^(\d+)\s+slow_bar_(read|write)(.).*addr=([^\s]+)\s+val=([^\s]+)/) {
 		my $time = $1;
 		my $optype = $2;
+		my $align = $3;
 		my $op = "$2$3";
 		my $reg = hex($4);
 		my $val = hex($5);
@@ -144,7 +210,9 @@ while (<>) {
 		} else {
 			$reg = sprintf("0x%04x", $reg);
 		}
-		if ($optype eq "read") {
+		if ($reg =~ m/SAA7134_I2C_ATTR_STATUS/) {
+			parse_i2c($time, $optype, $align, $reg, $val);
+		} elsif ($optype eq "read") {
 			printf ("reg = saa_%s(%s);	/* read 0x%04x */\n", $op, $reg, $val);
 		} else {
 			printf ("saa_%s(%s, 0x%04x);\n", $op, $reg, $val);
