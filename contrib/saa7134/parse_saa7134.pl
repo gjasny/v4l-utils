@@ -166,6 +166,39 @@ my $write = 0;
 my $direction;
 my @buf;
 
+sub flush_i2c_transaction($$)
+{
+	my $direction = shift;
+	my $is_complete = shift;
+
+	my $size = scalar(@buf);
+
+	if ($direction == 0) {
+		my $v = shift @buf;
+		printf("write_i2c_addr(0x%02x, %d, { 0x%02x",
+			$addr, $size, $v);
+		while (scalar(@buf)) {
+			my $v = shift @buf;
+			printf(", 0x%02x", $v);
+		}
+		printf("});");
+	} else {
+		my $size = scalar(@buf);
+		my $v = shift @buf;
+		printf("read_i2c_addr(0x%02x, %d) /* 0x%02x",
+			$addr, $size, $v);
+		while (scalar(@buf)) {
+			my $v = shift @buf;
+			printf(", 0x%02x", $v);
+		}
+		printf(" */;");
+	}
+	@buf = ();
+	$addr = -1;
+
+	printf (" /* INCOMPLETE */") if (!$is_complete);
+	printf "\n";
+}
 sub parse_i2c($$$$$)
 {
 	my $time = shift;
@@ -205,6 +238,8 @@ sub parse_i2c($$$$$)
 	$val >>= 8;
 
 	if (($attr eq "START") && ($optype eq "write")) {
+		flush_i2c_transaction(0, 0) if (scalar(@buf) && $addr >= 0);
+
 		$direction = $val & 1;
 		$addr = $val >> 1;
 	}
@@ -216,19 +251,8 @@ sub parse_i2c($$$$$)
 			push @buf, $val;
 		} elsif ($attr eq "STOP" && $addr >= 0) {
 			push @buf, $val;
-			my $size = scalar(@buf);
-			if ($direction == 0) {
-				my $v = shift @buf;
-				printf("write_i2c_addr(0x%02x, %d, { 0x%02x",
-					$addr, $size, $v);
-				while (scalar(@buf)) {
-					my $v = shift @buf;
-					printf(", 0x%02x", $v);
-				}
-				printf("});\n");
-			}
-			@buf = ();
-			$addr = -1;
+
+			flush_i2c_transaction(0, 1);
 		}
 	} elsif ($direction == 1) {
 		if ($optype eq "write") {
@@ -241,18 +265,7 @@ sub parse_i2c($$$$$)
 		if ($attr eq "CONTINUE") {
 			push @buf, $val;
 		} elsif ($attr eq "STOP" && $addr >= 0) {
-			push @buf, $val;
-			my $size = scalar(@buf);
-			my $v = shift @buf;
-			printf("read_i2c_addr(0x%02x, %d) /* 0x%02x",
-				$addr, $size, $v);
-			while (scalar(@buf)) {
-				my $v = shift @buf;
-				printf(", 0x%02x", $v);
-			}
-			printf(" */;\n");
-			@buf = ();
-			$addr = -1;
+			flush_i2c_transaction(1, 1);
 		}
 	}
 }
