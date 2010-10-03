@@ -1,0 +1,64 @@
+diff --git a/hw/device-assignment.c b/hw/device-assignment.c
+index c99d986..4af9ff6 100644
+--- a/hw/device-assignment.c
++++ b/hw/device-assignment.c
+@@ -47,7 +47,7 @@
+ #define IORESOURCE_DMA      0x00000800
+ #define IORESOURCE_PREFETCH 0x00001000  /* No side effects */
+ 
+-/* #define DEVICE_ASSIGNMENT_DEBUG 1 */
++#define DEVICE_ASSIGNMENT_DEBUG 1
+ 
+ #ifdef DEVICE_ASSIGNMENT_DEBUG
+ #define DEBUG(fmt, ...)                                       \
+@@ -267,10 +267,10 @@ static void assigned_dev_iomem_map(PCIDevice *pci_dev, int region_num,
+     pcibus_t old_esize = region->e_size;
+     int first_map = (region->e_size == 0);
+     int ret = 0;
+-
++#if 0
+     DEBUG("e_phys=%08x r_virt=%p type=%d len=%08x region_num=%d \n",
+           e_phys, region->u.r_virtbase, type, e_size, region_num);
+-
++#endif
+     region->e_physbase = e_phys;
+     region->e_size = e_size;
+ 
+@@ -344,10 +344,10 @@ static void assigned_dev_ioport_map(PCIDevice *pci_dev, int region_num,
+ 
+     region->e_physbase = addr;
+     region->e_size = size;
+-
++#if 0
+     DEBUG("e_phys=0x%x r_baseport=%x type=0x%x len=%d region_num=%d \n",
+           addr, region->u.r_baseport, type, size, region_num);
+-
++#endif
+     if (first_map && region->region->resource_fd < 0) {
+ 	struct ioperm_data *data;
+ 
+@@ -561,11 +561,13 @@ static int assigned_dev_register_regions(PCIRegion *io_regions,
+                 : PCI_BASE_ADDRESS_SPACE_MEMORY;
+ 
+             if (cur_region->size & 0xFFF) {
++#if 0
+                 fprintf(stderr, "PCI region %d at address 0x%llx "
+                         "has size 0x%x, which is not a multiple of 4K. "
+                         "You might experience some performance hit due to that.\n",
+                         i, (unsigned long long)cur_region->base_addr,
+                         cur_region->size);
++#endif
+                 slow_map = 1;
+             }
+ 
+@@ -1341,8 +1343,8 @@ static void msix_mmio_writel(void *opaque,
+     unsigned int offset = addr & 0xfff;
+     void *page = adev->msix_table_page;
+ 
+-    DEBUG("write to MSI-X entry table mmio offset 0x%lx, val 0x%lx\n",
+-		    addr, val);
++    DEBUG("write to MSI-X entry table mmio offset 0x%lx, val 0x%ux\n",
++		    (unsigned long)addr, val);
+     memcpy((void *)((char *)page + offset), &val, 4);
+ }
+ 

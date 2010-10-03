@@ -1,0 +1,90 @@
+INTRODUCTION
+============
+Sometimes, it is useful to check what the driver is doing with
+the PCI registers.
+
+As it took me some time to get the right info from the Intenet,
+and to write a few patches to enable debug, and to write them
+to a file, I'm documenting here the procedure I used, as it
+may be useful for the others.
+
+One of the ways to see what a driver is doing with PCI registers
+is to write several debug printk's. Another way is to enable PCI
+device access at a VM machine, and catch the PCI emulation logs.
+
+To use the second case, one of the ways is to modify the qemu-kvm
+package. In my case, I wrote some patches for
+qemu-kvm-0.12.1.2-2.113.el6.x86_64 (shipped with RHEL6), but they
+probably apply on other versions of qemu.
+
+Be careful: in order to get the PCI writes, the patches I'm using
+intercepts all calls to PCI write/read to the mapped devices. This
+is slow, and may cause machine hangs. If you're willing to use it,
+you'll likely need to do on a separate machine, used just for
+tests. On my test machine, they work fine for digital TV, but hangs
+the machine with analog TV (probably because digital streams use
+compressed traffic).
+
+PATCHES FOR QEMU-KVM
+====================
+
+There are a few patches that are needed to allow getting a kvm log
+from the PCI traffic.
+
+The patches should be applied on this order:
+
+kvm-allow-assigned-different-than-4K.patch
+kvm-dev-assign-debug.patch
+write_log_to_file.patch
+
+1) kvm-allow-assigned-different-than-4K.patch
+
+This patch came from qemu-kvm git tree. It will likely be available
+on some stable version soon. It is needed for some devices.
+
+2) kvm-dev-assign-debug.patch
+This patch were written by me. It basically enables some debug
+logs. It is licensed with GPLv2;
+
+3) write_log_to_file.patch
+
+This patch were written by me. It changes the debug logic to write
+logs on a file, instead of stderr. The file is: /var/log/qemu_hw_pci.log.
+You'll need to create it previously, change its ownership to match
+qemu user, and fix selinux permissions (if you're using selinux).
+In the case of RHEL6, I'm using:
+
+-rw-r--r--. qemu qemu system_u:system_r:svirt_t:s0     qemu_hw_pci.log
+
+IRQ CONFLICTS
+=============
+
+You need to be sure that IRQ's are not shared between the device you
+want to sniff and any other device, otherwise, kvm won't allow you
+to see the physical device. This is (currently) a kvm restriction.
+
+You may check it  by looking at /proc/interrupts.
+
+In my case, ehci_hcd and uhci_hcd shares interrrupts with devices I
+plug on my PCI slots. So, I wrote a script to disconnect all USB buses
+from my test machine. The script is:
+
+	disconnect_usb.sh
+
+MAPPING THE PHYSICAL DEVICE ON QEMU
+===================================
+
+You'll need to use an option for KVM to map the PCI device at the
+machine. In my case, I'm using those lines:
+
+-device pci-assign,host=37:09.0,id=hostdev0,configfd=22,bus=pci.0,addr=0x6
+-device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x5
+
+The actual line depends on the PCI device that you're using. The above
+example assumes a device at PCI address 37:09.0.
+
+You may also use virt-manager to configure physical access to your PCI
+device.
+
+I hope this may be useful for you.
+Mauro Carvalho Chehab <mchehab@infradead.org>

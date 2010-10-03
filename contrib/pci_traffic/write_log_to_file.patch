@@ -1,0 +1,55 @@
+diff --git a/hw/device-assignment.c b/hw/device-assignment.c
+index 4af9ff6..aae2d8a 100644
+--- a/hw/device-assignment.c
++++ b/hw/device-assignment.c
+@@ -25,8 +25,10 @@
+  *  Copyright (C) 2008, Red Hat, Amit Shah (amit.shah@redhat.com)
+  *  Copyright (C) 2008, IBM, Muli Ben-Yehuda (muli@il.ibm.com)
+  */
++
+ #include <stdio.h>
+ #include <unistd.h>
++#include <time.h>
+ #include <sys/io.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+@@ -50,9 +52,15 @@
+ #define DEVICE_ASSIGNMENT_DEBUG 1
+ 
+ #ifdef DEVICE_ASSIGNMENT_DEBUG
+-#define DEBUG(fmt, ...)                                       \
+-    do {                                                      \
+-      fprintf(stderr, "%s: " fmt, __func__ , __VA_ARGS__);    \
++static FILE *debugfp = NULL;
++
++#define DEBUG(fmt, ...)                                                 \
++    do {                                                                \
++      if (!debugfp)							\
++		debugfp = fopen("/var/log/qemu_hw_pci.log", "a+");	\
++      if (debugfp)						        \
++	      fprintf(debugfp, "%ld %s: " fmt, (long)time(NULL),	\
++		      __func__ , __VA_ARGS__);				\
+     } while (0)
+ #else
+ #define DEBUG(fmt, ...) do { } while(0)
+@@ -560,6 +568,10 @@ static int assigned_dev_register_regions(PCIRegion *io_regions,
+                 ? PCI_BASE_ADDRESS_MEM_PREFETCH
+                 : PCI_BASE_ADDRESS_SPACE_MEMORY;
+ 
++#ifdef DEVICE_ASSIGNMENT_DEBUG
++	    slow_map = 1;
++#endif
++
+             if (cur_region->size & 0xFFF) {
+ #if 0
+                 fprintf(stderr, "PCI region %d at address 0x%llx "
+@@ -1453,6 +1465,9 @@ static int assigned_initfn(struct PCIDevice *pci_dev)
+         if (assigned_dev_register_msix_mmio(dev))
+             goto assigned_out;
+ 
++    DEBUG("Assigned device 0000:%02x:%02x.%01x/rom",
++          dev->host.bus, dev->host.dev, dev->host.func);
++
+     assigned_dev_load_option_rom(dev);
+     QLIST_INSERT_HEAD(&devs, dev, next);
+     return 0;

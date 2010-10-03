@@ -1,0 +1,185 @@
+commit 8845b72377a42443b249360b9cd3d6f1e8cfb097
+Author: Alexander Graf <agraf@suse.de>
+Date:   Thu Dec 17 16:04:44 2009 +0100
+
+    Enable non page boundary BAR device assignment
+    
+    While trying to get device passthrough working with an emulex hba, kvm
+    refused to pass it through because it has a BAR of 256 bytes:
+    
+            Region 0: Memory at d2100000 (64-bit, non-prefetchable) [size=4K]
+            Region 2: Memory at d2101000 (64-bit, non-prefetchable) [size=256]
+            Region 4: I/O ports at b100 [size=256]
+    
+    Since the page boundary is an arbitrary optimization to allow 1:1 mapping of
+    physical to virtual addresses, we can still take the old MMIO callback route.
+    
+    So let's add a second code path that allows for size & 0xFFF != 0 sized regions
+    by looping it through userspace.
+    
+    I verified that it works by passing through an e1000 with this additional patch
+    applied and the card acted the same way it did without this patch:
+    
+                 map_func = assigned_dev_iomem_map;
+    -            if (cur_region->size & 0xFFF) {
+    +            if (i != PCI_ROM_SLOT){
+                     fprintf(stderr, "PCI region %d at address 0x%llx "
+    
+    Signed-off-by: Alexander Graf <agraf@suse.de>
+    Signed-off-by: Avi Kivity <avi@redhat.com>
+
+diff --git a/hw/device-assignment.c b/hw/device-assignment.c
+index 5422e9a..c99d986 100644
+--- a/hw/device-assignment.c
++++ b/hw/device-assignment.c
+@@ -158,6 +158,105 @@ static uint32_t assigned_dev_ioport_readl(void *opaque, uint32_t addr)
+     return assigned_dev_ioport_rw(opaque, addr, 4, NULL);
+ }
+ 
++static uint32_t slow_bar_readb(void *opaque, target_phys_addr_t addr)
++{
++    AssignedDevRegion *d = opaque;
++    uint8_t *in = d->u.r_virtbase + addr;
++    uint32_t r;
++
++    r = *in;
++    DEBUG("slow_bar_readl addr=0x" TARGET_FMT_plx " val=0x%08x\n", addr, r);
++
++    return r;
++}
++
++static uint32_t slow_bar_readw(void *opaque, target_phys_addr_t addr)
++{
++    AssignedDevRegion *d = opaque;
++    uint16_t *in = d->u.r_virtbase + addr;
++    uint32_t r;
++
++    r = *in;
++    DEBUG("slow_bar_readl addr=0x" TARGET_FMT_plx " val=0x%08x\n", addr, r);
++
++    return r;
++}
++
++static uint32_t slow_bar_readl(void *opaque, target_phys_addr_t addr)
++{
++    AssignedDevRegion *d = opaque;
++    uint32_t *in = d->u.r_virtbase + addr;
++    uint32_t r;
++
++    r = *in;
++    DEBUG("slow_bar_readl addr=0x" TARGET_FMT_plx " val=0x%08x\n", addr, r);
++
++    return r;
++}
++
++static void slow_bar_writeb(void *opaque, target_phys_addr_t addr, uint32_t val)
++{
++    AssignedDevRegion *d = opaque;
++    uint8_t *out = d->u.r_virtbase + addr;
++
++    DEBUG("slow_bar_writeb addr=0x" TARGET_FMT_plx " val=0x%02x\n", addr, val);
++    *out = val;
++}
++
++static void slow_bar_writew(void *opaque, target_phys_addr_t addr, uint32_t val)
++{
++    AssignedDevRegion *d = opaque;
++    uint16_t *out = d->u.r_virtbase + addr;
++
++    DEBUG("slow_bar_writew addr=0x" TARGET_FMT_plx " val=0x%04x\n", addr, val);
++    *out = val;
++}
++
++static void slow_bar_writel(void *opaque, target_phys_addr_t addr, uint32_t val)
++{
++    AssignedDevRegion *d = opaque;
++    uint32_t *out = d->u.r_virtbase + addr;
++
++    DEBUG("slow_bar_writel addr=0x" TARGET_FMT_plx " val=0x%08x\n", addr, val);
++    *out = val;
++}
++
++static CPUWriteMemoryFunc * const slow_bar_write[] = {
++    &slow_bar_writeb,
++    &slow_bar_writew,
++    &slow_bar_writel
++};
++
++static CPUReadMemoryFunc * const slow_bar_read[] = {
++    &slow_bar_readb,
++    &slow_bar_readw,
++    &slow_bar_readl
++};
++
++static void assigned_dev_iomem_map_slow(PCIDevice *pci_dev, int region_num,
++                                        pcibus_t e_phys, pcibus_t e_size,
++                                        int type)
++{
++    AssignedDevice *r_dev = container_of(pci_dev, AssignedDevice, dev);
++    AssignedDevRegion *region = &r_dev->v_addrs[region_num];
++    PCIRegion *real_region = &r_dev->real_device.regions[region_num];
++    int m;
++
++    DEBUG("slow map type %i\n", type);
++    m = cpu_register_io_memory(slow_bar_read, slow_bar_write, region);
++    cpu_register_physical_memory(e_phys, e_size, m);
++
++    /* MSI-X MMIO page */
++    if ((e_size > 0) &&
++        real_region->base_addr <= r_dev->msix_table_addr &&
++        real_region->base_addr + real_region->size >= r_dev->msix_table_addr) {
++        int offset = r_dev->msix_table_addr - real_region->base_addr;
++
++        cpu_register_physical_memory(e_phys + offset,
++                TARGET_PAGE_SIZE, r_dev->mmio_index);
++    }
++}
++
+ static void assigned_dev_iomem_map(PCIDevice *pci_dev, int region_num,
+                                    pcibus_t e_phys, pcibus_t e_size, int type)
+ {
+@@ -456,15 +555,22 @@ static int assigned_dev_register_regions(PCIRegion *io_regions,
+ 
+         /* handle memory io regions */
+         if (cur_region->type & IORESOURCE_MEM) {
++            int slow_map = 0;
+             int t = cur_region->type & IORESOURCE_PREFETCH
+                 ? PCI_BASE_ADDRESS_MEM_PREFETCH
+                 : PCI_BASE_ADDRESS_SPACE_MEMORY;
++
+             if (cur_region->size & 0xFFF) {
+-                fprintf(stderr, "Unable to assign device: PCI region %d "
+-                        "at address 0x%llx has size 0x%x, "
+-                        " which is not a multiple of 4K\n",
++                fprintf(stderr, "PCI region %d at address 0x%llx "
++                        "has size 0x%x, which is not a multiple of 4K. "
++                        "You might experience some performance hit due to that.\n",
+                         i, (unsigned long long)cur_region->base_addr,
+                         cur_region->size);
++                slow_map = 1;
++            }
++
++            if (slow_map && (i == PCI_ROM_SLOT)) {
++                fprintf(stderr, "ROM not aligned - can't continue\n");
+                 return -1;
+             }
+ 
+@@ -480,7 +586,7 @@ static int assigned_dev_register_regions(PCIRegion *io_regions,
+             } else {
+                 pci_dev->v_addrs[i].u.r_virtbase =
+                     mmap(NULL,
+-                         (cur_region->size + 0xFFF) & 0xFFFFF000,
++                         cur_region->size,
+                          PROT_WRITE | PROT_READ, MAP_SHARED,
+                          cur_region->resource_fd, (off_t) 0);
+             }
+@@ -507,7 +613,8 @@ static int assigned_dev_register_regions(PCIRegion *io_regions,
+ 
+             pci_register_bar((PCIDevice *) pci_dev, i,
+                              cur_region->size, t,
+-                             assigned_dev_iomem_map);
++                             slow_map ? assigned_dev_iomem_map_slow
++                                      : assigned_dev_iomem_map);
+             continue;
+         } else {
+             /* handle port io regions */
