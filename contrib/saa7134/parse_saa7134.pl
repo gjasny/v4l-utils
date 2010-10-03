@@ -161,6 +161,11 @@ my %i2c_attr = (
 	3 => "START",
 );
 
+my $addr = -1;
+my $write = 0;
+my $direction;
+my @buf;
+
 sub parse_i2c($$$$$)
 {
 	my $time = shift;
@@ -168,6 +173,7 @@ sub parse_i2c($$$$$)
 	my $align = shift;
 	my $reg = shift;
 	my $val = shift;
+	my $discard = 0;
 
 	if ($align ne 'l') {
 		print("FIXME: currently, parser work only with 32 bits i2c reg $optype\n");
@@ -177,22 +183,77 @@ sub parse_i2c($$$$$)
 	my $status = $i2c_status{$val & 0x0f};
 	my $attr = $i2c_attr{($val >> 6) & 0x03};
 
-	if ($debug < 1) {
-		# Avoid poluting the logs with busy msgs
-		return if ($status eq "BUSY" | $status eq "TO_SCL" | $status eq "TO_ARB");
+	# Avoid poluting the logs with busy msgs
+	$discard = 1 if ($status eq "BUSY" | $status eq "TO_SCL" | $status eq "TO_ARB");
 
-		# Avoid poluting the logs with read msgs during write
-		return if ($optype eq "read" && $status eq "DONE_WRITE");
+	# Avoid poluting the logs with read msgs during write
+	$discard = 1 if ($optype eq "read" && $status eq "DONE_WRITE");
 
-		# Avoid poluting the logs with NOP operations
-		return if ($attr eq "NOP");
+	# Avoid poluting the logs with NOP operations
+	$discard = 1 if ($attr eq "NOP");
+
+	# Prints I2C raw transaction
+	if ($debug >= 1) {
+		return if ($debug == 1 && $discard);
+		if ($optype eq "write") {
+			printf("write_i2c(%s, %s, 0x%02x)\t/* %s */\n", $status, $attr, $val >> 8, $time);
+		} else {
+			printf("val = read_i2c()\t/* %s: read %s, %s, val=0x%02x */\n", $time, $status, $attr, $val >> 8);
+		}
 	}
+	return if ($discard);
+	$val >>= 8;
 
-	# Prints I2C transaction
-	if ($optype eq "write") {
-		printf("write_i2c(%s, %s, 0x%02x)\t/* %s */\n", $status, $attr, $val >> 8, $time);
-	} else {
-		printf("val = read_i2c()\t/* %s: read %s, %s, val=0x%02x */\n", $time, $status, $attr, $val >> 8);
+	if (($attr eq "START") && ($optype eq "write")) {
+		$direction = $val & 1;
+		$addr = $val >> 1;
+	}
+	# Prints I2C transaction. This state machine is not 100%
+	# it is known to fail with eeprom access
+	if (($direction == 0) && ($optype eq "write")) {
+		if ($attr eq "CONTINUE") {
+			# Discard transactions on the wrong direction
+			push @buf, $val;
+		} elsif ($attr eq "STOP" && $addr >= 0) {
+			push @buf, $val;
+			my $size = scalar(@buf);
+			if ($direction == 0) {
+				my $v = shift @buf;
+				printf("write_i2c_addr(0x%02x, %d, { 0x%02x",
+					$addr, $size, $v);
+				while (scalar(@buf)) {
+					my $v = shift @buf;
+					printf(", 0x%02x", $v);
+				}
+				printf("});\n");
+			}
+			@buf = ();
+			$addr = -1;
+		}
+	} elsif ($direction == 1) {
+		if ($optype eq "write") {
+			$write = 1;
+			return;
+		}
+		return if (!$write);
+		$write = 0;
+
+		if ($attr eq "CONTINUE") {
+			push @buf, $val;
+		} elsif ($attr eq "STOP" && $addr >= 0) {
+			push @buf, $val;
+			my $size = scalar(@buf);
+			my $v = shift @buf;
+			printf("read_i2c_addr(0x%02x, %d) /* 0x%02x",
+				$addr, $size, $v);
+			while (scalar(@buf)) {
+				my $v = shift @buf;
+				printf(", 0x%02x", $v);
+			}
+			printf(" */;\n");
+			@buf = ();
+			$addr = -1;
+		}
 	}
 }
 
