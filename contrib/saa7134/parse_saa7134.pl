@@ -190,9 +190,9 @@ sub parse_i2c($$$$$)
 
 	# Prints I2C transaction
 	if ($optype eq "write") {
-		printf("write_i2c(%s, %s, 0x%02x)\n", $status, $attr, $val >> 8);
+		printf("write_i2c(%s, %s, 0x%02x)\t/* %s */\n", $status, $attr, $val >> 8, $time);
 	} else {
-		printf("val = read_i2c()\t/* read %s, %s, val=0x%02x */\n", $status, $attr, $val >> 8);
+		printf("val = read_i2c()\t/* %s: read %s, %s, val=0x%02x */\n", $time, $status, $attr, $val >> 8);
 	}
 }
 
@@ -213,9 +213,9 @@ while (<>) {
 		if ($reg =~ m/SAA7134_I2C_ATTR_STATUS/) {
 			parse_i2c($time, $optype, $align, $reg, $val);
 		} elsif ($optype eq "read") {
-			printf ("reg = saa_%s(%s);	/* read 0x%04x */\n", $op, $reg, $val);
+			printf ("reg = saa_%s(%s);	/* %s: read 0x%04x */\n", $op, $reg, $time, $val);
 		} else {
-			printf ("saa_%s(%s, 0x%04x);\n", $op, $reg, $val);
+			printf ("saa_%s(%s, 0x%04x);	/* %s */\n", $op, $reg, $val, $time);
 		}
 	}
 }
