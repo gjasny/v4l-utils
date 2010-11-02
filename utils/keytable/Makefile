@@ -51,10 +51,10 @@ sync-with-kernel:
 	@for i in `echo $(IR_FILES)`; do echo $$i;./gen_keytables.pl $(KERNEL_DIR)/$$i; done
 
 install: $(TARGETS)
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	mkdir -p $(DESTDIR)$(PREFIX)/bin $(DESTDIR)/etc
 	install -m 755 $(TARGETS) $(DESTDIR)$(PREFIX)/bin
-	install -m 644 rc_maps.cfg.example /etc
-	install -m 755 -d /etc/rc_keymaps
-	install -m 644 rc_keymaps/* /etc/rc_keymaps
+	install -m 644 rc_maps.cfg.example $(DESTDIR)/etc
+	install -m 755 -d $(DESTDIR)/etc/rc_keymaps
+	install -m 644 rc_keymaps/* $(DESTDIR)/etc/rc_keymaps
 
 include ../../Make.rules
