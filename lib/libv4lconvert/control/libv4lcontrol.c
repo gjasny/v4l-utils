@@ -220,6 +220,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		"FUJITSU", "LifeBook T4310" },
 	{ 0x04f2, 0xb1b9, 0, "ASUSTeK Computer Inc.        ", "U52F",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x04f2, 0xb1bb, 0, "ASUSTeK Computer INC.", "N61Jv",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb1bb, 0, "ASUSTeK Computer Inc.        ", "N82JV",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb1bb, 0, "ASUSTeK Computer Inc.        ", "N82JQ",
