@@ -79,6 +79,31 @@ sub parse_i2c($$$$$$)
 	printf("$payload\n");
 }
 
+sub parse_gpio($$$$$$)
+{
+	my $reqtype = shift;
+	my $req = shift;
+	my $wvalue = shift;
+	my $windex = shift;
+	my $wlen = shift;
+	my $payload = shift;
+
+	my $type = sprintf "Req %d: ", $req;
+	if ($req == 8) {
+		$type .= "GET gpio";
+	} elsif ($req == 9) {
+		$type .= "SET gpio";
+	} elsif ($req == 0xa) {
+		$type .= "SET gpie";
+	} elsif ($req == 0xb) {
+		$type .= "SET gpie";
+	}
+
+	my $gpio_bit = $wvalue << 16 & $windex;
+
+	printf("$type 0x%04x len %d val = %s\n", $gpio_bit, $wlen, $payload);
+}
+
 while (<>) {
 	tr/A-F/a-f/;
 	if (m/([4c]0) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].)[\<\>\s]+(.*)/) {
@@ -94,5 +119,8 @@ while (<>) {
 		} elsif ($req < 3) {
 			parse_i2c($reqtype, $req, $wvalue, $windex, $wlen, $payload);
 		}
+#		if ($req >= 8 && $req <= 0xb) {
+			parse_gpio($reqtype, $req, $wvalue, $windex, $wlen, $payload);
+#		}
 	}
 }
