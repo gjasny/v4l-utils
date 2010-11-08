@@ -83,7 +83,7 @@ static int parse_code(char *string)
 	return -1;
 }
 
-const char *argp_program_version = "IR keytable control version 0.1.0";
+const char *argp_program_version = "IR keytable control version "V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
 
 static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
