@@ -10,7 +10,10 @@ my $out;
 my $read=0;
 my $type = $deftype;
 my $check_type = 0;
+my $name;
+my $warn;
 
+my $filename = shift or die "Need a file name to proceed.";
 sub flush()
 {
 	return if (!$keyname || !$out);
@@ -20,12 +23,18 @@ sub flush()
 	print OUT $out;
 	close OUT;
 
+	if (!$name) {
+		$warn++;
+	}
+
 	$keyname = "";
 	$out = "";
 	$type = $deftype;
+	$name = "";
 }
 
-while (<>) {
+open IN, "<$filename";
+while (<IN>) {
 	if (m/struct\s+ir_scancode\s+(\w[\w\d_]+)/) {
 		flush();
 
@@ -39,6 +48,10 @@ while (<>) {
 		$check_type = 1;
 		next;
 	}
+	if (m/\.name\s*=\s*(RC_MAP_[^\s\,]+)/) {
+		$name = $1;
+	}
+
 	if ($check_type) {
 		if (m/^\s*}/) {
 			$check_type = 0;
@@ -60,5 +73,8 @@ while (<>) {
 		}
 	}
 }
+close IN;
 
 flush();
+
+printf STDERR "WARNING: keyboard name not found on %d tables at file $filename\n", $warn if ($warn);
