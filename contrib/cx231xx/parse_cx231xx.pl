@@ -118,9 +118,11 @@ while (<>) {
 			parse_i2c($reqtype, $req, $wvalue, $windex, $wlen, $payload);
 		} elsif ($req < 3) {
 			parse_i2c($reqtype, $req, $wvalue, $windex, $wlen, $payload);
-		}
-#		if ($req >= 8 && $req <= 0xb) {
+		} elsif ($req >= 8 && $req <= 0xb) {
 			parse_gpio($reqtype, $req, $wvalue, $windex, $wlen, $payload);
-#		}
+		} else {
+			printf("Reqtype: %3d, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
+				$reqtype, $req, $wvalue, $windex, $wlen, $payload);
+		}
 	}
 }
