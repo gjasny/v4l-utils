@@ -250,8 +250,6 @@ sub parse_i2c($$$$$)
 			# Discard transactions on the wrong direction
 			push @buf, $val;
 		} elsif ($attr eq "STOP" && $addr >= 0) {
-			push @buf, $val;
-
 			flush_i2c_transaction(0, 1);
 		}
 	} elsif ($direction == 1) {
