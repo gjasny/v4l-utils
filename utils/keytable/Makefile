@@ -1,24 +1,5 @@
 TARGETS = ir-keytable
 
-IR_FILES = "drivers/media/dvb/dvb-usb/a800.c \
-drivers/media/dvb/dvb-usb/af9005-remote.c \
-drivers/media/dvb/dvb-usb/af9015.c \
-drivers/media/dvb/dvb-usb/af9015.h \
-drivers/media/dvb/dvb-usb/anysee.c \
-drivers/media/dvb/dvb-usb/cinergyT2-core.c \
-drivers/media/dvb/dvb-usb/cxusb.c \
-drivers/media/dvb/dvb-usb/dibusb-common.c \
-drivers/media/dvb/dvb-usb/digitv.c \
-drivers/media/dvb/dvb-usb/dtt200u.c \
-drivers/media/dvb/dvb-usb/dvb-usb-remote.c \
-drivers/media/dvb/dvb-usb/dvb-usb.h \
-drivers/media/dvb/dvb-usb/dw2102.c \
-drivers/media/dvb/dvb-usb/m920x.c \
-drivers/media/dvb/dvb-usb/nova-t-usb2.c \
-drivers/media/dvb/dvb-usb/opera1.c \
-drivers/media/dvb/dvb-usb/vp702x.c \
-drivers/media/dvb/dvb-usb/vp7045.c "
-
 all: $(TARGETS)
 
 -include *.d
@@ -46,9 +27,9 @@ sync-with-kernel:
 	@printf "\t{ NULL, 0}\n};\n" >>parse.h
 
 	@-mkdir -p rc_keymaps
+	@cp rc_maps.cfg.example rc_maps.cfg
 	@echo storing existing keymaps at rc_keymaps/
-	@for i in $(KERNEL_DIR)/drivers/media/IR/keymaps/*.c; do echo $$i;./gen_keytables.pl $$i; done
-	@for i in `echo $(IR_FILES)`; do echo $$i;./gen_keytables.pl $(KERNEL_DIR)/$$i; done
+	@./gen_keytables.pl $(KERNEL_DIR);
 
 install: $(TARGETS)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin $(DESTDIR)/etc

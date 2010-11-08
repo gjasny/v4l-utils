@@ -1,19 +1,43 @@
 #!/usr/bin/perl
 use strict;
+use File::Find;
 
+my @ir_files = (
+	"drivers/media/dvb/dvb-usb/a800.c",
+	"drivers/media/dvb/dvb-usb/af9005-remote.c",
+	"drivers/media/dvb/dvb-usb/af9015.c",
+	"drivers/media/dvb/dvb-usb/af9015.h",
+	"drivers/media/dvb/dvb-usb/anysee.c",
+	"drivers/media/dvb/dvb-usb/cinergyT2-core.c",
+	"drivers/media/dvb/dvb-usb/cxusb.c",
+	"drivers/media/dvb/dvb-usb/dibusb-common.c",
+	"drivers/media/dvb/dvb-usb/digitv.c",
+	"drivers/media/dvb/dvb-usb/dtt200u.c",
+	"drivers/media/dvb/dvb-usb/dvb-usb-remote.c",
+	"drivers/media/dvb/dvb-usb/dvb-usb.h",
+	"drivers/media/dvb/dvb-usb/dw2102.c",
+	"drivers/media/dvb/dvb-usb/m920x.c",
+	"drivers/media/dvb/dvb-usb/nova-t-usb2.c",
+	"drivers/media/dvb/dvb-usb/opera1.c",
+	"drivers/media/dvb/dvb-usb/vp702x.c",
+	"drivers/media/dvb/dvb-usb/vp7045.c",
+);
+
+my $debug = 1;
 my $dir="rc_keymaps";
 my $deftype = "UNKNOWN";
 
 my $keyname="";
-my $debug=0;
 my $out;
 my $read=0;
 my $type = $deftype;
 my $check_type = 0;
 my $name;
 my $warn;
+my $warn_all;
 
-my $file = shift or die "Need a file name to proceed.";
+my $kernel_dir = shift or die "Need a file name to proceed.";
+
 sub flush()
 {
 	return if (!$keyname || !$out);
@@ -37,7 +61,10 @@ sub parse_file($)
 {
 	my $filename = shift;
 
-	open IN, "<$filename";
+	$warn = 0;
+
+	printf "processing file $filename\n" if ($debug);
+	open IN, "<$filename" or die "couldn't find $filename";
 	while (<IN>) {
 		if (m/struct\s+ir_scancode\s+(\w[\w\d_]+)/) {
 			flush();
@@ -82,6 +109,28 @@ sub parse_file($)
 	flush();
 
 	printf STDERR "WARNING: keyboard name not found on %d tables at file $filename\n", $warn if ($warn);
+
+	$warn_all += $warn;
 }
 
-parse_file $file;
+sub parse_dir()
+{
+	my $file = $File::Find::name;
+
+	return if ($file =~ m/^\./);
+
+	return if (! ($file =~ m/\.c$/));
+
+	parse_file $file;
+}
+
+# Main logic
+#
+
+find({wanted => \&parse_dir, no_chdir => 1}, "$kernel_dir/drivers/media/IR/keymaps");
+
+foreach my $file (@ir_files) {
+	parse_file "$kernel_dir/$file";
+}
+
+printf STDERR "WARNING: there are %d tables not defined at rc_maps.h\n", $warn_all if ($warn_all);
