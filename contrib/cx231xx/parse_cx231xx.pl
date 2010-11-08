@@ -88,7 +88,7 @@ sub parse_gpio($$$$$$)
 	my $wlen = shift;
 	my $payload = shift;
 
-	my $type = sprintf "Req %d: ", $req;
+	my $type;
 	if ($req == 8) {
 		$type .= "GET gpio";
 	} elsif ($req == 9) {
@@ -101,7 +101,8 @@ sub parse_gpio($$$$$$)
 
 	my $gpio_bit = $wvalue << 16 & $windex;
 
-	printf("$type 0x%04x len %d val = %s\n", $gpio_bit, $wlen, $payload);
+	printf("$type: Reqtype %3d Req %3d 0x%04x len %d val = %s\n",
+		$reqtype, $req, $gpio_bit, $wlen, $payload);
 }
 
 while (<>) {
