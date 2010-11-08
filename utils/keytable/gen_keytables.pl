@@ -35,11 +35,15 @@ my $check_type = 0;
 my $name;
 my $warn;
 my $warn_all;
+my %rc_map_names;
 
 my $kernel_dir = shift or die "Need a file name to proceed.";
 
-sub flush()
+sub flush($)
 {
+	my $filename = shift;
+	my $defined;
+
 	return if (!$keyname || !$out);
 	print "Creating $dir/$keyname\n";
 	open OUT, ">$dir/$keyname";
@@ -49,6 +53,16 @@ sub flush()
 
 	if (!$name) {
 		$warn++;
+	} else {
+		$defined = 1 if ($rc_map_names{$name});
+	}
+
+	if ($defined) {
+		printf OUT_MAP "*\t%-24s %s\n", $rc_map_names{$name} , $keyname;
+	} else {
+		my $fname = $filename;
+		$fname =~ s,.*/,,;
+		printf OUT_MAP "# *\t*\t\t\t %-20s # found in %s\n", $keyname, $fname;
 	}
 
 	$keyname = "";
@@ -67,7 +81,7 @@ sub parse_file($)
 	open IN, "<$filename" or die "couldn't find $filename";
 	while (<IN>) {
 		if (m/struct\s+ir_scancode\s+(\w[\w\d_]+)/) {
-			flush();
+			flush($filename);
 
 			$keyname = $1;
 			$keyname =~ s/^ir_codes_//;
@@ -106,7 +120,7 @@ sub parse_file($)
 	}
 	close IN;
 
-	flush();
+	flush($filename);
 
 	printf STDERR "WARNING: keyboard name not found on %d tables at file $filename\n", $warn if ($warn);
 
@@ -124,8 +138,61 @@ sub parse_dir()
 	parse_file $file;
 }
 
+sub parse_rc_map_names($)
+{
+	my $filename = shift;
+
+	$warn = 0;
+
+	printf "processing file $filename\n" if ($debug);
+	open IN, "<$filename" or die "couldn't find $filename";
+	while (<IN>) {
+		if (m/^\s*\#define\s+(RC_MAP[^\s]+)\s+\"(.*)\"/) {
+			$rc_map_names{$1} = $2;
+		}
+	}
+}
+
 # Main logic
 #
+
+parse_rc_map_names "$kernel_dir/include/media/rc-map.h";
+
+open OUT_MAP, ">rc_maps.cfg";
+print OUT_MAP << "EOF";
+#
+# Keymaps table
+#
+# This table creates an association between a keycode file and a kernel
+# driver. It can be used to automatically override a keycode definition.
+#
+# Although not yet tested, it is mented to be added at udev.
+#
+# To use, you just need to run:
+#	./ir-keytable -a
+#
+# Or, if the remote is not the first device:
+#	./ir-keytable -a -s rc1		# for RC at rc1
+#
+
+# Format:
+#	driver - name of the driver provided via uevent - use * for any driver
+#	table -  RC keymap table, provided via uevent - use * for any table
+#	file - file name. If directory is not specified, it will default to
+#		/etc/rc_keymaps.
+# For example:
+# driver	table				file
+# cx8800	*				./keycodes/rc5_hauppauge_new
+# *		rc-avermedia-m135a-rm-jx	./keycodes/kworld_315u
+# saa7134	rc-avermedia-m135a-rm-jx	./keycodes/keycodes/nec_terratec_cinergy_xs
+# em28xx	*				./keycodes/kworld_315u
+# *		*				./keycodes/rc5_hauppauge_new
+
+# Table to automatically load the rc maps for the bundled IR's provided with the
+# devices supported by the linux kernel
+
+#driver table                    file
+EOF
 
 find({wanted => \&parse_dir, no_chdir => 1}, "$kernel_dir/drivers/media/IR/keymaps");
 
@@ -134,3 +201,4 @@ foreach my $file (@ir_files) {
 }
 
 printf STDERR "WARNING: there are %d tables not defined at rc_maps.h\n", $warn_all if ($warn_all);
+close OUT_MAP;

@@ -27,14 +27,13 @@ sync-with-kernel:
 	@printf "\t{ NULL, 0}\n};\n" >>parse.h
 
 	@-mkdir -p rc_keymaps
-	@cp rc_maps.cfg.example rc_maps.cfg
 	@echo storing existing keymaps at rc_keymaps/
 	@./gen_keytables.pl $(KERNEL_DIR);
 
 install: $(TARGETS)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin $(DESTDIR)/etc
 	install -m 755 $(TARGETS) $(DESTDIR)$(PREFIX)/bin
-	install -m 644 rc_maps.cfg.example $(DESTDIR)/etc
+	install -m 644 rc_maps.cfg $(DESTDIR)/etc
 	install -m 755 -d $(DESTDIR)/etc/rc_keymaps
 	install -m 644 rc_keymaps/* $(DESTDIR)/etc/rc_keymaps
 
