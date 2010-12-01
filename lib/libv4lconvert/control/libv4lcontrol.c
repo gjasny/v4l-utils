@@ -51,6 +51,10 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED | V4LCONTROL_WANTS_WB, 1500 },
 
 	/* Laptops (and all in one PC's) */
+	{ 0x0402, 0x5606, 0,
+		"CLEVO CO.                       ",
+		"M570TU                          ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x0402, 0x5606, 0, "AOpen", "i45GMt-HR R1.02 Dec.21.2009",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
 		"RM plc", "RM ONE ECOQUIET 300" },
