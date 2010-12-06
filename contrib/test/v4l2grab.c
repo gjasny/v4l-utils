@@ -22,6 +22,7 @@
 #include <sys/mman.h>
 #include <linux/videodev2.h>
 #include "../../lib/include/libv4l2.h"
+#include <argp.h>
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
@@ -161,13 +162,74 @@ static int capture(char *dev_name, int x_res, int y_res, int n_frames,
 	return 0;
 }
 
+/*
+ * Main routine. Basically, reads parameters via argp.h and passes it to the
+ * capture routine
+ */
+
+const char *argp_program_version = "V4L2 grabber version " V4L_UTILS_VERSION;
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
+
+static const char doc[] = "\nCapture images using libv4l, storing them as ppm files\n";
+
+static const struct argp_option options[] = {
+	{"device",	'd',	"DEV",		0,	"video device (default: /dev/video0)", 0},
+	{"out-dir",	'o',	"OUTDIR",	0,	"output directory (default: current dir)", 0},
+	{"xres",	'x',	"XRES",		0,	"horizontal resolution", 0},
+	{"yres",	'y',	"YRES",		0,	"vertical resolution", 0},
+	{"n-frames",	'n',	"NFRAMES",	0,	"number of frames to capture", 0},
+	{ 0, 0, 0, 0, 0, 0 }
+};
+
+/* Static vars to store the parameters */
+static char 	*dev_name = "/dev/video0";
+static char	*out_dir = ".";
+static int	x_res = 640;
+static int	y_res = 480;
+static int	n_frames = 20;
+
+static error_t parse_opt(int k, char *arg, struct argp_state *state)
+{
+	int val;
+
+	switch (k) {
+	case 'd':
+		dev_name = arg;
+		break;
+	case 'o':
+		out_dir = arg;
+		break;
+	case 'x':
+		val = atoi(arg);
+		if (val)
+			x_res = val;
+		break;
+	case 'y':
+		val = atoi(arg);
+		if (val)
+			y_res = val;
+		break;
+	case 'n':
+		val = atoi(arg);
+		if (val)
+			n_frames = val;
+		break;
+	default:
+		return ARGP_ERR_UNKNOWN;
+	}
+	return 0;
+}
+
+static struct argp argp = {
+	.options = options,
+	.parser = parse_opt,
+	.doc = doc,
+};
+
+
 int main(int argc, char **argv)
 {
-	char 	*dev_name = "/dev/video0";
-	char	*out_dir = ".";
-	int	x_res = 640;
-	int	y_res = 480;
-	int	n_frames = 20;
+	argp_parse(&argp, argc, argv, 0, 0, 0);
 
 	return capture(dev_name, x_res, y_res, n_frames, out_dir);
 }
