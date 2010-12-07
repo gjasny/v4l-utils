@@ -26,6 +26,19 @@ use Getopt::Long;
 my $debug = 0;
 GetOptions('d' => \$debug);
 
+# FIXME: How to handle multiple registers being changed at the same time?
+
+my %reg_map = (
+	0x1180 => "SN9C201_R1180_HSTART_LOW",
+	0x1181 => "SN9C201_R1181_HSTART_HIGH",
+	0x1182 => "SN9C201_R1182_VSTART_LOW",
+	0x1183 => "SN9C201_R1183_VSTART_HIGH",
+	0x1184 => "SN9C201_R1184_HSIZE"
+	0x1185 => "SN9C201_R1184_VSIZE"
+	0x11b8 => "SN9C201_R11B8_CLK_CTRL",
+);
+
+
 sub i2c_reg($)
 {
 	my %decode;
@@ -173,10 +186,18 @@ while (<>) {
 		} else {
 			printf("%s, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
 				type_req($reqtype), $req, $wvalue, $windex, $wlen, $payload) if ($debug);
+
+			my $reg;
+			if (defined($reg_map{$wvalue})) {
+				$reg = $reg_map{$wvalue};
+			} else {
+				$reg = sprintf "0x%04x", $wvalue;
+			}
+
 			if ($reqtype == 0xc1) {
-				printf "reg_r(gspcadev, 0x%04x);\t/* read %s*/\n", $wvalue, $payload;
+				printf "reg_r(gspcadev, %s);\t/* read %s*/\n", $reg, $payload;
 			} elsif ($reqtype == 0x41) {
-				printf "reg_w(gspcadev, 0x%04x, { %s });*/\n", $wvalue, $payload;
+				printf "reg_w(gspcadev, %s, { %s });*/\n", $reg, $payload;
 			}
 		}
 	}
