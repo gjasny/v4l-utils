@@ -28,9 +28,9 @@ sub type_req($)
 	my $s;
 
 	if ($reqtype & 0x80) {
-		$s = "WR ";
-	} else {
 		$s = "RD ";
+	} else {
+		$s = "WR ";
 	}
 	if (($reqtype & 0x60) == 0x20) {
 		$s .= "CLAS ";
