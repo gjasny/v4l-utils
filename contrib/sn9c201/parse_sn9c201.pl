@@ -117,18 +117,39 @@ while (<>) {
 				$reg++;
 			}
 
-#			my $data = $payload;
-#			$payload =~ 
+			my $data;
+			for (my $i = 0; $i < $i2c{"size"}; $i++) {
+				my $tmp = $payload;
+				$tmp =~ s/\s+.*//;
+				$payload =~ s/^([0-9a-f].)//;
+                                $payload =~ s/^\s+//;
+				$data .= "$tmp ";
+			}
+			$data =~ s/\s+$//;
+
+			my $discard;
+			for (my $i = 0; $i < 5; $i++) {
+				my $tmp = $payload;
+				$tmp =~ s/\s+.*//;
+				$payload =~ s/^([0-9a-f].)//;
+                                $payload =~ s/^\s+//;
+				$discard .= "$tmp ";
+			}
+			$discard =~ s/\s+$//;
 
 			my $s = sprintf "%s %s %s %s %s size=%d",
 				$i2c{"op"}, $i2c{"speed"}, $i2c{"busy"}, $i2c{"err"}, $i2c{"i2c"}, $i2c{"size"};
 			$s =~ s/\s+/ /g;
 
 			if ($reqtype & 0x80) {
-				printf "Read I2C: $s $i2c_id$payload\n";
+				printf "Read I2C: $s $i2c_id$data";
 			} else {
-				printf "I2C $s $i2c_id$payload\n";
+				printf "I2C $s $i2c_id$data";
 			}
+			printf " ($discard)" if ($discard);
+			printf "Extra: $payload" if ($payload);
+			print "\n";
+
 			printf("\t%s, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
 				type_req($reqtype), $req, $wvalue, $windex, $wlen, $fullpayload);
 		} else {
