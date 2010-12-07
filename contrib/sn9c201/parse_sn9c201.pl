@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-use strict;
 
 #   Copyright (C) 2010 Mauro Carvalho Chehab <mchehab@redhat.com>
 #
@@ -21,6 +20,11 @@ use strict;
 # Also, there are other utilities that produce similar outputs, and it
 # is not hard to parse some USB analyzers log into the expected format.
 #
+use strict;
+use Getopt::Long;
+
+my $debug = 0;
+GetOptions('d' => \$debug);
 
 sub i2c_reg($)
 {
@@ -118,43 +122,62 @@ while (<>) {
 			}
 
 			my $data;
-			for (my $i = 0; $i < $i2c{"size"}; $i++) {
+			for (my $i = 0; ($i < $i2c{"size"}) && ($payload ne ""); $i++) {
 				my $tmp = $payload;
 				$tmp =~ s/\s+.*//;
 				$payload =~ s/^([0-9a-f].)//;
-                                $payload =~ s/^\s+//;
-				$data .= "$tmp ";
+				$payload =~ s/^\s+//;
+				$data .= "$tmp, ";
 			}
-			$data =~ s/\s+$//;
+			$data =~ s/\,\s+$//;
 
 			my $discard;
-			for (my $i = 0; $i < 5; $i++) {
+			for (my $i = 0; ($i < 5) && ($payload ne ""); $i++) {
 				my $tmp = $payload;
 				$tmp =~ s/\s+.*//;
 				$payload =~ s/^([0-9a-f].)//;
-                                $payload =~ s/^\s+//;
-				$discard .= "$tmp ";
+				$payload =~ s/^\s+//;
+				$discard .= "$tmp, ";
 			}
-			$discard =~ s/\s+$//;
+			$discard =~ s/\,\s+$//;
 
 			my $s = sprintf "%s %s %s %s %s size=%d",
 				$i2c{"op"}, $i2c{"speed"}, $i2c{"busy"}, $i2c{"err"}, $i2c{"i2c"}, $i2c{"size"};
 			$s =~ s/\s+/ /g;
 
-			if ($reqtype & 0x80) {
-				printf "Read I2C: $s $i2c_id$data";
-			} else {
-				printf "I2C $s $i2c_id$data";
-			}
-			printf " ($discard)" if ($discard);
-			printf "Extra: $payload" if ($payload);
-			print "\n";
+			if ($debug) {
+				if ($reqtype & 0x80) {
+					printf "Read I2C: $s $i2c_id$data";
+				} else {
+					printf "I2C $s $i2c_id$data";
+				}
+				printf " ($discard)" if ($discard);
+				printf "Extra: $payload" if ($payload);
+				print "\n";
 
-			printf("\t%s, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
-				type_req($reqtype), $req, $wvalue, $windex, $wlen, $fullpayload);
+				printf("\t%s, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
+					type_req($reqtype), $req, $wvalue, $windex, $wlen, $fullpayload);
+			}
+			next if ($reg < 0x10c2);
+			if (($i2c{"size"} == 1) && ($reqtype & 0x80)) {
+				printf "i2c_r1(gspca_dev, $data);\n";
+			} elsif (($i2c{"size"} == 2) && (($reqtype & 0x80) == 0)) {
+				printf "i2c_w1(gspca_dev, $data);\n";
+			} else {
+				if ($reqtype & 0x80) {
+					printf "i2c_r(gspca_dev, { $data }, %d);\n", $i2c{"size"};
+				} else {
+					printf "i2c_w(gspca_dev, { $data }, %d);\n", $i2c{"size"};
+				}
+			}
 		} else {
 			printf("%s, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
-				type_req($reqtype), $req, $wvalue, $windex, $wlen, $payload);
+				type_req($reqtype), $req, $wvalue, $windex, $wlen, $payload) if ($debug);
+			if ($reqtype == 0xc1) {
+				printf "reg_r(gspcadev, 0x%04x);\t/* read %s*/\n", $wvalue, $payload;
+			} elsif ($reqtype == 0x41) {
+				printf "reg_w(gspcadev, 0x%04x, { %s });*/\n", $wvalue, $payload;
+			}
 		}
 	}
 }
