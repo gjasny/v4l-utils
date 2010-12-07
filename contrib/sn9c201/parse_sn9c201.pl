@@ -29,12 +29,14 @@ GetOptions('d' => \$debug);
 # FIXME: How to handle multiple registers being changed at the same time?
 
 my %reg_map = (
+	0x10e0 => "SN9C201_R10E0_IMG_FMT",
 	0x1180 => "SN9C201_R1180_HSTART_LOW",
 	0x1181 => "SN9C201_R1181_HSTART_HIGH",
 	0x1182 => "SN9C201_R1182_VSTART_LOW",
 	0x1183 => "SN9C201_R1183_VSTART_HIGH",
-	0x1184 => "SN9C201_R1184_HSIZE"
-	0x1185 => "SN9C201_R1184_VSIZE"
+	0x1184 => "SN9C201_R1184_HSIZE",
+	0x1185 => "SN9C201_R1185_VSIZE",
+	0x1189 => "SN9C201_R1189_SCALE",
 	0x11b8 => "SN9C201_R11B8_CLK_CTRL",
 );
 
