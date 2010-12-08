@@ -142,7 +142,7 @@ while (<>) {
 				$tmp =~ s/\s+.*//;
 				$payload =~ s/^([0-9a-f].)//;
 				$payload =~ s/^\s+//;
-				$data .= "$tmp, ";
+				$data .= "0x$tmp, ";
 			}
 			$data =~ s/\,\s+$//;
 
@@ -152,7 +152,7 @@ while (<>) {
 				$tmp =~ s/\s+.*//;
 				$payload =~ s/^([0-9a-f].)//;
 				$payload =~ s/^\s+//;
-				$discard .= "$tmp, ";
+				$discard .= "0x$tmp, ";
 			}
 			$discard =~ s/\,\s+$//;
 
