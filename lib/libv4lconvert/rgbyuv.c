@@ -575,3 +575,31 @@ void v4lconvert_rgb565_to_yuv420(const unsigned char *src, unsigned char *dest,
 		src += 2 * src_fmt->fmt.pix.bytesperline - 2 * src_fmt->fmt.pix.width;
 	}
 }
+
+void v4lconvert_grey_to_rgb24(const unsigned char *src, unsigned char *dest,
+		int width, int height)
+{
+	int j;
+	while (--height >= 0) {
+		for (j = 0; j < width; j++) {
+			*dest++ = *src;
+			*dest++ = *src;
+			*dest++ = *src;
+			src++;
+		}
+	}
+}
+
+void v4lconvert_grey_to_yuv420(const unsigned char *src, unsigned char *dest,
+		const struct v4l2_format *src_fmt)
+{
+	int x, y;
+
+	/* Y */
+	for (y = 0; y < src_fmt->fmt.pix.height; y++)
+		for (x = 0; x < src_fmt->fmt.pix.width; x++)
+			*dest++ = *src++;
+
+	/* Clear U/V */
+	memset(dest, 0x80, src_fmt->fmt.pix.width * src_fmt->fmt.pix.height / 2);
+}

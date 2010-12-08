@@ -43,6 +43,7 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
    v4lconvert_try_format for low resolutions */
 static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	SUPPORTED_DST_PIXFMTS,
+	{ V4L2_PIX_FMT_GREY,         0 },
 	{ V4L2_PIX_FMT_YUYV,         0 },
 	{ V4L2_PIX_FMT_YVYU,         0 },
 	{ V4L2_PIX_FMT_UYVY,         0 },
@@ -839,6 +840,23 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 		}
 		break;
 
+	case V4L2_PIX_FMT_GREY:
+		switch (dest_pix_fmt) {
+		case V4L2_PIX_FMT_RGB24:
+	        case V4L2_PIX_FMT_BGR24:
+			v4lconvert_grey_to_rgb24(src, dest, width, height);
+			break;
+		case V4L2_PIX_FMT_YUV420:
+		case V4L2_PIX_FMT_YVU420:
+			v4lconvert_grey_to_yuv420(src, dest, fmt);
+			break;
+		}
+		if (src_size < (width * height)) {
+			V4LCONVERT_ERR("short grey data frame\n");
+			errno = EPIPE;
+			result = -1;
+		}
+		break;
 	case V4L2_PIX_FMT_RGB565:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
