@@ -133,9 +133,6 @@ void v4lconvert_grey_to_rgb24(const unsigned char *src, unsigned char *dest,
 void v4lconvert_grey_to_yuv420(const unsigned char *src, unsigned char *dest,
                 const struct v4l2_format *src_fmt);
 
-void v4lconvert_grey_to_rgb24(const unsigned char *src, unsigned char *dest,
-		int width, int height);
-
 void v4lconvert_rgb565_to_rgb24(const unsigned char *src, unsigned char *dest,
 		int width, int height);
 
