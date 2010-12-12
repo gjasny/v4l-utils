@@ -224,10 +224,8 @@ static int testCap(int fd)
 		return -2;
 	if (check_ustring(vcap.card, sizeof(vcap.card), "card"))
 		return -3;
-	if (check_ustring(vcap.bus_info, sizeof(vcap.bus_info), "bus_info"))
-		return -4;
 	if (check_0(vcap.reserved, sizeof(vcap.reserved)))
-		return -5;
+		return -4;
 	caps = vcap.capabilities;
 	if (caps == 0) {
 		if (verbose) printf("no capabilities set\n");
