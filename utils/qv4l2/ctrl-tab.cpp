@@ -514,14 +514,17 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 	if (!m_haveExtendedUserCtrls && ctrl_class == V4L2_CTRL_CLASS_USER) {
 		for (unsigned i = 0; i < m_classMap[ctrl_class].size(); i++) {
 			unsigned id = m_classMap[ctrl_class][i];
-
 			v4l2_control c;
 
+			queryctrl(m_ctrlMap[id]);
+			if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_BUTTON)
+				continue;
+			if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_WRITE_ONLY)
+				continue;
 			c.id = id;
 			if (ioctl(VIDIOC_G_CTRL, &c)) {
 				errorCtrl(id, errno);
 			}
-			queryctrl(m_ctrlMap[id]);
 			setVal(id, c.value);
 			m_widgetMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
 		}
@@ -729,7 +732,7 @@ void ApplicationWindow::setDefaults(unsigned ctrl_class)
 		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64)
 			setVal64(id, 0);
 		else if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING)
-			setString(id, "");
+			setString(id, QString(' ', m_ctrlMap[id].minimum));
 		else if (m_ctrlMap[id].type != V4L2_CTRL_TYPE_BUTTON)
 			setVal(id, m_ctrlMap[id].default_value);
 	}
