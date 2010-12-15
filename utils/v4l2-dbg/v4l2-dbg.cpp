@@ -620,8 +620,6 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptGetRegister]) {
-		int stride = 1;
-
 		get_reg.match = match;
 		printf("ioctl: VIDIOC_DBG_G_REGISTER\n");
 
