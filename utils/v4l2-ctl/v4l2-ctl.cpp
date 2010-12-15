@@ -742,10 +742,11 @@ static std::string safename(const char *name)
 static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 		struct v4l2_ext_control *ctrl, int show_menus)
 {
-	struct v4l2_querymenu qmenu = { 0 };
+	struct v4l2_querymenu qmenu;
 	std::string s = name2var(queryctrl->name);
 	int i;
 
+	memset(&qmenu, 0, sizeof(qmenu));
 	qmenu.id = queryctrl->id;
 	switch (queryctrl->type) {
 	case V4L2_CTRL_TYPE_INTEGER:
@@ -805,10 +806,13 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 
 static int print_control(int fd, struct v4l2_queryctrl &qctrl, int show_menus)
 {
-	struct v4l2_control ctrl = { 0 };
-	struct v4l2_ext_control ext_ctrl = { 0 };
-	struct v4l2_ext_controls ctrls = { 0 };
+	struct v4l2_control ctrl;
+	struct v4l2_ext_control ext_ctrl;
+	struct v4l2_ext_controls ctrls;
 
+	memset(&ctrl, 0, sizeof(ctrl));
+	memset(&ext_ctrl, 0, sizeof(ext_ctrl));
+	memset(&ctrls, 0, sizeof(ctrls));
 	if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 		return 1;
 	if (qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS) {
@@ -856,9 +860,11 @@ static int print_control(int fd, struct v4l2_queryctrl &qctrl, int show_menus)
 
 static void list_controls(int fd, int show_menus)
 {
-	struct v4l2_queryctrl qctrl = { V4L2_CTRL_FLAG_NEXT_CTRL };
+	struct v4l2_queryctrl qctrl;
 	int id;
 
+	memset(&qctrl, 0, sizeof(qctrl));
+	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	while (ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
 			print_control(fd, qctrl, show_menus);
 		qctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
@@ -878,9 +884,11 @@ static void list_controls(int fd, int show_menus)
 
 static void find_controls(int fd)
 {
-	struct v4l2_queryctrl qctrl = { V4L2_CTRL_FLAG_NEXT_CTRL };
+	struct v4l2_queryctrl qctrl;
 	int id;
 
+	memset(&qctrl, 0, sizeof(qctrl));
+	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	while (ioctl(fd, VIDIOC_QUERYCTRL, &qctrl) == 0) {
 		if (qctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS &&
 		    !(qctrl.flags & V4L2_CTRL_FLAG_DISABLED)) {
@@ -2778,14 +2786,16 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptSetCtrl] && !set_ctrls.empty()) {
-		struct v4l2_ext_controls ctrls = { 0 };
+		struct v4l2_ext_controls ctrls;
 		class2ctrls_map class2ctrls;
 		bool use_ext_ctrls = false;
 
+		memset(&ctrls, 0, sizeof(ctrls));
 		for (ctrl_set_map::iterator iter = set_ctrls.begin();
 				iter != set_ctrls.end(); ++iter) {
-			struct v4l2_ext_control ctrl = { 0 };
+			struct v4l2_ext_control ctrl;
 
+			memset(&ctrl, 0, sizeof(ctrl));
 			ctrl.id = ctrl_str2q[iter->first].id;
 			if (ctrl_str2q[iter->first].type == V4L2_CTRL_TYPE_INTEGER64)
 				use_ext_ctrls = true;
@@ -3140,14 +3150,16 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptGetCtrl] && !get_ctrls.empty()) {
-		struct v4l2_ext_controls ctrls = { 0 };
+		struct v4l2_ext_controls ctrls;
 		class2ctrls_map class2ctrls;
 		bool use_ext_ctrls = false;
 
+		memset(&ctrls, 0, sizeof(ctrls));
 		for (ctrl_get_list::iterator iter = get_ctrls.begin();
 				iter != get_ctrls.end(); ++iter) {
-			struct v4l2_ext_control ctrl = { 0 };
+			struct v4l2_ext_control ctrl;
 
+			memset(&ctrl, 0, sizeof(ctrl));
 			ctrl.id = ctrl_str2q[*iter].id;
 			if (ctrl_str2q[*iter].type == V4L2_CTRL_TYPE_INTEGER64)
 				use_ext_ctrls = true;
@@ -3426,9 +3438,11 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptWaitForEvent]) {
-		struct v4l2_event_subscription sub = { wait_for_event };
+		struct v4l2_event_subscription sub;
 		struct v4l2_event ev;
 
+		memset(&sub, 0, sizeof(sub));
+		sub.type = wait_for_event;
 		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub, "VIDIOC_SUBSCRIBE_EVENT")) {
 			if (!doioctl(fd, VIDIOC_DQEVENT, &ev, "VIDIOC_DQEVENT")) {
 				print_event(&ev);
@@ -3437,9 +3451,11 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptPollForEvent]) {
-		struct v4l2_event_subscription sub = { poll_for_event };
+		struct v4l2_event_subscription sub;
 		struct v4l2_event ev;
 
+		memset(&sub, 0, sizeof(sub));
+		sub.type = poll_for_event;
 		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub, "VIDIOC_SUBSCRIBE_EVENT")) {
 			fd_set fds;
 
