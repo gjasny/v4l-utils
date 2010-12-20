@@ -400,6 +400,8 @@ struct parse_key {
 	{"KEY_FRAMEFORWARD", 0x1b5},
 	{"KEY_CONTEXT_MENU", 0x1b6},
 	{"KEY_MEDIA_REPEAT", 0x1b7},
+	{"KEY_10CHANNELSUP", 0x1b8},
+	{"KEY_10CHANNELSDOWN", 0x1b9},
 	{"KEY_DEL_EOL", 0x1c0},
 	{"KEY_DEL_EOS", 0x1c1},
 	{"KEY_INS_LINE", 0x1c2},
