@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <linux/input.h>
@@ -101,6 +102,7 @@ static const struct argp_option options[] = {
 	{"verbose",	'v',	0,		0,	"enables debug messages", 0},
 	{"clear",	'c',	0,		0,	"clears the old table", 0},
 	{"sysdev",	's',	"SYSDEV",	0,	"ir class device to control", 0},
+	{"test",	't',	0,		0,	"test if IR is generating events", 0},
 	{"device",	'd',	"DEV",		0,	"ir device to control", 0},
 	{"read",	'r',	0,		0,	"reads the current scancode/keycode table", 0},
 	{"write",	'w',	"TABLE",	0,	"write (adds) the scancodes to the device scancode/keycode table from an specified file", 0},
@@ -118,9 +120,10 @@ static const char args_doc[] =
 /* Static vars to store the parameters */
 static char *devclass = "rc0";
 static char *devname = NULL;
-static int read = 0;
+static int readtable = 0;
 static int clear = 0;
 static int debug = 0;
+static int test = 0;
 static enum ir_protocols ch_proto = 0;
 
 struct keytable keys = {
@@ -337,6 +340,9 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	case 'v':
 		debug++;
 		break;
+	case 't':
+		test++;
+		break;
 	case 'c':
 		clear++;
 		break;
@@ -347,7 +353,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		devclass = arg;
 		break;
 	case 'r':
-		read++;
+		readtable++;
 		break;
 	case 'w': {
 		char *name = NULL;
@@ -1133,6 +1139,63 @@ static void display_proto(struct rc_device *rc_dev)
 	fprintf(stderr, "\n");
 }
 
+static void test_event(int fd)
+{
+	struct input_event ev[64];
+	int rd, i;
+
+	printf ("Testing events. Please, press CTRL-C to abort.\n");
+	while (1) {
+		rd = read(fd, ev, sizeof(ev));
+
+		if (rd < (int) sizeof(struct input_event)) {
+			perror("Error reading event");
+			return;
+		}
+
+		for (i = 0; i < rd / sizeof(struct input_event); i++) {
+			switch (ev[i].type) {
+			case EV_MSC:
+				if (ev[i].code != MSC_SCAN)
+					break;
+				printf("%ld.%06ld: Scancode = %02x\n",
+					ev[i].time.tv_sec, ev[i].time.tv_usec, ev[i].value);
+				break;
+			case EV_KEY: 			{
+				struct parse_key *p;
+				char *name = "";
+
+				printf("%ld.%06ld: key ",
+					ev[i].time.tv_sec, ev[i].time.tv_usec);
+
+				for (p = keynames; p->name != NULL; p++) {
+					if (p->value == ev[i].value) {
+						name = p->name;
+						break;
+					}
+				}
+
+				if (isprint (ev[i].value))
+					printf("%s ('%c')\n", name, ev[i].value);
+				else
+					printf("%s (%02x)\n", name, ev[i].value);
+				break;
+			}
+			case EV_REP:
+				printf("%ld.%06ld: repeat %d\n",
+					ev[i].time.tv_sec, ev[i].time.tv_usec,
+					ev[i].value);
+				break;
+			default:
+				printf("%ld.%06ld: type %d\n",
+					ev[i].time.tv_sec, ev[i].time.tv_usec,
+					ev[i].type);
+				break;
+			}
+		}
+	}
+}
+
 static void display_table(struct rc_device *rc_dev, int fd)
 {
 	unsigned int i, j;
@@ -1159,7 +1222,7 @@ int main(int argc, char *argv[])
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
 	/* Just list all devices */
-	if (!clear && !read && !keys.next && !ch_proto && !cfg.next) {
+	if (!clear && !readtable && !keys.next && !ch_proto && !cfg.next && !test) {
 		static struct sysfs_names *names, *cur;
 
 		names = find_device(NULL);
@@ -1285,8 +1348,11 @@ int main(int argc, char *argv[])
 	/*
 	 * Fourth step: display current keytable
 	 */
-	if (read)
+	if (readtable)
 		display_table(&rc_dev, fd);
+
+	if (test)
+		test_event(fd);
 
 	return 0;
 }
