@@ -27,6 +27,7 @@ sync-with-kernel:
 	@printf "\t{ NULL, 0}\n};\n" >>parse.h
 
 	@-mkdir -p rc_keymaps
+	@-rm rc_keymaps/*
 	@echo storing existing keymaps at rc_keymaps/
 	@./gen_keytables.pl $(KERNEL_DIR);
 

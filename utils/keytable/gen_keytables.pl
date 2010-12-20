@@ -80,29 +80,33 @@ sub parse_file($)
 	printf "processing file $filename\n" if ($debug);
 	open IN, "<$filename" or die "couldn't find $filename";
 	while (<IN>) {
-		if (m/struct\s+ir_scancode\s+(\w[\w\d_]+)/) {
+		if (m/struct\s+rc_map_table\s+(\w[\w\d_]+)/) {
 			flush($filename);
 
 			$keyname = $1;
-			$keyname =~ s/^ir_codes_//;
+			$keyname =~ s/^rc_map_//;
 			$keyname =~ s/_table$//;
 			$read = 1;
 			next;
 		}
-		if (m/struct\s+rc_keymap.*=\s+{/) {
+		if (m/struct\s+rc_map_list.*=\s+{/) {
 			$check_type = 1;
 			next;
 		}
-		if (m/\.name\s*=\s*(RC_MAP_[^\s\,]+)/) {
-			$name = $1;
-		}
-
 		if ($check_type) {
+			if (m/\.name\s*=\s*(RC_MAP_[^\s\,]+)/) {
+				$name = $1;
+				$keyname = $1;
+				$keyname =~ s/^RC_MAP_//;
+				$keyname =~ tr/A-Z/a-z/;
+				$keyname =~ s/_table$//;
+			}
+
 			if (m/^\s*}/) {
 				$check_type = 0;
 				next;
 			}
-			if (m/IR_TYPE_([\w\d_]+)/) {
+			if (m/RC_TYPE_([\w\d_]+)/) {
 				$type = $1;
 			}
 			next;
@@ -194,7 +198,7 @@ print OUT_MAP << "EOF";
 #driver table                    file
 EOF
 
-find({wanted => \&parse_dir, no_chdir => 1}, "$kernel_dir/drivers/media/IR/keymaps");
+find({wanted => \&parse_dir, no_chdir => 1}, "$kernel_dir/drivers/media/rc/keymaps");
 
 foreach my $file (@ir_files) {
 	parse_file "$kernel_dir/$file";
