@@ -522,7 +522,7 @@ int main(int argc, char **argv)
 	a.setWindowIcon(QIcon(":/qv4l2.png"));
 	g_mw = new ApplicationWindow();
 	g_mw->setWindowTitle("V4L2 Test Bench");
-	g_mw->setDevice(a.argc() > 1 ? a.argv()[1] : "/dev/video0", true);
+	g_mw->setDevice(a.argc() > 1 ? a.argv()[1] : "/dev/video0", false);
 	g_mw->show();
 	a.connect(&a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()));
 	return a.exec();
