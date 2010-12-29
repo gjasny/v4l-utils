@@ -178,7 +178,10 @@ void ApplicationWindow::capFrame()
 	switch (m_capMethod) {
 	case methodRead:
 		s = read(m_frameData, m_capSrcFormat.fmt.pix.sizeimage);
-		err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
+		if (useWrapper())
+			memcpy(m_capImage->bits(), m_frameData, m_capSrcFormat.fmt.pix.sizeimage);
+		else
+			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 				m_frameData, m_capSrcFormat.fmt.pix.sizeimage,
 				m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
 		break;
@@ -190,7 +193,11 @@ void ApplicationWindow::capFrame()
 			return;
 		}
 
-		err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
+		if (useWrapper())
+			memcpy(m_capImage->bits(), (unsigned char *)m_buffers[buf.index].start,
+					m_capSrcFormat.fmt.pix.sizeimage);
+		else
+			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 				(unsigned char *)m_buffers[buf.index].start, buf.bytesused,
 				m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
 
@@ -209,7 +216,11 @@ void ApplicationWindow::capFrame()
 					&& buf.length == m_buffers[i].length)
 				break;
 
-		err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
+		if (useWrapper())
+			memcpy(m_capImage->bits(), (unsigned char *)buf.m.userptr,
+					m_capSrcFormat.fmt.pix.sizeimage);
+		else
+			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 				(unsigned char *)buf.m.userptr, buf.bytesused,
 				m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
 
@@ -410,6 +421,11 @@ void ApplicationWindow::capStart(bool start)
 	}
 	m_capMethod = m_genTab->capMethod();
 	g_fmt_cap(m_capSrcFormat);
+	if (useWrapper()) {
+		m_capSrcFormat.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+		s_fmt(m_capSrcFormat);
+		g_fmt_cap(m_capSrcFormat);
+	}
 	m_frameData = new unsigned char[m_capSrcFormat.fmt.pix.sizeimage];
 	m_capDestFormat = m_capSrcFormat;
 	m_capDestFormat.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
@@ -421,11 +437,13 @@ void ApplicationWindow::capStart(bool start)
 			break;
 		}
 	}
-	v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
-	// v4lconvert_try_format sometimes modifies the source format if it thinks
-	// that there is a better format available. Restore our selected source
-	// format since we do not want that happening.
-	g_fmt_cap(m_capSrcFormat);
+	if (!useWrapper()) {
+		v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
+		// v4lconvert_try_format sometimes modifies the source format if it thinks
+		// that there is a better format available. Restore our selected source
+		// format since we do not want that happening.
+		g_fmt_cap(m_capSrcFormat);
+	}
 	m_capture->setMinimumSize(m_capDestFormat.fmt.pix.width, m_capDestFormat.fmt.pix.height);
 	m_capImage = new QImage(m_capDestFormat.fmt.pix.width, m_capDestFormat.fmt.pix.height, dstFmt);
 	m_capImage->fill(0);
