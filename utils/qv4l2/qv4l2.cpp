@@ -202,7 +202,7 @@ void ApplicationWindow::capFrame()
 
 		if (useWrapper())
 			memcpy(m_capImage->bits(), (unsigned char *)m_buffers[buf.index].start,
-					m_capSrcFormat.fmt.pix.sizeimage);
+					buf.bytesused);
 		else
 			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 				(unsigned char *)m_buffers[buf.index].start, buf.bytesused,
@@ -225,7 +225,7 @@ void ApplicationWindow::capFrame()
 
 		if (useWrapper())
 			memcpy(m_capImage->bits(), (unsigned char *)buf.m.userptr,
-					m_capSrcFormat.fmt.pix.sizeimage);
+					buf.bytesused);
 		else
 			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 				(unsigned char *)buf.m.userptr, buf.bytesused,
