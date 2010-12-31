@@ -250,7 +250,7 @@ int main (int argc, char*argv[])
 	int fd;
 	unsigned int i;
 	unsigned char buf[TM6000_URB_MSG_LEN], img[720*2*480];
-	unsigned int  cmd, cpysize, pktsize, size, field, block, line, pos=0;
+	unsigned int  cmd, size, field, block, line, pos=0;
 	unsigned long header=0;
 	int           linesize=720*2,skip=0;
 	struct v4l2_driver drv;
