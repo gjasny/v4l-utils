@@ -178,11 +178,18 @@ void ApplicationWindow::capFrame()
 	switch (m_capMethod) {
 	case methodRead:
 		s = read(m_frameData, m_capSrcFormat.fmt.pix.sizeimage);
+		if (s < 0) {
+			if (errno != EAGAIN) {
+				error("read");
+				m_capStartAct->setChecked(false);
+			}
+			return;
+		}
 		if (useWrapper())
-			memcpy(m_capImage->bits(), m_frameData, m_capSrcFormat.fmt.pix.sizeimage);
+			memcpy(m_capImage->bits(), m_frameData, s);
 		else
 			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
-				m_frameData, m_capSrcFormat.fmt.pix.sizeimage,
+				m_frameData, s,
 				m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
 		break;
 
@@ -227,6 +234,9 @@ void ApplicationWindow::capFrame()
 		qbuf(buf);
 		break;
 	}
+	if (err == -1)
+		error(v4lconvert_get_error_message(m_convertData));
+
 	m_capture->setImage(*m_capImage);
 	if (m_capture->frame() == 1)
 		refresh();
