@@ -196,8 +196,7 @@ int v4l2_enum_stds (struct v4l2_driver *drv)
 {
 	struct v4l2_standard	*p=NULL;
 	struct drv_list		*list;
-	int			ok=0,ret,i;
-	v4l2_std_id		id;
+	int			ok=0,i;
 
 	free_list(&drv->stds);
 
@@ -239,8 +238,7 @@ int v4l2_enum_input (struct v4l2_driver *drv)
 {
 	struct v4l2_input	*p=NULL;
 	struct drv_list		*list;
-	int			ok=0,ret,i;
-	v4l2_std_id		id;
+	int			ok=0,i;
 
 	free_list(&drv->inputs);
 
@@ -278,10 +276,8 @@ int v4l2_enum_input (struct v4l2_driver *drv)
 int v4l2_enum_fmt (struct v4l2_driver *drv, enum v4l2_buf_type type)
 {
 	struct v4l2_fmtdesc 	*p=NULL;
-	struct v4l2_format	fmt;
 	struct drv_list		*list;
-	int			ok=0,ret,i;
-	v4l2_std_id		id;
+	int			ok=0,i;
 
 	free_list(&drv->fmt_caps);
 
@@ -369,7 +365,7 @@ int v4l2_setget_std (struct v4l2_driver *drv, enum v4l2_direction dir, v4l2_std_
 
 int v4l2_setget_input (struct v4l2_driver *drv, enum v4l2_direction dir, struct v4l2_input *input)
 {
-	int			ok=0,ret,i;
+	int			ok=0,ret;
 	unsigned int		inp=input->index;
 	char			s[256];
 
@@ -595,7 +591,6 @@ int v4l2_mmap_bufs(struct v4l2_driver *drv, unsigned int num_buffers)
 
 	for (drv->n_bufs = 0; drv->n_bufs < drv->reqbuf.count; drv->n_bufs++) {
 		struct v4l2_buffer *p;
-		struct v4l2_timecode *tc;
 
 		/* Requests kernel buffers to be mmapped */
 		p=drv->v4l2_bufs[drv->n_bufs]=calloc(1,sizeof(*p));
@@ -758,7 +753,6 @@ int v4l2_getset_freq (struct v4l2_driver *drv, enum v4l2_direction dir,
 	struct v4l2_tuner     tun;
 	struct v4l2_frequency frq;
 	double d = 62500;
-	unsigned int counter;
 
 	memset(&tun, 0, sizeof(tun));
 
