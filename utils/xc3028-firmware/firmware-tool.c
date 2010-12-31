@@ -60,6 +60,7 @@ struct firmware {
 	__u16 nr_desc;
 };
 
+#if 0
 static struct firmware_description* alloc_firmware_description(void) {
 	struct firmware_description *d = malloc(sizeof(*d));
 	d->type = 0;
@@ -73,6 +74,7 @@ static void free_firmware_description(struct firmware_description *d) {
 	free(d->data);
 	free(d);
 }
+#endif
 
 static struct firmware* alloc_firmware(void) {
 	struct firmware *f = malloc(sizeof(*f));
@@ -563,7 +565,7 @@ static void list_firmware(struct firmware *f, unsigned int dump, char *binfile)
 
 static void add_standard(struct firmware* f, char* firmware_file, char* standard_file) {
 	unsigned char* standard_data;
-	unsigned int len, i;
+	unsigned int len;
 	struct firmware_description desc;
 
 	create_standard_data(standard_file, &standard_data, &len);
@@ -615,8 +617,8 @@ static int seek_chunks(struct chunk_hunk *fhunk,
 		unsigned char *seek, unsigned char *endp,	/* File to seek */
 		unsigned char *fdata, unsigned char *endf)	/* Firmware */
 {
-	unsigned char *fpos, *p, *p2, *lastp;
-	int rc, fsize;
+	unsigned char *fpos, *p, *p2;
+	int fsize;
 	unsigned char *temp_data;
 	struct chunk_hunk *hunk = fhunk;
 	/* Method 3 vars */
@@ -779,8 +781,8 @@ method3:
 		}
 	}
 	return 3;
-#endif
 not_found:
+#endif
 	memset(fhunk, 0, sizeof(struct chunk_hunk));
 	printf("Couldn't find firmware\n");
 	return 0;
@@ -796,6 +798,7 @@ seek_next:
 		}
 		if (p2 > fdata + 3) {
 			int i = 0;
+			unsigned char *lastp;
 			printf("Found %ld equal bytes at %06x:\n",
 				p2 - fdata, p - seek);
 			fpos = p;
@@ -828,7 +831,7 @@ seek_next:
 static void seek_firmware(struct firmware *f, char *seek_file, char *write_file) {
 	unsigned int i = 0, j, nfound = 0;
 	long size, rd = 0;
-	unsigned char *seek, *p, *endp, *p2, *endp2, *fpos;
+	unsigned char *seek, *p, *endp, *endp2;
 	/*FIXME: Calculate it, instead of using a hardcode value */
 	char *md5 = "0e44dbf63bb0169d57446aec21881ff2";
 	FILE *fp;
@@ -970,7 +973,6 @@ int main(int argc, char* argv[])
 	char* firmware_file, *file = NULL, *nr_str = NULL, *index_str = NULL;
 	char *seek_file = NULL, *write_file = NULL;
 	struct firmware *f;
-	__u64 nr;
 
 	while(1) {
 		static struct option long_options[] = {
