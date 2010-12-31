@@ -122,29 +122,6 @@ static void usage(void)
 	exit(0);
 }
 
-static char *pts_to_string(char *str, unsigned long pts, float fps)
-{
-	static char buf[256];
-	int hours, minutes, seconds, fracsec;
-	int frame;
-	char *p = (str) ? str : buf;
-
-	static const int MPEG_CLOCK_FREQ = 90000;
-	seconds = pts / MPEG_CLOCK_FREQ;
-	fracsec = pts % MPEG_CLOCK_FREQ;
-
-	minutes = seconds / 60;
-	seconds = seconds % 60;
-
-	hours = minutes / 60;
-	minutes = minutes % 60;
-
-	frame = (int)ceilf(((float)fracsec / (float)MPEG_CLOCK_FREQ) * fps);
-
-	snprintf(p, sizeof(buf), "%d:%02d:%02d:%d", hours, minutes, seconds, frame);
-	return p;
-}
-
 static void print_debug_mask(int mask)
 {
 #define MASK_OR_NOTHING (mask ? " | " : "")
@@ -251,15 +228,12 @@ int main(int argc, char **argv)
 	/* command args */
 	const char *device = "/dev/video0";	/* -d device */
 	int ch;
-	int yuv_mode = 0;
 	unsigned int gpio_out = 0x0;	/* GPIO output data */
 	unsigned int gpio_dir = 0x0;	/* GPIO direction bits */
 	int gpio_set_dir = 0;
 	int debug_level = 0;
 	__u32 reset = 0;
 	int new_debug_level, gdebug_level;
-	double timestamp;
-	char ptsstr[64];
 	char short_options[26 * 2 * 2 + 1];
 
 	if (argc == 1) {
