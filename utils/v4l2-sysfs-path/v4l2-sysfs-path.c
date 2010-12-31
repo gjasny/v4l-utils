@@ -142,10 +142,8 @@ static char *seek_name(char *path, char *match)
 {
 	DIR             *dir;
 	struct dirent   *entry;
-	struct stat	st;
 	char		*p;
 	static char     name[1024];
-	int		major, minor;
 
 	dir = opendir(path);
 	if (!dir)
