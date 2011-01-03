@@ -46,6 +46,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x0471, 0x0326, 0, NULL, NULL, V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	/* Philips SPC210NC */
 	{ 0x0471, 0x032d, 0, NULL, NULL, V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	/* Philips SPC315NC */
+	{ 0x0471, 0x032e, 0, NULL, NULL, V4LCONTROL_VFLIPPED },
 	/* Genius E-M 112 (also want whitebalance by default) */
 	{ 0x093a, 0x2476, 0, NULL, NULL,
 		V4LCONTROL_HFLIPPED|V4LCONTROL_VFLIPPED | V4LCONTROL_WANTS_WB, 1500 },
