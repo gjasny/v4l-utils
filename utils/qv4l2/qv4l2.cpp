@@ -546,11 +546,31 @@ ApplicationWindow *g_mw;
 int main(int argc, char **argv)
 {
 	QApplication a(argc, argv);
+	QString device = "/dev/video0";
+	bool raw = false;
+	bool help = false;
+	int i;
 
 	a.setWindowIcon(QIcon(":/qv4l2.png"));
 	g_mw = new ApplicationWindow();
 	g_mw->setWindowTitle("V4L2 Test Bench");
-	g_mw->setDevice(a.argc() > 1 ? a.argv()[1] : "/dev/video0", false);
+	for (i = 1; i < argc; i++) {
+		const char *arg = a.argv()[i];
+
+		if (!strcmp(arg, "-r"))
+			raw = true;
+		else if (!strcmp(arg, "-h"))
+			help = true;
+		else if (arg[0] != '-')
+			device = arg;
+	}
+	if (help) {
+		printf("qv4l2 [-r] [-h] [device node]\n\n"
+		       "-h\tthis help message\n"
+		       "-r\topen device node in raw mode\n");
+		return 0;
+	}
+	g_mw->setDevice(device, raw);
 	g_mw->show();
 	a.connect(&a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()));
 	return a.exec();
