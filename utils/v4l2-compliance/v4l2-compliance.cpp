@@ -237,8 +237,12 @@ static int testCap(int fd)
 static int check_prio(int fd, int fd2, enum v4l2_priority match)
 {
 	enum v4l2_priority prio;
+	int err;
 
-	if (doioctl(fd, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY"))
+	err = doioctl(fd, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY");
+	if (err == EINVAL)
+		return ENOSYS;
+	if (err)
 		return -1;
 	if (prio != match) {
 		if (verbose) printf("wrong priority returned (%d, expected %d)\n", prio, match);
@@ -256,29 +260,31 @@ static int check_prio(int fd, int fd2, enum v4l2_priority match)
 static int testPrio(int fd, int fd2)
 {
 	enum v4l2_priority prio;
+	int err;
 
-	if (check_prio(fd, fd2, V4L2_PRIORITY_DEFAULT))
-		return -1;
+	err = check_prio(fd, fd2, V4L2_PRIORITY_DEFAULT);
+	if (err)
+		return err;
 
 	prio = V4L2_PRIORITY_RECORD;
 	if (doioctl(fd, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY"))
-		return -2;
+		return -10;
 	if (check_prio(fd, fd2, V4L2_PRIORITY_RECORD))
-		return -3;
+		return -11;
 
 	prio = V4L2_PRIORITY_INTERACTIVE;
 	if (!doioctl(fd2, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY")) {
 		if (verbose) printf("Can lower prio on second filehandle\n");
-		return -4;
+		return -12;
 	}
 	prio = V4L2_PRIORITY_INTERACTIVE;
 	if (doioctl(fd, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY")) {
 		if (verbose) printf("Could not lower prio\n");
-		return -5;
+		return -13;
 	}
 	
 	if (check_prio(fd, fd2, V4L2_PRIORITY_INTERACTIVE))
-		return -3;
+		return -14;
 	return 0;
 }
 
