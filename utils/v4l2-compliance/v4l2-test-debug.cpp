@@ -83,7 +83,7 @@ int testRegister(int fd)
 	reg.reg = 0;
 	ret = doioctl(fd, VIDIOC_DBG_G_REGISTER, &reg, "VIDIOC_DBG_G_REGISTER");
 	if (ret == EINVAL)
-		return 0;
+		return ENOSYS;
 	if (uid && ret != EPERM) {
 		printf("Not allowed to call VIDIOC_DBG_G_REGISTER unless root\n");
 		return -1;
