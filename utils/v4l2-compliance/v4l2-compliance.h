@@ -29,6 +29,7 @@ extern unsigned caps;
 
 struct node {
 	int fd;
+	bool is_radio;
 	unsigned caps;
 	unsigned tuners;
 	unsigned modulators;
@@ -58,10 +59,12 @@ int testRegister(struct node *node);
 int testLogStatus(struct node *node);
 
 // Input ioctl tests
+int testTuner(struct node *node);
 int testInput(struct node *node);
 int testInputAudio(struct node *node);
 
 // Output ioctl tests
+int testModulator(struct node *node);
 int testOutput(struct node *node);
 int testOutputAudio(struct node *node);
 

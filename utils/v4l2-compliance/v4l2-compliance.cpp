@@ -283,8 +283,8 @@ int main(int argc, char **argv)
 	struct node node = { -1 };
 	struct node video_node = { -1 };
 	struct node video_node2 = { -1 };
-	struct node radio_node = { -1 };
-	struct node radio_node2 = { -1 };
+	struct node radio_node = { -1, true };
+	struct node radio_node2 = { -1, true };
 	struct node vbi_node = { -1 };
 	struct node vbi_node2 = { -1 };
 
@@ -486,12 +486,14 @@ int main(int argc, char **argv)
 
 	printf("Input ioctls:\n");
 	if (test[TestInput]) {
+		printf("\ttest VIDIOC_S/G_TUNER: %s\n", ok(testTuner(&node)));
 		printf("\ttest VIDIOC_S/G/ENUMAUDIO: %s\n", ok(testInputAudio(&node)));
 		printf("\ttest VIDIOC_G/S/ENUMINPUT: %s\n", ok(testInput(&node)));
 	}
 
 	printf("Output ioctls:\n");
 	if (test[TestOutput]) {
+		printf("\ttest VIDIOC_S/G_MODULATOR: %s\n", ok(testModulator(&node)));
 		printf("\ttest VIDIOC_S/G/ENUMAUDOUT: %s\n", ok(testOutputAudio(&node)));
 		printf("\ttest VIDIOC_G/S/ENUMOUTPUT: %s\n", ok(testOutput(&node)));
 	}
