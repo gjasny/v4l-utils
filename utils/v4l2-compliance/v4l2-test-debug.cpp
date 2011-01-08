@@ -35,7 +35,7 @@
 #include <sys/klog.h>
 #include "v4l2-compliance.h"
 
-int testChipIdent(int fd)
+int testChipIdent(struct node *node)
 {
 	struct v4l2_dbg_chip_ident chip;
 	int ret;
@@ -43,7 +43,7 @@ int testChipIdent(int fd)
 	memset(&chip, 0, sizeof(chip));
 	chip.match.type = V4L2_CHIP_MATCH_HOST;
 	chip.match.addr = 0;
-	ret = doioctl(fd, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT");
+	ret = doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT");
 	// Must return either 0 (OK) or EINVAL (not supported)
 	if (ret == 0) {
 		struct v4l2_dbg_chip_ident orig;
@@ -55,23 +55,17 @@ int testChipIdent(int fd)
 		chip.ident = 0xdeadbeef;
 		chip.revision = 0xdeadbeef;
 		orig = chip;
-		ret = doioctl(fd, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT");
-		if (ret != EINVAL) {
-			if (verbose)
-				printf("Invalid match_type accepted\n");
-			return -1;
-		}
-		if (memcmp(&orig, &chip, sizeof(chip))) {
-			if (verbose)
-				printf("Error, but struct modified\n");
-			return -2;
-		}
+		ret = doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT");
+		if (ret != EINVAL)
+			return fail("Invalid match_type accepted\n");
+		if (memcmp(&orig, &chip, sizeof(chip)))
+			return fail("Error, but struct modified\n");
 		return 0;
 	}
-	return ret == EINVAL ? ENOSYS : ret;
+	return ret == EINVAL ? -ENOSYS : ret;
 }
 
-int testRegister(int fd)
+int testRegister(struct node *node)
 {
 	struct v4l2_dbg_register reg;
 	struct v4l2_dbg_chip_ident chip;
@@ -81,39 +75,31 @@ int testRegister(int fd)
 	reg.match.type = V4L2_CHIP_MATCH_HOST;
 	reg.match.addr = 0;
 	reg.reg = 0;
-	ret = doioctl(fd, VIDIOC_DBG_G_REGISTER, &reg, "VIDIOC_DBG_G_REGISTER");
+	ret = doioctl(node, VIDIOC_DBG_G_REGISTER, &reg, "VIDIOC_DBG_G_REGISTER");
 	if (ret == EINVAL)
-		return ENOSYS;
-	if (uid && ret != EPERM) {
-		printf("Not allowed to call VIDIOC_DBG_G_REGISTER unless root\n");
-		return -1;
-	}
-	if (uid == 0 && ret) {
-		printf("Not allowed to call VIDIOC_DBG_G_REGISTER even though we are root\n");
-		return -2;
-	}
+		return -ENOSYS;
+	if (uid && ret != EPERM)
+		return fail("Not allowed to call VIDIOC_DBG_G_REGISTER unless root\n");
+	if (uid == 0 && ret)
+		return fail("Not allowed to call VIDIOC_DBG_G_REGISTER even though we are root\n");
 	chip.match.type = V4L2_CHIP_MATCH_HOST;
 	chip.match.addr = 0;
-	if (doioctl(fd, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT")) {
-		printf("Must support VIDIOC_DBG_G_CHIP_IDENT\n");
-		return -3;
-	}
+	if (doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT"))
+		return fail("Must support VIDIOC_DBG_G_CHIP_IDENT\n");
 	if (uid) {
 		// Don't test S_REGISTER as root, don't want to risk
 		// messing with registers in the compliance test.
 		reg.reg = reg.val = 0;
-		ret = doioctl(fd, VIDIOC_DBG_S_REGISTER, &reg, "VIDIOC_DBG_S_REGISTER");
-		if (ret != EINVAL && ret != EPERM) {
-			printf("Invalid error calling VIDIOC_DBG_S_REGISTER as non-root\n");
-			return -4;
-		}
+		ret = doioctl(node, VIDIOC_DBG_S_REGISTER, &reg, "VIDIOC_DBG_S_REGISTER");
+		if (ret != EINVAL && ret != EPERM)
+			return fail("Invalid error calling VIDIOC_DBG_S_REGISTER as non-root\n");
 	}
 	return 0;
 }
 
-int testLogStatus(int fd)
+int testLogStatus(struct node *node)
 {
-	int ret = doioctl(fd, VIDIOC_LOG_STATUS, NULL, "VIDIOC_LOG_STATUS");
+	int ret = doioctl(node, VIDIOC_LOG_STATUS, NULL, "VIDIOC_LOG_STATUS");
 
-	return (ret == EINVAL) ? ENOSYS : ret;
+	return (ret == EINVAL) ? -ENOSYS : ret;
 }

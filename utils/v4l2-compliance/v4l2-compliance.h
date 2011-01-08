@@ -27,16 +27,40 @@
 extern int verbose;
 extern unsigned caps;
 
-int doioctl(int fd, unsigned long int request, void *parm, const char *name);
+struct node {
+	int fd;
+	unsigned caps;
+	unsigned tuners;
+	unsigned modulators;
+	unsigned audio_inputs;
+	unsigned audio_outputs;
+};
+
+#define fail(fmt, args...) 			\
+({ 						\
+	if (verbose)				\
+ 		printf("\t\tfail: " fmt, ##args);	\
+	1;					\
+})
+
+int doioctl(struct node *node, unsigned long int request, void *parm, const char *name);
 std::string cap2s(unsigned cap);
 const char *ok(int res);
-int check_string(const char *s, size_t len, const char *fld);
-int check_ustring(const __u8 *s, int len, const char *fld);
-int check_0(void *p, int len);
+int check_string(const char *s, size_t len);
+int check_ustring(const __u8 *s, int len);
+int check_0(const void *p, int len);
 
 // Debug ioctl tests
-int testChipIdent(int fd);
-int testRegister(int fd);
-int testLogStatus(int fd);
+int testChipIdent(struct node *node);
+int testRegister(struct node *node);
+int testLogStatus(struct node *node);
+
+// Input ioctl tests
+int testInput(struct node *node);
+int testInputAudio(struct node *node);
+
+// Output ioctl tests
+int testOutput(struct node *node);
+int testOutputAudio(struct node *node);
 
 #endif

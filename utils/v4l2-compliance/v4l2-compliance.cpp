@@ -50,6 +50,7 @@ enum Option {
 	OptHelp = 'h',
 	OptTest = 't',
 	OptVerbose = 'v',
+	OptTrace = 'T',
 	OptLast = 256
 };
 
@@ -58,6 +59,8 @@ enum Test {
 	TestChipIdent,
 	TestRegister,
 	TestLogStatus,
+	TestInput,
+	TestOutput,
 	TestMax
 };
 
@@ -78,6 +81,7 @@ static struct option long_options[] = {
 	{"vbi-device", required_argument, 0, OptSetVbiDevice},
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
+	{"trace", no_argument, 0, OptTrace},
 	{"test", required_argument, 0, OptTest},
 	{0, 0, 0, 0}
 };
@@ -97,26 +101,28 @@ static void usage(void)
 	printf("  -t, --test=<num>   run specified test.\n");
 	printf("                     By default all tests are run.\n");
 	printf("                     0 = test VIDIOC_QUERYCAP\n");
-	printf("  -v, --verbose      turn on verbose ioctl error reporting.\n");
+	printf("  -v, --verbose      turn on verbose error reporting.\n");
+	printf("  -T, --trace        trace all called ioctls.\n");
 	exit(0);
 }
 
-int doioctl(int fd, unsigned long int request, void *parm, const char *name)
+int doioctl(struct node *node, unsigned long int request, void *parm, const char *name)
 {
-	int retVal;
+	int retval;
 	int e;
 
 	errno = 0;
-	retVal = ioctl(fd, request, parm);
+	retval = ioctl(node->fd, request, parm);
 	e = errno;
-	if (verbose)
-		printf("\t\t%s returned %d (%s)\n", name, retVal, strerror(e));
-	if (retVal == 0) return retVal;
-	if (retVal != -1) {
+	if (options[OptTrace])
+		printf("\t\t%s returned %d (%s)\n", name, retval, strerror(e));
+	if (retval == 0)
+		return 0;
+	if (retval != -1) {
+		fail("%s returned %d instead of 0 or -1\n", name, retval);
 		return -1;
 	}
-	retVal = e;
-	return retVal;
+	return e;
 }
 
 std::string cap2s(unsigned cap)
@@ -164,7 +170,7 @@ const char *ok(int res)
 {
 	static char buf[100];
 
-	if (res == ENOSYS) {
+	if (res == -ENOSYS) {
 		strcpy(buf, "Not Supported");
 		res = 0;
 	} else {
@@ -173,118 +179,100 @@ const char *ok(int res)
 	tests_total++;
 	if (res) {
 		app_result = res;
-		sprintf(buf, "FAIL (%d)\n", res);
+		sprintf(buf, "FAIL");
 	} else {
 		tests_ok++;
 	}
 	return buf;
 }
 
-int check_string(const char *s, size_t len, const char *fld)
+int check_string(const char *s, size_t len)
 {
-	if (strlen(s) == 0) {
-		if (verbose)
-			printf("%s field empty\n", fld);
-		return -1;
-	}
-	if (strlen(s) >= len) {
-		if (verbose)
-			printf("%s field not 0-terminated\n", fld);
-		return -2;
-	}
+	size_t sz = strnlen(s, len);
+
+	if (sz == 0)
+		return fail("string empty\n");
+	if (sz == len)
+		return fail("string not 0-terminated\n");
 	return 0;
 }
 
-int check_ustring(const __u8 *s, int len, const char *fld)
+int check_ustring(const __u8 *s, int len)
 {
-	return check_string((const char *)s, len, fld);
+	return check_string((const char *)s, len);
 }
 
-int check_0(void *p, int len)
+int check_0(const void *p, int len)
 {
-	__u8 *q = (__u8 *)p;
+	const __u8 *q = (const __u8 *)p;
 
 	while (len--)
-		if (*q++) {
-			if (verbose)
-				printf("array not zeroed by driver\n");
-			return -1;
-		}
+		if (*q++)
+			return 1;
 	return 0;
 }
 
-static int testCap(int fd)
+static int testCap(struct node *node)
 {
 	struct v4l2_capability vcap;
 	__u32 caps;
 
-	if (doioctl(fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP"))
-		return -1;
-	if (check_ustring(vcap.driver, sizeof(vcap.driver), "driver"))
-		return -2;
-	if (check_ustring(vcap.card, sizeof(vcap.card), "card"))
-		return -3;
+	if (doioctl(node, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP"))
+		return fail("VIDIOC_QUERYCAP not implemented\n");
+	if (check_ustring(vcap.driver, sizeof(vcap.driver)))
+		return fail("invalid driver name\n");
+	if (check_ustring(vcap.card, sizeof(vcap.card)))
+		return fail("invalid card name\n");
 	if (check_0(vcap.reserved, sizeof(vcap.reserved)))
-		return -4;
+		return fail("non-zero reserved fields\n");
 	caps = vcap.capabilities;
-	if (caps == 0) {
-		if (verbose) printf("no capabilities set\n");
-		return -6;
-	}
+	if (caps == 0)
+		return fail("no capabilities set\n");
 	return 0;
 }
 
-static int check_prio(int fd, int fd2, enum v4l2_priority match)
+static int check_prio(struct node *node, struct node *node2, enum v4l2_priority match)
 {
 	enum v4l2_priority prio;
 	int err;
 
-	err = doioctl(fd, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY");
+	err = doioctl(node, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY");
 	if (err == EINVAL)
-		return ENOSYS;
+		return -ENOSYS;
 	if (err)
-		return -1;
-	if (prio != match) {
-		if (verbose) printf("wrong priority returned (%d, expected %d)\n", prio, match);
-		return -2;
-	}
-	if (doioctl(fd2, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY"))
-		return -3;
-	if (prio != match) {
-		if (verbose) printf("wrong priority returned on second fh (%d, expected %d)\n", prio, match);
-		return -4;
-	}
+		return fail("VIDIOC_G_PRIORITY failed\n");
+	if (prio != match)
+		return fail("wrong priority returned (%d, expected %d)\n", prio, match);
+	if (doioctl(node2, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY"))
+		return fail("second VIDIOC_G_PRIORITY failed\n");
+	if (prio != match)
+		return fail("wrong priority returned on second fh (%d, expected %d)\n", prio, match);
 	return 0;
 }
 
-static int testPrio(int fd, int fd2)
+static int testPrio(struct node *node, struct node *node2)
 {
 	enum v4l2_priority prio;
 	int err;
 
-	err = check_prio(fd, fd2, V4L2_PRIORITY_DEFAULT);
+	err = check_prio(node, node2, V4L2_PRIORITY_DEFAULT);
 	if (err)
 		return err;
 
 	prio = V4L2_PRIORITY_RECORD;
-	if (doioctl(fd, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY"))
-		return -10;
-	if (check_prio(fd, fd2, V4L2_PRIORITY_RECORD))
-		return -11;
+	if (doioctl(node, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY"))
+		return fail("VIDIOC_S_PRIORITY RECORD failed\n");
+	if (check_prio(node, node2, V4L2_PRIORITY_RECORD))
+		return fail("expected priority RECORD");
 
 	prio = V4L2_PRIORITY_INTERACTIVE;
-	if (!doioctl(fd2, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY")) {
-		if (verbose) printf("Can lower prio on second filehandle\n");
-		return -12;
-	}
+	if (!doioctl(node2, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY"))
+		return fail("Can lower prio on second filehandle\n");
 	prio = V4L2_PRIORITY_INTERACTIVE;
-	if (doioctl(fd, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY")) {
-		if (verbose) printf("Could not lower prio\n");
-		return -13;
-	}
-	
-	if (check_prio(fd, fd2, V4L2_PRIORITY_INTERACTIVE))
-		return -14;
+	if (doioctl(node, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY"))
+		return fail("Could not lower prio\n");
+	if (check_prio(node, node2, V4L2_PRIORITY_INTERACTIVE))
+		return fail("expected priority INTERACTIVE");
 	return 0;
 }
 
@@ -292,13 +280,13 @@ int main(int argc, char **argv)
 {
 	int i;
 	unsigned t;
-	int fd = -1;
-	int video_fd = -1;
-	int video_fd2 = -1;
-	int radio_fd = -1;
-	int radio_fd2 = -1;
-	int vbi_fd = -1;
-	int vbi_fd2 = -1;
+	struct node node = { -1 };
+	struct node video_node = { -1 };
+	struct node video_node2 = { -1 };
+	struct node radio_node = { -1 };
+	struct node radio_node2 = { -1 };
+	struct node vbi_node = { -1 };
+	struct node vbi_node2 = { -1 };
 
 	/* command args */
 	int ch;
@@ -402,37 +390,37 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (video_device && (video_fd = open(video_device, O_RDWR)) < 0) {
+	if (video_device && (video_node.fd = open(video_device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", video_device,
 			strerror(errno));
 		exit(1);
 	}
 
-	if (radio_device && (radio_fd = open(radio_device, O_RDWR)) < 0) {
+	if (radio_device && (radio_node.fd = open(radio_device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", radio_device,
 			strerror(errno));
 		exit(1);
 	}
 
-	if (vbi_device && (vbi_fd = open(vbi_device, O_RDWR)) < 0) {
+	if (vbi_device && (vbi_node.fd = open(vbi_device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", vbi_device,
 			strerror(errno));
 		exit(1);
 	}
 
-	if (video_fd >= 0) {
-		fd = video_fd;
+	if (video_node.fd >= 0) {
+		node.fd = video_node.fd;
 		device = video_device;
-	} else if (radio_fd >= 0) {
-		fd = radio_fd;
+	} else if (radio_node.fd >= 0) {
+		node.fd = radio_node.fd;
 		device = radio_device;
-	} else if (vbi_fd >= 0) {
-		fd = vbi_fd;
+	} else if (vbi_node.fd >= 0) {
+		node.fd = vbi_node.fd;
 		device = vbi_device;
 	}
 
-	ioctl(fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP");
-	caps = vcap.capabilities;
+	ioctl(node.fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP");
+	node.caps = vcap.capabilities;
 
 	/* Information Opts */
 
@@ -449,54 +437,66 @@ int main(int argc, char **argv)
 	printf("Required ioctls:\n");
 	if (test[TestCap]) {
 		if (video_device)
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(video_fd)));
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node)));
 		if (radio_device)
-			printf("\ttest VIDIOC_QUERYCAP for radio: %s\n", ok(testCap(radio_fd)));
+			printf("\ttest VIDIOC_QUERYCAP for radio: %s\n", ok(testCap(&radio_node)));
 		if (vbi_device)
-			printf("\ttest VIDIOC_QUERYCAP for vbi: %s\n", ok(testCap(vbi_fd)));
+			printf("\ttest VIDIOC_QUERYCAP for vbi: %s\n", ok(testCap(&vbi_node)));
 	}
 
 	printf("Allow for multiple opens:\n");
 	if (video_device) {
 		printf("\ttest second video open: %s\n",
-				ok((video_fd2 = open(video_device, O_RDWR)) < 0));
-		if (video_fd2 >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(video_fd2)));
+				ok((video_node2.fd = open(video_device, O_RDWR)) < 0));
+		if (video_node2.fd >= 0) {
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
 			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
-					ok(testPrio(video_fd, video_fd2)));
-			close(video_fd2);
+					ok(testPrio(&video_node, &video_node2)));
+			close(video_node2.fd);
 		}
 	}
 	if (radio_device) {
 		printf("\ttest second radio open: %s\n",
-				ok((radio_fd2 = open(radio_device, O_RDWR)) < 0));
-		if (radio_fd2 >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(radio_fd2)));
+				ok((radio_node2.fd = open(radio_device, O_RDWR)) < 0));
+		if (radio_node2.fd >= 0) {
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
 			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
-					ok(testPrio(radio_fd, radio_fd2)));
-			close(radio_fd2);
+					ok(testPrio(&radio_node, &radio_node2)));
+			close(radio_node2.fd);
 		}
 	}
 	if (vbi_device) {
 		printf("\ttest second vbi open: %s\n",
-				ok((vbi_fd2 = open(vbi_device, O_RDWR)) < 0));
-		if (vbi_fd2 >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(vbi_fd2)));
+				ok((vbi_node2.fd = open(vbi_device, O_RDWR)) < 0));
+		if (vbi_node2.fd >= 0) {
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
 			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
-					ok(testPrio(vbi_fd, vbi_fd2)));
-			close(vbi_fd2);
+					ok(testPrio(&vbi_node, &vbi_node2)));
+			close(vbi_node2.fd);
 		}
 	}
 
 	printf("Debug ioctls:\n");
 	if (test[TestChipIdent])
-		printf("\ttest VIDIOC_DBG_G_CHIP_IDENT: %s\n", ok(testChipIdent(fd)));
+		printf("\ttest VIDIOC_DBG_G_CHIP_IDENT: %s\n", ok(testChipIdent(&node)));
 	if (test[TestRegister])
-		printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(fd)));
+		printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(&node)));
 	if (test[TestLogStatus])
-		printf("\ttest VIDIOC_LOG_STATUS: %s\n", ok(testLogStatus(fd)));
+		printf("\ttest VIDIOC_LOG_STATUS: %s\n", ok(testLogStatus(&node)));
 
-	close(fd);
+	printf("Input ioctls:\n");
+	if (test[TestInput]) {
+		printf("\ttest VIDIOC_S/G/ENUMAUDIO: %s\n", ok(testInputAudio(&node)));
+		printf("\ttest VIDIOC_G/S/ENUMINPUT: %s\n", ok(testInput(&node)));
+	}
+
+	printf("Output ioctls:\n");
+	if (test[TestOutput]) {
+		printf("\ttest VIDIOC_S/G/ENUMAUDOUT: %s\n", ok(testOutputAudio(&node)));
+		printf("\ttest VIDIOC_G/S/ENUMOUTPUT: %s\n", ok(testOutput(&node)));
+	}
+
+	close(node.fd);
 	printf("Total: %d Succeeded: %d Failed: %d\n",
 			tests_total, tests_ok, tests_total - tests_ok);
 	exit(app_result);
