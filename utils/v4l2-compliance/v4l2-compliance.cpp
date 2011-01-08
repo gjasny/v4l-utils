@@ -414,6 +414,7 @@ int main(int argc, char **argv)
 	} else if (radio_node.fd >= 0) {
 		node.fd = radio_node.fd;
 		device = radio_device;
+		node.is_radio = true;
 	} else if (vbi_node.fd >= 0) {
 		node.fd = vbi_node.fd;
 		device = vbi_device;
