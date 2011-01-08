@@ -43,7 +43,7 @@ int testChipIdent(struct node *node)
 	memset(&chip, 0, sizeof(chip));
 	chip.match.type = V4L2_CHIP_MATCH_HOST;
 	chip.match.addr = 0;
-	ret = doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT");
+	ret = doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip);
 	// Must return either 0 (OK) or EINVAL (not supported)
 	if (ret == 0) {
 		struct v4l2_dbg_chip_ident orig;
@@ -55,7 +55,7 @@ int testChipIdent(struct node *node)
 		chip.ident = 0xdeadbeef;
 		chip.revision = 0xdeadbeef;
 		orig = chip;
-		ret = doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT");
+		ret = doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip);
 		if (ret != EINVAL)
 			return fail("Invalid match_type accepted\n");
 		if (memcmp(&orig, &chip, sizeof(chip)))
@@ -75,7 +75,7 @@ int testRegister(struct node *node)
 	reg.match.type = V4L2_CHIP_MATCH_HOST;
 	reg.match.addr = 0;
 	reg.reg = 0;
-	ret = doioctl(node, VIDIOC_DBG_G_REGISTER, &reg, "VIDIOC_DBG_G_REGISTER");
+	ret = doioctl(node, VIDIOC_DBG_G_REGISTER, &reg);
 	if (ret == EINVAL)
 		return -ENOSYS;
 	if (uid && ret != EPERM)
@@ -84,13 +84,13 @@ int testRegister(struct node *node)
 		return fail("Not allowed to call VIDIOC_DBG_G_REGISTER even though we are root\n");
 	chip.match.type = V4L2_CHIP_MATCH_HOST;
 	chip.match.addr = 0;
-	if (doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip, "VIDIOC_DBG_G_CHIP_IDENT"))
+	if (doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip))
 		return fail("Must support VIDIOC_DBG_G_CHIP_IDENT\n");
 	if (uid) {
 		// Don't test S_REGISTER as root, don't want to risk
 		// messing with registers in the compliance test.
 		reg.reg = reg.val = 0;
-		ret = doioctl(node, VIDIOC_DBG_S_REGISTER, &reg, "VIDIOC_DBG_S_REGISTER");
+		ret = doioctl(node, VIDIOC_DBG_S_REGISTER, &reg);
 		if (ret != EINVAL && ret != EPERM)
 			return fail("Invalid error calling VIDIOC_DBG_S_REGISTER as non-root\n");
 	}
@@ -99,7 +99,7 @@ int testRegister(struct node *node)
 
 int testLogStatus(struct node *node)
 {
-	int ret = doioctl(node, VIDIOC_LOG_STATUS, NULL, "VIDIOC_LOG_STATUS");
+	int ret = doioctl(node, VIDIOC_LOG_STATUS, NULL);
 
 	return (ret == EINVAL) ? -ENOSYS : ret;
 }

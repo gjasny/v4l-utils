@@ -43,7 +43,9 @@ struct node {
 	1;					\
 })
 
-int doioctl(struct node *node, unsigned long int request, void *parm, const char *name);
+int doioctl_name(struct node *node, unsigned long int request, void *parm, const char *name);
+#define doioctl(n, r, p) doioctl_name(n, r, p, #r)
+
 std::string cap2s(unsigned cap);
 const char *ok(int res);
 int check_string(const char *s, size_t len);

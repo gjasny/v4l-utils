@@ -106,7 +106,7 @@ static void usage(void)
 	exit(0);
 }
 
-int doioctl(struct node *node, unsigned long int request, void *parm, const char *name)
+int doioctl_name(struct node *node, unsigned long int request, void *parm, const char *name)
 {
 	int retval;
 	int e;
@@ -217,7 +217,7 @@ static int testCap(struct node *node)
 	struct v4l2_capability vcap;
 	__u32 caps;
 
-	if (doioctl(node, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP"))
+	if (doioctl(node, VIDIOC_QUERYCAP, &vcap))
 		return fail("VIDIOC_QUERYCAP not implemented\n");
 	if (check_ustring(vcap.driver, sizeof(vcap.driver)))
 		return fail("invalid driver name\n");
@@ -236,14 +236,14 @@ static int check_prio(struct node *node, struct node *node2, enum v4l2_priority 
 	enum v4l2_priority prio;
 	int err;
 
-	err = doioctl(node, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY");
+	err = doioctl(node, VIDIOC_G_PRIORITY, &prio);
 	if (err == EINVAL)
 		return -ENOSYS;
 	if (err)
 		return fail("VIDIOC_G_PRIORITY failed\n");
 	if (prio != match)
 		return fail("wrong priority returned (%d, expected %d)\n", prio, match);
-	if (doioctl(node2, VIDIOC_G_PRIORITY, &prio, "VIDIOC_G_PRIORITY"))
+	if (doioctl(node2, VIDIOC_G_PRIORITY, &prio))
 		return fail("second VIDIOC_G_PRIORITY failed\n");
 	if (prio != match)
 		return fail("wrong priority returned on second fh (%d, expected %d)\n", prio, match);
@@ -260,16 +260,16 @@ static int testPrio(struct node *node, struct node *node2)
 		return err;
 
 	prio = V4L2_PRIORITY_RECORD;
-	if (doioctl(node, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY"))
+	if (doioctl(node, VIDIOC_S_PRIORITY, &prio))
 		return fail("VIDIOC_S_PRIORITY RECORD failed\n");
 	if (check_prio(node, node2, V4L2_PRIORITY_RECORD))
 		return fail("expected priority RECORD");
 
 	prio = V4L2_PRIORITY_INTERACTIVE;
-	if (!doioctl(node2, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY"))
+	if (!doioctl(node2, VIDIOC_S_PRIORITY, &prio))
 		return fail("Can lower prio on second filehandle\n");
 	prio = V4L2_PRIORITY_INTERACTIVE;
-	if (doioctl(node, VIDIOC_S_PRIORITY, &prio, "VIDIOC_S_PRIORITY"))
+	if (doioctl(node, VIDIOC_S_PRIORITY, &prio))
 		return fail("Could not lower prio\n");
 	if (check_prio(node, node2, V4L2_PRIORITY_INTERACTIVE))
 		return fail("expected priority INTERACTIVE");
