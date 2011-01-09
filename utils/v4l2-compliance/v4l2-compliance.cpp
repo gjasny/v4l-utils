@@ -45,22 +45,22 @@
    case is used to retrieve a setting. */
 enum Option {
 	OptSetDevice = 'd',
-	OptSetRadioDevice = 'r',
-	OptSetVbiDevice = 'V',
 	OptHelp = 'h',
+	OptSetRadioDevice = 'r',
 	OptTest = 't',
-	OptVerbose = 'v',
 	OptTrace = 'T',
+	OptVerbose = 'v',
+	OptSetVbiDevice = 'V',
 	OptLast = 256
 };
 
 enum Test {
-	TestCap = 0,
-	TestChipIdent,
-	TestRegister,
-	TestLogStatus,
+	TestRequired = 0,
+	TestMultipleOpen,
+	TestDebug,
 	TestInput,
 	TestOutput,
+	TestControls,
 	TestMax
 };
 
@@ -73,6 +73,7 @@ static int tests_total, tests_ok;
 
 // Globals
 int verbose;
+int ignore_failure;
 unsigned caps;
 
 static struct option long_options[] = {
@@ -435,8 +436,8 @@ int main(int argc, char **argv)
 
 	printf("\nCompliance test for device %s:\n\n", device);
 
-	printf("Required ioctls:\n");
-	if (test[TestCap]) {
+	if (test[TestRequired]) {
+		printf("Required ioctls:\n");
 		if (video_device)
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node)));
 		if (radio_device)
@@ -445,58 +446,64 @@ int main(int argc, char **argv)
 			printf("\ttest VIDIOC_QUERYCAP for vbi: %s\n", ok(testCap(&vbi_node)));
 	}
 
-	printf("Allow for multiple opens:\n");
-	if (video_device) {
-		printf("\ttest second video open: %s\n",
-				ok((video_node2.fd = open(video_device, O_RDWR)) < 0));
-		if (video_node2.fd >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
-			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
-					ok(testPrio(&video_node, &video_node2)));
-			close(video_node2.fd);
+	if (test[TestMultipleOpen]) {
+		printf("Allow for multiple opens:\n");
+		if (video_device) {
+			printf("\ttest second video open: %s\n",
+					ok((video_node2.fd = open(video_device, O_RDWR)) < 0));
+			if (video_node2.fd >= 0) {
+				printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
+				printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+						ok(testPrio(&video_node, &video_node2)));
+				close(video_node2.fd);
+			}
 		}
-	}
-	if (radio_device) {
-		printf("\ttest second radio open: %s\n",
-				ok((radio_node2.fd = open(radio_device, O_RDWR)) < 0));
-		if (radio_node2.fd >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
-			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
-					ok(testPrio(&radio_node, &radio_node2)));
-			close(radio_node2.fd);
+		if (radio_device) {
+			printf("\ttest second radio open: %s\n",
+					ok((radio_node2.fd = open(radio_device, O_RDWR)) < 0));
+			if (radio_node2.fd >= 0) {
+				printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
+				printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+						ok(testPrio(&radio_node, &radio_node2)));
+				close(radio_node2.fd);
+			}
 		}
-	}
-	if (vbi_device) {
-		printf("\ttest second vbi open: %s\n",
-				ok((vbi_node2.fd = open(vbi_device, O_RDWR)) < 0));
-		if (vbi_node2.fd >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
-			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
-					ok(testPrio(&vbi_node, &vbi_node2)));
-			close(vbi_node2.fd);
+		if (vbi_device) {
+			printf("\ttest second vbi open: %s\n",
+					ok((vbi_node2.fd = open(vbi_device, O_RDWR)) < 0));
+			if (vbi_node2.fd >= 0) {
+				printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
+				printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+						ok(testPrio(&vbi_node, &vbi_node2)));
+				close(vbi_node2.fd);
+			}
 		}
 	}
 
-	printf("Debug ioctls:\n");
-	if (test[TestChipIdent])
+	if (test[TestDebug]) {
+		printf("Debug ioctls:\n");
 		printf("\ttest VIDIOC_DBG_G_CHIP_IDENT: %s\n", ok(testChipIdent(&node)));
-	if (test[TestRegister])
 		printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(&node)));
-	if (test[TestLogStatus])
 		printf("\ttest VIDIOC_LOG_STATUS: %s\n", ok(testLogStatus(&node)));
+	}
 
-	printf("Input ioctls:\n");
 	if (test[TestInput]) {
+		printf("Input ioctls:\n");
 		printf("\ttest VIDIOC_S/G_TUNER: %s\n", ok(testTuner(&node)));
 		printf("\ttest VIDIOC_S/G/ENUMAUDIO: %s\n", ok(testInputAudio(&node)));
 		printf("\ttest VIDIOC_G/S/ENUMINPUT: %s\n", ok(testInput(&node)));
 	}
 
-	printf("Output ioctls:\n");
 	if (test[TestOutput]) {
+		printf("Output ioctls:\n");
 		printf("\ttest VIDIOC_S/G_MODULATOR: %s\n", ok(testModulator(&node)));
 		printf("\ttest VIDIOC_S/G/ENUMAUDOUT: %s\n", ok(testOutputAudio(&node)));
 		printf("\ttest VIDIOC_G/S/ENUMOUTPUT: %s\n", ok(testOutput(&node)));
+	}
+
+	if (test[TestControls]) {
+		printf("Control ioctls:\n");
+		printf("\ttest VIDIOC_QUERYCTRL/MENU: %s\n", ok(testQueryControls(&node)));
 	}
 
 	close(node.fd);

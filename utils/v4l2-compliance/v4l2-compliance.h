@@ -35,6 +35,10 @@ struct node {
 	unsigned modulators;
 	unsigned audio_inputs;
 	unsigned audio_outputs;
+	unsigned user_controls;
+	unsigned priv_user_controls;
+	unsigned user_controls_check;
+	unsigned priv_user_controls_check;
 };
 
 #define fail(fmt, args...) 			\
@@ -67,5 +71,8 @@ int testInputAudio(struct node *node);
 int testModulator(struct node *node);
 int testOutput(struct node *node);
 int testOutputAudio(struct node *node);
+
+// Control ioctl tests
+int testQueryControls(struct node *node);
 
 #endif

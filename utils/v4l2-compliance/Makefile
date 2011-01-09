@@ -4,7 +4,8 @@ all: $(TARGETS)
 
 -include *.d
 
-v4l2-compliance: v4l2-compliance.o v4l2-test-debug.o v4l2-test-input-output.o
+v4l2-compliance: v4l2-compliance.o v4l2-test-debug.o v4l2-test-input-output.o \
+	v4l2-test-controls.o
 	$(CXX) $(LDFLAGS) -o $@ $^
 
 install: $(TARGETS)
