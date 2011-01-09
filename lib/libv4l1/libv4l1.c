@@ -87,6 +87,10 @@ static unsigned int palette_to_pixelformat(unsigned int palette)
 	case VIDEO_PALETTE_RGB565:
 		return V4L2_PIX_FMT_RGB565;
 	case VIDEO_PALETTE_RGB24:
+	        /* Yes v4l1 RGB24 really is BGR24, this is a weirdness in the
+	           V4L1 API. Which unfortunately some V4L1 apps get wrong.
+	           If you have an app which has r and b swapped and end up here
+	           fix the app, this is not a libv4l1 bug */
 		return V4L2_PIX_FMT_BGR24;
 	case VIDEO_PALETTE_RGB32:
 		return V4L2_PIX_FMT_BGR32;
@@ -119,6 +123,7 @@ static unsigned int pixelformat_to_palette(unsigned int pixelformat)
 	case V4L2_PIX_FMT_RGB565:
 		return VIDEO_PALETTE_RGB565;
 	case V4L2_PIX_FMT_BGR24:
+	        /* See the comment in palette_to_pixelformat above */
 		return VIDEO_PALETTE_RGB24;
 	case V4L2_PIX_FMT_BGR32:
 		return VIDEO_PALETTE_RGB32;
