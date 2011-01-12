@@ -1158,14 +1158,14 @@ static void test_event(int fd)
 			case EV_MSC:
 				if (ev[i].code != MSC_SCAN)
 					break;
-				printf("%ld.%06ld: Scancode = %02x\n",
+				printf("%ld.%06ld: event MSC: scancode = %02x\n",
 					ev[i].time.tv_sec, ev[i].time.tv_usec, ev[i].value);
 				break;
 			case EV_KEY: 			{
 				struct parse_key *p;
 				char *name = "";
 
-				printf("%ld.%06ld: key %s ",
+				printf("%ld.%06ld: event key %s: ",
 					ev[i].time.tv_sec, ev[i].time.tv_usec,
 					(ev[i].value == 0) ? "up" : "down"
 					);
@@ -1184,14 +1184,18 @@ static void test_event(int fd)
 				break;
 			}
 			case EV_REP:
-				printf("%ld.%06ld: repeat %d\n",
+				printf("%ld.%06ld: event repeat: %d\n",
 					ev[i].time.tv_sec, ev[i].time.tv_usec,
 					ev[i].value);
 				break;
+			case EV_SYN:
+				printf("%ld.%06ld: event sync\n",
+					ev[i].time.tv_sec, ev[i].time.tv_usec);
+				break;
 			default:
-				printf("%ld.%06ld: type %d\n",
+				printf("%ld.%06ld: event type %d: value: %d\n",
 					ev[i].time.tv_sec, ev[i].time.tv_usec,
-					ev[i].type);
+					ev[i].type, ev[i].value);
 				break;
 			}
 		}
