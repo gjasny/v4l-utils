@@ -1176,11 +1176,8 @@ static void test_event(int fd)
 						break;
 					}
 				}
+				printf("%s (0x%04x)\n", name, ev[i].code);
 
-				if (isprint (ev[i].value))
-					printf("%s ('%c')\n", name, ev[i].value);
-				else
-					printf("%s (%02x)\n", name, ev[i].value);
 				break;
 			}
 			case EV_REP:
