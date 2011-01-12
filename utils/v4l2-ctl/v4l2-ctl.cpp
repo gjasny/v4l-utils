@@ -2488,7 +2488,10 @@ int main(int argc, char **argv)
 		printf("\tDriver name   : %s\n", vcap.driver);
 		printf("\tCard type     : %s\n", vcap.card);
 		printf("\tBus info      : %s\n", vcap.bus_info);
-		printf("\tDriver version: %d\n", vcap.version);
+		printf("\tDriver version: %d.%d.%d\n",
+				vcap.version >> 16,
+				(vcap.version >> 8) & 0xff,
+				vcap.version & 0xff);
 		printf("\tCapabilities  : 0x%08X\n", vcap.capabilities);
 		printf("%s", cap2s(vcap.capabilities).c_str());
 	}
