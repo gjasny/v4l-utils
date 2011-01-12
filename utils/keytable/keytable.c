@@ -1165,11 +1165,13 @@ static void test_event(int fd)
 				struct parse_key *p;
 				char *name = "";
 
-				printf("%ld.%06ld: key ",
-					ev[i].time.tv_sec, ev[i].time.tv_usec);
+				printf("%ld.%06ld: key %s ",
+					ev[i].time.tv_sec, ev[i].time.tv_usec,
+					(ev[i].value == 0) ? "up" : "down"
+					);
 
 				for (p = keynames; p->name != NULL; p++) {
-					if (p->value == ev[i].value) {
+					if (p->value == ev[i].code) {
 						name = p->name;
 						break;
 					}
