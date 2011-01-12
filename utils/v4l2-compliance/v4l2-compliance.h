@@ -26,6 +26,7 @@
 
 extern int verbose;
 extern unsigned caps;
+extern unsigned warnings;
 
 struct node {
 	int fd;
@@ -41,10 +42,22 @@ struct node {
 	unsigned priv_user_controls_check;
 };
 
+#define info(fmt, args...) 					\
+	do {							\
+		if (verbose)					\
+ 			printf("\t\tinfo: " fmt, ##args);	\
+	} while (0)
+
+#define warn(fmt, args...) 					\
+	do {							\
+		warnings++;					\
+		if (verbose)					\
+ 			printf("\t\twarn: " fmt, ##args);	\
+	} while (0)
+
 #define fail(fmt, args...) 			\
 ({ 						\
-	if (verbose)				\
- 		printf("\t\tfail: " fmt, ##args);	\
+ 	printf("\t\tfail: " fmt, ##args);	\
 	1;					\
 })
 

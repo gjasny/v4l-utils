@@ -46,6 +46,13 @@ int validQCtrl(struct node *node, const struct v4l2_queryctrl &qctrl)
 		return fail("non-zero reserved fields\n");
 	if (check_ustring(qctrl.name, sizeof(qctrl.name)))
 		return fail("invalid name\n");
+	if (qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS) {
+		if ((qctrl.id & 0xffff) != 1)
+			return fail("invalid control ID for a control class\n");
+	} else {
+		if ((qctrl.id & 0xffff) < 0x900)
+			return fail("invalid control ID\n");
+	}
 	switch (qctrl.type) {
 	case V4L2_CTRL_TYPE_BOOLEAN:
 		if (qctrl.maximum > 1)
@@ -104,6 +111,10 @@ int validQCtrl(struct node *node, const struct v4l2_queryctrl &qctrl)
 			return fail("invalid flags for control class\n");
 		break;
 	}
+	if (fl & V4L2_CTRL_FLAG_GRABBED)
+		return fail("GRABBED flag set\n");
+	if (fl & V4L2_CTRL_FLAG_DISABLED)
+		return fail("DISABLED flag set\n");
 	if (qctrl.type != V4L2_CTRL_TYPE_MENU) {
 		memset(&qmenu, 0xff, sizeof(qmenu));
 		qmenu.id = qctrl.id;
@@ -162,6 +173,8 @@ int testQueryControls(struct node *node)
 		if (qctrl.id <= id)
 			return fail("id did not increase!\n");
 		id = qctrl.id;
+		if (id >= V4L2_CID_PRIVATE_BASE)
+			return fail("no V4L2_CID_PRIVATE_BASE allowed\n");
 		if (V4L2_CTRL_ID2CLASS(id) != ctrl_class) {
 			if (ctrl_class && !found_ctrl_class)
 				return fail("missing control class for class %08x\n", ctrl_class);

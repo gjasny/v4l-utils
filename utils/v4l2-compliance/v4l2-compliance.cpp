@@ -73,8 +73,8 @@ static int tests_total, tests_ok;
 
 // Globals
 int verbose;
-int ignore_failure;
 unsigned caps;
+unsigned warnings;
 
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
@@ -102,7 +102,7 @@ static void usage(void)
 	printf("  -t, --test=<num>   run specified test.\n");
 	printf("                     By default all tests are run.\n");
 	printf("                     0 = test VIDIOC_QUERYCAP\n");
-	printf("  -v, --verbose      turn on verbose error reporting.\n");
+	printf("  -v, --verbose      turn on verbose reporting.\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
 	exit(0);
 }
@@ -224,6 +224,12 @@ static int testCap(struct node *node)
 		return fail("invalid driver name\n");
 	if (check_ustring(vcap.card, sizeof(vcap.card)))
 		return fail("invalid card name\n");
+	if (check_ustring(vcap.bus_info, sizeof(vcap.bus_info))) {
+		if (vcap.bus_info[0])
+			return fail("invalid bus_info\n");
+		else
+			warn("empty bus_info\n");
+	}
 	if (check_0(vcap.reserved, sizeof(vcap.reserved)))
 		return fail("non-zero reserved fields\n");
 	caps = vcap.capabilities;
@@ -430,7 +436,10 @@ int main(int argc, char **argv)
 	printf("\tDriver name   : %s\n", vcap.driver);
 	printf("\tCard type     : %s\n", vcap.card);
 	printf("\tBus info      : %s\n", vcap.bus_info);
-	printf("\tDriver version: %d\n", vcap.version);
+	printf("\tDriver version: %d.%d.%d\n",
+			vcap.version >> 16,
+			(vcap.version >> 8) & 0xff,
+			vcap.version & 0xff);
 	printf("\tCapabilities  : 0x%08X\n", vcap.capabilities);
 	printf("%s", cap2s(vcap.capabilities).c_str());
 
@@ -507,7 +516,7 @@ int main(int argc, char **argv)
 	}
 
 	close(node.fd);
-	printf("Total: %d Succeeded: %d Failed: %d\n",
-			tests_total, tests_ok, tests_total - tests_ok);
+	printf("Total: %d Succeeded: %d Failed: %d Warnings: %d\n",
+			tests_total, tests_ok, tests_total - tests_ok, warnings);
 	exit(app_result);
 }
