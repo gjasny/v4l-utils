@@ -22,6 +22,7 @@
 #define _V4L2_COMPLIANCE_H_
 
 #include <string>
+#include <list>
 #include <linux/videodev2.h>
 #include <libv4l2.h>
 
@@ -29,6 +30,12 @@ extern int verbose;
 extern int wrapper;
 extern unsigned caps;
 extern unsigned warnings;
+
+struct test_queryctrl: v4l2_queryctrl {
+	unsigned menu_mask;
+};
+
+typedef std::list<test_queryctrl> qctrl_list;
 
 struct node {
 	int fd;
@@ -42,6 +49,7 @@ struct node {
 	unsigned audio_outputs;
 	unsigned std_controls;
 	unsigned priv_controls;
+	qctrl_list controls;
 };
 
 #define info(fmt, args...) 					\
@@ -104,5 +112,6 @@ int testOutputAudio(struct node *node);
 
 // Control ioctl tests
 int testQueryControls(struct node *node);
+int testSimpleControls(struct node *node);
 
 #endif

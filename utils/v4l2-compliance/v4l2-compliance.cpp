@@ -525,6 +525,7 @@ int main(int argc, char **argv)
 	if (test[TestControls]) {
 		printf("Control ioctls:\n");
 		printf("\ttest VIDIOC_QUERYCTRL/MENU: %s\n", ok(testQueryControls(&node)));
+		printf("\ttest VIDIOC_S/G_CTRL: %s\n", ok(testSimpleControls(&node)));
 		printf("\tStandard Controls: %d Private Controls: %d\n",
 				node.std_controls, node.priv_controls);
 		printf("\n");

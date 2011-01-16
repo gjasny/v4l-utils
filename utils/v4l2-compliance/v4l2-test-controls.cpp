@@ -31,25 +31,26 @@
 #include <sys/ioctl.h>
 #include "v4l2-compliance.h"
 
-int validQCtrl(struct node *node, const struct v4l2_queryctrl &qctrl)
+static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 {
 	struct v4l2_querymenu qmenu;
 	__u32 fl = qctrl.flags;
 	__u32 rw_mask = V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_WRITE_ONLY;
-	unsigned menus = 0;
 	int ret;
 	int i;
 
+	qctrl.menu_mask = 0;
+	if (check_ustring(qctrl.name, sizeof(qctrl.name)))
+		return fail("invalid name\n");
+	info("checking v4l2_queryctrl of control '%s' (0x%08x)\n", qctrl.name, qctrl.id);
 	if (qctrl.id & V4L2_CTRL_FLAG_NEXT_CTRL)
 		return fail("V4L2_CTRL_FLAG_NEXT_CTRL not cleared\n");
 	if (check_0(qctrl.reserved, sizeof(qctrl.reserved)))
 		return fail("non-zero reserved fields\n");
-	if (check_ustring(qctrl.name, sizeof(qctrl.name)))
-		return fail("invalid name\n");
 	if (qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS) {
 		if ((qctrl.id & 0xffff) != 1)
 			return fail("invalid control ID for a control class\n");
-	} else {
+	} else if (qctrl.id < V4L2_CID_PRIVATE_BASE) {
 		if ((qctrl.id & 0xffff) < 0x900)
 			return fail("invalid control ID\n");
 	}
@@ -76,8 +77,14 @@ int validQCtrl(struct node *node, const struct v4l2_queryctrl &qctrl)
 			return fail("step == 0\n");
 		if (qctrl.step < 0)
 			return fail("step < 0\n");
-		if (qctrl.step > qctrl.maximum - qctrl.minimum)
+		if ((unsigned)qctrl.step > (unsigned)(qctrl.maximum - qctrl.minimum))
 			return fail("step > max - min\n");
+		if ((qctrl.maximum - qctrl.minimum) % qctrl.step) {
+			// This really should be a fail, but there are so few
+			// drivers that do this right that I made it a warning
+			// for now.
+			warn("(max - min) %% step != 0\n");
+		}
 		break;
 	case V4L2_CTRL_TYPE_CTRL_CLASS:
 	case V4L2_CTRL_TYPE_INTEGER64:
@@ -124,6 +131,8 @@ int validQCtrl(struct node *node, const struct v4l2_queryctrl &qctrl)
 			return fail("can do querymenu on a non-menu control\n");
 		return 0;
 	}
+	if (qctrl.maximum >= 32)
+		return fail("currently more than 32 menu items are not supported\n");
 	for (i = 0; i <= qctrl.maximum + 1; i++) {
 		memset(&qmenu, 0xff, sizeof(qmenu));
 		qmenu.id = qctrl.id;
@@ -141,17 +150,18 @@ int validQCtrl(struct node *node, const struct v4l2_queryctrl &qctrl)
 			return fail("invalid menu name\n");
 		if (qmenu.reserved)
 			return fail("reserved is non-zero\n");
-		menus++;
-		return 0;
+		qctrl.menu_mask |= 1 << i;
 	}
-	if (menus == 0)
+	if (qctrl.menu_mask == 0)
 		return fail("no menu items found\n");
+	if (!(qctrl.menu_mask & (1 << qctrl.default_value)))
+		return fail("the default_value is an invalid menu item\n");
 	return 0;
 }
 
 int testQueryControls(struct node *node)
 {
-	struct v4l2_queryctrl qctrl;
+	struct test_queryctrl qctrl;
 	__u32 id = 0;
 	int ret;
 	__u32 ctrl_class = 0;
@@ -172,7 +182,7 @@ int testQueryControls(struct node *node)
 			return fail("does not support V4L2_CTRL_FLAG_NEXT_CTRL\n");
 		if (ret)
 			break;
-		if (validQCtrl(node, qctrl))
+		if (checkQCtrl(node, qctrl))
 			return fail("invalid control %08x\n", qctrl.id);
 		if (qctrl.id <= id)
 			return fail("id did not increase!\n");
@@ -192,8 +202,6 @@ int testQueryControls(struct node *node)
 			found_ctrl_class = true;
 		} else {
 			class_count++;
-			if (V4L2_CTRL_DRIVER_PRIV(id))
-				node->priv_controls++;
 		}
 
 		if (ctrl_class == V4L2_CTRL_CLASS_USER &&
@@ -209,6 +217,7 @@ int testQueryControls(struct node *node)
 			node->priv_controls++;
 		else
 			node->std_controls++;
+		node->controls.push_back(qctrl);
 	}
 	if (ctrl_class && !found_ctrl_class)
 		return fail("missing control class for class %08x\n", ctrl_class);
@@ -224,8 +233,9 @@ int testQueryControls(struct node *node)
 		if (ret)
 			continue;
 		if (qctrl.id != id)
-			return fail("qctrl.id != id\n");
-		if (validQCtrl(node, qctrl))
+			return fail("qctrl.id (%08x) != id (%08x)\n",
+					qctrl.id, id);
+		if (checkQCtrl(node, qctrl))
 			return fail("invalid control %08x\n", qctrl.id);
 		user_controls++;
 	}
@@ -239,8 +249,9 @@ int testQueryControls(struct node *node)
 		if (ret)
 			break;
 		if (qctrl.id != id)
-			return fail("qctrl.id != id\n");
-		if (validQCtrl(node, qctrl))
+			return fail("qctrl.id (%08x) != id (%08x)\n",
+					qctrl.id, id);
+		if (checkQCtrl(node, qctrl))
 			return fail("invalid control %08x\n", qctrl.id);
 		priv_user_controls++;
 	}
@@ -251,5 +262,154 @@ int testQueryControls(struct node *node)
 	if (priv_user_controls != priv_user_controls_check)
 		return fail("expected %d private controls, got %d\n",
 			priv_user_controls_check, priv_user_controls);
+	return 0;
+}
+
+static int checkSimpleCtrl(struct v4l2_control &ctrl, struct test_queryctrl &qctrl)
+{
+	if (ctrl.id != qctrl.id)
+		return fail("control id mismatch\n");
+	switch (qctrl.type) {
+	case V4L2_CTRL_TYPE_INTEGER:
+	case V4L2_CTRL_TYPE_BOOLEAN:
+	case V4L2_CTRL_TYPE_MENU:
+		if (ctrl.value < qctrl.minimum || ctrl.value > qctrl.maximum)
+			return fail("returned control value out of range\n");
+		if ((ctrl.value - qctrl.minimum) % qctrl.step) {
+			// This really should be a fail, but there are so few
+			// drivers that do this right that I made it a warning
+			// for now.
+			warn("returned control value not a multiple of step\n");
+		}
+		break;
+	case V4L2_CTRL_TYPE_BUTTON:
+		break;
+	default:
+		return fail("this type should not allow g_ctrl\n");
+	}
+	return 0;
+}
+
+int testSimpleControls(struct node *node)
+{
+	qctrl_list::iterator iter;
+	struct v4l2_control ctrl;
+	int ret;
+	int i;
+
+	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
+		info("checking control '%s' (0x%08x)\n", iter->name, iter->id);
+		ctrl.id = iter->id;
+		if (iter->type == V4L2_CTRL_TYPE_INTEGER64 ||
+		    iter->type == V4L2_CTRL_TYPE_STRING ||
+		    iter->type == V4L2_CTRL_TYPE_CTRL_CLASS) {
+			ret = doioctl(node, VIDIOC_G_CTRL, &ctrl);
+			if (ret != EINVAL &&
+			    !((iter->flags & V4L2_CTRL_FLAG_WRITE_ONLY) && ret == EACCES))
+				return fail("g_ctrl allowed for unsupported type\n");
+			ctrl.id = iter->id;
+			ctrl.value = 0;
+			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+			if (ret != EINVAL &&
+			    !((iter->flags & V4L2_CTRL_FLAG_READ_ONLY) && ret == EACCES))
+				return fail("s_ctrl allowed for unsupported type\n");
+			continue;
+		}
+
+		// Get the current value
+		ret = doioctl(node, VIDIOC_G_CTRL, &ctrl);
+		if ((iter->flags & V4L2_CTRL_FLAG_WRITE_ONLY)) {
+			if (ret != EACCES)
+				return fail("g_ctrl did not check the write-only flag\n");
+			ctrl.id = iter->id;
+			ctrl.value = iter->default_value;
+		} else if (ret)
+			return fail("g_ctrl returned an error\n");
+		else if (checkSimpleCtrl(ctrl, *iter))
+			return fail("invalid control %08x\n", iter->id);
+		
+		// Try to set the current value (or the default value for write only controls)
+		ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+		if ((iter->flags & V4L2_CTRL_FLAG_READ_ONLY) && ret != EACCES)
+			return fail("s_ctrl did not check the read-only flag\n");
+		else if (ret)
+			return fail("s_ctrl returned an error\n");
+		if (ret)
+			continue;
+		if (checkSimpleCtrl(ctrl, *iter))
+			return fail("s_ctrl returned invalid control contents (%08x)\n", iter->id);
+
+		// Try to set value 'minimum - 1'
+		if ((unsigned)iter->minimum != 0x80000000) {
+			ctrl.id = iter->id;
+			ctrl.value = iter->minimum - 1;
+			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+			if (ret && ret != ERANGE)
+				return fail("invalid minimum range check\n");
+			if (!ret && checkSimpleCtrl(ctrl, *iter))
+				return fail("invalid control %08x\n", iter->id);
+		}
+		// Try to set value 'maximum + 1'
+		if ((unsigned)iter->maximum != 0x7fffffff) {
+			ctrl.id = iter->id;
+			ctrl.value = iter->maximum + 1;
+			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+			if (ret && ret != ERANGE)
+				return fail("invalid maximum range check\n");
+			if (!ret && checkSimpleCtrl(ctrl, *iter))
+				return fail("invalid control %08x\n", iter->id);
+		}
+		// Try to set non-step value
+		if (iter->step > 1 && iter->maximum > iter->minimum) {
+			ctrl.id = iter->id;
+			ctrl.value = iter->minimum + 1;
+			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+			if (ret == ERANGE)
+				warn("returns ERANGE for in-range, but non-step-multiple value\n");
+			else if (ret)
+				return fail("returns error for in-range, but non-step-multiple value\n");
+		}
+
+		if (iter->type == V4L2_CTRL_TYPE_MENU) {
+			// check menu items
+			for (i = iter->minimum; i <= iter->maximum; i++) {
+				unsigned valid = iter->menu_mask & (1 << i);
+
+				ctrl.id = iter->id; 
+				ctrl.value = i;
+				ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+				if (valid && ret)
+					return fail("could not set valid menu item %d\n", i);
+				if (!valid && !ret)
+					return fail("could set invalid menu item %d\n", i);
+				if (ret && ret != EINVAL)
+					return fail("setting invalid menu item returned wrong error\n");
+			}
+		} else {
+			// at least min, max and default values should work
+			ctrl.id = iter->id; 
+			ctrl.value = iter->minimum;
+			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+			if (ret)
+				return fail("could not set minimum value\n");
+			ctrl.value = iter->maximum;
+			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+			if (ret)
+				return fail("could not set maximum value\n");
+			ctrl.value = iter->default_value;
+			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+			if (ret)
+				return fail("could not set default value\n");
+		}
+	}
+	ctrl.id = 0;
+	ret = doioctl(node, VIDIOC_G_CTRL, &ctrl);
+	if (ret != EINVAL)
+		return fail("g_ctrl accepted invalid control ID\n");
+	ctrl.id = 0;
+	ctrl.value = 0;
+	ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+	if (ret != EINVAL)
+		return fail("s_ctrl accepted invalid control ID\n");
 	return 0;
 }
