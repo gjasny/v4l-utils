@@ -396,11 +396,8 @@ int main(int argc, char **argv)
 	}
 	wrapper = options[OptUseWrapper];
 
-	if (!video_device && !radio_device && !vbi_device) {
-		fprintf(stderr, "No device selected\n");
-		usage();
-		exit(1);
-	}
+	if (!video_device && !radio_device && !vbi_device)
+		video_device = "/dev/video0";
 
 	if (video_device && (video_node.fd = test_open(video_device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", video_device,
