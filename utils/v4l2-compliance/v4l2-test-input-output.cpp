@@ -110,6 +110,7 @@ int testTuner(struct node *node)
 	struct v4l2_tuner tuner;
 	v4l2_std_id std;
 	unsigned t = 0;
+	bool has_rds = false;
 	int ret;
 
 	if (doioctl(node, VIDIOC_G_STD, &std))
@@ -130,11 +131,21 @@ int testTuner(struct node *node)
 			return fail("invalid tuner %d\n", t);
 		t++;
 		node->tuners++;
+		if (tuner.capability & V4L2_TUNER_CAP_RDS)
+			has_rds = true;
 	}
 	memset(&tuner, 0, sizeof(tuner));
 	tuner.index = t;
 	if (doioctl(node, VIDIOC_S_TUNER, &tuner) != EINVAL)
 		return fail("could set invalid tuner %d\n", t);
+	if (node->tuners && !(node->caps & V4L2_CAP_TUNER))
+		return fail("tuners found, but no tuner capability set\n");
+	if (!node->tuners && (node->caps & V4L2_CAP_TUNER))
+		return fail("no tuners found, but tuner capability set\n");
+	if (has_rds && !(node->caps & V4L2_CAP_RDS_CAPTURE))
+		return fail("RDS tuner capability, but no RDS capture capability?\n");
+	if (!has_rds && (node->caps & V4L2_CAP_RDS_CAPTURE))
+		return fail("No RDS tuner capability, but RDS capture capability?\n");
 	return 0;
 }
 
@@ -217,6 +228,10 @@ int testInput(struct node *node)
 		return fail("could set input to invalid input %d\n", i);
 	if (doioctl(node, VIDIOC_S_INPUT, &cur_input))
 		return fail("couldn't set input to the original input %d\n", cur_input);
+	if (node->inputs && !node->has_inputs)
+		return fail("inputs found, but no input capabilities set\n");
+	if (!node->inputs && node->has_inputs)
+		return fail("no inputs found, but input capabilities set\n");
 	return 0;
 }
 
@@ -265,6 +280,10 @@ int testInputAudio(struct node *node)
 	input.mode = 0;
 	if (doioctl(node, VIDIOC_S_AUDIO, &input) != EINVAL)
 		return fail("can set invalid audio input\n");
+	if (node->audio_inputs && !(node->caps & V4L2_CAP_AUDIO))
+		return fail("audio inputs reported, but no CAP_AUDIO set\n");
+	if (node->audio_inputs == 0 && (node->caps & V4L2_CAP_AUDIO))
+		return fail("no audio inputs reported, but CAP_AUDIO set\n");
 	memset(&input, 0xff, sizeof(input));
 	ret = doioctl(node, VIDIOC_G_AUDIO, &input);
 	if (i == 0) {
@@ -319,6 +338,7 @@ int testModulator(struct node *node)
 {
 	struct v4l2_modulator mod;
 	unsigned m = 0;
+	bool has_rds = false;
 	int ret;
 
 	for (;;) {
@@ -338,11 +358,21 @@ int testModulator(struct node *node)
 			return fail("cannot set modulator %d\n", m);
 		m++;
 		node->modulators++;
+		if (mod.capability & V4L2_TUNER_CAP_RDS)
+			has_rds = true;
 	}
 	memset(&mod, 0, sizeof(mod));
 	mod.index = m;
 	if (doioctl(node, VIDIOC_S_MODULATOR, &mod) != EINVAL)
 		return fail("could set invalid modulator %d\n", m);
+	if (node->modulators && !(node->caps & V4L2_CAP_MODULATOR))
+		return fail("modulators found, but no modulator capability set\n");
+	if (!node->modulators && (node->caps & V4L2_CAP_MODULATOR))
+		return fail("no modulators found, but modulator capability set\n");
+	if (has_rds && !(node->caps & V4L2_CAP_RDS_OUTPUT))
+		return fail("RDS modulator capability, but no RDS output capability?\n");
+	if (!has_rds && (node->caps & V4L2_CAP_RDS_OUTPUT))
+		return fail("No RDS modulator capability, but RDS output capability?\n");
 	return 0;
 }
 
@@ -419,6 +449,10 @@ int testOutput(struct node *node)
 		return fail("could set output to invalid output %d\n", o);
 	if (doioctl(node, VIDIOC_S_OUTPUT, &cur_output))
 		return fail("couldn't set output to the original output %d\n", cur_output);
+	if (node->outputs && !node->has_outputs)
+		return fail("outputs found, but no output capabilities set\n");
+	if (!node->outputs && node->has_outputs)
+		return fail("no outputs found, but output capabilities set\n");
 	return 0;
 }
 
@@ -465,6 +499,10 @@ int testOutputAudio(struct node *node)
 	output.mode = 0;
 	if (doioctl(node, VIDIOC_S_AUDOUT, &output) != EINVAL)
 		return fail("can set invalid audio output\n");
+	if (node->audio_outputs && !(node->caps & V4L2_CAP_AUDIO))
+		return fail("audio outputs reported, but no CAP_AUDIO set\n");
+	if (node->audio_outputs == 0 && (node->caps & V4L2_CAP_AUDIO))
+		return fail("no audio outputs reported, but CAP_AUDIO set\n");
 	memset(&output, 0xff, sizeof(output));
 	ret = doioctl(node, VIDIOC_G_AUDOUT, &output);
 	if (o == 0) {

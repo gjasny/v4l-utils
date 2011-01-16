@@ -55,18 +55,6 @@ enum Option {
 	OptLast = 256
 };
 
-enum Test {
-	TestRequired = 0,
-	TestMultipleOpen,
-	TestDebug,
-	TestInput,
-	TestOutput,
-	TestControls,
-	TestMax
-};
-
-static int test[TestMax];
-
 static char options[OptLast];
 
 static int app_result;
@@ -86,7 +74,6 @@ static struct option long_options[] = {
 	{"verbose", no_argument, 0, OptVerbose},
 	{"trace", no_argument, 0, OptTrace},
 	{"wrapper", no_argument, 0, OptUseWrapper},
-	{"test", required_argument, 0, OptTest},
 	{0, 0, 0, 0}
 };
 
@@ -102,9 +89,6 @@ static void usage(void)
 	printf("  -V, --vbi-device=<dev> use device <dev> as the vbi device\n");
 	printf("                     if <dev> is a single digit, then /dev/vbi<dev> is used\n");
 	printf("  -h, --help         display this help message\n");
-	printf("  -t, --test=<num>   run specified test.\n");
-	printf("                     By default all tests are run.\n");
-	printf("                     0 = test VIDIOC_QUERYCAP\n");
 	printf("  -v, --verbose      turn on verbose reporting.\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
 	printf("  -w, --wrapper      use the libv4l2 wrapper library.\n");
@@ -239,6 +223,14 @@ static int testCap(struct node *node)
 	caps = vcap.capabilities;
 	if (caps == 0)
 		return fail("no capabilities set\n");
+	if (node->is_video && !(caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT |
+				        V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)))
+		return fail("video node without the relevant capabilities\n");
+	if (node->is_radio && !(caps & (V4L2_CAP_RADIO | V4L2_CAP_MODULATOR)))
+		return fail("radio node without the relevant capabilities\n");
+	if (node->is_vbi && !(caps & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
+				      V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT)))
+		return fail("vbi node without the relevant capabilities\n");
 	return 0;
 }
 
@@ -290,7 +282,6 @@ static int testPrio(struct node *node, struct node *node2)
 int main(int argc, char **argv)
 {
 	int i;
-	unsigned t;
 	struct node node = { -1 };
 	struct node video_node = { -1 };
 	struct node video_node2 = { -1 };
@@ -308,7 +299,6 @@ int main(int argc, char **argv)
 	struct v4l2_capability vcap;	/* list_cap */
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
-	int tests = 0;
 
 	for (i = 0; long_options[i].name; i++) {
 		if (!isalpha(long_options[i].val))
@@ -331,14 +321,6 @@ int main(int argc, char **argv)
 		case OptHelp:
 			usage();
 			return 0;
-		case OptTest:
-			t = strtoul(optarg, NULL, 0);
-
-			if (t >= TestMax)
-				usage();
-			test[t] = 1;
-			tests++;
-			break;
 		case OptSetDevice:
 			video_device = optarg;
 			if (video_device[0] >= '0' && video_device[0] <= '9' && video_device[1] == 0) {
@@ -390,10 +372,6 @@ int main(int argc, char **argv)
 		return 1;
 	}
 	verbose = options[OptVerbose];
-	if (!tests) {
-		for (t = 0; t < TestMax; t++)
-			test[t] = 1;
-	}
 	wrapper = options[OptUseWrapper];
 
 	if (!video_device && !radio_device && !vbi_device)
@@ -420,6 +398,7 @@ int main(int argc, char **argv)
 	if (video_node.fd >= 0) {
 		node.fd = video_node.fd;
 		device = video_device;
+		node.is_video = true;
 	} else if (radio_node.fd >= 0) {
 		node.fd = radio_node.fd;
 		device = radio_device;
@@ -427,10 +406,19 @@ int main(int argc, char **argv)
 	} else if (vbi_node.fd >= 0) {
 		node.fd = vbi_node.fd;
 		device = vbi_device;
+		node.is_vbi = true;
 	}
 
 	doioctl(&node, VIDIOC_QUERYCAP, &vcap);
 	node.caps = vcap.capabilities;
+	if (node.caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
+			 V4L2_CAP_SLICED_VBI_CAPTURE | V4L2_CAP_RDS_CAPTURE |
+			 V4L2_CAP_RADIO | V4L2_CAP_TUNER))
+		node.has_inputs = true;
+	if (node.caps & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VBI_OUTPUT |
+			 V4L2_CAP_SLICED_VBI_OUTPUT | V4L2_CAP_RDS_OUTPUT |
+			 V4L2_CAP_MODULATOR))
+		node.has_outputs = true;
 
 	/* Information Opts */
 
@@ -448,88 +436,91 @@ int main(int argc, char **argv)
 	printf("\nCompliance test for device %s (%susing libv4l2):\n\n",
 			device, wrapper ? "" : "not ");
 
-	if (test[TestRequired]) {
-		printf("Required ioctls:\n");
-		if (video_device)
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node)));
-		if (radio_device)
-			printf("\ttest VIDIOC_QUERYCAP for radio: %s\n", ok(testCap(&radio_node)));
-		if (vbi_device)
-			printf("\ttest VIDIOC_QUERYCAP for vbi: %s\n", ok(testCap(&vbi_node)));
-		printf("\n");
-	}
+	/* Required ioctls */
 
-	if (test[TestMultipleOpen]) {
-		printf("Allow for multiple opens:\n");
-		if (video_device) {
-			printf("\ttest second video open: %s\n",
-					ok((video_node2.fd = test_open(video_device, O_RDWR)) < 0));
-			if (video_node2.fd >= 0) {
-				printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
-				printf("\ttest VIDIOC_S_PRIORITY: %s\n",
-						ok(testPrio(&video_node, &video_node2)));
-				test_close(video_node2.fd);
-			}
+	printf("Required ioctls:\n");
+	printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&node)));
+	printf("\n");
+
+	/* Multiple opens */
+
+	printf("Allow for multiple opens:\n");
+	if (video_device) {
+		printf("\ttest second video open: %s\n",
+				ok((video_node2.fd = test_open(video_device, O_RDWR)) < 0));
+		if (video_node2.fd >= 0) {
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
+			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+					ok(testPrio(&video_node, &video_node2)));
+			test_close(video_node2.fd);
 		}
-		if (radio_device) {
-			printf("\ttest second radio open: %s\n",
-					ok((radio_node2.fd = test_open(radio_device, O_RDWR)) < 0));
-			if (radio_node2.fd >= 0) {
-				printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
-				printf("\ttest VIDIOC_S_PRIORITY: %s\n",
-						ok(testPrio(&radio_node, &radio_node2)));
-				test_close(radio_node2.fd);
-			}
+	}
+	if (radio_device) {
+		printf("\ttest second radio open: %s\n",
+				ok((radio_node2.fd = test_open(radio_device, O_RDWR)) < 0));
+		if (radio_node2.fd >= 0) {
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
+			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+					ok(testPrio(&radio_node, &radio_node2)));
+			test_close(radio_node2.fd);
 		}
-		if (vbi_device) {
-			printf("\ttest second vbi open: %s\n",
-					ok((vbi_node2.fd = test_open(vbi_device, O_RDWR)) < 0));
-			if (vbi_node2.fd >= 0) {
-				printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
-				printf("\ttest VIDIOC_S_PRIORITY: %s\n",
-						ok(testPrio(&vbi_node, &vbi_node2)));
-				test_close(vbi_node2.fd);
-			}
+	}
+	if (vbi_device) {
+		printf("\ttest second vbi open: %s\n",
+				ok((vbi_node2.fd = test_open(vbi_device, O_RDWR)) < 0));
+		if (vbi_node2.fd >= 0) {
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
+			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+					ok(testPrio(&vbi_node, &vbi_node2)));
+			test_close(vbi_node2.fd);
 		}
-		printf("\n");
 	}
+	printf("\n");
 
-	if (test[TestDebug]) {
-		printf("Debug ioctls:\n");
-		printf("\ttest VIDIOC_DBG_G_CHIP_IDENT: %s\n", ok(testChipIdent(&node)));
-		printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(&node)));
-		printf("\ttest VIDIOC_LOG_STATUS: %s\n", ok(testLogStatus(&node)));
-		printf("\n");
-	}
+	/* Debug ioctls */
 
-	if (test[TestInput]) {
-		printf("Input ioctls:\n");
-		printf("\ttest VIDIOC_S/G_TUNER: %s\n", ok(testTuner(&node)));
-		printf("\ttest VIDIOC_S/G/ENUMAUDIO: %s\n", ok(testInputAudio(&node)));
-		printf("\ttest VIDIOC_G/S/ENUMINPUT: %s\n", ok(testInput(&node)));
-		printf("\tInputs: %d Audio Inputs: %d Tuners: %d\n",
-				node.inputs, node.audio_inputs, node.tuners);
-		printf("\n");
-	}
+	printf("Debug ioctls:\n");
+	printf("\ttest VIDIOC_DBG_G_CHIP_IDENT: %s\n", ok(testChipIdent(&node)));
+	printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(&node)));
+	printf("\ttest VIDIOC_LOG_STATUS: %s\n", ok(testLogStatus(&node)));
+	printf("\n");
 
-	if (test[TestOutput]) {
-		printf("Output ioctls:\n");
-		printf("\ttest VIDIOC_S/G_MODULATOR: %s\n", ok(testModulator(&node)));
-		printf("\ttest VIDIOC_S/G/ENUMAUDOUT: %s\n", ok(testOutputAudio(&node)));
-		printf("\ttest VIDIOC_G/S/ENUMOUTPUT: %s\n", ok(testOutput(&node)));
-		printf("\tOutputs: %d Audio Outputs: %d Modulators: %d\n",
-				node.outputs, node.audio_outputs, node.modulators);
-		printf("\n");
-	}
+	/* Input ioctls */
 
-	if (test[TestControls]) {
-		printf("Control ioctls:\n");
-		printf("\ttest VIDIOC_QUERYCTRL/MENU: %s\n", ok(testQueryControls(&node)));
-		printf("\ttest VIDIOC_S/G_CTRL: %s\n", ok(testSimpleControls(&node)));
-		printf("\tStandard Controls: %d Private Controls: %d\n",
-				node.std_controls, node.priv_controls);
-		printf("\n");
-	}
+	printf("Input ioctls:\n");
+	printf("\ttest VIDIOC_S/G_TUNER: %s\n", ok(testTuner(&node)));
+	printf("\ttest VIDIOC_S/G/ENUMAUDIO: %s\n", ok(testInputAudio(&node)));
+	printf("\ttest VIDIOC_G/S/ENUMINPUT: %s\n", ok(testInput(&node)));
+	printf("\tInputs: %d Audio Inputs: %d Tuners: %d\n",
+			node.inputs, node.audio_inputs, node.tuners);
+	printf("\n");
+
+	/* Output ioctls */
+
+	printf("Output ioctls:\n");
+	printf("\ttest VIDIOC_S/G_MODULATOR: %s\n", ok(testModulator(&node)));
+	printf("\ttest VIDIOC_S/G/ENUMAUDOUT: %s\n", ok(testOutputAudio(&node)));
+	printf("\ttest VIDIOC_G/S/ENUMOUTPUT: %s\n", ok(testOutput(&node)));
+	printf("\tOutputs: %d Audio Outputs: %d Modulators: %d\n",
+			node.outputs, node.audio_outputs, node.modulators);
+	printf("\n");
+
+	/* Control ioctls */
+
+	printf("Control ioctls:\n");
+	printf("\ttest VIDIOC_QUERYCTRL/MENU: %s\n", ok(testQueryControls(&node)));
+	printf("\ttest VIDIOC_S/G_CTRL: %s\n", ok(testSimpleControls(&node)));
+	printf("\tStandard Controls: %d Private Controls: %d\n",
+			node.std_controls, node.priv_controls);
+	printf("\n");
+
+	/* I/O configuration ioctls */
+
+	printf("Input/Output configuration ioctls:\n");
+	printf("\ttest VIDIOC_ENUM/S/G/QUERY_STD: %s\n", ok(testStd(&node)));
+	printf("\n");
+
+	/* Final test report */
 
 	test_close(node.fd);
 	printf("Total: %d Succeeded: %d Failed: %d Warnings: %d\n",

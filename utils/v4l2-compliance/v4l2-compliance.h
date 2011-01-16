@@ -39,8 +39,12 @@ typedef std::list<test_queryctrl> qctrl_list;
 
 struct node {
 	int fd;
+	bool is_video;
 	bool is_radio;
+	bool is_vbi;
 	unsigned caps;
+	bool has_outputs;
+	bool has_inputs;
 	unsigned tuners;
 	unsigned modulators;
 	unsigned inputs;
@@ -113,5 +117,8 @@ int testOutputAudio(struct node *node);
 // Control ioctl tests
 int testQueryControls(struct node *node);
 int testSimpleControls(struct node *node);
+
+// I/O configuration ioctl tests
+int testStd(struct node *node);
 
 #endif
