@@ -33,6 +33,7 @@
 #include <sys/time.h>
 #include <math.h>
 #include <sys/klog.h>
+#include <sys/utsname.h>
 
 #include "v4l2-compliance.h"
 
@@ -62,9 +63,10 @@ static int tests_total, tests_ok;
 
 // Globals
 int verbose;
+int wrapper;
+int kernel_version;
 unsigned caps;
 unsigned warnings;
-int wrapper;
 
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
@@ -374,6 +376,14 @@ int main(int argc, char **argv)
 	verbose = options[OptVerbose];
 	wrapper = options[OptUseWrapper];
 
+	struct utsname uts;
+	int v1, v2, v3;
+
+	uname(&uts);
+	sscanf(uts.release, "%d.%d.%d", &v1, &v2, &v3);
+	if (v1 == 2 && v2 == 6)
+		kernel_version = v3;
+
 	if (!video_device && !radio_device && !vbi_device)
 		video_device = "/dev/video0";
 
@@ -421,6 +431,9 @@ int main(int argc, char **argv)
 		node.has_outputs = true;
 
 	/* Information Opts */
+
+	if (kernel_version)
+		printf("Running on 2.6.%d\n\n", kernel_version);
 
 	printf("Driver Info:\n");
 	printf("\tDriver name   : %s\n", vcap.driver);
