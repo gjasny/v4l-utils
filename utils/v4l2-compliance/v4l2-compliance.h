@@ -23,8 +23,10 @@
 
 #include <string>
 #include <linux/videodev2.h>
+#include <libv4l2.h>
 
 extern int verbose;
+extern int wrapper;
 extern unsigned caps;
 extern unsigned warnings;
 
@@ -60,6 +62,21 @@ struct node {
  	printf("\t\tfail: " fmt, ##args);	\
 	1;					\
 })
+
+static inline int test_open(const char *file, int oflag)
+{
+ 	return wrapper ? v4l2_open(file, oflag) : open(file, oflag);
+}
+
+static inline int test_close(int fd)
+{
+	return wrapper ? v4l2_close(fd) : close(fd);
+}
+
+static inline int test_ioctl(int fd, int cmd, void *arg)
+{
+	return wrapper ? v4l2_ioctl(fd, cmd, arg) : ioctl(fd, cmd, arg);
+}
 
 int doioctl_name(struct node *node, unsigned long int request, void *parm, const char *name);
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)

@@ -51,6 +51,7 @@ enum Option {
 	OptTrace = 'T',
 	OptVerbose = 'v',
 	OptSetVbiDevice = 'V',
+	OptUseWrapper = 'w',
 	OptLast = 256
 };
 
@@ -75,6 +76,7 @@ static int tests_total, tests_ok;
 int verbose;
 unsigned caps;
 unsigned warnings;
+int wrapper;
 
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
@@ -83,6 +85,7 @@ static struct option long_options[] = {
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"trace", no_argument, 0, OptTrace},
+	{"wrapper", no_argument, 0, OptUseWrapper},
 	{"test", required_argument, 0, OptTest},
 	{0, 0, 0, 0}
 };
@@ -104,6 +107,7 @@ static void usage(void)
 	printf("                     0 = test VIDIOC_QUERYCAP\n");
 	printf("  -v, --verbose      turn on verbose reporting.\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
+	printf("  -w, --wrapper      use the libv4l2 wrapper library.\n");
 	exit(0);
 }
 
@@ -113,7 +117,7 @@ int doioctl_name(struct node *node, unsigned long int request, void *parm, const
 	int e;
 
 	errno = 0;
-	retval = ioctl(node->fd, request, parm);
+	retval = test_ioctl(node->fd, request, parm);
 	e = errno;
 	if (options[OptTrace])
 		printf("\t\t%s returned %d (%s)\n", name, retval, strerror(e));
@@ -390,6 +394,7 @@ int main(int argc, char **argv)
 		for (t = 0; t < TestMax; t++)
 			test[t] = 1;
 	}
+	wrapper = options[OptUseWrapper];
 
 	if (!video_device && !radio_device && !vbi_device) {
 		fprintf(stderr, "No device selected\n");
@@ -397,19 +402,19 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (video_device && (video_node.fd = open(video_device, O_RDWR)) < 0) {
+	if (video_device && (video_node.fd = test_open(video_device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", video_device,
 			strerror(errno));
 		exit(1);
 	}
 
-	if (radio_device && (radio_node.fd = open(radio_device, O_RDWR)) < 0) {
+	if (radio_device && (radio_node.fd = test_open(radio_device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", radio_device,
 			strerror(errno));
 		exit(1);
 	}
 
-	if (vbi_device && (vbi_node.fd = open(vbi_device, O_RDWR)) < 0) {
+	if (vbi_device && (vbi_node.fd = test_open(vbi_device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", vbi_device,
 			strerror(errno));
 		exit(1);
@@ -427,7 +432,7 @@ int main(int argc, char **argv)
 		device = vbi_device;
 	}
 
-	ioctl(node.fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP");
+	doioctl(&node, VIDIOC_QUERYCAP, &vcap);
 	node.caps = vcap.capabilities;
 
 	/* Information Opts */
@@ -443,7 +448,8 @@ int main(int argc, char **argv)
 	printf("\tCapabilities  : 0x%08X\n", vcap.capabilities);
 	printf("%s", cap2s(vcap.capabilities).c_str());
 
-	printf("\nCompliance test for device %s:\n\n", device);
+	printf("\nCompliance test for device %s (%susing libv4l2):\n\n",
+			device, wrapper ? "" : "not ");
 
 	if (test[TestRequired]) {
 		printf("Required ioctls:\n");
@@ -460,32 +466,32 @@ int main(int argc, char **argv)
 		printf("Allow for multiple opens:\n");
 		if (video_device) {
 			printf("\ttest second video open: %s\n",
-					ok((video_node2.fd = open(video_device, O_RDWR)) < 0));
+					ok((video_node2.fd = test_open(video_device, O_RDWR)) < 0));
 			if (video_node2.fd >= 0) {
 				printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
 				printf("\ttest VIDIOC_S_PRIORITY: %s\n",
 						ok(testPrio(&video_node, &video_node2)));
-				close(video_node2.fd);
+				test_close(video_node2.fd);
 			}
 		}
 		if (radio_device) {
 			printf("\ttest second radio open: %s\n",
-					ok((radio_node2.fd = open(radio_device, O_RDWR)) < 0));
+					ok((radio_node2.fd = test_open(radio_device, O_RDWR)) < 0));
 			if (radio_node2.fd >= 0) {
 				printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
 				printf("\ttest VIDIOC_S_PRIORITY: %s\n",
 						ok(testPrio(&radio_node, &radio_node2)));
-				close(radio_node2.fd);
+				test_close(radio_node2.fd);
 			}
 		}
 		if (vbi_device) {
 			printf("\ttest second vbi open: %s\n",
-					ok((vbi_node2.fd = open(vbi_device, O_RDWR)) < 0));
+					ok((vbi_node2.fd = test_open(vbi_device, O_RDWR)) < 0));
 			if (vbi_node2.fd >= 0) {
 				printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
 				printf("\ttest VIDIOC_S_PRIORITY: %s\n",
 						ok(testPrio(&vbi_node, &vbi_node2)));
-				close(vbi_node2.fd);
+				test_close(vbi_node2.fd);
 			}
 		}
 		printf("\n");
@@ -527,7 +533,7 @@ int main(int argc, char **argv)
 		printf("\n");
 	}
 
-	close(node.fd);
+	test_close(node.fd);
 	printf("Total: %d Succeeded: %d Failed: %d Warnings: %d\n",
 			tests_total, tests_ok, tests_total - tests_ok, warnings);
 	exit(app_result);
