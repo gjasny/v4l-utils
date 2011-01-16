@@ -209,6 +209,7 @@ int testInput(struct node *node)
 			if (ret != EINVAL && !(descr.audioset & (1 << a)))
 				return fail("could set invalid audio input %d for video input %d\n", a, i);
 		}
+		node->inputs++;
 		i++;
 	}
 	input = i;
@@ -410,6 +411,7 @@ int testOutput(struct node *node)
 			if (ret != EINVAL && !(descr.audioset & (1 << a)))
 				return fail("could set invalid audio output %d for video output %d\n", a, o);
 		}
+		node->outputs++;
 		o++;
 	}
 	output = o;

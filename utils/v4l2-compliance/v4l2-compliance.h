@@ -34,12 +34,12 @@ struct node {
 	unsigned caps;
 	unsigned tuners;
 	unsigned modulators;
+	unsigned inputs;
 	unsigned audio_inputs;
+	unsigned outputs;
 	unsigned audio_outputs;
-	unsigned user_controls;
-	unsigned priv_user_controls;
-	unsigned user_controls_check;
-	unsigned priv_user_controls_check;
+	unsigned std_controls;
+	unsigned priv_controls;
 };
 
 #define info(fmt, args...) 					\

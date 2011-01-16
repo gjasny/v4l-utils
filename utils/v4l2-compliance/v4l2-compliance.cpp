@@ -453,6 +453,7 @@ int main(int argc, char **argv)
 			printf("\ttest VIDIOC_QUERYCAP for radio: %s\n", ok(testCap(&radio_node)));
 		if (vbi_device)
 			printf("\ttest VIDIOC_QUERYCAP for vbi: %s\n", ok(testCap(&vbi_node)));
+		printf("\n");
 	}
 
 	if (test[TestMultipleOpen]) {
@@ -487,6 +488,7 @@ int main(int argc, char **argv)
 				close(vbi_node2.fd);
 			}
 		}
+		printf("\n");
 	}
 
 	if (test[TestDebug]) {
@@ -494,6 +496,7 @@ int main(int argc, char **argv)
 		printf("\ttest VIDIOC_DBG_G_CHIP_IDENT: %s\n", ok(testChipIdent(&node)));
 		printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(&node)));
 		printf("\ttest VIDIOC_LOG_STATUS: %s\n", ok(testLogStatus(&node)));
+		printf("\n");
 	}
 
 	if (test[TestInput]) {
@@ -501,6 +504,9 @@ int main(int argc, char **argv)
 		printf("\ttest VIDIOC_S/G_TUNER: %s\n", ok(testTuner(&node)));
 		printf("\ttest VIDIOC_S/G/ENUMAUDIO: %s\n", ok(testInputAudio(&node)));
 		printf("\ttest VIDIOC_G/S/ENUMINPUT: %s\n", ok(testInput(&node)));
+		printf("\tInputs: %d Audio Inputs: %d Tuners: %d\n",
+				node.inputs, node.audio_inputs, node.tuners);
+		printf("\n");
 	}
 
 	if (test[TestOutput]) {
@@ -508,11 +514,17 @@ int main(int argc, char **argv)
 		printf("\ttest VIDIOC_S/G_MODULATOR: %s\n", ok(testModulator(&node)));
 		printf("\ttest VIDIOC_S/G/ENUMAUDOUT: %s\n", ok(testOutputAudio(&node)));
 		printf("\ttest VIDIOC_G/S/ENUMOUTPUT: %s\n", ok(testOutput(&node)));
+		printf("\tOutputs: %d Audio Outputs: %d Modulators: %d\n",
+				node.outputs, node.audio_outputs, node.modulators);
+		printf("\n");
 	}
 
 	if (test[TestControls]) {
 		printf("Control ioctls:\n");
 		printf("\ttest VIDIOC_QUERYCTRL/MENU: %s\n", ok(testQueryControls(&node)));
+		printf("\tStandard Controls: %d Private Controls: %d\n",
+				node.std_controls, node.priv_controls);
+		printf("\n");
 	}
 
 	close(node.fd);

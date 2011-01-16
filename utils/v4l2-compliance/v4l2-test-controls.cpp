@@ -156,6 +156,10 @@ int testQueryControls(struct node *node)
 	int ret;
 	__u32 ctrl_class = 0;
 	bool found_ctrl_class = false;
+	unsigned user_controls = 0;
+	unsigned priv_user_controls = 0;
+	unsigned user_controls_check = 0;
+	unsigned priv_user_controls_check = 0;
 	unsigned class_count = 0;
 
 	for (;;) {
@@ -184,20 +188,27 @@ int testQueryControls(struct node *node)
 			found_ctrl_class = false;
 			class_count = 0;
 		}
-		if (qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
+		if (qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS) {
 			found_ctrl_class = true;
-		else
+		} else {
 			class_count++;
+			if (V4L2_CTRL_DRIVER_PRIV(id))
+				node->priv_controls++;
+		}
 
 		if (ctrl_class == V4L2_CTRL_CLASS_USER &&
 		    qctrl.type != V4L2_CTRL_TYPE_INTEGER64 &&
 		    qctrl.type != V4L2_CTRL_TYPE_STRING &&
 		    qctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS) {
 			if (V4L2_CTRL_DRIVER_PRIV(id))
-				node->priv_user_controls_check++;
+				priv_user_controls_check++;
 			else if (id < V4L2_CID_LASTP1)
-				node->user_controls_check++;
+				user_controls_check++;
 		}
+		if (V4L2_CTRL_DRIVER_PRIV(id))
+			node->priv_controls++;
+		else
+			node->std_controls++;
 	}
 	if (ctrl_class && !found_ctrl_class)
 		return fail("missing control class for class %08x\n", ctrl_class);
@@ -216,7 +227,7 @@ int testQueryControls(struct node *node)
 			return fail("qctrl.id != id\n");
 		if (validQCtrl(node, qctrl))
 			return fail("invalid control %08x\n", qctrl.id);
-		node->user_controls++;
+		user_controls++;
 	}
 
 	for (id = V4L2_CID_PRIVATE_BASE; ; id++) {
@@ -231,14 +242,14 @@ int testQueryControls(struct node *node)
 			return fail("qctrl.id != id\n");
 		if (validQCtrl(node, qctrl))
 			return fail("invalid control %08x\n", qctrl.id);
-		node->priv_user_controls++;
+		priv_user_controls++;
 	}
 
-	if (node->user_controls != node->user_controls_check)
+	if (user_controls != user_controls_check)
 		return fail("expected %d user controls, got %d\n",
-			node->user_controls_check, node->user_controls);
-	if (node->priv_user_controls != node->priv_user_controls_check)
+			user_controls_check, user_controls);
+	if (priv_user_controls != priv_user_controls_check)
 		return fail("expected %d private controls, got %d\n",
-			node->priv_user_controls_check, node->priv_user_controls);
+			priv_user_controls_check, priv_user_controls);
 	return 0;
 }
