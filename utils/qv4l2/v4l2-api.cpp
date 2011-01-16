@@ -404,20 +404,28 @@ bool v4l2::reqbufs_mmap_cap(v4l2_requestbuffers &reqbuf, int count)
 	return ioctl(VIDIOC_REQBUFS, &reqbuf) >= 0;
 }
 
-bool v4l2::dqbuf_mmap_cap(v4l2_buffer &buf)
+bool v4l2::dqbuf_mmap_cap(v4l2_buffer &buf, bool &again)
 {
+	int res;
+
 	memset(&buf, 0, sizeof(buf));
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	buf.memory = V4L2_MEMORY_MMAP;
-	return ioctl(VIDIOC_DQBUF, &buf) >= 0;
+	res = ioctl(VIDIOC_DQBUF, &buf);
+	again = res < 0 && errno == EAGAIN;
+	return res >= 0 || again;
 }
 
-bool v4l2::dqbuf_user_cap(v4l2_buffer &buf)
+bool v4l2::dqbuf_user_cap(v4l2_buffer &buf, bool &again)
 {
+	int res;
+
 	memset(&buf, 0, sizeof(buf));
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	buf.memory = V4L2_MEMORY_USERPTR;
-	return ioctl(VIDIOC_DQBUF, &buf) >= 0;
+	res = ioctl(VIDIOC_DQBUF, &buf);
+	again = res < 0 && errno == EAGAIN;
+	return res >= 0 || again;
 }
 
 bool v4l2::qbuf(v4l2_buffer &buf)

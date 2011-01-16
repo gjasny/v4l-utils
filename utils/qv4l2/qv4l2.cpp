@@ -174,6 +174,7 @@ void ApplicationWindow::capFrame()
 	unsigned i;
 	int s = 0;
 	int err = 0;
+	bool again;
 
 	switch (m_capMethod) {
 	case methodRead:
@@ -194,11 +195,13 @@ void ApplicationWindow::capFrame()
 		break;
 
 	case methodMmap:
-		if (!dqbuf_mmap_cap(buf)) {
+		if (!dqbuf_mmap_cap(buf, again)) {
 			error("dqbuf");
 			m_capStartAct->setChecked(false);
 			return;
 		}
+		if (again)
+			return;
 
 		if (useWrapper())
 			memcpy(m_capImage->bits(), (unsigned char *)m_buffers[buf.index].start,
@@ -212,11 +215,13 @@ void ApplicationWindow::capFrame()
 		break;
 
 	case methodUser:
-		if (!dqbuf_user_cap(buf)) {
+		if (!dqbuf_user_cap(buf, again)) {
 			error("dqbuf");
 			m_capStartAct->setChecked(false);
 			return;
 		}
+		if (again)
+			return;
 
 		for (i = 0; i < m_nbuffers; ++i)
 			if (buf.m.userptr == (unsigned long)m_buffers[i].start

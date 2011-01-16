@@ -87,8 +87,8 @@ public:
 
 	bool reqbufs_mmap_cap(v4l2_requestbuffers &reqbuf, int count = 0);
 	bool reqbufs_user_cap(v4l2_requestbuffers &reqbuf, int count = 0);
-	bool dqbuf_mmap_cap(v4l2_buffer &buf);
-	bool dqbuf_user_cap(v4l2_buffer &buf);
+	bool dqbuf_mmap_cap(v4l2_buffer &buf, bool &again);
+	bool dqbuf_user_cap(v4l2_buffer &buf, bool &again);
 	bool qbuf(v4l2_buffer &buf);
 	bool qbuf_mmap_cap(int index);
 	bool qbuf_user_cap(int index, void *ptr, int length);
