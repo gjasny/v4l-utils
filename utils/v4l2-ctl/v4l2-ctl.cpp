@@ -1263,15 +1263,15 @@ static std::string txsubchans2s(int txsubchans)
 	std::string s;
 
 	if (txsubchans & V4L2_TUNER_SUB_MONO)
-		s += "mono";
+		s += "mono ";
 	if (txsubchans & V4L2_TUNER_SUB_STEREO)
-		s += "stereo";
+		s += "stereo ";
 	if (txsubchans & V4L2_TUNER_SUB_LANG1)
-		s += "bilingual";
+		s += "bilingual ";
 	if (txsubchans & V4L2_TUNER_SUB_SAP)
-		s += "+sap";
+		s += "sap ";
 	if (txsubchans & V4L2_TUNER_SUB_RDS)
-		s += "+rds";
+		s += "rds ";
 	return s;
 }
 
