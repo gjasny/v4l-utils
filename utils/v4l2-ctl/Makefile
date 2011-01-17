@@ -13,7 +13,7 @@ ivtv-ctl: ivtv-ctl.o
 	$(CC) $(LDFLAGS) -o $@ $^ -lm
 
 v4l2-ctl: v4l2-ctl.o
-	$(CXX) -I../../lib/include -I../../include $(LDFLAGS) -L../../lib/libv4l2 -lv4l2 -o $@ $^
+	$(CXX) $(LDFLAGS) -lv4l2 -o $@ $^
 
 install: $(TARGETS)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
