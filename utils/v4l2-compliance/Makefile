@@ -6,7 +6,7 @@ all: $(TARGETS)
 
 v4l2-compliance: v4l2-compliance.o v4l2-test-debug.o v4l2-test-input-output.o \
 	v4l2-test-controls.o v4l2-test-io-config.o
-	$(CXX) $(LDFLAGS) -lv4l2 -o $@ $^
+	$(CXX) $(LDFLAGS) -lv4l2 -lv4lconvert -o $@ $^
 
 install: $(TARGETS)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
