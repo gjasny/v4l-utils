@@ -242,8 +242,6 @@ static int check_prio(struct node *node, struct node *node2, enum v4l2_priority 
 	int err;
 
 	err = doioctl(node, VIDIOC_G_PRIORITY, &prio);
-	if (err == EINVAL)
-		return -ENOSYS;
 	if (err)
 		return fail("VIDIOC_G_PRIORITY failed\n");
 	if (prio != match)
@@ -463,7 +461,7 @@ int main(int argc, char **argv)
 				ok((video_node2.fd = test_open(video_device, O_RDWR)) < 0));
 		if (video_node2.fd >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
-			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&video_node, &video_node2)));
 			test_close(video_node2.fd);
 		}
@@ -473,7 +471,7 @@ int main(int argc, char **argv)
 				ok((radio_node2.fd = test_open(radio_device, O_RDWR)) < 0));
 		if (radio_node2.fd >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
-			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&radio_node, &radio_node2)));
 			test_close(radio_node2.fd);
 		}
@@ -483,7 +481,7 @@ int main(int argc, char **argv)
 				ok((vbi_node2.fd = test_open(vbi_device, O_RDWR)) < 0));
 		if (vbi_node2.fd >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
-			printf("\ttest VIDIOC_S_PRIORITY: %s\n",
+			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&vbi_node, &vbi_node2)));
 			test_close(vbi_node2.fd);
 		}
@@ -501,8 +499,8 @@ int main(int argc, char **argv)
 	/* Input ioctls */
 
 	printf("Input ioctls:\n");
-	printf("\ttest VIDIOC_S/G_TUNER: %s\n", ok(testTuner(&node)));
-	printf("\ttest VIDIOC_S/G/ENUMAUDIO: %s\n", ok(testInputAudio(&node)));
+	printf("\ttest VIDIOC_G/S_TUNER: %s\n", ok(testTuner(&node)));
+	printf("\ttest VIDIOC_G/S/ENUMAUDIO: %s\n", ok(testInputAudio(&node)));
 	printf("\ttest VIDIOC_G/S/ENUMINPUT: %s\n", ok(testInput(&node)));
 	printf("\tInputs: %d Audio Inputs: %d Tuners: %d\n",
 			node.inputs, node.audio_inputs, node.tuners);
@@ -511,8 +509,8 @@ int main(int argc, char **argv)
 	/* Output ioctls */
 
 	printf("Output ioctls:\n");
-	printf("\ttest VIDIOC_S/G_MODULATOR: %s\n", ok(testModulator(&node)));
-	printf("\ttest VIDIOC_S/G/ENUMAUDOUT: %s\n", ok(testOutputAudio(&node)));
+	printf("\ttest VIDIOC_G/S_MODULATOR: %s\n", ok(testModulator(&node)));
+	printf("\ttest VIDIOC_G/S/ENUMAUDOUT: %s\n", ok(testOutputAudio(&node)));
 	printf("\ttest VIDIOC_G/S/ENUMOUTPUT: %s\n", ok(testOutput(&node)));
 	printf("\tOutputs: %d Audio Outputs: %d Modulators: %d\n",
 			node.outputs, node.audio_outputs, node.modulators);
@@ -522,7 +520,7 @@ int main(int argc, char **argv)
 
 	printf("Control ioctls:\n");
 	printf("\ttest VIDIOC_QUERYCTRL/MENU: %s\n", ok(testQueryControls(&node)));
-	printf("\ttest VIDIOC_S/G_CTRL: %s\n", ok(testSimpleControls(&node)));
+	printf("\ttest VIDIOC_G/S_CTRL: %s\n", ok(testSimpleControls(&node)));
 	printf("\tStandard Controls: %d Private Controls: %d\n",
 			node.std_controls, node.priv_controls);
 	printf("\n");
@@ -530,9 +528,9 @@ int main(int argc, char **argv)
 	/* I/O configuration ioctls */
 
 	printf("Input/Output configuration ioctls:\n");
-	printf("\ttest VIDIOC_ENUM/S/G/QUERY_STD: %s\n", ok(testStd(&node)));
-	printf("\ttest VIDIOC_ENUM/S/G/QUERY_DV_PRESETS: %s\n", ok(testPresets(&node)));
-	printf("\ttest VIDIOC_S/G_DV_TIMINGS: %s\n", ok(testCustomTimings(&node)));
+	printf("\ttest VIDIOC_ENUM/G/S/QUERY_STD: %s\n", ok(testStd(&node)));
+	printf("\ttest VIDIOC_ENUM/G/S/QUERY_DV_PRESETS: %s\n", ok(testPresets(&node)));
+	printf("\ttest VIDIOC_G/S_DV_TIMINGS: %s\n", ok(testCustomTimings(&node)));
 	printf("\n");
 
 	/* TODO:
