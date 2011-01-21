@@ -1,3 +1,16 @@
+v4l-utils-0.8.2
+---------------
+* Utils changes:
+  * Various ir-keytable improvements (mchehab)
+  * Various qv4l2 fixes (hverkuil, hdegoede)
+  * Various v4l2-ctl fixes (hverkuil)
+  * Add parsers for cx231xx i2c, saa7134 pci, sn9c201 usb and generic usb
+    logs (mchehab)
+  * v4l2-compliance: lots of new tests (hverkuil)
+* libv4l changes
+  * Add many more laptop models to the upside down devices table (hdegoede)
+  * Add support for 8-bits grey format (V4L2_PIX_FMT_GREY) (mchehab)
+
 v4l-utils-0.8.1
 ---------------
 * Utils changes:
