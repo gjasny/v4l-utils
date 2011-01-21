@@ -33,7 +33,10 @@
 
 static int checkStd(struct node *node, bool has_std, v4l2_std_id mask)
 {
+	v4l2_std_id std_mask = 0;
 	v4l2_std_id std;
+	struct v4l2_standard enumstd;
+	unsigned i;
 	int ret;
 
 	ret = doioctl(node, VIDIOC_G_STD, &std);
@@ -47,11 +50,46 @@ static int checkStd(struct node *node, bool has_std, v4l2_std_id mask)
 		if (std == 0)
 			return fail("Standard == 0?!\n");
 	}
+	if (std & V4L2_STD_ATSC)
+		return fail("Current standard contains ATSC standards. This is no longer supported\n");
 	ret = doioctl(node, VIDIOC_S_STD, &std);
 	if (ret && has_std)
 		return fail("STD cap set, but could not set standard\n");
 	if (!ret && !has_std)
 		return fail("STD cap not set, but could still set a standard\n");
+	std = V4L2_STD_ATSC;
+	ret = doioctl(node, VIDIOC_S_STD, &std);
+	if (ret != EINVAL)
+		return fail("could set standard to ATSC, which is not supported anymore\n");
+	for (i = 0; ; i++) {
+		memset(&enumstd, 0xff, sizeof(enumstd));
+
+		enumstd.index = i;
+		ret = doioctl(node, VIDIOC_ENUMSTD, &enumstd);
+		if (ret)
+			break;
+		std_mask |= enumstd.id;
+		if (check_ustring(enumstd.name, sizeof(enumstd.name)))
+			return fail("invalid standard name\n");
+		if (check_0(enumstd.reserved, sizeof(enumstd.reserved)))
+			return fail("reserved not zeroed\n");
+		if (enumstd.framelines == 0)
+			return fail("framelines not filled\n");
+		if (enumstd.framelines != 625 && enumstd.framelines != 525)
+			warn("strange framelines value (%d)\n", enumstd.framelines);
+		if (enumstd.frameperiod.numerator == 0 || enumstd.frameperiod.denominator == 0)
+			return fail("frameperiod is not filled\n");
+		if (enumstd.index != i)
+			return fail("index changed!\n");
+		if (enumstd.id == 0)
+			return fail("empty standard returned\n");
+	}
+	if (i == 0 && has_std)
+		return fail("STD cap set, but no standards can be enumerated\n");
+	if (i && !has_std)
+		return fail("STD cap was not set, but standards can be enumerated\n");
+	if (std_mask & V4L2_STD_ATSC)
+		return fail("STD mask contains ATSC standards. This is no longer supported\n");
 	return 0;
 }
 
@@ -59,6 +97,7 @@ int testStd(struct node *node)
 {
 	int ret;
 	unsigned i, o;
+	bool has_std = false;
 
 	for (i = 0; i < node->inputs; i++) {
 		struct v4l2_input input;
@@ -70,6 +109,8 @@ int testStd(struct node *node)
 		ret = doioctl(node, VIDIOC_S_INPUT, &input.index);
 		if (ret)
 			return fail("could not select input %d.\n", i);
+		if (input.capabilities & V4L2_IN_CAP_STD)
+			has_std = true;
 		if (checkStd(node, input.capabilities & V4L2_IN_CAP_STD, input.std))
 			return fail("STD failed for input %d.\n", i);
 	}
@@ -84,8 +125,10 @@ int testStd(struct node *node)
 		ret = doioctl(node, VIDIOC_S_OUTPUT, &output.index);
 		if (ret)
 			return fail("could not select output %d.\n", o);
+		if (output.capabilities & V4L2_OUT_CAP_STD)
+			has_std = true;
 		if (checkStd(node, output.capabilities & V4L2_OUT_CAP_STD, output.std))
 			return fail("STD failed for output %d.\n", o);
 	}
-	return 0;
+	return has_std ? 0 : -ENOSYS;
 }
