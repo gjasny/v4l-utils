@@ -132,3 +132,154 @@ int testStd(struct node *node)
 	}
 	return has_std ? 0 : -ENOSYS;
 }
+
+static int checkPresets(struct node *node, bool has_presets)
+{
+	struct v4l2_dv_enum_preset enumpreset;
+	struct v4l2_dv_preset preset;
+	unsigned i;
+	int ret;
+
+	memset(&preset, 0xff, sizeof(preset));
+	ret = doioctl(node, VIDIOC_G_DV_PRESET, &preset);
+	if (!ret && check_0(preset.reserved, sizeof(preset.reserved)))
+		return fail("reserved not zeroed\n");
+	if (ret && has_presets)
+		return fail("PRESET cap set, but could not get current preset\n");
+	if (!ret && !has_presets)
+		return fail("PRESET cap not set, but could still get a preset\n");
+	if (preset.preset != V4L2_DV_INVALID) {
+		ret = doioctl(node, VIDIOC_S_DV_PRESET, &preset);
+		if (ret && has_presets)
+			return fail("PRESET cap set, but could not set preset\n");
+		if (!ret && !has_presets)
+			return fail("PRESET cap not set, but could still set a preset\n");
+	}
+	preset.preset = V4L2_DV_INVALID;
+	ret = doioctl(node, VIDIOC_S_DV_PRESET, &preset);
+	if (ret != EINVAL)
+		return fail("could set preset V4L2_DV_INVALID\n");
+
+	for (i = 0; ; i++) {
+		memset(&enumpreset, 0xff, sizeof(enumpreset));
+
+		enumpreset.index = i;
+		ret = doioctl(node, VIDIOC_ENUM_DV_PRESETS, &enumpreset);
+		if (ret)
+			break;
+		if (check_ustring(enumpreset.name, sizeof(enumpreset.name)))
+			return fail("invalid preset name\n");
+		if (check_0(enumpreset.reserved, sizeof(enumpreset.reserved)))
+			return fail("reserved not zeroed\n");
+		if (enumpreset.index != i)
+			return fail("index changed!\n");
+		if (enumpreset.preset == V4L2_DV_INVALID)
+			return fail("invalid preset!\n");
+		if (enumpreset.width == 0 || enumpreset.height == 0)
+			return fail("width or height not set\n");
+	}
+	if (i == 0 && has_presets)
+		return fail("PRESET cap set, but no presets can be enumerated\n");
+	if (i && !has_presets)
+		return fail("PRESET cap was not set, but presets can be enumerated\n");
+	return 0;
+}
+
+int testPresets(struct node *node)
+{
+	int ret;
+	unsigned i, o;
+	bool has_presets = false;
+
+	for (i = 0; i < node->inputs; i++) {
+		struct v4l2_input input;
+
+		input.index = i;
+		ret = doioctl(node, VIDIOC_ENUMINPUT, &input);
+		if (ret)
+			return fail("could not enumerate input %d?!\n", i);
+		ret = doioctl(node, VIDIOC_S_INPUT, &input.index);
+		if (ret)
+			return fail("could not select input %d.\n", i);
+		if (input.capabilities & V4L2_IN_CAP_PRESETS)
+			has_presets = true;
+		if (checkPresets(node, input.capabilities & V4L2_IN_CAP_PRESETS))
+			return fail("Presets failed for input %d.\n", i);
+	}
+
+	for (o = 0; o < node->outputs; o++) {
+		struct v4l2_output output;
+
+		output.index = o;
+		ret = doioctl(node, VIDIOC_ENUMOUTPUT, &output);
+		if (ret)
+			return fail("could not enumerate output %d?!\n", o);
+		ret = doioctl(node, VIDIOC_S_OUTPUT, &output.index);
+		if (ret)
+			return fail("could not select output %d.\n", o);
+		if (output.capabilities & V4L2_OUT_CAP_PRESETS)
+			has_presets = true;
+		if (checkPresets(node, output.capabilities & V4L2_OUT_CAP_PRESETS))
+			return fail("Presets check failed for output %d.\n", o);
+	}
+	return has_presets ? 0 : -ENOSYS;
+}
+
+static int checkTimings(struct node *node, bool has_timings)
+{
+	struct v4l2_dv_timings timings;
+	int ret;
+
+	memset(&timings, 0xff, sizeof(timings));
+	ret = doioctl(node, VIDIOC_G_DV_TIMINGS, &timings);
+	if (!ret && check_0(timings.reserved, sizeof(timings.reserved)))
+		return fail("reserved not zeroed\n");
+	if (ret && has_timings)
+		return fail("TIMINGS cap set, but could not get current custom timings\n");
+	if (!ret && !has_timings)
+		return fail("TIMINGS cap not set, but could still get custom timings\n");
+	/* I can't really test anything else here since due to the nature of these
+	   ioctls there isn't anything 'generic' that I can test. If you use this,
+	   then you are supposed to know what you are doing. */
+	return 0;
+}
+
+int testCustomTimings(struct node *node)
+{
+	int ret;
+	unsigned i, o;
+	bool has_timings = false;
+
+	for (i = 0; i < node->inputs; i++) {
+		struct v4l2_input input;
+
+		input.index = i;
+		ret = doioctl(node, VIDIOC_ENUMINPUT, &input);
+		if (ret)
+			return fail("could not enumerate input %d?!\n", i);
+		ret = doioctl(node, VIDIOC_S_INPUT, &input.index);
+		if (ret)
+			return fail("could not select input %d.\n", i);
+		if (input.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS)
+			has_timings = true;
+		if (checkTimings(node, input.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS))
+			return fail("Custom timings failed for input %d.\n", i);
+	}
+
+	for (o = 0; o < node->outputs; o++) {
+		struct v4l2_output output;
+
+		output.index = o;
+		ret = doioctl(node, VIDIOC_ENUMOUTPUT, &output);
+		if (ret)
+			return fail("could not enumerate output %d?!\n", o);
+		ret = doioctl(node, VIDIOC_S_OUTPUT, &output.index);
+		if (ret)
+			return fail("could not select output %d.\n", o);
+		if (output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS)
+			has_timings = true;
+		if (checkTimings(node, output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS))
+			return fail("Custom timings check failed for output %d.\n", o);
+	}
+	return has_timings ? 0 : -ENOSYS;
+}

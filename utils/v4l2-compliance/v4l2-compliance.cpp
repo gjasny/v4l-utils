@@ -531,6 +531,8 @@ int main(int argc, char **argv)
 
 	printf("Input/Output configuration ioctls:\n");
 	printf("\ttest VIDIOC_ENUM/S/G/QUERY_STD: %s\n", ok(testStd(&node)));
+	printf("\ttest VIDIOC_ENUM/S/G_DV_PRESETS: %s\n", ok(testPresets(&node)));
+	printf("\ttest VIDIOC_S/G_DV_TIMINGS: %s\n", ok(testCustomTimings(&node)));
 	printf("\n");
 
 	/* Final test report */

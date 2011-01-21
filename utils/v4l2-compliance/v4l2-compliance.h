@@ -121,5 +121,7 @@ int testSimpleControls(struct node *node);
 
 // I/O configuration ioctl tests
 int testStd(struct node *node);
+int testPresets(struct node *node);
+int testCustomTimings(struct node *node);
 
 #endif
