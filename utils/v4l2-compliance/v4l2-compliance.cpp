@@ -523,6 +523,7 @@ int main(int argc, char **argv)
 	printf("Control ioctls:\n");
 	printf("\ttest VIDIOC_QUERYCTRL/MENU: %s\n", ok(testQueryControls(&node)));
 	printf("\ttest VIDIOC_G/S_CTRL: %s\n", ok(testSimpleControls(&node)));
+	printf("\ttest VIDIOC_G/S/TRY_EXT_CTRLS: %s\n", ok(testExtendedControls(&node)));
 	printf("\tStandard Controls: %d Private Controls: %d\n",
 			node.std_controls, node.priv_controls);
 	printf("\n");
@@ -537,8 +538,6 @@ int main(int argc, char **argv)
 
 	/* TODO:
 
-	   VIDIOC_G/S/TRY_EXT_CTRLS
-	   VIDIOC_G/S_FREQUENCY
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP
 	   VIDIOC_ENUM_FMT/FRAMESIZES/FRAMEINTERVALS
 	   VIDIOC_G/S_FBUF/OVERLAY

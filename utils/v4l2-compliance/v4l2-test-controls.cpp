@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <vector>
 #include "v4l2-compliance.h"
 
 static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
@@ -416,5 +417,213 @@ int testSimpleControls(struct node *node)
 	ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
 	if (ret != EINVAL)
 		return fail("s_ctrl accepted invalid control ID\n");
+	return 0;
+}
+
+static int checkExtendedCtrl(struct v4l2_ext_control &ctrl, struct test_queryctrl &qctrl)
+{
+	int len;
+
+	if (ctrl.id != qctrl.id)
+		return fail("control id mismatch\n");
+	switch (qctrl.type) {
+	case V4L2_CTRL_TYPE_INTEGER:
+	case V4L2_CTRL_TYPE_BOOLEAN:
+	case V4L2_CTRL_TYPE_MENU:
+		if (ctrl.value < qctrl.minimum || ctrl.value > qctrl.maximum)
+			return fail("returned control value out of range\n");
+		if ((ctrl.value - qctrl.minimum) % qctrl.step) {
+			// This really should be a fail, but there are so few
+			// drivers that do this right that I made it a warning
+			// for now.
+			warn("returned control value not a multiple of step\n");
+		}
+		break;
+	case V4L2_CTRL_TYPE_BUTTON:
+		break;
+	case V4L2_CTRL_TYPE_STRING:
+		len = strnlen(ctrl.string, qctrl.maximum + 1);
+		if (len == qctrl.maximum + 1)
+			return fail("string too long\n");
+		if (len < qctrl.minimum)
+			return fail("string too short\n");
+		if ((len - qctrl.minimum) % qctrl.step)
+			return fail("string not a multiple of step\n");
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+int testExtendedControls(struct node *node)
+{
+	qctrl_list::iterator iter;
+	struct v4l2_ext_controls ctrls;
+	std::vector<struct v4l2_ext_control> total_vec;
+	std::vector<struct v4l2_ext_control> class_vec;
+	struct v4l2_ext_control ctrl;
+	__u32 ctrl_class = 0;
+	bool multiple_classes = false;
+	int ret;
+
+	memset(&ctrls, 0, sizeof(ctrls));
+	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
+	if (ret && !node->controls.empty())
+		return fail("g_ext_ctrls does not support count == 0\n");
+	if (ret && ret != EINVAL)
+		return fail("g_ext_ctrls with count == 0 did not return EINVAL\n");
+	if (ret)
+		return -ENOSYS;
+	if (node->controls.empty())
+		return fail("g_ext_ctrls worked even when no controls are present\n");
+	if (ctrls.ctrl_class)
+		return fail("field ctrl_class changed\n");
+	if (ctrls.count)
+		return fail("field count changed\n");
+	if (check_0(ctrls.reserved, sizeof(ctrls.reserved)))
+		return fail("reserved not zeroed\n");
+
+	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
+		info("checking extended control '%s' (0x%08x)\n", iter->name, iter->id);
+		ctrl.id = iter->id;
+		ctrl.size = 0;
+		ctrl.reserved2[0] = 0;
+		ctrls.count = 1;
+
+		// Either should work, so try both semi-randomly
+		ctrls.ctrl_class = (ctrl.id & 1) ? 0 : V4L2_CTRL_ID2CLASS(ctrl.id);
+		ctrls.controls = &ctrl;
+
+		// Get the current value
+		ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
+		if ((iter->flags & V4L2_CTRL_FLAG_WRITE_ONLY)) {
+			if (ret != EACCES)
+				return fail("g_ext_ctrls did not check the write-only flag\n");
+			if (ctrls.error_idx != ctrls.count)
+				return fail("invalid error index write only control\n");
+			ctrl.id = iter->id;
+			ctrl.value = iter->default_value;
+		} else {
+			if (ret != ENOSPC && iter->type == V4L2_CTRL_TYPE_STRING)
+				return fail("did not check against size\n");
+			if (ret == ENOSPC && iter->type == V4L2_CTRL_TYPE_STRING) {
+				if (ctrls.error_idx != 0)
+					return fail("invalid error index string control\n");
+				ctrl.string = new char[iter->maximum + 1];
+				ctrl.size = iter->maximum + 1;
+				ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
+			}
+			if (ret)
+				return fail("g_ext_ctrls returned an error\n");
+			if (checkExtendedCtrl(ctrl, *iter))
+				return fail("invalid control %08x\n", iter->id);
+		}
+		
+		// Try the current value (or the default value for write only controls)
+		ret = doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls);
+		if (iter->flags & V4L2_CTRL_FLAG_READ_ONLY) {
+			if (ret != EACCES)
+				return fail("try_ext_ctrls did not check the read-only flag\n");
+			if (ctrls.error_idx != 0)
+				return fail("invalid error index read only control\n");
+		} else if (ret) {
+			return fail("try_ext_ctrls returned an error\n");
+		}
+		
+		// Try to set the current value (or the default value for write only controls)
+		ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+		if (iter->flags & V4L2_CTRL_FLAG_READ_ONLY) {
+			if (ret != EACCES)
+				return fail("s_ext_ctrls did not check the read-only flag\n");
+			if (ctrls.error_idx != ctrls.count)
+				return fail("invalid error index\n");
+		} else {
+			if (ret)
+				return fail("s_ext_ctrls returned an error\n");
+		
+			if (checkExtendedCtrl(ctrl, *iter))
+				return fail("s_ext_ctrls returned invalid control contents (%08x)\n", iter->id);
+		}
+		if (iter->type == V4L2_CTRL_TYPE_STRING)
+			delete [] ctrl.string;
+		ctrl.string = NULL;
+	}
+
+	ctrls.ctrl_class = 0;
+	ctrl.id = 0;
+	ctrl.size = 0;
+	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
+	if (ret != EINVAL)
+		return fail("g_ext_ctrls accepted invalid control ID\n");
+	if (ctrls.error_idx != ctrls.count)
+		return fail("g_ext_ctrls(0) invalid error_idx\n");
+	ctrl.id = 0;
+	ctrl.size = 0;
+	ctrl.value = 0;
+	ret = doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls);
+	if (ret != EINVAL)
+		return fail("try_ext_ctrls accepted invalid control ID\n");
+	if (ctrls.error_idx != 0)
+		return fail("try_ext_ctrls(0) invalid error_idx\n");
+	ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+	if (ret != EINVAL)
+		return fail("s_ext_ctrls accepted invalid control ID\n");
+	if (ctrls.error_idx != ctrls.count)
+		return fail("s_ext_ctrls(0) invalid error_idx\n");
+
+	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
+		struct v4l2_ext_control ctrl;
+
+		if (iter->flags & (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_WRITE_ONLY))
+			continue;
+		ctrl.id = iter->id;
+		ctrl.size = 0;
+		if (iter->type == V4L2_CTRL_TYPE_STRING) {
+			ctrl.size = iter->maximum + 1;
+			ctrl.string = new char[ctrl.size];
+		}
+		ctrl.reserved2[0] = 0;
+		if (!ctrl_class)
+			ctrl_class = V4L2_CTRL_ID2CLASS(ctrl.id);
+		else if (ctrl_class != V4L2_CTRL_ID2CLASS(ctrl.id))
+			multiple_classes = true;
+		total_vec.push_back(ctrl);
+	}
+
+	ctrls.count = total_vec.size();
+	ctrls.controls = &total_vec[0];
+	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
+	if (ret)
+		return fail("could not get all controls\n");
+	ret = doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls);
+	if (ret)
+		return fail("could not try all controls\n");
+	ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+	if (ret)
+		return fail("could not set all controls\n");
+
+	ctrls.ctrl_class = ctrl_class;
+	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
+	if (ret && !multiple_classes)
+		return fail("could not get all controls of a specific class\n");
+	if (ret != EINVAL && multiple_classes)
+		return fail("should get EINVAL when getting mixed-class controls\n");
+	if (multiple_classes && ctrls.error_idx != ctrls.count)
+		return fail("error_idx should be equal to count\n");
+	ret = doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls);
+	if (ret && !multiple_classes)
+		return fail("could not try all controls of a specific class\n");
+	if (ret != EINVAL && multiple_classes)
+		return fail("should get EINVAL when trying mixed-class controls\n");
+	if (multiple_classes && ctrls.error_idx >= ctrls.count)
+		return fail("error_idx should be < count\n");
+	ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+	if (ret && !multiple_classes)
+		return fail("could not set all controls of a specific class\n");
+	if (ret != EINVAL && multiple_classes)
+		return fail("should get EINVAL when setting mixed-class controls\n");
+	if (multiple_classes && ctrls.error_idx != ctrls.count)
+		return fail("error_idx should be equal to count\n");
 	return 0;
 }
