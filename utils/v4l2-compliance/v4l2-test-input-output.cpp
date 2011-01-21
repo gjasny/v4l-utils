@@ -54,6 +54,10 @@ static int validTuner(struct node *node, const struct v4l2_tuner &tuner,
 	if (!tv && (tuner.capability & (V4L2_TUNER_CAP_NORM |
 					V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2)))
 		return fail("TV capabilities for radio tuner?\n");
+	if (tv && (tuner.capability & V4L2_TUNER_CAP_LOW))
+		return fail("did not expect to see V4L2_TUNER_CAP_LOW set for a tv tuner\n");
+	if (!tv && !(tuner.capability & V4L2_TUNER_CAP_LOW))
+		return fail("V4L2_TUNER_CAP_LOW was not set for a radio tuner\n");
 	if (tuner.rangelow >= tuner.rangehigh)
 		return fail("rangelow >= rangehigh\n");
 	if (tuner.rangelow == 0 || tuner.rangehigh == 0xffffffff)
@@ -146,6 +150,88 @@ int testTuner(struct node *node)
 		return fail("RDS tuner capability, but no RDS capture capability?\n");
 	if (!has_rds && (node->caps & V4L2_CAP_RDS_CAPTURE))
 		return fail("No RDS tuner capability, but RDS capture capability?\n");
+	return 0;
+}
+
+int testTunerFreq(struct node *node)
+{
+	struct v4l2_frequency freq;
+	enum v4l2_tuner_type last_type = V4L2_TUNER_ANALOG_TV;
+	unsigned t;
+	int ret;
+
+	for (t = 0; t < node->tuners; t++) {
+		struct v4l2_tuner tuner;
+		
+		tuner.index = t;
+		ret = doioctl(node, VIDIOC_G_TUNER, &tuner);
+		if (ret)
+			return fail("could not get tuner %d\n", t);
+		last_type = tuner.type;
+		memset(&freq, 0, sizeof(freq));
+		freq.tuner = t;
+		ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
+		if (ret)
+			return fail("could not get frequency for tuner %d\n", t);
+		if (check_0(freq.reserved, sizeof(freq.reserved)))
+			return fail("reserved was not zeroed\n");
+		if (freq.type != V4L2_TUNER_RADIO && freq.type != V4L2_TUNER_ANALOG_TV)
+			return fail("returned invalid tuner type %d\n", freq.type);
+		if (freq.type == V4L2_TUNER_RADIO && !(node->caps & V4L2_CAP_RADIO))
+			return fail("radio tuner found but no radio capability set\n");
+		if (freq.type != tuner.type)
+			return fail("frequency tuner type and tuner type mismatch\n");
+		if (freq.tuner != t)
+			return fail("frequency tuner field changed!\n");
+		if (freq.frequency == 0)
+			return fail("frequency not set\n");
+		if (freq.frequency < tuner.rangelow || freq.frequency > tuner.rangehigh)
+			warn("returned frequency out of range\n");
+
+		freq.type = (enum v4l2_tuner_type)0;
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret != EINVAL)
+			return fail("did not return EINVAL when passed tuner type 0\n");
+		freq.type = tuner.type;
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret)
+			return fail("could not set current frequency\n");
+		freq.frequency = tuner.rangelow;
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret)
+			return fail("could not set rangelow frequency\n");
+		freq.frequency = tuner.rangehigh;
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret)
+			return fail("could not set rangehigh frequency\n");
+		freq.frequency = tuner.rangelow - 1;
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret != EINVAL)
+			return fail("set rangelow-1 frequency did not return EINVAL\n");
+		freq.frequency = tuner.rangehigh + 1;
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret)
+			return fail("set rangehigh+1 frequency did not return EINVAL\n");
+	}
+
+	/* There is an ambiguity in the API and G/S_FREQUENCY: you cannot specify
+	   correctly whether to the ioctl is for a tuner or a modulator. This should
+	   be corrected, but until then the tests below have to be skipped if there
+	   is a modulator of index t. */
+	if (node->modulators > t)
+		return 0;
+
+	freq.tuner = t;
+	ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
+	if (ret != EINVAL)
+		return fail("could get frequency for invalid tuner %d\n", t);
+	freq.tuner = t;
+	freq.type = last_type;
+	// TV: 400 Mhz Radio: 100 MHz
+	freq.frequency = last_type == V4L2_TUNER_ANALOG_TV ? 6400 : 1600000;
+	ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+	if (ret != EINVAL)
+		return fail("could set frequency for invalid tuner %d\n", t);
 	return 0;
 }
 
@@ -310,10 +396,12 @@ static int validModulator(struct node *node, const struct v4l2_modulator &mod, u
 		return fail("invalid name\n");
 	if (check_0(mod.reserved, sizeof(mod.reserved)))
 		return fail("non-zero reserved fields\n");
-	if (tv && (mod.capability & V4L2_TUNER_CAP_RDS))
-		return fail("RDS for TV modulator?\n");
-	if (!tv && (mod.capability & (V4L2_TUNER_CAP_NORM |
-					V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2)))
+	if (tv)
+		return fail("currently only radio modulators are supported\n");
+	if (!(mod.capability & V4L2_TUNER_CAP_LOW))
+		return fail("V4L2_TUNER_CAP_LOW was not set for a radio modulator\n");
+	if (mod.capability & (V4L2_TUNER_CAP_NORM |
+					V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2))
 		return fail("TV capabilities for radio modulator?\n");
 	if (mod.rangelow >= mod.rangehigh)
 		return fail("rangelow >= rangehigh\n");
@@ -373,6 +461,74 @@ int testModulator(struct node *node)
 		return fail("RDS modulator capability, but no RDS output capability?\n");
 	if (!has_rds && (node->caps & V4L2_CAP_RDS_OUTPUT))
 		return fail("No RDS modulator capability, but RDS output capability?\n");
+	return 0;
+}
+
+int testModulatorFreq(struct node *node)
+{
+	struct v4l2_frequency freq;
+	unsigned m;
+	int ret;
+
+	for (m = 0; m < node->modulators; m++) {
+		struct v4l2_modulator modulator;
+		
+		modulator.index = m;
+		ret = doioctl(node, VIDIOC_G_MODULATOR, &modulator);
+		if (ret)
+			return fail("could not get modulator %d\n", m);
+		memset(&freq, 0, sizeof(freq));
+		freq.tuner = m;
+		ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
+		if (ret)
+			return fail("could not get frequency for modulator %d\n", m);
+		if (check_0(freq.reserved, sizeof(freq.reserved)))
+			return fail("reserved was not zeroed\n");
+		if (freq.tuner != m)
+			return fail("frequency modulator field changed!\n");
+		if (freq.frequency == 0)
+			return fail("frequency not set\n");
+		if (freq.frequency < modulator.rangelow || freq.frequency > modulator.rangehigh)
+			warn("returned frequency out of range\n");
+
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret)
+			return fail("could not set current frequency\n");
+		freq.frequency = modulator.rangelow;
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret)
+			return fail("could not set rangelow frequency\n");
+		freq.frequency = modulator.rangehigh;
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret)
+			return fail("could not set rangehigh frequency\n");
+		freq.frequency = modulator.rangelow - 1;
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret != EINVAL)
+			return fail("set rangelow-1 frequency did not return EINVAL\n");
+		freq.frequency = modulator.rangehigh + 1;
+		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+		if (ret)
+			return fail("set rangehigh+1 frequency did not return EINVAL\n");
+	}
+
+	/* There is an ambiguity in the API and G/S_FREQUENCY: you cannot specify
+	   correctly whether to the ioctl is for a tuner or a modulator. This should
+	   be corrected, but until then the tests below have to be skipped if there
+	   is a tuner of index m. */
+	if (node->tuners > m)
+		return 0;
+
+	freq.tuner = m;
+	ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
+	if (ret != EINVAL)
+		return fail("could get frequency for invalid modulator %d\n", m);
+	freq.tuner = m;
+	// Radio: 100 MHz
+	freq.frequency = 1600000;
+	ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+	if (ret != EINVAL)
+		return fail("could set frequency for invalid modulator %d\n", m);
 	return 0;
 }
 

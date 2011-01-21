@@ -500,6 +500,7 @@ int main(int argc, char **argv)
 
 	printf("Input ioctls:\n");
 	printf("\ttest VIDIOC_G/S_TUNER: %s\n", ok(testTuner(&node)));
+	printf("\ttest VIDIOC_G/S_FREQUENCY: %s\n", ok(testTunerFreq(&node)));
 	printf("\ttest VIDIOC_G/S/ENUMAUDIO: %s\n", ok(testInputAudio(&node)));
 	printf("\ttest VIDIOC_G/S/ENUMINPUT: %s\n", ok(testInput(&node)));
 	printf("\tInputs: %d Audio Inputs: %d Tuners: %d\n",
@@ -510,6 +511,7 @@ int main(int argc, char **argv)
 
 	printf("Output ioctls:\n");
 	printf("\ttest VIDIOC_G/S_MODULATOR: %s\n", ok(testModulator(&node)));
+	printf("\ttest VIDIOC_G/S_FREQUENCY: %s\n", ok(testModulatorFreq(&node)));
 	printf("\ttest VIDIOC_G/S/ENUMAUDOUT: %s\n", ok(testOutputAudio(&node)));
 	printf("\ttest VIDIOC_G/S/ENUMOUTPUT: %s\n", ok(testOutput(&node)));
 	printf("\tOutputs: %d Audio Outputs: %d Modulators: %d\n",
