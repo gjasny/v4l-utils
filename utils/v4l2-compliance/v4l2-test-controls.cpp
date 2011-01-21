@@ -84,7 +84,7 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 			// This really should be a fail, but there are so few
 			// drivers that do this right that I made it a warning
 			// for now.
-			warn("(max - min) %% step != 0\n");
+			warn("%s: (max - min) %% step != 0\n", qctrl.name);
 		}
 		break;
 	case V4L2_CTRL_TYPE_CTRL_CLASS:
@@ -280,7 +280,8 @@ static int checkSimpleCtrl(struct v4l2_control &ctrl, struct test_queryctrl &qct
 			// This really should be a fail, but there are so few
 			// drivers that do this right that I made it a warning
 			// for now.
-			warn("returned control value not a multiple of step\n");
+			warn("%s: returned control value %d not a multiple of step\n",
+					qctrl.name, ctrl.value);
 		}
 		break;
 	case V4L2_CTRL_TYPE_BUTTON:
@@ -371,7 +372,8 @@ int testSimpleControls(struct node *node)
 			ctrl.value = iter->minimum + 1;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
 			if (ret == ERANGE)
-				warn("returns ERANGE for in-range, but non-step-multiple value\n");
+				warn("%s: returns ERANGE for in-range, but non-step-multiple value\n",
+						iter->name);
 			else if (ret)
 				return fail("returns error for in-range, but non-step-multiple value\n");
 		}
@@ -436,7 +438,8 @@ static int checkExtendedCtrl(struct v4l2_ext_control &ctrl, struct test_queryctr
 			// This really should be a fail, but there are so few
 			// drivers that do this right that I made it a warning
 			// for now.
-			warn("returned control value not a multiple of step\n");
+			warn("%s: returned control value %d not a multiple of step\n",
+					qctrl.name, ctrl.value);
 		}
 		break;
 	case V4L2_CTRL_TYPE_BUTTON:

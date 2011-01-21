@@ -76,7 +76,8 @@ static int checkStd(struct node *node, bool has_std, v4l2_std_id mask)
 		if (enumstd.framelines == 0)
 			return fail("framelines not filled\n");
 		if (enumstd.framelines != 625 && enumstd.framelines != 525)
-			warn("strange framelines value (%d)\n", enumstd.framelines);
+			warn("strange framelines value %d for standard %08llx\n",
+					enumstd.framelines, enumstd.id);
 		if (enumstd.frameperiod.numerator == 0 || enumstd.frameperiod.denominator == 0)
 			return fail("frameperiod is not filled\n");
 		if (enumstd.index != i)

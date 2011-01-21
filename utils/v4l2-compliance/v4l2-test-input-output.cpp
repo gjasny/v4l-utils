@@ -186,7 +186,8 @@ int testTunerFreq(struct node *node)
 		if (freq.frequency == 0)
 			return fail("frequency not set\n");
 		if (freq.frequency < tuner.rangelow || freq.frequency > tuner.rangehigh)
-			warn("returned frequency out of range\n");
+			warn("returned tuner %d frequency out of range (%d not in [%d...%d])\n",
+					t, freq.frequency, tuner.rangelow, tuner.rangehigh);
 
 		freq.type = (enum v4l2_tuner_type)0;
 		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
@@ -489,7 +490,8 @@ int testModulatorFreq(struct node *node)
 		if (freq.frequency == 0)
 			return fail("frequency not set\n");
 		if (freq.frequency < modulator.rangelow || freq.frequency > modulator.rangehigh)
-			warn("returned frequency out of range\n");
+			warn("returned modulator %d frequency out of range (%d not in [%d...%d])\n",
+					m, freq.frequency, modulator.rangelow, modulator.rangehigh);
 
 		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
 		if (ret)

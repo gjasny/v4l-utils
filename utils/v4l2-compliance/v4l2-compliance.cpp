@@ -73,7 +73,7 @@ static struct option long_options[] = {
 	{"radio-device", required_argument, 0, OptSetRadioDevice},
 	{"vbi-device", required_argument, 0, OptSetVbiDevice},
 	{"help", no_argument, 0, OptHelp},
-	{"verbose", no_argument, 0, OptVerbose},
+	{"verbose", required_argument, 0, OptVerbose},
 	{"trace", no_argument, 0, OptTrace},
 	{"wrapper", no_argument, 0, OptUseWrapper},
 	{0, 0, 0, 0}
@@ -91,7 +91,9 @@ static void usage(void)
 	printf("  -V, --vbi-device=<dev> use device <dev> as the vbi device\n");
 	printf("                     if <dev> is a single digit, then /dev/vbi<dev> is used\n");
 	printf("  -h, --help         display this help message\n");
-	printf("  -v, --verbose      turn on verbose reporting.\n");
+	printf("  -v, --verbose=<level> turn on verbose reporting.\n");
+	printf("                     level 1: show warnings\n");
+	printf("                     level 2: show warnings and info messages\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
 	printf("  -w, --wrapper      use the libv4l2 wrapper library.\n");
 	exit(0);
@@ -218,7 +220,7 @@ static int testCap(struct node *node)
 		if (vcap.bus_info[0])
 			return fail("invalid bus_info\n");
 		else
-			warn("empty bus_info\n");
+			warn("VIDIOC_QUERYCAP: empty bus_info\n");
 	}
 	if (check_0(vcap.reserved, sizeof(vcap.reserved)))
 		return fail("non-zero reserved fields\n");
@@ -351,6 +353,9 @@ int main(int argc, char **argv)
 				vbi_device = newdev;
 			}
 			break;
+		case OptVerbose:
+			verbose = atoi(optarg);
+			break;
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",
 				argv[optind]);
@@ -371,7 +376,6 @@ int main(int argc, char **argv)
 		usage();
 		return 1;
 	}
-	verbose = options[OptVerbose];
 	wrapper = options[OptUseWrapper];
 
 	struct utsname uts;

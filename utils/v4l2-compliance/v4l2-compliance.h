@@ -59,7 +59,7 @@ struct node {
 
 #define info(fmt, args...) 					\
 	do {							\
-		if (verbose)					\
+		if (verbose > 1)				\
  			printf("\t\tinfo: " fmt, ##args);	\
 	} while (0)
 
