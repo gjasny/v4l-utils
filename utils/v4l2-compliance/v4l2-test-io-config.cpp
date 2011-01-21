@@ -90,6 +90,11 @@ static int checkStd(struct node *node, bool has_std, v4l2_std_id mask)
 		return fail("STD cap was not set, but standards can be enumerated\n");
 	if (std_mask & V4L2_STD_ATSC)
 		return fail("STD mask contains ATSC standards. This is no longer supported\n");
+	ret = doioctl(node, VIDIOC_QUERYSTD, &std);
+	if (!ret && !has_std)
+		return fail("STD cap was not set, but could still query standard\n");
+	if (!ret && (std & ~std_mask))
+		return fail("QUERYSTD gives back an unsupported standard\n");
 	return 0;
 }
 
@@ -182,6 +187,9 @@ static int checkPresets(struct node *node, bool has_presets)
 		return fail("PRESET cap set, but no presets can be enumerated\n");
 	if (i && !has_presets)
 		return fail("PRESET cap was not set, but presets can be enumerated\n");
+	ret = doioctl(node, VIDIOC_QUERY_DV_PRESET, &preset);
+	if (!ret && !has_presets)
+		return fail("PRESET cap was not set, but could still query preset\n");
 	return 0;
 }
 
