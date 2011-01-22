@@ -1,0 +1,24 @@
+This file keeps track of ambiguities and just plain problems found in the
+V4L2 specification while writing and testing this compliance test tool.
+
+At some point in time these issues should be resolved, but by placing them
+here they won't be forgotten.
+
+- Should QUERYCAP report capabilities for only the current device node or
+  'system wide'?
+
+- Are tuner audio modes other than MONO and STEREO allowed for FM receivers?
+
+- If I set a tuner audio mode to something that is not supported by the hardware,
+  should the driver return an error, or silently modify the audio mode, or just
+  accept it?
+
+- G/S_FREQUENCY: this can be used for both receivers and modulators, but if a
+  device has both, then how to I tell the driver that this is the frequency for
+  the modulator instead of the tuner?
+
+- Related question: how do I tell whether a modulator is for TV or FM radio?
+
+- Control documentation is out of date regarding use of class_ctrl 0 and how
+  error_idx should be set for G/S_EXT_CTRLS and for TRY_EXT_CTRLS (which does
+  this slightly differently).
