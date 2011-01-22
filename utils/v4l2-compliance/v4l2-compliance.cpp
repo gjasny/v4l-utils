@@ -232,6 +232,8 @@ static int testCap(struct node *node)
 		return fail("video node without the relevant capabilities\n");
 	if (node->is_radio && !(caps & (V4L2_CAP_RADIO | V4L2_CAP_MODULATOR)))
 		return fail("radio node without the relevant capabilities\n");
+	if (node->is_radio && (caps & V4L2_CAP_AUDIO))
+		return fail("radio node cannot have CAP_AUDIO set\n");
 	if (node->is_vbi && !(caps & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
 				      V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT)))
 		return fail("vbi node without the relevant capabilities\n");
@@ -461,6 +463,7 @@ int main(int argc, char **argv)
 
 	printf("Allow for multiple opens:\n");
 	if (video_device) {
+		video_node2 = node;
 		printf("\ttest second video open: %s\n",
 				ok((video_node2.fd = test_open(video_device, O_RDWR)) < 0));
 		if (video_node2.fd >= 0) {
@@ -471,6 +474,7 @@ int main(int argc, char **argv)
 		}
 	}
 	if (radio_device) {
+		radio_node2 = node;
 		printf("\ttest second radio open: %s\n",
 				ok((radio_node2.fd = test_open(radio_device, O_RDWR)) < 0));
 		if (radio_node2.fd >= 0) {
@@ -481,6 +485,7 @@ int main(int argc, char **argv)
 		}
 	}
 	if (vbi_device) {
+		vbi_node2 = node;
 		printf("\ttest second vbi open: %s\n",
 				ok((vbi_node2.fd = test_open(vbi_device, O_RDWR)) < 0));
 		if (vbi_node2.fd >= 0) {
@@ -505,8 +510,9 @@ int main(int argc, char **argv)
 	printf("Input ioctls:\n");
 	printf("\ttest VIDIOC_G/S_TUNER: %s\n", ok(testTuner(&node)));
 	printf("\ttest VIDIOC_G/S_FREQUENCY: %s\n", ok(testTunerFreq(&node)));
-	printf("\ttest VIDIOC_G/S/ENUMAUDIO: %s\n", ok(testInputAudio(&node)));
+	printf("\ttest VIDIOC_ENUMAUDIO: %s\n", ok(testEnumInputAudio(&node)));
 	printf("\ttest VIDIOC_G/S/ENUMINPUT: %s\n", ok(testInput(&node)));
+	printf("\ttest VIDIOC_G/S_AUDIO: %s\n", ok(testInputAudio(&node)));
 	printf("\tInputs: %d Audio Inputs: %d Tuners: %d\n",
 			node.inputs, node.audio_inputs, node.tuners);
 	printf("\n");
@@ -516,8 +522,9 @@ int main(int argc, char **argv)
 	printf("Output ioctls:\n");
 	printf("\ttest VIDIOC_G/S_MODULATOR: %s\n", ok(testModulator(&node)));
 	printf("\ttest VIDIOC_G/S_FREQUENCY: %s\n", ok(testModulatorFreq(&node)));
-	printf("\ttest VIDIOC_G/S/ENUMAUDOUT: %s\n", ok(testOutputAudio(&node)));
+	printf("\ttest VIDIOC_ENUMAUDOUT: %s\n", ok(testEnumOutputAudio(&node)));
 	printf("\ttest VIDIOC_G/S/ENUMOUTPUT: %s\n", ok(testOutput(&node)));
+	printf("\ttest VIDIOC_G/S_AUDOUT: %s\n", ok(testOutputAudio(&node)));
 	printf("\tOutputs: %d Audio Outputs: %d Modulators: %d\n",
 			node.outputs, node.audio_outputs, node.modulators);
 	printf("\n");

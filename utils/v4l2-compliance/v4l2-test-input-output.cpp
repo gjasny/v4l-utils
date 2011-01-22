@@ -33,7 +33,7 @@
 
 #define MAGIC 0x1eadbeef
 
-static int validTuner(struct node *node, const struct v4l2_tuner &tuner,
+static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 		unsigned t, v4l2_std_id std)
 {
 	bool valid_modes[5] = { true, false, false, true, false };
@@ -131,7 +131,7 @@ int testTuner(struct node *node)
 			break;
 		if (ret)
 			return fail("couldn't get tuner %d\n", t);
-		if (validTuner(node, tuner, t, std))
+		if (checkTuner(node, tuner, t, std))
 			return fail("invalid tuner %d\n", t);
 		t++;
 		node->tuners++;
@@ -233,10 +233,10 @@ int testTunerFreq(struct node *node)
 	ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
 	if (ret != EINVAL)
 		return fail("could set frequency for invalid tuner %d\n", t);
-	return 0;
+	return node->tuners ? 0 : -ENOSYS;
 }
 
-static int validInput(struct node *node, const struct v4l2_input &descr, unsigned i)
+static int checkInput(struct node *node, const struct v4l2_input &descr, unsigned i)
 {
 	__u32 mask = (1 << node->audio_inputs) - 1;
 
@@ -270,19 +270,28 @@ static int validInput(struct node *node, const struct v4l2_input &descr, unsigne
 int testInput(struct node *node)
 {
 	struct v4l2_input descr;
-	struct v4l2_audio audio;
 	int cur_input = MAGIC;
 	int input;
 	int ret = doioctl(node, VIDIOC_G_INPUT, &cur_input);
 	int i = 0;
-	unsigned a;
 
-	if (ret == EINVAL)
+	if (ret == EINVAL) {
+		descr.index = 0;
+		ret = doioctl(node, VIDIOC_ENUMINPUT, &descr);
+		if (ret != EINVAL)
+			return fail("G_INPUT not supported, but ENUMINPUT is\n");
+		cur_input = 0;
+		ret = doioctl(node, VIDIOC_S_INPUT, &cur_input);
+		if (ret != EINVAL)
+			return fail("G_INPUT not supported, but S_INPUT is\n");
 		return -ENOSYS;
+	}
 	if (ret)
-		return ret;
+		return fail("could not get current input\n");
 	if (cur_input == MAGIC)
 		return fail("VIDIOC_G_INPUT didn't fill in the input\n");
+	if (node->is_radio)
+		return fail("radio can't have input support\n");
 	for (;;) {
 		memset(&descr, 0xff, sizeof(descr));
 		descr.index = i;
@@ -296,17 +305,8 @@ int testInput(struct node *node)
 			return fail("could not set input to %d\n", i);
 		if (input != i)
 			return fail("input set to %d, but becomes %d?!\n", i, input);
-		if (validInput(node, descr, i))
+		if (checkInput(node, descr, i))
 			return fail("invalid attributes for input %d\n", i);
-		for (a = 0; a <= node->audio_inputs; a++) {
-			memset(&audio, 0, sizeof(audio));
-			audio.index = a;
-			ret = doioctl(node, VIDIOC_S_AUDIO, &audio);
-			if (ret && (descr.audioset & (1 << a)))
-				return fail("could not set audio input to %d for video input %d\n", a, i);
-			if (ret != EINVAL && !(descr.audioset & (1 << a)))
-				return fail("could set invalid audio input %d for video input %d\n", a, i);
-		}
 		node->inputs++;
 		i++;
 	}
@@ -322,7 +322,7 @@ int testInput(struct node *node)
 	return 0;
 }
 
-static int validInputAudio(const struct v4l2_audio &descr, unsigned i)
+static int checkInputAudio(const struct v4l2_audio &descr, unsigned i)
 {
 	if (descr.index != i)
 		return fail("invalid index\n");
@@ -339,10 +339,10 @@ static int validInputAudio(const struct v4l2_audio &descr, unsigned i)
 	return 0;
 }
 
-int testInputAudio(struct node *node)
+int testEnumInputAudio(struct node *node)
 {
 	struct v4l2_audio input;
-	int i = 0;
+	unsigned i = 0;
 	int ret;
 
 	for (;;) {
@@ -356,38 +356,74 @@ int testInputAudio(struct node *node)
 			break;
 		if (ret)
 			return fail("could not enumerate audio input %d\n", i);
-		if (validInputAudio(input, i))
+		if (checkInputAudio(input, i))
 			return fail("invalid attributes for audio input %d\n", i);
 		node->audio_inputs++;
 		i++;
 	}
-	memset(&input, 0xff, sizeof(input));
-	memset(input.reserved, 0, sizeof(input.reserved));
-	input.index = i;
-	input.mode = 0;
-	if (doioctl(node, VIDIOC_S_AUDIO, &input) != EINVAL)
-		return fail("can set invalid audio input\n");
 	if (node->audio_inputs && !(node->caps & V4L2_CAP_AUDIO))
 		return fail("audio inputs reported, but no CAP_AUDIO set\n");
-	if (node->audio_inputs == 0 && (node->caps & V4L2_CAP_AUDIO))
-		return fail("no audio inputs reported, but CAP_AUDIO set\n");
-	memset(&input, 0xff, sizeof(input));
-	ret = doioctl(node, VIDIOC_G_AUDIO, &input);
-	if (i == 0) {
-	       	if (ret != EINVAL)
-			return fail("can get current audio input, but no inputs enumerated\n");
-		return 0;
-	}
-	if (ret)
-		return fail("cannot get current audio input\n");
-	if (input.index >= node->audio_inputs)
-		return fail("invalid current audio input %d\n", input.index);
-	if (validInputAudio(input, input.index))
-		return fail("invalid attributes for audio input %d\n", input.index);
 	return 0;
 }
 
-static int validModulator(struct node *node, const struct v4l2_modulator &mod, unsigned m)
+static int checkInputAudioSet(struct node *node, __u32 audioset)
+{
+	struct v4l2_audio input;
+	unsigned i;
+	int ret;
+
+	ret = doioctl(node, VIDIOC_G_AUDIO, &input);
+	if (audioset == 0 && ret != EINVAL)
+		return fail("No audio inputs, but G_AUDIO did not return EINVAL\n");
+	if (audioset) {
+		if (ret)
+			return fail("Audio inputs, but G_AUDIO returned an error\n");
+		if (input.index >= node->audio_inputs)
+			return fail("invalid current audio input %d\n", input.index);
+		if (checkInputAudio(input, input.index))
+			return fail("invalid attributes for audio input %d\n", input.index);
+	}
+
+	for (i = 0; i <= node->audio_inputs; i++) {
+		int valid = audioset & (1 << i);
+
+		memset(&input, 0xff, sizeof(input));
+		memset(input.reserved, 0, sizeof(input.reserved));
+		input.index = i;
+		input.mode = 0;
+		ret = doioctl(node, VIDIOC_S_AUDIO, &input);
+		if (!valid && ret != EINVAL)
+			return fail("can set invalid audio input %d\n", i);
+		if (valid && ret)
+			return fail("can't set valid audio input %d\n", i);
+	}
+	return 0;
+}
+
+int testInputAudio(struct node *node)
+{
+	struct v4l2_input vinput;
+	unsigned i = 0;
+	int ret;
+
+	if (node->audio_inputs && node->inputs == 0)
+		return fail("audio inputs found but no video inputs?!\n");
+
+	for (i = 0; i < node->inputs; i++) {
+		ret = doioctl(node, VIDIOC_S_INPUT, &i);
+		if (ret)
+			return fail("could not select input %d\n", i);
+		vinput.index = i;
+		ret = doioctl(node, VIDIOC_ENUMINPUT, &vinput);
+		if (ret)
+			return fail("could not enumerate input %d\n", i);
+		if (checkInputAudioSet(node, vinput.audioset))
+			return fail("invalid audioset for input %d\n", i);
+	}
+	return node->audio_inputs ? 0 : -ENOSYS;
+}
+
+static int checkModulator(struct node *node, const struct v4l2_modulator &mod, unsigned m)
 {
 	bool tv = !node->is_radio;
 
@@ -441,7 +477,7 @@ int testModulator(struct node *node)
 			break;
 		if (ret)
 			return fail("couldn't get modulator %d\n", m);
-		if (validModulator(node, mod, m))
+		if (checkModulator(node, mod, m))
 			return fail("invalid modulator %d\n", m);
 		if (doioctl(node, VIDIOC_S_MODULATOR, &mod))
 			return fail("cannot set modulator %d\n", m);
@@ -531,10 +567,10 @@ int testModulatorFreq(struct node *node)
 	ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
 	if (ret != EINVAL)
 		return fail("could set frequency for invalid modulator %d\n", m);
-	return 0;
+	return node->modulators ? 0 : -ENOSYS;
 }
 
-static int validOutput(struct node *node, const struct v4l2_output &descr, unsigned o)
+static int checkOutput(struct node *node, const struct v4l2_output &descr, unsigned o)
 {
 	__u32 mask = (1 << node->audio_outputs) - 1;
 
@@ -564,15 +600,22 @@ static int validOutput(struct node *node, const struct v4l2_output &descr, unsig
 int testOutput(struct node *node)
 {
 	struct v4l2_output descr;
-	struct v4l2_audioout audio;
 	int cur_output = MAGIC;
 	int output;
 	int ret = doioctl(node, VIDIOC_G_OUTPUT, &cur_output);
 	int o = 0;
-	unsigned a;
 
-	if (ret == EINVAL)
+	if (ret == EINVAL) {
+		descr.index = 0;
+		ret = doioctl(node, VIDIOC_ENUMOUTPUT, &descr);
+		if (ret != EINVAL)
+			return fail("G_OUTPUT not supported, but ENUMOUTPUT is\n");
+		output = 0;
+		ret = doioctl(node, VIDIOC_S_OUTPUT, &output);
+		if (ret != EINVAL)
+			return fail("G_OUTPUT not supported, but S_OUTPUT is\n");
 		return -ENOSYS;
+	}
 	if (ret)
 		return ret;
 	if (cur_output == MAGIC)
@@ -588,17 +631,8 @@ int testOutput(struct node *node)
 			return fail("could not set output to %d\n", o);
 		if (output != o)
 			return fail("output set to %d, but becomes %d?!\n", o, output);
-		if (validOutput(node, descr, o))
+		if (checkOutput(node, descr, o))
 			return fail("invalid attributes for output %d\n", o);
-		for (a = 0; a <= node->audio_outputs; a++) {
-			memset(&audio, 0, sizeof(audio));
-			audio.index = a;
-			ret = doioctl(node, VIDIOC_S_AUDOUT, &audio);
-			if (ret && (descr.audioset & (1 << a)))
-				return fail("could not set audio output to %d for video output %d\n", a, o);
-			if (ret != EINVAL && !(descr.audioset & (1 << a)))
-				return fail("could set invalid audio output %d for video output %d\n", a, o);
-		}
 		node->outputs++;
 		o++;
 	}
@@ -614,7 +648,7 @@ int testOutput(struct node *node)
 	return 0;
 }
 
-static int validOutputAudio(const struct v4l2_audioout &descr, unsigned o)
+static int checkOutputAudio(const struct v4l2_audioout &descr, unsigned o)
 {
 	if (descr.index != o)
 		return fail("invalid index\n");
@@ -629,10 +663,10 @@ static int validOutputAudio(const struct v4l2_audioout &descr, unsigned o)
 	return 0;
 }
 
-int testOutputAudio(struct node *node)
+int testEnumOutputAudio(struct node *node)
 {
 	struct v4l2_audioout output;
-	int o = 0;
+	unsigned o = 0;
 	int ret;
 
 	for (;;) {
@@ -646,33 +680,73 @@ int testOutputAudio(struct node *node)
 			break;
 		if (ret)
 			return fail("could not enumerate audio output %d\n", o);
-		if (validOutputAudio(output, o))
+		if (checkOutputAudio(output, o))
 			return fail("invalid attributes for audio output %d\n", o);
 		node->audio_outputs++;
 		o++;
 	}
-	memset(&output, 0xff, sizeof(output));
-	memset(output.reserved, 0, sizeof(output.reserved));
-	output.index = o;
-	output.mode = 0;
-	if (doioctl(node, VIDIOC_S_AUDOUT, &output) != EINVAL)
-		return fail("can set invalid audio output\n");
+
 	if (node->audio_outputs && !(node->caps & V4L2_CAP_AUDIO))
 		return fail("audio outputs reported, but no CAP_AUDIO set\n");
-	if (node->audio_outputs == 0 && (node->caps & V4L2_CAP_AUDIO))
-		return fail("no audio outputs reported, but CAP_AUDIO set\n");
-	memset(&output, 0xff, sizeof(output));
-	ret = doioctl(node, VIDIOC_G_AUDOUT, &output);
-	if (o == 0) {
-	       	if (ret != EINVAL)
-			return fail("can get current audio output, but no outputs enumerated\n");
-		return 0;
-	}
-	if (ret)
-		return fail("cannot get current audio output\n");
-	if (output.index >= node->audio_outputs)
-		return fail("invalid current audio output %d\n", output.index);
-	if (validOutputAudio(output, output.index))
-		return fail("invalid attributes for audio output %d\n", output.index);
 	return 0;
+}
+
+static int checkOutputAudioSet(struct node *node, __u32 audioset)
+{
+	struct v4l2_audioout output;
+	unsigned i;
+	int ret;
+
+	ret = doioctl(node, VIDIOC_G_AUDOUT, &output);
+	if (audioset == 0 && ret != EINVAL)
+		return fail("No audio outputs, but G_AUDOUT did not return EINVAL\n");
+	if (audioset) {
+		if (ret)
+			return fail("Audio outputs, but G_AUDOUT returned an error\n");
+		if (output.index >= node->audio_outputs)
+			return fail("invalid current audio output %d\n", output.index);
+		if (checkOutputAudio(output, output.index))
+			return fail("invalid attributes for audio output %d\n", output.index);
+	}
+
+	for (i = 0; i <= node->audio_outputs; i++) {
+		int valid = audioset & (1 << i);
+
+		memset(&output, 0xff, sizeof(output));
+		memset(output.reserved, 0, sizeof(output.reserved));
+		output.index = i;
+		output.mode = 0;
+		ret = doioctl(node, VIDIOC_S_AUDOUT, &output);
+		if (!valid && ret != EINVAL)
+			return fail("can set invalid audio output %d\n", i);
+		if (valid && ret)
+			return fail("can't set valid audio output %d\n", i);
+	}
+	return 0;
+}
+
+int testOutputAudio(struct node *node)
+{
+	struct v4l2_output voutput;
+	unsigned o = 0;
+	int ret;
+
+	if (node->audio_outputs && node->outputs == 0)
+		return fail("audio outputs found but no video outputs?!\n");
+
+	for (o = 0; o < node->outputs; o++) {
+		ret = doioctl(node, VIDIOC_S_OUTPUT, &o);
+		if (ret)
+			return fail("could not select output %d\n", o);
+		voutput.index = o;
+		ret = doioctl(node, VIDIOC_ENUMOUTPUT, &voutput);
+		if (ret)
+			return fail("could not enumerate output %d\n", o);
+		if (checkOutputAudioSet(node, voutput.audioset))
+			return fail("invalid audioset for output %d\n", o);
+	}
+
+	if (node->audio_outputs == 0 && node->audio_inputs && (caps & V4L2_CAP_AUDIO))
+		return fail("no audio inputs or outputs reported, but CAP_AUDIO set\n");
+	return node->audio_outputs ? 0 : -ENOSYS;
 }
