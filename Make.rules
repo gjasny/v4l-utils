@@ -3,7 +3,7 @@ V4L_UTILS_VERSION=0.8.2-test
 # These ones can be overriden from the cmdline
 
 CFLAGS := -g -O1
-CFLAGS += -Wall -Wpointer-arith -DV4L_UTILS_VERSION='"$(V4L_UTILS_VERSION)"'
+CFLAGS += -Wall -Wpointer-arith
 CXXFLAGS := $(CFLAGS)
 CFLAGS += -Wstrict-prototypes -Wmissing-prototypes
 
@@ -15,7 +15,7 @@ LIBSUBDIR = libv4l
 # These ones should not be overriden from the cmdline
 
 # Note the -I../.. this assumes all sources live in a 2 level dir hierarchy!
-override CPPFLAGS += -I../../include -I../../lib/include -D_GNU_SOURCE
+override CPPFLAGS += -I../../include -I../../lib/include -D_GNU_SOURCE -DV4L_UTILS_VERSION='"$(V4L_UTILS_VERSION)"'
 override LDFLAGS += -L../../lib/libv4l1 -L../../lib/libv4l2 -L../../lib/libv4lconvert
 # This is the soname version
 LIB_RELEASE = 0
