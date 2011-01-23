@@ -16,10 +16,10 @@ all: $(TARGETS)
 install:
 
 ../../utils/libv4l2util/libv4l2util.a: ../../utils/libv4l2util/v4l2_driver.c ../../utils/libv4l2util/frequencies.c
-	make -C ../../utils/libv4l2util libv4l2util.a
+	$(MAKE) -C ../../utils/libv4l2util libv4l2util.a
 
 ../../lib/libv4l2/libv4l2.so:
-	make -C ../../lib
+	$(MAKE) -C ../../lib
 
 driver-test: driver-test.o ../../utils/libv4l2util/libv4l2util.a
 	$(CC) $(LDFLAGS) -o $@ $^

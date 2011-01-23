@@ -12,7 +12,7 @@ sync-with-kernel:
 	cp -a $(KERNEL_DIR)/include/linux/videodev2.h include/linux
 	cp -a $(KERNEL_DIR)/include/linux/ivtv.h include/linux
 	cp -a $(KERNEL_DIR)/include/media/v4l2-chip-ident.h include/media
-	make -C utils $@
+	$(MAKE) -C utils $@
 
 clean::
 	rm -f include/*/*~
