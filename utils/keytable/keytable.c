@@ -1210,6 +1210,8 @@ static void display_table(struct rc_device *rc_dev, int fd)
 			codes[0] = (j << 8) | i;
 			if (!ioctl(fd, EVIOCGKEYCODE, codes) && codes[1] != KEY_RESERVED)
 				prtcode(codes);
+			else
+				perror("EVIOCGKEYCODE");
 		}
 	}
 	display_proto(rc_dev);
