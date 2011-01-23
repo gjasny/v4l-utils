@@ -2,7 +2,7 @@ SUBDIRS=libv4l2util decode_tm6000 keytable rds v4l2-compliance v4l2-ctl v4l2-dbg
 
 all install: 
 	@for i in $(SUBDIRS); do \
-		$(MAKE) -C $$i $@; \
+		$(MAKE) -C $$i $@ || exit 1; \
 	done
 
 	# Test if libsysfs is installed
@@ -11,14 +11,16 @@ all install:
 	fi
 
 	# Test whether qmake is installed, and whether it is for qt4.
-	@-if which qmake-qt4 >/dev/null 2>&1; then \
+	@if which qmake-qt4 >/dev/null 2>&1; then \
 		QMAKE=qmake-qt4; \
 	else \
 		QMAKE=qmake; \
 	fi; \
 	if which $$QMAKE >/dev/null 2>&1; then \
 		if $$QMAKE --version 2>&1 | grep '4\.[0-9][0-9]*\.[0-9][0-9]*' >/dev/null; then \
-			if [ ! -f qv4l2/Makefile ]; then (cd qv4l2; $$QMAKE); fi; \
+			if [ ! -f qv4l2/Makefile ]; then \
+				(cd qv4l2 && $$QMAKE) || exit 1; \
+			fi; \
 			$(MAKE) -C qv4l2 -f Makefile.install $@; \
 		fi \
 	fi
