@@ -37,5 +37,6 @@ install: $(TARGETS)
 	install -m 644 rc_maps.cfg $(DESTDIR)/etc
 	install -m 755 -d $(DESTDIR)/etc/rc_keymaps
 	install -m 644 rc_keymaps/* $(DESTDIR)/etc/rc_keymaps
+	install -m 644 70-infrared.rules /etc/udev/rules.d
 
 include ../../Make.rules
