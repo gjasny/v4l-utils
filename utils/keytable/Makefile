@@ -34,10 +34,10 @@ sync-with-kernel:
 install: $(TARGETS)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin $(DESTDIR)/etc
 	install -m 755 $(TARGETS) $(DESTDIR)$(PREFIX)/bin
-	install -m 644 rc_maps.cfg $(DESTDIR)/etc
+	install -m 644 -p rc_maps.cfg $(DESTDIR)/etc
 	install -m 755 -d $(DESTDIR)/etc/rc_keymaps
-	install -m 644 rc_keymaps/* $(DESTDIR)/etc/rc_keymaps
+	install -m 644 -p rc_keymaps/* $(DESTDIR)/etc/rc_keymaps
 	install -m 755 -d $(DESTDIR)/etc/udev/rules.d
-	install -m 644 70-infrared.rules $(DESTDIR)/etc/udev/rules.d
+	install -m 644 -p 70-infrared.rules $(DESTDIR)/etc/udev/rules.d
 
 include ../../Make.rules
