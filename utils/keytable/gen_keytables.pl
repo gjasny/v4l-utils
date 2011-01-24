@@ -113,7 +113,7 @@ sub parse_file($)
 		}
 
 		if ($read) {
-			if (m/(0x[\dA-Fa-f]+).*(KEY_[^\s\,\}]+)/) {
+			if (m/(0x[\dA-Fa-f]+)[\s\,]+(KEY_[^\s\,\}]+)/) {
 				$out .= "$1 $2\n";
 				next;
 			}
