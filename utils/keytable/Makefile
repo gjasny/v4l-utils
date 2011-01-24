@@ -39,5 +39,7 @@ install: $(TARGETS)
 	install -m 644 -p rc_keymaps/* $(DESTDIR)/etc/rc_keymaps
 	install -m 755 -d $(DESTDIR)/etc/udev/rules.d
 	install -m 644 -p 70-infrared.rules $(DESTDIR)/etc/udev/rules.d
+	install -m 755 -d $(DESTDIR)/man/man1
+	install -m 644 -p ir-keytable $(DESTDIR)/man/man1
 
 include ../../Make.rules
