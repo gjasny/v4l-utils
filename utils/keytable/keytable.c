@@ -45,7 +45,7 @@ struct input_keymap_entry_v2 {
 #endif
 
 struct keytable {
-	int codes[2];
+	u_int32_t codes[2];
 	struct input_keymap_entry_v2 keymap;
 	struct keytable *next;
 };
@@ -1126,7 +1126,7 @@ static int get_input_protocol_version(int fd)
 static void clear_table(int fd)
 {
 	int i, j;
-	int codes[2];
+	u_int32_t codes[2];
 	struct input_keymap_entry_v2 entry;
 
 	/* Clears old table */
@@ -1280,6 +1280,7 @@ static void display_table_v2(struct rc_device *rc_dev, int fd)
 	do {
 		entry.flags = KEYMAP_BY_INDEX;
 		entry.index = i;
+		entry.len = sizeof(u_int32_t);
 
 		if (ioctl(fd, EVIOCGKEYCODE_V2, &entry) == -1)
 			break;
