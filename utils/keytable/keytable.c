@@ -1251,7 +1251,7 @@ static void test_event(int fd)
 	}
 }
 
-static void display_table(struct rc_device *rc_dev, int fd)
+static void display_table_v1(struct rc_device *rc_dev, int fd)
 {
 	unsigned int i, j;
 
@@ -1268,6 +1268,40 @@ static void display_table(struct rc_device *rc_dev, int fd)
 	}
 	display_proto(rc_dev);
 }
+
+static void display_table_v2(struct rc_device *rc_dev, int fd)
+{
+	int i;
+	struct input_keymap_entry_v2 entry;
+	int codes[2];
+
+	memset(&entry, '\0', sizeof(entry));
+	i = 0;
+	do {
+		entry.flags = KEYMAP_BY_INDEX;
+		entry.index = i;
+
+		if (ioctl(fd, EVIOCGKEYCODE_V2, &entry) == -1)
+			break;
+
+		/* FIXME: Extend it to support scancodes > 32 bits */
+		codes[0] = ((u_int32_t *)entry.scancode)[0];
+		codes[1] = entry.keycode;
+
+		prtcode(codes);
+		i++;
+	} while (1);
+	display_proto(rc_dev);
+}
+
+static void display_table(struct rc_device *rc_dev, int fd)
+{
+	if (input_protocol_version < 0x10001)
+		display_table_v1(rc_dev, fd);
+	else
+		display_table_v2(rc_dev, fd);
+}
+
 
 int main(int argc, char *argv[])
 {
