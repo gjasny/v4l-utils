@@ -21,6 +21,7 @@
 #include <string.h>
 #include <linux/input.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
 #include <dirent.h>
 #include <argp.h>
 
@@ -29,8 +30,23 @@
 /* Default place where the keymaps will be stored */
 #define CFGDIR "/etc/rc_keymaps"
 
+struct input_keymap_entry_v2 {
+#define KEYMAP_BY_INDEX	(1 << 0)
+	u_int8_t  flags;
+	u_int8_t  len;
+	u_int16_t index;
+	u_int32_t keycode;
+	u_int8_t  scancode[32];
+};
+
+#ifndef EVIOCGKEYCODE_V2
+#define EVIOCGKEYCODE_V2	_IOR('E', 0x04, struct input_keymap_entry_v2)
+#define EVIOCSKEYCODE_V2	_IOW('E', 0x04, struct input_keymap_entry_v2)
+#endif
+
 struct keytable {
 	int codes[2];
+	struct input_keymap_entry_v2 keymap;
 	struct keytable *next;
 };
 
@@ -127,13 +143,19 @@ static int test = 0;
 static enum ir_protocols ch_proto = 0;
 
 struct keytable keys = {
-	{0, 0}, NULL
+	.codes = {0, 0},
+	.next = NULL
 };
 
 
 struct cfgfile cfg = {
 	NULL, NULL, NULL, NULL
 };
+
+/*
+ * Stores the input layer protocol version
+ */
+static int input_protocol_version;
 
 /*
  * Values that are read only via sysfs node
@@ -1086,18 +1108,48 @@ static int set_proto(struct rc_device *rc_dev)
 	return rc;
 }
 
+static int get_input_protocol_version(int fd)
+{
+	if (ioctl(fd, EVIOCGVERSION, &input_protocol_version) < 0) {
+		fprintf(stderr,
+			"Unable to query evdev protocol version: %s\n",
+			strerror(errno));
+		return errno;
+	}
+	if (debug)
+		fprintf(stderr, "Input Protocol version: 0x%08x\n",
+			input_protocol_version);
+
+	return 0;
+}
+
 static void clear_table(int fd)
 {
 	int i, j;
 	int codes[2];
+	struct input_keymap_entry_v2 entry;
 
 	/* Clears old table */
-	for (j = 0; j < 256; j++) {
-		for (i = 0; i < 256; i++) {
-			codes[0] = (j << 8) | i;
-			codes[1] = KEY_RESERVED;
-			ioctl(fd, EVIOCSKEYCODE, codes);
+	if (input_protocol_version < 0x10001) {
+		for (j = 0; j < 256; j++) {
+			for (i = 0; i < 256; i++) {
+				codes[0] = (j << 8) | i;
+				codes[1] = KEY_RESERVED;
+				ioctl(fd, EVIOCSKEYCODE, codes);
+			}
 		}
+	} else {
+		memset(&entry, '\0', sizeof(entry));
+		i = 0;
+		do {
+			entry.flags = KEYMAP_BY_INDEX;
+			entry.keycode = KEY_RESERVED;
+			entry.index = 0;
+
+			i++;
+			if (debug)
+				fprintf(stderr, "Deleting entry %d\n", i);
+		} while (ioctl(fd, EVIOCSKEYCODE_V2, &entry) == 0);
 	}
 }
 
@@ -1320,6 +1372,8 @@ int main(int argc, char *argv[])
 	}
 	if (dev_from_class)
 		free(devname);
+	if (get_input_protocol_version(fd))
+		return -1;
 
 	/*
 	 * First step: clear, if --clear is specified
