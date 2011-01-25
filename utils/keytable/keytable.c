@@ -155,7 +155,7 @@ struct cfgfile cfg = {
 /*
  * Stores the input layer protocol version
  */
-static int input_protocol_version;
+static int input_protocol_version = 0;
 
 /*
  * Values that are read only via sysfs node
