@@ -27,6 +27,9 @@ clears the old table
 .TP 
 \fB\-d\fR, \fB\-\-device\fR=\fIDEV\fR
 ir device to control
+.TP
+\fB\-D\fR, \fB\-\-delay\fR=\fIDELAY\fR
+Sets the delay before repeating a keystroke
 .TP 
 \fB\-k\fR, \fB\-\-set\-key\fR=\fISCANKEY\fR
 Change scan/key pairs
@@ -34,6 +37,9 @@ Change scan/key pairs
 \fB\-p\fR, \fB\-\-protocol\fR=\fIPROTOCOL\fR
 Protocol to enable (the other ones will be disabled). To enable more than one, 
 use the option more than one time
+.TP
+\fB\-P\fR, \fB\-\-period\fR\=\fiPERIOD\fR
+Sets the period to repeat a keystroke
 .TP 
 \fB\-r\fR, \fB\-\-read\fR
 reads the current scancode/keycode table
@@ -73,6 +79,10 @@ a file wit a set of scancode=keycode value pairs
 a set of scancode1=keycode1,scancode2=keycode2.. value pairs
 .IP \fIPROTOCOL\fR
 protocol name (nec, rc\-5, rc\-6, other) to be enabled
+.IP \fIDELAY\fR
+Delay before repeating a keystroke
+.IP \fIPERIOD\fR
+Period to repeat a keystroke
 .IP \fICFGFILE\fR
 configuration file that associates a driver/table name with a keymap file
 .SH EXIT STATUS
