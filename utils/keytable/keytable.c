@@ -1342,6 +1342,32 @@ static int get_rate(int fd, unsigned int *delay, unsigned int *period)
 	return 0;
 }
 
+static int show_sysfs_attribs(struct rc_device *rc_dev)
+{
+	static struct sysfs_names *names, *cur;
+	names = find_device(NULL);
+	if (!names)
+		return -1;
+	for (cur = names; cur->next; cur = cur->next) {
+		if (cur->name) {
+			if (get_attribs(rc_dev, cur->name))
+				return -1;
+			fprintf(stderr, "Found %s (%s) with:\n",
+				rc_dev->sysfs_name,
+				rc_dev->input_name);
+			fprintf(stderr, "\tDriver %s, table %s\n",
+				rc_dev->drv_name,
+				rc_dev->keytable_name);
+			fprintf(stderr, "\tSupported protocols: ");
+			show_proto(rc_dev->supported);
+			fprintf(stderr, "\n\t");
+			display_proto(rc_dev);
+			fprintf(stderr, "\n");
+		}
+	}
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	int dev_from_class = 0, write_cnt;
@@ -1353,27 +1379,9 @@ int main(int argc, char *argv[])
 
 	/* Just list all devices */
 	if (!clear && !readtable && !keys.next && !ch_proto && !cfg.next && !test && !delay && !period) {
-		static struct sysfs_names *names, *cur;
-
-		names = find_device(NULL);
-		if (!names)
+		if (show_sysfs_attribs(&rc_dev))
 			return -1;
-		for (cur = names; cur->next; cur = cur->next) {
-			if (cur->name) {
-				if (get_attribs(&rc_dev, cur->name))
-					return -1;
-				fprintf(stderr, "Found %s (%s) with:\n",
-					rc_dev.sysfs_name,
-					rc_dev.input_name);
-				fprintf(stderr, "\tDriver %s, table %s\n",
-					rc_dev.drv_name,
-					rc_dev.keytable_name);
-				fprintf(stderr, "\tSupported protocols: ");
-				show_proto(rc_dev.supported);
-				fprintf(stderr, "\t");
-				display_proto(&rc_dev);
-			}
-		}
+
 		return 0;
 	}
 
