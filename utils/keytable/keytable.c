@@ -1342,9 +1342,19 @@ static int get_rate(int fd, unsigned int *delay, unsigned int *period)
 	return 0;
 }
 
+static void show_evdev_attribs(int fd)
+{
+	unsigned int delay, period;
+
+	printf("\t");
+	get_rate(fd, &delay, &period);
+}
+
 static int show_sysfs_attribs(struct rc_device *rc_dev)
 {
 	static struct sysfs_names *names, *cur;
+	int fd;
+
 	names = find_device(NULL);
 	if (!names)
 		return -1;
@@ -1362,7 +1372,13 @@ static int show_sysfs_attribs(struct rc_device *rc_dev)
 			show_proto(rc_dev->supported);
 			fprintf(stderr, "\n\t");
 			display_proto(rc_dev);
-			fprintf(stderr, "\n");
+			fd = open(rc_dev->input_name, O_RDONLY);
+			if (fd > 0) {
+				show_evdev_attribs(fd);
+				close(fd);
+			} else {
+				printf("\tExtra capabilities: <access denied>\n");
+			}
 		}
 	}
 	return 0;
