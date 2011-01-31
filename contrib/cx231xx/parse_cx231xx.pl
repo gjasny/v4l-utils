@@ -159,10 +159,13 @@ while (<>) {
 					$reqtype, $req, $wvalue, $windex, $wlen, $payload);
 			}
 
-			my $reg = $windex;
-			$reg = $cfg_reg_map{$windex} if defined($cfg_reg_map{$windex});
+			if ($cfg_len) {
+				my $reg = $windex;
+				$reg = $cfg_reg_map{$windex} if defined($cfg_reg_map{$windex});
 
-			printf "cx231xx_write_ctrl_reg(dev, $reg, $payload, $cfg_len);\n";
+				printf "cx231xx_read_ctrl_reg(dev, $reg, $cfg_len);\t\t/* read %s */\n",
+					$payload;
+			}
 		} elsif ($req == 0xd) {
 			my $cfg_len;
 			if ($wvalue == 1) {
@@ -178,12 +181,13 @@ while (<>) {
 				printf("Reqtype: %3d, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
 					$reqtype, $req, $wvalue, $windex, $wlen, $payload);
 			}
+			if ($cfg_len) {
+				my $reg = $windex;
+				$reg = $cfg_reg_map{$windex} if defined($cfg_reg_map{$windex});
 
-			my $reg = $windex;
-			$reg = $cfg_reg_map{$windex} if defined($cfg_reg_map{$windex});
-
-			printf "cx231xx_read_ctrl_reg(dev, $reg, $cfg_len);\t\t/* read %s */\n",
-				$payload;
+				printf "cx231xx_read_ctrl_reg(dev, $reg, $cfg_len);\t\t/* read %s */\n",
+					$payload;
+			}
 		} else {
 			printf("Reqtype: %3d, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
 				$reqtype, $req, $wvalue, $windex, $wlen, $payload);
