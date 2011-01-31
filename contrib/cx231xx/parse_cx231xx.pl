@@ -24,6 +24,28 @@
 
 use strict;
 
+my %cfg_reg_map = (
+	0x0 => "BOARD_CFG_STAT",
+	0x4 => "TS_MODE_REG",
+	0x8 => "TS1_CFG_REG",
+	0xc => "TS1_LENGTH_REG",
+	0x10 => "TS2_CFG_REG",
+	0x14 => "TS2_LENGTH_REG",
+	0x18 => "EP_MODE_SET",
+	0x1c => "CIR_PWR_PTN1",
+	0x20 => "CIR_PWR_PTN2",
+	0x24 => "CIR_PWR_PTN3",
+	0x28 => "CIR_PWR_MASK0",
+	0x2c => "CIR_PWR_MASK1",
+	0x30 => "CIR_PWR_MASK2",
+	0x34 => "CIR_GAIN",
+	0x38 => "CIR_CAR_REG",
+	0x40 => "CIR_OT_CFG1",
+	0x44 => "CIR_OT_CFG2",
+	0x68 => "GBULK_BIT_EN",
+	0x74 => "PWR_CTL_EN",
+);
+
 sub parse_i2c($$$$$$)
 {
 	my $reqtype = shift;
@@ -121,9 +143,47 @@ while (<>) {
 			parse_i2c($reqtype, $req, $wvalue, $windex, $wlen, $payload);
 		} elsif ($req >= 8 && $req <= 0xb) {
 			parse_gpio($reqtype, $req, $wvalue, $windex, $wlen, $payload);
-		} else {
-			printf("Reqtype: %3d, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
-				$reqtype, $req, $wvalue, $windex, $wlen, $payload);
+		} elsif ($req == 0xc) {
+			my $cfg_len;
+			if ($wvalue == 1) {
+				$cfg_len = 1;
+			} elsif($wvalue == 3) {
+				$cfg_len = 2;
+			} elsif($wvalue == 7) {
+				$cfg_len = 3;
+			} elsif($wvalue == 0xf) {
+				$cfg_len = 4;
+			} else {
+				printf("Invalid get len\n");
+			}
+
+			my $reg = $windex;
+			$reg = $cfg_reg_map{$windex} if defined($cfg_reg_map{$windex});
+
+			printf "cx231xx_write_ctrl_reg(dev, $reg, $payload, $cfg_len);\n";
+		} elsif ($req == 0xd) {
+			my $cfg_len;
+			if ($wvalue == 1) {
+				$cfg_len = 1;
+			} elsif($wvalue == 3) {
+				$cfg_len = 2;
+			} elsif($wvalue == 7) {
+				$cfg_len = 3;
+			} elsif($wvalue == 0xf) {
+				$cfg_len = 4;
+			} else {
+				printf("Invalid get len\n");
+			}
+
+			my $reg = $windex;
+			$reg = $cfg_reg_map{$windex} if defined($cfg_reg_map{$windex});
+
+			printf "cx231xx_read_ctrl_reg(dev, $reg, $cfg_len);\t\t/* read %s */\n",
+				$payload;
 		}
+
+		# Default
+		printf("Reqtype: %3d, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
+			$reqtype, $req, $wvalue, $windex, $wlen, $payload);
 	}
 }
