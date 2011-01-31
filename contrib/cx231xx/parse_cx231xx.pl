@@ -163,8 +163,7 @@ while (<>) {
 				my $reg = $windex;
 				$reg = $cfg_reg_map{$windex} if defined($cfg_reg_map{$windex});
 
-				printf "cx231xx_read_ctrl_reg(dev, $reg, $cfg_len);\t\t/* read %s */\n",
-					$payload;
+				printf "cx231xx_write_ctrl_reg(dev, $reg, $payload, $cfg_len);\n";
 			}
 		} elsif ($req == 0xd) {
 			my $cfg_len;
