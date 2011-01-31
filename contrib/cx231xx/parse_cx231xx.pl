@@ -154,7 +154,9 @@ while (<>) {
 			} elsif($wvalue == 0xf) {
 				$cfg_len = 4;
 			} else {
-				printf("Invalid get len\n");
+				printf("Invalid get len for ");
+				printf("Reqtype: %3d, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
+					$reqtype, $req, $wvalue, $windex, $wlen, $payload);
 			}
 
 			my $reg = $windex;
@@ -172,7 +174,9 @@ while (<>) {
 			} elsif($wvalue == 0xf) {
 				$cfg_len = 4;
 			} else {
-				printf("Invalid get len\n");
+				printf("Invalid get len for ");
+				printf("Reqtype: %3d, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
+					$reqtype, $req, $wvalue, $windex, $wlen, $payload);
 			}
 
 			my $reg = $windex;
@@ -180,10 +184,9 @@ while (<>) {
 
 			printf "cx231xx_read_ctrl_reg(dev, $reg, $cfg_len);\t\t/* read %s */\n",
 				$payload;
+		} else {
+			printf("Reqtype: %3d, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
+				$reqtype, $req, $wvalue, $windex, $wlen, $payload);
 		}
-
-		# Default
-		printf("Reqtype: %3d, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
-			$reqtype, $req, $wvalue, $windex, $wlen, $payload);
 	}
 }
