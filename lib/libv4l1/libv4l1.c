@@ -57,7 +57,6 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include "../libv4lconvert/libv4lsyscall-priv.h"
-#include <linux/videodev.h>
 #include <linux/videodev2.h>
 #include <libv4l2.h>
 #include "libv4l1.h"

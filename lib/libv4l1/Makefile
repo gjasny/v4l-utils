@@ -6,7 +6,7 @@ V4L1_OBJS     = libv4l1.o log.o
 V4L1COMPAT    = v4l1compat.so
 V4L1COMPAT_O  = v4l1compat.o libv4l1.so
 TARGETS       = $(V4L1_LIB) libv4l1.pc
-INCLUDES      = ../include/libv4l1.h
+INCLUDES      = ../include/libv4l1.h ../include/libv4l1-videodev.h
 
 ifeq ($(LINKTYPE),static)
 V4L1_LIB      = libv4l1.a

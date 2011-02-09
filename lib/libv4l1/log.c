@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../libv4lconvert/libv4lsyscall-priv.h"
-#include <linux/videodev.h>
+#include "libv4l1-videodev.h"
 #include "libv4l1-priv.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -39,7 +39,6 @@ static const char *v4l1_ioctls[] = {
 	[_IOC_NR(VIDIOCSWIN)]       = "VIDIOCSWIN",
 	[_IOC_NR(VIDIOCGFBUF)]      = "VIDIOCGFBUF",
 	[_IOC_NR(VIDIOCSFBUF)]      = "VIDIOCSFBUF",
-	[_IOC_NR(VIDIOCKEY)]        = "VIDIOCKEY",
 	[_IOC_NR(VIDIOCGFREQ)]      = "VIDIOCGFREQ",
 	[_IOC_NR(VIDIOCSFREQ)]      = "VIDIOCSFREQ",
 	[_IOC_NR(VIDIOCGAUDIO)]     = "VIDIOCGAUDIO",
@@ -47,13 +46,6 @@ static const char *v4l1_ioctls[] = {
 	[_IOC_NR(VIDIOCSYNC)]       = "VIDIOCSYNC",
 	[_IOC_NR(VIDIOCMCAPTURE)]   = "VIDIOCMCAPTURE",
 	[_IOC_NR(VIDIOCGMBUF)]      = "VIDIOCGMBUF",
-	[_IOC_NR(VIDIOCGUNIT)]      = "VIDIOCGUNIT",
-	[_IOC_NR(VIDIOCGCAPTURE)]   = "VIDIOCGCAPTURE",
-	[_IOC_NR(VIDIOCSCAPTURE)]   = "VIDIOCSCAPTURE",
-	[_IOC_NR(VIDIOCSPLAYMODE)]  = "VIDIOCSPLAYMODE",
-	[_IOC_NR(VIDIOCSWRITEMODE)] = "VIDIOCSWRITEMODE",
-	[_IOC_NR(VIDIOCGPLAYINFO)]  = "VIDIOCGPLAYINFO",
-	[_IOC_NR(VIDIOCSMICROCODE)] = "VIDIOCSMICROCODE",
 	[_IOC_NR(VIDIOCGVBIFMT)]    = "VIDIOCGVBIFMT",
 	[_IOC_NR(VIDIOCSVBIFMT)]    = "VIDIOCSVBIFMT",
 };

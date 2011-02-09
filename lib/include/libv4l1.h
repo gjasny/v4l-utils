@@ -26,6 +26,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <libv4l1-videodev.h>
 
 #if __GNUC__ >= 4
 #define LIBV4L_PUBLIC __attribute__ ((visibility("default")))
