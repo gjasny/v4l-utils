@@ -321,11 +321,6 @@ int v4l1_open(const char *file, int oflag, ...)
 	if (SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap2))
 		return fd;
 
-	/* IMPROVEME */
-	/* we only support simple video capture devices which do not do overlay */
-	if ((cap2.capabilities & 0x0F) != V4L2_CAP_VIDEO_CAPTURE)
-		return fd;
-
 	/* If no log file was set by the app, see if one was specified through the
 	   environment */
 	if (!v4l1_log_file) {
