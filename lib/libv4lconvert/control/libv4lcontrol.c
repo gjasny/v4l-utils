@@ -471,7 +471,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0xa311, 0, "ASUSTeK Computer Inc.        ", "A3V       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
-	{ 0x17ef, 0x4816, 0, "LENOVO", "3093W11",
+	{ 0x17ef, 0x4816, 0, "LENOVO", NULL,
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
 		"ThinkPad X201 Tablet" },
 	{ 0x1d4d, 0x1002, 0, "ASUSTeK Computer Inc.        ", "B50A      ",
