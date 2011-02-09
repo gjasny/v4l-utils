@@ -323,9 +323,13 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer INC.", "K50AD",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	/* 2 reports:
+	   Unknown laptop model -> System Vendor: "  IDEALMAX"
+	   Síragon SL-6120      -> System Vendor: "PEGA PC"
+	   So we just put NULL in the dmi_system_vendor field. */
 	{ 0x064e, 0xa116, 0, "To be filled by O.E.M.", "H34",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
-		"  IDEALMAX", "H34" },
+		NULL, "H34" },
 	{ 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "UL30A     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa136, 0, "ASUSTeK Computer Inc.        ", "UL30VT    ",
