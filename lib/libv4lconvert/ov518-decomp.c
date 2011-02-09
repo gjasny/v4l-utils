@@ -791,14 +791,13 @@ DCT_8x4(int *coeff, unsigned char *out)
 {
 	register int base, val1, val2, val3;
 	int tmp1, tmp2;
-	int C0, C4, C16, C20;
+	int C4, C16, C20;
 	int C2_18, C6_22, C1_17, C3_19, C5_21, C7_23;
 	register int t;
 #ifdef APPROXIMATE_MUL_BY_SHIFT
 	register int x;
 #endif
 
-	C0 = coeff[0];
 	C4 = coeff[4];
 	C16 = coeff[16];
 	C20 = coeff[20];

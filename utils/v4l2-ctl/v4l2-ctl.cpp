@@ -2599,7 +2599,7 @@ int main(int argc, char **argv)
 		parm.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 		parm.parm.output.timeperframe.numerator = 1000;
 		parm.parm.output.timeperframe.denominator =
-			fps * parm.parm.output.timeperframe.numerator;
+			output_fps * parm.parm.output.timeperframe.numerator;
 
 		if (doioctl(fd, VIDIOC_S_PARM, &parm) == 0) {
 			struct v4l2_fract *tf = &parm.parm.output.timeperframe;

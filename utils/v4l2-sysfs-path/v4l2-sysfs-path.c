@@ -142,7 +142,6 @@ static char *seek_name(char *path, char *match)
 {
 	DIR             *dir;
 	struct dirent   *entry;
-	char		*p;
 	static char     name[1024];
 
 	dir = opendir(path);
@@ -151,7 +150,6 @@ static char *seek_name(char *path, char *match)
 
 	strcpy(name, path);
 	strcat(name, "/");
-	p = name + strlen(name);
 
 	entry = readdir(dir);
 	while (entry) {

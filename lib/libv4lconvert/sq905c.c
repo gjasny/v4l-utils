@@ -103,7 +103,7 @@ sq905c_second_decompress(unsigned char *uncomp, unsigned char *in,
 {
 	int diff = 0;
 	int tempval = 0;
-	int i, m, parity;
+	int i, m;
 	unsigned char delta_left = 0;
 	unsigned char delta_right = 0;
 	int input_counter = 0;
@@ -139,7 +139,6 @@ sq905c_second_decompress(unsigned char *uncomp, unsigned char *in,
 	for (m = 0; m < height / 2; m++) {
 		/* First we do an even-numbered line */
 		for (i = 0; i < width / 2; i++) {
-			parity = i & 1;
 			delta_right = in[input_counter] & 0x0f;
 			delta_left = (in[input_counter] >> 4) & 0xff;
 			input_counter++;

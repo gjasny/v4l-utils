@@ -1090,7 +1090,7 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 
 static int set_proto(struct rc_device *rc_dev)
 {
-	int rc;
+	int rc = 0;
 
 	if (rc_dev->version == VERSION_2) {
 		rc = v2_set_protocols(rc_dev);

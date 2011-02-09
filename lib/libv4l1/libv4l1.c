@@ -399,7 +399,7 @@ int v4l1_open(const char *file, int oflag, ...)
 		devices[index].flags |= V4L1_SUPPORTS_ENUMINPUT;
 
 	standard2.index = 0;
-	if (v4l2_ioctl(fd, VIDIOC_ENUMSTD, &input2) == 0)
+	if (v4l2_ioctl(fd, VIDIOC_ENUMSTD, &standard2) == 0)
 		devices[index].flags |= V4L1_SUPPORTS_ENUMSTD;
 
 	V4L1_LOG("open: %d\n", fd);
