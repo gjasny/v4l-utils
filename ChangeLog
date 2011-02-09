@@ -1,3 +1,13 @@
+v4l-utils-0.8.3
+---------------
+* Utils changes:
+  * Various ir-keytable improvements (mchehab)
+  * Various cx231xx parser improvements (mchehab)
+* libv4l changes
+  * Add a few more laptop models to the upside down devices table (hdegoede)
+  * Make libv4l1 compile with kernels >= 2.6.38, which no longer have the
+    v4l1 linux/videodev.h header (hdegoede)
+
 v4l-utils-0.8.2
 ---------------
 * Utils changes:
