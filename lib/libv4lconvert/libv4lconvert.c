@@ -70,6 +70,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_MR97310A,     V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
 	{ V4L2_PIX_FMT_SQ905C,       V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
 	{ V4L2_PIX_FMT_PJPG,         V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+	{ V4L2_PIX_FMT_JPGL,         V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
 	{ V4L2_PIX_FMT_OV511,        V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
 	{ V4L2_PIX_FMT_OV518,        V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
 };
@@ -639,6 +640,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			errno = EPIPE;
 			result = -1;
 		}
+		break;
+	case V4L2_PIX_FMT_JPGL:
+		result = jpgl_decode(src, src_size,
+					dest_pix_fmt, dest, width, height);
 		break;
 
 		/* Custom cam specific YUV formats */

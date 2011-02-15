@@ -222,4 +222,8 @@ int v4lconvert_helper_decompress(struct v4lconvert_data *data,
 
 void v4lconvert_helper_cleanup(struct v4lconvert_data *data);
 
+int jpgl_decode(const unsigned char *inp, int src_size,
+		unsigned int dest_pix_fmt, unsigned char *fb,
+		int img_width, int img_height);
+
 #endif
