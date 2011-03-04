@@ -550,6 +550,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	/* stv0680 based cams */
 	{ 0x0553, 0x0202, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
 	{ 0x041e, 0x4007, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
+	/* vicam based cams */
+	{ 0x04c1, 0x009d, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 1500 },
+	{ 0x0602, 0x1001, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 1500 },
 };
 
 static const struct v4l2_queryctrl fake_controls[];
