@@ -87,7 +87,7 @@ static int autogain_calculate_lookup_tables(
 	   as most exposure controls tend to jump with big steps in the low
 	   range, causing oscilation, so we prefer to use gain when exposure
 	   has hit this value */
-	exposure_low = expoctrl.maximum / 10;
+	exposure_low = (expoctrl.maximum - expoctrl.minimum) / 10;
 	/* If we have a fine grained exposure control only avoid the last 10 steps */
 	steps = exposure_low / expoctrl.step;
 	if (steps > 10)
