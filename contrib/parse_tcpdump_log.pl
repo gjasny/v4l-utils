@@ -1,4 +1,16 @@
 #!/usr/bin/perl
+
+#   Copyright (C) 2011 Mauro Carvalho Chehab <mchehab@redhat.com>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, version 2 of the License.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
 # using cpan, you should install Net::TcpDumpLog
 use Net::TcpDumpLog;
 use strict;
@@ -294,5 +306,18 @@ A typical usage is to call tcpdump with:
 after finishing data collection, parse it with:
 
 	$ B<parse_tcpdump_log.pl> usb_device.tcpdump
+
+=head1 BUGS
+
+Report bugs to Mauro Carvalho Chehab <mchehab@redhat.com>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2011 by Mauro Carvalho Chehab <mchehab@redhat.com>.
+
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
 
 =cut
