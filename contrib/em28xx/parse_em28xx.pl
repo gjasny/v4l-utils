@@ -282,8 +282,14 @@ while (<>) {
 
 	if (m/40 0[23] 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\>]+\s+([0-9a-f ]+)/) {
 		printf "i2c_master_send(0x$1>>1, { $3 }, 0x$2);\n";
+		next;
 	}
 	if (m/c0 0[23] 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\<]+\s+([0-9a-f ]+)/) {
 		printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* $3 */\n";
+		next;
+	}
+	if (m/c0 0[23] 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\<]+/) {
+		printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* nothing returned */\n";
+		next;
 	}
 }
