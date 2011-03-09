@@ -28,12 +28,17 @@ sub print_frame($$)
 	my %req = %{ @_[0] };
 	my %resp = %{ @_[1] };
 
+	if (!$initial_time) {
+		$initial_time = $req{"Time"};
+		$last_time = $initial_time;
+	}
+
 	# Print timestamps:
 	#	relative time from resp 1
 	#	relative time from last resp
 	#	time to complete
 	printf "%09d ms %06d ms (%06d us",
-		1000 * $req{"Time"} + 0.5,
+		1000 * ($req{"Time"} - $initial_time) + 0.5,
 		1000 * ($req{"Time"} - $last_time) + 0.5,
 		($resp{"Time"} - $req{"Time"}) * 1000000 + 0.5;
 	$last_time = $req{"Time"};
@@ -81,8 +86,6 @@ sub print_frame($$)
 
 sub process_frame($) {
 	my %frame = %{ @_[0] };
-
-	$initial_time = $frame{"Arrival"} if (!$initial_time);
 
 	if ($debug > 1) {
 		my ($key, $value);
