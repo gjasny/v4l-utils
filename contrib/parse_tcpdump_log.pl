@@ -33,9 +33,9 @@ sub print_frame($$)
 	#	relative time from last resp
 	#	time to complete
 	printf "%09d ms %06d ms (%06d us",
-		1000 * $req{"Time"},
-		1000 * ($req{"Time"} - $last_time),
-		($resp{"Time"} - $req{"Time"}) * 1000000;
+		1000 * $req{"Time"} + 0.5,
+		1000 * ($req{"Time"} - $last_time) + 0.5,
+		($resp{"Time"} - $req{"Time"}) * 1000000 + 0.5;
 	$last_time = $req{"Time"};
 
 	printf " EP=%02x)", $resp{"Endpoint"};
