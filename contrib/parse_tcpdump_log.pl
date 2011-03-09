@@ -2,13 +2,14 @@
 # using cpan, you should install Net::TcpDumpLog
 use Net::TcpDumpLog;
 use strict;
-
+use Getopt::Long;
 
 # Currently, accepts only one usbmon format:
 #	USB with padded Linux header (LINKTYPE_USB_LINUX_MMAPPED)
 # This is the one produced by Beagleboard sniffer GSOC.
 
 my $debug = 0;
+GetOptions('debug' => \$debug);
 
 # Frame format as parsed by libpcap 1.0.0 and 1.1.1. Not sure if format
 # changed on different versions.
