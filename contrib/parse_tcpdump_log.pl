@@ -8,8 +8,12 @@ use Getopt::Long;
 #	USB with padded Linux header (LINKTYPE_USB_LINUX_MMAPPED)
 # This is the one produced by Beagleboard sniffer GSOC.
 
+# Debug levels:
+#	1 - frame request and frame response
+#	2 - parsed frames
+#	4 - raw data
 my $debug = 0;
-GetOptions('debug' => \$debug);
+GetOptions('debug=i' => \$debug);
 
 # Frame format as parsed by libpcap 1.0.0 and 1.1.1. Not sure if format
 # changed on different versions.
@@ -77,7 +81,7 @@ sub print_frame($$)
 
 	print "\n";
 
-	if ($debug) {
+	if ($debug & 1) {
 		my ($key, $value);
 		print "\tREQ:  $key => $value\n" while (($key, $value) = each(%req));
 		print "\tRESP: $key => $value\n" while (($key, $value) = each(%resp));
@@ -90,8 +94,9 @@ sub print_frame($$)
 sub process_frame($) {
 	my %frame = %{ @_[0] };
 
-	if ($debug > 1) {
+	if ($debug & 2) {
 		my ($key, $value);
+		print "PARSED data:\n";
 		print "\t\tRAW: $key => $value\n" while (($key, $value) = each(%frame));
 		print "\n";
 	}
@@ -147,7 +152,8 @@ sub parse_file($)
 		my $strdata = $log->data($index);
 		my @data=unpack('C*', $strdata);
 
-		if ($debug > 2) {
+		if ($debug & 4) {
+			print "RAW DATA: ";
 			for (my $i = 0; $i < scalar(@data); $i++) {
 				printf " %02x", $data[$i];
 			}
@@ -225,11 +231,6 @@ sub parse_file($)
 		$frame{"Payload"} = $payload;
 		$frame{"PayloadSize"} = $payload_size;
 
-		if ($debug > 1) {
-			my ($key, $value);
-			print "\t$key => $value\n" while (($key, $value) = each(%frame));
-			printf "\n";
-		}
 		process_frame(\%frame);
 	}
 }
