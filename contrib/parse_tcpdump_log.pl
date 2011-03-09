@@ -73,6 +73,8 @@ sub print_frame($$)
 		$app_data = substr($app_data, 2);
 	}
 
+	printf " ERROR %d",$resp{"Status"} if ($resp{"Status"});
+
 	print "\n";
 
 	if ($debug) {
