@@ -57,13 +57,13 @@ sub print_frame($$)
 
 	my $app_data = substr($req{"Payload"}, 24 * 2);
 	while ($app_data ne "") {
-		printf " %02x", substr($app_data, 0, 2);
+		printf " %s", substr($app_data, 0, 2);
 		$app_data = substr($app_data, 2);
 	}
 
 	my $app_data = substr($resp{"Payload"}, 24 * 2);
 	while ($app_data ne "") {
-		printf " %02x", substr($app_data, 0, 2);
+		printf " %s", substr($app_data, 0, 2);
 		$app_data = substr($app_data, 2);
 	}
 
