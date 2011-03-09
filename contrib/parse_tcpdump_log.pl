@@ -3,6 +3,7 @@
 use Net::TcpDumpLog;
 use strict;
 use Getopt::Long;
+use Pod::Usage;
 
 # Currently, accepts only one usbmon format:
 #	USB with padded Linux header (LINKTYPE_USB_LINUX_MMAPPED)
@@ -13,7 +14,15 @@ use Getopt::Long;
 #	2 - parsed frames
 #	4 - raw data
 my $debug = 0;
-GetOptions('debug=i' => \$debug);
+
+my $man = 0;
+my $help = 0;
+GetOptions('debug=i' => \$debug,
+	   'help|?' => \$help,
+	    man => \$man
+	  ) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 # Frame format as parsed by libpcap 1.0.0 and 1.1.1. Not sure if format
 # changed on different versions.
@@ -237,3 +246,53 @@ sub parse_file($)
 
 # Main program
 parse_file $filename;
+
+__END__
+
+=head1 NAME
+
+parse_tcpdump_log.pl - Parses a tcpdump log captured via usbmon.
+
+=head1 SYNOPSIS
+
+parse_tcpdump_log.pl [options] [file ...]
+
+Options:
+
+	--help			brief help message
+
+	--man			full documentation
+
+	--debug [log level]	enables debug
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Print a brief help message and exits.
+
+=item B<--man>
+
+Prints the manual page and exits.
+
+=item B<--debug> [log level]
+
+Changes the debug log level.
+
+=back
+
+=head1 DESCRIPTION
+
+B<parse_tcpdump_log.pl> will parse a tcpdump log captured via usbmon.
+
+A typical usage is to call tcpdump with:
+
+	# tcpdump -i usbmon1 -w usb_device.tcpdump
+
+after finishing data collection, parse it with:
+
+	$ B<parse_tcpdump_log.pl> usb_device.tcpdump
+
+=cut
