@@ -46,7 +46,7 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 my $filename;
 
 # FIXME: use shift of die, after finishing the tests
-$filename = shift or die "Please specify a file name";
+$filename = shift;
 
 #
 # tcpdump code imported from Tcpdumplog.pm
@@ -510,7 +510,12 @@ sub parse_file($)
 # Main program, reading from a file. A small change is needed to allow it to
 # accept a pipe
 
-open my $fh, "<$filename" || die "ERROR: Can't read log $filename: $!\n";
+my $fh;
+if (!$filename) {
+	$fh = *STDIN;
+} else {
+	open $fh, "<$filename" || die "ERROR: Can't read log $filename: $!\n";
+}
 binmode $fh;
 parse_file $fh;
 #parse_file $fh;
@@ -562,7 +567,11 @@ A typical usage is to call tcpdump with:
 
 after finishing data collection, parse it with:
 
-	$ B<parse_tcpdump_log.pl> usb_device.tcpdump
+	$ parse_tcpdump_log.pl usb_device.tcpdump
+
+it is also possible to use it via pipe, like:
+
+	$ cat usb_device.tcpdump | parse_tcpdump_log.pl
 
 =head1 BUGS
 
