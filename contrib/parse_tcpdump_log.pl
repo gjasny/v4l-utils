@@ -15,15 +15,13 @@
 # reduce memory footprint and allow doing realtime parsing.
 # The TcpDumpLog.pm is copyrighted by Brendan Gregg.
 #
+# Currently, the program is known to work with the frame formats as parsed by
+# libpcap 1.0.0 and 1.1.1, and provided that usbmon is using the mmaped
+# header: USB with padded Linux header (LINKTYPE_USB_LINUX_MMAPPED)
 
-# using cpan, you should install Net::TcpDumpLog
 use strict;
 use Getopt::Long;
 use Pod::Usage;
-
-# Currently, accepts only one usbmon format:
-#	USB with padded Linux header (LINKTYPE_USB_LINUX_MMAPPED)
-# This is the one produced by Beagleboard sniffer GSOC.
 
 # Debug levels:
 #	1 - frame request and frame response
@@ -40,13 +38,7 @@ GetOptions('debug=i' => \$debug,
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
-# Frame format as parsed by libpcap 1.0.0 and 1.1.1. Not sure if format
-# changed on different versions.
-
-my $filename;
-
-# FIXME: use shift of die, after finishing the tests
-$filename = shift;
+my $filename = shift;
 
 #
 # tcpdump code imported from Tcpdumplog.pm
