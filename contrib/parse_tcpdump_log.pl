@@ -10,9 +10,13 @@
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU General Public License for more details.
+#
+# tcpdump parser imported from TcpDumpLog.pm, in order to improve performance,
+# reduce memory footprint and allow doing realtime parsing.
+# The TcpDumpLog.pm is copyrighted by Brendan Gregg.
+#
 
 # using cpan, you should install Net::TcpDumpLog
-use Net::TcpDumpLog;
 use strict;
 use Getopt::Long;
 use Pod::Usage;
@@ -43,6 +47,255 @@ my $filename;
 
 # FIXME: use shift of die, after finishing the tests
 $filename = shift or die "Please specify a file name";
+
+#
+# tcpdump code imported from Tcpdumplog.pm
+# Copyright (c) 2003 Brendan Gregg. All rights reserved.  This
+#     library is free software; you can redistribute it and/or
+#     modify it under the same terms as Perl itself
+# Perl is dual-licensed between GPL and Artistic license, so we've opted
+# to make this utility as GPLv2.
+#
+# This is basically the code from TcpDumpLog.pm. The only change is that
+# instead of implementing a read() method, it was broken into two routines:
+# get_header() and get_packet(). Also, only the used sub-routines were
+# imported.
+#
+
+sub new {
+	my $proto = shift;
+	my $class = ref($proto) || $proto;
+	my $self = {};
+
+	my $bits = shift;
+	my $skip = shift;
+
+	$self->{major} = undef;
+	$self->{minor} = undef;
+	$self->{zoneoffset} = undef;
+	$self->{accuracy} = undef;
+	$self->{dumplength} = undef;
+	$self->{linktype} = undef;
+	$self->{bigendian} = undef;
+	$self->{data} = [];
+	$self->{length_orig} = [];
+	$self->{length_inc} = [];
+	$self->{drops} = [];
+	$self->{seconds} = [];
+	$self->{msecs} = [];
+	$self->{count} = 0;
+	$self->{sizeint} = length(pack("I",0));
+
+	if (defined $bits && $bits == 64) {
+		$self->{bits} = 64;
+	} elsif (defined $bits && $bits == 32) {
+		$self->{bits} = 32;
+	} else {
+		$self->{bits} = 0;	# Use native OS bits
+	}
+
+	if (defined $skip && $skip > 0) {
+		$self->{skip} = $skip;
+	}
+
+	bless($self,$class);
+	return $self;
+}
+
+sub get_header {
+        my $self = shift;
+	my $fh = shift;
+
+	my ($header, $length, $major, $minor, $zoneoffset, $accuracy);
+	my ($dumplength, $linktype, $version, $ident, $rest);
+
+	$length = read($fh, $header, 24);
+	die "ERROR: Can't read from tcpdump log\n" if $length < 24;
+
+	### Check file really is a tcpdump file
+	($ident, $rest) = unpack('a4a20', $header);
+
+	### Find out what type of tcpdump file it is
+	if ($ident =~ /^\241\262\303\324/) {
+		#
+		#  Standard format big endian, header "a1b2c3d4"
+		#  Seen from:
+		#	Solaris tcpdump
+		#	Solaris Ethereal "libpcap" format
+		#
+		$self->{style} = "standard1";
+		$self->{bigendian} = 1;
+		($ident,$major,$minor,$zoneoffset,$accuracy,$dumplength,
+		 $linktype) = unpack('a4nnNNNN',$header);
+	}
+	if ($ident =~ /^\324\303\262\241/) {
+		#
+		#  Standard format little endian, header "d4c3b2a1"
+		#  Seen from:
+		#	Windows Ethereal "libpcap" format
+		#
+		$self->{style} = "standard2";
+		$self->{bigendian} = 0;
+		($ident,$major,$minor,$zoneoffset,$accuracy,$dumplength,
+		 $linktype) = unpack('a4vvVVVV',$header);
+	}
+	if ($ident =~ /^\241\262\315\064/) {
+		#
+		#  Modified format big endian, header "a1b2cd34"
+		#  Seen from:
+		#	Solaris Ethereal "modified" format
+		#
+		$self->{style} = "modified1";
+		$self->{bigendian} = 1;
+		($ident,$major,$minor,$zoneoffset,$accuracy,$dumplength,
+		 $linktype) = unpack('a4nnNNNN',$header);
+	}
+	if ($ident =~ /^\064\315\262\241/) {
+		#
+		#  Modified format little endian, header "cd34a1b2"
+		#  Seen from:
+		#	Red Hat tcpdump
+		#	Windows Ethereal "modified" format
+		#
+		$self->{style} = "modified2";
+		$self->{bigendian} = 0;
+		($ident,$major,$minor,$zoneoffset,$accuracy,$dumplength,
+		 $linktype) = unpack('a4vvVVVV',$header);
+	}
+
+	### Store values
+	$self->{version} = $version;
+	$self->{major} = $major;
+	$self->{minor} = $minor;
+	$self->{zoneoffset} = $zoneoffset;
+	$self->{accuracy} = $accuracy;
+	$self->{dumplength} = $dumplength;
+	$self->{linktype} = $linktype;
+}
+
+sub get_packet {
+        my $self = shift;
+	my $fh = shift;
+
+	my ($frame_data, $frame_drops, $frame_length_inc, $frame_length_orig);
+	my ($frame_msecs, $frame_seconds, $header_rec, $length, $more);
+
+	if ($self->{bits} == 64) {
+		#
+		#  64-bit timestamps, quads
+		#
+
+		### Fetch record header
+		$length = read($fh, $header_rec, 24);
+
+		### Quit loop if at end of file
+		return -1 if $length < 24;
+
+		### Unpack header
+		($frame_seconds, $frame_msecs, $frame_length_inc,
+			$frame_length_orig) = unpack('QQLL',$header_rec);
+	} elsif ($self->{bits} == 32) {
+		#
+		#  32-bit timestamps, big-endian
+		#
+
+		### Fetch record header
+		$length = read($fh, $header_rec, 16);
+
+		### Quit loop if at end of file
+		return -1 if $length < 16;
+
+		### Unpack header
+		if ($self->{bigendian}) {
+			($frame_seconds, $frame_msecs,
+				$frame_length_inc, $frame_length_orig)
+				= unpack('NNNN', $header_rec);
+		} else {
+			($frame_seconds, $frame_msecs,
+				$frame_length_inc, $frame_length_orig)
+				= unpack('VVVV', $header_rec);
+		}
+	} else {
+		#
+		#  Default to OS native timestamps
+		#
+
+		### Fetch record header
+		$length = read($fh, $header_rec,
+			($self->{sizeint} * 2 + 8) );
+
+		### Quit loop if at end of file
+		return -1 if $length < ($self->{sizeint} * 2 + 8);
+
+		### Unpack header
+		if ($self->{sizeint} == 4) {	# 32-bit
+			if ($self->{bigendian}) {
+				($frame_seconds, $frame_msecs,
+					$frame_length_inc, $frame_length_orig)
+					= unpack('NNNN', $header_rec);
+			} else {
+				($frame_seconds, $frame_msecs,
+					$frame_length_inc, $frame_length_orig)
+					= unpack('VVVV', $header_rec);
+			}
+		} else {			# 64-bit?
+			if ($self->{bigendian}) {
+				($frame_seconds, $frame_msecs,
+					$frame_length_inc, $frame_length_orig)
+					= unpack('IINN', $header_rec);
+			} else {
+				($frame_seconds,$frame_msecs,
+					$frame_length_inc, $frame_length_orig)
+					= unpack('IIVV', $header_rec);
+			}
+		}
+	}
+
+	### Fetch extra info if in modified format
+	if ($self->{style} =~ /^modified/) {
+		$length = read($fh, $more, 8);
+	}
+
+	### Check for skip bytes
+	if (defined $self->{skip}) {
+		$length = read($fh, $more, $self->{skip});
+	}
+
+	### Fetch the data
+	$length = read($fh, $frame_data, $frame_length_inc);
+
+	$frame_drops = $frame_length_orig - $frame_length_inc;
+
+	### Store values in memory
+	$self->{data} = $frame_data;
+	$self->{length_orig} = $frame_length_orig;
+	$self->{length_inc} = $frame_length_inc;
+	$self->{drops} = $frame_drops;
+	$self->{seconds} = $frame_seconds;
+	$self->{msecs} = $frame_msecs;
+	$self->{count}++;
+
+	return 0;
+}
+
+sub packet {
+	my $self = shift;
+	return ($self->{length_orig},
+		$self->{length_inc},
+		$self->{drops},
+		$self->{seconds},
+		$self->{msecs},
+		$self->{data});
+}
+
+sub linktype {
+	my $self = shift;
+	return sprintf("%u",$self->{linktype});
+}
+
+#
+# USBMON-specific code, written by Mauro Carvalho Chehab
+#
 
 my @pending;
 
@@ -153,24 +406,22 @@ sub process_frame($) {
 
 sub parse_file($)
 {
-	my $file = shift;
+	my $fh = shift;
 
-	my $log = Net::TcpDumpLog->new();
-	$log->read($file);
+	my $log = new();
+	$log->get_header($fh);
 
 	# Check for LINKTYPE_USB_LINUX_MMAPPED (220)
 	if ($log->linktype() != 220) {
 		printf"Link type %d\n", $log->linktype();
-		die "Link type is not USB";
+		die "ERROR: Link type is not USB";
 	}
-	my @Indexes = $log->indexes;
 
-	foreach my $index (@Indexes) {
+	while ($log->get_packet($fh) == 0) {
 		my %frame;
-		my ($length_orig,$length_incl,$drops,$secs,$msecs) = $log->header($index);
+		my ($length_orig,$length_incl,$drops,$secs,$msecs,$strdata) = $log->packet();
 		$frame{"Time"} = sprintf "%d.%06d", $secs,$msecs;
 
-		my $strdata = $log->data($index);
 		my @data=unpack('C*', $strdata);
 
 		if ($debug & 4) {
@@ -256,8 +507,14 @@ sub parse_file($)
 	}
 }
 
-# Main program
-parse_file $filename;
+# Main program, reading from a file. A small change is needed to allow it to
+# accept a pipe
+
+open my $fh, "<$filename" || die "ERROR: Can't read log $filename: $!\n";
+binmode $fh;
+parse_file $fh;
+#parse_file $fh;
+close $fh;
 
 __END__
 
