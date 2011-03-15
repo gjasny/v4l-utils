@@ -19,7 +19,13 @@
 # libpcap 1.0.0 and 1.1.1, and provided that usbmon is using the mmaped
 # header: USB with padded Linux header (LINKTYPE_USB_LINUX_MMAPPED)
 
+# using cpan, you should install Net::Pcap, in order to allow direct capture
+#	On Fedora/RHEL6, it is called "perl-Net-Pcap"
+# FIXME: make this dependency optional
+use Net::Pcap;
+
 use strict;
+#use warnings;
 use Getopt::Long;
 use Pod::Usage;
 
@@ -31,14 +37,23 @@ my $debug = 0;
 
 my $man = 0;
 my $help = 0;
+my $pcap = 0;
+my $device;
+
 GetOptions('debug=i' => \$debug,
 	   'help|?' => \$help,
+	   'pcap' => \$pcap,
+	   'device=s' => \$device,
 	    man => \$man
 	  ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 my $filename = shift;
+
+$pcap = 1 if ($device);
+$device = "usbmon1" if ($pcap && !$device);
+die "Or use pcap or specify a filename" if ($pcap && $filename);
 
 #
 # tcpdump code imported from Tcpdumplog.pm
@@ -265,6 +280,7 @@ sub get_packet {
 	$self->{drops} = $frame_drops;
 	$self->{seconds} = $frame_seconds;
 	$self->{msecs} = $frame_msecs;
+	$self->{more} = $more;
 	$self->{count}++;
 
 	return 0;
@@ -277,6 +293,7 @@ sub packet {
 		$self->{drops},
 		$self->{seconds},
 		$self->{msecs},
+		$self->{more},
 		$self->{data});
 }
 
@@ -396,22 +413,14 @@ sub process_frame($) {
 	return;
 }
 
-sub parse_file($)
+sub parse_file
 {
+	my $log = shift;
 	my $fh = shift;
-
-	my $log = new();
-	$log->get_header($fh);
-
-	# Check for LINKTYPE_USB_LINUX_MMAPPED (220)
-	if ($log->linktype() != 220) {
-		printf"Link type %d\n", $log->linktype();
-		die "ERROR: Link type is not USB";
-	}
 
 	while ($log->get_packet($fh) == 0) {
 		my %frame;
-		my ($length_orig,$length_incl,$drops,$secs,$msecs,$strdata) = $log->packet();
+		my ($length_orig,$length_incl,$drops,$secs,$msecs,$more,$strdata) = $log->packet();
 		$frame{"Time"} = sprintf "%d.%06d", $secs,$msecs;
 
 		my @data=unpack('C*', $strdata);
@@ -448,11 +457,9 @@ sub parse_file($)
 	#	u_int32_t ndesc;	/* number of isochronous descriptors */
 	#} pcap_usb_header_mmapped;
 
-		# Not sure if this would work on 32-bits machines
-		$frame{"ID"} = $data[0]       | $data[1] << 8 |
-			$data[2] << 16 | $data[3] << 24 |
-			$data[4] << 32 | $data[5] << 40 |
-			$data[6] << 48 | $data[7] << 56;
+		$frame{"ID"} = sprintf("0x%02x%02x%02x%02x%02x%02x%02x%02x",
+					$data[7], $data[6], $data[5], $data[4],
+					$data[3], $data[2], $data[1], $data[0]);
 		$frame{"Type"} = chr($data[8]);
 		$frame{"TransferType"} = $data[9];
 		$frame{"Endpoint"} = $data[10];
@@ -468,6 +475,7 @@ sub parse_file($)
 		} else {
 			$frame{"HasData"} = "not present";
 		}
+		# Not sure if this would work on 32-bits machines
 		my $tsSec = $data[16]       | $data[17] << 8 |
 			$data[18] << 16 | $data[19] << 24 |
 			$data[20] << 32 | $data[21] << 40 |
@@ -492,6 +500,7 @@ sub parse_file($)
 			$payload .= sprintf "%02x", $data[$i];
 			$payload_size++;
 		}
+#		$frame{"More"} = $more;
 		$frame{"Payload"} = $payload;
 		$frame{"PayloadSize"} = $payload_size;
 
@@ -499,19 +508,143 @@ sub parse_file($)
 	}
 }
 
+my $caplog;
+sub handle_pcap_packet($$$)
+{
+	my $user_data = @_[0];
+	my %hdr = %{ @_[1] };
+	my $strdata = @_[2];
+
+	my %frame;
+
+#	my ($length_orig,$length_incl,$drops,$secs,$msecs,$more,$strdata) = $caplog->packet();
+	$frame{"Time"} = sprintf "%d.%06d", $hdr{tv_sec}, $hdr{tv_usec};
+
+	my @data=unpack('C*', "$strdata");
+
+	if ($debug & 4) {
+		printf "RAW DATA (len %d, cap len %d, %d.%06d): ",
+			$hdr{len}, $hdr{caplen}, $hdr{tv_sec}, $hdr{tv_usec};
+		for (my $i = 0; $i < scalar(@data); $i++) {
+			printf " %02x", $data[$i];
+		}
+		print "\n";
+	}
+
+	#typedef struct _usb_header_mmapped {
+	#	u_int64_t id;
+	#	u_int8_t event_type;
+	#	u_int8_t transfer_type;
+	#	u_int8_t endpoint_number;
+	#	u_int8_t device_address;
+	#	u_int16_t bus_id;
+	#	char setup_flag;/*if !=0 the urb setup header is not present*/
+	#	char data_flag; /*if !=0 no urb data is present*/
+	#	int64_t ts_sec;
+	#	int32_t ts_usec;
+	#	int32_t status;
+	#	u_int32_t urb_len;
+	#	u_int32_t data_len; /* amount of urb data really present in this event*/
+	#	union {
+	#		pcap_usb_setup setup;
+	#		iso_rec iso;
+	#	} s;
+	#	int32_t	interval;	/* for Interrupt and Isochronous events */
+	#	int32_t start_frame;	/* for Isochronous events */
+	#	u_int32_t xfer_flags;	/* copy of URB's transfer flags */
+	#	u_int32_t ndesc;	/* number of isochronous descriptors */
+	#} pcap_usb_header_mmapped;
+
+	$frame{"ID"} = sprintf("0x%02x%02x%02x%02x%02x%02x%02x%02x",
+				$data[7], $data[6], $data[5], $data[4],
+				$data[3], $data[2], $data[1], $data[0]);
+	$frame{"Type"} = chr($data[8]);
+	$frame{"TransferType"} = $data[9];
+	$frame{"Endpoint"} = $data[10];
+	$frame{"Device"} = $data[11];
+	$frame{"BusID"} = $data[12] | $data[13] << 8;
+	if ($data[14] == 0) {
+		$frame{"SetupRequest"} = "present";
+	} else {
+		$frame{"SetupRequest"} = "not present";
+	}
+	if ($data[15] == 0) {
+		$frame{"HasData"} = "present";
+	} else {
+		$frame{"HasData"} = "not present";
+	}
+	# Not sure if this would work on 32-bits machines
+	my $tsSec = $data[16]       | $data[17] << 8 |
+		$data[18] << 16 | $data[19] << 24 |
+		$data[20] << 32 | $data[21] << 40 |
+		$data[22] << 48 | $data[23] << 56;
+	my $tsUsec = $data[24]       | $data[25] << 8 |
+		$data[26] << 16 | $data[27] << 24;
+	$frame{"ArrivalTime"} = sprintf "%d.%06d", $tsSec,$tsUsec;
+
+	# Status is signed with 32 bits. Fix signal, as errors are negative
+	$frame{"Status"} = $data[28]       | $data[29] << 8 |
+			$data[30] << 16 | $data[31] << 24;
+	$frame{"Status"} = $frame{"Status"} - 0x100000000 if ($frame{"Status"} & 0x80000000);
+
+	$frame{"URBLength"} = $data[32]       | $data[33] << 8 |
+			$data[34] << 16 | $data[35] << 24;
+	$frame{"DataLength"} = $data[36]       | $data[37] << 8 |
+			$data[38] << 16 | $data[39] << 24;
+#	$frame{"More"} = $more;
+
+	my $payload;
+	my $payload_size;
+	for (my $i = 40; $i < scalar(@data); $i++) {
+		$payload .= sprintf "%02x", $data[$i];
+		$payload_size++;
+	}
+	$frame{"Payload"} = $payload;
+	$frame{"PayloadSize"} = $payload_size;
+
+	process_frame(\%frame);
+}
+
+
 # Main program, reading from a file. A small change is needed to allow it to
 # accept a pipe
 
-my $fh;
-if (!$filename) {
-	$fh = *STDIN;
+if (!$pcap) {
+	my $fh;
+	if (!$filename) {
+		$fh = *STDIN;
+	} else {
+		open $fh, "<$filename" || die "ERROR: Can't read log $filename: $!\n";
+	}
+	binmode $fh;
+
+	my $log = new();
+	$log->get_header($fh);
+
+	# Check for LINKTYPE_USB_LINUX_MMAPPED (220)
+	if ($log->linktype() != 220) {
+		printf"Link type %d\n", $log->linktype();
+		die "ERROR: Link type is not USB";
+	}
+
+	parse_file $log, $fh;
+	close $fh;
 } else {
-	open $fh, "<$filename" || die "ERROR: Can't read log $filename: $!\n";
+	my $err;
+
+	$pcap = Net::Pcap::open_live($device, 65535, 0, 1000, \$err);
+	die $err if ($err);
+
+	my $dl = Net::Pcap::datalink($pcap);
+	if ($dl != 220) {
+		printf"Link type %d\n", $dl;
+		die "ERROR: Link type is not USB";
+	}
+
+	Net::Pcap::loop($pcap, -1, \&handle_pcap_packet, '');
+	Net::Pcap::close($pcap);
+	die $err;
 }
-binmode $fh;
-parse_file $fh;
-#parse_file $fh;
-close $fh;
 
 __END__
 
@@ -531,6 +664,10 @@ Options:
 
 	--debug [log level]	enables debug
 
+	--pcap			enables pcap capture
+
+	--device [usbmon dev]	allow changing the usbmon device (default: usbmon1)
+
 =head1 OPTIONS
 
 =over 8
@@ -547,21 +684,39 @@ Prints the manual page and exits.
 
 Changes the debug log level.
 
+=item B<--pcap>
+
+Enables the capture from the usbmon directly, using Net::Pcap. For this
+to work, the kernel should be compiled with CONFIG_USB_MON, and the driver
+needs to be loaded, if compiled as a module.
+
+=item B<--device>
+
+Enables the capture from the usbmon directly, using Net::Pcap, using an
+interface different than usbmon1. It should be noticed, however, that the
+only datalink that this script can parse is the one provided by usbmon,
+e. g. datalink equal to 220 (LINKTYPE_USB_LINUX_MMAPPED).
+
 =back
 
 =head1 DESCRIPTION
 
 B<parse_tcpdump_log.pl> will parse a tcpdump log captured via usbmon.
 
-A typical usage is to call tcpdump with:
+A typical usage is to do a real time capture and parser with:
+
+	# parse_tcpdump_log.pl --pcap
+
+Alternatively, it may work with an offline capture. In this case, the
+capture should be done with:
 
 	# tcpdump -i usbmon1 -w usb_device.tcpdump
 
-after finishing data collection, parse it with:
+And the file will be parsed it with:
 
 	$ parse_tcpdump_log.pl usb_device.tcpdump
 
-it is also possible to use it via pipe, like:
+It is also possible to parse a file via pipe, like:
 
 	$ cat usb_device.tcpdump | parse_tcpdump_log.pl
 
