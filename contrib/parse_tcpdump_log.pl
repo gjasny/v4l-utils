@@ -413,7 +413,6 @@ sub process_frame($) {
 	return;
 }
 
-
 # Decode an USB header mapped frame. The frame is defined at libpcap as:
 #
 #typedef struct _usb_header_mmapped {
@@ -443,11 +442,10 @@ sub decode_frame($) {
 	my $strdata = shift;
 	my %frame;
 
-	my @data=unpack('C*', "$strdata");
 	if ($debug & 4) {
 		print "RAW DATA: ";
-		for (my $i = 0; $i < scalar(@data); $i++) {
-			printf " %02x", $data[$i];
+		for (my $i = 0; $i < length($strdata); $i++) {
+			printf " %02x", ord(substr($strdata, $i, 1));
 		}
 		print "\n";
 	}
@@ -478,11 +476,10 @@ sub decode_frame($) {
 
 	my $payload;
 	my $payload_size;
-	for (my $i = 40; $i < scalar(@data); $i++) {
-		$payload .= sprintf "%02x", $data[$i];
+	for (my $i = 40; $i < length($strdata); $i++) {
+		$payload .= sprintf "%02x", ord(substr($strdata, $i, 1));
 		$payload_size++;
 	}
-#		$frame{"More"} = $more;
 	$frame{"Payload"} = $payload;
 	$frame{"PayloadSize"} = $payload_size;
 
@@ -498,6 +495,12 @@ sub parse_file($$)
 		my ($length_orig,$length_incl,$drops,$secs,$msecs,$more,$strdata) = $log->packet();
 		my %frame = decode_frame($strdata);
 		$frame{"Time"} = sprintf "%d.%06d", $secs,$msecs;
+		my $s;
+		for (my $i = 0; $i < length($more); $i++) {
+			$s .= sprintf "%02x", ord(substr($more, $i, 1));
+		}
+		$frame{"More"} = $s;
+
 		process_frame(\%frame);
 	}
 }
