@@ -110,7 +110,7 @@ sub new {
 }
 
 sub get_header {
-        my $self = shift;
+	my $self = shift;
 	my $fh = shift;
 
 	my ($header, $length, $major, $minor, $zoneoffset, $accuracy);
@@ -181,7 +181,7 @@ sub get_header {
 }
 
 sub get_packet {
-        my $self = shift;
+	my $self = shift;
 	my $fh = shift;
 
 	my ($frame_data, $frame_drops, $frame_length_inc, $frame_length_orig);
@@ -719,6 +719,33 @@ And the file will be parsed it with:
 It is also possible to parse a file via pipe, like:
 
 	$ cat usb_device.tcpdump | parse_tcpdump_log.pl
+
+=head1 DUMP OUTPUT FORMAT:
+
+The output of the script looks like:
+
+ 000000000 ms 000000 ms (000127 us EP=80) 80 06 00 01 00 00 28 00 >>> 12 01 00 02 00 00 00 40 40 20 13 65 10 01 00 01 02 01
+ 000000000 ms 000000 ms (000002 us EP=80) 80 06 00 01 00 00 28 00 >>> 12 01 00 02 09 00 00 40 6b 1d 02 00 06 02 03 02 01 01
+ 000000006 ms 000005 ms (000239 us EP=80) c0 00 00 00 45 00 03 00 <<< 00 00 10
+ 000001006 ms 001000 ms (000112 us EP=80) c0 00 00 00 45 00 03 00 <<< 00 00 10
+ 000001106 ms 000100 ms (000150 us EP=80) c0 00 00 00 45 00 03 00 <<< 00 00 10
+
+The provided info are:
+
+    - Time from the script start;
+    - Time from the last transaction;
+    - Time between URB send request and URB response;
+    - Endpoint for the transfer;
+    - 8 bytes with the following URB fields:
+	- Type (1 byte);
+	- Request (1 byte);
+	- wValue (2 bytes);
+	- wIndex (2 bytes);
+	- wLength (2 bytes);
+    - URB direction:
+	>>> - To URB device
+	<<< - To host
+    - Optional data (length is given by wLength).
 
 =head1 BUGS
 
