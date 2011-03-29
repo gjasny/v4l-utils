@@ -2521,8 +2521,9 @@ int main(int argc, char **argv)
 	/* Set options */
 
 	if (options[OptStreamOff]) {
-		int dummy = 0;
-		doioctl(fd, VIDIOC_STREAMOFF, &dummy);
+		int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+		doioctl(fd, VIDIOC_STREAMOFF, &type);
 	}
 
 	if (options[OptSetPriority]) {
@@ -3459,8 +3460,9 @@ int main(int argc, char **argv)
 		}
 	}
 	if (options[OptStreamOn]) {
-		int dummy = 0;
-		doioctl(fd, VIDIOC_STREAMON, &dummy);
+		int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+		doioctl(fd, VIDIOC_STREAMON, &type);
 	}
 
 	if (options[OptWaitForEvent]) {
