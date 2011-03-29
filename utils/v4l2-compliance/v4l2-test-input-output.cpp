@@ -211,7 +211,7 @@ int testTunerFreq(struct node *node)
 			return fail("set rangelow-1 frequency did not return EINVAL\n");
 		freq.frequency = tuner.rangehigh + 1;
 		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
-		if (ret)
+		if (ret != EINVAL)
 			return fail("set rangehigh+1 frequency did not return EINVAL\n");
 	}
 
