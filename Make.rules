@@ -11,6 +11,7 @@ PREFIX = /usr/local
 LIBDIR = $(PREFIX)/lib
 # subdir below LIBDIR in which to install the libv4lx libc wrappers
 LIBSUBDIR = libv4l
+MANDIR = $(PREFIX)/share/man
 
 # These ones should not be overriden from the cmdline
 
