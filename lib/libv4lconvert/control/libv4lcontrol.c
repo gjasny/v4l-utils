@@ -504,6 +504,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0x5a35, 0, "ASUSTeK Computer Inc.        ", "G2S       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x174f, 0x5a35, 0, "PEGATRON CORPORATION         ", "F5SL    ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0x6a51, 0, NULL, "S96S",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
 		"MicroLink", "S96S" },
