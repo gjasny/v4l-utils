@@ -393,6 +393,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5120, 0, "ASUSTeK Computer Inc.", "K53SJ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x13d3, 0x5120, 0, "ASUSTeK Computer Inc.", "K53SV",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5120, 0, "ASUSTeK Computer Inc.        ", "N73JG",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x13d3, 0x5122, 0, "ASUSTeK Computer Inc.        ", "N43JF",
