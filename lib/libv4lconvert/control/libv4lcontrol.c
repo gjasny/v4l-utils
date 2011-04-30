@@ -235,6 +235,13 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb16b, 0, "ASUSTeK Computer Inc.        ", "U80V      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	/* 1 report:
+	   Unknown laptop model -> System Vendor: "  IDEALMAX"
+	   But given that the System Vendor is "unstable" for the other
+	   H34 entry, we put NULL in the dmi_system_vendor field. */
+	{ 0x04f2, 0xb16b, 0, "To be filled by O.E.M.", "H34",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0
+		NULL, "H34" },
 	{ 0x04f2, 0xb186, 0, "FUJITSU", "FJNB206",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
 		"FUJITSU SIEMENS", "LifeBook T4310" },
