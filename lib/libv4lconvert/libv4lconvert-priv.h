@@ -20,6 +20,7 @@
 #define __LIBV4LCONVERT_PRIV_H
 
 #include <stdio.h>
+#include <stdint.h>
 #include <sys/types.h>
 #include "libv4lconvert.h"
 #include "control/libv4lcontrol.h"
@@ -47,8 +48,8 @@ struct v4lconvert_data {
 	int fd;
 	int flags; /* bitfield */
 	int control_flags; /* bitfield */
-	int supported_src_formats; /* bitfield */
 	unsigned int no_formats;
+	int64_t supported_src_formats; /* bitfield */
 	char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
 	struct jdec_private *jdec;
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
