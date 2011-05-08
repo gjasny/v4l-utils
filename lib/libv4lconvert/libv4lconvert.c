@@ -59,6 +59,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_SPCA508,      V4LCONVERT_NEEDS_CONVERSION },
 	{ V4L2_PIX_FMT_CIT_YYVYUY,   V4LCONVERT_NEEDS_CONVERSION },
 	{ V4L2_PIX_FMT_KONICA420,    V4LCONVERT_NEEDS_CONVERSION },
+	{ V4L2_PIX_FMT_M420,         V4LCONVERT_NEEDS_CONVERSION },
 	{ V4L2_PIX_FMT_CPIA1,        V4LCONVERT_NEEDS_CONVERSION },
 	{ V4L2_PIX_FMT_HM12,         V4LCONVERT_NEEDS_CONVERSION },
 	{ V4L2_PIX_FMT_MJPEG,        V4LCONVERT_COMPRESSED },
@@ -652,6 +653,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_SPCA508:
 	case V4L2_PIX_FMT_CIT_YYVYUY:
 	case V4L2_PIX_FMT_KONICA420:
+	case V4L2_PIX_FMT_M420:
 	case V4L2_PIX_FMT_SN9C20X_I420:
 	case V4L2_PIX_FMT_CPIA1:
 	case V4L2_PIX_FMT_OV511:
@@ -690,6 +692,9 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			break;
 		case V4L2_PIX_FMT_KONICA420:
 			v4lconvert_konica_yuv420_to_yuv420(src, d, width, height, yvu);
+			break;
+		case V4L2_PIX_FMT_M420:
+			v4lconvert_m420_to_yuv420(src, d, width, height, yvu);
 			break;
 		case V4L2_PIX_FMT_SN9C20X_I420:
 			v4lconvert_sn9c20x_to_yuv420(src, d, width, height, yvu);

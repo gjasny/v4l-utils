@@ -1,9 +1,10 @@
 v4l-utils-0.8.4
 ---------------
 * libv4l changes
-  * Add a few more laptop models to the upside down devices table (hdegoede)
+  * Add many more laptop models to the upside down devices table (hdegoede)
   * Add vicam cameras to list of cameras need sw auto gain + whitebalance
     (hdegoede)
+  * Add support for m420 pixelformat (hdegoede)
 
 v4l-utils-0.8.3
 ---------------
