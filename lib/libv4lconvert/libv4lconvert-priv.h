@@ -39,11 +39,6 @@
 /* Card flags */
 #define V4LCONVERT_IS_UVC                0x01
 
-/* Pixformat flags */
-#define V4LCONVERT_COMPRESSED            0x01 /* Compressed format */
-#define V4LCONVERT_NEEDS_CONVERSION      0x02 /* Apps likely wont know this */
-#define V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION 0x03
-
 struct v4lconvert_data {
 	int fd;
 	int flags; /* bitfield */
@@ -54,6 +49,8 @@ struct v4lconvert_data {
 	struct jdec_private *jdec;
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
 	unsigned int no_framesizes;
+	int bandwidth;
+	int fps;
 	int convert1_buf_size;
 	int convert2_buf_size;
 	int rotate90_buf_size;
@@ -80,8 +77,11 @@ struct v4lconvert_data {
 };
 
 struct v4lconvert_pixfmt {
-	unsigned int fmt;
-	int flags;
+	unsigned int fmt;	/* v4l2 fourcc */
+	int bpp;		/* bits per pixel, 0 for compressed formats */
+	int rgb_rank;		/* rank for converting to rgb32 / bgr32 */
+	int yuv_rank;		/* rank for converting to yuv420 / yvu420 */
+	int needs_conversion;
 };
 
 void v4lconvert_fixup_fmt(struct v4l2_format *fmt);

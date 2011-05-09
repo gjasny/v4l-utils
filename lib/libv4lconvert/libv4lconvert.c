@@ -28,52 +28,59 @@
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-/* Note for proper functioning of v4lconvert_enum_fmt the first entries in
-   supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
-#define SUPPORTED_DST_PIXFMTS \
-{ V4L2_PIX_FMT_RGB24,  0 }, \
-{ V4L2_PIX_FMT_BGR24,  0 }, \
-{ V4L2_PIX_FMT_YUV420, 0 }, \
-{ V4L2_PIX_FMT_YVU420, 0 }
-
 static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
 		unsigned int pixelformat, int index);
 
-/* Note uncompressed formats must go first so that they are prefered by
-   v4lconvert_try_format for low resolutions */
+/* Note for proper functioning of v4lconvert_enum_fmt the first entries in
+   supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
+#define SUPPORTED_DST_PIXFMTS \
+	/* fourcc			bpp	rgb	yuv	needs      */ \
+	/*					rank	rank	conversion */ \
+	{ V4L2_PIX_FMT_RGB24,		24,	 1,	 5,	0 }, \
+	{ V4L2_PIX_FMT_BGR24,		24,	 1,	 5,	0 }, \
+	{ V4L2_PIX_FMT_YUV420,		12,	 6,	 1,	0 }, \
+	{ V4L2_PIX_FMT_YVU420,		12,	 6,	 1,	0 }
+
 static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	SUPPORTED_DST_PIXFMTS,
-	{ V4L2_PIX_FMT_GREY,         0 },
-	{ V4L2_PIX_FMT_YUYV,         0 },
-	{ V4L2_PIX_FMT_YVYU,         0 },
-	{ V4L2_PIX_FMT_UYVY,         0 },
-	{ V4L2_PIX_FMT_RGB565,       0 },
-	{ V4L2_PIX_FMT_SN9C20X_I420, V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_SBGGR8,       V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_SGBRG8,       V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_SGRBG8,       V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_SRGGB8,       V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_STV0680,      V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_SPCA501,      V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_SPCA505,      V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_SPCA508,      V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_CIT_YYVYUY,   V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_KONICA420,    V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_M420,         V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_CPIA1,        V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_HM12,         V4LCONVERT_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_MJPEG,        V4LCONVERT_COMPRESSED },
-	{ V4L2_PIX_FMT_JPEG,         V4LCONVERT_COMPRESSED },
-	{ V4L2_PIX_FMT_SPCA561,      V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_SN9C10X,      V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_SN9C2028,     V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_PAC207,       V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_MR97310A,     V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_SQ905C,       V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_PJPG,         V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_JPGL,         V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_OV511,        V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
-	{ V4L2_PIX_FMT_OV518,        V4LCONVERT_COMPRESSED_AND_NEEDS_CONVERSION },
+	/* packed rgb formats */
+	{ V4L2_PIX_FMT_RGB565,		16,	 4,	 6,	0 },
+	/* yuv 4:2:2 formats */
+	{ V4L2_PIX_FMT_YUYV,		16,	 5,	 4,	0 },
+	{ V4L2_PIX_FMT_YVYU,		16,	 5,	 4,	0 },
+	{ V4L2_PIX_FMT_UYVY,		16,	 5,	 4,	0 },
+	/* yuv 4:2:0 formats */
+	{ V4L2_PIX_FMT_SPCA501,		12,      6,	 3,	1 },
+	{ V4L2_PIX_FMT_SPCA505,		12,	 6,	 3,	1 },
+	{ V4L2_PIX_FMT_SPCA508,		12,	 6,	 3,	1 },
+	{ V4L2_PIX_FMT_CIT_YYVYUY,	12,	 6,	 3,	1 },
+	{ V4L2_PIX_FMT_KONICA420,	12,	 6,	 3,	1 },
+	{ V4L2_PIX_FMT_SN9C20X_I420,	12,	 6,	 3,	1 },
+	{ V4L2_PIX_FMT_M420,		12,	 6,	 3,	1 },
+	{ V4L2_PIX_FMT_HM12,		12,	 6,	 3,	1 },
+	{ V4L2_PIX_FMT_CPIA1,		 0,	 6,	 3,	1 },
+	/* JPEG and variants */
+	{ V4L2_PIX_FMT_MJPEG,		 0,	 7,	 7,	0 },
+	{ V4L2_PIX_FMT_JPEG,		 0,	 7,	 7,	0 },
+	{ V4L2_PIX_FMT_PJPG,		 0,	 7,	 7,	1 },
+	{ V4L2_PIX_FMT_JPGL,		 0,	 7,	 7,	1 },
+	{ V4L2_PIX_FMT_OV511,		 0,	 7,	 7,	1 },
+	{ V4L2_PIX_FMT_OV518,		 0,	 7,	 7,	1 },
+	/* uncompressed bayer */
+	{ V4L2_PIX_FMT_SBGGR8,		 8,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SGBRG8,		 8,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SGRBG8,		 8,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SRGGB8,		 8,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_STV0680,		 8,	 8,	 8,	1 },
+	/* compressed bayer */
+	{ V4L2_PIX_FMT_SPCA561,		 0,	 9,	 9,	1 },
+	{ V4L2_PIX_FMT_SN9C10X,		 0,	 9,	 9,	1 },
+	{ V4L2_PIX_FMT_SN9C2028,	 0,	 9,	 9,	1 },
+	{ V4L2_PIX_FMT_PAC207,		 0,	 9,	 9,	1 },
+	{ V4L2_PIX_FMT_MR97310A,	 0,	 9,	 9,	1 },
+	{ V4L2_PIX_FMT_SQ905C,		 0,	 9,	 9,	1 },
+	/* grey formats */
+	{ V4L2_PIX_FMT_GREY,		 8,	20,	20,	0 },
 };
 
 static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
@@ -110,6 +117,9 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 
 	data->fd = fd;
 	data->decompress_pid = -1;
+	/* Default to usb 2 bandwidth and 30 fps for now */
+	data->bandwidth = 3 * 1024 * 8000; /* 3 * 1024 byte packets * 8000 microframes */
+	data->fps = 30;
 
 	/* Check supported formats */
 	for (i = 0; ; i++) {
@@ -121,15 +131,15 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 			break;
 
 		for (j = 0; j < ARRAY_SIZE(supported_src_pixfmts); j++)
-			if (fmt.pixelformat == supported_src_pixfmts[j].fmt) {
-				data->supported_src_formats |= 1 << j;
-				v4lconvert_get_framesizes(data, fmt.pixelformat, j);
-				if (!(supported_src_pixfmts[j].flags & V4LCONVERT_NEEDS_CONVERSION))
-					always_needs_conversion = 0;
+			if (fmt.pixelformat == supported_src_pixfmts[j].fmt)
 				break;
-			}
 
-		if (j == ARRAY_SIZE(supported_src_pixfmts))
+		if (j < ARRAY_SIZE(supported_src_pixfmts)) {
+			data->supported_src_formats |= 1 << j;
+			v4lconvert_get_framesizes(data, fmt.pixelformat, j);
+			if (!supported_src_pixfmts[j].needs_conversion)
+				always_needs_conversion = 0;
+		} else
 			always_needs_conversion = 0;
 	}
 
@@ -238,6 +248,58 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
 	return 0;
 }
 
+/* This function returns a value to rank (sort) source format by preference
+   when multiple source formats are available for a certain resolution, the
+   source format for which this function returns the lowest value wins.
+   
+   This function uses the rgb_rank resp. yuv_rank values as a base when
+   converting to rgb32 resp. yuv420. The initial ranks range from 1 - 10,
+   the initial rank purely expresses the CPU cost of doing the conversion, the
+   ranking algorithm will give a penalty of 10 points if
+   (width * height * fps * bpp / 8) > bandwidth
+   thus disqualifying a src format which causes the bandwidth to be exceeded,
+   except when all of them cause this.
+   
+   Note grey scale formats start at 20 rather then 1-10, because we want to
+   never autoselect them, unless they are the only choice */
+static int v4lconvert_get_rank(struct v4lconvert_data *data,
+	int src_index, int src_width, int src_height,
+	unsigned int dest_pixelformat)
+{
+	int needed, rank = 0;
+
+	switch (dest_pixelformat) {
+	case V4L2_PIX_FMT_RGB24:
+	case V4L2_PIX_FMT_BGR24:
+		rank = supported_src_pixfmts[src_index].rgb_rank;
+		break;
+	case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_YVU420:
+		rank = supported_src_pixfmts[src_index].yuv_rank;
+		break;
+	}
+
+	/* So that if both rgb32 and bgr32 are supported, or both yuv420 and
+	   yvu420 the right one wins */
+	if (supported_src_pixfmts[src_index].fmt == dest_pixelformat)
+		rank--;
+
+	/* check bandwidth needed */
+	needed = src_width * src_height * data->fps *
+		 supported_src_pixfmts[src_index].bpp / 8;
+	if (needed > data->bandwidth)
+		rank += 10;
+#if 0
+	printf("ranked: %c%c%c%c for %dx%d @ %d fps, needed: %d, bandwidth: %d, rank: %d\n",
+	       supported_src_pixfmts[src_index].fmt & 0xff,
+	       (supported_src_pixfmts[src_index].fmt >> 8) & 0xff,
+	       (supported_src_pixfmts[src_index].fmt >> 16) & 0xff,
+	       supported_src_pixfmts[src_index].fmt >> 24, src_width,
+	       src_height, data->fps, needed, data->bandwidth, rank);
+#endif
+	return rank;
+}
+
 /* Find out what format to use based on the (cached) results of enum
    framesizes instead of doing a zillion try_fmt calls. This function
    currently is intended for use with UVC cams only. This is esp.
@@ -245,10 +307,11 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
 static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 		struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
 {
-	int i;
+	int i, rank;
 	unsigned int closest_fmt_size_diff = -1;
 	int best_framesize = 0;/* Just use the first format if no small enough one */
 	int best_format = 0;
+	int best_rank = 100;
 
 	for (i = 0; i < data->no_framesizes; i++) {
 		if (data->framesizes[i].discrete.width <= dest_fmt->fmt.pix.width &&
@@ -272,12 +335,16 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 		if (!(data->framesizes[best_framesize].pixel_format & (1 << i)))
 			continue;
 
-		if (!best_format ||
-				supported_src_pixfmts[i].fmt == dest_fmt->fmt.pix.pixelformat ||
-				((data->framesizes[best_framesize].discrete.width > 180 ||
-				  data->framesizes[best_framesize].discrete.height > 148) &&
-				 (supported_src_pixfmts[i].flags & V4LCONVERT_COMPRESSED)))
+		/* Note the hardcoded use of discrete is based on this function
+		   only getting called for uvc devices */
+		rank = v4lconvert_get_rank(data, i,
+			    data->framesizes[best_framesize].discrete.width,
+			    data->framesizes[best_framesize].discrete.height,
+			    dest_fmt->fmt.pix.pixelformat);
+		if (rank < best_rank) {
+			best_rank = rank;
 			best_format = supported_src_pixfmts[i].fmt;
+		}
 	}
 
 	dest_fmt->fmt.pix.width = data->framesizes[best_framesize].discrete.width;
@@ -299,8 +366,8 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 static int v4lconvert_do_try_format(struct v4lconvert_data *data,
 		struct v4l2_format *dest_fmt, struct v4l2_format *src_fmt)
 {
-	int i;
-	unsigned int closest_fmt_size_diff = -1;
+	int i, size_x_diff, size_y_diff, rank, best_rank = 0;
+	unsigned int size_diff, closest_fmt_size_diff = -1;
 	unsigned int desired_pixfmt = dest_fmt->fmt.pix.pixelformat;
 	struct v4l2_format try_fmt, closest_fmt = { .type = 0 };
 
@@ -314,25 +381,30 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
 
 		try_fmt = *dest_fmt;
 		try_fmt.fmt.pix.pixelformat = supported_src_pixfmts[i].fmt;
+		if (SYS_IOCTL(data->fd, VIDIOC_TRY_FMT, &try_fmt))
+			continue;
 
-		if (!SYS_IOCTL(data->fd, VIDIOC_TRY_FMT, &try_fmt)) {
-			if (try_fmt.fmt.pix.pixelformat == supported_src_pixfmts[i].fmt) {
-				int size_x_diff = abs((int)try_fmt.fmt.pix.width -
-						(int)dest_fmt->fmt.pix.width);
-				int size_y_diff = abs((int)try_fmt.fmt.pix.height -
-						(int)dest_fmt->fmt.pix.height);
-				unsigned int size_diff = size_x_diff * size_x_diff +
-					size_y_diff * size_y_diff;
+		if (try_fmt.fmt.pix.pixelformat !=
+		    supported_src_pixfmts[i].fmt)
+			continue;
 
-				if (size_diff < closest_fmt_size_diff ||
-						(size_diff == closest_fmt_size_diff &&
-						 (supported_src_pixfmts[i].fmt == desired_pixfmt ||
-						  ((try_fmt.fmt.pix.width > 180 || try_fmt.fmt.pix.height > 148) &&
-						   (supported_src_pixfmts[i].flags & V4LCONVERT_COMPRESSED))))) {
-					closest_fmt_size_diff = size_diff;
-					closest_fmt = try_fmt;
-				}
-			}
+		/* Did we get a better match then before? */
+		size_x_diff = (int)try_fmt.fmt.pix.width -
+			      (int)dest_fmt->fmt.pix.width;
+		size_y_diff = (int)try_fmt.fmt.pix.height -
+			      (int)dest_fmt->fmt.pix.height;
+		size_diff = size_x_diff * size_x_diff +
+			    size_y_diff * size_y_diff;
+
+		rank = v4lconvert_get_rank(data, i,
+					   try_fmt.fmt.pix.width,
+					   try_fmt.fmt.pix.height,
+					   desired_pixfmt);
+		if (size_diff < closest_fmt_size_diff ||
+		    (size_diff == closest_fmt_size_diff && rank < best_rank)) {
+			closest_fmt = try_fmt;
+			closest_fmt_size_diff = size_diff;
+			best_rank = rank;
 		}
 	}
 
@@ -1428,4 +1500,14 @@ int v4lconvert_vidioc_g_ctrl(struct v4lconvert_data *data, void *arg)
 int v4lconvert_vidioc_s_ctrl(struct v4lconvert_data *data, void *arg)
 {
 	return v4lcontrol_vidioc_s_ctrl(data->control, arg);
+}
+
+int v4lconvert_get_fps(struct v4lconvert_data *data)
+{
+	return data->fps;
+}
+
+void v4lconvert_set_fps(struct v4lconvert_data *data, int fps)
+{
+	data->fps = fps;
 }

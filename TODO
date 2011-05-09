@@ -1,14 +1,12 @@
 libv4l todo:
 ------------
 
+-libv4lconvert: v4lconvert_do_try_format should always prefer smaller then
+ requested resolutions over bigger then requested ones
+
 -add support for setting / getting the number of read buffers
 
 -add code to v4l2_read to not return frames more then say 5 seconds old
-
--add support for libv4l1 for non pure capture (combined capture and overlay)
- devices so that atleast CGMBUF emulation (but no conversion, as thats
- impossible for overlays) can be done, so that it will no longer be
- necessary to implement CGMBUF in the kernel for each driver.
 
 -take the possibility of pitch != width into account everywhere
 
