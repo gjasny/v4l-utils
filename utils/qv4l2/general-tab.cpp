@@ -328,8 +328,9 @@ void GeneralTab::vidCapFormatChanged(int idx)
 
 	g_fmt_cap(fmt);
 	fmt.fmt.pix.pixelformat = desc.pixelformat;
-	try_fmt(fmt);
-	s_fmt(fmt);
+	if (try_fmt(fmt))
+		s_fmt(fmt);
+
 	updateVidCapFormat();
 }
 
@@ -340,10 +341,10 @@ void GeneralTab::frameWidthChanged()
 
 	g_fmt_cap(fmt);
 	fmt.fmt.pix.width = val;
-	if (try_fmt(fmt) && s_fmt(fmt)) {
-		m_width = fmt.fmt.pix.width;
-		m_frameWidth->setValue(m_width);
-	}
+	if (try_fmt(fmt))
+		s_fmt(fmt);
+
+	updateVidCapFormat();
 }
 
 void GeneralTab::frameHeightChanged()
@@ -353,10 +354,10 @@ void GeneralTab::frameHeightChanged()
 
 	g_fmt_cap(fmt);
 	fmt.fmt.pix.height = val;
-	if (try_fmt(fmt) && s_fmt(fmt)) {
-		m_height = fmt.fmt.pix.height;
-		m_frameHeight->setValue(m_height);
-	}
+	if (try_fmt(fmt))
+		s_fmt(fmt);
+
+	updateVidCapFormat();
 }
 
 void GeneralTab::frameSizeChanged(int idx)
@@ -364,17 +365,15 @@ void GeneralTab::frameSizeChanged(int idx)
 	v4l2_frmsizeenum frmsize;
 
 	if (enum_framesizes(frmsize, m_pixelformat, idx)) {
-		m_width = frmsize.discrete.width;
-		m_height = frmsize.discrete.height;
-
 		v4l2_format fmt;
 
 		g_fmt_cap(fmt);
-		fmt.fmt.pix.width = m_width;
-		fmt.fmt.pix.height = m_height;
-		try_fmt(fmt);
-		s_fmt(fmt);
+		fmt.fmt.pix.width = frmsize.discrete.width;
+		fmt.fmt.pix.height = frmsize.discrete.height;
+		if (try_fmt(fmt))
+			s_fmt(fmt);
 	}
+	updateVidCapFormat();
 }
 
 void GeneralTab::frameIntervalChanged(int idx)
@@ -396,8 +395,8 @@ void GeneralTab::vidOutFormatChanged(int idx)
 
 	g_fmt_out(fmt);
 	fmt.fmt.pix.pixelformat = desc.pixelformat;
-	try_fmt(fmt);
-	s_fmt(fmt);
+	if (try_fmt(fmt))
+		s_fmt(fmt);
 	updateVidOutFormat();
 }
 
