@@ -69,8 +69,8 @@ private:
 	void updateFreq();
 	void updateFreqChannel();
 	void updateVidCapFormat();
-	void updateFrameSize(unsigned w, unsigned h);
-	void updateFrameInterval(unsigned w, unsigned h);
+	void updateFrameSize();
+	void updateFrameInterval();
 	void updateVidOutFormat();
 
 	void addWidget(QWidget *w, Qt::Alignment align = Qt::AlignLeft);
