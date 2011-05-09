@@ -104,6 +104,8 @@ public:
 	bool streamon_out();
 	bool streamoff_out();
 
+	bool set_interval(v4l2_fract interval);
+	bool get_interval(v4l2_fract &interval);
 private:
 	void clear() { error(QString()); }
 

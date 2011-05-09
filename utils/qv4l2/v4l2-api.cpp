@@ -543,3 +543,33 @@ bool v4l2::streamoff_out()
 
 	return ioctl("Stop Output", VIDIOC_STREAMOFF, &type);
 }
+
+bool v4l2::set_interval(v4l2_fract interval)
+{
+	v4l2_streamparm parm;
+
+	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (ioctl(VIDIOC_G_PARM, &parm) < 0)
+		return false;
+
+	if (!(parm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME))
+		return false;
+
+	parm.parm.capture.timeperframe = interval;
+
+	return ioctl("Set FPS", VIDIOC_S_PARM, &parm);
+}
+
+bool v4l2::get_interval(v4l2_fract &interval)
+{
+	v4l2_streamparm parm;
+
+	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (ioctl(VIDIOC_G_PARM, &parm) >= 0 &&
+	    (parm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME)) {
+		interval = parm.parm.capture.timeperframe;
+		return true;
+        }
+
+	return false;
+}

@@ -436,10 +436,15 @@ void ApplicationWindow::capStart(bool start)
 	}
 	m_capMethod = m_genTab->capMethod();
 	g_fmt_cap(m_capSrcFormat);
-	if (useWrapper()) {
+	if (useWrapper() &&
+	    m_capSrcFormat.fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24) {
+	        v4l2_fract interval;
+	        bool interval_ok = get_interval(interval);
 		m_capSrcFormat.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
 		s_fmt(m_capSrcFormat);
 		g_fmt_cap(m_capSrcFormat);
+		if (interval_ok)
+		        set_interval(interval);
 	}
 	m_frameData = new unsigned char[m_capSrcFormat.fmt.pix.sizeimage];
 	m_capDestFormat = m_capSrcFormat;

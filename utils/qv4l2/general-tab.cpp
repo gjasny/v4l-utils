@@ -380,8 +380,9 @@ void GeneralTab::frameIntervalChanged(int idx)
 {
 	v4l2_frmivalenum frmival;
 
-	if (enum_frameintervals(frmival, m_pixelformat, m_width, m_height, idx)) {
-		// TODO
+	if (enum_frameintervals(frmival, m_pixelformat, m_width, m_height, idx)
+	    && frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+		set_interval(frmival.discrete);
 	}
 }
 
@@ -595,15 +596,21 @@ void GeneralTab::updateFrameSize()
 void GeneralTab::updateFrameInterval()
 {
 	v4l2_frmivalenum frmival;
-	bool ok = false;
+	v4l2_fract curr;
+	bool curr_ok, ok;
 
 	m_frameInterval->clear();
 
 	ok = enum_frameintervals(frmival, m_pixelformat, m_width, m_height);
+	curr_ok = get_interval(curr);
 	if (ok && frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
 		do {
 			m_frameInterval->addItem(QString("%1 fps")
 				.arg((double)frmival.discrete.denominator / frmival.discrete.numerator));
+			if (curr_ok &&
+			    frmival.discrete.numerator == curr.numerator &&
+			    frmival.discrete.denominator == curr.denominator)
+				m_frameInterval->setCurrentIndex(frmival.index);
 		} while (enum_frameintervals(frmival));
 	}
 }
