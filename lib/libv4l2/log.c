@@ -216,6 +216,19 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 		}
 		break;
 	}
+	case VIDIOC_G_PARM:
+	case VIDIOC_S_PARM: {
+		struct v4l2_streamparm *parm = arg;
+
+		if (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			break;
+
+		if (parm->parm.capture.capability & V4L2_CAP_TIMEPERFRAME)
+			fprintf(v4l2_log_file, "timeperframe: %u/%u\n",
+				parm->parm.capture.timeperframe.numerator,
+				parm->parm.capture.timeperframe.denominator);
+		break;
+	}
 	}
 
 	if (result < 0)
