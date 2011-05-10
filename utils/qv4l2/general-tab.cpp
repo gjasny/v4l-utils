@@ -258,11 +258,9 @@ void GeneralTab::inputChanged(int input)
 {
 	s_input(input);
 
-	v4l2_audio vaudio;
-	if (m_audioInput && g_audio(vaudio)) {
-		m_audioInput->setCurrentIndex(vaudio.index);
+	if (m_audioInput)
 		updateAudioInput();
-	}
+
 	updateVideoInput();
 }
 
