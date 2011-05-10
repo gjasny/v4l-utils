@@ -515,7 +515,10 @@ void GeneralTab::updateFreq()
 	v4l2_frequency f;
 
 	g_frequency(f);
+	/* m_freq listens to valueChanged block it to avoid recursion */
+	m_freq->blockSignals(true);
 	m_freq->setValue(f.frequency);
+	m_freq->blockSignals(false);
 }
 
 void GeneralTab::updateFreqChannel()
