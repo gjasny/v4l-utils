@@ -950,7 +950,13 @@ int v4l2_ioctl(int fd, unsigned long int request, ...)
 		break;
 
 	case VIDIOC_TRY_FMT:
-		result = v4lconvert_try_format(devices[index].convert, arg, NULL);
+		if (devices[index].flags & V4L2_DISABLE_CONVERSION) {
+			result = SYS_IOCTL(devices[index].fd, VIDIOC_TRY_FMT,
+					   arg);
+		} else {
+			result = v4lconvert_try_format(devices[index].convert,
+						       arg, NULL);
+		}
 		break;
 
 	case VIDIOC_S_FMT: {
