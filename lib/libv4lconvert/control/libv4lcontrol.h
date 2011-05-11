@@ -50,6 +50,8 @@ struct v4lcontrol_data;
 struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion);
 void v4lcontrol_destroy(struct v4lcontrol_data *data);
 
+int v4lcontrol_get_bandwidth(struct v4lcontrol_data *data);
+
 /* Functions used by v4lprocessing to get the control state */
 int v4lcontrol_get_flags(struct v4lcontrol_data *data);
 int v4lcontrol_get_ctrl(struct v4lcontrol_data *data, int ctrl);

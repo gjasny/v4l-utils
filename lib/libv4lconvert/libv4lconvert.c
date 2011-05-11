@@ -117,8 +117,6 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 
 	data->fd = fd;
 	data->decompress_pid = -1;
-	/* Default to usb 2 bandwidth and 30 fps for now */
-	data->bandwidth = 3 * 1024 * 8000; /* 3 * 1024 byte packets * 8000 microframes */
 	data->fps = 30;
 
 	/* Check supported formats */
@@ -160,6 +158,7 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 		return NULL;
 	}
 	data->control_flags = v4lcontrol_get_flags(data->control);
+	data->bandwidth = v4lcontrol_get_bandwidth(data->control);
 
 	data->processing = v4lprocessing_create(fd, data->control);
 	if (!data->processing) {
@@ -287,7 +286,7 @@ static int v4lconvert_get_rank(struct v4lconvert_data *data,
 	/* check bandwidth needed */
 	needed = src_width * src_height * data->fps *
 		 supported_src_pixfmts[src_index].bpp / 8;
-	if (needed > data->bandwidth)
+	if (data->bandwidth && needed > data->bandwidth)
 		rank += 10;
 #if 0
 	printf("ranked: %c%c%c%c for %dx%d @ %d fps, needed: %d, bandwidth: %d, rank: %d\n",

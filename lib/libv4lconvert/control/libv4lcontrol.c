@@ -627,8 +627,9 @@ static void v4lcontrol_get_dmi_string(const char *string, char *buf, int size)
 	fclose(f);
 }
 
-static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
-		unsigned short *vendor_id, unsigned short *product_id)
+static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
+		unsigned short *vendor_id, unsigned short *product_id,
+		int *speed)
 {
 	FILE *f;
 	int i, minor;
@@ -642,7 +643,7 @@ static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
 	/* <Sigh> find ourselve in sysfs */
 	for (i = 0; i < 256; i++) {
 		snprintf(sysfs_name, sizeof(sysfs_name),
-				"/sys/class/video4linux/video%d/dev", i);
+			 "/sys/class/video4linux/video%d/dev", i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
 			continue;
@@ -650,8 +651,8 @@ static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 && c == '\n' &&
-				minor == minor(st.st_rdev))
+		if (s && sscanf(buf, "%*d:%d%c", &minor, &c) == 2 &&
+		    c == '\n' && minor == minor(st.st_rdev))
 			break;
 	}
 	if (i == 256)
@@ -659,23 +660,26 @@ static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
 
 	/* Get vendor and product ID */
 	snprintf(sysfs_name, sizeof(sysfs_name),
-			"/sys/class/video4linux/video%d/device/modalias", i);
+		 "/sys/class/video4linux/video%d/device/modalias", i);
 	f = fopen(sysfs_name, "r");
 	if (f) {
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (!s || sscanf(s, "usb:v%4hxp%4hx%c", vendor_id, product_id, &c) != 3 ||
-				c != 'd')
+		if (!s || sscanf(s, "usb:v%4hxp%4hx%c", vendor_id, product_id,
+				 &c) != 3 || c != 'd')
 			return 0; /* Not an USB device */
+
+		snprintf(sysfs_name, sizeof(sysfs_name),
+			 "/sys/class/video4linux/video%d/device/../speed", i);
 	} else {
 		/* Try again assuming the device link points to the usb
 		   device instead of the usb interface (bug in older versions
 		   of gspca) */
 
-		/* Get product ID */
+		/* Get vendor ID */
 		snprintf(sysfs_name, sizeof(sysfs_name),
-				"/sys/class/video4linux/video%d/device/idVendor", i);
+			 "/sys/class/video4linux/video%d/device/idVendor", i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
 			return 0; /* Not an USB device (or no sysfs) */
@@ -683,12 +687,13 @@ static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (!s || sscanf(s, "%04hx%c", vendor_id, &c) != 2 || c != '\n')
+		if (!s || sscanf(s, "%04hx%c", vendor_id, &c) != 2 ||
+		    c != '\n')
 			return 0; /* Should never happen */
 
 		/* Get product ID */
 		snprintf(sysfs_name, sizeof(sysfs_name),
-				"/sys/class/video4linux/video%d/device/idProduct", i);
+			 "/sys/class/video4linux/video%d/device/idProduct", i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
 			return 0; /* Should never happen */
@@ -696,9 +701,23 @@ static int v4lcontrol_get_usb_ids(struct v4lcontrol_data *data,
 		s = fgets(buf, sizeof(buf), f);
 		fclose(f);
 
-		if (!s || sscanf(s, "%04hx%c", product_id, &c) != 2 || c != '\n')
+		if (!s || sscanf(s, "%04hx%c", product_id, &c) != 2 ||
+		    c != '\n')
 			return 0; /* Should never happen */
+
+		snprintf(sysfs_name, sizeof(sysfs_name),
+			 "/sys/class/video4linux/video%d/device/speed", i);
 	}
+
+	f = fopen(sysfs_name, "r");
+	if (!f)
+		return 0; /* Should never happen */
+
+	s = fgets(buf, sizeof(buf), f);
+	fclose(f);
+
+	if (!s || sscanf(s, "%d%c", speed, &c) != 2 || (c != '\n' && c != '.'))
+		return 0; /* Should never happen */
 
 	return 1;
 }
@@ -752,7 +771,7 @@ static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data,
 struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 {
 	int shm_fd;
-	int i, rc, got_usb_ids, init = 0;
+	int i, rc, got_usb_info, speed, init = 0;
 	char *s, shm_name[256], pwd_buf[1024];
 	struct v4l2_capability cap;
 	struct v4l2_queryctrl ctrl;
@@ -779,9 +798,26 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 			data->flags |= V4LCONTROL_VFLIPPED;
 	}
 
-	got_usb_ids = v4lcontrol_get_usb_ids(data, &vendor_id, &product_id);
-	if (got_usb_ids)
+	got_usb_info = v4lcontrol_get_usb_info(data, &vendor_id, &product_id,
+					       &speed);
+	if (got_usb_info) {
 		v4lcontrol_get_flags_from_db(data, vendor_id, product_id);
+		switch (speed) {
+		case 12:
+			data->bandwidth = 1023 * 1000;
+			break;
+		case 480:
+			data->bandwidth = 3 * 1024 * 8000;
+			break;
+		case 5000:
+			data->bandwidth = 48 * 1024 * 8000;
+			break;
+		default:
+			/* heuh, low speed device, or ... ? */
+			data->bandwidth = speed / 20;
+		}
+	} else
+		data->bandwidth = 0;
 
 	/* Allow overriding through environment */
 	s = getenv("LIBV4LCONTROL_FLAGS");
@@ -842,7 +878,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 	}
 
 	if (getpwuid_r(geteuid(), &pwd, pwd_buf, sizeof(pwd_buf), &pwd_p) == 0) {
-		if (got_usb_ids)
+		if (got_usb_info)
 			snprintf(shm_name, 256, "/libv4l-%s:%s:%04x:%04x:%s", pwd.pw_name,
 					cap.bus_info, (int)vendor_id, (int)product_id, cap.card);
 		else
@@ -850,7 +886,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 					cap.bus_info, cap.card);
 	} else {
 		perror("libv4lcontrol: error getting username using uid instead");
-		if (got_usb_ids)
+		if (got_usb_info)
 			snprintf(shm_name, 256, "/libv4l-%lu:%s:%04x:%04x:%s",
 					(unsigned long)geteuid(), cap.bus_info,
 					(int)vendor_id, (int)product_id, cap.card);
@@ -1081,6 +1117,11 @@ int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
 		}
 
 	return SYS_IOCTL(data->fd, VIDIOC_S_CTRL, arg);
+}
+
+int v4lcontrol_get_bandwidth(struct v4lcontrol_data *data)
+{
+	return data->bandwidth;
 }
 
 int v4lcontrol_get_flags(struct v4lcontrol_data *data)
