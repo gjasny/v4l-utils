@@ -46,7 +46,7 @@ struct v4lconvert_data {
 	unsigned int no_formats;
 	int64_t supported_src_formats; /* bitfield */
 	char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
-	struct jdec_private *jdec;
+	struct jdec_private *tinyjpeg;
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
 	unsigned int no_framesizes;
 	int bandwidth;

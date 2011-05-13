@@ -174,11 +174,11 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
 {
 	v4lprocessing_destroy(data->processing);
 	v4lcontrol_destroy(data->control);
-	if (data->jdec) {
+	if (data->tinyjpeg) {
 		unsigned char *comps[3] = { NULL, NULL, NULL };
 
-		tinyjpeg_set_components(data->jdec, comps, 3);
-		tinyjpeg_free(data->jdec);
+		tinyjpeg_set_components(data->tinyjpeg, comps, 3);
+		tinyjpeg_free(data->tinyjpeg);
 	}
 	v4lconvert_helper_cleanup(data);
 	free(data->convert1_buf);
@@ -629,19 +629,19 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 		/* Fall through */
 	case V4L2_PIX_FMT_MJPEG:
 	case V4L2_PIX_FMT_JPEG:
-		if (!data->jdec) {
-			data->jdec = tinyjpeg_init();
-			if (!data->jdec)
+		if (!data->tinyjpeg) {
+			data->tinyjpeg = tinyjpeg_init();
+			if (!data->tinyjpeg)
 				return v4lconvert_oom_error(data);
 		}
-		tinyjpeg_set_flags(data->jdec, jpeg_flags);
-		if (tinyjpeg_parse_header(data->jdec, src, src_size)) {
+		tinyjpeg_set_flags(data->tinyjpeg, jpeg_flags);
+		if (tinyjpeg_parse_header(data->tinyjpeg, src, src_size)) {
 			V4LCONVERT_ERR("parsing JPEG header: %s",
-					tinyjpeg_get_errorstring(data->jdec));
+					tinyjpeg_get_errorstring(data->tinyjpeg));
 			errno = EIO;
 			return -1;
 		}
-		tinyjpeg_get_size(data->jdec, &header_width, &header_height);
+		tinyjpeg_get_size(data->tinyjpeg, &header_width, &header_height);
 
 		if (header_width != width || header_height != height) {
 			/* Check for (pixart) rotated JPEG */
@@ -674,24 +674,24 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			tinyjpeg_set_components(data->jdec, components, 1);
-			result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_RGB24);
+			tinyjpeg_set_components(data->tinyjpeg, components, 1);
+			result = tinyjpeg_decode(data->tinyjpeg, TINYJPEG_FMT_RGB24);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			tinyjpeg_set_components(data->jdec, components, 1);
-			result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_BGR24);
+			tinyjpeg_set_components(data->tinyjpeg, components, 1);
+			result = tinyjpeg_decode(data->tinyjpeg, TINYJPEG_FMT_BGR24);
 			break;
 		case V4L2_PIX_FMT_YUV420:
 			components[1] = components[0] + width * height;
 			components[2] = components[1] + width * height / 4;
-			tinyjpeg_set_components(data->jdec, components, 3);
-			result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_YUV420P);
+			tinyjpeg_set_components(data->tinyjpeg, components, 3);
+			result = tinyjpeg_decode(data->tinyjpeg, TINYJPEG_FMT_YUV420P);
 			break;
 		case V4L2_PIX_FMT_YVU420:
 			components[2] = components[0] + width * height;
 			components[1] = components[2] + width * height / 4;
-			tinyjpeg_set_components(data->jdec, components, 3);
-			result = tinyjpeg_decode(data->jdec, TINYJPEG_FMT_YUV420P);
+			tinyjpeg_set_components(data->tinyjpeg, components, 3);
+			result = tinyjpeg_decode(data->tinyjpeg, TINYJPEG_FMT_YUV420P);
 			break;
 		}
 
@@ -708,7 +708,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			   and if that fails just passing up whatever we did
 			   manage to decompress. */
 			V4LCONVERT_ERR("decompressing JPEG: %s",
-					tinyjpeg_get_errorstring(data->jdec));
+					tinyjpeg_get_errorstring(data->tinyjpeg));
 			errno = EPIPE;
 			result = -1;
 		}
