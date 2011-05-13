@@ -89,6 +89,8 @@ void v4lconvert_fixup_fmt(struct v4l2_format *fmt);
 unsigned char *v4lconvert_alloc_buffer(int needed,
 		unsigned char **buf, int *buf_size);
 
+int v4lconvert_oom_error(struct v4lconvert_data *data);
+
 void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
 		const struct v4l2_format *src_fmt, int bgr, int yvu);
 
@@ -170,6 +172,10 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
 
 void v4lconvert_sn9c20x_to_yuv420(const unsigned char *src, unsigned char *dst,
 		int width, int height, int yvu);
+
+int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
+	unsigned char *src, int src_size, unsigned char *dest,
+	struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags);
 
 void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,
 		int width, int height);
