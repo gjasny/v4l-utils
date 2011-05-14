@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <jpeglib.h>
+#include <setjmp.h>
 #include "libv4lconvert.h"
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
@@ -50,6 +51,8 @@ struct v4lconvert_data {
 	char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
 	struct jdec_private *tinyjpeg;
 	struct jpeg_error_mgr jerr;
+	int jerr_errno;
+	jmp_buf jerr_jmp_state;
 	struct jpeg_decompress_struct cinfo;
 	int cinfo_initialized;
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];

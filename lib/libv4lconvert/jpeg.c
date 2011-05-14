@@ -107,6 +107,27 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
 	return 0;
 }
 
+static void jerr_error_exit(j_common_ptr cinfo)
+{
+	struct v4lconvert_data *data = cinfo->client_data;
+
+	longjmp(data->jerr_jmp_state, data->jerr_errno);
+}
+
+static void jerr_emit_message(j_common_ptr cinfo, int msg_level)
+{
+	char buffer[JMSG_LENGTH_MAX];
+	struct v4lconvert_data *data = cinfo->client_data;
+
+	/* < -1 error, == -1 warning, >= 0 trace */
+	if (msg_level < -1)
+		return;
+
+	cinfo->err->format_message(cinfo, buffer);
+	snprintf(data->error_msg, V4LCONVERT_ERROR_MSG_SIZE,
+		 "v4l-convert: libjpeg error: %s\n", buffer);
+}
+
 static void init_libjpeg_cinfo(struct v4lconvert_data *data)
 {
 	struct jpeg_compress_struct cinfo;
@@ -116,12 +137,18 @@ static void init_libjpeg_cinfo(struct v4lconvert_data *data)
 	if (data->cinfo_initialized)
 		return;
 
+	/* Setup our error handling */
+	jpeg_std_error(&data->jerr);
+	data->jerr.error_exit = jerr_error_exit;
+	data->jerr.emit_message = jerr_emit_message;
+
 	/* Create a jpeg compression object with default params and write
 	   default jpeg headers to a mem buffer, so that we can use them to
 	   pre-fill a jpeg_decompress_struct with default quant and huffman
 	   tables, so that libjpeg can be used to parse [m]jpg-s with
 	   incomplete headers */
-	cinfo.err = jpeg_std_error(&data->jerr);
+	cinfo.err = &data->jerr;
+	cinfo.client_data = data;
 	jpeg_create_compress(&cinfo);
 	jpeg_mem_dest(&cinfo, &jpeg_header, &jpeg_header_size);
 	cinfo.input_components = 3;
@@ -131,7 +158,8 @@ static void init_libjpeg_cinfo(struct v4lconvert_data *data)
 	jpeg_destroy_compress(&cinfo);
 
 	/* Init the jpeg_decompress_struct */
-	data->cinfo.err = jpeg_std_error(&data->jerr);
+	data->cinfo.err = &data->jerr;
+	data->cinfo.client_data = data;
 	jpeg_create_decompress(&data->cinfo);
 	jpeg_mem_src(&data->cinfo, jpeg_header, jpeg_header_size);
 	jpeg_read_header(&data->cinfo, FALSE);
@@ -165,14 +193,14 @@ static int decode_libjpeg_h_samp1(struct v4lconvert_data *data,
 	}
 	uv_buf -= width * 16;
 
-	cinfo->raw_data_out = TRUE;
-	jpeg_start_decompress(cinfo);
 	while (cinfo->output_scanline < cinfo->image_height) {
 		for (y = 0; y < 8 * v_samp; y++) {
 			y_rows[y] = ydest;
 			ydest += cinfo->image_width;
 		}
-		jpeg_read_raw_data(cinfo, rows, 8 * v_samp);
+		y = jpeg_read_raw_data(cinfo, rows, 8 * v_samp);
+		if (y != 8 * v_samp)
+			return -1;
 
 		/* For v_samp == 1 skip copying uv vals every other time */
 		if (cinfo->output_scanline % 16)
@@ -191,7 +219,6 @@ static int decode_libjpeg_h_samp1(struct v4lconvert_data *data,
 		}
 		uv_buf -= width * 16;
 	}
-	jpeg_finish_decompress(cinfo);
 	return 0;
 }
 
@@ -205,8 +232,6 @@ static int decode_libjpeg_h_samp2(struct v4lconvert_data *data,
 	JSAMPROW y_rows[16], u_rows[8], v_rows[8];
 	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
 
-	cinfo->raw_data_out = TRUE;
-	jpeg_start_decompress(cinfo);
 	while (cinfo->output_scanline < cinfo->image_height) {
 		for (y = 0; y < 8 * v_samp; y++) {
 			y_rows[y] = ydest;
@@ -218,7 +243,10 @@ static int decode_libjpeg_h_samp2(struct v4lconvert_data *data,
 			udest += width / 2;
 			vdest += width / 2;
 		}
-		jpeg_read_raw_data(cinfo, rows, 8 * v_samp);
+		y = jpeg_read_raw_data(cinfo, rows, 8 * v_samp);
+		if (y != 8 * v_samp)
+			return -1;
+
 		/* For v_samp == 1 were going to get another set of uv values,
 		   but we need only 1 set since our output has v_samp == 2, so
 		   rewind u and vdest and overwrite the previous set. */
@@ -227,7 +255,6 @@ static int decode_libjpeg_h_samp2(struct v4lconvert_data *data,
 			vdest -= width * 8 / 2;
 		}
 	}
-	jpeg_finish_decompress(cinfo);
 	return 0;
 }
 
@@ -238,6 +265,16 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 	unsigned int width  = fmt->fmt.pix.width;
 	unsigned int height = fmt->fmt.pix.height;
 	int result = 0;
+
+	/* libjpeg errors before decoding the first line should signal EIO */
+	data->jerr_errno = EIO;
+	result = setjmp(data->jerr_jmp_state);
+	if (result) {
+		if (data->cinfo_initialized)
+			jpeg_abort_decompress(&data->cinfo);
+		errno = result;
+		return -1;
+	}
 
 	init_libjpeg_cinfo(data);
 
@@ -271,6 +308,8 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 #endif
 		row_pointer[0] = dest;
 		jpeg_start_decompress(&data->cinfo);
+		/* Make libjpeg errors report that we've got some data */
+		data->jerr_errno = EPIPE;
 		while (data->cinfo.output_scanline < height) {
 			jpeg_read_scanlines(&data->cinfo, row_pointer, 1);
 			row_pointer[0] += 3 * width;
@@ -346,6 +385,10 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 			vdest = udest + (width * height) / 4;
 		}
 
+		data->cinfo.raw_data_out = TRUE;
+		jpeg_start_decompress(&data->cinfo);
+		/* Make libjpeg errors report that we've got some data */
+		data->jerr_errno = EPIPE;
 		if (h_samp == 1) {
 			result = decode_libjpeg_h_samp1(data, dest, udest,
 							vdest, v_samp);
@@ -353,6 +396,10 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 			result = decode_libjpeg_h_samp2(data, dest, udest,
 							vdest, v_samp);
 		}
+		if (result)
+			jpeg_abort_decompress(&data->cinfo);
+		else
+			jpeg_finish_decompress(&data->cinfo);
 	}
 
 	return result;
