@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <jpeglib.h>
 #include "libv4lconvert.h"
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
@@ -38,6 +39,7 @@
 
 /* Card flags */
 #define V4LCONVERT_IS_UVC                0x01
+#define V4LCONVERT_USE_TINYJPEG          0x02
 
 struct v4lconvert_data {
 	int fd;
@@ -47,6 +49,9 @@ struct v4lconvert_data {
 	int64_t supported_src_formats; /* bitfield */
 	char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
 	struct jdec_private *tinyjpeg;
+	struct jpeg_error_mgr jerr;
+	struct jpeg_decompress_struct cinfo;
+	int cinfo_initialized;
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
 	unsigned int no_framesizes;
 	int bandwidth;
@@ -176,6 +181,10 @@ void v4lconvert_sn9c20x_to_yuv420(const unsigned char *src, unsigned char *dst,
 int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
 	unsigned char *src, int src_size, unsigned char *dest,
 	struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags);
+
+int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
+	unsigned char *src, int src_size, unsigned char *dest,
+	struct v4l2_format *fmt, unsigned int dest_pix_fmt);
 
 void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,
 		int width, int height);

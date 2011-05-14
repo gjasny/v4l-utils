@@ -180,6 +180,8 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
 		tinyjpeg_set_components(data->tinyjpeg, comps, 3);
 		tinyjpeg_free(data->tinyjpeg);
 	}
+	if (data->cinfo_initialized)
+		jpeg_destroy_decompress(&data->cinfo);
 	v4lconvert_helper_cleanup(data);
 	free(data->convert1_buf);
 	free(data->convert2_buf);
@@ -625,8 +627,24 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	/* JPG and variants */
 	case V4L2_PIX_FMT_MJPEG:
 	case V4L2_PIX_FMT_JPEG:
-		result = v4lconvert_decode_jpeg_tinyjpeg(data, src, src_size,
-				dest, fmt, dest_pix_fmt, 0);
+		if (data->flags & V4LCONVERT_USE_TINYJPEG) {
+			result = v4lconvert_decode_jpeg_tinyjpeg(data,
+							src, src_size, dest,
+							fmt, dest_pix_fmt, 0);
+		} else {
+			result = v4lconvert_decode_jpeg_libjpeg(data,
+							src, src_size, dest,
+							fmt, dest_pix_fmt);
+			if (result == -1 && errno == EOPNOTSUPP) {
+				/* Fall back to tinyjpeg */
+				jpeg_destroy_decompress(&data->cinfo);
+				data->cinfo_initialized = 0;
+				data->flags |= V4LCONVERT_USE_TINYJPEG;
+				result = v4lconvert_decode_jpeg_tinyjpeg(data,
+							src, src_size, dest,
+							fmt, dest_pix_fmt, 0);
+			}
+		}
 		break;
 	case V4L2_PIX_FMT_PJPG:
 		result = v4lconvert_decode_jpeg_tinyjpeg(data, src, src_size,

@@ -1,6 +1,14 @@
 libv4l todo:
 ------------
 
+-don't automatically enable the software effects (awb, gamma) on cameras
+ which need flipping, most of these only produce yuv data and software
+ effects are very expensive on yuv data
+
+-move pixart rotate 90 hack to v4lconvert_decode_jpeg_tinyjpeg, since it
+ is only needed on select pixart cameras, which use this function for
+ decoding, this will nicely cleanup the main conversion routine
+
 -libv4lconvert: v4lconvert_do_try_format should always prefer smaller then
  requested resolutions over bigger then requested ones
 
@@ -14,6 +22,13 @@ libv4l todo:
  frames
 
 -get standardized CID for AUTOGAIN_TARGET upstream and switch to that
+
+Nice to have:
+
+-support packed yuv as output format so that we aren't forced to do
+ conversion on upside down uvc cams
+
+-add a software rotation control (0 / 90 / 180 / 270 degrees) for tablets.
 
 
 utils todo:

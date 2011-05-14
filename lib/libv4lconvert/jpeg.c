@@ -17,7 +17,9 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
 #include "libv4lconvert-priv.h"
+#include "jpeg_memsrcdest.h"
 
 int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
 	unsigned char *src, int src_size, unsigned char *dest,
@@ -103,4 +105,255 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
 		return -1;
 	}
 	return 0;
+}
+
+static void init_libjpeg_cinfo(struct v4lconvert_data *data)
+{
+	struct jpeg_compress_struct cinfo;
+	unsigned char *jpeg_header = NULL;
+	unsigned long jpeg_header_size = 0;
+
+	if (data->cinfo_initialized)
+		return;
+
+	/* Create a jpeg compression object with default params and write
+	   default jpeg headers to a mem buffer, so that we can use them to
+	   pre-fill a jpeg_decompress_struct with default quant and huffman
+	   tables, so that libjpeg can be used to parse [m]jpg-s with
+	   incomplete headers */
+	cinfo.err = jpeg_std_error(&data->jerr);
+	jpeg_create_compress(&cinfo);
+	jpeg_mem_dest(&cinfo, &jpeg_header, &jpeg_header_size);
+	cinfo.input_components = 3;
+	cinfo.in_color_space = JCS_RGB;
+	jpeg_set_defaults(&cinfo);
+	jpeg_write_tables(&cinfo);
+	jpeg_destroy_compress(&cinfo);
+
+	/* Init the jpeg_decompress_struct */
+	data->cinfo.err = jpeg_std_error(&data->jerr);
+	jpeg_create_decompress(&data->cinfo);
+	jpeg_mem_src(&data->cinfo, jpeg_header, jpeg_header_size);
+	jpeg_read_header(&data->cinfo, FALSE);
+
+	free(jpeg_header);
+	data->cinfo_initialized = 1;
+}
+
+static int decode_libjpeg_h_samp1(struct v4lconvert_data *data,
+	unsigned char *ydest, unsigned char *udest, unsigned char *vdest,
+	int v_samp)
+{
+	struct jpeg_decompress_struct *cinfo = &data->cinfo;
+	int x, y;
+	unsigned char *uv_buf;
+	unsigned int width = cinfo->image_width;
+	JSAMPROW y_rows[16], u_rows[8], v_rows[8];
+	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
+
+	uv_buf = v4lconvert_alloc_buffer(width * 16,
+					 &data->convert_pixfmt_buf,
+					 &data->convert_pixfmt_buf_size);
+	if (!uv_buf)
+		return v4lconvert_oom_error(data);
+
+	for (y = 0; y < 8; y++) {
+		u_rows[y] = uv_buf;
+		uv_buf += width;
+		v_rows[y] = uv_buf;
+		uv_buf += width;
+	}
+	uv_buf -= width * 16;
+
+	cinfo->raw_data_out = TRUE;
+	jpeg_start_decompress(cinfo);
+	while (cinfo->output_scanline < cinfo->image_height) {
+		for (y = 0; y < 8 * v_samp; y++) {
+			y_rows[y] = ydest;
+			ydest += cinfo->image_width;
+		}
+		jpeg_read_raw_data(cinfo, rows, 8 * v_samp);
+
+		/* For v_samp == 1 skip copying uv vals every other time */
+		if (cinfo->output_scanline % 16)
+			continue;
+
+		/* Copy over every other u + v pixel for 8 lines */
+		for (y = 0; y < 8; y++) {
+			for (x = 0; x < width; x += 2) {
+				*udest++ = *uv_buf++;
+				uv_buf++;
+			}
+			for (x = 0; x < width; x += 2) {
+				*vdest++ = *uv_buf++;
+				uv_buf++;
+			}
+		}
+		uv_buf -= width * 16;
+	}
+	jpeg_finish_decompress(cinfo);
+	return 0;
+}
+
+static int decode_libjpeg_h_samp2(struct v4lconvert_data *data,
+	unsigned char *ydest, unsigned char *udest, unsigned char *vdest,
+	int v_samp)
+{
+	struct jpeg_decompress_struct *cinfo = &data->cinfo;
+	int y;
+	unsigned int width = cinfo->image_width;
+	JSAMPROW y_rows[16], u_rows[8], v_rows[8];
+	JSAMPARRAY rows[3] = { y_rows, u_rows, v_rows };
+
+	cinfo->raw_data_out = TRUE;
+	jpeg_start_decompress(cinfo);
+	while (cinfo->output_scanline < cinfo->image_height) {
+		for (y = 0; y < 8 * v_samp; y++) {
+			y_rows[y] = ydest;
+			ydest += width;
+		}
+		for (y = 0; y < 8; y++) {
+			u_rows[y] = udest;
+			v_rows[y] = vdest;
+			udest += width / 2;
+			vdest += width / 2;
+		}
+		jpeg_read_raw_data(cinfo, rows, 8 * v_samp);
+		/* For v_samp == 1 were going to get another set of uv values,
+		   but we need only 1 set since our output has v_samp == 2, so
+		   rewind u and vdest and overwrite the previous set. */
+		if (cinfo->output_scanline % 16) {
+			udest -= width * 8 / 2;
+			vdest -= width * 8 / 2;
+		}
+	}
+	jpeg_finish_decompress(cinfo);
+	return 0;
+}
+
+int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
+	unsigned char *src, int src_size, unsigned char *dest,
+	struct v4l2_format *fmt, unsigned int dest_pix_fmt)
+{
+	unsigned int width  = fmt->fmt.pix.width;
+	unsigned int height = fmt->fmt.pix.height;
+	int result = 0;
+
+	init_libjpeg_cinfo(data);
+
+	jpeg_mem_src(&data->cinfo, src, src_size);
+	jpeg_read_header(&data->cinfo, TRUE);
+
+	if (data->cinfo.image_width  != width ||
+	    data->cinfo.image_height != height) {
+		V4LCONVERT_ERR("unexpected width / height in JPEG header"
+			       "expected: %ux%u, header: %ux%u\n", width,
+			       height, data->cinfo.image_width,
+			       data->cinfo.image_height);
+		errno = EIO;
+		return -1;
+	}
+
+	if (data->cinfo.num_components != 3) {
+		V4LCONVERT_ERR("unexpected no components in JPEG: %d\n",
+			       data->cinfo.num_components);
+		errno = EIO;
+		return -1;
+	}
+
+	if (dest_pix_fmt == V4L2_PIX_FMT_RGB24 ||
+	    dest_pix_fmt == V4L2_PIX_FMT_BGR24) {
+		JSAMPROW row_pointer[1];
+
+#ifdef JCS_EXTENSIONS
+		if (dest_pix_fmt == V4L2_PIX_FMT_BGR24)
+			data->cinfo.out_color_space = JCS_EXT_BGR;
+#endif
+		row_pointer[0] = dest;
+		jpeg_start_decompress(&data->cinfo);
+		while (data->cinfo.output_scanline < height) {
+			jpeg_read_scanlines(&data->cinfo, row_pointer, 1);
+			row_pointer[0] += 3 * width;
+		}
+		jpeg_finish_decompress(&data->cinfo);
+#ifndef JCS_EXTENSIONS
+		if (dest_pix_fmt == V4L2_PIX_FMT_BGR24)
+			v4lconvert_swap_rgb(dest, dest, width, height);
+#endif
+	} else {
+		int h_samp, v_samp;
+		unsigned char *udest, *vdest;
+
+		if (data->cinfo.max_h_samp_factor == 2 &&
+		    data->cinfo.cur_comp_info[0]->h_samp_factor == 2 &&
+		    data->cinfo.cur_comp_info[1]->h_samp_factor == 1 &&
+		    data->cinfo.cur_comp_info[2]->h_samp_factor == 1) {
+			h_samp = 2;
+#if 0 /* HDG: untested, disable for now */
+		} else if (data->cinfo.max_h_samp_factor == 1 &&
+		    data->cinfo.cur_comp_info[0]->h_samp_factor == 1 &&
+		    data->cinfo.cur_comp_info[1]->h_samp_factor == 1 &&
+		    data->cinfo.cur_comp_info[2]->h_samp_factor == 1) {
+			h_samp = 1;
+#endif
+		} else {
+			fprintf(stderr,
+				"libv4lconvert: unsupported jpeg h-sampling "
+				"factors %d:%d:%d, please report this to "
+				"hdegoede@redhat.com\n",
+				data->cinfo.cur_comp_info[0]->h_samp_factor,
+				data->cinfo.cur_comp_info[1]->h_samp_factor,
+				data->cinfo.cur_comp_info[2]->h_samp_factor);
+			errno = EOPNOTSUPP;
+			return -1;
+		}
+
+		if (data->cinfo.max_v_samp_factor == 2 &&
+		    data->cinfo.cur_comp_info[0]->v_samp_factor == 2 &&
+		    data->cinfo.cur_comp_info[1]->v_samp_factor == 1 &&
+		    data->cinfo.cur_comp_info[2]->v_samp_factor == 1) {
+			v_samp = 2;
+		} else if (data->cinfo.max_v_samp_factor == 1 &&
+		    data->cinfo.cur_comp_info[0]->v_samp_factor == 1 &&
+		    data->cinfo.cur_comp_info[1]->v_samp_factor == 1 &&
+		    data->cinfo.cur_comp_info[2]->v_samp_factor == 1) {
+			v_samp = 1;
+		} else {
+			fprintf(stderr,
+				"libv4lconvert: unsupported jpeg v-sampling "
+				"factors %d:%d:%d, please report this to "
+				"hdegoede@redhat.com\n",
+				data->cinfo.cur_comp_info[0]->v_samp_factor,
+				data->cinfo.cur_comp_info[1]->v_samp_factor,
+				data->cinfo.cur_comp_info[2]->v_samp_factor);
+			errno = EOPNOTSUPP;
+			return -1;
+		}
+
+		/* We don't want any padding as that may overflow our dest */
+		if (width % (8 * h_samp) || height % (8 * v_samp)) {
+			V4LCONVERT_ERR(
+				"resolution is not a multiple of dctsize");
+			errno = EIO;
+			return -1;
+		}
+
+		if (dest_pix_fmt == V4L2_PIX_FMT_YVU420) {
+			vdest = dest + width * height;
+			udest = vdest + (width * height) / 4;
+		} else {
+			udest = dest + width * height;
+			vdest = udest + (width * height) / 4;
+		}
+
+		if (h_samp == 1) {
+			result = decode_libjpeg_h_samp1(data, dest, udest,
+							vdest, v_samp);
+		} else {
+			result = decode_libjpeg_h_samp2(data, dest, udest,
+							vdest, v_samp);
+		}
+	}
+
+	return result;
 }
