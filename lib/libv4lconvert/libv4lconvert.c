@@ -652,8 +652,8 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 				TINYJPEG_FLAGS_PIXART_JPEG);
 		break;
 	case V4L2_PIX_FMT_JPGL:
-		result = jpgl_decode(src, src_size, dest_pix_fmt, dest,
-				     width, height);
+		result = v4lconvert_decode_jpgl(src, src_size, dest_pix_fmt,
+						dest, width, height);
 		break;
 
 	/* Custom cam specific YUV formats */

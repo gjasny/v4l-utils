@@ -9,6 +9,21 @@ libv4l todo:
  is only needed on select pixart cameras, which use this function for
  decoding, this will nicely cleanup the main conversion routine
 
+-move usb info gathering code from libv4lcontrol into a new
+ libv4l deviceinfo (devicequirks?) sublib, since it really does not have
+ all that much to do with the emulated controls
+
+-make dmi + usb matching more generic, with wildcards support, etc. To allow
+ for a more flexible upside down table where one entry can match multiple
+ models, hopefully lowering maintainance costs of the upside down device
+ list a bit
+
+-some sort of generic rotation framework (for tablets)?
+
+-rewrite video effects code to be even more plugin based
+
+-add code for software auto focus
+
 -libv4lconvert: v4lconvert_do_try_format should always prefer smaller then
  requested resolutions over bigger then requested ones
 

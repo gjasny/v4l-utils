@@ -189,6 +189,9 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 	unsigned char *src, int src_size, unsigned char *dest,
 	struct v4l2_format *fmt, unsigned int dest_pix_fmt);
 
+int v4lconvert_decode_jpgl(const unsigned char *src, int src_size,
+	unsigned int dest_pix_fmt, unsigned char *dest, int width, int height);
+
 void v4lconvert_decode_spca561(const unsigned char *src, unsigned char *dst,
 		int width, int height);
 
@@ -244,9 +247,5 @@ int v4lconvert_helper_decompress(struct v4lconvert_data *data,
 		unsigned char *dest, int dest_size, int width, int height, int command);
 
 void v4lconvert_helper_cleanup(struct v4lconvert_data *data);
-
-int jpgl_decode(const unsigned char *inp, int src_size,
-		unsigned int dest_pix_fmt, unsigned char *fb,
-		int img_width, int img_height);
 
 #endif

@@ -410,7 +410,7 @@ static inline int decodeBlock( struct rqBitReader *br, int *block, int *dc )
 	return !(hdr & 0x700);
 }
 
-int jpgl_decode(const unsigned char *inp, int src_size,
+int v4lconvert_decode_jpgl(const unsigned char *inp, int src_size,
 		unsigned int dest_pix_fmt, unsigned char *fb,
 		int img_width, int img_height)
 {
