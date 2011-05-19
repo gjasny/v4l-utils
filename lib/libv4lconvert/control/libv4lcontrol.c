@@ -805,7 +805,8 @@ static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data,
 		}
 }
 
-struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
+struct v4lcontrol_data *v4lcontrol_create(int fd, void *dev_ops_priv,
+	const struct libv4l2_dev_ops *dev_ops, int always_needs_conversion)
 {
 	int shm_fd;
 	int i, rc, got_usb_info, speed, init = 0;
@@ -825,10 +826,14 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 	}
 
 	data->fd = fd;
+	data->dev_ops = dev_ops;
+	data->dev_ops_priv = dev_ops_priv;
 
 	/* Check if the driver has indicated some form of flipping is needed */
-	if ((SYS_IOCTL(data->fd, VIDIOC_G_INPUT, &input.index) == 0) &&
-			(SYS_IOCTL(data->fd, VIDIOC_ENUMINPUT, &input) == 0)) {
+	if ((data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				  VIDIOC_G_INPUT, &input.index) == 0) &&
+	    (data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+	    			VIDIOC_ENUMINPUT, &input) == 0)) {
 		if (input.status & V4L2_IN_ST_HFLIP)
 			data->flags |= V4LCONTROL_HFLIPPED;
 		if (input.status & V4L2_IN_ST_VFLIP)
@@ -862,7 +867,8 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 		data->flags = strtol(s, NULL, 0);
 
 	ctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	if (SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl) == 0)
+	if (data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+			VIDIOC_QUERYCTRL, &ctrl) == 0)
 		data->priv_flags |= V4LCONTROL_SUPPORTS_NEXT_CTRL;
 
 	/* If the device always needs conversion, we can add fake controls at no cost
@@ -870,8 +876,11 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 	if (always_needs_conversion || v4lcontrol_needs_conversion(data)) {
 		for (i = 0; i < V4LCONTROL_AUTO_ENABLE_COUNT; i++) {
 			ctrl.id = fake_controls[i].id;
-			rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
-			if (rc == -1 || (rc == 0 && (ctrl.flags & V4L2_CTRL_FLAG_DISABLED)))
+			rc = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+					VIDIOC_QUERYCTRL, &ctrl);
+			if (rc == -1 ||
+			    (rc == 0 &&
+			     (ctrl.flags & V4L2_CTRL_FLAG_DISABLED)))
 				data->controls |= 1 << i;
 		}
 	}
@@ -882,17 +891,20 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 	   different sensors with / without autogain or the necessary controls. */
 	while (data->flags & V4LCONTROL_WANTS_AUTOGAIN) {
 		ctrl.id = V4L2_CID_AUTOGAIN;
-		rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+		rc = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				VIDIOC_QUERYCTRL, &ctrl);
 		if (rc == 0 && !(ctrl.flags & V4L2_CTRL_FLAG_DISABLED))
 			break;
 
 		ctrl.id = V4L2_CID_EXPOSURE;
-		rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+		rc = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				VIDIOC_QUERYCTRL, &ctrl);
 		if (rc != 0 || (ctrl.flags & V4L2_CTRL_FLAG_DISABLED))
 			break;
 
 		ctrl.id = V4L2_CID_GAIN;
-		rc = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, &ctrl);
+		rc = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				VIDIOC_QUERYCTRL, &ctrl);
 		if (rc != 0 || (ctrl.flags & V4L2_CTRL_FLAG_DISABLED))
 			break;
 
@@ -909,7 +921,8 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 	if (data->controls == 0)
 		return data; /* No need to create a shared memory segment */
 
-	if (SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap)) {
+	if (data->dev_ops->ioctl(data->dev_ops_priv, fd,
+			VIDIOC_QUERYCAP, &cap)) {
 		perror("libv4lcontrol: error querying device capabilities");
 		goto error;
 	}
@@ -1095,7 +1108,8 @@ int v4lcontrol_vidioc_queryctrl(struct v4lcontrol_data *data, void *arg)
 		}
 
 	/* find out what the kernel driver would respond. */
-	retval = SYS_IOCTL(data->fd, VIDIOC_QUERYCTRL, arg);
+	retval = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+			VIDIOC_QUERYCTRL, arg);
 
 	if ((data->priv_flags & V4LCONTROL_SUPPORTS_NEXT_CTRL) &&
 			(orig_id & V4L2_CTRL_FLAG_NEXT_CTRL)) {
@@ -1132,7 +1146,8 @@ int v4lcontrol_vidioc_g_ctrl(struct v4lcontrol_data *data, void *arg)
 			return 0;
 		}
 
-	return SYS_IOCTL(data->fd, VIDIOC_G_CTRL, arg);
+	return data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+			VIDIOC_G_CTRL, arg);
 }
 
 int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
@@ -1153,7 +1168,8 @@ int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
 			return 0;
 		}
 
-	return SYS_IOCTL(data->fd, VIDIOC_S_CTRL, arg);
+	return data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+			VIDIOC_S_CTRL, arg);
 }
 
 int v4lcontrol_get_bandwidth(struct v4lcontrol_data *data)

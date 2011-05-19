@@ -47,6 +47,7 @@
 #include <sys/mman.h>
 #include <errno.h>
 #include <dirent.h>
+#include <libv4l2.h>
 
 ApplicationWindow::ApplicationWindow() :
 	m_capture(NULL),
@@ -144,7 +145,8 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	}
 	m_tabs->show();
 	m_tabs->setFocus();
-	m_convertData = v4lconvert_create(fd());
+	m_convertData = v4lconvert_create(fd(), NULL,
+	                                  &libv4l2_default_dev_ops);
 	m_capStartAct->setEnabled(fd() >= 0);
 }
 

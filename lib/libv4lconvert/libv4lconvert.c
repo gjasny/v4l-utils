@@ -103,7 +103,8 @@ static const int v4lconvert_crop_res[][2] = {
 	{ 176, 144 },
 };
 
-struct v4lconvert_data *v4lconvert_create(int fd)
+struct v4lconvert_data *v4lconvert_create(int fd, void *dev_ops_priv,
+		const struct libv4l2_dev_ops *dev_ops)
 {
 	int i, j;
 	struct v4lconvert_data *data = calloc(1, sizeof(struct v4lconvert_data));
@@ -119,6 +120,8 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 	}
 
 	data->fd = fd;
+	data->dev_ops = dev_ops;
+	data->dev_ops_priv = dev_ops_priv;
 	data->decompress_pid = -1;
 	data->fps = 30;
 
@@ -128,7 +131,8 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 
 		fmt.index = i;
 
-		if (SYS_IOCTL(data->fd, VIDIOC_ENUM_FMT, &fmt))
+		if (data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				VIDIOC_ENUM_FMT, &fmt))
 			break;
 
 		for (j = 0; j < ARRAY_SIZE(supported_src_pixfmts); j++)
@@ -147,7 +151,8 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 	data->no_formats = i;
 
 	/* Check if this cam has any special flags */
-	if (SYS_IOCTL(data->fd, VIDIOC_QUERYCAP, &cap) == 0) {
+	if (data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+			VIDIOC_QUERYCAP, &cap) == 0) {
 		if (!strcmp((char *)cap.driver, "uvcvideo"))
 			data->flags |= V4LCONVERT_IS_UVC;
 
@@ -155,7 +160,8 @@ struct v4lconvert_data *v4lconvert_create(int fd)
 			always_needs_conversion = 0;
 	}
 
-	data->control = v4lcontrol_create(fd, always_needs_conversion);
+	data->control = v4lcontrol_create(fd, dev_ops_priv, dev_ops,
+						always_needs_conversion);
 	if (!data->control) {
 		free(data);
 		return NULL;
@@ -221,7 +227,8 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
 	if (fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
 			(!v4lconvert_supported_dst_fmt_only(data) &&
 			 fmt->index < data->no_formats))
-		return SYS_IOCTL(data->fd, VIDIOC_ENUM_FMT, fmt);
+		return data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				VIDIOC_ENUM_FMT, fmt);
 
 	for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
 		if (v4lconvert_supported_dst_fmt_only(data) ||
@@ -385,7 +392,8 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
 
 		try_fmt = *dest_fmt;
 		try_fmt.fmt.pix.pixelformat = supported_src_pixfmts[i].fmt;
-		if (SYS_IOCTL(data->fd, VIDIOC_TRY_FMT, &try_fmt))
+		if (data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				VIDIOC_TRY_FMT, &try_fmt))
 			continue;
 
 		if (try_fmt.fmt.pix.pixelformat !=
@@ -459,7 +467,8 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
 	if (!v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat) ||
 			dest_fmt->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
 			v4lconvert_do_try_format(data, &try_dest, &try_src)) {
-		result = SYS_IOCTL(data->fd, VIDIOC_TRY_FMT, dest_fmt);
+		result = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				VIDIOC_TRY_FMT, dest_fmt);
 		if (src_fmt)
 			*src_fmt = *dest_fmt;
 		return result;
@@ -1316,7 +1325,8 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
 
 	for (i = 0; ; i++) {
 		frmsize.index = i;
-		if (SYS_IOCTL(data->fd, VIDIOC_ENUM_FRAMESIZES, &frmsize))
+		if (data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				VIDIOC_ENUM_FRAMESIZES, &frmsize))
 			break;
 
 		/* We got a framesize, check we don't have the same one already */
@@ -1376,7 +1386,8 @@ int v4lconvert_enum_framesizes(struct v4lconvert_data *data,
 			errno = EINVAL;
 			return -1;
 		}
-		return SYS_IOCTL(data->fd, VIDIOC_ENUM_FRAMESIZES, frmsize);
+		return data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				VIDIOC_ENUM_FRAMESIZES, frmsize);
 	}
 
 	if (frmsize->index >= data->no_framesizes) {
@@ -1412,7 +1423,8 @@ int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
 			errno = EINVAL;
 			return -1;
 		}
-		res = SYS_IOCTL(data->fd, VIDIOC_ENUM_FRAMEINTERVALS, frmival);
+		res = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+				VIDIOC_ENUM_FRAMEINTERVALS, frmival);
 		if (res)
 			V4LCONVERT_ERR("%s\n", strerror(errno));
 		return res;
@@ -1457,7 +1469,8 @@ int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
 	frmival->pixel_format = src_fmt.fmt.pix.pixelformat;
 	frmival->width = src_fmt.fmt.pix.width;
 	frmival->height = src_fmt.fmt.pix.height;
-	res = SYS_IOCTL(data->fd, VIDIOC_ENUM_FRAMEINTERVALS, frmival);
+	res = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+			VIDIOC_ENUM_FRAMEINTERVALS, frmival);
 	if (res) {
 		int dest_pixfmt = dest_fmt.fmt.pix.pixelformat;
 		int src_pixfmt  = src_fmt.fmt.pix.pixelformat;

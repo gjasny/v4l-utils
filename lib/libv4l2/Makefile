@@ -1,12 +1,12 @@
 override CPPFLAGS += -I../include -fvisibility=hidden
 
-LIBS_libv4l2  = -lpthread
+LIBS_libv4l2  = -lpthread -ldl
 
-V4L2_OBJS     = libv4l2.o log.o
+V4L2_OBJS     = libv4l2.o v4l2-plugin.o log.o
 V4L2CONVERT   = v4l2convert.so
 V4L2CONVERT_O = v4l2convert.o libv4l2.so
 TARGETS       = $(V4L2_LIB) libv4l2.pc
-INCLUDES      = ../include/libv4l2.h
+INCLUDES      = ../include/libv4l2.h ../include/libv4l2-plugin.h
 
 ifeq ($(LINKTYPE),static)
 V4L2_LIB      = libv4l2.a
@@ -17,6 +17,8 @@ V4L2_DEPS    += $(V4L2_OBJS) ../libv4lconvert/libv4lconvert.so
 TARGETS      += $(V4L2CONVERT)
 override CPPFLAGS += -fPIC
 endif
+
+override CPPFLAGS += -DLIBDIR='"$(LIBDIR)"'
 
 # This is the soname version
 LIB_RELEASE = 0

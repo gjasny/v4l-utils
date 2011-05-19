@@ -22,6 +22,8 @@
 #ifndef __LIBV4LCONTROL_H
 #define __LIBV4LCONTROL_H
 
+#include "libv4l2-plugin.h"
+
 /* Flags */
 #define V4LCONTROL_HFLIPPED              0x01
 #define V4LCONTROL_VFLIPPED              0x02
@@ -47,7 +49,8 @@ enum {
 
 struct v4lcontrol_data;
 
-struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion);
+struct v4lcontrol_data *v4lcontrol_create(int fd, void *dev_ops_priv,
+	const struct libv4l2_dev_ops *dev_ops, int always_needs_conversion);
 void v4lcontrol_destroy(struct v4lcontrol_data *data);
 
 int v4lcontrol_get_bandwidth(struct v4lcontrol_data *data);

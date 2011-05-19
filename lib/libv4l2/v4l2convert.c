@@ -46,7 +46,6 @@
 LIBV4L_PUBLIC int open(const char *file, int oflag, ...)
 {
 	int fd;
-	struct v4l2_capability cap;
 	int v4l_device = 0;
 
 	/* check if we're opening a video4linux2 device */
@@ -74,14 +73,6 @@ LIBV4L_PUBLIC int open(const char *file, int oflag, ...)
 	/* end of original open code */
 
 	if (fd == -1 || !v4l_device)
-		return fd;
-
-	/* check that this is an v4l2 device, libv4l2 only supports v4l2 devices */
-	if (SYS_IOCTL(fd, VIDIOC_QUERYCAP, &cap))
-		return fd;
-
-	/* libv4l2 only adds functionality to capture capable devices */
-	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
 		return fd;
 
 	/* Try to Register with libv4l2 (in case of failure pass the fd to the

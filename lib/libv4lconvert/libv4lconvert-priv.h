@@ -71,6 +71,8 @@ struct v4lconvert_data {
 	unsigned char *convert_pixfmt_buf;
 	struct v4lcontrol_data *control;
 	struct v4lprocessing_data *processing;
+	void *dev_ops_priv;
+	const struct libv4l2_dev_ops *dev_ops;
 
 	/* Data for external decompression helpers code */
 	pid_t decompress_pid;
