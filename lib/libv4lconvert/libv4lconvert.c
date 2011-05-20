@@ -81,6 +81,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_SQ905C,		 0,	 9,	 9,	1 },
 	/* grey formats */
 	{ V4L2_PIX_FMT_GREY,		 8,	20,	20,	0 },
+	{ V4L2_PIX_FMT_Y10BPACK,	10,	20,	20,	0 },
 };
 
 static const struct v4lconvert_pixfmt supported_dst_pixfmts[] = {
@@ -876,6 +877,27 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			result = -1;
 		}
 		break;
+
+	case V4L2_PIX_FMT_Y10BPACK:
+		switch (dest_pix_fmt) {
+		case V4L2_PIX_FMT_RGB24:
+	        case V4L2_PIX_FMT_BGR24:
+			result = v4lconvert_y10b_to_rgb24(data, src, dest,
+							  width, height);
+			break;
+		case V4L2_PIX_FMT_YUV420:
+		case V4L2_PIX_FMT_YVU420:
+			result = v4lconvert_y10b_to_yuv420(data, src, dest,
+							   width, height);
+			break;
+		}
+		if (result == 0 && src_size < (width * height * 10 / 8)) {
+			V4LCONVERT_ERR("short y10b data frame\n");
+			errno = EPIPE;
+			result = -1;
+		}
+		break;
+
 	case V4L2_PIX_FMT_RGB565:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
