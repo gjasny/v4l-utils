@@ -1,4 +1,4 @@
-OBJS    = frequencies.o v4l2_driver.o
+OBJS    = frequencies.o v4l2_driver.o get_media_devices.o
 TARGETS = libv4l2util.a
 
 all: $(TARGETS)

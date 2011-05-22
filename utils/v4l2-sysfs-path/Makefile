@@ -5,7 +5,7 @@ all: $(TARGETS)
 -include *.d
 
 v4l2-sysfs-path: v4l2-sysfs-path.o ../libv4l2util/libv4l2util.a
-	$(CC) $(LDFLAGS) -o $@ $^ -lsysfs
+	$(CC) $(LDFLAGS) -o $@ $^
 
 install: $(TARGETS)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
