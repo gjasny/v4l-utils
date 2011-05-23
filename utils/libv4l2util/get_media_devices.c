@@ -145,11 +145,19 @@ static int add_v4l_class(struct media_devices *md)
 
 static int add_snd_class(struct media_devices *md)
 {
+	unsigned c, d;
+	char *new;
+
 	if (strstr(md->node, "card"))
 		md->type = SND_CARD;
-	else if (strstr(md->node, "hw"))
+	else if (strstr(md->node, "hw")) {
+		sscanf(md->node, "hwC%uD%u", &c, &d);
+		if (asprintf(&new, "hw:%u.%u", c, d) > 0) {
+			free(md->node);
+			md->node = new;
+		}
 		md->type = SND_HW;
-	else if (strstr(md->node, "control"))
+	} else if (strstr(md->node, "control"))
 		md->type = SND_CONTROL;
 	else if (strstr(md->node, "pcm")) {
 		if (md->node[strlen(md->node) - 1] == 'p')
@@ -242,4 +250,3 @@ void display_media_devices(struct media_devices *md, unsigned int size)
 	}
 	printf("\n");
 }
-
