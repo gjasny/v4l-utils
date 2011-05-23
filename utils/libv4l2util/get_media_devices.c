@@ -64,7 +64,7 @@ static int get_class(char *class,
 	dir = opendir(dname);
 	if (!dir) {
 		perror(dname);
-		return -1;
+		return 0;
 	}
 	for (entry = readdir(dir); entry; entry = readdir(dir)) {
 		sprintf(fname, "%s/%s", dname, entry->d_name);
