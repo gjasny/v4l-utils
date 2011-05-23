@@ -250,3 +250,29 @@ void display_media_devices(struct media_devices *md, unsigned int size)
 	}
 	printf("\n");
 }
+
+char *get_first_alsa_cap_device(struct media_devices *md, unsigned int size,
+				char *v4l_device)
+{
+	int i;
+	char *prev;
+
+	/* Step 1: Find the V4L node */
+	for (i = 0; i < size; i++, md++) {
+		if (md->type == V4L_VIDEO) {
+			if (!strcmp(v4l_device,  md->node))
+				break;
+		}
+	}
+	if (i == size)
+		return NULL;
+
+	/* Step 2: find the alsa node */
+	prev = md->device;
+	for (i++, md++;i < size && !strcmp(prev,md->device); i++, md++) {
+		if (md->type == SND_CAP)
+			return md->node;
+	}
+
+	return NULL;
+}

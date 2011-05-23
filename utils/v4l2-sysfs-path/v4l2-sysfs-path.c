@@ -30,9 +30,16 @@ int main(void)
 {
 	struct media_devices *md;
 	unsigned int size = 0;
+	char *alsa;
 
 	md = discover_media_devices (&size);
 	display_media_devices(md, size);
+
+	alsa = get_first_alsa_cap_device(md, size, "video0");
+
+	if (alsa)
+		printf ("Alsa device associated with video0 capture: %s\n", alsa);
+
 	free_media_devices(md, size);
 
 	return 0;
