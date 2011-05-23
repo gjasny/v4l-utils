@@ -145,26 +145,43 @@ static int add_v4l_class(struct media_devices *md)
 
 static int add_snd_class(struct media_devices *md)
 {
-	unsigned c, d;
+	unsigned c = 65535, d = 65535;
 	char *new;
 
-	if (strstr(md->node, "card"))
+	if (strstr(md->node, "card")) {
+		sscanf(md->node, "card%u", &c);
 		md->type = SND_CARD;
-	else if (strstr(md->node, "hw")) {
+	} else if (strstr(md->node, "hw")) {
 		sscanf(md->node, "hwC%uD%u", &c, &d);
-		if (asprintf(&new, "hw:%u.%u", c, d) > 0) {
-			free(md->node);
-			md->node = new;
-		}
 		md->type = SND_HW;
-	} else if (strstr(md->node, "control"))
+	} else if (strstr(md->node, "control")) {
+		sscanf(md->node, "controlC%u", &c);
 		md->type = SND_CONTROL;
-	else if (strstr(md->node, "pcm")) {
+	} else if (strstr(md->node, "pcm")) {
+		sscanf(md->node, "pcmC%uD%u", &c, &d);
 		if (md->node[strlen(md->node) - 1] == 'p')
 			md->type = SND_OUT;
 		else if (md->node[strlen(md->node) - 1] == 'c')
 			md->type = SND_CAP;
 	}
+
+	if (c == 65535)
+		return 0;
+
+	/* Reformat device to be useful for alsa userspace library */
+	if (d == 65535) {
+		if (asprintf(&new, "hw:%u", c) > 0) {
+			free(md->node);
+			md->node = new;
+		}
+		return 0;
+	}
+
+	if (asprintf(&new, "hw:%u.%u", c, d) > 0) {
+		free(md->node);
+		md->node = new;
+	}
+
 	return 0;
 };
 
