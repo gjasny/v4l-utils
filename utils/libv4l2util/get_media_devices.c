@@ -177,7 +177,7 @@ static int add_snd_class(struct media_devices *md)
 		return 0;
 	}
 
-	if (asprintf(&new, "hw:%u.%u", c, d) > 0) {
+	if (asprintf(&new, "hw:%u,%u", c, d) > 0) {
 		free(md->node);
 		md->node = new;
 	}
