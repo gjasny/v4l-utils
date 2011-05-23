@@ -46,3 +46,4 @@ void free_media_devices(struct media_devices *md, unsigned int md_size);
 void display_media_devices(struct media_devices *md, unsigned int size);
 char *get_first_alsa_cap_device(struct media_devices *md, unsigned int size,
 				char *v4l_device);
+char *get_first_no_video_out_device(struct media_devices *md, unsigned int size);

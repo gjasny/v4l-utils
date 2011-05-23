@@ -293,3 +293,35 @@ char *get_first_alsa_cap_device(struct media_devices *md, unsigned int size,
 
 	return NULL;
 }
+
+char *get_first_no_video_out_device(struct media_devices *md, unsigned int size)
+{
+	struct media_devices *md_ptr = md;
+	int i, skip = 0;
+	char *prev = "";
+
+	/* Step 1: Find a device without video4linux node */
+	for (i = 0; i < size; i++, md++) {
+		if (md->type == V4L_VIDEO)
+			skip = 1;
+		else if (strcmp(prev, md->device)) {
+			prev = md->device;
+			skip = 0;
+		}
+		if (!skip && md->type == SND_OUT)
+			return md->node;
+	}
+
+	/*
+	 * Step 2: Fallback: Find any alsa out node. Useful if a machine
+	 * doesn't have an internal board, but an USB device like the
+	 * Sirius webcam also provides an alsa output node
+	 */
+	md = md_ptr;
+	for (i = 0; i < size; i++, md++) {
+		if (!skip && md->type == SND_OUT)
+			return md->node;
+	}
+
+	return NULL;
+}

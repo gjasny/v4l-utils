@@ -25,6 +25,7 @@
  */
 
 #include "../libv4l2util/get_media_devices.h"
+#include <stdio.h>
 
 int main(void)
 {
@@ -36,9 +37,12 @@ int main(void)
 	display_media_devices(md, size);
 
 	alsa = get_first_alsa_cap_device(md, size, "video0");
-
 	if (alsa)
-		printf ("Alsa device associated with video0 capture: %s\n", alsa);
+		printf("Alsa device associated with video0 capture: %s\n", alsa);
+
+	alsa = get_first_no_video_out_device(md, size);
+	if (alsa)
+		printf("Alsa output device: %s\n", alsa);
 
 	free_media_devices(md, size);
 
