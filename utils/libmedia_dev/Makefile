@@ -9,9 +9,9 @@ all: $(TARGETS)
 libmedia_dev.a: $(OBJS)
 
 install: $(TARGETS)
-	mkdir -p $(DESTDIR)$(PREFIX)/include
-	install -p -m 644 $(INCLUDES) $(DESTDIR)$(PREFIX)/include
-	mkdir -p $(DESTDIR)$(LIBDIR)
-	install -m 644 $(TARGETS) $(DESTDIR)$(LIBDIR)
+#	mkdir -p $(DESTDIR)$(PREFIX)/include
+#	install -p -m 644 $(INCLUDES) $(DESTDIR)$(PREFIX)/include
+#	mkdir -p $(DESTDIR)$(LIBDIR)
+#	install -m 644 $(TARGETS) $(DESTDIR)$(LIBDIR)
 
 include ../../Make.rules
