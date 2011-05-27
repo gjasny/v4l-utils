@@ -95,7 +95,8 @@ void ApplicationWindow::addTabs()
 		unsigned id = m_classMap[V4L2_CTRL_CLASS_USER][i];
 
 		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64 ||
-		    m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING) {
+		    m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING ||
+		    V4L2_CTRL_DRIVER_PRIV(id)) {
 			m_haveExtendedUserCtrls = true;
 			break;
 		}
