@@ -337,10 +337,12 @@ int testSimpleControls(struct node *node)
 		
 		// Try to set the current value (or the default value for write only controls)
 		ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-		if ((iter->flags & V4L2_CTRL_FLAG_READ_ONLY) && ret != EACCES)
-			return fail("s_ctrl did not check the read-only flag\n");
-		else if (ret)
+		if (iter->flags & V4L2_CTRL_FLAG_READ_ONLY) {
+			if (ret != EACCES)
+				return fail("s_ctrl did not check the read-only flag\n");
+		} else if (ret) {
 			return fail("s_ctrl returned an error\n");
+		}
 		if (ret)
 			continue;
 		if (checkSimpleCtrl(ctrl, *iter))
