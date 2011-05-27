@@ -40,6 +40,22 @@
 
 #define CTRL_FLAG_DISABLED (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE | V4L2_CTRL_FLAG_GRABBED)
 
+static bool is_valid_type(enum v4l2_ctrl_type type)
+{
+	switch (type) {
+	case V4L2_CTRL_TYPE_INTEGER:
+	case V4L2_CTRL_TYPE_BOOLEAN:
+	case V4L2_CTRL_TYPE_MENU:
+	case V4L2_CTRL_TYPE_BUTTON:
+	case V4L2_CTRL_TYPE_INTEGER64:
+	case V4L2_CTRL_TYPE_CTRL_CLASS:
+	case V4L2_CTRL_TYPE_STRING:
+		return true;
+	default:
+		return false;
+	}
+}
+
 void ApplicationWindow::addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment align)
 {
 	grid->addWidget(w, m_row, m_col, align | Qt::AlignVCenter);
@@ -60,7 +76,8 @@ void ApplicationWindow::addTabs()
 	memset(&qctrl, 0, sizeof(qctrl));
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	while (queryctrl(qctrl)) {
-		if ((qctrl.flags & V4L2_CTRL_FLAG_DISABLED) == 0) {
+		if (is_valid_type(qctrl.type) &&
+		    (qctrl.flags & V4L2_CTRL_FLAG_DISABLED) == 0) {
 			m_ctrlMap[qctrl.id] = qctrl;
 			if (qctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS)
 				m_classMap[V4L2_CTRL_ID2CLASS(qctrl.id)].push_back(qctrl.id);
@@ -76,6 +93,8 @@ void ApplicationWindow::addTabs()
 			qctrl.id = id;
 			if (!queryctrl(qctrl))
 				continue;
+			if (!is_valid_type(qctrl.type))
+				continue;
 			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 				continue;
 			m_ctrlMap[qctrl.id] = qctrl;
@@ -83,6 +102,8 @@ void ApplicationWindow::addTabs()
 		}
 		for (qctrl.id = V4L2_CID_PRIVATE_BASE;
 				queryctrl(qctrl); qctrl.id++) {
+			if (!is_valid_type(qctrl.type))
+				continue;
 			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 				continue;
 			m_ctrlMap[qctrl.id] = qctrl;
