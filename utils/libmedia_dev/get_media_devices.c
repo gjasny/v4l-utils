@@ -55,6 +55,7 @@ struct media_device_entry {
 	char *device;
 	char *node;
 	enum device_type type;
+	unsigned major, minor;		/* Device major/minor */
 };
 
 /**
@@ -74,6 +75,34 @@ struct media_devices {
 typedef int (*fill_data_t)(struct media_device_entry *md);
 
 #define DEVICE_STR "devices"
+
+static void get_uevent_info(struct media_device_entry *md_ptr, char *dname)
+{
+	FILE *fd;
+	char file[560], *name, *val, *p;
+	char s[1024];
+
+	sprintf(file, "%s/%s/uevent", dname, md_ptr->node);
+	fd = fopen(file, "r");
+	if (!fd)
+		return;
+	while (fgets(s, sizeof(s), fd)) {
+		p = strtok(s, "=");
+		if(!p)
+			continue;
+		name = p;
+		p = strtok(NULL, "\n");
+		if(!p)
+			continue;
+		val = p;
+		if (!strcmp(name, "MAJOR"))
+			md_ptr->major = atol(val);
+		else if (!strcmp(name, "MINOR"))
+			md_ptr->minor = atol(val);
+	}
+
+	fclose(fd);
+}
 
 static int get_class(char *class,
 		     struct media_device_entry **md,
@@ -147,11 +176,15 @@ static int get_class(char *class,
 			(*md_size)++;
 
 			/* Cleans previous data and fills it with device/node */
+			memset(md_ptr, 0, sizeof(*md_ptr));
 			md_ptr->type = UNKNOWN;
 			md_ptr->device = malloc(strlen(device) + 1);
 			strcpy(md_ptr->device, device);
 			md_ptr->node = malloc(strlen(class_node) + 1);
 			strcpy(md_ptr->node, class_node);
+
+			/* Retrieve major and minor information */
+			get_uevent_info(md_ptr, dname);
 
 			/* Used to identify the type of node */
 			fill(md_ptr);
