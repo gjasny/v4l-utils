@@ -20,7 +20,7 @@
 /*
  * Version of the API
  */
-#define GET_MEDIA_DEVICES_VERSION	0x0101
+#define GET_MEDIA_DEVICES_VERSION	0x0102
 
 /*
  A typical usecase for the above API is:
@@ -55,6 +55,7 @@ Where alsa_handler() is some function that will need to handle
  */
 enum device_type {
 	UNKNOWN = 65535,
+	NONE    = 65534,
 	V4L_VIDEO = 0,
 	V4L_VBI,
 	DVB_FRONTEND,
@@ -102,38 +103,42 @@ void free_media_devices(void *opaque);
 void display_media_devices(void *opaque);
 
 /**
- * get_first_alsa_cap_device() - Gets the first alsa capture device for a
- *				 video node
+ * get_not_associated_device() - Return the next device not associated with
+ * 				 an specific device type.
  *
- * @opaque:	media devices opaque descriptor
+ * @opaque:		media devices opaque descriptor
+ * @last_seek:		last seek result. Use NULL to get the first result
+ * @desired_type:	type of the desired device
+ * @not_desired_type:	type of the seek device
  *
- * This function seeks inside the media_devices struct for the first alsa
- * capture device (SND_CAP) that belongs to the same device where the video
- * node exists. The video node should belong to V4L_VIDEO type (video0,
- * video1, etc).
+ * This function seeks inside the media_devices struct for the next physical
+ * device that doesn't support a non_desired type.
+ * This method is useful for example to return the audio devices that are
+ * provided by the motherboard.
  */
-char *get_first_alsa_cap_device(void *opaque, char *v4l_device);
+char *get_associated_device(void *opaque,
+			    char *last_seek,
+			    enum device_type desired_type,
+			    char *seek_device,
+			    enum device_type seek_type);
 
-/**
- * get_first_no_video_out_device() - Gets the first alsa playback device
- *				     that is not associated to a video device.
+			    /**
+ * get_associated_device() - Return the next device associated with another one
  *
- * @opaque:	media devices opaque descriptor
+ * @opaque:		media devices opaque descriptor
+ * @last_seek:		last seek result. Use NULL to get the first result
+ * @desired_type:	type of the desired device
+ * @seek_device:	name of the device with you want to get an association.
+ *@ seek_type:		type of the seek device. Using NONE produces the same
+ *			result of using NULL for the seek_device.
  *
- * This function seeks inside the media_devices struct for the first alsa
- * playback device (SND_OUT) that is not associated to a video device.
- * The returned value is at the format expected by alsa libraries (like hw:0,0)
- *
- * If there's no playback device that are not associated to a video device,
- * the routine falls back to any existing audio playback device. This is useful
- * in the cases where there's no audio sound device on a system, and an external
- * USB device that provides both video and audio playback is connected.
- *
- * Note that, as the devices are ordered by the devices ID, this routine
- * may not return hw:0,0. That's OK, as, if the media card is probed before
- * the audio card, the media card will receive the lowest address.
- *
- * In general, it will return the alsa device for the default audio playback
- * device.
+ * This function seeks inside the media_devices struct for the next device
+ * that it is associated with a seek parameter.
+ * It can be used to get an alsa device associated with a video device. If
+ * the seek_device is NULL or seek_type is NONE, it will just search for
+ * devices of the desired_type.
  */
-char *get_first_no_video_out_device(void *opaque);
+char *get_not_associated_device(void *opaque,
+			    char *last_seek,
+			    enum device_type desired_type,
+			    enum device_type not_desired_type);

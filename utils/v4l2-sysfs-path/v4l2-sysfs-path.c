@@ -35,11 +35,11 @@ int main(void)
 	md = discover_media_devices();
 	display_media_devices(md);
 
-	alsa = get_first_alsa_cap_device(md, "video0");
+	alsa = get_associated_device(md, NULL, SND_CAP, "video0", V4L_VIDEO);
 	if (alsa)
 		printf("Alsa device associated with video0 capture: %s\n", alsa);
 
-	alsa = get_first_no_video_out_device(md);
+	alsa = get_not_associated_device(md, NULL, SND_OUT, V4L_VIDEO);
 	if (alsa)
 		printf("Alsa output device: %s\n", alsa);
 

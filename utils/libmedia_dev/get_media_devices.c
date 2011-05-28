@@ -27,6 +27,7 @@
 
 static char *device_type_str[] = {
 	[UNKNOWN]	= "unknown",
+	[NONE]		= "none",
 	[V4L_VIDEO]	= "video",
 	[V4L_VBI]	= "vbi",
 	[DVB_FRONTEND]	= "dvb frontend",
@@ -313,69 +314,75 @@ void display_media_devices(void *opaque)
 	printf("\n");
 }
 
-char *get_first_alsa_cap_device(void *opaque, char *v4l_device)
+char *get_associated_device(void *opaque,
+			    char *last_seek,
+			    enum device_type desired_type,
+			    char *seek_device,
+			    enum device_type seek_type)
 {
 	struct media_devices *md = opaque;
 	struct media_device_entry *md_ptr = md->md_entry;
 	int i;
 	char *prev;
-	char p = strrchr(v4l_device, '/');
+	char *p = strrchr(seek_device, '/');
 
 	/* Get just the device name */
 	if (p)
-		v4l_device = p + 1;
+		seek_device = p + 1;
 
-	/* Step 1: Find the V4L node */
-	for (i = 0; i < md->md_size; i++, md_ptr++) {
-		if (md_ptr->type == V4L_VIDEO) {
-			if (!strcmp(v4l_device,  md_ptr->node))
+	if (seek_type != NONE && seek_device[0]) {
+		/* Step 1: Find the seek node */
+		for (i = 0; i < md->md_size; i++, md_ptr++) {
+			if (md_ptr->type == seek_type &&
+			    !strcmp(seek_device, md_ptr->node))
 				break;
 		}
-	}
-	if (i == md->md_size)
-		return NULL;
+		if (i == md->md_size)
+			return NULL;
+		i++;
+	} else
+		i = 0;
 
-	/* Step 2: find the alsa node */
+	/* Step 2: find the associated node */
 	prev = md_ptr->device;
 	md_ptr++;
-	for (i++;i < md->md_size && !strcmp(prev,md_ptr->device); i++) {
-		if (md_ptr->type == SND_CAP)
+	for (;i < md->md_size && !strcmp(prev,md_ptr->device); i++, md_ptr++) {
+		if (last_seek && !strcmp(md_ptr->node, last_seek))
+			break;
+		if (md_ptr->type == desired_type)
 			return md_ptr->node;
-		md_ptr++;
 	}
 
 	return NULL;
 }
 
-char *get_first_no_video_out_device(void *opaque)
+char *get_not_associated_device(void *opaque,
+			    char *last_seek,
+			    enum device_type desired_type,
+			    enum device_type not_desired_type)
 {
 	struct media_devices *md = opaque;
 	struct media_device_entry *md_ptr = md->md_entry;
 	int i, skip = 0;
-	char *prev = "";
+	char *prev = "", *result = NULL;
 
-	/* Step 1: Find a device without video4linux node */
+	/* Step 1: Find a device without seek_type node */
 	for (i = 0; i < md->md_size; i++, md_ptr++) {
-		if (md_ptr->type == V4L_VIDEO)
-			skip = 1;
-		else if (strcmp(prev, md_ptr->device)) {
+		if (strcmp(prev, md_ptr->device)) {
+			if (!skip && result)
+				break;
 			prev = md_ptr->device;
 			skip = 0;
+			result = NULL;
 		}
-		if (!skip && md_ptr->type == SND_OUT)
-			return md_ptr->node;
+		if (md_ptr->type == not_desired_type) {
+			skip = 1;
+		} else if (!skip && !result && md_ptr->type == desired_type) {
+			result = md_ptr->node;
+		}
 	}
+	if (skip)
+		result = NULL;
 
-	/*
-	 * Step 2: Fallback: Find any alsa out node. Useful if a machine
-	 * doesn't have an internal board, but an USB device like the
-	 * Sirius webcam also provides an alsa output node
-	 */
-	md_ptr = md->md_entry;
-	for (i = 0; i < md->md_size; i++, md++) {
-		if (!skip && md_ptr->type == SND_OUT)
-			return md_ptr->node;
-	}
-
-	return NULL;
+	return result;
 }
