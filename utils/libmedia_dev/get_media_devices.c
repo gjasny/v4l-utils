@@ -319,6 +319,11 @@ char *get_first_alsa_cap_device(void *opaque, char *v4l_device)
 	struct media_device_entry *md_ptr = md->md_entry;
 	int i;
 	char *prev;
+	char p = strrchr(v4l_device, '/');
+
+	/* Get just the device name */
+	if (p)
+		v4l_device = p + 1;
 
 	/* Step 1: Find the V4L node */
 	for (i = 0; i < md->md_size; i++, md_ptr++) {
