@@ -1427,9 +1427,9 @@ int main(int argc, char *argv[])
 		int rc;
 
 		for (cur = &cfg; cur->next; cur = cur->next) {
-			if (strcasecmp(cur->driver, rc_dev.drv_name) && strcasecmp(cur->driver, "*"))
+			if ((!rc_dev.drv_name || strcasecmp(cur->driver, rc_dev.drv_name)) && strcasecmp(cur->driver, "*"))
 				continue;
-			if (strcasecmp(cur->table, rc_dev.keytable_name) && strcasecmp(cur->table, "*"))
+			if ((!rc_dev.keytable_name || strcasecmp(cur->table, rc_dev.keytable_name)) && strcasecmp(cur->table, "*"))
 				continue;
 			break;
 		}
