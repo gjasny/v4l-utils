@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Author:
- * 	Mauro Carvalho Chehab <mchehab@redhat.com>
+ *	Mauro Carvalho Chehab <mchehab@redhat.com>
  */
 
 #include "../libmedia_dev/get_media_devices.h"
@@ -55,8 +55,8 @@ static void print_all_alsa_independent_playback(void *md)
 	int first = 1;
 
 	do {
-		devname = get_not_associated_device(md, devname,
-						    MEDIA_SND_OUT, MEDIA_V4L_VIDEO);
+		devname = get_not_associated_device(md, devname, MEDIA_SND_OUT,
+						    MEDIA_V4L_VIDEO);
 		if (devname) {
 			if (first) {
 				printf("Alsa playback device(s): ");
@@ -73,7 +73,7 @@ static void print_all_alsa_independent_playback(void *md)
 int main(void)
 {
 	void *md;
-	char *vid, *alsa;
+	char *vid;
 	int i;
 
 	md = discover_media_devices();
@@ -81,7 +81,7 @@ int main(void)
 	vid = NULL;
 	do {
 		vid = get_associated_device(md, vid, MEDIA_V4L_VIDEO,
-						NULL, NONE);
+					    NULL, NONE);
 		if (!vid)
 			break;
 		printf("Video device: %s\n", vid);

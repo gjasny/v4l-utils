@@ -27,17 +27,17 @@
 
 static char *device_type_str[] = {
 	[MEDIA_V4L_VIDEO]	= "video",
-	[MEDIA_V4L_VBI]	= "vbi",
+	[MEDIA_V4L_VBI]		= "vbi",
 	[MEDIA_DVB_FRONTEND]	= "dvb frontend",
 	[MEDIA_DVB_DEMUX]	= "dvb demux",
-	[MEDIA_DVB_DVR]	= "dvb dvr",
-	[MEDIA_DVB_NET]	= "dvb net",
-	[MEDIA_DVB_CA]	= "dvb conditional access",
+	[MEDIA_DVB_DVR]		= "dvb dvr",
+	[MEDIA_DVB_NET]		= "dvb net",
+	[MEDIA_DVB_CA]		= "dvb conditional access",
 	[MEDIA_SND_CARD]	= "sound card",
-	[MEDIA_SND_CAP]	= "pcm capture",
-	[MEDIA_SND_OUT]	= "pcm output",
+	[MEDIA_SND_CAP]		= "pcm capture",
+	[MEDIA_SND_OUT]		= "pcm output",
 	[MEDIA_SND_CONTROL]	= "mixer",
-	[MEDIA_SND_HW]	= "sound hardware",
+	[MEDIA_SND_HW]		= "sound hardware",
 };
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
@@ -79,7 +79,7 @@ typedef int (*fill_data_t)(struct media_device_entry *md);
 static void get_uevent_info(struct media_device_entry *md_ptr, char *dname)
 {
 	FILE *fd;
-	char file[560], *name, *val, *p;
+	char file[560], *name, *p;
 	char s[1024];
 
 	sprintf(file, "%s/%s/uevent", dname, md_ptr->node);
@@ -88,17 +88,16 @@ static void get_uevent_info(struct media_device_entry *md_ptr, char *dname)
 		return;
 	while (fgets(s, sizeof(s), fd)) {
 		p = strtok(s, "=");
-		if(!p)
+		if (!p)
 			continue;
 		name = p;
 		p = strtok(NULL, "\n");
-		if(!p)
+		if (!p)
 			continue;
-		val = p;
 		if (!strcmp(name, "MAJOR"))
-			md_ptr->major = atol(val);
+			md_ptr->major = atol(p);
 		else if (!strcmp(name, "MINOR"))
-			md_ptr->minor = atol(val);
+			md_ptr->minor = atol(p);
 	}
 
 	fclose(fd);
@@ -150,22 +149,22 @@ static int get_class(char *class,
 			p = strstr(link, class);
 			if (!p)
 				goto error;
-			*(p -1) = '\0';
+			*(p - 1) = '\0';
 
 			/* Remove USB sub-devices from the path */
-			if (strstr(device,"usb")) {
+			if (strstr(device, "usb")) {
 				do {
 					p = strrchr(device, '/');
 					if (!p)
 						goto error;
-					if (!strpbrk(p,":."))
+					if (!strpbrk(p, ":."))
 						break;
 					*p = '\0';
 				} while (1);
 			}
 
 			/* Don't handle virtual devices */
-			if (!strcmp(device,"virtual"))
+			if (!strcmp(device, "virtual"))
 				continue;
 
 			/* Add one more element to the devices struct */
@@ -333,7 +332,8 @@ char *media_device_type(enum device_type type)
 {
 	if ((unsigned int)type >= ARRAY_SIZE(device_type_str))
 		return "unknown";
-	else return device_type_str[type];
+	else
+		return device_type_str[type];
 }
 
 void display_media_devices(void *opaque)
@@ -345,10 +345,10 @@ void display_media_devices(void *opaque)
 
 	for (i = 0; i < md->md_size; i++) {
 		if (strcmp(prev, md_ptr->device)) {
-			printf ("\nDevice %s:\n\t", md_ptr->device);
+			printf("\nDevice %s:\n\t", md_ptr->device);
 			prev = md_ptr->device;
 		}
-		printf ("%s(%s) ", md_ptr->node, media_device_type(md_ptr->type));
+		printf("%s(%s) ", md_ptr->node, media_device_type(md_ptr->type));
 		md_ptr++;
 	}
 	printf("\n");
@@ -390,7 +390,7 @@ char *get_associated_device(void *opaque,
 		prev = md_ptr->device;
 		md_ptr++;
 		/* Step 2: find the associated node */
-		for (;i < md->md_size && !strcmp(prev, md_ptr->device); i++, md_ptr++) {
+		for (; i < md->md_size && !strcmp(prev, md_ptr->device); i++, md_ptr++) {
 			if (last_seek && md_ptr->type == seek_type &&
 			    !strcmp(md_ptr->node, last_seek)) {
 				found = 1;
@@ -402,7 +402,7 @@ char *get_associated_device(void *opaque,
 				return md_ptr->node;
 		}
 	} else {
-		for (i = 0;i < md->md_size; i++, md_ptr++) {
+		for (i = 0; i < md->md_size; i++, md_ptr++) {
 			if (last_seek && !strcmp(md_ptr->node, last_seek)) {
 				found = 1;
 				continue;
@@ -442,11 +442,10 @@ char *get_not_associated_device(void *opaque,
 			skip = 0;
 			result = NULL;
 		}
-		if (md_ptr->type == not_desired_type) {
+		if (md_ptr->type == not_desired_type)
 			skip = 1;
-		} else if (!skip && !result && md_ptr->type == desired_type) {
+		else if (!skip && !result && md_ptr->type == desired_type)
 			result = md_ptr->node;
-		}
 	}
 	if (skip)
 		result = NULL;

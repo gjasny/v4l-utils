@@ -111,7 +111,7 @@ void display_media_devices(void *opaque);
 
 /**
  * get_associated_device() - Return the next device not associated with
- * 				 an specific device type.
+ *			     an specific device type.
  *
  * @opaque:		media devices opaque descriptor
  * @last_seek:		last seek result. Use NULL to get the first result
