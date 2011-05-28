@@ -20,7 +20,7 @@
 /*
  * Version of the API
  */
-#define GET_MEDIA_DEVICES_VERSION	0x0102
+#define GET_MEDIA_DEVICES_VERSION	0x0103
 
 /*
  A typical usecase for the above API is:
@@ -51,24 +51,24 @@ Where alsa_handler() is some function that will need to handle
  *
  * The device_type is used to sort the media devices array.
  * So, the order is relevant. The first device should be
- * V4L_VIDEO.
+ * MEDIA_V4L_VIDEO.
  */
 enum device_type {
 	UNKNOWN = 65535,
 	NONE    = 65534,
-	V4L_VIDEO = 0,
-	V4L_VBI,
-	DVB_FRONTEND,
-	DVB_DEMUX,
-	DVB_DVR,
-	DVB_NET,
-	DVB_CA,
+	MEDIA_V4L_VIDEO = 0,
+	MEDIA_V4L_VBI,
+	MEDIA_DVB_FRONTEND,
+	MEDIA_DVB_DEMUX,
+	MEDIA_DVB_DVR,
+	MEDIA_DVB_NET,
+	MEDIA_DVB_CA,
 	/* TODO: Add dvb full-featured nodes */
-	SND_CARD,
-	SND_CAP,
-	SND_OUT,
-	SND_CONTROL,
-	SND_HW,
+	MEDIA_SND_CARD,
+	MEDIA_SND_CAP,
+	MEDIA_SND_OUT,
+	MEDIA_SND_CONTROL,
+	MEDIA_SND_HW,
 };
 
 /**
@@ -110,7 +110,7 @@ char *media_device_type(enum device_type type);
 void display_media_devices(void *opaque);
 
 /**
- * get_not_associated_device() - Return the next device not associated with
+ * get_associated_device() - Return the next device not associated with
  * 				 an specific device type.
  *
  * @opaque:		media devices opaque descriptor

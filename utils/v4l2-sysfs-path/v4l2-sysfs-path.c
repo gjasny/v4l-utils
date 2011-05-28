@@ -35,7 +35,7 @@ static void print_all_associated_devices(void *md, char *vid,
 
 	do {
 		devname = get_associated_device(md, devname, type,
-						vid, V4L_VIDEO);
+						vid, MEDIA_V4L_VIDEO);
 		if (devname) {
 			if (first) {
 				printf("\t%s: ", media_device_type(type));
@@ -56,7 +56,7 @@ static void print_all_alsa_independent_playback(void *md)
 
 	do {
 		devname = get_not_associated_device(md, devname,
-						    SND_OUT, V4L_VIDEO);
+						    MEDIA_SND_OUT, MEDIA_V4L_VIDEO);
 		if (devname) {
 			if (first) {
 				printf("Alsa playback device(s): ");
@@ -80,13 +80,13 @@ int main(void)
 
 	vid = NULL;
 	do {
-		vid = get_associated_device(md, vid, V4L_VIDEO,
+		vid = get_associated_device(md, vid, MEDIA_V4L_VIDEO,
 						NULL, NONE);
 		if (!vid)
 			break;
 		printf("Video device: %s\n", vid);
 
-		for (i = 0; i <= SND_HW; i++)
+		for (i = 0; i <= MEDIA_SND_HW; i++)
 			print_all_associated_devices(md, vid, i);
 	} while (vid);
 

@@ -26,18 +26,18 @@
 #include "get_media_devices.h"
 
 static char *device_type_str[] = {
-	[V4L_VIDEO]	= "video",
-	[V4L_VBI]	= "vbi",
-	[DVB_FRONTEND]	= "dvb frontend",
-	[DVB_DEMUX]	= "dvb demux",
-	[DVB_DVR]	= "dvb dvr",
-	[DVB_NET]	= "dvb net",
-	[DVB_CA]	= "dvb conditional access",
-	[SND_CARD]	= "sound card",
-	[SND_CAP]	= "pcm capture",
-	[SND_OUT]	= "pcm output",
-	[SND_CONTROL]	= "mixer",
-	[SND_HW]	= "sound hardware",
+	[MEDIA_V4L_VIDEO]	= "video",
+	[MEDIA_V4L_VBI]	= "vbi",
+	[MEDIA_DVB_FRONTEND]	= "dvb frontend",
+	[MEDIA_DVB_DEMUX]	= "dvb demux",
+	[MEDIA_DVB_DVR]	= "dvb dvr",
+	[MEDIA_DVB_NET]	= "dvb net",
+	[MEDIA_DVB_CA]	= "dvb conditional access",
+	[MEDIA_SND_CARD]	= "sound card",
+	[MEDIA_SND_CAP]	= "pcm capture",
+	[MEDIA_SND_OUT]	= "pcm output",
+	[MEDIA_SND_CONTROL]	= "mixer",
+	[MEDIA_SND_HW]	= "sound hardware",
 };
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
@@ -199,9 +199,9 @@ error:
 static int add_v4l_class(struct media_device_entry *md)
 {
 	if (strstr(md->node, "video"))
-		md->type = V4L_VIDEO;
+		md->type = MEDIA_V4L_VIDEO;
 	else if (strstr(md->node, "vbi"))
-		md->type = V4L_VBI;
+		md->type = MEDIA_V4L_VBI;
 
 	return 0;
 };
@@ -213,19 +213,19 @@ static int add_snd_class(struct media_device_entry *md)
 
 	if (strstr(md->node, "card")) {
 		sscanf(md->node, "card%u", &c);
-		md->type = SND_CARD;
+		md->type = MEDIA_SND_CARD;
 	} else if (strstr(md->node, "hw")) {
 		sscanf(md->node, "hwC%uD%u", &c, &d);
-		md->type = SND_HW;
+		md->type = MEDIA_SND_HW;
 	} else if (strstr(md->node, "control")) {
 		sscanf(md->node, "controlC%u", &c);
-		md->type = SND_CONTROL;
+		md->type = MEDIA_SND_CONTROL;
 	} else if (strstr(md->node, "pcm")) {
 		sscanf(md->node, "pcmC%uD%u", &c, &d);
 		if (md->node[strlen(md->node) - 1] == 'p')
-			md->type = SND_OUT;
+			md->type = MEDIA_SND_OUT;
 		else if (md->node[strlen(md->node) - 1] == 'c')
-			md->type = SND_CAP;
+			md->type = MEDIA_SND_CAP;
 	}
 
 	if (c == 65535)
@@ -251,15 +251,15 @@ static int add_snd_class(struct media_device_entry *md)
 static int add_dvb_class(struct media_device_entry *md)
 {
 	if (strstr(md->node, "frontend"))
-		md->type = DVB_FRONTEND;
+		md->type = MEDIA_DVB_FRONTEND;
 	else if (strstr(md->node, "demux"))
-		md->type = DVB_DEMUX;
+		md->type = MEDIA_DVB_DEMUX;
 	else if (strstr(md->node, "dvr"))
-		md->type = DVB_DVR;
+		md->type = MEDIA_DVB_DVR;
 	else if (strstr(md->node, "net"))
-		md->type = DVB_NET;
+		md->type = MEDIA_DVB_NET;
 	else if (strstr(md->node, "ca"))
-		md->type = DVB_CA;
+		md->type = MEDIA_DVB_CA;
 
 	return 0;
 };
