@@ -27,21 +27,70 @@
 #include "../libmedia_dev/get_media_devices.h"
 #include <stdio.h>
 
+static void print_all_associated_devices(void *md, char *vid,
+					 enum device_type type)
+{
+	char *devname = NULL;
+	int first = 1;
+
+	do {
+		devname = get_associated_device(md, devname, type,
+						vid, V4L_VIDEO);
+		if (devname) {
+			if (first) {
+				printf("\t%s: ", media_device_type(type));
+				first = 0;
+			}
+
+			printf("%s ", devname);
+		}
+	} while (devname);
+	if (!first)
+		printf("\n");
+}
+
+static void print_all_alsa_independent_playback(void *md)
+{
+	char *devname = NULL;
+	int first = 1;
+
+	do {
+		devname = get_not_associated_device(md, devname,
+						    SND_OUT, V4L_VIDEO);
+		if (devname) {
+			if (first) {
+				printf("Alsa playback device(s): ");
+				first = 0;
+			}
+
+			printf("%s ", devname);
+		}
+	} while (devname);
+	if (!first)
+		printf("\n");
+}
+
 int main(void)
 {
 	void *md;
-	char *alsa;
+	char *vid, *alsa;
+	int i;
 
 	md = discover_media_devices();
-	display_media_devices(md);
 
-	alsa = get_associated_device(md, NULL, SND_CAP, "video0", V4L_VIDEO);
-	if (alsa)
-		printf("Alsa device associated with video0 capture: %s\n", alsa);
+	vid = NULL;
+	do {
+		vid = get_associated_device(md, vid, V4L_VIDEO,
+						NULL, NONE);
+		if (!vid)
+			break;
+		printf("Video device: %s\n", vid);
 
-	alsa = get_not_associated_device(md, NULL, SND_OUT, V4L_VIDEO);
-	if (alsa)
-		printf("Alsa output device: %s\n", alsa);
+		for (i = 0; i <= SND_HW; i++)
+			print_all_associated_devices(md, vid, i);
+	} while (vid);
+
+	print_all_alsa_independent_playback(md);
 
 	free_media_devices(md);
 
