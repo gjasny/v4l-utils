@@ -68,7 +68,7 @@ void *discover_media_devices(void);
  * strings, feeing the list requires also to free those data. So,
  * the safest and recommended way is to call this function.
  */
-void free_media_device(void *opaque);
+void free_media_devices(void *opaque);
 
 /**
  * display_media_devices() - prints a list of media devices

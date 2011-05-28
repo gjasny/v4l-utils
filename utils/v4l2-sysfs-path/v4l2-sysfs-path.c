@@ -29,8 +29,7 @@
 
 int main(void)
 {
-	struct media_devices *md;
-	unsigned int size = 0;
+	void *md;
 	char *alsa;
 
 	md = discover_media_devices();
