@@ -41,12 +41,41 @@ static char *device_type_str[] = {
 	[SND_HW]	= "sound hardware",
 };
 
-typedef int (*fill_data_t)(struct media_devices *md);
+/**
+ * struct media_device_entry - Describes one device entry got via sysfs
+ *
+ * @device:		sysfs name for a device.
+ *			PCI devices are like: pci0000:00/0000:00:1b.0
+ *			USB devices are like: pci0000:00/0000:00:1d.7/usb1/1-8
+ * @node:		Device node, in sysfs or alsa hw identifier
+ * @device_type:	Type of the device (V4L_*, DVB_*, SND_*)
+ */
+struct media_device_entry {
+	char *device;
+	char *node;
+	enum device_type type;
+};
+
+/**
+ * struct media_devices - Describes all devices found
+ *
+ * @device:		sysfs name for a device.
+ *			PCI devices are like: pci0000:00/0000:00:1b.0
+ *			USB devices are like: pci0000:00/0000:00:1d.7/usb1/1-8
+ * @node:		Device node, in sysfs or alsa hw identifier
+ * @device_type:	Type of the device (V4L_*, DVB_*, SND_*)
+ */
+struct media_devices {
+	struct media_device_entry *md_entry;
+	unsigned int md_size;
+};
+
+typedef int (*fill_data_t)(struct media_device_entry *md);
 
 #define DEVICE_STR "devices"
 
 static int get_class(char *class,
-		     struct media_devices **md,
+		     struct media_device_entry **md,
 		     unsigned int *md_size,
 		     fill_data_t fill)
 {
@@ -56,7 +85,7 @@ static int get_class(char *class,
 	char		fname[512];
 	char		link[1024];
 	int		err = -2;
-	struct		media_devices *md_ptr = NULL;
+	struct		media_device_entry *md_ptr = NULL;
 	int		size;
 	char		*p, *class_node, *device;
 
@@ -133,7 +162,7 @@ error:
 	return err;
 }
 
-static int add_v4l_class(struct media_devices *md)
+static int add_v4l_class(struct media_device_entry *md)
 {
 	if (strstr(md->node, "video"))
 		md->type = V4L_VIDEO;
@@ -143,7 +172,7 @@ static int add_v4l_class(struct media_devices *md)
 	return 0;
 };
 
-static int add_snd_class(struct media_devices *md)
+static int add_snd_class(struct media_device_entry *md)
 {
 	unsigned c = 65535, d = 65535;
 	char *new;
@@ -185,7 +214,7 @@ static int add_snd_class(struct media_devices *md)
 	return 0;
 };
 
-static int add_dvb_class(struct media_devices *md)
+static int add_dvb_class(struct media_device_entry *md)
 {
 	if (strstr(md->node, "frontend"))
 		md->type = DVB_FRONTEND;
@@ -201,10 +230,10 @@ static int add_dvb_class(struct media_devices *md)
 	return 0;
 };
 
-static int sort_media_devices(const void *a, const void *b)
+static int sort_media_device_entry(const void *a, const void *b)
 {
-	const struct media_devices *md_a = a;
-	const struct media_devices *md_b = b;
+	const struct media_device_entry *md_a = a;
+	const struct media_device_entry *md_b = b;
 	int cmp;
 
 	cmp = strcmp(md_a->device, md_b->device);
@@ -220,96 +249,116 @@ static int sort_media_devices(const void *a, const void *b)
 
 /* Public functions */
 
-struct media_devices *discover_media_devices(unsigned int *md_size)
+void free_media_devices(void *opaque)
 {
-	struct media_devices *md = NULL;
-
-	*md_size = 0;
-	if (get_class("video4linux", &md, md_size, add_v4l_class))
-		return NULL;
-	if (get_class("sound", &md, md_size, add_snd_class))
-		return NULL;
-	if (get_class("dvb", &md, md_size, add_dvb_class))
-		return NULL;
-
-	if (!md)
-		return NULL;
-
-	qsort(md, *md_size, sizeof(*md), sort_media_devices);
-
-	return md;
-}
-
-void free_media_devices(struct media_devices *md, unsigned int md_size)
-{
-	struct media_devices *md_ptr = md;
+	struct media_devices *md = opaque;
+	struct media_device_entry *md_ptr = md->md_entry;
 	int i;
-	for (i = 0; i < md_size; i++) {
+	for (i = 0; i < md->md_size; i++) {
 		free(md_ptr->node);
 		free(md_ptr->device);
 		md_ptr++;
 	}
+	free(md->md_entry);
 	free(md);
 }
 
-void display_media_devices(struct media_devices *md, unsigned int size)
+void *discover_media_devices(void)
 {
+	struct media_devices *md = NULL;
+	struct media_device_entry *md_entry = NULL;
+
+	md = calloc(1, sizeof(*md));
+	if (!md)
+		return NULL;
+
+	md->md_size = 0;
+	if (get_class("video4linux", &md_entry, &md->md_size, add_v4l_class))
+		goto error;
+	if (get_class("sound", &md_entry, &md->md_size, add_snd_class))
+		goto error;
+	if (get_class("dvb", &md_entry, &md->md_size, add_dvb_class))
+		goto error;
+
+	/* There's no media device */
+	if (!md_entry)
+		goto error;
+
+	qsort(md_entry, md->md_size, sizeof(*md_entry), sort_media_device_entry);
+
+	md->md_entry = md_entry;
+
+	return md;
+
+error:
+	free_media_devices(md);
+	return NULL;
+}
+
+void display_media_devices(void *opaque)
+{
+	struct media_devices *md = opaque;
+	struct media_device_entry *md_ptr = md->md_entry;
 	int i;
 	char *prev = "";
 
-	for (i = 0; i < size; i++) {
-		if (strcmp(prev, md->device)) {
-			printf ("\nDevice %s:\n\t", md->device);
-			prev = md->device;
+	for (i = 0; i < md->md_size; i++) {
+		if (strcmp(prev, md_ptr->device)) {
+			printf ("\nDevice %s:\n\t", md_ptr->device);
+			prev = md_ptr->device;
 		}
-		printf ("%s(%s) ", md->node, device_type_str[md->type]);
-		md++;
+		printf ("%s(%s) ", md_ptr->node, device_type_str[md_ptr->type]);
+		md_ptr++;
 	}
 	printf("\n");
 }
 
-char *get_first_alsa_cap_device(struct media_devices *md, unsigned int size,
-				char *v4l_device)
+char *get_first_alsa_cap_device(void *opaque, char *v4l_device)
 {
+	struct media_devices *md = opaque;
+	struct media_device_entry *md_ptr = md->md_entry;
 	int i;
 	char *prev;
 
 	/* Step 1: Find the V4L node */
-	for (i = 0; i < size; i++, md++) {
-		if (md->type == V4L_VIDEO) {
-			if (!strcmp(v4l_device,  md->node))
+	for (i = 0; i < md->md_size; i++, md_ptr++) {
+		if (md_ptr->type == V4L_VIDEO) {
+			if (!strcmp(v4l_device,  md_ptr->node))
 				break;
 		}
 	}
-	if (i == size)
+	if (i == md->md_size)
 		return NULL;
 
 	/* Step 2: find the alsa node */
-	prev = md->device;
-	for (i++, md++;i < size && !strcmp(prev,md->device); i++, md++) {
-		if (md->type == SND_CAP)
-			return md->node;
+	prev = md_ptr->device;
+	md_ptr++;
+	for (i++;i < md->md_size && !strcmp(prev,md_ptr->device); i++) {
+		if (md_ptr->type == SND_CAP)
+			return md_ptr->node;
+		md_ptr++;
 	}
 
 	return NULL;
 }
 
-char *get_first_no_video_out_device(struct media_devices *md, unsigned int size)
+char *get_first_no_video_out_device(void *opaque)
 {
-	struct media_devices *md_ptr = md;
+	struct media_devices *md = opaque;
+	struct media_device_entry *md_ptr = md->md_entry;
 	int i, skip = 0;
 	char *prev = "";
 
 	/* Step 1: Find a device without video4linux node */
-	for (i = 0; i < size; i++, md++) {
-		if (md->type == V4L_VIDEO)
+	for (i = 0; i < md->md_size; i++, md_ptr++) {
+		if (md_ptr->type == V4L_VIDEO)
 			skip = 1;
-		else if (strcmp(prev, md->device)) {
-			prev = md->device;
+		else if (strcmp(prev, md_ptr->device)) {
+			prev = md_ptr->device;
 			skip = 0;
 		}
-		if (!skip && md->type == SND_OUT)
-			return md->node;
+		if (!skip && md_ptr->type == SND_OUT)
+			return md_ptr->node;
 	}
 
 	/*
@@ -317,10 +366,10 @@ char *get_first_no_video_out_device(struct media_devices *md, unsigned int size)
 	 * doesn't have an internal board, but an USB device like the
 	 * Sirius webcam also provides an alsa output node
 	 */
-	md = md_ptr;
-	for (i = 0; i < size; i++, md++) {
-		if (!skip && md->type == SND_OUT)
-			return md->node;
+	md_ptr = md->md_entry;
+	for (i = 0; i < md->md_size; i++, md++) {
+		if (!skip && md_ptr->type == SND_OUT)
+			return md_ptr->node;
 	}
 
 	return NULL;

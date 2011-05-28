@@ -20,7 +20,7 @@
 /*
  * Version of the API
  */
-#define GET_MEDIA_DEVICES_VERSION	0x0100
+#define GET_MEDIA_DEVICES_VERSION	0x0101
 
 /**
  * enum device_type - Enumerates the type for each device
@@ -47,73 +47,54 @@ enum device_type {
 };
 
 /**
- * struct media_devices - Describes all devices found
- *
- * @device:		sysfs name for a device.
- *			PCI devices are like: pci0000:00/0000:00:1b.0
- *			USB devices are like: pci0000:00/0000:00:1d.7/usb1/1-8
- * @node:		Device node, in sysfs or alsa hw identifier
- * @device_type:	Type of the device (V4L_*, DVB_*, SND_*)
- */
-struct media_devices {
-	char *device;
-	char *node;
-	enum device_type type;
-};
-
-/**
  * discover_media_devices() - Returns a list of the media devices
  * @md_size:	Returns the size of the media devices found
  *
  * This function reads the /sys/class nodes for V4L, DVB and sound,
- * and returns an ordered list of devices. The devices are ordered
- * by device, type and node. At return, md_size is updated.
+ * and returns an opaque desciptor that keeps a list of the devices.
+ * The fields on this list is opaque, as they can be changed on newer
+ * releases of this library. So, all access to it should be done via
+ * a function provided by the API. The devices are ordered by device,
+ * type and node. At return, md_size is updated.
  */
-struct media_devices *discover_media_devices(unsigned int *md_size);
+void *discover_media_devices(void);
 
 /**
  * free_media_devices() - Frees the media devices array
  *
- * @md:		media devices array
- * @md_size:	size of the array
+ * @opaque:	media devices opaque descriptor
  *
  * As discover_media_devices() dynamically allocate space for the
  * strings, feeing the list requires also to free those data. So,
  * the safest and recommended way is to call this function.
  */
-void free_media_devices(struct media_devices *md, unsigned int md_size);
+void free_media_device(void *opaque);
 
 /**
  * display_media_devices() - prints a list of media devices
  *
- * @md:		media devices array
- * @size:	size of the list
+ * @opaque:	media devices opaque descriptor
  */
-void display_media_devices(struct media_devices *md, unsigned int size);
+void display_media_devices(void *opaque);
 
 /**
  * get_first_alsa_cap_device() - Gets the first alsa capture device for a
  *				 video node
  *
- * @md:		media devices array
- * @size:	size of the list
- * @v4l_device:	name of the video device
+ * @opaque:	media devices opaque descriptor
  *
  * This function seeks inside the media_devices struct for the first alsa
  * capture device (SND_CAP) that belongs to the same device where the video
  * node exists. The video node should belong to V4L_VIDEO type (video0,
  * video1, etc).
  */
-char *get_first_alsa_cap_device(struct media_devices *md, unsigned int size,
-				char *v4l_device);
+char *get_first_alsa_cap_device(void *opaque, char *v4l_device);
 
 /**
  * get_first_no_video_out_device() - Gets the first alsa playback device
  *				     that is not associated to a video device.
  *
- * @md:		media devices array
- * @size:	size of the list
- * @v4l_device:	name of the video device
+ * @opaque:	media devices opaque descriptor
  *
  * This function seeks inside the media_devices struct for the first alsa
  * playback device (SND_OUT) that is not associated to a video device.
@@ -131,24 +112,25 @@ char *get_first_alsa_cap_device(struct media_devices *md, unsigned int size,
  * In general, it will return the alsa device for the default audio playback
  * device.
  */
-char *get_first_no_video_out_device(struct media_devices *md,
-				    unsigned int size);
+char *get_first_no_video_out_device(void *opaque);
 
 /*
  * A typical usecase for the above API is:
  *
- *	struct media_devices *md;
+ *	void *md;
  *	unsigned int size = 0;
  *	char *alsa_cap, *alsa_out, *p;
  *	char *video_dev = "/dev/video0";
  *
- *	md = discover_media_devices(&size);
- *	p = strrchr(video_dev, '/');
- *	alsa_cap = get_first_alsa_cap_device(md, size, p + 1);
- *	alsa_out = get_first_no_video_out_device(md, size);
- *	if (alsa_cap && alsa_out)
- *		alsa_handler(alsa_out, alsa_cap);
- *	free_media_devices(md, size);
+ *	md = discover_media_devices();
+ *	if (md) {
+ *		p = strrchr(video_dev, '/');
+ *		alsa_cap = get_first_alsa_cap_device(md, p + 1);
+ *		alsa_out = get_first_no_video_out_device(md);
+ *		if (alsa_cap && alsa_out)
+ *			alsa_handler(alsa_out, alsa_cap);
+ *		free_media_devices(md);
+ *	}
  *
  * Where alsa_handler() is some function that will need to handle
  * both alsa capture and playback devices.
