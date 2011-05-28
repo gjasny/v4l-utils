@@ -22,6 +22,30 @@
  */
 #define GET_MEDIA_DEVICES_VERSION	0x0101
 
+/*
+ A typical usecase for the above API is:
+
+void start_alsa(char *video_dev) {
+	void *md;
+	char *alsa_playback, *alsa_capture, *p;
+
+	md = discover_media_devices();
+	if (!md)
+		return;
+	alsa_capture = get_first_alsa_cap_device(md, video_dev);
+	alsa_playback = get_first_no_video_out_device(md);
+	if (alsa_capture && alsa_playback)
+		alsa_handler(alsa_playback, alsa_capture);
+	free_media_devices(md);
+}
+
+start_alsa("/dev/video0");
+
+Where alsa_handler() is some function that will need to handle
+ both alsa capture and playback devices.
+*/
+
+
 /**
  * enum device_type - Enumerates the type for each device
  *
@@ -113,25 +137,3 @@ char *get_first_alsa_cap_device(void *opaque, char *v4l_device);
  * device.
  */
 char *get_first_no_video_out_device(void *opaque);
-
-/*
- * A typical usecase for the above API is:
- *
- *	void *md;
- *	unsigned int size = 0;
- *	char *alsa_cap, *alsa_out, *p;
- *	char *video_dev = "/dev/video0";
- *
- *	md = discover_media_devices();
- *	if (md) {
- *		p = strrchr(video_dev, '/');
- *		alsa_cap = get_first_alsa_cap_device(md, p + 1);
- *		alsa_out = get_first_no_video_out_device(md);
- *		if (alsa_cap && alsa_out)
- *			alsa_handler(alsa_out, alsa_cap);
- *		free_media_devices(md);
- *	}
- *
- * Where alsa_handler() is some function that will need to handle
- * both alsa capture and playback devices.
- */
