@@ -340,6 +340,13 @@ char *get_associated_device(void *opaque,
 
 		/* Step 1: Find the seek node */
 		for (i = 0; i < md->md_size; i++, md_ptr++) {
+			if (last_seek && md_ptr->type == seek_type &&
+			    !strcmp(md_ptr->node, last_seek)) {
+				found = 1;
+				continue;
+			}
+			if (last_seek && !found)
+				continue;
 			if (md_ptr->type == seek_type &&
 			    !strcmp(seek_device, md_ptr->node))
 				break;
@@ -351,7 +358,8 @@ char *get_associated_device(void *opaque,
 		md_ptr++;
 		/* Step 2: find the associated node */
 		for (;i < md->md_size && !strcmp(prev, md_ptr->device); i++, md_ptr++) {
-			if (last_seek && !strcmp(md_ptr->node, last_seek)) {
+			if (last_seek && md_ptr->type == seek_type &&
+			    !strcmp(md_ptr->node, last_seek)) {
 				found = 1;
 				continue;
 			}
