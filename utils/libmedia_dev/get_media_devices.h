@@ -96,6 +96,13 @@ void *discover_media_devices(void);
 void free_media_devices(void *opaque);
 
 /**
+ * media_device_type() - returns a string with the name of a given type
+ *
+ * @type:	media device type
+ */
+char *media_device_type(enum device_type type);
+
+/**
  * display_media_devices() - prints a list of media devices
  *
  * @opaque:	media devices opaque descriptor

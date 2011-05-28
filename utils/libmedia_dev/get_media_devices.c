@@ -26,8 +26,6 @@
 #include "get_media_devices.h"
 
 static char *device_type_str[] = {
-	[UNKNOWN]	= "unknown",
-	[NONE]		= "none",
 	[V4L_VIDEO]	= "video",
 	[V4L_VBI]	= "vbi",
 	[DVB_FRONTEND]	= "dvb frontend",
@@ -41,6 +39,8 @@ static char *device_type_str[] = {
 	[SND_CONTROL]	= "mixer",
 	[SND_HW]	= "sound hardware",
 };
+
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 /**
  * struct media_device_entry - Describes one device entry got via sysfs
@@ -296,6 +296,13 @@ error:
 	return NULL;
 }
 
+char *media_device_type(enum device_type type)
+{
+	if ((unsigned int)type >= ARRAY_SIZE(device_type_str))
+		return "unknown";
+	else return device_type_str[type];
+}
+
 void display_media_devices(void *opaque)
 {
 	struct media_devices *md = opaque;
@@ -308,7 +315,7 @@ void display_media_devices(void *opaque)
 			printf ("\nDevice %s:\n\t", md_ptr->device);
 			prev = md_ptr->device;
 		}
-		printf ("%s(%s) ", md_ptr->node, device_type_str[md_ptr->type]);
+		printf ("%s(%s) ", md_ptr->node, media_device_type(md_ptr->type));
 		md_ptr++;
 	}
 	printf("\n");
@@ -322,15 +329,15 @@ char *get_associated_device(void *opaque,
 {
 	struct media_devices *md = opaque;
 	struct media_device_entry *md_ptr = md->md_entry;
-	int i;
-	char *prev;
-	char *p = strrchr(seek_device, '/');
-
-	/* Get just the device name */
-	if (p)
-		seek_device = p + 1;
+	int i, found = 0;
+	char *prev, *p;
 
 	if (seek_type != NONE && seek_device[0]) {
+		/* Get just the device name */
+		p = strrchr(seek_device, '/');
+		if (p)
+			seek_device = p + 1;
+
 		/* Step 1: Find the seek node */
 		for (i = 0; i < md->md_size; i++, md_ptr++) {
 			if (md_ptr->type == seek_type &&
@@ -340,17 +347,30 @@ char *get_associated_device(void *opaque,
 		if (i == md->md_size)
 			return NULL;
 		i++;
-	} else
-		i = 0;
-
-	/* Step 2: find the associated node */
-	prev = md_ptr->device;
-	md_ptr++;
-	for (;i < md->md_size && !strcmp(prev,md_ptr->device); i++, md_ptr++) {
-		if (last_seek && !strcmp(md_ptr->node, last_seek))
-			break;
-		if (md_ptr->type == desired_type)
-			return md_ptr->node;
+		prev = md_ptr->device;
+		md_ptr++;
+		/* Step 2: find the associated node */
+		for (;i < md->md_size && !strcmp(prev, md_ptr->device); i++, md_ptr++) {
+			if (last_seek && !strcmp(md_ptr->node, last_seek)) {
+				found = 1;
+				continue;
+			}
+			if (last_seek && !found)
+				continue;
+			if (md_ptr->type == desired_type)
+				return md_ptr->node;
+		}
+	} else {
+		for (i = 0;i < md->md_size; i++, md_ptr++) {
+			if (last_seek && !strcmp(md_ptr->node, last_seek)) {
+				found = 1;
+				continue;
+			}
+			if (last_seek && !found)
+				continue;
+			if (md_ptr->type == desired_type)
+				return md_ptr->node;
+		}
 	}
 
 	return NULL;
@@ -363,11 +383,17 @@ char *get_not_associated_device(void *opaque,
 {
 	struct media_devices *md = opaque;
 	struct media_device_entry *md_ptr = md->md_entry;
-	int i, skip = 0;
+	int i, skip = 0, found = 0;
 	char *prev = "", *result = NULL;
 
 	/* Step 1: Find a device without seek_type node */
 	for (i = 0; i < md->md_size; i++, md_ptr++) {
+		if (last_seek && !strcmp(md_ptr->node, last_seek)) {
+			found = 1;
+			continue;
+		}
+		if (last_seek && !found)
+			continue;
 		if (strcmp(prev, md_ptr->device)) {
 			if (!skip && result)
 				break;
