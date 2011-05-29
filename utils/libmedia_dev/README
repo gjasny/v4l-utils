@@ -108,7 +108,7 @@ The parameters are:
 	desired_type:	type of the desired device
 	fd_seek_device:	file handler for the device where the association will
 			be made
- 	seek_type:	type of the seek device. Using NONE produces the same
+	seek_type:	type of the seek device. Using NONE produces the same
 			result of using NULL for the seek_device.
 
 This function seeks inside the media_devices struct for the next device
@@ -182,4 +182,17 @@ d) Get the mainboard alsa playback devices:
 		if (devname)
 			printf("Alsa playback: %s\n", devname);
 	} while (devname);
+	free_media_devices(md);
+
+e) Get all video devices:
+
+	void *md = discover_media_devices();
+	char *vid = NULL;
+	do {
+		vid = get_associated_device(md, vid, MEDIA_V4L_VIDEO,
+					    NULL, NONE);
+		if (!vid)
+			break;
+		printf("Video device: %s\n", vid);
+	} while (vid);
 	free_media_devices(md);
