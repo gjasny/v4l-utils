@@ -20,7 +20,7 @@
 /*
  * Version of the API
  */
-#define GET_MEDIA_DEVICES_VERSION	0x0103
+#define GET_MEDIA_DEVICES_VERSION	0x0104
 
 /*
  A typical usecase for the above API is:
