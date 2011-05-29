@@ -27,21 +27,6 @@
 #include <dirent.h>
 #include "get_media_devices.h"
 
-static char *device_type_str[] = {
-	[MEDIA_V4L_VIDEO]	= "video",
-	[MEDIA_V4L_VBI]		= "vbi",
-	[MEDIA_DVB_FRONTEND]	= "dvb frontend",
-	[MEDIA_DVB_DEMUX]	= "dvb demux",
-	[MEDIA_DVB_DVR]		= "dvb dvr",
-	[MEDIA_DVB_NET]		= "dvb net",
-	[MEDIA_DVB_CA]		= "dvb conditional access",
-	[MEDIA_SND_CARD]	= "sound card",
-	[MEDIA_SND_CAP]		= "pcm capture",
-	[MEDIA_SND_OUT]		= "pcm output",
-	[MEDIA_SND_CONTROL]	= "mixer",
-	[MEDIA_SND_HW]		= "sound hardware",
-};
-
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 /**
@@ -332,10 +317,34 @@ error:
 
 char *media_device_type(enum device_type type)
 {
-	if ((unsigned int)type >= ARRAY_SIZE(device_type_str))
+	switch(type) {
+	case MEDIA_V4L_VIDEO:
+		return  "video";
+	case MEDIA_V4L_VBI:
+		return  "vbi";
+	case MEDIA_DVB_FRONTEND:
+		return  "dvb frontend";
+	case MEDIA_DVB_DEMUX:
+		return  "dvb demux";
+	case MEDIA_DVB_DVR:
+		return  "dvb dvr";
+	case MEDIA_DVB_NET:
+		return  "dvb net";
+	case MEDIA_DVB_CA:
+		return  "dvb conditional access";
+	case MEDIA_SND_CARD:
+		return  "sound card";
+	case MEDIA_SND_CAP:
+		return  "pcm capture";
+	case MEDIA_SND_OUT:
+		return  "pcm output";
+	case MEDIA_SND_CONTROL:
+		return  "mixer";
+	case MEDIA_SND_HW:
+		return  "sound hardware";
+	default:
 		return "unknown";
-	else
-		return device_type_str[type];
+	};
 }
 
 void display_media_devices(void *opaque)
