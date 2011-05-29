@@ -393,7 +393,9 @@ void display_media_devices(void *opaque)
 			printf("\nDevice %s:\n\t", md_ptr->device);
 			prev = md_ptr->device;
 		}
-		printf("%s(%s) ", md_ptr->node, media_device_type(md_ptr->type));
+		printf("%s(%s, dev %i:%i) ", md_ptr->node,
+		       media_device_type(md_ptr->type),
+		       md_ptr->major, md_ptr->minor);
 		md_ptr++;
 	}
 	printf("\n");
