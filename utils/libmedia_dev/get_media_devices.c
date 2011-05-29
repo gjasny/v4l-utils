@@ -100,10 +100,12 @@ static int get_class(char *class,
 	char		dname[512];
 	char		fname[512];
 	char		link[1024];
+	char		virt_dev[60];
 	int		err = -2;
 	struct		media_device_entry *md_ptr = NULL;
 	int		size;
 	char		*p, *class_node, *device;
+	static int	virtual = 0;
 
 	sprintf(dname, "/sys/class/%s", class);
 	dir = opendir(dname);
@@ -150,9 +152,11 @@ static int get_class(char *class,
 				} while (1);
 			}
 
-			/* Don't handle virtual devices */
-			if (!strcmp(device, "virtual"))
-				continue;
+			/* Don't group virtual devices */
+			if (!strcmp(device, "virtual")) {
+				sprintf(virt_dev, "virtual%d", virtual++);
+				device = virt_dev;
+			}
 
 			/* Add one more element to the devices struct */
 			*md = realloc(*md, (*md_size + 1) * sizeof(*md_ptr));
