@@ -52,6 +52,8 @@ enum device_type {
 	MEDIA_SND_OUT,
 	MEDIA_SND_CONTROL,
 	MEDIA_SND_HW,
+	MEDIA_SND_TIMER,
+	MEDIA_SND_SEQ,
 	/*
 	 * FIXME: not all alsa devices were mapped. missing things like
 	 *	midi, midiC%iD%i and timer interfaces

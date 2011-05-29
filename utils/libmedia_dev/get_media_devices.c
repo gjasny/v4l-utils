@@ -205,7 +205,13 @@ static int add_snd_class(struct media_device_entry *md)
 	unsigned c = 65535, d = 65535;
 	char *new;
 
-	if (strstr(md->node, "card")) {
+	if (strstr(md->node, "timer")) {
+		md->type = MEDIA_SND_TIMER;
+		return 0;
+	} else if (strstr(md->node, "seq")) {
+		md->type = MEDIA_SND_SEQ;
+		return 0;
+	} if (strstr(md->node, "card")) {
 		sscanf(md->node, "card%u", &c);
 		md->type = MEDIA_SND_CARD;
 	} else if (strstr(md->node, "hw")) {
@@ -375,6 +381,10 @@ const char *media_device_type(enum device_type type)
 		return  "mixer";
 	case MEDIA_SND_HW:
 		return  "sound hardware";
+	case MEDIA_SND_TIMER:
+		return  "sound timer";
+	case MEDIA_SND_SEQ:
+		return  "sound sequencer";
 
 	default:
 		return "unknown";
