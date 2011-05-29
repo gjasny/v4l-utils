@@ -240,6 +240,12 @@ static int add_snd_class(struct media_device_entry *md)
 
 static int add_dvb_class(struct media_device_entry *md)
 {
+	if (strstr(md->node, "video"))
+		md->type = MEDIA_DVB_VIDEO;
+	if (strstr(md->node, "audio"))
+		md->type = MEDIA_DVB_AUDIO;
+	if (strstr(md->node, "sec"))
+		md->type = MEDIA_DVB_SEC;
 	if (strstr(md->node, "frontend"))
 		md->type = MEDIA_DVB_FRONTEND;
 	else if (strstr(md->node, "demux"))
@@ -250,6 +256,8 @@ static int add_dvb_class(struct media_device_entry *md)
 		md->type = MEDIA_DVB_NET;
 	else if (strstr(md->node, "ca"))
 		md->type = MEDIA_DVB_CA;
+	else if (strstr(md->node, "osd"))
+		md->type = MEDIA_DVB_OSD;
 
 	return 0;
 };
@@ -322,6 +330,7 @@ error:
 char *media_device_type(enum device_type type)
 {
 	switch(type) {
+		/* V4L nodes */
 	case MEDIA_V4L_VIDEO:
 		return  "video";
 	case MEDIA_V4L_VBI:
@@ -330,6 +339,14 @@ char *media_device_type(enum device_type type)
 		return "radio";
 	case MEDIA_V4L_SUBDEV:
 		return "v4l subdevice";
+
+		/* DVB nodes */
+	case MEDIA_DVB_VIDEO:
+		return  "dvb video";
+	case MEDIA_DVB_AUDIO:
+		return  "dvb audio";
+	case MEDIA_DVB_SEC:
+		return  "dvb sec";
 	case MEDIA_DVB_FRONTEND:
 		return  "dvb frontend";
 	case MEDIA_DVB_DEMUX:
@@ -340,6 +357,10 @@ char *media_device_type(enum device_type type)
 		return  "dvb net";
 	case MEDIA_DVB_CA:
 		return  "dvb conditional access";
+	case MEDIA_DVB_OSD:
+		return  "dvb OSD";
+
+		/* Alsa nodes */
 	case MEDIA_SND_CARD:
 		return  "sound card";
 	case MEDIA_SND_CAP:
@@ -350,6 +371,7 @@ char *media_device_type(enum device_type type)
 		return  "mixer";
 	case MEDIA_SND_HW:
 		return  "sound hardware";
+
 	default:
 		return "unknown";
 	};
