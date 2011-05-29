@@ -327,7 +327,7 @@ error:
 	return NULL;
 }
 
-char *media_device_type(enum device_type type)
+const char *media_device_type(enum device_type type)
 {
 	switch(type) {
 		/* V4L nodes */
@@ -395,11 +395,11 @@ void display_media_devices(void *opaque)
 	printf("\n");
 }
 
-char *get_associated_device(void *opaque,
-			    char *last_seek,
-			    enum device_type desired_type,
-			    char *seek_device,
-			    enum device_type seek_type)
+const char *get_associated_device(void *opaque,
+				  const char *last_seek,
+				  const enum device_type desired_type,
+				  const char *seek_device,
+				  const enum device_type seek_type)
 {
 	struct media_devices *md = opaque;
 	struct media_device_entry *md_ptr = md->md_entry;
@@ -458,11 +458,11 @@ char *get_associated_device(void *opaque,
 	return NULL;
 }
 
-char *fget_associated_device(void *opaque,
-			    char *last_seek,
-			    enum device_type desired_type,
-			    int fd_seek_device,
-			    enum device_type seek_type)
+const char *fget_associated_device(void *opaque,
+				   const char *last_seek,
+				   const enum device_type desired_type,
+				   const int fd_seek_device,
+				   const enum device_type seek_type)
 {
 	struct media_devices *md = opaque;
 	struct media_device_entry *md_ptr = md->md_entry;
@@ -518,10 +518,10 @@ char *fget_associated_device(void *opaque,
 	return NULL;
 }
 
-char *get_not_associated_device(void *opaque,
-			    char *last_seek,
-			    enum device_type desired_type,
-			    enum device_type not_desired_type)
+const char *get_not_associated_device(void *opaque,
+				      const char *last_seek,
+				      const enum device_type desired_type,
+				      const enum device_type not_desired_type)
 {
 	struct media_devices *md = opaque;
 	struct media_device_entry *md_ptr = md->md_entry;

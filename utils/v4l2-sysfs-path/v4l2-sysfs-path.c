@@ -27,10 +27,10 @@
 #include "../libmedia_dev/get_media_devices.h"
 #include <stdio.h>
 
-static void print_all_associated_devices(void *md, char *vid,
-					 enum device_type type)
+static void print_all_associated_devices(void *md, const char *vid,
+					 const enum device_type type)
 {
-	char *devname = NULL;
+	const char *devname = NULL;
 	int first = 1;
 
 	do {
@@ -51,7 +51,7 @@ static void print_all_associated_devices(void *md, char *vid,
 
 static void print_all_alsa_independent_playback(void *md)
 {
-	char *devname = NULL;
+	const char *devname = NULL;
 	int first = 1;
 
 	do {
@@ -73,7 +73,7 @@ static void print_all_alsa_independent_playback(void *md)
 int main(void)
 {
 	void *md;
-	char *vid;
+	const char *vid;
 	int i;
 
 	md = discover_media_devices();

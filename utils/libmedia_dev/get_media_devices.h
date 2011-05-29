@@ -20,7 +20,7 @@
 /*
  * Version of the API
  */
-#define GET_MEDIA_DEVICES_VERSION	0x0104
+#define GET_MEDIA_DEVICES_VERSION	0x0105
 
 /**
  * enum device_type - Enumerates the type for each device
@@ -87,7 +87,7 @@ void free_media_devices(void *opaque);
  *
  * @type:	media device type
  */
-char *media_device_type(enum device_type type);
+const char *media_device_type(const enum device_type type);
 
 /**
  * display_media_devices() - prints a list of media devices
@@ -112,11 +112,11 @@ void display_media_devices(void *opaque);
  * the seek_device is NULL or seek_type is NONE, it will just search for
  * devices of the desired_type.
  */
-char *get_associated_device(void *opaque,
-			    char *last_seek,
-			    enum device_type desired_type,
-			    char *seek_device,
-			    enum device_type seek_type);
+const char *get_associated_device(void *opaque,
+				  const char *last_seek,
+				  const enum device_type desired_type,
+				  const char *seek_device,
+				  const enum device_type seek_type);
 
 /**
  * fget_associated_device() - Return the next device associated with another one
@@ -133,11 +133,11 @@ char *get_associated_device(void *opaque,
  * that it is associated with a seek parameter.
  * It can be used to get an alsa device associated with an open file descriptor
  */
-char *fget_associated_device(void *opaque,
-			    char *last_seek,
-			    enum device_type desired_type,
-			    int fd_seek_device,
-			    enum device_type seek_type);
+const char *fget_associated_device(void *opaque,
+				   const char *last_seek,
+				   const enum device_type desired_type,
+				   const int fd_seek_device,
+				   const enum device_type seek_type);
 
 /**
  * get_not_associated_device() - Return the next device not associated with
@@ -153,7 +153,7 @@ char *fget_associated_device(void *opaque,
  * This method is useful for example to return the audio devices that are
  * provided by the motherboard.
  */
-char *get_not_associated_device(void *opaque,
-			    char *last_seek,
-			    enum device_type desired_type,
-			    enum device_type not_desired_type);
+const char *get_not_associated_device(void *opaque,
+				      const char *last_seek,
+				      const enum device_type desired_type,
+				      const enum device_type not_desired_type);
