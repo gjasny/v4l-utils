@@ -19,6 +19,8 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -414,6 +416,66 @@ char *get_associated_device(void *opaque,
 		}
 	}
 
+	return NULL;
+}
+
+char *fget_associated_device(void *opaque,
+			    char *last_seek,
+			    enum device_type desired_type,
+			    int fd_seek_device,
+			    enum device_type seek_type)
+{
+	struct media_devices *md = opaque;
+	struct media_device_entry *md_ptr = md->md_entry;
+	struct stat f_status;
+	unsigned int dev_major, dev_minor;
+	int i, found = 0;
+	char *prev;
+
+	if (fstat(fd_seek_device, &f_status)) {
+		perror("Can't get file status");
+		return NULL;
+	}
+	if (!S_ISCHR(f_status.st_mode)) {
+		fprintf(stderr, "File descriptor is not a char device\n");
+		return NULL;
+	}
+	dev_major = major(f_status.st_rdev);
+	dev_minor = minor(f_status.st_rdev);
+
+	/* Step 1: Find the seek node */
+	for (i = 0; i < md->md_size; i++, md_ptr++) {
+		if (last_seek && md_ptr->type == seek_type
+		    && md_ptr->major == dev_major
+		    && md_ptr->minor == dev_minor) {
+			found = 1;
+			continue;
+		}
+		if (last_seek && !found)
+			continue;
+		if (md_ptr->type == seek_type
+		    && md_ptr->major == dev_major
+		    && md_ptr->minor == dev_minor)
+			break;
+	}
+	if (i == md->md_size)
+		return NULL;
+	i++;
+	prev = md_ptr->device;
+	md_ptr++;
+	/* Step 2: find the associated node */
+	for (; i < md->md_size && !strcmp(prev, md_ptr->device); i++, md_ptr++) {
+		if (last_seek && md_ptr->type == seek_type
+		    && md_ptr->major == dev_major
+		    && md_ptr->minor == dev_minor) {
+			found = 1;
+			continue;
+		}
+		if (last_seek && !found)
+			continue;
+		if (md_ptr->type == desired_type)
+			return md_ptr->node;
+	}
 	return NULL;
 }
 

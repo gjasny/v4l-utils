@@ -110,26 +110,6 @@ char *media_device_type(enum device_type type);
 void display_media_devices(void *opaque);
 
 /**
- * get_associated_device() - Return the next device not associated with
- *			     an specific device type.
- *
- * @opaque:		media devices opaque descriptor
- * @last_seek:		last seek result. Use NULL to get the first result
- * @desired_type:	type of the desired device
- * @not_desired_type:	type of the seek device
- *
- * This function seeks inside the media_devices struct for the next physical
- * device that doesn't support a non_desired type.
- * This method is useful for example to return the audio devices that are
- * provided by the motherboard.
- */
-char *get_associated_device(void *opaque,
-			    char *last_seek,
-			    enum device_type desired_type,
-			    char *seek_device,
-			    enum device_type seek_type);
-
-			    /**
  * get_associated_device() - Return the next device associated with another one
  *
  * @opaque:		media devices opaque descriptor
@@ -144,6 +124,47 @@ char *get_associated_device(void *opaque,
  * It can be used to get an alsa device associated with a video device. If
  * the seek_device is NULL or seek_type is NONE, it will just search for
  * devices of the desired_type.
+ */
+char *get_associated_device(void *opaque,
+			    char *last_seek,
+			    enum device_type desired_type,
+			    char *seek_device,
+			    enum device_type seek_type);
+
+/**
+ * fget_associated_device() - Return the next device associated with another one
+ *
+ * @opaque:		media devices opaque descriptor
+ * @last_seek:		last seek result. Use NULL to get the first result
+ * @desired_type:	type of the desired device
+ * @fd_seek_device:	file handler for the device where the association will
+			be made
+ *@ seek_type:		type of the seek device. Using NONE produces the same
+ *			result of using NULL for the seek_device.
+ *
+ * This function seeks inside the media_devices struct for the next device
+ * that it is associated with a seek parameter.
+ * It can be used to get an alsa device associated with an open file descriptor
+ */
+char *fget_associated_device(void *opaque,
+			    char *last_seek,
+			    enum device_type desired_type,
+			    int fd_seek_device,
+			    enum device_type seek_type);
+
+/**
+ * get_not_associated_device() - Return the next device not associated with
+ *			     an specific device type.
+ *
+ * @opaque:		media devices opaque descriptor
+ * @last_seek:		last seek result. Use NULL to get the first result
+ * @desired_type:	type of the desired device
+ * @not_desired_type:	type of the seek device
+ *
+ * This function seeks inside the media_devices struct for the next physical
+ * device that doesn't support a non_desired type.
+ * This method is useful for example to return the audio devices that are
+ * provided by the motherboard.
  */
 char *get_not_associated_device(void *opaque,
 			    char *last_seek,
