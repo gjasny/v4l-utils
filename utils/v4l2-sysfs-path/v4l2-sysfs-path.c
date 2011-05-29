@@ -26,6 +26,34 @@
 
 #include "../libmedia_dev/get_media_devices.h"
 #include <stdio.h>
+#include <argp.h>
+
+const char *argp_program_version = "v4l2-sysfs-path version " V4L_UTILS_VERSION;
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
+
+static const struct argp_option options[] = {
+	{"device", 'd', 0, 0, "use alternative device show mode", 0},
+	{ 0, 0, 0, 0, 0, 0 }
+};
+
+static int device_mode = 0;
+
+static error_t parse_opt(int k, char *arg, struct argp_state *state)
+{
+	switch (k) {
+	case 'd':
+		device_mode++;
+		break;
+	default:
+		return ARGP_ERR_UNKNOWN;
+	}
+	return 0;
+}
+
+static struct argp argp = {
+	.options = options,
+	.parser = parse_opt,
+};
 
 static void print_all_associated_devices(void *md, const char *vid,
 					 const enum device_type type)
@@ -70,27 +98,33 @@ static void print_all_alsa_independent_playback(void *md)
 		printf("\n");
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	void *md;
 	const char *vid;
 	int i;
 
+	argp_parse(&argp, argc, argv, 0, 0, 0);
+
 	md = discover_media_devices();
 
-	vid = NULL;
-	do {
-		vid = get_associated_device(md, vid, MEDIA_V4L_VIDEO,
-					    NULL, NONE);
-		if (!vid)
-			break;
-		printf("Video device: %s\n", vid);
+	if (device_mode) {
+		display_media_devices(md);
+	} else {
+		vid = NULL;
+		do {
+			vid = get_associated_device(md, vid, MEDIA_V4L_VIDEO,
+						NULL, NONE);
+			if (!vid)
+				break;
+			printf("Video device: %s\n", vid);
 
-		for (i = 0; i <= MEDIA_SND_HW; i++)
-			print_all_associated_devices(md, vid, i);
-	} while (vid);
+			for (i = 0; i <= MEDIA_SND_HW; i++)
+				print_all_associated_devices(md, vid, i);
+		} while (vid);
 
-	print_all_alsa_independent_playback(md);
+		print_all_alsa_independent_playback(md);
+	}
 
 	free_media_devices(md);
 
