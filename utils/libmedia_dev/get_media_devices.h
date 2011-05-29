@@ -22,30 +22,6 @@
  */
 #define GET_MEDIA_DEVICES_VERSION	0x0104
 
-/*
- A typical usecase for the above API is:
-
-void start_alsa(char *video_dev) {
-	void *md;
-	char *alsa_playback, *alsa_capture, *p;
-
-	md = discover_media_devices();
-	if (!md)
-		return;
-	alsa_capture = get_first_alsa_cap_device(md, video_dev);
-	alsa_playback = get_first_no_video_out_device(md);
-	if (alsa_capture && alsa_playback)
-		alsa_handler(alsa_playback, alsa_capture);
-	free_media_devices(md);
-}
-
-start_alsa("/dev/video0");
-
-Where alsa_handler() is some function that will need to handle
- both alsa capture and playback devices.
-*/
-
-
 /**
  * enum device_type - Enumerates the type for each device
  *
