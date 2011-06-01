@@ -12,8 +12,8 @@
 
    You should have received a copy of the GNU Lesser General Public
    License along with the libv4l2util Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   Software Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA
+   02110-1335 USA.  */
 
 #ifndef _V4L2UTIL_H_
 #define _V4L2UTIL_H_
