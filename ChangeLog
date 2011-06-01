@@ -1,10 +1,31 @@
 v4l-utils-0.8.4
 ---------------
+* Utils changes
+  * Various small fixes (hverkuil, mchehab)
+  * qv4l2: Add support for configuring the framerate for devices which support
+    this like uvc cams (hdegoede)
+  * parse_tcpdump_log.pl: new parser for tcpdump / wireshark made usbmon
+    dumps (mchehab)
+  * New lib_media_dev lib, to pair audio devices with video devices
+    (and other combinations) for now this lives in utils and does not get
+    installed systemwide, as the API is not stable (mchehab)
 * libv4l changes
   * Add many more laptop models to the upside down devices table (hdegoede)
+  * Some small bugfixes (hdegoede)
   * Add vicam cameras to list of cameras need sw auto gain + whitebalance
     (hdegoede)
-  * Add support for m420 pixelformat (hdegoede)
+  * Add support for M420 pixelformat (hdegoede)
+  * Add support for Y10B pixelformat (Antonio Ospite)
+  * Add support for JPGL pixelformat (jfmoine)
+  * Modified (rewrote) jpeg decompression code to use libjpeg[-turbo], for
+    much lower cpu load when doing jpeg decompression (hdegoede)
+  * Detect usb connection speed of devices (hdegoede)
+  * Rewrite src format selection algorithm, taking bandwidth into account and
+    choosing the format which will give us the lowest CPU load while still
+    allowing 30 fps (hdegoede)
+  * Intercept S_PARM and redo src format selection based on new fps setting,
+    potentially switching from JPG to YUYV / M420 when the app lowers the
+    fps, resulting in a significant lower cpu load (hdegoede)
 
 v4l-utils-0.8.3
 ---------------
