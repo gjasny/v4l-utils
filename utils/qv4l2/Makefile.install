@@ -4,5 +4,9 @@ all::
 install:: all
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	install -m 755 qv4l2 $(DESTDIR)$(PREFIX)/bin
+	mkdir -p $(DESTDIR)$(PREFIX)/share/applications
+	install -p -m 644 qv4l2.desktop $(DESTDIR)$(PREFIX)/share/applications
+	mkdir -p $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps
+	install -p -m 644 qv4l2.svg $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps
 
 include ../../Make.rules
