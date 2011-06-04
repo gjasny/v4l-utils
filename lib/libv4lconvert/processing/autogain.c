@@ -42,16 +42,20 @@ static int autogain_active(struct v4lprocessing_data *data)
 
 /* Adjust ctrl value with steps steps, while not crossing limit */
 static void autogain_adjust(struct v4l2_queryctrl *ctrl, int *value,
-		int steps, int limit)
+		int steps, int limit, int accel)
 {
 	int ctrl_range = (ctrl->maximum - ctrl->minimum) / ctrl->step;
 
-	/* If we are of 3 * deadzone or more, and we have a very fine grained
+	/* If we are of 3 * deadzone or more, and we have a fine grained
 	   control, take larger steps, otherwise we take ages to get to the
-	   right setting point. We use 256 as tripping point for determineing fine
-	   grained controls here, as avg_lum has a range of 0 - 255. */
-	if (abs(steps) >= 3 && ctrl_range > 256)
+	   right setting point. We use 256 as tripping point for determining
+	   fine grained controls here, as avg_lum has a range of 0 - 255. */
+	if (accel && abs(steps) >= 3 && ctrl_range > 256)
 		*value += steps * ctrl->step * (ctrl_range / 256);
+        /* If we are of by less then 3, but have a very finegrained control
+           still speed things up a bit */
+	else if (accel && ctrl_range > 1024)
+		*value += steps * ctrl->step * (ctrl_range / 1024);
 	else
 		*value += steps * ctrl->step;
 
@@ -150,28 +154,38 @@ static int autogain_calculate_lookup_tables(
 
 	if (steps < 0) {
 		if (exposure > expoctrl.default_value)
-			autogain_adjust(&expoctrl, &exposure, steps, expoctrl.default_value);
+			autogain_adjust(&expoctrl, &exposure, steps,
+			                expoctrl.default_value, 1);
 		else if (gain > gainctrl.default_value)
-			autogain_adjust(&gainctrl, &gain, steps, gainctrl.default_value);
+			autogain_adjust(&gainctrl, &gain, steps,
+			                gainctrl.default_value, 1);
 		else if (exposure > exposure_low)
-			autogain_adjust(&expoctrl, &exposure, steps, exposure_low);
+			autogain_adjust(&expoctrl, &exposure, steps,
+			                exposure_low, 1);
 		else if (gain > gainctrl.minimum)
-			autogain_adjust(&gainctrl, &gain, steps, gainctrl.minimum);
+			autogain_adjust(&gainctrl, &gain, steps,
+			                gainctrl.minimum, 1);
 		else if (exposure > expoctrl.minimum)
-			autogain_adjust(&expoctrl, &exposure, steps, expoctrl.minimum);
+			autogain_adjust(&expoctrl, &exposure, steps,
+			                expoctrl.minimum, 0);
 		else
 			steps = 0;
 	} else {
 		if (exposure < exposure_low)
-			autogain_adjust(&expoctrl, &exposure, steps, exposure_low);
+			autogain_adjust(&expoctrl, &exposure, steps,
+			                exposure_low, 0);
 		else if (gain < gainctrl.default_value)
-			autogain_adjust(&gainctrl, &gain, steps, gainctrl.default_value);
+			autogain_adjust(&gainctrl, &gain, steps,
+			                gainctrl.default_value, 1);
 		else if (exposure < expoctrl.default_value)
-			autogain_adjust(&expoctrl, &exposure, steps, expoctrl.default_value);
+			autogain_adjust(&expoctrl, &exposure, steps,
+			                expoctrl.default_value, 1);
 		else if (gain < gainctrl.maximum)
-			autogain_adjust(&gainctrl, &gain, steps, gainctrl.maximum);
+			autogain_adjust(&gainctrl, &gain, steps,
+			                gainctrl.maximum, 1);
 		else if (exposure < expoctrl.maximum)
-			autogain_adjust(&expoctrl, &exposure, steps, expoctrl.maximum);
+			autogain_adjust(&expoctrl, &exposure, steps,
+			                expoctrl.maximum, 1);
 		else
 			steps = 0;
 	}
