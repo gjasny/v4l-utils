@@ -108,7 +108,7 @@ static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
 	"\nOn the options bellow, the arguments are:\n"
 	"  DEV      - the /dev/input/event* device to control\n"
 	"  SYSDEV   - the ir class as found at /sys/class/rc\n"
-	"  TABLE    - a file wit a set of scancode=keycode value pairs\n"
+	"  TABLE    - a file with a set of scancode=keycode value pairs\n"
 	"  SCANKEY  - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
 	"  PROTOCOL - protocol name (nec, rc-5, rc-6, other) to be enabled\n"
 	"  DELAY    - Delay before repeating a keystroke\n"
@@ -267,7 +267,7 @@ static error_t parse_keyfile(char *fname, char **table)
 				perror("value");
 		}
 
-		nextkey->codes[0] = (unsigned) strtol(scancode, NULL, 0);
+		nextkey->codes[0] = (unsigned) strtoul(scancode, NULL, 0);
 		nextkey->codes[1] = (unsigned) value;
 		nextkey->next = calloc(1, sizeof(*nextkey));
 		if (!nextkey->next) {
@@ -410,7 +410,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		do {
 			if (!p)
 				goto err_inval;
-			nextkey->codes[0] = strtol(p, NULL, 0);
+			nextkey->codes[0] = strtoul(p, NULL, 0);
 			if (errno)
 				goto err_inval;
 
@@ -426,7 +426,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			nextkey->codes[1] = key;
 
 			if (debug)
-				fprintf(stderr, "scancode %i=%i\n",
+				fprintf(stderr, "scancode %u=%u\n",
 					nextkey->codes[0], nextkey->codes[1]);
 
 			nextkey->next = calloc(1, sizeof(keys));
