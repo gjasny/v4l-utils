@@ -1,3 +1,9 @@
+v4l-utils-0.8.5
+---------------
+* libv4l changes
+  * Add some more laptop models to the upside down devices table (hdegoede)
+  * Add support for SE401 pixelformat (hdegoede)
+
 v4l-utils-0.8.4
 ---------------
 * Utils changes

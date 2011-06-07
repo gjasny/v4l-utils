@@ -79,6 +79,8 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_PAC207,		 0,	 9,	 9,	1 },
 	{ V4L2_PIX_FMT_MR97310A,	 0,	 9,	 9,	1 },
 	{ V4L2_PIX_FMT_SQ905C,		 0,	 9,	 9,	1 },
+	/* special */
+	{ V4L2_PIX_FMT_SE401,		 0,	 8,	 9,	1 },
 	/* grey formats */
 	{ V4L2_PIX_FMT_GREY,		 8,	20,	20,	0 },
 	{ V4L2_PIX_FMT_Y10BPACK,	10,	20,	20,	0 },
@@ -859,6 +861,43 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			result = -1;
 		}
 		break;
+
+	case V4L2_PIX_FMT_SE401: {
+		unsigned char *d = NULL;
+
+		switch (dest_pix_fmt) {
+		case V4L2_PIX_FMT_RGB24:
+			d = dest;
+			break;
+		case V4L2_PIX_FMT_BGR24:
+		case V4L2_PIX_FMT_YUV420:
+		case V4L2_PIX_FMT_YVU420:
+			d = v4lconvert_alloc_buffer(width * height * 3,
+					&data->convert_pixfmt_buf,
+					&data->convert_pixfmt_buf_size);
+			if (!d)
+				return v4lconvert_oom_error(data);
+
+			fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+			v4lconvert_fixup_fmt(fmt);
+			break;
+		}
+
+		result = v4lconvert_se401_to_rgb24(data, src, src_size, d,
+						   width, height);
+		switch (dest_pix_fmt) {
+		case V4L2_PIX_FMT_BGR24:
+			v4lconvert_swap_rgb(d, dest, width, height);
+			break;
+		case V4L2_PIX_FMT_YUV420:
+			v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 0);
+			break;
+		case V4L2_PIX_FMT_YVU420:
+			v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 1);
+			break;
+		}
+		break;
+	}
 
 	case V4L2_PIX_FMT_GREY:
 		switch (dest_pix_fmt) {

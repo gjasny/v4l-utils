@@ -187,6 +187,10 @@ int v4lconvert_cpia1_to_yuv420(struct v4lconvert_data *data,
 void v4lconvert_sn9c20x_to_yuv420(const unsigned char *src, unsigned char *dst,
 		int width, int height, int yvu);
 
+int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data,
+		const unsigned char *src, int src_size,
+		unsigned char *dest, int width, int height);
+
 int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
 	unsigned char *src, int src_size, unsigned char *dest,
 	struct v4l2_format *fmt, unsigned int dest_pix_fmt, int flags);

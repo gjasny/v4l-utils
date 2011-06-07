@@ -613,6 +613,17 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	/* vicam based cams */
 	{ 0x04c1, 0x009d, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 1500 },
 	{ 0x0602, 0x1001, 0,    NULL, NULL, V4LCONTROL_WANTS_WB_AUTOGAIN, 1500 },
+	/* se401 cams, mirrored and need wb + autogain */
+	{ 0x03e8, 0x0004, 0,    NULL, NULL,
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x0471, 0x030b, 0,    NULL, NULL,
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x047d, 0x5001, 0,    NULL, NULL,
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x047d, 0x5002, 0,    NULL, NULL,
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+	{ 0x047d, 0x5003, 0,    NULL, NULL,
+		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
 };
 
 static const struct v4l2_queryctrl fake_controls[];
