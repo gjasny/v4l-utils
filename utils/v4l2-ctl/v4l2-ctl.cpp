@@ -2989,6 +2989,8 @@ int main(int argc, char **argv)
 					strcpy(ctrl.string, iter->second.c_str());
 				}
 			} else {
+				if (V4L2_CTRL_DRIVER_PRIV(ctrl.id))
+					use_ext_ctrls = true;
 				ctrl.value = strtol(iter->second.c_str(), NULL, 0);
 			}
 			class2ctrls[V4L2_CTRL_ID2CLASS(ctrl.id)].push_back(ctrl);
@@ -3356,6 +3358,8 @@ int main(int argc, char **argv)
 				ctrl.string = (char *)malloc(ctrl.size);
 				ctrl.string[0] = 0;
 			}
+			if (V4L2_CTRL_DRIVER_PRIV(ctrl.id))
+				use_ext_ctrls = true;
 			class2ctrls[V4L2_CTRL_ID2CLASS(ctrl.id)].push_back(ctrl);
 		}
 		for (class2ctrls_map::iterator iter = class2ctrls.begin();
