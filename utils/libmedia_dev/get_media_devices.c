@@ -136,7 +136,6 @@ static int get_class(char *class,
 	snprintf(dname, PATH_MAX, "/sys/class/%s", class);
 	dir = opendir(dname);
 	if (!dir) {
-		perror(dname);
 		return 0;
 	}
 	for (entry = readdir(dir); entry; entry = readdir(dir)) {
