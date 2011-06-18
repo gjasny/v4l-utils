@@ -125,7 +125,7 @@ static int get_class(char *class,
 			/* Remove the subsystem/class_name from the string */
 			p = strstr(device, class);
 			if (!p)
-				goto error;
+				continue;
 			*(p - 1) = '\0';
 
 			/* Remove USB sub-devices from the path */
@@ -133,7 +133,7 @@ static int get_class(char *class,
 				do {
 					p = strrchr(device, '/');
 					if (!p)
-						goto error;
+						continue;
 					if (!strpbrk(p, ":."))
 						break;
 					*p = '\0';
