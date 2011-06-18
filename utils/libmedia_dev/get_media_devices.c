@@ -95,25 +95,25 @@ static enum bus_type get_bus(char *device)
 {
 	char file[PATH_MAX];
 	char s[1024];
-        FILE *f;
+	FILE *f;
 
-        if (!strcmp(device, "/sys/devices/virtual"))
-	        return MEDIA_BUS_VIRTUAL;
+	if (!strcmp(device, "/sys/devices/virtual"))
+		return MEDIA_BUS_VIRTUAL;
 
 	snprintf(file, PATH_MAX, "%s/modalias", device);
 	f = fopen(file, "r");
 	if (!f)
-	        return MEDIA_BUS_UNKNOWN;
-        if (!fgets(s, sizeof(s), f))
-	        return MEDIA_BUS_UNKNOWN;
-        fclose(f);
+		return MEDIA_BUS_UNKNOWN;
+	if (!fgets(s, sizeof(s), f))
+		return MEDIA_BUS_UNKNOWN;
+	fclose(f);
 
-        if (!strncmp(s, "pci", 3))
-                return MEDIA_BUS_PCI;
-        if (!strncmp(s, "usb", 3))
-                return MEDIA_BUS_USB;
+	if (!strncmp(s, "pci", 3))
+		return MEDIA_BUS_PCI;
+	if (!strncmp(s, "usb", 3))
+		return MEDIA_BUS_USB;
 
-        return MEDIA_BUS_UNKNOWN;
+	return MEDIA_BUS_UNKNOWN;
 }
 
 static int get_class(char *class,
@@ -139,13 +139,13 @@ static int get_class(char *class,
 		return 0;
 	}
 	for (entry = readdir(dir); entry; entry = readdir(dir)) {
-	        /* Skip . and .. */
-	        if (entry->d_name[0] == '.')
-	                continue;
+		/* Skip . and .. */
+		if (entry->d_name[0] == '.')
+			continue;
 		/* Canonicalize the device name */
 		snprintf(fname, PATH_MAX, "%s/%s", dname, entry->d_name);
 		if (realpath(fname, link)) {
-		        device = link;
+			device = link;
 
 			/* Remove the subsystem/class_name from the string */
 			p = strstr(device, class);
@@ -160,31 +160,31 @@ static int get_class(char *class,
 
 			switch (bus) {
 			case MEDIA_BUS_PCI:
-			        /* Remove the device function nr */
+				/* Remove the device function nr */
 				p = strrchr(device, '.');
 				if (!p)
 					continue;
 				*p = '\0';
-				break;			        
+				break;
 			case MEDIA_BUS_USB:
-        			/* Remove USB interface from the path */
+				/* Remove USB interface from the path */
 				p = strrchr(device, '/');
 				if (!p)
 					continue;
-                                /* In case we have a device where the driver
-                                   attaches directly to the usb device rather
-                                   then to an interface */
-                                if (!strchr(p, ':'))
+				/* In case we have a device where the driver
+				   attaches directly to the usb device rather
+				   then to an interface */
+				if (!strchr(p, ':'))
 					break;
 				*p = '\0';
 				break;
-                        case MEDIA_BUS_VIRTUAL:
-        			/* Don't group virtual devices */
+			case MEDIA_BUS_VIRTUAL:
+				/* Don't group virtual devices */
 				sprintf(virt_dev, "virtual%d", virtual++);
 				device = virt_dev;
 				break;
-                        case MEDIA_BUS_UNKNOWN:
-                                break;
+			case MEDIA_BUS_UNKNOWN:
+				break;
 			}
 
 			/* Add one more element to the devices struct */
