@@ -230,7 +230,7 @@ static int add_v4l_class(struct media_device_entry *md)
 static int add_snd_class(struct media_device_entry *md)
 {
 	unsigned c = 65535, d = 65535;
-	char *new;
+	char node[64];
 
 	if (strstr(md->node, "timer")) {
 		md->type = MEDIA_SND_TIMER;
@@ -259,18 +259,13 @@ static int add_snd_class(struct media_device_entry *md)
 		return 0;
 
 	/* Reformat device to be useful for alsa userspace library */
-	if (d == 65535) {
-		if (asprintf(&new, "hw:%u", c) > 0) {
-			free(md->node);
-			md->node = new;
-		}
-		return 0;
-	}
+	if (d == 65535)
+		snprintf(node, sizeof(node), "hw:%u", c);
+	else
+		snprintf(node, sizeof(node), "hw:%u,%u", c, d);
 
-	if (asprintf(&new, "hw:%u,%u", c, d) > 0) {
-		free(md->node);
-		md->node = new;
-	}
+	free(md->node);
+	md->node = strdup(node);
 
 	return 0;
 };
