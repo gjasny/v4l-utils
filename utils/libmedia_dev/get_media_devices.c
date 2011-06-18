@@ -160,15 +160,16 @@ static int get_class(char *class,
 
 			switch (bus) {
 			case MEDIA_BUS_USB:
-        			/* Remove USB sub-devices from the path */
-				do {
-					p = strrchr(device, '/');
-					if (!p)
-						continue;
-					if (!strpbrk(p, ":."))
-						break;
-					*p = '\0';
-				} while (1);
+        			/* Remove USB interface from the path */
+				p = strrchr(device, '/');
+				if (!p)
+					continue;
+                                /* In case we have a device where the driver
+                                   attaches directly to the usb device rather
+                                   then to an interface */
+                                if (!strchr(p, ':'))
+					break;
+				*p = '\0';
 				break;
                         case MEDIA_BUS_VIRTUAL:
         			/* Don't group virtual devices */
