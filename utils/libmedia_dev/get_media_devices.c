@@ -103,7 +103,6 @@ static int get_class(char *class,
 	char		virt_dev[60];
 	int		err = -2;
 	struct		media_device_entry *md_ptr = NULL;
-	int		size;
 	char		*p, *device;
 	static int	virtual = 0;
 
@@ -114,22 +113,17 @@ static int get_class(char *class,
 		return 0;
 	}
 	for (entry = readdir(dir); entry; entry = readdir(dir)) {
+	        /* Skip . and .. */
+	        if (entry->d_name[0] == '.')
+	                continue;
+		/* Canonicalize the device name */
 		snprintf(fname, PATH_MAX, "%s/%s", dname, entry->d_name);
-
-		size = readlink(fname, link, PATH_MAX);
-		if (size > 0) {
-			link[size] = '\0';
-
-			/* Canonicalize the device name */
-
-			/* remove the ../../devices/ from the name */
-			p = strstr(link, DEVICE_STR);
-			if (!p)
-				goto error;
-			device = p + sizeof(DEVICE_STR);
+		if (realpath(fname, link)) {
+			/* remove the /sys/devices/ from the name */
+			device = link + 13;
 
 			/* Remove the subsystem/class_name from the string */
-			p = strstr(link, class);
+			p = strstr(device, class);
 			if (!p)
 				goto error;
 			*(p - 1) = '\0';
