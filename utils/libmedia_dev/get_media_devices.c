@@ -162,10 +162,8 @@ static int get_class(char *class,
 			/* Cleans previous data and fills it with device/node */
 			memset(md_ptr, 0, sizeof(*md_ptr));
 			md_ptr->type = UNKNOWN;
-			md_ptr->device = malloc(strlen(device) + 1);
-			strcpy(md_ptr->device, device);
-			md_ptr->node = malloc(strlen(entry->d_name) + 1);
-			strcpy(md_ptr->node, entry->d_name);
+			md_ptr->device = strdup(device);
+			md_ptr->node = strdup(entry->d_name);
 
 			/* Retrieve major and minor information */
 			get_uevent_info(md_ptr, dname);
