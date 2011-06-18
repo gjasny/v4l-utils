@@ -60,6 +60,13 @@ enum device_type {
 	 */
 };
 
+enum bus_type {
+	MEDIA_BUS_UNKNOWN,
+	MEDIA_BUS_VIRTUAL,
+	MEDIA_BUS_PCI,
+	MEDIA_BUS_USB,
+};
+
 /**
  * discover_media_devices() - Returns a list of the media devices
  * @md_size:	Returns the size of the media devices found

@@ -42,6 +42,7 @@ struct media_device_entry {
 	char *device;
 	char *node;
 	enum device_type type;
+	enum bus_type bus;
 	unsigned major, minor;		/* Device major/minor */
 };
 
@@ -90,6 +91,31 @@ static void get_uevent_info(struct media_device_entry *md_ptr, char *dname)
 	fclose(fd);
 }
 
+static enum bus_type get_bus(char *device)
+{
+	char file[PATH_MAX];
+	char s[1024];
+        FILE *f;
+
+        if (!strcmp(device, "/sys/devices/virtual"))
+	        return MEDIA_BUS_VIRTUAL;
+
+	snprintf(file, PATH_MAX, "%s/modalias", device);
+	f = fopen(file, "r");
+	if (!f)
+	        return MEDIA_BUS_UNKNOWN;
+        if (!fgets(s, sizeof(s), f))
+	        return MEDIA_BUS_UNKNOWN;
+        fclose(f);
+
+        if (!strncmp(s, "pci", 3))
+                return MEDIA_BUS_PCI;
+        if (!strncmp(s, "usb", 3))
+                return MEDIA_BUS_USB;
+
+        return MEDIA_BUS_UNKNOWN;
+}
+
 static int get_class(char *class,
 		     struct media_device_entry **md,
 		     unsigned int *md_size,
@@ -104,6 +130,7 @@ static int get_class(char *class,
 	int		err = -2;
 	struct		media_device_entry *md_ptr = NULL;
 	char		*p, *device;
+	enum bus_type	bus;
 	static int	virtual = 0;
 
 	snprintf(dname, PATH_MAX, "/sys/class/%s", class);
@@ -119,8 +146,7 @@ static int get_class(char *class,
 		/* Canonicalize the device name */
 		snprintf(fname, PATH_MAX, "%s/%s", dname, entry->d_name);
 		if (realpath(fname, link)) {
-			/* remove the /sys/devices/ from the name */
-			device = link + 13;
+		        device = link;
 
 			/* Remove the subsystem/class_name from the string */
 			p = strstr(device, class);
@@ -128,8 +154,14 @@ static int get_class(char *class,
 				continue;
 			*(p - 1) = '\0';
 
-			/* Remove USB sub-devices from the path */
-			if (strstr(device, "usb")) {
+			bus = get_bus(device);
+
+			/* remove the /sys/devices/ from the name */
+			device += 13;
+
+			switch (bus) {
+			case MEDIA_BUS_USB:
+        			/* Remove USB sub-devices from the path */
 				do {
 					p = strrchr(device, '/');
 					if (!p)
@@ -138,12 +170,14 @@ static int get_class(char *class,
 						break;
 					*p = '\0';
 				} while (1);
-			}
-
-			/* Don't group virtual devices */
-			if (!strcmp(device, "virtual")) {
+				break;
+                        case MEDIA_BUS_VIRTUAL:
+        			/* Don't group virtual devices */
 				sprintf(virt_dev, "virtual%d", virtual++);
 				device = virt_dev;
+				break;
+                        default:
+                                break;
 			}
 
 			/* Add one more element to the devices struct */
