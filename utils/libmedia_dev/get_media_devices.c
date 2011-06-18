@@ -104,7 +104,7 @@ static int get_class(char *class,
 	int		err = -2;
 	struct		media_device_entry *md_ptr = NULL;
 	int		size;
-	char		*p, *class_node, *device;
+	char		*p, *device;
 	static int	virtual = 0;
 
 	sprintf(dname, "/sys/class/%s", class);
@@ -119,12 +119,6 @@ static int get_class(char *class,
 		size = readlink(fname, link, sizeof(link));
 		if (size > 0) {
 			link[size] = '\0';
-
-			/* Keep just the name of the cass node */
-			p = strrchr(fname, '/');
-			if (!p)
-				goto error;
-			class_node = p + 1;
 
 			/* Canonicalize the device name */
 
@@ -170,8 +164,8 @@ static int get_class(char *class,
 			md_ptr->type = UNKNOWN;
 			md_ptr->device = malloc(strlen(device) + 1);
 			strcpy(md_ptr->device, device);
-			md_ptr->node = malloc(strlen(class_node) + 1);
-			strcpy(md_ptr->node, class_node);
+			md_ptr->node = malloc(strlen(entry->d_name) + 1);
+			strcpy(md_ptr->node, entry->d_name);
 
 			/* Retrieve major and minor information */
 			get_uevent_info(md_ptr, dname);
