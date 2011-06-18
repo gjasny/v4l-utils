@@ -159,6 +159,13 @@ static int get_class(char *class,
 			device += 13;
 
 			switch (bus) {
+			case MEDIA_BUS_PCI:
+			        /* Remove the device function nr */
+				p = strrchr(device, '.');
+				if (!p)
+					continue;
+				*p = '\0';
+				break;			        
 			case MEDIA_BUS_USB:
         			/* Remove USB interface from the path */
 				p = strrchr(device, '/');
@@ -176,7 +183,7 @@ static int get_class(char *class,
 				sprintf(virt_dev, "virtual%d", virtual++);
 				device = virt_dev;
 				break;
-                        default:
+                        case MEDIA_BUS_UNKNOWN:
                                 break;
 			}
 
