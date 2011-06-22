@@ -179,8 +179,6 @@ int testQueryControls(struct node *node)
 		ret = doioctl(node, VIDIOC_QUERYCTRL, &qctrl);
 		if (ret && ret != EINVAL)
 			return fail("invalid queryctrl return code\n");
-		if (ret && id == 0)
-			return fail("does not support V4L2_CTRL_FLAG_NEXT_CTRL\n");
 		if (ret)
 			break;
 		if (checkQCtrl(node, qctrl))
@@ -257,6 +255,8 @@ int testQueryControls(struct node *node)
 		priv_user_controls++;
 	}
 
+	if (priv_user_controls + user_controls && node->controls.empty())
+		return fail("does not support V4L2_CTRL_FLAG_NEXT_CTRL\n");
 	if (user_controls != user_controls_check)
 		return fail("expected %d user controls, got %d\n",
 			user_controls_check, user_controls);
