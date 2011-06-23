@@ -5,7 +5,7 @@ all: $(TARGETS)
 -include *.d
 
 v4l2-compliance: v4l2-compliance.o v4l2-test-debug.o v4l2-test-input-output.o \
-	v4l2-test-controls.o v4l2-test-io-config.o
+	v4l2-test-controls.o v4l2-test-io-config.o v4l2-test-formats.o
 	$(CXX) $(LDFLAGS) -o $@ $^ -lv4l2 -lv4lconvert -lrt
 
 install: $(TARGETS)

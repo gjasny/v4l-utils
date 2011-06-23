@@ -547,6 +547,11 @@ int main(int argc, char **argv)
 	printf("\ttest VIDIOC_G/S_DV_TIMINGS: %s\n", ok(testCustomTimings(&node)));
 	printf("\n");
 
+	/* Format ioctls */
+
+	printf("Format ioctls:\n");
+	printf("\ttest VIDIOC_ENUM_FMT: %s\n", ok(testEnumFormats(&node)));
+
 	/* TODO:
 
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP
