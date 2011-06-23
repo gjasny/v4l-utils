@@ -247,7 +247,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
 	fmt->description[2] = (faked_fmts[i] >> 16) & 0xff;
 	fmt->description[3] = faked_fmts[i] >> 24;
 	fmt->description[4] = '\0';
-	memset(fmt->reserved, 0, 4);
+	memset(fmt->reserved, 0, sizeof(fmt->reserved));
 
 	return 0;
 }
