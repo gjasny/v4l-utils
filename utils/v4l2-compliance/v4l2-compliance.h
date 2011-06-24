@@ -91,6 +91,18 @@ static inline int test_ioctl(int fd, int cmd, void *arg)
 	return wrapper ? v4l2_ioctl(fd, cmd, arg) : ioctl(fd, cmd, arg);
 }
 
+static inline int check_fract(const struct v4l2_fract *f)
+{
+	if (f->numerator && f->denominator)
+		return 0;
+	return 1;
+}
+
+static inline double fract2f(const struct v4l2_fract *f)
+{
+	return (double)f->numerator / (double)f->denominator;
+}
+
 int doioctl_name(struct node *node, unsigned long int request, void *parm, const char *name);
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 

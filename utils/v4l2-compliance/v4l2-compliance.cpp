@@ -550,12 +550,11 @@ int main(int argc, char **argv)
 	/* Format ioctls */
 
 	printf("Format ioctls:\n");
-	printf("\ttest VIDIOC_ENUM_FMT: %s\n", ok(testEnumFormats(&node)));
+	printf("\ttest VIDIOC_ENUM_FMT/FRAMESIZES/FRAMEINTERVALS: %s\n", ok(testEnumFormats(&node)));
 
 	/* TODO:
 
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP
-	   VIDIOC_ENUM_FMT/FRAMESIZES/FRAMEINTERVALS
 	   VIDIOC_G/S_FBUF/OVERLAY
 	   VIDIOC_G/S/TRY_FMT
 	   VIDIOC_G/S_PARM
