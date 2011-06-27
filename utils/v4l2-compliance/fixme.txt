@@ -22,3 +22,10 @@ here they won't be forgotten.
 - Control documentation is out of date regarding use of class_ctrl 0 and how
   error_idx should be set for G/S_EXT_CTRLS and for TRY_EXT_CTRLS (which does
   this slightly differently).
+
+- V4L2_FBUF_CAP_SRC_CHROMAKEY: I believe this is defined the wrong way around in
+  DocBook.
+
+- define properly V4L2_FBUF_FLAG_PRIMARY and V4L2_FBUF_FLAG_OVERLAY.
+- ditto V4L2_FBUF_CAP_EXTERNOVERLAY: do bytesperline, sizeimage and base need to be
+  set or not? Determine for overlay and output overlay.

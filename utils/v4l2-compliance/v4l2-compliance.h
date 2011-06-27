@@ -57,6 +57,7 @@ struct node {
 	unsigned std_controls;
 	unsigned priv_controls;
 	qctrl_list controls;
+	__u32 fbuf_caps;
 	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE + 1];
 };
 
@@ -158,6 +159,7 @@ int testCustomTimings(struct node *node);
 
 // Format ioctl tests
 int testEnumFormats(struct node *node);
+int testFBuf(struct node *node);
 int testFormats(struct node *node);
 
 #endif

@@ -267,6 +267,10 @@ static int testCap(struct node *node)
 	if (node->is_vbi && !(caps & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
 				      V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT)))
 		return fail("vbi node without the relevant capabilities\n");
+	// You can't have both set due to missing buffer type in VIDIOC_G/S_FBUF
+	fail_on_test((caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)) ==
+			(V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY));
+
 	return 0;
 }
 
@@ -582,12 +586,13 @@ int main(int argc, char **argv)
 
 	printf("Format ioctls:\n");
 	printf("\ttest VIDIOC_ENUM_FMT/FRAMESIZES/FRAMEINTERVALS: %s\n", ok(testEnumFormats(&node)));
+	printf("\ttest VIDIOC_G_FBUF: %s\n", ok(testFBuf(&node)));
 	printf("\ttest VIDIOC_G_FMT: %s\n", ok(testFormats(&node)));
 
 	/* TODO:
 
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP
-	   VIDIOC_G/S_FBUF/OVERLAY
+	   VIDIOC_S_FBUF/OVERLAY
 	   VIDIOC_S/TRY_FMT
 	   VIDIOC_G/S_PARM
 	   VIDIOC_G/S_JPEGCOMP

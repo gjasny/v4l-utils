@@ -308,6 +308,52 @@ int testEnumFormats(struct node *node)
 	return 0;
 }
 
+int testFBuf(struct node *node)
+{
+	struct v4l2_framebuffer fbuf;
+	struct v4l2_pix_format &fmt = fbuf.fmt;
+	__u32 caps;
+	__u32 flags;
+	int ret;
+
+	memset(&fbuf, 0xff, sizeof(fbuf));
+	fbuf.fmt.priv = 0;
+	ret = doioctl(node, VIDIOC_G_FBUF, &fbuf);
+	fail_on_test(ret == 0 && !(node->caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
+	fail_on_test(ret == EINVAL && (node->caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
+	if (ret == EINVAL)
+		return -ENOSYS;
+	if (ret)
+		return fail("expected EINVAL, but got %d when getting framebuffer format\n", ret);
+	node->fbuf_caps = caps = fbuf.capability;
+	flags = fbuf.flags;
+	if (node->caps & V4L2_CAP_VIDEO_OUTPUT_OVERLAY)
+		fail_on_test(!fbuf.base);
+	if (flags & V4L2_FBUF_FLAG_CHROMAKEY)
+		fail_on_test(!(caps & V4L2_FBUF_CAP_CHROMAKEY));
+	if (flags & V4L2_FBUF_FLAG_LOCAL_ALPHA)
+		fail_on_test(!(caps & V4L2_FBUF_CAP_LOCAL_ALPHA));
+	if (flags & V4L2_FBUF_FLAG_GLOBAL_ALPHA)
+		fail_on_test(!(caps & V4L2_FBUF_CAP_GLOBAL_ALPHA));
+	if (flags & V4L2_FBUF_FLAG_LOCAL_INV_ALPHA)
+		fail_on_test(!(caps & V4L2_FBUF_CAP_LOCAL_INV_ALPHA));
+	if (flags & V4L2_FBUF_FLAG_SRC_CHROMAKEY)
+		fail_on_test(!(caps & V4L2_FBUF_CAP_SRC_CHROMAKEY));
+	fail_on_test(!fmt.width || !fmt.height);
+	if (fmt.priv)
+		warn("fbuf.fmt.priv is non-zero\n");
+	/* Not yet: unclear what EXTERNOVERLAY means in a output overlay context
+	if (caps & V4L2_FBUF_CAP_EXTERNOVERLAY) {
+		fail_on_test(fmt.bytesperline);
+		fail_on_test(fmt.sizeimage);
+		fail_on_test(fbuf.base);
+	}*/
+	fail_on_test(fmt.bytesperline && fmt.bytesperline < fmt.width);
+	fail_on_test(fmt.sizeimage && fmt.sizeimage < fmt.bytesperline * fmt.height);
+	fail_on_test(!fmt.colorspace);
+	return 0;
+}
+
 static int testFormatsType(struct node *node, enum v4l2_buf_type type)
 {
 	pixfmt_set &set = node->buftype_pixfmts[type];
@@ -403,11 +449,16 @@ static int testFormatsType(struct node *node, enum v4l2_buf_type type)
 			     win.field != V4L2_FIELD_TOP &&
 			     win.field != V4L2_FIELD_BOTTOM &&
 			     win.field != V4L2_FIELD_INTERLACED);
+		fail_on_test(win.clipcount && !(node->fbuf_caps & V4L2_FBUF_CAP_LIST_CLIPPING));
 		for (struct v4l2_clip *clip = win.clips; clip; win.clipcount--) {
 			fail_on_test(clip == NULL);
 			clip = clip->next;
 		}
 		fail_on_test(win.clipcount);
+		fail_on_test(win.chromakey && !(node->fbuf_caps & (V4L2_FBUF_CAP_CHROMAKEY | V4L2_FBUF_CAP_SRC_CHROMAKEY)));
+		if (!(node->fbuf_caps & V4L2_FBUF_CAP_BITMAP_CLIPPING))
+			fail_on_test(win.bitmap);
+		fail_on_test(win.global_alpha && !(node->fbuf_caps & V4L2_FBUF_CAP_GLOBAL_ALPHA));
 		break;
 	case V4L2_BUF_TYPE_PRIVATE:
 		break;
