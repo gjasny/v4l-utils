@@ -58,8 +58,7 @@ int testChipIdent(struct node *node)
 		ret = doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip);
 		if (ret != EINVAL)
 			return fail("Invalid match_type accepted\n");
-		if (memcmp(&orig, &chip, sizeof(chip)))
-			return fail("Error, but struct modified\n");
+		fail_on_test(memcmp(&orig, &chip, sizeof(chip)));
 		return 0;
 	}
 	return ret == EINVAL ? -ENOSYS : ret;
@@ -78,21 +77,18 @@ int testRegister(struct node *node)
 	ret = doioctl(node, VIDIOC_DBG_G_REGISTER, &reg);
 	if (ret == EINVAL)
 		return -ENOSYS;
-	if (uid && ret != EPERM)
-		return fail("Not allowed to call VIDIOC_DBG_G_REGISTER unless root\n");
-	if (uid == 0 && ret)
-		return fail("Not allowed to call VIDIOC_DBG_G_REGISTER even though we are root\n");
+	// Not allowed to call VIDIOC_DBG_G_REGISTER unless root
+	fail_on_test(uid && ret != EPERM);
+	fail_on_test(uid == 0 && ret);
 	chip.match.type = V4L2_CHIP_MATCH_HOST;
 	chip.match.addr = 0;
-	if (doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip))
-		return fail("Must support VIDIOC_DBG_G_CHIP_IDENT\n");
+	fail_on_test(doioctl(node, VIDIOC_DBG_G_CHIP_IDENT, &chip));
 	if (uid) {
 		// Don't test S_REGISTER as root, don't want to risk
 		// messing with registers in the compliance test.
 		reg.reg = reg.val = 0;
 		ret = doioctl(node, VIDIOC_DBG_S_REGISTER, &reg);
-		if (ret != EINVAL && ret != EPERM)
-			return fail("Invalid error calling VIDIOC_DBG_S_REGISTER as non-root\n");
+		fail_on_test(ret != EINVAL && ret != EPERM);
 	}
 	return 0;
 }

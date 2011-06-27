@@ -74,16 +74,16 @@ struct node {
  			printf("\t\twarn: " fmt, ##args);	\
 	} while (0)
 
-#define fail(fmt, args...) 			\
-({ 						\
- 	printf("\t\tfail: " fmt, ##args);	\
-	1;					\
+#define fail(fmt, args...) 						\
+({ 									\
+ 	printf("\t\tfail: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+	1;								\
 })
 
-#define fail_on_test(test) 					\
-	do {							\
-	 	if (test)					\
-		return fail("%s(%d): %s\n", __FILE__, __LINE__, #test); \
+#define fail_on_test(test) 				\
+	do {						\
+	 	if (test)				\
+			return fail("%s\n", #test);	\
 	} while (0)
 
 static inline int test_open(const char *file, int oflag)
