@@ -23,6 +23,7 @@
 
 #include <string>
 #include <list>
+#include <set>
 #include <linux/videodev2.h>
 #include <libv4l2.h>
 
@@ -37,6 +38,7 @@ struct test_queryctrl: v4l2_queryctrl {
 };
 
 typedef std::list<test_queryctrl> qctrl_list;
+typedef std::set<__u32> pixfmt_set;
 
 struct node {
 	int fd;
@@ -55,6 +57,7 @@ struct node {
 	unsigned std_controls;
 	unsigned priv_controls;
 	qctrl_list controls;
+	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE + 1];
 };
 
 #define info(fmt, args...) 					\
@@ -75,6 +78,12 @@ struct node {
  	printf("\t\tfail: " fmt, ##args);	\
 	1;					\
 })
+
+#define fail_on_test(test) 					\
+	do {							\
+	 	if (test)					\
+		return fail("%s(%d): %s\n", __FILE__, __LINE__, #test); \
+	} while (0)
 
 static inline int test_open(const char *file, int oflag)
 {
@@ -107,6 +116,12 @@ int doioctl_name(struct node *node, unsigned long int request, void *parm, const
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 
 std::string cap2s(unsigned cap);
+std::string buftype2s(int type);
+static inline std::string buftype2s(enum v4l2_buf_type type)
+{
+       return buftype2s((int)type);
+}
+
 const char *ok(int res);
 int check_string(const char *s, size_t len);
 int check_ustring(const __u8 *s, int len);
@@ -143,5 +158,6 @@ int testCustomTimings(struct node *node);
 
 // Format ioctl tests
 int testEnumFormats(struct node *node);
+int testFormats(struct node *node);
 
 #endif

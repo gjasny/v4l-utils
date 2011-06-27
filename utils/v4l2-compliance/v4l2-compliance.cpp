@@ -159,6 +159,36 @@ std::string cap2s(unsigned cap)
 	return s;
 }
 
+std::string buftype2s(int type)
+{
+	switch (type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		return "Video Capture";
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+		return "Video Capture Multiplanar";
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		return "Video Output";
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		return "Video Output Multiplanar";
+	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+		return "Video Overlay";
+	case V4L2_BUF_TYPE_VBI_CAPTURE:
+		return "VBI Capture";
+	case V4L2_BUF_TYPE_VBI_OUTPUT:
+		return "VBI Output";
+	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+		return "Sliced VBI Capture";
+	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+		return "Sliced VBI Output";
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
+		return "Video Output Overlay";
+	case V4L2_BUF_TYPE_PRIVATE:
+		return "Private";
+	default:
+		return std::string("Unknown");
+	}
+}
+
 const char *ok(int res)
 {
 	static char buf[100];
@@ -417,6 +447,7 @@ int main(int argc, char **argv)
 		node.fd = radio_node.fd;
 		device = radio_device;
 		node.is_radio = true;
+		printf("is radio\n");
 	} else if (vbi_node.fd >= 0) {
 		node.fd = vbi_node.fd;
 		device = vbi_device;
@@ -551,12 +582,13 @@ int main(int argc, char **argv)
 
 	printf("Format ioctls:\n");
 	printf("\ttest VIDIOC_ENUM_FMT/FRAMESIZES/FRAMEINTERVALS: %s\n", ok(testEnumFormats(&node)));
+	printf("\ttest VIDIOC_G_FMT: %s\n", ok(testFormats(&node)));
 
 	/* TODO:
 
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP
 	   VIDIOC_G/S_FBUF/OVERLAY
-	   VIDIOC_G/S/TRY_FMT
+	   VIDIOC_S/TRY_FMT
 	   VIDIOC_G/S_PARM
 	   VIDIOC_G/S_JPEGCOMP
 	   VIDIOC_SLICED_VBI_CAP

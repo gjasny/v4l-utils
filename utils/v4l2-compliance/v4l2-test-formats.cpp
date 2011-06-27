@@ -29,8 +29,23 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <assert.h>
 #include "v4l2-compliance.h"
 
+static const __u32 buftype2cap[] = {
+	0,
+	V4L2_CAP_VIDEO_CAPTURE,
+	V4L2_CAP_VIDEO_OUTPUT,
+	V4L2_CAP_VIDEO_OVERLAY,
+	V4L2_CAP_VBI_CAPTURE,
+	V4L2_CAP_VBI_OUTPUT,
+	V4L2_CAP_SLICED_VBI_CAPTURE,
+	V4L2_CAP_SLICED_VBI_OUTPUT,
+	V4L2_CAP_VIDEO_OUTPUT_OVERLAY,
+	// To be discussed
+	V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_CAPTURE,
+	V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_OUTPUT,
+};
 
 static int testEnumFrameIntervals(struct node *node, __u32 pixfmt, __u32 w, __u32 h, bool valid)
 {
@@ -185,6 +200,7 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 
 static int testEnumFormatsType(struct node *node, enum v4l2_buf_type type)
 {
+	pixfmt_set &set = node->buftype_pixfmts[type];
 	struct v4l2_fmtdesc fmtdesc;
 	unsigned f = 0;
 	int ret;
@@ -206,6 +222,8 @@ static int testEnumFormatsType(struct node *node, enum v4l2_buf_type type)
 			return fail("fmtdesc.reserved not zeroed\n");
 		if (fmtdesc.index != f)
 			return fail("fmtdesc.index was modified\n");
+		if (fmtdesc.type != type)
+			return fail("fmtdesc.type was modified\n");
 		ret = check_ustring(fmtdesc.description, sizeof(fmtdesc.description));
 		if (ret)
 			return fail("fmtdesc.description not set\n");
@@ -221,6 +239,13 @@ static int testEnumFormatsType(struct node *node, enum v4l2_buf_type type)
 		if (ret == 0 && !(node->caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)))
 			return fail("found framesizes when no video capture is supported\n");
 		f++;
+		if (type == V4L2_BUF_TYPE_PRIVATE)
+			continue;
+		// Update array in v4l2-compliance.h if new buffer types are added
+		assert(type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
+		if (set.find(fmtdesc.pixelformat) != set.end())
+			return fail("duplicate format %08x\n", fmtdesc.pixelformat);
+		set.insert(fmtdesc.pixelformat);
 	}
 	info("found %d formats for buftype %d\n", f, type);
 	return 0;
@@ -228,81 +253,45 @@ static int testEnumFormatsType(struct node *node, enum v4l2_buf_type type)
 
 int testEnumFormats(struct node *node)
 {
+	static const __u32 buftype2cap[] = {
+		0,
+		V4L2_CAP_VIDEO_CAPTURE,
+		V4L2_CAP_VIDEO_OUTPUT,
+		V4L2_CAP_VIDEO_OVERLAY,
+		V4L2_CAP_VBI_CAPTURE,
+		V4L2_CAP_VBI_OUTPUT,
+		V4L2_CAP_SLICED_VBI_CAPTURE,
+		V4L2_CAP_SLICED_VBI_OUTPUT,
+		V4L2_CAP_VIDEO_OUTPUT_OVERLAY,
+		V4L2_CAP_VIDEO_CAPTURE_MPLANE,
+		V4L2_CAP_VIDEO_OUTPUT_MPLANE,
+	};
+	int type;
 	int ret;
 
-	ret = testEnumFormatsType(node, (enum v4l2_buf_type)0);
-	if (ret != -ENOSYS)
-		return fail("Buffer type 0 accepted!\n");
-
-	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_VIDEO_CAPTURE);
-	if (ret > 0)
-		return ret;
-	if (ret && (node->caps & V4L2_CAP_VIDEO_CAPTURE))
-		return fail("Video capture cap set, but no capture formats defined\n");
-	if (!ret && !(node->caps & V4L2_CAP_VIDEO_CAPTURE))
-		return fail("Video capture cap not set, but capture formats defined\n");
-
-	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
-	if (ret > 0)
-		return ret;
-	if (ret && (node->caps & V4L2_CAP_VIDEO_CAPTURE_MPLANE))
-		return fail("MPlane Video capture cap set, but no multiplanar capture formats defined\n");
-	if (!ret && !(node->caps & V4L2_CAP_VIDEO_CAPTURE_MPLANE))
-		return fail("MPlane Video capture cap not set, but multiplanar capture formats defined\n");
-
-	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_VIDEO_OVERLAY);
-	if (ret > 0)
-		return ret;
-	if (ret && (node->caps & V4L2_CAP_VIDEO_OVERLAY))
-		return fail("Video overlay cap set, but no overlay formats defined\n");
-	if (!ret && !(node->caps & V4L2_CAP_VIDEO_OVERLAY))
-		return fail("Video overlay cap not set, but overlay formats defined\n");
-
-	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_VBI_CAPTURE);
-	if (ret > 0)
-		return ret;
-	if (!ret)
-		return fail("Buffer type VBI_CAPTURE allowed!\n");
-
-	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_SLICED_VBI_CAPTURE);
-	if (ret > 0)
-		return ret;
-	if (!ret)
-		return fail("Buffer type SLICED_VBI_CAPTURE allowed!\n");
-
-	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_VIDEO_OUTPUT);
-	if (ret > 0)
-		return ret;
-	if (ret && (node->caps & V4L2_CAP_VIDEO_OUTPUT))
-		return fail("Video output cap set, but no output formats defined\n");
-	if (!ret && !(node->caps & V4L2_CAP_VIDEO_OUTPUT))
-		return fail("Video output cap not set, but output formats defined\n");
-
-	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
-	if (ret > 0)
-		return ret;
-	if (ret && (node->caps & V4L2_CAP_VIDEO_OUTPUT_MPLANE))
-		return fail("MPlane Video output cap set, but no multiplanar output formats defined\n");
-	if (!ret && !(node->caps & V4L2_CAP_VIDEO_OUTPUT_MPLANE))
-		return fail("MPlane Video output cap not set, but multiplanar output formats defined\n");
-
-	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY);
-	if (ret > 0)
-		return ret;
-	if (!ret)
-		return fail("Buffer type VIDEO_OUTPUT_OVERLAY allowed!\n");
-
-	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_VBI_OUTPUT);
-	if (ret > 0)
-		return ret;
-	if (!ret)
-		return fail("Buffer type VBI_OUTPUT allowed!\n");
-
-	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_SLICED_VBI_OUTPUT);
-	if (ret > 0)
-		return ret;
-	if (!ret)
-		return fail("Buffer type SLICED_VBI_OUTPUT allowed!\n");
+	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
+		ret = testEnumFormatsType(node, (enum v4l2_buf_type)type);
+		if (ret > 0)
+			return ret;
+		switch (type) {
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+			if (ret < 0 && (node->caps & buftype2cap[type]))
+				return fail("%s cap set, but no %s formats defined\n",
+						buftype2s(type).c_str(), buftype2s(type).c_str());
+			if (!ret && !(node->caps & buftype2cap[type]))
+				return fail("%s cap not set, but %s formats defined\n",
+						buftype2s(type).c_str(), buftype2s(type).c_str());
+			break;
+		default:
+			if (!ret)
+				return fail("Buffer type %s not allowed!\n", buftype2s(type).c_str());
+			break;
+		}
+	}
 
 	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_PRIVATE);
 	if (ret > 0)
@@ -316,5 +305,138 @@ int testEnumFormats(struct node *node)
 	ret = testEnumFrameIntervals(node, 0x20202020, 640, 480, false);
 	if (ret >= 0)
 		return fail("Accepted frameinterval for invalid format\n");
+	return 0;
+}
+
+static int testFormatsType(struct node *node, enum v4l2_buf_type type)
+{
+	pixfmt_set &set = node->buftype_pixfmts[type];
+	pixfmt_set *set_splane;
+	struct v4l2_format fmt;
+	struct v4l2_pix_format &pix = fmt.fmt.pix;
+	struct v4l2_pix_format_mplane &pix_mp = fmt.fmt.pix_mp;
+	struct v4l2_window &win = fmt.fmt.win;
+	struct v4l2_vbi_format &vbi = fmt.fmt.vbi;
+	struct v4l2_sliced_vbi_format &sliced = fmt.fmt.sliced;
+	__u32 service_set = 0;
+	unsigned cnt = 0;
+	int ret;
+	
+	memset(&fmt, 0xff, sizeof(fmt));
+	fmt.type = type;
+	ret = doioctl(node, VIDIOC_G_FMT, &fmt);
+	if (ret == EINVAL)
+		return -ENOSYS;
+	if (ret)
+		return fail("expected EINVAL, but got %d when getting format for buftype %d\n", ret, type);
+	fail_on_test(fmt.type != type);
+	
+	switch (type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		fail_on_test(!pix.width || !pix.height);
+		if (set.find(pix.pixelformat) == set.end())
+			return fail("unknown pixelformat %08x for buftype %d\n",
+					pix.pixelformat, type);
+		fail_on_test(pix.bytesperline && pix.bytesperline < pix.width);
+		fail_on_test(!pix.sizeimage);
+		fail_on_test(!pix.colorspace);
+		if (pix.priv)
+			warn("priv is non-zero!\n");
+		break;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		fail_on_test(!pix_mp.width || !pix_mp.height);
+		set_splane = &node->buftype_pixfmts[type - 8];
+		if (set.find(pix_mp.pixelformat) == set.end() &&
+		    set_splane->find(pix_mp.pixelformat) == set_splane->end())
+			return fail("unknown pixelformat %08x for buftype %d\n",
+					pix_mp.pixelformat, type);
+		fail_on_test(!pix_mp.colorspace);
+		ret = check_0(pix_mp.reserved, sizeof(pix_mp.reserved));
+		if (ret)
+			return fail("pix_mp.reserved not zeroed\n");
+		fail_on_test(pix_mp.num_planes == 0 || pix_mp.num_planes >= VIDEO_MAX_PLANES);
+		for (int i = 0; i < pix_mp.num_planes; i++) {
+			struct v4l2_plane_pix_format &pfmt = pix_mp.plane_fmt[i];
+
+			ret = check_0(pfmt.reserved, sizeof(pfmt.reserved));
+			if (ret)
+				return fail("pix_mp.plane_fmt[%d].reserved not zeroed\n", i);
+			fail_on_test(!pfmt.sizeimage);
+			fail_on_test(pfmt.bytesperline && pfmt.bytesperline < pix_mp.width);
+		}
+		break;
+	case V4L2_BUF_TYPE_VBI_CAPTURE:
+	case V4L2_BUF_TYPE_VBI_OUTPUT:
+		fail_on_test(!vbi.sampling_rate);
+		fail_on_test(!vbi.samples_per_line);
+		fail_on_test(vbi.sample_format != V4L2_PIX_FMT_GREY);
+		fail_on_test(vbi.offset > vbi.samples_per_line);
+		ret = check_0(vbi.reserved, sizeof(vbi.reserved));
+		if (ret)
+			return fail("vbi.reserved not zeroed\n");
+		fail_on_test(!vbi.count[0] || !vbi.count[1]);
+		fail_on_test(vbi.flags & ~(V4L2_VBI_UNSYNC | V4L2_VBI_INTERLACED));
+		if (vbi.flags & V4L2_VBI_INTERLACED)
+			fail_on_test(vbi.count[0] != vbi.count[1]);
+		break;
+	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+		ret = check_0(sliced.reserved, sizeof(sliced.reserved));
+		if (ret)
+			return fail("sliced.reserved not zeroed\n");
+		fail_on_test(sliced.service_lines[0][0] || sliced.service_lines[1][0]);
+		for (int f = 0; f < 2; f++) {
+			for (int i = 0; i < 24; i++) {
+				if (sliced.service_lines[f][i])
+					cnt++;
+				service_set |= sliced.service_lines[f][i];
+			}
+		}
+		fail_on_test(sliced.io_size < sizeof(struct v4l2_sliced_vbi_data) * cnt);
+		fail_on_test(sliced.service_set != service_set);
+		break;
+	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
+		fail_on_test(win.field != V4L2_FIELD_ANY &&
+			     win.field != V4L2_FIELD_TOP &&
+			     win.field != V4L2_FIELD_BOTTOM &&
+			     win.field != V4L2_FIELD_INTERLACED);
+		for (struct v4l2_clip *clip = win.clips; clip; win.clipcount--) {
+			fail_on_test(clip == NULL);
+			clip = clip->next;
+		}
+		fail_on_test(win.clipcount);
+		break;
+	case V4L2_BUF_TYPE_PRIVATE:
+		break;
+	}
+	return 0;
+}
+
+int testFormats(struct node *node)
+{
+	int type;
+	int ret;
+
+	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
+		ret = testFormatsType(node, (enum v4l2_buf_type)type);
+
+		if (ret > 0)
+			return ret;
+		if (ret && (node->caps & buftype2cap[type]))
+			return fail("%s cap set, but no %s formats defined\n",
+					buftype2s(type).c_str(), buftype2s(type).c_str());
+		if (!ret && !(node->caps & buftype2cap[type]))
+			return fail("%s cap not set, but %s formats defined\n",
+					buftype2s(type).c_str(), buftype2s(type).c_str());
+	}
+
+	ret = testFormatsType(node, V4L2_BUF_TYPE_PRIVATE);
+	if (ret > 0)
+		return ret;
+	if (!ret)
+		warn("Buffer type PRIVATE allowed!\n");
 	return 0;
 }

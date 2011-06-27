@@ -584,6 +584,8 @@ static std::string num2s(unsigned num)
 static std::string buftype2s(int type)
 {
 	switch (type) {
+	case 0:
+		return "Invalid";
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 		return "Video Capture";
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
