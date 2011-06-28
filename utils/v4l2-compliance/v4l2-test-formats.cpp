@@ -491,3 +491,49 @@ int testFormats(struct node *node)
 		warn("Buffer type PRIVATE allowed!\n");
 	return 0;
 }
+
+static int testSlicedVBICapType(struct node *node, enum v4l2_buf_type type)
+{
+	struct v4l2_sliced_vbi_cap cap;
+	bool sliced_type = (type == V4L2_BUF_TYPE_SLICED_VBI_CAPTURE ||
+			    type == V4L2_BUF_TYPE_SLICED_VBI_OUTPUT);
+	__u32 service_set = 0;
+	int ret;
+
+	memset(&cap, 0xff, sizeof(cap));
+	memset(&cap.reserved, 0, sizeof(cap.reserved));
+	cap.type = type;
+	ret = doioctl(node, VIDIOC_G_SLICED_VBI_CAP, &cap);
+	fail_on_test(check_0(cap.reserved, sizeof(cap.reserved)));
+	fail_on_test(cap.type != type);
+	fail_on_test(ret && ret != EINVAL && sliced_type);
+	if (ret == EINVAL) {
+		fail_on_test(sliced_type && (node->caps & buftype2cap[type]));
+		if (node->caps & (V4L2_CAP_SLICED_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_OUTPUT))
+			return 0;
+		return -ENOSYS;
+	}
+	if (ret)
+		return fail("expected EINVAL, but got %d when getting sliced VBI caps buftype %d\n", ret, type);
+	fail_on_test(!(node->caps & buftype2cap[type]));
+
+	for (int f = 0; f < 2; f++)
+		for (int i = 0; i < 24; i++)
+			service_set |= cap.service_lines[f][i];
+	fail_on_test(cap.service_set != service_set);
+	fail_on_test(cap.service_lines[0][0] || cap.service_lines[1][0]);
+	return 0;
+}
+
+int testSlicedVBICap(struct node *node)
+{
+	int ret;
+
+	ret = testSlicedVBICapType(node, V4L2_BUF_TYPE_SLICED_VBI_CAPTURE);
+	if (ret)
+		return ret;
+	ret = testSlicedVBICapType(node, V4L2_BUF_TYPE_SLICED_VBI_OUTPUT);
+	if (ret)
+		return ret;
+	return testSlicedVBICapType(node, V4L2_BUF_TYPE_VIDEO_CAPTURE);
+}

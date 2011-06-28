@@ -161,5 +161,6 @@ int testCustomTimings(struct node *node);
 int testEnumFormats(struct node *node);
 int testFBuf(struct node *node);
 int testFormats(struct node *node);
+int testSlicedVBICap(struct node *node);
 
 #endif

@@ -574,6 +574,7 @@ int main(int argc, char **argv)
 	printf("\ttest VIDIOC_ENUM_FMT/FRAMESIZES/FRAMEINTERVALS: %s\n", ok(testEnumFormats(&node)));
 	printf("\ttest VIDIOC_G_FBUF: %s\n", ok(testFBuf(&node)));
 	printf("\ttest VIDIOC_G_FMT: %s\n", ok(testFormats(&node)));
+	printf("\ttest VIDIOC_G_SLICED_VBI_CAP: %s\n", ok(testSlicedVBICap(&node)));
 
 	/* TODO:
 
@@ -582,7 +583,6 @@ int main(int argc, char **argv)
 	   VIDIOC_S/TRY_FMT
 	   VIDIOC_G/S_PARM
 	   VIDIOC_G/S_JPEGCOMP
-	   VIDIOC_SLICED_VBI_CAP
 	   VIDIOC_S_HW_FREQ_SEEK
 	   VIDIOC_SUBSCRIBE_EVENT/UNSUBSCRIBE_EVENT/DQEVENT
 	   VIDIOC_(TRY_)ENCODER_CMD
