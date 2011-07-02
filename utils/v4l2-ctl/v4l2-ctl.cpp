@@ -1257,18 +1257,24 @@ static void print_frmival(const struct v4l2_frmivalenum &frmival, const char *pr
 	}
 }
 
+static const flag_def fmtdesc_def[] = {
+	{ V4L2_FMT_FLAG_COMPRESSED, "compressed" },
+	{ V4L2_FMT_FLAG_EMULATED, "emulated" },
+	{ 0, NULL }
+};
+
 static void print_video_formats(int fd, enum v4l2_buf_type type)
 {
 	struct v4l2_fmtdesc fmt;
 
-	fmt.index = 0;
+	memset(&fmt, 0, sizeof(fmt));
 	fmt.type = type;
 	while (test_ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
 		printf("\tIndex       : %d\n", fmt.index);
 		printf("\tType        : %s\n", buftype2s(type).c_str());
 		printf("\tPixel Format: '%s'", fcc2s(fmt.pixelformat).c_str());
 		if (fmt.flags)
-			printf(" (compressed)");
+			printf(" (%s)", flags2s(fmt.flags, fmtdesc_def).c_str());
 		printf("\n");
 		printf("\tName        : %s\n", fmt.description);
 		printf("\n");
@@ -1289,7 +1295,7 @@ static void print_video_formats_ext(int fd, enum v4l2_buf_type type)
 		printf("\tType        : %s\n", buftype2s(type).c_str());
 		printf("\tPixel Format: '%s'", fcc2s(fmt.pixelformat).c_str());
 		if (fmt.flags)
-			printf(" (compressed)");
+			printf(" (%s)", flags2s(fmt.flags, fmtdesc_def).c_str());
 		printf("\n");
 		printf("\tName        : %s\n", fmt.description);
 		frmsize.pixel_format = fmt.pixelformat;
