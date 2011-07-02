@@ -573,6 +573,24 @@ static inline int test_ioctl(int fd, int cmd, void *arg)
 	return options[OptUseWrapper] ? v4l2_ioctl(fd, cmd, arg) : ioctl(fd, cmd, arg);
 }
 
+static int doioctl_name(int fd, unsigned long int request, void *parm, const char *name)
+{
+	int retval = test_ioctl(fd, request, parm);
+
+	if (retval < 0) {
+		app_result = -1;
+	}
+	if (options[OptSilent]) return retval;
+	if (retval < 0)
+		printf("%s: failed: %s\n", name, strerror(errno));
+	else if (verbose)
+		printf("%s: ok\n", name);
+
+	return retval;
+}
+
+#define doioctl(n, r, p) doioctl_name(n, r, p, #r)
+
 static std::string num2s(unsigned num)
 {
 	char buf[10];
@@ -1494,24 +1512,6 @@ static v4l2_std_id parse_ntsc(const char *ntsc)
 	fprintf(stderr, "ntsc specifier not recognised\n");
 	return 0;
 }
-
-static int doioctl_name(int fd, unsigned long int request, void *parm, const char *name)
-{
-	int retval = test_ioctl(fd, request, parm);
-
-	if (retval < 0) {
-		app_result = -1;
-	}
-	if (options[OptSilent]) return retval;
-	if (retval < 0)
-		printf("%s: failed: %s\n", name, strerror(errno));
-	else if (verbose)
-		printf("%s: ok\n", name);
-
-	return retval;
-}
-
-#define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 
 static bool is_v4l_dev(const char *name)
 {
