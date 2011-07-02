@@ -558,17 +558,17 @@ static void usage(void)
 	exit(0);
 }
 
-static inline int test_open(const char *file, int oflag)
+static int test_open(const char *file, int oflag)
 {
  	return options[OptUseWrapper] ? v4l2_open(file, oflag) : open(file, oflag);
 }
 
-static inline int test_close(int fd)
+static int test_close(int fd)
 {
 	return options[OptUseWrapper] ? v4l2_close(fd) : close(fd);
 }
 
-static inline int test_ioctl(int fd, int cmd, void *arg)
+static int test_ioctl(int fd, int cmd, void *arg)
 {
 	return options[OptUseWrapper] ? v4l2_ioctl(fd, cmd, arg) : ioctl(fd, cmd, arg);
 }
@@ -2543,7 +2543,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if ((fd = open(device, O_RDWR)) < 0) {
+	if ((fd = test_open(device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device,
 			strerror(errno));
 		exit(1);
@@ -3701,6 +3701,6 @@ int main(int argc, char **argv)
 			perror("VIDIOC_QUERYCAP");
 	}
 
-	close(fd);
+	test_close(fd);
 	exit(app_result);
 }
