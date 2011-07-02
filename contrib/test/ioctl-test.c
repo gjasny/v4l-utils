@@ -29,8 +29,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
-#define __OLD_VIDIOC_
-#include "linux/videodev.h"
+#include "linux/videodev2.h"
 
 /* All possible parameters used on v4l ioctls */
 union v4l_parms {
@@ -39,26 +38,6 @@ union v4l_parms {
 	u_int32_t	u32;
 	v4l2_std_id	id;
 	enum v4l2_priority prio;
-
-#ifdef CONFIG_VIDEO_V4L1_COMPAT
-	/* V4L1 structs */
-	struct video_capability p_video_capability;
-	struct video_channel p_video_channel;
-	struct video_tuner p_video_tuner;
-	struct video_picture p_video_picture;
-	struct video_window p_video_window;
-	struct video_buffer p_video_buffer;
-	struct video_key p_video_key;
-	struct video_audio p_video_audio;
-	struct video_mmap p_video_mmap;
-	struct video_mbuf p_video_mbuf;
-	struct video_unit p_video_unit;
-	struct video_capture p_video_capture;
-	struct video_play_mode p_video_play_mode;
-	struct video_info p_video_info;
-	struct video_code p_video_code;
-	struct vbi_format p_vbi_format;
-#endif
 
 	/* V4L2 structs */
 	struct v4l2_capability p_v4l2_capability;
@@ -91,6 +70,11 @@ union v4l_parms {
 	struct v4l2_dbg_register p_v4l2_dbg_register;
 	struct v4l2_dbg_chip_ident p_v4l2_dbg_chip_ident;
 	struct v4l2_hw_freq_seek p_v4l2_hw_freq_seek;
+	struct v4l2_dv_enum_preset p_v4l2_dv_enum_preset;
+	struct v4l2_dv_preset p_v4l2_dv_preset;
+	struct v4l2_dv_timings p_v4l2_dv_timings;
+	struct v4l2_event p_v4l2_event;
+	struct v4l2_event_subscription p_v4l2_event_subscription;
 };
 
 #define ioc(cmd) { cmd, #cmd }
@@ -100,38 +84,6 @@ static const struct {
 	u_int32_t cmd;
 	const char *name;
 } ioctls[] = {
-#ifdef CONFIG_VIDEO_V4L1_COMPAT
-	/* V4L1 ioctls */
-	ioc(VIDIOCGCAP),		/* struct video_capability */
-	ioc(VIDIOCGCHAN),		/* struct video_channel */
-	ioc(VIDIOCSCHAN),		/* struct video_channel */
-	ioc(VIDIOCGTUNER),		/* struct video_tuner */
-	ioc(VIDIOCSTUNER),		/* struct video_tuner */
-	ioc(VIDIOCGPICT),		/* struct video_picture */
-	ioc(VIDIOCSPICT),		/* struct video_picture */
-	ioc(VIDIOCCAPTURE),		/* int */
-	ioc(VIDIOCGWIN),		/* struct video_window */
-	ioc(VIDIOCSWIN),		/* struct video_window */
-	ioc(VIDIOCGFBUF),		/* struct video_buffer */
-	ioc(VIDIOCSFBUF),		/* struct video_buffer */
-	ioc(VIDIOCKEY),			/* struct video_key */
-	ioc(VIDIOCGFREQ),		/* unsigned long */
-	ioc(VIDIOCSFREQ),		/* unsigned long */
-	ioc(VIDIOCGAUDIO),		/* struct video_audio */
-	ioc(VIDIOCSAUDIO),		/* struct video_audio */
-	ioc(VIDIOCSYNC),		/* int */
-	ioc(VIDIOCMCAPTURE),		/* struct video_mmap */
-	ioc(VIDIOCGMBUF),		/* struct video_mbuf */
-	ioc(VIDIOCGUNIT),		/* struct video_unit */
-	ioc(VIDIOCGCAPTURE),		/* struct video_capture */
-	ioc(VIDIOCSCAPTURE),		/* struct video_capture */
-	ioc(VIDIOCSPLAYMODE),		/* struct video_play_mode */
-	ioc(VIDIOCSWRITEMODE),		/* int */
-	ioc(VIDIOCGPLAYINFO),		/* struct video_info */
-	ioc(VIDIOCSMICROCODE),		/* struct video_code */
-	ioc(VIDIOCGVBIFMT),		/* struct vbi_format */
-	ioc(VIDIOCSVBIFMT),		/* struct vbi_format */
-#endif
 	/* V4L2 ioctls */
 	ioc(VIDIOC_QUERYCAP),		/* struct v4l2_capability */
 	ioc(VIDIOC_RESERVED),
@@ -197,14 +149,15 @@ static const struct {
 	ioc(VIDIOC_DBG_G_REGISTER),	/* struct v4l2_register */
 	ioc(VIDIOC_DBG_G_CHIP_IDENT),	/* struct v4l2_dbg_chip_ident */
 	ioc(VIDIOC_S_HW_FREQ_SEEK),	/* struct v4l2_hw_freq_seek */
-#ifdef __OLD_VIDIOC_
-	ioc(VIDIOC_OVERLAY_OLD),	/* int */
-	ioc(VIDIOC_S_PARM_OLD),		/* struct v4l2_streamparm */
-	ioc(VIDIOC_S_CTRL_OLD),		/* struct v4l2_control */
-	ioc(VIDIOC_G_AUDIO_OLD),	/* struct v4l2_audio */
-	ioc(VIDIOC_G_AUDOUT_OLD),	/* struct v4l2_audioout */
-	ioc(VIDIOC_CROPCAP_OLD),	/* struct v4l2_cropcap */
-#endif
+	ioc(VIDIOC_ENUM_DV_PRESETS),	/* struct v4l2_dv_enum_preset */
+	ioc(VIDIOC_S_DV_PRESET),	/* struct v4l2_dv_preset */
+	ioc(VIDIOC_G_DV_PRESET),	/* struct v4l2_dv_preset */
+	ioc(VIDIOC_QUERY_DV_PRESET),	/* struct v4l2_dv_preset */
+	ioc(VIDIOC_S_DV_TIMINGS),	/* struct v4l2_dv_timings */
+	ioc(VIDIOC_G_DV_TIMINGS),	/* struct v4l2_dv_timings */
+	ioc(VIDIOC_DQEVENT),		/* struct v4l2_event */
+	ioc(VIDIOC_SUBSCRIBE_EVENT),	/* struct v4l2_event_subscription */
+	ioc(VIDIOC_UNSUBSCRIBE_EVENT),	/* struct v4l2_event_subscription */
 };
 #define S_IOCTLS sizeof(ioctls)/sizeof(ioctls[0])
 
@@ -227,7 +180,7 @@ int main(int argc, char **argv)
 
 	if (argv[1])
 		device = argv[1];
-	if ((fd = open(device, O_RDONLY)) < 0) {
+	if ((fd = open(device, O_RDONLY|O_NONBLOCK)) < 0) {
 		fprintf(stderr, "Couldn't open %s\n", device);
 		return -1;
 	}
