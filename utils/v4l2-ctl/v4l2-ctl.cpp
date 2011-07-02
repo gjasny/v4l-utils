@@ -531,7 +531,8 @@ static void usage(void)
 	       "  --wait-for-event=<event>\n"
 	       "                     wait for an event [VIDIOC_DQEVENT]\n"
 	       "                     <event> is the event number or one of:\n"
-	       "                     eos, vsync\n"
+	       "                     eos, vsync, ctrl=<id>\n"
+	       "                     where <id> is the name of the control\n"
 	       "  --poll-for-event=<event>\n"
 	       "                     poll for an event [VIDIOC_DQEVENT]\n"
 	       "                     see --wait-for-event for possible events\n"
@@ -827,6 +828,21 @@ static std::string safename(const char *name)
 	return safename((const unsigned char *)name);
 }
 
+static std::string ctrlflags2s(__u32 flags)
+{
+	static const flag_def def[] = {
+		{ V4L2_CTRL_FLAG_GRABBED,    "grabbed" },
+		{ V4L2_CTRL_FLAG_DISABLED,   "disabled" },
+		{ V4L2_CTRL_FLAG_READ_ONLY,  "read-only" },
+		{ V4L2_CTRL_FLAG_UPDATE,     "update" },
+		{ V4L2_CTRL_FLAG_INACTIVE,   "inactive" },
+		{ V4L2_CTRL_FLAG_SLIDER,     "slider" },
+		{ V4L2_CTRL_FLAG_WRITE_ONLY, "write-only" },
+		{ 0, NULL }
+	};
+	return flags2s(flags, def);
+}
+
 static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 		struct v4l2_ext_control *ctrl, int show_menus)
 {
@@ -869,18 +885,8 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 		break;
 	default: break;
 	}
-	if (queryctrl->flags) {
-		const flag_def def[] = {
-			{ V4L2_CTRL_FLAG_GRABBED,    "grabbed" },
-			{ V4L2_CTRL_FLAG_READ_ONLY,  "read-only" },
-			{ V4L2_CTRL_FLAG_UPDATE,     "update" },
-			{ V4L2_CTRL_FLAG_INACTIVE,   "inactive" },
-			{ V4L2_CTRL_FLAG_SLIDER,     "slider" },
-			{ V4L2_CTRL_FLAG_WRITE_ONLY, "write-only" },
-			{ 0, NULL }
-		};
-		printf(" flags=%s", flags2s(queryctrl->flags, def).c_str());
-	}
+	if (queryctrl->flags)
+		printf(" flags=%s", ctrlflags2s(queryctrl->flags).c_str());
 	printf("\n");
 	if (queryctrl->type == V4L2_CTRL_TYPE_MENU && show_menus) {
 		for (i = queryctrl->minimum; i <= queryctrl->maximum; i++) {
@@ -1884,6 +1890,8 @@ static enum v4l2_field parse_field(const char *s)
 
 static void print_event(const struct v4l2_event *ev)
 {
+	const struct v4l2_event_ctrl *ctrl;
+
 	printf("%ld.%06ld: event %u, pending %u: ",
 			ev->timestamp.tv_sec, ev->timestamp.tv_nsec / 1000,
 			ev->sequence, ev->pending);
@@ -1894,6 +1902,18 @@ static void print_event(const struct v4l2_event *ev)
 	case V4L2_EVENT_EOS:
 		printf("eos\n");
 		break;
+	case V4L2_EVENT_CTRL:
+		ctrl = &ev->u.ctrl;
+		printf("ctrl: %s\n", ctrl_id2str[ev->id].c_str());
+		if (ctrl->changes & V4L2_EVENT_CTRL_CH_VALUE) {
+			if (ctrl->type == V4L2_CTRL_TYPE_INTEGER64)
+				printf("\tvalue: %lld 0x%llx\n", ctrl->value64, ctrl->value64);
+			else
+				printf("\tvalue: %d 0x%x\n", ctrl->value, ctrl->value);
+		}
+		if (ctrl->changes & V4L2_EVENT_CTRL_CH_FLAGS)
+			printf("\tflags: %s\n", ctrlflags2s(ctrl->flags).c_str());
+		break;
 	default:
 		if (ev->type >= V4L2_EVENT_PRIVATE_START)
 			printf("unknown private event (%08x)\n", ev->type);
@@ -1903,16 +1923,21 @@ static void print_event(const struct v4l2_event *ev)
 	}
 }
 
-static __u32 parse_event(const char *e)
+static __u32 parse_event(const char *e, const char **name)
 {
 	__u32 event = 0;
 
+	*name = NULL;
 	if (isdigit(e[0]))
 		event = strtoul(e, 0L, 0);
 	else if (!strcmp(e, "eos"))
 		event = V4L2_EVENT_EOS;
 	else if (!strcmp(e, "vsync"))
 		event = V4L2_EVENT_VSYNC;
+	else if (!strncmp(e, "ctrl=", 5)) {
+		event = V4L2_EVENT_CTRL;
+		*name = e + 5;
+	}
 
 	if (event == 0) {
 		fprintf(stderr, "Unknown event\n");
@@ -1996,7 +2021,9 @@ int main(int argc, char **argv)
 	unsigned int *set_overlay_fmt_ptr = NULL;
 	struct v4l2_format *overlay_fmt_ptr = NULL;
 	__u32 wait_for_event = 0;	/* wait for this event */
+	const char *wait_event_id = NULL;
 	__u32 poll_for_event = 0;	/* poll for this event */
+	const char *poll_event_id = NULL;
 	unsigned secs = 0;
 	enum v4l2_priority prio = V4L2_PRIORITY_UNSET;
 	char short_options[26 * 2 * 2 + 1];
@@ -2504,12 +2531,12 @@ int main(int argc, char **argv)
 			prio = (enum v4l2_priority)strtoul(optarg, 0L, 0);
 			break;
 		case OptWaitForEvent:
-			wait_for_event = parse_event(optarg);
+			wait_for_event = parse_event(optarg, &wait_event_id);
 			if (wait_for_event == 0)
 				return 1;
 			break;
 		case OptPollForEvent:
-			poll_for_event = parse_event(optarg);
+			poll_for_event = parse_event(optarg, &poll_event_id);
 			if (poll_for_event == 0)
 				return 1;
 			break;
@@ -2565,6 +2592,16 @@ int main(int argc, char **argv)
 		exit(1);
 	    }
 	}
+	if (wait_for_event == V4L2_EVENT_CTRL && wait_event_id)
+		if (ctrl_str2q.find(wait_event_id) == ctrl_str2q.end()) {
+			fprintf(stderr, "unknown control '%s'\n", wait_event_id);
+			exit(1);
+		}
+	if (poll_for_event == V4L2_EVENT_CTRL && poll_event_id)
+		if (ctrl_str2q.find(poll_event_id) == ctrl_str2q.end()) {
+			fprintf(stderr, "unknown control '%s'\n", poll_event_id);
+			exit(1);
+		}
 
 	if (options[OptAll]) {
 		options[OptGetVideoFormat] = 1;
@@ -3660,11 +3697,11 @@ int main(int argc, char **argv)
 
 		memset(&sub, 0, sizeof(sub));
 		sub.type = wait_for_event;
-		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub)) {
-			if (!doioctl(fd, VIDIOC_DQEVENT, &ev)) {
+		if (wait_for_event == V4L2_EVENT_CTRL)
+			sub.id = ctrl_str2q[wait_event_id].id;
+		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub))
+			if (!doioctl(fd, VIDIOC_DQEVENT, &ev))
 				print_event(&ev);
-			}
-		}
 	}
 
 	if (options[OptPollForEvent]) {
@@ -3672,9 +3709,13 @@ int main(int argc, char **argv)
 		struct v4l2_event ev;
 
 		memset(&sub, 0, sizeof(sub));
+		sub.flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
 		sub.type = poll_for_event;
+		if (poll_for_event == V4L2_EVENT_CTRL)
+			sub.id = ctrl_str2q[poll_event_id].id;
 		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub)) {
 			fd_set fds;
+			__u32 seq = 0;
 
 			fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 			while (1) {
@@ -3687,6 +3728,10 @@ int main(int argc, char **argv)
 					break;
 				if (!doioctl(fd, VIDIOC_DQEVENT, &ev)) {
 					print_event(&ev);
+					if (ev.sequence > seq)
+						printf("\tMissed %d events\n",
+							ev.sequence - seq);
+					seq = ev.sequence + 1;
 				}
 			}
 		}
