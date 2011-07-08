@@ -260,6 +260,18 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 				m_sigMapper, SLOT(map()));
 		break;
 
+	case V4L2_CTRL_TYPE_BITMASK:
+		addLabel(grid, name);
+		edit = new QLineEdit(p);
+		edit->setInputMask("HHHHHHHH");
+		addWidget(grid, edit);
+		m_widgetMap[qctrl.id] = edit;
+		connect(m_widgetMap[qctrl.id], SIGNAL(lostFocus()),
+				m_sigMapper, SLOT(map()));
+		connect(m_widgetMap[qctrl.id], SIGNAL(returnPressed()),
+				m_sigMapper, SLOT(map()));
+		break;
+
 	case V4L2_CTRL_TYPE_STRING:
 		addLabel(grid, name);
 		edit = new QLineEdit(p);
@@ -455,6 +467,9 @@ int ApplicationWindow::getVal(unsigned id)
 		v = static_cast<QCheckBox *>(w)->isChecked();
 		break;
 
+	case V4L2_CTRL_TYPE_BITMASK:
+		v = (int)static_cast<QLineEdit *>(w)->text().toUInt(0, 16);
+		break;
 	case V4L2_CTRL_TYPE_MENU:
 		idx = static_cast<QComboBox *>(w)->currentIndex();
 		for (i = qctrl.minimum; i <= qctrl.maximum; i++) {
@@ -647,6 +662,16 @@ void ApplicationWindow::setWhat(QWidget *w, unsigned id, long long v)
 		w->setStatusTip(w->whatsThis());
 		break;
 
+	case V4L2_CTRL_TYPE_BITMASK:
+		w->setWhatsThis(QString("Type: Bitmask\n"
+					"Maximum: %1\n"
+					"Current: %2\n"
+					"Default: %3")
+			.arg((unsigned)qctrl.maximum, 0, 16).arg((unsigned)v, 0, 16)
+			.arg((unsigned)qctrl.default_value, 0, 16) + flags);
+		w->setStatusTip(w->whatsThis());
+		break;
+
 	case V4L2_CTRL_TYPE_BUTTON:
 		w->setWhatsThis(QString("Type: Button") + flags);
 		w->setStatusTip(w->whatsThis());
@@ -689,6 +714,10 @@ void ApplicationWindow::setVal(unsigned id, int v)
 			static_cast<QSpinBox *>(w)->setValue(v);
 		else
 			static_cast<QLineEdit *>(w)->setText(QString::number(v));
+		break;
+
+	case V4L2_CTRL_TYPE_BITMASK:
+		static_cast<QLineEdit *>(w)->setText(QString("%1").arg((unsigned)v, 8, 16, QChar('0')));
 		break;
 
 	case V4L2_CTRL_TYPE_BOOLEAN:
