@@ -854,34 +854,39 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 	qmenu.id = queryctrl->id;
 	switch (queryctrl->type) {
 	case V4L2_CTRL_TYPE_INTEGER:
-		printf("%31s (int)  : min=%d max=%d step=%d default=%d value=%d",
+		printf("%31s (int)    : min=%d max=%d step=%d default=%d value=%d",
 				s.c_str(),
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->step, queryctrl->default_value,
 				ctrl->value);
 		break;
 	case V4L2_CTRL_TYPE_INTEGER64:
-		printf("%31s (int64): value=%lld", s.c_str(), ctrl->value64);
+		printf("%31s (int64)  : value=%lld", s.c_str(), ctrl->value64);
 		break;
 	case V4L2_CTRL_TYPE_STRING:
-		printf("%31s (str)  : min=%d max=%d step=%d value='%s'",
+		printf("%31s (str)    : min=%d max=%d step=%d value='%s'",
 				s.c_str(),
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->step, safename(ctrl->string).c_str());
 		break;
 	case V4L2_CTRL_TYPE_BOOLEAN:
-		printf("%31s (bool) : default=%d value=%d",
+		printf("%31s (bool)   : default=%d value=%d",
 				s.c_str(),
 				queryctrl->default_value, ctrl->value);
 		break;
 	case V4L2_CTRL_TYPE_MENU:
-		printf("%31s (menu) : min=%d max=%d default=%d value=%d",
+		printf("%31s (menu)   : min=%d max=%d default=%d value=%d",
 				s.c_str(),
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->default_value, ctrl->value);
 		break;
 	case V4L2_CTRL_TYPE_BUTTON:
-		printf("%31s (btn)  :", s.c_str());
+		printf("%31s (button) :", s.c_str());
+		break;
+	case V4L2_CTRL_TYPE_BITMASK:
+		printf("%31s (bitmask): max=0x%08x default=0x%08x value=0x%08x",
+				s.c_str(), queryctrl->maximum,
+				queryctrl->default_value, ctrl->value);
 		break;
 	default: break;
 	}
