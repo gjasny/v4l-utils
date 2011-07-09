@@ -44,6 +44,22 @@ GetOptions(
 	'show_other_lines' => \$show_other_lines,
 ) or die "Invalid arguments.\nUse $0 [--show_em28xx] [--show_other_xfer] [--show_ac97] [--show_other_lines]\n";
 
+
+sub add_hex_mark($)
+{
+	my $data = shift;
+	my $out ="{";
+
+	while ($data) {
+		$out .= "0x" . substr($data, 0, 2) . ", ";
+		$data = substr($data, 3);
+	}
+	$out =~ s/, $//;
+	$out .= "}";
+
+	return $out;
+}
+
 my %reg_map = (
 	"0x00" => "EM28XX_R00_CHIPCFG",
 	"0x04" => "EM2880_R04_GPO",
@@ -2101,12 +2117,6 @@ sub parse_drxk_addr($$$$)
 			       ($r1 & 0x0f << 16) |
 			       ($r1 & 0xf0 << 18);
 		}
-
-		if (defined($drxk_map{$reg})) {
-			$reg = $drxk_map{$reg};
-		} else {
-			$reg = sprintf "0x%08x", $reg;
-		}
 	} else {
 		goto parse_error if ($write);	# Parse error!!! Should be a read!
 
@@ -2123,8 +2133,14 @@ sub parse_drxk_addr($$$$)
 		return;
 	}
 
+	goto parse_block if ($n > 4 || $n == 3);
 	goto parse_error if ($n != 2 && $n != 4);
 
+	if (defined($drxk_map{$reg})) {
+		$reg = $drxk_map{$reg};
+	} else {
+		$reg = sprintf "0x%08x", $reg;
+	}
 	my $data = hex(substr($app_data, $j, 2)) |
 		   hex(substr($app_data, $j + 3, 2)) << 16;
 
@@ -2161,10 +2177,46 @@ sub parse_drxk_addr($$$$)
 
 	return;
 
+parse_block:
+	# On several cases, we don't want to get the reg name
+	# (e. g. during microcode load)
+	$reg = sprintf "0x%08x", $reg;
+
+	my $data = add_hex_mark(substr($app_data, $j));
+
+	if ($write) {
+		$cmd = "write";
+	} else {
+		$cmd = "read";
+	}
+
+	if ($flags) {
+		my $descr;
+
+		# That _seems_ to be the flags. Not sure through
+		$descr .= "R/W/Modify " if ($flags & 0x10);
+		$descr .= "Broadcast " if ($flags & 0x20);
+		$descr .= "SingleMaster " if (($flags & 0xc0) == 0xc0);
+		$descr .= "MultiMaster " if (($flags & 0xc0) == 0x40);
+		$descr .= "ClearCRC " if (($flags & 0xc0) == 0x80);
+
+		printf "%s_block_flags(state, 0x%s, %s, %d, %s, %d); /* Flags = %s */\n", $cmd, $addr, $reg, $n, $data, $flags, $descr;
+
+	} else {
+		printf "%s_block(state, 0x%s, %s, 0x%08x, %d, %s);\n", $cmd, $addr, $reg, $n, $data;
+	}
+
+	return;
+
 parse_error:
 	# Fallback: Couldn't parse it
 	if ($write) {
 		if ($old_flags > 0) {
+			if (defined($drxk_map{$old_reg})) {
+				$old_reg = $drxk_map{$old_reg};
+			} else {
+				$old_reg = sprintf "0x%08x", $old_reg;
+			}
 			printf "ERR: DRX-K write(state, 0x%s, %s, 0x%08x) without data. Probably an read ops + read error\n", $bits, $addr, $old_reg, $old_flags;
 		}
 		printf "i2c_master_send(0x%s>>1, { %s }, %d);\n", $addr, $app_data, $n;
