@@ -475,7 +475,7 @@ sub parse_drxk_addr($$$$)
 		if (defined($drxk_map{$reg})) {
 			$reg = $drxk_map{$reg};
 		} else {
-			$reg = "0x" . $reg;
+			$reg = sprintf "0x%08x", $reg;
 		}
 
 		my $data = hex(substr($app_data, $j, 2)) |
@@ -497,9 +497,9 @@ sub parse_drxk_addr($$$$)
 		}
 
 		if ($flags) {
-			printf "%s%d_flags(state, 0x%s, %s, 0x%04x, 0x%02x);\n", $cmd, $bits, $addr, $reg, $data, $flags;
+			printf "%s%d_flags(state, 0x%s, %s, 0x%08x, 0x%02x);\n", $cmd, $bits, $addr, $reg, $data, $flags;
 		} else {
-			printf "%s%d(state, 0x%s, %s, 0x%04x, %d);\n", $cmd, $bits, $addr, $reg, $data;
+			printf "%s%d(state, 0x%s, %s, 0x%08x, %d);\n", $cmd, $bits, $addr, $reg, $data;
 		}
 	} else {
 		if ($write) {
