@@ -2109,7 +2109,17 @@ sub parse_drxk_addr($$$$)
 		}
 
 		if ($flags) {
-			printf "%s%d_flags(state, 0x%s, %s, 0x%08x, 0x%02x);\n", $cmd, $bits, $addr, $reg, $data, $flags;
+			my $descr;
+
+			# That _seems_ to be the flags. Not sure through
+			$descr .= "R/W/Modify " if ($flags & 0x10);
+			$descr .= "Broadcast " if ($flags & 0x20);
+			$descr .= "SingleMaster " if (($flags & 0xc0) == 0xc0);
+			$descr .= "MultiMaster " if (($flags & 0xc0) == 0x40);
+			$descr .= "ClearCRC " if (($flags & 0xc0) == 0x80);
+
+			printf "%s%d_flags(state, 0x%s, %s, 0x%08x, 0x%02x); /* Flags = %s */\n", $cmd, $bits, $addr, $reg, $data, $flags, $descr;
+
 		} else {
 			printf "%s%d(state, 0x%s, %s, 0x%08x, %d);\n", $cmd, $bits, $addr, $reg, $data;
 		}
