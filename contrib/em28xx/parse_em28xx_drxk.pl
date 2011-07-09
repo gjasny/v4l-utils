@@ -2165,7 +2165,7 @@ parse_error:
 	# Fallback: Couldn't parse it
 	if ($write) {
 		if ($old_flags > 0) {
-			printf "%s%d_flags(state, 0x%s, %s, 0x%08x, NOTHING!!!);\n", $cmd, $bits, $addr, $old_reg, $old_flags;
+			printf "ERR: DRX-K write(state, 0x%s, %s, 0x%08x) without data. Probably an read ops + read error\n", $bits, $addr, $old_reg, $old_flags;
 		}
 		printf "i2c_master_send(0x%s>>1, { %s }, %d);\n", $addr, $app_data, $n;
 	} else {
