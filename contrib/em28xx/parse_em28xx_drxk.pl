@@ -31,6 +31,11 @@
 
 use strict;
 
+my $show_em28xx = 1;
+my $show_other_xfer = 1;
+my $show_ac97 = 1;
+my $show_other_lines = 0;	# Useful on some cases
+
 my %reg_map = (
 	"0x00" => "EM28XX_R00_CHIPCFG",
 	"0x04" => "EM2880_R04_GPO",
@@ -2047,27 +2052,32 @@ my %drxk_map = (
 	0x03c30fff => "OFDM_SC_IF_RAM_VERSION_PATCH__A",
 );
 
+my $old_flags = -1;
+my $old_reg;
 sub parse_drxk_addr($$$$)
 {
 	my $addr = shift;
 	my $n = shift;
 	my $app_data = shift;
 	my $write = shift;
+	my $j = 0;
 
 	my ($reg, $flags, $cmd, $bits);
 
 	$n = hex($n);
 
-	if (($n == 4) || ($n == 6) || ($n == 8)) {
-		my $r0 = hex(substr($app_data, 0, 2));
-		my $r1 = hex(substr($app_data, 3, 2));
+	goto parse_error if ($n < 2);
+	if ($old_flags < 0) {
+		my $r0 = hex(substr($app_data, $j, 2));
+		my $r1 = hex(substr($app_data, $j + 3, 2));
 		$n -= 2;
-		my $j = 6;
+		$j += 6;
 
 		if ($r0 & 1) {
+			goto parse_error if ($n < 2);
 			# Decode a Long format
-			my $r2 = hex(substr($app_data, 6, 2));
-			my $r3 = hex(substr($app_data, 9, 2));
+			my $r2 = hex(substr($app_data, $j, 2));
+			my $r3 = hex(substr($app_data, $j + 3, 2));
 			$n -= 2;
 			$j += 6;
 
@@ -2089,46 +2099,69 @@ sub parse_drxk_addr($$$$)
 		} else {
 			$reg = sprintf "0x%08x", $reg;
 		}
-
-		my $data = hex(substr($app_data, $j, 2)) |
-			   hex(substr($app_data, $j + 3, 2)) << 16;
-
-		$data |= hex(substr($app_data, $j + 6, 2)) << 24 |
-			 hex(substr($app_data, $j + 9, 2)) << 8 if ($n > 2);
-
-		if ($write) {
-			$cmd = "write";
-		} else {
-			$cmd = "read";
-		}
-
-		if ($n == 2) {
-			$bits = 16;
-		} else {
-			$bits = 32;
-		}
-
-		if ($flags) {
-			my $descr;
-
-			# That _seems_ to be the flags. Not sure through
-			$descr .= "R/W/Modify " if ($flags & 0x10);
-			$descr .= "Broadcast " if ($flags & 0x20);
-			$descr .= "SingleMaster " if (($flags & 0xc0) == 0xc0);
-			$descr .= "MultiMaster " if (($flags & 0xc0) == 0x40);
-			$descr .= "ClearCRC " if (($flags & 0xc0) == 0x80);
-
-			printf "%s%d_flags(state, 0x%s, %s, 0x%08x, 0x%02x); /* Flags = %s */\n", $cmd, $bits, $addr, $reg, $data, $flags, $descr;
-
-		} else {
-			printf "%s%d(state, 0x%s, %s, 0x%08x, %d);\n", $cmd, $bits, $addr, $reg, $data;
-		}
 	} else {
-		if ($write) {
-			printf "i2c_master_send(0x%02x>>1, { %s }, %d);\n", $addr, $app_data, $n;
-		} else {
-			printf "i2c_master_recv(0x%02x>>1, { %s }, %d);\n", $addr, $app_data, $n;
+		goto parse_error if ($write);	# Parse error!!! Should be a read!
+
+		$flags = $old_flags;
+		$reg = $old_reg;
+		$old_flags = -1;
+	}
+
+	if ($n == 0) {
+		goto parse_error if (!$write);	# Parse error!!! Should be a write!
+
+		$old_flags = $flags;
+		$old_reg = $reg;
+		return;
+	}
+
+	goto parse_error if ($n != 2 && $n != 4);
+
+	my $data = hex(substr($app_data, $j, 2)) |
+		   hex(substr($app_data, $j + 3, 2)) << 16;
+
+	$data |= hex(substr($app_data, $j + 6, 2)) << 24 |
+		 hex(substr($app_data, $j + 9, 2)) << 8 if ($n > 2);
+
+	if ($write) {
+		$cmd = "write";
+	} else {
+		$cmd = "read";
+	}
+
+	if ($n == 2) {
+		$bits = 16;
+	} else {
+		$bits = 32;
+	}
+
+	if ($flags) {
+		my $descr;
+
+		# That _seems_ to be the flags. Not sure through
+		$descr .= "R/W/Modify " if ($flags & 0x10);
+		$descr .= "Broadcast " if ($flags & 0x20);
+		$descr .= "SingleMaster " if (($flags & 0xc0) == 0xc0);
+		$descr .= "MultiMaster " if (($flags & 0xc0) == 0x40);
+		$descr .= "ClearCRC " if (($flags & 0xc0) == 0x80);
+
+		printf "%s%d_flags(state, 0x%s, %s, 0x%08x, 0x%02x); /* Flags = %s */\n", $cmd, $bits, $addr, $reg, $data, $flags, $descr;
+
+	} else {
+		printf "%s%d(state, 0x%s, %s, 0x%08x, %d);\n", $cmd, $bits, $addr, $reg, $data;
+	}
+
+	return;
+
+parse_error:
+	# Fallback: Couldn't parse it
+	if ($write) {
+		if ($old_flags > 0) {
+			printf "%s%d_flags(state, 0x%s, %s, 0x%08x, NOTHING!!!);\n", $cmd, $bits, $addr, $old_reg, $old_flags;
 		}
+		printf "i2c_master_send(0x%s>>1, { %s }, %d);\n", $addr, $app_data, $n;
+	} else {
+		printf "i2c_master_recv(0x%s>>1, { %s }, %d);\n", $addr, $app_data, $n;
 	}
 }
 
@@ -2151,7 +2184,7 @@ while (<>) {
 		$reg = $reg_map{$reg} if defined($reg_map{$reg});
 
 		printf "em28xx_read_reg(dev, %s);\t\t/* read 0x%s */\n",
-			$reg, $2;
+			$reg, $2 if ($show_em28xx);
 		next;
 	}
 	if (m/40 00 00 00 ([0-9a-f].) 00 01 00\s+[\>]+\s+([0-9a-f].)/) {
@@ -2171,7 +2204,7 @@ while (<>) {
 		$reg = $reg_map{$reg} if defined($reg_map{$reg});
 
 		printf "em28xx_write_reg(dev, %s, 0x%s);\n",
-			$reg, $2;
+			$reg, $2  if ($show_em28xx);
 		next;
 	}
 	if (m/c0 00 00 00 ([0-9a-f].) 00 02 00\s+[\<]+\s+([0-9a-f].) ([0-9a-f].)/) {
@@ -2192,7 +2225,7 @@ while (<>) {
 		$reg = $reg_map{$reg} if defined($reg_map{$reg});
 
 		printf "em28xx_read_reg16(dev, %s);\t\t/*read 0x%s%s */\n",
-			$reg, $3, $2;
+			$reg, $3, $2  if ($show_em28xx);
 		next;
 	}
 	if (m/40 00 00 00 ([0-9a-f].) 00 02 00\s+[\>]+\s+([0-9a-f].) ([0-9a-f].)/) {
@@ -2202,7 +2235,7 @@ while (<>) {
 				$dir = 1;
 
 				if ($r42 >= 0) {
-					output_ac97();
+					output_ac97() if ($show_ac97);
 					next;
 				}
 				next;
@@ -2213,7 +2246,7 @@ while (<>) {
 		$reg = $reg_map{$reg} if defined($reg_map{$reg});
 
 		printf "em28xx_write_reg16(dev, %s,0x%s%s);\n",
-			$reg, $3, $2;
+			$reg, $3, $2 if ($show_em28xx);
 		next;
 	}
 
@@ -2221,7 +2254,7 @@ while (<>) {
 		if ($1 eq "52") {
 			parse_drxk_addr($1, $2, $3, 1);
 		} else {
-			printf "i2c_master_send(0x$1>>1, { $3 }, 0x$2);\n";
+			printf "i2c_master_send(0x$1>>1, { $3 }, 0x$2);\n" if ($show_other_xfer);
 		}
 		next;
 	}
@@ -2229,12 +2262,13 @@ while (<>) {
 		if ($1 eq "52") {
 			parse_drxk_addr($1, $2, $3, 0);
 		} else {
-			printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* $3 */\n";
+			printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* $3 */\n" if ($show_other_xfer);
 		}
 		next;
 	}
 	if (m/c0 0[23] 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\<]+/) {
-		printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* nothing returned */\n";
+		printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* nothing returned */\n" if ($show_other_xfer);
 		next;
 	}
+	print $_ if ($show_other_lines);
 }
