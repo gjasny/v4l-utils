@@ -30,11 +30,19 @@
 #
 
 use strict;
+use Getopt::Long;
 
-my $show_em28xx = 1;
-my $show_other_xfer = 1;
-my $show_ac97 = 1;
+my $show_em28xx = 0;
+my $show_other_xfer = 0;
+my $show_ac97 = 0;
 my $show_other_lines = 0;	# Useful on some cases
+
+GetOptions(
+	'show_em28xx' => \$show_em28xx,
+	'show_other_xfer' => \$show_other_xfer,
+	'show_ac97' => \$show_ac97,
+	'show_other_lines' => \$show_other_lines,
+) or die "Invalid arguments.\nUse $0 [--show_em28xx] [--show_other_xfer] [--show_ac97] [--show_other_lines]\n";
 
 my %reg_map = (
 	"0x00" => "EM28XX_R00_CHIPCFG",
@@ -2170,6 +2178,7 @@ parse_error:
 ##############
 
 while (<>) {
+	my $org_line = $_;
 	tr/A-F/a-f/;
 	if (m/c0 00 00 00 ([0-9a-f].) 00 01 00\s+[\<]+\s+([0-9a-f].)/) {
 		if ($1 eq "43" && $2 eq "00") {
@@ -2270,5 +2279,5 @@ while (<>) {
 		printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* nothing returned */\n" if ($show_other_xfer);
 		next;
 	}
-	print $_ if ($show_other_lines);
+	print $org_line if ($show_other_lines);
 }
