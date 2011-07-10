@@ -61,6 +61,15 @@ sub add_hex_mark($)
 	my $data = shift;
 	my $out ="{";
 
+	# Check if the string has the correct syntax. If not, just return it as-is
+	for (my $i = 0; $i++; $i < length($data)) {
+		if ((($i + 1) % 3) == 0) {
+			return $data if (substr($data, $i, 1) ne ' ');
+		} else {
+			return $data if (!(substr($data, $i, 1) =~ /0-9A-Fa-f/));
+		}
+	}
+
 	while ($data) {
 		$out .= "0x" . substr($data, 0, 2) . ", ";
 		$data = substr($data, 3);
@@ -2168,12 +2177,6 @@ sub parse_drxk_addr($$$$$)
 	$data |= hex(substr($app_data, $j + 6, 2)) << 24 |
 		 hex(substr($app_data, $j + 9, 2)) << 8 if ($n > 2);
 
-	if ($write) {
-		$cmd = "write";
-	} else {
-		$cmd = "read";
-	}
-
 	if ($n == 2) {
 		$bits = 16;
 	} else {
@@ -2191,11 +2194,20 @@ sub parse_drxk_addr($$$$$)
 		$descr .= "ClearCRC " if (($flags & 0xc0) == 0x80);
 
 		printf "$timestamp " if ($timestamp);
-		printf "%s%d_flags(state, 0x%s, %s, 0x%08x, 0x%02x); /* Flags = %s */\n", $cmd, $bits, $addr, $reg, $data, $flags, $descr;
+
+		if ($write) {
+			printf "drxk_write%d_flags(state, 0x%s, %s, 0x%08x, 0x%02x); /* Flags = %s */\n", $bits, $addr, $reg, $data, $flags, $descr;
+		} else {
+			printf "drxk_read%d_flags(state, 0x%s, %s, 0x%02x) /* Read = 0x%08x Flags = %s */\n", $bits, $addr, $reg, $flags, $data, $descr;
+		}
 
 	} else {
 		printf "$timestamp " if ($timestamp);
-		printf "%s%d(state, 0x%s, %s, 0x%08x, %d);\n", $cmd, $bits, $addr, $reg, $data;
+		if ($write) {
+			printf "drxk_write%d(state, 0x%s, %s, 0x%08x, 0x%08x);\n", $bits, $addr, $reg, $data;
+		} else {
+			printf "drxk_read%d(state, 0x%s, %s, 0x%08x); /* Read = 0x%08x */\n", $bits, $addr, $reg, $data;
+		}
 	}
 
 	return;
@@ -2206,12 +2218,6 @@ parse_block:
 	$reg = sprintf "0x%08x", $reg;
 
 	my $data = add_hex_mark(substr($app_data, $j));
-
-	if ($write) {
-		$cmd = "write";
-	} else {
-		$cmd = "read";
-	}
 
 	if ($flags) {
 		my $descr;
@@ -2224,11 +2230,19 @@ parse_block:
 		$descr .= "ClearCRC " if (($flags & 0xc0) == 0x80);
 
 		printf "$timestamp " if ($timestamp);
-		printf "%s_block_flags(state, 0x%s, %s, %d, %s, %d); /* Flags = %s */\n", $cmd, $addr, $reg, $n, $data, $flags, $descr;
+		if ($write) {
+			printf "drxk_write_block_flags(state, 0x%s, %s, %d, %s, %d); /* Flags = %s */\n", $addr, $reg, $n, $data, $flags, $descr;
+		} else {
+			printf "drxk_read_block_flags(state, 0x%s, %s, %d, %d); /* Read = %s Flags = %s */\n", $addr, $reg, $n, $flags, $data, $descr;
+		}
 
 	} else {
 		printf "$timestamp " if ($timestamp);
-		printf "%s_block(state, 0x%s, %s, 0x%08x, %d, %s);\n", $cmd, $addr, $reg, $n, $data;
+		if ($write) {
+			printf "drxk_write_block(state, 0x%s, %s, %d, %s);\n", $addr, $reg, $n, $data;
+		} else {
+			printf "drxk_read_block(state, 0x%s, %s, %d); /* Read = %s */\n", $addr, $reg, $n, $data;
+		}
 	}
 
 	return;
@@ -2246,12 +2260,12 @@ parse_error:
 			printf "ERR: DRX-K write(state, 0x%s, %s, 0x%08x) without data. Probably an read ops + read error\n", $bits, $addr, $old_reg, $old_flags;
 		}
 		printf "$timestamp " if ($timestamp);
-		my $data = add_hex_mark(substr($app_data, $j));
+		my $data = add_hex_mark($app_data);
 		printf "i2c_master_send(0x%s>>1, %s, %d);\n", $addr, $data, $n;
 	} else {
 		printf "$timestamp " if ($timestamp);
-		my $data = add_hex_mark(substr($app_data, $j));
-		printf "i2c_master_recv(0x%s>>1, %s, %d);\n", $addr, $data, $n;
+		my $data = add_hex_mark($app_data);
+		printf "i2c_master_recv(0x%s>>1, &buf, 0x%d); /* %s */\n", $addr, $n, $data;
 	}
 }
 
@@ -2265,7 +2279,7 @@ while (<>) {
 	my $timestamp;
 
 	if ($show_timestamp) {
-		$timestamp = $1 if (m/(.*)[0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]./);
+		$timestamp = $1 if (m/(.*)[4c]0 [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]./);
 		$timestamp =~ s/\s+$//;
 	}
 
