@@ -2246,10 +2246,12 @@ parse_error:
 			printf "ERR: DRX-K write(state, 0x%s, %s, 0x%08x) without data. Probably an read ops + read error\n", $bits, $addr, $old_reg, $old_flags;
 		}
 		printf "$timestamp " if ($timestamp);
-		printf "i2c_master_send(0x%s>>1, { %s }, %d);\n", $addr, $app_data, $n;
+		my $data = add_hex_mark(substr($app_data, $j));
+		printf "i2c_master_send(0x%s>>1, %s, %d);\n", $addr, $data, $n;
 	} else {
 		printf "$timestamp " if ($timestamp);
-		printf "i2c_master_recv(0x%s>>1, { %s }, %d);\n", $addr, $app_data, $n;
+		my $data = add_hex_mark(substr($app_data, $j));
+		printf "i2c_master_recv(0x%s>>1, %s, %d);\n", $addr, $data, $n;
 	}
 }
 
@@ -2356,7 +2358,7 @@ while (<>) {
 			parse_drxk_addr($timestamp, $1, $2, $3, 1);
 		} else {
 			printf "$timestamp " if ($timestamp && $show_other_xfer);
-			printf "i2c_master_send(0x$1>>1, { $3 }, 0x$2);\n" if ($show_other_xfer);
+			printf "i2c_master_send(0x$1>>1, %s, 0x$2);\n", add_hex_mark($3) if ($show_other_xfer);
 		}
 		next;
 	}
@@ -2365,7 +2367,7 @@ while (<>) {
 			parse_drxk_addr($timestamp, $1, $2, $3, 0);
 		} else {
 			printf "$timestamp " if ($timestamp && $show_other_xfer);
-			printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* $3 */\n" if ($show_other_xfer);
+			printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* %s */\n", add_hex_mark($3) if ($show_other_xfer);
 		}
 		next;
 	}
