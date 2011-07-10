@@ -2171,16 +2171,18 @@ sub parse_drxk_addr($$$$$)
 	} else {
 		$reg = sprintf "0x%08x", $reg;
 	}
-	my $data = hex(substr($app_data, $j, 2)) |
-		   hex(substr($app_data, $j + 3, 2)) << 16;
 
-	$data |= hex(substr($app_data, $j + 6, 2)) << 24 |
-		 hex(substr($app_data, $j + 9, 2)) << 8 if ($n > 2);
-
+	my $data;
 	if ($n == 2) {
 		$bits = 16;
+		$data = hex(substr($app_data, $j, 2)) |
+			hex(substr($app_data, $j + 3, 2)) << 8;
 	} else {
 		$bits = 32;
+		$data = hex(substr($app_data, $j, 2)) |
+			hex(substr($app_data, $j + 3, 2)) << 16 |
+			hex(substr($app_data, $j + 6, 2)) << 24 |
+			hex(substr($app_data, $j + 9, 2)) << 8 if ($n > 2);
 	}
 
 	if ($flags) {
