@@ -36,12 +36,14 @@ my $show_em28xx = 0;
 my $show_other_xfer = 0;
 my $show_ac97 = 0;
 my $show_other_lines = 0;	# Useful on some cases
+my $show_timestamp = 0;
 
 GetOptions(
 	'show_em28xx' => \$show_em28xx,
 	'show_other_xfer' => \$show_other_xfer,
 	'show_ac97' => \$show_ac97,
 	'show_other_lines' => \$show_other_lines,
+	'show_timestamp' => \$show_timestamp,
 ) or die "Invalid arguments.\nUse $0 [--show_em28xx] [--show_other_xfer] [--show_ac97] [--show_other_lines]\n";
 
 
@@ -162,13 +164,16 @@ my %ac97_map = (
 
 my ($r40, $r42, $r43, $dir);
 
-sub output_ac97()
+sub output_ac97($)
 {
+	my $timestamp = shift;
+
 	if (hex($r42) < 0x80) {
 		if ($dir < 0) {
 			return;
 		}
 		$r42 = $ac97_map{$r42} if defined($ac97_map{$r42});
+		printf "$timestamp " if ($timestamp);
 		printf "em28xx_write_ac97(dev, %s, %s);\n",$r42, $r40;
 		$r43 = 0;
 
@@ -180,6 +185,7 @@ sub output_ac97()
 	}
 	$r42 = sprintf("0x%02x", hex($r42) - 0x80);
 	$r42 = $ac97_map{$r42} if defined($ac97_map{$r42});
+	printf "$timestamp " if ($timestamp);
 	printf "em28xx_read_ac97(dev, %s);\t/* read 0x%s */\n",$r42, $r40;
 	$r43 = 0;
 }
@@ -2078,8 +2084,10 @@ my %drxk_map = (
 
 my $old_flags = -1;
 my $old_reg;
-sub parse_drxk_addr($$$$)
+my $old_timestamp;
+sub parse_drxk_addr($$$$$)
 {
+	my $timestamp = shift;
 	my $addr = shift;
 	my $n = shift;
 	my $app_data = shift;
@@ -2130,8 +2138,12 @@ sub parse_drxk_addr($$$$)
 
 		$old_flags = $flags;
 		$old_reg = $reg;
+		$old_timestamp = $timestamp;
 		return;
 	}
+
+# Hack: may be useful for firmware dumps
+#goto parse_block if ($n > 1);
 
 	goto parse_block if ($n > 4 || $n == 3);
 	goto parse_error if ($n != 2 && $n != 4);
@@ -2169,9 +2181,11 @@ sub parse_drxk_addr($$$$)
 		$descr .= "MultiMaster " if (($flags & 0xc0) == 0x40);
 		$descr .= "ClearCRC " if (($flags & 0xc0) == 0x80);
 
+		printf "$timestamp " if ($timestamp);
 		printf "%s%d_flags(state, 0x%s, %s, 0x%08x, 0x%02x); /* Flags = %s */\n", $cmd, $bits, $addr, $reg, $data, $flags, $descr;
 
 	} else {
+		printf "$timestamp " if ($timestamp);
 		printf "%s%d(state, 0x%s, %s, 0x%08x, %d);\n", $cmd, $bits, $addr, $reg, $data;
 	}
 
@@ -2200,9 +2214,11 @@ parse_block:
 		$descr .= "MultiMaster " if (($flags & 0xc0) == 0x40);
 		$descr .= "ClearCRC " if (($flags & 0xc0) == 0x80);
 
+		printf "$timestamp " if ($timestamp);
 		printf "%s_block_flags(state, 0x%s, %s, %d, %s, %d); /* Flags = %s */\n", $cmd, $addr, $reg, $n, $data, $flags, $descr;
 
 	} else {
+		printf "$timestamp " if ($timestamp);
 		printf "%s_block(state, 0x%s, %s, 0x%08x, %d, %s);\n", $cmd, $addr, $reg, $n, $data;
 	}
 
@@ -2217,10 +2233,13 @@ parse_error:
 			} else {
 				$old_reg = sprintf "0x%08x", $old_reg;
 			}
+			printf "$old_timestamp " if ($old_timestamp);
 			printf "ERR: DRX-K write(state, 0x%s, %s, 0x%08x) without data. Probably an read ops + read error\n", $bits, $addr, $old_reg, $old_flags;
 		}
+		printf "$timestamp " if ($timestamp);
 		printf "i2c_master_send(0x%s>>1, { %s }, %d);\n", $addr, $app_data, $n;
 	} else {
+		printf "$timestamp " if ($timestamp);
 		printf "i2c_master_recv(0x%s>>1, { %s }, %d);\n", $addr, $app_data, $n;
 	}
 }
@@ -2231,6 +2250,14 @@ parse_error:
 
 while (<>) {
 	my $org_line = $_;
+
+	my $timestamp;
+
+	if ($show_timestamp) {
+		$timestamp = $1 if (m/(.*)c0 0[23] 00 00 /);
+		$timestamp =~ s/\s+$//;
+	}
+
 	tr/A-F/a-f/;
 	if (m/c0 00 00 00 ([0-9a-f].) 00 01 00\s+[\<]+\s+([0-9a-f].)/) {
 		if ($1 eq "43" && $2 eq "00") {
@@ -2244,6 +2271,7 @@ while (<>) {
 		my $reg = "0x$1";
 		$reg = $reg_map{$reg} if defined($reg_map{$reg});
 
+		printf "$timestamp " if ($show_timestamp && $show_em28xx);
 		printf "em28xx_read_reg(dev, %s);\t\t/* read 0x%s */\n",
 			$reg, $2 if ($show_em28xx);
 		next;
@@ -2253,7 +2281,7 @@ while (<>) {
 			if ($1 eq "42") {
 				$r42 = "0x$2";
 				if ($r40 >= 0) {
-					output_ac97();
+					output_ac97($timestamp) if ($show_ac97);
 					next;
 				}
 				next;
@@ -2264,6 +2292,7 @@ while (<>) {
 		my $reg = "0x$1";
 		$reg = $reg_map{$reg} if defined($reg_map{$reg});
 
+		printf "$timestamp " if ($timestamp && $show_em28xx);
 		printf "em28xx_write_reg(dev, %s, 0x%s);\n",
 			$reg, $2  if ($show_em28xx);
 		next;
@@ -2275,7 +2304,7 @@ while (<>) {
 				$dir = -1;
 
 				if ($r42 >= 0) {
-					output_ac97();
+					output_ac97($timestamp) if ($show_ac97);
 					next;
 				}
 				next;
@@ -2285,6 +2314,7 @@ while (<>) {
 		my $reg = "0x$1";
 		$reg = $reg_map{$reg} if defined($reg_map{$reg});
 
+		printf "$timestamp " if ($timestamp && $show_em28xx);
 		printf "em28xx_read_reg16(dev, %s);\t\t/*read 0x%s%s */\n",
 			$reg, $3, $2  if ($show_em28xx);
 		next;
@@ -2296,7 +2326,7 @@ while (<>) {
 				$dir = 1;
 
 				if ($r42 >= 0) {
-					output_ac97() if ($show_ac97);
+					output_ac97($timestamp) if ($show_ac97);
 					next;
 				}
 				next;
@@ -2306,6 +2336,7 @@ while (<>) {
 		my $reg = "0x$1";
 		$reg = $reg_map{$reg} if defined($reg_map{$reg});
 
+		printf "$timestamp " if ($timestamp && $show_em28xx);
 		printf "em28xx_write_reg16(dev, %s,0x%s%s);\n",
 			$reg, $3, $2 if ($show_em28xx);
 		next;
@@ -2313,21 +2344,24 @@ while (<>) {
 
 	if (m/40 0[23] 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\>]+\s+([0-9a-f ]+)/) {
 		if ($1 eq "52") {
-			parse_drxk_addr($1, $2, $3, 1);
+			parse_drxk_addr($timestamp, $1, $2, $3, 1);
 		} else {
+			printf "$timestamp " if ($timestamp && $show_other_xfer);
 			printf "i2c_master_send(0x$1>>1, { $3 }, 0x$2);\n" if ($show_other_xfer);
 		}
 		next;
 	}
 	if (m/c0 0[23] 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\<]+\s+([0-9a-f ]+)/) {
 		if ($1 eq "52") {
-			parse_drxk_addr($1, $2, $3, 0);
+			parse_drxk_addr($timestamp, $1, $2, $3, 0);
 		} else {
+			printf "$timestamp " if ($timestamp && $show_other_xfer);
 			printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* $3 */\n" if ($show_other_xfer);
 		}
 		next;
 	}
 	if (m/c0 0[23] 00 00 ([0-9a-f].) 00 ([0-9a-f].) 00\s+[\<]+/) {
+		printf "$timestamp " if ($timestamp && $show_other_xfer);
 		printf "i2c_master_recv(0x$1>>1, &buf, 0x$2); /* nothing returned */\n" if ($show_other_xfer);
 		next;
 	}
