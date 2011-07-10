@@ -37,6 +37,7 @@ my $show_other_xfer = 0;
 my $show_ac97 = 0;
 my $show_other_lines = 0;	# Useful on some cases
 my $show_timestamp = 0;
+my $show_all = 0;
 
 GetOptions(
 	'show_em28xx' => \$show_em28xx,
@@ -44,8 +45,16 @@ GetOptions(
 	'show_ac97' => \$show_ac97,
 	'show_other_lines' => \$show_other_lines,
 	'show_timestamp' => \$show_timestamp,
-) or die "Invalid arguments.\nUse $0 [--show_em28xx] [--show_other_xfer] [--show_ac97] [--show_other_lines]\n";
+	'show_all' => \$show_all,
+) or die "Invalid arguments.\nUse $0 [--show-all] [--show_em28xx] [--show_other_xfer] [--show_ac97] [--show_other_lines] [--show_timestamp]\n";
 
+if ($show_all) {
+	$show_em28xx = 1;
+	$show_other_xfer = 1;
+	$show_ac97 = 1;
+	$show_other_lines = 1;
+	$show_timestamp = 1;
+}
 
 sub add_hex_mark($)
 {
@@ -2254,7 +2263,7 @@ while (<>) {
 	my $timestamp;
 
 	if ($show_timestamp) {
-		$timestamp = $1 if (m/(.*)c0 0[23] 00 00 /);
+		$timestamp = $1 if (m/(.*)[0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]. [0-9a-f]./);
 		$timestamp =~ s/\s+$//;
 	}
 
