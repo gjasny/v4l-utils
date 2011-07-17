@@ -46,9 +46,9 @@ static void wr_pixel(int p, uint8_t **dest, int pitch, int *x)
 }
 
 enum decode_state {
-        get_len,
-        sign_bit,
-        other_bits,
+	get_len,
+	sign_bit,
+	other_bits,
 };
 
 static int decode_JangGu(const uint8_t *data, int bits, int plen, int pixels,
@@ -79,17 +79,20 @@ static int decode_JangGu(const uint8_t *data, int bits, int plen, int pixels,
 					}
 				}
 				break;
-                        case sign_bit:
-				if (!bit)
+			case sign_bit:
+				if (bit)
+					value = 0;
+				else
 					value = -(1 << len) + 1;
-                                /* fall through for positive number and
-                                   len == 1 handling */
-                        case other_bits:
+				state = other_bits;
+				/* fall through for positive number and
+				   len == 1 handling */
+			case other_bits:
 				len--;
 				value += bit << len;
 				if (len == 0) {
-				        /* Done write pixel and get bit len of
-				           the next one */
+					/* Done write pixel and get bit len of
+					   the next one */
 					state = get_len;
 					wr_pixel(value, dest, pitch, x);
 					if (!--pixels)
