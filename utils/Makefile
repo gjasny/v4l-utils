@@ -1,14 +1,9 @@
-SUBDIRS=libv4l2util libmedia_dev decode_tm6000 keytable rds v4l2-compliance v4l2-ctl v4l2-dbg xc3028-firmware
+SUBDIRS=libv4l2util libmedia_dev decode_tm6000 keytable rds v4l2-compliance v4l2-ctl v4l2-dbg v4l2-sysfs-path xc3028-firmware
 
 all install: 
 	@for i in $(SUBDIRS); do \
 		$(MAKE) -C $$i $@ || exit 1; \
 	done
-
-	# Test if libsysfs is installed
-	@-if [ -f /usr/include/sysfs/libsysfs.h ]; then \
-		$(MAKE) -C v4l2-sysfs-path $@; \
-	fi
 
 	# Test whether qmake is installed, and whether it is for qt4.
 	@if which qmake-qt4 >/dev/null 2>&1; then \
