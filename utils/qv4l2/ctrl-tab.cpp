@@ -48,6 +48,7 @@ static bool is_valid_type(enum v4l2_ctrl_type type)
 	case V4L2_CTRL_TYPE_MENU:
 	case V4L2_CTRL_TYPE_BUTTON:
 	case V4L2_CTRL_TYPE_INTEGER64:
+	case V4L2_CTRL_TYPE_BITMASK:
 	case V4L2_CTRL_TYPE_CTRL_CLASS:
 	case V4L2_CTRL_TYPE_STRING:
 		return true;
