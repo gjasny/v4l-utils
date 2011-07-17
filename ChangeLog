@@ -1,8 +1,18 @@
 v4l-utils-0.8.5
 ---------------
+* Utils changes
+  * parse_em28xx_drxk.pl: New parser for dumps of em28xx with drxk frontend
+    (mchehab)
+  * qv4l2: Add support for bitmap controls (hverkuil)
+  * v4l2-ctl: add support for the new bitmask control type (hverkuil)
+  * v4l2-ctl: add support for the control event (hverkuil)
+  * v4l2-ctl: small bugfixes (hverkuil)
+  * v4l2-compliance: various new tests (hverkuil)
+  * lib_media_dev: various fixes / cleanups (hdegoede)
 * libv4l changes
   * Add some more laptop models to the upside down devices table (hdegoede)
   * Add support for SE401 pixelformat (hdegoede)
+  * Software autogain tweaks (hdegoede)
 
 v4l-utils-0.8.4
 ---------------
