@@ -617,13 +617,6 @@ int v4l2_fd_open(int fd, int v4l2_flags)
 		return -1;
 	}
 
-	/* we only add functionality for video capture devices */
-	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) ||
-	    !(cap.capabilities & (V4L2_CAP_STREAMING | V4L2_CAP_READWRITE))) {
-		v4l2_plugin_cleanup(plugin_library, dev_ops_priv, dev_ops);
-		return fd;
-	}
-
 	/* Get current cam format */
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (dev_ops->ioctl(dev_ops_priv, fd, VIDIOC_G_FMT, &fmt)) {
