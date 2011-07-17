@@ -35,7 +35,7 @@ libv4lconvert.pc:
 	@echo 'Description: v4l format conversion library' >> libv4lconvert.pc
 	@echo 'Version: '$(V4L_UTILS_VERSION) >> libv4lconvert.pc
 	@echo 'Libs: -L$${libdir} -lv4lconvert' >> libv4lconvert.pc
-	@echo 'Libs.private: -lrt -lm' >> libv4lconvert.pc
+	@echo 'Libs.private: '$(LIBS_libv4lconvert) >> libv4lconvert.pc
 	@echo 'Cflags: -I$${prefix}/include' >> libv4lconvert.pc
 
 install: all

@@ -35,7 +35,7 @@ libv4l1.pc:
 	@echo 'Version: '$(V4L_UTILS_VERSION) >> libv4l1.pc
 	@echo 'Requires.private: libv4l2' >> libv4l1.pc
 	@echo 'Libs: -L$${libdir} -lv4l1' >> libv4l1.pc
-	@echo 'Libs.private: -lpthread' >> libv4l1.pc
+	@echo 'Libs.private: '$(LIBS_libv4l1) >> libv4l1.pc
 	@echo 'Cflags: -I$${prefix}/include' >> libv4l1.pc
 
 install: all
