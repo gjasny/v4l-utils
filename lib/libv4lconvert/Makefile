@@ -21,6 +21,9 @@ INCLUDES      = ../include/libv4lconvert.h
 
 override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBSUBDIR)\"
 
+# This is the soname version
+LIB_RELEASE = 1
+
 all: $(TARGETS)
 
 -include $(CONVERT_OBJS:.o=.d)

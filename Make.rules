@@ -1,4 +1,4 @@
-V4L_UTILS_VERSION=0.8.5
+V4L_UTILS_VERSION=0.9.0-test
 
 # These ones can be overriden from the cmdline
 
@@ -18,8 +18,6 @@ MANDIR = $(PREFIX)/share/man
 # Note the -I../.. this assumes all sources live in a 2 level dir hierarchy!
 override CPPFLAGS += -I../../include -I../../lib/include -D_GNU_SOURCE -DV4L_UTILS_VERSION='"$(V4L_UTILS_VERSION)"'
 override LDFLAGS += -L../../lib/libv4l1 -L../../lib/libv4l2 -L../../lib/libv4lconvert
-# This is the soname version
-LIB_RELEASE = 0
 
 # And last various rules
 

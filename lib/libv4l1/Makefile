@@ -18,6 +18,9 @@ TARGETS      += $(V4L1COMPAT)
 override CPPFLAGS += -fPIC
 endif
 
+# This is the soname version
+LIB_RELEASE = 0
+
 all: $(TARGETS)
 
 -include $(V4L1_OBJS:.o=.d)
