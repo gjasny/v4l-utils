@@ -2,7 +2,14 @@
 #ifndef __LINUX_VIDEODEV_H
 #define __LINUX_VIDEODEV_H
 
+#ifdef linux
 #include <linux/ioctl.h>
+#endif
+
+#ifdef __FreeBSD__
+#include <sys/ioctl.h>
+#endif
+
 #include <stdint.h>
 
 #define VID_TYPE_CAPTURE	1	/* Can capture */
