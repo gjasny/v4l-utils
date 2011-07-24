@@ -23,6 +23,7 @@ use strict;
 use Switch;
 use Getopt::Long;
 
+my $show_mt2063 = 0;
 my $show_drxk = 0;
 my $show_other_reqs = 0;
 my $show_other_xfer = 0;
@@ -30,9 +31,10 @@ my $show_other_lines = 0;	# Useful on some cases
 my $show_timestamp = 0;
 my $show_all = 0;
 
-my $argerr = "Invalid arguments.\nUse $0 [--show_all] [--show_drxk] [--show_other_reqs] [--show_other_xfer] [--show_other_lines] [--show_timestamp]\n";
+my $argerr = "Invalid arguments.\nUse $0 [--show_all] [--show_drxk] [--show_mt2063] [--show_other_reqs] [--show_other_xfer] [--show_other_lines] [--show_timestamp]\n";
 
 GetOptions(
+	'show_mt2063' => \$show_mt2063,
 	'show_drxk' => \$show_drxk,
 	'show_other_reqs' => \$show_other_reqs,
 	'show_other_xfer' => \$show_other_xfer,
@@ -47,9 +49,10 @@ if ($show_all) {
 	$show_timestamp = 1;
 	$show_other_reqs = 1;
 	$show_drxk = 1;
+	$show_mt2063 = 1;
 }
 
-die ($argerr) if (!($show_other_xfer || $show_other_lines || $show_other_reqs || $show_drxk));
+die ($argerr) if (!($show_other_xfer || $show_other_lines || $show_other_reqs || $show_drxk || $show_mt2063));
 
 sub add_hex_mark($)
 {
@@ -73,6 +76,102 @@ sub add_hex_mark($)
 	$out .= "}";
 
 	return $out;
+}
+
+my %mt2063_map = (
+	0x00 => "MT2063_REG_PART_REV",
+	0x01 => "MT2063_REG_LO1CQ_1",
+	0x02 => "MT2063_REG_LO1CQ_2",
+	0x03 => "MT2063_REG_LO2CQ_1",
+	0x04 => "MT2063_REG_LO2CQ_2",
+	0x05 => "MT2063_REG_LO2CQ_3",
+	0x06 => "MT2063_REG_RSVD_06",
+	0x07 => "MT2063_REG_LO_STATUS",
+	0x08 => "MT2063_REG_FIFFC",
+	0x09 => "MT2063_REG_CLEARTUNE",
+	0x0A => "MT2063_REG_ADC_OUT",
+	0x0B => "MT2063_REG_LO1C_1",
+	0x0C => "MT2063_REG_LO1C_2",
+	0x0D => "MT2063_REG_LO2C_1",
+	0x0E => "MT2063_REG_LO2C_2",
+	0x0F => "MT2063_REG_LO2C_3",
+	0x10 => "MT2063_REG_RSVD_10",
+	0x11 => "MT2063_REG_PWR_1",
+	0x12 => "MT2063_REG_PWR_2",
+	0x13 => "MT2063_REG_TEMP_STATUS",
+	0x14 => "MT2063_REG_XO_STATUS",
+	0x15 => "MT2063_REG_RF_STATUS",
+	0x16 => "MT2063_REG_FIF_STATUS",
+	0x17 => "MT2063_REG_LNA_OV",
+	0x18 => "MT2063_REG_RF_OV",
+	0x19 => "MT2063_REG_FIF_OV",
+	0x1A => "MT2063_REG_LNA_TGT",
+	0x1B => "MT2063_REG_PD1_TGT",
+	0x1C => "MT2063_REG_PD2_TGT",
+	0x1D => "MT2063_REG_RSVD_1D",
+	0x1E => "MT2063_REG_RSVD_1E",
+	0x1F => "MT2063_REG_RSVD_1F",
+	0x20 => "MT2063_REG_RSVD_20",
+	0x21 => "MT2063_REG_BYP_CTRL",
+	0x22 => "MT2063_REG_RSVD_22",
+	0x23 => "MT2063_REG_RSVD_23",
+	0x24 => "MT2063_REG_RSVD_24",
+	0x25 => "MT2063_REG_RSVD_25",
+	0x26 => "MT2063_REG_RSVD_26",
+	0x27 => "MT2063_REG_RSVD_27",
+	0x28 => "MT2063_REG_FIFF_CTRL",
+	0x29 => "MT2063_REG_FIFF_OFFSET",
+	0x2A => "MT2063_REG_CTUNE_CTRL",
+	0x2B => "MT2063_REG_CTUNE_OV",
+	0x2C => "MT2063_REG_CTRL_2C",
+	0x2D => "MT2063_REG_FIFF_CTRL2",
+	0x2E => "MT2063_REG_RSVD_2E",
+	0x2F => "MT2063_REG_DNC_GAIN",
+	0x30 => "MT2063_REG_VGA_GAIN",
+	0x31 => "MT2063_REG_RSVD_31",
+	0x32 => "MT2063_REG_TEMP_SEL",
+	0x33 => "MT2063_REG_RSVD_33",
+	0x34 => "MT2063_REG_RSVD_34",
+	0x35 => "MT2063_REG_RSVD_35",
+	0x36 => "MT2063_REG_RSVD_36",
+	0x37 => "MT2063_REG_RSVD_37",
+	0x38 => "MT2063_REG_RSVD_38",
+	0x39 => "MT2063_REG_RSVD_39",
+	0x3A => "MT2063_REG_RSVD_3A",
+	0x3B => "MT2063_REG_RSVD_3B",
+	0x3C => "MT2063_REG_RSVD_3C",
+);
+
+sub parse_mt2063_addr($$$$$)
+{
+	my $timestamp = shift;
+	my $addr = shift;
+	my $n = shift;
+	my $data = shift;
+	my $write = shift;
+
+	my $reg = hex(substr($data, 0, 2));
+	$data = substr($data, 3);
+	$n--;
+
+	if (defined($mt2063_map{$reg})) {
+		$reg = $mt2063_map{$reg};
+	} else {
+		$reg = sprintf "0x%02x", $reg;
+	}
+
+	if ($write) {
+		if ($n == 1) {
+			printf "mt2063_setreg(state, %s, 0x%s);\n",
+				$reg, $data;
+		} else {
+			printf "mt2063_write(state, %s, %s, %d);\n",
+				$reg, add_hex_mark($data), $n;
+		}
+	} else {
+		printf "mt2063_read(state, %s, &buf, %d); /* %s */\n",
+			$reg, $n, add_hex_mark($data);
+	}
 }
 
 # DRX-K registers used at the public driver
@@ -2184,8 +2283,17 @@ while (<>) {
 
 		if ($req == 0xb9 || $req == 0xbd) {
 			my ($addr, $data, $write, $n) = i2c_decode($reqtype, $wvalue, $windex, $wlen, $payload);
+
+			if ($n > 6 && !$write) {
+				# This is how az6007 returns reads
+				$n -= 6;
+				$data = substr($data, 3 * 5, $n * 3);
+			}
+
 			if ($addr == 0x52) {
 				parse_drxk_addr($timestamp, $addr, $n, $data, $write) if ($show_drxk);
+			} elsif ($addr == 0xc0) {
+				parse_mt2063_addr($timestamp, $addr, $n, $data, $write) if ($show_mt2063);
 			} elsif ($show_other_xfer) {
 				printf "$timestamp " if ($show_timestamp);
 				if ($write) {
