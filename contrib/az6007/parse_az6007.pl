@@ -2253,7 +2253,7 @@ sub i2c_decode($$$$$)
 	if ($n >= 6 && !$write) {
 		# This is how az6007 returns reads
 		$n -= 6;
-		$data = substr($data, 3 * 5, $n * 3);
+		$payload = substr($payload, 3 * 5, $n * 3);
 	}
 
 	$addr = $wvalue & 0xff;
