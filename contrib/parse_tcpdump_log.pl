@@ -593,7 +593,13 @@ Prints the manual page and exits.
 
 =item B<--debug> [log level]
 
-Changes the debug log level.
+Changes the debug log level. The available levels are:
+
+	1 - frame request and frame response
+
+	2 - parsed frames
+
+	4 - raw data
 
 =item B<--pcap>
 
