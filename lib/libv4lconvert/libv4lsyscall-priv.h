@@ -81,7 +81,7 @@ typedef off_t __off_t;
 #define SYS_READ(fd, buf, len) \
 	syscall(SYS_read, (int)(fd), (void *)(buf), (size_t)(len));
 #define SYS_WRITE(fd, buf, len) \
-	syscall(SYS_write, (int)(fd), (void *)(buf), (size_t)(len));
+	syscall(SYS_write, (int)(fd), (const void *)(buf), (size_t)(len));
 
 #ifdef __FreeBSD__
 #define SYS_MMAP(addr, len, prot, flags, fd, off) \
@@ -102,7 +102,7 @@ int v4lx_open_wrapper(const char *, int, int);
 int v4lx_close_wrapper(int);
 int v4lx_ioctl_wrapper(int, unsigned long, void *);
 int v4lx_read_wrapper(int, void *, size_t);
-int v4lx_write_wrapper(int, void *, size_t);
+int v4lx_write_wrapper(int, const void *, size_t);
 void *v4lx_mmap_wrapper(void *, size_t, int, int, int, off_t);
 int v4lx_munmap_wrapper(void *, size_t);
 

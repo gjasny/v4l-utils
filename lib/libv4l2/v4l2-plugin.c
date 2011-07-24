@@ -66,11 +66,18 @@ static ssize_t dev_read(void *dev_ops_priv, int fd, void *buf, size_t len)
 	return SYS_READ(fd, buf, len);
 }
 
+static ssize_t dev_write(void *dev_ops_priv, int fd, const void *buf,
+                         size_t len)
+{
+	return SYS_WRITE(fd, buf, len);
+}
+
 const struct libv4l2_dev_ops libv4l2_default_dev_ops = {
 	.init = dev_init,
 	.close = dev_close,
 	.ioctl = dev_ioctl,
-	.read = dev_read
+	.read = dev_read,
+	.write = dev_write,
 };
 
 void v4l2_plugin_init(int fd, void **plugin_lib_ret, void **plugin_priv_ret,
@@ -113,9 +120,8 @@ void v4l2_plugin_init(int fd, void **plugin_lib_ret, void **plugin_priv_ret,
 
 		if (!libv4l2_plugin->init ||
 		    !libv4l2_plugin->close ||
-		    !libv4l2_plugin->ioctl ||
-		    !libv4l2_plugin->read) {
-			V4L2_LOG("PLUGIN: does not have all functions\n");
+		    !libv4l2_plugin->ioctl) {
+			V4L2_LOG("PLUGIN: does not have all mandatory ops\n");
 			dlclose(plugin_library);
 			continue;
 		}

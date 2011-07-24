@@ -1414,6 +1414,11 @@ ssize_t v4l2_read(int fd, void *dest, size_t n)
 	if (index == -1)
 		return SYS_READ(fd, dest, n);
 
+	if (!devices[index].dev_ops->read) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	pthread_mutex_lock(&devices[index].stream_lock);
 
 	/* When not converting and the device supports read let the kernel handle
@@ -1464,6 +1469,22 @@ leave:
 	errno = saved_errno;
 
 	return result;
+}
+
+ssize_t v4l2_write(int fd, const void *buffer, size_t n)
+{
+	int index = v4l2_get_index(fd);
+
+	if (index == -1)
+		return SYS_WRITE(fd, buffer, n);
+
+	if (!devices[index].dev_ops->write) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return devices[index].dev_ops->write(
+			devices[index].dev_ops_priv, fd, buffer, n);
 }
 
 void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
