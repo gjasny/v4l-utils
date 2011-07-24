@@ -2250,6 +2250,12 @@ sub i2c_decode($$$$$)
 
 	$write = 1 if (!($reqtype & 0x80));
 
+	if ($n >= 6 && !$write) {
+		# This is how az6007 returns reads
+		$n -= 6;
+		$data = substr($data, 3 * 5, $n * 3);
+	}
+
 	$addr = $wvalue & 0xff;
 
 	if ($wvalue > 255) {
@@ -2283,12 +2289,6 @@ while (<>) {
 
 		if ($req == 0xb9 || $req == 0xbd) {
 			my ($addr, $data, $write, $n) = i2c_decode($reqtype, $wvalue, $windex, $wlen, $payload);
-
-			if ($n > 6 && !$write) {
-				# This is how az6007 returns reads
-				$n -= 6;
-				$data = substr($data, 3 * 5, $n * 3);
-			}
 
 			if ($addr == 0x52) {
 				parse_drxk_addr($timestamp, $addr, $n, $data, $write) if ($show_drxk);
