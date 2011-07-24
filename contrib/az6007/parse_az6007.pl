@@ -160,6 +160,7 @@ sub parse_mt2063_addr($$$$$)
 		$reg = sprintf "0x%02x", $reg;
 	}
 
+	printf "$timestamp " if ($show_timestamp);
 	if ($write) {
 		if ($n == 1) {
 			printf "mt2063_setreg(state, %s, 0x%s);\n",
