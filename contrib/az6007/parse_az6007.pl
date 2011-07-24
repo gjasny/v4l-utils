@@ -59,6 +59,9 @@ sub add_hex_mark($)
 	my $data = shift;
 	my $out ="{";
 
+	return "NULL" if ($data eq "");
+	return "NULL due to $data " if ($data =~ /[Ee][Rr][Rr][Oo][Rr]/);
+
 	# Check if the string has the correct syntax. If not, just return it as-is
 	for (my $i = 0; $i++; $i < length($data)) {
 		if ((($i + 1) % 3) == 0) {
@@ -2270,6 +2273,29 @@ sub i2c_decode($$$$$)
 	return ($addr, $data, $write, $n);
 }
 
+# This is a guess map for the Cypress FX2 registers that are seen
+# at the device and/or at other devices with FX2. It is incomplete
+# and may be wrong. The names here don't match the az6007 driver yet,
+# but are useful for someone that is checking the logs to analyze
+# what's wrong there
+my %req_map = (
+	# FX2 Special registers defined at CY7 datasheets
+	0x80 => "FX2_IOA",
+	0x90 => "FX2_IOB",
+	0xa0 => "FX2_LOAD_FIRMWARE",
+	0xb0 => "FX2_IOD",
+	0xb5 => "FX2_OED",
+	0xc0 => "FX2_SCON1",		# Used to reset demod
+	0xd0 => "FX2_PSW",
+
+	# Other registers used at the driver
+	0xb7 => "AZ6007_IDENTIFY_STATE", # I suspect that this is a RAM read function
+	0xb9 => "AZ6007_I2C_RD",
+	0xbc => "AZ6007_POWER",
+	0xbd => "AZ6007_I2C_WRT",	# FX2 calls it as GPIFSGL-DATH
+	0xc5 => "AZ6007_RC_READ",
+	0xc7 => "AZ6007_TS_THROUGH",
+);
 
 ##############
 # Main program
@@ -2309,13 +2335,20 @@ while (<>) {
 		}
 		if ($show_other_reqs) {
 			printf "$timestamp " if ($show_timestamp);
-			if ($reqtype > 0x80) {
-				printf "Read   ";
+
+			if (defined($req_map{$req})) {
+				$req = sprintf "%s /* 0x%02x */", $req_map{$req}, $req;
 			} else {
-				printf "Write  ";
+				$req = sprintf "0x%02x", $req;
 			}
-			printf("Reqtype: 0x%02x, Req 0x%02x, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
-				$reqtype, $req, $wvalue, $windex, $wlen, $payload);
+
+			if ($reqtype > 0x80) {
+				printf("az6007_usb_in_op(d, %s, %s, %s, &data, %s); /* %s */\n",
+					$req, $wvalue, $windex, $wlen, add_hex_mark($payload));
+			} else {
+				printf("az6007_usb_out_op(d, %s, %s, %s, %s, %s);\n",
+					$req, $wvalue, $windex, add_hex_mark($payload), $wlen);
+			}
 		}
 		next;
 	}
