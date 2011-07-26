@@ -30,8 +30,9 @@ my $show_other_xfer = 0;
 my $show_other_lines = 0;	# Useful on some cases
 my $show_timestamp = 0;
 my $show_all = 0;
+my $force_wrt_blocks = 0;
 
-my $argerr = "Invalid arguments.\nUse $0 [--show_all] [--show_drxk] [--show_mt2063] [--show_other_reqs] [--show_other_xfer] [--show_other_lines] [--show_timestamp]\n";
+my $argerr = "Invalid arguments.\nUse $0 [--show_all] [--show_drxk] [--show_mt2063] [--show_other_reqs] [--show_other_xfer] [--show_other_lines] [--show_timestamp] [--force_wrt_blocks]\n";
 
 GetOptions(
 	'show_mt2063' => \$show_mt2063,
@@ -41,6 +42,7 @@ GetOptions(
 	'show_other_lines' => \$show_other_lines,
 	'show_timestamp' => \$show_timestamp,
 	'show_all' => \$show_all,
+	'force_wrt_blocks' => \$force_wrt_blocks,
 ) or die $argerr;
 
 if ($show_all) {
@@ -2129,8 +2131,8 @@ sub parse_drxk_addr($$$$$)
 		return;
 	}
 
-# Hack: may be useful for firmware dumps
-#goto parse_block if ($n > 1);
+	# Hack: may be useful for firmware dumps
+	goto parse_block if ($n > 1 && $force_wrt_blocks);
 
 	goto parse_block if ($n > 4 || $n == 3);
 	goto parse_error if ($n != 2 && $n != 4);
@@ -2289,11 +2291,12 @@ my %req_map = (
 	0xd0 => "FX2_PSW",
 
 	# Other registers used at the driver
-	0xb7 => "AZ6007_IDENTIFY_STATE", # I suspect that this is a RAM read function
+	0xb7 => "AZ6007_READ_DATA", # I suspect that this is a RAM read function
 	0xb9 => "AZ6007_I2C_RD",
 	0xbc => "AZ6007_POWER",
-	0xbd => "AZ6007_I2C_WRT",	# FX2 calls it as GPIFSGL-DATH
-	0xc5 => "AZ6007_RC_READ",
+	0xbd => "AZ6007_I2C_WR",	# FX2 calls it as GPIFSGL-DATH
+	0xb4 => "AZ6007_READ_IR",
+	0xc5 => "AZ6007_CI_STATUS",	# Guessed from AZ6027 driver
 	0xc7 => "AZ6007_TS_THROUGH",
 );
 
@@ -2337,16 +2340,16 @@ while (<>) {
 			printf "$timestamp " if ($show_timestamp);
 
 			if (defined($req_map{$req})) {
-				$req = sprintf "%s /* 0x%02x */", $req_map{$req}, $req;
+				$req = sprintf "%s", $req_map{$req}, $req;
 			} else {
 				$req = sprintf "0x%02x", $req;
 			}
 
 			if ($reqtype > 0x80) {
-				printf("az6007_usb_in_op(d, %s, %s, %s, &data, %s); /* %s */\n",
+				printf("az6007_read(udev, %s, %s, %s, &data, %s); /* %s */\n",
 					$req, $wvalue, $windex, $wlen, add_hex_mark($payload));
 			} else {
-				printf("az6007_usb_out_op(d, %s, %s, %s, %s, %s);\n",
+				printf("az6007_write(udev, %s, %s, %s, %s, %s);\n",
 					$req, $wvalue, $windex, add_hex_mark($payload), $wlen);
 			}
 		}
