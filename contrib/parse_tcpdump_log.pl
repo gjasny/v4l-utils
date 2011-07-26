@@ -38,11 +38,13 @@ my $debug = 0;
 my $man = 0;
 my $help = 0;
 my $pcap = 0;
+my $all = 0;
 my $device;
 
 GetOptions('debug=i' => \$debug,
 	   'help|?' => \$help,
 	   'pcap' => \$pcap,
+	   'all' => \$all,
 	   'device=s' => \$device,
 	    man => \$man
 	  ) or pod2usage(2);
@@ -374,6 +376,13 @@ sub print_frame($$)
 	return;
 }
 
+my %frametype = (
+	0 => "ISOC",
+	1 => "Interrupt",
+	2 => "Control",
+	3 => "Bulk",
+);
+
 sub process_frame($) {
 	my %frame = %{ $_[0] };
 
@@ -385,7 +394,10 @@ sub process_frame($) {
 	}
 
 	# For now, we'll take a look only on control frames
-	return if ($frame{"TransferType"} ne "2");
+	if ($frame{"TransferType"} ne "2" && $all) {
+		printf "Transfer type: %s\n", $frametype{$frame{"TransferType"}};
+		return;
+	}
 
 	if ($frame{"Status"} eq "-115") {
 		push @pending, \%frame;
