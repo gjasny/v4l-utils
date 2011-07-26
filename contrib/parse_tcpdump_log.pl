@@ -528,6 +528,15 @@ sub handle_pcap_packet($$$)
 	process_frame(\%frame);
 }
 
+my $pcap_descr;
+sub sigint_handler {
+	# Close pcap gracefully after CTRL/C
+	if ($pcap_descr) {
+		Net::Pcap::close($pcap_descr);
+		print "End of capture.\n";
+		exit(0);
+	}
+}
 
 # Main program, reading from a file. A small change is needed to allow it to
 # accept a pipe
@@ -555,17 +564,23 @@ if (!$pcap) {
 } else {
 	my $err;
 
-	$pcap = Net::Pcap::open_live($device, 65535, 0, 1000, \$err);
+	$pcap_descr = Net::Pcap::open_live($device, 65535, 0, 1000, \$err);
 	die $err if ($err);
 
-	my $dl = Net::Pcap::datalink($pcap);
+	# Trap  signals to exit nicely
+	$SIG{HUP} = \&sigint_handler;
+	$SIG{INT} = \&sigint_handler;
+	$SIG{QUIT} = \&sigint_handler;
+	$SIG{TERM} = \&sigint_handler;
+
+	my $dl = Net::Pcap::datalink($pcap_descr);
 	if ($dl != 220) {
 		printf"Link type %d\n", $dl;
 		die "ERROR: Link type is not USB";
 	}
 
-	Net::Pcap::loop($pcap, -1, \&handle_pcap_packet, '');
-	Net::Pcap::close($pcap);
+	Net::Pcap::loop($pcap_descr, -1, \&handle_pcap_packet, '');
+	Net::Pcap::close($pcap_descr);
 	die $err;
 }
 
