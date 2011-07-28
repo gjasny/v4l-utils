@@ -545,7 +545,7 @@ static void usage(void)
 	       "  --set-dv-bt-timings=width=<width>,height=<height>,interlaced=<0/1>,\n"
 	       "                     polarities=<polarities mask>,pixelclock=<pixelclock Hz>,\n"
 	       "                     hfp=<horizontal front porch>,hs=<horizontal sync>,\n"
-	       "                     hbp=<horizontal back porch>,vfporch=<vertical front porch>,\n"
+	       "                     hbp=<horizontal back porch>,vfp=<vertical front porch>,\n"
 	       "                     vs=<vertical sync>,vbp=<vertical back porch>,\n"
 	       "                     il_vfp=<vertical front porch for bottom field>,\n"
 	       "                     il_vs=<vertical sync for bottom field>,\n"
