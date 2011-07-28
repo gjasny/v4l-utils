@@ -87,6 +87,16 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 			warn("%s: (max - min) %% step != 0\n", qctrl.name);
 		}
 		break;
+	case V4L2_CTRL_TYPE_BITMASK:
+		if (qctrl.minimum)
+			return fail("minimum must be 0 for a bitmask control\n");
+		if (qctrl.step)
+			return fail("step must be 0 for a bitmask control\n");
+		if (!qctrl.maximum)
+			return fail("maximum must be non-zero for a bitmask control\n");
+		if (qctrl.default_value & ~qctrl.maximum)
+			return fail("default_value is out of range for a bitmask control\n");
+		break;
 	case V4L2_CTRL_TYPE_CTRL_CLASS:
 	case V4L2_CTRL_TYPE_INTEGER64:
 	case V4L2_CTRL_TYPE_BUTTON:
@@ -106,6 +116,7 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 	case V4L2_CTRL_TYPE_BOOLEAN:
 	case V4L2_CTRL_TYPE_MENU:
 	case V4L2_CTRL_TYPE_STRING:
+	case V4L2_CTRL_TYPE_BITMASK:
 		if (fl & V4L2_CTRL_FLAG_SLIDER)
 			return fail("slider makes only sense for integer controls\n");
 		/* fall through */
@@ -284,6 +295,10 @@ static int checkSimpleCtrl(struct v4l2_control &ctrl, struct test_queryctrl &qct
 					qctrl.name, ctrl.value);
 		}
 		break;
+	case V4L2_CTRL_TYPE_BITMASK:
+		if (ctrl.value & ~qctrl.maximum)
+			return fail("returned control value out of range\n");
+		break;
 	case V4L2_CTRL_TYPE_BUTTON:
 		break;
 	default:
@@ -443,6 +458,10 @@ static int checkExtendedCtrl(struct v4l2_ext_control &ctrl, struct test_queryctr
 			warn("%s: returned control value %d not a multiple of step\n",
 					qctrl.name, ctrl.value);
 		}
+		break;
+	case V4L2_CTRL_TYPE_BITMASK:
+		if (ctrl.value & ~qctrl.maximum)
+			return fail("returned control value out of range\n");
 		break;
 	case V4L2_CTRL_TYPE_BUTTON:
 		break;
