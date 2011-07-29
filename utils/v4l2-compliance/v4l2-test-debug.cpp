@@ -61,7 +61,7 @@ int testChipIdent(struct node *node)
 		fail_on_test(memcmp(&orig, &chip, sizeof(chip)));
 		return 0;
 	}
-	return ret == EINVAL ? -ENOSYS : ret;
+	return ret;
 }
 
 int testRegister(struct node *node)
@@ -75,8 +75,8 @@ int testRegister(struct node *node)
 	reg.match.addr = 0;
 	reg.reg = 0;
 	ret = doioctl(node, VIDIOC_DBG_G_REGISTER, &reg);
-	if (ret == EINVAL)
-		return -ENOSYS;
+	if (ret == ENOTTY)
+		return ret;
 	// Not allowed to call VIDIOC_DBG_G_REGISTER unless root
 	fail_on_test(uid && ret != EPERM);
 	fail_on_test(uid == 0 && ret);
@@ -88,14 +88,12 @@ int testRegister(struct node *node)
 		// messing with registers in the compliance test.
 		reg.reg = reg.val = 0;
 		ret = doioctl(node, VIDIOC_DBG_S_REGISTER, &reg);
-		fail_on_test(ret != EINVAL && ret != EPERM);
+		fail_on_test(ret != ENOTTY && ret != EINVAL && ret != EPERM);
 	}
 	return 0;
 }
 
 int testLogStatus(struct node *node)
 {
-	int ret = doioctl(node, VIDIOC_LOG_STATUS, NULL);
-
-	return (ret == EINVAL) ? -ENOSYS : ret;
+	return doioctl(node, VIDIOC_LOG_STATUS, NULL);
 }

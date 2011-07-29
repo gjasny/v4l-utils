@@ -125,8 +125,8 @@ int testTuner(struct node *node)
 		memset(tuner.reserved, 0, sizeof(tuner.reserved));
 		tuner.index = t;
 		ret = doioctl(node, VIDIOC_G_TUNER, &tuner);
-		if (ret == EINVAL && t == 0)
-			return -ENOSYS;
+		if (ret == ENOTTY)
+			return ret;
 		if (ret == EINVAL)
 			break;
 		if (ret)
@@ -224,16 +224,16 @@ int testTunerFreq(struct node *node)
 
 	freq.tuner = t;
 	ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
-	if (ret != EINVAL)
+	if (ret != EINVAL && ret != ENOTTY)
 		return fail("could get frequency for invalid tuner %d\n", t);
 	freq.tuner = t;
 	freq.type = last_type;
 	// TV: 400 Mhz Radio: 100 MHz
 	freq.frequency = last_type == V4L2_TUNER_ANALOG_TV ? 6400 : 1600000;
 	ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
-	if (ret != EINVAL)
+	if (ret != EINVAL && ret != ENOTTY)
 		return fail("could set frequency for invalid tuner %d\n", t);
-	return node->tuners ? 0 : -ENOSYS;
+	return node->tuners ? 0 : ENOTTY;
 }
 
 static int checkInput(struct node *node, const struct v4l2_input &descr, unsigned i)
@@ -275,16 +275,16 @@ int testInput(struct node *node)
 	int ret = doioctl(node, VIDIOC_G_INPUT, &cur_input);
 	int i = 0;
 
-	if (ret == EINVAL) {
+	if (ret == ENOTTY) {
 		descr.index = 0;
 		ret = doioctl(node, VIDIOC_ENUMINPUT, &descr);
-		if (ret != EINVAL)
+		if (ret != ENOTTY)
 			return fail("G_INPUT not supported, but ENUMINPUT is\n");
 		cur_input = 0;
 		ret = doioctl(node, VIDIOC_S_INPUT, &cur_input);
-		if (ret != EINVAL)
+		if (ret != ENOTTY)
 			return fail("G_INPUT not supported, but S_INPUT is\n");
-		return -ENOSYS;
+		return ENOTTY;
 	}
 	if (ret)
 		return fail("could not get current input\n");
@@ -350,8 +350,8 @@ int testEnumInputAudio(struct node *node)
 		input.index = i;
 
 		ret = doioctl(node, VIDIOC_ENUMAUDIO, &input);
-		if (i == 0 && ret == EINVAL)
-			return -ENOSYS;
+		if (ret == ENOTTY)
+			return ret;
 		if (ret == EINVAL)
 			break;
 		if (ret)
@@ -373,8 +373,8 @@ static int checkInputAudioSet(struct node *node, __u32 audioset)
 	int ret;
 
 	ret = doioctl(node, VIDIOC_G_AUDIO, &input);
-	if (audioset == 0 && ret != EINVAL)
-		return fail("No audio inputs, but G_AUDIO did not return EINVAL\n");
+	if (audioset == 0 && ret != ENOTTY && ret != EINVAL)
+		return fail("No audio inputs, but G_AUDIO did not return ENOTTY or EINVAL\n");
 	if (audioset) {
 		if (ret)
 			return fail("Audio inputs, but G_AUDIO returned an error\n");
@@ -392,7 +392,7 @@ static int checkInputAudioSet(struct node *node, __u32 audioset)
 		input.index = i;
 		input.mode = 0;
 		ret = doioctl(node, VIDIOC_S_AUDIO, &input);
-		if (!valid && ret != EINVAL)
+		if (!valid && ret != EINVAL && ret != ENOTTY)
 			return fail("can set invalid audio input %d\n", i);
 		if (valid && ret)
 			return fail("can't set valid audio input %d\n", i);
@@ -420,7 +420,7 @@ int testInputAudio(struct node *node)
 		if (checkInputAudioSet(node, vinput.audioset))
 			return fail("invalid audioset for input %d\n", i);
 	}
-	return node->audio_inputs ? 0 : -ENOSYS;
+	return node->audio_inputs ? 0 : ENOTTY;
 }
 
 static int checkModulator(struct node *node, const struct v4l2_modulator &mod, unsigned m)
@@ -471,8 +471,8 @@ int testModulator(struct node *node)
 		memset(mod.reserved, 0, sizeof(mod.reserved));
 		mod.index = m;
 		ret = doioctl(node, VIDIOC_G_MODULATOR, &mod);
-		if (ret == EINVAL && m == 0)
-			return -ENOSYS;
+		if (ret == ENOTTY)
+			return ret;
 		if (ret == EINVAL)
 			break;
 		if (ret)
@@ -559,15 +559,15 @@ int testModulatorFreq(struct node *node)
 
 	freq.tuner = m;
 	ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
-	if (ret != EINVAL)
+	if (ret != EINVAL && ret != ENOTTY)
 		return fail("could get frequency for invalid modulator %d\n", m);
 	freq.tuner = m;
 	// Radio: 100 MHz
 	freq.frequency = 1600000;
 	ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
-	if (ret != EINVAL)
+	if (ret != EINVAL && ret != ENOTTY)
 		return fail("could set frequency for invalid modulator %d\n", m);
-	return node->modulators ? 0 : -ENOSYS;
+	return node->modulators ? 0 : ENOTTY;
 }
 
 static int checkOutput(struct node *node, const struct v4l2_output &descr, unsigned o)
@@ -605,16 +605,15 @@ int testOutput(struct node *node)
 	int ret = doioctl(node, VIDIOC_G_OUTPUT, &cur_output);
 	int o = 0;
 
-	if (ret == EINVAL) {
+	if (ret == ENOTTY) {
 		descr.index = 0;
 		ret = doioctl(node, VIDIOC_ENUMOUTPUT, &descr);
-		if (ret != EINVAL)
+		if (ret != ENOTTY)
 			return fail("G_OUTPUT not supported, but ENUMOUTPUT is\n");
 		output = 0;
 		ret = doioctl(node, VIDIOC_S_OUTPUT, &output);
-		if (ret != EINVAL)
+		if (ret != ENOTTY)
 			return fail("G_OUTPUT not supported, but S_OUTPUT is\n");
-		return -ENOSYS;
 	}
 	if (ret)
 		return ret;
@@ -674,8 +673,8 @@ int testEnumOutputAudio(struct node *node)
 		output.index = o;
 
 		ret = doioctl(node, VIDIOC_ENUMAUDOUT, &output);
-		if (o == 0 && ret == EINVAL)
-			return -ENOSYS;
+		if (ret == ENOTTY)
+			return ENOTTY;
 		if (ret == EINVAL)
 			break;
 		if (ret)
@@ -698,8 +697,8 @@ static int checkOutputAudioSet(struct node *node, __u32 audioset)
 	int ret;
 
 	ret = doioctl(node, VIDIOC_G_AUDOUT, &output);
-	if (audioset == 0 && ret != EINVAL)
-		return fail("No audio outputs, but G_AUDOUT did not return EINVAL\n");
+	if (audioset == 0 && ret != EINVAL && ret != ENOTTY)
+		return fail("No audio outputs, but G_AUDOUT did not return EINVAL or ENOTTY\n");
 	if (audioset) {
 		if (ret)
 			return fail("Audio outputs, but G_AUDOUT returned an error\n");
@@ -717,7 +716,7 @@ static int checkOutputAudioSet(struct node *node, __u32 audioset)
 		output.index = i;
 		output.mode = 0;
 		ret = doioctl(node, VIDIOC_S_AUDOUT, &output);
-		if (!valid && ret != EINVAL)
+		if (!valid && ret != EINVAL && ret != ENOTTY)
 			return fail("can set invalid audio output %d\n", i);
 		if (valid && ret)
 			return fail("can't set valid audio output %d\n", i);
@@ -748,5 +747,5 @@ int testOutputAudio(struct node *node)
 
 	if (node->audio_outputs == 0 && node->audio_inputs && (caps & V4L2_CAP_AUDIO))
 		return fail("no audio inputs or outputs reported, but CAP_AUDIO set\n");
-	return node->audio_outputs ? 0 : -ENOSYS;
+	return node->audio_outputs ? 0 : ENOTTY;
 }

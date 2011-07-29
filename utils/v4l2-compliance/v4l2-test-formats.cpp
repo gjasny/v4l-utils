@@ -63,10 +63,12 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt, __u32 w, __u3
 		frmival.height = h;
 
 		ret = doioctl(node, VIDIOC_ENUM_FRAMEINTERVALS, &frmival);
+		if (ret == ENOTTY)
+			return ret;
 		if (f == 0 && ret == EINVAL) {
 			if (valid)
 				warn("found framesize %dx%d, but no frame intervals\n", w, h);
-			return -ENOSYS;
+			return ENOTTY;
 		}
 		if (ret == EINVAL)
 			break;
@@ -130,8 +132,10 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 		frmsize.pixel_format = pixfmt;
 
 		ret = doioctl(node, VIDIOC_ENUM_FRAMESIZES, &frmsize);
+		if (ret == ENOTTY)
+			return ret;
 		if (f == 0 && ret == EINVAL)
-			return -ENOSYS;
+			return fail("got EINVAL enumerating first framesize\n");
 		if (ret == EINVAL)
 			break;
 		if (ret)
@@ -149,11 +153,11 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 				return fail("mixing discrete and stepwise is not allowed\n");
 			ret = testEnumFrameIntervals(node, pixfmt,
 					frmsize.discrete.width, frmsize.discrete.height, true);
-			if (ret > 0)
+			if (ret && ret != ENOTTY)
 				return ret;
 			ret = testEnumFrameIntervals(node, pixfmt,
 					frmsize.discrete.width + 1, frmsize.discrete.height, false);
-			if (ret > 0)
+			if (ret && ret != ENOTTY)
 				return ret;
 			break;
 		case V4L2_FRMSIZE_TYPE_CONTINUOUS:
@@ -173,19 +177,19 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 				return fail("step > max - min for width or height\n");
 			ret = testEnumFrameIntervals(node, pixfmt,
 					sw->min_width, sw->min_height, true);
-			if (ret > 0)
+			if (ret && ret != ENOTTY)
 				return ret;
 			ret = testEnumFrameIntervals(node, pixfmt,
 					sw->max_width, sw->max_height, true);
-			if (ret > 0)
+			if (ret && ret != ENOTTY)
 				return ret;
 			ret = testEnumFrameIntervals(node, pixfmt,
 					sw->min_width - 1, sw->min_height, false);
-			if (ret > 0)
+			if (ret && ret != ENOTTY)
 				return ret;
 			ret = testEnumFrameIntervals(node, pixfmt,
 					sw->max_width, sw->max_height + 1, false);
-			if (ret > 0)
+			if (ret && ret != ENOTTY)
 				return ret;
 			break;
 		default:
@@ -211,8 +215,10 @@ static int testEnumFormatsType(struct node *node, enum v4l2_buf_type type)
 		fmtdesc.index = f;
 
 		ret = doioctl(node, VIDIOC_ENUM_FMT, &fmtdesc);
+		if (ret == ENOTTY)
+			return ret;
 		if (f == 0 && ret == EINVAL)
-			return -ENOSYS;
+			return ENOTTY;
 		if (ret == EINVAL)
 			break;
 		if (ret)
@@ -234,7 +240,7 @@ static int testEnumFormatsType(struct node *node, enum v4l2_buf_type type)
 		if (fmtdesc.flags & ~(V4L2_FMT_FLAG_COMPRESSED | V4L2_FMT_FLAG_EMULATED))
 			return fail("unknown flag %08x returned\n", fmtdesc.flags);
 		ret = testEnumFrameSizes(node, fmtdesc.pixelformat);
-		if (ret > 0)
+		if (ret && ret != ENOTTY)
 			return ret;
 		if (ret == 0 && !(node->caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)))
 			return fail("found framesizes when no video capture is supported\n");
@@ -271,7 +277,7 @@ int testEnumFormats(struct node *node)
 
 	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
 		ret = testEnumFormatsType(node, (enum v4l2_buf_type)type);
-		if (ret > 0)
+		if (ret && ret != ENOTTY)
 			return ret;
 		switch (type) {
 		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
@@ -279,7 +285,7 @@ int testEnumFormats(struct node *node)
 		case V4L2_BUF_TYPE_VIDEO_OVERLAY:
 		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
-			if (ret < 0 && (node->caps & buftype2cap[type]))
+			if (ret && (node->caps & buftype2cap[type]))
 				return fail("%s cap set, but no %s formats defined\n",
 						buftype2s(type).c_str(), buftype2s(type).c_str());
 			if (!ret && !(node->caps & buftype2cap[type]))
@@ -294,16 +300,16 @@ int testEnumFormats(struct node *node)
 	}
 
 	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_PRIVATE);
-	if (ret > 0)
+	if (ret && ret != ENOTTY)
 		return ret;
 	if (!ret)
 		warn("Buffer type PRIVATE allowed!\n");
 		
 	ret = testEnumFrameSizes(node, 0x20202020);
-	if (ret >= 0)
+	if (ret != ENOTTY)
 		return fail("Accepted framesize for invalid format\n");
 	ret = testEnumFrameIntervals(node, 0x20202020, 640, 480, false);
-	if (ret >= 0)
+	if (ret != ENOTTY)
 		return fail("Accepted frameinterval for invalid format\n");
 	return 0;
 }
@@ -320,10 +326,10 @@ int testFBuf(struct node *node)
 	fbuf.fmt.priv = 0;
 	ret = doioctl(node, VIDIOC_G_FBUF, &fbuf);
 	fail_on_test(ret == 0 && !(node->caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
-	fail_on_test(ret == EINVAL && (node->caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
-	if (ret == EINVAL)
-		return -ENOSYS;
-	if (ret)
+	fail_on_test(ret == ENOTTY && (node->caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
+	if (ret == ENOTTY)
+		return ret;
+	if (ret != EINVAL)
 		return fail("expected EINVAL, but got %d when getting framebuffer format\n", ret);
 	node->fbuf_caps = caps = fbuf.capability;
 	flags = fbuf.flags;
@@ -371,11 +377,15 @@ static int testFormatsType(struct node *node, enum v4l2_buf_type type)
 	memset(&fmt, 0xff, sizeof(fmt));
 	fmt.type = type;
 	ret = doioctl(node, VIDIOC_G_FMT, &fmt);
+	if (ret == ENOTTY)
+		return ret;
 	if (ret == EINVAL)
-		return -ENOSYS;
+		return ENOTTY;
 	if (ret)
 		return fail("expected EINVAL, but got %d when getting format for buftype %d\n", ret, type);
 	fail_on_test(fmt.type != type);
+	if (ret)
+		return 0;
 	
 	switch (type) {
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
@@ -474,7 +484,7 @@ int testFormats(struct node *node)
 	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
 		ret = testFormatsType(node, (enum v4l2_buf_type)type);
 
-		if (ret > 0)
+		if (ret && ret != ENOTTY)
 			return ret;
 		if (ret && (node->caps & buftype2cap[type]))
 			return fail("%s cap set, but no %s formats defined\n",
@@ -485,7 +495,7 @@ int testFormats(struct node *node)
 	}
 
 	ret = testFormatsType(node, V4L2_BUF_TYPE_PRIVATE);
-	if (ret > 0)
+	if (ret && ret != ENOTTY)
 		return ret;
 	if (!ret)
 		warn("Buffer type PRIVATE allowed!\n");
@@ -504,18 +514,17 @@ static int testSlicedVBICapType(struct node *node, enum v4l2_buf_type type)
 	memset(&cap.reserved, 0, sizeof(cap.reserved));
 	cap.type = type;
 	ret = doioctl(node, VIDIOC_G_SLICED_VBI_CAP, &cap);
+	if (ret == ENOTTY) {
+		fail_on_test(sliced_type && (node->caps & buftype2cap[type]));
+		return ret;
+	}
 	fail_on_test(check_0(cap.reserved, sizeof(cap.reserved)));
 	fail_on_test(cap.type != type);
-	fail_on_test(ret && ret != EINVAL && sliced_type);
-	if (ret == EINVAL) {
-		fail_on_test(sliced_type && (node->caps & buftype2cap[type]));
-		if (node->caps & (V4L2_CAP_SLICED_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_OUTPUT))
-			return 0;
-		return -ENOSYS;
-	}
+	fail_on_test(ret && ret != EINVAL);
+	fail_on_test(ret && sliced_type && (node->caps & buftype2cap[type]));
+	fail_on_test(!ret && (!sliced_type || !(node->caps & buftype2cap[type])));
 	if (ret)
-		return fail("expected EINVAL, but got %d when getting sliced VBI caps buftype %d\n", ret, type);
-	fail_on_test(!(node->caps & buftype2cap[type]));
+		return 0;
 
 	for (int f = 0; f < 2; f++)
 		for (int i = 0; i < 24; i++)

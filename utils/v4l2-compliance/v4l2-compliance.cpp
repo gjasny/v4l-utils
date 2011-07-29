@@ -193,7 +193,7 @@ const char *ok(int res)
 {
 	static char buf[100];
 
-	if (res == -ENOSYS) {
+	if (res == ENOTTY) {
 		strcpy(buf, "Not Supported");
 		res = 0;
 	} else {
@@ -248,6 +248,7 @@ static int testCap(struct node *node)
 		fail_on_test(vcap.bus_info[0]);
 		warn("VIDIOC_QUERYCAP: empty bus_info\n");
 	}
+	fail_on_test((vcap.version >> 16) < 3);
 	fail_on_test(check_0(vcap.reserved, sizeof(vcap.reserved)));
 	caps = vcap.capabilities;
 	fail_on_test(vcap.capabilities == 0);

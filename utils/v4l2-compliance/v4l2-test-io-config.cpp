@@ -136,7 +136,7 @@ int testStd(struct node *node)
 		if (checkStd(node, output.capabilities & V4L2_OUT_CAP_STD, output.std))
 			return fail("STD failed for output %d.\n", o);
 	}
-	return has_std ? 0 : -ENOSYS;
+	return has_std ? 0 : ENOTTY;
 }
 
 static int checkPresets(struct node *node, bool has_presets)
@@ -163,7 +163,7 @@ static int checkPresets(struct node *node, bool has_presets)
 	}
 	preset.preset = V4L2_DV_INVALID;
 	ret = doioctl(node, VIDIOC_S_DV_PRESET, &preset);
-	if (ret != EINVAL)
+	if (ret != EINVAL && ret != ENOTTY)
 		return fail("could set preset V4L2_DV_INVALID\n");
 
 	for (i = 0; ; i++) {
@@ -231,7 +231,7 @@ int testPresets(struct node *node)
 		if (checkPresets(node, output.capabilities & V4L2_OUT_CAP_PRESETS))
 			return fail("Presets check failed for output %d.\n", o);
 	}
-	return has_presets ? 0 : -ENOSYS;
+	return has_presets ? 0 : ENOTTY;
 }
 
 static int checkTimings(struct node *node, bool has_timings)
@@ -290,5 +290,5 @@ int testCustomTimings(struct node *node)
 		if (checkTimings(node, output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS))
 			return fail("Custom timings check failed for output %d.\n", o);
 	}
-	return has_timings ? 0 : -ENOSYS;
+	return has_timings ? 0 : ENOTTY;
 }
