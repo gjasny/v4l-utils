@@ -558,6 +558,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		"MicroLink", "S96S" },
 	{ 0x174f, 0x8a31, 0, "ASUSTeK Computer Inc.        ", "F9E       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x174f, 0xa311, 0, "ASUSTeK Computer Inc.        ", "A3E       ",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0xa311, 0, "ASUSTeK Computer Inc.        ", "A3F       ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0xa311, 0, "ASUSTeK Computer Inc.        ", "A3V       ",
