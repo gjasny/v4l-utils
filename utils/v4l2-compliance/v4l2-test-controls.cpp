@@ -188,6 +188,8 @@ int testQueryControls(struct node *node)
 		memset(&qctrl, 0xff, sizeof(qctrl));
 		qctrl.id = id | V4L2_CTRL_FLAG_NEXT_CTRL;
 		ret = doioctl(node, VIDIOC_QUERYCTRL, &qctrl);
+		if (ret == ENOTTY)
+			return ret;
 		if (ret && ret != EINVAL)
 			return fail("invalid queryctrl return code\n");
 		if (ret)
@@ -493,12 +495,10 @@ int testExtendedControls(struct node *node)
 
 	memset(&ctrls, 0, sizeof(ctrls));
 	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
-	if (ret && !node->controls.empty())
-		return fail("g_ext_ctrls does not support count == 0\n");
-	if (ret && ret != EINVAL)
-		return fail("g_ext_ctrls with count == 0 did not return EINVAL\n");
+	if (ret == ENOTTY && node->controls.empty())
+		return ret;
 	if (ret)
-		return -ENOSYS;
+		return fail("g_ext_ctrls does not support count == 0\n");
 	if (node->controls.empty())
 		return fail("g_ext_ctrls worked even when no controls are present\n");
 	if (ctrls.ctrl_class)
