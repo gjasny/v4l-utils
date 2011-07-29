@@ -135,7 +135,7 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 		if (ret == ENOTTY)
 			return ret;
 		if (f == 0 && ret == EINVAL)
-			return fail("got EINVAL enumerating first framesize\n");
+			return ENOTTY;
 		if (ret == EINVAL)
 			break;
 		if (ret)
