@@ -166,8 +166,10 @@ struct v4lconvert_data *v4lconvert_create(int fd, void *dev_ops_priv,
 		free(data);
 		return NULL;
 	}
-	data->control_flags = v4lcontrol_get_flags(data->control);
 	data->bandwidth = v4lcontrol_get_bandwidth(data->control);
+	data->control_flags = v4lcontrol_get_flags(data->control);
+	if (data->control_flags & V4LCONTROL_FORCE_TINYJPEG)
+		data->flags |= V4LCONVERT_USE_TINYJPEG;
 
 	data->processing = v4lprocessing_create(fd, data->control);
 	if (!data->processing) {

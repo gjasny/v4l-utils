@@ -640,6 +640,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
 	{ 0x047d, 0x5003, 0,    NULL, NULL,
 		V4LCONTROL_HFLIPPED | V4LCONTROL_WANTS_WB_AUTOGAIN },
+	/* W996xCF based cams, must use jpeglite because of funky JPEG fmt */
+	{ 0x041e, 0x4003, 0,    NULL, NULL, V4LCONTROL_FORCE_TINYJPEG },
+	{ 0x1046, 0x9967, 0,    NULL, NULL, V4LCONTROL_FORCE_TINYJPEG },
 };
 
 static const struct v4l2_queryctrl fake_controls[];
