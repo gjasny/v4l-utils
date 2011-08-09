@@ -41,7 +41,7 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
 	if (tinyjpeg_parse_header(data->tinyjpeg, src, src_size)) {
 		V4LCONVERT_ERR("parsing JPEG header: %s",
 				tinyjpeg_get_errorstring(data->tinyjpeg));
-		errno = EIO;
+		errno = EAGAIN;
 		return -1;
 	}
 	tinyjpeg_get_size(data->tinyjpeg, &header_width, &header_height);
@@ -266,8 +266,8 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 	unsigned int height = fmt->fmt.pix.height;
 	int result = 0;
 
-	/* libjpeg errors before decoding the first line should signal EIO */
-	data->jerr_errno = EIO;
+	/* libjpeg errors before decoding the first line should signal EAGAIN */
+	data->jerr_errno = EAGAIN;
 	result = setjmp(data->jerr_jmp_state);
 	if (result) {
 		if (data->cinfo_initialized)
