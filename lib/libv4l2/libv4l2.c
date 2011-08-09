@@ -327,7 +327,7 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 	if (result < 0 && errno == EAGAIN) {
 		V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s",
 				max_tries, v4lconvert_get_error_message(devices[index].convert));
-		errno = EAGAIN;
+		errno = EIO;
 	}
 
 	if (result < 0 && errno == EPIPE) {
@@ -401,7 +401,7 @@ static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
 	if (result < 0 && errno == EAGAIN) {
 		V4L2_LOG_ERR("got %d consecutive frame decode errors, last error: %s",
 				max_tries, v4lconvert_get_error_message(devices[index].convert));
-		errno = EAGAIN;
+		errno = EIO;
 	}
 
 	if (result < 0 && errno == EPIPE) {
