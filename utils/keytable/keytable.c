@@ -1350,6 +1350,27 @@ static void show_evdev_attribs(int fd)
 	get_rate(fd, &delay, &period);
 }
 
+static void device_info(int fd, char *prepend)
+{
+	struct input_id id;
+	char buf[32];
+	int rc;
+
+	rc = ioctl(fd, EVIOCGNAME(sizeof(buf)), buf);
+	if (rc >= 0)
+		fprintf(stderr,"%sName: %.*s\n",prepend, rc, buf);
+	else
+		perror ("EVIOCGNAME");
+
+	rc = ioctl(fd, EVIOCGID, &id);
+	if (rc >= 0)
+		fprintf(stderr,
+			"%sbus: %d, vendor/product: %04x:%04x, version: 0x%04x\n",
+			prepend, id.bustype, id.vendor, id.product, id.version);
+	else
+		perror ("EVIOCGID");
+}
+
 static int show_sysfs_attribs(struct rc_device *rc_dev)
 {
 	static struct sysfs_names *names, *cur;
@@ -1374,6 +1395,7 @@ static int show_sysfs_attribs(struct rc_device *rc_dev)
 			display_proto(rc_dev);
 			fd = open(rc_dev->input_name, O_RDONLY);
 			if (fd > 0) {
+				device_info(fd, "\t");
 				show_evdev_attribs(fd);
 				close(fd);
 			} else {
@@ -1395,6 +1417,16 @@ int main(int argc, char *argv[])
 
 	/* Just list all devices */
 	if (!clear && !readtable && !keys.next && !ch_proto && !cfg.next && !test && !delay && !period) {
+		if (devname) {
+			fd = open(devname, O_RDONLY);
+			if (fd < 0) {
+				perror("Can't open device");
+				return -1;
+			}
+			device_info(fd, "");
+			close(fd);
+			return 0;
+		}
 		if (show_sysfs_attribs(&rc_dev))
 			return -1;
 
