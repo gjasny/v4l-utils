@@ -4,6 +4,7 @@
 	<file>fileopen.png</file>
 	<file>fileclose.png</file>
 	<file>record.png</file>
+	<file>video-television.png</file>
 	<file>qv4l2.png</file>
     </qresource>
 </RCC>

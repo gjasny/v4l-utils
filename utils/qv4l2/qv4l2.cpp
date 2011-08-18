@@ -76,6 +76,11 @@ ApplicationWindow::ApplicationWindow() :
 	m_capStartAct->setDisabled(true);
 	connect(m_capStartAct, SIGNAL(toggled(bool)), this, SLOT(capStart(bool)));
 
+	m_showFramesAct = new QAction(QIcon(":/video-television.png"), "Show &frames", this);
+	m_showFramesAct->setStatusTip("Only show captured frames if set.");
+	m_showFramesAct->setCheckable(true);
+	m_showFramesAct->setChecked(true);
+
 	QAction *closeAct = new QAction(QIcon(":/fileclose.png"), "&Close", this);
 	closeAct->setStatusTip("Close");
 	closeAct->setShortcut(Qt::CTRL+Qt::Key_W);
@@ -91,6 +96,7 @@ ApplicationWindow::ApplicationWindow() :
 	fileMenu->addAction(openRawAct);
 	fileMenu->addAction(closeAct);
 	fileMenu->addAction(m_capStartAct);
+	fileMenu->addAction(m_showFramesAct);
 	fileMenu->addSeparator();
 	fileMenu->addAction(quitAct);
 
@@ -171,7 +177,6 @@ void ApplicationWindow::openrawdev()
 void ApplicationWindow::capFrame()
 {
 	v4l2_buffer buf;
-	unsigned i;
 	int s = 0;
 	int err = 0;
 	bool again;
@@ -186,6 +191,8 @@ void ApplicationWindow::capFrame()
 			}
 			return;
 		}
+		if (!m_showFrames)
+			break;
 		if (m_mustConvert)
 			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 				m_frameData, s,
@@ -203,13 +210,17 @@ void ApplicationWindow::capFrame()
 		if (again)
 			return;
 
-		if (m_mustConvert)
-			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
-				(unsigned char *)m_buffers[buf.index].start, buf.bytesused,
-				m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-		else
-			memcpy(m_capImage->bits(), (unsigned char *)m_buffers[buf.index].start,
-					buf.bytesused);
+		if (m_showFrames) {
+			if (m_mustConvert)
+				err = v4lconvert_convert(m_convertData,
+					&m_capSrcFormat, &m_capDestFormat,
+					(unsigned char *)m_buffers[buf.index].start, buf.bytesused,
+					m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
+			else
+				memcpy(m_capImage->bits(),
+				       (unsigned char *)m_buffers[buf.index].start,
+				       buf.bytesused);
+		}
 
 		qbuf(buf);
 		break;
@@ -223,18 +234,16 @@ void ApplicationWindow::capFrame()
 		if (again)
 			return;
 
-		for (i = 0; i < m_nbuffers; ++i)
-			if (buf.m.userptr == (unsigned long)m_buffers[i].start
-					&& buf.length == m_buffers[i].length)
-				break;
-
-		if (m_mustConvert)
-			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
-				(unsigned char *)buf.m.userptr, buf.bytesused,
-				m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-		else
-			memcpy(m_capImage->bits(), (unsigned char *)buf.m.userptr,
+		if (m_showFrames) {
+			if (m_mustConvert)
+				err = v4lconvert_convert(m_convertData,
+					&m_capSrcFormat, &m_capDestFormat,
+					(unsigned char *)buf.m.userptr, buf.bytesused,
+					m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
+			else
+				memcpy(m_capImage->bits(), (unsigned char *)buf.m.userptr,
 					buf.bytesused);
+		}
 
 		qbuf(buf);
 		break;
@@ -242,9 +251,24 @@ void ApplicationWindow::capFrame()
 	if (err == -1)
 		error(v4lconvert_get_error_message(m_convertData));
 
-	QString status = m_capture->setImage(*m_capImage);
+	QString status;
+	struct timeval tv, res;
+
+	if (m_frame == 0)
+		gettimeofday(&m_tv, NULL);
+	gettimeofday(&tv, NULL);
+	timersub(&tv, &m_tv, &res);
+	if (res.tv_sec) {
+		m_fps = (100 * (m_frame - m_lastFrame)) /
+			(res.tv_sec * 100 + res.tv_usec / 10000);
+		m_lastFrame = m_frame;
+		m_tv = tv;
+	}
+	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
+	if (m_showFrames)
+		m_capture->setImage(*m_capImage, status);
 	statusBar()->showMessage(status);
-	if (m_capture->frame() == 1)
+	if (m_frame == 1)
 		refresh();
 }
 
@@ -435,35 +459,40 @@ void ApplicationWindow::capStart(bool start)
 		delete m_capImage;
 		return;
 	}
+	m_showFrames = m_showFramesAct->isChecked();
+	m_frame = m_lastFrame = m_fps = 0;
 	m_capMethod = m_genTab->capMethod();
 	g_fmt_cap(m_capSrcFormat);
-	m_frameData = new unsigned char[m_capSrcFormat.fmt.pix.sizeimage];
-	m_capDestFormat = m_capSrcFormat;
-	m_capDestFormat.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
 
-	m_mustConvert = true;
-	for (int i = 0; supported_fmts[i].v4l2_pixfmt; i++) {
-		if (supported_fmts[i].v4l2_pixfmt == m_capSrcFormat.fmt.pix.pixelformat) {
-			m_capDestFormat.fmt.pix.pixelformat = supported_fmts[i].v4l2_pixfmt;
-			dstFmt = supported_fmts[i].qt_pixfmt;
-			m_mustConvert = false;
-			break;
+	m_mustConvert = m_showFrames;
+	if (m_showFrames) {
+		m_frameData = new unsigned char[m_capSrcFormat.fmt.pix.sizeimage];
+		m_capDestFormat = m_capSrcFormat;
+		m_capDestFormat.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+
+		for (int i = 0; supported_fmts[i].v4l2_pixfmt; i++) {
+			if (supported_fmts[i].v4l2_pixfmt == m_capSrcFormat.fmt.pix.pixelformat) {
+				m_capDestFormat.fmt.pix.pixelformat = supported_fmts[i].v4l2_pixfmt;
+				dstFmt = supported_fmts[i].qt_pixfmt;
+				m_mustConvert = false;
+				break;
+			}
 		}
+		if (m_mustConvert) {
+			v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
+			// v4lconvert_try_format sometimes modifies the source format if it thinks
+			// that there is a better format available. Restore our selected source
+			// format since we do not want that happening.
+			g_fmt_cap(m_capSrcFormat);
+		}
+
+		m_capture->setMinimumSize(m_capDestFormat.fmt.pix.width, m_capDestFormat.fmt.pix.height);
+		m_capImage = new QImage(m_capDestFormat.fmt.pix.width, m_capDestFormat.fmt.pix.height, dstFmt);
+		m_capImage->fill(0);
+		m_capture->setImage(*m_capImage, "No frame");
+		m_capture->show();
 	}
-	if (m_mustConvert) {
-		v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
-		// v4lconvert_try_format sometimes modifies the source format if it thinks
-		// that there is a better format available. Restore our selected source
-		// format since we do not want that happening.
-		g_fmt_cap(m_capSrcFormat);
-	}
-	
-	m_capture->setMinimumSize(m_capDestFormat.fmt.pix.width, m_capDestFormat.fmt.pix.height);
-	m_capImage = new QImage(m_capDestFormat.fmt.pix.width, m_capDestFormat.fmt.pix.height, dstFmt);
-	m_capImage->fill(0);
-	QString status = m_capture->setImage(*m_capImage, true);
-	statusBar()->showMessage(status);
-	m_capture->show();
+	statusBar()->showMessage("No frame");
 	if (startCapture(m_capSrcFormat.fmt.pix.sizeimage)) {
 		m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
 		connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capFrame()));

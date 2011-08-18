@@ -30,7 +30,6 @@ CaptureWin::CaptureWin()
 	QVBoxLayout *vbox = new QVBoxLayout(this);
 
 	setWindowTitle("V4L2 Capture");
-	m_frame = 0;
 	m_label = new QLabel();
 	m_msg = new QLabel("No frame");
 
@@ -38,32 +37,10 @@ CaptureWin::CaptureWin()
 	vbox->addWidget(m_msg);
 }
 
-QString CaptureWin::setImage(const QImage &image, bool init)
+void CaptureWin::setImage(const QImage &image, const QString &status)
 {
-	QString txt;
-
 	m_label->setPixmap(QPixmap::fromImage(image));
-	if (init) {
-		m_frame = m_lastFrame = m_fps = 0;
-		txt = "No frame";
-		m_msg->setText(txt);
-	} else {
-		struct timeval tv, res;
-
-		if (m_frame == 0)
-			gettimeofday(&m_tv, NULL);
-		gettimeofday(&tv, NULL);
-		timersub(&tv, &m_tv, &res);
-		if (res.tv_sec) {
-			m_fps = (100 * (m_frame - m_lastFrame)) /
-				(res.tv_sec * 100 + res.tv_usec / 10000);
-			m_lastFrame = m_frame;
-			m_tv = tv;
-		}
-		txt = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
-		m_msg->setText(txt);
-	}
-	return txt;
+	m_msg->setText(status);
 }
 
 void CaptureWin::closeEvent(QCloseEvent *event)

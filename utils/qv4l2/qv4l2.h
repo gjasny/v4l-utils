@@ -147,6 +147,7 @@ private:
 
 	GeneralTab *m_genTab;
 	QAction *m_capStartAct;
+	QAction *m_showFramesAct;
 	QString m_filename;
 	QSignalMapper *m_sigMapper;
 	QTabWidget *m_tabs;
@@ -157,6 +158,11 @@ private:
 	WidgetMap m_widgetMap;
 	ClassMap m_classMap;
 	bool m_haveExtendedUserCtrls;
+	bool m_showFrames;
+	unsigned m_frame;
+	unsigned m_lastFrame;
+	unsigned m_fps;
+	struct timeval m_tv;
 };
 
 extern ApplicationWindow *g_mw;
