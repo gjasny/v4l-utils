@@ -29,6 +29,7 @@ CaptureWin::CaptureWin()
 {
 	QVBoxLayout *vbox = new QVBoxLayout(this);
 
+	setWindowTitle("V4L2 Capture");
 	m_frame = 0;
 	m_label = new QLabel();
 	m_msg = new QLabel("No frame");
