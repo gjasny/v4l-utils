@@ -91,6 +91,7 @@ private:
 	unsigned char *m_frameData;
 	unsigned m_nbuffers;
 	struct v4lconvert_data *m_convertData;
+	bool m_mustConvert;
 	CapMethod m_capMethod;
 
 private slots:
