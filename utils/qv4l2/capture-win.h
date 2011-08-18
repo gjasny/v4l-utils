@@ -34,8 +34,7 @@ public:
 	CaptureWin();
 	virtual ~CaptureWin() {}
 
-	QString setImage(const QImage &image, bool init = false);
-	unsigned frame() const { return m_frame; }
+	void setImage(const QImage &image, const QString &status);
 
 protected:
 	virtual void closeEvent(QCloseEvent *event);
@@ -46,10 +45,6 @@ signals:
 private:
 	QLabel *m_label;
 	QLabel *m_msg;
-	unsigned m_frame;
-	unsigned m_lastFrame;
-	unsigned m_fps;
-	struct timeval m_tv;
 };
 
 #endif
