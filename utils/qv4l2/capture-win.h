@@ -34,7 +34,7 @@ public:
 	CaptureWin();
 	virtual ~CaptureWin() {}
 
-	void setImage(const QImage &image, bool init = false);
+	QString setImage(const QImage &image, bool init = false);
 	unsigned frame() const { return m_frame; }
 
 protected:
