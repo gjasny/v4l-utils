@@ -37,12 +37,15 @@ CaptureWin::CaptureWin()
 	vbox->addWidget(m_msg);
 }
 
-void CaptureWin::setImage(const QImage &image, bool init)
+QString CaptureWin::setImage(const QImage &image, bool init)
 {
+	QString txt;
+
 	m_label->setPixmap(QPixmap::fromImage(image));
 	if (init) {
 		m_frame = m_lastFrame = m_fps = 0;
-		m_msg->setText("No frame");
+		txt = "No frame";
+		m_msg->setText(txt);
 	} else {
 		struct timeval tv, res;
 
@@ -56,9 +59,10 @@ void CaptureWin::setImage(const QImage &image, bool init)
 			m_lastFrame = m_frame;
 			m_tv = tv;
 		}
-		m_msg->setText(QString("Frame: %1 Fps: %2")
-				.arg(++m_frame).arg(m_fps));
+		txt = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
+		m_msg->setText(txt);
 	}
+	return txt;
 }
 
 void CaptureWin::closeEvent(QCloseEvent *event)

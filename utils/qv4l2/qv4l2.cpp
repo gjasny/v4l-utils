@@ -244,7 +244,8 @@ void ApplicationWindow::capFrame()
 	if (err == -1)
 		error(v4lconvert_get_error_message(m_convertData));
 
-	m_capture->setImage(*m_capImage);
+	QString status = m_capture->setImage(*m_capImage);
+	statusBar()->showMessage(status);
 	if (m_capture->frame() == 1)
 		refresh();
 }
@@ -462,7 +463,8 @@ void ApplicationWindow::capStart(bool start)
 	m_capture->setMinimumSize(m_capDestFormat.fmt.pix.width, m_capDestFormat.fmt.pix.height);
 	m_capImage = new QImage(m_capDestFormat.fmt.pix.width, m_capDestFormat.fmt.pix.height, dstFmt);
 	m_capImage->fill(0);
-	m_capture->setImage(*m_capImage, true);
+	QString status = m_capture->setImage(*m_capImage, true);
+	statusBar()->showMessage(status);
 	m_capture->show();
 	if (startCapture(m_capSrcFormat.fmt.pix.sizeimage)) {
 		m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
