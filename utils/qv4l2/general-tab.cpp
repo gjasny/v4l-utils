@@ -164,8 +164,12 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_vidCapFormats = new QComboBox(parent);
 	if (enum_fmt_cap(fmt, true)) {
 		do {
-			m_vidCapFormats->addItem(pixfmt2s(fmt.pixelformat) +
-					" - " + (const char *)fmt.description);
+			QString s(pixfmt2s(fmt.pixelformat) + " (");
+
+			if (fmt.flags & V4L2_FMT_FLAG_EMULATED)
+				m_vidCapFormats->addItem(s + "Emulated)");
+			else
+				m_vidCapFormats->addItem(s + (const char *)fmt.description + ")");
 		} while (enum_fmt_cap(fmt));
 	}
 	addWidget(m_vidCapFormats);
