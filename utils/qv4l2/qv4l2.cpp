@@ -459,6 +459,7 @@ void ApplicationWindow::capStart(bool start)
 		delete m_capNotifier;
 		m_capNotifier = NULL;
 		delete m_capImage;
+		m_capImage = NULL;
 		return;
 	}
 	m_showFrames = m_showFramesAct->isChecked();
@@ -512,6 +513,7 @@ void ApplicationWindow::closeDevice()
 			delete m_capNotifier;
 			delete m_capImage;
 			m_capNotifier = NULL;
+			m_capImage = NULL;
 		}
 		delete m_frameData;
 		m_frameData = NULL;
