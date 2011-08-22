@@ -69,7 +69,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		} while (enum_std(vs));
 		addWidget(m_tvStandard);
 		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
-		updateStandard();
 	}
 
 	v4l2_dv_enum_preset preset;
@@ -81,7 +80,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		} while (enum_dv_preset(preset));
 		addWidget(m_videoPreset);
 		connect(m_videoPreset, SIGNAL(activated(int)), SLOT(presetChanged(int)));
-		updatePreset();
 	}
 
 	v4l2_input vin;
@@ -195,6 +193,11 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_frameInterval->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	addWidget(m_frameInterval);
 	connect(m_frameInterval, SIGNAL(activated(int)), SLOT(frameIntervalChanged(int)));
+
+	if (m_tvStandard)
+		updateStandard();
+	if (m_videoPreset)
+		updatePreset();
 
 	updateVidCapFormat();
 
@@ -488,6 +491,7 @@ void GeneralTab::updateStandard()
 		vs.frameperiod.numerator, vs.frameperiod.denominator,
 		vs.framelines);
 	m_tvStandard->setWhatsThis(what);
+	updateVidCapFormat();
 }
 
 void GeneralTab::updatePreset()
@@ -510,6 +514,7 @@ void GeneralTab::updatePreset()
 		"Frame %ux%u\n",
 		p.preset, p.width, p.height);
 	m_videoPreset->setWhatsThis(what);
+	updateVidCapFormat();
 }
 
 void GeneralTab::updateFreq()
@@ -607,6 +612,7 @@ void GeneralTab::updateFrameInterval()
 	m_frameInterval->clear();
 
 	ok = enum_frameintervals(frmival, m_pixelformat, m_width, m_height);
+	m_frameInterval->setEnabled(ok);
 	curr_ok = get_interval(curr);
 	if (ok && frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
 		do {
