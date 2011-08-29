@@ -49,9 +49,9 @@ static int checkStd(struct node *node, bool has_std, v4l2_std_id mask)
 			warn("current standard is invalid according to the input standard mask\n");
 		if (std == 0)
 			return fail("Standard == 0?!\n");
+		if (std & V4L2_STD_ATSC)
+			return fail("Current standard contains ATSC standards. This is no longer supported\n");
 	}
-	if (std & V4L2_STD_ATSC)
-		return fail("Current standard contains ATSC standards. This is no longer supported\n");
 	ret = doioctl(node, VIDIOC_S_STD, &std);
 	if (ret && has_std)
 		return fail("STD cap set, but could not set standard\n");
