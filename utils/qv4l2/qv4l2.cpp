@@ -105,6 +105,7 @@ ApplicationWindow::ApplicationWindow() :
 	toolBar->setObjectName("toolBar");
 	toolBar->addAction(openAct);
 	toolBar->addAction(m_capStartAct);
+	toolBar->addAction(m_showFramesAct);
 	toolBar->addSeparator();
 	toolBar->addAction(quitAct);
 
