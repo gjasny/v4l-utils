@@ -183,6 +183,9 @@ struct v4lconvert_data *v4lconvert_create(int fd, void *dev_ops_priv,
 
 void v4lconvert_destroy(struct v4lconvert_data *data)
 {
+	if (!data)
+		return;
+
 	v4lprocessing_destroy(data->processing);
 	v4lcontrol_destroy(data->control);
 	if (data->tinyjpeg) {
