@@ -327,7 +327,11 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "F82Q      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x064e, 0xa116, 0, "ASUSTeK Computer INC.", "K40AB",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer INC.", "K40AD",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	{ 0x064e, 0xa116, 0, "ASUSTeK Computer INC.", "K50AD",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "K40IJ     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -386,11 +390,6 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "U80V      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x064e, 0xa116, 0, "ASUSTeK Computer Inc.        ", "X58LE     ",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
-	/* Note no whitespace padding for these models, this is not a typo */
-	{ 0x064e, 0xa116, 0, "ASUSTeK Computer INC.", "K40AB",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
-	{ 0x064e, 0xa116, 0, "ASUSTeK Computer INC.", "K50AD",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	/* 2 reports:
 	   Unknown laptop model -> System Vendor: "  IDEALMAX"
