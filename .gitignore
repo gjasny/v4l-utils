@@ -4,3 +4,7 @@
 *.so.0
 *.pc
 *.a
+config.log
+config.status
+Makefile
+configure

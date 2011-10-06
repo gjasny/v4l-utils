@@ -1,0 +1,42 @@
+AC_INIT(v4l-utils.spec.in)
+
+V4L_UTILS_VERSION=0.9.0-test
+
+dnl ---------------------------------------------------------------------
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_CXX
+AC_LANG_C
+AC_PROG_MAKE_SET
+AC_HEADER_STDC
+
+dnl ---------------------------------------------------------------------
+dnl Options
+
+AC_ARG_ENABLE(libv4l,
+  [  --disable-libv4l        disable dynamic libv4l compilation],
+  [case "${enableval}" in
+     yes | no ) WITH_LIBV4L="${enableval}" ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-ctemplate) ;;
+   esac],
+  [WITH_LIBV4L="yes"]
+)
+
+AC_ARG_ENABLE(v4l-utils,
+  [  --disable-v4l-utils     disable v4l-utils compilation],
+  [case "${enableval}" in
+     yes | no ) WITH_V4LUTILS="${enableval}" ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-ctemplate) ;;
+   esac],
+  [WITH_V4LUTILS="yes"]
+)
+
+dnl ---------------------------------------------------------------------
+dnl Substitute vars
+AC_SUBST(V4L_UTILS_VERSION)
+AC_SUBST(WITH_LIBV4L)
+AC_SUBST(WITH_V4LUTILS)
+
+dnl ---------------------------------------------------------------------
+dnl read Makefile.in and write Makefile
+AC_OUTPUT(Makefile)

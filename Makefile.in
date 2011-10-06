@@ -1,6 +1,36 @@
-all install:
+CC			= @CC@
+CXX			= @CXX@
+V4L_UTILS_VERSION	= @V4L_UTILS_VERSION@
+CFLAGS			= @CFLAGS@
+WITH_LIBV4L		= @WITH_LIBV4L@
+WITH_V4LUTILS		= @WITH_V4LUTILS@
+
+LIBV4L_ARGS=
+ifeq ($(WITH_LIBV4L),no)
+ifeq ($(WITH_V4LUTILS),yes)
+	LIBV4L_ARGS="LINKTYPE=static"
+endif
+endif
+
+all:
+  ifeq ($(WITH_LIBV4L),yes)
+	echo with Libv4l $(LIBV4L_ARGS)
+	$(MAKE) -C lib $(LIBV4L_ARGS) $@
+  else ifeq ($(WITH_V4LUTILS),yes)
+	echo with Libv4l static
+	$(MAKE) -C lib $(LIBV4L_ARGS) $@
+  endif
+  ifeq ($(WITH_V4LUTILS),yes)
+	$(MAKE) -C utils $(LIBV4L_ARGS) $@
+  endif
+
+install:
+  ifeq ($(WITH_LIBV4L),yes)
 	$(MAKE) -C lib $@
+  endif
+  ifeq ($(WITH_V4LUTILS),yes)
 	$(MAKE) -C utils $@
+  endif
 
 sync-with-kernel:
 	@if [ ! -f $(KERNEL_DIR)/include/linux/videodev2.h -o \
