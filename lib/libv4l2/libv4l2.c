@@ -1238,8 +1238,7 @@ no_capture_request:
 					devices[index].dev_ops_priv,
 					fd, VIDIOC_DQBUF, buf);
 			if (result) {
-				int saved_err = errno;
-
+				saved_err = errno;
 				V4L2_LOG_ERR("dequeuing buf: %s\n", strerror(errno));
 				errno = saved_err;
 			}
