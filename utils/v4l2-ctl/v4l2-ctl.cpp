@@ -532,7 +532,7 @@ static void usage(void)
 	       "  --wait-for-event=<event>\n"
 	       "                     wait for an event [VIDIOC_DQEVENT]\n"
 	       "                     <event> is the event number or one of:\n"
-	       "                     eos, vsync, ctrl=<id>\n"
+	       "                     eos, vsync, ctrl=<id>, frame_sync\n"
 	       "                     where <id> is the name of the control\n"
 	       "  --poll-for-event=<event>\n"
 	       "                     poll for an event [VIDIOC_DQEVENT]\n"
@@ -1921,6 +1921,9 @@ static void print_event(const struct v4l2_event *ev)
 		if (ctrl->changes & V4L2_EVENT_CTRL_CH_FLAGS)
 			printf("\tflags: %s\n", ctrlflags2s(ctrl->flags).c_str());
 		break;
+	case V4L2_EVENT_FRAME_SYNC:
+		printf("frame_sync %d\n", ev->u.frame_sync.frame_sequence);
+		break;
 	default:
 		if (ev->type >= V4L2_EVENT_PRIVATE_START)
 			printf("unknown private event (%08x)\n", ev->type);
@@ -1945,6 +1948,8 @@ static __u32 parse_event(const char *e, const char **name)
 		event = V4L2_EVENT_CTRL;
 		*name = e + 5;
 	}
+	else if (!strcmp(e, "frame_sync"))
+		event = V4L2_EVENT_FRAME_SYNC;
 
 	if (event == 0) {
 		fprintf(stderr, "Unknown event\n");
