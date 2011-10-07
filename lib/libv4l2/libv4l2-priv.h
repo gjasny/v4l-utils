@@ -100,6 +100,7 @@ void v4l2_plugin_cleanup(void *plugin_lib, void *plugin_priv,
 			 const struct libv4l2_dev_ops *dev_ops);
 
 /* From log.c */
+extern const char *v4l2_ioctls[];
 void v4l2_log_ioctl(unsigned long int request, void *arg, int result);
 
 #endif

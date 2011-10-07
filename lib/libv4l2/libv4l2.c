@@ -1059,6 +1059,13 @@ int v4l2_ioctl(int fd, unsigned long int request, ...)
 				stream_needs_locking = 1;
 		}
 		break;
+	case VIDIOC_S_STD:
+	case VIDIOC_S_INPUT:
+	case VIDIOC_S_DV_PRESET:
+	case VIDIOC_S_DV_TIMINGS:
+		is_capture_request = 1;
+		stream_needs_locking = 1;
+		break;		
 	}
 
 	if (!is_capture_request) {
@@ -1147,6 +1154,53 @@ no_capture_request:
 
 		*fmt = devices[index].dest_fmt;
 		result = 0;
+		break;
+	}
+
+	case VIDIOC_S_STD:
+	case VIDIOC_S_INPUT:
+	case VIDIOC_S_DV_PRESET:
+	case VIDIOC_S_DV_TIMINGS: {
+		struct v4l2_format src_fmt;
+
+		result = devices[index].dev_ops->ioctl(
+				devices[index].dev_ops_priv,
+				fd, request, arg);
+		if (result)
+			break;
+
+		/* These ioctls may have changed the device's fmt */
+		src_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		result = devices[index].dev_ops->ioctl(
+				devices[index].dev_ops_priv,
+				fd, VIDIOC_G_FMT, &src_fmt);
+		if (result) {
+			V4L2_LOG_ERR("getting pixformat after %s: %s\n",
+				     v4l2_ioctls[_IOC_NR(request)],
+				     strerror(errno));
+			result = 0; /* The original command did succeed */
+			break;
+		}
+
+		if (v4l2_pix_fmt_compat(&devices[index].src_fmt, &src_fmt)) {
+			v4l2_set_src_and_dest_format(index, &src_fmt,
+						     &devices[index].dest_fmt);
+			break;
+		}
+
+		/* The fmt has been changed, remember the new format ... */
+		devices[index].src_fmt  = src_fmt;
+		devices[index].dest_fmt = src_fmt;
+		/* and try to restore the last set destination pixelformat. */
+		src_fmt.fmt.pix.pixelformat =
+			devices[index].dest_fmt.fmt.pix.pixelformat;
+		result = v4l2_s_fmt(index, &src_fmt);
+		if (result) {
+			V4L2_LOG_WARN("restoring destination pixelformat after %s failed\n",
+				      v4l2_ioctls[_IOC_NR(request)]);
+			result = 0; /* The original command did succeed */
+		}
+
 		break;
 	}
 
