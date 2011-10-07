@@ -1192,8 +1192,7 @@ int v4l2_ioctl(int fd, unsigned long int request, ...)
 		if (!v4l2_needs_conversion(index)) {
 			result = SYS_IOCTL(devices[index].fd, VIDIOC_DQBUF, buf);
 			if (result) {
-				int saved_err = errno;
-
+				saved_err = errno;
 				V4L2_LOG_ERR("dequeuing buf: %s\n", strerror(errno));
 				errno = saved_err;
 			}
