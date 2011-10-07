@@ -204,6 +204,11 @@ bool v4l2::s_std(v4l2_std_id std)
 	return ioctl("Set TV Standard", VIDIOC_S_STD, &std);
 }
 
+bool v4l2::query_std(v4l2_std_id &std)
+{
+	return ioctl("Query TV Standard", VIDIOC_QUERYSTD, &std);
+}
+
 bool v4l2::g_dv_preset(__u32 &preset)
 {
 	struct v4l2_dv_preset p;
@@ -222,6 +227,11 @@ bool v4l2::s_dv_preset(__u32 preset)
 	memset(&p, 0, sizeof(p));
 	p.preset = preset;
 	return ioctl("Set Preset", VIDIOC_S_DV_PRESET, &p);
+}
+
+bool v4l2::query_dv_preset(v4l2_dv_preset &preset)
+{
+	return ioctl("Query Preset", VIDIOC_QUERY_DV_PRESET, &preset);
 }
 
 
