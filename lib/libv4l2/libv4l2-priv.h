@@ -90,6 +90,7 @@ struct v4l2_dev_info {
 };
 
 /* From log.c */
+extern const char *v4l2_ioctls[];
 void v4l2_log_ioctl(unsigned long int request, void *arg, int result);
 
 #endif
