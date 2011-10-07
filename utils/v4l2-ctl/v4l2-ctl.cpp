@@ -839,6 +839,7 @@ static std::string ctrlflags2s(__u32 flags)
 		{ V4L2_CTRL_FLAG_INACTIVE,   "inactive" },
 		{ V4L2_CTRL_FLAG_SLIDER,     "slider" },
 		{ V4L2_CTRL_FLAG_WRITE_ONLY, "write-only" },
+		{ V4L2_CTRL_FLAG_VOLATILE,   "volatile" },
 		{ 0, NULL }
 	};
 	return flags2s(flags, def);
