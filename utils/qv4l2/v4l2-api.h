@@ -65,8 +65,10 @@ public:
 	bool s_audout(int output);
 	bool s_std(v4l2_std_id std);
 	bool g_std(v4l2_std_id &std);
+	bool query_std(v4l2_std_id &std);
 	bool s_dv_preset(__u32 preset);
 	bool g_dv_preset(__u32 &preset);
+	bool query_dv_preset(v4l2_dv_preset &preset);
 	bool g_frequency(v4l2_frequency &freq);
 	bool s_frequency(v4l2_frequency &freq);
 	bool s_frequency(int freq);

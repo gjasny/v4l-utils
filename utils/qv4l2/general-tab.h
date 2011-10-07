@@ -29,6 +29,7 @@
 
 class QComboBox;
 class QSpinBox;
+class QPushButton;
 
 class GeneralTab: public QGridLayout, public v4l2
 {
@@ -48,7 +49,9 @@ private slots:
 	void inputAudioChanged(int);
 	void outputAudioChanged(int);
 	void standardChanged(int);
+	void qryStdClicked();
 	void presetChanged(int);
+	void qryPresetClicked();
 	void freqTableChanged(int);
 	void freqChannelChanged(int);
 	void freqChanged(int);
@@ -101,7 +104,9 @@ private:
 	QComboBox *m_audioInput;
 	QComboBox *m_audioOutput;
 	QComboBox *m_tvStandard;
+	QPushButton *m_qryStandard;
 	QComboBox *m_videoPreset;
+	QPushButton *m_qryPreset;
 	QSpinBox  *m_freq;
 	QComboBox *m_freqTable;
 	QComboBox *m_freqChannel;

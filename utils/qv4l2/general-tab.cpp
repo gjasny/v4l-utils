@@ -23,6 +23,7 @@
 
 #include <QSpinBox>
 #include <QComboBox>
+#include <QPushButton>
 
 #include <errno.h>
 
@@ -34,7 +35,9 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_cols(n),
 	m_audioInput(NULL),
 	m_tvStandard(NULL),
+	m_qryStandard(NULL),
 	m_videoPreset(NULL),
+	m_qryPreset(NULL),
 	m_freq(NULL),
 	m_vidCapFormats(NULL),
 	m_frameSize(NULL),
@@ -69,6 +72,10 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		} while (enum_std(vs));
 		addWidget(m_tvStandard);
 		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
+		addLabel("");
+		m_qryStandard = new QPushButton("Query Standard", parent);
+		addWidget(m_qryStandard);
+		connect(m_qryStandard, SIGNAL(clicked()), SLOT(qryStdClicked()));
 	}
 
 	v4l2_dv_enum_preset preset;
@@ -80,6 +87,10 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		} while (enum_dv_preset(preset));
 		addWidget(m_videoPreset);
 		connect(m_videoPreset, SIGNAL(activated(int)), SLOT(presetChanged(int)));
+		addLabel("");
+		m_qryPreset = new QPushButton("Query Preset", parent);
+		addWidget(m_qryPreset);
+		connect(m_qryPreset, SIGNAL(clicked()), SLOT(qryPresetClicked()));
 	}
 
 	v4l2_input vin;
@@ -415,10 +426,14 @@ void GeneralTab::updateVideoInput()
 		return;
 	enum_input(in, true, input);
 	m_videoInput->setCurrentIndex(input);
-	if (m_tvStandard)
+	if (m_tvStandard) {
 		m_tvStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
-	if (m_videoPreset)
+		m_qryStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
+	}
+	if (m_videoPreset) {
 		m_videoPreset->setEnabled(in.capabilities & V4L2_IN_CAP_PRESETS);
+		m_qryPreset->setEnabled(in.capabilities & V4L2_IN_CAP_PRESETS);
+	}
 }
 
 void GeneralTab::updateVideoOutput()
@@ -430,10 +445,14 @@ void GeneralTab::updateVideoOutput()
 		return;
 	enum_output(out, true, output);
 	m_videoOutput->setCurrentIndex(output);
-	if (m_tvStandard)
+	if (m_tvStandard) {
 		m_tvStandard->setEnabled(out.capabilities & V4L2_OUT_CAP_STD);
-	if (m_videoPreset)
+		m_qryStandard->setEnabled(out.capabilities & V4L2_OUT_CAP_STD);
+	}
+	if (m_videoPreset) {
 		m_videoPreset->setEnabled(out.capabilities & V4L2_OUT_CAP_PRESETS);
+		m_qryPreset->setEnabled(out.capabilities & V4L2_OUT_CAP_PRESETS);
+	}
 }
 
 void GeneralTab::updateAudioInput()
@@ -496,6 +515,16 @@ void GeneralTab::updateStandard()
 	updateVidCapFormat();
 }
 
+void GeneralTab::qryStdClicked()
+{
+	v4l2_std_id std;
+
+	if (query_std(std)) {
+		s_std(std);
+		updateStandard();
+	}
+}
+
 void GeneralTab::updatePreset()
 {
 	__u32 preset;
@@ -517,6 +546,16 @@ void GeneralTab::updatePreset()
 		p.preset, p.width, p.height);
 	m_videoPreset->setWhatsThis(what);
 	updateVidCapFormat();
+}
+
+void GeneralTab::qryPresetClicked()
+{
+	v4l2_dv_preset preset;
+
+	if (query_dv_preset(preset)) {
+		s_dv_preset(preset.preset);
+		updatePreset();
+	}
 }
 
 void GeneralTab::updateFreq()
