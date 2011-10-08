@@ -130,7 +130,7 @@ const unsigned int sys_isdbs_props[] = {
 	0
 };
 
-const unsigned int *delivery_system_name[] = {
+const unsigned int *dvb_v5_delivery_system[] = {
 	[SYS_ATSC] =          sys_atsc_props,
 	[SYS_DVBC_ANNEX_AC] = sys_dvbc_annex_ac_props,
 	[SYS_DVBC_ANNEX_B] =  sys_dvbc_annex_b_props,
