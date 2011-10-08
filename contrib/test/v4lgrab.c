@@ -11,6 +11,9 @@
  *      Copied from http://www.tazenda.demon.co.uk/phil/vgrabber.c
  *      with minor modifications (Dave Forrest, drf5n@virginia.edu).
  *
+ * NOTE: This utility uses the old, discontinued V4L version 1 API.
+ * It is kept here solely for the purposes of testing the libv4l1
+ * compatibility layer, as the V4L1 API were removed on kernel 2.6.39.
  */
 
 #include <unistd.h>
