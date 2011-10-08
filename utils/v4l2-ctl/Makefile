@@ -13,7 +13,7 @@ ivtv-ctl: ivtv-ctl.o
 	$(CC) $(LDFLAGS) -o $@ $^ -lm
 
 v4l2-ctl: v4l2-ctl.o
-	$(CXX) $(LDFLAGS) -o $@ $^ -lv4l2 -lv4lconvert -lrt
+	$(CXX) $(LDFLAGS) -o $@ $^ -ldl -ljpeg -lv4l2 -lv4lconvert -lrt
 
 install: $(TARGETS)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin

@@ -15,7 +15,7 @@ MANDIR = $(PREFIX)/share/man
 
 # Note the -I../.. this assumes all sources live in a 2 level dir hierarchy!
 override CPPFLAGS += -I../../include -I../../lib/include -D_GNU_SOURCE -DV4L_UTILS_VERSION='"$(V4L_UTILS_VERSION)"'
-override LDFLAGS += -L../../lib/libv4l1 -L../../lib/libv4l2 -L../../lib/libv4lconvert -ldl -ljpeg
+override LDFLAGS += -L../../lib/libv4l1 -L../../lib/libv4l2 -L../../lib/libv4lconvert
 
 # And last various rules
 
