@@ -25,7 +25,10 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
-#include <linux/videodev.h>
+#include <linux/videodev2.h>
+#ifdef CONFIG_VIDEO_V4L1_COMPAT
+#include "../../lib/include/libv4l1-videodev.h"
+#endif
 
 /* All possible parameters used on v4l ioctls */
 union v4l_parms {

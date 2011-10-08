@@ -27,8 +27,8 @@ driver-test: driver-test.o ../../utils/libv4l2util/libv4l2util.a
 pixfmt-test: pixfmt-test.o
 	$(CC) $(LDFLAGS) -o $@ $^ -lX11
 
-v4l2grab: v4l2grab.o ../../lib/libv4l2/libv4l2.so
-	$(CC) $(LDFLAGS) -o $@ $^ -L../../lib/libv4l2 -L../../lib/libv4lconvert -lv4l2 -lv4lconvert
+v4l2grab: v4l2grab.o
+	$(CC) $(LDFLAGS) -o $@ $^ -L../../lib/libv4l2 -L../../lib/libv4lconvert -ldl -ljpeg -lrt -lm -lv4l2 -lv4lconvert
 
 ioctl-test: ioctl-test.o
 	$(CC) $(LDFLAGS) -o $@ $^

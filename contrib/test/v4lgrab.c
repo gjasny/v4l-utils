@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 #include <linux/types.h>
-#include <linux/videodev.h>
+#include "../../lib/include/libv4l1-videodev.h"
 
 #define FILE "/dev/video0"
 
