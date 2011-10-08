@@ -12,7 +12,12 @@ use constant {
 	FE_BW => 6,
 	FE_GINTERVAL => 7,
 	FE_HIERARCHY => 8,
-	FE_DTS =>9,
+	FE_DTS => 9,
+	FE_VOLTAGE => 10,
+	FE_TONE => 11,
+	FE_INVERSION => 12,
+	FE_PILOT => 13,
+	FE_ROLLOFF => 14,
 };
 
 my $dir = shift or die "Please specify the kernel include directory.";
@@ -34,6 +39,11 @@ my %fe_guard_interval;
 my %fe_hierarchy;
 my %dvb_v5;
 my %fe_delivery_system;
+my %fe_voltage;
+my %fe_tone;
+my %fe_inversion;
+my %fe_pilot;
+my %fe_rolloff;
 
 sub gen_fe($)
 {
@@ -211,6 +221,106 @@ sub gen_fe($)
 			}
 		}
 		#
+		# Mode FE_VOLTAGE
+		#
+		if (m/typedef enum fe_sec_voltage \{/) {
+			$mode = FE_VOLTAGE;
+			next;
+		}
+		if ($mode == FE_VOLTAGE) {
+			if (m/\} fe_sec_voltage_t;/) {
+				$mode = NORMAL;
+				next;
+			}
+			if (m/(SEC_VOLTAGE_)([^\s,]+)/) {
+				my $macro = "$1$2";
+				my $name = $2;
+				$name =~ s,_,/,;
+
+				$fe_voltage{$macro} = $name;
+			}
+		}
+		#
+		# Mode FE_TONE
+		#
+		if (m/typedef enum fe_sec_tone_mode \{/) {
+			$mode = FE_TONE;
+			next;
+		}
+		if ($mode == FE_TONE) {
+			if (m/\} fe_sec_tone_mode_t;/) {
+				$mode = NORMAL;
+				next;
+			}
+			if (m/(SEC_TONE_)([^\s,]+)/) {
+				my $macro = "$1$2";
+				my $name = $2;
+				$name =~ s,_,/,;
+
+				$fe_tone{$macro} = $name;
+			}
+		}
+		#
+		# Mode FE_INVERSION
+		#
+		if (m/typedef enum fe_spectral_inversion \{/) {
+			$mode = FE_INVERSION;
+			next;
+		}
+		if ($mode == FE_INVERSION) {
+			if (m/\} fe_spectral_inversion_t;/) {
+				$mode = NORMAL;
+				next;
+			}
+			if (m/(INVERSION_)([^\s,]+)/) {
+				my $macro = "$1$2";
+				my $name = $2;
+				$name =~ s,_,/,;
+
+				$fe_inversion{$macro} = $name;
+			}
+		}
+		#
+		# Mode FE_PILOT
+		#
+		if (m/typedef enum fe_pilot \{/) {
+			$mode = FE_PILOT;
+			next;
+		}
+		if ($mode == FE_PILOT) {
+			if (m/\} fe_pilot_t;/) {
+				$mode = NORMAL;
+				next;
+			}
+			if (m/(PILOT_)([^\s,]+)/) {
+				my $macro = "$1$2";
+				my $name = $2;
+				$name =~ s,_,/,;
+
+				$fe_pilot{$macro} = $name;
+			}
+		}
+		#
+		# Mode FE_ROLLOFF
+		#
+		if (m/typedef enum fe_rolloff \{/) {
+			$mode =FE_ROLLOFF;
+			next;
+		}
+		if ($mode == FE_ROLLOFF) {
+			if (m/\} fe_rolloff_t;/) {
+				$mode = NORMAL;
+				next;
+			}
+			if (m/(ROLLOFF_)([^\s,]+)/) {
+				my $macro = "$1$2";
+				my $name = $2;
+				$name =~ s,_,/,;
+
+				$fe_rolloff{$macro} = $name;
+			}
+		}
+		#
 		# DTV macros
 		#
 		if (m/\#define\s+(DTV_)([^\s]+)\s+\d+/) {
@@ -357,6 +467,11 @@ output_arrays ("fe_transmission_mode_name", \%fe_t_mode, "char *", 0);
 output_arrays ("fe_bandwidth_name", \%fe_bw, "unsigned", 0);
 output_arrays ("fe_guard_interval_name", \%fe_guard_interval, "char *", 0);
 output_arrays ("fe_hierarchy_name", \%fe_hierarchy, "char *", 0);
+output_arrays ("fe_voltage_name", \%fe_voltage, "char *", 0);
+output_arrays ("fe_tone_name", \%fe_tone, "char *", 0);
+output_arrays ("fe_inversion_name", \%fe_inversion, "char *", 0);
+output_arrays ("fe_pilot_name", \%fe_pilot, "char *", 0);
+output_arrays ("fe_rolloff_name", \%fe_rolloff, "char *", 0);
 output_arrays ("dvb_v5_name", \%dvb_v5, "char *", 0);
 output_arrays ("delivery_system_name", \%fe_delivery_system, "char *", 0);
 printf OUT "#endif\n";

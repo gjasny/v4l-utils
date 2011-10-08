@@ -123,6 +123,36 @@ const char *fe_hierarchy_name[5] = {
 	[HIERARCHY_NONE] = "NONE",
 };
 
+const char *fe_voltage_name[3] = {
+	[SEC_VOLTAGE_13] =  "13",
+	[SEC_VOLTAGE_18] =  "18",
+	[SEC_VOLTAGE_OFF] = "OFF",
+};
+
+const char *fe_tone_name[2] = {
+	[SEC_TONE_OFF] = "OFF",
+	[SEC_TONE_ON] =  "ON",
+};
+
+const char *fe_inversion_name[3] = {
+	[INVERSION_AUTO] = "AUTO",
+	[INVERSION_OFF] =  "OFF",
+	[INVERSION_ON] =   "ON",
+};
+
+const char *fe_pilot_name[3] = {
+	[PILOT_AUTO] = "AUTO",
+	[PILOT_OFF] =  "OFF",
+	[PILOT_ON] =   "ON",
+};
+
+const char *fe_rolloff_name[4] = {
+	[ROLLOFF_20] =   "20",
+	[ROLLOFF_25] =   "25",
+	[ROLLOFF_35] =   "35",
+	[ROLLOFF_AUTO] = "AUTO",
+};
+
 const char *dvb_v5_name[44] = {
 	[DTV_API_VERSION] =                    "API_VERSION",
 	[DTV_BANDWIDTH_HZ] =                   "BANDWIDTH_HZ",
