@@ -46,3 +46,10 @@ void dvb_fe_prt_parms(struct dvb_v5_fe_parms *parms);
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms);
 int dvb_fe_get_status(struct dvb_v5_fe_parms *parms);
 int dvb_fe_get_event(struct dvb_v5_fe_parms *parms);
+int dvb_fe_sec_voltage(struct dvb_v5_fe_parms *parms, int on, int v18);
+int dvb_fe_sec_tone(struct dvb_v5_fe_parms *parms, int on);
+int dvb_fe_lnb_high_voltage(struct dvb_v5_fe_parms *parms, int on);
+int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *parms, int mini_a);
+int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, unsigned len, char *buf);
+int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
+		       int timeout);

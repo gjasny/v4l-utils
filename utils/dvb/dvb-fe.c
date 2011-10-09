@@ -450,3 +450,105 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
 	}
 	return 0;
 }
+
+/*
+ * Implement SEC/LNB/DISEqC specific functions
+ * For now, DVBv5 API doesn't support those commands. So, use the DVBv3
+ * version.
+ */
+
+int dvb_fe_sec_voltage(struct dvb_v5_fe_parms *parms, int on, int v18)
+{
+	fe_sec_voltage_t v;
+	int rc;
+
+	if (!on)
+		v = SEC_VOLTAGE_OFF;
+	else
+		v = v18 ? SEC_VOLTAGE_18 : SEC_VOLTAGE_13;
+
+	rc = ioctl(parms->fd, FE_SET_VOLTAGE, v);
+	if (rc == -1)
+		perror ("FE_SET_VOLTAGE");
+	return errno;
+}
+
+int dvb_fe_sec_tone(struct dvb_v5_fe_parms *parms, int on)
+{
+	fe_sec_tone_mode_t tone;
+	int rc;
+
+	tone = on ? SEC_TONE_ON : SEC_TONE_OFF;
+
+	rc = ioctl(parms->fd, FE_SET_TONE, tone);
+	if (rc == -1)
+		perror ("FE_SET_TONE");
+	return errno;
+}
+
+int dvb_fe_lnb_high_voltage(struct dvb_v5_fe_parms *parms, int on)
+{
+	int rc;
+
+	if (on)
+		on = 1;
+
+	rc = ioctl(parms->fd, FE_ENABLE_HIGH_LNB_VOLTAGE, on);
+	if (rc == -1)
+		perror ("FE_ENABLE_HIGH_LNB_VOLTAGE");
+	return errno;
+}
+
+int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *parms, int mini_a)
+{
+	fe_sec_mini_cmd_t mini;
+	int rc;
+
+	mini = mini_a ? SEC_MINI_A : SEC_MINI_B;
+
+	rc = ioctl(parms->fd, FE_DISEQC_SEND_BURST, mini);
+	if (rc == -1)
+		perror ("FE_DISEQC_SEND_BURST");
+	return errno;
+}
+
+int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, unsigned len, char *buf)
+{
+	struct dvb_diseqc_master_cmd msg;
+	int rc;
+
+	if (len > 6)
+		return -EINVAL;
+
+	msg.msg_len = len;
+	memcpy(msg.msg, buf, len);
+
+	rc = ioctl(parms->fd, FE_DISEQC_SEND_MASTER_CMD, &msg);
+	if (rc == -1)
+		perror ("FE_DISEQC_SEND_BURST");
+	return errno;
+}
+
+int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
+		       int timeout)
+{
+	struct dvb_diseqc_slave_reply reply;
+	int rc;
+
+	if (*len > 4)
+		*len = 4;
+
+	reply.timeout = timeout;
+	reply.msg_len = *len;
+
+	rc = ioctl(parms->fd, FE_DISEQC_RECV_SLAVE_REPLY, reply);
+	if (rc == -1) {
+		perror("FE_DISEQC_RECV_SLAVE_REPLY");
+		return errno;
+	}
+
+	*len = reply.msg_len;
+	memcpy(buf, reply.msg, reply.msg_len);
+
+	return 0;
+}
