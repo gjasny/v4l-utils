@@ -17,6 +17,17 @@
 
 #define MAX_DELIVERY_SYSTEMS	20
 
+#define DTV_MAX_STATS 5
+#define DTV_STATUS			(DTV_MAX_COMMAND + 100)
+#define DTV_BER				(DTV_MAX_COMMAND + 101)
+#define DTV_SIGNAL_STRENGTH		(DTV_MAX_COMMAND + 102)
+#define DTV_SNR				(DTV_MAX_COMMAND + 103)
+#define DTV_UNCORRECTED_BLOCKS		(DTV_MAX_COMMAND + 104)
+
+struct dvb_v5_stats {
+	struct dtv_property		prop[DTV_MAX_STATS];
+};
+
 struct dvb_v5_fe_parms {
 	int				fd;
 	char				*fname;
@@ -29,7 +40,7 @@ struct dvb_v5_fe_parms {
 	int				n_props;
 	struct dtv_property		dvb_prop[DTV_MAX_COMMAND];
 	int				legacy_fe;
-	int				last_status;
+	struct dvb_v5_stats		stats;
 };
 
 struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
@@ -44,8 +55,15 @@ int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 		   fe_delivery_system_t sys);
 void dvb_fe_prt_parms(struct dvb_v5_fe_parms *parms);
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms);
-int dvb_fe_get_status(struct dvb_v5_fe_parms *parms);
+
+int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
+			   unsigned cmd, uint32_t *value);
+int dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
+			unsigned cmd, uint32_t value);
+int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms);
+
 int dvb_fe_get_event(struct dvb_v5_fe_parms *parms);
+
 int dvb_fe_sec_voltage(struct dvb_v5_fe_parms *parms, int on, int v18);
 int dvb_fe_sec_tone(struct dvb_v5_fe_parms *parms, int on);
 int dvb_fe_lnb_high_voltage(struct dvb_v5_fe_parms *parms, int on);

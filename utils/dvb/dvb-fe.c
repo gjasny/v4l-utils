@@ -40,7 +40,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 	parms->fname = fname;
 	parms->verbose = verbose;
 
-	if (ioctl(fd, FE_GET_INFO, &parms->info)) {
+	if (ioctl(fd, FE_GET_INFO, &parms->info) == -1) {
 		perror("FE_GET_INFO");
 		dvb_v5_free(parms);
 		return NULL;
@@ -154,6 +154,13 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 
 	/* Prepare to use the delivery system */
 	dvb_set_sys(parms, parms->current_sys);
+
+	/* Prepare the status struct */
+	parms->stats.prop[0].cmd = DTV_STATUS;
+	parms->stats.prop[1].cmd = DTV_BER;
+	parms->stats.prop[2].cmd = DTV_SIGNAL_STRENGTH;
+	parms->stats.prop[3].cmd = DTV_SNR;
+	parms->stats.prop[4].cmd = DTV_UNCORRECTED_BLOCKS;
 
 	return parms;
 }
@@ -373,26 +380,85 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	return 0;
 }
 
-int dvb_fe_get_status(struct dvb_v5_fe_parms *parms)
+int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
+			   unsigned cmd, uint32_t *value)
+{
+	int i;
+	for (i = 0; i < DTV_MAX_STATS; i++) {
+		if (parms->stats.prop[i].cmd != cmd)
+			continue;
+		*value = parms->stats.prop[i].u.data;
+		return 0;
+	}
+	fprintf(stderr, "%s not found on retrieve\n",
+		dvb_v5_name[cmd]);
+
+	return EINVAL;
+}
+
+int dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
+			unsigned cmd, uint32_t value)
+{
+	int i;
+	for (i = 0; i < DTV_MAX_STATS; i++) {
+		if (parms->stats.prop[i].cmd != cmd)
+			continue;
+		parms->stats.prop[i].u.data = value;
+		return 0;
+	}
+	fprintf(stderr, "%s not found on store\n",
+		dvb_v5_name[cmd]);
+
+	return EINVAL;
+}
+
+#define FE_READ_BER		   _IOR('o', 70, __u32)
+#define FE_READ_SIGNAL_STRENGTH    _IOR('o', 71, __u16)
+#define FE_READ_SNR		   _IOR('o', 72, __u16)
+#define FE_READ_UNCORRECTED_BLOCKS _IOR('o', 73, __u32)
+
+int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 {
 	fe_status_t status;
+	uint32_t ber, ucb;
+	uint16_t strength, snr;
 	int i;
 
-	if (!ioctl(parms->fd, FE_READ_STATUS, &status) == -1) {
+	if (ioctl(parms->fd, FE_READ_STATUS, &status) == -1) {
 		perror("FE_READ_STATUS");
-		return -1;
+		status = -1;
 	}
+	dvb_fe_store_stats(parms, DTV_STATUS, status);
+
+	if (ioctl(parms->fd, FE_READ_BER, &ber) == -1)
+		ber = 0;
+	dvb_fe_store_stats(parms, DTV_BER, ber);
+
+	if (ioctl(parms->fd, FE_READ_SIGNAL_STRENGTH, &strength) == -1)
+		strength = (uint16_t) -1;
+	dvb_fe_store_stats(parms, DTV_SIGNAL_STRENGTH, strength);
+
+	if (ioctl(parms->fd, FE_READ_SNR, &snr) == -1)
+		snr = (uint16_t) -1;
+	dvb_fe_store_stats(parms, DTV_SNR, snr);
+
+	if (ioctl(parms->fd, FE_READ_UNCORRECTED_BLOCKS, &ucb) == -1)
+		ucb = 0;
+	dvb_fe_store_stats(parms, DTV_UNCORRECTED_BLOCKS, snr);
+
+
 	if (parms->verbose > 1) {
 		printf("Status: ");
 		for (i = 0; i < ARRAY_SIZE(fe_status_name); i++) {
 			if (status & fe_status_name[i].idx)
 				printf ("%s ", fe_status_name[i].name);
 		}
-		printf("\n");
+		printf("BER: %d, Strength: %d, SNR: %d, UCB: %d\n",
+		       ber, strength, snr, ucb);
 	}
-	parms->last_status = status;
 	return status;
 }
+
 
 int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
 {
@@ -402,10 +468,10 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
 
 	if (!parms->legacy_fe) {
 		dvb_fe_get_parms(parms);
-		return dvb_fe_get_status(parms);
+		return dvb_fe_get_stats(parms);
 	}
 
-	if (!ioctl(parms->fd, FE_GET_EVENT, &event) == -1) {
+	if (ioctl(parms->fd, FE_GET_EVENT, &event) == -1) {
 		perror("FE_GET_EVENT");
 		return -1;
 	}
@@ -418,7 +484,7 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
 		}
 		printf("\n");
 	}
-	parms->last_status = status;
+	dvb_fe_store_stats(parms, DTV_STATUS, status);
 
 	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &event.parameters.frequency);
 	dvb_fe_retrieve_parm(parms, DTV_INVERSION, &event.parameters.inversion);
@@ -448,7 +514,8 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
 	default:
 		return -EINVAL;
 	}
-	return 0;
+
+	return dvb_fe_get_stats(parms);
 }
 
 /*
