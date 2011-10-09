@@ -409,7 +409,7 @@ sub output_arrays($$$$)
 	$type .= " " if (!($type =~ m/\*$/));
 
 	if ($bitmap) {
-		printf OUT "struct %s {\n\t\%s idx;\n\tchar *name;\n} %s[%i] = {\n", 
+		printf OUT "struct %s {\n\t\%s idx;\n\tchar *name;\n} %s[%i] = {\n",
 			$name, $type, $name, $size;
 	} else {
 		printf OUT "const %s%s[%i] = {\n", $type, $name, $size;

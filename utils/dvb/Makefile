@@ -4,12 +4,10 @@ all: $(TARGETS)
 
 -include *.d
 
-dvb5_scan: dvb5_scan.c
+dvbv5_scan: dvbv5_scan.o dvb-fe.o
+	$(CC) $(LDFLAGS) -o $@ $^
 
 dvb-v5.h:
 	./gen_dvb_structs.pl $(KERNEL_DIR)/include/
-
-ir-keytable: keytable.o
-	$(CC) $(LDFLAGS) -o $@ $^
 
 include ../../Make.rules
