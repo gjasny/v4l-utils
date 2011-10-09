@@ -253,8 +253,7 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 	return EINVAL;
 }
 
-
-int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
+static int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 {
 	int n = 0;
 	const unsigned int *sys_props;
@@ -370,6 +369,84 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	if (ioctl(parms->fd, FE_SET_FRONTEND, &v3_parms) == -1) {
 		perror("FE_SET_FRONTEND");
 		return errno;
+	}
+	return 0;
+}
+
+int dvb_fe_get_status(struct dvb_v5_fe_parms *parms)
+{
+	fe_status_t status;
+	int i;
+
+	if (!ioctl(parms->fd, FE_READ_STATUS, &status) == -1) {
+		perror("FE_READ_STATUS");
+		return -1;
+	}
+	if (parms->verbose > 1) {
+		printf("Status: ");
+		for (i = 0; i < ARRAY_SIZE(fe_status_name); i++) {
+			if (status & fe_status_name[i].idx)
+				printf ("%s ", fe_status_name[i].name);
+		}
+		printf("\n");
+	}
+	parms->last_status = status;
+	return status;
+}
+
+int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
+{
+	struct dvb_frontend_event event;
+	fe_status_t status;
+	int i;
+
+	if (!parms->legacy_fe) {
+		dvb_fe_get_parms(parms);
+		return dvb_fe_get_status(parms);
+	}
+
+	if (!ioctl(parms->fd, FE_GET_EVENT, &event) == -1) {
+		perror("FE_GET_EVENT");
+		return -1;
+	}
+	status = event.status;
+	if (parms->verbose > 1) {
+		printf("Status: ");
+		for (i = 0; i < ARRAY_SIZE(fe_status_name); i++) {
+			if (status & fe_status_name[i].idx)
+				printf ("%s ", fe_status_name[i].name);
+		}
+		printf("\n");
+	}
+	parms->last_status = status;
+
+	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &event.parameters.frequency);
+	dvb_fe_retrieve_parm(parms, DTV_INVERSION, &event.parameters.inversion);
+	switch (parms->current_sys) {
+	case SYS_DVBS:
+		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &event.parameters.u.qpsk.symbol_rate);
+		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &event.parameters.u.qpsk.fec_inner);
+		break;
+	case SYS_DVBC_ANNEX_AC:
+		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &event.parameters.u.qam.symbol_rate);
+		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &event.parameters.u.qam.fec_inner);
+		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &event.parameters.u.qam.modulation);
+		break;
+	case SYS_ATSC:
+	case SYS_DVBC_ANNEX_B:
+		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &event.parameters.u.vsb.modulation);
+		break;
+	case SYS_DVBT:
+		dvb_fe_retrieve_parm(parms, DTV_BANDWIDTH_HZ, &event.parameters.u.ofdm.bandwidth);
+		dvb_fe_retrieve_parm(parms, DTV_CODE_RATE_HP, &event.parameters.u.ofdm.code_rate_HP);
+		dvb_fe_retrieve_parm(parms, DTV_CODE_RATE_LP, &event.parameters.u.ofdm.code_rate_LP);
+		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &event.parameters.u.ofdm.constellation);
+		dvb_fe_retrieve_parm(parms, DTV_TRANSMISSION_MODE, &event.parameters.u.ofdm.transmission_mode);
+		dvb_fe_retrieve_parm(parms, DTV_GUARD_INTERVAL, &event.parameters.u.ofdm.guard_interval);
+		dvb_fe_retrieve_parm(parms, DTV_HIERARCHY, &event.parameters.u.ofdm.hierarchy_information);
+		break;
+	default:
+		return -EINVAL;
 	}
 	return 0;
 }

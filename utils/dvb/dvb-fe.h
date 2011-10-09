@@ -29,6 +29,7 @@ struct dvb_v5_fe_parms {
 	int				n_props;
 	struct dtv_property		dvb_prop[DTV_MAX_COMMAND];
 	int				legacy_fe;
+	int				last_status;
 };
 
 struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
@@ -42,5 +43,6 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 		   fe_delivery_system_t sys);
 void dvb_fe_prt_parms(struct dvb_v5_fe_parms *parms);
-int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms);
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms);
+int dvb_fe_get_status(struct dvb_v5_fe_parms *parms);
+int dvb_fe_get_event(struct dvb_v5_fe_parms *parms);
