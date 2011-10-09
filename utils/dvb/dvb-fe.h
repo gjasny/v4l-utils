@@ -31,15 +31,16 @@ struct dvb_v5_fe_parms {
 	int				legacy_fe;
 };
 
-void dvb_fe_prt(struct dvb_v5_fe_parms *parms);
+struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
+				    unsigned verbose);
+void dvb_fe_close(struct dvb_v5_fe_parms *parms);
+
 int dvb_fe_retrieve_parm(struct dvb_v5_fe_parms *parms,
 			unsigned cmd, uint32_t *value);
 int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 		      unsigned cmd, uint32_t value);
-int dvb_change_sys(struct dvb_v5_fe_parms *parms,
+int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 		   fe_delivery_system_t sys);
+void dvb_fe_prt_parms(struct dvb_v5_fe_parms *parms);
 int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms);
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms);
-struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
-				    unsigned verbose);
-void dvb_fe_close(struct dvb_v5_fe_parms *parms);

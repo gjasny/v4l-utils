@@ -6,208 +6,6 @@
 #include "dvb-v5-std.h"
 #include "dvb-fe.h"
 
-void dvb_fe_prt(struct dvb_v5_fe_parms *parms)
-{
-	int i;
-
-	for (i = 0; i < parms->n_props; i++) {
-		printf("%s = %u\n",
-		       dvb_v5_name[parms->dvb_prop[i].cmd],
-		       parms->dvb_prop[i].u.data);
-		i++;
-	}
-};
-
-int dvb_fe_retrieve_parm(struct dvb_v5_fe_parms *parms,
-				unsigned cmd, uint32_t *value)
-{
-	int i;
-	for (i = 0; i < parms->n_props; i++) {
-		if (parms->dvb_prop[i].cmd != cmd)
-			continue;
-		*value = parms->dvb_prop[i].u.data;
-		return 0;
-	}
-	fprintf(stderr, "%s not found on retrieve\n",
-		dvb_v5_name[cmd]);
-
-	return EINVAL;
-}
-
-int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
-			     unsigned cmd, uint32_t value)
-{
-	int i;
-	for (i = 0; i < parms->n_props; i++) {
-		if (parms->dvb_prop[i].cmd != cmd)
-			continue;
-		parms->dvb_prop[i].u.data = value;
-		return 0;
-	}
-	fprintf(stderr, "%s not found on store\n",
-		dvb_v5_name[cmd]);
-
-	return EINVAL;
-}
-
-
-int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
-{
-	int n = 0;
-	const unsigned int *sys_props;
-	struct dtv_properties prop;
-	struct dvb_frontend_parameters v3_parms;
-
-	sys_props = dvb_v5_delivery_system[parms->current_sys];
-	if (!sys_props)
-		return EINVAL;
-
-	while (sys_props[n]) {
-		parms->dvb_prop[n].cmd = sys_props[n];
-		n++;
-	}
-	/* Keep it ready for set */
-	parms->dvb_prop[n].cmd = DTV_TUNE;
-	parms->n_props = n;
-
-	prop.props = parms->dvb_prop;
-	prop.num = n;
-	if (!parms->legacy_fe) {
-		if (ioctl(parms->fd, FE_GET_PROPERTY, &prop) == -1) {
-			perror("FE_GET_PROPERTY");
-			return errno;
-		}
-		if (parms->verbose) {
-			printf("Got parameters for %s:",
-			       delivery_system_name[parms->current_sys]);
-			dvb_fe_prt(parms);
-		}
-		return 0;
-	}
-	/* DVBv3 call */
-	if (ioctl(parms->fd, FE_GET_FRONTEND, &v3_parms) == -1) {
-		perror("FE_GET_FRONTEND");
-		return errno;
-	}
-
-	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &v3_parms.frequency);
-	dvb_fe_retrieve_parm(parms, DTV_INVERSION, &v3_parms.inversion);
-	switch (parms->current_sys) {
-	case SYS_DVBS:
-		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &v3_parms.u.qpsk.symbol_rate);
-		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &v3_parms.u.qpsk.fec_inner);
-		break;
-	case SYS_DVBC_ANNEX_AC:
-		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &v3_parms.u.qam.symbol_rate);
-		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &v3_parms.u.qam.fec_inner);
-		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.qam.modulation);
-		break;
-	case SYS_ATSC:
-	case SYS_DVBC_ANNEX_B:
-		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.vsb.modulation);
-		break;
-	case SYS_DVBT:
-		dvb_fe_retrieve_parm(parms, DTV_BANDWIDTH_HZ, &v3_parms.u.ofdm.bandwidth);
-		dvb_fe_retrieve_parm(parms, DTV_CODE_RATE_HP, &v3_parms.u.ofdm.code_rate_HP);
-		dvb_fe_retrieve_parm(parms, DTV_CODE_RATE_LP, &v3_parms.u.ofdm.code_rate_LP);
-		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.ofdm.constellation);
-		dvb_fe_retrieve_parm(parms, DTV_TRANSMISSION_MODE, &v3_parms.u.ofdm.transmission_mode);
-		dvb_fe_retrieve_parm(parms, DTV_GUARD_INTERVAL, &v3_parms.u.ofdm.guard_interval);
-		dvb_fe_retrieve_parm(parms, DTV_HIERARCHY, &v3_parms.u.ofdm.hierarchy_information);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
-
-int dvb_change_sys(struct dvb_v5_fe_parms *parms,
-			  fe_delivery_system_t sys)
-{
-	struct dtv_property dvb_prop[1];
-	struct dtv_properties prop;
-	const unsigned int *sys_props;
-	int n;
-
-	if (parms->legacy_fe)
-		return EINVAL;
-
-	if (sys != parms->current_sys) {
-		dvb_prop[0].cmd = DTV_DELIVERY_SYSTEM;
-		dvb_prop[0].u.data = sys;
-		prop.num = 1;
-		prop.props = dvb_prop;
-
-		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
-			perror("Set delivery system");
-			return errno;
-		}
-		parms->current_sys = sys;
-	}
-
-	sys_props = dvb_v5_delivery_system[parms->current_sys];
-	if (!sys_props)
-		return EINVAL;
-
-	n = 0;
-	while (sys_props[n]) {
-		parms->dvb_prop[n].cmd = sys_props[n];
-		n++;
-	}
-
-	return 0;
-}
-
-int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
-{
-	struct dtv_properties prop;
-	struct dvb_frontend_parameters v3_parms;
-
-	prop.props = parms->dvb_prop;
-	prop.num = parms->n_props + 1;
-
-	if (!parms->legacy_fe) {
-		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
-			perror("FE_SET_PROPERTY");
-			return errno;
-		}
-	}
-	/* DVBv3 call */
-	dvb_fe_store_parm(parms, DTV_FREQUENCY, v3_parms.frequency);
-	dvb_fe_store_parm(parms, DTV_INVERSION, v3_parms.inversion);
-	switch (parms->current_sys) {
-	case SYS_DVBS:
-		dvb_fe_store_parm(parms, DTV_SYMBOL_RATE, v3_parms.u.qpsk.symbol_rate);
-		dvb_fe_store_parm(parms, DTV_INNER_FEC, v3_parms.u.qpsk.fec_inner);
-		break;
-	case SYS_DVBC_ANNEX_AC:
-		dvb_fe_store_parm(parms, DTV_SYMBOL_RATE, v3_parms.u.qam.symbol_rate);
-		dvb_fe_store_parm(parms, DTV_INNER_FEC, v3_parms.u.qam.fec_inner);
-		dvb_fe_store_parm(parms, DTV_MODULATION, v3_parms.u.qam.modulation);
-		break;
-	case SYS_ATSC:
-	case SYS_DVBC_ANNEX_B:
-		dvb_fe_store_parm(parms, DTV_MODULATION, v3_parms.u.vsb.modulation);
-		break;
-	case SYS_DVBT:
-		dvb_fe_store_parm(parms, DTV_BANDWIDTH_HZ, v3_parms.u.ofdm.bandwidth);
-		dvb_fe_store_parm(parms, DTV_CODE_RATE_HP, v3_parms.u.ofdm.code_rate_HP);
-		dvb_fe_store_parm(parms, DTV_CODE_RATE_LP, v3_parms.u.ofdm.code_rate_LP);
-		dvb_fe_store_parm(parms, DTV_MODULATION, v3_parms.u.ofdm.constellation);
-		dvb_fe_store_parm(parms, DTV_TRANSMISSION_MODE, v3_parms.u.ofdm.transmission_mode);
-		dvb_fe_store_parm(parms, DTV_GUARD_INTERVAL, v3_parms.u.ofdm.guard_interval);
-		dvb_fe_store_parm(parms, DTV_HIERARCHY, v3_parms.u.ofdm.hierarchy_information);
-		break;
-	default:
-		return -EINVAL;
-	}
-	if (ioctl(parms->fd, FE_SET_FRONTEND, &v3_parms) == -1) {
-		perror("FE_SET_FRONTEND");
-		return errno;
-	}
-	return 0;
-}
-
 static void dvb_v5_free(struct dvb_v5_fe_parms *parms)
 {
 	if (parms->fname)
@@ -355,7 +153,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 	}
 
 	/* Prepare to use the delivery system */
-	dvb_change_sys(parms, parms->current_sys);
+	dvb_set_sys(parms, parms->current_sys);
 
 	return parms;
 }
@@ -368,4 +166,210 @@ void dvb_fe_close(struct dvb_v5_fe_parms *parms)
 
 	if (parms->fd < 0)
 		return;
+}
+
+int dvb_set_sys(struct dvb_v5_fe_parms *parms,
+			  fe_delivery_system_t sys)
+{
+	struct dtv_property dvb_prop[1];
+	struct dtv_properties prop;
+	const unsigned int *sys_props;
+	int n;
+
+	if (sys != parms->current_sys) {
+		/* Can't change standard with the legacy FE support */
+		if (parms->legacy_fe)
+			return EINVAL;
+
+		dvb_prop[0].cmd = DTV_DELIVERY_SYSTEM;
+		dvb_prop[0].u.data = sys;
+		prop.num = 1;
+		prop.props = dvb_prop;
+
+		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
+			perror("Set delivery system");
+			return errno;
+		}
+		parms->current_sys = sys;
+	}
+
+	/* Make dvb properties reflect the current standard */
+
+	sys_props = dvb_v5_delivery_system[parms->current_sys];
+	if (!sys_props)
+		return EINVAL;
+
+	n = 0;
+	while (sys_props[n]) {
+		parms->dvb_prop[n].cmd = sys_props[n];
+		n++;
+	}
+	parms->n_props = n;
+
+	return 0;
+}
+
+void dvb_fe_prt_parms(struct dvb_v5_fe_parms *parms)
+{
+	int i;
+
+	for (i = 0; i < parms->n_props; i++) {
+		printf("%s = %u\n",
+		       dvb_v5_name[parms->dvb_prop[i].cmd],
+		       parms->dvb_prop[i].u.data);
+		i++;
+	}
+};
+
+int dvb_fe_retrieve_parm(struct dvb_v5_fe_parms *parms,
+				unsigned cmd, uint32_t *value)
+{
+	int i;
+	for (i = 0; i < parms->n_props; i++) {
+		if (parms->dvb_prop[i].cmd != cmd)
+			continue;
+		*value = parms->dvb_prop[i].u.data;
+		return 0;
+	}
+	fprintf(stderr, "%s not found on retrieve\n",
+		dvb_v5_name[cmd]);
+
+	return EINVAL;
+}
+
+int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
+			     unsigned cmd, uint32_t value)
+{
+	int i;
+	for (i = 0; i < parms->n_props; i++) {
+		if (parms->dvb_prop[i].cmd != cmd)
+			continue;
+		parms->dvb_prop[i].u.data = value;
+		return 0;
+	}
+	fprintf(stderr, "%s not found on store\n",
+		dvb_v5_name[cmd]);
+
+	return EINVAL;
+}
+
+
+int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
+{
+	int n = 0;
+	const unsigned int *sys_props;
+	struct dtv_properties prop;
+	struct dvb_frontend_parameters v3_parms;
+
+	sys_props = dvb_v5_delivery_system[parms->current_sys];
+	if (!sys_props)
+		return EINVAL;
+
+	while (sys_props[n]) {
+		parms->dvb_prop[n].cmd = sys_props[n];
+		n++;
+	}
+	/* Keep it ready for set */
+	parms->dvb_prop[n].cmd = DTV_TUNE;
+	parms->n_props = n;
+
+	prop.props = parms->dvb_prop;
+	prop.num = n;
+	if (!parms->legacy_fe) {
+		if (ioctl(parms->fd, FE_GET_PROPERTY, &prop) == -1) {
+			perror("FE_GET_PROPERTY");
+			return errno;
+		}
+		if (parms->verbose) {
+			printf("Got parameters for %s:",
+			       delivery_system_name[parms->current_sys]);
+			dvb_fe_prt_parms(parms);
+		}
+		return 0;
+	}
+	/* DVBv3 call */
+	if (ioctl(parms->fd, FE_GET_FRONTEND, &v3_parms) == -1) {
+		perror("FE_GET_FRONTEND");
+		return errno;
+	}
+
+	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &v3_parms.frequency);
+	dvb_fe_retrieve_parm(parms, DTV_INVERSION, &v3_parms.inversion);
+	switch (parms->current_sys) {
+	case SYS_DVBS:
+		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &v3_parms.u.qpsk.symbol_rate);
+		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &v3_parms.u.qpsk.fec_inner);
+		break;
+	case SYS_DVBC_ANNEX_AC:
+		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &v3_parms.u.qam.symbol_rate);
+		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &v3_parms.u.qam.fec_inner);
+		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.qam.modulation);
+		break;
+	case SYS_ATSC:
+	case SYS_DVBC_ANNEX_B:
+		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.vsb.modulation);
+		break;
+	case SYS_DVBT:
+		dvb_fe_retrieve_parm(parms, DTV_BANDWIDTH_HZ, &v3_parms.u.ofdm.bandwidth);
+		dvb_fe_retrieve_parm(parms, DTV_CODE_RATE_HP, &v3_parms.u.ofdm.code_rate_HP);
+		dvb_fe_retrieve_parm(parms, DTV_CODE_RATE_LP, &v3_parms.u.ofdm.code_rate_LP);
+		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.ofdm.constellation);
+		dvb_fe_retrieve_parm(parms, DTV_TRANSMISSION_MODE, &v3_parms.u.ofdm.transmission_mode);
+		dvb_fe_retrieve_parm(parms, DTV_GUARD_INTERVAL, &v3_parms.u.ofdm.guard_interval);
+		dvb_fe_retrieve_parm(parms, DTV_HIERARCHY, &v3_parms.u.ofdm.hierarchy_information);
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
+
+int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
+{
+	struct dtv_properties prop;
+	struct dvb_frontend_parameters v3_parms;
+
+	prop.props = parms->dvb_prop;
+	prop.num = parms->n_props + 1;
+
+	if (!parms->legacy_fe) {
+		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
+			perror("FE_SET_PROPERTY");
+			return errno;
+		}
+	}
+	/* DVBv3 call */
+	dvb_fe_store_parm(parms, DTV_FREQUENCY, v3_parms.frequency);
+	dvb_fe_store_parm(parms, DTV_INVERSION, v3_parms.inversion);
+	switch (parms->current_sys) {
+	case SYS_DVBS:
+		dvb_fe_store_parm(parms, DTV_SYMBOL_RATE, v3_parms.u.qpsk.symbol_rate);
+		dvb_fe_store_parm(parms, DTV_INNER_FEC, v3_parms.u.qpsk.fec_inner);
+		break;
+	case SYS_DVBC_ANNEX_AC:
+		dvb_fe_store_parm(parms, DTV_SYMBOL_RATE, v3_parms.u.qam.symbol_rate);
+		dvb_fe_store_parm(parms, DTV_INNER_FEC, v3_parms.u.qam.fec_inner);
+		dvb_fe_store_parm(parms, DTV_MODULATION, v3_parms.u.qam.modulation);
+		break;
+	case SYS_ATSC:
+	case SYS_DVBC_ANNEX_B:
+		dvb_fe_store_parm(parms, DTV_MODULATION, v3_parms.u.vsb.modulation);
+		break;
+	case SYS_DVBT:
+		dvb_fe_store_parm(parms, DTV_BANDWIDTH_HZ, v3_parms.u.ofdm.bandwidth);
+		dvb_fe_store_parm(parms, DTV_CODE_RATE_HP, v3_parms.u.ofdm.code_rate_HP);
+		dvb_fe_store_parm(parms, DTV_CODE_RATE_LP, v3_parms.u.ofdm.code_rate_LP);
+		dvb_fe_store_parm(parms, DTV_MODULATION, v3_parms.u.ofdm.constellation);
+		dvb_fe_store_parm(parms, DTV_TRANSMISSION_MODE, v3_parms.u.ofdm.transmission_mode);
+		dvb_fe_store_parm(parms, DTV_GUARD_INTERVAL, v3_parms.u.ofdm.guard_interval);
+		dvb_fe_store_parm(parms, DTV_HIERARCHY, v3_parms.u.ofdm.hierarchy_information);
+		break;
+	default:
+		return -EINVAL;
+	}
+	if (ioctl(parms->fd, FE_SET_FRONTEND, &v3_parms) == -1) {
+		perror("FE_SET_FRONTEND");
+		return errno;
+	}
+	return 0;
 }
