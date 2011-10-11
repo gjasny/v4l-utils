@@ -32,3 +32,6 @@ here they won't be forgotten.
   set or not? Determine for overlay and output overlay.
 
 - RGB pixel formats: endianess issues: two tables in the spec.
+
+- Duplicate controls: V4L2_CID_EXPOSURE (user class) and V4L2_CID_EXPOSURE_ABSOLUTE
+  (camera class).
