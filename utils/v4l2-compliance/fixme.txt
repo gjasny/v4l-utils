@@ -7,8 +7,6 @@ here they won't be forgotten.
 - Should QUERYCAP report capabilities for only the current device node or
   'system wide'?
 
-- Are tuner audio modes other than MONO and STEREO allowed for FM receivers?
-
 - If I set a tuner audio mode to something that is not supported by the hardware,
   should the driver return an error, or silently modify the audio mode, or just
   accept it?
@@ -31,7 +29,7 @@ here they won't be forgotten.
 - ditto V4L2_FBUF_CAP_EXTERNOVERLAY: do bytesperline, sizeimage and base need to be
   set or not? Determine for overlay and output overlay.
 
-- RGB pixel formats: endianess issues: two tables in the spec.
+- RGB pixel formats: endianness issues: two tables in the spec.
 
 - Duplicate controls: V4L2_CID_EXPOSURE (user class) and V4L2_CID_EXPOSURE_ABSOLUTE
   (camera class).
