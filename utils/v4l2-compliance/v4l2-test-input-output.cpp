@@ -36,7 +36,7 @@
 static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 		unsigned t, v4l2_std_id std)
 {
-	bool valid_modes[5] = { true, false, false, true, false };
+	bool valid_modes[5] = { true, false, false, false, false };
 	bool tv = !node->is_radio;
 	enum v4l2_tuner_type type = tv ? V4L2_TUNER_ANALOG_TV : V4L2_TUNER_RADIO;
 	__u32 audmode;
@@ -58,6 +58,8 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 		return fail("did not expect to see V4L2_TUNER_CAP_LOW set for a tv tuner\n");
 	if (!tv && !(tuner.capability & V4L2_TUNER_CAP_LOW))
 		return fail("V4L2_TUNER_CAP_LOW was not set for a radio tuner\n");
+	if (tv && std == V4L2_STD_NTSC_M && (tuner.capability & V4L2_TUNER_CAP_LANG1))
+		return fail("LANG1 capability, but NTSC-M standard\n");
 	if (tuner.rangelow >= tuner.rangehigh)
 		return fail("rangelow >= rangehigh\n");
 	if (tuner.rangelow == 0 || tuner.rangehigh == 0xffffffff)
@@ -78,13 +80,14 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 		return fail("LANG1 subchan, but NTSC-M standard\n");
 	if (tuner.audmode > V4L2_TUNER_MODE_LANG1_LANG2)
 		return fail("invalid audio mode\n");
-	// Ambiguous whether this is allowed or not
-	//		if (!tv && tuner.audmode > V4L2_TUNER_MODE_STEREO)
-	//			return -16;
+	if (!tv && tuner.audmode > V4L2_TUNER_MODE_STEREO)
+		return fail("invalid audio mode for radio device\n");
 	if (tuner.signal > 65535)
 		return fail("signal too large\n");
 	if (tuner.capability & V4L2_TUNER_CAP_STEREO)
 		valid_modes[V4L2_TUNER_MODE_STEREO] = true;
+	if (tuner.capability & V4L2_TUNER_CAP_LANG1)
+		valid_modes[V4L2_TUNER_MODE_LANG1] = true;
 	if (tuner.capability & V4L2_TUNER_CAP_LANG2) {
 		valid_modes[V4L2_TUNER_MODE_LANG2] = true;
 		valid_modes[V4L2_TUNER_MODE_LANG1_LANG2] = true;
@@ -100,11 +103,8 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 			fail("failure to get new tuner audmode\n");
 		if (tun.audmode > V4L2_TUNER_MODE_LANG1_LANG2)
 			return fail("invalid new audmode\n");
-		// Ambiguous whether this is allowed or not
-		//	if (!tv && tun.audmode > V4L2_TUNER_MODE_STEREO)
-		//		return -21;
-		//	if (!valid_modes[tun.audmode])
-		//		return fail("accepted invalid audmode %d\n", audmode);
+		if (!valid_modes[tun.audmode])
+			return fail("accepted invalid audmode %d\n", audmode);
 	}
 	return 0;
 }
