@@ -784,7 +784,7 @@ void ApplicationWindow::setDefaults(unsigned ctrl_class)
 		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64)
 			setVal64(id, 0);
 		else if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_STRING)
-			setString(id, QString(' ', m_ctrlMap[id].minimum));
+			setString(id, QString(m_ctrlMap[id].minimum, ' '));
 		else if (m_ctrlMap[id].type != V4L2_CTRL_TYPE_BUTTON)
 			setVal(id, m_ctrlMap[id].default_value);
 	}
