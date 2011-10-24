@@ -119,16 +119,24 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 		for (i = 0; i < ARRAY_SIZE(dvb_v5_delivery_system); i++) {
 			if (!dvb_v5_delivery_system[i])
 				continue;
-
 			dtv_prop.num = 1;
 			parms->dvb_prop[0].cmd = DTV_DELIVERY_SYSTEM;
 			parms->dvb_prop[0].u.data = i;
-			if (ioctl(fd, FE_SET_PROPERTY, &dtv_prop) == -1)
-				continue;
-			if (ioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1)
-				continue;
-			if (parms->dvb_prop[0].u.data == i)
-				parms->systems[parms->num_systems++] = i;
+			if (i == SYS_ATSC) {
+				if (!(parms->info.caps & (FE_CAN_8VSB | FE_CAN_16VSB)))
+					continue;
+			} else if (i == SYS_DVBC_ANNEX_B) {
+				if (!(parms->info.caps & (FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_QAM_AUTO)))
+					continue;
+			} else {
+				if (ioctl(fd, FE_SET_PROPERTY, &dtv_prop) == -1)
+					continue;
+				if (ioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1)
+					continue;
+				if (parms->dvb_prop[0].u.data != i)
+					continue;
+			}
+			parms->systems[parms->num_systems++] = i;
 		}
 		if (parms->num_systems == 0) {
 			fprintf(stderr, "driver died while trying to set the delivery system\n");
