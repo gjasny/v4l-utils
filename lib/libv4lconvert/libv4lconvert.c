@@ -734,7 +734,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			}
 			break;
 		case V4L2_PIX_FMT_OV511:
-			if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov511-decomp",
+			if (v4lconvert_helper_decompress(data, LIBV4LCONVERTSUBDIR "/ov511-decomp",
 						src, src_size, d, d_size, width, height, yvu)) {
 				/* Corrupt frame, better get another one */
 				errno = EAGAIN;
@@ -742,7 +742,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			}
 			break;
 		case V4L2_PIX_FMT_OV518:
-			if (v4lconvert_helper_decompress(data, LIBDIR "/" LIBSUBDIR "/ov518-decomp",
+			if (v4lconvert_helper_decompress(data, LIBV4LCONVERTSUBDIR "/ov518-decomp",
 						src, src_size, d, d_size, width, height, yvu)) {
 				/* Corrupt frame, better get another one */
 				errno = EAGAIN;

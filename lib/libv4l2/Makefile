@@ -50,12 +50,12 @@ ifeq ($(LINKTYPE),static)
 	mkdir -p $(DESTDIR)$(LIBDIR)
 	install -m 644 $(V4L2_LIB) $(DESTDIR)$(LIBDIR)
 else
-	mkdir -p $(DESTDIR)$(LIBDIR)/$(LIBSUBDIR)
+	mkdir -p $(DESTDIR)$(LIBV4L2SUBDIR)
 	install -m 755 $(V4L2_LIB).$(LIB_RELEASE) $(DESTDIR)$(LIBDIR)
 	cd $(DESTDIR)$(LIBDIR) && \
 	  ln -f -s $(V4L2_LIB).$(LIB_RELEASE) $(V4L2_LIB)
 	install -m 755 $(V4L2CONVERT).$(LIB_RELEASE) \
-	  $(DESTDIR)$(LIBDIR)/$(LIBSUBDIR)/$(V4L2CONVERT)
+	  $(DESTDIR)$(LIBV4L2SUBDIR)/$(V4L2CONVERT)
 endif
 	mkdir -p $(DESTDIR)$(LIBDIR)/pkgconfig
 	install -m 644 libv4l2.pc $(DESTDIR)$(LIBDIR)/pkgconfig

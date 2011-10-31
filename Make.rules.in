@@ -8,7 +8,9 @@ CFLAGS += -Wstrict-prototypes -Wmissing-prototypes
 PREFIX = /usr/local
 LIBDIR = $(PREFIX)/lib
 # subdir below LIBDIR in which to install the libv4lx libc wrappers
-LIBSUBDIR = libv4l
+LIBV4L1SUBDIR = $(LIBDIR)/@libv4l1subdir@
+LIBV4L2SUBDIR = $(LIBDIR)/@libv4l2subdir@
+LIBV4LCONVERTSUBDIR = $(LIBDIR)/@libv4lconvertsubdir@
 MANDIR = $(PREFIX)/share/man
 
 # These ones should not be overriden from the cmdline

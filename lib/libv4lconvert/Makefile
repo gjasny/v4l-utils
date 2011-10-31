@@ -19,7 +19,7 @@ CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
 TARGETS       = $(CONVERT_LIB) libv4lconvert.pc ov511-decomp ov518-decomp
 INCLUDES      = ../include/libv4lconvert.h
 
-override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBSUBDIR)\"
+override CPPFLAGS += -DLIBV4LCONVERTSUBDIR=\"$(LIBV4LCONVERTSUBDIR)\"
 
 # This is the soname version
 LIB_RELEASE = 1
@@ -44,7 +44,7 @@ libv4lconvert.pc:
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/include
 	install -p -m 644 $(INCLUDES) $(DESTDIR)$(PREFIX)/include
-	mkdir -p $(DESTDIR)$(LIBDIR)/$(LIBSUBDIR)
+	mkdir -p $(DESTDIR)$(LIBV4LCONVERTSUBDIR)
 ifeq ($(LINKTYPE),static)
 	install -m 644 $(CONVERT_LIB) $(DESTDIR)$(LIBDIR)
 else
@@ -52,7 +52,7 @@ else
 	cd $(DESTDIR)$(LIBDIR) && \
 	  ln -f -s $(CONVERT_LIB).$(LIB_RELEASE) $(CONVERT_LIB)
 endif
-	install -m 755 *-decomp $(DESTDIR)$(LIBDIR)/$(LIBSUBDIR)
+	install -m 755 *-decomp $(DESTDIR)$(LIBV4LCONVERTSUBDIR)
 	mkdir -p $(DESTDIR)$(LIBDIR)/pkgconfig
 	install -m 644 libv4lconvert.pc $(DESTDIR)$(LIBDIR)/pkgconfig
 

@@ -12,7 +12,7 @@ configure:
 	@echo "*** You should now run ./configure or make ***"
 distclean:
 	-$(MAKE) -f Makefile clean
-	-rm Makefile configure config.h v4l-utils.spec
+	-rm Makefile Make.rules configure config.h v4l-utils.spec
 
 -include Makefile
 
