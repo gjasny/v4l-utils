@@ -47,7 +47,8 @@ static int whitebalance_calculate_lookup_tables_generic(
 		struct v4lprocessing_data *data, int green_avg, int comp1_avg, int comp2_avg)
 {
 	int i, avg_avg;
-	const int max_step = 64;
+	const int threshold = 64;
+	const int max_step = 128;
 
 	/* Clip averages (restricts maximum white balance correction) */
 	green_avg = CLIP(green_avg, 512, 3072);
@@ -60,13 +61,16 @@ static int whitebalance_calculate_lookup_tables_generic(
 		data->comp1_avg = comp1_avg;
 		data->comp2_avg = comp2_avg;
 	} else {
-		/* Slowly adjust the averages used for the correction, so that we
-		   do not get a sudden change in colors */
+		/* Slowly adjust the averages used for the correction, so that
+		   we do not get a sudden change in colors */
+		int throttling = 0;
+
 		if (abs(data->green_avg - green_avg) > max_step) {
 			if (data->green_avg < green_avg)
 				data->green_avg += max_step;
 			else
 				data->green_avg -= max_step;
+			throttling = 1;
 		} else
 			data->green_avg = green_avg;
 
@@ -75,6 +79,7 @@ static int whitebalance_calculate_lookup_tables_generic(
 				data->comp1_avg += max_step;
 			else
 				data->comp1_avg -= max_step;
+			throttling = 1;
 		} else
 			data->comp1_avg = comp1_avg;
 
@@ -83,13 +88,25 @@ static int whitebalance_calculate_lookup_tables_generic(
 				data->comp2_avg += max_step;
 			else
 				data->comp2_avg -= max_step;
+			throttling = 1;
 		} else
 			data->comp2_avg = comp2_avg;
+
+		/*
+		 * If we are still converging to a stable update situation,
+		 * re-calc the lookup tables next frame, but only if no
+		 * other processing plugin has already asked for a shorter
+		 * update cycle, as asking for an update each frame while
+		 * some other pluging is trying to adjust hw settings is bad.
+		 */
+		if (throttling && data->lookup_table_update_counter == 0)
+			data->lookup_table_update_counter =
+						V4L2PROCESSING_UPDATE_RATE;
 	}
 
-	if (abs(data->green_avg - data->comp1_avg) < max_step &&
-			abs(data->green_avg - data->comp2_avg) < max_step &&
-			abs(data->comp1_avg - data->comp2_avg) < max_step)
+	if (abs(data->green_avg - data->comp1_avg) < threshold &&
+			abs(data->green_avg - data->comp2_avg) < threshold &&
+			abs(data->comp1_avg - data->comp2_avg) < threshold)
 		return 0;
 
 	avg_avg = (data->green_avg + data->comp1_avg + data->comp2_avg) / 3;
