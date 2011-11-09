@@ -1,10 +1,10 @@
-TARGETS = dvbv5_scan
+TARGETS = dvb-fe-tool
 
 all: $(TARGETS)
 
 -include *.d
 
-dvbv5_scan: dvbv5_scan.o dvb-fe.o
+dvb-fe-tool: dvb-fe-tool.o dvb-fe.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 dvb-v5.h:
