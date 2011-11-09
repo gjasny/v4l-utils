@@ -83,6 +83,8 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 		case FE_QPSK:
 			parms->current_sys = SYS_DVBS;
 			parms->systems[parms->num_systems++] = parms->current_sys;
+			if (parms->version < 0x0500)
+				break;
 			if (parms->info.caps & FE_CAN_2G_MODULATION) {
 				parms->systems[parms->num_systems++] = SYS_DVBS2;
 			}
@@ -94,6 +96,8 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 		case FE_OFDM:
 			parms->current_sys = SYS_DVBT;
 			parms->systems[parms->num_systems++] = parms->current_sys;
+			if (parms->version < 0x0500)
+				break;
 			if (parms->info.caps & FE_CAN_2G_MODULATION) {
 				parms->systems[parms->num_systems++] = SYS_DVBT2;
 			}
