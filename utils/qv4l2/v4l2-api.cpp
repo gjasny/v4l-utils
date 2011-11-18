@@ -274,11 +274,13 @@ bool v4l2::g_fmt_out(v4l2_format &fmt)
 bool v4l2::try_fmt(v4l2_format &fmt)
 {
 	fmt.fmt.pix.field = V4L2_FIELD_ANY;
+	fmt.fmt.pix.bytesperline = 0;
 	return ioctl("Try Capture Format", VIDIOC_TRY_FMT, &fmt);
 }
 
 bool v4l2::s_fmt(v4l2_format &fmt)
 {
+	fmt.fmt.pix.bytesperline = 0;
 	return ioctl("Set Capture Format", VIDIOC_S_FMT, &fmt);
 }
 
