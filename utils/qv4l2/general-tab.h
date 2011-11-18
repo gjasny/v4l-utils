@@ -67,7 +67,9 @@ private:
 	void updateVideoOutput();
 	void updateAudioInput();
 	void updateAudioOutput();
+	void refreshStandards();
 	void updateStandard();
+	void refreshPresets();
 	void updatePreset();
 	void updateFreq();
 	void updateFreqChannel();
