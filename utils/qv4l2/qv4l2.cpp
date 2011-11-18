@@ -467,6 +467,7 @@ void ApplicationWindow::capStart(bool start)
 	m_frame = m_lastFrame = m_fps = 0;
 	m_capMethod = m_genTab->capMethod();
 	g_fmt_cap(m_capSrcFormat);
+	s_fmt(m_capSrcFormat);
 
 	m_mustConvert = m_showFrames;
 	if (m_showFrames) {
