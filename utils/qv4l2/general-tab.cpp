@@ -63,46 +63,22 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 	g_tuner(m_tuner);
 
-	v4l2_standard vs;
-	if (enum_std(vs, true)) {
-		addLabel("TV Standard");
-		m_tvStandard = new QComboBox(parent);
-		do {
-			m_tvStandard->addItem((char *)vs.name);
-		} while (enum_std(vs));
-		addWidget(m_tvStandard);
-		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
-		addLabel("");
-		m_qryStandard = new QPushButton("Query Standard", parent);
-		addWidget(m_qryStandard);
-		connect(m_qryStandard, SIGNAL(clicked()), SLOT(qryStdClicked()));
-	}
-
-	v4l2_dv_enum_preset preset;
-	if (enum_dv_preset(preset, true)) {
-		addLabel("Video Preset");
-		m_videoPreset = new QComboBox(parent);
-		do {
-			m_videoPreset->addItem((char *)preset.name);
-		} while (enum_dv_preset(preset));
-		addWidget(m_videoPreset);
-		connect(m_videoPreset, SIGNAL(activated(int)), SLOT(presetChanged(int)));
-		addLabel("");
-		m_qryPreset = new QPushButton("Query Preset", parent);
-		addWidget(m_qryPreset);
-		connect(m_qryPreset, SIGNAL(clicked()), SLOT(qryPresetClicked()));
-	}
-
 	v4l2_input vin;
+	bool needsStd = false;
+	bool needsPreset = false;
+
 	if (enum_input(vin, true)) {
 		addLabel("Input");
 		m_videoInput = new QComboBox(parent);
 		do {
 			m_videoInput->addItem((char *)vin.name);
+			if (vin.capabilities & V4L2_IN_CAP_STD)
+				needsStd = true;
+			if (vin.capabilities & V4L2_IN_CAP_PRESETS)
+				needsPreset = true;
 		} while (enum_input(vin));
 		addWidget(m_videoInput);
 		connect(m_videoInput, SIGNAL(activated(int)), SLOT(inputChanged(int)));
-		updateVideoInput();
 	}
 
 	v4l2_output vout;
@@ -139,6 +115,30 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		addWidget(m_audioOutput);
 		connect(m_audioOutput, SIGNAL(activated(int)), SLOT(outputAudioChanged(int)));
 		updateAudioOutput();
+	}
+
+	if (needsStd) {
+		addLabel("TV Standard");
+		m_tvStandard = new QComboBox(parent);
+		addWidget(m_tvStandard);
+		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
+		refreshStandards();
+		addLabel("");
+		m_qryStandard = new QPushButton("Query Standard", parent);
+		addWidget(m_qryStandard);
+		connect(m_qryStandard, SIGNAL(clicked()), SLOT(qryStdClicked()));
+	}
+
+	if (needsPreset) {
+		addLabel("Video Preset");
+		m_videoPreset = new QComboBox(parent);
+		addWidget(m_videoPreset);
+		connect(m_videoPreset, SIGNAL(activated(int)), SLOT(presetChanged(int)));
+		refreshPresets();
+		addLabel("");
+		m_qryPreset = new QPushButton("Query Preset", parent);
+		addWidget(m_qryPreset);
+		connect(m_qryPreset, SIGNAL(clicked()), SLOT(qryPresetClicked()));
 	}
 
 	if (m_tuner.type) {
@@ -205,10 +205,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	addWidget(m_frameInterval);
 	connect(m_frameInterval, SIGNAL(activated(int)), SLOT(frameIntervalChanged(int)));
 
-	if (m_tvStandard)
-		updateStandard();
-	if (m_videoPreset)
-		updatePreset();
+	updateVideoInput();
 
 	updateVidCapFormat();
 
@@ -426,10 +423,14 @@ void GeneralTab::updateVideoInput()
 	enum_input(in, true, input);
 	m_videoInput->setCurrentIndex(input);
 	if (m_tvStandard) {
+		refreshStandards();
+		updateStandard();
 		m_tvStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
 		m_qryStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
 	}
 	if (m_videoPreset) {
+		refreshPresets();
+		updatePreset();
 		m_videoPreset->setEnabled(in.capabilities & V4L2_IN_CAP_PRESETS);
 		m_qryPreset->setEnabled(in.capabilities & V4L2_IN_CAP_PRESETS);
 	}
@@ -479,6 +480,17 @@ void GeneralTab::updateAudioOutput()
 	m_audioOutput->setCurrentIndex(audio.index);
 }
 
+void GeneralTab::refreshStandards()
+{
+	v4l2_standard vs;
+	m_tvStandard->clear();
+	if (enum_std(vs, true)) {
+		do {
+			m_tvStandard->addItem((char *)vs.name);
+		} while (enum_std(vs));
+	}
+}
+
 void GeneralTab::updateStandard()
 {
 	v4l2_std_id std;
@@ -520,6 +532,17 @@ void GeneralTab::qryStdClicked()
 	if (query_std(std)) {
 		s_std(std);
 		updateStandard();
+	}
+}
+
+void GeneralTab::refreshPresets()
+{
+	v4l2_dv_enum_preset preset;
+	m_videoPreset->clear();
+	if (enum_dv_preset(preset, true)) {
+		do {
+			m_videoPreset->addItem((char *)preset.name);
+		} while (enum_dv_preset(preset));
 	}
 }
 
