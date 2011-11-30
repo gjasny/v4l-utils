@@ -442,7 +442,6 @@ my %regs = (
 	0x07dc => "TM6010_REQ07_RDC_IR_LEADER1",
 	0x07dd => "TM6000_REQ07_RDD_GPIO2_MDRV",
 	0x07dd => "TM6010_REQ07_RDD_IR_LEADER0",
-	0x07dd => "TM6010_REQ07_RDE_IR_PULSE_CNT2",
 	0x07de => "TM6000_REQ07_RDE_GPIO1_MDRV",
 	0x07de => "TM6010_REQ07_RDE_IR_PULSE_CNT1",
 	0x07df => "TM6000_REQ07_RDF_PWDOWN_ACLK",
@@ -544,6 +543,18 @@ my %regs = (
 	0x08f3 => "TM6010_REQ08_RF3_RIGHT_CHANNEL_VOL",
 );
 
+my %gpio = (
+	0x102	=> "GPIO_0",
+	0x103	=> "GPIO_1",
+	0x104	=> "GPIO_2",
+	0x105	=> "GPIO_3",
+	0x106	=> "GPIO_4",
+	0x107	=> "GPIO_5",
+	0x300	=> "GPIO_6",
+	0x301	=> "GPIO_7",
+	0x305	=> "GPIO_9",
+);
+
 ##############
 # Main program
 ##############
@@ -561,23 +572,45 @@ while (<>) {
 		my $dir = $10;
 		my $payload = $11;
 
-		if ($req == 0 && $reqtype > 0x80 && !$wvalue && !$windex) {
+		if ($req == 0 && $reqtype < 0x80 && !$wvalue && !$windex) {
 			printf("tm6000_set_ir_value(udev, %s, %s);\n",
 			       add_hex_mark($payload), $wlen);
-		} elsif ($req == 1 && $reqtype > 0x80 && !$wvalue && !$windex) {
+		} elsif ($req == 1 && $reqtype < 0x80 && !$wvalue && !$windex) {
 			printf("tm6000_set_ir_wakeup_code(udev, %s, %s);\n",
 			       add_hex_mark($payload), $wlen);
-		} elsif ($req == 2 && $reqtype < 0x80 && !$wvalue && !$windex) {
+		} elsif ($req == 2 && $reqtype >= 0x80 && !$wvalue && !$windex) {
 			printf("tm6000_get_ir(udev, &data, %s); /* %s */\n",
 				$wlen, add_hex_mark($payload));
+		} elsif ($req == 3) {
+			my $cur_gpio;
+			if (defined($gpio{$wvalue})) {
+				$cur_gpio = sprintf "%s", $gpio{$wvalue};
+			} else {
+				$cur_gpio = sprintf "0x%02x,", $wvalue;
+			}
+			if ($reqtype >= 0x80) {
+				printf("tm6000_read_gpio(udev, %s, &data, %s); /* %s */\n",
+					$cur_gpio, $wlen, add_hex_mark($payload));
+			} else {
+				if ($wlen) {
+					printf("tm6000_write_gpio(udev, %s, 0x%02x, %s);\n",
+						$cur_gpio, $windex, add_hex_mark($payload), $wlen);
+				} else {
+					printf("tm6000_write_gpio(udev, %s, 0x%02x);\n",
+						$cur_gpio, $windex);
+				}
+			}
+		} elsif ($req == 4 && $reqtype < 0x80 && !$wlen) {
+			printf("tm6000_write(udev, 0x04, EN_DISABLE_MCU_INT, 0x%02x, 0x%02x);\n",
+				$wvalue, $windex);
 		} elsif (($req == 5 || $req == 7 || $req == 8) && $wvalue < 256) {
 			my $register = $req << 8 | $wvalue;
 			if (defined($regs{$register})) {
-                                $register = sprintf "%s", $regs{$register};
-                        } else {
-                                $register = sprintf "0x%02x, 0x%02x,", $req, $wvalue;
-                       	}
-			if ($reqtype > 0x80) {
+				$register = sprintf "%s", $regs{$register};
+			} else {
+				$register = sprintf "0x%02x, 0x%02x,", $req, $wvalue;
+			}
+			if ($reqtype >= 0x80) {
 				printf("tm6000_read(udev, %s, %02x, &data, %s); /* %s */\n",
 					$register, $windex, $wlen, add_hex_mark($payload));
 			} else {
@@ -592,7 +625,7 @@ while (<>) {
 		} else {
 			printf "$timestamp " if ($show_timestamp);
 
-			if ($reqtype > 0x80) {
+			if ($reqtype >= 0x80) {
 				printf("tm6000_read(udev, 0x%02x, 0x%02x, %d, &data, %s); /* %s */\n",
 					$req, $wvalue, $windex, $wlen, add_hex_mark($payload));
 			} else {
