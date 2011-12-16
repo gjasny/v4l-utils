@@ -216,6 +216,10 @@ int v4lconvert_decode_mr97310a(struct v4lconvert_data *data,
 		const unsigned char *src, int src_size, unsigned char *dst,
 		int width, int height);
 
+int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data,
+		const unsigned char *src, int src_size,
+		unsigned char *dest, int width, int height);
+
 void v4lconvert_decode_sn9c2028(const unsigned char *src, unsigned char *dst,
 		int width, int height);
 
