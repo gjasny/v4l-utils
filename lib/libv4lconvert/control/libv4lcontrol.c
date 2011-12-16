@@ -607,6 +607,8 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 
 	/* Second: devices which should use some software processing by default */
+	/* jl2005bcd devices */
+	{ 0x0979, 0x0227, 0,    NULL, NULL, V4LCONTROL_WANTS_WB },
 	/* sn9c101 / sn9c102 based devices (sonixb) */
 	{ 0x0c45, 0x6011, 0,    NULL, NULL, 0, 1500 }, /* OV6650, no WB needed */
 	{ 0x0c45, 0x6019, 0,    NULL, NULL, 0, 1500 }, /* OV7630, no WB needed */
