@@ -153,7 +153,7 @@ const char *fe_rolloff_name[4] = {
 	[ROLLOFF_AUTO] = "AUTO",
 };
 
-const char *dvb_v5_name[44] = {
+const char *dvb_v5_name[45] = {
 	[DTV_API_VERSION] =                    "API_VERSION",
 	[DTV_BANDWIDTH_HZ] =                   "BANDWIDTH_HZ",
 	[DTV_CLEAR] =                          "CLEAR",
@@ -163,6 +163,7 @@ const char *dvb_v5_name[44] = {
 	[DTV_DISEQC_MASTER] =                  "DISEQC_MASTER",
 	[DTV_DISEQC_SLAVE_REPLY] =             "DISEQC_SLAVE_REPLY",
 	[DTV_DVBT2_PLP_ID] =                   "DVBT2_PLP_ID",
+	[DTV_ENUM_DELSYS] =                    "ENUM_DELSYS",
 	[DTV_FE_CAPABILITY] =                  "FE_CAPABILITY",
 	[DTV_FE_CAPABILITY_COUNT] =            "FE_CAPABILITY_COUNT",
 	[DTV_FREQUENCY] =                      "FREQUENCY",
@@ -200,25 +201,26 @@ const char *dvb_v5_name[44] = {
 	[DTV_VOLTAGE] =                        "VOLTAGE",
 };
 
-const char *delivery_system_name[18] = {
-	[SYS_ATSC] =          "ATSC",
-	[SYS_ATSCMH] =        "ATSCMH",
-	[SYS_CMMB] =          "CMMB",
-	[SYS_DAB] =           "DAB",
-	[SYS_DMBTH] =         "DMBTH",
-	[SYS_DSS] =           "DSS",
-	[SYS_DVBC_ANNEX_AC] = "DVBC/ANNEX_AC",
-	[SYS_DVBC_ANNEX_B] =  "DVBC/ANNEX_B",
-	[SYS_DVBH] =          "DVBH",
-	[SYS_DVBS] =          "DVBS",
-	[SYS_DVBS2] =         "DVBS2",
-	[SYS_DVBT] =          "DVBT",
-	[SYS_DVBT2] =         "DVBT2",
-	[SYS_ISDBC] =         "ISDBC",
-	[SYS_ISDBS] =         "ISDBS",
-	[SYS_ISDBT] =         "ISDBT",
-	[SYS_TURBO] =         "TURBO",
-	[SYS_UNDEFINED] =     "UNDEFINED",
+const char *delivery_system_name[19] = {
+	[SYS_ATSC] =         "ATSC",
+	[SYS_ATSCMH] =       "ATSCMH",
+	[SYS_CMMB] =         "CMMB",
+	[SYS_DAB] =          "DAB",
+	[SYS_DMBTH] =        "DMBTH",
+	[SYS_DSS] =          "DSS",
+	[SYS_DVBC_ANNEX_A] = "DVBC/ANNEX_A",
+	[SYS_DVBC_ANNEX_B] = "DVBC/ANNEX_B",
+	[SYS_DVBC_ANNEX_C] = "DVBC/ANNEX_C",
+	[SYS_DVBH] =         "DVBH",
+	[SYS_DVBS] =         "DVBS",
+	[SYS_DVBS2] =        "DVBS2",
+	[SYS_DVBT] =         "DVBT",
+	[SYS_DVBT2] =        "DVBT2",
+	[SYS_ISDBC] =        "ISDBC",
+	[SYS_ISDBS] =        "ISDBS",
+	[SYS_ISDBT] =        "ISDBT",
+	[SYS_TURBO] =        "TURBO",
+	[SYS_UNDEFINED] =    "UNDEFINED",
 };
 
 #endif
