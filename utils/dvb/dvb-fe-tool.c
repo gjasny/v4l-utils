@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
-	parms = dvb_fe_open(adapter, frontend, verbose);
+	parms = dvb_fe_open(adapter, frontend, verbose, 0);
 	dvb_fe_close(parms);
 
 	return 0;

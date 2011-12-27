@@ -52,7 +52,7 @@ struct dvb_v5_fe_parms {
 /* Open/close methods */
 
 struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
-				    unsigned verbose);
+				    unsigned verbose, unsigned use_legacy_call);
 void dvb_fe_close(struct dvb_v5_fe_parms *parms);
 
 /* Get/set delivery system parameters */

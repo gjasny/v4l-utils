@@ -14,7 +14,8 @@ static void dvb_v5_free(struct dvb_v5_fe_parms *parms)
 	free(parms);
 }
 
-struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
+struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
+				    unsigned use_legacy_call)
 {
 	int fd, i;
 	char *fname;
@@ -77,7 +78,10 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 			parms->version % 256,
 			delivery_system_name[parms->current_sys]);
 
-	if (parms->current_sys == SYS_UNDEFINED) {
+	if (parms->version < 0x505)
+		use_legacy_call = 1;
+
+	if (use_legacy_call) {
 		parms->legacy_fe = 1;
 		switch(parms->info.type) {
 		case FE_QPSK:
@@ -85,12 +89,13 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 			parms->systems[parms->num_systems++] = parms->current_sys;
 			if (parms->version < 0x0500)
 				break;
-			if (parms->info.caps & FE_CAN_2G_MODULATION) {
+			if (parms->info.caps & FE_CAN_2G_MODULATION)
 				parms->systems[parms->num_systems++] = SYS_DVBS2;
-			}
+			if (parms->info.caps & FE_CAN_TURBO_FEC)
+				parms->systems[parms->num_systems++] = SYS_TURBO;
 			break;
 		case FE_QAM:
-			parms->current_sys = SYS_DVBC_ANNEX_AC;
+			parms->current_sys = SYS_DVBC_ANNEX_A;
 			parms->systems[parms->num_systems++] = parms->current_sys;
 			break;
 		case FE_OFDM:
@@ -98,9 +103,8 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 			parms->systems[parms->num_systems++] = parms->current_sys;
 			if (parms->version < 0x0500)
 				break;
-			if (parms->info.caps & FE_CAN_2G_MODULATION) {
+			if (parms->info.caps & FE_CAN_2G_MODULATION)
 				parms->systems[parms->num_systems++] = SYS_DVBT2;
-			}
 			break;
 		case FE_ATSC:
 			if (parms->info.caps & (FE_CAN_8VSB | FE_CAN_16VSB))
@@ -116,35 +120,21 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 			return NULL;
 		}
 	} else {
-		for (i = 0; i < ARRAY_SIZE(dvb_v5_delivery_system); i++) {
-			if (!dvb_v5_delivery_system[i])
-				continue;
-			dtv_prop.num = 1;
-			parms->dvb_prop[0].cmd = DTV_DELIVERY_SYSTEM;
-			parms->dvb_prop[0].u.data = i;
-			if (i == SYS_ATSC) {
-				if (!(parms->info.caps & (FE_CAN_8VSB | FE_CAN_16VSB)))
-					continue;
-			} else if (i == SYS_DVBC_ANNEX_B) {
-				if (!(parms->info.caps & (FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_QAM_AUTO)))
-					continue;
-			} else {
-				if (ioctl(fd, FE_SET_PROPERTY, &dtv_prop) == -1)
-					continue;
-				if (ioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1)
-					continue;
-				if (parms->dvb_prop[0].u.data != i)
-					continue;
-			}
-			parms->systems[parms->num_systems++] = i;
-		}
-		if (parms->num_systems == 0) {
-			fprintf(stderr, "driver died while trying to set the delivery system\n");
+		parms->dvb_prop[0].cmd = DTV_ENUM_DELSYS;
+		parms->n_props = 1;
+		dtv_prop.num = 1;
+		dtv_prop.props = parms->dvb_prop;
+		if (ioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1) {
+			perror("FE_GET_PROPERTY");
 			dvb_v5_free(parms);
 			return NULL;
 		}
-		if (parms->num_systems == 1 && parms->systems[0] != parms->current_sys) {
-			fprintf(stderr, "failed to detect all delivery systems\n");
+		parms->num_systems = parms->dvb_prop[0].u.buffer.len;
+		for (i = 0; i < parms->num_systems; i++)
+			parms->systems[i] = parms->dvb_prop[0].u.buffer.data[i];
+
+		if (parms->num_systems == 0) {
+			fprintf(stderr, "driver died while trying to set the delivery system\n");
 			dvb_v5_free(parms);
 			return NULL;
 		}
@@ -162,6 +152,8 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose)
 					delivery_system_name[parms->systems[i]]);
 		}
 		printf("\n");
+		if (use_legacy_call)
+			printf("Warning: ISDB-T, ISDB-S, DMB-TH and DSS will be miss-detected by a DVBv3 call\n");
 	}
 
 	/* Prepare to use the delivery system */
@@ -236,7 +228,6 @@ void dvb_fe_prt_parms(struct dvb_v5_fe_parms *parms)
 		printf("%s = %u\n",
 		       dvb_v5_name[parms->dvb_prop[i].cmd],
 		       parms->dvb_prop[i].u.data);
-		i++;
 	}
 };
 
@@ -287,6 +278,9 @@ static int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 		parms->dvb_prop[n].cmd = sys_props[n];
 		n++;
 	}
+	parms->dvb_prop[n].cmd = DTV_DELIVERY_SYSTEM;
+	parms->dvb_prop[n].u.data = parms->current_sys;
+	n++;
 	/* Keep it ready for set */
 	parms->dvb_prop[n].cmd = DTV_TUNE;
 	parms->n_props = n;
