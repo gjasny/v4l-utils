@@ -40,6 +40,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 	}
 	parms->fname = fname;
 	parms->verbose = verbose;
+	parms->fd = fd;
 
 	if (ioctl(fd, FE_GET_INFO, &parms->info) == -1) {
 		perror("FE_GET_INFO");
