@@ -1,11 +1,11 @@
-TARGETS = dvb-fe-tool tzap
+TARGETS = dvb-fe-tool dvbzap
 
 all: $(TARGETS)
 
 -include *.d
 
 dvb-fe-tool: dvb-fe-tool.o dvb-fe.o
-tzap: tzap.o dvb-fe.o util.o
+dvbzap: dvbzap.o dvb-fe.o util.o
 
 	$(CC) $(LDFLAGS) -o $@ $^
 
