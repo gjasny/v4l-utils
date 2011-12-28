@@ -100,14 +100,14 @@ int get_pmt_pid(char *dmxdev, int sid)
 	    close(patfd);
 	    return -1;
 	}
-	
+
 	section_length = ((buf[1] & 0x0f) << 8) | buf[2];
 	if (count != section_length + 3)
 	    continue;
-	
+
 	buf += 8;
 	section_length -= 8;
-	
+
 	patread = 1; /* assumes one section contains the whole pat */
 	while (section_length > 0) {
 	    int service_id = (buf[0] << 8) | buf[1];
