@@ -29,7 +29,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <linux/dvb/frontend.h>
 #include <linux/dvb/dmx.h>
 #include "util.h"
 
