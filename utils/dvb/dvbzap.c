@@ -46,18 +46,18 @@ static int exit_after_tuning;
 #define CHANNEL_FILE "channels.conf"
 
 #define ERROR(x...)                                                     \
-        do {                                                            \
-                fprintf(stderr, "ERROR: ");                             \
-                fprintf(stderr, x);                                     \
-                fprintf (stderr, "\n");                                 \
-        } while (0)
+	do {                                                            \
+		fprintf(stderr, "ERROR: ");                             \
+		fprintf(stderr, x);                                     \
+		fprintf (stderr, "\n");                                 \
+	} while (0)
 
 #define PERROR(x...)                                                    \
-        do {                                                            \
-                fprintf(stderr, "ERROR: ");                             \
-                fprintf(stderr, x);                                     \
-                fprintf (stderr, " (%s)\n", strerror(errno));		\
-        } while (0)
+	do {                                                            \
+		fprintf(stderr, "ERROR: ");                             \
+		fprintf(stderr, x);                                     \
+		fprintf (stderr, " (%s)\n", strerror(errno));		\
+	} while (0)
 
 
 typedef struct {
@@ -249,7 +249,7 @@ int try_parse_param(int fd, const Param * plist, int list_size, int *param,
 	return err;
 }
 
-static int parse(const char *fname, const char *channel, 
+static int parse(const char *fname, const char *channel,
 		 struct dvb_v5_fe_parms *parms,
 		 int *vpid, int *apid, int *sid)
 {
@@ -305,6 +305,12 @@ static int parse(const char *fname, const char *channel,
 	if (err < 0)
 		return -7;
 
+	/* If the Delivery system is ISDB-T, set FEC for all layers */
+	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_FEC, tmp);
+	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_FEC, tmp);
+	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_FEC, tmp);
+
+
 	if ((err = try_parse_param(fd, constellation_list,
 				   LIST_SIZE(constellation_list),
 				   &tmp, "constellation")))
@@ -312,6 +318,11 @@ static int parse(const char *fname, const char *channel,
 	err = dvb_fe_store_parm(parms, DTV_MODULATION, tmp);
 	if (err < 0)
 		return -8;
+
+	/* If the Delivery system is ISDB-T, set modulation for all layers */
+	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_MODULATION, tmp);
+	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_MODULATION, tmp);
+	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_MODULATION, tmp);
 
 	if ((err = try_parse_param(fd, transmissionmode_list,
 				   LIST_SIZE(transmissionmode_list),
@@ -341,11 +352,11 @@ static int parse(const char *fname, const char *channel,
 
 	if ((err = try_parse_int(fd, apid, "Audio PID")))
 		return -13;
-	
+
 	if ((err = try_parse_int(fd, sid, "Service ID")))
 	    return -14;
-	
-	
+
+
 	close(fd);
 
 	return 0;
@@ -632,10 +643,10 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-        if ((video_fd = open(DEMUX_DEV, O_RDWR)) < 0) {
-                PERROR("failed opening '%s'", DEMUX_DEV);
-                return -1;
-        }
+	if ((video_fd = open(DEMUX_DEV, O_RDWR)) < 0) {
+		PERROR("failed opening '%s'", DEMUX_DEV);
+		return -1;
+	}
 
 	if (silent<2)
 		fprintf (stderr,"video pid 0x%04x, audio pid 0x%04x\n", vpid, apid);
@@ -644,9 +655,9 @@ int main(int argc, char **argv)
 		return -1;
 
 	if ((audio_fd = open(DEMUX_DEV, O_RDWR)) < 0) {
-                PERROR("failed opening '%s'", DEMUX_DEV);
-                return -1;
-        }
+		PERROR("failed opening '%s'", DEMUX_DEV);
+		return -1;
+	}
 
 	if (set_pesfilter (audio_fd, apid, DMX_PES_AUDIO, dvr) < 0)
 		return -1;
@@ -681,9 +692,9 @@ int main(int argc, char **argv)
 		}
 
 		if ((dvr_fd = open(DVR_DEV, O_RDONLY)) < 0) {
-	                PERROR("failed opening '%s'", DVR_DEV);
-	                return -1;
-	        }
+			PERROR("failed opening '%s'", DVR_DEV);
+			return -1;
+		}
 		if (silent<2)
 			print_frontend_stats (parms, human_readable);
 
@@ -701,7 +712,7 @@ just_the_frontend_dude:
 	close (pmt_fd);
 	close (audio_fd);
 	close (video_fd);
-        dvb_fe_close(parms);
+	dvb_fe_close(parms);
 
 	return 0;
 }
