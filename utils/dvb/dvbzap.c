@@ -32,12 +32,11 @@
 #include <errno.h>
 #include <signal.h>
 
-#include <linux/dvb/frontend.h>
 #include <linux/dvb/dmx.h>
+#include "dvb-fe.h"
 
 #include "util.h"
 
-static char FRONTEND_DEV [80];
 static char DEMUX_DEV [80];
 static char DVR_DEV [80];
 static int timeout_flag=0;
@@ -73,9 +72,9 @@ static const Param inversion_list [] = {
 };
 
 static const Param bw_list [] = {
-	{ "BANDWIDTH_6_MHZ", BANDWIDTH_6_MHZ },
-	{ "BANDWIDTH_7_MHZ", BANDWIDTH_7_MHZ },
-	{ "BANDWIDTH_8_MHZ", BANDWIDTH_8_MHZ }
+	{ "BANDWIDTH_6_MHZ", 6000000 },
+	{ "BANDWIDTH_7_MHZ", 7000000 },
+	{ "BANDWIDTH_8_MHZ", 8000000 }
 };
 
 static const Param fec_list [] = {
@@ -250,29 +249,9 @@ int try_parse_param(int fd, const Param * plist, int list_size, int *param,
 	return err;
 }
 
-static int check_fec(fe_code_rate_t *fec)
-{
-	switch (*fec)
-	{
-	case FEC_NONE:
-		*fec = FEC_AUTO;
-	case FEC_AUTO:
-	case FEC_1_2:
-	case FEC_2_3:
-	case FEC_3_4:
-	case FEC_5_6:
-	case FEC_7_8:
-		return 0;
-	default:
-		;
-	}
-	return 1;
-}
-
-
-static int parse(const char *fname, const char *channel,
-	  struct dvb_frontend_parameters *frontend, int *vpid, int *apid,
-	  int *sid)
+static int parse(const char *fname, const char *channel, 
+		 struct dvb_v5_fe_parms *parms,
+		 int *vpid, int *apid, int *sid)
 {
 	int fd;
 	int err;
@@ -291,55 +270,71 @@ static int parse(const char *fname, const char *channel,
 
 	if ((err = try_parse_int(fd, &tmp, "frequency")))
 		return -3;
-	frontend->frequency = tmp;
+
+	err = dvb_fe_store_parm(parms, DTV_FREQUENCY, tmp);
+	if (err < 0)
+		return -3;
 
 	if ((err = try_parse_param(fd,
 				   inversion_list, LIST_SIZE(inversion_list),
 				   &tmp, "inversion")))
 		return -4;
-	frontend->inversion = tmp;
+	err = dvb_fe_store_parm(parms, DTV_INVERSION, tmp);
+	if (err < 0)
+		return -4;
 
 	if ((err = try_parse_param(fd, bw_list, LIST_SIZE(bw_list),
 				   &tmp, "bandwidth")))
 		return -5;
-	frontend->u.ofdm.bandwidth = tmp;
+	err = dvb_fe_store_parm(parms, DTV_BANDWIDTH_HZ, tmp);
+	if (err < 0)
+		return -5;
 
 	if ((err = try_parse_param(fd, fec_list, LIST_SIZE(fec_list),
 				   &tmp, "code_rate_HP")))
 		return -6;
-	frontend->u.ofdm.code_rate_HP = tmp;
-	if (check_fec(&frontend->u.ofdm.code_rate_HP))
+
+	err = dvb_fe_store_parm(parms, DTV_CODE_RATE_HP, tmp);
+	if (err < 0)
 		return -6;
 
 	if ((err = try_parse_param(fd, fec_list, LIST_SIZE(fec_list),
 				   &tmp, "code_rate_LP")))
 		return -7;
-	frontend->u.ofdm.code_rate_LP = tmp;
-	if (check_fec(&frontend->u.ofdm.code_rate_LP))
+	err = dvb_fe_store_parm(parms, DTV_CODE_RATE_LP, tmp);
+	if (err < 0)
 		return -7;
 
 	if ((err = try_parse_param(fd, constellation_list,
 				   LIST_SIZE(constellation_list),
 				   &tmp, "constellation")))
 		return -8;
-	frontend->u.ofdm.constellation = tmp;
+	err = dvb_fe_store_parm(parms, DTV_MODULATION, tmp);
+	if (err < 0)
+		return -8;
 
 	if ((err = try_parse_param(fd, transmissionmode_list,
 				   LIST_SIZE(transmissionmode_list),
 				   &tmp, "transmission_mode")))
 		return -9;
-	frontend->u.ofdm.transmission_mode = tmp;
+	err = dvb_fe_store_parm(parms, DTV_TRANSMISSION_MODE, tmp);
+	if (err < 0)
+		return -9;
 
 	if ((err = try_parse_param(fd, guard_list, LIST_SIZE(guard_list),
 				   &tmp, "guard_interval")))
 		return -10;
-	frontend->u.ofdm.guard_interval = tmp;
+	err = dvb_fe_store_parm(parms, DTV_GUARD_INTERVAL, tmp);
+	if (err < 0)
+		return -10;
 
 	if ((err = try_parse_param(fd, hierarchy_list,
 				   LIST_SIZE(hierarchy_list),
 				   &tmp, "hierarchy_information")))
 		return -11;
-	frontend->u.ofdm.hierarchy_information = tmp;
+	err = dvb_fe_store_parm(parms, DTV_HIERARCHY, tmp);
+	if (err < 0)
+		return -11;
 
 	if ((err = try_parse_int(fd, vpid, "Video PID")))
 		return -12;
@@ -358,25 +353,23 @@ static int parse(const char *fname, const char *channel,
 
 
 static
-int setup_frontend (int fe_fd, struct dvb_frontend_parameters *frontend)
+int setup_frontend (struct dvb_v5_fe_parms *parms)
 {
-	struct dvb_frontend_info fe_info;
+	int rc;
+	uint32_t freq;
 
-	if (ioctl(fe_fd, FE_GET_INFO, &fe_info) < 0) {
-		PERROR("ioctl FE_GET_INFO failed");
-		return -1;
+	if (silent < 2) {
+		rc = dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
+		if (rc < 0) {
+			PERROR("can't get the frequency");
+			return -1;
+		}
+		fprintf (stderr,"tuning to %i Hz\n", freq);
 	}
 
-	if (fe_info.type != FE_OFDM) {
-		ERROR ("frontend device is not a OFDM (DVB-T) device");
-		return -1;
-	}
-
-	if (silent<2)
-		fprintf (stderr,"tuning to %i Hz\n", frontend->frequency);
-
-	if (ioctl(fe_fd, FE_SET_FRONTEND, frontend) < 0) {
-		PERROR("ioctl FE_SET_FRONTEND failed");
+	rc = dvb_fe_set_parms(parms);
+	if (rc < 0) {
+		PERROR("dvb_fe_set_parms failed");
 		return -1;
 	}
 
@@ -400,18 +393,25 @@ do_timeout(int x)
 	}
 }
 
-static void
-print_frontend_stats (int fe_fd, int human_readable)
+static int
+print_frontend_stats (struct dvb_v5_fe_parms *parms, int human_readable)
 {
+	int rc;
 	fe_status_t status;
-	uint16_t snr, _signal;
-	uint32_t ber, uncorrected_blocks;
+	uint32_t snr = 0, _signal = 0;
+	uint32_t ber = 0, uncorrected_blocks = 0;
 
-	ioctl(fe_fd, FE_READ_STATUS, &status);
-	ioctl(fe_fd, FE_READ_SIGNAL_STRENGTH, &_signal);
-	ioctl(fe_fd, FE_READ_SNR, &snr);
-	ioctl(fe_fd, FE_READ_BER, &ber);
-	ioctl(fe_fd, FE_READ_UNCORRECTED_BLOCKS, &uncorrected_blocks);
+	rc = dvb_fe_get_stats(parms);
+	if (rc < 0) {
+		PERROR("dvb_fe_get_stats failed");
+		return -1;
+	}
+
+	rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
+	rc += dvb_fe_retrieve_stats(parms, DTV_BER, &ber);
+	rc += dvb_fe_retrieve_stats(parms, DTV_SIGNAL_STRENGTH, &_signal);
+	rc += dvb_fe_retrieve_stats(parms, DTV_UNCORRECTED_BLOCKS, &uncorrected_blocks);
+	rc += dvb_fe_retrieve_stats(parms, DTV_SNR, &snr);
 
 	if (human_readable) {
 		printf ("status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d | ",
@@ -425,22 +425,28 @@ print_frontend_stats (int fe_fd, int human_readable)
 		fprintf(stderr,"FE_HAS_LOCK");
 
 	fprintf(stderr,"\n");
+	return 0;
 }
 
 static
-int check_frontend (int fe_fd, int human_readable)
+int check_frontend (struct dvb_v5_fe_parms *parms, int human_readable)
 {
+	int rc;
 	fe_status_t status;
 	do {
-	        ioctl(fe_fd, FE_READ_STATUS, &status);
+		rc = dvb_fe_get_stats(parms);
+		if (rc < 0)
+			PERROR("dvb_fe_get_stats failed");
+
+		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
 		if (!silent)
-			print_frontend_stats(fe_fd, human_readable);
+			print_frontend_stats(parms, human_readable);
 		if (exit_after_tuning && (status & FE_HAS_LOCK))
 			break;
 		usleep(1000000);
 	} while (!timeout_flag);
 	if (silent < 2)
-		print_frontend_stats (fe_fd, human_readable);
+		print_frontend_stats (parms, human_readable);
 
 	return 0;
 }
@@ -477,7 +483,7 @@ void copy_to_file(int in_fd, int out_fd)
 
 static char *usage =
     "usage:\n"
-    "       tzap [options] <channel_name>\n"
+    "       dvbzap [options] <channel_name>\n"
     "         zap to channel channel_name (case insensitive)\n"
     "     -a number : use given adapter (default 0)\n"
     "     -f number : use given frontend (default 0)\n"
@@ -497,19 +503,19 @@ static char *usage =
 
 int main(int argc, char **argv)
 {
-	struct dvb_frontend_parameters frontend_param;
 	char *homedir = getenv ("HOME");
 	char *confname = NULL;
 	char *channel = NULL;
 	int adapter = 0, frontend = 0, demux = 0, dvr = 0;
 	int vpid, apid, sid, pmtpid = 0;
 	int pat_fd = -1, pmt_fd = -1;
-	int frontend_fd, audio_fd = 0, video_fd = 0, dvr_fd, file_fd;
+	int audio_fd = 0, video_fd = 0, dvr_fd, file_fd;
 	int opt;
 	int record = 0;
 	int frontend_only = 0;
 	char *filename = NULL;
 	int human_readable = 0, rec_psi = 0;
+	struct dvb_v5_fe_parms *parms;
 
 	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:")) != -1) {
 		switch (opt) {
@@ -569,9 +575,6 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	snprintf (FRONTEND_DEV, sizeof(FRONTEND_DEV),
-		  "/dev/dvb/adapter%i/frontend%i", adapter, frontend);
-
 	snprintf (DEMUX_DEV, sizeof(DEMUX_DEV),
 		  "/dev/dvb/adapter%i/demux%i", adapter, demux);
 
@@ -579,7 +582,7 @@ int main(int argc, char **argv)
 		  "/dev/dvb/adapter%i/dvr%i", adapter, demux);
 
 	if (silent<2)
-		fprintf (stderr,"using '%s' and '%s'\n", FRONTEND_DEV, DEMUX_DEV);
+		fprintf (stderr,"using demug '%s'\n", DEMUX_DEV);
 
 	if (!confname)
 	{
@@ -595,17 +598,13 @@ int main(int argc, char **argv)
 	}
 	printf("reading channels from file '%s'\n", confname);
 
-	memset(&frontend_param, 0, sizeof(struct dvb_frontend_parameters));
 
-	if (parse (confname, channel, &frontend_param, &vpid, &apid, &sid))
+	parms = dvb_fe_open(adapter, frontend, !silent, 0);
+
+	if (parse (confname, channel, parms, &vpid, &apid, &sid))
 		return -1;
 
-	if ((frontend_fd = open(FRONTEND_DEV, O_RDWR)) < 0) {
-		PERROR ("failed opening '%s'", FRONTEND_DEV);
-		return -1;
-	}
-
-	if (setup_frontend (frontend_fd, &frontend_param) < 0)
+	if (setup_frontend (parms) < 0)
 		return -1;
 
 	if (frontend_only)
@@ -686,23 +685,23 @@ int main(int argc, char **argv)
 	                return -1;
 	        }
 		if (silent<2)
-			print_frontend_stats (frontend_fd, human_readable);
+			print_frontend_stats (parms, human_readable);
 
 		copy_to_file(dvr_fd,file_fd);
 
 		if (silent<2)
-			print_frontend_stats (frontend_fd, human_readable);
+			print_frontend_stats (parms, human_readable);
 	}
 	else {
 just_the_frontend_dude:
-		check_frontend (frontend_fd, human_readable);
+		check_frontend (parms, human_readable);
 	}
 
 	close (pat_fd);
 	close (pmt_fd);
 	close (audio_fd);
 	close (video_fd);
-	close (frontend_fd);
+        dvb_fe_close(parms);
 
 	return 0;
 }
