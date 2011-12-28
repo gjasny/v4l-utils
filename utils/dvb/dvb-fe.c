@@ -291,6 +291,7 @@ static int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 	const unsigned int *sys_props;
 	struct dtv_properties prop;
 	struct dvb_frontend_parameters v3_parms;
+	uint32_t bw;
 
 	sys_props = dvb_v5_delivery_system[parms->current_sys];
 	if (!sys_props)
@@ -344,7 +345,10 @@ static int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 		dvb_fe_store_parm(parms, DTV_MODULATION, v3_parms.u.vsb.modulation);
 		break;
 	case SYS_DVBT:
-		dvb_fe_store_parm(parms, DTV_BANDWIDTH_HZ, v3_parms.u.ofdm.bandwidth);
+		if (v3_parms.u.ofdm.bandwidth < ARRAY_SIZE(fe_bandwidth_name) -1)
+			bw = fe_bandwidth_name[v3_parms.u.ofdm.bandwidth];
+		else bw = 0;
+		dvb_fe_store_parm(parms, DTV_BANDWIDTH_HZ, bw);
 		dvb_fe_store_parm(parms, DTV_CODE_RATE_HP, v3_parms.u.ofdm.code_rate_HP);
 		dvb_fe_store_parm(parms, DTV_CODE_RATE_LP, v3_parms.u.ofdm.code_rate_LP);
 		dvb_fe_store_parm(parms, DTV_MODULATION, v3_parms.u.ofdm.constellation);
@@ -362,6 +366,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 {
 	struct dtv_properties prop;
 	struct dvb_frontend_parameters v3_parms;
+	uint32_t bw;
 
 	prop.props = parms->dvb_prop;
 	prop.num = parms->n_props + 1;
@@ -375,6 +380,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 		}
 	}
 	/* DVBv3 call */
+	
 	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &v3_parms.frequency);
 	dvb_fe_retrieve_parm(parms, DTV_INVERSION, &v3_parms.inversion);
 	switch (parms->current_sys) {
@@ -392,7 +398,11 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.vsb.modulation);
 		break;
 	case SYS_DVBT:
-		dvb_fe_retrieve_parm(parms, DTV_BANDWIDTH_HZ, &v3_parms.u.ofdm.bandwidth);
+		for (bw = 0; fe_bandwidth_name[bw] != 0; bw++) {
+			if (fe_bandwidth_name[bw] == v3_parms.u.ofdm.bandwidth)
+				break;
+		}
+		dvb_fe_retrieve_parm(parms, DTV_BANDWIDTH_HZ, &bw);
 		dvb_fe_retrieve_parm(parms, DTV_CODE_RATE_HP, &v3_parms.u.ofdm.code_rate_HP);
 		dvb_fe_retrieve_parm(parms, DTV_CODE_RATE_LP, &v3_parms.u.ofdm.code_rate_LP);
 		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.ofdm.constellation);
