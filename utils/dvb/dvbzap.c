@@ -270,7 +270,7 @@ static int check_fec(fe_code_rate_t *fec)
 }
 
 
-int parse(const char *fname, const char *channel,
+static int parse(const char *fname, const char *channel,
 	  struct dvb_frontend_parameters *frontend, int *vpid, int *apid,
 	  int *sid)
 {
@@ -503,7 +503,7 @@ int main(int argc, char **argv)
 	char *channel = NULL;
 	int adapter = 0, frontend = 0, demux = 0, dvr = 0;
 	int vpid, apid, sid, pmtpid = 0;
-	int pat_fd, pmt_fd;
+	int pat_fd = -1, pmt_fd = -1;
 	int frontend_fd, audio_fd = 0, video_fd = 0, dvr_fd, file_fd;
 	int opt;
 	int record = 0;
