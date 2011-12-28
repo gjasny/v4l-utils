@@ -31,6 +31,7 @@
 
 #include <linux/dvb/frontend.h>
 #include <linux/dvb/dmx.h>
+#include "util.h"
 
 int set_pesfilter(int dmxfd, int pid, int pes_type, int dvr)
 {
