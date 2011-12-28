@@ -156,6 +156,12 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 			printf("Warning: ISDB-T, ISDB-S, DMB-TH and DSS will be miss-detected by a DVBv3 call\n");
 	}
 
+	/*
+	 * Fix a bug at some DVB drivers
+	 */
+	if (parms->current_sys == SYS_UNDEFINED)
+		parms->current_sys = parms->systems[0];
+
 	/* Prepare to use the delivery system */
 	dvb_set_sys(parms, parms->current_sys);
 
@@ -225,9 +231,25 @@ void dvb_fe_prt_parms(struct dvb_v5_fe_parms *parms)
 	int i;
 
 	for (i = 0; i < parms->n_props; i++) {
-		printf("%s = %u\n",
-		       dvb_v5_name[parms->dvb_prop[i].cmd],
-		       parms->dvb_prop[i].u.data);
+		const char **attr_name = dvbv5_attr_names[parms->dvb_prop[i].cmd];
+		if (attr_name) {
+			int j;
+			
+			for (j = 0; j < parms->dvb_prop[i].u.data; j++) {
+				if (!*attr_name)
+					break;
+				attr_name++;
+			}
+		}
+
+		if (!attr_name || !*attr_name)
+			printf("%s = %u\n",
+				dvb_v5_name[parms->dvb_prop[i].cmd],
+				parms->dvb_prop[i].u.data);
+		else
+			printf("%s = %s\n",
+				dvb_v5_name[parms->dvb_prop[i].cmd],
+				*attr_name);
 	}
 };
 
@@ -346,6 +368,8 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 
 	if (!parms->legacy_fe) {
 		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
+			if (parms->verbose)
+				dvb_fe_prt_parms(parms);
 			perror("FE_SET_PROPERTY");
 			return errno;
 		}

@@ -151,3 +151,26 @@ const unsigned int *dvb_v5_delivery_system[] = {
 	[SYS_ISDBC] =         NULL,
 	[SYS_UNDEFINED] =     NULL,
 };
+
+const void *dvbv5_attr_names[] = {
+	[0 ...DTV_MAX_COMMAND ] = NULL,
+	[DTV_CODE_RATE_HP]		= fe_code_rate_name,
+	[DTV_CODE_RATE_LP]		=  fe_code_rate_name,
+	[DTV_INNER_FEC]			= fe_code_rate_name,
+	[DTV_ISDBT_LAYERA_FEC]		= fe_code_rate_name,
+	[DTV_ISDBT_LAYERB_FEC]		= fe_code_rate_name,
+	[DTV_ISDBT_LAYERC_FEC]		= fe_code_rate_name,
+	[DTV_MODULATION]		= fe_modulation_name,
+	[DTV_ISDBT_LAYERA_MODULATION]	= fe_modulation_name,
+	[DTV_ISDBT_LAYERB_MODULATION]	= fe_modulation_name,
+	[DTV_ISDBT_LAYERC_MODULATION]	= fe_modulation_name,
+	[DTV_TRANSMISSION_MODE]		= fe_transmission_mode_name,
+	[DTV_GUARD_INTERVAL]		= fe_guard_interval_name,
+	[DTV_HIERARCHY]			= fe_hierarchy_name,
+	[DTV_VOLTAGE]			= fe_voltage_name,
+	[DTV_TONE]			= fe_tone_name,
+	[DTV_INVERSION]			= fe_inversion_name,
+	[DTV_PILOT]			= fe_pilot_name,
+	[DTV_ROLLOFF]			= fe_rolloff_name,
+	[DTV_DELIVERY_SYSTEM]		= delivery_system_name,
+};
