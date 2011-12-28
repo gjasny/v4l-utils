@@ -371,6 +371,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 
 	prop.props = parms->dvb_prop;
 	prop.num = parms->n_props + 1;
+	parms->dvb_prop[parms->n_props].cmd = DTV_TUNE;
 
 	if (!parms->legacy_fe) {
 		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
@@ -379,6 +380,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 				dvb_fe_prt_parms(parms);
 			return errno;
 		}
+		return 0;
 	}
 	/* DVBv3 call */
 	
