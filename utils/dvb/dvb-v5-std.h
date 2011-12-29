@@ -66,7 +66,6 @@ const unsigned int sys_isdbt_props[] = {
 const unsigned int sys_atsc_props[] = {
 	DTV_FREQUENCY,
 	DTV_MODULATION,
-	DTV_BANDWIDTH_HZ,
 	0
 };
 
@@ -82,7 +81,6 @@ const unsigned int sys_dvbc_annex_ac_props[] = {
 const unsigned int sys_dvbc_annex_b_props[] = {
 	DTV_FREQUENCY,
 	DTV_MODULATION,
-	DTV_INVERSION,
 	0
 };
 
