@@ -227,12 +227,12 @@ int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
-void dvb_fe_prt_parms(struct dvb_v5_fe_parms *parms)
+void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
 {
 	int i;
 
 	for (i = 0; i < parms->n_props; i++) {
-		const char **attr_name = dvbv5_attr_names[parms->dvb_prop[i].cmd];
+		const char * const *attr_name = dvbv5_attr_names[parms->dvb_prop[i].cmd];
 		if (attr_name) {
 			int j;
 
@@ -244,11 +244,11 @@ void dvb_fe_prt_parms(struct dvb_v5_fe_parms *parms)
 		}
 
 		if (!attr_name || !*attr_name)
-			printf("%s = %u\n",
+			fprintf(fp, "%s = %u\n",
 				dvb_v5_name[parms->dvb_prop[i].cmd],
 				parms->dvb_prop[i].u.data);
 		else
-			printf("%s = %s\n",
+			fprintf(fp, "%s = %s\n",
 				dvb_v5_name[parms->dvb_prop[i].cmd],
 				*attr_name);
 	}
@@ -319,7 +319,7 @@ static int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 		if (parms->verbose) {
 			printf("Got parameters for %s:",
 			       delivery_system_name[parms->current_sys]);
-			dvb_fe_prt_parms(parms);
+			dvb_fe_prt_parms(stdout, parms);
 		}
 		return 0;
 	}
@@ -377,7 +377,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
 			perror("FE_SET_PROPERTY");
 			if (parms->verbose)
-				dvb_fe_prt_parms(parms);
+				dvb_fe_prt_parms(stderr, parms);
 			return errno;
 		}
 		return 0;
@@ -419,7 +419,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	if (ioctl(parms->fd, FE_SET_FRONTEND, &v3_parms) == -1) {
 		perror("FE_SET_FRONTEND");
 		if (parms->verbose)
-			dvb_fe_prt_parms(parms);
+			dvb_fe_prt_parms(stderr, parms);
 		return errno;
 	}
 	return 0;
