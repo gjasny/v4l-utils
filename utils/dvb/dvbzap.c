@@ -33,7 +33,7 @@
 #include <signal.h>
 
 #include <linux/dvb/dmx.h>
-#include "dvb-fe.h"
+#include "dvb-file.h"
 
 #include "util.h"
 
@@ -59,306 +59,81 @@ static int exit_after_tuning;
 		fprintf (stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
-
-typedef struct {
-	char *name;
-	int value;
-} Param;
-
-static const Param inversion_list [] = {
-	{ "INVERSION_OFF", INVERSION_OFF },
-	{ "INVERSION_ON", INVERSION_ON },
-	{ "INVERSION_AUTO", INVERSION_AUTO }
-};
-
-static const Param bw_list [] = {
-	{ "BANDWIDTH_6_MHZ", 6000000 },
-	{ "BANDWIDTH_7_MHZ", 7000000 },
-	{ "BANDWIDTH_8_MHZ", 8000000 }
-};
-
-static const Param fec_list [] = {
-	{ "FEC_1_2", FEC_1_2 },
-	{ "FEC_2_3", FEC_2_3 },
-	{ "FEC_3_4", FEC_3_4 },
-	{ "FEC_4_5", FEC_4_5 },
-	{ "FEC_5_6", FEC_5_6 },
-	{ "FEC_6_7", FEC_6_7 },
-	{ "FEC_7_8", FEC_7_8 },
-	{ "FEC_8_9", FEC_8_9 },
-	{ "FEC_AUTO", FEC_AUTO },
-	{ "FEC_NONE", FEC_NONE }
-};
-
-static const Param guard_list [] = {
-	{"GUARD_INTERVAL_1_16", GUARD_INTERVAL_1_16},
-	{"GUARD_INTERVAL_1_32", GUARD_INTERVAL_1_32},
-	{"GUARD_INTERVAL_1_4", GUARD_INTERVAL_1_4},
-	{"GUARD_INTERVAL_1_8", GUARD_INTERVAL_1_8},
-	{"GUARD_INTERVAL_AUTO", GUARD_INTERVAL_AUTO}
-};
-
-static const Param hierarchy_list [] = {
-	{ "HIERARCHY_1", HIERARCHY_1 },
-	{ "HIERARCHY_2", HIERARCHY_2 },
-	{ "HIERARCHY_4", HIERARCHY_4 },
-	{ "HIERARCHY_NONE", HIERARCHY_NONE },
-	{ "HIERARCHY_AUTO", HIERARCHY_AUTO }
-};
-
-static const Param constellation_list [] = {
-	{ "QPSK", QPSK },
-	{ "QAM_128", QAM_128 },
-	{ "QAM_16", QAM_16 },
-	{ "QAM_256", QAM_256 },
-	{ "QAM_32", QAM_32 },
-	{ "QAM_64", QAM_64 },
-	{ "QAM_AUTO", QAM_AUTO }
-};
-
-static const Param transmissionmode_list [] = {
-	{ "TRANSMISSION_MODE_2K", TRANSMISSION_MODE_2K },
-	{ "TRANSMISSION_MODE_8K", TRANSMISSION_MODE_8K },
-	{ "TRANSMISSION_MODE_AUTO", TRANSMISSION_MODE_AUTO }
-};
-
-#define LIST_SIZE(x) sizeof(x)/sizeof(Param)
-
-
-static
-int parse_param (int fd, const Param * plist, int list_size, int *param)
-{
-	char c;
-	int character = 0;
-	int _index = 0;
-
-	while (1) {
-		if (read(fd, &c, 1) < 1)
-			return -1;	/*  EOF? */
-
-		if ((c == ':' || c == '\n')
-		    && plist->name[character] == '\0')
-			break;
-
-		while (toupper(c) != plist->name[character]) {
-			_index++;
-			plist++;
-			if (_index >= list_size)	 /*  parse error, no valid */
-				return -2;	 /*  parameter name found  */
-		}
-
-		character++;
-	}
-
-	*param = plist->value;
-
-	return 0;
-}
-
-
-static
-int parse_int(int fd, int *val)
-{
-	char number[11];	/* 2^32 needs 10 digits... */
-	int character = 0;
-
-	while (1) {
-		if (read(fd, &number[character], 1) < 1)
-			return -1;	/*  EOF? */
-
-		if (number[character] == ':' || number[character] == '\n') {
-			number[character] = '\0';
-			break;
-		}
-
-		if (!isdigit(number[character]))
-			return -2;	/*  parse error, not a digit... */
-
-		character++;
-
-		if (character > 10)	/*  overflow, number too big */
-			return -3;	/*  to fit in 32 bit */
-	};
-
-	errno = 0;
-	*val = strtol(number, NULL, 10);
-	if (errno == ERANGE)
-		return -4;
-
-	return 0;
-}
-
-
-static
-int find_channel(int fd, const char *channel)
-{
-	int character = 0;
-
-	while (1) {
-		char c;
-
-		if (read(fd, &c, 1) < 1)
-			return -1;	/*  EOF! */
-
-		if ( '\n' == c ) /* start of line */
-			character = 0;
-		else if ( character >= 0 ) { /* we are in the namefield */
-
-			if (c == ':' && channel[character] == '\0')
-				break;
-
-			if (toupper(c) == toupper(channel[character]))
-				character++;
-			else
-				character = -1;
-		}
-	};
-
-	return 0;
-}
-
-
-static
-int try_parse_int(int fd, int *val, const char *pname)
-{
-	int err;
-
-	err = parse_int(fd, val);
-
-	if (err)
-		ERROR("error while parsing %s (%s)", pname,
-		      err == -1 ? "end of file" :
-		      err == -2 ? "not a number" : "number too big");
-
-	return err;
-}
-
-
-static
-int try_parse_param(int fd, const Param * plist, int list_size, int *param,
-		    const char *pname)
-{
-	int err;
-
-	err = parse_param(fd, plist, list_size, param);
-
-	if (err)
-		ERROR("error while parsing %s (%s)", pname,
-		      err == -1 ? "end of file" : "syntax error");
-
-	return err;
-}
-
 static int parse(const char *fname, const char *channel,
 		 struct dvb_v5_fe_parms *parms,
-		 int *vpid, int *apid, int *sid)
-{
-	int fd;
-	int err;
-	int tmp;
+	         uint32_t *vpid, uint32_t *apid, uint32_t *sid)
 
-	if ((fd = open(fname, O_RDONLY | O_NONBLOCK)) < 0) {
-		PERROR ("could not open file '%s'", fname);
-		perror ("");
+{
+	struct dvb_file *dvb_file;
+	struct dvb_entry *entry;
+	int i;
+	uint32_t sys;
+
+	switch (parms->current_sys) {
+	case SYS_DVBT:
+	case SYS_DVBS:
+	case SYS_DVBC_ANNEX_A:
+	case SYS_ATSC:
+		sys = parms->current_sys;
+		break;
+	case SYS_DVBC_ANNEX_C:
+		sys = SYS_DVBC_ANNEX_A;
+		break;
+	case SYS_DVBC_ANNEX_B:
+		sys = SYS_ATSC;
+		break;
+	case SYS_ISDBT:
+		sys = SYS_DVBT;
+		break;
+	default:
+		ERROR("Doesn't know how to emulate the delivery system");
 		return -1;
 	}
 
-	if (find_channel(fd, channel) < 0) {
-		ERROR("could not find channel '%s' in channel list", channel);
+	dvb_file = parse_format_oneline(fname, ":", sys, zap_formats);
+	if (!dvb_file)
 		return -2;
+
+	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
+		if (!strcmp(entry->channel, channel))
+			break;
+	}
+	/*
+	 * Give a second shot, using a case insensitive seek
+	 */
+	if (!entry) {
+		for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
+			if (!strcasecmp(entry->channel, channel))
+				break;
+		}
+	}
+	if (!entry) {
+		ERROR("Can't find channel");
+		return -3;
 	}
 
-	if ((err = try_parse_int(fd, &tmp, "frequency")))
-		return -3;
+	*vpid = entry->video_pid;
+	*apid = entry->audio_pid;
+	*sid = entry->service_pid;
 
-	err = dvb_fe_store_parm(parms, DTV_FREQUENCY, tmp);
-	if (err < 0)
-		return -3;
+	/* Copy data into parms */
+	for (i = 0; i < entry->n_props; i++) {
+		uint32_t data = entry->props[i].u.data;
+		dvb_fe_store_parm(parms, entry->props[i].cmd, data);
+		if (parms->current_sys == SYS_ISDBT) {
+			if (entry->props[i].cmd == DTV_CODE_RATE_HP) {
+				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_FEC, data);
+				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_FEC, data);
+				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_FEC, data);
+			} else if (entry->props[i].cmd == DTV_MODULATION) {
+				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_MODULATION, data);
+				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_MODULATION, data);
+				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_MODULATION, data);
+			}
+		}
+	}
 
-	if ((err = try_parse_param(fd,
-				   inversion_list, LIST_SIZE(inversion_list),
-				   &tmp, "inversion")))
-		return -4;
-	err = dvb_fe_store_parm(parms, DTV_INVERSION, tmp);
-	if (err < 0)
-		return -4;
-
-	if ((err = try_parse_param(fd, bw_list, LIST_SIZE(bw_list),
-				   &tmp, "bandwidth")))
-		return -5;
-	err = dvb_fe_store_parm(parms, DTV_BANDWIDTH_HZ, tmp);
-	if (err < 0)
-		return -5;
-
-	if ((err = try_parse_param(fd, fec_list, LIST_SIZE(fec_list),
-				   &tmp, "code_rate_HP")))
-		return -6;
-
-	err = dvb_fe_store_parm(parms, DTV_CODE_RATE_HP, tmp);
-	if (err < 0)
-		return -6;
-
-	if ((err = try_parse_param(fd, fec_list, LIST_SIZE(fec_list),
-				   &tmp, "code_rate_LP")))
-		return -7;
-	err = dvb_fe_store_parm(parms, DTV_CODE_RATE_LP, tmp);
-	if (err < 0)
-		return -7;
-
-	/* If the Delivery system is ISDB-T, set FEC for all layers */
-	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_FEC, tmp);
-	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_FEC, tmp);
-	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_FEC, tmp);
-
-
-	if ((err = try_parse_param(fd, constellation_list,
-				   LIST_SIZE(constellation_list),
-				   &tmp, "constellation")))
-		return -8;
-	err = dvb_fe_store_parm(parms, DTV_MODULATION, tmp);
-	if (err < 0)
-		return -8;
-
-	/* If the Delivery system is ISDB-T, set modulation for all layers */
-	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_MODULATION, tmp);
-	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_MODULATION, tmp);
-	dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_MODULATION, tmp);
-
-	if ((err = try_parse_param(fd, transmissionmode_list,
-				   LIST_SIZE(transmissionmode_list),
-				   &tmp, "transmission_mode")))
-		return -9;
-	err = dvb_fe_store_parm(parms, DTV_TRANSMISSION_MODE, tmp);
-	if (err < 0)
-		return -9;
-
-	if ((err = try_parse_param(fd, guard_list, LIST_SIZE(guard_list),
-				   &tmp, "guard_interval")))
-		return -10;
-	err = dvb_fe_store_parm(parms, DTV_GUARD_INTERVAL, tmp);
-	if (err < 0)
-		return -10;
-
-	if ((err = try_parse_param(fd, hierarchy_list,
-				   LIST_SIZE(hierarchy_list),
-				   &tmp, "hierarchy_information")))
-		return -11;
-	err = dvb_fe_store_parm(parms, DTV_HIERARCHY, tmp);
-	if (err < 0)
-		return -11;
-
-	if ((err = try_parse_int(fd, vpid, "Video PID")))
-		return -12;
-
-	if ((err = try_parse_int(fd, apid, "Audio PID")))
-		return -13;
-
-	if ((err = try_parse_int(fd, sid, "Service ID")))
-	    return -14;
-
-
-	close(fd);
-
+	dvb_file_free(dvb_file);
 	return 0;
 }
 
@@ -518,9 +293,11 @@ int main(int argc, char **argv)
 	char *confname = NULL;
 	char *channel = NULL;
 	int adapter = 0, frontend = 0, demux = 0, dvr = 0;
-	int vpid, apid, sid, pmtpid = 0;
+	uint32_t vpid, apid, sid;
+	int pmtpid = 0;
 	int pat_fd = -1, pmt_fd = -1;
-	int audio_fd = 0, video_fd = 0, dvr_fd, file_fd;
+	int audio_fd = 0, video_fd = 0;
+	int dvr_fd, file_fd;
 	int opt;
 	int record = 0;
 	int frontend_only = 0;
@@ -608,7 +385,6 @@ int main(int argc, char **argv)
 				  homedir, CHANNEL_FILE);
 	}
 	printf("reading channels from file '%s'\n", confname);
-
 
 	parms = dvb_fe_open(adapter, frontend, !silent, 0);
 
