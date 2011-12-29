@@ -38,8 +38,7 @@
 
 #include <linux/dvb/dmx.h>
 #include "dvb-file.h"
-
-#include "util.h"
+#include "dvb-demux.h"
 
 static char DEMUX_DEV[80];
 static char DVR_DEV[80];

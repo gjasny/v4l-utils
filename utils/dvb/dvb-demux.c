@@ -30,7 +30,7 @@
 #include <fcntl.h>
 
 #include <linux/dvb/dmx.h>
-#include "util.h"
+#include "dvb-demux.h"
 
 int set_pesfilter(int dmxfd, int pid, int pes_type, int dvr)
 {
