@@ -829,8 +829,13 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
 			break;
 		case V4L2_PIX_FMT_JL2005BCD:
-			v4lconvert_decode_jl2005bcd(data, src, src_size,
-					tmpbuf, width, height);
+			if (v4lconvert_decode_jl2005bcd(data, src, src_size,
+							tmpbuf,
+							width, height)) {
+				/* Corrupt frame, better get another one */
+				errno = EAGAIN;
+				return -1;
+			}
 			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
 			break;
 		case V4L2_PIX_FMT_SN9C2028:

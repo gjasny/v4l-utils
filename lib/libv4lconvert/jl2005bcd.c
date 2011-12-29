@@ -34,8 +34,8 @@
 #define JPEG_HEADER_SIZE	338
 #define JPEG_HEIGHT_OFFSET	 94
 
-static int
-find_eoi(const unsigned char *jpeg_data, int jpeg_data_idx, int jpeg_data_size)
+static int find_eoi(struct v4lconvert_data *data,
+        const unsigned char *jpeg_data, int jpeg_data_idx, int jpeg_data_size)
 {
 	int i;
 
@@ -44,7 +44,7 @@ find_eoi(const unsigned char *jpeg_data, int jpeg_data_idx, int jpeg_data_size)
 			break;
 
 	if (i >= (jpeg_data_size - 1)) {
-		printf("AAI\n");
+		V4LCONVERT_ERR("incomplete jl2005bcd frame\n");
 		return -1;
 	}
 
@@ -73,16 +73,15 @@ int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data,
 	q = src[13] & 0x7f;
 
 	if (height != src[4] << 3) {
-		printf("Height is %d, not %d\n", src[4] << 3, height);
+		V4LCONVERT_ERR("Height is %d, not %d\n", src[4] << 3, height);
 		return 1;
 	}
 
 	if (width != src[5] << 3) {
-		printf("Width is %d, not %d\n", src[5] << 3, width);
+		V4LCONVERT_ERR("Width is %d, not %d\n", src[5] << 3, width);
 		return 1;
 	}
-	printf("quality is %d\n", q);
-	printf("size: %dx%d\n", width, height);
+
 	/*
 	 * And the fun begins, first of all create a dummy jpeg, which we use
 	 * to get the headers from to feed to libjpeg when decompressing the
@@ -163,13 +162,15 @@ int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data,
 	dinfo.err = jpeg_std_error (&jderr);
 	jpeg_create_decompress (&dinfo);
 	for (x = 0; x < width; x += 16) {
-		eoi = find_eoi(src, jpeg_data_idx, jpeg_data_size);
+		eoi = find_eoi(data, src, jpeg_data_idx, jpeg_data_size);
 		if (eoi < 0)
 			return eoi;
 
 		size = eoi - jpeg_data_idx;
 		if ((JPEG_HEADER_SIZE + size) > sizeof(jpeg_stripe)) {
-			printf("AAAIIIIII\n");
+			V4LCONVERT_ERR("stripe size too big %d > %ld\n",
+				       JPEG_HEADER_SIZE + size,
+				       sizeof(jpeg_stripe));
 			return 1;
 		}
 		memcpy (jpeg_stripe + JPEG_HEADER_SIZE,	
