@@ -28,6 +28,7 @@
  * just one line.
  */
 struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
+				      uint32_t delsys,
 				      const struct parse_struct *formats)
 {
 	char *buf = NULL, *p;
@@ -59,17 +60,26 @@ struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 		if (!len)
 			break;
 		line++;
-		p = strtok(buf, delimiter);
-		if (!p) {
-			sprintf(err_msg, "unknown delivery system type for %s",
-				p);
-			goto error;
-		}
 
-		/* Parse the type of the delivery system */
-		for (i = 0; formats[i].id != NULL; i++) {
-			if (!strcmp(p, formats[i].id))
-				break;
+		if (!delsys) {
+			p = strtok(buf, delimiter);
+			if (!p) {
+				sprintf(err_msg, "unknown delivery system type for %s",
+					p);
+				goto error;
+			}
+
+			/* Parse the type of the delivery system */
+			for (i = 0; formats[i].id != NULL; i++) {
+				if (!strcmp(p, formats[i].id))
+					break;
+			}
+		} else {
+			/* Seek for the delivery system */
+			for (i = 0; formats[i].id != NULL; i++) {
+				if (formats[i].delsys == delsys)
+					break;
+			}
 		}
 		if (i == ARRAY_SIZE(formats))
 			goto error;
@@ -114,8 +124,25 @@ struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 				long v = atol(p);
 				if (table->mult_factor)
 					v *= table->mult_factor;
-				entry->props[entry->n_props].cmd = table->prop;
-				entry->props[entry->n_props++].u.data = v;
+
+				switch (table->prop) {
+				case DTV_VIDEO_PID:
+					entry->video_pid = v;
+					break;
+				case DTV_AUDIO_PID:
+					entry->audio_pid = v;
+					break;
+				case DTV_SERVICE_PID:
+					entry->service_pid = v;
+					break;
+				case DTV_CH_NAME:
+					entry->channel = calloc(strlen(p) + 1, 1);
+					strcpy(entry->channel, p);
+					break;
+				default:
+					entry->props[entry->n_props].cmd = table->prop;
+					entry->props[entry->n_props++].u.data = v;
+				}
 			}
 			if (table->prop == DTV_INVERSION)
 				has_inversion = 1;

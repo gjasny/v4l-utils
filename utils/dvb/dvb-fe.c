@@ -235,7 +235,7 @@ void dvb_fe_prt_parms(struct dvb_v5_fe_parms *parms)
 		const char **attr_name = dvbv5_attr_names[parms->dvb_prop[i].cmd];
 		if (attr_name) {
 			int j;
-			
+
 			for (j = 0; j < parms->dvb_prop[i].u.data; j++) {
 				if (!*attr_name)
 					break;
@@ -383,7 +383,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 		return 0;
 	}
 	/* DVBv3 call */
-	
+
 	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &v3_parms.frequency);
 	dvb_fe_retrieve_parm(parms, DTV_INVERSION, &v3_parms.inversion);
 	switch (parms->current_sys) {

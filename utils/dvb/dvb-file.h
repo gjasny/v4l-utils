@@ -32,6 +32,8 @@ struct dvb_entry {
 	unsigned int n_props;
 	struct dvb_entry *next;
 	enum polarization pol;
+	uint32_t video_pid, audio_pid, service_pid;
+	char *channel;
 };
 
 struct dvb_file {
@@ -55,21 +57,34 @@ struct parse_struct {
 };
 
 #define PTABLE(a) .table = a, .size=ARRAY_SIZE(a)
+
+/* FAKE DTV codes, for internal usage */
 #define DTV_POLARIZATION        (DTV_MAX_COMMAND + 200)
+#define DTV_VIDEO_PID           (DTV_MAX_COMMAND + 201)
+#define DTV_AUDIO_PID           (DTV_MAX_COMMAND + 202)
+#define DTV_SERVICE_PID         (DTV_MAX_COMMAND + 203)
+#define DTV_CH_NAME             (DTV_MAX_COMMAND + 204)
 
 static inline void dvb_file_free(struct dvb_file *dvb_file)
 {
 	struct dvb_entry *entry = dvb_file->first_entry, *next;
 	while (entry) {
 		next = entry->next;
+		if (entry->channel)
+			free (entry->channel);
 		free (entry);
 		entry = next;
 	}
 	free (dvb_file);
 }
 
-/* From dvb_legacy_channel_format.c */
+/* From dvb-legacy-channel-format.c */
 extern const const struct parse_struct channel_formats[];
 
+/* From dvb-zap-format.c */
+extern const const struct parse_struct zap_formats[];
+
+/* From dvb-file.c */
 struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
+				      uint32_t delsys,
 				      const struct parse_struct *formats);
