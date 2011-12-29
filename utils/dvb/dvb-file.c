@@ -23,6 +23,26 @@
 
 #include "dvb-file.h"
 
+static const char *parm_name(const struct parse_table *table)
+{
+	if (table->prop < DTV_MAX_COMMAND)
+		return dvb_v5_name[table->prop];
+	switch (table->prop) {
+	case DTV_CH_NAME:
+		return ("CHANNEL");
+	case DTV_POLARIZATION:
+		return ("POLARIZATION");
+	case DTV_VIDEO_PID:
+		return ("VIDEO PID");
+	case DTV_AUDIO_PID:
+		return ("AUDIO PID");
+	case DTV_SERVICE_PID:
+		return ("SERVICE ID");
+	default:
+		return ("unknown");
+	}
+}
+
 /*
  * Generic parse function for all formats each channel is contained into
  * just one line.
@@ -57,12 +77,18 @@ struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 
 	do {
 		len = getline(&buf, &size, fd);
-		if (!len)
+		if (len <= 0)
 			break;
 		line++;
 
+		p = buf;
+		while (*p == ' ')
+			p++;
+		if (*p == '\n' || *p == '#' || *p == '\a' || *p == '\0')
+			continue;
+
 		if (!delsys) {
-			p = strtok(buf, delimiter);
+			p = strtok(p, delimiter);
 			if (!p) {
 				sprintf(err_msg, "unknown delivery system type for %s",
 					p);
@@ -97,10 +123,13 @@ struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 		has_inversion = 0;
 		for (i = 0; i < fmt->size; i++) {
 			table = &fmt->table[i];
-			p = strtok(NULL, delimiter);
+			if (delsys && !i) {
+				p = strtok(p, delimiter);
+			} else
+				p = strtok(NULL, delimiter);
 			if (!p) {
-				sprintf(err_msg, "parameter %s missing",
-					dvb_v5_name[table->prop]);
+				sprintf(err_msg, "parameter %i (%s) missing",
+					i, parm_name(table));
 				goto error;
 			}
 			if (table->size) {
@@ -109,7 +138,7 @@ struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 						break;
 				if (j == table->size) {
 					sprintf(err_msg, "parameter %s invalid: %s",
-						dvb_v5_name[table->prop], p);
+						parm_name(table), p);
 					goto error;
 				}
 				if (table->prop == DTV_BANDWIDTH_HZ)
@@ -157,7 +186,8 @@ struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 	return dvb_file;
 
 error:
-	fprintf (stderr, "Error parsing line %d of %s\n", line, fname);
+	fprintf (stderr, "ERROR %s while parsing line %d of %s\n",
+		 err_msg, line, fname);
 	dvb_file_free(dvb_file);
 	fclose(fd);
 	return NULL;
