@@ -147,6 +147,13 @@ static int parse(const char *fname, const char *channel,
 						  data);
 			}
 		}
+		if (parms->current_sys == SYS_ATSC &&
+		    entry->props[i].cmd == DTV_MODULATION) {
+			if (data != VSB_8 && data != VSB_16)
+				dvb_fe_store_parm(parms,
+						  DTV_DELIVERY_SYSTEM,
+						  SYS_DVBC_ANNEX_B);
+		}
 	}
 
 #if 0
