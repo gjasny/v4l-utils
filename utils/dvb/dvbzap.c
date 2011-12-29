@@ -123,6 +123,9 @@ static int parse(const char *fname, const char *channel,
 	/* Copy data into parms */
 	for (i = 0; i < entry->n_props; i++) {
 		uint32_t data = entry->props[i].u.data;
+		/* Don't change the delivery system */
+		if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
+			continue;
 		dvb_fe_store_parm(parms, entry->props[i].cmd, data);
 		if (parms->current_sys == SYS_ISDBT) {
 			if (entry->props[i].cmd == DTV_CODE_RATE_HP) {
