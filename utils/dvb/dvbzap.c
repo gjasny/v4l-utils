@@ -146,6 +146,11 @@ static int parse(const char *fname, const char *channel,
 		}
 	}
 
+#if 0
+	/* HACK to test the write file function */
+	write_dvb_file("dvb_channels.conf", dvb_file);
+#endif
+
 	dvb_file_free(dvb_file);
 	return 0;
 }

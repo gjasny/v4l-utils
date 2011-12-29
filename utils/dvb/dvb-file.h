@@ -88,3 +88,4 @@ extern const const struct parse_struct zap_formats[];
 struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 				      uint32_t delsys,
 				      const struct parse_struct *formats);
+int write_dvb_file(const char *fname, struct dvb_file *dvb_file);

@@ -192,3 +192,62 @@ error:
 	fclose(fd);
 	return NULL;
 }
+
+static const char *pol_name[] = {
+	[POLARIZATION_H] = "HORIZONTAL",
+	[POLARIZATION_V] = "VERTICAL",
+	[POLARIZATION_L] = "LEFT",
+	[POLARIZATION_R] = "RIGHT",
+};
+
+int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
+{
+	FILE *fp;
+	int i;
+	struct dvb_entry *entry = dvb_file->first_entry;
+
+	fp = fopen(fname, "w");
+	if (!fp) {
+		perror(fname);
+		return -errno;
+	}
+
+	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
+		if (entry->channel) {
+			fprintf(fp, "[%s]\n", entry->channel);
+			fprintf(fp, "\tVIDEO_PID = %d\n", entry->video_pid);
+			fprintf(fp, "\tAUDIO_PID = %d\n", entry->audio_pid);
+			fprintf(fp, "\tSERVICE_ID = %d\n", entry->service_pid);
+			if (entry->pol != POLARIZATION_OFF) {
+				fprintf(fp, "\tPOLARIZATION = %s\n",
+					pol_name[entry->pol]);
+			}
+		} else {
+			fprintf(fp, "[CHANNEL]\n");
+		}
+		for (i = 0; i < entry->n_props; i++) {
+			const char * const *attr_name = dvbv5_attr_names[entry->props[i].cmd];
+			if (attr_name) {
+				int j;
+
+				for (j = 0; j < entry->props[i].u.data; j++) {
+					if (!*attr_name)
+						break;
+					attr_name++;
+				}
+			}
+
+			if (!attr_name || !*attr_name)
+				fprintf(fp, "\t%s = %u\n",
+					dvb_v5_name[entry->props[i].cmd],
+					entry->props[i].u.data);
+			else
+				fprintf(fp, "\t%s = %s\n",
+					dvb_v5_name[entry->props[i].cmd],
+					*attr_name);
+		}
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
+	return 0;
+};
