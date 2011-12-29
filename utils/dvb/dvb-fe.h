@@ -108,3 +108,9 @@ int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *parms, int mini_a);
 int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, unsigned len, char *buf);
 int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
 		       int timeout);
+
+
+/* Arrays from dvb-v5.h */
+
+extern const unsigned fe_bandwidth_name[7];
+extern const char *dvb_v5_name[45];

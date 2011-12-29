@@ -5,7 +5,7 @@ all: $(TARGETS)
 -include *.d
 
 dvb-fe-tool: dvb-fe-tool.o dvb-fe.o
-dvbzap: dvbzap.o dvb-fe.o util.o
+dvbzap: dvbzap.o dvb-fe.o util.o dvb-legacy-channel-format.o dvb-file.o
 
 	$(CC) $(LDFLAGS) -o $@ $^
 
