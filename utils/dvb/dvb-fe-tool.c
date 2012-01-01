@@ -21,6 +21,7 @@ static const struct argp_option options[] = {
 	{"frontend",	'f',	"FRONTEND",	0,	"dvb frontend", 0},
 	{"set",		's',	"PARAMS",	0,	"set frontend", 0},
 	{"get",		'g',	0,		0,	"get frontend", 0},
+	{"dvbv3",	'3',	0,		0,	"Use DVBv3 only", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -29,6 +30,7 @@ static int frontend = 0;
 static unsigned get = 0;
 char *set_params = NULL;
 static int verbose = 1;		/* FIXME */
+static int dvbv3 = 0;
 
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
@@ -44,6 +46,9 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		break;
 	case 'g':
 		get++;
+		break;
+	case '3':
+		dvbv3++;
 		break;
 	case 'v':
 		verbose	++;
@@ -66,7 +71,7 @@ int main(int argc, char *argv[])
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
-	parms = dvb_fe_open(adapter, frontend, verbose, 0);
+	parms = dvb_fe_open(adapter, frontend, verbose, dvbv3);
 
 #if 0
 	if (set_params)
