@@ -317,7 +317,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 			return errno;
 		}
 		if (parms->verbose) {
-			printf("Got parameters for %s:",
+			printf("Got parameters for %s:\n",
 			       delivery_system_name[parms->current_sys]);
 			dvb_fe_prt_parms(stdout, parms);
 		}
