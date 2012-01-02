@@ -401,7 +401,7 @@ int main(int argc, char **argv)
 		 "/dev/dvb/adapter%i/dvr%i", adapter, demux);
 
 	if (silent < 2)
-		fprintf(stderr, "using demug '%s'\n", DEMUX_DEV);
+		fprintf(stderr, "using demux '%s'\n", DEMUX_DEV);
 
 	if (!confname) {
 		int len = strlen(homedir) + strlen(CHANNEL_FILE) + 18;
