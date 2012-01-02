@@ -203,6 +203,8 @@ static void do_timeout(int x)
 	}
 }
 
+static old_status = 0;
+
 static int print_frontend_stats(struct dvb_v5_fe_parms *parms,
 				int human_readable)
 {
@@ -234,8 +236,15 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms,
 			status, _signal, snr, ber, uncorrected_blocks);
 	}
 
-	if (status & FE_HAS_LOCK)
+	if (status & FE_HAS_LOCK) {
 		fprintf(stderr, "FE_HAS_LOCK");
+		if (!(old_status & FE_HAS_LOCK)) {
+			fprintf(stderr, "\n");
+	                dvb_fe_get_parms(parms);
+	                dvb_fe_prt_parms(stderr, parms);
+		}
+	}
+	old_status = status;
 
 	fprintf(stderr, "\n");
 	return 0;
