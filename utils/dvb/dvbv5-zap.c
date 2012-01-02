@@ -241,7 +241,6 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms,
 		if (!(old_status & FE_HAS_LOCK)) {
 			fprintf(stderr, "\n");
 	                dvb_fe_get_parms(parms);
-	                dvb_fe_prt_parms(stderr, parms);
 		}
 	}
 	old_status = status;
