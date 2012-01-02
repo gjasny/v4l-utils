@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 		do_something();
 #endif
 	if (get) {
-//		dvb_fe_get_parms(parms);
+		dvb_fe_get_parms(parms);
 		dvb_fe_prt_parms(stdout, parms);
 	}
 

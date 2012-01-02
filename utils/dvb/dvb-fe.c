@@ -286,7 +286,7 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 	return EINVAL;
 }
 
-static int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
+int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 {
 	int n = 0;
 	const unsigned int *sys_props;

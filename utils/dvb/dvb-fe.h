@@ -65,6 +65,7 @@ int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 		   fe_delivery_system_t sys);
 void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms);
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms);
+int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms);
 
 /* Get statistics */
 
