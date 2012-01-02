@@ -127,6 +127,9 @@ static int parse(const char *fname, const char *channel,
 			continue;
 		dvb_fe_store_parm(parms, entry->props[i].cmd, data);
 		if (parms->current_sys == SYS_ISDBT) {
+			dvb_fe_store_parm(parms, DTV_ISDBT_PARTIAL_RECEPTION, 0);
+			dvb_fe_store_parm(parms, DTV_ISDBT_SOUND_BROADCASTING, 0);
+			dvb_fe_store_parm(parms, DTV_ISDBT_LAYER_ENABLED, 0x07);
 			if (entry->props[i].cmd == DTV_CODE_RATE_HP) {
 				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_FEC,
 						  data);
