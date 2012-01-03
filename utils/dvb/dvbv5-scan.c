@@ -62,12 +62,11 @@ static int silent = 0;
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
-static int parse(const char *fname, const char *channel,
-		 struct dvb_v5_fe_parms *parms)
+static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 {
-	struct dvb_file *dvb_file;
+	struct dvb_file *dvb_file, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
-	int i;
+	int i, rc, count = 0;
 	uint32_t sys;
 
 	switch (parms->current_sys) {
@@ -96,92 +95,69 @@ static int parse(const char *fname, const char *channel,
 		return -2;
 
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
-		if (!strcmp(entry->channel, channel))
-			break;
-	}
-	/*
-	 * Give a second shot, using a case insensitive seek
-	 */
-	if (!entry) {
-		for (entry = dvb_file->first_entry; entry != NULL;
-		     entry = entry->next) {
-			if (!strcasecmp(entry->channel, channel))
-				break;
-		}
-	}
-	if (!entry) {
-		ERROR("Can't find channel");
-		return -3;
-	}
+		struct dvb_descriptors *dvb_desc = NULL;
 
-	/* Copy data into parms */
-	for (i = 0; i < entry->n_props; i++) {
-		uint32_t data = entry->props[i].u.data;
-		/* Don't change the delivery system */
-		if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
-			continue;
-		dvb_fe_store_parm(parms, entry->props[i].cmd, data);
-		if (parms->current_sys == SYS_ISDBT) {
-			dvb_fe_store_parm(parms, DTV_ISDBT_PARTIAL_RECEPTION, 0);
-			dvb_fe_store_parm(parms, DTV_ISDBT_SOUND_BROADCASTING, 0);
-			dvb_fe_store_parm(parms, DTV_ISDBT_LAYER_ENABLED, 0x07);
-			if (entry->props[i].cmd == DTV_CODE_RATE_HP) {
-				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_FEC,
-						  data);
-				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_FEC,
-						  data);
-				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_FEC,
-						  data);
-			} else if (entry->props[i].cmd == DTV_MODULATION) {
-				dvb_fe_store_parm(parms,
-						  DTV_ISDBT_LAYERA_MODULATION,
-						  data);
-				dvb_fe_store_parm(parms,
-						  DTV_ISDBT_LAYERB_MODULATION,
-						  data);
-				dvb_fe_store_parm(parms,
-						  DTV_ISDBT_LAYERC_MODULATION,
-						  data);
+		/* Copy data into parms */
+		for (i = 0; i < entry->n_props; i++) {
+			uint32_t data = entry->props[i].u.data;
+
+			/* Don't change the delivery system */
+			if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
+				continue;
+
+			dvb_fe_store_parm(parms, entry->props[i].cmd, data);
+			if (parms->current_sys == SYS_ISDBT) {
+				dvb_fe_store_parm(parms, DTV_ISDBT_PARTIAL_RECEPTION, 0);
+				dvb_fe_store_parm(parms, DTV_ISDBT_SOUND_BROADCASTING, 0);
+				dvb_fe_store_parm(parms, DTV_ISDBT_LAYER_ENABLED, 0x07);
+				if (entry->props[i].cmd == DTV_CODE_RATE_HP) {
+					dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_FEC,
+							data);
+					dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_FEC,
+							data);
+					dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_FEC,
+							data);
+				} else if (entry->props[i].cmd == DTV_MODULATION) {
+					dvb_fe_store_parm(parms,
+							DTV_ISDBT_LAYERA_MODULATION,
+							data);
+					dvb_fe_store_parm(parms,
+							DTV_ISDBT_LAYERB_MODULATION,
+							data);
+					dvb_fe_store_parm(parms,
+							DTV_ISDBT_LAYERC_MODULATION,
+							data);
+				}
+			}
+			if (parms->current_sys == SYS_ATSC &&
+			    entry->props[i].cmd == DTV_MODULATION) {
+				if (data != VSB_8 && data != VSB_16)
+					dvb_fe_store_parm(parms,
+							DTV_DELIVERY_SYSTEM,
+							SYS_DVBC_ANNEX_B);
 			}
 		}
-		if (parms->current_sys == SYS_ATSC &&
-		    entry->props[i].cmd == DTV_MODULATION) {
-			if (data != VSB_8 && data != VSB_16)
-				dvb_fe_store_parm(parms,
-						  DTV_DELIVERY_SYSTEM,
-						  SYS_DVBC_ANNEX_B);
-		}
-	}
 
-#if 0
-	/* HACK to test the write file function */
-	write_dvb_file("dvb_channels.conf", dvb_file);
-#endif
-
-	dvb_file_free(dvb_file);
-	return 0;
-}
-
-static int setup_frontend(struct dvb_v5_fe_parms *parms)
-{
-	int rc;
-	uint32_t freq;
-
-	if (silent < 2) {
-		rc = dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
+		rc = dvb_fe_set_parms(parms);
 		if (rc < 0) {
-			PERROR("can't get the frequency");
+			PERROR("dvb_fe_set_parms failed");
 			return -1;
 		}
-		fprintf(stderr, "tuning to %i Hz\n", freq);
+
+		count++;
+		printf("CHANNEL #%d %s\n", count, entry->channel);
+		dvb_desc = get_dvb_ts_tables(DEMUX_DEV);
+
+		store_dvb_channel(&dvb_file_new, parms, dvb_desc, 0);
+
+		free_dvb_ts_tables(dvb_desc);
 	}
 
-	rc = dvb_fe_set_parms(parms);
-	if (rc < 0) {
-		PERROR("dvb_fe_set_parms failed");
-		return -1;
-	}
 
+	write_dvb_file("dvb_channels.conf", dvb_file_new);
+
+	dvb_file_free(dvb_file);
+	dvb_file_free(dvb_file_new);
 	return 0;
 }
 
@@ -206,7 +182,6 @@ int main(int argc, char **argv)
 	int adapter = 0, frontend = 0, demux = 0;
 	int opt;
 	struct dvb_v5_fe_parms *parms;
-	struct dvb_descriptors *dvb_desc;
 	struct dvb_file *dvb_file = NULL;
 
 	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:")) != -1) {
@@ -237,14 +212,6 @@ int main(int argc, char **argv)
 		};
 	}
 
-	if (optind < argc)
-		channel = argv[optind];
-
-	if (!channel) {
-		fprintf(stderr, usage, argv[0]);
-		return -1;
-	}
-
 	snprintf(DEMUX_DEV, sizeof(DEMUX_DEV),
 		 "/dev/dvb/adapter%i/demux%i", adapter, demux);
 
@@ -269,16 +236,8 @@ int main(int argc, char **argv)
 
 	parms = dvb_fe_open(adapter, frontend, !silent, 0);
 
-	if (parse(confname, channel, parms))
+	if (run_scan(confname, parms))
 		return -1;
-
-	if (setup_frontend(parms) < 0)
-		return -1;
-
-	dvb_desc = get_dvb_ts_tables(DEMUX_DEV);
-
-	store_dvb_channel(&dvb_file, parms, dvb_desc, 0);
-	write_dvb_file("dvb_channels.conf", dvb_file);
 
 	dvb_fe_close(parms);
 	return 0;

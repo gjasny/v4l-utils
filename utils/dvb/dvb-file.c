@@ -304,7 +304,8 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 			return -1;
 		}
 
-		entry->channel = service_table->service_name;
+		entry->channel = calloc(strlen(service_table->service_name) + 1, 1);
+		strcpy(entry->channel, service_table->service_name);
 		entry->service_id = service_table->service_id;
 
 		for (j = 0; j < pat_table->pid_table_len; j++) {

@@ -77,6 +77,7 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 	buf += 4;
 	*section_length -= 4;
 
+#if 0
 	while (len > 0) {
 		int dlen = ((int)buf[1]) + 2;
 
@@ -85,6 +86,10 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 		section_length   -= dlen;
 		len -= dlen;
 	}
+#endif
+
+	buf += 4 + len;
+	*section_length -= 4 + len;
 
 	while (*section_length >= 5) {
 		len = ((buf[3] & 0x0f) << 8) | buf[4];
@@ -119,7 +124,8 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 			printf("other pid (type 0x%02x) 0x%04x\n", buf[0], pid);
 		};
 
-#if 0 /* FIXME */
+#if 0
+		/* FIXME */
 		while (len > 0) {
 			int dlen = ((int)buf[5]) + 2;
 
