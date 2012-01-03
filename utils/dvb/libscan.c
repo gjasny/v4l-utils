@@ -36,20 +36,23 @@ static int parse_pat(struct dvb_descriptors *dvb_desc,
 	buf += 8;
 	*section_length -= 8;
 
+	printf("n_elements %d\n", *section_length / 4);
+	dvb_desc->pat_table.pid_table = realloc(dvb_desc->pat_table.pid_table,
+				sizeof(*dvb_desc->pat_table.pid_table) *
+				*section_length / 4);
+
 	n = dvb_desc->pat_table.pid_table_len;
 	while (*section_length > 3) {
-		dvb_desc->pat_table.pid_table = realloc(
-			dvb_desc->pat_table.pid_table,
-			(n + 1) *
-			sizeof(*dvb_desc->pat_table.pid_table));
-
 		service_id = (buf[0] << 8) | buf[1];
 		pmt_pid = ((buf[2] & 0x1f) << 8) | buf[3];
+
+		memset(&dvb_desc->pat_table.pid_table[n], 0,
+		       sizeof(dvb_desc->pat_table.pid_table[n]));
 
 		dvb_desc->pat_table.pid_table[n].program_number = service_id;
 		dvb_desc->pat_table.pid_table[n].pid = pmt_pid;
 
-		printf("service_id %d, pmt_pid %d\n", service_id, pmt_pid);
+		printf("service_id 0x%04x, pmt_pid 0x%04x\n", service_id, pmt_pid);
 
 		buf += 4;
 		*section_length -= 4;
@@ -57,6 +60,75 @@ static int parse_pat(struct dvb_descriptors *dvb_desc,
 	}
 	dvb_desc->pat_table.pid_table_len = n;
 
+	return !next;
+}
+
+static int parse_pmt(struct dvb_descriptors *dvb_desc,
+		      const unsigned char *buf, int *section_length,
+		      struct pid_table *pid_table)
+{
+	struct pmt_table *pmt_table = &pid_table->pmt_table;
+	uint16_t len, pid;
+	int i, next;
+
+	pmt_table->program_number = (buf[4] << 8) | buf[3];
+	pmt_table->version = (buf[5] >> 1) & 0x1f;
+
+	next = (buf[6] == buf[7]) ? 0 : 1;
+	printf("section %d, last section %d\n", buf[6], buf[7]);
+
+	buf += 8;
+	*section_length -= 8;
+
+        pmt_table->pcr_pid = ((buf[0] & 0x1f) << 8) | buf[1];
+        len = ((buf[2] & 0x0f) << 8) | buf[3];
+
+	printf("PN 0x%04x, version %d, PCR ID 0x%04x, len %d\n",
+	       pmt_table->program_number, pmt_table->version,
+	       pmt_table->pcr_pid, len);
+
+	/* Just skip CA and language descriptors for now */
+	buf += len + 4;
+	*section_length -= len + 4;
+
+	printf("n_elements %d\n", *section_length / 5);
+
+	while (*section_length >= 5) {
+		len = ((buf[3] & 0x0f) << 8) | buf[4];
+		pid = ((buf[1] & 0x1f) << 8) | buf[2];
+
+		switch (buf[0]) {
+		case 0x01:
+		case 0x02:
+		case 0x10:
+		case 0x1b:
+			printf ("video pid 0x%04x\n", pid);
+			i = pid_table->video_pid_len;
+			pid_table->video_pid = realloc(pid_table->video_pid,
+				sizeof(*pid_table->video_pid) *
+				++pid_table->video_pid_len);
+			pid_table->video_pid[i] = pid;
+			break;
+		case 0x03:
+		case 0x04:
+		case 0x0f:
+		case 0x11:
+		case 0x81:
+			printf ("audio pid 0x%04x\n", pid);
+			i = pid_table->audio_pid_len;
+			pid_table->audio_pid = realloc(pid_table->audio_pid,
+				sizeof(*pid_table->audio_pid) *
+				++pid_table->audio_pid_len);
+			pid_table->audio_pid[i] = pid;
+			/* Discard audio language descriptors */
+			break;
+		default:
+			printf ("other pid (type 0x%02x) 0x%04x\n", buf[0], pid);
+		};
+
+		buf += len + 5;
+		*section_length -= len + 5;
+	};
 	return !next;
 }
 
@@ -73,13 +145,27 @@ static void hexdump(const unsigned char *buf, int len)
 	printf("\n");
 }
 
-static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc)
+static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
+			uint16_t pid, unsigned char table, void *ptr)
 {
 	int count;
 	int section_length, table_id;
 	unsigned char buf[4096];
 	unsigned char *p;
+	struct dmx_sct_filter_params f;
 	int finish = 0;
+
+	memset(&f, 0, sizeof(f));
+	f.pid = pid;
+	f.filter.filter[0] = table;
+	f.filter.mask[0] = 0xff;
+	f.timeout = 0;
+	f.flags = DMX_IMMEDIATE_START | DMX_CHECK_CRC;
+	if (ioctl(dmx_fd, DMX_SET_FILTER, &f) == -1) {
+		perror("ioctl DMX_SET_FILTER failed");
+		close(dmx_fd);
+		return -1;
+	}
 
 	while (!finish) {
 		do {
@@ -110,7 +196,12 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc)
 		case 0x00:	/* PAT */
 			finish = parse_pat(dvb_desc, p, &section_length);
 			break;
+		case 0x02:	/* PMT */
+			finish = parse_pmt(dvb_desc, p, &section_length, ptr);
+			break;
 //		case 0x42:	/* NIT */
+//		default:
+//			return 0;
 		}
 	}
 	return 0;
@@ -118,12 +209,8 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc)
 
 struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev)
 {
-	int dmx_fd;
-	struct dmx_sct_filter_params f;
+	int dmx_fd, i;
 	struct dvb_descriptors *dvb_desc;
-
-
-	memset(&f, 0, sizeof(f));
 
 	if ((dmx_fd = open(dmxdev, O_RDWR)) < 0) {
 		perror("openening pat demux failed");
@@ -137,32 +224,19 @@ struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev)
 	}
 
 	/* PAT table */
-	f.pid = 0;
-	f.filter.filter[0] = 0x00;
-	f.filter.mask[0] = 0xff;
-	f.timeout = 0;
-	f.flags = DMX_IMMEDIATE_START | DMX_CHECK_CRC;
-	if (ioctl(dmx_fd, DMX_SET_FILTER, &f) == -1) {
-		perror("ioctl DMX_SET_FILTER failed");
-		close(dmx_fd);
-		return NULL;
-	}
-	read_section(dmx_fd, dvb_desc);
+	read_section(dmx_fd, dvb_desc, 0, 0, NULL);
 
-#if 0
-	/* NIT table */
-	f.pid = 0x11;
-	f.filter.filter[0] = 0x42;
-	f.filter.mask[0] = 0xff;
-	f.timeout = 0;
-	f.flags = DMX_IMMEDIATE_START | DMX_CHECK_CRC;
-	if (ioctl(dmx_fd, DMX_SET_FILTER, &f) == -1) {
-		perror("ioctl DMX_SET_FILTER failed");
-		close(dmx_fd);
-		return NULL;
+	/* PMT tables */
+	for (i = 0; i < dvb_desc->pat_table.pid_table_len; i++) {
+		struct pid_table *pid_table = &dvb_desc->pat_table.pid_table[i];
+		uint16_t pn = pid_table->program_number;
+		/* Skip PAT, CAT, reserved and NULL packets */
+		if (pn < 0x0010 || pn == 0x1fff)
+			continue;
+printf("PID = %d\n", pid_table->pid);
+		read_section(dmx_fd, dvb_desc, pid_table->pid, 0x02,
+			     pid_table);
 	}
-	read_section(dmx_fd, dvb_desc);
-#endif
 
 	close(dmx_fd);
 
