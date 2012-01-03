@@ -17,15 +17,22 @@ struct pid_table {
 	uint16_t *audio_pid;
 };
 
-struct program_association_section {
+struct pat_table {
 	uint16_t  ts_id;
 	unsigned char version;
 	struct pid_table *pid_table;
 	unsigned pid_table_len;
 };
 
+struct nit_table {
+	uint16_t network_id;
+	unsigned char version;
+	char *network_name, *network_alias;
+};
+
 struct dvb_descriptors {
-	struct program_association_section pat_table;
+	struct pat_table pat_table;
+	struct nit_table nit_table;
 };
 
 struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev);

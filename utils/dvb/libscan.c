@@ -2,10 +2,13 @@
  * Parse DVB tables
  * According with:
  *	ETSI EN 301 192 V1.5.1 (2009-11)
- * 	ISO/IEC 13818-1:2007
+ *	ISO/IEC 13818-1:2007
+ *	ETSI EN 300 468 V1.11.1 (2010-04)
  *****************************************************************************/
 
 #include "libscan.h"
+#include "descriptors.h"
+#include "parse_string.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -84,7 +87,7 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 		case 0x02:
 		case 0x10:
 		case 0x1b:
-			printf ("video pid 0x%04x\n", pid);
+			printf("video pid 0x%04x\n", pid);
 			i = pid_table->video_pid_len;
 			pid_table->video_pid = realloc(pid_table->video_pid,
 				sizeof(*pid_table->video_pid) *
@@ -96,7 +99,7 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 		case 0x0f:
 		case 0x11:
 		case 0x81:
-			printf ("audio pid 0x%04x\n", pid);
+			printf("audio pid 0x%04x\n", pid);
 			i = pid_table->audio_pid_len;
 			pid_table->audio_pid = realloc(pid_table->audio_pid,
 				sizeof(*pid_table->audio_pid) *
@@ -105,13 +108,37 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 			/* Discard audio language descriptors */
 			break;
 		default:
-			printf ("other pid (type 0x%02x) 0x%04x\n", buf[0], pid);
+			printf("other pid (type 0x%02x) 0x%04x\n", buf[0], pid);
 		};
 
 		buf += len + 5;
 		*section_length -= len + 5;
 	};
 }
+
+static void parse_nit(struct dvb_descriptors *dvb_desc,
+		      const unsigned char *buf, int *section_length,
+		      int id, int version)
+{
+	struct nit_table *nit_table = &dvb_desc->nit_table;
+	int len;
+
+	nit_table->network_id	 = id;
+	nit_table->version = version;
+
+	len = ((buf[0] & 0x0f) << 8) | buf[1];
+
+	if (*section_length < len + 4) {
+		printf("NIT section too short for Network ID 0x%04x", id);
+		return;
+	}
+
+	printf("descriptor 0x%02x, len %d\n", buf[2], len);
+
+	parse_nit_descriptor(dvb_desc, &buf[2], len);
+
+}
+
 
 static void hexdump(const unsigned char *buf, int len)
 {
@@ -219,6 +246,8 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 			break;
 		case 0x40:	/* NIT */
 		case 0x41:	/* NIT other */
+			parse_nit(dvb_desc, p, &section_length,
+					   id, version);
 		case 0x42:	/* SAT */
 		case 0x46:	/* SAT other */
 			break;

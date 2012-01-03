@@ -10,7 +10,7 @@ dvbv5-zap: dvbv5-zap.o dvb-fe.o dvb-demux.o dvb-file.o \
 
 dvbv5-scan: dvbv5-scan.o dvb-fe.o dvb-demux.o dvb-file.o \
 		dvb-zap-format.o dvb-legacy-channel-format.o \
-		libscan.o
+		parse_string.o descriptors.o libscan.o
 
 	$(CC) $(LDFLAGS) -o $@ $^
 
