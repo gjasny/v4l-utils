@@ -74,9 +74,17 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 	       pmt_table->program_number, pmt_table->version,
 	       pmt_table->pcr_pid, len);
 
-	/* Just skip CA and language descriptors for now */
-	buf += len + 4;
-	*section_length -= len + 4;
+	buf += 4;
+	*section_length -= 4;
+
+	while (len > 0) {
+		int dlen = ((int)buf[1]) + 2;
+
+		parse_pmt_descriptor(dvb_desc, &buf[0], len, NULL);
+		buf += dlen;
+		section_length   -= dlen;
+		len -= dlen;
+	}
 
 	while (*section_length >= 5) {
 		len = ((buf[3] & 0x0f) << 8) | buf[4];
@@ -111,8 +119,17 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 			printf("other pid (type 0x%02x) 0x%04x\n", buf[0], pid);
 		};
 
-		buf += len + 5;
-		*section_length -= len + 5;
+		while (len > 0) {
+			int dlen = ((int)buf[6]) + 2;
+
+			parse_pmt_descriptor(dvb_desc, &buf[5], len, NULL);
+			buf += dlen;
+			section_length   -= dlen;
+			len -= dlen;
+		}
+
+		buf += 5;
+		*section_length -= 5;
 	};
 }
 
@@ -151,7 +168,7 @@ static void parse_nit(struct dvb_descriptors *dvb_desc,
 			continue;
 		} else {
 			printf("Transport stream ID 0x%04x, len %d\n",
-				nit_table->tr_table[n].tr_id);
+				nit_table->tr_table[n].tr_id, len);
 
 			parse_nit_descriptor(dvb_desc, &buf[6], len,
 					&nit_table->tr_table[n]);
