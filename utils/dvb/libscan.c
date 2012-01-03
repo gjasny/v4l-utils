@@ -145,6 +145,26 @@ static void hexdump(const unsigned char *buf, int len)
 	printf("\n");
 }
 
+static int poll(int filedes, unsigned int seconds)
+{
+	fd_set set;
+	struct timeval timeout;
+
+	/* Initialize the file descriptor set. */
+	FD_ZERO (&set);
+	FD_SET (filedes, &set);
+
+	/* Initialize the timeout data structure. */
+	timeout.tv_sec = seconds;
+	timeout.tv_usec = 0;
+
+	/* `select' returns 0 if timeout, 1 if input available, -1 if error. */
+	return TEMP_FAILURE_RETRY (select (FD_SETSIZE,
+						&set, NULL, NULL,
+						&timeout));
+}
+
+
 static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 			uint16_t pid, unsigned char table, void *ptr)
 {
@@ -169,9 +189,15 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 
 	while (!finish) {
 		do {
-			count = read(dmx_fd, buf, sizeof(buf));
+			count = poll(dmx_fd, 10);
+			if (count > 0)
+				count = read(dmx_fd, buf, sizeof(buf));
 		} while (count < 0 && errno == EOVERFLOW);
-
+		if (!count) {
+			fprintf(stderr, "timeout while waiting for pid 0x%04x, table 0x%02x",
+				pid, table);
+			return -1;
+		}
 		if (count < 0) {
 			perror("read_sections: read error");
 			close(dmx_fd);
@@ -199,9 +225,10 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 		case 0x02:	/* PMT */
 			finish = parse_pmt(dvb_desc, p, &section_length, ptr);
 			break;
-//		case 0x42:	/* NIT */
-//		default:
-//			return 0;
+#if 0
+		case 0x40:	/* NIT */
+		case 0x41:	/* NIT other */
+#endif
 		}
 	}
 	return 0;
@@ -237,6 +264,12 @@ printf("PID = %d\n", pid_table->pid);
 		read_section(dmx_fd, dvb_desc, pid_table->pid, 0x02,
 			     pid_table);
 	}
+
+#if 0
+	/* NIT table */
+	read_section(dmx_fd, dvb_desc, 0x0010, 0x40, NULL);
+	read_section(dmx_fd, dvb_desc, 0x0010, 0x41, NULL);
+#endif
 
 	close(dmx_fd);
 
