@@ -63,8 +63,7 @@ static int silent = 0;
 	} while (0)
 
 static int parse(const char *fname, const char *channel,
-		 struct dvb_v5_fe_parms *parms,
-		 uint32_t *vpid, uint32_t *apid, uint32_t *sid)
+		 struct dvb_v5_fe_parms *parms)
 {
 	struct dvb_file *dvb_file;
 	struct dvb_entry *entry;
@@ -114,10 +113,6 @@ static int parse(const char *fname, const char *channel,
 		ERROR("Can't find channel");
 		return -3;
 	}
-
-	*vpid = entry->video_pid;
-	*apid = entry->audio_pid;
-	*sid = entry->service_pid;
 
 	/* Copy data into parms */
 	for (i = 0; i < entry->n_props; i++) {
@@ -209,9 +204,9 @@ int main(int argc, char **argv)
 	char *confname = NULL;
 	char *channel = NULL;
 	int adapter = 0, frontend = 0, demux = 0;
-	uint32_t vpid, apid, sid;
 	int opt;
 	struct dvb_v5_fe_parms *parms;
+	struct dvb_descriptors *dvb_desc;
 
 	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:")) != -1) {
 		switch (opt) {
@@ -273,13 +268,15 @@ int main(int argc, char **argv)
 
 	parms = dvb_fe_open(adapter, frontend, !silent, 0);
 
-	if (parse(confname, channel, parms, &vpid, &apid, &sid))
+	if (parse(confname, channel, parms))
 		return -1;
 
 	if (setup_frontend(parms) < 0)
 		return -1;
 
-	get_dvb_ts_tables(DEMUX_DEV);
+	dvb_desc = get_dvb_ts_tables(DEMUX_DEV);
+
+//	write_dvb_file("dvb_channels.conf", dvb_file);
 
 	dvb_fe_close(parms);
 	return 0;

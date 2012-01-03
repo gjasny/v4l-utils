@@ -32,7 +32,9 @@ struct dvb_entry {
 	unsigned int n_props;
 	struct dvb_entry *next;
 	enum polarization pol;
-	uint32_t video_pid, audio_pid, service_pid;
+	uint16_t service_id;
+	uint16_t *video_pid, *audio_pid;
+	unsigned video_pid_len, audio_pid_len;
 	char *channel;
 };
 
@@ -62,7 +64,7 @@ struct parse_struct {
 #define DTV_POLARIZATION        (DTV_MAX_COMMAND + 200)
 #define DTV_VIDEO_PID           (DTV_MAX_COMMAND + 201)
 #define DTV_AUDIO_PID           (DTV_MAX_COMMAND + 202)
-#define DTV_SERVICE_PID         (DTV_MAX_COMMAND + 203)
+#define DTV_SERVICE_ID          (DTV_MAX_COMMAND + 203)
 #define DTV_CH_NAME             (DTV_MAX_COMMAND + 204)
 
 static inline void dvb_file_free(struct dvb_file *dvb_file)

@@ -36,7 +36,7 @@ static const char *parm_name(const struct parse_table *table)
 		return ("VIDEO PID");
 	case DTV_AUDIO_PID:
 		return ("AUDIO PID");
-	case DTV_SERVICE_PID:
+	case DTV_SERVICE_ID:
 		return ("SERVICE ID");
 	default:
 		return ("unknown");
@@ -156,13 +156,17 @@ struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 
 				switch (table->prop) {
 				case DTV_VIDEO_PID:
-					entry->video_pid = v;
+					entry->video_pid = calloc(sizeof(*entry->video_pid), 1);
+					entry->video_pid_len = 1;
+					entry->video_pid[0] = v;
 					break;
 				case DTV_AUDIO_PID:
-					entry->audio_pid = v;
+					entry->audio_pid = calloc(sizeof(*entry->audio_pid), 1);
+					entry->audio_pid_len = 1;
+					entry->audio_pid[0] = v;
 					break;
-				case DTV_SERVICE_PID:
-					entry->service_pid = v;
+				case DTV_SERVICE_ID:
+					entry->service_id = v;
 					break;
 				case DTV_CH_NAME:
 					entry->channel = calloc(strlen(p) + 1, 1);
@@ -215,9 +219,18 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
 		if (entry->channel) {
 			fprintf(fp, "[%s]\n", entry->channel);
-			fprintf(fp, "\tVIDEO_PID = %d\n", entry->video_pid);
-			fprintf(fp, "\tAUDIO_PID = %d\n", entry->audio_pid);
-			fprintf(fp, "\tSERVICE_ID = %d\n", entry->service_pid);
+			fprintf(fp, "\tSERVICE_ID = %d\n", entry->service_id);
+
+			fprintf(fp, "\tVIDEO_PID =");
+			for (i = 0; i < entry->video_pid_len; i++)
+				fprintf(fp, " %d\n", entry->video_pid[i]);
+			fprintf(fp, "\n");
+
+			fprintf(fp, "\tAUDIO_PID =");
+			for (i = 0; i < entry->audio_pid_len; i++)
+				fprintf(fp, " %d\n", entry->audio_pid[i]);
+			fprintf(fp, "\n");
+
 			if (entry->pol != POLARIZATION_OFF) {
 				fprintf(fp, "\tPOLARIZATION = %s\n",
 					pol_name[entry->pol]);

@@ -119,7 +119,7 @@ static const struct parse_table sys_atsc_table[] = {
 
 	{ DTV_VIDEO_PID, NULL, 0 },
 	{ DTV_AUDIO_PID, NULL, 0 },
-	{ DTV_SERVICE_PID, NULL, 0 },
+	{ DTV_SERVICE_ID, NULL, 0 },
 
 };
 
@@ -134,7 +134,7 @@ static const struct parse_table sys_dvbc_table[] = {
 
 	{ DTV_VIDEO_PID, NULL, 0 },
 	{ DTV_AUDIO_PID, NULL, 0 },
-	{ DTV_SERVICE_PID, NULL, 0 },
+	{ DTV_SERVICE_ID, NULL, 0 },
 };
 
 /* Note: On DVB-S, frequency and symbol rate are divided by 1000 */
@@ -147,7 +147,7 @@ static const struct parse_table sys_dvbs_table[] = {
 
 	{ DTV_VIDEO_PID, NULL, 0 },
 	{ DTV_AUDIO_PID, NULL, 0 },
-	{ DTV_SERVICE_PID, NULL, 0 },
+	{ DTV_SERVICE_ID, NULL, 0 },
 
 };
 
@@ -166,7 +166,7 @@ static const struct parse_table sys_dvbt_table[] = {
 
 	{ DTV_VIDEO_PID, NULL, 0 },
 	{ DTV_AUDIO_PID, NULL, 0 },
-	{ DTV_SERVICE_PID, NULL, 0 },
+	{ DTV_SERVICE_ID, NULL, 0 },
 };
 
 const struct parse_struct zap_formats[] = {

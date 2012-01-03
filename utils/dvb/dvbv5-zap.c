@@ -115,9 +115,11 @@ static int parse(const char *fname, const char *channel,
 		return -3;
 	}
 
-	*vpid = entry->video_pid;
-	*apid = entry->audio_pid;
-	*sid = entry->service_pid;
+	if (entry->video_pid)
+		*vpid = entry->video_pid[0];
+	if (entry->audio_pid)
+		*apid = entry->audio_pid[0];
+	*sid = entry->service_id;
 
 	/* Copy data into parms */
 	for (i = 0; i < entry->n_props; i++) {
@@ -203,7 +205,7 @@ static void do_timeout(int x)
 	}
 }
 
-static old_status = 0;
+static int old_status = 0;
 
 static int print_frontend_stats(struct dvb_v5_fe_parms *parms,
 				int human_readable)
@@ -324,7 +326,7 @@ int main(int argc, char **argv)
 	char *confname = NULL;
 	char *channel = NULL;
 	int adapter = 0, frontend = 0, demux = 0, dvr = 0;
-	uint32_t vpid, apid, sid;
+	uint32_t vpid, apid = -1, sid = -1;
 	int pmtpid = 0;
 	int pat_fd = -1, pmt_fd = -1;
 	int audio_fd = 0, video_fd = 0;
