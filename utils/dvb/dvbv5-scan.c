@@ -67,7 +67,7 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 	struct dvb_file *dvb_file, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
 	int i, rc, count = 0;
-	uint32_t sys;
+	uint32_t sys, freq;
 
 	switch (parms->current_sys) {
 	case SYS_DVBT:
@@ -144,9 +144,17 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 			return -1;
 		}
 
+		dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
+
 		count++;
-		printf("CHANNEL #%d %s\n", count, entry->channel);
+		printf("Scanning frequency #%d %d\n", count, freq);
 		dvb_desc = get_dvb_ts_tables(DEMUX_DEV, 0);
+
+		for (i = 0; i < dvb_desc->sdt_table.service_table_len; i++) {
+			struct service_table *service_table = &dvb_desc->sdt_table.service_table[i];
+			if (service_table->service_name)
+				printf("Service #%d: %s\n", i, service_table->service_name);
+		}
 
 		store_dvb_channel(&dvb_file_new, parms, dvb_desc, 0);
 
