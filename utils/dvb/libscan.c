@@ -159,6 +159,8 @@ static void parse_nit(struct dvb_descriptors *dvb_desc,
 	while (*section_length > 6) {
 		nit_table->tr_table = realloc(nit_table->tr_table,
 					sizeof(*nit_table->tr_table) * (n + 1));
+		memset(&nit_table->tr_table[n], 0,
+		       sizeof(nit_table->tr_table[n]));
 		nit_table->tr_table[n].tr_id = (buf[0] << 8) | buf[1];
 
 		len = ((buf[4] & 0x0f) << 8) | buf[5];
@@ -181,6 +183,49 @@ static void parse_nit(struct dvb_descriptors *dvb_desc,
 	nit_table->tr_table_len = n;
 }
 
+static void parse_sdt(struct dvb_descriptors *dvb_desc,
+		      const unsigned char *buf, int *section_length,
+		      int id, int version)
+{
+	struct sdt_table *sdt_table = &dvb_desc->sdt_table;
+	int len, n;
+
+	sdt_table->ts_id = id;
+	sdt_table->version = version;
+
+	buf += 3;
+	*section_length -= 3;
+
+	n = sdt_table->service_table_len;
+	while (*section_length > 4) {
+		sdt_table->service_table = realloc(sdt_table->service_table,
+				sizeof(*sdt_table->service_table) * (n + 1));
+		memset(&sdt_table->service_table[n], 0,
+		       sizeof(sdt_table->service_table[n]));
+		sdt_table->service_table[n].service_id = (buf[0] << 8) | buf[1];
+		len = ((buf[3] & 0x0f) << 8) | buf[4];
+		if (*section_length < len || !len) {
+			printf("SDT section too short for Service ID 0x%04x\n",
+			       sdt_table->service_table[n].service_id);
+		} else {
+			sdt_table->service_table[n].running = (buf[3] >> 5) & 0x7;
+			sdt_table->service_table[n].scrambled = (buf[3] >> 4) & 1;
+
+			printf("Service ID 0x%04x, running %d, scrambled %d\n",
+			       sdt_table->service_table[n].service_id,
+			       sdt_table->service_table[n].running,
+			       sdt_table->service_table[n].scrambled);
+
+			parse_sdt_descriptor(dvb_desc, &buf[5], len,
+					     &sdt_table->service_table[n]);
+			n++;
+		}
+
+		*section_length -= len + 5;
+		buf += len + 5;
+	}
+	sdt_table->service_table_len = n;
+}
 
 static void hexdump(const unsigned char *buf, int len)
 {
@@ -290,8 +335,11 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 		case 0x41:	/* NIT other */
 			parse_nit(dvb_desc, p, &section_length,
 					   id, version);
+			break;
 		case 0x42:	/* SAT */
 		case 0x46:	/* SAT other */
+			parse_sdt(dvb_desc, p, &section_length,
+					   id, version);
 			break;
 		}
 	} while (next);
@@ -331,11 +379,11 @@ struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev)
 
 	/* NIT table */
 	read_section(dmx_fd, dvb_desc, 0x0010, 0x40, NULL);
-	read_section(dmx_fd, dvb_desc, 0x0010, 0x41, NULL);
+//	read_section(dmx_fd, dvb_desc, 0x0010, 0x41, NULL);
 
 	/* SAT/BAT table */
 	read_section(dmx_fd, dvb_desc, 0x0011, 0x42, NULL);
-	read_section(dmx_fd, dvb_desc, 0x0011, 0x46, NULL);
+//	read_section(dmx_fd, dvb_desc, 0x0011, 0x46, NULL);
 
 	close(dmx_fd);
 

@@ -74,3 +74,6 @@ void parse_nit_descriptor(struct dvb_descriptors *dvb_desc,
 
 void parse_pmt_descriptor(struct dvb_descriptors *dvb_desc,
 			  const unsigned char *buf, int len, void *ptr);
+
+void parse_sdt_descriptor(struct dvb_descriptors *dvb_desc,
+			  const unsigned char *buf, int len, void *ptr);

@@ -36,9 +36,26 @@ struct nit_table {
 	unsigned tr_table_len;
 };
 
+struct service_table {
+	uint16_t service_id;
+	char running;
+	char scrambled;
+	unsigned char type;
+	char *service_name, *service_alias;
+	char *provider_name, *provider_alias;
+};
+
+struct sdt_table {
+	unsigned char version;
+	uint16_t ts_id;
+	struct service_table *service_table;
+	unsigned service_table_len;
+};
+
 struct dvb_descriptors {
 	struct pat_table pat_table;
 	struct nit_table nit_table;
+	struct sdt_table sdt_table;
 };
 
 struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev);

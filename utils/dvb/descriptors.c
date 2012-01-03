@@ -27,6 +27,32 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 			printf("(%s)", dvb_desc->nit_table.network_alias);
 		printf("\n");
 		return;
+	case service_descriptor: {
+		struct service_table *service_table = ptr;
+
+		service_table->type = buf[2];
+		parse_string(&service_table->provider_name,
+			     &service_table->provider_alias,
+			     &buf[4], buf[3],
+			     default_charset, output_charset);
+		if (service_table->provider_name)
+			printf("Provider %s", service_table->provider_name);
+		if (service_table->service_alias)
+			printf("(%s)", service_table->provider_alias);
+		if (service_table->provider_name || service_table->service_alias)
+			printf("\n");
+		buf += 4 + buf[3];
+		parse_string(&service_table->service_name,
+			     &service_table->service_alias,
+			     &buf[1], buf[0],
+			     default_charset, output_charset);
+		if (service_table->service_name)
+			printf("Service %s", service_table->service_name);
+		if (service_table->service_alias)
+			printf("(%s)", service_table->service_alias);
+		printf("\n");
+		return;
+	}
 	case service_list_descriptor:
 	case stuffing_descriptor:
 	case satellite_delivery_system_descriptor:
@@ -34,7 +60,6 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 	case VBI_data_descriptor:
 	case VBI_teletext_descriptor:
 	case bouquet_name_descriptor:
-	case service_descriptor:
 	case country_availability_descriptor:
 	case linkage_descriptor:
 	case NVOD_reference_descriptor:
@@ -164,6 +189,42 @@ void parse_pmt_descriptor(struct dvb_descriptors *dvb_desc,
 		break;
 	default:
 		printf("Invalid or unknown PMT descriptor 0x%02x\n", buf[0]);
+		return;
+	}
+}
+
+void parse_sdt_descriptor(struct dvb_descriptors *dvb_desc,
+			  const unsigned char *buf, int len, void *ptr)
+{
+	/* Check if the descriptor is valid on a PAT table */
+	switch (buf[0]) {
+	case stuffing_descriptor:
+	case bouquet_name_descriptor:
+	case service_descriptor:
+	case country_availability_descriptor:
+	case linkage_descriptor:
+	case NVOD_reference_descriptor:
+	case time_shifted_service_descriptor:
+	case component_descriptor:
+	case mosaic_descriptor:
+	case CA_identifier_descriptor:
+	case content_descriptor:
+	case parental_rating_descriptor:
+	case telephone_descriptor:
+	case multilingual_service_name_descriptor:
+	case private_data_specifier_descriptor:
+	case short_smoothing_buffer_descriptor:
+	case data_broadcast_descriptor:
+	case PDC_descriptor:
+	case TVA_id_descriptor:
+	case content_identifier_descriptor:
+	case XAIT_location_descriptor:
+	case FTA_content_management_descriptor:
+	case extension_descriptor:
+		parse_descriptor(dvb_desc, buf, len, ptr);
+		break;
+	default:
+		printf("Invalid or unknown SDT descriptor 0x%02x\n", buf[0]);
 		return;
 	}
 }
