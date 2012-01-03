@@ -18,25 +18,16 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
-static int parse_pat(struct dvb_descriptors *dvb_desc,
-		      const unsigned char *buf, int *section_length)
+static void parse_pat(struct dvb_descriptors *dvb_desc,
+		      const unsigned char *buf, int *section_length,
+		      int id, int version)
 {
 	int service_id, pmt_pid;
-	int next, n;
+	int n;
 
-	dvb_desc->pat_table.ts_id = (buf[3] << 8) | buf[4];
-	dvb_desc->pat_table.version = (buf[5] >> 1) & 0x1f;
-	printf("PAT TS ID=0x%04x, version %d\n",
-	       dvb_desc->pat_table.ts_id,
-		dvb_desc->pat_table.version);
+	dvb_desc->pat_table.ts_id = id;
+	dvb_desc->pat_table.version = version;
 
-	next = (buf[6] == buf[7]) ? 0 : 1;
-	printf("section %d, last section %d\n", buf[6], buf[7]);
-
-	buf += 8;
-	*section_length -= 8;
-
-	printf("n_elements %d\n", *section_length / 4);
 	dvb_desc->pat_table.pid_table = realloc(dvb_desc->pat_table.pid_table,
 				sizeof(*dvb_desc->pat_table.pid_table) *
 				*section_length / 4);
@@ -59,26 +50,19 @@ static int parse_pat(struct dvb_descriptors *dvb_desc,
 		n++;
 	}
 	dvb_desc->pat_table.pid_table_len = n;
-
-	return !next;
 }
 
-static int parse_pmt(struct dvb_descriptors *dvb_desc,
+static void parse_pmt(struct dvb_descriptors *dvb_desc,
 		      const unsigned char *buf, int *section_length,
+		      int id, int version,
 		      struct pid_table *pid_table)
 {
 	struct pmt_table *pmt_table = &pid_table->pmt_table;
 	uint16_t len, pid;
-	int i, next;
+	int i;
 
-	pmt_table->program_number = (buf[4] << 8) | buf[3];
-	pmt_table->version = (buf[5] >> 1) & 0x1f;
-
-	next = (buf[6] == buf[7]) ? 0 : 1;
-	printf("section %d, last section %d\n", buf[6], buf[7]);
-
-	buf += 8;
-	*section_length -= 8;
+	pmt_table->program_number = id;
+	pmt_table->version = version;
 
         pmt_table->pcr_pid = ((buf[0] & 0x1f) << 8) | buf[1];
         len = ((buf[2] & 0x0f) << 8) | buf[3];
@@ -90,8 +74,6 @@ static int parse_pmt(struct dvb_descriptors *dvb_desc,
 	/* Just skip CA and language descriptors for now */
 	buf += len + 4;
 	*section_length -= len + 4;
-
-	printf("n_elements %d\n", *section_length / 5);
 
 	while (*section_length >= 5) {
 		len = ((buf[3] & 0x0f) << 8) | buf[4];
@@ -129,14 +111,13 @@ static int parse_pmt(struct dvb_descriptors *dvb_desc,
 		buf += len + 5;
 		*section_length -= len + 5;
 	};
-	return !next;
 }
 
 static void hexdump(const unsigned char *buf, int len)
 {
 	int i;
 
-	printf("[%d]", len);
+	printf("size %d", len);
 	for (i = 0; i < len; i++) {
 		if (!(i % 16))
 			printf("\n\t");
@@ -169,11 +150,10 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 			uint16_t pid, unsigned char table, void *ptr)
 {
 	int count;
-	int section_length, table_id;
+	int section_length, table_id, id, version, next = 0;
 	unsigned char buf[4096];
 	unsigned char *p;
 	struct dmx_sct_filter_params f;
-	int finish = 0;
 
 	memset(&f, 0, sizeof(f));
 	f.pid = pid;
@@ -187,14 +167,14 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 		return -1;
 	}
 
-	while (!finish) {
+	do {
 		do {
 			count = poll(dmx_fd, 10);
 			if (count > 0)
 				count = read(dmx_fd, buf, sizeof(buf));
 		} while (count < 0 && errno == EOVERFLOW);
 		if (!count) {
-			fprintf(stderr, "timeout while waiting for pid 0x%04x, table 0x%02x",
+			fprintf(stderr, "timeout while waiting for pid 0x%04x, table 0x%02x\n",
 				pid, table);
 			return -1;
 		}
@@ -206,31 +186,45 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 
 		p = buf;
 
-		hexdump(buf, count);
 		if (count < 3)
 			continue;
 
 		table_id = *p;
 		section_length = ((p[1] & 0x0f) << 8) | p[2];
 
-		printf("section_length = %d\n", section_length);
-
 		if (count != section_length + 3)
 			continue;
 
+
+		id = (buf[3] << 8) | buf[4];
+		version = (buf[5] >> 1) & 0x1f;
+		printf("PID 0x%04x, TableID 0x%02x ID=0x%04x, version %d, ",
+		       pid, table_id, id, version);
+		hexdump(buf, count);
+		next = (buf[6] == buf[7]) ? 0 : 1;
+		printf("\tsection_length = %d ", section_length);
+		printf("section %d, last section %d\n", buf[6], buf[7]);
+
+		p += 8;
+		section_length -= 8;
+
 		switch (table_id) {
 		case 0x00:	/* PAT */
-			finish = parse_pat(dvb_desc, p, &section_length);
+			parse_pat(dvb_desc, p, &section_length,
+					   id, version);
 			break;
 		case 0x02:	/* PMT */
-			finish = parse_pmt(dvb_desc, p, &section_length, ptr);
+			parse_pmt(dvb_desc, p, &section_length,
+					   id, version, ptr);
 			break;
-#if 0
 		case 0x40:	/* NIT */
 		case 0x41:	/* NIT other */
-#endif
+		case 0x42:	/* SAT */
+		case 0x46:	/* SAT other */
+			break;
 		}
-	}
+	} while (next);
+
 	return 0;
 }
 
@@ -260,16 +254,17 @@ struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev)
 		/* Skip PAT, CAT, reserved and NULL packets */
 		if (pn < 0x0010 || pn == 0x1fff)
 			continue;
-printf("PID = %d\n", pid_table->pid);
 		read_section(dmx_fd, dvb_desc, pid_table->pid, 0x02,
 			     pid_table);
 	}
 
-#if 0
 	/* NIT table */
 	read_section(dmx_fd, dvb_desc, 0x0010, 0x40, NULL);
 	read_section(dmx_fd, dvb_desc, 0x0010, 0x41, NULL);
-#endif
+
+	/* SAT/BAT table */
+	read_section(dmx_fd, dvb_desc, 0x0011, 0x42, NULL);
+	read_section(dmx_fd, dvb_desc, 0x0011, 0x46, NULL);
 
 	close(dmx_fd);
 
