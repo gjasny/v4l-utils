@@ -23,10 +23,11 @@
  * FIXME: It lacks DISEqC support and DVB-CA. Tested only with ISDB-T
  */
 
+#if 0
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
-
+#endif
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -176,9 +177,6 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 			}
 		}
 
-		count++;
-		printf("Scanning frequency #%d %d\n", count, freq);
-
 		rc = dvb_fe_set_parms(parms);
 		if (rc < 0) {
 			PERROR("dvb_fe_set_parms failed");
@@ -186,6 +184,8 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 		}
 
 		dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
+		count++;
+		printf("Scanning frequency #%d %d\n", count, freq);
 
 		rc = check_frontend(parms, 4);
 		if (rc < 0)
