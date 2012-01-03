@@ -12,7 +12,7 @@ struct pid_table {
 	uint16_t program_number;
 	uint16_t pid;
 	struct pmt_table pmt_table;
-	int video_pid_len, audio_pid_len;
+	unsigned video_pid_len, audio_pid_len;
 	uint16_t *video_pid;
 	uint16_t *audio_pid;
 };
@@ -24,10 +24,16 @@ struct pat_table {
 	unsigned pid_table_len;
 };
 
+struct transport_table {
+	uint16_t tr_id;
+};
+
 struct nit_table {
 	uint16_t network_id;
 	unsigned char version;
 	char *network_name, *network_alias;
+	struct transport_table *tr_table;
+	unsigned tr_table_len;
 };
 
 struct dvb_descriptors {

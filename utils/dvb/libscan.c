@@ -121,7 +121,7 @@ static void parse_nit(struct dvb_descriptors *dvb_desc,
 		      int id, int version)
 {
 	struct nit_table *nit_table = &dvb_desc->nit_table;
-	int len;
+	int len, n;
 
 	nit_table->network_id	 = id;
 	nit_table->version = version;
@@ -133,10 +133,35 @@ static void parse_nit(struct dvb_descriptors *dvb_desc,
 		return;
 	}
 
-	printf("descriptor 0x%02x, len %d\n", buf[2], len);
+	parse_nit_descriptor(dvb_desc, &buf[2], len, NULL);
 
-	parse_nit_descriptor(dvb_desc, &buf[2], len);
+	*section_length -= len + 4;
+	buf += len + 4;
 
+	n = nit_table->tr_table_len;
+	while (*section_length > 6) {
+		nit_table->tr_table = realloc(nit_table->tr_table,
+					sizeof(*nit_table->tr_table) * (n + 1));
+		nit_table->tr_table[n].tr_id = (buf[0] << 8) | buf[1];
+
+		len = ((buf[4] & 0x0f) << 8) | buf[5];
+		if (*section_length < len + 4) {
+			printf("NIT section too short for Network ID 0x%04x, transport stream ID 0x%04x",
+			       id, nit_table->tr_table[n].tr_id);
+			continue;
+		} else {
+			printf("Transport stream ID 0x%04x, len %d\n",
+				nit_table->tr_table[n].tr_id);
+
+			parse_nit_descriptor(dvb_desc, &buf[6], len,
+					&nit_table->tr_table[n]);
+			n++;
+		}
+
+		*section_length -= len + 6;
+		buf += len + 6;
+	}
+	nit_table->tr_table_len = n;
 }
 
 

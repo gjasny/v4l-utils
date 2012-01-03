@@ -8,11 +8,13 @@ static char *default_charset = "iso-8859-1";
 static char *output_charset = "utf-8";
 
 static void parse_descriptor(struct dvb_descriptors *dvb_desc,
-			      const unsigned char *buf, int len)
+			      const unsigned char *buf, int len,
+			      void *ptr)
 {
 	int dlen = buf[1] + 1;
 	/* FIXME: Not all descriptors are valid for all tables */
 
+	printf("Descriptor 0x%02x, len %d\n", buf[0], dlen);
 	switch(buf[0]) {
 	case network_name_descriptor:
 		parse_string(&dvb_desc->nit_table.network_name,
@@ -50,7 +52,7 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 }
 
 void parse_nit_descriptor(struct dvb_descriptors *dvb_desc,
-			  const unsigned char *buf, int len)
+			  const unsigned char *buf, int len, void *ptr)
 {
 	/* Check if the descriptor is valid on a NIT table */
 	switch (buf[0]) {
@@ -72,7 +74,7 @@ void parse_nit_descriptor(struct dvb_descriptors *dvb_desc,
 	case XAIT_location_descriptor:
 	case FTA_content_management_descriptor:
 	case extension_descriptor:
-		parse_descriptor(dvb_desc, buf, len);
+		parse_descriptor(dvb_desc, buf, len, ptr);
 		break;
 	default:
 		return;

@@ -2,13 +2,6 @@
  * Descriptors, as defined on ETSI EN 300 468 V1.11.1 (2010-04)
  */
 
-enum table_type {
-	PAT,
-	PMT,
-	NIT,
-	NUM_TABLE_TYPES
-};
-
 enum descriptors {
 	network_name_descriptor				= 0x40,
 	service_list_descriptor				= 0x41,
@@ -77,4 +70,4 @@ enum descriptors {
 };
 
 void parse_nit_descriptor(struct dvb_descriptors *dvb_desc,
-			  const unsigned char *buf, int len);
+			  const unsigned char *buf, int len, void *ptr);
