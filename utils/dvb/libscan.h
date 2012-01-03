@@ -53,10 +53,12 @@ struct sdt_table {
 };
 
 struct dvb_descriptors {
+	int verbose;
+
 	struct pat_table pat_table;
 	struct nit_table nit_table;
 	struct sdt_table sdt_table;
 };
 
-struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev);
+struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev, int verbose);
 void free_dvb_ts_tables(struct dvb_descriptors *dvb_desc);

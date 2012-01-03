@@ -146,7 +146,7 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 
 		count++;
 		printf("CHANNEL #%d %s\n", count, entry->channel);
-		dvb_desc = get_dvb_ts_tables(DEMUX_DEV);
+		dvb_desc = get_dvb_ts_tables(DEMUX_DEV, 0);
 
 		store_dvb_channel(&dvb_file_new, parms, dvb_desc, 0);
 
@@ -178,11 +178,9 @@ int main(int argc, char **argv)
 {
 	char *homedir = getenv("HOME");
 	char *confname = NULL;
-	char *channel = NULL;
 	int adapter = 0, frontend = 0, demux = 0;
 	int opt;
 	struct dvb_v5_fe_parms *parms;
-	struct dvb_file *dvb_file = NULL;
 
 	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:")) != -1) {
 		switch (opt) {

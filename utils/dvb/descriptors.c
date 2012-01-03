@@ -14,18 +14,21 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 	int dlen = buf[1] + 1;
 	/* FIXME: Not all descriptors are valid for all tables */
 
-	printf("Descriptor 0x%02x, len %d\n", buf[0], dlen);
+	if (dvb_desc->verbose)
+		printf("Descriptor 0x%02x, len %d\n", buf[0], dlen);
 	switch(buf[0]) {
 	case network_name_descriptor:
 		parse_string(&dvb_desc->nit_table.network_name,
 			     &dvb_desc->nit_table.network_alias,
 			     &buf[1], dlen,
 			     default_charset, output_charset);
-		if (dvb_desc->nit_table.network_name)
-			printf("Network %s", dvb_desc->nit_table.network_name);
-		if (dvb_desc->nit_table.network_alias)
-			printf("(%s)", dvb_desc->nit_table.network_alias);
-		printf("\n");
+		if (dvb_desc->verbose) {
+			if (dvb_desc->nit_table.network_name)
+				printf("Network %s", dvb_desc->nit_table.network_name);
+			if (dvb_desc->nit_table.network_alias)
+				printf("(%s)", dvb_desc->nit_table.network_alias);
+			printf("\n");
+		}
 		return;
 	case service_descriptor: {
 		struct service_table *service_table = ptr;
@@ -35,22 +38,24 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 			     &service_table->provider_alias,
 			     &buf[4], buf[3],
 			     default_charset, output_charset);
-		if (service_table->provider_name)
-			printf("Provider %s", service_table->provider_name);
-		if (service_table->service_alias)
-			printf("(%s)", service_table->provider_alias);
-		if (service_table->provider_name || service_table->service_alias)
-			printf("\n");
 		buf += 4 + buf[3];
 		parse_string(&service_table->service_name,
 			     &service_table->service_alias,
 			     &buf[1], buf[0],
 			     default_charset, output_charset);
-		if (service_table->service_name)
-			printf("Service %s", service_table->service_name);
-		if (service_table->service_alias)
-			printf("(%s)", service_table->service_alias);
-		printf("\n");
+		if (dvb_desc->verbose) {
+			if (service_table->provider_name)
+				printf("Provider %s", service_table->provider_name);
+			if (service_table->service_alias)
+				printf("(%s)", service_table->provider_alias);
+			if (service_table->provider_name || service_table->service_alias)
+				printf("\n");
+			if (service_table->service_name)
+				printf("Service %s", service_table->service_name);
+			if (service_table->service_alias)
+				printf("(%s)", service_table->service_alias);
+			printf("\n");
+		}
 		return;
 	}
 	case service_list_descriptor:
@@ -116,14 +121,16 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 		/* FIXME: Add parser */
 		return;
 	case AAC_descriptor:
-		printf("AAC descriptor with len %d\n", dlen);
+		if (dvb_desc->verbose)
+			printf("AAC descriptor with len %d\n", dlen);
 		return;
 	case stream_identifier_descriptor:
 		/* Don't need to parse it */
-		printf("Component tag 0x%02x\n", buf[2]);
+		if (dvb_desc->verbose)
+			printf("Component tag 0x%02x\n", buf[2]);
 		return;
 	default:
-		printf("Unknown descriptor 0x%02x\n", buf[0]);
+		fprintf(stderr, "Unknown descriptor 0x%02x\n", buf[0]);
 		return;
 	}
 }
@@ -188,7 +195,7 @@ void parse_pmt_descriptor(struct dvb_descriptors *dvb_desc,
 		parse_descriptor(dvb_desc, buf, len, ptr);
 		break;
 	default:
-		printf("Invalid or unknown PMT descriptor 0x%02x\n", buf[0]);
+		fprintf(stderr, "Invalid or unknown PMT descriptor 0x%02x\n", buf[0]);
 		return;
 	}
 }
@@ -224,7 +231,7 @@ void parse_sdt_descriptor(struct dvb_descriptors *dvb_desc,
 		parse_descriptor(dvb_desc, buf, len, ptr);
 		break;
 	default:
-		printf("Invalid or unknown SDT descriptor 0x%02x\n", buf[0]);
+		fprintf(stderr, "Invalid or unknown SDT descriptor 0x%02x\n", buf[0]);
 		return;
 	}
 }

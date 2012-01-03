@@ -46,7 +46,8 @@ static void parse_pat(struct dvb_descriptors *dvb_desc,
 		dvb_desc->pat_table.pid_table[n].program_number = service_id;
 		dvb_desc->pat_table.pid_table[n].pid = pmt_pid;
 
-		printf("service_id 0x%04x, pmt_pid 0x%04x\n", service_id, pmt_pid);
+		if (dvb_desc->verbose)
+			printf("service_id 0x%04x, pmt_pid 0x%04x\n", service_id, pmt_pid);
 
 		buf += 4;
 		*section_length -= 4;
@@ -70,9 +71,10 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
         pmt_table->pcr_pid = ((buf[0] & 0x1f) << 8) | buf[1];
         len = ((buf[2] & 0x0f) << 8) | buf[3];
 
-	printf("PN 0x%04x, version %d, PCR ID 0x%04x, len %d\n",
-	       pmt_table->program_number, pmt_table->version,
-	       pmt_table->pcr_pid, len);
+	if (dvb_desc->verbose)
+		printf("PN 0x%04x, version %d, PCR ID 0x%04x, len %d\n",
+			pmt_table->program_number, pmt_table->version,
+			pmt_table->pcr_pid, len);
 
 	buf += 4;
 	*section_length -= 4;
@@ -100,7 +102,8 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 		case 0x02:
 		case 0x10:
 		case 0x1b:
-			printf("video pid 0x%04x\n", pid);
+			if (dvb_desc->verbose)
+				printf("video pid 0x%04x\n", pid);
 			i = pid_table->video_pid_len;
 			pid_table->video_pid = realloc(pid_table->video_pid,
 				sizeof(*pid_table->video_pid) *
@@ -112,7 +115,8 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 		case 0x0f:
 		case 0x11:
 		case 0x81:
-			printf("audio pid 0x%04x\n", pid);
+			if (dvb_desc->verbose)
+				printf("audio pid 0x%04x\n", pid);
 			i = pid_table->audio_pid_len;
 			pid_table->audio_pid = realloc(pid_table->audio_pid,
 				sizeof(*pid_table->audio_pid) *
@@ -121,7 +125,8 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 			/* Discard audio language descriptors */
 			break;
 		default:
-			printf("other pid (type 0x%02x) 0x%04x\n", buf[0], pid);
+			if (dvb_desc->verbose)
+				printf("other pid (type 0x%02x) 0x%04x\n", buf[0], pid);
 		};
 
 #if 0
@@ -153,7 +158,7 @@ static void parse_nit(struct dvb_descriptors *dvb_desc,
 	len = ((buf[0] & 0x0f) << 8) | buf[1];
 
 	if (*section_length < len + 4) {
-		printf("NIT section too short for Network ID 0x%04x", id);
+		fprintf(stderr, "NIT section too short for Network ID 0x%04x", id);
 		return;
 	}
 
@@ -172,12 +177,13 @@ static void parse_nit(struct dvb_descriptors *dvb_desc,
 
 		len = ((buf[4] & 0x0f) << 8) | buf[5];
 		if (*section_length < len + 4) {
-			printf("NIT section too short for Network ID 0x%04x, transport stream ID 0x%04x",
+			fprintf(stderr, "NIT section too short for Network ID 0x%04x, transport stream ID 0x%04x",
 			       id, nit_table->tr_table[n].tr_id);
 			continue;
 		} else {
-			printf("Transport stream #%d ID 0x%04x, len %d\n",
-				n, nit_table->tr_table[n].tr_id, len);
+			if (dvb_desc->verbose)
+				printf("Transport stream #%d ID 0x%04x, len %d\n",
+					n, nit_table->tr_table[n].tr_id, len);
 
 			parse_nit_descriptor(dvb_desc, &buf[6], len,
 					&nit_table->tr_table[n]);
@@ -212,17 +218,18 @@ static void parse_sdt(struct dvb_descriptors *dvb_desc,
 		sdt_table->service_table[n].service_id = (buf[0] << 8) | buf[1];
 		len = ((buf[3] & 0x0f) << 8) | buf[4];
 		if (*section_length < len || !len) {
-			printf("SDT section too short for Service ID 0x%04x\n",
+			fprintf(stderr, "SDT section too short for Service ID 0x%04x\n",
 			       sdt_table->service_table[n].service_id);
 		} else {
 			sdt_table->service_table[n].running = (buf[3] >> 5) & 0x7;
 			sdt_table->service_table[n].scrambled = (buf[3] >> 4) & 1;
 
-			printf("Service #%d ID 0x%04x, running %d, scrambled %d\n",
-			       n,
-			       sdt_table->service_table[n].service_id,
-			       sdt_table->service_table[n].running,
-			       sdt_table->service_table[n].scrambled);
+			if (dvb_desc->verbose)
+				printf("Service #%d ID 0x%04x, running %d, scrambled %d\n",
+				n,
+				sdt_table->service_table[n].service_id,
+				sdt_table->service_table[n].running,
+				sdt_table->service_table[n].scrambled);
 
 			parse_sdt_descriptor(dvb_desc, &buf[5], len,
 					     &sdt_table->service_table[n]);
@@ -320,12 +327,15 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 
 		id = (buf[3] << 8) | buf[4];
 		version = (buf[5] >> 1) & 0x1f;
-		printf("PID 0x%04x, TableID 0x%02x ID=0x%04x, version %d, ",
-		       pid, table_id, id, version);
-		hexdump(buf, count);
 		next = (buf[6] == buf[7]) ? 0 : 1;
-		printf("\tsection_length = %d ", section_length);
-		printf("section %d, last section %d\n", buf[6], buf[7]);
+
+		if (dvb_desc->verbose) {
+			printf("PID 0x%04x, TableID 0x%02x ID=0x%04x, version %d, ",
+			pid, table_id, id, version);
+			hexdump(buf, count);
+			printf("\tsection_length = %d ", section_length);
+			printf("section %d, last section %d\n", buf[6], buf[7]);
+		}
 
 		p += 8;
 		section_length -= 8;
@@ -355,7 +365,7 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 	return 0;
 }
 
-struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev)
+struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev, int verbose)
 {
 	int dmx_fd, i;
 	struct dvb_descriptors *dvb_desc;
@@ -370,6 +380,8 @@ struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev)
 		close (dmx_fd);
 		return NULL;
 	}
+
+	dvb_desc->verbose = verbose;
 
 	/* PAT table */
 	read_section(dmx_fd, dvb_desc, 0, 0, NULL);
