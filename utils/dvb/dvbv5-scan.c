@@ -62,6 +62,44 @@ static int silent = 0;
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
+static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
+{
+	int rc, i;
+	fe_status_t status;
+	uint32_t snr = 0, _signal = 0;
+	uint32_t ber = 0, uncorrected_blocks = 0;
+
+	for (i = 0; i < timeout * 10; i++) {
+		rc = dvb_fe_get_stats(parms);
+		if (rc < 0)
+			PERROR("dvb_fe_get_stats failed");
+
+		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
+		if (status & FE_HAS_LOCK)
+			break;
+		usleep(100000);
+	};
+	dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
+	dvb_fe_retrieve_stats(parms, DTV_BER, &ber);
+	dvb_fe_retrieve_stats(parms, DTV_SIGNAL_STRENGTH, &_signal);
+	dvb_fe_retrieve_stats(parms, DTV_UNCORRECTED_BLOCKS,
+				    &uncorrected_blocks);
+	dvb_fe_retrieve_stats(parms, DTV_SNR, &snr);
+
+	printf("status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d ",
+		status, (_signal * 100) / 0xffff, (snr * 100) / 0xffff,
+		ber, uncorrected_blocks);
+
+	if (status & FE_HAS_LOCK)
+		printf("| FE_HAS_LOCK\n");
+	else {
+		printf("| tune failed\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 {
 	struct dvb_file *dvb_file, *dvb_file_new = NULL;
@@ -138,6 +176,9 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 			}
 		}
 
+		count++;
+		printf("Scanning frequency #%d %d\n", count, freq);
+
 		rc = dvb_fe_set_parms(parms);
 		if (rc < 0) {
 			PERROR("dvb_fe_set_parms failed");
@@ -146,8 +187,10 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 
 		dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
 
-		count++;
-		printf("Scanning frequency #%d %d\n", count, freq);
+		rc = check_frontend(parms, 4);
+		if (rc < 0)
+			continue;
+
 		dvb_desc = get_dvb_ts_tables(DEMUX_DEV, 0);
 
 		for (i = 0; i < dvb_desc->sdt_table.service_table_len; i++) {
@@ -160,7 +203,6 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 
 		free_dvb_ts_tables(dvb_desc);
 	}
-
 
 	write_dvb_file("dvb_channels.conf", dvb_file_new);
 
