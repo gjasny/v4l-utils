@@ -207,6 +207,7 @@ int main(int argc, char **argv)
 	int opt;
 	struct dvb_v5_fe_parms *parms;
 	struct dvb_descriptors *dvb_desc;
+	struct dvb_file *dvb_file = NULL;
 
 	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:")) != -1) {
 		switch (opt) {
@@ -276,7 +277,8 @@ int main(int argc, char **argv)
 
 	dvb_desc = get_dvb_ts_tables(DEMUX_DEV);
 
-//	write_dvb_file("dvb_channels.conf", dvb_file);
+	store_dvb_channel(&dvb_file, parms, dvb_desc, 0);
+	write_dvb_file("dvb_channels.conf", dvb_file);
 
 	dvb_fe_close(parms);
 	return 0;

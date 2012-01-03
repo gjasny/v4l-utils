@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "dvb-file.h"
+#include "libscan.h"
 
 static const char *parm_name(const struct parse_table *table)
 {
@@ -223,12 +224,12 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 
 			fprintf(fp, "\tVIDEO_PID =");
 			for (i = 0; i < entry->video_pid_len; i++)
-				fprintf(fp, " %d\n", entry->video_pid[i]);
+				fprintf(fp, " %d", entry->video_pid[i]);
 			fprintf(fp, "\n");
 
 			fprintf(fp, "\tAUDIO_PID =");
 			for (i = 0; i < entry->audio_pid_len; i++)
-				fprintf(fp, " %d\n", entry->audio_pid[i]);
+				fprintf(fp, " %d", entry->audio_pid[i]);
 			fprintf(fp, "\n");
 
 			if (entry->pol != POLARIZATION_OFF) {
@@ -264,3 +265,80 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 	fclose(fp);
 	return 0;
 };
+
+int store_dvb_channel(struct dvb_file **dvb_file,
+		      struct dvb_v5_fe_parms *parms,
+		      struct dvb_descriptors *dvb_desc,
+		      int get_detected)
+{
+	struct dvb_entry *entry;
+	int i, j;
+
+	if (!*dvb_file) {
+		*dvb_file = calloc(sizeof(*dvb_file), 1);
+		if (!*dvb_file) {
+			perror("Allocating memory for dvb_file");
+			return -1;
+		}
+	}
+
+	/* Go to the last entry */
+	entry = (*dvb_file)->first_entry;
+	while (entry && entry->next)
+		entry = entry->next;
+
+	for (i = 0; i < dvb_desc->sdt_table.service_table_len; i++) {
+		struct service_table *service_table = &dvb_desc->sdt_table.service_table[i];
+		struct pat_table *pat_table = &dvb_desc->pat_table;
+		struct pid_table *pid_table = NULL;
+
+		if (!entry) {
+			(*dvb_file)->first_entry = calloc(sizeof(*entry), 1);
+			entry = (*dvb_file)->first_entry;
+		} else {
+			entry->next = calloc(sizeof(*entry), 1);
+			entry = entry->next;
+		}
+		if (!entry) {
+			fprintf(stderr, "Not enough memory\n");
+			return -1;
+		}
+
+		entry->channel = service_table->service_name;
+		entry->service_id = service_table->service_id;
+
+		for (j = 0; j < pat_table->pid_table_len; j++) {
+			pid_table = &pat_table->pid_table[j];
+			if (service_table->service_id == pid_table->program_number)
+				break;
+		}
+		if (j == pat_table->pid_table_len) {
+			fprintf(stderr, "Service ID 0x%04x not found!\n",
+			      service_table->service_id);
+			return -1;
+		}
+		entry->video_pid = calloc(sizeof(*entry[i].video_pid),
+					    pid_table->video_pid_len);
+		for (j = 0; j < pid_table->video_pid_len; j++)
+			entry->video_pid[j] = pid_table->video_pid[j];
+		entry->video_pid_len = pid_table->video_pid_len;
+
+		entry->audio_pid = calloc(sizeof(*entry[i].audio_pid),
+					    pid_table->audio_pid_len);
+		for (j = 0; j < pid_table->audio_pid_len; j++)
+			entry->audio_pid[j] = pid_table->audio_pid[j];
+		entry->audio_pid_len = pid_table->audio_pid_len;
+
+		/* Copy data from parms */
+		if (get_detected)
+			dvb_fe_get_parms(parms);
+
+		for (j = 0; j < parms->n_props; j++) {
+			entry->props[j].cmd = parms->dvb_prop[j].cmd;
+			entry->props[j].u.data = parms->dvb_prop[j].u.data;
+		}
+		entry->n_props = parms->n_props;
+	}
+
+	return 0;
+}

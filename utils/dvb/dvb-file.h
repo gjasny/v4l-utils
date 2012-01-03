@@ -67,6 +67,8 @@ struct parse_struct {
 #define DTV_SERVICE_ID          (DTV_MAX_COMMAND + 203)
 #define DTV_CH_NAME             (DTV_MAX_COMMAND + 204)
 
+struct dvb_descriptors;
+
 static inline void dvb_file_free(struct dvb_file *dvb_file)
 {
 	struct dvb_entry *entry = dvb_file->first_entry, *next;
@@ -74,7 +76,10 @@ static inline void dvb_file_free(struct dvb_file *dvb_file)
 		next = entry->next;
 		if (entry->channel)
 			free (entry->channel);
-		free (entry);
+		if (entry->video_pid)
+			free (entry->video_pid);
+		if (entry->audio_pid)
+			free (entry->audio_pid);
 		entry = next;
 	}
 	free (dvb_file);
@@ -90,4 +95,11 @@ extern const const struct parse_struct zap_formats[];
 struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 				      uint32_t delsys,
 				      const struct parse_struct *formats);
+
 int write_dvb_file(const char *fname, struct dvb_file *dvb_file);
+
+int store_dvb_channel(struct dvb_file **dvb_file,
+		      struct dvb_v5_fe_parms *parms,
+		      struct dvb_descriptors *dvb_desc,
+		      int get_detected);
+
