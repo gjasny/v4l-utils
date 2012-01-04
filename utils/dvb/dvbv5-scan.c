@@ -106,28 +106,7 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 	struct dvb_file *dvb_file, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
 	int i, rc, count = 0;
-	uint32_t sys, freq;
-
-	switch (parms->current_sys) {
-	case SYS_DVBT:
-	case SYS_DVBS:
-	case SYS_DVBC_ANNEX_A:
-	case SYS_ATSC:
-		sys = parms->current_sys;
-		break;
-	case SYS_DVBC_ANNEX_C:
-		sys = SYS_DVBC_ANNEX_A;
-		break;
-	case SYS_DVBC_ANNEX_B:
-		sys = SYS_ATSC;
-		break;
-	case SYS_ISDBT:
-		sys = SYS_DVBT;
-		break;
-	default:
-		ERROR("Doesn't know how to emulate the delivery system");
-		return -1;
-	}
+	uint32_t freq;
 
 	dvb_file = parse_format_oneline(fname, " \n", SYS_UNDEFINED,
 					channel_formats);

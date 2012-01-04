@@ -330,7 +330,7 @@ int main(int argc, char **argv)
 	char *confname = NULL;
 	char *channel = NULL;
 	int adapter = 0, frontend = 0, demux = 0, dvr = 0;
-	uint32_t vpid, apid = -1, sid = -1;
+	uint32_t vpid = -1, apid = -1, sid = -1;
 	int pmtpid = 0;
 	int pat_fd = -1, pmt_fd = -1;
 	int audio_fd = 0, video_fd = 0;
