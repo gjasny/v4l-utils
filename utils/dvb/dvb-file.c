@@ -224,13 +224,12 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 	/* Handle the DVBv5 DTV_foo properties */
 	if (i < ARRAY_SIZE(dvb_v5_name)) {
 		const char * const *attr_name = dvbv5_attr_names[i];
-
 		n_prop = entry->n_props;
 		entry->props[n_prop].cmd = i;
 		if (!attr_name || !*attr_name)
 			entry->props[n_prop].u.data = atol(value);
 		else {
-			for (j = 0; !attr_name[j]; j++)
+			for (j = 0; attr_name[j]; j++)
 				if (!strcasecmp(value, attr_name[j]))
 					break;
 			if (!attr_name[j])
