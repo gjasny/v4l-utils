@@ -76,10 +76,10 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 			pmt_table->program_number, pmt_table->version,
 			pmt_table->pcr_pid, len);
 
+#if 0
 	buf += 4;
 	*section_length -= 4;
 
-#if 0
 	while (len > 0) {
 		int dlen = ((int)buf[1]) + 2;
 
