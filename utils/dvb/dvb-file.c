@@ -205,6 +205,193 @@ static const char *pol_name[] = {
 	[POLARIZATION_R] = "RIGHT",
 };
 
+#define CHANNEL "CHANNEL"
+
+static int fill_entry(struct dvb_entry *entry, int n_prop,
+		       char *key, char *value)
+{
+	int i, j, len;
+	int is_video = 0, is_audio = 0;
+	uint16_t *pid = NULL;
+	char *p;
+
+	for (i = 0; i < ARRAY_SIZE(dvb_v5_name); i++) {
+		if (!dvb_v5_name[i])
+			continue;
+		if (!strcasecmp(key, dvb_v5_name[i]))
+			break;
+	}
+
+	/* Handle the DVBv5 DTV_foo properties */
+	if (i < ARRAY_SIZE(dvb_v5_name)) {
+		const char * const *attr_name = dvbv5_attr_names[i];
+
+		entry->props[n_prop].cmd = i;
+		if (!attr_name || !*attr_name)
+			entry->props[n_prop].u.data = atol(value);
+		else {
+			for (j = 0; !attr_name[j]; j++)
+				if (!strcasecmp(value, attr_name[j]))
+					break;
+			if (!attr_name[j])
+				return -2;
+			entry->props[n_prop].u.data = j;
+		}
+		return 0;
+	}
+
+	/* Handle the other properties */
+
+	if (!strcasecmp(key, "SERVICE_ID")) {
+		entry->service_id = atol(value);
+		return 0;
+	}
+
+	if (!strcasecmp(key, "VIDEO_PID"))
+		is_video = 1;
+	else 	if (!strcasecmp(key, "AUDIO_PID"))
+		is_audio = 1;
+	else if (!strcasecmp(key, "POLARIZATION")) {
+		entry->service_id = atol(value);
+		for (j = 0; ARRAY_SIZE(pol_name); j++)
+			if (!strcasecmp(value, pol_name[j]))
+				break;
+		if (j == ARRAY_SIZE(pol_name))
+			return -2;
+		entry->pol = j;
+		return 0;
+	}
+
+	if (!is_video && !is_audio)
+		return -1;
+
+	/* Video and audio may have multiple values */
+
+	len = 0;
+
+	p = strtok(value," \t");
+	if (!p)
+		return -2;
+	while (p) {
+		pid = realloc(pid, (len + 1) * sizeof (*pid));
+		pid[len] = atol(p);
+		p = strtok(NULL, " \t\n");
+		len++;
+	}
+
+	if (is_video)
+		entry->video_pid = pid;
+	else
+		entry->audio_pid = pid;
+
+	return 0;
+}
+
+
+struct dvb_file *read_dvb_file(const char *fname)
+{
+	char *buf = NULL, *p, *key, *value;
+	size_t size = 0;
+	int len = 0;
+	int line = 0, n_prop = 0, rc;
+	struct dvb_file *dvb_file;
+	FILE *fd;
+	struct dvb_entry *entry = NULL;
+	char err_msg[80];
+
+	dvb_file = calloc(sizeof(*dvb_file), 1);
+	if (!dvb_file) {
+		perror("Allocating memory for dvb_file");
+		return NULL;
+	}
+
+	fd = fopen(fname, "r");
+	if (!fd) {
+		perror(fname);
+		return NULL;
+	}
+
+	do {
+		len = getline(&buf, &size, fd);
+		if (len <= 0)
+			break;
+		line++;
+		p = buf;
+		while (*p == ' ' || *p == '\t')
+			p++;
+		if (*p == '\n' || *p == '#' || *p == '\a' || *p == '\0')
+			continue;
+
+		if (*p == '[') {
+			/* NEW Entry */
+			if (!entry) {
+				dvb_file->first_entry = calloc(sizeof(*entry), 1);
+				entry = dvb_file->first_entry;
+			} else {
+				entry->next = calloc(sizeof(*entry), 1);
+				entry = entry->next;
+			}
+			n_prop = 0;
+			p++;
+			p = strtok(p, "]");
+			if (!p) {
+				sprintf(err_msg, "Missing channel group");
+				goto error;
+			}
+			if (!strcasecmp(p, CHANNEL))
+				p += strlen(CHANNEL);
+			while (*p == ' ' || *p == '\t')
+				p++;
+			if (*p) {
+				entry->channel = calloc(strlen(p) + 1, 1);
+				strcpy(entry->channel, p);
+printf("channel %s", entry->channel);
+			}
+		} else {
+			if (!entry) {
+				sprintf(err_msg, "key/value without a channel group");
+				goto error;
+			}
+			key = strtok(p, "=");
+			if (!key) {
+				sprintf(err_msg, "missing key");
+				goto error;
+			}
+			p = &key[strlen(key) - 1];
+			while (*p == ' ' || *p == '\t')
+				p--;
+			*p = 0;
+			value = strtok(NULL, "\n");
+			if (!value) {
+				sprintf(err_msg, "missing value");
+				goto error;
+			}
+			while (*value == ' ' || *value == '\t')
+				value++;
+
+			rc = fill_entry(entry, n_prop, key, value);
+			if (rc == -2) {
+				sprintf(err_msg, "value %s is invalid for %s",
+					value, key);
+				goto error;
+			} else if (rc == -2) {
+				sprintf(err_msg, "key %s is unknown", key);
+				goto error;
+			}
+			n_prop++;
+		}
+	} while (1);
+	fclose(fd);
+	return dvb_file;
+
+error:
+	fprintf (stderr, "ERROR %s while parsing line %d of %s\n",
+		 err_msg, line, fname);
+	dvb_file_free(dvb_file);
+	fclose(fd);
+	return NULL;
+};
+
 int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 {
 	FILE *fp;

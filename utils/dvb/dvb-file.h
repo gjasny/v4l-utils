@@ -96,10 +96,12 @@ struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 				      uint32_t delsys,
 				      const struct parse_struct *formats);
 
+
+struct dvb_file *read_dvb_file(const char *fname);
+
 int write_dvb_file(const char *fname, struct dvb_file *dvb_file);
 
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_descriptors *dvb_desc,
 		      int get_detected);
-

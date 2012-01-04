@@ -412,7 +412,7 @@ sub output_arrays($$$$)
 		printf OUT "struct %s {\n\t\%s idx;\n\tchar *name;\n} %s[%i] = {\n",
 			$name, $type, $name, $size;
 	} else {
-		printf OUT "const %s%s[%i] = {\n", $type, $name, $size;
+		printf OUT "const %s%s[%i] = {\n", $type, $name, $size + 1;
 	}
 
 	foreach my $i (sort keys %$struct) {
@@ -441,6 +441,17 @@ sub output_arrays($$$$)
 			}
 		}
 	}
+
+	if (!$bitmap) {
+		printf OUT "\t[%s] = ", $size;
+		if ($type eq "char *") {
+			printf OUT "NULL,\n";
+		} else {
+			printf OUT "0,\n";
+		}
+	}
+
+
 	printf OUT "};\n\n";
 }
 

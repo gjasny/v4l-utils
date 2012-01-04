@@ -53,7 +53,7 @@ struct fe_status_name {
 	{ FE_TIMEDOUT,    "TIMEDOUT" },
 };
 
-const char *fe_code_rate_name[12] = {
+const char *fe_code_rate_name[13] = {
 	[FEC_1_2] =  "1/2",
 	[FEC_2_3] =  "2/3",
 	[FEC_3_4] =  "3/4",
@@ -66,9 +66,10 @@ const char *fe_code_rate_name[12] = {
 	[FEC_9_10] = "9/10",
 	[FEC_AUTO] = "AUTO",
 	[FEC_NONE] = "NONE",
+	[12] = NULL,
 };
 
-const char *fe_modulation_name[13] = {
+const char *fe_modulation_name[14] = {
 	[APSK_16] =  "APSK/16",
 	[APSK_32] =  "APSK/32",
 	[DQPSK] =    "DQPSK",
@@ -82,9 +83,10 @@ const char *fe_modulation_name[13] = {
 	[QPSK] =     "QPSK",
 	[VSB_8] =    "VSB/8",
 	[VSB_16] =   "VSB/16",
+	[13] = NULL,
 };
 
-const char *fe_transmission_mode_name[7] = {
+const char *fe_transmission_mode_name[8] = {
 	[TRANSMISSION_MODE_1K] =   "1K",
 	[TRANSMISSION_MODE_2K] =   "2K",
 	[TRANSMISSION_MODE_4K] =   "4K",
@@ -92,9 +94,10 @@ const char *fe_transmission_mode_name[7] = {
 	[TRANSMISSION_MODE_16K] =  "16K",
 	[TRANSMISSION_MODE_32K] =  "32K",
 	[TRANSMISSION_MODE_AUTO] = "AUTO",
+	[7] = NULL,
 };
 
-const unsigned fe_bandwidth_name[7] = {
+const unsigned fe_bandwidth_name[8] = {
 	[BANDWIDTH_1_712_MHZ] = 1712000,
 	[BANDWIDTH_5_MHZ] =     5000000,
 	[BANDWIDTH_6_MHZ] =     6000000,
@@ -102,9 +105,10 @@ const unsigned fe_bandwidth_name[7] = {
 	[BANDWIDTH_8_MHZ] =     8000000,
 	[BANDWIDTH_10_MHZ] =    10000000,
 	[BANDWIDTH_AUTO] =      0,
+	[7] = 0,
 };
 
-const char *fe_guard_interval_name[8] = {
+const char *fe_guard_interval_name[9] = {
 	[GUARD_INTERVAL_1_4] =    "1/4",
 	[GUARD_INTERVAL_1_8] =    "1/8",
 	[GUARD_INTERVAL_1_16] =   "1/16",
@@ -113,47 +117,54 @@ const char *fe_guard_interval_name[8] = {
 	[GUARD_INTERVAL_19_128] = "19/128",
 	[GUARD_INTERVAL_19_256] = "19/256",
 	[GUARD_INTERVAL_AUTO] =   "AUTO",
+	[8] = NULL,
 };
 
-const char *fe_hierarchy_name[5] = {
+const char *fe_hierarchy_name[6] = {
 	[HIERARCHY_1] =    "1",
 	[HIERARCHY_2] =    "2",
 	[HIERARCHY_4] =    "4",
 	[HIERARCHY_AUTO] = "AUTO",
 	[HIERARCHY_NONE] = "NONE",
+	[5] = NULL,
 };
 
-const char *fe_voltage_name[3] = {
+const char *fe_voltage_name[4] = {
 	[SEC_VOLTAGE_13] =  "13",
 	[SEC_VOLTAGE_18] =  "18",
 	[SEC_VOLTAGE_OFF] = "OFF",
+	[3] = NULL,
 };
 
-const char *fe_tone_name[2] = {
+const char *fe_tone_name[3] = {
 	[SEC_TONE_OFF] = "OFF",
 	[SEC_TONE_ON] =  "ON",
+	[2] = NULL,
 };
 
-const char *fe_inversion_name[3] = {
+const char *fe_inversion_name[4] = {
 	[INVERSION_AUTO] = "AUTO",
 	[INVERSION_OFF] =  "OFF",
 	[INVERSION_ON] =   "ON",
+	[3] = NULL,
 };
 
-const char *fe_pilot_name[3] = {
+const char *fe_pilot_name[4] = {
 	[PILOT_AUTO] = "AUTO",
 	[PILOT_OFF] =  "OFF",
 	[PILOT_ON] =   "ON",
+	[3] = NULL,
 };
 
-const char *fe_rolloff_name[4] = {
+const char *fe_rolloff_name[5] = {
 	[ROLLOFF_20] =   "20",
 	[ROLLOFF_25] =   "25",
 	[ROLLOFF_35] =   "35",
 	[ROLLOFF_AUTO] = "AUTO",
+	[4] = NULL,
 };
 
-const char *dvb_v5_name[45] = {
+const char *dvb_v5_name[46] = {
 	[DTV_API_VERSION] =                    "API_VERSION",
 	[DTV_BANDWIDTH_HZ] =                   "BANDWIDTH_HZ",
 	[DTV_CLEAR] =                          "CLEAR",
@@ -199,9 +210,10 @@ const char *dvb_v5_name[45] = {
 	[DTV_TUNE] =                           "TUNE",
 	[DTV_UNDEFINED] =                      "UNDEFINED",
 	[DTV_VOLTAGE] =                        "VOLTAGE",
+	[45] = NULL,
 };
 
-const char *delivery_system_name[19] = {
+const char *delivery_system_name[20] = {
 	[SYS_ATSC] =         "ATSC",
 	[SYS_ATSCMH] =       "ATSCMH",
 	[SYS_CMMB] =         "CMMB",
@@ -221,6 +233,7 @@ const char *delivery_system_name[19] = {
 	[SYS_ISDBT] =        "ISDBT",
 	[SYS_TURBO] =        "TURBO",
 	[SYS_UNDEFINED] =    "UNDEFINED",
+	[19] = NULL,
 };
 
 #endif

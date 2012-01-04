@@ -62,7 +62,7 @@ static int exit_after_tuning;
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
-static int parse(const char *fname, const char *channel,
+static int parse(const char *fname, int old_format, const char *channel,
 		 struct dvb_v5_fe_parms *parms,
 		 uint32_t *vpid, uint32_t *apid, uint32_t *sid)
 {
@@ -92,7 +92,10 @@ static int parse(const char *fname, const char *channel,
 		return -1;
 	}
 
-	dvb_file = parse_format_oneline(fname, ":", sys, zap_formats);
+	if (old_format)
+		dvb_file = parse_format_oneline(fname, ":", sys, zap_formats);
+	else
+		dvb_file = read_dvb_file(fname);
 	if (!dvb_file)
 		return -2;
 
@@ -318,6 +321,7 @@ static char *usage =
     "     -F        : set up frontend only, don't touch demux\n"
     "     -t number : timeout (seconds)\n"
     "     -o file   : output filename (use -o - for stdout)\n"
+    "     -O        : Channel configuration is using the old format\n"
     "     -h -?     : display this help and exit\n";
 
 int main(int argc, char **argv)
@@ -334,11 +338,12 @@ int main(int argc, char **argv)
 	int opt;
 	int record = 0;
 	int frontend_only = 0;
+	int old_format = 0;
 	char *filename = NULL;
 	int human_readable = 0, rec_psi = 0;
 	struct dvb_v5_fe_parms *parms;
 
-	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:")) != -1) {
+	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:O")) != -1) {
 		switch (opt) {
 		case 'a':
 			adapter = strtoul(optarg, NULL, 0);
@@ -351,6 +356,9 @@ int main(int argc, char **argv)
 			break;
 		case 't':
 			timeout = strtoul(optarg, NULL, 0);
+			break;
+		case 'O':
+			old_format++;
 			break;
 		case 'o':
 			filename = strdup(optarg);
@@ -420,7 +428,7 @@ int main(int argc, char **argv)
 
 	parms = dvb_fe_open(adapter, frontend, !silent, 0);
 
-	if (parse(confname, channel, parms, &vpid, &apid, &sid))
+	if (parse(confname, old_format, channel, parms, &vpid, &apid, &sid))
 		return -1;
 
 	if (setup_frontend(parms) < 0)
