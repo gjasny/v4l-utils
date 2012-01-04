@@ -220,8 +220,12 @@ int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 	n = 0;
 	while (sys_props[n]) {
 		parms->dvb_prop[n].cmd = sys_props[n];
+		parms->dvb_prop[n].u.data = 0;
 		n++;
 	}
+	parms->dvb_prop[n].cmd = DTV_DELIVERY_SYSTEM;
+	parms->dvb_prop[n].u.data = sys;
+	n++;
 	parms->n_props = n;
 
 	return 0;
