@@ -207,11 +207,10 @@ static const char *pol_name[] = {
 
 #define CHANNEL "CHANNEL"
 
-static int fill_entry(struct dvb_entry *entry, int n_prop,
-		       char *key, char *value)
+static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 {
 	int i, j, len;
-	int is_video = 0, is_audio = 0;
+	int is_video = 0, is_audio = 0, n_prop;
 	uint16_t *pid = NULL;
 	char *p;
 
@@ -226,6 +225,7 @@ static int fill_entry(struct dvb_entry *entry, int n_prop,
 	if (i < ARRAY_SIZE(dvb_v5_name)) {
 		const char * const *attr_name = dvbv5_attr_names[i];
 
+		n_prop = entry->n_props;
 		entry->props[n_prop].cmd = i;
 		if (!attr_name || !*attr_name)
 			entry->props[n_prop].u.data = atol(value);
@@ -237,6 +237,7 @@ static int fill_entry(struct dvb_entry *entry, int n_prop,
 				return -2;
 			entry->props[n_prop].u.data = j;
 		}
+		entry->n_props++;
 		return 0;
 	}
 
@@ -293,7 +294,7 @@ struct dvb_file *read_dvb_file(const char *fname)
 	char *buf = NULL, *p, *key, *value;
 	size_t size = 0;
 	int len = 0;
-	int line = 0, n_prop = 0, rc;
+	int line = 0, rc;
 	struct dvb_file *dvb_file;
 	FILE *fd;
 	struct dvb_entry *entry = NULL;
@@ -331,7 +332,6 @@ struct dvb_file *read_dvb_file(const char *fname)
 				entry->next = calloc(sizeof(*entry), 1);
 				entry = entry->next;
 			}
-			n_prop = 0;
 			p++;
 			p = strtok(p, "]");
 			if (!p) {
@@ -357,7 +357,7 @@ struct dvb_file *read_dvb_file(const char *fname)
 				goto error;
 			}
 			p = &key[strlen(key) - 1];
-			while (*p == ' ' || *p == '\t')
+			while (p > key && *(p - 1) == ' ' || *(p - 1) == '\t')
 				p--;
 			*p = 0;
 			value = strtok(NULL, "\n");
@@ -368,7 +368,7 @@ struct dvb_file *read_dvb_file(const char *fname)
 			while (*value == ' ' || *value == '\t')
 				value++;
 
-			rc = fill_entry(entry, n_prop, key, value);
+			rc = fill_entry(entry, key, value);
 			if (rc == -2) {
 				sprintf(err_msg, "value %s is invalid for %s",
 					value, key);
@@ -377,7 +377,6 @@ struct dvb_file *read_dvb_file(const char *fname)
 				sprintf(err_msg, "key %s is unknown", key);
 				goto error;
 			}
-			n_prop++;
 		}
 	} while (1);
 	fclose(fd);
