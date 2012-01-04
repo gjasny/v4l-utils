@@ -345,7 +345,6 @@ struct dvb_file *read_dvb_file(const char *fname)
 			if (*p) {
 				entry->channel = calloc(strlen(p) + 1, 1);
 				strcpy(entry->channel, p);
-printf("channel %s", entry->channel);
 			}
 		} else {
 			if (!entry) {
