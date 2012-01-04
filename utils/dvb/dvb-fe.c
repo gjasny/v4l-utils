@@ -268,8 +268,8 @@ int dvb_fe_retrieve_parm(struct dvb_v5_fe_parms *parms,
 		*value = parms->dvb_prop[i].u.data;
 		return 0;
 	}
-	fprintf(stderr, "%s not found on retrieve\n",
-		dvb_v5_name[cmd]);
+	fprintf(stderr, "%s (%d) command not found during retrieve\n",
+		dvb_v5_name[cmd], cmd);
 
 	return EINVAL;
 }
@@ -284,8 +284,8 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 		parms->dvb_prop[i].u.data = value;
 		return 0;
 	}
-	fprintf(stderr, "%s not found on store\n",
-		dvb_v5_name[cmd]);
+	fprintf(stderr, "%s (%d) command not found during store\n",
+		dvb_v5_name[cmd], cmd);
 
 	return EINVAL;
 }
