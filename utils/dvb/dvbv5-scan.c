@@ -46,7 +46,7 @@
 
 static char DEMUX_DEV[80];
 static char DVR_DEV[80];
-static int silent = 0;
+static int verbose = 0;
 #define CHANNEL_FILE "channels.conf"
 
 #define ERROR(x...)                                                     \
@@ -129,7 +129,10 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 		return -1;
 	}
 
-	dvb_file = parse_format_oneline(fname, ":", sys, zap_formats);
+	dvb_file = parse_format_oneline(fname, " \n", SYS_UNDEFINED,
+					channel_formats);
+
+//	dvb_file = parse_format_oneline(fname, ":", sys, zap_formats);
 	if (!dvb_file)
 		return -2;
 
@@ -191,7 +194,7 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 		if (rc < 0)
 			continue;
 
-		dvb_desc = get_dvb_ts_tables(DEMUX_DEV, 0);
+		dvb_desc = get_dvb_ts_tables(DEMUX_DEV, verbose);
 
 		for (i = 0; i < dvb_desc->sdt_table.service_table_len; i++) {
 			struct service_table *service_table = &dvb_desc->sdt_table.service_table[i];
@@ -213,20 +216,17 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 
 static char *usage =
     "usage:\n"
-    "       dvbzap [options] <channel_name>\n"
+    "       dvbzap [options] <channels.conf>\n"
     "         zap to channel channel_name (case insensitive)\n"
     "     -a number : use given adapter (default 0)\n"
     "     -f number : use given frontend (default 0)\n"
     "     -d number : use given demux (default 0)\n"
-    "     -c file   : read channels list from 'file'\n"
-    "     -s        : only print summary\n"
-    "     -S        : run silently (no output)\n"
+    "     -v        : be (very) verbose\n"
     "     -o file   : output filename (use -o - for stdout)\n"
     "     -h -?     : display this help and exit\n";
 
 int main(int argc, char **argv)
 {
-	char *homedir = getenv("HOME");
 	char *confname = NULL;
 	int adapter = 0, frontend = 0, demux = 0;
 	int opt;
@@ -243,14 +243,8 @@ int main(int argc, char **argv)
 		case 'd':
 			demux = strtoul(optarg, NULL, 0);
 			break;
-		case 'c':
-			confname = optarg;
-			break;
-		case 's':
-			silent = 1;
-			break;
-		case 'S':
-			silent = 2;
+		case 'v':
+			verbose++;
 			break;
 		case '?':
 		case 'h':
@@ -266,23 +260,18 @@ int main(int argc, char **argv)
 	snprintf(DVR_DEV, sizeof(DVR_DEV),
 		 "/dev/dvb/adapter%i/dvr%i", adapter, demux);
 
-	if (silent < 2)
+	if (verbose)
 		fprintf(stderr, "using demux '%s'\n", DEMUX_DEV);
 
-	if (!confname) {
-		int len = strlen(homedir) + strlen(CHANNEL_FILE) + 18;
-		if (!homedir)
-			ERROR("$HOME not set");
-		confname = malloc(len);
-		snprintf(confname, len, "%s/.tzap/%i/%s",
-			 homedir, adapter, CHANNEL_FILE);
-		if (access(confname, R_OK))
-			snprintf(confname, len, "%s/.tzap/%s",
-				 homedir, CHANNEL_FILE);
-	}
-	printf("reading channels from file '%s'\n", confname);
+	if (optind < argc)
+		confname = argv[optind];
 
-	parms = dvb_fe_open(adapter, frontend, !silent, 0);
+	if (!confname) {
+		fprintf(stderr, usage, argv[0]);
+		return -1;
+	}
+
+	parms = dvb_fe_open(adapter, frontend, verbose, 0);
 
 	if (run_scan(confname, parms))
 		return -1;
