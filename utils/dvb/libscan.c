@@ -367,7 +367,7 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 
 struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev, int verbose)
 {
-	int dmx_fd, i;
+	int dmx_fd, i, rc;
 	struct dvb_descriptors *dvb_desc;
 
 	if ((dmx_fd = open(dmxdev, O_RDWR)) < 0) {
@@ -384,7 +384,11 @@ struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev, int verbose)
 	dvb_desc->verbose = verbose;
 
 	/* PAT table */
-	read_section(dmx_fd, dvb_desc, 0, 0, NULL);
+	rc = read_section(dmx_fd, dvb_desc, 0, 0, NULL);
+	if (rc < 0) {
+		free_dvb_ts_tables(dvb_desc);
+		return NULL;
+	}
 
 	/* PMT tables */
 	for (i = 0; i < dvb_desc->pat_table.pid_table_len; i++) {

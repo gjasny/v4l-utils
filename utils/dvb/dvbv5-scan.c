@@ -101,17 +101,47 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 	return 0;
 }
 
-static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
+static int run_scan(const char *fname, int format,
+		    struct dvb_v5_fe_parms *parms)
 {
-	struct dvb_file *dvb_file, *dvb_file_new = NULL;
+	struct dvb_file *dvb_file = NULL, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
 	int i, rc, count = 0;
-	uint32_t freq;
+	uint32_t freq, sys;
 
-	dvb_file = parse_format_oneline(fname, " \n", SYS_UNDEFINED,
-					channel_formats);
-
-//	dvb_file = parse_format_oneline(fname, ":", sys, zap_formats);
+	switch (format) {
+	case 0:
+	default:
+		dvb_file = read_dvb_file(fname);
+		break;
+	case 1:			/* DVB channel/transponder old format */
+		dvb_file = parse_format_oneline(fname, " \n", SYS_UNDEFINED,
+						channel_formats);
+		break;
+	case 2: 			/* DVB old zap format */
+		switch (parms->current_sys) {
+		case SYS_DVBT:
+		case SYS_DVBS:
+		case SYS_DVBC_ANNEX_A:
+		case SYS_ATSC:
+			sys = parms->current_sys;
+			break;
+		case SYS_DVBC_ANNEX_C:
+			sys = SYS_DVBC_ANNEX_A;
+			break;
+		case SYS_DVBC_ANNEX_B:
+			sys = SYS_ATSC;
+			break;
+		case SYS_ISDBT:
+			sys = SYS_DVBT;
+			break;
+		default:
+			ERROR("Doesn't know how to emulate the delivery system");
+			return -1;
+		}
+		dvb_file = parse_format_oneline(fname, ":", sys, zap_formats);
+		break;
+	}
 	if (!dvb_file)
 		return -2;
 
@@ -165,15 +195,22 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 			return -1;
 		}
 
+		/* As the DVB core emulates it, better to always use auto */
+		dvb_fe_store_parm(parms, DTV_INVERSION, INVERSION_AUTO);
+
 		dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
 		count++;
 		printf("Scanning frequency #%d %d\n", count, freq);
+		if (verbose)
+			dvb_fe_prt_parms(stdout, parms);
 
 		rc = check_frontend(parms, 4);
 		if (rc < 0)
 			continue;
 
 		dvb_desc = get_dvb_ts_tables(DEMUX_DEV, verbose);
+		if (!dvb_desc)
+			continue;
 
 		for (i = 0; i < dvb_desc->sdt_table.service_table_len; i++) {
 			struct service_table *service_table = &dvb_desc->sdt_table.service_table[i];
@@ -195,23 +232,25 @@ static int run_scan(const char *fname, struct dvb_v5_fe_parms *parms)
 
 static char *usage =
     "usage:\n"
-    "       dvbzap [options] <channels.conf>\n"
-    "         zap to channel channel_name (case insensitive)\n"
+    "       dvbv5-scan [options] <channels_file>\n"
+    "        scan DVB services using the channel file\n"
     "     -a number : use given adapter (default 0)\n"
     "     -f number : use given frontend (default 0)\n"
     "     -d number : use given demux (default 0)\n"
     "     -v        : be (very) verbose\n"
     "     -o file   : output filename (use -o - for stdout)\n"
+    "     -O        : uses old channel format\n"
+    "     -z        : uses zap services file, discarding video/audio pid's\n"
     "     -h -?     : display this help and exit\n";
 
 int main(int argc, char **argv)
 {
 	char *confname = NULL;
 	int adapter = 0, frontend = 0, demux = 0;
-	int opt;
+	int opt, format = 0;
 	struct dvb_v5_fe_parms *parms;
 
-	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:")) != -1) {
+	while ((opt = getopt(argc, argv, "H?ha:f:d:vzO")) != -1) {
 		switch (opt) {
 		case 'a':
 			adapter = strtoul(optarg, NULL, 0);
@@ -221,6 +260,12 @@ int main(int argc, char **argv)
 			break;
 		case 'd':
 			demux = strtoul(optarg, NULL, 0);
+			break;
+		case 'O':
+			format = 1;
+			break;
+		case 'z':
+			format = 2;
 			break;
 		case 'v':
 			verbose++;
@@ -252,7 +297,7 @@ int main(int argc, char **argv)
 
 	parms = dvb_fe_open(adapter, frontend, verbose, 0);
 
-	if (run_scan(confname, parms))
+	if (run_scan(confname, format, parms))
 		return -1;
 
 	dvb_fe_close(parms);
