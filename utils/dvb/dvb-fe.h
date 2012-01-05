@@ -30,6 +30,14 @@
 #define DTV_SNR				(DTV_MAX_COMMAND + 103)
 #define DTV_UNCORRECTED_BLOCKS		(DTV_MAX_COMMAND + 104)
 
+enum dvbv3_emulation_type {
+	DVBV3_UNKNOWN = -1,
+	DVBV3_QPSK,
+	DVBV3_QAM,
+	DVBV3_OFDM,
+	DVBV3_ATSC,
+};
+
 struct dvb_v5_stats {
 	struct dtv_property		prop[DTV_MAX_STATS];
 };
@@ -63,6 +71,8 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 		      unsigned cmd, uint32_t value);
 int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 		   fe_delivery_system_t sys);
+int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms, 
+				   uint32_t desired_system);
 void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms);
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms);
 int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms);
@@ -109,7 +119,6 @@ int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *parms, int mini_a);
 int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, unsigned len, char *buf);
 int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
 		       int timeout);
-
 
 /* Arrays from dvb-v5.h */
 

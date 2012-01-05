@@ -124,6 +124,12 @@ static int parse(const char *fname, int old_format, const char *channel,
 		*apid = entry->audio_pid[0];
 	*sid = entry->service_id;
 
+	/* First of all, set the delivery system */
+	for (i = 0; i < entry->n_props; i++)
+		if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
+			dvb_set_compat_delivery_system(parms,
+						       entry->props[i].u.data);
+
 	/* Copy data into parms */
 	for (i = 0; i < entry->n_props; i++) {
 		uint32_t data = entry->props[i].u.data;

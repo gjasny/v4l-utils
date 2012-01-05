@@ -148,6 +148,12 @@ static int run_scan(const char *fname, int format,
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
 		struct dvb_descriptors *dvb_desc = NULL;
 
+		/* First of all, set the delivery system */
+		for (i = 0; i < entry->n_props; i++)
+			if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
+				dvb_set_compat_delivery_system(parms,
+							       entry->props[i].u.data);
+
 		/* Copy data into parms */
 		for (i = 0; i < entry->n_props; i++) {
 			uint32_t data = entry->props[i].u.data;

@@ -231,6 +231,102 @@ int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
+static enum dvbv3_emulation_type dvbv3_type(uint32_t delivery_system)
+{
+	switch (delivery_system) {
+	case SYS_DVBC_ANNEX_A:
+	case SYS_DVBC_ANNEX_C:
+		return DVBV3_QAM;
+	case SYS_DVBS:
+	case SYS_DVBS2:
+	case SYS_TURBO:
+	case SYS_ISDBS:
+	case SYS_DSS:
+		return DVBV3_QPSK;
+	case SYS_DVBT:
+	case SYS_DVBT2:
+	case SYS_ISDBT:
+	case SYS_DMBTH:
+		return DVBV3_OFDM;
+	case SYS_ATSC:
+	case SYS_DVBC_ANNEX_B:
+		return DVBV3_ATSC;
+	default:
+		return DVBV3_UNKNOWN;
+	}
+};
+
+static int is_dvbv3_delsys(uint32_t delsys)
+{
+        int status;
+
+        status = (delsys == SYS_DVBT) || (delsys == SYS_DVBC_ANNEX_A) ||
+                 (delsys == SYS_DVBS) || (delsys == SYS_ATSC);
+
+        return status;
+}
+
+int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
+				   uint32_t desired_system)
+{
+	int ncaps, i;
+	uint32_t delsys = SYS_UNDEFINED;
+	enum dvbv3_emulation_type type;
+
+
+	/* Check if the desired delivery system is supported */
+	for (i = 0; i < parms->num_systems; i++) {
+		if (parms->systems[i] == desired_system) {
+			dvb_set_sys(parms, desired_system);
+		}
+		return 0;
+	}
+
+	/*
+	 * Find the closest DVBv3 system that matches the delivery
+	 * system.
+	 */
+	type = dvbv3_type(desired_system);
+
+	/*
+	 * Get the last non-DVBv3 delivery system that has the same type
+	 * of the desired system
+	 */
+	for (i = 0; i < parms->num_systems; i++) {
+		if ((dvbv3_type(parms->systems[i]) == type) &&
+		    !is_dvbv3_delsys(parms->systems[i]))
+			delsys = parms->systems[i];
+	}
+
+	if (delsys == SYS_UNDEFINED)
+		return -1;
+
+	dvb_set_sys(parms, desired_system);
+
+	/* Put ISDB-T into auto mode */
+	if (desired_system == SYS_ISDBT) {
+		dvb_fe_store_parm(parms, DTV_BANDWIDTH_HZ, 6000000);
+		dvb_fe_store_parm(parms, DTV_ISDBT_PARTIAL_RECEPTION, 0);
+		dvb_fe_store_parm(parms, DTV_ISDBT_SOUND_BROADCASTING, 0);
+		dvb_fe_store_parm(parms, DTV_ISDBT_SB_SUBCHANNEL_ID, 0);
+		dvb_fe_store_parm(parms, DTV_ISDBT_SB_SEGMENT_IDX, 0);
+		dvb_fe_store_parm(parms, DTV_ISDBT_SB_SEGMENT_COUNT, 0);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYER_ENABLED, 7);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_FEC, FEC_AUTO);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_FEC, FEC_AUTO);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_FEC, FEC_AUTO);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_MODULATION, QAM_AUTO);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_MODULATION, QAM_AUTO);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_MODULATION, QAM_AUTO);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_SEGMENT_COUNT, 0);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_TIME_INTERLEAVING, 0);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_SEGMENT_COUNT, 0);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_TIME_INTERLEAVING, 0);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_SEGMENT_COUNT, 0);
+		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_TIME_INTERLEAVING, 0);
+	}
+}
+
 void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
 {
 	int i;
