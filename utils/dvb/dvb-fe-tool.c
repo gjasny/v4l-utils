@@ -19,6 +19,7 @@ static const struct argp_option options[] = {
 	{"verbose",	'v',	0,		0,	"enables debug messages", 0},
 	{"adapter",	'a',	"ADAPTER",	0,	"dvb adapter", 0},
 	{"frontend",	'f',	"FRONTEND",	0,	"dvb frontend", 0},
+	{"set-delsys",	'd',	"PARAMS",	0,	"set delivery system", 0},
 	{"set",		's',	"PARAMS",	0,	"set frontend", 0},
 	{"get",		'g',	0,		0,	"get frontend", 0},
 	{"dvbv3",	'3',	0,		0,	"Use DVBv3 only", 0},
@@ -28,18 +29,41 @@ static const struct argp_option options[] = {
 static int adapter = 0;
 static int frontend = 0;
 static unsigned get = 0;
-char *set_params = NULL;
+static char *set_params = NULL;
 static int verbose = 1;		/* FIXME */
 static int dvbv3 = 0;
+static int delsys = 0;
 
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
+	int i;
+
 	switch (k) {
 	case 'a':
 		adapter = atoi(arg);
 		break;
 	case 'f':
 		frontend = atoi(arg);
+		break;
+	case 'd':
+		for (i = 0; i < ARRAY_SIZE(delivery_system_name); i++)
+			if (delivery_system_name[i] &&
+			    !strcasecmp(arg, delivery_system_name[i]))
+				break;
+		if (i < ARRAY_SIZE(delivery_system_name)) {
+			delsys = i;
+			break;
+		}
+		/* Not found. Print all possible values */
+		fprintf(stderr, "Delivery system %s is not known. Valid values are:\n",
+			arg);
+		for (i = 0; i < ARRAY_SIZE(delivery_system_name) - 1; i++) {
+			fprintf(stderr, "%-15s", delivery_system_name[i]);
+			if (!((i + 1) % 5))
+				fprintf(stderr, "\n");
+		}
+		fprintf(stderr, "\n");
+		return ARGP_ERR_UNKNOWN;
 		break;
 	case 's':
 		set_params = arg;
@@ -72,6 +96,12 @@ int main(int argc, char *argv[])
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
 	parms = dvb_fe_open(adapter, frontend, verbose, dvbv3);
+
+	if (delsys) {
+		printf("Changing delivery system to: %s\n",
+			delivery_system_name[delsys]);
+		dvb_set_sys(parms, delsys);
+	}
 
 #if 0
 	if (set_params)

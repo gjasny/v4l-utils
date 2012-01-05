@@ -116,3 +116,4 @@ int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
 extern const unsigned fe_bandwidth_name[8];
 extern const char *dvb_v5_name[46];
 extern const void *dvbv5_attr_names[];
+extern const char *delivery_system_name[20];
