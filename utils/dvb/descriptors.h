@@ -3,6 +3,9 @@
  */
 
 enum descriptors {
+
+	/* ETSI EN 300 468 V1.11.1 (2010-04) */
+
 	network_name_descriptor				= 0x40,
 	service_list_descriptor				= 0x41,
 	stuffing_descriptor				= 0x42,
@@ -67,6 +70,55 @@ enum descriptors {
 	XAIT_location_descriptor			= 0x7d,
 	FTA_content_management_descriptor		= 0x7e,
 	extension_descriptor				= 0x7f,
+
+	/* ISDB Descriptors, as defined on ABNT NBR 15603-1 2007 */
+
+	conditional_access_descriptor			= 0x09,
+	copyright_descriptor				= 0x0d,
+	carousel_id_descriptor				= 0x13,
+	association_tag_descriptor			= 0x14,
+	deferred_association_tags_descriptor		= 0x15,
+	AVC_video_descriptor				= 0x28,
+	AVC_timing_and_HRD_descriptor			= 0x2a,
+	hierarchical_transmission_descriptor		= 0xc0,
+	digital_copy_control_descriptor			= 0xc1,
+	network_identifier_descriptor			= 0xc2,
+	partial_transport_stream_time_descriptor	= 0xc3,
+	audio_component_descriptor			= 0xc4,
+	hyperlink_descriptor				= 0xc5,
+	target_area_descriptor				= 0xc6,
+	data_contents_descriptor			= 0xc7,
+	video_decode_control_descriptor			= 0xc8,
+	download_content_descriptor			= 0xc9,
+	CA_EMM_TS_descriptor				= 0xca,
+	CA_contract_information_descriptor		= 0xcb,
+	CA_service_descriptor				= 0xcc,
+	TS_Information_descriptior			= 0xcd,
+	extended_broadcaster_descriptor			= 0xce,
+	logo_transmission_descriptor			= 0xcf,
+	basic_local_event_descriptor			= 0xd0,
+	reference_descriptor				= 0xd1,
+	node_relation_descriptor			= 0xd2,
+	short_node_information_descriptor		= 0xd3,
+	STC_reference_descriptor			= 0xd4,
+	series_descriptor				= 0xd5,
+	event_group_descriptor				= 0xd6,
+	SI_parameter_descriptor				= 0xd7,
+	broadcaster_Name_Descriptor			= 0xd8,
+	component_group_descriptor			= 0xd9,
+	SI_prime_TS_descriptor				= 0xda,
+	board_information_descriptor			= 0xdb,
+	LDT_linkage_descriptor				= 0xdc,
+	connected_transmission_descriptor		= 0xdd,
+	content_availability_descriptor			= 0xde,
+	service_group_descriptor			= 0xe0,
+	carousel_compatible_composite_Descriptor	= 0xf7,
+	conditional_playback_descriptor			= 0xf8,
+	ISDBT_delivery_system_descriptor		= 0xfa,
+	partial_reception_descriptor			= 0xfb,
+	emergency_information_descriptor		= 0xfc,
+	data_component_descriptor			= 0xfd,
+	system_management_descriptor			= 0xfe,
 };
 
 void parse_nit_descriptor(struct dvb_descriptors *dvb_desc,

@@ -120,6 +120,56 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 	case extension_descriptor:
 		/* FIXME: Add parser */
 		return;
+
+	case conditional_access_descriptor:
+	case copyright_descriptor:
+	case carousel_id_descriptor:
+	case association_tag_descriptor:
+	case deferred_association_tags_descriptor:
+	case AVC_video_descriptor:
+	case AVC_timing_and_HRD_descriptor:
+	case hierarchical_transmission_descriptor:
+	case digital_copy_control_descriptor:
+	case network_identifier_descriptor:
+	case partial_transport_stream_time_descriptor:
+	case audio_component_descriptor:
+	case hyperlink_descriptor:
+	case target_area_descriptor:
+	case data_contents_descriptor:
+	case video_decode_control_descriptor:
+	case download_content_descriptor:
+	case CA_EMM_TS_descriptor:
+	case CA_contract_information_descriptor:
+	case CA_service_descriptor:
+	case TS_Information_descriptior:
+	case extended_broadcaster_descriptor:
+	case logo_transmission_descriptor:
+	case basic_local_event_descriptor:
+	case reference_descriptor:
+	case node_relation_descriptor:
+	case short_node_information_descriptor:
+	case STC_reference_descriptor:
+	case series_descriptor:
+	case event_group_descriptor:
+	case SI_parameter_descriptor:
+	case broadcaster_Name_Descriptor:
+	case component_group_descriptor:
+	case SI_prime_TS_descriptor:
+	case board_information_descriptor:
+	case LDT_linkage_descriptor:
+	case connected_transmission_descriptor:
+	case content_availability_descriptor:
+	case service_group_descriptor:
+	case carousel_compatible_composite_Descriptor:
+	case conditional_playback_descriptor:
+	case ISDBT_delivery_system_descriptor:
+	case partial_reception_descriptor:
+	case emergency_information_descriptor:
+	case data_component_descriptor:
+	case system_management_descriptor:
+
+		/* FIXME: Add parser for ISDB descriptors */
+		return;
 	case AAC_descriptor:
 		if (dvb_desc->verbose)
 			printf("AAC descriptor with len %d\n", dlen);
