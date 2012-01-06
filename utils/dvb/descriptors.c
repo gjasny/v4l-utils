@@ -317,7 +317,8 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 				printf("Component tag 0x%02x\n", buf[2]);
 			break;
 		default:
-			fprintf(stderr, "Unknown descriptor 0x%02x\n", buf[0]);
+			if (dvb_desc->verbose)
+				printf("Unknown descriptor 0x%02x\n", buf[0]);
 			break;
 		}
 		buf += dlen + 2;
