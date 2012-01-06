@@ -76,19 +76,7 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 			pmt_table->program_number, pmt_table->version,
 			pmt_table->pcr_pid, len);
 
-#if 0
-	buf += 4;
-	*section_length -= 4;
-
-	while (len > 0) {
-		int dlen = ((int)buf[1]) + 2;
-
-		parse_pmt_descriptor(dvb_desc, &buf[0], len, NULL);
-		buf += dlen;
-		section_length   -= dlen;
-		len -= dlen;
-	}
-#endif
+	parse_pmt_descriptor(dvb_desc, &buf[4], len, NULL);
 
 	buf += 4 + len;
 	*section_length -= 4 + len;
@@ -129,19 +117,9 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 				printf("other pid (type 0x%02x) 0x%04x\n", buf[0], pid);
 		};
 
-#if 0
-		/* FIXME */
-		while (len > 0) {
-			int dlen = ((int)buf[5]) + 2;
-
-			parse_pmt_descriptor(dvb_desc, &buf[6], len, NULL);
-			buf += dlen;
-			section_length   -= dlen;
-			len -= dlen;
-		}
-#endif
-		buf += 5 + len;
-		*section_length -= 5 + len;
+		parse_pmt_descriptor(dvb_desc, &buf[5], len, NULL);
+		buf += len + 5;
+		*section_length -= len + 5;
 	};
 }
 
