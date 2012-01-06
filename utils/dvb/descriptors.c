@@ -272,7 +272,6 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 		case CA_EMM_TS_descriptor:
 		case CA_contract_information_descriptor:
 		case CA_service_descriptor:
-		case TS_Information_descriptior:
 		case extended_broadcaster_descriptor:
 		case logo_transmission_descriptor:
 		case basic_local_event_descriptor:
@@ -293,11 +292,18 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 		case service_group_descriptor:
 		case carousel_compatible_composite_Descriptor:
 		case conditional_playback_descriptor:
-		case ISDBT_delivery_system_descriptor:
 		case partial_reception_descriptor:
 		case emergency_information_descriptor:
 		case data_component_descriptor:
 		case system_management_descriptor:
+			break;
+
+		case TS_Information_descriptior:
+			dvb_desc->nit_table.virtual_channel = buf[2];
+			if (dvb_desc->verbose)
+				printf("Virtual channel = %d\n", buf[2]);
+			break;
+		case ISDBT_delivery_system_descriptor:
 
 			/* FIXME: Add parser for ISDB descriptors */
 			break;

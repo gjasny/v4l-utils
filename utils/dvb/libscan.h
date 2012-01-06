@@ -34,6 +34,7 @@ struct nit_table {
 	char *network_name, *network_alias;
 	struct transport_table *tr_table;
 	unsigned tr_table_len;
+	unsigned virtual_channel;
 };
 
 struct service_table {

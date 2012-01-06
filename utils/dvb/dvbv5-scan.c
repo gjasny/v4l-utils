@@ -221,7 +221,11 @@ static int run_scan(const char *fname, int format,
 		for (i = 0; i < dvb_desc->sdt_table.service_table_len; i++) {
 			struct service_table *service_table = &dvb_desc->sdt_table.service_table[i];
 			if (service_table->service_name)
-				printf("Service #%d: %s\n", i, service_table->service_name);
+				printf("Service #%d: %s", i, service_table->service_name);
+				if (dvb_desc->nit_table.virtual_channel)
+					printf(" channel %d",
+					      dvb_desc->nit_table.virtual_channel);
+				printf("\n");
 		}
 
 		store_dvb_channel(&dvb_file_new, parms, dvb_desc, 0);
