@@ -3,6 +3,11 @@
  */
 
 enum descriptors {
+	/* ISO/IEC 13818-1 */
+
+	dvbpsi_registration_descriptor			= 0x05,
+	ds_alignment_descriptor				= 0x06,
+	iso639_language_descriptor			= 0x0a,
 
 	/* ETSI EN 300 468 V1.11.1 (2010-04) */
 
@@ -70,6 +75,9 @@ enum descriptors {
 	XAIT_location_descriptor			= 0x7d,
 	FTA_content_management_descriptor		= 0x7e,
 	extension_descriptor				= 0x7f,
+
+	/* SCTE 35 2004 */
+	CUE_identifier_descriptor			= 0x8a,
 
 	/* ISDB Descriptors, as defined on ABNT NBR 15603-1 2007 */
 

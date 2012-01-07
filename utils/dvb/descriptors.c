@@ -9,6 +9,10 @@ static char *default_charset = "iso-8859-1";
 static char *output_charset = "utf-8";
 
 static const char *descriptors[] = {
+	[0 ...255 ] = "Unknown descriptor ",
+	[dvbpsi_registration_descriptor] = "dvbpsi_registration_descriptor",
+	[ds_alignment_descriptor] = "ds_alignment_descriptor",
+	[iso639_language_descriptor] = "iso639_language_descriptor",
 	[network_name_descriptor] = "network_name_descriptor",
 	[service_list_descriptor] = "service_list_descriptor",
 	[stuffing_descriptor] = "stuffing_descriptor",
@@ -73,6 +77,9 @@ static const char *descriptors[] = {
 	[XAIT_location_descriptor] = "XAIT_location_descriptor",
 	[FTA_content_management_descriptor] = "FTA_content_management_descriptor",
 	[extension_descriptor] = "extension_descriptor",
+
+	[CUE_identifier_descriptor] = "CUE_identifier_descriptor",
+
 	[conditional_access_descriptor] = "conditional_access_descriptor",
 	[copyright_descriptor] = "copyright_descriptor",
 	[carousel_id_descriptor] = "carousel_id_descriptor",
@@ -149,6 +156,19 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 			printf("%s (0x%02x), len %d\n",
 			       descriptors[buf[0]], buf[0], buf[1]);
 		switch(buf[0]) {
+		case iso639_language_descriptor:
+		{
+			int i;
+			const unsigned char *p = &buf[2];
+
+			if (dvb_desc->verbose) {
+				for (i = 0; i < dlen; i+= 4, p += 4) {
+					printf("Language = %c%c%c, amode = %d\n",
+						p[0], p[1], p[2], p[3]);
+				}
+			}
+			break;
+		}
 		case network_name_descriptor:
 			parse_string(&dvb_desc->nit_table.network_name,
 				&dvb_desc->nit_table.network_alias,
@@ -190,6 +210,8 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 			}
 			break;
 		}
+		case ds_alignment_descriptor:
+		case dvbpsi_registration_descriptor:
 		case service_list_descriptor:
 		case stuffing_descriptor:
 		case satellite_delivery_system_descriptor:
@@ -250,6 +272,7 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 		case XAIT_location_descriptor:
 		case FTA_content_management_descriptor:
 		case extension_descriptor:
+		case CUE_identifier_descriptor:
 			/* FIXME: Add parser */
 			break;
 
