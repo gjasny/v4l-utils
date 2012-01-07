@@ -88,8 +88,7 @@ static char *usage =
 
 int main(int argc, char **argv)
 {
-	char *confname = NULL, *outfile = NULL, *delsys;
-	int adapter = 0;
+	char *confname = NULL, *outfile = NULL, *delsys = NULL;
 	int opt, format = 0;
 
 	while ((opt = getopt(argc, argv, "H?hzOs:")) != -1) {

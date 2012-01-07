@@ -362,7 +362,7 @@ struct dvb_file *read_dvb_file(const char *fname)
 				goto error;
 			}
 			p = &key[strlen(key) - 1];
-			while (p > key && *(p - 1) == ' ' || *(p - 1) == '\t')
+			while ((p > key) && (*(p - 1) == ' ' || *(p - 1) == '\t'))
 				p--;
 			*p = 0;
 			value = strtok(NULL, "\n");

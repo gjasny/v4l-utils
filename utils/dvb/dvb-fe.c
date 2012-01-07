@@ -269,7 +269,7 @@ static int is_dvbv3_delsys(uint32_t delsys)
 int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 				   uint32_t desired_system)
 {
-	int ncaps, i;
+	int i;
 	uint32_t delsys = SYS_UNDEFINED;
 	enum dvbv3_emulation_type type;
 
@@ -325,6 +325,7 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_SEGMENT_COUNT, 0);
 		dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_TIME_INTERLEAVING, 0);
 	}
+	return 0;
 }
 
 void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
