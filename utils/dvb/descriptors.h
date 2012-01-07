@@ -144,4 +144,4 @@ enum descriptors {
 
 void parse_descriptor(enum dvb_tables type,
 		      struct dvb_descriptors *dvb_desc,
-		      const unsigned char *buf, int len, void *ptr);
+		      const unsigned char *buf, int len);

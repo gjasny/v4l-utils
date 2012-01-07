@@ -133,8 +133,7 @@ static const char *descriptors[] = {
 
 void parse_descriptor(enum dvb_tables type,
 			     struct dvb_descriptors *dvb_desc,
-			     const unsigned char *buf, int len,
-			     void *ptr)
+			     const unsigned char *buf, int len)
 {
 	if (len == 0)
 		return;
@@ -196,7 +195,7 @@ void parse_descriptor(enum dvb_tables type,
 				err = 1;
 				break;
 			}
-			struct service_table *service_table = ptr;
+			struct service_table *service_table = &dvb_desc->sdt_table.service_table[dvb_desc->cur_service];
 
 			service_table->type = buf[2];
 			parse_string(&service_table->provider_name,

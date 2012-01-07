@@ -61,6 +61,11 @@ struct dvb_descriptors {
 	struct pat_table pat_table;
 	struct nit_table nit_table;
 	struct sdt_table sdt_table;
+
+	/* Used by descriptors to know where to update a PMT/Service/TS */
+	unsigned cur_pmt;
+	unsigned cur_service;
+	unsigned cur_ts;
 };
 
 struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev, int verbose);
