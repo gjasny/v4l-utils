@@ -1,4 +1,4 @@
-SUBDIRS=libv4l2util libmedia_dev decode_tm6000 keytable rds v4l2-compliance v4l2-ctl v4l2-dbg v4l2-sysfs-path xc3028-firmware
+SUBDIRS=libv4l2util libmedia_dev decode_tm6000 keytable rds v4l2-compliance v4l2-ctl v4l2-dbg v4l2-sysfs-path xc3028-firmware dvb
 
 all install: 
 	@for i in $(SUBDIRS); do \
