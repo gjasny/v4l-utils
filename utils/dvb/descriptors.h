@@ -2,6 +2,13 @@
  * Descriptors, as defined on ETSI EN 300 468 V1.11.1 (2010-04)
  */
 
+enum dvb_tables {
+	PAT,
+	PMT,
+	NIT,
+	SDT,
+};
+
 enum descriptors {
 	/* ISO/IEC 13818-1 */
 
@@ -135,11 +142,6 @@ enum descriptors {
 	system_management_descriptor			= 0xfe,
 };
 
-void parse_nit_descriptor(struct dvb_descriptors *dvb_desc,
-			  const unsigned char *buf, int len, void *ptr);
-
-void parse_pmt_descriptor(struct dvb_descriptors *dvb_desc,
-			  const unsigned char *buf, int len, void *ptr);
-
-void parse_sdt_descriptor(struct dvb_descriptors *dvb_desc,
-			  const unsigned char *buf, int len, void *ptr);
+void parse_descriptor(enum dvb_tables type,
+		      struct dvb_descriptors *dvb_desc,
+		      const unsigned char *buf, int len, void *ptr);

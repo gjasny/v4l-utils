@@ -76,7 +76,7 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 			pmt_table->program_number, pmt_table->version,
 			pmt_table->pcr_pid, len);
 
-	parse_pmt_descriptor(dvb_desc, &buf[4], len, NULL);
+	parse_descriptor(PMT, dvb_desc, &buf[4], len, NULL);
 
 	buf += 4 + len;
 	*section_length -= 4 + len;
@@ -117,7 +117,7 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 				printf("other pid (type 0x%02x) 0x%04x\n", buf[0], pid);
 		};
 
-		parse_pmt_descriptor(dvb_desc, &buf[5], len, NULL);
+		parse_descriptor(PMT, dvb_desc, &buf[5], len, NULL);
 		buf += len + 5;
 		*section_length -= len + 5;
 	};
@@ -140,7 +140,7 @@ static void parse_nit(struct dvb_descriptors *dvb_desc,
 		return;
 	}
 
-	parse_nit_descriptor(dvb_desc, &buf[2], len, NULL);
+	parse_descriptor(NIT, dvb_desc, &buf[2], len, NULL);
 
 	*section_length -= len + 4;
 	buf += len + 4;
@@ -163,7 +163,7 @@ static void parse_nit(struct dvb_descriptors *dvb_desc,
 				printf("Transport stream #%d ID 0x%04x, len %d\n",
 					n, nit_table->tr_table[n].tr_id, len);
 
-			parse_nit_descriptor(dvb_desc, &buf[6], len,
+			parse_descriptor(NIT, dvb_desc, &buf[6], len,
 					&nit_table->tr_table[n]);
 			n++;
 		}
@@ -209,8 +209,8 @@ static void parse_sdt(struct dvb_descriptors *dvb_desc,
 				sdt_table->service_table[n].running,
 				sdt_table->service_table[n].scrambled);
 
-			parse_sdt_descriptor(dvb_desc, &buf[5], len,
-					     &sdt_table->service_table[n]);
+			parse_descriptor(SDT, dvb_desc, &buf[5], len,
+					 &sdt_table->service_table[n]);
 			n++;
 		}
 

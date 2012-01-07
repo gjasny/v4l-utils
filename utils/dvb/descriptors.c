@@ -131,9 +131,10 @@ static const char *descriptors[] = {
 	[system_management_descriptor] = "system_management_descriptor",
 };
 
-static void parse_descriptor(struct dvb_descriptors *dvb_desc,
-			      const unsigned char *buf, int len,
-			      void *ptr)
+void parse_descriptor(enum dvb_tables type,
+			     struct dvb_descriptors *dvb_desc,
+			     const unsigned char *buf, int len,
+			     void *ptr)
 {
 	if (len == 0)
 		return;
@@ -399,114 +400,4 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 		buf += dlen + 2;
 		len -= dlen + 2;
 	} while (len > 0);
-}
-
-void parse_nit_descriptor(struct dvb_descriptors *dvb_desc,
-			  const unsigned char *buf, int len, void *ptr)
-{
-#if 0
-	/* Check if the descriptor is valid on a NIT table */
-	switch (buf[0]) {
-	case network_name_descriptor:
-	case service_list_descriptor:
-	case stuffing_descriptor:
-	case satellite_delivery_system_descriptor:
-	case cable_delivery_system_descriptor:
-	case linkage_descriptor:
-	case terrestrial_delivery_system_descriptor:
-	case multilingual_network_name_descriptor:
-	case private_data_specifier_descriptor:
-	case frequency_list_descriptor:
-	case cell_list_descriptor:
-	case cell_frequency_link_descriptor:
-	case default_authority_descriptor:
-	case time_slice_fec_identifier_descriptor:
-	case S2_satellite_delivery_system_descriptor:
-	case XAIT_location_descriptor:
-	case FTA_content_management_descriptor:
-	case extension_descriptor:
-		parse_descriptor(dvb_desc, buf, len, ptr);
-		break;
-	default:
-		printf("Invalid or unknown NIT descriptor 0x%02x\n", buf[0]);
-		return;
-	}
-#endif
-	parse_descriptor(dvb_desc, buf, len, ptr);
-}
-
-void parse_pmt_descriptor(struct dvb_descriptors *dvb_desc,
-			  const unsigned char *buf, int len, void *ptr)
-{
-#if 0
-	/* Check if the descriptor is valid on a PAT table */
-	switch (buf[0]) {
-	case VBI_data_descriptor:
-	case VBI_teletext_descriptor:
-	case mosaic_descriptor:
-	case stream_identifier_descriptor:
-	case teletext_descriptor:
-	case subtitling_descriptor:
-	case private_data_specifier_descriptor:
-	case service_move_descriptor:
-	case scrambling_descriptor:
-	case data_broadcast_id_descriptor:
-	case AC_3_descriptor:
-	case ancillary_data_descriptor:
-	case application_signalling_descriptor:
-	case adaptation_field_data_descriptor:
-	case ECM_repetition_rate_descriptor:
-	case enhanced_AC_3_descriptor:
-	case DTS_descriptor:
-	case AAC_descriptor:
-	case XAIT_location_descriptor:
-	case FTA_content_management_descriptor:
-	case extension_descriptor:
-		parse_descriptor(dvb_desc, buf, len, ptr);
-		break;
-	default:
-		fprintf(stderr, "Invalid or unknown PMT descriptor 0x%02x\n", buf[0]);
-		return;
-	}
-#endif
-	parse_descriptor(dvb_desc, buf, len, ptr);
-}
-
-void parse_sdt_descriptor(struct dvb_descriptors *dvb_desc,
-			  const unsigned char *buf, int len, void *ptr)
-{
-#if 0
-	/* Check if the descriptor is valid on a PAT table */
-	switch (buf[0]) {
-	case stuffing_descriptor:
-	case bouquet_name_descriptor:
-	case service_descriptor:
-	case country_availability_descriptor:
-	case linkage_descriptor:
-	case NVOD_reference_descriptor:
-	case time_shifted_service_descriptor:
-	case component_descriptor:
-	case mosaic_descriptor:
-	case CA_identifier_descriptor:
-	case content_descriptor:
-	case parental_rating_descriptor:
-	case telephone_descriptor:
-	case multilingual_service_name_descriptor:
-	case private_data_specifier_descriptor:
-	case short_smoothing_buffer_descriptor:
-	case data_broadcast_descriptor:
-	case PDC_descriptor:
-	case TVA_id_descriptor:
-	case content_identifier_descriptor:
-	case XAIT_location_descriptor:
-	case FTA_content_management_descriptor:
-	case extension_descriptor:
-		parse_descriptor(dvb_desc, buf, len, ptr);
-		break;
-	default:
-		fprintf(stderr, "Invalid or unknown SDT descriptor 0x%02x\n", buf[0]);
-		return;
-	}
-#endif
-	parse_descriptor(dvb_desc, buf, len, ptr);
 }
