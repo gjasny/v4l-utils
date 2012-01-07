@@ -102,6 +102,8 @@ static int parse(const char *fname, int old_format, const char *channel,
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
 		if (!strcmp(entry->channel, channel))
 			break;
+		if (entry->vchannel && !strcmp(entry->vchannel, channel))
+			break;
 	}
 	/*
 	 * Give a second shot, using a case insensitive seek
