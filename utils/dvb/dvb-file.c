@@ -247,6 +247,12 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 		return 0;
 	}
 
+	if (!strcasecmp(key, "VCHANNEL")) {
+		entry->vchannel = strdup(value);
+		return 0;
+	}
+
+
 	if (!strcasecmp(key, "VIDEO_PID"))
 		is_video = 1;
 	else 	if (!strcasecmp(key, "AUDIO_PID"))
@@ -404,6 +410,8 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
 		if (entry->channel) {
 			fprintf(fp, "[%s]\n", entry->channel);
+			if (entry->vchannel)
+				fprintf(fp, "\tVCHANNEL = %s\n", entry->vchannel);
 			fprintf(fp, "\tSERVICE_ID = %d\n", entry->service_id);
 
 			fprintf(fp, "\tVIDEO_PID =");
@@ -450,6 +458,33 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 	return 0;
 };
 
+static char *vchannel(struct dvb_descriptors *dvb_desc,
+		      struct service_table *service_table)
+{
+	struct lcn_table *lcn = dvb_desc->nit_table.lcn;
+	int i;
+	char *buf;
+
+	if (!lcn) {
+		if (!dvb_desc->nit_table.virtual_channel)
+			return NULL;
+
+		asprintf(&buf, "%d", dvb_desc->nit_table.virtual_channel);
+		return buf;
+	}
+
+	for (i = 0; i < dvb_desc->nit_table.lcn_len; i++) {
+		if (lcn[i].service_id == service_table->service_id) {
+			asprintf(&buf, "%d.%d",
+					dvb_desc->nit_table.virtual_channel,
+					lcn[i].lcn);
+			return buf;
+		}
+	}
+	asprintf(&buf, "%d", dvb_desc->nit_table.virtual_channel);
+	return buf;
+}
+
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_descriptors *dvb_desc,
@@ -491,6 +526,8 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		entry->channel = calloc(strlen(service_table->service_name) + 1, 1);
 		strcpy(entry->channel, service_table->service_name);
 		entry->service_id = service_table->service_id;
+
+		entry->vchannel = vchannel(dvb_desc, service_table);
 
 		for (j = 0; j < pat_table->pid_table_len; j++) {
 			pid_table = &pat_table->pid_table[j];

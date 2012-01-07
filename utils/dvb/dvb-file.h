@@ -67,6 +67,7 @@ struct parse_struct {
 #define DTV_AUDIO_PID           (DTV_MAX_COMMAND + 202)
 #define DTV_SERVICE_ID          (DTV_MAX_COMMAND + 203)
 #define DTV_CH_NAME             (DTV_MAX_COMMAND + 204)
+#define DTV_VCHANNEL            (DTV_MAX_COMMAND + 205)
 
 struct dvb_descriptors;
 
