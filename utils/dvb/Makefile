@@ -23,3 +23,7 @@ dvb-v5.h:
 	./gen_dvb_structs.pl $(KERNEL_DIR)/include/
 
 include ../../Make.rules
+
+install: $(TARGETS)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	install -m 755 $(TARGETS) $(DESTDIR)$(PREFIX)/bin
