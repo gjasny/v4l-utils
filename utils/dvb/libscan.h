@@ -35,6 +35,8 @@ struct nit_table {
 	struct transport_table *tr_table;
 	unsigned tr_table_len;
 	unsigned virtual_channel;
+	unsigned area_code;
+	uint32_t guard_interval;
 };
 
 struct service_table {

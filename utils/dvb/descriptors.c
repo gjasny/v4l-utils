@@ -1,6 +1,7 @@
 #include "libscan.h"
 #include "descriptors.h"
 #include "parse_string.h"
+#include "dvb_frontend.h"
 
 #include <stdio.h>
 
@@ -292,21 +293,54 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 		case service_group_descriptor:
 		case carousel_compatible_composite_Descriptor:
 		case conditional_playback_descriptor:
-		case partial_reception_descriptor:
 		case emergency_information_descriptor:
 		case data_component_descriptor:
 		case system_management_descriptor:
 			break;
 
+		case partial_reception_descriptor:
+		{
+			int i;
+			if (dvb_desc->verbose) {
+				printf("Service IDs with partial reception = ");
+				for (i = dlen + 2; i < dlen; i += 2) {
+					if (dvb_desc->verbose)
+						printf("%d\n",
+						buf[i + 1] << 8 | buf[i]);
+				}
+				printf("\n");
+			}
+			break;
+		}
 		case TS_Information_descriptior:
 			dvb_desc->nit_table.virtual_channel = buf[2];
 			if (dvb_desc->verbose)
 				printf("Virtual channel = %d\n", buf[2]);
 			break;
 		case ISDBT_delivery_system_descriptor:
+		{
+			static const uint32_t interval[] = {
+				GUARD_INTERVAL_1_32,
+				GUARD_INTERVAL_1_16,
+				GUARD_INTERVAL_1_8,
+				GUARD_INTERVAL_1_4,
+			};
+			unsigned tmp = buf[3] >> 4 & 0x3;
+			int i;
 
-			/* FIXME: Add parser for ISDB descriptors */
+			dvb_desc->nit_table.area_code = (buf[3] & 0x0f) << 8 | buf[2];
+			dvb_desc->nit_table.guard_interval = interval[tmp];
+			if (dvb_desc->verbose)
+				printf("Area code: %d, guard interval: %d, mode: %d\n",
+				       dvb_desc->nit_table.area_code,
+				       tmp, buf[3] >> 6);
+			for (i = dlen + 3; i < dlen; i += 2) {
+				if (dvb_desc->verbose)
+					printf("Frequency %d\n",
+					       buf[i + 1] << 8 | buf[i]);
+			}
 			break;
+		}
 		case AAC_descriptor:
 			if (dvb_desc->verbose)
 				printf("AAC descriptor with len %d\n", dlen);
