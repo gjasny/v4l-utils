@@ -19,14 +19,6 @@
 
 #include "dvb-fe.h"
 
-enum polarization {
-	POLARIZATION_OFF	= 0,
-	POLARIZATION_H		= 1,
-	POLARIZATION_V		= 2,
-	POLARIZATION_L		= 3,
-	POLARIZATION_R		= 4,
-};
-
 struct dvb_entry {
 	struct dtv_property props[DTV_MAX_COMMAND];
 	unsigned int n_props;

@@ -248,6 +248,7 @@ static char *usage =
     "     -a number : use given adapter (default 0)\n"
     "     -f number : use given frontend (default 0)\n"
     "     -d number : use given demux (default 0)\n"
+    "     -l LNBf   : type of LNBf to use. 'help' lists the available ones\n"
     "     -v        : be (very) verbose\n"
     "     -o file   : output filename (use -o - for stdout)\n"
     "     -O        : uses old channel format\n"
@@ -256,12 +257,12 @@ static char *usage =
 
 int main(int argc, char **argv)
 {
-	char *confname = NULL;
-	int adapter = 0, frontend = 0, demux = 0;
+	char *confname = NULL, *lnb_name = NULL;
+	int adapter = 0, frontend = 0, demux = 0, lnb = -1;
 	int opt, format = 0;
 	struct dvb_v5_fe_parms *parms;
 
-	while ((opt = getopt(argc, argv, "H?ha:f:d:vzO")) != -1) {
+	while ((opt = getopt(argc, argv, "H?ha:f:d:vzOl:")) != -1) {
 		switch (opt) {
 		case 'a':
 			adapter = strtoul(optarg, NULL, 0);
@@ -278,6 +279,9 @@ int main(int argc, char **argv)
 		case 'z':
 			format = 2;
 			break;
+		case 'l':
+			lnb_name = optarg;
+			break;
 		case 'v':
 			verbose++;
 			break;
@@ -287,6 +291,18 @@ int main(int argc, char **argv)
 			fprintf(stderr, usage, argv[0]);
 			return -1;
 		};
+	}
+
+	if (lnb_name) {
+		lnb = search_lnb(lnb_name);
+		if (lnb < 0) {
+			printf("Please select one of the LNBf's below:\n");
+			print_all_lnb();
+			exit(1);
+		} else {
+			printf("Using LNBf ");
+			print_lnb(lnb);
+		}
 	}
 
 	snprintf(DEMUX_DEV, sizeof(DEMUX_DEV),
@@ -307,6 +323,8 @@ int main(int argc, char **argv)
 	}
 
 	parms = dvb_fe_open(adapter, frontend, verbose, 0);
+	if (lnb)
+		parms->lnb = get_lnb(lnb);
 
 	if (run_scan(confname, format, parms))
 		return -1;

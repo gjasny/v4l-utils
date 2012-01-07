@@ -12,6 +12,7 @@
 #include <sys/ioctl.h>
 #include <string.h>
 #include "dvb_frontend.h"
+#include "libsat.h"
 
 #define ARRAY_SIZE(x)	(sizeof(x)/sizeof((x)[0]))
 
@@ -55,7 +56,13 @@ struct dvb_v5_fe_parms {
 	struct dtv_property		dvb_prop[DTV_MAX_COMMAND];
 	int				legacy_fe;
 	struct dvb_v5_stats		stats;
+
+	/* Satellite specific stuff */
+	struct dvb_satellite_lnb	*lnb;
+	enum polarization		pol;
+	int				high_band;
 };
+
 
 /* Open/close methods */
 
@@ -71,7 +78,7 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 		      unsigned cmd, uint32_t value);
 int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 		   fe_delivery_system_t sys);
-int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms, 
+int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 				   uint32_t desired_system);
 void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms);
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms);

@@ -319,6 +319,7 @@ static char *usage =
     "     -a number : use given adapter (default 0)\n"
     "     -f number : use given frontend (default 0)\n"
     "     -d number : use given demux (default 0)\n"
+    "     -l LNBf   : type of LNBf to use. 'help' lists the available ones\n"
     "     -c file   : read channels list from 'file'\n"
     "     -x        : exit after tuning\n"
     "     -r        : set up /dev/dvb/adapterX/dvr0 for TS recording\n"
@@ -337,7 +338,8 @@ int main(int argc, char **argv)
 	char *homedir = getenv("HOME");
 	char *confname = NULL;
 	char *channel = NULL;
-	int adapter = 0, frontend = 0, demux = 0, dvr = 0;
+	char *lnb_name = NULL;
+	int adapter = 0, frontend = 0, demux = 0, dvr = 0, lnb = -1;
 	uint32_t vpid = -1, apid = -1, sid = -1;
 	int pmtpid = 0;
 	int pat_fd = -1, pmt_fd = -1;
@@ -351,7 +353,7 @@ int main(int argc, char **argv)
 	int human_readable = 0, rec_psi = 0;
 	struct dvb_v5_fe_parms *parms;
 
-	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:O")) != -1) {
+	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:Ol:")) != -1) {
 		switch (opt) {
 		case 'a':
 			adapter = strtoul(optarg, NULL, 0);
@@ -384,6 +386,9 @@ int main(int argc, char **argv)
 		case 'c':
 			confname = optarg;
 			break;
+		case 'l':
+			lnb_name = optarg;
+			break;
 		case 's':
 			silent = 1;
 			break;
@@ -412,6 +417,18 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+	if (lnb_name) {
+		lnb = search_lnb(lnb_name);
+		if (lnb < 0) {
+			printf("Please select one of the LNBf's below:\n");
+			print_all_lnb();
+			exit(1);
+		} else {
+			printf("Using LNBf ");
+			print_lnb(lnb);
+		}
+	}
+
 	snprintf(DEMUX_DEV, sizeof(DEMUX_DEV),
 		 "/dev/dvb/adapter%i/demux%i", adapter, demux);
 
@@ -435,6 +452,9 @@ int main(int argc, char **argv)
 	printf("reading channels from file '%s'\n", confname);
 
 	parms = dvb_fe_open(adapter, frontend, 0, 0);
+	if (lnb)
+		parms->lnb = get_lnb(lnb);
+
 
 	if (parse(confname, old_format, channel, parms, &vpid, &apid, &sid))
 		return -1;

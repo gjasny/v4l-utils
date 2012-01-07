@@ -186,6 +186,20 @@ void dvb_fe_close(struct dvb_v5_fe_parms *parms)
 		return;
 }
 
+static int is_satellite(uint32_t delivery_system)
+{
+	switch (delivery_system) {
+	case SYS_DVBS:
+	case SYS_DVBS2:
+	case SYS_TURBO:
+	case SYS_ISDBS:
+		return 1;
+	default:
+		return 0;
+
+	}
+}
+
 int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 			  fe_delivery_system_t sys)
 {
@@ -422,7 +436,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 			       delivery_system_name[parms->current_sys]);
 			dvb_fe_prt_parms(stdout, parms);
 		}
-		return 0;
+		goto ret;
 	}
 	/* DVBv3 call */
 	if (ioctl(parms->fd, FE_GET_FRONTEND, &v3_parms) == -1) {
@@ -461,6 +475,12 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 	default:
 		return -EINVAL;
 	}
+
+ret:
+	/* For satellite, need to recover from LNBf IF frequency */
+	if (is_satellite(parms->current_sys))
+		return dvb_satellite_get_parms(parms);
+
 	return 0;
 }
 
@@ -468,11 +488,17 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 {
 	struct dtv_properties prop;
 	struct dvb_frontend_parameters v3_parms;
+	uint32_t freq;
 	uint32_t bw;
 
 	prop.props = parms->dvb_prop;
 	prop.num = parms->n_props + 1;
 	parms->dvb_prop[parms->n_props].cmd = DTV_TUNE;
+
+	if (is_satellite(parms->current_sys)) {
+		dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
+		dvb_satellite_set_parms(parms);
+	}
 
 	if (!parms->legacy_fe) {
 		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
@@ -481,7 +507,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 				dvb_fe_prt_parms(stderr, parms);
 			return errno;
 		}
-		return 0;
+		goto ret;
 	}
 	/* DVBv3 call */
 
@@ -523,6 +549,11 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 			dvb_fe_prt_parms(stderr, parms);
 		return errno;
 	}
+ret:
+	/* For satellite, need to recover from LNBf IF frequency */
+	if (is_satellite(parms->current_sys))
+		dvb_fe_store_parm(parms, DTV_FREQUENCY, freq);
+
 	return 0;
 }
 

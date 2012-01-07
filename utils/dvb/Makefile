@@ -4,17 +4,18 @@ all: $(TARGETS)
 
 -include *.d
 
-dvb-fe-tool: dvb-fe-tool.o dvb-fe.o
+dvb-fe-tool: dvb-fe-tool.o dvb-fe.o libsat.o
 dvbv5-zap: dvbv5-zap.o dvb-fe.o dvb-demux.o dvb-file.o \
-		dvb-zap-format.o dvb-legacy-channel-format.o
-
+		dvb-zap-format.o dvb-legacy-channel-format.o \
+		libsat.o
 dvbv5-scan: dvbv5-scan.o dvb-fe.o dvb-demux.o dvb-file.o \
 		dvb-zap-format.o dvb-legacy-channel-format.o \
-		parse_string.o descriptors.o libscan.o
+		parse_string.o descriptors.o libscan.o \
+		libsat.o
 
 dvb-format-convert: dvb-format-convert.o dvb-file.o \
 		dvb-zap-format.o dvb-legacy-channel-format.o \
-		dvb-fe.o
+		dvb-fe.o libsat.o
 
 
 	$(CC) $(LDFLAGS) -o $@ $^
