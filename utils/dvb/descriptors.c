@@ -303,6 +303,7 @@ void parse_descriptor(enum dvb_tables type,
 				(*lcn)[n].service_id = p[0] << 8 | p[1];
 				(*lcn)[n].lcn = (p[2] << 8 | p[3]) & 0x3ff;
 				dvb_desc->nit_table.lcn_len++;
+				n++;
 
 				if (dvb_desc->verbose)
 					printf("Service ID: 0x%04x, LCN: %d\n",

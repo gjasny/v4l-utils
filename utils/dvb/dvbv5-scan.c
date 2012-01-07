@@ -101,6 +101,33 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 	return 0;
 }
 
+static char *vchannel(struct dvb_descriptors *dvb_desc,
+		      struct service_table *service_table)
+{
+	struct lcn_table *lcn = dvb_desc->nit_table.lcn;
+	int i;
+	char *buf;
+
+	if (!lcn) {
+		if (!dvb_desc->nit_table.virtual_channel)
+			return NULL;
+
+		asprintf(&buf, "%d", dvb_desc->nit_table.virtual_channel);
+		return buf;
+	}
+
+	for (i = 0; i < dvb_desc->nit_table.lcn_len; i++) {
+		if (lcn[i].service_id == service_table->service_id) {
+			asprintf(&buf, "%d.%d",
+					dvb_desc->nit_table.virtual_channel,
+					lcn[i].lcn);
+			return buf;
+		}
+	}
+	asprintf(&buf, "%d", dvb_desc->nit_table.virtual_channel);
+	return buf;
+}
+
 static int run_scan(const char *fname, int format,
 		    struct dvb_v5_fe_parms *parms)
 {
@@ -220,11 +247,12 @@ static int run_scan(const char *fname, int format,
 
 		for (i = 0; i < dvb_desc->sdt_table.service_table_len; i++) {
 			struct service_table *service_table = &dvb_desc->sdt_table.service_table[i];
+
+			entry->vchannel = vchannel(dvb_desc, service_table);
 			if (service_table->service_name)
 				printf("Service #%d: %s", i, service_table->service_name);
-				if (dvb_desc->nit_table.virtual_channel)
-					printf(" channel %d",
-					      dvb_desc->nit_table.virtual_channel);
+				if (entry->vchannel)
+					printf(" channel %s", entry->vchannel);
 				printf("\n");
 		}
 

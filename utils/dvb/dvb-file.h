@@ -36,6 +36,7 @@ struct dvb_entry {
 	uint16_t *video_pid, *audio_pid;
 	unsigned video_pid_len, audio_pid_len;
 	char *channel;
+	char *vchannel;
 };
 
 struct dvb_file {
