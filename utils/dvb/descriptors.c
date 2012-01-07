@@ -148,6 +148,7 @@ void parse_descriptor(enum dvb_tables type,
 		printf("Descriptors table len %d\n", len);
 	do {
 		int dlen = buf[1];
+		int err = 0;
 
 		if (dlen > len) {
 			fprintf(stderr, "descriptor size %d is longer than %d!\n",
@@ -174,6 +175,10 @@ void parse_descriptor(enum dvb_tables type,
 			break;
 		}
 		case network_name_descriptor:
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
 			parse_string(&dvb_desc->nit_table.network_name,
 				&dvb_desc->nit_table.network_alias,
 				&buf[2], dlen,
@@ -187,6 +192,10 @@ void parse_descriptor(enum dvb_tables type,
 			}
 			break;
 		case service_descriptor: {
+			if (type != SDT) {
+				err = 1;
+				break;
+			}
 			struct service_table *service_table = ptr;
 
 			service_table->type = buf[2];
@@ -355,6 +364,10 @@ void parse_descriptor(enum dvb_tables type,
 			break;
 		}
 		case TS_Information_descriptior:
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
 			dvb_desc->nit_table.virtual_channel = buf[2];
 			if (dvb_desc->verbose)
 				printf("Virtual channel = %d\n", buf[2]);
@@ -370,6 +383,10 @@ void parse_descriptor(enum dvb_tables type,
 			unsigned tmp = buf[3] >> 4 & 0x3;
 			int i;
 
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
 			dvb_desc->nit_table.area_code = (buf[3] & 0x0f) << 8 | buf[2];
 			dvb_desc->nit_table.guard_interval = interval[tmp];
 			if (dvb_desc->verbose)
@@ -396,6 +413,10 @@ void parse_descriptor(enum dvb_tables type,
 			if (dvb_desc->verbose)
 				printf("Unknown descriptor 0x%02x\n", buf[0]);
 			break;
+		}
+		if (err) {
+			fprintf(stderr,
+				"descriptor type is invalid on this table\n");
 		}
 		buf += dlen + 2;
 		len -= dlen + 2;
