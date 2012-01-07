@@ -76,10 +76,9 @@
 #define V4L2_BUFFERS_REQUESTED_BY_READ	0x0200
 #define V4L2_STREAM_CONTROLLED_BY_READ	0x0400
 #define V4L2_SUPPORTS_READ		0x0800
-#define V4L2_IS_UVC			0x1000
-#define V4L2_STREAM_TOUCHED		0x2000
-#define V4L2_USE_READ_FOR_READ		0x4000
-#define V4L2_SUPPORTS_TIMEPERFRAME	0x8000
+#define V4L2_STREAM_TOUCHED		0x1000
+#define V4L2_USE_READ_FOR_READ		0x2000
+#define V4L2_SUPPORTS_TIMEPERFRAME	0x4000
 
 #define V4L2_MMAP_OFFSET_MAGIC      0xABCDEF00u
 
@@ -679,8 +678,6 @@ no_capture:
 		   driver on the first read */
 		devices[index].first_frame = V4L2_IGNORE_FIRST_FRAME_ERRORS;
 	}
-	if (!strcmp((char *)cap.driver, "uvcvideo"))
-		devices[index].flags |= V4L2_IS_UVC;
 	if ((parm.type == V4L2_BUF_TYPE_VIDEO_CAPTURE) &&
 	    (parm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME))
 		devices[index].flags |= V4L2_SUPPORTS_TIMEPERFRAME;
@@ -887,14 +884,6 @@ static int v4l2_s_fmt(int index, struct v4l2_format *dest_fmt)
 	struct v4l2_pix_format req_pix_fmt;
 	int result;
 
-	/* Don't be lazy on uvc cams, as this triggers a bug in the uvcvideo
-	   driver in kernel <= 2.6.28 (with certain cams) */
-	if (!(devices[index].flags & V4L2_IS_UVC) &&
-	    v4l2_pix_fmt_compat(&devices[index].dest_fmt, dest_fmt)) {
-		*dest_fmt = devices[index].dest_fmt;
-		return 0;
-	}
-
 	if (v4l2_log_file) {
 		int pixfmt = dest_fmt->fmt.pix.pixelformat;
 
@@ -922,15 +911,6 @@ static int v4l2_s_fmt(int index, struct v4l2_format *dest_fmt)
 			"VIDIOC_S_FMT converting from: %c%c%c%c\n",
 			pixfmt & 0xff, (pixfmt >> 8) & 0xff,
 			(pixfmt >> 16) & 0xff, pixfmt >> 24);
-	}
-
-	/* Maybe after try format has adjusted width/height etc, to whats
-	   available nothing has changed (on the cam side) ? */
-	if (!(devices[index].flags & V4L2_IS_UVC) &&
-	    v4l2_pix_fmt_compat(&devices[index].src_fmt, &src_fmt)) {
-		v4l2_set_src_and_dest_format(index, &devices[index].src_fmt,
-				dest_fmt);
-		return 0;
 	}
 
 	result = v4l2_check_buffer_change_ok(index);
