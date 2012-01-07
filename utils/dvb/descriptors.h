@@ -79,6 +79,12 @@ enum descriptors {
 	/* SCTE 35 2004 */
 	CUE_identifier_descriptor			= 0x8a,
 
+	/* From http://www.etherguidesystems.com/Help/SDOs/ATSC/Semantics/Descriptors/Default.aspx */
+	component_name_descriptor			= 0xa3,
+
+	/* From http://www.coolstf.com/tsreader/descriptors.html */
+	logical_channel_number_descriptor		= 0x83,
+
 	/* ISDB Descriptors, as defined on ABNT NBR 15603-1 2007 */
 
 	conditional_access_descriptor			= 0x09,

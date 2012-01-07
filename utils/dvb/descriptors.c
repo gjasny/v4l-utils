@@ -80,6 +80,9 @@ static const char *descriptors[] = {
 
 	[CUE_identifier_descriptor] = "CUE_identifier_descriptor",
 
+	[component_name_descriptor] = "component_name_descriptor",
+	[logical_channel_number_descriptor] = "logical_channel_number_descriptor",
+
 	[conditional_access_descriptor] = "conditional_access_descriptor",
 	[copyright_descriptor] = "copyright_descriptor",
 	[carousel_id_descriptor] = "carousel_id_descriptor",
@@ -272,9 +275,24 @@ static void parse_descriptor(struct dvb_descriptors *dvb_desc,
 		case XAIT_location_descriptor:
 		case FTA_content_management_descriptor:
 		case extension_descriptor:
+
 		case CUE_identifier_descriptor:
+		case component_name_descriptor:
 			/* FIXME: Add parser */
 			break;
+
+		case logical_channel_number_descriptor:
+		{
+			int i;
+			const unsigned char *p = &buf[2];
+			for (i = 0; i < dlen; i+= 4, p+= 4) {
+				if (dvb_desc->verbose)
+					printf("Service ID: 0x%04x, LCN: %d\n",
+					       p[0] << 8 | p[1],
+					       (p[2] << 8 | p[3]) & 0x3ff);
+			}
+			break;
+		}
 
 		case conditional_access_descriptor:
 		case copyright_descriptor:
