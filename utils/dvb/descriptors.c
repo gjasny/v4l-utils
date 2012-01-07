@@ -3,6 +3,7 @@
 #include "parse_string.h"
 #include "dvb_frontend.h"
 
+#include <malloc.h>
 #include <stdio.h>
 
 static char *default_charset = "iso-8859-1";
@@ -292,13 +293,21 @@ void parse_descriptor(enum dvb_tables type,
 
 		case logical_channel_number_descriptor:
 		{
-			int i;
+			int i, n = dvb_desc->nit_table.lcn_len;
 			const unsigned char *p = &buf[2];
+
 			for (i = 0; i < dlen; i+= 4, p+= 4) {
+				struct lcn_table **lcn = &dvb_desc->nit_table.lcn;
+
+				*lcn = realloc(*lcn, (n + 1) * sizeof(*lcn));
+				(*lcn)[n].service_id = p[0] << 8 | p[1];
+				(*lcn)[n].lcn = (p[2] << 8 | p[3]) & 0x3ff;
+				dvb_desc->nit_table.lcn_len++;
+
 				if (dvb_desc->verbose)
 					printf("Service ID: 0x%04x, LCN: %d\n",
-					       p[0] << 8 | p[1],
-					       (p[2] << 8 | p[3]) & 0x3ff);
+					       (*lcn)[n].service_id,
+					       (*lcn)[n].lcn);
 			}
 			break;
 		}

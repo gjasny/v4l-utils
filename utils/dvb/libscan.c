@@ -411,6 +411,8 @@ void free_dvb_ts_tables(struct dvb_descriptors *dvb_desc)
 		free(pid_table);
 	}
 
+	if (nit_table->lcn)
+		free(nit_table->lcn);
 	if (nit_table->network_name)
 		free(nit_table->network_name);
 	if (nit_table->network_alias)

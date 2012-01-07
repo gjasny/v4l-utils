@@ -28,6 +28,11 @@ struct transport_table {
 	uint16_t tr_id;
 };
 
+struct lcn_table {
+	uint16_t service_id;
+	uint16_t lcn;
+};
+
 struct nit_table {
 	uint16_t network_id;
 	unsigned char version;
@@ -37,6 +42,9 @@ struct nit_table {
 	unsigned virtual_channel;
 	unsigned area_code;
 	uint32_t guard_interval;
+
+	struct lcn_table *lcn;
+	unsigned lcn_len;
 };
 
 struct service_table {
