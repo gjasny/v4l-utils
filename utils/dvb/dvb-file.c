@@ -458,9 +458,10 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 	return 0;
 };
 
-static char *vchannel(struct dvb_descriptors *dvb_desc,
-		      struct service_table *service_table)
+char *dvb_vchannel(struct dvb_descriptors *dvb_desc,
+	           int service)
 {
+	struct service_table *service_table = &dvb_desc->sdt_table.service_table[service];
 	struct lcn_table *lcn = dvb_desc->nit_table.lcn;
 	int i;
 	char *buf;
@@ -469,19 +470,21 @@ static char *vchannel(struct dvb_descriptors *dvb_desc,
 		if (!dvb_desc->nit_table.virtual_channel)
 			return NULL;
 
-		asprintf(&buf, "%d", dvb_desc->nit_table.virtual_channel);
+		asprintf(&buf, "%d.%d", dvb_desc->nit_table.virtual_channel,
+			 service);
 		return buf;
 	}
 
 	for (i = 0; i < dvb_desc->nit_table.lcn_len; i++) {
 		if (lcn[i].service_id == service_table->service_id) {
-			asprintf(&buf, "%d.%d",
+			asprintf(&buf, "%d.%d.%d",
 					dvb_desc->nit_table.virtual_channel,
-					lcn[i].lcn);
+					lcn[i].lcn, service);
 			return buf;
 		}
 	}
-	asprintf(&buf, "%d", dvb_desc->nit_table.virtual_channel);
+	asprintf(&buf, "%d.%d", dvb_desc->nit_table.virtual_channel,
+			service);
 	return buf;
 }
 
@@ -527,7 +530,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		strcpy(entry->channel, service_table->service_name);
 		entry->service_id = service_table->service_id;
 
-		entry->vchannel = vchannel(dvb_desc, service_table);
+		entry->vchannel = dvb_vchannel(dvb_desc, i);
 
 		for (j = 0; j < pat_table->pid_table_len; j++) {
 			pid_table = &pat_table->pid_table[j];

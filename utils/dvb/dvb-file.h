@@ -103,6 +103,9 @@ struct dvb_file *read_dvb_file(const char *fname);
 
 int write_dvb_file(const char *fname, struct dvb_file *dvb_file);
 
+char *dvb_vchannel(struct dvb_descriptors *dvb_desc,
+	           int service);
+
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_descriptors *dvb_desc,
