@@ -101,70 +101,105 @@ Be careful: whitespace in the middle of the value are not discarded.
 A typical service would be like:
 
 [TV Brasil HD]
-        VCHANNEL = 2.2
-        SERVICE_ID = 16160
-        VIDEO_PID = 770
-        AUDIO_PID = 514 614
-        FREQUENCY = 479142857
-        MODULATION = QAM/AUTO
-        BANDWIDTH_HZ = 6000000
-        INVERSION = AUTO
-        CODE_RATE_HP = AUTO
-        CODE_RATE_LP = NONE
-        GUARD_INTERVAL = AUTO
-        TRANSMISSION_MODE = AUTO
-        HIERARCHY = NONE
-        ISDBT_LAYER_ENABLED = 7
-        ISDBT_PARTIAL_RECEPTION = 0
-        ISDBT_SOUND_BROADCASTING = 0
-        ISDBT_SB_SUBCHANNEL_ID = 0
-        ISDBT_SB_SEGMENT_IDX = 0
-        ISDBT_SB_SEGMENT_COUNT = 0
-        ISDBT_LAYERA_FEC = AUTO
-        ISDBT_LAYERA_MODULATION = QAM/AUTO
-        ISDBT_LAYERA_SEGMENT_COUNT = 0
-        ISDBT_LAYERA_TIME_INTERLEAVING = 0
-        ISDBT_LAYERB_FEC = AUTO
-        ISDBT_LAYERB_MODULATION = QAM/AUTO
-        ISDBT_LAYERB_SEGMENT_COUNT = 0
-        ISDBT_LAYERB_TIME_INTERLEAVING = 0
-        ISDBT_LAYERC_FEC = AUTO
-        ISDBT_LAYERC_MODULATION = QAM/AUTO
-        ISDBT_LAYERC_SEGMENT_COUNT = 0
-        ISDBT_LAYERC_TIME_INTERLEAVING = 0
-        DELIVERY_SYSTEM = ISDBT
+	VCHANNEL = 2.2
+	SERVICE_ID = 16160
+	VIDEO_PID = 770
+	AUDIO_PID = 514 614
+	FREQUENCY = 479142857
+	MODULATION = QAM/AUTO
+	BANDWIDTH_HZ = 6000000
+	INVERSION = AUTO
+	CODE_RATE_HP = AUTO
+	CODE_RATE_LP = NONE
+	GUARD_INTERVAL = AUTO
+	TRANSMISSION_MODE = AUTO
+	HIERARCHY = NONE
+	ISDBT_LAYER_ENABLED = 7
+	ISDBT_PARTIAL_RECEPTION = 0
+	ISDBT_SOUND_BROADCASTING = 0
+	ISDBT_SB_SUBCHANNEL_ID = 0
+	ISDBT_SB_SEGMENT_IDX = 0
+	ISDBT_SB_SEGMENT_COUNT = 0
+	ISDBT_LAYERA_FEC = AUTO
+	ISDBT_LAYERA_MODULATION = QAM/AUTO
+	ISDBT_LAYERA_SEGMENT_COUNT = 0
+	ISDBT_LAYERA_TIME_INTERLEAVING = 0
+	ISDBT_LAYERB_FEC = AUTO
+	ISDBT_LAYERB_MODULATION = QAM/AUTO
+	ISDBT_LAYERB_SEGMENT_COUNT = 0
+	ISDBT_LAYERB_TIME_INTERLEAVING = 0
+	ISDBT_LAYERC_FEC = AUTO
+	ISDBT_LAYERC_MODULATION = QAM/AUTO
+	ISDBT_LAYERC_SEGMENT_COUNT = 0
+	ISDBT_LAYERC_TIME_INTERLEAVING = 0
+	DELIVERY_SYSTEM = ISDBT
 
 Just the channel description for it would be:
 
 [CHANNEL]
-        FREQUENCY = 479142857
-        MODULATION = QAM/AUTO
-        BANDWIDTH_HZ = 6000000
-        INVERSION = AUTO
-        CODE_RATE_HP = AUTO
-        CODE_RATE_LP = NONE
-        GUARD_INTERVAL = AUTO
-        TRANSMISSION_MODE = AUTO
-        HIERARCHY = NONE
-        ISDBT_LAYER_ENABLED = 7
-        ISDBT_PARTIAL_RECEPTION = 0
-        ISDBT_SOUND_BROADCASTING = 0
-        ISDBT_SB_SUBCHANNEL_ID = 0
-        ISDBT_SB_SEGMENT_IDX = 0
-        ISDBT_SB_SEGMENT_COUNT = 0
-        ISDBT_LAYERA_FEC = AUTO
-        ISDBT_LAYERA_MODULATION = QAM/AUTO
-        ISDBT_LAYERA_SEGMENT_COUNT = 0
-        ISDBT_LAYERA_TIME_INTERLEAVING = 0
-        ISDBT_LAYERB_FEC = AUTO
-        ISDBT_LAYERB_MODULATION = QAM/AUTO
-        ISDBT_LAYERB_SEGMENT_COUNT = 0
-        ISDBT_LAYERB_TIME_INTERLEAVING = 0
-        ISDBT_LAYERC_FEC = AUTO
-        ISDBT_LAYERC_MODULATION = QAM/AUTO
-        ISDBT_LAYERC_SEGMENT_COUNT = 0
-        ISDBT_LAYERC_TIME_INTERLEAVING = 0
-        DELIVERY_SYSTEM = ISDBT
+	FREQUENCY = 479142857
+	MODULATION = QAM/AUTO
+	BANDWIDTH_HZ = 6000000
+	INVERSION = AUTO
+	CODE_RATE_HP = AUTO
+	CODE_RATE_LP = NONE
+	GUARD_INTERVAL = AUTO
+	TRANSMISSION_MODE = AUTO
+	HIERARCHY = NONE
+	ISDBT_LAYER_ENABLED = 7
+	ISDBT_PARTIAL_RECEPTION = 0
+	ISDBT_SOUND_BROADCASTING = 0
+	ISDBT_SB_SUBCHANNEL_ID = 0
+	ISDBT_SB_SEGMENT_IDX = 0
+	ISDBT_SB_SEGMENT_COUNT = 0
+	ISDBT_LAYERA_FEC = AUTO
+	ISDBT_LAYERA_MODULATION = QAM/AUTO
+	ISDBT_LAYERA_SEGMENT_COUNT = 0
+	ISDBT_LAYERA_TIME_INTERLEAVING = 0
+	ISDBT_LAYERB_FEC = AUTO
+	ISDBT_LAYERB_MODULATION = QAM/AUTO
+	ISDBT_LAYERB_SEGMENT_COUNT = 0
+	ISDBT_LAYERB_TIME_INTERLEAVING = 0
+	ISDBT_LAYERC_FEC = AUTO
+	ISDBT_LAYERC_MODULATION = QAM/AUTO
+	ISDBT_LAYERC_SEGMENT_COUNT = 0
+	ISDBT_LAYERC_TIME_INTERLEAVING = 0
+	DELIVERY_SYSTEM = ISDBT
+
+USAGE WITH SATELLITE DELIVERY SYSTEMS
+=====================================
+
+The dvbv5-zap and dvbv5-scan can now work with DVB-S/DVB-S2
+systems. A new code, yet to be tested, adds support for LNBf
+devices, and for DISEqC switching (SMATV).
+
+Additional parameters for satellite delivery systems are needed:
+	- l <lnbf>
+selects the LNBf type. Using an invalid value like "help" shows
+what's currently supported.
+	- S <sat_number>
+Selects satellite number, between 0 to 3. If not specified,
+disables DISEqC. This actually changes the DISEqC "option"
+and "position" parameter. According with the specs, for
+position B, tone should be off, and tone burst should
+be miniA.
+	-W <extra time in ms>
+The DISEqC logic will wait for 15 ms. If this parameter is
+specified, it will add  the extra time to the 15ms delay.
+
+For LNBf devices that use bandstacking (e. g. the ones that use
+different LO frequrencies for V and H polarization), the code will
+always use 13 Volts and will disable tone/tone burst.
+
+Currently, C-Band multi and DishPro bandstacking LNBf's are
+supported.
+
+Tests are welcome!
+
+Note: Currently, the implementation uses DISEqC only uses the
+command [E0 10 38 xx], where xx selects the DISEqC input.
+Additional support could be needed for more sophisticated
+arrangements.
 
 CURRENT ISSUES
 ==============
@@ -176,19 +211,6 @@ some diferent things, depending on the delivery system.
 I'm currently with only ISDB-T signals here, so the other two
 tools were tested only with it.
 
-The dvbv5-zap in general won't work with Satellite delivery
-systems. It lacks polarity settings, and it doesn't know anything
-about LNB or DISEqC. It shouldn't hard to port those things into it, 
-but a DVB-S signal is needed to test. As I don't have it curently,
-I'm not working to add support for it at the moment. 
-
-Patches are welcome.
-
-The dvbv5-scan also won't work with Satellite delivery systems
-due to the same reasons.
-
-Patches are welcome.
-
 The dvbv5-scan should likely work with the other standards, but the
 descriptor parser for NIT, PAT, PMT and SDT tables are fine-tuned
 for ISDB-T. Adding more parsed info there could help to improve the
@@ -199,7 +221,7 @@ It also doesn't current look inside the network descriptors to get
 other transponders. So, on DVB-C, it will only get the channels
 at the main frequency. I should fix it in a near future.
 
-It is very likely that it will work as-is for DVB-T. 
+It is very likely that it will work as-is for DVB-T.
 
 If someone wants to patch the code to improve the tool, the descriptors
 parser is inside descriptors.c file. The scan code that uses it is
@@ -211,16 +233,16 @@ to fill it.
 The main structure is this one:
 
 struct dvb_descriptors {
-        int verbose;
+	int verbose;
 
-        struct pat_table pat_table;
-        struct nit_table nit_table;
-        struct sdt_table sdt_table;
+	struct pat_table pat_table;
+	struct nit_table nit_table;
+	struct sdt_table sdt_table;
 
-        /* Used by descriptors to know where to update a PMT/Service/TS */
-        unsigned cur_pmt;
-        unsigned cur_service;
-        unsigned cur_ts;
+	/* Used by descriptors to know where to update a PMT/Service/TS */
+	unsigned cur_pmt;
+	unsigned cur_service;
+	unsigned cur_ts;
 };
 
 While parsing each table, the current item being parsed is pointed by
@@ -234,4 +256,4 @@ Patches are welcome!
 
 Regards,
 Mauro Carvalho Chehab
-2012-January-7
+2012-January-8
