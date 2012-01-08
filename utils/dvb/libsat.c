@@ -51,6 +51,14 @@ struct dvb_satellite_lnb lnb[] = {
 		.freqrange = {
 			{ 3700, 4200 }
 		},
+	}, {
+		.name = "DishPro LNBf",
+		.alias = "DISHPRO",
+		.lowfreq = 11250,
+		.highfreq = 14350,
+		.freqrange = {
+			{ 12200, 12700 }
+		}
 	},
 };
 
