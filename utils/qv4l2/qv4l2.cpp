@@ -452,6 +452,7 @@ void ApplicationWindow::capStart(bool start)
 		{ 0, QImage::Format_Invalid }
 	};
 	QImage::Format dstFmt = QImage::Format_RGB888;
+	struct v4l2_fract interval;
 
 	if (!start) {
 		stopCapture();
@@ -466,6 +467,8 @@ void ApplicationWindow::capStart(bool start)
 	m_capMethod = m_genTab->capMethod();
 	g_fmt_cap(m_capSrcFormat);
 	s_fmt(m_capSrcFormat);
+	if (m_genTab->get_interval(interval))
+	        set_interval(interval);
 
 	m_mustConvert = m_showFrames;
 	if (m_showFrames) {

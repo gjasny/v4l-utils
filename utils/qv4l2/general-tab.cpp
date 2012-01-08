@@ -396,6 +396,7 @@ void GeneralTab::frameIntervalChanged(int idx)
 	if (enum_frameintervals(frmival, m_pixelformat, m_width, m_height, idx)
 	    && frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
 		set_interval(frmival.discrete);
+		m_interval = frmival.discrete;
 	}
 }
 
@@ -676,16 +677,20 @@ void GeneralTab::updateFrameInterval()
 	m_frameInterval->clear();
 
 	ok = enum_frameintervals(frmival, m_pixelformat, m_width, m_height);
-	m_frameInterval->setEnabled(ok);
-	curr_ok = get_interval(curr);
-	if (ok && frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+	m_has_interval = ok && frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE;
+	m_frameInterval->setEnabled(m_has_interval);
+	if (m_has_interval) {
+	        m_interval = frmival.discrete;
+        	curr_ok = v4l2::get_interval(curr);
 		do {
 			m_frameInterval->addItem(QString("%1 fps")
 				.arg((double)frmival.discrete.denominator / frmival.discrete.numerator));
 			if (curr_ok &&
 			    frmival.discrete.numerator == curr.numerator &&
-			    frmival.discrete.denominator == curr.denominator)
+			    frmival.discrete.denominator == curr.denominator) {
 				m_frameInterval->setCurrentIndex(frmival.index);
+				m_interval = frmival.discrete;
+                        }
 		} while (enum_frameintervals(frmival));
 	}
 }
@@ -705,4 +710,12 @@ void GeneralTab::updateVidOutFormat()
 	if (desc.pixelformat != fmt.fmt.pix.pixelformat)
 		return;
 	m_vidCapFormats->setCurrentIndex(desc.index);
+}
+
+bool GeneralTab::get_interval(struct v4l2_fract &interval)
+{
+	if (m_has_interval)
+		interval = m_interval;
+
+	return m_has_interval;
 }

@@ -40,6 +40,7 @@ public:
 	virtual ~GeneralTab() {}
 
 	CapMethod capMethod();
+	bool get_interval(struct v4l2_fract &interval);
 	int width() const { return m_width; }
 	int height() const { return m_height; }
 
@@ -99,6 +100,8 @@ private:
 	struct v4l2_capability m_querycap;
 	__u32 m_pixelformat;
 	__u32 m_width, m_height;
+	struct v4l2_fract m_interval;
+	bool m_has_interval;
 
 	// General tab
 	QComboBox *m_videoInput;
