@@ -252,6 +252,20 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 		return 0;
 	}
 
+	if (!strcasecmp(key, "SAT_NUMBER")) {
+		entry->sat_number = atol(value);
+		return 0;
+	}
+
+	if (!strcasecmp(key, "DISEQC_WAIT")) {
+		entry->diseqc_wait = atol(value);
+		return 0;
+	}
+
+	if (!strcasecmp(key, "LNB")) {
+		entry->lnb = strdup(value);
+		return 0;
+	}
 
 	if (!strcasecmp(key, "VIDEO_PID"))
 		is_video = 1;
@@ -428,6 +442,18 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 				fprintf(fp, "\tPOLARIZATION = %s\n",
 					pol_name[entry->pol]);
 			}
+
+			if (entry->sat_number >= 0) {
+				fprintf(fp, "\tSAT_NUMBER = %d\n",
+					entry->sat_number);
+			}
+
+			if (entry->diseqc_wait > 0) {
+				fprintf(fp, "\tDISEQC_WAIT = %d\n",
+					entry->diseqc_wait);
+			}
+			if (entry->lnb)
+				fprintf(fp, "\tLNB = %s\n", entry->lnb);
 		} else {
 			fprintf(fp, "[CHANNEL]\n");
 		}
@@ -531,6 +557,12 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		entry->service_id = service_table->service_id;
 
 		entry->vchannel = dvb_vchannel(dvb_desc, i);
+
+		entry->pol = parms->pol;
+		entry->sat_number = parms->sat_number;
+		entry->diseqc_wait = parms->diseqc_wait;
+		if (parms->lnb)
+			entry->lnb = strdup(parms->lnb->alias);
 
 		for (j = 0; j < pat_table->pid_table_len; j++) {
 			pid_table = &pat_table->pid_table[j];

@@ -23,12 +23,16 @@ struct dvb_entry {
 	struct dtv_property props[DTV_MAX_COMMAND];
 	unsigned int n_props;
 	struct dvb_entry *next;
-	enum polarization pol;
 	uint16_t service_id;
 	uint16_t *video_pid, *audio_pid;
 	unsigned video_pid_len, audio_pid_len;
 	char *channel;
 	char *vchannel;
+
+	enum polarization pol;
+	int sat_number;
+	unsigned diseqc_wait;
+	char *lnb;
 };
 
 struct dvb_file {
@@ -60,6 +64,9 @@ struct parse_struct {
 #define DTV_SERVICE_ID          (DTV_MAX_COMMAND + 203)
 #define DTV_CH_NAME             (DTV_MAX_COMMAND + 204)
 #define DTV_VCHANNEL            (DTV_MAX_COMMAND + 205)
+#define DTV_SAT_NUMBER          (DTV_MAX_COMMAND + 206)
+#define DTV_DISEQC_WAIT         (DTV_MAX_COMMAND + 207)
+#define DTV_DISEQC_LNB          (DTV_MAX_COMMAND + 208)
 
 struct dvb_descriptors;
 
@@ -70,10 +77,14 @@ static inline void dvb_file_free(struct dvb_file *dvb_file)
 		next = entry->next;
 		if (entry->channel)
 			free (entry->channel);
+		if (entry->vchannel)
+			free (entry->vchannel);
 		if (entry->video_pid)
 			free (entry->video_pid);
 		if (entry->audio_pid)
 			free (entry->audio_pid);
+		if (entry->lnb)
+			free (entry->lnb);
 		entry = next;
 	}
 	free (dvb_file);
