@@ -321,6 +321,7 @@ static char *usage =
     "     -d number : use given demux (default 0)\n"
     "     -l LNBf   : type of LNBf to use. 'help' lists the available ones\n"
     "     -S number : satellite number. If not specified, disable DISEqC\n"
+    "     -W number : adds aditional wait time for DISEqC command completion\n"
     "     -c file   : read channels list from 'file'\n"
     "     -x        : exit after tuning\n"
     "     -r        : set up /dev/dvb/adapterX/dvr0 for TS recording\n"
@@ -341,6 +342,7 @@ int main(int argc, char **argv)
 	char *lnb_name = NULL;
 	int adapter = 0, frontend = 0, demux = 0, dvr = 0;
 	int lnb = -1, sat_number = -1;
+	unsigned diseqc_wait = 0;
 	uint32_t vpid = -1, apid = -1, sid = -1;
 	int pmtpid = 0;
 	int pat_fd = -1, pmt_fd = -1;
@@ -354,7 +356,7 @@ int main(int argc, char **argv)
 	int human_readable = 0, rec_psi = 0;
 	struct dvb_v5_fe_parms *parms;
 
-	while ((opt = getopt(argc, argv, "H?hrpxRsFn:a:f:d:c:t:o:Ol:S:")) != -1) {
+	while ((opt = getopt(argc, argv, "H?hrpxRsFn:a:f:d:c:t:o:Ol:S:W:")) != -1) {
 		switch (opt) {
 		case 'a':
 			adapter = strtoul(optarg, NULL, 0);
@@ -392,6 +394,9 @@ int main(int argc, char **argv)
 			break;
 		case 'S':
 			sat_number = strtoul(optarg, NULL, 0);
+			break;
+		case 'W':
+			diseqc_wait = strtoul(optarg, NULL, 0);
 			break;
 		case 's':
 			silent++;
@@ -457,6 +462,7 @@ int main(int argc, char **argv)
 		parms->lnb = get_lnb(lnb);
 	if (sat_number > 0)
 		parms->sat_number = sat_number % 3;
+	parms->diseqc_wait = diseqc_wait;
 
 	if (parse(confname, old_format, channel, parms, &vpid, &apid, &sid))
 		return -1;

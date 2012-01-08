@@ -250,6 +250,7 @@ static char *usage =
     "     -d number : use given demux (default 0)\n"
     "     -l LNBf   : type of LNBf to use. 'help' lists the available ones\n"
     "     -S number : satellite number. If not specified, disable DISEqC\n"
+    "     -W number : adds aditional wait time for DISEqC command completion\n"
     "     -v        : be (very) verbose\n"
     "     -o file   : output filename (use -o - for stdout)\n"
     "     -O        : uses old channel format\n"
@@ -259,11 +260,13 @@ static char *usage =
 int main(int argc, char **argv)
 {
 	char *confname = NULL, *lnb_name = NULL;
-	int adapter = 0, frontend = 0, demux = 0, lnb = -1, sat_number = -1;
+	int adapter = 0, frontend = 0, demux = 0;
+	int lnb = -1, sat_number = -1;
+	unsigned diseqc_wait = 0;
 	int opt, format = 0;
 	struct dvb_v5_fe_parms *parms;
 
-	while ((opt = getopt(argc, argv, "H?ha:f:d:vzOl:S:")) != -1) {
+	while ((opt = getopt(argc, argv, "H?ha:f:d:vzOl:S:W:")) != -1) {
 		switch (opt) {
 		case 'a':
 			adapter = strtoul(optarg, NULL, 0);
@@ -285,6 +288,9 @@ int main(int argc, char **argv)
 			break;
 		case 'S':
 			sat_number = strtoul(optarg, NULL, 0);
+			break;
+		case 'W':
+			diseqc_wait = strtoul(optarg, NULL, 0);
 			break;
 		case 'v':
 			verbose++;
@@ -331,6 +337,7 @@ int main(int argc, char **argv)
 		parms->lnb = get_lnb(lnb);
 	if (sat_number > 0)
 		parms->sat_number = sat_number % 3;
+	parms->diseqc_wait = diseqc_wait;
 
 	if (run_scan(confname, format, parms))
 		return -1;
