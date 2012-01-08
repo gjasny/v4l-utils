@@ -50,6 +50,18 @@ struct nit_table {
 	uint32_t modulation;
 	uint32_t rolloff;
 	uint32_t symbol_rate;
+	uint32_t bandwidth;
+	uint32_t code_rate_hp;
+	uint32_t code_rate_lp;
+	uint32_t transmission_mode;
+	uint32_t hierarchy;
+
+	unsigned is_hp:1;
+	unsigned has_time_slicing:1;
+	unsigned has_mpe_fec:1;
+	unsigned has_other_frequency:1;
+	unsigned is_in_depth_interleaver:1;
+
 	char *orbit;
 	uint32_t *frequency;
 	unsigned frequency_len;

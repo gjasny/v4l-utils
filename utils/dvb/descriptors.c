@@ -160,10 +160,10 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 	uint32_t **freq = &nit_table->frequency;
 	unsigned *nfreq = &nit_table->frequency_len;
 	static const uint32_t interval[] = {
-		GUARD_INTERVAL_1_32,
-		GUARD_INTERVAL_1_16,
-		GUARD_INTERVAL_1_8,
-		GUARD_INTERVAL_1_4,
+		[0] = GUARD_INTERVAL_1_32,
+		[1] = GUARD_INTERVAL_1_16,
+		[2] = GUARD_INTERVAL_1_8,
+		[3] = GUARD_INTERVAL_1_4,
 	};
 	unsigned tmp = buf[3] >> 4 & 0x3;
 	int i, n = 0;
@@ -297,6 +297,78 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 			     const unsigned char *buf, int dlen,
 			     int verbose)
 {
+	uint32_t **freq = &nit_table->frequency;
+	static const unsigned bw[] = {
+		[0] = 8000000,
+		[1] = 7000000,
+		[2] = 6000000,
+		[3] = 5000000,
+		[4 ...7] = 0,		/* Reserved */
+	};
+	static const unsigned modulation[] = {
+		[0] = QPSK,
+		[1] = QAM_16,
+		[2] = QAM_32,
+		[3] = QAM_AUTO	/* Reserved */
+	};
+	static const unsigned hierarchy[] = {
+		[0] = HIERARCHY_NONE,
+		[1] = HIERARCHY_1,
+		[2] = HIERARCHY_2,
+		[3] = HIERARCHY_4,
+	};
+	static const unsigned code_rate[] = {
+		[0] = FEC_1_2,
+		[1] = FEC_2_3,
+		[2] = FEC_3_4,
+		[3] = FEC_5_6,
+		[4] = FEC_7_8,
+		[4 ...7] = FEC_AUTO,	/* Reserved */
+	};
+	static const uint32_t interval[] = {
+		[0] = GUARD_INTERVAL_1_32,
+		[1] = GUARD_INTERVAL_1_16,
+		[2] = GUARD_INTERVAL_1_8,
+		[3] = GUARD_INTERVAL_1_4,
+	};
+	static const unsigned transmission_mode[] = {
+		[0] = TRANSMISSION_MODE_2K,
+		[1] = TRANSMISSION_MODE_8K,
+		[2] = TRANSMISSION_MODE_4K,
+		[3] = TRANSMISSION_MODE_AUTO,	/* Reserved */
+	};
+
+	*freq = realloc(*freq, 1);
+	nit_table->frequency_len = 1;
+	nit_table->frequency[0] = bcd_to_int(&buf[2], 32) * 10; /* KHz */
+
+	nit_table->delivery_system = SYS_DVBT;
+	nit_table->bandwidth = bw[(buf[6] >> 5) & 0x07];
+	nit_table->is_hp = (buf[6] & 0x10) ? 1 : 0;
+	nit_table->has_time_slicing = (buf[6] & 0x08) ? 0 : 1;
+	nit_table->has_mpe_fec = (buf[6] & 0x04) ? 0 : 1;
+
+	nit_table->modulation = modulation[buf[7] >> 6];
+	nit_table->hierarchy = hierarchy[(buf[7] >> 3) & 0x03];
+	nit_table->is_in_depth_interleaver = (buf[7] & 0x20) ? 1 : 0;
+	nit_table->code_rate_hp = code_rate[buf[7] & 0x07];
+	nit_table->code_rate_lp = code_rate[(buf[8] >> 5) & 0x07];
+	nit_table->guard_interval = interval[(buf[8] >> 3) & 0x03];
+	nit_table->transmission_mode = transmission_mode[(buf[8] >> 1) & 0x02];
+	nit_table->has_other_frequency = buf[8] & 0x01;
+
+	if (verbose) {
+		printf("DVB-T freq %d, bandwidth %d modulation %d\n",
+		       nit_table->frequency[0],
+		       nit_table->bandwidth,
+		       nit_table->modulation);
+		printf("hierarchy %d, code rate HP %d, LP %d, guard interval %d\n",
+		       nit_table->hierarchy,
+		       nit_table->code_rate_hp,
+		       nit_table->code_rate_lp,
+		       nit_table->guard_interval);
+		printf("transmission mode %d\n", nit_table->transmission_mode);
+	}
 }
 
 void parse_descriptor(enum dvb_tables type,
