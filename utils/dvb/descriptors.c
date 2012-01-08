@@ -261,6 +261,36 @@ static void parse_NIT_DVBC(struct nit_table *nit_table,
 			     const unsigned char *buf, int dlen,
 			     int verbose)
 {
+	uint32_t **freq = &nit_table->frequency;
+	static const unsigned modulation[] = {
+		[0] = QAM_AUTO,
+		[1] = QAM_16,
+		[2] = QAM_32,
+		[3] = QAM_64,
+		[4] = QAM_128,
+		[5] = QAM_256,
+		[6 ...255] = QAM_AUTO	/* Reserved for future usage*/
+	};
+
+	*freq = realloc(*freq, 1);
+	nit_table->frequency_len = 1;
+	nit_table->frequency[0] = bcd_to_int(&buf[2], 32) * 10; /* KHz */
+
+	nit_table->fec_outer = dvbc_dvbs_freq_inner[buf[7] & 0x07];
+	nit_table->modulation = modulation[buf[8]];
+	nit_table->symbol_rate = bcd_to_int(&buf[9], 28) * 100; /* Bauds */
+	nit_table->fec_inner = dvbc_dvbs_freq_inner[buf[12] & 0x07];
+
+	nit_table->delivery_system = SYS_DVBC_ANNEX_A;
+
+	if (verbose) {
+		printf("DVB-C freq %d, modulation %d, Symbol rate %d\n",
+			nit_table->frequency[0],
+		       nit_table->modulation,
+		       nit_table->symbol_rate);
+		printf("fec_inner %d, fec_inner %d\n",
+		       nit_table->fec_inner, nit_table->fec_outer);
+	}
 }
 
 static void parse_NIT_DVBT(struct nit_table *nit_table,

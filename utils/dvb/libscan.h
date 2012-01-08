@@ -45,7 +45,7 @@ struct nit_table {
 	/* Network Parameters */
 	uint32_t delivery_system;
 	uint32_t guard_interval;
-	uint32_t fec_inner;
+	uint32_t fec_inner, fec_outer;
 	uint32_t pol;
 	uint32_t modulation;
 	uint32_t rolloff;
