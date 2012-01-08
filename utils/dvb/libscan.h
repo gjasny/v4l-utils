@@ -41,7 +41,18 @@ struct nit_table {
 	unsigned tr_table_len;
 	unsigned virtual_channel;
 	unsigned area_code;
+
+	/* Network Parameters */
+	uint32_t delivery_system;
 	uint32_t guard_interval;
+	uint32_t fec_inner;
+	uint32_t pol;
+	uint32_t modulation;
+	uint32_t rolloff;
+	uint32_t symbol_rate;
+	char *orbit;
+	uint32_t *frequency;
+	unsigned frequency_len;
 
 	struct lcn_table *lcn;
 	unsigned lcn_len;

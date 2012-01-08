@@ -1,10 +1,12 @@
+
+#include <malloc.h>
+#include <stdio.h>
+
+#include "dvb-fe.h"
 #include "libscan.h"
 #include "descriptors.h"
 #include "parse_string.h"
 #include "dvb_frontend.h"
-
-#include <malloc.h>
-#include <stdio.h>
 
 static char *default_charset = "iso-8859-1";
 static char *output_charset = "utf-8";
@@ -132,6 +134,129 @@ static const char *descriptors[] = {
 	[system_management_descriptor] = "system_management_descriptor",
 };
 
+static int bcd_to_int(const unsigned char *bcd, int bits)
+{
+	int nibble = 0;
+	int ret = 0;
+
+	while (bits) {
+		ret *= 10;
+		if (!nibble)
+			ret += *bcd >> 4;
+		else
+			ret += *bcd & 0x0f;
+		bits -= 4;
+		nibble = !nibble;
+		if (!nibble)
+			bcd++;
+	}
+	return ret;
+}
+
+static void parse_NIT_ISDBT(struct nit_table *nit_table,
+			     const unsigned char *buf, int dlen,
+			     int verbose)
+{
+	uint32_t **freq = &nit_table->frequency;
+	unsigned *nfreq = &nit_table->frequency_len;
+	static const uint32_t interval[] = {
+		GUARD_INTERVAL_1_32,
+		GUARD_INTERVAL_1_16,
+		GUARD_INTERVAL_1_8,
+		GUARD_INTERVAL_1_4,
+	};
+	unsigned tmp = buf[3] >> 4 & 0x3;
+	int i, n = 0;
+
+	nit_table->delivery_system = SYS_ISDBT;
+	nit_table->area_code = (buf[3] & 0x0f) << 8 | buf[2];
+	nit_table->guard_interval = interval[tmp];
+	if (verbose)
+		printf("Area code: %d, guard interval: %d, mode: %d\n",
+			nit_table->area_code,
+			tmp, buf[3] >> 6);
+	for (i = dlen + 3; i < dlen; i += 2, n++) {
+		*freq = realloc(*freq, (*nfreq + 1));
+		nit_table->frequency[n] = buf[i + 1] << 8 | buf[i];
+;
+		if (verbose)
+			printf("Frequency %d\n", nit_table->frequency[n]);
+		(*nfreq)++;
+	}
+}
+
+static const unsigned dvbc_dvbs_freq_inner[] = {
+	[0]  = FEC_AUTO,
+	[1]  = FEC_1_2,
+	[2]  = FEC_2_3,
+	[3]  = FEC_3_4,
+	[4]  = FEC_5_6,
+	[5]  = FEC_7_8,
+	[6]  = FEC_8_9,
+	[7]  = FEC_3_5,
+	[8]  = FEC_4_5,
+	[9]  = FEC_9_10,
+	[10 ...14] = FEC_AUTO,	/* Currently, undefined */
+	[15] = FEC_NONE,
+};
+
+static void parse_NIT_DVBS(struct nit_table *nit_table,
+			     const unsigned char *buf, int dlen,
+			     int verbose)
+{
+	unsigned orbit, west;
+	uint32_t **freq = &nit_table->frequency;
+	static const unsigned polarization[] = {
+		[0] = POLARIZATION_H,
+		[1] = POLARIZATION_V,
+		[2] = POLARIZATION_L,
+		[3] = POLARIZATION_R
+	};
+	static const unsigned rolloff[] = {
+		[0] = ROLLOFF_35,
+		[1] = ROLLOFF_25,
+		[2] = ROLLOFF_20,
+		[2] = ROLLOFF_AUTO,	/* Reserved */
+	};
+	static const unsigned modulation[] = {
+		[0] = QAM_AUTO,
+		[1] = QPSK,
+		[2] = PSK_8,
+		[3] = QAM_16
+	};
+
+	*freq = realloc(*freq, 1);
+	nit_table->frequency_len = 1;
+	nit_table->frequency[0] = bcd_to_int(&buf[2], 32) * 10; /* KHz */
+
+
+	orbit = bcd_to_int(&buf[6], 16);
+	west = buf[8] >> 7;
+	asprintf(&nit_table->orbit, "%d%c", orbit, west ? 'W' : 'E');
+
+	nit_table->pol = polarization[(buf[8] >> 5) & 0x3];
+	nit_table->modulation = modulation[(buf[8] >> 3) & 0x3];
+	if (buf[8] & 1) {
+		nit_table->delivery_system = SYS_DVBS2;
+		nit_table->rolloff = rolloff[(buf[8] >> 1) & 0x3];
+	} else {
+		nit_table->delivery_system = SYS_DVBS;
+		nit_table->rolloff = ROLLOFF_35;
+	}
+	nit_table->symbol_rate = bcd_to_int(&buf[9], 28) * 100; /* Bauds */
+	nit_table->fec_inner = dvbc_dvbs_freq_inner[buf[12] & 0x07];
+
+	if (verbose) {
+		printf("DVB-%s orbit %s, freq %d, pol %d, modulation %d, rolloff %d\n",
+		       (nit_table->delivery_system == SYS_DVBS) ? "S" : "S2",
+		       nit_table->orbit, nit_table->frequency[0],
+		       nit_table->pol, nit_table->modulation,
+		       nit_table->rolloff);
+		printf("Symbol rate %d, fec_inner %d\n",
+		       nit_table->symbol_rate, nit_table->fec_inner);
+	}
+}
+
 void parse_descriptor(enum dvb_tables type,
 			     struct dvb_descriptors *dvb_desc,
 			     const unsigned char *buf, int len)
@@ -223,11 +348,18 @@ void parse_descriptor(enum dvb_tables type,
 			}
 			break;
 		}
+		case satellite_delivery_system_descriptor:
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
+			parse_NIT_DVBS(&dvb_desc->nit_table, buf, dlen,
+				       dvb_desc->verbose);
+			break;
 		case ds_alignment_descriptor:
 		case dvbpsi_registration_descriptor:
 		case service_list_descriptor:
 		case stuffing_descriptor:
-		case satellite_delivery_system_descriptor:
 		case cable_delivery_system_descriptor:
 		case VBI_data_descriptor:
 		case VBI_teletext_descriptor:
@@ -382,33 +514,14 @@ void parse_descriptor(enum dvb_tables type,
 				printf("Virtual channel = %d\n", buf[2]);
 			break;
 		case ISDBT_delivery_system_descriptor:
-		{
-			static const uint32_t interval[] = {
-				GUARD_INTERVAL_1_32,
-				GUARD_INTERVAL_1_16,
-				GUARD_INTERVAL_1_8,
-				GUARD_INTERVAL_1_4,
-			};
-			unsigned tmp = buf[3] >> 4 & 0x3;
-			int i;
-
 			if (type != NIT) {
 				err = 1;
 				break;
 			}
-			dvb_desc->nit_table.area_code = (buf[3] & 0x0f) << 8 | buf[2];
-			dvb_desc->nit_table.guard_interval = interval[tmp];
-			if (dvb_desc->verbose)
-				printf("Area code: %d, guard interval: %d, mode: %d\n",
-				       dvb_desc->nit_table.area_code,
-				       tmp, buf[3] >> 6);
-			for (i = dlen + 3; i < dlen; i += 2) {
-				if (dvb_desc->verbose)
-					printf("Frequency %d\n",
-					       buf[i + 1] << 8 | buf[i]);
-			}
+
+			parse_NIT_ISDBT(&dvb_desc->nit_table, buf, dlen,
+					dvb_desc->verbose);
 			break;
-		}
 		case AAC_descriptor:
 			if (dvb_desc->verbose)
 				printf("AAC descriptor with len %d\n", dlen);

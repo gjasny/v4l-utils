@@ -419,6 +419,10 @@ void free_dvb_ts_tables(struct dvb_descriptors *dvb_desc)
 		free(nit_table->network_alias);
 	if (nit_table->tr_table)
 		free(nit_table->tr_table);
+	if (nit_table->frequency)
+		free(nit_table->frequency);
+	if (nit_table->orbit)
+		free(nit_table->orbit);
 
 	if (sdt_table->service_table) {
 		for (i = 0; i < sdt_table->service_table_len; i++) {
