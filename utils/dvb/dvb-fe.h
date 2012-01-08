@@ -61,6 +61,7 @@ struct dvb_v5_fe_parms {
 	struct dvb_satellite_lnb	*lnb;
 	enum polarization		pol;
 	int				high_band;
+	int				sat_number;
 };
 
 

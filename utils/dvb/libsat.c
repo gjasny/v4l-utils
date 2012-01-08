@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "dvb-fe.h"
 
@@ -86,6 +87,8 @@ int print_lnb(int i)
 	}
 	printf("IF = lowband %d MHz, highband %d MHz\n",
 	       lnb[i].lowfreq, lnb[i].highfreq);
+
+	return 0;
 }
 
 void print_all_lnb(void)
@@ -106,12 +109,64 @@ struct dvb_satellite_lnb *get_lnb(int i)
 	return &lnb[i];
 }
 
+/*
+ * DVB satellite Diseqc specifics
+ */
+
+static int dvbsat_diseqc_send_msg(struct dvb_v5_fe_parms *parms,
+				   int vol_on,
+				   int vol_high,
+				   int tone_on,
+				   int mini_a,
+				   int wait,
+				   char *cmd,
+				   int len)
+{
+	int rc;
+
+	rc = dvb_fe_sec_tone(parms, SEC_TONE_OFF);
+	if (rc)
+		return rc;
+	rc = dvb_fe_sec_voltage(parms, vol_on, vol_high);
+	if (rc)
+		return rc;
+	usleep(15 * 1000);
+	rc = dvb_fe_diseqc_cmd(parms, len, cmd);
+	if (rc)
+		return rc;
+	usleep(wait * 1000);
+	usleep(15 * 1000);
+	rc = dvb_fe_diseqc_burst(parms, mini_a);
+	if (rc)
+		return rc;
+	usleep(15 * 1000);
+	rc = dvb_fe_sec_tone(parms, tone_on);
+
+	return rc;
+}
+
 static int dvb_satellite_switch_band(struct dvb_v5_fe_parms *parms)
 {
-	/* FIXME: Add diseqc code */
-//	usleep(50000);
+	char cmd[] = {0xe0, 0x10, 0x38, 0xf0, 0x00, 0x00 };
+	char *p = &cmd[3];
+        enum polarization pol = parms->pol;
+	int is_pol_v = (pol == POLARIZATION_V) || (pol == POLARIZATION_R);
+
+	*p |= (parms->sat_number << 2) & 0x0f;
+	*p |= parms->high_band;
+	*p |= ((pol == POLARIZATION_V) || (pol == POLARIZATION_R)) ? 0 : 2;
+
+	dvbsat_diseqc_send_msg(parms, 1, !is_pol_v, parms->high_band,
+			       !(parms->sat_number % 2),
+			       4, cmd, ARRAY_SIZE(cmd));
+
 	return 0;
 }
+
+/*
+ * DVB satellite get/set params hooks
+ */
+
 
 int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms)
 {
