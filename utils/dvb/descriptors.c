@@ -257,6 +257,18 @@ static void parse_NIT_DVBS(struct nit_table *nit_table,
 	}
 }
 
+static void parse_NIT_DVBC(struct nit_table *nit_table,
+			     const unsigned char *buf, int dlen,
+			     int verbose)
+{
+}
+
+static void parse_NIT_DVBT(struct nit_table *nit_table,
+			     const unsigned char *buf, int dlen,
+			     int verbose)
+{
+}
+
 void parse_descriptor(enum dvb_tables type,
 			     struct dvb_descriptors *dvb_desc,
 			     const unsigned char *buf, int len)
@@ -299,6 +311,15 @@ void parse_descriptor(enum dvb_tables type,
 			}
 			break;
 		}
+		case AAC_descriptor:
+			if (dvb_desc->verbose)
+				printf("AAC descriptor with len %d\n", dlen);
+			break;
+		case stream_identifier_descriptor:
+			/* Don't need to parse it */
+			if (dvb_desc->verbose)
+				printf("Component tag 0x%02x\n", buf[2]);
+			break;
 		case network_name_descriptor:
 			if (type != NIT) {
 				err = 1;
@@ -315,6 +336,97 @@ void parse_descriptor(enum dvb_tables type,
 					printf("(%s)", dvb_desc->nit_table.network_alias);
 				printf("\n");
 			}
+			break;
+
+		/* DVB NIT decoders */
+		case satellite_delivery_system_descriptor:
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
+			parse_NIT_DVBS(&dvb_desc->nit_table, buf, dlen,
+				       dvb_desc->verbose);
+			break;
+		case cable_delivery_system_descriptor:
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
+			parse_NIT_DVBC(&dvb_desc->nit_table, buf, dlen,
+				       dvb_desc->verbose);
+			break;
+		case terrestrial_delivery_system_descriptor:
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
+			parse_NIT_DVBT(&dvb_desc->nit_table, buf, dlen,
+				       dvb_desc->verbose);
+			break;
+
+		/* ISDBT NIT decoders */
+		case ISDBT_delivery_system_descriptor:
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
+
+			parse_NIT_ISDBT(&dvb_desc->nit_table, buf, dlen,
+					dvb_desc->verbose);
+			break;
+		case partial_reception_descriptor:
+		{
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
+			int i;
+			if (dvb_desc->verbose) {
+				printf("Service IDs with partial reception = ");
+				for (i = dlen + 2; i < dlen; i += 2) {
+					if (dvb_desc->verbose)
+						printf("%d\n",
+						buf[i + 1] << 8 | buf[i]);
+				}
+				printf("\n");
+			}
+			break;
+		}
+
+		case logical_channel_number_descriptor:
+		{
+			int i, n = dvb_desc->nit_table.lcn_len;
+			const unsigned char *p = &buf[2];
+
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
+			for (i = 0; i < dlen; i+= 4, p+= 4) {
+				struct lcn_table **lcn = &dvb_desc->nit_table.lcn;
+
+				*lcn = realloc(*lcn, (n + 1) * sizeof(*lcn));
+				(*lcn)[n].service_id = p[0] << 8 | p[1];
+				(*lcn)[n].lcn = (p[2] << 8 | p[3]) & 0x3ff;
+				dvb_desc->nit_table.lcn_len++;
+				n++;
+
+				if (dvb_desc->verbose)
+					printf("Service ID: 0x%04x, LCN: %d\n",
+					       (*lcn)[n].service_id,
+					       (*lcn)[n].lcn);
+			}
+			break;
+		}
+
+		case TS_Information_descriptior:
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
+			dvb_desc->nit_table.virtual_channel = buf[2];
+			if (dvb_desc->verbose)
+				printf("Virtual channel = %d\n", buf[2]);
 			break;
 		case service_descriptor: {
 			if (type != SDT) {
@@ -348,19 +460,25 @@ void parse_descriptor(enum dvb_tables type,
 			}
 			break;
 		}
-		case satellite_delivery_system_descriptor:
-			if (type != NIT) {
-				err = 1;
-				break;
-			}
-			parse_NIT_DVBS(&dvb_desc->nit_table, buf, dlen,
-				       dvb_desc->verbose);
+		default:
 			break;
+		}
+		if (err) {
+			fprintf(stderr,
+				"descriptor type is invalid on this table\n");
+		}
+		buf += dlen + 2;
+		len -= dlen + 2;
+	} while (len > 0);
+}
+
+#if 0
+	/* TODO: remove those stuff */
+
 		case ds_alignment_descriptor:
 		case dvbpsi_registration_descriptor:
 		case service_list_descriptor:
 		case stuffing_descriptor:
-		case cable_delivery_system_descriptor:
 		case VBI_data_descriptor:
 		case VBI_teletext_descriptor:
 		case bouquet_name_descriptor:
@@ -380,7 +498,6 @@ void parse_descriptor(enum dvb_tables type,
 		case telephone_descriptor:
 		case local_time_offset_descriptor:
 		case subtitling_descriptor:
-		case terrestrial_delivery_system_descriptor:
 		case multilingual_network_name_descriptor:
 		case multilingual_bouquet_name_descriptor:
 		case multilingual_service_name_descriptor:
@@ -420,31 +537,6 @@ void parse_descriptor(enum dvb_tables type,
 
 		case CUE_identifier_descriptor:
 		case component_name_descriptor:
-			/* FIXME: Add parser */
-			break;
-
-		case logical_channel_number_descriptor:
-		{
-			int i, n = dvb_desc->nit_table.lcn_len;
-			const unsigned char *p = &buf[2];
-
-			for (i = 0; i < dlen; i+= 4, p+= 4) {
-				struct lcn_table **lcn = &dvb_desc->nit_table.lcn;
-
-				*lcn = realloc(*lcn, (n + 1) * sizeof(*lcn));
-				(*lcn)[n].service_id = p[0] << 8 | p[1];
-				(*lcn)[n].lcn = (p[2] << 8 | p[3]) & 0x3ff;
-				dvb_desc->nit_table.lcn_len++;
-				n++;
-
-				if (dvb_desc->verbose)
-					printf("Service ID: 0x%04x, LCN: %d\n",
-					       (*lcn)[n].service_id,
-					       (*lcn)[n].lcn);
-			}
-			break;
-		}
-
 		case conditional_access_descriptor:
 		case copyright_descriptor:
 		case carousel_id_descriptor:
@@ -488,59 +580,4 @@ void parse_descriptor(enum dvb_tables type,
 		case emergency_information_descriptor:
 		case data_component_descriptor:
 		case system_management_descriptor:
-			break;
-
-		case partial_reception_descriptor:
-		{
-			int i;
-			if (dvb_desc->verbose) {
-				printf("Service IDs with partial reception = ");
-				for (i = dlen + 2; i < dlen; i += 2) {
-					if (dvb_desc->verbose)
-						printf("%d\n",
-						buf[i + 1] << 8 | buf[i]);
-				}
-				printf("\n");
-			}
-			break;
-		}
-		case TS_Information_descriptior:
-			if (type != NIT) {
-				err = 1;
-				break;
-			}
-			dvb_desc->nit_table.virtual_channel = buf[2];
-			if (dvb_desc->verbose)
-				printf("Virtual channel = %d\n", buf[2]);
-			break;
-		case ISDBT_delivery_system_descriptor:
-			if (type != NIT) {
-				err = 1;
-				break;
-			}
-
-			parse_NIT_ISDBT(&dvb_desc->nit_table, buf, dlen,
-					dvb_desc->verbose);
-			break;
-		case AAC_descriptor:
-			if (dvb_desc->verbose)
-				printf("AAC descriptor with len %d\n", dlen);
-			break;
-		case stream_identifier_descriptor:
-			/* Don't need to parse it */
-			if (dvb_desc->verbose)
-				printf("Component tag 0x%02x\n", buf[2]);
-			break;
-		default:
-			if (dvb_desc->verbose)
-				printf("Unknown descriptor 0x%02x\n", buf[0]);
-			break;
-		}
-		if (err) {
-			fprintf(stderr,
-				"descriptor type is invalid on this table\n");
-		}
-		buf += dlen + 2;
-		len -= dlen + 2;
-	} while (len > 0);
-}
+#endif
