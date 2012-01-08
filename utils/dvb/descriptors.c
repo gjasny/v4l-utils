@@ -166,7 +166,7 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 		[3] = GUARD_INTERVAL_1_4,
 	};
 	unsigned tmp = buf[3] >> 4 & 0x3;
-	int i, n = 0;
+	int i;
 
 	nit_table->delivery_system = SYS_ISDBT;
 	nit_table->area_code = (buf[3] & 0x0f) << 8 | buf[2];
@@ -175,13 +175,15 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 		printf("Area code: %d, guard interval: %d, mode: %d\n",
 			nit_table->area_code,
 			tmp, buf[3] >> 6);
-	for (i = dlen + 3; i < dlen; i += 2, n++) {
+	buf += 4;
+	for (i = 4; i < dlen; i += 2) {
 		*freq = realloc(*freq, (*nfreq + 1));
-		nit_table->frequency[n] = buf[i + 1] << 8 | buf[i];
+		nit_table->frequency[*nfreq] = buf[i + 1] << 8 | buf[i];
 ;
 		if (verbose)
-			printf("Frequency %d\n", nit_table->frequency[n]);
+			printf("Frequency %d\n", nit_table->frequency[*nfreq]);
 		(*nfreq)++;
+		buf += 2;
 	}
 }
 
@@ -371,6 +373,27 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 	}
 }
 
+static void parse_freq_list(struct nit_table *nit_table,
+			    const unsigned char *buf, int dlen,
+			    int verbose)
+{
+	int i;
+	uint32_t **freq = &nit_table->other_frequency;
+	unsigned *nfreq = &nit_table->frequency_len;
+
+	buf += 3;
+	for (i = 3; i < dlen; i += 4) {
+		*freq = realloc(*freq, (*nfreq + 1));
+		nit_table->frequency[*nfreq] = (buf[0] << 24) |
+					       (buf[1] << 16) |
+					       (buf[2] << 8)  | buf[3];
+		if (verbose)
+			printf("Frequency %d\n", nit_table->frequency[*nfreq]);
+		(*nfreq)++;
+		buf += 4;
+	}
+}
+
 void parse_descriptor(enum dvb_tables type,
 			     struct dvb_descriptors *dvb_desc,
 			     const unsigned char *buf, int len)
@@ -530,6 +553,16 @@ void parse_descriptor(enum dvb_tables type,
 			if (dvb_desc->verbose)
 				printf("Virtual channel = %d\n", buf[2]);
 			break;
+
+		case frequency_list_descriptor:
+			if (type != NIT) {
+				err = 1;
+				break;
+			}
+			parse_freq_list(&dvb_desc->nit_table, buf, dlen,
+				        dvb_desc->verbose);
+			break;
+
 		case service_descriptor: {
 			if (type != SDT) {
 				err = 1;
@@ -607,7 +640,6 @@ void parse_descriptor(enum dvb_tables type,
 		case private_data_specifier_descriptor:
 		case service_move_descriptor:
 		case short_smoothing_buffer_descriptor:
-		case frequency_list_descriptor:
 		case partial_transport_stream_descriptor:
 		case data_broadcast_descriptor:
 		case scrambling_descriptor:
