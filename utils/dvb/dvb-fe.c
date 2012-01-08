@@ -6,6 +6,9 @@
 #include "dvb-v5-std.h"
 #include "dvb-fe.h"
 
+#include <unistd.h>
+
+
 static void dvb_v5_free(struct dvb_v5_fe_parms *parms)
 {
 	if (parms->fname)
@@ -36,6 +39,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 	parms = calloc(sizeof(*parms), 1);
 	if (!parms) {
 		perror("parms calloc");
+		close(fd);
 		return NULL;
 	}
 	parms->fname = fname;
@@ -45,6 +49,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 	if (ioctl(fd, FE_GET_INFO, &parms->info) == -1) {
 		perror("FE_GET_INFO");
 		dvb_v5_free(parms);
+		close(fd);
 		return NULL;
 	}
 
@@ -118,6 +123,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 		if (!parms->num_systems) {
 			fprintf(stderr, "delivery system not detected\n");
 			dvb_v5_free(parms);
+			close(fd);
 			return NULL;
 		}
 	} else {
@@ -128,6 +134,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 		if (ioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1) {
 			perror("FE_GET_PROPERTY");
 			dvb_v5_free(parms);
+			close(fd);
 			return NULL;
 		}
 		parms->num_systems = parms->dvb_prop[0].u.buffer.len;
@@ -137,6 +144,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 		if (parms->num_systems == 0) {
 			fprintf(stderr, "driver died while trying to set the delivery system\n");
 			dvb_v5_free(parms);
+			close(fd);
 			return NULL;
 		}
 	}
@@ -176,15 +184,6 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 	return parms;
 }
 
-void dvb_fe_close(struct dvb_v5_fe_parms *parms)
-{
-	if (!parms)
-		return;
-
-
-	if (parms->fd < 0)
-		return;
-}
 
 static int is_satellite(uint32_t delivery_system)
 {
@@ -200,6 +199,24 @@ static int is_satellite(uint32_t delivery_system)
 	}
 }
 
+
+void dvb_fe_close(struct dvb_v5_fe_parms *parms)
+{
+	if (!parms)
+		return;
+
+	if (parms->fd < 0)
+		return;
+
+	/* Disable LNBf power */
+	if (is_satellite(parms->current_sys))
+		dvb_fe_sec_voltage(parms, 0, 0);
+
+	close(parms->fd);
+
+	dvb_v5_free(parms);
+}
+
 int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 			  fe_delivery_system_t sys)
 {
@@ -209,6 +226,11 @@ int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 	int n;
 
 	if (sys != parms->current_sys) {
+		/* Disable LNBf power */
+		if (is_satellite(parms->current_sys) &&
+		    !is_satellite(sys))
+			dvb_fe_sec_voltage(parms, 0, 0);
+
 		/* Can't change standard with the legacy FE support */
 		if (parms->legacy_fe)
 			return EINVAL;
