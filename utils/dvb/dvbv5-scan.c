@@ -249,6 +249,7 @@ static char *usage =
     "     -f number : use given frontend (default 0)\n"
     "     -d number : use given demux (default 0)\n"
     "     -l LNBf   : type of LNBf to use. 'help' lists the available ones\n"
+    "     -S number : satellite number. If not specified, disable DISEqC\n"
     "     -v        : be (very) verbose\n"
     "     -o file   : output filename (use -o - for stdout)\n"
     "     -O        : uses old channel format\n"
@@ -258,11 +259,11 @@ static char *usage =
 int main(int argc, char **argv)
 {
 	char *confname = NULL, *lnb_name = NULL;
-	int adapter = 0, frontend = 0, demux = 0, lnb = -1;
+	int adapter = 0, frontend = 0, demux = 0, lnb = -1, sat_number = -1;
 	int opt, format = 0;
 	struct dvb_v5_fe_parms *parms;
 
-	while ((opt = getopt(argc, argv, "H?ha:f:d:vzOl:")) != -1) {
+	while ((opt = getopt(argc, argv, "H?ha:f:d:vzOl:S:")) != -1) {
 		switch (opt) {
 		case 'a':
 			adapter = strtoul(optarg, NULL, 0);
@@ -281,6 +282,9 @@ int main(int argc, char **argv)
 			break;
 		case 'l':
 			lnb_name = optarg;
+			break;
+		case 'S':
+			sat_number = strtoul(optarg, NULL, 0);
 			break;
 		case 'v':
 			verbose++;
@@ -325,6 +329,8 @@ int main(int argc, char **argv)
 	parms = dvb_fe_open(adapter, frontend, verbose, 0);
 	if (lnb)
 		parms->lnb = get_lnb(lnb);
+	if (sat_number > 0)
+		parms->sat_number = sat_number % 3;
 
 	if (run_scan(confname, format, parms))
 		return -1;

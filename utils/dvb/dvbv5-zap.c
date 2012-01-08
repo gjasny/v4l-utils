@@ -320,12 +320,12 @@ static char *usage =
     "     -f number : use given frontend (default 0)\n"
     "     -d number : use given demux (default 0)\n"
     "     -l LNBf   : type of LNBf to use. 'help' lists the available ones\n"
+    "     -S number : satellite number. If not specified, disable DISEqC\n"
     "     -c file   : read channels list from 'file'\n"
     "     -x        : exit after tuning\n"
     "     -r        : set up /dev/dvb/adapterX/dvr0 for TS recording\n"
     "     -p        : add pat and pmt to TS recording (implies -r)\n"
-    "     -s        : only print summary\n"
-    "     -S        : run silently (no output)\n"
+    "     -s        : increases silence (can be used more than once)\n"
     "     -H        : human readable output\n"
     "     -F        : set up frontend only, don't touch demux\n"
     "     -t number : timeout (seconds)\n"
@@ -339,7 +339,8 @@ int main(int argc, char **argv)
 	char *confname = NULL;
 	char *channel = NULL;
 	char *lnb_name = NULL;
-	int adapter = 0, frontend = 0, demux = 0, dvr = 0, lnb = -1;
+	int adapter = 0, frontend = 0, demux = 0, dvr = 0;
+	int lnb = -1, sat_number = -1;
 	uint32_t vpid = -1, apid = -1, sid = -1;
 	int pmtpid = 0;
 	int pat_fd = -1, pmt_fd = -1;
@@ -353,7 +354,7 @@ int main(int argc, char **argv)
 	int human_readable = 0, rec_psi = 0;
 	struct dvb_v5_fe_parms *parms;
 
-	while ((opt = getopt(argc, argv, "H?hrpxRsFSn:a:f:d:c:t:o:Ol:")) != -1) {
+	while ((opt = getopt(argc, argv, "H?hrpxRsFn:a:f:d:c:t:o:Ol:S:")) != -1) {
 		switch (opt) {
 		case 'a':
 			adapter = strtoul(optarg, NULL, 0);
@@ -389,11 +390,11 @@ int main(int argc, char **argv)
 		case 'l':
 			lnb_name = optarg;
 			break;
-		case 's':
-			silent = 1;
-			break;
 		case 'S':
-			silent = 2;
+			sat_number = strtoul(optarg, NULL, 0);
+			break;
+		case 's':
+			silent++;
 			break;
 		case 'F':
 			frontend_only = 1;
@@ -454,7 +455,8 @@ int main(int argc, char **argv)
 	parms = dvb_fe_open(adapter, frontend, 0, 0);
 	if (lnb)
 		parms->lnb = get_lnb(lnb);
-
+	if (sat_number > 0)
+		parms->sat_number = sat_number % 3;
 
 	if (parse(confname, old_format, channel, parms, &vpid, &apid, &sid))
 		return -1;
