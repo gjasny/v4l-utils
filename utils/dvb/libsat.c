@@ -84,13 +84,14 @@ int print_lnb(int i)
 	if (lnb[i].freqrange[1].low)
 		printf(" and %d to %d MHz",
 		       lnb[i].freqrange[1].low, lnb[i].freqrange[1].high);
-	printf("\n\t%s LO, ", lnb[i].rangeswitch ? "Single" : "Dual");
+	printf("\n\t%s LO, ", lnb[i].highfreq ? "Dual" : "Single");
 	if (!lnb[i].highfreq) {
 		printf("IF = %d MHz\n", lnb[i].lowfreq);
 		return 0;
 	}
 	if (!lnb[i].rangeswitch) {
-		printf("IF = %d/%d MHz\n", lnb[i].lowfreq, lnb[i].highfreq);
+		printf("Bandstacking, LO POL_R %d MHZ, LO POL_L %d MHz\n",
+		       lnb[i].lowfreq, lnb[i].highfreq);
 		return 0;
 	}
 	printf("IF = lowband %d MHz, highband %d MHz\n",
