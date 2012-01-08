@@ -200,9 +200,11 @@ static error_t parse_keyfile(char *fname, char **table)
 
 	while (fgets(s, sizeof(s), fin)) {
 		char *p = s;
+
+		line++;
 		while (*p == ' ' || *p == '\t')
 			p++;
-		if (!line && p[0] == '#') {
+		if (line==1 && p[0] == '#') {
 			p++;
 			p = strtok(p, "\n\t =:");
 			do {
@@ -275,7 +277,6 @@ static error_t parse_keyfile(char *fname, char **table)
 			return ENOMEM;
 		}
 		nextkey = nextkey->next;
-		line++;
 	}
 	fclose(fin);
 
@@ -283,7 +284,7 @@ static error_t parse_keyfile(char *fname, char **table)
 
 err_einval:
 	fprintf(stderr, "Invalid parameter on line %d of %s\n",
-		line + 1, fname);
+		line, fname);
 	return EINVAL;
 
 }
@@ -308,6 +309,8 @@ static error_t parse_cfgfile(char *fname)
 
 	while (fgets(s, sizeof(s), fin)) {
 		char *p = s;
+
+		line++;
 		while (*p == ' ' || *p == '\t')
 			p++;
 
@@ -345,7 +348,6 @@ static error_t parse_cfgfile(char *fname)
 			return ENOMEM;
 		}
 		nextcfg = nextcfg->next;
-		line++;
 	}
 	fclose(fin);
 
@@ -353,7 +355,7 @@ static error_t parse_cfgfile(char *fname)
 
 err_einval:
 	fprintf(stderr, "Invalid parameter on line %d of %s\n",
-		line + 1, fname);
+		line, fname);
 	return EINVAL;
 
 }
