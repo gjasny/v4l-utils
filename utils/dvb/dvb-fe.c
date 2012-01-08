@@ -45,6 +45,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 	parms->fname = fname;
 	parms->verbose = verbose;
 	parms->fd = fd;
+	parms->sat_number = -1;
 
 	if (ioctl(fd, FE_GET_INFO, &parms->info) == -1) {
 		perror("FE_GET_INFO");
@@ -765,12 +766,12 @@ int dvb_fe_lnb_high_voltage(struct dvb_v5_fe_parms *parms, int on)
 	return errno;
 }
 
-int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *parms, int mini_a)
+int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *parms, int mini_b)
 {
 	fe_sec_mini_cmd_t mini;
 	int rc;
 
-	mini = mini_a ? SEC_MINI_A : SEC_MINI_B;
+	mini = mini_b ? SEC_MINI_B : SEC_MINI_A;
 
 	rc = ioctl(parms->fd, FE_DISEQC_SEND_BURST, mini);
 	if (rc == -1)
@@ -778,7 +779,8 @@ int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *parms, int mini_a)
 	return errno;
 }
 
-int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, unsigned len, char *buf)
+int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, const unsigned len,
+		      const unsigned char *buf)
 {
 	struct dvb_diseqc_master_cmd msg;
 	int rc;

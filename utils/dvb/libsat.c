@@ -120,56 +120,164 @@ struct dvb_satellite_lnb *get_lnb(int i)
 
 /*
  * DVB satellite Diseqc specifics
+ * According with:
+ *	http://www.eutelsat.com/satellites/pdf/Diseqc/Reference%20docs/bus_spec.pdf
+ *	http://www.eutelsat.com/satellites/pdf/Diseqc/associated%20docs/applic_info_turner-receiver.pdf
  */
 
-static int dvbsat_diseqc_send_msg(struct dvb_v5_fe_parms *parms,
-				   int vol_on,
-				   int vol_high,
-				   int tone_on,
-				   int mini_a,
-				   int wait,
-				   char *cmd,
-				   int len)
+struct diseqc_cmd {
+	int len;
+	union {
+		unsigned char msg[6];
+		struct {
+			unsigned char framing;
+			unsigned char address;
+			unsigned char command;
+			unsigned char data0;
+			unsigned char data1;
+			unsigned char data2;
+		};
+	};
+};
+
+enum diseqc_type {
+	DISEQC_BROADCAST,
+	DISEQC_BROADCAST_LNB_SWITCHER_SMATV,
+	DISEQC_LNB,
+	DISEQC_LNB_WITH_LOOP_SWITCH,
+	DISEQC_SWITCHER,
+	DISEQC_SWITHCER_WITH_LOOP,
+	DISEQC_SMATV,
+	DISEQC_ANY_POLARISER,
+	DISEQC_LINEAR_POLARISER,
+	DISEQC_ANY_POSITIONER,
+	DISEQC_AZIMUTH_POSITIONER,
+	DISEQC_ELEVATON_POSITIONER,
+	DISEQC_ANY_INSTALLER_AID,
+	DISEQC_SIGNAL_STRENGH_ANALOGUE_VAL,
+	DISEQC_ANY_INTELLIGENT_SLAVE,
+	DISEQC_SUBSCRIBER_HEADENDS,
+};
+
+int diseqc_addr[] = {
+	[DISEQC_BROADCAST]			= 0x00,
+	[DISEQC_BROADCAST_LNB_SWITCHER_SMATV]	= 0x10,
+	[DISEQC_LNB]				= 0x11,
+	[DISEQC_LNB_WITH_LOOP_SWITCH]		= 0x12,
+	[DISEQC_SWITCHER]			= 0x14,
+	[DISEQC_SWITHCER_WITH_LOOP]		= 0x15,
+	[DISEQC_SMATV]				= 0x18,
+	[DISEQC_ANY_POLARISER]			= 0x20,
+	[DISEQC_LINEAR_POLARISER]		= 0x21,
+	[DISEQC_ANY_POSITIONER]			= 0x30,
+	[DISEQC_AZIMUTH_POSITIONER]		= 0x31,
+	[DISEQC_ELEVATON_POSITIONER]		= 0x32,
+	[DISEQC_ANY_INSTALLER_AID]		= 0x40,
+	[DISEQC_SIGNAL_STRENGH_ANALOGUE_VAL]	= 0x41,
+	[DISEQC_ANY_INTELLIGENT_SLAVE]		= 0x70,
+	[DISEQC_SUBSCRIBER_HEADENDS]		= 0x71,
+};
+
+static void dvbsat_diseqc_prep_frame_addr(struct diseqc_cmd *cmd,
+					 enum diseqc_type type,
+					 int reply,
+					 int repeat)
+{
+	cmd->framing = 0xe0;	/* First four bits are always 1110 */
+	if (reply)
+		cmd->framing |=0x02;
+	if (repeat)
+		cmd->framing |=1;
+
+	cmd->address = diseqc_addr[type];
+}
+
+/* Inputs are numbered from 1 to 16, according with the spec */
+static int dvbsat_diseqc_write_to_port_group(struct diseqc_cmd *cmd,
+					     int high_band,
+					     int pol_v,
+					     int sat_number)
+{
+	dvbsat_diseqc_prep_frame_addr(cmd,
+				      DISEQC_BROADCAST_LNB_SWITCHER_SMATV,
+				      0, 0);
+
+	cmd->command = 0x38;	/* Write to Port group 0 (Committed switches) */
+	cmd->len = 4;
+
+	/* Fill the 4 bits for the "input" select */
+	cmd->data0 = 0xf0;
+	cmd->data0 |= high_band;
+	cmd->data0 |= pol_v ? 0 : 2;
+	/* Instead of using position/option, use a number from 0 to 3 */
+	cmd->data0 |= (sat_number % 0x3) << 2;
+
+	return dvb_fe_diseqc_cmd(parms, cmd->len, cmd->msg);
+}
+
+static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms)
 {
 	int rc;
+        enum polarization pol = parms->pol;
+	int pol_v = (pol == POLARIZATION_V) || (pol == POLARIZATION_R);
+	int high_band = parms->high_band;
+	int sat_number = parms->sat_number;
+	int vol_high = 0;
+	int tone_on = 0;
+	int mini_b = 0;
+	struct diseqc_cmd cmd;
+
+	if (!lnb->rangeswitch) {
+		/*
+		 * Bandstacking and single LO may not be using DISEqC
+		 */
+		if (sat_number < 0)
+			return 0;
+
+		/*
+		 * Bandstacking switches don't use 2 bands nor use
+		 * DISEqC for setting the polarization. It also doesn't
+		 * use any tone/tone burst
+		 */
+		pol_v = 0;
+		high_band = 1;
+	} else {
+		if (sat_number < 0) {
+			fprintf(stderr, "Need a satellite number for DISEqC\n");
+			return -EINVAL;
+		}
+
+		/* Adjust voltage/tone accordingly */
+		if (parms->sat_number < 2) {
+			vol_high = high_band;
+			tone_on = pol_v ? 0 : 1;
+			mini_b = parms->sat_number & 1;
+		}
+	}
 
 	rc = dvb_fe_sec_tone(parms, SEC_TONE_OFF);
 	if (rc)
 		return rc;
-	rc = dvb_fe_sec_voltage(parms, vol_on, vol_high);
+
+	rc = dvb_fe_sec_voltage(parms, 1, vol_high);
 	if (rc)
 		return rc;
 	usleep(15 * 1000);
-	rc = dvb_fe_diseqc_cmd(parms, len, cmd);
+
+	rc = dvbsat_diseqc_write_to_port_group(&cmd, high_band,
+					       pol_v, sat_number);
 	if (rc)
 		return rc;
-	usleep(wait * 1000);
-	usleep(15 * 1000);
-	rc = dvb_fe_diseqc_burst(parms, mini_a);
+	usleep((15 + parms->diseqc_wait) * 1000);
+
+	rc = dvb_fe_diseqc_burst(parms, mini_b);
 	if (rc)
 		return rc;
 	usleep(15 * 1000);
+
 	rc = dvb_fe_sec_tone(parms, tone_on);
 
 	return rc;
-}
-
-static int dvb_satellite_switch_band(struct dvb_v5_fe_parms *parms)
-{
-	char cmd[] = {0xe0, 0x10, 0x38, 0xf0, 0x00, 0x00 };
-	char *p = &cmd[3];
-        enum polarization pol = parms->pol;
-	int is_pol_v = (pol == POLARIZATION_V) || (pol == POLARIZATION_R);
-
-	*p |= (parms->sat_number << 2) & 0x0f;
-	*p |= parms->high_band;
-	*p |= ((pol == POLARIZATION_V) || (pol == POLARIZATION_R)) ? 0 : 2;
-
-	dvbsat_diseqc_send_msg(parms, 1, !is_pol_v, parms->high_band,
-			       !(parms->sat_number % 2),
-			       4, cmd, ARRAY_SIZE(cmd));
-
-	return 0;
 }
 
 /*
@@ -183,6 +291,7 @@ int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms)
         enum polarization pol = parms->pol;
 	uint32_t freq;
 	uint32_t voltage = SEC_VOLTAGE_13;
+	int rc;
 
 	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
 
@@ -209,8 +318,6 @@ int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms)
 	/* Voltage-controlled multiband switch */
 	parms->high_band = (freq > lnb->rangeswitch) ? 1 : 0;
 
-	dvb_satellite_switch_band(parms);
-
 	/* Adjust frequency */
 	if (parms->high_band)
 		freq = abs(freq - lnb->highfreq);
@@ -218,9 +325,12 @@ int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms)
 		freq = abs(freq - lnb->lowfreq);
 
 ret:
+	rc = dvbsat_diseqc_set_input(parms);
+
 	dvb_fe_store_parm(parms, DTV_FREQUENCY, voltage);
 	dvb_fe_store_parm(parms, DTV_FREQUENCY, freq);
-	return 0;
+
+	return rc;
 }
 
 int dvb_satellite_get_parms(struct dvb_v5_fe_parms *parms)
