@@ -182,9 +182,9 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 		[3] = GUARD_INTERVAL_1_4,
 	};
 	static const uint32_t mode[] = {
-		[0] = TRANSMISSION_MODE_4K,	/* Mode 1 */
-		[1] = TRANSMISSION_MODE_2K,	/* Mode 2 */
-		[2] = TRANSMISSION_MODE_1K,	/* Mode 3 */
+		[0] = TRANSMISSION_MODE_2K,	/* Mode 1 */
+		[1] = TRANSMISSION_MODE_4K,	/* Mode 2 */
+		[2] = TRANSMISSION_MODE_8K,	/* Mode 3 */
 		[3] = TRANSMISSION_MODE_AUTO	/* Reserved */
 	};
 	unsigned tmp = buf[3] >> 4 & 0x3;
