@@ -514,10 +514,110 @@ char *dvb_vchannel(struct dvb_descriptors *dvb_desc,
 	return buf;
 }
 
+static int store_entry_prop(struct dvb_entry *entry,
+			    uint32_t cmd, uint32_t value)
+{
+	int i;
+
+	for (i = 0; i < entry->n_props; i++) {
+		if (cmd == entry->props[i].cmd)
+			break;
+	}
+	if (i == entry->n_props) {
+		if (i == DTV_MAX_COMMAND) {
+			fprintf(stderr, "Can't add property %s\n",
+			       dvb_v5_name[cmd]);
+			return -1;
+		}
+		entry->n_props++;
+	}
+
+	entry->props[i].u.data = value;
+
+	return 0;
+}
+
+static void handle_std_specific_parms(struct dvb_entry *entry,
+				      struct dvb_descriptors *dvb_desc)
+{
+	struct nit_table *nit_table = &dvb_desc->nit_table;
+	int i;
+
+	/*
+	 * If found, parses the NIT tables for the delivery systems
+	 * with the information provided on it. For some delivery systems,
+	 * there are some missing stuff.
+	 */
+	switch (nit_table->delivery_system) {
+	case SYS_ISDBT:
+		store_entry_prop(entry, DTV_GUARD_INTERVAL,
+				 nit_table->guard_interval);
+		store_entry_prop(entry, DTV_TRANSMISSION_MODE,
+				 nit_table->transmission_mode);
+		asprintf(&entry->location, "area %d", nit_table->area_code);
+		for (i = 0; i < nit_table->partial_reception_len; i++) {
+			int par, sid = entry->service_id;
+			par = (sid == nit_table->partial_reception[i]) ?
+			      1 : 0;
+			store_entry_prop(entry, DTV_ISDBT_PARTIAL_RECEPTION,
+					par);
+			break;
+		}
+		break;
+	case SYS_DVBS2:
+		store_entry_prop(entry, DTV_ROLLOFF,
+				 nit_table->rolloff);
+		/* fall through */
+	case SYS_DVBS:
+		entry->location = strdup(nit_table->orbit);
+		store_entry_prop(entry, DTV_FREQUENCY,
+				 nit_table->frequency[0]);
+		store_entry_prop(entry, DTV_MODULATION,
+				 nit_table->modulation);
+		entry->pol = nit_table->pol;
+		store_entry_prop(entry, DTV_DELIVERY_SYSTEM,
+				 nit_table->delivery_system);
+		store_entry_prop(entry, DTV_SYMBOL_RATE,
+				 nit_table->symbol_rate);
+		store_entry_prop(entry, DTV_INNER_FEC,
+				 nit_table->fec_inner);
+		break;
+	case SYS_DVBC_ANNEX_A:
+		entry->location = strdup(nit_table->network_name);
+		store_entry_prop(entry, DTV_FREQUENCY,
+				 nit_table->frequency[0]);
+		store_entry_prop(entry, DTV_MODULATION,
+				 nit_table->modulation);
+		store_entry_prop(entry, DTV_SYMBOL_RATE,
+				 nit_table->symbol_rate);
+		store_entry_prop(entry, DTV_INNER_FEC,
+				 nit_table->fec_inner);
+		break;
+	case SYS_DVBT:
+		entry->location = strdup(nit_table->network_name);
+		store_entry_prop(entry, DTV_FREQUENCY,
+				 nit_table->frequency[0]);
+		store_entry_prop(entry, DTV_MODULATION,
+				 nit_table->modulation);
+		store_entry_prop(entry, DTV_BANDWIDTH_HZ,
+				 nit_table->bandwidth);
+		store_entry_prop(entry, DTV_CODE_RATE_HP,
+				 nit_table->code_rate_hp);
+		store_entry_prop(entry, DTV_CODE_RATE_LP,
+				 nit_table->code_rate_lp);
+		store_entry_prop(entry, DTV_GUARD_INTERVAL,
+				 nit_table->guard_interval);
+		store_entry_prop(entry, DTV_TRANSMISSION_MODE,
+				 nit_table->transmission_mode);
+		store_entry_prop(entry, DTV_HIERARCHY,
+				 nit_table->hierarchy);
+	}
+}
+
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_descriptors *dvb_desc,
-		      int get_detected)
+		      int get_detected, int get_nit)
 {
 	struct dvb_entry *entry;
 	int i, j;
@@ -595,6 +695,9 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 			entry->props[j].u.data = parms->dvb_prop[j].u.data;
 		}
 		entry->n_props = parms->n_props;
+
+		if (get_nit)
+			handle_std_specific_parms(entry, dvb_desc);
 	}
 
 	return 0;

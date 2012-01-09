@@ -29,6 +29,8 @@ struct dvb_entry {
 	char *channel;
 	char *vchannel;
 
+	char *location;
+
 	enum polarization pol;
 	int sat_number;
 	unsigned diseqc_wait;
@@ -79,6 +81,8 @@ static inline void dvb_file_free(struct dvb_file *dvb_file)
 			free (entry->channel);
 		if (entry->vchannel)
 			free (entry->vchannel);
+		if (entry->location)
+			free (entry->location);
 		if (entry->video_pid)
 			free (entry->video_pid);
 		if (entry->audio_pid)
@@ -112,4 +116,4 @@ char *dvb_vchannel(struct dvb_descriptors *dvb_desc,
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_descriptors *dvb_desc,
-		      int get_detected);
+		      int get_detected, int get_nit);

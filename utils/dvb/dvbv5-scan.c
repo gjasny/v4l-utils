@@ -102,7 +102,8 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 }
 
 static int run_scan(const char *fname, int format,
-		    struct dvb_v5_fe_parms *parms)
+		    struct dvb_v5_fe_parms *parms,
+		    int get_detected, int get_nit)
 {
 	struct dvb_file *dvb_file = NULL, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
@@ -229,7 +230,8 @@ static int run_scan(const char *fname, int format,
 				printf("\n");
 		}
 
-		store_dvb_channel(&dvb_file_new, parms, dvb_desc, 0);
+		store_dvb_channel(&dvb_file_new, parms, dvb_desc,
+				  get_detected, get_nit);
 
 		free_dvb_ts_tables(dvb_desc);
 	}
@@ -253,6 +255,8 @@ static char *usage =
     "     -l LNBf   : type of LNBf to use. 'help' lists the available ones\n"
     "     -S number : satellite number. If not specified, disable DISEqC\n"
     "     -W number : adds aditional wait time for DISEqC command completion\n"
+    "     -N        : use data from NIT table on the output file\n"
+    "     -G        : use data from get_frontend on the output file\n"
     "     -v        : be (very) verbose\n"
     "     -o file   : output filename (use -o - for stdout)\n"
     "     -O        : uses old channel format\n"
@@ -263,12 +267,13 @@ int main(int argc, char **argv)
 {
 	char *confname = NULL, *lnb_name = NULL;
 	int adapter = 0, frontend = 0, demux = 0;
+	int get_detected = 0, get_nit = 0;
 	int lnb = -1, sat_number = -1;
 	unsigned diseqc_wait = 0;
 	int opt, format = 0;
 	struct dvb_v5_fe_parms *parms;
 
-	while ((opt = getopt(argc, argv, "H?ha:f:d:vzOl:S:W:")) != -1) {
+	while ((opt = getopt(argc, argv, "H?ha:f:d:vzOl:S:W:NG")) != -1) {
 		switch (opt) {
 		case 'a':
 			adapter = strtoul(optarg, NULL, 0);
@@ -293,6 +298,12 @@ int main(int argc, char **argv)
 			break;
 		case 'W':
 			diseqc_wait = strtoul(optarg, NULL, 0);
+			break;
+		case 'N':
+			get_nit++;
+			break;
+		case 'D':
+			get_detected++;
 			break;
 		case 'v':
 			verbose++;
@@ -341,7 +352,7 @@ int main(int argc, char **argv)
 		parms->sat_number = sat_number % 3;
 	parms->diseqc_wait = diseqc_wait;
 
-	if (run_scan(confname, format, parms))
+	if (run_scan(confname, format, parms, get_detected, get_nit))
 		return -1;
 
 	dvb_fe_close(parms);
