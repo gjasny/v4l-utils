@@ -43,7 +43,7 @@ static void parse_pat(struct dvb_descriptors *dvb_desc,
 		memset(&dvb_desc->pat_table.pid_table[n], 0,
 		       sizeof(dvb_desc->pat_table.pid_table[n]));
 
-		dvb_desc->pat_table.pid_table[n].program_number = service_id;
+		dvb_desc->pat_table.pid_table[n].service_id = service_id;
 		dvb_desc->pat_table.pid_table[n].pid = pmt_pid;
 
 		if (dvb_desc->verbose)
@@ -410,7 +410,7 @@ struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev, int verbose)
 	/* PMT tables */
 	for (i = 0; i < dvb_desc->pat_table.pid_table_len; i++) {
 		struct pid_table *pid_table = &dvb_desc->pat_table.pid_table[i];
-		uint16_t pn = pid_table->program_number;
+		uint16_t pn = pid_table->service_id;
 		/* Skip PAT, CAT, reserved and NULL packets */
 		if (pn < 0x0010 || pn == 0x1fff)
 			continue;

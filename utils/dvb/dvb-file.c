@@ -566,7 +566,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 
 		for (j = 0; j < pat_table->pid_table_len; j++) {
 			pid_table = &pat_table->pid_table[j];
-			if (service_table->service_id == pid_table->program_number)
+			if (service_table->service_id == pid_table->service_id)
 				break;
 		}
 		if (j == pat_table->pid_table_len) {

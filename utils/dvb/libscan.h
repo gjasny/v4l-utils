@@ -9,7 +9,7 @@ struct pmt_table {
 };
 
 struct pid_table {
-	uint16_t program_number;
+	uint16_t service_id;
 	uint16_t pid;
 	struct pmt_table pmt_table;
 	unsigned video_pid_len, audio_pid_len;
