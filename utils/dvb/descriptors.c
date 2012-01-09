@@ -401,6 +401,27 @@ static void parse_freq_list(struct nit_table *nit_table,
 	}
 }
 
+static void parse_partial_reception(struct nit_table *nit_table,
+				    const unsigned char *buf, int dlen,
+				    int verbose)
+{
+	int i;
+	uint16_t **pid = &nit_table->partial_reception;
+	unsigned *n = &nit_table->partial_reception_len;
+
+	buf += 2;
+	for (i = 0; i < dlen; i += 2) {
+		*pid = realloc(*pid, (*n + 1));
+		nit_table->partial_reception[*n] = buf[i] << 8 | buf[i + 1];
+		if (verbose)
+			printf("Service 0x%04x has partial reception\n",
+			       nit_table->partial_reception[*n]);
+		buf += 2;
+		(*n)++;
+	}
+}
+
+
 void parse_descriptor(enum dvb_tables type,
 			     struct dvb_descriptors *dvb_desc,
 			     const unsigned char *buf, int len)
@@ -516,27 +537,15 @@ void parse_descriptor(enum dvb_tables type,
 					dvb_desc->verbose);
 			break;
 		case partial_reception_descriptor:
-		{
-			int i;
-			const unsigned char *p = &buf[2];
-
 			if (type != NIT) {
 				err = 1;
 				break;
 			}
-			if (dvb_desc->verbose) {
-				printf("Service IDs with partial reception = ");
-				for (i = 0; i < dlen; i += 2) {
-					if (dvb_desc->verbose)
-						printf("0x%04x\n",
-						p[i] << 8 | p[i + 1]);
-					p += 2;
-				}
-				printf("\n");
-			}
+			parse_partial_reception(&dvb_desc->nit_table, buf, dlen,
+					        dvb_desc->verbose);
 			break;
-		}
 
+		/* LCN decoder */
 		case logical_channel_number_descriptor:
 		{
 			int i, n = dvb_desc->nit_table.lcn_len;

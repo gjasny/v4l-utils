@@ -69,6 +69,9 @@ struct nit_table {
 	uint32_t *other_frequency;
 	unsigned other_frequency_len;
 
+	uint16_t *partial_reception;
+	unsigned partial_reception_len;
+
 	struct lcn_table *lcn;
 	unsigned lcn_len;
 };
