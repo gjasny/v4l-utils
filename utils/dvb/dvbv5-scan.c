@@ -302,7 +302,7 @@ int main(int argc, char **argv)
 		case 'N':
 			get_nit++;
 			break;
-		case 'D':
+		case 'G':
 			get_detected++;
 			break;
 		case 'v':
