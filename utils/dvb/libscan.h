@@ -55,6 +55,8 @@ struct nit_table {
 	uint32_t code_rate_lp;
 	uint32_t transmission_mode;
 	uint32_t hierarchy;
+	uint32_t plp_id;
+	uint32_t system_id;
 
 	unsigned is_hp:1;
 	unsigned has_time_slicing:1;

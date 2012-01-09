@@ -134,6 +134,22 @@ static const char *descriptors[] = {
 	[system_management_descriptor] = "system_management_descriptor",
 };
 
+static const char *extension_descriptors[] = {
+	[image_icon_descriptor] = "image_icon_descriptor",
+	[cpcm_delivery_signalling_descriptor] = "cpcm_delivery_signalling_descriptor",
+	[CP_descriptor] = "CP_descriptor",
+	[CP_identifier_descriptor] = "CP_identifier_descriptor",
+	[T2_delivery_system_descriptor] = "T2_delivery_system_descriptor",
+	[SH_delivery_system_descriptor] = "SH_delivery_system_descriptor",
+	[supplementary_audio_descriptor] = "supplementary_audio_descriptor",
+	[network_change_notify_descriptor] = "network_change_notify_descriptor",
+	[message_descriptor] = "message_descriptor",
+	[target_region_descriptor] = "target_region_descriptor",
+	[target_region_name_descriptor] = "target_region_name_descriptor",
+	[service_relocated_descriptor] = "service_relocated_descriptor",
+};
+
+
 static int bcd_to_int(const unsigned char *bcd, int bits)
 {
 	int nibble = 0;
@@ -351,7 +367,8 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 	nit_table->frequency_len = 1;
 	nit_table->frequency[0] = bcd_to_int(&buf[2], 32) * 10; /* KHz */
 
-	nit_table->delivery_system = SYS_DVBT;
+	if (nit_table->delivery_system != SYS_DVBT2)
+		nit_table->delivery_system = SYS_DVBT;
 	nit_table->bandwidth = bw[(buf[6] >> 5) & 0x07];
 	nit_table->is_hp = (buf[6] & 0x10) ? 1 : 0;
 	nit_table->has_time_slicing = (buf[6] & 0x08) ? 0 : 1;
@@ -378,6 +395,58 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 		       nit_table->guard_interval);
 		printf("transmission mode %d\n", nit_table->transmission_mode);
 	}
+}
+
+static void parse_NIT_DVBT2(struct nit_table *nit_table,
+			    const unsigned char *buf, int dlen,
+			    int verbose)
+{
+	static const unsigned bw[] = {
+		[0] =  8000000,
+		[1] =  7000000,
+		[2] =  6000000,
+		[3] =  5000000,
+		[4] = 10000000,
+		[5] =  1712000,
+		[6 ...15] = 0,		/* Reserved */
+	};
+	static const uint32_t interval[] = {
+		[0] = GUARD_INTERVAL_1_32,
+		[1] = GUARD_INTERVAL_1_16,
+		[2] = GUARD_INTERVAL_1_8,
+		[3] = GUARD_INTERVAL_1_4,
+		[4] = GUARD_INTERVAL_1_128,
+		[5] = GUARD_INTERVAL_19_128,
+		[6] = GUARD_INTERVAL_19_256,
+		[7 ...15] = GUARD_INTERVAL_AUTO /* Reserved */
+	};
+	static const unsigned transmission_mode[] = {
+		[0] = TRANSMISSION_MODE_2K,
+		[1] = TRANSMISSION_MODE_8K,
+		[2] = TRANSMISSION_MODE_4K,
+		[3] = TRANSMISSION_MODE_1K,
+		[4] = TRANSMISSION_MODE_16K,
+		[5] = TRANSMISSION_MODE_32K,
+		[6 ...7] = TRANSMISSION_MODE_AUTO,	/* Reserved */
+	};
+
+	nit_table->delivery_system = SYS_DVBT2;
+
+	nit_table->plp_id = buf[0];
+	nit_table->system_id = buf[1] << 8 | buf[2];
+
+	buf += 4;
+	dlen -= 4;
+	if (dlen <= 0)
+		return;
+
+	nit_table->bandwidth = bw[(buf[0] >> 2) & 0x0f];
+	nit_table->guard_interval = interval[buf[1] >> 5];
+	nit_table->transmission_mode = transmission_mode[(buf[1] >> 2) && 0x07];
+	nit_table->has_other_frequency = buf[1] & 0x02 ? 1 : 0;
+
+	/* FIXME: add a parser for the cell tables */
+	return;
 }
 
 static void parse_freq_list(struct nit_table *nit_table,
@@ -421,6 +490,42 @@ static void parse_partial_reception(struct nit_table *nit_table,
 	}
 }
 
+static int parse_extension_descriptor(enum dvb_tables type,
+				       struct dvb_descriptors *dvb_desc,
+				       const unsigned char *buf, int dlen)
+{
+	unsigned char ext = buf[0];
+	int i;
+
+	if (dlen < 1)
+		return 0;
+
+	/* buf[0] will point to the first useful data */
+	buf++;
+	dlen--;
+
+	if (dvb_desc->verbose) {
+		printf("Extension descriptor %s (0x%02x), len %d",
+			extension_descriptors[buf[0]], buf[0], buf[1]);
+		for (i = 0; i < dlen; i++) {
+			if (!(i % 16))
+				printf("\n\t");
+			printf("%02x ", (uint8_t) *(buf + i + 2));
+		}
+		printf("\n");
+	}
+	switch(ext) {
+	case T2_delivery_system_descriptor:
+		if (type != NIT)
+			return 1;
+
+		parse_NIT_DVBT2(&dvb_desc->nit_table, buf, dlen,
+				dvb_desc->verbose);
+		break;
+	}
+
+	return 0;
+};
 
 void parse_descriptor(enum dvb_tables type,
 			     struct dvb_descriptors *dvb_desc,
@@ -460,6 +565,10 @@ void parse_descriptor(enum dvb_tables type,
 			printf("\n");
 		}
 		switch(buf[0]) {
+		case extension_descriptor:
+			err = parse_extension_descriptor(type, dvb_desc,
+							 &buf[2], dlen);
+			break;
 		case iso639_language_descriptor:
 		{
 			int i;
@@ -542,7 +651,7 @@ void parse_descriptor(enum dvb_tables type,
 				break;
 			}
 			parse_partial_reception(&dvb_desc->nit_table, buf, dlen,
-					        dvb_desc->verbose);
+						dvb_desc->verbose);
 			break;
 
 		/* LCN decoder */
@@ -588,7 +697,7 @@ void parse_descriptor(enum dvb_tables type,
 				break;
 			}
 			parse_freq_list(&dvb_desc->nit_table, buf, dlen,
-				        dvb_desc->verbose);
+					dvb_desc->verbose);
 			break;
 
 		case service_descriptor: {
