@@ -58,6 +58,7 @@ struct nit_table {
 	uint32_t plp_id;
 	uint32_t system_id;
 
+	unsigned has_dvbt:1;
 	unsigned is_hp:1;
 	unsigned has_time_slicing:1;
 	unsigned has_mpe_fec:1;

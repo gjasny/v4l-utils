@@ -367,6 +367,7 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 	nit_table->frequency_len = 1;
 	nit_table->frequency[0] = bcd_to_int(&buf[2], 32) * 10; /* KHz */
 
+	nit_table->has_dvbt = 1;
 	if (nit_table->delivery_system != SYS_DVBT2)
 		nit_table->delivery_system = SYS_DVBT;
 	nit_table->bandwidth = bw[(buf[6] >> 5) & 0x07];

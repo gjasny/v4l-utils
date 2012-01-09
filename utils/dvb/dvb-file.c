@@ -611,6 +611,31 @@ static void handle_std_specific_parms(struct dvb_entry *entry,
 				 nit_table->transmission_mode);
 		store_entry_prop(entry, DTV_HIERARCHY,
 				 nit_table->hierarchy);
+		break;
+	case SYS_DVBT2:
+		entry->location = strdup(nit_table->network_name);
+		store_entry_prop(entry, DTV_DVBT2_PLP_ID,
+				 nit_table->plp_id);
+		store_entry_prop(entry, DTV_BANDWIDTH_HZ,
+				 nit_table->bandwidth);
+		store_entry_prop(entry, DTV_GUARD_INTERVAL,
+				 nit_table->guard_interval);
+		store_entry_prop(entry, DTV_TRANSMISSION_MODE,
+				 nit_table->transmission_mode);
+		if (!nit_table->has_dvbt)
+			break;
+
+		/* Fill data from terrestrial descriptor */
+		store_entry_prop(entry, DTV_FREQUENCY,
+				 nit_table->frequency[0]);
+		store_entry_prop(entry, DTV_MODULATION,
+				 nit_table->modulation);
+		store_entry_prop(entry, DTV_CODE_RATE_HP,
+				 nit_table->code_rate_hp);
+		store_entry_prop(entry, DTV_CODE_RATE_LP,
+				 nit_table->code_rate_lp);
+		store_entry_prop(entry, DTV_HIERARCHY,
+				 nit_table->hierarchy);
 	}
 }
 
