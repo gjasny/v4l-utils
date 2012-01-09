@@ -165,20 +165,27 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 		[2] = GUARD_INTERVAL_1_8,
 		[3] = GUARD_INTERVAL_1_4,
 	};
+	static const uint32_t mode[] = {
+		[0] = TRANSMISSION_MODE_4K,	/* Mode 1 */
+		[1] = TRANSMISSION_MODE_2K,	/* Mode 2 */
+		[2] = TRANSMISSION_MODE_1K,	/* Mode 3 */
+		[3] = TRANSMISSION_MODE_AUTO	/* Reserved */
+	};
 	unsigned tmp = buf[3] >> 4 & 0x3;
 	int i;
 
 	nit_table->delivery_system = SYS_ISDBT;
 	nit_table->area_code = (buf[3] & 0x0f) << 8 | buf[2];
 	nit_table->guard_interval = interval[tmp];
+	nit_table->transmission_mode = mode[buf[3] >> 6];
 	if (verbose)
 		printf("Area code: %d, guard interval: %d, mode: %d\n",
 			nit_table->area_code,
-			tmp, buf[3] >> 6);
+			tmp, 1 + (buf[3] >> 6));
 	buf += 4;
 	for (i = 4; i < dlen; i += 2) {
 		*freq = realloc(*freq, (*nfreq + 1));
-		nit_table->frequency[*nfreq] = buf[i + 1] << 8 | buf[i];
+		nit_table->frequency[*nfreq] = buf[i] << 8 | buf[i + 1];
 ;
 		if (verbose)
 			printf("Frequency %d\n", nit_table->frequency[*nfreq]);
@@ -398,6 +405,8 @@ void parse_descriptor(enum dvb_tables type,
 			     struct dvb_descriptors *dvb_desc,
 			     const unsigned char *buf, int len)
 {
+	int i;
+
 	if (len == 0)
 		return;
 
@@ -419,9 +428,16 @@ void parse_descriptor(enum dvb_tables type,
 		}
 		/* FIXME: Not all descriptors are valid for all tables */
 
-		if (dvb_desc->verbose)
-			printf("%s (0x%02x), len %d\n",
+		if (dvb_desc->verbose) {
+			printf("%s (0x%02x), len %d",
 			       descriptors[buf[0]], buf[0], buf[1]);
+			for (i = 0; i < dlen; i++) {
+				if (!(i % 16))
+					printf("\n\t");
+				printf("%02x ", (uint8_t) *(buf + i + 2));
+			}
+			printf("\n");
+		}
 		switch(buf[0]) {
 		case iso639_language_descriptor:
 		{
@@ -501,17 +517,20 @@ void parse_descriptor(enum dvb_tables type,
 			break;
 		case partial_reception_descriptor:
 		{
+			int i;
+			const unsigned char *p = &buf[2];
+
 			if (type != NIT) {
 				err = 1;
 				break;
 			}
-			int i;
 			if (dvb_desc->verbose) {
 				printf("Service IDs with partial reception = ");
-				for (i = dlen + 2; i < dlen; i += 2) {
+				for (i = 0; i < dlen; i += 2) {
 					if (dvb_desc->verbose)
-						printf("%d\n",
-						buf[i + 1] << 8 | buf[i]);
+						printf("0x%04x\n",
+						p[i] << 8 | p[i + 1]);
+					p += 2;
 				}
 				printf("\n");
 			}

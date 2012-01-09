@@ -112,6 +112,44 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 			pid_table->audio_pid[i] = pid;
 			/* Discard audio language descriptors */
 			break;
+		case 0x06:
+			/*
+			 * Used for streaming synchronous and
+			 * asynchronous data for broadcasting
+			 * services. Applied to subtitles and
+			 * superimposed characters.
+			 */
+			if (dvb_desc->verbose)
+				printf("independent PES (type 0x%02x) 0x%04x\n",
+				       buf[0], pid);
+			break;
+		case 0x0b:
+			/*
+			 * Used to transfer general synchronous and
+			 * asynchronous data for broadcasting
+			 * services. Applied to data transmission for
+			 * Download services and multimedia services.
+			 */
+			if (dvb_desc->verbose)
+				printf("data carrousel (type 0x%02x) 0x%04x\n",
+				       buf[0], pid);
+			break;
+		case 0x0c:
+			/*
+			 * Used for synchronous and asynchronous
+			 * message notification to an application on the
+			 * receiver unit from the broadcasting station.
+			 * Used in multimedia services.
+			 */
+			if (dvb_desc->verbose)
+				printf("event message (type 0x%02x) 0x%04x\n",
+				       buf[0], pid);
+			break;
+		case 0x0d:
+			if (dvb_desc->verbose)
+				printf("data carrousel or event message (type 0x%02x) 0x%04x\n",
+				       buf[0], pid);
+			break;
 		default:
 			if (dvb_desc->verbose)
 				printf("other pid (type 0x%02x) 0x%04x\n", buf[0], pid);
