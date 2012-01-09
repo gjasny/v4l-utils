@@ -234,10 +234,12 @@ static int run_scan(const char *fname, int format,
 		free_dvb_ts_tables(dvb_desc);
 	}
 
-	write_dvb_file("dvb_channels.conf", dvb_file_new);
+	if (dvb_file_new)
+		write_dvb_file("dvb_channels.conf", dvb_file_new);
 
 	dvb_file_free(dvb_file);
-	dvb_file_free(dvb_file_new);
+	if (dvb_file_new)
+		dvb_file_free(dvb_file_new);
 	return 0;
 }
 
