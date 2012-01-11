@@ -299,7 +299,7 @@ static void parse_NIT_DVBC(struct nit_table *nit_table,
 
 	*freq = realloc(*freq, 1);
 	nit_table->frequency_len = 1;
-	nit_table->frequency[0] = bcd_to_int(&buf[2], 32) * 10; /* KHz */
+	nit_table->frequency[0] = bcd_to_int(&buf[2], 32) * 100; /* KHz */
 
 	nit_table->fec_outer = dvbc_dvbs_freq_inner[buf[7] & 0x07];
 	nit_table->modulation = modulation[buf[8]];
@@ -365,7 +365,8 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 
 	*freq = realloc(*freq, 1);
 	nit_table->frequency_len = 1;
-	nit_table->frequency[0] = bcd_to_int(&buf[2], 32) * 10; /* KHz */
+        nit_table->frequency[0]  = 10 * ((buf[2] << 24) | (buf[3] << 16) |
+                                         (buf[4] << 8)  |  buf[5]);
 
 	nit_table->has_dvbt = 1;
 	if (nit_table->delivery_system != SYS_DVBT2)
@@ -461,9 +462,12 @@ static void parse_freq_list(struct nit_table *nit_table,
 	buf += 3;
 	for (i = 3; i < dlen; i += 4) {
 		*freq = realloc(*freq, (*nfreq + 1));
-		nit_table->frequency[*nfreq] = (buf[0] << 24) |
+
+		nit_table->frequency[*nfreq] = 10 *(
+					       (buf[0] << 24) |
 					       (buf[1] << 16) |
-					       (buf[2] << 8)  | buf[3];
+					       (buf[2] << 8)  |
+					       buf[3]);
 		if (verbose)
 			printf("Frequency %d\n", nit_table->frequency[*nfreq]);
 		(*nfreq)++;
