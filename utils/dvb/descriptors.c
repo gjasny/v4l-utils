@@ -511,11 +511,11 @@ static int parse_extension_descriptor(enum dvb_tables type,
 
 	if (dvb_desc->verbose) {
 		printf("Extension descriptor %s (0x%02x), len %d",
-			extension_descriptors[buf[0]], buf[0], buf[1]);
+			extension_descriptors[ext], ext, dlen);
 		for (i = 0; i < dlen; i++) {
 			if (!(i % 16))
 				printf("\n\t");
-			printf("%02x ", (uint8_t) *(buf + i + 2));
+			printf("%02x ", (uint8_t) *(buf + i));
 		}
 		printf("\n");
 	}
