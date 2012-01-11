@@ -528,6 +528,73 @@ static int parse_extension_descriptor(enum dvb_tables type,
 	return 0;
 };
 
+static void parse_net_name(struct nit_table *nit_table,
+			   const unsigned char *buf, int dlen, int verbose)
+{
+	parse_string(&nit_table->network_name, &nit_table->network_alias,
+		     &buf[2], dlen, default_charset, output_charset);
+	if (verbose) {
+		if (nit_table->network_name)
+			printf("Network %s", nit_table->network_name);
+		if (nit_table->network_alias)
+			printf("(%s)", nit_table->network_alias);
+		printf("\n");
+	}
+}
+
+
+static void parse_lcn(struct nit_table *nit_table,
+		      const unsigned char *buf, int dlen, int verbose)
+{
+	int i, n = nit_table->lcn_len;
+	const unsigned char *p = &buf[2];
+
+
+	for (i = 0; i < dlen; i+= 4, p+= 4) {
+		struct lcn_table **lcn = &nit_table->lcn;
+
+		*lcn = realloc(*lcn, (n + 1) * sizeof(*lcn));
+		(*lcn)[n].service_id = p[0] << 8 | p[1];
+		(*lcn)[n].lcn = (p[2] << 8 | p[3]) & 0x3ff;
+		nit_table->lcn_len++;
+		n++;
+
+		if (verbose)
+			printf("Service ID: 0x%04x, LCN: %d\n",
+			       (*lcn)[n].service_id,
+			       (*lcn)[n].lcn);
+	}
+}
+
+static void parse_service(struct service_table *service_table,
+		          const unsigned char *buf, int dlen, int verbose)
+{
+	service_table->type = buf[2];
+
+	parse_string(&service_table->provider_name,
+		     &service_table->provider_alias,
+		     &buf[4], buf[3],
+		     default_charset, output_charset);
+	buf += 4 + buf[3];
+	parse_string(&service_table->service_name,
+		     &service_table->service_alias,
+		     &buf[1], buf[0],
+		     default_charset, output_charset);
+	if (verbose) {
+		if (service_table->provider_name)
+			printf("Provider %s", service_table->provider_name);
+		if (service_table->service_alias)
+			printf("(%s)", service_table->provider_alias);
+		if (service_table->provider_name || service_table->service_alias)
+			printf("\n");
+		if (service_table->service_name)
+			printf("Service %s", service_table->service_name);
+		if (service_table->service_alias)
+			printf("(%s)", service_table->service_alias);
+		printf("\n");
+	}
+}
+
 void parse_descriptor(enum dvb_tables type,
 			     struct dvb_descriptors *dvb_desc,
 			     const unsigned char *buf, int len)
@@ -597,17 +664,8 @@ void parse_descriptor(enum dvb_tables type,
 				err = 1;
 				break;
 			}
-			parse_string(&dvb_desc->nit_table.network_name,
-				&dvb_desc->nit_table.network_alias,
-				&buf[2], dlen,
-				default_charset, output_charset);
-			if (dvb_desc->verbose) {
-				if (dvb_desc->nit_table.network_name)
-					printf("Network %s", dvb_desc->nit_table.network_name);
-				if (dvb_desc->nit_table.network_alias)
-					printf("(%s)", dvb_desc->nit_table.network_alias);
-				printf("\n");
-			}
+			parse_net_name(&dvb_desc->nit_table, buf, dlen,
+                                       dvb_desc->verbose);
 			break;
 
 		/* DVB NIT decoders */
@@ -658,27 +716,12 @@ void parse_descriptor(enum dvb_tables type,
 		/* LCN decoder */
 		case logical_channel_number_descriptor:
 		{
-			int i, n = dvb_desc->nit_table.lcn_len;
-			const unsigned char *p = &buf[2];
-
 			if (type != NIT) {
 				err = 1;
 				break;
 			}
-			for (i = 0; i < dlen; i+= 4, p+= 4) {
-				struct lcn_table **lcn = &dvb_desc->nit_table.lcn;
-
-				*lcn = realloc(*lcn, (n + 1) * sizeof(*lcn));
-				(*lcn)[n].service_id = p[0] << 8 | p[1];
-				(*lcn)[n].lcn = (p[2] << 8 | p[3]) & 0x3ff;
-				dvb_desc->nit_table.lcn_len++;
-				n++;
-
-				if (dvb_desc->verbose)
-					printf("Service ID: 0x%04x, LCN: %d\n",
-					       (*lcn)[n].service_id,
-					       (*lcn)[n].lcn);
-			}
+			parse_lcn(&dvb_desc->nit_table, buf, dlen,
+				  dvb_desc->verbose);
 			break;
 		}
 
@@ -706,31 +749,8 @@ void parse_descriptor(enum dvb_tables type,
 				err = 1;
 				break;
 			}
-			struct service_table *service_table = &dvb_desc->sdt_table.service_table[dvb_desc->cur_service];
-
-			service_table->type = buf[2];
-			parse_string(&service_table->provider_name,
-				&service_table->provider_alias,
-				&buf[4], buf[3],
-				default_charset, output_charset);
-			buf += 4 + buf[3];
-			parse_string(&service_table->service_name,
-				&service_table->service_alias,
-				&buf[1], buf[0],
-				default_charset, output_charset);
-			if (dvb_desc->verbose) {
-				if (service_table->provider_name)
-					printf("Provider %s", service_table->provider_name);
-				if (service_table->service_alias)
-					printf("(%s)", service_table->provider_alias);
-				if (service_table->provider_name || service_table->service_alias)
-					printf("\n");
-				if (service_table->service_name)
-					printf("Service %s", service_table->service_name);
-				if (service_table->service_alias)
-					printf("(%s)", service_table->service_alias);
-				printf("\n");
-			}
+			parse_service(&dvb_desc->sdt_table.service_table[dvb_desc->cur_service],
+				      buf, dlen, dvb_desc->verbose);
 			break;
 		}
 		default:
