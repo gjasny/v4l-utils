@@ -458,6 +458,8 @@ int main(int argc, char **argv)
 	printf("reading channels from file '%s'\n", confname);
 
 	parms = dvb_fe_open(adapter, frontend, 0, 0);
+	if (!parms)
+		return -1;
 	if (lnb)
 		parms->lnb = get_lnb(lnb);
 	if (sat_number > 0)

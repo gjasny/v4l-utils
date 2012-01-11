@@ -96,6 +96,8 @@ int main(int argc, char *argv[])
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
 	parms = dvb_fe_open(adapter, frontend, verbose, dvbv3);
+	if (!parms)
+		return -1;
 
 	if (delsys) {
 		printf("Changing delivery system to: %s\n",

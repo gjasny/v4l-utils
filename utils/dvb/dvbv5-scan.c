@@ -346,6 +346,8 @@ int main(int argc, char **argv)
 	}
 
 	parms = dvb_fe_open(adapter, frontend, verbose, 0);
+	if (!parms)
+		return -1;
 	if (lnb)
 		parms->lnb = get_lnb(lnb);
 	if (sat_number > 0)
