@@ -55,7 +55,7 @@ struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev;
 	unsigned adapter, frontend, demux, get_detected, get_nit, format;
 	int lnb, sat_number;
-	unsigned diseqc_wait;
+	unsigned diseqc_wait, dont_add_new_freqs;
 };
 
 static const struct argp_option options[] = {
@@ -71,6 +71,7 @@ static const struct argp_option options[] = {
 	{"output",	'o',	"file",			0, "output filename (default: " DEFAULT_OUTPUT ")", 0},
 	{"old-format",	'O',	NULL,			0, "uses old transponder/channel format", 0},
 	{"zap",		'z',	"file",			0, "uses zap services file, discarding video/audio pid's", 0},
+	{"file-freqs-only", 'F', NULL,			0, "don't use the other frequencies discovered during scan", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -334,7 +335,8 @@ static int run_scan(struct arguments *args,
 		store_dvb_channel(&dvb_file_new, parms, dvb_desc,
 				  args->get_detected, args->get_nit);
 
-		add_other_freq_entries(dvb_file, dvb_desc);
+		if (!args->dont_add_new_freqs)
+			add_other_freq_entries(dvb_file, dvb_desc);
 
 		free_dvb_ts_tables(dvb_desc);
 	}
@@ -381,6 +383,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		break;
 	case 'G':
 		args->get_detected++;
+		break;
+	case 'F':
+		args->dont_add_new_freqs++;
 		break;
 	case 'v':
 		verbose++;
