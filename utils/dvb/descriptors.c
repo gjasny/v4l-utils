@@ -11,8 +11,15 @@
 static char *default_charset = "iso-8859-1";
 static char *output_charset = "utf-8";
 
+static char *table[] = {
+	[PAT] = "PAT",
+	[PMT] = "PMT",
+	[NIT] = "NIT",
+	[SDT] = "SDT",
+};
+
 static const char *descriptors[] = {
-	[0 ...255 ] = "Unknown descriptor ",
+	[0 ...255 ] = "Unknown descriptor",
 	[dvbpsi_registration_descriptor] = "dvbpsi_registration_descriptor",
 	[ds_alignment_descriptor] = "ds_alignment_descriptor",
 	[iso639_language_descriptor] = "iso639_language_descriptor",
@@ -768,7 +775,8 @@ void parse_descriptor(enum dvb_tables type,
 		}
 		if (err) {
 			fprintf(stderr,
-				"descriptor type is invalid on this table\n");
+				"descriptor %s is invalid on %s table\n",
+				descriptors[buf[0]], table[type]);
 		}
 		buf += dlen + 2;
 		len -= dlen + 2;
