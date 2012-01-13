@@ -207,19 +207,22 @@ int testTunerFreq(struct node *node)
 			return fail("could not set rangehigh frequency\n");
 		freq.frequency = tuner.rangelow - 1;
 		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
-		if (ret != EINVAL)
-			return fail("set rangelow-1 frequency did not return EINVAL\n");
+		if (ret)
+			return fail("could not set rangelow-1 frequency\n");
+		ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
+		if (ret || freq.frequency != tuner.rangelow)
+			return fail("frequency rangelow-1 wasn't mapped to rangelow\n");
 		freq.frequency = tuner.rangehigh + 1;
 		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
-		if (ret != EINVAL)
-			return fail("set rangehigh+1 frequency did not return EINVAL\n");
+		if (ret)
+			return fail("could not set rangehigh+1 frequency\n");
+		ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
+		if (ret || freq.frequency != tuner.rangehigh)
+			return fail("frequency rangehigh+1 wasn't mapped to rangehigh\n");
 	}
 
-	/* There is an ambiguity in the API and G/S_FREQUENCY: you cannot specify
-	   correctly whether to the ioctl is for a tuner or a modulator. This should
-	   be corrected, but until then the tests below have to be skipped if there
-	   is a modulator of index t. */
-	if (node->modulators > t)
+	/* If this is a modulator device, then skip the remaining tests */
+	if (node->caps & V4L2_CAP_MODULATOR)
 		return 0;
 
 	freq.tuner = t;
@@ -542,19 +545,22 @@ int testModulatorFreq(struct node *node)
 			return fail("could not set rangehigh frequency\n");
 		freq.frequency = modulator.rangelow - 1;
 		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
-		if (ret != EINVAL)
-			return fail("set rangelow-1 frequency did not return EINVAL\n");
+		if (ret)
+			return fail("could not set rangelow-1 frequency\n");
+		ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
+		if (ret || freq.frequency != modulator.rangelow)
+			return fail("frequency rangelow-1 wasn't mapped to rangelow\n");
 		freq.frequency = modulator.rangehigh + 1;
 		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
-		if (ret != EINVAL)
-			return fail("set rangehigh+1 frequency did not return EINVAL\n");
+		if (ret)
+			return fail("could not set rangehigh+1 frequency\n");
+		ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
+		if (ret || freq.frequency != modulator.rangehigh)
+			return fail("frequency rangehigh+1 wasn't mapped to rangehigh\n");
 	}
 
-	/* There is an ambiguity in the API and G/S_FREQUENCY: you cannot specify
-	   correctly whether to the ioctl is for a tuner or a modulator. This should
-	   be corrected, but until then the tests below have to be skipped if there
-	   is a tuner of index m. */
-	if (node->tuners > m)
+	/* If this is a tuner device, then skip the remaining tests */
+	if (node->caps & V4L2_CAP_TUNER)
 		return 0;
 
 	freq.tuner = m;
