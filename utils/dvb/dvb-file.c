@@ -485,7 +485,7 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 };
 
 char *dvb_vchannel(struct dvb_descriptors *dvb_desc,
-	           int service)
+		   int service)
 {
 	struct service_table *service_table = &dvb_desc->sdt_table.service_table[service];
 	struct lcn_table *lcn = dvb_desc->nit_table.lcn;
@@ -677,8 +677,13 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 			return -1;
 		}
 
-		entry->channel = calloc(strlen(service_table->service_name) + 1, 1);
-		strcpy(entry->channel, service_table->service_name);
+		if (service_table->service_name) {
+			entry->channel = calloc(strlen(service_table->service_name) + 1, 1);
+			strcpy(entry->channel, service_table->service_name);
+		} else {
+			asprintf(&entry->channel, "#%d",
+				 service_table->service_id);
+		}
 		entry->service_id = service_table->service_id;
 
 		entry->vchannel = dvb_vchannel(dvb_desc, i);
