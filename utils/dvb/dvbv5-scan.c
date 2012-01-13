@@ -101,6 +101,78 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 	return 0;
 }
 
+static int new_freq_is_needed(struct dvb_entry *entry, uint32_t freq,
+			      int shift)
+{
+	int i;
+	uint32_t data;
+
+	for (; entry != NULL; entry = entry->next) {
+		for (i = 0; i < entry->n_props; i++) {
+			data = entry->props[i].u.data;
+			if (entry->props[i].cmd == DTV_FREQUENCY) {
+				if (( freq >= data - shift) && (freq <= data + shift))
+					return 0;
+			}
+		}
+	}
+
+	return 1;
+}
+
+static void add_new_freq(struct dvb_entry *entry, uint32_t freq)
+{
+	struct dvb_entry *new_entry;
+	int i, n = 2;
+
+	/* Clone the current entry into a new entry */
+	new_entry = calloc(sizeof(*new_entry), 1);
+	memcpy(new_entry, entry, sizeof(*entry));
+
+	/*
+	 * The frequency should change to the new one. Seek for it and
+	 * replace its value to the desired one.
+	 */
+	for (i = 0; i < new_entry->n_props; i++) {
+		if (new_entry->props[i].cmd == DTV_FREQUENCY) {
+			new_entry->props[i].u.data = freq;
+			/* Navigate to the end of the entry list */
+			while (entry->next) {
+				entry = entry->next;
+				n++;
+			}
+			printf("New transponder/channel found: #%d: %d\n",
+			       n, freq);
+			entry->next = new_entry;
+			new_entry->next = NULL;
+			return;
+		}
+	}
+
+	/* This should never happen */
+	fprintf(stderr, "BUG: Couldn't add %d to the scan frequency list.\n",
+		freq);
+	free(new_entry);
+}
+
+static void add_other_freq_entries(struct dvb_file *dvb_file,
+				   struct dvb_descriptors *dvb_desc)
+{
+	int i;
+	uint32_t freq;
+
+	if (!dvb_desc->nit_table.frequency)
+		return;
+
+	for (i = 0; i < dvb_desc->nit_table.frequency_len; i++) {
+		freq = dvb_desc->nit_table.frequency[i];
+
+		if (new_freq_is_needed(dvb_file->first_entry, freq, 0))
+			add_new_freq(dvb_file->first_entry, freq);
+	}
+}
+
+
 static int run_scan(const char *fname, int format,
 		    struct dvb_v5_fe_parms *parms,
 		    int get_detected, int get_nit)
@@ -232,6 +304,8 @@ static int run_scan(const char *fname, int format,
 
 		store_dvb_channel(&dvb_file_new, parms, dvb_desc,
 				  get_detected, get_nit);
+
+		add_other_freq_entries(dvb_file, dvb_desc);
 
 		free_dvb_ts_tables(dvb_desc);
 	}
