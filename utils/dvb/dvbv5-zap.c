@@ -35,18 +35,49 @@
 #include <ctype.h>
 #include <errno.h>
 #include <signal.h>
+#include <argp.h>
 
 #include <linux/dvb/dmx.h>
 #include "dvb-file.h"
 #include "dvb-demux.h"
 
-static char DEMUX_DEV[80];
-static char DVR_DEV[80];
-static int timeout_flag = 0;
-static int silent = 0, timeout = 0;
-static int exit_after_tuning;
+#define CHANNEL_FILE	"channels.conf"
+#define PROGRAM_NAME	"dvbv5-scan"
 
-#define CHANNEL_FILE "channels.conf"
+const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
+
+struct arguments {
+	char *confname, *lnb_name, *output, *demux_dev, *dvr_dev;
+	char *filename;
+	unsigned adapter, frontend, demux, get_detected, get_nit;
+	int lnb, sat_number;
+	unsigned diseqc_wait, silent, frontend_only;
+	unsigned timeout, old_format, dvr, rec_psi, exit_after_tuning;
+	unsigned human_readable, record;
+};
+
+static const struct argp_option options[] = {
+	{"adapter",	'a', "adapter#",		0, "use given adapter (default 0)", 0},
+	{"frontend",	'f', "frontend#",		0, "use given frontend (default 0)", 0},
+	{"demux",	'd', "demux#",			0, "use given demux (default 0)", 0},
+	{"lnbf",	'l', "LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
+	{"sat_number",	'S', "satellite_number",	0, "satellite number. If not specified, disable DISEqC", 0},
+	{"wait",	'W', "time",			0, "adds aditional wait time for DISEqC command completion", 0},
+	{"channels",	'c', "file",			0, "read channels list from 'file'", 0},
+	{"exit",	'x', NULL,			0, "exit after tuning", 0},
+	{"record",	'r', NULL,			0, "set up /dev/dvb/adapterX/dvr0 for TS recording", 0},
+	{"pat",		'p', NULL,			0, "add pat and pmt to TS recording (implies -r)", 0},
+	{"silence",	's', NULL,			0, "increases silence (can be used more than once)", 0},
+	{"human",	'H', NULL,			0, "human readable output", 0},
+	{"frontend",	'F', NULL,			0, "set up frontend only, don't touch demux", 0},
+	{"timeout",	't', "seconds",			0, "timeout for zapping and for recording", 0},
+	{"output",	'o', "file",			0, "output filename (use -o - for stdout)", 0},
+	{"old-format",	'O', NULL,			0, "uses old zap format", 0},
+	{ 0, 0, 0, 0, 0, 0 }
+};
+
+static int timeout_flag = 0;
 
 #define ERROR(x...)                                                     \
 	do {                                                            \
@@ -62,8 +93,9 @@ static int exit_after_tuning;
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
-static int parse(const char *fname, int old_format, const char *channel,
+static int parse(struct arguments *args,
 		 struct dvb_v5_fe_parms *parms,
+		 char *channel,
 		 uint32_t *vpid, uint32_t *apid, uint32_t *sid)
 {
 	struct dvb_file *dvb_file;
@@ -92,10 +124,11 @@ static int parse(const char *fname, int old_format, const char *channel,
 		return -1;
 	}
 
-	if (old_format)
-		dvb_file = parse_format_oneline(fname, ":", sys, zap_formats);
+	if (args->old_format)
+		dvb_file = parse_format_oneline(args->confname, ":",
+						sys, zap_formats);
 	else
-		dvb_file = read_dvb_file(fname);
+		dvb_file = read_dvb_file(args->confname);
 	if (!dvb_file)
 		return -2;
 
@@ -180,12 +213,13 @@ static int parse(const char *fname, int old_format, const char *channel,
 	return 0;
 }
 
-static int setup_frontend(struct dvb_v5_fe_parms *parms)
+static int setup_frontend(struct arguments *args,
+			  struct dvb_v5_fe_parms *parms)
 {
 	int rc;
 	uint32_t freq;
 
-	if (silent < 2) {
+	if (args->silent < 2) {
 		rc = dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
 		if (rc < 0) {
 			PERROR("can't get the frequency");
@@ -262,7 +296,8 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
-static int check_frontend(struct dvb_v5_fe_parms *parms, int human_readable)
+static int check_frontend(struct arguments *args,
+			  struct dvb_v5_fe_parms *parms)
 {
 	int rc;
 	fe_status_t status;
@@ -272,20 +307,20 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int human_readable)
 			PERROR("dvb_fe_get_stats failed");
 
 		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
-		if (!silent)
-			print_frontend_stats(parms, human_readable);
-		if (exit_after_tuning && (status & FE_HAS_LOCK))
+		if (!args->silent)
+			print_frontend_stats(parms, args->human_readable);
+		if (args->exit_after_tuning && (status & FE_HAS_LOCK))
 			break;
 		usleep(1000000);
 	} while (!timeout_flag);
-	if (silent < 2)
-		print_frontend_stats(parms, human_readable);
+	if (args->silent < 2)
+		print_frontend_stats(parms, args->human_readable);
 
 	return 0;
 }
 
 #define BUFLEN (188 * 256)
-static void copy_to_file(int in_fd, int out_fd)
+static void copy_to_file(int in_fd, int out_fd, int timeout, int silent)
 {
 	char buf[BUFLEN];
 	int r;
@@ -312,119 +347,100 @@ static void copy_to_file(int in_fd, int out_fd)
 	}
 }
 
-static char *usage =
-    "usage:\n"
-    "       dvbzap [options] <channel_name>\n"
-    "         zap to channel channel_name (case insensitive)\n"
-    "     -a number : use given adapter (default 0)\n"
-    "     -f number : use given frontend (default 0)\n"
-    "     -d number : use given demux (default 0)\n"
-    "     -l LNBf   : type of LNBf to use. 'help' lists the available ones\n"
-    "     -S number : satellite number. If not specified, disable DISEqC\n"
-    "     -W number : adds aditional wait time for DISEqC command completion\n"
-    "     -c file   : read channels list from 'file'\n"
-    "     -x        : exit after tuning\n"
-    "     -r        : set up /dev/dvb/adapterX/dvr0 for TS recording\n"
-    "     -p        : add pat and pmt to TS recording (implies -r)\n"
-    "     -s        : increases silence (can be used more than once)\n"
-    "     -H        : human readable output\n"
-    "     -F        : set up frontend only, don't touch demux\n"
-    "     -t number : timeout (seconds)\n"
-    "     -o file   : output filename (use -o - for stdout)\n"
-    "     -O        : Channel configuration is using the old format\n"
-    "     -h -?     : display this help and exit\n";
+static error_t parse_opt(int k, char *optarg, struct argp_state *state)
+{
+	struct arguments *args = state->input;
+
+	switch (k) {
+	case 'a':
+		args->adapter = strtoul(optarg, NULL, 0);
+		break;
+	case 'f':
+		args->frontend = strtoul(optarg, NULL, 0);
+		break;
+	case 'd':
+		args->demux = strtoul(optarg, NULL, 0);
+		break;
+	case 't':
+		args->timeout = strtoul(optarg, NULL, 0);
+		break;
+	case 'O':
+		args->old_format++;
+		break;
+	case 'o':
+		args->filename = strdup(optarg);
+		args->record = 1;
+		/* fall through */
+	case 'r':
+		args->dvr = 1;
+		break;
+	case 'p':
+		args->rec_psi = 1;
+		break;
+	case 'x':
+		args->exit_after_tuning = 1;
+		break;
+	case 'c':
+		args->confname = strdup(optarg);
+		break;
+	case 'l':
+		args->lnb_name = strdup(optarg);
+		break;
+	case 'S':
+		args->sat_number = strtoul(optarg, NULL, 0);
+		break;
+	case 'W':
+		args->diseqc_wait = strtoul(optarg, NULL, 0);
+		break;
+	case 's':
+		args->silent++;
+		break;
+	case 'F':
+		args->frontend_only = 1;
+		break;
+	case 'H':
+		args->human_readable = 1;
+		break;
+	default:
+		return ARGP_ERR_UNKNOWN;
+	};
+	return 0;
+}
 
 int main(int argc, char **argv)
 {
+	struct arguments args;
 	char *homedir = getenv("HOME");
-	char *confname = NULL;
 	char *channel = NULL;
-	char *lnb_name = NULL;
-	int adapter = 0, frontend = 0, demux = 0, dvr = 0;
-	int lnb = -1, sat_number = -1;
-	unsigned diseqc_wait = 0;
+	int lnb = -1, idx = -1;
 	uint32_t vpid = -1, apid = -1, sid = -1;
 	int pmtpid = 0;
 	int pat_fd = -1, pmt_fd = -1;
 	int audio_fd = 0, video_fd = 0;
 	int dvr_fd, file_fd;
-	int opt;
-	int record = 0;
-	int frontend_only = 0;
-	int old_format = 0;
-	char *filename = NULL;
-	int human_readable = 0, rec_psi = 0;
 	struct dvb_v5_fe_parms *parms;
+	const struct argp argp = {
+		.options = options,
+		.parser = parse_opt,
+		.doc = "DVB zap utility",
+		.args_doc = "<initial file>",
+	};
 
-	while ((opt = getopt(argc, argv, "H?hrpxRsFn:a:f:d:c:t:o:Ol:S:W:")) != -1) {
-		switch (opt) {
-		case 'a':
-			adapter = strtoul(optarg, NULL, 0);
-			break;
-		case 'f':
-			frontend = strtoul(optarg, NULL, 0);
-			break;
-		case 'd':
-			demux = strtoul(optarg, NULL, 0);
-			break;
-		case 't':
-			timeout = strtoul(optarg, NULL, 0);
-			break;
-		case 'O':
-			old_format++;
-			break;
-		case 'o':
-			filename = strdup(optarg);
-			record = 1;
-			/* fall through */
-		case 'r':
-			dvr = 1;
-			break;
-		case 'p':
-			rec_psi = 1;
-			break;
-		case 'x':
-			exit_after_tuning = 1;
-			break;
-		case 'c':
-			confname = optarg;
-			break;
-		case 'l':
-			lnb_name = optarg;
-			break;
-		case 'S':
-			sat_number = strtoul(optarg, NULL, 0);
-			break;
-		case 'W':
-			diseqc_wait = strtoul(optarg, NULL, 0);
-			break;
-		case 's':
-			silent++;
-			break;
-		case 'F':
-			frontend_only = 1;
-			break;
-		case 'H':
-			human_readable = 1;
-			break;
-		case '?':
-		case 'h':
-		default:
-			fprintf(stderr, usage, argv[0]);
-			return -1;
-		};
-	}
+	memset(&args, 0, sizeof(args));
+	args.sat_number = -1;
 
-	if (optind < argc)
-		channel = argv[optind];
+	argp_parse(&argp, argc, argv, 0, &idx, &args);
+
+	if (idx < argc)
+		channel = argv[idx];
 
 	if (!channel) {
-		fprintf(stderr, usage, argv[0]);
+		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
 		return -1;
 	}
 
-	if (lnb_name) {
-		lnb = search_lnb(lnb_name);
+	if (args.lnb_name) {
+		lnb = search_lnb(args.lnb_name);
 		if (lnb < 0) {
 			printf("Please select one of the LNBf's below:\n");
 			print_all_lnb();
@@ -435,105 +451,104 @@ int main(int argc, char **argv)
 		}
 	}
 
-	snprintf(DEMUX_DEV, sizeof(DEMUX_DEV),
-		 "/dev/dvb/adapter%i/demux%i", adapter, demux);
+	asprintf(&args.demux_dev,
+		 "/dev/dvb/adapter%i/demux%i", args.adapter, args.demux);
 
-	snprintf(DVR_DEV, sizeof(DVR_DEV),
-		 "/dev/dvb/adapter%i/dvr%i", adapter, demux);
+	asprintf(&args.dvr_dev,
+		 "/dev/dvb/adapter%i/dvr%i", args.adapter, args.demux);
 
-	if (silent < 2)
-		fprintf(stderr, "using demux '%s'\n", DEMUX_DEV);
+	if (args.silent < 2)
+		fprintf(stderr, "using demux '%s'\n", args.demux_dev);
 
-	if (!confname) {
-		int len = strlen(homedir) + strlen(CHANNEL_FILE) + 18;
+	if (!args.confname) {
 		if (!homedir)
 			ERROR("$HOME not set");
-		confname = malloc(len);
-		snprintf(confname, len, "%s/.tzap/%i/%s",
-			 homedir, adapter, CHANNEL_FILE);
-		if (access(confname, R_OK))
-			snprintf(confname, len, "%s/.tzap/%s",
-				 homedir, CHANNEL_FILE);
+		asprintf(&args.confname, "%s/.tzap/%i/%s",
+			 homedir, args.adapter, CHANNEL_FILE);
+		if (access(args.confname, R_OK))
+			asprintf(&args.confname, "%s/.tzap/%s",
+				homedir, CHANNEL_FILE);
 	}
-	printf("reading channels from file '%s'\n", confname);
+	printf("reading channels from file '%s'\n", args.confname);
 
-	parms = dvb_fe_open(adapter, frontend, 0, 0);
+	parms = dvb_fe_open(args.adapter, args.frontend, 0, 0);
 	if (!parms)
 		return -1;
 	if (lnb)
 		parms->lnb = get_lnb(lnb);
-	if (sat_number > 0)
-		parms->sat_number = sat_number % 3;
-	parms->diseqc_wait = diseqc_wait;
+	if (args.sat_number > 0)
+		parms->sat_number = args.sat_number % 3;
+	parms->diseqc_wait = args.diseqc_wait;
 
-	if (parse(confname, old_format, channel, parms, &vpid, &apid, &sid))
+	if (parse(&args, parms, channel, &vpid, &apid, &sid))
 		return -1;
 
-	if (setup_frontend(parms) < 0)
+	if (setup_frontend(&args, parms) < 0)
 		return -1;
 
-	if (frontend_only) {
-		check_frontend(parms, human_readable);
+	if (args.frontend_only) {
+		check_frontend(&args, parms);
 		dvb_fe_close(parms);
 		return 0;
 	}
 
-	if (rec_psi) {
-		pmtpid = get_pmt_pid(DEMUX_DEV, sid);
+	if (args.rec_psi) {
+		pmtpid = get_pmt_pid(args.demux_dev, sid);
 		if (pmtpid <= 0) {
 			fprintf(stderr, "couldn't find pmt-pid for sid %04x\n",
 				sid);
 			return -1;
 		}
 
-		if ((pat_fd = open(DEMUX_DEV, O_RDWR)) < 0) {
+		if ((pat_fd = open(args.demux_dev, O_RDWR)) < 0) {
 			perror("opening pat demux failed");
 			return -1;
 		}
-		if (set_pesfilter(pat_fd, 0, DMX_PES_OTHER, dvr) < 0)
+		if (set_pesfilter(pat_fd, 0, DMX_PES_OTHER, args.dvr) < 0)
 			return -1;
 
-		if ((pmt_fd = open(DEMUX_DEV, O_RDWR)) < 0) {
+		if ((pmt_fd = open(args.demux_dev, O_RDWR)) < 0) {
 			perror("opening pmt demux failed");
 			return -1;
 		}
-		if (set_pesfilter(pmt_fd, pmtpid, DMX_PES_OTHER, dvr) < 0)
+		if (set_pesfilter(pmt_fd, pmtpid, DMX_PES_OTHER, args.dvr) < 0)
 			return -1;
 	}
 
-	if ((video_fd = open(DEMUX_DEV, O_RDWR)) < 0) {
-		PERROR("failed opening '%s'", DEMUX_DEV);
+	if ((video_fd = open(args.demux_dev, O_RDWR)) < 0) {
+		PERROR("failed opening '%s'", args.demux_dev);
 		return -1;
 	}
 
-	if (silent < 2)
+	if (args.silent < 2)
 		fprintf(stderr, "video pid 0x%04x, audio pid 0x%04x\n", vpid,
 			apid);
 
-	if (set_pesfilter(video_fd, vpid, DMX_PES_VIDEO, dvr) < 0)
+	if (set_pesfilter(video_fd, vpid, DMX_PES_VIDEO, args.dvr) < 0)
 		return -1;
 
-	if ((audio_fd = open(DEMUX_DEV, O_RDWR)) < 0) {
-		PERROR("failed opening '%s'", DEMUX_DEV);
+	if ((audio_fd = open(args.demux_dev, O_RDWR)) < 0) {
+		PERROR("failed opening '%s'", args.demux_dev);
 		return -1;
 	}
 
-	if (set_pesfilter(audio_fd, apid, DMX_PES_AUDIO, dvr) < 0)
+	if (set_pesfilter(audio_fd, apid, DMX_PES_AUDIO, args.dvr) < 0)
 		return -1;
 
 	signal(SIGALRM, do_timeout);
-	if (timeout > 0)
-		alarm(timeout);
+	if (args.timeout > 0)
+		alarm(args.timeout);
 
-	if (record) {
-		if (filename != NULL) {
-			if (strcmp(filename, "-") != 0) {
+	if (args.record) {
+		if (args.filename != NULL) {
+			if (strcmp(args.filename, "-") != 0) {
 				file_fd =
-				    open(filename,
+				    open(args.filename,
 					 O_WRONLY | O_LARGEFILE | O_CREAT,
 					 0644);
 				if (file_fd < 0) {
-					PERROR("open of '%s' failed", filename);
+					PERROR("open of '%s' failed",
+					       args.filename);
 					return -1;
 				}
 			} else {
@@ -544,19 +559,19 @@ int main(int argc, char **argv)
 			return -1;
 		}
 
-		if ((dvr_fd = open(DVR_DEV, O_RDONLY)) < 0) {
-			PERROR("failed opening '%s'", DVR_DEV);
+		if ((dvr_fd = open(args.dvr_dev, O_RDONLY)) < 0) {
+			PERROR("failed opening '%s'", args.dvr_dev);
 			return -1;
 		}
-		if (silent < 2)
-			print_frontend_stats(parms, human_readable);
+		if (args.silent < 2)
+			print_frontend_stats(parms, args.human_readable);
 
-		copy_to_file(dvr_fd, file_fd);
+		copy_to_file(dvr_fd, file_fd, args.timeout, args.silent);
 
-		if (silent < 2)
-			print_frontend_stats(parms, human_readable);
+		if (args.silent < 2)
+			print_frontend_stats(parms, args.human_readable);
 	} else {
-		check_frontend(parms, human_readable);
+		check_frontend(&args, parms);
 	}
 
 	close(pat_fd);
