@@ -55,12 +55,15 @@ struct arguments {
 	unsigned diseqc_wait, silent, frontend_only;
 	unsigned timeout, old_format, dvr, rec_psi, exit_after_tuning;
 	unsigned human_readable, record;
+	unsigned n_apid, n_vpid;
 };
 
 static const struct argp_option options[] = {
 	{"adapter",	'a', "adapter#",		0, "use given adapter (default 0)", 0},
 	{"frontend",	'f', "frontend#",		0, "use given frontend (default 0)", 0},
 	{"demux",	'd', "demux#",			0, "use given demux (default 0)", 0},
+	{"audio_pid",	'A', "audio_pid#",		0, "audio pid program to use (default 0)", 0},
+	{"video_pid",	'V', "video_pid#",		0, "video pid program to use (default 0)", 0},
 	{"lnbf",	'l', "LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
 	{"sat_number",	'S', "satellite_number",	0, "satellite number. If not specified, disable DISEqC", 0},
 	{"wait",	'W', "time",			0, "adds aditional wait time for DISEqC command completion", 0},
@@ -153,10 +156,18 @@ static int parse(struct arguments *args,
 		return -3;
 	}
 
-	if (entry->video_pid)
-		*vpid = entry->video_pid[0];
-	if (entry->audio_pid)
+	if (entry->video_pid) {
+		if (args->n_vpid < entry->video_pid_len)
+			*vpid = entry->video_pid[args->n_vpid];
+		else
+			*vpid = entry->video_pid[0];
+	}
+	if (entry->audio_pid) {
+		if (args->n_apid < entry->audio_pid_len)
+			*apid = entry->audio_pid[args->n_apid];
+		else
 		*apid = entry->audio_pid[0];
+	}
 	*sid = entry->service_id;
 
 	/* First of all, set the delivery system */
@@ -401,6 +412,11 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'H':
 		args->human_readable = 1;
 		break;
+	case 'A':
+		args->n_apid = strtoul(optarg, NULL, 0);
+		break;
+	case 'V':
+		args->n_vpid = strtoul(optarg, NULL, 0);
 	default:
 		return ARGP_ERR_UNKNOWN;
 	};
@@ -413,7 +429,7 @@ int main(int argc, char **argv)
 	char *homedir = getenv("HOME");
 	char *channel = NULL;
 	int lnb = -1, idx = -1;
-	uint32_t vpid = -1, apid = -1, sid = -1;
+	int vpid = -1, apid = -1, sid = -1;
 	int pmtpid = 0;
 	int pat_fd = -1, pmt_fd = -1;
 	int audio_fd = 0, video_fd = 0;
@@ -493,6 +509,11 @@ int main(int argc, char **argv)
 	}
 
 	if (args.rec_psi) {
+		if (sid < 0) {
+			fprintf(stderr, "Service id was not specified at the file\n",
+				sid);
+			return -1;
+		}
 		pmtpid = get_pmt_pid(args.demux_dev, sid);
 		if (pmtpid <= 0) {
 			fprintf(stderr, "couldn't find pmt-pid for sid %04x\n",
@@ -515,25 +536,28 @@ int main(int argc, char **argv)
 			return -1;
 	}
 
-	if ((video_fd = open(args.demux_dev, O_RDWR)) < 0) {
-		PERROR("failed opening '%s'", args.demux_dev);
-		return -1;
+	if (vpid >= 0) {
+		if (args.silent < 2)
+			fprintf(stderr, "video pid %d\n", vpid);
+		if ((video_fd = open(args.demux_dev, O_RDWR)) < 0) {
+			PERROR("failed opening '%s'", args.demux_dev);
+			return -1;
+		}
+		if (set_pesfilter(video_fd, vpid, DMX_PES_VIDEO, args.dvr) < 0)
+			return -1;
 	}
 
-	if (args.silent < 2)
-		fprintf(stderr, "video pid 0x%04x, audio pid 0x%04x\n", vpid,
-			apid);
+	if (apid >= 0) {
+		if (args.silent < 2)
+			fprintf(stderr, "audio pid %d\n", apid);
+		if ((audio_fd = open(args.demux_dev, O_RDWR)) < 0) {
+			PERROR("failed opening '%s'", args.demux_dev);
+			return -1;
+		}
 
-	if (set_pesfilter(video_fd, vpid, DMX_PES_VIDEO, args.dvr) < 0)
-		return -1;
-
-	if ((audio_fd = open(args.demux_dev, O_RDWR)) < 0) {
-		PERROR("failed opening '%s'", args.demux_dev);
-		return -1;
+		if (set_pesfilter(audio_fd, apid, DMX_PES_AUDIO, args.dvr) < 0)
+			return -1;
 	}
-
-	if (set_pesfilter(audio_fd, apid, DMX_PES_AUDIO, args.dvr) < 0)
-		return -1;
 
 	signal(SIGALRM, do_timeout);
 	if (args.timeout > 0)

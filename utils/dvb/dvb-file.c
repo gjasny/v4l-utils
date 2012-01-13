@@ -296,7 +296,7 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 
 	p = strtok(value," \t");
 	if (!p)
-		return -2;
+		return 0;
 	while (p) {
 		pid = realloc(pid, (len + 1) * sizeof (*pid));
 		pid[len] = atol(p);
@@ -304,10 +304,13 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 		len++;
 	}
 
-	if (is_video)
+	if (is_video) {
 		entry->video_pid = pid;
-	else
+		entry->video_pid_len = len;
+	} else {
 		entry->audio_pid = pid;
+		entry->audio_pid_len = len;
+	}
 
 	return 0;
 }
