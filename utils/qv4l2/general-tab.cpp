@@ -404,7 +404,8 @@ void GeneralTab::updateVideoInput()
 	int input;
 	v4l2_input in;
 
-	g_input(input);
+	if (!g_input(input))
+		return;
 	enum_input(in, true, input);
 	m_videoInput->setCurrentIndex(input);
 	if (m_tvStandard)
@@ -418,7 +419,8 @@ void GeneralTab::updateVideoOutput()
 	int output;
 	v4l2_output out;
 
-	g_output(output);
+	if (!g_output(output))
+		return;
 	enum_output(out, true, output);
 	m_videoOutput->setCurrentIndex(output);
 	if (m_tvStandard)
