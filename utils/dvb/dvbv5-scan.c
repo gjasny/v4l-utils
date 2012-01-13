@@ -38,14 +38,42 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <argp.h>
 
 #include <linux/dvb/dmx.h>
 #include "dvb-file.h"
 #include "dvb-demux.h"
 #include "libscan.h"
 
-static char DEMUX_DEV[80];
-static char DVR_DEV[80];
+#define PROGRAM_NAME	"dvbv5-scan"
+#define DEFAULT_OUTPUT  "dvb_channel.conf"
+
+const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
+
+struct arguments {
+	char *confname, *lnb_name, *output, *demux_dev;
+	unsigned adapter, frontend, demux, get_detected, get_nit, format;
+	int lnb, sat_number;
+	unsigned diseqc_wait;
+};
+
+static const struct argp_option options[] = {
+	{"adapter",	'a',	"adapter#",		0, "use given adapter (default 0)", 0},
+	{"frontend",	'f',	"frontend#",		0, "use given frontend (default 0)", 0},
+	{"demux",	'd',	"demux#",		0, "use given demux (default 0)", 0},
+	{"lnbf",	'l',	"LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
+	{"sat_number",	'S',	"satellite_number",	0, "satellite number. If not specified, disable DISEqC", 0},
+	{"wait",	'W',	"time",			0, "adds aditional wait time for DISEqC command completion", 0},
+	{"nit",		'N',	NULL,			0, "use data from NIT table on the output file", 0},
+	{"get_frontend",'G',	NULL,			0, "use data from get_frontend on the output file", 0},
+	{"verbose",	'v',	NULL,			0, "be (very) verbose", 0},
+	{"output",	'o',	"file",			0, "output filename (default: " DEFAULT_OUTPUT ")", 0},
+	{"old-format",	'O',	NULL,			0, "uses old transponder/channel format", 0},
+	{"zap",		'z',	"file",			0, "uses zap services file, discarding video/audio pid's", 0},
+	{ 0, 0, 0, 0, 0, 0 }
+};
+
 static int verbose = 0;
 #define CHANNEL_FILE "channels.conf"
 
@@ -173,22 +201,22 @@ static void add_other_freq_entries(struct dvb_file *dvb_file,
 }
 
 
-static int run_scan(const char *fname, int format,
-		    struct dvb_v5_fe_parms *parms,
-		    int get_detected, int get_nit)
+static int run_scan(struct arguments *args,
+		    struct dvb_v5_fe_parms *parms)
 {
 	struct dvb_file *dvb_file = NULL, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
 	int i, rc, count = 0;
 	uint32_t freq, sys;
 
-	switch (format) {
+	switch (args->format) {
 	case 0:
 	default:
-		dvb_file = read_dvb_file(fname);
+		dvb_file = read_dvb_file(args->confname);
 		break;
 	case 1:			/* DVB channel/transponder old format */
-		dvb_file = parse_format_oneline(fname, " \n", SYS_UNDEFINED,
+		dvb_file = parse_format_oneline(args->confname, " \n",
+						SYS_UNDEFINED,
 						channel_formats);
 		break;
 	case 2: 			/* DVB old zap format */
@@ -212,7 +240,8 @@ static int run_scan(const char *fname, int format,
 			ERROR("Doesn't know how to emulate the delivery system");
 			return -1;
 		}
-		dvb_file = parse_format_oneline(fname, ":", sys, zap_formats);
+		dvb_file = parse_format_oneline(args->confname, ":", sys,
+						zap_formats);
 		break;
 	}
 	if (!dvb_file)
@@ -287,7 +316,7 @@ static int run_scan(const char *fname, int format,
 		if (rc < 0)
 			continue;
 
-		dvb_desc = get_dvb_ts_tables(DEMUX_DEV, verbose);
+		dvb_desc = get_dvb_ts_tables(args->demux_dev, verbose);
 		if (!dvb_desc)
 			continue;
 
@@ -303,7 +332,7 @@ static int run_scan(const char *fname, int format,
 		}
 
 		store_dvb_channel(&dvb_file_new, parms, dvb_desc,
-				  get_detected, get_nit);
+				  args->get_detected, args->get_nit);
 
 		add_other_freq_entries(dvb_file, dvb_desc);
 
@@ -311,7 +340,7 @@ static int run_scan(const char *fname, int format,
 	}
 
 	if (dvb_file_new)
-		write_dvb_file("dvb_channels.conf", dvb_file_new);
+		write_dvb_file(args->output, dvb_file_new);
 
 	dvb_file_free(dvb_file);
 	if (dvb_file_new)
@@ -319,79 +348,68 @@ static int run_scan(const char *fname, int format,
 	return 0;
 }
 
-static char *usage =
-    "usage:\n"
-    "       dvbv5-scan [options] <channels_file>\n"
-    "        scan DVB services using the channel file\n"
-    "     -a number : use given adapter (default 0)\n"
-    "     -f number : use given frontend (default 0)\n"
-    "     -d number : use given demux (default 0)\n"
-    "     -l LNBf   : type of LNBf to use. 'help' lists the available ones\n"
-    "     -S number : satellite number. If not specified, disable DISEqC\n"
-    "     -W number : adds aditional wait time for DISEqC command completion\n"
-    "     -N        : use data from NIT table on the output file\n"
-    "     -G        : use data from get_frontend on the output file\n"
-    "     -v        : be (very) verbose\n"
-    "     -o file   : output filename (use -o - for stdout)\n"
-    "     -O        : uses old channel format\n"
-    "     -z        : uses zap services file, discarding video/audio pid's\n"
-    "     -h -?     : display this help and exit\n";
+static error_t parse_opt(int k, char *optarg, struct argp_state *state)
+{
+	struct arguments *args = state->input;
+	switch (k) {
+	case 'a':
+		args->adapter = strtoul(optarg, NULL, 0);
+		break;
+	case 'f':
+		args->frontend = strtoul(optarg, NULL, 0);
+		break;
+	case 'd':
+		args->demux = strtoul(optarg, NULL, 0);
+		break;
+	case 'O':
+		args->format = 1;
+		break;
+	case 'z':
+		args->format = 2;
+		break;
+	case 'l':
+		args->lnb_name = optarg;
+		break;
+	case 'S':
+		args->sat_number = strtoul(optarg, NULL, 0);
+		break;
+	case 'W':
+		args->diseqc_wait = strtoul(optarg, NULL, 0);
+		break;
+	case 'N':
+		args->get_nit++;
+		break;
+	case 'G':
+		args->get_detected++;
+		break;
+	case 'v':
+		verbose++;
+		break;
+	default:
+		return ARGP_ERR_UNKNOWN;
+	};
+	return 0;
+}
 
 int main(int argc, char **argv)
 {
-	char *confname = NULL, *lnb_name = NULL;
-	int adapter = 0, frontend = 0, demux = 0;
-	int get_detected = 0, get_nit = 0;
-	int lnb = -1, sat_number = -1;
-	unsigned diseqc_wait = 0;
-	int opt, format = 0;
-	struct dvb_v5_fe_parms *parms;
+	struct arguments args;
+	int lnb = -1,idx = -1;
+	const struct argp argp = {
+		.options = options,
+		.parser = parse_opt,
+		.doc = "scan DVB services using the channel file",
+		.args_doc = "<initial file>",
+	};
 
-	while ((opt = getopt(argc, argv, "H?ha:f:d:vzOl:S:W:NG")) != -1) {
-		switch (opt) {
-		case 'a':
-			adapter = strtoul(optarg, NULL, 0);
-			break;
-		case 'f':
-			frontend = strtoul(optarg, NULL, 0);
-			break;
-		case 'd':
-			demux = strtoul(optarg, NULL, 0);
-			break;
-		case 'O':
-			format = 1;
-			break;
-		case 'z':
-			format = 2;
-			break;
-		case 'l':
-			lnb_name = optarg;
-			break;
-		case 'S':
-			sat_number = strtoul(optarg, NULL, 0);
-			break;
-		case 'W':
-			diseqc_wait = strtoul(optarg, NULL, 0);
-			break;
-		case 'N':
-			get_nit++;
-			break;
-		case 'G':
-			get_detected++;
-			break;
-		case 'v':
-			verbose++;
-			break;
-		case '?':
-		case 'h':
-		default:
-			fprintf(stderr, usage, argv[0]);
-			return -1;
-		};
-	}
+	memset(&args, 0, sizeof(args));
+	args.sat_number = -1;
+	args.output = DEFAULT_OUTPUT;
 
-	if (lnb_name) {
-		lnb = search_lnb(lnb_name);
+	argp_parse(&argp, argc, argv, 0, &idx, &args);
+
+	if (args.lnb_name) {
+		lnb = search_lnb(args.lnb_name);
 		if (lnb < 0) {
 			printf("Please select one of the LNBf's below:\n");
 			print_all_lnb();
@@ -402,35 +420,35 @@ int main(int argc, char **argv)
 		}
 	}
 
-	snprintf(DEMUX_DEV, sizeof(DEMUX_DEV),
-		 "/dev/dvb/adapter%i/demux%i", adapter, demux);
+	if (idx < argc)
+		args.confname = argv[idx];
 
-	snprintf(DVR_DEV, sizeof(DVR_DEV),
-		 "/dev/dvb/adapter%i/dvr%i", adapter, demux);
-
-	if (verbose)
-		fprintf(stderr, "using demux '%s'\n", DEMUX_DEV);
-
-	if (optind < argc)
-		confname = argv[optind];
-
-	if (!confname) {
-		fprintf(stderr, usage, argv[0]);
+	if (!args.confname || idx < 0) {
+		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
 		return -1;
 	}
 
-	parms = dvb_fe_open(adapter, frontend, verbose, 0);
+	asprintf(&args.demux_dev,
+		 "/dev/dvb/adapter%i/demux%i", args.adapter, args.demux);
+
+	if (verbose)
+		fprintf(stderr, "using demux '%s'\n", args.demux_dev);
+
+	parms = dvb_fe_open(args.adapter, args.frontend, verbose, 0);
 	if (!parms)
 		return -1;
 	if (lnb)
 		parms->lnb = get_lnb(lnb);
-	if (sat_number > 0)
-		parms->sat_number = sat_number % 3;
-	parms->diseqc_wait = diseqc_wait;
+	if (args.sat_number > 0)
+		parms->sat_number = args.sat_number % 3;
+	parms->diseqc_wait = args.diseqc_wait;
 
-	if (run_scan(confname, format, parms, get_detected, get_nit))
+	if (run_scan(&args, parms))
 		return -1;
 
 	dvb_fe_close(parms);
+
+	free(args.demux_dev);
+
 	return 0;
 }
