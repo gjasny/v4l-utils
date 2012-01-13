@@ -282,8 +282,13 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 		return 0;
 	}
 
+	/*
+	 * If the key is not known, just discard.
+	 * This way, it provides forward compatibility with new keys
+	 * that may be added in the future.
+	 */
 	if (!is_video && !is_audio)
-		return -1;
+		return 0;
 
 	/* Video and audio may have multiple values */
 
