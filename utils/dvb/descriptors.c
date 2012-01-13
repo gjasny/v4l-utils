@@ -169,12 +169,27 @@ static int bcd_to_int(const unsigned char *bcd, int bits)
 	return ret;
 }
 
+static int add_frequency(struct nit_table *nit_table, uint32_t freq)
+{
+	unsigned n = nit_table->frequency_len;
+
+	nit_table->frequency = realloc(nit_table->frequency,
+				       (n + 1) * sizeof(*nit_table->frequency));
+
+	if (!nit_table->frequency)
+		return -ENOMEM;
+
+	nit_table->frequency[n] = freq;
+	nit_table->frequency_len++;
+
+	return 0;
+}
+
 static void parse_NIT_ISDBT(struct nit_table *nit_table,
 			     const unsigned char *buf, int dlen,
 			     int verbose)
 {
-	uint32_t **freq = &nit_table->frequency;
-	unsigned *nfreq = &nit_table->frequency_len;
+	uint32_t freq;
 	static const uint32_t interval[] = {
 		[0] = GUARD_INTERVAL_1_32,
 		[1] = GUARD_INTERVAL_1_16,
@@ -200,12 +215,11 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 			tmp, 1 + (buf[3] >> 6));
 	buf += 4;
 	for (i = 4; i < dlen; i += 2) {
-		*freq = realloc(*freq, (*nfreq + 1));
-		nit_table->frequency[*nfreq] = buf[i] << 8 | buf[i + 1];
-;
+		freq = buf[i] << 8 | buf[i + 1];
+		add_frequency(nit_table, freq);
+
 		if (verbose)
-			printf("Frequency %d\n", nit_table->frequency[*nfreq]);
-		(*nfreq)++;
+			printf("Frequency %d\n", freq);
 		buf += 2;
 	}
 }
@@ -230,7 +244,8 @@ static void parse_NIT_DVBS(struct nit_table *nit_table,
 			     int verbose)
 {
 	unsigned orbit, west;
-	uint32_t **freq = &nit_table->frequency;
+	uint32_t freq;
+
 	static const unsigned polarization[] = {
 		[0] = POLARIZATION_H,
 		[1] = POLARIZATION_V,
@@ -250,10 +265,8 @@ static void parse_NIT_DVBS(struct nit_table *nit_table,
 		[3] = QAM_16
 	};
 
-	*freq = realloc(*freq, 1);
-	nit_table->frequency_len = 1;
-	nit_table->frequency[0] = bcd_to_int(&buf[2], 32) * 10; /* KHz */
-
+	freq =  bcd_to_int(&buf[2], 32) * 10; /* KHz */
+	add_frequency(nit_table, freq);
 
 	orbit = bcd_to_int(&buf[6], 16);
 	west = buf[8] >> 7;
@@ -274,7 +287,7 @@ static void parse_NIT_DVBS(struct nit_table *nit_table,
 	if (verbose) {
 		printf("DVB-%s orbit %s, freq %d, pol %d, modulation %d, rolloff %d\n",
 		       (nit_table->delivery_system == SYS_DVBS) ? "S" : "S2",
-		       nit_table->orbit, nit_table->frequency[0],
+		       nit_table->orbit, freq,
 		       nit_table->pol, nit_table->modulation,
 		       nit_table->rolloff);
 		printf("Symbol rate %d, fec_inner %d\n",
@@ -286,7 +299,7 @@ static void parse_NIT_DVBC(struct nit_table *nit_table,
 			     const unsigned char *buf, int dlen,
 			     int verbose)
 {
-	uint32_t **freq = &nit_table->frequency;
+	uint32_t freq;
 	static const unsigned modulation[] = {
 		[0] = QAM_AUTO,
 		[1] = QAM_16,
@@ -297,9 +310,8 @@ static void parse_NIT_DVBC(struct nit_table *nit_table,
 		[6 ...255] = QAM_AUTO	/* Reserved for future usage*/
 	};
 
-	*freq = realloc(*freq, 1);
-	nit_table->frequency_len = 1;
-	nit_table->frequency[0] = bcd_to_int(&buf[2], 32) * 100; /* KHz */
+	freq = bcd_to_int(&buf[2], 32) * 100; /* KHz */
+	add_frequency(nit_table, freq);
 
 	nit_table->fec_outer = dvbc_dvbs_freq_inner[buf[7] & 0x07];
 	nit_table->modulation = modulation[buf[8]];
@@ -310,7 +322,7 @@ static void parse_NIT_DVBC(struct nit_table *nit_table,
 
 	if (verbose) {
 		printf("DVB-C freq %d, modulation %d, Symbol rate %d\n",
-			nit_table->frequency[0],
+		       freq,
 		       nit_table->modulation,
 		       nit_table->symbol_rate);
 		printf("fec_inner %d, fec_inner %d\n",
@@ -322,7 +334,7 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 			     const unsigned char *buf, int dlen,
 			     int verbose)
 {
-	uint32_t **freq = &nit_table->frequency;
+	uint32_t freq;
 	static const unsigned bw[] = {
 		[0] = 8000000,
 		[1] = 7000000,
@@ -363,10 +375,9 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 		[3] = TRANSMISSION_MODE_AUTO,	/* Reserved */
 	};
 
-	*freq = realloc(*freq, 1);
-	nit_table->frequency_len = 1;
-        nit_table->frequency[0]  = 10 * ((buf[2] << 24) | (buf[3] << 16) |
-                                         (buf[4] << 8)  |  buf[5]);
+	freq = (buf[2] << 24) | (buf[3] << 16) | (buf[4] << 8)  |  buf[5];
+	freq *= 10; /* Hz */
+	add_frequency(nit_table, freq);
 
 	nit_table->has_dvbt = 1;
 	if (nit_table->delivery_system != SYS_DVBT2)
@@ -387,7 +398,7 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 
 	if (verbose) {
 		printf("DVB-T freq %d, bandwidth %d modulation %d\n",
-		       nit_table->frequency[0],
+		       freq,
 		       nit_table->bandwidth,
 		       nit_table->modulation);
 		printf("hierarchy %d, code rate HP %d, LP %d, guard interval %d\n",
@@ -456,21 +467,16 @@ static void parse_freq_list(struct nit_table *nit_table,
 			    int verbose)
 {
 	int i;
-	uint32_t **freq = &nit_table->other_frequency;
-	unsigned *nfreq = &nit_table->frequency_len;
+	uint32_t freq;
 
 	buf += 3;
 	for (i = 3; i < dlen; i += 4) {
-		*freq = realloc(*freq, (*nfreq + 1));
+		freq = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
+		freq *= 10;	/* Hz */
+		add_frequency(nit_table, freq);
 
-		nit_table->frequency[*nfreq] = 10 *(
-					       (buf[0] << 24) |
-					       (buf[1] << 16) |
-					       (buf[2] << 8)  |
-					       buf[3]);
 		if (verbose)
-			printf("Frequency %d\n", nit_table->frequency[*nfreq]);
-		(*nfreq)++;
+			printf("Frequency %d\n", freq);
 		buf += 4;
 	}
 }
@@ -485,7 +491,7 @@ static void parse_partial_reception(struct nit_table *nit_table,
 
 	buf += 2;
 	for (i = 0; i < dlen; i += 2) {
-		*pid = realloc(*pid, (*n + 1));
+		*pid = realloc(*pid, (*n + 1) * sizeof(**pid));
 		nit_table->partial_reception[*n] = buf[i] << 8 | buf[i + 1];
 		if (verbose)
 			printf("Service 0x%04x has partial reception\n",
@@ -571,7 +577,7 @@ static void parse_lcn(struct nit_table *nit_table,
 }
 
 static void parse_service(struct service_table *service_table,
-		          const unsigned char *buf, int dlen, int verbose)
+			  const unsigned char *buf, int dlen, int verbose)
 {
 	service_table->type = buf[2];
 
@@ -669,7 +675,7 @@ void parse_descriptor(enum dvb_tables type,
 				break;
 			}
 			parse_net_name(&dvb_desc->nit_table, buf, dlen,
-                                       dvb_desc->verbose);
+				       dvb_desc->verbose);
 			break;
 
 		/* DVB NIT decoders */
