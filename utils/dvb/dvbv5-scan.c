@@ -185,18 +185,75 @@ static void add_new_freq(struct dvb_entry *entry, uint32_t freq)
 }
 
 static void add_other_freq_entries(struct dvb_file *dvb_file,
+				    struct dvb_v5_fe_parms *parms,
 				   struct dvb_descriptors *dvb_desc)
 {
 	int i;
-	uint32_t freq;
+	uint32_t freq, shift = 0, bw = 0, symbol_rate, ro;
+	int rolloff = 0;
 
 	if (!dvb_desc->nit_table.frequency)
 		return;
 
+	/* Need to handle only cable/satellite and ATSC standards */
+	switch (parms->current_sys) {
+	case SYS_DVBC_ANNEX_A:
+		rolloff = 115;
+		break;
+	case SYS_DVBC_ANNEX_C:
+		rolloff = 115;
+		break;
+	case SYS_DVBS:
+	case SYS_ISDBS:	/* FIXME: not sure if this rollof is right for ISDB-S */
+		rolloff = 135;
+		break;
+	case SYS_DVBS2:
+	case SYS_DSS:
+	case SYS_TURBO:
+		dvb_fe_retrieve_parm(parms, DTV_ROLLOFF, &ro);
+		switch (ro) {
+		case ROLLOFF_20:
+			rolloff = 120;
+			break;
+		case ROLLOFF_25:
+			rolloff = 125;
+			break;
+		default:
+		case ROLLOFF_AUTO:
+		case ROLLOFF_35:
+			rolloff = 135;
+			break;
+		}
+		break;
+	case SYS_ATSC:
+	case SYS_DVBC_ANNEX_B:
+		bw = 6000000;
+		break;
+	default:
+		break;
+	}
+	if (rolloff) {
+		/*
+		 * This is not 100% correct for DVB-S2, as there is a bw
+		 * guard interval there but it should be enough for the
+		 * purposes of estimating a max frequency shift here.
+		 */
+		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &symbol_rate);
+		bw = (symbol_rate * rolloff) / 100;
+	}
+	if (!bw)
+		dvb_fe_retrieve_parm(parms, DTV_BANDWIDTH_HZ, &bw);
+
+	/*
+	 * If the max frequency shift between two frequencies is below
+	 * than the used bandwidth / 8, it should be the same channel.
+	 */
+	shift = bw / 8;
+
 	for (i = 0; i < dvb_desc->nit_table.frequency_len; i++) {
 		freq = dvb_desc->nit_table.frequency[i];
 
-		if (new_freq_is_needed(dvb_file->first_entry, freq, 0))
+		if (new_freq_is_needed(dvb_file->first_entry, freq, shift))
 			add_new_freq(dvb_file->first_entry, freq);
 	}
 }
@@ -336,7 +393,7 @@ static int run_scan(struct arguments *args,
 				  args->get_detected, args->get_nit);
 
 		if (!args->dont_add_new_freqs)
-			add_other_freq_entries(dvb_file, dvb_desc);
+			add_other_freq_entries(dvb_file, parms, dvb_desc);
 
 		free_dvb_ts_tables(dvb_desc);
 	}
