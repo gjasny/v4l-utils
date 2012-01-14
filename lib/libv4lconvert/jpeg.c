@@ -386,6 +386,7 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 		}
 
 		data->cinfo.raw_data_out = TRUE;
+		data->cinfo.do_fancy_upsampling = FALSE;
 		jpeg_start_decompress(&data->cinfo);
 		/* Make libjpeg errors report that we've got some data */
 		data->jerr_errno = EPIPE;
