@@ -11,10 +11,42 @@ enum dvb_tables {
 
 enum descriptors {
 	/* ISO/IEC 13818-1 */
-
+	video_stream_descriptor				= 0x02,
+	audio_stream_descriptor				= 0x03,
+	hierarchy_descriptor				= 0x04,
 	dvbpsi_registration_descriptor			= 0x05,
 	ds_alignment_descriptor				= 0x06,
+	target_background_grid_descriptor		= 0x07,
+	video_window_descriptor				= 0x08,
+	conditional_access_descriptor			= 0x09,
 	iso639_language_descriptor			= 0x0a,
+	system_clock_descriptor				= 0x0b,
+	multiplex_buffer_utilization_descriptor		= 0x0c,
+	copyright_descriptor				= 0x0d,
+	maximum_bitrate_descriptor			= 0x0e,
+	private_data_indicator_descriptor		= 0x0f,
+	smoothing_buffer_descriptor			= 0x10,
+	std_descriptor					= 0x11,
+	ibp_descriptor					= 0x12,
+
+	mpeg4_video_descriptor				= 0x1b,
+	mpeg4_audio_descriptor				= 0x1c,
+	iod_descriptor					= 0x1d,
+	sl_descriptor					= 0x1e,
+	fmc_descriptor					= 0x1f,
+	external_es_id_descriptor			= 0x20,
+	muxcode_descriptor				= 0x21,
+	fmxbuffersize_descriptor			= 0x22,
+	multiplexbuffer_descriptor			= 0x23,
+	content_labeling_descriptor			= 0x24,
+	metadata_pointer_descriptor			= 0x25,
+	metadata_descriptor				= 0x26,
+	metadata_std_descriptor				= 0x27,
+	AVC_video_descriptor				= 0x28,
+	ipmp_descriptor					= 0x29,
+	AVC_timing_and_HRD_descriptor			= 0x2a,
+	mpeg2_aac_audio_descriptor			= 0x2b,
+	flexmux_timing_descriptor			= 0x2c,
 
 	/* ETSI EN 300 468 V1.11.1 (2010-04) */
 
@@ -94,13 +126,10 @@ enum descriptors {
 
 	/* ISDB Descriptors, as defined on ABNT NBR 15603-1 2007 */
 
-	conditional_access_descriptor			= 0x09,
-	copyright_descriptor				= 0x0d,
 	carousel_id_descriptor				= 0x13,
 	association_tag_descriptor			= 0x14,
 	deferred_association_tags_descriptor		= 0x15,
-	AVC_video_descriptor				= 0x28,
-	AVC_timing_and_HRD_descriptor			= 0x2a,
+
 	hierarchical_transmission_descriptor		= 0xc0,
 	digital_copy_control_descriptor			= 0xc1,
 	network_identifier_descriptor			= 0xc2,
