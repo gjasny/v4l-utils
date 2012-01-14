@@ -99,7 +99,7 @@ static int timeout_flag = 0;
 static int parse(struct arguments *args,
 		 struct dvb_v5_fe_parms *parms,
 		 char *channel,
-		 uint32_t *vpid, uint32_t *apid, uint32_t *sid)
+		 int *vpid, int *apid, int *sid)
 {
 	struct dvb_file *dvb_file;
 	struct dvb_entry *entry;
@@ -510,7 +510,7 @@ int main(int argc, char **argv)
 
 	if (args.rec_psi) {
 		if (sid < 0) {
-			fprintf(stderr, "Service id was not specified at the file\n",
+			fprintf(stderr, "Service id 0x%04x was not specified at the file\n",
 				sid);
 			return -1;
 		}
