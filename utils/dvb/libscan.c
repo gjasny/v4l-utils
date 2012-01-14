@@ -80,6 +80,21 @@ static void add_apid(struct pid_table *pid_table, uint16_t pid, int verbose)
 	pid_table->audio_pid[i] = pid;
 }
 
+static void add_otherpid(struct pid_table *pid_table,
+			 uint8_t type, uint16_t pid, int verbose)
+{
+	int i;
+
+	if (verbose)
+		printf("pid type 0x%02x: 0x%04x\n", type, pid);
+	i = pid_table->other_el_pid_len;
+	pid_table->other_el_pid = realloc(pid_table->other_el_pid,
+		sizeof(*pid_table->other_el_pid) *
+		++pid_table->other_el_pid_len);
+
+	pid_table->other_el_pid[i].type = type;
+	pid_table->other_el_pid[i].pid = pid;
+}
 
 static void parse_pmt(struct dvb_descriptors *dvb_desc,
 		      const unsigned char *buf, int *section_length,
@@ -88,7 +103,6 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 {
 	struct pmt_table *pmt_table = &pid_table->pmt_table;
 	uint16_t len, pid;
-	int i;
 
 	pmt_table->program_number = id;
 	pmt_table->version = version;
@@ -134,18 +148,13 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 			if (has_descriptor(dvb_desc, AC_3_descriptor, &buf[5], len) |
 			    has_descriptor(dvb_desc, enhanced_AC_3_descriptor, &buf[5], len))
 				add_apid(pid_table, pid, dvb_desc->verbose);
+			else
+				add_otherpid(pid_table, buf[0], pid,
+					     dvb_desc->verbose);
 
 			break;
 		default:
-			if (dvb_desc->verbose)
-				printf("pid type 0x02x: 0x%04x\n", pid);
-			i = pid_table->other_el_pid_len;
-			pid_table->other_el_pid = realloc(pid_table->other_el_pid,
-				sizeof(*pid_table->other_el_pid) *
-				++pid_table->other_el_pid_len);
-
-			pid_table->other_el_pid[i].type = buf[0];
-			pid_table->other_el_pid[i].pid = pid;
+			add_otherpid(pid_table, buf[0], pid, dvb_desc->verbose);
 		};
 
 		parse_descriptor(PMT, dvb_desc, &buf[5], len);
