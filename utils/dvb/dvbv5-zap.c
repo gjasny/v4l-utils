@@ -40,6 +40,7 @@
 #include <linux/dvb/dmx.h>
 #include "dvb-file.h"
 #include "dvb-demux.h"
+#include "libscan.h"
 
 #define CHANNEL_FILE	"channels.conf"
 #define PROGRAM_NAME	"dvbv5-scan"
@@ -167,6 +168,19 @@ static int parse(struct arguments *args,
 			*apid = entry->audio_pid[args->n_apid];
 		else
 		*apid = entry->audio_pid[0];
+	}
+	if (entry->other_el_pid) {
+		int i, type = -1;
+		for (i = 0; i < entry->other_el_pid_len; i++) {
+			if (type != entry->other_el_pid[i].type) {
+				type = entry->other_el_pid[i].type;
+				if (i)
+					printf("\n");
+				printf("service has pid type %02x: ", type);
+			}
+			printf(" %d", entry->other_el_pid[i].pid);
+		}
+		printf("\n");
 	}
 	*sid = entry->service_id;
 

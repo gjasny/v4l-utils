@@ -209,7 +209,7 @@ static const char *pol_name[] = {
 
 static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 {
-	int i, j, len;
+	int i, j, len, type = 0, v;
 	int is_video = 0, is_audio = 0, n_prop;
 	uint16_t *pid = NULL;
 	char *p;
@@ -269,7 +269,7 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 
 	if (!strcasecmp(key, "VIDEO_PID"))
 		is_video = 1;
-	else 	if (!strcasecmp(key, "AUDIO_PID"))
+	else if (!strcasecmp(key, "AUDIO_PID"))
 		is_audio = 1;
 	else if (!strcasecmp(key, "POLARIZATION")) {
 		entry->service_id = atol(value);
@@ -280,6 +280,26 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 			return -2;
 		entry->pol = j;
 		return 0;
+	} else if (!strncasecmp(key,"PID_", 4)){
+		type = strtol(&key[4], NULL, 16);
+		if (!type)
+			return 0;
+
+		len = 0;
+
+		p = strtok(value," \t");
+		if (!p)
+			return 0;
+		while (p) {
+			entry->other_el_pid = realloc(entry->other_el_pid,
+						      (len + 1) *
+						      sizeof (*entry->other_el_pid));
+			entry->other_el_pid[len].type = type;
+			entry->other_el_pid[len].pid = atol(p);
+			p = strtok(NULL, " \t\n");
+			len++;
+		}
+		entry->other_el_pid_len = len;
 	}
 
 	/*
@@ -434,37 +454,58 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 			fprintf(fp, "[%s]\n", entry->channel);
 			if (entry->vchannel)
 				fprintf(fp, "\tVCHANNEL = %s\n", entry->vchannel);
+		} else {
+			fprintf(fp, "[CHANNEL]\n");
+		}
+
+		if (entry->service_id)
 			fprintf(fp, "\tSERVICE_ID = %d\n", entry->service_id);
 
+		if (entry->video_pid_len){
 			fprintf(fp, "\tVIDEO_PID =");
 			for (i = 0; i < entry->video_pid_len; i++)
 				fprintf(fp, " %d", entry->video_pid[i]);
 			fprintf(fp, "\n");
+		}
 
+		if (entry->audio_pid_len) {
 			fprintf(fp, "\tAUDIO_PID =");
 			for (i = 0; i < entry->audio_pid_len; i++)
 				fprintf(fp, " %d", entry->audio_pid[i]);
 			fprintf(fp, "\n");
-
-			if (entry->pol != POLARIZATION_OFF) {
-				fprintf(fp, "\tPOLARIZATION = %s\n",
-					pol_name[entry->pol]);
-			}
-
-			if (entry->sat_number >= 0) {
-				fprintf(fp, "\tSAT_NUMBER = %d\n",
-					entry->sat_number);
-			}
-
-			if (entry->diseqc_wait > 0) {
-				fprintf(fp, "\tDISEQC_WAIT = %d\n",
-					entry->diseqc_wait);
-			}
-			if (entry->lnb)
-				fprintf(fp, "\tLNB = %s\n", entry->lnb);
-		} else {
-			fprintf(fp, "[CHANNEL]\n");
 		}
+
+		if (entry->other_el_pid_len) {
+			int type = -1;
+			for (i = 0; i < entry->other_el_pid_len; i++) {
+				if (type != entry->other_el_pid[i].type) {
+					type = entry->other_el_pid[i].type;
+					if (i)
+						fprintf(fp, "\n");
+					fprintf(fp, "\tPID_%02x =", type);
+				}
+				fprintf(fp, " %d", entry->other_el_pid[i].pid);
+			}
+			fprintf(fp, "\n");
+		}
+
+		if (entry->pol != POLARIZATION_OFF) {
+			fprintf(fp, "\tPOLARIZATION = %s\n",
+				pol_name[entry->pol]);
+		}
+
+		if (entry->sat_number >= 0) {
+			fprintf(fp, "\tSAT_NUMBER = %d\n",
+				entry->sat_number);
+		}
+
+		if (entry->diseqc_wait > 0) {
+			fprintf(fp, "\tDISEQC_WAIT = %d\n",
+				entry->diseqc_wait);
+		}
+		if (entry->lnb)
+				fprintf(fp, "\tLNB = %s\n", entry->lnb);
+
 		for (i = 0; i < entry->n_props; i++) {
 			const char * const *attr_name = dvbv5_attr_names[entry->props[i].cmd];
 			if (attr_name) {
@@ -647,6 +688,18 @@ static void handle_std_specific_parms(struct dvb_entry *entry,
 	}
 }
 
+static int sort_other_el_pid(const void *a_arg, const void *b_arg)
+{
+	const struct el_pid *a = a_arg, *b = b_arg;
+	int r;
+
+	r = b->type - a->type;
+	if (r)
+		return r;
+
+	return b->pid - a->pid;
+}
+
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_descriptors *dvb_desc,
@@ -723,6 +776,14 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		for (j = 0; j < pid_table->audio_pid_len; j++)
 			entry->audio_pid[j] = pid_table->audio_pid[j];
 		entry->audio_pid_len = pid_table->audio_pid_len;
+
+		entry->other_el_pid = calloc(sizeof(*entry->other_el_pid),
+					     pid_table->other_el_pid_len);
+		memcpy(entry->other_el_pid, pid_table->other_el_pid,
+		       pid_table->other_el_pid_len * sizeof(*entry->other_el_pid));
+		entry->other_el_pid_len = pid_table->other_el_pid_len;
+		qsort(entry->other_el_pid, entry->other_el_pid_len,
+		      sizeof(*entry->other_el_pid), sort_other_el_pid);
 
 		/* Copy data from parms */
 		if (get_detected)

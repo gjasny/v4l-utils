@@ -8,13 +8,19 @@ struct pmt_table {
 	unsigned char version;
 };
 
+struct el_pid {
+	uint8_t  type;
+	uint16_t pid;
+};
+
 struct pid_table {
 	uint16_t service_id;
 	uint16_t pid;
 	struct pmt_table pmt_table;
-	unsigned video_pid_len, audio_pid_len;
+	unsigned video_pid_len, audio_pid_len, other_el_pid_len;
 	uint16_t *video_pid;
 	uint16_t *audio_pid;
+	struct el_pid *other_el_pid;
 };
 
 struct pat_table {

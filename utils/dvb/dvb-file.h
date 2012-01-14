@@ -25,7 +25,8 @@ struct dvb_entry {
 	struct dvb_entry *next;
 	uint16_t service_id;
 	uint16_t *video_pid, *audio_pid;
-	unsigned video_pid_len, audio_pid_len;
+	struct el_pid *other_el_pid;
+	unsigned video_pid_len, audio_pid_len, other_el_pid_len;
 	char *channel;
 	char *vchannel;
 
@@ -87,6 +88,8 @@ static inline void dvb_file_free(struct dvb_file *dvb_file)
 			free (entry->video_pid);
 		if (entry->audio_pid)
 			free (entry->audio_pid);
+		if (entry->other_el_pid)
+			free (entry->other_el_pid);
 		if (entry->lnb)
 			free (entry->lnb);
 		entry = next;
