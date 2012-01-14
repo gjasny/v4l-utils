@@ -19,6 +19,7 @@
     Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
+#include <config.h>
 #include <unistd.h>
 #include <features.h>	/* Uses _GNU_SOURCE to define getsubopt in stdlib.h */
 #include <stdlib.h>

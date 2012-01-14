@@ -3,6 +3,7 @@
  */
 
 #include "dvb-fe.h"
+#include <config.h>
 #include <argp.h>
 #include <stdlib.h>
 #include <stdio.h>

@@ -19,7 +19,7 @@
 
 
 #include "general-tab.h"
-#include <libv4l2util.h>
+#include "../libv4l2util/libv4l2util.h"
 
 #include <QSpinBox>
 #include <QComboBox>

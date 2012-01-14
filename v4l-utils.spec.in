@@ -1,5 +1,5 @@
 Name:           v4l-utils
-Version:        @@V4L_UTILS_VERSION@@
+Version:        @PACKAGE_VERSION@
 Release:        1%{?dist}
 Summary:        Utilities for video4linux and DVB devices
 Group:          Applications/System

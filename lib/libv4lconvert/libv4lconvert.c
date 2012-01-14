@@ -16,6 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
+#include <config.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -195,8 +196,10 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
 		tinyjpeg_set_components(data->tinyjpeg, comps, 3);
 		tinyjpeg_free(data->tinyjpeg);
 	}
+#ifdef HAVE_JPEG
 	if (data->cinfo_initialized)
 		jpeg_destroy_decompress(&data->cinfo);
+#endif // HAVE_JPEG
 	v4lconvert_helper_cleanup(data);
 	free(data->convert1_buf);
 	free(data->convert2_buf);
@@ -646,10 +649,13 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	/* JPG and variants */
 	case V4L2_PIX_FMT_MJPEG:
 	case V4L2_PIX_FMT_JPEG:
+#ifdef HAVE_JPEG
 		if (data->flags & V4LCONVERT_USE_TINYJPEG) {
+#endif // HAVE_JPEG
 			result = v4lconvert_decode_jpeg_tinyjpeg(data,
 							src, src_size, dest,
 							fmt, dest_pix_fmt, 0);
+#ifdef HAVE_JPEG
 		} else {
 			result = v4lconvert_decode_jpeg_libjpeg(data,
 							src, src_size, dest,
@@ -664,6 +670,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 							fmt, dest_pix_fmt, 0);
 			}
 		}
+#endif // HAVE_JPEG
 		break;
 	case V4L2_PIX_FMT_PJPG:
 		result = v4lconvert_decode_jpeg_tinyjpeg(data, src, src_size,
@@ -736,7 +743,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			}
 			break;
 		case V4L2_PIX_FMT_OV511:
-			if (v4lconvert_helper_decompress(data, LIBV4LCONVERTSUBDIR "/ov511-decomp",
+			if (v4lconvert_helper_decompress(data, LIBV4LCONVERT_PRIV_DIR "/ov511-decomp",
 						src, src_size, d, d_size, width, height, yvu)) {
 				/* Corrupt frame, better get another one */
 				errno = EAGAIN;
@@ -744,7 +751,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			}
 			break;
 		case V4L2_PIX_FMT_OV518:
-			if (v4lconvert_helper_decompress(data, LIBV4LCONVERTSUBDIR "/ov518-decomp",
+			if (v4lconvert_helper_decompress(data, LIBV4LCONVERT_PRIV_DIR "/ov518-decomp",
 						src, src_size, d, d_size, width, height, yvu)) {
 				/* Corrupt frame, better get another one */
 				errno = EAGAIN;

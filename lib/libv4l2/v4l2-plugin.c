@@ -16,6 +16,7 @@
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <config.h>
 #include <stdarg.h>
 #include <dlfcn.h>
 #include <fcntl.h>
@@ -45,7 +46,7 @@
    and if it was not then v4l2_* functions proceed with their usual behavior.
 */
 
-#define PLUGINS_PATTERN LIBDIR "/libv4l/plugins/*.so"
+#define PLUGINS_PATTERN LIBV4L2_PLUGIN_DIR "/*.so"
 
 static void *dev_init(int fd)
 {

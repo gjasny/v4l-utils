@@ -40,6 +40,8 @@
 #include <sys/time.h>
 #include <argp.h>
 
+#include <config.h>
+
 #include <linux/dvb/dmx.h>
 #include "dvb-file.h"
 #include "dvb-demux.h"

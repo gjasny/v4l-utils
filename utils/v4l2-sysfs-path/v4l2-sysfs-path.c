@@ -24,6 +24,7 @@
  *	Mauro Carvalho Chehab <mchehab@redhat.com>
  */
 
+#include <config.h>
 #include "../libmedia_dev/get_media_devices.h"
 #include <stdio.h>
 #include <argp.h>
