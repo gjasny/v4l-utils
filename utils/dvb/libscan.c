@@ -56,6 +56,31 @@ static void parse_pat(struct dvb_descriptors *dvb_desc,
 	dvb_desc->pat_table.pid_table_len = n;
 }
 
+static void add_vpid(struct pid_table *pid_table, uint16_t pid, int verbose)
+{
+	int i;
+
+	if (verbose)
+		printf("video pid 0x%04x\n", pid);
+	i = pid_table->video_pid_len;
+	pid_table->video_pid = realloc(pid_table->video_pid,
+		sizeof(*pid_table->video_pid) * ++pid_table->video_pid_len);
+	pid_table->video_pid[i] = pid;
+}
+
+static void add_apid(struct pid_table *pid_table, uint16_t pid, int verbose)
+{
+	int i;
+
+	if (verbose)
+		printf("audio pid 0x%04x\n", pid);
+	i = pid_table->audio_pid_len;
+	pid_table->audio_pid = realloc(pid_table->audio_pid,
+		sizeof(*pid_table->audio_pid) * ++pid_table->audio_pid_len);
+	pid_table->audio_pid[i] = pid;
+}
+
+
 static void parse_pmt(struct dvb_descriptors *dvb_desc,
 		      const unsigned char *buf, int *section_length,
 		      int id, int version,
@@ -86,31 +111,30 @@ static void parse_pmt(struct dvb_descriptors *dvb_desc,
 		pid = ((buf[1] & 0x1f) << 8) | buf[2];
 
 		switch (buf[0]) {
-		case 0x01:
-		case 0x02:
-		case 0x10:
-		case 0x1b:
-			if (dvb_desc->verbose)
-				printf("video pid 0x%04x\n", pid);
-			i = pid_table->video_pid_len;
-			pid_table->video_pid = realloc(pid_table->video_pid,
-				sizeof(*pid_table->video_pid) *
-				++pid_table->video_pid_len);
-			pid_table->video_pid[i] = pid;
+		case 0x01: /* ISO/IEC 11172-2 Video */
+		case 0x02: /* H.262, ISO/IEC 13818-2 or ISO/IEC 11172-2 video */
+			add_vpid(pid_table, pid, dvb_desc->verbose);
 			break;
-		case 0x03:
-		case 0x04:
-		case 0x0f:
-		case 0x11:
-		case 0x81:
-			if (dvb_desc->verbose)
-				printf("audio pid 0x%04x\n", pid);
-			i = pid_table->audio_pid_len;
-			pid_table->audio_pid = realloc(pid_table->audio_pid,
-				sizeof(*pid_table->audio_pid) *
-				++pid_table->audio_pid_len);
-			pid_table->audio_pid[i] = pid;
-			/* Discard audio language descriptors */
+		case 0x1b: /* H.264 AVC */
+			add_vpid(pid_table, pid, dvb_desc->verbose);
+			break;
+		case 0x03: /* ISO/IEC 11172-3 Audio */
+		case 0x04: /* ISO/IEC 13818-3 Audio */
+		case 0x0f: /* ISO/IEC 13818-7 Audio with ADTS (AAC) */
+		case 0x11: /* ISO/IEC 14496-3 Audio with the LATM */
+		case 0x81: /* user private - in general ATSC Dolby - AC-3 */
+			add_apid(pid_table, pid, dvb_desc->verbose);
+			break;
+		case 0x05: /* private sections */
+		case 0x06: /* private data */
+			/*
+			 * Those can be used by sub-titling, teletext and/or
+			 * DVB AC-3. So, need to seek for the AC-3 descriptors
+			 */
+			if (has_descriptor(dvb_desc, AC_3_descriptor, &buf[5], len) |
+			    has_descriptor(dvb_desc, enhanced_AC_3_descriptor, &buf[5], len))
+				add_apid(pid_table, pid, dvb_desc->verbose);
+
 			break;
 		default:
 			if (dvb_desc->verbose)

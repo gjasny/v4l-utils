@@ -160,3 +160,7 @@ enum extension_descriptors {
 void parse_descriptor(enum dvb_tables type,
 		      struct dvb_descriptors *dvb_desc,
 		      const unsigned char *buf, int len);
+
+int has_descriptor(struct dvb_descriptors *dvb_desc,
+		    unsigned char needed_descriptor,
+	            const unsigned char *buf, int len);

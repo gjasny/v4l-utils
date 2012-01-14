@@ -621,11 +621,6 @@ void parse_descriptor(enum dvb_tables type,
 	if (len == 0)
 		return;
 
-	/*
-	 * FIXME: syntax need to be changed, to avoid parsing an invalid
-	 * descriptor here (e. g. a descriptor at the wrong table)
-	 */
-
 	if (dvb_desc->verbose)
 		printf("Descriptors table len %d\n", len);
 	do {
@@ -637,8 +632,6 @@ void parse_descriptor(enum dvb_tables type,
 				dlen, len);
 			return;
 		}
-		/* FIXME: Not all descriptors are valid for all tables */
-
 		if (dvb_desc->verbose) {
 			printf("%s (0x%02x), len %d",
 			       descriptors[buf[0]], buf[0], buf[1]);
@@ -781,6 +774,26 @@ void parse_descriptor(enum dvb_tables type,
 		buf += dlen + 2;
 		len -= dlen + 2;
 	} while (len > 0);
+}
+
+int has_descriptor(struct dvb_descriptors *dvb_desc,
+		    unsigned char needed_descriptor,
+	            const unsigned char *buf, int len)
+{
+	if (len == 0)
+		return 0;
+
+	do {
+		int dlen = buf[1];
+
+		if (buf[0] == needed_descriptor)
+			return 1;
+
+		buf += dlen + 2;
+		len -= dlen + 2;
+	} while (len > 0);
+
+	return 0;
 }
 
 #if 0
