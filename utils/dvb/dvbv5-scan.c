@@ -390,9 +390,11 @@ static int run_scan(struct arguments *args,
 			entry->vchannel = dvb_vchannel(dvb_desc, i);
 			if (service_table->service_name)
 				printf("Service #%d: %s", i, service_table->service_name);
-				if (entry->vchannel)
-					printf(" channel %s", entry->vchannel);
-				printf("\n");
+			else
+				printf("Service #%d", i);
+			if (entry->vchannel)
+				printf(" channel %s", entry->vchannel);
+			printf("\n");
 		}
 
 		store_dvb_channel(&dvb_file_new, parms, dvb_desc,
