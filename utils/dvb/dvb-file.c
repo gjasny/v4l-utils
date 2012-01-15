@@ -706,7 +706,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		      int get_detected, int get_nit)
 {
 	struct dvb_entry *entry;
-	int i, j;
+	int i, j, has_detected = 1;
 
 	if (!*dvb_file) {
 		*dvb_file = calloc(sizeof(*dvb_file), 1);
@@ -761,29 +761,36 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 				break;
 		}
 		if (j == pat_table->pid_table_len) {
-			fprintf(stderr, "Service ID 0x%04x not found!\n",
+			fprintf(stderr, "Service ID %d not found on PMT!\n",
 			      service_table->service_id);
-			return -1;
+			has_detected = 0;
+		} else has_detected = 1;
+
+		/*
+		 * Video/audio/other pid's can only be filled if the service
+		 * was found.
+		 */
+		if (has_detected) {
+			entry->video_pid = calloc(sizeof(*entry[i].video_pid),
+						pid_table->video_pid_len);
+			for (j = 0; j < pid_table->video_pid_len; j++)
+				entry->video_pid[j] = pid_table->video_pid[j];
+			entry->video_pid_len = pid_table->video_pid_len;
+
+			entry->audio_pid = calloc(sizeof(*entry[i].audio_pid),
+						pid_table->audio_pid_len);
+			for (j = 0; j < pid_table->audio_pid_len; j++)
+				entry->audio_pid[j] = pid_table->audio_pid[j];
+			entry->audio_pid_len = pid_table->audio_pid_len;
+
+			entry->other_el_pid = calloc(sizeof(*entry->other_el_pid),
+						pid_table->other_el_pid_len);
+			memcpy(entry->other_el_pid, pid_table->other_el_pid,
+			pid_table->other_el_pid_len * sizeof(*entry->other_el_pid));
+			entry->other_el_pid_len = pid_table->other_el_pid_len;
+			qsort(entry->other_el_pid, entry->other_el_pid_len,
+			sizeof(*entry->other_el_pid), sort_other_el_pid);
 		}
-		entry->video_pid = calloc(sizeof(*entry[i].video_pid),
-					    pid_table->video_pid_len);
-		for (j = 0; j < pid_table->video_pid_len; j++)
-			entry->video_pid[j] = pid_table->video_pid[j];
-		entry->video_pid_len = pid_table->video_pid_len;
-
-		entry->audio_pid = calloc(sizeof(*entry[i].audio_pid),
-					    pid_table->audio_pid_len);
-		for (j = 0; j < pid_table->audio_pid_len; j++)
-			entry->audio_pid[j] = pid_table->audio_pid[j];
-		entry->audio_pid_len = pid_table->audio_pid_len;
-
-		entry->other_el_pid = calloc(sizeof(*entry->other_el_pid),
-					     pid_table->other_el_pid_len);
-		memcpy(entry->other_el_pid, pid_table->other_el_pid,
-		       pid_table->other_el_pid_len * sizeof(*entry->other_el_pid));
-		entry->other_el_pid_len = pid_table->other_el_pid_len;
-		qsort(entry->other_el_pid, entry->other_el_pid_len,
-		      sizeof(*entry->other_el_pid), sort_other_el_pid);
 
 		/* Copy data from parms */
 		if (get_detected)

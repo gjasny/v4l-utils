@@ -388,10 +388,10 @@ static int run_scan(struct arguments *args,
 			struct service_table *service_table = &dvb_desc->sdt_table.service_table[i];
 
 			entry->vchannel = dvb_vchannel(dvb_desc, i);
+			printf("Service #%d (%d)", i,
+				service_table->service_id);
 			if (service_table->service_name)
-				printf("Service #%d: %s", i, service_table->service_name);
-			else
-				printf("Service #%d", i);
+				printf(" %s", service_table->service_name);
 			if (entry->vchannel)
 				printf(" channel %s", entry->vchannel);
 			printf("\n");
