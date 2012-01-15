@@ -206,22 +206,11 @@ CURRENT ISSUES
 
 The dvb-fe-tool and the dvb-format-convert are generic enough to work
 with all delivery systems. However, the other two tools need to do
-some diferent things, depending on the delivery system.
+some diferent things, depending on the delivery system, as other
+tables and descriptors may be needed.
 
-I'm currently with only ISDB-T signals here, so the other two
-tools were tested only with it.
-
-The dvbv5-scan should likely work with the other standards, but the
-descriptor parser for NIT, PAT, PMT and SDT tables are fine-tuned
-for ISDB-T. Adding more parsed info there could help to improve the
-detected things, like virtual channels. Maybe some additional
-tables would need to be parsed for ATSC.
-
-It also doesn't current look inside the network descriptors to get
-other transponders. So, on DVB-C, it will only get the channels
-at the main frequency. I should fix it in a near future.
-
-It is very likely that it will work as-is for DVB-T.
+Currently, the tools were tested with DVB-C, ISDB-T, DVB-T and
+DVB-T2.
 
 If someone wants to patch the code to improve the tool, the descriptors
 parser is inside descriptors.c file. The scan code that uses it is
@@ -256,4 +245,4 @@ Patches are welcome!
 
 Regards,
 Mauro Carvalho Chehab
-2012-January-8
+2012-January-15
