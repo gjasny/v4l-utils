@@ -762,6 +762,13 @@ void parse_descriptor(enum dvb_tables type,
 		/* LCN decoder */
 		case logical_channel_number_descriptor:
 		{
+			/*
+			 * According with SCTE 57 2011, descriptor 0x83
+			 * is the extended video descriptor. We don't need
+			 * it, but don't print an error for this condition.
+			 */
+			if (type == PMT)
+				break;
 			if (type != NIT) {
 				err = 1;
 				break;
