@@ -342,12 +342,12 @@ void parse_string(char **dest, char **emph,
 	int emphasis = 0;
 
 	if (*dest) {
-		free (*dest);
+		free(*dest);
 		*dest = NULL;
 	}
 	if (*emph) {
-		free (*dest);
-		*dest = NULL;
+		free(*emph);
+		*emph = NULL;
 	}
 	if (!len)
 		return;
@@ -409,10 +409,9 @@ void parse_string(char **dest, char **emph,
 		/*
 		 * Handles the ISO/IEC 10646 1-byte control codes
 		 * (EN 300 468 v1.11.1 Table A.1)
-		 * Emphasis will be represented as: *emphased*
 		 */
-		tmp1 = malloc(len + 2);
-		tmp2 = malloc(len + 2);
+		tmp1 = malloc(len);
+		tmp2 = malloc(len);
 		p = (char *)tmp1;
 		p2 = (char *)tmp2;
 		s = src;
@@ -459,5 +458,4 @@ void parse_string(char **dest, char **emph,
 
 	if (tmp1)
 		free(tmp1);
-
 }
