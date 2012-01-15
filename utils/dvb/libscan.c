@@ -7,6 +7,7 @@
  *****************************************************************************/
 
 #include "libscan.h"
+#include "dvb_frontend.h"
 #include "descriptors.h"
 #include "parse_string.h"
 
@@ -31,11 +32,11 @@ static void parse_pat(struct dvb_descriptors *dvb_desc,
 	dvb_desc->pat_table.ts_id = id;
 	dvb_desc->pat_table.version = version;
 
+	n = dvb_desc->pat_table.pid_table_len;
 	dvb_desc->pat_table.pid_table = realloc(dvb_desc->pat_table.pid_table,
 				sizeof(*dvb_desc->pat_table.pid_table) *
-				*section_length / 4);
+				(n + (*section_length / 4)));
 
-	n = dvb_desc->pat_table.pid_table_len;
 	while (*section_length > 3) {
 		service_id = (buf[0] << 8) | buf[1];
 		pmt_pid = ((buf[2] & 0x1f) << 8) | buf[3];
@@ -195,20 +196,20 @@ static void parse_nit(struct dvb_descriptors *dvb_desc,
 		nit_table->tr_table[n].tr_id = (buf[0] << 8) | buf[1];
 
 		len = ((buf[4] & 0x0f) << 8) | buf[5];
-		if (*section_length < len + 4) {
+		if (*section_length < len + 4 && len > 0) {
 			fprintf(stderr, "NIT section too short for Network ID 0x%04x, transport stream ID 0x%04x",
 			       id, nit_table->tr_table[n].tr_id);
-			continue;
-		} else {
+			break;
+		} else if (len) {
 			if (dvb_desc->verbose)
 				printf("Transport stream #%d ID 0x%04x, len %d\n",
 					n, nit_table->tr_table[n].tr_id, len);
 
 			parse_descriptor(NIT, dvb_desc, &buf[6], len);
-			n++;
-			dvb_desc->cur_ts++;
 		}
 
+		n++;
+		dvb_desc->cur_ts++;
 		*section_length -= len + 6;
 		buf += len + 6;
 	}
@@ -236,13 +237,13 @@ static void parse_sdt(struct dvb_descriptors *dvb_desc,
 		       sizeof(sdt_table->service_table[n]));
 		sdt_table->service_table[n].service_id = (buf[0] << 8) | buf[1];
 		len = ((buf[3] & 0x0f) << 8) | buf[4];
-		if (*section_length < len || !len) {
+		sdt_table->service_table[n].running = (buf[3] >> 5) & 0x7;
+		sdt_table->service_table[n].scrambled = (buf[3] >> 4) & 1;
+
+		if (*section_length < len && len > 0) {
 			fprintf(stderr, "SDT section too short for Service ID 0x%04x\n",
 			       sdt_table->service_table[n].service_id);
-		} else {
-			sdt_table->service_table[n].running = (buf[3] >> 5) & 0x7;
-			sdt_table->service_table[n].scrambled = (buf[3] >> 4) & 1;
-
+		} else if (len) {
 			if (dvb_desc->verbose)
 				printf("Service #%d ID 0x%04x, running %d, scrambled %d\n",
 				n,
@@ -251,9 +252,9 @@ static void parse_sdt(struct dvb_descriptors *dvb_desc,
 				sdt_table->service_table[n].scrambled);
 
 			parse_descriptor(SDT, dvb_desc, &buf[5], len);
-			n++;
 		}
 
+		n++;
 		*section_length -= len + 5;
 		buf += len + 5;
 		dvb_desc->cur_service++;
@@ -295,7 +296,8 @@ static int poll(int filedes, unsigned int seconds)
 
 
 static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
-			uint16_t pid, unsigned char table, void *ptr)
+			uint16_t pid, unsigned char table, void *ptr,
+			unsigned timeout)
 {
 	int count;
 	int section_length, table_id, id, version, next = 0;
@@ -317,19 +319,16 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 
 	do {
 		do {
-			count = poll(dmx_fd, 10);
+			count = poll(dmx_fd, timeout);
 			if (count > 0)
 				count = read(dmx_fd, buf, sizeof(buf));
 		} while (count < 0 && errno == EOVERFLOW);
-		if (!count) {
-			fprintf(stderr, "timeout while waiting for pid 0x%04x, table 0x%02x\n",
-				pid, table);
+		if (!count)
 			return -1;
-		}
 		if (count < 0) {
 			perror("read_sections: read error");
 			close(dmx_fd);
-			return -1;
+			return -2;
 		}
 
 		p = buf;
@@ -384,9 +383,14 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 	return 0;
 }
 
-struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev, int verbose)
+struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev,
+					  uint32_t delivery_system,
+					  unsigned timeout_multiply,
+					  int verbose)
 {
 	int dmx_fd, i, rc;
+	int other_nit, pat_pmt_time, sdt_time, nit_time;
+
 	struct dvb_descriptors *dvb_desc;
 
 	if ((dmx_fd = open(dmxdev, O_RDWR)) < 0) {
@@ -401,10 +405,55 @@ struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev, int verbose)
 	}
 
 	dvb_desc->verbose = verbose;
+	dvb_desc->delivery_system = delivery_system;
+
+	if (!timeout_multiply)
+		timeout_multiply = 1;
+
+	/* Get standard timeouts for each table */
+	switch(delivery_system) {
+	case SYS_DVBC_ANNEX_A:
+	case SYS_DVBC_ANNEX_C:
+	case SYS_DVBS:
+	case SYS_DVBS2:
+	case SYS_TURBO:
+		pat_pmt_time = 1;
+		sdt_time = 2;
+		nit_time = 10;
+		other_nit = 1;
+		break;
+	case SYS_DVBT:
+	case SYS_DVBT2:
+		pat_pmt_time = 1;
+		sdt_time = 2;
+		nit_time = 12;
+		other_nit = 1;
+		break;
+	case SYS_ISDBT:
+		pat_pmt_time = 1;
+		sdt_time = 2;
+		nit_time = 12;
+		other_nit = 0;
+		break;
+	case SYS_ATSC:
+	case SYS_DVBC_ANNEX_B:
+		pat_pmt_time = 1;
+		sdt_time = 5;
+		nit_time = 5;
+		other_nit = 1;
+	default:
+		pat_pmt_time = 1;
+		sdt_time = 2;
+		nit_time = 10;
+		other_nit = 1;
+		break;
+	};
 
 	/* PAT table */
-	rc = read_section(dmx_fd, dvb_desc, 0, 0, NULL);
+	rc = read_section(dmx_fd, dvb_desc, 0, 0, NULL,
+			  pat_pmt_time * timeout_multiply);
 	if (rc < 0) {
+		fprintf(stderr, "error while waiting for PAT table\n");
 		free_dvb_ts_tables(dvb_desc);
 		return NULL;
 	}
@@ -416,22 +465,40 @@ struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev, int verbose)
 		/* Skip PAT, CAT, reserved and NULL packets */
 		if (!pn)
 			continue;
-		read_section(dmx_fd, dvb_desc, pid_table->pid, 0x02,
-			     pid_table);
+		rc = read_section(dmx_fd, dvb_desc, pid_table->pid, 0x02,
+			          pid_table, pat_pmt_time * timeout_multiply);
+		if (rc < 0)
+			fprintf(stderr, "error while reading the PMT table for service 0x%04x\n",
+				pn);
 	}
 
 	/* NIT table */
-	read_section(dmx_fd, dvb_desc, 0x0010, 0x40, NULL);
-//	read_section(dmx_fd, dvb_desc, 0x0010, 0x41, NULL);
+	rc = read_section(dmx_fd, dvb_desc, 0x0010, 0x40, NULL,
+		          nit_time * timeout_multiply);
+	if (rc < 0)
+		fprintf(stderr, "error while reading the NIT table\n");
 
-	/* SAT/BAT table */
-	read_section(dmx_fd, dvb_desc, 0x0011, 0x42, NULL);
-//	read_section(dmx_fd, dvb_desc, 0x0011, 0x46, NULL);
+	/* SDT table */
+	rc = read_section(dmx_fd, dvb_desc, 0x0011, 0x42, NULL,
+		          sdt_time * timeout_multiply);
+	if (rc < 0)
+		fprintf(stderr, "error while reading the SDT table\n");
+
+	/* NIT/SDT other tables */
+	if (other_nit) {
+		if (verbose)
+			printf("Parsing other NIT/SDT\n");
+		rc = read_section(dmx_fd, dvb_desc, 0x0010, 0x41, NULL,
+			          nit_time * timeout_multiply);
+		rc = read_section(dmx_fd, dvb_desc, 0x0011, 0x46, NULL,
+			          sdt_time * timeout_multiply);
+	}
 
 	close(dmx_fd);
 
 	return dvb_desc;
 }
+
 
 void free_dvb_ts_tables(struct dvb_descriptors *dvb_desc)
 {

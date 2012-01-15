@@ -57,7 +57,7 @@ struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev;
 	unsigned adapter, frontend, demux, get_detected, get_nit, format;
 	int lnb, sat_number;
-	unsigned diseqc_wait, dont_add_new_freqs;
+	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
 };
 
 static const struct argp_option options[] = {
@@ -74,6 +74,7 @@ static const struct argp_option options[] = {
 	{"old-format",	'O',	NULL,			0, "uses old transponder/channel format", 0},
 	{"zap",		'z',	"file",			0, "uses zap services file, discarding video/audio pid's", 0},
 	{"file-freqs-only", 'F', NULL,			0, "don't use the other frequencies discovered during scan", 0},
+	{"timeout-multiply", 'T', NULL,			0, "Multiply scan timeouts by this factor", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -376,7 +377,10 @@ static int run_scan(struct arguments *args,
 		if (rc < 0)
 			continue;
 
-		dvb_desc = get_dvb_ts_tables(args->demux_dev, verbose);
+		dvb_desc = get_dvb_ts_tables(args->demux_dev,
+					     parms->current_sys,
+					     args->timeout_multiply,
+					     verbose);
 		if (!dvb_desc)
 			continue;
 
@@ -448,6 +452,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		break;
 	case 'v':
 		verbose++;
+		break;
+	case 'T':
+		args->timeout_multiply++;
 		break;
 	default:
 		return ARGP_ERR_UNKNOWN;

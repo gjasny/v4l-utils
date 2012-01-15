@@ -103,6 +103,7 @@ struct sdt_table {
 
 struct dvb_descriptors {
 	int verbose;
+	uint32_t delivery_system;
 
 	struct pat_table pat_table;
 	struct nit_table nit_table;
@@ -114,5 +115,8 @@ struct dvb_descriptors {
 	unsigned cur_ts;
 };
 
-struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev, int verbose);
+struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev,
+					  uint32_t delivery_system,
+					  unsigned timeout_multiply,
+					  int verbose);
 void free_dvb_ts_tables(struct dvb_descriptors *dvb_desc);

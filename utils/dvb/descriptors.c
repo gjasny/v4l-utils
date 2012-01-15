@@ -580,10 +580,13 @@ static void parse_net_name(struct nit_table *nit_table,
 	parse_string(&nit_table->network_name, &nit_table->network_alias,
 		     &buf[2], dlen, default_charset, output_charset);
 	if (verbose) {
+		printf("Network");
 		if (nit_table->network_name)
-			printf("Network %s", nit_table->network_name);
+			printf(" %s", nit_table->network_name);
 		if (nit_table->network_alias)
-			printf("(%s)", nit_table->network_alias);
+			printf(" (%s)", nit_table->network_alias);
+		if (!nit_table->network_name && !nit_table->network_alias)
+			printf(" unknown");
 		printf("\n");
 	}
 }
@@ -616,7 +619,6 @@ static void parse_service(struct service_table *service_table,
 			  const unsigned char *buf, int dlen, int verbose)
 {
 	service_table->type = buf[2];
-
 	parse_string(&service_table->provider_name,
 		     &service_table->provider_alias,
 		     &buf[4], buf[3],
@@ -637,6 +639,11 @@ static void parse_service(struct service_table *service_table,
 			printf("Service %s", service_table->service_name);
 		if (service_table->service_alias)
 			printf("(%s)", service_table->service_alias);
+		if (!service_table->provider_name &&
+		    !service_table->service_alias &&
+		    !service_table->service_name &&
+		    !service_table->service_alias)
+			printf("Service 0x%04x", service_table->service_id);
 		printf("\n");
 	}
 }
