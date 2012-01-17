@@ -410,8 +410,8 @@ void parse_string(char **dest, char **emph,
 		 * Handles the ISO/IEC 10646 1-byte control codes
 		 * (EN 300 468 v1.11.1 Table A.1)
 		 */
-		tmp1 = malloc(len);
-		tmp2 = malloc(len);
+		tmp1 = malloc(len + 2);
+		tmp2 = malloc(len + 2);
 		p = (char *)tmp1;
 		p2 = (char *)tmp2;
 		s = src;
