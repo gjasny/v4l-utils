@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "dvb-file.h"
 #include "libscan.h"
@@ -793,9 +794,14 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		}
 
 		/* Copy data from parms */
-		if (get_detected)
-			dvb_fe_get_parms(parms);
-
+		if (get_detected) {
+			int rc;
+			do {
+				rc = dvb_fe_get_parms(parms);
+				if (rc == EAGAIN)
+					usleep(100000);
+			} while (rc == EAGAIN);
+		}
 		for (j = 0; j < parms->n_props; j++) {
 			entry->props[j].cmd = parms->dvb_prop[j].cmd;
 			entry->props[j].u.data = parms->dvb_prop[j].u.data;
