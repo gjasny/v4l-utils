@@ -225,7 +225,7 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 			     const unsigned char *buf, int dlen,
 			     int verbose)
 {
-	uint32_t freq;
+	uint64_t freq;
 	static const uint32_t interval[] = {
 		[0] = GUARD_INTERVAL_1_32,
 		[1] = GUARD_INTERVAL_1_16,
@@ -252,27 +252,30 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 	};
 	int i, isdbt_mode, guard;
 
+	buf += 2;
 	nit_table->delivery_system = SYS_ISDBT;
-	isdbt_mode = buf[3] >> 6;
-	guard = buf[3] >> 4 & 0x3;
-	nit_table->area_code = (buf[3] & 0x0f) << 8 | buf[2];
+	isdbt_mode = buf[0] >> 6;
+	guard = buf[0] >> 4 & 0x3;
+	nit_table->area_code = ((buf[0] << 8) | buf[1]) & 0x0fff;
 	nit_table->guard_interval = interval[guard];
 	nit_table->transmission_mode = mode[isdbt_mode];
-
 	if (verbose)
 		printf("Area code: %d, mode %d (%s), guard interval: %s\n",
 			nit_table->area_code,
 			isdbt_mode + 1,
 			tm_name[nit_table->transmission_mode],
 			interval_name[nit_table->guard_interval]);
-	buf += 4;
-	for (i = 4; i < dlen; i += 2) {
-		freq = buf[i] << 8 | buf[i + 1];
+	for (i = 2; i < dlen; i += 2) {
+		buf += 2;
+		/*
+		 * The spec is not very clear about that, but some tests
+		 * showed how this is supported to be calculated.
+		 */
+		freq = ((buf[0] << 8 | buf[1]) * 1000000l) / 7; /* Hz */
 		add_frequency(nit_table, freq);
 
 		if (verbose)
 			printf("Frequency %d\n", freq);
-		buf += 2;
 	}
 }
 
@@ -497,10 +500,12 @@ static void parse_NIT_DVBT2(struct nit_table *nit_table,
 
 	nit_table->delivery_system = SYS_DVBT2;
 
+
+	buf += 2;
 	nit_table->plp_id = buf[0];
 	nit_table->system_id = buf[1] << 8 | buf[2];
 
-	buf += 4;
+	buf += 2;
 	dlen -= 4;
 	if (dlen <= 0)
 		return;
