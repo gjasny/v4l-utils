@@ -232,23 +232,39 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 		[2] = GUARD_INTERVAL_1_8,
 		[3] = GUARD_INTERVAL_1_4,
 	};
+	static const char *interval_name[] = {
+		[GUARD_INTERVAL_1_4] =    "1/4",
+		[GUARD_INTERVAL_1_8] =    "1/8",
+		[GUARD_INTERVAL_1_16] =   "1/16",
+		[GUARD_INTERVAL_1_32] =   "1/32",
+	};
 	static const uint32_t mode[] = {
 		[0] = TRANSMISSION_MODE_2K,	/* Mode 1 */
 		[1] = TRANSMISSION_MODE_4K,	/* Mode 2 */
 		[2] = TRANSMISSION_MODE_8K,	/* Mode 3 */
 		[3] = TRANSMISSION_MODE_AUTO	/* Reserved */
 	};
-	unsigned tmp = buf[3] >> 4 & 0x3;
-	int i;
+	static const char *tm_name[] = {
+		[TRANSMISSION_MODE_2K] =   "2K",
+		[TRANSMISSION_MODE_4K] =   "4K",
+		[TRANSMISSION_MODE_8K] =   "8K",
+		[TRANSMISSION_MODE_AUTO] = "AUTO",
+	};
+	int i, isdbt_mode, guard;
 
 	nit_table->delivery_system = SYS_ISDBT;
+	isdbt_mode = buf[3] >> 6;
+	guard = buf[3] >> 4 & 0x3;
 	nit_table->area_code = (buf[3] & 0x0f) << 8 | buf[2];
-	nit_table->guard_interval = interval[tmp];
-	nit_table->transmission_mode = mode[buf[3] >> 6];
+	nit_table->guard_interval = interval[guard];
+	nit_table->transmission_mode = mode[isdbt_mode];
+
 	if (verbose)
-		printf("Area code: %d, guard interval: %d, mode: %d\n",
+		printf("Area code: %d, mode %d (%s), guard interval: %s\n",
 			nit_table->area_code,
-			tmp, 1 + (buf[3] >> 6));
+			isdbt_mode + 1,
+			tm_name[nit_table->transmission_mode],
+			interval_name[nit_table->guard_interval]);
 	buf += 4;
 	for (i = 4; i < dlen; i += 2) {
 		freq = buf[i] << 8 | buf[i + 1];
