@@ -313,7 +313,6 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 	f.flags = DMX_IMMEDIATE_START | DMX_CHECK_CRC;
 	if (ioctl(dmx_fd, DMX_SET_FILTER, &f) == -1) {
 		perror("ioctl DMX_SET_FILTER failed");
-		close(dmx_fd);
 		return -1;
 	}
 
@@ -327,7 +326,6 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 			return -1;
 		if (count < 0) {
 			perror("read_sections: read error");
-			close(dmx_fd);
 			return -2;
 		}
 
@@ -383,26 +381,19 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 	return 0;
 }
 
-struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev,
+struct dvb_descriptors *get_dvb_ts_tables(int dmx_fd,
 					  uint32_t delivery_system,
 					  unsigned timeout_multiply,
 					  int verbose)
 {
-	int dmx_fd, i, rc;
+	int i, rc;
 	int other_nit, pat_pmt_time, sdt_time, nit_time;
 
 	struct dvb_descriptors *dvb_desc;
 
-	if ((dmx_fd = open(dmxdev, O_RDWR)) < 0) {
-		perror("openening pat demux failed");
-		return NULL;
-	}
-
 	dvb_desc = calloc(sizeof(*dvb_desc), 1);
-	if (!dvb_desc) {
-		close (dmx_fd);
+	if (!dvb_desc)
 		return NULL;
-	}
 
 	dvb_desc->verbose = verbose;
 	dvb_desc->delivery_system = delivery_system;
@@ -493,8 +484,6 @@ struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev,
 		rc = read_section(dmx_fd, dvb_desc, 0x0011, 0x46, NULL,
 			          sdt_time * timeout_multiply);
 	}
-
-	close(dmx_fd);
 
 	return dvb_desc;
 }

@@ -267,7 +267,7 @@ static int run_scan(struct arguments *args,
 {
 	struct dvb_file *dvb_file = NULL, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
-	int i, rc, count = 0;
+	int i, rc, count = 0, dmx_fd;
 	uint32_t freq, sys;
 
 	switch (args->format) {
@@ -307,6 +307,12 @@ static int run_scan(struct arguments *args,
 	}
 	if (!dvb_file)
 		return -2;
+
+	dmx_fd = open(args->demux_dev, O_RDWR);
+	if (dmx_fd < 0) {
+		perror("openening pat demux failed");
+		return -3;
+	}
 
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
 		struct dvb_descriptors *dvb_desc = NULL;
@@ -377,7 +383,7 @@ static int run_scan(struct arguments *args,
 		if (rc < 0)
 			continue;
 
-		dvb_desc = get_dvb_ts_tables(args->demux_dev,
+		dvb_desc = get_dvb_ts_tables(dmx_fd,
 					     parms->current_sys,
 					     args->timeout_multiply,
 					     verbose);
@@ -412,6 +418,8 @@ static int run_scan(struct arguments *args,
 	dvb_file_free(dvb_file);
 	if (dvb_file_new)
 		dvb_file_free(dvb_file_new);
+
+	close(dmx_fd);
 	return 0;
 }
 

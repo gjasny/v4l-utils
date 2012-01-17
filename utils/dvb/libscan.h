@@ -115,7 +115,7 @@ struct dvb_descriptors {
 	unsigned cur_ts;
 };
 
-struct dvb_descriptors *get_dvb_ts_tables(char *dmxdev,
+struct dvb_descriptors *get_dvb_ts_tables(int dmx_fd,
 					  uint32_t delivery_system,
 					  unsigned timeout_multiply,
 					  int verbose);
