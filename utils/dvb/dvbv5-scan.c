@@ -58,6 +58,7 @@ struct arguments {
 	unsigned adapter, frontend, demux, get_detected, get_nit, format;
 	int lnb, sat_number;
 	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
+	unsigned other_nit;
 };
 
 static const struct argp_option options[] = {
@@ -75,6 +76,7 @@ static const struct argp_option options[] = {
 	{"zap",		'z',	"file",			0, "uses zap services file, discarding video/audio pid's", 0},
 	{"file-freqs-only", 'F', NULL,			0, "don't use the other frequencies discovered during scan", 0},
 	{"timeout-multiply", 'T', "factor",		0, "Multiply scan timeouts by this factor", 0},
+	{"parse-other-nit", 'p', NULL,			0, "Parse the other NIT/SDT tables", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -385,6 +387,7 @@ static int run_scan(struct arguments *args,
 
 		dvb_desc = get_dvb_ts_tables(dmx_fd,
 					     parms->current_sys,
+					     args->other_nit,
 					     args->timeout_multiply,
 					     verbose);
 		if (!dvb_desc)
@@ -459,6 +462,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		break;
 	case 'F':
 		args->dont_add_new_freqs++;
+		break;
+	case 'p':
+		args->other_nit++;
 		break;
 	case 'v':
 		verbose++;

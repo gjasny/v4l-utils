@@ -117,6 +117,7 @@ struct dvb_descriptors {
 
 struct dvb_descriptors *get_dvb_ts_tables(int dmx_fd,
 					  uint32_t delivery_system,
+					  unsigned other_nit,
 					  unsigned timeout_multiply,
 					  int verbose);
 void free_dvb_ts_tables(struct dvb_descriptors *dvb_desc);

@@ -383,11 +383,12 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 
 struct dvb_descriptors *get_dvb_ts_tables(int dmx_fd,
 					  uint32_t delivery_system,
+					  unsigned other_nit,
 					  unsigned timeout_multiply,
 					  int verbose)
 {
 	int i, rc;
-	int other_nit, pat_pmt_time, sdt_time, nit_time;
+	int pat_pmt_time, sdt_time, nit_time;
 
 	struct dvb_descriptors *dvb_desc;
 
@@ -411,32 +412,27 @@ struct dvb_descriptors *get_dvb_ts_tables(int dmx_fd,
 		pat_pmt_time = 1;
 		sdt_time = 2;
 		nit_time = 10;
-		other_nit = 1;
 		break;
 	case SYS_DVBT:
 	case SYS_DVBT2:
 		pat_pmt_time = 1;
 		sdt_time = 2;
 		nit_time = 12;
-		other_nit = 1;
 		break;
 	case SYS_ISDBT:
 		pat_pmt_time = 1;
 		sdt_time = 2;
 		nit_time = 12;
-		other_nit = 0;
 		break;
 	case SYS_ATSC:
 	case SYS_DVBC_ANNEX_B:
 		pat_pmt_time = 1;
 		sdt_time = 5;
 		nit_time = 5;
-		other_nit = 1;
 	default:
 		pat_pmt_time = 1;
 		sdt_time = 2;
 		nit_time = 10;
-		other_nit = 1;
 		break;
 	};
 
