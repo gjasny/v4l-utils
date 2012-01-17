@@ -74,7 +74,7 @@ static const struct argp_option options[] = {
 	{"old-format",	'O',	NULL,			0, "uses old transponder/channel format", 0},
 	{"zap",		'z',	"file",			0, "uses zap services file, discarding video/audio pid's", 0},
 	{"file-freqs-only", 'F', NULL,			0, "don't use the other frequencies discovered during scan", 0},
-	{"timeout-multiply", 'T', NULL,			0, "Multiply scan timeouts by this factor", 0},
+	{"timeout-multiply", 'T', "factor",		0, "Multiply scan timeouts by this factor", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -456,7 +456,7 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		verbose++;
 		break;
 	case 'T':
-		args->timeout_multiply++;
+		args->timeout_multiply = strtoul(optarg, NULL, 0);
 		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
