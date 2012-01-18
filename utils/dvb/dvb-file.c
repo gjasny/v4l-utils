@@ -210,7 +210,7 @@ static const char *pol_name[] = {
 
 static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 {
-	int i, j, len, type = 0, v;
+	int i, j, len, type = 0;
 	int is_video = 0, is_audio = 0, n_prop;
 	uint16_t *pid = NULL;
 	char *p;

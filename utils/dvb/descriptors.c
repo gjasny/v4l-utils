@@ -275,7 +275,7 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 		add_frequency(nit_table, freq);
 
 		if (verbose)
-			printf("Frequency %d\n", freq);
+			printf("Frequency %ld\n", freq);
 	}
 }
 
