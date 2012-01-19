@@ -227,7 +227,7 @@ static error_t parse_keyfile(char *fname, char **table)
 						else if (!strcasecmp(p,"sony"))
 							ch_proto |= SONY;
 						else if (!strcasecmp(p,"sanyo"))
-							ch_proto |= SONY;
+							ch_proto |= SANYO;
 						else if (!strcasecmp(p,"other") || !strcasecmp(p,"unknown"))
 							ch_proto |= OTHER;
 						else {
