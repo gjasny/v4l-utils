@@ -512,7 +512,7 @@ static void parse_NIT_DVBT2(struct nit_table *nit_table,
 
 	nit_table->bandwidth = bw[(buf[0] >> 2) & 0x0f];
 	nit_table->guard_interval = interval[buf[1] >> 5];
-	nit_table->transmission_mode = transmission_mode[(buf[1] >> 2) && 0x07];
+	nit_table->transmission_mode = transmission_mode[(buf[1] >> 2) & 0x07];
 	nit_table->has_other_frequency = buf[1] & 0x02 ? 1 : 0;
 
 	/* FIXME: add a parser for the cell tables */
