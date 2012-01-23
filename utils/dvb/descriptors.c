@@ -311,7 +311,7 @@ static void parse_NIT_DVBS(struct nit_table *nit_table,
 		[0] = ROLLOFF_35,
 		[1] = ROLLOFF_25,
 		[2] = ROLLOFF_20,
-		[2] = ROLLOFF_AUTO,	/* Reserved */
+		[3] = ROLLOFF_AUTO,	/* Reserved */
 	};
 	static const unsigned modulation[] = {
 		[0] = QAM_AUTO,
@@ -415,7 +415,7 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 		[2] = FEC_3_4,
 		[3] = FEC_5_6,
 		[4] = FEC_7_8,
-		[4 ...7] = FEC_AUTO,	/* Reserved */
+		[5 ...7] = FEC_AUTO,	/* Reserved */
 	};
 	static const uint32_t interval[] = {
 		[0] = GUARD_INTERVAL_1_32,
