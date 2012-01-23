@@ -36,7 +36,7 @@ AC_CONFIG_FILES([Makefile
 AM_INIT_AUTOMAKE([1.9 no-dist-gzip dist-bzip2 -Wno-portability]) # 1.10 is needed for target_LIBTOOLFLAGS
 
 AM_MAINTAINER_MODE
-AM_SILENT_RULES
+AM_SILENT_RULES(yes)
 
 # Checks for programs.
 AC_PROG_CXX
