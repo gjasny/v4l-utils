@@ -124,8 +124,12 @@ std::string cap2s(unsigned cap)
 
 	if (cap & V4L2_CAP_VIDEO_CAPTURE)
 		s += "\t\tVideo Capture\n";
+	if (cap & V4L2_CAP_VIDEO_CAPTURE_MPLANE)
+		s += "\t\tVideo Capture Multiplanar\n";
 	if (cap & V4L2_CAP_VIDEO_OUTPUT)
 		s += "\t\tVideo Output\n";
+	if (cap & V4L2_CAP_VIDEO_OUTPUT_MPLANE)
+		s += "\t\tVideo Output Multiplanar\n";
 	if (cap & V4L2_CAP_VIDEO_OVERLAY)
 		s += "\t\tVideo Overlay\n";
 	if (cap & V4L2_CAP_VIDEO_OUTPUT_OVERLAY)
@@ -156,6 +160,8 @@ std::string cap2s(unsigned cap)
 		s += "\t\tAsync I/O\n";
 	if (cap & V4L2_CAP_STREAMING)
 		s += "\t\tStreaming\n";
+	if (cap & V4L2_CAP_DEVICE_CAPS)
+		s += "\t\tDevice Capabilities\n";
 	return s;
 }
 
@@ -238,7 +244,21 @@ int check_0(const void *p, int len)
 static int testCap(struct node *node)
 {
 	struct v4l2_capability vcap;
-	__u32 caps;
+	__u32 caps, dcaps;
+	const __u32 video_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT |
+			V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+			V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY;
+	const __u32 vbi_caps = V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
+			V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT;
+	const __u32 radio_caps = V4L2_CAP_RADIO | V4L2_CAP_MODULATOR;
+	const __u32 input_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OVERLAY |
+			V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
+			V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_HW_FREQ_SEEK |
+			V4L2_CAP_RDS_CAPTURE | V4L2_CAP_TUNER;
+	const __u32 output_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+			V4L2_CAP_VIDEO_OUTPUT_OVERLAY | V4L2_CAP_VBI_OUTPUT |
+			V4L2_CAP_SLICED_VBI_OUTPUT | V4L2_CAP_MODULATOR |
+			V4L2_CAP_RDS_OUTPUT;
 
 	// Must always be there
 	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, &vcap));
@@ -251,17 +271,27 @@ static int testCap(struct node *node)
 	fail_on_test((vcap.version >> 16) < 3);
 	fail_on_test(check_0(vcap.reserved, sizeof(vcap.reserved)));
 	caps = vcap.capabilities;
-	fail_on_test(vcap.capabilities == 0);
-	fail_on_test(node->is_video && !(caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT |
-				        V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
-	fail_on_test(node->is_radio && !(caps & (V4L2_CAP_RADIO | V4L2_CAP_MODULATOR)));
+	dcaps = vcap.device_caps;
+	fail_on_test(caps == 0);
+	fail_on_test(!(caps & V4L2_CAP_DEVICE_CAPS));
+	fail_on_test(dcaps & V4L2_CAP_DEVICE_CAPS);
+	fail_on_test(dcaps & ~caps);
+	fail_on_test(!(dcaps & caps));
+	fail_on_test(node->is_video && !(caps & video_caps));
+	fail_on_test(node->is_radio && !(caps & radio_caps));
 	// V4L2_CAP_AUDIO is invalid for radio
 	fail_on_test(node->is_radio && (caps & V4L2_CAP_AUDIO));
-	fail_on_test(node->is_vbi && !(caps & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
-				      V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT)));
+	fail_on_test(node->is_vbi && !(caps & vbi_caps));
 	// You can't have both set due to missing buffer type in VIDIOC_G/S_FBUF
 	fail_on_test((caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)) ==
 			(V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY));
+	fail_on_test(node->is_video && (dcaps & (vbi_caps | radio_caps)));
+	fail_on_test(node->is_radio && (dcaps & (vbi_caps | video_caps)));
+	fail_on_test(node->is_vbi && (dcaps & (video_caps | radio_caps)));
+	if (dcaps & input_caps)
+		fail_on_test(dcaps & output_caps);
+	if (dcaps & output_caps)
+		fail_on_test(dcaps & input_caps);
 
 	return 0;
 }
@@ -471,6 +501,10 @@ int main(int argc, char **argv)
 			vcap.version & 0xff);
 	printf("\tCapabilities  : 0x%08X\n", vcap.capabilities);
 	printf("%s", cap2s(vcap.capabilities).c_str());
+	if (vcap.capabilities & V4L2_CAP_DEVICE_CAPS) {
+		printf("\tDevice Caps   : 0x%08X\n", vcap.device_caps);
+		printf("%s", cap2s(vcap.device_caps).c_str());
+	}
 
 	printf("\nCompliance test for device %s (%susing libv4l2):\n\n",
 			device, wrapper ? "" : "not ");

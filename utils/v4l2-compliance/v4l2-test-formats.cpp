@@ -42,9 +42,8 @@ static const __u32 buftype2cap[] = {
 	V4L2_CAP_SLICED_VBI_CAPTURE,
 	V4L2_CAP_SLICED_VBI_OUTPUT,
 	V4L2_CAP_VIDEO_OUTPUT_OVERLAY,
-	// To be discussed
-	V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_CAPTURE,
-	V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_OUTPUT,
+	V4L2_CAP_VIDEO_CAPTURE_MPLANE,
+	V4L2_CAP_VIDEO_OUTPUT_MPLANE,
 };
 
 static int testEnumFrameIntervals(struct node *node, __u32 pixfmt, __u32 w, __u32 h, bool valid)
@@ -259,19 +258,6 @@ static int testEnumFormatsType(struct node *node, enum v4l2_buf_type type)
 
 int testEnumFormats(struct node *node)
 {
-	static const __u32 buftype2cap[] = {
-		0,
-		V4L2_CAP_VIDEO_CAPTURE,
-		V4L2_CAP_VIDEO_OUTPUT,
-		V4L2_CAP_VIDEO_OVERLAY,
-		V4L2_CAP_VBI_CAPTURE,
-		V4L2_CAP_VBI_OUTPUT,
-		V4L2_CAP_SLICED_VBI_CAPTURE,
-		V4L2_CAP_SLICED_VBI_OUTPUT,
-		V4L2_CAP_VIDEO_OUTPUT_OVERLAY,
-		V4L2_CAP_VIDEO_CAPTURE_MPLANE,
-		V4L2_CAP_VIDEO_OUTPUT_MPLANE,
-	};
 	int type;
 	int ret;
 
