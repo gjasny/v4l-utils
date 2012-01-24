@@ -18,7 +18,7 @@
  *
  */
 
-#include "dvb-fe.h"
+#include "dvb-file.h"
 #include <config.h>
 #include <argp.h>
 #include <stdlib.h>
@@ -53,8 +53,6 @@ static int delsys = 0;
 
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
-	int i;
-
 	switch (k) {
 	case 'a':
 		adapter = atoi(arg);
