@@ -37,13 +37,6 @@
 
 #define PROGRAM_NAME	"dvb-format-convert"
 
-enum file_formats {
-	FILE_UNKNOWN,
-	FILE_ZAP,
-	FILE_CHANNEL,
-	FILE_DVBV5,
-};
-
 struct arguments {
 	char *input_file, *output_file;
 	enum file_formats input_format, output_format;
@@ -59,34 +52,6 @@ static const struct argp_option options[] = {
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
-
-enum file_formats parse_format(const char *name)
-{
-	if (!strcasecmp(name, "ZAP"))
-		return FILE_ZAP;
-	if (!strcasecmp(name, "CHANNEL"))
-		return FILE_CHANNEL;
-	if (!strcasecmp(name, "DVBV5"))
-		return FILE_DVBV5;
-
-	fprintf(stderr, "File format %s is unknown\n", name);
-	return FILE_UNKNOWN;
-}
-
-int parse_delsys(const char *name)
-{
-	if (!strcasecmp(name, "DVB-T"))
-		return SYS_DVBT;
-	if (!strcasecmp(name, "DVB-C"))
-		return SYS_DVBC_ANNEX_A;
-	if (!strcasecmp(name, "DVB-S"))
-		return SYS_DVBS;
-	if (!strcasecmp(name, "ATSC"))
-		return SYS_ATSC;
-
-	fprintf(stderr, "Delivery system unknown\n");
-	return -1;
-}
 
 static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 {
@@ -113,44 +78,13 @@ static int convert_file(struct arguments *args)
 	int ret;
 
 	printf("Reading file %s\n", args->input_file);
-	switch (args->input_format) {
-	case FILE_CHANNEL:		/* DVB channel/transponder old format */
-		dvb_file = parse_format_oneline(args->input_file,
-						SYS_UNDEFINED,
-						&channel_file_format);
-		break;
-	case FILE_ZAP:
-		dvb_file = parse_format_oneline(args->input_file,
-						(uint32_t)args->delsys,
-						&channel_file_zap_format);
-		break;
-	case FILE_DVBV5:
-		dvb_file = read_dvb_file(args->input_file);
-	default:
-		return -1;
-	}
-	if (!dvb_file)
-		return -2;
+
+	dvb_file = read_file_format(args->input_file, args->delsys,
+				    args->input_format);
 
 	printf("Writing file %s\n", args->output_file);
-	switch (args->output_format) {
-	case FILE_CHANNEL:		/* DVB channel/transponder old format */
-		ret = write_format_oneline(args->output_file,
-					   dvb_file,
-					   SYS_UNDEFINED,
-					   &channel_file_format);
-		break;
-	case FILE_ZAP:
-		ret = write_format_oneline(args->output_file,
-					   dvb_file,
-					   (uint32_t)args->delsys,
-					   &channel_file_zap_format);
-		break;
-	case FILE_DVBV5:
-		ret = write_dvb_file(args->output_file, dvb_file);
-	default:
-		return -1;
-	}
+	ret = write_file_format(args->output_file, dvb_file,
+				args->delsys, args->output_format);
 
 	return ret;
 }

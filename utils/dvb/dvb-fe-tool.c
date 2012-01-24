@@ -47,24 +47,9 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		frontend = atoi(arg);
 		break;
 	case 'd':
-		for (i = 0; i < ARRAY_SIZE(delivery_system_name); i++)
-			if (delivery_system_name[i] &&
-			    !strcasecmp(arg, delivery_system_name[i]))
-				break;
-		if (i < ARRAY_SIZE(delivery_system_name)) {
-			delsys = i;
-			break;
-		}
-		/* Not found. Print all possible values */
-		fprintf(stderr, "Delivery system %s is not known. Valid values are:\n",
-			arg);
-		for (i = 0; i < ARRAY_SIZE(delivery_system_name) - 1; i++) {
-			fprintf(stderr, "%-15s", delivery_system_name[i]);
-			if (!((i + 1) % 5))
-				fprintf(stderr, "\n");
-		}
-		fprintf(stderr, "\n");
-		return ARGP_ERR_UNKNOWN;
+		delsys = parse_delsys(arg);
+		if (delsys < 0)
+			return ARGP_ERR_UNKNOWN;
 		break;
 	case 's':
 		set_params = arg;

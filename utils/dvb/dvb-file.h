@@ -65,6 +65,14 @@ struct parse_file {
 	struct parse_struct formats[];
 };
 
+/* Known file formats */
+enum file_formats {
+	FILE_UNKNOWN,
+	FILE_ZAP,
+	FILE_CHANNEL,
+	FILE_DVBV5,
+};
+
 #define PTABLE(a) .table = a, .size=ARRAY_SIZE(a)
 
 /* FAKE DTV codes, for internal usage */
@@ -133,3 +141,12 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_descriptors *dvb_desc,
 		      int get_detected, int get_nit);
+int parse_delsys(const char *name);
+enum file_formats parse_format(const char *name);
+struct dvb_file *read_file_format(const char *fname,
+					   uint32_t delsys,
+					   enum file_formats format);
+int write_file_format(const char *fname,
+		      struct dvb_file *dvb_file,
+		      uint32_t delsys,
+		      enum file_formats format);
