@@ -20,10 +20,6 @@
  *	Bernard Hatt 24/2/04
  */
 
-/*
- * FIXME: It lacks DISEqC support and DVB-CA. Tested only with ISDB-T
- */
-
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
@@ -56,9 +52,10 @@ struct arguments {
 	unsigned adapter, frontend, demux, get_detected, get_nit;
 	int lnb, sat_number;
 	unsigned diseqc_wait, silent, frontend_only, freq_bpf;
-	unsigned timeout, old_format, dvr, rec_psi, exit_after_tuning;
+	unsigned timeout, dvr, rec_psi, exit_after_tuning;
 	unsigned human_readable, record;
 	unsigned n_apid, n_vpid;
+	enum file_formats input_format, output_format;
 };
 
 static const struct argp_option options[] = {
@@ -80,7 +77,7 @@ static const struct argp_option options[] = {
 	{"frontend",	'F', NULL,			0, "set up frontend only, don't touch demux", 0},
 	{"timeout",	't', "seconds",			0, "timeout for zapping and for recording", 0},
 	{"output",	'o', "file",			0, "output filename (use -o - for stdout)", 0},
-	{"old-format",	'O', NULL,			0, "uses old zap format", 0},
+	{"input-format", 'I',	"format",		0, "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -110,6 +107,7 @@ static int parse(struct arguments *args,
 	int i;
 	uint32_t sys;
 
+	/* This is used only when reading old formats */
 	switch (parms->current_sys) {
 	case SYS_DVBT:
 	case SYS_DVBS:
@@ -127,15 +125,11 @@ static int parse(struct arguments *args,
 		sys = SYS_DVBT;
 		break;
 	default:
-		ERROR("Doesn't know how to emulate the delivery system");
-		return -1;
+		sys = SYS_UNDEFINED;
+		break;
 	}
-
-	if (args->old_format)
-		dvb_file = parse_format_oneline(args->confname, sys,
-						&channel_file_zap_format);
-	else
-		dvb_file = read_dvb_file(args->confname);
+	dvb_file = read_file_format(args->confname, sys,
+				    args->input_format);
 	if (!dvb_file)
 		return -2;
 
@@ -392,8 +386,8 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 't':
 		args->timeout = strtoul(optarg, NULL, 0);
 		break;
-	case 'O':
-		args->old_format++;
+	case 'I':
+		args->input_format = parse_format(optarg);
 		break;
 	case 'o':
 		args->filename = strdup(optarg);
@@ -471,6 +465,12 @@ int main(int argc, char **argv)
 		channel = argv[idx];
 
 	if (!channel) {
+		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
+		return -1;
+	}
+
+	if (args.input_format == FILE_UNKNOWN) {
+		fprintf(stderr, "ERROR: Please specify a valid format\n");
 		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
 		return -1;
 	}

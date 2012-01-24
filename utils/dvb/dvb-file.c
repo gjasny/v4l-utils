@@ -210,7 +210,7 @@ int write_format_oneline(const char *fname,
 {
 	const char delimiter = parse_file->delimiter[0];
 	const struct parse_struct *formats = parse_file->formats;
-	int i, j, line = 0;;
+	int i, j, line = 0, first;
 	FILE *fp;
 	const struct parse_struct *fmt;
 	struct dvb_entry *entry;
@@ -242,14 +242,20 @@ int write_format_oneline(const char *fname,
 				 delsys);
 			goto error;
 		}
-		if (parse_file->has_delsys_id)
-			fprintf(fp, "%s%c", formats[i].id, delimiter);
-
-
+		if (parse_file->has_delsys_id) {
+			fprintf(fp, "%s", formats[i].id);
+			first = 0;
+		} else
+			first = 1;
 
 		fmt = &formats[i];
 		for (i = 0; i < fmt->size; i++) {
 			table = &fmt->table[i];
+
+			if (first)
+				first = 0;
+			else
+				fprintf(fp, "%c", delimiter);
 
 			for (j = 0; j < entry->n_props; j++)
 				if (entry->props[j].cmd == table->prop)
@@ -267,35 +273,34 @@ int write_format_oneline(const char *fname,
 					goto error;
 				}
 
-				fprintf(fp, "%s%c", table->table[data],
-					delimiter);
+				fprintf(fp, "%s", table->table[data]);
 			} else {
 				switch (table->prop) {
 				case DTV_VIDEO_PID:
 					if (!entry->video_pid) {
-						sprintf(err_msg,
-							"missing video PID");
-						goto error;
-					}
-					fprintf(fp, "%d%c", entry->video_pid[0],
-						delimiter);
+						fprintf(stderr,
+							"WARNING: missing video PID while parsing entry %d of %s\n",
+							line, fname);
+						fprintf(fp, "%d",0);
+					} else
+						fprintf(fp, "%d",
+							entry->video_pid[0]);
 					break;
 				case DTV_AUDIO_PID:
 					if (!entry->audio_pid) {
-						sprintf(err_msg,
-							"missing audio PID");
-						goto error;
-					}
-					fprintf(fp, "%d%c", entry->audio_pid[0],
-						delimiter);
+						fprintf(stderr,
+							"WARNING: missing audio PID while parsing entry %d of %s\n",
+							line, fname);
+						fprintf(fp, "%d",0);
+					} else
+						fprintf(fp, "%d",
+							entry->audio_pid[0]);
 					break;
 				case DTV_SERVICE_ID:
-					fprintf(fp, "%d%c", entry->service_id,
-						delimiter);
+					fprintf(fp, "%d", entry->service_id);
 					break;
 				case DTV_CH_NAME:
-					fprintf(fp, "%s%c", entry->channel,
-						delimiter);
+					fprintf(fp, "%s", entry->channel);
 					break;
 				default:
 					if (j >= entry->n_props) {
@@ -305,8 +310,7 @@ int write_format_oneline(const char *fname,
 					}
 
 					data = entry->props[j].u.data;
-					fprintf(fp, "%d%c", data,
-						delimiter);
+					fprintf(fp, "%d", data);
 					break;
 				}
 			}
@@ -967,9 +971,26 @@ enum file_formats parse_format(const char *name)
 	return FILE_UNKNOWN;
 }
 
+static struct {
+	uint32_t delsys;
+	char *name;
+} alt_names[] = {
+	{ SYS_DVBC_ANNEX_A,	"DVB-C" },
+	{ SYS_DVBH,		"DVB-H" },
+	{ SYS_DVBS,		"DVB-S" },
+	{ SYS_DVBS2,		"DVB-S2" },
+	{ SYS_DVBT,		"DVB-T" },
+	{ SYS_DVBT2,		"DVB-T2" },
+	{ SYS_ISDBC,		"ISDB-C" },
+	{ SYS_ISDBS,		"ISDB-S" },
+	{ SYS_ISDBT,		"ISDB-T" },
+	{ SYS_ATSCMH,		"ATSC-MH" },
+	{ SYS_DMBTH,		"DMB-TH" },
+};
+
 int parse_delsys(const char *name)
 {
-	int i;
+	int i, cnt = 0;
 
 	/* Check for DVBv5 names */
 	for (i = 0; i < ARRAY_SIZE(delivery_system_name); i++)
@@ -979,26 +1000,36 @@ int parse_delsys(const char *name)
 	if (i < ARRAY_SIZE(delivery_system_name))
 		return i;
 
-	/* Also accept DVB-<foo> format */
-	if (!strcasecmp(name, "DVB-T"))
-		return SYS_DVBT;
-	if (!strcasecmp(name, "DVB-C"))
-		return SYS_DVBC_ANNEX_A;
-	if (!strcasecmp(name, "DVB-S"))
-		return SYS_DVBS;
-	if (!strcasecmp(name, "ISDB-T"))
-		return SYS_ISDBT;
+	/* Also accept the alternative names */
+	for (i = 0; i < ARRAY_SIZE(alt_names); i++)
+		if (!strcasecmp(name, alt_names[i].name))
+			break;
+	if (i < ARRAY_SIZE(alt_names))
+		return alt_names[i].delsys;
 
-	/* Not found. Print all possible values, "by the book" */
-	fprintf(stderr, "Delivery system %s is not known. Valid values are:\n",
+	/*
+	 * Not found. Print all possible values, except for
+	 * SYS_UNDEFINED.
+	 */
+	fprintf(stderr, "ERROR: Delivery system %s is not known. Valid values are:\n",
 		name);
-	for (i = 0; i < ARRAY_SIZE(delivery_system_name) - 1; i++) {
-		fprintf(stderr, "%-15s", delivery_system_name[i]);
-		if (!((i + 1) % 5))
+	for (i = 0; i < ARRAY_SIZE(alt_names) - 1; i++) {
+		if (!(cnt % 5))
 			fprintf(stderr, "\n");
+		fprintf(stderr, "%-15s", alt_names[i].name);
+		cnt++;
 	}
 
-	fprintf(stderr, "Delivery system unknown\n");
+	for (i = 1; i < ARRAY_SIZE(delivery_system_name) - 1; i++) {
+		if (!(cnt % 5))
+			fprintf(stderr, "\n");
+		fprintf(stderr, "%-15s", delivery_system_name[i]);
+		cnt++;
+	}
+	if (cnt % 5)
+		fprintf(stderr, "\n");
+
+	fprintf(stderr, "\n");
 	return -1;
 }
 
@@ -1021,7 +1052,9 @@ struct dvb_file *read_file_format(const char *fname,
 		break;
 	case FILE_DVBV5:
 		dvb_file = read_dvb_file(fname);
+		break;
 	default:
+		fprintf(stderr, "Format is not supported\n");
 		return NULL;
 	}
 
@@ -1050,6 +1083,7 @@ int write_file_format(const char *fname,
 		break;
 	case FILE_DVBV5:
 		ret = write_dvb_file(fname, dvb_file);
+		break;
 	default:
 		return -1;
 	}

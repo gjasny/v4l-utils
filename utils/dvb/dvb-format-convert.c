@@ -44,8 +44,8 @@ struct arguments {
 };
 
 static const struct argp_option options[] = {
-	{"input-format",	'i',	"format",	0, "Input format: ZAP, CHANNEL, DVBV5", 0},
-	{"output-format",	'o',	"format",	0, "Input format: ZAP, CHANNEL, DVBV5", 0},
+	{"input-format",	'I',	"format",	0, "Input format: ZAP, CHANNEL, DVBV5", 0},
+	{"output-format",	'O',	"format",	0, "Input format: ZAP, CHANNEL, DVBV5", 0},
 	{"delsys",		's',	"system",	0, "Delivery system type. Needed if input or output format is ZAP", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
@@ -57,10 +57,10 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 {
 	struct arguments *args = state->input;
 	switch (k) {
-	case 'i':
+	case 'I':
 		args->input_format = parse_format(optarg);
 		break;
-	case 'o':
+	case 'O':
 		args->output_format = parse_format(optarg);
 		break;
 	case 's':
@@ -81,6 +81,10 @@ static int convert_file(struct arguments *args)
 
 	dvb_file = read_file_format(args->input_file, args->delsys,
 				    args->input_format);
+	if (!dvb_file) {
+		fprintf(stderr, "Error reading file %s\n", args->input_file);
+		return -1;
+	}
 
 	printf("Writing file %s\n", args->output_file);
 	ret = write_file_format(args->output_file, dvb_file,
@@ -108,13 +112,13 @@ int main(int argc, char **argv)
 		args.output_file = argv[idx + 1];
 	}
 
-	if (!args.input_format) {
+	if (args.input_format == FILE_UNKNOWN) {
 		fprintf(stderr, "ERROR: Please specify a valid input format\n");
 		missing = 1;
 	} else if (!args.output_file) {
 		fprintf(stderr, "ERROR: Please specify a valid input file\n");
 		missing = 1;
-	} else if (!args.output_format) {
+	} else if (args.output_format == FILE_UNKNOWN) {
 		fprintf(stderr, "ERROR: Please specify a valid output format\n");
 		missing = 1;
 	} else if (!args.output_file) {

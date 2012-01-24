@@ -19,16 +19,6 @@
  * Based on dvbv5-tzap utility.
  */
 
-/*
- * FIXME: It lacks DISEqC support and DVB-CA. Tested only with ISDB-T
- */
-
-#if 0
-#define _FILE_OFFSET_BITS 64
-#define _LARGEFILE_SOURCE 1
-#define _LARGEFILE64_SOURCE 1
-#endif
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,10 +45,11 @@ const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.co
 
 struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev;
-	unsigned adapter, frontend, demux, get_detected, get_nit, format;
+	unsigned adapter, frontend, demux, get_detected, get_nit;
 	int lnb, sat_number, freq_bpf;
 	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
 	unsigned other_nit;
+	enum file_formats input_format, output_format;
 };
 
 static const struct argp_option options[] = {
@@ -73,11 +64,11 @@ static const struct argp_option options[] = {
 	{"get_frontend",'G',	NULL,			0, "use data from get_frontend on the output file", 0},
 	{"verbose",	'v',	NULL,			0, "be (very) verbose", 0},
 	{"output",	'o',	"file",			0, "output filename (default: " DEFAULT_OUTPUT ")", 0},
-	{"old-format",	'O',	NULL,			0, "uses old transponder/channel format", 0},
-	{"zap",		'z',	"file",			0, "uses zap services file, discarding video/audio pid's", 0},
 	{"file-freqs-only", 'F', NULL,			0, "don't use the other frequencies discovered during scan", 0},
 	{"timeout-multiply", 'T', "factor",		0, "Multiply scan timeouts by this factor", 0},
 	{"parse-other-nit", 'p', NULL,			0, "Parse the other NIT/SDT tables", 0},
+	{"input-format", 'I',	"format",		0, "Input format: CHANNEL, DVBV5 (default: DVBV5)", 0},
+	{"output-format", 'O',	"format",		0, "Output format: CHANNEL, ZAP, DVBV5 (default: DVBV5)", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -273,41 +264,29 @@ static int run_scan(struct arguments *args,
 	int i, rc, count = 0, dmx_fd;
 	uint32_t freq, sys;
 
-	switch (args->format) {
-	case 0:
+	/* This is used only when reading old formats */
+	switch (parms->current_sys) {
+	case SYS_DVBT:
+	case SYS_DVBS:
+	case SYS_DVBC_ANNEX_A:
+	case SYS_ATSC:
+		sys = parms->current_sys;
+		break;
+	case SYS_DVBC_ANNEX_C:
+		sys = SYS_DVBC_ANNEX_A;
+		break;
+	case SYS_DVBC_ANNEX_B:
+		sys = SYS_ATSC;
+		break;
+	case SYS_ISDBT:
+		sys = SYS_DVBT;
+		break;
 	default:
-		dvb_file = read_dvb_file(args->confname);
-		break;
-	case 1:			/* DVB channel/transponder old format */
-		dvb_file = parse_format_oneline(args->confname,
-						SYS_UNDEFINED,
-						&channel_file_format);
-		break;
-	case 2: 			/* DVB old zap format */
-		switch (parms->current_sys) {
-		case SYS_DVBT:
-		case SYS_DVBS:
-		case SYS_DVBC_ANNEX_A:
-		case SYS_ATSC:
-			sys = parms->current_sys;
-			break;
-		case SYS_DVBC_ANNEX_C:
-			sys = SYS_DVBC_ANNEX_A;
-			break;
-		case SYS_DVBC_ANNEX_B:
-			sys = SYS_ATSC;
-			break;
-		case SYS_ISDBT:
-			sys = SYS_DVBT;
-			break;
-		default:
-			ERROR("Doesn't know how to emulate the delivery system");
-			return -1;
-		}
-		dvb_file = parse_format_oneline(args->confname, sys,
-						&channel_file_zap_format);
+		sys = SYS_UNDEFINED;
 		break;
 	}
+	dvb_file = read_file_format(args->confname, sys,
+				    args->input_format);
 	if (!dvb_file)
 		return -2;
 
@@ -417,7 +396,8 @@ static int run_scan(struct arguments *args,
 	}
 
 	if (dvb_file_new)
-		write_dvb_file(args->output, dvb_file_new);
+		write_file_format(args->output, dvb_file_new,
+				  parms->current_sys, args->output_format);
 
 	dvb_file_free(dvb_file);
 	if (dvb_file_new)
@@ -439,12 +419,6 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		break;
 	case 'd':
 		args->demux = strtoul(optarg, NULL, 0);
-		break;
-	case 'O':
-		args->format = 1;
-		break;
-	case 'z':
-		args->format = 2;
 		break;
 	case 'l':
 		args->lnb_name = optarg;
@@ -476,6 +450,12 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'T':
 		args->timeout_multiply = strtoul(optarg, NULL, 0);
 		break;
+	case 'I':
+		args->input_format = parse_format(optarg);
+		break;
+	case 'O':
+		args->output_format = parse_format(optarg);
+		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
 	};
@@ -496,6 +476,8 @@ int main(int argc, char **argv)
 	memset(&args, 0, sizeof(args));
 	args.sat_number = -1;
 	args.output = DEFAULT_OUTPUT;
+	args.input_format = FILE_DVBV5;
+	args.output_format = FILE_DVBV5;
 
 	argp_parse(&argp, argc, argv, 0, &idx, &args);
 
@@ -515,6 +497,13 @@ int main(int argc, char **argv)
 		args.confname = argv[idx];
 
 	if (!args.confname || idx < 0) {
+		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
+		return -1;
+	}
+	if ((args.input_format == FILE_ZAP) ||
+		   (args.input_format == FILE_UNKNOWN) ||
+		   (args.output_format == FILE_UNKNOWN)) {
+		fprintf(stderr, "ERROR: Please specify a valid format\n");
 		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
 		return -1;
 	}
