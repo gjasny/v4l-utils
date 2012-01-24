@@ -55,7 +55,7 @@ struct arguments {
 	char *filename;
 	unsigned adapter, frontend, demux, get_detected, get_nit;
 	int lnb, sat_number;
-	unsigned diseqc_wait, silent, frontend_only;
+	unsigned diseqc_wait, silent, frontend_only, freq_bpf;
 	unsigned timeout, old_format, dvr, rec_psi, exit_after_tuning;
 	unsigned human_readable, record;
 	unsigned n_apid, n_vpid;
@@ -69,6 +69,7 @@ static const struct argp_option options[] = {
 	{"video_pid",	'V', "video_pid#",		0, "video pid program to use (default 0)", 0},
 	{"lnbf",	'l', "LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
 	{"sat_number",	'S', "satellite_number",	0, "satellite number. If not specified, disable DISEqC", 0},
+	{"freq_bpf",	'U', "frequency",		0, "SCR/Unicable band-pass filter frequency to use, in kHz", 0},
 	{"wait",	'W', "time",			0, "adds aditional wait time for DISEqC command completion", 0},
 	{"channels",	'c', "file",			0, "read channels list from 'file'", 0},
 	{"exit",	'x', NULL,			0, "exit after tuning", 0},
@@ -416,6 +417,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'S':
 		args->sat_number = strtoul(optarg, NULL, 0);
 		break;
+	case 'U':
+		args->freq_bpf = strtoul(optarg, NULL, 0);
+		break;
 	case 'W':
 		args->diseqc_wait = strtoul(optarg, NULL, 0);
 		break;
@@ -511,6 +515,7 @@ int main(int argc, char **argv)
 	if (args.sat_number > 0)
 		parms->sat_number = args.sat_number % 3;
 	parms->diseqc_wait = args.diseqc_wait;
+	parms->freq_bpf = args.freq_bpf;
 
 	if (parse(&args, parms, channel, &vpid, &apid, &sid))
 		return -1;

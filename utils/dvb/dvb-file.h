@@ -33,7 +33,8 @@ struct dvb_entry {
 	char *location;
 
 	enum polarization pol;
-	int sat_number;
+	unsigned sat_number;
+	unsigned freq_bpf;
 	unsigned diseqc_wait;
 	char *lnb;
 };
@@ -70,6 +71,7 @@ struct parse_struct {
 #define DTV_SAT_NUMBER          (DTV_MAX_COMMAND + 206)
 #define DTV_DISEQC_WAIT         (DTV_MAX_COMMAND + 207)
 #define DTV_DISEQC_LNB          (DTV_MAX_COMMAND + 208)
+#define DTV_FREQ_BPF            (DTV_MAX_COMMAND + 209)
 
 struct dvb_descriptors;
 

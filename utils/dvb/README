@@ -170,20 +170,42 @@ USAGE WITH SATELLITE DELIVERY SYSTEMS
 =====================================
 
 The dvbv5-zap and dvbv5-scan can now work with DVB-S/DVB-S2
-systems. A new code, yet to be tested, adds support for LNBf
-devices, and for DISEqC switching (SMATV).
+systems. A new code, yet to be tested, has the following
+features:
+	- support for common types of LNBf;
+	- DISEqC switching (SMATV);
+	- Bandstacking;
+	- Unicable/SRC.
 
 Additional parameters for satellite delivery systems are needed:
+
 	- l <lnbf>
+
 selects the LNBf type. Using an invalid value like "help" shows
 what's currently supported.
+
 	- S <sat_number>
-Selects satellite number, between 0 to 3. If not specified,
-disables DISEqC. This actually changes the DISEqC "option"
+
+Selects satellite number, between 0 to 3, for SMATV, or between
+0 to 15 for SCR/Unicable. The highest bit is used to select between
+position A and position B.
+
+If not specified, disables DISEqC and Unicable/SCR.
+
+For SMATV, this actually changes the DISEqC "option"
 and "position" parameter. According with the specs, for
 position B, tone should be off, and tone burst should
 be miniA.
+
+	-U <freq_bpf>
+
+Selects the band-pass filter frequency used by the Unicable device. Currently,
+only the mandatory DISEqC commands were implemented. It means that
+the library is currently not able to use bi-directional DISEqC commands
+to detect the available frequencies.
+
 	-W <extra time in ms>
+
 The DISEqC logic will wait for 15 ms. If this parameter is
 specified, it will add  the extra time to the 15ms delay.
 

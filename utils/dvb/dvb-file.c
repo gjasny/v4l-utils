@@ -258,6 +258,11 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 		return 0;
 	}
 
+	if (!strcasecmp(key, "FREQ_BPF")) {
+		entry->freq_bpf = atol(value);
+		return 0;
+	}
+
 	if (!strcasecmp(key, "DISEQC_WAIT")) {
 		entry->diseqc_wait = atol(value);
 		return 0;
@@ -498,6 +503,11 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 		if (entry->sat_number >= 0) {
 			fprintf(fp, "\tSAT_NUMBER = %d\n",
 				entry->sat_number);
+		}
+
+		if (entry->freq_bpf > 0) {
+			fprintf(fp, "\tFREQ_BPF = %d\n",
+				entry->freq_bpf);
 		}
 
 		if (entry->diseqc_wait > 0) {
@@ -752,6 +762,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 
 		entry->pol = parms->pol;
 		entry->sat_number = parms->sat_number;
+		entry->freq_bpf = parms->freq_bpf;
 		entry->diseqc_wait = parms->diseqc_wait;
 		if (parms->lnb)
 			entry->lnb = strdup(parms->lnb->alias);

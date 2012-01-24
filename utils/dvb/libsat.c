@@ -215,7 +215,38 @@ static int dvbsat_diseqc_write_to_port_group(struct diseqc_cmd *cmd,
 	return dvb_fe_diseqc_cmd(parms, cmd->len, cmd->msg);
 }
 
-static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms)
+static int dvbsat_scr_odu_channel_change(struct diseqc_cmd *cmd,
+					 int high_band,
+					 int pol_v,
+					 int sat_number,
+					 uint16_t t)
+{
+	int pos_b;
+
+	dvbsat_diseqc_prep_frame_addr(cmd,
+				      DISEQC_BROADCAST_LNB_SWITCHER_SMATV,
+				      0, 0);
+
+	cmd->command = 0x5a;	/* ODU Channel Change */
+	cmd->len = 5;
+
+	/* Fill the tuning parameter */
+	cmd->data0 = (t >> 8) & 0x03;
+	cmd->data1 = t & 0xff;
+
+	/* Fill the satelite number - highest bit is for pos A/pos B */
+	cmd->data0 |= (sat_number % 0x7) << 5;
+	pos_b =  (sat_number & 0x8) ? 1 : 0;
+
+	/* Fill the LNB number */
+	cmd->data0 |= high_band ? 0 : 4;
+	cmd->data0 |= pol_v ? 8 : 0;
+	cmd->data0 |= pos_b ? 16 : 0;
+
+	return dvb_fe_diseqc_cmd(parms, cmd->len, cmd->msg);
+}
+
+static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 {
 	int rc;
         enum polarization pol = parms->pol;
@@ -264,8 +295,13 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms)
 		return rc;
 	usleep(15 * 1000);
 
-	rc = dvbsat_diseqc_write_to_port_group(&cmd, high_band,
-					       pol_v, sat_number);
+	if (!t)
+		rc = dvbsat_diseqc_write_to_port_group(&cmd, high_band,
+						       pol_v, sat_number);
+	else
+		rc = dvbsat_scr_odu_channel_change(&cmd, high_band,
+						   pol_v, sat_number, t);
+
 	if (rc)
 		return rc;
 	usleep((15 + parms->diseqc_wait) * 1000);
@@ -290,6 +326,7 @@ int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms)
 	struct dvb_satellite_lnb *lnb = parms->lnb;
         enum polarization pol = parms->pol;
 	uint32_t freq;
+	uint16_t t = 0;
 	uint32_t voltage = SEC_VOLTAGE_13;
 	int rc;
 
@@ -302,16 +339,16 @@ int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms)
 
 	/* Simple case: LNBf with just Single LO */
 	if (!lnb->highfreq) {
-		freq = abs(freq - lnb->lowfreq);
+		parms->freq_offset = lnb->lowfreq;
 		goto ret;
 	}
 
 	/* polarization-controlled multi LNBf */
 	if (!lnb->rangeswitch) {
 		if ((pol == POLARIZATION_V) || (pol == POLARIZATION_R))
-			freq = abs(freq - lnb->lowfreq);
+			parms->freq_offset = lnb->lowfreq;
 		else
-			freq = abs(freq - lnb->highfreq);
+			parms->freq_offset = lnb->highfreq;
 		goto ret;
 	}
 
@@ -320,14 +357,21 @@ int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms)
 
 	/* Adjust frequency */
 	if (parms->high_band)
-		freq = abs(freq - lnb->highfreq);
+		parms->freq_offset = lnb->highfreq;
 	else
-		freq = abs(freq - lnb->lowfreq);
+		parms->freq_offset = lnb->lowfreq;
+
+	/* For SCR/Unicable setups */
+	if (parms->freq_bpf) {
+		t = (((freq / 1000) + parms->freq_bpf + 2) / 4) - 350;
+		parms->freq_offset += ((t + 350) * 4) * 1000;
+	}
 
 ret:
-	rc = dvbsat_diseqc_set_input(parms);
+	rc = dvbsat_diseqc_set_input(parms, t);
 
-	dvb_fe_store_parm(parms, DTV_FREQUENCY, voltage);
+	freq = abs(freq - parms->freq_offset);
+	dvb_fe_store_parm(parms, DTV_VOLTAGE, voltage);
 	dvb_fe_store_parm(parms, DTV_FREQUENCY, freq);
 
 	return rc;
@@ -335,39 +379,10 @@ ret:
 
 int dvb_satellite_get_parms(struct dvb_v5_fe_parms *parms)
 {
-	struct dvb_satellite_lnb *lnb = parms->lnb;
-        enum polarization pol = parms->pol;
-	uint32_t freq;
+	uint32_t freq = 0;
 
 	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
-
-	if (!lnb) {
-		fprintf(stderr, "Need a LNBf to work\n");
-		return -EINVAL;
-	}
-
-	/* Simple case: LNBf with just Single LO */
-	if (!lnb->highfreq) {
-		freq = abs(freq + lnb->lowfreq);
-		goto ret;
-	}
-
-	/* polarization-controlled multi LNBf */
-	if (!lnb->rangeswitch) {
-		if ((pol == POLARIZATION_V) || (pol == POLARIZATION_R))
-			freq = abs(freq + lnb->lowfreq);
-		else
-			freq = abs(freq + lnb->highfreq);
-		goto ret;
-	}
-
-	/* Voltage-controlled multiband switch */
-	if (parms->high_band)
-		freq = abs(freq + lnb->highfreq);
-	else
-		freq = abs(freq + lnb->lowfreq);
-
-ret:
+	freq = abs(freq + parms->freq_offset);
 	dvb_fe_store_parm(parms, DTV_FREQUENCY, freq);
 
 	return 0;
