@@ -59,6 +59,12 @@ struct parse_struct {
 	unsigned int			size;
 };
 
+struct parse_file {
+	int has_delsys_id;
+	char *delimiter;
+	struct parse_struct formats[];
+};
+
 #define PTABLE(a) .table = a, .size=ARRAY_SIZE(a)
 
 /* FAKE DTV codes, for internal usage */
@@ -100,15 +106,15 @@ static inline void dvb_file_free(struct dvb_file *dvb_file)
 }
 
 /* From dvb-legacy-channel-format.c */
-extern const const struct parse_struct channel_formats[];
+extern const struct parse_file channel_file_format;
 
 /* From dvb-zap-format.c */
-extern const const struct parse_struct zap_formats[];
+extern const struct parse_file channel_file_zap_format;
 
 /* From dvb-file.c */
-struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
+struct dvb_file *parse_format_oneline(const char *fname,
 				      uint32_t delsys,
-				      const struct parse_struct *formats);
+				      const struct parse_file *parse_file);
 
 
 struct dvb_file *read_dvb_file(const char *fname);

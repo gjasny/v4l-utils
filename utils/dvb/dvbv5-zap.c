@@ -132,8 +132,8 @@ static int parse(struct arguments *args,
 	}
 
 	if (args->old_format)
-		dvb_file = parse_format_oneline(args->confname, ":",
-						sys, zap_formats);
+		dvb_file = parse_format_oneline(args->confname, sys,
+						&channel_file_zap_format);
 	else
 		dvb_file = read_dvb_file(args->confname);
 	if (!dvb_file)

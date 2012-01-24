@@ -279,9 +279,9 @@ static int run_scan(struct arguments *args,
 		dvb_file = read_dvb_file(args->confname);
 		break;
 	case 1:			/* DVB channel/transponder old format */
-		dvb_file = parse_format_oneline(args->confname, " \n",
+		dvb_file = parse_format_oneline(args->confname,
 						SYS_UNDEFINED,
-						channel_formats);
+						&channel_file_format);
 		break;
 	case 2: 			/* DVB old zap format */
 		switch (parms->current_sys) {
@@ -304,8 +304,8 @@ static int run_scan(struct arguments *args,
 			ERROR("Doesn't know how to emulate the delivery system");
 			return -1;
 		}
-		dvb_file = parse_format_oneline(args->confname, ":", sys,
-						zap_formats);
+		dvb_file = parse_format_oneline(args->confname, sys,
+						&channel_file_zap_format);
 		break;
 	}
 	if (!dvb_file)

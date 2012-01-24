@@ -134,24 +134,28 @@ static const struct parse_table sys_dvbt_table[] = {
 	{ DTV_HIERARCHY, PTABLE(channel_parse_hierarchy) },
 };
 
-const struct parse_struct channel_formats[] = {
-	{
-		.id		= "A",
-		.delsys		= SYS_ATSC,
-		PTABLE(sys_atsc_table),
-	}, {
-		.id		= "C",
-		.delsys		= SYS_DVBC_ANNEX_A,
-		PTABLE(sys_dvbc_table),
-	}, {
-		.id		= "S",
-		.delsys		= SYS_DVBS,
-		PTABLE(sys_dvbs_table),
-	}, {
-		.id		= "T",
-		.delsys		= SYS_DVBT,
-		PTABLE(sys_dvbt_table),
-	}, {
-		NULL, 0, NULL, 0,
+const struct parse_file channel_file_format = {
+	.has_delsys_id = 1,
+	.delimiter = " \n",
+	.formats = {
+		{
+			.id		= "A",
+			.delsys		= SYS_ATSC,
+			PTABLE(sys_atsc_table),
+		}, {
+			.id		= "C",
+			.delsys		= SYS_DVBC_ANNEX_A,
+			PTABLE(sys_dvbc_table),
+		}, {
+			.id		= "S",
+			.delsys		= SYS_DVBS,
+			PTABLE(sys_dvbs_table),
+		}, {
+			.id		= "T",
+			.delsys		= SYS_DVBT,
+			PTABLE(sys_dvbt_table),
+		}, {
+			NULL, 0, NULL, 0,
+		}
 	}
 };

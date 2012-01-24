@@ -41,8 +41,8 @@ static int convert_file(const char *fname, const char *delsys,
 	printf("Reading file %s\n", fname);
 	switch (format) {
 	case 1:			/* DVB channel/transponder old format */
-		dvb_file = parse_format_oneline(fname, " \n", SYS_UNDEFINED,
-						channel_formats);
+		dvb_file = parse_format_oneline(fname, SYS_UNDEFINED,
+						&channel_file_format);
 		break;
 	case 2: 			/* DVB old zap format */
 		if (!delsys) {
@@ -61,7 +61,8 @@ static int convert_file(const char *fname, const char *delsys,
 			fprintf(stderr, "Delivery system unknown\n");
 			return -1;
 		}
-		dvb_file = parse_format_oneline(fname, ":", sys, zap_formats);
+		dvb_file = parse_format_oneline(fname, sys,
+						&channel_file_zap_format);
 		break;
 	}
 	if (!dvb_file)

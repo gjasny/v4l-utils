@@ -49,10 +49,12 @@ static const char *parm_name(const struct parse_table *table)
  * Generic parse function for all formats each channel is contained into
  * just one line.
  */
-struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
+struct dvb_file *parse_format_oneline(const char *fname,
 				      uint32_t delsys,
-				      const struct parse_struct *formats)
+				      const struct parse_file *parse_file)
 {
+	const char *delimiter = parse_file->delimiter;
+	const struct parse_struct *formats = parse_file->formats;
 	char *buf = NULL, *p;
 	size_t size = 0;
 	int len = 0;
@@ -89,7 +91,7 @@ struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 		if (*p == '\n' || *p == '#' || *p == '\a' || *p == '\0')
 			continue;
 
-		if (!delsys) {
+		if (!parse_file->has_delsys_id) {
 			p = strtok(p, delimiter);
 			if (!p) {
 				sprintf(err_msg, "unknown delivery system type for %s",
@@ -104,7 +106,7 @@ struct dvb_file *parse_format_oneline(const char *fname, const char *delimiter,
 			}
 		} else {
 			/* Seek for the delivery system */
-			for (i = 0; formats[i].id != NULL; i++) {
+			for (i = 0; formats[i].delsys != 0; i++) {
 				if (formats[i].delsys == delsys)
 					break;
 			}
