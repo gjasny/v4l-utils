@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,7 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ *
  */
+
 
 #include "dvb-fe.h"
 
