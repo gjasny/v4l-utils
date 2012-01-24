@@ -1440,6 +1440,8 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tAsync I/O\n";
 	if (cap & V4L2_CAP_STREAMING)
 		s += "\t\tStreaming\n";
+	if (cap & V4L2_CAP_DEVICE_CAPS)
+		s += "\t\tDevice Capabilities\n";
 	return s;
 }
 
@@ -2659,6 +2661,10 @@ int main(int argc, char **argv)
 				vcap.version & 0xff);
 		printf("\tCapabilities  : 0x%08X\n", vcap.capabilities);
 		printf("%s", cap2s(vcap.capabilities).c_str());
+		if (vcap.capabilities & V4L2_CAP_DEVICE_CAPS) {
+			printf("\tDevice Caps   : 0x%08X\n", vcap.device_caps);
+			printf("%s", cap2s(vcap.device_caps).c_str());
+		}
 	}
 
 	/* Set options */
