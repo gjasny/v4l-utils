@@ -761,7 +761,8 @@ static void handle_std_specific_parms(struct dvb_entry *entry,
 				 nit_table->rolloff);
 		/* fall through */
 	case SYS_DVBS:
-		entry->location = strdup(nit_table->orbit);
+		if (nit_table->orbit)
+			entry->location = strdup(nit_table->orbit);
 		store_entry_prop(entry, DTV_FREQUENCY,
 				 nit_table->frequency[0]);
 		store_entry_prop(entry, DTV_MODULATION,
@@ -775,7 +776,8 @@ static void handle_std_specific_parms(struct dvb_entry *entry,
 				 nit_table->fec_inner);
 		break;
 	case SYS_DVBC_ANNEX_A:
-		entry->location = strdup(nit_table->network_name);
+		if (nit_table->network_name)
+			entry->location = strdup(nit_table->network_name);
 		store_entry_prop(entry, DTV_FREQUENCY,
 				 nit_table->frequency[0]);
 		store_entry_prop(entry, DTV_MODULATION,
@@ -786,7 +788,8 @@ static void handle_std_specific_parms(struct dvb_entry *entry,
 				 nit_table->fec_inner);
 		break;
 	case SYS_DVBT:
-		entry->location = strdup(nit_table->network_name);
+		if (nit_table->network_name)
+			entry->location = strdup(nit_table->network_name);
 		store_entry_prop(entry, DTV_FREQUENCY,
 				 nit_table->frequency[0]);
 		store_entry_prop(entry, DTV_MODULATION,
@@ -805,7 +808,8 @@ static void handle_std_specific_parms(struct dvb_entry *entry,
 				 nit_table->hierarchy);
 		break;
 	case SYS_DVBT2:
-		entry->location = strdup(nit_table->network_name);
+		if (nit_table->network_name)
+			entry->location = strdup(nit_table->network_name);
 		store_entry_prop(entry, DTV_DVBT2_PLP_ID,
 				 nit_table->plp_id);
 		store_entry_prop(entry, DTV_BANDWIDTH_HZ,
