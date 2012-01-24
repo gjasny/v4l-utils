@@ -33,7 +33,7 @@ struct dvb_entry {
 	char *location;
 
 	enum polarization pol;
-	unsigned sat_number;
+	int sat_number;
 	unsigned freq_bpf;
 	unsigned diseqc_wait;
 	char *lnb;
@@ -115,6 +115,11 @@ extern const struct parse_file channel_file_zap_format;
 struct dvb_file *parse_format_oneline(const char *fname,
 				      uint32_t delsys,
 				      const struct parse_file *parse_file);
+int write_format_oneline(const char *fname,
+			 struct dvb_file *dvb_file,
+			 uint32_t delsys,
+			 const struct parse_file *parse_file);
+
 
 
 struct dvb_file *read_dvb_file(const char *fname);

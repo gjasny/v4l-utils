@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,104 +27,174 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <argp.h>
+
+#include <config.h>
 
 #include "dvb-file.h"
 #include "dvb-demux.h"
 #include "libscan.h"
 
-static int convert_file(const char *fname, const char *delsys,
-			int format, const char *fout)
+#define PROGRAM_NAME	"dvb-format-convert"
+
+enum file_formats {
+	FILE_UNKNOWN,
+	FILE_ZAP,
+	FILE_CHANNEL,
+	FILE_DVBV5,
+};
+
+struct arguments {
+	char *input_file, *output_file;
+	enum file_formats input_format, output_format;
+	int delsys;
+};
+
+static const struct argp_option options[] = {
+	{"input-format",	'i',	"format",	0, "Input format: ZAP, CHANNEL, DVBV5", 0},
+	{"output-format",	'o',	"format",	0, "Input format: ZAP, CHANNEL, DVBV5", 0},
+	{"delsys",		's',	"system",	0, "Delivery system type. Needed if input or output format is ZAP", 0},
+	{ 0, 0, 0, 0, 0, 0 }
+};
+
+const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
+
+enum file_formats parse_format(const char *name)
+{
+	if (!strcasecmp(name, "ZAP"))
+		return FILE_ZAP;
+	if (!strcasecmp(name, "CHANNEL"))
+		return FILE_CHANNEL;
+	if (!strcasecmp(name, "DVBV5"))
+		return FILE_DVBV5;
+
+	fprintf(stderr, "File format %s is unknown\n", name);
+	return FILE_UNKNOWN;
+}
+
+int parse_delsys(const char *name)
+{
+	if (!strcasecmp(name, "DVB-T"))
+		return SYS_DVBT;
+	if (!strcasecmp(name, "DVB-C"))
+		return SYS_DVBC_ANNEX_A;
+	if (!strcasecmp(name, "DVB-S"))
+		return SYS_DVBS;
+	if (!strcasecmp(name, "ATSC"))
+		return SYS_ATSC;
+
+	fprintf(stderr, "Delivery system unknown\n");
+	return -1;
+}
+
+static error_t parse_opt(int k, char *optarg, struct argp_state *state)
+{
+	struct arguments *args = state->input;
+	switch (k) {
+	case 'i':
+		args->input_format = parse_format(optarg);
+		break;
+	case 'o':
+		args->output_format = parse_format(optarg);
+		break;
+	case 's':
+		args->delsys = parse_delsys(optarg);
+		break;
+	default:
+		return ARGP_ERR_UNKNOWN;
+	};
+	return 0;
+}
+
+static int convert_file(struct arguments *args)
 {
 	struct dvb_file *dvb_file = NULL;
-	uint32_t sys;
+	int ret;
 
-	printf("Reading file %s\n", fname);
-	switch (format) {
-	case 1:			/* DVB channel/transponder old format */
-		dvb_file = parse_format_oneline(fname, SYS_UNDEFINED,
+	printf("Reading file %s\n", args->input_file);
+	switch (args->input_format) {
+	case FILE_CHANNEL:		/* DVB channel/transponder old format */
+		dvb_file = parse_format_oneline(args->input_file,
+						SYS_UNDEFINED,
 						&channel_file_format);
 		break;
-	case 2: 			/* DVB old zap format */
-		if (!delsys) {
-			fprintf(stderr, "Delivery system need to be specified, for zap format\n");
-			return -1;
-		}
-		if (!strcasecmp(delsys, "DVB-T"))
-			sys = SYS_DVBT;
-		else if (!strcasecmp(delsys, "DVB-C"))
-			sys = SYS_DVBC_ANNEX_A;
-		else if (!strcasecmp(delsys, "DVB-S"))
-			sys = SYS_DVBS;
-		else if (!strcasecmp(delsys, "ATSC"))
-			sys = SYS_ATSC;
-		else {
-			fprintf(stderr, "Delivery system unknown\n");
-			return -1;
-		}
-		dvb_file = parse_format_oneline(fname, sys,
+	case FILE_ZAP:
+		dvb_file = parse_format_oneline(args->input_file,
+						(uint32_t)args->delsys,
 						&channel_file_zap_format);
 		break;
+	case FILE_DVBV5:
+		dvb_file = read_dvb_file(args->input_file);
+	default:
+		return -1;
 	}
 	if (!dvb_file)
 		return -2;
 
-	printf("Writing file %s\n", fout);
-	write_dvb_file(fout, dvb_file);
+	printf("Writing file %s\n", args->output_file);
+	switch (args->output_format) {
+	case FILE_CHANNEL:		/* DVB channel/transponder old format */
+		ret = write_format_oneline(args->output_file,
+					   dvb_file,
+					   SYS_UNDEFINED,
+					   &channel_file_format);
+		break;
+	case FILE_ZAP:
+		ret = write_format_oneline(args->output_file,
+					   dvb_file,
+					   (uint32_t)args->delsys,
+					   &channel_file_zap_format);
+		break;
+	case FILE_DVBV5:
+		ret = write_dvb_file(args->output_file, dvb_file);
+	default:
+		return -1;
+	}
 
-	dvb_file_free(dvb_file);
-	return 0;
+	return ret;
 }
-
-static char *usage =
-    "usage:\n"
-    "       dvb-format-convert [options] <channels_file> <out file>\n"
-    "        scan DVB services using the channel file\n"
-    "     -v        : be (very) verbose\n"
-    "     -o file   : output filename (use -o - for stdout)\n"
-    "     -O        : uses old channel format\n"
-    "     -z        : uses zap services file, discarding video/audio pid's\n"
-    "     -s        : delivery system (DVB-T, DVB-C, DVB-S or ATSC) for zap format\n"
-    "     -h -?     : display this help and exit\n\n"
-    "-O or -z parameters are mandatory\n";
 
 int main(int argc, char **argv)
 {
-	char *confname = NULL, *outfile = NULL, *delsys = NULL;
-	int opt, format = 0;
+	struct arguments args;
+	int idx = -1, missing = 0;
+	const struct argp argp = {
+		.options = options,
+		.parser = parse_opt,
+		.doc = "scan DVB services using the channel file",
+		.args_doc = "<initial file>",
+	};
 
-	while ((opt = getopt(argc, argv, "H?hzOs:")) != -1) {
-		switch (opt) {
-		case 'O':
-			format = 1;
-			break;
-		case 'z':
-			format = 2;
-			break;
-		case 's':
-			delsys = optarg;
-			break;
-		case '?':
-		case 'h':
-		default:
-			fprintf(stderr, usage, argv[0]);
-			return -1;
-		};
+	memset(&args, 0, sizeof(args));
+	argp_parse(&argp, argc, argv, 0, &idx, &args);
+
+	if (idx + 1 < argc) {
+		args.input_file = argv[idx];
+		args.output_file = argv[idx + 1];
 	}
 
-	if (!format) {
-		fprintf(stderr, usage, argv[0]);
+	if (!args.input_format) {
+		fprintf(stderr, "ERROR: Please specify a valid input format\n");
+		missing = 1;
+	} else if (!args.output_file) {
+		fprintf(stderr, "ERROR: Please specify a valid input file\n");
+		missing = 1;
+	} else if (!args.output_format) {
+		fprintf(stderr, "ERROR: Please specify a valid output format\n");
+		missing = 1;
+	} else if (!args.output_file) {
+		fprintf(stderr, "ERROR: Please specify a valid output file\n");
+		missing = 1;
+	} else if (((args.input_format == FILE_ZAP) ||
+		   (args.output_format == FILE_ZAP)) && args.delsys <= 0) {
+		fprintf(stderr, "ERROR: Please specify a valid delivery system for ZAP format\n");
+		missing = 1;
+	}
+	if (missing) {
+		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
 		return -1;
 	}
 
-	if (optind < argc + 1) {
-		confname = argv[optind];
-		outfile = argv[optind + 1];
-	}
-
-	if (!confname) {
-		fprintf(stderr, usage, argv[0]);
-		return -1;
-	}
-
-	return convert_file(confname, delsys, format, outfile);
+	return convert_file(&args);
 }

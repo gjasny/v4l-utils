@@ -91,7 +91,7 @@ struct dvb_file *parse_format_oneline(const char *fname,
 		if (*p == '\n' || *p == '#' || *p == '\a' || *p == '\0')
 			continue;
 
-		if (!parse_file->has_delsys_id) {
+		if (parse_file->has_delsys_id) {
 			p = strtok(p, delimiter);
 			if (!p) {
 				sprintf(err_msg, "unknown delivery system type for %s",
@@ -114,6 +114,7 @@ struct dvb_file *parse_format_oneline(const char *fname,
 		if (i == ARRAY_SIZE(formats))
 			goto error;
 
+
 		fmt = &formats[i];
 		if (!entry) {
 			dvb_file->first_entry = calloc(sizeof(*entry), 1);
@@ -122,6 +123,7 @@ struct dvb_file *parse_format_oneline(const char *fname,
 			entry->next = calloc(sizeof(*entry), 1);
 			entry = entry->next;
 		}
+		entry->sat_number = -1;
 		entry->props[entry->n_props].cmd = DTV_DELIVERY_SYSTEM;
 		entry->props[entry->n_props++].u.data = fmt->delsys;
 		has_inversion = 0;
@@ -200,6 +202,128 @@ error:
 	fclose(fd);
 	return NULL;
 }
+
+int write_format_oneline(const char *fname,
+			 struct dvb_file *dvb_file,
+			 uint32_t delsys,
+			 const struct parse_file *parse_file)
+{
+	const char delimiter = parse_file->delimiter[0];
+	const struct parse_struct *formats = parse_file->formats;
+	int i, j, line = 0;;
+	FILE *fp;
+	const struct parse_struct *fmt;
+	struct dvb_entry *entry;
+	const struct parse_table *table;
+	uint32_t data;
+	char err_msg[80];
+
+	fp = fopen(fname, "w");
+	if (!fp) {
+		perror(fname);
+		return -errno;
+	}
+
+	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
+		for (i = 0; i < entry->n_props; i++) {
+			if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM) {
+				delsys = entry->props[i].u.data;
+				break;
+			}
+		}
+
+		for (i = 0; formats[i].delsys != 0; i++) {
+			if (formats[i].delsys == delsys)
+				break;
+		}
+		if (formats[i].delsys == 0) {
+			sprintf(err_msg,
+				 "delivery system %d not supported on this format",
+				 delsys);
+			goto error;
+		}
+		if (parse_file->has_delsys_id)
+			fprintf(fp, "%s%c", formats[i].id, delimiter);
+
+
+
+		fmt = &formats[i];
+		for (i = 0; i < fmt->size; i++) {
+			table = &fmt->table[i];
+
+			for (j = 0; j < entry->n_props; j++)
+				if (entry->props[j].cmd == table->prop)
+					break;
+
+			if (table->size && j < entry->n_props) {
+				data = entry->props[j].u.data;
+
+				if (table->prop == DTV_BANDWIDTH_HZ)
+					data = fe_bandwidth_name[data];
+
+				if (data >= table->size) {
+					sprintf(err_msg,
+						 "value not supported");
+					goto error;
+				}
+
+				fprintf(fp, "%s%c", table->table[data],
+					delimiter);
+			} else {
+				switch (table->prop) {
+				case DTV_VIDEO_PID:
+					if (!entry->video_pid) {
+						sprintf(err_msg,
+							"missing video PID");
+						goto error;
+					}
+					fprintf(fp, "%d%c", entry->video_pid[0],
+						delimiter);
+					break;
+				case DTV_AUDIO_PID:
+					if (!entry->audio_pid) {
+						sprintf(err_msg,
+							"missing audio PID");
+						goto error;
+					}
+					fprintf(fp, "%d%c", entry->audio_pid[0],
+						delimiter);
+					break;
+				case DTV_SERVICE_ID:
+					fprintf(fp, "%d%c", entry->service_id,
+						delimiter);
+					break;
+				case DTV_CH_NAME:
+					fprintf(fp, "%s%c", entry->channel,
+						delimiter);
+					break;
+				default:
+					if (j >= entry->n_props) {
+						sprintf(err_msg,
+							"property not supported");
+						goto error;
+					}
+
+					data = entry->props[j].u.data;
+					fprintf(fp, "%d%c", data,
+						delimiter);
+					break;
+				}
+			}
+		}
+		fprintf(fp, "\n");
+		line++;
+	};
+	fclose (fp);
+	return 0;
+
+error:
+	fprintf(stderr, "ERROR: %s while parsing entry %d of %s\n",
+		 err_msg, line, fname);
+	fclose(fp);
+	return -1;
+}
+
 
 static const char *pol_name[] = {
 	[POLARIZATION_H] = "HORIZONTAL",
@@ -387,6 +511,7 @@ struct dvb_file *read_dvb_file(const char *fname)
 				entry->next = calloc(sizeof(*entry), 1);
 				entry = entry->next;
 			}
+			entry->sat_number = -1;
 			p++;
 			p = strtok(p, "]");
 			if (!p) {
@@ -750,6 +875,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 			fprintf(stderr, "Not enough memory\n");
 			return -1;
 		}
+		entry->sat_number = -1;
 
 		if (service_table->service_name) {
 			entry->channel = calloc(strlen(service_table->service_name) + 1, 1);
