@@ -456,6 +456,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'O':
 		args->output_format = parse_format(optarg);
 		break;
+	case 'o':
+		args->output = optarg;
+		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
 	};
