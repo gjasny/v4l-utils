@@ -127,13 +127,14 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 	return 0;
 }
 
-static int new_freq_is_needed(struct dvb_entry *entry, uint32_t freq,
-			      int shift)
+static int new_freq_is_needed(struct dvb_entry *entry,
+			      struct dvb_entry *last_entry,
+			      uint32_t freq, int shift)
 {
 	int i;
 	uint32_t data;
 
-	for (; entry != NULL; entry = entry->next) {
+	for (; entry != last_entry; entry = entry->next) {
 		for (i = 0; i < entry->n_props; i++) {
 			data = entry->props[i].u.data;
 			if (entry->props[i].cmd == DTV_FREQUENCY) {
@@ -181,16 +182,10 @@ static void add_new_freq(struct dvb_entry *entry, uint32_t freq)
 	free(new_entry);
 }
 
-static void add_other_freq_entries(struct dvb_file *dvb_file,
-				    struct dvb_v5_fe_parms *parms,
-				   struct dvb_descriptors *dvb_desc)
+static int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
 {
-	int i;
-	uint32_t freq, shift = 0, bw = 0, symbol_rate, ro;
+	uint32_t shift = 0, bw = 0, symbol_rate, ro;
 	int rolloff = 0;
-
-	if (!dvb_desc->nit_table.frequency)
-		return;
 
 	/* Need to handle only cable/satellite and ATSC standards */
 	switch (parms->current_sys) {
@@ -247,10 +242,25 @@ static void add_other_freq_entries(struct dvb_file *dvb_file,
 	 */
 	shift = bw / 8;
 
+	return shift;
+}
+
+static void add_other_freq_entries(struct dvb_file *dvb_file,
+				    struct dvb_v5_fe_parms *parms,
+				   struct dvb_descriptors *dvb_desc)
+{
+	int i;
+	uint32_t freq, shift = 0;
+
+	if (!dvb_desc->nit_table.frequency)
+		return;
+
+	shift = estimate_freq_shift(parms);
+
 	for (i = 0; i < dvb_desc->nit_table.frequency_len; i++) {
 		freq = dvb_desc->nit_table.frequency[i];
 
-		if (new_freq_is_needed(dvb_file->first_entry, freq, shift))
+		if (new_freq_is_needed(dvb_file->first_entry, NULL, freq, shift))
 			add_new_freq(dvb_file->first_entry, freq);
 	}
 }
@@ -261,7 +271,7 @@ static int run_scan(struct arguments *args,
 {
 	struct dvb_file *dvb_file = NULL, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
-	int i, rc, count = 0, dmx_fd;
+	int i, rc, count = 0, dmx_fd, shift;
 	uint32_t freq, sys;
 
 	/* This is used only when reading old formats */
@@ -345,6 +355,24 @@ static int run_scan(struct arguments *args,
 							SYS_DVBC_ANNEX_B);
 			}
 		}
+
+		/*
+		 * If the channel file has duplicated frequencies, or some
+		 * entries without any frequency at all, discard.
+		 */
+		freq = 0;
+		for (i = 0; i < entry->n_props; i++) {
+			if (entry->props[i].cmd == DTV_FREQUENCY) {
+				freq = entry->props[i].u.data;
+				break;
+			}
+		}
+		if (!freq)
+			continue;
+		shift = estimate_freq_shift(parms);
+		if (!new_freq_is_needed(dvb_file->first_entry, entry,
+					freq, shift))
+			continue;
 
 		rc = dvb_fe_set_parms(parms);
 		if (rc < 0) {
