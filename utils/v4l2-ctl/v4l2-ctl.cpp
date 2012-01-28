@@ -166,6 +166,7 @@ enum Option {
 	OptQueryDvPreset,
 	OptGetDvBtTimings,
 	OptSetDvBtTimings,
+	OptFreqSeek,
 	OptLast = 256
 };
 
@@ -327,6 +328,7 @@ static struct option long_options[] = {
 	{"query-dv-presets", no_argument, 0, OptQueryDvPreset},
 	{"get-dv-bt-timings", no_argument, 0, OptGetDvBtTimings},
 	{"set-dv-bt-timings", required_argument, 0, OptSetDvBtTimings},
+	{"freq-seek", required_argument, 0, OptFreqSeek},
 	{0, 0, 0, 0}
 };
 
@@ -552,6 +554,11 @@ static void usage(void)
 	       "                     set the digital video timings according to the BT 656/1120 standard [VIDIOC_S_DV_TIMINGS]\n"
 	       "  --get-dv-bt-timings\n"
 	       "                     get the digital video timings in use [VIDIOC_G_DV_TIMINGS]\n"
+	       "  --freq-seek=dir=<0/1>,wrap=<0/1>,spacing=<hz>\n"
+	       "                     perform a hardware frequency seek [VIDIOC_S_HW_FREQ_SEEK]\n"
+	       "                     dir is 0 (seek downward) or 1 (seek upward)\n"
+	       "                     wrap is 0 (do not wrap around) or 1 (wrap around)\n"
+	       "                     spacing is 0 (use default seek resolution) or sets the seek resolution\n"
 	       "  --sleep=<secs>     sleep for <secs> seconds, call QUERYCAP and close the file handle\n"
 	       "  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n"
 	       "  --streamon         turn the stream on [VIDIOC_STREAMON]\n"
@@ -1881,6 +1888,33 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
     }
 }
 
+static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
+{
+	char *value;
+	char *subs = optarg;
+
+	while (*subs != '\0') {
+		static const char *const subopts[] = {
+			"dir",
+			"wrap",
+			"spacing",
+			NULL
+		};
+
+		switch (parse_subopt(&subs, subopts, &value)) {
+		case 0:
+			seek.seek_upward = strtol(value, 0L, 0);
+			break;
+		case 1:
+			seek.wrap_around = strtol(value, 0L, 0);
+			break;
+		case 2:
+			seek.spacing = strtol(value, 0L, 0);
+			break;
+		}
+	}
+}
+
 static enum v4l2_field parse_field(const char *s)
 {
 	if (!strcmp(s, "any")) return V4L2_FIELD_ANY;
@@ -2030,6 +2064,7 @@ int main(int argc, char **argv)
 	double output_fps = 0;		/* set framerate speed, in fps */
 	struct v4l2_frequency vf;	/* get_freq/set_freq */
 	struct v4l2_standard vs;	/* list_std */
+	struct v4l2_hw_freq_seek freq_seek; /* freq-seek */
 	int overlay;			/* overlay */
 	unsigned int *set_overlay_fmt_ptr = NULL;
 	struct v4l2_format *overlay_fmt_ptr = NULL;
@@ -2071,6 +2106,7 @@ int main(int argc, char **argv)
 	memset(&dv_preset, 0, sizeof(dv_preset));
 	memset(&dv_timings, 0, sizeof(dv_timings));
 	memset(&dv_enum_preset, 0, sizeof(dv_enum_preset));
+	memset(&freq_seek, 0, sizeof(freq_seek));
 
 	if (argc == 1) {
 		usage();
@@ -2561,6 +2597,9 @@ int main(int argc, char **argv)
 			break;
 		case OptSetDvBtTimings:
 			parse_dv_bt_timings(optarg, &dv_timings);
+			break;
+		case OptFreqSeek:
+			parse_freq_seek(optarg, freq_seek);
 			break;
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",
@@ -3092,6 +3131,11 @@ int main(int argc, char **argv)
 				}
 			}
 		}
+	}
+	
+	if (options[OptFreqSeek]) {
+		freq_seek.type = V4L2_TUNER_RADIO;
+		doioctl(fd, VIDIOC_S_HW_FREQ_SEEK, &freq_seek);
 	}
 
 	/* Get options */
