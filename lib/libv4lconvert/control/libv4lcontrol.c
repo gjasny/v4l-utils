@@ -689,20 +689,20 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 
 static const struct v4l2_queryctrl fake_controls[];
 
-static void v4lcontrol_get_dmi_string(const char *string, char *buf, int size)
+static void v4lcontrol_get_dmi_string(const char *sysfs_prefix, const char *string, char *buf, int size)
 {
 	FILE *f;
 	char *s, sysfs_name[512];
 
 	snprintf(sysfs_name, sizeof(sysfs_name),
-			"/sys/class/dmi/id/%s", string);
+			"%s/sys/class/dmi/id/%s", sysfs_prefix, string);
 	f = fopen(sysfs_name, "r");
 	if (!f) {
 		/* Try again with a different sysfs path, not sure if this is needed
 		   but we used to look under /sys/devices/virtual/dmi/id in older
 		   libv4l versions, but this did not work with some kernels */
 		snprintf(sysfs_name, sizeof(sysfs_name),
-				"/sys/devices/virtual/dmi/id/%s", string);
+				"%s/sys/devices/virtual/dmi/id/%s", sysfs_prefix, string);
 		f = fopen(sysfs_name, "r");
 		if (!f) {
 			buf[0] = 0;
@@ -717,6 +717,7 @@ static void v4lcontrol_get_dmi_string(const char *string, char *buf, int size)
 }
 
 static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
+		const char *sysfs_prefix,
 		unsigned short *vendor_id, unsigned short *product_id,
 		int *speed)
 {
@@ -732,7 +733,7 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 	/* <Sigh> find ourselve in sysfs */
 	for (i = 0; i < 256; i++) {
 		snprintf(sysfs_name, sizeof(sysfs_name),
-			 "/sys/class/video4linux/video%d/dev", i);
+			 "%s/sys/class/video4linux/video%d/dev", sysfs_prefix, i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
 			continue;
@@ -749,7 +750,7 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 
 	/* Get vendor and product ID */
 	snprintf(sysfs_name, sizeof(sysfs_name),
-		 "/sys/class/video4linux/video%d/device/modalias", i);
+		 "%s/sys/class/video4linux/video%d/device/modalias", sysfs_prefix, i);
 	f = fopen(sysfs_name, "r");
 	if (f) {
 		s = fgets(buf, sizeof(buf), f);
@@ -760,7 +761,7 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 			return 0; /* Not an USB device */
 
 		snprintf(sysfs_name, sizeof(sysfs_name),
-			 "/sys/class/video4linux/video%d/device/../speed", i);
+			 "%s/sys/class/video4linux/video%d/device/../speed", sysfs_prefix, i);
 	} else {
 		/* Try again assuming the device link points to the usb
 		   device instead of the usb interface (bug in older versions
@@ -768,7 +769,7 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 
 		/* Get vendor ID */
 		snprintf(sysfs_name, sizeof(sysfs_name),
-			 "/sys/class/video4linux/video%d/device/idVendor", i);
+			 "%s/sys/class/video4linux/video%d/device/idVendor", sysfs_prefix, i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
 			return 0; /* Not an USB device (or no sysfs) */
@@ -782,7 +783,7 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 
 		/* Get product ID */
 		snprintf(sysfs_name, sizeof(sysfs_name),
-			 "/sys/class/video4linux/video%d/device/idProduct", i);
+			 "%s/sys/class/video4linux/video%d/device/idProduct", sysfs_prefix, i);
 		f = fopen(sysfs_name, "r");
 		if (!f)
 			return 0; /* Should never happen */
@@ -795,7 +796,7 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 			return 0; /* Should never happen */
 
 		snprintf(sysfs_name, sizeof(sysfs_name),
-			 "/sys/class/video4linux/video%d/device/speed", i);
+			 "%s/sys/class/video4linux/video%d/device/speed", sysfs_prefix, i);
 	}
 
 	f = fopen(sysfs_name, "r");
@@ -812,6 +813,7 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 }
 
 static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data,
+		const char *sysfs_prefix,
 		unsigned short vendor_id, unsigned short product_id)
 {
 	char dmi_system_vendor[512], dmi_system_name[512], dmi_system_version[512];
@@ -819,18 +821,18 @@ static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data,
 	int i;
 
 	/* Get DMI board and system strings */
-	v4lcontrol_get_dmi_string("sys_vendor", dmi_system_vendor,
+	v4lcontrol_get_dmi_string(sysfs_prefix, "sys_vendor", dmi_system_vendor,
 			sizeof(dmi_system_vendor));
-	v4lcontrol_get_dmi_string("product_name", dmi_system_name,
+	v4lcontrol_get_dmi_string(sysfs_prefix, "product_name", dmi_system_name,
 			sizeof(dmi_system_name));
-	v4lcontrol_get_dmi_string("product_version", dmi_system_version,
+	v4lcontrol_get_dmi_string(sysfs_prefix, "product_version", dmi_system_version,
 			sizeof(dmi_system_version));
 
-	v4lcontrol_get_dmi_string("board_vendor", dmi_board_vendor,
+	v4lcontrol_get_dmi_string(sysfs_prefix, "board_vendor", dmi_board_vendor,
 			sizeof(dmi_board_vendor));
-	v4lcontrol_get_dmi_string("board_name", dmi_board_name,
+	v4lcontrol_get_dmi_string(sysfs_prefix, "board_name", dmi_board_name,
 			sizeof(dmi_board_name));
-	v4lcontrol_get_dmi_string("board_version", dmi_board_version,
+	v4lcontrol_get_dmi_string(sysfs_prefix, "board_version", dmi_board_version,
 			sizeof(dmi_board_version));
 
 	for (i = 0; i < ARRAY_SIZE(v4lcontrol_flags); i++)
@@ -887,10 +889,14 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, int always_needs_conversion)
 			data->flags |= V4LCONTROL_VFLIPPED;
 	}
 
-	got_usb_info = v4lcontrol_get_usb_info(data, &vendor_id, &product_id,
+	s = getenv("LIBV4LCONTROL_SYSFS_PREFIX");
+	if (!s)
+		s = "";
+
+	got_usb_info = v4lcontrol_get_usb_info(data, s, &vendor_id, &product_id,
 					       &speed);
 	if (got_usb_info) {
-		v4lcontrol_get_flags_from_db(data, vendor_id, product_id);
+		v4lcontrol_get_flags_from_db(data, s, vendor_id, product_id);
 		switch (speed) {
 		case 12:
 			data->bandwidth = 1023 * 1000;
