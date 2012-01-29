@@ -62,4 +62,15 @@ struct v4lcontrol_flags_info {
 	const char *dmi_system_version;
 };
 
+struct v4lcontrol_usb_id {
+	unsigned short vendor_id;
+	unsigned short product_id;
+};
+
+struct v4lcontrol_upside_down_table {
+	const char **board_vendor;
+	const char **board_name;
+	const struct v4lcontrol_usb_id *camera_id;
+};
+
 #endif
