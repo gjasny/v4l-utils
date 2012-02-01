@@ -94,6 +94,15 @@ dl_saved_libs=$LIBS
   AC_SUBST([DLOPEN_LIBS])
 LIBS=$dl_saved_libs
 
+AC_CHECK_HEADER([argp.h],,AC_MSG_ERROR(Cannot continue: argp.h not found))
+argp_saved_libs=$LIBS
+  AC_SEARCH_LIBS([argp_parse],
+                 [argp],
+                 [test "$ac_cv_search_argp_parse" = "none required" || ARGP_LIBS=$ac_cv_search_argp_parse],
+                 [AC_MSG_ERROR([unable to find the argp_parse() function])])
+  AC_SUBST([ARGP_LIBS])
+LIBS=$argp_saved_libs
+
 # directories
 
 AC_ARG_WITH(libv4l1subdir, AS_HELP_STRING(--with-libv4l1subdir=DIR,set libv4l1 library subdir [default=libv4l]),

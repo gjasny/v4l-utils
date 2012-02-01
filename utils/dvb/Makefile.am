@@ -17,15 +17,19 @@ libdvbv5_la_LDFLAGS = -static
 
 dvb_fe_tool_SOURCES = dvb-fe-tool.c
 dvb_fe_tool_LDADD = libdvbv5.la
+dvb_fe_tool_LDFLAGS = $(ARGP_LIBS)
 
 dvbv5_zap_SOURCES = dvbv5-zap.c
 dvbv5_zap_LDADD = libdvbv5.la
+dvbv5_zap_LDFLAGS = $(ARGP_LIBS)
 
 dvbv5_scan_SOURCES = dvbv5-scan.c
 dvbv5_scan_LDADD = libdvbv5.la
+dvbv5_scan_LDFLAGS = $(ARGP_LIBS)
 
 dvb_format_convert_SOURCES = dvb-format-convert.c
 dvb_format_convert_LDADD = libdvbv5.la
+dvb_format_convert_LDFLAGS = $(ARGP_LIBS)
 
 EXTRA_DIST = README gen_dvb_structs.pl
 

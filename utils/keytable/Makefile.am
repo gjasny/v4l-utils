@@ -7,6 +7,7 @@ nobase_rootetc_DATA = rc_maps.cfg $(srcdir)/rc_keymaps/*
 udevrules_DATA = 70-infrared.rules
 
 ir_keytable_SOURCES = keytable.c parse.h
+ir_keytable_LDFLAGS = $(ARGP_LIBS)
 
 EXTRA_DIST = 70-infrared.rules rc_keymaps gen_keytables.pl ir-keytable.1 rc_maps.cfg
 
