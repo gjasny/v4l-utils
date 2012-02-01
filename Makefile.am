@@ -11,14 +11,18 @@ SUBDIRS += \
 	utils/libv4l2util \
 	utils/libmedia_dev \
 	utils/decode_tm6000 \
-	utils/dvb \
 	utils/keytable \
+	utils/v4l2-sysfs-path
+
+if LINUX_OS
+SUBDIRS += \
+	utils/dvb \
 	utils/rds \
 	utils/v4l2-compliance \
 	utils/v4l2-ctl \
 	utils/v4l2-dbg \
-	utils/v4l2-sysfs-path \
 	utils/xc3028-firmware
+endif
 
 if BUILD_QT
 SUBDIRS += utils/qv4l2

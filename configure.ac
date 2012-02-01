@@ -49,6 +49,15 @@ AC_PROG_LIBTOOL
 #AC_PROG_SED
 #AC_PROG_MKDIR_P
 
+# Check host os
+case "$host_os" in
+  linux*)
+    linux_os="yes"
+    ;;
+esac
+
+AM_CONDITIONAL([LINUX_OS], [test x$linux_os = xyes])
+
 # Checks for dependencies
 
 AC_ARG_WITH([jpeg],
