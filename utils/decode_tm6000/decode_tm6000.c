@@ -44,7 +44,7 @@ const struct argp_option options[] = {
 static char outbuf[692224];
 static int debug=0, audio=0, use_mmap=1, nbufs=4;
 static float freq_mhz=193.25;
-static char *devname="/dev/video0";
+static char *devicename="/dev/video0";
 static char *filename=NULL;
 static enum {
 	NORMAL,
@@ -69,7 +69,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
 		debug++;
 		break;
 	case 'd':
-		devname=arg;
+		devicename=arg;
 		break;
 	case 'i':
 	case 'o':
@@ -145,7 +145,7 @@ static int prepare_read (struct v4l2_driver *drv)
 
 	memset (drv,0,sizeof(*drv));
 
-	if (v4l2_open (devname, 1,drv)<0) {
+	if (v4l2_open (devicename, 1,drv)<0) {
 		perror ("Error opening dev");
 		return -1;
 	}

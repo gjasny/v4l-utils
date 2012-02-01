@@ -141,7 +141,7 @@ static const char args_doc[] =
 
 /* Static vars to store the parameters */
 static char *devclass = "rc0";
-static char *devname = NULL;
+static char *devicename = NULL;
 static int readtable = 0;
 static int clear = 0;
 static int debug = 0;
@@ -387,7 +387,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		period = atoi(arg);
 		break;
 	case 'd':
-		devname = arg;
+		devicename = arg;
 		break;
 	case 's':
 		devclass = arg;
@@ -1437,8 +1437,8 @@ int main(int argc, char *argv[])
 
 	/* Just list all devices */
 	if (!clear && !readtable && !keys.next && !ch_proto && !cfg.next && !test && !delay && !period) {
-		if (devname) {
-			fd = open(devname, O_RDONLY);
+		if (devicename) {
+			fd = open(devicename, O_RDONLY);
 			if (fd < 0) {
 				perror("Can't open device");
 				return -1;
@@ -1453,11 +1453,11 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	if (cfg.next && (clear || keys.next || ch_proto || devname)) {
+	if (cfg.next && (clear || keys.next || ch_proto || devicename)) {
 		fprintf (stderr, "Auto-mode can be used only with --read, --debug and --sysdev options\n");
 		return -1;
 	}
-	if (!devname) {
+	if (!devicename) {
 		names = find_device(devclass);
 		if (!names)
 			return -1;
@@ -1469,7 +1469,7 @@ int main(int argc, char *argv[])
 		names->name = NULL;
 		free_names(names);
 
-		devname = rc_dev.input_name;
+		devicename = rc_dev.input_name;
 		dev_from_class++;
 	}
 
@@ -1513,14 +1513,14 @@ int main(int argc, char *argv[])
 	}
 
 	if (debug)
-		fprintf(stderr, "Opening %s\n", devname);
-	fd = open(devname, O_RDONLY);
+		fprintf(stderr, "Opening %s\n", devicename);
+	fd = open(devicename, O_RDONLY);
 	if (fd < 0) {
-		perror(devname);
+		perror(devicename);
 		return -1;
 	}
 	if (dev_from_class)
-		free(devname);
+		free(devicename);
 	if (get_input_protocol_version(fd))
 		return -1;
 
