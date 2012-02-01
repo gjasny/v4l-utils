@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <errno.h>
 
 const char *argp_program_version="decode_tm6000 version 0.0.1";
 const char *argp_program_bug_address="Mauro Carvalho Chehab <mchehab@infradead.org>";

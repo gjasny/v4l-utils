@@ -23,8 +23,8 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <dirent.h>
+#include <limits.h>
 #include "get_media_devices.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))

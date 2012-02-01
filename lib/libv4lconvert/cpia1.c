@@ -17,6 +17,7 @@
  */
 
 #include "libv4lconvert-priv.h"
+#include <stdlib.h>
 #include <string.h>
 
 #define MAGIC_0		0x19
