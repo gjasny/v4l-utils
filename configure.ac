@@ -83,6 +83,17 @@ fi
 AM_CONDITIONAL(BUILD_QT, [test ${qt_pkgconfig} = true])
 AC_SUBST([JPEG_LIBS])
 
+# The dlopen() function is in the C library for *BSD and in
+# libdl on GLIBC-based systems
+
+dl_saved_libs=$LIBS
+  AC_SEARCH_LIBS([dlopen],
+                 [dl],
+                 [test "$ac_cv_search_dlopen" = "none required" || DLOPEN_LIBS=$ac_cv_search_dlopen],
+                 [AC_MSG_ERROR([unable to find the dlopen() function])])
+  AC_SUBST([DLOPEN_LIBS])
+LIBS=$dl_saved_libs
+
 # directories
 
 AC_ARG_WITH(libv4l1subdir, AS_HELP_STRING(--with-libv4l1subdir=DIR,set libv4l1 library subdir [default=libv4l]),
