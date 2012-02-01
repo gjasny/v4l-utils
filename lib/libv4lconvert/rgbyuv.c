@@ -605,7 +605,7 @@ void v4lconvert_grey_to_yuv420(const unsigned char *src, unsigned char *dest,
 }
 
 /* Unpack buffer of (vw bit) data into padded 16bit buffer. */
-static inline void convert_packed_to_16bit(uint8_t *raw, uint16_t *unpacked,
+static inline void convert_packed_to_16bit(const uint8_t *raw, uint16_t *unpacked,
 					   int vw, int unpacked_len)
 {
 	int mask = (1 << vw) - 1;
