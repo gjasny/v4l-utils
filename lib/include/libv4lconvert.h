@@ -28,7 +28,7 @@
 #include <linux/ioctl.h>
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
