@@ -174,6 +174,10 @@ AS_IF([test x$with_libv4l != xyes], [AC_SUBST([ENFORCE_LIBV4L_STATIC], ["-static
 
 # misc
 
-CPPFLAGS="-I\$(top_srcdir)/include -I\$(top_srcdir)/lib/include -Wall -Wpointer-arith -D_GNU_SOURCE $CPPFLAGS"
+if test "x$linux_os" = "xyes"; then
+  CPPFLAGS="-I\$(top_srcdir)/include $CPPFLAGS"
+fi
+
+CPPFLAGS="-I\$(top_srcdir)/lib/include -Wall -Wpointer-arith -D_GNU_SOURCE $CPPFLAGS"
 
 AC_OUTPUT
