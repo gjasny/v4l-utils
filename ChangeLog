@@ -1,3 +1,15 @@
+v4l-utils-0.8.6
+---------------
+* libv4l changes (0.9.x backports)
+  * Add support for libjpeg >= v7
+  * Add new matching algorithm for upside down table (gjasny)
+  * Add some more laptop models to the upside down devices table (hdegoede, gjasny)
+  * Retry with another frame on JPEG header decode errors (hdegoede)
+  * Improved JL2005BCD support (Theodore Kilgore, hdegoede)
+  * Set errno to EIO if getting 4 consecutive EAGAIN convert errors (hdegoede)
+  * Make software autowhitebalance converge faster (hdegoede)
+  * Add quirk support for forced tinyjpeg fallback (hdegoede)
+
 v4l-utils-0.8.5
 ---------------
 * Utils changes
