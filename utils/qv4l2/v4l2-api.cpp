@@ -87,7 +87,7 @@ int v4l2::read(unsigned char *p, int size)
 	return ::read(m_fd, p, size);
 }
 
-void *v4l2::mmap(size_t length, __off64_t offset)
+void *v4l2::mmap(size_t length, int64_t offset)
 {
 	if (useWrapper())
 		return v4l2_mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, offset);

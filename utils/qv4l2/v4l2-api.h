@@ -40,7 +40,7 @@ public:
 	int read(unsigned char *p, int size);
 	int ioctl(unsigned cmd, void *arg);
 	bool ioctl(const QString &descr, unsigned cmd, void *arg);
-	void *mmap(size_t length, __off64_t offset);
+	void *mmap(size_t length, int64_t offset);
 	int munmap(void *_start, size_t length);
 
 	inline int fd() const { return m_fd; }
