@@ -14,16 +14,18 @@ clean-local:
 	-rm -vf moc_*.cpp qrc_*.cpp qrc_*.o ui_*.h
 
 # Call the moc preprocessor
-moc_%.cpp : %.h
-	$(MOC) -o $@ $<
+moc_qv4l2.cpp: qv4l2.h
+	$(MOC) -o $@ qv4l2.h
+
+moc_general-tab.cpp: general-tab.h
+	$(MOC) -o $@ general-tab.h
+
+moc_capture-win.cpp: capture-win.h
+	$(MOC) -o $@ capture-win.h
 
 # Call the Qt resource compiler
-qrc_%.cpp: %.qrc
-	rcc -name qv4l2 -o $@ $<
-
-# Call the Qt ui compiler
-ui_%.h: %.ui
-	$(UIC) -o $@ $<
+qrc_qv4l2.cpp: qv4l2.qrc
+	rcc -name qv4l2 -o $@ qv4l2.qrc
 
 install-data-local:
 	$(INSTALL_DATA) -D -p "$(srcdir)/qv4l2.desktop"   "$(DESTDIR)$(datadir)/applications/qv4l2.desktop"
