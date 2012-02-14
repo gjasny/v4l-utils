@@ -34,7 +34,6 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <math.h>
-#include <linux/types.h>
 
 #include <linux/videodev2.h>
 #include <linux/dvb/video.h>
