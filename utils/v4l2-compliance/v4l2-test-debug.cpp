@@ -32,7 +32,6 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <math.h>
-#include <sys/klog.h>
 #include "v4l2-compliance.h"
 
 int testChipIdent(struct node *node)
