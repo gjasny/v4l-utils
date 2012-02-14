@@ -17,6 +17,7 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
+#include <inttypes.h>
 #include <malloc.h>
 #include <stdio.h>
 
@@ -293,7 +294,7 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 		add_frequency(nit_table, freq);
 
 		if (verbose)
-			printf("Frequency %ld\n", freq);
+			printf("Frequency %" PRId64 "\n", freq);
 	}
 }
 
