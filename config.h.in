@@ -70,6 +70,10 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define to the type that is the result of default argument promotions of
+   type mode_t. */
+#undef PROMOTED_MODE_T
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
@@ -78,3 +82,6 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef mode_t

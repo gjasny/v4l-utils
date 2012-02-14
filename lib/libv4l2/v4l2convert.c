@@ -22,6 +22,7 @@
 
 #define _LARGEFILE64_SOURCE 1
 
+#include <config.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -62,7 +63,7 @@ LIBV4L_PUBLIC int open(const char *file, int oflag, ...)
 		mode_t mode;
 
 		va_start(ap, oflag);
-		mode = va_arg(ap, mode_t);
+		mode = va_arg(ap, PROMOTED_MODE_T);
 
 		fd = SYS_OPEN(file, oflag, mode);
 
@@ -93,7 +94,7 @@ LIBV4L_PUBLIC int open64(const char *file, int oflag, ...)
 		mode_t mode;
 
 		va_start(ap, oflag);
-		mode = va_arg(ap, mode_t);
+		mode = va_arg(ap, PROMOTED_MODE_T);
 
 		fd = open(file, oflag | O_LARGEFILE, mode);
 

@@ -55,6 +55,7 @@
    When modifications are made, one should be carefull that this behavior is
    preserved.
  */
+#include <config.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -561,7 +562,7 @@ int v4l2_open(const char *file, int oflag, ...)
 		mode_t mode;
 
 		va_start(ap, oflag);
-		mode = va_arg(ap, mode_t);
+		mode = va_arg(ap, PROMOTED_MODE_T);
 
 		fd = SYS_OPEN(file, oflag, mode);
 

@@ -47,6 +47,7 @@
       in turn will call v4l1_open, so therefor v4l1_open (for example) may not
       use the regular open()!
 */
+#include <config.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -302,7 +303,7 @@ int v4l1_open(const char *file, int oflag, ...)
 		mode_t mode;
 
 		va_start(ap, oflag);
-		mode = va_arg(ap, mode_t);
+		mode = va_arg(ap, PROMOTED_MODE_T);
 
 		fd = SYS_OPEN(file, oflag, mode);
 

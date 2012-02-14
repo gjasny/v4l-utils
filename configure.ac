@@ -48,6 +48,7 @@ AC_PROG_LIBTOOL
 #AC_PROG_GREP
 #AC_PROG_SED
 #AC_PROG_MKDIR_P
+gl_PROMOTED_TYPE_MODE_T
 
 # Check host os
 case "$host_os" in
