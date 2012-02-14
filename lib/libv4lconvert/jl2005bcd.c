@@ -168,7 +168,7 @@ int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data,
 
 		size = eoi - jpeg_data_idx;
 		if ((JPEG_HEADER_SIZE + size) > sizeof(jpeg_stripe)) {
-			V4LCONVERT_ERR("stripe size too big %d > %ld\n",
+			V4LCONVERT_ERR("stripe size too big %d > %zd\n",
 				       JPEG_HEADER_SIZE + size,
 				       sizeof(jpeg_stripe));
 			return 1;
