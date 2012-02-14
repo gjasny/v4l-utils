@@ -36,7 +36,10 @@
 #include <sys/time.h>
 #include <dirent.h>
 #include <math.h>
+
+#ifdef HAVE_SYS_KLOG_H
 #include <sys/klog.h>
+#endif
 
 #include <linux/videodev2.h>
 #include <libv4l2.h>
@@ -3547,11 +3550,13 @@ int main(int argc, char **argv)
 
 	if (options[OptLogStatus]) {
 		static char buf[40960];
-		int len;
+		int len = -1;
 
 		if (doioctl(fd, VIDIOC_LOG_STATUS, NULL) == 0) {
 			printf("\nStatus Log:\n\n");
+#ifdef HAVE_KLOGCTL
 			len = klogctl(3, buf, sizeof(buf) - 1);
+#endif
 			if (len >= 0) {
 				char *p = buf;
 				char *q;

@@ -32,7 +32,6 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <math.h>
-#include <sys/klog.h>
 #include <sys/utsname.h>
 
 #include "v4l2-compliance.h"

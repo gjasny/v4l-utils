@@ -36,7 +36,6 @@
 #include <sys/time.h>
 #include <math.h>
 #include <linux/types.h>
-#include <sys/klog.h>
 
 #include <linux/videodev2.h>
 
