@@ -21,7 +21,6 @@
  */
 
 #include <unistd.h>
-#include <features.h>		/* Uses _GNU_SOURCE to define getsubopt in stdlib.h */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
