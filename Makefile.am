@@ -12,15 +12,15 @@ SUBDIRS += \
 	utils/libmedia_dev \
 	utils/decode_tm6000 \
 	utils/keytable \
+	utils/v4l2-compliance \
+	utils/v4l2-ctl \
+	utils/v4l2-dbg \
 	utils/v4l2-sysfs-path
 
 if LINUX_OS
 SUBDIRS += \
 	utils/dvb \
 	utils/rds \
-	utils/v4l2-compliance \
-	utils/v4l2-ctl \
-	utils/v4l2-dbg \
 	utils/xc3028-firmware
 endif
 
