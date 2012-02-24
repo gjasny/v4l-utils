@@ -166,6 +166,10 @@ enum Option {
 	OptGetDvBtTimings,
 	OptSetDvBtTimings,
 	OptFreqSeek,
+	OptEncoderCmd,
+	OptTryEncoderCmd,
+	OptDecoderCmd,
+	OptTryDecoderCmd,
 	OptLast = 256
 };
 
@@ -329,6 +333,10 @@ static struct option long_options[] = {
 	{"get-dv-bt-timings", no_argument, 0, OptGetDvBtTimings},
 	{"set-dv-bt-timings", required_argument, 0, OptSetDvBtTimings},
 	{"freq-seek", required_argument, 0, OptFreqSeek},
+	{"encoder-cmd", required_argument, 0, OptEncoderCmd},
+	{"try-encoder-cmd", required_argument, 0, OptTryEncoderCmd},
+	{"decoder-cmd", required_argument, 0, OptDecoderCmd},
+	{"try-decoder-cmd", required_argument, 0, OptTryDecoderCmd},
 	{0, 0, 0, 0}
 };
 
@@ -559,6 +567,22 @@ static void usage(void)
 	       "                     dir is 0 (seek downward) or 1 (seek upward)\n"
 	       "                     wrap is 0 (do not wrap around) or 1 (wrap around)\n"
 	       "                     spacing is 0 (use default seek resolution) or sets the seek resolution\n"
+	       "  --encoder-cmd=cmd=<cmd>,flags=<flags>\n"
+	       "                     Send a command to the encoder [VIDIOC_ENCODER_CMD]\n"
+	       "                     cmd=start|stop|pause|resume\n"
+	       "                     flags=stop_at_gop_end\n"
+	       "  --try-encoder-cmd=cmd=<cmd>,flags=<flags>\n"
+	       "                     Try an encoder command [VIDIOC_TRY_ENCODER_CMD]\n"
+	       "                     See --encoder-cmd for the arguments.\n"
+	       "  --decoder-cmd=cmd=<cmd>,flags=<flags>,stop_pts=<pts>,start_speed=<speed>,\n"
+	       "                     start_format=<none|gop>\n"
+	       "                     Send a command to the decoder [VIDIOC_DECODER_CMD]\n"
+	       "                     cmd=start|stop|pause|resume\n"
+	       "                     flags=start_mute_audio|pause_to_black|stop_to_black|\n"
+	       "                           stop_immediately\n"
+	       "  --try-decoder-cmd=cmd=<cmd>,flags=<flags>\n"
+	       "                     Try a decoder command [VIDIOC_TRY_DECODER_CMD]\n"
+	       "                     See --decoder-cmd for the arguments.\n"
 	       "  --sleep=<secs>     sleep for <secs> seconds, call QUERYCAP and close the file handle\n"
 	       "  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n"
 	       "  --streamon         turn the stream on [VIDIOC_STREAMON]\n"
@@ -1761,6 +1785,59 @@ static void print_v4lstd(v4l2_std_id std)
 	}
 }
 
+static void print_enccmd(const struct v4l2_encoder_cmd &cmd)
+{
+	switch (cmd.cmd) {
+	case V4L2_ENC_CMD_START:
+		printf("\tstart\n");
+		break;
+	case V4L2_ENC_CMD_STOP:
+		printf("\tstop%s\n",
+			(cmd.flags & V4L2_ENC_CMD_STOP_AT_GOP_END) ? " at gop end" : "");
+		break;
+	case V4L2_ENC_CMD_PAUSE:
+		printf("\tpause\n");
+		break;
+	case V4L2_ENC_CMD_RESUME:
+		printf("\tresume\n");
+		break;
+	}
+}
+
+static void print_deccmd(const struct v4l2_decoder_cmd &cmd)
+{
+	__s32 speed;
+
+	switch (cmd.cmd) {
+	case V4L2_DEC_CMD_START:
+		speed = cmd.start.speed;
+		if (speed == 0)
+			speed = 1000;
+		printf("\tstart%s%s, ",
+			cmd.start.format == V4L2_DEC_START_FMT_GOP ? " (GOP aligned)" : "",
+			(speed != 1000 &&
+			 (cmd.flags & V4L2_DEC_CMD_START_MUTE_AUDIO)) ? " (mute audio)" : "");
+		if (speed == 1 || speed == -1)
+			printf("single step %s\n",
+				speed == 1 ? "forward" : "backward");
+		else
+			printf("speed %.3fx\n", speed / 1000.0);
+		break;
+	case V4L2_DEC_CMD_STOP:
+		printf("\tstop%s%s\n",
+			(cmd.flags & V4L2_DEC_CMD_STOP_TO_BLACK) ? " to black" : "",
+			(cmd.flags & V4L2_DEC_CMD_STOP_IMMEDIATELY) ? " immediately" : "");
+		break;
+	case V4L2_DEC_CMD_PAUSE:
+		printf("\tpause%s\n",
+			(cmd.flags & V4L2_DEC_CMD_PAUSE_TO_BLACK) ? " to black" : "");
+		break;
+	case V4L2_DEC_CMD_RESUME:
+		printf("\tresume\n");
+		break;
+	}
+}
+
 static void do_crop(int fd, unsigned int set_crop, struct v4l2_rect &vcrop, v4l2_buf_type type)
 {
 	struct v4l2_crop in_crop;
@@ -1915,6 +1992,32 @@ static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 	}
 }
 
+/* Used for both encoder and decoder commands since they are the same
+   at the moment. */
+static int parse_cmd(const char *s)
+{
+	if (!strcmp(s, "start")) return V4L2_ENC_CMD_START;
+	if (!strcmp(s, "stop")) return V4L2_ENC_CMD_STOP;
+	if (!strcmp(s, "pause")) return V4L2_ENC_CMD_PAUSE;
+	if (!strcmp(s, "resume")) return V4L2_ENC_CMD_RESUME;
+	return 0;
+}
+
+static int parse_encflags(const char *s)
+{
+	if (!strcmp(s, "stop_at_gop_end")) return V4L2_ENC_CMD_STOP_AT_GOP_END;
+	return 0;
+}
+
+static int parse_decflags(const char *s)
+{
+	if (!strcmp(s, "start_mute_audio")) return V4L2_DEC_CMD_START_MUTE_AUDIO;
+	if (!strcmp(s, "pause_to_black")) return V4L2_DEC_CMD_PAUSE_TO_BLACK;
+	if (!strcmp(s, "stop_to_black")) return V4L2_DEC_CMD_STOP_TO_BLACK;
+	if (!strcmp(s, "stop_immediately")) return V4L2_DEC_CMD_STOP_IMMEDIATELY;
+	return 0;
+}
+
 static enum v4l2_field parse_field(const char *s)
 {
 	if (!strcmp(s, "any")) return V4L2_FIELD_ANY;
@@ -2055,6 +2158,8 @@ int main(int argc, char **argv)
 	struct v4l2_dv_enum_preset dv_enum_preset; /* list_dv_preset */
 	struct v4l2_dv_preset dv_preset; /* set_dv_preset/get_dv_preset/query_dv_preset */
 	struct v4l2_dv_timings dv_timings; /* set_dv_bt_timings/get_dv_bt_timings */
+	struct v4l2_encoder_cmd enc_cmd; /* (try_)encoder_cmd */
+	struct v4l2_decoder_cmd dec_cmd; /* (try_)decoder_cmd */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
 	int txsubchans = 0;		/* set_modulator */
@@ -2106,6 +2211,8 @@ int main(int argc, char **argv)
 	memset(&dv_preset, 0, sizeof(dv_preset));
 	memset(&dv_timings, 0, sizeof(dv_timings));
 	memset(&dv_enum_preset, 0, sizeof(dv_enum_preset));
+	memset(&enc_cmd, 0, sizeof(enc_cmd));
+	memset(&dec_cmd, 0, sizeof(dec_cmd));
 	memset(&freq_seek, 0, sizeof(freq_seek));
 
 	if (argc == 1) {
@@ -2600,6 +2707,61 @@ int main(int argc, char **argv)
 			break;
 		case OptFreqSeek:
 			parse_freq_seek(optarg, freq_seek);
+			break;
+		case OptEncoderCmd:
+		case OptTryEncoderCmd:
+			subs = optarg;
+			while (*subs != '\0') {
+				static const char *const subopts[] = {
+					"cmd",
+					"flags",
+					NULL
+				};
+
+				switch (parse_subopt(&subs, subopts, &value)) {
+				case 0:
+					enc_cmd.cmd = parse_cmd(value);
+					break;
+				case 1:
+					enc_cmd.flags = parse_encflags(value);
+					break;
+				}
+			}
+			break;
+		case OptDecoderCmd:
+		case OptTryDecoderCmd:
+			subs = optarg;
+			while (*subs != '\0') {
+				static const char *const subopts[] = {
+					"cmd",
+					"flags",
+					"stop_pts",
+					"start_speed",
+					"start_format",
+					NULL
+				};
+
+				switch (parse_subopt(&subs, subopts, &value)) {
+				case 0:
+					dec_cmd.cmd = parse_cmd(value);
+					break;
+				case 1:
+					dec_cmd.flags = parse_decflags(value);
+					break;
+				case 2:
+					dec_cmd.stop.pts = strtoull(value, 0, 0);
+					break;
+				case 3:
+					dec_cmd.start.speed = strtol(value, 0, 0);
+					break;
+				case 4:
+					if (!strcmp(value, "gop"))
+						dec_cmd.start.format = V4L2_DEC_START_FMT_GOP;
+					else if (!strcmp(value, "none"))
+						dec_cmd.start.format = V4L2_DEC_START_FMT_NONE;
+					break;
+				}
+			}
 			break;
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",
@@ -3137,6 +3299,17 @@ int main(int argc, char **argv)
 		freq_seek.type = V4L2_TUNER_RADIO;
 		doioctl(fd, VIDIOC_S_HW_FREQ_SEEK, &freq_seek);
 	}
+	
+	if (options[OptEncoderCmd])
+		doioctl(fd, VIDIOC_ENCODER_CMD, &enc_cmd);
+	if (options[OptTryEncoderCmd])
+		if (doioctl(fd, VIDIOC_TRY_ENCODER_CMD, &enc_cmd) == 0)
+			print_enccmd(enc_cmd);
+	if (options[OptDecoderCmd])
+		doioctl(fd, VIDIOC_DECODER_CMD, &dec_cmd);
+	if (options[OptTryDecoderCmd])
+		if (doioctl(fd, VIDIOC_TRY_DECODER_CMD, &dec_cmd) == 0)
+			print_deccmd(dec_cmd);
 
 	/* Get options */
 
