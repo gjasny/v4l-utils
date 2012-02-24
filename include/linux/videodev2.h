@@ -1407,6 +1407,16 @@ enum v4l2_mpeg_audio_ac3_bitrate {
 	V4L2_MPEG_AUDIO_AC3_BITRATE_576K = 17,
 	V4L2_MPEG_AUDIO_AC3_BITRATE_640K = 18,
 };
+#define V4L2_CID_MPEG_AUDIO_DEC_PLAYBACK	(V4L2_CID_MPEG_BASE+112)
+enum v4l2_mpeg_audio_dec_playback {
+	V4L2_MPEG_AUDIO_DEC_PLAYBACK_AUTO	    = 0,
+	V4L2_MPEG_AUDIO_DEC_PLAYBACK_STEREO	    = 1,
+	V4L2_MPEG_AUDIO_DEC_PLAYBACK_LEFT	    = 2,
+	V4L2_MPEG_AUDIO_DEC_PLAYBACK_RIGHT	    = 3,
+	V4L2_MPEG_AUDIO_DEC_PLAYBACK_MONO	    = 4,
+	V4L2_MPEG_AUDIO_DEC_PLAYBACK_SWAPPED_STEREO = 5,
+};
+#define V4L2_CID_MPEG_AUDIO_DEC_MULTILINGUAL_PLAYBACK (V4L2_CID_MPEG_BASE+113)
 
 /*  MPEG video controls specific to multiplexed streams */
 #define V4L2_CID_MPEG_VIDEO_ENCODING 		(V4L2_CID_MPEG_BASE+200)
@@ -1457,6 +1467,9 @@ enum v4l2_mpeg_video_multi_slice_mode {
 	V4L2_MPEG_VIDEO_MULTI_SICE_MODE_MAX_BYTES	= 2,
 };
 #define V4L2_CID_MPEG_VIDEO_VBV_SIZE			(V4L2_CID_MPEG_BASE+222)
+#define V4L2_CID_MPEG_VIDEO_DEC_PTS			(V4L2_CID_MPEG_BASE+223)
+#define V4L2_CID_MPEG_VIDEO_DEC_FRAME			(V4L2_CID_MPEG_BASE+224)
+
 #define V4L2_CID_MPEG_VIDEO_H263_I_FRAME_QP		(V4L2_CID_MPEG_BASE+300)
 #define V4L2_CID_MPEG_VIDEO_H263_P_FRAME_QP		(V4L2_CID_MPEG_BASE+301)
 #define V4L2_CID_MPEG_VIDEO_H263_B_FRAME_QP		(V4L2_CID_MPEG_BASE+302)
@@ -1908,6 +1921,54 @@ struct v4l2_encoder_cmd {
 	};
 };
 
+/* Decoder commands */
+#define V4L2_DEC_CMD_START       (0)
+#define V4L2_DEC_CMD_STOP        (1)
+#define V4L2_DEC_CMD_PAUSE       (2)
+#define V4L2_DEC_CMD_RESUME      (3)
+
+/* Flags for V4L2_DEC_CMD_START */
+#define V4L2_DEC_CMD_START_MUTE_AUDIO	(1 << 0)
+
+/* Flags for V4L2_DEC_CMD_PAUSE */
+#define V4L2_DEC_CMD_PAUSE_TO_BLACK	(1 << 0)
+
+/* Flags for V4L2_DEC_CMD_STOP */
+#define V4L2_DEC_CMD_STOP_TO_BLACK	(1 << 0)
+#define V4L2_DEC_CMD_STOP_IMMEDIATELY	(1 << 1)
+
+/* Play format requirements (returned by the driver): */
+
+/* The decoder has no special format requirements */
+#define V4L2_DEC_START_FMT_NONE		(0)
+/* The decoder requires full GOPs */
+#define V4L2_DEC_START_FMT_GOP		(1)
+
+/* The structure must be zeroed before use by the application
+   This ensures it can be extended safely in the future. */
+struct v4l2_decoder_cmd {
+	__u32 cmd;
+	__u32 flags;
+	union {
+		struct {
+			__u64 pts;
+		} stop;
+
+		struct {
+			/* 0 or 1000 specifies normal speed,
+			   1 specifies forward single stepping,
+			   -1 specifies backward single stepping,
+			   >1: playback at speed/1000 of the normal speed,
+			   <-1: reverse playback at (-speed/1000) of the normal speed. */
+			__s32 speed;
+			__u32 format;
+		} start;
+
+		struct {
+			__u32 data[16];
+		} raw;
+	};
+};
 #endif
 
 
@@ -2317,6 +2378,11 @@ struct v4l2_create_buffers {
 /* Experimental selection API */
 #define VIDIOC_G_SELECTION	_IOWR('V', 94, struct v4l2_selection)
 #define VIDIOC_S_SELECTION	_IOWR('V', 95, struct v4l2_selection)
+
+/* Experimental, these two ioctls may change over the next couple of kernel
+   versions. */
+#define VIDIOC_DECODER_CMD	_IOWR('V', 96, struct v4l2_decoder_cmd)
+#define VIDIOC_TRY_DECODER_CMD	_IOWR('V', 97, struct v4l2_decoder_cmd)
 
 /* Reminder: when adding new ioctls please add support for them to
    drivers/media/video/v4l2-compat-ioctl32.c as well! */
