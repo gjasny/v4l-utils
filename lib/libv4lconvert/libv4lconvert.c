@@ -629,6 +629,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	unsigned int src_pix_fmt = fmt->fmt.pix.pixelformat;
 	unsigned int width  = fmt->fmt.pix.width;
 	unsigned int height = fmt->fmt.pix.height;
+	unsigned int bytesperline = fmt->fmt.pix.bytesperline;
 
 	switch (src_pix_fmt) {
 	/* JPG and variants */
@@ -858,16 +859,16 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_SRGGB8:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_bayer_to_rgb24(src, dest, width, height, src_pix_fmt);
+			v4lconvert_bayer_to_rgb24(src, dest, width, height, bytesperline, src_pix_fmt);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_bayer_to_bgr24(src, dest, width, height, src_pix_fmt);
+			v4lconvert_bayer_to_bgr24(src, dest, width, height, bytesperline, src_pix_fmt);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 0);
+			v4lconvert_bayer_to_yuv420(src, dest, width, height, bytesperline, src_pix_fmt, 0);
 			break;
 		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_bayer_to_yuv420(src, dest, width, height, src_pix_fmt, 1);
+			v4lconvert_bayer_to_yuv420(src, dest, width, height, bytesperline, src_pix_fmt, 1);
 			break;
 		}
 		if (src_size < (width * height)) {
