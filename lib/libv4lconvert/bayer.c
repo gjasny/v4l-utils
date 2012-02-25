@@ -25,7 +25,7 @@
  *
  * Note that the original bayer.c in libdc1394 supports many different
  * bayer decode algorithms, for lib4lconvert the one in this file has been
- * chosen (and optimized a bit) and the other algorithm's have been removed,
+ * chosen (and optimized a bit) and the other algorithms have been removed,
  * see bayer.c from libdc1394 for all supported algorithms
  */
 

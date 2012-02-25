@@ -67,7 +67,7 @@ struct v4l2_dev_info {
 	int fd;
 	int flags;
 	int open_count;
-	/* actually format of the cam */
+	/* actual format of the cam */
 	struct v4l2_format src_fmt;
 	/* fmt as seen by the application (iow after conversion) */
 	struct v4l2_format dest_fmt;

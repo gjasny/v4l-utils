@@ -45,14 +45,14 @@
 
    This also means that libv4l2 may not use any of the regular functions
    it mimics, as for example open could be a symbol in v4l2convert.so, which
-   in turn will call v4l2_open, so therefor v4l2_open (for example) may not
+   in turn will call v4l2_open, so therefore v4l2_open (for example) may not
    use the regular open()!
 
    Another important note: libv4l2 does conversion for capture usage only, if
    any calls are made which are passed a v4l2_buffer or v4l2_format with a
    v4l2_buf_type which is different from V4L2_BUF_TYPE_VIDEO_CAPTURE, then
    the v4l2_ methods behave exactly the same as their regular counterparts.
-   When modifications are made, one should be carefull that this behavior is
+   When modifications are made, one should be careful that this behavior is
    preserved.
  */
 #include <config.h>
@@ -101,7 +101,7 @@ static int v4l2_request_read_buffers(int index)
 	struct v4l2_requestbuffers req;
 
 	/* Note we re-request the buffers if they are already requested as the format
-	   and thus the needed buffersize may have changed. */
+	   and thus the needed buffer size may have changed. */
 	req.count = (devices[index].no_frames) ? devices[index].no_frames :
 		devices[index].nreadbuffers;
 	req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -245,7 +245,7 @@ static int v4l2_streamoff(int index)
 		}
 		devices[index].flags &= ~V4L2_STREAMON;
 
-		/* Stream off also unqueues all our buffers! */
+		/* Stream off also dequeues all our buffers! */
 		devices[index].frame_queued = 0;
 	}
 
@@ -482,7 +482,7 @@ static int v4l2_deactivate_read_stream(int index)
 	if (result)
 		return result;
 
-	/* No need to unqueue our buffers, streamoff does that for us */
+	/* No need to dequeue our buffers, streamoff does that for us */
 
 	v4l2_unmap_buffers(index);
 
@@ -608,7 +608,7 @@ int v4l2_fd_open(int fd, int v4l2_flags)
 			v4l2_log_file = fopen(lfname, "w");
 	}
 
-	/* check that this is an v4l2 device */
+	/* check that this is a v4l2 device */
 	if (dev_ops->ioctl(dev_ops_priv, fd, VIDIOC_QUERYCAP, &cap)) {
 		int saved_err = errno;
 		V4L2_LOG_ERR("getting capabilities: %s\n", strerror(errno));
@@ -631,7 +631,7 @@ int v4l2_fd_open(int fd, int v4l2_flags)
 		return -1;
 	}
 
-	/* Check for framerate setting support */
+	/* Check for frame rate setting support */
 	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (dev_ops->ioctl(dev_ops_priv, fd, VIDIOC_G_PARM, &parm))
 		parm.type = 0;
@@ -714,8 +714,8 @@ no_capture:
 		devices_used = index + 1;
 
 	/* Note we always tell v4lconvert to optimize src fmt selection for
-	   our default fps, the only exception is the app explictly selecting
-	   a framerate using the S_PARM ioctl after a S_FMT */
+	   our default fps, the only exception is the app explicitly selecting
+	   a fram erate using the S_PARM ioctl after a S_FMT */
 	if (devices[index].convert)
 		v4lconvert_set_fps(devices[index].convert, V4L2_DEFAULT_FPS);
 	v4l2_update_fps(index, &parm);
@@ -783,7 +783,7 @@ int v4l2_close(int fd)
 	devices[index].readbuf_size = 0;
 
 	/* Remove the fd from our list of managed fds before closing it, because as
-	   soon as we've done the actual close the fd maybe returned by an open in
+	   soon as we've done the actual close, the fd maybe returned by an open() in
 	   another thread and we don't want to intercept calls to this new fd. */
 	devices[index].fd = -1;
 
@@ -972,7 +972,7 @@ int v4l2_ioctl(int fd, unsigned long int request, ...)
 	if (index == -1)
 		return SYS_IOCTL(fd, request, arg);
 
-	/* Appearantly the kernel and / or glibc ignore the 32 most significant bits
+	/* Apparently the kernel and / or glibc ignore the 32 most significant bits
 	   when long = 64 bits, and some applications pass an int holding the req to
 	   ioctl, causing it to get sign extended, depending upon this behavior */
 	request = (unsigned int)request;
@@ -1063,7 +1063,7 @@ no_capture_request:
 
 	if (stream_needs_locking) {
 		pthread_mutex_lock(&devices[index].stream_lock);
-		/* If this is the first stream related ioctl, and we should only allow
+		/* If this is the first stream-related ioctl, and we should only allow
 		   libv4lconvert supported destination formats (so that it can do flipping,
 		   processing, etc.) and the current destination format is not supported,
 		   try setting the format to RGB24 (which is a supported dest. format). */
@@ -1333,7 +1333,7 @@ no_capture_request:
 		struct v4l2_streamparm *parm = arg;
 
 		/* See if libv4lconvert wishes to use a different src_fmt
-		   for the new framerate and set that first */
+		   for the new frame rate and set that first */
 		if ((devices[index].flags & V4L2_SUPPORTS_TIMEPERFRAME) &&
 		    parm->parm.capture.timeperframe.numerator != 0) {
 			int fps = parm->parm.capture.timeperframe.denominator;
@@ -1452,7 +1452,7 @@ ssize_t v4l2_read(int fd, void *dest, size_t n)
 
 	pthread_mutex_lock(&devices[index].stream_lock);
 
-	/* When not converting and the device supports read let the kernel handle
+	/* When not converting and the device supports read(), let the kernel handle
 	   it */
 	if (devices[index].convert == NULL ||
 	    ((devices[index].flags & V4L2_SUPPORTS_READ) &&
@@ -1466,7 +1466,7 @@ ssize_t v4l2_read(int fd, void *dest, size_t n)
 	/* Since we need to do conversion try to use mmap (streaming) mode under
 	   the hood as that safes a memcpy for each frame read.
 
-	   Note sometimes this will fail as some drivers (atleast gspca) do not allow
+	   Note sometimes this will fail as some drivers (at least gspca) do not allow
 	   switching from read mode to mmap mode and they assume read() mode if a
 	   select or poll() is done before any buffers are requested. So using mmap
 	   mode under the hood will fail if a select() or poll() is done before the
@@ -1528,8 +1528,8 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
 
 	index = v4l2_get_index(fd);
 	if (index == -1 ||
-			/* Check if the mmap data matches our answer to QUERY_BUF, if it doesn't
-			   let the kernel handle it (to allow for mmap based non capture use) */
+			/* Check if the mmap data matches our answer to QUERY_BUF. If it doesn't,
+			   let the kernel handle it (to allow for mmap-based non capture use) */
 			start || length != V4L2_FRAME_BUF_SIZE ||
 			((unsigned int)offset & ~0xFFu) != V4L2_MMAP_OFFSET_MAGIC) {
 		if (index != -1)
@@ -1607,7 +1607,7 @@ int v4l2_munmap(void *_start, size_t length)
 
 			buffer_index = (start - devices[index].convert_mmap_buf) / length;
 
-			/* Redo our checks now that we have the lock, things may have changed */
+			/* Re-do our checks now that we have the lock, things may have changed */
 			if (devices[index].convert_mmap_buf != MAP_FAILED &&
 					start >= devices[index].convert_mmap_buf &&
 					(start - devices[index].convert_mmap_buf) % length == 0 &&

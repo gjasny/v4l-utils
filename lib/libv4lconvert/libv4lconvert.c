@@ -409,7 +409,7 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
 		    supported_src_pixfmts[i].fmt)
 			continue;
 
-		/* Did we get a better match then before? */
+		/* Did we get a better match than before? */
 		size_x_diff = (int)try_fmt.fmt.pix.width -
 			      (int)dest_fmt->fmt.pix.width;
 		size_y_diff = (int)try_fmt.fmt.pix.height -
@@ -486,7 +486,7 @@ int v4lconvert_try_format(struct v4lconvert_data *data,
 	/* In case of a non exact resolution match, try again with a slightly larger
 	   resolution as some weird devices are not able to crop of the number of
 	   extra (border) pixels most sensors have compared to standard resolutions,
-	   which we will then just crop of in software */
+	   which we will then just crop off in software */
 	if (try_dest.fmt.pix.width != desired_width ||
 			try_dest.fmt.pix.height != desired_height) {
 		try2_dest = *dest_fmt;

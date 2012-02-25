@@ -51,7 +51,7 @@ LIBV4L_PUBLIC int open(const char *file, int oflag, ...)
 
 	/* check if we're opening a video4linux2 device */
 	if (!strncmp(file, "/dev/video", 10) || !strncmp(file, "/dev/v4l/", 9)) {
-		/* Some apps open the device read only, but we need rw rights as the
+		/* Some apps open the device read-only, but we need rw rights as the
 		   buffers *MUST* be mapped rw */
 		oflag = (oflag & ~O_ACCMODE) | O_RDWR;
 		v4l_device = 1;
