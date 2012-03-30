@@ -35,6 +35,7 @@
 #include <sys/time.h>
 #include <dirent.h>
 #include <math.h>
+#include <config.h>
 
 #ifdef HAVE_SYS_KLOG_H
 #include <sys/klog.h>
