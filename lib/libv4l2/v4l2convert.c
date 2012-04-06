@@ -20,6 +20,9 @@
 # Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
 */
 
+/* prevent GCC 4.7 inlining error */
+#undef _FORTIFY_SOURCE
+
 #define _LARGEFILE64_SOURCE 1
 
 #include <stdarg.h>
