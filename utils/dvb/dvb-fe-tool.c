@@ -24,10 +24,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-const char *argp_program_version = "DVBv5 scan version "V4L_UTILS_VERSION;
+#define PROGRAM_NAME	"dvb-fe-tool"
+
+const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
 
-static const char doc[] = "\nAllows scanning DVB using API version 5\n"
+static const char doc[] = "\nA DVB frontend tool using API version 5\n"
 	"\nOn the options bellow, the arguments are:\n"
 	"  ADAPTER      - the dvb adapter to control\n"
 	"  FRONTEND     - the dvb frontend to control";

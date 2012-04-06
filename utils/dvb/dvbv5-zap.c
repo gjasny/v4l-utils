@@ -41,7 +41,7 @@
 #include "libscan.h"
 
 #define CHANNEL_FILE	"channels.conf"
-#define PROGRAM_NAME	"dvbv5-scan"
+#define PROGRAM_NAME	"dvbv5-zap"
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
