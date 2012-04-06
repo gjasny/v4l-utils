@@ -1,3 +1,12 @@
+v4l-utils-0.8.7
+---------------
+* Utils changes (0.9.x backports)
+  * ir-keytable: Fixed file parsing errors
+  * qv4l2: fix segfault when there are no inputs or outputs
+  * dvb: Merged DVB tools from development branch
+* libv4l changes (0.9.x backports)
+  * Add some more laptop models to the upside down devices table
+
 v4l-utils-0.8.6
 ---------------
 * libv4l changes (0.9.x backports)
