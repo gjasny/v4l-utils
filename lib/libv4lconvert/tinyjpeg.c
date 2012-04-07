@@ -2556,7 +2556,7 @@ int tinyjpeg_get_components(struct jdec_private *priv, unsigned char **component
 {
 	int i;
 
-	for (i = 0; priv->components[i] && i < COMPONENTS; i++)
+	for (i = 0; i < COMPONENTS && priv->components[i]; i++)
 		components[i] = priv->components[i];
 	return 0;
 }
