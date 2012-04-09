@@ -204,6 +204,32 @@ error:
 	return NULL;
 }
 
+static uint32_t get_compat_format(uint32_t delivery_system)
+{
+	switch (delivery_system) {
+	case SYS_DVBS:
+	case SYS_DVBS2:
+	case SYS_TURBO:
+	case SYS_ISDBS:
+	case SYS_DSS:
+		return SYS_DVBS;
+	case SYS_ATSC:
+	case SYS_DVBC_ANNEX_B:
+		return SYS_ATSC;
+	case SYS_DVBC_ANNEX_A:
+	case SYS_DVBC_ANNEX_C:
+		return  SYS_DVBC_ANNEX_A;
+	case SYS_CMMB:
+	case SYS_ISDBT:
+	case SYS_DVBT:
+	case SYS_DVBT2:
+		return SYS_DVBT;
+	default:
+		return 0;
+
+	}
+}
+
 int write_format_oneline(const char *fname,
 			 struct dvb_file *dvb_file,
 			 uint32_t delsys,
@@ -218,6 +244,7 @@ int write_format_oneline(const char *fname,
 	const struct parse_table *table;
 	uint32_t data;
 	char err_msg[80];
+	uint32_t delsys_compat = 0;
 
 	fp = fopen(fname, "w");
 	if (!fp) {
@@ -236,6 +263,13 @@ int write_format_oneline(const char *fname,
 		for (i = 0; formats[i].delsys != 0; i++) {
 			if (formats[i].delsys == delsys)
 				break;
+		}
+		delsys_compat = get_compat_format(delsys);
+		for (i = 0; formats[i].delsys != 0; i++) {
+			if (formats[i].delsys == delsys_compat) {
+				delsys = delsys_compat;
+				break;
+			}
 		}
 		if (formats[i].delsys == 0) {
 			sprintf(err_msg,
@@ -265,8 +299,12 @@ int write_format_oneline(const char *fname,
 			if (table->size && j < entry->n_props) {
 				data = entry->props[j].u.data;
 
-				if (table->prop == DTV_BANDWIDTH_HZ)
-					data = fe_bandwidth_name[data];
+				if (table->prop == DTV_BANDWIDTH_HZ) {
+					if (data < ARRAY_SIZE(fe_bandwidth_name))
+						data = fe_bandwidth_name[data];
+					else
+						data = BANDWIDTH_AUTO;
+				}
 
 				if (data >= table->size) {
 					sprintf(err_msg,
@@ -305,9 +343,10 @@ int write_format_oneline(const char *fname,
 					break;
 				default:
 					if (j >= entry->n_props) {
-						sprintf(err_msg,
-							"property not supported");
-						goto error;
+						fprintf(stderr,
+							"property %s not supported while parsing entry %d of %s\n",
+							dvb_v5_name[entry->props[i].cmd],
+							line, fname);
 					}
 
 					data = entry->props[j].u.data;
