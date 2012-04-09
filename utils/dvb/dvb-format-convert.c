@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 		.options = options,
 		.parser = parse_opt,
 		.doc = "scan DVB services using the channel file",
-		.args_doc = "<initial file>",
+		.args_doc = "<input file> <output file>",
 	};
 
 	memset(&args, 0, sizeof(args));
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 	if (args.input_format == FILE_UNKNOWN) {
 		fprintf(stderr, "ERROR: Please specify a valid input format\n");
 		missing = 1;
-	} else if (!args.output_file) {
+	} else if (!args.input_file) {
 		fprintf(stderr, "ERROR: Please specify a valid input file\n");
 		missing = 1;
 	} else if (args.output_format == FILE_UNKNOWN) {
