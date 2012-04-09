@@ -1,7 +1,7 @@
 libv4lconvert is not safe for using one convert instance as returned by
 v4lconvert_create from multiple threads, if you want to use one v4lconvert
 instance from multiple threads you must provide your own locking and make
-sure no simultanious calls are made.
+sure no simultaneous calls are made.
 
 libv4l1 and libv4l2 are safe for multithread use *under* *the* *following*
 *conditions* :

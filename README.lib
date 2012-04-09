@@ -4,7 +4,7 @@ Introduction
 libv4l is a collection of libraries which adds a thin abstraction layer on
 top of video4linux2 devices. The purpose of this (thin) layer is to make it
 easy for application writers to support a wide variety of devices without
-having to write seperate code for different devices in the same class.
+having to write separate code for different devices in the same class.
 
 All libv4l components are licensed under the GNU Lesser General Public
 License version 2 or (at your option) any later version.
@@ -121,7 +121,7 @@ would need to be extended with many more often chip dependent formats, like
 the bayer compression used by the spca561 and the (different) compression used
 by the pac207 and the (again different) compression used by the sn9c102. Adding
 support for all these formats should not be done at the application level, as
-then it needs to be written for each application seperately. Licensing issues
+then it needs to be written for each application separately. Licensing issues
 with the decompressors will then also become a problem as just cut and pasting
 from one application to another is bound to hit license incompatibilities.
 
@@ -156,14 +156,14 @@ Q: Why should I use libv4l2 in my app instead of direct device access
    combined with libv4lconvert?
 A: libv4l2 is mainly meant for quickly and easily adding support for more
 pixelformats to existing v4l2 applications. So if you feel better directly
-accessing the device in combination with libv4lconvert thats fine too.
+accessing the device in combination with libv4lconvert that's fine too.
 
 Notice that libv4l2 also does emulation of the read() call on devices which
 do not support it in the driver. In the background this uses mmap buffers
 (even on devices which do support the read call). This mmap gives libv4lconvert
 zero-copy access to the captured frame, and then it can write the converted
 data directly to the buffer the application provided to v4l2_read(). Thus
-another reason to use liv4l2 is to get the no memcpy advantage of the mmap
+another reason to use libv4l2 is to get the no memcpy advantage of the mmap
 capture method combined with the simplicity of making a simple read() call.
 
 
