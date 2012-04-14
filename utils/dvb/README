@@ -7,7 +7,7 @@ using its latest V5 API. The tools can also work with the DVBv3 API.
 The current tools are:
 
 dvb-fe-tool - a simple test application, that reads from the frontend.
-	      it also allows to change the default delivery system.
+	      it also allows one to change the default delivery system.
 	      In the future, it may be used to change any property
 	      via command line.
 

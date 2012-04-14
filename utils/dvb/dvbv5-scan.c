@@ -57,7 +57,7 @@ static const struct argp_option options[] = {
 	{"lnbf",	'l',	"LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
 	{"sat_number",	'S',	"satellite_number",	0, "satellite number. If not specified, disable DISEqC", 0},
 	{"freq_bpf",	'U',	"frequency",		0, "SCR/Unicable band-pass filter frequency to use, in kHz", 0},
-	{"wait",	'W',	"time",			0, "adds aditional wait time for DISEqC command completion", 0},
+	{"wait",	'W',	"time",			0, "adds additional wait time for DISEqC command completion", 0},
 	{"nit",		'N',	NULL,			0, "use data from NIT table on the output file", 0},
 	{"get_frontend",'G',	NULL,			0, "use data from get_frontend on the output file", 0},
 	{"verbose",	'v',	NULL,			0, "be (very) verbose", 0},
