@@ -161,9 +161,10 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x17ef, 0x480c, 0, "LENOVO", "7449C8G",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
 		"ThinkPad X200 Tablet" },
+	/* Disabled due to http://bugs.debian.org/667958
 	{ 0x17ef, 0x4816, 0, "LENOVO", "0831CTO",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
-		"ThinkPad X201 Tablet" },
+		"ThinkPad X201 Tablet" }, */
 	{ 0x5986, 0x0200, 0, "LENOVO", "SPEEDY    ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0, NULL, NULL, NULL,
 		"Lenovo IdeaPad Y510" },
