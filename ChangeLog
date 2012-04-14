@@ -1,3 +1,14 @@
+v4l-utils-0.8.8
+---------------
+* Utils changes (0.9.x backports)
+  * dvb-format-convert: fix argument check and helper message
+* libv4l changes (0.9.x backports)
+  * tinyjpeg: Better luminance quantization table for Pixart JPEG (Jean-Francois Moine)
+  * tinyjpeg: Fix out of bounds array usage
+  * libv4lconvert: Use bytesperline instead of width (Robert Abel)
+  * libv4lconvert: Revert Lenovo X201 upside down table entry
+  * libv4lconver: Add 06f8:301b pac7302 based cam to the quirk table
+
 v4l-utils-0.8.7
 ---------------
 * Utils changes (0.9.x backports)
@@ -5,6 +16,7 @@ v4l-utils-0.8.7
   * qv4l2: fix segfault when there are no inputs or outputs
   * dvb: Merged DVB tools from development branch
 * libv4l changes (0.9.x backports)
+  * Prevent GCC 4.7 inlining error
   * Add some more laptop models to the upside down devices table
 
 v4l-utils-0.8.6

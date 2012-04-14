@@ -1,4 +1,4 @@
-V4L_UTILS_VERSION=0.8.7
+V4L_UTILS_VERSION=0.8.8
 
 # These ones can be overriden from the cmdline
 
