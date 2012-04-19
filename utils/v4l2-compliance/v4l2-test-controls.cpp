@@ -61,6 +61,7 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 			return fail("invalid boolean max value\n");
 		/* fall through */
 	case V4L2_CTRL_TYPE_MENU:
+	case V4L2_CTRL_TYPE_INTEGER_MENU:
 		if (qctrl.step != 1)
 			return fail("invalid step value %d\n", qctrl.step);
 		if (qctrl.minimum < 0)
@@ -115,6 +116,7 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 		/* fall through */
 	case V4L2_CTRL_TYPE_BOOLEAN:
 	case V4L2_CTRL_TYPE_MENU:
+	case V4L2_CTRL_TYPE_INTEGER_MENU:
 	case V4L2_CTRL_TYPE_STRING:
 	case V4L2_CTRL_TYPE_BITMASK:
 		if (fl & V4L2_CTRL_FLAG_SLIDER)
@@ -134,7 +136,7 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 		return fail("GRABBED flag set\n");
 	if (fl & V4L2_CTRL_FLAG_DISABLED)
 		return fail("DISABLED flag set\n");
-	if (qctrl.type != V4L2_CTRL_TYPE_MENU) {
+	if (qctrl.type != V4L2_CTRL_TYPE_MENU && qctrl.type != V4L2_CTRL_TYPE_INTEGER_MENU) {
 		memset(&qmenu, 0xff, sizeof(qmenu));
 		qmenu.id = qctrl.id;
 		qmenu.index = qctrl.minimum;
@@ -158,7 +160,8 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 			return fail("can get menu for out-of-range index\n");
 		if (qmenu.index != (__u32)i || qmenu.id != qctrl.id)
 			return fail("id or index changed\n");
-		if (check_ustring(qmenu.name, sizeof(qmenu.name)))
+		if (qctrl.type == V4L2_CTRL_TYPE_MENU &&
+		    check_ustring(qmenu.name, sizeof(qmenu.name)))
 			return fail("invalid menu name\n");
 		if (qmenu.reserved)
 			return fail("reserved is non-zero\n");
@@ -287,6 +290,7 @@ static int checkSimpleCtrl(struct v4l2_control &ctrl, struct test_queryctrl &qct
 	case V4L2_CTRL_TYPE_INTEGER:
 	case V4L2_CTRL_TYPE_BOOLEAN:
 	case V4L2_CTRL_TYPE_MENU:
+	case V4L2_CTRL_TYPE_INTEGER_MENU:
 		if (ctrl.value < qctrl.minimum || ctrl.value > qctrl.maximum)
 			return fail("returned control value out of range\n");
 		if ((ctrl.value - qctrl.minimum) % qctrl.step) {
@@ -397,7 +401,7 @@ int testSimpleControls(struct node *node)
 				return fail("returns error for in-range, but non-step-multiple value\n");
 		}
 
-		if (iter->type == V4L2_CTRL_TYPE_MENU) {
+		if (iter->type == V4L2_CTRL_TYPE_MENU || iter->type == V4L2_CTRL_TYPE_INTEGER_MENU) {
 			// check menu items
 			for (i = iter->minimum; i <= iter->maximum; i++) {
 				unsigned valid = iter->menu_mask & (1 << i);
@@ -451,6 +455,7 @@ static int checkExtendedCtrl(struct v4l2_ext_control &ctrl, struct test_queryctr
 	case V4L2_CTRL_TYPE_INTEGER:
 	case V4L2_CTRL_TYPE_BOOLEAN:
 	case V4L2_CTRL_TYPE_MENU:
+	case V4L2_CTRL_TYPE_INTEGER_MENU:
 		if (ctrl.value < qctrl.minimum || ctrl.value > qctrl.maximum)
 			return fail("returned control value out of range\n");
 		if ((ctrl.value - qctrl.minimum) % qctrl.step) {
