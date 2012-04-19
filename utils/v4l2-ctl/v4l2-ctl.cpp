@@ -915,6 +915,12 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->default_value, ctrl->value);
 		break;
+	case V4L2_CTRL_TYPE_INTEGER_MENU:
+		printf("%31s (intmenu): min=%d max=%d default=%d value=%d",
+				s.c_str(),
+				queryctrl->minimum, queryctrl->maximum,
+				queryctrl->default_value, ctrl->value);
+		break;
 	case V4L2_CTRL_TYPE_BUTTON:
 		printf("%31s (button) :", s.c_str());
 		break;
@@ -928,12 +934,16 @@ static void print_qctrl(int fd, struct v4l2_queryctrl *queryctrl,
 	if (queryctrl->flags)
 		printf(" flags=%s", ctrlflags2s(queryctrl->flags).c_str());
 	printf("\n");
-	if (queryctrl->type == V4L2_CTRL_TYPE_MENU && show_menus) {
+	if ((queryctrl->type == V4L2_CTRL_TYPE_MENU ||
+	     queryctrl->type == V4L2_CTRL_TYPE_INTEGER_MENU) && show_menus) {
 		for (i = queryctrl->minimum; i <= queryctrl->maximum; i++) {
 			qmenu.index = i;
 			if (test_ioctl(fd, VIDIOC_QUERYMENU, &qmenu))
 				continue;
-			printf("\t\t\t\t%d: %s\n", i, qmenu.name);
+			if (queryctrl->type == V4L2_CTRL_TYPE_MENU)
+				printf("\t\t\t\t%d: %s\n", i, qmenu.name);
+			else
+				printf("\t\t\t\t%d: %lld (0x%llx)\n", i, qmenu.value, qmenu.value);
 		}
 	}
 }
