@@ -651,3 +651,45 @@ int testExtendedControls(struct node *node)
 		return fail("error_idx should be equal to count\n");
 	return 0;
 }
+
+int testControlEvents(struct node *node)
+{
+	qctrl_list::iterator iter;
+
+	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
+		struct v4l2_event_subscription sub = { 0 };
+		struct v4l2_event ev;
+		struct timeval timeout = { 0, 100 };
+		fd_set set;
+		int ret;
+
+		info("checking control event '%s' (0x%08x)\n", iter->name, iter->id);
+		sub.type = V4L2_EVENT_CTRL;
+		sub.id = iter->id;
+		sub.flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
+		ret = doioctl(node, VIDIOC_SUBSCRIBE_EVENT, &sub);
+		if (ret)
+			return fail("subscribe event for control '%s' failed\n", iter->name);
+		//if (iter->type == V4L2_CTRL_TYPE_CTRL_CLASS)
+		FD_ZERO(&set);
+		FD_SET(node->fd, &set);
+		ret = select(node->fd + 1, NULL, NULL, &set, &timeout);
+		if (ret == 0) {
+			if (iter->type != V4L2_CTRL_TYPE_CTRL_CLASS)
+				return fail("failed to find event for control '%s'\n", iter->name);
+		} else if (iter->type == V4L2_CTRL_TYPE_CTRL_CLASS) {
+			return fail("found event for control class '%s'\n", iter->name);
+		}
+		if (ret) {
+			ret = doioctl(node, VIDIOC_DQEVENT, &ev);
+			if (ret)
+				return fail("couldn't get event for control '%s'\n", iter->name);
+			if (ev.type != V4L2_EVENT_CTRL || ev.id != iter->id)
+				return fail("dequeued wrong event\n");
+		}
+		ret = doioctl(node, VIDIOC_UNSUBSCRIBE_EVENT, &sub);
+		if (ret)
+			return fail("unsubscribe event for control '%s' failed\n", iter->name);
+	}
+	return 0;
+}
