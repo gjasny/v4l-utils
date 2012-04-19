@@ -762,20 +762,20 @@ struct v4l2_crop {
 
 /* Selection targets */
 
-/* current cropping area */
-#define V4L2_SEL_TGT_CROP_ACTIVE	0
-/* default cropping area */
-#define V4L2_SEL_TGT_CROP_DEFAULT	1
-/* cropping bounds */
-#define V4L2_SEL_TGT_CROP_BOUNDS	2
-/* current composing area */
-#define V4L2_SEL_TGT_COMPOSE_ACTIVE	256
-/* default composing area */
-#define V4L2_SEL_TGT_COMPOSE_DEFAULT	257
-/* composing bounds */
-#define V4L2_SEL_TGT_COMPOSE_BOUNDS	258
-/* current composing area plus all padding pixels */
-#define V4L2_SEL_TGT_COMPOSE_PADDED	259
+/* Current cropping area */
+#define V4L2_SEL_TGT_CROP_ACTIVE	0x0000
+/* Default cropping area */
+#define V4L2_SEL_TGT_CROP_DEFAULT	0x0001
+/* Cropping bounds */
+#define V4L2_SEL_TGT_CROP_BOUNDS	0x0002
+/* Current composing area */
+#define V4L2_SEL_TGT_COMPOSE_ACTIVE	0x0100
+/* Default composing area */
+#define V4L2_SEL_TGT_COMPOSE_DEFAULT	0x0101
+/* Composing bounds */
+#define V4L2_SEL_TGT_COMPOSE_BOUNDS	0x0102
+/* Current composing area plus all padding pixels */
+#define V4L2_SEL_TGT_COMPOSE_PADDED	0x0103
 
 /**
  * struct v4l2_selection - selection info
@@ -785,7 +785,7 @@ struct v4l2_crop {
  * @r:		coordinates of selection window
  * @reserved:	for future use, rounds structure size to 64 bytes, set to zero
  *
- * Hardware may use multiple helper window to process a video stream.
+ * Hardware may use multiple helper windows to process a video stream.
  * The structure is used to exchange this selection areas between
  * an application and a driver.
  */
@@ -1136,6 +1136,7 @@ struct v4l2_ext_controls {
 #define V4L2_CTRL_CLASS_CAMERA 0x009a0000	/* Camera class controls */
 #define V4L2_CTRL_CLASS_FM_TX 0x009b0000	/* FM Modulator control class */
 #define V4L2_CTRL_CLASS_FLASH 0x009c0000	/* Camera flash controls */
+#define V4L2_CTRL_CLASS_JPEG 0x009d0000		/* JPEG-compression controls */
 
 #define V4L2_CTRL_ID_MASK      	  (0x0fffffff)
 #define V4L2_CTRL_ID2CLASS(id)    ((id) & 0x0fff0000UL)
@@ -1150,6 +1151,7 @@ enum v4l2_ctrl_type {
 	V4L2_CTRL_TYPE_CTRL_CLASS    = 6,
 	V4L2_CTRL_TYPE_STRING        = 7,
 	V4L2_CTRL_TYPE_BITMASK       = 8,
+	V4L2_CTRL_TYPE_INTEGER_MENU = 9,
 };
 
 /*  Used in the VIDIOC_QUERYCTRL ioctl for querying controls */
@@ -1169,9 +1171,12 @@ struct v4l2_queryctrl {
 struct v4l2_querymenu {
 	__u32		id;
 	__u32		index;
-	__u8		name[32];	/* Whatever */
+	union {
+		__u8	name[32];	/* Whatever */
+		__s64	value;
+	};
 	__u32		reserved;
-};
+} __attribute__ ((packed));
 
 /*  Control flags  */
 #define V4L2_CTRL_FLAG_DISABLED		0x0001
@@ -1757,6 +1762,29 @@ enum v4l2_flash_strobe_source {
 
 #define V4L2_CID_FLASH_CHARGE			(V4L2_CID_FLASH_CLASS_BASE + 11)
 #define V4L2_CID_FLASH_READY			(V4L2_CID_FLASH_CLASS_BASE + 12)
+
+/*  JPEG-class control IDs defined by V4L2 */
+#define V4L2_CID_JPEG_CLASS_BASE		(V4L2_CTRL_CLASS_JPEG | 0x900)
+#define V4L2_CID_JPEG_CLASS			(V4L2_CTRL_CLASS_JPEG | 1)
+
+#define	V4L2_CID_JPEG_CHROMA_SUBSAMPLING	(V4L2_CID_JPEG_CLASS_BASE + 1)
+enum v4l2_jpeg_chroma_subsampling {
+	V4L2_JPEG_CHROMA_SUBSAMPLING_444	= 0,
+	V4L2_JPEG_CHROMA_SUBSAMPLING_422	= 1,
+	V4L2_JPEG_CHROMA_SUBSAMPLING_420	= 2,
+	V4L2_JPEG_CHROMA_SUBSAMPLING_411	= 3,
+	V4L2_JPEG_CHROMA_SUBSAMPLING_410	= 4,
+	V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY	= 5,
+};
+#define	V4L2_CID_JPEG_RESTART_INTERVAL		(V4L2_CID_JPEG_CLASS_BASE + 2)
+#define	V4L2_CID_JPEG_COMPRESSION_QUALITY	(V4L2_CID_JPEG_CLASS_BASE + 3)
+
+#define	V4L2_CID_JPEG_ACTIVE_MARKER		(V4L2_CID_JPEG_CLASS_BASE + 4)
+#define	V4L2_JPEG_ACTIVE_MARKER_APP0		(1 << 0)
+#define	V4L2_JPEG_ACTIVE_MARKER_APP1		(1 << 1)
+#define	V4L2_JPEG_ACTIVE_MARKER_COM		(1 << 16)
+#define	V4L2_JPEG_ACTIVE_MARKER_DQT		(1 << 17)
+#define	V4L2_JPEG_ACTIVE_MARKER_DHT		(1 << 18)
 
 /*
  *	T U N I N G
