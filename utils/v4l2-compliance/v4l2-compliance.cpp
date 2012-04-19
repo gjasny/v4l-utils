@@ -590,6 +590,7 @@ int main(int argc, char **argv)
 	printf("\ttest VIDIOC_QUERYCTRL/MENU: %s\n", ok(testQueryControls(&node)));
 	printf("\ttest VIDIOC_G/S_CTRL: %s\n", ok(testSimpleControls(&node)));
 	printf("\ttest VIDIOC_G/S/TRY_EXT_CTRLS: %s\n", ok(testExtendedControls(&node)));
+	printf("\ttest VIDIOC_(UN)SUBSCRIBE_EVENT/DQEVENT: %s\n", ok(testControlEvents(&node)));
 	printf("\tStandard Controls: %d Private Controls: %d\n",
 			node.std_controls, node.priv_controls);
 	printf("\n");
@@ -618,7 +619,6 @@ int main(int argc, char **argv)
 	   VIDIOC_G/S_PARM
 	   VIDIOC_G/S_JPEGCOMP
 	   VIDIOC_S_HW_FREQ_SEEK
-	   VIDIOC_SUBSCRIBE_EVENT/UNSUBSCRIBE_EVENT/DQEVENT
 	   VIDIOC_(TRY_)ENCODER_CMD
 	   VIDIOC_G_ENC_INDEX
 	   VIDIOC_REQBUFS/QBUF/DQBUF/QUERYBUF
