@@ -75,6 +75,9 @@ union v4l_parms {
 	struct v4l2_dv_timings p_v4l2_dv_timings;
 	struct v4l2_event p_v4l2_event;
 	struct v4l2_event_subscription p_v4l2_event_subscription;
+	struct v4l2_create_buffers p_v4l2_create_buffers;
+	struct v4l2_selection p_v4l2_selection;
+	struct v4l2_decoder_cmd p_v4l2_decoder_cmd;
 };
 
 #define ioc(cmd) { cmd, #cmd }
@@ -158,6 +161,12 @@ static const struct {
 	ioc(VIDIOC_DQEVENT),		/* struct v4l2_event */
 	ioc(VIDIOC_SUBSCRIBE_EVENT),	/* struct v4l2_event_subscription */
 	ioc(VIDIOC_UNSUBSCRIBE_EVENT),	/* struct v4l2_event_subscription */
+	ioc(VIDIOC_CREATE_BUFS),	/* struct v4l2_create_buffers */
+	ioc(VIDIOC_PREPARE_BUF),	/* struct v4l2_buffer */
+	ioc(VIDIOC_G_SELECTION),	/* struct v4l2_selection */
+	ioc(VIDIOC_S_SELECTION),	/* struct v4l2_selection */
+	ioc(VIDIOC_DECODER_CMD),	/* struct v4l2_decoder_cmd */
+	ioc(VIDIOC_TRY_DECODER_CMD),	/* struct v4l2_decoder_cmd */
 };
 #define S_IOCTLS sizeof(ioctls)/sizeof(ioctls[0])
 
