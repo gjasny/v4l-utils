@@ -103,6 +103,7 @@ struct jdec_private {
 #if SANITY_CHECK
 	unsigned int current_cid;			/* For planar JPEG */
 #endif
+	unsigned char marker;			/* for PJPG (Pixart JPEG) */
 
 	/* Temp space used after the IDCT to store each components */
 	uint8_t Y[64 * 4], Cr[64], Cb[64];
