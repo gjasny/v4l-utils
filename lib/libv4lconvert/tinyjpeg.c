@@ -1387,6 +1387,16 @@ static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
 	look_nbits(priv->reservoir, priv->nbits_in_reservoir, priv->stream,
 		   8, marker);
 
+	/* Sometimes the pac7302 switches chrominance setting halfway though a
+	   frame, with a quite ugly looking result, so we drop such frames. */
+	if (priv->first_marker == 0)
+		priv->first_marker = marker;
+	else if ((marker & 0x80) != (priv->first_marker & 0x80)) {
+		snprintf(priv->error_string, sizeof(priv->error_string),
+			"Pixart JPEG error: chrominance changed halfway\n");
+		longjmp(priv->jump_state, -EIO);
+	}
+
 	/* Pixart JPEG MCU-s are preceded by a marker indicating the quality
 	   setting with which the MCU is compressed, IOW the MCU-s may have a
 	   different quantization table per MCU. So if the marker changes we
@@ -2224,6 +2234,7 @@ int tinyjpeg_decode(struct jdec_private *priv, int pixfmt)
 			return length;
 		priv->stream = priv->stream_filtered;
 		priv->stream_end = priv->stream + length;
+		priv->first_marker = 0;
 
 		decode_mcu_table = pixart_decode_mcu_3comp_table;
 	}
