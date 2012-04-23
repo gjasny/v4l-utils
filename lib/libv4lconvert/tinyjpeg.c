@@ -2101,7 +2101,17 @@ static int pixart_filter(struct jdec_private *priv, unsigned char *dest,
 {
 	int chunksize, copied = 0;
 
-	/* Skip mysterious first data byte */
+	/* The first data bytes encodes the image size:
+	   0x60: 160x120
+	   0x61: 320x240
+	   0x62: 640x480
+	   160x120 images are not chunked due to their small size!
+	*/
+	if (src[0] == 0x60) {
+			memcpy(dest, src + 1, n - 1);
+			return n - 1;
+	}
+
 	src++;
 	n--;
 
@@ -2124,8 +2134,8 @@ kernel: 0xff 0xff 0x00 0xff 0x96, and we skip one unknown byte */
 
 		if (src[0] != 0xff || src[1] != 0xff || src[2] != 0xff)
 			error("Missing Pixart ff ff ff xx header, "
-					"got: %02x %02x %02x %02x\n",
-					src[0], src[1], src[2], src[3]);
+			      "got: %02x %02x %02x %02x, copied sofar: %d\n",
+			      src[0], src[1], src[2], src[3], copied);
 		if (src[3] > 6)
 			error("Unexpected Pixart chunk size: %d\n", src[3]);
 
