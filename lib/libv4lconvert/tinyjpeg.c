@@ -1404,7 +1404,7 @@ static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
 	   different quantization table per MCU. So if the marker changes we
 	   need to rebuild the quantization tables. */
 	if (marker != priv->marker) {
-		int i, j, comp, lumi, chroma;
+		int i, j, comp, lumi;
 		unsigned char qt[64];
 		/* These values have been found by trial and error and seem to
 		   work reasonably. Markers with index 0 - 7 are never
@@ -1457,8 +1457,7 @@ static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
 		i = (marker & 0x7c) >> 2; /* Bits 0 and 1 are always 0 */
 		comp = qfactor[i];
 		lumi = (marker & 0x40) ? 1 : 0;
-		chroma = (marker & 0x80) ? 2 : 3;
-		/* printf("marker %02x comp %d lumi %d chroma %d\n", marker, comp, lumi, chroma); */
+		/* printf("marker %02x comp %d lumi %d\n", marker, comp, lumi); */
 
 		/* Note the DC quantization factor is fixed! */
 		qt[0] = pixart_q[lumi][0]; 
@@ -1468,10 +1467,14 @@ static void pixart_decode_MCU_2x1_3planes(struct jdec_private *priv)
 		}
 		build_quantization_table(priv->Q_tables[0], qt);
 
-		qt[0] = pixart_q[chroma][0]; 
-		for (i = 1; i < 64; i++) {
-			j = (pixart_q[chroma][i] * comp + 50) / 100;
-			qt[i] = (j < 255) ? j : 255;
+		/* If bit 7 of the marker is set chrominance uses the
+		   luminance quantization table */
+		if (!(marker & 0x80)) {
+			qt[0] = pixart_q[3][0];
+			for (i = 1; i < 64; i++) {
+				j = (pixart_q[3][i] * comp + 50) / 100;
+				qt[i] = (j < 255) ? j : 255;
+			}
 		}
 		build_quantization_table(priv->Q_tables[1], qt);
 
