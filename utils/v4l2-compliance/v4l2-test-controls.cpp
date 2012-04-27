@@ -361,8 +361,11 @@ int testSimpleControls(struct node *node)
 		if (iter->flags & V4L2_CTRL_FLAG_READ_ONLY) {
 			if (ret != EACCES)
 				return fail("s_ctrl did not check the read-only flag\n");
+		} else if (ret == EIO) {
+			warn("s_ctrl returned EIO\n");
+			ret = 0;
 		} else if (ret) {
-			return fail("s_ctrl returned an error\n");
+			return fail("s_ctrl returned an error (%d)\n", ret);
 		}
 		if (ret)
 			continue;
@@ -543,8 +546,12 @@ int testExtendedControls(struct node *node)
 				ctrl.size = iter->maximum + 1;
 				ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
 			}
+			if (ret == EIO) {
+				warn("g_ext_ctrls returned EIO\n");
+				ret = 0;
+			}
 			if (ret)
-				return fail("g_ext_ctrls returned an error\n");
+				return fail("g_ext_ctrls returned an error (%d)\n", ret);
 			if (checkExtendedCtrl(ctrl, *iter))
 				return fail("invalid control %08x\n", iter->id);
 		}
@@ -568,6 +575,10 @@ int testExtendedControls(struct node *node)
 			if (ctrls.error_idx != ctrls.count)
 				return fail("invalid error index\n");
 		} else {
+			if (ret == EIO) {
+				warn("s_ext_ctrls returned EIO\n");
+				ret = 0;
+			}
 			if (ret)
 				return fail("s_ext_ctrls returned an error\n");
 		
@@ -629,6 +640,10 @@ int testExtendedControls(struct node *node)
 	if (ret)
 		return fail("could not try all controls\n");
 	ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+	if (ret == EIO) {
+		warn("s_ext_ctrls returned EIO\n");
+		ret = 0;
+	}
 	if (ret)
 		return fail("could not set all controls\n");
 
@@ -648,6 +663,10 @@ int testExtendedControls(struct node *node)
 	if (multiple_classes && ctrls.error_idx >= ctrls.count)
 		return fail("error_idx should be < count\n");
 	ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+	if (ret == EIO) {
+		warn("s_ext_ctrls returned EIO\n");
+		ret = 0;
+	}
 	if (ret && !multiple_classes)
 		return fail("could not set all controls of a specific class\n");
 	if (ret != EINVAL && multiple_classes)
