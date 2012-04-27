@@ -258,6 +258,7 @@ static int testEnumFormatsType(struct node *node, enum v4l2_buf_type type)
 
 int testEnumFormats(struct node *node)
 {
+	bool supported = false;
 	int type;
 	int ret;
 
@@ -265,6 +266,8 @@ int testEnumFormats(struct node *node)
 		ret = testEnumFormatsType(node, (enum v4l2_buf_type)type);
 		if (ret && ret != ENOTTY)
 			return ret;
+		if (!ret)
+			supported = true;
 		switch (type) {
 		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
@@ -288,8 +291,10 @@ int testEnumFormats(struct node *node)
 	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_PRIVATE);
 	if (ret && ret != ENOTTY)
 		return ret;
-	if (!ret)
+	if (!ret) {
+		supported = true;
 		warn("Buffer type PRIVATE allowed!\n");
+	}
 		
 	ret = testEnumFrameSizes(node, 0x20202020);
 	if (ret != ENOTTY)
@@ -297,7 +302,7 @@ int testEnumFormats(struct node *node)
 	ret = testEnumFrameIntervals(node, 0x20202020, 640, 480, false);
 	if (ret != ENOTTY)
 		return fail("Accepted frameinterval for invalid format\n");
-	return 0;
+	return supported ? 0 : ENOTTY;
 }
 
 int testFBuf(struct node *node)
@@ -464,6 +469,7 @@ static int testFormatsType(struct node *node, enum v4l2_buf_type type)
 
 int testFormats(struct node *node)
 {
+	bool supported = false;
 	int type;
 	int ret;
 
@@ -472,6 +478,8 @@ int testFormats(struct node *node)
 
 		if (ret && ret != ENOTTY)
 			return ret;
+		if (!ret)
+			supported = true;
 		if (ret && (node->caps & buftype2cap[type]))
 			return fail("%s cap set, but no %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
@@ -483,9 +491,11 @@ int testFormats(struct node *node)
 	ret = testFormatsType(node, V4L2_BUF_TYPE_PRIVATE);
 	if (ret && ret != ENOTTY)
 		return ret;
-	if (!ret)
+	if (!ret) {
+		supported = true;
 		warn("Buffer type PRIVATE allowed!\n");
-	return 0;
+	}
+	return supported ? 0 : ENOTTY;
 }
 
 static int testSlicedVBICapType(struct node *node, enum v4l2_buf_type type)
