@@ -71,7 +71,7 @@ struct node {
 	do {							\
 		warnings++;					\
 		if (verbose)					\
- 			printf("\t\twarn: " fmt, ##args);	\
+ 			printf("\t\twarn: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
 	} while (0)
 
 #define fail(fmt, args...) 						\
