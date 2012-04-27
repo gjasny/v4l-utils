@@ -565,6 +565,7 @@ int main(int argc, char **argv)
 	printf("Input ioctls:\n");
 	printf("\ttest VIDIOC_G/S_TUNER: %s\n", ok(testTuner(&node)));
 	printf("\ttest VIDIOC_G/S_FREQUENCY: %s\n", ok(testTunerFreq(&node)));
+	printf("\ttest VIDIOC_S_HW_FREQ_SEEK: %s\n", ok(testTunerHwSeek(&node)));
 	printf("\ttest VIDIOC_ENUMAUDIO: %s\n", ok(testEnumInputAudio(&node)));
 	printf("\ttest VIDIOC_G/S/ENUMINPUT: %s\n", ok(testInput(&node)));
 	printf("\ttest VIDIOC_G/S_AUDIO: %s\n", ok(testInputAudio(&node)));
@@ -618,7 +619,6 @@ int main(int argc, char **argv)
 	   VIDIOC_S/TRY_FMT
 	   VIDIOC_G/S_PARM
 	   VIDIOC_G/S_JPEGCOMP
-	   VIDIOC_S_HW_FREQ_SEEK
 	   VIDIOC_(TRY_)ENCODER_CMD
 	   VIDIOC_G_ENC_INDEX
 	   VIDIOC_REQBUFS/QBUF/DQBUF/QUERYBUF

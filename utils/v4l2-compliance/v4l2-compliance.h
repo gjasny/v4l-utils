@@ -136,6 +136,7 @@ int testLogStatus(struct node *node);
 // Input ioctl tests
 int testTuner(struct node *node);
 int testTunerFreq(struct node *node);
+int testTunerHwSeek(struct node *node);
 int testEnumInputAudio(struct node *node);
 int testInput(struct node *node);
 int testInputAudio(struct node *node);
