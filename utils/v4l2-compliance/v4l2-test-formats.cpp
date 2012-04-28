@@ -375,8 +375,6 @@ static int testFormatsType(struct node *node, enum v4l2_buf_type type)
 	if (ret)
 		return fail("expected EINVAL, but got %d when getting format for buftype %d\n", ret, type);
 	fail_on_test(fmt.type != type);
-	if (ret)
-		return 0;
 	
 	switch (type) {
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
@@ -541,4 +539,115 @@ int testSlicedVBICap(struct node *node)
 	if (ret)
 		return ret;
 	return testSlicedVBICapType(node, V4L2_BUF_TYPE_VIDEO_CAPTURE);
+}
+
+static int testParmStruct(struct node *node, struct v4l2_streamparm &parm)
+{
+	struct v4l2_captureparm *cap = &parm.parm.capture;
+	struct v4l2_outputparm *out = &parm.parm.output;
+	int ret;
+
+	switch (parm.type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+		ret = check_0(cap->reserved, sizeof(cap->reserved));
+		if (ret)
+			return fail("reserved not zeroed\n");
+		fail_on_test(cap->readbuffers > VIDEO_MAX_FRAME);
+		if (!(node->caps & V4L2_CAP_READWRITE))
+			fail_on_test(cap->readbuffers);
+		else if (node->caps & V4L2_CAP_STREAMING)
+			fail_on_test(!cap->readbuffers);
+		fail_on_test(cap->capability & ~V4L2_CAP_TIMEPERFRAME);
+		fail_on_test(cap->capturemode & ~V4L2_MODE_HIGHQUALITY);
+		if (cap->capturemode & V4L2_MODE_HIGHQUALITY)
+			warn("V4L2_MODE_HIGHQUALITY is poorly defined\n");
+		fail_on_test(cap->extendedmode);
+		if (cap->capability & V4L2_CAP_TIMEPERFRAME)
+			fail_on_test(cap->timeperframe.numerator == 0 || cap->timeperframe.denominator == 0);
+		break;
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		ret = check_0(out->reserved, sizeof(out->reserved));
+		if (ret)
+			return fail("reserved not zeroed\n");
+		fail_on_test(out->writebuffers > VIDEO_MAX_FRAME);
+		if (!(node->caps & V4L2_CAP_READWRITE))
+			fail_on_test(out->writebuffers);
+		else if (node->caps & V4L2_CAP_STREAMING)
+			fail_on_test(!out->writebuffers);
+		fail_on_test(out->capability & ~V4L2_CAP_TIMEPERFRAME);
+		fail_on_test(out->outputmode);
+		fail_on_test(out->extendedmode);
+		if (out->capability & V4L2_CAP_TIMEPERFRAME)
+			fail_on_test(out->timeperframe.numerator == 0 || out->timeperframe.denominator == 0);
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+static int testParmType(struct node *node, enum v4l2_buf_type type)
+{
+	struct v4l2_streamparm parm;
+	int ret;
+
+	memset(&parm, 0, sizeof(parm));
+	parm.type = type;
+	ret = doioctl(node, VIDIOC_G_PARM, &parm);
+	if (ret == ENOTTY)
+		return ret;
+	if (ret == EINVAL)
+		return ENOTTY;
+	if (ret)
+		return fail("expected EINVAL, but got %d when getting parms for buftype %d\n", ret, type);
+	fail_on_test(parm.type != type);
+	ret = testParmStruct(node, parm);
+	if (ret)
+		return ret;
+
+	memset(&parm, 0, sizeof(parm));
+	parm.type = type;
+	ret = doioctl(node, VIDIOC_S_PARM, &parm);
+	if (ret == ENOTTY)
+		return 0;
+	if (ret)
+		return fail("got error %d when setting parms for buftype %d\n", ret, type);
+	fail_on_test(parm.type != type);
+	return testParmStruct(node, parm);
+}
+
+int testParm(struct node *node)
+{
+	bool supported = false;
+	int type;
+	int ret;
+
+	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
+		ret = testParmType(node, (enum v4l2_buf_type)type);
+
+		if (ret && ret != ENOTTY)
+			return ret;
+		if (!ret) {
+			supported = true;
+			if (type != V4L2_BUF_TYPE_VIDEO_CAPTURE &&
+			    type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+			    type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
+			    type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+				return fail("G/S_PARM is only allowed for video capture/output\n");
+			if (!(node->caps & buftype2cap[type]))
+				return fail("%s cap not set, but G/S_PARM worked\n",
+						buftype2s(type).c_str());
+		}
+	}
+
+	ret = testParmType(node, V4L2_BUF_TYPE_PRIVATE);
+	if (ret && ret != ENOTTY)
+		return ret;
+	if (!ret) {
+		supported = true;
+		warn("Buffer type PRIVATE allowed!\n");
+	}
+	return supported ? 0 : ENOTTY;
 }

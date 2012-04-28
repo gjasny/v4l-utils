@@ -162,6 +162,7 @@ int testCustomTimings(struct node *node);
 
 // Format ioctl tests
 int testEnumFormats(struct node *node);
+int testParm(struct node *node);
 int testFBuf(struct node *node);
 int testFormats(struct node *node);
 int testSlicedVBICap(struct node *node);
