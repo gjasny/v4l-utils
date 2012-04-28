@@ -717,3 +717,42 @@ int testControlEvents(struct node *node)
 	}
 	return 0;
 }
+
+int testJpegComp(struct node *node)
+{
+	struct v4l2_jpegcompression jc;
+	bool have_jpegcomp = false;
+	const unsigned all_markers =
+		V4L2_JPEG_MARKER_DHT | V4L2_JPEG_MARKER_DQT |
+		V4L2_JPEG_MARKER_DRI | V4L2_JPEG_MARKER_COM |
+		V4L2_JPEG_MARKER_APP;
+	int ret;
+	
+	memset(&jc, 0, sizeof(jc));
+	ret = doioctl(node, VIDIOC_G_JPEGCOMP, &jc);
+	if (ret != ENOTTY) {
+		warn("The VIDIOC_G_JPEGCOMP ioctl is deprecated!\n");
+		if (ret)
+			return fail("VIDIOC_G_JPEGCOMP gave an error\n");
+		have_jpegcomp = true;
+		if (jc.COM_len < 0 || jc.COM_len > (int)sizeof(jc.COM_data))
+			return fail("invalid COM_len value\n");
+		if (jc.APP_len < 0 || jc.APP_len > (int)sizeof(jc.APP_data))
+			return fail("invalid APP_len value\n");
+		if (jc.quality < 0 || jc.quality > 100)
+			warn("weird quality value: %d\n", jc.quality);
+		if (jc.APPn < 0 || jc.APPn > 15)
+			return fail("invalid APPn value (%d)\n", jc.APPn);
+		if (jc.jpeg_markers & ~all_markers)
+			return fail("invalid markers (%x)\n", jc.jpeg_markers);
+	}
+	ret = doioctl(node, VIDIOC_S_JPEGCOMP, &jc);
+	if (ret != ENOTTY) {
+		warn("The VIDIOC_S_JPEGCOMP ioctl is deprecated!\n");
+		if (ret && ret != EINVAL)
+			return fail("VIDIOC_S_JPEGCOMP gave an error\n");
+		have_jpegcomp = true;
+	}
+
+	return have_jpegcomp ? ret : ENOTTY;
+}

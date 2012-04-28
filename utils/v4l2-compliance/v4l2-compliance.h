@@ -153,6 +153,7 @@ int testQueryControls(struct node *node);
 int testSimpleControls(struct node *node);
 int testExtendedControls(struct node *node);
 int testControlEvents(struct node *node);
+int testJpegComp(struct node *node);
 
 // I/O configuration ioctl tests
 int testStd(struct node *node);
