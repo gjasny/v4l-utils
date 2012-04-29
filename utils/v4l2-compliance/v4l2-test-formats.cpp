@@ -320,7 +320,7 @@ int testFBuf(struct node *node)
 	fail_on_test(ret == ENOTTY && (node->caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
 	if (ret == ENOTTY)
 		return ret;
-	if (ret != EINVAL)
+	if (ret && ret != EINVAL)
 		return fail("expected EINVAL, but got %d when getting framebuffer format\n", ret);
 	node->fbuf_caps = caps = fbuf.capability;
 	flags = fbuf.flags;
