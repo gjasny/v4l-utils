@@ -234,6 +234,7 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 			m_widgetMap[qctrl.id] = spin = new QSpinBox(p);
 			spin->setMinimum(qctrl.minimum);
 			spin->setMaximum(qctrl.maximum);
+			spin->setSingleStep(qctrl.step);
 			addWidget(grid, m_widgetMap[qctrl.id]);
 			connect(m_widgetMap[qctrl.id], SIGNAL(valueChanged(int)),
 				m_sigMapper, SLOT(map()));
