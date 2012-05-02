@@ -444,11 +444,18 @@ void ApplicationWindow::capStart(bool start)
 		__u32 v4l2_pixfmt;
 		QImage::Format qt_pixfmt;
 	} supported_fmts[] = {
-		{ V4L2_PIX_FMT_RGB32, QImage::Format_ARGB32 },
+#if Q_BYTE_ORDER == Q_BIG_ENDIAN
+		{ V4L2_PIX_FMT_RGB32, QImage::Format_RGB32 },
 		{ V4L2_PIX_FMT_RGB24, QImage::Format_RGB888 },
 		{ V4L2_PIX_FMT_RGB565X, QImage::Format_RGB16 },
 		{ V4L2_PIX_FMT_RGB555X, QImage::Format_RGB555 },
+#else
+		{ V4L2_PIX_FMT_BGR32, QImage::Format_RGB32 },
+		{ V4L2_PIX_FMT_RGB24, QImage::Format_RGB888 },
+		{ V4L2_PIX_FMT_RGB565, QImage::Format_RGB16 },
+		{ V4L2_PIX_FMT_RGB555, QImage::Format_RGB555 },
 		{ V4L2_PIX_FMT_RGB444, QImage::Format_RGB444 },
+#endif
 		{ 0, QImage::Format_Invalid }
 	};
 	QImage::Format dstFmt = QImage::Format_RGB888;
