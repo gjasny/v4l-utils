@@ -141,7 +141,7 @@ struct dvb_file *parse_format_oneline(const char *fname,
 			}
 			if (table->size) {
 				for (j = 0; j < table->size; j++)
-					if (!strcasecmp(table->table[j], p))
+					if (!table->table[j] || !strcasecmp(table->table[j], p))
 						break;
 				if (j == table->size) {
 					sprintf(err_msg, "parameter %s invalid: %s",
