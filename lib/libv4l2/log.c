@@ -154,6 +154,8 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 					(int)fmt->fmt.pix.sizeimage);
 			fprintf(v4l2_log_file, "  colorspace: %d, priv: %x\n",
 					(int)fmt->fmt.pix.colorspace, (int)fmt->fmt.pix.priv);
+		} else {
+			 fprintf(v4l2_log_file, "  type: %d\n", (int)fmt->type);
 		}
 		break;
 	}
