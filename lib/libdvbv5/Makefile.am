@@ -14,7 +14,7 @@ libdvbv5_la_SOURCES = \
 #libdvbv5_la_CPPFLAGS = -fvisibility=hidden
 #libdvbv5_la_LDFLAGS = -version-info 0 -lpthread
 
-EXTRA_DIST = gen_dvb_structs.pl
+EXTRA_DIST = README gen_dvb_structs.pl
 
 sync-with-kernel:
 	./gen_dvb_structs.pl $(KERNEL_DIR)/include/
