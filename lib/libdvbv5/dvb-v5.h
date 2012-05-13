@@ -3,7 +3,7 @@
  */
 #ifndef _DVB_V5_CONSTS_H
 #define _DVB_V5_CONSTS_H
-#include "dvb_frontend.h"
+#include "dvb-frontend.h"
 struct fe_caps_name {
 	unsigned  idx;
 	char *name;

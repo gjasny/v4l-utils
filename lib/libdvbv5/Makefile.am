@@ -4,7 +4,7 @@ libdvbv5_la_SOURCES = \
   dvb-demux.c dvb-demux.h \
   dvb-fe.c dvb-fe.h \
   dvb-file.c dvb-file.h \
-  dvb_frontend.h  dvb-v5.h  dvb-v5-std.h \
+  dvb-frontend.h  dvb-v5.h  dvb-v5-std.h \
   dvb-legacy-channel-format.c \
   dvb-zap-format.c \
   descriptors.c descriptors.h \

@@ -58,7 +58,7 @@ dvb-zap-format.c/dvb-legacy-channel-format.c:
 Contains the data structures required in order to read from the legacy
 formats (zap or scan "initial-tuning-data-file").
 
-dvb_frontend.h: DVBv5 frontend API.
+dvb-frontend.h: DVBv5 frontend API.
 
 This is just a copy of the newest linux/dvb/frontend.h header.
 I opted to keep a copy there, in order to allow working with the tools

@@ -25,7 +25,7 @@
 #include "libscan.h"
 #include "descriptors.h"
 #include "parse_string.h"
-#include "dvb_frontend.h"
+#include "dvb-frontend.h"
 
 static char *default_charset = "iso-8859-1";
 static char *output_charset = "utf-8";

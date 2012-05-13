@@ -20,7 +20,7 @@
  * 	http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html
  */
 
-#include "dvb_frontend.h"
+#include "dvb-frontend.h"
 
 const unsigned int sys_dvbt_props[] = {
 	DTV_FREQUENCY,

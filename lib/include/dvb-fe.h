@@ -27,7 +27,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <string.h>
-#include "dvb_frontend.h"
+#include "dvb-frontend.h"
 #include "libsat.h"
 
 #define ARRAY_SIZE(x)	(sizeof(x)/sizeof((x)[0]))

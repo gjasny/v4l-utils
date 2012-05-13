@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #include "libscan.h"
-#include "dvb_frontend.h"
+#include "dvb-frontend.h"
 #include "descriptors.h"
 #include "parse_string.h"
 
