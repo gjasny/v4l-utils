@@ -88,6 +88,10 @@ struct dvb_v5_fe_parms {
 
 /* Open/close methods */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
 				    unsigned verbose, unsigned use_legacy_call);
 void dvb_fe_close(struct dvb_v5_fe_parms *parms);
@@ -149,6 +153,10 @@ int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, const unsigned len,
 		      const unsigned char *buf);
 int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
 		       int timeout);
+
+#ifdef __cplusplus
+}
+#endif
 
 /* Arrays from dvb-v5.h */
 
