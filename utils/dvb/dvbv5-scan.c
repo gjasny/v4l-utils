@@ -138,7 +138,7 @@ static int new_freq_is_needed(struct dvb_entry *entry,
 		for (i = 0; i < entry->n_props; i++) {
 			data = entry->props[i].u.data;
 			if (entry->props[i].cmd == DTV_FREQUENCY) {
-				if (( freq >= data - shift) && (freq <= data + shift))
+				if (( freq >= data - shift) && (freq <= data + shift)) //FIXME: should consideer polarization for DVB-S
 					return 0;
 			}
 		}
@@ -186,6 +186,7 @@ static int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
 {
 	uint32_t shift = 0, bw = 0, symbol_rate, ro;
 	int rolloff = 0;
+        int divisor = 100;
 
 	/* Need to handle only cable/satellite and ATSC standards */
 	switch (parms->current_sys) {
@@ -197,11 +198,13 @@ static int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
 		break;
 	case SYS_DVBS:
 	case SYS_ISDBS:	/* FIXME: not sure if this rollof is right for ISDB-S */
+                divisor = 100000;
 		rolloff = 135;
 		break;
 	case SYS_DVBS2:
 	case SYS_DSS:
 	case SYS_TURBO:
+                divisor = 100000;
 		dvb_fe_retrieve_parm(parms, DTV_ROLLOFF, &ro);
 		switch (ro) {
 		case ROLLOFF_20:
@@ -231,7 +234,7 @@ static int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
 		 * purposes of estimating a max frequency shift here.
 		 */
 		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &symbol_rate);
-		bw = (symbol_rate * rolloff) / 100;
+		bw = (symbol_rate * rolloff) / divisor;
 	}
 	if (!bw)
 		dvb_fe_retrieve_parm(parms, DTV_BANDWIDTH_HZ, &bw);
@@ -261,7 +264,9 @@ static void add_other_freq_entries(struct dvb_file *dvb_file,
 		freq = dvb_desc->nit_table.frequency[i];
 
 		if (new_freq_is_needed(dvb_file->first_entry, NULL, freq, shift))
+                {
 			add_new_freq(dvb_file->first_entry, freq);
+                }
 	}
 }
 
