@@ -13,6 +13,7 @@ AC_CONFIG_FILES([Makefile
 	lib/libv4lconvert/Makefile
 	lib/libv4l2/Makefile
 	lib/libv4l1/Makefile
+	lib/libdvbv5/Makefile
 
 	utils/libv4l2util/Makefile
 	utils/libmedia_dev/Makefile
@@ -78,7 +79,7 @@ AS_IF([test "x$with_jpeg" != xno],
                                       AC_DEFINE([HAVE_JPEG],[1],[whether we use libjpeg])],
                                      [AC_MSG_ERROR(cannot find libjpeg (v6 or later required))])],
                        [AC_MSG_ERROR(cannot find jpeglib.h)])])
-	     
+
 AM_CONDITIONAL([HAVE_JPEG], [$have_jpeg])
 
 PKG_CHECK_MODULES(QT, [QtCore >= 4.4 QtGui >= 4.4], [qt_pkgconfig=true], [qt_pkgconfig=false])

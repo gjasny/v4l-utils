@@ -4,7 +4,8 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = \
 	lib/libv4lconvert \
 	lib/libv4l2 \
-	lib/libv4l1
+	lib/libv4l1 \
+	lib/libdvbv5
 
 if WITH_V4LUTILS
 SUBDIRS += \
