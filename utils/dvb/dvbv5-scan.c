@@ -129,7 +129,9 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 
 static int new_freq_is_needed(struct dvb_entry *entry,
 			      struct dvb_entry *last_entry,
-			      uint32_t freq, int shift)
+			      uint32_t freq,
+			      enum polarization pol,
+			      int shift)
 {
 	int i;
 	uint32_t data;
@@ -137,8 +139,12 @@ static int new_freq_is_needed(struct dvb_entry *entry,
 	for (; entry != last_entry; entry = entry->next) {
 		for (i = 0; i < entry->n_props; i++) {
 			data = entry->props[i].u.data;
+			if (entry->props[i].cmd == DTV_POLARIZATION) {
+				if (data != pol)
+					continue;
+			}
 			if (entry->props[i].cmd == DTV_FREQUENCY) {
-				if (( freq >= data - shift) && (freq <= data + shift)) //FIXME: should consideer polarization for DVB-S
+				if (( freq >= data - shift) && (freq <= data + shift))
 					return 0;
 			}
 		}
@@ -249,27 +255,28 @@ static int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
 }
 
 static void add_other_freq_entries(struct dvb_file *dvb_file,
-				    struct dvb_v5_fe_parms *parms,
+				   struct dvb_v5_fe_parms *parms,
 				   struct dvb_descriptors *dvb_desc)
 {
 	int i;
 	uint32_t freq, shift = 0;
+	enum polarization pol = POLARIZATION_OFF;
 
 	if (!dvb_desc->nit_table.frequency)
 		return;
+
+	pol = dvb_desc->nit_table.pol;
 
 	shift = estimate_freq_shift(parms);
 
 	for (i = 0; i < dvb_desc->nit_table.frequency_len; i++) {
 		freq = dvb_desc->nit_table.frequency[i];
 
-		if (new_freq_is_needed(dvb_file->first_entry, NULL, freq, shift))
-                {
+		if (new_freq_is_needed(dvb_file->first_entry, NULL, freq, pol,
+				       shift))
 			add_new_freq(dvb_file->first_entry, freq);
-                }
 	}
 }
-
 
 static int run_scan(struct arguments *args,
 		    struct dvb_v5_fe_parms *parms)
@@ -376,7 +383,7 @@ static int run_scan(struct arguments *args,
 			continue;
 		shift = estimate_freq_shift(parms);
 		if (!new_freq_is_needed(dvb_file->first_entry, entry,
-					freq, shift))
+					freq, dvb_desc->nit_table.pol, shift))
 			continue;
 
 		rc = dvb_fe_set_parms(parms);
