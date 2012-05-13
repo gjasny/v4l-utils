@@ -200,12 +200,12 @@ void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dest,
 }
 
 void v4lconvert_yuyv_to_bgr24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+		int width, int height, int stride)
 {
 	int j;
 
 	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+		for (j = 0; j + 1 < width; j += 2) {
 			int u = src[1];
 			int v = src[3];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
@@ -222,16 +222,17 @@ void v4lconvert_yuyv_to_bgr24(const unsigned char *src, unsigned char *dest,
 			*dest++ = CLIP(src[2] + v1);
 			src += 4;
 		}
+		src += stride - width * 2;
 	}
 }
 
 void v4lconvert_yuyv_to_rgb24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+		int width, int height, int stride)
 {
 	int j;
 
 	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+		for (j = 0; j + 1 < width; j += 2) {
 			int u = src[1];
 			int v = src[3];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
@@ -248,11 +249,12 @@ void v4lconvert_yuyv_to_rgb24(const unsigned char *src, unsigned char *dest,
 			*dest++ = CLIP(src[2] + u1);
 			src += 4;
 		}
+		src += stride - (width * 2);
 	}
 }
 
 void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dest,
-		int width, int height, int yvu)
+		int width, int height, int stride, int yvu)
 {
 	int i, j;
 	const unsigned char *src1;
@@ -261,16 +263,17 @@ void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dest,
 	/* copy the Y values */
 	src1 = src;
 	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j += 2) {
+		for (j = 0; j + 1 < width; j += 2) {
 			*dest++ = src1[0];
 			*dest++ = src1[2];
 			src1 += 4;
 		}
+		src1 += stride - width * 2;
 	}
 
 	/* copy the U and V values */
 	src++;				/* point to V */
-	src1 = src + width * 2;		/* next line */
+	src1 = src + stride;		/* next line */
 	if (yvu) {
 		vdest = dest;
 		udest = dest + width * height / 4;
@@ -279,24 +282,25 @@ void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dest,
 		vdest = dest + width * height / 4;
 	}
 	for (i = 0; i < height; i += 2) {
-		for (j = 0; j < width; j += 2) {
+		for (j = 0; j + 1 < width; j += 2) {
 			*udest++ = ((int) src[0] + src1[0]) / 2;	/* U */
 			*vdest++ = ((int) src[2] + src1[2]) / 2;	/* V */
 			src += 4;
 			src1 += 4;
 		}
+		src1 += stride - width * 2;
 		src = src1;
-		src1 += width * 2;
+		src1 += stride;
 	}
 }
 
 void v4lconvert_yvyu_to_bgr24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+		int width, int height, int stride)
 {
 	int j;
 
 	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+		for (j = 0; j + 1 < width; j += 2) {
 			int u = src[3];
 			int v = src[1];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
@@ -313,16 +317,17 @@ void v4lconvert_yvyu_to_bgr24(const unsigned char *src, unsigned char *dest,
 			*dest++ = CLIP(src[2] + v1);
 			src += 4;
 		}
+		src += stride - (width * 2);
 	}
 }
 
 void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+		int width, int height, int stride)
 {
 	int j;
 
 	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+		for (j = 0; j + 1 < width; j += 2) {
 			int u = src[3];
 			int v = src[1];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
@@ -339,16 +344,17 @@ void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dest,
 			*dest++ = CLIP(src[2] + u1);
 			src += 4;
 		}
+		src += stride - (width * 2);
 	}
 }
 
 void v4lconvert_uyvy_to_bgr24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+		int width, int height, int stride)
 {
 	int j;
 
 	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+		for (j = 0; j + 1 < width; j += 2) {
 			int u = src[0];
 			int v = src[2];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
@@ -365,16 +371,17 @@ void v4lconvert_uyvy_to_bgr24(const unsigned char *src, unsigned char *dest,
 			*dest++ = CLIP(src[3] + v1);
 			src += 4;
 		}
+		src += stride - width * 2;
 	}
 }
 
 void v4lconvert_uyvy_to_rgb24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+		int width, int height, int stride)
 {
 	int j;
 
 	while (--height >= 0) {
-		for (j = 0; j < width; j += 2) {
+		for (j = 0; j + 1 < width; j += 2) {
 			int u = src[0];
 			int v = src[2];
 			int u1 = (((u - 128) << 7) +  (u - 128)) >> 6;
@@ -391,11 +398,12 @@ void v4lconvert_uyvy_to_rgb24(const unsigned char *src, unsigned char *dest,
 			*dest++ = CLIP(src[3] + u1);
 			src += 4;
 		}
+		src += stride - width * 2;
 	}
 }
 
 void v4lconvert_uyvy_to_yuv420(const unsigned char *src, unsigned char *dest,
-		int width, int height, int yvu)
+		int width, int height, int stride, int yvu)
 {
 	int i, j;
 	const unsigned char *src1;
@@ -404,15 +412,16 @@ void v4lconvert_uyvy_to_yuv420(const unsigned char *src, unsigned char *dest,
 	/* copy the Y values */
 	src1 = src;
 	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j += 2) {
+		for (j = 0; j + 1 < width; j += 2) {
 			*dest++ = src1[1];
 			*dest++ = src1[3];
 			src1 += 4;
 		}
+		src1 += stride - width * 2;
 	}
 
 	/* copy the U and V values */
-	src1 = src + width * 2;		/* next line */
+	src1 = src + stride;		/* next line */
 	if (yvu) {
 		vdest = dest;
 		udest = dest + width * height / 4;
@@ -421,14 +430,15 @@ void v4lconvert_uyvy_to_yuv420(const unsigned char *src, unsigned char *dest,
 		vdest = dest + width * height / 4;
 	}
 	for (i = 0; i < height; i += 2) {
-		for (j = 0; j < width; j += 2) {
+		for (j = 0; j + 1 < width; j += 2) {
 			*udest++ = ((int) src[0] + src1[0]) / 2;	/* U */
 			*vdest++ = ((int) src[2] + src1[2]) / 2;	/* V */
 			src += 4;
 			src1 += 4;
 		}
+		src1 += stride - width * 2;
 		src = src1;
-		src1 += width * 2;
+		src1 += stride;
 	}
 }
 

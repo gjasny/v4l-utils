@@ -116,28 +116,28 @@ void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dst,
 		int width, int height, int yvu);
 
 void v4lconvert_yuyv_to_rgb24(const unsigned char *src, unsigned char *dst,
-		int width, int height);
+		int width, int height, int stride);
 
 void v4lconvert_yuyv_to_bgr24(const unsigned char *src, unsigned char *dst,
-		int width, int height);
+		int width, int height, int stride);
 
 void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dst,
-		int width, int height, int yvu);
+		int width, int height, int stride, int yvu);
 
 void v4lconvert_yvyu_to_rgb24(const unsigned char *src, unsigned char *dst,
-		int width, int height);
+		int width, int height, int stride);
 
 void v4lconvert_yvyu_to_bgr24(const unsigned char *src, unsigned char *dst,
-		int width, int height);
+		int width, int height, int stride);
 
 void v4lconvert_uyvy_to_rgb24(const unsigned char *src, unsigned char *dst,
-		int width, int height);
+		int width, int height, int stride);
 
 void v4lconvert_uyvy_to_bgr24(const unsigned char *src, unsigned char *dst,
-		int width, int height);
+		int width, int height, int stride);
 
 void v4lconvert_uyvy_to_yuv420(const unsigned char *src, unsigned char *dst,
-		int width, int height, int yvu);
+		int width, int height, int stride, int yvu);
 
 void v4lconvert_swap_rgb(const unsigned char *src, unsigned char *dst,
 		int width, int height);

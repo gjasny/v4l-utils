@@ -1097,16 +1097,16 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_YUYV:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_yuyv_to_rgb24(src, dest, width, height);
+			v4lconvert_yuyv_to_rgb24(src, dest, width, height, bytesperline);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_yuyv_to_bgr24(src, dest, width, height);
+			v4lconvert_yuyv_to_bgr24(src, dest, width, height, bytesperline);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_yuyv_to_yuv420(src, dest, width, height, 0);
+			v4lconvert_yuyv_to_yuv420(src, dest, width, height, bytesperline, 0);
 			break;
 		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_yuyv_to_yuv420(src, dest, width, height, 1);
+			v4lconvert_yuyv_to_yuv420(src, dest, width, height, bytesperline, 1);
 			break;
 		}
 		if (src_size < (width * height * 2)) {
@@ -1119,18 +1119,18 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_YVYU:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_yvyu_to_rgb24(src, dest, width, height);
+			v4lconvert_yvyu_to_rgb24(src, dest, width, height, bytesperline);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_yvyu_to_bgr24(src, dest, width, height);
+			v4lconvert_yvyu_to_bgr24(src, dest, width, height, bytesperline);
 			break;
 		case V4L2_PIX_FMT_YUV420:
 			/* Note we use yuyv_to_yuv420 not v4lconvert_yvyu_to_yuv420,
 			   with the last argument reversed to make it have as we want */
-			v4lconvert_yuyv_to_yuv420(src, dest, width, height, 1);
+			v4lconvert_yuyv_to_yuv420(src, dest, width, height, bytesperline, 1);
 			break;
 		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_yuyv_to_yuv420(src, dest, width, height, 0);
+			v4lconvert_yuyv_to_yuv420(src, dest, width, height, bytesperline, 0);
 			break;
 		}
 		if (src_size < (width * height * 2)) {
@@ -1143,16 +1143,16 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_UYVY:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_uyvy_to_rgb24(src, dest, width, height);
+			v4lconvert_uyvy_to_rgb24(src, dest, width, height, bytesperline);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_uyvy_to_bgr24(src, dest, width, height);
+			v4lconvert_uyvy_to_bgr24(src, dest, width, height, bytesperline);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_uyvy_to_yuv420(src, dest, width, height, 0);
+			v4lconvert_uyvy_to_yuv420(src, dest, width, height, bytesperline, 0);
 			break;
 		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_uyvy_to_yuv420(src, dest, width, height, 1);
+			v4lconvert_uyvy_to_yuv420(src, dest, width, height, bytesperline, 1);
 			break;
 		}
 		if (src_size < (width * height * 2)) {
