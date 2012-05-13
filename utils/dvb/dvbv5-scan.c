@@ -548,9 +548,9 @@ int main(int argc, char **argv)
 	parms = dvb_fe_open(args.adapter, args.frontend, verbose, 0);
 	if (!parms)
 		return -1;
-	if (lnb)
+	if (lnb >= 0)
 		parms->lnb = get_lnb(lnb);
-	if (args.sat_number > 0)
+	if (args.sat_number >= 0)
 		parms->sat_number = args.sat_number % 3;
 	parms->diseqc_wait = args.diseqc_wait;
 	parms->freq_bpf = args.freq_bpf;
