@@ -20,6 +20,7 @@
  * 	http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html
  */
 
+#include <stddef.h>
 #include "dvb_frontend.h"
 
 const unsigned int sys_dvbt_props[] = {
