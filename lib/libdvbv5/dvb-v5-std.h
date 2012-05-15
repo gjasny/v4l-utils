@@ -19,7 +19,10 @@
  * Per-delivery system properties, according with the specs:
  * 	http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html
  */
+#ifndef _DVB_V5_STD_H
+#define _DVB_V5_STD_H
 
+#include <stddef.h>
 #include "dvb-frontend.h"
 
 const unsigned int sys_dvbt_props[] = {
@@ -185,3 +188,6 @@ const void *dvbv5_attr_names[] = {
 	[DTV_ROLLOFF]			= fe_rolloff_name,
 	[DTV_DELIVERY_SYSTEM]		= delivery_system_name,
 };
+
+#endif
+

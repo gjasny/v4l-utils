@@ -17,7 +17,8 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  *
  */
-
+#ifndef _DVB_FILE_H
+#define _DVB_FILE_H
 
 #include "dvb-fe.h"
 
@@ -152,3 +153,5 @@ int write_file_format(const char *fname,
 		      struct dvb_file *dvb_file,
 		      uint32_t delsys,
 		      enum file_formats format);
+
+#endif

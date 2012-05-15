@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
+#ifndef _LIBSCAN_H
+#define _LIBSCAN_H
 
 #include <stdint.h>
 #include <linux/dvb/dmx.h>
@@ -140,3 +142,5 @@ struct dvb_descriptors *get_dvb_ts_tables(int dmx_fd,
 					  unsigned timeout_multiply,
 					  int verbose);
 void free_dvb_ts_tables(struct dvb_descriptors *dvb_desc);
+
+#endif

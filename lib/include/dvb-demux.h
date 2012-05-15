@@ -26,7 +26,11 @@
  *	Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
  *
  */
+#ifndef _DVB_DEMUX_H
+#define _DVB_DEMUX_H
 
 int set_pesfilter(int dmxfd, int pid, int pes_type, int dvr);
 
 int get_pmt_pid(char *dmxdev, int sid);
+
+#endif

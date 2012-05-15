@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
+#ifndef _LIBSAT_H
+#define _LIBSAT_H
 
 enum polarization {
 	POLARIZATION_OFF	= 0,
@@ -48,3 +50,5 @@ void print_all_lnb(void);
 struct dvb_satellite_lnb *get_lnb(int i);
 int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms);
 int dvb_satellite_get_parms(struct dvb_v5_fe_parms *parms);
+
+#endif

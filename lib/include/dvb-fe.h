@@ -17,6 +17,8 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  *
  */
+#ifndef _DVB_FE_H
+#define _DVB_FE_H
 
 #include <stdio.h>
 #include <errno.h>
@@ -164,3 +166,5 @@ extern const unsigned fe_bandwidth_name[8];
 extern const char *dvb_v5_name[46];
 extern const void *dvbv5_attr_names[];
 extern const char *delivery_system_name[20];
+
+#endif
