@@ -25,7 +25,7 @@
 #include "dvb-fe.h"
 #include "dvb-v5-std.h"
 
-struct dvbsat_lnb lnb[] = {
+struct dvb_sat_lnb lnb[] = {
 	{
 		.name = "Europe",
 		.alias = "UNIVERSAL",
@@ -83,7 +83,7 @@ struct dvbsat_lnb lnb[] = {
 	},
 };
 
-int search_lnb(char *name)
+int dvb_sat_search_lnb(const char *name)
 {
 	int i = 0;
 
@@ -131,7 +131,7 @@ void print_all_lnb(void)
 	}
 }
 
-struct dvbsat_lnb *get_lnb(int i)
+struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
 {
 	if (i >= ARRAY_SIZE(lnb))
 		return NULL;
@@ -213,10 +213,10 @@ static void dvbsat_diseqc_prep_frame_addr(struct diseqc_cmd *cmd,
 	cmd->address = diseqc_addr[type];
 }
 
-struct dvb_v5_fe_parms *parms; // legacy code, used for parms->fd, FIXME anyway
+//struct dvb_v5_fe_parms *parms; // legacy code, used for parms->fd, FIXME anyway
 
 /* Inputs are numbered from 1 to 16, according with the spec */
-static int dvbsat_diseqc_write_to_port_group(struct diseqc_cmd *cmd,
+static int dvbsat_diseqc_write_to_port_group(struct dvb_v5_fe_parms *parms, struct diseqc_cmd *cmd,
 					     int high_band,
 					     int pol_v,
 					     int sat_number)
@@ -238,7 +238,7 @@ static int dvbsat_diseqc_write_to_port_group(struct diseqc_cmd *cmd,
 	return dvb_fe_diseqc_cmd(parms, cmd->len, cmd->msg);
 }
 
-static int dvbsat_scr_odu_channel_change(struct diseqc_cmd *cmd,
+static int dvbsat_scr_odu_channel_change(struct dvb_v5_fe_parms *parms, struct diseqc_cmd *cmd,
 					 int high_band,
 					 int pol_v,
 					 int sat_number,
@@ -320,10 +320,10 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 	usleep(15 * 1000);
 
 	if (!t)
-		rc = dvbsat_diseqc_write_to_port_group(&cmd, high_band,
+		rc = dvbsat_diseqc_write_to_port_group(parms, &cmd, high_band,
 						       pol_v, sat_number);
 	else
-		rc = dvbsat_scr_odu_channel_change(&cmd, high_band,
+		rc = dvbsat_scr_odu_channel_change(parms, &cmd, high_band,
 						   pol_v, sat_number, t);
 
 	if (rc)
@@ -345,9 +345,9 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
  */
 
 
-int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms)
+int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
 {
-	struct dvbsat_lnb *lnb = parms->lnb;
+	struct dvb_sat_lnb *lnb = parms->lnb;
         enum dvb_sat_polarization pol;
         dvb_fe_retrieve_parm(parms, DTV_POLARIZATION,& pol);
 	uint32_t freq;
@@ -402,7 +402,7 @@ ret:
 	return rc;
 }
 
-int dvb_satellite_get_parms(struct dvb_v5_fe_parms *parms)
+int dvb_sat_get_parms(struct dvb_v5_fe_parms *parms)
 {
 	uint32_t freq = 0;
 

@@ -476,7 +476,7 @@ int main(int argc, char **argv)
 	}
 
 	if (args.lnb_name) {
-		lnb = search_lnb(args.lnb_name);
+		lnb = dvb_sat_search_lnb(args.lnb_name);
 		if (lnb < 0) {
 			printf("Please select one of the LNBf's below:\n");
 			print_all_lnb();
@@ -511,7 +511,7 @@ int main(int argc, char **argv)
 	if (!parms)
 		return -1;
 	if (lnb)
-		parms->lnb = get_lnb(lnb);
+		parms->lnb = dvb_sat_get_lnb(lnb);
 	if (args.sat_number > 0)
 		parms->sat_number = args.sat_number % 3;
 	parms->diseqc_wait = args.diseqc_wait;

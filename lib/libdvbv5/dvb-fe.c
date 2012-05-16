@@ -517,7 +517,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 ret:
 	/* For satellite, need to recover from LNBf IF frequency */
 	if (is_satellite(parms->current_sys))
-		return dvb_satellite_get_parms(parms);
+		return dvb_sat_get_parms(parms);
 
 	return 0;
 }
@@ -535,7 +535,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 
 	if (is_satellite(parms->current_sys)) {
 		dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
-		dvb_satellite_set_parms(parms);
+		dvb_sat_set_parms(parms);
 	}
 
 	if (!parms->legacy_fe) {

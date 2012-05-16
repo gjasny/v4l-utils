@@ -76,7 +76,7 @@ struct dvb_v5_fe_parms {
 	struct dvb_v5_stats		stats;
 
 	/* Satellite specific stuff, specified by the library client */
-	struct dvbsat_lnb       	*lnb;
+	struct dvb_sat_lnb       	*lnb;
 	int				sat_number;
 	unsigned			freq_bpf;
 

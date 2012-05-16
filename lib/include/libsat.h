@@ -25,7 +25,7 @@ struct dvbsat_freqrange {
 	unsigned low, high;
 };
 
-struct dvbsat_lnb {
+struct dvb_sat_lnb {
 	char *name;
 	char *alias;
 	unsigned lowfreq, highfreq;
@@ -44,12 +44,12 @@ extern "C" {
 #endif
 
 /* From libsat.c */
-int search_lnb(char *name);
+int dvb_sat_search_lnb(const char *name);
 int print_lnb(int i);
 void print_all_lnb(void);
-struct dvbsat_lnb *get_lnb(int i);
-int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms);
-int dvb_satellite_get_parms(struct dvb_v5_fe_parms *parms);
+struct dvb_sat_lnb *dvb_sat_get_lnb(int i);
+int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms);
+int dvb_sat_get_parms(struct dvb_v5_fe_parms *parms);
 
 #ifdef __cplusplus
 }
