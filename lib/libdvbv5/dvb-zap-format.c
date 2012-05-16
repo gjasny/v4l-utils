@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "dvb-file.h"
+#include "dvb-v5-std.h"
 
 /*
  * Standard channel.conf format for DVB-T, DVB-C, DVB-S and ATSC

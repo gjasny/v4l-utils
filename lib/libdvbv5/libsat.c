@@ -23,6 +23,7 @@
 #include <unistd.h>
 
 #include "dvb-fe.h"
+#include "dvb-v5-std.h"
 
 struct dvbsat_lnb lnb[] = {
 	{
@@ -271,7 +272,8 @@ static int dvbsat_scr_odu_channel_change(struct diseqc_cmd *cmd,
 static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 {
 	int rc;
-        enum dvbsat_polarization pol = parms->pol;
+        enum dvb_sat_polarization pol;
+        dvb_fe_retrieve_parm(parms, DTV_POLARIZATION,& pol);
 	int pol_v = (pol == POLARIZATION_V) || (pol == POLARIZATION_R);
 	int high_band = parms->high_band;
 	int sat_number = parms->sat_number;
@@ -346,7 +348,8 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms)
 {
 	struct dvbsat_lnb *lnb = parms->lnb;
-        enum dvbsat_polarization pol = parms->pol;
+        enum dvb_sat_polarization pol;
+        dvb_fe_retrieve_parm(parms, DTV_POLARIZATION,& pol);
 	uint32_t freq;
 	uint16_t t = 0;
 	uint32_t voltage = SEC_VOLTAGE_13;

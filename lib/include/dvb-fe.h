@@ -81,7 +81,7 @@ struct dvb_v5_fe_parms {
 	unsigned			freq_bpf;
 
 	/* Satellite specific stuff, used internally */
-	enum dvbsat_polarization        pol;
+	//enum dvb_sat_polarization       pol;
 	int				high_band;
 	unsigned			diseqc_wait;
 	unsigned			freq_offset;
@@ -164,7 +164,7 @@ int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
 
 extern const unsigned fe_bandwidth_name[8];
 extern const char *dvb_v5_name[46];
-extern const void *dvbv5_attr_names[];
+extern const void *dvb_v5_attr_names[];
 extern const char *delivery_system_name[20];
 
 #endif

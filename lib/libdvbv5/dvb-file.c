@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include "dvb-file.h"
+#include "dvb-v5-std.h"
 #include "libscan.h"
 
 static const char *parm_name(const struct parse_table *table)
@@ -150,12 +151,12 @@ struct dvb_file *parse_format_oneline(const char *fname,
 				}
 				if (table->prop == DTV_BANDWIDTH_HZ)
 					j = fe_bandwidth_name[j];
-				if (table->prop == DTV_POLARIZATION) {
-					entry->pol = j;
-				} else {
+				/*if (table->prop == DTV_POLARIZATION) {*/
+					/*entry->pol = j;*/
+				/*} else {*/
 					entry->props[entry->n_props].cmd = table->prop;
 					entry->props[entry->n_props++].u.data = j;
-				}
+				/*}*/
 			} else {
 				long v = atol(p);
 				if (table->mult_factor)
@@ -369,13 +370,6 @@ error:
 }
 
 
-static const char *pol_name[] = {
-	[POLARIZATION_H] = "HORIZONTAL",
-	[POLARIZATION_V] = "VERTICAL",
-	[POLARIZATION_L] = "LEFT",
-	[POLARIZATION_R] = "RIGHT",
-};
-
 #define CHANNEL "CHANNEL"
 
 static int fill_entry(struct dvb_entry *entry, char *key, char *value)
@@ -383,18 +377,17 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 	int i, j, len, type = 0;
 	int is_video = 0, is_audio = 0, n_prop;
 	uint16_t *pid = NULL;
-	char *p;
+        char *p;
 
+	/* Handle the DVBv5 DTV_foo properties */
 	for (i = 0; i < ARRAY_SIZE(dvb_v5_name); i++) {
 		if (!dvb_v5_name[i])
 			continue;
 		if (!strcasecmp(key, dvb_v5_name[i]))
 			break;
 	}
-
-	/* Handle the DVBv5 DTV_foo properties */
 	if (i < ARRAY_SIZE(dvb_v5_name)) {
-		const char * const *attr_name = dvbv5_attr_names[i];
+		const char * const *attr_name = dvb_v5_attr_names[i];
 		n_prop = entry->n_props;
 		entry->props[n_prop].cmd = i;
 		if (!attr_name || !*attr_name)
@@ -406,6 +399,31 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 			if (!attr_name[j])
 				return -2;
 			entry->props[n_prop].u.data = j;
+		}
+		entry->n_props++;
+		return 0;
+	}
+
+	/* Handle the DVB extra DTV_foo properties */
+	for (i = 0; i < ARRAY_SIZE(dvb_user_name); i++) {
+		if (!dvb_user_name[i])
+			continue;
+		if (!strcasecmp(key, dvb_user_name[i]))
+			break;
+	}
+	if (i < ARRAY_SIZE(dvb_user_name)) {
+		const char * const *attr_name = dvb_user_attr_names[i];
+		n_prop = entry->n_props;
+		entry->props[n_prop].cmd = i + DTV_USER_COMMAND_START;
+		if (!attr_name || !*attr_name)
+			entry->props[n_prop].u.data = atol(value);
+		else {
+			for (j = 0; attr_name[j]; j++)
+				if (!strcasecmp(value, attr_name[j]))
+					break;
+			if (!attr_name[j])
+				return -2;
+			entry->props[n_prop].u.data = j + DTV_USER_COMMAND_START;
 		}
 		entry->n_props++;
 		return 0;
@@ -447,7 +465,7 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 		is_video = 1;
 	else if (!strcasecmp(key, "AUDIO_PID"))
 		is_audio = 1;
-	else if (!strcasecmp(key, "POLARIZATION")) {
+	/*else if (!strcasecmp(key, "POLARIZATION")) {
 		entry->service_id = atol(value);
 		for (j = 0; ARRAY_SIZE(pol_name); j++)
 			if (!strcasecmp(value, pol_name[j]))
@@ -456,7 +474,7 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 			return -2;
 		entry->pol = j;
 		return 0;
-	} else if (!strncasecmp(key,"PID_", 4)){
+	}*/ else if (!strncasecmp(key,"PID_", 4)){
 		type = strtol(&key[4], NULL, 16);
 		if (!type)
 			return 0;
@@ -666,10 +684,10 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 			fprintf(fp, "\n");
 		}
 
-		if (entry->pol != POLARIZATION_OFF) {
-			fprintf(fp, "\tPOLARIZATION = %s\n",
-				pol_name[entry->pol]);
-		}
+		/*if (entry->pol != POLARIZATION_OFF) {*/
+			/*fprintf(fp, "\tPOLARIZATION = %s\n",*/
+				/*pol_name[entry->pol]);*/
+		/*}*/
 
 		if (entry->sat_number >= 0) {
 			fprintf(fp, "\tSAT_NUMBER = %d\n",
@@ -689,7 +707,7 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 				fprintf(fp, "\tLNB = %s\n", entry->lnb);
 
 		for (i = 0; i < entry->n_props; i++) {
-			const char * const *attr_name = dvbv5_attr_names[entry->props[i].cmd];
+			const char * const *attr_name = dvb_v5_attr_names[entry->props[i].cmd];
 			if (attr_name) {
 				int j;
 
@@ -707,6 +725,31 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 			else
 				fprintf(fp, "\t%s = %s\n",
 					dvb_v5_name[entry->props[i].cmd],
+					*attr_name);
+		}
+		fprintf(fp, "\n");
+
+		for (i = 0; i < entry->n_props; i++) {
+                  if (entry->props[i].cmd < DTV_USER_COMMAND_START)
+                    continue;
+			const char * const *attr_name = dvb_user_attr_names[entry->props[i].cmd - DTV_USER_COMMAND_START];
+			if (attr_name) {
+				int j;
+
+				for (j = 0; j < entry->props[i].u.data; j++) {
+					if (!*attr_name)
+						break;
+					attr_name++;
+				}
+			}
+
+			if (!attr_name || !*attr_name)
+				fprintf(fp, "\t%s = %u\n",
+					dvb_user_name[entry->props[i].cmd - DTV_USER_COMMAND_START],
+					entry->props[i].u.data);
+			else
+				fprintf(fp, "\t%s = %s\n",
+					dvb_user_name[entry->props[i].cmd - DTV_USER_COMMAND_START],
 					*attr_name);
 		}
 		fprintf(fp, "\n");
@@ -806,7 +849,9 @@ static void handle_std_specific_parms(struct dvb_entry *entry,
 				 nit_table->frequency[0]);
 		store_entry_prop(entry, DTV_MODULATION,
 				 nit_table->modulation);
-		entry->pol = nit_table->pol;
+		/*entry->pol = nit_table->pol;*/
+		store_entry_prop(entry, DTV_POLARIZATION,
+				 nit_table->pol);
 		store_entry_prop(entry, DTV_DELIVERY_SYSTEM,
 				 nit_table->delivery_system);
 		store_entry_prop(entry, DTV_SYMBOL_RATE,
@@ -936,7 +981,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 
 		entry->vchannel = dvb_vchannel(dvb_desc, i);
 
-		entry->pol = parms->pol;
+		/*entry->pol = parms->pol;*/
 		entry->sat_number = parms->sat_number;
 		entry->freq_bpf = parms->freq_bpf;
 		entry->diseqc_wait = parms->diseqc_wait;

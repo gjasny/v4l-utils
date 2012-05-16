@@ -385,7 +385,7 @@ void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
 	int i;
 
 	for (i = 0; i < parms->n_props; i++) {
-		const char * const *attr_name = dvbv5_attr_names[parms->dvb_prop[i].cmd];
+		const char * const *attr_name = dvb_v5_attr_names[parms->dvb_prop[i].cmd];
 		if (attr_name) {
 			int j;
 

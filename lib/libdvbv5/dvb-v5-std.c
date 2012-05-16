@@ -19,11 +19,9 @@
  * Per-delivery system properties, according with the specs:
  * 	http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html
  */
-#ifndef _DVB_V5_STD_H
-#define _DVB_V5_STD_H
 
-#include <stddef.h>
-#include "dvb-frontend.h"
+#include "dvb-v5-std.h"
+#include "dvb-v5.h"
 
 const unsigned int sys_dvbt_props[] = {
 	DTV_FREQUENCY,
@@ -166,7 +164,7 @@ const unsigned int *dvb_v5_delivery_system[] = {
 	[SYS_UNDEFINED] =     NULL,
 };
 
-const void *dvbv5_attr_names[] = {
+const void *dvb_v5_attr_names[] = {
 	[0 ...DTV_MAX_COMMAND ] = NULL,
 	[DTV_CODE_RATE_HP]		= fe_code_rate_name,
 	[DTV_CODE_RATE_LP]		= fe_code_rate_name,
@@ -189,5 +187,22 @@ const void *dvbv5_attr_names[] = {
 	[DTV_DELIVERY_SYSTEM]		= delivery_system_name,
 };
 
-#endif
+const char *dvb_sat_pol_name[6] = {
+	[POLARIZATION_OFF] = "OFF",
+	[POLARIZATION_H] = "HORIZONTAL",
+	[POLARIZATION_V] = "VERTICAL",
+	[POLARIZATION_L] = "LEFT",
+	[POLARIZATION_R] = "RIGHT",
+        [5] = NULL,
+};
+
+const char *dvb_user_name[2] = {
+	[DTV_POLARIZATION - DTV_USER_COMMAND_START] =                    "POLARIZATION",
+        [1] = NULL,
+};
+
+const void *dvb_user_attr_names[] = {
+	[0 ... DTV_MAX_USER_COMMAND - DTV_USER_COMMAND_START] = NULL,
+	[DTV_POLARIZATION - DTV_USER_COMMAND_START]           = dvb_sat_pol_name,
+};
 

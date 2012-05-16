@@ -35,7 +35,7 @@ struct dvb_entry {
 
 	char *location;
 
-	enum dvbsat_polarization pol;
+//	enum dvbsat_polarization pol;
 	int sat_number;
 	unsigned freq_bpf;
 	unsigned diseqc_wait;
@@ -78,17 +78,6 @@ enum file_formats {
 
 #define PTABLE(a) .table = a, .size=ARRAY_SIZE(a)
 
-/* FAKE DTV codes, for internal usage */
-#define DTV_POLARIZATION        (DTV_MAX_COMMAND + 200)
-#define DTV_VIDEO_PID           (DTV_MAX_COMMAND + 201)
-#define DTV_AUDIO_PID           (DTV_MAX_COMMAND + 202)
-#define DTV_SERVICE_ID          (DTV_MAX_COMMAND + 203)
-#define DTV_CH_NAME             (DTV_MAX_COMMAND + 204)
-#define DTV_VCHANNEL            (DTV_MAX_COMMAND + 205)
-#define DTV_SAT_NUMBER          (DTV_MAX_COMMAND + 206)
-#define DTV_DISEQC_WAIT         (DTV_MAX_COMMAND + 207)
-#define DTV_DISEQC_LNB          (DTV_MAX_COMMAND + 208)
-#define DTV_FREQ_BPF            (DTV_MAX_COMMAND + 209)
 
 struct dvb_descriptors;
 

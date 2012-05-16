@@ -26,6 +26,7 @@
 #include "descriptors.h"
 #include "parse_string.h"
 #include "dvb-frontend.h"
+#include "dvb-v5-std.h"
 
 static char *default_charset = "iso-8859-1";
 static char *output_charset = "utf-8";

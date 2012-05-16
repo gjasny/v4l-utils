@@ -35,6 +35,7 @@
 #include <linux/dvb/dmx.h>
 #include "dvb-file.h"
 #include "dvb-demux.h"
+#include "dvb-v5-std.h"
 #include "libscan.h"
 
 #define PROGRAM_NAME	"dvbv5-scan"
@@ -130,7 +131,7 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 static int new_freq_is_needed(struct dvb_entry *entry,
 			      struct dvb_entry *last_entry,
 			      uint32_t freq,
-			      enum dvbsat_polarization pol,
+			      enum dvb_sat_polarization pol,
 			      int shift)
 {
 	int i;
@@ -260,7 +261,7 @@ static void add_other_freq_entries(struct dvb_file *dvb_file,
 {
 	int i;
 	uint32_t freq, shift = 0;
-	enum dvbsat_polarization pol = POLARIZATION_OFF;
+	enum dvb_sat_polarization pol = POLARIZATION_OFF;
 
 	if (!dvb_desc->nit_table.frequency)
 		return;

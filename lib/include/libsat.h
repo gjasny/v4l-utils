@@ -19,13 +19,7 @@
 #ifndef _LIBSAT_H
 #define _LIBSAT_H
 
-enum dvbsat_polarization {
-	POLARIZATION_OFF	= 0,
-	POLARIZATION_H		= 1,
-	POLARIZATION_V		= 2,
-	POLARIZATION_L		= 3,
-	POLARIZATION_R		= 4,
-};
+#include "dvb-v5-std.h"
 
 struct dvbsat_freqrange {
 	unsigned low, high;

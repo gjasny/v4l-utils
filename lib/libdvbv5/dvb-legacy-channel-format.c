@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "dvb-file.h"
+#include "dvb-v5-std.h"
 
 /*
  * Standard channel.conf format for DVB-T, DVB-C, DVB-S and ATSC
@@ -97,6 +98,7 @@ static const char *channel_parse_hierarchy[] = {
 };
 
 static const char *channel_parse_polarization[] = {
+	[POLARIZATION_OFF] = "-",
 	[POLARIZATION_H] = "H",
 	[POLARIZATION_V] = "V",
 	[POLARIZATION_L] = "L",
