@@ -35,7 +35,7 @@ struct dvb_entry {
 
 	char *location;
 
-	enum polarization pol;
+	enum dvbsat_polarization pol;
 	int sat_number;
 	unsigned freq_bpf;
 	unsigned diseqc_wait;
@@ -92,6 +92,10 @@ enum file_formats {
 
 struct dvb_descriptors;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static inline void dvb_file_free(struct dvb_file *dvb_file)
 {
 	struct dvb_entry *entry = dvb_file->first_entry, *next;
@@ -146,7 +150,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		      int get_detected, int get_nit);
 int parse_delsys(const char *name);
 enum file_formats parse_format(const char *name);
-struct dvb_file *read_file_format(const char *fname,
+struct dvb_file *dvb_read_file_format(const char *fname,
 					   uint32_t delsys,
 					   enum file_formats format);
 int write_file_format(const char *fname,
@@ -154,4 +158,8 @@ int write_file_format(const char *fname,
 		      uint32_t delsys,
 		      enum file_formats format);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif // _DVB_FILE_H

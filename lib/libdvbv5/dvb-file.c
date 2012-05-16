@@ -1077,7 +1077,7 @@ int parse_delsys(const char *name)
 	return -1;
 }
 
-struct dvb_file *read_file_format(const char *fname,
+struct dvb_file *dvb_read_file_format(const char *fname,
 				  uint32_t delsys,
 				  enum file_formats format)
 {

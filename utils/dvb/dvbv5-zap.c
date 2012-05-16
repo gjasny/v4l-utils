@@ -128,7 +128,7 @@ static int parse(struct arguments *args,
 		sys = SYS_UNDEFINED;
 		break;
 	}
-	dvb_file = read_file_format(args->confname, sys,
+	dvb_file = dvb_read_file_format(args->confname, sys,
 				    args->input_format);
 	if (!dvb_file)
 		return -2;

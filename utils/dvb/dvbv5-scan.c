@@ -130,7 +130,7 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 static int new_freq_is_needed(struct dvb_entry *entry,
 			      struct dvb_entry *last_entry,
 			      uint32_t freq,
-			      enum polarization pol,
+			      enum dvbsat_polarization pol,
 			      int shift)
 {
 	int i;
@@ -260,7 +260,7 @@ static void add_other_freq_entries(struct dvb_file *dvb_file,
 {
 	int i;
 	uint32_t freq, shift = 0;
-	enum polarization pol = POLARIZATION_OFF;
+	enum dvbsat_polarization pol = POLARIZATION_OFF;
 
 	if (!dvb_desc->nit_table.frequency)
 		return;
@@ -307,7 +307,7 @@ static int run_scan(struct arguments *args,
 		sys = SYS_UNDEFINED;
 		break;
 	}
-	dvb_file = read_file_format(args->confname, sys,
+	dvb_file = dvb_read_file_format(args->confname, sys,
 				    args->input_format);
 	if (!dvb_file)
 		return -2;
@@ -557,7 +557,7 @@ int main(int argc, char **argv)
 	if (verbose)
 		fprintf(stderr, "using demux '%s'\n", args.demux_dev);
 
-	parms = dvb_fe_open(args.adapter, args.frontend, verbose, 0);
+	struct dvb_v5_fe_parms *parms = dvb_fe_open(args.adapter, args.frontend, verbose, 0);
 	if (!parms)
 		return -1;
 	if (lnb >= 0)

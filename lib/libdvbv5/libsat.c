@@ -24,7 +24,7 @@
 
 #include "dvb-fe.h"
 
-struct dvb_satellite_lnb lnb[] = {
+struct dvbsat_lnb lnb[] = {
 	{
 		.name = "Europe",
 		.alias = "UNIVERSAL",
@@ -130,7 +130,7 @@ void print_all_lnb(void)
 	}
 }
 
-struct dvb_satellite_lnb *get_lnb(int i)
+struct dvbsat_lnb *get_lnb(int i)
 {
 	if (i >= ARRAY_SIZE(lnb))
 		return NULL;
@@ -212,6 +212,8 @@ static void dvbsat_diseqc_prep_frame_addr(struct diseqc_cmd *cmd,
 	cmd->address = diseqc_addr[type];
 }
 
+struct dvb_v5_fe_parms *parms; // legacy code, used for parms->fd, FIXME anyway
+
 /* Inputs are numbered from 1 to 16, according with the spec */
 static int dvbsat_diseqc_write_to_port_group(struct diseqc_cmd *cmd,
 					     int high_band,
@@ -269,7 +271,7 @@ static int dvbsat_scr_odu_channel_change(struct diseqc_cmd *cmd,
 static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 {
 	int rc;
-        enum polarization pol = parms->pol;
+        enum dvbsat_polarization pol = parms->pol;
 	int pol_v = (pol == POLARIZATION_V) || (pol == POLARIZATION_R);
 	int high_band = parms->high_band;
 	int sat_number = parms->sat_number;
@@ -343,8 +345,8 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 
 int dvb_satellite_set_parms(struct dvb_v5_fe_parms *parms)
 {
-	struct dvb_satellite_lnb *lnb = parms->lnb;
-        enum polarization pol = parms->pol;
+	struct dvbsat_lnb *lnb = parms->lnb;
+        enum dvbsat_polarization pol = parms->pol;
 	uint32_t freq;
 	uint16_t t = 0;
 	uint32_t voltage = SEC_VOLTAGE_13;
@@ -407,3 +409,11 @@ int dvb_satellite_get_parms(struct dvb_v5_fe_parms *parms)
 
 	return 0;
 }
+
+const char *dvbsat_polarization_name[5] = {
+	"OFF",
+	"H",
+	"V",
+	"L",
+	"R",
+};

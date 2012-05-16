@@ -76,12 +76,12 @@ struct dvb_v5_fe_parms {
 	struct dvb_v5_stats		stats;
 
 	/* Satellite specific stuff, specified by the library client */
-	struct dvb_satellite_lnb	*lnb;
+	struct dvbsat_lnb       	*lnb;
 	int				sat_number;
 	unsigned			freq_bpf;
 
 	/* Satellite specific stuff, used internally */
-	enum polarization		pol;
+	enum dvbsat_polarization        pol;
 	int				high_band;
 	unsigned			diseqc_wait;
 	unsigned			freq_offset;

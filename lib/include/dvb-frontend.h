@@ -328,7 +328,7 @@ typedef enum fe_pilot {
 	PILOT_AUTO,
 } fe_pilot_t;
 
-typedef enum fe_rolloff {
+typedef enum fe_rolloff { // FIXME: move to libsat.h ?
 	ROLLOFF_35, /* Implied value in DVB-S, default for DVB-S2 */
 	ROLLOFF_20,
 	ROLLOFF_25,
