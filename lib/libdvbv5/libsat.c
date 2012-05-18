@@ -131,7 +131,7 @@ void print_all_lnb(void)
 	}
 }
 
-const struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
+struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
 {
 	if (i < 0 || i >= ARRAY_SIZE(lnb))
 		return NULL;
