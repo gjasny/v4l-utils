@@ -180,7 +180,7 @@ enum diseqc_type {
 	DISEQC_SUBSCRIBER_HEADENDS,
 };
 
-int diseqc_addr[] = {
+static int diseqc_addr[] = {
 	[DISEQC_BROADCAST]			= 0x00,
 	[DISEQC_BROADCAST_LNB_SWITCHER_SMATV]	= 0x10,
 	[DISEQC_LNB]				= 0x11,
