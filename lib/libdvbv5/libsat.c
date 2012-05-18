@@ -96,7 +96,7 @@ int dvb_sat_search_lnb(const char *name)
 
 int print_lnb(int i)
 {
-	if (i >= ARRAY_SIZE(lnb))
+	if (i < 0 || i >= ARRAY_SIZE(lnb))
 		return -1;
 
 	printf("%s\n\t%s\n", lnb[i].alias, lnb[i].name);
@@ -131,9 +131,9 @@ void print_all_lnb(void)
 	}
 }
 
-struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
+const struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
 {
-	if (i >= ARRAY_SIZE(lnb))
+	if (i < 0 || i >= ARRAY_SIZE(lnb))
 		return NULL;
 
 	return &lnb[i];
