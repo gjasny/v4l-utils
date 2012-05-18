@@ -21,6 +21,8 @@
 #include "dvb-v5-std.h"
 #include "dvb-fe.h"
 
+#include <stddef.h>
+#include <stdio.h>
 #include <unistd.h>
 
 
