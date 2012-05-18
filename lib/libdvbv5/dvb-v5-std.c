@@ -19,6 +19,7 @@
  * Per-delivery system properties, according with the specs:
  * 	http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html
  */
+#include <stddef.h>
 
 #include "dvb-v5-std.h"
 #include "dvb-v5.h"

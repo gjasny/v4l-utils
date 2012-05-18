@@ -18,7 +18,8 @@
  */
 
 #include <inttypes.h>
-#include <malloc.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "dvb-fe.h"

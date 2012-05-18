@@ -1,7 +1,10 @@
 /*
  * File auto-generated from the kernel sources. Please, don't edit it
  */
+#include <stddef.h>
+
 #include "dvb-v5.h"
+
 struct fe_caps_name fe_caps_name[30] = {
 	{ FE_CAN_2G_MODULATION,          "CAN_2G_MODULATION" },
 	{ FE_CAN_8VSB,                   "CAN_8VSB" },
