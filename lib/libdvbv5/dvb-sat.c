@@ -25,7 +25,7 @@
 #include "dvb-fe.h"
 #include "dvb-v5-std.h"
 
-struct dvb_sat_lnb lnb[] = {
+static const struct dvb_sat_lnb lnb[] = {
 	{
 		.name = "Europe",
 		.alias = "UNIVERSAL",
@@ -131,7 +131,7 @@ void print_all_lnb(void)
 	}
 }
 
-struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
+const struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
 {
 	if (i < 0 || i >= ARRAY_SIZE(lnb))
 		return NULL;
@@ -347,7 +347,7 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 
 int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
 {
-	struct dvb_sat_lnb *lnb = parms->lnb;
+	const struct dvb_sat_lnb *lnb = parms->lnb;
 	enum dvb_sat_polarization pol;
 	dvb_fe_retrieve_parm(parms, DTV_POLARIZATION, &pol);
 	uint32_t freq;
