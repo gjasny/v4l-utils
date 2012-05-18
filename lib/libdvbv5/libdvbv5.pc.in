@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+libdir=@libdir@
+
+Name: libdvbv5
+Description: DVBv5 utility library
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -ldvbv5
+Cflags: -I${includedir}

@@ -32,6 +32,7 @@ AC_CONFIG_FILES([Makefile
 	lib/libv4lconvert/libv4lconvert.pc
 	lib/libv4l1/libv4l1.pc
 	lib/libv4l2/libv4l2.pc
+	lib/libdvbv5/libdvbv5.pc
 ])
 
 AM_INIT_AUTOMAKE([1.9 no-dist-gzip dist-bzip2 -Wno-portability]) # 1.10 is needed for target_LIBTOOLFLAGS
@@ -153,6 +154,15 @@ AC_DEFINE_DIR([LIBV4LCONVERT_PRIV_DIR], [libv4lconvertprivdir], [libv4lconvert p
 
 # options
 
+AC_ARG_ENABLE(libdvbv5,
+  [  --disable-libdvbv5      disable dynamic libdvbv5 compilation],
+  [case "${enableval}" in
+     yes | no ) with_liblibdvbv5="${enableval}" ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-libdvbv5) ;;
+   esac],
+  [with_libdvbv5="yes"]
+)
+
 AC_ARG_ENABLE(libv4l,
   [  --disable-libv4l        disable dynamic libv4l compilation],
   [case "${enableval}" in
@@ -171,10 +181,12 @@ AC_ARG_ENABLE(v4l-utils,
   [with_v4lutils="yes"]
 )
 
+AM_CONDITIONAL([WITH_LIBDVBV5], [test x$with_libdvbv5 = xyes])
 AM_CONDITIONAL([WITH_LIBV4L], [test x$with_libv4l = xyes])
 AM_CONDITIONAL([WITH_V4LUTILS], [test x$with_v4lutils = xyes])
 
 # append -static to libtool compile and link command to enforce static libs
+AS_IF([test x$with_libdvbv5 != xyes], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])
 AS_IF([test x$with_libv4l != xyes], [AC_SUBST([ENFORCE_LIBV4L_STATIC], ["-static"])])
 
 # misc
