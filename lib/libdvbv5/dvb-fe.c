@@ -391,12 +391,21 @@ const char *dvb_cmd_name(int cmd)
   return NULL;
 }
 
+const char * const *dvb_attr_names(int cmd)
+{
+  if (cmd < DTV_USER_COMMAND_START)
+    return dvb_v5_attr_names[cmd];
+  else if (cmd <= DTV_MAX_USER_COMMAND)
+    return dvb_user_attr_names[cmd - DTV_USER_COMMAND_START];
+  return NULL;
+}
+
 void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
 {
 	int i;
 
 	for (i = 0; i < parms->n_props; i++) {
-		const char * const *attr_name = dvb_v5_attr_names[parms->dvb_prop[i].cmd];
+		const char * const *attr_name = dvb_attr_names(parms->dvb_prop[i].cmd);
 		if (attr_name) {
 			int j;
 
@@ -450,6 +459,15 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 	return EINVAL;
 }
 
+int dvb_copy_fe_props(struct dtv_property *from, int n, struct dtv_property *to)
+{
+  int i, j;
+  for (i = 0, j = 0; i < n; i++)
+    if (from[i].cmd < DTV_USER_COMMAND_START)
+      to[j++] = from[i];
+  return j;
+}
+
 int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 {
 	int n = 0;
@@ -473,7 +491,10 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 	parms->dvb_prop[n].cmd = DTV_TUNE;
 	parms->n_props = n;
 
-	prop.props = parms->dvb_prop;
+	struct dtv_property fe_prop[DTV_MAX_COMMAND];
+        n = dvb_copy_fe_props(parms->dvb_prop, n, fe_prop);
+
+	prop.props = fe_prop;
 	prop.num = n;
 	if (!parms->legacy_fe) {
 		if (ioctl(parms->fd, FE_GET_PROPERTY, &prop) == -1) {
@@ -540,8 +561,11 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	uint32_t freq;
 	uint32_t bw;
 
-	prop.props = parms->dvb_prop;
-	prop.num = parms->n_props + 1;
+	struct dtv_property fe_prop[DTV_MAX_COMMAND];
+        int n = dvb_copy_fe_props(parms->dvb_prop, parms->n_props, fe_prop);
+
+	prop.props = fe_prop;
+	prop.num = n + 1;
 	parms->dvb_prop[parms->n_props].cmd = DTV_TUNE;
 
 	if (is_satellite(parms->current_sys)) {
