@@ -400,7 +400,7 @@ static int read_section(int dmx_fd, struct dvb_descriptors *dvb_desc,
 	return 0;
 }
 
-struct dvb_descriptors *get_dvb_ts_tables(int dmx_fd,
+struct dvb_descriptors *dvb_get_ts_tables(int dmx_fd,
 					  uint32_t delivery_system,
 					  unsigned other_nit,
 					  unsigned timeout_multiply,
@@ -460,7 +460,7 @@ struct dvb_descriptors *get_dvb_ts_tables(int dmx_fd,
 			  pat_pmt_time * timeout_multiply);
 	if (rc < 0) {
 		fprintf(stderr, "error while waiting for PAT table\n");
-		free_dvb_ts_tables(dvb_desc);
+		dvb_free_ts_tables(dvb_desc);
 		return NULL;
 	}
 
@@ -504,7 +504,7 @@ struct dvb_descriptors *get_dvb_ts_tables(int dmx_fd,
 }
 
 
-void free_dvb_ts_tables(struct dvb_descriptors *dvb_desc)
+void dvb_free_ts_tables(struct dvb_descriptors *dvb_desc)
 {
 	struct pat_table *pat_table = &dvb_desc->pat_table;
 	struct pid_table *pid_table = dvb_desc->pat_table.pid_table;

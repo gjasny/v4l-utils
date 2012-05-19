@@ -406,7 +406,7 @@ static int run_scan(struct arguments *args,
 		if (rc < 0)
 			continue;
 
-		dvb_desc = get_dvb_ts_tables(dmx_fd,
+		dvb_desc = dvb_get_ts_tables(dmx_fd,
 					     parms->current_sys,
 					     args->other_nit,
 					     args->timeout_multiply,
@@ -433,7 +433,7 @@ static int run_scan(struct arguments *args,
 		if (!args->dont_add_new_freqs)
 			add_other_freq_entries(dvb_file, parms, dvb_desc);
 
-		free_dvb_ts_tables(dvb_desc);
+		dvb_free_ts_tables(dvb_desc);
 	}
 
 	if (dvb_file_new)

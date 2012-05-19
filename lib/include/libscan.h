@@ -136,11 +136,19 @@ struct dvb_descriptors {
 	unsigned cur_ts;
 };
 
-struct dvb_descriptors *get_dvb_ts_tables(int dmx_fd,
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct dvb_descriptors *dvb_get_ts_tables(int dmx_fd,
 					  uint32_t delivery_system,
 					  unsigned other_nit,
 					  unsigned timeout_multiply,
 					  int verbose);
-void free_dvb_ts_tables(struct dvb_descriptors *dvb_desc);
+void dvb_free_ts_tables(struct dvb_descriptors *dvb_desc);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
