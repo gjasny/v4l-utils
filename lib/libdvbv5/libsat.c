@@ -272,8 +272,8 @@ static int dvbsat_scr_odu_channel_change(struct dvb_v5_fe_parms *parms, struct d
 static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 {
 	int rc;
-        enum dvb_sat_polarization pol;
-        dvb_fe_retrieve_parm(parms, DTV_POLARIZATION,& pol);
+	enum dvb_sat_polarization pol;
+	dvb_fe_retrieve_parm(parms, DTV_POLARIZATION,& pol);
 	int pol_v = (pol == POLARIZATION_V) || (pol == POLARIZATION_R);
 	int high_band = parms->high_band;
 	int sat_number = parms->sat_number;
@@ -298,7 +298,7 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 		high_band = 1;
 	} else {
 		if (sat_number < 0) {
-			fprintf(stderr, "Need a satellite number for DISEqC\n");
+			dvb_logerr("Need a satellite number for DISEqC");
 			return -EINVAL;
 		}
 
@@ -348,8 +348,8 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
 {
 	struct dvb_sat_lnb *lnb = parms->lnb;
-        enum dvb_sat_polarization pol;
-        dvb_fe_retrieve_parm(parms, DTV_POLARIZATION,& pol);
+	enum dvb_sat_polarization pol;
+	dvb_fe_retrieve_parm(parms, DTV_POLARIZATION,& pol);
 	uint32_t freq;
 	uint16_t t = 0;
 	uint32_t voltage = SEC_VOLTAGE_13;
@@ -358,7 +358,7 @@ int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
 	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
 
 	if (!lnb) {
-		fprintf(stderr, "Need a LNBf to work\n");
+		dvb_logerr("Need a LNBf to work");
 		return -EINVAL;
 	}
 

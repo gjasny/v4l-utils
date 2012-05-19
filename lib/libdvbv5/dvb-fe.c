@@ -24,7 +24,29 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdarg.h>
 
+void dvb_default_log(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	printf("libdvbv5: ");
+	vprintf(fmt, ap);
+	printf("\n");
+	va_end(ap);
+}
+
+void dvb_default_logerr(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	fprintf(stderr, "libdvbv5: ");
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+}
 
 static void dvb_v5_free(struct dvb_v5_fe_parms *parms)
 {
@@ -37,6 +59,14 @@ static void dvb_v5_free(struct dvb_v5_fe_parms *parms)
 struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 				    unsigned use_legacy_call)
 {
+  return dvb_fe_open2(adapter, frontend, verbose, use_legacy_call,
+		      dvb_default_log, dvb_default_logerr);
+}
+
+struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose,
+				    unsigned use_legacy_call, dvb_logfunc logfunc,
+				    dvb_logfunc logerrfunc)
+{
 	int fd, i;
 	char *fname;
 	struct dtv_properties dtv_prop;
@@ -44,18 +74,18 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 
 	asprintf(&fname, "/dev/dvb/adapter%i/frontend%i", adapter, frontend);
 	if (!fname) {
-		perror("fname malloc");
+		logerrfunc("fname calloc: %s", strerror(errno));
 		return NULL;
 	}
 
 	fd = open(fname, O_RDWR, 0);
 	if (fd == -1) {
-		fprintf(stderr, "%s while opening %s\n", strerror(errno), fname);
+		logerrfunc("%s while opening %s", strerror(errno), fname);
 		return NULL;
 	}
 	parms = calloc(sizeof(*parms), 1);
 	if (!parms) {
-		perror("parms calloc");
+		logerrfunc("parms calloc: %s", strerror(errno));
 		close(fd);
 		return NULL;
 	}
@@ -63,9 +93,11 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 	parms->verbose = verbose;
 	parms->fd = fd;
 	parms->sat_number = -1;
+	parms->logfunc = logfunc;
+	parms->logerrfunc = logerrfunc;
 
 	if (ioctl(fd, FE_GET_INFO, &parms->info) == -1) {
-		perror("FE_GET_INFO");
+		dvb_perror("FE_GET_INFO");
 		dvb_v5_free(parms);
 		close(fd);
 		return NULL;
@@ -74,13 +106,12 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 	if (verbose) {
 		fe_caps_t caps = parms->info.caps;
 
-		printf("Device %s (%s) capabilities:\n\t",
+		dvb_log("Device %s (%s) capabilities:",
 			parms->info.name, fname);
 		for (i = 0; i < ARRAY_SIZE(fe_caps_name); i++) {
 			if (caps & fe_caps_name[i].idx)
-				printf ("%s ", fe_caps_name[i].name);
+				dvb_log ("     %s", fe_caps_name[i].name);
 		}
-		printf("\n");
 	}
 
 	parms->dvb_prop[0].cmd = DTV_API_VERSION;
@@ -97,7 +128,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 	parms->version = parms->dvb_prop[0].u.data;
 	parms->current_sys = parms->dvb_prop[1].u.data;
 	if (verbose)
-		printf ("DVB API Version %d.%d, Current v5 delivery system: %s\n",
+		dvb_log ("DVB API Version %d.%d, Current v5 delivery system: %s",
 			parms->version / 256,
 			parms->version % 256,
 			delivery_system_name[parms->current_sys]);
@@ -139,7 +170,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 			break;
 		}
 		if (!parms->num_systems) {
-			fprintf(stderr, "delivery system not detected\n");
+			dvb_logerr("delivery system not detected");
 			dvb_v5_free(parms);
 			close(fd);
 			return NULL;
@@ -150,7 +181,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 		dtv_prop.num = 1;
 		dtv_prop.props = parms->dvb_prop;
 		if (ioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1) {
-			perror("FE_GET_PROPERTY");
+			dvb_perror("FE_GET_PROPERTY");
 			dvb_v5_free(parms);
 			close(fd);
 			return NULL;
@@ -160,7 +191,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 			parms->systems[i] = parms->dvb_prop[0].u.buffer.data[i];
 
 		if (parms->num_systems == 0) {
-			fprintf(stderr, "driver died while trying to set the delivery system\n");
+			dvb_logerr("driver died while trying to set the delivery system");
 			dvb_v5_free(parms);
 			close(fd);
 			return NULL;
@@ -168,19 +199,18 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 	}
 
 	if (verbose) {
-		printf("Supported delivery system%s: ",
+		dvb_log("Supported delivery system%s: ",
 		       (parms->num_systems > 1) ? "s" : "");
 		for (i = 0; i < parms->num_systems; i++) {
 			if (parms->systems[i] == parms->current_sys)
-				printf ("[%s] ",
+				dvb_log ("    [%s]",
 					delivery_system_name[parms->systems[i]]);
 			else
-				printf ("%s ",
+				dvb_log ("     %s",
 					delivery_system_name[parms->systems[i]]);
 		}
-		printf("\n");
 		if (use_legacy_call)
-			printf("Warning: ISDB-T, ISDB-S, DMB-TH and DSS will be miss-detected by a DVBv3 call\n");
+			dvb_log("Warning: ISDB-T, ISDB-S, DMB-TH and DSS will be miss-detected by a DVBv3 call");
 	}
 
 	/*
@@ -259,7 +289,7 @@ int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 		prop.props = dvb_prop;
 
 		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
-			perror("Set delivery system");
+			dvb_perror("Set delivery system");
 			return errno;
 		}
 		parms->current_sys = sys;
@@ -312,12 +342,12 @@ static enum dvbv3_emulation_type dvbv3_type(uint32_t delivery_system)
 
 static int is_dvbv3_delsys(uint32_t delsys)
 {
-        int status;
+	int status;
 
-        status = (delsys == SYS_DVBT) || (delsys == SYS_DVBC_ANNEX_A) ||
-                 (delsys == SYS_DVBS) || (delsys == SYS_ATSC);
+	status = (delsys == SYS_DVBT) || (delsys == SYS_DVBC_ANNEX_A) ||
+		 (delsys == SYS_DVBS) || (delsys == SYS_ATSC);
 
-        return status;
+	return status;
 }
 
 int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
@@ -437,7 +467,7 @@ int dvb_fe_retrieve_parm(struct dvb_v5_fe_parms *parms,
 		*value = parms->dvb_prop[i].u.data;
 		return 0;
 	}
-	fprintf(stderr, "command %s (%d) not found during retrieve\n",
+	dvb_logerr("command %s (%d) not found during retrieve",
 		dvb_cmd_name(cmd), cmd);
 
 	return EINVAL;
@@ -453,7 +483,7 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 		parms->dvb_prop[i].u.data = value;
 		return 0;
 	}
-	fprintf(stderr, "command %s (%d) not found during store\n",
+	dvb_logerr("command %s (%d) not found during store",
 		dvb_cmd_name(cmd), cmd);
 
 	return EINVAL;
@@ -492,13 +522,13 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 	parms->n_props = n;
 
 	struct dtv_property fe_prop[DTV_MAX_COMMAND];
-        n = dvb_copy_fe_props(parms->dvb_prop, n, fe_prop);
+	n = dvb_copy_fe_props(parms->dvb_prop, n, fe_prop);
 
 	prop.props = fe_prop;
 	prop.num = n;
 	if (!parms->legacy_fe) {
 		if (ioctl(parms->fd, FE_GET_PROPERTY, &prop) == -1) {
-			perror("FE_GET_PROPERTY");
+			dvb_perror("FE_GET_PROPERTY");
 			return errno;
 		}
 		if (parms->verbose) {
@@ -510,7 +540,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 	}
 	/* DVBv3 call */
 	if (ioctl(parms->fd, FE_GET_FRONTEND, &v3_parms) == -1) {
-		perror("FE_GET_FRONTEND");
+		dvb_perror("FE_GET_FRONTEND");
 		return errno;
 	}
 
@@ -562,7 +592,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	uint32_t bw;
 
 	struct dtv_property fe_prop[DTV_MAX_COMMAND];
-        int n = dvb_copy_fe_props(parms->dvb_prop, parms->n_props, fe_prop);
+	int n = dvb_copy_fe_props(parms->dvb_prop, parms->n_props, fe_prop);
 
 	prop.props = fe_prop;
 	prop.num = n + 1;
@@ -575,7 +605,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 
 	if (!parms->legacy_fe) {
 		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
-			perror("FE_SET_PROPERTY");
+			dvb_perror("FE_SET_PROPERTY");
 			if (parms->verbose)
 				dvb_fe_prt_parms(stderr, parms);
 			return errno;
@@ -617,7 +647,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 		return -EINVAL;
 	}
 	if (ioctl(parms->fd, FE_SET_FRONTEND, &v3_parms) == -1) {
-		perror("FE_SET_FRONTEND");
+		dvb_perror("FE_SET_FRONTEND");
 		if (parms->verbose)
 			dvb_fe_prt_parms(stderr, parms);
 		return errno;
@@ -640,8 +670,8 @@ int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
 		*value = parms->stats.prop[i].u.data;
 		return 0;
 	}
-	fprintf(stderr, "%s not found on retrieve\n",
-		dvb_v5_name[cmd]);
+	dvb_logerr("%s not found on retrieve",
+		dvb_cmd_name(cmd));
 
 	return EINVAL;
 }
@@ -656,8 +686,8 @@ int dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
 		parms->stats.prop[i].u.data = value;
 		return 0;
 	}
-	fprintf(stderr, "%s not found on store\n",
-		dvb_v5_name[cmd]);
+	dvb_logerr("%s not found on store",
+		dvb_cmd_name(cmd));
 
 	return EINVAL;
 }
@@ -675,7 +705,7 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 	int i;
 
 	if (ioctl(parms->fd, FE_READ_STATUS, &status) == -1) {
-		perror("FE_READ_STATUS");
+		dvb_perror("FE_READ_STATUS");
 		status = -1;
 	}
 	dvb_fe_store_stats(parms, DTV_STATUS, status);
@@ -698,12 +728,12 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 
 
 	if (parms->verbose > 1) {
-		printf("Status: ");
+		dvb_log("Status: ");
 		for (i = 0; i < ARRAY_SIZE(fe_status_name); i++) {
 			if (status & fe_status_name[i].idx)
-				printf ("%s ", fe_status_name[i].name);
+				dvb_log ("    %s", fe_status_name[i].name);
 		}
-		printf("BER: %d, Strength: %d, SNR: %d, UCB: %d\n",
+		dvb_log("BER: %d, Strength: %d, SNR: %d, UCB: %d",
 		       ber, strength, snr, ucb);
 	}
 	return status;
@@ -722,17 +752,16 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
 	}
 
 	if (ioctl(parms->fd, FE_GET_EVENT, &event) == -1) {
-		perror("FE_GET_EVENT");
+		dvb_perror("FE_GET_EVENT");
 		return -1;
 	}
 	status = event.status;
 	if (parms->verbose > 1) {
-		printf("Status: ");
+		dvb_log("Status: ");
 		for (i = 0; i < ARRAY_SIZE(fe_status_name); i++) {
 			if (status & fe_status_name[i].idx)
-				printf ("%s ", fe_status_name[i].name);
+				dvb_log ("    %s", fe_status_name[i].name);
 		}
-		printf("\n");
 	}
 	dvb_fe_store_stats(parms, DTV_STATUS, status);
 
@@ -861,7 +890,7 @@ int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
 
 	rc = ioctl(parms->fd, FE_DISEQC_RECV_SLAVE_REPLY, reply);
 	if (rc == -1) {
-		perror("FE_DISEQC_RECV_SLAVE_REPLY");
+		dvb_perror("FE_DISEQC_RECV_SLAVE_REPLY");
 		return errno;
 	}
 
