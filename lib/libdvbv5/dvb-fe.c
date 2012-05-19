@@ -382,6 +382,15 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
+const char *dvb_cmd_name(int cmd)
+{
+  if (cmd < DTV_USER_COMMAND_START)
+    return dvb_v5_name[cmd];
+  else if (cmd <= DTV_MAX_USER_COMMAND)
+    return dvb_user_name[cmd - DTV_USER_COMMAND_START];
+  return NULL;
+}
+
 void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
 {
 	int i;
@@ -400,11 +409,11 @@ void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
 
 		if (!attr_name || !*attr_name)
 			fprintf(fp, "%s = %u\n",
-				dvb_v5_name[parms->dvb_prop[i].cmd],
+				dvb_cmd_name(parms->dvb_prop[i].cmd),
 				parms->dvb_prop[i].u.data);
 		else
 			fprintf(fp, "%s = %s\n",
-				dvb_v5_name[parms->dvb_prop[i].cmd],
+				dvb_cmd_name(parms->dvb_prop[i].cmd),
 				*attr_name);
 	}
 };
@@ -419,8 +428,8 @@ int dvb_fe_retrieve_parm(struct dvb_v5_fe_parms *parms,
 		*value = parms->dvb_prop[i].u.data;
 		return 0;
 	}
-	fprintf(stderr, "%s (%d) command not found during retrieve\n",
-		dvb_v5_name[cmd], cmd);
+	fprintf(stderr, "command %s (%d) not found during retrieve\n",
+		dvb_cmd_name(cmd), cmd);
 
 	return EINVAL;
 }
@@ -435,8 +444,8 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 		parms->dvb_prop[i].u.data = value;
 		return 0;
 	}
-	fprintf(stderr, "%s (%d) command not found during store\n",
-		dvb_v5_name[cmd], cmd);
+	fprintf(stderr, "command %s (%d) not found during store\n",
+		dvb_cmd_name(cmd), cmd);
 
 	return EINVAL;
 }
