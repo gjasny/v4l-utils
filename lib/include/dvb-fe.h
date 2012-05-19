@@ -29,19 +29,19 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#include <syslog.h>
 #include "dvb-frontend.h"
 #include "dvb-sat.h"
 
 #define dvb_log(fmt, arg...) do {\
-	 parms->logfunc(fmt, ##arg); \
+	parms->logfunc(LOG_INFO, fmt, ##arg); \
 } while (0)
-
 #define dvb_logerr(fmt, arg...) do {\
-	parms->logerrfunc(fmt, ##arg); \
+	parms->logfunc(LOG_ERR, fmt, ##arg); \
 } while (0)
 
 #define dvb_perror(msg) do {\
-	parms->logerrfunc("%s: %s", msg, strerror(errno)); \
+	parms->logfunc(LOG_ERR, "%s: %s", msg, strerror(errno)); \
 } while (0)
 
 #define ARRAY_SIZE(x)	(sizeof(x)/sizeof((x)[0]))
@@ -73,7 +73,7 @@ struct dvb_v5_stats {
 	struct dtv_property		prop[DTV_MAX_STATS];
 };
 
-typedef void (*dvb_logfunc)(const char *fmt, ...);
+typedef void (*dvb_logfunc)(int level, const char *fmt, ...);
 
 struct dvb_v5_fe_parms {
 	int				fd;
@@ -100,8 +100,7 @@ struct dvb_v5_fe_parms {
 	unsigned			diseqc_wait;
 	unsigned			freq_offset;
 
-	dvb_logfunc                     logfunc;
-	dvb_logfunc                     logerrfunc;
+        dvb_logfunc                     logfunc;
 };
 
 
@@ -115,8 +114,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
 				    unsigned verbose, unsigned use_legacy_call);
 struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend,
 				    unsigned verbose, unsigned use_legacy_call,
-				    dvb_logfunc logfunc,
-				    dvb_logfunc logerrfunc);
+                                    dvb_logfunc logfunc);
 void dvb_fe_close(struct dvb_v5_fe_parms *parms);
 
 /* Get/set delivery system parameters */

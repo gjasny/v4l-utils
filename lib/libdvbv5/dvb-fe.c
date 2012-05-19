@@ -26,25 +26,39 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-void dvb_default_log(const char *fmt, ...)
+static const struct loglevel {
+	const char *name;
+	const char *color;
+	int fd;
+} loglevels[9] = {
+	{"EMERG   ", "\033[31m", STDERR_FILENO },
+	{"ALERT   ", "\033[31m", STDERR_FILENO },
+	{"CRITICAL", "\033[31m", STDERR_FILENO },
+	{"ERROR   ", "\033[31m", STDERR_FILENO },
+	{"WARNING ", "\033[33m", STDOUT_FILENO },
+	{"NOTICE  ", "\033[36m", STDOUT_FILENO },
+	{"INFO    ", "\033[36m", STDOUT_FILENO },
+	{"DEBUG   ", "\033[32m", STDOUT_FILENO },
+	{"",         "\033[0m",  STDOUT_FILENO },
+};
+#define LOG_COLOROFF 8
+
+void dvb_default_log(int level, const char *fmt, ...)
 {
+	if(level > sizeof(loglevels) / sizeof(struct loglevel) - 2) // ignore LOG_COLOROFF as well
+		level = LOG_INFO;
 	va_list ap;
-
 	va_start(ap, fmt);
-	printf("libdvbv5: ");
-	vprintf(fmt, ap);
-	printf("\n");
-	va_end(ap);
-}
-
-void dvb_default_logerr(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	fprintf(stderr, "libdvbv5: ");
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
+	FILE *out = stdout;
+	if(STDERR_FILENO == loglevels[level].fd)
+		out = stderr;
+	if(isatty(loglevels[level].fd))
+		fprintf(out, loglevels[level].color);
+	fprintf(out, "%s ", loglevels[level].name);
+	vfprintf(out, fmt, ap);
+	fprintf(out, "\n");
+	if(isatty(loglevels[level].fd))
+		fprintf(out, loglevels[LOG_COLOROFF].color);
 	va_end(ap);
 }
 
@@ -60,12 +74,11 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 				    unsigned use_legacy_call)
 {
   return dvb_fe_open2(adapter, frontend, verbose, use_legacy_call,
-		      dvb_default_log, dvb_default_logerr);
+                      dvb_default_log);
 }
 
 struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose,
-				    unsigned use_legacy_call, dvb_logfunc logfunc,
-				    dvb_logfunc logerrfunc)
+				    unsigned use_legacy_call, dvb_logfunc logfunc)
 {
 	int fd, i;
 	char *fname;
@@ -74,18 +87,18 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 
 	asprintf(&fname, "/dev/dvb/adapter%i/frontend%i", adapter, frontend);
 	if (!fname) {
-		logerrfunc("fname calloc: %s", strerror(errno));
+		logfunc(LOG_ERR, "fname calloc: %s", strerror(errno));
 		return NULL;
 	}
 
 	fd = open(fname, O_RDWR, 0);
 	if (fd == -1) {
-		logerrfunc("%s while opening %s", strerror(errno), fname);
+		logfunc(LOG_ERR, "%s while opening %s", strerror(errno), fname);
 		return NULL;
 	}
 	parms = calloc(sizeof(*parms), 1);
 	if (!parms) {
-		logerrfunc("parms calloc: %s", strerror(errno));
+		logfunc(LOG_ERR, "parms calloc: %s", strerror(errno));
 		close(fd);
 		return NULL;
 	}
@@ -93,8 +106,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	parms->verbose = verbose;
 	parms->fd = fd;
 	parms->sat_number = -1;
-	parms->logfunc = logfunc;
-	parms->logerrfunc = logerrfunc;
+        parms->logfunc = logfunc;
 
 	if (ioctl(fd, FE_GET_INFO, &parms->info) == -1) {
 		dvb_perror("FE_GET_INFO");
