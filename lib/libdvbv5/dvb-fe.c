@@ -384,20 +384,20 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 
 const char *dvb_cmd_name(int cmd)
 {
-  if (cmd < DTV_USER_COMMAND_START)
-    return dvb_v5_name[cmd];
-  else if (cmd <= DTV_MAX_USER_COMMAND)
-    return dvb_user_name[cmd - DTV_USER_COMMAND_START];
-  return NULL;
+	if (cmd < DTV_USER_COMMAND_START)
+		return dvb_v5_name[cmd];
+	else if (cmd <= DTV_MAX_USER_COMMAND)
+		return dvb_user_name[cmd - DTV_USER_COMMAND_START];
+	return NULL;
 }
 
 const char * const *dvb_attr_names(int cmd)
 {
-  if (cmd < DTV_USER_COMMAND_START)
-    return dvb_v5_attr_names[cmd];
-  else if (cmd <= DTV_MAX_USER_COMMAND)
-    return dvb_user_attr_names[cmd - DTV_USER_COMMAND_START];
-  return NULL;
+	if (cmd < DTV_USER_COMMAND_START)
+		return dvb_v5_attr_names[cmd];
+	else if (cmd <= DTV_MAX_USER_COMMAND)
+		return dvb_user_attr_names[cmd - DTV_USER_COMMAND_START];
+	return NULL;
 }
 
 void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
