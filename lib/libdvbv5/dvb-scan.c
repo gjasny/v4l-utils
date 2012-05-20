@@ -25,7 +25,7 @@
  *	ETSI EN 300 468 V1.11.1 (2010-04)
  *****************************************************************************/
 
-#include "libscan.h"
+#include "dvb-scan.h"
 #include "dvb-frontend.h"
 #include "descriptors.h"
 #include "parse_string.h"

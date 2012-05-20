@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 #include "dvb-fe.h"
-#include "libscan.h"
+#include "dvb-scan.h"
 #include "descriptors.h"
 #include "parse_string.h"
 #include "dvb-frontend.h"

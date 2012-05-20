@@ -2,7 +2,7 @@ if WITH_LIBDVBV5
 lib_LTLIBRARIES = libdvbv5.la
 include_HEADERS = ../include/dvb-demux.h ../include/dvb-v5-std.h \
   ../include/dvb-file.h ../include/dvb-frontend.h ../include/dvb-fe.h \
-  ../include/libsat.h ../include/libscan.h
+  ../include/dvb-sat.h ../include/dvb-scan.h
 pkgconfig_DATA = libdvbv5.pc
 else
 noinst_LTLIBRARIES = libdvbv5.la
@@ -18,8 +18,8 @@ libdvbv5_la_SOURCES = \
   dvb-legacy-channel-format.c \
   dvb-zap-format.c \
   descriptors.c descriptors.h \
-  libsat.c ../include/libsat.h \
-  libscan.c ../include/libscan.h \
+  dvb-sat.c ../include/dvb-sat.h \
+  dvb-scan.c ../include/dvb-scan.h \
   parse_string.c parse_string.h
 libdvbv5_la_CPPFLAGS = $(ENFORCE_LIBDVBV5_STATIC)
 libdvbv5_la_LDFLAGS = -version-info 0 $(ENFORCE_LIBDVBV5_STATIC)

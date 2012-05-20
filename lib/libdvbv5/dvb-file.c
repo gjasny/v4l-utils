@@ -25,7 +25,7 @@
 
 #include "dvb-file.h"
 #include "dvb-v5-std.h"
-#include "libscan.h"
+#include "dvb-scan.h"
 
 static const char *parm_name(const struct parse_table *table)
 {

@@ -30,7 +30,7 @@
 #include <sys/ioctl.h>
 #include <string.h>
 #include "dvb-frontend.h"
-#include "libsat.h"
+#include "dvb-sat.h"
 
 #define dvb_log(fmt, arg...) do {\
 	 parms->logfunc(fmt, ##arg); \

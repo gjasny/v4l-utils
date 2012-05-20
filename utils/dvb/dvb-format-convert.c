@@ -33,7 +33,7 @@
 
 #include "dvb-file.h"
 #include "dvb-demux.h"
-#include "libscan.h"
+#include "dvb-scan.h"
 
 #define PROGRAM_NAME	"dvb-format-convert"
 
