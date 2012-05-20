@@ -470,7 +470,7 @@ sub output_arrays($$$$$)
 
 my $fe_file = "$dir/linux/dvb/frontend.h";
 
-copy $fe_file, "dvb_frontend.h";
+copy $fe_file, "../include/dvb-frontend.h";
 
 # Generate a header file with the API conversions
 open OUT, ">dvb-v5.h" or die "Can't write on dvb-v5.h";
@@ -481,7 +481,7 @@ print OUT <<EOF;
  */
 #ifndef _DVB_V5_CONSTS_H
 #define _DVB_V5_CONSTS_H
-#include "dvb_frontend.h"
+#include "../include/dvb_frontend.h"
 EOF
 output_arrays ("fe_caps_name", \%fe_caps, "unsigned", 1, 1);
 output_arrays ("fe_status_name", \%fe_status, "unsigned", 1, 1);
@@ -508,7 +508,10 @@ print OUT <<EOF;
 /*
  * File auto-generated from the kernel sources. Please, don't edit it
  */
+#include <stddef.h>
+
 #include "dvb-v5.h"
+
 EOF
 output_arrays ("fe_caps_name", \%fe_caps, "unsigned", 1, 0);
 output_arrays ("fe_status_name", \%fe_status, "unsigned", 1, 0);
