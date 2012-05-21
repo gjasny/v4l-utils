@@ -53,12 +53,12 @@ void dvb_default_log(int level, const char *fmt, ...)
 	if(STDERR_FILENO == loglevels[level].fd)
 		out = stderr;
 	if(isatty(loglevels[level].fd))
-		fprintf(out, loglevels[level].color);
+		fputs(loglevels[level].color, out);
 	fprintf(out, "%s ", loglevels[level].name);
 	vfprintf(out, fmt, ap);
 	fprintf(out, "\n");
 	if(isatty(loglevels[level].fd))
-		fprintf(out, loglevels[LOG_COLOROFF].color);
+		fputs(loglevels[LOG_COLOROFF].color, out);
 	va_end(ap);
 }
 
