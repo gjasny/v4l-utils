@@ -25,6 +25,7 @@
 #include <QComboBox>
 #include <QPushButton>
 
+#include <stdio.h>
 #include <errno.h>
 
 GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) :
@@ -38,6 +39,8 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_qryStandard(NULL),
 	m_videoPreset(NULL),
 	m_qryPreset(NULL),
+	m_videoTimings(NULL),
+	m_qryTimings(NULL),
 	m_freq(NULL),
 	m_vidCapFormats(NULL),
 	m_frameSize(NULL),
@@ -66,6 +69,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	v4l2_input vin;
 	bool needsStd = false;
 	bool needsPreset = false;
+	bool needsTimings = false;
 
 	if (enum_input(vin, true)) {
 		addLabel("Input");
@@ -76,6 +80,8 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 				needsStd = true;
 			if (vin.capabilities & V4L2_IN_CAP_PRESETS)
 				needsPreset = true;
+			if (vin.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS)
+				needsTimings = true;
 		} while (enum_input(vin));
 		addWidget(m_videoInput);
 		connect(m_videoInput, SIGNAL(activated(int)), SLOT(inputChanged(int)));
@@ -139,6 +145,18 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_qryPreset = new QPushButton("Query Preset", parent);
 		addWidget(m_qryPreset);
 		connect(m_qryPreset, SIGNAL(clicked()), SLOT(qryPresetClicked()));
+	}
+
+	if (needsTimings) {
+		addLabel("Video Timings");
+		m_videoTimings = new QComboBox(parent);
+		addWidget(m_videoTimings);
+		connect(m_videoTimings, SIGNAL(activated(int)), SLOT(timingsChanged(int)));
+		refreshTimings();
+		addLabel("");
+		m_qryTimings = new QPushButton("Query Timings", parent);
+		addWidget(m_qryTimings);
+		connect(m_qryTimings, SIGNAL(clicked()), SLOT(qryTimingsClicked()));
 	}
 
 	if (m_tuner.type) {
@@ -315,6 +333,15 @@ void GeneralTab::presetChanged(int index)
 	updatePreset();
 }
 
+void GeneralTab::timingsChanged(int index)
+{
+	v4l2_enum_dv_timings timings;
+
+	enum_dv_timings(timings, true, index);
+	s_dv_timings(timings.timings);
+	updateTimings();
+}
+
 void GeneralTab::freqTableChanged(int)
 {
 	updateFreqChannel();
@@ -436,6 +463,12 @@ void GeneralTab::updateVideoInput()
 		m_videoPreset->setEnabled(in.capabilities & V4L2_IN_CAP_PRESETS);
 		m_qryPreset->setEnabled(in.capabilities & V4L2_IN_CAP_PRESETS);
 	}
+	if (m_videoTimings) {
+		refreshTimings();
+		updateTimings();
+		m_videoTimings->setEnabled(in.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS);
+		m_qryTimings->setEnabled(in.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS);
+	}
 }
 
 void GeneralTab::updateVideoOutput()
@@ -454,6 +487,10 @@ void GeneralTab::updateVideoOutput()
 	if (m_videoPreset) {
 		m_videoPreset->setEnabled(out.capabilities & V4L2_OUT_CAP_PRESETS);
 		m_qryPreset->setEnabled(out.capabilities & V4L2_OUT_CAP_PRESETS);
+	}
+	if (m_videoTimings) {
+		m_videoTimings->setEnabled(out.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS);
+		m_qryTimings->setEnabled(out.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS);
 	}
 }
 
@@ -579,6 +616,59 @@ void GeneralTab::qryPresetClicked()
 	if (query_dv_preset(preset)) {
 		s_dv_preset(preset.preset);
 		updatePreset();
+	}
+}
+
+void GeneralTab::refreshTimings()
+{
+	v4l2_enum_dv_timings timings;
+	m_videoTimings->clear();
+	if (enum_dv_timings(timings, true)) {
+		do {
+			v4l2_bt_timings &bt = timings.timings.bt;
+			char buf[100];
+
+			sprintf(buf, "%dx%d%c%.2f", bt.width, bt.height,
+					bt.interlaced ? 'i' : 'p',
+					(double)bt.pixelclock /
+						((bt.width + bt.hfrontporch + bt.hsync + bt.hbackporch) *
+						 (bt.height + bt.vfrontporch + bt.vsync + bt.vbackporch +
+						  bt.il_vfrontporch + bt.il_vsync + bt.il_vbackporch)));
+			m_videoTimings->addItem(buf);
+		} while (enum_dv_timings(timings));
+	}
+}
+
+void GeneralTab::updateTimings()
+{
+	v4l2_dv_timings timings;
+	v4l2_enum_dv_timings p;
+	QString what;
+
+	g_dv_timings(timings);
+	if (enum_dv_timings(p, true)) {
+		do {
+			if (!memcmp(&timings, &p.timings, sizeof(timings)))
+				break;
+		} while (enum_dv_timings(p));
+	}
+	if (memcmp(&timings, &p.timings, sizeof(timings)))
+		return;
+	m_videoTimings->setCurrentIndex(p.index);
+	what.sprintf("Video Timings (%u)\n"
+		"Frame %ux%u\n",
+		p.index, p.timings.bt.width, p.timings.bt.height);
+	m_videoTimings->setWhatsThis(what);
+	updateVidCapFormat();
+}
+
+void GeneralTab::qryTimingsClicked()
+{
+	v4l2_dv_timings timings;
+
+	if (query_dv_timings(timings)) {
+		s_dv_timings(timings);
+		updateTimings();
 	}
 }
 
