@@ -167,8 +167,11 @@ enum Option {
 	OptSetDvPreset,
 	OptGetDvPreset,
 	OptQueryDvPreset,
-	OptGetDvBtTimings,
+	OptListDvTimings,
+	OptQueryDvTimings,
+	OptGetDvTimings,
 	OptSetDvBtTimings,
+	OptGetDvTimingsCap,
 	OptFreqSeek,
 	OptEncoderCmd,
 	OptTryEncoderCmd,
@@ -333,8 +336,11 @@ static struct option long_options[] = {
 	{"set-dv-presets", required_argument, 0, OptSetDvPreset},
 	{"get-dv-presets", no_argument, 0, OptGetDvPreset},
 	{"query-dv-presets", no_argument, 0, OptQueryDvPreset},
-	{"get-dv-bt-timings", no_argument, 0, OptGetDvBtTimings},
+	{"list-dv-timings", no_argument, 0, OptListDvTimings},
+	{"query-dv-timings", no_argument, 0, OptQueryDvTimings},
+	{"get-dv-timings", no_argument, 0, OptGetDvTimings},
 	{"set-dv-bt-timings", required_argument, 0, OptSetDvBtTimings},
+	{"get-dv-timings-cap", no_argument, 0, OptGetDvTimingsCap},
 	{"freq-seek", required_argument, 0, OptFreqSeek},
 	{"encoder-cmd", required_argument, 0, OptEncoderCmd},
 	{"try-encoder-cmd", required_argument, 0, OptTryEncoderCmd},
@@ -554,7 +560,12 @@ static void usage(void)
 	       "                     set the digital video preset to <num> [VIDIOC_S_DV_PRESET]\n"
 	       "  --get-dv-preset    query the digital video preset in use [VIDIOC_G_DV_PRESET]\n"
 	       "  --query-dv-preset  query the detected digital video preset [VIDIOC_QUERY_DV_PRESET]\n"
-	       "  --set-dv-bt-timings=width=<width>,height=<height>,interlaced=<0/1>,\n"
+	       "  --list-dv-timings  list the standard supported digital video timings [VIDIOC_ENUM_DV_TIMINGS]\n"
+	       "  --set-dv-bt-timings\n"
+	       "		     no arguments: use the output of VIDIOC_QUERY_DV_PRESET\n"
+	       "		     index=<index>: use the index as provided by --list-dv-presets\n"
+	       "		     or give a fully specified timings:\n"
+	       "		     width=<width>,height=<height>,interlaced=<0/1>,\n"
 	       "                     polarities=<polarities mask>,pixelclock=<pixelclock Hz>,\n"
 	       "                     hfp=<horizontal front porch>,hs=<horizontal sync>,\n"
 	       "                     hbp=<horizontal back porch>,vfp=<vertical front porch>,\n"
@@ -563,8 +574,10 @@ static void usage(void)
 	       "                     il_vs=<vertical sync for bottom field>,\n"
 	       "                     il_vbp=<vertical back porch for bottom field>,\n"
 	       "                     set the digital video timings according to the BT 656/1120 standard [VIDIOC_S_DV_TIMINGS]\n"
-	       "  --get-dv-bt-timings\n"
-	       "                     get the digital video timings in use [VIDIOC_G_DV_TIMINGS]\n"
+	       "  --get-dv-timings   get the digital video timings in use [VIDIOC_G_DV_TIMINGS]\n"
+	       "  --query-dv-timings query the detected digital video timings [VIDIOC_QUERY_DV_TIMINGS]\n"
+	       "  --get-dv-timings-cap\n"
+	       "                     get the digital video timings capabilities [VIDIOC_DV_TIMINGS_CAP]\n"
 	       "  --freq-seek=dir=<0/1>,wrap=<0/1>,spacing=<hz>\n"
 	       "                     perform a hardware frequency seek [VIDIOC_S_HW_FREQ_SEEK]\n"
 	       "                     dir is 0 (seek downward) or 1 (seek upward)\n"
@@ -773,7 +786,7 @@ static std::string status2s(__u32 status)
 
 static const flag_def input_cap_def[] = {
 	{V4L2_IN_CAP_PRESETS, "DV presets" },
-	{V4L2_IN_CAP_CUSTOM_TIMINGS, "custom DV timings" },
+	{V4L2_IN_CAP_CUSTOM_TIMINGS, "DV timings" },
 	{V4L2_IN_CAP_STD, "SD presets" },
 	{ 0, NULL }
 };
@@ -785,7 +798,7 @@ static std::string input_cap2s(__u32 capabilities)
 
 static const flag_def output_cap_def[] = {
 	{V4L2_OUT_CAP_PRESETS, "DV presets" },
-	{V4L2_OUT_CAP_CUSTOM_TIMINGS, "custom DV timings" },
+	{V4L2_OUT_CAP_CUSTOM_TIMINGS, "DV timings" },
 	{V4L2_OUT_CAP_STD, "SD presets" },
 	{ 0, NULL }
 };
@@ -1904,80 +1917,6 @@ static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
 	}
 }
 
-static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings)
-{
-    char *value;
-    char *subs = optarg;
-    struct v4l2_bt_timings *bt = &dv_timings->bt;
-
-    dv_timings->type = V4L2_DV_BT_656_1120;
-
-    while (*subs != '\0') {
-	    static const char *const subopts[] = {
-		    "width",
-		    "height",
-		    "interlaced",
-		    "polarities",
-		    "pixelclock",
-		    "hfp",
-		    "hs",
-		    "hbp",
-		    "vfp",
-		    "vs",
-		    "vbp",
-		    "il_vfp",
-		    "il_vs",
-		    "il_vbp",
-		    NULL
-	    };
-
-	    switch (parse_subopt(&subs, subopts, &value)) {
-	    case 0:
-		    bt->width = atoi(value);
-		    break;
-	    case 1:
-		    bt->height = strtol(value, 0L, 0);
-		    break;
-	    case 2:
-		    bt->interlaced = strtol(value, 0L, 0);
-		    break;
-	    case 3:
-		    bt->polarities = strtol(value, 0L, 0);
-		    break;
-	    case 4:
-		    bt->pixelclock = strtol(value, 0L, 0);
-		    break;
-	    case 5:
-		    bt->hfrontporch = strtol(value, 0L, 0);
-		    break;
-	    case 6:
-		    bt->hsync = strtol(value, 0L, 0);
-		    break;
-	    case 7:
-		    bt->hbackporch = strtol(value, 0L, 0);
-		    break;
-	    case 8:
-		    bt->vfrontporch = strtol(value, 0L, 0);
-		    break;
-	    case 9:
-		    bt->vsync = strtol(value, 0L, 0);
-		    break;
-	    case 10:
-		    bt->vbackporch = strtol(value, 0L, 0);
-		    break;
-	    case 11:
-		    bt->il_vfrontporch = strtol(value, 0L, 0);
-		    break;
-	    case 12:
-		    bt->il_vsync = strtol(value, 0L, 0);
-		    break;
-	    case 13:
-		    bt->il_vbackporch = strtol(value, 0L, 0);
-		    break;
-	    }
-    }
-}
-
 static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 {
 	char *value;
@@ -2029,6 +1968,156 @@ static int parse_decflags(const char *s)
 	if (!strcmp(s, "stop_to_black")) return V4L2_DEC_CMD_STOP_TO_BLACK;
 	if (!strcmp(s, "stop_immediately")) return V4L2_DEC_CMD_STOP_IMMEDIATELY;
 	return 0;
+}
+
+static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings,
+		bool &query, int &enumerate)
+{
+	char *value;
+	char *subs = optarg;
+	struct v4l2_bt_timings *bt = &dv_timings->bt;
+
+	dv_timings->type = V4L2_DV_BT_656_1120;
+
+	if (optarg == NULL || *optarg == '\0') {
+		query = true;
+		return;
+	}
+	while (*subs != '\0') {
+		static const char *const subopts[] = {
+			"width",
+			"height",
+			"interlaced",
+			"polarities",
+			"pixelclock",
+			"hfp",
+			"hs",
+			"hbp",
+			"vfp",
+			"vs",
+			"vbp",
+			"il_vfp",
+			"il_vs",
+			"il_vbp",
+			"index",
+			NULL
+		};
+
+		switch (parse_subopt(&subs, subopts, &value)) {
+		case 0:
+			bt->width = atoi(value);
+			break;
+		case 1:
+			bt->height = strtol(value, 0L, 0);
+			break;
+		case 2:
+			bt->interlaced = strtol(value, 0L, 0);
+			break;
+		case 3:
+			bt->polarities = strtol(value, 0L, 0);
+			break;
+		case 4:
+			bt->pixelclock = strtol(value, 0L, 0);
+			break;
+		case 5:
+			bt->hfrontporch = strtol(value, 0L, 0);
+			break;
+		case 6:
+			bt->hsync = strtol(value, 0L, 0);
+			break;
+		case 7:
+			bt->hbackporch = strtol(value, 0L, 0);
+			break;
+		case 8:
+			bt->vfrontporch = strtol(value, 0L, 0);
+			break;
+		case 9:
+			bt->vsync = strtol(value, 0L, 0);
+			break;
+		case 10:
+			bt->vbackporch = strtol(value, 0L, 0);
+			break;
+		case 11:
+			bt->il_vfrontporch = strtol(value, 0L, 0);
+			break;
+		case 12:
+			bt->il_vsync = strtol(value, 0L, 0);
+			break;
+		case 13:
+			bt->il_vbackporch = strtol(value, 0L, 0);
+			break;
+		case 14:
+			enumerate = strtol(value, 0L, 0);
+			break;
+		}
+	}
+}
+
+
+static const flag_def dv_standards_def[] = {
+	{ V4L2_DV_BT_STD_CEA861, "CEA-861" },
+	{ V4L2_DV_BT_STD_DMT, "DMT" },
+	{ V4L2_DV_BT_STD_CVT, "CVT" },
+	{ V4L2_DV_BT_STD_GTF, "GTF" },
+	{ 0, NULL }
+};
+
+static const flag_def dv_flags_def[] = {
+	{ V4L2_DV_FL_REDUCED_BLANKING, "reduced blanking" },
+	{ V4L2_DV_FL_CAN_REDUCE_FPS, "framerate can be reduced by 1/1.001" },
+	{ V4L2_DV_FL_REDUCED_FPS, "framerate is reduced by 1/1.001" },
+	{ V4L2_DV_FL_HALF_LINE, "half-line" },
+	{ 0, NULL }
+};
+
+static void print_dv_timings(const struct v4l2_dv_timings *t)
+{
+	const struct v4l2_bt_timings *bt;
+
+	switch (t->type) {
+	case V4L2_DV_BT_656_1120:
+		bt = &t->bt;
+
+		printf("\tActive width: %d\n", bt->width);
+		printf("\tActive height: %d\n", bt->height);
+		printf("\tTotal width: %d\n",bt->width +
+				bt->hfrontporch + bt->hsync + bt->hbackporch);
+		printf("\tTotal height: %d\n", bt->height +
+				bt->vfrontporch + bt->vsync + bt->vbackporch +
+				bt->il_vfrontporch + bt->il_vsync + bt->il_vbackporch);
+
+		printf("\tFrame format: %s\n", bt->interlaced ? "interlaced" : "progressive");
+		printf("\tPolarities: %cvsync %chsync\n",
+				(bt->polarities & V4L2_DV_VSYNC_POS_POL) ? '+' : '-',
+				(bt->polarities & V4L2_DV_HSYNC_POS_POL) ? '+' : '-');
+		printf("\tPixelclock: %lld Hz", bt->pixelclock);
+		if (bt->width && bt->height)
+			printf(" (%.2f fps)", (double)bt->pixelclock /
+					((bt->width + bt->hfrontporch + bt->hsync + bt->hbackporch) *
+					 (bt->height + bt->vfrontporch + bt->vsync + bt->vbackporch +
+					  bt->il_vfrontporch + bt->il_vsync + bt->il_vbackporch)));
+		printf("\n");
+		printf("\tHorizontal frontporch: %d\n", bt->hfrontporch);
+		printf("\tHorizontal sync: %d\n", bt->hsync);
+		printf("\tHorizontal backporch: %d\n", bt->hbackporch);
+		if (bt->interlaced)
+			printf("\tField 1:\n");
+		printf("\tVertical frontporch: %d\n", bt->vfrontporch);
+		printf("\tVertical sync: %d\n", bt->vsync);
+		printf("\tVertical backporch: %d\n", bt->vbackporch);
+		if (bt->interlaced) {
+			printf("\tField 2:\n");
+			printf("\tVertical frontporch: %d\n", bt->il_vfrontporch);
+			printf("\tVertical sync: %d\n", bt->il_vsync);
+			printf("\tVertical backporch: %d\n", bt->il_vbackporch);
+		}
+		printf("\tStandards: %s\n", flags2s(bt->standards, dv_standards_def).c_str());
+		printf("\tFlags: %s\n", flags2s(bt->flags, dv_flags_def).c_str());
+		break;
+	default:
+		printf("Timing type not defined\n");
+		break;
+	}
 }
 
 static enum v4l2_field parse_field(const char *s)
@@ -2095,12 +2184,12 @@ static __u32 parse_event(const char *e, const char **name)
 		event = V4L2_EVENT_EOS;
 	else if (!strcmp(e, "vsync"))
 		event = V4L2_EVENT_VSYNC;
+	else if (!strcmp(e, "frame_sync"))
+		event = V4L2_EVENT_FRAME_SYNC;
 	else if (!strncmp(e, "ctrl=", 5)) {
 		event = V4L2_EVENT_CTRL;
 		*name = e + 5;
 	}
-	else if (!strcmp(e, "frame_sync"))
-		event = V4L2_EVENT_FRAME_SYNC;
 
 	if (event == 0) {
 		fprintf(stderr, "Unknown event\n");
@@ -2169,8 +2258,12 @@ int main(int argc, char **argv)
 	struct v4l2_jpegcompression jpegcomp; /* jpeg compression */
 	struct v4l2_streamparm parm;	/* get/set parm */
 	struct v4l2_dv_enum_preset dv_enum_preset; /* list_dv_preset */
+	struct v4l2_enum_dv_timings dv_enum_timings; /* list_dv_timings */
 	struct v4l2_dv_preset dv_preset; /* set_dv_preset/get_dv_preset/query_dv_preset */
-	struct v4l2_dv_timings dv_timings; /* set_dv_bt_timings/get_dv_bt_timings */
+	struct v4l2_dv_timings dv_timings; /* set_dv_bt_timings/get_dv_timings/query_dv_timings */
+	bool query_and_set_dv_timings = false;
+	int enum_and_set_dv_timings = -1;
+	struct v4l2_dv_timings_cap dv_timings_cap; /* get_dv_timings_cap */
 	struct v4l2_encoder_cmd enc_cmd; /* (try_)encoder_cmd */
 	struct v4l2_decoder_cmd dec_cmd; /* (try_)decoder_cmd */
 	int input;			/* set_input/get_input */
@@ -2716,7 +2809,8 @@ int main(int argc, char **argv)
 			dv_preset.preset = strtoul(optarg, 0L, 0);
 			break;
 		case OptSetDvBtTimings:
-			parse_dv_bt_timings(optarg, &dv_timings);
+			parse_dv_bt_timings(optarg, &dv_timings,
+					query_and_set_dv_timings, enum_and_set_dv_timings);
 			break;
 		case OptFreqSeek:
 			parse_freq_seek(optarg, freq_seek);
@@ -2856,7 +2950,8 @@ int main(int argc, char **argv)
 		options[OptGetOutputCropCap] = 1;
 		options[OptGetJpegComp] = 1;
 		options[OptGetDvPreset] = 1;
-		options[OptGetDvBtTimings] = 1;
+		options[OptGetDvTimings] = 1;
+		options[OptGetDvTimingsCap] = 1;
 		options[OptGetPriority] = 1;
 		options[OptSilent] = 1;
 	}
@@ -2935,6 +3030,16 @@ int main(int argc, char **argv)
 	}
 
         if (options[OptSetDvBtTimings]){
+		struct v4l2_enum_dv_timings et;
+
+		if (query_and_set_dv_timings)
+			doioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &dv_timings);
+		if (enum_and_set_dv_timings >= 0) {
+			memset(&et, 0, sizeof(et));
+			et.index = enum_and_set_dv_timings;
+			doioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &et);
+			dv_timings = et.timings;
+		}
 		if (doioctl(fd, VIDIOC_S_DV_TIMINGS, &dv_timings) >= 0) {
 			printf("BT timings set\n");
 		}
@@ -3532,40 +3637,38 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (options[OptGetDvBtTimings]) {
+	if (options[OptGetDvTimings]) {
 		if (doioctl(fd, VIDIOC_G_DV_TIMINGS, &dv_timings) >= 0) {
-			struct v4l2_bt_timings *bt;
-
 			printf("DV timings:\n");
+			print_dv_timings(&dv_timings);
+		}
+	}
 
-			switch (dv_timings.type) {
-			case V4L2_DV_BT_656_1120:
-				bt = &dv_timings.bt;
+	if (options[OptGetDvTimingsCap]) {
+		if (doioctl(fd, VIDIOC_DV_TIMINGS_CAP, &dv_timings_cap) >= 0) {
+			static const flag_def dv_caps_def[] = {
+				{ V4L2_DV_BT_CAP_INTERLACED, "Interlaced" },
+				{ V4L2_DV_BT_CAP_PROGRESSIVE, "Progressive" },
+				{ V4L2_DV_BT_CAP_REDUCED_BLANKING, "Reduced Blanking" },
+				{ V4L2_DV_BT_CAP_CUSTOM, "Custom Formats" },
+				{ 0, NULL }
+			};
+			struct v4l2_bt_timings_cap *bt = &dv_timings_cap.bt;
 
-				printf("\tWidth: %d\n",bt->width);
-				printf("\tHeight: %d\n", bt->height);
-
-				printf("\tFrame format: %s\n", bt->interlaced ? "interlaced" : "progressive");
-				printf("\tPolarities: %d\n", bt->polarities);
-				printf("\tPixelclock: %lld Hz\n", bt->pixelclock);
-				printf("\tHorizontal frontporch: %d\n", bt->hfrontporch);
-				printf("\tHorizontal sync: %d\n", bt->hsync);
-				printf("\tHorizontal backporch: %d\n", bt->hbackporch);
-				if (bt->interlaced)
-					printf("\tFrame 1:\n");
-				printf("\tVertical frontporch: %d\n", bt->vfrontporch);
-				printf("\tVertical sync: %d\n", bt->vsync);
-				printf("\tVertical backporch: %d\n", bt->vbackporch);
-				if (bt->interlaced) {
-					printf("\tFrame 2:\n");
-					printf("\tVertical frontporch: %d\n", bt->il_vfrontporch);
-					printf("\tVertical sync: %d\n", bt->il_vsync);
-					printf("\tVertical backporch: %d\n", bt->il_vbackporch);
-				}
-				break;
-			default:
-				printf("Timing type not defined\n");
-				break;
+			printf("DV timings capabilities:\n");
+			if (dv_timings_cap.type != V4L2_DV_BT_656_1120)
+				printf("\tUnknown type\n");
+			else {
+				printf("\tMinimum Width: %u\n", bt->min_width);
+				printf("\tMaximum Width: %u\n", bt->max_width);
+				printf("\tMinimum Height: %u\n", bt->min_height);
+				printf("\tMaximum Height: %u\n", bt->max_height);
+				printf("\tMinimum PClock: %llu\n", bt->min_pixelclock);
+				printf("\tMaximum PClock: %llu\n", bt->max_pixelclock);
+				printf("\tStandards: %s\n",
+					flags2s(bt->standards, dv_standards_def).c_str());
+				printf("\tCapabilities: %s\n",
+					flags2s(bt->capabilities, dv_caps_def).c_str());
 			}
 		}
 	}
@@ -3584,6 +3687,11 @@ int main(int argc, char **argv)
                 } else {
                         fprintf(stderr, "No active input detected\n");
                 }
+        }
+
+        if (options[OptQueryDvTimings]) {
+                doioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &dv_timings);
+		print_dv_timings(&dv_timings);
         }
 
         if (options[OptGetParm]) {
@@ -3934,6 +4042,19 @@ int main(int argc, char **argv)
 			dv_enum_preset.index++;
 		}
 	}
+
+	if (options[OptListDvTimings]) {
+		dv_enum_timings.index = 0;
+		printf("ioctl: VIDIOC_ENUM_DV_TIMINGS\n");
+		while (test_ioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &dv_enum_timings) >= 0) {
+			if (dv_enum_timings.index)
+				printf("\n");
+			printf("\tIndex: %d\n", dv_enum_timings.index);
+			print_dv_timings(&dv_enum_timings.timings);
+			dv_enum_timings.index++;
+		}
+	}
+
 	if (options[OptStreamOn]) {
 		int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
