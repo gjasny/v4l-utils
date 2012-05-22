@@ -40,7 +40,7 @@
 
 #define CTRL_FLAG_DISABLED (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE | V4L2_CTRL_FLAG_GRABBED)
 
-static bool is_valid_type(enum v4l2_ctrl_type type)
+static bool is_valid_type(__u32 type)
 {
 	switch (type) {
 	case V4L2_CTRL_TYPE_INTEGER:

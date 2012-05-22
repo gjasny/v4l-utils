@@ -167,7 +167,7 @@ int testTunerFreq(struct node *node)
 		ret = doioctl(node, VIDIOC_G_TUNER, &tuner);
 		if (ret)
 			return fail("could not get tuner %d\n", t);
-		last_type = tuner.type;
+		last_type = (enum v4l2_tuner_type)tuner.type;
 		memset(&freq, 0, sizeof(freq));
 		freq.tuner = t;
 		ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
