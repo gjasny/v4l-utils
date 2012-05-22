@@ -234,6 +234,22 @@ bool v4l2::query_dv_preset(v4l2_dv_preset &preset)
 	return ioctl("Query Preset", VIDIOC_QUERY_DV_PRESET, &preset);
 }
 
+bool v4l2::g_dv_timings(v4l2_dv_timings &timings)
+{
+	int err = ioctl(VIDIOC_G_DV_TIMINGS, &timings);
+	return err >= 0;
+}
+
+bool v4l2::s_dv_timings(v4l2_dv_timings &timings)
+{
+	return ioctl("Set Timings", VIDIOC_S_DV_TIMINGS, &timings);
+}
+
+bool v4l2::query_dv_timings(v4l2_dv_timings &timings)
+{
+	return ioctl("Query Timings", VIDIOC_QUERY_DV_TIMINGS, &timings);
+}
+
 
 bool v4l2::g_frequency(v4l2_frequency &freq)
 {
@@ -344,6 +360,17 @@ bool v4l2::enum_dv_preset(v4l2_dv_enum_preset &preset, bool init, int index)
 		preset.index++;
 	}
 	return ioctl(VIDIOC_ENUM_DV_PRESETS, &preset) >= 0;
+}
+
+bool v4l2::enum_dv_timings(v4l2_enum_dv_timings &timings, bool init, int index)
+{
+	if (init) {
+		memset(&timings, 0, sizeof(timings));
+		timings.index = index;
+	} else {
+		timings.index++;
+	}
+	return ioctl(VIDIOC_ENUM_DV_TIMINGS, &timings) >= 0;
 }
 
 bool v4l2::enum_fmt_cap(v4l2_fmtdesc &fmt, bool init, int index)

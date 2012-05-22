@@ -53,6 +53,8 @@ private slots:
 	void qryStdClicked();
 	void presetChanged(int);
 	void qryPresetClicked();
+	void timingsChanged(int);
+	void qryTimingsClicked();
 	void freqTableChanged(int);
 	void freqChannelChanged(int);
 	void freqChanged(int);
@@ -72,6 +74,8 @@ private:
 	void updateStandard();
 	void refreshPresets();
 	void updatePreset();
+	void refreshTimings();
+	void updateTimings();
 	void updateFreq();
 	void updateFreqChannel();
 	void updateVidCapFormat();
@@ -112,6 +116,8 @@ private:
 	QPushButton *m_qryStandard;
 	QComboBox *m_videoPreset;
 	QPushButton *m_qryPreset;
+	QComboBox *m_videoTimings;
+	QPushButton *m_qryTimings;
 	QSpinBox  *m_freq;
 	QComboBox *m_freqTable;
 	QComboBox *m_freqChannel;

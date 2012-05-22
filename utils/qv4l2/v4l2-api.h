@@ -69,6 +69,9 @@ public:
 	bool s_dv_preset(__u32 preset);
 	bool g_dv_preset(__u32 &preset);
 	bool query_dv_preset(v4l2_dv_preset &preset);
+	bool s_dv_timings(v4l2_dv_timings &timings);
+	bool g_dv_timings(v4l2_dv_timings &timings);
+	bool query_dv_timings(v4l2_dv_timings &timings);
 	bool g_frequency(v4l2_frequency &freq);
 	bool s_frequency(v4l2_frequency &freq);
 	bool s_frequency(int freq);
@@ -82,6 +85,7 @@ public:
 	bool enum_audout(v4l2_audioout &audout, bool init = false);
 	bool enum_std(v4l2_standard &std, bool init = false, int index = 0);
 	bool enum_dv_preset(v4l2_dv_enum_preset &preset, bool init = false, int index = 0);
+	bool enum_dv_timings(v4l2_enum_dv_timings &timings, bool init = false, int index = 0);
 	bool enum_fmt_cap(v4l2_fmtdesc &std, bool init = false, int index = 0);
 	bool enum_fmt_out(v4l2_fmtdesc &std, bool init = false, int index = 0);
 	bool enum_framesizes(v4l2_frmsizeenum &frm, __u32 init_pixfmt = 0, int index = 0);
