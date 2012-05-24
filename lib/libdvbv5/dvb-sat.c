@@ -349,7 +349,7 @@ int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
 {
 	struct dvb_sat_lnb *lnb = parms->lnb;
 	enum dvb_sat_polarization pol;
-	dvb_fe_retrieve_parm(parms, DTV_POLARIZATION,& pol);
+	dvb_fe_retrieve_parm(parms, DTV_POLARIZATION, &pol);
 	uint32_t freq;
 	uint16_t t = 0;
 	uint32_t voltage = SEC_VOLTAGE_13;
@@ -364,27 +364,27 @@ int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
 
 	/* Simple case: LNBf with just Single LO */
 	if (!lnb->highfreq) {
-		parms->freq_offset = lnb->lowfreq;
+		parms->freq_offset = lnb->lowfreq * 1000;
 		goto ret;
 	}
 
 	/* polarization-controlled multi LNBf */
 	if (!lnb->rangeswitch) {
 		if ((pol == POLARIZATION_V) || (pol == POLARIZATION_R))
-			parms->freq_offset = lnb->lowfreq;
+			parms->freq_offset = lnb->lowfreq * 1000;
 		else
-			parms->freq_offset = lnb->highfreq;
+			parms->freq_offset = lnb->highfreq * 1000;
 		goto ret;
 	}
 
 	/* Voltage-controlled multiband switch */
-	parms->high_band = (freq > lnb->rangeswitch) ? 1 : 0;
+	parms->high_band = (freq > lnb->rangeswitch * 1000) ? 1 : 0;
 
 	/* Adjust frequency */
 	if (parms->high_band)
-		parms->freq_offset = lnb->highfreq;
+		parms->freq_offset = lnb->highfreq * 1000;
 	else
-		parms->freq_offset = lnb->lowfreq;
+		parms->freq_offset = lnb->lowfreq * 1000;
 
 	/* For SCR/Unicable setups */
 	if (parms->freq_bpf) {
