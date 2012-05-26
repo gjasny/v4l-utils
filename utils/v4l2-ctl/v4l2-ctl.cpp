@@ -177,6 +177,7 @@ enum Option {
 	OptTryEncoderCmd,
 	OptDecoderCmd,
 	OptTryDecoderCmd,
+	OptTunerIndex,
 	OptLast = 256
 };
 
@@ -346,6 +347,7 @@ static struct option long_options[] = {
 	{"try-encoder-cmd", required_argument, 0, OptTryEncoderCmd},
 	{"decoder-cmd", required_argument, 0, OptDecoderCmd},
 	{"try-decoder-cmd", required_argument, 0, OptTryDecoderCmd},
+	{"tuner-index", required_argument, 0, OptTunerIndex},
 	{0, 0, 0, 0}
 };
 
@@ -394,6 +396,7 @@ static void usage(void)
 	       "  -t, --set-tuner=<mode>\n"
 	       "                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n"
 	       "                     Possible values: mono, stereo, lang2, lang1, bilingual\n"
+	       "  --tuner-index=<idx> Use idx as tuner idx for tuner/modulator commands\n"
 	       "  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n"
 	       "  --list-formats-mplane\n"
  	       "                     display supported video multi-planar formats [VIDIOC_ENUM_FMT]\n"
@@ -2216,6 +2219,7 @@ int main(int argc, char **argv)
 	int i;
 
 	int fd = -1;
+	int tuner_index = 0;
 
 	/* bitfield for fmts */
 	unsigned int set_fmts = 0;
@@ -2870,6 +2874,9 @@ int main(int argc, char **argv)
 				}
 			}
 			break;
+		case OptTunerIndex:
+			tuner_index = strtoul(optarg, NULL, 0);
+			break;
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",
 				argv[optind]);
@@ -2995,21 +3002,23 @@ int main(int argc, char **argv)
 
 		if (capabilities & V4L2_CAP_MODULATOR) {
 			vf.type = V4L2_TUNER_RADIO;
+			modulator.index = tuner_index;
 			if (doioctl(fd, VIDIOC_G_MODULATOR, &modulator) == 0) {
 				fac = (modulator.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
 			}
 		} else {
 			vf.type = V4L2_TUNER_ANALOG_TV;
+			tuner.index = tuner_index;
 			if (doioctl(fd, VIDIOC_G_TUNER, &tuner) == 0) {
 				fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
 				vf.type = tuner.type;
 			}
 		}
-		vf.tuner = 0;
+		vf.tuner = tuner_index;
 		vf.frequency = __u32(freq * fac);
 		if (doioctl(fd, VIDIOC_S_FREQUENCY, &vf) == 0)
-			printf("Frequency set to %d (%f MHz)\n", vf.frequency,
-					vf.frequency / fac);
+			printf("Frequency for tuner %d set to %d (%f MHz)\n",
+			       vf.tuner, vf.frequency, vf.frequency / fac);
 	}
 
 	if (options[OptSetStandard]) {
@@ -3110,6 +3119,7 @@ int main(int argc, char **argv)
 		struct v4l2_tuner vt;
 
 		memset(&vt, 0, sizeof(struct v4l2_tuner));
+		vt.index = tuner_index;
 		if (doioctl(fd, VIDIOC_G_TUNER, &vt) == 0) {
 			vt.audmode = mode;
 			doioctl(fd, VIDIOC_S_TUNER, &vt);
@@ -3120,6 +3130,7 @@ int main(int argc, char **argv)
 		struct v4l2_modulator mt;
 
 		memset(&mt, 0, sizeof(struct v4l2_modulator));
+		mt.index = tuner_index;
 		if (doioctl(fd, VIDIOC_G_MODULATOR, &mt) == 0) {
 			mt.txsubchans = txsubchans;
 			doioctl(fd, VIDIOC_S_MODULATOR, &mt);
@@ -3414,6 +3425,7 @@ int main(int argc, char **argv)
 	}
 	
 	if (options[OptFreqSeek]) {
+		freq_seek.tuner = tuner_index;
 		freq_seek.type = V4L2_TUNER_RADIO;
 		doioctl(fd, VIDIOC_S_HW_FREQ_SEEK, &freq_seek);
 	}
@@ -3607,19 +3619,21 @@ int main(int argc, char **argv)
 
 		if (capabilities & V4L2_CAP_MODULATOR) {
 			vf.type = V4L2_TUNER_RADIO;
+			modulator.index = tuner_index;
 			if (doioctl(fd, VIDIOC_G_MODULATOR, &modulator) == 0)
 				fac = (modulator.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
 		} else {
 			vf.type = V4L2_TUNER_ANALOG_TV;
+			tuner.index = tuner_index;
 			if (doioctl(fd, VIDIOC_G_TUNER, &tuner) == 0) {
 				fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
 				vf.type = tuner.type;
 			}
 		}
-		vf.tuner = 0;
+		vf.tuner = tuner_index;
 		if (doioctl(fd, VIDIOC_G_FREQUENCY, &vf) == 0)
-			printf("Frequency: %d (%f MHz)\n", vf.frequency,
-					vf.frequency / fac);
+			printf("Frequency for tuner %d: %d (%f MHz)\n",
+			       vf.tuner, vf.frequency, vf.frequency / fac);
 	}
 
 	if (options[OptGetStandard]) {
@@ -3796,8 +3810,9 @@ int main(int argc, char **argv)
 		struct v4l2_tuner vt;
 
 		memset(&vt, 0, sizeof(struct v4l2_tuner));
+		vt.index = tuner_index;
 		if (doioctl(fd, VIDIOC_G_TUNER, &vt) == 0) {
-			printf("Tuner:\n");
+			printf("Tuner %d:\n", vt.index);
 			printf("\tName                 : %s\n", vt.name);
 			printf("\tCapabilities         : %s\n", tcap2s(vt.capability).c_str());
 			if (vt.capability & V4L2_TUNER_CAP_LOW)
@@ -3817,8 +3832,9 @@ int main(int argc, char **argv)
 		struct v4l2_modulator mt;
 
 		memset(&mt, 0, sizeof(struct v4l2_modulator));
+		modulator.index = tuner_index;
 		if (doioctl(fd, VIDIOC_G_MODULATOR, &mt) == 0) {
-			printf("Modulator:\n");
+			printf("Modulator %d:\n", modulator.index);
 			printf("\tName                 : %s\n", mt.name);
 			printf("\tCapabilities         : %s\n", tcap2s(mt.capability).c_str());
 			if (mt.capability & V4L2_TUNER_CAP_LOW)
