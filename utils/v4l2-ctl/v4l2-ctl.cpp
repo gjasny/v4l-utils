@@ -3612,9 +3612,6 @@ int main(int argc, char **argv)
 				vf.type = tuner.type;
 			}
 		}
-		if (doioctl(fd, VIDIOC_G_TUNER, &tuner) == 0) {
-			fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
-		}
 		vf.tuner = 0;
 		if (doioctl(fd, VIDIOC_G_FREQUENCY, &vf) == 0)
 			printf("Frequency: %d (%f MHz)\n", vf.frequency,
