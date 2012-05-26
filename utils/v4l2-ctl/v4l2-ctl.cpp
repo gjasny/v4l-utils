@@ -3603,6 +3603,7 @@ int main(int argc, char **argv)
 		double fac = 16;
 
 		if (capabilities & V4L2_CAP_MODULATOR) {
+			vf.type = V4L2_TUNER_RADIO;
 			if (doioctl(fd, VIDIOC_G_MODULATOR, &modulator) == 0)
 				fac = (modulator.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
 		} else {
