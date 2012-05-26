@@ -438,13 +438,15 @@ int testSimpleControls(struct node *node)
 	}
 	ctrl.id = 0;
 	ret = doioctl(node, VIDIOC_G_CTRL, &ctrl);
-	if (ret != EINVAL)
+	if (ret != EINVAL && ret != ENOTTY)
 		return fail("g_ctrl accepted invalid control ID\n");
 	ctrl.id = 0;
 	ctrl.value = 0;
 	ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-	if (ret != EINVAL)
+	if (ret != EINVAL && ret != ENOTTY)
 		return fail("s_ctrl accepted invalid control ID\n");
+	if (ret == ENOTTY && node->controls.empty())
+		return ENOTTY;
 	return 0;
 }
 
@@ -715,6 +717,8 @@ int testControlEvents(struct node *node)
 		if (ret)
 			return fail("unsubscribe event for control '%s' failed\n", iter->name);
 	}
+	if (node->controls.empty())
+		return ENOTTY;
 	return 0;
 }
 

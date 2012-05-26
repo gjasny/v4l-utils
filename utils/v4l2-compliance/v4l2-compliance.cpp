@@ -475,7 +475,10 @@ int main(int argc, char **argv)
 	}
 
 	doioctl(&node, VIDIOC_QUERYCAP, &vcap);
-	node.caps = vcap.capabilities;
+	if (vcap.capabilities & V4L2_CAP_DEVICE_CAPS)
+		node.caps = vcap.device_caps;
+	else
+		node.caps = vcap.capabilities;
 	if (node.caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
 			 V4L2_CAP_SLICED_VBI_CAPTURE | V4L2_CAP_RDS_CAPTURE |
 			 V4L2_CAP_RADIO | V4L2_CAP_TUNER))

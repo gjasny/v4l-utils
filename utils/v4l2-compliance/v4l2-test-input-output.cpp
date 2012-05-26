@@ -58,8 +58,6 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 		return fail("did not expect to see V4L2_TUNER_CAP_LOW set for a tv tuner\n");
 	if (!tv && !(tuner.capability & V4L2_TUNER_CAP_LOW))
 		return fail("V4L2_TUNER_CAP_LOW was not set for a radio tuner\n");
-	if (tv && std == V4L2_STD_NTSC_M && (tuner.capability & V4L2_TUNER_CAP_LANG1))
-		return fail("LANG1 capability, but NTSC-M standard\n");
 	if (tuner.rangelow >= tuner.rangehigh)
 		return fail("rangelow >= rangehigh\n");
 	if (tuner.rangelow == 0 || tuner.rangehigh == 0xffffffff)
