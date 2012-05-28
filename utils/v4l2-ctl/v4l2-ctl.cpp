@@ -351,10 +351,14 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static void usage(void)
+static void usage_hint(void)
 {
-	printf("Usage:\n");
-	printf("Common options:\n"
+	fprintf(stderr, "Try 'v4l2-ctl --help' for more information.\n");
+}
+
+static void usage_common(void)
+{
+	printf("\nGeneral/Common options:\n"
 	       "  --all              display all information available\n"
 	       "  -C, --get-ctrl=<ctrl>[,<ctrl>...]\n"
 	       "                     get the value of the controls [VIDIOC_G_EXT_CTRLS]\n"
@@ -363,163 +367,64 @@ static void usage(void)
 	       "  -D, --info         show driver info [VIDIOC_QUERYCAP]\n"
 	       "  -d, --device=<dev> use device <dev> instead of /dev/video0\n"
 	       "                     if <dev> is a single digit, then /dev/video<dev> is used\n"
-	       "  -F, --get-freq     query the frequency [VIDIOC_G_FREQUENCY]\n"
-	       "  -f, --set-freq=<freq>\n"
-	       "                     set the frequency to <freq> MHz [VIDIOC_S_FREQUENCY]\n"
 	       "  -h, --help         display this help message\n"
-	       "  -I, --get-input    query the video input [VIDIOC_G_INPUT]\n"
-	       "  -i, --set-input=<num>\n"
-	       "                     set the video input to <num> [VIDIOC_S_INPUT]\n"
 	       "  -l, --list-ctrls   display all controls and their values [VIDIOC_QUERYCTRL]\n"
 	       "  -L, --list-ctrls-menus\n"
 	       "		     display all controls, their values and the menus [VIDIOC_QUERYMENU]\n"
-	       "  -N, --list-outputs display video outputs [VIDIOC_ENUMOUTPUT]\n"
-	       "  -n, --list-inputs  display video inputs [VIDIOC_ENUMINPUT]\n"
-	       "  -O, --get-output   query the video output [VIDIOC_G_OUTPUT]\n"
-	       "  -o, --set-output=<num>\n"
-	       "                     set the video output to <num> [VIDIOC_S_OUTPUT]\n"
-	       "  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n"
-	       "  -S, --get-standard\n"
-	       "                     query the video standard [VIDIOC_G_STD]\n"
-	       "  -s, --set-standard=<num>\n"
-	       "                     set the video standard to <num> [VIDIOC_S_STD]\n"
-	       "                     <num> can be a numerical v4l2_std value, or it can be one of:\n"
-	       "                     pal-X (X = B/G/H/N/Nc/I/D/K/M/60) or just 'pal' (V4L2_STD_PAL)\n"
-	       "                     ntsc-X (X = M/J/K) or just 'ntsc' (V4L2_STD_NTSC)\n"
-	       "                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n"
-	       "  --get-detected-standard\n"
-	       "                     display detected input video standard [VIDIOC_QUERYSTD]\n"
-	       "  -P, --get-parm     display video parameters [VIDIOC_G_PARM]\n"
-	       "  -p, --set-parm=<fps>\n"
-	       "                     set video framerate in <fps> [VIDIOC_S_PARM]\n"
+               "  -w, --wrapper      use the libv4l2 wrapper library.\n"
+	       "  --list-devices     list all v4l devices\n"
+	       "  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n"
+	       "  --get-priority     query the current access priority [VIDIOC_G_PRIORITY]\n"
+	       "  --set-priority=<prio>\n"
+	       "                     set the new access priority [VIDIOC_S_PRIORITY]\n"
+	       "                     <prio> is 1 (background), 2 (interactive) or 3 (record)\n"
+	       "  --silent           only set the result code, do not print any messages\n"
+	       "  --sleep=<secs>     sleep for <secs> seconds, call QUERYCAP and close the file handle\n"
+	       "  --verbose          turn on verbose ioctl status reporting\n"
+	       );
+}
+
+static void usage_tuner(void)
+{
+	printf("\nTuner/Modulator options:\n"
+	       "  -F, --get-freq     query the frequency [VIDIOC_G_FREQUENCY]\n"
+	       "  -f, --set-freq=<freq>\n"
+	       "                     set the frequency to <freq> MHz [VIDIOC_S_FREQUENCY]\n"
 	       "  -T, --get-tuner    query the tuner settings [VIDIOC_G_TUNER]\n"
 	       "  -t, --set-tuner=<mode>\n"
 	       "                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n"
 	       "                     Possible values: mono, stereo, lang2, lang1, bilingual\n"
 	       "  --tuner-index=<idx> Use idx as tuner idx for tuner/modulator commands\n"
-	       "  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n"
-	       "  --list-formats-mplane\n"
- 	       "                     display supported video multi-planar formats [VIDIOC_ENUM_FMT]\n"
-	       "  --list-formats-ext display supported video formats including frame sizes\n"
-	       "                     and intervals\n"
-	       "  --list-formats-ext-mplane\n"
-	       "                     display supported video multi-planar formats including\n"
-	       "                     frame sizes and intervals\n"
-	       "  --list-framesizes=<f>\n"
-	       "                     list supported framesizes for pixelformat <f>\n"
-	       "                     [VIDIOC_ENUM_FRAMESIZES]\n"
-	       "                     pixelformat is the fourcc value as a string\n"
-	       "  --list-frameintervals=width=<w>,height=<h>,pixelformat=<f>\n"
-	       "                     list supported frame intervals for pixelformat <f> and\n"
-	       "                     the given width and height [VIDIOC_ENUM_FRAMEINTERVALS]\n"
-	       "                     pixelformat is the fourcc value as a string\n"
-	       "  -V, --get-fmt-video\n"
-	       "     		     query the video capture format [VIDIOC_G_FMT]\n"
-	       "  -v, --set-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
-	       "                     set the video capture format [VIDIOC_S_FMT]\n"
-	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats, or the fourcc value as a string\n"
-               "  -w, --wrapper      use the libv4l2 wrapper library.\n"
-	       "  --list-devices     list all v4l devices\n"
-	       "  --silent           only set the result code, do not print any messages\n"
-	       "  --verbose          turn on verbose ioctl status reporting\n"
-	       "\n");
-	printf("Uncommon options:\n"
-	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
-	       "                     try the video capture format [VIDIOC_TRY_FMT]\n"
-	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats, or the fourcc value as a string\n"
-	       "  --get-fmt-video-mplane\n"
-	       "     		     query the video capture format through the multi-planar API [VIDIOC_G_FMT]\n"
-	       "  --set-fmt-video-mplane\n"
-	       "  --try-fmt-video-mplane=width=<w>,height=<h>,pixelformat=<f>\n"
-	       "                     set/try the video capture format using the multi-planar API [VIDIOC_S/TRY_FMT]\n"
-	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats-mplane, or the fourcc value as a string\n"
-	       "  --list-formats-out display supported video output formats [VIDIOC_ENUM_FMT]\n"
-	       "  --get-fmt-video-out\n"
-	       "     		     query the video output format [VIDIOC_G_FMT]\n"
-	       "  --set-fmt-video-out\n"
-	       "  --try-fmt-video-out=width=<w>,height=<h>,pixelformat=<f>\n"
-	       "                     set/try the video output format [VIDIOC_TRY_FMT]\n"
-	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats-out, or the fourcc value as a string\n"
-	       "  --list-formats-out-mplane\n"
- 	       "                     display supported video output multi-planar formats [VIDIOC_ENUM_FMT]\n"
-	       "  --get-fmt-video-out-mplane\n"
-	       "     		     query the video output format using the multi-planar API [VIDIOC_G_FMT]\n"
-	       "  --set-fmt-video-out-mplane\n"
-	       "  --try-fmt-video-out-mplane=width=<w>,height=<h>,pixelformat=<f>\n"
-	       "                     set/try the video output format with the multi-planar API [VIDIOC_S/TRY_FMT]\n"
-	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats-out-mplane, or the fourcc value as a string\n"
-	       "  --list-formats-overlay\n"
-	       "                     display supported overlay formats [VIDIOC_ENUM_FMT]\n"
-	       "  --get-fmt-overlay  query the video overlay format [VIDIOC_G_FMT]\n"
-	       "  --get-fmt-output-overlay\n"
-	       "     		     query the video output overlay format [VIDIOC_G_FMT]\n"
-	       "  --set-fmt-overlay\n"
-	       "  --try-fmt-overlay\n"
-	       "  --set-fmt-output-overlay\n"
-	       "  --try-fmt-output-overlay=chromakey=<key>,global_alpha=<alpha>,\n"
-	       "                           top=<t>,left=<l>,width=<w>,height=<h>,field=<f>\n"
-	       "     		     set/try the video or video output overlay format [VIDIOC_S/TRY_FMT]\n"
-	       "                     <f> can be one of:\n"
-	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt, alternate,\n"
-	       "                     interlaced_tb, interlaced_bt\n"
-	       "  --get-sliced-vbi-cap\n"
-	       "		     query the sliced VBI capture capabilities [VIDIOC_G_SLICED_VBI_CAP]\n"
-	       "  --get-sliced-vbi-out-cap\n"
-	       "		     query the sliced VBI output capabilities [VIDIOC_G_SLICED_VBI_CAP]\n"
-	       "  -B, --get-fmt-sliced-vbi\n"
-	       "		     query the sliced VBI capture format [VIDIOC_G_FMT]\n"
-	       "  --get-fmt-sliced-vbi-out\n"
-	       "		     query the sliced VBI output format [VIDIOC_G_FMT]\n"
-	       "  -b, --set-fmt-sliced-vbi\n"
-	       "  --try-fmt-sliced-vbi\n"
-	       "  --set-fmt-sliced-vbi-out\n"
-	       "  --try-fmt-sliced-vbi-out=<mode>\n"
-	       "                     set/try the sliced VBI capture/output format to <mode> [VIDIOC_S/TRY_FMT]\n"
-	       "                     <mode> is a comma separated list of:\n"
-	       "                     off:      turn off sliced VBI (cannot be combined with other modes)\n"
-	       "                     teletext: teletext (PAL/SECAM)\n"
-	       "                     cc:       closed caption (NTSC)\n"
-	       "                     wss:      widescreen signal (PAL/SECAM)\n"
-	       "                     vps:      VPS (PAL/SECAM)\n"
-	       "  --get-fmt-vbi      query the VBI capture format [VIDIOC_G_FMT]\n"
-	       "  --get-fmt-vbi-out  query the VBI output format [VIDIOC_G_FMT]\n"
-	       "  --overlay=<on>     turn overlay on (1) or off (0) (VIDIOC_OVERLAY)\n"
-	       "  --get-fbuf         query the overlay framebuffer data [VIDIOC_G_FBUF]\n"
-	       "  --set-fbuf=chromakey=<0/1>,global_alpha=<0/1>,local_alpha=<0/1>,local_inv_alpha=<0/1>\n"
-	       "		     set the overlay framebuffer [VIDIOC_S_FBUF]\n"
-	       "  --get-cropcap      query the crop capabilities [VIDIOC_CROPCAP]\n"
-	       "  --get-crop	     query the video capture crop window [VIDIOC_G_CROP]\n"
-	       "  --set-crop=top=<x>,left=<y>,width=<w>,height=<h>\n"
-	       "                     set the video capture crop window [VIDIOC_S_CROP]\n"
-	       "  --get-cropcap-output\n"
-	       "                     query the crop capabilities for video output [VIDIOC_CROPCAP]\n"
-	       "  --get-crop-output  query the video output crop window [VIDIOC_G_CROP]\n"
-	       "  --set-crop-output=top=<x>,left=<y>,width=<w>,height=<h>\n"
-	       "                     set the video output crop window [VIDIOC_S_CROP]\n"
-	       "  --get-cropcap-overlay\n"
-	       "                     query the crop capabilities for video overlay [VIDIOC_CROPCAP]\n"
-	       "  --get-crop-overlay query the video overlay crop window [VIDIOC_G_CROP]\n"
-	       "  --set-crop-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n"
-	       "                     set the video overlay crop window [VIDIOC_S_CROP]\n"
-	       "  --get-cropcap-output-overlay\n"
-	       "                     query the crop capabilities for video output overlays [VIDIOC_CROPCAP]\n"
-	       "  --get-crop-output-overlay\n"
-	       "                     query the video output overlay crop window [VIDIOC_G_CROP]\n"
-	       "  --set-crop-output-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n"
-	       "                     set the video output overlay crop window [VIDIOC_S_CROP]\n"
-	       "  --get-jpeg-comp    query the JPEG compression [VIDIOC_G_JPEGCOMP]\n"
-	       "  --set-jpeg-comp=quality=<q>,markers=<markers>,comment=<c>,app<n>=<a>\n"
-	       "                     set the JPEG compression [VIDIOC_S_JPEGCOMP]\n"
-	       "                     <n> is the app segment: 0-9 or a-f, <a> is the actual string.\n"
-	       "                     <markers> is a colon separated list of:\n"
-	       "                     dht:      Define Huffman Tables\n"
-	       "                     dqt:      Define Quantization Tables\n"
-	       "                     dri:      Define Restart Interval\n"
+	       "  --get-modulator    query the modulator settings [VIDIOC_G_MODULATOR]\n"
+	       "  --set-modulator=<txsubchans>\n"
+	       "                     set the sub-carrier modulation [VIDIOC_S_MODULATOR]\n"
+	       "                     <txsubchans> is one of:\n"
+	       "                     mono:	 Modulate as mono\n"
+	       "                     mono-rds:	 Modulate as mono with RDS (radio only)\n"
+	       "                     stereo:	 Modulate as stereo\n"
+	       "                     stereo-rds: Modulate as stereo with RDS (radio only)\n"
+	       "                     bilingual:	 Modulate as bilingual\n"
+	       "                     mono-sap:	 Modulate as mono with Second Audio Program\n"
+	       "                     stereo-sap: Modulate as stereo with Second Audio Program\n"
+	       "  --freq-seek=dir=<0/1>,wrap=<0/1>,spacing=<hz>\n"
+	       "                     perform a hardware frequency seek [VIDIOC_S_HW_FREQ_SEEK]\n"
+	       "                     dir is 0 (seek downward) or 1 (seek upward)\n"
+	       "                     wrap is 0 (do not wrap around) or 1 (wrap around)\n"
+	       "                     spacing is 0 (use default seek resolution) or sets the seek resolution\n"
+	       );
+}
+
+static void usage_io(void)
+{
+	printf("\nInput/Output options:\n"
+	       "  -I, --get-input    query the video input [VIDIOC_G_INPUT]\n"
+	       "  -i, --set-input=<num>\n"
+	       "                     set the video input to <num> [VIDIOC_S_INPUT]\n"
+	       "  -N, --list-outputs display video outputs [VIDIOC_ENUMOUTPUT]\n"
+	       "  -n, --list-inputs  display video inputs [VIDIOC_ENUMINPUT]\n"
+	       "  -O, --get-output   query the video output [VIDIOC_G_OUTPUT]\n"
+	       "  -o, --set-output=<num>\n"
+	       "                     set the video output to <num> [VIDIOC_S_OUTPUT]\n"
 	       "  --set-audio-output=<num>\n"
 	       "                     set the audio output to <num> [VIDIOC_S_AUDOUT]\n"
 	       "  --get-audio-input  query the audio input [VIDIOC_G_AUDIO]\n"
@@ -532,32 +437,23 @@ static void usage(void)
 	       "                     display audio outputs [VIDIOC_ENUMAUDOUT]\n"
 	       "  --list-audio-inputs\n"
 	       "                     display audio inputs [VIDIOC_ENUMAUDIO]\n"
-	       "  --get-modulator    query the modulator settings [VIDIOC_G_MODULATOR]\n"
-	       "  --set-modulator=<txsubchans>\n"
-	       "                     set the sub-carrier modulation [VIDIOC_S_MODULATOR]\n"
-	       "                     <txsubchans> is one of:\n"
-	       "                     mono:	 Modulate as mono\n"
-	       "                     mono-rds:	 Modulate as mono with RDS (radio only)\n"
-	       "                     stereo:	 Modulate as stereo\n"
-	       "                     stereo-rds: Modulate as stereo with RDS (radio only)\n"
-	       "                     bilingual:	 Modulate as bilingual\n"
-	       "                     mono-sap:	 Modulate as mono with Second Audio Program\n"
-	       "                     stereo-sap: Modulate as stereo with Second Audio Program\n"
-	       "  --get-priority     query the current access priority [VIDIOC_G_PRIORITY]\n"
-	       "  --set-priority=<prio>\n"
-	       "                     set the new access priority [VIDIOC_S_PRIORITY]\n"
-	       "                     <prio> is 1 (background), 2 (interactive) or 3 (record)\n"
-	       "  --get-output-parm  display output video parameters [VIDIOC_G_PARM]\n"
-	       "  --set-output-parm=<fps>\n"
-	       "                     set output video framerate in <fps> [VIDIOC_S_PARM]\n"
-	       "  --wait-for-event=<event>\n"
-	       "                     wait for an event [VIDIOC_DQEVENT]\n"
-	       "                     <event> is the event number or one of:\n"
-	       "                     eos, vsync, ctrl=<id>, frame_sync\n"
-	       "                     where <id> is the name of the control\n"
-	       "  --poll-for-event=<event>\n"
-	       "                     poll for an event [VIDIOC_DQEVENT]\n"
-	       "                     see --wait-for-event for possible events\n"
+	       );
+}
+
+static void usage_stds(void)
+{
+	printf("\nStandards/Presets/Timings options:\n"
+	       "  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n"
+	       "  -S, --get-standard\n"
+	       "                     query the video standard [VIDIOC_G_STD]\n"
+	       "  -s, --set-standard=<num>\n"
+	       "                     set the video standard to <num> [VIDIOC_S_STD]\n"
+	       "                     <num> can be a numerical v4l2_std value, or it can be one of:\n"
+	       "                     pal-X (X = B/G/H/N/Nc/I/D/K/M/60) or just 'pal' (V4L2_STD_PAL)\n"
+	       "                     ntsc-X (X = M/J/K) or just 'ntsc' (V4L2_STD_NTSC)\n"
+	       "                     secam-X (X = B/G/H/D/K/L/Lc) or just 'secam' (V4L2_STD_SECAM)\n"
+	       "  --get-detected-standard\n"
+	       "                     display detected input video standard [VIDIOC_QUERYSTD]\n"
 	       "  --list-dv-presets  list supported digital video presets [VIDIOC_ENUM_DV_PRESETS]\n"
 	       "  --set-dv-preset=<num>\n"
 	       "                     set the digital video preset to <num> [VIDIOC_S_DV_PRESET]\n"
@@ -581,11 +477,173 @@ static void usage(void)
 	       "  --query-dv-timings query the detected digital video timings [VIDIOC_QUERY_DV_TIMINGS]\n"
 	       "  --get-dv-timings-cap\n"
 	       "                     get the digital video timings capabilities [VIDIOC_DV_TIMINGS_CAP]\n"
-	       "  --freq-seek=dir=<0/1>,wrap=<0/1>,spacing=<hz>\n"
-	       "                     perform a hardware frequency seek [VIDIOC_S_HW_FREQ_SEEK]\n"
-	       "                     dir is 0 (seek downward) or 1 (seek upward)\n"
-	       "                     wrap is 0 (do not wrap around) or 1 (wrap around)\n"
-	       "                     spacing is 0 (use default seek resolution) or sets the seek resolution\n"
+	       );
+}
+
+static void usage_vidcap(void)
+{
+	printf("\nVideo Capture Formats options:\n"
+	       "  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n"
+	       "  --list-formats-mplane\n"
+ 	       "                     display supported video multi-planar formats [VIDIOC_ENUM_FMT]\n"
+	       "  --list-formats-ext display supported video formats including frame sizes\n"
+	       "                     and intervals\n"
+	       "  --list-formats-ext-mplane\n"
+	       "                     display supported video multi-planar formats including\n"
+	       "                     frame sizes and intervals\n"
+	       "  --list-framesizes=<f>\n"
+	       "                     list supported framesizes for pixelformat <f>\n"
+	       "                     [VIDIOC_ENUM_FRAMESIZES]\n"
+	       "                     pixelformat is the fourcc value as a string\n"
+	       "  --list-frameintervals=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "                     list supported frame intervals for pixelformat <f> and\n"
+	       "                     the given width and height [VIDIOC_ENUM_FRAMEINTERVALS]\n"
+	       "                     pixelformat is the fourcc value as a string\n"
+	       "  -V, --get-fmt-video\n"
+	       "     		     query the video capture format [VIDIOC_G_FMT]\n"
+	       "  -v, --set-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "                     set the video capture format [VIDIOC_S_FMT]\n"
+	       "                     pixelformat is either the format index as reported by\n"
+	       "                     --list-formats, or the fourcc value as a string\n"
+	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "                     try the video capture format [VIDIOC_TRY_FMT]\n"
+	       "                     pixelformat is either the format index as reported by\n"
+	       "                     --list-formats, or the fourcc value as a string\n"
+	       "  --get-fmt-video-mplane\n"
+	       "     		     query the video capture format through the multi-planar API [VIDIOC_G_FMT]\n"
+	       "  --set-fmt-video-mplane\n"
+	       "  --try-fmt-video-mplane=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "                     set/try the video capture format using the multi-planar API [VIDIOC_S/TRY_FMT]\n"
+	       "                     pixelformat is either the format index as reported by\n"
+	       "                     --list-formats-mplane, or the fourcc value as a string\n"
+	       );
+}
+
+static void usage_vidout(void)
+{
+	printf("\nVideo Output Formats options:\n"
+	       "  --list-formats-out display supported video output formats [VIDIOC_ENUM_FMT]\n"
+	       "  --get-fmt-video-out\n"
+	       "     		     query the video output format [VIDIOC_G_FMT]\n"
+	       "  --set-fmt-video-out\n"
+	       "  --try-fmt-video-out=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "                     set/try the video output format [VIDIOC_TRY_FMT]\n"
+	       "                     pixelformat is either the format index as reported by\n"
+	       "                     --list-formats-out, or the fourcc value as a string\n"
+	       "  --list-formats-out-mplane\n"
+ 	       "                     display supported video output multi-planar formats [VIDIOC_ENUM_FMT]\n"
+	       "  --get-fmt-video-out-mplane\n"
+	       "     		     query the video output format using the multi-planar API [VIDIOC_G_FMT]\n"
+	       "  --set-fmt-video-out-mplane\n"
+	       "  --try-fmt-video-out-mplane=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "                     set/try the video output format with the multi-planar API [VIDIOC_S/TRY_FMT]\n"
+	       "                     pixelformat is either the format index as reported by\n"
+	       "                     --list-formats-out-mplane, or the fourcc value as a string\n"
+	       );
+}
+
+static void usage_overlay(void)
+{
+	printf("\nVideo Overlay options:\n"
+	       "  --list-formats-overlay\n"
+	       "                     display supported overlay formats [VIDIOC_ENUM_FMT]\n"
+	       "  --overlay=<on>     turn overlay on (1) or off (0) (VIDIOC_OVERLAY)\n"
+	       "  --get-fmt-overlay  query the video overlay format [VIDIOC_G_FMT]\n"
+	       "  --get-fmt-output-overlay\n"
+	       "     		     query the video output overlay format [VIDIOC_G_FMT]\n"
+	       "  --set-fmt-overlay\n"
+	       "  --try-fmt-overlay\n"
+	       "  --set-fmt-output-overlay\n"
+	       "  --try-fmt-output-overlay=chromakey=<key>,global_alpha=<alpha>,\n"
+	       "                           top=<t>,left=<l>,width=<w>,height=<h>,field=<f>\n"
+	       "     		     set/try the video or video output overlay format [VIDIOC_S/TRY_FMT]\n"
+	       "                     <f> can be one of:\n"
+	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt, alternate,\n"
+	       "                     interlaced_tb, interlaced_bt\n"
+	       "  --get-fbuf         query the overlay framebuffer data [VIDIOC_G_FBUF]\n"
+	       "  --set-fbuf=chromakey=<0/1>,global_alpha=<0/1>,local_alpha=<0/1>,local_inv_alpha=<0/1>\n"
+	       "		     set the overlay framebuffer [VIDIOC_S_FBUF]\n"
+	       );
+}
+
+static void usage_vbi(void)
+{
+	printf("\nVBI Formats options:\n"
+	       "  --get-sliced-vbi-cap\n"
+	       "		     query the sliced VBI capture capabilities [VIDIOC_G_SLICED_VBI_CAP]\n"
+	       "  --get-sliced-vbi-out-cap\n"
+	       "		     query the sliced VBI output capabilities [VIDIOC_G_SLICED_VBI_CAP]\n"
+	       "  -B, --get-fmt-sliced-vbi\n"
+	       "		     query the sliced VBI capture format [VIDIOC_G_FMT]\n"
+	       "  --get-fmt-sliced-vbi-out\n"
+	       "		     query the sliced VBI output format [VIDIOC_G_FMT]\n"
+	       "  -b, --set-fmt-sliced-vbi\n"
+	       "  --try-fmt-sliced-vbi\n"
+	       "  --set-fmt-sliced-vbi-out\n"
+	       "  --try-fmt-sliced-vbi-out=<mode>\n"
+	       "                     set/try the sliced VBI capture/output format to <mode> [VIDIOC_S/TRY_FMT]\n"
+	       "                     <mode> is a comma separated list of:\n"
+	       "                     off:      turn off sliced VBI (cannot be combined with other modes)\n"
+	       "                     teletext: teletext (PAL/SECAM)\n"
+	       "                     cc:       closed caption (NTSC)\n"
+	       "                     wss:      widescreen signal (PAL/SECAM)\n"
+	       "                     vps:      VPS (PAL/SECAM)\n"
+	       "  --get-fmt-vbi      query the VBI capture format [VIDIOC_G_FMT]\n"
+	       "  --get-fmt-vbi-out  query the VBI output format [VIDIOC_G_FMT]\n"
+	       );
+}
+
+static void usage_crop(void)
+{
+	printf("\nCropping options:\n"
+	       "  --get-cropcap      query the crop capabilities [VIDIOC_CROPCAP]\n"
+	       "  --get-crop	     query the video capture crop window [VIDIOC_G_CROP]\n"
+	       "  --set-crop=top=<x>,left=<y>,width=<w>,height=<h>\n"
+	       "                     set the video capture crop window [VIDIOC_S_CROP]\n"
+	       "  --get-cropcap-output\n"
+	       "                     query the crop capabilities for video output [VIDIOC_CROPCAP]\n"
+	       "  --get-crop-output  query the video output crop window [VIDIOC_G_CROP]\n"
+	       "  --set-crop-output=top=<x>,left=<y>,width=<w>,height=<h>\n"
+	       "                     set the video output crop window [VIDIOC_S_CROP]\n"
+	       "  --get-cropcap-overlay\n"
+	       "                     query the crop capabilities for video overlay [VIDIOC_CROPCAP]\n"
+	       "  --get-crop-overlay query the video overlay crop window [VIDIOC_G_CROP]\n"
+	       "  --set-crop-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n"
+	       "                     set the video overlay crop window [VIDIOC_S_CROP]\n"
+	       "  --get-cropcap-output-overlay\n"
+	       "                     query the crop capabilities for video output overlays [VIDIOC_CROPCAP]\n"
+	       "  --get-crop-output-overlay\n"
+	       "                     query the video output overlay crop window [VIDIOC_G_CROP]\n"
+	       "  --set-crop-output-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n"
+	       "                     set the video output overlay crop window [VIDIOC_S_CROP]\n"
+	       );
+}
+
+static void usage_misc(void)
+{
+	printf("\nMiscellaneous options:\n"
+	       "  --wait-for-event=<event>\n"
+	       "                     wait for an event [VIDIOC_DQEVENT]\n"
+	       "                     <event> is the event number or one of:\n"
+	       "                     eos, vsync, ctrl=<id>, frame_sync\n"
+	       "                     where <id> is the name of the control\n"
+	       "  --poll-for-event=<event>\n"
+	       "                     poll for an event [VIDIOC_DQEVENT]\n"
+	       "                     see --wait-for-event for possible events\n"
+	       "  -P, --get-parm     display video parameters [VIDIOC_G_PARM]\n"
+	       "  -p, --set-parm=<fps>\n"
+	       "                     set video framerate in <fps> [VIDIOC_S_PARM]\n"
+	       "  --get-output-parm  display output video parameters [VIDIOC_G_PARM]\n"
+	       "  --set-output-parm=<fps>\n"
+	       "                     set output video framerate in <fps> [VIDIOC_S_PARM]\n"
+	       "  --get-jpeg-comp    query the JPEG compression [VIDIOC_G_JPEGCOMP]\n"
+	       "  --set-jpeg-comp=quality=<q>,markers=<markers>,comment=<c>,app<n>=<a>\n"
+	       "                     set the JPEG compression [VIDIOC_S_JPEGCOMP]\n"
+	       "                     <n> is the app segment: 0-9 or a-f, <a> is the actual string.\n"
+	       "                     <markers> is a colon separated list of:\n"
+	       "                     dht:      Define Huffman Tables\n"
+	       "                     dqt:      Define Quantization Tables\n"
+	       "                     dri:      Define Restart Interval\n"
 	       "  --encoder-cmd=cmd=<cmd>,flags=<flags>\n"
 	       "                     Send a command to the encoder [VIDIOC_ENCODER_CMD]\n"
 	       "                     cmd=start|stop|pause|resume\n"
@@ -602,11 +660,24 @@ static void usage(void)
 	       "  --try-decoder-cmd=cmd=<cmd>,flags=<flags>\n"
 	       "                     Try a decoder command [VIDIOC_TRY_DECODER_CMD]\n"
 	       "                     See --decoder-cmd for the arguments.\n"
-	       "  --sleep=<secs>     sleep for <secs> seconds, call QUERYCAP and close the file handle\n"
 	       "  --streamoff        turn the stream off [VIDIOC_STREAMOFF]\n"
 	       "  --streamon         turn the stream on [VIDIOC_STREAMON]\n"
-	       "  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n");
-	exit(0);
+	       );
+}
+
+static void usage(void)
+{
+	printf("Usage:\n");
+	usage_common();
+	usage_tuner();
+	usage_io();
+	usage_stds();
+	usage_vidcap();
+	usage_vidout();
+	usage_overlay();
+	usage_vbi();
+	usage_crop();
+	usage_misc();
 }
 
 static int test_open(const char *file, int oflag)
@@ -1713,19 +1784,17 @@ static int parse_subopt(char **subs, const char * const *subopts, char **value)
 
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");
-		usage();
-		exit(1);
+		return -1;
 	}
 	if (value == NULL) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopts[opt]);
-		usage();
-		exit(1);
+		return -1;
 	}
 	return opt;
 }
 
-static void parse_next_subopt(char **subs, char **value)
+static bool parse_next_subopt(char **subs, char **value)
 {
 	static char *const subopts[] = {
 	    NULL
@@ -1735,9 +1804,9 @@ static void parse_next_subopt(char **subs, char **value)
 	if (value == NULL) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopts[opt]);
-		usage();
-		exit(1);
+		return true;
 	}
+	return false;
 }
 
 static std::string partstd2s(const char *prefix, const char *stds[], unsigned long long std)
@@ -1916,6 +1985,9 @@ static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
 			vcrop.height = strtol(value, 0L, 0);
 			set_crop |= CropHeight;
 			break;
+		default:
+			usage_crop();
+			exit(1);
 		}
 	}
 }
@@ -1943,6 +2015,9 @@ static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 		case 2:
 			seek.spacing = strtol(value, 0L, 0);
 			break;
+		default:
+			usage_tuner();
+			exit(1);
 		}
 	}
 }
@@ -2052,6 +2127,9 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 		case 14:
 			enumerate = strtol(value, 0L, 0);
 			break;
+		default:
+			usage_stds();
+			exit(1);
 		}
 	}
 }
@@ -2196,7 +2274,8 @@ static __u32 parse_event(const char *e, const char **name)
 
 	if (event == 0) {
 		fprintf(stderr, "Unknown event\n");
-		usage();
+		usage_misc();
+		exit(1);
 	}
 	return event;
 }
@@ -2326,7 +2405,7 @@ int main(int argc, char **argv)
 	memset(&freq_seek, 0, sizeof(freq_seek));
 
 	if (argc == 1) {
-		usage();
+		usage_hint();
 		return 0;
 	}
 	for (i = 0; long_options[i].name; i++) {
@@ -2398,6 +2477,22 @@ int main(int argc, char **argv)
 						pixelformat = strtol(value, 0L, 0);
 					fmts |= FmtPixelFormat;
 					break;
+				default:
+					switch (ch) {
+					case OptSetVideoOutMplaneFormat:
+					case OptTryVideoOutMplaneFormat:
+					case OptSetVideoOutFormat:
+					case OptTryVideoOutFormat:
+						usage_vidout();
+						break;
+					case OptSetVideoMplaneFormat:
+					case OptTryVideoMplaneFormat:
+					case OptSetVideoFormat:
+					case OptTryVideoFormat:
+						usage_vidcap();
+						break;
+					}
+					exit(1);
 				}
 			}
 			switch (ch) {
@@ -2490,6 +2585,9 @@ int main(int argc, char **argv)
 					overlay_fmt_ptr->fmt.win.field = parse_field(value);
 					*set_overlay_fmt_ptr |= FmtField;
 					break;
+				default:
+					usage_overlay();
+					break;
 				}
 			}
 			break;
@@ -2520,6 +2618,9 @@ int main(int argc, char **argv)
 				case 3:
 					fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_LOCAL_INV_ALPHA : 0;
 					set_fbuf |= V4L2_FBUF_FLAG_LOCAL_INV_ALPHA;
+					break;
+				default:
+					usage_overlay();
 					break;
 				}
 			}
@@ -2558,6 +2659,9 @@ int main(int argc, char **argv)
 							    value[2], value[3]);
 					else
 						frmival.pixel_format = strtol(value, 0L, 0);
+					break;
+				default:
+					usage_vidcap();
 					break;
 				}
 			}
@@ -2621,9 +2725,12 @@ int main(int argc, char **argv)
 		case OptGetCtrl:
 			subs = optarg;
 			while (*subs != '\0') {
-				parse_next_subopt(&subs, &value);
+				if (parse_next_subopt(&subs, &value)) {
+				    usage_common();
+				    exit(1);
+				}
 				if (strchr(value, '=')) {
-				    usage();
+				    usage_common();
 				    exit(1);
 				}
 				else {
@@ -2634,7 +2741,10 @@ int main(int argc, char **argv)
 		case OptSetCtrl:
 			subs = optarg;
 			while (*subs != '\0') {
-				parse_next_subopt(&subs, &value);
+				if (parse_next_subopt(&subs, &value)) {
+				    usage_common();
+				    exit(1);
+				}
 				if (const char *equal = strchr(value, '=')) {
 				    set_ctrls[std::string(value, (equal - value))] = equal + 1;
 				}
@@ -2657,7 +2767,7 @@ int main(int argc, char **argv)
 				mode = V4L2_TUNER_MODE_MONO;
 			else {
 				fprintf(stderr, "Unknown audio mode\n");
-				usage();
+				usage_tuner();
 				return 1;
 			}
 			break;
@@ -2679,7 +2789,7 @@ int main(int argc, char **argv)
 				txsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_RDS;
 			else {
 				fprintf(stderr, "Unknown txsubchans value\n");
-				usage();
+				usage_tuner();
 				return 1;
 			}
 			break;
@@ -2725,11 +2835,14 @@ int main(int argc, char **argv)
 					fmt->fmt.sliced.service_set |=
 					    V4L2_SLICED_VPS;
 					break;
+				default:
+					usage_vbi();
+					break;
 				}
 			}
 			if (foundOff && fmt->fmt.sliced.service_set) {
 				fprintf(stderr, "Sliced VBI mode 'off' cannot be combined with other modes\n");
-				usage();
+				usage_vbi();
 				return 1;
 			}
 			break;
@@ -2772,8 +2885,10 @@ int main(int argc, char **argv)
 					jpegcomp.COM_data[len] = '\0';
 					break;
 				default:
-					if (opt < 0 || opt > 15)
-						break;
+					if (opt < 0 || opt > 15) {
+						usage_misc();
+						exit(1);
+					}
 					len = strlen(value);
 					if (len > sizeof(jpegcomp.APP_data) - 1)
 						len = sizeof(jpegcomp.APP_data) - 1;
@@ -2836,6 +2951,9 @@ int main(int argc, char **argv)
 				case 1:
 					enc_cmd.flags = parse_encflags(value);
 					break;
+				default:
+					usage_misc();
+					exit(1);
 				}
 			}
 			break;
@@ -2871,6 +2989,9 @@ int main(int argc, char **argv)
 					else if (!strcmp(value, "none"))
 						dec_cmd.start.format = V4L2_DEC_START_FMT_NONE;
 					break;
+				default:
+					usage_misc();
+					exit(1);
 				}
 			}
 			break;
@@ -2878,14 +2999,14 @@ int main(int argc, char **argv)
 			tuner_index = strtoul(optarg, NULL, 0);
 			break;
 		case ':':
-			fprintf(stderr, "Option `%s' requires a value\n",
+			fprintf(stderr, "Option '%s' requires a value\n",
 				argv[optind]);
-			usage();
+			usage_hint();
 			return 1;
 		case '?':
-			fprintf(stderr, "Unknown argument `%s'\n",
-				argv[optind]);
-			usage();
+			if (argv[optind])
+				fprintf(stderr, "Unknown argument '%s'\n", argv[optind]);
+			usage_hint();
 			return 1;
 		}
 	}
@@ -2894,7 +3015,7 @@ int main(int argc, char **argv)
 		while (optind < argc)
 			printf("%s ", argv[optind++]);
 		printf("\n");
-		usage();
+		usage_hint();
 		return 1;
 	}
 
