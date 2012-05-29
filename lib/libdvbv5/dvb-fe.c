@@ -145,10 +145,10 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 			parms->version % 256,
 			delivery_system_name[parms->current_sys]);
 
-	if (parms->version < 0x505)
+	if (parms->version < 0x500)
 		use_legacy_call = 1;
 
-	if (use_legacy_call) {
+	if (use_legacy_call || parms->version < 0x505) {
 		parms->legacy_fe = 1;
 		switch(parms->info.type) {
 		case FE_QPSK:
@@ -221,8 +221,9 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 				dvb_log ("     %s",
 					delivery_system_name[parms->systems[i]]);
 		}
-		if (use_legacy_call)
-			dvb_log("Warning: ISDB-T, ISDB-S, DMB-TH and DSS will be miss-detected by a DVBv3 call");
+		if (use_legacy_call || parms->version < 0x505)
+			dvb_log("Warning: ISDB-T, ISDB-S, DMB-TH and DSS will be miss-detected by a DVBv%d.%d call",
+				parms->version >> 8, parms->version & 0xff);
 	}
 
 	/*
