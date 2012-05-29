@@ -84,6 +84,27 @@ const unsigned int sys_atsc_props[] = {
 	0
 };
 
+const unsigned int sys_atscmh_props[] = {
+	DTV_FREQUENCY,
+	DTV_MODULATION,
+	DTV_ATSCMH_FIC_VER,
+	DTV_ATSCMH_PARADE_ID,
+	DTV_ATSCMH_NOG,
+	DTV_ATSCMH_TNOG,
+	DTV_ATSCMH_SGN,
+	DTV_ATSCMH_PRC,
+	DTV_ATSCMH_RS_FRAME_MODE,
+	DTV_ATSCMH_RS_FRAME_ENSEMBLE,
+	DTV_ATSCMH_RS_CODE_MODE_PRI,
+	DTV_ATSCMH_RS_CODE_MODE_SEC,
+	DTV_ATSCMH_SCCC_BLOCK_MODE,
+	DTV_ATSCMH_SCCC_CODE_MODE_A,
+	DTV_ATSCMH_SCCC_CODE_MODE_B,
+	DTV_ATSCMH_SCCC_CODE_MODE_C,
+	DTV_ATSCMH_SCCC_CODE_MODE_D,
+	0
+};
+
 const unsigned int sys_dvbc_annex_ac_props[] = {
 	DTV_FREQUENCY,
 	DTV_MODULATION,
@@ -147,6 +168,7 @@ const unsigned int sys_isdbs_props[] = {
 
 const unsigned int *dvb_v5_delivery_system[] = {
 	[SYS_ATSC] =          sys_atsc_props,
+	[SYS_ATSCMH] =        sys_atscmh_props,
 	[SYS_DVBC_ANNEX_A] =  sys_dvbc_annex_ac_props,
 	[SYS_DVBC_ANNEX_C] =  sys_dvbc_annex_ac_props,
 	[SYS_DVBC_ANNEX_B] =  sys_dvbc_annex_b_props,

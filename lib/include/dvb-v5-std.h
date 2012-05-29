@@ -29,6 +29,7 @@ extern const unsigned int sys_dvbt_props[];
 extern const unsigned int sys_dvbt2_props[];
 extern const unsigned int sys_isdbt_props[];
 extern const unsigned int sys_atsc_props[];
+extern const unsigned int sys_atscmh_props[];
 extern const unsigned int sys_dvbc_annex_ac_props[];
 extern const unsigned int sys_dvbc_annex_b_props[];
 extern const unsigned int sys_dvbs_props[];

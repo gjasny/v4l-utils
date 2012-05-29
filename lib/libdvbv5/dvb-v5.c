@@ -159,8 +159,23 @@ const char *fe_rolloff_name[5] = {
 	[4] = NULL,
 };
 
-const char *dvb_v5_name[46] = {
+const char *dvb_v5_name[61] = {
 	[DTV_API_VERSION] =                    "API_VERSION",
+	[DTV_ATSCMH_FIC_VER] =                 "ATSCMH_FIC_VER",
+	[DTV_ATSCMH_NOG] =                     "ATSCMH_NOG",
+	[DTV_ATSCMH_PARADE_ID] =               "ATSCMH_PARADE_ID",
+	[DTV_ATSCMH_PRC] =                     "ATSCMH_PRC",
+	[DTV_ATSCMH_RS_CODE_MODE_PRI] =        "ATSCMH_RS_CODE_MODE_PRI",
+	[DTV_ATSCMH_RS_CODE_MODE_SEC] =        "ATSCMH_RS_CODE_MODE_SEC",
+	[DTV_ATSCMH_RS_FRAME_ENSEMBLE] =       "ATSCMH_RS_FRAME_ENSEMBLE",
+	[DTV_ATSCMH_RS_FRAME_MODE] =           "ATSCMH_RS_FRAME_MODE",
+	[DTV_ATSCMH_SCCC_BLOCK_MODE] =         "ATSCMH_SCCC_BLOCK_MODE",
+	[DTV_ATSCMH_SCCC_CODE_MODE_A] =        "ATSCMH_SCCC_CODE_MODE_A",
+	[DTV_ATSCMH_SCCC_CODE_MODE_B] =        "ATSCMH_SCCC_CODE_MODE_B",
+	[DTV_ATSCMH_SCCC_CODE_MODE_C] =        "ATSCMH_SCCC_CODE_MODE_C",
+	[DTV_ATSCMH_SCCC_CODE_MODE_D] =        "ATSCMH_SCCC_CODE_MODE_D",
+	[DTV_ATSCMH_SGN] =                     "ATSCMH_SGN",
+	[DTV_ATSCMH_TNOG] =                    "ATSCMH_TNOG",
 	[DTV_BANDWIDTH_HZ] =                   "BANDWIDTH_HZ",
 	[DTV_CLEAR] =                          "CLEAR",
 	[DTV_CODE_RATE_HP] =                   "CODE_RATE_HP",
@@ -205,7 +220,7 @@ const char *dvb_v5_name[46] = {
 	[DTV_TUNE] =                           "TUNE",
 	[DTV_UNDEFINED] =                      "UNDEFINED",
 	[DTV_VOLTAGE] =                        "VOLTAGE",
-	[45] = NULL,
+	[60] = NULL,
 };
 
 const char *delivery_system_name[20] = {
