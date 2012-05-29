@@ -184,8 +184,7 @@ with all delivery systems. However, the other two tools need to do
 some diferent things, depending on the delivery system, as other
 tables and descriptors may be needed.
 
-Currently, the tools were tested with DVB-C, ISDB-T, DVB-T and
-DVB-T2.
+Currently, the tools were tested with DVB-C, DVB-T, DVB-T2, DVB-S and ISDB-T.
 
 If someone wants to patch the code to improve the tool, the descriptors
 parser is inside descriptors.c file. The scan code that uses it is
@@ -220,4 +219,4 @@ Patches are welcome!
 
 Regards,
 Mauro Carvalho Chehab
-2012-January-15
+2012-May-15
