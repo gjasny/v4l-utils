@@ -140,9 +140,10 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	parms->version = parms->dvb_prop[0].u.data;
 	parms->current_sys = parms->dvb_prop[1].u.data;
 	if (verbose)
-		dvb_log ("DVB API Version %d.%d, Current v5 delivery system: %s",
+		dvb_log ("DVB API Version %d.%d%s, Current v5 delivery system: %s",
 			parms->version / 256,
 			parms->version % 256,
+			use_legacy_call ? " (forcing DVBv3 calls)" : "",
 			delivery_system_name[parms->current_sys]);
 
 	if (parms->version < 0x500)
@@ -222,8 +223,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 					delivery_system_name[parms->systems[i]]);
 		}
 		if (use_legacy_call || parms->version < 0x505)
-			dvb_log("Warning: ISDB-T, ISDB-S, DMB-TH and DSS will be miss-detected by a DVBv%d.%d call",
-				parms->version >> 8, parms->version & 0xff);
+			dvb_log("Warning: new delivery systems like ISDB-T, ISDB-S, DMB-TH, DSS, ATSC-MH will be miss-detected by a DVBv5.4 or earlier API call");
 	}
 
 	/*
