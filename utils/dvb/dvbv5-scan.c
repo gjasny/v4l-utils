@@ -47,7 +47,7 @@ const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.co
 struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev;
 	unsigned adapter, frontend, demux, get_detected, get_nit;
-	int lnb, sat_number, freq_bpf;
+	int force_dvbv3, lnb, sat_number, freq_bpf;
 	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
 	unsigned other_nit;
 	enum file_formats input_format, output_format;
@@ -70,6 +70,7 @@ static const struct argp_option options[] = {
 	{"parse-other-nit", 'p', NULL,			0, "Parse the other NIT/SDT tables", 0},
 	{"input-format", 'I',	"format",		0, "Input format: CHANNEL, DVBV5 (default: DVBV5)", 0},
 	{"output-format", 'O',	"format",		0, "Output format: CHANNEL, ZAP, DVBV5 (default: DVBV5)", 0},
+	{"dvbv3",	'3',	0,			0, "Use DVBv3 only", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -500,6 +501,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'o':
 		args->output = optarg;
 		break;
+	case '3':
+		args->force_dvbv3 = 1;
+		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
 	};
@@ -558,7 +562,9 @@ int main(int argc, char **argv)
 	if (verbose)
 		fprintf(stderr, "using demux '%s'\n", args.demux_dev);
 
-	struct dvb_v5_fe_parms *parms = dvb_fe_open(args.adapter, args.frontend, verbose, 0);
+	struct dvb_v5_fe_parms *parms = dvb_fe_open(args.adapter,
+						    args.frontend,
+						    verbose, args.force_dvbv3);
 	if (!parms)
 		return -1;
 	if (lnb >= 0)

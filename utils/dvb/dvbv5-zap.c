@@ -50,7 +50,7 @@ struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev, *dvr_dev;
 	char *filename;
 	unsigned adapter, frontend, demux, get_detected, get_nit;
-	int lnb, sat_number;
+	int force_dvbv3, lnb, sat_number;
 	unsigned diseqc_wait, silent, frontend_only, freq_bpf;
 	unsigned timeout, dvr, rec_psi, exit_after_tuning;
 	unsigned human_readable, record;
@@ -78,6 +78,7 @@ static const struct argp_option options[] = {
 	{"timeout",	't', "seconds",			0, "timeout for zapping and for recording", 0},
 	{"output",	'o', "file",			0, "output filename (use -o - for stdout)", 0},
 	{"input-format", 'I',	"format",		0, "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)", 0},
+	{"dvbv3",	'3',	0,			0, "Use DVBv3 only", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -431,6 +432,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		break;
 	case 'V':
 		args->n_vpid = strtoul(optarg, NULL, 0);
+	case '3':
+		args->force_dvbv3 = 1;
+		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
 	};
@@ -507,7 +511,7 @@ int main(int argc, char **argv)
 	}
 	printf("reading channels from file '%s'\n", args.confname);
 
-	parms = dvb_fe_open(args.adapter, args.frontend, 0, 0);
+	parms = dvb_fe_open(args.adapter, args.frontend, 0, args.force_dvbv3);
 	if (!parms)
 		return -1;
 	if (lnb)
