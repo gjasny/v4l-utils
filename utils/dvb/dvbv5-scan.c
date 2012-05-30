@@ -162,6 +162,11 @@ static void add_new_freq(struct dvb_entry *entry, uint32_t freq)
 
 	/* Clone the current entry into a new entry */
 	new_entry = calloc(sizeof(*new_entry), 1);
+	if (!new_entry) {
+		PERROR("not enough memory ofr a new scanning frequency");
+		return;
+	}
+
 	memcpy(new_entry, entry, sizeof(*entry));
 
 	/*
