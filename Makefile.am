@@ -25,7 +25,7 @@ SUBDIRS += \
 	utils/xc3028-firmware
 endif
 
-if BUILD_QT
+if WITH_QV4L2
 SUBDIRS += utils/qv4l2
 endif
 endif

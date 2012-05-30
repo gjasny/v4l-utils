@@ -92,10 +92,9 @@ if test "x$qt_pkgconfig" = "xtrue"; then
    AC_SUBST(MOC)
    AC_SUBST(UIC)
 else
-   AC_MSG_WARN(qv4l2 will not be built)
+   AC_MSG_WARN(Qt4 is not available)
 fi
 
-AM_CONDITIONAL(BUILD_QT, [test ${qt_pkgconfig} = true])
 AC_SUBST([JPEG_LIBS])
 
 # The dlopen() function is in the C library for *BSD and in
@@ -181,9 +180,19 @@ AC_ARG_ENABLE(v4l-utils,
   [with_v4lutils="yes"]
 )
 
+AC_ARG_ENABLE(qv4l2,
+  [  --disable-qv4l2         disable qv4l2 compilation],
+  [case "${enableval}" in
+     yes | no ) with_qv4l2="${enableval}" ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-qv4l2) ;;
+   esac],
+  [with_qv4l2="yes"]
+)
+
 AM_CONDITIONAL([WITH_LIBDVBV5], [test x$with_libdvbv5 = xyes])
 AM_CONDITIONAL([WITH_LIBV4L], [test x$with_libv4l = xyes])
 AM_CONDITIONAL([WITH_V4LUTILS], [test x$with_v4lutils = xyes])
+AM_CONDITIONAL([WITH_QV4L2], [test ${qt_pkgconfig} = true -a x$with_qv4l2 = xyes])
 
 # append -static to libtool compile and link command to enforce static libs
 AS_IF([test x$with_libdvbv5 != xyes], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])
