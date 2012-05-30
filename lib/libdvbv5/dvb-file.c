@@ -707,7 +707,7 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 				fprintf(fp, "\tLNB = %s\n", entry->lnb);
 
 		for (i = 0; i < entry->n_props; i++) {
-			const char * const *attr_name = dvb_v5_attr_names[entry->props[i].cmd];
+			const char * const *attr_name = dvb_attr_names(entry->props[i].cmd);
 			if (attr_name) {
 				int j;
 

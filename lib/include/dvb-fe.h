@@ -144,6 +144,10 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms);
 
 int dvb_fe_get_event(struct dvb_v5_fe_parms *parms);
 
+/* Ancillary functions */
+
+const char * const *dvb_attr_names(int cmd);
+
 /* Other functions, associated to SEC/LNB/DISEqC */
 
 /*
