@@ -886,6 +886,16 @@ int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, const unsigned len,
 	msg.msg_len = len;
 	memcpy(msg.msg, buf, len);
 
+	if (parms->verbose) {
+		int i;
+		char log[len * 3 + 20], *p = log;
+
+		p += sprintf(p, "DiSEqC cmd: ");
+		for (i = 0; i < len; i++)
+			p += sprintf (p, "0x%02x ", buf[i]);
+		dvb_log(p);
+	}
+
 	rc = ioctl(parms->fd, FE_DISEQC_SEND_MASTER_CMD, &msg);
 	if (rc == -1)
 		perror ("FE_DISEQC_SEND_BURST");
