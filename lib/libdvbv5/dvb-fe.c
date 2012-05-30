@@ -893,7 +893,7 @@ int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, const unsigned len,
 		p += sprintf(p, "DiSEqC cmd: ");
 		for (i = 0; i < len; i++)
 			p += sprintf (p, "0x%02x ", buf[i]);
-		dvb_log(p);
+		dvb_log(log);
 	}
 
 	rc = ioctl(parms->fd, FE_DISEQC_SEND_MASTER_CMD, &msg);
