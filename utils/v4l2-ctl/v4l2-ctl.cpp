@@ -1518,6 +1518,10 @@ static std::string tcap2s(unsigned cap)
 		s += "62.5 kHz ";
 	if (cap & V4L2_TUNER_CAP_NORM)
 		s += "multi-standard ";
+	if (cap & V4L2_TUNER_CAP_HWSEEK_BOUNDED)
+		s += "hwseek-bounded ";
+	if (cap & V4L2_TUNER_CAP_HWSEEK_WRAP)
+		s += "hwseek-wrap ";
 	if (cap & V4L2_TUNER_CAP_STEREO)
 		s += "stereo ";
 	if (cap & V4L2_TUNER_CAP_LANG1)
