@@ -1524,7 +1524,7 @@ static std::string txsubchans2s(int txsubchans)
 
 static const char *band_names[] = {
 	"default",
-	"fm-eur_us",
+	"fm-eur-us",
 	"fm-japan",
 	"fm-russian",
 	"fm-weather",
