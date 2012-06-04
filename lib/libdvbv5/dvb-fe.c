@@ -278,52 +278,69 @@ void dvb_fe_close(struct dvb_v5_fe_parms *parms)
 	dvb_v5_free(parms);
 }
 
-int dvb_set_sys(struct dvb_v5_fe_parms *parms,
+
+int dvb_add_parms_for_sys(struct dtv_property *dvb_prop,
+			  unsigned max_size,
 			  fe_delivery_system_t sys)
 {
-	struct dtv_property dvb_prop[1];
-	struct dtv_properties prop;
 	const unsigned int *sys_props;
 	int n;
 
-	if (sys != parms->current_sys) {
-		/* Disable LNBf power */
-		if (is_satellite(parms->current_sys) &&
-		    !is_satellite(sys))
-			dvb_fe_sec_voltage(parms, 0, 0);
-
-		/* Can't change standard with the legacy FE support */
-		if (parms->legacy_fe)
-			return EINVAL;
-
-		dvb_prop[0].cmd = DTV_DELIVERY_SYSTEM;
-		dvb_prop[0].u.data = sys;
-		prop.num = 1;
-		prop.props = dvb_prop;
-
-		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
-			dvb_perror("Set delivery system");
-			return errno;
-		}
-		parms->current_sys = sys;
-	}
-
 	/* Make dvb properties reflect the current standard */
 
-	sys_props = dvb_v5_delivery_system[parms->current_sys];
+	sys_props = dvb_v5_delivery_system[sys];
 	if (!sys_props)
 		return EINVAL;
 
 	n = 0;
 	while (sys_props[n]) {
-		parms->dvb_prop[n].cmd = sys_props[n];
-		parms->dvb_prop[n].u.data = 0;
+		dvb_prop[n].cmd = sys_props[n];
+		dvb_prop[n].u.data = 0;
 		n++;
 	}
-	parms->dvb_prop[n].cmd = DTV_DELIVERY_SYSTEM;
-	parms->dvb_prop[n].u.data = sys;
+	dvb_prop[n].cmd = DTV_DELIVERY_SYSTEM;
+	dvb_prop[n].u.data = sys;
 	n++;
-	parms->n_props = n;
+
+	return n;
+}
+
+int dvb_set_sys(struct dvb_v5_fe_parms *parms,
+			  fe_delivery_system_t sys)
+{
+	struct dtv_property dvb_prop[1];
+	struct dtv_properties prop;
+	int rc;
+
+	if (sys == parms->current_sys)
+		return 0;
+
+	/* Disable LNBf power */
+	if (is_satellite(parms->current_sys) &&
+	    !is_satellite(sys))
+		dvb_fe_sec_voltage(parms, 0, 0);
+
+	/* Can't change standard with the legacy FE support */
+	if (parms->legacy_fe)
+		return EINVAL;
+
+	dvb_prop[0].cmd = DTV_DELIVERY_SYSTEM;
+	dvb_prop[0].u.data = sys;
+	prop.num = 1;
+	prop.props = dvb_prop;
+
+	if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
+		dvb_perror("Set delivery system");
+		return errno;
+	}
+
+	rc = dvb_add_parms_for_sys(parms->dvb_prop,
+				   ARRAY_SIZE(parms->dvb_prop), sys);
+	if (rc < 0)
+		return EINVAL;
+
+	parms->current_sys = sys;
+	parms->n_props = rc;
 
 	return 0;
 }

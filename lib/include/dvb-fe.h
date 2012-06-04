@@ -125,6 +125,9 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 		      unsigned cmd, uint32_t value);
 int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 		   fe_delivery_system_t sys);
+int dvb_add_parms_for_sys(struct dtv_property *dvb_prop,
+			  unsigned max_size,
+			  fe_delivery_system_t sys);
 int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 				   uint32_t desired_system);
 const char *dvb_cmd_name(int cmd);
