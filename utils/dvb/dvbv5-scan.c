@@ -389,7 +389,7 @@ static int run_scan(struct arguments *args,
 		if (!freq)
 			continue;
 		shift = estimate_freq_shift(parms);
-		if (!new_freq_is_needed(dvb_file->first_entry, entry,
+		if (dvb_desc && !new_freq_is_needed(dvb_file->first_entry, entry,
 					freq, dvb_desc->nit_table.pol, shift))
 			continue;
 
