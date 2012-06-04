@@ -312,26 +312,25 @@ int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 	struct dtv_properties prop;
 	int rc;
 
-	if (sys == parms->current_sys)
-		return 0;
+	if (sys != parms->current_sys) {
+		/* Disable LNBf power */
+		if (is_satellite(parms->current_sys) &&
+		    !is_satellite(sys))
+			dvb_fe_sec_voltage(parms, 0, 0);
 
-	/* Disable LNBf power */
-	if (is_satellite(parms->current_sys) &&
-	    !is_satellite(sys))
-		dvb_fe_sec_voltage(parms, 0, 0);
+		/* Can't change standard with the legacy FE support */
+		if (parms->legacy_fe)
+			return EINVAL;
 
-	/* Can't change standard with the legacy FE support */
-	if (parms->legacy_fe)
-		return EINVAL;
+		dvb_prop[0].cmd = DTV_DELIVERY_SYSTEM;
+		dvb_prop[0].u.data = sys;
+		prop.num = 1;
+		prop.props = dvb_prop;
 
-	dvb_prop[0].cmd = DTV_DELIVERY_SYSTEM;
-	dvb_prop[0].u.data = sys;
-	prop.num = 1;
-	prop.props = dvb_prop;
-
-	if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
-		dvb_perror("Set delivery system");
-		return errno;
+		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
+			dvb_perror("Set delivery system");
+			return errno;
+		}
 	}
 
 	rc = dvb_add_parms_for_sys(parms->dvb_prop,
