@@ -87,6 +87,8 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_SE401,		 0,	 8,	 9,	1 },
 	/* grey formats */
 	{ V4L2_PIX_FMT_GREY,		 8,	20,	20,	0 },
+	{ V4L2_PIX_FMT_Y4,		 8,	20,	20,	0 },
+	{ V4L2_PIX_FMT_Y6,		 8,	20,	20,	0 },
 	{ V4L2_PIX_FMT_Y10BPACK,	10,	20,	20,	0 },
 };
 
@@ -943,6 +945,8 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	}
 
 	case V4L2_PIX_FMT_GREY:
+	case V4L2_PIX_FMT_Y4:
+	case V4L2_PIX_FMT_Y6:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
 	        case V4L2_PIX_FMT_BGR24:
