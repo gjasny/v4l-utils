@@ -38,7 +38,7 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 {
 	bool valid_modes[5] = { true, false, false, false, false };
 	bool tv = !node->is_radio;
-	enum v4l2_tuner_type type = tv ? V4L2_TUNER_ANALOG_TV : V4L2_TUNER_RADIO;
+	unsigned type = tv ? V4L2_TUNER_ANALOG_TV : V4L2_TUNER_RADIO;
 	__u32 audmode;
 
 	if (tuner.index != t)
