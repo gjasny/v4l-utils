@@ -201,7 +201,7 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 	return 0;
 }
 
-static int testEnumFormatsType(struct node *node, enum v4l2_buf_type type)
+static int testEnumFormatsType(struct node *node, unsigned type)
 {
 	pixfmt_set &set = node->buftype_pixfmts[type];
 	struct v4l2_fmtdesc fmtdesc;
@@ -259,11 +259,11 @@ static int testEnumFormatsType(struct node *node, enum v4l2_buf_type type)
 int testEnumFormats(struct node *node)
 {
 	bool supported = false;
-	int type;
+	unsigned type;
 	int ret;
 
 	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
-		ret = testEnumFormatsType(node, (enum v4l2_buf_type)type);
+		ret = testEnumFormatsType(node, type);
 		if (ret && ret != ENOTTY)
 			return ret;
 		if (!ret)
@@ -351,7 +351,7 @@ int testFBuf(struct node *node)
 	return 0;
 }
 
-static int testFormatsType(struct node *node, enum v4l2_buf_type type)
+static int testFormatsType(struct node *node, unsigned type)
 {
 	pixfmt_set &set = node->buftype_pixfmts[type];
 	pixfmt_set *set_splane;
@@ -472,7 +472,7 @@ int testFormats(struct node *node)
 	int ret;
 
 	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
-		ret = testFormatsType(node, (enum v4l2_buf_type)type);
+		ret = testFormatsType(node, type);
 
 		if (ret && ret != ENOTTY)
 			return ret;
@@ -496,7 +496,7 @@ int testFormats(struct node *node)
 	return supported ? 0 : ENOTTY;
 }
 
-static int testSlicedVBICapType(struct node *node, enum v4l2_buf_type type)
+static int testSlicedVBICapType(struct node *node, unsigned type)
 {
 	struct v4l2_sliced_vbi_cap cap;
 	bool sliced_type = (type == V4L2_BUF_TYPE_SLICED_VBI_CAPTURE ||
@@ -588,7 +588,7 @@ static int testParmStruct(struct node *node, struct v4l2_streamparm &parm)
 	return 0;
 }
 
-static int testParmType(struct node *node, enum v4l2_buf_type type)
+static int testParmType(struct node *node, unsigned type)
 {
 	struct v4l2_streamparm parm;
 	int ret;
@@ -625,7 +625,7 @@ int testParm(struct node *node)
 	int ret;
 
 	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
-		ret = testParmType(node, (enum v4l2_buf_type)type);
+		ret = testParmType(node, type);
 
 		if (ret && ret != ENOTTY)
 			return ret;
