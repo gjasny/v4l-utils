@@ -146,7 +146,7 @@ struct v4lconvert_data *v4lconvert_create(int fd, void *dev_ops_priv,
 				break;
 
 		if (j < ARRAY_SIZE(supported_src_pixfmts)) {
-			data->supported_src_formats |= 1 << j;
+			data->supported_src_formats |= 1ULL << j;
 			v4lconvert_get_framesizes(data, fmt.pixelformat, j);
 			if (!supported_src_pixfmts[j].needs_conversion)
 				always_needs_conversion = 0;
@@ -245,7 +245,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
 
 	for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
 		if (v4lconvert_supported_dst_fmt_only(data) ||
-				!(data->supported_src_formats & (1 << i))) {
+				!(data->supported_src_formats & (1ULL << i))) {
 			faked_fmts[no_faked_fmts] = supported_dst_pixfmts[i].fmt;
 			no_faked_fmts++;
 		}
@@ -400,7 +400,7 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
 
 	for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
 		/* is this format supported? */
-		if (!(data->supported_src_formats & (1 << i)))
+		if (!(data->supported_src_formats & (1ULL << i)))
 			continue;
 
 		try_fmt = *dest_fmt;
