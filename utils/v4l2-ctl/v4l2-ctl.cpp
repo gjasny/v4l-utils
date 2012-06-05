@@ -466,10 +466,10 @@ static void usage_stds(void)
 	       "  --query-dv-preset  query the detected dv preset [VIDIOC_QUERY_DV_PRESET]\n"
 	       "  --list-dv-timings  list supp. standard dv timings [VIDIOC_ENUM_DV_TIMINGS]\n"
 	       "  --set-dv-bt-timings\n"
-	       "		     no arguments: use the output of VIDIOC_QUERY_DV_PRESET\n"
-	       "		     index=<index>: use the index as provided by\n"
-	       "                     --list-dv-presets, or give a fully specified timings:\n"
-	       "		     width=<width>,height=<height>,interlaced=<0/1>,\n"
+	       "                     query: use the output of VIDIOC_QUERY_DV_PRESET\n"
+	       "                     index=<index>: use the index as provided by --list-dv-presets\n"
+	       "                     or give a fully specified timings:\n"
+	       "                     width=<width>,height=<height>,interlaced=<0/1>,\n"
 	       "                     polarities=<polarities mask>,pixelclock=<pixelclock Hz>,\n"
 	       "                     hfp=<horizontal front porch>,hs=<horizontal sync>,\n"
 	       "                     hbp=<horizontal back porch>,vfp=<vertical front porch>,\n"
@@ -2121,10 +2121,6 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 
 	dv_timings->type = V4L2_DV_BT_656_1120;
 
-	if (optarg == NULL || *optarg == '\0') {
-		query = true;
-		return;
-	}
 	while (*subs != '\0') {
 		static const char *const subopts[] = {
 			"width",
@@ -2142,6 +2138,7 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 			"il_vs",
 			"il_vbp",
 			"index",
+			"query",
 			NULL
 		};
 
@@ -2190,6 +2187,9 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 			break;
 		case 14:
 			enumerate = strtol(value, 0L, 0);
+			break;
+		case 15:
+			query = true;
 			break;
 		default:
 			usage_stds();
@@ -3253,13 +3253,13 @@ int main(int argc, char **argv)
 			printf("Standard set to %08llx\n", (unsigned long long)std);
 	}
 
-        if (options[OptSetDvPreset]){
+        if (options[OptSetDvPreset]) {
 		if (doioctl(fd, VIDIOC_S_DV_PRESET, &dv_preset) >= 0) {
 			printf("Preset set: %d\n", dv_preset.preset);
 		}
 	}
 
-        if (options[OptSetDvBtTimings]){
+	if (options[OptSetDvBtTimings]) {
 		struct v4l2_enum_dv_timings et;
 
 		if (query_and_set_dv_timings)
