@@ -40,12 +40,18 @@ struct test_queryctrl: v4l2_queryctrl {
 typedef std::list<test_queryctrl> qctrl_list;
 typedef std::set<__u32> pixfmt_set;
 
+struct node;
+
 struct node {
 	int fd;
 	bool is_video;
 	bool is_radio;
 	bool is_vbi;
+	bool can_capture;
+	bool can_output;
+	const char *device;
 	unsigned caps;
+	struct node *node2;	/* second open filehandle */
 	bool has_outputs;
 	bool has_inputs;
 	unsigned tuners;
@@ -59,6 +65,7 @@ struct node {
 	qctrl_list controls;
 	__u32 fbuf_caps;
 	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE + 1];
+	__u32 valid_buftype;
 };
 
 #define info(fmt, args...) 					\
@@ -94,6 +101,16 @@ static inline int test_open(const char *file, int oflag)
 static inline int test_close(int fd)
 {
 	return wrapper ? v4l2_close(fd) : close(fd);
+}
+
+static inline void reopen(struct node *node)
+{
+	test_close(node->fd);
+	if ((node->fd = test_open(node->device, O_RDWR)) < 0) {
+		fprintf(stderr, "Failed to open %s: %s\n", node->device,
+			strerror(errno));
+		exit(1);
+	}
 }
 
 static inline int test_ioctl(int fd, int cmd, void *arg)
@@ -166,5 +183,9 @@ int testParm(struct node *node);
 int testFBuf(struct node *node);
 int testFormats(struct node *node);
 int testSlicedVBICap(struct node *node);
+
+// Buffer ioctl tests
+int testReqBufs(struct node *node);
+int testReadWrite(struct node *node);
 
 #endif
