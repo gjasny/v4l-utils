@@ -258,6 +258,7 @@ static int testCap(struct node *node)
 			V4L2_CAP_VIDEO_OUTPUT_OVERLAY | V4L2_CAP_VBI_OUTPUT |
 			V4L2_CAP_SLICED_VBI_OUTPUT | V4L2_CAP_MODULATOR |
 			V4L2_CAP_RDS_OUTPUT;
+	const __u32 io_caps = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
 
 	// Must always be there
 	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, &vcap));
@@ -291,6 +292,10 @@ static int testCap(struct node *node)
 		fail_on_test(dcaps & output_caps);
 	if (dcaps & output_caps)
 		fail_on_test(dcaps & input_caps);
+	if (node->can_capture || node->can_output)
+		fail_on_test(!(dcaps & io_caps));
+	else
+		fail_on_test(dcaps & io_caps);
 
 	return 0;
 }
@@ -473,6 +478,7 @@ int main(int argc, char **argv)
 		device = vbi_device;
 		node.is_vbi = true;
 	}
+	node.device = device;
 
 	doioctl(&node, VIDIOC_QUERYCAP, &vcap);
 	if (vcap.capabilities & V4L2_CAP_DEVICE_CAPS)
@@ -487,6 +493,12 @@ int main(int argc, char **argv)
 			 V4L2_CAP_SLICED_VBI_OUTPUT | V4L2_CAP_RDS_OUTPUT |
 			 V4L2_CAP_MODULATOR))
 		node.has_outputs = true;
+	if (node.caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
+			 V4L2_CAP_SLICED_VBI_CAPTURE))
+		node.can_capture = true;
+	if (node.caps & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VBI_OUTPUT |
+			 V4L2_CAP_SLICED_VBI_OUTPUT))
+		node.can_output = true;
 
 	/* Information Opts */
 
@@ -528,7 +540,7 @@ int main(int argc, char **argv)
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&video_node, &video_node2)));
-			test_close(video_node2.fd);
+			node.node2 = &video_node2;
 		}
 	}
 	if (radio_device) {
@@ -539,7 +551,7 @@ int main(int argc, char **argv)
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&radio_node, &radio_node2)));
-			test_close(radio_node2.fd);
+			node.node2 = &video_node2;
 		}
 	}
 	if (vbi_device) {
@@ -550,7 +562,7 @@ int main(int argc, char **argv)
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&vbi_node, &vbi_node2)));
-			test_close(vbi_node2.fd);
+			node.node2 = &video_node2;
 		}
 	}
 	printf("\n");
@@ -617,6 +629,12 @@ int main(int argc, char **argv)
 	printf("\ttest VIDIOC_G_FMT: %s\n", ok(testFormats(&node)));
 	printf("\ttest VIDIOC_G_SLICED_VBI_CAP: %s\n", ok(testSlicedVBICap(&node)));
 
+	/* Buffer ioctls */
+
+	printf("Buffer ioctls:\n");
+	printf("\ttest VIDIOC_REQBUFS/CREATE_BUFS: %s\n", ok(testReqBufs(&node)));
+	printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
+
 	/* TODO:
 
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP, VIDIOC_G/S_SELECTION
@@ -625,7 +643,7 @@ int main(int argc, char **argv)
 	   VIDIOC_(TRY_)ENCODER_CMD
 	   VIDIOC_(TRY_)DECODER_CMD
 	   VIDIOC_G_ENC_INDEX
-	   VIDIOC_REQBUFS/QBUF/DQBUF/QUERYBUF/CREATE_BUFS/PREPARE_BUFS
+	   VIDIOC_QBUF/DQBUF/QUERYBUF/PREPARE_BUFS
 	   VIDIOC_STREAMON/OFF
 
 	   */
@@ -633,6 +651,7 @@ int main(int argc, char **argv)
 	/* Final test report */
 
 	test_close(node.fd);
+	test_close(node.node2->fd);
 	printf("Total: %d Succeeded: %d Failed: %d Warnings: %d\n",
 			tests_total, tests_ok, tests_total - tests_ok, warnings);
 	exit(app_result);
