@@ -59,6 +59,7 @@ public:
 	bool queryctrl(v4l2_queryctrl &qc);
 	bool querymenu(v4l2_querymenu &qm);
 	bool g_tuner(v4l2_tuner &tuner);
+	bool s_tuner(v4l2_tuner &tuner);
 	bool g_input(int &input);
 	bool s_input(int input);
 	bool g_output(int &output);

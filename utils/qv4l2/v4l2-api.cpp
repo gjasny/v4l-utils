@@ -144,6 +144,11 @@ bool v4l2::g_tuner(v4l2_tuner &tuner)
 	return true;
 }
 
+bool v4l2::s_tuner(v4l2_tuner &tuner)
+{
+	return ioctl("Set Tuner", VIDIOC_S_TUNER, &tuner);
+}
+
 bool v4l2::g_input(int &input)
 {
 	return ioctl(VIDIOC_G_INPUT, &input) >= 0;
