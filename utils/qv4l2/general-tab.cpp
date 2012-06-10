@@ -477,10 +477,8 @@ void GeneralTab::detectSubchansClicked()
 	if (m_tuner.rxsubchans & V4L2_TUNER_SUB_RDS)
 		chans += "RDS ";
 	chans += "(" + QString::number((int)(m_tuner.signal / 655.35 + 0.5)) + "%";
-	if (m_tuner.afc < 0)
-		chans += " too low";
-	else if (m_tuner.afc > 0)
-		chans += " too high";
+	if (m_tuner.signal && m_tuner.afc)
+		chans += m_tuner.afc < 0 ? " too low" : " too high";
 	chans += ")";
 	m_subchannels->setText(chans);
 }
