@@ -38,6 +38,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_col(0),
 	m_cols(n),
 	m_isRadio(false),
+	m_isVbi(false),
 	m_audioInput(NULL),
 	m_tvStandard(NULL),
 	m_qryStandard(NULL),
@@ -80,6 +81,8 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_isRadio = true;
 	if (m_modulator.capability && m_modulator.capability & V4L2_TUNER_CAP_LOW)
 		m_isRadio = true;
+	if (m_querycap.capabilities & V4L2_CAP_DEVICE_CAPS)
+		m_isVbi = caps() & V4L2_CAP_VBI_CAPTURE;
 
 	if (!isRadio() && enum_input(vin, true)) {
 		addLabel("Input");
@@ -277,6 +280,9 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (isRadio())
 		goto done;
 
+	if (isVbi())
+		goto capture_method;
+
 	v4l2_fmtdesc fmt;
 	addLabel("Capture Image Formats");
 	m_vidCapFormats = new QComboBox(parent);
@@ -331,8 +337,11 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		connect(m_vidOutFormats, SIGNAL(activated(int)), SLOT(vidOutFormatChanged(int)));
 	}
 
+capture_method:
 	addLabel("Capture Method");
 	m_capMethods = new QComboBox(parent);
+	m_buftype = isVbi() ? V4L2_BUF_TYPE_VBI_CAPTURE :
+		V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (caps() & V4L2_CAP_STREAMING) {
 		v4l2_requestbuffers reqbuf;
 
@@ -345,13 +354,13 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		// unexpected. So the only way at the moment to do this that works
 		// everywhere is to call REQBUFS with a count of 1, and then again with
 		// a count of 0.
-		if (reqbufs_user_cap(reqbuf, 1)) {
+		if (reqbufs_user(reqbuf, 1)) {
 			m_capMethods->addItem("User pointer I/O", QVariant(methodUser));
-			reqbufs_user_cap(reqbuf, 0);
+			reqbufs_user(reqbuf, 0);
 		}
-		if (reqbufs_mmap_cap(reqbuf, 1)) {
+		if (reqbufs_mmap(reqbuf, 1)) {
 			m_capMethods->addItem("Memory mapped I/O", QVariant(methodMmap));
-			reqbufs_mmap_cap(reqbuf, 0);
+			reqbufs_mmap(reqbuf, 0);
 		}
 	}
 	if (caps() & V4L2_CAP_READWRITE) {

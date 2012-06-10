@@ -84,6 +84,7 @@ public:
 	bool s_frequency(int freq, bool low = false);
 	bool g_fmt_cap(v4l2_format &fmt);
 	bool g_fmt_out(v4l2_format &fmt);
+	bool g_fmt_vbi(v4l2_format &fmt);
 	bool try_fmt(v4l2_format &fmt);
 	bool s_fmt(v4l2_format &fmt);
 	bool enum_input(v4l2_input &in, bool init = false, int index = 0);
@@ -98,15 +99,57 @@ public:
 	bool enum_framesizes(v4l2_frmsizeenum &frm, __u32 init_pixfmt = 0, int index = 0);
 	bool enum_frameintervals(v4l2_frmivalenum &frm, __u32 init_pixfmt = 0, __u32 w = 0, __u32 h = 0, int index = 0);
 
-	bool reqbufs_mmap_cap(v4l2_requestbuffers &reqbuf, int count = 0);
-	bool reqbufs_user_cap(v4l2_requestbuffers &reqbuf, int count = 0);
-	bool dqbuf_mmap_cap(v4l2_buffer &buf, bool &again);
-	bool dqbuf_user_cap(v4l2_buffer &buf, bool &again);
+	bool reqbufs_mmap(v4l2_requestbuffers &reqbuf, __u32 buftype, int count = 0);
+	bool reqbufs_user(v4l2_requestbuffers &reqbuf, __u32 buftype, int count = 0);
+	bool dqbuf_mmap(v4l2_buffer &buf, __u32 buftype, bool &again);
+	bool dqbuf_user(v4l2_buffer &buf, __u32 buftype, bool &again);
 	bool qbuf(v4l2_buffer &buf);
-	bool qbuf_mmap_cap(int index);
-	bool qbuf_user_cap(int index, void *ptr, int length);
-	bool streamon_cap();
-	bool streamoff_cap();
+	bool qbuf_mmap(int index, __u32 buftype);
+	bool qbuf_user(int index, __u32 buftype, void *ptr, int length);
+	bool streamon(__u32 buftype);
+	bool streamoff(__u32 buftype);
+
+	inline bool reqbufs_mmap_cap(v4l2_requestbuffers &reqbuf, int count = 0) {
+		return reqbufs_mmap(reqbuf, V4L2_BUF_TYPE_VIDEO_CAPTURE, count);
+	}
+	inline bool reqbufs_user_cap(v4l2_requestbuffers &reqbuf, int count = 0) {
+		return reqbufs_user(reqbuf, V4L2_BUF_TYPE_VIDEO_CAPTURE, count);
+	}
+	inline bool dqbuf_mmap_cap(v4l2_buffer &buf, bool &again) {
+		return dqbuf_mmap(buf, V4L2_BUF_TYPE_VIDEO_CAPTURE, again);
+	}
+	inline bool dqbuf_user_cap(v4l2_buffer &buf, bool &again) {
+		return dqbuf_user(buf, V4L2_BUF_TYPE_VIDEO_CAPTURE, again);
+	}
+	inline bool qbuf_mmap_cap(int index) {
+		return qbuf_mmap(index, V4L2_BUF_TYPE_VIDEO_CAPTURE);
+	}
+	inline bool qbuf_user_cap(int index, void *ptr, int length) {
+		return qbuf_user(index, V4L2_BUF_TYPE_VIDEO_CAPTURE, ptr, length);
+	}
+	inline bool streamon_cap() { return streamon(V4L2_BUF_TYPE_VIDEO_CAPTURE); }
+	inline bool streamoff_cap() { return streamoff(V4L2_BUF_TYPE_VIDEO_CAPTURE); }
+
+	inline bool reqbufs_mmap_vbi(v4l2_requestbuffers &reqbuf, int count = 0) {
+		return reqbufs_mmap(reqbuf, V4L2_BUF_TYPE_VBI_CAPTURE, count);
+	}
+	inline bool reqbufs_user_vbi(v4l2_requestbuffers &reqbuf, int count = 0) {
+		return reqbufs_user(reqbuf, V4L2_BUF_TYPE_VBI_CAPTURE, count);
+	}
+	inline bool dqbuf_mmap_vbi(v4l2_buffer &buf, bool &again) {
+		return dqbuf_mmap(buf, V4L2_BUF_TYPE_VBI_CAPTURE, again);
+	}
+	inline bool dqbuf_user_vbi(v4l2_buffer &buf, bool &again) {
+		return dqbuf_user(buf, V4L2_BUF_TYPE_VBI_CAPTURE, again);
+	}
+	inline bool qbuf_mmap_vbi(int index) {
+		return qbuf_mmap(index, V4L2_BUF_TYPE_VBI_CAPTURE);
+	}
+	inline bool qbuf_user_vbi(int index, void *ptr, int length) {
+		return qbuf_user(index, V4L2_BUF_TYPE_VBI_CAPTURE, ptr, length);
+	}
+	inline bool streamon_vbi() { return streamon(V4L2_BUF_TYPE_VBI_CAPTURE); }
+	inline bool streamoff_vbi() { return streamoff(V4L2_BUF_TYPE_VBI_CAPTURE); }
 
 	bool reqbufs_mmap_out(v4l2_requestbuffers &reqbuf, int count = 0);
 	bool reqbufs_user_out(v4l2_requestbuffers &reqbuf);
