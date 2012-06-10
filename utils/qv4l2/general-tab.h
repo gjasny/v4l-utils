@@ -45,6 +45,28 @@ public:
 	int width() const { return m_width; }
 	int height() const { return m_height; }
 	bool isRadio() const { return m_isRadio; }
+	bool isVbi() const { return m_isVbi; }
+	__u32 bufType() const { return m_buftype; }
+	inline bool reqbufs_mmap(v4l2_requestbuffers &reqbuf, int count = 0) {
+		return v4l2::reqbufs_mmap(reqbuf, m_buftype, count);
+	}
+	inline bool reqbufs_user(v4l2_requestbuffers &reqbuf, int count = 0) {
+		return v4l2::reqbufs_user(reqbuf, m_buftype, count);
+	}
+	inline bool dqbuf_mmap(v4l2_buffer &buf, bool &again) {
+		return v4l2::dqbuf_mmap(buf, m_buftype, again);
+	}
+	inline bool dqbuf_user(v4l2_buffer &buf, bool &again) {
+		return v4l2::dqbuf_user(buf, m_buftype, again);
+	}
+	inline bool qbuf_mmap(int index) {
+		return v4l2::qbuf_mmap(index, m_buftype);
+	}
+	inline bool qbuf_user(int index, void *ptr, int length) {
+		return v4l2::qbuf_user(index, m_buftype, ptr, length);
+	}
+	inline bool streamon() { return v4l2::streamon(m_buftype); }
+	inline bool streamoff() { return v4l2::streamoff(m_buftype); }
 
 private slots:
 	void inputChanged(int);
@@ -107,6 +129,8 @@ private:
 	int m_col;
 	int m_cols;
 	bool m_isRadio;
+	bool m_isVbi;
+	__u32 m_buftype;
 	__u32 m_audioModes[5];
 	struct v4l2_tuner m_tuner;
 	struct v4l2_modulator m_modulator;

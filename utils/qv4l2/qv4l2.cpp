@@ -180,6 +180,7 @@ void ApplicationWindow::openrawdev()
 
 void ApplicationWindow::capFrame()
 {
+	__u32 buftype = m_genTab->bufType();
 	v4l2_buffer buf;
 	int s = 0;
 	int err = 0;
@@ -206,7 +207,7 @@ void ApplicationWindow::capFrame()
 		break;
 
 	case methodMmap:
-		if (!dqbuf_mmap_cap(buf, again)) {
+		if (!dqbuf_mmap(buf, buftype, again)) {
 			error("dqbuf");
 			m_capStartAct->setChecked(false);
 			return;
@@ -230,7 +231,7 @@ void ApplicationWindow::capFrame()
 		break;
 
 	case methodUser:
-		if (!dqbuf_user_cap(buf, again)) {
+		if (!dqbuf_user(buf, buftype, again)) {
 			error("dqbuf");
 			m_capStartAct->setChecked(false);
 			return;
@@ -280,8 +281,9 @@ void ApplicationWindow::capFrame()
 
 bool ApplicationWindow::startCapture(unsigned buffer_size)
 {
-	unsigned int i;
+	__u32 buftype = m_genTab->bufType();
 	v4l2_requestbuffers req;
+	unsigned int i;
 
 	memset(&req, 0, sizeof(req));
 
@@ -291,14 +293,14 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 		return true;
 
 	case methodMmap:
-		if (!reqbufs_mmap_cap(req, 3)) {
+		if (!reqbufs_mmap(req, buftype, 3)) {
 			error("Cannot capture");
 			break;
 		}
 
 		if (req.count < 2) {
 			error("Too few buffers");
-			reqbufs_mmap_cap(req);
+			reqbufs_mmap(req, buftype);
 			break;
 		}
 
@@ -306,7 +308,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 
 		if (!m_buffers) {
 			error("Out of memory");
-			reqbufs_mmap_cap(req);
+			reqbufs_mmap(req, buftype);
 			break;
 		}
 
@@ -315,7 +317,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 
 			memset(&buf, 0, sizeof(buf));
 
-			buf.type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			buf.type        = buftype;
 			buf.memory      = V4L2_MEMORY_MMAP;
 			buf.index       = m_nbuffers;
 
@@ -333,26 +335,26 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			}
 		}
 		for (i = 0; i < m_nbuffers; ++i) {
-			if (!qbuf_mmap_cap(i)) {
+			if (!qbuf_mmap(i, buftype)) {
 				perror("VIDIOC_QBUF");
 				goto error;
 			}
 		}
-		if (!streamon_cap()) {
+		if (!streamon(buftype)) {
 			perror("VIDIOC_STREAMON");
 			goto error;
 		}
 		return true;
 
 	case methodUser:
-		if (!reqbufs_user_cap(req, 3)) {
+		if (!reqbufs_user(req, buftype, 3)) {
 			error("Cannot capture");
 			break;
 		}
 
 		if (req.count < 2) {
 			error("Too few buffers");
-			reqbufs_user_cap(req);
+			reqbufs_user(req, buftype);
 			break;
 		}
 
@@ -373,11 +375,11 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			}
 		}
 		for (i = 0; i < m_nbuffers; ++i)
-			if (!qbuf_user_cap(i, m_buffers[i].start, m_buffers[i].length)) {
+			if (!qbuf_user(i, buftype, m_buffers[i].start, m_buffers[i].length)) {
 				perror("VIDIOC_QBUF");
 				goto error;
 			}
-		if (!streamon_cap()) {
+		if (!streamon(buftype)) {
 			perror("VIDIOC_STREAMON");
 			goto error;
 		}
@@ -391,6 +393,7 @@ error:
 
 void ApplicationWindow::stopCapture()
 {
+	__u32 buftype = m_genTab->bufType();
 	v4l2_requestbuffers reqbufs;
 	v4l2_encoder_cmd cmd;
 	unsigned i;
@@ -405,22 +408,22 @@ void ApplicationWindow::stopCapture()
 	case methodMmap:
 		if (m_buffers == NULL)
 			break;
-		if (!streamoff_cap())
+		if (!streamoff(buftype))
 			perror("VIDIOC_STREAMOFF");
 		for (i = 0; i < m_nbuffers; ++i)
 			if (-1 == munmap(m_buffers[i].start, m_buffers[i].length))
 				perror("munmap");
 		// Free all buffers.
-		reqbufs_mmap_cap(reqbufs, 1);  // videobuf workaround
-		reqbufs_mmap_cap(reqbufs, 0);
+		reqbufs_mmap(reqbufs, buftype, 1);  // videobuf workaround
+		reqbufs_mmap(reqbufs, buftype, 0);
 		break;
 
 	case methodUser:
-		if (!streamoff_cap())
+		if (!streamoff(buftype))
 			perror("VIDIOC_STREAMOFF");
 		// Free all buffers.
-		reqbufs_user_cap(reqbufs, 1);  // videobuf workaround
-		reqbufs_user_cap(reqbufs, 0);
+		reqbufs_user(reqbufs, buftype, 1);  // videobuf workaround
+		reqbufs_user(reqbufs, buftype, 0);
 		for (i = 0; i < m_nbuffers; ++i)
 			free(m_buffers[i].start);
 		break;
@@ -465,6 +468,8 @@ void ApplicationWindow::capStart(bool start)
 	};
 	QImage::Format dstFmt = QImage::Format_RGB888;
 	struct v4l2_fract interval;
+	v4l2_pix_format &srcPix = m_capSrcFormat.fmt.pix;
+	v4l2_pix_format &dstPix = m_capDestFormat.fmt.pix;
 
 	if (!start) {
 		stopCapture();
@@ -477,41 +482,66 @@ void ApplicationWindow::capStart(bool start)
 	m_showFrames = m_showFramesAct->isChecked();
 	m_frame = m_lastFrame = m_fps = 0;
 	m_capMethod = m_genTab->capMethod();
-	g_fmt_cap(m_capSrcFormat);
-	s_fmt(m_capSrcFormat);
-	if (m_genTab->get_interval(interval))
-	        set_interval(interval);
+
+	if (m_genTab->isVbi()) {
+		v4l2_format fmt;
+
+		g_fmt_vbi(fmt);
+		srcPix.pixelformat = fmt.fmt.vbi.sample_format;
+		srcPix.width = srcPix.bytesperline =
+					fmt.fmt.vbi.samples_per_line;
+		if (fmt.fmt.vbi.flags & V4L2_VBI_INTERLACED) {
+			srcPix.height = fmt.fmt.vbi.count[0];
+			srcPix.field = V4L2_FIELD_INTERLACED;
+		} else {
+			srcPix.height = fmt.fmt.vbi.count[0] + fmt.fmt.vbi.count[1];
+			srcPix.field = V4L2_FIELD_NONE;
+		}
+		srcPix.sizeimage = srcPix.bytesperline * srcPix.height;
+	} else {
+		g_fmt_cap(m_capSrcFormat);
+		s_fmt(m_capSrcFormat);
+		if (m_genTab->get_interval(interval))
+			set_interval(interval);
+	}
 
 	m_mustConvert = m_showFrames;
 	if (m_showFrames) {
-		m_frameData = new unsigned char[m_capSrcFormat.fmt.pix.sizeimage];
+		m_frameData = new unsigned char[srcPix.sizeimage];
 		m_capDestFormat = m_capSrcFormat;
-		m_capDestFormat.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+		dstPix.pixelformat = V4L2_PIX_FMT_RGB24;
 
 		for (int i = 0; supported_fmts[i].v4l2_pixfmt; i++) {
-			if (supported_fmts[i].v4l2_pixfmt == m_capSrcFormat.fmt.pix.pixelformat) {
-				m_capDestFormat.fmt.pix.pixelformat = supported_fmts[i].v4l2_pixfmt;
+			if (supported_fmts[i].v4l2_pixfmt == srcPix.pixelformat) {
+				dstPix.pixelformat = supported_fmts[i].v4l2_pixfmt;
 				dstFmt = supported_fmts[i].qt_pixfmt;
 				m_mustConvert = false;
 				break;
 			}
 		}
 		if (m_mustConvert) {
+			v4l2_format copy = m_capSrcFormat;
+
 			v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
 			// v4lconvert_try_format sometimes modifies the source format if it thinks
 			// that there is a better format available. Restore our selected source
 			// format since we do not want that happening.
-			g_fmt_cap(m_capSrcFormat);
+			m_capSrcFormat = copy;
 		}
 
-		m_capture->setMinimumSize(m_capDestFormat.fmt.pix.width, m_capDestFormat.fmt.pix.height);
-		m_capImage = new QImage(m_capDestFormat.fmt.pix.width, m_capDestFormat.fmt.pix.height, dstFmt);
+		if (m_genTab->isVbi()) {
+			dstPix.bytesperline = (dstPix.bytesperline + 3) & ~3;
+			dstPix.sizeimage = dstPix.bytesperline * dstPix.height * 3;
+		}
+		m_capture->setMinimumSize(dstPix.width, dstPix.height);
+		m_capImage = new QImage(dstPix.width, dstPix.height, dstFmt);
 		m_capImage->fill(0);
 		m_capture->setImage(*m_capImage, "No frame");
 		m_capture->show();
 	}
+
 	statusBar()->showMessage("No frame");
-	if (startCapture(m_capSrcFormat.fmt.pix.sizeimage)) {
+	if (startCapture(srcPix.sizeimage)) {
 		m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
 		connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capFrame()));
 	}
