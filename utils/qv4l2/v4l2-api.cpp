@@ -263,12 +263,12 @@ bool v4l2::s_frequency(v4l2_frequency &freq)
 	return ioctl("Set Frequency", VIDIOC_S_FREQUENCY, &freq);
 }
 
-bool v4l2::s_frequency(int val)
+bool v4l2::s_frequency(int val, bool low)
 {
 	v4l2_frequency f;
 
 	memset(&f, 0, sizeof(f));
-	f.type = V4L2_TUNER_ANALOG_TV;
+	f.type = low ? V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
 	f.frequency = val;
 	return s_frequency(f);
 }

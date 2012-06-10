@@ -24,6 +24,8 @@
 #include <QSpinBox>
 #include <QComboBox>
 #include <QPushButton>
+#include <QLineEdit>
+#include <QDoubleValidator>
 
 #include <stdio.h>
 #include <errno.h>
@@ -34,6 +36,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_row(0),
 	m_col(0),
 	m_cols(n),
+	m_isRadio(false),
 	m_audioInput(NULL),
 	m_tvStandard(NULL),
 	m_qryStandard(NULL),
@@ -71,7 +74,10 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	bool needsPreset = false;
 	bool needsTimings = false;
 
-	if (enum_input(vin, true)) {
+	if (m_tuner.type && m_tuner.capability & V4L2_TUNER_CAP_LOW)
+		m_isRadio = true;
+
+	if (!isRadio() && enum_input(vin, true)) {
 		addLabel("Input");
 		m_videoInput = new QComboBox(parent);
 		do {
@@ -88,7 +94,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	v4l2_output vout;
-	if (enum_output(vout, true)) {
+	if (!isRadio() && enum_output(vout, true)) {
 		addLabel("Output");
 		m_videoOutput = new QComboBox(parent);
 		do {
@@ -100,7 +106,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	v4l2_audio vaudio;
-	if (enum_audio(vaudio, true)) {
+	if (!isRadio() && enum_audio(vaudio, true)) {
 		addLabel("Input Audio");
 		m_audioInput = new QComboBox(parent);
 		do {
@@ -112,7 +118,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	v4l2_audioout vaudout;
-	if (enum_audout(vaudout, true)) {
+	if (!isRadio() && enum_audout(vaudout, true)) {
 		addLabel("Output Audio");
 		m_audioOutput = new QComboBox(parent);
 		do {
@@ -160,31 +166,43 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	if (m_tuner.type) {
-		m_freq = new QSpinBox(parent);
-		m_freq->setMinimum(m_tuner.rangelow);
-		m_freq->setMaximum(m_tuner.rangehigh);
+		QDoubleValidator *val;
+		double factor = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? 16 : 16000;
+
+		val = new QDoubleValidator(m_tuner.rangelow / factor, m_tuner.rangehigh / factor, 3, parent);
+		m_freq = new QLineEdit(parent);
+		m_freq->setValidator(val);
 		m_freq->setWhatsThis(QString("Frequency\nLow: %1\nHigh: %2")
-				.arg(m_tuner.rangelow).arg(m_tuner.rangehigh));
-		connect(m_freq, SIGNAL(valueChanged(int)), SLOT(freqChanged(int)));
+				.arg(m_tuner.rangelow / factor).arg(m_tuner.rangehigh / factor));
+		connect(m_freq, SIGNAL(lostFocus()), SLOT(freqChanged()));
+		connect(m_freq, SIGNAL(returnPressed()), SLOT(freqChanged()));
 		updateFreq();
-		addLabel("Frequency");
+		if (m_tuner.capability & V4L2_TUNER_CAP_LOW)
+			addLabel("Frequency (kHz)");
+		else
+			addLabel("Frequency (MHz)");
 		addWidget(m_freq);
 
-		addLabel("Frequency Table");
-		m_freqTable = new QComboBox(parent);
-		for (int i = 0; v4l2_channel_lists[i].name; i++) {
-			m_freqTable->addItem(v4l2_channel_lists[i].name);
-		}
-		addWidget(m_freqTable);
-		connect(m_freqTable, SIGNAL(activated(int)), SLOT(freqTableChanged(int)));
+		if (!m_tuner.capability & V4L2_TUNER_CAP_LOW) {
+			addLabel("Frequency Table");
+			m_freqTable = new QComboBox(parent);
+			for (int i = 0; v4l2_channel_lists[i].name; i++) {
+				m_freqTable->addItem(v4l2_channel_lists[i].name);
+			}
+			addWidget(m_freqTable);
+			connect(m_freqTable, SIGNAL(activated(int)), SLOT(freqTableChanged(int)));
 
-		addLabel("Channels");
-		m_freqChannel = new QComboBox(parent);
-		m_freqChannel->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-		addWidget(m_freqChannel);
-		connect(m_freqChannel, SIGNAL(activated(int)), SLOT(freqChannelChanged(int)));
-		updateFreqChannel();
+			addLabel("Channels");
+			m_freqChannel = new QComboBox(parent);
+			m_freqChannel->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+			addWidget(m_freqChannel);
+			connect(m_freqChannel, SIGNAL(activated(int)), SLOT(freqChannelChanged(int)));
+			updateFreqChannel();
+		}
 	}
+
+	if (isRadio())
+		goto done;
 
 	v4l2_fmtdesc fmt;
 	addLabel("Capture Image Formats");
@@ -268,6 +286,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 	addWidget(m_capMethods);
 
+done:
 	QGridLayout::addWidget(new QWidget(parent), rowCount(), 0, 1, n);
 	setRowStretch(rowCount() - 1, 1);
 }
@@ -350,12 +369,17 @@ void GeneralTab::freqTableChanged(int)
 
 void GeneralTab::freqChannelChanged(int idx)
 {
-	m_freq->setValue((int)(v4l2_channel_lists[m_freqTable->currentIndex()].list[idx].freq / 62.5));
+	double f = v4l2_channel_lists[m_freqTable->currentIndex()].list[idx].freq;
+
+	m_freq->setText(QString::number(f / 1000.0));
+	freqChanged();
 }
 
-void GeneralTab::freqChanged(int val)
+void GeneralTab::freqChanged()
 {
-	s_frequency(val);
+	double f = m_freq->text().toDouble();
+
+	s_frequency(f * 16, m_tuner.capability & V4L2_TUNER_CAP_LOW);
 }
 
 void GeneralTab::vidCapFormatChanged(int idx)
@@ -680,7 +704,7 @@ void GeneralTab::updateFreq()
 	g_frequency(f);
 	/* m_freq listens to valueChanged block it to avoid recursion */
 	m_freq->blockSignals(true);
-	m_freq->setValue(f.frequency);
+	m_freq->setText(QString::number(f.frequency / 16.0));
 	m_freq->blockSignals(false);
 }
 
