@@ -149,6 +149,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	if (QWidget *current = m_tabs->currentWidget()) {
 		current->show();
 	}
+	statusBar()->clearMessage();
 	m_tabs->show();
 	m_tabs->setFocus();
 	m_convertData = v4lconvert_create(fd());
@@ -252,7 +253,7 @@ void ApplicationWindow::capFrame()
 	if (err == -1 && m_frame == 0)
 		error(v4lconvert_get_error_message(m_convertData));
 
-	QString status;
+	QString status, curStatus;
 	struct timeval tv, res;
 
 	if (m_frame == 0)
@@ -268,7 +269,9 @@ void ApplicationWindow::capFrame()
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
 	if (m_showFrames)
 		m_capture->setImage(*m_capImage, status);
-	statusBar()->showMessage(status);
+	curStatus = statusBar()->currentMessage();
+	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
+		statusBar()->showMessage(status);
 	if (m_frame == 1)
 		refresh();
 }
