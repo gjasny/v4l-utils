@@ -152,7 +152,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_tabs->show();
 	m_tabs->setFocus();
 	m_convertData = v4lconvert_create(fd());
-	m_capStartAct->setEnabled(fd() >= 0);
+	m_capStartAct->setEnabled(fd() >= 0 && !m_genTab->isRadio());
 }
 
 void ApplicationWindow::opendev()

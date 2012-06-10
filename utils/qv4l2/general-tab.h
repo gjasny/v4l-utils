@@ -43,6 +43,7 @@ public:
 	bool get_interval(struct v4l2_fract &interval);
 	int width() const { return m_width; }
 	int height() const { return m_height; }
+	bool isRadio() const { return m_isRadio; }
 
 private slots:
 	void inputChanged(int);
@@ -57,7 +58,7 @@ private slots:
 	void qryTimingsClicked();
 	void freqTableChanged(int);
 	void freqChannelChanged(int);
-	void freqChanged(int);
+	void freqChanged();
 	void vidCapFormatChanged(int);
 	void frameWidthChanged();
 	void frameHeightChanged();
@@ -100,6 +101,7 @@ private:
 	int m_row;
 	int m_col;
 	int m_cols;
+	bool m_isRadio;
 	struct v4l2_tuner m_tuner;
 	struct v4l2_capability m_querycap;
 	__u32 m_pixelformat;
@@ -118,7 +120,7 @@ private:
 	QPushButton *m_qryPreset;
 	QComboBox *m_videoTimings;
 	QPushButton *m_qryTimings;
-	QSpinBox  *m_freq;
+	QLineEdit *m_freq;
 	QComboBox *m_freqTable;
 	QComboBox *m_freqChannel;
 	QComboBox *m_vidCapFormats;

@@ -78,7 +78,7 @@ public:
 	bool query_dv_timings(v4l2_dv_timings &timings);
 	bool g_frequency(v4l2_frequency &freq);
 	bool s_frequency(v4l2_frequency &freq);
-	bool s_frequency(int freq);
+	bool s_frequency(int freq, bool low = false);
 	bool g_fmt_cap(v4l2_format &fmt);
 	bool g_fmt_out(v4l2_format &fmt);
 	bool try_fmt(v4l2_format &fmt);
