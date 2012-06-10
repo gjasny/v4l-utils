@@ -60,6 +60,8 @@ public:
 	bool querymenu(v4l2_querymenu &qm);
 	bool g_tuner(v4l2_tuner &tuner);
 	bool s_tuner(v4l2_tuner &tuner);
+	bool g_modulator(v4l2_modulator &modulator);
+	bool s_modulator(v4l2_modulator &modulator);
 	bool g_input(int &input);
 	bool s_input(int input);
 	bool g_output(int &output);

@@ -28,6 +28,7 @@
 #include "v4l2-api.h"
 
 class QComboBox;
+class QCheckBox;
 class QSpinBox;
 class QPushButton;
 
@@ -61,6 +62,8 @@ private slots:
 	void freqChanged();
 	void audioModeChanged(int);
 	void detectSubchansClicked();
+	void stereoModeChanged();
+	void rdsModeChanged();
 	void vidCapFormatChanged(int);
 	void frameWidthChanged();
 	void frameHeightChanged();
@@ -106,6 +109,7 @@ private:
 	bool m_isRadio;
 	__u32 m_audioModes[5];
 	struct v4l2_tuner m_tuner;
+	struct v4l2_modulator m_modulator;
 	struct v4l2_capability m_querycap;
 	__u32 m_pixelformat;
 	__u32 m_width, m_height;
@@ -128,6 +132,8 @@ private:
 	QComboBox *m_freqChannel;
 	QComboBox *m_audioMode;
 	QLabel *m_subchannels;
+	QCheckBox *m_stereoMode;
+	QCheckBox *m_rdsMode;
 	QPushButton *m_detectSubchans;
 	QComboBox *m_vidCapFormats;
 	QComboBox *m_frameSize;

@@ -149,6 +149,17 @@ bool v4l2::s_tuner(v4l2_tuner &tuner)
 	return ioctl("Set Tuner", VIDIOC_S_TUNER, &tuner);
 }
 
+bool v4l2::g_modulator(v4l2_modulator &modulator)
+{
+	memset(&modulator, 0, sizeof(modulator));
+	return ioctl(VIDIOC_G_MODULATOR, &modulator) >= 0;
+}
+
+bool v4l2::s_modulator(v4l2_modulator &modulator)
+{
+	return ioctl("Set Modulator", VIDIOC_S_MODULATOR, &modulator);
+}
+
 bool v4l2::g_input(int &input)
 {
 	return ioctl(VIDIOC_G_INPUT, &input) >= 0;

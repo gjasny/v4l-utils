@@ -23,6 +23,7 @@
 
 #include <QSpinBox>
 #include <QComboBox>
+#include <QCheckBox>
 #include <QPushButton>
 #include <QLineEdit>
 #include <QDoubleValidator>
@@ -68,13 +69,16 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	g_tuner(m_tuner);
+	g_modulator(m_modulator);
 
 	v4l2_input vin;
 	bool needsStd = false;
 	bool needsPreset = false;
 	bool needsTimings = false;
 
-	if (m_tuner.type && m_tuner.capability & V4L2_TUNER_CAP_LOW)
+	if (m_tuner.capability && m_tuner.capability & V4L2_TUNER_CAP_LOW)
+		m_isRadio = true;
+	if (m_modulator.capability && m_modulator.capability & V4L2_TUNER_CAP_LOW)
 		m_isRadio = true;
 
 	if (!isRadio() && enum_input(vin, true)) {
@@ -165,7 +169,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		connect(m_qryTimings, SIGNAL(clicked()), SLOT(qryTimingsClicked()));
 	}
 
-	if (m_tuner.type) {
+	if (m_tuner.capability) {
 		QDoubleValidator *val;
 		double factor = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? 16 : 16000;
 
@@ -233,6 +237,41 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		addWidget(m_detectSubchans);
 		connect(m_detectSubchans, SIGNAL(clicked()), SLOT(detectSubchansClicked()));
 		detectSubchansClicked();
+	}
+
+	if (m_modulator.capability) {
+		QDoubleValidator *val;
+		double factor = (m_modulator.capability & V4L2_TUNER_CAP_LOW) ? 16 : 16000;
+
+		val = new QDoubleValidator(m_modulator.rangelow / factor, m_modulator.rangehigh / factor, 3, parent);
+		m_freq = new QLineEdit(parent);
+		m_freq->setValidator(val);
+		m_freq->setWhatsThis(QString("Frequency\nLow: %1\nHigh: %2")
+				.arg(m_modulator.rangelow / factor).arg(m_modulator.rangehigh / factor));
+		connect(m_freq, SIGNAL(lostFocus()), SLOT(freqChanged()));
+		connect(m_freq, SIGNAL(returnPressed()), SLOT(freqChanged()));
+		updateFreq();
+		if (m_modulator.capability & V4L2_TUNER_CAP_LOW)
+			addLabel("Frequency (kHz)");
+		else
+			addLabel("Frequency (MHz)");
+		addWidget(m_freq);
+		if (m_modulator.capability & V4L2_TUNER_CAP_STEREO) {
+			addLabel("Stereo");
+			m_stereoMode = new QCheckBox(parent);
+			m_stereoMode->setCheckState((m_modulator.txsubchans & V4L2_TUNER_SUB_STEREO) ?
+					Qt::Checked : Qt::Unchecked);
+			addWidget(m_stereoMode);
+			connect(m_stereoMode, SIGNAL(clicked()), SLOT(stereoModeChanged()));
+		}
+		if (m_modulator.capability & V4L2_TUNER_CAP_RDS) {
+			addLabel("RDS");
+			m_rdsMode = new QCheckBox(parent);
+			m_rdsMode->setCheckState((m_modulator.txsubchans & V4L2_TUNER_SUB_RDS) ?
+					Qt::Checked : Qt::Unchecked);
+			addWidget(m_rdsMode);
+			connect(m_rdsMode, SIGNAL(clicked()), SLOT(rdsModeChanged()));
+		}
 	}
 
 	if (isRadio())
@@ -444,6 +483,28 @@ void GeneralTab::detectSubchansClicked()
 		chans += " too high";
 	chans += ")";
 	m_subchannels->setText(chans);
+}
+
+void GeneralTab::stereoModeChanged()
+{
+	v4l2_modulator mod;
+	bool val = m_stereoMode->checkState() == Qt::Checked;
+
+	g_modulator(mod);
+	mod.txsubchans &= ~(V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_STEREO);
+	mod.txsubchans |= val ? V4L2_TUNER_SUB_STEREO : V4L2_TUNER_SUB_MONO;
+	s_modulator(mod);
+}
+
+void GeneralTab::rdsModeChanged()
+{
+	v4l2_modulator mod;
+	bool val = m_rdsMode->checkState() == Qt::Checked;
+
+	g_modulator(mod);
+	mod.txsubchans &= ~V4L2_TUNER_SUB_RDS;
+	mod.txsubchans |= val ? V4L2_TUNER_SUB_RDS : 0;
+	s_modulator(mod);
 }
 
 void GeneralTab::vidCapFormatChanged(int idx)
