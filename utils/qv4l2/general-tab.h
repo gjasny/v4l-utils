@@ -59,6 +59,7 @@ private slots:
 	void freqTableChanged(int);
 	void freqChannelChanged(int);
 	void freqChanged();
+	void audioModeChanged(int);
 	void vidCapFormatChanged(int);
 	void frameWidthChanged();
 	void frameHeightChanged();
@@ -102,6 +103,7 @@ private:
 	int m_col;
 	int m_cols;
 	bool m_isRadio;
+	__u32 m_audioModes[5];
 	struct v4l2_tuner m_tuner;
 	struct v4l2_capability m_querycap;
 	__u32 m_pixelformat;
@@ -123,6 +125,7 @@ private:
 	QLineEdit *m_freq;
 	QComboBox *m_freqTable;
 	QComboBox *m_freqChannel;
+	QComboBox *m_audioMode;
 	QComboBox *m_vidCapFormats;
 	QComboBox *m_frameSize;
 	QSpinBox *m_frameWidth;

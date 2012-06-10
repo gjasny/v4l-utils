@@ -199,6 +199,34 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 			connect(m_freqChannel, SIGNAL(activated(int)), SLOT(freqChannelChanged(int)));
 			updateFreqChannel();
 		}
+		addLabel("Audio Mode");
+		m_audioMode = new QComboBox(parent);
+		m_audioMode->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+		m_audioMode->addItem("Mono");
+		int audIdx = 0;
+		m_audioModes[audIdx++] = V4L2_TUNER_MODE_MONO;
+		if (m_tuner.capability & V4L2_TUNER_CAP_STEREO) {
+			m_audioMode->addItem("Stereo");
+			m_audioModes[audIdx++] = V4L2_TUNER_MODE_STEREO;
+		}
+		if (m_tuner.capability & V4L2_TUNER_CAP_LANG1) {
+			m_audioMode->addItem("Language 1");
+			m_audioModes[audIdx++] = V4L2_TUNER_MODE_LANG1;
+		}
+		if (m_tuner.capability & V4L2_TUNER_CAP_LANG2) {
+			m_audioMode->addItem("Language 2");
+			m_audioModes[audIdx++] = V4L2_TUNER_MODE_LANG2;
+		}
+		if ((m_tuner.capability & (V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2)) ==
+				(V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2)) {
+			m_audioMode->addItem("Language 1+2");
+			m_audioModes[audIdx++] = V4L2_TUNER_MODE_LANG1_LANG2;
+		}
+		addWidget(m_audioMode);
+		for (int i = 0; i < audIdx; i++)
+			if (m_audioModes[i] == m_tuner.audmode)
+				m_audioMode->setCurrentIndex(i);
+		connect(m_audioMode, SIGNAL(activated(int)), SLOT(audioModeChanged(int)));
 	}
 
 	if (isRadio())
@@ -380,6 +408,12 @@ void GeneralTab::freqChanged()
 	double f = m_freq->text().toDouble();
 
 	s_frequency(f * 16, m_tuner.capability & V4L2_TUNER_CAP_LOW);
+}
+
+void GeneralTab::audioModeChanged(int)
+{
+	m_tuner.audmode = m_audioModes[m_audioMode->currentIndex()];
+	s_tuner(m_tuner);
 }
 
 void GeneralTab::vidCapFormatChanged(int idx)
