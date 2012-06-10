@@ -242,7 +242,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 	addLabel("Capture Method");
 	m_capMethods = new QComboBox(parent);
-	if (m_querycap.capabilities & V4L2_CAP_STREAMING) {
+	if (caps() & V4L2_CAP_STREAMING) {
 		v4l2_requestbuffers reqbuf;
 
 		// Yuck. The videobuf framework does not accept a count of 0.
@@ -263,7 +263,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 			reqbufs_mmap_cap(reqbuf, 0);
 		}
 	}
-	if (m_querycap.capabilities & V4L2_CAP_READWRITE) {
+	if (caps() & V4L2_CAP_READWRITE) {
 		m_capMethods->addItem("read()", QVariant(methodRead));
 	}
 	addWidget(m_capMethods);
@@ -422,9 +422,10 @@ void GeneralTab::frameIntervalChanged(int idx)
 
 	if (enum_frameintervals(frmival, m_pixelformat, m_width, m_height, idx)
 	    && frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
-		set_interval(frmival.discrete);
-		m_interval = frmival.discrete;
+		if (set_interval(frmival.discrete))
+			m_interval = frmival.discrete;
 	}
+	updateVidCapFormat();
 }
 
 void GeneralTab::vidOutFormatChanged(int idx)
@@ -702,6 +703,7 @@ void GeneralTab::updateVidCapFormat()
 	m_width       = fmt.fmt.pix.width;
 	m_height      = fmt.fmt.pix.height;
 	updateFrameSize();
+	updateFrameInterval();
 	if (enum_fmt_cap(desc, true)) {
 		do {
 			if (desc.pixelformat == fmt.fmt.pix.pixelformat)

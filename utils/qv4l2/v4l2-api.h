@@ -45,7 +45,11 @@ public:
 
 	inline int fd() const { return m_fd; }
 	inline bool useWrapper() const { return m_useWrapper; }
-	inline __u32 caps() const { return m_capability.capabilities; }
+	inline __u32 caps() const {
+		if (m_capability.capabilities & V4L2_CAP_DEVICE_CAPS)
+			return m_capability.device_caps;
+		return m_capability.capabilities;
+	}
 	inline const QString &device() const { return m_device; }
 	static QString pixfmt2s(unsigned pixelformat);
 

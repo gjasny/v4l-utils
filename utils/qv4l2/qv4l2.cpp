@@ -200,8 +200,8 @@ void ApplicationWindow::capFrame()
 			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 				m_frameData, s,
 				m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-		else
-			memcpy(m_capImage->bits(), m_frameData, s);
+		if (!m_mustConvert || err)
+			memcpy(m_capImage->bits(), m_frameData, std::min(s, m_capImage->numBytes()));
 		break;
 
 	case methodMmap:
@@ -219,10 +219,10 @@ void ApplicationWindow::capFrame()
 					&m_capSrcFormat, &m_capDestFormat,
 					(unsigned char *)m_buffers[buf.index].start, buf.bytesused,
 					m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-			else
+			if (!m_mustConvert || err)
 				memcpy(m_capImage->bits(),
 				       (unsigned char *)m_buffers[buf.index].start,
-				       buf.bytesused);
+				       std::min(buf.bytesused, (unsigned)m_capImage->numBytes()));
 		}
 
 		qbuf(buf);
@@ -243,15 +243,15 @@ void ApplicationWindow::capFrame()
 					&m_capSrcFormat, &m_capDestFormat,
 					(unsigned char *)buf.m.userptr, buf.bytesused,
 					m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-			else
+			if (!m_mustConvert || err)
 				memcpy(m_capImage->bits(), (unsigned char *)buf.m.userptr,
-					buf.bytesused);
+				       std::min(buf.bytesused, (unsigned)m_capImage->numBytes()));
 		}
 
 		qbuf(buf);
 		break;
 	}
-	if (err == -1)
+	if (err == -1 && m_frame == 0)
 		error(v4lconvert_get_error_message(m_convertData));
 
 	QString status;
