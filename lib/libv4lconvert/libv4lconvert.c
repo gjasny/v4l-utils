@@ -162,6 +162,8 @@ struct v4lconvert_data *v4lconvert_create(int fd, void *dev_ops_priv,
 		if (!strcmp((char *)cap.driver, "uvcvideo"))
 			data->flags |= V4LCONVERT_IS_UVC;
 
+		if (cap.capabilities & V4L2_CAP_DEVICE_CAPS)
+			cap.capabilities = cap.device_caps;
 		if ((cap.capabilities & 0xff) & ~V4L2_CAP_VIDEO_CAPTURE)
 			always_needs_conversion = 0;
 	}

@@ -617,6 +617,8 @@ int v4l2_fd_open(int fd, int v4l2_flags)
 		return -1;
 	}
 
+	if (cap.capabilities & V4L2_CAP_DEVICE_CAPS)
+		cap.capabilities = cap.device_caps;
 	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) ||
 	    !(cap.capabilities & (V4L2_CAP_STREAMING | V4L2_CAP_READWRITE)))
 		goto no_capture;
@@ -1100,9 +1102,11 @@ no_capture_request:
 		result = devices[index].dev_ops->ioctl(
 				devices[index].dev_ops_priv,
 				fd, VIDIOC_QUERYCAP, cap);
-		if (result == 0)
+		if (result == 0) {
 			/* We always support read() as we fake it using mmap mode */
 			cap->capabilities |= V4L2_CAP_READWRITE;
+			cap->device_caps |= V4L2_CAP_READWRITE;
+		}
 		break;
 	}
 

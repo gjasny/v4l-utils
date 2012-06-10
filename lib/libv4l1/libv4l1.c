@@ -518,6 +518,8 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 		if (result < 0)
 			break;
 
+		if (cap2.capabilities & V4L2_CAP_DEVICE_CAPS)
+			cap2.capabilities = cap2.device_caps;
 		if (cap2.capabilities & V4L2_CAP_VIDEO_OVERLAY) {
 			result = v4l2_ioctl(fd, VIDIOC_G_FBUF, &fbuf);
 			if (result < 0)
