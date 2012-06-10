@@ -227,6 +227,12 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 			if (m_audioModes[i] == m_tuner.audmode)
 				m_audioMode->setCurrentIndex(i);
 		connect(m_audioMode, SIGNAL(activated(int)), SLOT(audioModeChanged(int)));
+		m_subchannels = new QLabel("", parent);
+		addWidget(m_subchannels, Qt::AlignRight);
+		m_detectSubchans = new QPushButton("Refresh Tuner Status", parent);
+		addWidget(m_detectSubchans);
+		connect(m_detectSubchans, SIGNAL(clicked()), SLOT(detectSubchansClicked()));
+		detectSubchansClicked();
 	}
 
 	if (isRadio())
@@ -414,6 +420,30 @@ void GeneralTab::audioModeChanged(int)
 {
 	m_tuner.audmode = m_audioModes[m_audioMode->currentIndex()];
 	s_tuner(m_tuner);
+}
+
+void GeneralTab::detectSubchansClicked()
+{
+	QString chans;
+
+	g_tuner(m_tuner);
+	if (m_tuner.rxsubchans & V4L2_TUNER_SUB_MONO)
+		chans += "Mono ";
+	if (m_tuner.rxsubchans & V4L2_TUNER_SUB_STEREO)
+		chans += "Stereo ";
+	if (m_tuner.rxsubchans & V4L2_TUNER_SUB_LANG1)
+		chans += "Lang1 ";
+	if (m_tuner.rxsubchans & V4L2_TUNER_SUB_LANG2)
+		chans += "Lang2 ";
+	if (m_tuner.rxsubchans & V4L2_TUNER_SUB_RDS)
+		chans += "RDS ";
+	chans += "(" + QString::number((int)(m_tuner.signal / 655.35 + 0.5)) + "%";
+	if (m_tuner.afc < 0)
+		chans += " too low";
+	else if (m_tuner.afc > 0)
+		chans += " too high";
+	chans += ")";
+	m_subchannels->setText(chans);
 }
 
 void GeneralTab::vidCapFormatChanged(int idx)

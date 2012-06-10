@@ -60,6 +60,7 @@ private slots:
 	void freqChannelChanged(int);
 	void freqChanged();
 	void audioModeChanged(int);
+	void detectSubchansClicked();
 	void vidCapFormatChanged(int);
 	void frameWidthChanged();
 	void frameHeightChanged();
@@ -126,6 +127,8 @@ private:
 	QComboBox *m_freqTable;
 	QComboBox *m_freqChannel;
 	QComboBox *m_audioMode;
+	QLabel *m_subchannels;
+	QPushButton *m_detectSubchans;
 	QComboBox *m_vidCapFormats;
 	QComboBox *m_frameSize;
 	QSpinBox *m_frameWidth;
