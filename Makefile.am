@@ -21,9 +21,13 @@ SUBDIRS += \
 if LINUX_OS
 SUBDIRS += \
 	utils/dvb \
-	utils/rds \
 	utils/xc3028-firmware \
 	contrib/test
+
+if HAVE_LINUX_I2C_DEV
+SUBDIRS += \
+	utils/rds
+endif
 endif
 
 if WITH_QV4L2
