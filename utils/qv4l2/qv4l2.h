@@ -97,6 +97,7 @@ private:
 private slots:
 	void capStart(bool);
 	void capFrame();
+	void capVbiFrame();
 
 	// gui
 private slots:
@@ -159,6 +160,9 @@ private:
 	ClassMap m_classMap;
 	bool m_haveExtendedUserCtrls;
 	bool m_showFrames;
+	int m_vbiSize;
+	unsigned m_vbiWidth;
+	unsigned m_vbiHeight;
 	unsigned m_frame;
 	unsigned m_lastFrame;
 	unsigned m_fps;

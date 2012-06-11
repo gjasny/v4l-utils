@@ -176,6 +176,95 @@ void ApplicationWindow::openrawdev()
 		setDevice(d.selectedFiles().first(), true);
 }
 
+void ApplicationWindow::capVbiFrame()
+{
+	__u32 buftype = m_genTab->bufType();
+	v4l2_buffer buf;
+	__u8 *data = NULL;
+	int s = 0;
+	bool again;
+
+	switch (m_capMethod) {
+	case methodRead:
+		s = read(m_frameData, m_vbiSize);
+		if (s < 0) {
+			if (errno != EAGAIN) {
+				error("read");
+				m_capStartAct->setChecked(false);
+			}
+			return;
+		}
+		data = m_frameData;
+		break;
+
+	case methodMmap:
+		if (!dqbuf_mmap(buf, buftype, again)) {
+			error("dqbuf");
+			m_capStartAct->setChecked(false);
+			return;
+		}
+		if (again)
+			return;
+		data = (__u8 *)m_buffers[buf.index].start;
+		s = buf.bytesused;
+		break;
+
+	case methodUser:
+		if (!dqbuf_user(buf, buftype, again)) {
+			error("dqbuf");
+			m_capStartAct->setChecked(false);
+			return;
+		}
+		if (again)
+			return;
+		data = (__u8 *)buf.m.userptr;
+		s = buf.bytesused;
+		break;
+	}
+	if (s != m_vbiSize) {
+		error("incorrect vbi size");
+		m_capStartAct->setChecked(false);
+		return;
+	}
+	if (m_showFrames) {
+		for (unsigned y = 0; y < m_vbiHeight; y++) {
+			__u8 *p = data + y * m_vbiWidth;
+			__u8 *q = m_capImage->bits() + y * m_capImage->bytesPerLine();
+
+			for (unsigned x = 0; x < m_vbiWidth; x++) {
+				*q++ = *p;
+				*q++ = *p;
+				*q++ = *p++;
+			}
+		}
+	}
+
+	if (m_capMethod != methodRead)
+		qbuf(buf);
+
+	QString status, curStatus;
+	struct timeval tv, res;
+
+	if (m_frame == 0)
+		gettimeofday(&m_tv, NULL);
+	gettimeofday(&tv, NULL);
+	timersub(&tv, &m_tv, &res);
+	if (res.tv_sec) {
+		m_fps = (100 * (m_frame - m_lastFrame)) /
+			(res.tv_sec * 100 + res.tv_usec / 10000);
+		m_lastFrame = m_frame;
+		m_tv = tv;
+	}
+	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
+	if (m_showFrames)
+		m_capture->setImage(*m_capImage, status);
+	curStatus = statusBar()->currentMessage();
+	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
+		statusBar()->showMessage(status);
+	if (m_frame == 1)
+		refresh();
+}
+
 void ApplicationWindow::capFrame()
 {
 	__u32 buftype = m_genTab->bufType();
@@ -485,23 +574,35 @@ void ApplicationWindow::capStart(bool start)
 		v4l2_format fmt;
 
 		g_fmt_vbi(fmt);
-		srcPix.pixelformat = fmt.fmt.vbi.sample_format;
-		srcPix.width = srcPix.bytesperline =
-					fmt.fmt.vbi.samples_per_line;
-		if (fmt.fmt.vbi.flags & V4L2_VBI_INTERLACED) {
-			srcPix.height = fmt.fmt.vbi.count[0];
-			srcPix.field = V4L2_FIELD_INTERLACED;
-		} else {
-			srcPix.height = fmt.fmt.vbi.count[0] + fmt.fmt.vbi.count[1];
-			srcPix.field = V4L2_FIELD_NONE;
+		if (fmt.fmt.vbi.sample_format != V4L2_PIX_FMT_GREY) {
+			error("non-grey pixelformat not supported for VBI\n");
+			return;
 		}
-		srcPix.sizeimage = srcPix.bytesperline * srcPix.height;
-	} else {
-		g_fmt_cap(m_capSrcFormat);
-		s_fmt(m_capSrcFormat);
-		if (m_genTab->get_interval(interval))
-			set_interval(interval);
+		m_vbiWidth = fmt.fmt.vbi.samples_per_line;
+		if (fmt.fmt.vbi.flags & V4L2_VBI_INTERLACED)
+			m_vbiHeight = fmt.fmt.vbi.count[0];
+		else
+			m_vbiHeight = fmt.fmt.vbi.count[0] + fmt.fmt.vbi.count[1];
+		m_vbiSize = m_vbiWidth * m_vbiHeight;
+		if (m_showFrames)
+			m_frameData = new unsigned char[m_vbiSize];
+		m_capture->setMinimumSize(m_vbiWidth, m_vbiHeight);
+		m_capImage = new QImage(m_vbiWidth, m_vbiHeight, dstFmt);
+		m_capImage->fill(0);
+		m_capture->setImage(*m_capImage, "No frame");
+		m_capture->show();
+		statusBar()->showMessage("No frame");
+		if (startCapture(m_vbiSize)) {
+			m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
+			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capVbiFrame()));
+		}
+		return;
 	}
+
+	g_fmt_cap(m_capSrcFormat);
+	s_fmt(m_capSrcFormat);
+	if (m_genTab->get_interval(interval))
+		set_interval(interval);
 
 	m_mustConvert = m_showFrames;
 	if (m_showFrames) {
@@ -527,10 +628,6 @@ void ApplicationWindow::capStart(bool start)
 			m_capSrcFormat = copy;
 		}
 
-		if (m_genTab->isVbi()) {
-			dstPix.bytesperline = (dstPix.bytesperline + 3) & ~3;
-			dstPix.sizeimage = dstPix.bytesperline * dstPix.height * 3;
-		}
 		m_capture->setMinimumSize(dstPix.width, dstPix.height);
 		m_capImage = new QImage(dstPix.width, dstPix.height, dstFmt);
 		m_capImage->fill(0);
