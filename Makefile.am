@@ -22,7 +22,8 @@ if LINUX_OS
 SUBDIRS += \
 	utils/dvb \
 	utils/rds \
-	utils/xc3028-firmware
+	utils/xc3028-firmware \
+	contrib/test
 endif
 
 if WITH_QV4L2

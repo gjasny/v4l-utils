@@ -20,6 +20,8 @@
 
 #define _GNU_SOURCE 1
 
+#include <config.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -371,8 +373,6 @@ typedef struct {
 	void *			start;
 	size_t			length;
 } io_buffer;
-
-#define VERSION "1.0"
 
 static const char *		my_name;
 
@@ -1868,7 +1868,7 @@ usage				(FILE *			fp,
 				 char **		argv)
 {
 	fprintf (fp, "\
-V4L2 pixfmt test " VERSION "\n\
+V4L2 pixfmt test " V4L_UTILS_VERSION "\n\
 Copyright (C) 2007 Michael H. Schimek\n\
 This program is licensed under GPL 2 or later. NO WARRANTIES.\n\n\
 Usage: %s [options]\n\n\

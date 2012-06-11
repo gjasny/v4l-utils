@@ -28,6 +28,8 @@ AC_CONFIG_FILES([Makefile
 	utils/xc3028-firmware/Makefile
 	utils/qv4l2/Makefile
 
+	contrib/test/Makefile
+
 	v4l-utils.spec
 	lib/libv4lconvert/libv4lconvert.pc
 	lib/libv4l1/libv4l1.pc
@@ -45,6 +47,7 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
+PKG_PROG_PKG_CONFIG
 
 # sync-with-kernel and keytable install could make use of them
 #AC_PROG_GREP
@@ -65,6 +68,12 @@ esac
 AM_CONDITIONAL([LINUX_OS], [test x$linux_os = xyes])
 
 # Checks for dependencies
+
+PKG_CHECK_MODULES(X11, [x11], [x11_pkgconfig=yes], [x11_pkgconfig=no])
+AC_SUBST([X11_CFLAGS])
+AC_SUBST([X11_LIBS])
+AM_CONDITIONAL([HAVE_X11], [test x$x11_pkgconfig = xyes])
+
 
 AC_ARG_WITH([jpeg],
             AS_HELP_STRING([--without-jpeg], [Do not use jpeg library]),
