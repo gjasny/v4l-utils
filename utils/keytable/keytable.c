@@ -88,6 +88,7 @@ enum ir_protocols {
 	SONY		= 1 << 4,
 	LIRC		= 1 << 5,
 	SANYO		= 1 << 6,
+	RC_5_SZ		= 1 << 7,
 	OTHER		= 1 << 31,
 };
 
@@ -112,7 +113,7 @@ static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
 	"  SYSDEV   - the ir class as found at /sys/class/rc\n"
 	"  TABLE    - a file with a set of scancode=keycode value pairs\n"
 	"  SCANKEY  - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
-	"  PROTOCOL - protocol name (nec, rc-5, rc-6, jvc, sony, sanyo, lirc, other) to be enabled\n"
+	"  PROTOCOL - protocol name (nec, rc-5, rc-6, jvc, sony, sanyo, rc-5-sz, lirc, other) to be enabled\n"
 	"  DELAY    - Delay before repeating a keystroke\n"
 	"  PERIOD   - Period to repeat a keystroke\n"
 	"  CFGFILE  - configuration file that associates a driver/table name with a keymap file\n"
@@ -229,6 +230,8 @@ static error_t parse_keyfile(char *fname, char **table)
 							ch_proto |= SONY;
 						else if (!strcasecmp(p,"sanyo"))
 							ch_proto |= SANYO;
+						else if (!strcasecmp(p,"rc-5-sz"))
+							ch_proto |= RC_5_SZ;
 						else if (!strcasecmp(p,"other") || !strcasecmp(p,"unknown"))
 							ch_proto |= OTHER;
 						else {
@@ -462,6 +465,8 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 				ch_proto |= SANYO;
 			else if (!strcasecmp(p,"lirc"))
 				ch_proto |= LIRC;
+			else if (!strcasecmp(p,"rc-5-sz"))
+				ch_proto |= RC_5_SZ;
 			else
 				goto err_inval;
 			p = strtok(NULL, ",;");
@@ -733,6 +738,8 @@ static enum ir_protocols v1_get_hw_protocols(char *name)
 			proto |= SONY;
 		else if (!strcmp(p, "sanyo"))
 			proto |= SANYO;
+		else if (!strcmp(p, "rc-5-sz"))
+			proto |= RC_5_SZ;
 		else
 			proto |= OTHER;
 
@@ -775,6 +782,9 @@ static int v1_set_hw_protocols(struct rc_device *rc_dev)
 
 	if (rc_dev->current & SANYO)
 		fprintf(fp, "sanyo ");
+
+	if (rc_dev->current & RC_5_SZ)
+		fprintf(fp, "rc-5-sz ");
 
 	if (rc_dev->current & OTHER)
 		fprintf(fp, "unknown ");
@@ -900,6 +910,8 @@ static enum ir_protocols v2_get_protocols(struct rc_device *rc_dev, char *name)
 			proto = SANYO;
 		else if (!strcmp(p, "lirc"))	/* Only V2 has LIRC support */
 			proto = LIRC;
+		else if (!strcmp(p, "rc-5-sz"))
+			proto = RC_5_SZ;
 		else
 			proto = OTHER;
 
@@ -953,6 +965,9 @@ static int v2_set_protocols(struct rc_device *rc_dev)
 	if (rc_dev->current & LIRC)
 		fprintf(fp, "+lirc\n");
 
+	if (rc_dev->current & RC_5_SZ)
+		fprintf(fp, "+rc-5-sz\n");
+
 	if (rc_dev->current & OTHER)
 		fprintf(fp, "+unknown\n");
 
@@ -980,6 +995,8 @@ static void show_proto(	enum ir_protocols proto)
 		fprintf (stderr, "SANYO ");
 	if (proto & LIRC)
 		fprintf (stderr, "LIRC ");
+	if (proto & RC_5_SZ)
+		fprintf (stderr, "RC-5-SZ ");
 	if (proto & OTHER)
 		fprintf (stderr, "other ");
 }
