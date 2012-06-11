@@ -78,7 +78,9 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_SN9C2028,	 0,	 9,	 9,	1 },
 	{ V4L2_PIX_FMT_PAC207,		 0,	 9,	 9,	1 },
 	{ V4L2_PIX_FMT_MR97310A,	 0,	 9,	 9,	1 },
+#ifndef DISABLE_LIBJPEG
 	{ V4L2_PIX_FMT_JL2005BCD,	 0,	 9,	 9,	1 },
+#endif
 	{ V4L2_PIX_FMT_SQ905C,		 0,	 9,	 9,	1 },
 	/* special */
 	{ V4L2_PIX_FMT_SE401,		 0,	 8,	 9,	1 },
@@ -186,8 +188,10 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
 		tinyjpeg_set_components(data->tinyjpeg, comps, 3);
 		tinyjpeg_free(data->tinyjpeg);
 	}
+#ifndef DISABLE_LIBJPEG
 	if (data->cinfo_initialized)
 		jpeg_destroy_decompress(&data->cinfo);
+#endif
 	v4lconvert_helper_cleanup(data);
 	free(data->convert1_buf);
 	free(data->convert2_buf);
@@ -635,10 +639,13 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	/* JPG and variants */
 	case V4L2_PIX_FMT_MJPEG:
 	case V4L2_PIX_FMT_JPEG:
+#ifndef DISABLE_LIBJPEG
 		if (data->flags & V4LCONVERT_USE_TINYJPEG) {
+#endif
 			result = v4lconvert_decode_jpeg_tinyjpeg(data,
 							src, src_size, dest,
 							fmt, dest_pix_fmt, 0);
+#ifndef DISABLE_LIBJPEG
 		} else {
 			result = v4lconvert_decode_jpeg_libjpeg(data,
 							src, src_size, dest,
@@ -653,6 +660,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 							fmt, dest_pix_fmt, 0);
 			}
 		}
+#endif
 		break;
 	case V4L2_PIX_FMT_PJPG:
 		result = v4lconvert_decode_jpeg_tinyjpeg(data, src, src_size,
@@ -778,7 +786,9 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_SN9C10X:
 	case V4L2_PIX_FMT_PAC207:
 	case V4L2_PIX_FMT_MR97310A:
+#ifndef DISABLE_LIBJPEG
 	case V4L2_PIX_FMT_JL2005BCD:
+#endif
 	case V4L2_PIX_FMT_SN9C2028:
 	case V4L2_PIX_FMT_SQ905C:
 	case V4L2_PIX_FMT_STV0680: { /* Not compressed but needs some shuffling */
@@ -817,6 +827,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			}
 			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
 			break;
+#ifndef DISABLE_LIBJPEG
 		case V4L2_PIX_FMT_JL2005BCD:
 			if (v4lconvert_decode_jl2005bcd(data, src, src_size,
 							tmpbuf,
@@ -827,6 +838,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			}
 			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
 			break;
+#endif
 		case V4L2_PIX_FMT_SN9C2028:
 			v4lconvert_decode_sn9c2028(src, tmpbuf, width, height);
 			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;

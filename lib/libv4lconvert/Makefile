@@ -1,6 +1,6 @@
 override CPPFLAGS += -I../include -fvisibility=hidden
 
-LIBS_libv4lconvert = -lrt -lm -ljpeg
+LIBS_libv4lconvert = -lrt -lm
 
 ifeq ($(LINKTYPE),static)
 CONVERT_LIB   = libv4lconvert.a
@@ -10,15 +10,21 @@ override CPPFLAGS += -fPIC
 endif
 
 CONVERT_OBJS  = libv4lconvert.o tinyjpeg.o sn9c10x.o sn9c20x.o pac207.o \
-		jl2005bcd.o \
 		mr97310a.o flip.o crop.o jidctflt.o spca561-decompress.o \
 		rgbyuv.o sn9c2028-decomp.o spca501.o sq905c.o bayer.o hm12.o \
-		stv0680.o cpia1.o se401.o jpgl.o jpeg.o jpeg_memsrcdest.o \
+		stv0680.o cpia1.o se401.o jpgl.o jpeg.o \
 		control/libv4lcontrol.o processing/libv4lprocessing.o \
 		processing/whitebalance.o processing/autogain.o \
 		processing/gamma.o helper.o
 TARGETS       = $(CONVERT_LIB) libv4lconvert.pc ov511-decomp ov518-decomp
 INCLUDES      = ../include/libv4lconvert.h
+
+ifeq ($(DISABLE_LIBJPEG),1)
+override CFLAGS += -DDISABLE_LIBJPEG
+else
+LIBS_libv4lconvert += -ljpeg
+CONVERT_OBJS += jl2005bcd.o jpeg_memsrcdest.o
+endif
 
 override CPPFLAGS += -DLIBDIR=\"$(LIBDIR)\" -DLIBSUBDIR=\"$(LIBSUBDIR)\"
 
