@@ -546,7 +546,7 @@ static void v4lcontrol_get_flags_from_db(struct v4lcontrol_data *data,
 }
 
 struct v4lcontrol_data *v4lcontrol_create(int fd, void *dev_ops_priv,
-	const struct libv4l2_dev_ops *dev_ops, int always_needs_conversion)
+	const struct libv4l_dev_ops *dev_ops, int always_needs_conversion)
 {
 	int shm_fd;
 	int i, rc, got_usb_info, speed, init = 0;

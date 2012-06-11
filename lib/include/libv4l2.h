@@ -37,11 +37,6 @@ extern "C" {
    status messages to a file, when NULL errors will get send to stderr */
 LIBV4L_PUBLIC extern FILE *v4l2_log_file;
 
-/* For apps which want to directly use libv4lconvert, but don't want to
-   define their own device ops. Apps which do this call v4lconvert_create 
-   with NULL as dev_ops_priv and this as dev_ops parameter */
-LIBV4L_PUBLIC extern const struct libv4l2_dev_ops libv4l2_default_dev_ops;
-
 /* Just like your regular open/close/etc, except that format conversion is
    done if necessary when capturing. That is if you (try to) set a capture
    format which is not supported by the cam, but is supported by libv4lconvert,

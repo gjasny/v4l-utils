@@ -29,6 +29,44 @@
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
+static void *dev_init(int fd)
+{
+	return NULL;
+}
+
+static void dev_close(void *dev_ops_priv)
+{
+}
+
+static int dev_ioctl(void *dev_ops_priv, int fd, unsigned long cmd, void *arg)
+{
+	return SYS_IOCTL(fd, cmd, arg);
+}
+
+static ssize_t dev_read(void *dev_ops_priv, int fd, void *buf, size_t len)
+{
+	return SYS_READ(fd, buf, len);
+}
+
+static ssize_t dev_write(void *dev_ops_priv, int fd, const void *buf,
+                         size_t len)
+{
+	return SYS_WRITE(fd, buf, len);
+}
+
+static const struct libv4l_dev_ops default_dev_ops = {
+	.init = dev_init,
+	.close = dev_close,
+	.ioctl = dev_ioctl,
+	.read = dev_read,
+	.write = dev_write,
+};
+
+const struct libv4l_dev_ops *v4lconvert_get_default_dev_ops()
+{
+	return &default_dev_ops;
+}
+
 static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
 		unsigned int pixelformat, int index);
 
@@ -109,8 +147,13 @@ static const int v4lconvert_crop_res[][2] = {
 	{ 176, 144 },
 };
 
-struct v4lconvert_data *v4lconvert_create(int fd, void *dev_ops_priv,
-		const struct libv4l2_dev_ops *dev_ops)
+struct v4lconvert_data *v4lconvert_create(int fd)
+{
+	return v4lconvert_create_with_dev_ops(fd, NULL, &default_dev_ops); 
+}
+
+struct v4lconvert_data *v4lconvert_create_with_dev_ops(int fd, void *dev_ops_priv,
+		const struct libv4l_dev_ops *dev_ops)
 {
 	int i, j;
 	struct v4lconvert_data *data = calloc(1, sizeof(struct v4lconvert_data));

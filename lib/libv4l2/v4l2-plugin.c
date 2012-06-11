@@ -25,7 +25,7 @@
 #include <sys/mman.h>
 #include "libv4l2.h"
 #include "libv4l2-priv.h"
-#include "libv4l2-plugin.h"
+#include "libv4l-plugin.h"
 
 /* libv4l plugin support:
    it is provided by functions v4l2_plugin_[open,close,etc].
@@ -48,49 +48,16 @@
 
 #define PLUGINS_PATTERN LIBV4L2_PLUGIN_DIR "/*.so"
 
-static void *dev_init(int fd)
-{
-	return NULL;
-}
-
-static void dev_close(void *dev_ops_priv)
-{
-}
-
-static int dev_ioctl(void *dev_ops_priv, int fd, unsigned long cmd, void *arg)
-{
-	return SYS_IOCTL(fd, cmd, arg);
-}
-
-static ssize_t dev_read(void *dev_ops_priv, int fd, void *buf, size_t len)
-{
-	return SYS_READ(fd, buf, len);
-}
-
-static ssize_t dev_write(void *dev_ops_priv, int fd, const void *buf,
-                         size_t len)
-{
-	return SYS_WRITE(fd, buf, len);
-}
-
-const struct libv4l2_dev_ops libv4l2_default_dev_ops = {
-	.init = dev_init,
-	.close = dev_close,
-	.ioctl = dev_ioctl,
-	.read = dev_read,
-	.write = dev_write,
-};
-
 void v4l2_plugin_init(int fd, void **plugin_lib_ret, void **plugin_priv_ret,
-		      const struct libv4l2_dev_ops **dev_ops_ret)
+		      const struct libv4l_dev_ops **dev_ops_ret)
 {
 	char *error;
 	int glob_ret, i;
 	void *plugin_library = NULL;
-	const struct libv4l2_dev_ops *libv4l2_plugin = NULL;
+	const struct libv4l_dev_ops *libv4l2_plugin = NULL;
 	glob_t globbuf;
 
-	*dev_ops_ret = &libv4l2_default_dev_ops;
+	*dev_ops_ret = v4lconvert_get_default_dev_ops();
 	*plugin_lib_ret = NULL;
 	*plugin_priv_ret = NULL;
 
@@ -110,7 +77,7 @@ void v4l2_plugin_init(int fd, void **plugin_lib_ret, void **plugin_priv_ret,
 			continue;
 
 		dlerror(); /* Clear any existing error */
-		libv4l2_plugin = (struct libv4l2_dev_ops *)
+		libv4l2_plugin = (struct libv4l_dev_ops *)
 			dlsym(plugin_library, "libv4l2_plugin");
 		error = dlerror();
 		if (error != NULL)  {
@@ -144,7 +111,7 @@ leave:
 }
 
 void v4l2_plugin_cleanup(void *plugin_lib, void *plugin_priv,
-			 const struct libv4l2_dev_ops *dev_ops)
+			 const struct libv4l_dev_ops *dev_ops)
 {
 	if (plugin_lib) {
 		dev_ops->close(plugin_priv);

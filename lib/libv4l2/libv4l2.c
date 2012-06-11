@@ -68,7 +68,7 @@
 #include <sys/stat.h>
 #include "libv4l2.h"
 #include "libv4l2-priv.h"
-#include "libv4l2-plugin.h"
+#include "libv4l-plugin.h"
 
 /* Note these flags are stored together with the flags passed to v4l2_fd_open()
    in v4l2_dev_info's flags member, so care should be taken that the do not
@@ -596,7 +596,7 @@ int v4l2_fd_open(int fd, int v4l2_flags)
 	struct v4lconvert_data *convert = NULL;
 	void *plugin_library;
 	void *dev_ops_priv;
-	const struct libv4l2_dev_ops *dev_ops;
+	const struct libv4l_dev_ops *dev_ops;
 
 	v4l2_plugin_init(fd, &plugin_library, &dev_ops_priv, &dev_ops);
 
@@ -640,7 +640,7 @@ int v4l2_fd_open(int fd, int v4l2_flags)
 
 	/* init libv4lconvert */
 	if (!(v4l2_flags & V4L2_DISABLE_CONVERSION)) {
-		convert = v4lconvert_create(fd, dev_ops_priv, dev_ops);
+		convert = v4lconvert_create_with_dev_ops(fd, dev_ops_priv, dev_ops);
 		if (!convert) {
 			int saved_err = errno;
 			v4l2_plugin_cleanup(plugin_library, dev_ops_priv,

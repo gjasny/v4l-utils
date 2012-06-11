@@ -21,7 +21,7 @@ if HAVE_JPEG
 libv4lconvert_la_SOURCES += jpeg_memsrcdest.c jpeg_memsrcdest.h
 endif
 libv4lconvert_la_CPPFLAGS = -fvisibility=hidden $(ENFORCE_LIBV4L_STATIC)
-libv4lconvert_la_LDFLAGS = -version-info 1 -lrt -lm $(JPEG_LIBS) $(ENFORCE_LIBV4L_STATIC)
+libv4lconvert_la_LDFLAGS = -version-info 0 -lrt -lm $(JPEG_LIBS) $(ENFORCE_LIBV4L_STATIC)
 
 ov511_decomp_SOURCES = ov511-decomp.c
 

@@ -22,7 +22,7 @@
 #ifndef __LIBV4LCONTROL_PRIV_H
 #define __LIBV4LCONTROL_PRIV_H
 
-#include "libv4l2-plugin.h"
+#include "libv4l-plugin.h"
 
 #define V4LCONTROL_SHM_SIZE 4096
 
@@ -41,7 +41,7 @@ struct v4lcontrol_data {
 	unsigned int old_values[V4LCONTROL_COUNT]; /* for controls_changed() */
 	const struct v4lcontrol_flags_info *flags_info;
 	void *dev_ops_priv;
-	const struct libv4l2_dev_ops *dev_ops;
+	const struct libv4l_dev_ops *dev_ops;
 };
 
 struct v4lcontrol_flags_info {

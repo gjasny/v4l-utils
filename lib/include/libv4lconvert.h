@@ -38,8 +38,6 @@
 
 #include <linux/videodev2.h>
 
-#include "libv4l2-plugin.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -50,10 +48,14 @@ extern "C" {
 #define LIBV4L_PUBLIC
 #endif
 
+struct libv4l_dev_ops;
 struct v4lconvert_data;
 
-LIBV4L_PUBLIC struct v4lconvert_data *v4lconvert_create(int fd,
-		void *dev_ops_priv, const struct libv4l2_dev_ops *dev_ops);
+LIBV4L_PUBLIC const struct libv4l_dev_ops *v4lconvert_get_default_dev_ops();
+
+LIBV4L_PUBLIC struct v4lconvert_data *v4lconvert_create(int fd);
+LIBV4L_PUBLIC struct v4lconvert_data *v4lconvert_create_with_dev_ops(int fd,
+		void *dev_ops_priv, const struct libv4l_dev_ops *dev_ops);
 LIBV4L_PUBLIC void v4lconvert_destroy(struct v4lconvert_data *data);
 
 /* When doing flipping / rotating / video-processing, only supported

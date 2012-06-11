@@ -90,14 +90,14 @@ struct v4l2_dev_info {
 	/* plugin info */
 	void *plugin_library;
 	void *dev_ops_priv;
-	const struct libv4l2_dev_ops *dev_ops;
+	const struct libv4l_dev_ops *dev_ops;
 };
 
 /* From v4l2-plugin.c */
 void v4l2_plugin_init(int fd, void **plugin_lib_ret, void **plugin_priv_ret,
-		      const struct libv4l2_dev_ops **dev_ops_ret);
+		      const struct libv4l_dev_ops **dev_ops_ret);
 void v4l2_plugin_cleanup(void *plugin_lib, void *plugin_priv,
-			 const struct libv4l2_dev_ops *dev_ops);
+			 const struct libv4l_dev_ops *dev_ops);
 
 /* From log.c */
 extern const char *v4l2_ioctls[];

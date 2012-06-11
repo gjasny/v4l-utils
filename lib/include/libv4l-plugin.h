@@ -16,17 +16,17 @@
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef __LIBV4L2_PLUGIN_H
-#define __LIBV4L2_PLUGIN_H
+#ifndef __LIBV4L_PLUGIN_H
+#define __LIBV4L_PLUGIN_H
 
 #include <sys/types.h>
 
-/* Structure libv4l2_dev_ops holds the calls from libv4ls to video nodes.
+/* Structure libv4l_dev_ops holds the calls from libv4ls to video nodes.
    They can be normal open/close/ioctl etc. or any of them may be replaced
    with a callback by a loaded plugin.
 */
 
-struct libv4l2_dev_ops {
+struct libv4l_dev_ops {
     void * (*init)(int fd);
     void (*close)(void *dev_ops_priv);
     int (*ioctl)(void *dev_ops_priv, int fd, unsigned long int request, void *arg);

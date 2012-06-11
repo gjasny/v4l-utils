@@ -27,6 +27,7 @@
 #include <jpeglib.h>
 #endif
 #include <setjmp.h>
+#include "libv4l-plugin.h"
 #include "libv4lconvert.h"
 #include "control/libv4lcontrol.h"
 #include "processing/libv4lprocessing.h"
@@ -77,7 +78,7 @@ struct v4lconvert_data {
 	struct v4lcontrol_data *control;
 	struct v4lprocessing_data *processing;
 	void *dev_ops_priv;
-	const struct libv4l2_dev_ops *dev_ops;
+	const struct libv4l_dev_ops *dev_ops;
 
 	/* Data for external decompression helpers code */
 	pid_t decompress_pid;

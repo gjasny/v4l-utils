@@ -1,6 +1,6 @@
 if WITH_LIBV4L
 lib_LTLIBRARIES = libv4l2.la
-include_HEADERS = ../include/libv4l2.h ../include/libv4l2-plugin.h
+include_HEADERS = ../include/libv4l2.h ../include/libv4l-plugin.h
 libv4l2priv_LTLIBRARIES = v4l2convert.la
 pkgconfig_DATA = libv4l2.pc
 else
