@@ -289,7 +289,7 @@ void ApplicationWindow::capFrame()
 			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 				m_frameData, s,
 				m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-		if (!m_mustConvert || err)
+		if (!m_mustConvert || err < 0)
 			memcpy(m_capImage->bits(), m_frameData, std::min(s, m_capImage->numBytes()));
 		break;
 
@@ -308,7 +308,7 @@ void ApplicationWindow::capFrame()
 					&m_capSrcFormat, &m_capDestFormat,
 					(unsigned char *)m_buffers[buf.index].start, buf.bytesused,
 					m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-			if (!m_mustConvert || err)
+			if (!m_mustConvert || err < 0)
 				memcpy(m_capImage->bits(),
 				       (unsigned char *)m_buffers[buf.index].start,
 				       std::min(buf.bytesused, (unsigned)m_capImage->numBytes()));
@@ -332,7 +332,7 @@ void ApplicationWindow::capFrame()
 					&m_capSrcFormat, &m_capDestFormat,
 					(unsigned char *)buf.m.userptr, buf.bytesused,
 					m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-			if (!m_mustConvert || err)
+			if (!m_mustConvert || err < 0)
 				memcpy(m_capImage->bits(), (unsigned char *)buf.m.userptr,
 				       std::min(buf.bytesused, (unsigned)m_capImage->numBytes()));
 		}
