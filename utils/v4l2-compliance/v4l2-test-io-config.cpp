@@ -241,8 +241,6 @@ static int checkTimings(struct node *node, bool has_timings)
 
 	memset(&timings, 0xff, sizeof(timings));
 	ret = doioctl(node, VIDIOC_G_DV_TIMINGS, &timings);
-	if (!ret && check_0(timings.reserved, sizeof(timings.reserved)))
-		return fail("reserved not zeroed\n");
 	if (ret && has_timings)
 		return fail("TIMINGS cap set, but could not get current custom timings\n");
 	if (!ret && !has_timings)
