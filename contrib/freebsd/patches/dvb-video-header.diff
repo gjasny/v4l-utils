@@ -1,7 +1,5 @@
-Index: freebsd/include/linux/dvb/video.h
-===================================================================
---- freebsd.orig/include/linux/dvb/video.h
-+++ freebsd/include/linux/dvb/video.h
+--- a/include/linux/dvb/video.h
++++ b/include/linux/dvb/video.h
 @@ -24,13 +24,9 @@
  #ifndef _DVBVIDEO_H_
  #define _DVBVIDEO_H_

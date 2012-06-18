@@ -56,6 +56,7 @@
 #ifndef __LINUX_VIDEODEV2_H
 #define __LINUX_VIDEODEV2_H
 
+#include <stdint.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>

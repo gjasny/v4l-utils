@@ -1,8 +1,6 @@
-Index: freebsd/include/linux/dvb/dmx.h
-===================================================================
---- freebsd.orig/include/linux/dvb/dmx.h
-+++ freebsd/include/linux/dvb/dmx.h
-@@ -24,13 +24,8 @@
+--- a/include/linux/dvb/dmx.h
++++ b/include/linux/dvb/dmx.h
+@@ -24,13 +24,9 @@
  #ifndef _DVBDMX_H_
  #define _DVBDMX_H_
  
@@ -10,6 +8,7 @@ Index: freebsd/include/linux/dvb/dmx.h
 -#ifdef __KERNEL__
 -#include <linux/time.h>
 -#else
++#include <stdint.h>
 +#include <sys/types.h>
  #include <time.h>
 -#endif

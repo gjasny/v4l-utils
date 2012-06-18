@@ -21,6 +21,7 @@
 #ifndef __LINUX_IVTV_H__
 #define __LINUX_IVTV_H__
 
+#include <stdint.h>
 #include <sys/types.h>
 #include <linux/videodev2.h>
 

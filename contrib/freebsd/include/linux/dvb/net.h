@@ -24,6 +24,7 @@
 #ifndef _DVBNET_H_
 #define _DVBNET_H_
 
+#include <stdint.h>
 #include <sys/types.h>
 
 struct dvb_net_if {

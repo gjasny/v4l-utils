@@ -13,6 +13,7 @@
 #include <linux/time.h>
 #include <linux/list.h>
 #else
+#include <stdint.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -46,7 +47,7 @@ typedef int8_t __s8;
 #endif
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #define __user
 #define	_IOC_READ   IOC_OUT
 #define	_IOC_WRITE  IOC_IN

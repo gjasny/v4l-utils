@@ -1,7 +1,5 @@
-Index: freebsd/include/linux/dvb/osd.h
-===================================================================
---- freebsd.orig/include/linux/dvb/osd.h
-+++ freebsd/include/linux/dvb/osd.h
+--- a/include/linux/dvb/osd.h
++++ b/include/linux/dvb/osd.h
 @@ -24,7 +24,7 @@
  #ifndef _DVBOSD_H_
  #define _DVBOSD_H_

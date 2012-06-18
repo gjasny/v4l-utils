@@ -1,7 +1,5 @@
-Index: freebsd/include/linux/dvb/audio.h
-===================================================================
---- freebsd.orig/include/linux/dvb/audio.h
-+++ freebsd/include/linux/dvb/audio.h
+--- a/include/linux/dvb/audio.h
++++ b/include/linux/dvb/audio.h
 @@ -24,7 +24,7 @@
  #ifndef _DVBAUDIO_H_
  #define _DVBAUDIO_H_

@@ -24,6 +24,7 @@
 #ifndef _DVBDMX_H_
 #define _DVBDMX_H_
 
+#include <stdint.h>
 #include <sys/types.h>
 #include <time.h>
 

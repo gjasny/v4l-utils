@@ -26,6 +26,7 @@
 #ifndef _DVBFRONTEND_H_
 #define _DVBFRONTEND_H_
 
+#include <stdint.h>
 #include <sys/types.h>
 
 typedef enum fe_type {
