@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdint.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
