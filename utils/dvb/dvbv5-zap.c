@@ -593,7 +593,10 @@ int main(int argc, char **argv)
 			if (strcmp(args.filename, "-") != 0) {
 				file_fd =
 				    open(args.filename,
-					 O_WRONLY | O_LARGEFILE | O_CREAT,
+#ifdef O_LARGEFILE
+					 O_LARGEFILE |
+#endif
+					 O_WRONLY | O_CREAT,
 					 0644);
 				if (file_fd < 0) {
 					PERROR("open of '%s' failed",
