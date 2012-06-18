@@ -1,0 +1,19 @@
+Index: freebsd/include/linux/dvb/dmx.h
+===================================================================
+--- freebsd.orig/include/linux/dvb/dmx.h
++++ freebsd/include/linux/dvb/dmx.h
+@@ -24,13 +24,8 @@
+ #ifndef _DVBDMX_H_
+ #define _DVBDMX_H_
+ 
+-#include <linux/types.h>
+-#ifdef __KERNEL__
+-#include <linux/time.h>
+-#else
++#include <sys/types.h>
+ #include <time.h>
+-#endif
+-
+ 
+ #define DMX_FILTER_SIZE 16
+ 

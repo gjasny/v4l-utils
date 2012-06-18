@@ -28,6 +28,7 @@ AC_CONFIG_FILES([Makefile
 	utils/xc3028-firmware/Makefile
 	utils/qv4l2/Makefile
 
+	contrib/freebsd/Makefile
 	contrib/test/Makefile
 
 	v4l-utils.spec

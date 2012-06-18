@@ -1,0 +1,19 @@
+Index: freebsd/include/linux/dvb/video.h
+===================================================================
+--- freebsd.orig/include/linux/dvb/video.h
++++ freebsd/include/linux/dvb/video.h
+@@ -24,13 +24,9 @@
+ #ifndef _DVBVIDEO_H_
+ #define _DVBVIDEO_H_
+ 
+-#include <linux/types.h>
+-#ifdef __KERNEL__
+-#include <linux/compiler.h>
+-#else
++#include <sys/types.h>
+ #include <stdint.h>
+ #include <time.h>
+-#endif
+ 
+ typedef enum {
+ 	VIDEO_FORMAT_4_3,     /* Select 4:3 format */

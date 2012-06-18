@@ -54,4 +54,5 @@ sync-with-kernel:
 	$(MAKE) -C utils/v4l2-dbg $@
 	$(MAKE) -C utils/xc3028-firmware $@
 	$(MAKE) -C lib/libdvbv5 $@
+	$(MAKE) -C contrib/freebsd $@
 
