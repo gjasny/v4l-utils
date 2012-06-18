@@ -724,11 +724,6 @@ int dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
 	return EINVAL;
 }
 
-#define FE_READ_BER		   _IOR('o', 70, __u32)
-#define FE_READ_SIGNAL_STRENGTH    _IOR('o', 71, __u16)
-#define FE_READ_SNR		   _IOR('o', 72, __u16)
-#define FE_READ_UNCORRECTED_BLOCKS _IOR('o', 73, __u32)
-
 int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 {
 	fe_status_t status;
