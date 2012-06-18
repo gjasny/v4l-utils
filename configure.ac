@@ -219,6 +219,8 @@ AS_IF([test x$with_libv4l != xyes], [AC_SUBST([ENFORCE_LIBV4L_STATIC], ["-static
 
 if test "x$linux_os" = "xyes"; then
   CPPFLAGS="-I\$(top_srcdir)/include $CPPFLAGS"
+else
+  CPPFLAGS="-I\$(top_srcdir)/contrib/freebsd/include $CPPFLAGS"
 fi
 
 CPPFLAGS="-I\$(top_srcdir)/lib/include -Wall -Wpointer-arith -D_GNU_SOURCE $CPPFLAGS"
