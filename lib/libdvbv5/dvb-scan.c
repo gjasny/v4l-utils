@@ -298,6 +298,7 @@ static int poll(int filedes, unsigned int seconds)
 {
 	fd_set set;
 	struct timeval timeout;
+	int ret;
 
 	/* Initialize the file descriptor set. */
 	FD_ZERO (&set);
@@ -308,9 +309,10 @@ static int poll(int filedes, unsigned int seconds)
 	timeout.tv_usec = 0;
 
 	/* `select' returns 0 if timeout, 1 if input available, -1 if error. */
-	return TEMP_FAILURE_RETRY (select (FD_SETSIZE,
-						&set, NULL, NULL,
-						&timeout));
+	do ret = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
+	while (ret == -1 && errno == EINTR);
+
+	return ret;
 }
 
 
