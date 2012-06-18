@@ -9,6 +9,7 @@ SUBDIRS = \
 
 if WITH_V4LUTILS
 SUBDIRS += \
+	utils/dvb \
 	utils/libv4l2util \
 	utils/libmedia_dev \
 	utils/decode_tm6000 \
@@ -20,7 +21,6 @@ SUBDIRS += \
 
 if LINUX_OS
 SUBDIRS += \
-	utils/dvb \
 	utils/xc3028-firmware \
 	contrib/test
 
