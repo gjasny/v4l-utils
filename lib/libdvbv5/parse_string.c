@@ -22,6 +22,7 @@
  *   c.f. EN 300 468 annex A
  */
 
+#include <config.h>
 #include <iconv.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -344,7 +345,7 @@ static void charset_conversion(char **dest, const unsigned char *s,
 			fprintf(stderr, "Conversion from %s to %s not supported\n",
 				 type, output_charset);
 		} else {
-			iconv(cd, (char **)&s, &len, &p, &destlen);
+			iconv(cd, (ICONV_CONST char **)&s, &len, &p, &destlen);
 			iconv_close(cd);
 			*p = '\0';
 		}
