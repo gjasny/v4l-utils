@@ -93,17 +93,8 @@ AS_IF([test "x$with_jpeg" != xno],
 
 AM_CONDITIONAL([HAVE_JPEG], [$have_jpeg])
 
-AC_ARG_ENABLE(qv4l2,
-  [  --disable-qv4l2         disable qv4l2 compilation],
-  [case "${enableval}" in
-     yes | no ) with_qv4l2="${enableval}" ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --disable-qv4l2) ;;
-   esac],
-  [with_qv4l2="yes"]
-)
-
 PKG_CHECK_MODULES(QT, [QtCore >= 4.4 QtGui >= 4.4], [qt_pkgconfig=true], [qt_pkgconfig=false])
-if test "x$qt_pkgconfig" = "xtrue" && test "x$with_qv4l2" = "xyes"; then
+if test "x$qt_pkgconfig" = "xtrue"; then
    AC_SUBST(QT_CFLAGS)
    AC_SUBST(QT_LIBS)
    MOC=`$PKG_CONFIG --variable=moc_location QtCore`
