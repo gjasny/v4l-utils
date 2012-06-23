@@ -194,7 +194,6 @@ static error_t parse_keyfile(char *fname, char **table)
 
 	fin = fopen(fname, "r");
 	if (!fin) {
-		perror("opening keycode file");
 		return errno;
 	}
 
@@ -1512,15 +1511,31 @@ int main(int argc, char *argv[])
 				cur->fname);
 		if (cur->fname[0] == '/' || ((cur->fname[0] == '.') && strchr(cur->fname, '/'))) {
 			fname = cur->fname;
+			rc = parse_keyfile(fname, &name);
+			if (rc < 0) {
+				fprintf(stderr, "Can't load %s table\n", fname);
+				return -1;
+			}
 		} else {
-			fname = malloc(strlen(cur->fname) + strlen(IR_KEYTABLE_SYSTEM_DIR) + 2);
-			strcpy(fname, IR_KEYTABLE_SYSTEM_DIR);
+			fname = malloc(strlen(cur->fname) + strlen(IR_KEYTABLE_USER_DIR) + 2);
+			strcpy(fname, IR_KEYTABLE_USER_DIR);
 			strcat(fname, "/");
 			strcat(fname, cur->fname);
+			rc = parse_keyfile(fname, &name);
+			if (rc != 0) {
+				fname = malloc(strlen(cur->fname) + strlen(IR_KEYTABLE_SYSTEM_DIR) + 2);
+				strcpy(fname, IR_KEYTABLE_SYSTEM_DIR);
+				strcat(fname, "/");
+				strcat(fname, cur->fname);
+				rc = parse_keyfile(fname, &name);
+			}
+			if (rc != 0) {
+				fprintf(stderr, "Can't load %s table from %s or %s\n", cur->fname, IR_KEYTABLE_USER_DIR, IR_KEYTABLE_SYSTEM_DIR);
+				return -1;
+			}
 		}
-		rc = parse_keyfile(fname, &name);
-		if (rc < 0 || !keys.next) {
-			fprintf(stderr, "Can't load %s table or empty table\n", fname);
+		if (!keys.next) {
+			fprintf(stderr, "Empty table %s\n", fname);
 			return -1;
 		}
 		clear = 1;

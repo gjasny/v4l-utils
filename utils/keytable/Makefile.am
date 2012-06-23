@@ -10,6 +10,8 @@ ir_keytable_LDFLAGS = $(ARGP_LIBS)
 EXTRA_DIST = 70-infrared.rules rc_keymaps gen_keytables.pl ir-keytable.1 rc_maps.cfg
 
 # custom target
+install-data-local:
+	$(install_sh) -d "$(DESTDIR)$(keytableuserdir)"
 
 sync-with-kernel:
 	@if [ ! -f $(KERNEL_DIR)/include/linux/input.h ]; then \
