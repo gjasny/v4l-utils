@@ -154,7 +154,7 @@ libv4l2privdir="$libdir/$libv4l2subdir"
 libv4l2plugindir="$libv4l2privdir/plugins"
 libv4lconvertprivdir="$libdir/$libv4lconvertsubdir"
 
-rootetcdir="/etc"
+keytablesystemdir="$sysconfdir/rc_keymaps"
 udevrulesdir="$udevdir/rules.d"
 pkgconfigdir="$libdir/pkgconfig"
 
@@ -162,7 +162,7 @@ AC_SUBST(libv4l1privdir)
 AC_SUBST(libv4l2privdir)
 AC_SUBST(libv4l2plugindir)
 AC_SUBST(libv4lconvertprivdir)
-AC_SUBST(rootetcdir)
+AC_SUBST(keytablesystemdir)
 AC_SUBST(udevrulesdir)
 AC_SUBST(pkgconfigdir)
 
@@ -171,6 +171,7 @@ AC_DEFINE_DIR([LIBV4L1_PRIV_DIR], [libv4l1privdir], [libv4l1 private lib directo
 AC_DEFINE_DIR([LIBV4L2_PRIV_DIR], [libv4l2privdir], [libv4l2 private lib directory])
 AC_DEFINE_DIR([LIBV4L2_PLUGIN_DIR], [libv4l2plugindir], [libv4l2 plugin directory])
 AC_DEFINE_DIR([LIBV4LCONVERT_PRIV_DIR], [libv4lconvertprivdir], [libv4lconvert private lib directory])
+AC_DEFINE_DIR([IR_KEYTABLE_SYSTEM_DIR], [keytablesystemdir], [ir-keytable preinstalled tables directory])
 
 # options
 

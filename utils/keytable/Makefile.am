@@ -1,8 +1,7 @@
-rootetcdir="/etc"
-
 bin_PROGRAMS = ir-keytable
 man_MANS = ir-keytable.1
-nobase_rootetc_DATA = rc_maps.cfg $(srcdir)/rc_keymaps/*
+sysconf_DATA = rc_maps.cfg
+keytablesystem_DATA = $(srcdir)/rc_keymaps/*
 udevrules_DATA = 70-infrared.rules
 
 ir_keytable_SOURCES = keytable.c parse.h

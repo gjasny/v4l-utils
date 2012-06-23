@@ -28,9 +28,6 @@
 
 #include "parse.h"
 
-/* Default place where the keymaps will be stored */
-#define CFGDIR "/etc/rc_keymaps"
-
 struct input_keymap_entry_v2 {
 #define KEYMAP_BY_INDEX	(1 << 0)
 	u_int8_t  flags;
@@ -1516,8 +1513,8 @@ int main(int argc, char *argv[])
 		if (cur->fname[0] == '/' || ((cur->fname[0] == '.') && strchr(cur->fname, '/'))) {
 			fname = cur->fname;
 		} else {
-			fname = malloc(strlen(cur->fname) + strlen(CFGDIR) + 2);
-			strcpy(fname, CFGDIR);
+			fname = malloc(strlen(cur->fname) + strlen(IR_KEYTABLE_SYSTEM_DIR) + 2);
+			strcpy(fname, IR_KEYTABLE_SYSTEM_DIR);
 			strcat(fname, "/");
 			strcat(fname, cur->fname);
 		}
