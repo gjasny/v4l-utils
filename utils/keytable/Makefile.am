@@ -1,4 +1,3 @@
-udevrulesdir="/lib/udev/rules.d"
 rootetcdir="/etc"
 
 bin_PROGRAMS = ir-keytable

@@ -146,13 +146,16 @@ AC_ARG_WITH(libv4l2subdir, AS_HELP_STRING(--with-libv4l2subdir=DIR,set libv4l2 l
 AC_ARG_WITH(libv4lconvertsubdir, AS_HELP_STRING(--with-libv4lconvertsubdir=DIR,set libv4lconvert library subdir [default=libv4l]),
    libv4lconvertsubdir=$withval, libv4lconvertsubdir="libv4l")
 
+AC_ARG_WITH(udevdir, AS_HELP_STRING(--with-udevdir=DIR,set udev directory [default=/lib/udev]),
+   udevdir=$withval, udevdir="/lib/udev")
+
 libv4l1privdir="$libdir/$libv4l1subdir"
 libv4l2privdir="$libdir/$libv4l2subdir"
 libv4l2plugindir="$libv4l2privdir/plugins"
 libv4lconvertprivdir="$libdir/$libv4lconvertsubdir"
 
 rootetcdir="/etc"
-rootlibdir="/lib"
+udevrulesdir="$udevdir/rules.d"
 pkgconfigdir="$libdir/pkgconfig"
 
 AC_SUBST(libv4l1privdir)
@@ -160,7 +163,7 @@ AC_SUBST(libv4l2privdir)
 AC_SUBST(libv4l2plugindir)
 AC_SUBST(libv4lconvertprivdir)
 AC_SUBST(rootetcdir)
-AC_SUBST(rootlibdir)
+AC_SUBST(udevrulesdir)
 AC_SUBST(pkgconfigdir)
 
 AC_DEFINE_UNQUOTED([V4L_UTILS_VERSION], ["$PACKAGE_VERSION"], [v4l-utils version string])
