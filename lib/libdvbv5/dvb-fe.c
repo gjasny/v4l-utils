@@ -518,7 +518,7 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 	return EINVAL;
 }
 
-int dvb_copy_fe_props(struct dtv_property *from, int n, struct dtv_property *to)
+static int dvb_copy_fe_props(const struct dtv_property *from, int n, struct dtv_property *to)
 {
 	int i, j;
 	for (i = 0, j = 0; i < n; i++)
