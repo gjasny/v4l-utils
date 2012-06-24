@@ -31,6 +31,6 @@
 
 int set_pesfilter(int dmxfd, int pid, int pes_type, int dvr);
 
-int get_pmt_pid(char *dmxdev, int sid);
+int get_pmt_pid(const char *dmxdev, int sid);
 
 #endif

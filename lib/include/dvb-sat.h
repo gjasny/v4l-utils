@@ -26,8 +26,8 @@ struct dvbsat_freqrange {
 };
 
 struct dvb_sat_lnb {
-	char *name;
-	char *alias;
+	const char *name;
+	const char *alias;
 	unsigned lowfreq, highfreq;
 
 	unsigned rangeswitch;

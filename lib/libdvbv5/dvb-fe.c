@@ -486,7 +486,7 @@ void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
 	}
 };
 
-int dvb_fe_retrieve_parm(struct dvb_v5_fe_parms *parms,
+int dvb_fe_retrieve_parm(const struct dvb_v5_fe_parms *parms,
 				unsigned cmd, uint32_t *value)
 {
 	int i;

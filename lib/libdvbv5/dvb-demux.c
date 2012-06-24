@@ -36,7 +36,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+    
 #include <linux/dvb/dmx.h>
 #include "dvb-demux.h"
 
@@ -71,7 +71,7 @@ int set_pesfilter(int dmxfd, int pid, int pes_type, int dvr)
 	return 0;
 }
 
-int get_pmt_pid(char *dmxdev, int sid)
+int get_pmt_pid(const char *dmxdev, int sid)
 {
 	int patfd, count;
 	int pmt_pid = 0;
