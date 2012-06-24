@@ -8,7 +8,7 @@ noinst_LTLIBRARIES = libv4l2.la
 endif
 
 libv4l2_la_SOURCES = libv4l2.c v4l2-plugin.c log.c libv4l2-priv.h
-libv4l2_la_CPPFLAGS = -fvisibility=hidden $(ENFORCE_LIBV4L_STATIC)
+libv4l2_la_CPPFLAGS = $(CFLAG_VISIBILITY) $(ENFORCE_LIBV4L_STATIC)
 libv4l2_la_LDFLAGS = -version-info 0 -lpthread $(DLOPEN_LIBS) $(ENFORCE_LIBV4L_STATIC)
 libv4l2_la_LIBADD = ../libv4lconvert/libv4lconvert.la
 

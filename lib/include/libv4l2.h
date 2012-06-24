@@ -27,7 +27,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#if __GNUC__ >= 4
+#if HAVE_VISIBILITY
 #define LIBV4L_PUBLIC __attribute__ ((visibility("default")))
 #else
 #define LIBV4L_PUBLIC
