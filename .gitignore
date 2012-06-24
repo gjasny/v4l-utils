@@ -25,3 +25,5 @@ autom4te.cache
 build-aux
 libtool
 stamp-h1
+po
+ABOUT-NLS
