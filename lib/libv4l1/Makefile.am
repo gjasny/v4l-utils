@@ -1,8 +1,10 @@
 if WITH_LIBV4L
 lib_LTLIBRARIES = libv4l1.la
 include_HEADERS = ../include/libv4l1.h ../include/libv4l1-videodev.h
-libv4l1priv_LTLIBRARIES = v4l1compat.la
 pkgconfig_DATA = libv4l1.pc
+if WITH_V4L_WRAPPERS
+libv4l1priv_LTLIBRARIES = v4l1compat.la
+endif
 else
 noinst_LTLIBRARIES = libv4l1.la
 endif

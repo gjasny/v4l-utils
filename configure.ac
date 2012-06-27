@@ -211,6 +211,7 @@ AM_CONDITIONAL([WITH_LIBDVBV5], [test x$with_libdvbv5 = xyes])
 AM_CONDITIONAL([WITH_LIBV4L], [test x$with_libv4l = xyes])
 AM_CONDITIONAL([WITH_V4LUTILS], [test x$with_v4lutils = xyes])
 AM_CONDITIONAL([WITH_QV4L2], [test ${qt_pkgconfig} = true -a x$with_qv4l2 = xyes])
+AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$with_libv4l = xyes -a x$enable_shared = xyes])
 
 # append -static to libtool compile and link command to enforce static libs
 AS_IF([test x$with_libdvbv5 != xyes], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])
