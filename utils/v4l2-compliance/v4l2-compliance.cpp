@@ -82,7 +82,6 @@ static void usage(void)
 {
 	printf("Usage:\n");
 	printf("Common options:\n");
-	printf("  -D, --info         show driver info [VIDIOC_QUERYCAP]\n");
 	printf("  -d, --device=<dev> use device <dev> as the video device\n");
 	printf("                     if <dev> is a single digit, then /dev/video<dev> is used\n");
 	printf("  -r, --radio-device=<dev> use device <dev> as the radio device\n");
