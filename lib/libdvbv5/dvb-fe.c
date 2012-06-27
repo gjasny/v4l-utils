@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
+#include <sys/types.h>
 
 #include "dvb-v5.h"
 #include "dvb-v5-std.h"
