@@ -2023,8 +2023,7 @@ struct v4l2_tuner {
 	__u32			audmode;
 	__s32			signal;
 	__s32			afc;
-	__u32			band;
-	__u32			reserved[3];
+	__u32			reserved[4];
 };
 
 struct v4l2_modulator {
@@ -2034,8 +2033,7 @@ struct v4l2_modulator {
 	__u32			rangelow;
 	__u32			rangehigh;
 	__u32			txsubchans;
-	__u32			band;
-	__u32			reserved[3];
+	__u32			reserved[4];
 };
 
 /*  Flags for the 'capability' field */
@@ -2050,12 +2048,7 @@ struct v4l2_modulator {
 #define V4L2_TUNER_CAP_RDS		0x0080
 #define V4L2_TUNER_CAP_RDS_BLOCK_IO	0x0100
 #define V4L2_TUNER_CAP_RDS_CONTROLS	0x0200
-#define V4L2_TUNER_CAP_BAND_FM_EUROPE_US     0x00010000
-#define V4L2_TUNER_CAP_BAND_FM_JAPAN         0x00020000
-#define V4L2_TUNER_CAP_BAND_FM_RUSSIAN       0x00040000
-#define V4L2_TUNER_CAP_BAND_FM_WEATHER       0x00080000
-#define V4L2_TUNER_CAP_BAND_AM_MW            0x00100000
-#define V4L2_TUNER_CAP_BANDS_MASK            0x001f0000
+#define V4L2_TUNER_CAP_HAS_BANDS	0x0400
 
 /*  Flags for the 'rxsubchans' field */
 #define V4L2_TUNER_SUB_MONO		0x0001
@@ -2073,19 +2066,21 @@ struct v4l2_modulator {
 #define V4L2_TUNER_MODE_LANG1		0x0003
 #define V4L2_TUNER_MODE_LANG1_LANG2	0x0004
 
-/*  Values for the 'band' field */
-#define V4L2_TUNER_BAND_DEFAULT       0
-#define V4L2_TUNER_BAND_FM_EUROPE_US  1       /* 87.5 Mhz - 108 MHz */
-#define V4L2_TUNER_BAND_FM_JAPAN      2       /* 76 MHz - 90 MHz */
-#define V4L2_TUNER_BAND_FM_RUSSIAN    3       /* 65.8 MHz - 74 MHz */
-#define V4L2_TUNER_BAND_FM_WEATHER    4       /* 162.4 MHz - 162.55 MHz */
-#define V4L2_TUNER_BAND_AM_MW         5
-
 struct v4l2_frequency {
 	__u32		      tuner;
 	__u32		      type;	/* enum v4l2_tuner_type */
 	__u32		      frequency;
 	__u32		      reserved[8];
+};
+
+struct v4l2_frequency_band {
+	__u32			tuner;
+	__u32			index;
+	__u8			name[32];
+	__u32			capability;
+	__u32			rangelow;
+	__u32			rangehigh;
+	__u32			reserved[7];
 };
 
 struct v4l2_hw_freq_seek {
@@ -2658,9 +2653,13 @@ struct v4l2_create_buffers {
 
 /* Experimental, these three ioctls may change over the next couple of kernel
    versions. */
-#define VIDIOC_ENUM_DV_TIMINGS  _IOWR('V', 96, struct v4l2_enum_dv_timings)
-#define VIDIOC_QUERY_DV_TIMINGS  _IOR('V', 97, struct v4l2_dv_timings)
-#define VIDIOC_DV_TIMINGS_CAP   _IOWR('V', 98, struct v4l2_dv_timings_cap)
+#define VIDIOC_ENUM_DV_TIMINGS  _IOWR('V', 98, struct v4l2_enum_dv_timings)
+#define VIDIOC_QUERY_DV_TIMINGS  _IOR('V', 99, struct v4l2_dv_timings)
+#define VIDIOC_DV_TIMINGS_CAP   _IOWR('V', 100, struct v4l2_dv_timings_cap)
+
+/* Experimental, this ioctl may change over the next couple of kernel
+   versions. */
+#define VIDIOC_ENUM_FREQ_BANDS	_IOWR('V', 101, struct v4l2_frequency_band)
 
 /* Reminder: when adding new ioctls please add support for them to
    drivers/media/video/v4l2-compat-ioctl32.c as well! */
