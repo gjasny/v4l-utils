@@ -350,8 +350,6 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static std::string tcap2bands(unsigned cap);
-
 static void usage_hint(void)
 {
 	fprintf(stderr, "Try 'v4l2-ctl --help' for more information.\n");
@@ -392,15 +390,14 @@ static void usage_tuner(void)
 	       "  -f, --set-freq=<freq>\n"
 	       "                     set the frequency to <freq> MHz [VIDIOC_S_FREQUENCY]\n"
 	       "  -T, --get-tuner    query the tuner settings [VIDIOC_G_TUNER]\n"
-	       "  -t, --set-tuner=band=<band>,mode=<mode>\n"
-	       "                     set the band / audio mode of the tuner [VIDIOC_S_TUNER]\n"
-	       "                     <band>: %s\n"
-	       "                     <mode>: mono stereo lang2 lang1 bilingual\n"
+	       "  -t, --set-tuner=<mode>\n"
+	       "                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n"
+	       "                     Possible values: mono, stereo, lang2, lang1, bilingual\n"
 	       "  --tuner-index=<idx> Use idx as tuner idx for tuner/modulator commands\n"
 	       "  --get-modulator    query the modulator settings [VIDIOC_G_MODULATOR]\n"
-	       "  --set-modulator=band=<band>,txsubchans=<txsubchans>\n"
-	       "                     set the band / sub-carrier modulation [VIDIOC_S_MODULATOR]\n"
-	       "                     <band> see --set-tuner, <txsubchans> is one of:\n"
+	       "  --set-modulator=<txsubchans>\n"
+	       "                     set the sub-carrier modulation [VIDIOC_S_MODULATOR]\n"
+	       "                     <txsubchans> is one of:\n"
 	       "                     mono:	 Modulate as mono\n"
 	       "                     mono-rds:	 Modulate as mono with RDS (radio only)\n"
 	       "                     stereo:	 Modulate as stereo\n"
@@ -412,8 +409,8 @@ static void usage_tuner(void)
 	       "                     perform a hardware frequency seek [VIDIOC_S_HW_FREQ_SEEK]\n"
 	       "                     dir is 0 (seek downward) or 1 (seek upward)\n"
 	       "                     wrap is 0 (do not wrap around) or 1 (wrap around)\n"
-	       "                     spacing sets the seek resolution (use 0 for default)\n",
-	       tcap2bands(-1).c_str());
+	       "                     spacing sets the seek resolution (use 0 for default)\n"
+	       );
 }
 
 static void usage_io(void)
@@ -2372,8 +2369,7 @@ int main(int argc, char **argv)
 	unsigned int set_overlay_fmt = 0;
 	unsigned int set_overlay_fmt_out = 0;
 
-	int mode = -1;			/* set audio mode */
-	int band = -1;			/* set tuner/modulator band */
+	int mode = V4L2_TUNER_MODE_STEREO;	/* set audio mode */
 
 	/* command args */
 	int ch;
@@ -2413,7 +2409,7 @@ int main(int argc, char **argv)
 	struct v4l2_decoder_cmd dec_cmd; /* (try_)decoder_cmd */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
-	int txsubchans = -1;		/* set_modulator */
+	int txsubchans = 0;		/* set_modulator */
 	v4l2_std_id std;		/* get_std/set_std */
 	double freq = 0;		/* get/set frequency */
 	double fps = 0;			/* set framerate speed, in fps */
@@ -2817,78 +2813,43 @@ int main(int argc, char **argv)
 			}
 			break;
 		case OptSetTuner:
-			subs = optarg;
-			while (*subs != '\0') {
-				static const char *const subopts[] =
-					{ "band", "mode", NULL };
-
-				switch (parse_subopt(&subs, subopts, &value)) {
-				case 0:
-					band = s2band(value);
-					if (band == -1) {
-						fprintf(stderr, "Unknown band: '%s'\n", value);
-						usage_tuner();
-						return 1;
-					}
-					break;
-				case 1:
-					if (!strcmp(value, "stereo"))
-						mode = V4L2_TUNER_MODE_STEREO;
-					else if (!strcmp(value, "lang1"))
-						mode = V4L2_TUNER_MODE_LANG1;
-					else if (!strcmp(value, "lang2"))
-						mode = V4L2_TUNER_MODE_LANG2;
-					else if (!strcmp(value, "bilingual"))
-						mode = V4L2_TUNER_MODE_LANG1_LANG2;
-					else if (!strcmp(value, "mono"))
-						mode = V4L2_TUNER_MODE_MONO;
-					else {
-						fprintf(stderr, "Unknown audio mode: '%s'\n", value);
-						usage_tuner();
-						return 1;
-					}
-					break;
-				}
+			if (!strcmp(optarg, "stereo"))
+				mode = V4L2_TUNER_MODE_STEREO;
+			else if (!strcmp(optarg, "lang1"))
+				mode = V4L2_TUNER_MODE_LANG1;
+			else if (!strcmp(optarg, "lang2"))
+				mode = V4L2_TUNER_MODE_LANG2;
+			else if (!strcmp(optarg, "bilingual"))
+				mode = V4L2_TUNER_MODE_LANG1_LANG2;
+			else if (!strcmp(optarg, "mono"))
+				mode = V4L2_TUNER_MODE_MONO;
+			else {
+				fprintf(stderr, "Unknown audio mode\n");
+				usage_tuner();
+				return 1;
 			}
 			break;
 		case OptSetModulator:
-			subs = optarg;
-			while (*subs != '\0') {
-				static const char *const subopts[] =
-					{ "band", "txsubchans", NULL };
-
-				switch (parse_subopt(&subs, subopts, &value)) {
-				case 0:
-					band = s2band(value);
-					if (band == -1) {
-						fprintf(stderr, "Unknown band: '%s'\n", value);
-						usage_tuner();
-						return 1;
-					}
-					break;
-				case 1:
-					if (!strcmp(value, "stereo"))
-						txsubchans = V4L2_TUNER_SUB_STEREO;
-					else if (!strcmp(value, "stereo-sap"))
-						txsubchans = V4L2_TUNER_SUB_STEREO | V4L2_TUNER_SUB_SAP;
-					else if (!strcmp(value, "bilingual"))
-						txsubchans = V4L2_TUNER_SUB_LANG1;
-					else if (!strcmp(value, "mono"))
-						txsubchans = V4L2_TUNER_SUB_MONO;
-					else if (!strcmp(value, "mono-sap"))
-						txsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_SAP;
-					else if (!strcmp(value, "stereo-rds"))
-						txsubchans = V4L2_TUNER_SUB_STEREO | V4L2_TUNER_SUB_RDS;
-					else if (!strcmp(value, "mono-rds"))
-						txsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_RDS;
-					else {
-						fprintf(stderr, "Unknown txsubchans value: '%s'\n", value);
-						usage_tuner();
-						return 1;
-					}
-					break;
-				}
- 			}
+			txsubchans = strtol(optarg, 0L, 0);
+			if (!strcmp(optarg, "stereo"))
+				txsubchans = V4L2_TUNER_SUB_STEREO;
+			else if (!strcmp(optarg, "stereo-sap"))
+				txsubchans = V4L2_TUNER_SUB_STEREO | V4L2_TUNER_SUB_SAP;
+			else if (!strcmp(optarg, "bilingual"))
+				txsubchans = V4L2_TUNER_SUB_LANG1;
+			else if (!strcmp(optarg, "mono"))
+				txsubchans = V4L2_TUNER_SUB_MONO;
+			else if (!strcmp(optarg, "mono-sap"))
+				txsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_SAP;
+			else if (!strcmp(optarg, "stereo-rds"))
+				txsubchans = V4L2_TUNER_SUB_STEREO | V4L2_TUNER_SUB_RDS;
+			else if (!strcmp(optarg, "mono-rds"))
+				txsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_RDS;
+			else {
+				fprintf(stderr, "Unknown txsubchans value\n");
+				usage_tuner();
+				return 1;
+			}
 			break;
 		case OptSetSlicedVbiFormat:
 		case OptSetSlicedVbiOutFormat:
@@ -3339,10 +3300,7 @@ int main(int argc, char **argv)
 		memset(&vt, 0, sizeof(struct v4l2_tuner));
 		vt.index = tuner_index;
 		if (doioctl(fd, VIDIOC_G_TUNER, &vt) == 0) {
-			if (mode != -1)
-				vt.audmode = mode;
-			if (band != -1)
-				vt.band = band;
+			vt.audmode = mode;
 			doioctl(fd, VIDIOC_S_TUNER, &vt);
 		}
 	}
@@ -3353,10 +3311,7 @@ int main(int argc, char **argv)
 		memset(&mt, 0, sizeof(struct v4l2_modulator));
 		mt.index = tuner_index;
 		if (doioctl(fd, VIDIOC_G_MODULATOR, &mt) == 0) {
-			if (txsubchans != -1)
-				mt.txsubchans = txsubchans;
-			if (band != -1)
-				mt.band = band;
+			mt.txsubchans = txsubchans;
 			doioctl(fd, VIDIOC_S_MODULATOR, &mt);
 		}
 	}
