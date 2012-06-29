@@ -50,8 +50,6 @@
 #include <string>
 #include <algorithm>
 
-#define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
-
 /* Short option list
 
    Please keep in alphabetical order.
@@ -1519,49 +1517,6 @@ static std::string txsubchans2s(int txsubchans)
 		s += "sap ";
 	if (txsubchans & V4L2_TUNER_SUB_RDS)
 		s += "rds ";
-	return s;
-}
-
-static const char *band_names[] = {
-	"default",
-	"fm-eur_us",
-	"fm-japan",
-	"fm-russian",
-	"fm-weather",
-	"am-mw",
-};
-
-static const char *band2s(unsigned band)
-{
-	if (band >= ARRAY_SIZE(band_names))
-		return "Unknown";
-
-	return band_names[band];
-}
-
-static int s2band(const char *s) {
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(band_names); i++) {
-		if (!strcmp(s, band_names[i]))
-			return i;
-	}
-
-	return -1;
-}
-
-static std::string tcap2bands(unsigned cap) {
-	std::string s;
-	int i;
-
-	for (i = 1; i < ARRAY_SIZE(band_names); i++) {
-		if (cap & (V4L2_TUNER_CAP_BAND_FM_EUROPE_US << (i - 1))) {
-			if (s.length())
-				s += " ";
-			s += band_names[i];
-		}
-	}
-
 	return s;
 }
 
@@ -3997,12 +3952,6 @@ int main(int argc, char **argv)
 			printf("Tuner %d:\n", vt.index);
 			printf("\tName                 : %s\n", vt.name);
 			printf("\tCapabilities         : %s\n", tcap2s(vt.capability).c_str());
-			if (vt.capability & V4L2_TUNER_CAP_BANDS_MASK) {
-				printf("\tAvailable bands      : %s\n",
-					tcap2bands(vt.capability).c_str());
-				printf("\tCurrent band         : %s\n",
-					band2s(vt.band));
-			}
 			if (vt.capability & V4L2_TUNER_CAP_LOW)
 				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
 				     vt.rangelow / 16000.0, vt.rangehigh / 16000.0);
@@ -4025,12 +3974,6 @@ int main(int argc, char **argv)
 			printf("Modulator %d:\n", modulator.index);
 			printf("\tName                 : %s\n", mt.name);
 			printf("\tCapabilities         : %s\n", tcap2s(mt.capability).c_str());
-			if (mt.capability & V4L2_TUNER_CAP_BANDS_MASK) {
-				printf("\tAvailable bands      : %s\n",
-					tcap2bands(mt.capability).c_str());
-				printf("\tCurrent band         : %s\n",
-					band2s(mt.band));
-			}
 			if (mt.capability & V4L2_TUNER_CAP_LOW)
 				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
 				     mt.rangelow / 16000.0, mt.rangehigh / 16000.0);
