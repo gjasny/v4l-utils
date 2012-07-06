@@ -534,7 +534,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 	/* DVBv3 call */
 	if (ioctl(parms->fd, FE_GET_FRONTEND, &v3_parms) == -1) {
 		dvb_perror("FE_GET_FRONTEND");
-		return errno;
+		return -1;
 	}
 
 	dvb_fe_store_parm(parms, DTV_FREQUENCY, v3_parms.frequency);
@@ -603,7 +603,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 			dvb_perror("FE_SET_PROPERTY");
 			if (parms->verbose)
 				dvb_fe_prt_parms(parms);
-			return errno;
+			return -1;
 		}
 		goto ret;
 	}
@@ -645,7 +645,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 		dvb_perror("FE_SET_FRONTEND");
 		if (parms->verbose)
 			dvb_fe_prt_parms(parms);
-		return errno;
+		return -1;
 	}
 ret:
 	/* For satellite, need to recover from LNBf IF frequency */
@@ -798,41 +798,43 @@ int dvb_fe_sec_voltage(struct dvb_v5_fe_parms *parms, int on, int v18)
 	fe_sec_voltage_t v;
 	int rc;
 
-	if (!on)
+	if (!on) {
 		v = SEC_VOLTAGE_OFF;
-	else
+		if (parms->verbose)
+			dvb_log("DiSEqC VOLTAGE: OFF");
+	} else {
 		v = v18 ? SEC_VOLTAGE_18 : SEC_VOLTAGE_13;
-
+		if (parms->verbose)
+			dvb_log("DiSEqC VOLTAGE: %s", v18 ? "18" : "13");
+	}
 	rc = ioctl(parms->fd, FE_SET_VOLTAGE, v);
 	if (rc == -1)
-		perror ("FE_SET_VOLTAGE");
-	return errno;
+		dvb_perror("FE_SET_VOLTAGE");
+	return rc;
 }
 
-int dvb_fe_sec_tone(struct dvb_v5_fe_parms *parms, int on)
+int dvb_fe_sec_tone(struct dvb_v5_fe_parms *parms, fe_sec_tone_mode_t tone)
 {
-	fe_sec_tone_mode_t tone;
 	int rc;
-
-	tone = on ? SEC_TONE_ON : SEC_TONE_OFF;
-
+	if (parms->verbose)
+		dvb_log( "DiSEqC TONE: %s", fe_tone_name[tone] );
 	rc = ioctl(parms->fd, FE_SET_TONE, tone);
 	if (rc == -1)
-		perror ("FE_SET_TONE");
-	return errno;
+		dvb_perror("FE_SET_TONE");
+	return rc;
 }
 
 int dvb_fe_lnb_high_voltage(struct dvb_v5_fe_parms *parms, int on)
 {
 	int rc;
 
-	if (on)
-		on = 1;
-
+	if (on) on = 1;
+	if (parms->verbose)
+		dvb_log( "DiSEqC HIGH LNB VOLTAGE: %s", on ? "ON" : "OFF" );
 	rc = ioctl(parms->fd, FE_ENABLE_HIGH_LNB_VOLTAGE, on);
 	if (rc == -1)
-		perror ("FE_ENABLE_HIGH_LNB_VOLTAGE");
-	return errno;
+		dvb_perror("FE_ENABLE_HIGH_LNB_VOLTAGE");
+	return rc;
 }
 
 int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *parms, int mini_b)
@@ -842,10 +844,12 @@ int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *parms, int mini_b)
 
 	mini = mini_b ? SEC_MINI_B : SEC_MINI_A;
 
+	if (parms->verbose)
+		dvb_log( "DiSEqC BURST: %s", mini_b ? "SEC_MINI_B" : "SEC_MINI_A" );
 	rc = ioctl(parms->fd, FE_DISEQC_SEND_BURST, mini);
 	if (rc == -1)
-		perror ("FE_DISEQC_SEND_BURST");
-	return errno;
+		dvb_perror("FE_DISEQC_SEND_BURST");
+	return rc;
 }
 
 int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, const unsigned len,
@@ -864,16 +868,16 @@ int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, const unsigned len,
 		int i;
 		char log[len * 3 + 20], *p = log;
 
-		p += sprintf(p, "DiSEqC cmd: ");
+		p += sprintf(p, "DiSEqC command: ");
 		for (i = 0; i < len; i++)
-			p += sprintf (p, "0x%02x ", buf[i]);
+			p += sprintf (p, "%02x ", buf[i]);
 		dvb_log(log);
 	}
 
 	rc = ioctl(parms->fd, FE_DISEQC_SEND_MASTER_CMD, &msg);
 	if (rc == -1)
-		perror ("FE_DISEQC_SEND_BURST");
-	return errno;
+		dvb_perror("FE_DISEQC_SEND_MASTER_CMD");
+	return rc;
 }
 
 int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
@@ -888,10 +892,13 @@ int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
 	reply.timeout = timeout;
 	reply.msg_len = *len;
 
+	if (parms->verbose)
+		dvb_log("DiSEqC FE_DISEQC_RECV_SLAVE_REPLY");
+
 	rc = ioctl(parms->fd, FE_DISEQC_RECV_SLAVE_REPLY, reply);
 	if (rc == -1) {
 		dvb_perror("FE_DISEQC_RECV_SLAVE_REPLY");
-		return errno;
+		return rc;
 	}
 
 	*len = reply.msg_len;

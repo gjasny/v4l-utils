@@ -304,8 +304,8 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 
 		/* Adjust voltage/tone accordingly */
 		if (parms->sat_number < 2) {
-			vol_high = high_band;
-			tone_on = pol_v ? 0 : 1;
+			vol_high = pol_v ? 0 : 1;
+			tone_on = high_band;
 			mini_b = parms->sat_number & 1;
 		}
 	}
@@ -326,8 +326,10 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 		rc = dvbsat_scr_odu_channel_change(parms, &cmd, high_band,
 						   pol_v, sat_number, t);
 
-	if (rc)
+	if (rc) {
+		dvb_logerr("sending diseq failed");
 		return rc;
+	}
 	usleep((15 + parms->diseqc_wait) * 1000);
 
 	rc = dvb_fe_diseqc_burst(parms, mini_b);
@@ -335,7 +337,7 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 		return rc;
 	usleep(15 * 1000);
 
-	rc = dvb_fe_sec_tone(parms, tone_on);
+	rc = dvb_fe_sec_tone(parms, tone_on ? SEC_TONE_ON : SEC_TONE_OFF);
 
 	return rc;
 }
@@ -352,7 +354,7 @@ int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
 	dvb_fe_retrieve_parm(parms, DTV_POLARIZATION, &pol);
 	uint32_t freq;
 	uint16_t t = 0;
-	uint32_t voltage = SEC_VOLTAGE_13;
+	/*uint32_t voltage = SEC_VOLTAGE_18;*/
 	int rc;
 
 	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
@@ -396,7 +398,6 @@ ret:
 	rc = dvbsat_diseqc_set_input(parms, t);
 
 	freq = abs(freq - parms->freq_offset);
-	dvb_fe_store_parm(parms, DTV_VOLTAGE, voltage);
 	dvb_fe_store_parm(parms, DTV_FREQUENCY, freq);
 
 	return rc;

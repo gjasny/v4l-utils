@@ -166,7 +166,7 @@ const char * const *dvb_attr_names(int cmd);
  */
 
 int dvb_fe_sec_voltage(struct dvb_v5_fe_parms *parms, int on, int v18);
-int dvb_fe_sec_tone(struct dvb_v5_fe_parms *parms, int on);
+int dvb_fe_sec_tone(struct dvb_v5_fe_parms *parms, fe_sec_tone_mode_t tone);
 int dvb_fe_lnb_high_voltage(struct dvb_v5_fe_parms *parms, int on);
 int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *parms, int mini_b);
 int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, const unsigned len,

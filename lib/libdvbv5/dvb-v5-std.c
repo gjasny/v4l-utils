@@ -125,8 +125,8 @@ const unsigned int sys_dvbs_props[] = {
 	DTV_INVERSION,
 	DTV_SYMBOL_RATE,
 	DTV_INNER_FEC,
-	DTV_VOLTAGE,
-	DTV_TONE,
+	/*DTV_VOLTAGE,*/
+	/*DTV_TONE,*/
         DTV_POLARIZATION,
 	0
 };
@@ -136,8 +136,8 @@ const unsigned int sys_dvbs2_props[] = {
 	DTV_INVERSION,
 	DTV_SYMBOL_RATE,
 	DTV_INNER_FEC,
-	DTV_VOLTAGE,
-	DTV_TONE,
+	/*DTV_VOLTAGE,*/
+	/*DTV_TONE,*/
 	DTV_MODULATION,
 	DTV_PILOT,
 	DTV_ROLLOFF,
