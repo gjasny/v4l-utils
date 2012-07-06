@@ -27,8 +27,8 @@
 
 struct dvb_desc_terrestrial_delivery {
 	uint8_t type;
-	struct dvb_desc *next;
 	uint8_t length;
+	struct dvb_desc *next;
 
 	uint32_t centre_frequency;
 	uint8_t reserved_future_use1:2;

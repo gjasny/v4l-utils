@@ -27,8 +27,8 @@
 
 struct dvb_desc_service {
 	uint8_t type;
-	struct dvb_desc *next;
 	uint8_t length;
+	struct dvb_desc *next;
 
 	uint8_t service_type;
 	char *name;

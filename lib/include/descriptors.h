@@ -35,13 +35,15 @@
 
 struct dvb_v5_fe_parms;
 
-typedef void *(*dvb_table_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size);
+typedef void (*dvb_table_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size, uint8_t **buf, ssize_t *buflen);
 
 struct dvb_table_init {
 	dvb_table_init_func init;
 };
 
 extern const struct dvb_table_init dvb_table_initializers[];
+extern char *default_charset;
+extern char *output_charset;
 
 #define bswap16(b) do {\
 	b = be16toh(b); \
@@ -53,10 +55,14 @@ extern const struct dvb_table_init dvb_table_initializers[];
 
 struct dvb_desc {
 	uint8_t type;
-	struct dvb_desc *next;
 	uint8_t length;
+	struct dvb_desc *next;
+
 	uint8_t data[];
 } __attribute__((packed));
+
+ssize_t dvb_desc_default_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+void dvb_desc_default_print  (struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 
 #define dvb_desc_foreach( _desc, _tbl ) \
 	for( struct dvb_desc *_desc = _tbl->descriptor; _desc; _desc = _desc->next ) \
@@ -69,7 +75,10 @@ ssize_t dvb_desc_init(const uint8_t *buf, struct dvb_desc *desc);
 
 uint32_t bcd(uint32_t bcd);
 
+void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *buf, int len);
+
 ssize_t dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, uint8_t *dest, uint16_t section_length, struct dvb_desc **head_desc);
+void dvb_print_descriptors(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc);
 
 struct dvb_v5_fe_parms;
 
@@ -381,7 +390,7 @@ struct dvb_v5_descriptors {
 	unsigned cur_ts;
 };
 
-void parse_descriptor(enum dvb_tables type,
+void parse_descriptor(struct dvb_v5_fe_parms *parms, enum dvb_tables type,
 		struct dvb_v5_descriptors *dvb_desc,
 		const unsigned char *buf, int len);
 

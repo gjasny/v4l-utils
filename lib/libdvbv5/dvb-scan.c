@@ -30,6 +30,9 @@
 #include "descriptors.h"
 #include "parse_string.h"
 #include "crc32.h"
+#include "dvb-fe.h"
+#include "dvb-log.h"
+#include "descriptors/header.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -111,7 +114,7 @@ static void add_otherpid(struct pid_table *pid_table,
 	pid_table->other_el_pid[i].pid = pid;
 }
 
-static void parse_pmt(struct dvb_v5_descriptors *dvb_desc,
+static void parse_pmt(struct dvb_v5_fe_parms *parms, struct dvb_v5_descriptors *dvb_desc,
 		const unsigned char *buf, int *section_length,
 		int id, int version,
 		struct pid_table *pid_table)
@@ -130,7 +133,7 @@ static void parse_pmt(struct dvb_v5_descriptors *dvb_desc,
 				pmt_table->program_number, pmt_table->version,
 				pmt_table->pcr_pid, len);
 
-	parse_descriptor(PMT, dvb_desc, &buf[4], len);
+	parse_descriptor(parms, PMT, dvb_desc, &buf[4], len);
 
 	buf += 4 + len;
 	*section_length -= 4 + len;
@@ -170,14 +173,14 @@ static void parse_pmt(struct dvb_v5_descriptors *dvb_desc,
 				break;
 		};
 
-		parse_descriptor(PMT, dvb_desc, &buf[5], len);
+		parse_descriptor(parms, PMT, dvb_desc, &buf[5], len);
 		buf += len + 5;
 		*section_length -= len + 5;
 		dvb_desc->cur_pmt++;
 	};
 }
 
-static void parse_nit(struct dvb_v5_descriptors *dvb_desc,
+static void parse_nit(struct dvb_v5_fe_parms *parms, struct dvb_v5_descriptors *dvb_desc,
 		const unsigned char *buf, int *section_length,
 		int id, int version)
 {
@@ -194,7 +197,7 @@ static void parse_nit(struct dvb_v5_descriptors *dvb_desc,
 		return;
 	}
 
-	parse_descriptor(NIT, dvb_desc, &buf[2], len);
+	parse_descriptor(parms, NIT, dvb_desc, &buf[2], len);
 
 	*section_length -= len + 4;
 	buf += len + 4;
@@ -217,7 +220,7 @@ static void parse_nit(struct dvb_v5_descriptors *dvb_desc,
 				printf("Transport stream #%d ID 0x%04x, len %d\n",
 						n, nit_table->tr_table[n].tr_id, len);
 
-			parse_descriptor(NIT, dvb_desc, &buf[6], len);
+			parse_descriptor(parms, NIT, dvb_desc, &buf[6], len);
 		}
 
 		n++;
@@ -228,7 +231,7 @@ static void parse_nit(struct dvb_v5_descriptors *dvb_desc,
 	nit_table->tr_table_len = n;
 }
 
-static void parse_sdt(struct dvb_v5_descriptors *dvb_desc,
+static void parse_sdt(struct dvb_v5_fe_parms *parms, struct dvb_v5_descriptors *dvb_desc,
 		const unsigned char *buf, int *section_length,
 		int id, int version)
 {
@@ -263,7 +266,7 @@ static void parse_sdt(struct dvb_v5_descriptors *dvb_desc,
 						sdt_table->service_table[n].running,
 						sdt_table->service_table[n].scrambled);
 
-			parse_descriptor(SDT, dvb_desc, &buf[5], len);
+			parse_descriptor(parms, SDT, dvb_desc, &buf[5], len);
 		}
 
 		n++;
@@ -272,19 +275,6 @@ static void parse_sdt(struct dvb_v5_descriptors *dvb_desc,
 		dvb_desc->cur_service++;
 	}
 	sdt_table->service_table_len = n;
-}
-
-static void hexdump(const unsigned char *buf, int len)
-{
-	int i;
-
-	printf("size %d", len);
-	for (i = 0; i < len; i++) {
-		if (!(i % 16))
-			printf("\n\t");
-		printf("%02x ", (uint8_t) *(buf + i));
-	}
-	printf("\n");
 }
 
 static int poll(int filedes, unsigned int seconds)
@@ -313,9 +303,12 @@ int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char ta
 		unsigned *length, unsigned timeout)
 {
 	int available;
-	ssize_t count = 0;
+	ssize_t count;
 	struct dmx_sct_filter_params f;
-	uint8_t *tmp;
+	uint8_t *tmp = NULL;
+	uint64_t sections_read = 0;
+	uint64_t sections_total = 0;
+	ssize_t table_length = 0;
 
 	// FIXME: verify known table
 	*buf = NULL;
@@ -327,41 +320,71 @@ int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char ta
 	f.timeout = 0;
 	f.flags = DMX_IMMEDIATE_START | DMX_CHECK_CRC;
 	if (ioctl(dmx_fd, DMX_SET_FILTER, &f) == -1) {
-		perror("ioctl DMX_SET_FILTER failed");
+		dvb_perror("dvb_read_section: ioctl DMX_SET_FILTER failed");
 		return -1;
 	}
 
 	do {
-		available = poll(dmx_fd, timeout);
-		if (available > 0) {
-			tmp = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE);
-			count = read(dmx_fd, tmp,
-					DVB_MAX_PAYLOAD_PACKET_SIZE);
+		count = 0;
+		do {
+			available = poll(dmx_fd, timeout);
+		} while (available < 0 && errno == EOVERFLOW);
+		if (available <= 0) {
+			dvb_logerr("dvb_read_section: no data read" );
+			return -1;
 		}
-	} while (available < 0 && errno == EOVERFLOW);
-	if (!count) {
-		printf("no data read\n" );
-		return -1;
-	}
-	if (count < 0) {
-		perror("read_sections: read error");
-		return -2;
-	}
+		tmp = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE);
+		count = read(dmx_fd, tmp, DVB_MAX_PAYLOAD_PACKET_SIZE);
+		if (!count) {
+			dvb_logerr("dvb_read_section: no data read" );
+			free(tmp);
+			return -1;
+		}
+		if (count < 0) {
+			dvb_perror("dvb_read_section: read error");
+			free(tmp);
+			return -2;
+		}
 
-	uint32_t crc = crc32(tmp, count, 0xFFFFFFFF);
-	if (crc != 0) {
-		printf("crc error\n");
-		return -3;
-	}
+		uint32_t crc = crc32(tmp, count, 0xFFFFFFFF);
+		if (crc != 0) {
+			dvb_logerr("dvb_read_section: crc error");
+			free(tmp);
+			return -3;
+		}
 
-	//ARRAY_SIZE(vb_table_initializers) >= table
-	*buf = dvb_table_initializers[table].init(parms, tmp, count);
+		//ARRAY_SIZE(vb_table_initializers) >= table
+
+		struct dvb_table_header *h = (struct dvb_table_header *) tmp;
+		dvb_table_header_init(h);
+		/*dvb_log("dvb_read_section: got section %d/%d", h->section_id + 1, h->last_section + 1);*/
+		if (!sections_total) {
+			if (h->last_section + 1 > 32) {
+				dvb_logerr("dvb_read_section: cannot read more than 32 sections, %d requested", h->last_section);
+				h->last_section = 31;
+			}
+			sections_total = (1 << (h->last_section + 1)) - 1;
+		}
+		if (sections_read & (1 << h->section_id)) {
+			dvb_logwarn("dvb_read_section: section %d already read", h->section_id);
+		}
+		sections_read  |= 1 << h->section_id;
+		/*if (sections_read != sections_total)*/
+			/*dvb_logwarn("dvb_read_section: sections are missing: %d != %d", sections_read, sections_total);*/
+
+		dvb_table_initializers[table].init(parms, tmp, count, buf, &table_length);
+
+		free(tmp);
+		tmp = NULL;
+	} while(sections_read != sections_total);
+	// FIXME: log incomplete sections
+
 	if (length)
-		*length = count;
+		*length = table_length;
 	return 0;
 }
 
-static int read_section(int dmx_fd, struct dvb_v5_descriptors *dvb_desc,
+static int read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, struct dvb_v5_descriptors *dvb_desc,
 		uint16_t pid, unsigned char table, void *ptr,
 		unsigned timeout)
 {
@@ -414,7 +437,7 @@ static int read_section(int dmx_fd, struct dvb_v5_descriptors *dvb_desc,
 		if (dvb_desc->verbose) {
 			printf("PID 0x%04x, TableID 0x%02x ID=0x%04x, version %d, ",
 					pid, table_id, id, version);
-			hexdump(buf, count);
+			hexdump(parms, "", buf, count);
 			printf("\tsection_length = %d ", section_length);
 			printf("section %d, last section %d\n", buf[6], buf[7]);
 		}
@@ -428,17 +451,17 @@ static int read_section(int dmx_fd, struct dvb_v5_descriptors *dvb_desc,
 						id, version);
 				break;
 			case 0x02:	/* PMT */
-				parse_pmt(dvb_desc, p, &section_length,
+				parse_pmt(parms, dvb_desc, p, &section_length,
 						id, version, ptr);
 				break;
 			case 0x40:	/* NIT */
 			case 0x41:	/* NIT other */
-				parse_nit(dvb_desc, p, &section_length,
+				parse_nit(parms, dvb_desc, p, &section_length,
 						id, version);
 				break;
-			case 0x42:	/* SAT */
-			case 0x46:	/* SAT other */
-				parse_sdt(dvb_desc, p, &section_length,
+			case 0x42:	/* SDT */
+			case 0x46:	/* SDT other */
+				parse_sdt(parms, dvb_desc, p, &section_length,
 						id, version);
 				break;
 		}
@@ -447,7 +470,7 @@ static int read_section(int dmx_fd, struct dvb_v5_descriptors *dvb_desc,
 	return 0;
 }
 
-struct dvb_v5_descriptors *dvb_get_ts_tables(int dmx_fd,
+struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		uint32_t delivery_system,
 		unsigned other_nit,
 		unsigned timeout_multiply,
@@ -504,7 +527,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(int dmx_fd,
 	};
 
 	/* PAT table */
-	rc = read_section(dmx_fd, dvb_desc, 0, 0, NULL,
+	rc = read_section(parms, dmx_fd, dvb_desc, 0, 0, NULL,
 			pat_pmt_time * timeout_multiply);
 	if (rc < 0) {
 		fprintf(stderr, "error while waiting for PAT table\n");
@@ -519,7 +542,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(int dmx_fd,
 		/* Skip PAT, CAT, reserved and NULL packets */
 		if (!pn)
 			continue;
-		rc = read_section(dmx_fd, dvb_desc, pid_table->pid, 0x02,
+		rc = read_section(parms, dmx_fd, dvb_desc, pid_table->pid, 0x02,
 				pid_table, pat_pmt_time * timeout_multiply);
 		if (rc < 0)
 			fprintf(stderr, "error while reading the PMT table for service 0x%04x\n",
@@ -527,13 +550,13 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(int dmx_fd,
 	}
 
 	/* NIT table */
-	rc = read_section(dmx_fd, dvb_desc, 0x0010, 0x40, NULL,
+	rc = read_section(parms, dmx_fd, dvb_desc, 0x0010, 0x40, NULL,
 			nit_time * timeout_multiply);
 	if (rc < 0)
 		fprintf(stderr, "error while reading the NIT table\n");
 
 	/* SDT table */
-	rc = read_section(dmx_fd, dvb_desc, 0x0011, 0x42, NULL,
+	rc = read_section(parms, dmx_fd, dvb_desc, 0x0011, 0x42, NULL,
 			sdt_time * timeout_multiply);
 	if (rc < 0)
 		fprintf(stderr, "error while reading the SDT table\n");
@@ -542,9 +565,9 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(int dmx_fd,
 	if (other_nit) {
 		if (verbose)
 			printf("Parsing other NIT/SDT\n");
-		rc = read_section(dmx_fd, dvb_desc, 0x0010, 0x41, NULL,
+		rc = read_section(parms, dmx_fd, dvb_desc, 0x0010, 0x41, NULL,
 				nit_time * timeout_multiply);
-		rc = read_section(dmx_fd, dvb_desc, 0x0011, 0x46, NULL,
+		rc = read_section(parms, dmx_fd, dvb_desc, 0x0011, 0x46, NULL,
 				sdt_time * timeout_multiply);
 	}
 

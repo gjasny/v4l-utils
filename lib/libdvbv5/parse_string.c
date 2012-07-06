@@ -29,6 +29,8 @@
 #include <string.h>
 
 #include "parse_string.h"
+#include "dvb-log.h"
+#include "dvb-fe.h"
 
 #define CS_OPTIONS "//TRANSLIT"
 
@@ -297,7 +299,7 @@ static struct charset_conv en300468_latin_00_to_utf8[256] = {
 	[0xff] = { 2, {0xc2, 0xad, } },
 };
 
-static void charset_conversion(char **dest, const unsigned char *s,
+static void charset_conversion(struct dvb_v5_fe_parms *parms, char **dest, const unsigned char *s,
 			       size_t len,
 			       char *type, char *output_charset)
 {
@@ -342,7 +344,7 @@ static void charset_conversion(char **dest, const unsigned char *s,
 		if (cd == (iconv_t)(-1)) {
 			memcpy(p, s, len);
 			p[len] = '\0';
-			fprintf(stderr, "Conversion from %s to %s not supported\n",
+			dvb_logerr("Conversion from %s to %s not supported\n",
 				 type, output_charset);
 		} else {
 			iconv(cd, (ICONV_CONST char **)&s, &len, &p, &destlen);
@@ -352,7 +354,7 @@ static void charset_conversion(char **dest, const unsigned char *s,
 	}
 }
 
-void parse_string(char **dest, char **emph,
+void parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 		  const unsigned char *src, size_t len,
 		  char *default_charset, char *output_charset)
 {
@@ -392,6 +394,8 @@ void parse_string(char **dest, char **emph,
 		case 0x14:	type = "BIG5";			break;
 		case 0x15:	type = "ISO-10646/UTF-8";	break;
 		case 0x10: /* ISO8859 */
+			if (len < 2)
+				break;
 			if ((*(src + 1) != 0) || *(src + 2) > 0x0f)
 				break;
 			src+=2;
@@ -452,6 +456,7 @@ void parse_string(char **dest, char **emph,
 		len = p - (char *)tmp1;
 		len2 = p2 - (char *)tmp2;
 	} else {
+		dvb_logerr("charset %s not implemented", type);
 		/*
 		 * FIXME: need to handle the ISO/IEC 10646 2-byte control codes
 		 * (EN 300 468 v1.11.1 Table A.2)
@@ -463,7 +468,7 @@ void parse_string(char **dest, char **emph,
 	else
 		s = src;
 
-	charset_conversion(dest, s, len, type, output_charset);
+	charset_conversion(parms, dest, s, len, type, output_charset);
 	/* The code had over-sized the space. Fix it. */
 	if (*dest)
 		*dest = realloc(*dest, strlen(*dest) + 1);
@@ -473,10 +478,11 @@ void parse_string(char **dest, char **emph,
 		free (*emph);
 		*emph = NULL;
 	} else {
-		charset_conversion(emph, tmp2, len2, type, output_charset);
+		charset_conversion(parms, emph, tmp2, len2, type, output_charset);
 		*emph = realloc(*emph, strlen(*emph) + 1);
 	}
 
 	if (tmp1)
 		free(tmp1);
 }
+

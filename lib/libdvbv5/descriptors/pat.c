@@ -23,25 +23,30 @@
 #include "descriptors.h"
 #include "dvb-fe.h"
 
-void *dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t size)
+void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size, uint8_t **buf, ssize_t *buflen)
 {
-	struct dvb_table_pat *pat = malloc(size + sizeof(uint16_t));
-	memcpy(pat, buf, sizeof(struct dvb_table_pat) - sizeof(uint16_t));
+	uint8_t *d;
+	struct dvb_table_pat *pat;
+	if (!*buf) {
+		d = malloc(size + sizeof(uint16_t));
+		*buf = d;
+		*buflen = size + sizeof(uint16_t);
+		pat = (struct dvb_table_pat *) d;
+		memcpy(pat, ptr, sizeof(struct dvb_table_pat) - sizeof(uint16_t));
 
-	dvb_table_header_init(&pat->header);
-
-	struct dvb_table_pat_program *p = (struct dvb_table_pat_program *)
-		                          (buf + sizeof(struct dvb_table_pat) - sizeof(uint16_t));
-	int i = 0;
-	while ((uint8_t *) p < buf + size - 4) {
-		memcpy(pat->program + i, p, sizeof(struct dvb_table_pat_program));
-		bswap16(pat->program[i].program_id);
-		bswap16(pat->program[i].bitfield);
-		p++;
-		i++;
+		struct dvb_table_pat_program *p = (struct dvb_table_pat_program *)
+			                          (ptr + sizeof(struct dvb_table_pat) - sizeof(uint16_t));
+		pat->programs = 0;
+		while ((uint8_t *) p < ptr + size - 4) {
+			memcpy(pat->program + pat->programs, p, sizeof(struct dvb_table_pat_program));
+			bswap16(pat->program[pat->programs].program_id);
+			bswap16(pat->program[pat->programs].bitfield);
+			p++;
+			pat->programs++;
+		}
+	} else {
+		dvb_logerr("multisecttion PAT table not implemented");
 	}
-	pat->programs = i;
-	return pat;
 }
 
 void dvb_table_pat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_pat *t)

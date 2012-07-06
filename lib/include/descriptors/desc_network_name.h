@@ -27,8 +27,8 @@
 
 struct dvb_desc_network_name {
 	uint8_t type;
-	struct dvb_desc *next;
 	uint8_t length;
+	struct dvb_desc *next;
 
 	unsigned char network_name[];
 } __attribute__((packed));

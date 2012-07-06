@@ -46,9 +46,21 @@
 ssize_t dvb_desc_init(const uint8_t *buf, struct dvb_desc *desc)
 {
 	desc->type   = buf[0];
-	desc->next   = NULL;
 	desc->length = buf[1];
+	desc->next   = NULL;
 	return 2;
+}
+
+ssize_t dvb_desc_default_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+{
+	memcpy(desc->data, buf, desc->length);
+	return sizeof(struct dvb_desc) + desc->length;
+}
+
+void dvb_desc_default_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
+{
+	dvb_log("|                   %s (%d)", dvb_descriptors[desc->type].name, desc->type);
+	hexdump(parms, "|                       ", desc->data, desc->length);
 }
 
 const struct dvb_table_init dvb_table_initializers[] = {
@@ -58,8 +70,8 @@ const struct dvb_table_init dvb_table_initializers[] = {
 	[DVB_TABLE_SDT] = { dvb_table_sdt_init },
 };
 
-static char *default_charset = "iso-8859-1";
-static char *output_charset = "utf-8";
+char *default_charset = "iso-8859-1";
+char *output_charset = "utf-8";
 
 static char *table[] = {
 	[PAT] = "PAT",
@@ -75,23 +87,33 @@ ssize_t dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	struct dvb_desc *current = NULL;
 	struct dvb_desc *last = NULL;
 	while (ptr < buf + section_length) {
-	    current = (struct dvb_desc *) dest;
-	    ptr += dvb_desc_init(ptr, current); /* the standard header was read */
-		if (dvb_descriptors[current->type].init) {
-			ssize_t len = dvb_descriptors[current->type].init(parms, ptr, current);
-			if(!*head_desc)
-				*head_desc = current;
-			if (last)
-				last->next = current;
-			last = current;
-			dest += len;
-			length += len;
-		} else {
-			dvb_logdbg("no parser for descriptor %s (%d)", dvb_descriptors[current->type].name, current->type);
-		}
+		current = (struct dvb_desc *) dest;
+		ptr += dvb_desc_init(ptr, current); /* the standard header was read */
+		dvb_desc_init_func init = dvb_descriptors[current->type].init;
+		if (!init)
+			init = dvb_desc_default_init;
+		ssize_t len = init(parms, ptr, current);
+		if(!*head_desc)
+			*head_desc = current;
+		if (last)
+			last->next = current;
+		last = current;
+		dest += len;
+		length += len;
 		ptr += current->length;     /* standard descriptor header plus descriptor length */
 	}
 	return length;
+}
+
+void dvb_print_descriptors(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc)
+{
+	while (desc) {
+		dvb_desc_print_func print = dvb_descriptors[desc->type].print;
+		if (!print)
+			print = dvb_desc_default_print;
+		print(parms, desc);
+		desc = desc->next;
+	}
 }
 
 const struct dvb_descriptor dvb_descriptors[] = {
@@ -682,10 +704,10 @@ static int parse_extension_descriptor(enum dvb_tables type,
 	return 0;
 };
 
-static void parse_net_name(struct nit_table *nit_table,
+static void parse_net_name(struct dvb_v5_fe_parms *parms, struct nit_table *nit_table,
 		const unsigned char *buf, int dlen, int verbose)
 {
-	parse_string(&nit_table->network_name, &nit_table->network_alias,
+	parse_string(parms, &nit_table->network_name, &nit_table->network_alias,
 			&buf[2], dlen, default_charset, output_charset);
 	if (verbose) {
 		printf("Network");
@@ -723,16 +745,16 @@ static void parse_lcn(struct nit_table *nit_table,
 	}
 }
 
-static void parse_service(struct service_table *service_table,
+static void parse_service(struct dvb_v5_fe_parms *parms, struct service_table *service_table,
 		const unsigned char *buf, int dlen, int verbose)
 {
 	service_table->type = buf[2];
-	parse_string(&service_table->provider_name,
+	parse_string(parms, &service_table->provider_name,
 			&service_table->provider_alias,
 			&buf[4], buf[3],
 			default_charset, output_charset);
 	buf += 4 + buf[3];
-	parse_string(&service_table->service_name,
+	parse_string(parms, &service_table->service_name,
 			&service_table->service_alias,
 			&buf[1], buf[0],
 			default_charset, output_charset);
@@ -756,7 +778,7 @@ static void parse_service(struct service_table *service_table,
 	}
 }
 
-void parse_descriptor(enum dvb_tables type,
+void parse_descriptor(struct dvb_v5_fe_parms *parms, enum dvb_tables type,
 		struct dvb_v5_descriptors *dvb_desc,
 		const unsigned char *buf, int len)
 {
@@ -818,7 +840,7 @@ void parse_descriptor(enum dvb_tables type,
 					err = 1;
 					break;
 				}
-				parse_net_name(&dvb_desc->nit_table, buf, dlen,
+				parse_net_name(parms, &dvb_desc->nit_table, buf, dlen,
 						dvb_desc->verbose);
 				break;
 
@@ -910,7 +932,7 @@ void parse_descriptor(enum dvb_tables type,
 								 err = 1;
 								 break;
 							 }
-							 parse_service(&dvb_desc->sdt_table.service_table[dvb_desc->cur_service],
+							 parse_service(parms, &dvb_desc->sdt_table.service_table[dvb_desc->cur_service],
 									 buf, dlen, dvb_desc->verbose);
 							 break;
 						 }
@@ -945,6 +967,22 @@ int has_descriptor(struct dvb_v5_descriptors *dvb_desc,
 	} while (len > 0);
 
 	return 0;
+}
+
+void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *buf, int len)
+{
+	int i, j;
+	char tmp[256];
+	/*printf("size %d", len);*/
+	for (i = 0, j = 0; i < len; i++, j++) {
+		if (i && !(i % 16)) {
+			dvb_log("%s%s", prefix, tmp);
+			j = 0;
+		}
+		sprintf( tmp + j * 3, "%02x ", (uint8_t) *(buf + i));
+	}
+	if (i && (i % 16))
+		dvb_log("%s%s", prefix, tmp);
 }
 
 #if 0

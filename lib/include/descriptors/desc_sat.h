@@ -27,8 +27,8 @@
 
 struct dvb_desc_sat {
 	uint8_t type;
-	struct dvb_desc *next;
 	uint8_t length;
+	struct dvb_desc *next;
 
 	uint32_t frequency;
 	uint16_t orbit;

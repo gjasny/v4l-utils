@@ -17,6 +17,8 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
-void parse_string(char **dest, char **emph,
+struct dvb_v5_fe_parms;
+
+void parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 		  const unsigned char *src, size_t len,
 		  char *default_charset, char *output_charset);

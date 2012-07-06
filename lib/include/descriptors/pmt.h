@@ -35,15 +35,15 @@ struct dvb_table_pmt_stream {
 		uint16_t bitfield;
 		struct {
 			uint16_t elementary_pid:13;
-			uint16_t  reserved:3;
+			uint16_t reserved:3;
 		};
 	};
 	union {
 		uint16_t bitfield2;
 		struct {
 			uint16_t section_length:10;
-			uint16_t  zero:2;
-			uint16_t  reserved2:4;
+			uint16_t zero:2;
+			uint16_t reserved2:4;
 		};
 	};
 	struct dvb_desc *descriptor;
@@ -64,8 +64,8 @@ struct dvb_table_pmt {
 		uint16_t bitfield2;
 		struct {
 			uint16_t prog_length:10;
-			uint16_t  zero3:2;
-			uint16_t  reserved3:4;
+			uint16_t zero3:2;
+			uint16_t reserved3:4;
 		};
 	};
 	struct dvb_table_pmt_stream *stream;
@@ -80,7 +80,7 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void *dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t size);
+void dvb_table_pmt_init (struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size, uint8_t **buf, ssize_t *buflen);
 void dvb_table_pmt_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_pmt *pmt);
 
 #ifdef __cplusplus

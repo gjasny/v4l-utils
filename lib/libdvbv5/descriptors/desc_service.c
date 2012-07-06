@@ -22,25 +22,55 @@
 #include "descriptors/desc_service.h"
 #include "descriptors.h"
 #include "dvb-fe.h"
+#include "parse_string.h"
 
 ssize_t dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_service *service = (struct dvb_desc_service *) desc;
+	char *name, *emph;
+	uint8_t len;        /* the length of the string in the input data */
+	uint8_t len1, len2; /* the lenght of the output strings */
 
+	/*hexdump(parms, "service desc: ", buf - 2, desc->length + 2);*/
 	service->service_type = buf[0];
 	buf++;
 
 	service->provider = ((char *) desc) + sizeof(struct dvb_desc_service);
-	uint8_t len1 = buf[0];
+	len = buf[0];
 	buf++;
-	memcpy(service->provider, buf, len1);
+	len1 = len;
+	name = NULL;
+	emph = NULL;
+	parse_string(parms, &name, &emph, buf, len1, default_charset, output_charset);
+	buf += len;
+	if (emph)
+		free(emph);
+	if (name) {
+		len1 = strlen(name);
+		memcpy(service->provider, name, len1);
+		free(name);
+	} else {
+		memcpy(service->provider, buf, len1);
+	}
 	service->provider[len1] = '\0';
-	buf += len1;
 
 	service->name = service->provider + len1 + 1;
-	uint8_t len2 = buf[0];
+	len = buf[0];
+	len2 = len;
 	buf++;
-	memcpy(service->name, buf, len2);
+	name = NULL;
+	emph = NULL;
+	parse_string(parms, &name, &emph, buf, len2, default_charset, output_charset);
+	buf += len;
+	if (emph)
+		free(emph);
+	if (name) {
+		len2 = strlen(name);
+		memcpy(service->name, name, len2);
+		free(name);
+	} else {
+		memcpy(service->name, buf, len2);
+	}
 	service->name[len2] = '\0';
 
 	return sizeof(struct dvb_desc_service) + len1 + 1 + len2 + 1;
@@ -49,8 +79,8 @@ ssize_t dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 void dvb_desc_service_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_service *srv = (const struct dvb_desc_service *) desc;
-	dvb_log("|           type    : '%d'", srv->service_type);
-	dvb_log("|           name    : '%s'", srv->name);
-	dvb_log("|           provider: '%s'", srv->provider);
+	dvb_log("|   service type     %d", srv->service_type);
+	dvb_log("|           name     '%s'", srv->name);
+	dvb_log("|           provider '%s'", srv->provider);
 }
 

@@ -412,7 +412,7 @@ static int run_scan(struct arguments *args,
 		if (rc < 0)
 			continue;
 
-		dvb_desc = dvb_get_ts_tables(dmx_fd,
+		dvb_desc = dvb_get_ts_tables(parms, dmx_fd,
 					     parms->current_sys,
 					     args->other_nit,
 					     args->timeout_multiply,

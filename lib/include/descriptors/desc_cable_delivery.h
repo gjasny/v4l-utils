@@ -27,8 +27,8 @@
 
 struct dvb_desc_cable_delivery {
 	uint8_t type;
-	struct dvb_desc *next;
 	uint8_t length;
+	struct dvb_desc *next;
 
 	uint32_t frequency;
 	union {

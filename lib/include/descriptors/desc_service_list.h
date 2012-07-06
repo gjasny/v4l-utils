@@ -32,8 +32,8 @@ struct dvb_desc_service_list_table {
 
 struct dvb_desc_service_list {
 	uint8_t type;
-	struct dvb_desc *next;
 	uint8_t length;
+	struct dvb_desc *next;
 
 	struct dvb_desc_service_list_table services[];
 } __attribute__((packed));

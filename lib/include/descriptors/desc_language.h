@@ -27,8 +27,8 @@
 
 struct dvb_desc_language {
 	uint8_t type;
-	struct dvb_desc *next;
 	uint8_t length;
+	struct dvb_desc *next;
 
 	unsigned char language[4];
 	uint8_t audio_type;

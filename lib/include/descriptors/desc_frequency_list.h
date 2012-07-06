@@ -27,8 +27,8 @@
 
 struct dvb_desc_frequency_list {
 	uint8_t type;
-	struct dvb_desc *next;
 	uint8_t length;
+	struct dvb_desc *next;
 
 	union {
 		uint8_t bitfield;

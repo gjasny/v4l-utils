@@ -76,7 +76,7 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void *dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t size);
+void dvb_table_nit_init (struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size, uint8_t **buf, ssize_t *buflen);
 void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *nit);
 
 #ifdef __cplusplus
