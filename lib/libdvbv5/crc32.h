@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ * Copyright (c) 2012 - Andre Roth <neolynx@gmail.com>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation version 2
@@ -14,34 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  *
- * These routines were written as part of the dvb-apps, as:
- *	util functions for various ?zap implementations
- *
- *	Copyright (C) 2001 Johannes Stezenbach (js@convergence.de)
- *	for convergence integrated media
- *
- *	Originally licensed as GPLv2 or upper
- *
- * All subsequent changes are under GPLv2 only and are:
- *	Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
- *
  */
-#ifndef _DVB_DEMUX_H
-#define _DVB_DEMUX_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef _CRC32_H
+#define _CRC32_H
 
-int dvb_dmx_open(int adapter, int demux, unsigned verbose);
-void dvb_dmx_close(int dmx_fd);
+#include <stdint.h>
+#include <unistd.h> /* size_t */
 
-int set_pesfilter(int dmxfd, int pid, int pes_type, int dvr);
-
-int get_pmt_pid(const char *dmxdev, int sid);
-
-#ifdef __cplusplus
-}
-#endif
+uint32_t crc32(uint8_t *data, size_t datalen, uint32_t crc);
 
 #endif
+

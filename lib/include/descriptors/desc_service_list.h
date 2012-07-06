@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ * Copyright (c) 2012 - Andre Roth <neolynx@gmail.com>
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation version 2
@@ -14,31 +17,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  *
- * These routines were written as part of the dvb-apps, as:
- *	util functions for various ?zap implementations
- *
- *	Copyright (C) 2001 Johannes Stezenbach (js@convergence.de)
- *	for convergence integrated media
- *
- *	Originally licensed as GPLv2 or upper
- *
- * All subsequent changes are under GPLv2 only and are:
- *	Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
- *
  */
-#ifndef _DVB_DEMUX_H
-#define _DVB_DEMUX_H
+
+#ifndef _DESC_SERVICE_LIST_H
+#define _DESC_SERVICE_LIST_H
+
+#include <stdint.h>
+#include <unistd.h> /* ssize_t */
+
+struct dvb_desc_service_list_table {
+	uint16_t service_id;
+	uint8_t service_type;
+} __attribute__((packed));
+
+struct dvb_desc_service_list {
+	uint8_t type;
+	struct dvb_desc *next;
+	uint8_t length;
+
+	struct dvb_desc_service_list_table services[];
+} __attribute__((packed));
+
+struct dvb_v5_fe_parms;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int dvb_dmx_open(int adapter, int demux, unsigned verbose);
-void dvb_dmx_close(int dmx_fd);
-
-int set_pesfilter(int dmxfd, int pid, int pes_type, int dvr);
-
-int get_pmt_pid(const char *dmxdev, int sid);
+ssize_t dvb_desc_service_list_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+void dvb_desc_service_list_print  (struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }

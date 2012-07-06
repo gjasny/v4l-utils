@@ -22,12 +22,41 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "descriptors.h"
 #include "dvb-fe.h"
 #include "dvb-scan.h"
-#include "descriptors.h"
 #include "parse_string.h"
 #include "dvb-frontend.h"
 #include "dvb-v5-std.h"
+#include "dvb-log.h"
+
+#include "descriptors/pat.h"
+#include "descriptors/pmt.h"
+#include "descriptors/desc_language.h"
+#include "descriptors/desc_network_name.h"
+#include "descriptors/desc_cable_delivery.h"
+#include "descriptors/desc_sat.h"
+#include "descriptors/desc_terrestrial_delivery.h"
+#include "descriptors/desc_service.h"
+#include "descriptors/desc_service_list.h"
+#include "descriptors/desc_frequency_list.h"
+#include "descriptors/nit.h"
+#include "descriptors/sdt.h"
+
+ssize_t dvb_desc_init(const uint8_t *buf, struct dvb_desc *desc)
+{
+	desc->type   = buf[0];
+	desc->next   = NULL;
+	desc->length = buf[1];
+	return 2;
+}
+
+const struct dvb_table_init dvb_table_initializers[] = {
+	[DVB_TABLE_PAT] = { dvb_table_pat_init },
+	[DVB_TABLE_PMT] = { dvb_table_pmt_init },
+	[DVB_TABLE_NIT] = { dvb_table_nit_init },
+	[DVB_TABLE_SDT] = { dvb_table_sdt_init },
+};
 
 static char *default_charset = "iso-8859-1";
 static char *output_charset = "utf-8";
@@ -39,156 +68,182 @@ static char *table[] = {
 	[SDT] = "SDT",
 };
 
-static const char *descriptors[] = {
-	[0 ...255 ] = "Unknown descriptor",
-	[video_stream_descriptor] = "video_stream_descriptor",
-	[audio_stream_descriptor] = "audio_stream_descriptor",
-	[hierarchy_descriptor] = "hierarchy_descriptor",
-	[dvbpsi_registration_descriptor] = "dvbpsi_registration_descriptor",
-	[ds_alignment_descriptor] = "ds_alignment_descriptor",
-	[target_background_grid_descriptor] = "target_background_grid_descriptor",
-	[video_window_descriptor] = "video_window_descriptor",
-	[conditional_access_descriptor] = "conditional_access_descriptor",
-	[iso639_language_descriptor] = "iso639_language_descriptor",
-	[system_clock_descriptor] = "system_clock_descriptor",
-	[multiplex_buffer_utilization_descriptor] = "multiplex_buffer_utilization_descriptor",
-	[copyright_descriptor] = "copyright_descriptor",
-	[maximum_bitrate_descriptor] = "maximum_bitrate_descriptor",
-	[private_data_indicator_descriptor] = "private_data_indicator_descriptor",
-	[smoothing_buffer_descriptor] = "smoothing_buffer_descriptor",
-	[std_descriptor] = "std_descriptor",
-	[ibp_descriptor] = "ibp_descriptor",
-	[mpeg4_video_descriptor] = "mpeg4_video_descriptor",
-	[mpeg4_audio_descriptor] = "mpeg4_audio_descriptor",
-	[iod_descriptor] = "iod_descriptor",
-	[sl_descriptor] = "sl_descriptor",
-	[fmc_descriptor] = "fmc_descriptor",
-	[external_es_id_descriptor] = "external_es_id_descriptor",
-	[muxcode_descriptor] = "muxcode_descriptor",
-	[fmxbuffersize_descriptor] = "fmxbuffersize_descriptor",
-	[multiplexbuffer_descriptor] = "multiplexbuffer_descriptor",
-	[content_labeling_descriptor] = "content_labeling_descriptor",
-	[metadata_pointer_descriptor] = "metadata_pointer_descriptor",
-	[metadata_descriptor] = "metadata_descriptor",
-	[metadata_std_descriptor] = "metadata_std_descriptor",
-	[AVC_video_descriptor] = "AVC_video_descriptor",
-	[ipmp_descriptor] = "ipmp_descriptor",
-	[AVC_timing_and_HRD_descriptor] = "AVC_timing_and_HRD_descriptor",
-	[mpeg2_aac_audio_descriptor] = "mpeg2_aac_audio_descriptor",
-	[flexmux_timing_descriptor] = "flexmux_timing_descriptor",
-	[network_name_descriptor] = "network_name_descriptor",
-	[service_list_descriptor] = "service_list_descriptor",
-	[stuffing_descriptor] = "stuffing_descriptor",
-	[satellite_delivery_system_descriptor] = "satellite_delivery_system_descriptor",
-	[cable_delivery_system_descriptor] = "cable_delivery_system_descriptor",
-	[VBI_data_descriptor] = "VBI_data_descriptor",
-	[VBI_teletext_descriptor] = "VBI_teletext_descriptor",
-	[bouquet_name_descriptor] = "bouquet_name_descriptor",
-	[service_descriptor] = "service_descriptor",
-	[country_availability_descriptor] = "country_availability_descriptor",
-	[linkage_descriptor] = "linkage_descriptor",
-	[NVOD_reference_descriptor] = "NVOD_reference_descriptor",
-	[time_shifted_service_descriptor] = "time_shifted_service_descriptor",
-	[short_event_descriptor] = "short_event_descriptor",
-	[extended_event_descriptor] = "extended_event_descriptor",
-	[time_shifted_event_descriptor] = "time_shifted_event_descriptor",
-	[component_descriptor] = "component_descriptor",
-	[mosaic_descriptor] = "mosaic_descriptor",
-	[stream_identifier_descriptor] = "stream_identifier_descriptor",
-	[CA_identifier_descriptor] = "CA_identifier_descriptor",
-	[content_descriptor] = "content_descriptor",
-	[parental_rating_descriptor] = "parental_rating_descriptor",
-	[teletext_descriptor] = "teletext_descriptor",
-	[telephone_descriptor] = "telephone_descriptor",
-	[local_time_offset_descriptor] = "local_time_offset_descriptor",
-	[subtitling_descriptor] = "subtitling_descriptor",
-	[terrestrial_delivery_system_descriptor] = "terrestrial_delivery_system_descriptor",
-	[multilingual_network_name_descriptor] = "multilingual_network_name_descriptor",
-	[multilingual_bouquet_name_descriptor] = "multilingual_bouquet_name_descriptor",
-	[multilingual_service_name_descriptor] = "multilingual_service_name_descriptor",
-	[multilingual_component_descriptor] = "multilingual_component_descriptor",
-	[private_data_specifier_descriptor] = "private_data_specifier_descriptor",
-	[service_move_descriptor] = "service_move_descriptor",
-	[short_smoothing_buffer_descriptor] = "short_smoothing_buffer_descriptor",
-	[frequency_list_descriptor] = "frequency_list_descriptor",
-	[partial_transport_stream_descriptor] = "partial_transport_stream_descriptor",
-	[data_broadcast_descriptor] = "data_broadcast_descriptor",
-	[scrambling_descriptor] = "scrambling_descriptor",
-	[data_broadcast_id_descriptor] = "data_broadcast_id_descriptor",
-	[transport_stream_descriptor] = "transport_stream_descriptor",
-	[DSNG_descriptor] = "DSNG_descriptor",
-	[PDC_descriptor] = "PDC_descriptor",
-	[AC_3_descriptor] = "AC_3_descriptor",
-	[ancillary_data_descriptor] = "ancillary_data_descriptor",
-	[cell_list_descriptor] = "cell_list_descriptor",
-	[cell_frequency_link_descriptor] = "cell_frequency_link_descriptor",
-	[announcement_support_descriptor] = "announcement_support_descriptor",
-	[application_signalling_descriptor] = "application_signalling_descriptor",
-	[adaptation_field_data_descriptor] = "adaptation_field_data_descriptor",
-	[service_identifier_descriptor] = "service_identifier_descriptor",
-	[service_availability_descriptor] = "service_availability_descriptor",
-	[default_authority_descriptor] = "default_authority_descriptor",
-	[related_content_descriptor] = "related_content_descriptor",
-	[TVA_id_descriptor] = "TVA_id_descriptor",
-	[content_identifier_descriptor] = "content_identifier_descriptor",
-	[time_slice_fec_identifier_descriptor] = "time_slice_fec_identifier_descriptor",
-	[ECM_repetition_rate_descriptor] = "ECM_repetition_rate_descriptor",
-	[S2_satellite_delivery_system_descriptor] = "S2_satellite_delivery_system_descriptor",
-	[enhanced_AC_3_descriptor] = "enhanced_AC_3_descriptor",
-	[DTS_descriptor] = "DTS_descriptor",
-	[AAC_descriptor] = "AAC_descriptor",
-	[XAIT_location_descriptor] = "XAIT_location_descriptor",
-	[FTA_content_management_descriptor] = "FTA_content_management_descriptor",
-	[extension_descriptor] = "extension_descriptor",
+ssize_t dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, uint8_t *dest, uint16_t section_length, struct dvb_desc **head_desc)
+{
+	const uint8_t *ptr = buf;
+	ssize_t length = 0;
+	struct dvb_desc *current = NULL;
+	struct dvb_desc *last = NULL;
+	while (ptr < buf + section_length) {
+	    current = (struct dvb_desc *) dest;
+	    ptr += dvb_desc_init(ptr, current); /* the standard header was read */
+		if (dvb_descriptors[current->type].init) {
+			ssize_t len = dvb_descriptors[current->type].init(parms, ptr, current);
+			if(!*head_desc)
+				*head_desc = current;
+			if (last)
+				last->next = current;
+			last = current;
+			dest += len;
+			length += len;
+		} else {
+			dvb_logdbg("no parser for descriptor %s (%d)", dvb_descriptors[current->type].name, current->type);
+		}
+		ptr += current->length;     /* standard descriptor header plus descriptor length */
+	}
+	return length;
+}
 
-	[CUE_identifier_descriptor] = "CUE_identifier_descriptor",
+const struct dvb_descriptor dvb_descriptors[] = {
+	[0 ...255 ] = { "Unknown descriptor", NULL, NULL },
+	[video_stream_descriptor] = { "video_stream_descriptor", NULL, NULL },
+	[audio_stream_descriptor] = { "audio_stream_descriptor", NULL, NULL },
+	[hierarchy_descriptor] = { "hierarchy_descriptor", NULL, NULL },
+	[dvbpsi_registration_descriptor] = { "dvbpsi_registration_descriptor", NULL, NULL },
+	[ds_alignment_descriptor] = { "ds_alignment_descriptor", NULL, NULL },
+	[target_background_grid_descriptor] = { "target_background_grid_descriptor", NULL, NULL },
+	[video_window_descriptor] = { "video_window_descriptor", NULL, NULL },
+	[conditional_access_descriptor] = { "conditional_access_descriptor", NULL, NULL },
+	[iso639_language_descriptor] = { "iso639_language_descriptor", dvb_desc_language_init, dvb_desc_language_print },
+	[system_clock_descriptor] = { "system_clock_descriptor", NULL, NULL },
+	[multiplex_buffer_utilization_descriptor] = { "multiplex_buffer_utilization_descriptor", NULL, NULL },
+	[copyright_descriptor] = { "copyright_descriptor", NULL, NULL },
+	[maximum_bitrate_descriptor] = { "maximum_bitrate_descriptor", NULL, NULL },
+	[private_data_indicator_descriptor] = { "private_data_indicator_descriptor", NULL, NULL },
+	[smoothing_buffer_descriptor] = { "smoothing_buffer_descriptor", NULL, NULL },
+	[std_descriptor] = { "std_descriptor", NULL, NULL },
+	[ibp_descriptor] = { "ibp_descriptor", NULL, NULL },
+	[mpeg4_video_descriptor] = { "mpeg4_video_descriptor", NULL, NULL },
+	[mpeg4_audio_descriptor] = { "mpeg4_audio_descriptor", NULL, NULL },
+	[iod_descriptor] = { "iod_descriptor", NULL, NULL },
+	[sl_descriptor] = { "sl_descriptor", NULL, NULL },
+	[fmc_descriptor] = { "fmc_descriptor", NULL, NULL },
+	[external_es_id_descriptor] = { "external_es_id_descriptor", NULL, NULL },
+	[muxcode_descriptor] = { "muxcode_descriptor", NULL, NULL },
+	[fmxbuffersize_descriptor] = { "fmxbuffersize_descriptor", NULL, NULL },
+	[multiplexbuffer_descriptor] = { "multiplexbuffer_descriptor", NULL, NULL },
+	[content_labeling_descriptor] = { "content_labeling_descriptor", NULL, NULL },
+	[metadata_pointer_descriptor] = { "metadata_pointer_descriptor", NULL, NULL },
+	[metadata_descriptor] = { "metadata_descriptor", NULL, NULL },
+	[metadata_std_descriptor] = { "metadata_std_descriptor", NULL, NULL },
+	[AVC_video_descriptor] = { "AVC_video_descriptor", NULL, NULL },
+	[ipmp_descriptor] = { "ipmp_descriptor", NULL, NULL },
+	[AVC_timing_and_HRD_descriptor] = { "AVC_timing_and_HRD_descriptor", NULL, NULL },
+	[mpeg2_aac_audio_descriptor] = { "mpeg2_aac_audio_descriptor", NULL, NULL },
+	[flexmux_timing_descriptor] = { "flexmux_timing_descriptor", NULL, NULL },
+	[network_name_descriptor] = { "network_name_descriptor", dvb_desc_network_name_init, dvb_desc_network_name_print },
+	[service_list_descriptor] = { "service_list_descriptor", dvb_desc_service_list_init, dvb_desc_service_list_print },
+	[stuffing_descriptor] = { "stuffing_descriptor", NULL, NULL },
+	[satellite_delivery_system_descriptor] = { "satellite_delivery_system_descriptor", dvb_desc_sat_init, dvb_desc_sat_print },
+	[cable_delivery_system_descriptor] = { "cable_delivery_system_descriptor", dvb_desc_cable_delivery_init, dvb_desc_cable_delivery_print },
+	[VBI_data_descriptor] = { "VBI_data_descriptor", NULL, NULL },
+	[VBI_teletext_descriptor] = { "VBI_teletext_descriptor", NULL, NULL },
+	[bouquet_name_descriptor] = { "bouquet_name_descriptor", NULL, NULL },
+	[service_descriptor] = { "service_descriptor", dvb_desc_service_init, dvb_desc_service_print },
+	[country_availability_descriptor] = { "country_availability_descriptor", NULL, NULL },
+	[linkage_descriptor] = { "linkage_descriptor", NULL, NULL },
+	[NVOD_reference_descriptor] = { "NVOD_reference_descriptor", NULL, NULL },
+	[time_shifted_service_descriptor] = { "time_shifted_service_descriptor", NULL, NULL },
+	[short_event_descriptor] = { "short_event_descriptor", NULL, NULL },
+	[extended_event_descriptor] = { "extended_event_descriptor", NULL, NULL },
+	[time_shifted_event_descriptor] = { "time_shifted_event_descriptor", NULL, NULL },
+	[component_descriptor] = { "component_descriptor", NULL, NULL },
+	[mosaic_descriptor] = { "mosaic_descriptor", NULL, NULL },
+	[stream_identifier_descriptor] = { "stream_identifier_descriptor", NULL, NULL },
+	[CA_identifier_descriptor] = { "CA_identifier_descriptor", NULL, NULL },
+	[content_descriptor] = { "content_descriptor", NULL, NULL },
+	[parental_rating_descriptor] = { "parental_rating_descriptor", NULL, NULL },
+	[teletext_descriptor] = { "teletext_descriptor", NULL, NULL },
+	[telephone_descriptor] = { "telephone_descriptor", NULL, NULL },
+	[local_time_offset_descriptor] = { "local_time_offset_descriptor", NULL, NULL },
+	[subtitling_descriptor] = { "subtitling_descriptor", NULL, NULL },
+	[terrestrial_delivery_system_descriptor] = { "terrestrial_delivery_system_descriptor", dvb_desc_terrestrial_delivery_init, dvb_desc_terrestrial_delivery_print },
+	[multilingual_network_name_descriptor] = { "multilingual_network_name_descriptor", NULL, NULL },
+	[multilingual_bouquet_name_descriptor] = { "multilingual_bouquet_name_descriptor", NULL, NULL },
+	[multilingual_service_name_descriptor] = { "multilingual_service_name_descriptor", NULL, NULL },
+	[multilingual_component_descriptor] = { "multilingual_component_descriptor", NULL, NULL },
+	[private_data_specifier_descriptor] = { "private_data_specifier_descriptor", NULL, NULL },
+	[service_move_descriptor] = { "service_move_descriptor", NULL, NULL },
+	[short_smoothing_buffer_descriptor] = { "short_smoothing_buffer_descriptor", NULL, NULL },
+	[frequency_list_descriptor] = { "frequency_list_descriptor", dvb_desc_frequency_list_init, dvb_desc_frequency_list_print },
+	[partial_transport_stream_descriptor] = { "partial_transport_stream_descriptor", NULL, NULL },
+	[data_broadcast_descriptor] = { "data_broadcast_descriptor", NULL, NULL },
+	[scrambling_descriptor] = { "scrambling_descriptor", NULL, NULL },
+	[data_broadcast_id_descriptor] = { "data_broadcast_id_descriptor", NULL, NULL },
+	[transport_stream_descriptor] = { "transport_stream_descriptor", NULL, NULL },
+	[DSNG_descriptor] = { "DSNG_descriptor", NULL, NULL },
+	[PDC_descriptor] = { "PDC_descriptor", NULL, NULL },
+	[AC_3_descriptor] = { "AC_3_descriptor", NULL, NULL },
+	[ancillary_data_descriptor] = { "ancillary_data_descriptor", NULL, NULL },
+	[cell_list_descriptor] = { "cell_list_descriptor", NULL, NULL },
+	[cell_frequency_link_descriptor] = { "cell_frequency_link_descriptor", NULL, NULL },
+	[announcement_support_descriptor] = { "announcement_support_descriptor", NULL, NULL },
+	[application_signalling_descriptor] = { "application_signalling_descriptor", NULL, NULL },
+	[adaptation_field_data_descriptor] = { "adaptation_field_data_descriptor", NULL, NULL },
+	[service_identifier_descriptor] = { "service_identifier_descriptor", NULL, NULL },
+	[service_availability_descriptor] = { "service_availability_descriptor", NULL, NULL },
+	[default_authority_descriptor] = { "default_authority_descriptor", NULL, NULL },
+	[related_content_descriptor] = { "related_content_descriptor", NULL, NULL },
+	[TVA_id_descriptor] = { "TVA_id_descriptor", NULL, NULL },
+	[content_identifier_descriptor] = { "content_identifier_descriptor", NULL, NULL },
+	[time_slice_fec_identifier_descriptor] = { "time_slice_fec_identifier_descriptor", NULL, NULL },
+	[ECM_repetition_rate_descriptor] = { "ECM_repetition_rate_descriptor", NULL, NULL },
+	[S2_satellite_delivery_system_descriptor] = { "S2_satellite_delivery_system_descriptor", NULL, NULL },
+	[enhanced_AC_3_descriptor] = { "enhanced_AC_3_descriptor", NULL, NULL },
+	[DTS_descriptor] = { "DTS_descriptor", NULL, NULL },
+	[AAC_descriptor] = { "AAC_descriptor", NULL, NULL },
+	[XAIT_location_descriptor] = { "XAIT_location_descriptor", NULL, NULL },
+	[FTA_content_management_descriptor] = { "FTA_content_management_descriptor", NULL, NULL },
+	[extension_descriptor] = { "extension_descriptor", NULL, NULL },
 
-	[component_name_descriptor] = "component_name_descriptor",
-	[logical_channel_number_descriptor] = "logical_channel_number_descriptor",
+	[CUE_identifier_descriptor] = { "CUE_identifier_descriptor", NULL, NULL },
 
-	[carousel_id_descriptor] = "carousel_id_descriptor",
-	[association_tag_descriptor] = "association_tag_descriptor",
-	[deferred_association_tags_descriptor] = "deferred_association_tags_descriptor",
+	[component_name_descriptor] = { "component_name_descriptor", NULL, NULL },
+	[logical_channel_number_descriptor] = { "logical_channel_number_descriptor", NULL, NULL },
 
-	[hierarchical_transmission_descriptor] = "hierarchical_transmission_descriptor",
-	[digital_copy_control_descriptor] = "digital_copy_control_descriptor",
-	[network_identifier_descriptor] = "network_identifier_descriptor",
-	[partial_transport_stream_time_descriptor] = "partial_transport_stream_time_descriptor",
-	[audio_component_descriptor] = "audio_component_descriptor",
-	[hyperlink_descriptor] = "hyperlink_descriptor",
-	[target_area_descriptor] = "target_area_descriptor",
-	[data_contents_descriptor] = "data_contents_descriptor",
-	[video_decode_control_descriptor] = "video_decode_control_descriptor",
-	[download_content_descriptor] = "download_content_descriptor",
-	[CA_EMM_TS_descriptor] = "CA_EMM_TS_descriptor",
-	[CA_contract_information_descriptor] = "CA_contract_information_descriptor",
-	[CA_service_descriptor] = "CA_service_descriptor",
-	[TS_Information_descriptior] = "TS_Information_descriptior",
-	[extended_broadcaster_descriptor] = "extended_broadcaster_descriptor",
-	[logo_transmission_descriptor] = "logo_transmission_descriptor",
-	[basic_local_event_descriptor] = "basic_local_event_descriptor",
-	[reference_descriptor] = "reference_descriptor",
-	[node_relation_descriptor] = "node_relation_descriptor",
-	[short_node_information_descriptor] = "short_node_information_descriptor",
-	[STC_reference_descriptor] = "STC_reference_descriptor",
-	[series_descriptor] = "series_descriptor",
-	[event_group_descriptor] = "event_group_descriptor",
-	[SI_parameter_descriptor] = "SI_parameter_descriptor",
-	[broadcaster_Name_Descriptor] = "broadcaster_Name_Descriptor",
-	[component_group_descriptor] = "component_group_descriptor",
-	[SI_prime_TS_descriptor] = "SI_prime_TS_descriptor",
-	[board_information_descriptor] = "board_information_descriptor",
-	[LDT_linkage_descriptor] = "LDT_linkage_descriptor",
-	[connected_transmission_descriptor] = "connected_transmission_descriptor",
-	[content_availability_descriptor] = "content_availability_descriptor",
-	[service_group_descriptor] = "service_group_descriptor",
-	[carousel_compatible_composite_Descriptor] = "carousel_compatible_composite_Descriptor",
-	[conditional_playback_descriptor] = "conditional_playback_descriptor",
-	[ISDBT_delivery_system_descriptor] = "ISDBT_delivery_system_descriptor",
-	[partial_reception_descriptor] = "partial_reception_descriptor",
-	[emergency_information_descriptor] = "emergency_information_descriptor",
-	[data_component_descriptor] = "data_component_descriptor",
-	[system_management_descriptor] = "system_management_descriptor",
+	[carousel_id_descriptor] = { "carousel_id_descriptor", NULL, NULL },
+	[association_tag_descriptor] = { "association_tag_descriptor", NULL, NULL },
+	[deferred_association_tags_descriptor] = { "deferred_association_tags_descriptor", NULL, NULL },
+
+	[hierarchical_transmission_descriptor] = { "hierarchical_transmission_descriptor", NULL, NULL },
+	[digital_copy_control_descriptor] = { "digital_copy_control_descriptor", NULL, NULL },
+	[network_identifier_descriptor] = { "network_identifier_descriptor", NULL, NULL },
+	[partial_transport_stream_time_descriptor] = { "partial_transport_stream_time_descriptor", NULL, NULL },
+	[audio_component_descriptor] = { "audio_component_descriptor", NULL, NULL },
+	[hyperlink_descriptor] = { "hyperlink_descriptor", NULL, NULL },
+	[target_area_descriptor] = { "target_area_descriptor", NULL, NULL },
+	[data_contents_descriptor] = { "data_contents_descriptor", NULL, NULL },
+	[video_decode_control_descriptor] = { "video_decode_control_descriptor", NULL, NULL },
+	[download_content_descriptor] = { "download_content_descriptor", NULL, NULL },
+	[CA_EMM_TS_descriptor] = { "CA_EMM_TS_descriptor", NULL, NULL },
+	[CA_contract_information_descriptor] = { "CA_contract_information_descriptor", NULL, NULL },
+	[CA_service_descriptor] = { "CA_service_descriptor", NULL, NULL },
+	[TS_Information_descriptior] = { "TS_Information_descriptior", NULL, NULL },
+	[extended_broadcaster_descriptor] = { "extended_broadcaster_descriptor", NULL, NULL },
+	[logo_transmission_descriptor] = { "logo_transmission_descriptor", NULL, NULL },
+	[basic_local_event_descriptor] = { "basic_local_event_descriptor", NULL, NULL },
+	[reference_descriptor] = { "reference_descriptor", NULL, NULL },
+	[node_relation_descriptor] = { "node_relation_descriptor", NULL, NULL },
+	[short_node_information_descriptor] = { "short_node_information_descriptor", NULL, NULL },
+	[STC_reference_descriptor] = { "STC_reference_descriptor", NULL, NULL },
+	[series_descriptor] = { "series_descriptor", NULL, NULL },
+	[event_group_descriptor] = { "event_group_descriptor", NULL, NULL },
+	[SI_parameter_descriptor] = { "SI_parameter_descriptor", NULL, NULL },
+	[broadcaster_Name_Descriptor] = { "broadcaster_Name_Descriptor", NULL, NULL },
+	[component_group_descriptor] = { "component_group_descriptor", NULL, NULL },
+	[SI_prime_TS_descriptor] = { "SI_prime_TS_descriptor", NULL, NULL },
+	[board_information_descriptor] = { "board_information_descriptor", NULL, NULL },
+	[LDT_linkage_descriptor] = { "LDT_linkage_descriptor", NULL, NULL },
+	[connected_transmission_descriptor] = { "connected_transmission_descriptor", NULL, NULL },
+	[content_availability_descriptor] = { "content_availability_descriptor", NULL, NULL },
+	[service_group_descriptor] = { "service_group_descriptor", NULL, NULL },
+	[carousel_compatible_composite_Descriptor] = { "carousel_compatible_composite_Descriptor", NULL, NULL },
+	[conditional_playback_descriptor] = { "conditional_playback_descriptor", NULL, NULL },
+	[ISDBT_delivery_system_descriptor] = { "ISDBT_delivery_system_descriptor", NULL, NULL },
+	[partial_reception_descriptor] = { "partial_reception_descriptor", NULL, NULL },
+	[emergency_information_descriptor] = { "emergency_information_descriptor", NULL, NULL },
+	[data_component_descriptor] = { "data_component_descriptor", NULL, NULL },
+	[system_management_descriptor] = { "system_management_descriptor", NULL, NULL },
 };
 
 static const char *extension_descriptors[] = {
@@ -207,7 +262,18 @@ static const char *extension_descriptors[] = {
 };
 
 
-static int bcd_to_int(const unsigned char *bcd, int bits)
+uint32_t bcd(uint32_t bcd)
+{
+	uint32_t ret = 0, mult = 1;
+	while (bcd) {
+		ret += (bcd & 0x0f) * mult;
+		bcd >>=4;
+		mult *= 10;
+	}
+	return ret;
+}
+
+int bcd_to_int(const unsigned char *bcd, int bits)
 {
 	int nibble = 0;
 	int ret = 0;
@@ -231,7 +297,7 @@ static int add_frequency(struct nit_table *nit_table, uint32_t freq)
 	unsigned n = nit_table->frequency_len;
 
 	nit_table->frequency = realloc(nit_table->frequency,
-				       (n + 1) * sizeof(*nit_table->frequency));
+			(n + 1) * sizeof(*nit_table->frequency));
 
 	if (!nit_table->frequency)
 		return -ENOMEM;
@@ -243,8 +309,8 @@ static int add_frequency(struct nit_table *nit_table, uint32_t freq)
 }
 
 static void parse_NIT_ISDBT(struct nit_table *nit_table,
-			     const unsigned char *buf, int dlen,
-			     int verbose)
+		const unsigned char *buf, int dlen,
+		int verbose)
 {
 	uint64_t freq;
 	static const uint32_t interval[] = {
@@ -282,10 +348,10 @@ static void parse_NIT_ISDBT(struct nit_table *nit_table,
 	nit_table->transmission_mode = mode[isdbt_mode];
 	if (verbose)
 		printf("Area code: %d, mode %d (%s), guard interval: %s\n",
-			nit_table->area_code,
-			isdbt_mode + 1,
-			tm_name[nit_table->transmission_mode],
-			interval_name[nit_table->guard_interval]);
+				nit_table->area_code,
+				isdbt_mode + 1,
+				tm_name[nit_table->transmission_mode],
+				interval_name[nit_table->guard_interval]);
 	for (i = 2; i < dlen; i += 2) {
 		buf += 2;
 		/*
@@ -316,8 +382,8 @@ static const unsigned dvbc_dvbs_freq_inner[] = {
 };
 
 static void parse_NIT_DVBS(struct nit_table *nit_table,
-			     const unsigned char *buf, int dlen,
-			     int verbose)
+		const unsigned char *buf, int dlen,
+		int verbose)
 {
 	unsigned orbit, west;
 	uint32_t freq;
@@ -362,18 +428,18 @@ static void parse_NIT_DVBS(struct nit_table *nit_table,
 
 	if (verbose) {
 		printf("DVB-%s orbit %s, freq %d, pol %d, modulation %d, rolloff %d\n",
-		       (nit_table->delivery_system == SYS_DVBS) ? "S" : "S2",
-		       nit_table->orbit, freq,
-		       nit_table->pol, nit_table->modulation,
-		       nit_table->rolloff);
+				(nit_table->delivery_system == SYS_DVBS) ? "S" : "S2",
+				nit_table->orbit, freq,
+				nit_table->pol, nit_table->modulation,
+				nit_table->rolloff);
 		printf("Symbol rate %d, fec_inner %d\n",
-		       nit_table->symbol_rate, nit_table->fec_inner);
+				nit_table->symbol_rate, nit_table->fec_inner);
 	}
 }
 
 static void parse_NIT_DVBC(struct nit_table *nit_table,
-			     const unsigned char *buf, int dlen,
-			     int verbose)
+		const unsigned char *buf, int dlen,
+		int verbose)
 {
 	uint32_t freq;
 	static const unsigned modulation[] = {
@@ -398,17 +464,17 @@ static void parse_NIT_DVBC(struct nit_table *nit_table,
 
 	if (verbose) {
 		printf("DVB-C freq %d, modulation %d, Symbol rate %d\n",
-		       freq,
-		       nit_table->modulation,
-		       nit_table->symbol_rate);
+				freq,
+				nit_table->modulation,
+				nit_table->symbol_rate);
 		printf("fec_inner %d, fec_inner %d\n",
-		       nit_table->fec_inner, nit_table->fec_outer);
+				nit_table->fec_inner, nit_table->fec_outer);
 	}
 }
 
 static void parse_NIT_DVBT(struct nit_table *nit_table,
-			     const unsigned char *buf, int dlen,
-			     int verbose)
+		const unsigned char *buf, int dlen,
+		int verbose)
 {
 	uint32_t freq;
 	static const unsigned bw[] = {
@@ -474,21 +540,21 @@ static void parse_NIT_DVBT(struct nit_table *nit_table,
 
 	if (verbose) {
 		printf("DVB-T freq %d, bandwidth %d modulation %d\n",
-		       freq,
-		       nit_table->bandwidth,
-		       nit_table->modulation);
+				freq,
+				nit_table->bandwidth,
+				nit_table->modulation);
 		printf("hierarchy %d, code rate HP %d, LP %d, guard interval %d\n",
-		       nit_table->hierarchy,
-		       nit_table->code_rate_hp,
-		       nit_table->code_rate_lp,
-		       nit_table->guard_interval);
+				nit_table->hierarchy,
+				nit_table->code_rate_hp,
+				nit_table->code_rate_lp,
+				nit_table->guard_interval);
 		printf("transmission mode %d\n", nit_table->transmission_mode);
 	}
 }
 
 static void parse_NIT_DVBT2(struct nit_table *nit_table,
-			    const unsigned char *buf, int dlen,
-			    int verbose)
+		const unsigned char *buf, int dlen,
+		int verbose)
 {
 	static const unsigned bw[] = {
 		[0] =  8000000,
@@ -541,8 +607,8 @@ static void parse_NIT_DVBT2(struct nit_table *nit_table,
 }
 
 static void parse_freq_list(struct nit_table *nit_table,
-			    const unsigned char *buf, int dlen,
-			    int verbose)
+		const unsigned char *buf, int dlen,
+		int verbose)
 {
 	int i;
 	uint32_t freq;
@@ -560,8 +626,8 @@ static void parse_freq_list(struct nit_table *nit_table,
 }
 
 static void parse_partial_reception(struct nit_table *nit_table,
-				    const unsigned char *buf, int dlen,
-				    int verbose)
+		const unsigned char *buf, int dlen,
+		int verbose)
 {
 	int i;
 	uint16_t **pid = &nit_table->partial_reception;
@@ -573,15 +639,15 @@ static void parse_partial_reception(struct nit_table *nit_table,
 		nit_table->partial_reception[*n] = buf[i] << 8 | buf[i + 1];
 		if (verbose)
 			printf("Service 0x%04x has partial reception\n",
-			       nit_table->partial_reception[*n]);
+					nit_table->partial_reception[*n]);
 		buf += 2;
 		(*n)++;
 	}
 }
 
 static int parse_extension_descriptor(enum dvb_tables type,
-				       struct dvb_descriptors *dvb_desc,
-				       const unsigned char *buf, int dlen)
+		struct dvb_v5_descriptors *dvb_desc,
+		const unsigned char *buf, int dlen)
 {
 	unsigned char ext = buf[0];
 	int i;
@@ -595,7 +661,7 @@ static int parse_extension_descriptor(enum dvb_tables type,
 
 	if (dvb_desc->verbose) {
 		printf("Extension descriptor %s (0x%02x), len %d",
-			extension_descriptors[ext], ext, dlen);
+				extension_descriptors[ext], ext, dlen);
 		for (i = 0; i < dlen; i++) {
 			if (!(i % 16))
 				printf("\n\t");
@@ -604,23 +670,23 @@ static int parse_extension_descriptor(enum dvb_tables type,
 		printf("\n");
 	}
 	switch(ext) {
-	case T2_delivery_system_descriptor:
-		if (type != NIT)
-			return 1;
+		case T2_delivery_system_descriptor:
+			if (type != NIT)
+				return 1;
 
-		parse_NIT_DVBT2(&dvb_desc->nit_table, buf, dlen,
-				dvb_desc->verbose);
-		break;
+			parse_NIT_DVBT2(&dvb_desc->nit_table, buf, dlen,
+					dvb_desc->verbose);
+			break;
 	}
 
 	return 0;
 };
 
 static void parse_net_name(struct nit_table *nit_table,
-			   const unsigned char *buf, int dlen, int verbose)
+		const unsigned char *buf, int dlen, int verbose)
 {
 	parse_string(&nit_table->network_name, &nit_table->network_alias,
-		     &buf[2], dlen, default_charset, output_charset);
+			&buf[2], dlen, default_charset, output_charset);
 	if (verbose) {
 		printf("Network");
 		if (nit_table->network_name)
@@ -635,7 +701,7 @@ static void parse_net_name(struct nit_table *nit_table,
 
 
 static void parse_lcn(struct nit_table *nit_table,
-		      const unsigned char *buf, int dlen, int verbose)
+		const unsigned char *buf, int dlen, int verbose)
 {
 	int i, n = nit_table->lcn_len;
 	const unsigned char *p = &buf[2];
@@ -652,24 +718,24 @@ static void parse_lcn(struct nit_table *nit_table,
 
 		if (verbose)
 			printf("Service ID: 0x%04x, LCN: %d\n",
-			       (*lcn)[n].service_id,
-			       (*lcn)[n].lcn);
+					(*lcn)[n].service_id,
+					(*lcn)[n].lcn);
 	}
 }
 
 static void parse_service(struct service_table *service_table,
-			  const unsigned char *buf, int dlen, int verbose)
+		const unsigned char *buf, int dlen, int verbose)
 {
 	service_table->type = buf[2];
 	parse_string(&service_table->provider_name,
-		     &service_table->provider_alias,
-		     &buf[4], buf[3],
-		     default_charset, output_charset);
+			&service_table->provider_alias,
+			&buf[4], buf[3],
+			default_charset, output_charset);
 	buf += 4 + buf[3];
 	parse_string(&service_table->service_name,
-		     &service_table->service_alias,
-		     &buf[1], buf[0],
-		     default_charset, output_charset);
+			&service_table->service_alias,
+			&buf[1], buf[0],
+			default_charset, output_charset);
 	if (verbose) {
 		if (service_table->provider_name)
 			printf("Provider %s", service_table->provider_name);
@@ -682,17 +748,17 @@ static void parse_service(struct service_table *service_table,
 		if (service_table->service_alias)
 			printf("(%s)", service_table->service_alias);
 		if (!service_table->provider_name &&
-		    !service_table->service_alias &&
-		    !service_table->service_name &&
-		    !service_table->service_alias)
+				!service_table->service_alias &&
+				!service_table->service_name &&
+				!service_table->service_alias)
 			printf("Service 0x%04x", service_table->service_id);
 		printf("\n");
 	}
 }
 
 void parse_descriptor(enum dvb_tables type,
-			     struct dvb_descriptors *dvb_desc,
-			     const unsigned char *buf, int len)
+		struct dvb_v5_descriptors *dvb_desc,
+		const unsigned char *buf, int len)
 {
 	int i;
 
@@ -707,12 +773,12 @@ void parse_descriptor(enum dvb_tables type,
 
 		if (dlen > len) {
 			fprintf(stderr, "descriptor size %d is longer than %d!\n",
-				dlen, len);
+					dlen, len);
 			return;
 		}
 		if (dvb_desc->verbose) {
 			printf("%s (0x%02x), len %d",
-			       descriptors[buf[0]], buf[0], buf[1]);
+					dvb_descriptors[buf[0]].name, buf[0], buf[1]);
 			for (i = 0; i < dlen; i++) {
 				if (!(i % 16))
 					printf("\n\t");
@@ -721,149 +787,149 @@ void parse_descriptor(enum dvb_tables type,
 			printf("\n");
 		}
 		switch(buf[0]) {
-		case extension_descriptor:
-			err = parse_extension_descriptor(type, dvb_desc,
-							 &buf[2], dlen);
-			break;
-		case iso639_language_descriptor:
-		{
-			int i;
-			const unsigned char *p = &buf[2];
+			case extension_descriptor:
+				err = parse_extension_descriptor(type, dvb_desc,
+						&buf[2], dlen);
+				break;
+			case iso639_language_descriptor:
+				{
+					int i;
+					const unsigned char *p = &buf[2];
 
-			if (dvb_desc->verbose) {
-				for (i = 0; i < dlen; i+= 4, p += 4) {
-					printf("Language = %c%c%c, amode = %d\n",
-						p[0], p[1], p[2], p[3]);
+					if (dvb_desc->verbose) {
+						for (i = 0; i < dlen; i+= 4, p += 4) {
+							printf("Language = %c%c%c, amode = %d\n",
+									p[0], p[1], p[2], p[3]);
+						}
+					}
+					break;
 				}
-			}
-			break;
-		}
-		case AAC_descriptor:
-			if (dvb_desc->verbose)
-				printf("AAC descriptor with len %d\n", dlen);
-			break;
-		case stream_identifier_descriptor:
-			/* Don't need to parse it */
-			if (dvb_desc->verbose)
-				printf("Component tag 0x%02x\n", buf[2]);
-			break;
-		case network_name_descriptor:
-			if (type != NIT) {
-				err = 1;
+			case AAC_descriptor:
+				if (dvb_desc->verbose)
+					printf("AAC descriptor with len %d\n", dlen);
 				break;
-			}
-			parse_net_name(&dvb_desc->nit_table, buf, dlen,
-				       dvb_desc->verbose);
-			break;
-
-		/* DVB NIT decoders */
-		case satellite_delivery_system_descriptor:
-			if (type != NIT) {
-				err = 1;
+			case stream_identifier_descriptor:
+				/* Don't need to parse it */
+				if (dvb_desc->verbose)
+					printf("Component tag 0x%02x\n", buf[2]);
 				break;
-			}
-			parse_NIT_DVBS(&dvb_desc->nit_table, buf, dlen,
-				       dvb_desc->verbose);
-			break;
-		case cable_delivery_system_descriptor:
-			if (type != NIT) {
-				err = 1;
-				break;
-			}
-			parse_NIT_DVBC(&dvb_desc->nit_table, buf, dlen,
-				       dvb_desc->verbose);
-			break;
-		case terrestrial_delivery_system_descriptor:
-			if (type != NIT) {
-				err = 1;
-				break;
-			}
-			parse_NIT_DVBT(&dvb_desc->nit_table, buf, dlen,
-				       dvb_desc->verbose);
-			break;
-
-		/* ISDBT NIT decoders */
-		case ISDBT_delivery_system_descriptor:
-			if (type != NIT) {
-				err = 1;
-				break;
-			}
-
-			parse_NIT_ISDBT(&dvb_desc->nit_table, buf, dlen,
-					dvb_desc->verbose);
-			break;
-		case partial_reception_descriptor:
-			if (type != NIT) {
-				err = 1;
-				break;
-			}
-			parse_partial_reception(&dvb_desc->nit_table, buf, dlen,
+			case network_name_descriptor:
+				if (type != NIT) {
+					err = 1;
+					break;
+				}
+				parse_net_name(&dvb_desc->nit_table, buf, dlen,
 						dvb_desc->verbose);
-			break;
+				break;
 
-		/* LCN decoder */
-		case logical_channel_number_descriptor:
-		{
-			/*
-			 * According with SCTE 57 2011, descriptor 0x83
-			 * is the extended video descriptor. We don't need
-			 * it, but don't print an error for this condition.
-			 */
-			if (type == PMT)
+				/* DVB NIT decoders */
+			case satellite_delivery_system_descriptor:
+				if (type != NIT) {
+					err = 1;
+					break;
+				}
+				parse_NIT_DVBS(&dvb_desc->nit_table, buf, dlen,
+						dvb_desc->verbose);
 				break;
-			if (type != NIT) {
-				err = 1;
+			case cable_delivery_system_descriptor:
+				if (type != NIT) {
+					err = 1;
+					break;
+				}
+				parse_NIT_DVBC(&dvb_desc->nit_table, buf, dlen,
+						dvb_desc->verbose);
 				break;
-			}
-			parse_lcn(&dvb_desc->nit_table, buf, dlen,
-				  dvb_desc->verbose);
-			break;
-		}
+			case terrestrial_delivery_system_descriptor:
+				if (type != NIT) {
+					err = 1;
+					break;
+				}
+				parse_NIT_DVBT(&dvb_desc->nit_table, buf, dlen,
+						dvb_desc->verbose);
+				break;
 
-		case TS_Information_descriptior:
-			if (type != NIT) {
-				err = 1;
-				break;
-			}
-			dvb_desc->nit_table.virtual_channel = buf[2];
-			if (dvb_desc->verbose)
-				printf("Virtual channel = %d\n", buf[2]);
-			break;
+				/* ISDBT NIT decoders */
+			case ISDBT_delivery_system_descriptor:
+				if (type != NIT) {
+					err = 1;
+					break;
+				}
 
-		case frequency_list_descriptor:
-			if (type != NIT) {
-				err = 1;
+				parse_NIT_ISDBT(&dvb_desc->nit_table, buf, dlen,
+						dvb_desc->verbose);
 				break;
-			}
-			parse_freq_list(&dvb_desc->nit_table, buf, dlen,
-					dvb_desc->verbose);
-			break;
+			case partial_reception_descriptor:
+				if (type != NIT) {
+					err = 1;
+					break;
+				}
+				parse_partial_reception(&dvb_desc->nit_table, buf, dlen,
+						dvb_desc->verbose);
+				break;
 
-		case service_descriptor: {
-			if (type != SDT) {
-				err = 1;
+				/* LCN decoder */
+			case logical_channel_number_descriptor:
+				{
+					/*
+					 * According with SCTE 57 2011, descriptor 0x83
+					 * is the extended video descriptor. We don't need
+					 * it, but don't print an error for this condition.
+					 */
+					if (type == PMT)
+						break;
+					if (type != NIT) {
+						err = 1;
+						break;
+					}
+					parse_lcn(&dvb_desc->nit_table, buf, dlen,
+							dvb_desc->verbose);
+					break;
+				}
+
+			case TS_Information_descriptior:
+				if (type != NIT) {
+					err = 1;
+					break;
+				}
+				dvb_desc->nit_table.virtual_channel = buf[2];
+				if (dvb_desc->verbose)
+					printf("Virtual channel = %d\n", buf[2]);
 				break;
-			}
-			parse_service(&dvb_desc->sdt_table.service_table[dvb_desc->cur_service],
-				      buf, dlen, dvb_desc->verbose);
-			break;
-		}
-		default:
-			break;
+
+			case frequency_list_descriptor:
+				if (type != NIT) {
+					err = 1;
+					break;
+				}
+				parse_freq_list(&dvb_desc->nit_table, buf, dlen,
+						dvb_desc->verbose);
+				break;
+
+			case service_descriptor: {
+							 if (type != SDT) {
+								 err = 1;
+								 break;
+							 }
+							 parse_service(&dvb_desc->sdt_table.service_table[dvb_desc->cur_service],
+									 buf, dlen, dvb_desc->verbose);
+							 break;
+						 }
+			default:
+						 break;
 		}
 		if (err) {
 			fprintf(stderr,
-				"descriptor %s is invalid on %s table\n",
-				descriptors[buf[0]], table[type]);
+					"descriptor %s is invalid on %s table\n",
+					dvb_descriptors[buf[0]].name, table[type]);
 		}
 		buf += dlen + 2;
 		len -= dlen + 2;
 	} while (len > 0);
 }
 
-int has_descriptor(struct dvb_descriptors *dvb_desc,
-		    unsigned char needed_descriptor,
-	            const unsigned char *buf, int len)
+int has_descriptor(struct dvb_v5_descriptors *dvb_desc,
+		unsigned char needed_descriptor,
+		const unsigned char *buf, int len)
 {
 	if (len == 0)
 		return 0;
@@ -882,110 +948,110 @@ int has_descriptor(struct dvb_descriptors *dvb_desc,
 }
 
 #if 0
-	/* TODO: remove those stuff */
+/* TODO: remove those stuff */
 
-		case ds_alignment_descriptor:
-		case dvbpsi_registration_descriptor:
-		case service_list_descriptor:
-		case stuffing_descriptor:
-		case VBI_data_descriptor:
-		case VBI_teletext_descriptor:
-		case bouquet_name_descriptor:
-		case country_availability_descriptor:
-		case linkage_descriptor:
-		case NVOD_reference_descriptor:
-		case time_shifted_service_descriptor:
-		case short_event_descriptor:
-		case extended_event_descriptor:
-		case time_shifted_event_descriptor:
-		case component_descriptor:
-		case mosaic_descriptor:
-		case CA_identifier_descriptor:
-		case content_descriptor:
-		case parental_rating_descriptor:
-		case teletext_descriptor:
-		case telephone_descriptor:
-		case local_time_offset_descriptor:
-		case subtitling_descriptor:
-		case multilingual_network_name_descriptor:
-		case multilingual_bouquet_name_descriptor:
-		case multilingual_service_name_descriptor:
-		case multilingual_component_descriptor:
-		case private_data_specifier_descriptor:
-		case service_move_descriptor:
-		case short_smoothing_buffer_descriptor:
-		case partial_transport_stream_descriptor:
-		case data_broadcast_descriptor:
-		case scrambling_descriptor:
-		case data_broadcast_id_descriptor:
-		case transport_stream_descriptor:
-		case DSNG_descriptor:
-		case PDC_descriptor:
-		case AC_3_descriptor:
-		case ancillary_data_descriptor:
-		case cell_list_descriptor:
-		case cell_frequency_link_descriptor:
-		case announcement_support_descriptor:
-		case application_signalling_descriptor:
-		case adaptation_field_data_descriptor:
-		case service_identifier_descriptor:
-		case service_availability_descriptor:
-		case default_authority_descriptor:
-		case related_content_descriptor:
-		case TVA_id_descriptor:
-		case content_identifier_descriptor:
-		case time_slice_fec_identifier_descriptor:
-		case ECM_repetition_rate_descriptor:
-		case S2_satellite_delivery_system_descriptor:
-		case enhanced_AC_3_descriptor:
-		case DTS_descriptor:
-		case XAIT_location_descriptor:
-		case FTA_content_management_descriptor:
-		case extension_descriptor:
+case ds_alignment_descriptor:
+case dvbpsi_registration_descriptor:
+case service_list_descriptor:
+case stuffing_descriptor:
+case VBI_data_descriptor:
+case VBI_teletext_descriptor:
+case bouquet_name_descriptor:
+case country_availability_descriptor:
+case linkage_descriptor:
+case NVOD_reference_descriptor:
+case time_shifted_service_descriptor:
+case short_event_descriptor:
+case extended_event_descriptor:
+case time_shifted_event_descriptor:
+case component_descriptor:
+case mosaic_descriptor:
+case CA_identifier_descriptor:
+case content_descriptor:
+case parental_rating_descriptor:
+case teletext_descriptor:
+case telephone_descriptor:
+case local_time_offset_descriptor:
+case subtitling_descriptor:
+case multilingual_network_name_descriptor:
+case multilingual_bouquet_name_descriptor:
+case multilingual_service_name_descriptor:
+case multilingual_component_descriptor:
+case private_data_specifier_descriptor:
+case service_move_descriptor:
+case short_smoothing_buffer_descriptor:
+case partial_transport_stream_descriptor:
+case data_broadcast_descriptor:
+case scrambling_descriptor:
+case data_broadcast_id_descriptor:
+case transport_stream_descriptor:
+case DSNG_descriptor:
+case PDC_descriptor:
+case AC_3_descriptor:
+case ancillary_data_descriptor:
+case cell_list_descriptor:
+case cell_frequency_link_descriptor:
+case announcement_support_descriptor:
+case application_signalling_descriptor:
+case adaptation_field_data_descriptor:
+case service_identifier_descriptor:
+case service_availability_descriptor:
+case default_authority_descriptor:
+case related_content_descriptor:
+case TVA_id_descriptor:
+case content_identifier_descriptor:
+case time_slice_fec_identifier_descriptor:
+case ECM_repetition_rate_descriptor:
+case S2_satellite_delivery_system_descriptor:
+case enhanced_AC_3_descriptor:
+case DTS_descriptor:
+case XAIT_location_descriptor:
+case FTA_content_management_descriptor:
+case extension_descriptor:
 
-		case CUE_identifier_descriptor:
-		case component_name_descriptor:
-		case conditional_access_descriptor:
-		case copyright_descriptor:
-		case carousel_id_descriptor:
-		case association_tag_descriptor:
-		case deferred_association_tags_descriptor:
-		case AVC_video_descriptor:
-		case AVC_timing_and_HRD_descriptor:
-		case hierarchical_transmission_descriptor:
-		case digital_copy_control_descriptor:
-		case network_identifier_descriptor:
-		case partial_transport_stream_time_descriptor:
-		case audio_component_descriptor:
-		case hyperlink_descriptor:
-		case target_area_descriptor:
-		case data_contents_descriptor:
-		case video_decode_control_descriptor:
-		case download_content_descriptor:
-		case CA_EMM_TS_descriptor:
-		case CA_contract_information_descriptor:
-		case CA_service_descriptor:
-		case extended_broadcaster_descriptor:
-		case logo_transmission_descriptor:
-		case basic_local_event_descriptor:
-		case reference_descriptor:
-		case node_relation_descriptor:
-		case short_node_information_descriptor:
-		case STC_reference_descriptor:
-		case series_descriptor:
-		case event_group_descriptor:
-		case SI_parameter_descriptor:
-		case broadcaster_Name_Descriptor:
-		case component_group_descriptor:
-		case SI_prime_TS_descriptor:
-		case board_information_descriptor:
-		case LDT_linkage_descriptor:
-		case connected_transmission_descriptor:
-		case content_availability_descriptor:
-		case service_group_descriptor:
-		case carousel_compatible_composite_Descriptor:
-		case conditional_playback_descriptor:
-		case emergency_information_descriptor:
-		case data_component_descriptor:
-		case system_management_descriptor:
+case CUE_identifier_descriptor:
+case component_name_descriptor:
+case conditional_access_descriptor:
+case copyright_descriptor:
+case carousel_id_descriptor:
+case association_tag_descriptor:
+case deferred_association_tags_descriptor:
+case AVC_video_descriptor:
+case AVC_timing_and_HRD_descriptor:
+case hierarchical_transmission_descriptor:
+case digital_copy_control_descriptor:
+case network_identifier_descriptor:
+case partial_transport_stream_time_descriptor:
+case audio_component_descriptor:
+case hyperlink_descriptor:
+case target_area_descriptor:
+case data_contents_descriptor:
+case video_decode_control_descriptor:
+case download_content_descriptor:
+case CA_EMM_TS_descriptor:
+case CA_contract_information_descriptor:
+case CA_service_descriptor:
+case extended_broadcaster_descriptor:
+case logo_transmission_descriptor:
+case basic_local_event_descriptor:
+case reference_descriptor:
+case node_relation_descriptor:
+case short_node_information_descriptor:
+case STC_reference_descriptor:
+case series_descriptor:
+case event_group_descriptor:
+case SI_parameter_descriptor:
+case broadcaster_Name_Descriptor:
+case component_group_descriptor:
+case SI_prime_TS_descriptor:
+case board_information_descriptor:
+case LDT_linkage_descriptor:
+case connected_transmission_descriptor:
+case content_availability_descriptor:
+case service_group_descriptor:
+case carousel_compatible_composite_Descriptor:
+case conditional_playback_descriptor:
+case emergency_information_descriptor:
+case data_component_descriptor:
+case system_management_descriptor:
 #endif

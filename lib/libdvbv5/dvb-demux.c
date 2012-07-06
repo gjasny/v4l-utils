@@ -36,9 +36,25 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-    
+#include <stdlib.h> /* free */
+
 #include <linux/dvb/dmx.h>
 #include "dvb-demux.h"
+
+int dvb_dmx_open(int adapter, int demux, unsigned verbose)
+{
+  char* demux_name = NULL;
+  asprintf(&demux_name, "/dev/dvb/adapter%i/demux%i", adapter, demux );
+  int fd_demux = open( demux_name, O_RDWR );
+  free( demux_name );
+  return fd_demux;
+}
+
+void dvb_dmx_close(int dmx_fd)
+{
+  (void) ioctl( dmx_fd, DMX_STOP);
+  close( dmx_fd);
+}
 
 int set_pesfilter(int dmxfd, int pid, int pes_type, int dvr)
 {

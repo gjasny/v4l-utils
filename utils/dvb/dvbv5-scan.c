@@ -263,7 +263,7 @@ static int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
 
 static void add_other_freq_entries(struct dvb_file *dvb_file,
 				   struct dvb_v5_fe_parms *parms,
-				   struct dvb_descriptors *dvb_desc)
+				   struct dvb_v5_descriptors *dvb_desc)
 {
 	int i;
 	uint32_t freq, shift = 0;
@@ -326,7 +326,7 @@ static int run_scan(struct arguments *args,
 	}
 
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
-		struct dvb_descriptors *dvb_desc = NULL;
+		struct dvb_v5_descriptors *dvb_desc = NULL;
 
 		/* First of all, set the delivery system */
 		for (i = 0; i < entry->n_props; i++)
@@ -404,9 +404,9 @@ static int run_scan(struct arguments *args,
 
 		dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
 		count++;
-		printf("Scanning frequency #%d %d\n", count, freq);
+		dvb_log("Scanning frequency #%d %d", count, freq);
 		if (verbose)
-			dvb_fe_prt_parms(stdout, parms);
+			dvb_fe_prt_parms(parms);
 
 		rc = check_frontend(parms, 4);
 		if (rc < 0)

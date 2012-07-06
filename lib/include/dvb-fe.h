@@ -29,20 +29,9 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <string.h>
-#include <syslog.h>
 #include "dvb-frontend.h"
 #include "dvb-sat.h"
-
-#define dvb_log(fmt, arg...) do {\
-	parms->logfunc(LOG_INFO, fmt, ##arg); \
-} while (0)
-#define dvb_logerr(fmt, arg...) do {\
-	parms->logfunc(LOG_ERR, fmt, ##arg); \
-} while (0)
-
-#define dvb_perror(msg) do {\
-	parms->logfunc(LOG_ERR, "%s: %s", msg, strerror(errno)); \
-} while (0)
+#include "dvb-log.h"
 
 #define ARRAY_SIZE(x)	(sizeof(x)/sizeof((x)[0]))
 
@@ -73,7 +62,6 @@ struct dvb_v5_stats {
 	struct dtv_property		prop[DTV_MAX_STATS];
 };
 
-typedef void (*dvb_logfunc)(int level, const char *fmt, ...);
 
 struct dvb_v5_fe_parms {
 	int				fd;
@@ -119,6 +107,9 @@ void dvb_fe_close(struct dvb_v5_fe_parms *parms);
 
 /* Get/set delivery system parameters */
 
+const char *dvb_cmd_name(int cmd);
+const char *const *dvb_attr_names(int cmd);
+
 int dvb_fe_retrieve_parm(const struct dvb_v5_fe_parms *parms,
 			unsigned cmd, uint32_t *value);
 int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
@@ -130,8 +121,8 @@ int dvb_add_parms_for_sys(struct dtv_property *dvb_prop,
 			  fe_delivery_system_t sys);
 int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 				   uint32_t desired_system);
-const char *dvb_cmd_name(int cmd);
-void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms);
+
+void dvb_fe_prt_parms(const struct dvb_v5_fe_parms *parms);
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms);
 int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms);
 
@@ -193,5 +184,16 @@ extern const unsigned fe_bandwidth_name[8];
 extern const char *dvb_v5_name[61];
 extern const void *dvb_v5_attr_names[];
 extern const char *delivery_system_name[20];
+extern const char *fe_code_rate_name[13];
+extern const char *fe_modulation_name[14];
+extern const char *fe_transmission_mode_name[8];
+extern const unsigned fe_bandwidth_name[8];
+extern const char *fe_guard_interval_name[9];
+extern const char *fe_hierarchy_name[6];
+extern const char *fe_voltage_name[4];
+extern const char *fe_tone_name[3];
+extern const char *fe_inversion_name[4];
+extern const char *fe_pilot_name[4];
+extern const char *fe_rolloff_name[5];
 
 #endif

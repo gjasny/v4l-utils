@@ -79,7 +79,7 @@ enum file_formats {
 #define PTABLE(a) .table = a, .size=ARRAY_SIZE(a)
 
 
-struct dvb_descriptors;
+struct dvb_v5_descriptors;
 
 #ifdef __cplusplus
 extern "C" {
@@ -130,12 +130,12 @@ struct dvb_file *read_dvb_file(const char *fname);
 
 int write_dvb_file(const char *fname, struct dvb_file *dvb_file);
 
-char *dvb_vchannel(struct dvb_descriptors *dvb_desc,
+char *dvb_vchannel(struct dvb_v5_descriptors *dvb_desc,
 	           int service);
 
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
-		      struct dvb_descriptors *dvb_desc,
+		      struct dvb_v5_descriptors *dvb_desc,
 		      int get_detected, int get_nit);
 int parse_delsys(const char *name);
 enum file_formats parse_format(const char *name);

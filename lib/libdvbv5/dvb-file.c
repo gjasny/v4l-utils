@@ -720,11 +720,11 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 
 			if (!attr_name || !*attr_name)
 				fprintf(fp, "\t%s = %u\n",
-					dvb_v5_name[entry->props[i].cmd],
+					dvb_cmd_name(entry->props[i].cmd),
 					entry->props[i].u.data);
 			else
 				fprintf(fp, "\t%s = %s\n",
-					dvb_v5_name[entry->props[i].cmd],
+					dvb_cmd_name(entry->props[i].cmd),
 					*attr_name);
 		}
 		fprintf(fp, "\n");
@@ -758,7 +758,7 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 	return 0;
 };
 
-char *dvb_vchannel(struct dvb_descriptors *dvb_desc,
+char *dvb_vchannel(struct dvb_v5_descriptors *dvb_desc,
 		   int service)
 {
 	struct service_table *service_table = &dvb_desc->sdt_table.service_table[service];
@@ -812,7 +812,7 @@ static int store_entry_prop(struct dvb_entry *entry,
 }
 
 static void handle_std_specific_parms(struct dvb_entry *entry,
-				      struct dvb_descriptors *dvb_desc)
+				      struct dvb_v5_descriptors *dvb_desc)
 {
 	struct nit_table *nit_table = &dvb_desc->nit_table;
 	int i;
@@ -933,7 +933,7 @@ static int sort_other_el_pid(const void *a_arg, const void *b_arg)
 
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
-		      struct dvb_descriptors *dvb_desc,
+		      struct dvb_v5_descriptors *dvb_desc,
 		      int get_detected, int get_nit)
 {
 	struct dvb_entry *entry;

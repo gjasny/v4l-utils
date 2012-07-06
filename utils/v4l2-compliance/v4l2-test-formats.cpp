@@ -108,7 +108,7 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt, __u32 w, __u3
 		default:
 			return fail("frmival.type is invalid\n");
 		}
-		
+
 		f++;
 	}
 	if (!valid)
@@ -194,7 +194,7 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 		default:
 			return fail("frmsize.type is invalid\n");
 		}
-		
+
 		f++;
 	}
 	info("found %d framesizes for pixel format %08x\n", f, pixfmt);
@@ -295,7 +295,7 @@ int testEnumFormats(struct node *node)
 		supported = true;
 		warn("Buffer type PRIVATE allowed!\n");
 	}
-		
+
 	ret = testEnumFrameSizes(node, 0x20202020);
 	if (ret != ENOTTY)
 		return fail("Accepted framesize for invalid format\n");
@@ -364,7 +364,7 @@ static int testFormatsType(struct node *node, unsigned type)
 	__u32 service_set = 0;
 	unsigned cnt = 0;
 	int ret;
-	
+
 	memset(&fmt, 0xff, sizeof(fmt));
 	fmt.type = type;
 	ret = doioctl(node, VIDIOC_G_FMT, &fmt);
@@ -375,7 +375,7 @@ static int testFormatsType(struct node *node, unsigned type)
 	if (ret)
 		return fail("expected EINVAL, but got %d when getting format for buftype %d\n", ret, type);
 	fail_on_test(fmt.type != type);
-	
+
 	switch (type) {
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:

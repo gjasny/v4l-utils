@@ -23,45 +23,7 @@
 #include "dvb-fe.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <stdarg.h>
-
-static const struct loglevel {
-	const char *name;
-	const char *color;
-	int fd;
-} loglevels[9] = {
-	{"EMERG   ", "\033[31m", STDERR_FILENO },
-	{"ALERT   ", "\033[31m", STDERR_FILENO },
-	{"CRITICAL", "\033[31m", STDERR_FILENO },
-	{"ERROR   ", "\033[31m", STDERR_FILENO },
-	{"WARNING ", "\033[33m", STDOUT_FILENO },
-	{"NOTICE  ", "\033[36m", STDOUT_FILENO },
-	{"INFO    ", "\033[36m", STDOUT_FILENO },
-	{"DEBUG   ", "\033[32m", STDOUT_FILENO },
-	{"",         "\033[0m",  STDOUT_FILENO },
-};
-#define LOG_COLOROFF 8
-
-void dvb_default_log(int level, const char *fmt, ...)
-{
-	if(level > sizeof(loglevels) / sizeof(struct loglevel) - 2) // ignore LOG_COLOROFF as well
-		level = LOG_INFO;
-	va_list ap;
-	va_start(ap, fmt);
-	FILE *out = stdout;
-	if(STDERR_FILENO == loglevels[level].fd)
-		out = stderr;
-	if(isatty(loglevels[level].fd))
-		fputs(loglevels[level].color, out);
-	fprintf(out, "%s ", loglevels[level].name);
-	vfprintf(out, fmt, ap);
-	fprintf(out, "\n");
-	if(isatty(loglevels[level].fd))
-		fputs(loglevels[LOG_COLOROFF].color, out);
-	va_end(ap);
-}
 
 static void dvb_v5_free(struct dvb_v5_fe_parms *parms)
 {
@@ -451,7 +413,7 @@ const char *dvb_cmd_name(int cmd)
 	return NULL;
 }
 
-const char * const *dvb_attr_names(int cmd)
+const char *const *dvb_attr_names(int cmd)
 {
 	if (cmd >= 0 && cmd < DTV_USER_COMMAND_START)
 		return dvb_v5_attr_names[cmd];
@@ -460,7 +422,7 @@ const char * const *dvb_attr_names(int cmd)
 	return NULL;
 }
 
-void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
+void dvb_fe_prt_parms(const struct dvb_v5_fe_parms *parms)
 {
 	int i;
 
@@ -477,11 +439,11 @@ void dvb_fe_prt_parms(FILE *fp, const struct dvb_v5_fe_parms *parms)
 		}
 
 		if (!attr_name || !*attr_name)
-			fprintf(fp, "%s = %u\n",
+			dvb_log("%s = %u",
 				dvb_cmd_name(parms->dvb_prop[i].cmd),
 				parms->dvb_prop[i].u.data);
 		else
-			fprintf(fp, "%s = %s\n",
+			dvb_log("%s = %s",
 				dvb_cmd_name(parms->dvb_prop[i].cmd),
 				*attr_name);
 	}
@@ -563,9 +525,9 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 			return errno;
 		}
 		if (parms->verbose) {
-			printf("Got parameters for %s:\n",
+			dvb_log("Got parameters for %s:",
 			       delivery_system_name[parms->current_sys]);
-			dvb_fe_prt_parms(stdout, parms);
+			dvb_fe_prt_parms(parms);
 		}
 		goto ret;
 	}
@@ -640,7 +602,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
 			dvb_perror("FE_SET_PROPERTY");
 			if (parms->verbose)
-				dvb_fe_prt_parms(stderr, parms);
+				dvb_fe_prt_parms(parms);
 			return errno;
 		}
 		goto ret;
@@ -682,7 +644,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	if (ioctl(parms->fd, FE_SET_FRONTEND, &v3_parms) == -1) {
 		dvb_perror("FE_SET_FRONTEND");
 		if (parms->verbose)
-			dvb_fe_prt_parms(stderr, parms);
+			dvb_fe_prt_parms(parms);
 		return errno;
 	}
 ret:

@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,70 @@
 /*
  * Descriptors, as defined on ETSI EN 300 468 V1.11.1 (2010-04)
  */
+
+
+#ifndef _DESCRIPTORS_H
+#define _DESCRIPTORS_H
+
+#include <endian.h>
+#include <unistd.h>
+#include <stdint.h>
+
+#define DVB_MAX_PAYLOAD_PACKET_SIZE 4096
+#define DVB_PID_SDT      17
+#define DVB_PMT_TABLE_ID 2
+
+struct dvb_v5_fe_parms;
+
+typedef void *(*dvb_table_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size);
+
+struct dvb_table_init {
+	dvb_table_init_func init;
+};
+
+extern const struct dvb_table_init dvb_table_initializers[];
+
+#define bswap16(b) do {\
+	b = be16toh(b); \
+} while (0)
+
+#define bswap32(b) do {\
+	b = be32toh(b); \
+} while (0)
+
+struct dvb_desc {
+	uint8_t type;
+	struct dvb_desc *next;
+	uint8_t length;
+	uint8_t data[];
+} __attribute__((packed));
+
+#define dvb_desc_foreach( _desc, _tbl ) \
+	for( struct dvb_desc *_desc = _tbl->descriptor; _desc; _desc = _desc->next ) \
+
+#define dvb_desc_find(_struct, _desc, _tbl, _type) \
+	for( _struct *_desc = (_struct *) _tbl->descriptor; _desc; _desc = (_struct *) _desc->next ) \
+		if(_desc->type == _type) \
+
+ssize_t dvb_desc_init(const uint8_t *buf, struct dvb_desc *desc);
+
+uint32_t bcd(uint32_t bcd);
+
+ssize_t dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, uint8_t *dest, uint16_t section_length, struct dvb_desc **head_desc);
+
+struct dvb_v5_fe_parms;
+
+typedef ssize_t (*dvb_desc_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+typedef void (*dvb_desc_print_func)(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+
+struct dvb_descriptor {
+	const char *name;
+	dvb_desc_init_func init;
+	dvb_desc_print_func print;
+	ssize_t desc_size;
+};
+
+extern const struct dvb_descriptor dvb_descriptors[];
 
 enum dvb_tables {
 	PAT,
@@ -190,6 +254,7 @@ enum descriptors {
 	system_management_descriptor			= 0xfe,
 };
 
+
 enum extension_descriptors {
 	image_icon_descriptor				= 0x00,
 	cpcm_delivery_signalling_descriptor		= 0x01,
@@ -205,10 +270,124 @@ enum extension_descriptors {
 	service_relocated_descriptor			= 0x0b,
 };
 
-void parse_descriptor(enum dvb_tables type,
-		      struct dvb_descriptors *dvb_desc,
-		      const unsigned char *buf, int len);
+struct pmt_table {
+	uint16_t program_number, pcr_pid;
+	unsigned char version;
+};
 
-int has_descriptor(struct dvb_descriptors *dvb_desc,
-		    unsigned char needed_descriptor,
-	            const unsigned char *buf, int len);
+struct el_pid {
+	uint8_t  type;
+	uint16_t pid;
+};
+
+struct pid_table {
+	uint16_t service_id;
+	uint16_t pid;
+	struct pmt_table pmt_table;
+	unsigned video_pid_len, audio_pid_len, other_el_pid_len;
+	uint16_t *video_pid;
+	uint16_t *audio_pid;
+	struct el_pid *other_el_pid;
+};
+
+struct pat_table {
+	uint16_t  ts_id;
+	unsigned char version;
+	struct pid_table *pid_table;
+	unsigned pid_table_len;
+};
+
+struct transport_table {
+	uint16_t tr_id;
+};
+
+struct lcn_table {
+	uint16_t service_id;
+	uint16_t lcn;
+};
+
+struct nit_table {
+	uint16_t network_id;
+	unsigned char version;
+	char *network_name, *network_alias;
+	struct transport_table *tr_table;
+	unsigned tr_table_len;
+	unsigned virtual_channel;
+	unsigned area_code;
+
+	/* Network Parameters */
+	uint32_t delivery_system;
+	uint32_t guard_interval;
+	uint32_t fec_inner, fec_outer;
+	uint32_t pol;
+	uint32_t modulation;
+	uint32_t rolloff;
+	uint32_t symbol_rate;
+	uint32_t bandwidth;
+	uint32_t code_rate_hp;
+	uint32_t code_rate_lp;
+	uint32_t transmission_mode;
+	uint32_t hierarchy;
+	uint32_t plp_id;
+	uint32_t system_id;
+
+	unsigned has_dvbt:1;
+	unsigned is_hp:1;
+	unsigned has_time_slicing:1;
+	unsigned has_mpe_fec:1;
+	unsigned has_other_frequency:1;
+	unsigned is_in_depth_interleaver:1;
+
+	char *orbit;
+	uint32_t *frequency;
+	unsigned frequency_len;
+
+	uint32_t *other_frequency;
+	unsigned other_frequency_len;
+
+	uint16_t *partial_reception;
+	unsigned partial_reception_len;
+
+	struct lcn_table *lcn;
+	unsigned lcn_len;
+};
+
+struct service_table {
+	uint16_t service_id;
+	char running;
+	char scrambled;
+	unsigned char type;
+	char *service_name, *service_alias;
+	char *provider_name, *provider_alias;
+};
+
+struct sdt_table {
+	unsigned char version;
+	uint16_t ts_id;
+	struct service_table *service_table;
+	unsigned service_table_len;
+};
+struct dvb_v5_descriptors {
+	int verbose;
+	uint32_t delivery_system;
+
+	struct pat_table pat_table;
+	struct nit_table nit_table;
+	struct sdt_table sdt_table;
+
+	/* Used by descriptors to know where to update a PMT/Service/TS */
+	unsigned cur_pmt;
+	unsigned cur_service;
+	unsigned cur_ts;
+};
+
+void parse_descriptor(enum dvb_tables type,
+		struct dvb_v5_descriptors *dvb_desc,
+		const unsigned char *buf, int len);
+
+int has_descriptor(struct dvb_v5_descriptors *dvb_desc,
+		unsigned char needed_descriptor,
+		const unsigned char *buf, int len);
+
+
+#endif

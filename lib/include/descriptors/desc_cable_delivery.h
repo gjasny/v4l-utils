@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ * Copyright (c) 2012 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,31 +16,46 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ *
  */
-#ifndef _LIBSCAN_H
-#define _LIBSCAN_H
+
+#ifndef _CABLE_DELIVERY_H
+#define _CABLE_DELIVERY_H
 
 #include <stdint.h>
-#include <linux/dvb/dmx.h>
+#include <unistd.h> /* ssize_t */
 
-#include "descriptors.h"
+struct dvb_desc_cable_delivery {
+	uint8_t type;
+	struct dvb_desc *next;
+	uint8_t length;
 
-/* According with ISO/IEC 13818-1:2007 */
+	uint32_t frequency;
+	union {
+		uint16_t bitfield1;
+		struct {
+			uint16_t fec_outer:4;
+			uint16_t reserved_future_use:12;
+		};
+	};
+	uint8_t modulation;
+	union {
+		uint32_t bitfield2;
+		struct {
+			uint32_t fec_inner:4;
+			uint32_t symbol_rate:28;
+		};
+	};
+} __attribute__((packed));
 
+struct dvb_v5_fe_parms;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char table, uint16_t pid, unsigned char **buf,
-		unsigned *length, unsigned timeout);
-
-struct dvb_v5_descriptors *dvb_get_ts_tables(int dmx_fd,
-					  uint32_t delivery_system,
-					  unsigned other_nit,
-					  unsigned timeout_multiply,
-					  int verbose);
-void dvb_free_ts_tables(struct dvb_v5_descriptors *dvb_desc);
+ssize_t dvb_desc_cable_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+void dvb_desc_cable_delivery_print  (struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }

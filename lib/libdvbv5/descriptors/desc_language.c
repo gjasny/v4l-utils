@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ * Copyright (c) 2012 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,34 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ *
  */
-#ifndef _LIBSCAN_H
-#define _LIBSCAN_H
 
-#include <stdint.h>
-#include <linux/dvb/dmx.h>
-
+#include "descriptors/desc_language.h"
 #include "descriptors.h"
+#include "dvb-fe.h"
 
-/* According with ISO/IEC 13818-1:2007 */
+ssize_t dvb_desc_language_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+{
+	struct dvb_desc_language *lang = (struct dvb_desc_language *) desc;
 
+	lang->language[0] = buf[0];
+	lang->language[1] = buf[1];
+	lang->language[2] = buf[2];
+	lang->language[3] = '\0';
+	lang->audio_type  = buf[3];
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char table, uint16_t pid, unsigned char **buf,
-		unsigned *length, unsigned timeout);
-
-struct dvb_v5_descriptors *dvb_get_ts_tables(int dmx_fd,
-					  uint32_t delivery_system,
-					  unsigned other_nit,
-					  unsigned timeout_multiply,
-					  int verbose);
-void dvb_free_ts_tables(struct dvb_v5_descriptors *dvb_desc);
-
-#ifdef __cplusplus
+	return sizeof(struct dvb_desc_language);
 }
-#endif
 
-#endif
+void dvb_desc_language_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
+{
+	const struct dvb_desc_language *lang = (const struct dvb_desc_language *) desc;
+	dvb_log("|                   lang: %s (type: %d)", lang->language, lang->audio_type);
+}
+
