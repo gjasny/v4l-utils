@@ -392,8 +392,8 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 	for (i = 0; i < parms->num_systems; i++) {
 		if (parms->systems[i] == desired_system) {
 			dvb_set_sys(parms, desired_system);
+			return 0;
 		}
-		return 0;
 	}
 
 	/*
