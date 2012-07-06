@@ -387,7 +387,7 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 			break;
 	}
 	if (i < ARRAY_SIZE(dvb_v5_name)) {
-		const char * const *attr_name = dvb_v5_attr_names[i];
+		const char * const *attr_name = dvb_attr_names(i);
 		n_prop = entry->n_props;
 		entry->props[n_prop].cmd = i;
 		if (!attr_name || !*attr_name)
@@ -412,7 +412,7 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 			break;
 	}
 	if (i < ARRAY_SIZE(dvb_user_name)) {
-		const char * const *attr_name = dvb_user_attr_names[i];
+		const char * const *attr_name = dvb_attr_names(i);
 		n_prop = entry->n_props;
 		entry->props[n_prop].cmd = i + DTV_USER_COMMAND_START;
 		if (!attr_name || !*attr_name)
