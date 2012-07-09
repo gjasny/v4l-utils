@@ -486,6 +486,23 @@ static int v4l2_needs_conversion(int index)
 	return 0;
 }
 
+static void v4l2_set_conversion_buf_params(int index, struct v4l2_buffer *buf)
+{
+	if (!v4l2_needs_conversion(index))
+		return;
+
+	/* This may happen if the ioctl failed */
+	if (buf->index >= devices[index].no_frames)
+		buf->index = 0;
+
+	buf->m.offset = V4L2_MMAP_OFFSET_MAGIC | buf->index;
+	buf->length = V4L2_FRAME_BUF_SIZE;
+	if (devices[index].frame_map_count[buf->index])
+		buf->flags |= V4L2_BUF_FLAG_MAPPED;
+	else
+		buf->flags &= ~V4L2_BUF_FLAG_MAPPED;
+}
+
 static int v4l2_buffers_mapped(int index)
 {
 	unsigned int i;
@@ -1182,19 +1199,14 @@ int v4l2_ioctl(int fd, unsigned long int request, ...)
 		/* Do a real query even when converting to let the driver fill in
 		   things like buf->field */
 		result = SYS_IOCTL(devices[index].fd, VIDIOC_QUERYBUF, buf);
-		if (result || !v4l2_needs_conversion(index))
-			break;
 
-		buf->m.offset = V4L2_MMAP_OFFSET_MAGIC | buf->index;
-		buf->length = V4L2_FRAME_BUF_SIZE;
-		if (devices[index].frame_map_count[buf->index])
-			buf->flags |= V4L2_BUF_FLAG_MAPPED;
-		else
-			buf->flags &= ~V4L2_BUF_FLAG_MAPPED;
+		v4l2_set_conversion_buf_params(index, buf);
 		break;
 	}
 
-	case VIDIOC_QBUF:
+	case VIDIOC_QBUF: {
+		struct v4l2_buffer *buf = arg;
+
 		if (devices[index].flags & V4L2_STREAM_CONTROLLED_BY_READ) {
 			result = v4l2_deactivate_read_stream(index);
 			if (result)
@@ -1209,7 +1221,10 @@ int v4l2_ioctl(int fd, unsigned long int request, ...)
 		}
 
 		result = SYS_IOCTL(devices[index].fd, VIDIOC_QBUF, arg);
+
+		v4l2_set_conversion_buf_params(index, buf);
 		break;
+	}
 
 	case VIDIOC_DQBUF: {
 		struct v4l2_buffer *buf = arg;
@@ -1248,19 +1263,14 @@ int v4l2_ioctl(int fd, unsigned long int request, ...)
 			}
 		}
 
-		result = v4l2_dequeue_and_convert(index, buf, 0, V4L2_FRAME_BUF_SIZE);
-		if (result < 0)
-			break;
+		result = v4l2_dequeue_and_convert(index, buf, 0,
+						  V4L2_FRAME_BUF_SIZE);
+		if (result >= 0) {
+			buf->bytesused = result;
+			result = 0;
+		}
 
-		buf->bytesused = result;
-		buf->m.offset = V4L2_MMAP_OFFSET_MAGIC | buf->index;
-		buf->length = V4L2_FRAME_BUF_SIZE;
-		if (devices[index].frame_map_count[buf->index])
-			buf->flags |= V4L2_BUF_FLAG_MAPPED;
-		else
-			buf->flags &= ~V4L2_BUF_FLAG_MAPPED;
-
-		result = 0;
+		v4l2_set_conversion_buf_params(index, buf);
 		break;
 	}
 
