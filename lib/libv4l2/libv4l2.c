@@ -317,7 +317,13 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 				V4L2_LOG_ERR("converting / decoding frame data: %s",
 						v4lconvert_get_error_message(devices[index].convert));
 
-			v4l2_queue_read_buffer(index, buf->index);
+			/*
+			 * If this is the last try, and the frame is short
+			 * we will return the (short) buffer to the caller,
+			 * so we must not re-queue it then!
+			 */
+			if (!(tries == 1 && errno == EPIPE))
+				v4l2_queue_read_buffer(index, buf->index);
 			errno = saved_err;
 		}
 		tries--;
