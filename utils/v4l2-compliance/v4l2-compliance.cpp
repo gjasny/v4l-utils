@@ -616,7 +616,8 @@ int main(int argc, char **argv)
 	printf("Input/Output configuration ioctls:\n");
 	printf("\ttest VIDIOC_ENUM/G/S/QUERY_STD: %s\n", ok(testStd(&node)));
 	printf("\ttest VIDIOC_ENUM/G/S/QUERY_DV_PRESETS: %s\n", ok(testPresets(&node)));
-	printf("\ttest VIDIOC_G/S_DV_TIMINGS: %s\n", ok(testCustomTimings(&node)));
+	printf("\ttest VIDIOC_ENUM/G/S/QUERY_DV_TIMINGS: %s\n", ok(testCustomTimings(&node)));
+	printf("\ttest VIDIOC_DV_TIMINGS_CAP: %s\n", ok(testTimingsCap(&node)));
 	printf("\n");
 
 	/* Format ioctls */
@@ -644,7 +645,6 @@ int main(int argc, char **argv)
 	   VIDIOC_G_ENC_INDEX
 	   VIDIOC_QBUF/DQBUF/QUERYBUF/PREPARE_BUFS
 	   VIDIOC_STREAMON/OFF
-
 	   */
 
 	/* Final test report */
