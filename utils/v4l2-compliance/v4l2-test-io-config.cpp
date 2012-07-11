@@ -231,23 +231,44 @@ int testPresets(struct node *node)
 		if (checkPresets(node, output.capabilities & V4L2_OUT_CAP_PRESETS))
 			return fail("Presets check failed for output %d.\n", o);
 	}
+	if (has_presets)
+		warn("Presets are deprecated, use DV-TIMINGS instead\n");
 	return has_presets ? 0 : ENOTTY;
 }
 
 static int checkTimings(struct node *node, bool has_timings)
 {
+	struct v4l2_enum_dv_timings enumtimings;
 	struct v4l2_dv_timings timings;
 	int ret;
+	unsigned i;
 
 	memset(&timings, 0xff, sizeof(timings));
 	ret = doioctl(node, VIDIOC_G_DV_TIMINGS, &timings);
 	if (ret && has_timings)
-		return fail("TIMINGS cap set, but could not get current custom timings\n");
+		return fail("TIMINGS cap set, but could not get current timings\n");
 	if (!ret && !has_timings)
-		return fail("TIMINGS cap not set, but could still get custom timings\n");
-	/* I can't really test anything else here since due to the nature of these
-	   ioctls there isn't anything 'generic' that I can test. If you use this,
-	   then you are supposed to know what you are doing. */
+		return fail("TIMINGS cap not set, but could still get timings\n");
+
+	for (i = 0; ; i++) {
+		memset(&enumtimings, 0xff, sizeof(enumtimings));
+
+		enumtimings.index = i;
+		ret = doioctl(node, VIDIOC_ENUM_DV_TIMINGS, &enumtimings);
+		if (ret)
+			break;
+		if (check_0(enumtimings.reserved, sizeof(enumtimings.reserved)))
+			return fail("reserved not zeroed\n");
+		if (enumtimings.index != i)
+			return fail("index changed!\n");
+	}
+	if (i == 0 && has_timings)
+		return fail("TIMINGS cap set, but no timings can be enumerated\n");
+	if (i && !has_timings)
+		return fail("TIMINGS cap was not set, but timings can be enumerated\n");
+	ret = doioctl(node, VIDIOC_QUERY_DV_TIMINGS, &timings);
+	if (!ret && !has_timings)
+		return fail("TIMINGS cap was not set, but could still query timings\n");
 	return 0;
 }
 
@@ -270,7 +291,7 @@ int testCustomTimings(struct node *node)
 		if (input.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS)
 			has_timings = true;
 		if (checkTimings(node, input.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS))
-			return fail("Custom timings failed for input %d.\n", i);
+			return fail("Timings failed for input %d.\n", i);
 	}
 
 	for (o = 0; o < node->outputs; o++) {
@@ -286,7 +307,69 @@ int testCustomTimings(struct node *node)
 		if (output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS)
 			has_timings = true;
 		if (checkTimings(node, output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS))
-			return fail("Custom timings check failed for output %d.\n", o);
+			return fail("Timings check failed for output %d.\n", o);
+	}
+	return has_timings ? 0 : ENOTTY;
+}
+
+static int checkTimingsCap(struct node *node, bool has_timings)
+{
+	struct v4l2_dv_timings_cap timingscap;
+	int ret;
+
+	memset(&timingscap, 0xff, sizeof(timingscap));
+	ret = doioctl(node, VIDIOC_DV_TIMINGS_CAP, &timingscap);
+	if (ret && has_timings)
+		return fail("TIMINGS cap set, but could not get timings caps\n");
+	if (!ret && !has_timings)
+		return fail("TIMINGS cap not set, but could still get timings caps\n");
+	if (check_0(timingscap.reserved, sizeof(timingscap.reserved)))
+		return fail("reserved not zeroed\n");
+	fail_on_test(timingscap.type != V4L2_DV_BT_656_1120);
+	if (check_0(timingscap.bt.reserved, sizeof(timingscap.bt.reserved)))
+		return fail("reserved not zeroed\n");
+	fail_on_test(timingscap.bt.min_width > timingscap.bt.max_width);
+	fail_on_test(timingscap.bt.min_height > timingscap.bt.max_height);
+	fail_on_test(timingscap.bt.min_pixelclock > timingscap.bt.max_pixelclock);
+	return 0;
+}
+
+int testTimingsCap(struct node *node)
+{
+	int ret;
+	unsigned i, o;
+	bool has_timings = false;
+
+	for (i = 0; i < node->inputs; i++) {
+		struct v4l2_input input;
+
+		input.index = i;
+		ret = doioctl(node, VIDIOC_ENUMINPUT, &input);
+		if (ret)
+			return fail("could not enumerate input %d?!\n", i);
+		ret = doioctl(node, VIDIOC_S_INPUT, &input.index);
+		if (ret)
+			return fail("could not select input %d.\n", i);
+		if (input.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS)
+			has_timings = true;
+		if (checkTimingsCap(node, input.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS))
+			return fail("Timings cap failed for input %d.\n", i);
+	}
+
+	for (o = 0; o < node->outputs; o++) {
+		struct v4l2_output output;
+
+		output.index = o;
+		ret = doioctl(node, VIDIOC_ENUMOUTPUT, &output);
+		if (ret)
+			return fail("could not enumerate output %d?!\n", o);
+		ret = doioctl(node, VIDIOC_S_OUTPUT, &output.index);
+		if (ret)
+			return fail("could not select output %d.\n", o);
+		if (output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS)
+			has_timings = true;
+		if (checkTimingsCap(node, output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS))
+			return fail("Timings cap check failed for output %d.\n", o);
 	}
 	return has_timings ? 0 : ENOTTY;
 }
