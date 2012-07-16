@@ -323,6 +323,8 @@ static int checkTimingsCap(struct node *node, bool has_timings)
 		return fail("TIMINGS cap set, but could not get timings caps\n");
 	if (!ret && !has_timings)
 		return fail("TIMINGS cap not set, but could still get timings caps\n");
+	if (ret && !has_timings)
+		return 0;
 	if (check_0(timingscap.reserved, sizeof(timingscap.reserved)))
 		return fail("reserved not zeroed\n");
 	fail_on_test(timingscap.type != V4L2_DV_BT_656_1120);
