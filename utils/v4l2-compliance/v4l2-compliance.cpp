@@ -276,13 +276,13 @@ static int testCap(struct node *node)
 	fail_on_test(dcaps & V4L2_CAP_DEVICE_CAPS);
 	fail_on_test(dcaps & ~caps);
 	fail_on_test(!(dcaps & caps));
-	fail_on_test(node->is_video && !(caps & video_caps));
-	fail_on_test(node->is_radio && !(caps & radio_caps));
+	fail_on_test(node->is_video && !(dcaps & video_caps));
+	fail_on_test(node->is_radio && !(dcaps & radio_caps));
 	// V4L2_CAP_AUDIO is invalid for radio
-	fail_on_test(node->is_radio && (caps & V4L2_CAP_AUDIO));
-	fail_on_test(node->is_vbi && !(caps & vbi_caps));
+	fail_on_test(node->is_radio && (dcaps & V4L2_CAP_AUDIO));
+	fail_on_test(node->is_vbi && !(dcaps & vbi_caps));
 	// You can't have both set due to missing buffer type in VIDIOC_G/S_FBUF
-	fail_on_test((caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)) ==
+	fail_on_test((dcaps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)) ==
 			(V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY));
 	fail_on_test(node->is_video && (dcaps & (vbi_caps | radio_caps)));
 	fail_on_test(node->is_radio && (dcaps & (vbi_caps | video_caps)));
