@@ -271,6 +271,8 @@ static int testCap(struct node *node)
 	fail_on_test(check_0(vcap.reserved, sizeof(vcap.reserved)));
 	caps = vcap.capabilities;
 	dcaps = vcap.device_caps;
+	node->is_m2m = (dcaps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)) &&
+		       (dcaps & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE));
 	fail_on_test(caps == 0);
 	fail_on_test(!(caps & V4L2_CAP_DEVICE_CAPS));
 	fail_on_test(dcaps & V4L2_CAP_DEVICE_CAPS);
@@ -287,10 +289,12 @@ static int testCap(struct node *node)
 	fail_on_test(node->is_video && (dcaps & (vbi_caps | radio_caps)));
 	fail_on_test(node->is_radio && (dcaps & (vbi_caps | video_caps)));
 	fail_on_test(node->is_vbi && (dcaps & (video_caps | radio_caps)));
-	if (dcaps & input_caps)
-		fail_on_test(dcaps & output_caps);
-	if (dcaps & output_caps)
-		fail_on_test(dcaps & input_caps);
+	if (!node->is_m2m) {
+		if (dcaps & input_caps)
+			fail_on_test(dcaps & output_caps);
+		if (dcaps & output_caps)
+			fail_on_test(dcaps & input_caps);
+	}
 	if (node->can_capture || node->can_output)
 		fail_on_test(!(dcaps & io_caps));
 	else
@@ -317,6 +321,10 @@ static int testPrio(struct node *node, struct node *node2)
 	enum v4l2_priority prio;
 	int err;
 
+	if (node->is_m2m) {
+		fail_on_test(doioctl(node, VIDIOC_G_PRIORITY, &prio) != ENOTTY);
+		return 0;
+	}
 	err = check_prio(node, node2, V4L2_PRIORITY_DEFAULT);
 	if (err)
 		return err;
@@ -538,7 +546,7 @@ int main(int argc, char **argv)
 		if (video_node2.fd >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
-					ok(testPrio(&video_node, &video_node2)));
+					ok(testPrio(&node, &video_node2)));
 			node.node2 = &video_node2;
 		}
 	}
@@ -549,7 +557,7 @@ int main(int argc, char **argv)
 		if (radio_node2.fd >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
-					ok(testPrio(&radio_node, &radio_node2)));
+					ok(testPrio(&node, &radio_node2)));
 			node.node2 = &video_node2;
 		}
 	}
@@ -560,7 +568,7 @@ int main(int argc, char **argv)
 		if (vbi_node2.fd >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
-					ok(testPrio(&vbi_node, &vbi_node2)));
+					ok(testPrio(&node, &vbi_node2)));
 			node.node2 = &video_node2;
 		}
 	}

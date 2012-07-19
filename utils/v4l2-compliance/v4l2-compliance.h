@@ -47,6 +47,7 @@ struct node {
 	bool is_video;
 	bool is_radio;
 	bool is_vbi;
+	bool is_m2m;
 	bool can_capture;
 	bool can_output;
 	const char *device;

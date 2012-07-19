@@ -56,6 +56,8 @@ int testReqBufs(struct node *node)
 		if (node->buftype_pixfmts[i].empty())
 			continue;
 		info("test buftype %d\n", i);
+		memset(&bufs, 0, sizeof(bufs));
+		memset(&cbufs, 0, sizeof(cbufs));
 		if (node->valid_buftype == 0)
 			node->valid_buftype = i;
 		fmt.type = i;
@@ -104,15 +106,17 @@ int testReqBufs(struct node *node)
 			fail_on_test(ret != -1);
 			fail_on_test(errno != EBUSY);
 		}
-		bufs.count = 1;
-		fail_on_test(doioctl(node->node2, VIDIOC_REQBUFS, &bufs) != EBUSY);
-		bufs.count = 0;
-		fail_on_test(doioctl(node->node2, VIDIOC_REQBUFS, &bufs) != EBUSY);
-		fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
-		bufs.count = 1;
-		fail_on_test(doioctl(node->node2, VIDIOC_REQBUFS, &bufs));
-		bufs.count = 0;
-		fail_on_test(doioctl(node->node2, VIDIOC_REQBUFS, &bufs));
+		if (!node->is_m2m) {
+			bufs.count = 1;
+			fail_on_test(doioctl(node->node2, VIDIOC_REQBUFS, &bufs) != EBUSY);
+			bufs.count = 0;
+			fail_on_test(doioctl(node->node2, VIDIOC_REQBUFS, &bufs) != EBUSY);
+			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
+			bufs.count = 1;
+			fail_on_test(doioctl(node->node2, VIDIOC_REQBUFS, &bufs));
+			bufs.count = 0;
+			fail_on_test(doioctl(node->node2, VIDIOC_REQBUFS, &bufs));
+		}
 		cbufs.format = fmt;
 		cbufs.count = 1;
 		cbufs.memory = bufs.memory;
@@ -126,8 +130,10 @@ int testReqBufs(struct node *node)
 		fail_on_test(cbufs.format.type != i);
 		cbufs.count = 1;
 		fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &cbufs));
-		bufs.count = 1;
-		fail_on_test(doioctl(node->node2, VIDIOC_REQBUFS, &bufs) != EBUSY);
+		if (!node->is_m2m) {
+			bufs.count = 1;
+			fail_on_test(doioctl(node->node2, VIDIOC_REQBUFS, &bufs) != EBUSY);
+		}
 		bufs.count = 0;
 		fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
 	}
