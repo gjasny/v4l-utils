@@ -31,10 +31,12 @@
 #include <vector>
 
 #include "v4l2-api.h"
+#include "raw2sliced.h"
 
 class QComboBox;
 class QSpinBox;
 class GeneralTab;
+class VbiTab;
 class QCloseEvent;
 class CaptureWin;
 
@@ -147,6 +149,7 @@ private:
 	void updateFreqChannel();
 
 	GeneralTab *m_genTab;
+	VbiTab *m_vbiTab;
 	QAction *m_capStartAct;
 	QAction *m_showFramesAct;
 	QString m_filename;
@@ -163,6 +166,7 @@ private:
 	int m_vbiSize;
 	unsigned m_vbiWidth;
 	unsigned m_vbiHeight;
+	struct vbi_handle m_vbiHandle;
 	unsigned m_frame;
 	unsigned m_lastFrame;
 	unsigned m_fps;

@@ -19,6 +19,7 @@
 
 #include "qv4l2.h"
 #include "general-tab.h"
+#include "vbi-tab.h"
 #include "capture-win.h"
 
 #include <QToolBar>
@@ -146,6 +147,11 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_genTab = new GeneralTab(device, *this, 4, w);
 	m_tabs->addTab(w, "General");
 	addTabs();
+	if (caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE)) {
+		w = new QWidget(m_tabs);
+		m_vbiTab = new VbiTab(w);
+		m_tabs->addTab(w, "VBI");
+	}
 	if (QWidget *current = m_tabs->currentWidget()) {
 		current->show();
 	}
@@ -239,8 +245,15 @@ void ApplicationWindow::capVbiFrame()
 		}
 	}
 
+	struct v4l2_sliced_vbi_format sfmt;
+	struct v4l2_sliced_vbi_data sdata[m_vbiHandle.count[0] + m_vbiHandle.count[1]];
+
+	vbi_parse(&m_vbiHandle, data, &sfmt, sdata);
+
 	if (m_capMethod != methodRead)
 		qbuf(buf);
+
+	m_vbiTab->slicedData(sdata);
 
 	QString status, curStatus;
 	struct timeval tv, res;
@@ -572,12 +585,19 @@ void ApplicationWindow::capStart(bool start)
 
 	if (m_genTab->isVbi()) {
 		v4l2_format fmt;
+		v4l2_std_id std;
 
 		g_fmt_vbi(fmt);
 		if (fmt.fmt.vbi.sample_format != V4L2_PIX_FMT_GREY) {
 			error("non-grey pixelformat not supported for VBI\n");
 			return;
 		}
+		g_std(std);
+		if (!vbi_prepare(&m_vbiHandle, &fmt.fmt.vbi, std)) {
+			error("no services possible\n");
+			return;
+		}
+		m_vbiTab->rawFormat(fmt.fmt.vbi);
 		m_vbiWidth = fmt.fmt.vbi.samples_per_line;
 		if (fmt.fmt.vbi.flags & V4L2_VBI_INTERLACED)
 			m_vbiHeight = fmt.fmt.vbi.count[0];
