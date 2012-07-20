@@ -310,6 +310,13 @@ bool v4l2::g_fmt_vbi(v4l2_format &fmt)
 	return ioctl(VIDIOC_G_FMT, &fmt) >= 0;
 }
 
+bool v4l2::g_fmt_sliced_vbi(v4l2_format &fmt)
+{
+	memset(&fmt, 0, sizeof(fmt));
+	fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+	return ioctl(VIDIOC_G_FMT, &fmt) >= 0;
+}
+
 bool v4l2::try_fmt(v4l2_format &fmt)
 {
 	fmt.fmt.pix.field = V4L2_FIELD_ANY;

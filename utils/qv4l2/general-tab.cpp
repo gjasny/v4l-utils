@@ -49,7 +49,8 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_freq(NULL),
 	m_vidCapFormats(NULL),
 	m_frameSize(NULL),
-	m_vidOutFormats(NULL)
+	m_vidOutFormats(NULL),
+	m_vbiMethods(NULL)
 {
 	setSpacing(3);
 
@@ -82,7 +83,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (m_modulator.capability && m_modulator.capability & V4L2_TUNER_CAP_LOW)
 		m_isRadio = true;
 	if (m_querycap.capabilities & V4L2_CAP_DEVICE_CAPS)
-		m_isVbi = caps() & V4L2_CAP_VBI_CAPTURE;
+		m_isVbi = caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE);
 
 	if (!isRadio() && enum_input(vin, true)) {
 		addLabel("Input");
@@ -280,8 +281,17 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (isRadio())
 		goto done;
 
-	if (isVbi())
+	if (isVbi()) {
+		addLabel("VBI Capture Method");
+		m_vbiMethods = new QComboBox(parent);
+		if (caps() & V4L2_CAP_VBI_CAPTURE)
+			m_vbiMethods->addItem("Raw");
+		if (caps() & V4L2_CAP_SLICED_VBI_CAPTURE)
+			m_vbiMethods->addItem("Sliced");
+		addWidget(m_vbiMethods);
+		connect(m_vbiMethods, SIGNAL(activated(int)), SLOT(vbiMethodsChanged(int)));
 		goto capture_method;
+	}
 
 	v4l2_fmtdesc fmt;
 	addLabel("Capture Image Formats");
@@ -340,8 +350,8 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 capture_method:
 	addLabel("Capture Method");
 	m_capMethods = new QComboBox(parent);
-	m_buftype = isVbi() ? V4L2_BUF_TYPE_VBI_CAPTURE :
-		V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	m_buftype = isSlicedVbi() ? V4L2_BUF_TYPE_SLICED_VBI_CAPTURE :
+		(isVbi() ? V4L2_BUF_TYPE_VBI_CAPTURE : V4L2_BUF_TYPE_VIDEO_CAPTURE);
 	if (caps() & V4L2_CAP_STREAMING) {
 		v4l2_requestbuffers reqbuf;
 
@@ -381,6 +391,11 @@ void GeneralTab::addWidget(QWidget *w, Qt::Alignment align)
 		m_col = 0;
 		m_row++;
 	}
+}
+
+bool GeneralTab::isSlicedVbi() const
+{
+	return m_vbiMethods && m_vbiMethods->currentText() == "Sliced";
 }
 
 CapMethod GeneralTab::capMethod()
@@ -597,6 +612,12 @@ void GeneralTab::vidOutFormatChanged(int idx)
 	if (try_fmt(fmt))
 		s_fmt(fmt);
 	updateVidOutFormat();
+}
+
+void GeneralTab::vbiMethodsChanged(int idx)
+{
+	m_buftype = isSlicedVbi() ? V4L2_BUF_TYPE_SLICED_VBI_CAPTURE :
+		(isVbi() ? V4L2_BUF_TYPE_VBI_CAPTURE : V4L2_BUF_TYPE_VIDEO_CAPTURE);
 }
 
 void GeneralTab::updateVideoInput()

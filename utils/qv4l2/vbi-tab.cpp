@@ -45,29 +45,51 @@ VbiTab::VbiTab(QWidget *parent) :
 	addWidget(m_tableF2, 0, 1);
 }
 
-void VbiTab::rawFormat(const v4l2_vbi_format &fmt)
+void VbiTab::tableFormat()
 {
 	QTableWidgetItem *item;
 	QStringList q;
 	unsigned i;
 
-	m_tableF1->setRowCount(fmt.count[0]);
-	m_tableF2->setRowCount(fmt.count[1]);
-	for (i = 0; i < fmt.count[0]; i++) {
+	m_tableF1->setRowCount(m_countF1);
+	m_tableF2->setRowCount(m_countF2);
+	for (i = 0; i < m_countF1; i++) {
 		item = new QTableWidgetItem();
 		item->setFlags(Qt::ItemIsEnabled);
 		m_tableF1->setItem(i, 0, item);
-		q.append("Line " + QString::number(i + fmt.start[0]));
+		q.append("Line " + QString::number(i + m_startF1));
 	}
 	m_tableF1->setVerticalHeaderLabels(q);
 	q.clear();
-	for (i = 0; i < fmt.count[1]; i++) {
+	for (i = 0; i < m_countF2; i++) {
 		item = new QTableWidgetItem();
 		item->setFlags(Qt::ItemIsEnabled);
 		m_tableF2->setItem(i, 0, item);
-		q.append("Line " + QString::number(i + fmt.start[1]));
+		q.append("Line " + QString::number(i + m_startF2));
 	}
 	m_tableF2->setVerticalHeaderLabels(q);
+}
+
+void VbiTab::rawFormat(const v4l2_vbi_format &fmt)
+{
+
+	m_countF1 = fmt.count[0];
+	m_countF2 = fmt.count[1];
+	m_startF1 = fmt.start[0];
+	m_startF2 = fmt.start[1];
+	m_offsetF2 = m_startF2 >= 313 ? 313 : 263;
+	tableFormat();
+}
+
+void VbiTab::slicedFormat(const v4l2_sliced_vbi_format &fmt)
+{
+	bool is_625 = fmt.service_set & V4L2_SLICED_VBI_625;
+
+	m_startF1 = is_625 ? 6 : 10;
+	m_startF2 = is_625 ? 319 : 273;
+	m_offsetF2 = is_625 ? 313 : 263;
+	m_countF1 = m_countF2 = is_625 ? 18 : 12;
+	tableFormat();
 }
 
 static const char *formats[] = {
@@ -350,18 +372,36 @@ static void setItem(QTableWidgetItem *item, const v4l2_sliced_vbi_data *data)
 	}
 }
 
-void VbiTab::slicedData(const v4l2_sliced_vbi_data *data)
+void VbiTab::slicedData(const v4l2_sliced_vbi_data *data, unsigned elems)
 {
-	int i;
+	char found[m_countF1 + m_countF2];
 
-	for (i = 0; i < m_tableF1->rowCount(); i++) {
-		QTableWidgetItem *item = m_tableF1->item(i, 0);
-
+	memset(found, 0, m_countF1 + m_countF2);
+	for (unsigned i = 0; i < elems; i++) {
+		QTableWidgetItem *item;
+		
+		if (data[i].id == 0)
+			continue;
+		if (data[i].field == 0) {
+			if (data[i].line < m_startF1 ||
+			    data[i].line >= m_startF1 + m_countF1)
+				continue;
+			item = m_tableF1->item(data[i].line - m_startF1, 0);
+			found[data[i].line - m_startF1] = 1;
+		} else {
+			if (data[i].line + m_offsetF2 < m_startF2 ||
+			    data[i].line + m_offsetF2 >= m_startF2 + m_countF2)
+				continue;
+			item = m_tableF2->item(data[i].line + m_offsetF2 - m_startF2, 0);
+			found[data[i].line + m_offsetF2 - m_startF2 + m_countF1] = 1;
+		}
 		setItem(item, data + i);
 	}
-	for (i = 0; i < m_tableF2->rowCount(); i++) {
-		QTableWidgetItem *item = m_tableF2->item(i, 0);
-
-		setItem(item, data + i + m_tableF1->rowCount());
+	for (unsigned i = 0; i < m_countF1 + m_countF2; i++) {
+		if (found[i])
+			continue;
+		QTableWidgetItem *item = (i < m_countF1) ?
+			m_tableF1->item(i, 0) : m_tableF2->item(i - m_countF1, 0);
+		item->setText("");
 	}
 }

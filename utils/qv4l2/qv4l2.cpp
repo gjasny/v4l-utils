@@ -227,7 +227,7 @@ void ApplicationWindow::capVbiFrame()
 		s = buf.bytesused;
 		break;
 	}
-	if (s != m_vbiSize) {
+	if (buftype == V4L2_BUF_TYPE_VBI_CAPTURE && s != m_vbiSize) {
 		error("incorrect vbi size");
 		m_capStartAct->setChecked(false);
 		return;
@@ -247,13 +247,20 @@ void ApplicationWindow::capVbiFrame()
 
 	struct v4l2_sliced_vbi_format sfmt;
 	struct v4l2_sliced_vbi_data sdata[m_vbiHandle.count[0] + m_vbiHandle.count[1]];
+	struct v4l2_sliced_vbi_data *p;
 
-	vbi_parse(&m_vbiHandle, data, &sfmt, sdata);
+	if (buftype == V4L2_BUF_TYPE_SLICED_VBI_CAPTURE) {
+		p = (struct v4l2_sliced_vbi_data *)data;
+	} else {
+		vbi_parse(&m_vbiHandle, data, &sfmt, sdata);
+		s = sizeof(sdata);
+		p = sdata;
+	}
 
 	if (m_capMethod != methodRead)
 		qbuf(buf);
 
-	m_vbiTab->slicedData(sdata);
+	m_vbiTab->slicedData(p, s / sizeof(p[0]));
 
 	QString status, curStatus;
 	struct timeval tv, res;
@@ -583,6 +590,26 @@ void ApplicationWindow::capStart(bool start)
 	m_frame = m_lastFrame = m_fps = 0;
 	m_capMethod = m_genTab->capMethod();
 
+	if (m_genTab->isSlicedVbi()) {
+		v4l2_format fmt;
+		v4l2_std_id std;
+
+		m_showFrames = false;
+		g_fmt_sliced_vbi(fmt);
+		g_std(std);
+		fmt.fmt.sliced.service_set = (std & V4L2_STD_625_50) ?
+			V4L2_SLICED_VBI_625 : V4L2_SLICED_VBI_525;
+		s_fmt(fmt);
+		memset(&m_vbiHandle, 0, sizeof(m_vbiHandle));
+		m_vbiTab->slicedFormat(fmt.fmt.sliced);
+		m_vbiSize = fmt.fmt.sliced.io_size;
+		m_frameData = new unsigned char[m_vbiSize];
+		if (startCapture(m_vbiSize)) {
+			m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
+			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capVbiFrame()));
+		}
+		return;
+	}
 	if (m_genTab->isVbi()) {
 		v4l2_format fmt;
 		v4l2_std_id std;
@@ -592,6 +619,7 @@ void ApplicationWindow::capStart(bool start)
 			error("non-grey pixelformat not supported for VBI\n");
 			return;
 		}
+		s_fmt(fmt);
 		g_std(std);
 		if (!vbi_prepare(&m_vbiHandle, &fmt.fmt.vbi, std)) {
 			error("no services possible\n");
@@ -604,13 +632,14 @@ void ApplicationWindow::capStart(bool start)
 		else
 			m_vbiHeight = fmt.fmt.vbi.count[0] + fmt.fmt.vbi.count[1];
 		m_vbiSize = m_vbiWidth * m_vbiHeight;
-		if (m_showFrames)
-			m_frameData = new unsigned char[m_vbiSize];
-		m_capture->setMinimumSize(m_vbiWidth, m_vbiHeight);
-		m_capImage = new QImage(m_vbiWidth, m_vbiHeight, dstFmt);
-		m_capImage->fill(0);
-		m_capture->setImage(*m_capImage, "No frame");
-		m_capture->show();
+		m_frameData = new unsigned char[m_vbiSize];
+		if (m_showFrames) {
+			m_capture->setMinimumSize(m_vbiWidth, m_vbiHeight);
+			m_capImage = new QImage(m_vbiWidth, m_vbiHeight, dstFmt);
+			m_capImage->fill(0);
+			m_capture->setImage(*m_capImage, "No frame");
+			m_capture->show();
+		}
 		statusBar()->showMessage("No frame");
 		if (startCapture(m_vbiSize)) {
 			m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
@@ -625,8 +654,8 @@ void ApplicationWindow::capStart(bool start)
 		set_interval(interval);
 
 	m_mustConvert = m_showFrames;
+	m_frameData = new unsigned char[srcPix.sizeimage];
 	if (m_showFrames) {
-		m_frameData = new unsigned char[srcPix.sizeimage];
 		m_capDestFormat = m_capSrcFormat;
 		dstPix.pixelformat = V4L2_PIX_FMT_RGB24;
 

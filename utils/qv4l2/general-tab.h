@@ -46,6 +46,7 @@ public:
 	int height() const { return m_height; }
 	bool isRadio() const { return m_isRadio; }
 	bool isVbi() const { return m_isVbi; }
+	bool isSlicedVbi() const;
 	__u32 bufType() const { return m_buftype; }
 	inline bool reqbufs_mmap(v4l2_requestbuffers &reqbuf, int count = 0) {
 		return v4l2::reqbufs_mmap(reqbuf, m_buftype, count);
@@ -92,6 +93,7 @@ private slots:
 	void frameSizeChanged(int);
 	void frameIntervalChanged(int);
 	void vidOutFormatChanged(int);
+	void vbiMethodsChanged(int);
 
 private:
 	void updateVideoInput();
@@ -166,6 +168,7 @@ private:
 	QComboBox *m_frameInterval;
 	QComboBox *m_vidOutFormats;
 	QComboBox *m_capMethods;
+	QComboBox *m_vbiMethods;
 };
 
 #endif

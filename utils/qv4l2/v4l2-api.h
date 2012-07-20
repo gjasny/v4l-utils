@@ -85,6 +85,7 @@ public:
 	bool g_fmt_cap(v4l2_format &fmt);
 	bool g_fmt_out(v4l2_format &fmt);
 	bool g_fmt_vbi(v4l2_format &fmt);
+	bool g_fmt_sliced_vbi(v4l2_format &fmt);
 	bool try_fmt(v4l2_format &fmt);
 	bool s_fmt(v4l2_format &fmt);
 	bool enum_input(v4l2_input &in, bool init = false, int index = 0);
