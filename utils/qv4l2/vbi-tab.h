@@ -35,7 +35,8 @@ public:
 	virtual ~VbiTab() {}
 
 	void rawFormat(const v4l2_vbi_format &fmt);
-	void slicedData(const v4l2_sliced_vbi_data *data);
+	void slicedFormat(const v4l2_sliced_vbi_format &fmt);
+	void slicedData(const v4l2_sliced_vbi_data *data, unsigned elems);
 
 private:
 	void info(const QString &info)
@@ -46,9 +47,13 @@ private:
 	{
 		g_mw->error(error);
 	}
+	void tableFormat();
 
 	QTableWidget *m_tableF1;
 	QTableWidget *m_tableF2;
+	unsigned m_startF1, m_startF2;
+	unsigned m_countF1, m_countF2;
+	unsigned m_offsetF2;
 };
 
 #endif
