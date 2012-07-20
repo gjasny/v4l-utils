@@ -166,7 +166,6 @@ private:
 	QComboBox *m_frameInterval;
 	QComboBox *m_vidOutFormats;
 	QComboBox *m_capMethods;
-	QGridLayout *m_layout;
 };
 
 #endif

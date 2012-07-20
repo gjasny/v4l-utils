@@ -1,8 +1,8 @@
 bin_PROGRAMS = qv4l2
 
-qv4l2_SOURCES = qv4l2.cpp general-tab.cpp ctrl-tab.cpp v4l2-api.cpp capture-win.cpp \
-  qv4l2.h capture-win.h general-tab.h v4l2-api.h
-nodist_qv4l2_SOURCES = moc_qv4l2.cpp moc_general-tab.cpp moc_capture-win.cpp qrc_qv4l2.cpp
+qv4l2_SOURCES = qv4l2.cpp general-tab.cpp ctrl-tab.cpp vbi-tab.cpp v4l2-api.cpp capture-win.cpp \
+  raw2sliced.cpp qv4l2.h capture-win.h general-tab.h vbi-tab.h v4l2-api.h raw2sliced.h
+nodist_qv4l2_SOURCES = moc_qv4l2.cpp moc_general-tab.cpp moc_capture-win.cpp moc_vbi-tab.cpp qrc_qv4l2.cpp
 qv4l2_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la ../libv4l2util/libv4l2util.la
 qv4l2_CPPFLAGS = $(QT_CFLAGS)
 qv4l2_LDFLAGS = $(QT_LIBS)
@@ -19,6 +19,9 @@ moc_qv4l2.cpp: $(srcdir)/qv4l2.h
 
 moc_general-tab.cpp: $(srcdir)/general-tab.h
 	$(MOC) -o $@ $(srcdir)/general-tab.h
+
+moc_vbi-tab.cpp: $(srcdir)/vbi-tab.h
+	$(MOC) -o $@ $(srcdir)/vbi-tab.h
 
 moc_capture-win.cpp: $(srcdir)/capture-win.h
 	$(MOC) -o $@ $(srcdir)/capture-win.h
