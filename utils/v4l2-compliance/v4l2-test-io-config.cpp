@@ -31,7 +31,7 @@
 #include <sys/ioctl.h>
 #include "v4l2-compliance.h"
 
-static int checkStd(struct node *node, bool has_std, v4l2_std_id mask)
+static int checkStd(struct node *node, bool has_std, v4l2_std_id mask, bool is_input)
 {
 	v4l2_std_id std_mask = 0;
 	v4l2_std_id std;
@@ -46,7 +46,7 @@ static int checkStd(struct node *node, bool has_std, v4l2_std_id mask)
 		return fail("STD cap not set, but could still get a standard\n");
 	if (!ret && has_std) {
 		if (std & ~mask)
-			warn("current standard is invalid according to the input standard mask\n");
+			warn("current standard is invalid according to the standard mask\n");
 		if (std == 0)
 			return fail("Standard == 0?!\n");
 		if (std & V4L2_STD_ATSC)
@@ -91,10 +91,15 @@ static int checkStd(struct node *node, bool has_std, v4l2_std_id mask)
 		return fail("STD cap was not set, but standards can be enumerated\n");
 	if (std_mask & V4L2_STD_ATSC)
 		return fail("STD mask contains ATSC standards. This is no longer supported\n");
+	if (has_std && std_mask != mask)
+		return fail("the union of ENUMSTD does not match the standard mask (%llx != %llx)\n",
+				std_mask, mask);
 	ret = doioctl(node, VIDIOC_QUERYSTD, &std);
 	if (!ret && !has_std)
 		return fail("STD cap was not set, but could still query standard\n");
-	if (!ret && (std & ~std_mask))
+	if (ret != ENOTTY && !is_input)
+		return fail("this is an output, but could still query standard\n");
+	if (!ret && is_input && (std & ~std_mask))
 		return fail("QUERYSTD gives back an unsupported standard\n");
 	return 0;
 }
@@ -117,7 +122,7 @@ int testStd(struct node *node)
 			return fail("could not select input %d.\n", i);
 		if (input.capabilities & V4L2_IN_CAP_STD)
 			has_std = true;
-		if (checkStd(node, input.capabilities & V4L2_IN_CAP_STD, input.std))
+		if (checkStd(node, input.capabilities & V4L2_IN_CAP_STD, input.std, true))
 			return fail("STD failed for input %d.\n", i);
 	}
 
@@ -133,7 +138,7 @@ int testStd(struct node *node)
 			return fail("could not select output %d.\n", o);
 		if (output.capabilities & V4L2_OUT_CAP_STD)
 			has_std = true;
-		if (checkStd(node, output.capabilities & V4L2_OUT_CAP_STD, output.std))
+		if (checkStd(node, output.capabilities & V4L2_OUT_CAP_STD, output.std, false))
 			return fail("STD failed for output %d.\n", o);
 	}
 	return has_std ? 0 : ENOTTY;
