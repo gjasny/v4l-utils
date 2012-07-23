@@ -361,6 +361,9 @@ static int testFormatsType(struct node *node, unsigned type)
 	struct v4l2_window &win = fmt.fmt.win;
 	struct v4l2_vbi_format &vbi = fmt.fmt.vbi;
 	struct v4l2_sliced_vbi_format &sliced = fmt.fmt.sliced;
+	unsigned min_data_samples;
+	unsigned min_sampling_rate;
+	v4l2_std_id std;
 	__u32 service_set = 0;
 	unsigned cnt = 0;
 	int ret;
@@ -414,13 +417,29 @@ static int testFormatsType(struct node *node, unsigned type)
 		break;
 	case V4L2_BUF_TYPE_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_VBI_OUTPUT:
-		fail_on_test(!vbi.sampling_rate);
+		// Currently VBI assumes that you have G_STD as well.
+		fail_on_test(doioctl(node, VIDIOC_G_STD, &std));
+		if (std & V4L2_STD_625_50) {
+			min_sampling_rate = 6937500;
+			// the number of databits for PAL teletext is 18 (clock run in) +
+			// 6 (framing code) + 42 * 8 (data).
+			min_data_samples = (vbi.sampling_rate * (18 + 6 + 42 * 8)) / min_sampling_rate;
+		} else {
+			min_sampling_rate = 5727272;
+			// the number of databits for NTSC teletext is 18 (clock run in) +
+			// 6 (framing code) + 34 * 8 (data).
+			min_data_samples = (vbi.sampling_rate * (18 + 6 + 34 * 8)) / min_sampling_rate;
+		}
+		fail_on_test(vbi.sampling_rate < min_sampling_rate);
 		fail_on_test(!vbi.samples_per_line);
 		fail_on_test(vbi.sample_format != V4L2_PIX_FMT_GREY);
 		fail_on_test(vbi.offset > vbi.samples_per_line);
 		ret = check_0(vbi.reserved, sizeof(vbi.reserved));
 		if (ret)
 			return fail("vbi.reserved not zeroed\n");
+		// Check that offset leaves enough room for the maximum required
+		// amount of data.
+		fail_on_test(min_data_samples > vbi.samples_per_line - vbi.offset);
 		fail_on_test(!vbi.count[0] || !vbi.count[1]);
 		fail_on_test(vbi.flags & ~(V4L2_VBI_UNSYNC | V4L2_VBI_INTERLACED));
 		if (vbi.flags & V4L2_VBI_INTERLACED)
