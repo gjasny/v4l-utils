@@ -182,6 +182,16 @@ enum Option {
 	OptDecoderCmd,
 	OptTryDecoderCmd,
 	OptTunerIndex,
+	OptHelpTuner,
+	OptHelpIO,
+	OptHelpStds,
+	OptHelpVidCap,
+	OptHelpVidOut,
+	OptHelpOverlay,
+	OptHelpVbi,
+	OptHelpSelection,
+	OptHelpMisc,
+	OptHelpAll,
 	OptLast = 256
 };
 
@@ -262,6 +272,16 @@ static struct option long_options[] = {
 	{"set-fmt-video-out-mplane", required_argument, 0, OptSetVideoOutMplaneFormat},
 	{"try-fmt-video-out-mplane", required_argument, 0, OptTryVideoOutMplaneFormat},
 	{"help", no_argument, 0, OptHelp},
+	{"help-tuner", no_argument, 0, OptHelpTuner},
+	{"help-io", no_argument, 0, OptHelpIO},
+	{"help-stds", no_argument, 0, OptHelpStds},
+	{"help-vidcap", no_argument, 0, OptHelpVidCap},
+	{"help-vidout", no_argument, 0, OptHelpVidOut},
+	{"help-overlay", no_argument, 0, OptHelpOverlay},
+	{"help-vbi", no_argument, 0, OptHelpVbi},
+	{"help-selection", no_argument, 0, OptHelpSelection},
+	{"help-misc", no_argument, 0, OptHelpMisc},
+	{"help-all", no_argument, 0, OptHelpAll},
 	{"wrapper", no_argument, 0, OptUseWrapper},
 	{"get-output", no_argument, 0, OptGetOutput},
 	{"set-output", required_argument, 0, OptSetOutput},
@@ -366,12 +386,7 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static void usage_hint(void)
-{
-	fprintf(stderr, "Try 'v4l2-ctl --help' for more information.\n");
-}
-
-static void usage_common(void)
+static void usage(void)
 {
 	printf("\nGeneral/Common options:\n"
 	       "  --all              display all information available\n"
@@ -383,6 +398,16 @@ static void usage_common(void)
 	       "  -d, --device=<dev> use device <dev> instead of /dev/video0\n"
 	       "                     if <dev> is a single digit, then /dev/video<dev> is used\n"
 	       "  -h, --help         display this help message\n"
+	       "  --help-all         all options\n"
+	       "  --help-io          input/output options\n"
+	       "  --help-misc        miscellaneous options\n"
+	       "  --help-overlay     overlay format options\n"
+	       "  --help-selection   crop/selection options\n"
+	       "  --help-stds        standards and other video timings options\n"
+	       "  --help-tuner       tuner/modulator options\n"
+	       "  --help-vbi         VBI format options\n"
+	       "  --help-vidcap      video capture format options\n"
+	       "  --help-vidout      vidout output format options\n"
 	       "  -l, --list-ctrls   display all controls and their values [VIDIOC_QUERYCTRL]\n"
 	       "  -L, --list-ctrls-menus\n"
 	       "		     display all controls and their menus [VIDIOC_QUERYMENU]\n"
@@ -619,9 +644,9 @@ static void usage_vbi(void)
 	       );
 }
 
-static void usage_crop(void)
+static void usage_selection(void)
 {
-	printf("\nCropping options:\n"
+	printf("\nSelection/Cropping options:\n"
 	       "  --get-cropcap      query the crop capabilities [VIDIOC_CROPCAP]\n"
 	       "  --get-crop	     query the video capture crop window [VIDIOC_G_CROP]\n"
 	       "  --set-crop=top=<x>,left=<y>,width=<w>,height=<h>\n"
@@ -643,12 +668,6 @@ static void usage_crop(void)
 	       "                     query the video output overlay crop window [VIDIOC_G_CROP]\n"
 	       "  --set-crop-output-overlay=top=<x>,left=<y>,width=<w>,height=<h>\n"
 	       "                     set the video output overlay crop window [VIDIOC_S_CROP]\n"
-	       );
-}
-
-static void usage_selection(void)
-{
-	printf("\nSelection options:\n"
 	       "  --get-selection=target=<target>\n"
 	       "                     query the video capture selection rectangle [VIDIOC_G_SELECTION]\n"
 	       "                     See --set-selection command for the valid <target> values.\n"
@@ -712,20 +731,18 @@ static void usage_misc(void)
 	       );
 }
 
-static void usage(void)
+static void usage_all(void)
 {
-	printf("Usage:\n");
-	usage_common();
-	usage_tuner();
-	usage_io();
-	usage_stds();
-	usage_vidcap();
-	usage_vidout();
-	usage_overlay();
-	usage_vbi();
-	usage_selection();
-	usage_crop();
-	usage_misc();
+       usage();
+       usage_tuner();
+       usage_io();
+       usage_stds();
+       usage_vidcap();
+       usage_vidout();
+       usage_overlay();
+       usage_vbi();
+       usage_selection();
+       usage_misc();
 }
 
 static int test_open(const char *file, int oflag)
@@ -2067,7 +2084,7 @@ static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
 			set_crop |= CropHeight;
 			break;
 		default:
-			usage_crop();
+			usage_selection();
 			exit(1);
 		}
 	}
@@ -2590,7 +2607,7 @@ int main(int argc, char **argv)
 	memset(&freq_seek, 0, sizeof(freq_seek));
 
 	if (argc == 1) {
-		usage_hint();
+		usage();
 		return 0;
 	}
 	for (i = 0; long_options[i].name; i++) {
@@ -2613,6 +2630,36 @@ int main(int argc, char **argv)
 		switch (ch) {
 		case OptHelp:
 			usage();
+			return 0;
+		case OptHelpTuner:
+			usage_tuner();
+			return 0;
+		case OptHelpIO:
+			usage_io();
+			return 0;
+		case OptHelpStds:
+			usage_stds();
+			return 0;
+		case OptHelpVidCap:
+			usage_vidcap();
+			return 0;
+		case OptHelpVidOut:
+			usage_vidout();
+			return 0;
+		case OptHelpOverlay:
+			usage_overlay();
+			return 0;
+		case OptHelpVbi:
+			usage_vbi();
+			return 0;
+		case OptHelpSelection:
+			usage_selection();
+			return 0;
+		case OptHelpMisc:
+			usage_misc();
+			return 0;
+		case OptHelpAll:
+			usage_all();
 			return 0;
 		case OptSetDevice:
 			device = optarg;
@@ -2930,11 +2977,11 @@ int main(int argc, char **argv)
 			subs = optarg;
 			while (*subs != '\0') {
 				if (parse_next_subopt(&subs, &value)) {
-				    usage_common();
+				    usage();
 				    exit(1);
 				}
 				if (strchr(value, '=')) {
-				    usage_common();
+				    usage();
 				    exit(1);
 				}
 				else {
@@ -2946,7 +2993,7 @@ int main(int argc, char **argv)
 			subs = optarg;
 			while (*subs != '\0') {
 				if (parse_next_subopt(&subs, &value)) {
-				    usage_common();
+				    usage();
 				    exit(1);
 				}
 				if (const char *equal = strchr(value, '=')) {
@@ -3205,12 +3252,12 @@ int main(int argc, char **argv)
 		case ':':
 			fprintf(stderr, "Option '%s' requires a value\n",
 				argv[optind]);
-			usage_hint();
+			usage();
 			return 1;
 		case '?':
 			if (argv[optind])
 				fprintf(stderr, "Unknown argument '%s'\n", argv[optind]);
-			usage_hint();
+			usage();
 			return 1;
 		}
 	}
@@ -3219,7 +3266,7 @@ int main(int argc, char **argv)
 		while (optind < argc)
 			printf("%s ", argv[optind++]);
 		printf("\n");
-		usage_hint();
+		usage();
 		return 1;
 	}
 
