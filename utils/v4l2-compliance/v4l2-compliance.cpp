@@ -259,6 +259,7 @@ static int testCap(struct node *node)
 			V4L2_CAP_RDS_OUTPUT;
 	const __u32 io_caps = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
 
+	memset(&vcap, 0xff, sizeof(vcap));
 	// Must always be there
 	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, &vcap));
 	fail_on_test(check_ustring(vcap.driver, sizeof(vcap.driver)));
@@ -636,12 +637,14 @@ int main(int argc, char **argv)
 	printf("\ttest VIDIOC_G_FBUF: %s\n", ok(testFBuf(&node)));
 	printf("\ttest VIDIOC_G_FMT: %s\n", ok(testFormats(&node)));
 	printf("\ttest VIDIOC_G_SLICED_VBI_CAP: %s\n", ok(testSlicedVBICap(&node)));
+	printf("\n");
 
 	/* Buffer ioctls */
 
 	printf("Buffer ioctls:\n");
 	printf("\ttest VIDIOC_REQBUFS/CREATE_BUFS: %s\n", ok(testReqBufs(&node)));
 	printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
+	printf("\n");
 
 	/* TODO:
 
