@@ -290,6 +290,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 			m_vbiMethods->addItem("Sliced");
 		addWidget(m_vbiMethods);
 		connect(m_vbiMethods, SIGNAL(activated(int)), SLOT(vbiMethodsChanged(int)));
+		updateVideoInput();
 		goto capture_method;
 	}
 
@@ -331,7 +332,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	connect(m_frameInterval, SIGNAL(activated(int)), SLOT(frameIntervalChanged(int)));
 
 	updateVideoInput();
-
 	updateVidCapFormat();
 
 	if (caps() & V4L2_CAP_VIDEO_OUTPUT) {
@@ -875,6 +875,8 @@ void GeneralTab::updateVidCapFormat()
 	v4l2_fmtdesc desc;
 	v4l2_format fmt;
 
+	if (isVbi())
+		return;
 	g_fmt_cap(fmt);
 	m_pixelformat = fmt.fmt.pix.pixelformat;
 	m_width       = fmt.fmt.pix.width;
