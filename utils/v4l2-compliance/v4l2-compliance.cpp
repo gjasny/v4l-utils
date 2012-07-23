@@ -660,7 +660,7 @@ int main(int argc, char **argv)
 	test_close(node.fd);
 	if (node.node2)
 		test_close(node.node2->fd);
-	printf("Total: %d Succeeded: %d Failed: %d Warnings: %d\n",
+	printf("Total: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 			tests_total, tests_ok, tests_total - tests_ok, warnings);
 	exit(app_result);
 }
