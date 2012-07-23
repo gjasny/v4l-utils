@@ -48,7 +48,6 @@ struct vbi_bit_slicer {
 	unsigned int		frc_bits;
 	unsigned int		payload;
 	unsigned int		endian;
-	unsigned int		skip;
 };
 
 struct vbi_handle {

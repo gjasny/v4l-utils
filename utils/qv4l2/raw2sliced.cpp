@@ -161,8 +161,6 @@ static bool low_pass_bit_slicer_Y8(struct vbi_bit_slicer *bs, uint8_t *buffer, c
 	unsigned char b1;	/* previous bit */
 	unsigned int oversampling = 4;
 
-	raw += bs->skip;
-
 	thresh0 = bs->thresh;
 
 	c = 0;
@@ -261,7 +259,6 @@ static bool vbi_bit_slicer_prepare(struct vbi_bit_slicer *bs,
 		const struct service *s,
 		const struct v4l2_vbi_format *fmt)
 {
-	unsigned int sample_offset = 0;
 	unsigned int c_mask;
 	unsigned int f_mask;
 	unsigned int min_samples_per_bit;
@@ -270,8 +267,6 @@ static bool vbi_bit_slicer_prepare(struct vbi_bit_slicer *bs,
 	unsigned int data_samples;
 	unsigned int cri, cri_mask, frc;
 	unsigned int cri_end;
-	unsigned int cri_samples;
-	unsigned int skip;
 
 	assert (s->cri_bits <= 32);
 	assert (s->frc_bits <= 32);
@@ -299,7 +294,6 @@ static bool vbi_bit_slicer_prepare(struct vbi_bit_slicer *bs,
 	f_mask = (s->frc_bits == 32) ? ~0U : (1U << s->frc_bits) - 1;
 
 	oversampling = 4;
-	skip = 0;
 
 	/* 0-1 threshold, start value. */
 	bs->thresh = 105 << DEF_THR_FRAC;
@@ -311,49 +305,15 @@ static bool vbi_bit_slicer_prepare(struct vbi_bit_slicer *bs,
 		bs->thresh_frac += LP_AVG - 2;
 	}
 
-	bs->skip = sample_offset + skip;
-
 	bs->cri_mask = cri_mask & c_mask;
 	bs->cri = cri & bs->cri_mask;
-
-	/* We stop searching for CRI when CRI, FRC and payload
-	   cannot possibly fit anymore. Additionally this eliminates
-	   a data end check in the payload loop. */
-	cri_samples = (fmt->sampling_rate * (int64_t) s->cri_bits) / s->cri_rate;
 
 	data_bits = s->payload + s->frc_bits;
 	data_samples = (fmt->sampling_rate * (int64_t) data_bits) / s->bit_rate;
 
-	if ((fmt->offset > fmt->samples_per_line)
-	    || ((cri_samples + data_samples)
-		> (fmt->samples_per_line - fmt->offset))) {
-		/*fprintf(stderr,
-			 "%u samples_per_line too small for "
-			 "sample_offset %u + %u cri_bits (%u samples) "
-			 "+ %u frc_bits and %u payload "
-			 "(%u samples).\n",
-			 fmt->samples_per_line, fmt->offset,
-			 s->cri_bits, cri_samples,
-			 s->frc_bits, s->payload, data_samples);*/
-	}
-	if ((sample_offset > fmt->samples_per_line)
-	    || ((cri_samples + data_samples)
-		> (fmt->samples_per_line - sample_offset))) {
-		/*
-		fprintf(stderr,
-			 "%u samples_per_line too small for "
-			 "sample_offset %u + %u cri_bits (%u samples) "
-			 "+ %u frc_bits and %u payload "
-			 "(%u samples).\n",
-			 fmt->samples_per_line, sample_offset,
-			 s->cri_bits, cri_samples,
-			 s->frc_bits, s->payload, data_samples);*/
-		return false;
-	}
-
 	cri_end = fmt->samples_per_line - data_samples;
 
-	bs->cri_samples = cri_end - sample_offset;
+	bs->cri_samples = cri_end;
 	bs->cri_rate = s->cri_rate;
 
 	bs->oversampling_rate = fmt->sampling_rate * oversampling;
