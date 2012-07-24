@@ -60,24 +60,30 @@ ApplicationWindow::ApplicationWindow() :
 	m_frameData = NULL;
 	m_nbuffers = 0;
 	m_buffers = NULL;
+	m_makeSnapshot = false;
 
-	QAction *openAct = new QAction(QIcon(":/fileopen.png"), "&Open device", this);
+	QAction *openAct = new QAction(QIcon(":/fileopen.png"), "&Open Device", this);
 	openAct->setStatusTip("Open a v4l device, use libv4l2 wrapper if possible");
 	openAct->setShortcut(Qt::CTRL+Qt::Key_O);
 	connect(openAct, SIGNAL(triggered()), this, SLOT(opendev()));
 
-	QAction *openRawAct = new QAction(QIcon(":/fileopen.png"), "Open &raw device", this);
+	QAction *openRawAct = new QAction(QIcon(":/fileopen.png"), "Open &Raw Device", this);
 	openRawAct->setStatusTip("Open a v4l device without using the libv4l2 wrapper");
 	openRawAct->setShortcut(Qt::CTRL+Qt::Key_R);
 	connect(openRawAct, SIGNAL(triggered()), this, SLOT(openrawdev()));
 
-	m_capStartAct = new QAction(QIcon(":/record.png"), "&Start capturing", this);
+	m_capStartAct = new QAction(QIcon(":/record.png"), "&Start Capturing", this);
 	m_capStartAct->setStatusTip("Start capturing");
 	m_capStartAct->setCheckable(true);
 	m_capStartAct->setDisabled(true);
 	connect(m_capStartAct, SIGNAL(toggled(bool)), this, SLOT(capStart(bool)));
 
-	m_showFramesAct = new QAction(QIcon(":/video-television.png"), "Show &frames", this);
+	m_snapshotAct = new QAction(QIcon(":/snapshot.png"), "&Make Snapshot", this);
+	m_snapshotAct->setStatusTip("Make snapshot");
+	m_snapshotAct->setDisabled(true);
+	connect(m_snapshotAct, SIGNAL(triggered()), this, SLOT(snapshot()));
+
+	m_showFramesAct = new QAction(QIcon(":/video-television.png"), "Show &Frames", this);
 	m_showFramesAct->setStatusTip("Only show captured frames if set.");
 	m_showFramesAct->setCheckable(true);
 	m_showFramesAct->setChecked(true);
@@ -97,6 +103,7 @@ ApplicationWindow::ApplicationWindow() :
 	fileMenu->addAction(openRawAct);
 	fileMenu->addAction(closeAct);
 	fileMenu->addAction(m_capStartAct);
+	fileMenu->addAction(m_snapshotAct);
 	fileMenu->addAction(m_showFramesAct);
 	fileMenu->addSeparator();
 	fileMenu->addAction(quitAct);
@@ -105,6 +112,7 @@ ApplicationWindow::ApplicationWindow() :
 	toolBar->setObjectName("toolBar");
 	toolBar->addAction(openAct);
 	toolBar->addAction(m_capStartAct);
+	toolBar->addAction(m_snapshotAct);
 	toolBar->addAction(m_showFramesAct);
 	toolBar->addSeparator();
 	toolBar->addAction(quitAct);
@@ -303,6 +311,9 @@ void ApplicationWindow::capFrame()
 			}
 			return;
 		}
+		if (m_makeSnapshot)
+			makeSnapshot((unsigned char *)m_frameData, s);
+
 		if (!m_showFrames)
 			break;
 		if (m_mustConvert)
@@ -333,6 +344,8 @@ void ApplicationWindow::capFrame()
 				       (unsigned char *)m_buffers[buf.index].start,
 				       std::min(buf.bytesused, (unsigned)m_capImage->numBytes()));
 		}
+		if (m_makeSnapshot)
+			makeSnapshot((unsigned char *)m_buffers[buf.index].start, buf.bytesused);
 
 		qbuf(buf);
 		break;
@@ -356,6 +369,8 @@ void ApplicationWindow::capFrame()
 				memcpy(m_capImage->bits(), (unsigned char *)buf.m.userptr,
 				       std::min(buf.bytesused, (unsigned)m_capImage->numBytes()));
 		}
+		if (m_makeSnapshot)
+			makeSnapshot((unsigned char *)buf.m.userptr, buf.bytesused);
 
 		qbuf(buf);
 		break;
@@ -396,6 +411,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 
 	switch (m_capMethod) {
 	case methodRead:
+		m_snapshotAct->setEnabled(true);
 		/* Nothing to do. */
 		return true;
 
@@ -451,6 +467,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			perror("VIDIOC_STREAMON");
 			goto error;
 		}
+		m_snapshotAct->setEnabled(true);
 		return true;
 
 	case methodUser:
@@ -490,6 +507,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			perror("VIDIOC_STREAMON");
 			goto error;
 		}
+		m_snapshotAct->setEnabled(true);
 		return true;
 	}
 
@@ -505,6 +523,7 @@ void ApplicationWindow::stopCapture()
 	v4l2_encoder_cmd cmd;
 	unsigned i;
 
+	m_snapshotAct->setDisabled(true);
 	switch (m_capMethod) {
 	case methodRead:
 		memset(&cmd, 0, sizeof(cmd));
@@ -718,6 +737,49 @@ void ApplicationWindow::closeDevice()
 	m_ctrlMap.clear();
 	m_widgetMap.clear();
 	m_classMap.clear();
+}
+
+bool SaveDialog::setBuffer(unsigned char *buf, unsigned size)
+{
+	m_buf = new unsigned char[size];
+	m_size = size;
+	if (m_buf == NULL)
+		return false;
+	memcpy(m_buf, buf, size);
+	return true;
+}
+
+void SaveDialog::selected(const QString &s)
+{
+	if (!s.isEmpty()) {
+		QFile file(s);
+		file.open(QIODevice::WriteOnly);
+		file.write((const char *)m_buf, m_size);
+		file.close();
+	}
+	delete [] m_buf;
+}
+
+void ApplicationWindow::makeSnapshot(unsigned char *buf, unsigned size)
+{
+	m_makeSnapshot = false;
+	SaveDialog *dlg = new SaveDialog(this, "Save Snapshot");
+	dlg->setAttribute(Qt::WA_DeleteOnClose);
+	dlg->setFileMode(QFileDialog::AnyFile);
+	dlg->setAcceptMode(QFileDialog::AcceptSave);
+	dlg->setModal(false);
+	if (!dlg->setBuffer(buf, size)) {
+		delete dlg;
+		error("No memory to make snapshot\n");
+		return;
+	}
+	connect(dlg, SIGNAL(fileSelected(const QString &)), dlg, SLOT(selected(const QString &)));
+	dlg->show();
+}
+
+void ApplicationWindow::snapshot()
+{
+	m_makeSnapshot = true;
 }
 
 void ApplicationWindow::about()
