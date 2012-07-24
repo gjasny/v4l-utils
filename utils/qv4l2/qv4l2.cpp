@@ -83,6 +83,12 @@ ApplicationWindow::ApplicationWindow() :
 	m_snapshotAct->setDisabled(true);
 	connect(m_snapshotAct, SIGNAL(triggered()), this, SLOT(snapshot()));
 
+	m_saveRawAct = new QAction(QIcon(":/saveraw.png"), "Save Raw Frames", this);
+	m_saveRawAct->setStatusTip("Save raw frames to file.");
+	m_saveRawAct->setCheckable(true);
+	m_saveRawAct->setChecked(false);
+	connect(m_saveRawAct, SIGNAL(toggled(bool)), this, SLOT(saveRaw(bool)));
+
 	m_showFramesAct = new QAction(QIcon(":/video-television.png"), "Show &Frames", this);
 	m_showFramesAct->setStatusTip("Only show captured frames if set.");
 	m_showFramesAct->setCheckable(true);
@@ -104,6 +110,7 @@ ApplicationWindow::ApplicationWindow() :
 	fileMenu->addAction(closeAct);
 	fileMenu->addAction(m_capStartAct);
 	fileMenu->addAction(m_snapshotAct);
+	fileMenu->addAction(m_saveRawAct);
 	fileMenu->addAction(m_showFramesAct);
 	fileMenu->addSeparator();
 	fileMenu->addAction(quitAct);
@@ -113,6 +120,7 @@ ApplicationWindow::ApplicationWindow() :
 	toolBar->addAction(openAct);
 	toolBar->addAction(m_capStartAct);
 	toolBar->addAction(m_snapshotAct);
+	toolBar->addAction(m_saveRawAct);
 	toolBar->addAction(m_showFramesAct);
 	toolBar->addSeparator();
 	toolBar->addAction(quitAct);
@@ -313,6 +321,8 @@ void ApplicationWindow::capFrame()
 		}
 		if (m_makeSnapshot)
 			makeSnapshot((unsigned char *)m_frameData, s);
+		if (m_saveRaw.openMode())
+			m_saveRaw.write((const char *)m_frameData, s);
 
 		if (!m_showFrames)
 			break;
@@ -346,6 +356,8 @@ void ApplicationWindow::capFrame()
 		}
 		if (m_makeSnapshot)
 			makeSnapshot((unsigned char *)m_buffers[buf.index].start, buf.bytesused);
+		if (m_saveRaw.openMode())
+			m_saveRaw.write((const char *)m_buffers[buf.index].start, buf.bytesused);
 
 		qbuf(buf);
 		break;
@@ -371,6 +383,8 @@ void ApplicationWindow::capFrame()
 		}
 		if (m_makeSnapshot)
 			makeSnapshot((unsigned char *)buf.m.userptr, buf.bytesused);
+		if (m_saveRaw.openMode())
+			m_saveRaw.write((const char *)buf.m.userptr, buf.bytesused);
 
 		qbuf(buf);
 		break;
@@ -753,7 +767,7 @@ void SaveDialog::selected(const QString &s)
 {
 	if (!s.isEmpty()) {
 		QFile file(s);
-		file.open(QIODevice::WriteOnly);
+		file.open(QIODevice::WriteOnly | QIODevice::Truncate);
 		file.write((const char *)m_buf, m_size);
 		file.close();
 	}
@@ -780,6 +794,41 @@ void ApplicationWindow::makeSnapshot(unsigned char *buf, unsigned size)
 void ApplicationWindow::snapshot()
 {
 	m_makeSnapshot = true;
+}
+
+void ApplicationWindow::rejectedRawFile()
+{
+	m_saveRawAct->setChecked(false);
+}
+
+void ApplicationWindow::openRawFile(const QString &s)
+{
+	if (s.isEmpty())
+		return;
+
+	if (m_saveRaw.openMode())
+		m_saveRaw.close();
+	m_saveRaw.setFileName(s);
+	m_saveRaw.open(QIODevice::WriteOnly | QIODevice::Truncate);
+	m_saveRawAct->setChecked(true);
+}
+
+void ApplicationWindow::saveRaw(bool checked)
+{
+	if (!checked) {
+		if (m_saveRaw.openMode())
+			m_saveRaw.close();
+		return;
+	}
+
+	SaveDialog *dlg = new SaveDialog(this, "Save Raw Frames");
+	dlg->setAttribute(Qt::WA_DeleteOnClose);
+	dlg->setFileMode(QFileDialog::AnyFile);
+	dlg->setAcceptMode(QFileDialog::AcceptSave);
+	dlg->setModal(false);
+	connect(dlg, SIGNAL(fileSelected(const QString &)), this, SLOT(openRawFile(const QString &)));
+	connect(dlg, SIGNAL(rejected()), this, SLOT(rejectedRawFile()));
+	dlg->show();
 }
 
 void ApplicationWindow::about()

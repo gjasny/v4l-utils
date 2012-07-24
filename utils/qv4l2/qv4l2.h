@@ -103,12 +103,15 @@ private slots:
 	void capFrame();
 	void snapshot();
 	void capVbiFrame();
+	void saveRaw(bool);
 
 	// gui
 private slots:
 	void opendev();
 	void openrawdev();
 	void ctrlAction(int);
+	void openRawFile(const QString &s);
+	void rejectedRawFile();
 
 	void about();
 
@@ -156,6 +159,7 @@ private:
 	VbiTab *m_vbiTab;
 	QAction *m_capStartAct;
 	QAction *m_snapshotAct;
+	QAction *m_saveRawAct;
 	QAction *m_showFramesAct;
 	QString m_filename;
 	QSignalMapper *m_sigMapper;
@@ -176,6 +180,7 @@ private:
 	unsigned m_lastFrame;
 	unsigned m_fps;
 	struct timeval m_tv;
+	QFile m_saveRaw;
 };
 
 extern ApplicationWindow *g_mw;
