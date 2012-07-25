@@ -351,11 +351,10 @@ int testFBuf(struct node *node)
 	return 0;
 }
 
-static int testFormatsType(struct node *node, unsigned type)
+static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4l2_format &fmt)
 {
 	pixfmt_set &set = node->buftype_pixfmts[type];
 	pixfmt_set *set_splane;
-	struct v4l2_format fmt;
 	struct v4l2_pix_format &pix = fmt.fmt.pix;
 	struct v4l2_pix_format_mplane &pix_mp = fmt.fmt.pix_mp;
 	struct v4l2_window &win = fmt.fmt.win;
@@ -366,11 +365,7 @@ static int testFormatsType(struct node *node, unsigned type)
 	v4l2_std_id std;
 	__u32 service_set = 0;
 	unsigned cnt = 0;
-	int ret;
 
-	memset(&fmt, 0xff, sizeof(fmt));
-	fmt.type = type;
-	ret = doioctl(node, VIDIOC_G_FMT, &fmt);
 	if (ret == ENOTTY)
 		return ret;
 	if (ret == EINVAL)
@@ -389,6 +384,7 @@ static int testFormatsType(struct node *node, unsigned type)
 		fail_on_test(pix.bytesperline && pix.bytesperline < pix.width);
 		fail_on_test(!pix.sizeimage);
 		fail_on_test(!pix.colorspace);
+		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		if (pix.priv)
 			warn("priv is non-zero!\n");
 		break;
@@ -401,6 +397,7 @@ static int testFormatsType(struct node *node, unsigned type)
 			return fail("unknown pixelformat %08x for buftype %d\n",
 					pix_mp.pixelformat, type);
 		fail_on_test(!pix_mp.colorspace);
+		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		ret = check_0(pix_mp.reserved, sizeof(pix_mp.reserved));
 		if (ret)
 			return fail("pix_mp.reserved not zeroed\n");
@@ -463,10 +460,7 @@ static int testFormatsType(struct node *node, unsigned type)
 		break;
 	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
-		fail_on_test(win.field != V4L2_FIELD_ANY &&
-			     win.field != V4L2_FIELD_TOP &&
-			     win.field != V4L2_FIELD_BOTTOM &&
-			     win.field != V4L2_FIELD_INTERLACED);
+		fail_on_test(win.field == V4L2_FIELD_ANY);
 		fail_on_test(win.clipcount && !(node->fbuf_caps & V4L2_FBUF_CAP_LIST_CLIPPING));
 		for (struct v4l2_clip *clip = win.clips; clip; win.clipcount--) {
 			fail_on_test(clip == NULL);
@@ -484,28 +478,48 @@ static int testFormatsType(struct node *node, unsigned type)
 	return 0;
 }
 
-int testFormats(struct node *node)
+int testGetFormats(struct node *node)
 {
+	struct v4l2_format fmt;
 	bool supported = false;
 	int type;
 	int ret;
 
 	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
-		ret = testFormatsType(node, type);
+		memset(&fmt, 0xff, sizeof(fmt));
+		fmt.type = type;
+		ret = doioctl(node, VIDIOC_G_FMT, &fmt);
+		ret = testFormatsType(node, ret, type, fmt);
 
 		if (ret && ret != ENOTTY)
 			return ret;
-		if (!ret)
+		if (!ret) {
 			supported = true;
+			node->valid_buftypes |= 1 << type;
+		}
 		if (ret && (node->caps & buftype2cap[type]))
 			return fail("%s cap set, but no %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
-		if (!ret && !(node->caps & buftype2cap[type]))
-			return fail("%s cap not set, but %s formats defined\n",
+		if (!ret && !(node->caps & buftype2cap[type])) {
+			switch (type) {
+			case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+			case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+			case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+			case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+			case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+				return fail("%s cap not set, but %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
+			default:
+				/* ENUMFMT doesn't support other buftypes */
+				break;
+			}
+		}
 	}
 
-	ret = testFormatsType(node, V4L2_BUF_TYPE_PRIVATE);
+	memset(&fmt, 0xff, sizeof(fmt));
+	fmt.type = V4L2_BUF_TYPE_PRIVATE;
+	ret = doioctl(node, VIDIOC_G_FMT, &fmt);
+	ret = testFormatsType(node, ret, V4L2_BUF_TYPE_PRIVATE, fmt);
 	if (ret && ret != ENOTTY)
 		return ret;
 	if (!ret) {
@@ -513,6 +527,92 @@ int testFormats(struct node *node)
 		warn("Buffer type PRIVATE allowed!\n");
 	}
 	return supported ? 0 : ENOTTY;
+}
+
+int testTryFormats(struct node *node)
+{
+	struct v4l2_format fmt, fmt_try;
+	int type;
+	int ret;
+	
+	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
+		if (!(node->valid_buftypes & (1 << type)))
+			continue;
+
+		memset(&fmt, 0xff, sizeof(fmt));
+		fmt.type = type;
+		doioctl(node, VIDIOC_G_FMT, &fmt);
+		fmt_try = fmt;
+		ret = doioctl(node, VIDIOC_TRY_FMT, &fmt_try);
+		if (ret)
+			return fail("%s is valid, but no TRY_FMT was implemented\n",
+					buftype2s(type).c_str());
+		ret = testFormatsType(node, ret, type, fmt_try);
+		if (ret)
+			return ret;
+		if (memcmp(&fmt, &fmt_try, sizeof(fmt)))
+			return fail("TRY_FMT(G_FMT) != G_FMT\n");
+	}
+
+	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
+		if (!(node->valid_buftypes & (1 << type)))
+			continue;
+
+		memset(&fmt, 0xff, sizeof(fmt));
+		fmt.type = type;
+		fmt.fmt.pix.field = V4L2_FIELD_ANY;
+		ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
+		ret = testFormatsType(node, ret, type, fmt);
+		if (ret)
+			return fail("%s is valid, but TRY_FMT failed to return a format\n",
+					buftype2s(type).c_str());
+	}
+
+	memset(&fmt, 0xff, sizeof(fmt));
+	fmt.type = V4L2_BUF_TYPE_PRIVATE;
+	ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
+	if (!ret)
+		warn("Buffer type PRIVATE allowed!\n");
+	return node->valid_buftypes ? 0 : ENOTTY;
+}
+
+int testSetFormats(struct node *node)
+{
+	struct v4l2_format fmt, fmt_set;
+	int type;
+	int ret;
+	
+	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
+		if (!(node->valid_buftypes & (1 << type)))
+			continue;
+
+		memset(&fmt, 0xff, sizeof(fmt));
+		fmt.type = type;
+		doioctl(node, VIDIOC_G_FMT, &fmt);
+		
+		memset(&fmt_set, 0xff, sizeof(fmt_set));
+		fmt_set.type = type;
+		fmt_set.fmt.pix.field = V4L2_FIELD_ANY;
+		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
+		ret = testFormatsType(node, ret, type, fmt_set);
+		if (ret)
+			return fail("%s is valid, but no S_FMT was implemented\n",
+					buftype2s(type).c_str());
+
+		fmt_set = fmt;
+		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
+		ret = testFormatsType(node, ret, type, fmt_set);
+		if (ret)
+			return ret;
+		if (memcmp(&fmt, &fmt_set, sizeof(fmt)))
+			return fail("S_FMT(G_FMT) != G_FMT\n");
+	}
+	memset(&fmt, 0xff, sizeof(fmt));
+	fmt.type = V4L2_BUF_TYPE_PRIVATE;
+	ret = doioctl(node, VIDIOC_S_FMT, &fmt);
+	if (!ret)
+		warn("Buffer type PRIVATE allowed!\n");
+	return node->valid_buftypes ? 0 : ENOTTY;
 }
 
 static int testSlicedVBICapType(struct node *node, unsigned type)

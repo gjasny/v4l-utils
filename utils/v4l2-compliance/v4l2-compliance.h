@@ -66,6 +66,7 @@ struct node {
 	qctrl_list controls;
 	__u32 fbuf_caps;
 	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE + 1];
+	__u32 valid_buftypes;
 	__u32 valid_buftype;
 };
 
@@ -183,7 +184,9 @@ int testTimingsCap(struct node *node);
 int testEnumFormats(struct node *node);
 int testParm(struct node *node);
 int testFBuf(struct node *node);
-int testFormats(struct node *node);
+int testGetFormats(struct node *node);
+int testTryFormats(struct node *node);
+int testSetFormats(struct node *node);
 int testSlicedVBICap(struct node *node);
 
 // Buffer ioctl tests
