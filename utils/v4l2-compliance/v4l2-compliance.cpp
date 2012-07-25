@@ -635,7 +635,9 @@ int main(int argc, char **argv)
 	printf("\ttest VIDIOC_ENUM_FMT/FRAMESIZES/FRAMEINTERVALS: %s\n", ok(testEnumFormats(&node)));
 	printf("\ttest VIDIOC_G/S_PARM: %s\n", ok(testParm(&node)));
 	printf("\ttest VIDIOC_G_FBUF: %s\n", ok(testFBuf(&node)));
-	printf("\ttest VIDIOC_G_FMT: %s\n", ok(testFormats(&node)));
+	printf("\ttest VIDIOC_G_FMT: %s\n", ok(testGetFormats(&node)));
+	printf("\ttest VIDIOC_TRY_FMT: %s\n", ok(testTryFormats(&node)));
+	printf("\ttest VIDIOC_S_FMT: %s\n", ok(testSetFormats(&node)));
 	printf("\ttest VIDIOC_G_SLICED_VBI_CAP: %s\n", ok(testSlicedVBICap(&node)));
 	printf("\n");
 
@@ -650,7 +652,6 @@ int main(int argc, char **argv)
 
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP, VIDIOC_G/S_SELECTION
 	   VIDIOC_S_FBUF/OVERLAY
-	   VIDIOC_S/TRY_FMT
 	   VIDIOC_(TRY_)ENCODER_CMD
 	   VIDIOC_(TRY_)DECODER_CMD
 	   VIDIOC_G_ENC_INDEX

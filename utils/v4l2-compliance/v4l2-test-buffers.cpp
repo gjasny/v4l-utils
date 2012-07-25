@@ -43,6 +43,7 @@ int testReqBufs(struct node *node)
 	int ret;
 	unsigned i;
 	
+	reopen(node);
 	memset(&bufs, 0, sizeof(bufs));
 	memset(&cbufs, 0, sizeof(cbufs));
 	ret = doioctl(node, VIDIOC_REQBUFS, &bufs);
