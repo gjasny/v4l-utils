@@ -148,11 +148,22 @@ enum Option {
 
 extern char options[OptLast];
 extern unsigned capabilities;
+extern int verbose;
 
 typedef struct {
 	unsigned flag;
 	const char *str;
 } flag_def;
+
+/* fmts specified */
+#define FmtWidth		(1L<<0)
+#define FmtHeight		(1L<<1)
+#define FmtChromaKey		(1L<<2)
+#define FmtGlobalAlpha		(1L<<3)
+#define FmtPixelFormat		(1L<<4)
+#define FmtLeft			(1L<<5)
+#define FmtTop			(1L<<6)
+#define FmtField		(1L<<7)
 
 // v4l2-ctl.cpp
 int doioctl_name(int fd, unsigned long int request, void *parm, const char *name);
@@ -160,7 +171,14 @@ int test_ioctl(int fd, int cmd, void *arg);
 std::string flags2s(unsigned val, const flag_def *def);
 int parse_subopt(char **subs, const char * const *subopts, char **value);
 std::string std2s(v4l2_std_id std);
+std::string buftype2s(int type);
+std::string fcc2s(unsigned int val);
+std::string fmtdesc2s(unsigned flags);
 void print_v4lstd(v4l2_std_id std);
+int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat);
+__u32 find_pixel_format(int fd, unsigned index, bool mplane);
+void printfmt(const struct v4l2_format &vfmt);
+void print_video_formats(int fd, enum v4l2_buf_type type);
 
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 
@@ -193,6 +211,13 @@ void stds_cmd(int ch, char *optarg);
 void stds_set(int fd);
 void stds_get(int fd);
 void stds_list(int fd);
+
+// v4l2-ctl-vidcap.cpp
+void vidcap_usage(void);
+void vidcap_cmd(int ch, char *optarg);
+void vidcap_set(int fd);
+void vidcap_get(int fd);
+void vidcap_list(int fd);
 
 
 #endif
