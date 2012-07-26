@@ -63,8 +63,6 @@ enum Option {
 	//OptTryVbiFormat, TODO
 	//OptTryVbiOutFormat, TODO
 	OptAll,
-	OptStreamOff,
-	OptStreamOn,
 	OptListStandards,
 	OptListFormats,
 	OptListMplaneFormats,
@@ -247,6 +245,12 @@ void selection_usage(void);
 void selection_cmd(int ch, char *optarg);
 void selection_set(int fd);
 void selection_get(int fd);
+
+// v4l2-ctl-misc.cpp
+void misc_usage(void);
+void misc_cmd(int ch, char *optarg);
+void misc_set(int fd);
+void misc_get(int fd);
 
 
 #endif
