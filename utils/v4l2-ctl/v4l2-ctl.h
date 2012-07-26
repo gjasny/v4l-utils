@@ -131,6 +131,14 @@ enum Option {
 	OptDecoderCmd,
 	OptTryDecoderCmd,
 	OptTunerIndex,
+	OptListBuffers,
+	OptListBuffersMplane,
+	OptListBuffersOut,
+	OptListBuffersMplaneOut,
+	OptListBuffersVbi,
+	OptListBuffersSlicedVbi,
+	OptListBuffersVbiOut,
+	OptListBuffersSlicedVbiOut,
 	OptHelpTuner,
 	OptHelpIO,
 	OptHelpStds,
@@ -174,6 +182,7 @@ std::string fcc2s(unsigned int val);
 std::string fmtdesc2s(unsigned flags);
 std::string colorspace2s(int val);
 std::string service2s(unsigned service);
+std::string field2s(int val);
 void print_v4lstd(v4l2_std_id std);
 int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat);
 __u32 find_pixel_format(int fd, unsigned index, bool mplane);
@@ -252,5 +261,11 @@ void misc_cmd(int ch, char *optarg);
 void misc_set(int fd);
 void misc_get(int fd);
 
+// v4l2-ctl-streaming.cpp
+void streaming_usage(void);
+void streaming_cmd(int ch, char *optarg);
+void streaming_set(int fd);
+void streaming_get(int fd);
+void streaming_list(int fd);
 
 #endif

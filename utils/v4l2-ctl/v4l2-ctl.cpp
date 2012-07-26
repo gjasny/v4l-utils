@@ -187,6 +187,14 @@ static struct option long_options[] = {
 	{"decoder-cmd", required_argument, 0, OptDecoderCmd},
 	{"try-decoder-cmd", required_argument, 0, OptTryDecoderCmd},
 	{"tuner-index", required_argument, 0, OptTunerIndex},
+	{"list-buffers", no_argument, 0, OptListBuffers},
+	{"list-buffers-mplane", no_argument, 0, OptListBuffersMplane},
+	{"list-buffers-out", no_argument, 0, OptListBuffersOut},
+	{"list-buffers-mplane-out", no_argument, 0, OptListBuffersMplaneOut},
+	{"list-buffers-vbi", no_argument, 0, OptListBuffersVbi},
+	{"list-buffers-sliced-vbi", no_argument, 0, OptListBuffersSlicedVbi},
+	{"list-buffers-vbi-out", no_argument, 0, OptListBuffersVbiOut},
+	{"list-buffers-sliced-vbi-out", no_argument, 0, OptListBuffersSlicedVbiOut},
 	{0, 0, 0, 0}
 };
 
@@ -202,6 +210,7 @@ static void usage_all(void)
        vbi_usage();
        selection_usage();
        misc_usage();
+       streaming_usage();
 }
 
 static int test_open(const char *file, int oflag)
@@ -286,7 +295,7 @@ std::string fcc2s(unsigned int val)
 	return s;
 }
 
-static std::string field2s(int val)
+std::string field2s(int val)
 {
 	switch (val) {
 	case V4L2_FIELD_ANY:
@@ -841,6 +850,7 @@ int main(int argc, char **argv)
 			vbi_cmd(ch, optarg);
 			selection_cmd(ch, optarg);
 			misc_cmd(ch, optarg);
+			streaming_cmd(ch, optarg);
 			break;
 		}
 	}
@@ -966,6 +976,7 @@ int main(int argc, char **argv)
 	vidout_list(fd);
 	overlay_list(fd);
 	vbi_list(fd);
+	streaming_list(fd);
 
 	if (options[OptWaitForEvent]) {
 		struct v4l2_event_subscription sub;
