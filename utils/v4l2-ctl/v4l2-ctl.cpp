@@ -210,31 +210,6 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static void usage_overlay(void)
-{
-	printf("\nVideo Overlay options:\n"
-	       "  --list-formats-overlay\n"
-	       "                     display supported overlay formats [VIDIOC_ENUM_FMT]\n"
-	       "  --overlay=<on>     turn overlay on (1) or off (0) (VIDIOC_OVERLAY)\n"
-	       "  --get-fmt-overlay  query the video overlay format [VIDIOC_G_FMT]\n"
-	       "  --get-fmt-output-overlay\n"
-	       "     		     query the video output overlay format [VIDIOC_G_FMT]\n"
-	       "  --set-fmt-overlay\n"
-	       "  --try-fmt-overlay\n"
-	       "  --set-fmt-output-overlay\n"
-	       "  --try-fmt-output-overlay=chromakey=<key>,global_alpha=<alpha>,\n"
-	       "                           top=<t>,left=<l>,width=<w>,height=<h>,field=<f>\n"
-	       "     		     set/try the video or video output overlay format\n"
-	       "                     [VIDIOC_S/TRY_FMT], <f> can be one of:\n"
-	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
-	       "                     alternate, interlaced_tb, interlaced_bt\n"
-	       "  --get-fbuf         query the overlay framebuffer data [VIDIOC_G_FBUF]\n"
-	       "  --set-fbuf=chromakey=<b>,global_alpha=<b>,local_alpha=<b>,local_inv_alpha=<b>\n"
-	       "		     set the overlay framebuffer [VIDIOC_S_FBUF]\n"
-	       "                     b = 0 or 1\n"
-	       );
-}
-
 static void usage_vbi(void)
 {
 	printf("\nVBI Formats options:\n"
@@ -360,7 +335,7 @@ static void usage_all(void)
        stds_usage();
        vidcap_usage();
        vidout_usage();
-       usage_overlay();
+       overlay_usage();
        usage_vbi();
        usage_selection();
        usage_misc();
@@ -476,7 +451,7 @@ static std::string field2s(int val)
 	}
 }
 
-static std::string colorspace2s(int val)
+std::string colorspace2s(int val)
 {
 	switch (val) {
 	case V4L2_COLORSPACE_SMPTE170M:
@@ -531,69 +506,6 @@ static void print_sliced_vbi_cap(struct v4l2_sliced_vbi_cap &cap)
 	}
 }
 
-
-static std::string fbufcap2s(unsigned cap)
-{
-	std::string s;
-
-	if (cap & V4L2_FBUF_CAP_EXTERNOVERLAY)
-		s += "\t\t\tExtern Overlay\n";
-	if (cap & V4L2_FBUF_CAP_CHROMAKEY)
-		s += "\t\t\tChromakey\n";
-	if (cap & V4L2_FBUF_CAP_GLOBAL_ALPHA)
-		s += "\t\t\tGlobal Alpha\n";
-	if (cap & V4L2_FBUF_CAP_LOCAL_ALPHA)
-		s += "\t\t\tLocal Alpha\n";
-	if (cap & V4L2_FBUF_CAP_LOCAL_INV_ALPHA)
-		s += "\t\t\tLocal Inverted Alpha\n";
-	if (cap & V4L2_FBUF_CAP_LIST_CLIPPING)
-		s += "\t\t\tClipping List\n";
-	if (cap & V4L2_FBUF_CAP_BITMAP_CLIPPING)
-		s += "\t\t\tClipping Bitmap\n";
-	if (s.empty()) s += "\t\t\t\n";
-	return s;
-}
-
-static std::string fbufflags2s(unsigned fl)
-{
-	std::string s;
-
-	if (fl & V4L2_FBUF_FLAG_PRIMARY)
-		s += "\t\t\tPrimary Graphics Surface\n";
-	if (fl & V4L2_FBUF_FLAG_OVERLAY)
-		s += "\t\t\tOverlay Matches Capture/Output Size\n";
-	if (fl & V4L2_FBUF_FLAG_CHROMAKEY)
-		s += "\t\t\tChromakey\n";
-	if (fl & V4L2_FBUF_FLAG_GLOBAL_ALPHA)
-		s += "\t\t\tGlobal Alpha\n";
-	if (fl & V4L2_FBUF_FLAG_LOCAL_ALPHA)
-		s += "\t\t\tLocal Alpha\n";
-	if (fl & V4L2_FBUF_FLAG_LOCAL_INV_ALPHA)
-		s += "\t\t\tLocal Inverted Alpha\n";
-	if (s.empty()) s += "\t\t\t\n";
-	return s;
-}
-
-static void printfbuf(const struct v4l2_framebuffer &fb)
-{
-	int is_ext = fb.capability & V4L2_FBUF_CAP_EXTERNOVERLAY;
-
-	printf("Framebuffer Format:\n");
-	printf("\tCapability    : %s", fbufcap2s(fb.capability).c_str() + 3);
-	printf("\tFlags         : %s", fbufflags2s(fb.flags).c_str() + 3);
-	if (fb.base)
-		printf("\tBase          : 0x%p\n", fb.base);
-	printf("\tWidth         : %d\n", fb.fmt.width);
-	printf("\tHeight        : %d\n", fb.fmt.height);
-	printf("\tPixel Format  : '%s'\n", fcc2s(fb.fmt.pixelformat).c_str());
-	if (!is_ext) {
-		printf("\tBytes per Line: %d\n", fb.fmt.bytesperline);
-		printf("\tSize image    : %d\n", fb.fmt.sizeimage);
-		printf("\tColorspace    : %s\n", colorspace2s(fb.fmt.colorspace).c_str());
-		if (fb.fmt.priv)
-			printf("\tCustom Info   : %08x\n", fb.fmt.priv);
-	}
-}
 
 static std::string markers2s(unsigned markers)
 {
@@ -1187,21 +1099,6 @@ static int parse_decflags(const char *s)
 }
 
 
-static enum v4l2_field parse_field(const char *s)
-{
-	if (!strcmp(s, "any")) return V4L2_FIELD_ANY;
-	if (!strcmp(s, "none")) return V4L2_FIELD_NONE;
-	if (!strcmp(s, "top")) return V4L2_FIELD_TOP;
-	if (!strcmp(s, "bottom")) return V4L2_FIELD_BOTTOM;
-	if (!strcmp(s, "interlaced")) return V4L2_FIELD_INTERLACED;
-	if (!strcmp(s, "seq_tb")) return V4L2_FIELD_SEQ_TB;
-	if (!strcmp(s, "seq_bt")) return V4L2_FIELD_SEQ_BT;
-	if (!strcmp(s, "alternate")) return V4L2_FIELD_ALTERNATE;
-	if (!strcmp(s, "interlaced_tb")) return V4L2_FIELD_INTERLACED_TB;
-	if (!strcmp(s, "interlaced_bt")) return V4L2_FIELD_INTERLACED_BT;
-	return V4L2_FIELD_ANY;
-}
-
 static void print_event(const struct v4l2_event *ev)
 {
 	printf("%ld.%06ld: event %u, pending %u: ",
@@ -1275,8 +1172,6 @@ int main(int argc, char **argv)
 	int fd = -1;
 
 	/* bitfield for fmts */
-	unsigned int set_fmts = 0;
-	unsigned int set_fmts_out = 0;
 	unsigned int set_crop = 0;
 	unsigned int set_crop_out = 0;
 	unsigned int set_crop_overlay = 0;
@@ -1284,20 +1179,14 @@ int main(int argc, char **argv)
 	unsigned int set_selection = 0;
 	unsigned int set_selection_out = 0;
 	int get_sel_target = 0;
-	unsigned int set_fbuf = 0;
-	unsigned int set_overlay_fmt = 0;
-	unsigned int set_overlay_fmt_out = 0;
 
 	/* command args */
 	int ch;
 	const char *device = "/dev/video0";	/* -d device */
-	struct v4l2_format vfmt_out;	/* set_format/get_format video output */
 	struct v4l2_format vbi_fmt;	/* set_format/get_format for sliced VBI */
 	struct v4l2_format vbi_fmt_out;	/* set_format/get_format for sliced VBI output */
 	struct v4l2_format raw_fmt;	/* set_format/get_format for VBI */
 	struct v4l2_format raw_fmt_out;	/* set_format/get_format for VBI output */
-	struct v4l2_format overlay_fmt;	/* set_format/get_format video overlay */
-	struct v4l2_format overlay_fmt_out;	/* set_format/get_format video overlay output */
 	struct v4l2_capability vcap;	/* list_cap */
 	struct v4l2_rect vcrop; 	/* crop rect */
 	struct v4l2_rect vcrop_out; 	/* crop rect */
@@ -1305,16 +1194,12 @@ int main(int argc, char **argv)
 	struct v4l2_rect vcrop_out_overlay; 	/* crop rect */
 	struct v4l2_selection vselection; 	/* capture selection */
 	struct v4l2_selection vselection_out;	/* output selection */
-	struct v4l2_framebuffer fbuf;   /* fbuf */
 	struct v4l2_jpegcompression jpegcomp; /* jpeg compression */
 	struct v4l2_streamparm parm;	/* get/set parm */
 	struct v4l2_encoder_cmd enc_cmd; /* (try_)encoder_cmd */
 	struct v4l2_decoder_cmd dec_cmd; /* (try_)decoder_cmd */
 	double fps = 0;			/* set framerate speed, in fps */
 	double output_fps = 0;		/* set framerate speed, in fps */
-	int overlay;			/* overlay */
-	unsigned int *set_overlay_fmt_ptr = NULL;
-	struct v4l2_format *overlay_fmt_ptr = NULL;
 	unsigned secs = 0;
 	__u32 wait_for_event = 0;	/* wait for this event */
 	const char *wait_event_id = NULL;
@@ -1326,10 +1211,7 @@ int main(int argc, char **argv)
 
 	memset(&vbi_fmt, 0, sizeof(vbi_fmt));
 	memset(&raw_fmt, 0, sizeof(raw_fmt));
-	memset(&vfmt_out, 0, sizeof(vfmt_out));
 	memset(&vbi_fmt_out, 0, sizeof(vbi_fmt_out));
-	memset(&overlay_fmt, 0, sizeof(overlay_fmt));
-	memset(&overlay_fmt_out, 0, sizeof(overlay_fmt_out));
 	memset(&raw_fmt_out, 0, sizeof(raw_fmt_out));
 	memset(&vcap, 0, sizeof(vcap));
 	memset(&vcrop, 0, sizeof(vcrop));
@@ -1338,7 +1220,6 @@ int main(int argc, char **argv)
 	memset(&vcrop_out_overlay, 0, sizeof(vcrop_out_overlay));
 	memset(&vselection, 0, sizeof(vselection));
 	memset(&vselection_out, 0, sizeof(vselection_out));
-	memset(&fbuf, 0, sizeof(fbuf));
 	memset(&jpegcomp, 0, sizeof(jpegcomp));
 	memset(&enc_cmd, 0, sizeof(enc_cmd));
 	memset(&dec_cmd, 0, sizeof(dec_cmd));
@@ -1384,7 +1265,7 @@ int main(int argc, char **argv)
 			vidout_usage();
 			return 0;
 		case OptHelpOverlay:
-			usage_overlay();
+			overlay_usage();
 			return 0;
 		case OptHelpVbi:
 			usage_vbi();
@@ -1410,107 +1291,6 @@ int main(int argc, char **argv)
 			break;
 		case OptSleep:
 			secs = strtoul(optarg, 0L, 0);
-			break;
-		case OptSetOverlayFormat:
-		case OptTryOverlayFormat:
-		case OptSetOutputOverlayFormat:
-		case OptTryOutputOverlayFormat:
-			switch (ch) {
-			case OptSetOverlayFormat:
-			case OptTryOverlayFormat:
-				set_overlay_fmt_ptr = &set_overlay_fmt;
-				overlay_fmt_ptr = &overlay_fmt;
-				break;
-			case OptSetOutputOverlayFormat:
-			case OptTryOutputOverlayFormat:
-				set_overlay_fmt_ptr = &set_overlay_fmt_out;
-				overlay_fmt_ptr = &overlay_fmt_out;
-				break;
-			}
-			subs = optarg;
-			while (*subs != '\0') {
-				static const char *const subopts[] = {
-					"chromakey",
-					"global_alpha",
-					"left",
-					"top",
-					"width",
-					"height",
-					"field",
-					NULL
-				};
-
-				switch (parse_subopt(&subs, subopts, &value)) {
-				case 0:
-					overlay_fmt_ptr->fmt.win.chromakey = strtol(value, 0L, 0);
-					*set_overlay_fmt_ptr |= FmtChromaKey;
-					break;
-				case 1:
-					overlay_fmt_ptr->fmt.win.global_alpha = strtol(value, 0L, 0);
-					*set_overlay_fmt_ptr |= FmtGlobalAlpha;
-					break;
-				case 2:
-					overlay_fmt_ptr->fmt.win.w.left = strtol(value, 0L, 0);
-					*set_overlay_fmt_ptr |= FmtLeft;
-					break;
-				case 3:
-					overlay_fmt_ptr->fmt.win.w.top = strtol(value, 0L, 0);
-					*set_overlay_fmt_ptr |= FmtTop;
-					break;
-				case 4:
-					overlay_fmt_ptr->fmt.win.w.width = strtol(value, 0L, 0);
-					*set_overlay_fmt_ptr |= FmtWidth;
-					break;
-				case 5:
-					overlay_fmt_ptr->fmt.win.w.height = strtol(value, 0L, 0);
-					*set_overlay_fmt_ptr |= FmtHeight;
-					break;
-				case 6:
-					overlay_fmt_ptr->fmt.win.field = parse_field(value);
-					*set_overlay_fmt_ptr |= FmtField;
-					break;
-				default:
-					usage_overlay();
-					break;
-				}
-			}
-			break;
-		case OptSetFBuf:
-			subs = optarg;
-			while (*subs != '\0') {
-				static const char *const subopts[] = {
-					"chromakey",
-					"global_alpha",
-					"local_alpha",
-					"local_inv_alpha",
-					NULL
-				};
-
-				switch (parse_subopt(&subs, subopts, &value)) {
-				case 0:
-					fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_CHROMAKEY : 0;
-					set_fbuf |= V4L2_FBUF_FLAG_CHROMAKEY;
-					break;
-				case 1:
-					fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_GLOBAL_ALPHA : 0;
-					set_fbuf |= V4L2_FBUF_FLAG_GLOBAL_ALPHA;
-					break;
-				case 2:
-					fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_LOCAL_ALPHA : 0;
-					set_fbuf |= V4L2_FBUF_FLAG_LOCAL_ALPHA;
-					break;
-				case 3:
-					fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_LOCAL_INV_ALPHA : 0;
-					set_fbuf |= V4L2_FBUF_FLAG_LOCAL_INV_ALPHA;
-					break;
-				default:
-					usage_overlay();
-					break;
-				}
-			}
-			break;
-		case OptOverlay:
-			overlay = strtol(optarg, 0L, 0);
 			break;
 		case OptSetCrop:
 			parse_crop(optarg, set_crop, vcrop);
@@ -1749,6 +1529,7 @@ int main(int argc, char **argv)
 			stds_cmd(ch, optarg);
 			vidcap_cmd(ch, optarg);
 			vidout_cmd(ch, optarg);
+			overlay_cmd(ch, optarg);
 			break;
 		}
 	}
@@ -1854,6 +1635,7 @@ int main(int argc, char **argv)
 	stds_set(fd);
 	vidcap_set(fd);
 	vidout_set(fd);
+	overlay_set(fd);
 
 	if (options[OptSetParm]) {
 		memset(&parm, 0, sizeof(parm));
@@ -1911,78 +1693,8 @@ int main(int argc, char **argv)
 			printfmt(vbi_fmt_out);
 	}
 
-	if (options[OptSetOverlayFormat] || options[OptTryOverlayFormat]) {
-		struct v4l2_format fmt;
-
-		fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
-		if (doioctl(fd, VIDIOC_G_FMT, &fmt) == 0) {
-			if (set_overlay_fmt & FmtChromaKey)
-				fmt.fmt.win.chromakey = overlay_fmt.fmt.win.chromakey;
-			if (set_overlay_fmt & FmtGlobalAlpha)
-				fmt.fmt.win.global_alpha = overlay_fmt.fmt.win.global_alpha;
-			if (set_overlay_fmt & FmtLeft)
-				fmt.fmt.win.w.left = overlay_fmt.fmt.win.w.left;
-			if (set_overlay_fmt & FmtTop)
-				fmt.fmt.win.w.top = overlay_fmt.fmt.win.w.top;
-			if (set_overlay_fmt & FmtWidth)
-				fmt.fmt.win.w.width = overlay_fmt.fmt.win.w.width;
-			if (set_overlay_fmt & FmtHeight)
-				fmt.fmt.win.w.height = overlay_fmt.fmt.win.w.height;
-			if (set_overlay_fmt & FmtField)
-				fmt.fmt.win.field = overlay_fmt.fmt.win.field;
-			if (options[OptSetOverlayFormat])
-				ret = doioctl(fd, VIDIOC_S_FMT, &fmt);
-			else
-				ret = doioctl(fd, VIDIOC_TRY_FMT, &fmt);
-			if (ret == 0 && verbose)
-				printfmt(fmt);
-		}
-	}
-
-	if (options[OptSetOutputOverlayFormat] || options[OptTryOutputOverlayFormat]) {
-		struct v4l2_format fmt;
-
-		fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY;
-		if (doioctl(fd, VIDIOC_G_FMT, &fmt) == 0) {
-			if (set_overlay_fmt_out & FmtChromaKey)
-				fmt.fmt.win.chromakey = overlay_fmt_out.fmt.win.chromakey;
-			if (set_overlay_fmt_out & FmtGlobalAlpha)
-				fmt.fmt.win.global_alpha = overlay_fmt_out.fmt.win.global_alpha;
-			if (set_overlay_fmt_out & FmtLeft)
-				fmt.fmt.win.w.left = overlay_fmt_out.fmt.win.w.left;
-			if (set_overlay_fmt_out & FmtTop)
-				fmt.fmt.win.w.top = overlay_fmt_out.fmt.win.w.top;
-			if (set_overlay_fmt_out & FmtWidth)
-				fmt.fmt.win.w.width = overlay_fmt_out.fmt.win.w.width;
-			if (set_overlay_fmt_out & FmtHeight)
-				fmt.fmt.win.w.height = overlay_fmt_out.fmt.win.w.height;
-			if (set_overlay_fmt_out & FmtField)
-				fmt.fmt.win.field = overlay_fmt_out.fmt.win.field;
-			if (options[OptSetOutputOverlayFormat])
-				ret = doioctl(fd, VIDIOC_S_FMT, &fmt);
-			else
-				ret = doioctl(fd, VIDIOC_TRY_FMT, &fmt);
-			if (ret == 0 && verbose)
-				printfmt(fmt);
-		}
-	}
-
-	if (options[OptSetFBuf]) {
-		struct v4l2_framebuffer fb;
-
-		if (doioctl(fd, VIDIOC_G_FBUF, &fb) == 0) {
-			fb.flags &= ~set_fbuf;
-			fb.flags |= fbuf.flags;
-			doioctl(fd, VIDIOC_S_FBUF, &fb);
-		}
-	}
-
 	if (options[OptSetJpegComp]) {
 		doioctl(fd, VIDIOC_S_JPEGCOMP, &jpegcomp);
-	}
-
-	if (options[OptOverlay]) {
-		doioctl(fd, VIDIOC_OVERLAY, &overlay);
 	}
 
 	if (options[OptSetCrop]) {
@@ -2028,22 +1740,7 @@ int main(int argc, char **argv)
 	stds_get(fd);
 	vidcap_get(fd);
 	vidout_get(fd);
-
-	if (options[OptGetOverlayFormat]) {
-		struct v4l2_format fmt;
-
-		fmt.type = V4L2_BUF_TYPE_VIDEO_OVERLAY;
-		if (doioctl(fd, VIDIOC_G_FMT, &fmt) == 0)
-			printfmt(fmt);
-	}
-
-	if (options[OptGetOutputOverlayFormat]) {
-		struct v4l2_format fmt;
-
-		fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY;
-		if (doioctl(fd, VIDIOC_G_FMT, &fmt) == 0)
-			printfmt(fmt);
-	}
+	overlay_get(fd);
 
 	if (options[OptGetSlicedVbiFormat]) {
 		vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
@@ -2067,12 +1764,6 @@ int main(int argc, char **argv)
 		raw_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
 		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt_out) == 0)
 			printfmt(raw_fmt_out);
-	}
-
-	if (options[OptGetFBuf]) {
-		struct v4l2_framebuffer fb;
-		if (doioctl(fd, VIDIOC_G_FBUF, &fb) == 0)
-			printfbuf(fb);
 	}
 
 	if (options[OptGetJpegComp]) {
@@ -2236,11 +1927,7 @@ int main(int argc, char **argv)
 	stds_list(fd);
 	vidcap_list(fd);
 	vidout_list(fd);
-
-	if (options[OptListOverlayFormats]) {
-		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OVERLAY);
-	}
+	overlay_list(fd);
 
 	if (options[OptGetSlicedVbiCap]) {
 		struct v4l2_sliced_vbi_cap cap;

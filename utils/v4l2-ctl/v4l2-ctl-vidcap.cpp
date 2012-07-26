@@ -19,7 +19,7 @@
 #include <string>
 
 #include "v4l2-ctl.h"
-	
+
 static struct v4l2_format vfmt;	/* set_format/get_format for video */
 static struct v4l2_frmsizeenum frmsize; /* list frame sizes */
 static struct v4l2_frmivalenum frmival; /* list frame intervals */
