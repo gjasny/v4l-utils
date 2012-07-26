@@ -147,6 +147,7 @@ enum Option {
 };
 
 extern char options[OptLast];
+extern unsigned capabilities;
 
 typedef struct {
 	unsigned flag;
@@ -157,6 +158,7 @@ typedef struct {
 int doioctl_name(int fd, unsigned long int request, void *parm, const char *name);
 int test_ioctl(int fd, int cmd, void *arg);
 std::string flags2s(unsigned val, const flag_def *def);
+int parse_subopt(char **subs, const char * const *subopts, char **value);
 
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 
@@ -169,6 +171,12 @@ void common_list(int fd);
 void common_process_controls(int fd);
 void common_control_event(const struct v4l2_event *ev);
 int common_find_ctrl_id(const char *name);
+
+// v4l2-ctl-tuner.cpp
+void tuner_usage(void);
+void tuner_cmd(int ch, char *optarg);
+void tuner_set(int fd);
+void tuner_get(int fd);
 
 
 #endif

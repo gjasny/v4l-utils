@@ -54,7 +54,7 @@ char options[OptLast];
 static int app_result;
 static int verbose;
 
-static unsigned capabilities;
+unsigned capabilities;
 
 static const flag_def service_def[] = {
 	{ V4L2_SLICED_TELETEXT_B,  "teletext" },
@@ -219,36 +219,6 @@ static struct option long_options[] = {
 	{"tuner-index", required_argument, 0, OptTunerIndex},
 	{0, 0, 0, 0}
 };
-
-static void usage_tuner(void)
-{
-	printf("\nTuner/Modulator options:\n"
-	       "  -F, --get-freq     query the frequency [VIDIOC_G_FREQUENCY]\n"
-	       "  -f, --set-freq=<freq>\n"
-	       "                     set the frequency to <freq> MHz [VIDIOC_S_FREQUENCY]\n"
-	       "  -T, --get-tuner    query the tuner settings [VIDIOC_G_TUNER]\n"
-	       "  -t, --set-tuner=<mode>\n"
-	       "                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n"
-	       "                     Possible values: mono, stereo, lang2, lang1, bilingual\n"
-	       "  --tuner-index=<idx> Use idx as tuner idx for tuner/modulator commands\n"
-	       "  --get-modulator    query the modulator settings [VIDIOC_G_MODULATOR]\n"
-	       "  --set-modulator=<txsubchans>\n"
-	       "                     set the sub-carrier modulation [VIDIOC_S_MODULATOR]\n"
-	       "                     <txsubchans> is one of:\n"
-	       "                     mono:	 Modulate as mono\n"
-	       "                     mono-rds:	 Modulate as mono with RDS (radio only)\n"
-	       "                     stereo:	 Modulate as stereo\n"
-	       "                     stereo-rds: Modulate as stereo with RDS (radio only)\n"
-	       "                     bilingual:	 Modulate as bilingual\n"
-	       "                     mono-sap:	 Modulate as mono with Second Audio Program\n"
-	       "                     stereo-sap: Modulate as stereo with Second Audio Program\n"
-	       "  --freq-seek=dir=<0/1>,wrap=<0/1>,spacing=<hz>\n"
-	       "                     perform a hardware frequency seek [VIDIOC_S_HW_FREQ_SEEK]\n"
-	       "                     dir is 0 (seek downward) or 1 (seek upward)\n"
-	       "                     wrap is 0 (do not wrap around) or 1 (wrap around)\n"
-	       "                     spacing sets the seek resolution (use 0 for default)\n"
-	       );
-}
 
 static void usage_io(void)
 {
@@ -530,7 +500,7 @@ static void usage_misc(void)
 static void usage_all(void)
 {
        common_usage();
-       usage_tuner();
+       tuner_usage();
        usage_io();
        usage_stds();
        usage_vidcap();
@@ -1098,77 +1068,6 @@ static void print_video_formats_ext(int fd, enum v4l2_buf_type type)
 	}
 }
 
-static const char *audmode2s(int audmode)
-{
-	switch (audmode) {
-		case V4L2_TUNER_MODE_STEREO: return "stereo";
-		case V4L2_TUNER_MODE_LANG1: return "lang1";
-		case V4L2_TUNER_MODE_LANG2: return "lang2";
-		case V4L2_TUNER_MODE_LANG1_LANG2: return "bilingual";
-		case V4L2_TUNER_MODE_MONO: return "mono";
-		default: return "unknown";
-	}
-}
-
-static std::string rxsubchans2s(int rxsubchans)
-{
-	std::string s;
-
-	if (rxsubchans & V4L2_TUNER_SUB_MONO)
-		s += "mono ";
-	if (rxsubchans & V4L2_TUNER_SUB_STEREO)
-		s += "stereo ";
-	if (rxsubchans & V4L2_TUNER_SUB_LANG1)
-		s += "lang1 ";
-	if (rxsubchans & V4L2_TUNER_SUB_LANG2)
-		s += "lang2 ";
-	if (rxsubchans & V4L2_TUNER_SUB_RDS)
-		s += "rds ";
-	return s;
-}
-
-static std::string txsubchans2s(int txsubchans)
-{
-	std::string s;
-
-	if (txsubchans & V4L2_TUNER_SUB_MONO)
-		s += "mono ";
-	if (txsubchans & V4L2_TUNER_SUB_STEREO)
-		s += "stereo ";
-	if (txsubchans & V4L2_TUNER_SUB_LANG1)
-		s += "bilingual ";
-	if (txsubchans & V4L2_TUNER_SUB_SAP)
-		s += "sap ";
-	if (txsubchans & V4L2_TUNER_SUB_RDS)
-		s += "rds ";
-	return s;
-}
-
-static std::string tcap2s(unsigned cap)
-{
-	std::string s;
-
-	if (cap & V4L2_TUNER_CAP_LOW)
-		s += "62.5 Hz ";
-	else
-		s += "62.5 kHz ";
-	if (cap & V4L2_TUNER_CAP_NORM)
-		s += "multi-standard ";
-	if (cap & V4L2_TUNER_CAP_HWSEEK_BOUNDED)
-		s += "hwseek-bounded ";
-	if (cap & V4L2_TUNER_CAP_HWSEEK_WRAP)
-		s += "hwseek-wrap ";
-	if (cap & V4L2_TUNER_CAP_STEREO)
-		s += "stereo ";
-	if (cap & V4L2_TUNER_CAP_LANG1)
-		s += "lang1 ";
-	if (cap & V4L2_TUNER_CAP_LANG2)
-		s += "lang2 ";
-	if (cap & V4L2_TUNER_CAP_RDS)
-		s += "rds ";
-	return s;
-}
-
 static std::string cap2s(unsigned cap)
 {
 	std::string s;
@@ -1304,7 +1203,7 @@ static v4l2_std_id parse_ntsc(const char *ntsc)
 	return 0;
 }
 
-static int parse_subopt(char **subs, const char * const *subopts, char **value)
+int parse_subopt(char **subs, const char * const *subopts, char **value)
 {
 	int opt = getsubopt(subs, (char * const *)subopts, value);
 
@@ -1600,36 +1499,6 @@ static int parse_selection(char *optarg, unsigned int &set_sel, v4l2_selection &
 	return 0;
 }
 
-static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
-{
-	char *value;
-	char *subs = optarg;
-
-	while (*subs != '\0') {
-		static const char *const subopts[] = {
-			"dir",
-			"wrap",
-			"spacing",
-			NULL
-		};
-
-		switch (parse_subopt(&subs, subopts, &value)) {
-		case 0:
-			seek.seek_upward = strtol(value, 0L, 0);
-			break;
-		case 1:
-			seek.wrap_around = strtol(value, 0L, 0);
-			break;
-		case 2:
-			seek.spacing = strtol(value, 0L, 0);
-			break;
-		default:
-			usage_tuner();
-			exit(1);
-		}
-	}
-}
-
 /* Used for both encoder and decoder commands since they are the same
    at the moment. */
 static int parse_cmd(const char *s)
@@ -1895,7 +1764,6 @@ int main(int argc, char **argv)
 	int i;
 
 	int fd = -1;
-	int tuner_index = 0;
 
 	/* bitfield for fmts */
 	unsigned int set_fmts = 0;
@@ -1911,8 +1779,6 @@ int main(int argc, char **argv)
 	unsigned int set_overlay_fmt = 0;
 	unsigned int set_overlay_fmt_out = 0;
 
-	int mode = V4L2_TUNER_MODE_STEREO;	/* set audio mode */
-
 	/* command args */
 	int ch;
 	const char *device = "/dev/video0";	/* -d device */
@@ -1924,8 +1790,6 @@ int main(int argc, char **argv)
 	struct v4l2_format raw_fmt_out;	/* set_format/get_format for VBI output */
 	struct v4l2_format overlay_fmt;	/* set_format/get_format video overlay */
 	struct v4l2_format overlay_fmt_out;	/* set_format/get_format video overlay output */
-	struct v4l2_tuner tuner;        /* set_freq/get_freq */
-	struct v4l2_modulator modulator;/* set_freq/get_freq */
 	struct v4l2_capability vcap;	/* list_cap */
 	struct v4l2_input vin;		/* list_inputs */
 	struct v4l2_output vout;	/* list_outputs */
@@ -1953,14 +1817,10 @@ int main(int argc, char **argv)
 	struct v4l2_decoder_cmd dec_cmd; /* (try_)decoder_cmd */
 	int input;			/* set_input/get_input */
 	int output;			/* set_output/get_output */
-	int txsubchans = 0;		/* set_modulator */
 	v4l2_std_id std;		/* get_std/set_std */
-	double freq = 0;		/* get/set frequency */
 	double fps = 0;			/* set framerate speed, in fps */
 	double output_fps = 0;		/* set framerate speed, in fps */
-	struct v4l2_frequency vf;	/* get_freq/set_freq */
 	struct v4l2_standard vs;	/* list_std */
-	struct v4l2_hw_freq_seek freq_seek; /* freq-seek */
 	int overlay;			/* overlay */
 	unsigned int *set_overlay_fmt_ptr = NULL;
 	struct v4l2_format *overlay_fmt_ptr = NULL;
@@ -1981,8 +1841,6 @@ int main(int argc, char **argv)
 	memset(&overlay_fmt, 0, sizeof(overlay_fmt));
 	memset(&overlay_fmt_out, 0, sizeof(overlay_fmt_out));
 	memset(&raw_fmt_out, 0, sizeof(raw_fmt_out));
-	memset(&tuner, 0, sizeof(tuner));
-	memset(&modulator, 0, sizeof(modulator));
 	memset(&vcap, 0, sizeof(vcap));
 	memset(&vin, 0, sizeof(vin));
 	memset(&vout, 0, sizeof(vout));
@@ -1996,7 +1854,6 @@ int main(int argc, char **argv)
 	memset(&vcrop_out_overlay, 0, sizeof(vcrop_out_overlay));
 	memset(&vselection, 0, sizeof(vselection));
 	memset(&vselection_out, 0, sizeof(vselection_out));
-	memset(&vf, 0, sizeof(vf));
 	memset(&vs, 0, sizeof(vs));
 	memset(&fbuf, 0, sizeof(fbuf));
 	memset(&jpegcomp, 0, sizeof(jpegcomp));
@@ -2005,7 +1862,6 @@ int main(int argc, char **argv)
 	memset(&dv_enum_preset, 0, sizeof(dv_enum_preset));
 	memset(&enc_cmd, 0, sizeof(enc_cmd));
 	memset(&dec_cmd, 0, sizeof(dec_cmd));
-	memset(&freq_seek, 0, sizeof(freq_seek));
 
 	if (argc == 1) {
 		common_usage();
@@ -2033,7 +1889,7 @@ int main(int argc, char **argv)
 			common_usage();
 			return 0;
 		case OptHelpTuner:
-			usage_tuner();
+			tuner_usage();
 			return 0;
 		case OptHelpIO:
 			usage_io();
@@ -2345,9 +2201,6 @@ int main(int argc, char **argv)
 		case OptSetAudioOutput:
 			vaudout.index = strtol(optarg, 0L, 0);
 			break;
-		case OptSetFreq:
-			freq = strtod(optarg, NULL);
-			break;
 		case OptSetStandard:
 			if (!strncmp(optarg, "pal", 3)) {
 				if (optarg[3])
@@ -2376,45 +2229,6 @@ int main(int argc, char **argv)
 			break;
 		case OptSetOutputParm:
 			output_fps = strtod(optarg, NULL);
-			break;
-		case OptSetTuner:
-			if (!strcmp(optarg, "stereo"))
-				mode = V4L2_TUNER_MODE_STEREO;
-			else if (!strcmp(optarg, "lang1"))
-				mode = V4L2_TUNER_MODE_LANG1;
-			else if (!strcmp(optarg, "lang2"))
-				mode = V4L2_TUNER_MODE_LANG2;
-			else if (!strcmp(optarg, "bilingual"))
-				mode = V4L2_TUNER_MODE_LANG1_LANG2;
-			else if (!strcmp(optarg, "mono"))
-				mode = V4L2_TUNER_MODE_MONO;
-			else {
-				fprintf(stderr, "Unknown audio mode\n");
-				usage_tuner();
-				return 1;
-			}
-			break;
-		case OptSetModulator:
-			txsubchans = strtol(optarg, 0L, 0);
-			if (!strcmp(optarg, "stereo"))
-				txsubchans = V4L2_TUNER_SUB_STEREO;
-			else if (!strcmp(optarg, "stereo-sap"))
-				txsubchans = V4L2_TUNER_SUB_STEREO | V4L2_TUNER_SUB_SAP;
-			else if (!strcmp(optarg, "bilingual"))
-				txsubchans = V4L2_TUNER_SUB_LANG1;
-			else if (!strcmp(optarg, "mono"))
-				txsubchans = V4L2_TUNER_SUB_MONO;
-			else if (!strcmp(optarg, "mono-sap"))
-				txsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_SAP;
-			else if (!strcmp(optarg, "stereo-rds"))
-				txsubchans = V4L2_TUNER_SUB_STEREO | V4L2_TUNER_SUB_RDS;
-			else if (!strcmp(optarg, "mono-rds"))
-				txsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_RDS;
-			else {
-				fprintf(stderr, "Unknown txsubchans value\n");
-				usage_tuner();
-				return 1;
-			}
 			break;
 		case OptSetSlicedVbiFormat:
 		case OptSetSlicedVbiOutFormat:
@@ -2545,9 +2359,6 @@ int main(int argc, char **argv)
 			parse_dv_bt_timings(optarg, &dv_timings,
 					query_and_set_dv_timings, enum_and_set_dv_timings);
 			break;
-		case OptFreqSeek:
-			parse_freq_seek(optarg, freq_seek);
-			break;
 		case OptEncoderCmd:
 		case OptTryEncoderCmd:
 			subs = optarg;
@@ -2609,9 +2420,6 @@ int main(int argc, char **argv)
 				}
 			}
 			break;
-		case OptTunerIndex:
-			tuner_index = strtoul(optarg, NULL, 0);
-			break;
 		case ':':
 			fprintf(stderr, "Option '%s' requires a value\n",
 				argv[optind]);
@@ -2624,6 +2432,7 @@ int main(int argc, char **argv)
 			return 1;
 		default:
 			common_cmd(ch, optarg);
+			tuner_cmd(ch, optarg);
 			break;
 		}
 	}
@@ -2724,30 +2533,7 @@ int main(int argc, char **argv)
 	}
 
 	common_set(fd);
-
-	if (options[OptSetFreq]) {
-		double fac = 16;
-
-		if (capabilities & V4L2_CAP_MODULATOR) {
-			vf.type = V4L2_TUNER_RADIO;
-			modulator.index = tuner_index;
-			if (doioctl(fd, VIDIOC_G_MODULATOR, &modulator) == 0) {
-				fac = (modulator.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
-			}
-		} else {
-			vf.type = V4L2_TUNER_ANALOG_TV;
-			tuner.index = tuner_index;
-			if (doioctl(fd, VIDIOC_G_TUNER, &tuner) == 0) {
-				fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
-				vf.type = tuner.type;
-			}
-		}
-		vf.tuner = tuner_index;
-		vf.frequency = __u32(freq * fac);
-		if (doioctl(fd, VIDIOC_S_FREQUENCY, &vf) == 0)
-			printf("Frequency for tuner %d set to %d (%f MHz)\n",
-			       vf.tuner, vf.frequency, vf.frequency / fac);
-	}
+	tuner_set(fd);
 
 	if (options[OptSetStandard]) {
 		if (std & (1ULL << 63)) {
@@ -2841,28 +2627,6 @@ int main(int argc, char **argv)
 	if (options[OptSetAudioOutput]) {
 		if (doioctl(fd, VIDIOC_S_AUDOUT, &vaudout) == 0)
 			printf("Audio output set to %d\n", vaudout.index);
-	}
-
-	if (options[OptSetTuner]) {
-		struct v4l2_tuner vt;
-
-		memset(&vt, 0, sizeof(struct v4l2_tuner));
-		vt.index = tuner_index;
-		if (doioctl(fd, VIDIOC_G_TUNER, &vt) == 0) {
-			vt.audmode = mode;
-			doioctl(fd, VIDIOC_S_TUNER, &vt);
-		}
-	}
-
-	if (options[OptSetModulator]) {
-		struct v4l2_modulator mt;
-
-		memset(&mt, 0, sizeof(struct v4l2_modulator));
-		mt.index = tuner_index;
-		if (doioctl(fd, VIDIOC_G_MODULATOR, &mt) == 0) {
-			mt.txsubchans = txsubchans;
-			doioctl(fd, VIDIOC_S_MODULATOR, &mt);
-		}
 	}
 
 	if (options[OptSetVideoFormat] || options[OptTryVideoFormat]) {
@@ -3088,12 +2852,6 @@ int main(int argc, char **argv)
 		do_selection(fd, set_selection_out, vselection_out, V4L2_BUF_TYPE_VIDEO_OUTPUT);
 	}
 	
-	if (options[OptFreqSeek]) {
-		freq_seek.tuner = tuner_index;
-		freq_seek.type = V4L2_TUNER_RADIO;
-		doioctl(fd, VIDIOC_S_HW_FREQ_SEEK, &freq_seek);
-	}
-	
 	if (options[OptEncoderCmd])
 		doioctl(fd, VIDIOC_ENCODER_CMD, &enc_cmd);
 	if (options[OptTryEncoderCmd])
@@ -3106,6 +2864,9 @@ int main(int argc, char **argv)
 			print_deccmd(dec_cmd);
 
 	/* Get options */
+
+	common_get(fd);
+	tuner_get(fd);
 
 	if (options[OptGetVideoFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -3318,28 +3079,6 @@ int main(int argc, char **argv)
 			printf("Audio output: %d (%s)\n", vaudout.index, vaudout.name);
 	}
 
-	if (options[OptGetFreq]) {
-		double fac = 16;
-
-		if (capabilities & V4L2_CAP_MODULATOR) {
-			vf.type = V4L2_TUNER_RADIO;
-			modulator.index = tuner_index;
-			if (doioctl(fd, VIDIOC_G_MODULATOR, &modulator) == 0)
-				fac = (modulator.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
-		} else {
-			vf.type = V4L2_TUNER_ANALOG_TV;
-			tuner.index = tuner_index;
-			if (doioctl(fd, VIDIOC_G_TUNER, &tuner) == 0) {
-				fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
-				vf.type = tuner.type;
-			}
-		}
-		vf.tuner = tuner_index;
-		if (doioctl(fd, VIDIOC_G_FREQUENCY, &vf) == 0)
-			printf("Frequency for tuner %d: %d (%f MHz)\n",
-			       vf.tuner, vf.frequency, vf.frequency / fac);
-	}
-
 	if (options[OptGetStandard]) {
 		if (doioctl(fd, VIDIOC_G_STD, &std) == 0) {
 			printf("Video Standard = 0x%08llx\n", (unsigned long long)std);
@@ -3451,48 +3190,6 @@ int main(int argc, char **argv)
 						(1.0 * tf.denominator) / tf.numerator,
 						tf.denominator, tf.numerator);
 			printf("\tWrite buffers    : %d\n", parm.parm.output.writebuffers);
-		}
-	}
-
-	if (options[OptGetTuner]) {
-		struct v4l2_tuner vt;
-
-		memset(&vt, 0, sizeof(struct v4l2_tuner));
-		vt.index = tuner_index;
-		if (doioctl(fd, VIDIOC_G_TUNER, &vt) == 0) {
-			printf("Tuner %d:\n", vt.index);
-			printf("\tName                 : %s\n", vt.name);
-			printf("\tCapabilities         : %s\n", tcap2s(vt.capability).c_str());
-			if (vt.capability & V4L2_TUNER_CAP_LOW)
-				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
-				     vt.rangelow / 16000.0, vt.rangehigh / 16000.0);
-			else
-				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
-				     vt.rangelow / 16.0, vt.rangehigh / 16.0);
-			printf("\tSignal strength/AFC  : %d%%/%d\n", (int)((vt.signal / 655.35)+0.5), vt.afc);
-			printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode));
-			printf("\tAvailable subchannels: %s\n",
-					rxsubchans2s(vt.rxsubchans).c_str());
-		}
-	}
-
-	if (options[OptGetModulator]) {
-		struct v4l2_modulator mt;
-
-		memset(&mt, 0, sizeof(struct v4l2_modulator));
-		modulator.index = tuner_index;
-		if (doioctl(fd, VIDIOC_G_MODULATOR, &mt) == 0) {
-			printf("Modulator %d:\n", modulator.index);
-			printf("\tName                 : %s\n", mt.name);
-			printf("\tCapabilities         : %s\n", tcap2s(mt.capability).c_str());
-			if (mt.capability & V4L2_TUNER_CAP_LOW)
-				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
-				     mt.rangelow / 16000.0, mt.rangehigh / 16000.0);
-			else
-				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
-				     mt.rangelow / 16.0, mt.rangehigh / 16.0);
-			printf("\tSubchannel modulation: %s\n",
-					txsubchans2s(mt.txsubchans).c_str());
 		}
 	}
 
