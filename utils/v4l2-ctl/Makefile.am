@@ -5,5 +5,5 @@ cx18_ctl_SOURCES = cx18-ctl.c
 ivtv_ctl_SOURCES = ivtv-ctl.c
 ivtv_ctl_LDFLAGS = -lm
 
-v4l2_ctl_SOURCES = v4l2-ctl.cpp v4l2-ctl.h v4l2-ctl-common.cpp
+v4l2_ctl_SOURCES = v4l2-ctl.cpp v4l2-ctl.h v4l2-ctl-common.cpp v4l2-ctl-tuner.cpp
 v4l2_ctl_LDADD = ../../lib/libv4l2/libv4l2.la
