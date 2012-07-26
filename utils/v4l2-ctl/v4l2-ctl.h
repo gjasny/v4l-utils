@@ -219,5 +219,12 @@ void vidcap_set(int fd);
 void vidcap_get(int fd);
 void vidcap_list(int fd);
 
+// v4l2-ctl-vidout.cpp
+void vidout_usage(void);
+void vidout_cmd(int ch, char *optarg);
+void vidout_set(int fd);
+void vidout_get(int fd);
+void vidout_list(int fd);
+
 
 #endif
