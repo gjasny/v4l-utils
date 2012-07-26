@@ -174,6 +174,7 @@ std::string std2s(v4l2_std_id std);
 std::string buftype2s(int type);
 std::string fcc2s(unsigned int val);
 std::string fmtdesc2s(unsigned flags);
+std::string colorspace2s(int val);
 void print_v4lstd(v4l2_std_id std);
 int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat);
 __u32 find_pixel_format(int fd, unsigned index, bool mplane);
@@ -225,6 +226,13 @@ void vidout_cmd(int ch, char *optarg);
 void vidout_set(int fd);
 void vidout_get(int fd);
 void vidout_list(int fd);
+
+// v4l2-ctl-overlay.cpp
+void overlay_usage(void);
+void overlay_cmd(int ch, char *optarg);
+void overlay_set(int fd);
+void overlay_get(int fd);
+void overlay_list(int fd);
 
 
 #endif
