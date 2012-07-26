@@ -160,6 +160,7 @@ int test_ioctl(int fd, int cmd, void *arg);
 std::string flags2s(unsigned val, const flag_def *def);
 int parse_subopt(char **subs, const char * const *subopts, char **value);
 std::string std2s(v4l2_std_id std);
+void print_v4lstd(v4l2_std_id std);
 
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 
@@ -185,6 +186,13 @@ void io_cmd(int ch, char *optarg);
 void io_set(int fd);
 void io_get(int fd);
 void io_list(int fd);
+
+// v4l2-ctl-stds.cpp
+void stds_usage(void);
+void stds_cmd(int ch, char *optarg);
+void stds_set(int fd);
+void stds_get(int fd);
+void stds_list(int fd);
 
 
 #endif

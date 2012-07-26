@@ -223,47 +223,6 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static void usage_stds(void)
-{
-	printf("\nStandards/Presets/Timings options:\n"
-	       "  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n"
-	       "  -S, --get-standard\n"
-	       "                     query the video standard [VIDIOC_G_STD]\n"
-	       "  -s, --set-standard=<num>\n"
-	       "                     set the video standard to <num> [VIDIOC_S_STD]\n"
-	       "                     <num> a numerical v4l2_std value, or one of:\n"
-	       "                     pal or pal-X (X = B/G/H/N/Nc/I/D/K/M/60) (V4L2_STD_PAL)\n"
-	       "                     ntsc or ntsc-X (X = M/J/K) (V4L2_STD_NTSC)\n"
-	       "                     secam or secam-X (X = B/G/H/D/K/L/Lc) (V4L2_STD_SECAM)\n"
-	       "  --get-detected-standard\n"
-	       "                     display detected input video standard [VIDIOC_QUERYSTD]\n"
-	       "  --list-dv-presets  list supported dv presets [VIDIOC_ENUM_DV_PRESETS]\n"
-	       "  --set-dv-preset=<num>\n"
-	       "                     set the digital video preset to <num> [VIDIOC_S_DV_PRESET]\n"
-	       "  --get-dv-preset    query the digital video preset in use [VIDIOC_G_DV_PRESET]\n"
-	       "  --query-dv-preset  query the detected dv preset [VIDIOC_QUERY_DV_PRESET]\n"
-	       "  --list-dv-timings  list supp. standard dv timings [VIDIOC_ENUM_DV_TIMINGS]\n"
-	       "  --set-dv-bt-timings\n"
-	       "                     query: use the output of VIDIOC_QUERY_DV_PRESET\n"
-	       "                     index=<index>: use the index as provided by --list-dv-presets\n"
-	       "                     or give a fully specified timings:\n"
-	       "                     width=<width>,height=<height>,interlaced=<0/1>,\n"
-	       "                     polarities=<polarities mask>,pixelclock=<pixelclock Hz>,\n"
-	       "                     hfp=<horizontal front porch>,hs=<horizontal sync>,\n"
-	       "                     hbp=<horizontal back porch>,vfp=<vertical front porch>,\n"
-	       "                     vs=<vertical sync>,vbp=<vertical back porch>,\n"
-	       "                     il_vfp=<vertical front porch for bottom field>,\n"
-	       "                     il_vs=<vertical sync for bottom field>,\n"
-	       "                     il_vbp=<vertical back porch for bottom field>,\n"
-	       "                     set the digital video timings according to the BT 656/1120\n"
-	       "                     standard [VIDIOC_S_DV_TIMINGS]\n"
-	       "  --get-dv-timings   get the digital video timings in use [VIDIOC_G_DV_TIMINGS]\n"
-	       "  --query-dv-timings query the detected dv timings [VIDIOC_QUERY_DV_TIMINGS]\n"
-	       "  --get-dv-timings-cap\n"
-	       "                     get the dv timings capabilities [VIDIOC_DV_TIMINGS_CAP]\n"
-	       );
-}
-
 static void usage_vidcap(void)
 {
 	printf("\nVideo Capture Formats options:\n"
@@ -479,7 +438,7 @@ static void usage_all(void)
        common_usage();
        tuner_usage();
        io_usage();
-       usage_stds();
+       stds_usage();
        usage_vidcap();
        usage_vidout();
        usage_overlay();
@@ -1045,94 +1004,6 @@ static std::string cap2s(unsigned cap)
 	return s;
 }
 
-static v4l2_std_id parse_pal(const char *pal)
-{
-	if (pal[0] == '-') {
-		switch (pal[1]) {
-			case '6':
-				return V4L2_STD_PAL_60;
-			case 'b':
-			case 'B':
-			case 'g':
-			case 'G':
-				return V4L2_STD_PAL_BG;
-			case 'h':
-			case 'H':
-				return V4L2_STD_PAL_H;
-			case 'n':
-			case 'N':
-				if (pal[2] == 'c' || pal[2] == 'C')
-					return V4L2_STD_PAL_Nc;
-				return V4L2_STD_PAL_N;
-			case 'i':
-			case 'I':
-				return V4L2_STD_PAL_I;
-			case 'd':
-			case 'D':
-			case 'k':
-			case 'K':
-				return V4L2_STD_PAL_DK;
-			case 'M':
-			case 'm':
-				return V4L2_STD_PAL_M;
-			case '-':
-				break;
-		}
-	}
-	fprintf(stderr, "pal specifier not recognised\n");
-	return 0;
-}
-
-static v4l2_std_id parse_secam(const char *secam)
-{
-	if (secam[0] == '-') {
-		switch (secam[1]) {
-			case 'b':
-			case 'B':
-			case 'g':
-			case 'G':
-			case 'h':
-			case 'H':
-				return V4L2_STD_SECAM_B | V4L2_STD_SECAM_G | V4L2_STD_SECAM_H;
-			case 'd':
-			case 'D':
-			case 'k':
-			case 'K':
-				return V4L2_STD_SECAM_DK;
-			case 'l':
-			case 'L':
-				if (secam[2] == 'C' || secam[2] == 'c')
-					return V4L2_STD_SECAM_LC;
-				return V4L2_STD_SECAM_L;
-			case '-':
-				break;
-		}
-	}
-	fprintf(stderr, "secam specifier not recognised\n");
-	return 0;
-}
-
-static v4l2_std_id parse_ntsc(const char *ntsc)
-{
-	if (ntsc[0] == '-') {
-		switch (ntsc[1]) {
-			case 'm':
-			case 'M':
-				return V4L2_STD_NTSC_M;
-			case 'j':
-			case 'J':
-				return V4L2_STD_NTSC_M_JP;
-			case 'k':
-			case 'K':
-				return V4L2_STD_NTSC_M_KR;
-			case '-':
-				break;
-		}
-	}
-	fprintf(stderr, "ntsc specifier not recognised\n");
-	return 0;
-}
-
 int parse_subopt(char **subs, const char * const *subopts, char **value)
 {
 	int opt = getsubopt(subs, (char * const *)subopts, value);
@@ -1207,7 +1078,7 @@ std::string std2s(v4l2_std_id std)
 	return s;
 }
 
-static void print_v4lstd(v4l2_std_id std)
+void print_v4lstd(v4l2_std_id std)
 {
 	if (std & 0xfff) {
 		printf("\t%s\n", partstd2s("PAL", std_pal, std).c_str());
@@ -1455,158 +1326,6 @@ static int parse_decflags(const char *s)
 	return 0;
 }
 
-static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings,
-		bool &query, int &enumerate)
-{
-	char *value;
-	char *subs = optarg;
-	struct v4l2_bt_timings *bt = &dv_timings->bt;
-
-	dv_timings->type = V4L2_DV_BT_656_1120;
-
-	while (*subs != '\0') {
-		static const char *const subopts[] = {
-			"width",
-			"height",
-			"interlaced",
-			"polarities",
-			"pixelclock",
-			"hfp",
-			"hs",
-			"hbp",
-			"vfp",
-			"vs",
-			"vbp",
-			"il_vfp",
-			"il_vs",
-			"il_vbp",
-			"index",
-			"query",
-			NULL
-		};
-
-		switch (parse_subopt(&subs, subopts, &value)) {
-		case 0:
-			bt->width = atoi(value);
-			break;
-		case 1:
-			bt->height = strtol(value, 0L, 0);
-			break;
-		case 2:
-			bt->interlaced = strtol(value, 0L, 0);
-			break;
-		case 3:
-			bt->polarities = strtol(value, 0L, 0);
-			break;
-		case 4:
-			bt->pixelclock = strtol(value, 0L, 0);
-			break;
-		case 5:
-			bt->hfrontporch = strtol(value, 0L, 0);
-			break;
-		case 6:
-			bt->hsync = strtol(value, 0L, 0);
-			break;
-		case 7:
-			bt->hbackporch = strtol(value, 0L, 0);
-			break;
-		case 8:
-			bt->vfrontporch = strtol(value, 0L, 0);
-			break;
-		case 9:
-			bt->vsync = strtol(value, 0L, 0);
-			break;
-		case 10:
-			bt->vbackporch = strtol(value, 0L, 0);
-			break;
-		case 11:
-			bt->il_vfrontporch = strtol(value, 0L, 0);
-			break;
-		case 12:
-			bt->il_vsync = strtol(value, 0L, 0);
-			break;
-		case 13:
-			bt->il_vbackporch = strtol(value, 0L, 0);
-			break;
-		case 14:
-			enumerate = strtol(value, 0L, 0);
-			break;
-		case 15:
-			query = true;
-			break;
-		default:
-			usage_stds();
-			exit(1);
-		}
-	}
-}
-
-
-static const flag_def dv_standards_def[] = {
-	{ V4L2_DV_BT_STD_CEA861, "CEA-861" },
-	{ V4L2_DV_BT_STD_DMT, "DMT" },
-	{ V4L2_DV_BT_STD_CVT, "CVT" },
-	{ V4L2_DV_BT_STD_GTF, "GTF" },
-	{ 0, NULL }
-};
-
-static const flag_def dv_flags_def[] = {
-	{ V4L2_DV_FL_REDUCED_BLANKING, "reduced blanking" },
-	{ V4L2_DV_FL_CAN_REDUCE_FPS, "framerate can be reduced by 1/1.001" },
-	{ V4L2_DV_FL_REDUCED_FPS, "framerate is reduced by 1/1.001" },
-	{ V4L2_DV_FL_HALF_LINE, "half-line" },
-	{ 0, NULL }
-};
-
-static void print_dv_timings(const struct v4l2_dv_timings *t)
-{
-	const struct v4l2_bt_timings *bt;
-
-	switch (t->type) {
-	case V4L2_DV_BT_656_1120:
-		bt = &t->bt;
-
-		printf("\tActive width: %d\n", bt->width);
-		printf("\tActive height: %d\n", bt->height);
-		printf("\tTotal width: %d\n",bt->width +
-				bt->hfrontporch + bt->hsync + bt->hbackporch);
-		printf("\tTotal height: %d\n", bt->height +
-				bt->vfrontporch + bt->vsync + bt->vbackporch +
-				bt->il_vfrontporch + bt->il_vsync + bt->il_vbackporch);
-
-		printf("\tFrame format: %s\n", bt->interlaced ? "interlaced" : "progressive");
-		printf("\tPolarities: %cvsync %chsync\n",
-				(bt->polarities & V4L2_DV_VSYNC_POS_POL) ? '+' : '-',
-				(bt->polarities & V4L2_DV_HSYNC_POS_POL) ? '+' : '-');
-		printf("\tPixelclock: %lld Hz", bt->pixelclock);
-		if (bt->width && bt->height)
-			printf(" (%.2f fps)", (double)bt->pixelclock /
-					((bt->width + bt->hfrontporch + bt->hsync + bt->hbackporch) *
-					 (bt->height + bt->vfrontporch + bt->vsync + bt->vbackporch +
-					  bt->il_vfrontporch + bt->il_vsync + bt->il_vbackporch)));
-		printf("\n");
-		printf("\tHorizontal frontporch: %d\n", bt->hfrontporch);
-		printf("\tHorizontal sync: %d\n", bt->hsync);
-		printf("\tHorizontal backporch: %d\n", bt->hbackporch);
-		if (bt->interlaced)
-			printf("\tField 1:\n");
-		printf("\tVertical frontporch: %d\n", bt->vfrontporch);
-		printf("\tVertical sync: %d\n", bt->vsync);
-		printf("\tVertical backporch: %d\n", bt->vbackporch);
-		if (bt->interlaced) {
-			printf("\tField 2:\n");
-			printf("\tVertical frontporch: %d\n", bt->il_vfrontporch);
-			printf("\tVertical sync: %d\n", bt->il_vsync);
-			printf("\tVertical backporch: %d\n", bt->il_vbackporch);
-		}
-		printf("\tStandards: %s\n", flags2s(bt->standards, dv_standards_def).c_str());
-		printf("\tFlags: %s\n", flags2s(bt->flags, dv_flags_def).c_str());
-		break;
-	default:
-		printf("Timing type not defined\n");
-		break;
-	}
-}
 
 static enum v4l2_field parse_field(const char *s)
 {
@@ -1732,19 +1451,10 @@ int main(int argc, char **argv)
 	struct v4l2_framebuffer fbuf;   /* fbuf */
 	struct v4l2_jpegcompression jpegcomp; /* jpeg compression */
 	struct v4l2_streamparm parm;	/* get/set parm */
-	struct v4l2_dv_enum_preset dv_enum_preset; /* list_dv_preset */
-	struct v4l2_enum_dv_timings dv_enum_timings; /* list_dv_timings */
-	struct v4l2_dv_preset dv_preset; /* set_dv_preset/get_dv_preset/query_dv_preset */
-	struct v4l2_dv_timings dv_timings; /* set_dv_bt_timings/get_dv_timings/query_dv_timings */
-	bool query_and_set_dv_timings = false;
-	int enum_and_set_dv_timings = -1;
-	struct v4l2_dv_timings_cap dv_timings_cap; /* get_dv_timings_cap */
 	struct v4l2_encoder_cmd enc_cmd; /* (try_)encoder_cmd */
 	struct v4l2_decoder_cmd dec_cmd; /* (try_)decoder_cmd */
-	v4l2_std_id std;		/* get_std/set_std */
 	double fps = 0;			/* set framerate speed, in fps */
 	double output_fps = 0;		/* set framerate speed, in fps */
-	struct v4l2_standard vs;	/* list_std */
 	int overlay;			/* overlay */
 	unsigned int *set_overlay_fmt_ptr = NULL;
 	struct v4l2_format *overlay_fmt_ptr = NULL;
@@ -1774,12 +1484,8 @@ int main(int argc, char **argv)
 	memset(&vcrop_out_overlay, 0, sizeof(vcrop_out_overlay));
 	memset(&vselection, 0, sizeof(vselection));
 	memset(&vselection_out, 0, sizeof(vselection_out));
-	memset(&vs, 0, sizeof(vs));
 	memset(&fbuf, 0, sizeof(fbuf));
 	memset(&jpegcomp, 0, sizeof(jpegcomp));
-	memset(&dv_preset, 0, sizeof(dv_preset));
-	memset(&dv_timings, 0, sizeof(dv_timings));
-	memset(&dv_enum_preset, 0, sizeof(dv_enum_preset));
 	memset(&enc_cmd, 0, sizeof(enc_cmd));
 	memset(&dec_cmd, 0, sizeof(dec_cmd));
 
@@ -1815,7 +1521,7 @@ int main(int argc, char **argv)
 			io_usage();
 			return 0;
 		case OptHelpStds:
-			usage_stds();
+			stds_usage();
 			return 0;
 		case OptHelpVidCap:
 			usage_vidcap();
@@ -2109,29 +1815,6 @@ int main(int argc, char **argv)
 			get_sel_target = gsel.target;
 			break;
 		}
-		case OptSetStandard:
-			if (!strncmp(optarg, "pal", 3)) {
-				if (optarg[3])
-					std = parse_pal(optarg + 3);
-				else
-					std = V4L2_STD_PAL;
-			}
-			else if (!strncmp(optarg, "ntsc", 4)) {
-				if (optarg[4])
-					std = parse_ntsc(optarg + 4);
-				else
-					std = V4L2_STD_NTSC;
-			}
-			else if (!strncmp(optarg, "secam", 5)) {
-				if (optarg[5])
-					std = parse_secam(optarg + 5);
-				else
-					std = V4L2_STD_SECAM;
-			}
-			else {
-				std = strtol(optarg, 0L, 0) | (1ULL << 63);
-			}
-			break;
 		case OptSetParm:
 			fps = strtod(optarg, NULL);
 			break;
@@ -2260,13 +1943,6 @@ int main(int argc, char **argv)
 			if (poll_for_event == 0)
 				return 1;
 			break;
-		case OptSetDvPreset:
-			dv_preset.preset = strtoul(optarg, 0L, 0);
-			break;
-		case OptSetDvBtTimings:
-			parse_dv_bt_timings(optarg, &dv_timings,
-					query_and_set_dv_timings, enum_and_set_dv_timings);
-			break;
 		case OptEncoderCmd:
 		case OptTryEncoderCmd:
 			subs = optarg;
@@ -2342,6 +2018,7 @@ int main(int argc, char **argv)
 			common_cmd(ch, optarg);
 			tuner_cmd(ch, optarg);
 			io_cmd(ch, optarg);
+			stds_cmd(ch, optarg);
 			break;
 		}
 	}
@@ -2444,39 +2121,7 @@ int main(int argc, char **argv)
 	common_set(fd);
 	tuner_set(fd);
 	io_set(fd);
-
-	if (options[OptSetStandard]) {
-		if (std & (1ULL << 63)) {
-			vs.index = std & 0xffff;
-			if (test_ioctl(fd, VIDIOC_ENUMSTD, &vs) >= 0) {
-				std = vs.id;
-			}
-		}
-		if (doioctl(fd, VIDIOC_S_STD, &std) == 0)
-			printf("Standard set to %08llx\n", (unsigned long long)std);
-	}
-
-        if (options[OptSetDvPreset]) {
-		if (doioctl(fd, VIDIOC_S_DV_PRESET, &dv_preset) >= 0) {
-			printf("Preset set: %d\n", dv_preset.preset);
-		}
-	}
-
-	if (options[OptSetDvBtTimings]) {
-		struct v4l2_enum_dv_timings et;
-
-		if (query_and_set_dv_timings)
-			doioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &dv_timings);
-		if (enum_and_set_dv_timings >= 0) {
-			memset(&et, 0, sizeof(et));
-			et.index = enum_and_set_dv_timings;
-			doioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &et);
-			dv_timings = et.timings;
-		}
-		if (doioctl(fd, VIDIOC_S_DV_TIMINGS, &dv_timings) >= 0) {
-			printf("BT timings set\n");
-		}
-	}
+	stds_set(fd);
 
 	if (options[OptSetParm]) {
 		memset(&parm, 0, sizeof(parm));
@@ -2753,6 +2398,7 @@ int main(int argc, char **argv)
 	common_get(fd);
 	tuner_get(fd);
 	io_get(fd);
+	stds_get(fd);
 
 	if (options[OptGetVideoFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -2934,76 +2580,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (options[OptGetStandard]) {
-		if (doioctl(fd, VIDIOC_G_STD, &std) == 0) {
-			printf("Video Standard = 0x%08llx\n", (unsigned long long)std);
-			print_v4lstd((unsigned long long)std);
-		}
-	}
-
-	if (options[OptGetDvPreset]) {
-		if (doioctl(fd, VIDIOC_G_DV_PRESET, &dv_preset) >= 0) {
-			printf("DV preset: %d\n", dv_preset.preset);
-		}
-	}
-
-	if (options[OptGetDvTimings]) {
-		if (doioctl(fd, VIDIOC_G_DV_TIMINGS, &dv_timings) >= 0) {
-			printf("DV timings:\n");
-			print_dv_timings(&dv_timings);
-		}
-	}
-
-	if (options[OptGetDvTimingsCap]) {
-		if (doioctl(fd, VIDIOC_DV_TIMINGS_CAP, &dv_timings_cap) >= 0) {
-			static const flag_def dv_caps_def[] = {
-				{ V4L2_DV_BT_CAP_INTERLACED, "Interlaced" },
-				{ V4L2_DV_BT_CAP_PROGRESSIVE, "Progressive" },
-				{ V4L2_DV_BT_CAP_REDUCED_BLANKING, "Reduced Blanking" },
-				{ V4L2_DV_BT_CAP_CUSTOM, "Custom Formats" },
-				{ 0, NULL }
-			};
-			struct v4l2_bt_timings_cap *bt = &dv_timings_cap.bt;
-
-			printf("DV timings capabilities:\n");
-			if (dv_timings_cap.type != V4L2_DV_BT_656_1120)
-				printf("\tUnknown type\n");
-			else {
-				printf("\tMinimum Width: %u\n", bt->min_width);
-				printf("\tMaximum Width: %u\n", bt->max_width);
-				printf("\tMinimum Height: %u\n", bt->min_height);
-				printf("\tMaximum Height: %u\n", bt->max_height);
-				printf("\tMinimum PClock: %llu\n", bt->min_pixelclock);
-				printf("\tMaximum PClock: %llu\n", bt->max_pixelclock);
-				printf("\tStandards: %s\n",
-					flags2s(bt->standards, dv_standards_def).c_str());
-				printf("\tCapabilities: %s\n",
-					flags2s(bt->capabilities, dv_caps_def).c_str());
-			}
-		}
-	}
-
-        if (options[OptQueryStandard]) {
-		if (doioctl(fd, VIDIOC_QUERYSTD, &std) == 0) {
-			printf("Video Standard = 0x%08llx\n", (unsigned long long)std);
-			print_v4lstd((unsigned long long)std);
-		}
-	}
-
-        if (options[OptQueryDvPreset]) {
-                doioctl(fd, VIDIOC_QUERY_DV_PRESET, &dv_preset);
-                if (dv_preset.preset != V4L2_DV_INVALID) {
-                        printf("Preset: %d\n", dv_preset.preset);
-                } else {
-                        fprintf(stderr, "No active input detected\n");
-                }
-        }
-
-        if (options[OptQueryDvTimings]) {
-                doioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &dv_timings);
-		print_dv_timings(&dv_timings);
-        }
-
         if (options[OptGetParm]) {
 		memset(&parm, 0, sizeof(parm));
 		parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -3052,23 +2628,7 @@ int main(int argc, char **argv)
 
 	common_list(fd);
 	io_list(fd);
-
-	if (options[OptListStandards]) {
-		printf("ioctl: VIDIOC_ENUMSTD\n");
-		vs.index = 0;
-		while (test_ioctl(fd, VIDIOC_ENUMSTD, &vs) >= 0) {
-			if (vs.index)
-				printf("\n");
-			printf("\tIndex       : %d\n", vs.index);
-			printf("\tID          : 0x%016llX\n", (unsigned long long)vs.id);
-			printf("\tName        : %s\n", vs.name);
-			printf("\tFrame period: %d/%d\n",
-			       vs.frameperiod.numerator,
-			       vs.frameperiod.denominator);
-			printf("\tFrame lines : %d\n", vs.framelines);
-			vs.index++;
-		}
-	}
+	stds_list(fd);
 
 	if (options[OptListFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
@@ -3138,33 +2698,6 @@ int main(int argc, char **argv)
 		cap.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
 		if (doioctl(fd, VIDIOC_G_SLICED_VBI_CAP, &cap) == 0) {
 			print_sliced_vbi_cap(cap);
-		}
-	}
-
-	if (options[OptListDvPresets]) {
-		dv_enum_preset.index = 0;
-		printf("ioctl: VIDIOC_ENUM_DV_PRESETS\n");
-		while (test_ioctl(fd, VIDIOC_ENUM_DV_PRESETS, &dv_enum_preset) >= 0) {
-			if (dv_enum_preset.index)
-				printf("\n");
-			printf("\tIndex   : %d\n", dv_enum_preset.index);
-			printf("\tPreset  : %d\n", dv_enum_preset.preset);
-			printf("\tName    : %s\n", dv_enum_preset.name);
-			printf("\tWidth   : %d\n", dv_enum_preset.width);
-			printf("\tHeight  : %d\n", dv_enum_preset.height);
-			dv_enum_preset.index++;
-		}
-	}
-
-	if (options[OptListDvTimings]) {
-		dv_enum_timings.index = 0;
-		printf("ioctl: VIDIOC_ENUM_DV_TIMINGS\n");
-		while (test_ioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &dv_enum_timings) >= 0) {
-			if (dv_enum_timings.index)
-				printf("\n");
-			printf("\tIndex: %d\n", dv_enum_timings.index);
-			print_dv_timings(&dv_enum_timings.timings);
-			dv_enum_timings.index++;
 		}
 	}
 
