@@ -52,7 +52,7 @@
 char options[OptLast];
 
 static int app_result;
-static int verbose;
+int verbose;
 
 unsigned capabilities;
 
@@ -63,16 +63,6 @@ static const flag_def service_def[] = {
 	{ V4L2_SLICED_WSS_625,     "wss" },
 	{ 0, NULL }
 };
-
-/* fmts specified */
-#define FmtWidth		(1L<<0)
-#define FmtHeight		(1L<<1)
-#define FmtChromaKey		(1L<<2)
-#define FmtGlobalAlpha		(1L<<3)
-#define FmtPixelFormat		(1L<<4)
-#define FmtLeft			(1L<<5)
-#define FmtTop			(1L<<6)
-#define FmtField		(1L<<7)
 
 /* crop specified */
 #define CropWidth		(1L<<0)
@@ -219,48 +209,6 @@ static struct option long_options[] = {
 	{"tuner-index", required_argument, 0, OptTunerIndex},
 	{0, 0, 0, 0}
 };
-
-static void usage_vidcap(void)
-{
-	printf("\nVideo Capture Formats options:\n"
-	       "  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n"
-	       "  --list-formats-mplane\n"
- 	       "                     display supported video multi-planar formats\n"
- 	       "                     [VIDIOC_ENUM_FMT]\n"
-	       "  --list-formats-ext display supported video formats including frame sizes\n"
-	       "                     and intervals\n"
-	       "  --list-formats-ext-mplane\n"
-	       "                     display supported video multi-planar formats including\n"
-	       "                     frame sizes and intervals\n"
-	       "  --list-framesizes=<f>\n"
-	       "                     list supported framesizes for pixelformat <f>\n"
-	       "                     [VIDIOC_ENUM_FRAMESIZES]\n"
-	       "                     pixelformat is the fourcc value as a string\n"
-	       "  --list-frameintervals=width=<w>,height=<h>,pixelformat=<f>\n"
-	       "                     list supported frame intervals for pixelformat <f> and\n"
-	       "                     the given width and height [VIDIOC_ENUM_FRAMEINTERVALS]\n"
-	       "                     pixelformat is the fourcc value as a string\n"
-	       "  -V, --get-fmt-video\n"
-	       "     		     query the video capture format [VIDIOC_G_FMT]\n"
-	       "  -v, --set-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
-	       "                     set the video capture format [VIDIOC_S_FMT]\n"
-	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats, or the fourcc value as a string\n"
-	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
-	       "                     try the video capture format [VIDIOC_TRY_FMT]\n"
-	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats, or the fourcc value as a string\n"
-	       "  --get-fmt-video-mplane\n"
-	       "     		     query the video capture format through the multi-planar API\n"
-	       "                     [VIDIOC_G_FMT]\n"
-	       "  --set-fmt-video-mplane\n"
-	       "  --try-fmt-video-mplane=width=<w>,height=<h>,pixelformat=<f>\n"
-	       "                     set/try the video capture format using the multi-planar API\n"
-	       "                     [VIDIOC_S/TRY_FMT]\n"
-	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats-mplane, or the fourcc value as a string\n"
-	       );
-}
 
 static void usage_vidout(void)
 {
@@ -436,7 +384,7 @@ static void usage_all(void)
        tuner_usage();
        io_usage();
        stds_usage();
-       usage_vidcap();
+       vidcap_usage();
        usage_vidout();
        usage_overlay();
        usage_vbi();
@@ -483,7 +431,7 @@ static std::string num2s(unsigned num)
 	return buf;
 }
 
-static std::string buftype2s(int type)
+std::string buftype2s(int type)
 {
 	switch (type) {
 	case 0:
@@ -515,7 +463,7 @@ static std::string buftype2s(int type)
 	}
 }
 
-static std::string fcc2s(unsigned int val)
+std::string fcc2s(unsigned int val)
 {
 	std::string s;
 
@@ -747,7 +695,7 @@ static void print_selection(const struct v4l2_selection &sel)
 			sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 }
 
-static void printfmt(const struct v4l2_format &vfmt)
+void printfmt(const struct v4l2_format &vfmt)
 {
 	const flag_def vbi_def[] = {
 		{ V4L2_VBI_UNSYNC,     "unsynchronized" },
@@ -826,79 +774,18 @@ static void printfmt(const struct v4l2_format &vfmt)
 	}
 }
 
-static std::string frmtype2s(unsigned type)
-{
-	static const char *types[] = {
-		"Unknown",
-		"Discrete",
-		"Continuous",
-		"Stepwise"
-	};
-
-	if (type > 3)
-		type = 0;
-	return types[type];
-}
-
-static std::string fract2sec(const struct v4l2_fract &f)
-{
-	char buf[100];
-
-	sprintf(buf, "%.3f s", (1.0 * f.numerator) / f.denominator);
-	return buf;
-}
-
-static std::string fract2fps(const struct v4l2_fract &f)
-{
-	char buf[100];
-
-	sprintf(buf, "%.3f fps", (1.0 * f.denominator) / f.numerator);
-	return buf;
-}
-
-static void print_frmsize(const struct v4l2_frmsizeenum &frmsize, const char *prefix)
-{
-	printf("%s\tSize: %s ", prefix, frmtype2s(frmsize.type).c_str());
-	if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
-		printf("%dx%d", frmsize.discrete.width, frmsize.discrete.height);
-	} else if (frmsize.type == V4L2_FRMSIZE_TYPE_STEPWISE) {
-		printf("%dx%d - %dx%d with step %d/%d",
-				frmsize.stepwise.min_width,
-				frmsize.stepwise.min_height,
-				frmsize.stepwise.max_width,
-				frmsize.stepwise.max_height,
-				frmsize.stepwise.step_width,
-				frmsize.stepwise.step_height);
-	}
-	printf("\n");
-}
-
-static void print_frmival(const struct v4l2_frmivalenum &frmival, const char *prefix)
-{
-	printf("%s\tInterval: %s ", prefix, frmtype2s(frmival.type).c_str());
-	if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
-		printf("%s (%s)\n", fract2sec(frmival.discrete).c_str(),
-				fract2fps(frmival.discrete).c_str());
-	} else if (frmival.type == V4L2_FRMIVAL_TYPE_STEPWISE) {
-		printf("%s - %s with step %s\n",
-				fract2sec(frmival.stepwise.min).c_str(),
-				fract2sec(frmival.stepwise.max).c_str(),
-				fract2sec(frmival.stepwise.step).c_str());
-		printf("%s\t            : ", prefix);
-		printf("(%s - %s with step %s)\n",
-				fract2fps(frmival.stepwise.min).c_str(),
-				fract2fps(frmival.stepwise.max).c_str(),
-				fract2fps(frmival.stepwise.step).c_str());
-	}
-}
-
 static const flag_def fmtdesc_def[] = {
 	{ V4L2_FMT_FLAG_COMPRESSED, "compressed" },
 	{ V4L2_FMT_FLAG_EMULATED, "emulated" },
 	{ 0, NULL }
 };
 
-static void print_video_formats(int fd, enum v4l2_buf_type type)
+std::string fmtdesc2s(unsigned flags)
+{
+	return flags2s(flags, fmtdesc_def);
+}
+
+void print_video_formats(int fd, enum v4l2_buf_type type)
 {
 	struct v4l2_fmtdesc fmt;
 
@@ -909,46 +796,9 @@ static void print_video_formats(int fd, enum v4l2_buf_type type)
 		printf("\tType        : %s\n", buftype2s(type).c_str());
 		printf("\tPixel Format: '%s'", fcc2s(fmt.pixelformat).c_str());
 		if (fmt.flags)
-			printf(" (%s)", flags2s(fmt.flags, fmtdesc_def).c_str());
+			printf(" (%s)", fmtdesc2s(fmt.flags).c_str());
 		printf("\n");
 		printf("\tName        : %s\n", fmt.description);
-		printf("\n");
-		fmt.index++;
-	}
-}
-
-static void print_video_formats_ext(int fd, enum v4l2_buf_type type)
-{
-	struct v4l2_fmtdesc fmt;
-	struct v4l2_frmsizeenum frmsize;
-	struct v4l2_frmivalenum frmival;
-
-	fmt.index = 0;
-	fmt.type = type;
-	while (test_ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
-		printf("\tIndex       : %d\n", fmt.index);
-		printf("\tType        : %s\n", buftype2s(type).c_str());
-		printf("\tPixel Format: '%s'", fcc2s(fmt.pixelformat).c_str());
-		if (fmt.flags)
-			printf(" (%s)", flags2s(fmt.flags, fmtdesc_def).c_str());
-		printf("\n");
-		printf("\tName        : %s\n", fmt.description);
-		frmsize.pixel_format = fmt.pixelformat;
-		frmsize.index = 0;
-		while (test_ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
-			print_frmsize(frmsize, "\t");
-			if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
-				frmival.index = 0;
-				frmival.pixel_format = fmt.pixelformat;
-				frmival.width = frmsize.discrete.width;
-				frmival.height = frmsize.discrete.height;
-				while (test_ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) >= 0) {
-					print_frmival(frmival, "\t\t");
-					frmival.index++;
-				}
-			}
-			frmsize.index++;
-		}
 		printf("\n");
 		fmt.index++;
 	}
@@ -1089,6 +939,45 @@ void print_v4lstd(v4l2_std_id std)
 	if (std & 0xf000000) {
 		printf("\t%s\n", partstd2s("ATSC", std_atsc, std >> 24).c_str());
 	}
+}
+
+int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat)
+{
+	char *value, *subs;
+	int fmts = 0;
+
+	subs = optarg;
+	while (*subs != '\0') {
+		static const char *const subopts[] = {
+			"width",
+			"height",
+			"pixelformat",
+			NULL
+		};
+
+		switch (parse_subopt(&subs, subopts, &value)) {
+		case 0:
+			width = strtol(value, 0L, 0);
+			fmts |= FmtWidth;
+			break;
+		case 1:
+			height = strtol(value, 0L, 0);
+			fmts |= FmtHeight;
+			break;
+		case 2:
+			if (strlen(value) == 4)
+				pixelformat =
+					v4l2_fourcc(value[0], value[1],
+							value[2], value[3]);
+			else
+				pixelformat = strtol(value, 0L, 0);
+			fmts |= FmtPixelFormat;
+			break;
+		default:
+			return 0;
+		}
+	}
+	return fmts;
 }
 
 static void print_enccmd(const struct v4l2_encoder_cmd &cmd)
@@ -1392,7 +1281,7 @@ static __u32 parse_event(const char *e, const char **name)
 	return event;
 }
 
-static __u32 find_pixel_format(int fd, unsigned index, bool mplane)
+__u32 find_pixel_format(int fd, unsigned index, bool mplane)
 {
 	struct v4l2_fmtdesc fmt;
 
@@ -1428,7 +1317,6 @@ int main(int argc, char **argv)
 	/* command args */
 	int ch;
 	const char *device = "/dev/video0";	/* -d device */
-	struct v4l2_format vfmt;	/* set_format/get_format for video */
 	struct v4l2_format vfmt_out;	/* set_format/get_format video output */
 	struct v4l2_format vbi_fmt;	/* set_format/get_format for sliced VBI */
 	struct v4l2_format vbi_fmt_out;	/* set_format/get_format for sliced VBI output */
@@ -1437,8 +1325,6 @@ int main(int argc, char **argv)
 	struct v4l2_format overlay_fmt;	/* set_format/get_format video overlay */
 	struct v4l2_format overlay_fmt_out;	/* set_format/get_format video overlay output */
 	struct v4l2_capability vcap;	/* list_cap */
-	struct v4l2_frmsizeenum frmsize;/* list frame sizes */
-	struct v4l2_frmivalenum frmival;/* list frame intervals */
 	struct v4l2_rect vcrop; 	/* crop rect */
 	struct v4l2_rect vcrop_out; 	/* crop rect */
 	struct v4l2_rect vcrop_overlay; 	/* crop rect */
@@ -1464,7 +1350,6 @@ int main(int argc, char **argv)
 	int idx = 0;
 	int ret;
 
-	memset(&vfmt, 0, sizeof(vfmt));
 	memset(&vbi_fmt, 0, sizeof(vbi_fmt));
 	memset(&raw_fmt, 0, sizeof(raw_fmt));
 	memset(&vfmt_out, 0, sizeof(vfmt_out));
@@ -1473,8 +1358,6 @@ int main(int argc, char **argv)
 	memset(&overlay_fmt_out, 0, sizeof(overlay_fmt_out));
 	memset(&raw_fmt_out, 0, sizeof(raw_fmt_out));
 	memset(&vcap, 0, sizeof(vcap));
-	memset(&frmsize, 0, sizeof(frmsize));
-	memset(&frmival, 0, sizeof(frmival));
 	memset(&vcrop, 0, sizeof(vcrop));
 	memset(&vcrop_out, 0, sizeof(vcrop_out));
 	memset(&vcrop_overlay, 0, sizeof(vcrop_overlay));
@@ -1521,7 +1404,7 @@ int main(int argc, char **argv)
 			stds_usage();
 			return 0;
 		case OptHelpVidCap:
-			usage_vidcap();
+			vidcap_usage();
 			return 0;
 		case OptHelpVidOut:
 			usage_vidout();
@@ -1557,11 +1440,7 @@ int main(int argc, char **argv)
 		case OptSetVideoOutMplaneFormat:
 		case OptTryVideoOutMplaneFormat:
 		case OptSetVideoOutFormat:
-		case OptTryVideoOutFormat:
-		case OptSetVideoMplaneFormat:
-		case OptTryVideoMplaneFormat:
-		case OptSetVideoFormat:
-		case OptTryVideoFormat: {
+		case OptTryVideoOutFormat: {
 			__u32 width = 0, height = 0, pixelformat = 0;
 			int fmts = 0;
 
@@ -1600,31 +1479,11 @@ int main(int argc, char **argv)
 					case OptTryVideoOutFormat:
 						usage_vidout();
 						break;
-					case OptSetVideoMplaneFormat:
-					case OptTryVideoMplaneFormat:
-					case OptSetVideoFormat:
-					case OptTryVideoFormat:
-						usage_vidcap();
-						break;
 					}
 					exit(1);
 				}
 			}
 			switch (ch) {
-			case OptSetVideoFormat:
-			case OptTryVideoFormat:
-				vfmt.fmt.pix.width = width;
-				vfmt.fmt.pix.height = height;
-				vfmt.fmt.pix.pixelformat = pixelformat;
-				set_fmts = fmts;
-				break;
-			case OptSetVideoMplaneFormat:
-			case OptTryVideoMplaneFormat:
-				vfmt.fmt.pix_mp.width = width;
-				vfmt.fmt.pix_mp.height = height;
-				vfmt.fmt.pix_mp.pixelformat = pixelformat;
-				set_fmts = fmts;
-				break;
 			case OptSetVideoOutFormat:
 			case OptTryVideoOutFormat:
 				vfmt_out.fmt.pix.width = width;
@@ -1742,44 +1601,6 @@ int main(int argc, char **argv)
 			break;
 		case OptOverlay:
 			overlay = strtol(optarg, 0L, 0);
-			break;
-		case OptListFrameSizes:
-			if (strlen(optarg) == 4)
-			    frmsize.pixel_format = v4l2_fourcc(optarg[0], optarg[1],
-					optarg[2], optarg[3]);
-			else
-			    frmsize.pixel_format = strtol(optarg, 0L, 0);
-			break;
-		case OptListFrameIntervals:
-			subs = optarg;
-			while (*subs != '\0') {
-				static const char *const subopts[] = {
-					"width",
-					"height",
-					"pixelformat",
-					NULL
-				};
-
-				switch (parse_subopt(&subs, subopts, &value)) {
-				case 0:
-					frmival.width = strtol(value, 0L, 0);
-					break;
-				case 1:
-					frmival.height = strtol(value, 0L, 0);
-					break;
-				case 2:
-					if (strlen(value) == 4)
-						frmival.pixel_format =
-						    v4l2_fourcc(value[0], value[1],
-							    value[2], value[3]);
-					else
-						frmival.pixel_format = strtol(value, 0L, 0);
-					break;
-				default:
-					usage_vidcap();
-					break;
-				}
-			}
 			break;
 		case OptSetCrop:
 			parse_crop(optarg, set_crop, vcrop);
@@ -2016,6 +1837,7 @@ int main(int argc, char **argv)
 			tuner_cmd(ch, optarg);
 			io_cmd(ch, optarg);
 			stds_cmd(ch, optarg);
+			vidcap_cmd(ch, optarg);
 			break;
 		}
 	}
@@ -2119,6 +1941,7 @@ int main(int argc, char **argv)
 	tuner_set(fd);
 	io_set(fd);
 	stds_set(fd);
+	vidcap_set(fd);
 
 	if (options[OptSetParm]) {
 		memset(&parm, 0, sizeof(parm));
@@ -2153,58 +1976,6 @@ int main(int argc, char **argv)
 			else
 				printf("Frame rate set to %.3f fps\n",
 					1.0 * tf->denominator / tf->numerator);
-		}
-	}
-
-	if (options[OptSetVideoFormat] || options[OptTryVideoFormat]) {
-		struct v4l2_format in_vfmt;
-
-		in_vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &in_vfmt) == 0) {
-			if (set_fmts & FmtWidth)
-				in_vfmt.fmt.pix.width = vfmt.fmt.pix.width;
-			if (set_fmts & FmtHeight)
-				in_vfmt.fmt.pix.height = vfmt.fmt.pix.height;
-			if (set_fmts & FmtPixelFormat) {
-				in_vfmt.fmt.pix.pixelformat = vfmt.fmt.pix.pixelformat;
-				if (in_vfmt.fmt.pix.pixelformat < 256) {
-					in_vfmt.fmt.pix.pixelformat =
-						find_pixel_format(fd, in_vfmt.fmt.pix.pixelformat,
-								  false);
-				}
-			}
-			if (options[OptSetVideoFormat])
-				ret = doioctl(fd, VIDIOC_S_FMT, &in_vfmt);
-			else
-				ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt);
-			if (ret == 0 && verbose)
-				printfmt(in_vfmt);
-		}
-	}
-
-	if (options[OptSetVideoMplaneFormat] || options[OptTryVideoMplaneFormat]) {
-		struct v4l2_format in_vfmt;
-
-		in_vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-		if (doioctl(fd, VIDIOC_G_FMT, &in_vfmt) == 0) {
-			if (set_fmts & FmtWidth)
-				in_vfmt.fmt.pix_mp.width = vfmt.fmt.pix_mp.width;
-			if (set_fmts & FmtHeight)
-				in_vfmt.fmt.pix_mp.height = vfmt.fmt.pix_mp.height;
-			if (set_fmts & FmtPixelFormat) {
-				in_vfmt.fmt.pix_mp.pixelformat = vfmt.fmt.pix_mp.pixelformat;
-				if (in_vfmt.fmt.pix_mp.pixelformat < 256) {
-					in_vfmt.fmt.pix_mp.pixelformat =
-						find_pixel_format(fd, in_vfmt.fmt.pix_mp.pixelformat,
-								  true);
-				}
-			}
-			if (options[OptSetVideoMplaneFormat])
-				ret = doioctl(fd, VIDIOC_S_FMT, &in_vfmt);
-			else
-				ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt);
-			if (ret == 0 && verbose)
-				printfmt(in_vfmt);
 		}
 	}
 
@@ -2396,18 +2167,7 @@ int main(int argc, char **argv)
 	tuner_get(fd);
 	io_get(fd);
 	stds_get(fd);
-
-	if (options[OptGetVideoFormat]) {
-		vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(vfmt);
-	}
-
-	if (options[OptGetVideoMplaneFormat]) {
-		vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(vfmt);
-	}
+	vidcap_get(fd);
 
 	if (options[OptGetVideoOutFormat]) {
 		vfmt_out.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
@@ -2626,44 +2386,7 @@ int main(int argc, char **argv)
 	common_list(fd);
 	io_list(fd);
 	stds_list(fd);
-
-	if (options[OptListFormats]) {
-		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE);
-	}
-
-	if (options[OptListMplaneFormats]) {
-		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
-	}
-
-	if (options[OptListFormatsExt]) {
-		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats_ext(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE);
-	}
-
-	if (options[OptListMplaneFormatsExt]) {
-		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats_ext(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
-	}
-
-	if (options[OptListFrameSizes]) {
-		printf("ioctl: VIDIOC_ENUM_FRAMESIZES\n");
-		frmsize.index = 0;
-		while (test_ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
-			print_frmsize(frmsize, "");
-			frmsize.index++;
-		}
-	}
-
-	if (options[OptListFrameIntervals]) {
-		printf("ioctl: VIDIOC_ENUM_FRAMEINTERVALS\n");
-		frmival.index = 0;
-		while (test_ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) >= 0) {
-			print_frmival(frmival, "");
-			frmival.index++;
-		}
-	}
+	vidcap_list(fd);
 
 	if (options[OptListOverlayFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
