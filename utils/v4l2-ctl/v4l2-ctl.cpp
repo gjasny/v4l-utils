@@ -220,32 +220,6 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static void usage_io(void)
-{
-	printf("\nInput/Output options:\n"
-	       "  -I, --get-input    query the video input [VIDIOC_G_INPUT]\n"
-	       "  -i, --set-input=<num>\n"
-	       "                     set the video input to <num> [VIDIOC_S_INPUT]\n"
-	       "  -N, --list-outputs display video outputs [VIDIOC_ENUMOUTPUT]\n"
-	       "  -n, --list-inputs  display video inputs [VIDIOC_ENUMINPUT]\n"
-	       "  -O, --get-output   query the video output [VIDIOC_G_OUTPUT]\n"
-	       "  -o, --set-output=<num>\n"
-	       "                     set the video output to <num> [VIDIOC_S_OUTPUT]\n"
-	       "  --set-audio-output=<num>\n"
-	       "                     set the audio output to <num> [VIDIOC_S_AUDOUT]\n"
-	       "  --get-audio-input  query the audio input [VIDIOC_G_AUDIO]\n"
-	       "  --set-audio-input=<num>\n"
-	       "                     set the audio input to <num> [VIDIOC_S_AUDIO]\n"
-	       "  --get-audio-output query the audio output [VIDIOC_G_AUDOUT]\n"
-	       "  --set-audio-output=<num>\n"
-	       "                     set the audio output to <num> [VIDIOC_S_AUDOUT]\n"
-	       "  --list-audio-outputs\n"
-	       "                     display audio outputs [VIDIOC_ENUMAUDOUT]\n"
-	       "  --list-audio-inputs\n"
-	       "                     display audio inputs [VIDIOC_ENUMAUDIO]\n"
-	       );
-}
-
 static void usage_stds(void)
 {
 	printf("\nStandards/Presets/Timings options:\n"
@@ -501,7 +475,7 @@ static void usage_all(void)
 {
        common_usage();
        tuner_usage();
-       usage_io();
+       io_usage();
        usage_stds();
        usage_vidcap();
        usage_vidout();
@@ -662,53 +636,6 @@ std::string flags2s(unsigned val, const flag_def *def)
 		s += num2s(val);
 	}
 	return s;
-}
-
-static const flag_def in_status_def[] = {
-	{ V4L2_IN_ST_NO_POWER,    "no power" },
-	{ V4L2_IN_ST_NO_SIGNAL,   "no signal" },
-	{ V4L2_IN_ST_NO_COLOR,    "no color" },
-	{ V4L2_IN_ST_HFLIP,       "hflip" },
-	{ V4L2_IN_ST_VFLIP,       "vflip" },
-	{ V4L2_IN_ST_NO_H_LOCK,   "no hsync lock." },
-	{ V4L2_IN_ST_COLOR_KILL,  "color kill" },
-	{ V4L2_IN_ST_NO_SYNC,     "no sync lock" },
-	{ V4L2_IN_ST_NO_EQU,      "no equalizer lock" },
-	{ V4L2_IN_ST_NO_CARRIER,  "no carrier" },
-	{ V4L2_IN_ST_MACROVISION, "macrovision" },
-	{ V4L2_IN_ST_NO_ACCESS,   "no conditional access" },
-	{ V4L2_IN_ST_VTR,         "VTR time constant" },
-	{ 0, NULL }
-};
-
-static std::string status2s(__u32 status)
-{
-	return status ? flags2s(status, in_status_def) : "ok";
-}
-
-
-static const flag_def input_cap_def[] = {
-	{V4L2_IN_CAP_PRESETS, "DV presets" },
-	{V4L2_IN_CAP_CUSTOM_TIMINGS, "DV timings" },
-	{V4L2_IN_CAP_STD, "SD presets" },
-	{ 0, NULL }
-};
-
-static std::string input_cap2s(__u32 capabilities)
-{
-	return capabilities ? flags2s(capabilities, input_cap_def) : "not defined";
-}
-
-static const flag_def output_cap_def[] = {
-	{V4L2_OUT_CAP_PRESETS, "DV presets" },
-	{V4L2_OUT_CAP_CUSTOM_TIMINGS, "DV timings" },
-	{V4L2_OUT_CAP_STD, "SD presets" },
-	{ 0, NULL }
-};
-
-static std::string output_cap2s(__u32 capabilities)
-{
-	return capabilities ? flags2s(capabilities, output_cap_def) : "not defined";
 }
 
 static void print_sliced_vbi_cap(struct v4l2_sliced_vbi_cap &cap)
@@ -1255,7 +1182,7 @@ static const char *std_atsc[] = {
 	NULL
 };
 
-static std::string std2s(v4l2_std_id std)
+std::string std2s(v4l2_std_id std)
 {
 	std::string s;
 
@@ -1791,10 +1718,6 @@ int main(int argc, char **argv)
 	struct v4l2_format overlay_fmt;	/* set_format/get_format video overlay */
 	struct v4l2_format overlay_fmt_out;	/* set_format/get_format video overlay output */
 	struct v4l2_capability vcap;	/* list_cap */
-	struct v4l2_input vin;		/* list_inputs */
-	struct v4l2_output vout;	/* list_outputs */
-	struct v4l2_audio vaudio;	/* list audio inputs */
-	struct v4l2_audioout vaudout;   /* audio outputs */
 	struct v4l2_frmsizeenum frmsize;/* list frame sizes */
 	struct v4l2_frmivalenum frmival;/* list frame intervals */
 	struct v4l2_rect vcrop; 	/* crop rect */
@@ -1815,8 +1738,6 @@ int main(int argc, char **argv)
 	struct v4l2_dv_timings_cap dv_timings_cap; /* get_dv_timings_cap */
 	struct v4l2_encoder_cmd enc_cmd; /* (try_)encoder_cmd */
 	struct v4l2_decoder_cmd dec_cmd; /* (try_)decoder_cmd */
-	int input;			/* set_input/get_input */
-	int output;			/* set_output/get_output */
 	v4l2_std_id std;		/* get_std/set_std */
 	double fps = 0;			/* set framerate speed, in fps */
 	double output_fps = 0;		/* set framerate speed, in fps */
@@ -1842,10 +1763,6 @@ int main(int argc, char **argv)
 	memset(&overlay_fmt_out, 0, sizeof(overlay_fmt_out));
 	memset(&raw_fmt_out, 0, sizeof(raw_fmt_out));
 	memset(&vcap, 0, sizeof(vcap));
-	memset(&vin, 0, sizeof(vin));
-	memset(&vout, 0, sizeof(vout));
-	memset(&vaudio, 0, sizeof(vaudio));
-	memset(&vaudout, 0, sizeof(vaudout));
 	memset(&frmsize, 0, sizeof(frmsize));
 	memset(&frmival, 0, sizeof(frmival));
 	memset(&vcrop, 0, sizeof(vcrop));
@@ -1892,7 +1809,7 @@ int main(int argc, char **argv)
 			tuner_usage();
 			return 0;
 		case OptHelpIO:
-			usage_io();
+			io_usage();
 			return 0;
 		case OptHelpStds:
 			usage_stds();
@@ -2189,18 +2106,6 @@ int main(int argc, char **argv)
 			get_sel_target = gsel.target;
 			break;
 		}
-		case OptSetInput:
-			input = strtol(optarg, 0L, 0);
-			break;
-		case OptSetOutput:
-			output = strtol(optarg, 0L, 0);
-			break;
-		case OptSetAudioInput:
-			vaudio.index = strtol(optarg, 0L, 0);
-			break;
-		case OptSetAudioOutput:
-			vaudout.index = strtol(optarg, 0L, 0);
-			break;
 		case OptSetStandard:
 			if (!strncmp(optarg, "pal", 3)) {
 				if (optarg[3])
@@ -2433,6 +2338,7 @@ int main(int argc, char **argv)
 		default:
 			common_cmd(ch, optarg);
 			tuner_cmd(ch, optarg);
+			io_cmd(ch, optarg);
 			break;
 		}
 	}
@@ -2534,6 +2440,7 @@ int main(int argc, char **argv)
 
 	common_set(fd);
 	tuner_set(fd);
+	io_set(fd);
 
 	if (options[OptSetStandard]) {
 		if (std & (1ULL << 63)) {
@@ -2602,31 +2509,6 @@ int main(int argc, char **argv)
 				printf("Frame rate set to %.3f fps\n",
 					1.0 * tf->denominator / tf->numerator);
 		}
-	}
-
-	if (options[OptSetInput]) {
-		if (doioctl(fd, VIDIOC_S_INPUT, &input) == 0) {
-			printf("Video input set to %d", input);
-			vin.index = input;
-			if (test_ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0)
-				printf(" (%s: %s)", vin.name, status2s(vin.status).c_str());
-			printf("\n");
-		}
-	}
-
-	if (options[OptSetOutput]) {
-		if (doioctl(fd, VIDIOC_S_OUTPUT, &output) == 0)
-			printf("Output set to %d\n", output);
-	}
-
-	if (options[OptSetAudioInput]) {
-		if (doioctl(fd, VIDIOC_S_AUDIO, &vaudio) == 0)
-			printf("Audio input set to %d\n", vaudio.index);
-	}
-
-	if (options[OptSetAudioOutput]) {
-		if (doioctl(fd, VIDIOC_S_AUDOUT, &vaudout) == 0)
-			printf("Audio output set to %d\n", vaudout.index);
 	}
 
 	if (options[OptSetVideoFormat] || options[OptTryVideoFormat]) {
@@ -2867,6 +2749,7 @@ int main(int argc, char **argv)
 
 	common_get(fd);
 	tuner_get(fd);
+	io_get(fd);
 
 	if (options[OptGetVideoFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -3048,37 +2931,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (options[OptGetInput]) {
-		if (doioctl(fd, VIDIOC_G_INPUT, &input) == 0) {
-			printf("Video input : %d", input);
-			vin.index = input;
-			if (test_ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0)
-				printf(" (%s: %s)", vin.name, status2s(vin.status).c_str());
-			printf("\n");
-		}
-	}
-
-	if (options[OptGetOutput]) {
-		if (doioctl(fd, VIDIOC_G_OUTPUT, &output) == 0) {
-			printf("Video output: %d", output);
-			vout.index = output;
-			if (test_ioctl(fd, VIDIOC_ENUMOUTPUT, &vout) >= 0) {
-				printf(" (%s)", vout.name);
-			}
-			printf("\n");
-		}
-	}
-
-	if (options[OptGetAudioInput]) {
-		if (doioctl(fd, VIDIOC_G_AUDIO, &vaudio) == 0)
-			printf("Audio input : %d (%s)\n", vaudio.index, vaudio.name);
-	}
-
-	if (options[OptGetAudioOutput]) {
-		if (doioctl(fd, VIDIOC_G_AUDOUT, &vaudout) == 0)
-			printf("Audio output: %d (%s)\n", vaudout.index, vaudout.name);
-	}
-
 	if (options[OptGetStandard]) {
 		if (doioctl(fd, VIDIOC_G_STD, &std) == 0) {
 			printf("Video Standard = 0x%08llx\n", (unsigned long long)std);
@@ -3195,67 +3047,8 @@ int main(int argc, char **argv)
 
 	/* List options */
 
-	if (options[OptListInputs]) {
-		vin.index = 0;
-		printf("ioctl: VIDIOC_ENUMINPUT\n");
-		while (test_ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0) {
-			if (vin.index)
-				printf("\n");
-			printf("\tInput       : %d\n", vin.index);
-			printf("\tName        : %s\n", vin.name);
-			printf("\tType        : 0x%08X\n", vin.type);
-			printf("\tAudioset    : 0x%08X\n", vin.audioset);
-			printf("\tTuner       : 0x%08X\n", vin.tuner);
-			printf("\tStandard    : 0x%016llX (%s)\n", (unsigned long long)vin.std,
-				std2s(vin.std).c_str());
-			printf("\tStatus      : 0x%08X (%s)\n", vin.status, status2s(vin.status).c_str());
-			printf("\tCapabilities: 0x%08X (%s)\n", vin.capabilities, input_cap2s(vin.capabilities).c_str());
-                        vin.index++;
-                }
-	}
-
-	if (options[OptListOutputs]) {
-		vout.index = 0;
-		printf("ioctl: VIDIOC_ENUMOUTPUT\n");
-		while (test_ioctl(fd, VIDIOC_ENUMOUTPUT, &vout) >= 0) {
-			if (vout.index)
-				printf("\n");
-			printf("\tOutput      : %d\n", vout.index);
-			printf("\tName        : %s\n", vout.name);
-			printf("\tType        : 0x%08X\n", vout.type);
-			printf("\tAudioset    : 0x%08X\n", vout.audioset);
-			printf("\tStandard    : 0x%016llX (%s)\n", (unsigned long long)vout.std,
-					std2s(vout.std).c_str());
-			printf("\tCapabilities: 0x%08X (%s)\n", vout.capabilities, output_cap2s(vout.capabilities).c_str());
-			vout.index++;
-		}
-	}
-
-	if (options[OptListAudioInputs]) {
-		struct v4l2_audio vaudio;	/* list audio inputs */
-		vaudio.index = 0;
-		printf("ioctl: VIDIOC_ENUMAUDIO\n");
-		while (test_ioctl(fd, VIDIOC_ENUMAUDIO, &vaudio) >= 0) {
-			if (vaudio.index)
-				printf("\n");
-			printf("\tInput   : %d\n", vaudio.index);
-			printf("\tName    : %s\n", vaudio.name);
-			vaudio.index++;
-		}
-	}
-
-	if (options[OptListAudioOutputs]) {
-		struct v4l2_audioout vaudio;	/* list audio outputs */
-		vaudio.index = 0;
-		printf("ioctl: VIDIOC_ENUMAUDOUT\n");
-		while (test_ioctl(fd, VIDIOC_ENUMAUDOUT, &vaudio) >= 0) {
-			if (vaudio.index)
-				printf("\n");
-			printf("\tOutput  : %d\n", vaudio.index);
-			printf("\tName    : %s\n", vaudio.name);
-			vaudio.index++;
-		}
-	}
+	common_list(fd);
+	io_list(fd);
 
 	if (options[OptListStandards]) {
 		printf("ioctl: VIDIOC_ENUMSTD\n");
@@ -3326,8 +3119,6 @@ int main(int argc, char **argv)
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
 		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
 	}
-
-	common_list(fd);
 
 	if (options[OptGetSlicedVbiCap]) {
 		struct v4l2_sliced_vbi_cap cap;

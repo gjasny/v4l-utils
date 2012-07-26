@@ -159,6 +159,7 @@ int doioctl_name(int fd, unsigned long int request, void *parm, const char *name
 int test_ioctl(int fd, int cmd, void *arg);
 std::string flags2s(unsigned val, const flag_def *def);
 int parse_subopt(char **subs, const char * const *subopts, char **value);
+std::string std2s(v4l2_std_id std);
 
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 
@@ -177,6 +178,13 @@ void tuner_usage(void);
 void tuner_cmd(int ch, char *optarg);
 void tuner_set(int fd);
 void tuner_get(int fd);
+
+// v4l2-ctl-io.cpp
+void io_usage(void);
+void io_cmd(int ch, char *optarg);
+void io_set(int fd);
+void io_get(int fd);
+void io_list(int fd);
 
 
 #endif

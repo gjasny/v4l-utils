@@ -12,7 +12,7 @@ cx18-ctl: cx18-ctl.o
 ivtv-ctl: ivtv-ctl.o
 	$(CC) $(LDFLAGS) -o $@ $^ -lm
 
-v4l2-ctl: v4l2-ctl.o v4l2-ctl-common.o v4l2-ctl-tuner.o
+v4l2-ctl: v4l2-ctl.o v4l2-ctl-common.o v4l2-ctl-tuner.o v4l2-ctl-io.o
 	$(CXX) $(LDFLAGS) -o $@ $^ -lv4l2 -lv4lconvert -lrt
 
 install: $(TARGETS)
