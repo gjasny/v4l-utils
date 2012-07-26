@@ -20,7 +20,7 @@
 #include <string>
 
 #include "v4l2-ctl.h"
-	
+
 static int tuner_index = 0;
 static struct v4l2_tuner tuner;        	/* set_freq/get_freq */
 static struct v4l2_modulator modulator;	/* set_freq/get_freq */
