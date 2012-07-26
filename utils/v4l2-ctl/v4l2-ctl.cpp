@@ -60,14 +60,6 @@ int verbose;
 
 unsigned capabilities;
 
-static const flag_def service_def[] = {
-	{ V4L2_SLICED_TELETEXT_B,  "teletext" },
-	{ V4L2_SLICED_VPS,         "vps" },
-	{ V4L2_SLICED_CAPTION_525, "cc" },
-	{ V4L2_SLICED_WSS_625,     "wss" },
-	{ 0, NULL }
-};
-
 /* crop specified */
 #define CropWidth		(1L<<0)
 #define CropHeight		(1L<<1)
@@ -213,36 +205,6 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static void usage_vbi(void)
-{
-	printf("\nVBI Formats options:\n"
-	       "  --get-sliced-vbi-cap\n"
-	       "		     query the sliced VBI capture capabilities\n"
-	       "                     [VIDIOC_G_SLICED_VBI_CAP]\n"
-	       "  --get-sliced-vbi-out-cap\n"
-	       "		     query the sliced VBI output capabilities\n"
-	       "                     [VIDIOC_G_SLICED_VBI_CAP]\n"
-	       "  -B, --get-fmt-sliced-vbi\n"
-	       "		     query the sliced VBI capture format [VIDIOC_G_FMT]\n"
-	       "  --get-fmt-sliced-vbi-out\n"
-	       "		     query the sliced VBI output format [VIDIOC_G_FMT]\n"
-	       "  -b, --set-fmt-sliced-vbi\n"
-	       "  --try-fmt-sliced-vbi\n"
-	       "  --set-fmt-sliced-vbi-out\n"
-	       "  --try-fmt-sliced-vbi-out=<mode>\n"
-	       "                     set/try the sliced VBI capture/output format to <mode>\n"
-	       "                     [VIDIOC_S/TRY_FMT], <mode> is a comma separated list of:\n"
-	       "                     off:      turn off sliced VBI (cannot be combined with\n"
-	       "                               other modes)\n"
-	       "                     teletext: teletext (PAL/SECAM)\n"
-	       "                     cc:       closed caption (NTSC)\n"
-	       "                     wss:      widescreen signal (PAL/SECAM)\n"
-	       "                     vps:      VPS (PAL/SECAM)\n"
-	       "  --get-fmt-vbi      query the VBI capture format [VIDIOC_G_FMT]\n"
-	       "  --get-fmt-vbi-out  query the VBI output format [VIDIOC_G_FMT]\n"
-	       );
-}
-
 static void usage_selection(void)
 {
 	printf("\nSelection/Cropping options:\n"
@@ -339,7 +301,7 @@ static void usage_all(void)
        vidcap_usage();
        vidout_usage();
        overlay_usage();
-       usage_vbi();
+       vbi_usage();
        usage_selection();
        usage_misc();
 }
@@ -497,18 +459,6 @@ std::string flags2s(unsigned val, const flag_def *def)
 	return s;
 }
 
-static void print_sliced_vbi_cap(struct v4l2_sliced_vbi_cap &cap)
-{
-	printf("\tType           : %s\n", buftype2s(cap.type).c_str());
-	printf("\tService Set    : %s\n",
-			flags2s(cap.service_set, service_def).c_str());
-	for (int i = 0; i < 24; i++) {
-		printf("\tService Line %2d: %8s / %-8s\n", i,
-				flags2s(cap.service_lines[0][i], service_def).c_str(),
-				flags2s(cap.service_lines[1][i], service_def).c_str());
-	}
-}
-
 
 static std::string markers2s(unsigned markers)
 {
@@ -584,6 +534,19 @@ static void print_selection(const struct v4l2_selection &sel)
 			sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 }
 
+static const flag_def service_def[] = {
+	{ V4L2_SLICED_TELETEXT_B,  "teletext" },
+	{ V4L2_SLICED_VPS,         "vps" },
+	{ V4L2_SLICED_CAPTION_525, "cc" },
+	{ V4L2_SLICED_WSS_625,     "wss" },
+	{ 0, NULL }
+};
+
+std::string service2s(unsigned service)
+{
+	return flags2s(service, service_def);
+}
+
 void printfmt(const struct v4l2_format &vfmt)
 {
 	const flag_def vbi_def[] = {
@@ -650,11 +613,11 @@ void printfmt(const struct v4l2_format &vfmt)
 	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
 		printf("\tService Set    : %s\n",
-				flags2s(vfmt.fmt.sliced.service_set, service_def).c_str());
+				service2s(vfmt.fmt.sliced.service_set).c_str());
 		for (int i = 0; i < 24; i++) {
 			printf("\tService Line %2d: %8s / %-8s\n", i,
-			       flags2s(vfmt.fmt.sliced.service_lines[0][i], service_def).c_str(),
-			       flags2s(vfmt.fmt.sliced.service_lines[1][i], service_def).c_str());
+			       service2s(vfmt.fmt.sliced.service_lines[0][i]).c_str(),
+			       service2s(vfmt.fmt.sliced.service_lines[1][i]).c_str());
 		}
 		printf("\tI/O Size       : %u\n", vfmt.fmt.sliced.io_size);
 		break;
@@ -1186,10 +1149,6 @@ int main(int argc, char **argv)
 	/* command args */
 	int ch;
 	const char *device = "/dev/video0";	/* -d device */
-	struct v4l2_format vbi_fmt;	/* set_format/get_format for sliced VBI */
-	struct v4l2_format vbi_fmt_out;	/* set_format/get_format for sliced VBI output */
-	struct v4l2_format raw_fmt;	/* set_format/get_format for VBI */
-	struct v4l2_format raw_fmt_out;	/* set_format/get_format for VBI output */
 	struct v4l2_capability vcap;	/* list_cap */
 	struct v4l2_rect vcrop; 	/* crop rect */
 	struct v4l2_rect vcrop_out; 	/* crop rect */
@@ -1210,12 +1169,7 @@ int main(int argc, char **argv)
 	const char *poll_event_id = NULL;
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
-	int ret;
 
-	memset(&vbi_fmt, 0, sizeof(vbi_fmt));
-	memset(&raw_fmt, 0, sizeof(raw_fmt));
-	memset(&vbi_fmt_out, 0, sizeof(vbi_fmt_out));
-	memset(&raw_fmt_out, 0, sizeof(raw_fmt_out));
 	memset(&vcap, 0, sizeof(vcap));
 	memset(&vcrop, 0, sizeof(vcrop));
 	memset(&vcrop_out, 0, sizeof(vcrop_out));
@@ -1271,7 +1225,7 @@ int main(int argc, char **argv)
 			overlay_usage();
 			return 0;
 		case OptHelpVbi:
-			usage_vbi();
+			vbi_usage();
 			return 0;
 		case OptHelpSelection:
 			usage_selection();
@@ -1332,60 +1286,6 @@ int main(int argc, char **argv)
 		case OptSetOutputParm:
 			output_fps = strtod(optarg, NULL);
 			break;
-		case OptSetSlicedVbiFormat:
-		case OptSetSlicedVbiOutFormat:
-		case OptTrySlicedVbiFormat:
-		case OptTrySlicedVbiOutFormat:
-		{
-			bool foundOff = false;
-			v4l2_format *fmt = &vbi_fmt;
-
-			if (ch == OptSetSlicedVbiOutFormat || ch == OptTrySlicedVbiOutFormat)
-				fmt = &vbi_fmt_out;
-			fmt->fmt.sliced.service_set = 0;
-			subs = optarg;
-			while (*subs != '\0') {
-				static const char *const subopts[] = {
-					"off",
-					"teletext",
-					"cc",
-					"wss",
-					"vps",
-					NULL
-				};
-
-				switch (parse_subopt(&subs, subopts, &value)) {
-				case 0:
-					foundOff = true;
-					break;
-				case 1:
-					fmt->fmt.sliced.service_set |=
-					    V4L2_SLICED_TELETEXT_B;
-					break;
-				case 2:
-					fmt->fmt.sliced.service_set |=
-					    V4L2_SLICED_CAPTION_525;
-					break;
-				case 3:
-					fmt->fmt.sliced.service_set |=
-					    V4L2_SLICED_WSS_625;
-					break;
-				case 4:
-					fmt->fmt.sliced.service_set |=
-					    V4L2_SLICED_VPS;
-					break;
-				default:
-					usage_vbi();
-					break;
-				}
-			}
-			if (foundOff && fmt->fmt.sliced.service_set) {
-				fprintf(stderr, "Sliced VBI mode 'off' cannot be combined with other modes\n");
-				usage_vbi();
-				return 1;
-			}
-			break;
-		}
 		case OptSetJpegComp:
 		{
 			subs = optarg;
@@ -1533,6 +1433,7 @@ int main(int argc, char **argv)
 			vidcap_cmd(ch, optarg);
 			vidout_cmd(ch, optarg);
 			overlay_cmd(ch, optarg);
+			vbi_cmd(ch, optarg);
 			break;
 		}
 	}
@@ -1639,6 +1540,7 @@ int main(int argc, char **argv)
 	vidcap_set(fd);
 	vidout_set(fd);
 	overlay_set(fd);
+	vbi_set(fd);
 
 	if (options[OptSetParm]) {
 		memset(&parm, 0, sizeof(parm));
@@ -1674,26 +1576,6 @@ int main(int argc, char **argv)
 				printf("Frame rate set to %.3f fps\n",
 					1.0 * tf->denominator / tf->numerator);
 		}
-	}
-
-	if (options[OptSetSlicedVbiFormat] || options[OptTrySlicedVbiFormat]) {
-		vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-		if (options[OptSetSlicedVbiFormat])
-			ret = doioctl(fd, VIDIOC_S_FMT, &vbi_fmt);
-		else
-			ret = doioctl(fd, VIDIOC_TRY_FMT, &vbi_fmt);
-		if (ret == 0 && verbose)
-			printfmt(vbi_fmt);
-	}
-
-	if (options[OptSetSlicedVbiOutFormat] || options[OptTrySlicedVbiOutFormat]) {
-		vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
-		if (options[OptSetSlicedVbiOutFormat])
-			ret = doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out);
-		else
-			ret = doioctl(fd, VIDIOC_TRY_FMT, &vbi_fmt_out);
-		if (ret == 0 && verbose)
-			printfmt(vbi_fmt_out);
 	}
 
 	if (options[OptSetJpegComp]) {
@@ -1744,30 +1626,7 @@ int main(int argc, char **argv)
 	vidcap_get(fd);
 	vidout_get(fd);
 	overlay_get(fd);
-
-	if (options[OptGetSlicedVbiFormat]) {
-		vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt) == 0)
-			printfmt(vbi_fmt);
-	}
-
-	if (options[OptGetSlicedVbiOutFormat]) {
-		vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
-		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out) == 0)
-			printfmt(vbi_fmt_out);
-	}
-
-	if (options[OptGetVbiFormat]) {
-		raw_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt) == 0)
-			printfmt(raw_fmt);
-	}
-
-	if (options[OptGetVbiOutFormat]) {
-		raw_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
-		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt_out) == 0)
-			printfmt(raw_fmt_out);
-	}
+	vbi_get(fd);
 
 	if (options[OptGetJpegComp]) {
 		struct v4l2_jpegcompression jc;
@@ -1931,24 +1790,7 @@ int main(int argc, char **argv)
 	vidcap_list(fd);
 	vidout_list(fd);
 	overlay_list(fd);
-
-	if (options[OptGetSlicedVbiCap]) {
-		struct v4l2_sliced_vbi_cap cap;
-
-		cap.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_SLICED_VBI_CAP, &cap) == 0) {
-			print_sliced_vbi_cap(cap);
-		}
-	}
-
-	if (options[OptGetSlicedVbiOutCap]) {
-		struct v4l2_sliced_vbi_cap cap;
-
-		cap.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
-		if (doioctl(fd, VIDIOC_G_SLICED_VBI_CAP, &cap) == 0) {
-			print_sliced_vbi_cap(cap);
-		}
-	}
+	vbi_list(fd);
 
 	if (options[OptStreamOn]) {
 		int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
