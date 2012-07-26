@@ -242,5 +242,11 @@ void vbi_set(int fd);
 void vbi_get(int fd);
 void vbi_list(int fd);
 
+// v4l2-ctl-selection.cpp
+void selection_usage(void);
+void selection_cmd(int ch, char *optarg);
+void selection_set(int fd);
+void selection_get(int fd);
+
 
 #endif
