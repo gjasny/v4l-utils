@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/mman.h>
 #include <dirent.h>
 #include <math.h>
 
@@ -20,9 +21,29 @@
 
 #include "v4l2-ctl.h"
 
+static unsigned stream_count;
+static unsigned stream_skip;
+static unsigned reqbufs_count = 3;
+static char *file;
+
 void streaming_usage(void)
 {
 	printf("\nVideo Streaming options:\n"
+	       "  --stream-count=<count>\n"
+	       "                     stream <count> buffers. The default is to keep streaming\n"
+	       "                     forever. This count does not include the number of initial\n"
+	       "                     skipped buffers as is passed by --stream-skip.\n"
+	       "  --stream-skip=<count>\n"
+	       "                     skip the first <count> buffers. The default is 0.\n"
+	       "  --stream-to=<file> stream to this file. The default is to discard the\n"
+	       "                     data. If <file> is '-', then the data is written to stdout\n"
+	       "                     and the --silent option is turned on automatically.\n"
+	       "  --stream-mmap=<count>\n"
+	       "                     capture video using mmap() [VIDIOC_(D)QBUF]\n"
+	       "                     count: the number of buffers to allocate. The default is 3.\n"
+	       "  --stream-user=<count>\n"
+	       "                     capture video using user pointers [VIDIOC_(D)QBUF]\n"
+	       "                     count: the number of buffers to allocate. The default is 3.\n"
 	       "  --list-buffers     list all video buffers [VIDIOC_QUERYBUF]\n"
 	       "  --list-buffers-mplane\n"
 	       "                     list all multi-planar video buffers [VIDIOC_QUERYBUF]\n"
@@ -119,7 +140,7 @@ static void list_buffers(int fd, unsigned buftype)
 			buf.m.planes = planes;
 			memset(planes, 0, sizeof(planes));
 		}
-		if (ioctl(fd, VIDIOC_QUERYBUF, &buf))
+		if (test_ioctl(fd, VIDIOC_QUERYBUF, &buf))
 			break;
 		if (i == 0)
 			printf("VIDIOC_QUERYBUF:\n");
@@ -130,15 +151,133 @@ static void list_buffers(int fd, unsigned buftype)
 void streaming_cmd(int ch, char *optarg)
 {
 	switch (ch) {
+	case OptStreamCount:
+		stream_count = strtoul(optarg, 0L, 0);
+		break;
+	case OptStreamSkip:
+		stream_skip = strtoul(optarg, 0L, 0);
+		break;
+	case OptStreamTo:
+		file = optarg;
+		if (strcmp(file, "-"))
+			options[OptSilent] = true;
+		break;
+	case OptStreamMmap:
+	case OptStreamUser:
+		if (optarg) {
+			reqbufs_count = strtoul(optarg, 0L, 0);
+			if (reqbufs_count == 0)
+				reqbufs_count = 3;
+		}
+		break;
 	}
 }
 
 void streaming_set(int fd)
 {
-}
+	if (options[OptStreamMmap] || options[OptStreamUser]) {
+		struct v4l2_requestbuffers reqbufs;
+		bool is_mmap = options[OptStreamMmap];
+		FILE *fout = NULL;
 
-void streaming_get(int fd)
-{
+		memset(&reqbufs, 0, sizeof(reqbufs));
+		reqbufs.count = reqbufs_count;
+		reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		reqbufs.memory = is_mmap ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
+
+		if (file) {
+			if (!strcmp(file, "-"))
+				fout = stdout;
+			else
+				fout = fopen(file, "w+");
+		}
+
+		if (doioctl(fd, VIDIOC_REQBUFS, &reqbufs))
+			return;
+
+		void *buffers[reqbufs.count];
+		
+		for (unsigned i = 0; i < reqbufs.count; i++) {
+			struct v4l2_buffer buf;
+
+			memset(&buf, 0, sizeof(buf));
+			buf.type = reqbufs.type;
+			buf.memory = reqbufs.memory;
+			buf.index = i;
+			if (doioctl(fd, VIDIOC_QUERYBUF, &buf))
+				return;
+			if (is_mmap) {
+				buffers[i] = mmap(NULL, buf.length,
+					PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
+
+				if (buffers[i] == MAP_FAILED) {
+					fprintf(stderr, "mmap failed\n");
+					return;
+				}
+			} else {
+				buffers[i] = calloc(1, buf.length);
+				buf.m.userptr = (unsigned long)buffers[i];
+			}
+			if (doioctl(fd, VIDIOC_QBUF, &buf))
+				return;
+		}
+
+		int type = reqbufs.type;
+		if (doioctl(fd, VIDIOC_STREAMON, &type))
+			return;
+
+		for (;;) {
+			struct v4l2_buffer buf;
+			int ret;
+
+			memset(&buf, 0, sizeof(buf));
+			buf.type = reqbufs.type;
+			buf.memory = reqbufs.memory;
+
+			ret = test_ioctl(fd, VIDIOC_DQBUF, &buf);
+			if (ret < 0 && errno == EAGAIN)
+				continue;
+			if (ret < 0) {
+				if (!options[OptSilent])
+					printf("%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
+				return;
+			}
+			if (fout == NULL) {
+				printf(".");
+				fflush(stdout);
+			} else if (!stream_skip) {
+				fwrite(buffers[buf.index], 1, buf.length, fout);
+			}
+			if (doioctl(fd, VIDIOC_QBUF, &buf))
+				return;
+			if (stream_skip) {
+				stream_skip--;
+				continue;
+			}
+			if (stream_count == 0)
+				continue;
+			if (--stream_count == 0)
+				break;
+		}
+		doioctl(fd, VIDIOC_STREAMOFF, &type);
+
+		for (unsigned i = 0; i < reqbufs.count; i++) {
+			struct v4l2_buffer buf;
+
+			memset(&buf, 0, sizeof(buf));
+			buf.type = reqbufs.type;
+			buf.memory = reqbufs.memory;
+			buf.index = i;
+			if (doioctl(fd, VIDIOC_QUERYBUF, &buf))
+				return;
+			if (is_mmap)
+				munmap(buffers[i], buf.length);
+			else
+				free(buffers[i]);
+		}
+		if (fout)
+			fclose(fout);
+	}
 }
 
 void streaming_list(int fd)

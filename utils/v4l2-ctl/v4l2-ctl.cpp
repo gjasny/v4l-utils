@@ -83,6 +83,7 @@ static struct option long_options[] = {
 	{"help-vbi", no_argument, 0, OptHelpVbi},
 	{"help-selection", no_argument, 0, OptHelpSelection},
 	{"help-misc", no_argument, 0, OptHelpMisc},
+	{"help-streaming", no_argument, 0, OptHelpStreaming},
 	{"help-all", no_argument, 0, OptHelpAll},
 	{"wrapper", no_argument, 0, OptUseWrapper},
 	{"get-output", no_argument, 0, OptGetOutput},
@@ -192,6 +193,11 @@ static struct option long_options[] = {
 	{"list-buffers-sliced-vbi", no_argument, 0, OptListBuffersSlicedVbi},
 	{"list-buffers-vbi-out", no_argument, 0, OptListBuffersVbiOut},
 	{"list-buffers-sliced-vbi-out", no_argument, 0, OptListBuffersSlicedVbiOut},
+	{"stream-count", required_argument, 0, OptStreamCount},
+	{"stream-skip", required_argument, 0, OptStreamSkip},
+	{"stream-to", required_argument, 0, OptStreamTo},
+	{"stream-mmap", optional_argument, 0, OptStreamMmap},
+	{"stream-user", optional_argument, 0, OptStreamUser},
 	{0, 0, 0, 0}
 };
 
@@ -800,6 +806,9 @@ int main(int argc, char **argv)
 		case OptHelpMisc:
 			misc_usage();
 			return 0;
+		case OptHelpStreaming:
+			streaming_usage();
+			return 0;
 		case OptHelpAll:
 			usage_all();
 			return 0;
@@ -950,6 +959,7 @@ int main(int argc, char **argv)
 	vbi_set(fd);
 	selection_set(fd);
 	misc_set(fd);
+	streaming_set(fd);
 
 	/* Get options */
 

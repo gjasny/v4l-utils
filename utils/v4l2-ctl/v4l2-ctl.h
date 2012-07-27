@@ -139,6 +139,11 @@ enum Option {
 	OptListBuffersSlicedVbi,
 	OptListBuffersVbiOut,
 	OptListBuffersSlicedVbiOut,
+	OptStreamCount,
+	OptStreamSkip,
+	OptStreamTo,
+	OptStreamMmap,
+	OptStreamUser,
 	OptHelpTuner,
 	OptHelpIO,
 	OptHelpStds,
@@ -148,6 +153,7 @@ enum Option {
 	OptHelpVbi,
 	OptHelpSelection,
 	OptHelpMisc,
+	OptHelpStreaming,
 	OptHelpAll,
 	OptLast = 256
 };
@@ -265,7 +271,6 @@ void misc_get(int fd);
 void streaming_usage(void);
 void streaming_cmd(int ch, char *optarg);
 void streaming_set(int fd);
-void streaming_get(int fd);
 void streaming_list(int fd);
 
 #endif
