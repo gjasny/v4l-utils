@@ -39,6 +39,7 @@ void streaming_usage(void)
 	       "  --stream-to=<file> stream to this file. The default is to discard the\n"
 	       "                     data. If <file> is '-', then the data is written to stdout\n"
 	       "                     and the --silent option is turned on automatically.\n"
+	       "  --stream-poll      use non-blocking mode and select() to stream.\n"
 	       "  --stream-mmap=<count>\n"
 	       "                     capture video using mmap() [VIDIOC_(D)QBUF]\n"
 	       "                     count: the number of buffers to allocate. The default is 3.\n"
@@ -178,7 +179,9 @@ void streaming_set(int fd)
 {
 	if (options[OptStreamMmap] || options[OptStreamUser]) {
 		struct v4l2_requestbuffers reqbufs;
+		int fd_flags = fcntl(fd, F_GETFL);
 		bool is_mmap = options[OptStreamMmap];
+		bool use_poll = options[OptStreamPoll];
 		FILE *fout = NULL;
 
 		memset(&reqbufs, 0, sizeof(reqbufs));
@@ -227,9 +230,40 @@ void streaming_set(int fd)
 		if (doioctl(fd, VIDIOC_STREAMON, &type))
 			return;
 
+		if (use_poll)
+			fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
+
 		for (;;) {
 			struct v4l2_buffer buf;
 			int ret;
+
+			if (use_poll) {
+				fd_set fds;
+				struct timeval tv;
+				int r;
+
+				FD_ZERO(&fds);
+				FD_SET(fd, &fds);
+
+				/* Timeout. */
+				tv.tv_sec = 2;
+				tv.tv_usec = 0;
+
+				r = select(fd + 1, &fds, NULL, NULL, &tv);
+
+				if (r == -1) {
+					if (EINTR == errno)
+						continue;
+					fprintf(stderr, "select error: %s\n",
+							strerror(errno));
+					return;
+				}
+
+				if (r == 0) {
+					fprintf(stderr, "select timeout\n");
+					return;
+				}
+			}
 
 			memset(&buf, 0, sizeof(buf));
 			buf.type = reqbufs.type;
@@ -261,6 +295,7 @@ void streaming_set(int fd)
 				break;
 		}
 		doioctl(fd, VIDIOC_STREAMOFF, &type);
+		fcntl(fd, F_SETFL, fd_flags);
 
 		for (unsigned i = 0; i < reqbufs.count; i++) {
 			struct v4l2_buffer buf;
