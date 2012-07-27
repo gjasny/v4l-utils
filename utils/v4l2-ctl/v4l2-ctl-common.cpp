@@ -66,6 +66,7 @@ void common_usage(void)
 	       "  --help-overlay     overlay format options\n"
 	       "  --help-selection   crop/selection options\n"
 	       "  --help-stds        standards and other video timings options\n"
+	       "  --help-streaming   streaming options\n"
 	       "  --help-tuner       tuner/modulator options\n"
 	       "  --help-vbi         VBI format options\n"
 	       "  --help-vidcap      video capture format options\n"
