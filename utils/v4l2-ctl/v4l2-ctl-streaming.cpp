@@ -71,7 +71,6 @@ static const flag_def flags_def[] = {
 	{ V4L2_BUF_FLAG_BFRAME, "B-frame" },
 	{ V4L2_BUF_FLAG_ERROR, "error" },
 	{ V4L2_BUF_FLAG_TIMECODE, "timecode" },
-	{ V4L2_BUF_FLAG_INPUT, "input" },
 	{ V4L2_BUF_FLAG_PREPARED, "prepared" },
 	{ V4L2_BUF_FLAG_NO_CACHE_INVALIDATE, "no-cache-invalidate" },
 	{ V4L2_BUF_FLAG_NO_CACHE_CLEAN, "no-cache-clean" },
