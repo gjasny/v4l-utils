@@ -508,6 +508,10 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tVideo Output\n";
 	if (cap & V4L2_CAP_VIDEO_OUTPUT_MPLANE)
 		s += "\t\tVideo Output Multiplanar\n";
+	if (cap & V4L2_CAP_VIDEO_M2M)
+		s += "\t\tVideo Memory-to-Memory\n";
+	if (cap & V4L2_CAP_VIDEO_M2M_MPLANE)
+		s += "\t\tVideo Memory-to-Memory Multiplanar\n";
 	if (cap & V4L2_CAP_VIDEO_OVERLAY)
 		s += "\t\tVideo Overlay\n";
 	if (cap & V4L2_CAP_VIDEO_OUTPUT_OVERLAY)
