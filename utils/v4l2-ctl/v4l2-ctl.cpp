@@ -122,6 +122,7 @@ static struct option long_options[] = {
 	{"get-ctrl", required_argument, 0, OptGetCtrl},
 	{"get-tuner", no_argument, 0, OptGetTuner},
 	{"set-tuner", required_argument, 0, OptSetTuner},
+	{"list-freq-bands", no_argument, 0, OptListFreqBands},
 	{"silent", no_argument, 0, OptSilent},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"log-status", no_argument, 0, OptLogStatus},
@@ -883,6 +884,8 @@ int main(int argc, char **argv)
 	verbose = options[OptVerbose];
 	doioctl(fd, VIDIOC_QUERYCAP, &vcap);
 	capabilities = vcap.capabilities;
+	if (capabilities & V4L2_CAP_DEVICE_CAPS)
+		capabilities = vcap.device_caps;
 
 	common_process_controls(fd);
 
