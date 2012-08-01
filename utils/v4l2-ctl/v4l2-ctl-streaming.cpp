@@ -231,6 +231,9 @@ void streaming_set(int fd)
 		if (use_poll)
 			fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
 
+		unsigned count = 0, last = 0;
+		struct timeval tv_last;
+
 		for (;;) {
 			struct v4l2_buffer buf;
 			int ret;
@@ -271,18 +274,36 @@ void streaming_set(int fd)
 			if (ret < 0 && errno == EAGAIN)
 				continue;
 			if (ret < 0) {
-				if (!options[OptSilent])
-					printf("%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
+				fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
 				return;
 			}
-			if (fout == NULL) {
-				printf(".");
-				fflush(stdout);
-			} else if (!stream_skip) {
-				fwrite(buffers[buf.index], 1, buf.length, fout);
+			if (fout && !stream_skip) {
+				unsigned sz = fwrite(buffers[buf.index], 1, buf.length, fout);
+				if (sz != buf.length)
+					fprintf(stderr, "%u != %u\n", sz, buf.length);
 			}
 			if (doioctl(fd, VIDIOC_QBUF, &buf))
 				return;
+
+			fprintf(stderr, ".");
+			fflush(stderr);
+
+			if (count == 0) {
+				gettimeofday(&tv_last, NULL);
+			} else {
+				struct timeval tv_cur, res;
+
+				gettimeofday(&tv_cur, NULL);
+				timersub(&tv_cur, &tv_last, &res);
+				if (res.tv_sec) {
+					unsigned fps = (100 * (count - last)) /
+						(res.tv_sec * 100 + res.tv_usec / 10000);
+					last = count;
+					tv_last = tv_cur;
+					fprintf(stderr, " %d fps\n", fps);
+				}
+			}
+			count++;
 			if (stream_skip) {
 				stream_skip--;
 				continue;
@@ -294,6 +315,7 @@ void streaming_set(int fd)
 		}
 		doioctl(fd, VIDIOC_STREAMOFF, &type);
 		fcntl(fd, F_SETFL, fd_flags);
+		fprintf(stderr, "\n");
 
 		for (unsigned i = 0; i < reqbufs.count; i++) {
 			struct v4l2_buffer buf;
