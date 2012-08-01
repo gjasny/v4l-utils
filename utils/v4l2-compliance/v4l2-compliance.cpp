@@ -128,6 +128,10 @@ std::string cap2s(unsigned cap)
 		s += "\t\tVideo Output\n";
 	if (cap & V4L2_CAP_VIDEO_OUTPUT_MPLANE)
 		s += "\t\tVideo Output Multiplanar\n";
+	if (cap & V4L2_CAP_VIDEO_M2M)
+		s += "\t\tVideo Memory-to-Memory\n";
+	if (cap & V4L2_CAP_VIDEO_M2M_MPLANE)
+		s += "\t\tVideo Memory-to-Memory Multiplanar\n";
 	if (cap & V4L2_CAP_VIDEO_OVERLAY)
 		s += "\t\tVideo Overlay\n";
 	if (cap & V4L2_CAP_VIDEO_OUTPUT_OVERLAY)
@@ -245,6 +249,7 @@ static int testCap(struct node *node)
 	__u32 caps, dcaps;
 	const __u32 video_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT |
 			V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+			V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE |
 			V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY;
 	const __u32 vbi_caps = V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
 			V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT;
@@ -257,6 +262,7 @@ static int testCap(struct node *node)
 			V4L2_CAP_VIDEO_OUTPUT_OVERLAY | V4L2_CAP_VBI_OUTPUT |
 			V4L2_CAP_SLICED_VBI_OUTPUT | V4L2_CAP_MODULATOR |
 			V4L2_CAP_RDS_OUTPUT;
+	const __u32 m2m_caps = V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE;
 	const __u32 io_caps = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
 
 	memset(&vcap, 0xff, sizeof(vcap));
@@ -272,8 +278,7 @@ static int testCap(struct node *node)
 	fail_on_test(check_0(vcap.reserved, sizeof(vcap.reserved)));
 	caps = vcap.capabilities;
 	dcaps = vcap.device_caps;
-	node->is_m2m = (dcaps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)) &&
-		       (dcaps & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE));
+	node->is_m2m = dcaps & m2m_caps;
 	fail_on_test(caps == 0);
 	fail_on_test(!(caps & V4L2_CAP_DEVICE_CAPS));
 	fail_on_test(dcaps & V4L2_CAP_DEVICE_CAPS);
@@ -290,7 +295,12 @@ static int testCap(struct node *node)
 	fail_on_test(node->is_video && (dcaps & (vbi_caps | radio_caps)));
 	fail_on_test(node->is_radio && (dcaps & (vbi_caps | video_caps)));
 	fail_on_test(node->is_vbi && (dcaps & (video_caps | radio_caps)));
-	if (!node->is_m2m) {
+	if (node->is_m2m) {
+		// This will become an error as this combination of caps
+		// is on the feature removal list.
+		if ((dcaps & input_caps) && (dcaps & output_caps))
+			warn("VIDIOC_QUERYCAP: m2m with video input and output caps\n");
+	} else {
 		if (dcaps & input_caps)
 			fail_on_test(dcaps & output_caps);
 		if (dcaps & output_caps)
@@ -494,18 +504,20 @@ int main(int argc, char **argv)
 	else
 		node.caps = vcap.capabilities;
 	if (node.caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
-			 V4L2_CAP_SLICED_VBI_CAPTURE | V4L2_CAP_RDS_CAPTURE |
-			 V4L2_CAP_RADIO | V4L2_CAP_TUNER))
+			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_SLICED_VBI_CAPTURE |
+			 V4L2_CAP_RDS_CAPTURE | V4L2_CAP_RADIO | V4L2_CAP_TUNER))
 		node.has_inputs = true;
 	if (node.caps & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VBI_OUTPUT |
-			 V4L2_CAP_SLICED_VBI_OUTPUT | V4L2_CAP_RDS_OUTPUT |
-			 V4L2_CAP_MODULATOR))
+			 V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_SLICED_VBI_OUTPUT |
+			 V4L2_CAP_RDS_OUTPUT | V4L2_CAP_MODULATOR))
 		node.has_outputs = true;
 	if (node.caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
-			 V4L2_CAP_SLICED_VBI_CAPTURE))
+			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE |
+			 V4L2_CAP_VIDEO_M2M | V4L2_CAP_SLICED_VBI_CAPTURE))
 		node.can_capture = true;
 	if (node.caps & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VBI_OUTPUT |
-			 V4L2_CAP_SLICED_VBI_OUTPUT))
+			 V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE |
+			 V4L2_CAP_VIDEO_M2M | V4L2_CAP_SLICED_VBI_OUTPUT))
 		node.can_output = true;
 
 	/* Information Opts */
