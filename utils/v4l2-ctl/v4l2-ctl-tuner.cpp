@@ -21,13 +21,14 @@
 
 #include "v4l2-ctl.h"
 
-static int tuner_index = 0;
+static int tuner_index;
 static struct v4l2_tuner tuner;        	/* set_freq/get_freq */
 static struct v4l2_modulator modulator;	/* set_freq/get_freq */
-static int txsubchans = 0;		/* set_modulator */
-static double freq = 0;			/* get/set frequency */
+static int txsubchans;			/* set_modulator */
+static double freq;			/* get/set frequency */
 static struct v4l2_frequency vf;	/* get_freq/set_freq */
 static struct v4l2_hw_freq_seek freq_seek; /* freq-seek */
+static double low, high;		/* freq-seek frequency range */
 static int mode = V4L2_TUNER_MODE_STEREO;  /* set audio mode */
 
 void tuner_usage(void)
@@ -54,11 +55,12 @@ void tuner_usage(void)
 	       "                     bilingual:	 Modulate as bilingual\n"
 	       "                     mono-sap:	 Modulate as mono with Second Audio Program\n"
 	       "                     stereo-sap: Modulate as stereo with Second Audio Program\n"
-	       "  --freq-seek=dir=<0/1>,wrap=<0/1>,spacing=<hz>\n"
+	       "  --freq-seek=dir=<0/1>,wrap=<0/1>,spacing=<hz>,low=<freq>,high=<freq>\n"
 	       "                     perform a hardware frequency seek [VIDIOC_S_HW_FREQ_SEEK]\n"
 	       "                     dir is 0 (seek downward) or 1 (seek upward)\n"
 	       "                     wrap is 0 (do not wrap around) or 1 (wrap around)\n"
 	       "                     spacing sets the seek resolution (use 0 for default)\n"
+	       "                     low and high set the low and high seek frequency range in MHz\n"
 	       );
 }
 
@@ -160,6 +162,8 @@ static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 			"dir",
 			"wrap",
 			"spacing",
+			"low",
+			"high",
 			NULL
 		};
 
@@ -172,6 +176,12 @@ static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 			break;
 		case 2:
 			seek.spacing = strtol(value, 0L, 0);
+			break;
+		case 3:
+			low = strtod(value, NULL);
+			break;
+		case 4:
+			high = strtod(value, NULL);
 			break;
 		default:
 			tuner_usage();
@@ -238,23 +248,22 @@ void tuner_set(int fd)
 {
 	__u32 type = (capabilities & V4L2_CAP_RADIO) ?
 		V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
+	double fac = 16;
 
-	if (options[OptSetFreq]) {
-		double fac = 16;
-
-		vf.type = type;
-		if (capabilities & V4L2_CAP_MODULATOR) {
-			modulator.index = tuner_index;
-			if (doioctl(fd, VIDIOC_G_MODULATOR, &modulator) == 0) {
-				fac = (modulator.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
-			}
-		} else {
-			tuner.index = tuner_index;
-			if (doioctl(fd, VIDIOC_G_TUNER, &tuner) == 0) {
-				fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
-				vf.type = tuner.type;
-			}
+	if (capabilities & V4L2_CAP_MODULATOR) {
+		type = V4L2_TUNER_RADIO;
+		modulator.index = tuner_index;
+		if (doioctl(fd, VIDIOC_G_MODULATOR, &modulator) == 0)
+			fac = (modulator.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
+	} else if (capabilities & V4L2_CAP_TUNER) {
+		tuner.index = tuner_index;
+		if (doioctl(fd, VIDIOC_G_TUNER, &tuner) == 0) {
+			fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
+			type = tuner.type;
 		}
+	}
+	if (options[OptSetFreq]) {
+		vf.type = type;
 		vf.tuner = tuner_index;
 		vf.frequency = __u32(freq * fac);
 		if (doioctl(fd, VIDIOC_S_FREQUENCY, &vf) == 0)
@@ -311,6 +320,8 @@ void tuner_set(int fd)
 	if (options[OptFreqSeek]) {
 		freq_seek.tuner = tuner_index;
 		freq_seek.type = type;
+		freq_seek.rangelow = __u32(low * fac);
+		freq_seek.rangehigh = __u32(high * fac);
 		doioctl(fd, VIDIOC_S_HW_FREQ_SEEK, &freq_seek);
 	}
 }
