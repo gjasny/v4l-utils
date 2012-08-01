@@ -108,6 +108,7 @@ enum Option {
 	OptSetJpegComp,
 	OptGetModulator,
 	OptSetModulator,
+	OptListFreqBands,
 	OptListDevices,
 	OptGetOutputParm,
 	OptSetOutputParm,

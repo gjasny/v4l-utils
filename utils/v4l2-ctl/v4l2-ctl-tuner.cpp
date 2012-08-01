@@ -41,6 +41,8 @@ void tuner_usage(void)
 	       "                     set the audio mode of the tuner [VIDIOC_S_TUNER]\n"
 	       "                     Possible values: mono, stereo, lang2, lang1, bilingual\n"
 	       "  --tuner-index=<idx> Use idx as tuner idx for tuner/modulator commands\n"
+	       "  --list-freq-bands  display all frequency bands for the tuner/modulator\n"
+	       "                     [VIDIOC_ENUM_FREQ_BANDS]\n"
 	       "  --get-modulator    query the modulator settings [VIDIOC_G_MODULATOR]\n"
 	       "  --set-modulator=<txsubchans>\n"
 	       "                     set the sub-carrier modulation [VIDIOC_S_MODULATOR]\n"
@@ -128,7 +130,24 @@ static std::string tcap2s(unsigned cap)
 		s += "lang2 ";
 	if (cap & V4L2_TUNER_CAP_RDS)
 		s += "rds ";
+	if (cap & V4L2_TUNER_CAP_FREQ_BANDS)
+		s += "freq-bands ";
+	if (cap & V4L2_TUNER_CAP_HWSEEK_PROG_LIM)
+		s += "hwseek-prog-lim ";
 	return s;
+}
+
+static std::string modulation2s(unsigned modulation)
+{
+	switch (modulation) {
+	case V4L2_BAND_MODULATION_VSB:
+		return "VSB";
+	case V4L2_BAND_MODULATION_FM:
+		return "FM";
+	case V4L2_BAND_MODULATION_AM:
+		return "AM";
+	}
+	return "Unknown";
 }
 
 static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
@@ -217,17 +236,19 @@ void tuner_cmd(int ch, char *optarg)
 
 void tuner_set(int fd)
 {
+	__u32 type = (capabilities & V4L2_CAP_RADIO) ?
+		V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
+
 	if (options[OptSetFreq]) {
 		double fac = 16;
 
+		vf.type = type;
 		if (capabilities & V4L2_CAP_MODULATOR) {
-			vf.type = V4L2_TUNER_RADIO;
 			modulator.index = tuner_index;
 			if (doioctl(fd, VIDIOC_G_MODULATOR, &modulator) == 0) {
 				fac = (modulator.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
 			}
 		} else {
-			vf.type = V4L2_TUNER_ANALOG_TV;
 			tuner.index = tuner_index;
 			if (doioctl(fd, VIDIOC_G_TUNER, &tuner) == 0) {
 				fac = (tuner.capability & V4L2_TUNER_CAP_LOW) ? 16000 : 16;
@@ -252,6 +273,30 @@ void tuner_set(int fd)
 		}
 	}
 
+	if (options[OptListFreqBands]) {
+		struct v4l2_frequency_band band;
+
+		memset(&band, 0, sizeof(band));
+		band.tuner = tuner_index;
+		band.type = type;
+		band.index = 0;
+		printf("ioctl: VIDIOC_ENUM_FREQ_BANDS\n");
+		while (test_ioctl(fd, VIDIOC_ENUM_FREQ_BANDS, &band) >= 0) {
+			if (band.index)
+				printf("\n");
+			printf("\tIndex          : %d\n", band.index);
+			printf("\tModulation     : %s\n", modulation2s(band.modulation).c_str());
+			printf("\tCapability     : %s\n", tcap2s(band.capability).c_str());
+			if (band.capability & V4L2_TUNER_CAP_LOW)
+				printf("\tFrequency Range: %.3f MHz - %.3f MHz\n",
+				     band.rangelow / 16000.0, band.rangehigh / 16000.0);
+			else
+				printf("\tFrequency Range: %.3f MHz - %.3f MHz\n",
+				     band.rangelow / 16.0, band.rangehigh / 16.0);
+			band.index++;
+		}
+	}
+
 	if (options[OptSetModulator]) {
 		struct v4l2_modulator mt;
 
@@ -265,7 +310,7 @@ void tuner_set(int fd)
 
 	if (options[OptFreqSeek]) {
 		freq_seek.tuner = tuner_index;
-		freq_seek.type = V4L2_TUNER_RADIO;
+		freq_seek.type = type;
 		doioctl(fd, VIDIOC_S_HW_FREQ_SEEK, &freq_seek);
 	}
 }
@@ -304,10 +349,10 @@ void tuner_get(int fd)
 			printf("\tName                 : %s\n", vt.name);
 			printf("\tCapabilities         : %s\n", tcap2s(vt.capability).c_str());
 			if (vt.capability & V4L2_TUNER_CAP_LOW)
-				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
+				printf("\tFrequency range      : %.3f MHz - %.3f MHz\n",
 				     vt.rangelow / 16000.0, vt.rangehigh / 16000.0);
 			else
-				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
+				printf("\tFrequency range      : %.3f MHz - %.3f MHz\n",
 				     vt.rangelow / 16.0, vt.rangehigh / 16.0);
 			printf("\tSignal strength/AFC  : %d%%/%d\n", (int)((vt.signal / 655.35)+0.5), vt.afc);
 			printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode));
