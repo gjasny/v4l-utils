@@ -37,6 +37,7 @@ extern "C" {
 
 int dvb_dmx_open(int adapter, int demux, unsigned verbose);
 void dvb_dmx_close(int dmx_fd);
+void dvb_dmx_stop(int dmx_fd);
 
 int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type, dmx_output_t output, int buffersize);
 
