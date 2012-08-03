@@ -88,6 +88,7 @@ struct dvb_v5_fe_parms {
 	unsigned			diseqc_wait;
 	unsigned			freq_offset;
 
+	int				abort;
         dvb_logfunc                     logfunc;
 };
 

@@ -69,6 +69,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	parms->verbose = verbose;
 	parms->fd = fd;
 	parms->sat_number = -1;
+        parms->abort = 0;
         parms->logfunc = logfunc;
 
 	if (ioctl(fd, FE_GET_INFO, &parms->info) == -1) {
