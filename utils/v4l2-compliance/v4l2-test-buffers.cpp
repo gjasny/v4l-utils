@@ -151,8 +151,10 @@ int testReadWrite(struct node *node)
 		ret = read(node->fd, &buf, 1);
 	else
 		ret = write(node->fd, &buf, 1);
+	// Note: RDS can only return multiples of 3, so we accept
+	// both 0 and 1 as return code.
 	if (can_rw)
-		fail_on_test(ret != 1);
+		fail_on_test(ret != 0 && ret != 1);
 	else
 		fail_on_test(ret < 0 && errno != EINVAL);
 	if (!can_rw)
@@ -165,7 +167,7 @@ int testReadWrite(struct node *node)
 		ret = read(node->fd, &buf, 1);
 	else
 		ret = write(node->fd, &buf, 1);
-	fail_on_test(ret != 1);
+	fail_on_test(ret != 0 && ret != 1);
 	reopen(node);
 	return 0;
 }
