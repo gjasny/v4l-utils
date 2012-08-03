@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-int dvb_dmx_open(int adapter, int demux, unsigned verbose);
+int dvb_dmx_open(int adapter, int demux);
 void dvb_dmx_close(int dmx_fd);
 void dvb_dmx_stop(int dmx_fd);
 

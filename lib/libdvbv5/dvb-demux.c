@@ -40,11 +40,11 @@
 
 #include "dvb-demux.h"
 
-int dvb_dmx_open(int adapter, int demux, unsigned verbose)
+int dvb_dmx_open(int adapter, int demux)
 {
   char* demux_name = NULL;
   asprintf(&demux_name, "/dev/dvb/adapter%i/demux%i", adapter, demux );
-  int fd_demux = open( demux_name, O_RDWR );
+  int fd_demux = open( demux_name, O_RDWR | O_NONBLOCK );
   free( demux_name );
   return fd_demux;
 }
