@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef _NETWORK_NAME_H
-#define _NETWORK_NAME_H
+#ifndef _DESC_NETWORK_NAME_H
+#define _DESC_NETWORK_NAME_H
 
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */

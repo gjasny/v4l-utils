@@ -34,8 +34,10 @@ libdvbv5_la_SOURCES = \
   descriptors/desc_service.c  ../include/descriptors/desc_service.h \
   descriptors/desc_frequency_list.c  ../include/descriptors/desc_frequency_list.h \
   descriptors/desc_service_list.c  ../include/descriptors/desc_service_list.h \
+  descriptors/desc_event_short.c  ../include/descriptors/desc_event_short.h \
   descriptors/nit.c  ../include/descriptors/nit.h \
-  descriptors/sdt.c  ../include/descriptors/sdt.h
+  descriptors/sdt.c  ../include/descriptors/sdt.h \
+  descriptors/eit.c  ../include/descriptors/eit.h
 
 libdvbv5_la_CPPFLAGS = $(ENFORCE_LIBDVBV5_STATIC)
 libdvbv5_la_LDFLAGS = -version-info 0 $(ENFORCE_LIBDVBV5_STATIC)

@@ -39,13 +39,13 @@ void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize
 		pat->programs = 0;
 		while ((uint8_t *) p < ptr + size - 4) {
 			memcpy(pat->program + pat->programs, p, sizeof(struct dvb_table_pat_program));
-			bswap16(pat->program[pat->programs].program_id);
+			bswap16(pat->program[pat->programs].service_id);
 			bswap16(pat->program[pat->programs].bitfield);
 			p++;
 			pat->programs++;
 		}
 	} else {
-		dvb_logerr("multisecttion PAT table not implemented");
+		dvb_logerr("multisection PAT table not implemented");
 	}
 }
 
@@ -53,10 +53,10 @@ void dvb_table_pat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_pat *t)
 {
 	dvb_log("PAT");
 	dvb_table_header_print(parms, &t->header);
-	dvb_log("|\\   pid     program_id (%d programs)", t->programs);
+	dvb_log("|\\  program  service (%d programs)", t->programs);
 	int i;
 	for (i = 0; i < t->programs; i++) {
-		dvb_log("|- %7d %7d", t->program[i].pid, t->program[i].program_id);
+		dvb_log("|- %7d %7d", t->program[i].pid, t->program[i].service_id);
 	}
 }
 

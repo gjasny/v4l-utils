@@ -309,6 +309,7 @@ int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char ta
 	uint64_t sections_read = 0;
 	uint64_t sections_total = 0;
 	ssize_t table_length = 0;
+	int table_id = -1;
 
 	// FIXME: verify known table
 	*buf = NULL;
@@ -357,6 +358,14 @@ int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char ta
 
 		struct dvb_table_header *h = (struct dvb_table_header *) tmp;
 		dvb_table_header_init(h);
+		if (table_id == -1)
+			table_id = h->id;
+		else if (h->id != table_id) {
+			dvb_logwarn("Table ID mismatch reading multi section table: %d != %d", h->id, table_id);
+			free(tmp);
+			tmp = NULL;
+			continue;
+		}
 		/*dvb_log("dvb_read_section: got section %d/%d", h->section_id + 1, h->last_section + 1);*/
 		if (!sections_total) {
 			if (h->last_section + 1 > 32) {
@@ -372,7 +381,10 @@ int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char ta
 		/*if (sections_read != sections_total)*/
 			/*dvb_logwarn("dvb_read_section: sections are missing: %d != %d", sections_read, sections_total);*/
 
-		dvb_table_initializers[table].init(parms, tmp, count, buf, &table_length);
+		if (dvb_table_initializers[table].init)
+			dvb_table_initializers[table].init(parms, tmp, count, buf, &table_length);
+		else
+			dvb_logerr("no initializer for table %d", table);
 
 		free(tmp);
 		tmp = NULL;

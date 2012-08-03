@@ -26,9 +26,11 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize
 {
 	uint8_t *d;
 	const uint8_t *p = ptr;
-	struct dvb_table_nit *nit;
+	struct dvb_table_nit *nit = (struct dvb_table_nit *) ptr;
 	struct dvb_desc **head_desc;
 	struct dvb_table_nit_transport **head;
+
+	bswap16(nit->bitfield);
 
 	if (!*buf) {
 		d = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE * 4);
@@ -58,7 +60,6 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize
 		// read new table
 		nit = (struct dvb_table_nit *) p; // FIXME: should be copied to tmp, cause bswap in const
 	}
-	bswap16(nit->bitfield);
 	p += sizeof(struct dvb_table_nit) - sizeof(nit->descriptor) - sizeof(nit->transport);
 
 	*buflen += dvb_parse_descriptors(parms, p, d + *buflen, nit->desc_length, head_desc);

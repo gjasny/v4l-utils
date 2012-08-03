@@ -78,9 +78,9 @@ ssize_t dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 void dvb_desc_service_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
-	const struct dvb_desc_service *srv = (const struct dvb_desc_service *) desc;
-	dvb_log("|   service type     %d", srv->service_type);
-	dvb_log("|           name     '%s'", srv->name);
-	dvb_log("|           provider '%s'", srv->provider);
+	const struct dvb_desc_service *service = (const struct dvb_desc_service *) desc;
+	dvb_log("|   service type     %d", service->service_type);
+	dvb_log("|           name     '%s'", service->name);
+	dvb_log("|           provider '%s'", service->provider);
 }
 

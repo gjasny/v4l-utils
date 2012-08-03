@@ -29,7 +29,10 @@ void dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize
 {
 	uint8_t *d;
 	const uint8_t *p = ptr;
-	struct dvb_table_pmt *pmt;
+	struct dvb_table_pmt *pmt = (struct dvb_table_pmt *) ptr;
+
+	bswap16(pmt->bitfield);
+	bswap16(pmt->bitfield2);
 
 	if (!*buf) {
 		d = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE * 2);
@@ -41,8 +44,6 @@ void dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize
 		p += sizeof(struct dvb_table_pmt) - sizeof(pmt->stream);
 		*buflen += sizeof(struct dvb_table_pmt);
 
-		bswap16(pmt->bitfield);
-		bswap16(pmt->bitfield2);
 		pmt->stream = NULL;
 
 		/* skip prog section */
@@ -82,18 +83,18 @@ void dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize
 
 void dvb_table_pmt_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_pmt *pmt)
 {
-	dvb_log( "PMT" );
+	dvb_log("PMT");
 	dvb_table_header_print(parms, &pmt->header);
-	dvb_log( "|- pcr_pid       %d", pmt->pcr_pid );
-	dvb_log( "|  reserved2     %d", pmt->reserved2 );
-	dvb_log( "|  prog length   %d", pmt->prog_length );
-	dvb_log( "|  zero3         %d", pmt->zero3 );
-	dvb_log( "|  reserved3     %d", pmt->reserved3 );
-	dvb_log("|\\  pid     len   type");
+	dvb_log("|- pcr_pid       %d", pmt->pcr_pid);
+	dvb_log("|  reserved2     %d", pmt->reserved2);
+	dvb_log("|  prog length   %d", pmt->prog_length);
+	dvb_log("|  zero3         %d", pmt->zero3);
+	dvb_log("|  reserved3     %d", pmt->reserved3);
+	dvb_log("|\\  pid     type");
 	const struct dvb_table_pmt_stream *stream = pmt->stream;
 	uint16_t streams = 0;
 	while(stream) {
-		dvb_log("|- %5d    %4d  %s (%d)", stream->elementary_pid, stream->section_length,
+		dvb_log("|- %5d   %s (%d)", stream->elementary_pid,
 				dvb_descriptors[stream->type].name, stream->type);
 		dvb_print_descriptors(parms, stream->descriptor);
 		stream = stream->next;

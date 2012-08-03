@@ -32,6 +32,9 @@
 
 #include "descriptors/pat.h"
 #include "descriptors/pmt.h"
+#include "descriptors/nit.h"
+#include "descriptors/sdt.h"
+#include "descriptors/eit.h"
 #include "descriptors/desc_language.h"
 #include "descriptors/desc_network_name.h"
 #include "descriptors/desc_cable_delivery.h"
@@ -40,8 +43,7 @@
 #include "descriptors/desc_service.h"
 #include "descriptors/desc_service_list.h"
 #include "descriptors/desc_frequency_list.h"
-#include "descriptors/nit.h"
-#include "descriptors/sdt.h"
+#include "descriptors/desc_event_short.h"
 
 ssize_t dvb_desc_init(const uint8_t *buf, struct dvb_desc *desc)
 {
@@ -68,6 +70,7 @@ const struct dvb_table_init dvb_table_initializers[] = {
 	[DVB_TABLE_PMT] = { dvb_table_pmt_init },
 	[DVB_TABLE_NIT] = { dvb_table_nit_init },
 	[DVB_TABLE_SDT] = { dvb_table_sdt_init },
+	[DVB_TABLE_EIT] = { dvb_table_eit_init },
 };
 
 char *default_charset = "iso-8859-1";
@@ -166,7 +169,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	[linkage_descriptor] = { "linkage_descriptor", NULL, NULL },
 	[NVOD_reference_descriptor] = { "NVOD_reference_descriptor", NULL, NULL },
 	[time_shifted_service_descriptor] = { "time_shifted_service_descriptor", NULL, NULL },
-	[short_event_descriptor] = { "short_event_descriptor", NULL, NULL },
+	[short_event_descriptor] = { "short_event_descriptor", dvb_desc_event_short_init, dvb_desc_event_short_print },
 	[extended_event_descriptor] = { "extended_event_descriptor", NULL, NULL },
 	[time_shifted_event_descriptor] = { "time_shifted_event_descriptor", NULL, NULL },
 	[component_descriptor] = { "component_descriptor", NULL, NULL },
@@ -969,20 +972,56 @@ int has_descriptor(struct dvb_v5_descriptors *dvb_desc,
 	return 0;
 }
 
-void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *buf, int len)
+void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *data, int length)
 {
-	int i, j;
-	char tmp[256];
-	/*printf("size %d", len);*/
-	for (i = 0, j = 0; i < len; i++, j++) {
-		if (i && !(i % 16)) {
-			dvb_log("%s%s", prefix, tmp);
+	if (!data)
+		return;
+	char ascii[17];
+	char hex[50];
+	int i, j = 0;
+	hex[0] = '\0';
+	for (i = 0; i < length; i++)
+	{
+		char t[4];
+		snprintf (t, sizeof(t), "%02x ", (unsigned int) data[i]);
+		strncat (hex, t, sizeof(hex));
+		if (data[i] > 31 && data[i] < 128 )
+			ascii[j] = data[i];
+		else
+			ascii[j] = '.';
+		j++;
+		if (j == 8)
+			strncat(hex, " ", sizeof(hex));
+		if (j == 16)
+		{
+			ascii[j] = '\0';
+			dvb_log("%s%s  %s", prefix, hex, ascii);
 			j = 0;
+			hex[0] = '\0';
 		}
-		sprintf( tmp + j * 3, "%02x ", (uint8_t) *(buf + i));
 	}
-	if (i && (i % 16))
-		dvb_log("%s%s", prefix, tmp);
+	if (j > 0 && j < 16)
+	{
+		char spaces[47];
+		spaces[0] = '\0';
+		for (i = strlen(hex); i < 49; i++)
+			strncat(spaces, " ", sizeof(spaces));
+		ascii[j] = '\0';
+		dvb_log("%s%s %s %s", prefix, hex, spaces, ascii);
+	}
+
+	/*int i, j;*/
+	/*char tmp[64];*/
+	/*char ascii[32];*/
+	/*for (i = 0, j = 0; i < len; i++, j++) {*/
+	/*if (i && !(i % 16)) {*/
+	/*dvb_log("%s%s", prefix, tmp);*/
+	/*j = 0;*/
+	/*}*/
+	/*sprintf( tmp + j * 3, "%02x ", (uint8_t) *(buf + i));*/
+	/*}*/
+	/*if (i && (i % 16))*/
+	/*dvb_log("%s%s", prefix, tmp);*/
 }
 
 #if 0

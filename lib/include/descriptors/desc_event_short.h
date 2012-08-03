@@ -19,19 +19,20 @@
  *
  */
 
-#ifndef _DESC_LANGUAGE_H
-#define _DESC_LANGUAGE_H
+#ifndef _DESC_EVENT_SHORT_H
+#define _DESC_EVENT_SHORT_H
 
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
 
-struct dvb_desc_language {
+struct dvb_desc_event_short {
 	uint8_t type;
 	uint8_t length;
 	struct dvb_desc *next;
 
 	unsigned char language[4];
-	uint8_t audio_type;
+	char *name;
+	char *text;
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;
@@ -40,8 +41,8 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-ssize_t dvb_desc_language_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
-void dvb_desc_language_print  (struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+ssize_t dvb_desc_event_short_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+void dvb_desc_event_short_print  (struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }
