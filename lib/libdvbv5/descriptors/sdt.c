@@ -22,46 +22,33 @@
 #include "descriptors/sdt.h"
 #include "dvb-fe.h"
 
-void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size, uint8_t **buf, ssize_t *buflen)
+void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
-	uint8_t *d;
-	const uint8_t *p = ptr;
-	struct dvb_table_sdt *sdt = (struct dvb_table_sdt *) ptr;
+	const uint8_t *p = buf;
+	struct dvb_table_sdt *sdt = (struct dvb_table_sdt *) table;
 	struct dvb_table_sdt_service **head;
 
-	bswap16(sdt->network_id);
-
-	if (!*buf) {
-		d = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE * 2);
-		*buf = d;
-		*buflen = 0;
-		sdt = (struct dvb_table_sdt *) d;
-		memcpy(sdt, p, sizeof(struct dvb_table_sdt) - sizeof(sdt->service));
-		*buflen += sizeof(struct dvb_table_sdt);
-
-		sdt->service = NULL;
-		head = &sdt->service;
-	} else {
-		// should realloc d
-		d = *buf;
-
+	if (*table_length > 0) {
 		/* find end of curent list */
-		sdt = (struct dvb_table_sdt *) d;
 		head = &sdt->service;
 		while (*head != NULL)
 			head = &(*head)->next;
+	} else {
+		memcpy(sdt, p, sizeof(struct dvb_table_sdt) - sizeof(sdt->service));
+		*table_length = sizeof(struct dvb_table_sdt);
 
-		/* read new table */
-		sdt = (struct dvb_table_sdt *) p;
+		bswap16(sdt->network_id);
+
+		sdt->service = NULL;
+		head = &sdt->service;
 	}
 	p += sizeof(struct dvb_table_sdt) - sizeof(sdt->service);
 
 	struct dvb_table_sdt_service *last = NULL;
-	while ((uint8_t *) p < ptr + size - 4) {
-		struct dvb_table_sdt_service *service = (struct dvb_table_sdt_service *) (d + *buflen);
-		memcpy(d + *buflen, p, sizeof(struct dvb_table_sdt_service) - sizeof(service->descriptor) - sizeof(service->next));
+	while ((uint8_t *) p < buf + buflen - 4) {
+		struct dvb_table_sdt_service *service = (struct dvb_table_sdt_service *) malloc(sizeof(struct dvb_table_sdt_service));
+		memcpy(service, p, sizeof(struct dvb_table_sdt_service) - sizeof(service->descriptor) - sizeof(service->next));
 		p += sizeof(struct dvb_table_sdt_service) - sizeof(service->descriptor) - sizeof(service->next);
-		*buflen += sizeof(struct dvb_table_sdt_service);
 
 		bswap16(service->service_id);
 		bswap16(service->bitfield);
@@ -75,11 +62,23 @@ void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize
 
 		/* get the descriptors for each program */
 		struct dvb_desc **head_desc = &service->descriptor;
-		*buflen += dvb_parse_descriptors(parms, p, d + *buflen, service->section_length, head_desc);
+		dvb_parse_descriptors(parms, p, service->section_length, head_desc);
 
 		p += service->section_length;
 		last = service;
 	}
+}
+
+void dvb_table_sdt_free(struct dvb_table_sdt *sdt)
+{
+	struct dvb_table_sdt_service *service = sdt->service;
+	while(service) {
+		dvb_free_descriptors((struct dvb_desc **) &service->descriptor);
+		struct dvb_table_sdt_service *tmp = service;
+		service = service->next;
+		free(tmp);
+	}
+	free(sdt);
 }
 
 void dvb_table_sdt_print(struct dvb_v5_fe_parms *parms, struct dvb_table_sdt *sdt)

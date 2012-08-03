@@ -26,13 +26,17 @@
 
 /* According with ISO/IEC 13818-1:2007 */
 
+#define MAX_TABLE_SIZE 1024 * 1024
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char table, uint16_t pid, unsigned char **buf,
-		unsigned *length, unsigned timeout);
+int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, unsigned char **table,
+		unsigned timeout);
+
+int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, int id, uint8_t **table,
+		unsigned timeout);
 
 struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms, int dmx_fd,
 					  uint32_t delivery_system,

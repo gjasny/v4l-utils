@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
+#include <time.h>
 
 #include "descriptors/header.h"
 #include "descriptors.h"
@@ -38,18 +39,23 @@
 
 struct dvb_table_eit_event {
 	uint16_t event_id;
-	uint8_t start[5];
-	uint8_t duration[3];
 	union {
 		uint16_t bitfield;
+		uint8_t dvbstart[5];
+	} __attribute__((packed));
+	uint8_t dvbduration[3];
+	union {
+		uint16_t bitfield2;
 		struct {
 			uint16_t section_length:12;
 			uint16_t free_CA_mode:1;
 			uint16_t running_status:3;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 	struct dvb_desc *descriptor;
 	struct dvb_table_eit_event *next;
+	struct tm start;
+	uint32_t duration;
 } __attribute__((packed));
 
 struct dvb_table_eit {
@@ -61,17 +67,21 @@ struct dvb_table_eit {
 	struct dvb_table_eit_event *event;
 } __attribute__((packed));
 
-#define dvb_eit_service_foreach(_event, _eit) \
+#define dvb_eit_event_foreach(_event, _eit) \
 	for( struct dvb_table_eit_event *_event = _eit->event; _event; _event = _event->next ) \
 
 struct dvb_v5_fe_parms;
+
+extern const char *dvb_eit_running_status_name[8];
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void dvb_table_eit_init (struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size, uint8_t **buf, ssize_t *buflen);
+void dvb_table_eit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length);
+void dvb_table_eit_free(struct dvb_table_eit *eit);
 void dvb_table_eit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_eit *eit);
+void dvb_time(const uint8_t data[5], struct tm *tm);
 
 #ifdef __cplusplus
 }

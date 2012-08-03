@@ -27,7 +27,6 @@
 ssize_t dvb_desc_event_short_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_event_short *event = (struct dvb_desc_event_short *) desc;
-	char *string, *emph;
 	uint8_t len;        /* the length of the string in the input data */
 	uint8_t len1, len2; /* the lenght of the output strings */
 
@@ -39,51 +38,39 @@ ssize_t dvb_desc_event_short_init(struct dvb_v5_fe_parms *parms, const uint8_t *
 	event->language[3] = '\0';
 	buf += 3;
 
-	event->name = ((char *) desc) + sizeof(struct dvb_desc_event_short);
+	event->name = NULL;
+	event->name_emph = NULL;
 	len = buf[0];
 	buf++;
 	len1 = len;
-	string = NULL;
-	emph   = NULL;
-	parse_string(parms, &string, &emph, buf, len1, default_charset, output_charset);
+	parse_string(parms, &event->name, &event->name_emph, buf, len1, default_charset, output_charset);
 	buf += len;
-	if (emph)
-		free(emph);
-	if (string) {
-		len1 = strlen(string);
-		memcpy(event->name, string, len1);
-		free(string);
-	} else {
-		memcpy(event->name, buf, len1);
-	}
-	event->name[len1] = '\0';
 
-	event->text = event->name + len1 + 1;
+	event->text = NULL;
+	event->text_emph = NULL;
 	len = buf[0];
 	len2 = len;
 	buf++;
-	string = NULL;
-	emph   = NULL;
-	parse_string(parms, &string, &emph, buf, len2, default_charset, output_charset);
+	parse_string(parms, &event->text, &event->text_emph, buf, len2, default_charset, output_charset);
 	buf += len;
-	if (emph)
-		free(emph);
-	if (string) {
-		len2 = strlen(string);
-		memcpy(event->text, string, len2);
-		free(string);
-	} else {
-		memcpy(event->text, buf, len2);
-	}
-	event->text[len2] = '\0';
 
-	return sizeof(struct dvb_desc_event_short) + len1 + 1 + len2 + 1;
+	return sizeof(struct dvb_desc_event_short);
+}
+
+void dvb_desc_event_short_free(struct dvb_desc *desc)
+{
+	struct dvb_desc_event_short *event = (struct dvb_desc_event_short *) desc;
+	free(event->name);
+	free(event->name_emph);
+	free(event->text);
+	free(event->text_emph);
 }
 
 void dvb_desc_event_short_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_event_short *event = (const struct dvb_desc_event_short *) desc;
-	dvb_log("|   Event         '%s'", event->name);
+	dvb_log("|   Name          '%s'", event->name);
+	dvb_log("|   Language      '%s'", event->language);
 	dvb_log("|   Description   '%s'", event->text);
 }
 

@@ -32,7 +32,9 @@ struct dvb_desc_service {
 
 	uint8_t service_type;
 	char *name;
+	char *name_emph;
 	char *provider;
+	char *provider_emph;
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;
@@ -43,6 +45,7 @@ extern "C" {
 
 ssize_t dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 void dvb_desc_service_print  (struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+void dvb_desc_service_free   (struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }

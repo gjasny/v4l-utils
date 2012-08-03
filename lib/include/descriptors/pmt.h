@@ -80,7 +80,8 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void dvb_table_pmt_init (struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size, uint8_t **buf, ssize_t *buflen);
+void dvb_table_pmt_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length);
+void dvb_table_pmt_free(struct dvb_table_pmt *pmt);
 void dvb_table_pmt_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_pmt *pmt);
 
 #ifdef __cplusplus

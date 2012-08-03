@@ -23,40 +23,43 @@
 #include "descriptors.h"
 #include "dvb-fe.h"
 
-void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size, uint8_t **buf, ssize_t *buflen)
+void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
-	uint8_t *d;
-	struct dvb_table_pat *pat;
-	if (!*buf) {
-		d = malloc(size + sizeof(uint16_t));
-		*buf = d;
-		*buflen = size + sizeof(uint16_t);
-		pat = (struct dvb_table_pat *) d;
-		memcpy(pat, ptr, sizeof(struct dvb_table_pat) - sizeof(uint16_t));
-
-		struct dvb_table_pat_program *p = (struct dvb_table_pat_program *)
-			                          (ptr + sizeof(struct dvb_table_pat) - sizeof(uint16_t));
-		pat->programs = 0;
-		while ((uint8_t *) p < ptr + size - 4) {
-			memcpy(pat->program + pat->programs, p, sizeof(struct dvb_table_pat_program));
-			bswap16(pat->program[pat->programs].service_id);
-			bswap16(pat->program[pat->programs].bitfield);
-			p++;
-			pat->programs++;
-		}
-	} else {
+	if (*table_length > 0) {
 		dvb_logerr("multisection PAT table not implemented");
+		return;
+	}
+
+	const uint8_t *p = buf;
+	memcpy(table, buf, sizeof(struct dvb_table_pat) - sizeof(uint16_t));
+	p += sizeof(struct dvb_table_pat) - sizeof(uint16_t);
+	*table_length = buflen + sizeof(uint16_t);
+
+	struct dvb_table_pat *pat = (struct dvb_table_pat *) table;
+	pat->programs = 0;
+
+	while (p < buf + buflen - 4) {
+		memcpy(pat->program + pat->programs, p, sizeof(struct dvb_table_pat_program));
+		bswap16(pat->program[pat->programs].service_id);
+		bswap16(pat->program[pat->programs].bitfield);
+		p += sizeof(struct dvb_table_pat_program);
+		pat->programs++;
 	}
 }
 
-void dvb_table_pat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_pat *t)
+void dvb_table_pat_free(struct dvb_table_pat *pat)
+{
+	free(pat);
+}
+
+void dvb_table_pat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_pat *pat)
 {
 	dvb_log("PAT");
-	dvb_table_header_print(parms, &t->header);
-	dvb_log("|\\  program  service (%d programs)", t->programs);
+	dvb_table_header_print(parms, &pat->header);
+	dvb_log("|\\  program  service (%d programs)", pat->programs);
 	int i;
-	for (i = 0; i < t->programs; i++) {
-		dvb_log("|- %7d %7d", t->program[i].pid, t->program[i].service_id);
+	for (i = 0; i < pat->programs; i++) {
+		dvb_log("|- %7d %7d", pat->program[i].pid, pat->program[i].service_id);
 	}
 }
 

@@ -27,7 +27,6 @@
 ssize_t dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_service *service = (struct dvb_desc_service *) desc;
-	char *name, *emph;
 	uint8_t len;        /* the length of the string in the input data */
 	uint8_t len1, len2; /* the lenght of the output strings */
 
@@ -35,45 +34,32 @@ ssize_t dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	service->service_type = buf[0];
 	buf++;
 
-	service->provider = ((char *) desc) + sizeof(struct dvb_desc_service);
+	service->provider = NULL;
+	service->provider_emph = NULL;
 	len = buf[0];
 	buf++;
 	len1 = len;
-	name = NULL;
-	emph = NULL;
-	parse_string(parms, &name, &emph, buf, len1, default_charset, output_charset);
+	parse_string(parms, &service->provider, &service->provider_emph, buf, len1, default_charset, output_charset);
 	buf += len;
-	if (emph)
-		free(emph);
-	if (name) {
-		len1 = strlen(name);
-		memcpy(service->provider, name, len1);
-		free(name);
-	} else {
-		memcpy(service->provider, buf, len1);
-	}
-	service->provider[len1] = '\0';
 
-	service->name = service->provider + len1 + 1;
+	service->name = NULL;
+	service->name_emph = NULL;
 	len = buf[0];
 	len2 = len;
 	buf++;
-	name = NULL;
-	emph = NULL;
-	parse_string(parms, &name, &emph, buf, len2, default_charset, output_charset);
+	parse_string(parms, &service->name, &service->name_emph, buf, len2, default_charset, output_charset);
 	buf += len;
-	if (emph)
-		free(emph);
-	if (name) {
-		len2 = strlen(name);
-		memcpy(service->name, name, len2);
-		free(name);
-	} else {
-		memcpy(service->name, buf, len2);
-	}
-	service->name[len2] = '\0';
 
-	return sizeof(struct dvb_desc_service) + len1 + 1 + len2 + 1;
+	return sizeof(struct dvb_desc_service);
+}
+
+void dvb_desc_service_free(struct dvb_desc *desc)
+{
+	struct dvb_desc_service *service = (struct dvb_desc_service *) desc;
+	free(service->provider);
+	free(service->provider_emph);
+	free(service->name);
+	free(service->name_emph);
 }
 
 void dvb_desc_service_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)

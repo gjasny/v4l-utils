@@ -22,57 +22,50 @@
 #include "descriptors/nit.h"
 #include "dvb-fe.h"
 
-void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize_t size, uint8_t **buf, ssize_t *buflen)
+void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
-	uint8_t *d;
-	const uint8_t *p = ptr;
-	struct dvb_table_nit *nit = (struct dvb_table_nit *) ptr;
+	const uint8_t *p = buf;
+	struct dvb_table_nit *nit = (struct dvb_table_nit *) table;
 	struct dvb_desc **head_desc;
 	struct dvb_table_nit_transport **head;
+	int desc_length;
 
-	bswap16(nit->bitfield);
-
-	if (!*buf) {
-		d = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE * 4);
-		*buf = d;
-		*buflen = 0;
-		nit = (struct dvb_table_nit *) d;
-
-		memcpy(d + *buflen, p, sizeof(struct dvb_table_nit) - sizeof(nit->descriptor) - sizeof(nit->transport));
-		*buflen += sizeof(struct dvb_table_nit);
-
-		nit->descriptor = NULL;
-		nit->transport = NULL;
-		head_desc = &nit->descriptor;
-		head = &nit->transport;
-	} else {
-		// should realloc d
-		d = *buf;
-
-		// find end of curent list
-		nit = (struct dvb_table_nit *) d;
+	if (*table_length > 0) {
+		/* find end of curent lists */
 		head_desc = &nit->descriptor;
 		while (*head_desc != NULL)
 			head_desc = &(*head_desc)->next;
 		head = &nit->transport;
 		while (*head != NULL)
 			head = &(*head)->next;
-		// read new table
-		nit = (struct dvb_table_nit *) p; // FIXME: should be copied to tmp, cause bswap in const
+
+		struct dvb_table_nit *t = (struct dvb_table_nit *) buf;
+		bswap16(t->bitfield);
+		desc_length = t->desc_length;
+
+	} else {
+		memcpy(table, p, sizeof(struct dvb_table_nit) - sizeof(nit->descriptor) - sizeof(nit->transport));
+		*table_length = sizeof(struct dvb_table_nit);
+
+		bswap16(nit->bitfield);
+		nit->descriptor = NULL;
+		nit->transport = NULL;
+		head_desc = &nit->descriptor;
+		head = &nit->transport;
+		desc_length = nit->desc_length;
 	}
 	p += sizeof(struct dvb_table_nit) - sizeof(nit->descriptor) - sizeof(nit->transport);
 
-	*buflen += dvb_parse_descriptors(parms, p, d + *buflen, nit->desc_length, head_desc);
-	p += nit->desc_length;
+	dvb_parse_descriptors(parms, p, desc_length, head_desc);
+	p += desc_length;
 
 	p += sizeof(union dvb_table_nit_transport_header);
 
 	struct dvb_table_nit_transport *last = NULL;
-	while ((uint8_t *) p < ptr + size - 4) {
-		struct dvb_table_nit_transport *transport = (struct dvb_table_nit_transport *) (d + *buflen);
-		memcpy(d + *buflen, p, sizeof(struct dvb_table_nit_transport) - sizeof(transport->descriptor) - sizeof(transport->next));
+	while ((uint8_t *) p < buf + buflen - 4) {
+		struct dvb_table_nit_transport *transport = (struct dvb_table_nit_transport *) malloc(sizeof(struct dvb_table_nit_transport));
+		memcpy(transport, p, sizeof(struct dvb_table_nit_transport) - sizeof(transport->descriptor) - sizeof(transport->next));
 		p += sizeof(struct dvb_table_nit_transport) - sizeof(transport->descriptor) - sizeof(transport->next);
-		*buflen += sizeof(struct dvb_table_nit_transport);
 
 		bswap16(transport->transport_id);
 		bswap16(transport->network_id);
@@ -87,11 +80,24 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *ptr, ssize
 
 		/* get the descriptors for each transport */
 		struct dvb_desc **head_desc = &transport->descriptor;
-		*buflen += dvb_parse_descriptors(parms, p, d + *buflen, transport->section_length, head_desc);
+		dvb_parse_descriptors(parms, p, transport->section_length, head_desc);
 
 		p += transport->section_length;
 		last = transport;
 	}
+}
+
+void dvb_table_nit_free(struct dvb_table_nit *nit)
+{
+	struct dvb_table_nit_transport *transport = nit->transport;
+	dvb_free_descriptors((struct dvb_desc **) &nit->descriptor);
+	while(transport) {
+		dvb_free_descriptors((struct dvb_desc **) &transport->descriptor);
+		struct dvb_table_nit_transport *tmp = transport;
+		transport = transport->next;
+		free(tmp);
+	}
+	free(nit);
 }
 
 void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *nit)
@@ -99,12 +105,7 @@ void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *ni
 	dvb_log("NIT");
 	dvb_table_header_print(parms, &nit->header);
 	dvb_log("| desc_length   %d", nit->desc_length);
-	struct dvb_desc *desc = nit->descriptor;
-	while (desc) {
-		if (dvb_descriptors[desc->type].print)
-			dvb_descriptors[desc->type].print(parms, desc);
-		desc = desc->next;
-	}
+	dvb_print_descriptors(parms, nit->descriptor);
 	const struct dvb_table_nit_transport *transport = nit->transport;
 	uint16_t transports = 0;
 	while(transport) {
