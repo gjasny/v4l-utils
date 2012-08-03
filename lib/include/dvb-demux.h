@@ -29,6 +29,8 @@
 #ifndef _DVB_DEMUX_H
 #define _DVB_DEMUX_H
 
+#include <linux/dvb/dmx.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,7 +38,7 @@ extern "C" {
 int dvb_dmx_open(int adapter, int demux, unsigned verbose);
 void dvb_dmx_close(int dmx_fd);
 
-int set_pesfilter(int dmxfd, int pid, int pes_type, int dvr);
+int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type, dmx_output_t output, int buffersize);
 
 int get_pmt_pid(const char *dmxdev, int sid);
 

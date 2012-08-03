@@ -550,14 +550,18 @@ int main(int argc, char **argv)
 			perror("opening pat demux failed");
 			return -1;
 		}
-		if (set_pesfilter(pat_fd, 0, DMX_PES_OTHER, args.dvr) < 0)
+		if (dvb_set_pesfilter(pat_fd, 0, DMX_PES_OTHER,
+				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
+				args.dvr ? 64 * 1024 : 0) < 0)
 			return -1;
 
 		if ((pmt_fd = open(args.demux_dev, O_RDWR)) < 0) {
 			perror("opening pmt demux failed");
 			return -1;
 		}
-		if (set_pesfilter(pmt_fd, pmtpid, DMX_PES_OTHER, args.dvr) < 0)
+		if (dvb_set_pesfilter(pmt_fd, pmtpid, DMX_PES_OTHER,
+				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
+				args.dvr ? 64 * 1024 : 0) < 0)
 			return -1;
 	}
 
@@ -568,7 +572,10 @@ int main(int argc, char **argv)
 			PERROR("failed opening '%s'", args.demux_dev);
 			return -1;
 		}
-		if (set_pesfilter(video_fd, vpid, DMX_PES_VIDEO, args.dvr) < 0)
+		printf( "  dvb_set_pesfilter %d\n", vpid );
+		if (dvb_set_pesfilter(video_fd, vpid, DMX_PES_VIDEO,
+				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
+				args.dvr ? 64 * 1024 : 0) < 0)
 			return -1;
 	}
 
@@ -580,7 +587,9 @@ int main(int argc, char **argv)
 			return -1;
 		}
 
-		if (set_pesfilter(audio_fd, apid, DMX_PES_AUDIO, args.dvr) < 0)
+		if (dvb_set_pesfilter(audio_fd, apid, DMX_PES_AUDIO,
+				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
+				args.dvr ? 64 * 1024 : 0) < 0)
 			return -1;
 	}
 

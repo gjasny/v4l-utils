@@ -38,7 +38,6 @@
 #include <fcntl.h>
 #include <stdlib.h> /* free */
 
-#include <linux/dvb/dmx.h>
 #include "dvb-demux.h"
 
 int dvb_dmx_open(int adapter, int demux, unsigned verbose)
@@ -56,26 +55,25 @@ void dvb_dmx_close(int dmx_fd)
   close( dmx_fd);
 }
 
-int set_pesfilter(int dmxfd, int pid, int pes_type, int dvr)
+int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type, dmx_output_t output, int buffersize)
 {
 	struct dmx_pes_filter_params pesfilter;
 
 	/* ignore this pid to allow radio services */
 	if (pid < 0 ||
 		pid >= 0x1fff ||
-		(pid == 0 && pes_type != DMX_PES_OTHER))
+		(pid == 0 && type != DMX_PES_OTHER))
 		return 0;
 
-	if (dvr) {
-		int buffersize = 64 * 1024;
+	if (buffersize) {
 		if (ioctl(dmxfd, DMX_SET_BUFFER_SIZE, buffersize) == -1)
-		perror("DMX_SET_BUFFER_SIZE failed");
+			perror("DMX_SET_BUFFER_SIZE failed");
 	}
 
 	pesfilter.pid = pid;
 	pesfilter.input = DMX_IN_FRONTEND;
-	pesfilter.output = dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER;
-	pesfilter.pes_type = pes_type;
+	pesfilter.output = output;
+	pesfilter.pes_type = type;
 	pesfilter.flags = DMX_IMMEDIATE_START;
 
 	if (ioctl(dmxfd, DMX_SET_PES_FILTER, &pesfilter) == -1) {
