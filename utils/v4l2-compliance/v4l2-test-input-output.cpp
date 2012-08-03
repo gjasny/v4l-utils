@@ -70,6 +70,8 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 {
 	bool valid_modes[5] = { true, false, false, false, false };
 	bool tv = !node->is_radio;
+	bool hwseek_caps = tuner.capability & (V4L2_TUNER_CAP_HWSEEK_BOUNDED |
+			V4L2_TUNER_CAP_HWSEEK_WRAP | V4L2_TUNER_CAP_HWSEEK_PROG_LIM);
 	unsigned type = tv ? V4L2_TUNER_ANALOG_TV : V4L2_TUNER_RADIO;
 	__u32 audmode;
 
@@ -91,6 +93,7 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 	if (!tv && !(tuner.capability & V4L2_TUNER_CAP_LOW))
 		return fail("V4L2_TUNER_CAP_LOW was not set for a radio tuner\n");
 	fail_on_test(!(tuner.capability & V4L2_TUNER_CAP_FREQ_BANDS));
+	fail_on_test(!(node->caps & V4L2_CAP_HW_FREQ_SEEK) && hwseek_caps);
 	if (tuner.rangelow >= tuner.rangehigh)
 		return fail("rangelow >= rangehigh\n");
 	if (tuner.rangelow == 0 || tuner.rangehigh == 0xffffffff)
