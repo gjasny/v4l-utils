@@ -280,6 +280,7 @@ static int testCap(struct node *node)
 	dcaps = vcap.device_caps;
 	node->is_m2m = dcaps & m2m_caps;
 	fail_on_test(caps == 0);
+	fail_on_test(caps & V4L2_CAP_ASYNCIO);
 	fail_on_test(!(caps & V4L2_CAP_DEVICE_CAPS));
 	fail_on_test(dcaps & V4L2_CAP_DEVICE_CAPS);
 	fail_on_test(dcaps & ~caps);
