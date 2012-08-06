@@ -88,10 +88,10 @@ void common_usage(void)
 
 static bool is_v4l_dev(const char *name)
 {
-	return !memcmp(name, "vtx", 3) ||
-		!memcmp(name, "video", 5) ||
+	return !memcmp(name, "video", 5) ||
 		!memcmp(name, "radio", 5) ||
-		!memcmp(name, "vbi", 3);
+		!memcmp(name, "vbi", 3) ||
+		!memcmp(name, "v4l-subdev", 10);
 }
 
 static int calc_node_val(const char *s)
