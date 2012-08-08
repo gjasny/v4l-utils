@@ -23,8 +23,11 @@
 
 static unsigned stream_count;
 static unsigned stream_skip;
+static unsigned stream_pat;
 static unsigned reqbufs_count = 3;
 static char *file;
+
+#define NUM_PATTERNS (4)
 
 void streaming_usage(void)
 {
@@ -44,6 +47,16 @@ void streaming_usage(void)
 	       "                     count: the number of buffers to allocate. The default is 3.\n"
 	       "  --stream-user=<count>\n"
 	       "                     capture video using user pointers [VIDIOC_(D)QBUF]\n"
+	       "                     count: the number of buffers to allocate. The default is 3.\n"
+	       "  --stream-from=<file> stream from this file. The default is to generate a pattern.\n"
+	       "                     If <file> is '-', then the data is read from stdin.\n"
+	       "  --stream-pattern=<count>\n"
+	       "                     choose output pattern. The default is 0.\n"
+	       "  --stream-out-mmap=<count>\n"
+	       "                     output video using mmap() [VIDIOC_(D)QBUF]\n"
+	       "                     count: the number of buffers to allocate. The default is 3.\n"
+	       "  --stream-out-user=<count>\n"
+	       "                     output video using user pointers [VIDIOC_(D)QBUF]\n"
 	       "                     count: the number of buffers to allocate. The default is 3.\n"
 	       "  --list-buffers     list all video buffers [VIDIOC_QUERYBUF]\n"
 	       "  --list-buffers-mplane\n"
@@ -157,19 +170,313 @@ void streaming_cmd(int ch, char *optarg)
 	case OptStreamSkip:
 		stream_skip = strtoul(optarg, 0L, 0);
 		break;
+	case OptStreamPattern:
+		stream_pat = strtoul(optarg, 0L, 0);
+		stream_pat %= NUM_PATTERNS;
+		break;
 	case OptStreamTo:
 		file = optarg;
 		if (strcmp(file, "-"))
 			options[OptSilent] = true;
 		break;
+	case OptStreamFrom:
+		file = optarg;
+		break;
 	case OptStreamMmap:
 	case OptStreamUser:
+	case OptStreamOutMmap:
+	case OptStreamOutUser:
 		if (optarg) {
 			reqbufs_count = strtoul(optarg, 0L, 0);
 			if (reqbufs_count == 0)
 				reqbufs_count = 3;
 		}
 		break;
+	}
+}
+
+/* Note: the code to create the test patterns is derived from the vivi.c kernel
+   driver. */
+
+/* Bars and Colors should match positions */
+
+enum colors {
+	WHITE,
+	AMBER,
+	CYAN,
+	GREEN,
+	MAGENTA,
+	RED,
+	BLUE,
+	BLACK,
+	TEXT_BLACK,
+};
+
+/* R   G   B */
+#define COLOR_WHITE	{204, 204, 204}
+#define COLOR_AMBER	{208, 208,   0}
+#define COLOR_CYAN	{  0, 206, 206}
+#define	COLOR_GREEN	{  0, 239,   0}
+#define COLOR_MAGENTA	{239,   0, 239}
+#define COLOR_RED	{205,   0,   0}
+#define COLOR_BLUE	{  0,   0, 205}
+#define COLOR_BLACK	{  0,   0,   0}
+
+struct bar_std {
+	__u8 bar[9][3];
+};
+
+static struct bar_std bars[NUM_PATTERNS] = {
+	{	/* Standard ITU-R color bar sequence */
+		{ COLOR_WHITE, COLOR_AMBER, COLOR_CYAN, COLOR_GREEN,
+		  COLOR_MAGENTA, COLOR_RED, COLOR_BLUE, COLOR_BLACK, COLOR_BLACK }
+	}, {
+		{ COLOR_WHITE, COLOR_AMBER, COLOR_BLACK, COLOR_WHITE,
+		  COLOR_AMBER, COLOR_BLACK, COLOR_WHITE, COLOR_AMBER, COLOR_BLACK }
+	}, {
+		{ COLOR_WHITE, COLOR_CYAN, COLOR_BLACK, COLOR_WHITE,
+		  COLOR_CYAN, COLOR_BLACK, COLOR_WHITE, COLOR_CYAN, COLOR_BLACK }
+	}, {
+		{ COLOR_WHITE, COLOR_GREEN, COLOR_BLACK, COLOR_WHITE,
+		  COLOR_GREEN, COLOR_BLACK, COLOR_WHITE, COLOR_GREEN, COLOR_BLACK }
+	},
+};
+
+#define TO_Y(r, g, b) \
+	(((16829 * r + 33039 * g + 6416 * b  + 32768) >> 16) + 16)
+/* RGB to  V(Cr) Color transform */
+#define TO_V(r, g, b) \
+	(((28784 * r - 24103 * g - 4681 * b  + 32768) >> 16) + 128)
+/* RGB to  U(Cb) Color transform */
+#define TO_U(r, g, b) \
+	(((-9714 * r - 19070 * g + 28784 * b + 32768) >> 16) + 128)
+
+static __u8 calc_bars[9][3];
+static int pixel_size;
+
+/* precalculate color bar values to speed up rendering */
+static bool precalculate_bars(__u32 pixfmt, int pattern)
+{
+	__u8 r, g, b;
+	int k, is_yuv;
+
+	pixel_size = 2;
+	for (k = 0; k < 9; k++) {
+		r = bars[pattern].bar[k][0];
+		g = bars[pattern].bar[k][1];
+		b = bars[pattern].bar[k][2];
+		is_yuv = 0;
+
+		switch (pixfmt) {
+		case V4L2_PIX_FMT_YUYV:
+		case V4L2_PIX_FMT_UYVY:
+		case V4L2_PIX_FMT_YVYU:
+		case V4L2_PIX_FMT_VYUY:
+			is_yuv = 1;
+			break;
+		case V4L2_PIX_FMT_RGB565:
+		case V4L2_PIX_FMT_RGB565X:
+			r >>= 3;
+			g >>= 2;
+			b >>= 3;
+			break;
+		case V4L2_PIX_FMT_RGB555:
+		case V4L2_PIX_FMT_RGB555X:
+			r >>= 3;
+			g >>= 3;
+			b >>= 3;
+			break;
+		case V4L2_PIX_FMT_RGB24:
+		case V4L2_PIX_FMT_BGR24:
+			pixel_size = 3;
+			break;
+		case V4L2_PIX_FMT_RGB32:
+		case V4L2_PIX_FMT_BGR32:
+			pixel_size = 4;
+			break;
+		default:
+			return false;
+		}
+
+		if (is_yuv) {
+			calc_bars[k][0] = TO_Y(r, g, b);	/* Luma */
+			calc_bars[k][1] = TO_U(r, g, b);	/* Cb */
+			calc_bars[k][2] = TO_V(r, g, b);	/* Cr */
+		} else {
+			calc_bars[k][0] = r;
+			calc_bars[k][1] = g;
+			calc_bars[k][2] = b;
+		}
+	}
+	return true;
+}
+
+/* 'odd' is true for pixels 1, 3, 5, etc. and false for pixels 0, 2, 4, etc. */
+static void gen_twopix(__u8 *buf, __u32 pixfmt, int colorpos, bool odd)
+{
+	__u8 r_y, g_u, b_v;
+	int color;
+
+	r_y = calc_bars[colorpos][0]; /* R or precalculated Y */
+	g_u = calc_bars[colorpos][1]; /* G or precalculated U */
+	b_v = calc_bars[colorpos][2]; /* B or precalculated V */
+
+	for (color = 0; color < pixel_size; color++) {
+		__u8 *p = buf + color;
+
+		switch (pixfmt) {
+		case V4L2_PIX_FMT_YUYV:
+			switch (color) {
+			case 0:
+				*p = r_y;
+				break;
+			case 1:
+				*p = odd ? b_v : g_u;
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_UYVY:
+			switch (color) {
+			case 0:
+				*p = odd ? b_v : g_u;
+				break;
+			case 1:
+				*p = r_y;
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_YVYU:
+			switch (color) {
+			case 0:
+				*p = r_y;
+				break;
+			case 1:
+				*p = odd ? g_u : b_v;
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_VYUY:
+			switch (color) {
+			case 0:
+				*p = odd ? g_u : b_v;
+				break;
+			case 1:
+				*p = r_y;
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_RGB565:
+			switch (color) {
+			case 0:
+				*p = (g_u << 5) | b_v;
+				break;
+			case 1:
+				*p = (r_y << 3) | (g_u >> 3);
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_RGB565X:
+			switch (color) {
+			case 0:
+				*p = (r_y << 3) | (g_u >> 3);
+				break;
+			case 1:
+				*p = (g_u << 5) | b_v;
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_RGB555:
+			switch (color) {
+			case 0:
+				*p = (g_u << 5) | b_v;
+				break;
+			case 1:
+				*p = (r_y << 2) | (g_u >> 3);
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_RGB555X:
+			switch (color) {
+			case 0:
+				*p = (r_y << 2) | (g_u >> 3);
+				break;
+			case 1:
+				*p = (g_u << 5) | b_v;
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_RGB24:
+			switch (color) {
+			case 0:
+				*p = r_y;
+				break;
+			case 1:
+				*p = g_u;
+				break;
+			case 2:
+				*p = b_v;
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_BGR24:
+			switch (color) {
+			case 0:
+				*p = b_v;
+				break;
+			case 1:
+				*p = g_u;
+				break;
+			case 2:
+				*p = r_y;
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_RGB32:
+			switch (color) {
+			case 0:
+				*p = 0;
+				break;
+			case 1:
+				*p = r_y;
+				break;
+			case 2:
+				*p = g_u;
+				break;
+			case 3:
+				*p = b_v;
+				break;
+			}
+			break;
+		case V4L2_PIX_FMT_BGR32:
+			switch (color) {
+			case 0:
+				*p = b_v;
+				break;
+			case 1:
+				*p = g_u;
+				break;
+			case 2:
+				*p = r_y;
+				break;
+			case 3:
+				*p = 0;
+				break;
+			}
+			break;
+		}
+	}
+}
+
+static void fill_buffer(void *buffer, struct v4l2_pix_format *pix)
+{
+	for (unsigned y = 0; y < pix->height; y++) {
+		__u8 *ptr = (__u8 *)buffer + y * pix->bytesperline;
+
+		for (unsigned x = 0; x < pix->width; x++) {
+			int colorpos = x / (pix->width / 8) % 8;
+
+			gen_twopix(ptr + x * pixel_size, pix->pixelformat, colorpos, x & 1);
+		}
 	}
 }
 
@@ -331,8 +638,179 @@ void streaming_set(int fd)
 			else
 				free(buffers[i]);
 		}
-		if (fout)
+		if (fout && fout != stdout)
 			fclose(fout);
+	}
+	
+	if (options[OptStreamOutMmap] || options[OptStreamOutUser]) {
+		struct v4l2_format fmt;
+		struct v4l2_requestbuffers reqbufs;
+		int fd_flags = fcntl(fd, F_GETFL);
+		bool is_mmap = options[OptStreamOutMmap];
+		bool use_poll = options[OptStreamPoll];
+		FILE *fin = NULL;
+
+		memset(&fmt, 0, sizeof(fmt));
+		fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+		doioctl(fd, VIDIOC_G_FMT, &fmt);
+
+		if (!precalculate_bars(fmt.fmt.pix.pixelformat, stream_pat % NUM_PATTERNS)) {
+			fprintf(stderr, "unsupported pixelformat\n");
+			return;
+		}
+
+		memset(&reqbufs, 0, sizeof(reqbufs));
+		reqbufs.count = reqbufs_count;
+		reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+		reqbufs.memory = is_mmap ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
+
+		if (file) {
+			if (!strcmp(file, "-"))
+				fin = stdin;
+			else
+				fin = fopen(file, "r");
+		}
+
+		if (doioctl(fd, VIDIOC_REQBUFS, &reqbufs))
+			return;
+
+		void *buffers[reqbufs.count];
+		
+		for (unsigned i = 0; i < reqbufs.count; i++) {
+			struct v4l2_buffer buf;
+
+			memset(&buf, 0, sizeof(buf));
+			buf.type = reqbufs.type;
+			buf.memory = reqbufs.memory;
+			buf.index = i;
+			if (doioctl(fd, VIDIOC_QUERYBUF, &buf))
+				return;
+			if (is_mmap) {
+				buffers[i] = mmap(NULL, buf.length,
+					PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
+
+				if (buffers[i] == MAP_FAILED) {
+					fprintf(stderr, "mmap failed\n");
+					return;
+				}
+			} else {
+				buffers[i] = calloc(1, buf.length);
+				buf.m.userptr = (unsigned long)buffers[i];
+			}
+			fill_buffer(buffers[i], &fmt.fmt.pix);
+			if (doioctl(fd, VIDIOC_QBUF, &buf))
+				return;
+		}
+
+		int type = reqbufs.type;
+		if (doioctl(fd, VIDIOC_STREAMON, &type))
+			return;
+
+		if (use_poll)
+			fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
+
+		unsigned count = 0, last = 0;
+		struct timeval tv_last;
+
+		for (;;) {
+			struct v4l2_buffer buf;
+			int ret;
+
+			if (use_poll) {
+				fd_set fds;
+				struct timeval tv;
+				int r;
+
+				FD_ZERO(&fds);
+				FD_SET(fd, &fds);
+
+				/* Timeout. */
+				tv.tv_sec = 2;
+				tv.tv_usec = 0;
+
+				r = select(fd + 1, NULL, &fds, NULL, &tv);
+
+				if (r == -1) {
+					if (EINTR == errno)
+						continue;
+					fprintf(stderr, "select error: %s\n",
+							strerror(errno));
+					return;
+				}
+
+				if (r == 0) {
+					fprintf(stderr, "select timeout\n");
+					return;
+				}
+			}
+
+			memset(&buf, 0, sizeof(buf));
+			buf.type = reqbufs.type;
+			buf.memory = reqbufs.memory;
+
+			ret = test_ioctl(fd, VIDIOC_DQBUF, &buf);
+			if (ret < 0 && errno == EAGAIN)
+				continue;
+			if (ret < 0) {
+				fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
+				return;
+			}
+			if (fin && !stream_skip) {
+				unsigned sz = fread(buffers[buf.index], 1, buf.length, fin);
+				if (sz != buf.length)
+					fprintf(stderr, "%u != %u\n", sz, buf.length);
+			}
+			if (doioctl(fd, VIDIOC_QBUF, &buf))
+				return;
+
+			fprintf(stderr, ".");
+			fflush(stderr);
+
+			if (count == 0) {
+				gettimeofday(&tv_last, NULL);
+			} else {
+				struct timeval tv_cur, res;
+
+				gettimeofday(&tv_cur, NULL);
+				timersub(&tv_cur, &tv_last, &res);
+				if (res.tv_sec) {
+					unsigned fps = (100 * (count - last)) /
+						(res.tv_sec * 100 + res.tv_usec / 10000);
+					last = count;
+					tv_last = tv_cur;
+					fprintf(stderr, " %d fps\n", fps);
+				}
+			}
+			count++;
+			if (stream_skip) {
+				stream_skip--;
+				continue;
+			}
+			if (stream_count == 0)
+				continue;
+			if (--stream_count == 0)
+				break;
+		}
+		doioctl(fd, VIDIOC_STREAMOFF, &type);
+		fcntl(fd, F_SETFL, fd_flags);
+		fprintf(stderr, "\n");
+
+		for (unsigned i = 0; i < reqbufs.count; i++) {
+			struct v4l2_buffer buf;
+
+			memset(&buf, 0, sizeof(buf));
+			buf.type = reqbufs.type;
+			buf.memory = reqbufs.memory;
+			buf.index = i;
+			if (doioctl(fd, VIDIOC_QUERYBUF, &buf))
+				return;
+			if (is_mmap)
+				munmap(buffers[i], buf.length);
+			else
+				free(buffers[i]);
+		}
+		if (fin && fin != stdin)
+			fclose(fin);
 	}
 }
 
