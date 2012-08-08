@@ -19,28 +19,26 @@
  *
  */
 
-#include "descriptors/desc_network_name.h"
+#include "descriptors/desc_hierarchy.h"
 #include "descriptors.h"
 #include "dvb-fe.h"
-#include "parse_string.h"
 
-void dvb_desc_network_name_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+void dvb_desc_hierarchy_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
-	struct dvb_desc_network_name *net = (struct dvb_desc_network_name *) desc;
-	uint8_t len;  /* the length of the string in the input data */
-	uint8_t len1; /* the lenght of the output strings */
-
-	len = desc->length;
-	len1 = len;
-	net->network_name = NULL;
-	net->network_name_emph = NULL;
-	parse_string(parms, &net->network_name, &net->network_name_emph, buf, len1, default_charset, output_charset);
-	buf += len;
+	struct dvb_desc_hierarchy *hierarchy = (struct dvb_desc_hierarchy *) desc;
+	/* copy from .length */
+	memcpy(((uint8_t *) hierarchy ) + sizeof(hierarchy->type) + sizeof(hierarchy->length) + sizeof(hierarchy->next),
+		buf,
+		hierarchy->length);
 }
 
-void dvb_desc_network_name_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
+void dvb_desc_hierarchy_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
-	const struct dvb_desc_network_name *net = (const struct dvb_desc_network_name *) desc;
-	dvb_log("|           network name: '%s'", net->network_name);
+	const struct dvb_desc_hierarchy *hierarchy = (const struct dvb_desc_hierarchy *) desc;
+	dvb_log("|	Hierarchy");
+	dvb_log("|           type           %d", hierarchy->hierarchy_type);
+	dvb_log("|           layer          %d", hierarchy->layer);
+	dvb_log("|           embedded_layer %d", hierarchy->embedded_layer);
+	dvb_log("|           channel        %d", hierarchy->channel);
 }
 

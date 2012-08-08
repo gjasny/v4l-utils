@@ -98,11 +98,37 @@ void dvb_table_pmt_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_p
 	uint16_t streams = 0;
 	while(stream) {
 		dvb_log("|- %5d   %s (%d)", stream->elementary_pid,
-				dvb_descriptors[stream->type].name, stream->type);
+				pmt_stream_name[stream->type], stream->type);
 		dvb_print_descriptors(parms, stream->descriptor);
 		stream = stream->next;
 		streams++;
 	}
 	dvb_log("|_  %d streams", streams);
 }
+
+const char *pmt_stream_name[] = {
+	[stream_reserved0]         = "Reserved",
+	[stream_video]             = "Video ISO/IEC 11172",
+	[stream_video_h262]        = "Video ISO/IEC 13818-2",
+	[stream_audio]             = "Audio ISO/IEC 11172",
+	[stream_audio_13818_3]     = "Audio ISO/IEC 13818-3",
+	[stream_private_sections]  = "ISO/IEC 13818-1 Private Sections",
+	[stream_private_data]      = "ISO/IEC 13818-1 Private Data",
+	[stream_mheg]              = "ISO/IEC 13522 MHEG",
+	[stream_h222]              = "ISO/IEC 13818-1 Annex A DSM-CC",
+	[stream_h222_1]            = "ITU-T Rec. H.222.1",
+	[stream_13818_6_A]         = "ISO/IEC 13818-6 type A",
+	[stream_13818_6_B]         = "ISO/IEC 13818-6 type B",
+	[stream_13818_6_C]         = "ISO/IEC 13818-6 type C",
+	[stream_13818_6_D]         = "ISO/IEC 13818-6 type D",
+	[stream_h222_aux]          = "ISO/IEC 13818-1 auxiliary",
+	[stream_audio_adts]        = "Audio ISO/IEC 13818-7 ADTS",
+	[stream_video_14496_2]     = "Video ISO/IEC 14496-2",
+	[stream_audio_latm]        = "Audio ISO/IEC 14496-3 LATM",
+	[stream_14496_1_pes]       = "ISO/IEC 14496-1 PES",
+	[stream_14496_1_iso]       = "ISO/IEC 14496-1 ISO",
+	[stream_download]          = "ISO/IEC 13818-6 Synchronized Download Protocol",
+	[stream_reserved ... 0x7f] = "ISO/IEC 13818-1 Reserved",
+	[stream_private  ... 0xff] = "User Private"
+};
 

@@ -24,7 +24,7 @@
 #include "dvb-fe.h"
 #include "parse_string.h"
 
-ssize_t dvb_desc_event_extended_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+void dvb_desc_event_extended_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_event_extended *event = (struct dvb_desc_event_extended *) desc;
 	uint8_t len;  /* the length of the string in the input data */
@@ -62,8 +62,6 @@ ssize_t dvb_desc_event_extended_init(struct dvb_v5_fe_parms *parms, const uint8_
 	buf++;
 	parse_string(parms, &event->text, &event->text_emph, buf, len1, default_charset, output_charset);
 	buf += len;
-
-	return sizeof(struct dvb_desc_event_extended);
 }
 
 void dvb_desc_event_extended_free(struct dvb_desc *desc)

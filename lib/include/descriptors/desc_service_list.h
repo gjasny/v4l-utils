@@ -35,7 +35,7 @@ struct dvb_desc_service_list {
 	uint8_t length;
 	struct dvb_desc *next;
 
-	struct dvb_desc_service_list_table services[];
+	//struct dvb_desc_service_list_table services[];
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;
@@ -44,8 +44,8 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-ssize_t dvb_desc_service_list_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
-void dvb_desc_service_list_print  (struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+void dvb_desc_service_list_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+void dvb_desc_service_list_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }

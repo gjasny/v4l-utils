@@ -19,19 +19,27 @@
  *
  */
 
-#ifndef _DESC_NETWORK_NAME_H
-#define _DESC_NETWORK_NAME_H
+#ifndef _HIERARCHY_H
+#define _HIERARCHY_H
 
 #include <stdint.h>
-#include <unistd.h> /* ssize_t */
 
-struct dvb_desc_network_name {
+struct dvb_desc_hierarchy {
 	uint8_t type;
 	uint8_t length;
 	struct dvb_desc *next;
 
-	char *network_name;
-	char *network_name_emph;
+	uint8_t hierarchy_type:4;
+	uint8_t reserved:4;
+
+	uint8_t layer:6;
+	uint8_t reserved2:2;
+
+	uint8_t embedded_layer:6;
+	uint8_t reserved3:2;
+
+	uint8_t channel:6;
+	uint8_t reserved4:2;
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;
@@ -40,9 +48,8 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void dvb_desc_network_name_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
-void dvb_desc_network_name_free (struct dvb_desc *desc);
-void dvb_desc_network_name_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+void dvb_desc_hierarchy_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+void dvb_desc_hierarchy_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }

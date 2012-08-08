@@ -24,13 +24,13 @@
 #include "dvb-fe.h"
 #include "parse_string.h"
 
-ssize_t dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+void dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_service *service = (struct dvb_desc_service *) desc;
 	uint8_t len;        /* the length of the string in the input data */
 	uint8_t len1, len2; /* the lenght of the output strings */
 
-	/*hexdump(parms, "service desc: ", buf - 2, desc->length + 2);*/
+        /*hexdump(parms, "service desc: ", buf - 2, desc->length + 2);*/
 	service->service_type = buf[0];
 	buf++;
 
@@ -49,8 +49,6 @@ ssize_t dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	buf++;
 	parse_string(parms, &service->name, &service->name_emph, buf, len2, default_charset, output_charset);
 	buf += len;
-
-	return sizeof(struct dvb_desc_service);
 }
 
 void dvb_desc_service_free(struct dvb_desc *desc)

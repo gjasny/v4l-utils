@@ -23,7 +23,7 @@
 #include "descriptors.h"
 #include "dvb-fe.h"
 
-ssize_t dvb_desc_cable_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+void dvb_desc_cable_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_cable_delivery *cable = (struct dvb_desc_cable_delivery *) desc;
 	/* copy only the data - length already initialize */
@@ -35,8 +35,6 @@ ssize_t dvb_desc_cable_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_
 	bswap32(cable->bitfield2);
 	cable->frequency   = bcd(cable->frequency) * 100;
 	cable->symbol_rate = bcd(cable->symbol_rate) * 100;
-
-	return sizeof(struct dvb_desc_cable_delivery);
 }
 
 void dvb_desc_cable_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)

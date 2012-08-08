@@ -331,7 +331,7 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned
 	f.filter.filter[0] = tid;
 	f.filter.mask[0] = 0xff;
 	f.timeout = 0;
-	f.flags = DMX_IMMEDIATE_START; // | DMX_CHECK_CRC;
+	f.flags = DMX_IMMEDIATE_START | DMX_CHECK_CRC;
 	if (ioctl(dmx_fd, DMX_SET_FILTER, &f) == -1) {
 		dvb_perror("dvb_read_section: ioctl DMX_SET_FILTER failed");
 		return -1;
@@ -388,8 +388,6 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned
 				continue;
 			}
 		}
-
-		dvb_logwarn("section %d/%d", h->section_id, h->last_section);
 
 		/* handle the sections */
 		if (first_section == -1)

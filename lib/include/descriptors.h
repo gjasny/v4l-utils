@@ -61,7 +61,7 @@ struct dvb_desc {
 	uint8_t data[];
 } __attribute__((packed));
 
-ssize_t dvb_desc_default_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+void dvb_desc_default_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 void dvb_desc_default_print  (struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 
 #define dvb_desc_foreach( _desc, _tbl ) \
@@ -83,16 +83,16 @@ void dvb_print_descriptors(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc)
 
 struct dvb_v5_fe_parms;
 
-typedef ssize_t (*dvb_desc_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+typedef void (*dvb_desc_init_func) (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 typedef void (*dvb_desc_print_func)(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
-typedef void (*dvb_desc_free_func)(struct dvb_desc *desc);
+typedef void (*dvb_desc_free_func) (struct dvb_desc *desc);
 
 struct dvb_descriptor {
 	const char *name;
 	dvb_desc_init_func init;
 	dvb_desc_print_func print;
 	dvb_desc_free_func free;
-	ssize_t desc_size;
+	ssize_t size;
 };
 
 extern const struct dvb_descriptor dvb_descriptors[];
@@ -257,7 +257,7 @@ enum descriptors {
 	connected_transmission_descriptor		= 0xdd,
 	content_availability_descriptor			= 0xde,
 	service_group_descriptor			= 0xe0,
-	carousel_compatible_composite_Descriptor	= 0xf7,
+	carousel_compatible_composite_descriptor	= 0xf7,
 	conditional_playback_descriptor			= 0xf8,
 	ISDBT_delivery_system_descriptor		= 0xfa,
 	partial_reception_descriptor			= 0xfb,
