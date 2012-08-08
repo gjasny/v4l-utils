@@ -109,7 +109,7 @@ enum descriptors {
 	video_stream_descriptor				= 0x02,
 	audio_stream_descriptor				= 0x03,
 	hierarchy_descriptor				= 0x04,
-	dvbpsi_registration_descriptor			= 0x05,
+	registration_descriptor				= 0x05,
 	ds_alignment_descriptor				= 0x06,
 	target_background_grid_descriptor		= 0x07,
 	video_window_descriptor				= 0x08,

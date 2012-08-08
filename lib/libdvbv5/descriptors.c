@@ -137,7 +137,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	[video_stream_descriptor] = { "video_stream_descriptor", NULL, NULL, NULL },
 	[audio_stream_descriptor] = { "audio_stream_descriptor", NULL, NULL, NULL },
 	[hierarchy_descriptor] = { "hierarchy_descriptor", NULL, NULL, NULL },
-	[dvbpsi_registration_descriptor] = { "dvbpsi_registration_descriptor", NULL, NULL, NULL },
+	[registration_descriptor] = { "registration_descriptor", NULL, NULL, NULL },
 	[ds_alignment_descriptor] = { "ds_alignment_descriptor", NULL, NULL, NULL },
 	[target_background_grid_descriptor] = { "target_background_grid_descriptor", NULL, NULL, NULL },
 	[video_window_descriptor] = { "video_window_descriptor", NULL, NULL, NULL },
@@ -1041,7 +1041,7 @@ void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned c
 /* TODO: remove those stuff */
 
 case ds_alignment_descriptor:
-case dvbpsi_registration_descriptor:
+case registration_descriptor:
 case service_list_descriptor:
 case stuffing_descriptor:
 case VBI_data_descriptor:
