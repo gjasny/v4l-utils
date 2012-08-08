@@ -203,6 +203,10 @@ static struct option long_options[] = {
 	{"stream-to", required_argument, 0, OptStreamTo},
 	{"stream-mmap", optional_argument, 0, OptStreamMmap},
 	{"stream-user", optional_argument, 0, OptStreamUser},
+	{"stream-from", required_argument, 0, OptStreamFrom},
+	{"stream-pattern", required_argument, 0, OptStreamPattern},
+	{"stream-out-mmap", optional_argument, 0, OptStreamOutMmap},
+	{"stream-out-user", optional_argument, 0, OptStreamOutUser},
 	{0, 0, 0, 0}
 };
 
