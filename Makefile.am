@@ -5,7 +5,8 @@ SUBDIRS = \
 	lib/libv4lconvert \
 	lib/libv4l2 \
 	lib/libv4l1 \
-	lib/libdvbv5
+	lib/libdvbv5 \
+	lib/libv4l2rds
 
 if WITH_V4LUTILS
 SUBDIRS += \
