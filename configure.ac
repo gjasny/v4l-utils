@@ -28,6 +28,7 @@ AC_CONFIG_FILES([Makefile
 	utils/v4l2-sysfs-path/Makefile
 	utils/xc3028-firmware/Makefile
 	utils/qv4l2/Makefile
+	utils/rds-ctl/Makefile
 
 	contrib/freebsd/Makefile
 	contrib/test/Makefile

@@ -18,7 +18,8 @@ SUBDIRS += \
 	utils/v4l2-compliance \
 	utils/v4l2-ctl \
 	utils/v4l2-dbg \
-	utils/v4l2-sysfs-path
+	utils/v4l2-sysfs-path \
+	utils/rds-ctl
 
 if LINUX_OS
 SUBDIRS += \
