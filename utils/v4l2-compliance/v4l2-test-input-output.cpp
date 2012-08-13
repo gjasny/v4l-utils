@@ -94,6 +94,8 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 		return fail("V4L2_TUNER_CAP_LOW was not set for a radio tuner\n");
 	fail_on_test(!(tuner.capability & V4L2_TUNER_CAP_FREQ_BANDS));
 	fail_on_test(!(node->caps & V4L2_CAP_HW_FREQ_SEEK) && hwseek_caps);
+	fail_on_test((node->caps & V4L2_CAP_HW_FREQ_SEEK) &&
+		!(tuner.capability & (V4L2_TUNER_CAP_HWSEEK_BOUNDED | V4L2_TUNER_CAP_HWSEEK_WRAP)));
 	if (tuner.rangelow >= tuner.rangehigh)
 		return fail("rangelow >= rangehigh\n");
 	if (tuner.rangelow == 0 || tuner.rangehigh == 0xffffffff)
@@ -283,35 +285,48 @@ int testTunerFreq(struct node *node)
 
 int testTunerHwSeek(struct node *node)
 {
-	struct v4l2_hw_freq_seek seek;
+	unsigned t;
 	int ret;
 
-	memset(&seek, 0, sizeof(seek));
-	seek.type = V4L2_TUNER_RADIO;
-	ret = doioctl(node, VIDIOC_S_HW_FREQ_SEEK, &seek);
-	if (!(node->caps & V4L2_CAP_HW_FREQ_SEEK) && ret != ENOTTY)
-		return fail("hw seek supported but capability not set\n");
-	if (!node->is_radio && ret != ENOTTY)
-		return fail("hw seek supported on a non-radio node?!\n");
-	if (!node->is_radio || !(node->caps & V4L2_CAP_HW_FREQ_SEEK))
-		return ENOTTY;
-	seek.type = V4L2_TUNER_ANALOG_TV;
-	ret = doioctl(node, VIDIOC_S_HW_FREQ_SEEK, &seek);
-	if (ret != EINVAL)
-		return fail("hw seek accepted TV tuner\n");
-	seek.type = V4L2_TUNER_RADIO;
-	seek.seek_upward = 1;
-	ret = doioctl(node, VIDIOC_S_HW_FREQ_SEEK, &seek);
-	if (ret == EINVAL) {
+	for (t = 0; t < node->tuners; t++) {
+		struct v4l2_hw_freq_seek seek;
+		struct v4l2_tuner tuner;
+		
+		tuner.index = t;
+		ret = doioctl(node, VIDIOC_G_TUNER, &tuner);
+		if (ret)
+			return fail("could not get tuner %d\n", t);
+
+		memset(&seek, 0, sizeof(seek));
+		seek.tuner = t;
+		seek.type = V4L2_TUNER_RADIO;
+		ret = doioctl(node, VIDIOC_S_HW_FREQ_SEEK, &seek);
+		if (!(node->caps & V4L2_CAP_HW_FREQ_SEEK) && ret != ENOTTY)
+			return fail("hw seek supported but capability not set\n");
+		if (!node->is_radio && ret != ENOTTY)
+			return fail("hw seek supported on a non-radio node?!\n");
+		if (!node->is_radio || !(node->caps & V4L2_CAP_HW_FREQ_SEEK))
+			return ENOTTY;
+		seek.type = V4L2_TUNER_ANALOG_TV;
+		ret = doioctl(node, VIDIOC_S_HW_FREQ_SEEK, &seek);
+		if (ret != EINVAL)
+			return fail("hw seek accepted TV tuner\n");
+		seek.type = V4L2_TUNER_RADIO;
+		seek.seek_upward = 1;
+		ret = doioctl(node, VIDIOC_S_HW_FREQ_SEEK, &seek);
+		if (ret == EINVAL && (tuner.capability & V4L2_TUNER_CAP_HWSEEK_BOUNDED))
+			return fail("hw bounded seek failed\n");
+		if (ret && ret != EINVAL && ret != ENODATA)
+			return fail("hw bounded seek failed with error %d\n", ret);
 		seek.wrap_around = 1;
 		ret = doioctl(node, VIDIOC_S_HW_FREQ_SEEK, &seek);
+		if (ret == EINVAL && (tuner.capability & V4L2_TUNER_CAP_HWSEEK_WRAP))
+			return fail("hw wrapped seek failed\n");
+		if (ret && ret != EINVAL && ret != ENODATA)
+			return fail("hw wrapped seek failed with error %d\n", ret);
+		if (check_0(seek.reserved, sizeof(seek.reserved)))
+			return fail("non-zero reserved fields\n");
 	}
-	if (ret == EINVAL)
-		return fail("neither wrap_around value was accepted\n");
-	if (ret)
-		return fail("hw seek failed with error %d\n", ret);
-	if (check_0(seek.reserved, sizeof(seek.reserved)))
-		return fail("non-zero reserved fields\n");
 	return 0;
 }
 
