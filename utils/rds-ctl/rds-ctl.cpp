@@ -3,7 +3,7 @@
  *
  * the following applies for all RDS related parts:
  * Copyright 2012 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
- * Author: Konke Radlow <kradlow@cisco.com>
+ * Author: Konke Radlow <koradlow@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
