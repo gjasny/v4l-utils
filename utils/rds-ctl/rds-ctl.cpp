@@ -76,6 +76,7 @@ enum Option {
 	OptOpenFile,
 	OptPrintBlock,
 	OptSilent,
+	OptTMC,
 	OptTunerIndex,
 	OptVerbose,
 	OptWaitLimit,
@@ -110,6 +111,7 @@ static struct option long_options[] = {
 	{"print-block", no_argument, 0, OptPrintBlock},
 	{"read-rds", no_argument, 0, OptReadRds},
 	{"set-freq", required_argument, 0, OptSetFreq},
+	{"tmc", no_argument, 0, OptTMC},
 	{"tuner-index", required_argument, 0, OptTunerIndex},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"wait-limit", required_argument, 0, OptWaitLimit},
@@ -170,6 +172,8 @@ static void usage_rds(void)
 	       "  --print-block\n"
 	       "                     prints all valid RDS fields, whenever a value is updated\n"
 	       "                     instead of printing only updated values\n"
+	       "  --tmc\n"
+	       "                     enables decoding of TMC (Traffic Message Channel) data\n"
 	       "  --verbose\n"
 	       "                     turn on verbose mode - every received RDS group\n"
 	       "                     will be printed\n"
@@ -491,7 +495,30 @@ static void print_decoder_info(uint8_t di)
 		printf("Not Compressed");
 }
 
-static void print_rds_statistics(struct v4l2_rds_statistics *statistics)
+static void print_rds_tmc(const struct v4l2_rds *handle, uint32_t updated_fields)
+{
+	const struct v4l2_rds_tmc_msg *msg = &handle->tmc.tmc_msg;
+	const struct v4l2_tmc_additional_set *set = &msg->additional;
+
+	if (updated_fields & V4L2_RDS_TMC_SG) {
+		printf("\nTMC Single-grp: location: %04x, event: %04x, extent: %02x "
+			"duration: %02x", msg->location, msg->event,
+			msg->extent, msg->dp);
+		return;
+	}
+	if (updated_fields & V4L2_RDS_TMC_MG) {
+		printf("\nTMC Multi-grp: length: %02d, location: %04x, event: %04x,\n"
+		"               extent: %02x duration: %02x", msg->length, msg->location, msg->event,
+			msg->extent, msg->dp);
+		for (int i = 0; i < set->size; i++) {
+			printf("\n               additional[%02d]: label: %02d, value: %04x",
+			i, set->fields[i].label, set->fields[i].data);
+		}
+		return;
+	}
+}
+
+static void print_rds_statistics(const struct v4l2_rds_statistics *statistics)
 {
 	printf("\n\nRDS Statistics: \n");
 	printf("received blocks / received groups: %u / %u\n",
@@ -583,6 +610,8 @@ static void print_rds_data(const struct v4l2_rds *handle, uint32_t updated_field
 		print_rds_af(&handle->rds_af);
 	if (params.options[OptPrintBlock])
 		printf("\n");
+	if (params.options[OptTMC])
+		print_rds_tmc(handle, updated_fields);
 }
 
 static void read_rds(struct v4l2_rds *handle, const int fd, const int wait_limit)

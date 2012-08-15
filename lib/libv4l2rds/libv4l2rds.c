@@ -63,6 +63,23 @@ struct rds_private_state {
 	uint8_t utc_minute;
 	uint8_t utc_offset;
 
+	/* TMC decoding buffers, to store data before it can be verified,
+	 * and before all parts of a multi-group message have been received */
+	uint8_t continuity_id;	/* continuity index of current TMC multigroup */
+	uint8_t grp_seq_id; 	/* group sequence identifier */
+	bool optional_tmc[112];	/* buffer for up to 112 bits of optional
+				 * additional data in multi-group
+				 * messages (112 is the maximal possible length
+				 * specified by the standard) */
+
+	/* TMC groups are only accepted if the same data was received twice,
+	 * these structs are used as receive buffers to validate TMC groups */
+	struct v4l2_rds_group prev_tmc_group;
+	struct v4l2_rds_group prev_tmc_sys_group;
+	struct v4l2_rds_tmc_msg new_tmc_msg;
+
+	/* buffers for rds data, before group type specific decoding can
+	 * be done */
 	struct v4l2_rds_group rds_group;
 	struct v4l2_rds_data rds_data_raw[4];
 };
@@ -177,6 +194,244 @@ static void rds_decode_d(struct rds_private_state *priv_state, struct v4l2_rds_d
 
 	grp->data_d_msb = rds_data->msb;
 	grp->data_d_lsb = rds_data->lsb;
+}
+
+/* compare two rds-groups for equality */
+/* used for decoding RDS-TMC, which has the requirement that the same group
+ * is at least received twice before it is accepted */
+static bool rds_compare_group(const struct v4l2_rds_group *a,
+				const struct v4l2_rds_group *b)
+{
+	if (a->pi != b->pi)
+		return false;
+	if (a->group_version != b->group_version)
+		return false;
+	if (a->group_id != b->group_id)
+		return false;
+
+	if (a->data_b_lsb != b->data_b_lsb)
+		return false;
+	if (a->data_c_lsb != b->data_c_lsb || a->data_c_msb != b->data_c_msb)
+		return false;
+	if (a->data_d_lsb != b->data_d_lsb || a->data_d_msb != b->data_d_msb)
+		return false;
+	/* all values are equal */
+	return true;
+}
+
+/* decode additional information of a TMC message into handy representation */
+/* the additional information of TMC messages is submitted in (up to) 4 blocks of
+ * 28 bits each, which are to be treated as a consecutive bit-array. This data
+ * is represented by the optional_tmc array in the private handle, where each
+ * value represents 1 bit. Each additional information set is defined by a 4-bit
+ * label, and an associated data field for which the length is known */ 
+void rds_tmc_decode_additional(struct rds_private_state *priv_state)
+{
+	struct v4l2_rds_tmc_msg *msg = &priv_state->handle.tmc.tmc_msg;
+	struct v4l2_tmc_additional *fields = &msg->additional.fields[0];
+	const uint8_t label_len = 4;	/* fixed length of a label */
+	uint8_t len; 		/* length of next data field to be extracted */
+	uint8_t label;		/* buffer for extracted label */
+	uint16_t data;		/* buffer for extracted data */
+	uint8_t array_idx = 0;	/* index for optional_tmc array */
+	uint8_t *field_idx = &msg->additional.size;	/* index for
+				 * additional field array */
+	/* LUT for the length of additional data blocks as defined in
+	 * ISO 14819-1 sect. 5.5.1 */
+	static const uint8_t additional_lut[16] = {
+		3, 3, 5, 5, 5, 8, 8, 8, 8, 11, 16, 16, 16, 16, 0, 0
+	};
+
+	/* reset the additional information from previous messages */
+	*field_idx = 0;
+	memset(fields, 0, sizeof(*fields));
+
+	/* decode the optional TMC data */
+	while (array_idx < (msg->length * 28)) {
+		/* extract the next label */
+		label = 0;
+		for (int i = 0; i < label_len; i++) {
+			if (priv_state->optional_tmc[array_idx++])
+				label |= 1 << (label_len - 1 - i); 
+		}
+
+		/* extract the associated data block */
+		data = 0;
+		len = additional_lut[label];	/* length of data block */
+		for (int i = 0; i < len; i++) {
+			if (priv_state->optional_tmc[array_idx++])
+				data |= 1 << (len - 1 - i);
+		}
+
+		/* if  the label is not "reserved for future use", or both
+		 * fields are 0, store the extracted additional information */
+		if (label == 15)
+			continue;
+		if (label == 0 && data == 0)
+			continue;
+		fields[*field_idx].label = label;
+		fields[*field_idx].data = data;
+		*field_idx += 1;
+	}
+}
+
+/* decode the TMC system information that is contained in type 3A groups
+ * that announce the presence of TMC */
+static uint32_t rds_decode_tmc_system(struct rds_private_state *priv_state)
+{
+	struct v4l2_rds_group *group = &priv_state->rds_group;
+	struct v4l2_rds_tmc *tmc = &priv_state->handle.tmc;
+	uint8_t variant_code;
+
+	/* check if the same group was received twice. If not, store new
+	 * group and return early */
+	if (!rds_compare_group(&priv_state->prev_tmc_sys_group, &priv_state->rds_group)) {
+		priv_state->prev_tmc_sys_group = priv_state->rds_group;
+		return 0;
+	}
+	/* bits 14-15 of block 3 contain the variant code */
+	variant_code = priv_state->rds_group.data_c_msb >> 6;
+	switch (variant_code) {
+	case 0x00:
+		/* bits 11-16 of block 3 contain the LTN */
+		tmc->ltn = (((group->data_c_msb & 0x0f) << 2)) |
+			(group->data_c_lsb >> 6);
+		/* bit 5 of block 3 contains the AFI */
+		tmc->afi = group->data_c_lsb & 0x20;
+		/* bit 4 of block 3 contains the Mode */
+		tmc->enhanced_mode = group->data_c_lsb & 0x10;
+		/* bits 0-3 of block 3 contain the MGS */
+		tmc->mgs = group->data_c_lsb & 0x0f;
+		break;
+	case 0x01:
+		/* bits 12-13 of block 3 contain the Gap parameters */
+		tmc->gap = (group->data_c_msb & 0x30) >> 4;
+		/* bits 11-16 of block 3 contain the SID */
+		tmc->sid = (((group->data_c_msb & 0x0f) << 2)) |
+			(group->data_c_lsb >> 6);
+		/* timing information is only valid in enhanced mode */
+		if (!tmc->enhanced_mode)
+			break;
+		/* bits 4-5 of block 3 contain the activity time */
+		tmc->t_a = (group->data_c_lsb & 0x30) >> 4;
+		/* bits 2-3 of block 3 contain the window time */
+		tmc->t_w = (group->data_c_lsb & 0x0c) >> 2;
+		/* bits 0-1 of block 3 contain the delay time */
+		tmc->t_d = group->data_c_lsb & 0x03;
+		break;
+	}
+	return V4L2_RDS_TMC_SYS;
+}
+
+/* decode a single group TMC message */
+static uint32_t rds_decode_tmc_single_group(struct rds_private_state *priv_state)
+{
+	struct v4l2_rds_group *grp = &priv_state->rds_group;
+	struct v4l2_rds_tmc_msg msg;
+
+	/* bits 0-2 of group 2 contain the duration value */
+	msg.dp = grp->data_b_lsb & 0x07;
+	/* bit 15 of block 3 indicates follow diversion advice */
+	msg.follow_diversion = grp->data_c_msb & 0x80;
+	/* bit 14 of block 3 indicates the direction */
+	msg.neg_direction = grp->data_c_msb & 0x40;
+	/* bits 11-13 of block 3 contain the extend of the event */
+	msg.extent = (grp->data_c_msb & 0x38) >> 3;
+	/* bits 0-10 of block 3 contain the event */
+	msg.event = ((grp->data_c_msb & 0x07) << 8) | grp->data_c_lsb;
+	/* bits 0-15 of block 4 contain the location */
+	msg.location = (grp->data_d_msb << 8) | grp->data_c_lsb;
+
+	/* decoding done, store the new message */
+	priv_state->handle.tmc.tmc_msg = msg;
+	priv_state->handle.valid_fields |= V4L2_RDS_TMC_SG;
+	priv_state->handle.valid_fields &= ~V4L2_RDS_TMC_MG;
+
+	return V4L2_RDS_TMC_SG;
+}
+
+/* decode a multi group TMC message and decode the additional fields once
+ * a complete group was decoded */
+static uint32_t rds_decode_tmc_multi_group(struct rds_private_state *priv_state)
+{
+	struct v4l2_rds_group *grp = &priv_state->rds_group;
+	struct v4l2_rds_tmc_msg *msg = &priv_state->new_tmc_msg;
+	bool message_completed = false;
+	uint8_t grp_seq_id;
+	uint64_t buffer;
+
+	/* bits 12-13 of block 3 contain the group sequence id, for all
+	 * multi groups except the first group */
+	grp_seq_id = (grp->data_c_msb & 0x30) >> 4;
+
+	/* beginning of a new multigroup ? */
+	/* bit 15 of block 3 is the first group indicator */
+	if (grp->data_c_msb & 0x80) {
+		/* begine decoding of new message */
+		memset(msg, 0, sizeof(msg));
+		memset(priv_state->optional_tmc, 0, 112*sizeof(bool)); 
+		/* bits 0-3 of block 2 contain continuity index */
+		priv_state->continuity_id = grp->data_b_lsb & 0x07;
+		/* bit 15 of block 3 indicates follow diversion advice */
+		msg->follow_diversion = grp->data_c_msb & 0x80;
+		/* bit 14 of block 3 indicates the direction */
+		msg->neg_direction = grp->data_c_msb & 0x40;
+		/* bits 11-13 of block 3 contain the extend of the event */
+		msg->extent = (grp->data_c_msb & 0x38) >> 3;
+		/* bits 0-10 of block 3 contain the event */
+		msg->event = ((grp->data_c_msb & 0x07) << 8) | grp->data_c_lsb;
+		/* bits 0-15 of block 4 contain the location */
+		msg->location = (grp->data_d_msb << 8) | grp->data_c_lsb;
+	}
+	/* second group of multigroup ? */
+	/* bit 14 of block 3 ist the second group indicator, and the
+	 * group continuity id has to match */
+	else if (grp->data_c_msb & 0x40 &&
+		(grp->data_b_lsb & 0x07) == priv_state->continuity_id) {
+		priv_state->grp_seq_id = grp_seq_id;
+		/* store group for later decoding by transforming the bit values
+		 * into boolean values and storing them in an array, to ease
+		 * further handling */
+		msg->length = 1;
+		buffer = grp->data_c_msb << 24 | grp->data_c_lsb << 16 |
+			grp->data_d_msb << 8 | grp->data_d_lsb;
+		/* the buffer contains 28 bits of additional information */
+		for (int i = 27; i >= 0; i--) {
+			if (buffer & (1 << i))
+				priv_state->optional_tmc[27-i] = true;
+		}
+		if (grp_seq_id == 0)
+			message_completed = true;
+	}
+	/* subsequent groups of multigroup ? */
+	/* group continuity id has to match, and group sequence number has
+	 * to be smaller by one than the group sequence id */
+	else if ((grp->data_b_lsb & 0x07) == priv_state->continuity_id &&
+		(grp_seq_id == priv_state->grp_seq_id-1)) {
+		priv_state->grp_seq_id = grp_seq_id;
+		/* store group for later decoding */
+		msg->length += 1;
+		buffer = grp->data_c_msb << 24 | grp->data_c_lsb << 16|
+			grp->data_d_msb << 8 | grp->data_d_lsb;
+		/* the buffer contains 28 bits of additional information */
+		for (int i = 27; i >= 0; i--) {
+			if (buffer & (1 << i))
+				priv_state->optional_tmc[msg->length*28 + 27 - i] = true;
+		}
+		if (grp_seq_id == 0)
+			message_completed = true;
+	}
+
+	/* complete message received -> decode additional fields and store
+	 * the new message */
+	if (message_completed) {
+		priv_state->handle.tmc.tmc_msg = *msg;
+		rds_tmc_decode_additional(priv_state);
+		priv_state->handle.valid_fields |= V4L2_RDS_TMC_MG;
+		priv_state->handle.valid_fields &= ~V4L2_RDS_TMC_SG;
+	}
+
+	return V4L2_RDS_TMC_MG;
 }
 
 static bool rds_add_oda(struct rds_private_state *priv_state, struct v4l2_rds_oda oda)
@@ -526,6 +781,12 @@ static uint32_t rds_decode_group3(struct rds_private_state *priv_state)
 		handle->decode_information |= V4L2_RDS_ODA;
 		updated_fields |= V4L2_RDS_ODA;
 	}
+
+	/* if it's a TMC announcement decode the contained information */
+	if (new_oda.aid == 0xcd46 || new_oda.aid == 0xcd47) {
+		rds_decode_tmc_system(priv_state);
+	}
+
 	return updated_fields;
 }
 
@@ -623,6 +884,50 @@ static uint32_t rds_decode_group4(struct rds_private_state *priv_state)
 	return updated_fields;
 }
 
+/* group 8A: TMC */
+static uint32_t rds_decode_group8(struct rds_private_state *priv_state)
+{
+	struct v4l2_rds_group *grp = &priv_state->rds_group;
+	uint8_t tuning_variant;
+
+	/* TMC uses version A exclusively */
+	if (grp->group_version != 'A')
+		return 0;
+
+	/* check if the same group was received twice, store new rds group
+	 * and return early if the old group doesn't match the new one */
+	if (!rds_compare_group(&priv_state->prev_tmc_group, &priv_state->rds_group)) {
+		priv_state->prev_tmc_group = priv_state->rds_group;
+		return 0;
+	}
+	/* modify the old group, to prevent that the same TMC message is decoded
+	 * again in the next iteration (the default number of repetitions for
+	 * RDS-TMC groups is 3) */
+	priv_state->prev_tmc_group.group_version = 0;
+
+	/* handle the new TMC data depending on the message type */
+	/* -> single group message */
+	if ((grp->data_b_lsb & V4L2_TMC_SINGLE_GROUP) &&
+		!(grp->data_b_lsb & V4L2_TMC_TUNING_INFO)) {
+		return rds_decode_tmc_single_group(priv_state);
+	}
+	/* -> multi group message */
+	if (!(grp->data_b_lsb & V4L2_TMC_SINGLE_GROUP) &&
+		!(grp->data_b_lsb & V4L2_TMC_TUNING_INFO)) {
+		return rds_decode_tmc_multi_group(priv_state);
+	}
+	/* -> tuning information message, defined for variants 4..9, submitted
+	 * in bits 0-3 of block 2 */
+	tuning_variant = grp->data_b_lsb & 0x0f;
+	if ((grp->data_b_lsb & V4L2_TMC_TUNING_INFO) && tuning_variant >= 4 &&
+		tuning_variant <= 9) {
+		/* TODO: Implement tuning information decoding */
+		return 0;
+	}
+
+	return 0;
+}
+
 /* group 10: Program Type Name */
 static uint32_t rds_decode_group10(struct rds_private_state *priv_state)
 {
@@ -685,6 +990,7 @@ static const decode_group_func decode_group[16] = {
 	[2] = rds_decode_group2,
 	[3] = rds_decode_group3,
 	[4] = rds_decode_group4,
+	[8] = rds_decode_group8,
 	[10] = rds_decode_group10,
 };
 
@@ -956,8 +1262,7 @@ const char *v4l2_rds_get_coverage_str(const struct v4l2_rds *handle)
 	return coverage_lut[coverage];
 }
 
-const struct v4l2_rds_group *v4l2_rds_get_group
-	(const struct v4l2_rds *handle)
+const struct v4l2_rds_group *v4l2_rds_get_group(const struct v4l2_rds *handle)
 {
 	struct rds_private_state *priv_state = (struct rds_private_state *) handle;
 	return &priv_state->rds_group;
