@@ -1695,19 +1695,18 @@ init_device			(void)
 		}
 	}
 
-	switch (io_method) {
-	case 0:
+	if (io_method == 0) {
 		if (cap.capabilities & V4L2_CAP_STREAMING) {
 			io_method = IO_METHOD_MMAP;
 		} else if (cap.capabilities & V4L2_CAP_READWRITE) {
 			io_method = IO_METHOD_READ;
 		} else {
 			error_exit ("%s does not support reading or "
-				    "streaming.\n");
+					"streaming.\n");
 		}
+	}
 
-		break;
-
+	switch (io_method) {
 	case IO_METHOD_READ:
 		if (0 == (cap.capabilities & V4L2_CAP_READWRITE)) {
 			error_exit ("%s does not support read i/o.\n");
