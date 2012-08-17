@@ -83,6 +83,7 @@
 	}                                                               \
 }
 
+#ifdef CONFIG_VIDEO_V4L1_COMPAT
 static int get_brightness_adj(unsigned char *image, long size, int *brightness)
 {
 	long i, tot = 0;
@@ -91,6 +92,7 @@ static int get_brightness_adj(unsigned char *image, long size, int *brightness)
 	*brightness = (128 - tot/(size*3))/3;
 	return !((tot/(size*3)) >= 126 && (tot/(size*3)) <= 130);
 }
+#endif
 
 int main(int argc, char **argv)
 {
