@@ -4,30 +4,9 @@ V4L2 specification while writing and testing this compliance test tool.
 At some point in time these issues should be resolved, but by placing them
 here they won't be forgotten.
 
-- Should QUERYCAP report capabilities for only the current device node or
-  'system wide'?
-
-- If I set a tuner audio mode to something that is not supported by the hardware,
-  should the driver return an error, or silently modify the audio mode, or just
-  accept it?
-
-- G/S_FREQUENCY: this can be used for both receivers and modulators, but if a
-  device has both, then how to I tell the driver that this is the frequency for
-  the modulator instead of the tuner?
-
-- Related question: how do I tell whether a modulator is for TV or FM radio?
-  Spec currently supports modulators for radio only.
-
-- Control documentation is out of date regarding use of class_ctrl 0 and how
+- Control documentation is out of date regarding how
   error_idx should be set for G/S_EXT_CTRLS and for TRY_EXT_CTRLS (which does
   this slightly differently).
-
-- V4L2_FBUF_CAP_SRC_CHROMAKEY: I believe this is defined the wrong way around in
-  DocBook.
-
-- define properly V4L2_FBUF_FLAG_PRIMARY and V4L2_FBUF_FLAG_OVERLAY.
-- ditto V4L2_FBUF_CAP_EXTERNOVERLAY: do bytesperline, sizeimage and base need to be
-  set or not? Determine for overlay and output overlay.
 
 - RGB pixel formats: endianness issues: two tables in the spec.
 
