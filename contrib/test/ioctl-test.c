@@ -78,6 +78,9 @@ union v4l_parms {
 	struct v4l2_create_buffers p_v4l2_create_buffers;
 	struct v4l2_selection p_v4l2_selection;
 	struct v4l2_decoder_cmd p_v4l2_decoder_cmd;
+	struct v4l2_enum_dv_timings p_v4l2_enum_dv_timings;
+	struct v4l2_dv_timings_cap p_v4l2_dv_timings_cap;
+	struct v4l2_frequency_band p_v4l2_frequency_band;
 };
 
 #define ioc(cmd) { cmd, #cmd }
@@ -167,6 +170,10 @@ static const struct {
 	ioc(VIDIOC_S_SELECTION),	/* struct v4l2_selection */
 	ioc(VIDIOC_DECODER_CMD),	/* struct v4l2_decoder_cmd */
 	ioc(VIDIOC_TRY_DECODER_CMD),	/* struct v4l2_decoder_cmd */
+	ioc(VIDIOC_ENUM_DV_TIMINGS),	/* struct v4l2_enum_dv_timings */
+	ioc(VIDIOC_QUERY_DV_TIMINGS),	/* struct v4l2_dv_timings */
+	ioc(VIDIOC_DV_TIMINGS_CAP),	/* struct v4l2_dv_timings_cap */
+	ioc(VIDIOC_ENUM_FREQ_BANDS),	/* struct v4l2_frequency_band */
 };
 #define S_IOCTLS sizeof(ioctls)/sizeof(ioctls[0])
 
@@ -174,7 +181,7 @@ static const struct {
 
 int main(int argc, char **argv)
 {
-	int fd = 0, ret = 0;
+	int fd = 0;
 	unsigned i;
 	unsigned maxlen = 0;
 	char *device = "/dev/video0";
@@ -216,7 +223,7 @@ int main(int argc, char **argv)
 		sprintf(buf, "ioctl 0x%08x = %s('%c', %2d, %4d) = %-*s",
 			cmd, dirs[dir], type, nr, sz, maxlen, name);
 		errno = 0;
-		ret = ioctl(fd, cmd, (void *)&p[sizeof(marker)]);
+		ioctl(fd, cmd, (void *)&p[sizeof(marker)]);
 		perror(buf);
 		if (memcmp(p, marker, sizeof(marker)))
 			fprintf(stderr, "%s: front marker overwritten!\n", name);
