@@ -53,7 +53,7 @@ struct arguments {
 	int force_dvbv3, lnb, sat_number;
 	unsigned diseqc_wait, silent, frontend_only, freq_bpf;
 	unsigned timeout, dvr, rec_psi, exit_after_tuning;
-	unsigned human_readable, record;
+	unsigned record;
 	unsigned n_apid, n_vpid;
 	enum file_formats input_format, output_format;
 };
@@ -73,7 +73,6 @@ static const struct argp_option options[] = {
 	{"record",	'r', NULL,			0, "set up /dev/dvb/adapterX/dvr0 for TS recording", 0},
 	{"pat",		'p', NULL,			0, "add pat and pmt to TS recording (implies -r)", 0},
 	{"silence",	's', NULL,			0, "increases silence (can be used more than once)", 0},
-	{"human",	'H', NULL,			0, "human readable output", 0},
 	{"frontend",	'F', NULL,			0, "set up frontend only, don't touch demux", 0},
 	{"timeout",	't', "seconds",			0, "timeout for zapping and for recording", 0},
 	{"output",	'o', "file",			0, "output filename (use -o - for stdout)", 0},
@@ -275,9 +274,9 @@ static void do_timeout(int x)
 
 static int old_status = 0;
 
-static int print_frontend_stats(struct dvb_v5_fe_parms *parms,
-				int human_readable)
+static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 {
+	char stats[256];
 	int rc;
 	fe_status_t status;
 	uint32_t snr = 0, _signal = 0;
@@ -290,33 +289,29 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms,
 	}
 
 	rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
+
 	rc += dvb_fe_retrieve_stats(parms, DTV_BER, &ber);
 	rc += dvb_fe_retrieve_stats(parms, DTV_SIGNAL_STRENGTH, &_signal);
 	rc += dvb_fe_retrieve_stats(parms, DTV_UNCORRECTED_BLOCKS,
 				    &uncorrected_blocks);
 	rc += dvb_fe_retrieve_stats(parms, DTV_SNR, &snr);
 
-	if (human_readable) {
-		fprintf(stderr,
-		        "status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d | ",
-		        status, (_signal * 100) / 0xffff, (snr * 100) / 0xffff,
-		        ber, uncorrected_blocks);
-	} else {
-		fprintf(stderr,
-			"status %02x | signal %04x | snr %04x | ber %08x | unc %08x | ",
-			status, _signal, snr, ber, uncorrected_blocks);
-	}
+	fprintf(stderr,
+	        "\rstatus 0x%02x | signal %3.2f%% | snr %3.2f%% | ber %6d | unc %d | ",
+	        status, (_signal * 100.0) / 0xffff, (snr * 100.0) / 0xffff,
+	        ber, uncorrected_blocks);
 
 	if (status & FE_HAS_LOCK) {
-		fprintf(stderr, "FE_HAS_LOCK");
+		fprintf(stderr, "FE_HAS_LOCK    ");
 		if (!(old_status & FE_HAS_LOCK)) {
-			fprintf(stderr, "\n");
+			fflush(stderr);
 	                dvb_fe_get_parms(parms);
 		}
+	} else {
+		fprintf(stderr, "\n");
 	}
 	old_status = status;
 
-	fprintf(stderr, "\n");
 	return 0;
 }
 
@@ -332,13 +327,13 @@ static int check_frontend(struct arguments *args,
 
 		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
 		if (!args->silent)
-			print_frontend_stats(parms, args->human_readable);
+			print_frontend_stats(parms);
 		if (args->exit_after_tuning && (status & FE_HAS_LOCK))
 			break;
 		usleep(1000000);
 	} while (!timeout_flag);
 	if (args->silent < 2)
-		print_frontend_stats(parms, args->human_readable);
+		print_frontend_stats(parms);
 
 	return 0;
 }
@@ -424,9 +419,6 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		break;
 	case 'F':
 		args->frontend_only = 1;
-		break;
-	case 'H':
-		args->human_readable = 1;
 		break;
 	case 'A':
 		args->n_apid = strtoul(optarg, NULL, 0);
@@ -628,12 +620,12 @@ int main(int argc, char **argv)
 			return -1;
 		}
 		if (args.silent < 2)
-			print_frontend_stats(parms, args.human_readable);
+			print_frontend_stats(parms);
 
 		copy_to_file(dvr_fd, file_fd, args.timeout, args.silent);
 
 		if (args.silent < 2)
-			print_frontend_stats(parms, args.human_readable);
+			print_frontend_stats(parms);
 	} else {
 		check_frontend(&args, parms);
 	}
