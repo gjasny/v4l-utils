@@ -60,6 +60,7 @@ enum dvbv3_emulation_type {
 
 struct dvb_v5_stats {
 	struct dtv_property		prop[DTV_MAX_STATS];
+	int				valid[DTV_MAX_STATS];
 };
 
 
@@ -130,9 +131,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms);
 /* Get statistics */
 
 int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
-			   unsigned cmd, uint32_t *value);
-int dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
-			unsigned cmd, uint32_t value);
+			  unsigned cmd, uint32_t *value);
 int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms);
 
 /* Get both status statistics and dvb parameters */

@@ -657,13 +657,16 @@ ret:
 }
 
 int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
-			   unsigned cmd, uint32_t *value)
+			  unsigned cmd, uint32_t *value)
 {
-	int i;
+	int i, valid;
 	for (i = 0; i < DTV_MAX_STATS; i++) {
 		if (parms->stats.prop[i].cmd != cmd)
 			continue;
 		*value = parms->stats.prop[i].u.data;
+		valid = parms->stats.valid[i];
+		if (!valid)
+			return EINVAL;
 		return 0;
 	}
 	dvb_logerr("%s not found on retrieve",
@@ -672,14 +675,16 @@ int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
 	return EINVAL;
 }
 
-int dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
-			unsigned cmd, uint32_t value)
+static int dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
+			unsigned cmd, uint32_t value,
+			int valid)
 {
 	int i;
 	for (i = 0; i < DTV_MAX_STATS; i++) {
 		if (parms->stats.prop[i].cmd != cmd)
 			continue;
 		parms->stats.prop[i].u.data = value;
+		parms->stats.valid[i] = valid;
 		return 0;
 	}
 	dvb_logerr("%s not found on store",
@@ -690,33 +695,42 @@ int dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
 
 int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 {
-	fe_status_t status;
-	uint32_t ber, ucb;
-	uint16_t strength, snr;
-	int i;
+	fe_status_t status = 0;
+	uint32_t ber= 0, ucb = 0;
+	uint16_t strength = 0, snr = 0;
+	int i, valid;
 
 	if (ioctl(parms->fd, FE_READ_STATUS, &status) == -1) {
 		dvb_perror("FE_READ_STATUS");
-		status = -1;
-	}
-	dvb_fe_store_stats(parms, DTV_STATUS, status);
+		valid = 0;
+	} else
+		valid = 1;
+	dvb_fe_store_stats(parms, DTV_STATUS, status, valid);
 
 	if (ioctl(parms->fd, FE_READ_BER, &ber) == -1)
-		ber = 0;
-	dvb_fe_store_stats(parms, DTV_BER, ber);
+		valid = 0;
+	else
+		valid = 1;
+	dvb_fe_store_stats(parms, DTV_BER, ber, valid);
 
 	if (ioctl(parms->fd, FE_READ_SIGNAL_STRENGTH, &strength) == -1)
-		strength = (uint16_t) -1;
-	dvb_fe_store_stats(parms, DTV_SIGNAL_STRENGTH, strength);
+		valid = 0;
+	else
+		valid = 1;
+
+	dvb_fe_store_stats(parms, DTV_SIGNAL_STRENGTH, strength, valid);
 
 	if (ioctl(parms->fd, FE_READ_SNR, &snr) == -1)
-		snr = (uint16_t) -1;
-	dvb_fe_store_stats(parms, DTV_SNR, snr);
+		valid = 0;
+	else
+		valid = 1;
+	dvb_fe_store_stats(parms, DTV_SNR, snr, valid);
 
 	if (ioctl(parms->fd, FE_READ_UNCORRECTED_BLOCKS, &ucb) == -1)
-		ucb = 0;
-	dvb_fe_store_stats(parms, DTV_UNCORRECTED_BLOCKS, snr);
-
+		valid = 0;
+	else
+		valid = 1;
+	dvb_fe_store_stats(parms, DTV_UNCORRECTED_BLOCKS, snr, valid);
 
 	if (parms->verbose > 1) {
 		dvb_log("Status: ");
@@ -754,7 +768,7 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
 				dvb_log ("    %s", fe_status_name[i].name);
 		}
 	}
-	dvb_fe_store_stats(parms, DTV_STATUS, status);
+	dvb_fe_store_stats(parms, DTV_STATUS, status, 1);
 
 	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &event.parameters.frequency);
 	dvb_fe_retrieve_parm(parms, DTV_INVERSION, &event.parameters.inversion);
