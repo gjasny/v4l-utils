@@ -156,12 +156,12 @@ static void print_frontend_stats(struct dvb_v5_fe_parms *parms)
 		len -= s;
 	}
 
-	fprintf(stderr, "%s", buf);
-
 	if (!(status & FE_HAS_LOCK))
-		printf("| tune failed\n");
+		s = snprintf(p, len, "| failed\n");
 	else
-		printf("\n");
+		s = snprintf(p, len, "\n");
+
+	fprintf(stderr, "%s", buf);
 }
 
 static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
