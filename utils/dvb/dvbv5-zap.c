@@ -173,12 +173,12 @@ static int parse(struct arguments *args,
 			if (type != entry->other_el_pid[i].type) {
 				type = entry->other_el_pid[i].type;
 				if (i)
-					printf("\n");
-				printf("service has pid type %02x: ", type);
+					fprintf(stderr, "\n");
+				fprintf(stderr, "service has pid type %02x: ", type);
 			}
-			printf(" %d", entry->other_el_pid[i].pid);
+			fprintf(stderr, " %d", entry->other_el_pid[i].pid);
 		}
-		printf("\n");
+		fprintf(stderr, "\n");
 	}
 	*sid = entry->service_id;
 
@@ -297,9 +297,10 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms,
 	rc += dvb_fe_retrieve_stats(parms, DTV_SNR, &snr);
 
 	if (human_readable) {
-		printf("status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d | ",
-		     status, (_signal * 100) / 0xffff, (snr * 100) / 0xffff,
-		     ber, uncorrected_blocks);
+		fprintf(stderr,
+		        "status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d | ",
+		        status, (_signal * 100) / 0xffff, (snr * 100) / 0xffff,
+		        ber, uncorrected_blocks);
 	} else {
 		fprintf(stderr,
 			"status %02x | signal %04x | snr %04x | ber %08x | unc %08x | ",
@@ -352,7 +353,7 @@ static void copy_to_file(int in_fd, int out_fd, int timeout, int silent)
 		r = read(in_fd, buf, BUFLEN);
 		if (r < 0) {
 			if (errno == EOVERFLOW) {
-				printf("buffer overrun\n");
+				fprintf(stderr, "buffer overrun\n");
 				continue;
 			}
 			PERROR("Read failed");
@@ -509,7 +510,7 @@ int main(int argc, char **argv)
 			asprintf(&args.confname, "%s/.tzap/%s",
 				homedir, CHANNEL_FILE);
 	}
-	printf("reading channels from file '%s'\n", args.confname);
+	fprintf(stderr, "reading channels from file '%s'\n", args.confname);
 
 	parms = dvb_fe_open(args.adapter, args.frontend, 0, args.force_dvbv3);
 	if (!parms)
@@ -572,7 +573,8 @@ int main(int argc, char **argv)
 			PERROR("failed opening '%s'", args.demux_dev);
 			return -1;
 		}
-		printf( "  dvb_set_pesfilter %d\n", vpid );
+		if (args.silent < 2)
+			fprintf(stderr, "  dvb_set_pesfilter %d\n", vpid);
 		if (dvb_set_pesfilter(video_fd, vpid, DMX_PES_VIDEO,
 				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
 				args.dvr ? 64 * 1024 : 0) < 0)
@@ -586,7 +588,8 @@ int main(int argc, char **argv)
 			PERROR("failed opening '%s'", args.demux_dev);
 			return -1;
 		}
-
+		if (args.silent < 2)
+			fprintf(stderr, "  dvb_set_pesfilter %d\n", apid);
 		if (dvb_set_pesfilter(audio_fd, apid, DMX_PES_AUDIO,
 				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
 				args.dvr ? 64 * 1024 : 0) < 0)
