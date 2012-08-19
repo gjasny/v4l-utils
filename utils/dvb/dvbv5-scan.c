@@ -91,12 +91,83 @@ static int verbose = 0;
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
+static char *sig_bits[7] = {
+	[0] = "RF sig",
+	[1] = "Carrier",
+	[2] = "Viterbi",
+	[3] = "Sync",
+	[4] = "Lock",
+	[5] = "Timeout",
+	[6] = "Reinit",
+};
+
+static void print_frontend_stats(struct dvb_v5_fe_parms *parms)
+{
+	char buf[256], *p = buf;
+	int i, s, len = sizeof(buf);
+	fe_status_t status;
+	uint32_t snr = 0, _signal = 0;
+	uint32_t ber = 0, ucb = 0;
+
+	if (dvb_fe_retrieve_stats(parms, DTV_STATUS, &status)) {
+		fprintf(stderr, "Error: dvb_fe_get_stats failed: no status\n");
+		return;
+	}
+
+	/* Get the most significative status */
+	for (i = ARRAY_SIZE(sig_bits) - 1; i >= 0 ; i--) {
+		if ((1 << i) & status) {
+			s = snprintf(p, len, "%-7s ", sig_bits[i]);
+			break;
+		}
+	}
+	if (i < 0)
+		s = snprintf(p, len, "%7s ", "");
+	p += s;
+	len -= s;
+
+	/* Add the status bits */
+	s = snprintf(p, len, "(0x%02x) ", status);
+	p += s;
+	len -= s;
+
+	if (!dvb_fe_retrieve_stats(parms, DTV_SIGNAL_STRENGTH, &_signal)) {
+		s = snprintf(p, len, "| signal %03.2f%% ",
+			     (_signal * 100.0) / 0xffff);
+		p += s;
+		len -= s;
+	}
+	if (!dvb_fe_retrieve_stats(parms, DTV_SNR, &snr)) {
+		s = snprintf(p, len, "| snr %5d ", snr);
+		p += s;
+		len -= s;
+	}
+
+	if (!dvb_fe_retrieve_stats(parms, DTV_BER, &ber)) {
+		s = snprintf(p, len, "| ber %6d ", ber);
+		p += s;
+		len -= s;
+	}
+
+	if (!dvb_fe_retrieve_stats(parms, DTV_UNCORRECTED_BLOCKS,
+				    &ucb)) {
+		s = snprintf(p, len, "| ucb %6d ", ucb);
+		p += s;
+		len -= s;
+	}
+
+	fprintf(stderr, "%s", buf);
+
+	if (!(status & FE_HAS_LOCK))
+		printf("| tune failed\n");
+	else
+		printf("\n");
+}
+
 static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 {
 	int rc, i;
 	fe_status_t status;
-	uint32_t snr = 0, _signal = 0;
-	uint32_t ber = 0, uncorrected_blocks = 0;
 
 	for (i = 0; i < timeout * 10; i++) {
 		rc = dvb_fe_get_stats(parms);
@@ -104,29 +175,16 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 			PERROR("dvb_fe_get_stats failed");
 
 		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
+		if (rc)
+			status = 0;
 		if (status & FE_HAS_LOCK)
 			break;
 		usleep(100000);
 	};
-	dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
-	dvb_fe_retrieve_stats(parms, DTV_BER, &ber);
-	dvb_fe_retrieve_stats(parms, DTV_SIGNAL_STRENGTH, &_signal);
-	dvb_fe_retrieve_stats(parms, DTV_UNCORRECTED_BLOCKS,
-				    &uncorrected_blocks);
-	dvb_fe_retrieve_stats(parms, DTV_SNR, &snr);
 
-	printf("status %02x | signal %3u%% | snr %3u%% | ber %d | unc %d ",
-		status, (_signal * 100) / 0xffff, (snr * 100) / 0xffff,
-		ber, uncorrected_blocks);
+	print_frontend_stats(parms);
 
-	if (status & FE_HAS_LOCK)
-		printf("| FE_HAS_LOCK\n");
-	else {
-		printf("| tune failed\n");
-		return -1;
-	}
-
-	return 0;
+	return (status & FE_HAS_LOCK) ? 0 : -1;
 }
 
 static int new_freq_is_needed(struct dvb_entry *entry,
