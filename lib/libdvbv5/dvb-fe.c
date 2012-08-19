@@ -702,10 +702,9 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 
 	if (ioctl(parms->fd, FE_READ_STATUS, &status) == -1) {
 		dvb_perror("FE_READ_STATUS");
-		valid = 0;
-	} else
-		valid = 1;
-	dvb_fe_store_stats(parms, DTV_STATUS, status, valid);
+		return EINVAL;
+	}
+	dvb_fe_store_stats(parms, DTV_STATUS, status, 1);
 
 	if (ioctl(parms->fd, FE_READ_BER, &ber) == -1)
 		valid = 0;
@@ -741,7 +740,7 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 		dvb_log("BER: %d, Strength: %d, SNR: %d, UCB: %d",
 		       ber, strength, snr, ucb);
 	}
-	return status;
+	return 0;
 }
 
 

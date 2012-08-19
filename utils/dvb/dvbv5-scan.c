@@ -100,7 +100,7 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 
 	for (i = 0; i < timeout * 10; i++) {
 		rc = dvb_fe_get_stats(parms);
-		if (rc < 0)
+		if (rc)
 			PERROR("dvb_fe_get_stats failed");
 
 		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
