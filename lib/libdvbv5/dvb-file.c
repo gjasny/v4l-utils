@@ -106,15 +106,23 @@ struct dvb_file *parse_format_oneline(const char *fname,
 				if (!strcmp(p, formats[i].id))
 					break;
 			}
+			if (!formats[i].id) {
+				sprintf(err_msg, "Doesn't know how to handle delimiter '%s'",
+					p);
+				goto error;
+			}
 		} else {
 			/* Seek for the delivery system */
 			for (i = 0; formats[i].delsys != 0; i++) {
 				if (formats[i].delsys == delsys)
 					break;
 			}
+			if (!formats[i].delsys) {
+				sprintf(err_msg, "Doesn't know how to parse delivery system %d",
+					delsys);
+				goto error;
+			}
 		}
-		if (i == ARRAY_SIZE(formats))
-			goto error;
 
 
 		fmt = &formats[i];
