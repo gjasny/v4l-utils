@@ -90,7 +90,7 @@ struct dvb_v5_fe_parms {
 	unsigned			freq_offset;
 
 	int				abort;
-        dvb_logfunc                     logfunc;
+	dvb_logfunc                     logfunc;
 };
 
 
@@ -104,7 +104,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
 				    unsigned verbose, unsigned use_legacy_call);
 struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend,
 				    unsigned verbose, unsigned use_legacy_call,
-                                    dvb_logfunc logfunc);
+				    dvb_logfunc logfunc);
 void dvb_fe_close(struct dvb_v5_fe_parms *parms);
 
 /* Get/set delivery system parameters */

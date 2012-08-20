@@ -329,7 +329,7 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 		p += s;
 		len -= s;
 	}
-	
+
 	if (!dvb_fe_retrieve_stats(parms, DTV_BER, &ber)) {
 		s = snprintf(p, len, "| ber %6d ", ber);
 		p += s;

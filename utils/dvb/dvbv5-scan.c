@@ -257,7 +257,7 @@ static int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
 {
 	uint32_t shift = 0, bw = 0, symbol_rate, ro;
 	int rolloff = 0;
-        int divisor = 100;
+	int divisor = 100;
 
 	/* Need to handle only cable/satellite and ATSC standards */
 	switch (parms->current_sys) {
@@ -269,13 +269,13 @@ static int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
 		break;
 	case SYS_DVBS:
 	case SYS_ISDBS:	/* FIXME: not sure if this rollof is right for ISDB-S */
-                divisor = 100000;
+		divisor = 100000;
 		rolloff = 135;
 		break;
 	case SYS_DVBS2:
 	case SYS_DSS:
 	case SYS_TURBO:
-                divisor = 100000;
+		divisor = 100000;
 		dvb_fe_retrieve_parm(parms, DTV_ROLLOFF, &ro);
 		switch (ro) {
 		case ROLLOFF_20:

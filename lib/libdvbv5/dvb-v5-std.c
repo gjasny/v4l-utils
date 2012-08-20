@@ -127,7 +127,7 @@ const unsigned int sys_dvbs_props[] = {
 	DTV_INNER_FEC,
 	/*DTV_VOLTAGE,*/
 	/*DTV_TONE,*/
-        DTV_POLARIZATION,
+	DTV_POLARIZATION,
 	0
 };
 
@@ -141,7 +141,7 @@ const unsigned int sys_dvbs2_props[] = {
 	DTV_MODULATION,
 	DTV_PILOT,
 	DTV_ROLLOFF,
-        DTV_POLARIZATION,
+	DTV_POLARIZATION,
 	0
 };
 
@@ -218,12 +218,12 @@ const char *dvb_sat_pol_name[6] = {
 	[POLARIZATION_V] = "VERTICAL",
 	[POLARIZATION_L] = "LEFT",
 	[POLARIZATION_R] = "RIGHT",
-        [5] = NULL,
+	[5] = NULL,
 };
 
 const char *dvb_user_name[2] = {
 	[DTV_POLARIZATION - DTV_USER_COMMAND_START] =                    "POLARIZATION",
-        [1] = NULL,
+	[1] = NULL,
 };
 
 const void *dvb_user_attr_names[] = {

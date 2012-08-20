@@ -37,7 +37,7 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 				    unsigned use_legacy_call)
 {
   return dvb_fe_open2(adapter, frontend, verbose, use_legacy_call,
-                      dvb_default_log);
+		      dvb_default_log);
 }
 
 struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose,
@@ -69,8 +69,8 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	parms->verbose = verbose;
 	parms->fd = fd;
 	parms->sat_number = -1;
-        parms->abort = 0;
-        parms->logfunc = logfunc;
+	parms->abort = 0;
+	parms->logfunc = logfunc;
 
 	if (ioctl(fd, FE_GET_INFO, &parms->info) == -1) {
 		dvb_perror("FE_GET_INFO");

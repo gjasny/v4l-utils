@@ -385,7 +385,7 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 	int i, j, len, type = 0;
 	int is_video = 0, is_audio = 0, n_prop;
 	uint16_t *pid = NULL;
-        char *p;
+	char *p;
 
 	/* Handle the DVBv5 DTV_foo properties */
 	for (i = 0; i < ARRAY_SIZE(dvb_v5_name); i++) {
@@ -738,8 +738,8 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 		fprintf(fp, "\n");
 
 		for (i = 0; i < entry->n_props; i++) {
-                  if (entry->props[i].cmd < DTV_USER_COMMAND_START)
-                    continue;
+		  if (entry->props[i].cmd < DTV_USER_COMMAND_START)
+		    continue;
 			const char * const *attr_name = dvb_user_attr_names[entry->props[i].cmd - DTV_USER_COMMAND_START];
 			if (attr_name) {
 				int j;
