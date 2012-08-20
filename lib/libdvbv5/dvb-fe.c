@@ -326,6 +326,7 @@ static enum dvbv3_emulation_type dvbv3_type(uint32_t delivery_system)
 	case SYS_DMBTH:
 		return DVBV3_OFDM;
 	case SYS_ATSC:
+	case SYS_ATSCMH:
 	case SYS_DVBC_ANNEX_B:
 		return DVBV3_ATSC;
 	default:
@@ -551,6 +552,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 		dvb_fe_store_parm(parms, DTV_MODULATION, v3_parms.u.qam.modulation);
 		break;
 	case SYS_ATSC:
+	case SYS_ATSCMH:
 	case SYS_DVBC_ANNEX_B:
 		dvb_fe_store_parm(parms, DTV_MODULATION, v3_parms.u.vsb.modulation);
 		break;
@@ -623,6 +625,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.qam.modulation);
 		break;
 	case SYS_ATSC:
+	case SYS_ATSCMH:
 	case SYS_DVBC_ANNEX_B:
 		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.vsb.modulation);
 		break;
@@ -782,6 +785,7 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
 		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &event.parameters.u.qam.modulation);
 		break;
 	case SYS_ATSC:
+	case SYS_ATSCMH:
 	case SYS_DVBC_ANNEX_B:
 		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &event.parameters.u.vsb.modulation);
 		break;
