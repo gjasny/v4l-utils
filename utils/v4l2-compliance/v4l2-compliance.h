@@ -191,6 +191,7 @@ int testSlicedVBICap(struct node *node);
 
 // Codec ioctl tests
 int testEncoder(struct node *node);
+int testDecoder(struct node *node);
 
 // Buffer ioctl tests
 int testReqBufs(struct node *node);
