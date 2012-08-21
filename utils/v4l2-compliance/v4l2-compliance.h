@@ -189,6 +189,9 @@ int testTryFormats(struct node *node);
 int testSetFormats(struct node *node);
 int testSlicedVBICap(struct node *node);
 
+// Codec ioctl tests
+int testEncoder(struct node *node);
+
 // Buffer ioctl tests
 int testReqBufs(struct node *node);
 int testReadWrite(struct node *node);
