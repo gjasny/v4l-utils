@@ -25,7 +25,7 @@
 #ifndef _DESCRIPTORS_H
 #define _DESCRIPTORS_H
 
-#include <endian.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <stdint.h>
 
@@ -46,11 +46,11 @@ extern char *default_charset;
 extern char *output_charset;
 
 #define bswap16(b) do {\
-	b = be16toh(b); \
+	b = ntohs(b); \
 } while (0)
 
 #define bswap32(b) do {\
-	b = be32toh(b); \
+	b = ntohl(b); \
 } while (0)
 
 struct dvb_desc {
