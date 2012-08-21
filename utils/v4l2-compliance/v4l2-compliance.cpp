@@ -656,6 +656,12 @@ int main(int argc, char **argv)
 	printf("\ttest VIDIOC_G_SLICED_VBI_CAP: %s\n", ok(testSlicedVBICap(&node)));
 	printf("\n");
 
+	/* Codec ioctls */
+
+	printf("Codec ioctls:\n");
+	printf("\ttest VIDIOC_(TRY_)ENCODER_CMD: %s\n", ok(testEncoder(&node)));
+	printf("\n");
+
 	/* Buffer ioctls */
 
 	printf("Buffer ioctls:\n");
@@ -667,7 +673,6 @@ int main(int argc, char **argv)
 
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP, VIDIOC_G/S_SELECTION
 	   VIDIOC_S_FBUF/OVERLAY
-	   VIDIOC_(TRY_)ENCODER_CMD
 	   VIDIOC_(TRY_)DECODER_CMD
 	   VIDIOC_G_ENC_INDEX
 	   VIDIOC_QBUF/DQBUF/QUERYBUF/PREPARE_BUFS
