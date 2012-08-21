@@ -60,3 +60,33 @@ int testEncoder(struct node *node)
 	fail_on_test(ret != EPERM && ret != EINVAL);
 	return 0;
 }
+
+int testDecoder(struct node *node)
+{
+	struct v4l2_decoder_cmd cmd;
+	int ret;
+
+	memset(&cmd, 0xff, sizeof(cmd));
+	memset(&cmd.raw, 0, sizeof(cmd.raw));
+	ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+	if (ret == ENOTTY)
+		return ret;
+	fail_on_test(ret != EINVAL);
+	ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
+	fail_on_test(ret == ENOTTY);
+	fail_on_test(ret != EINVAL);
+	cmd.cmd = V4L2_DEC_CMD_STOP;
+	cmd.flags = V4L2_DEC_CMD_STOP_IMMEDIATELY;
+	ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
+	fail_on_test(ret != 0);
+	ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+	fail_on_test(ret != 0);
+	cmd.cmd = V4L2_DEC_CMD_PAUSE;
+	cmd.flags = 0;
+	ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+	fail_on_test(ret != EPERM && ret != EINVAL);
+	cmd.cmd = V4L2_DEC_CMD_RESUME;
+	ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+	fail_on_test(ret != EPERM && ret != EINVAL);
+	return 0;
+}
