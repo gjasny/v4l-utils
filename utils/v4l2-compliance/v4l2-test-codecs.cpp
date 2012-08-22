@@ -61,6 +61,23 @@ int testEncoder(struct node *node)
 	return 0;
 }
 
+int testEncIndex(struct node *node)
+{
+	struct v4l2_enc_idx idx;
+	int ret;
+
+	memset(&idx, 0xff, sizeof(idx));
+	ret = doioctl(node, VIDIOC_G_ENC_INDEX, &idx);
+	if (ret == ENOTTY)
+		return ret;
+	if (check_0(idx.reserved, sizeof(idx.reserved)))
+		return fail("idx.reserved not zeroed\n");
+	fail_on_test(ret);
+	fail_on_test(idx.entries != 0);
+	fail_on_test(idx.entries_cap == 0);
+	return 0;
+}
+
 int testDecoder(struct node *node)
 {
 	struct v4l2_decoder_cmd cmd;
