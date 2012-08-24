@@ -60,6 +60,7 @@ typedef std::map<std::string, std::string> dev_map;
    In general the lower case is used to set something and the upper
    case is used to retrieve a setting. */
 enum Option {
+	OptRBDS = 'b',
 	OptSetDevice = 'd',
 	OptGetDriverInfo = 'D',
 	OptGetFreq = 'F',
@@ -99,6 +100,7 @@ static int app_result;
 
 static struct option long_options[] = {
 	{"all", no_argument, 0, OptAll},
+	{"rbds", no_argument, 0, OptRBDS},
 	{"device", required_argument, 0, OptSetDevice},
 	{"file", required_argument, 0, OptOpenFile},
 	{"freq-seek", required_argument, 0, OptFreqSeek},
@@ -160,22 +162,17 @@ static void usage_tuner(void)
 static void usage_rds(void)
 {
 	printf("\nRDS options: \n"
-	       "  -R, --read-rds\n"
-	       "                     enable reading of RDS data from device\n"
-	       "  --file=<path>\n"
-	       "                     open a RDS stream file dump instead of a device\n"
+	       "  -b, --rbds         parse the RDS data according to the RBDS standard\n"
+	       "  -R, --read-rds     enable reading of RDS data from device\n"
+	       "  --file=<path>      open a RDS stream file dump instead of a device\n"
 	       "                     all General and Tuner Options are disabled in this mode\n"
-	       "  --wait-limit=<ms>\n"
-	       "                     defines the maximum wait duration for avaibility of new\n"
+	       "  --wait-limit=<ms>  defines the maximum wait duration for avaibility of new\n"
 	       "                     RDS data\n"
-	       "                     <default>: 5000ms\n"
-	       "  --print-block\n"
-	       "                     prints all valid RDS fields, whenever a value is updated\n"
+	       "                     <default>: 5000 ms\n"
+	       "  --print-block      prints all valid RDS fields, whenever a value is updated\n"
 	       "                     instead of printing only updated values\n"
-	       "  --tmc\n"
-	       "                     enables decoding of TMC (Traffic Message Channel) data\n"
-	       "  --verbose\n"
-	       "                     turn on verbose mode - every received RDS group\n"
+	       "  --tmc              enables decoding of TMC (Traffic Message Channel) data\n"
+	       "  --verbose          turn on verbose mode - every received RDS group\n"
 	       "                     will be printed\n"
 	       );
 }
@@ -656,7 +653,7 @@ static void read_rds_from_fd(const int fd)
 	struct v4l2_rds *rds_handle;
 
 	/* create an rds handle for the current device */
-	if (!(rds_handle = v4l2_rds_create(true))) {
+	if (!(rds_handle = v4l2_rds_create(params.options[OptRBDS]))) {
 		fprintf(stderr, "Failed to init RDS lib: %s\n", strerror(errno));
 		exit(1);
 	}
