@@ -245,7 +245,7 @@ struct v4l2_rds {
  * initialize a new instance of the RDS-decoding struct and return
  * a handle containing state and RDS information, used to interact
  * with the library functions */
-LIBV4L_PUBLIC struct v4l2_rds *v4l2_rds_create(bool is_rdbs);
+LIBV4L_PUBLIC struct v4l2_rds *v4l2_rds_create(bool is_rbds);
 
 /* frees all memory allocated for the RDS-decoding struct */
 LIBV4L_PUBLIC void v4l2_rds_destroy(struct v4l2_rds *handle);
