@@ -276,9 +276,9 @@ static std::string tcap2s(unsigned cap)
 	if (cap & V4L2_TUNER_CAP_RDS)
 		s += "rds ";
 	if (cap & V4L2_TUNER_CAP_RDS_BLOCK_IO)
-		s += "rds block I/O ";
+		s += "rds-block-I/O ";
 	if (cap & V4L2_TUNER_CAP_RDS_CONTROLS)
-		s += "rds control ";
+		s += "rds-controls ";
 	if (cap & V4L2_TUNER_CAP_FREQ_BANDS)
 		s += "freq-bands ";
 	if (cap & V4L2_TUNER_CAP_HWSEEK_PROG_LIM)
