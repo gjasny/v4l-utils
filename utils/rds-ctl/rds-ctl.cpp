@@ -132,7 +132,7 @@ static void usage_common(void)
 	       "  --all              display all information available\n"
 	       "  -D, --info         show driver info [VIDIOC_QUERYCAP]\n"
 	       "  -d, --device=<dev> use device <dev>\n"
-	       "                     if <dev> is a single digit, then /dev/video<dev> is used\n"
+	       "                     if <dev> is a single digit, then /dev/radio<dev> is used\n"
 	       "                     default: checks for RDS-capable devices,\n"
 	       "                     uses device with lowest ID\n"
 	       "  -h, --help         display this help message\n"
