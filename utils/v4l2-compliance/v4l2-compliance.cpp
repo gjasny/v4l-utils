@@ -202,7 +202,7 @@ const char *ok(int res)
 	static char buf[100];
 
 	if (res == ENOTTY) {
-		strcpy(buf, "Not Supported");
+		strcpy(buf, "OK (Not Supported)");
 		res = 0;
 	} else {
 		strcpy(buf, "OK");
