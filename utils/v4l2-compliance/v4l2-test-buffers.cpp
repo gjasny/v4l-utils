@@ -144,9 +144,11 @@ int testReqBufs(struct node *node)
 int testReadWrite(struct node *node)
 {
 	bool can_rw = node->caps & V4L2_CAP_READWRITE;
+	int fd_flags = fcntl(node->fd, F_GETFL);
 	char buf = 0;
 	int ret;
 
+	fcntl(node->fd, F_SETFL, fd_flags | O_NONBLOCK);
 	if (node->can_capture)
 		ret = read(node->fd, &buf, 1);
 	else
@@ -154,20 +156,22 @@ int testReadWrite(struct node *node)
 	// Note: RDS can only return multiples of 3, so we accept
 	// both 0 and 1 as return code.
 	if (can_rw)
-		fail_on_test(ret != 0 && ret != 1);
+		fail_on_test((ret < 0 && errno != EAGAIN) || ret > 1);
 	else
 		fail_on_test(ret < 0 && errno != EINVAL);
 	if (!can_rw)
-		return 0;
+		goto rw_exit;
 
 	reopen(node);
+	fcntl(node->fd, F_SETFL, fd_flags | O_NONBLOCK);
 
 	/* check that the close cleared the busy flag */
 	if (node->can_capture)
 		ret = read(node->fd, &buf, 1);
 	else
 		ret = write(node->fd, &buf, 1);
-	fail_on_test(ret != 0 && ret != 1);
+	fail_on_test((ret < 0 && errno != EAGAIN) || ret > 1);
+rw_exit:
 	reopen(node);
 	return 0;
 }
