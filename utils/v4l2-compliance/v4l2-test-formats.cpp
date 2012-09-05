@@ -551,7 +551,8 @@ int testTryFormats(struct node *node)
 		if (ret)
 			return ret;
 		if (memcmp(&fmt, &fmt_try, sizeof(fmt)))
-			return fail("TRY_FMT(G_FMT) != G_FMT\n");
+			return fail("%s: TRY_FMT(G_FMT) != G_FMT\n",
+					buftype2s(type).c_str());
 	}
 
 	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
@@ -605,7 +606,8 @@ int testSetFormats(struct node *node)
 		if (ret)
 			return ret;
 		if (memcmp(&fmt, &fmt_set, sizeof(fmt)))
-			return fail("S_FMT(G_FMT) != G_FMT\n");
+			return fail("%s: S_FMT(G_FMT) != G_FMT\n",
+					buftype2s(type).c_str());
 	}
 	memset(&fmt, 0xff, sizeof(fmt));
 	fmt.type = V4L2_BUF_TYPE_PRIVATE;
@@ -627,17 +629,14 @@ static int testSlicedVBICapType(struct node *node, unsigned type)
 	memset(&cap.reserved, 0, sizeof(cap.reserved));
 	cap.type = type;
 	ret = doioctl(node, VIDIOC_G_SLICED_VBI_CAP, &cap);
-	if (ret == ENOTTY) {
+	if (ret == ENOTTY || ret == EINVAL) {
 		fail_on_test(sliced_type && (node->caps & buftype2cap[type]));
-		return ret;
+		return ret == ENOTTY ? ret : 0;
 	}
+	fail_on_test(ret);
 	fail_on_test(check_0(cap.reserved, sizeof(cap.reserved)));
 	fail_on_test(cap.type != type);
-	fail_on_test(ret && ret != EINVAL);
-	fail_on_test(ret && sliced_type && (node->caps & buftype2cap[type]));
-	fail_on_test(!ret && (!sliced_type || !(node->caps & buftype2cap[type])));
-	if (ret)
-		return 0;
+	fail_on_test(!sliced_type || !(node->caps & buftype2cap[type]));
 
 	for (int f = 0; f < 2; f++)
 		for (int i = 0; i < 24; i++)
