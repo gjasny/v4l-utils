@@ -270,9 +270,20 @@ static int testCap(struct node *node)
 	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, &vcap));
 	fail_on_test(check_ustring(vcap.driver, sizeof(vcap.driver)));
 	fail_on_test(check_ustring(vcap.card, sizeof(vcap.card)));
-	if (check_ustring(vcap.bus_info, sizeof(vcap.bus_info))) {
-		fail_on_test(vcap.bus_info[0]);
-		warn("VIDIOC_QUERYCAP: empty bus_info\n");
+	fail_on_test(check_ustring(vcap.bus_info, sizeof(vcap.bus_info)));
+	// Check for valid prefixes
+	if (memcmp(vcap.bus_info, "usb-", 4) &&
+	    memcmp(vcap.bus_info, "PCI:", 4) &&
+	    memcmp(vcap.bus_info, "PCIe:", 5) &&
+	    memcmp(vcap.bus_info, "ISA:", 4) &&
+	    memcmp(vcap.bus_info, "I2C:", 4) &&
+	    memcmp(vcap.bus_info, "parport", 7) &&
+	    strcmp((const char *)vcap.bus_info, (const char *)vcap.driver)) {
+		unsigned len = strlen((const char *)vcap.driver);
+
+		// fail if the prefix isn't the driver name followed by a dash
+		fail_on_test(memcmp(vcap.bus_info, vcap.driver, len));
+		fail_on_test(vcap.bus_info[len] != '-');
 	}
 	fail_on_test((vcap.version >> 16) < 3);
 	fail_on_test(check_0(vcap.reserved, sizeof(vcap.reserved)));
