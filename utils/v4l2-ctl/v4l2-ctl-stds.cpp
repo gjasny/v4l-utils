@@ -71,89 +71,69 @@ void stds_usage(void)
 static v4l2_std_id parse_pal(const char *pal)
 {
 	if (pal[0] == '-') {
-		switch (pal[1]) {
+		switch (tolower(pal[1])) {
 			case '6':
 				return V4L2_STD_PAL_60;
 			case 'b':
-			case 'B':
 			case 'g':
-			case 'G':
 				return V4L2_STD_PAL_BG;
 			case 'h':
-			case 'H':
 				return V4L2_STD_PAL_H;
 			case 'n':
-			case 'N':
-				if (pal[2] == 'c' || pal[2] == 'C')
+				if (tolower(pal[2]) == 'c')
 					return V4L2_STD_PAL_Nc;
 				return V4L2_STD_PAL_N;
 			case 'i':
-			case 'I':
 				return V4L2_STD_PAL_I;
 			case 'd':
-			case 'D':
 			case 'k':
-			case 'K':
 				return V4L2_STD_PAL_DK;
-			case 'M':
 			case 'm':
 				return V4L2_STD_PAL_M;
-			case '-':
-				break;
 		}
 	}
 	fprintf(stderr, "pal specifier not recognised\n");
-	return 0;
+	stds_usage();
+	exit(1);
 }
 
 static v4l2_std_id parse_secam(const char *secam)
 {
 	if (secam[0] == '-') {
-		switch (secam[1]) {
+		switch (tolower(secam[1])) {
 			case 'b':
-			case 'B':
 			case 'g':
-			case 'G':
 			case 'h':
-			case 'H':
 				return V4L2_STD_SECAM_B | V4L2_STD_SECAM_G | V4L2_STD_SECAM_H;
 			case 'd':
-			case 'D':
 			case 'k':
-			case 'K':
 				return V4L2_STD_SECAM_DK;
 			case 'l':
-			case 'L':
-				if (secam[2] == 'C' || secam[2] == 'c')
+				if (tolower(secam[2]) == 'c')
 					return V4L2_STD_SECAM_LC;
 				return V4L2_STD_SECAM_L;
-			case '-':
-				break;
 		}
 	}
 	fprintf(stderr, "secam specifier not recognised\n");
-	return 0;
+	stds_usage();
+	exit(1);
 }
 
 static v4l2_std_id parse_ntsc(const char *ntsc)
 {
 	if (ntsc[0] == '-') {
-		switch (ntsc[1]) {
+		switch (tolower(ntsc[1])) {
 			case 'm':
-			case 'M':
 				return V4L2_STD_NTSC_M;
 			case 'j':
-			case 'J':
 				return V4L2_STD_NTSC_M_JP;
 			case 'k':
-			case 'K':
 				return V4L2_STD_NTSC_M_KR;
-			case '-':
-				break;
 		}
 	}
 	fprintf(stderr, "ntsc specifier not recognised\n");
-	return 0;
+	stds_usage();
+	exit(1);
 }
 
 static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings,
@@ -312,26 +292,30 @@ void stds_cmd(int ch, char *optarg)
 {
 	switch (ch) {
 	case OptSetStandard:
-		if (!strncmp(optarg, "pal", 3)) {
+		if (!strncasecmp(optarg, "pal", 3)) {
 			if (optarg[3])
 				standard = parse_pal(optarg + 3);
 			else
 				standard = V4L2_STD_PAL;
 		}
-		else if (!strncmp(optarg, "ntsc", 4)) {
+		else if (!strncasecmp(optarg, "ntsc", 4)) {
 			if (optarg[4])
 				standard = parse_ntsc(optarg + 4);
 			else
 				standard = V4L2_STD_NTSC;
 		}
-		else if (!strncmp(optarg, "secam", 5)) {
+		else if (!strncasecmp(optarg, "secam", 5)) {
 			if (optarg[5])
 				standard = parse_secam(optarg + 5);
 			else
 				standard = V4L2_STD_SECAM;
 		}
-		else {
+		else if (isdigit(optarg[0])) {
 			standard = strtol(optarg, 0L, 0) | (1ULL << 63);
+		} else {
+			fprintf(stderr, "Unknown standard '%s'\n", optarg);
+			stds_usage();
+			exit(1);
 		}
 		break;
 	case OptSetDvPreset:
