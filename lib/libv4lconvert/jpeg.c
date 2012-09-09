@@ -55,7 +55,7 @@ int v4lconvert_decode_jpeg_tinyjpeg(struct v4lconvert_data *data,
 	}
 
 	if (header_width != width || header_height != height) {
-		V4LCONVERT_ERR("unexpected width / height in JPEG header"
+		V4LCONVERT_ERR("unexpected width / height in JPEG header: "
 			       "expected: %ux%u, header: %ux%u\n",
 			       width, height, header_width, header_height);
 		errno = EIO;
@@ -287,7 +287,7 @@ int v4lconvert_decode_jpeg_libjpeg(struct v4lconvert_data *data,
 
 	if (data->cinfo.image_width  != width ||
 	    data->cinfo.image_height != height) {
-		V4LCONVERT_ERR("unexpected width / height in JPEG header"
+		V4LCONVERT_ERR("unexpected width / height in JPEG header: "
 			       "expected: %ux%u, header: %ux%u\n", width,
 			       height, data->cinfo.image_width,
 			       data->cinfo.image_height);
