@@ -562,6 +562,12 @@ int testTryFormats(struct node *node)
 		memset(&fmt, 0xff, sizeof(fmt));
 		fmt.type = type;
 		fmt.fmt.pix.field = V4L2_FIELD_ANY;
+		if (type == V4L2_BUF_TYPE_VIDEO_OVERLAY ||
+		    type == V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY) {
+			fmt.fmt.win.clipcount = 0;
+			fmt.fmt.win.clips = NULL;
+			fmt.fmt.win.bitmap = NULL;
+		}
 		ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
 		ret = testFormatsType(node, ret, type, fmt);
 		if (ret)
