@@ -851,7 +851,7 @@ int testOutputAudio(struct node *node)
 			return fail("invalid audioset for output %d\n", o);
 	}
 
-	if (node->audio_outputs == 0 && node->audio_inputs && (caps & V4L2_CAP_AUDIO))
+	if (node->audio_outputs == 0 && node->audio_inputs == 0 && (node->caps & V4L2_CAP_AUDIO))
 		return fail("no audio inputs or outputs reported, but CAP_AUDIO set\n");
 	return node->audio_outputs ? 0 : ENOTTY;
 }

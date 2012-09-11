@@ -64,7 +64,6 @@ static int tests_total, tests_ok;
 int verbose;
 int wrapper;
 int kernel_version;
-unsigned caps;
 unsigned warnings;
 
 static struct option long_options[] = {

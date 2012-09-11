@@ -30,7 +30,6 @@
 extern int verbose;
 extern int wrapper;
 extern int kernel_version;
-extern unsigned caps;
 extern unsigned warnings;
 
 struct test_queryctrl: v4l2_queryctrl {
