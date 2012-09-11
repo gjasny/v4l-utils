@@ -518,6 +518,21 @@ int testExtendedControls(struct node *node)
 	if (check_0(ctrls.reserved, sizeof(ctrls.reserved)))
 		return fail("reserved not zeroed\n");
 
+	memset(&ctrls, 0, sizeof(ctrls));
+	ret = doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls);
+	if (ret == ENOTTY && node->controls.empty())
+		return ret;
+	if (ret)
+		return fail("try_ext_ctrls does not support count == 0\n");
+	if (node->controls.empty())
+		return fail("try_ext_ctrls worked even when no controls are present\n");
+	if (ctrls.ctrl_class)
+		return fail("field ctrl_class changed\n");
+	if (ctrls.count)
+		return fail("field count changed\n");
+	if (check_0(ctrls.reserved, sizeof(ctrls.reserved)))
+		return fail("reserved not zeroed\n");
+
 	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
 		info("checking extended control '%s' (0x%08x)\n", iter->name, iter->id);
 		ctrl.id = iter->id;
