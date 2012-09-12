@@ -583,6 +583,127 @@ int testTryFormats(struct node *node)
 	return node->valid_buftypes ? 0 : ENOTTY;
 }
 
+static int testGlobalFormat(struct node *node, int type)
+{
+	struct v4l2_fmtdesc fdesc;
+	struct v4l2_frmsizeenum fsize;
+	struct v4l2_format fmt1, fmt2;
+	struct v4l2_pix_format *p1 = &fmt1.fmt.pix;
+	struct v4l2_pix_format *p2 = &fmt2.fmt.pix;
+	struct v4l2_pix_format_mplane *mp1 = &fmt1.fmt.pix_mp;
+	struct v4l2_pix_format_mplane *mp2 = &fmt2.fmt.pix_mp;
+	__u32 pixfmt1, pixfmt2;
+	__u32 w1 = 0, w2 = 0, h1 = 0, h2 = 0;
+
+	memset(&fmt1, 0, sizeof(fmt1));
+	memset(&fmt2, 0, sizeof(fmt2));
+	fmt1.type = fmt2.type = type;
+	fdesc.index = 1;
+	fdesc.type = type;
+	memset(&fsize, 0, sizeof(fsize));
+
+	if (!doioctl(node, VIDIOC_ENUM_FMT, &fdesc)) {
+		// We found at least two different formats.
+		pixfmt2 = fdesc.pixelformat;
+		fdesc.index = 0;
+		doioctl(node, VIDIOC_ENUM_FMT, &fdesc);
+		pixfmt1 = fdesc.pixelformat;
+	} else {
+		fdesc.index = 0;
+		doioctl(node, VIDIOC_ENUM_FMT, &fdesc);
+		fsize.pixel_format = fdesc.pixelformat;
+		if (doioctl(node, VIDIOC_ENUM_FRAMESIZES, &fsize))
+			return 0;
+		pixfmt1 = pixfmt2 = fdesc.pixelformat;
+		switch (fsize.type) {
+		case V4L2_FRMSIZE_TYPE_CONTINUOUS:
+		case V4L2_FRMSIZE_TYPE_STEPWISE:
+			w1 = fsize.stepwise.min_width;
+			w2 = fsize.stepwise.max_width;
+			h1 = fsize.stepwise.min_height;
+			h2 = fsize.stepwise.max_height;
+			break;
+		case V4L2_FRMSIZE_TYPE_DISCRETE:
+			w1 = fsize.discrete.width;
+			h1 = fsize.discrete.height;
+			fsize.index = 1;
+			doioctl(node, VIDIOC_ENUM_FRAMESIZES, &fsize);
+			w2 = fsize.discrete.width;
+			h2 = fsize.discrete.height;
+			break;
+		}
+	}
+	// Check if we have found different formats, otherwise this
+	// test is pointless.
+	if (pixfmt1 == pixfmt2 && w1 == w2 && h1 == h2)
+		return 0;
+
+	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
+	    type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		mp1->pixelformat = pixfmt1;
+		mp1->width = w1;
+		mp1->height = h1;
+		mp2->pixelformat = pixfmt2;
+		mp2->width = w2;
+		mp2->height = h2;
+	} else {
+		p1->pixelformat = pixfmt1;
+		p1->width = w1;
+		p1->height = h1;
+		p2->pixelformat = pixfmt2;
+		p2->width = w2;
+		p2->height = h2;
+	}
+	if (doioctl(node, VIDIOC_S_FMT, &fmt1)) {
+		warn("Could not set fmt1\n");
+		return 0;
+	}
+	if (doioctl(node->node2, VIDIOC_S_FMT, &fmt2)) {
+		warn("Could not set fmt1\n");
+		return 0;
+	}
+	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
+	    type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		if (mp1->pixelformat == mp2->pixelformat &&
+		    mp1->width == mp2->width && mp1->height == mp2->height) {
+			// This compliance test only succeeds if the two formats
+			// are really different after S_FMT
+			warn("Could not perform global format test\n");
+			return 0;
+		}
+	} else {
+		if (p1->pixelformat == p2->pixelformat &&
+		    p1->width == p2->width && p1->height == p2->height) {
+			// This compliance test only succeeds if the two formats
+			// are really different after S_FMT
+			warn("Could not perform global format test\n");
+			return 0;
+		}
+	}
+	doioctl(node, VIDIOC_G_FMT, &fmt1);
+	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
+	    type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		pixfmt1 = mp1->pixelformat;
+		w1 = mp1->width;
+		h1 = mp1->height;
+		pixfmt2 = mp2->pixelformat;
+		w2 = mp2->width;
+		h2 = mp2->height;
+	} else {
+		pixfmt1 = p1->pixelformat;
+		w1 = p1->width;
+		h1 = p1->height;
+		pixfmt2 = p2->pixelformat;
+		w2 = p2->width;
+		h2 = p2->height;
+	}
+	if (pixfmt1 != pixfmt2 || w1 != w2 || h1 != h2)
+		return fail("Global format mismatch: %08x/%dx%d vs %08x/%dx%d\n",
+				pixfmt1, w1, h1, pixfmt2, w2, h2);
+	info("Global format check succeeded for type %d\n", type);
+	return 0;
+}
+
 int testSetFormats(struct node *node)
 {
 	struct v4l2_format fmt, fmt_set;
@@ -620,7 +741,37 @@ int testSetFormats(struct node *node)
 	ret = doioctl(node, VIDIOC_S_FMT, &fmt);
 	if (!ret)
 		warn("Buffer type PRIVATE allowed!\n");
-	return node->valid_buftypes ? 0 : ENOTTY;
+	if (!node->valid_buftypes)
+		return ENOTTY;
+
+	// Test if setting a format on one fh will set the format for all
+	// filehandles.
+	if (node->node2 == NULL)
+		return 0;
+	// m2m devices are unique in that the format is often per-filehandle.
+	if (node->is_m2m)
+		return 0;
+
+	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
+		switch (type) {
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+			if (!(node->valid_buftypes & (1 << type)))
+				continue;
+
+			ret = testGlobalFormat(node, type);
+			if (ret)
+				return ret;
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	return 0;
 }
 
 static int testSlicedVBICapType(struct node *node, unsigned type)
