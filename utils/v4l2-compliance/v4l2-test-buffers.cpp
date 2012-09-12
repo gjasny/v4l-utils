@@ -31,6 +31,29 @@
 #include <sys/ioctl.h>
 #include "v4l2-compliance.h"
 
+static int testQueryBuf(struct node *node, unsigned type, unsigned count)
+{
+	struct v4l2_buffer buf;
+	int ret;
+	unsigned i;
+
+	memset(&buf, 0, sizeof(buf));
+	buf.type = type;
+	for (i = 0; i < count; i++) {
+		buf.index = i;
+		fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
+		fail_on_test(buf.index != i);
+		fail_on_test(buf.type != type);
+		fail_on_test(buf.flags & (V4L2_BUF_FLAG_QUEUED |
+					V4L2_BUF_FLAG_DONE |
+					V4L2_BUF_FLAG_ERROR));
+	}
+	buf.index = count;
+	ret = doioctl(node, VIDIOC_QUERYBUF, &buf);
+	fail_on_test(ret != EINVAL);
+	return 0;
+}
+
 int testReqBufs(struct node *node)
 {
 	struct v4l2_requestbuffers bufs;
@@ -86,6 +109,7 @@ int testReqBufs(struct node *node)
 			fail_on_test(bufs.memory != V4L2_MEMORY_MMAP);
 			fail_on_test(bufs.type != i);
 			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
+			testQueryBuf(node, i, bufs.count);
 		}
 		if (userptr_valid) {
 			bufs.count = 1;
@@ -95,6 +119,7 @@ int testReqBufs(struct node *node)
 			fail_on_test(bufs.memory != V4L2_MEMORY_USERPTR);
 			fail_on_test(bufs.type != i);
 			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
+			testQueryBuf(node, i, bufs.count);
 		}
 
 		if (can_rw) {
@@ -129,6 +154,7 @@ int testReqBufs(struct node *node)
 		fail_on_test(cbufs.count == 0);
 		fail_on_test(cbufs.memory != bufs.memory);
 		fail_on_test(cbufs.format.type != i);
+		testQueryBuf(node, i, cbufs.count);
 		cbufs.count = 1;
 		fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &cbufs));
 		if (!node->is_m2m) {
