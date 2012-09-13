@@ -285,11 +285,11 @@ int testTunerFreq(struct node *node)
 
 int testTunerHwSeek(struct node *node)
 {
+	struct v4l2_hw_freq_seek seek;
 	unsigned t;
 	int ret;
 
 	for (t = 0; t < node->tuners; t++) {
-		struct v4l2_hw_freq_seek seek;
 		struct v4l2_tuner tuner;
 		
 		tuner.index = t;
@@ -327,7 +327,13 @@ int testTunerHwSeek(struct node *node)
 		if (check_0(seek.reserved, sizeof(seek.reserved)))
 			return fail("non-zero reserved fields\n");
 	}
-	return 0;
+	memset(&seek, 0, sizeof(seek));
+	seek.tuner = node->tuners;
+	seek.type = V4L2_TUNER_RADIO;
+	ret = doioctl(node, VIDIOC_S_HW_FREQ_SEEK, &seek);
+	if (ret != EINVAL && ret != ENOTTY)
+		return fail("hw seek for invalid tuner didn't return EINVAL or ENOTTY\n");
+	return ret == ENOTTY ? ret : 0;
 }
 
 static int checkInput(struct node *node, const struct v4l2_input &descr, unsigned i)
