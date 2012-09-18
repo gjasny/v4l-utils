@@ -136,7 +136,7 @@ void vbi_set(int fd)
 			ret = doioctl(fd, VIDIOC_S_FMT, &vbi_fmt);
 		else
 			ret = doioctl(fd, VIDIOC_TRY_FMT, &vbi_fmt);
-		if (ret == 0 && verbose)
+		if (ret == 0 && (verbose || options[OptTrySlicedVbiFormat]))
 			printfmt(vbi_fmt);
 	}
 
@@ -146,7 +146,7 @@ void vbi_set(int fd)
 			ret = doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out);
 		else
 			ret = doioctl(fd, VIDIOC_TRY_FMT, &vbi_fmt_out);
-		if (ret == 0 && verbose)
+		if (ret == 0 && (verbose || options[OptTrySlicedVbiOutFormat]))
 			printfmt(vbi_fmt_out);
 	}
 }
