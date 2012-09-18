@@ -270,7 +270,7 @@ void overlay_set(int fd)
 				ret = doioctl(fd, VIDIOC_S_FMT, &fmt);
 			else
 				ret = doioctl(fd, VIDIOC_TRY_FMT, &fmt);
-			if (ret == 0 && verbose)
+			if (ret == 0 && (verbose || options[OptTryOverlayFormat]))
 				printfmt(fmt);
 		}
 	}
@@ -298,7 +298,7 @@ void overlay_set(int fd)
 				ret = doioctl(fd, VIDIOC_S_FMT, &fmt);
 			else
 				ret = doioctl(fd, VIDIOC_TRY_FMT, &fmt);
-			if (ret == 0 && verbose)
+			if (ret == 0 && (verbose || options[OptTryOutputOverlayFormat]))
 				printfmt(fmt);
 		}
 	}

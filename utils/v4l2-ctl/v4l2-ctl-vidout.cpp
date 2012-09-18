@@ -107,7 +107,7 @@ void vidout_set(int fd)
 				ret = doioctl(fd, VIDIOC_S_FMT, &in_vfmt);
 			else
 				ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt);
-			if (ret == 0 && verbose)
+			if (ret == 0 && (verbose || options[OptTryVideoOutFormat]))
 				printfmt(in_vfmt);
 		}
 	}
@@ -133,7 +133,7 @@ void vidout_set(int fd)
 				ret = doioctl(fd, VIDIOC_S_FMT, &in_vfmt);
 			else
 				ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt);
-			if (ret == 0 && verbose)
+			if (ret == 0 && (verbose || options[OptTryVideoOutMplaneFormat]))
 				printfmt(in_vfmt);
 		}
 	}

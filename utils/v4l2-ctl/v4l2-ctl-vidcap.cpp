@@ -266,7 +266,7 @@ void vidcap_set(int fd)
 				ret = doioctl(fd, VIDIOC_S_FMT, &in_vfmt);
 			else
 				ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt);
-			if (ret == 0 && verbose)
+			if (ret == 0 && (verbose || options[OptTryVideoFormat]))
 				printfmt(in_vfmt);
 		}
 	}
@@ -292,7 +292,7 @@ void vidcap_set(int fd)
 				ret = doioctl(fd, VIDIOC_S_FMT, &in_vfmt);
 			else
 				ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt);
-			if (ret == 0 && verbose)
+			if (ret == 0 && (verbose || options[OptTryVideoMplaneFormat]))
 				printfmt(in_vfmt);
 		}
 	}
