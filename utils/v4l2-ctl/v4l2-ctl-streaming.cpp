@@ -177,7 +177,7 @@ void streaming_cmd(int ch, char *optarg)
 		break;
 	case OptStreamTo:
 		file = optarg;
-		if (strcmp(file, "-"))
+		if (!strcmp(file, "-"))
 			options[OptSilent] = true;
 		break;
 	case OptStreamFrom:
