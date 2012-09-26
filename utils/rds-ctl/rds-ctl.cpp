@@ -115,6 +115,7 @@ static struct option long_options[] = {
 	{"set-freq", required_argument, 0, OptSetFreq},
 	{"tmc", no_argument, 0, OptTMC},
 	{"tuner-index", required_argument, 0, OptTunerIndex},
+	{"silent", no_argument, 0, OptSilent},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"wait-limit", required_argument, 0, OptWaitLimit},
 	{"wrapper", no_argument, 0, OptUseWrapper},
@@ -172,6 +173,7 @@ static void usage_rds(void)
 	       "  --print-block      prints all valid RDS fields, whenever a value is updated\n"
 	       "                     instead of printing only updated values\n"
 	       "  --tmc              enables decoding of TMC (Traffic Message Channel) data\n"
+	       "  --silent           only set the result code, do not print any messages\n"
 	       "  --verbose          turn on verbose mode - every received RDS group\n"
 	       "                     will be printed\n"
 	       );
