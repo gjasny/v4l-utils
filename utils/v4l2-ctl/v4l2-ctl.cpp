@@ -278,6 +278,7 @@ static struct option long_options[] = {
 	{"get-ctrl", required_argument, 0, OptGetCtrl},
 	{"get-tuner", no_argument, 0, OptGetTuner},
 	{"set-tuner", required_argument, 0, OptSetTuner},
+	{"silent", no_argument, 0, OptSilent},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"log-status", no_argument, 0, OptLogStatus},
 	{"get-fmt-overlay", no_argument, 0, OptGetOverlayFormat},

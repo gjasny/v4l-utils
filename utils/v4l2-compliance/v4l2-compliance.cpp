@@ -678,7 +678,7 @@ int main(int argc, char **argv)
 
 	printf("Buffer ioctls:\n");
 	printf("\ttest VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: %s\n", ok(testReqBufs(&node)));
-	printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
+	//printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
 	printf("\n");
 
 	/* TODO:
