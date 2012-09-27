@@ -293,9 +293,9 @@ int testCustomTimings(struct node *node)
 		ret = doioctl(node, VIDIOC_S_INPUT, &input.index);
 		if (ret)
 			return fail("could not select input %d.\n", i);
-		if (input.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS)
+		if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS)
 			has_timings = true;
-		if (checkTimings(node, input.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS))
+		if (checkTimings(node, input.capabilities & V4L2_IN_CAP_DV_TIMINGS))
 			return fail("Timings failed for input %d.\n", i);
 	}
 
@@ -309,9 +309,9 @@ int testCustomTimings(struct node *node)
 		ret = doioctl(node, VIDIOC_S_OUTPUT, &output.index);
 		if (ret)
 			return fail("could not select output %d.\n", o);
-		if (output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS)
+		if (output.capabilities & V4L2_OUT_CAP_DV_TIMINGS)
 			has_timings = true;
-		if (checkTimings(node, output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS))
+		if (checkTimings(node, output.capabilities & V4L2_OUT_CAP_DV_TIMINGS))
 			return fail("Timings check failed for output %d.\n", o);
 	}
 	return has_timings ? 0 : ENOTTY;
@@ -357,9 +357,9 @@ int testTimingsCap(struct node *node)
 		ret = doioctl(node, VIDIOC_S_INPUT, &input.index);
 		if (ret)
 			return fail("could not select input %d.\n", i);
-		if (input.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS)
+		if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS)
 			has_timings = true;
-		if (checkTimingsCap(node, input.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS))
+		if (checkTimingsCap(node, input.capabilities & V4L2_IN_CAP_DV_TIMINGS))
 			return fail("Timings cap failed for input %d.\n", i);
 	}
 
@@ -373,9 +373,9 @@ int testTimingsCap(struct node *node)
 		ret = doioctl(node, VIDIOC_S_OUTPUT, &output.index);
 		if (ret)
 			return fail("could not select output %d.\n", o);
-		if (output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS)
+		if (output.capabilities & V4L2_OUT_CAP_DV_TIMINGS)
 			has_timings = true;
-		if (checkTimingsCap(node, output.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS))
+		if (checkTimingsCap(node, output.capabilities & V4L2_OUT_CAP_DV_TIMINGS))
 			return fail("Timings cap check failed for output %d.\n", o);
 	}
 	return has_timings ? 0 : ENOTTY;
