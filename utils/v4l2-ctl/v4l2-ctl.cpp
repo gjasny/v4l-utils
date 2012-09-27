@@ -187,9 +187,7 @@ static struct option long_options[] = {
 	{"try-decoder-cmd", required_argument, 0, OptTryDecoderCmd},
 	{"tuner-index", required_argument, 0, OptTunerIndex},
 	{"list-buffers", no_argument, 0, OptListBuffers},
-	{"list-buffers-mplane", no_argument, 0, OptListBuffersMplane},
 	{"list-buffers-out", no_argument, 0, OptListBuffersOut},
-	{"list-buffers-mplane-out", no_argument, 0, OptListBuffersMplaneOut},
 	{"list-buffers-vbi", no_argument, 0, OptListBuffersVbi},
 	{"list-buffers-sliced-vbi", no_argument, 0, OptListBuffersSlicedVbi},
 	{"list-buffers-vbi-out", no_argument, 0, OptListBuffersVbiOut},
@@ -241,9 +239,8 @@ int doioctl_name(int fd, unsigned long int request, void *parm, const char *name
 {
 	int retval = test_ioctl(fd, request, parm);
 
-	if (retval < 0) {
+	if (retval < 0)
 		app_result = -1;
-	}
 	if (options[OptSilent]) return retval;
 	if (retval < 0)
 		printf("%s: failed: %s\n", name, strerror(errno));
