@@ -94,7 +94,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 				needsStd = true;
 			if (vin.capabilities & V4L2_IN_CAP_PRESETS)
 				needsPreset = true;
-			if (vin.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS)
+			if (vin.capabilities & V4L2_IN_CAP_DV_TIMINGS)
 				needsTimings = true;
 		} while (enum_input(vin));
 		addWidget(m_videoInput);
@@ -644,8 +644,8 @@ void GeneralTab::updateVideoInput()
 	if (m_videoTimings) {
 		refreshTimings();
 		updateTimings();
-		m_videoTimings->setEnabled(in.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS);
-		m_qryTimings->setEnabled(in.capabilities & V4L2_IN_CAP_CUSTOM_TIMINGS);
+		m_videoTimings->setEnabled(in.capabilities & V4L2_IN_CAP_DV_TIMINGS);
+		m_qryTimings->setEnabled(in.capabilities & V4L2_IN_CAP_DV_TIMINGS);
 	}
 }
 
@@ -667,8 +667,8 @@ void GeneralTab::updateVideoOutput()
 		m_qryPreset->setEnabled(out.capabilities & V4L2_OUT_CAP_PRESETS);
 	}
 	if (m_videoTimings) {
-		m_videoTimings->setEnabled(out.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS);
-		m_qryTimings->setEnabled(out.capabilities & V4L2_OUT_CAP_CUSTOM_TIMINGS);
+		m_videoTimings->setEnabled(out.capabilities & V4L2_OUT_CAP_DV_TIMINGS);
+		m_qryTimings->setEnabled(out.capabilities & V4L2_OUT_CAP_DV_TIMINGS);
 	}
 }
 
