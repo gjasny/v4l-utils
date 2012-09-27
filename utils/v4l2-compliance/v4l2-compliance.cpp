@@ -277,13 +277,8 @@ static int testCap(struct node *node)
 	    memcmp(vcap.bus_info, "ISA:", 4) &&
 	    memcmp(vcap.bus_info, "I2C:", 4) &&
 	    memcmp(vcap.bus_info, "parport", 7) &&
-	    strcmp((const char *)vcap.bus_info, (const char *)vcap.driver)) {
-		unsigned len = strlen((const char *)vcap.driver);
-
-		// fail if the prefix isn't the driver name followed by a dash
-		fail_on_test(memcmp(vcap.bus_info, vcap.driver, len));
-		fail_on_test(vcap.bus_info[len] != '-');
-	}
+	    memcmp(vcap.bus_info, "platform:", 9))
+		return fail("missing bus_info prefix ('%s')\n", vcap.bus_info);
 	fail_on_test((vcap.version >> 16) < 3);
 	fail_on_test(check_0(vcap.reserved, sizeof(vcap.reserved)));
 	caps = vcap.capabilities;
