@@ -7,8 +7,8 @@ EXTRA_DIST = README
 # custom targets
 
 sync-with-kernel:
-	@if [ ! -f $(KERNEL_DIR)/drivers/media/common/tuners/tuner-xc2028-types.h ]; then \
+	@if [ ! -f $(KERNEL_DIR)/drivers/media/tuners/tuner-xc2028-types.h ]; then \
 	  echo "Error you must set KERNEL_DIR to point to an extracted kernel source dir"; \
 	  exit 1; \
 	fi
-	cp -a $(KERNEL_DIR)/drivers/media/common/tuners/tuner-xc2028-types.h $(srcdir)/
+	cp -a $(KERNEL_DIR)/drivers/media/tuners/tuner-xc2028-types.h $(srcdir)/

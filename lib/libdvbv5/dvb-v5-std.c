@@ -47,7 +47,7 @@ const unsigned int sys_dvbt2_props[] = {
 	DTV_GUARD_INTERVAL,
 	DTV_TRANSMISSION_MODE,
 	DTV_HIERARCHY,
-	DTV_DVBT2_PLP_ID,
+	DTV_DVBT2_PLP_ID_LEGACY,
 	0
 };
 
@@ -162,7 +162,7 @@ const unsigned int sys_isdbs_props[] = {
 	DTV_SYMBOL_RATE,
 	DTV_INNER_FEC,
 	DTV_VOLTAGE,
-	DTV_ISDBS_TS_ID,
+	DTV_ISDBS_TS_ID_LEGACY,
 	0
 };
 

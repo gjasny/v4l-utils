@@ -1,6 +1,8 @@
+diff --git a/include/linux/videodev2.h b/include/linux/videodev2.h
+index 61395ef..59b4bec 100644
 --- a/include/linux/videodev2.h
 +++ b/include/linux/videodev2.h
-@@ -56,14 +56,39 @@
+@@ -56,10 +56,38 @@
  #ifndef __LINUX_VIDEODEV2_H
  #define __LINUX_VIDEODEV2_H
  
@@ -40,9 +42,5 @@
 +typedef int8_t __s8;
 +#endif
  #endif
--#include <linux/compiler.h>
--#include <linux/ioctl.h>
--#include <linux/types.h>
- 
- /*
-  * Common stuff for both V4L1 and V4L2
+ #include <linux/compiler.h>
+ #include <linux/ioctl.h>

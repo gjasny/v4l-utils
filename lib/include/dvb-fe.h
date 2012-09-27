@@ -181,14 +181,14 @@ int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
 /* Arrays from dvb-v5.h */
 
 extern const unsigned fe_bandwidth_name[8];
-extern const char *dvb_v5_name[61];
+extern const char *dvb_v5_name[62];
 extern const void *dvb_v5_attr_names[];
 extern const char *delivery_system_name[20];
-extern const char *fe_code_rate_name[13];
-extern const char *fe_modulation_name[14];
-extern const char *fe_transmission_mode_name[8];
+extern const char *fe_code_rate_name[14];
+extern const char *fe_modulation_name[15];
+extern const char *fe_transmission_mode_name[10];
 extern const unsigned fe_bandwidth_name[8];
-extern const char *fe_guard_interval_name[9];
+extern const char *fe_guard_interval_name[12];
 extern const char *fe_hierarchy_name[6];
 extern const char *fe_voltage_name[4];
 extern const char *fe_tone_name[3];

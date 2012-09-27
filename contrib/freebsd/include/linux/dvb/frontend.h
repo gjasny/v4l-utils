@@ -63,6 +63,7 @@ typedef enum fe_caps {
 	FE_CAN_8VSB			= 0x200000,
 	FE_CAN_16VSB			= 0x400000,
 	FE_HAS_EXTENDED_CAPS		= 0x800000,   /* We need more bitspace for newer APIs, indicate this. */
+	FE_CAN_MULTISTREAM		= 0x4000000,  /* frontend supports multistream filtering */
 	FE_CAN_TURBO_FEC		= 0x8000000,  /* frontend supports "turbo fec modulation" */
 	FE_CAN_2G_MODULATION		= 0x10000000, /* frontend supports "2nd generation modulation" (DVB-S2) */
 	FE_NEEDS_BENDING		= 0x20000000, /* not supported anymore, don't use (frontend requires frequency bending) */
@@ -122,16 +123,27 @@ typedef enum fe_sec_mini_cmd {
 } fe_sec_mini_cmd_t;
 
 
+/**
+ * enum fe_status - enumerates the possible frontend status
+ * @FE_HAS_SIGNAL:	found something above the noise level
+ * @FE_HAS_CARRIER:	found a DVB signal
+ * @FE_HAS_VITERBI:	FEC is stable
+ * @FE_HAS_SYNC:	found sync bytes
+ * @FE_HAS_LOCK:	everything's working
+ * @FE_TIMEDOUT:	no lock within the last ~2 seconds
+ * @FE_REINIT:		frontend was reinitialized, application is recommended
+ *			to reset DiSEqC, tone and parameters
+ */
+
 typedef enum fe_status {
-	FE_HAS_SIGNAL	= 0x01,   /* found something above the noise level */
-	FE_HAS_CARRIER	= 0x02,   /* found a DVB signal  */
-	FE_HAS_VITERBI	= 0x04,   /* FEC is stable  */
-	FE_HAS_SYNC	= 0x08,   /* found sync bytes  */
-	FE_HAS_LOCK	= 0x10,   /* everything's working... */
-	FE_TIMEDOUT	= 0x20,   /* no lock within the last ~2 seconds */
-	FE_REINIT	= 0x40    /* frontend was reinitialized,  */
-} fe_status_t;			  /* application is recommended to reset */
-				  /* DiSEqC, tone and parameters */
+	FE_HAS_SIGNAL		= 0x01,
+	FE_HAS_CARRIER		= 0x02,
+	FE_HAS_VITERBI		= 0x04,
+	FE_HAS_SYNC		= 0x08,
+	FE_HAS_LOCK		= 0x10,
+	FE_TIMEDOUT		= 0x20,
+	FE_REINIT		= 0x40,
+} fe_status_t;
 
 typedef enum fe_spectral_inversion {
 	INVERSION_OFF,
@@ -153,6 +165,7 @@ typedef enum fe_code_rate {
 	FEC_AUTO,
 	FEC_3_5,
 	FEC_9_10,
+	FEC_2_5,
 } fe_code_rate_t;
 
 
@@ -170,6 +183,7 @@ typedef enum fe_modulation {
 	APSK_16,
 	APSK_32,
 	DQPSK,
+	QAM_4_NR,
 } fe_modulation_t;
 
 typedef enum fe_transmit_mode {
@@ -180,6 +194,8 @@ typedef enum fe_transmit_mode {
 	TRANSMISSION_MODE_1K,
 	TRANSMISSION_MODE_16K,
 	TRANSMISSION_MODE_32K,
+	TRANSMISSION_MODE_C1,
+	TRANSMISSION_MODE_C3780,
 } fe_transmit_mode_t;
 
 #if defined(__DVB_CORE__) || !defined (__KERNEL__)
@@ -203,6 +219,9 @@ typedef enum fe_guard_interval {
 	GUARD_INTERVAL_1_128,
 	GUARD_INTERVAL_19_128,
 	GUARD_INTERVAL_19_256,
+	GUARD_INTERVAL_PN420,
+	GUARD_INTERVAL_PN595,
+	GUARD_INTERVAL_PN945,
 } fe_guard_interval_t;
 
 
@@ -214,6 +233,12 @@ typedef enum fe_hierarchy {
 	HIERARCHY_AUTO
 } fe_hierarchy_t;
 
+enum fe_interleaving {
+	INTERLEAVING_NONE,
+	INTERLEAVING_AUTO,
+	INTERLEAVING_240,
+	INTERLEAVING_720,
+};
 
 #if defined(__DVB_CORE__) || !defined (__KERNEL__)
 struct dvb_qpsk_parameters {
@@ -315,9 +340,9 @@ struct dvb_frontend_event {
 
 #define DTV_ISDBT_LAYER_ENABLED	41
 
-#define DTV_ISDBS_TS_ID		42
-
-#define DTV_DVBT2_PLP_ID	43
+#define DTV_STREAM_ID		42
+#define DTV_ISDBS_TS_ID_LEGACY	DTV_STREAM_ID
+#define DTV_DVBT2_PLP_ID_LEGACY	43
 
 #define DTV_ENUM_DELSYS		44
 
@@ -338,7 +363,9 @@ struct dvb_frontend_event {
 #define DTV_ATSCMH_SCCC_CODE_MODE_C	58
 #define DTV_ATSCMH_SCCC_CODE_MODE_D	59
 
-#define DTV_MAX_COMMAND				DTV_ATSCMH_SCCC_CODE_MODE_D
+#define DTV_INTERLEAVING			60
+
+#define DTV_MAX_COMMAND				DTV_INTERLEAVING
 
 typedef enum fe_pilot {
 	PILOT_ON,
@@ -367,7 +394,7 @@ typedef enum fe_delivery_system {
 	SYS_ISDBC,
 	SYS_ATSC,
 	SYS_ATSCMH,
-	SYS_DMBTH,
+	SYS_DTMB,
 	SYS_CMMB,
 	SYS_DAB,
 	SYS_DVBT2,
@@ -375,8 +402,9 @@ typedef enum fe_delivery_system {
 	SYS_DVBC_ANNEX_C,
 } fe_delivery_system_t;
 
-
+/* backward compatibility */
 #define SYS_DVBC_ANNEX_AC	SYS_DVBC_ANNEX_A
+#define SYS_DMBTH SYS_DTMB /* DMB-TH is legacy name, use DTMB instead */
 
 /* ATSC-MH */
 
@@ -410,6 +438,7 @@ enum atscmh_rs_code_mode {
 	ATSCMH_RSCODE_RES        = 3,
 };
 
+#define NO_STREAM_ID_FILTER	(~0U)
 
 struct dtv_cmds_h {
 	char	*name;		/* A display name for debugging purposes */

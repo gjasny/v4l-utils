@@ -902,7 +902,7 @@ static void handle_std_specific_parms(struct dvb_entry *entry,
 	case SYS_DVBT2:
 		if (nit_table->network_name)
 			entry->location = strdup(nit_table->network_name);
-		store_entry_prop(entry, DTV_DVBT2_PLP_ID,
+		store_entry_prop(entry, DTV_DVBT2_PLP_ID_LEGACY,
 				 nit_table->plp_id);
 		store_entry_prop(entry, DTV_BANDWIDTH_HZ,
 				 nit_table->bandwidth);

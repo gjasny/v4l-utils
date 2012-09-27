@@ -5,7 +5,7 @@
 
 #include "dvb-v5.h"
 
-struct fe_caps_name fe_caps_name[30] = {
+struct fe_caps_name fe_caps_name[31] = {
 	{ FE_CAN_2G_MODULATION,          "CAN_2G_MODULATION" },
 	{ FE_CAN_8VSB,                   "CAN_8VSB" },
 	{ FE_CAN_16VSB,                  "CAN_16VSB" },
@@ -22,6 +22,7 @@ struct fe_caps_name fe_caps_name[30] = {
 	{ FE_CAN_GUARD_INTERVAL_AUTO,    "CAN_GUARD_INTERVAL_AUTO" },
 	{ FE_CAN_HIERARCHY_AUTO,         "CAN_HIERARCHY_AUTO" },
 	{ FE_CAN_INVERSION_AUTO,         "CAN_INVERSION_AUTO" },
+	{ FE_CAN_MULTISTREAM,            "CAN_MULTISTREAM" },
 	{ FE_CAN_MUTE_TS,                "CAN_MUTE_TS" },
 	{ FE_CAN_QAM_16,                 "CAN_QAM_16" },
 	{ FE_CAN_QAM_32,                 "CAN_QAM_32" },
@@ -48,9 +49,10 @@ struct fe_status_name fe_status_name[7] = {
 	{ FE_TIMEDOUT,    "TIMEDOUT" },
 };
 
-const char *fe_code_rate_name[13] = {
+const char *fe_code_rate_name[14] = {
 	[FEC_1_2] =  "1/2",
 	[FEC_2_3] =  "2/3",
+	[FEC_2_5] =  "2/5",
 	[FEC_3_4] =  "3/4",
 	[FEC_3_5] =  "3/5",
 	[FEC_4_5] =  "4/5",
@@ -61,14 +63,15 @@ const char *fe_code_rate_name[13] = {
 	[FEC_9_10] = "9/10",
 	[FEC_AUTO] = "AUTO",
 	[FEC_NONE] = "NONE",
-	[12] = NULL,
+	[13] = NULL,
 };
 
-const char *fe_modulation_name[14] = {
+const char *fe_modulation_name[15] = {
 	[APSK_16] =  "APSK/16",
 	[APSK_32] =  "APSK/32",
 	[DQPSK] =    "DQPSK",
 	[PSK_8] =    "PSK/8",
+	[QAM_4_NR] = "QAM/4_NR",
 	[QAM_16] =   "QAM/16",
 	[QAM_32] =   "QAM/32",
 	[QAM_64] =   "QAM/64",
@@ -78,18 +81,20 @@ const char *fe_modulation_name[14] = {
 	[QPSK] =     "QPSK",
 	[VSB_8] =    "VSB/8",
 	[VSB_16] =   "VSB/16",
-	[13] = NULL,
+	[14] = NULL,
 };
 
-const char *fe_transmission_mode_name[8] = {
-	[TRANSMISSION_MODE_1K] =   "1K",
-	[TRANSMISSION_MODE_2K] =   "2K",
-	[TRANSMISSION_MODE_4K] =   "4K",
-	[TRANSMISSION_MODE_8K] =   "8K",
-	[TRANSMISSION_MODE_16K] =  "16K",
-	[TRANSMISSION_MODE_32K] =  "32K",
-	[TRANSMISSION_MODE_AUTO] = "AUTO",
-	[7] = NULL,
+const char *fe_transmission_mode_name[10] = {
+	[TRANSMISSION_MODE_1K] =    "1K",
+	[TRANSMISSION_MODE_2K] =    "2K",
+	[TRANSMISSION_MODE_4K] =    "4K",
+	[TRANSMISSION_MODE_8K] =    "8K",
+	[TRANSMISSION_MODE_16K] =   "16K",
+	[TRANSMISSION_MODE_32K] =   "32K",
+	[TRANSMISSION_MODE_AUTO] =  "AUTO",
+	[TRANSMISSION_MODE_C1] =    "C1",
+	[TRANSMISSION_MODE_C3780] = "C3780",
+	[9] = NULL,
 };
 
 const unsigned fe_bandwidth_name[8] = {
@@ -103,7 +108,7 @@ const unsigned fe_bandwidth_name[8] = {
 	[7] = 0,
 };
 
-const char *fe_guard_interval_name[9] = {
+const char *fe_guard_interval_name[12] = {
 	[GUARD_INTERVAL_1_4] =    "1/4",
 	[GUARD_INTERVAL_1_8] =    "1/8",
 	[GUARD_INTERVAL_1_16] =   "1/16",
@@ -112,7 +117,10 @@ const char *fe_guard_interval_name[9] = {
 	[GUARD_INTERVAL_19_128] = "19/128",
 	[GUARD_INTERVAL_19_256] = "19/256",
 	[GUARD_INTERVAL_AUTO] =   "AUTO",
-	[8] = NULL,
+	[GUARD_INTERVAL_PN420] =  "PN420",
+	[GUARD_INTERVAL_PN595] =  "PN595",
+	[GUARD_INTERVAL_PN945] =  "PN945",
+	[11] = NULL,
 };
 
 const char *fe_hierarchy_name[6] = {
@@ -159,7 +167,7 @@ const char *fe_rolloff_name[5] = {
 	[4] = NULL,
 };
 
-const char *dvb_v5_name[61] = {
+const char *dvb_v5_name[62] = {
 	[DTV_API_VERSION] =                    "API_VERSION",
 	[DTV_ATSCMH_FIC_VER] =                 "ATSCMH_FIC_VER",
 	[DTV_ATSCMH_NOG] =                     "ATSCMH_NOG",
@@ -183,7 +191,7 @@ const char *dvb_v5_name[61] = {
 	[DTV_DELIVERY_SYSTEM] =                "DELIVERY_SYSTEM",
 	[DTV_DISEQC_MASTER] =                  "DISEQC_MASTER",
 	[DTV_DISEQC_SLAVE_REPLY] =             "DISEQC_SLAVE_REPLY",
-	[DTV_DVBT2_PLP_ID] =                   "DVBT2_PLP_ID",
+	[DTV_DVBT2_PLP_ID_LEGACY] =            "DVBT2_PLP_ID_LEGACY",
 	[DTV_ENUM_DELSYS] =                    "ENUM_DELSYS",
 	[DTV_FE_CAPABILITY] =                  "FE_CAPABILITY",
 	[DTV_FE_CAPABILITY_COUNT] =            "FE_CAPABILITY_COUNT",
@@ -191,8 +199,8 @@ const char *dvb_v5_name[61] = {
 	[DTV_GUARD_INTERVAL] =                 "GUARD_INTERVAL",
 	[DTV_HIERARCHY] =                      "HIERARCHY",
 	[DTV_INNER_FEC] =                      "INNER_FEC",
+	[DTV_INTERLEAVING] =                   "INTERLEAVING",
 	[DTV_INVERSION] =                      "INVERSION",
-	[DTV_ISDBS_TS_ID] =                    "ISDBS_TS_ID",
 	[DTV_ISDBT_LAYERA_FEC] =               "ISDBT_LAYERA_FEC",
 	[DTV_ISDBT_LAYERA_MODULATION] =        "ISDBT_LAYERA_MODULATION",
 	[DTV_ISDBT_LAYERA_SEGMENT_COUNT] =     "ISDBT_LAYERA_SEGMENT_COUNT",
@@ -214,13 +222,14 @@ const char *dvb_v5_name[61] = {
 	[DTV_MODULATION] =                     "MODULATION",
 	[DTV_PILOT] =                          "PILOT",
 	[DTV_ROLLOFF] =                        "ROLLOFF",
+	[DTV_STREAM_ID] =                      "STREAM_ID",
 	[DTV_SYMBOL_RATE] =                    "SYMBOL_RATE",
 	[DTV_TONE] =                           "TONE",
 	[DTV_TRANSMISSION_MODE] =              "TRANSMISSION_MODE",
 	[DTV_TUNE] =                           "TUNE",
 	[DTV_UNDEFINED] =                      "UNDEFINED",
 	[DTV_VOLTAGE] =                        "VOLTAGE",
-	[60] = NULL,
+	[61] = NULL,
 };
 
 const char *delivery_system_name[20] = {
@@ -228,8 +237,8 @@ const char *delivery_system_name[20] = {
 	[SYS_ATSCMH] =       "ATSCMH",
 	[SYS_CMMB] =         "CMMB",
 	[SYS_DAB] =          "DAB",
-	[SYS_DMBTH] =        "DMBTH",
 	[SYS_DSS] =          "DSS",
+	[SYS_DTMB] =         "DTMB",
 	[SYS_DVBC_ANNEX_A] = "DVBC/ANNEX_A",
 	[SYS_DVBC_ANNEX_B] = "DVBC/ANNEX_B",
 	[SYS_DVBC_ANNEX_C] = "DVBC/ANNEX_C",

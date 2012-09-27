@@ -180,6 +180,12 @@ enum {
 	/* module adv7343: just ident 7343 */
 	V4L2_IDENT_ADV7343 = 7343,
 
+	/* module adv7393: just ident 7393 */
+	V4L2_IDENT_ADV7393 = 7393,
+
+	/* module adv7604: just ident 7604 */
+	V4L2_IDENT_ADV7604 = 7604,
+
 	/* module saa7706h: just ident 7706 */
 	V4L2_IDENT_SAA7706H = 7706,
 
@@ -208,6 +214,9 @@ enum {
 	V4L2_IDENT_CX23888    = 8880,
 	V4L2_IDENT_CX23888_AV = 8881, /* Integrated A/V decoder */
 	V4L2_IDENT_CX23888_IR = 8882, /* Integrated infrared controller */
+
+	/* module ad9389b: just ident 9389 */
+	V4L2_IDENT_AD9389B = 9389,
 
 	/* module tda9840: just ident 9840 */
 	V4L2_IDENT_TDA9840 = 9840,
