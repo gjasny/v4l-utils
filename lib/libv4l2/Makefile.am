@@ -4,6 +4,11 @@ include_HEADERS = ../include/libv4l2.h ../include/libv4l-plugin.h
 pkgconfig_DATA = libv4l2.pc
 if WITH_V4L_WRAPPERS
 libv4l2priv_LTLIBRARIES = v4l2convert.la
+
+install-exec-hook:
+	$(MKDIR_P) $(DESTDIR)/$(libdir)
+	(cd $(DESTDIR)/$(libdir) && $(LN_S) $(libv4l2subdir)/v4l2convert.so v4l2convert.so)
+
 endif
 else
 noinst_LTLIBRARIES = libv4l2.la

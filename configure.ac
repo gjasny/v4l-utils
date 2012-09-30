@@ -51,12 +51,13 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
+AC_PROG_MKDIR_P
+AC_PROG_LN_S
 PKG_PROG_PKG_CONFIG
 
 # sync-with-kernel and keytable install could make use of them
 #AC_PROG_GREP
 #AC_PROG_SED
-#AC_PROG_MKDIR_P
 gl_PROMOTED_TYPE_MODE_T
 gl_VISIBILITY
 
@@ -162,6 +163,8 @@ keytableuserdir="$sysconfdir/rc_keymaps"
 udevrulesdir="$udevdir/rules.d"
 pkgconfigdir="$libdir/pkgconfig"
 
+AC_SUBST(libv4l1subdir)
+AC_SUBST(libv4l2subdir)
 AC_SUBST(libv4l1privdir)
 AC_SUBST(libv4l2privdir)
 AC_SUBST(libv4l2plugindir)

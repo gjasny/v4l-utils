@@ -4,6 +4,11 @@ include_HEADERS = ../include/libv4l1.h ../include/libv4l1-videodev.h
 pkgconfig_DATA = libv4l1.pc
 if WITH_V4L_WRAPPERS
 libv4l1priv_LTLIBRARIES = v4l1compat.la
+
+install-exec-hook:
+	$(MKDIR_P) $(DESTDIR)/$(libdir)
+	(cd $(DESTDIR)/$(libdir) && $(LN_S) $(libv4l1subdir)/v4l1compat.so v4l1compat.so)
+
 endif
 else
 noinst_LTLIBRARIES = libv4l1.la
