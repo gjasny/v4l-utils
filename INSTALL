@@ -23,3 +23,28 @@ To install do "make install". The configured paths will be used.
 Note that v4l-utils' "make install" supports DESTDIR for installing into
 a build root for example:
 make install DESTDIR=/mnt/sysimage
+
+Cross Compiling:
+----------------
+
+Cross compiling has been tested with the Code Sourcery and Linaro ARM Linux
+toolchain.
+
+Currently it is necessary to disable the generation of shared libraries.
+Othewise linking against libv4l2 might fail due to missing libv4lconvert
+symbols (due to a failure to find libv4lconvert).
+
+To cross compile with the Code Sourcery toolchain run the following commands:
+
+export PATH=/opt/arm-2009q3/bin:$PATH
+export PKG_CONFIG_LIBDIR=/path/to/cross/root/lib
+./configure --host=arm-none-linux-gnueabi --without-jpeg --disable-shared
+make
+
+To cross compile with the Linaro toolchain run the following commands:
+
+export PATH=/opt/gcc-linaro-arm-linux-gnueabihf-2012.09-20120921_linux/bin:$PATH
+export PKG_CONFIG_LIBDIR=/path/to/cross/root/lib
+./configure --host=arm-linux-gnueabihf --without-jpeg --disable-shared
+make
+
