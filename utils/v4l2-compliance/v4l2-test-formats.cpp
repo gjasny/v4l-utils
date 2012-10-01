@@ -289,12 +289,8 @@ int testEnumFormats(struct node *node)
 	}
 
 	ret = testEnumFormatsType(node, V4L2_BUF_TYPE_PRIVATE);
-	if (ret && ret != ENOTTY)
-		return ret;
-	if (!ret) {
-		supported = true;
-		warn("Buffer type PRIVATE allowed!\n");
-	}
+	if (ret != ENOTTY && ret != EINVAL)
+		return fail("Buffer type PRIVATE allowed!\n");
 
 	ret = testEnumFrameSizes(node, 0x20202020);
 	if (ret != ENOTTY)
@@ -516,16 +512,11 @@ int testGetFormats(struct node *node)
 		}
 	}
 
-	memset(&fmt, 0xff, sizeof(fmt));
+	memset(&fmt, 0, sizeof(fmt));
 	fmt.type = V4L2_BUF_TYPE_PRIVATE;
 	ret = doioctl(node, VIDIOC_G_FMT, &fmt);
-	ret = testFormatsType(node, ret, V4L2_BUF_TYPE_PRIVATE, fmt);
-	if (ret && ret != ENOTTY)
-		return ret;
-	if (!ret) {
-		supported = true;
-		warn("Buffer type PRIVATE allowed!\n");
-	}
+	if (ret != ENOTTY && ret != EINVAL)
+		return fail("Buffer type PRIVATE allowed!\n");
 	return supported ? 0 : ENOTTY;
 }
 
@@ -575,11 +566,11 @@ int testTryFormats(struct node *node)
 					buftype2s(type).c_str());
 	}
 
-	memset(&fmt, 0xff, sizeof(fmt));
+	memset(&fmt, 0, sizeof(fmt));
 	fmt.type = V4L2_BUF_TYPE_PRIVATE;
 	ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
-	if (!ret)
-		warn("Buffer type PRIVATE allowed!\n");
+	if (ret != ENOTTY && ret != EINVAL)
+		return fail("Buffer type PRIVATE allowed!\n");
 	return node->valid_buftypes ? 0 : ENOTTY;
 }
 
@@ -736,11 +727,11 @@ int testSetFormats(struct node *node)
 			return fail("%s: S_FMT(G_FMT) != G_FMT\n",
 					buftype2s(type).c_str());
 	}
-	memset(&fmt, 0xff, sizeof(fmt));
+	memset(&fmt, 0, sizeof(fmt));
 	fmt.type = V4L2_BUF_TYPE_PRIVATE;
 	ret = doioctl(node, VIDIOC_S_FMT, &fmt);
-	if (!ret)
-		warn("Buffer type PRIVATE allowed!\n");
+	if (ret != ENOTTY && ret != EINVAL)
+		return fail("Buffer type PRIVATE allowed!\n");
 	if (!node->valid_buftypes)
 		return ENOTTY;
 
@@ -918,11 +909,7 @@ int testParm(struct node *node)
 	}
 
 	ret = testParmType(node, V4L2_BUF_TYPE_PRIVATE);
-	if (ret && ret != ENOTTY)
-		return ret;
-	if (!ret) {
-		supported = true;
-		warn("Buffer type PRIVATE allowed!\n");
-	}
+	if (ret != ENOTTY && ret != EINVAL)
+		return fail("Buffer type PRIVATE allowed!\n");
 	return supported ? 0 : ENOTTY;
 }
