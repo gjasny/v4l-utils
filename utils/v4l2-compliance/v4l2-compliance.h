@@ -176,7 +176,7 @@ int testJpegComp(struct node *node);
 // I/O configuration ioctl tests
 int testStd(struct node *node);
 int testPresets(struct node *node);
-int testCustomTimings(struct node *node);
+int testTimings(struct node *node);
 int testTimingsCap(struct node *node);
 
 // Format ioctl tests
