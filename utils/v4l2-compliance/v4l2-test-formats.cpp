@@ -386,7 +386,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		fail_on_test(!pix.colorspace);
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		if (pix.priv)
-			warn("priv is non-zero!\n");
+			return fail("priv is non-zero!\n");
 		break;
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
