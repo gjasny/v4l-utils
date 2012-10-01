@@ -263,6 +263,10 @@ static int testCap(struct node *node)
 			V4L2_CAP_RDS_OUTPUT;
 	const __u32 m2m_caps = V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE;
 	const __u32 io_caps = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
+	const __u32 mplane_caps = V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+		V4L2_CAP_VIDEO_M2M_MPLANE;
+	const __u32 splane_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT |
+		V4L2_CAP_VIDEO_M2M;
 
 	memset(&vcap, 0xff, sizeof(vcap));
 	// Must always be there
@@ -316,6 +320,8 @@ static int testCap(struct node *node)
 		fail_on_test(!(dcaps & io_caps));
 	else
 		fail_on_test(dcaps & io_caps);
+	// having both mplane and splane caps is not allowed (at least for now)
+	fail_on_test((dcaps & mplane_caps) && (dcaps & splane_caps));
 
 	return 0;
 }
