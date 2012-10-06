@@ -10,6 +10,8 @@ sync-with-kernel:
 	  exit 1; \
 	fi
 	cp -a $(KERNEL_DIR)/include/linux/videodev2.h include/linux
+	cp -a $(KERNEL_DIR)/include/linux/v4l2-common.h include/linux
+	cp -a $(KERNEL_DIR)/include/linux/v4l2-controls.h include/linux
 	cp -a $(KERNEL_DIR)/include/linux/ivtv.h include/linux
 	cp -a $(KERNEL_DIR)/include/media/v4l2-chip-ident.h include/media
 	$(MAKE) -C utils $@

@@ -90,22 +90,10 @@
 /* This flag identifies that the scode table has a new format */
 #define HAS_IF         (1 << 30)
 
-#if 0
-/* The current seek algorithm doesn'use those flags. Instead, this is
-   currently useful only for debug process, since this is a HINT table
-   associating an alias to an IF table that can be used by that digital
-   video standard (in the case of DTV6/7/78/8, QAM and ATSC), or to a
-   particular demod type
- */
-#define SCODE_TYPES	(DTV6|QAM|DTV7|DTV78|DTV8|LCD|NOGD|MONO|ATSC|IF| \
-			 LG60|ATI638|OREN538|OREN36|TOYOTA388|TOYOTA794|     \
-			 DIBCOM52|ZARLINK456|CHINA|F6MHZ|SCODE)
-#else
 /* There are different scode tables for MTS and non-MTS.
    The MTS firmwares support mono only
   */
 #define SCODE_TYPES (SCODE | MTS)
-#endif
 
 
 /* Newer types not defined on videodev2.h.
