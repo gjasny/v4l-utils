@@ -167,7 +167,7 @@ const char *fe_rolloff_name[5] = {
 	[4] = NULL,
 };
 
-const char *dvb_v5_name[62] = {
+const char *dvb_v5_name[63] = {
 	[DTV_API_VERSION] =                    "API_VERSION",
 	[DTV_ATSCMH_FIC_VER] =                 "ATSCMH_FIC_VER",
 	[DTV_ATSCMH_NOG] =                     "ATSCMH_NOG",
@@ -219,6 +219,7 @@ const char *dvb_v5_name[62] = {
 	[DTV_ISDBT_SB_SEGMENT_IDX] =           "ISDBT_SB_SEGMENT_IDX",
 	[DTV_ISDBT_SB_SUBCHANNEL_ID] =         "ISDBT_SB_SUBCHANNEL_ID",
 	[DTV_ISDBT_SOUND_BROADCASTING] =       "ISDBT_SOUND_BROADCASTING",
+	[DTV_LNA] =                            "LNA",
 	[DTV_MODULATION] =                     "MODULATION",
 	[DTV_PILOT] =                          "PILOT",
 	[DTV_ROLLOFF] =                        "ROLLOFF",
@@ -229,7 +230,7 @@ const char *dvb_v5_name[62] = {
 	[DTV_TUNE] =                           "TUNE",
 	[DTV_UNDEFINED] =                      "UNDEFINED",
 	[DTV_VOLTAGE] =                        "VOLTAGE",
-	[61] = NULL,
+	[62] = NULL,
 };
 
 const char *delivery_system_name[20] = {
