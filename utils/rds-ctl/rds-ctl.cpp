@@ -761,6 +761,9 @@ static int parse_cl(int argc, char **argv)
 		params.options[OptGetTuner] = 1;
 		params.options[OptSilent] = 1;
 	}
+	/* set default value for wait limit, if not specified by user */
+	if (!params.options[OptWaitLimit])
+		params.wait_limit = 5000;
 
 	return 0;
 }
