@@ -108,7 +108,7 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt, __u32 w, __u3
 		default:
 			return fail("frmival.type is invalid\n");
 		}
-		
+
 		f++;
 	}
 	if (!valid)
@@ -194,7 +194,7 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 		default:
 			return fail("frmsize.type is invalid\n");
 		}
-		
+
 		f++;
 	}
 	info("found %d framesizes for pixel format %08x\n", f, pixfmt);
@@ -369,7 +369,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 	if (ret)
 		return fail("expected EINVAL, but got %d when getting format for buftype %d\n", ret, type);
 	fail_on_test(fmt.type != type);
-	
+
 	switch (type) {
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
