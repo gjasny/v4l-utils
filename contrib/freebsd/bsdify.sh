@@ -28,7 +28,7 @@ rm -rf include .pc
 
 # copy
 
-for i in input.h ivtv.h uinput.h videodev2.h dvb/{audio.h,ca.h,dmx.h,frontend.h,net.h,osd.h,version.h,video.h}; do
+for i in input.h ivtv.h uinput.h videodev2.h v4l2-controls.h v4l2-common.h dvb/{audio.h,ca.h,dmx.h,frontend.h,net.h,osd.h,version.h,video.h}; do
     mkdir -p include/linux/$(dirname $i)
     cp $KERNEL_DIR/include/linux/$i include/linux/$i
 done
