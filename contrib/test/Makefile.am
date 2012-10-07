@@ -21,7 +21,7 @@ pixfmt_test_CFLAGS = $(X11_CFLAGS)
 pixfmt_test_LDFLAGS = $(X11_LIBS)
 
 v4l2grab_SOURCES = v4l2grab.c
-v4l2grab_LDADD = ../../lib/libv4l2/libv4l2.la
+v4l2grab_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
 
 ioctl_test_SOURCES = ioctl-test.c
 
