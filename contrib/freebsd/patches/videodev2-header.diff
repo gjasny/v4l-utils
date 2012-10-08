@@ -1,8 +1,6 @@
-diff --git a/include/linux/videodev2.h b/include/linux/videodev2.h
-index 61395ef..59b4bec 100644
 --- a/include/linux/videodev2.h
 +++ b/include/linux/videodev2.h
-@@ -56,10 +56,38 @@
+@@ -56,14 +56,40 @@
  #ifndef __LINUX_VIDEODEV2_H
  #define __LINUX_VIDEODEV2_H
  
@@ -31,7 +29,10 @@ index 61395ef..59b4bec 100644
 +
 +#ifndef __s64
 +typedef int64_t __s64;
-+#endif
+ #endif
+-#include <linux/compiler.h>
+-#include <linux/ioctl.h>
+-#include <linux/types.h>
 +#ifndef __s32
 +typedef int32_t __s32;
 +#endif
@@ -41,6 +42,8 @@ index 61395ef..59b4bec 100644
 +#ifndef __s8
 +typedef int8_t __s8;
 +#endif
- #endif
- #include <linux/compiler.h>
- #include <linux/ioctl.h>
++#endif
++
+ #include <linux/v4l2-common.h>
+ #include <linux/v4l2-controls.h>
+ 

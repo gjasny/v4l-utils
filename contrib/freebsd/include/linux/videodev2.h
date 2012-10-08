@@ -89,9 +89,7 @@ typedef int16_t __s16;
 typedef int8_t __s8;
 #endif
 #endif
-#include <linux/compiler.h>
-#include <linux/ioctl.h>
-#include <linux/types.h>
+
 #include <linux/v4l2-common.h>
 #include <linux/v4l2-controls.h>
 
