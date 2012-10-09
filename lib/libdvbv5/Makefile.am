@@ -22,7 +22,7 @@ libdvbv5_la_SOURCES = \
   dvb-scan.c ../include/dvb-scan.h \
   parse_string.c parse_string.h \
   crc32.c crc32.h \
-  descriptors.c descriptors.h \
+  descriptors.c ../include/descriptors.h \
   descriptors/header.c ../include/descriptors/header.h \
   descriptors/pat.c  ../include/descriptors/pat.h \
   descriptors/pmt.c  ../include/descriptors/pmt.h \
