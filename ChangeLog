@@ -1,3 +1,36 @@
+v4l-utils-0.9.1
+---------------
+* libv4l changes
+  * Various Pixart JPEG fixes
+  * Add more notebooks to the upside down device table
+  * Use bytesperline instead of width (Robert Abel)
+  * Better luminance quantization table for Pixart JPEG (Jean-Francois Moine)
+  * Fix out of bounds array usage
+  * Prevent GCC 4.7 inlining error
+  * Add support for libjpeg >= v7
+  * Add new matching algorithm for upside down table
+  * Retry with another frame on JPEG header decode errors
+  * Improved JL2005BCD support (Theodore Kilgore)
+  * Set errno to EIO if getting 4 consecutive EAGAIN convert errors
+  * Make software autowhitebalance converge faster
+  * Add quirk support for forced tinyjpeg fallback
+
+* ir-keytable changes
+  * Fixed file parsing errors
+  * Add support for Sanyo IR and RC-5-SZ protocol
+  * Add missing mouse buttons in shipped keytables
+
+* libdvbv5 changes
+  * Initial release
+
+* qv4l2 changes
+  * fix segfault when there are no inputs or outputs
+
+* buildsystem changes
+  * Converted buildsystem to autotools
+  * Made buildsystem cross compiling friendly
+  * Support out of tree builds
+
 v4l-utils-0.8.5
 ---------------
 * Utils changes
