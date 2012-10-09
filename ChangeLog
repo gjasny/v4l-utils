@@ -1,3 +1,13 @@
+v4l-utils-0.8.9
+---------------
+* libv4l changes (0.9.x backports)
+  * libv4lconvert: Various Pixart JPEG fixes
+  * libv4lconvert: Add more notebooks to the upside down device table
+* Utils changes (0.9.x backports)
+  * keytable: Add support for Sanyo IR and RC-5-SZ protocol
+  * keytable: Add missing buttons in shipped keytables
+  * v4l2-compliance, v4l-ctl, qv4l2: Sync with development branch
+
 v4l-utils-0.8.8
 ---------------
 * Utils changes (0.9.x backports)
