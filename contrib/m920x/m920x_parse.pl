@@ -103,6 +103,13 @@ sub get_line {
 			last;
 		}
 
+		#40 23 c0 00 80 00 00 00 >>>
+		if($input eq "us2" && $line =~ m/([a-fA-F0-9 ]+)/) {
+			@ret = split(/ /, $1); $foo = $1;
+			@ret[2,3,4,5,6,7] = @ret[3,2,5,4,7,6];
+			last;
+		}
+
 		if($input eq "um" && $line =~ m/\S+ \S+ \S+ \S+ s ([a-fA-F0-9 ]+)/) {
 			@ret = expand_string_long(split(/ /, $1)); $foo = $1;
 			last;
@@ -125,7 +132,7 @@ sub get_line {
 
 sub us_get_write {
 	#print "<$line>\n";
-	if($input eq "us" && $line =~ m/>>>\s+([a-fA-F0-9 ]+)/) {
+	if(($input eq "us" || $input eq "us2") && $line =~ m/>>>\s+([a-fA-F0-9 ]+)/) {
 		return split(/ /, $1);
 	}
 	if($input eq "um") {
@@ -138,7 +145,7 @@ sub us_get_write {
 
 sub get_read {
 	#print "<$line>\n";
-	if($input eq "us" && $line =~ m/<<<  ([a-fA-F0-9 ]+)/) {
+	if(($input eq "us" || $input eq "us2") && $line =~ m/<<<\s+([a-fA-F0-9 ]+)/) {
 		return split(/ /, $1);
 	}
 	if($input eq "um") {
@@ -156,6 +163,7 @@ sub usage {
 
 	-i	um (usbmon)
 		us (usb snoop)
+		us2 (usb snoop as produced by parse-sniffusb2.pl)
 		sp (snoopy pro)
 
 	-m	fw (extract firmware)
@@ -169,7 +177,7 @@ getopts("m:i:", \%opt ) or usage();
 $mode = $opt{m};
 $input = $opt{i};
 
-if ($input ne "um" && $input ne "us" && $input ne "sp") {
+if ($input ne "um" && $input ne "us" && $input ne "us2" && $input ne "sp") {
 	usage();
 }
 
