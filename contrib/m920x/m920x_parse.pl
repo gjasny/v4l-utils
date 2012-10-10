@@ -64,7 +64,7 @@ sub check {
 	@cmp = split(/ /, $cmd);
 	for ($i = 0; $i < scalar(@cmp); $i++) {
 		#print "check $bytes[$i] vs $cmp[$i]\n";
-		if ($cmp[$i] == "-1") {
+		if ($cmp[$i] eq "-1") {
 			next;
 		}
 
@@ -102,7 +102,7 @@ sub get_line {
 	}
 	@cmp = split(/ /, $cmd);
 	for ($i = 0; $i < scalar(@cmp); $i++) {
-		if ($cmp[$i] == "-1") {
+		if ($cmp[$i] eq "-1") {
 			next;
 		}
 
@@ -117,10 +117,10 @@ sub get_line {
 
 sub us_get_write {
 	#print "<$line>\n";
-	if($input == "us" && $line =~ m/>>>\s+([a-fA-F0-9 ]+)/) {
+	if($input eq "us" && $line =~ m/>>>\s+([a-fA-F0-9 ]+)/) {
 		return split(/ /, $1);
 	}
-	if($input == "um") {
+	if($input eq "um") {
 		if($line =~ m/\S+ \S+ \S+ \S+ \S+ \S+ \S+ \S+ \S+ \S+ \S+ = ([a-fA-F0-9 ]+)/) {
 			#print "read match $line\n";
 			return expand_string_long(split(/ /, $1));
@@ -130,10 +130,10 @@ sub us_get_write {
 
 sub get_read {
 	#print "<$line>\n";
-	if($input == "us" && $line =~ m/<<<  ([a-fA-F0-9 ]+)/) {
+	if($input eq "us" && $line =~ m/<<<  ([a-fA-F0-9 ]+)/) {
 		return split(/ /, $1);
 	}
-	if($input == "um") {
+	if($input eq "um") {
 		while($line = <STDIN>) {
 			if($line =~ m/\S+ \S+ \S+ \S+ \S+ \S+ = ([a-fA-F0-9 ]+)/) {
 				return expand_string_long(split(/ /, $1));
@@ -161,11 +161,11 @@ getopts("m:i:", \%opt ) or usage();
 $mode = $opt{m};
 $input = $opt{i};
 
-if ($input != "um" && $input != "us" && $input != "sp") {
+if ($input ne "um" && $input ne "us" && $input ne "sp") {
 	usage();
 }
 
-if ($mode != "fw" && $mode != "i2c") {
+if ($mode ne "fw" && $mode ne "i2c") {
 	usage();
 }
 
@@ -207,9 +207,9 @@ while(@bytes = get_line("-1")) {
 
 	$master_line = $. - 1;
 
-	if ($bytes[0] == "40" && $bytes[1] == "23") {
+	if ($bytes[0] eq "40" && $bytes[1] eq "23") {
 
-		if ($bytes[4] == "80" || $bytes[4] == "00") {
+		if ($bytes[4] eq "80" || $bytes[4] eq "00") {
 			my $multibyte = 0;
 			my $addr;
 
@@ -225,16 +225,16 @@ while(@bytes = get_line("-1")) {
 			@bytes = get_line("40 23");
 
 			$reg = $bytes[2];
-			if ($bytes[4] == "80") {
+			if ($bytes[4] eq "80") {
 				$multibyte = 1;
 			} else {
 				@bytes = get_line("40 23");
 			}
-			#if ($bytes[4] != "40") {
+			#if ($bytes[4] ne "40") {
 			#	print "(missing 40)";
 			#}
 
-			if ($bytes[4] == "80") {
+			if ($bytes[4] eq "80") {
 				if ($multibyte == 0) {
 					$raddr = sprintf("%02x", hex($addr) | 0x1);
 
@@ -245,7 +245,7 @@ while(@bytes = get_line("-1")) {
 				} else {
 					print "$reg = ";
 					@bytes = get_line("c0 23");
-					while ($bytes[4] == "21") {
+					while ($bytes[4] eq "21") {
 						check("c0 23 00 00 21 00 -1 -1", @bytes);
 
 						@bytes = get_read();
@@ -265,7 +265,7 @@ while(@bytes = get_line("-1")) {
 				check("40 23 -1 00 4|00 00 00 00", @bytes);
 				print "reg $reg = $bytes[2]";
 
-				while ($bytes[4] != "40") {
+				while ($bytes[4] ne "40") {
 					@bytes = get_line("40 23");
 					check("40 23 -1 00 4|00 00 00 00", @bytes);
 					print " $bytes[2]";
