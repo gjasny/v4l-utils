@@ -10,12 +10,14 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([lib/libv4l2/libv4l2.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
+	lib/Makefile
 	lib/libv4lconvert/Makefile
 	lib/libv4l2/Makefile
 	lib/libv4l1/Makefile
 	lib/libdvbv5/Makefile
 	lib/libv4l2rds/Makefile
 
+	utils/Makefile
 	utils/libv4l2util/Makefile
 	utils/libmedia_dev/Makefile
 	utils/decode_tm6000/Makefile
@@ -30,6 +32,7 @@ AC_CONFIG_FILES([Makefile
 	utils/qv4l2/Makefile
 	utils/rds-ctl/Makefile
 
+	contrib/Makefile
 	contrib/freebsd/Makefile
 	contrib/test/Makefile
 
