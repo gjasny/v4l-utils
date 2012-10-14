@@ -107,8 +107,13 @@ if test "x$qt_pkgconfig" = "xtrue"; then
    AC_SUBST(QT_LIBS)
    MOC=`$PKG_CONFIG --variable=moc_location QtCore`
    UIC=`$PKG_CONFIG --variable=uic_location QtCore`
+   RCC=`$PKG_CONFIG --variable=rcc_location QtCore`
+   if test -z "$RCC"; then
+      RCC="rcc"
+   fi
    AC_SUBST(MOC)
    AC_SUBST(UIC)
+   AC_SUBST(RCC)
 else
    AC_MSG_WARN(Qt4 is not available)
 fi

@@ -29,7 +29,7 @@ moc_capture-win.cpp: $(srcdir)/capture-win.h
 
 # Call the Qt resource compiler
 qrc_qv4l2.cpp: $(srcdir)/qv4l2.qrc
-	rcc -name qv4l2 -o $@ $(srcdir)/qv4l2.qrc
+	$(RCC) -name qv4l2 -o $@ $(srcdir)/qv4l2.qrc
 
 install-data-local:
 	$(INSTALL_DATA) -D -p "$(srcdir)/qv4l2.desktop"   "$(DESTDIR)$(datadir)/applications/qv4l2.desktop"
