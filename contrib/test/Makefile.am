@@ -1,4 +1,4 @@
-bin_PROGRAMS = \
+noinst_PROGRAMS = \
 	ioctl-test		\
 	sliced-vbi-test		\
 	sliced-vbi-detect	\
@@ -10,7 +10,7 @@ bin_PROGRAMS = \
 	capture-example
 
 if HAVE_X11
-bin_PROGRAMS += pixfmt-test
+noinst_PROGRAMS += pixfmt-test
 endif
 
 driver_test_SOURCES = driver-test.c
