@@ -1,3 +1,8 @@
+EXTRA_DIST = \
+	bsdify.sh \
+	include \
+	patches
+
 sync-with-kernel:
 	rm -rf .pc
 
