@@ -23,8 +23,17 @@ v4l-utils-0.9.1
 * libdvbv5 changes
   * Initial release
 
+* libv4l2rds and rds-ctl
+  * Initial release (Konke Radlow)
+
 * qv4l2 changes
-  * fix segfault when there are no inputs or outputs
+  * Fix segfault when there are no inputs or outputs
+  * Fix endianess issues
+  * Add support for new timing ioctls
+  * Improve frequency and radio support
+  * Add VBI support
+  * Add ability to make a snapshot
+  * Add support to stream raw frames into a file
 
 * buildsystem changes
   * Converted buildsystem to autotools
