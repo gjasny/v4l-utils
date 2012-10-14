@@ -149,38 +149,36 @@ AM_ICONV
 
 # directories
 
-AC_ARG_WITH(libv4l1subdir, AS_HELP_STRING(--with-libv4l1subdir=DIR,set libv4l1 library subdir [default=libv4l]),
-   libv4l1subdir=$withval, libv4l1subdir="libv4l")
+AC_ARG_WITH(libv4l1subdir,
+	AS_HELP_STRING([--with-libv4l1subdir=DIR], [set libv4l1 library subdir (default=libv4l)]),
+	[],
+	[with_libv4l1subdir="libv4l"])
 
-AC_ARG_WITH(libv4l2subdir, AS_HELP_STRING(--with-libv4l2subdir=DIR,set libv4l2 library subdir [default=libv4l]),
-   libv4l2subdir=$withval, libv4l2subdir="libv4l")
+AC_ARG_WITH(libv4l2subdir,
+	AS_HELP_STRING([--with-libv4l2subdir=DIR], [set libv4l2 library subdir (default=libv4l)]),
+   	[],
+	[with_libv4l2subdir="libv4l"])
 
-AC_ARG_WITH(libv4lconvertsubdir, AS_HELP_STRING(--with-libv4lconvertsubdir=DIR,set libv4lconvert library subdir [default=libv4l]),
-   libv4lconvertsubdir=$withval, libv4lconvertsubdir="libv4l")
+AC_ARG_WITH(libv4lconvertsubdir,
+	AS_HELP_STRING([--with-libv4lconvertsubdir=DIR], [set libv4lconvert library subdir (default=libv4l)]),
+	[],
+	[with_libv4lconvertsubdir="libv4l"])
 
 AC_ARG_WITH(udevdir,
 	AS_HELP_STRING([--with-udevdir=DIR], [set udev directory]),
    	[],
 	[with_udevdir=`$PKG_CONFIG --variable=udevdir udev || echo /lib/udev`])
 
-libv4l1privdir="$libdir/$libv4l1subdir"
-libv4l2privdir="$libdir/$libv4l2subdir"
-libv4l2plugindir="$libv4l2privdir/plugins"
-libv4lconvertprivdir="$libdir/$libv4lconvertsubdir"
-
-keytableuserdir="$sysconfdir/rc_keymaps"
-pkgconfigdir="$libdir/pkgconfig"
-
-AC_SUBST(libv4l1subdir)
-AC_SUBST(libv4l2subdir)
-AC_SUBST(libv4l1privdir)
-AC_SUBST(libv4l2privdir)
-AC_SUBST(libv4l2plugindir)
-AC_SUBST(libv4lconvertprivdir)
+AC_SUBST([libv4l1subdir], [$with_libv4l1subdir])
+AC_SUBST([libv4l2subdir], [$with_libv4l2subdir])
+AC_SUBST([libv4l1privdir], [$libdir/$with_libv4l1subdir])
+AC_SUBST([libv4l2privdir], [$libdir/$with_libv4l2subdir])
+AC_SUBST([libv4l2plugindir], [$libdir/$with_libv4l2subdir/plugins])
+AC_SUBST([libv4lconvertprivdir], [$libdir/$with_libv4lconvertsubdir])
 AC_SUBST([keytablesystemdir], [$with_udevdir/rc_keymaps])
-AC_SUBST(keytableuserdir)
+AC_SUBST([keytableuserdir], [$sysconfdir/rc_keymaps])
 AC_SUBST([udevrulesdir], [$with_udevdir/rules.d])
-AC_SUBST(pkgconfigdir)
+AC_SUBST([pkgconfigdir], [$libdir/pkgconfig])
 
 AC_DEFINE_UNQUOTED([V4L_UTILS_VERSION], ["$PACKAGE_VERSION"], [v4l-utils version string])
 AC_DEFINE_DIR([LIBV4L1_PRIV_DIR], [libv4l1privdir], [libv4l1 private lib directory])
@@ -193,50 +191,46 @@ AC_DEFINE_DIR([IR_KEYTABLE_USER_DIR], [keytableuserdir], [ir-keytable user defin
 # options
 
 AC_ARG_ENABLE(libdvbv5,
-  [  --disable-libdvbv5      disable dynamic libdvbv5 compilation],
+  AS_HELP_STRING([--disable-libdvbv5], [disable dynamic libdvbv5 compilation]),
   [case "${enableval}" in
-     yes | no ) with_liblibdvbv5="${enableval}" ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --disable-libdvbv5) ;;
-   esac],
-  [with_libdvbv5="yes"]
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-libdvbv5) ;;
+   esac]
 )
 
 AC_ARG_ENABLE(libv4l,
-  [  --disable-libv4l        disable dynamic libv4l compilation],
+  AS_HELP_STRING([--disable-libv4l], [disable dynamic libv4l compilation]),
   [case "${enableval}" in
-     yes | no ) with_libv4l="${enableval}" ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --disable-libv4l) ;;
-   esac],
-  [with_libv4l="yes"]
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-libv4l) ;;
+   esac]
 )
 
 AC_ARG_ENABLE(v4l-utils,
-  [  --disable-v4l-utils     disable v4l-utils compilation],
+  AS_HELP_STRING([--disable-v4l-utils], [disable v4l-utils compilation]),
   [case "${enableval}" in
-     yes | no ) with_v4lutils="${enableval}" ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --disable-v4l-utils) ;;
-   esac],
-  [with_v4lutils="yes"]
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-v4l-utils) ;;
+   esac]
 )
 
 AC_ARG_ENABLE(qv4l2,
-  [  --disable-qv4l2         disable qv4l2 compilation],
+  AS_HELP_STRING([--disable-qv4l2], [disable qv4l2 compilation]),
   [case "${enableval}" in
-     yes | no ) with_qv4l2="${enableval}" ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --disable-qv4l2) ;;
-   esac],
-  [with_qv4l2="yes"]
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-qv4l2) ;;
+   esac]
 )
 
-AM_CONDITIONAL([WITH_LIBDVBV5], [test x$with_libdvbv5 = xyes])
-AM_CONDITIONAL([WITH_LIBV4L], [test x$with_libv4l = xyes])
-AM_CONDITIONAL([WITH_V4LUTILS], [test x$with_v4lutils = xyes])
-AM_CONDITIONAL([WITH_QV4L2], [test ${qt_pkgconfig} = true -a x$with_qv4l2 = xyes])
-AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$with_libv4l = xyes -a x$enable_shared = xyes])
+AM_CONDITIONAL([WITH_LIBDVBV5], [test x$enable_libdvbv5 != xno])
+AM_CONDITIONAL([WITH_LIBV4L], [test x$enable_libv4l != xno])
+AM_CONDITIONAL([WITH_V4LUTILS], [test x$enable_v4lutils != xno])
+AM_CONDITIONAL([WITH_QV4L2], [test ${qt_pkgconfig} = true -a x$enable_qv4l2 != xno])
+AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$enable_libv4l != xno -a x$enable_shared != xno])
 
 # append -static to libtool compile and link command to enforce static libs
-AS_IF([test x$with_libdvbv5 != xyes], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])
-AS_IF([test x$with_libv4l != xyes], [AC_SUBST([ENFORCE_LIBV4L_STATIC], ["-static"])])
+AS_IF([test x$enable_libdvbv5 = xno], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])
+AS_IF([test x$enable_libv4l = xno], [AC_SUBST([ENFORCE_LIBV4L_STATIC], ["-static"])])
 
 # misc
 
