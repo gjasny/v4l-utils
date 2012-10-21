@@ -89,8 +89,24 @@ LIBV4L_PUBLIC int v4lconvert_needs_conversion(struct v4lconvert_data *data,
 		const struct v4l2_format *src_fmt,   /* in */
 		const struct v4l2_format *dest_fmt); /* in */
 
-/* return value of -1 on error, otherwise the amount of bytes written to
-   dest */
+/* This function does the following conversions:
+    - format conversion
+    - cropping
+   if enabled:
+    - processing (auto whitebalance, auto gain, gamma correction)
+    - horizontal/vertical flipping
+    - 90 degree (clockwise) rotation
+
+   NOTE: the last 3 steps are enabled/disabled depending on
+    - the internal device list
+    - the state of the (software emulated) image controls
+
+   Therefore this function should
+    - not be used when getting the frames from libv4l
+    - be called only once per frame
+   Otherwise this may result in unintended double conversions !
+
+   Returns the amount of bytes written to dest and -1 on error */
 LIBV4L_PUBLIC int v4lconvert_convert(struct v4lconvert_data *data,
 		const struct v4l2_format *src_fmt,  /* in */
 		const struct v4l2_format *dest_fmt, /* in */
