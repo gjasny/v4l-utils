@@ -262,6 +262,10 @@ void vidcap_set(int fd)
 								  false);
 				}
 			}
+			/* G_FMT might return a bytesperline value > width,
+			 * reset this to 0 to force the driver to update it
+			 * to the closest value for the new width. */
+			in_vfmt.fmt.pix.bytesperline = 0;
 			if (options[OptSetVideoFormat])
 				ret = doioctl(fd, VIDIOC_S_FMT, &in_vfmt);
 			else
@@ -288,6 +292,11 @@ void vidcap_set(int fd)
 								  true);
 				}
 			}
+			/* G_FMT might return bytesperline values > width,
+			 * reset them to 0 to force the driver to update them
+			 * to the closest value for the new width. */
+			for (unsigned i = 0; i < in_vfmt.fmt.pix_mp.num_planes; i++)
+				in_vfmt.fmt.pix_mp.plane_fmt[i].bytesperline = 0;
 			if (options[OptSetVideoMplaneFormat])
 				ret = doioctl(fd, VIDIOC_S_FMT, &in_vfmt);
 			else
