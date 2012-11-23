@@ -198,6 +198,7 @@ static struct option long_options[] = {
 	{"list-buffers-sliced-vbi-out", no_argument, 0, OptListBuffersSlicedVbiOut},
 	{"stream-count", required_argument, 0, OptStreamCount},
 	{"stream-skip", required_argument, 0, OptStreamSkip},
+	{"stream-loop", no_argument, 0, OptStreamLoop},
 	{"stream-poll", no_argument, 0, OptStreamPoll},
 	{"stream-to", required_argument, 0, OptStreamTo},
 	{"stream-mmap", optional_argument, 0, OptStreamMmap},

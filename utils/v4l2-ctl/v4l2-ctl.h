@@ -140,6 +140,7 @@ enum Option {
 	OptListBuffersSlicedVbiOut,
 	OptStreamCount,
 	OptStreamSkip,
+	OptStreamLoop,
 	OptStreamPoll,
 	OptStreamTo,
 	OptStreamMmap,

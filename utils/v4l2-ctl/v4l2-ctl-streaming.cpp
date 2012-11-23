@@ -25,6 +25,7 @@
 static unsigned stream_count;
 static unsigned stream_skip;
 static unsigned stream_pat;
+static bool stream_loop;
 static unsigned reqbufs_count = 3;
 static char *file;
 
@@ -51,6 +52,8 @@ void streaming_usage(void)
 	       "                     count: the number of buffers to allocate. The default is 3.\n"
 	       "  --stream-from=<file> stream from this file. The default is to generate a pattern.\n"
 	       "                     If <file> is '-', then the data is read from stdin.\n"
+	       "  --stream-loop      loop when the end of the file we are streaming from is reached.\n"
+	       "                     The default is to stop.\n"
 	       "  --stream-pattern=<count>\n"
 	       "                     choose output pattern. The default is 0.\n"
 	       "  --stream-out-mmap=<count>\n"
@@ -167,6 +170,9 @@ void streaming_cmd(int ch, char *optarg)
 		break;
 	case OptStreamSkip:
 		stream_skip = strtoul(optarg, 0L, 0);
+		break;
+	case OptStreamLoop:
+		stream_loop = true;
 		break;
 	case OptStreamPattern:
 		stream_pat = strtoul(optarg, 0L, 0);
@@ -841,13 +847,23 @@ void streaming_set(int fd)
 				fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
 				return;
 			}
-			if (fin && !stream_skip) {
+			if (fin) {
 				for (unsigned j = 0; j < num_planes; j++) {
 					unsigned p = buf.index * num_planes + j;
 					unsigned sz = fread(buffers[p], 1,
 							buffer_lengths[p], fin);
-					if (sz != buffer_lengths[p])
+
+					if (j == 0 && sz == 0 && stream_loop) {
+						fseek(fin, 0, SEEK_SET);
+						sz = fread(buffers[p], 1,
+							buffer_lengths[p], fin);
+					}
+					if (sz == buffer_lengths[p])
+						continue;
+					if (sz)
 						fprintf(stderr, "%u != %u\n", sz, buffer_lengths[p]);
+					// Bail out if we get weird buffer sizes.
+					goto stream_out_eof;
 				}
 			}
 			if (doioctl(fd, VIDIOC_QBUF, &buf))
@@ -872,15 +888,12 @@ void streaming_set(int fd)
 				}
 			}
 			count++;
-			if (stream_skip) {
-				stream_skip--;
-				continue;
-			}
 			if (stream_count == 0)
 				continue;
 			if (--stream_count == 0)
 				break;
 		}
+stream_out_eof:
 		doioctl(fd, VIDIOC_STREAMOFF, &type);
 		fcntl(fd, F_SETFL, fd_flags);
 		fprintf(stderr, "\n");
