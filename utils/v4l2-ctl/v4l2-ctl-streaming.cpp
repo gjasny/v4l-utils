@@ -484,6 +484,29 @@ static void fill_buffer(void *buffer, struct v4l2_pix_format *pix)
 	}
 }
 
+static bool fill_buffer_from_file(void *buffers[], unsigned buffer_lengths[],
+		unsigned buf_index, unsigned num_planes, FILE *fin)
+{
+	for (unsigned j = 0; j < num_planes; j++) {
+		unsigned p = buf_index * num_planes + j;
+		unsigned sz = fread(buffers[p], 1,
+				buffer_lengths[p], fin);
+
+		if (j == 0 && sz == 0 && stream_loop) {
+			fseek(fin, 0, SEEK_SET);
+			sz = fread(buffers[p], 1,
+					buffer_lengths[p], fin);
+		}
+		if (sz == buffer_lengths[p])
+			continue;
+		if (sz)
+			fprintf(stderr, "%u != %u\n", sz, buffer_lengths[p]);
+		// Bail out if we get weird buffer sizes.
+		return false;
+	}
+	return true;
+}
+
 void streaming_set(int fd)
 {
 	if (options[OptStreamMmap] || options[OptStreamUser]) {
@@ -768,6 +791,9 @@ void streaming_set(int fd)
 					}
 				}
 				// TODO fill_buffer_mp(buffers[i], &fmt.fmt.pix_mp);
+				if (fin)
+					fill_buffer_from_file(buffers, buffer_lengths,
+						buf.index, num_planes, fin);
 			} else {
 				buffer_lengths[i] = buf.length;
 				if (is_mmap) {
@@ -782,7 +808,9 @@ void streaming_set(int fd)
 					buffers[i] = calloc(1, buf.length);
 					buf.m.userptr = (unsigned long)buffers[i];
 				}
-				fill_buffer(buffers[i], &fmt.fmt.pix);
+				if (!fin || !fill_buffer_from_file(buffers, buffer_lengths,
+						buf.index, num_planes, fin))
+					fill_buffer(buffers[i], &fmt.fmt.pix);
 			}
 			if (doioctl(fd, VIDIOC_QBUF, &buf))
 				return;
@@ -847,25 +875,9 @@ void streaming_set(int fd)
 				fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
 				return;
 			}
-			if (fin) {
-				for (unsigned j = 0; j < num_planes; j++) {
-					unsigned p = buf.index * num_planes + j;
-					unsigned sz = fread(buffers[p], 1,
-							buffer_lengths[p], fin);
-
-					if (j == 0 && sz == 0 && stream_loop) {
-						fseek(fin, 0, SEEK_SET);
-						sz = fread(buffers[p], 1,
-							buffer_lengths[p], fin);
-					}
-					if (sz == buffer_lengths[p])
-						continue;
-					if (sz)
-						fprintf(stderr, "%u != %u\n", sz, buffer_lengths[p]);
-					// Bail out if we get weird buffer sizes.
-					goto stream_out_eof;
-				}
-			}
+			if (fin && !fill_buffer_from_file(buffers, buffer_lengths,
+					buf.index, num_planes, fin))
+				break;
 			if (doioctl(fd, VIDIOC_QBUF, &buf))
 				return;
 
@@ -893,7 +905,6 @@ void streaming_set(int fd)
 			if (--stream_count == 0)
 				break;
 		}
-stream_out_eof:
 		doioctl(fd, VIDIOC_STREAMOFF, &type);
 		fcntl(fd, F_SETFL, fd_flags);
 		fprintf(stderr, "\n");
