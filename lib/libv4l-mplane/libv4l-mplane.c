@@ -292,6 +292,13 @@ static int buf_ioctl(int fd, unsigned long int cmd, struct v4l2_buffer *arg)
 
 	ret = SYS_IOCTL(fd, cmd, &buf);
 
+	arg->index = buf.index;
+	arg->flags = buf.flags;
+	arg->field = buf.field;
+	arg->timestamp = buf.timestamp;
+	arg->timecode = buf.timecode;
+	arg->sequence = buf.sequence;
+
 	arg->length = plane.length;
 	arg->bytesused = plane.bytesused;
 
