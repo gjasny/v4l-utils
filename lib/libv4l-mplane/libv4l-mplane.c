@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
+#include <config.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -32,7 +33,7 @@
 	syscall(SYS_ioctl, (int)(fd), (unsigned long)(cmd), (void *)(arg))
 
 
-#if __GNUC__ >= 4
+#if HAVE_VISIBILITY
 #define PLUGIN_PUBLIC __attribute__ ((visibility("default")))
 #else
 #define PLUGIN_PUBLIC
