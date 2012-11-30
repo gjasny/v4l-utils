@@ -260,10 +260,6 @@ static int capture(char *dev_name, int x_res, int y_res, int n_frames,
 	return 0;
 }
 
-
-/*isso é comentario*/
-
-
 /*
  * Main routine. Basically, reads parameters via argp.h and passes it to the
  * capture routine
