@@ -5,6 +5,7 @@ pixfmt-test
 sliced-vbi-detect
 sliced-vbi-test
 stress-buffer
+v4l2gl
 v4l2grab
 v4lgrab
 vbi-test
