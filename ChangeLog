@@ -1,3 +1,20 @@
+v4l-utils-0.9.2
+---------------
+* libv4l changes
+  * Add a libv4l plugin for mplane handling
+
+* v4l2-ctl changes
+  * load initial frames from the file as well
+  * add --stream-loop for streaming to an output
+  * zero bytesperline
+
+* test utility changes
+  * Add an OpenGL test application to test utilities in contrib
+
+* buildsystem changes
+  * Use udev pkgconfig file to populate installation directory
+  * Query Qt rcc tool location and fall back to rcc if not available
+
 v4l-utils-0.9.1
 ---------------
 * libv4l changes
