@@ -43,7 +43,6 @@ AC_CONFIG_FILES([Makefile
 	lib/libv4l2/libv4l2.pc
 	lib/libdvbv5/libdvbv5.pc
 	lib/libv4l2rds/libv4l2rds.pc
-	lib/libv4l-mplane/libv4l-mplane.pc
 ])
 
 AM_INIT_AUTOMAKE([1.9 no-dist-gzip dist-bzip2 -Wno-portability]) # 1.10 is needed for target_LIBTOOLFLAGS
