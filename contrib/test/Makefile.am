@@ -13,6 +13,10 @@ if HAVE_X11
 noinst_PROGRAMS += pixfmt-test
 endif
 
+if HAVE_GLU
+noinst_PROGRAMS += v4l2gl
+endif
+
 driver_test_SOURCES = driver-test.c
 driver_test_LDADD = ../../utils/libv4l2util/libv4l2util.la
 
@@ -22,6 +26,10 @@ pixfmt_test_LDFLAGS = $(X11_LIBS)
 
 v4l2grab_SOURCES = v4l2grab.c
 v4l2grab_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
+
+v4l2gl_SOURCES = v4l2gl.c
+v4l2gl_LDFLAGS = $(X11_LIBS) $(GL_LIBS) $(GLU_LIBS)
+v4l2gl_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
 
 ioctl_test_SOURCES = ioctl-test.c
 
