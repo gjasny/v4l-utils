@@ -1,7 +1,5 @@
-libdir = @libv4l2plugindir@
-
 if WITH_LIBV4L
-lib_LTLIBRARIES = libv4l-mplane.la
+libv4l2plugin_LTLIBRARIES = libv4l-mplane.la
 pkgconfig_DATA = libv4l-mplane.pc
 else
 noinst_LTLIBRARIES = libv4l-mplane.la
