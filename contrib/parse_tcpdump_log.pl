@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-#   Copyright (C) 2011 Mauro Carvalho Chehab <mchehab@redhat.com>
+#   Copyright (C) 2011-2012 Mauro Carvalho Chehab <mchehab@redhat.com>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ use strict;
 #use warnings;
 use Getopt::Long;
 use Pod::Usage;
+use File::Find;
 
 # Debug levels:
 #	1 - frame request and frame response
@@ -39,6 +40,7 @@ my $man = 0;
 my $help = 0;
 my $pcap = 0;
 my $all = 0;
+my $list_devices = 0;
 my $device;
 
 GetOptions('debug=i' => \$debug,
@@ -46,7 +48,8 @@ GetOptions('debug=i' => \$debug,
 	   'pcap' => \$pcap,
 	   'all' => \$all,
 	   'device=s' => \$device,
-	    man => \$man
+	    man => \$man,
+	   'list-devices' => \$list_devices,
 	  ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
@@ -538,6 +541,30 @@ sub sigint_handler {
 	}
 }
 
+#
+# Ancillary routines to list what's connected to each USB port
+#
+sub parse_devices {
+	my $file = $File::Find::name;
+
+	return if (!($file =~ m/product/));
+	return if (!($file =~ m/[0-9]+\-[0-9]+/));
+	return if (($file =~ m/subsystem/));
+
+	my $name = qx(cat $file);
+	$name =~ s/\n//g;
+
+	my ($bus, $port);
+	($bus, $port) = ($1, $2) if ($file =~ m/([0-9]+)\-([0-9]+)/);
+
+	printf("usbmon%s ==> %s (level %s)\n",$bus, $name, $port);
+}
+
+if ($list_devices) {
+	find({follow => 1, follow_skip => 2, wanted => \&parse_devices, no_chdir => 1}, "/sys/bus/usb/devices/");
+	exit;
+}
+
 # Main program, reading from a file. A small change is needed to allow it to
 # accept a pipe
 
@@ -606,6 +633,8 @@ Options:
 
 	--device [usbmon dev]	allow changing the usbmon device (default: usbmon1)
 
+	--list-devices          list the available USB devices for each usbmon port
+
 =head1 OPTIONS
 
 =over 8
@@ -640,6 +669,10 @@ Enables the capture from the usbmon directly, using Net::Pcap, using an
 interface different than usbmon1. It should be noticed, however, that the
 only datalink that this script can parse is the one provided by usbmon,
 e. g. datalink equal to 220 (LINKTYPE_USB_LINUX_MMAPPED).
+
+=item B<--list-devices>
+
+Lists all connected USB devices, and the associated usbmon device.
 
 =back
 
@@ -697,7 +730,7 @@ Report bugs to Mauro Carvalho Chehab <mchehab@redhat.com>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2011 by Mauro Carvalho Chehab <mchehab@redhat.com>.
+Copyright (c) 2011-2012 by Mauro Carvalho Chehab <mchehab@redhat.com>.
 
 License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
 
