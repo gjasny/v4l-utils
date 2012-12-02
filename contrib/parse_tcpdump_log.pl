@@ -30,6 +30,9 @@ use Getopt::Long;
 use Pod::Usage;
 use File::Find;
 
+# Enable autoflush
+BEGIN { $| = 1 }
+
 # Debug levels:
 #	1 - frame request and frame response
 #	2 - parsed frames
