@@ -143,7 +143,7 @@ sub get_header {
 		($ident,$major,$minor,$zoneoffset,$accuracy,$dumplength,
 		 $linktype) = unpack('a4nnNNNN',$header);
 	}
-	if ($ident =~ /^\324\303\262\241/) {
+	elsif ($ident =~ /^\324\303\262\241/) {
 		#
 		#  Standard format little endian, header "d4c3b2a1"
 		#  Seen from:
@@ -154,7 +154,7 @@ sub get_header {
 		($ident,$major,$minor,$zoneoffset,$accuracy,$dumplength,
 		 $linktype) = unpack('a4vvVVVV',$header);
 	}
-	if ($ident =~ /^\241\262\315\064/) {
+	elsif ($ident =~ /^\241\262\315\064/) {
 		#
 		#  Modified format big endian, header "a1b2cd34"
 		#  Seen from:
@@ -165,7 +165,7 @@ sub get_header {
 		($ident,$major,$minor,$zoneoffset,$accuracy,$dumplength,
 		 $linktype) = unpack('a4nnNNNN',$header);
 	}
-	if ($ident =~ /^\064\315\262\241/) {
+	elsif ($ident =~ /^\064\315\262\241/) {
 		#
 		#  Modified format little endian, header "cd34a1b2"
 		#  Seen from:
@@ -177,7 +177,9 @@ sub get_header {
 		($ident,$major,$minor,$zoneoffset,$accuracy,$dumplength,
 		 $linktype) = unpack('a4vvVVVV',$header);
 	}
-
+	else {
+		die "unknown magic in header, cannot parse this file, make sure it is pcap and not a pcapng (run file <filename> to find out) and than convert with wireshark.";
+	}
 	### Store values
 	$self->{version} = $version;
 	$self->{major} = $major;
