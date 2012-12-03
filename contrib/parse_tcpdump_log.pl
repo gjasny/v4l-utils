@@ -45,6 +45,7 @@ my $pcap = 0;
 my $all = 0;
 my $list_devices = 0;
 my $device;
+my $usbdev = -1;
 
 GetOptions('debug=i' => \$debug,
 	   'help|?' => \$help,
@@ -52,6 +53,7 @@ GetOptions('debug=i' => \$debug,
 	   'all' => \$all,
 	   'device=s' => \$device,
 	    man => \$man,
+	   'usbdev=i' => \$usbdev,
 	   'list-devices' => \$list_devices,
 	  ) or pod2usage(2);
 pod2usage(1) if $help;
@@ -412,6 +414,10 @@ sub process_frame($) {
 		return;
 	}
 
+# skip unwanted URBs
+	return
+		if $usbdev != -1 and $usbdev != $frame{'Device'};
+
 	# Seek for operation origin
 	my $related = $frame{"ID"};
 	if (!$related) {
@@ -638,6 +644,8 @@ Options:
 
 	--device [usbmon dev]	allow changing the usbmon device (default: usbmon1)
 
+	--usbdev [usbdev id]    filter only traffic for a specific device
+
 	--list-devices          list the available USB devices for each usbmon port
 
 =head1 OPTIONS
@@ -678,6 +686,11 @@ e. g. datalink equal to 220 (LINKTYPE_USB_LINUX_MMAPPED).
 =item B<--list-devices>
 
 Lists all connected USB devices, and the associated usbmon device.
+
+=item B<--usbdev [id]>
+
+Filter traffic with given usbdev-id. By default no filtering is done
+and usbdev is -1.
 
 =back
 
