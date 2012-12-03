@@ -396,7 +396,3 @@ void tuner_get(int fd)
 		}
 	}
 }
-
-void tuner_list(int fd)
-{
-}
