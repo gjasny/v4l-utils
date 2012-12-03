@@ -61,7 +61,7 @@ my $filename = shift;
 
 $pcap = 1 if ($device);
 $device = "usbmon1" if ($pcap && !$device);
-die "Or use pcap or specify a filename" if ($pcap && $filename);
+die "Either use pcap or specify a filename" if ($pcap && $filename);
 
 #
 # tcpdump code imported from Tcpdumplog.pm
