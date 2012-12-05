@@ -63,6 +63,7 @@ int testReqBufs(struct node *node)
 	bool can_rw = node->caps & V4L2_CAP_READWRITE;
 	bool mmap_valid;
 	bool userptr_valid;
+	bool dmabuf_valid;
 	int ret;
 	unsigned i;
 	
@@ -87,17 +88,24 @@ int testReqBufs(struct node *node)
 		fmt.type = i;
 		fail_on_test(doioctl(node, VIDIOC_G_FMT, &fmt));
 		bufs.type = fmt.type;
+
 		fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs) != EINVAL);
 		bufs.memory = V4L2_MEMORY_MMAP;
 		ret = doioctl(node, VIDIOC_REQBUFS, &bufs);
 		fail_on_test(ret && ret != EINVAL);
 		mmap_valid = !ret;
+
 		bufs.memory = V4L2_MEMORY_USERPTR;
 		ret = doioctl(node, VIDIOC_REQBUFS, &bufs);
 		fail_on_test(ret && ret != EINVAL);
 		userptr_valid = !ret;
-		fail_on_test(can_stream && !mmap_valid && !userptr_valid);
-		fail_on_test(!can_stream && (mmap_valid || userptr_valid));
+
+		bufs.memory = V4L2_MEMORY_DMABUF;
+		ret = doioctl(node, VIDIOC_REQBUFS, &bufs);
+		fail_on_test(ret && ret != EINVAL);
+		dmabuf_valid = !ret;
+		fail_on_test(can_stream && !mmap_valid && !userptr_valid && !dmabuf_valid);
+		fail_on_test(!can_stream && (mmap_valid || userptr_valid || dmabuf_valid));
 		if (!can_stream)
 			continue;
 
@@ -111,12 +119,24 @@ int testReqBufs(struct node *node)
 			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
 			testQueryBuf(node, i, bufs.count);
 		}
+
 		if (userptr_valid) {
 			bufs.count = 1;
 			bufs.memory = V4L2_MEMORY_USERPTR;
 			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
 			fail_on_test(bufs.count == 0);
 			fail_on_test(bufs.memory != V4L2_MEMORY_USERPTR);
+			fail_on_test(bufs.type != i);
+			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
+			testQueryBuf(node, i, bufs.count);
+		}
+
+		if (dmabuf_valid) {
+			bufs.count = 1;
+			bufs.memory = V4L2_MEMORY_DMABUF;
+			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
+			fail_on_test(bufs.count == 0);
+			fail_on_test(bufs.memory != V4L2_MEMORY_DMABUF);
 			fail_on_test(bufs.type != i);
 			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
 			testQueryBuf(node, i, bufs.count);
