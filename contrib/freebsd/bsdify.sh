@@ -30,7 +30,7 @@ rm -rf include .pc
 
 for i in input.h ivtv.h uinput.h videodev2.h v4l2-controls.h v4l2-common.h dvb/{audio.h,ca.h,dmx.h,frontend.h,net.h,osd.h,version.h,video.h}; do
     mkdir -p include/linux/$(dirname $i)
-    cp $KERNEL_DIR/include/linux/$i include/linux/$i
+    cp $KERNEL_DIR/include/uapi/linux/$i include/linux/$i
 done
 
 mkdir -p include/media

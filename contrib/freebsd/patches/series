@@ -1,4 +1,5 @@
 input-header.diff
+uinput-header.diff
 ivtv-header.diff
 videodev2-header.diff
 dvb-audio-header.diff

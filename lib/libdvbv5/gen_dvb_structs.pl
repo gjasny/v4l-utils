@@ -468,7 +468,7 @@ sub output_arrays($$$$$)
   }
 }
 
-my $fe_file = "$dir/linux/dvb/frontend.h";
+my $fe_file = "$dir/uapi/linux/dvb/frontend.h";
 
 copy $fe_file, "../include/dvb-frontend.h";
 

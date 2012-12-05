@@ -53,9 +53,10 @@
  *              Hans Verkuil <hverkuil@xs4all.nl>
  *		et al.
  */
-#ifndef __LINUX_VIDEODEV2_H
-#define __LINUX_VIDEODEV2_H
+#ifndef _UAPI__LINUX_VIDEODEV2_H
+#define _UAPI__LINUX_VIDEODEV2_H
 
+#ifndef __KERNEL__
 #include <stdint.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -90,6 +91,11 @@ typedef int8_t __s8;
 #endif
 #endif
 
+#else
+#include <linux/compiler.h>
+#include <linux/ioctl.h>
+#include <linux/types.h>
+#endif
 #include <linux/v4l2-common.h>
 #include <linux/v4l2-controls.h>
 
@@ -214,6 +220,7 @@ enum v4l2_memory {
 	V4L2_MEMORY_MMAP             = 1,
 	V4L2_MEMORY_USERPTR          = 2,
 	V4L2_MEMORY_OVERLAY          = 3,
+	V4L2_MEMORY_DMABUF           = 4,
 };
 
 /* see also http://vektor.theorem.ca/graphics/ycbcr/ */
@@ -630,6 +637,8 @@ struct v4l2_requestbuffers {
  *			should be passed to mmap() called on the video node)
  * @userptr:		when memory is V4L2_MEMORY_USERPTR, a userspace pointer
  *			pointing to this plane
+ * @fd:			when memory is V4L2_MEMORY_DMABUF, a userspace file
+ *			descriptor associated with this plane
  * @data_offset:	offset in the plane to the start of data; usually 0,
  *			unless there is a header in front of the data
  *
@@ -644,6 +653,7 @@ struct v4l2_plane {
 	union {
 		uint32_t		mem_offset;
 		unsigned long	userptr;
+		int32_t		fd;
 	} m;
 	uint32_t			data_offset;
 	uint32_t			reserved[11];
@@ -668,6 +678,8 @@ struct v4l2_plane {
  *		(or a "cookie" that should be passed to mmap() as offset)
  * @userptr:	for non-multiplanar buffers with memory == V4L2_MEMORY_USERPTR;
  *		a userspace pointer pointing to this buffer
+ * @fd:		for non-multiplanar buffers with memory == V4L2_MEMORY_DMABUF;
+ *		a userspace file descriptor associated with this buffer
  * @planes:	for multiplanar buffers; userspace pointer to the array of plane
  *		info structs for this buffer
  * @length:	size in bytes of the buffer (NOT its payload) for single-plane
@@ -694,6 +706,7 @@ struct v4l2_buffer {
 		uint32_t           offset;
 		unsigned long   userptr;
 		struct v4l2_plane *planes;
+		int32_t		fd;
 	} m;
 	uint32_t			length;
 	uint32_t			reserved2;
@@ -714,6 +727,33 @@ struct v4l2_buffer {
 /* Cache handling flags */
 #define V4L2_BUF_FLAG_NO_CACHE_INVALIDATE	0x0800
 #define V4L2_BUF_FLAG_NO_CACHE_CLEAN		0x1000
+
+/**
+ * struct v4l2_exportbuffer - export of video buffer as DMABUF file descriptor
+ *
+ * @index:	id number of the buffer
+ * @type:	enum v4l2_buf_type; buffer type (type == *_MPLANE for
+ *		multiplanar buffers);
+ * @plane:	index of the plane to be exported, 0 for single plane queues
+ * @flags:	flags for newly created file, currently only O_CLOEXEC is
+ *		supported, refer to manual of open syscall for more details
+ * @fd:		file descriptor associated with DMABUF (set by driver)
+ *
+ * Contains data used for exporting a video buffer as DMABUF file descriptor.
+ * The buffer is identified by a 'cookie' returned by VIDIOC_QUERYBUF
+ * (identical to the cookie used to mmap() the buffer to userspace). All
+ * reserved fields must be set to zero. The field reserved0 is expected to
+ * become a structure 'type' allowing an alternative layout of the structure
+ * content. Therefore this field should not be used for any other extensions.
+ */
+struct v4l2_exportbuffer {
+	uint32_t		type; /* enum v4l2_buf_type */
+	uint32_t		index;
+	uint32_t		plane;
+	uint32_t		flags;
+	int32_t		fd;
+	uint32_t		reserved[11];
+};
 
 /*
  *	O V E R L A Y   P R E V I E W
@@ -765,7 +805,7 @@ struct v4l2_window {
 struct v4l2_captureparm {
 	uint32_t		   capability;	  /*  Supported modes */
 	uint32_t		   capturemode;	  /*  Current mode */
-	struct v4l2_fract  timeperframe;  /*  Time per frame in .1us units */
+	struct v4l2_fract  timeperframe;  /*  Time per frame in seconds */
 	uint32_t		   extendedmode;  /*  Driver-specific extensions */
 	uint32_t              readbuffers;   /*  # of buffers for read */
 	uint32_t		   reserved[4];
@@ -1916,6 +1956,7 @@ struct v4l2_create_buffers {
 #define VIDIOC_S_FBUF		 _IOW('V', 11, struct v4l2_framebuffer)
 #define VIDIOC_OVERLAY		 _IOW('V', 14, int)
 #define VIDIOC_QBUF		_IOWR('V', 15, struct v4l2_buffer)
+#define VIDIOC_EXPBUF		_IOWR('V', 16, struct v4l2_exportbuffer)
 #define VIDIOC_DQBUF		_IOWR('V', 17, struct v4l2_buffer)
 #define VIDIOC_STREAMON		 _IOW('V', 18, int)
 #define VIDIOC_STREAMOFF	 _IOW('V', 19, int)
@@ -2023,4 +2064,4 @@ struct v4l2_create_buffers {
 
 #define BASE_VIDIOC_PRIVATE	192		/* 192-255 are private */
 
-#endif /* __LINUX_VIDEODEV2_H */
+#endif /* _UAPI__LINUX_VIDEODEV2_H */

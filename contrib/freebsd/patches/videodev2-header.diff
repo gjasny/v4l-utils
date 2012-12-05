@@ -1,12 +1,9 @@
---- a/include/linux/videodev2.h
-+++ b/include/linux/videodev2.h
-@@ -56,14 +56,40 @@
- #ifndef __LINUX_VIDEODEV2_H
- #define __LINUX_VIDEODEV2_H
+--- freebsd/include/linux/videodev2.h.orig	2012-12-05 10:23:08.000000000 +0100
++++ freebsd/include/linux/videodev2.h	2012-12-05 10:25:46.864570965 +0100
+@@ -57,11 +57,45 @@
+ #define _UAPI__LINUX_VIDEODEV2_H
  
--#ifdef __KERNEL__
--#include <linux/time.h>     /* need struct timeval */
--#else
+ #ifndef __KERNEL__
 +#include <stdint.h>
  #include <sys/time.h>
 +#include <sys/types.h>
@@ -30,9 +27,6 @@
 +#ifndef __s64
 +typedef int64_t __s64;
  #endif
--#include <linux/compiler.h>
--#include <linux/ioctl.h>
--#include <linux/types.h>
 +#ifndef __s32
 +typedef int32_t __s32;
 +#endif
@@ -44,6 +38,11 @@
 +#endif
 +#endif
 +
++#else
+ #include <linux/compiler.h>
+ #include <linux/ioctl.h>
+ #include <linux/types.h>
++#endif
  #include <linux/v4l2-common.h>
  #include <linux/v4l2-controls.h>
  

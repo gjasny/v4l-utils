@@ -1,0 +1,10 @@
+--- freebsd/include/linux/uinput.h.orig	2012-12-05 10:38:23.417354136 +0100
++++ freebsd/include/linux/uinput.h	2012-12-05 10:38:27.832358799 +0100
+@@ -32,7 +32,6 @@
+ #ifndef _UAPI__UINPUT_H_
+ #define _UAPI__UINPUT_H_
+ 
+-#include <linux/types.h>
+ #include <linux/input.h>
+ 
+ #define UINPUT_VERSION		3

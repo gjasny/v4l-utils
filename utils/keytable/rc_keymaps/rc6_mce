@@ -1,4 +1,4 @@
-# table rc6_mce, type: RC6
+# table rc6_mce, type: RC6_MCE
 0x800f0400 KEY_NUMERIC_0
 0x800f0401 KEY_NUMERIC_1
 0x800f0402 KEY_NUMERIC_2
