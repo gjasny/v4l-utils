@@ -81,6 +81,7 @@ union v4l_parms {
 	struct v4l2_enum_dv_timings p_v4l2_enum_dv_timings;
 	struct v4l2_dv_timings_cap p_v4l2_dv_timings_cap;
 	struct v4l2_frequency_band p_v4l2_frequency_band;
+	struct v4l2_exportbuffer p_v4l2_exportbuffer;
 };
 
 #define ioc(cmd) { cmd, #cmd }
@@ -102,6 +103,7 @@ static const struct {
 	ioc(VIDIOC_S_FBUF),		/* struct v4l2_framebuffer */
 	ioc(VIDIOC_OVERLAY),		/* int */
 	ioc(VIDIOC_QBUF),		/* struct v4l2_buffer */
+	ioc(VIDIOC_EXPBUF),		/* struct v4l2_exportbuffer */
 	ioc(VIDIOC_DQBUF),		/* struct v4l2_buffer */
 	ioc(VIDIOC_STREAMON),		/* int */
 	ioc(VIDIOC_STREAMOFF),		/* int */
