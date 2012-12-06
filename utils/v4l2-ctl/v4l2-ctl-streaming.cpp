@@ -152,6 +152,7 @@ static void list_buffers(int fd, unsigned buftype)
 		if (buftype == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
 		    buftype == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
 			buf.m.planes = planes;
+			buf.length = VIDEO_MAX_PLANES;
 			memset(planes, 0, sizeof(planes));
 		}
 		if (test_ioctl(fd, VIDIOC_QUERYBUF, &buf))
