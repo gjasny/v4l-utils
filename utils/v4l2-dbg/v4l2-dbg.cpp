@@ -375,7 +375,7 @@ static int parse_subopt(char **subs, const char * const *subopts, char **value)
 		usage();
 		exit(1);
 	}
-	if (value == NULL) {
+	if (*value == NULL) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopts[opt]);
 		usage();
