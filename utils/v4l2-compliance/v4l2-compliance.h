@@ -21,11 +21,16 @@
 #ifndef _V4L2_COMPLIANCE_H_
 #define _V4L2_COMPLIANCE_H_
 
+#include <cerrno>
 #include <string>
 #include <list>
 #include <set>
 #include <linux/videodev2.h>
 #include <libv4l2.h>
+
+#if !defined(ENODATA) && (defined(__FreeBSD__) || defined(__FreeBSD_kernel__))
+#define ENODATA ENOTSUP
+#endif
 
 extern int verbose;
 extern int wrapper;
