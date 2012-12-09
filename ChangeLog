@@ -1,3 +1,16 @@
+v4l-utils-0.9.3
+---------------
+* Synced with latest kernel headers
+
+* v4l2-ctl changes
+  * fixed bug in parse_subopt
+  * --list-buffers didn't work for multiplanar formats
+
+* v4l2-compliance
+  * work around missing ENODATA on (k)FreeBSD
+  * add test whether V4L2_MEMORY_DMABUF is supported
+  * add the new EXPBUF ioctl
+
 v4l-utils-0.9.2
 ---------------
 * libv4l changes
