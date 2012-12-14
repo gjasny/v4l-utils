@@ -1253,11 +1253,9 @@ static void test_event(int fd)
 
 		for (i = 0; i < rd / sizeof(struct input_event); i++) {
 			switch (ev[i].type) {
-			case EV_MSC:
-				if (ev[i].code != MSC_SCAN)
-					break;
-				printf("%ld.%06ld: event MSC: scancode = %02x\n",
-					ev[i].time.tv_sec, ev[i].time.tv_usec, ev[i].value);
+			case EV_SYN:
+				printf("%ld.%06ld: event sync\n",
+					ev[i].time.tv_sec, ev[i].time.tv_usec);
 				break;
 			case EV_KEY: 			{
 				char *name = "";
@@ -1309,14 +1307,16 @@ static void test_event(int fd)
 				printf(" value: 0x%04x\n", ev[i].value);
 				break;
 			}
+			case EV_MSC:
+				if (ev[i].code != MSC_SCAN)
+					break;
+				printf("%ld.%06ld: event MSC: scancode = %02x\n",
+					ev[i].time.tv_sec, ev[i].time.tv_usec, ev[i].value);
+				break;
 			case EV_REP:
 				printf("%ld.%06ld: event repeat: %d\n",
 					ev[i].time.tv_sec, ev[i].time.tv_usec,
 					ev[i].value);
-				break;
-			case EV_SYN:
-				printf("%ld.%06ld: event sync\n",
-					ev[i].time.tv_sec, ev[i].time.tv_usec);
 				break;
 			default:
 				printf("%ld.%06ld: event type %d: code: 0x%02x, value: %d\n",
