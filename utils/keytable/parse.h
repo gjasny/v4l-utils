@@ -18,6 +18,15 @@ struct parse_event events_type[] = {
 	{"EV_MAX", 0x1f},
 	{ NULL, 0}
 };
+struct parse_event msc_events[] = {
+	{"MSC_SERIAL", 0x00},
+	{"MSC_PULSELED", 0x01},
+	{"MSC_GESTURE", 0x02},
+	{"MSC_RAW", 0x03},
+	{"MSC_SCAN", 0x04},
+	{"MSC_MAX", 0x07},
+	{ NULL, 0}
+};
 struct parse_event key_events[] = {
 	{"KEY_RESERVED", 0},
 	{"KEY_ESC", 1},

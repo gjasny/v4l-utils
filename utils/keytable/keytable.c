@@ -1293,7 +1293,8 @@ static void test_event(int fd)
 				if (ev[i].code == MSC_SCAN)
 					printf(": scancode = %02x\n", ev[i].value);
 				else
-					printf(": code = %02x, value = %d\n",
+					printf(": code = %s(%02x), value = %d\n",
+						get_event_name(msc_events, ev[i].code),
 						ev[i].code, ev[i].value);
 				break;
 			case EV_REP:

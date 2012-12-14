@@ -28,6 +28,13 @@ sync-with-kernel:
 	>> $(srcdir)/parse.h
 	@printf "\t{ NULL, 0}\n};\n" >> $(srcdir)/parse.h
 
+	@printf "struct parse_event msc_events[] = {\n" >> $(srcdir)/parse.h
+	@more $(KERNEL_DIR)/include/uapi/linux/input.h | perl -n \
+	-e 'if (m/^\#define\s+(MSC_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
+	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
+	>> $(srcdir)/parse.h
+	@printf "\t{ NULL, 0}\n};\n" >> $(srcdir)/parse.h
+
 	@printf "struct parse_event key_events[] = {\n" >> $(srcdir)/parse.h
 	@more $(KERNEL_DIR)/include/uapi/linux/input.h | perl -n \
 	-e 'if (m/^\#define\s+(KEY_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
