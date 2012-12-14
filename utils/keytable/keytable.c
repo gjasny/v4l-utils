@@ -1318,6 +1318,12 @@ static void test_event(int fd)
 					ev[i].time.tv_sec, ev[i].time.tv_usec,
 					ev[i].value);
 				break;
+			case EV_SW:
+			case EV_LED:
+			case EV_SND:
+			case EV_FF:
+			case EV_PWR:
+			case EV_FF_STATUS:
 			default:
 				printf("%ld.%06ld: event type %d: code: 0x%02x, value: %d\n",
 					ev[i].time.tv_sec, ev[i].time.tv_usec,
