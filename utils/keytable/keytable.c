@@ -1319,9 +1319,9 @@ static void test_event(int fd)
 					ev[i].time.tv_sec, ev[i].time.tv_usec);
 				break;
 			default:
-				printf("%ld.%06ld: event type %d: value: %d\n",
+				printf("%ld.%06ld: event type %d: code: 0x%02x, value: %d\n",
 					ev[i].time.tv_sec, ev[i].time.tv_usec,
-					ev[i].type, ev[i].value);
+					ev[i].type, ev[i].code, ev[i].value);
 				break;
 			}
 		}
