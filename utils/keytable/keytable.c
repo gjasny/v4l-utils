@@ -1236,10 +1236,21 @@ static void display_proto(struct rc_device *rc_dev)
 	fprintf(stderr, "\n");
 }
 
+
+static char *get_event_name(struct parse_event *event, u_int16_t code)
+{
+	struct parse_event *p;
+
+	for (p = event; p->name != NULL; p++) {
+		if (p->value == code)
+			return p->name;
+	}
+	return "";
+}
+
 static void test_event(int fd)
 {
 	struct input_event ev[64];
-	struct parse_event *p;
 	int rd, i;
 
 	printf ("Testing events. Please, press CTRL-C to abort.\n");
@@ -1252,71 +1263,41 @@ static void test_event(int fd)
 		}
 
 		for (i = 0; i < rd / sizeof(struct input_event); i++) {
+			printf("%ld.%06ld: event type %s(0x%02x)",
+				ev[i].time.tv_sec, ev[i].time.tv_usec,
+				get_event_name(events_type, ev[i].type), ev[i].type);
+
 			switch (ev[i].type) {
 			case EV_SYN:
-				printf("%ld.%06ld: event sync\n",
-					ev[i].time.tv_sec, ev[i].time.tv_usec);
+				printf(".\n");
 				break;
-			case EV_KEY: 			{
-				char *name = "";
-
-				printf("%ld.%06ld: event key %s: ",
-					ev[i].time.tv_sec, ev[i].time.tv_usec,
-					(ev[i].value == 0) ? "up" : "down"
-					);
-
-				for (p = key_events; p->name != NULL; p++) {
-					if (p->value == ev[i].code) {
-						name = p->name;
-						break;
-					}
-				}
-				printf("%s (0x%04x)\n", name, ev[i].code);
-
+			case EV_KEY:
+				printf(" key_%s: %s(0x%04x)\n",
+					(ev[i].value == 0) ? "up" : "down",
+					get_event_name(key_events, ev[i].code),
+					ev[i].type);
 				break;
-			}
-			case EV_ABS:			{
-				char *name = "";
-
-				printf("%ld.%06ld: event abs ",
-					ev[i].time.tv_sec, ev[i].time.tv_usec);
-
-				for (p = abs_events; p->name != NULL; p++) {
-					if (p->value == ev[i].code) {
-						name = p->name;
-						break;
-					}
-				}
-				printf("%s (0x%04x)", name, ev[i].code);
-				printf(" value: 0x%04x\n", ev[i].value);
+			case EV_REL:
+				printf(": %s (0x%04x) value=%d\n",
+					get_event_name(rel_events, ev[i].code),
+					ev[i].type,
+					ev[i].value);
 				break;
-			}
-			case EV_REL:			{
-				char *name = "";
-
-				printf("%ld.%06ld: event rel ",
-					ev[i].time.tv_sec, ev[i].time.tv_usec);
-
-				for (p = rel_events; p->name != NULL; p++) {
-					if (p->value == ev[i].code) {
-						name = p->name;
-						break;
-					}
-				}
-				printf("%s (0x%04x)", name, ev[i].code);
-				printf(" value: 0x%04x\n", ev[i].value);
+			case EV_ABS:
+				printf(": %s (0x%04x) value=%d\n",
+					get_event_name(abs_events, ev[i].code),
+					ev[i].type,
+					ev[i].value);
 				break;
-			}
 			case EV_MSC:
-				if (ev[i].code != MSC_SCAN)
-					break;
-				printf("%ld.%06ld: event MSC: scancode = %02x\n",
-					ev[i].time.tv_sec, ev[i].time.tv_usec, ev[i].value);
+				if (ev[i].code == MSC_SCAN)
+					printf(": scancode = %02x\n", ev[i].value);
+				else
+					printf(": code = %02x, value = %d\n",
+						ev[i].code, ev[i].value);
 				break;
 			case EV_REP:
-				printf("%ld.%06ld: event repeat: %d\n",
-					ev[i].time.tv_sec, ev[i].time.tv_usec,
-					ev[i].value);
+				printf(": value = %d\n", ev[i].value);
 				break;
 			case EV_SW:
 			case EV_LED:
@@ -1325,9 +1306,8 @@ static void test_event(int fd)
 			case EV_PWR:
 			case EV_FF_STATUS:
 			default:
-				printf("%ld.%06ld: event type %d: code: 0x%02x, value: %d\n",
-					ev[i].time.tv_sec, ev[i].time.tv_usec,
-					ev[i].type, ev[i].code, ev[i].value);
+				printf(": code = %02x, value = %d\n",
+					ev[i].code, ev[i].value);
 				break;
 			}
 		}
