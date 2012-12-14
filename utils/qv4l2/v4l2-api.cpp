@@ -609,6 +609,16 @@ bool v4l2::streamoff_out()
 	return ioctl("Stop Output", VIDIOC_STREAMOFF, &type);
 }
 
+bool v4l2::subscribe_event(v4l2_event_subscription &sub)
+{
+	return ioctl(VIDIOC_SUBSCRIBE_EVENT, &sub);
+}
+
+bool v4l2::dqevent(v4l2_event &ev)
+{
+	return ioctl(VIDIOC_DQEVENT, &ev) >= 0;
+}
+
 bool v4l2::set_interval(v4l2_fract interval)
 {
 	v4l2_streamparm parm;

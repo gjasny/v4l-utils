@@ -38,8 +38,6 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
-#define CTRL_FLAG_DISABLED (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_INACTIVE | V4L2_CTRL_FLAG_GRABBED)
-
 static bool is_valid_type(__u32 type)
 {
 	switch (type) {
@@ -326,6 +324,12 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 	default:
 		return;
 	}
+	struct v4l2_event_subscription sub;
+	memset(&sub, 0, sizeof(sub));
+	sub.type = V4L2_EVENT_CTRL;
+	sub.id = qctrl.id;
+	subscribe_event(sub);
+
 	m_sigMapper->setMapping(m_widgetMap[qctrl.id], qctrl.id);
 	if (qctrl.flags & CTRL_FLAG_DISABLED)
 		m_widgetMap[qctrl.id]->setDisabled(true);

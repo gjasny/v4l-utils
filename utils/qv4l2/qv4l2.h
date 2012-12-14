@@ -64,6 +64,9 @@ struct buffer {
 	size_t  length;
 };
 
+#define CTRL_FLAG_DISABLED	(V4L2_CTRL_FLAG_READ_ONLY | \
+				 V4L2_CTRL_FLAG_INACTIVE | \
+				 V4L2_CTRL_FLAG_GRABBED)
 
 class ApplicationWindow: public QMainWindow, public v4l2
 {
@@ -101,6 +104,7 @@ private:
 private slots:
 	void capStart(bool);
 	void capFrame();
+	void ctrlEvent();
 	void snapshot();
 	void capVbiFrame();
 	void saveRaw(bool);
@@ -165,6 +169,7 @@ private:
 	QSignalMapper *m_sigMapper;
 	QTabWidget *m_tabs;
 	QSocketNotifier *m_capNotifier;
+	QSocketNotifier *m_ctrlNotifier;
 	QImage *m_capImage;
 	int m_row, m_col, m_cols;
 	CtrlMap m_ctrlMap;

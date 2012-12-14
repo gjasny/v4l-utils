@@ -160,6 +160,8 @@ public:
 	bool qbuf_user_out(void *ptr, int length);
 	bool streamon_out();
 	bool streamoff_out();
+	bool subscribe_event(v4l2_event_subscription &sub);
+	bool dqevent(v4l2_event &ev);
 
 	bool set_interval(v4l2_fract interval);
 	bool get_interval(v4l2_fract &interval);
