@@ -19,9 +19,9 @@ sync-with-kernel:
 	  exit 1; \
 	fi
 	@echo generating $(srcdir)/parse.h
-	@printf "struct parse_key {\n\tchar *name;\n\tunsigned int value;\n} " > $(srcdir)/parse.h
-	@printf "keynames[] = {\n" >> $(srcdir)/parse.h
+	@printf "struct parse_event {\n\tchar *name;\n\tunsigned int value;\n};\n" > $(srcdir)/parse.h
 
+	@printf "struct parse_event key_events[] = {\n" >> $(srcdir)/parse.h
 	@more $(KERNEL_DIR)/include/uapi/linux/input.h | perl -n \
 	-e 'if (m/^\#define\s+(KEY_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
 	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
@@ -30,9 +30,8 @@ sync-with-kernel:
 	>> $(srcdir)/parse.h
 	@printf "\t{ NULL, 0}\n};\n" >> $(srcdir)/parse.h
 
-	@printf "struct event_abs {\n\tchar *name;\n\tunsigned int value;\n} " >> $(srcdir)/parse.h
-	@printf "event_abs[] = {\n" >> $(srcdir)/parse.h
 
+	@printf "struct parse_event abs_events[] = {\n" >> $(srcdir)/parse.h
 	@more $(KERNEL_DIR)/include/uapi/linux/input.h | perl -n \
 	-e 'if (m/^\#define\s+(ABS_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
 	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \

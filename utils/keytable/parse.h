@@ -1,7 +1,8 @@
-struct parse_key {
+struct parse_event {
 	char *name;
 	unsigned int value;
-} keynames[] = {
+};
+struct parse_event key_events[] = {
 	{"KEY_RESERVED", 0},
 	{"KEY_ESC", 1},
 	{"KEY_1", 2},
@@ -507,10 +508,7 @@ struct parse_key {
 	{"KEY_MAX", 0x2ff},
 	{ NULL, 0}
 };
-struct event_abs {
-	char *name;
-	unsigned int value;
-} event_abs[] = {
+struct parse_event abs_events[] = {
 	{"ABS_X", 0x00},
 	{"ABS_Y", 0x01},
 	{"ABS_Z", 0x02},

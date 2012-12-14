@@ -91,9 +91,9 @@ enum ir_protocols {
 
 static int parse_code(char *string)
 {
-	struct parse_key *p;
+	struct parse_event *p;
 
-	for (p = keynames; p->name != NULL; p++) {
+	for (p = key_events; p->name != NULL; p++) {
 		if (!strcasecmp(p->name, string))
 			return p->value;
 	}
@@ -488,9 +488,9 @@ static struct argp argp = {
 
 static void prtcode(int *codes)
 {
-	struct parse_key *p;
+	struct parse_event *p;
 
-	for (p = keynames; p->name != NULL; p++) {
+	for (p = key_events; p->name != NULL; p++) {
 		if (p->value == (unsigned)codes[1]) {
 			printf("scancode 0x%04x = %s (0x%02x)\n", codes[0], p->name, codes[1]);
 			return;
@@ -1239,6 +1239,7 @@ static void display_proto(struct rc_device *rc_dev)
 static void test_event(int fd)
 {
 	struct input_event ev[64];
+	struct parse_event *p;
 	int rd, i;
 
 	printf ("Testing events. Please, press CTRL-C to abort.\n");
@@ -1259,7 +1260,6 @@ static void test_event(int fd)
 					ev[i].time.tv_sec, ev[i].time.tv_usec, ev[i].value);
 				break;
 			case EV_KEY: 			{
-				struct parse_key *p;
 				char *name = "";
 
 				printf("%ld.%06ld: event key %s: ",
@@ -1267,7 +1267,7 @@ static void test_event(int fd)
 					(ev[i].value == 0) ? "up" : "down"
 					);
 
-				for (p = keynames; p->name != NULL; p++) {
+				for (p = key_events; p->name != NULL; p++) {
 					if (p->value == ev[i].code) {
 						name = p->name;
 						break;
@@ -1287,13 +1287,12 @@ static void test_event(int fd)
 					ev[i].time.tv_sec, ev[i].time.tv_usec);
 				break;
 			case EV_ABS:			{
-				struct event_abs *p;
 				char *name = "";
 
 				printf("%ld.%06ld: event abs ",
 					ev[i].time.tv_sec, ev[i].time.tv_usec);
 
-				for (p = event_abs; p->name != NULL; p++) {
+				for (p = abs_events; p->name != NULL; p++) {
 					if (p->value == ev[i].code) {
 						name = p->name;
 						break;
