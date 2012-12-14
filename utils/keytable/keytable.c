@@ -1293,6 +1293,22 @@ static void test_event(int fd)
 				printf(" value: 0x%04x\n", ev[i].value);
 				break;
 			}
+			case EV_REL:			{
+				char *name = "";
+
+				printf("%ld.%06ld: event rel ",
+					ev[i].time.tv_sec, ev[i].time.tv_usec);
+
+				for (p = rel_events; p->name != NULL; p++) {
+					if (p->value == ev[i].code) {
+						name = p->name;
+						break;
+					}
+				}
+				printf("%s (0x%04x)", name, ev[i].code);
+				printf(" value: 0x%04x\n", ev[i].value);
+				break;
+			}
 			case EV_REP:
 				printf("%ld.%06ld: event repeat: %d\n",
 					ev[i].time.tv_sec, ev[i].time.tv_usec,
