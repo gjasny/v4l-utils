@@ -639,7 +639,11 @@ void ApplicationWindow::setWhat(QWidget *w, unsigned id, const QString &v)
 	switch (qctrl.type) {
 	case V4L2_CTRL_TYPE_STRING:
 		w->setWhatsThis(QString("Type: String\n"
-					"Current: %1").arg(v) + flags);
+					"Minimum: %1\n"
+					"Maximum: %2\n"
+					"Step: %3\n"
+					"Current: %4")
+			.arg(qctrl.minimum).arg(qctrl.maximum).arg(qctrl.step).arg(v) + flags);
 		w->setStatusTip(w->whatsThis());
 		break;
 	default:
@@ -658,9 +662,10 @@ void ApplicationWindow::setWhat(QWidget *w, unsigned id, long long v)
 		w->setWhatsThis(QString("Type: Integer\n"
 					"Minimum: %1\n"
 					"Maximum: %2\n"
-					"Current: %3\n"
-					"Default: %4")
-			.arg(qctrl.minimum).arg(qctrl.maximum).arg(v).arg(qctrl.default_value) + flags);
+					"Step: %3\n"
+					"Current: %4\n"
+					"Default: %5")
+			.arg(qctrl.minimum).arg(qctrl.maximum).arg(qctrl.step).arg(v).arg(qctrl.default_value) + flags);
 		w->setStatusTip(w->whatsThis());
 		break;
 
