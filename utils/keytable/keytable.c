@@ -1291,9 +1291,9 @@ static void test_event(int fd)
 				break;
 			case EV_MSC:
 				if (ev[i].code == MSC_SCAN)
-					printf(": scancode = %02x\n", ev[i].value);
+					printf(": scancode = 0x%02x\n", ev[i].value);
 				else
-					printf(": code = %s(%02x), value = %d\n",
+					printf(": code = %s(0x%02x), value = %d\n",
 						get_event_name(msc_events, ev[i].code),
 						ev[i].code, ev[i].value);
 				break;
@@ -1307,7 +1307,7 @@ static void test_event(int fd)
 			case EV_PWR:
 			case EV_FF_STATUS:
 			default:
-				printf(": code = %02x, value = %d\n",
+				printf(": code = 0x%02x, value = %d\n",
 					ev[i].code, ev[i].value);
 				break;
 			}
