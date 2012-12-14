@@ -1277,15 +1277,6 @@ static void test_event(int fd)
 
 				break;
 			}
-			case EV_REP:
-				printf("%ld.%06ld: event repeat: %d\n",
-					ev[i].time.tv_sec, ev[i].time.tv_usec,
-					ev[i].value);
-				break;
-			case EV_SYN:
-				printf("%ld.%06ld: event sync\n",
-					ev[i].time.tv_sec, ev[i].time.tv_usec);
-				break;
 			case EV_ABS:			{
 				char *name = "";
 
@@ -1302,6 +1293,15 @@ static void test_event(int fd)
 				printf(" value: 0x%04x\n", ev[i].value);
 				break;
 			}
+			case EV_REP:
+				printf("%ld.%06ld: event repeat: %d\n",
+					ev[i].time.tv_sec, ev[i].time.tv_usec,
+					ev[i].value);
+				break;
+			case EV_SYN:
+				printf("%ld.%06ld: event sync\n",
+					ev[i].time.tv_sec, ev[i].time.tv_usec);
+				break;
 			default:
 				printf("%ld.%06ld: event type %d: value: %d\n",
 					ev[i].time.tv_sec, ev[i].time.tv_usec,
