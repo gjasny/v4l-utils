@@ -30,6 +30,15 @@ sync-with-kernel:
 	>> $(srcdir)/parse.h
 	@printf "\t{ NULL, 0}\n};\n" >> $(srcdir)/parse.h
 
+	@printf "struct event_abs {\n\tchar *name;\n\tunsigned int value;\n} " >> $(srcdir)/parse.h
+	@printf "event_abs[] = {\n" >> $(srcdir)/parse.h
+
+	@more $(KERNEL_DIR)/include/uapi/linux/input.h | perl -n \
+	-e 'if (m/^\#define\s+(ABS_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
+	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
+	>> $(srcdir)/parse.h
+	@printf "\t{ NULL, 0}\n};\n" >> $(srcdir)/parse.h
+
 	@-mkdir -p $(srcdir)/rc_keymaps
 	@-rm $(srcdir)/rc_keymaps/*
 	@echo storing existing keymaps at $(srcdir)/rc_keymaps/

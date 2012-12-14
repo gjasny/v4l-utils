@@ -1286,6 +1286,23 @@ static void test_event(int fd)
 				printf("%ld.%06ld: event sync\n",
 					ev[i].time.tv_sec, ev[i].time.tv_usec);
 				break;
+			case EV_ABS:			{
+				struct event_abs *p;
+				char *name = "";
+
+				printf("%ld.%06ld: event abs ",
+					ev[i].time.tv_sec, ev[i].time.tv_usec);
+
+				for (p = event_abs; p->name != NULL; p++) {
+					if (p->value == ev[i].code) {
+						name = p->name;
+						break;
+					}
+				}
+				printf("%s (0x%04x)", name, ev[i].code);
+				printf(" value: 0x%04x\n", ev[i].value);
+				break;
+			}
 			default:
 				printf("%ld.%06ld: event type %d: value: %d\n",
 					ev[i].time.tv_sec, ev[i].time.tv_usec,
