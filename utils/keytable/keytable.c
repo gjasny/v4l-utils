@@ -431,7 +431,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			nextkey->codes[1] = key;
 
 			if (debug)
-				fprintf(stderr, "scancode %u=%u\n",
+				fprintf(stderr, "scancode 0x%04x=%u\n",
 					nextkey->codes[0], nextkey->codes[1]);
 
 			nextkey->next = calloc(1, sizeof(keys));
@@ -498,9 +498,9 @@ static void prtcode(int *codes)
 	}
 
 	if (isprint (codes[1]))
-		printf("scancode %d = '%c' (0x%02x)\n", codes[0], codes[1], codes[1]);
+		printf("scancode 0x%04x = '%c' (0x%02x)\n", codes[0], codes[1], codes[1]);
 	else
-		printf("scancode %d = 0x%02x\n", codes[0], codes[1]);
+		printf("scancode 0x%04x = 0x%02x\n", codes[0], codes[1]);
 }
 
 static void free_names(struct sysfs_names *names)
