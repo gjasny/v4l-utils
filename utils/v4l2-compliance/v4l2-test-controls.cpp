@@ -614,7 +614,7 @@ int testExtendedControls(struct node *node)
 	if (ret != EINVAL)
 		return fail("g_ext_ctrls accepted invalid control ID\n");
 	if (ctrls.error_idx != ctrls.count)
-		return fail("g_ext_ctrls(0) invalid error_idx\n");
+		return fail("g_ext_ctrls(0) invalid error_idx %u\n", ctrls.error_idx);
 	ctrl.id = 0;
 	ctrl.size = 0;
 	ctrl.value = 0;
@@ -622,12 +622,12 @@ int testExtendedControls(struct node *node)
 	if (ret != EINVAL)
 		return fail("try_ext_ctrls accepted invalid control ID\n");
 	if (ctrls.error_idx != 0)
-		return fail("try_ext_ctrls(0) invalid error_idx\n");
+		return fail("try_ext_ctrls(0) invalid error_idx %u\n", ctrls.error_idx);
 	ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
 	if (ret != EINVAL)
 		return fail("s_ext_ctrls accepted invalid control ID\n");
 	if (ctrls.error_idx != ctrls.count)
-		return fail("s_ext_ctrls(0) invalid error_idx\n");
+		return fail("s_ext_ctrls(0) invalid error_idx %u\n", ctrls.error_idx);
 
 	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
 		struct v4l2_ext_control ctrl;
