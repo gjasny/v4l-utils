@@ -195,8 +195,9 @@ if ($mode eq "fw") {
 			last;
 		}
 
+		my $is_fw_msg = $bytes[0] eq "40" && $bytes[1] eq "30";
 		my $len = hex($bytes[6] . $bytes[7]);
-		if ($len < 32) {
+		if (!$is_fw_msg || $len < 32) {
 			next;
 		}
 
