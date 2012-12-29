@@ -190,7 +190,7 @@ my @bytes;
 if ($mode eq "fw") {
 	open(OUT, ">", "fw") || die "Can't open fw";
 
-	while(@bytes = get_line()) {
+	while(@bytes = get_line("-1")) {
 		if(scalar(@bytes) <= 1) {
 			last;
 		}
