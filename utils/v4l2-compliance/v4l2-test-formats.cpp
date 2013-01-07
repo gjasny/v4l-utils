@@ -560,10 +560,15 @@ int testTryFormats(struct node *node)
 			fmt.fmt.win.bitmap = NULL;
 		}
 		ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
-		ret = testFormatsType(node, ret, type, fmt);
-		if (ret)
-			return fail("%s is valid, but TRY_FMT failed to return a format\n",
-					buftype2s(type).c_str());
+		if (ret == EINVAL) {
+			warn("TRY_FMT cannot handle an invalid pixelformat. This may or may not be a problem.\n"
+			     "See http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html for more information.\n");
+		} else {
+			ret = testFormatsType(node, ret, type, fmt);
+			if (ret)
+				return fail("%s is valid, but TRY_FMT failed to return a format\n",
+						buftype2s(type).c_str());
+		}
 	}
 
 	memset(&fmt, 0, sizeof(fmt));
@@ -713,10 +718,15 @@ int testSetFormats(struct node *node)
 		fmt_set.type = type;
 		fmt_set.fmt.pix.field = V4L2_FIELD_ANY;
 		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
-		ret = testFormatsType(node, ret, type, fmt_set);
-		if (ret)
-			return fail("%s is valid, but no S_FMT was implemented\n",
-					buftype2s(type).c_str());
+		if (ret == EINVAL) {
+			warn("S_FMT cannot handle an invalid pixelformat. This may or may not be a problem.\n"
+			     "See http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html for more information.\n");
+		} else {
+			ret = testFormatsType(node, ret, type, fmt_set);
+			if (ret)
+				return fail("%s is valid, but no S_FMT was implemented\n",
+						buftype2s(type).c_str());
+		}
 
 		fmt_set = fmt;
 		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
