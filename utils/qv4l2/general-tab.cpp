@@ -476,7 +476,7 @@ void GeneralTab::freqChanged()
 {
 	double f = m_freq->text().toDouble();
 
-	s_frequency(f * 16, m_tuner.capability & V4L2_TUNER_CAP_LOW);
+	s_frequency(f * 16, m_isRadio);
 }
 
 void GeneralTab::audioModeChanged(int)
