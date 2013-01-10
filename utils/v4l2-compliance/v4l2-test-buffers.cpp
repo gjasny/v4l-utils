@@ -47,6 +47,8 @@ static int testQueryBuf(struct node *node, unsigned type, unsigned count)
 		fail_on_test(buf.flags & (V4L2_BUF_FLAG_QUEUED |
 					V4L2_BUF_FLAG_DONE |
 					V4L2_BUF_FLAG_ERROR));
+		fail_on_test((buf.flags & V4L2_BUF_FLAG_TIMESTAMP_MASK) !=
+						V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC);
 	}
 	buf.index = count;
 	ret = doioctl(node, VIDIOC_QUERYBUF, &buf);
