@@ -89,6 +89,21 @@ static const flag_def flags_def[] = {
 	{ 0, NULL }
 };
 
+static std::string timestamp_type2s(__u32 flags)
+{
+	char buf[20];
+
+	switch (flags & V4L2_BUF_FLAG_TIMESTAMP_MASK) {
+	case V4L2_BUF_FLAG_TIMESTAMP_UNKNOWN:
+		return "Unknown";
+	case V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC:
+		return "Monotonic";
+	default:
+		sprintf(buf, "Type %d", (flags & V4L2_BUF_FLAG_TIMESTAMP_MASK) >> 13);
+		return std::string(buf);
+	}
+}
+
 static const flag_def tc_flags_def[] = {
 	{ V4L2_TC_FLAG_DROPFRAME, "dropframe" },
 	{ V4L2_TC_FLAG_COLORFRAME, "colorframe" },
@@ -107,7 +122,8 @@ static void print_buffer(struct v4l2_buffer &buf)
 	printf("\tSequence : %u\n", buf.sequence);
 	printf("\tLength   : %u\n", buf.length);
 	printf("\tBytesused: %u\n", buf.bytesused);
-	printf("\tTimestamp: %lu.%06lus\n", buf.timestamp.tv_sec, buf.timestamp.tv_usec);
+	printf("\tTimestamp: %lu.%06lus (%s)\n", buf.timestamp.tv_sec, buf.timestamp.tv_usec,
+			timestamp_type2s(buf.flags).c_str());
 	if (buf.flags & V4L2_BUF_FLAG_TIMECODE) {
 		static const int fps_types[] = { 0, 24, 25, 30, 50, 60 };
 		int fps = buf.timecode.type;
