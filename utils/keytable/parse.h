@@ -24,6 +24,7 @@ struct parse_event msc_events[] = {
 	{"MSC_GESTURE", 0x02},
 	{"MSC_RAW", 0x03},
 	{"MSC_SCAN", 0x04},
+	{"MSC_TIMESTAMP", 0x05},
 	{"MSC_MAX", 0x07},
 	{ NULL, 0}
 };
