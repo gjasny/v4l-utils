@@ -27,26 +27,6 @@
 #include "dvb-v5-std.h"
 #include "dvb-scan.h"
 
-static const char *parm_name(const struct parse_table *table)
-{
-	if (table->prop < DTV_MAX_COMMAND)
-		return dvb_v5_name[table->prop];
-	switch (table->prop) {
-	case DTV_CH_NAME:
-		return ("CHANNEL");
-	case DTV_POLARIZATION:
-		return ("POLARIZATION");
-	case DTV_VIDEO_PID:
-		return ("VIDEO PID");
-	case DTV_AUDIO_PID:
-		return ("AUDIO PID");
-	case DTV_SERVICE_ID:
-		return ("SERVICE ID");
-	default:
-		return ("unknown");
-	}
-}
-
 /*
  * Generic parse function for all formats each channel is contained into
  * just one line.
@@ -145,7 +125,7 @@ struct dvb_file *parse_format_oneline(const char *fname,
 				p = strtok(NULL, delimiter);
 			if (!p) {
 				sprintf(err_msg, "parameter %i (%s) missing",
-					i, parm_name(table));
+					i, dvb_cmd_name(table->prop));
 				goto error;
 			}
 			if (table->size) {
@@ -154,7 +134,7 @@ struct dvb_file *parse_format_oneline(const char *fname,
 						break;
 				if (j == table->size) {
 					sprintf(err_msg, "parameter %s invalid: %s",
-						parm_name(table), p);
+						dvb_cmd_name(table->prop), p);
 					goto error;
 				}
 				if (table->prop == DTV_BANDWIDTH_HZ)

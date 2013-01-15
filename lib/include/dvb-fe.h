@@ -43,12 +43,14 @@
  * code to v5 style, if such change gets merged upstream.
  */
 
-#define DTV_MAX_STATS 5
-#define DTV_STATUS			(DTV_MAX_COMMAND + 100)
-#define DTV_BER				(DTV_MAX_COMMAND + 101)
-#define DTV_SIGNAL_STRENGTH		(DTV_MAX_COMMAND + 102)
-#define DTV_SNR				(DTV_MAX_COMMAND + 103)
-#define DTV_UNCORRECTED_BLOCKS		(DTV_MAX_COMMAND + 104)
+/*
+ * Those are needed to avoid breaking apps that depend on the library
+ * but shoudn't be used anymore
+ */
+#define DTV_MAX_STATS			DTV_NUM_STATS_PROPS
+#define DTV_SIGNAL_STRENGTH		DTV_STAT_SIGNAL_STRENGTH
+#define DTV_SNR				DTV_STAT_CNR
+#define DTV_UNCORRECTED_BLOCKS		DTV_STAT_ERROR_BLOCK_COUNT
 
 enum dvbv3_emulation_type {
 	DVBV3_UNKNOWN = -1,
@@ -59,10 +61,8 @@ enum dvbv3_emulation_type {
 };
 
 struct dvb_v5_stats {
-	struct dtv_property		prop[DTV_MAX_STATS];
-	int				valid[DTV_MAX_STATS];
+	struct dtv_property		prop[DTV_NUM_STATS_PROPS];
 };
-
 
 struct dvb_v5_fe_parms {
 	int				fd;
@@ -130,6 +130,8 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms);
 
 /* Get statistics */
 
+struct dtv_stats *dvb_fe_retrieve_stats_layer(struct dvb_v5_fe_parms *parms,
+                                              unsigned cmd, unsigned layer);
 int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
 			  unsigned cmd, uint32_t *value);
 int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms);

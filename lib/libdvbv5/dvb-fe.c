@@ -199,12 +199,19 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	/* Prepare to use the delivery system */
 	dvb_set_sys(parms, parms->current_sys);
 
-	/* Prepare the status struct */
-	parms->stats.prop[0].cmd = DTV_STATUS;
-	parms->stats.prop[1].cmd = DTV_BER;
-	parms->stats.prop[2].cmd = DTV_SIGNAL_STRENGTH;
-	parms->stats.prop[3].cmd = DTV_SNR;
-	parms->stats.prop[4].cmd = DTV_UNCORRECTED_BLOCKS;
+	/*
+	 * Prepare the status struct - DVBv5.10 parameters should
+	 * come first, as they'll be read together.
+	 */
+	parms->stats.prop[0].cmd = DTV_STAT_SIGNAL_STRENGTH;
+	parms->stats.prop[1].cmd = DTV_STAT_CNR;
+	parms->stats.prop[2].cmd = DTV_STAT_POST_BIT_ERROR_COUNT;
+	parms->stats.prop[3].cmd = DTV_STAT_POST_TOTAL_BIT_COUNT;
+	parms->stats.prop[4].cmd = DTV_STAT_ERROR_BLOCK_COUNT;
+	parms->stats.prop[5].cmd = DTV_STAT_TOTAL_BLOCK_COUNT;
+
+	parms->stats.prop[6].cmd = DTV_STATUS;
+	parms->stats.prop[7].cmd = DTV_BER;
 
 	return parms;
 }
@@ -410,7 +417,7 @@ const char *dvb_cmd_name(int cmd)
 {
 	if (cmd >= 0 && cmd < DTV_USER_COMMAND_START)
 		return dvb_v5_name[cmd];
-	else if (cmd >= 0 && cmd <= DTV_MAX_USER_COMMAND)
+	else if (cmd >= 0 && cmd <= DTV_MAX_STAT_COMMAND)
 		return dvb_user_name[cmd - DTV_USER_COMMAND_START];
 	return NULL;
 }
@@ -419,7 +426,7 @@ const char *const *dvb_attr_names(int cmd)
 {
 	if (cmd >= 0 && cmd < DTV_USER_COMMAND_START)
 		return dvb_v5_attr_names[cmd];
-	else if (cmd >= 0 && cmd <= DTV_MAX_USER_COMMAND)
+	else if (cmd >= 0 && cmd <= DTV_MAX_STAT_COMMAND)
 		return dvb_user_attr_names[cmd - DTV_USER_COMMAND_START];
 	return NULL;
 }
@@ -659,39 +666,68 @@ ret:
 	return 0;
 }
 
+struct dtv_stats *dvb_fe_retrieve_stats_layer(struct dvb_v5_fe_parms *parms,
+					      unsigned cmd, unsigned layer)
+{
+	int i;
+
+	for (i = 0; i < DTV_NUM_STATS_PROPS; i++) {
+		if (parms->stats.prop[i].cmd != cmd)
+			continue;
+		if (layer >= parms->stats.prop[2].u.st.len)
+			return NULL;
+		return &parms->stats.prop[i].u.st.stat[layer];
+	}
+	dvb_logerr("%s not found on retrieve", dvb_cmd_name(cmd));
+
+	return NULL;
+}
+
 int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
 			  unsigned cmd, uint32_t *value)
 {
-	int i, valid;
-	for (i = 0; i < DTV_MAX_STATS; i++) {
-		if (parms->stats.prop[i].cmd != cmd)
-			continue;
-		*value = parms->stats.prop[i].u.data;
-		valid = parms->stats.valid[i];
-		if (!valid)
-			return EINVAL;
-		return 0;
-	}
-	dvb_logerr("%s not found on retrieve",
-		dvb_cmd_name(cmd));
+	struct dtv_stats *stat;
+	enum fecap_scale_params scale;
 
-	return EINVAL;
+	stat = dvb_fe_retrieve_stats_layer(parms, cmd, 0);
+	if (!stat) {
+		if (parms->verbose)
+			dvb_logdbg("%s not found on retrieve", dvb_cmd_name(cmd));
+		return EINVAL;
+	}
+
+	scale = stat->scale;
+	if (scale == FE_SCALE_NOT_AVAILABLE) {
+		if (parms->verbose)
+			dvb_logdbg("%s not available", dvb_cmd_name(cmd));
+		return EINVAL;
+	}
+
+	*value = stat->uvalue;
+
+	if (parms->verbose)
+		dvb_logdbg("Stats for %s = %d", dvb_cmd_name(cmd), *value);
+
+	return 0;
 }
 
 static int dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
-			unsigned cmd, uint32_t value,
-			int valid)
+			      unsigned cmd,
+			      enum fecap_scale_params scale,
+			      unsigned layer,
+			      uint32_t value)
 {
 	int i;
-	for (i = 0; i < DTV_MAX_STATS; i++) {
+	for (i = 0; i < DTV_NUM_STATS_PROPS; i++) {
 		if (parms->stats.prop[i].cmd != cmd)
 			continue;
-		parms->stats.prop[i].u.data = value;
-		parms->stats.valid[i] = valid;
+		parms->stats.prop[i].u.st.stat[layer].scale = scale;
+		parms->stats.prop[i].u.st.stat[layer].uvalue = value;
+		if (parms->stats.prop[i].u.st.len < layer + 1)
+			parms->stats.prop[i].u.st.len = layer + 1;
 		return 0;
 	}
-	dvb_logerr("%s not found on store",
-		dvb_cmd_name(cmd));
+	dvb_logerr("%s not found on store", dvb_cmd_name(cmd));
 
 	return EINVAL;
 }
@@ -701,38 +737,87 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 	fe_status_t status = 0;
 	uint32_t ber= 0, ucb = 0;
 	uint16_t strength = 0, snr = 0;
-	int i, valid;
+	int i;
+	enum fecap_scale_params scale;
 
 	if (ioctl(parms->fd, FE_READ_STATUS, &status) == -1) {
 		dvb_perror("FE_READ_STATUS");
 		return EINVAL;
 	}
-	dvb_fe_store_stats(parms, DTV_STATUS, status, 1);
+	dvb_fe_store_stats(parms, DTV_STATUS, FE_SCALE_RELATIVE, 0, status);
 
+	if (parms->version >= 0x50a) {
+		struct dtv_properties props;
+		struct dtv_stats *st_bec, *st_bc;
+
+		props.num = 6;
+		props.props = parms->stats.prop;
+
+		/* Do a DVBv5.10 stats call */
+		if (ioctl(parms->fd, FE_GET_PROPERTY, &props) == -1)
+			goto dvbv3_fallback;
+
+		/* If no stats i returned, fallback to the legacy API */
+		for (i = 0; i < props.num; i++)
+			if (parms->stats.prop[i].u.st.len)
+				break;
+		if (i == props.num)
+			goto dvbv3_fallback;
+
+		/* Calculate and store BER */
+		for (i = 0; i < 4; i++) {
+			uint64_t ber64;
+
+			st_bec = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_BIT_ERROR_COUNT, i);
+			if (!st_bec)
+				goto no_ber;
+
+			st_bc = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_TOTAL_BIT_COUNT, i);
+			if (!st_bc || !st_bc->uvalue)
+				goto no_ber;
+
+			ber64 = (1E9 * st_bec->uvalue) / st_bc->uvalue;
+
+			dvb_fe_store_stats(parms, DTV_BER, FE_SCALE_COUNTER, i, ber64);
+			continue;
+no_ber:
+			dvb_fe_store_stats(parms, DTV_BER, FE_SCALE_NOT_AVAILABLE, i, 0);
+		}
+
+		return 0;
+	}
+
+dvbv3_fallback:
+	/* DVB v3 stats*/
 	if (ioctl(parms->fd, FE_READ_BER, &ber) == -1)
-		valid = 0;
+		scale = FE_SCALE_NOT_AVAILABLE;
 	else
-		valid = 1;
-	dvb_fe_store_stats(parms, DTV_BER, ber, valid);
+		scale = FE_SCALE_RELATIVE;
+
+	/*
+	 * BER scale on DVBv3 is not defined - different drivers use
+	 * different scales, even weird ones, like multiples of 1/65280
+	 */
+	dvb_fe_store_stats(parms, DTV_BER, scale, 0, ber);
 
 	if (ioctl(parms->fd, FE_READ_SIGNAL_STRENGTH, &strength) == -1)
-		valid = 0;
+		scale = FE_SCALE_NOT_AVAILABLE;
 	else
-		valid = 1;
+		scale = FE_SCALE_RELATIVE;
 
-	dvb_fe_store_stats(parms, DTV_SIGNAL_STRENGTH, strength, valid);
+	dvb_fe_store_stats(parms, DTV_STAT_SIGNAL_STRENGTH, scale, 0, strength);
 
 	if (ioctl(parms->fd, FE_READ_SNR, &snr) == -1)
-		valid = 0;
+		scale = FE_SCALE_NOT_AVAILABLE;
 	else
-		valid = 1;
-	dvb_fe_store_stats(parms, DTV_SNR, snr, valid);
+		scale = FE_SCALE_RELATIVE;
+	dvb_fe_store_stats(parms, DTV_STAT_CNR, scale, 0, snr);
 
 	if (ioctl(parms->fd, FE_READ_UNCORRECTED_BLOCKS, &ucb) == -1)
-		valid = 0;
+		scale = FE_SCALE_NOT_AVAILABLE;
 	else
-		valid = 1;
-	dvb_fe_store_stats(parms, DTV_UNCORRECTED_BLOCKS, snr, valid);
+		scale = FE_SCALE_COUNTER;
+	dvb_fe_store_stats(parms, DTV_STAT_ERROR_BLOCK_COUNT, scale, 0, snr);
 
 	if (parms->verbose > 1) {
 		dvb_log("Status: ");
@@ -770,7 +855,7 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
 				dvb_log ("    %s", fe_status_name[i].name);
 		}
 	}
-	dvb_fe_store_stats(parms, DTV_STATUS, status, 1);
+	dvb_fe_store_stats(parms, DTV_STATUS, FE_SCALE_RELATIVE, 0, status);
 
 	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &event.parameters.frequency);
 	dvb_fe_retrieve_parm(parms, DTV_INVERSION, &event.parameters.inversion);
