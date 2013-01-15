@@ -167,7 +167,7 @@ const char *fe_rolloff_name[5] = {
 	[4] = NULL,
 };
 
-const char *dvb_v5_name[63] = {
+const char *dvb_v5_name[71] = {
 	[DTV_API_VERSION] =                    "API_VERSION",
 	[DTV_ATSCMH_FIC_VER] =                 "ATSCMH_FIC_VER",
 	[DTV_ATSCMH_NOG] =                     "ATSCMH_NOG",
@@ -223,6 +223,14 @@ const char *dvb_v5_name[63] = {
 	[DTV_MODULATION] =                     "MODULATION",
 	[DTV_PILOT] =                          "PILOT",
 	[DTV_ROLLOFF] =                        "ROLLOFF",
+	[DTV_STAT_CNR] =                       "STAT_CNR",
+	[DTV_STAT_ERROR_BLOCK_COUNT] =         "STAT_ERROR_BLOCK_COUNT",
+	[DTV_STAT_POST_BIT_ERROR_COUNT] =      "STAT_POST_BIT_ERROR_COUNT",
+	[DTV_STAT_POST_TOTAL_BIT_COUNT] =      "STAT_POST_TOTAL_BIT_COUNT",
+	[DTV_STAT_PRE_BIT_ERROR_COUNT] =       "STAT_PRE_BIT_ERROR_COUNT",
+	[DTV_STAT_PRE_TOTAL_BIT_COUNT] =       "STAT_PRE_TOTAL_BIT_COUNT",
+	[DTV_STAT_SIGNAL_STRENGTH] =           "STAT_SIGNAL_STRENGTH",
+	[DTV_STAT_TOTAL_BLOCK_COUNT] =         "STAT_TOTAL_BLOCK_COUNT",
 	[DTV_STREAM_ID] =                      "STREAM_ID",
 	[DTV_SYMBOL_RATE] =                    "SYMBOL_RATE",
 	[DTV_TONE] =                           "TONE",
@@ -230,7 +238,7 @@ const char *dvb_v5_name[63] = {
 	[DTV_TUNE] =                           "TUNE",
 	[DTV_UNDEFINED] =                      "UNDEFINED",
 	[DTV_VOLTAGE] =                        "VOLTAGE",
-	[62] = NULL,
+	[70] = NULL,
 };
 
 const char *delivery_system_name[20] = {
