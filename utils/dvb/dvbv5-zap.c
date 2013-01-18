@@ -24,6 +24,7 @@
 #define _LARGEFILE_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
 
+#include <inttypes.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -283,13 +284,51 @@ static char *sig_bits[7] = {
 	[6] = "Reinit",
 };
 
+
+static void print_stat(struct dtv_stats *stat, char *name, int layer,
+		       char **buf, int *len, int *show,
+		       int is_strength)
+{
+	int size;
+
+	if (stat->scale == FE_SCALE_NOT_AVAILABLE)
+		return;
+
+	if (!*show && layer) {
+		size = snprintf(*buf, *len, "  Layer %c:", 'A' + layer - 1);
+		*buf += size;
+		*len -= size;
+		*show = 1;
+	}
+	size = snprintf(*buf, *len, " %s=", name);
+	*buf += size;
+	*len -= size;
+	*show = 1;
+	switch (stat->scale) {
+	case FE_SCALE_DECIBEL:
+		if (is_strength)
+			size = snprintf(*buf, *len, " %.2f dBm", stat->svalue / 1000.);
+		else
+			size = snprintf(*buf, *len, " %.2f dB", stat->svalue / 1000.);
+		break;
+	case FE_SCALE_RELATIVE:
+		size = snprintf(*buf, *len, " %3.2f%%", (100 * stat->uvalue) / 65535.);
+		break;
+	case FE_SCALE_COUNTER:
+		size = snprintf(*buf, *len, " %" PRIu64, (uint64_t)stat->uvalue);
+		break;
+	}
+	*buf += size;
+	*len -= size;
+	*show = 1;
+}
+
 static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 {
 	char buf[256], *p = buf;
-	int rc, i, s, len = sizeof(buf);
+	int rc, i, s, len = sizeof(buf), show = 0;
 	fe_status_t status;
-	uint32_t snr = 0, _signal = 0;
-	uint32_t ber = 0, ucb = 0;
+	struct dtv_stats *stat;
 
 	rc = dvb_fe_get_stats(parms);
 	if (rc) {
@@ -315,33 +354,28 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 	len -= s;
 
 	/* Add the status bits */
-	s = snprintf(p, len, "(0x%02x) ", status);
+	s = snprintf(p, len, "(0x%02x)", status);
 	p += s;
 	len -= s;
 
-	if (!dvb_fe_retrieve_stats(parms, DTV_SIGNAL_STRENGTH, &_signal)) {
-		s = snprintf(p, len, "| signal %03.2f%% ",
-			     (_signal * 100.0) / 0xffff);
-		p += s;
-		len -= s;
-	}
-	if (!dvb_fe_retrieve_stats(parms, DTV_SNR, &snr)) {
-		s = snprintf(p, len, "| snr %5d ", snr);
-		p += s;
-		len -= s;
-	}
+	for (i = 0; i < MAX_DTV_STATS; i++) {
+		show = 0;
 
-	if (!dvb_fe_retrieve_stats(parms, DTV_BER, &ber)) {
-		s = snprintf(p, len, "| ber %6d ", ber);
-		p += s;
-		len -= s;
-	}
+		stat = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_SIGNAL_STRENGTH, i);
+		if (stat)
+			print_stat(stat, "Signal", i, &p, &len, &show, 1);
 
-	if (!dvb_fe_retrieve_stats(parms, DTV_UNCORRECTED_BLOCKS,
-				    &ucb)) {
-		s = snprintf(p, len, "| ucb %6d ", ucb);
-		p += s;
-		len -= s;
+		stat = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_CNR, i);
+		if (stat)
+			print_stat(stat, "C/N", i, &p, &len, &show, 0);
+
+		stat = dvb_fe_retrieve_stats_layer(parms, DTV_BER, i);
+		if (stat)
+			print_stat(stat, "BER", i, &p, &len, &show, 0);
+
+		stat = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_ERROR_BLOCK_COUNT, i);
+		if (stat)
+			print_stat(stat, "UCB", i, &p, &len, &show, 0);
 	}
 
 	fprintf(stderr, "\r%s", buf);
