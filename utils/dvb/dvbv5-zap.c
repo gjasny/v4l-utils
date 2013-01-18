@@ -51,7 +51,7 @@ struct arguments {
 	char *filename;
 	unsigned adapter, frontend, demux, get_detected, get_nit;
 	int force_dvbv3, lnb, sat_number;
-	unsigned diseqc_wait, silent, frontend_only, freq_bpf;
+	unsigned diseqc_wait, silent, verbose, frontend_only, freq_bpf;
 	unsigned timeout, dvr, rec_psi, exit_after_tuning;
 	unsigned record;
 	unsigned n_apid, n_vpid;
@@ -73,6 +73,7 @@ static const struct argp_option options[] = {
 	{"record",	'r', NULL,			0, "set up /dev/dvb/adapterX/dvr0 for TS recording", 0},
 	{"pat",		'p', NULL,			0, "add pat and pmt to TS recording (implies -r)", 0},
 	{"silence",	's', NULL,			0, "increases silence (can be used more than once)", 0},
+	{"verbose",	'v', NULL,			0, "verbose debug messages (can be used more than once)", 0},
 	{"frontend",	'F', NULL,			0, "set up frontend only, don't touch demux", 0},
 	{"timeout",	't', "seconds",			0, "timeout for zapping and for recording", 0},
 	{"output",	'o', "file",			0, "output filename (use -o - for stdout)", 0},
@@ -455,6 +456,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 's':
 		args->silent++;
 		break;
+	case 'v':
+		args->verbose++;
+		break;
 	case 'F':
 		args->frontend_only = 1;
 		break;
@@ -542,7 +546,7 @@ int main(int argc, char **argv)
 	}
 	fprintf(stderr, "reading channels from file '%s'\n", args.confname);
 
-	parms = dvb_fe_open(args.adapter, args.frontend, 0, args.force_dvbv3);
+	parms = dvb_fe_open(args.adapter, args.frontend, args.verbose, args.force_dvbv3);
 	if (!parms)
 		return -1;
 	if (lnb)
