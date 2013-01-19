@@ -24,7 +24,6 @@
 #define _LARGEFILE_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
 
-#include <inttypes.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,7 +32,6 @@
 #include <errno.h>
 #include <signal.h>
 #include <argp.h>
-#include <math.h>
 
 #include <config.h>
 
@@ -275,198 +273,44 @@ static void do_timeout(int x)
 	}
 }
 
-static char *sig_bits[7] = {
-	[0] = "RF sig",
-	[1] = "Carrier",
-	[2] = "Viterbi",
-	[3] = "Sync",
-	[4] = "Lock",
-	[5] = "Timeout",
-	[6] = "Reinit",
-};
-
-
-static void print_stat(struct dtv_stats *stat, char *name, int layer,
-		       char **buf, int *len, int *show,
-		       int is_strength)
-{
-	int size;
-
-	if (stat->scale == FE_SCALE_NOT_AVAILABLE)
-		return;
-
-	if (!*show && layer) {
-		size = snprintf(*buf, *len, "  Layer %c:", 'A' + layer - 1);
-		*buf += size;
-		*len -= size;
-		*show = 1;
-	}
-	size = snprintf(*buf, *len, " %s=", name);
-	*buf += size;
-	*len -= size;
-	*show = 1;
-	switch (stat->scale) {
-	case FE_SCALE_DECIBEL:
-		if (is_strength)
-			size = snprintf(*buf, *len, " %.2f dBm", stat->svalue / 1000.);
-		else
-			size = snprintf(*buf, *len, " %.2f dB", stat->svalue / 1000.);
-		break;
-	case FE_SCALE_RELATIVE:
-		size = snprintf(*buf, *len, " %3.2f%%", (100 * stat->uvalue) / 65535.);
-		break;
-	case FE_SCALE_COUNTER:
-		size = snprintf(*buf, *len, " %" PRIu64, (uint64_t)stat->uvalue);
-		break;
-	}
-	*buf += size;
-	*len -= size;
-	*show = 1;
-}
-
-/*
- * As BER/PER measures are always positive, the routine assumes
- * that the value is always positive.
- */
-int snprintf_eng(char *buf, int len, float val)
-{
-	int digits = 3;
-	int exp, signal = 1;
-
-	/* If value is zero, nothing to do */
-	if (val == 0.)
-		return snprintf(buf, len, " 0");
-
-	/* Take the absolute value */
-	if (val < 0.) {
-		signal = -1;
-		val = -val;
-	}
-
-	/*
-	 * Converts the number into an expoent and a
-	 * value between 0 and 1000, exclusive
-	 */
-	exp = (int)log10(val);
-	if (exp > 0)
-		exp = (exp / 3) * 3;
-	else
-		exp = (-exp + 3) / 3 * (-3);
-
-	val *= pow(10, -exp);
-
-	if (val >= 1000.) {
-		val /= 1000.0;
-		exp += 3;
-	} else if(val >= 100.0)
-		digits -= 2;
-	else if(val >= 10.0)
-		digits -= 1;
-
-	if (exp) {
-		if (signal > 0)
-			return snprintf(buf, len, " %.*fx10^%d", digits - 1, val, exp);
-		else
-			return snprintf(buf, len, " -%.*fx10^%d", digits - 1, val, exp);
-	} else {
-		if (signal > 0)
-			return snprintf(buf, len, " %.*f", digits - 1, val);
-		else
-			return snprintf(buf, len, " -%.*f", digits - 1, val);
-	}
-}
-
-static void print_stat_float(struct dtv_stats *stat, float val, char *name,
-		       int layer, char **buf, int *len, int *show,
-		       int is_strength)
-{
-	int size;
-
-	if (stat->scale == FE_SCALE_NOT_AVAILABLE)
-		return;
-
-	if (!*show && layer) {
-		size = snprintf(*buf, *len, "  Layer %c:", 'A' + layer - 1);
-		*buf += size;
-		*len -= size;
-		*show = 1;
-	}
-	size = snprintf(*buf, *len, " %s=", name);
-	*buf += size;
-	*len -= size;
-	*show = 1;
-	switch (stat->scale) {
-	case FE_SCALE_RELATIVE:
-		size = snprintf(*buf, *len, " %u", (unsigned int)val);
-		break;
-	case FE_SCALE_COUNTER:
-		size = snprintf_eng(*buf, *len, val);
-		break;
-	}
-	*buf += size;
-	*len -= size;
-	*show = 1;
-}
-
 static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 {
 	char buf[256], *p = buf;
-	int rc, i, s, len = sizeof(buf), show = 0;
-	fe_status_t status;
-	struct dtv_stats *stat;
-	float ber;
+	int rc, i, len = sizeof(buf), show = 0;
+	uint32_t status = 0;
 
 	rc = dvb_fe_get_stats(parms);
 	if (rc) {
 		PERROR("dvb_fe_get_stats failed");
 		return -1;
 	}
-
-	if (dvb_fe_retrieve_stats(parms, DTV_STATUS, &status)) {
-		fprintf(stderr, "Error: dvb_fe_get_stats failed: no status\n");
-		return -1;
-	}
-
-	/* Get the most significative status */
-	for (i = ARRAY_SIZE(sig_bits) - 1; i >= 0 ; i--) {
-		if ((1 << i) & status) {
-			s = snprintf(p, len, "%-7s ", sig_bits[i]);
-			break;
-		}
-	}
-	if (i < 0)
-		s = snprintf(p, len, "%7s ", "");
-	p += s;
-	len -= s;
-
-	/* Add the status bits */
-	s = snprintf(p, len, "(0x%02x)", status);
-	p += s;
-	len -= s;
+	dvb_fe_snprintf_stat(parms,  DTV_STATUS, NULL, 0,
+			     &p, &len, &show);
 
 	for (i = 0; i < MAX_DTV_STATS; i++) {
-		show = 0;
+		show = 1;
 
-		stat = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_SIGNAL_STRENGTH, i);
-		if (stat)
-			print_stat(stat, "Signal", i, &p, &len, &show, 1);
+		dvb_fe_snprintf_stat(parms, DTV_STAT_SIGNAL_STRENGTH, "Signal",
+				     i, &p, &len, &show);
 
-		stat = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_CNR, i);
-		if (stat)
-			print_stat(stat, "C/N", i, &p, &len, &show, 0);
+		dvb_fe_snprintf_stat(parms, DTV_STAT_CNR, "C/N",
+				     i, &p, &len, &show);
 
-		ber = dvb_fe_retrieve_ber(parms, i, (enum fecap_scale_params *)&stat->scale);
-		print_stat_float(stat, ber, "BER", i, &p, &len, &show, 0);
+		dvb_fe_snprintf_stat(parms, DTV_BER, "BER",
+				     i,  &p, &len, &show);
 
-		stat = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_ERROR_BLOCK_COUNT, i);
-		if (stat)
-			print_stat(stat, "UCB", i, &p, &len, &show, 0);
+		dvb_fe_snprintf_stat(parms, DTV_PER, "PER",
+				     i,  &p, &len, &show);
+
+		dvb_fe_snprintf_stat(parms, DTV_STAT_ERROR_BLOCK_COUNT, "UCB",
+				     i,  &p, &len, &show);
 	}
 
-	fprintf(stderr, "\r%s", buf);
+	fprintf(stderr, "\r\x1b[K%s", buf);
 	fflush(stderr);
 
 	/* While not lock, display status on a new line */
+	dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
 	if (!(status & FE_HAS_LOCK))
 		fprintf(stderr, "\n");
 

@@ -42,7 +42,7 @@ libdvbv5_la_SOURCES = \
   descriptors/eit.c  ../include/descriptors/eit.h
 
 libdvbv5_la_CPPFLAGS = $(ENFORCE_LIBDVBV5_STATIC)
-libdvbv5_la_LDFLAGS = -version-info 0 $(ENFORCE_LIBDVBV5_STATIC)
+libdvbv5_la_LDFLAGS = -version-info 0 $(ENFORCE_LIBDVBV5_STATIC) -lm
 libdvbv5_la_LIBADD = $(LTLIBICONV)
 
 EXTRA_DIST = README gen_dvb_structs.pl

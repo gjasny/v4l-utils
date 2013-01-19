@@ -22,6 +22,8 @@
 #include "dvb-v5-std.h"
 #include "dvb-fe.h"
 
+#include <inttypes.h>
+#include <math.h>
 #include <stddef.h>
 #include <unistd.h>
 
@@ -785,6 +787,8 @@ float dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *parms, unsigned layer,
 		ber = calculate_BER(parms, layer);
 		if (ber >= 0)
 			*scale = FE_SCALE_COUNTER;
+		else
+			*scale = FE_SCALE_NOT_AVAILABLE;
 		return ber;
 	}
 
@@ -1000,6 +1004,185 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
 	}
 
 	return dvb_fe_get_stats(parms);
+}
+
+int dvb_fe_snprintf_eng(char *buf, int len, float val)
+{
+	int digits = 3;
+	int exp, signal = 1;
+
+	/* If value is zero, nothing to do */
+	if (val == 0.)
+		return snprintf(buf, len, " 0");
+
+	/* Take the absolute value */
+	if (val < 0.) {
+		signal = -1;
+		val = -val;
+	}
+
+	/*
+	 * Converts the number into an expoent and a
+	 * value between 0 and 1000, exclusive
+	 */
+	exp = (int)log10(val);
+	if (exp > 0)
+		exp = (exp / 3) * 3;
+	else
+		exp = (-exp + 3) / 3 * (-3);
+
+	val *= pow(10, -exp);
+
+	if (val >= 1000.) {
+		val /= 1000.0;
+		exp += 3;
+	} else if(val >= 100.0)
+		digits -= 2;
+	else if(val >= 10.0)
+		digits -= 1;
+
+	if (exp) {
+		if (signal > 0)
+			return snprintf(buf, len, " %.*fx10^%d", digits - 1,
+					val, exp);
+		else
+			return snprintf(buf, len, " -%.*fx10^%d", digits - 1,
+					val, exp);
+	} else {
+		if (signal > 0)
+			return snprintf(buf, len, " %.*f", digits - 1, val);
+		else
+			return snprintf(buf, len, " -%.*f", digits - 1, val);
+	}
+}
+
+static char *sig_bits[7] = {
+	[0] = "RF",
+	[1] = "Carrier",
+	[2] = "Viterbi",
+	[3] = "Sync",
+	[4] = "Lock",
+	[5] = "Timeout",
+	[6] = "Reinit",
+};
+
+int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *parms, uint32_t cmd,
+			  char *display_name, int layer,
+		          char **buf, int *len, int *show_layer_name)
+{
+	struct dtv_stats *stat = NULL;
+	enum fecap_scale_params scale;
+	float val = -1;
+	int initial_len = *len;
+	int size, i;
+
+	/* Print status, if layer == 0, as there is only global status */
+	if (cmd == DTV_STATUS) {
+		fe_status_t status;
+
+		if (layer)
+			return 0;
+
+		if (dvb_fe_retrieve_stats(parms, DTV_STATUS, &status)) {
+			dvb_logerr ("Error: no adapter status");
+			return -1;
+		}
+
+		if (display_name) {
+			size = snprintf(*buf, *len, " %s=", display_name);
+			*buf += size;
+			*len -= size;
+		}
+
+		/* Get the name of the highest status bit */
+		for (i = ARRAY_SIZE(sig_bits) - 1; i >= 0 ; i--) {
+			if ((1 << i) & status) {
+				size = snprintf(*buf, *len, "%-7s", sig_bits[i]);
+				break;
+			}
+		}
+		if (i < 0)
+			size = snprintf(*buf, *len, "%7s", "");
+		*buf += size;
+		len -= size;
+
+		/* Add the status bits */
+		size = snprintf(*buf, *len, "(0x%02x)", status);
+		*buf += size;
+		len -= size;
+
+		return initial_len - *len;
+	}
+
+	/* Retrieve the statistics */
+	switch (cmd) {
+	case DTV_BER:
+		val = dvb_fe_retrieve_ber(parms, layer, &scale);
+		if (scale == FE_SCALE_NOT_AVAILABLE)
+			return 0;
+		break;
+	case DTV_PER:
+		val = dvb_fe_retrieve_ber(parms, layer, &scale);
+		if (scale == FE_SCALE_NOT_AVAILABLE)
+			return 0;
+		break;
+	default:
+		stat = dvb_fe_retrieve_stats_layer(parms, cmd, layer);
+		if (!stat || stat->scale == FE_SCALE_NOT_AVAILABLE)
+			return 0;
+	}
+
+	/* If requested, prints the layer name */
+	if (*show_layer_name && layer) {
+		size = snprintf(*buf, *len, "  Layer %c:", 'A' + layer - 1);
+		*buf += size;
+		*len -= size;
+		*show_layer_name = 0;
+	}
+	if (display_name) {
+		size = snprintf(*buf, *len, " %s=", display_name);
+		*buf += size;
+		*len -= size;
+	}
+
+	/* Special case: float point measures like BER/PER */
+	if (!stat) {
+		switch (scale) {
+		case FE_SCALE_RELATIVE:
+			size = snprintf(*buf, *len, " %u", (unsigned int)val);
+			break;
+		case FE_SCALE_COUNTER:
+			size = dvb_fe_snprintf_eng(*buf, *len, val);
+			break;
+		default:
+			size = 0;
+		}
+		*buf += size;
+		*len -= size;
+		return initial_len - *len;
+	}
+
+	/* Prints the scale */
+	switch (stat->scale) {
+	case FE_SCALE_DECIBEL:
+		if (cmd == DTV_STAT_SIGNAL_STRENGTH)
+			size = snprintf(*buf, *len, " %.2fdBm", stat->svalue / 1000.);
+		else
+			size = snprintf(*buf, *len, " %.2fdB", stat->svalue / 1000.);
+		break;
+	case FE_SCALE_RELATIVE:
+		size = snprintf(*buf, *len, " %3.2f%%", (100 * stat->uvalue) / 65535.);
+		break;
+	case FE_SCALE_COUNTER:
+		size = snprintf(*buf, *len, " %" PRIu64, (uint64_t)stat->uvalue);
+		break;
+	default:
+		size = 0;
+	}
+	*buf += size;
+	*len -= size;
+
+	return initial_len - *len;
 }
 
 /*
