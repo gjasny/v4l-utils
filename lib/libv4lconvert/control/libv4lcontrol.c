@@ -268,7 +268,7 @@ static const char *asus_board_vendor[] = {
 static const char *asus_board_name[] = {
 	"A3[A-Z]*",
 	"B50[A-Z]*",
-	"F[3579][A-Z]*", "F70[A-Z]*", "F[58]2[A-Z]*",
+	"F[23579][A-Z]*", "F70[A-Z]*", "F[58]2[A-Z]*",
 	"G[12][A-Z]*", "G[57]0[A-Z]*",
 	"K[4567]0[A-Z]*", "K[56]1[A-Z]*", "K52[A-Z]*", "K[45]3[A-Z]*",
 	"N[12579]0[A-Z]*", "N[56]1[A-Z]*", "N82[A-Z]*", "N[47]3[A-Z]*",
@@ -314,6 +314,7 @@ static const struct v4lcontrol_usb_id asus_camera_id[] = {
 	{ 0x174f, 0x8a31 },
 	{ 0x174f, 0xa311 },
 	{ 0x1d4d, 0x1002 },
+	{ 0x05e1, 0x0501 },
 	{ 0x0000, 0x0000 }
 };
 
