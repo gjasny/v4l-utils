@@ -6,7 +6,7 @@ dvb_fe_tool_LDFLAGS = $(ARGP_LIBS)
 
 dvbv5_zap_SOURCES = dvbv5-zap.c
 dvbv5_zap_LDADD = ../../lib/libdvbv5/libdvbv5.la
-dvbv5_zap_LDFLAGS = $(ARGP_LIBS)
+dvbv5_zap_LDFLAGS = $(ARGP_LIBS) -lm
 
 dvbv5_scan_SOURCES = dvbv5-scan.c
 dvbv5_scan_LDADD = ../../lib/libdvbv5/libdvbv5.la

@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <argp.h>
+#include <math.h>
 
 #include <config.h>
 
@@ -323,12 +324,97 @@ static void print_stat(struct dtv_stats *stat, char *name, int layer,
 	*show = 1;
 }
 
+/*
+ * As BER/PER measures are always positive, the routine assumes
+ * that the value is always positive.
+ */
+int snprintf_eng(char *buf, int len, float val)
+{
+	int digits = 3;
+	int exp, signal = 1;
+
+	/* If value is zero, nothing to do */
+	if (val == 0.)
+		return snprintf(buf, len, " 0");
+
+	/* Take the absolute value */
+	if (val < 0.) {
+		signal = -1;
+		val = -val;
+	}
+
+	/*
+	 * Converts the number into an expoent and a
+	 * value between 0 and 1000, exclusive
+	 */
+	exp = (int)log10(val);
+	if (exp > 0)
+		exp = (exp / 3) * 3;
+	else
+		exp = (-exp + 3) / 3 * (-3);
+
+	val *= pow(10, -exp);
+
+	if (val >= 1000.) {
+		val /= 1000.0;
+		exp += 3;
+	} else if(val >= 100.0)
+		digits -= 2;
+	else if(val >= 10.0)
+		digits -= 1;
+
+	if (exp) {
+		if (signal > 0)
+			return snprintf(buf, len, " %.*fx10^%d", digits - 1, val, exp);
+		else
+			return snprintf(buf, len, " -%.*fx10^%d", digits - 1, val, exp);
+	} else {
+		if (signal > 0)
+			return snprintf(buf, len, " %.*f", digits - 1, val);
+		else
+			return snprintf(buf, len, " -%.*f", digits - 1, val);
+	}
+}
+
+static void print_stat_float(struct dtv_stats *stat, float val, char *name,
+		       int layer, char **buf, int *len, int *show,
+		       int is_strength)
+{
+	int size;
+
+	if (stat->scale == FE_SCALE_NOT_AVAILABLE)
+		return;
+
+	if (!*show && layer) {
+		size = snprintf(*buf, *len, "  Layer %c:", 'A' + layer - 1);
+		*buf += size;
+		*len -= size;
+		*show = 1;
+	}
+	size = snprintf(*buf, *len, " %s=", name);
+	*buf += size;
+	*len -= size;
+	*show = 1;
+	switch (stat->scale) {
+	case FE_SCALE_RELATIVE:
+		size = snprintf(*buf, *len, " %u", (unsigned int)val);
+		break;
+	case FE_SCALE_COUNTER:
+		size = snprintf_eng(*buf, *len, val);
+		break;
+	}
+	*buf += size;
+	*len -= size;
+	*show = 1;
+}
+
 static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 {
 	char buf[256], *p = buf;
 	int rc, i, s, len = sizeof(buf), show = 0;
 	fe_status_t status;
 	struct dtv_stats *stat;
+	float ber;
 
 	rc = dvb_fe_get_stats(parms);
 	if (rc) {
@@ -369,9 +455,8 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 		if (stat)
 			print_stat(stat, "C/N", i, &p, &len, &show, 0);
 
-		stat = dvb_fe_retrieve_stats_layer(parms, DTV_BER, i);
-		if (stat)
-			print_stat(stat, "BER", i, &p, &len, &show, 0);
+		ber = dvb_fe_retrieve_ber(parms, i, (enum fecap_scale_params *)&stat->scale);
+		print_stat_float(stat, ber, "BER", i, &p, &len, &show, 0);
 
 		stat = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_ERROR_BLOCK_COUNT, i);
 		if (stat)
