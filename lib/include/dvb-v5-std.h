@@ -60,10 +60,11 @@ extern const void *dvb_v5_attr_names[];
 
 #define DTV_STATUS              (DTV_MAX_USER_COMMAND + 1)
 #define DTV_BER                 (DTV_MAX_USER_COMMAND + 2)
+#define DTV_PER                 (DTV_MAX_USER_COMMAND + 3)
 
-#define DTV_MAX_STAT_COMMAND    DTV_BER
+#define DTV_MAX_STAT_COMMAND    DTV_PER
 
-#define DTV_NUM_STATS_PROPS 8              /* 6 from DVBv5.10 API plus Status and BER */
+#define DTV_NUM_STATS_PROPS 9              /* 6 from DVBv5.10 API plus Status, BER and PER */
 
 enum dvb_sat_polarization {
 	POLARIZATION_OFF	= 0,
@@ -74,7 +75,7 @@ enum dvb_sat_polarization {
 };
 
 extern const char *dvb_sat_pol_name[6];
-extern const char *dvb_user_name[13];
+extern const char *dvb_user_name[14];
 extern const void *dvb_user_attr_names[];
 
 #endif

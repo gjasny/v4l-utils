@@ -221,7 +221,7 @@ const char *dvb_sat_pol_name[6] = {
 	[5] = NULL,
 };
 
-const char *dvb_user_name[13] = {
+const char *dvb_user_name[14] = {
 	[DTV_POLARIZATION - DTV_USER_COMMAND_START] =   "POLARIZATION",
 	[DTV_VIDEO_PID - DTV_USER_COMMAND_START] =	"VIDEO PID",
 	[DTV_AUDIO_PID - DTV_USER_COMMAND_START] =	"AUDIO PID",
@@ -234,7 +234,8 @@ const char *dvb_user_name[13] = {
 	[DTV_FREQ_BPF - DTV_USER_COMMAND_START] =	"FREQ BPF",
 	[DTV_STATUS - DTV_USER_COMMAND_START] = 	"STATUS",
 	[DTV_BER - DTV_USER_COMMAND_START] =		"BER",
-	[12] = NULL,
+	[DTV_PER - DTV_USER_COMMAND_START] =		"PER",
+	[13] = NULL,
 };
 
 const void *dvb_user_attr_names[] = {
