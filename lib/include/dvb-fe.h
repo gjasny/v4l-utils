@@ -70,6 +70,7 @@ struct dvb_v5_fe_parms {
 	unsigned			verbose;
 	struct dvb_frontend_info	info;
 	uint32_t			version;
+	int				has_v5_stats;
 	fe_delivery_system_t		current_sys;
 	int				num_systems;
 	fe_delivery_system_t		systems[MAX_DELIVERY_SYSTEMS];

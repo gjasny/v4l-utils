@@ -113,6 +113,11 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	if (parms->version < 0x500)
 		use_legacy_call = 1;
 
+	if (parms->version >= 0x50a)
+		parms->has_v5_stats = 1;
+	else
+		parms->has_v5_stats = 0;
+
 	if (use_legacy_call || parms->version < 0x505) {
 		parms->legacy_fe = 1;
 		switch(parms->info.type) {
@@ -666,10 +671,53 @@ ret:
 	return 0;
 }
 
+static struct dtv_stats *dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
+			      unsigned cmd,
+			      enum fecap_scale_params scale,
+			      unsigned layer,
+			      uint32_t value)
+{
+	int i;
+	for (i = 0; i < DTV_NUM_STATS_PROPS; i++) {
+		if (parms->stats.prop[i].cmd != cmd)
+			continue;
+		parms->stats.prop[i].u.st.stat[layer].scale = scale;
+		parms->stats.prop[i].u.st.stat[layer].uvalue = value;
+		if (parms->stats.prop[i].u.st.len < layer + 1)
+			parms->stats.prop[i].u.st.len = layer + 1;
+		return &parms->stats.prop[i].u.st.stat[layer];
+	}
+	dvb_logerr("%s not found on store", dvb_cmd_name(cmd));
+
+	return NULL;
+}
+
+static struct dtv_stats *dvb_fe_retrieve_v5_BER(struct dvb_v5_fe_parms *parms,
+					        unsigned cmd, unsigned layer)
+{
+	struct dtv_stats *st_bec, *st_bc;
+	uint64_t ber64;
+
+	st_bec = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_BIT_ERROR_COUNT, layer);
+	if (!st_bec)
+		return NULL;
+
+	st_bc = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_TOTAL_BIT_COUNT, layer);
+	if (!st_bc || !st_bc->uvalue)
+		return NULL;
+
+	ber64 = (1E9 * st_bec->uvalue) / st_bc->uvalue;
+
+	return dvb_fe_store_stats(parms, DTV_BER, FE_SCALE_COUNTER, layer, ber64);
+}
+
 struct dtv_stats *dvb_fe_retrieve_stats_layer(struct dvb_v5_fe_parms *parms,
 					      unsigned cmd, unsigned layer)
 {
 	int i;
+
+	if (cmd == DTV_BER && parms->has_v5_stats)
+		return dvb_fe_retrieve_v5_BER(parms, cmd, layer);
 
 	for (i = 0; i < DTV_NUM_STATS_PROPS; i++) {
 		if (parms->stats.prop[i].cmd != cmd)
@@ -711,27 +759,6 @@ int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
-static int dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
-			      unsigned cmd,
-			      enum fecap_scale_params scale,
-			      unsigned layer,
-			      uint32_t value)
-{
-	int i;
-	for (i = 0; i < DTV_NUM_STATS_PROPS; i++) {
-		if (parms->stats.prop[i].cmd != cmd)
-			continue;
-		parms->stats.prop[i].u.st.stat[layer].scale = scale;
-		parms->stats.prop[i].u.st.stat[layer].uvalue = value;
-		if (parms->stats.prop[i].u.st.len < layer + 1)
-			parms->stats.prop[i].u.st.len = layer + 1;
-		return 0;
-	}
-	dvb_logerr("%s not found on store", dvb_cmd_name(cmd));
-
-	return EINVAL;
-}
-
 int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 {
 	fe_status_t status = 0;
@@ -746,49 +773,31 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 	}
 	dvb_fe_store_stats(parms, DTV_STATUS, FE_SCALE_RELATIVE, 0, status);
 
-	if (parms->version >= 0x50a) {
+	if (parms->has_v5_stats) {
 		struct dtv_properties props;
-		struct dtv_stats *st_bec, *st_bc;
 
 		props.num = 6;
 		props.props = parms->stats.prop;
 
 		/* Do a DVBv5.10 stats call */
 		if (ioctl(parms->fd, FE_GET_PROPERTY, &props) == -1)
-			goto dvbv3_fallback;
+			return errno;
 
-		/* If no stats i returned, fallback to the legacy API */
+		/*
+		 * All props with len=0 mean that this device doesn't have any
+		 * dvbv5 stats. Try the legacy stats instead.
+		 */
 		for (i = 0; i < props.num; i++)
 			if (parms->stats.prop[i].u.st.len)
 				break;
 		if (i == props.num)
 			goto dvbv3_fallback;
-
-		/* Calculate and store BER */
-		for (i = 0; i < 4; i++) {
-			uint64_t ber64;
-
-			st_bec = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_BIT_ERROR_COUNT, i);
-			if (!st_bec)
-				goto no_ber;
-
-			st_bc = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_TOTAL_BIT_COUNT, i);
-			if (!st_bc || !st_bc->uvalue)
-				goto no_ber;
-
-			ber64 = (1E9 * st_bec->uvalue) / st_bc->uvalue;
-
-			dvb_fe_store_stats(parms, DTV_BER, FE_SCALE_COUNTER, i, ber64);
-			continue;
-no_ber:
-			dvb_fe_store_stats(parms, DTV_BER, FE_SCALE_NOT_AVAILABLE, i, 0);
-		}
-
-		return 0;
 	}
 
 dvbv3_fallback:
-	/* DVB v3 stats*/
+	/* DVB v3 stats */
+	parms->has_v5_stats = 0;
+
 	if (ioctl(parms->fd, FE_READ_BER, &ber) == -1)
 		scale = FE_SCALE_NOT_AVAILABLE;
 	else
