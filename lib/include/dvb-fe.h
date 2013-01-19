@@ -150,6 +150,9 @@ int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
 			  unsigned cmd, uint32_t *value);
 int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms);
 
+float dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *parms, unsigned layer,
+                          enum fecap_scale_params *scale);
+
 /* Get both status statistics and dvb parameters */
 
 int dvb_fe_get_event(struct dvb_v5_fe_parms *parms);

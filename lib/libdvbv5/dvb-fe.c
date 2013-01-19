@@ -775,6 +775,32 @@ int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
+float dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *parms, unsigned layer,
+			  enum fecap_scale_params *scale)
+{
+	float ber;
+	uint32_t ber32;
+
+	if (parms->has_v5_stats) {
+		ber = calculate_BER(parms, layer);
+		if (ber >= 0)
+			*scale = FE_SCALE_COUNTER;
+		return ber;
+	}
+
+	if (layer) {
+		*scale = FE_SCALE_NOT_AVAILABLE;
+		return -1;
+	}
+
+	if (dvb_fe_retrieve_stats(parms, DTV_BER, &ber32))
+		*scale = FE_SCALE_NOT_AVAILABLE;
+	else
+		*scale = FE_SCALE_RELATIVE;
+
+	return ber32;
+}
+
 static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 {
 	struct dtv_stats *error, *count;
