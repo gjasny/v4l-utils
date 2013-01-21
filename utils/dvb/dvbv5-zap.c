@@ -290,6 +290,9 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 	for (i = 0; i < MAX_DTV_STATS; i++) {
 		show = 1;
 
+		dvb_fe_snprintf_stat(parms, DTV_QUALITY, "Quality",
+				     i, &p, &len, &show);
+
 		dvb_fe_snprintf_stat(parms, DTV_STAT_SIGNAL_STRENGTH, "Signal",
 				     i, &p, &len, &show);
 

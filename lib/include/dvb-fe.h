@@ -75,6 +75,9 @@ struct dvb_v5_stats {
 
 	int				has_ber[MAX_DTV_STATS];
 	int				has_per[MAX_DTV_STATS];
+
+	fe_status_t prev_status;
+
 };
 
 struct dvb_v5_fe_parms {

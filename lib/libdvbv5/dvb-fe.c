@@ -823,6 +823,228 @@ float dvb_fe_retrieve_per(struct dvb_v5_fe_parms *parms, unsigned layer)
 	return ((float)n)/d;
 }
 
+struct cnr_to_qual_s {
+	uint32_t modulation;		/* use QAM_AUTO if it doesn't matter */
+	uint32_t fec;			/* Use FEC_NONE if it doesn't matter */
+	float cnr_ok, cnr_good;
+};
+
+static enum dvb_quality cnr_arr_to_qual(uint32_t modulation,
+					 uint32_t fec,
+					 float cnr,
+					 struct cnr_to_qual_s *arr,
+					 unsigned len)
+{
+	int i;
+
+	for (i = 0; i < len; i++) {
+		if (modulation == arr[i].modulation) {
+			if (cnr < arr[i].cnr_ok)
+				return DVB_QUAL_POOR;
+			else if (cnr < arr[i].cnr_good)
+				return DVB_QUAL_OK;
+			else
+				return DVB_QUAL_GOOD;
+
+		}
+	}
+
+	return DVB_QUAL_UNKNOWN;
+}
+
+/* Source: http://www.maxpeak.tv/articles/Maxpeak_Article_2.pdf */
+struct cnr_to_qual_s dvb_c_cnr_2_qual[] = {
+	{ QAM_256, FEC_NONE,  34., 38.},
+	{ QAM_64,  FEC_NONE,  30., 34.},
+};
+
+/*
+ * Base reference: http://www.maxpeak.tv/articles/Maxpeak_Article_2.pdf
+ * Used http://www.nws.noaa.gov/noaaport/html/DVB%20S2%20Satellite%20Receiver%20Specs.pdf
+ * to estimate the missing FEC's
+ */
+struct cnr_to_qual_s dvb_s_cnr_2_qual[] = {
+	{ QPSK, FEC_1_2,  7., 10.},
+
+	{ QPSK, FEC_2_3,  9., 12.},
+	{ QPSK, FEC_3_4, 10., 13.},
+	{ QPSK, FEC_5_6, 11., 14.},
+
+	{ QPSK, FEC_7_8, 12., 15.},
+};
+
+struct cnr_to_qual_s dvb_s2_cnr_2_qual[] = {
+	{ QPSK,  FEC_1_2,   9.,  12.},
+	{ QPSK,  FEC_2_3,  11.,  14.},
+	{ QPSK,  FEC_3_4,  12.,  15.},
+	{ QPSK,  FEC_5_6,  12.,  15.},
+	{ QPSK,  FEC_8_9,  13.,  16.},
+	{ QPSK,  FEC_9_10, 13.5, 16.5},
+	{ PSK_8, FEC_2_3,  14.5, 17.5},
+	{ PSK_8, FEC_3_4,  16.,  19.},
+	{ PSK_8, FEC_5_6,  17.5, 20.5},
+	{ PSK_8, FEC_8_9,  19.,  22.},
+};
+
+/*
+ * Minimum values from ARIB STD-B21 for DVB_QUAL_OK.
+ * As ARIB doesn't define a max value, assume +2dB for DVB_QUAL_GOOD
+ */
+struct cnr_to_qual_s isdb_t_cnr_2_qual[] = {
+	{  DQPSK, FEC_1_2,  6.2,  8.2},
+	{  DQPSK, FEC_2_3,  7.7,  9.7},
+	{  DQPSK, FEC_3_4,  8.7, 10.7},
+	{  DQPSK, FEC_5_6,  9.6, 11.6},
+	{  DQPSK, FEC_7_8, 10.4, 12.4},
+
+	{   QPSK, FEC_1_2,  4.9,  6.9},
+	{   QPSK, FEC_2_3,  6.6,  8.6},
+	{   QPSK, FEC_3_4,  7.5,  9.5},
+	{   QPSK, FEC_5_6,  8.5, 10.5},
+	{   QPSK, FEC_7_8,  9.1, 11.5},
+
+	{ QAM_16, FEC_1_2, 11.5, 13.5},
+	{ QAM_16, FEC_2_3, 13.5, 15.5},
+	{ QAM_16, FEC_3_4, 14.6, 16.6},
+	{ QAM_16, FEC_5_6, 15.6, 17.6},
+	{ QAM_16, FEC_7_8, 16.2, 18.2},
+
+	{ QAM_64, FEC_1_2, 16.5, 18.5},
+	{ QAM_64, FEC_2_3, 18.7, 21.7},
+	{ QAM_64, FEC_3_4, 20.1, 22.1},
+	{ QAM_64, FEC_5_6, 21.3, 23.3},
+	{ QAM_64, FEC_7_8, 22.0, 24.0},
+};
+
+/*
+ * Values obtained from table A.1 of ETSI EN 300 744 v1.6.1
+ * OK corresponds to Ricean fading; Good to Rayleigh fading
+ */
+struct cnr_to_qual_s dvb_t_cnr_2_qual[] = {
+	{   QPSK, FEC_1_2,  4.1,  5.9},
+	{   QPSK, FEC_2_3,  6.1,  9.6},
+	{   QPSK, FEC_3_4,  7.2, 12.4},
+	{   QPSK, FEC_5_6,  8.5, 15.6},
+	{   QPSK, FEC_7_8,  9.2, 17.5},
+
+	{ QAM_16, FEC_1_2,  9.8, 11.8},
+	{ QAM_16, FEC_2_3, 12.1, 15.3},
+	{ QAM_16, FEC_3_4, 13.4, 18.1},
+	{ QAM_16, FEC_5_6, 14.8, 21.3},
+	{ QAM_16, FEC_7_8, 15.7, 23.6},
+
+	{ QAM_64, FEC_1_2, 14.0, 16.0},
+	{ QAM_64, FEC_2_3, 19.9, 25.4},
+	{ QAM_64, FEC_3_4, 24.9, 27.9},
+	{ QAM_64, FEC_5_6, 21.3, 23.3},
+	{ QAM_64, FEC_7_8, 22.0, 24.0},
+};
+
+static enum dvb_quality dvbv_fe_cnr_to_quality(struct dvb_v5_fe_parms *parms,
+					       struct dtv_stats *cnr)
+{
+	uint32_t modulation, fec;
+	enum dvb_quality qual = DVB_QUAL_UNKNOWN;
+
+	switch (cnr->scale) {
+	case FE_SCALE_RELATIVE:
+		if (cnr->uvalue == 65535)
+			return DVB_QUAL_GOOD;
+		else if (cnr->uvalue >= 65535 / 2)
+			return DVB_QUAL_OK;
+		else
+			return DVB_QUAL_POOR;
+		return qual;
+	case FE_SCALE_DECIBEL:
+		break;
+	default:
+		return DVB_QUAL_UNKNOWN;
+	}
+
+	switch (parms->current_sys) {
+	case SYS_DVBC_ANNEX_A:
+	case SYS_DVBC_ANNEX_C:
+		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &modulation);
+		if (modulation == QAM_AUTO)
+			modulation = QAM_64;	/* Assume worse case */
+		qual = cnr_arr_to_qual(modulation, FEC_NONE, cnr->svalue,
+				       dvb_c_cnr_2_qual,
+				       ARRAY_SIZE(dvb_c_cnr_2_qual));
+		break;
+	case SYS_DVBS:
+		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &fec);
+		qual = cnr_arr_to_qual(QPSK, fec, cnr->svalue,
+				       dvb_s_cnr_2_qual,
+				       ARRAY_SIZE(dvb_s_cnr_2_qual));
+		break;
+	case SYS_DVBS2:
+		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &modulation);
+		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &fec);
+		qual = cnr_arr_to_qual(modulation, fec, cnr->svalue,
+			               dvb_s2_cnr_2_qual,
+				       ARRAY_SIZE(dvb_s_cnr_2_qual));
+		break;
+	case SYS_ISDBT:
+		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &modulation);
+		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &fec);
+		if (modulation == QAM_AUTO)
+			modulation = QAM_64;	/* Assume worse case */
+		qual = cnr_arr_to_qual(modulation, fec, cnr->svalue,
+			               isdb_t_cnr_2_qual,
+				       ARRAY_SIZE(isdb_t_cnr_2_qual));
+		break;
+	case SYS_DVBT:
+	case SYS_DVBT2:
+	case SYS_TURBO:
+	case SYS_ISDBS:
+	case SYS_DSS:
+	case SYS_DMBTH:
+	case SYS_ATSC:
+	case SYS_ATSCMH:
+	case SYS_DVBC_ANNEX_B:
+	default:
+		/* Quality unknown */
+		break;
+	}
+
+	return qual;
+};
+
+static enum dvb_quality dvb_fe_retrieve_quality(struct dvb_v5_fe_parms *parms,
+						unsigned layer)
+{
+	float ber, per;
+	struct dtv_stats *cnr;
+	enum dvb_quality qual = DVB_QUAL_UNKNOWN;
+
+	per = dvb_fe_retrieve_per(parms, layer);
+	if (per >= 0) {
+		if (per > 1e-6)
+			qual = DVB_QUAL_POOR;
+		else if (per > 1e-7)
+			return DVB_QUAL_OK;
+		else
+			return DVB_QUAL_GOOD;
+	}
+
+	ber = dvb_fe_retrieve_per(parms, layer);
+	if (ber >= 0) {
+
+		if (ber > 1e-3)	/* FIXME: good enough???? */
+			return DVB_QUAL_POOR;
+		if (ber <= 2e-4)		/* BER = 10^-11 at TS */
+			return DVB_QUAL_GOOD;
+		else
+			qual = DVB_QUAL_OK;	/* OK or good */
+	}
+
+	cnr = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_CNR, layer);
+	if (cnr)
+		dvbv_fe_cnr_to_quality(parms, cnr);
+
+	return qual;
+}
+
 static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 {
 	struct dtv_stats *error, *count;
@@ -871,6 +1093,14 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 		return EINVAL;
 	}
 	dvb_fe_store_stats(parms, DTV_STATUS, FE_SCALE_RELATIVE, 0, status);
+
+	/* if lock has obtained, get DVB parameters */
+	if (status != parms->stats.prev_status) {
+		if (status && FE_HAS_LOCK &&
+		    parms->stats.prev_status != status)
+			dvb_fe_get_parms(parms);
+		parms->stats.prev_status = status;
+	}
 
 	if (parms->has_v5_stats) {
 		struct dtv_properties props;
@@ -1062,11 +1292,18 @@ static char *sig_bits[7] = {
 	[6] = "Reinit",
 };
 
+static char *qual_name[] = {
+	[DVB_QUAL_POOR] = "Poor",
+	[DVB_QUAL_OK]   = "Ok",
+	[DVB_QUAL_GOOD] = "Good",
+};
+
 int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *parms, uint32_t cmd,
 			  char *display_name, int layer,
 		          char **buf, int *len, int *show_layer_name)
 {
 	struct dtv_stats *stat = NULL;
+	enum dvb_quality qual = DVB_QUAL_UNKNOWN;
 	enum fecap_scale_params scale;
 	float val = -1;
 	int initial_len = *len;
@@ -1083,7 +1320,6 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *parms, uint32_t cmd,
 			dvb_logerr ("Error: no adapter status");
 			return -1;
 		}
-
 		if (display_name) {
 			size = snprintf(*buf, *len, " %s=", display_name);
 			*buf += size;
@@ -1122,6 +1358,11 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *parms, uint32_t cmd,
 		if (val < 0)
 			return 0;
 		break;
+	case DTV_QUALITY:
+		qual = dvb_fe_retrieve_quality(parms, layer);
+		if (qual == DVB_QUAL_UNKNOWN)
+			return 0;
+		break;
 	default:
 		stat = dvb_fe_retrieve_stats_layer(parms, cmd, layer);
 		if (!stat || stat->scale == FE_SCALE_NOT_AVAILABLE)
@@ -1140,6 +1381,15 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *parms, uint32_t cmd,
 		*buf += size;
 		*len -= size;
 	}
+
+	/* Quality measure */
+	if (qual != DVB_QUAL_UNKNOWN) {
+		size = snprintf(*buf, *len, " %-4s", qual_name[qual]);
+		*buf += size;
+		*len -= size;
+		return initial_len - *len;
+	}
+
 
 	/* Special case: float point measures like BER/PER */
 	if (!stat) {
