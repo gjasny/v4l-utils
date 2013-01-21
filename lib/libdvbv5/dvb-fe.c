@@ -805,22 +805,18 @@ float dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *parms, unsigned layer,
 	return ber32;
 }
 
-float dvb_fe_retrieve_per(struct dvb_v5_fe_parms *parms, unsigned layer,
-			  enum fecap_scale_params *scale)
+float dvb_fe_retrieve_per(struct dvb_v5_fe_parms *parms, unsigned layer)
 {
 	uint64_t n, d;
 
 	if (!parms->stats.has_per[layer]) {
-		*scale = FE_SCALE_NOT_AVAILABLE;
 		return -1;
 	}
 
 	d = parms->stats.cur[layer].block_count - parms->stats.prev[layer].block_count;
 	if (!d) {
-		*scale = FE_SCALE_NOT_AVAILABLE;
 		return -1;
 	}
-	*scale = FE_SCALE_COUNTER;
 
 	n = parms->stats.cur[layer].block_error - parms->stats.prev[layer].block_error;
 
@@ -1122,8 +1118,8 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *parms, uint32_t cmd,
 			return 0;
 		break;
 	case DTV_PER:
-		val = dvb_fe_retrieve_ber(parms, layer, &scale);
-		if (scale == FE_SCALE_NOT_AVAILABLE)
+		val = dvb_fe_retrieve_per(parms, layer);
+		if (val < 0)
 			return 0;
 		break;
 	default:

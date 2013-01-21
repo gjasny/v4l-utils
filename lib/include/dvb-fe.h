@@ -152,8 +152,7 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms);
 
 float dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *parms, unsigned layer,
                           enum fecap_scale_params *scale);
-float dvb_fe_retrieve_per(struct dvb_v5_fe_parms *parms, unsigned layer,
-			  enum fecap_scale_params *scale);
+float dvb_fe_retrieve_per(struct dvb_v5_fe_parms *parms, unsigned layer);
 int dvb_fe_snprintf_eng(char *buf, int len, float val);
 int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *parms, uint32_t cmd,
 			  char *display_name, int layer,
