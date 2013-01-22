@@ -72,8 +72,13 @@ typedef off_t __off_t;
 
 #ifndef CONFIG_SYS_WRAPPER
 
+#ifdef SYS_openat
+#define SYS_OPEN(file, oflag, mode) \
+	syscall(SYS_openat, AT_FDCWD, (const char *)(file), (int)(oflag), (mode_t)(mode))
+#else
 #define SYS_OPEN(file, oflag, mode) \
 	syscall(SYS_open, (const char *)(file), (int)(oflag), (mode_t)(mode))
+#endif
 #define SYS_CLOSE(fd) \
 	syscall(SYS_close, (int)(fd))
 #define SYS_IOCTL(fd, cmd, arg) \
