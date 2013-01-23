@@ -60,8 +60,21 @@ enum dvbv3_emulation_type {
 	DVBV3_ATSC,
 };
 
+struct dvb_v5_counters {
+	uint64_t			bit_count;
+	uint64_t			bit_error;
+	uint64_t			block_count;
+	uint64_t			block_error;
+};
+
 struct dvb_v5_stats {
 	struct dtv_property		prop[DTV_NUM_STATS_PROPS];
+
+	struct dvb_v5_counters		prev[MAX_DTV_STATS];
+	struct dvb_v5_counters		cur[MAX_DTV_STATS];
+
+	int				has_ber[MAX_DTV_STATS];
+	int				has_per[MAX_DTV_STATS];
 };
 
 struct dvb_v5_fe_parms {

@@ -692,22 +692,38 @@ static struct dtv_stats *dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
 	return NULL;
 }
 
-static struct dtv_stats *dvb_fe_retrieve_v5_BER(struct dvb_v5_fe_parms *parms,
-					        unsigned cmd, unsigned layer)
+static float calculate_BER(struct dvb_v5_fe_parms *parms, unsigned layer)
 {
-	struct dtv_stats *st_bec, *st_bc;
+	uint64_t n, d;
+
+	if (!parms->stats.has_ber[layer])
+		return -1;
+
+	d = parms->stats.cur[layer].bit_count - parms->stats.prev[layer].bit_count;
+	if (!d)
+		return -1;
+
+	n = parms->stats.cur[layer].bit_error - parms->stats.prev[layer].bit_error;
+
+	return ((float)n)/d;
+}
+
+static struct dtv_stats *dvb_fe_retrieve_v5_BER(struct dvb_v5_fe_parms *parms,
+					        unsigned layer)
+{
+	float ber;
 	uint64_t ber64;
 
-	st_bec = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_BIT_ERROR_COUNT, layer);
-	if (!st_bec)
+	ber = calculate_BER(parms, layer);
+	if (ber < 0)
 		return NULL;
 
-	st_bc = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_TOTAL_BIT_COUNT, layer);
-	if (!st_bc || !st_bc->uvalue)
-		return NULL;
+	/*
+	 * Put BER into some DVBv3 compat scale. The thing is that DVBv3 has no
+	 * defined scale for BER. So, let's use 10^-7.
+	 */
 
-	ber64 = (1E9 * st_bec->uvalue) / st_bc->uvalue;
-
+	ber64 = 10000000 * ber;
 	return dvb_fe_store_stats(parms, DTV_BER, FE_SCALE_COUNTER, layer, ber64);
 }
 
@@ -717,7 +733,7 @@ struct dtv_stats *dvb_fe_retrieve_stats_layer(struct dvb_v5_fe_parms *parms,
 	int i;
 
 	if (cmd == DTV_BER && parms->has_v5_stats)
-		return dvb_fe_retrieve_v5_BER(parms, cmd, layer);
+		return dvb_fe_retrieve_v5_BER(parms, layer);
 
 	for (i = 0; i < DTV_NUM_STATS_PROPS; i++) {
 		if (parms->stats.prop[i].cmd != cmd)
@@ -759,6 +775,41 @@ int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
+static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
+{
+	struct dtv_stats *error, *count;
+	int i;
+
+	for (i = 0; i < MAX_DTV_STATS; i++) {
+		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_TOTAL_BIT_COUNT, i);
+		if (count) {
+			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_BIT_ERROR_COUNT, i);
+			if (error && count->uvalue != parms->stats.cur[i].bit_count) {
+				parms->stats.prev[i].bit_count = parms->stats.cur[i].bit_count;
+				parms->stats.cur[i].bit_count = count->uvalue;
+
+				parms->stats.prev[i].bit_error = parms->stats.cur[i].bit_error;
+				parms->stats.cur[i].bit_error = error->uvalue;
+
+				parms->stats.has_ber[i] = 1;
+			}
+		}
+		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_TOTAL_BLOCK_COUNT, i);
+		if (count) {
+			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_ERROR_BLOCK_COUNT, i);
+			if (error && count->uvalue != parms->stats.cur[i].bit_count) {
+				parms->stats.prev[i].block_count = parms->stats.cur[i].block_count;
+				parms->stats.cur[i].block_count = count->uvalue;
+
+				parms->stats.prev[i].block_error = parms->stats.cur[i].block_error;
+				parms->stats.cur[i].block_error = error->uvalue;
+
+				parms->stats.has_per[i] = 1;
+			}
+		}
+	}
+}
+
 int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 {
 	fe_status_t status = 0;
@@ -792,6 +843,10 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 				break;
 		if (i == props.num)
 			goto dvbv3_fallback;
+
+		dvb_fe_update_counters(parms);
+
+		return 0;
 	}
 
 dvbv3_fallback:
