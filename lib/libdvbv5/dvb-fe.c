@@ -212,7 +212,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	 */
 	parms->stats.prop[0].cmd = DTV_STAT_SIGNAL_STRENGTH;
 	parms->stats.prop[1].cmd = DTV_STAT_CNR;
-	parms->stats.prop[2].cmd = DTV_STAT_POST_BIT_ERROR_COUNT;
+	parms->stats.prop[2].cmd = DTV_STAT_POST_ERROR_BIT_COUNT;
 	parms->stats.prop[3].cmd = DTV_STAT_POST_TOTAL_BIT_COUNT;
 	parms->stats.prop[4].cmd = DTV_STAT_ERROR_BLOCK_COUNT;
 	parms->stats.prop[5].cmd = DTV_STAT_TOTAL_BLOCK_COUNT;
@@ -1053,7 +1053,7 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 	for (i = 0; i < MAX_DTV_STATS; i++) {
 		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_TOTAL_BIT_COUNT, i);
 		if (count) {
-			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_BIT_ERROR_COUNT, i);
+			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_ERROR_BIT_COUNT, i);
 			if (error && count->uvalue != parms->stats.cur[i].bit_count) {
 				parms->stats.prev[i].bit_count = parms->stats.cur[i].bit_count;
 				parms->stats.cur[i].bit_count = count->uvalue;
