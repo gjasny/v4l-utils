@@ -61,8 +61,8 @@ enum dvbv3_emulation_type {
 };
 
 struct dvb_v5_counters {
-	uint64_t			bit_count;
-	uint64_t			bit_error;
+	uint64_t			post_bit_count;
+	uint64_t			post_bit_error;
 	uint64_t			block_count;
 	uint64_t			block_error;
 };
@@ -73,7 +73,7 @@ struct dvb_v5_stats {
 	struct dvb_v5_counters		prev[MAX_DTV_STATS];
 	struct dvb_v5_counters		cur[MAX_DTV_STATS];
 
-	int				has_ber[MAX_DTV_STATS];
+	int				has_post_ber[MAX_DTV_STATS];
 	int				has_per[MAX_DTV_STATS];
 
 	fe_status_t prev_status;

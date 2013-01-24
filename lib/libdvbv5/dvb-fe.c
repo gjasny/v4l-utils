@@ -696,18 +696,18 @@ static struct dtv_stats *dvb_fe_store_stats(struct dvb_v5_fe_parms *parms,
 	return NULL;
 }
 
-static float calculate_BER(struct dvb_v5_fe_parms *parms, unsigned layer)
+static float calculate_postBER(struct dvb_v5_fe_parms *parms, unsigned layer)
 {
 	uint64_t n, d;
 
-	if (!parms->stats.has_ber[layer])
+	if (!parms->stats.has_post_ber[layer])
 		return -1;
 
-	d = parms->stats.cur[layer].bit_count - parms->stats.prev[layer].bit_count;
+	d = parms->stats.cur[layer].post_bit_count - parms->stats.prev[layer].post_bit_count;
 	if (!d)
 		return -1;
 
-	n = parms->stats.cur[layer].bit_error - parms->stats.prev[layer].bit_error;
+	n = parms->stats.cur[layer].post_bit_error - parms->stats.prev[layer].post_bit_error;
 
 	return ((float)n)/d;
 }
@@ -718,7 +718,7 @@ static struct dtv_stats *dvb_fe_retrieve_v5_BER(struct dvb_v5_fe_parms *parms,
 	float ber;
 	uint64_t ber64;
 
-	ber = calculate_BER(parms, layer);
+	ber = calculate_postBER(parms, layer);
 	if (ber < 0)
 		return NULL;
 
@@ -786,7 +786,7 @@ float dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *parms, unsigned layer,
 	uint32_t ber32;
 
 	if (parms->has_v5_stats) {
-		ber = calculate_BER(parms, layer);
+		ber = calculate_postBER(parms, layer);
 		if (ber >= 0)
 			*scale = FE_SCALE_COUNTER;
 		else
@@ -1056,20 +1056,20 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_TOTAL_BIT_COUNT, i);
 		if (count) {
 			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_ERROR_BIT_COUNT, i);
-			if (error && count->uvalue != parms->stats.cur[i].bit_count) {
-				parms->stats.prev[i].bit_count = parms->stats.cur[i].bit_count;
-				parms->stats.cur[i].bit_count = count->uvalue;
+			if (error && count->uvalue != parms->stats.cur[i].post_bit_count) {
+				parms->stats.prev[i].post_bit_count = parms->stats.cur[i].post_bit_count;
+				parms->stats.cur[i].post_bit_count = count->uvalue;
 
-				parms->stats.prev[i].bit_error = parms->stats.cur[i].bit_error;
-				parms->stats.cur[i].bit_error = error->uvalue;
+				parms->stats.prev[i].post_bit_error = parms->stats.cur[i].post_bit_error;
+				parms->stats.cur[i].post_bit_error = error->uvalue;
 
-				parms->stats.has_ber[i] = 1;
+				parms->stats.has_post_ber[i] = 1;
 			}
 		}
 		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_TOTAL_BLOCK_COUNT, i);
 		if (count) {
 			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_ERROR_BLOCK_COUNT, i);
-			if (error && count->uvalue != parms->stats.cur[i].bit_count) {
+			if (error && count->uvalue != parms->stats.cur[i].post_bit_count) {
 				parms->stats.prev[i].block_count = parms->stats.cur[i].block_count;
 				parms->stats.cur[i].block_count = count->uvalue;
 
