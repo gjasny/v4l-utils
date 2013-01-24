@@ -1107,7 +1107,7 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 	if (parms->has_v5_stats) {
 		struct dtv_properties props;
 
-		props.num = 6;
+		props.num = DTV_NUM_KERNEL_STATS;
 		props.props = parms->stats.prop;
 
 		/* Do a DVBv5.10 stats call */

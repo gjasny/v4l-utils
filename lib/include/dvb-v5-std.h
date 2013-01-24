@@ -67,9 +67,10 @@ extern const void *dvb_v5_attr_names[];
 
 #define DTV_USER_NAME_SIZE	(1 + DTV_MAX_STAT_COMMAND - DTV_USER_COMMAND_START)
 
-/* There are currently 6 stats provided on Kernelspace */
+/* There are currently 8 stats provided on Kernelspace */
+#define DTV_NUM_KERNEL_STATS	8
 
-#define DTV_NUM_STATS_PROPS	(8 + DTV_MAX_STAT_COMMAND - DTV_MAX_USER_COMMAND)
+#define DTV_NUM_STATS_PROPS	(DTV_NUM_KERNEL_STATS + DTV_MAX_STAT_COMMAND - DTV_MAX_USER_COMMAND)
 
 enum dvb_sat_polarization {
 	POLARIZATION_OFF	= 0,
