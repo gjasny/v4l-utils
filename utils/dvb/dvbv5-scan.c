@@ -91,77 +91,69 @@ static int verbose = 0;
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
-static char *sig_bits[7] = {
-	[0] = "RF sig",
-	[1] = "Carrier",
-	[2] = "Viterbi",
-	[3] = "Sync",
-	[4] = "Lock",
-	[5] = "Timeout",
-	[6] = "Reinit",
-};
-
-static void print_frontend_stats(struct dvb_v5_fe_parms *parms)
+static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 {
-	char buf[256], *p = buf;
-	int i, s, len = sizeof(buf);
-	fe_status_t status;
-	uint32_t snr = 0, _signal = 0;
-	uint32_t ber = 0, ucb = 0;
+	char buf[512], *p;
+	int rc, i, len, show, n_status_lines = 0;
+	uint32_t status = 0;
 
-	if (dvb_fe_retrieve_stats(parms, DTV_STATUS, &status)) {
-		fprintf(stderr, "Error: dvb_fe_get_stats failed: no status\n");
-		return;
+	rc = dvb_fe_get_stats(parms);
+	if (rc) {
+		PERROR("dvb_fe_get_stats failed");
+		return -1;
 	}
 
-	/* Get the most significative status */
-	for (i = ARRAY_SIZE(sig_bits) - 1; i >= 0 ; i--) {
-		if ((1 << i) & status) {
-			s = snprintf(p, len, "%-7s ", sig_bits[i]);
-			break;
+	p = buf;
+	len = sizeof(buf);
+	dvb_fe_snprintf_stat(parms,  DTV_STATUS, NULL, 0, &p, &len, &show);
+
+	/* While not lock, display status on a new line */
+	dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
+	if (!(status & FE_HAS_LOCK)) {
+		fprintf(stderr, "%s: Tuning failed.\n", buf);
+		return 0;
+	}
+
+	for (i = 0; i < MAX_DTV_STATS; i++) {
+		show = 1;
+
+		dvb_fe_snprintf_stat(parms, DTV_QUALITY, "Quality",
+				     i, &p, &len, &show);
+
+		dvb_fe_snprintf_stat(parms, DTV_STAT_SIGNAL_STRENGTH, "Signal",
+				     i, &p, &len, &show);
+
+		dvb_fe_snprintf_stat(parms, DTV_STAT_CNR, "C/N",
+				     i, &p, &len, &show);
+
+		dvb_fe_snprintf_stat(parms, DTV_STAT_ERROR_BLOCK_COUNT, "UCB",
+				     i,  &p, &len, &show);
+
+		dvb_fe_snprintf_stat(parms, DTV_BER, "postBER",
+				     i,  &p, &len, &show);
+
+		dvb_fe_snprintf_stat(parms, DTV_PRE_BER, "preBER",
+				     i,  &p, &len, &show);
+
+		dvb_fe_snprintf_stat(parms, DTV_PER, "PER",
+				     i,  &p, &len, &show);
+
+		if (p != buf) {
+			if (n_status_lines)
+				fprintf(stderr, "\t%s\n", buf);
+			else
+				fprintf(stderr, "%s\n", buf);
+
+			n_status_lines++;
+
+			p = buf;
+			len = sizeof(buf);
 		}
 	}
-	if (i < 0)
-		s = snprintf(p, len, "%7s ", "");
-	p += s;
-	len -= s;
 
-	/* Add the status bits */
-	s = snprintf(p, len, "(0x%02x) ", status);
-	p += s;
-	len -= s;
+	fflush(stderr);
 
-	if (!dvb_fe_retrieve_stats(parms, DTV_SIGNAL_STRENGTH, &_signal)) {
-		s = snprintf(p, len, "| signal %03.2f%% ",
-			     (_signal * 100.0) / 0xffff);
-		p += s;
-		len -= s;
-	}
-	if (!dvb_fe_retrieve_stats(parms, DTV_SNR, &snr)) {
-		s = snprintf(p, len, "| snr %5d ", snr);
-		p += s;
-		len -= s;
-	}
-
-	if (!dvb_fe_retrieve_stats(parms, DTV_BER, &ber)) {
-		s = snprintf(p, len, "| ber %6d ", ber);
-		p += s;
-		len -= s;
-	}
-
-	if (!dvb_fe_retrieve_stats(parms, DTV_UNCORRECTED_BLOCKS,
-				    &ucb)) {
-		s = snprintf(p, len, "| ucb %6d ", ucb);
-		p += s;
-		len -= s;
-	}
-
-	if (!(status & FE_HAS_LOCK))
-		s = snprintf(p, len, "| failed\n");
-	else
-		s = snprintf(p, len, "\n");
-
-	fprintf(stderr, "%s", buf);
+	return 0;
 }
 
 static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
