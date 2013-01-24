@@ -153,9 +153,13 @@ static void prt_buf_info(char *name,struct v4l2_buffer *p)
 		p->length);
 	tc=&p->timecode;
 	printf ("\tTIMECODE: %02d:%02d:%02d type=%d, "
-		"flags=0x%08x, frames=%d, userbits=0x%08x\n",
+		"flags=0x%08x, frames=%d, userbits=0x%02x%02x%02x%02x\n",
 		tc->hours,tc->minutes,tc->seconds,
-		tc->type, tc->flags, tc->frames, *(uint32_t *) tc->userbits);
+		tc->type, tc->flags, tc->frames,
+		tc->userbits[0],
+		tc->userbits[1],
+		tc->userbits[2],
+		tc->userbits[3]);
 }
 
 /****************************************************************************

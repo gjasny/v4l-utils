@@ -1350,7 +1350,7 @@ static void display_table_v2(struct rc_device *rc_dev, int fd)
 			break;
 
 		/* FIXME: Extend it to support scancodes > 32 bits */
-		codes[0] = ((u_int32_t *)entry.scancode)[0];
+		memcpy(&codes[0], entry.scancode, sizeof(codes[0]));
 		codes[1] = entry.keycode;
 
 		prtcode(codes);
