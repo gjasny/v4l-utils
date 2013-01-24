@@ -7,7 +7,7 @@ libv4l2priv_LTLIBRARIES = v4l2convert.la
 
 install-exec-hook:
 	$(MKDIR_P) $(DESTDIR)/$(libdir)
-	(cd $(DESTDIR)/$(libdir) && $(LN_S) $(libv4l2subdir)/v4l2convert.so v4l2convert.so)
+	(cd $(DESTDIR)/$(libdir) && rm -f v4l2convert.so && $(LN_S) $(libv4l2subdir)/v4l2convert.so v4l2convert.so)
 
 endif
 else
