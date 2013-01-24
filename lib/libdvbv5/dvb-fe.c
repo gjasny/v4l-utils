@@ -1072,7 +1072,9 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_TOTAL_BIT_COUNT, i);
 		if (count) {
 			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_ERROR_BIT_COUNT, i);
-			if (error && count->uvalue != parms->stats.cur[i].post_bit_count) {
+			if (!error) {
+				parms->stats.has_post_ber[i] = 0;
+			} else if(count->uvalue != parms->stats.cur[i].post_bit_count) {
 				parms->stats.prev[i].post_bit_count = parms->stats.cur[i].post_bit_count;
 				parms->stats.cur[i].post_bit_count = count->uvalue;
 
@@ -1081,11 +1083,14 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 
 				parms->stats.has_post_ber[i] = 1;
 			}
-		}
+		} else
+			parms->stats.has_post_ber[i] = 0;
 		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_PRE_TOTAL_BIT_COUNT, i);
 		if (count) {
 			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_PRE_ERROR_BIT_COUNT, i);
-			if (error && count->uvalue != parms->stats.cur[i].pre_bit_count) {
+			if (!error) {
+				parms->stats.has_pre_ber[i] = 0;
+			} else if(count->uvalue != parms->stats.cur[i].pre_bit_count) {
 				parms->stats.prev[i].pre_bit_count = parms->stats.cur[i].pre_bit_count;
 				parms->stats.cur[i].pre_bit_count = count->uvalue;
 
@@ -1094,11 +1099,14 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 
 				parms->stats.has_pre_ber[i] = 1;
 			}
-		}
+		} else
+			parms->stats.has_pre_ber[i] = 0;
 		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_TOTAL_BLOCK_COUNT, i);
 		if (count) {
 			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_ERROR_BLOCK_COUNT, i);
-			if (error && count->uvalue != parms->stats.cur[i].block_count) {
+			if (!error) {
+				parms->stats.has_per[i] = 0;
+			} else if (count->uvalue != parms->stats.cur[i].block_count) {
 				parms->stats.prev[i].block_count = parms->stats.cur[i].block_count;
 				parms->stats.cur[i].block_count = count->uvalue;
 
@@ -1107,7 +1115,8 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 
 				parms->stats.has_per[i] = 1;
 			}
-		}
+		} else
+			parms->stats.has_per[i] = 0;
 	}
 }
 
@@ -1394,6 +1403,7 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *parms, uint32_t cmd,
 		val = dvb_fe_retrieve_per(parms, layer);
 		if (val < 0)
 			return 0;
+		scale = FE_SCALE_COUNTER;
 		break;
 	case DTV_QUALITY:
 		qual = dvb_fe_retrieve_quality(parms, layer);
