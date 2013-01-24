@@ -712,6 +712,22 @@ static float calculate_postBER(struct dvb_v5_fe_parms *parms, unsigned layer)
 	return ((float)n)/d;
 }
 
+static float calculate_preBER(struct dvb_v5_fe_parms *parms, unsigned layer)
+{
+	uint64_t n, d;
+
+	if (!parms->stats.has_pre_ber[layer])
+		return -1;
+
+	d = parms->stats.cur[layer].pre_bit_count - parms->stats.prev[layer].pre_bit_count;
+	if (!d)
+		return -1;
+
+	n = parms->stats.cur[layer].pre_bit_error - parms->stats.prev[layer].pre_bit_error;
+
+	return ((float)n)/d;
+}
+
 static struct dtv_stats *dvb_fe_retrieve_v5_BER(struct dvb_v5_fe_parms *parms,
 					        unsigned layer)
 {
@@ -1066,10 +1082,23 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 				parms->stats.has_post_ber[i] = 1;
 			}
 		}
+		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_PRE_TOTAL_BIT_COUNT, i);
+		if (count) {
+			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_PRE_ERROR_BIT_COUNT, i);
+			if (error && count->uvalue != parms->stats.cur[i].pre_bit_count) {
+				parms->stats.prev[i].pre_bit_count = parms->stats.cur[i].pre_bit_count;
+				parms->stats.cur[i].pre_bit_count = count->uvalue;
+
+				parms->stats.prev[i].pre_bit_error = parms->stats.cur[i].pre_bit_error;
+				parms->stats.cur[i].pre_bit_error = error->uvalue;
+
+				parms->stats.has_pre_ber[i] = 1;
+			}
+		}
 		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_TOTAL_BLOCK_COUNT, i);
 		if (count) {
 			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_ERROR_BLOCK_COUNT, i);
-			if (error && count->uvalue != parms->stats.cur[i].post_bit_count) {
+			if (error && count->uvalue != parms->stats.cur[i].block_count) {
 				parms->stats.prev[i].block_count = parms->stats.cur[i].block_count;
 				parms->stats.cur[i].block_count = count->uvalue;
 
@@ -1350,6 +1379,12 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *parms, uint32_t cmd,
 
 	/* Retrieve the statistics */
 	switch (cmd) {
+	case DTV_PRE_BER:
+		val = calculate_preBER(parms, layer);
+		if (val < 0)
+			return 0;
+		scale = FE_SCALE_COUNTER;
+		break;
 	case DTV_BER:
 		val = dvb_fe_retrieve_ber(parms, layer, &scale);
 		if (scale == FE_SCALE_NOT_AVAILABLE)

@@ -62,8 +62,9 @@ extern const void *dvb_v5_attr_names[];
 #define DTV_BER                 (DTV_MAX_USER_COMMAND + 2)
 #define DTV_PER                 (DTV_MAX_USER_COMMAND + 3)
 #define DTV_QUALITY             (DTV_MAX_USER_COMMAND + 4)
+#define DTV_PRE_BER		(DTV_MAX_USER_COMMAND + 5)
 
-#define DTV_MAX_STAT_COMMAND	DTV_QUALITY
+#define DTV_MAX_STAT_COMMAND	DTV_PRE_BER
 
 #define DTV_USER_NAME_SIZE	(1 + DTV_MAX_STAT_COMMAND - DTV_USER_COMMAND_START)
 

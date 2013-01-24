@@ -302,6 +302,9 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 		dvb_fe_snprintf_stat(parms, DTV_BER, "BER",
 				     i,  &p, &len, &show);
 
+		dvb_fe_snprintf_stat(parms, DTV_PRE_BER, "preBER",
+				     i,  &p, &len, &show);
+
 		dvb_fe_snprintf_stat(parms, DTV_PER, "PER",
 				     i,  &p, &len, &show);
 
