@@ -212,13 +212,15 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	 */
 	parms->stats.prop[0].cmd = DTV_STAT_SIGNAL_STRENGTH;
 	parms->stats.prop[1].cmd = DTV_STAT_CNR;
-	parms->stats.prop[2].cmd = DTV_STAT_POST_ERROR_BIT_COUNT;
-	parms->stats.prop[3].cmd = DTV_STAT_POST_TOTAL_BIT_COUNT;
-	parms->stats.prop[4].cmd = DTV_STAT_ERROR_BLOCK_COUNT;
-	parms->stats.prop[5].cmd = DTV_STAT_TOTAL_BLOCK_COUNT;
+	parms->stats.prop[2].cmd = DTV_STAT_PRE_ERROR_BIT_COUNT;
+	parms->stats.prop[3].cmd = DTV_STAT_PRE_TOTAL_BIT_COUNT;
+	parms->stats.prop[4].cmd = DTV_STAT_POST_ERROR_BIT_COUNT;
+	parms->stats.prop[5].cmd = DTV_STAT_POST_TOTAL_BIT_COUNT;
+	parms->stats.prop[6].cmd = DTV_STAT_ERROR_BLOCK_COUNT;
+	parms->stats.prop[7].cmd = DTV_STAT_TOTAL_BLOCK_COUNT;
 
-	parms->stats.prop[6].cmd = DTV_STATUS;
-	parms->stats.prop[7].cmd = DTV_BER;
+	parms->stats.prop[8].cmd = DTV_STATUS;
+	parms->stats.prop[9].cmd = DTV_BER;
 
 	return parms;
 }
