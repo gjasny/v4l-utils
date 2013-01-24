@@ -110,6 +110,9 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 	/* While not lock, display status on a new line */
 	dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
 	if (!(status & FE_HAS_LOCK)) {
+		dvb_fe_snprintf_stat(parms, DTV_STAT_SIGNAL_STRENGTH, "Signal",
+				     i, &p, &len, &show);
+
 		fprintf(stderr, "%s: Tuning failed.\n", buf);
 		return 0;
 	}
