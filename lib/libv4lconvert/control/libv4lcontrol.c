@@ -360,6 +360,13 @@ static int v4lcontrol_get_usb_info(struct v4lcontrol_data *data,
 	char sysfs_name[512];
 	char c, *s, buf[32];
 
+	snprintf(sysfs_name, sizeof(sysfs_name),
+	    "%s/sys/class/video4linux", sysfs_prefix);
+
+	/* Check for sysfs mounted before trying to search */
+	if (stat(sysfs_name, &st) != 0)
+		return 0; /* Not found, sysfs not mounted? */
+
 	if (fstat(data->fd, &st) || !S_ISCHR(st.st_mode))
 		return 0; /* Should never happen */
 
