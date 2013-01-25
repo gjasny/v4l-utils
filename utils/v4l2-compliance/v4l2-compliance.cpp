@@ -46,6 +46,7 @@
 enum Option {
 	OptSetDevice = 'd',
 	OptHelp = 'h',
+	OptNoWarnings = 'n',
 	OptSetRadioDevice = 'r',
 	OptTest = 't',
 	OptTrace = 'T',
@@ -61,8 +62,9 @@ static int app_result;
 static int tests_total, tests_ok;
 
 // Globals
-int verbose;
-int wrapper;
+bool show_info;
+bool show_warnings = true;
+bool wrapper;
 int kernel_version;
 unsigned warnings;
 
@@ -71,7 +73,8 @@ static struct option long_options[] = {
 	{"radio-device", required_argument, 0, OptSetRadioDevice},
 	{"vbi-device", required_argument, 0, OptSetVbiDevice},
 	{"help", no_argument, 0, OptHelp},
-	{"verbose", required_argument, 0, OptVerbose},
+	{"verbose", no_argument, 0, OptVerbose},
+	{"no-warnings", no_argument, 0, OptNoWarnings},
 	{"trace", no_argument, 0, OptTrace},
 	{"wrapper", no_argument, 0, OptUseWrapper},
 	{0, 0, 0, 0}
@@ -88,10 +91,9 @@ static void usage(void)
 	printf("  -V, --vbi-device=<dev> use device <dev> as the vbi device\n");
 	printf("                     if <dev> is a single digit, then /dev/vbi<dev> is used\n");
 	printf("  -h, --help         display this help message\n");
-	printf("  -v, --verbose=<level> turn on verbose reporting.\n");
-	printf("                     level 1: show warnings\n");
-	printf("                     level 2: show warnings and info messages\n");
+	printf("  -n, --no-warnings  turn off warning messages.\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
+	printf("  -v, --verbose      turn on verbose reporting.\n");
 	printf("  -w, --wrapper      use the libv4l2 wrapper library.\n");
 	exit(0);
 }
@@ -440,8 +442,11 @@ int main(int argc, char **argv)
 				vbi_device = newdev;
 			}
 			break;
+		case OptNoWarnings:
+			show_warnings = false;
+			break;
 		case OptVerbose:
-			verbose = atoi(optarg);
+			show_info = true;
 			break;
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",

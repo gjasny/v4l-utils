@@ -32,8 +32,9 @@
 #define ENODATA ENOTSUP
 #endif
 
-extern int verbose;
-extern int wrapper;
+extern bool show_info;
+extern bool show_warnings;
+extern bool wrapper;
 extern int kernel_version;
 extern unsigned warnings;
 
@@ -76,14 +77,14 @@ struct node {
 
 #define info(fmt, args...) 					\
 	do {							\
-		if (verbose > 1)				\
+		if (show_info)					\
  			printf("\t\tinfo: " fmt, ##args);	\
 	} while (0)
 
 #define warn(fmt, args...) 					\
 	do {							\
 		warnings++;					\
-		if (verbose)					\
+		if (show_warnings)				\
  			printf("\t\twarn: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
 	} while (0)
 
