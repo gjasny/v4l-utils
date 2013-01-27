@@ -72,6 +72,9 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x046d, 0x09b2, 0, "FUJITSU", "FJNB1C9",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
 		"FUJITSU", "LifeBook P7230" },
+	/* A re-branded ASUS notebook */
+	{ 0x04f2, 0xb012, 0, "Founder PC", "T14MF",
+		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	/* Note no whitespace padding for board vendor, this is not a typo */
 	{ 0x04f2, 0xb012, 0, "PEGATRON CORPORATION", "X71TL     ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
