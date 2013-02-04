@@ -16,6 +16,10 @@ sync-with-kernel:
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/v4l2-controls.h -o \
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/v4l2-common.h -o \
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/ivtv.h -o \
+	      ! -f $(KERNEL_DIR)/include/uapi/linux/dvb/frontend.h -o \
+	      ! -f $(KERNEL_DIR)/include/uapi/linux/dvb/dmx.h -o \
+	      ! -f $(KERNEL_DIR)/include/uapi/linux/dvb/audio.h -o \
+	      ! -f $(KERNEL_DIR)/include/uapi/linux/dvb/video.h -o \
 	      ! -f $(KERNEL_DIR)/include/media/v4l2-chip-ident.h ]; then \
 	  echo "Error you must set KERNEL_DIR to point to an extracted kernel source dir"; \
 	  exit 1; \
@@ -24,6 +28,10 @@ sync-with-kernel:
 	cp -a $(KERNEL_DIR)/include/uapi/linux/v4l2-controls.h $(top_srcdir)/include/linux
 	cp -a $(KERNEL_DIR)/include/uapi/linux/v4l2-common.h $(top_srcdir)/include/linux
 	cp -a $(KERNEL_DIR)/include/uapi/linux/ivtv.h $(top_srcdir)/include/linux
+	cp -a $(KERNEL_DIR)/include/uapi/linux/dvb/frontend.h $(top_srcdir)/include/linux/dvb
+	cp -a $(KERNEL_DIR)/include/uapi/linux/dvb/dmx.h $(top_srcdir)/include/linux/dvb
+	cp -a $(KERNEL_DIR)/include/uapi/linux/dvb/audio.h $(top_srcdir)/include/linux/dvb
+	cp -a $(KERNEL_DIR)/include/uapi/linux/dvb/video.h $(top_srcdir)/include/linux/dvb
 	cp -a $(KERNEL_DIR)/include/media/v4l2-chip-ident.h $(top_srcdir)/include/media
 
 	$(MAKE) -C utils/keytable $@
