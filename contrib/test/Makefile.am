@@ -44,3 +44,14 @@ v4lgrab_SOURCES = v4lgrab.c
 stress_buffer_SOURCES = stress-buffer.c
 
 capture_example_SOURCES = capture-example.c
+
+ioctl-test.c: ioctl-test.h
+
+sync-with-kernel:
+	./gen_ioctl_list.pl --gen_ioctl_numbers >.tmp_ioctl.c
+	gcc -I ../../include/ .tmp_ioctl.c -o tmp_ioctl32 -m32
+	gcc -I ../../include/ .tmp_ioctl.c -o tmp_ioctl64 -m64
+	./tmp_ioctl32 32 >ioctl_32.h
+	./tmp_ioctl64 64 >ioctl_64.h
+	rm .tmp_ioctl.c tmp_ioctl32 tmp_ioctl64
+	./gen_ioctl_list.pl >ioctl-test.h
