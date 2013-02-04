@@ -93,6 +93,10 @@ int main(int argc, char **argv)
 		int nr = _IOC_NR(cmd);
 		int sz = _IOC_SIZE(cmd);
 
+		/* Only apply the pertinent ioctl's to the device */
+		if (!strstr(device, ioctls[i].type))
+			continue;
+
 		/* Check whether the front and back markers aren't overwritten.
 		   Useful to verify the compat32 code. */
 		memset(&p, 0, sizeof(p));
