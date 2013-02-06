@@ -151,8 +151,10 @@ int testReqBufs(struct node *node)
 				ret = read(node->fd, &buf, 1);
 			else
 				ret = write(node->fd, &buf, 1);
-			fail_on_test(ret != -1);
-			fail_on_test(errno != EBUSY);
+			if (ret != -1)
+				return fail("Expected -1, got %d\n", ret);
+			if (errno != EBUSY)
+				return fail("Expected EBUSY, got %d\n", errno);
 		}
 		if (!node->is_m2m) {
 			bufs.count = 1;
