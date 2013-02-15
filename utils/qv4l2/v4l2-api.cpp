@@ -80,6 +80,17 @@ bool v4l2::ioctl(const QString &descr, unsigned cmd, void *arg)
 	return err >= 0;
 }
 
+bool v4l2::ioctl_exists(unsigned cmd, void *arg)
+{
+	int err;
+
+	if (useWrapper())
+		err = v4l2_ioctl(m_fd, cmd, arg);
+	else
+		err = ::ioctl(m_fd, cmd, arg);
+	return !err || errno != ENOTTY;
+}
+
 int v4l2::read(unsigned char *p, int size)
 {
 	if (useWrapper())

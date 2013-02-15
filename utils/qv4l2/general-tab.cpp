@@ -138,15 +138,19 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	if (needsStd) {
+		v4l2_std_id tmp;
+
 		addLabel("TV Standard");
 		m_tvStandard = new QComboBox(parent);
 		addWidget(m_tvStandard);
 		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
 		refreshStandards();
-		addLabel("");
-		m_qryStandard = new QPushButton("Query Standard", parent);
-		addWidget(m_qryStandard);
-		connect(m_qryStandard, SIGNAL(clicked()), SLOT(qryStdClicked()));
+		if (ioctl_exists(VIDIOC_QUERYSTD, &tmp)) {
+			addLabel("");
+			m_qryStandard = new QPushButton("Query Standard", parent);
+			addWidget(m_qryStandard);
+			connect(m_qryStandard, SIGNAL(clicked()), SLOT(qryStdClicked()));
+		}
 	}
 
 	if (needsPreset) {
@@ -633,7 +637,8 @@ void GeneralTab::updateVideoInput()
 		refreshStandards();
 		updateStandard();
 		m_tvStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
-		m_qryStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
+		if (m_qryStandard)
+			m_qryStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
 	}
 	if (m_videoPreset) {
 		refreshPresets();
@@ -660,7 +665,8 @@ void GeneralTab::updateVideoOutput()
 	m_videoOutput->setCurrentIndex(output);
 	if (m_tvStandard) {
 		m_tvStandard->setEnabled(out.capabilities & V4L2_OUT_CAP_STD);
-		m_qryStandard->setEnabled(out.capabilities & V4L2_OUT_CAP_STD);
+		if (m_qryStandard)
+			m_qryStandard->setEnabled(out.capabilities & V4L2_OUT_CAP_STD);
 	}
 	if (m_videoPreset) {
 		m_videoPreset->setEnabled(out.capabilities & V4L2_OUT_CAP_PRESETS);
