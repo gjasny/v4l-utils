@@ -758,7 +758,7 @@ struct dtv_stats *dvb_fe_retrieve_stats_layer(struct dvb_v5_fe_parms *parms,
 	for (i = 0; i < DTV_NUM_STATS_PROPS; i++) {
 		if (parms->stats.prop[i].cmd != cmd)
 			continue;
-		if (layer >= parms->stats.prop[2].u.st.len)
+		if (layer >= parms->stats.prop[i].u.st.len)
 			return NULL;
 		return &parms->stats.prop[i].u.st.stat[layer];
 	}
