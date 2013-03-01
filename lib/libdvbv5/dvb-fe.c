@@ -219,8 +219,12 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	parms->stats.prop[6].cmd = DTV_STAT_ERROR_BLOCK_COUNT;
 	parms->stats.prop[7].cmd = DTV_STAT_TOTAL_BLOCK_COUNT;
 
+	/* Now, status and the calculated stats */
 	parms->stats.prop[8].cmd = DTV_STATUS;
 	parms->stats.prop[9].cmd = DTV_BER;
+	parms->stats.prop[10].cmd = DTV_PER;
+	parms->stats.prop[11].cmd = DTV_QUALITY;
+	parms->stats.prop[12].cmd = DTV_PRE_BER;
 
 	return parms;
 }
