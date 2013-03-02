@@ -919,6 +919,12 @@ void GeneralTab::updateFrameSize()
 
 		m_frameWidth->setEnabled(false);
 		m_frameHeight->setEnabled(false);
+		m_frameWidth->setMinimum(m_width);
+		m_frameWidth->setMaximum(m_width);
+		m_frameWidth->setValue(m_width);
+		m_frameHeight->setMinimum(m_height);
+		m_frameHeight->setMaximum(m_height);
+		m_frameHeight->setValue(m_height);
 		m_frameSize->setEnabled(true);
 		updateFrameInterval();
 		return;
