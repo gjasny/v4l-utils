@@ -1074,9 +1074,9 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 
 	for (i = 0; i < MAX_DTV_STATS; i++) {
 		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_TOTAL_BIT_COUNT, i);
-		if (count) {
+		if (count && count->scale != FE_SCALE_NOT_AVAILABLE) {
 			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_POST_ERROR_BIT_COUNT, i);
-			if (!error) {
+			if (!error || error->scale == FE_SCALE_NOT_AVAILABLE) {
 				parms->stats.has_post_ber[i] = 0;
 			} else if(count->uvalue != parms->stats.cur[i].post_bit_count) {
 				parms->stats.prev[i].post_bit_count = parms->stats.cur[i].post_bit_count;
@@ -1090,9 +1090,9 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 		} else
 			parms->stats.has_post_ber[i] = 0;
 		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_PRE_TOTAL_BIT_COUNT, i);
-		if (count) {
+		if (count && count->scale != FE_SCALE_NOT_AVAILABLE) {
 			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_PRE_ERROR_BIT_COUNT, i);
-			if (!error) {
+			if (!error || error->scale == FE_SCALE_NOT_AVAILABLE) {
 				parms->stats.has_pre_ber[i] = 0;
 			} else if(count->uvalue != parms->stats.cur[i].pre_bit_count) {
 				parms->stats.prev[i].pre_bit_count = parms->stats.cur[i].pre_bit_count;
@@ -1106,9 +1106,9 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms *parms)
 		} else
 			parms->stats.has_pre_ber[i] = 0;
 		count = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_TOTAL_BLOCK_COUNT, i);
-		if (count) {
+		if (count && count->scale != FE_SCALE_NOT_AVAILABLE) {
 			error = dvb_fe_retrieve_stats_layer(parms, DTV_STAT_ERROR_BLOCK_COUNT, i);
-			if (!error) {
+			if (!error || error->scale == FE_SCALE_NOT_AVAILABLE) {
 				parms->stats.has_per[i] = 0;
 			} else if (count->uvalue != parms->stats.cur[i].block_count) {
 				parms->stats.prev[i].block_count = parms->stats.cur[i].block_count;
