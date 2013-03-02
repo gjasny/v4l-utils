@@ -166,11 +166,6 @@ static int print_frontend_stats(struct arguments *args,
 
 	fflush(stderr);
 
-	/* While not lock, display status on a new line */
-	dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
-	if (!isatty(STDERR_FILENO) || !(status & FE_HAS_LOCK))
-		fprintf(stderr, "\n");
-
 	return 0;
 }
 
