@@ -284,7 +284,7 @@ static int print_frontend_stats(struct arguments *args,
 	uint32_t status = 0;
 
 	/* Move cursor up and cleans down */
-	if (isatty(STDERR_FILENO))
+	if (isatty(STDERR_FILENO) && args->n_status_lines)
 		fprintf(stderr, "\r\x1b[%dA\x1b[J", args->n_status_lines);
 
 	args->n_status_lines = 0;
