@@ -51,6 +51,9 @@ struct arguments {
 	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
 	unsigned other_nit;
 	enum file_formats input_format, output_format;
+
+	/* Used by status print */
+	unsigned n_status_lines;
 };
 
 static const struct argp_option options[] = {
@@ -91,11 +94,18 @@ static int verbose = 0;
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
-static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
+static int print_frontend_stats(struct arguments *args,
+				struct dvb_v5_fe_parms *parms)
 {
 	char buf[512], *p;
-	int rc, i, len, show, n_status_lines = 0;
+	int rc, i, len, show;
 	uint32_t status = 0;
+
+	/* Move cursor up and cleans down */
+	if (isatty(STDERR_FILENO) && args->n_status_lines)
+		fprintf(stderr, "\r\x1b[%dA\x1b[J", args->n_status_lines);
+
+	args->n_status_lines = 0;
 
 	rc = dvb_fe_get_stats(parms);
 	if (rc) {
@@ -103,19 +113,19 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 		return -1;
 	}
 
+	if (isatty(STDERR_FILENO)) {
+		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
+		if (rc)
+			status = 0;
+		if (status & FE_HAS_LOCK)
+			fprintf(stderr, "\x1b[1;32m");
+		else
+			fprintf(stderr, "\x1b[33m");
+	}
+
 	p = buf;
 	len = sizeof(buf);
 	dvb_fe_snprintf_stat(parms,  DTV_STATUS, NULL, 0, &p, &len, &show);
-
-	/* While not lock, display status on a new line */
-	dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
-	if (!(status & FE_HAS_LOCK)) {
-		dvb_fe_snprintf_stat(parms, DTV_STAT_SIGNAL_STRENGTH, "Signal",
-				     0, &p, &len, &show);
-
-		fprintf(stderr, "%s: Tuning failed.\n", buf);
-		return 0;
-	}
 
 	for (i = 0; i < MAX_DTV_STATS; i++) {
 		show = 1;
@@ -142,12 +152,12 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 				     i,  &p, &len, &show);
 
 		if (p != buf) {
-			if (n_status_lines)
+			if (args->n_status_lines)
 				fprintf(stderr, "\t%s\n", buf);
 			else
 				fprintf(stderr, "%s\n", buf);
 
-			n_status_lines++;
+			args->n_status_lines++;
 
 			p = buf;
 			len = sizeof(buf);
@@ -156,14 +166,20 @@ static int print_frontend_stats(struct dvb_v5_fe_parms *parms)
 
 	fflush(stderr);
 
+	/* While not lock, display status on a new line */
+	dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
+	if (!isatty(STDERR_FILENO) || !(status & FE_HAS_LOCK))
+		fprintf(stderr, "\n");
+
 	return 0;
 }
 
-static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
+static int check_frontend(struct arguments *args, struct dvb_v5_fe_parms *parms, int timeout)
 {
 	int rc, i;
 	fe_status_t status;
 
+	args->n_status_lines = 0;
 	for (i = 0; i < timeout * 10; i++) {
 		rc = dvb_fe_get_stats(parms);
 		if (rc)
@@ -172,12 +188,15 @@ static int check_frontend(struct dvb_v5_fe_parms *parms, int timeout)
 		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
 		if (rc)
 			status = 0;
+		print_frontend_stats(args, parms);
 		if (status & FE_HAS_LOCK)
 			break;
 		usleep(100000);
 	};
 
-	print_frontend_stats(parms);
+	if (isatty(STDERR_FILENO)) {
+		fprintf(stderr, "\x1b[37m");
+	}
 
 	return (status & FE_HAS_LOCK) ? 0 : -1;
 }
@@ -461,7 +480,7 @@ static int run_scan(struct arguments *args,
 		if (verbose)
 			dvb_fe_prt_parms(parms);
 
-		rc = check_frontend(parms, 4);
+		rc = check_frontend(args, parms, 4);
 		if (rc < 0)
 			continue;
 
