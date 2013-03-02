@@ -107,12 +107,6 @@ static int print_frontend_stats(struct arguments *args,
 
 	args->n_status_lines = 0;
 
-	rc = dvb_fe_get_stats(parms);
-	if (rc) {
-		PERROR("dvb_fe_get_stats failed");
-		return -1;
-	}
-
 	if (isatty(STDERR_FILENO)) {
 		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
 		if (rc)
