@@ -674,11 +674,11 @@ void streaming_set(int fd)
 			if (fout && !stream_skip) {
 				for (unsigned j = 0; j < num_planes; j++) {
 					unsigned p = buf.index * num_planes + j;
-					unsigned sz = fwrite(buffers[p], 1,
-							buffer_lengths[p], fout);
+					unsigned used = is_mplane ? planes[j].bytesused : buf.bytesused;
+					unsigned sz = fwrite(buffers[p], 1, used, fout);
 
-					if (sz != buffer_lengths[p])
-						fprintf(stderr, "%u != %u\n", sz, buffer_lengths[p]);
+					if (sz != used)
+						fprintf(stderr, "%u != %u\n", sz, used);
 				}
 			}
 			if (doioctl(fd, VIDIOC_QBUF, &buf))
