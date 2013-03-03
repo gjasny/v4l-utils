@@ -163,13 +163,13 @@ static int print_frontend_stats(struct arguments *args,
 	return 0;
 }
 
-static int check_frontend(struct arguments *args, struct dvb_v5_fe_parms *parms, int timeout)
+static int check_frontend(struct arguments *args, struct dvb_v5_fe_parms *parms)
 {
 	int rc, i;
 	fe_status_t status;
 
 	args->n_status_lines = 0;
-	for (i = 0; i < timeout * 10; i++) {
+	for (i = 0; i < args->timeout_multiply * 40; i++) {
 		rc = dvb_fe_get_stats(parms);
 		if (rc)
 			PERROR("dvb_fe_get_stats failed");
@@ -469,7 +469,7 @@ static int run_scan(struct arguments *args,
 		if (verbose)
 			dvb_fe_prt_parms(parms);
 
-		rc = check_frontend(args, parms, 4);
+		rc = check_frontend(args, parms);
 		if (rc < 0)
 			continue;
 
@@ -592,8 +592,11 @@ int main(int argc, char **argv)
 	args.output = DEFAULT_OUTPUT;
 	args.input_format = FILE_DVBV5;
 	args.output_format = FILE_DVBV5;
+	args.timeout_multiply = 1;
 
 	argp_parse(&argp, argc, argv, 0, &idx, &args);
+	if (args.timeout_multiply == 0)
+		args.timeout_multiply = 1;
 
 	if (args.lnb_name) {
 		lnb = dvb_sat_search_lnb(args.lnb_name);
