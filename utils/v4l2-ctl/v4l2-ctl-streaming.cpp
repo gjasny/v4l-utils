@@ -113,16 +113,16 @@ static const flag_def tc_flags_def[] = {
 	{ 0, NULL }
 };
 
-static void print_buffer(struct v4l2_buffer &buf)
+static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 {
-	printf("\tIndex    : %d\n", buf.index);
-	printf("\tType     : %s\n", buftype2s(buf.type).c_str());
-	printf("\tFlags    : %s\n", flags2s(buf.flags, flags_def).c_str());
-	printf("\tField    : %s\n", field2s(buf.field).c_str());
-	printf("\tSequence : %u\n", buf.sequence);
-	printf("\tLength   : %u\n", buf.length);
-	printf("\tBytesused: %u\n", buf.bytesused);
-	printf("\tTimestamp: %lu.%06lus (%s)\n", buf.timestamp.tv_sec, buf.timestamp.tv_usec,
+	fprintf(f, "\tIndex    : %d\n", buf.index);
+	fprintf(f, "\tType     : %s\n", buftype2s(buf.type).c_str());
+	fprintf(f, "\tFlags    : %s\n", flags2s(buf.flags, flags_def).c_str());
+	fprintf(f, "\tField    : %s\n", field2s(buf.field).c_str());
+	fprintf(f, "\tSequence : %u\n", buf.sequence);
+	fprintf(f, "\tLength   : %u\n", buf.length);
+	fprintf(f, "\tBytesused: %u\n", buf.bytesused);
+	fprintf(f, "\tTimestamp: %lu.%06lus (%s)\n", buf.timestamp.tv_sec, buf.timestamp.tv_usec,
 			timestamp_type2s(buf.flags).c_str());
 	if (buf.flags & V4L2_BUF_FLAG_TIMECODE) {
 		static const int fps_types[] = { 0, 24, 25, 30, 50, 60 };
@@ -130,7 +130,7 @@ static void print_buffer(struct v4l2_buffer &buf)
 
 		if (fps > 5)
 			fps = 0;
-		printf("\tTimecode : %dfps %s %dh %dm %ds %df (0x%02x 0x%02x 0x%02x 0x%02x)\n",
+		fprintf(f, "\tTimecode : %dfps %s %dh %dm %ds %df (0x%02x 0x%02x 0x%02x 0x%02x)\n",
 			fps_types[fps],
 			flags2s(buf.timecode.flags, tc_flags_def).c_str(),
 			buf.timecode.hours, buf.timecode.minutes,
@@ -143,14 +143,14 @@ static void print_buffer(struct v4l2_buffer &buf)
 		for (unsigned i = 0; i < buf.length; i++) {
 			struct v4l2_plane *p = buf.m.planes + i;
 
-			printf("\tPlane    : %d\n", i);
-			printf("\t\tLength     : %u\n", p->length);
-			printf("\t\tBytesused  : %u\n", p->bytesused);
-			printf("\t\tData Offset: %u\n", p->data_offset);
+			fprintf(f, "\tPlane    : %d\n", i);
+			fprintf(f, "\t\tLength     : %u\n", p->length);
+			fprintf(f, "\t\tBytesused  : %u\n", p->bytesused);
+			fprintf(f, "\t\tData Offset: %u\n", p->data_offset);
 		}
 	}
 			
-	printf("\n");
+	fprintf(f, "\n");
 }
 
 static void list_buffers(int fd, unsigned buftype)
@@ -175,7 +175,7 @@ static void list_buffers(int fd, unsigned buftype)
 			break;
 		if (i == 0)
 			printf("VIDIOC_QUERYBUF:\n");
-		print_buffer(buf);
+		print_buffer(stdout, buf);
 	}
 }
 
@@ -625,6 +625,7 @@ void streaming_set(int fd)
 		for (;;) {
 			struct v4l2_plane planes[VIDEO_MAX_PLANES];
 			struct v4l2_buffer buf;
+			char ch = '.';
 			int ret;
 
 			if (use_poll) {
@@ -691,11 +692,21 @@ void streaming_set(int fd)
 						fprintf(stderr, "%u != %u\n", sz, used);
 				}
 			}
+			if (buf.flags & V4L2_BUF_FLAG_KEYFRAME)
+				ch = 'K';
+			else if (buf.flags & V4L2_BUF_FLAG_PFRAME)
+				ch = 'P';
+			else if (buf.flags & V4L2_BUF_FLAG_BFRAME)
+				ch = 'B';
+			if (verbose)
+				print_buffer(stderr, buf);
 			if (doioctl(fd, VIDIOC_QBUF, &buf))
 				return;
 
-			fprintf(stderr, ".");
-			fflush(stderr);
+			if (!verbose) {
+				fprintf(stderr, "%c", ch);
+				fflush(stderr);
+			}
 
 			if (count == 0) {
 				gettimeofday(&tv_last, NULL);
