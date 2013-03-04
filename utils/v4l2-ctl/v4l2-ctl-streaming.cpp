@@ -675,7 +675,17 @@ void streaming_set(int fd)
 				for (unsigned j = 0; j < num_planes; j++) {
 					unsigned p = buf.index * num_planes + j;
 					unsigned used = is_mplane ? planes[j].bytesused : buf.bytesused;
-					unsigned sz = fwrite(buffers[p], 1, used, fout);
+					unsigned offset = is_mplane ? planes[j].data_offset : 0;
+					unsigned sz;
+					
+					if (offset > used) {
+						// Should never happen
+						fprintf(stderr, "offset %d > used %d!\n",
+								offset, used);
+						offset = 0;
+					}
+					used -= offset;
+					sz = fwrite((char *)buffers[p] + offset, 1, used, fout);
 
 					if (sz != used)
 						fprintf(stderr, "%u != %u\n", sz, used);
