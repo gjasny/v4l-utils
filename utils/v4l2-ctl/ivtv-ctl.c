@@ -397,11 +397,10 @@ int main(int argc, char **argv)
 		}
 		case OptSetDevice:
 			device = optarg;
-			if (device[0] >= '0' && device[0] <= '9' && device[1] == 0) {
+			if (device[0] >= '0' && device[0] <= '9' && strlen(device) <= 3) {
 				static char newdev[20];
-				char dev = device[0];
 
-				sprintf(newdev, "/dev/video%c", dev);
+				sprintf(newdev, "/dev/video%s", device);
 				device = newdev;
 			}
 			break;

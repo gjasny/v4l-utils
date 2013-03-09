@@ -58,7 +58,7 @@ void common_usage(void)
 	       "                     set the value of the controls [VIDIOC_S_EXT_CTRLS]\n"
 	       "  -D, --info         show driver info [VIDIOC_QUERYCAP]\n"
 	       "  -d, --device=<dev> use device <dev> instead of /dev/video0\n"
-	       "                     if <dev> is a single digit, then /dev/video<dev> is used\n"
+	       "                     if <dev> starts with a digit, then /dev/video<dev> is used\n"
 	       "  -h, --help         display this help message\n"
 	       "  --help-all         all options\n"
 	       "  --help-io          input/output options\n"

@@ -85,11 +85,11 @@ static void usage(void)
 	printf("Usage:\n");
 	printf("Common options:\n");
 	printf("  -d, --device=<dev> use device <dev> as the video device\n");
-	printf("                     if <dev> is a single digit, then /dev/video<dev> is used\n");
+	printf("                     if <dev> starts with a digit, then /dev/video<dev> is used\n");
 	printf("  -r, --radio-device=<dev> use device <dev> as the radio device\n");
-	printf("                     if <dev> is a single digit, then /dev/radio<dev> is used\n");
+	printf("                     if <dev> starts with a digit, then /dev/radio<dev> is used\n");
 	printf("  -V, --vbi-device=<dev> use device <dev> as the vbi device\n");
-	printf("                     if <dev> is a single digit, then /dev/vbi<dev> is used\n");
+	printf("                     if <dev> starts with a digit, then /dev/vbi<dev> is used\n");
 	printf("  -h, --help         display this help message\n");
 	printf("  -n, --no-warnings  turn off warning messages.\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
@@ -414,31 +414,28 @@ int main(int argc, char **argv)
 			return 0;
 		case OptSetDevice:
 			video_device = optarg;
-			if (video_device[0] >= '0' && video_device[0] <= '9' && video_device[1] == 0) {
+			if (video_device[0] >= '0' && video_device[0] <= '9' && strlen(video_device) <= 3) {
 				static char newdev[20];
-				char dev = video_device[0];
 
-				sprintf(newdev, "/dev/video%c", dev);
+				sprintf(newdev, "/dev/video%s", video_device);
 				video_device = newdev;
 			}
 			break;
 		case OptSetRadioDevice:
 			radio_device = optarg;
-			if (radio_device[0] >= '0' && radio_device[0] <= '9' && radio_device[1] == 0) {
+			if (radio_device[0] >= '0' && radio_device[0] <= '9' && strlen(radio_device) <= 3) {
 				static char newdev[20];
-				char dev = radio_device[0];
 
-				sprintf(newdev, "/dev/radio%c", dev);
+				sprintf(newdev, "/dev/radio%s", radio_device);
 				radio_device = newdev;
 			}
 			break;
 		case OptSetVbiDevice:
 			vbi_device = optarg;
-			if (vbi_device[0] >= '0' && vbi_device[0] <= '9' && vbi_device[1] == 0) {
+			if (vbi_device[0] >= '0' && vbi_device[0] <= '9' && strlen(vbi_device) <= 3) {
 				static char newdev[20];
-				char dev = vbi_device[0];
 
-				sprintf(newdev, "/dev/vbi%c", dev);
+				sprintf(newdev, "/dev/vbi%s", vbi_device);
 				vbi_device = newdev;
 			}
 			break;
