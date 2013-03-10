@@ -482,6 +482,9 @@ void common_control_event(const struct v4l2_event *ev)
 	}
 	if (ctrl->changes & V4L2_EVENT_CTRL_CH_FLAGS)
 		printf("\tflags: %s\n", ctrlflags2s(ctrl->flags).c_str());
+	if (ctrl->changes & V4L2_EVENT_CTRL_CH_RANGE)
+		printf("\trange: min=%d max=%d step=%d default=%d\n",
+			ctrl->minimum, ctrl->maximum, ctrl->step, ctrl->default_value);
 }
 
 static bool parse_next_subopt(char **subs, char **value)

@@ -98,6 +98,8 @@ static std::string timestamp_type2s(__u32 flags)
 		return "Unknown";
 	case V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC:
 		return "Monotonic";
+	case V4L2_BUF_FLAG_TIMESTAMP_COPY:
+		return "Copy";
 	default:
 		sprintf(buf, "Type %d", (flags & V4L2_BUF_FLAG_TIMESTAMP_MASK) >> 13);
 		return std::string(buf);
