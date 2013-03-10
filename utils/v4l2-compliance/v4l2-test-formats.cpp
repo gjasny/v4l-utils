@@ -82,6 +82,10 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt, __u32 w, __u3
 		switch (frmival.type) {
 		case V4L2_FRMIVAL_TYPE_DISCRETE:
 			ret = check_fract(&frmival.discrete);
+			if (ret)
+				return fail("invalid frameinterval %d (%d/%d)\n", f,
+						frmival.discrete.numerator,
+						frmival.discrete.denominator);
 			if (found_stepwise)
 				return fail("mixing discrete and stepwise is not allowed\n");
 			break;
