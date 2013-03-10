@@ -40,15 +40,18 @@ static int testQueryBuf(struct node *node, unsigned type, unsigned count)
 	memset(&buf, 0, sizeof(buf));
 	buf.type = type;
 	for (i = 0; i < count; i++) {
+		unsigned timestamp;
+
 		buf.index = i;
 		fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
+		timestamp = buf.flags & V4L2_BUF_FLAG_TIMESTAMP_MASK;
 		fail_on_test(buf.index != i);
 		fail_on_test(buf.type != type);
 		fail_on_test(buf.flags & (V4L2_BUF_FLAG_QUEUED |
 					V4L2_BUF_FLAG_DONE |
 					V4L2_BUF_FLAG_ERROR));
-		fail_on_test((buf.flags & V4L2_BUF_FLAG_TIMESTAMP_MASK) !=
-						V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC);
+		fail_on_test(timestamp != V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC &&
+			     timestamp != V4L2_BUF_FLAG_TIMESTAMP_COPY);
 	}
 	buf.index = count;
 	ret = doioctl(node, VIDIOC_QUERYBUF, &buf);
