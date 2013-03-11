@@ -753,7 +753,12 @@ void GeneralTab::qryStdClicked()
 {
 	v4l2_std_id std;
 
-	if (query_std(std)) {
+	if (!query_std(std))
+		return;
+
+	if (std == V4L2_STD_ALL) {
+		info("No standard detected\n");
+	} else {
 		s_std(std);
 		updateStandard();
 	}
