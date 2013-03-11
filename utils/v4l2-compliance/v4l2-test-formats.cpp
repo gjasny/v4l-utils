@@ -565,14 +565,47 @@ int testTryFormats(struct node *node)
 		}
 		ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
 		if (ret == EINVAL) {
-			warn("TRY_FMT cannot handle an invalid pixelformat. This may or may not be a problem.\n"
-			     "See http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html for more information.\n");
-		} else {
-			ret = testFormatsType(node, ret, type, fmt);
-			if (ret)
-				return fail("%s is valid, but TRY_FMT failed to return a format\n",
-						buftype2s(type).c_str());
+			__u32 pixelformat;
+			bool is_mplane = false;
+
+			/* In case of failure obtain a valid pixelformat and insert
+			 * that in the next attempt to call TRY_FMT. */
+			doioctl(node, VIDIOC_G_FMT, &fmt);
+
+			switch (type) {
+			case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+			case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+				pixelformat = fmt.fmt.pix.pixelformat;
+				break;
+			case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+			case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+				pixelformat = fmt.fmt.pix_mp.pixelformat;
+				is_mplane = true;
+				break;
+			default:
+				/* for other formats returning EINVAL is certainly wrong */
+				return fail("TRY_FMT cannot handle an invalid format\n");
+			}
+			warn("TRY_FMT cannot handle an invalid pixelformat.\n");
+			warn("This may or may not be a problem. For more information see:\n");
+			warn("http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html\n");
+
+			/* Now try again, but pass a valid pixelformat. */
+			memset(&fmt, 0xff, sizeof(fmt));
+			fmt.type = type;
+			fmt.fmt.pix.field = V4L2_FIELD_ANY;
+			if (is_mplane)
+				fmt.fmt.pix_mp.pixelformat = pixelformat;
+			else
+				fmt.fmt.pix.pixelformat = pixelformat;
+			ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
+			if (ret == EINVAL)
+				return fail("TRY_FMT cannot handle an invalid format\n");
 		}
+		ret = testFormatsType(node, ret, type, fmt);
+		if (ret)
+			return fail("%s is valid, but TRY_FMT failed to return a format\n",
+					buftype2s(type).c_str());
 	}
 
 	memset(&fmt, 0, sizeof(fmt));
@@ -723,14 +756,47 @@ int testSetFormats(struct node *node)
 		fmt_set.fmt.pix.field = V4L2_FIELD_ANY;
 		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
 		if (ret == EINVAL) {
-			warn("S_FMT cannot handle an invalid pixelformat. This may or may not be a problem.\n"
-			     "See http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html for more information.\n");
-		} else {
-			ret = testFormatsType(node, ret, type, fmt_set);
-			if (ret)
-				return fail("%s is valid, but no S_FMT was implemented\n",
-						buftype2s(type).c_str());
+			__u32 pixelformat;
+			bool is_mplane = false;
+
+			/* In case of failure obtain a valid pixelformat and insert
+			 * that in the next attempt to call TRY_FMT. */
+			doioctl(node, VIDIOC_G_FMT, &fmt_set);
+
+			switch (type) {
+			case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+			case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+				pixelformat = fmt_set.fmt.pix.pixelformat;
+				break;
+			case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+			case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+				pixelformat = fmt_set.fmt.pix_mp.pixelformat;
+				is_mplane = true;
+				break;
+			default:
+				/* for other formats returning EINVAL is certainly wrong */
+				return fail("TRY_FMT cannot handle an invalid format\n");
+			}
+			warn("S_FMT cannot handle an invalid pixelformat.\n");
+			warn("This may or may not be a problem. For more information see:\n");
+			warn("http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html\n");
+
+			/* Now try again, but pass a valid pixelformat. */
+			memset(&fmt_set, 0xff, sizeof(fmt_set));
+			fmt_set.type = type;
+			fmt_set.fmt.pix.field = V4L2_FIELD_ANY;
+			if (is_mplane)
+				fmt_set.fmt.pix_mp.pixelformat = pixelformat;
+			else
+				fmt_set.fmt.pix.pixelformat = pixelformat;
+			ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
+			if (ret == EINVAL)
+				return fail("S_FMT cannot handle an invalid format\n");
 		}
+		ret = testFormatsType(node, ret, type, fmt_set);
+		if (ret)
+			return fail("%s is valid, but no S_FMT was implemented\n",
+					buftype2s(type).c_str());
 
 		fmt_set = fmt;
 		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
