@@ -313,6 +313,10 @@ void ApplicationWindow::ctrlEvent()
 		if (ev.type != V4L2_EVENT_CTRL)
 			continue;
 		m_ctrlMap[ev.id].flags = ev.u.ctrl.flags;
+		m_ctrlMap[ev.id].minimum = ev.u.ctrl.minimum;
+		m_ctrlMap[ev.id].maximum = ev.u.ctrl.maximum;
+		m_ctrlMap[ev.id].step = ev.u.ctrl.step;
+		m_ctrlMap[ev.id].default_value = ev.u.ctrl.default_value;
 		m_widgetMap[ev.id]->setDisabled(m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED);
 		switch (m_ctrlMap[ev.id].type) {
 		case V4L2_CTRL_TYPE_INTEGER:
