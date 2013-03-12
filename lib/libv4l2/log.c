@@ -107,6 +107,16 @@ const char *v4l2_ioctls[] = {
 	[_IOC_NR(VIDIOC_DQEVENT)]	   = "VIDIOC_DQEVENT",
 	[_IOC_NR(VIDIOC_SUBSCRIBE_EVENT)]  = "VIDIOC_SUBSCRIBE_EVENT",
 	[_IOC_NR(VIDIOC_UNSUBSCRIBE_EVENT)] = "VIDIOC_UNSUBSCRIBE_EVENT",
+	[_IOC_NR(VIDIOC_CREATE_BUFS)]      = "VIDIOC_CREATE_BUFS",
+	[_IOC_NR(VIDIOC_PREPARE_BUF)]      = "VIDIOC_PREPARE_BUF",
+	[_IOC_NR(VIDIOC_G_SELECTION)]      = "VIDIOC_G_SELECTION",
+	[_IOC_NR(VIDIOC_S_SELECTION)]      = "VIDIOC_S_SELECTION",
+	[_IOC_NR(VIDIOC_DECODER_CMD)]      = "VIDIOC_DECODER_CMD",
+	[_IOC_NR(VIDIOC_TRY_DECODER_CMD)]  = "VIDIOC_TRY_DECODER_CMD",
+	[_IOC_NR(VIDIOC_ENUM_DV_TIMINGS)]  = "VIDIOC_ENUM_DV_TIMINGS",
+	[_IOC_NR(VIDIOC_QUERY_DV_TIMINGS)] = "VIDIOC_QUERY_DV_TIMINGS",
+	[_IOC_NR(VIDIOC_DV_TIMINGS_CAP)]   = "VIDIOC_DV_TIMINGS_CAP",
+	[_IOC_NR(VIDIOC_ENUM_FREQ_BANDS)]  = "VIDIOC_ENUM_FREQ_BANDS",
 };
 
 void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
@@ -150,7 +160,7 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 					pixfmt >> 24,
 					fmt->fmt.pix.width,
 					fmt->fmt.pix.height);
-			fprintf(v4l2_log_file, "  field: %d bytesperline: %d imagesize%d\n",
+			fprintf(v4l2_log_file, "  field: %d bytesperline: %d imagesize: %d\n",
 					(int)fmt->fmt.pix.field, (int)fmt->fmt.pix.bytesperline,
 					(int)fmt->fmt.pix.sizeimage);
 			fprintf(v4l2_log_file, "  colorspace: %d, priv: %x\n",
