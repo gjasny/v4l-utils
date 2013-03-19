@@ -64,12 +64,6 @@ int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type, dmx_output_t outp
 {
 	struct dmx_pes_filter_params pesfilter;
 
-	/* ignore this pid to allow radio services */
-	if (pid < 0 ||
-		pid >= 0x1fff ||
-		(pid == 0 && type != DMX_PES_OTHER))
-		return 0;
-
 	if (buffersize) {
 		if (ioctl(dmxfd, DMX_SET_BUFFER_SIZE, buffersize) == -1)
 			perror("DMX_SET_BUFFER_SIZE failed");

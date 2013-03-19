@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <argp.h>
+#include <sys/time.h>
 
 #include <config.h>
 
@@ -56,6 +57,8 @@ struct arguments {
 	unsigned record;
 	unsigned n_apid, n_vpid;
 	enum file_formats input_format, output_format;
+	unsigned traffic_monitor;
+	char *search;
 
 	/* Used by status print */
 	unsigned n_status_lines;
@@ -81,7 +84,9 @@ static const struct argp_option options[] = {
 	{"timeout",	't', "seconds",			0, "timeout for zapping and for recording", 0},
 	{"output",	'o', "file",			0, "output filename (use -o - for stdout)", 0},
 	{"input-format", 'I',	"format",		0, "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)", 0},
-	{"dvbv3",	'3',	0,			0, "Use DVBv3 only", 0},
+	{"dvbv3",	'3', NULL,			0, "Use DVBv3 only", 0},
+	{"monitor",	'm', NULL,			0, "monitors de DVB traffic", 0},
+	{"search",	'L', NULL,			0, "search/look for a string inside the traffic", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -462,9 +467,128 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case '3':
 		args->force_dvbv3 = 1;
 		break;
+	case 'm':
+		args->traffic_monitor = 1;
+		break;
+	case 'L':
+		args->search = strdup(optarg);
+		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
 	};
+	return 0;
+}
+
+#define BSIZE 188
+
+int do_traffic_monitor(struct arguments *args,
+		    struct dvb_v5_fe_parms *parms)
+{
+	int fd, dvr_fd;
+	long long unsigned pidt[0x2001], wait;
+	int packets = 0;
+	struct timeval startt;
+
+	memset(pidt, 0, sizeof(pidt));
+
+	args->exit_after_tuning = 1;
+	check_frontend(args, parms);
+
+	if ((dvr_fd = open(args->dvr_dev, O_RDONLY)) < 0) {
+		PERROR("failed opening '%s'", args->dvr_dev);
+		return -1;
+	}
+
+	if (ioctl(dvr_fd, DMX_SET_BUFFER_SIZE, 1024 * 1024) == -1)
+		perror("DMX_SET_BUFFER_SIZE failed");
+
+	if ((fd = open(args->demux_dev, O_RDWR)) < 0) {
+		PERROR("failed opening '%s'", args->demux_dev);
+		return -1;
+	}
+
+	if (args->silent < 2)
+		fprintf(stderr, "  dvb_set_pesfilter to 0x2000\n");
+	if (dvb_set_pesfilter(fd, 0x2000, DMX_PES_OTHER,
+			      DMX_OUT_TS_TAP, 0) < 0) {
+		PERROR("couldn't set filter");
+		return -1;
+	}
+
+	gettimeofday(&startt, 0);
+	wait = 1000;
+
+	while (1) {
+		unsigned char buffer[BSIZE];
+		int pid, ok;
+		ssize_t r;
+		if ((r = read(dvr_fd, buffer, BSIZE)) <= 0) {
+			perror("read");
+			break;
+		}
+		if (r != BSIZE) {
+			fprintf(stderr, "dvbtraffic: only read %zd bytes\n", r);
+			break;
+		}
+		if (buffer[0] != 0x47) {
+			continue;
+			printf("desync (%x)\n", buffer[0]);
+			while (buffer[0] != 0x47)
+				read(fd, buffer, 1);
+			continue;
+		}
+		ok = 1;
+		pid = ((((unsigned) buffer[1]) << 8) |
+		       ((unsigned) buffer[2])) & 0x1FFF;
+
+		if (args->search) {
+			int i, sl = strlen(args->search);
+			ok = 0;
+			if (pid != 0x1fff) {
+				for (i = 0; i < (188 - sl); ++i) {
+					if (!memcmp(buffer + i, args->search, sl))
+						ok = 1;
+				}
+			}
+		}
+
+		if (ok) {
+			pidt[pid]++;
+			pidt[0x2000]++;
+		}
+
+		packets++;
+
+		if (!(packets & 0xFF)) {
+			struct timeval now;
+			int diff;
+			gettimeofday(&now, 0);
+			diff =
+			    (now.tv_sec - startt.tv_sec) * 1000 +
+			    (now.tv_usec - startt.tv_usec) / 1000;
+			if (diff > wait) {
+				if (isatty(STDERR_FILENO))
+			                printf("\x1b[1H\x1b[2J");
+
+				args->n_status_lines = 0;
+				printf(" PID         FREQ    BANDWIDTH      KBYTES\n");
+				int _pid = 0;
+				for (_pid = 0; _pid < 0x2001; _pid++) {
+					if (pidt[_pid]) {
+						printf("%04x %8.2f p/s %7.1f kb/s %8d Kb\n",
+						     _pid,
+						     pidt[_pid] * 1000. / diff,
+						     pidt[_pid] * 1000. / diff * 188 / 1024,
+						     pidt[_pid] * 8 * 188 / 1024);
+					}
+				}
+				printf("\n\n");
+				print_frontend_stats(args, parms);
+				wait += 1000;
+			}
+		}
+	}
+	close (fd);
 	return 0;
 }
 
@@ -559,6 +683,9 @@ int main(int argc, char **argv)
 		dvb_fe_close(parms);
 		return 0;
 	}
+
+	if (args.traffic_monitor)
+		return do_traffic_monitor(&args, parms);
 
 	if (args.rec_psi) {
 		if (sid < 0) {
