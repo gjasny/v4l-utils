@@ -702,7 +702,7 @@ void streaming_set(int fd)
 				ch = 'B';
 			if (verbose)
 				print_buffer(stderr, buf);
-			if (doioctl(fd, VIDIOC_QBUF, &buf))
+			if (test_ioctl(fd, VIDIOC_QBUF, &buf))
 				return;
 
 			if (!verbose) {
@@ -918,7 +918,7 @@ void streaming_set(int fd)
 			if (fin && !fill_buffer_from_file(buffers, buffer_lengths,
 					buf.index, num_planes, fin))
 				break;
-			if (doioctl(fd, VIDIOC_QBUF, &buf))
+			if (test_ioctl(fd, VIDIOC_QBUF, &buf))
 				return;
 
 			fprintf(stderr, ".");
