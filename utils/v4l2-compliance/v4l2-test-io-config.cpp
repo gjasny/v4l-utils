@@ -61,7 +61,7 @@ static int checkStd(struct node *node, bool has_std, v4l2_std_id mask, bool is_i
 		return fail("STD cap not set, but could still set a standard\n");
 	std = V4L2_STD_ATSC;
 	ret = doioctl(node, VIDIOC_S_STD, &std);
-	if (ret != EINVAL && ret != ENOTTY)
+	if (ret != ENODATA && ret != EINVAL && ret != ENOTTY)
 		return fail("could set standard to ATSC, which is not supported anymore\n");
 	for (i = 0; ; i++) {
 		memset(&enumstd, 0xff, sizeof(enumstd));
