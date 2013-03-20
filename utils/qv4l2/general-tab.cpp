@@ -817,12 +817,16 @@ void GeneralTab::refreshTimings()
 			v4l2_bt_timings &bt = timings.timings.bt;
 			char buf[100];
 
-			sprintf(buf, "%dx%d%c%.2f", bt.width, bt.height,
-					bt.interlaced ? 'i' : 'p',
+			if (bt.interlaced)
+				sprintf(buf, "%dx%di%.2f", bt.width, bt.height,
 					(double)bt.pixelclock /
 						((bt.width + bt.hfrontporch + bt.hsync + bt.hbackporch) *
-						 (bt.height + bt.vfrontporch + bt.vsync + bt.vbackporch +
-						  bt.il_vfrontporch + bt.il_vsync + bt.il_vbackporch)));
+						 (bt.height / 2 + bt.vfrontporch + bt.vsync + bt.vbackporch)));
+			else
+				sprintf(buf, "%dx%dp%.2f", bt.width, bt.height,
+					(double)bt.pixelclock /
+						((bt.width + bt.hfrontporch + bt.hsync + bt.hbackporch) *
+						 (bt.height + bt.vfrontporch + bt.vsync + bt.vbackporch)));
 			m_videoTimings->addItem(buf);
 		} while (enum_dv_timings(timings));
 	}
