@@ -815,18 +815,19 @@ void GeneralTab::refreshTimings()
 	if (enum_dv_timings(timings, true)) {
 		do {
 			v4l2_bt_timings &bt = timings.timings.bt;
+			unsigned tot_height = bt.height +
+				bt.vfrontporch + bt.vsync + bt.vbackporch +
+				bt.il_vfrontporch + bt.il_vsync + bt.il_vbackporch;
+			unsigned tot_width = bt.width +
+				bt.hfrontporch + bt.hsync + bt.hbackporch;
 			char buf[100];
 
 			if (bt.interlaced)
 				sprintf(buf, "%dx%di%.2f", bt.width, bt.height,
-					(double)bt.pixelclock /
-						((bt.width + bt.hfrontporch + bt.hsync + bt.hbackporch) *
-						 (bt.height / 2 + bt.vfrontporch + bt.vsync + bt.vbackporch)));
+					(double)bt.pixelclock / (tot_width * (tot_height / 2)));
 			else
 				sprintf(buf, "%dx%dp%.2f", bt.width, bt.height,
-					(double)bt.pixelclock /
-						((bt.width + bt.hfrontporch + bt.hsync + bt.hbackporch) *
-						 (bt.height + bt.vfrontporch + bt.vsync + bt.vbackporch)));
+					(double)bt.pixelclock / (tot_width * tot_height));
 			m_videoTimings->addItem(buf);
 		} while (enum_dv_timings(timings));
 	}
