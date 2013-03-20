@@ -575,7 +575,7 @@ int do_traffic_monitor(struct arguments *args,
 				int _pid = 0;
 				for (_pid = 0; _pid < 0x2001; _pid++) {
 					if (pidt[_pid]) {
-						printf("%04x %8.2f p/s %7.1f kb/s %8d Kb\n",
+						printf("%04x %8.2f p/s %7.1f kb/s %8llu Kb\n",
 						     _pid,
 						     pidt[_pid] * 1000. / diff,
 						     pidt[_pid] * 1000. / diff * 188 / 1024,
