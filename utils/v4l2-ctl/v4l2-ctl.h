@@ -20,6 +20,7 @@ enum Option {
 	OptHelp = 'h',
 	OptGetInput = 'I',
 	OptSetInput = 'i',
+	OptConcise = 'k',
 	OptListCtrls = 'l',
 	OptListCtrlsMenus = 'L',
 	OptListOutputs = 'N',

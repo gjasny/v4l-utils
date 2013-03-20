@@ -90,6 +90,7 @@ static struct option long_options[] = {
 	{"help-streaming", no_argument, 0, OptHelpStreaming},
 	{"help-all", no_argument, 0, OptHelpAll},
 	{"wrapper", no_argument, 0, OptUseWrapper},
+	{"concise", no_argument, 0, OptConcise},
 	{"get-output", no_argument, 0, OptGetOutput},
 	{"set-output", required_argument, 0, OptSetOutput},
 	{"list-outputs", no_argument, 0, OptListOutputs},

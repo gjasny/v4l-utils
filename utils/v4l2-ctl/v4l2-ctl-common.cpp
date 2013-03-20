@@ -71,6 +71,7 @@ void common_usage(void)
 	       "  --help-vbi         VBI format options\n"
 	       "  --help-vidcap      video capture format options\n"
 	       "  --help-vidout      vidout output format options\n"
+	       "  -k, --concise      be more concise if possible.\n"
 	       "  -l, --list-ctrls   display all controls and their values [VIDIOC_QUERYCTRL]\n"
 	       "  -L, --list-ctrls-menus\n"
 	       "		     display all controls and their menus [VIDIOC_QUERYMENU]\n"
