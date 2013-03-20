@@ -260,10 +260,10 @@ static void print_dv_timings(const struct v4l2_dv_timings *t)
 				(bt->polarities & V4L2_DV_HSYNC_POS_POL) ? '+' : '-');
 		printf("\tPixelclock: %lld Hz", bt->pixelclock);
 		if (bt->width && bt->height) {
-			unsigned tot_height = bt->height +
+			double tot_height = bt->height +
 				bt->vfrontporch + bt->vsync + bt->vbackporch +
 				bt->il_vfrontporch + bt->il_vsync + bt->il_vbackporch;
-			unsigned tot_width = bt->width +
+			double tot_width = bt->width +
 				bt->hfrontporch + bt->hsync + bt->hbackporch;
 
 			if (bt->interlaced)

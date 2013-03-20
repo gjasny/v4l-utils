@@ -815,10 +815,10 @@ void GeneralTab::refreshTimings()
 	if (enum_dv_timings(timings, true)) {
 		do {
 			v4l2_bt_timings &bt = timings.timings.bt;
-			unsigned tot_height = bt.height +
+			double tot_height = bt.height +
 				bt.vfrontporch + bt.vsync + bt.vbackporch +
 				bt.il_vfrontporch + bt.il_vsync + bt.il_vbackporch;
-			unsigned tot_width = bt.width +
+			double tot_width = bt.width +
 				bt.hfrontporch + bt.hsync + bt.hbackporch;
 			char buf[100];
 
