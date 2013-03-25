@@ -76,6 +76,7 @@ struct chipid { const char *name; unsigned id; } chipids[] = {
 { "saa7191", 7191 },
 { "ths7303", 7303 },
 { "adv7343", 7343 },
+{ "ths7353", 7353 },
 { "adv7393", 7393 },
 { "adv7604", 7604 },
 { "saa7706h", 7706 },

@@ -42,8 +42,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_audioInput(NULL),
 	m_tvStandard(NULL),
 	m_qryStandard(NULL),
-	m_videoPreset(NULL),
-	m_qryPreset(NULL),
 	m_videoTimings(NULL),
 	m_qryTimings(NULL),
 	m_freq(NULL),
@@ -75,7 +73,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 	v4l2_input vin;
 	bool needsStd = false;
-	bool needsPreset = false;
 	bool needsTimings = false;
 
 	if (m_tuner.capability && m_tuner.capability & V4L2_TUNER_CAP_LOW)
@@ -92,8 +89,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 			m_videoInput->addItem((char *)vin.name);
 			if (vin.capabilities & V4L2_IN_CAP_STD)
 				needsStd = true;
-			if (vin.capabilities & V4L2_IN_CAP_PRESETS)
-				needsPreset = true;
 			if (vin.capabilities & V4L2_IN_CAP_DV_TIMINGS)
 				needsTimings = true;
 		} while (enum_input(vin));
@@ -151,18 +146,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 			addWidget(m_qryStandard);
 			connect(m_qryStandard, SIGNAL(clicked()), SLOT(qryStdClicked()));
 		}
-	}
-
-	if (needsPreset) {
-		addLabel("Video Preset");
-		m_videoPreset = new QComboBox(parent);
-		addWidget(m_videoPreset);
-		connect(m_videoPreset, SIGNAL(activated(int)), SLOT(presetChanged(int)));
-		refreshPresets();
-		addLabel("");
-		m_qryPreset = new QPushButton("Query Preset", parent);
-		addWidget(m_qryPreset);
-		connect(m_qryPreset, SIGNAL(clicked()), SLOT(qryPresetClicked()));
 	}
 
 	if (needsTimings) {
@@ -444,15 +427,6 @@ void GeneralTab::standardChanged(int std)
 	updateStandard();
 }
 
-void GeneralTab::presetChanged(int index)
-{
-	v4l2_dv_enum_preset preset;
-
-	enum_dv_preset(preset, true, index);
-	s_dv_preset(preset.preset);
-	updatePreset();
-}
-
 void GeneralTab::timingsChanged(int index)
 {
 	v4l2_enum_dv_timings timings;
@@ -640,12 +614,6 @@ void GeneralTab::updateVideoInput()
 		if (m_qryStandard)
 			m_qryStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
 	}
-	if (m_videoPreset) {
-		refreshPresets();
-		updatePreset();
-		m_videoPreset->setEnabled(in.capabilities & V4L2_IN_CAP_PRESETS);
-		m_qryPreset->setEnabled(in.capabilities & V4L2_IN_CAP_PRESETS);
-	}
 	if (m_videoTimings) {
 		refreshTimings();
 		updateTimings();
@@ -667,10 +635,6 @@ void GeneralTab::updateVideoOutput()
 		m_tvStandard->setEnabled(out.capabilities & V4L2_OUT_CAP_STD);
 		if (m_qryStandard)
 			m_qryStandard->setEnabled(out.capabilities & V4L2_OUT_CAP_STD);
-	}
-	if (m_videoPreset) {
-		m_videoPreset->setEnabled(out.capabilities & V4L2_OUT_CAP_PRESETS);
-		m_qryPreset->setEnabled(out.capabilities & V4L2_OUT_CAP_PRESETS);
 	}
 	if (m_videoTimings) {
 		m_videoTimings->setEnabled(out.capabilities & V4L2_OUT_CAP_DV_TIMINGS);
@@ -761,50 +725,6 @@ void GeneralTab::qryStdClicked()
 	} else {
 		s_std(std);
 		updateStandard();
-	}
-}
-
-void GeneralTab::refreshPresets()
-{
-	v4l2_dv_enum_preset preset;
-	m_videoPreset->clear();
-	if (enum_dv_preset(preset, true)) {
-		do {
-			m_videoPreset->addItem((char *)preset.name);
-		} while (enum_dv_preset(preset));
-	}
-}
-
-void GeneralTab::updatePreset()
-{
-	__u32 preset;
-	v4l2_dv_enum_preset p;
-	QString what;
-
-	g_dv_preset(preset);
-	if (enum_dv_preset(p, true)) {
-		do {
-			if (p.preset == preset)
-				break;
-		} while (enum_dv_preset(p));
-	}
-	if (p.preset != preset)
-		return;
-	m_videoPreset->setCurrentIndex(p.index);
-	what.sprintf("Video Preset (%u)\n"
-		"Frame %ux%u\n",
-		p.preset, p.width, p.height);
-	m_videoPreset->setWhatsThis(what);
-	updateVidCapFormat();
-}
-
-void GeneralTab::qryPresetClicked()
-{
-	v4l2_dv_preset preset;
-
-	if (query_dv_preset(preset)) {
-		s_dv_preset(preset.preset);
-		updatePreset();
 	}
 }
 

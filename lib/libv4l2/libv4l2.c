@@ -1067,7 +1067,6 @@ int v4l2_ioctl(int fd, unsigned long int request, ...)
 		break;
 	case VIDIOC_S_STD:
 	case VIDIOC_S_INPUT:
-	case VIDIOC_S_DV_PRESET:
 	case VIDIOC_S_DV_TIMINGS:
 		is_capture_request = 1;
 		stream_needs_locking = 1;
@@ -1167,7 +1166,6 @@ no_capture_request:
 
 	case VIDIOC_S_STD:
 	case VIDIOC_S_INPUT:
-	case VIDIOC_S_DV_PRESET:
 	case VIDIOC_S_DV_TIMINGS: {
 		struct v4l2_format src_fmt;
 

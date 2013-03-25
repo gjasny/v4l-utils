@@ -33,8 +33,6 @@ union v4l_parms {
 	struct v4l2_dbg_chip_ident	p_v4l2_dbg_chip_ident;
 	struct v4l2_dbg_register	p_v4l2_dbg_register;
 	struct v4l2_decoder_cmd		p_v4l2_decoder_cmd;
-	struct v4l2_dv_enum_preset	p_v4l2_dv_enum_preset;
-	struct v4l2_dv_preset		p_v4l2_dv_preset;
 	struct v4l2_dv_timings		p_v4l2_dv_timings;
 	struct v4l2_dv_timings_cap	p_v4l2_dv_timings_cap;
 	struct v4l2_enc_idx		p_v4l2_enc_idx;
@@ -122,7 +120,6 @@ static const struct {
 	ioc(video, VIDIOC_ENUMINPUT),					/*  struct v4l2_input */
 	ioc(video, VIDIOC_ENUMOUTPUT),					/*  struct v4l2_output */
 	ioc(video, VIDIOC_ENUMSTD),					/*  struct v4l2_standard */
-	ioc(video, VIDIOC_ENUM_DV_PRESETS),				/*  struct v4l2_dv_enum_preset */
 	ioc(video, VIDIOC_ENUM_DV_TIMINGS),				/*  struct v4l2_enum_dv_timings */
 	ioc(video, VIDIOC_ENUM_FMT),					/*  struct v4l2_fmtdesc */
 	ioc(video, VIDIOC_ENUM_FRAMEINTERVALS),				/*  struct v4l2_frmivalenum */
@@ -133,7 +130,6 @@ static const struct {
 	ioc(video, VIDIOC_G_AUDOUT),					/*  struct v4l2_audioout */
 	ioc(video, VIDIOC_G_CROP),					/*  struct v4l2_crop */
 	ioc(video, VIDIOC_G_CTRL),					/*  struct v4l2_control */
-	ioc(video, VIDIOC_G_DV_PRESET),					/*  struct v4l2_dv_preset */
 	ioc(video, VIDIOC_G_DV_TIMINGS),				/*  struct v4l2_dv_timings */
 	ioc(video, VIDIOC_G_ENC_INDEX),					/*  struct v4l2_enc_idx */
 	ioc(video, VIDIOC_G_EXT_CTRLS),					/*  struct v4l2_ext_controls */
@@ -159,7 +155,6 @@ static const struct {
 	ioc(video, VIDIOC_QUERYCTRL),					/*  struct v4l2_queryctrl */
 	ioc(video, VIDIOC_QUERYMENU),					/*  struct v4l2_querymenu */
 	ioc(video, VIDIOC_QUERYSTD),					/*  v4l2_std_id */
-	ioc(video, VIDIOC_QUERY_DV_PRESET),				/*  struct v4l2_dv_preset */
 	ioc(video, VIDIOC_QUERY_DV_TIMINGS),				/*  struct v4l2_dv_timings */
 	ioc(video, VIDIOC_REQBUFS),					/*  struct v4l2_requestbuffers */
 	ioc(video, VIDIOC_RESERVED),					/*  void */
@@ -170,7 +165,6 @@ static const struct {
 	ioc(video, VIDIOC_S_AUDOUT),					/*  struct v4l2_audioout */
 	ioc(video, VIDIOC_S_CROP),					/*  struct v4l2_crop */
 	ioc(video, VIDIOC_S_CTRL),					/*  struct v4l2_control */
-	ioc(video, VIDIOC_S_DV_PRESET),					/*  struct v4l2_dv_preset */
 	ioc(video, VIDIOC_S_DV_TIMINGS),				/*  struct v4l2_dv_timings */
 	ioc(video, VIDIOC_S_EXT_CTRLS),					/*  struct v4l2_ext_controls */
 	ioc(video, VIDIOC_S_FBUF),					/*  struct v4l2_framebuffer */

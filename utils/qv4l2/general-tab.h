@@ -76,8 +76,6 @@ private slots:
 	void outputAudioChanged(int);
 	void standardChanged(int);
 	void qryStdClicked();
-	void presetChanged(int);
-	void qryPresetClicked();
 	void timingsChanged(int);
 	void qryTimingsClicked();
 	void freqTableChanged(int);
@@ -102,8 +100,6 @@ private:
 	void updateAudioOutput();
 	void refreshStandards();
 	void updateStandard();
-	void refreshPresets();
-	void updatePreset();
 	void refreshTimings();
 	void updateTimings();
 	void updateFreq();
@@ -149,8 +145,6 @@ private:
 	QComboBox *m_audioOutput;
 	QComboBox *m_tvStandard;
 	QPushButton *m_qryStandard;
-	QComboBox *m_videoPreset;
-	QPushButton *m_qryPreset;
 	QComboBox *m_videoTimings;
 	QPushButton *m_qryTimings;
 	QLineEdit *m_freq;

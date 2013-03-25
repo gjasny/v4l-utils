@@ -176,10 +176,6 @@ static struct option long_options[] = {
 	{"overlay", required_argument, 0, OptOverlay},
 	{"sleep", required_argument, 0, OptSleep},
 	{"list-devices", no_argument, 0, OptListDevices},
-	{"list-dv-presets", no_argument, 0, OptListDvPresets},
-	{"set-dv-presets", required_argument, 0, OptSetDvPreset},
-	{"get-dv-presets", no_argument, 0, OptGetDvPreset},
-	{"query-dv-presets", no_argument, 0, OptQueryDvPreset},
 	{"list-dv-timings", no_argument, 0, OptListDvTimings},
 	{"query-dv-timings", no_argument, 0, OptQueryDvTimings},
 	{"get-dv-timings", no_argument, 0, OptGetDvTimings},
@@ -931,7 +927,6 @@ int main(int argc, char **argv)
 		options[OptGetCropCap] = 1;
 		options[OptGetOutputCropCap] = 1;
 		options[OptGetJpegComp] = 1;
-		options[OptGetDvPreset] = 1;
 		options[OptGetDvTimings] = 1;
 		options[OptGetDvTimingsCap] = 1;
 		options[OptGetPriority] = 1;

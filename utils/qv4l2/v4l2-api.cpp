@@ -236,31 +236,6 @@ bool v4l2::query_std(v4l2_std_id &std)
 	return ioctl("Query TV Standard", VIDIOC_QUERYSTD, &std);
 }
 
-bool v4l2::g_dv_preset(__u32 &preset)
-{
-	struct v4l2_dv_preset p;
-	int err;
-
-	memset(&p, 0, sizeof(p));
-	err = ioctl(VIDIOC_G_DV_PRESET, &p);
-	preset = p.preset;
-	return err >= 0;
-}
-
-bool v4l2::s_dv_preset(__u32 preset)
-{
-	struct v4l2_dv_preset p;
-
-	memset(&p, 0, sizeof(p));
-	p.preset = preset;
-	return ioctl("Set Preset", VIDIOC_S_DV_PRESET, &p);
-}
-
-bool v4l2::query_dv_preset(v4l2_dv_preset &preset)
-{
-	return ioctl("Query Preset", VIDIOC_QUERY_DV_PRESET, &preset);
-}
-
 bool v4l2::g_dv_timings(v4l2_dv_timings &timings)
 {
 	int err = ioctl(VIDIOC_G_DV_TIMINGS, &timings);
@@ -390,17 +365,6 @@ bool v4l2::enum_std(v4l2_standard &std, bool init, int index)
 		std.index++;
 	}
 	return ioctl(VIDIOC_ENUMSTD, &std) >= 0;
-}
-
-bool v4l2::enum_dv_preset(v4l2_dv_enum_preset &preset, bool init, int index)
-{
-	if (init) {
-		memset(&preset, 0, sizeof(preset));
-		preset.index = index;
-	} else {
-		preset.index++;
-	}
-	return ioctl(VIDIOC_ENUM_DV_PRESETS, &preset) >= 0;
 }
 
 bool v4l2::enum_dv_timings(v4l2_enum_dv_timings &timings, bool init, int index)
