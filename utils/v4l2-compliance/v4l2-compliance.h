@@ -153,7 +153,6 @@ int check_ustring(const __u8 *s, int len);
 int check_0(const void *p, int len);
 
 // Debug ioctl tests
-int testChipIdent(struct node *node);
 int testRegister(struct node *node);
 int testLogStatus(struct node *node);
 

@@ -606,7 +606,6 @@ int main(int argc, char **argv)
 	/* Debug ioctls */
 
 	printf("Debug ioctls:\n");
-	printf("\ttest VIDIOC_DBG_G_CHIP_IDENT: %s\n", ok(testChipIdent(&node)));
 	printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(&node)));
 	printf("\ttest VIDIOC_LOG_STATUS: %s\n", ok(testLogStatus(&node)));
 	printf("\n");
