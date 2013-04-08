@@ -317,10 +317,15 @@ static int testCap(struct node *node)
 		if (dcaps & output_caps)
 			fail_on_test(dcaps & input_caps);
 	}
-	if (node->can_capture || node->can_output)
-		fail_on_test(!(dcaps & io_caps));
-	else
+	if (node->can_capture || node->can_output) {
+		// whether io_caps need to be set for RDS capture/output is
+		// checked elsewhere as that depends on the tuner/modulator
+		// capabilities.
+		if (!(dcaps & (V4L2_CAP_RDS_CAPTURE | V4L2_CAP_RDS_OUTPUT)))
+			fail_on_test(!(dcaps & io_caps));
+	} else {
 		fail_on_test(dcaps & io_caps);
+	}
 	// having both mplane and splane caps is not allowed (at least for now)
 	fail_on_test((dcaps & mplane_caps) && (dcaps & splane_caps));
 

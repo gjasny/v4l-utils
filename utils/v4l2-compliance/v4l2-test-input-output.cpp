@@ -120,6 +120,9 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 	if ((tuner.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
 			!(node->caps & V4L2_CAP_READWRITE))
 		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is set, but not V4L2_CAP_READWRITE\n");
+	if (!tv && !(tuner.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
+			(node->caps & V4L2_CAP_READWRITE))
+		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is not set, but V4L2_CAP_READWRITE is\n");
 	if (std == V4L2_STD_NTSC_M && (tuner.rxsubchans & V4L2_TUNER_SUB_LANG1))
 		return fail("LANG1 subchan, but NTSC-M standard\n");
 	if (tuner.audmode > V4L2_TUNER_MODE_LANG1_LANG2)
@@ -565,6 +568,9 @@ static int checkModulator(struct node *node, const struct v4l2_modulator &mod, u
 	if ((mod.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
 			!(node->caps & V4L2_CAP_READWRITE))
 		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is set, but not V4L2_CAP_READWRITE\n");
+	if (!(mod.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
+			(node->caps & V4L2_CAP_READWRITE))
+		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is not set, but V4L2_CAP_READWRITE is\n");
 	return checkEnumFreqBands(node, mod.index, V4L2_TUNER_RADIO, mod.capability);
 }
 
