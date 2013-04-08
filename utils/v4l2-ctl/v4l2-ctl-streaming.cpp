@@ -816,6 +816,7 @@ void streaming_set(int fd)
 					unsigned p = i * num_planes + j;
 
 					buffer_lengths[p] = planes[j].length;
+					buf.m.planes[j].bytesused = planes[j].length;
 					if (is_mmap) {
 						buffers[p] = mmap(NULL, planes[j].length,
 								PROT_READ | PROT_WRITE, MAP_SHARED,
@@ -836,6 +837,7 @@ void streaming_set(int fd)
 						buf.index, num_planes, fin);
 			} else {
 				buffer_lengths[i] = buf.length;
+				buf.bytesused = buf.length;
 				if (is_mmap) {
 					buffers[i] = mmap(NULL, buf.length,
 							PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
@@ -918,6 +920,12 @@ void streaming_set(int fd)
 			if (fin && !fill_buffer_from_file(buffers, buffer_lengths,
 					buf.index, num_planes, fin))
 				break;
+			if (is_mplane) {
+				for (unsigned j = 0; j < buf.length; j++)
+					buf.m.planes[j].bytesused = buf.m.planes[j].length;
+			} else {
+				buf.bytesused = buf.length;
+			}
 			if (test_ioctl(fd, VIDIOC_QBUF, &buf))
 				return;
 
