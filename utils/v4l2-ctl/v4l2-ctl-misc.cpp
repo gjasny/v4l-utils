@@ -21,10 +21,10 @@
 
 #include "v4l2-ctl.h"
 
+struct v4l2_decoder_cmd dec_cmd; /* (try_)decoder_cmd */
+static struct v4l2_encoder_cmd enc_cmd; /* (try_)encoder_cmd */
 static struct v4l2_jpegcompression jpegcomp; /* jpeg compression */
 static struct v4l2_streamparm parm;	/* get/set parm */
-static struct v4l2_encoder_cmd enc_cmd; /* (try_)encoder_cmd */
-static struct v4l2_decoder_cmd dec_cmd; /* (try_)decoder_cmd */
 static double fps = 0;			/* set framerate speed, in fps */
 static double output_fps = 0;		/* set framerate speed, in fps */
 

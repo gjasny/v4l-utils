@@ -530,6 +530,7 @@ void streaming_set(int fd)
 {
 	if (options[OptStreamMmap] || options[OptStreamUser]) {
 		struct v4l2_requestbuffers reqbufs;
+		struct v4l2_event_subscription sub;
 		int fd_flags = fcntl(fd, F_GETFL);
 		bool is_mplane = capabilities &
 			(V4L2_CAP_VIDEO_CAPTURE_MPLANE |
@@ -545,6 +546,9 @@ void streaming_set(int fd)
 		reqbufs.count = reqbufs_count;
 		reqbufs.type = type;
 		reqbufs.memory = is_mmap ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
+		memset(&sub, 0, sizeof(sub));
+		sub.type = V4L2_EVENT_EOS;
+		ioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
 
 		if (file) {
 			if (!strcmp(file, "-"))
@@ -623,26 +627,30 @@ void streaming_set(int fd)
 
 		unsigned count = 0, last = 0;
 		struct timeval tv_last;
+		bool eos = false;
 
-		for (;;) {
+		while (!eos) {
 			struct v4l2_plane planes[VIDEO_MAX_PLANES];
 			struct v4l2_buffer buf;
+			fd_set read_fds;
+			fd_set exception_fds;
 			char ch = '.';
 			int ret;
 
 			if (use_poll) {
-				fd_set fds;
 				struct timeval tv;
 				int r;
 
-				FD_ZERO(&fds);
-				FD_SET(fd, &fds);
+				FD_ZERO(&read_fds);
+				FD_SET(fd, &read_fds);
+				FD_ZERO(&exception_fds);
+				FD_SET(fd, &exception_fds);
 
 				/* Timeout. */
 				tv.tv_sec = 2;
 				tv.tv_usec = 0;
 
-				r = select(fd + 1, &fds, NULL, NULL, &tv);
+				r = select(fd + 1, &read_fds, NULL, &exception_fds, &tv);
 
 				if (r == -1) {
 					if (EINTR == errno)
@@ -657,6 +665,19 @@ void streaming_set(int fd)
 					return;
 				}
 			}
+
+			if (FD_ISSET(fd, &exception_fds)) {
+				struct v4l2_event ev;
+
+				while (!ioctl(fd, VIDIOC_DQEVENT, &ev)) {
+					if (ev.type != V4L2_EVENT_EOS)
+						continue;
+					eos = true;
+					break;
+				}
+			}
+			if (!FD_ISSET(fd, &read_fds))
+				continue;
 
 			memset(&buf, 0, sizeof(buf));
 			memset(planes, 0, sizeof(planes));
@@ -952,6 +973,10 @@ void streaming_set(int fd)
 				continue;
 			if (--stream_count == 0)
 				break;
+		}
+		if (options[OptDecoderCmd]) {
+			doioctl(fd, VIDIOC_DECODER_CMD, &dec_cmd);
+			options[OptDecoderCmd] = false;
 		}
 		doioctl(fd, VIDIOC_STREAMOFF, &type);
 		fcntl(fd, F_SETFL, fd_flags);

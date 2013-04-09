@@ -264,6 +264,8 @@ void selection_set(int fd);
 void selection_get(int fd);
 
 // v4l2-ctl-misc.cpp
+// This one is also used by the streaming code.
+extern struct v4l2_decoder_cmd dec_cmd;
 void misc_usage(void);
 void misc_cmd(int ch, char *optarg);
 void misc_set(int fd);

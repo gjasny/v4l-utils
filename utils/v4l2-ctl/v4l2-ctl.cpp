@@ -967,8 +967,8 @@ int main(int argc, char **argv)
 	overlay_set(fd);
 	vbi_set(fd);
 	selection_set(fd);
-	misc_set(fd);
 	streaming_set(fd);
+	misc_set(fd);
 
 	/* Get options */
 
