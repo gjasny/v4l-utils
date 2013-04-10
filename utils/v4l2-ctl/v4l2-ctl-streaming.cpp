@@ -774,6 +774,15 @@ static int do_handle_cap(int fd, struct v4l2_requestbuffers *reqbufs,
 		}
 	}
 	*count += 1;
+
+	/*
+	 * The stream_count and stream_skip does not apply to capture path of
+	 * M2M devices.  In that case, we skip them with an early return.
+	 */
+	if ((capabilities & V4L2_CAP_VIDEO_M2M) ||
+	    (capabilities & V4L2_CAP_VIDEO_M2M_MPLANE))
+		return 0;
+
 	if (stream_skip) {
 		stream_skip--;
 		return 0;
@@ -1075,12 +1084,208 @@ void streaming_set_out(int fd)
 		fclose(fin);
 }
 
+enum stream_type {
+	CAP,
+	OUT,
+};
+
+void streaming_set_m2m(int fd)
+{
+	int fd_flags = fcntl(fd, F_GETFL);
+	bool use_poll = options[OptStreamPoll];
+
+	bool is_mplane = capabilities & V4L2_CAP_VIDEO_M2M_MPLANE;
+	unsigned num_planes[2] = {1, 1};
+	bool is_mmap = options[OptStreamMmap];
+
+	__u32 type[2];
+	FILE *file[2] = {NULL, NULL};
+	struct v4l2_requestbuffers reqbufs[2];
+
+	if (!(capabilities & V4L2_CAP_VIDEO_M2M) &&
+	    !(capabilities & V4L2_CAP_VIDEO_M2M_MPLANE)) {
+		fprintf(stderr, "unsupported stream type\n");
+		return;
+	}
+
+	type[CAP] = is_mplane ?
+		V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE : V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+	type[OUT] = is_mplane ?
+		V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE : V4L2_BUF_TYPE_VIDEO_OUTPUT;
+
+	memset(&reqbufs, 0, sizeof(reqbufs));
+
+	reqbufs[CAP].count = reqbufs_count_cap;
+	reqbufs[CAP].type = type[CAP];
+	reqbufs[CAP].memory = is_mmap ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
+
+	reqbufs[OUT].count = reqbufs_count_out;
+	reqbufs[OUT].type = type[OUT];
+	reqbufs[OUT].memory = is_mmap ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
+
+	struct v4l2_event_subscription sub;
+
+	memset(&sub, 0, sizeof(sub));
+	sub.type = V4L2_EVENT_EOS;
+	ioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
+
+	if (file_cap) {
+		if (!strcmp(file_cap, "-"))
+			file[CAP] = stdout;
+		else
+			file[CAP] = fopen(file_cap, "w+");
+	}
+
+	if (file_out) {
+		if (!strcmp(file_out, "-"))
+			file[OUT] = stdin;
+		else
+			file[OUT] = fopen(file_out, "r");
+	}
+
+	if (doioctl(fd, VIDIOC_REQBUFS, &reqbufs[CAP]) ||
+	    doioctl(fd, VIDIOC_REQBUFS, &reqbufs[OUT]))
+		return;
+
+	void *buffers_cap[reqbufs_count_cap * VIDEO_MAX_PLANES];
+	void *buffers_out[reqbufs_count_out * VIDEO_MAX_PLANES];
+	unsigned buffer_lengths_cap[reqbufs_count_cap * VIDEO_MAX_PLANES];
+	unsigned buffer_lengths_out[reqbufs_count_out * VIDEO_MAX_PLANES];
+
+	do_setup_cap_buffers(fd, &reqbufs[CAP], is_mplane, &num_planes[CAP],
+			     is_mmap, buffers_cap, buffer_lengths_cap);
+
+	do_setup_out_buffers(fd, &reqbufs[OUT], is_mplane, &num_planes[OUT],
+			     is_mmap, buffers_out, buffer_lengths_out,
+			     file[OUT]);
+
+	if (doioctl(fd, VIDIOC_STREAMON, &type[CAP]) ||
+	    doioctl(fd, VIDIOC_STREAMON, &type[OUT]))
+		return;
+
+	if (use_poll)
+		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
+
+	unsigned count[2] = { 0, 0 };
+	unsigned last[2] = { 0, 0 };
+	struct timeval tv_last[2];
+
+	fd_set fds[3];
+	fd_set *rd_fds = &fds[0]; /* for capture */
+	fd_set *ex_fds = &fds[1]; /* for capture */
+	fd_set *wr_fds = &fds[2]; /* for output */
+
+	while (rd_fds || wr_fds || ex_fds) {
+
+		int r;
+
+		if (use_poll) {
+			struct timeval tv;
+
+			/* Timeout. */
+			tv.tv_sec = 2;
+			tv.tv_usec = 0;
+
+			if (rd_fds) {
+				FD_ZERO(rd_fds);
+				FD_SET(fd, rd_fds);
+			}
+
+			if (ex_fds) {
+				FD_ZERO(ex_fds);
+				FD_SET(fd, ex_fds);
+			}
+
+			if (wr_fds) {
+				FD_ZERO(wr_fds);
+				FD_SET(fd, wr_fds);
+
+			}
+
+			r = select(fd + 1, rd_fds, wr_fds, ex_fds, &tv);
+
+			if (r == -1) {
+				if (EINTR == errno)
+					continue;
+				fprintf(stderr, "select error: %s\n",
+					strerror(errno));
+				return;
+			}
+
+			if (r == 0) {
+				fprintf(stderr, "select timeout\n");
+				return;
+			}
+		}
+
+		if (rd_fds && FD_ISSET(fd, rd_fds)) {
+			r  = do_handle_cap(fd, &reqbufs[CAP], is_mplane, num_planes[CAP],
+					   buffers_cap, buffer_lengths_cap, file[CAP],
+					   &count[CAP], &last[CAP], &tv_last[CAP]);
+			if (r < 0) {
+				rd_fds = NULL;
+				ex_fds = NULL;
+				doioctl(fd, VIDIOC_STREAMOFF, &type[CAP]);
+			}
+		}
+
+		if (wr_fds && FD_ISSET(fd, wr_fds)) {
+			r  = do_handle_out(fd, &reqbufs[OUT], is_mplane, num_planes[OUT],
+					   buffers_out, buffer_lengths_out, file[OUT],
+					   &count[OUT], &last[OUT], &tv_last[OUT]);
+			if (r < 0)  {
+				wr_fds = NULL;
+
+				if (options[OptDecoderCmd]) {
+					doioctl(fd, VIDIOC_DECODER_CMD, &dec_cmd);
+					options[OptDecoderCmd] = false;
+				}
+
+				doioctl(fd, VIDIOC_STREAMOFF, &type[OUT]);
+			}
+		}
+
+		if (ex_fds && FD_ISSET(fd, ex_fds)) {
+			struct v4l2_event ev;
+
+			while (!ioctl(fd, VIDIOC_DQEVENT, &ev)) {
+
+				if (ev.type != V4L2_EVENT_EOS)
+					continue;
+
+				rd_fds = NULL;
+				ex_fds = NULL;
+				doioctl(fd, VIDIOC_STREAMOFF, &type[CAP]);
+				break;
+			}
+		}
+	}
+
+	fcntl(fd, F_SETFL, fd_flags);
+	fprintf(stderr, "\n");
+
+	do_release_buffers(&reqbufs[CAP], num_planes[CAP], is_mmap,
+			   buffers_cap, buffer_lengths_cap);
+
+	do_release_buffers(&reqbufs[OUT], num_planes[OUT], is_mmap,
+			   buffers_out, buffer_lengths_out);
+
+	if (file[CAP] && file[CAP] != stdout)
+		fclose(file[CAP]);
+
+	if (file[OUT] && file[OUT] != stdin)
+		fclose(file[OUT]);
+}
+
 void streaming_set(int fd)
 {
 	bool do_cap = options[OptStreamMmap] || options[OptStreamUser];
 	bool do_out = options[OptStreamOutMmap] || options[OptStreamOutUser];
 
-	if (do_cap)
+	if (do_cap && do_out)
+		streaming_set_m2m(fd);
+	else if (do_cap)
 		streaming_set_cap(fd);
 	else if (do_out)
 		streaming_set_out(fd);
