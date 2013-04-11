@@ -534,7 +534,7 @@ static bool fill_buffer_from_file(void *buffers[], unsigned buffer_lengths[],
 }
 
 static void do_setup_cap_buffers(int fd, struct v4l2_requestbuffers *reqbufs,
-				 bool is_mplane, unsigned *num_planes, bool is_mmap,
+				 bool is_mplane, unsigned &num_planes, bool is_mmap,
 				 void *buffers[], unsigned buffer_lengths[])
 {
 	for (unsigned i = 0; i < reqbufs->count; i++) {
@@ -554,9 +554,9 @@ static void do_setup_cap_buffers(int fd, struct v4l2_requestbuffers *reqbufs,
 			return;
 
 		if (is_mplane) {
-			*num_planes = buf.length;
-			for (unsigned j = 0; j < *num_planes; j++) {
-				unsigned p = i * (*num_planes) + j;
+			num_planes = buf.length;
+			for (unsigned j = 0; j < num_planes; j++) {
+				unsigned p = i * num_planes + j;
 
 				buffer_lengths[p] = planes[j].length;
 				if (is_mmap) {
@@ -597,7 +597,7 @@ static void do_setup_cap_buffers(int fd, struct v4l2_requestbuffers *reqbufs,
 }
 
 static void do_setup_out_buffers(int fd, struct v4l2_requestbuffers *reqbufs,
-				 bool is_mplane, unsigned *num_planes, bool is_mmap,
+				 bool is_mplane, unsigned &num_planes, bool is_mmap,
 				 void *buffers[], unsigned buffer_lengths[], FILE *fin)
 {
 	struct v4l2_format fmt;
@@ -627,9 +627,9 @@ static void do_setup_out_buffers(int fd, struct v4l2_requestbuffers *reqbufs,
 			return;
 
 		if (is_mplane) {
-			*num_planes = buf.length;
-			for (unsigned j = 0; j < *num_planes; j++) {
-				unsigned p = i * (*num_planes) + j;
+			num_planes = buf.length;
+			for (unsigned j = 0; j < num_planes; j++) {
+				unsigned p = i * num_planes + j;
 
 				buffer_lengths[p] = planes[j].length;
 				buf.m.planes[j].bytesused = planes[j].length;
@@ -651,7 +651,7 @@ static void do_setup_out_buffers(int fd, struct v4l2_requestbuffers *reqbufs,
 			// TODO fill_buffer_mp(buffers[i], &fmt.fmt.pix_mp);
 			if (fin)
 				fill_buffer_from_file(buffers, buffer_lengths,
-						      buf.index, *num_planes, fin);
+						      buf.index, num_planes, fin);
 		}
 		else {
 			buffer_lengths[i] = buf.length;
@@ -670,7 +670,7 @@ static void do_setup_out_buffers(int fd, struct v4l2_requestbuffers *reqbufs,
 				buf.m.userptr = (unsigned long)buffers[i];
 			}
 			if (!fin || !fill_buffer_from_file(buffers, buffer_lengths,
-							   buf.index, *num_planes, fin))
+							   buf.index, num_planes, fin))
 				fill_buffer(buffers[i], &fmt.fmt.pix);
 		}
 		if (doioctl(fd, VIDIOC_QBUF, &buf))
@@ -697,7 +697,7 @@ static void do_release_buffers(struct v4l2_requestbuffers *reqbufs,
 static int do_handle_cap(int fd, struct v4l2_requestbuffers *reqbufs,
 			 bool is_mplane, unsigned num_planes,
 			 void *buffers[], unsigned buffer_lengths[], FILE *fout,
-			 unsigned *count, unsigned *last, struct timeval *tv_last)
+			 unsigned &count, unsigned &last, struct timeval &tv_last)
 {
 	char ch = '+';
 	int ret;
@@ -757,23 +757,22 @@ static int do_handle_cap(int fd, struct v4l2_requestbuffers *reqbufs,
 		fflush(stderr);
 	}
 
-	if (*count == 0) {
-		gettimeofday(tv_last, NULL);
-	}
-	else {
+	if (count == 0) {
+		gettimeofday(&tv_last, NULL);
+	} else {
 		struct timeval tv_cur, res;
 
 		gettimeofday(&tv_cur, NULL);
-		timersub(&tv_cur, tv_last, &res);
+		timersub(&tv_cur, &tv_last, &res);
 		if (res.tv_sec) {
-			unsigned fps = (100 * (*count - *last)) /
+			unsigned fps = (100 * (count - last)) /
 				(res.tv_sec * 100 + res.tv_usec / 10000);
-			*last = *count;
-			*tv_last = tv_cur;
+			last = count;
+			tv_last = tv_cur;
 			fprintf(stderr, " %d fps\n", fps);
 		}
 	}
-	*count += 1;
+	count++;
 
 	/*
 	 * The stream_count and stream_skip does not apply to capture path of
@@ -798,7 +797,7 @@ static int do_handle_cap(int fd, struct v4l2_requestbuffers *reqbufs,
 static int do_handle_out(int fd, struct v4l2_requestbuffers *reqbufs,
 			 bool is_mplane, unsigned num_planes,
 			 void *buffers[], unsigned buffer_lengths[], FILE *fin,
-			 unsigned *count, unsigned *last, struct timeval *tv_last)
+			 unsigned &count, unsigned &last, struct timeval &tv_last)
 {
 	int ret;
 
@@ -825,9 +824,9 @@ static int do_handle_out(int fd, struct v4l2_requestbuffers *reqbufs,
 					  buf.index, num_planes, fin))
 		return -1;
 	if (is_mplane) {
-		for (unsigned j = 0; j < buf.length; j++) buf.m.planes[j].bytesused = buf.m.planes[j].length;
-	}
-	else {
+		for (unsigned j = 0; j < buf.length; j++)
+			buf.m.planes[j].bytesused = buf.m.planes[j].length;
+	} else {
 		buf.bytesused = buf.length;
 	}
 	if (test_ioctl(fd, VIDIOC_QBUF, &buf))
@@ -836,23 +835,22 @@ static int do_handle_out(int fd, struct v4l2_requestbuffers *reqbufs,
 	fprintf(stderr, "-");
 	fflush(stderr);
 
-	if (*count == 0) {
-		gettimeofday(tv_last, NULL);
-	}
-	else {
+	if (count == 0) {
+		gettimeofday(&tv_last, NULL);
+	} else {
 		struct timeval tv_cur, res;
 
 		gettimeofday(&tv_cur, NULL);
-		timersub(&tv_cur, tv_last, &res);
+		timersub(&tv_cur, &tv_last, &res);
 		if (res.tv_sec) {
-			unsigned fps = (100 * (*count - *last)) /
+			unsigned fps = (100 * (count - last)) /
 				(res.tv_sec * 100 + res.tv_usec / 10000);
-			*last = *count;
-			*tv_last = tv_cur;
+			last = count;
+			tv_last = tv_cur;
 			fprintf(stderr, " %d fps\n", fps);
 		}
 	}
-	*count += 1;
+	count++;
 	if (stream_count == 0)
 		return 0;
 	if (--stream_count == 0)
@@ -903,7 +901,7 @@ void streaming_set_cap(int fd)
 	void *buffers[reqbufs.count * VIDEO_MAX_PLANES];
 	unsigned buffer_lengths[reqbufs.count * VIDEO_MAX_PLANES];
 
-	do_setup_cap_buffers(fd, &reqbufs, is_mplane, &num_planes,
+	do_setup_cap_buffers(fd, &reqbufs, is_mplane, num_planes,
 			     is_mmap, buffers, buffer_lengths);
 
 	type = reqbufs.type;
@@ -964,7 +962,7 @@ void streaming_set_cap(int fd)
 		if (FD_ISSET(fd, &read_fds)) {
 			r  = do_handle_cap(fd, &reqbufs, is_mplane, num_planes,
 					   buffers, buffer_lengths, fout,
-					   &count, &last, &tv_last);
+					   count, last, tv_last);
 			if (r == -1)
 				break;
 		}
@@ -1019,7 +1017,7 @@ void streaming_set_out(int fd)
 	void *buffers[reqbufs.count * VIDEO_MAX_PLANES];
 	unsigned buffer_lengths[reqbufs.count * VIDEO_MAX_PLANES];
 
-	do_setup_out_buffers(fd, &reqbufs, is_mplane, &num_planes,
+	do_setup_out_buffers(fd, &reqbufs, is_mplane, num_planes,
 			     is_mmap, buffers, buffer_lengths, fin);
 
 	type = reqbufs.type;
@@ -1063,7 +1061,7 @@ void streaming_set_out(int fd)
 		}
 		r  = do_handle_out(fd, &reqbufs, is_mplane, num_planes,
 				   buffers, buffer_lengths, fin,
-				   &count, &last, &tv_last);
+				   count, last, tv_last);
 		if (r == -1)
 			break;
 
@@ -1153,10 +1151,10 @@ void streaming_set_m2m(int fd)
 	unsigned buffer_lengths_cap[reqbufs_count_cap * VIDEO_MAX_PLANES];
 	unsigned buffer_lengths_out[reqbufs_count_out * VIDEO_MAX_PLANES];
 
-	do_setup_cap_buffers(fd, &reqbufs[CAP], is_mplane, &num_planes[CAP],
+	do_setup_cap_buffers(fd, &reqbufs[CAP], is_mplane, num_planes[CAP],
 			     is_mmap, buffers_cap, buffer_lengths_cap);
 
-	do_setup_out_buffers(fd, &reqbufs[OUT], is_mplane, &num_planes[OUT],
+	do_setup_out_buffers(fd, &reqbufs[OUT], is_mplane, num_planes[OUT],
 			     is_mmap, buffers_out, buffer_lengths_out,
 			     file[OUT]);
 
@@ -1222,7 +1220,7 @@ void streaming_set_m2m(int fd)
 		if (rd_fds && FD_ISSET(fd, rd_fds)) {
 			r  = do_handle_cap(fd, &reqbufs[CAP], is_mplane, num_planes[CAP],
 					   buffers_cap, buffer_lengths_cap, file[CAP],
-					   &count[CAP], &last[CAP], &tv_last[CAP]);
+					   count[CAP], last[CAP], tv_last[CAP]);
 			if (r < 0) {
 				rd_fds = NULL;
 				ex_fds = NULL;
@@ -1233,7 +1231,7 @@ void streaming_set_m2m(int fd)
 		if (wr_fds && FD_ISSET(fd, wr_fds)) {
 			r  = do_handle_out(fd, &reqbufs[OUT], is_mplane, num_planes[OUT],
 					   buffers_out, buffer_lengths_out, file[OUT],
-					   &count[OUT], &last[OUT], &tv_last[OUT]);
+					   count[OUT], last[OUT], tv_last[OUT]);
 			if (r < 0)  {
 				wr_fds = NULL;
 
