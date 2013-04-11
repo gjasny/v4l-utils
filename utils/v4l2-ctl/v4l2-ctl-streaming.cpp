@@ -701,11 +701,20 @@ static int do_handle_cap(int fd, struct v4l2_requestbuffers *reqbufs,
 {
 	char ch = '+';
 	int ret;
-
 	struct v4l2_plane planes[VIDEO_MAX_PLANES];
 	struct v4l2_buffer buf;
+	bool ignore_count_skip = false;
+
 	memset(&buf, 0, sizeof(buf));
 	memset(planes, 0, sizeof(planes));
+
+	/*
+	 * The stream_count and stream_skip does not apply to capture path of
+	 * M2M devices.
+	 */
+	if ((capabilities & V4L2_CAP_VIDEO_M2M) ||
+	    (capabilities & V4L2_CAP_VIDEO_M2M_MPLANE))
+		ignore_count_skip = true;
 
 	buf.type = reqbufs->type;
 	buf.memory = reqbufs->memory;
@@ -721,7 +730,7 @@ static int do_handle_cap(int fd, struct v4l2_requestbuffers *reqbufs,
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
 		return -1;
 	}
-	if (fout && !stream_skip) {
+	if (fout && (!stream_skip || ignore_count_skip)) {
 		for (unsigned j = 0; j < num_planes; j++) {
 			unsigned p = buf.index * num_planes + j;
 			unsigned used = is_mplane ? planes[j].bytesused : buf.bytesused;
@@ -774,12 +783,7 @@ static int do_handle_cap(int fd, struct v4l2_requestbuffers *reqbufs,
 	}
 	count++;
 
-	/*
-	 * The stream_count and stream_skip does not apply to capture path of
-	 * M2M devices.  In that case, we skip them with an early return.
-	 */
-	if ((capabilities & V4L2_CAP_VIDEO_M2M) ||
-	    (capabilities & V4L2_CAP_VIDEO_M2M_MPLANE))
+	if (ignore_count_skip)
 		return 0;
 
 	if (stream_skip) {
@@ -799,10 +803,9 @@ static int do_handle_out(int fd, struct v4l2_requestbuffers *reqbufs,
 			 void *buffers[], unsigned buffer_lengths[], FILE *fin,
 			 unsigned &count, unsigned &last, struct timeval &tv_last)
 {
-	int ret;
-
 	struct v4l2_plane planes[VIDEO_MAX_PLANES];
 	struct v4l2_buffer buf;
+	int ret;
 
 	memset(&buf, 0, sizeof(buf));
 	memset(planes, 0, sizeof(planes));
