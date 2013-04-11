@@ -411,7 +411,7 @@ static int do_handle_cap(int fd, struct v4l2_requestbuffers *reqbufs,
 			 void *buffers[], FILE *fout,
 			 unsigned &count, unsigned &last, struct timeval &tv_last)
 {
-	char ch = '+';
+	char ch = '<';
 	int ret;
 	struct v4l2_plane planes[VIDEO_MAX_PLANES];
 	struct v4l2_buffer buf;
@@ -547,7 +547,7 @@ static int do_handle_out(int fd, struct v4l2_requestbuffers *reqbufs,
 	if (test_ioctl(fd, VIDIOC_QBUF, &buf))
 		return -1;
 
-	fprintf(stderr, "-");
+	fprintf(stderr, ">");
 	fflush(stderr);
 
 	if (count == 0) {
@@ -633,34 +633,25 @@ static void streaming_set_cap(int fd)
 	while (!eos) {
 		fd_set read_fds;
 		fd_set exception_fds;
+		struct timeval tv = { use_poll ? 2 : 0, 0 };
 		int r;
 
-		if (use_poll) {
-			struct timeval tv;
+		FD_ZERO(&exception_fds);
+		FD_SET(fd, &exception_fds);
+		FD_ZERO(&read_fds);
+		FD_SET(fd, &read_fds);
+		r = select(fd + 1, use_poll ? &read_fds : NULL, NULL, &exception_fds, &tv);
 
-			FD_ZERO(&read_fds);
-			FD_SET(fd, &read_fds);
-			FD_ZERO(&exception_fds);
-			FD_SET(fd, &exception_fds);
-
-			/* Timeout. */
-			tv.tv_sec = 2;
-			tv.tv_usec = 0;
-
-			r = select(fd + 1, &read_fds, NULL, &exception_fds, &tv);
-
-			if (r == -1) {
-				if (EINTR == errno)
-					continue;
-				fprintf(stderr, "select error: %s\n",
+		if (r == -1) {
+			if (EINTR == errno)
+				continue;
+			fprintf(stderr, "select error: %s\n",
 					strerror(errno));
-				return;
-			}
-
-			if (r == 0) {
-				fprintf(stderr, "select timeout\n");
-				return;
-			}
+			return;
+		}
+		if (use_poll && r == 0) {
+			fprintf(stderr, "select timeout\n");
+			return;
 		}
 
 		if (FD_ISSET(fd, &exception_fds)) {
@@ -774,7 +765,7 @@ static void streaming_set_out(int fd)
 				return;
 			}
 		}
-		r  = do_handle_out(fd, &reqbufs, is_mplane, num_planes,
+		r = do_handle_out(fd, &reqbufs, is_mplane, num_planes,
 				   buffers, buffer_lengths, fin,
 				   count, last, tv_last);
 		if (r == -1)
@@ -890,46 +881,38 @@ static void streaming_set_m2m(int fd)
 	fd_set *wr_fds = &fds[2]; /* for output */
 
 	while (rd_fds || wr_fds || ex_fds) {
+		struct timeval tv = { use_poll ? 2 : 0, 0 };
+		int r = 0;
 
-		int r;
+		if (rd_fds) {
+			FD_ZERO(rd_fds);
+			FD_SET(fd, rd_fds);
+		}
 
-		if (use_poll) {
-			struct timeval tv;
+		if (ex_fds) {
+			FD_ZERO(ex_fds);
+			FD_SET(fd, ex_fds);
+		}
 
-			/* Timeout. */
-			tv.tv_sec = 2;
-			tv.tv_usec = 0;
+		if (wr_fds) {
+			FD_ZERO(wr_fds);
+			FD_SET(fd, wr_fds);
+		}
 
-			if (rd_fds) {
-				FD_ZERO(rd_fds);
-				FD_SET(fd, rd_fds);
-			}
+		if (use_poll || ex_fds)
+			r = select(fd + 1, use_poll ? rd_fds : NULL,
+					   use_poll ? wr_fds : NULL, ex_fds, &tv);
 
-			if (ex_fds) {
-				FD_ZERO(ex_fds);
-				FD_SET(fd, ex_fds);
-			}
-
-			if (wr_fds) {
-				FD_ZERO(wr_fds);
-				FD_SET(fd, wr_fds);
-
-			}
-
-			r = select(fd + 1, rd_fds, wr_fds, ex_fds, &tv);
-
-			if (r == -1) {
-				if (EINTR == errno)
-					continue;
-				fprintf(stderr, "select error: %s\n",
+		if (r == -1) {
+			if (EINTR == errno)
+				continue;
+			fprintf(stderr, "select error: %s\n",
 					strerror(errno));
-				return;
-			}
-
-			if (r == 0) {
-				fprintf(stderr, "select timeout\n");
-				return;
-			}
+			return;
+		}
+		if (use_poll && r == 0) {
+			fprintf(stderr, "select timeout\n");
+			return;
 		}
 
 		if (rd_fds && FD_ISSET(fd, rd_fds)) {
