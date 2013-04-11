@@ -408,7 +408,7 @@ static void do_release_buffers(struct v4l2_requestbuffers *reqbufs,
 
 static int do_handle_cap(int fd, struct v4l2_requestbuffers *reqbufs,
 			 bool is_mplane, unsigned num_planes,
-			 void *buffers[], unsigned buffer_lengths[], FILE *fout,
+			 void *buffers[], FILE *fout,
 			 unsigned &count, unsigned &last, struct timeval &tv_last)
 {
 	char ch = '+';
@@ -574,7 +574,7 @@ static int do_handle_out(int fd, struct v4l2_requestbuffers *reqbufs,
 	return 0;
 }
 
-void streaming_set_cap(int fd)
+static void streaming_set_cap(int fd)
 {
 	struct v4l2_requestbuffers reqbufs;
 	struct v4l2_event_subscription sub;
@@ -676,7 +676,7 @@ void streaming_set_cap(int fd)
 
 		if (FD_ISSET(fd, &read_fds)) {
 			r  = do_handle_cap(fd, &reqbufs, is_mplane, num_planes,
-					   buffers, buffer_lengths, fout,
+					   buffers, fout,
 					   count, last, tv_last);
 			if (r == -1)
 				break;
@@ -694,7 +694,7 @@ void streaming_set_cap(int fd)
 		fclose(fout);
 }
 
-void streaming_set_out(int fd)
+static void streaming_set_out(int fd)
 {
 	struct v4l2_requestbuffers reqbufs;
 	int fd_flags = fcntl(fd, F_GETFL);
@@ -802,7 +802,7 @@ enum stream_type {
 	OUT,
 };
 
-void streaming_set_m2m(int fd)
+static void streaming_set_m2m(int fd)
 {
 	int fd_flags = fcntl(fd, F_GETFL);
 	bool use_poll = options[OptStreamPoll];
@@ -934,7 +934,7 @@ void streaming_set_m2m(int fd)
 
 		if (rd_fds && FD_ISSET(fd, rd_fds)) {
 			r  = do_handle_cap(fd, &reqbufs[CAP], is_mplane, num_planes[CAP],
-					   buffers_cap, buffer_lengths_cap, file[CAP],
+					   buffers_cap, file[CAP],
 					   count[CAP], last[CAP], tv_last[CAP]);
 			if (r < 0) {
 				rd_fds = NULL;
