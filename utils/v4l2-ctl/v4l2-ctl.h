@@ -277,4 +277,8 @@ void streaming_cmd(int ch, char *optarg);
 void streaming_set(int fd);
 void streaming_list(int fd);
 
+// v4l2-ctl-test-patterns.cpp
+void fill_buffer(void *buffer, struct v4l2_pix_format *pix);
+bool precalculate_bars(__u32 pixfmt, unsigned pattern);
+
 #endif
