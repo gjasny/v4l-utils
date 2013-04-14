@@ -524,6 +524,10 @@ int do_traffic_monitor(struct arguments *args,
 		int pid, ok;
 		ssize_t r;
 		if ((r = read(dvr_fd, buffer, BSIZE)) <= 0) {
+			if (errno == EOVERFLOW) {
+				fprintf(stderr, "buffer overrun\n");
+				continue;
+			}
 			perror("read");
 			break;
 		}
