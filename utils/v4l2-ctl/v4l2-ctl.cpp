@@ -731,13 +731,17 @@ static __u32 parse_event(const char *e, const char **name)
 	return event;
 }
 
-__u32 find_pixel_format(int fd, unsigned index, bool mplane)
+__u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane)
 {
 	struct v4l2_fmtdesc fmt;
 
 	fmt.index = index;
-	fmt.type = mplane ?
-		V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE : V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (output)
+		fmt.type = mplane ?  V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
+			V4L2_BUF_TYPE_VIDEO_OUTPUT;
+	else
+		fmt.type = mplane ?  V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+			V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (doioctl(fd, VIDIOC_ENUM_FMT, &fmt))
 		return 0;
 	return fmt.pixelformat;

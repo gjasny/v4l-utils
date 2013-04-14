@@ -256,7 +256,7 @@ void vidcap_set(int fd)
 				if (in_vfmt.fmt.pix.pixelformat < 256) {
 					in_vfmt.fmt.pix.pixelformat =
 						find_pixel_format(fd, in_vfmt.fmt.pix.pixelformat,
-								  false);
+								  false, false);
 				}
 			}
 			/* G_FMT might return a bytesperline value > width,
@@ -286,7 +286,7 @@ void vidcap_set(int fd)
 				if (in_vfmt.fmt.pix_mp.pixelformat < 256) {
 					in_vfmt.fmt.pix_mp.pixelformat =
 						find_pixel_format(fd, in_vfmt.fmt.pix_mp.pixelformat,
-								  true);
+								  false, true);
 				}
 			}
 			/* G_FMT might return bytesperline values > width,
