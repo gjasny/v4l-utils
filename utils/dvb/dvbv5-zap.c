@@ -57,7 +57,7 @@ struct arguments {
 	unsigned record;
 	unsigned n_apid, n_vpid;
 	enum file_formats input_format, output_format;
-	unsigned traffic_monitor;
+	unsigned traffic_monitor, low_traffic;
 	char *search;
 
 	/* Used by status print */
@@ -85,7 +85,8 @@ static const struct argp_option options[] = {
 	{"output",	'o', "file",			0, "output filename (use -o - for stdout)", 0},
 	{"input-format", 'I',	"format",		0, "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)", 0},
 	{"dvbv3",	'3', NULL,			0, "Use DVBv3 only", 0},
-	{"monitor",	'm', NULL,			0, "monitors de DVB traffic", 0},
+	{"monitor",	'm', NULL,			0, "monitors the DVB traffic", 0},
+	{"low_traffic",	'X', NULL,			0, "also shows DVB traffic with less then 1 packet per second", 0},
 	{"search",	'L', NULL,			0, "search/look for a string inside the traffic", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
@@ -471,6 +472,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'm':
 		args->traffic_monitor = 1;
 		break;
+	case 'X':
+		args->low_traffic = 1;
+		break;
 	case 'L':
 		args->search = strdup(optarg);
 		break;
@@ -580,11 +584,16 @@ int do_traffic_monitor(struct arguments *args,
 				int _pid = 0;
 				for (_pid = 0; _pid < 0x2000; _pid++) {
 					if (pidt[_pid]) {
-						printf("%04x %9.2f p/s %8.1f Kbps %8llu KB\n",
+						if (!args->low_traffic && (pidt[_pid] * 1000. / diff) < 1)
+							continue;
+						printf("%04x %9.2f p/s %8.1f Kbps ",
 						     _pid,
 						     pidt[_pid] * 1000. / diff,
-						     pidt[_pid] * 1000. / diff * 8 * 188 / 1024,
-						     pidt[_pid] * 188 / 1024);
+						     pidt[_pid] * 1000. / diff * 8 * 188 / 1024);
+						if (pidt[_pid] * 188 / 1024)
+							printf("%8llu KB\n", pidt[_pid] * 188 / 1024);
+						else
+							printf(" %8llu B\n", pidt[_pid] * 188);
 					}
 				}
 				/* 0x2000 is the total traffic */
