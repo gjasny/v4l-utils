@@ -281,7 +281,8 @@ static void do_timeout(int x)
 	}
 }
 
-static int print_frontend_stats(struct arguments *args,
+static int print_frontend_stats(FILE *fd,
+				struct arguments *args,
 				struct dvb_v5_fe_parms *parms)
 {
 	char buf[512], *p;
@@ -289,8 +290,8 @@ static int print_frontend_stats(struct arguments *args,
 	uint32_t status = 0;
 
 	/* Move cursor up and cleans down */
-	if (isatty(STDERR_FILENO) && args->n_status_lines)
-		fprintf(stderr, "\r\x1b[%dA\x1b[J", args->n_status_lines);
+	if (isatty(fileno(fd)) && args->n_status_lines)
+		fprintf(fd, "\r\x1b[%dA\x1b[J", args->n_status_lines);
 
 	args->n_status_lines = 0;
 
@@ -330,9 +331,9 @@ static int print_frontend_stats(struct arguments *args,
 
 		if (p != buf) {
 			if (args->n_status_lines)
-				fprintf(stderr, "\t%s\n", buf);
+				fprintf(fd, "\t%s\n", buf);
 			else
-				fprintf(stderr, "%s\n", buf);
+				fprintf(fd, "%s\n", buf);
 
 			args->n_status_lines++;
 
@@ -341,12 +342,12 @@ static int print_frontend_stats(struct arguments *args,
 		}
 	}
 
-	fflush(stderr);
+	fflush(fd);
 
 	/* While not lock, display status on a new line */
 	dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
-	if (!isatty(STDERR_FILENO) || !(status & FE_HAS_LOCK))
-		fprintf(stderr, "\n");
+	if (!isatty(fileno(fd)) || !(status & FE_HAS_LOCK))
+		fprintf(fd, "\n");
 
 	return 0;
 }
@@ -363,13 +364,13 @@ static int check_frontend(struct arguments *args,
 
 		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
 		if (!args->silent)
-			print_frontend_stats(args, parms);
+			print_frontend_stats(stderr, args, parms);
 		if (args->exit_after_tuning && (status & FE_HAS_LOCK))
 			break;
 		usleep(1000000);
 	} while (!timeout_flag);
 	if (args->silent < 2)
-		print_frontend_stats(args, parms);
+		print_frontend_stats(stderr, args, parms);
 
 	return 0;
 }
@@ -567,7 +568,7 @@ int do_traffic_monitor(struct arguments *args,
 			    (now.tv_sec - startt.tv_sec) * 1000 +
 			    (now.tv_usec - startt.tv_usec) / 1000;
 			if (diff > wait) {
-				if (isatty(STDERR_FILENO))
+				if (isatty(STDOUT_FILENO))
 			                printf("\x1b[1H\x1b[2J");
 
 				args->n_status_lines = 0;
@@ -583,7 +584,7 @@ int do_traffic_monitor(struct arguments *args,
 					}
 				}
 				printf("\n\n");
-				print_frontend_stats(args, parms);
+				print_frontend_stats(stdout, args, parms);
 				wait += 1000;
 			}
 		}
@@ -781,12 +782,12 @@ int main(int argc, char **argv)
 			return -1;
 		}
 		if (args.silent < 2)
-			print_frontend_stats(&args, parms);
+			print_frontend_stats(stderr, &args, parms);
 
 		copy_to_file(dvr_fd, file_fd, args.timeout, args.silent);
 
 		if (args.silent < 2)
-			print_frontend_stats(&args, parms);
+			print_frontend_stats(stderr, &args, parms);
 	} else {
 		check_frontend(&args, parms);
 	}
