@@ -572,17 +572,22 @@ int do_traffic_monitor(struct arguments *args,
 			                printf("\x1b[1H\x1b[2J");
 
 				args->n_status_lines = 0;
-				printf(" PID         FREQ    BANDWIDTH      KBYTES\n");
+				printf(" PID          FREQ         SPEED       TOTAL\n");
 				int _pid = 0;
-				for (_pid = 0; _pid < 0x2001; _pid++) {
+				for (_pid = 0; _pid < 0x2000; _pid++) {
 					if (pidt[_pid]) {
-						printf("%04x %8.2f p/s %7.1f kb/s %8llu Kb\n",
+						printf("%04x %9.2f p/s %8.1f Kbps %8llu KB\n",
 						     _pid,
 						     pidt[_pid] * 1000. / diff,
-						     pidt[_pid] * 1000. / diff * 188 / 1024,
-						     pidt[_pid] * 8 * 188 / 1024);
+						     pidt[_pid] * 1000. / diff * 8 * 188 / 1024,
+						     pidt[_pid] * 188 / 1024);
 					}
 				}
+				/* 0x2000 is the total traffic */
+				printf("TOT %10.2f p/s %8.1f Kbps %8llu KB\n",
+				     pidt[_pid] * 1000. / diff,
+				     pidt[_pid] * 1000. / diff * 8 * 188 / 1024,
+				     pidt[_pid] * 188 / 1024);
 				printf("\n\n");
 				print_frontend_stats(stdout, args, parms);
 				wait += 1000;
