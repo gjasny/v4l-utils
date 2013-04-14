@@ -529,7 +529,13 @@ int do_traffic_monitor(struct arguments *args,
 		ssize_t r;
 		if ((r = read(dvr_fd, buffer, BSIZE)) <= 0) {
 			if (errno == EOVERFLOW) {
-				fprintf(stderr, "buffer overrun\n");
+				struct timeval now;
+				int diff;
+				gettimeofday(&now, 0);
+				diff =
+				    (now.tv_sec - startt.tv_sec) * 1000 +
+				    (now.tv_usec - startt.tv_usec) / 1000;
+				fprintf(stderr, "%.2fs: buffer overrun\n", diff / 1000.);
 				continue;
 			}
 			perror("read");
