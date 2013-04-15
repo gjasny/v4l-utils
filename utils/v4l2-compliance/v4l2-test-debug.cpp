@@ -37,7 +37,7 @@
 int testRegister(struct node *node)
 {
 	struct v4l2_dbg_register reg;
-	struct v4l2_dbg_chip_name chip;
+	struct v4l2_dbg_chip_info chip;
 	int ret;
 	int uid = getuid();
 
@@ -52,7 +52,7 @@ int testRegister(struct node *node)
 	fail_on_test(uid == 0 && ret);
 	chip.match.type = V4L2_CHIP_MATCH_BRIDGE;
 	chip.match.addr = 0;
-	fail_on_test(doioctl(node, VIDIOC_DBG_G_CHIP_NAME, &chip));
+	fail_on_test(doioctl(node, VIDIOC_DBG_G_CHIP_INFO, &chip));
 	if (uid) {
 		// Don't test S_REGISTER as root, don't want to risk
 		// messing with registers in the compliance test.
