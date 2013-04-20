@@ -31,7 +31,7 @@ v4l2gl_SOURCES = v4l2gl.c
 v4l2gl_LDFLAGS = $(X11_LIBS) $(GL_LIBS) $(GLU_LIBS)
 v4l2gl_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
 
-ioctl_test_SOURCES = ioctl-test.c
+ioctl_test_SOURCES = ioctl-test.c ioctl-test.h ioctl_32.h ioctl_64.h
 
 sliced_vbi_test_SOURCES = sliced-vbi-test.c
 
@@ -55,3 +55,6 @@ sync-with-kernel:
 	./tmp_ioctl64 64 >ioctl_64.h
 	rm .tmp_ioctl.c tmp_ioctl32 tmp_ioctl64
 	./gen_ioctl_list.pl >ioctl-test.h
+
+EXTRA_DIST = \
+	gen_ioctl_list.pl
