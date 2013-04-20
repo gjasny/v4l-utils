@@ -1,3 +1,62 @@
+v4l-utils-0.9.4
+---------------
+
+André Roth (1):
+      libdvbv5: fix anonymous unions on older gcc
+
+Gregor Jasny (2):
+      contrib: Add missing files to distribution list
+
+Hans Verkuil (33):
+      v4l2-* utils: allow -d11 to refer to /dev/video11
+      v4l-utils: run sync-with-kernel.
+      v4l2-ctl: add support for 'COPY' timestamp and ctrl range events.
+      v4l2-compliance: add support for the new 'COPY' timestamp type.
+      v4l2-compliance: missing check on the frameinterval
+      v4l2-compliance: improve tests when TRY/S_FMT returns EINVAL.
+      qv4l2: do nothing if querystd does not detect a standard.
+      qv4l2: handle control range updates.
+      libv4l2/log.c: update list of ioctls.
+      v4l2-compliance: fix s_std test: ENODATA is a valid error code.
+      v4l2-ctl: don't produce verbose output for QBUF while streaming.
+      qv4l2: fix the way interlaced formats are displayed
+      v4l2-ctl: fix the field-per-second calculation
+      qv4l2/v4l2-ctl: fix the fields-per-second calculation
+      qv4l2/v4l2-ctl: fix rounding error in field-per-second calculation
+      v4l2-ctl: add the --concise option.
+      v4l-utils: sync with kernel, remove all references to the DV_PRESET API.
+      v4l-utils: sync to the latest kernel.
+      v4l-utils: sync-with-kernel.
+      v4l2-compliance: remove ChipIdent tests
+      v4l2-ctl: set bytesused for streaming to the output.
+      v4l2-compliance: fix RDS + CAP_READWRITE tests.
+      v4l2-compliance: really fix the RDS and V4L2_CAP_READWRITE tests
+      v4l2-ctl: add eos and decoder-stop support.
+      v4l2-ctl: use references instead of pointers.
+      v4l2-ctl: fix a small bug in the stream-count/skip handling.
+      v4l2-ctl: split off test pattern generation in a separate source.
+      v4l2-ctl: small improvements.
+      v4l2-ctl: poll/non-poll behavior fixes
+      v4l2-ctl: find_pixel_format couldn't handle output streams.
+      v4l-utils: sync with latest kernel.
+      v4l2-dbg: replace CHIP_IDENT with CHIP_INFO.
+      v4l2-ctl: introduce buffers class to simplify the streaming code
+
+Jean Delvare (1):
+      dvbv5-zap: Fix build warning
+
+Mauro Carvalho Chehab (6):
+      dvbv5-zap: add traffic monitor support
+      dvbv5-zap: output stats to stdout on monitor mode
+      dvbv5-zap: Better output at monitor mode
+      dvbv5-zap: don't stop monitoring for buffer underrun
+      dvbv5-zap: better represent low_traffic data in monitor mode
+      dvbv5-zap: print elapsed time when buffer overflow happens
+
+Tzu-Jung Lee (2):
+      v4l2-ctl: break down the streaming_set()
+      v4l2-ctl: initial attempt to support M2M device streaming
+
 v4l-utils-0.9.3
 ---------------
 * Synced with latest kernel headers
