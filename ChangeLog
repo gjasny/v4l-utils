@@ -1,13 +1,49 @@
+v4l-utils-0.9.5
+---------------
+
+Gregor Jasny (1):
+      contrib: Add missing dist files for ioctl-test
+
 v4l-utils-0.9.4
 ---------------
 
-André Roth (1):
+André Roth (3):
+      libv4l-mplane: Fix compile flags to allow anonymous unions with gcc 4.5.5
+      libdvbv5: fix compile error
       libdvbv5: fix anonymous unions on older gcc
 
-Gregor Jasny (2):
+Antonio Ospite (2):
+      contrib/m920x/m920x_parse.pl: stricter check when extracting firmware
+      contrib/m920x/m920x_parse.pl: silence a warning
+
+Gregor Jasny (4):
+      libv4l: Add ASUS F2F with STK DC-1125 to upside down list
+      libv4l: Add Founder PC T14MF to upside down table
       contrib: Add missing files to distribution list
 
-Hans Verkuil (33):
+Hans Petter Selasky (1):
+      libv4l: Don't try to access sysfs 256 times when there is no sysfs
+
+Hans Verkuil (52):
+      qv4l2: add missing information for string and integer controls
+      qv4l2: add support for control events.
+      v4l2-compliance: allow EINVAL to be returned by S/TRY_FMT.
+      qv4l2: fix setting frequency for radio modulators
+      v4l-utils: sync with latest kernel.
+      v4l2-ctl: show used timestamp type.
+      v4l2-compliance: add check whether the timestamp is monotonic.
+      v4l-utils: fix make install problems with ln -s
+      v4l-utils: fix two 'dereferencing type-punned pointer' warnings
+      v4l2-compliance: reorganize verbosity options
+      ioctl-test: improve comments and add checks against ioctl num changes.
+      v4l2-compliance: improve read/write error reporting.
+      qv4l2: don't show "Query Standard" button if QUERYSTD isn't supported.
+      qv4l2: correctly update frame width and height for fixed resolutions.
+      v4l2-ctl: improve interval reporting.
+      v4l2-ctl: when streaming to file use bytesused instead of the full buffer.
+      v4l2-ctl: improve dv_timings reporting.
+      v4l2-ctl: support data_offset when streaming multiplanar formats.
+      v4l2-ctl: show buffers or key/P/B-frames when capturing.
       v4l2-* utils: allow -d11 to refer to /dev/video11
       v4l-utils: run sync-with-kernel.
       v4l2-ctl: add support for 'COPY' timestamp and ctrl range events.
@@ -45,13 +81,64 @@ Hans Verkuil (33):
 Jean Delvare (1):
       dvbv5-zap: Fix build warning
 
-Mauro Carvalho Chehab (6):
+Laurent Pinchart (2):
+      v4l2-compliance: Print invalid return codes in control tests
+      v4l2-compliance: Print invalid error_idx values in control tests
+
+Mauro Carvalho Chehab (50):
+      ir-keytable: Add support for testing EV_ABS events
+      keytable: merge two identical structures into one
+      keytable: reorder functions to put similar code together
+      keytable: Add handler for EV_REL type
+      keytable: also print code for unknown/unhandled events
+      keytable: Put events in numeric order
+      keytable: Add the remaining other unhandled events
+      keytable: Make the parsing code more generic
+      keytable: properly print the other MSC_* event names
+      keytable: be clear when a value is in hexadecimal
+      keytable: always use hexadecimal values for scancodes
+      dvbv5-zap: Allow to enable FE debug
+      Sync with kernel, with DVB stats
+      dvb-fe: add support for DVBv5 stats
+      dvbv5-zap: use the new DVBv5 stats API
+      dvb-fe: Add a flag to indicate if DVBv5 stats is in use
+      dvb-fe: Improve BER measurements for DVBv5
+      dvb-fe: Allow returning BER in a float value
+      dvbv5-zap: better display BER
+      dvb-fe: Add a method to report PER
+      dvb: Move the core of the stats logic to dvb-fe
+      dvb-fe: Fix PER statistics measurement
+      dvb-fe: Add support for a quality measurement
+      dvb: Rename a few DVB statistics
+      dvb: Add support for retrieving pre-BER data
+      dvb: use a macro for the number of Kernel stats
+      dvb: Better name the post-BER data
+      dvb: add support for pre-BER measurement
+      dvb: if the signal vanishes, bit/block error counters should vanish
+      dvbv5-zap: improve status display
+      dvbv5-scan: use library support for stats print
+      dvbv5-scan: also prints signal strength on tuner fail
+      ioctl-test: Auto-generate the list of ioctls to test
+      Add DVB headers to make sync-with-kernel
+      ioctl-test: expand it to also test DVB frontend/demux
+      dvbv5-scan: Fix get_signal logic
+      dvb-fe: Fix check for stats property
+      dvb-fe: Reserve space for the other DVBv5 properties
+      dvbv5-zap: Only go back if is there anything to clean
+      dvb5-scan: Improve output to better show the status
+      dvbv5-scan: don't be too verbose with status
+      dvb-scan: Don't call dvb_fe_get_stats() twice
+      dvb-fe: Supress statistics if signal lock vanishes
+      dvbv5-scan: timeout-multiply should also affect the timeout for scan
       dvbv5-zap: add traffic monitor support
       dvbv5-zap: output stats to stdout on monitor mode
       dvbv5-zap: Better output at monitor mode
       dvbv5-zap: don't stop monitoring for buffer underrun
       dvbv5-zap: better represent low_traffic data in monitor mode
       dvbv5-zap: print elapsed time when buffer overflow happens
+
+Riku Voipio (1):
+      v4l-utils: use openat when available
 
 Tzu-Jung Lee (2):
       v4l2-ctl: break down the streaming_set()
