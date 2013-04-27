@@ -55,7 +55,7 @@ struct arguments {
 	unsigned diseqc_wait, silent, verbose, frontend_only, freq_bpf;
 	unsigned timeout, dvr, rec_psi, exit_after_tuning;
 	unsigned record;
-	unsigned n_apid, n_vpid;
+	unsigned n_apid, n_vpid, all_pids;
 	enum file_formats input_format, output_format;
 	unsigned traffic_monitor, low_traffic;
 	char *search;
@@ -78,6 +78,7 @@ static const struct argp_option options[] = {
 	{"monitor",	'm', NULL,			0, "monitors de DVB traffic", 0},
 	{"output",	'o', "file",			0, "output filename (use -o - for stdout)", 0},
 	{"pat",		'p', NULL,			0, "add pat and pmt to TS recording (implies -r)", 0},
+	{"all-pids",	'P', NULL,			0, "don't filter any pids. Instead, outputs all of them", 0 },
 	{"record",	'r', NULL,			0, "set up /dev/dvb/adapterX/dvr0 for TS recording", 0},
 	{"silence",	's', NULL,			0, "increases silence (can be used more than once)", 0},
 	{"sat_number",	'S', "satellite_number",	0, "satellite number. If not specified, disable DISEqC", 0},
@@ -466,6 +467,10 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		break;
 	case 'V':
 		args->n_vpid = strtoul(optarg, NULL, 0);
+		break;
+	case 'P':
+		args->all_pids++;
+		break;
 	case '3':
 		args->force_dvbv3 = 1;
 		break;
@@ -744,9 +749,17 @@ int main(int argc, char **argv)
 			return -1;
 	}
 
+	if (args.all_pids++) {
+		vpid = 0x2000;
+		apid = 0;
+	}
 	if (vpid >= 0) {
-		if (args.silent < 2)
-			fprintf(stderr, "video pid %d\n", vpid);
+		if (args.silent < 2) {
+			if (vpid == 0x2000)
+				fprintf(stderr, "pass all PID's to TS\n");
+			else
+				fprintf(stderr, "video pid %d\n", vpid);
+		}
 		if ((video_fd = open(args.demux_dev, O_RDWR)) < 0) {
 			PERROR("failed opening '%s'", args.demux_dev);
 			return -1;
