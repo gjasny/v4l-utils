@@ -351,6 +351,19 @@ int testFBuf(struct node *node)
 	return 0;
 }
 
+static void createInvalidFmt(struct v4l2_format &fmt, unsigned type)
+{
+	memset(&fmt, 0xff, sizeof(fmt));
+	fmt.type = type;
+	fmt.fmt.pix.field = V4L2_FIELD_ANY;
+	if (type == V4L2_BUF_TYPE_VIDEO_OVERLAY ||
+	    type == V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY) {
+		fmt.fmt.win.clipcount = 0;
+		fmt.fmt.win.clips = NULL;
+		fmt.fmt.win.bitmap = NULL;
+	}
+}
+
 static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4l2_format &fmt)
 {
 	pixfmt_set &set = node->buftype_pixfmts[type];
@@ -486,8 +499,7 @@ int testGetFormats(struct node *node)
 	int ret;
 
 	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
-		memset(&fmt, 0xff, sizeof(fmt));
-		fmt.type = type;
+		createInvalidFmt(fmt, type);
 		ret = doioctl(node, VIDIOC_G_FMT, &fmt);
 		ret = testFormatsType(node, ret, type, fmt);
 
@@ -534,8 +546,7 @@ int testTryFormats(struct node *node)
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 
-		memset(&fmt, 0xff, sizeof(fmt));
-		fmt.type = type;
+		createInvalidFmt(fmt, type);
 		doioctl(node, VIDIOC_G_FMT, &fmt);
 		fmt_try = fmt;
 		ret = doioctl(node, VIDIOC_TRY_FMT, &fmt_try);
@@ -554,15 +565,7 @@ int testTryFormats(struct node *node)
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 
-		memset(&fmt, 0xff, sizeof(fmt));
-		fmt.type = type;
-		fmt.fmt.pix.field = V4L2_FIELD_ANY;
-		if (type == V4L2_BUF_TYPE_VIDEO_OVERLAY ||
-		    type == V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY) {
-			fmt.fmt.win.clipcount = 0;
-			fmt.fmt.win.clips = NULL;
-			fmt.fmt.win.bitmap = NULL;
-		}
+		createInvalidFmt(fmt, type);
 		ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
 		if (ret == EINVAL) {
 			__u32 pixelformat;
@@ -591,9 +594,7 @@ int testTryFormats(struct node *node)
 			warn("http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html\n");
 
 			/* Now try again, but pass a valid pixelformat. */
-			memset(&fmt, 0xff, sizeof(fmt));
-			fmt.type = type;
-			fmt.fmt.pix.field = V4L2_FIELD_ANY;
+			createInvalidFmt(fmt, type);
 			if (is_mplane)
 				fmt.fmt.pix_mp.pixelformat = pixelformat;
 			else
@@ -747,13 +748,10 @@ int testSetFormats(struct node *node)
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 
-		memset(&fmt, 0xff, sizeof(fmt));
-		fmt.type = type;
+		createInvalidFmt(fmt, type);
 		doioctl(node, VIDIOC_G_FMT, &fmt);
 		
-		memset(&fmt_set, 0xff, sizeof(fmt_set));
-		fmt_set.type = type;
-		fmt_set.fmt.pix.field = V4L2_FIELD_ANY;
+		createInvalidFmt(fmt_set, type);
 		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
 		if (ret == EINVAL) {
 			__u32 pixelformat;
@@ -782,9 +780,7 @@ int testSetFormats(struct node *node)
 			warn("http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html\n");
 
 			/* Now try again, but pass a valid pixelformat. */
-			memset(&fmt_set, 0xff, sizeof(fmt_set));
-			fmt_set.type = type;
-			fmt_set.fmt.pix.field = V4L2_FIELD_ANY;
+			createInvalidFmt(fmt_set, type);
 			if (is_mplane)
 				fmt_set.fmt.pix_mp.pixelformat = pixelformat;
 			else
