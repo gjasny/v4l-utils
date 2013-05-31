@@ -351,15 +351,17 @@ int testFBuf(struct node *node)
 	return 0;
 }
 
-static void createInvalidFmt(struct v4l2_format &fmt, unsigned type)
+static void createInvalidFmt(struct v4l2_format &fmt, struct v4l2_clip &clip, unsigned type)
 {
 	memset(&fmt, 0xff, sizeof(fmt));
 	fmt.type = type;
 	fmt.fmt.pix.field = V4L2_FIELD_ANY;
 	if (type == V4L2_BUF_TYPE_VIDEO_OVERLAY ||
 	    type == V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY) {
-		fmt.fmt.win.clipcount = 0;
-		fmt.fmt.win.clips = NULL;
+		memset(&clip, 0xff, sizeof(clip));
+		clip.next = NULL;
+		fmt.fmt.win.clipcount = 1;
+		fmt.fmt.win.clips = &clip;
 		fmt.fmt.win.bitmap = NULL;
 	}
 }
@@ -493,13 +495,14 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 
 int testGetFormats(struct node *node)
 {
+	struct v4l2_clip clip;
 	struct v4l2_format fmt;
 	bool supported = false;
 	int type;
 	int ret;
 
 	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
-		createInvalidFmt(fmt, type);
+		createInvalidFmt(fmt, clip, type);
 		ret = doioctl(node, VIDIOC_G_FMT, &fmt);
 		ret = testFormatsType(node, ret, type, fmt);
 
@@ -538,6 +541,7 @@ int testGetFormats(struct node *node)
 
 int testTryFormats(struct node *node)
 {
+	struct v4l2_clip clip;
 	struct v4l2_format fmt, fmt_try;
 	int type;
 	int ret;
@@ -546,7 +550,7 @@ int testTryFormats(struct node *node)
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 
-		createInvalidFmt(fmt, type);
+		createInvalidFmt(fmt, clip, type);
 		doioctl(node, VIDIOC_G_FMT, &fmt);
 		fmt_try = fmt;
 		ret = doioctl(node, VIDIOC_TRY_FMT, &fmt_try);
@@ -565,7 +569,7 @@ int testTryFormats(struct node *node)
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 
-		createInvalidFmt(fmt, type);
+		createInvalidFmt(fmt, clip, type);
 		ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
 		if (ret == EINVAL) {
 			__u32 pixelformat;
@@ -594,7 +598,7 @@ int testTryFormats(struct node *node)
 			warn("http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html\n");
 
 			/* Now try again, but pass a valid pixelformat. */
-			createInvalidFmt(fmt, type);
+			createInvalidFmt(fmt, clip, type);
 			if (is_mplane)
 				fmt.fmt.pix_mp.pixelformat = pixelformat;
 			else
@@ -740,6 +744,7 @@ static int testGlobalFormat(struct node *node, int type)
 
 int testSetFormats(struct node *node)
 {
+	struct v4l2_clip clip, clip_set;
 	struct v4l2_format fmt, fmt_set;
 	int type;
 	int ret;
@@ -748,10 +753,10 @@ int testSetFormats(struct node *node)
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 
-		createInvalidFmt(fmt, type);
+		createInvalidFmt(fmt, clip, type);
 		doioctl(node, VIDIOC_G_FMT, &fmt);
 		
-		createInvalidFmt(fmt_set, type);
+		createInvalidFmt(fmt_set, clip_set, type);
 		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
 		if (ret == EINVAL) {
 			__u32 pixelformat;
@@ -780,7 +785,7 @@ int testSetFormats(struct node *node)
 			warn("http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html\n");
 
 			/* Now try again, but pass a valid pixelformat. */
-			createInvalidFmt(fmt_set, type);
+			createInvalidFmt(fmt_set, clip_set, type);
 			if (is_mplane)
 				fmt_set.fmt.pix_mp.pixelformat = pixelformat;
 			else
