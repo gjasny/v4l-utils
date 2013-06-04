@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 /* used to define the current version (version field) of the v4l2_rds struct */
-#define V4L2_RDS_VERSION (1)
+#define V4L2_RDS_VERSION (2)
 
 /* Constants used to define the size of arrays used to store RDS information */
 #define MAX_ODA_CNT 18 	/* there are 16 groups each with type a or b. Of these
@@ -50,6 +50,16 @@ extern "C" {
 			* Additional data is limited to 112 bit, and the smallest
 			* optional tuple has a size of 4 bit (4 bit identifier +
 			* 0 bits of data) */
+#define MAX_TMC_ALT_STATIONS 32 /* defined by ISO 14819-1:2003, 7.5.3.3  */
+#define MAX_TMC_AF_CNT 4	/* limit for the numbers of AFs stored per alternative TMC
+			* station. This value is not defined by the standard, but based on observation
+			* of real-world RDS-TMC streams. The maximum encountered number of AFs per
+			* station during testing was 2 */
+#define MAX_EON_CNT 20	/* Maximal number of entries in the EON table (for storing
+			* information about other radio stations, broadcasted by the current station). 
+			* This value is not defined by the standard, but based on observation
+			* of real-world RDS-TMC streams. EON doesn't seem to be a widely used feature
+			* and the maximum number of EON encountered during testing was 8 */
 
 /* Define Constants for the possible types of RDS information
  * used to address the relevant bit in the valid_fields bitmask */
@@ -69,7 +79,10 @@ extern "C" {
 #define V4L2_RDS_LC		0x2000	/* Language Code */
 #define V4L2_RDS_TMC_SG		0x4000	/* RDS-TMC single group */
 #define V4L2_RDS_TMC_MG		0x8000	/* RDS-TMC multi group */
-#define V4L2_RDS_TMC_SYS	0x10000 /* RDS-TMC system information */
+#define V4L2_RDS_TMC_SYS	0x10000	/* RDS-TMC system information */
+#define V4L2_RDS_EON		0x20000	/* Enhanced Other Network Info */
+#define V4L2_RDS_LSF		0x40000	/* Linkage information */
+#define V4L2_RDS_TMC_TUNING	0x80000	/* RDS-TMC tuning information */
 
 /* Define Constants for the state of the RDS decoding process
  * used to address the relevant bit in the decode_information bitmask */
@@ -84,9 +97,10 @@ extern "C" {
 #define V4L2_RDS_FLAG_STATIC_PTY	0x08
 
 /* TMC related codes
- * used to extract TMC fields from RDS groups */
-#define V4L2_TMC_TUNING_INFO	0x08
-#define V4L2_TMC_SINGLE_GROUP	0x04
+ * used to extract TMC fields from RDS-TMC groups
+ * see ISO 14819-1:2003, Figure 2 - RDS-TMC single-grp full message structure */
+#define V4L2_TMC_TUNING_INFO	0x10	/* Bit 4 indicates Tuning Info / User msg */
+#define V4L2_TMC_SINGLE_GROUP	0x08	/* Bit 3 indicates Single / Multi-group msg */
 
 /* struct to encapsulate one complete RDS group */
 /* This structure is used internally to store data until a complete RDS
@@ -149,6 +163,57 @@ struct v4l2_rds_af_set {
 	uint32_t af[MAX_AF_CNT];	/* AFs defined in Hz */
 };
 
+/* struct to encapsulate one entry in the EON table (Enhanced Other Network) */
+struct v4l2_rds_eon {
+	uint32_t valid_fields;
+	uint16_t pi;
+	uint8_t ps[9];
+	uint8_t pty;
+	bool ta;
+	bool tp;
+	uint16_t lsf;		/* Linkage Set Number */
+	struct v4l2_rds_af_set af;
+};
+
+/* struct to encapsulate a table of EON information */
+struct v4l2_rds_eon_set {
+	uint8_t size;		/* size of the table */
+	uint8_t index;		/* current position in the table */
+	struct v4l2_rds_eon eon[MAX_EON_CNT];	/* Information about other
+						 * radio channels */
+};
+
+/* struct to encapsulate alternative frequencies (AFs) for RDS-TMC stations.
+ * AFs listed in af[] can be used unconditionally. 
+ * AFs listed in mapped_af[n] should only be used if the current 
+ * tuner frequency matches the value in mapped_af_tuning[n] */
+struct v4l2_tmc_alt_freq {
+	uint8_t af_size;		/* number of known AFs */
+	uint8_t af_index;
+	uint8_t mapped_af_size;		/* number of mapped AFs */
+	uint8_t mapped_af_index;
+	uint32_t af[MAX_TMC_AF_CNT];		/* AFs defined in Hz */
+	uint32_t mapped_af[MAX_TMC_AF_CNT];		/* mapped AFs defined in Hz */
+	uint32_t mapped_af_tuning[MAX_TMC_AF_CNT];	/* mapped AFs defined in Hz */
+};
+
+/* struct to encapsulate information about stations carrying RDS-TMC services */
+struct v4l2_tmc_station {
+	uint16_t pi;
+	uint8_t ltn;	/* database-ID of ON */
+	uint8_t msg;	/* msg parameters of ON */
+	uint8_t sid;	/* service-ID of ON */
+	struct v4l2_tmc_alt_freq afi;
+};
+
+/* struct to encapsulate tuning information for TMC */
+struct v4l2_tmc_tuning {
+	uint8_t station_cnt;	/* number of announced alternative stations */
+	uint8_t index;
+	struct v4l2_tmc_station station[MAX_TMC_ALT_STATIONS];	/* information
+							* about other stations carrying the same RDS-TMC service */
+};
+
 /* struct to encapsulate an additional data field in a TMC message */
 struct v4l2_tmc_additional {
 	uint8_t label;
@@ -199,6 +264,9 @@ struct v4l2_rds_tmc {
 	uint8_t t_d;		/* delay time (only if mode = enhanced */
 	uint8_t spn[9];		/* service provider name */
 	struct v4l2_rds_tmc_msg tmc_msg;
+
+	/* tuning information for alternative service providers */
+	struct v4l2_tmc_tuning tuning;
 };
 
 /* struct to encapsulate state and RDS information for current decoding process */
@@ -236,6 +304,7 @@ struct v4l2_rds {
 	struct v4l2_rds_statistics rds_statistics;
 	struct v4l2_rds_oda_set rds_oda;	/* Open Data Services */
 	struct v4l2_rds_af_set rds_af; 		/* Alternative Frequencies */
+	struct v4l2_rds_eon_set rds_eon;	/* EON information */
 	struct v4l2_rds_tmc tmc;		/* TMC information */
 };
 
