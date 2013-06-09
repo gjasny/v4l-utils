@@ -173,6 +173,13 @@ void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
 				req->count, (int)req->type, (int)req->memory);
 		break;
 	}
+	case VIDIOC_DQBUF: {
+		struct v4l2_buffer *buf = arg;
+		fprintf(v4l2_log_file, "  timestamp %ld.%06ld\n",
+			(long)buf->timestamp.tv_sec,
+			(long)buf->timestamp.tv_usec);
+		break;
+	}
 	case VIDIOC_ENUM_FRAMESIZES: {
 		struct v4l2_frmsizeenum *frmsize = arg;
 		int pixfmt = frmsize->pixel_format;
