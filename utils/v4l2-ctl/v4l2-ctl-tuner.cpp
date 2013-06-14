@@ -254,6 +254,13 @@ void tuner_set(int fd)
 		V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
 	double fac = 16;
 
+	if (!options[OptSetFreq] && !options[OptSetTuner] && !options[OptListFreqBands]
+	    && !options[OptSetModulator] && !options[OptFreqSeek]) {
+		/* Don't actually call G_[MODULATOR/TUNER] if we don't intend to
+		   actually perform any tuner related function */
+		return;
+	}
+
 	if (capabilities & V4L2_CAP_MODULATOR) {
 		type = V4L2_TUNER_RADIO;
 		modulator.index = tuner_index;
