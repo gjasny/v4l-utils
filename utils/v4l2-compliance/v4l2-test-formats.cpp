@@ -697,7 +697,7 @@ static int testGlobalFormat(struct node *node, int type)
 		return 0;
 	}
 	if (doioctl(node->node2, VIDIOC_S_FMT, &fmt2)) {
-		warn("Could not set fmt1\n");
+		warn("Could not set fmt2\n");
 		return 0;
 	}
 	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
