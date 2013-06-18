@@ -392,31 +392,6 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 		return 0;
 	}
 
-	/* Handle the DVB extra DTV_foo properties */
-	for (i = 0; i < ARRAY_SIZE(dvb_user_name); i++) {
-		if (!dvb_user_name[i])
-			continue;
-		if (!strcasecmp(key, dvb_user_name[i]))
-			break;
-	}
-	if (i < ARRAY_SIZE(dvb_user_name)) {
-		const char * const *attr_name = dvb_attr_names(i);
-		n_prop = entry->n_props;
-		entry->props[n_prop].cmd = i + DTV_USER_COMMAND_START;
-		if (!attr_name || !*attr_name)
-			entry->props[n_prop].u.data = atol(value);
-		else {
-			for (j = 0; attr_name[j]; j++)
-				if (!strcasecmp(value, attr_name[j]))
-					break;
-			if (!attr_name[j])
-				return -2;
-			entry->props[n_prop].u.data = j + DTV_USER_COMMAND_START;
-		}
-		entry->n_props++;
-		return 0;
-	}
-
 	/* Handle the other properties */
 
 	if (!strcasecmp(key, "SERVICE_ID")) {
