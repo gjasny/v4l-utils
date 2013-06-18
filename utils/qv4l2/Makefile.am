@@ -16,20 +16,20 @@ clean-local:
 
 # Call the moc preprocessor
 moc_qv4l2.cpp: $(srcdir)/qv4l2.h
-	$(MOC) -o $@ $(srcdir)/qv4l2.h
+	$(AM_V_GEN)$(MOC) -o $@ $(srcdir)/qv4l2.h
 
 moc_general-tab.cpp: $(srcdir)/general-tab.h
-	$(MOC) -o $@ $(srcdir)/general-tab.h
+	$(AM_V_GEN)$(MOC) -o $@ $(srcdir)/general-tab.h
 
 moc_vbi-tab.cpp: $(srcdir)/vbi-tab.h
-	$(MOC) -o $@ $(srcdir)/vbi-tab.h
+	$(AM_V_GEN)$(MOC) -o $@ $(srcdir)/vbi-tab.h
 
 moc_capture-win.cpp: $(srcdir)/capture-win.h
-	$(MOC) -o $@ $(srcdir)/capture-win.h
+	$(AM_V_GEN)$(MOC) -o $@ $(srcdir)/capture-win.h
 
 # Call the Qt resource compiler
 qrc_qv4l2.cpp: $(srcdir)/qv4l2.qrc
-	$(RCC) -name qv4l2 -o $@ $(srcdir)/qv4l2.qrc
+	$(AM_V_GEN)$(RCC) -name qv4l2 -o $@ $(srcdir)/qv4l2.qrc
 
 install-data-local:
 	$(INSTALL_DATA) -D -p "$(srcdir)/qv4l2.desktop"   "$(DESTDIR)$(datadir)/applications/qv4l2.desktop"
