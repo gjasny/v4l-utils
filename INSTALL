@@ -8,8 +8,8 @@ Building:
 ---------
 
 If you checked out the source repository you need to install the autotools
-environment first. Then type "autoreconf -vfi" to generate the configure
-script.
+environment and gettext first. Then type "autoreconf -vfi" to generate the
+configure script.
 
 Then execute "configure" with any desired options. You can get a summary via
 the --help option.
