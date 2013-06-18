@@ -203,6 +203,7 @@ int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *parms, const unsigned len,
 		      const unsigned char *buf);
 int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
 		       int timeout);
+int dvb_fe_is_satellite(uint32_t delivery_system);
 
 #ifdef __cplusplus
 }

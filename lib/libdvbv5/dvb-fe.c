@@ -230,7 +230,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 }
 
 
-static int is_satellite(uint32_t delivery_system)
+int dvb_fe_is_satellite(uint32_t delivery_system)
 {
 	switch (delivery_system) {
 	case SYS_DVBS:
@@ -254,7 +254,7 @@ void dvb_fe_close(struct dvb_v5_fe_parms *parms)
 		return;
 
 	/* Disable LNBf power */
-	if (is_satellite(parms->current_sys))
+	if (dvb_fe_is_satellite(parms->current_sys))
 		dvb_fe_sec_voltage(parms, 0, 0);
 
 	close(parms->fd);
@@ -298,8 +298,8 @@ int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 
 	if (sys != parms->current_sys) {
 		/* Disable LNBf power */
-		if (is_satellite(parms->current_sys) &&
-		    !is_satellite(sys))
+		if (dvb_fe_is_satellite(parms->current_sys) &&
+		    !dvb_fe_is_satellite(sys))
 			dvb_fe_sec_voltage(parms, 0, 0);
 
 		/* Can't change standard with the legacy FE support */
@@ -594,7 +594,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 
 ret:
 	/* For satellite, need to recover from LNBf IF frequency */
-	if (is_satellite(parms->current_sys))
+	if (dvb_fe_is_satellite(parms->current_sys))
 		return dvb_sat_get_parms(parms);
 
 	return 0;
@@ -609,7 +609,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 
 	struct dtv_property fe_prop[DTV_MAX_COMMAND];
 
-	if (is_satellite(parms->current_sys)) {
+	if (dvb_fe_is_satellite(parms->current_sys)) {
 		dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
 		dvb_sat_set_parms(parms);
 	}
@@ -673,7 +673,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	}
 ret:
 	/* For satellite, need to recover from LNBf IF frequency */
-	if (is_satellite(parms->current_sys))
+	if (dvb_fe_is_satellite(parms->current_sys))
 		dvb_fe_store_parm(parms, DTV_FREQUENCY, freq);
 
 	return 0;
