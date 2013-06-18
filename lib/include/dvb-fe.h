@@ -104,7 +104,6 @@ struct dvb_v5_fe_parms {
 	unsigned			freq_bpf;
 
 	/* Satellite specific stuff, used internally */
-	//enum dvb_sat_polarization       pol;
 	int				high_band;
 	unsigned			diseqc_wait;
 	unsigned			freq_offset;

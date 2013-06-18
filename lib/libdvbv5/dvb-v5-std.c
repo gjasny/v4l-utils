@@ -125,8 +125,6 @@ const unsigned int sys_dvbs_props[] = {
 	DTV_INVERSION,
 	DTV_SYMBOL_RATE,
 	DTV_INNER_FEC,
-	/*DTV_VOLTAGE,*/
-	/*DTV_TONE,*/
 	DTV_POLARIZATION,
 	0
 };
@@ -136,8 +134,6 @@ const unsigned int sys_dvbs2_props[] = {
 	DTV_INVERSION,
 	DTV_SYMBOL_RATE,
 	DTV_INNER_FEC,
-	/*DTV_VOLTAGE,*/
-	/*DTV_TONE,*/
 	DTV_MODULATION,
 	DTV_PILOT,
 	DTV_ROLLOFF,
@@ -150,9 +146,8 @@ const unsigned int sys_turbo_props[] = {
 	DTV_INVERSION,
 	DTV_SYMBOL_RATE,
 	DTV_INNER_FEC,
-	DTV_VOLTAGE,
-	DTV_TONE,
 	DTV_MODULATION,
+	DTV_POLARIZATION,
 	0
 };
 
@@ -161,8 +156,8 @@ const unsigned int sys_isdbs_props[] = {
 	DTV_INVERSION,
 	DTV_SYMBOL_RATE,
 	DTV_INNER_FEC,
-	DTV_VOLTAGE,
 	DTV_ISDBS_TS_ID_LEGACY,
+	DTV_POLARIZATION,
 	0
 };
 
