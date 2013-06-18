@@ -35,7 +35,6 @@ struct dvb_entry {
 
 	char *location;
 
-//	enum dvbsat_polarization pol;
 	int sat_number;
 	unsigned freq_bpf;
 	unsigned diseqc_wait;
