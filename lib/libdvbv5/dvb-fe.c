@@ -551,7 +551,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 			       delivery_system_name[parms->current_sys]);
 			dvb_fe_prt_parms(parms);
 		}
-		goto ret;
+		return 0;
 	}
 	/* DVBv3 call */
 	if (ioctl(parms->fd, FE_GET_FRONTEND, &v3_parms) == -1) {
@@ -592,32 +592,27 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 		return -EINVAL;
 	}
 
-ret:
-	/* For satellite, need to recover from LNBf IF frequency */
-	if (dvb_fe_is_satellite(parms->current_sys))
-		return dvb_sat_get_parms(parms);
-
 	return 0;
 }
 
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 {
+	/* Use a temporary copy of the parameters so we can safely perform
+	 * adjustments for satellite */
+	struct dvb_v5_fe_parms tmp_parms = *parms;
+
 	struct dtv_properties prop;
 	struct dvb_frontend_parameters v3_parms;
-	uint32_t freq;
 	uint32_t bw;
 
-	struct dtv_property fe_prop[DTV_MAX_COMMAND];
+	if (dvb_fe_is_satellite(tmp_parms.current_sys))
+		dvb_sat_set_parms(&tmp_parms);
 
-	if (dvb_fe_is_satellite(parms->current_sys)) {
-		dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
-		dvb_sat_set_parms(parms);
-	}
+	/* Filter out any user DTV_foo property such as DTV_POLARIZATION */
+	tmp_parms.n_props = dvb_copy_fe_props(tmp_parms.dvb_prop, tmp_parms.n_props, tmp_parms.dvb_prop);
 
-	int n = dvb_copy_fe_props(parms->dvb_prop, parms->n_props, fe_prop);
-
-	prop.props = fe_prop;
-	prop.num = n;
+	prop.props = tmp_parms.dvb_prop;
+	prop.num = tmp_parms.n_props;
 	prop.props[prop.num].cmd = DTV_TUNE;
 	prop.num++;
 
@@ -628,53 +623,49 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 				dvb_fe_prt_parms(parms);
 			return -1;
 		}
-		goto ret;
+		return 0;
 	}
 	/* DVBv3 call */
 
-	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &v3_parms.frequency);
-	dvb_fe_retrieve_parm(parms, DTV_INVERSION, &v3_parms.inversion);
-	switch (parms->current_sys) {
+	dvb_fe_retrieve_parm(&tmp_parms, DTV_FREQUENCY, &v3_parms.frequency);
+	dvb_fe_retrieve_parm(&tmp_parms, DTV_INVERSION, &v3_parms.inversion);
+	switch (tmp_parms.current_sys) {
 	case SYS_DVBS:
-		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &v3_parms.u.qpsk.symbol_rate);
-		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &v3_parms.u.qpsk.fec_inner);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_SYMBOL_RATE, &v3_parms.u.qpsk.symbol_rate);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_INNER_FEC, &v3_parms.u.qpsk.fec_inner);
 		break;
 	case SYS_DVBC_ANNEX_AC:
-		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &v3_parms.u.qam.symbol_rate);
-		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &v3_parms.u.qam.fec_inner);
-		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.qam.modulation);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_SYMBOL_RATE, &v3_parms.u.qam.symbol_rate);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_INNER_FEC, &v3_parms.u.qam.fec_inner);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_MODULATION, &v3_parms.u.qam.modulation);
 		break;
 	case SYS_ATSC:
 	case SYS_ATSCMH:
 	case SYS_DVBC_ANNEX_B:
-		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.vsb.modulation);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_MODULATION, &v3_parms.u.vsb.modulation);
 		break;
 	case SYS_DVBT:
 		for (bw = 0; fe_bandwidth_name[bw] != 0; bw++) {
 			if (fe_bandwidth_name[bw] == v3_parms.u.ofdm.bandwidth)
 				break;
 		}
-		dvb_fe_retrieve_parm(parms, DTV_BANDWIDTH_HZ, &bw);
-		dvb_fe_retrieve_parm(parms, DTV_CODE_RATE_HP, &v3_parms.u.ofdm.code_rate_HP);
-		dvb_fe_retrieve_parm(parms, DTV_CODE_RATE_LP, &v3_parms.u.ofdm.code_rate_LP);
-		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &v3_parms.u.ofdm.constellation);
-		dvb_fe_retrieve_parm(parms, DTV_TRANSMISSION_MODE, &v3_parms.u.ofdm.transmission_mode);
-		dvb_fe_retrieve_parm(parms, DTV_GUARD_INTERVAL, &v3_parms.u.ofdm.guard_interval);
-		dvb_fe_retrieve_parm(parms, DTV_HIERARCHY, &v3_parms.u.ofdm.hierarchy_information);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_BANDWIDTH_HZ, &bw);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_CODE_RATE_HP, &v3_parms.u.ofdm.code_rate_HP);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_CODE_RATE_LP, &v3_parms.u.ofdm.code_rate_LP);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_MODULATION, &v3_parms.u.ofdm.constellation);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_TRANSMISSION_MODE, &v3_parms.u.ofdm.transmission_mode);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_GUARD_INTERVAL, &v3_parms.u.ofdm.guard_interval);
+		dvb_fe_retrieve_parm(&tmp_parms, DTV_HIERARCHY, &v3_parms.u.ofdm.hierarchy_information);
 		break;
 	default:
 		return -EINVAL;
 	}
-	if (ioctl(parms->fd, FE_SET_FRONTEND, &v3_parms) == -1) {
+	if (ioctl(tmp_parms.fd, FE_SET_FRONTEND, &v3_parms) == -1) {
 		dvb_perror("FE_SET_FRONTEND");
-		if (parms->verbose)
-			dvb_fe_prt_parms(parms);
+		if (tmp_parms.verbose)
+			dvb_fe_prt_parms(&tmp_parms);
 		return -1;
 	}
-ret:
-	/* For satellite, need to recover from LNBf IF frequency */
-	if (dvb_fe_is_satellite(parms->current_sys))
-		dvb_fe_store_parm(parms, DTV_FREQUENCY, freq);
 
 	return 0;
 }

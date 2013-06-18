@@ -394,17 +394,6 @@ ret:
 	return rc;
 }
 
-int dvb_sat_get_parms(struct dvb_v5_fe_parms *parms)
-{
-	uint32_t freq = 0;
-
-	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
-	freq = abs(freq + parms->freq_offset);
-	dvb_fe_store_parm(parms, DTV_FREQUENCY, freq);
-
-	return 0;
-}
-
 const char *dvbsat_polarization_name[5] = {
 	"OFF",
 	"H",
