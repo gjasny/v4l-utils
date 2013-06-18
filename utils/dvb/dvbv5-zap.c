@@ -165,6 +165,15 @@ static int parse(struct arguments *args,
 		return -3;
 	}
 
+	if (entry->lnb) {
+		int lnb = dvb_sat_search_lnb(entry->lnb);
+		if (lnb == -1) {
+			PERROR("unknown LNB %s\n", entry->lnb);
+			return -1;
+		}
+		parms->lnb = dvb_sat_get_lnb(lnb);
+	}
+
 	if (entry->video_pid) {
 		if (args->n_vpid < entry->video_pid_len)
 			*vpid = entry->video_pid[args->n_vpid];
