@@ -274,9 +274,10 @@ static std::string seltarget2s(__u32 target)
 {
 	int i = 0;
 
-	while (selection_targets_def[i++].str != NULL) {
+	while (selection_targets_def[i].str != NULL) {
 		if (selection_targets_def[i].flag == target)
 			return selection_targets_def[i].str;
+		i++;
 	}
 	return "Unknown";
 }
@@ -426,10 +427,11 @@ void selection_get(int fd)
 		sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
 		if (options[OptAll] || get_sel_target == -1) {
-			while (selection_targets_def[t++].str != NULL) {
+			while (selection_targets_def[t].str != NULL) {
 				sel.target = selection_targets_def[t].flag;
 				if (doioctl(fd, VIDIOC_G_SELECTION, &sel) == 0)
 					print_selection(sel);
+				t++;
 			}
 		} else {
 			sel.target = get_sel_target;
@@ -446,10 +448,11 @@ void selection_get(int fd)
 		sel.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 
 		if (options[OptAll] || get_sel_target == -1) {
-			while (selection_targets_def[t++].str != NULL) {
+			while (selection_targets_def[t].str != NULL) {
 				sel.target = selection_targets_def[t].flag;
 				if (doioctl(fd, VIDIOC_G_SELECTION, &sel) == 0)
 					print_selection(sel);
+				t++;
 			}
 		} else {
 			sel.target = get_sel_target;
