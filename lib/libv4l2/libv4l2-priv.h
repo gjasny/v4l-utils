@@ -44,6 +44,11 @@
 		fprintf(stderr, "libv4l2: error " __VA_ARGS__); \
 	} while (0)
 
+#define V4L2_PERROR(format, ...)		\
+	do { 					\
+		V4L2_LOG_ERR(format ": %s\n", ##__VA_ARGS__, strerror(errno)); \
+	} while (0)
+
 #define V4L2_LOG_WARN(...) 			\
 	do { 					\
 		if (v4l2_log_file) { 		\

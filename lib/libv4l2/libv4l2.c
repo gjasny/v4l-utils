@@ -164,7 +164,7 @@ static int v4l2_map_buffers(int index)
 		if (result) {
 			int saved_err = errno;
 
-			V4L2_LOG_ERR("querying buffer %u: %s\n", i, strerror(errno));
+			V4L2_PERROR("querying buffer %u", i);
 			errno = saved_err;
 			break;
 		}
@@ -175,7 +175,7 @@ static int v4l2_map_buffers(int index)
 		if (devices[index].frame_pointers[i] == MAP_FAILED) {
 			int saved_err = errno;
 
-			V4L2_LOG_ERR("mmapping buffer %u: %s\n", i, strerror(errno));
+			V4L2_PERROR("mmapping buffer %u", i);
 			errno = saved_err;
 			result = -1;
 			break;
@@ -216,7 +216,7 @@ static int v4l2_streamon(int index)
 		if (result) {
 			int saved_err = errno;
 
-			V4L2_LOG_ERR("turning on stream: %s\n", strerror(errno));
+			V4L2_PERROR("turning on stream");
 			errno = saved_err;
 			return result;
 		}
@@ -239,7 +239,7 @@ static int v4l2_streamoff(int index)
 		if (result) {
 			int saved_err = errno;
 
-			V4L2_LOG_ERR("turning off stream: %s\n", strerror(errno));
+			V4L2_PERROR("turning off stream");
 			errno = saved_err;
 			return result;
 		}
@@ -269,7 +269,7 @@ static int v4l2_queue_read_buffer(int index, int buffer_index)
 	if (result) {
 		int saved_err = errno;
 
-		V4L2_LOG_ERR("queuing buf %d: %s\n", buffer_index, strerror(errno));
+		V4L2_PERROR("queuing buf %d", buffer_index);
 		errno = saved_err;
 		return result;
 	}
@@ -297,7 +297,7 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 			if (errno != EAGAIN) {
 				int saved_err = errno;
 
-				V4L2_LOG_ERR("dequeuing buf: %s\n", strerror(errno));
+				V4L2_PERROR("dequeuing buf");
 				errno = saved_err;
 			}
 			return result;
@@ -385,7 +385,7 @@ static int v4l2_read_and_convert(int index, unsigned char *dest, int dest_size)
 			if (result && errno != EAGAIN) {
 				int saved_err = errno;
 
-				V4L2_LOG_ERR("reading: %s\n", strerror(errno));
+				V4L2_PERROR("reading");
 				errno = saved_err;
 			}
 			return result;
@@ -543,7 +543,7 @@ static int v4l2_buffers_mapped(int index)
 					&buf)) {
 				int saved_err = errno;
 
-				V4L2_LOG_ERR("querying buffer %u: %s\n", i, strerror(errno));
+				V4L2_PERROR("querying buffer %u", i);
 				errno = saved_err;
 				break;
 			}
@@ -949,7 +949,7 @@ static int v4l2_s_fmt(int index, struct v4l2_format *dest_fmt)
 					       VIDIOC_S_FMT, &src_fmt);
 	if (result) {
 		int saved_err = errno;
-		V4L2_LOG_ERR("setting pixformat: %s\n", strerror(errno));
+		V4L2_PERROR("setting pixformat");
 		/* Report to the app dest_fmt has not changed */
 		*dest_fmt = devices[index].dest_fmt;
 		errno = saved_err;
@@ -1181,9 +1181,8 @@ no_capture_request:
 				devices[index].dev_ops_priv,
 				fd, VIDIOC_G_FMT, &src_fmt);
 		if (result) {
-			V4L2_LOG_ERR("getting pixformat after %s: %s\n",
-				     v4l2_ioctls[_IOC_NR(request)],
-				     strerror(errno));
+			V4L2_PERROR("getting pixformat after %s",
+				     v4l2_ioctls[_IOC_NR(request)]);
 			result = 0; /* The original command did succeed */
 			break;
 		}
@@ -1298,7 +1297,7 @@ no_capture_request:
 					fd, VIDIOC_DQBUF, buf);
 			if (result) {
 				saved_err = errno;
-				V4L2_LOG_ERR("dequeuing buf: %s\n", strerror(errno));
+				V4L2_PERROR("dequeuing buf");
 				errno = saved_err;
 			}
 			break;
@@ -1443,7 +1442,7 @@ static void v4l2_adjust_src_fmt_to_fps(int index, int fps)
 	req_pix_fmt = src_fmt.fmt.pix;
 	if (devices[index].dev_ops->ioctl(devices[index].dev_ops_priv,
 			devices[index].fd, VIDIOC_S_FMT, &src_fmt)) {
-		V4L2_LOG_ERR("restoring src fmt: %s\n", strerror(errno));
+		V4L2_PERROR("restoring src fmt");
 		return;
 	}
 	v4l2_set_src_and_dest_format(index, &src_fmt, &dest_fmt);
