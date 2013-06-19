@@ -795,11 +795,13 @@ int v4l2_close(int fd)
 	/* Free resources */
 	v4l2_unmap_buffers(index);
 	if (devices[index].convert_mmap_buf != MAP_FAILED) {
-		if (v4l2_buffers_mapped(index))
-			V4L2_LOG_WARN("v4l2 mmap buffers still mapped on close()\n");
-		else
+		if (v4l2_buffers_mapped(index)) {
+			if (!devices[index].gone)
+				V4L2_LOG_WARN("v4l2 mmap buffers still mapped on close()\n");
+		} else {
 			SYS_MUNMAP(devices[index].convert_mmap_buf,
 					devices[index].no_frames * V4L2_FRAME_BUF_SIZE);
+		}
 		devices[index].convert_mmap_buf = MAP_FAILED;
 	}
 	v4lconvert_destroy(devices[index].convert);

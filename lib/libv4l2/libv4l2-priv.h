@@ -46,6 +46,10 @@
 
 #define V4L2_PERROR(format, ...)		\
 	do { 					\
+		if (errno == ENODEV) {		\
+			devices[index].gone = 1;\
+			break;			\
+		}				\
 		V4L2_LOG_ERR(format ": %s\n", ##__VA_ARGS__, strerror(errno)); \
 	} while (0)
 
@@ -72,6 +76,7 @@ struct v4l2_dev_info {
 	int fd;
 	int flags;
 	int open_count;
+	int gone; /* Set to 1 when a device is detached (ENODEV encountered) */
 	/* actual format of the cam */
 	struct v4l2_format src_fmt;
 	/* fmt as seen by the application (iow after conversion) */
