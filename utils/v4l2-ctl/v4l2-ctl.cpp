@@ -285,8 +285,6 @@ std::string buftype2s(int type)
 		return "Sliced VBI Output";
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 		return "Video Output Overlay";
-	case V4L2_BUF_TYPE_PRIVATE:
-		return "Private";
 	default:
 		return "Unknown (" + num2s(type) + ")";
 	}
@@ -461,8 +459,6 @@ void printfmt(const struct v4l2_format &vfmt)
 			       service2s(vfmt.fmt.sliced.service_lines[1][i]).c_str());
 		}
 		printf("\tI/O Size       : %u\n", vfmt.fmt.sliced.io_size);
-		break;
-	case V4L2_BUF_TYPE_PRIVATE:
 		break;
 	}
 }
