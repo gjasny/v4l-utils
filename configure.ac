@@ -202,7 +202,7 @@ AC_DEFINE_DIR([IR_KEYTABLE_USER_DIR], [keytableuserdir], [ir-keytable user defin
 # options
 
 AC_ARG_ENABLE(libdvbv5,
-  AS_HELP_STRING([--disable-libdvbv5], [disable dynamic libdvbv5 compilation]),
+  AS_HELP_STRING([--enable-libdvbv5], [enable experimental dynamic libdvbv5 compilation]),
   [case "${enableval}" in
      yes | no ) ;;
      *) AC_MSG_ERROR(bad value ${enableval} for --enable-libdvbv5) ;;
@@ -233,7 +233,7 @@ AC_ARG_ENABLE(qv4l2,
    esac]
 )
 
-AM_CONDITIONAL([WITH_LIBDVBV5], [test x$enable_libdvbv5 != xno])
+AM_CONDITIONAL([WITH_LIBDVBV5], [test x$enable_libdvbv5 = xyes])
 AM_CONDITIONAL([WITH_LIBV4L], [test x$enable_libv4l != xno])
 AM_CONDITIONAL([WITH_V4LUTILS], [test x$enable_v4lutils != xno])
 AM_CONDITIONAL([WITH_QV4L2], [test ${qt_pkgconfig} = true -a x$enable_qv4l2 != xno])
@@ -241,7 +241,7 @@ AM_CONDITIONAL([WITH_V4L_PLUGINS], [test x$enable_libv4l != xno -a x$enable_shar
 AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$enable_libv4l != xno -a x$enable_shared != xno])
 
 # append -static to libtool compile and link command to enforce static libs
-AS_IF([test x$enable_libdvbv5 = xno], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])
+AS_IF([test x$enable_libdvbv5 != xyes], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])
 AS_IF([test x$enable_libv4l = xno], [AC_SUBST([ENFORCE_LIBV4L_STATIC], ["-static"])])
 
 # misc
