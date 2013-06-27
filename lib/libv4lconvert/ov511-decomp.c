@@ -14,6 +14,7 @@
  * Free Software Foundation; version 2 of the License.
  */
 
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 #include "helper-funcs.h"
@@ -640,7 +641,11 @@ int main(int argc, char *argv[])
 
 
 		dest_size = width * height * 3 / 2;
-		if (dest_size > sizeof(dest_buf)) {
+		if (width <= 0 || width > SHRT_MAX || height <= 0 || height > SHRT_MAX) {
+			fprintf(stderr, "%s: error: width or height out of bounds\n",
+					argv[0]);
+			dest_size = -1;
+		} else if (dest_size > sizeof(dest_buf)) {
 			fprintf(stderr, "%s: error: dest_buf too small, need: %d\n",
 					argv[0], dest_size);
 			dest_size = -1;
