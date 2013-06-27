@@ -210,13 +210,19 @@ static error_t parse_keyfile(char *fname, char **table)
 			p++;
 			p = strtok(p, "\n\t =:");
 			do {
+				if (!p)
+					goto err_einval;
 				if (!strcmp(p, "table")) {
 					p = strtok(NULL,"\n, ");
+					if (!p)
+						goto err_einval;
 					*table = malloc(strlen(p) + 1);
 					strcpy(*table, p);
 				} else if (!strcmp(p, "type")) {
 					p = strtok(NULL, " ,\n");
 					do {
+						if (!p)
+							goto err_einval;
 						if (!strcasecmp(p,"rc5") || !strcasecmp(p,"rc-5"))
 							ch_proto |= RC_5;
 						else if (!strcasecmp(p,"rc6") || !strcasecmp(p,"rc-6"))
@@ -450,6 +456,8 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	case 'p':
 		p = strtok(arg, ",;");
 		do {
+			if (!p)
+				goto err_inval;
 			if (!strcasecmp(p,"rc5") || !strcasecmp(p,"rc-5"))
 				ch_proto |= RC_5;
 			else if (!strcasecmp(p,"rc6") || !strcasecmp(p,"rc-6"))
@@ -816,13 +824,18 @@ static int v1_get_sw_enabled_protocol(char *dirname)
 		return 0;
 	}
 
-	p = strtok(buf, " \n");
-	rc = atoi(p);
-
 	if (fclose(fp)) {
 		perror(name);
 		return errno;
 	}
+
+	p = strtok(buf, " \n");
+	if (!p) {
+		fprintf(stderr, "%s has invalid content: '%s'\n", name, buf);
+		return 0;
+	}
+
+	rc = atoi(p);
 
 	if (debug)
 		fprintf(stderr, "protocol %s is %s\n",
