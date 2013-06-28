@@ -113,6 +113,7 @@ const char *v4l2_ioctls[] = {
 	[_IOC_NR(VIDIOC_QUERY_DV_TIMINGS)] = "VIDIOC_QUERY_DV_TIMINGS",
 	[_IOC_NR(VIDIOC_DV_TIMINGS_CAP)]   = "VIDIOC_DV_TIMINGS_CAP",
 	[_IOC_NR(VIDIOC_ENUM_FREQ_BANDS)]  = "VIDIOC_ENUM_FREQ_BANDS",
+	[_IOC_NR(VIDIOC_DBG_G_CHIP_INFO)]  = "VIDIOC_DBG_G_CHIP_INFO",
 };
 
 void v4l2_log_ioctl(unsigned long int request, void *arg, int result)
