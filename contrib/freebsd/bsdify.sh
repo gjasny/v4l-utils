@@ -33,9 +33,6 @@ for i in input.h ivtv.h uinput.h videodev2.h v4l2-controls.h v4l2-common.h dvb/{
     cp $KERNEL_DIR/include/uapi/linux/$i include/linux/$i
 done
 
-mkdir -p include/media
-cp $KERNEL_DIR/include/media/v4l2-chip-ident.h include/media/
-
 # replace kernel types
 
 for i in ivtv.h uinput.h videodev2.h dvb/{audio.h,ca.h,dmx.h,frontend.h,net.h,osd.h,version.h,video.h}; do
