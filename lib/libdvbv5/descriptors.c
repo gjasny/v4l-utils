@@ -758,7 +758,7 @@ static void parse_lcn(struct nit_table *nit_table,
 	for (i = 0; i < dlen; i+= 4, p+= 4) {
 		struct lcn_table **lcn = &nit_table->lcn;
 
-		*lcn = realloc(*lcn, (n + 1) * sizeof(*lcn));
+		*lcn = realloc(*lcn, (n + 1) * sizeof(**lcn));
 		(*lcn)[n].service_id = p[0] << 8 | p[1];
 		(*lcn)[n].lcn = (p[2] << 8 | p[3]) & 0x3ff;
 		nit_table->lcn_len++;
