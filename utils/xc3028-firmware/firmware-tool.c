@@ -86,13 +86,13 @@ static struct firmware* alloc_firmware(void) {
 
 static void free_firmware(struct firmware *f) {
 	free(f->name);
-	free(f->desc);
 	if(f->desc) {
 		unsigned int i = 0;
 		for(i = 0; i < f->nr_desc; ++ i) {
 			free(f->desc[i].data);
 		}
 	}
+	free(f->desc);
 	free(f);
 }
 
