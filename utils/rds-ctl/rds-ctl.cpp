@@ -762,13 +762,11 @@ static int parse_cl(int argc, char **argv)
 		params.options[(int)opt] = 1;
 		switch (opt) {
 		case OptSetDevice:
-			strncpy(params.fd_name, optarg, 80);
+			strncpy(params.fd_name, optarg, sizeof(params.fd_name));
 			if (optarg[0] >= '0' && optarg[0] <= '9' && strlen(optarg) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/radio%s", optarg);
-				strncpy(params.fd_name, newdev, 20);
+				snprintf(params.fd_name, sizeof(params.fd_name), "/dev/radio%s", optarg);
 			}
+			params.fd_name[sizeof(params.fd_name) - 1] = '\0';
 			break;
 		case OptSetFreq:
 			params.freq = strtod(optarg, NULL);
@@ -786,7 +784,8 @@ static int parse_cl(int argc, char **argv)
 		{
 			if (access(optarg, F_OK) != -1) {
 				params.filemode_active = true;
-				strncpy(params.fd_name, optarg, 80);
+				strncpy(params.fd_name, optarg, sizeof(params.fd_name));
+				params.fd_name[sizeof(params.fd_name) - 1] = '\0';
 			} else {
 				fprintf(stderr, "Unable to open file: %s\n", optarg);
 				return -1;
@@ -993,7 +992,8 @@ int main(int argc, char **argv)
 			fprintf(stderr, "No RDS-capable device found\n");
 			exit(1);
 		}
-		strncpy(params.fd_name, devices[0].c_str(), 80);
+		strncpy(params.fd_name, devices[0].c_str(), sizeof(params.fd_name));
+		params.fd_name[sizeof(params.fd_name) - 1] = '\0';
 		printf("Using device: %s\n", params.fd_name);
 	}
 	if ((fd = test_open(params.fd_name, O_RDONLY | O_NONBLOCK)) < 0) {
