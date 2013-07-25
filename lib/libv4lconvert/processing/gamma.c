@@ -37,6 +37,9 @@ static int gamma_calculate_lookup_tables(
 
 	gamma = v4lcontrol_get_ctrl(data->control, V4LCONTROL_GAMMA);
 
+	if (gamma == 0)
+		return 0;
+
 	if (gamma != data->last_gamma) {
 		for (i = 0; i < 256; i++) {
 			x = powf(i / 255.0, 1000.0 / gamma) * 255;
