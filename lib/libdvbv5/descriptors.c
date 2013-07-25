@@ -787,9 +787,9 @@ static void parse_service(struct dvb_v5_fe_parms *parms, struct service_table *s
 	if (verbose) {
 		if (service_table->provider_name)
 			printf("Provider %s", service_table->provider_name);
-		if (service_table->service_alias)
+		if (service_table->provider_alias)
 			printf("(%s)", service_table->provider_alias);
-		if (service_table->provider_name || service_table->service_alias)
+		if (service_table->provider_name || service_table->provider_alias)
 			printf("\n");
 		if (service_table->service_name)
 			printf("Service %s", service_table->service_name);
