@@ -437,18 +437,23 @@ write_rgb_pixel			(uint8_t *		dst,
 		/* fall through */
 	case LE * 256 + 24:
 		dst[2] = dst_pixel >> 16;
+		/* fall through */
 	case LE * 256 + 16:
 		dst[1] = dst_pixel >> 8;
+		/* fall through */
 	case LE * 256 + 8:
 		dst[0] = dst_pixel;
 		break;
 
 	case BE * 256 + 32:
 		*dst++ = dst_pixel >> 24;
+		/* fall through */
 	case BE * 256 + 24:
 		*dst++ = dst_pixel >> 16;
+		/* fall through */
 	case BE * 256 + 16:
 		*dst++ = dst_pixel >> 8;
+		/* fall through */
 	case BE * 256 + 8:
 		*dst = dst_pixel;
 		break;
