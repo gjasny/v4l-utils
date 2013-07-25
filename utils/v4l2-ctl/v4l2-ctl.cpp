@@ -414,12 +414,10 @@ void printfmt(const struct v4l2_format &vfmt)
 		printf("\tField             : %s\n", field2s(vfmt.fmt.pix_mp.field).c_str());
 		printf("\tNumber of planes  : %u\n", vfmt.fmt.pix_mp.num_planes);
 		printf("\tColorspace        : %s\n", colorspace2s(vfmt.fmt.pix_mp.colorspace).c_str());
-		for (int i = 0; i < vfmt.fmt.pix_mp.num_planes; i++) {
+		for (int i = 0; i < vfmt.fmt.pix_mp.num_planes && i < VIDEO_MAX_PLANES; i++) {
 			printf("\tPlane %d           :\n", i);
 			printf("\t   Bytes per Line : %u\n", vfmt.fmt.pix_mp.plane_fmt[i].bytesperline);
 			printf("\t   Size Image     : %u\n", vfmt.fmt.pix_mp.plane_fmt[i].sizeimage);
-			if (i >= VIDEO_MAX_PLANES)
-				break;
 		}
 		break;
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
