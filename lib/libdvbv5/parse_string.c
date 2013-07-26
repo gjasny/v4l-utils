@@ -391,7 +391,7 @@ void parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 		case 0x11:	type = "ISO-10646";		break;
 		case 0x12:	type = "ISO-2022-KR";		break;
 		case 0x13:	type = "GB2312";		break;
-		case 0x14:	type = "BIG5";			break;
+		case 0x14:	type = "UTF-16BE";		break;
 		case 0x15:	type = "ISO-10646/UTF-8";	break;
 		case 0x10: /* ISO8859 */
 			if (len < 2)
