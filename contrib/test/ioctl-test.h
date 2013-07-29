@@ -30,7 +30,6 @@ union v4l_parms {
 	struct v4l2_create_buffers	p_v4l2_create_buffers;
 	struct v4l2_crop		p_v4l2_crop;
 	struct v4l2_cropcap		p_v4l2_cropcap;
-	struct v4l2_dbg_chip_ident	p_v4l2_dbg_chip_ident;
 	struct v4l2_dbg_chip_info	p_v4l2_dbg_chip_info;
 	struct v4l2_dbg_register	p_v4l2_dbg_register;
 	struct v4l2_decoder_cmd		p_v4l2_decoder_cmd;
@@ -108,7 +107,6 @@ static const struct {
 	ioc(frontend, FE_SET_VOLTAGE),					/*  void */
 	ioc(video, VIDIOC_CREATE_BUFS),					/*  struct v4l2_create_buffers */
 	ioc(video, VIDIOC_CROPCAP),					/*  struct v4l2_cropcap */
-	ioc(video, VIDIOC_DBG_G_CHIP_IDENT),				/*  struct v4l2_dbg_chip_ident */
 	ioc(video, VIDIOC_DBG_G_CHIP_INFO),				/*  struct v4l2_dbg_chip_info */
 	ioc(video, VIDIOC_DBG_G_REGISTER),				/*  struct v4l2_dbg_register */
 	ioc(video, VIDIOC_DBG_S_REGISTER),				/*  struct v4l2_dbg_register */
