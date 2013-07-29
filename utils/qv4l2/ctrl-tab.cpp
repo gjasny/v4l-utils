@@ -196,7 +196,7 @@ void ApplicationWindow::finishGrid(QGridLayout *grid, unsigned ctrl_class)
 	m_sigMapper->setMapping(button, ctrl_class | CTRL_UPDATE);
 	connect(cbox, SIGNAL(toggled(bool)), button, SLOT(setDisabled(bool)));
 
-	cbox->setChecked(ctrl_class == V4L2_CTRL_CLASS_USER);
+	cbox->setChecked(true);
 
 	refresh(ctrl_class);
 }
