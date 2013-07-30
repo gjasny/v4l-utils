@@ -68,7 +68,6 @@ enum Option {
 	OptHelp = 'h',
 	OptReadRds = 'R',
 	OptGetTuner = 'T',
-	OptSetTuner = 't',
 	OptUseWrapper = 'w',
 	OptAll = 128,
 	OptFreqSeek,
@@ -397,8 +396,9 @@ static dev_vec list_devices(void)
 			continue;
 		}
 		/* remove device if it doesn't support rds block I/O */
-		if (!vt.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO)
+		if (!(vt.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO))
 			iter = files.erase(iter);
+		close(fd);
 	}
 	return files;
 }
@@ -665,7 +665,7 @@ static void print_rds_data(const struct v4l2_rds *handle, uint32_t updated_field
 	}
 	if (updated_fields & V4L2_RDS_AF && handle->valid_fields & V4L2_RDS_AF)
 		print_rds_af(&handle->rds_af);
-	if (updated_fields & V4L2_RDS_TMC_TUNING && handle->valid_fields & V4L2_RDS_TMC_TUNING);
+	if (updated_fields & V4L2_RDS_TMC_TUNING && handle->valid_fields & V4L2_RDS_TMC_TUNING)
 		print_rds_tmc_tuning(handle, updated_fields);
 	if (params.options[OptPrintBlock])
 		printf("\n");
@@ -854,7 +854,6 @@ static void print_driver_info(const struct v4l2_capability *vcap)
 static void set_options(const int fd, const int capabilities, struct v4l2_frequency *vf,
 			struct v4l2_tuner *tuner)
 {
-	int mode = -1;			/* set audio mode */
 	double fac = 16;		/* factor for frequency division */
 
 	if (params.options[OptSetFreq]) {
@@ -870,18 +869,6 @@ static void set_options(const int fd, const int capabilities, struct v4l2_freque
 		if (doioctl(fd, VIDIOC_S_FREQUENCY, vf) == 0)
 			printf("Frequency for tuner %d set to %d (%f MHz)\n",
 				vf->tuner, vf->frequency, vf->frequency / fac);
-	}
-
-	if (params.options[OptSetTuner]) {
-		struct v4l2_tuner vt;
-
-		memset(&vt, 0, sizeof(struct v4l2_tuner));
-		vt.index = params.tuner_index;
-		if (doioctl(fd, VIDIOC_G_TUNER, &vt) == 0) {
-			if (mode != -1)
-				vt.audmode = mode;
-			doioctl(fd, VIDIOC_S_TUNER, &vt);
-		}
 	}
 
 	if (params.options[OptFreqSeek]) {
