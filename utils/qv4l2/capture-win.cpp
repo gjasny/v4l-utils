@@ -35,6 +35,14 @@ CaptureWin::CaptureWin()
 
 	vbox->addWidget(m_label);
 	vbox->addWidget(m_msg);
+
+	hotkeyClose = new QShortcut(Qt::CTRL+Qt::Key_W, this);
+	QObject::connect(hotkeyClose, SIGNAL(activated()), this, SLOT(close()));
+}
+
+CaptureWin::~CaptureWin()
+{
+	delete hotkeyClose;
 }
 
 void CaptureWin::setImage(const QImage &image, const QString &status)

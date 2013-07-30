@@ -21,6 +21,7 @@
 #define CAPTURE_WIN_H
 
 #include <QWidget>
+#include <QShortcut>
 #include <sys/time.h>
 
 class QImage;
@@ -32,7 +33,7 @@ class CaptureWin : public QWidget
 
 public:
 	CaptureWin();
-	virtual ~CaptureWin() {}
+	~CaptureWin();
 
 	void setImage(const QImage &image, const QString &status);
 
@@ -45,6 +46,7 @@ signals:
 private:
 	QLabel *m_label;
 	QLabel *m_msg;
+	QShortcut *hotkeyClose;
 };
 
 #endif
