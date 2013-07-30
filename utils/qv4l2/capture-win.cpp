@@ -16,35 +16,42 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include <stdio.h>
+
+#include "capture-win.h"
+
+#include <QCloseEvent>
 #include <QLabel>
 #include <QImage>
 #include <QVBoxLayout>
-#include <QCloseEvent>
 #include <QApplication>
 #include <QDesktopWidget>
 
-#include "qv4l2.h"
-#include "capture-win.h"
-
 CaptureWin::CaptureWin()
 {
-	QVBoxLayout *vbox = new QVBoxLayout(this);
-
 	setWindowTitle("V4L2 Capture");
-	m_label = new QLabel();
-	m_msg = new QLabel("No frame");
-
-	vbox->addWidget(m_label);
-	vbox->addWidget(m_msg);
-
-	hotkeyClose = new QShortcut(Qt::CTRL+Qt::Key_W, this);
-	QObject::connect(hotkeyClose, SIGNAL(activated()), this, SLOT(close()));
+	m_hotkeyClose = new QShortcut(Qt::CTRL+Qt::Key_W, this);
+	QObject::connect(m_hotkeyClose, SIGNAL(activated()), this, SLOT(close()));
 }
 
 CaptureWin::~CaptureWin()
 {
-	delete hotkeyClose;
+	if (layout() == NULL)
+		return;
+
+	layout()->removeWidget(this);
+	delete layout();
+	delete m_hotkeyClose;
+}
+
+void CaptureWin::buildWindow(QWidget *videoSurface)
+{
+	int l, t, r, b;
+	QVBoxLayout *vbox = new QVBoxLayout(this);
+	m_information.setText("No Frame");
+	vbox->addWidget(videoSurface, 2000);
+	vbox->addWidget(&m_information, 1, Qt::AlignBottom);
+	vbox->getContentsMargins(&l, &t, &r, &b);
+	vbox->setSpacing(b);
 }
 
 void CaptureWin::setMinimumSize(int minw, int minh)
@@ -56,7 +63,7 @@ void CaptureWin::setMinimumSize(int minw, int minh)
 	int l, t, r, b;
 	layout()->getContentsMargins(&l, &t, &r, &b);
 	minw += l + r;
-	minh += t + b + m_msg->minimumSizeHint().height() + layout()->spacing();
+	minh += t + b + m_information.minimumSizeHint().height() + layout()->spacing();
 
 	if (minw > resolution.width())
 		minw = resolution.width();
@@ -72,12 +79,6 @@ void CaptureWin::setMinimumSize(int minw, int minh)
 	QWidget::setMaximumSize(minw, minh);
 	updateGeometry();
 	QWidget::setMaximumSize(maxSize.width(), maxSize.height());
-}
-
-void CaptureWin::setImage(const QImage &image, const QString &status)
-{
-	m_label->setPixmap(QPixmap::fromImage(image));
-	m_msg->setText(status);
 }
 
 void CaptureWin::closeEvent(QCloseEvent *event)

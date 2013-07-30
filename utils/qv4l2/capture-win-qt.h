@@ -17,41 +17,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef CAPTURE_WIN_H
-#define CAPTURE_WIN_H
+#ifndef CAPTURE_WIN_QT_H
+#define CAPTURE_WIN_QT_H
 
 #include "qv4l2.h"
+#include "capture-win.h"
 
-#include <QWidget>
-#include <QShortcut>
 #include <QLabel>
+#include <QImage>
 
-class CaptureWin : public QWidget
+class CaptureWinQt : public CaptureWin
 {
-	Q_OBJECT
-
 public:
-	CaptureWin();
-	~CaptureWin();
+	CaptureWinQt();
+	~CaptureWinQt();
 
-	void setMinimumSize(int minw, int minh);
-	virtual void setFrame(int width, int height, __u32 format,
-			      unsigned char *data, const QString &info) = 0;
+	void setFrame(int width, int height, __u32 format,
+		      unsigned char *data, const QString &info);
 
-	virtual bool hasNativeFormat(__u32 format) = 0;
-	static bool isSupported() { return false; }
-
-protected:
-	void closeEvent(QCloseEvent *event);
-	void buildWindow(QWidget *videoSurface);
-
-	QLabel m_information;
-
-signals:
-	void close();
+	bool hasNativeFormat(__u32 format);
+	static bool isSupported() { return true; }
 
 private:
-	QShortcut *m_hotkeyClose;
+	bool findNativeFormat(__u32 format, QImage::Format &dstFmt);
 
+	QImage *m_frame;
+	QLabel m_videoSurface;
 };
 #endif

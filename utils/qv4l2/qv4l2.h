@@ -33,6 +33,7 @@
 
 #include "v4l2-api.h"
 #include "raw2sliced.h"
+#include "capture-win.h"
 
 class QComboBox;
 class QSpinBox;
