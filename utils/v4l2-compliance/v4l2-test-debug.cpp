@@ -49,7 +49,7 @@ int testRegister(struct node *node)
 		return ret;
 	// Not allowed to call VIDIOC_DBG_G_REGISTER unless root
 	fail_on_test(uid && ret != EPERM);
-	fail_on_test(uid == 0 && ret != EINVAL);
+	fail_on_test(uid == 0 && ret && ret != EINVAL);
 	fail_on_test(uid == 0 && !ret && reg.size == 0);
 	chip.match.type = V4L2_CHIP_MATCH_BRIDGE;
 	chip.match.addr = 0;
