@@ -35,6 +35,7 @@ public:
 	CaptureWin();
 	~CaptureWin();
 
+	void setMinimumSize(int minw, int minh);
 	void setImage(const QImage &image, const QString &status);
 
 protected:

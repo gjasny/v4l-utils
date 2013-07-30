@@ -21,6 +21,8 @@
 #include <QImage>
 #include <QVBoxLayout>
 #include <QCloseEvent>
+#include <QApplication>
+#include <QDesktopWidget>
 
 #include "qv4l2.h"
 #include "capture-win.h"
@@ -43,6 +45,33 @@ CaptureWin::CaptureWin()
 CaptureWin::~CaptureWin()
 {
 	delete hotkeyClose;
+}
+
+void CaptureWin::setMinimumSize(int minw, int minh)
+{
+	QDesktopWidget *screen = QApplication::desktop();
+	QRect resolution = screen->screenGeometry();
+	QSize maxSize = maximumSize();
+
+	int l, t, r, b;
+	layout()->getContentsMargins(&l, &t, &r, &b);
+	minw += l + r;
+	minh += t + b + m_msg->minimumSizeHint().height() + layout()->spacing();
+
+	if (minw > resolution.width())
+		minw = resolution.width();
+	if (minw < 150)
+		minw = 150;
+
+	if (minh > resolution.height())
+		minh = resolution.height();
+	if (minh < 100)
+		minh = 100;
+
+	QWidget::setMinimumSize(minw, minh);
+	QWidget::setMaximumSize(minw, minh);
+	updateGeometry();
+	QWidget::setMaximumSize(maxSize.width(), maxSize.height());
 }
 
 void CaptureWin::setImage(const QImage &image, const QString &status)
