@@ -111,10 +111,8 @@ ApplicationWindow::ApplicationWindow() :
 	fileMenu->addAction(openAct);
 	fileMenu->addAction(openRawAct);
 	fileMenu->addAction(closeAct);
-	fileMenu->addAction(m_capStartAct);
 	fileMenu->addAction(m_snapshotAct);
 	fileMenu->addAction(m_saveRawAct);
-	fileMenu->addAction(m_showFramesAct);
 	fileMenu->addSeparator();
 	fileMenu->addAction(quitAct);
 
@@ -127,6 +125,10 @@ ApplicationWindow::ApplicationWindow() :
 	toolBar->addAction(m_showFramesAct);
 	toolBar->addSeparator();
 	toolBar->addAction(quitAct);
+
+	QMenu *captureMenu = menuBar()->addMenu("&Capture");
+	captureMenu->addAction(m_capStartAct);
+	captureMenu->addAction(m_showFramesAct);
 
 	QMenu *helpMenu = menuBar()->addMenu("&Help");
 	helpMenu->addAction("&About", this, SLOT(about()), Qt::Key_F1);
