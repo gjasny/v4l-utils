@@ -128,7 +128,12 @@ if test "x$qt_pkgconfig" = "xtrue"; then
    AC_SUBST(UIC)
    AC_SUBST(RCC)
 else
-   AC_MSG_WARN(Qt4 is not available)
+   AC_MSG_WARN(Qt4 or higher is not available)
+fi
+
+PKG_CHECK_MODULES(QTGL, [QtOpenGL >= 4.4 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
+if test "x$qt_pkgconfig_gl" = "xfalse"; then
+   AC_MSG_WARN(Qt4 OpenGL or higher is not available)
 fi
 
 AC_SUBST([JPEG_LIBS])
@@ -237,6 +242,7 @@ AM_CONDITIONAL([WITH_LIBDVBV5], [test x$enable_libdvbv5 = xyes])
 AM_CONDITIONAL([WITH_LIBV4L], [test x$enable_libv4l != xno])
 AM_CONDITIONAL([WITH_V4LUTILS], [test x$enable_v4lutils != xno])
 AM_CONDITIONAL([WITH_QV4L2], [test ${qt_pkgconfig} = true -a x$enable_qv4l2 != xno])
+AM_CONDITIONAL([WITH_QV4L2_GL], [test WITH_QV4L2 -a ${qt_pkgconfig_gl} = true])
 AM_CONDITIONAL([WITH_V4L_PLUGINS], [test x$enable_libv4l != xno -a x$enable_shared != xno])
 AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$enable_libv4l != xno -a x$enable_shared != xno])
 

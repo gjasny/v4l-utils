@@ -60,6 +60,11 @@ enum CapMethod {
 	methodUser
 };
 
+enum RenderMethod {
+	QV4L2_RENDER_GL,
+	QV4L2_RENDER_QT
+};
+
 struct buffer {
 	void   *start;
 	size_t  length;
@@ -92,6 +97,8 @@ private:
 	void stopCapture();
 	void startOutput(unsigned buffer_size);
 	void stopOutput();
+	void newCaptureWin();
+
 	struct buffer *m_buffers;
 	struct v4l2_format m_capSrcFormat;
 	struct v4l2_format m_capDestFormat;
@@ -101,6 +108,7 @@ private:
 	bool m_mustConvert;
 	CapMethod m_capMethod;
 	bool m_makeSnapshot;
+	RenderMethod m_renderMethod;
 
 private slots:
 	void capStart(bool);
@@ -109,6 +117,7 @@ private slots:
 	void snapshot();
 	void capVbiFrame();
 	void saveRaw(bool);
+	void setRenderMethod();
 
 	// gui
 private slots:
@@ -166,6 +175,7 @@ private:
 	QAction *m_snapshotAct;
 	QAction *m_saveRawAct;
 	QAction *m_showFramesAct;
+	QAction *m_useGLAct;
 	QString m_filename;
 	QSignalMapper *m_sigMapper;
 	QTabWidget *m_tabs;

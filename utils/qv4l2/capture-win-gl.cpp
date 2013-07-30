@@ -1,0 +1,555 @@
+/*
+ * The YUY2 shader code was copied and simplified from face-responder. The code is under public domain:
+ * https://bitbucket.org/nateharward/face-responder/src/0c3b4b957039d9f4bf1da09b9471371942de2601/yuv42201_laplace.frag?at=master
+ *
+ * All other OpenGL code:
+ *
+ * Copyright 2013 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you may redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include "capture-win-gl.h"
+
+#include <stdio.h>
+
+CaptureWinGL::CaptureWinGL()
+{
+#ifdef ENABLE_GL
+	CaptureWin::buildWindow(&m_videoSurface);
+#endif
+	CaptureWin::setWindowTitle("V4L2 Capture (OpenGL)");
+}
+
+CaptureWinGL::~CaptureWinGL()
+{
+}
+
+void CaptureWinGL::stop()
+{
+#ifdef ENABLE_GL
+	m_videoSurface.stop();
+#endif
+}
+
+void CaptureWinGL::setFrame(int width, int height, __u32 format, unsigned char *data, const QString &info)
+{
+#ifdef ENABLE_GL
+	m_videoSurface.setFrame(width, height, format, data);
+#endif
+	m_information.setText(info);
+}
+
+bool CaptureWinGL::hasNativeFormat(__u32 format)
+{
+#ifdef ENABLE_GL
+	return m_videoSurface.hasNativeFormat(format);
+#else
+	return false;
+#endif
+}
+
+bool CaptureWinGL::isSupported()
+{
+#ifdef ENABLE_GL
+	return true;
+#else
+	return false;
+#endif
+}
+
+#ifdef ENABLE_GL
+CaptureWinGLEngine::CaptureWinGLEngine() :
+	m_frameHeight(0),
+	m_frameWidth(0),
+	m_screenTextureCount(0),
+	m_formatChange(false),
+	m_frameFormat(0),
+	m_frameData(NULL)
+{
+	m_glfunction.initializeGLFunctions(context());
+}
+
+CaptureWinGLEngine::~CaptureWinGLEngine()
+{
+	clearShader();
+}
+
+void CaptureWinGLEngine::clearShader()
+{
+	glDeleteTextures(m_screenTextureCount, m_screenTexture);
+	m_shaderProgram.release();
+	m_shaderProgram.removeAllShaders();
+}
+
+void CaptureWinGLEngine::stop()
+{
+	// Setting the m_frameData to NULL stops OpenGL
+	// from updating frames on repaint
+	m_frameData = NULL;
+}
+
+void CaptureWinGLEngine::initializeGL()
+{
+	glShadeModel(GL_FLAT);
+	glEnable(GL_TEXTURE_2D);
+
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	checkError("InitializeGL");
+}
+
+
+void CaptureWinGLEngine::resizeGL(int width, int height)
+{
+	// Resizing is disabled by setting viewport equal to frame size
+	glViewport(0, 0, m_frameWidth, m_frameHeight);
+}
+
+void CaptureWinGLEngine::setFrame(int width, int height, __u32 format, unsigned char *data)
+{
+	if (format != m_frameFormat || width != m_frameWidth || height != m_frameHeight) {
+		m_formatChange = true;
+		m_frameWidth = width;
+		m_frameHeight = height;
+		m_frameFormat = format;
+
+		QGLWidget::setMaximumSize(m_frameWidth, m_frameHeight);
+	}
+
+	m_frameData = data;
+	updateGL();
+}
+
+void CaptureWinGLEngine::checkError(const char *msg)
+{
+	int err = glGetError();
+	if (err) fprintf(stderr, "OpenGL Error 0x%x: %s.\n", err, msg);
+}
+
+bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
+{
+	static const __u32 supported_fmts[] = {
+		V4L2_PIX_FMT_RGB32,
+		V4L2_PIX_FMT_BGR32,
+		V4L2_PIX_FMT_RGB24,
+		V4L2_PIX_FMT_BGR24,
+		V4L2_PIX_FMT_RGB565,
+		V4L2_PIX_FMT_RGB555,
+		V4L2_PIX_FMT_YUYV,
+		V4L2_PIX_FMT_YVYU,
+		V4L2_PIX_FMT_UYVY,
+		V4L2_PIX_FMT_VYUY,
+		V4L2_PIX_FMT_YVU420,
+		V4L2_PIX_FMT_YUV420,
+		0
+	};
+
+	for (int i = 0; supported_fmts[i]; i++)
+		if (supported_fmts[i] == format)
+			return true;
+
+	return false;
+}
+
+void CaptureWinGLEngine::changeShader()
+{
+	m_formatChange = false;
+	clearShader();
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, m_frameWidth, m_frameHeight, 0, 0, 1);
+	resizeGL(QGLWidget::width(), QGLWidget::height());
+	checkError("Render settings.\n");
+
+	switch (m_frameFormat) {
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_YVYU:
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_VYUY:
+		shader_YUY2(m_frameFormat);
+		break;
+
+	case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_YVU420:
+		shader_YUV();
+		break;
+
+	case V4L2_PIX_FMT_RGB32:
+		m_screenTextureCount = 1;
+		glActiveTexture(GL_TEXTURE0);
+		glGenTextures(m_screenTextureCount, m_screenTexture);
+		configureTexture(0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, m_frameWidth, m_frameHeight, 0,
+			     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+		checkError("RGB32 shader");
+		break;
+
+	case V4L2_PIX_FMT_BGR32:
+		m_screenTextureCount = 1;
+		glActiveTexture(GL_TEXTURE0);
+		glGenTextures(m_screenTextureCount, m_screenTexture);
+		configureTexture(0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, m_frameWidth, m_frameHeight, 0,
+			     GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+		checkError("BGR32 shader");
+		break;
+
+	case V4L2_PIX_FMT_RGB555:
+		m_screenTextureCount = 1;
+		glActiveTexture(GL_TEXTURE0);
+		glGenTextures(m_screenTextureCount, m_screenTexture);
+		configureTexture(0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, m_frameWidth, m_frameHeight, 0,
+			     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, NULL);
+		checkError("RGB555 shader");
+		break;
+
+	case V4L2_PIX_FMT_RGB565:
+		m_screenTextureCount = 1;
+		glActiveTexture(GL_TEXTURE0);
+		glGenTextures(m_screenTextureCount, m_screenTexture);
+		configureTexture(0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_frameWidth, m_frameHeight, 0,
+			     GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
+		checkError("RGB565 shader");
+		break;
+	case V4L2_PIX_FMT_BGR24:
+		shader_BGR();
+		break;
+	case V4L2_PIX_FMT_RGB24:
+	default:
+		m_screenTextureCount = 1;
+		glActiveTexture(GL_TEXTURE0);
+		glGenTextures(m_screenTextureCount, m_screenTexture);
+		configureTexture(0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_frameWidth, m_frameHeight, 0,
+			     GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		checkError("Default shader");
+		break;
+	}
+
+	glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void CaptureWinGLEngine::paintGL()
+{
+	if (m_frameWidth < 1 || m_frameHeight < 1) {
+		return;
+	}
+
+	if (m_formatChange)
+		changeShader();
+
+	if (m_frameData == NULL) {
+		return;
+	}
+
+	switch (m_frameFormat) {
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_YVYU:
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_VYUY:
+		render_YUY2();
+		break;
+
+	case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_YVU420:
+		render_YUV(m_frameFormat);
+		break;
+
+	case V4L2_PIX_FMT_RGB32:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, m_frameData);
+		checkError("RGB32 paint");
+		break;
+
+	case V4L2_PIX_FMT_BGR32:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, m_frameData);
+		checkError("BGR32 paint");
+		break;
+
+	case V4L2_PIX_FMT_RGB555:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+				GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, m_frameData);
+		checkError("RGB555 paint");
+		break;
+
+	case V4L2_PIX_FMT_RGB565:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+				GL_RGB, GL_UNSIGNED_SHORT_5_6_5, m_frameData);
+		checkError("RGB565 paint");
+		break;
+
+	case V4L2_PIX_FMT_BGR24:
+		render_BGR();
+		break;
+	case V4L2_PIX_FMT_RGB24:
+	default:
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+				GL_RGB, GL_UNSIGNED_BYTE, m_frameData);
+		checkError("Default paint");
+		break;
+	}
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0, 0);
+	glTexCoord2f(1.0f, 0.0f); glVertex2f(m_frameWidth, 0);
+	glTexCoord2f(1.0f, 1.0f); glVertex2f(m_frameWidth, m_frameHeight);
+	glTexCoord2f(0.0f, 1.0f); glVertex2f(0, m_frameHeight);
+	glEnd();
+}
+
+void CaptureWinGLEngine::configureTexture(size_t idx)
+{
+	glBindTexture(GL_TEXTURE_2D, m_screenTexture[idx]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+}
+
+void CaptureWinGLEngine::shader_YUV()
+{
+	m_screenTextureCount = 3;
+	glGenTextures(m_screenTextureCount, m_screenTexture);
+
+	glActiveTexture(GL_TEXTURE0);
+	configureTexture(0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, m_frameWidth, m_frameHeight, 0,
+		     GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
+	checkError("YUV shader texture 0");
+
+	glActiveTexture(GL_TEXTURE1);
+	configureTexture(1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, m_frameWidth / 2, m_frameHeight / 2, 0,
+		     GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
+	checkError("YUV shader texture 1");
+
+	glActiveTexture(GL_TEXTURE2);
+	configureTexture(2);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, m_frameWidth / 2, m_frameHeight / 2, 0,
+		     GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
+	checkError("YUV shader texture 2");
+
+	bool src_c = m_shaderProgram.addShaderFromSourceCode(
+				QGLShader::Fragment,
+				"uniform sampler2D ytex;"
+				"uniform sampler2D utex;"
+				"uniform sampler2D vtex;"
+				"void main()"
+				"{"
+				"   vec2 xy = vec2(gl_TexCoord[0].xy);"
+				"   float y = 1.1640625 * (texture2D(ytex, xy).r - 0.0625);"
+				"   float u = texture2D(utex, xy).r - 0.5;"
+				"   float v = texture2D(vtex, xy).r - 0.5;"
+				"   float r = y + 1.59765625 * v;"
+				"   float g = y - 0.390625 * u - 0.8125 *v;"
+				"   float b = y + 2.015625 * u;"
+				"   gl_FragColor = vec4(r, g, b, 1.0);"
+				"}"
+				);
+
+	if (!src_c)
+		fprintf(stderr, "OpenGL Error: YUV shader compilation failed.\n");
+
+	m_shaderProgram.bind();
+}
+
+void CaptureWinGLEngine::render_YUV(__u32 format)
+{
+	int idxU;
+	int idxV;
+	if (format == V4L2_PIX_FMT_YUV420) {
+		idxU = m_frameWidth * m_frameHeight;
+		idxV = idxU + (idxU / 4);
+	} else {
+		idxV = m_frameWidth * m_frameHeight;
+		idxU = idxV + (idxV / 4);
+	}
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
+	GLint Y = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "ytex");
+	glUniform1i(Y, 0);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+			GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData);
+	checkError("YUV paint ytex");
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_screenTexture[1]);
+	GLint U = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "utex");
+	glUniform1i(U, 1);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / 2, m_frameHeight / 2,
+			GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData == NULL ? NULL : &m_frameData[idxU]);
+	checkError("YUV paint utex");
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, m_screenTexture[2]);
+	GLint V = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "vtex");
+	glUniform1i(V, 2);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / 2, m_frameHeight / 2,
+			GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData == NULL ? NULL : &m_frameData[idxV]);
+	checkError("YUV paint vtex");
+}
+
+void CaptureWinGLEngine::shader_BGR()
+{
+	m_screenTextureCount = 1;
+	glGenTextures(m_screenTextureCount, m_screenTexture);
+	configureTexture(0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_frameWidth, m_frameHeight, 0,
+		     GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	checkError("BGR shader");
+
+	bool src_c = m_shaderProgram.addShaderFromSourceCode(
+				QGLShader::Fragment,
+				"uniform sampler2D tex;"
+				"void main()"
+				"{"
+				"   vec4 color = texture2D(tex, gl_TexCoord[0].xy);"
+				"   gl_FragColor = vec4(color.b, color.g, color.r, 1.0);"
+				"}"
+				);
+	if (!src_c)
+		fprintf(stderr, "OpenGL Error: BGR shader compilation failed.\n");
+
+	m_shaderProgram.bind();
+}
+
+void CaptureWinGLEngine::render_BGR()
+{
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
+	GLint Y = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "tex");
+	glUniform1i(Y, 0);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+			GL_RGB, GL_UNSIGNED_BYTE, m_frameData);
+	checkError("BGR paint");
+}
+
+QString CaptureWinGLEngine::shader_YUY2_invariant(__u32 format)
+{
+	switch (format) {
+	case V4L2_PIX_FMT_YUYV:
+		return QString("y = (luma_chroma.r - 0.0625) * 1.1643;"
+			       "if (mod(xcoord, 2.0) == 0.0) {"
+			       "   u = luma_chroma.a;"
+			       "   v = texture2D(tex, vec2(pixelx + texl_w, pixely)).a;"
+			       "} else {"
+			       "   v = luma_chroma.a;"
+			       "   u = texture2D(tex, vec2(pixelx - texl_w, pixely)).a;"
+			       "}"
+			       );
+
+	case V4L2_PIX_FMT_YVYU:
+		return QString("y = (luma_chroma.r - 0.0625) * 1.1643;"
+			       "if (mod(xcoord, 2.0) == 0.0) {"
+			       "   v = luma_chroma.a;"
+			       "   u = texture2D(tex, vec2(pixelx + texl_w, pixely)).a;"
+			       "} else {"
+			       "   u = luma_chroma.a;"
+			       "   v = texture2D(tex, vec2(pixelx - texl_w, pixely)).a;"
+			       "}"
+			       );
+
+	case V4L2_PIX_FMT_UYVY:
+		return QString("y = (luma_chroma.a - 0.0625) * 1.1643;"
+			       "if (mod(xcoord, 2.0) == 0.0) {"
+			       "   u = luma_chroma.r;"
+			       "   v = texture2D(tex, vec2(pixelx + texl_w, pixely)).r;"
+			       "} else {"
+			       "   v = luma_chroma.r;"
+			       "   u = texture2D(tex, vec2(pixelx - texl_w, pixely)).r;"
+			       "}"
+			       );
+
+	case V4L2_PIX_FMT_VYUY:
+		return QString("y = (luma_chroma.a - 0.0625) * 1.1643;"
+			       "if (mod(xcoord, 2.0) == 0.0) {"
+			       "   v = luma_chroma.r;"
+			       "   u = texture2D(tex, vec2(pixelx + texl_w, pixely)).r;"
+			       "} else {"
+			       "   u = luma_chroma.r;"
+			       "   v = texture2D(tex, vec2(pixelx - texl_w, pixely)).r;"
+			       "}"
+			       );
+
+	default:
+		return QString();
+	}
+}
+
+void CaptureWinGLEngine::shader_YUY2(__u32 format)
+{
+	m_screenTextureCount = 1;
+	glGenTextures(m_screenTextureCount, m_screenTexture);
+	configureTexture(0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, m_frameWidth, m_frameHeight, 0,
+		     GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, NULL);
+	checkError("YUY2 shader");
+
+	QString codeHead = QString("uniform sampler2D tex;"
+				   "uniform float texl_w;"
+				   "uniform float tex_w;"
+				   "void main()"
+				   "{"
+				   "   float y, u, v;"
+				   "   float pixelx = gl_TexCoord[0].x;"
+				   "   float pixely = gl_TexCoord[0].y;"
+				   "   float xcoord = floor(pixelx * tex_w);"
+				   "   vec4 luma_chroma = texture2D(tex, vec2(pixelx, pixely));"
+				   );
+
+	QString codeBody = shader_YUY2_invariant(format);
+
+	QString codeTail = QString("   u = u - 0.5;"
+				   "   v = v - 0.5;"
+				   "   float r = y + 1.5958 * v;"
+				   "   float g = y - 0.39173 * u - 0.81290 * v;"
+				   "   float b = y + 2.017 * u;"
+				   "   gl_FragColor = vec4(r, g, b, 1.0);"
+				   "}"
+				   );
+
+	bool src_ok = m_shaderProgram.addShaderFromSourceCode(
+				QGLShader::Fragment, QString("%1%2%3").arg(codeHead, codeBody, codeTail)
+				);
+
+	if (!src_ok)
+		fprintf(stderr, "OpenGL Error: YUY2 shader compilation failed.\n");
+
+	m_shaderProgram.bind();
+}
+
+void CaptureWinGLEngine::render_YUY2()
+{
+	int idx;
+	idx = glGetUniformLocation(m_shaderProgram.programId(), "texl_w"); // Texel width
+	glUniform1f(idx, 1.0 / m_frameWidth);
+	idx = glGetUniformLocation(m_shaderProgram.programId(), "tex_w"); // Texture width
+	glUniform1f(idx, m_frameWidth);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
+	GLint Y = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "tex");
+	glUniform1i(Y, 0);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+			GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, m_frameData);
+	checkError("YUY2 paint");
+}
+#endif

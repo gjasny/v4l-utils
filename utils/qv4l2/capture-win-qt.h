@@ -35,6 +35,7 @@ public:
 	void setFrame(int width, int height, __u32 format,
 		      unsigned char *data, const QString &info);
 
+	void stop(){}
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported() { return true; }
 

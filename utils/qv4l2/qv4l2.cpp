@@ -22,6 +22,7 @@
 #include "vbi-tab.h"
 #include "capture-win.h"
 #include "capture-win-qt.h"
+#include "capture-win-gl.h"
 
 #include <QToolBar>
 #include <QToolButton>
@@ -130,6 +131,20 @@ ApplicationWindow::ApplicationWindow() :
 	QMenu *captureMenu = menuBar()->addMenu("&Capture");
 	captureMenu->addAction(m_capStartAct);
 	captureMenu->addAction(m_showFramesAct);
+	captureMenu->addSeparator();
+
+	if (CaptureWinGL::isSupported()) {
+		m_renderMethod = QV4L2_RENDER_GL;
+
+		m_useGLAct = new QAction("Use Open&GL Render", this);
+		m_useGLAct->setStatusTip("Use GPU with OpenGL for video capture if set.");
+		m_useGLAct->setCheckable(true);
+		m_useGLAct->setChecked(true);
+		connect(m_useGLAct, SIGNAL(triggered()), this, SLOT(setRenderMethod()));
+		captureMenu->addAction(m_useGLAct);
+	} else {
+		m_renderMethod = QV4L2_RENDER_QT;
+	}
 
 	QMenu *helpMenu = menuBar()->addMenu("&Help");
 	helpMenu->addAction("&About", this, SLOT(about()), Qt::Key_F1);
@@ -161,9 +176,9 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	if (!open(device, !rawOpen))
 		return;
 
-	m_capture = new CaptureWinQt;
+	newCaptureWin();
+
 	m_capture->setMinimumSize(150, 50);
-	connect(m_capture, SIGNAL(close()), this, SLOT(closeCaptureWin()));
 
 	QWidget *w = new QWidget(m_tabs);
 	m_genTab = new GeneralTab(device, *this, 4, w);
@@ -204,6 +219,21 @@ void ApplicationWindow::openrawdev()
 	d.setFileMode(QFileDialog::ExistingFile);
 	if (d.exec())
 		setDevice(d.selectedFiles().first(), true);
+}
+
+void ApplicationWindow::setRenderMethod()
+{
+	if (m_capStartAct->isChecked()) {
+		m_useGLAct->setChecked(m_renderMethod == QV4L2_RENDER_GL);
+		return;
+	}
+
+	if (m_useGLAct->isChecked())
+		m_renderMethod = QV4L2_RENDER_GL;
+	else
+		m_renderMethod = QV4L2_RENDER_QT;
+
+	newCaptureWin();
 }
 
 void ApplicationWindow::ctrlEvent()
@@ -251,6 +281,25 @@ void ApplicationWindow::ctrlEvent()
 			setString(ev.id, c.string);
 		free(c.string);
 	}
+}
+
+void ApplicationWindow::newCaptureWin()
+{
+	if (m_capture != NULL) {
+		m_capture->stop();
+		delete m_capture;
+	}
+
+	switch (m_renderMethod) {
+	case QV4L2_RENDER_GL:
+		m_capture = new CaptureWinGL;
+		break;
+	default:
+		m_capture = new CaptureWinQt;
+		break;
+	}
+
+	connect(m_capture, SIGNAL(close()), this, SLOT(closeCaptureWin()));
 }
 
 void ApplicationWindow::capVbiFrame()
@@ -602,6 +651,7 @@ void ApplicationWindow::stopCapture()
 	v4l2_encoder_cmd cmd;
 	unsigned i;
 
+	m_capture->stop();
 	m_snapshotAct->setDisabled(true);
 	switch (m_capMethod) {
 	case methodRead:
