@@ -202,6 +202,53 @@ void ApplicationWindow::openrawdev()
 		setDevice(d.selectedFiles().first(), true);
 }
 
+void ApplicationWindow::ctrlEvent()
+{
+	v4l2_event ev;
+
+	while (dqevent(ev)) {
+		if (ev.type != V4L2_EVENT_CTRL)
+			continue;
+		m_ctrlMap[ev.id].flags = ev.u.ctrl.flags;
+		m_ctrlMap[ev.id].minimum = ev.u.ctrl.minimum;
+		m_ctrlMap[ev.id].maximum = ev.u.ctrl.maximum;
+		m_ctrlMap[ev.id].step = ev.u.ctrl.step;
+		m_ctrlMap[ev.id].default_value = ev.u.ctrl.default_value;
+		m_widgetMap[ev.id]->setDisabled(m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED);
+		switch (m_ctrlMap[ev.id].type) {
+		case V4L2_CTRL_TYPE_INTEGER:
+		case V4L2_CTRL_TYPE_INTEGER_MENU:
+		case V4L2_CTRL_TYPE_MENU:
+		case V4L2_CTRL_TYPE_BOOLEAN:
+		case V4L2_CTRL_TYPE_BITMASK:
+			setVal(ev.id, ev.u.ctrl.value);
+			break;
+		case V4L2_CTRL_TYPE_INTEGER64:
+			setVal64(ev.id, ev.u.ctrl.value64);
+			break;
+		default:
+			break;
+		}
+		if (m_ctrlMap[ev.id].type != V4L2_CTRL_TYPE_STRING)
+			continue;
+		queryctrl(m_ctrlMap[ev.id]);
+
+		struct v4l2_ext_control c;
+		struct v4l2_ext_controls ctrls;
+
+		c.id = ev.id;
+		c.size = m_ctrlMap[ev.id].maximum + 1;
+		c.string = (char *)malloc(c.size);
+		memset(&ctrls, 0, sizeof(ctrls));
+		ctrls.count = 1;
+		ctrls.ctrl_class = 0;
+		ctrls.controls = &c;
+		if (!ioctl(VIDIOC_G_EXT_CTRLS, &ctrls))
+			setString(ev.id, c.string);
+		free(c.string);
+	}
+}
+
 void ApplicationWindow::capVbiFrame()
 {
 	__u32 buftype = m_genTab->bufType();
@@ -303,53 +350,6 @@ void ApplicationWindow::capVbiFrame()
 		statusBar()->showMessage(status);
 	if (m_frame == 1)
 		refresh();
-}
-
-void ApplicationWindow::ctrlEvent()
-{
-	v4l2_event ev;
-
-	while (dqevent(ev)) {
-		if (ev.type != V4L2_EVENT_CTRL)
-			continue;
-		m_ctrlMap[ev.id].flags = ev.u.ctrl.flags;
-		m_ctrlMap[ev.id].minimum = ev.u.ctrl.minimum;
-		m_ctrlMap[ev.id].maximum = ev.u.ctrl.maximum;
-		m_ctrlMap[ev.id].step = ev.u.ctrl.step;
-		m_ctrlMap[ev.id].default_value = ev.u.ctrl.default_value;
-		m_widgetMap[ev.id]->setDisabled(m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED);
-		switch (m_ctrlMap[ev.id].type) {
-		case V4L2_CTRL_TYPE_INTEGER:
-		case V4L2_CTRL_TYPE_INTEGER_MENU:
-		case V4L2_CTRL_TYPE_MENU:
-		case V4L2_CTRL_TYPE_BOOLEAN:
-		case V4L2_CTRL_TYPE_BITMASK:
-			setVal(ev.id, ev.u.ctrl.value);
-			break;
-		case V4L2_CTRL_TYPE_INTEGER64:
-			setVal64(ev.id, ev.u.ctrl.value64);
-			break;
-		default:
-			break;
-		}
-		if (m_ctrlMap[ev.id].type != V4L2_CTRL_TYPE_STRING)
-			continue;
-		queryctrl(m_ctrlMap[ev.id]);
-
-		struct v4l2_ext_control c;
-		struct v4l2_ext_controls ctrls;
-
-		c.id = ev.id;
-		c.size = m_ctrlMap[ev.id].maximum + 1;
-		c.string = (char *)malloc(c.size);
-		memset(&ctrls, 0, sizeof(ctrls));
-		ctrls.count = 1;
-		ctrls.ctrl_class = 0;
-		ctrls.controls = &c;
-		if (!ioctl(VIDIOC_G_EXT_CTRLS, &ctrls))
-			setString(ev.id, c.string);
-		free(c.string);
-	}
 }
 
 void ApplicationWindow::capFrame()
