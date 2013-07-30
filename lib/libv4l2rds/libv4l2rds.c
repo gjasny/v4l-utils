@@ -142,7 +142,7 @@ static uint32_t rds_decode_b(struct rds_private_state *priv_state, struct v4l2_r
 	grp->group_version = (rds_data->msb & 0x08) ? 'B' : 'A';
 
 	/* bit 10 (2 of msb) defines Traffic program Code */
-	traffic_prog = (bool)rds_data->msb & 0x04;
+	traffic_prog = rds_data->msb & 0x04;
 	if (handle->tp != traffic_prog) {
 		handle->tp = traffic_prog;
 		updated_fields |= V4L2_RDS_TP;
@@ -200,7 +200,8 @@ static void rds_decode_d(struct rds_private_state *priv_state, struct v4l2_rds_d
  * @af: 8-bit AF value as transmitted in RDS groups
  * @is_vhf: boolean value defining  which conversion table to use
  * @return: frequency in Hz, 0 in case of wrong input values */
-static uint32_t rds_decode_af(uint8_t af, bool is_vhf) {
+static uint32_t rds_decode_af(uint8_t af, bool is_vhf)
+{
 	uint32_t freq = 0;
 
 	/* AF = 0 => "not to be used"
@@ -211,7 +212,7 @@ static uint32_t rds_decode_af(uint8_t af, bool is_vhf) {
 	/* calculate the AF values in HZ */
 	if (is_vhf)
 		freq = 87500000 + af * 100000;
-	else if (freq <= 15)
+	else if (af <= 15)
 		freq = 152000 + af * 9000;
 	else
 		freq = 531000 + af * 9000;
@@ -315,12 +316,13 @@ static bool rds_add_tmc_af(struct rds_private_state *priv_state)
 
 	/* mapped frequency pair */
 	else if (variant == 7) {
-		/* check the if there's already a frequency mapped to the new tuning
+		/* check if there's already a frequency mapped to the new tuning
 		 * frequency, update the mapped frequency in this case */
 		for (int i = 0; i < afi->mapped_af_size; i++) {
-			if (freq_a == afi->mapped_af_tuning[i])
+			if (freq_a == afi->mapped_af_tuning[i]) {
 				afi->mapped_af[i] = freq_b;
 				return true;
+			}
 		}
 		/* new pair is unknown, add it to the list */
 		if (freq_a != 0 && freq_b != 0) {
@@ -461,6 +463,9 @@ static uint32_t rds_decode_tmc_single_group(struct rds_private_state *priv_state
 	msg.event = ((grp->data_c_msb & 0x07) << 8) | grp->data_c_lsb;
 	/* bits 0-15 of block 4 contain the location */
 	msg.location = (grp->data_d_msb << 8) | grp->data_c_lsb;
+	/* there is no service ID in a single group TMC message, so
+	 * just set it to 0. */
+	msg.sid = 0;
 
 	/* decoding done, store the new message */
 	priv_state->handle.tmc.tmc_msg = msg;
@@ -614,10 +619,11 @@ static bool rds_add_oda(struct rds_private_state *priv_state, struct v4l2_rds_od
 
 	/* check if there was already an ODA announced for this group type */
 	for (int i = 0; i < handle->rds_oda.size; i++) {
-		if (handle->rds_oda.oda[i].group_id == oda.group_id)
+		if (handle->rds_oda.oda[i].group_id == oda.group_id) {
 			/* update the AID for this ODA */
 			handle->rds_oda.oda[i].aid = oda.aid;
 			return false;
+		}
 	}
 	/* add the new ODA */
 	if (handle->rds_oda.size >= MAX_ODA_CNT)
