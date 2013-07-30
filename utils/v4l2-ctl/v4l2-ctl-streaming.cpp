@@ -211,6 +211,7 @@ void streaming_cmd(int ch, char *optarg)
 			if (reqbufs_count_cap == 0)
 				reqbufs_count_cap = 3;
 		}
+		break;
 	case OptStreamOutMmap:
 	case OptStreamOutUser:
 		if (optarg) {
@@ -294,8 +295,8 @@ static void do_setup_cap_buffers(int fd, buffers &b)
 
 		memset(&buf, 0, sizeof(buf));
 		memset(planes, 0, sizeof(planes));
-		buf.type = b.type = b.type;
-		buf.memory = b.memory = b.memory;
+		buf.type = b.type;
+		buf.memory = b.memory;
 		buf.index = i;
 		if (b.is_mplane) {
 			buf.m.planes = planes;

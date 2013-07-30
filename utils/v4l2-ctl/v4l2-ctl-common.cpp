@@ -495,7 +495,7 @@ static bool parse_next_subopt(char **subs, char **value)
 	};
 	int opt = getsubopt(subs, subopts, value);
 
-	if (value == NULL) {
+	if (*value == NULL) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopts[opt]);
 		return true;
