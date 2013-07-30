@@ -718,14 +718,16 @@ list_done:
 			len = klogctl(3, buf, sizeof(buf) - 1);
 #endif
 			if (len >= 0) {
+				bool found_status = false;
 				char *p = buf;
 				char *q;
 
 				buf[len] = 0;
 				while ((q = strstr(p, "START STATUS"))) {
+					found_status = true;
 					p = q + 1;
 				}
-				if (p) {
+				if (found_status) {
 					while (p > buf && *p != '<') p--;
 					q = p;
 					while ((q = strstr(q, "<6>"))) {
