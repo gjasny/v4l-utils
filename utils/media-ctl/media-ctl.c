@@ -353,6 +353,7 @@ static void media_print_topology_dot(struct media_device *media)
 			break;
 
 		case MEDIA_ENT_T_V4L2_SUBDEV:
+		default:
 			printf("\tn%08x [label=\"{{", info->id);
 
 			for (j = 0, npads = 0; j < info->pads; ++j) {
@@ -380,11 +381,10 @@ static void media_print_topology_dot(struct media_device *media)
 				npads++;
 			}
 
-			printf("}}\", shape=Mrecord, style=filled, fillcolor=green]\n");
+			printf("}}\", shape=Mrecord, style=filled, fillcolor=%s]\n",
+				media_entity_type(entity) == MEDIA_ENT_T_V4L2_SUBDEV
+				? "green" : "blue");
 			break;
-
-		default:
-			continue;
 		}
 
 		for (j = 0; j < num_links; j++) {
