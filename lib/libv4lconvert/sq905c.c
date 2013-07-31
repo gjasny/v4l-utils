@@ -117,21 +117,21 @@ sq905c_second_decompress(unsigned char *uncomp, unsigned char *in,
 
 	templine_red = malloc(width);
 	if (!templine_red) {
-		free(templine_red);
 		return -1;
 	}
 	for (i = 0; i < width; i++)
 		templine_red[i] = 0x80;
 	templine_green = malloc(width);
 	if (!templine_green) {
-		free(templine_green);
+		free(templine_red);
 		return -1;
 	}
 	for (i = 0; i < width; i++)
 		templine_green[i] = 0x80;
 	templine_blue = malloc(width);
 	if (!templine_blue) {
-		free(templine_blue);
+		free(templine_red);
+		free(templine_green);
 		return -1;
 	}
 	for (i = 0; i < width; i++)
