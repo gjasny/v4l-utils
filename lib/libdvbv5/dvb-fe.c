@@ -1131,7 +1131,7 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 
 	/* if lock has obtained, get DVB parameters */
 	if (status != parms->stats.prev_status) {
-		if (status && FE_HAS_LOCK &&
+		if ((status & FE_HAS_LOCK) &&
 		    parms->stats.prev_status != status)
 			dvb_fe_get_parms(parms);
 		parms->stats.prev_status = status;
