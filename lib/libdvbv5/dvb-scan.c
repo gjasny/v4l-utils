@@ -346,10 +346,13 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned
 		do {
 			available = poll(parms, dmx_fd, timeout);
 		} while (available < 0 && errno == EOVERFLOW);
-		if (parms->abort)
-			return 0; // FIXME: free tbl
+		if (parms->abort) {
+			free(tbl);
+			return 0;
+		}
 		if (available <= 0) {
 			dvb_logerr("dvb_read_section: no data read" );
+			free(tbl);
 			return -1;
 		}
 		buf = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE);
@@ -357,11 +360,13 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned
 		if (!buf_length) {
 			dvb_logerr("dvb_read_section: no data read" );
 			free(buf);
+			free(tbl);
 			return -1;
 		}
 		if (buf_length < 0) {
 			dvb_perror("dvb_read_section: read error");
 			free(buf);
+			free(tbl);
 			return -2;
 		}
 
@@ -371,6 +376,7 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned
 		if (crc != 0) {
 			dvb_logerr("dvb_read_section: crc error");
 			free(buf);
+			free(tbl);
 			return -3;
 		}
 
