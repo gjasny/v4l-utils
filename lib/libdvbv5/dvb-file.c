@@ -535,6 +535,7 @@ struct dvb_file *read_dvb_file(const char *fname)
 	fd = fopen(fname, "r");
 	if (!fd) {
 		perror(fname);
+		free(dvb_file);
 		return NULL;
 	}
 
