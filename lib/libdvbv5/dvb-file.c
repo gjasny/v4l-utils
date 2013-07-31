@@ -58,6 +58,7 @@ struct dvb_file *parse_format_oneline(const char *fname,
 	fd = fopen(fname, "r");
 	if (!fd) {
 		perror(fname);
+		free(dvb_file);
 		return NULL;
 	}
 
