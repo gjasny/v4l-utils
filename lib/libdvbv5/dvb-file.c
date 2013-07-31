@@ -602,9 +602,6 @@ struct dvb_file *read_dvb_file(const char *fname)
 				sprintf(err_msg, "value %s is invalid for %s",
 					value, key);
 				goto error;
-			} else if (rc == -2) {
-				sprintf(err_msg, "key %s is unknown", key);
-				goto error;
 			}
 		}
 	} while (1);
