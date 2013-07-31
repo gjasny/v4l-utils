@@ -81,8 +81,8 @@ static void write_vector16(struct vector *v, unsigned int i, __u16 value) {
 	copy_vector(v, i, buf, 2);
 }
 
-static const const char reset_tuner_str[] = "RESET_TUNER";
-static const const char reset_clk_str[] = "RESET_CLK";
+static const char reset_tuner_str[] = "RESET_TUNER";
+static const char reset_clk_str[] = "RESET_CLK";
 
 void create_standard_data(char* filename, unsigned char** data, unsigned int *r_len) {
 	FILE *file;
