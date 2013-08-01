@@ -457,7 +457,7 @@ void common_process_controls(int fd)
 	find_controls(fd);
 	for (ctrl_get_list::iterator iter = get_ctrls.begin(); iter != get_ctrls.end(); ++iter) {
 	    if (ctrl_str2q.find(*iter) == ctrl_str2q.end()) {
-		fprintf(stderr, "unknown control '%s'\n", (*iter).c_str());
+		fprintf(stderr, "unknown control '%s'\n", iter->c_str());
 		exit(1);
 	    }
 	}
