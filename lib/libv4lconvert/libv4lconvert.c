@@ -84,6 +84,8 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	SUPPORTED_DST_PIXFMTS,
 	/* packed rgb formats */
 	{ V4L2_PIX_FMT_RGB565,		16,	 4,	 6,	0 },
+	{ V4L2_PIX_FMT_BGR32,		32,	 4,	 6,	0 },
+	{ V4L2_PIX_FMT_RGB32,		32,	 4,	 6,	0 },
 	/* yuv 4:2:2 formats */
 	{ V4L2_PIX_FMT_YUYV,		16,	 5,	 4,	0 },
 	{ V4L2_PIX_FMT_YVYU,		16,	 5,	 4,	0 },
@@ -981,10 +983,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			v4lconvert_swap_rgb(d, dest, width, height);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 0);
+			v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 0, 3);
 			break;
 		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 1);
+			v4lconvert_rgb24_to_yuv420(d, dest, fmt, 0, 1, 3);
 			break;
 		}
 		break;
@@ -1079,10 +1081,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			v4lconvert_swap_rgb(src, dest, width, height);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 0);
+			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 0, 3);
 			break;
 		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 1);
+			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 1, 3);
 			break;
 		}
 		if (src_size < (width * height * 3)) {
@@ -1101,14 +1103,58 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			memcpy(dest, src, width * height * 3);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 0);
+			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 0, 3);
 			break;
 		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 1);
+			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 1, 3);
 			break;
 		}
 		if (src_size < (width * height * 3)) {
 			V4LCONVERT_ERR("short bgr24 data frame\n");
+			errno = EPIPE;
+			result = -1;
+		}
+		break;
+
+	case V4L2_PIX_FMT_RGB32:
+		switch (dest_pix_fmt) {
+		case V4L2_PIX_FMT_RGB24:
+			v4lconvert_rgb32_to_rgb24(src, dest, width, height, 0);
+			break;
+		case V4L2_PIX_FMT_BGR24:
+			v4lconvert_rgb32_to_rgb24(src, dest, width, height, 1);
+			break;
+		case V4L2_PIX_FMT_YUV420:
+			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 0, 4);
+			break;
+		case V4L2_PIX_FMT_YVU420:
+			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 0, 1, 4);
+			break;
+		}
+		if (src_size < (width * height * 4)) {
+			V4LCONVERT_ERR("short rgb32 data frame\n");
+			errno = EPIPE;
+			result = -1;
+		}
+		break;
+
+	case V4L2_PIX_FMT_BGR32:
+		switch (dest_pix_fmt) {
+		case V4L2_PIX_FMT_RGB24:
+			v4lconvert_rgb32_to_rgb24(src, dest, width, height, 1);
+			break;
+		case V4L2_PIX_FMT_BGR24:
+			v4lconvert_rgb32_to_rgb24(src, dest, width, height, 0);
+			break;
+		case V4L2_PIX_FMT_YUV420:
+			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 0, 4);
+			break;
+		case V4L2_PIX_FMT_YVU420:
+			v4lconvert_rgb24_to_yuv420(src, dest, fmt, 1, 1, 4);
+			break;
+		}
+		if (src_size < (width * height * 4)) {
+			V4LCONVERT_ERR("short bgr32 data frame\n");
 			errno = EPIPE;
 			result = -1;
 		}

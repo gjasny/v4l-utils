@@ -35,7 +35,7 @@
 	} while (0)
 
 void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
-		const struct v4l2_format *src_fmt, int bgr, int yvu)
+		const struct v4l2_format *src_fmt, int bgr, int yvu, int bpp)
 {
 	int x, y;
 	unsigned char *udest, *vdest;
@@ -47,9 +47,10 @@ void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
 				RGB2Y(src[2], src[1], src[0], *dest++);
 			else
 				RGB2Y(src[0], src[1], src[2], *dest++);
-			src += 3;
+			src += bpp;
 		}
-		src += src_fmt->fmt.pix.bytesperline - 3 * src_fmt->fmt.pix.width;
+
+		src += src_fmt->fmt.pix.bytesperline - bpp * src_fmt->fmt.pix.width;
 	}
 	src -= src_fmt->fmt.pix.height * src_fmt->fmt.pix.bytesperline;
 
@@ -66,19 +67,19 @@ void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
 		for (x = 0; x < src_fmt->fmt.pix.width / 2; x++) {
 			int avg_src[3];
 
-			avg_src[0] = (src[0] + src[3] + src[src_fmt->fmt.pix.bytesperline] +
-					src[src_fmt->fmt.pix.bytesperline + 3]) / 4;
-			avg_src[1] = (src[1] + src[4] + src[src_fmt->fmt.pix.bytesperline + 1] +
-					src[src_fmt->fmt.pix.bytesperline + 4]) / 4;
-			avg_src[2] = (src[2] + src[5] + src[src_fmt->fmt.pix.bytesperline + 2] +
-					src[src_fmt->fmt.pix.bytesperline + 5]) / 4;
+			avg_src[0] = (src[0] + src[bpp] + src[src_fmt->fmt.pix.bytesperline] +
+					src[src_fmt->fmt.pix.bytesperline + bpp]) / 4;
+			avg_src[1] = (src[1] + src[bpp + 1] + src[src_fmt->fmt.pix.bytesperline + 1] +
+					src[src_fmt->fmt.pix.bytesperline + bpp + 1]) / 4;
+			avg_src[2] = (src[2] + src[bpp + 2] + src[src_fmt->fmt.pix.bytesperline + 2] +
+					src[src_fmt->fmt.pix.bytesperline + bpp + 2]) / 4;
 			if (bgr)
 				RGB2UV(avg_src[2], avg_src[1], avg_src[0], *udest++, *vdest++);
 			else
 				RGB2UV(avg_src[0], avg_src[1], avg_src[2], *udest++, *vdest++);
-			src += 6;
+			src += 2 * bpp;
 		}
-		src += 2 * src_fmt->fmt.pix.bytesperline - 3 * src_fmt->fmt.pix.width;
+		src += 2 * src_fmt->fmt.pix.bytesperline - bpp * src_fmt->fmt.pix.width;
 	}
 }
 
@@ -724,4 +725,26 @@ int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data,
 	memset(dest, 0x80, width * height / 2);
 
 	return 0;
+}
+
+void v4lconvert_rgb32_to_rgb24(const unsigned char *src, unsigned char *dest,
+		int width, int height,int bgr)
+{
+	int j;
+	while (--height >= 0) {
+		for (j = 0; j < width; j++) {
+			if (bgr){
+				*dest++ = src[2];
+				*dest++ = src[1];
+				*dest++ = src[0];
+				src+=4;
+			}
+			else{
+				*dest++ = *src++;
+				*dest++ = *src++;
+				*dest++ = *src++;
+				src+=1;
+			}
+		}
+	}
 }

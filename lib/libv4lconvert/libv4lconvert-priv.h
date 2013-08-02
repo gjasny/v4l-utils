@@ -108,7 +108,7 @@ unsigned char *v4lconvert_alloc_buffer(int needed,
 int v4lconvert_oom_error(struct v4lconvert_data *data);
 
 void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
-		const struct v4l2_format *src_fmt, int bgr, int yvu);
+		const struct v4l2_format *src_fmt, int bgr, int yvu, int bpp);
 
 void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dst,
 		int width, int height, int yvu);
@@ -157,6 +157,9 @@ void v4lconvert_y16_to_rgb24(const unsigned char *src, unsigned char *dest,
 
 void v4lconvert_y16_to_yuv420(const unsigned char *src, unsigned char *dest,
 		const struct v4l2_format *src_fmt);
+
+void v4lconvert_rgb32_to_rgb24(const unsigned char *src, unsigned char *dest,
+		int width, int height, int bgr);
 
 int v4lconvert_y10b_to_rgb24(struct v4lconvert_data *data,
 	const unsigned char *src, unsigned char *dest, int width, int height);
