@@ -1,3 +1,82 @@
+v4l-utils-1.0.0
+---------------
+
+Devin Heitmueller (1):
+      Don't call G_TUNER unless actually performing a tuning related call
+
+Diego Viola (1):
+      Fix spelling of Qt in .desktop file (typo)
+
+Gregor Jasny (20):
+      qv4l2: Silence Qt build tools invocation if silent mode is enabled
+      buildsystem: Do not bootstrap complete gettext for testing iconv
+      libdvb: Disable library installation by default
+      keytable: Always check if strtok return value is null
+      libv4lconvert: Prevent integer overflow by checking width and height
+      xc3082: Fix use after free in free_firmware()
+      libdvbv5: Fix reallocation in parse_lcn
+      rds-ctl: Always terminate strings properly
+      libdvbv5: Fix copy and paste error in parse_service()
+      libv4lconvert: Avoid division by 0 if gamma value is corrupted
+      pixfmt-test: Explicitely mention fall-through
+      v4l2-ctl: Do not read past end of num_planes array
+      libv4lconvert: Fix resource leak in sq905 error path
+      xc3028: Remove duplicate const
+      libdvbv5: Actually check for lock
+      libdvbv5: Free all memory in read_dvb_file error path
+      libdvbv5: Free all memory in parse_format_oneline error path
+      libdvbv5: Free tbl in dvb_read_section_with_id error paths
+      libdvbv5: Properly free temporary variables at end of parse_string
+      libdvbv5: Remove dead code in read_dvb_file.
+
+Guy Martin (6):
+      libdvbv5: Remove buggy parsing of extra DTV_foo parameters
+      libdvbv5: Add parsing of POLARIZATION
+      libdvbv5: Export dvb_fe_is_satellite()
+      libdvbv5: Fix satellite handling and apply polarization parameter to the frontend
+      libdvbv5: Use a temporary copy of the dvb parameters when tuning
+      dvbv5-zap: Parse the LNB from the channel file
+
+Hans Verkuil (20):
+      v4l2-dbg: remove unused source.
+      v4l2-compliance: refactor code to create invalid formats.
+      v4l2-compliance: improve overlay clipping tests.
+      v4l2-compliance: check that g_register fills the size field.
+      rds-ctl: fix percentage handling.
+      rds-ctl: support -d10 to refer to radio10.
+      v4l2-compliance: fix typo
+      v4l2-ctl: fix wrong array accesses in selection code.
+      v4l2-ctl: V4L2_BUF_TYPE_PRIVATE is no longer used.
+      Remove references to v4l2-chip-ident.h
+      Sync with latest 3.10.0-rc7  kernel.
+      libv4l2/log.c: add entry for new VIDIOC_DBG_G_CHIP_INFO ioctl.
+      Remove committed v4l2-chip-ident.h headers.
+      Sync with 3.11 kernel.
+      qv4l2: always update controls by default
+      libv4l2rds: fix coverity issues.
+      rds-ctl: fix coverity issues.
+      v4l2-dbg: fix coverity issues.
+      v4l2-ctl: fix coverity issues.
+      v4l2-ctl: (*XX).Foo -> XX->Foo
+
+Hans de Goede (3):
+      libv4l2: Add logging of dqbuf timestamps to debug logging
+      libv4l2: Add V4L2_PERROR convenience macro
+      libv4l2: do not log a ton of errors on device unplug
+
+Konke Radlow (3):
+      libv4l2rds: support RDS-EON and TMC-tuning info
+      rds-ctl: support RDS-EON and TMC-tuning info
+      libv4l2rds.c: moving functions to get rid of declarations
+
+Mauro Carvalho Chehab (3):
+      dvbv5-zap: sort the params by the key letter
+      dvbv5-zap: add an option to not filter pids
+      parse_string: fix encodings for Taiwan
+
+Ricardo Ribalda Delgado (1):
+      v4l2_compliance: -EINVAL is expected when ret is not 0
+
 v4l-utils-0.9.5
 ---------------
 
