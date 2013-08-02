@@ -7,7 +7,7 @@ if WITH_V4LUTILS
 SUBDIRS += utils contrib
 endif
 
-EXTRA_DIST = include README.lib README.lib-multi-threading
+EXTRA_DIST = include COPYING.libv4l README.libv4l README.lib-multi-threading
 
 # custom targets
 

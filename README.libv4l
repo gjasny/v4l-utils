@@ -86,24 +86,6 @@ Prerequisites
 libv4l requires shmem file system support in the kernel (CONFIG_SHMEM).
 
 
-Installation Instructions
--------------------------
-
-Simple type the following commands from the libv4l-x.y.z directory
-(adjusting PREFIX as desired):
-make
-make install PREFIX=/usr/local
-
-Note: make install also supports the DESTDIR=... parameter for installation
-into chroots.
-
-If you require static libraries to also be built, these can be compiled
-along with the dynamic equivalents by defining LINKTYPE to 'static', e.g.:
-
-make LINKTYPE=static
-make install LINKTYPE=static
-
-
 FAQ
 ---
 
@@ -133,7 +115,7 @@ Hence libv4l was born.
 Q: Under which license may I use and distribute libv4l?
 A: The libv4l libraries are licensed under the GNU Library General Publishing
 License version 2 or (at your option) any later version. See the included
-COPYING.LIB file. The decompression helpers are licensed under the GNU
+COPYING.LIBV4L file. The decompression helpers are licensed under the GNU
 Library Publishing License version 2 (as they are derived from kernel code)
 
 
