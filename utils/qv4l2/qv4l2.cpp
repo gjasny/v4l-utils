@@ -806,6 +806,9 @@ void ApplicationWindow::capStart(bool start)
 		}
 
 		m_capture->setMinimumSize(dstPix.width, dstPix.height);
+		// Ensure that the initial image is large enough for native 32 bit per pixel formats
+		if (dstPix.pixelformat == V4L2_PIX_FMT_RGB32 || dstPix.pixelformat == V4L2_PIX_FMT_BGR32)
+			dstFmt = QImage::Format_ARGB32;
 		m_capImage = new QImage(dstPix.width, dstPix.height, dstFmt);
 		m_capImage->fill(0);
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
