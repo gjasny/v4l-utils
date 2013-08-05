@@ -76,9 +76,10 @@ public:
 	static bool isSupported() { return false; }
 
 	void enableScaling(bool enable);
+	void setPixelAspectRatio(double ratio);
 	static QSize scaleFrameSize(QSize window, QSize frame);
 
-public slots:
+	public slots:
 	void resetSize();
 
 protected:
@@ -98,6 +99,11 @@ protected:
 	 * @brief Determines if scaling is to be applied to video frame.
 	 */
 	static bool m_enableScaling;
+
+	/**
+	 * @note Aspect ratio it taken care of by scaling, frame size is for square pixels only!
+	 */
+	static double m_pixelAspectRatio;
 
 signals:
 	void close();

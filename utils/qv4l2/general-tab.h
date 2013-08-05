@@ -57,6 +57,7 @@ public:
 	void setAudioDeviceBufferSize(int size);
 	int getAudioDeviceBufferSize();
 	bool hasAlsaAudio();
+	double getPixelAspectRatio();
 	bool get_interval(struct v4l2_fract &interval);
 	int width() const { return m_width; }
 	int height() const { return m_height; }
@@ -90,6 +91,7 @@ public slots:
 
 signals:
 	void audioDeviceChanged();
+	void pixelAspectRatioChanged();
 
 private slots:
 	void inputChanged(int);
@@ -182,6 +184,7 @@ private:
 	QComboBox *m_tvStandard;
 	QPushButton *m_qryStandard;
 	QComboBox *m_videoTimings;
+	QComboBox *m_pixelAspectRatio;
 	QPushButton *m_qryTimings;
 	QLineEdit *m_freq;
 	QComboBox *m_freqTable;

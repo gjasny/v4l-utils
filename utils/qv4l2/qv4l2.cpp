@@ -103,7 +103,7 @@ ApplicationWindow::ApplicationWindow() :
 	m_saveRawAct->setChecked(false);
 	connect(m_saveRawAct, SIGNAL(toggled(bool)), this, SLOT(saveRaw(bool)));
 
-	m_showFramesAct = new QAction(QIcon(":/video-television.png"), "Show &Frames", this);
+	m_showFramesAct = new QAction(QIcon(":/video-television.png"), "&Show Frames", this);
 	m_showFramesAct->setStatusTip("Only show captured frames if set.");
 	m_showFramesAct->setCheckable(true);
 	m_showFramesAct->setChecked(true);
@@ -137,12 +137,12 @@ ApplicationWindow::ApplicationWindow() :
 	toolBar->addSeparator();
 	toolBar->addAction(quitAct);
 
-	m_scalingAct = new QAction("Enable Video Scaling", this);
+	m_scalingAct = new QAction("&Enable Video Scaling", this);
 	m_scalingAct->setStatusTip("Scale video frames to match window size if set");
 	m_scalingAct->setCheckable(true);
 	m_scalingAct->setChecked(true);
 	connect(m_scalingAct, SIGNAL(toggled(bool)), this, SLOT(enableScaling(bool)));
-	m_resetScalingAct = new QAction("Resize to Frame Size", this);
+	m_resetScalingAct = new QAction("Resize to &Frame Size", this);
 	m_resetScalingAct->setStatusTip("Resizes the capture window to match frame size");
 	m_resetScalingAct->setShortcut(Qt::CTRL+Qt::Key_F);
 
@@ -169,13 +169,13 @@ ApplicationWindow::ApplicationWindow() :
 #ifdef HAVE_ALSA
 	captureMenu->addSeparator();
 
-	m_showAllAudioAct = new QAction("Show All Audio Devices", this);
+	m_showAllAudioAct = new QAction("Show All Audio &Devices", this);
 	m_showAllAudioAct->setStatusTip("Show all audio input and output devices if set");
 	m_showAllAudioAct->setCheckable(true);
 	m_showAllAudioAct->setChecked(false);
 	captureMenu->addAction(m_showAllAudioAct);
 
-	m_audioBufferAct = new QAction("Set Audio Buffer Capacity...", this);
+	m_audioBufferAct = new QAction("Set Audio &Buffer Size...", this);
 	m_audioBufferAct->setStatusTip("Set audio buffer capacity in amout of ms than can be stored");
 	connect(m_audioBufferAct, SIGNAL(triggered()), this, SLOT(setAudioBufferSize()));
 	captureMenu->addAction(m_audioBufferAct);
@@ -216,8 +216,6 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 
 	newCaptureWin();
 
-	m_capture->setMinimumSize(150, 50);
-
 	QWidget *w = new QWidget(m_tabs);
 	m_genTab = new GeneralTab(device, *this, 4, w);
 
@@ -233,6 +231,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	}
 #endif
 
+	connect(m_genTab, SIGNAL(pixelAspectRatioChanged()), this, SLOT(updatePixelAspectRatio()));
 	m_tabs->addTab(w, "General");
 	addTabs();
 	if (caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE)) {
@@ -363,6 +362,7 @@ void ApplicationWindow::newCaptureWin()
 		break;
 	}
 
+	m_capture->setPixelAspectRatio(1.0);
 	m_capture->enableScaling(m_scalingAct->isChecked());
         connect(m_capture, SIGNAL(close()), this, SLOT(closeCaptureWin()));
 	connect(m_resetScalingAct, SIGNAL(triggered()), m_capture, SLOT(resetSize()));
@@ -811,6 +811,12 @@ void ApplicationWindow::enableScaling(bool enable)
 		m_capture->enableScaling(enable);
 }
 
+void ApplicationWindow::updatePixelAspectRatio()
+{
+	if (m_capture != NULL && m_genTab != NULL)
+		m_capture->setPixelAspectRatio(m_genTab->getPixelAspectRatio());
+}
+
 void ApplicationWindow::startAudio()
 {
 #ifdef HAVE_ALSA
@@ -892,6 +898,7 @@ void ApplicationWindow::capStart(bool start)
 		m_vbiTab->slicedFormat(fmt.fmt.sliced);
 		m_vbiSize = fmt.fmt.sliced.io_size;
 		m_frameData = new unsigned char[m_vbiSize];
+		updatePixelAspectRatio();
 		if (startCapture(m_vbiSize)) {
 			m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
 			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capVbiFrame()));
@@ -960,6 +967,7 @@ void ApplicationWindow::capStart(bool start)
 		m_capSrcFormat = copy;
 	}
 
+	updatePixelAspectRatio();
 	m_capture->resize(dstPix.width, dstPix.height);
 	// Ensure that the initial image is large enough for native 32 bit per pixel formats
 	if (dstPix.pixelformat == V4L2_PIX_FMT_RGB32 || dstPix.pixelformat == V4L2_PIX_FMT_BGR32)

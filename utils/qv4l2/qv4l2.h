@@ -132,6 +132,8 @@ private slots:
 	void openRawFile(const QString &s);
 	void rejectedRawFile();
 	void setAudioBufferSize();
+	void enableScaling(bool enable);
+	void updatePixelAspectRatio();
 
 	void about();
 
@@ -174,6 +176,7 @@ private:
 	void updateStandard();
 	void updateFreq();
 	void updateFreqChannel();
+	bool showFrames();
 
 	GeneralTab *m_genTab;
 	VbiTab *m_vbiTab;
@@ -184,6 +187,8 @@ private:
 	QAction *m_useGLAct;
 	QAction *m_showAllAudioAct;
 	QAction *m_audioBufferAct;
+	QAction *m_scalingAct;
+	QAction *m_resetScalingAct;
 	QString m_filename;
 	QSignalMapper *m_sigMapper;
 	QTabWidget *m_tabs;
@@ -195,7 +200,6 @@ private:
 	WidgetMap m_widgetMap;
 	ClassMap m_classMap;
 	bool m_haveExtendedUserCtrls;
-	bool m_showFrames;
 	int m_vbiSize;
 	unsigned m_vbiWidth;
 	unsigned m_vbiHeight;

@@ -21,6 +21,9 @@
 #include "qv4l2.h"
 #include "capture-win.h"
 
+#include <QBoxLayout>
+#include <QResizeEvent>
+
 #ifdef ENABLE_GL
 #define GL_GLEXT_PROTOTYPES
 #include <QGLWidget>
@@ -40,6 +43,7 @@ public:
 	void stop();
 	void setFrame(int width, int height, __u32 format, unsigned char *data);
 	bool hasNativeFormat(__u32 format);
+	void setSize(int width, int height);
 
 protected:
 	void paintGL();
@@ -88,6 +92,10 @@ public:
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported();
 
+ protected:
+	void resizeEvent(QResizeEvent *event);
+
+private:
 #ifdef ENABLE_GL
 	CaptureWinGLEngine m_videoSurface;
 #endif

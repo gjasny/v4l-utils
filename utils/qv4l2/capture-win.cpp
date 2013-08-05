@@ -30,6 +30,7 @@
 #define MIN_WIN_SIZE_HEIGHT 120
 
 bool CaptureWin::m_enableScaling = true;
+double CaptureWin::m_pixelAspectRatio = 1.0;
 
 CaptureWin::CaptureWin() :
 	m_curWidth(-1),
@@ -73,6 +74,14 @@ void CaptureWin::resetSize()
 	resize(w, h);
 }
 
+int CaptureWin::actualFrameWidth(int width)
+{
+	if (m_enableScaling)
+		return (int)((double)width * m_pixelAspectRatio);
+	else
+		return width;
+}
+
 QSize CaptureWin::getMargins()
 {
 	int l, t, r, b;
@@ -94,6 +103,14 @@ void CaptureWin::enableScaling(bool enable)
 	delete event;
 }
 
+void CaptureWin::setPixelAspectRatio(double ratio)
+{
+	m_pixelAspectRatio = ratio;
+	QResizeEvent *event = new QResizeEvent(QSize(width(), height()), QSize(width(), height()));
+	QCoreApplication::sendEvent(this, event);
+	delete event;
+}
+
 void CaptureWin::resize(int width, int height)
 {
 	// Dont resize window if the frame size is the same in
@@ -105,7 +122,7 @@ void CaptureWin::resize(int width, int height)
 	m_curHeight = height;
 
 	QSize margins = getMargins();
-	width += margins.width();
+	width = actualFrameWidth(width) + margins.width();
 	height += margins.height();
 
 	QDesktopWidget *screen = QApplication::desktop();
@@ -127,12 +144,15 @@ void CaptureWin::resize(int width, int height)
 
 QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
 {
-	int actualFrameWidth = frame.width();;
+	int actualFrameWidth;
 	int actualFrameHeight = frame.height();
 
 	if (!m_enableScaling) {
 		window.setWidth(frame.width());
 		window.setHeight(frame.height());
+		actualFrameWidth = frame.width();
+	} else {
+		actualFrameWidth = CaptureWin::actualFrameWidth(frame.width());
 	}
 
 	double newW, newH;

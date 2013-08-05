@@ -43,6 +43,15 @@ void CaptureWinGL::stop()
 #endif
 }
 
+void CaptureWinGL::resizeEvent(QResizeEvent *event)
+{
+	QSize margins = getMargins();
+#ifdef ENABLE_GL
+	m_videoSurface.setSize(width() - margins.width(), height() - margins.height());
+#endif
+	event->accept();
+}
+
 void CaptureWinGL::setFrame(int width, int height, __u32 format, unsigned char *data, const QString &info)
 {
 #ifdef ENABLE_GL
@@ -109,11 +118,22 @@ void CaptureWinGLEngine::initializeGL()
 	checkError("InitializeGL");
 }
 
+void CaptureWinGLEngine::setSize(int width, int height)
+{
+	QSize sizedFrame = CaptureWin::scaleFrameSize(QSize(width, height), QSize(m_frameWidth, m_frameHeight));
+
+	width = sizedFrame.width();
+	height = sizedFrame.height();
+
+	if (width > 0 && height > 0) {
+		setMaximumSize(width, height);
+		resizeGL(width, height);
+	}
+}
 
 void CaptureWinGLEngine::resizeGL(int width, int height)
 {
-	// Resizing is disabled by setting viewport equal to frame size
-	glViewport(0, 0, m_frameWidth, m_frameHeight);
+	glViewport(0, 0, width, height);
 }
 
 void CaptureWinGLEngine::setFrame(int width, int height, __u32 format, unsigned char *data)
@@ -123,8 +143,6 @@ void CaptureWinGLEngine::setFrame(int width, int height, __u32 format, unsigned 
 		m_frameWidth = width;
 		m_frameHeight = height;
 		m_frameFormat = format;
-
-		QGLWidget::setMaximumSize(m_frameWidth, m_frameHeight);
 	}
 
 	m_frameData = data;

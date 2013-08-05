@@ -25,6 +25,7 @@
 
 #include <QLabel>
 #include <QImage>
+#include <QResizeEvent>
 
 class CaptureWinQt : public CaptureWin
 {
@@ -39,10 +40,14 @@ public:
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported() { return true; }
 
+protected:
+	void resizeEvent(QResizeEvent *event);
+
 private:
 	bool findNativeFormat(__u32 format, QImage::Format &dstFmt);
 
 	QImage *m_frame;
 	QLabel m_videoSurface;
+	QSize m_scaledFrame;
 };
 #endif
