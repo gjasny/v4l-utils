@@ -404,7 +404,7 @@ void ApplicationWindow::capVbiFrame()
 		m_capStartAct->setChecked(false);
 		return;
 	}
-	if (m_showFrames) {
+	if (showFrames()) {
 		for (unsigned y = 0; y < m_vbiHeight; y++) {
 			__u8 *p = data + y * m_vbiWidth;
 			__u8 *q = m_capImage->bits() + y * m_capImage->bytesPerLine();
@@ -448,7 +448,7 @@ void ApplicationWindow::capVbiFrame()
 		m_tv = tv;
 	}
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
-	if (m_showFrames)
+	if (showFrames())
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), status);
 
@@ -491,7 +491,7 @@ void ApplicationWindow::capFrame()
 		if (m_saveRaw.openMode())
 			m_saveRaw.write((const char *)m_frameData, s);
 
-		if (!m_showFrames)
+		if (!showFrames())
 			break;
 		if (m_mustConvert)
 			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
@@ -515,7 +515,7 @@ void ApplicationWindow::capFrame()
 		if (again)
 			return;
 
-		if (m_showFrames) {
+		if (showFrames()) {
 			if (m_mustConvert)
 				err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 							 (unsigned char *)m_buffers[buf.index].start, buf.bytesused,
@@ -544,7 +544,7 @@ void ApplicationWindow::capFrame()
 		if (again)
 			return;
 
-		if (m_showFrames) {
+		if (showFrames()) {
 			if (m_mustConvert)
 				err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 							 (unsigned char *)buf.m.userptr, buf.bytesused,
@@ -590,10 +590,10 @@ void ApplicationWindow::capFrame()
 			      .arg((m_totalAudioLatency.tv_sec * 1000 + m_totalAudioLatency.tv_usec / 1000) / m_frame));
 	}
 #endif
-	if (displaybuf == NULL && m_showFrames)
+	if (displaybuf == NULL && showFrames())
 		status.append(" Error: Unsupported format.");
 
-	if (m_showFrames)
+	if (showFrames())
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, displaybuf, status);
 
@@ -776,6 +776,13 @@ void ApplicationWindow::stopCapture()
 	refresh();
 }
 
+bool ApplicationWindow::showFrames()
+{
+	if (m_showFramesAct->isChecked() && !m_capture->isVisible())
+		m_capture->show();
+	return m_showFramesAct->isChecked();
+}
+
 void ApplicationWindow::startOutput(unsigned)
 {
 }
@@ -849,7 +856,6 @@ void ApplicationWindow::capStart(bool start)
 		m_capImage = NULL;
 		return;
 	}
-	m_showFrames = m_showFramesAct->isChecked();
 	m_frame = m_lastFrame = m_fps = 0;
 	m_capMethod = m_genTab->capMethod();
 
@@ -857,7 +863,6 @@ void ApplicationWindow::capStart(bool start)
 		v4l2_format fmt;
 		v4l2_std_id std;
 
-		m_showFrames = false;
 		g_fmt_sliced_vbi(fmt);
 		g_std(std);
 		fmt.fmt.sliced.service_set = (std & V4L2_STD_625_50) ?
@@ -896,14 +901,14 @@ void ApplicationWindow::capStart(bool start)
 			m_vbiHeight = fmt.fmt.vbi.count[0] + fmt.fmt.vbi.count[1];
 		m_vbiSize = m_vbiWidth * m_vbiHeight;
 		m_frameData = new unsigned char[m_vbiSize];
-		if (m_showFrames) {
-			m_capture->setMinimumSize(m_vbiWidth, m_vbiHeight);
-			m_capImage = new QImage(m_vbiWidth, m_vbiHeight, dstFmt);
-			m_capImage->fill(0);
-			m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-					    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), "No frame");
+		m_capture->setMinimumSize(m_vbiWidth, m_vbiHeight);
+		m_capImage = new QImage(m_vbiWidth, m_vbiHeight, dstFmt);
+		m_capImage->fill(0);
+		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), "No frame");
+		if (showFrames())
 			m_capture->show();
-		}
+
 		statusBar()->showMessage("No frame");
 		if (startCapture(m_vbiSize)) {
 			m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
@@ -917,33 +922,31 @@ void ApplicationWindow::capStart(bool start)
 	if (m_genTab->get_interval(interval))
 		set_interval(interval);
 
-	m_mustConvert = m_showFrames;
 	m_frameData = new unsigned char[srcPix.sizeimage];
-	if (m_showFrames) {
-		m_capDestFormat = m_capSrcFormat;
-		dstPix.pixelformat = V4L2_PIX_FMT_RGB24;
+	m_capDestFormat = m_capSrcFormat;
+	dstPix.pixelformat = V4L2_PIX_FMT_RGB24;
 
-		if (m_capture->hasNativeFormat(srcPix.pixelformat)) {
-			dstPix.pixelformat = srcPix.pixelformat;
-			m_mustConvert = false;
-		}
+	if (m_capture->hasNativeFormat(srcPix.pixelformat)) {
+		dstPix.pixelformat = srcPix.pixelformat;
+		m_mustConvert = false;
+	} else {
+		m_mustConvert = true;
+		v4l2_format copy = m_capSrcFormat;
 
-		if (m_mustConvert) {
-			v4l2_format copy = m_capSrcFormat;
+		v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
+		// v4lconvert_try_format sometimes modifies the source format if it thinks
+		// that there is a better format available. Restore our selected source
+		// format since we do not want that happening.
+		m_capSrcFormat = copy;
+	}
 
-			v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
-			// v4lconvert_try_format sometimes modifies the source format if it thinks
-			// that there is a better format available. Restore our selected source
-			// format since we do not want that happening.
-			m_capSrcFormat = copy;
-		}
-
-		m_capture->setMinimumSize(dstPix.width, dstPix.height);
-		// Ensure that the initial image is large enough for native 32 bit per pixel formats
-		if (dstPix.pixelformat == V4L2_PIX_FMT_RGB32 || dstPix.pixelformat == V4L2_PIX_FMT_BGR32)
-			dstFmt = QImage::Format_ARGB32;
-		m_capImage = new QImage(dstPix.width, dstPix.height, dstFmt);
-		m_capImage->fill(0);
+	m_capture->setMinimumSize(dstPix.width, dstPix.height);
+	// Ensure that the initial image is large enough for native 32 bit per pixel formats
+	if (dstPix.pixelformat == V4L2_PIX_FMT_RGB32 || dstPix.pixelformat == V4L2_PIX_FMT_BGR32)
+		dstFmt = QImage::Format_ARGB32;
+	m_capImage = new QImage(dstPix.width, dstPix.height, dstFmt);
+	m_capImage->fill(0);
+	if (showFrames()) {
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), "No frame");
 		m_capture->show();
