@@ -136,6 +136,13 @@ if test "x$qt_pkgconfig_gl" = "xfalse"; then
    AC_MSG_WARN(Qt4 OpenGL or higher is not available)
 fi
 
+PKG_CHECK_MODULES(ALSA, [alsa], [alsa_pkgconfig=true], [alsa_pkgconfig=false])
+if test "x$alsa_pkgconfig" = "xtrue"; then
+   AC_DEFINE([HAVE_ALSA], [1], [alsa library is present])
+else
+   AC_MSG_WARN(ALSA library not available)
+fi
+
 AC_SUBST([JPEG_LIBS])
 
 # The dlopen() function is in the C library for *BSD and in

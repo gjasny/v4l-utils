@@ -26,9 +26,10 @@
  *
  */
 
-#include "config.h"
+#include <config.h>
 
-#ifdef HAVE_ALSA_ASOUNDLIB_H
+#ifdef HAVE_ALSA
+#include "alsa_stream.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,12 +41,12 @@
 #include <alsa/asoundlib.h>
 #include <sys/time.h>
 #include <math.h>
-#include "alsa_stream.h"
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(*(a)))
 
 /* Private vars to control alsa thread status */
 static int stop_alsa = 0;
+static snd_htimestamp_t timestamp;
 
 /* Error handlers */
 snd_output_t *output = NULL;
@@ -202,6 +203,13 @@ static int setparams_set(snd_pcm_t *handle,
 		id, snd_strerror(err));
 	return err;
     }
+
+    err = snd_pcm_sw_params_set_tstamp_mode(handle, swparams, SND_PCM_TSTAMP_ENABLE);
+    if (err < 0) {
+	fprintf(error_fp, "alsa: Unable to enable timestamps for %s: %s\n",
+		id, snd_strerror(err));
+    }
+
     err = snd_pcm_sw_params(handle, swparams);
     if (err < 0) {
 	fprintf(error_fp, "alsa: Unable to set sw params for %s: %s\n",
@@ -422,7 +430,8 @@ static int setparams(snd_pcm_t *phandle, snd_pcm_t *chandle,
 static snd_pcm_sframes_t readbuf(snd_pcm_t *handle, char *buf, long len)
 {
     snd_pcm_sframes_t r;
-
+    snd_pcm_uframes_t frames;
+    snd_pcm_htimestamp(handle, &frames, &timestamp);
     r = snd_pcm_readi(handle, buf, len);
     if (r < 0 && r != -EAGAIN) {
 	r = snd_pcm_recover(handle, r, 0);
@@ -453,6 +462,7 @@ static snd_pcm_sframes_t writebuf(snd_pcm_t *handle, char *buf, long len)
 	len -= r;
 	snd_pcm_wait(handle, 100);
     }
+    return -1;
 }
 
 static int alsa_stream(const char *pdevice, const char *cdevice, int latency)
@@ -642,4 +652,14 @@ int alsa_thread_is_running(void)
     return alsa_is_running;
 }
 
+void alsa_thread_timestamp(struct timeval *tv)
+{
+	if (alsa_thread_is_running()) {
+		tv->tv_sec = timestamp.tv_sec;
+		tv->tv_usec = timestamp.tv_nsec / 1000;
+	} else {
+		tv->tv_sec = 0;
+		tv->tv_usec = 0;
+	}
+}
 #endif
