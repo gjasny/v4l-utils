@@ -437,7 +437,7 @@ static snd_pcm_sframes_t writebuf(snd_pcm_t *handle, char *buf, long len)
 {
     snd_pcm_sframes_t r;
 
-    while (1) {
+    while (!stop_alsa) {
 	r = snd_pcm_writei(handle, buf, len);
 	if (r == len)
 	    return 0;
