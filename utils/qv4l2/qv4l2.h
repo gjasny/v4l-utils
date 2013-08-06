@@ -20,6 +20,8 @@
 #ifndef QV4L2_H
 #define QV4L2_H
 
+#include <config.h>
+
 #include <QMainWindow>
 #include <QTabWidget>
 #include <QSignalMapper>
@@ -98,6 +100,8 @@ private:
 	void startOutput(unsigned buffer_size);
 	void stopOutput();
 	void newCaptureWin();
+	void startAudio();
+	void stopAudio();
 
 	struct buffer *m_buffers;
 	struct v4l2_format m_capSrcFormat;
@@ -118,6 +122,7 @@ private slots:
 	void capVbiFrame();
 	void saveRaw(bool);
 	void setRenderMethod();
+	void changeAudioDevice();
 
 	// gui
 private slots:
@@ -126,6 +131,7 @@ private slots:
 	void ctrlAction(int);
 	void openRawFile(const QString &s);
 	void rejectedRawFile();
+	void setAudioBufferSize();
 
 	void about();
 
@@ -176,6 +182,8 @@ private:
 	QAction *m_saveRawAct;
 	QAction *m_showFramesAct;
 	QAction *m_useGLAct;
+	QAction *m_showAllAudioAct;
+	QAction *m_audioBufferAct;
 	QString m_filename;
 	QSignalMapper *m_sigMapper;
 	QTabWidget *m_tabs;
@@ -196,6 +204,7 @@ private:
 	unsigned m_lastFrame;
 	unsigned m_fps;
 	struct timeval m_tv;
+	struct timeval m_totalAudioLatency;
 	QFile m_saveRaw;
 };
 

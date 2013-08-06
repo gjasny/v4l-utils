@@ -30,6 +30,16 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <QRegExp>
+
+bool GeneralTab::m_fullAudioName = false;
+
+enum audioDeviceAdd {
+	AUDIO_ADD_NO,
+	AUDIO_ADD_READ,
+	AUDIO_ADD_WRITE,
+	AUDIO_ADD_READWRITE
+};
 
 GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) :
 	QGridLayout(parent),
@@ -48,11 +58,15 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_vidCapFormats(NULL),
 	m_frameSize(NULL),
 	m_vidOutFormats(NULL),
-	m_vbiMethods(NULL)
+	m_vbiMethods(NULL),
+	m_audioInDevice(NULL),
+	m_audioOutDevice(NULL)
 {
+	m_device.append(device);
 	setSpacing(3);
 
 	setSizeConstraint(QLayout::SetMinimumSize);
+
 
 	if (querycap(m_querycap)) {
 		addLabel("Device:");
@@ -130,6 +144,42 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		addWidget(m_audioOutput);
 		connect(m_audioOutput, SIGNAL(activated(int)), SLOT(outputAudioChanged(int)));
 		updateAudioOutput();
+	}
+
+	if (hasAlsaAudio()) {
+		m_audioInDevice = new QComboBox(parent);
+		m_audioOutDevice = new QComboBox(parent);
+		m_audioInDevice->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+		m_audioOutDevice->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+
+		if (createAudioDeviceList()) {
+			addLabel("Audio Input Device");
+			connect(m_audioInDevice, SIGNAL(activated(int)), SLOT(changeAudioDevice()));
+			addWidget(m_audioInDevice);
+
+			addLabel("Audio Output Device");
+			connect(m_audioOutDevice, SIGNAL(activated(int)), SLOT(changeAudioDevice()));
+			addWidget(m_audioOutDevice);
+
+			if (isRadio()) {
+				setAudioDeviceBufferSize(75);
+			} else {
+				v4l2_fract fract;
+				if (!v4l2::get_interval(fract)) {
+					// Default values are for 30 FPS
+					fract.numerator = 33;
+					fract.denominator = 1000;
+				}
+				// Standard capacity is two frames
+				setAudioDeviceBufferSize((fract.numerator * 2000) / fract.denominator);
+			}
+		} else {
+			fprintf(stderr, "BANNA\n");
+			delete m_audioInDevice;
+			delete m_audioOutDevice;
+			m_audioInDevice = NULL;
+			m_audioOutDevice = NULL;
+		}
 	}
 
 	if (needsStd) {
@@ -368,6 +418,180 @@ capture_method:
 done:
 	QGridLayout::addWidget(new QWidget(parent), rowCount(), 0, 1, n);
 	setRowStretch(rowCount() - 1, 1);
+}
+
+void GeneralTab::showAllAudioDevices(bool use)
+{
+	QString oldIn(m_audioInDevice->currentText());
+	QString oldOut(m_audioOutDevice->currentText());
+
+	m_fullAudioName = use;
+	if (oldIn == NULL || oldOut == NULL || !createAudioDeviceList())
+		return;
+
+	// Select a similar device as before the listings method change
+	// check by comparing old selection with any matching in the new list
+	bool setIn = false, setOut = false;
+	int listSize = std::max(m_audioInDevice->count(), m_audioOutDevice->count());
+
+	for (int i = 0; i < listSize; i++) {
+		QString oldInCmp(oldIn.left(std::min(m_audioInDevice->itemText(i).length(), oldIn.length())));
+		QString oldOutCmp(oldOut.left(std::min(m_audioOutDevice->itemText(i).length(), oldOut.length())));
+
+		if (!setIn && i < m_audioInDevice->count()
+		    && m_audioInDevice->itemText(i).startsWith(oldInCmp)) {
+			setIn = true;
+			m_audioInDevice->setCurrentIndex(i);
+		}
+
+		if (!setOut && i < m_audioOutDevice->count()
+		    && m_audioOutDevice->itemText(i).startsWith(oldOutCmp)) {
+			setOut = true;
+			m_audioOutDevice->setCurrentIndex(i);
+		}
+	}
+}
+
+bool GeneralTab::filterAudioInDevice(QString &deviceName)
+{
+	// Removes S/PDIF, front speakers and surround from input devices
+	// as they are output devices, not input
+	if (deviceName.contains("surround")
+	    || deviceName.contains("front")
+	    || deviceName.contains("iec958"))
+		return false;
+
+	// Removes sysdefault too if not full audio mode listings
+	if (!m_fullAudioName && deviceName.contains("sysdefault"))
+		return false;
+
+	return true;
+}
+
+bool GeneralTab::filterAudioOutDevice(QString &deviceName)
+{
+	// Removes advanced options if not full audio mode listings
+	if (!m_fullAudioName && (deviceName.contains("surround")
+				 || deviceName.contains("front")
+				 || deviceName.contains("iec958")
+				 || deviceName.contains("sysdefault"))) {
+		return false;
+	}
+
+	return true;
+}
+
+int GeneralTab::addAudioDevice(void *hint, int deviceNum)
+{
+	int added = 0;
+#ifdef HAVE_ALSA
+	char *name;
+	char *iotype;
+	QString deviceName;
+	QString listName;
+	QStringList deviceType;
+	iotype = snd_device_name_get_hint(hint, "IOID");
+	name = snd_device_name_get_hint(hint, "NAME");
+	deviceName.append(name);
+
+	snd_card_get_name(deviceNum, &name);
+	listName.append(name);
+
+	deviceType = deviceName.split(":");
+
+	// Add device io capability to list name
+	if (m_fullAudioName) {
+		listName.append(" ");
+
+		// Makes the surround name more readable
+		if (deviceName.contains("surround"))
+			listName.append(QString("surround %1.%2")
+					.arg(deviceType.value(0)[8]).arg(deviceType.value(0)[9]));
+		else
+			listName.append(deviceType.value(0));
+
+	} else if (!deviceType.value(0).contains("default")) {
+		listName.append(" ").append(deviceType.value(0));
+	}
+
+	// Add device number if it is not 0
+	if (deviceName.contains("DEV=")) {
+		int devNo;
+		QStringList deviceNo = deviceName.split("DEV=");
+		devNo = deviceNo.value(1).toInt();
+		if (devNo)
+			listName.append(QString(" %1").arg(devNo));
+	}
+
+	if ((iotype == NULL || strncmp(iotype, "Input", 5) == 0) && filterAudioInDevice(deviceName)) {
+		m_audioInDevice->addItem(listName);
+		m_audioInDeviceMap[listName] = snd_device_name_get_hint(hint, "NAME");
+		added += AUDIO_ADD_READ;
+	}
+
+	if ((iotype == NULL || strncmp(iotype, "Output", 6) == 0)  && filterAudioOutDevice(deviceName)) {
+		m_audioOutDevice->addItem(listName);
+		m_audioOutDeviceMap[listName] = snd_device_name_get_hint(hint, "NAME");
+		added += AUDIO_ADD_WRITE;
+	}
+#endif
+	return added;
+}
+
+bool GeneralTab::createAudioDeviceList()
+{
+#ifdef HAVE_ALSA
+	if (m_audioInDevice == NULL || m_audioOutDevice == NULL)
+		return false;
+
+	m_audioInDevice->clear();
+	m_audioOutDevice->clear();
+	m_audioInDeviceMap.clear();
+	m_audioOutDeviceMap.clear();
+
+	m_audioInDevice->addItem("None");
+	m_audioOutDevice->addItem("Default");
+	m_audioInDeviceMap["None"] = "None";
+	m_audioOutDeviceMap["Default"] = "default";
+
+	int deviceNum = -1;
+	int audioDevices = 0;
+	int matchDevice = matchAudioDevice();
+	int indexDevice = -1;
+	int indexCount = 0;
+
+	while (snd_card_next(&deviceNum) >= 0) {
+		if (deviceNum == -1)
+			break;
+
+		audioDevices++;
+		if (deviceNum == matchDevice && indexDevice == -1)
+			indexDevice = indexCount;
+
+		void **hint;
+
+		snd_device_name_hint(deviceNum, "pcm", &hint);
+		for (int i = 0; hint[i] != NULL; i++) {
+			int addAs = addAudioDevice(hint[i], deviceNum);
+			if (addAs == AUDIO_ADD_READ || addAs == AUDIO_ADD_READWRITE)
+				indexCount++;
+		}
+		snd_device_name_free_hint(hint);
+	}
+
+	snd_config_update_free_global();
+	m_audioInDevice->setCurrentIndex(indexDevice + 1);
+	changeAudioDevice();
+	return m_audioInDeviceMap.size() > 1 && m_audioOutDeviceMap.size() > 1 && audioDevices > 1;
+#else
+	return false;
+#endif
+}
+
+void GeneralTab::changeAudioDevice()
+{
+	m_audioOutDevice->setEnabled(getAudioInDevice() != NULL ? getAudioInDevice().compare("None") : false);
+	emit audioDeviceChanged();
 }
 
 void GeneralTab::addWidget(QWidget *w, Qt::Alignment align)
@@ -931,4 +1155,74 @@ bool GeneralTab::get_interval(struct v4l2_fract &interval)
 		interval = m_interval;
 
 	return m_has_interval;
+}
+
+QString GeneralTab::getAudioInDevice()
+{
+	if (m_audioInDevice == NULL)
+		return NULL;
+
+	return m_audioInDeviceMap[m_audioInDevice->currentText()];
+}
+
+QString GeneralTab::getAudioOutDevice()
+{
+	if (m_audioOutDevice == NULL)
+		return NULL;
+
+	return m_audioOutDeviceMap[m_audioOutDevice->currentText()];
+}
+
+void GeneralTab::setAudioDeviceBufferSize(int size)
+{
+	m_audioDeviceBufferSize = size;
+}
+
+int GeneralTab::getAudioDeviceBufferSize()
+{
+	return m_audioDeviceBufferSize;
+}
+
+#ifdef HAVE_ALSA
+int GeneralTab::checkMatchAudioDevice(void *md, const char *vid, const enum device_type type)
+{
+	const char *devname = NULL;
+
+	while ((devname = get_associated_device(md, devname, type, vid, MEDIA_V4L_VIDEO)) != NULL) {
+		if (type == MEDIA_SND_CAP) {
+			QStringList devAddr = QString(devname).split(QRegExp("[:,]"));
+			return devAddr.value(1).toInt();
+		}
+	}
+	return -1;
+}
+
+int GeneralTab::matchAudioDevice()
+{
+	QStringList devPath = m_device.split("/");
+	QString curDev = devPath.value(devPath.count() - 1);
+
+	void *media;
+	const char *video = NULL;
+	int match;
+
+	media = discover_media_devices();
+
+	while ((video = get_associated_device(media, video, MEDIA_V4L_VIDEO, NULL, NONE)) != NULL)
+		if (curDev.compare(video) == 0)
+			for (int i = 0; i <= MEDIA_SND_HW; i++)
+				if ((match = checkMatchAudioDevice(media, video, static_cast<device_type>(i))) != -1)
+					return match;
+
+	return -1;
+}
+#endif
+
+bool GeneralTab::hasAlsaAudio()
+{
+#ifdef HAVE_ALSA
+	return !isVbi();
+#else
+	return false;
+#endif
 }

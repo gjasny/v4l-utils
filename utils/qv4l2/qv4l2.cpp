@@ -24,6 +24,12 @@
 #include "capture-win-qt.h"
 #include "capture-win-gl.h"
 
+#ifdef ENABLE_ASLA
+extern "C" {
+#include "alsa_stream.h"
+}
+#endif
+
 #include <QToolBar>
 #include <QToolButton>
 #include <QMenuBar>
@@ -45,15 +51,18 @@
 #include <QWhatsThis>
 #include <QThread>
 #include <QCloseEvent>
+#include <QInputDialog>
 
 #include <assert.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <dirent.h>
 #include <libv4l2.h>
 
 ApplicationWindow::ApplicationWindow() :
 	m_capture(NULL),
+	m_genTab(NULL),
 	m_sigMapper(NULL)
 {
 	setAttribute(Qt::WA_DeleteOnClose, true);
@@ -76,7 +85,7 @@ ApplicationWindow::ApplicationWindow() :
 	openRawAct->setShortcut(Qt::CTRL+Qt::Key_R);
 	connect(openRawAct, SIGNAL(triggered()), this, SLOT(openrawdev()));
 
-	m_capStartAct = new QAction(QIcon(":/record.png"), "&Start Capturing", this);
+	m_capStartAct = new QAction(QIcon(":/record.png"), "Start &Capturing", this);
 	m_capStartAct->setStatusTip("Start capturing");
 	m_capStartAct->setCheckable(true);
 	m_capStartAct->setDisabled(true);
@@ -145,6 +154,21 @@ ApplicationWindow::ApplicationWindow() :
 		m_renderMethod = QV4L2_RENDER_QT;
 	}
 
+#ifdef HAVE_ALSA
+	captureMenu->addSeparator();
+
+	m_showAllAudioAct = new QAction("Show All Audio Devices", this);
+	m_showAllAudioAct->setStatusTip("Show all audio input and output devices if set");
+	m_showAllAudioAct->setCheckable(true);
+	m_showAllAudioAct->setChecked(false);
+	captureMenu->addAction(m_showAllAudioAct);
+
+	m_audioBufferAct = new QAction("Set Audio Buffer Capacity...", this);
+	m_audioBufferAct->setStatusTip("Set audio buffer capacity in amout of ms than can be stored");
+	connect(m_audioBufferAct, SIGNAL(triggered()), this, SLOT(setAudioBufferSize()));
+	captureMenu->addAction(m_audioBufferAct);
+#endif
+
 	QMenu *helpMenu = menuBar()->addMenu("&Help");
 	helpMenu->addAction("&About", this, SLOT(about()), Qt::Key_F1);
 
@@ -172,8 +196,11 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_sigMapper = new QSignalMapper(this);
 	connect(m_sigMapper, SIGNAL(mapped(int)), this, SLOT(ctrlAction(int)));
 
-	if (!open(device, !rawOpen))
+	if (!open(device, !rawOpen)) {
+		m_showAllAudioAct->setEnabled(false);
+		m_audioBufferAct->setEnabled(false);
 		return;
+	}
 
 	newCaptureWin();
 
@@ -181,6 +208,19 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 
 	QWidget *w = new QWidget(m_tabs);
 	m_genTab = new GeneralTab(device, *this, 4, w);
+
+#ifdef HAVE_ALSA
+	if (m_genTab->hasAlsaAudio()) {
+		connect(m_showAllAudioAct, SIGNAL(toggled(bool)), m_genTab, SLOT(showAllAudioDevices(bool)));
+		connect(m_genTab, SIGNAL(audioDeviceChanged()), this, SLOT(changeAudioDevice()));
+		m_showAllAudioAct->setEnabled(true);
+		m_audioBufferAct->setEnabled(true);
+	} else {
+		m_showAllAudioAct->setEnabled(false);
+		m_audioBufferAct->setEnabled(false);
+	}
+#endif
+
 	m_tabs->addTab(w, "General");
 	addTabs();
 	if (caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE)) {
@@ -195,7 +235,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_tabs->show();
 	m_tabs->setFocus();
 	m_convertData = v4lconvert_create(fd());
-	m_capStartAct->setEnabled(fd() >= 0 && !m_genTab->isRadio());
+	m_capStartAct->setEnabled(fd() >= 0);
 	m_ctrlNotifier = new QSocketNotifier(fd(), QSocketNotifier::Exception, m_tabs);
 	connect(m_ctrlNotifier, SIGNAL(activated(int)), this, SLOT(ctrlEvent()));
 }
@@ -234,6 +274,19 @@ void ApplicationWindow::setRenderMethod()
 
 	newCaptureWin();
 }
+
+void ApplicationWindow::setAudioBufferSize()
+{
+	bool ok;
+	int buffer = QInputDialog::getInt(this, "Audio Device Buffer Size", "Capacity in ms:",
+					   m_genTab->getAudioDeviceBufferSize(), 1, 65535, 1, &ok);
+
+	if (ok) {
+		m_genTab->setAudioDeviceBufferSize(buffer);
+		changeAudioDevice();
+	}
+}
+
 
 void ApplicationWindow::ctrlEvent()
 {
@@ -413,12 +466,19 @@ void ApplicationWindow::capFrame()
 	int s = 0;
 	int err = 0;
 	bool again;
+#ifdef HAVE_ALSA
+	struct timeval tv_alsa;
+#endif
 
 	unsigned char *displaybuf = NULL;
 
 	switch (m_capMethod) {
 	case methodRead:
 		s = read(m_frameData, m_capSrcFormat.fmt.pix.sizeimage);
+#ifdef HAVE_ALSA
+		alsa_thread_timestamp(&tv_alsa);
+#endif
+
 		if (s < 0) {
 			if (errno != EAGAIN) {
 				error("read");
@@ -449,6 +509,9 @@ void ApplicationWindow::capFrame()
 			m_capStartAct->setChecked(false);
 			return;
 		}
+#ifdef HAVE_ALSA
+		alsa_thread_timestamp(&tv_alsa);
+#endif
 		if (again)
 			return;
 
@@ -475,6 +538,9 @@ void ApplicationWindow::capFrame()
 			m_capStartAct->setChecked(false);
 			return;
 		}
+#ifdef HAVE_ALSA
+		alsa_thread_timestamp(&tv_alsa);
+#endif
 		if (again)
 			return;
 
@@ -511,9 +577,22 @@ void ApplicationWindow::capFrame()
 		m_lastFrame = m_frame;
 		m_tv = tv;
 	}
+
+
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
+#ifdef HAVE_ALSA
+	if (alsa_thread_is_running()) {
+		if (tv_alsa.tv_sec || tv_alsa.tv_usec) {
+			m_totalAudioLatency.tv_sec += buf.timestamp.tv_sec - tv_alsa.tv_sec;
+			m_totalAudioLatency.tv_usec += buf.timestamp.tv_usec - tv_alsa.tv_usec;
+		}
+		status.append(QString(" Average A-V: %3 ms")
+			      .arg((m_totalAudioLatency.tv_sec * 1000 + m_totalAudioLatency.tv_usec / 1000) / m_frame));
+	}
+#endif
 	if (displaybuf == NULL && m_showFrames)
 		status.append(" Error: Unsupported format.");
+
 	if (m_showFrames)
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, displaybuf, status);
@@ -530,6 +609,11 @@ void ApplicationWindow::capFrame()
 
 bool ApplicationWindow::startCapture(unsigned buffer_size)
 {
+	startAudio();
+
+	if (m_genTab->isRadio())
+		return true;
+
 	__u32 buftype = m_genTab->bufType();
 	v4l2_requestbuffers req;
 	unsigned int i;
@@ -645,6 +729,11 @@ error:
 
 void ApplicationWindow::stopCapture()
 {
+	stopAudio();
+
+	if (m_genTab->isRadio())
+		return;
+
 	__u32 buftype = m_genTab->bufType();
 	v4l2_requestbuffers reqbufs;
 	v4l2_encoder_cmd cmd;
@@ -695,6 +784,42 @@ void ApplicationWindow::stopOutput()
 {
 }
 
+void ApplicationWindow::startAudio()
+{
+#ifdef HAVE_ALSA
+	m_totalAudioLatency.tv_sec = 0;
+	m_totalAudioLatency.tv_usec = 0;
+
+	QString audIn = m_genTab->getAudioInDevice();
+	QString audOut = m_genTab->getAudioOutDevice();
+
+	if (audIn != NULL && audOut != NULL && audIn.compare("None") && audIn.compare(audOut) != 0) {
+		alsa_thread_startup(audOut.toAscii().data(), audIn.toAscii().data(),
+				    m_genTab->getAudioDeviceBufferSize(), NULL, 0);
+
+		if (m_genTab->isRadio())
+			statusBar()->showMessage("Capturing audio");
+	}
+#endif
+}
+
+void ApplicationWindow::stopAudio()
+{
+#ifdef HAVE_ALSA
+	if (m_genTab != NULL && m_genTab->isRadio())
+		statusBar()->showMessage("");
+	alsa_thread_stop();
+#endif
+}
+
+void ApplicationWindow::changeAudioDevice()
+{
+	stopAudio();
+	if (m_capStartAct->isChecked()) {
+		startAudio();
+	}
+}
+
 void ApplicationWindow::closeCaptureWin()
 {
 	m_capStartAct->setChecked(false);
@@ -702,6 +827,15 @@ void ApplicationWindow::closeCaptureWin()
 
 void ApplicationWindow::capStart(bool start)
 {
+	if (m_genTab->isRadio()) {
+		if (start)
+			startCapture(0);
+		else
+			stopCapture();
+
+		return;
+	}
+
 	QImage::Format dstFmt = QImage::Format_RGB888;
 	struct v4l2_fract interval;
 	v4l2_pix_format &srcPix = m_capSrcFormat.fmt.pix;
@@ -824,6 +958,7 @@ void ApplicationWindow::capStart(bool start)
 
 void ApplicationWindow::closeDevice()
 {
+	stopAudio();
 	delete m_sigMapper;
 	m_sigMapper = NULL;
 	m_capStartAct->setEnabled(false);

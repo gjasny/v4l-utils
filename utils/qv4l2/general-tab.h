@@ -21,11 +21,22 @@
 #ifndef GENERAL_TAB_H
 #define GENERAL_TAB_H
 
+#include <config.h>
+
 #include <QSpinBox>
 #include <sys/time.h>
 #include <linux/videodev2.h>
+#include <map>
 #include "qv4l2.h"
 #include "v4l2-api.h"
+
+#ifdef HAVE_ALSA
+extern "C" {
+#include "../libmedia_dev/get_media_devices.h"
+#include "alsa_stream.h"
+}
+#include <alsa/asoundlib.h>
+#endif
 
 class QComboBox;
 class QCheckBox;
@@ -41,6 +52,11 @@ public:
 	virtual ~GeneralTab() {}
 
 	CapMethod capMethod();
+	QString getAudioInDevice();
+	QString getAudioOutDevice();
+	void setAudioDeviceBufferSize(int size);
+	int getAudioDeviceBufferSize();
+	bool hasAlsaAudio();
 	bool get_interval(struct v4l2_fract &interval);
 	int width() const { return m_width; }
 	int height() const { return m_height; }
@@ -69,6 +85,12 @@ public:
 	inline bool streamon() { return v4l2::streamon(m_buftype); }
 	inline bool streamoff() { return v4l2::streamoff(m_buftype); }
 
+public slots:
+	void showAllAudioDevices(bool use);
+
+signals:
+	void audioDeviceChanged();
+
 private slots:
 	void inputChanged(int);
 	void outputChanged(int);
@@ -92,6 +114,7 @@ private slots:
 	void frameIntervalChanged(int);
 	void vidOutFormatChanged(int);
 	void vbiMethodsChanged(int);
+	void changeAudioDevice();
 
 private:
 	void updateVideoInput();
@@ -108,6 +131,14 @@ private:
 	void updateFrameSize();
 	void updateFrameInterval();
 	void updateVidOutFormat();
+	int addAudioDevice(void *hint, int deviceNum);
+	bool filterAudioInDevice(QString &deviceName);
+	bool filterAudioOutDevice(QString &deviceName);
+	bool createAudioDeviceList();
+#ifdef HAVE_ALSA
+	int matchAudioDevice();
+	int checkMatchAudioDevice(void *md, const char *vid, const enum device_type type);
+#endif
 
 	void addWidget(QWidget *w, Qt::Alignment align = Qt::AlignLeft);
 	void addLabel(const QString &text, Qt::Alignment align = Qt::AlignRight)
@@ -130,6 +161,7 @@ private:
 	bool m_isVbi;
 	__u32 m_buftype;
 	__u32 m_audioModes[5];
+	QString m_device;
 	struct v4l2_tuner m_tuner;
 	struct v4l2_modulator m_modulator;
 	struct v4l2_capability m_querycap;
@@ -137,6 +169,10 @@ private:
 	__u32 m_width, m_height;
 	struct v4l2_fract m_interval;
 	bool m_has_interval;
+	int m_audioDeviceBufferSize;
+	static bool m_fullAudioName;
+	std::map<QString, QString> m_audioInDeviceMap;
+	std::map<QString, QString> m_audioOutDeviceMap;
 
 	// General tab
 	QComboBox *m_videoInput;
@@ -163,6 +199,8 @@ private:
 	QComboBox *m_vidOutFormats;
 	QComboBox *m_capMethods;
 	QComboBox *m_vbiMethods;
+	QComboBox *m_audioInDevice;
+	QComboBox *m_audioOutDevice;
 };
 
 #endif
