@@ -131,12 +131,11 @@ ApplicationWindow::ApplicationWindow() :
 	QMenu *captureMenu = menuBar()->addMenu("&Capture");
 	captureMenu->addAction(m_capStartAct);
 	captureMenu->addAction(m_showFramesAct);
-	captureMenu->addSeparator();
 
 	if (CaptureWinGL::isSupported()) {
 		m_renderMethod = QV4L2_RENDER_GL;
 
-		m_useGLAct = new QAction("Use Open&GL Render", this);
+		m_useGLAct = new QAction("Use Open&GL Rendering", this);
 		m_useGLAct->setStatusTip("Use GPU with OpenGL for video capture if set.");
 		m_useGLAct->setCheckable(true);
 		m_useGLAct->setChecked(true);
