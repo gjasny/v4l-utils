@@ -142,11 +142,14 @@ ApplicationWindow::ApplicationWindow() :
 	m_scalingAct->setCheckable(true);
 	m_scalingAct->setChecked(true);
 	connect(m_scalingAct, SIGNAL(toggled(bool)), this, SLOT(enableScaling(bool)));
+	m_resetScalingAct = new QAction("Resize to Frame Size", this);
+	m_resetScalingAct->setStatusTip("Resizes the capture window to match frame size");
 
 	QMenu *captureMenu = menuBar()->addMenu("&Capture");
 	captureMenu->addAction(m_capStartAct);
 	captureMenu->addAction(m_showFramesAct);
 	captureMenu->addAction(m_scalingAct);
+	captureMenu->addAction(m_resetScalingAct);
 
 	if (CaptureWinGL::isSupported()) {
 		m_renderMethod = QV4L2_RENDER_GL;
@@ -210,8 +213,6 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	}
 
 	newCaptureWin();
-
-	m_capture->setMinimumSize(150, 50);
 
 	QWidget *w = new QWidget(m_tabs);
 	m_genTab = new GeneralTab(device, *this, 4, w);
@@ -360,6 +361,7 @@ void ApplicationWindow::newCaptureWin()
 
 	m_capture->enableScaling(m_scalingAct->isChecked());
         connect(m_capture, SIGNAL(close()), this, SLOT(closeCaptureWin()));
+	connect(m_resetScalingAct, SIGNAL(triggered()), m_capture, SLOT(resetSize()));
 }
 
 void ApplicationWindow::capVbiFrame()

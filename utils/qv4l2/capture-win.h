@@ -78,6 +78,9 @@ public:
 	void enableScaling(bool enable);
 	static QSize scaleFrameSize(QSize window, QSize frame);
 
+public slots:
+	void resetSize();
+
 protected:
 	void closeEvent(QCloseEvent *event);
 	void buildWindow(QWidget *videoSurface);

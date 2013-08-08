@@ -61,6 +61,18 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 	vbox->setSpacing(b);
 }
 
+void CaptureWin::resetSize()
+{
+	if (isMaximized())
+		showNormal();
+
+	int w = m_curWidth;
+	int h = m_curHeight;
+	m_curWidth = -1;
+	m_curHeight = -1;
+	resize(w, h);
+}
+
 QSize CaptureWin::getMargins()
 {
 	int l, t, r, b;
