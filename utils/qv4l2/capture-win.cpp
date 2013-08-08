@@ -30,6 +30,7 @@
 #define MIN_WIN_SIZE_HEIGHT 120
 
 bool CaptureWin::m_enableScaling = true;
+double CaptureWin::m_pixelAspectRatio = 1.0;
 
 CaptureWin::CaptureWin() :
 	m_curWidth(-1),
@@ -76,6 +77,14 @@ void CaptureWin::resetSize()
 	resize(w, h);
 }
 
+int CaptureWin::actualFrameWidth(int width)
+{
+	if (m_enableScaling)
+		return (int)((double)width * m_pixelAspectRatio);
+
+	return width;
+}
+
 QSize CaptureWin::getMargins()
 {
 	int l, t, r, b;
@@ -108,7 +117,7 @@ void CaptureWin::resize(int width, int height)
 	m_curHeight = height;
 
 	QSize margins = getMargins();
-	width += margins.width();
+	width = actualFrameWidth(width) + margins.width();
 	height += margins.height();
 
 	QDesktopWidget *screen = QApplication::desktop();
@@ -130,25 +139,36 @@ void CaptureWin::resize(int width, int height)
 
 QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
 {
-	int actualFrameWidth = frame.width();;
-	int actualFrameHeight = frame.height();
+	int actualWidth;
+	int actualHeight = frame.height();
 
 	if (!m_enableScaling) {
 		window.setWidth(frame.width());
 		window.setHeight(frame.height());
+		actualWidth = frame.width();
+	} else {
+		actualWidth = CaptureWin::actualFrameWidth(frame.width());
 	}
 
 	double newW, newH;
 	if (window.width() >= window.height()) {
-		newW = (double)window.width() / actualFrameWidth;
-		newH = (double)window.height() / actualFrameHeight;
+		newW = (double)window.width() / actualWidth;
+		newH = (double)window.height() / actualHeight;
 	} else {
-		newH = (double)window.width() / actualFrameWidth;
-		newW = (double)window.height() / actualFrameHeight;
+		newH = (double)window.width() / actualWidth;
+		newW = (double)window.height() / actualHeight;
 	}
 	double resized = std::min(newW, newH);
 
-	return QSize((int)(actualFrameWidth * resized), (int)(actualFrameHeight * resized));
+	return QSize((int)(actualWidth * resized), (int)(actualHeight * resized));
+}
+
+void CaptureWin::setPixelAspectRatio(double ratio)
+{
+	m_pixelAspectRatio = ratio;
+	QResizeEvent *event = new QResizeEvent(QSize(width(), height()), QSize(width(), height()));
+	QCoreApplication::sendEvent(this, event);
+	delete event;
 }
 
 void CaptureWin::closeEvent(QCloseEvent *event)

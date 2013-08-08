@@ -133,6 +133,7 @@ private slots:
 	void rejectedRawFile();
 	void setAudioBufferSize();
 	void enableScaling(bool enable);
+	void updatePixelAspectRatio();
 
 	void about();
 

@@ -53,6 +53,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_tvStandard(NULL),
 	m_qryStandard(NULL),
 	m_videoTimings(NULL),
+	m_pixelAspectRatio(NULL),
 	m_qryTimings(NULL),
 	m_freq(NULL),
 	m_vidCapFormats(NULL),
@@ -208,6 +209,23 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_qryTimings = new QPushButton("Query Timings", parent);
 		addWidget(m_qryTimings);
 		connect(m_qryTimings, SIGNAL(clicked()), SLOT(qryTimingsClicked()));
+	}
+
+	if (!isRadio() && !isVbi()) {
+		m_pixelAspectRatio = new QComboBox(parent);
+		m_pixelAspectRatio->addItem("Autodetect");
+		m_pixelAspectRatio->addItem("Square");
+		m_pixelAspectRatio->addItem("NTSC/PAL-M/PAL-60");
+		m_pixelAspectRatio->addItem("NTSC/PAL-M/PAL-60, Anamorphic");
+		m_pixelAspectRatio->addItem("PAL/SECAM");
+		m_pixelAspectRatio->addItem("PAL/SECAM, Anamorphic");
+
+		// Update hints by calling a get
+		getPixelAspectRatio();
+
+		addLabel("Pixel Aspect Ratio");
+		addWidget(m_pixelAspectRatio);
+		connect(m_pixelAspectRatio, SIGNAL(activated(int)), SLOT(changePixelAspectRatio()));
 	}
 
 	if (m_tuner.capability) {
@@ -1103,6 +1121,56 @@ void GeneralTab::updateFrameSize()
 	m_frameHeight->setSingleStep(frmsize.stepwise.step_height);
 	m_frameHeight->setValue(m_height);
 	updateFrameInterval();
+}
+
+void GeneralTab::changePixelAspectRatio()
+{
+	// Update hints by calling a get
+	getPixelAspectRatio();
+	info("");
+	emit pixelAspectRatioChanged();
+}
+
+double GeneralTab::getPixelAspectRatio()
+{
+	switch (m_pixelAspectRatio->currentIndex()) {
+	case 0:
+		v4l2_cropcap ratio;
+		ratio.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (ioctl(VIDIOC_CROPCAP, &ratio) < 0) {
+			m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 1:1");
+			m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 1:1");
+			return 1.0;
+		}
+
+		m_pixelAspectRatio->setStatusTip(QString("Pixel Aspect Ratio %1:%2")
+						 .arg(ratio.pixelaspect.denominator)
+						 .arg(ratio.pixelaspect.numerator));
+		m_pixelAspectRatio->setWhatsThis(QString("Pixel Aspect Ratio %1:%2")
+						 .arg(ratio.pixelaspect.denominator)
+						 .arg(ratio.pixelaspect.numerator));
+		return (double)ratio.pixelaspect.denominator / ratio.pixelaspect.numerator;
+	case 2:
+		m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 10:11");
+		m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 10:11");
+		return 10.0 / 11.0;
+	case 3:
+		m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 40:33");
+		m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 40:33");
+		return 40.0 / 33.0;
+	case 4:
+		m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 12:11");
+		m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 12:11");
+		return 12.0 / 11.0;
+	case 5:
+		m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 16:11");
+		m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 16:11");
+		return 16.0 / 11.0;
+	default:
+		m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 1:1");
+		m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 1:1");
+		return 1.0;
+	}
 }
 
 void GeneralTab::updateFrameInterval()
