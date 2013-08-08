@@ -7,8 +7,8 @@ nodist_qv4l2_SOURCES = moc_qv4l2.cpp moc_general-tab.cpp moc_capture-win.cpp moc
 qv4l2_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la ../libv4l2util/libv4l2util.la \
   ../libmedia_dev/libmedia_dev.la
 
-if WITH_QV4L2_GL
-qv4l2_CPPFLAGS = $(QTGL_CFLAGS) -DENABLE_GL
+if WITH_QTGL
+qv4l2_CPPFLAGS = $(QTGL_CFLAGS)
 qv4l2_LDFLAGS = $(QTGL_LIBS)
 else
 qv4l2_CPPFLAGS = $(QT_CFLAGS)

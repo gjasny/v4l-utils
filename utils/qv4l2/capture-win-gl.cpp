@@ -26,7 +26,7 @@
 
 CaptureWinGL::CaptureWinGL()
 {
-#ifdef ENABLE_GL
+#ifdef HAVE_QTGL
 	CaptureWin::buildWindow(&m_videoSurface);
 #endif
 	CaptureWin::setWindowTitle("V4L2 Capture (OpenGL)");
@@ -38,14 +38,14 @@ CaptureWinGL::~CaptureWinGL()
 
 void CaptureWinGL::stop()
 {
-#ifdef ENABLE_GL
+#ifdef HAVE_QTGL
 	m_videoSurface.stop();
 #endif
 }
 
 void CaptureWinGL::setFrame(int width, int height, __u32 format, unsigned char *data, const QString &info)
 {
-#ifdef ENABLE_GL
+#ifdef HAVE_QTGL
 	m_videoSurface.setFrame(width, height, format, data);
 #endif
 	m_information.setText(info);
@@ -53,7 +53,7 @@ void CaptureWinGL::setFrame(int width, int height, __u32 format, unsigned char *
 
 bool CaptureWinGL::hasNativeFormat(__u32 format)
 {
-#ifdef ENABLE_GL
+#ifdef HAVE_QTGL
 	return m_videoSurface.hasNativeFormat(format);
 #else
 	return false;
@@ -62,14 +62,14 @@ bool CaptureWinGL::hasNativeFormat(__u32 format)
 
 bool CaptureWinGL::isSupported()
 {
-#ifdef ENABLE_GL
+#ifdef HAVE_QTGL
 	return true;
 #else
 	return false;
 #endif
 }
 
-#ifdef ENABLE_GL
+#ifdef HAVE_QTGL
 CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_frameHeight(0),
 	m_frameWidth(0),

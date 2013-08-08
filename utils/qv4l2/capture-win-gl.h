@@ -18,10 +18,12 @@
 #ifndef CAPTURE_WIN_GL_H
 #define CAPTURE_WIN_GL_H
 
+#include <config.h>
+
 #include "qv4l2.h"
 #include "capture-win.h"
 
-#ifdef ENABLE_GL
+#ifdef HAVE_QTGL
 #define GL_GLEXT_PROTOTYPES
 #include <QGLWidget>
 #include <QGLShader>
@@ -88,7 +90,7 @@ public:
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported();
 
-#ifdef ENABLE_GL
+#ifdef HAVE_QTGL
 	CaptureWinGLEngine m_videoSurface;
 #endif
 };
