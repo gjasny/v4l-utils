@@ -144,7 +144,6 @@ ApplicationWindow::ApplicationWindow() :
 	connect(m_scalingAct, SIGNAL(toggled(bool)), this, SLOT(enableScaling(bool)));
 	m_resetScalingAct = new QAction("Resize to Frame Size", this);
 	m_resetScalingAct->setStatusTip("Resizes the capture window to match frame size");
-	m_resetScalingAct->setShortcut(Qt::CTRL+Qt::Key_F);
 
 	QMenu *captureMenu = menuBar()->addMenu("&Capture");
 	captureMenu->addAction(m_capStartAct);

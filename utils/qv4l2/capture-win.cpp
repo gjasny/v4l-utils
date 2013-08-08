@@ -26,20 +26,11 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-#define MIN_WIN_SIZE_WIDTH 160
-#define MIN_WIN_SIZE_HEIGHT 120
-
-bool CaptureWin::m_enableScaling = true;
-
-CaptureWin::CaptureWin() :
-	m_curWidth(-1),
-	m_curHeight(-1)
+CaptureWin::CaptureWin()
 {
 	setWindowTitle("V4L2 Capture");
 	m_hotkeyClose = new QShortcut(Qt::CTRL+Qt::Key_W, this);
-	connect(m_hotkeyClose, SIGNAL(activated()), this, SLOT(close()));
-	m_hotkeyScaleReset = new QShortcut(Qt::CTRL+Qt::Key_F, this);
-	connect(m_hotkeyScaleReset, SIGNAL(activated()), this, SLOT(resetSize()));
+	QObject::connect(m_hotkeyClose, SIGNAL(activated()), this, SLOT(close()));
 }
 
 CaptureWin::~CaptureWin()
@@ -50,7 +41,6 @@ CaptureWin::~CaptureWin()
 	layout()->removeWidget(this);
 	delete layout();
 	delete m_hotkeyClose;
-	delete m_hotkeyScaleReset;
 }
 
 void CaptureWin::buildWindow(QWidget *videoSurface)
@@ -64,88 +54,37 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 	vbox->setSpacing(b);
 }
 
-void CaptureWin::resetSize()
-{
-	int w = m_curWidth;
-	int h = m_curHeight;
-	m_curWidth = -1;
-	m_curHeight = -1;
-	resize(w, h);
-}
-
 QSize CaptureWin::getMargins()
 {
-	int l, t, r, b;
-	layout()->getContentsMargins(&l, &t, &r, &b);
+ 	int l, t, r, b;
+ 	layout()->getContentsMargins(&l, &t, &r, &b);
 	return QSize(l + r, t + b + m_information.minimumSizeHint().height() + layout()->spacing());
 }
 
-void CaptureWin::enableScaling(bool enable)
+void CaptureWin::setMinimumSize(int minw, int minh)
 {
-	if (!enable) {
-		QSize margins = getMargins();
-		QWidget::setMinimumSize(m_curWidth + margins.width(), m_curHeight + margins.height());
-	} else {
-		QWidget::setMinimumSize(MIN_WIN_SIZE_WIDTH, MIN_WIN_SIZE_HEIGHT);
-	}
-	m_enableScaling = enable;
-	QResizeEvent *event = new QResizeEvent(QSize(width(), height()), QSize(width(), height()));
-	QCoreApplication::sendEvent(this, event);
-	delete event;
-}
-
-void CaptureWin::resize(int width, int height)
-{
-	// Dont resize window if the frame size is the same in
-	// the event the window has been paused when beeing resized.
-	if (width == m_curWidth && height == m_curHeight)
-		return;
-
-	m_curWidth = width;
-	m_curHeight = height;
-
-	QSize margins = getMargins();
-	width += margins.width();
-	height += margins.height();
-
 	QDesktopWidget *screen = QApplication::desktop();
 	QRect resolution = screen->screenGeometry();
+	QSize maxSize = maximumSize();
 
-	if (width > resolution.width())
-		width = resolution.width();
-	if (width < MIN_WIN_SIZE_WIDTH)
-		width = MIN_WIN_SIZE_WIDTH;
+	QSize margins = getMargins();
+	minw += margins.width();
+	minh += margins.height();
 
-	if (height > resolution.height())
-		height = resolution.height();
-	if (height < MIN_WIN_SIZE_HEIGHT)
-		height = MIN_WIN_SIZE_HEIGHT;
+	if (minw > resolution.width())
+		minw = resolution.width();
+	if (minw < 150)
+		minw = 150;
 
-	QWidget::setMinimumSize(MIN_WIN_SIZE_WIDTH, MIN_WIN_SIZE_HEIGHT);
-	QWidget::resize(width, height);
-}
+	if (minh > resolution.height())
+		minh = resolution.height();
+	if (minh < 100)
+		minh = 100;
 
-QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
-{
-	int actualFrameWidth = frame.width();;
-	int actualFrameHeight = frame.height();
-
-	if (!m_enableScaling) {
-		window.setWidth(frame.width());
-		window.setHeight(frame.height());
-	}
-
-	double newW, newH;
-	if (window.width() >= window.height()) {
-		newW = (double)window.width() / actualFrameWidth;
-		newH = (double)window.height() / actualFrameHeight;
-	} else {
-		newH = (double)window.width() / actualFrameWidth;
-		newW = (double)window.height() / actualFrameHeight;
-	}
-	double resized = std::min(newW, newH);
-
-	return QSize((int)(actualFrameWidth * resized), (int)(actualFrameHeight * resized));
+	QWidget::setMinimumSize(minw, minh);
+	QWidget::setMaximumSize(minw, minh);
+	updateGeometry();
+	QWidget::setMaximumSize(maxSize.width(), maxSize.height());
 }
 
 void CaptureWin::closeEvent(QCloseEvent *event)
