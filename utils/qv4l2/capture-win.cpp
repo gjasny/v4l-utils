@@ -54,22 +54,16 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 	vbox->setSpacing(b);
 }
 
-QSize CaptureWin::getMargins()
-{
- 	int l, t, r, b;
- 	layout()->getContentsMargins(&l, &t, &r, &b);
-	return QSize(l + r, t + b + m_information.minimumSizeHint().height() + layout()->spacing());
-}
-
 void CaptureWin::setMinimumSize(int minw, int minh)
 {
 	QDesktopWidget *screen = QApplication::desktop();
 	QRect resolution = screen->screenGeometry();
 	QSize maxSize = maximumSize();
 
-	QSize margins = getMargins();
-	minw += margins.width();
-	minh += margins.height();
+	int l, t, r, b;
+	layout()->getContentsMargins(&l, &t, &r, &b);
+	minw += l + r;
+	minh += t + b + m_information.minimumSizeHint().height() + layout()->spacing();
 
 	if (minw > resolution.width())
 		minw = resolution.width();

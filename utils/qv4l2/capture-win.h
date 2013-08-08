@@ -78,8 +78,6 @@ public:
 protected:
 	void closeEvent(QCloseEvent *event);
 	void buildWindow(QWidget *videoSurface);
-	QSize getMargins();
-
 
 	/**
 	 * @brief A label that can is used to display capture information.
