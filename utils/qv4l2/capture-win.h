@@ -104,6 +104,7 @@ signals:
 
 private:
 	QShortcut *m_hotkeyClose;
+	QShortcut *m_hotkeyScaleReset;
 	int m_curWidth;
 	int m_curHeight;
 };

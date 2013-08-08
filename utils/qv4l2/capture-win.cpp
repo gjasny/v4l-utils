@@ -38,6 +38,8 @@ CaptureWin::CaptureWin() :
 	setWindowTitle("V4L2 Capture");
 	m_hotkeyClose = new QShortcut(Qt::CTRL+Qt::Key_W, this);
 	connect(m_hotkeyClose, SIGNAL(activated()), this, SLOT(close()));
+	m_hotkeyScaleReset = new QShortcut(Qt::CTRL+Qt::Key_F, this);
+	connect(m_hotkeyScaleReset, SIGNAL(activated()), this, SLOT(resetSize()));
 }
 
 CaptureWin::~CaptureWin()
@@ -48,6 +50,7 @@ CaptureWin::~CaptureWin()
 	layout()->removeWidget(this);
 	delete layout();
 	delete m_hotkeyClose;
+	delete m_hotkeyScaleReset;
 }
 
 void CaptureWin::buildWindow(QWidget *videoSurface)
