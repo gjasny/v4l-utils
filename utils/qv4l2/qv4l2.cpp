@@ -137,20 +137,9 @@ ApplicationWindow::ApplicationWindow() :
 	toolBar->addSeparator();
 	toolBar->addAction(quitAct);
 
-	m_scalingAct = new QAction("Enable Video Scaling", this);
-	m_scalingAct->setStatusTip("Scale video frames to match window size if set");
-	m_scalingAct->setCheckable(true);
-	m_scalingAct->setChecked(true);
-	connect(m_scalingAct, SIGNAL(toggled(bool)), this, SLOT(enableScaling(bool)));
-	m_resetScalingAct = new QAction("Resize to Frame Size", this);
-	m_resetScalingAct->setStatusTip("Resizes the capture window to match frame size");
-
 	QMenu *captureMenu = menuBar()->addMenu("&Capture");
 	captureMenu->addAction(m_capStartAct);
 	captureMenu->addAction(m_showFramesAct);
-	captureMenu->addAction(m_scalingAct);
-	captureMenu->addAction(m_resetScalingAct);
-
 
 	if (CaptureWinGL::isSupported()) {
 		m_renderMethod = QV4L2_RENDER_GL;
@@ -362,9 +351,7 @@ void ApplicationWindow::newCaptureWin()
 		break;
 	}
 
-	m_capture->enableScaling(m_scalingAct->isChecked());
-        connect(m_capture, SIGNAL(close()), this, SLOT(closeCaptureWin()));
-	connect(m_resetScalingAct, SIGNAL(triggered()), m_capture, SLOT(resetSize()));
+	connect(m_capture, SIGNAL(close()), this, SLOT(closeCaptureWin()));
 }
 
 void ApplicationWindow::capVbiFrame()
@@ -804,12 +791,6 @@ void ApplicationWindow::stopOutput()
 {
 }
 
-void ApplicationWindow::enableScaling(bool enable)
-{
-	if (m_capture != NULL)
-		m_capture->enableScaling(enable);
-}
-
 void ApplicationWindow::startAudio()
 {
 #ifdef HAVE_ALSA
@@ -920,7 +901,7 @@ void ApplicationWindow::capStart(bool start)
 			m_vbiHeight = fmt.fmt.vbi.count[0] + fmt.fmt.vbi.count[1];
 		m_vbiSize = m_vbiWidth * m_vbiHeight;
 		m_frameData = new unsigned char[m_vbiSize];
-		m_capture->resize(m_vbiWidth, m_vbiHeight);
+		m_capture->setMinimumSize(m_vbiWidth, m_vbiHeight);
 		m_capImage = new QImage(m_vbiWidth, m_vbiHeight, dstFmt);
 		m_capImage->fill(0);
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
@@ -950,8 +931,8 @@ void ApplicationWindow::capStart(bool start)
 		m_mustConvert = false;
 	} else {
 		m_mustConvert = true;
-		
 		v4l2_format copy = m_capSrcFormat;
+
 		v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
 		// v4lconvert_try_format sometimes modifies the source format if it thinks
 		// that there is a better format available. Restore our selected source
@@ -959,7 +940,7 @@ void ApplicationWindow::capStart(bool start)
 		m_capSrcFormat = copy;
 	}
 
-	m_capture->resize(dstPix.width, dstPix.height);
+	m_capture->setMinimumSize(dstPix.width, dstPix.height);
 	// Ensure that the initial image is large enough for native 32 bit per pixel formats
 	if (dstPix.pixelformat == V4L2_PIX_FMT_RGB32 || dstPix.pixelformat == V4L2_PIX_FMT_BGR32)
 		dstFmt = QImage::Format_ARGB32;
