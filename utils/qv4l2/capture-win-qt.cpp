@@ -22,27 +22,13 @@
 CaptureWinQt::CaptureWinQt() :
 	m_frame(new QImage(0, 0, QImage::Format_Invalid))
 {
+
 	CaptureWin::buildWindow(&m_videoSurface);
-	m_scaledFrame.setWidth(0);
-	m_scaledFrame.setHeight(0);
 }
 
 CaptureWinQt::~CaptureWinQt()
 {
 	delete m_frame;
-}
-
-void CaptureWinQt::resizeEvent(QResizeEvent *event)
-{
-	if (m_frame->bits() == NULL)
-		return;
-
-	QPixmap img = QPixmap::fromImage(*m_frame);
-	m_scaledFrame = scaleFrameSize(QSize(m_videoSurface.width(), m_videoSurface.height()),
-				       QSize(m_frame->width(), m_frame->height()));
-	img = img.scaled(m_scaledFrame.width(), m_scaledFrame.height(), Qt::IgnoreAspectRatio);
-	m_videoSurface.setPixmap(img);
-	QWidget::resizeEvent(event);
 }
 
 void CaptureWinQt::setFrame(int width, int height, __u32 format, unsigned char *data, const QString &info)
@@ -55,8 +41,6 @@ void CaptureWinQt::setFrame(int width, int height, __u32 format, unsigned char *
 	if (m_frame->width() != width || m_frame->height() != height || m_frame->format() != dstFmt) {
 		delete m_frame;
 		m_frame = new QImage(width, height, dstFmt);
-		m_scaledFrame = scaleFrameSize(QSize(m_videoSurface.width(), m_videoSurface.height()),
-					       QSize(m_frame->width(), m_frame->height()));
 	}
 
 	if (data == NULL || !supported)
@@ -65,11 +49,7 @@ void CaptureWinQt::setFrame(int width, int height, __u32 format, unsigned char *
 		memcpy(m_frame->bits(), data, m_frame->numBytes());
 
 	m_information.setText(info);
-
-	QPixmap img = QPixmap::fromImage(*m_frame);
-	img = img.scaled(m_scaledFrame.width(), m_scaledFrame.height(), Qt::IgnoreAspectRatio);
-
-	m_videoSurface.setPixmap(img);
+	m_videoSurface.setPixmap(QPixmap::fromImage(*m_frame));
 }
 
 bool CaptureWinQt::hasNativeFormat(__u32 format)
