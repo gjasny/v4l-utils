@@ -253,12 +253,6 @@ void CaptureWinGLEngine::paintGL()
 		changeShader();
 
 	if (m_frameData == NULL) {
-		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0, 0);
-		glTexCoord2f(1.0f, 0.0f); glVertex2f(m_frameWidth, 0);
-		glTexCoord2f(1.0f, 1.0f); glVertex2f(m_frameWidth, m_frameHeight);
-		glTexCoord2f(0.0f, 1.0f); glVertex2f(0, m_frameHeight);
-		glEnd();
 		return;
 	}
 
