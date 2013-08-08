@@ -34,7 +34,7 @@ public:
 	CaptureWin();
 	~CaptureWin();
 
-	void setMinimumSize(int minw, int minh);
+	void resize(int minw, int minh);
 
 	/**
 	 * @brief Set a frame into the capture window.
@@ -75,9 +75,13 @@ public:
 	 */
 	static bool isSupported() { return false; }
 
+	void enableScaling(bool enable);
+	static QSize scaleFrameSize(QSize window, QSize frame);
+
 protected:
 	void closeEvent(QCloseEvent *event);
 	void buildWindow(QWidget *videoSurface);
+	static int actualFrameWidth(int width);
 	QSize getMargins();
 
 	/**
@@ -87,11 +91,17 @@ protected:
 	 */
 	QLabel m_information;
 
+	/**
+	 * @brief Determines if scaling is to be applied to video frame.
+	 */
+	static bool m_enableScaling;
+
 signals:
 	void close();
 
 private:
 	QShortcut *m_hotkeyClose;
-
+	int m_curWidth;
+	int m_curHeight;
 };
 #endif

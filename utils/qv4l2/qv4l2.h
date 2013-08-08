@@ -132,6 +132,7 @@ private slots:
 	void openRawFile(const QString &s);
 	void rejectedRawFile();
 	void setAudioBufferSize();
+	void enableScaling(bool enable);
 
 	void about();
 
@@ -185,6 +186,7 @@ private:
 	QAction *m_useGLAct;
 	QAction *m_showAllAudioAct;
 	QAction *m_audioBufferAct;
+	QAction *m_scalingAct;
 	QString m_filename;
 	QSignalMapper *m_sigMapper;
 	QTabWidget *m_tabs;
