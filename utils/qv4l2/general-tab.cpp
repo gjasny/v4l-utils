@@ -248,7 +248,9 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_freq = new QLineEdit(parent);
 		m_freq->setValidator(val);
 		m_freq->setWhatsThis(QString("Frequency\nLow: %1\nHigh: %2")
-				.arg(m_tuner.rangelow / factor).arg(m_tuner.rangehigh / factor));
+				     .arg(m_tuner.rangelow / factor)
+				     .arg((double)m_tuner.rangehigh / factor, 0, 'f', 2));
+		m_freq->setStatusTip(m_freq->whatsThis());
 		connect(m_freq, SIGNAL(lostFocus()), SLOT(freqChanged()));
 		connect(m_freq, SIGNAL(returnPressed()), SLOT(freqChanged()));
 		updateFreq();
@@ -318,7 +320,9 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_freq = new QLineEdit(parent);
 		m_freq->setValidator(val);
 		m_freq->setWhatsThis(QString("Frequency\nLow: %1\nHigh: %2")
-				.arg(m_modulator.rangelow / factor).arg(m_modulator.rangehigh / factor));
+				     .arg(m_tuner.rangelow / factor)
+				     .arg((double)m_tuner.rangehigh / factor, 0, 'f', 2));
+		m_freq->setStatusTip(m_freq->whatsThis());
 		connect(m_freq, SIGNAL(lostFocus()), SLOT(freqChanged()));
 		connect(m_freq, SIGNAL(returnPressed()), SLOT(freqChanged()));
 		updateFreq();
@@ -911,6 +915,7 @@ void GeneralTab::updateAudioInput()
 		what += ", has AVL";
 	if (audio.mode & V4L2_AUDMODE_AVL)
 		what += ", AVL is on";
+	m_audioInput->setStatusTip(what);
 	m_audioInput->setWhatsThis(what);
 }
 
@@ -963,6 +968,7 @@ void GeneralTab::updateStandard()
 		(double)vs.frameperiod.numerator / vs.frameperiod.denominator,
 		vs.frameperiod.numerator, vs.frameperiod.denominator,
 		vs.framelines);
+	m_tvStandard->setStatusTip(what);
 	m_tvStandard->setWhatsThis(what);
 	updateVidCapFormat();
 	changePixelAspectRatio();
@@ -1027,6 +1033,7 @@ void GeneralTab::updateTimings()
 	what.sprintf("Video Timings (%u)\n"
 		"Frame %ux%u\n",
 		p.index, p.timings.bt.width, p.timings.bt.height);
+	m_videoTimings->setStatusTip(what);
 	m_videoTimings->setWhatsThis(what);
 	updateVidCapFormat();
 }
