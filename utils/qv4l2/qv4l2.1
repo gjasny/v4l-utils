@@ -1,0 +1,58 @@
+.TH "QV4L2" "1" "August 2013" "v4l-utils" "User Commands"
+.SH NAME
+qv4l2 - A test bench application for video4linux devices
+.SH SYNOPSIS
+.B qv4l2
+[\fI-R\fR] [\fI-h\fR] [\fI-d <dev>\fR] [\fI-r <dev>\fR] [\fI-V <dev>\fR]
+.SH DESCRIPTION
+The qv4l2 tool is used to test video4linux capture devices, either video, vbi or radio.
+This application can also serve as a generic video/TV viewer application.
+.PP
+However, it does not (yet) support compressed video streams other than MJPEG
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
+Use device <dev> as the video device. If <dev> is a number, then /dev/video<dev> is used.
+.TP
+\fB\-r\fR, \fB\-\-radio-device\fR=\fI<dev>\fR
+Use device <dev> as the radio device. If <dev> is a number, then /dev/radio<dev> is used.
+.TP
+\fB\-V\fR, \fB\-\-vbi-device\fR=\fI<dev>\fR
+Use device <dev> as the vbi device. If <dev> is a number, then /dev/vbi<dev> is used.
+.TP
+\fB\-R\fR, \fB\-\-raw\fR
+Open device in raw mode, i.e. without using the libv4l2 wrapper functions.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Prints the help message.
+.SH HOTKEYS
+.SS Main Window
+.TP
+\fICtrl + O\fR
+Open device
+.TP
+\fICtrl + R\fR
+Open device in raw mode
+.TP
+\fICtrl + W\fR
+Close the device
+.TP
+\fICtrl + V\fR
+Start capture
+.TP
+\fICtrl + F\fR
+Resize Capture Window to frame size
+.TP
+\fICtrl + Q\fR
+Exit the application
+.SS Capture Window
+.TP
+\fICtrl + W\fR
+Closes the window and stops capture
+.TP
+\fICtrl + F\fR
+Resize Capture Window to frame size
+.SH EXIT STATUS
+On success, it returns 0. Otherwise, it will return the error code.
+.SH BUGS
+Report bugs to Hans Verkuil <hverkuil@xs4all.nl>
