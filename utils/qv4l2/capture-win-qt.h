@@ -48,6 +48,6 @@ private:
 
 	QImage *m_frame;
 	QLabel m_videoSurface;
-	QSize m_scaledFrame;
+	QSize m_scaledSize;
 };
 #endif

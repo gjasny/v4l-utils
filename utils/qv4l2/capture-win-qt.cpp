@@ -24,8 +24,8 @@ CaptureWinQt::CaptureWinQt() :
 {
 
 	CaptureWin::buildWindow(&m_videoSurface);
-	m_scaledFrame.setWidth(0);
-	m_scaledFrame.setHeight(0);
+	m_scaledSize.setWidth(0);
+	m_scaledSize.setHeight(0);
 }
 
 CaptureWinQt::~CaptureWinQt()
@@ -39,9 +39,9 @@ void CaptureWinQt::resizeEvent(QResizeEvent *event)
 		return;
 
 	QPixmap img = QPixmap::fromImage(*m_frame);
-	m_scaledFrame = scaleFrameSize(QSize(m_videoSurface.width(), m_videoSurface.height()),
+	m_scaledSize = scaleFrameSize(QSize(m_videoSurface.width(), m_videoSurface.height()),
 				       QSize(m_frame->width(), m_frame->height()));
-	img = img.scaled(m_scaledFrame.width(), m_scaledFrame.height(), Qt::IgnoreAspectRatio);
+	img = img.scaled(m_scaledSize.width(), m_scaledSize.height(), Qt::IgnoreAspectRatio);
 	m_videoSurface.setPixmap(img);
 	QWidget::resizeEvent(event);
 }
@@ -56,7 +56,7 @@ void CaptureWinQt::setFrame(int width, int height, __u32 format, unsigned char *
 	if (m_frame->width() != width || m_frame->height() != height || m_frame->format() != dstFmt) {
 		delete m_frame;
 		m_frame = new QImage(width, height, dstFmt);
-		m_scaledFrame = scaleFrameSize(QSize(m_videoSurface.width(), m_videoSurface.height()),
+		m_scaledSize = scaleFrameSize(QSize(m_videoSurface.width(), m_videoSurface.height()),
 					       QSize(m_frame->width(), m_frame->height()));
 	}
 
@@ -68,7 +68,7 @@ void CaptureWinQt::setFrame(int width, int height, __u32 format, unsigned char *
 	m_information.setText(info);
 
 	QPixmap img = QPixmap::fromImage(*m_frame);
-	img = img.scaled(m_scaledFrame.width(), m_scaledFrame.height(), Qt::IgnoreAspectRatio);
+	img = img.scaled(m_scaledSize.width(), m_scaledSize.height(), Qt::IgnoreAspectRatio);
 
 	m_videoSurface.setPixmap(img);
 }
