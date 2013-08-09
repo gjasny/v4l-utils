@@ -1158,33 +1158,138 @@ void ApplicationWindow::closeEvent(QCloseEvent *event)
 
 ApplicationWindow *g_mw;
 
+static void usage()
+{
+	printf("  Usage:\n"
+	       "  qv4l2 [-R] [-h] [-d <dev>] [-r <dev>] [-V <dev>]\n"
+	       "\n  -d, --device=<dev> use device <dev> as the video device\n"
+	       "                     if <dev> is a number, then /dev/video<dev> is used\n"
+	       "  -r, --radio-device=<dev> use device <dev> as the radio device\n"
+	       "                     if <dev> is a number, then /dev/radio<dev> is used\n"
+	       "  -V, --vbi-device=<dev> use device <dev> as the vbi device\n"
+	       "                     if <dev> is a number, then /dev/vbi<dev> is used\n"
+	       "  -h, --help         display this help message\n"
+	       "  -R, --raw          open device in raw mode.\n");
+}
+
+static void usageError(const char *msg)
+{
+	printf("Missing parameter for %s\n", msg);
+	usage();
+}
+
+static QString getDeviceName(QString dev, QString &name)
+{
+	bool ok;
+	name.toInt(&ok);
+	return ok ? QString("%1%2").arg(dev).arg(name) : name;
+}
+
 int main(int argc, char **argv)
 {
 	QApplication a(argc, argv);
-	QString device = "/dev/video0";
 	bool raw = false;
-	bool help = false;
-	int i;
+	QString device;
+	QString video_device;
+	QString radio_device;
+	QString vbi_device;
 
 	a.setWindowIcon(QIcon(":/qv4l2.png"));
 	g_mw = new ApplicationWindow();
 	g_mw->setWindowTitle("V4L2 Test Bench");
-	for (i = 1; i < argc; i++) {
-		const char *arg = a.argv()[i];
 
-		if (!strcmp(arg, "-r"))
+	QStringList args = a.arguments();
+	for (int i = 1; i < args.size(); i++) {
+		if (args[i] == "-d" || args[i] == "--device") {
+			++i;
+			if (i >= args.size()) {
+				usageError("-d");
+				return 0;
+			}
+
+			video_device = args[i];
+			if (video_device.startsWith("-")) {
+				usageError("-d");
+				return 0;
+			}
+
+		} else if (args[i] == "-r" || args[i] == "--radio-device") {
+			++i;
+			if (i >= args.size()) {
+				usageError("-r");
+				return 0;
+			}
+
+			radio_device = args[i];
+			if (radio_device.startsWith("-")) {
+				usageError("-r");
+				return 0;
+			}
+
+		} else if (args[i] == "-V" || args[i] == "--vbi-device") {
+			++i;
+			if (i >= args.size()) {
+				usageError("-V");
+				return 0;
+			}
+
+			vbi_device = args[i];
+			if (vbi_device.startsWith("-")) {
+				usageError("-V");
+				return 0;
+			}
+
+		} else if (args[i].startsWith("--device")) {
+			QStringList param = args[i].split("=");
+			if (param.size() == 2) {
+				video_device = param[1];
+			} else {
+				usageError("--device");
+				return 0;
+			}
+
+		} else if (args[i].startsWith("--radio-device")) {
+			QStringList param = args[i].split("=");
+			if (param.size() == 2) {
+				radio_device = param[1];
+			} else {
+				usageError("--radio-device");
+				return 0;
+			}
+
+
+		} else if (args[i].startsWith("--vbi-device")) {
+			QStringList param = args[i].split("=");
+			if (param.size() == 2) {
+				vbi_device = param[1];
+			} else {
+				usageError("--vbi-device");
+				return 0;
+			}
+
+		} else if (args[i] == "-h" || args[i] == "--help") {
+			usage();
+			return 0;
+
+		} else if (args[i] == "-R" || args[i] == "--raw") {
 			raw = true;
-		else if (!strcmp(arg, "-h"))
-			help = true;
-		else if (arg[0] != '-')
-			device = arg;
+
+
+		} else {
+			printf("Invalid argument %s\n", args[i].toAscii().data());
+			return 0;
+		}
 	}
-	if (help) {
-		printf("qv4l2 [-r] [-h] [device node]\n\n"
-		       "-h\tthis help message\n"
-		       "-r\topen device node in raw mode\n");
-		return 0;
-	}
+
+	if (video_device != NULL)
+		device = getDeviceName("/dev/video", video_device);
+	else if (radio_device != NULL)
+		device = getDeviceName("/dev/radio", radio_device);
+	else if (vbi_device != NULL)
+		device = getDeviceName("/dev/vbi", vbi_device);
+	else
+		device = "/dev/video0";
+
 	g_mw->setDevice(device, raw);
 	g_mw->show();
 	a.connect(&a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()));
