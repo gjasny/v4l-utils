@@ -1110,8 +1110,24 @@ void ApplicationWindow::saveRaw(bool checked)
 
 void ApplicationWindow::about()
 {
+#ifdef HAVE_ALSA
+	bool alsa = true;
+#else
+	bool alsa = false;
+#endif
+#ifdef HAVE_QTGL
+	bool gl = true;
+#else
+	bool gl = false;
+#endif
+
 	QMessageBox::about(this, "V4L2 Test Bench",
-			"This program allows easy experimenting with video4linux devices.");
+			   QString("This program allows easy experimenting with video4linux devices.\n"
+				   "v. %1\n\nALSA support : %2\nOpenGL support : %3")
+			   .arg(V4L_UTILS_VERSION)
+			   .arg(alsa ? "Present" : "Not Available")
+			   .arg(gl ? "Present" : "Not Available")
+			   );
 }
 
 void ApplicationWindow::error(const QString &error)
