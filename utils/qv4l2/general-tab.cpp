@@ -98,6 +98,70 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (m_querycap.capabilities & V4L2_CAP_DEVICE_CAPS)
 		m_isVbi = caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE);
 
+	if (hasAlsaAudio()) {
+		m_audioInDevice = new QComboBox(parent);
+		m_audioOutDevice = new QComboBox(parent);
+		m_audioInDevice->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+		m_audioOutDevice->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+
+		if (createAudioDeviceList()) {
+			addLabel("Audio Input Device");
+			connect(m_audioInDevice, SIGNAL(activated(int)), SLOT(changeAudioDevice()));
+			addWidget(m_audioInDevice);
+
+			addLabel("Audio Output Device");
+			connect(m_audioOutDevice, SIGNAL(activated(int)), SLOT(changeAudioDevice()));
+			addWidget(m_audioOutDevice);
+
+			if (isRadio()) {
+				setAudioDeviceBufferSize(75);
+			} else {
+				v4l2_fract fract;
+				if (!v4l2::get_interval(fract)) {
+					// Default values are for 30 FPS
+					fract.numerator = 33;
+					fract.denominator = 1000;
+				}
+				// Standard capacity is two frames
+				setAudioDeviceBufferSize((fract.numerator * 2000) / fract.denominator);
+			}
+		} else {
+			delete m_audioInDevice;
+			delete m_audioOutDevice;
+			m_audioInDevice = NULL;
+			m_audioOutDevice = NULL;
+		}
+	}
+
+	if (!isRadio() && !isVbi()) {
+		m_pixelAspectRatio = new QComboBox(parent);
+		m_pixelAspectRatio->addItem("Autodetect");
+		m_pixelAspectRatio->addItem("Square");
+		m_pixelAspectRatio->addItem("NTSC/PAL-M/PAL-60");
+		m_pixelAspectRatio->addItem("NTSC/PAL-M/PAL-60, Anamorphic");
+		m_pixelAspectRatio->addItem("PAL/SECAM");
+		m_pixelAspectRatio->addItem("PAL/SECAM, Anamorphic");
+
+		// Update hints by calling a get
+		getPixelAspectRatio();
+
+		addLabel("Pixel Aspect Ratio");
+		addWidget(m_pixelAspectRatio);
+		connect(m_pixelAspectRatio, SIGNAL(activated(int)), SLOT(changePixelAspectRatio()));
+
+		m_crop = new QComboBox(parent);
+		m_crop->addItem("None");
+		m_crop->addItem("Top and Bottom Line");
+		m_crop->addItem("Widescreen 14:9");
+		m_crop->addItem("Widescreen 16:9");
+		m_crop->addItem("Cinema 1.85:1");
+		m_crop->addItem("Cinema 2.39:1");
+
+		addLabel("Cropping");
+		addWidget(m_crop);
+		connect(m_crop, SIGNAL(activated(int)), SIGNAL(cropChanged()));
+	}
+
 	if (!isRadio() && enum_input(vin, true)) {
 		addLabel("Input");
 		m_videoInput = new QComboBox(parent);
@@ -148,41 +212,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		updateAudioOutput();
 	}
 
-	if (hasAlsaAudio()) {
-		m_audioInDevice = new QComboBox(parent);
-		m_audioOutDevice = new QComboBox(parent);
-		m_audioInDevice->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-		m_audioOutDevice->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-
-		if (createAudioDeviceList()) {
-			addLabel("Audio Input Device");
-			connect(m_audioInDevice, SIGNAL(activated(int)), SLOT(changeAudioDevice()));
-			addWidget(m_audioInDevice);
-
-			addLabel("Audio Output Device");
-			connect(m_audioOutDevice, SIGNAL(activated(int)), SLOT(changeAudioDevice()));
-			addWidget(m_audioOutDevice);
-
-			if (isRadio()) {
-				setAudioDeviceBufferSize(75);
-			} else {
-				v4l2_fract fract;
-				if (!v4l2::get_interval(fract)) {
-					// Default values are for 30 FPS
-					fract.numerator = 33;
-					fract.denominator = 1000;
-				}
-				// Standard capacity is two frames
-				setAudioDeviceBufferSize((fract.numerator * 2000) / fract.denominator);
-			}
-		} else {
-			delete m_audioInDevice;
-			delete m_audioOutDevice;
-			m_audioInDevice = NULL;
-			m_audioOutDevice = NULL;
-		}
-	}
-
 	if (needsStd) {
 		v4l2_std_id tmp;
 
@@ -209,35 +238,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_qryTimings = new QPushButton("Query Timings", parent);
 		addWidget(m_qryTimings);
 		connect(m_qryTimings, SIGNAL(clicked()), SLOT(qryTimingsClicked()));
-	}
-
-	if (!isRadio() && !isVbi()) {
-		m_pixelAspectRatio = new QComboBox(parent);
-		m_pixelAspectRatio->addItem("Autodetect");
-		m_pixelAspectRatio->addItem("Square");
-		m_pixelAspectRatio->addItem("NTSC/PAL-M/PAL-60");
-		m_pixelAspectRatio->addItem("NTSC/PAL-M/PAL-60, Anamorphic");
-		m_pixelAspectRatio->addItem("PAL/SECAM");
-		m_pixelAspectRatio->addItem("PAL/SECAM, Anamorphic");
-
-		// Update hints by calling a get
-		getPixelAspectRatio();
-
-		addLabel("Pixel Aspect Ratio");
-		addWidget(m_pixelAspectRatio);
-		connect(m_pixelAspectRatio, SIGNAL(activated(int)), SLOT(changePixelAspectRatio()));
-
-		m_crop = new QComboBox(parent);
-		m_crop->addItem("None");
-		m_crop->addItem("Top and Bottom Line");
-		m_crop->addItem("Widescreen 14:9");
-		m_crop->addItem("Widescreen 16:9");
-		m_crop->addItem("Cinema 1.85:1");
-		m_crop->addItem("Cinema 2.39:1");
-
-		addLabel("Cropping");
-		addWidget(m_crop);
-		connect(m_crop, SIGNAL(activated(int)), SIGNAL(cropChanged()));
 	}
 
 	if (m_tuner.capability) {
