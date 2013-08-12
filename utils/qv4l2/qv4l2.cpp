@@ -935,11 +935,11 @@ void ApplicationWindow::capStart(bool start)
 			m_vbiHeight = fmt.fmt.vbi.count[0] + fmt.fmt.vbi.count[1];
 		m_vbiSize = m_vbiWidth * m_vbiHeight;
 		m_frameData = new unsigned char[m_vbiSize];
-		m_capture->resize(m_vbiWidth, m_vbiHeight);
 		m_capImage = new QImage(m_vbiWidth, m_vbiHeight, dstFmt);
 		m_capImage->fill(0);
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), "No frame");
+		m_capture->resize(m_vbiWidth, m_vbiHeight);
 		if (showFrames())
 			m_capture->show();
 
@@ -981,13 +981,12 @@ void ApplicationWindow::capStart(bool start)
 	m_capImage->fill(0);
 	
 	updatePixelAspectRatio();
-	m_capture->resize(dstPix.width, dstPix.height);
 	
-	if (showFrames()) {
-		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), "No frame");
+	m_capture->setFrame(m_capImage->width(), m_capImage->height(),
+			    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), "No frame");
+	m_capture->resize(dstPix.width, dstPix.height);
+	if (showFrames())
 		m_capture->show();
-	}
 
 	statusBar()->showMessage("No frame");
 	if (startCapture(srcPix.sizeimage)) {
