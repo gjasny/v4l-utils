@@ -134,6 +134,7 @@ private slots:
 	void setAudioBufferSize();
 	void enableScaling(bool enable);
 	void updatePixelAspectRatio();
+	void updateCropping();
 
 	void about();
 

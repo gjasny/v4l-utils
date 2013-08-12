@@ -27,8 +27,10 @@
 #include <sys/time.h>
 #include <linux/videodev2.h>
 #include <map>
+
 #include "qv4l2.h"
 #include "v4l2-api.h"
+#include "capture-win.h"
 
 #ifdef HAVE_ALSA
 extern "C" {
@@ -58,6 +60,7 @@ public:
 	int getAudioDeviceBufferSize();
 	bool hasAlsaAudio();
 	double getPixelAspectRatio();
+	CropMethod getCropMethod();
 	bool get_interval(struct v4l2_fract &interval);
 	int width() const { return m_width; }
 	int height() const { return m_height; }
@@ -92,6 +95,7 @@ public slots:
 signals:
 	void audioDeviceChanged();
 	void pixelAspectRatioChanged();
+	void cropChanged();
 
 private slots:
 	void inputChanged(int);
@@ -186,6 +190,7 @@ private:
 	QPushButton *m_qryStandard;
 	QComboBox *m_videoTimings;
 	QComboBox *m_pixelAspectRatio;
+	QComboBox *m_crop;
 	QPushButton *m_qryTimings;
 	QLineEdit *m_freq;
 	QComboBox *m_freqTable;

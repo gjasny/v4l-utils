@@ -31,6 +31,7 @@
 
 bool CaptureWin::m_enableScaling = true;
 double CaptureWin::m_pixelAspectRatio = 1.0;
+CropMethod CaptureWin::m_cropMethod = QV4L2_CROP_NONE;
 
 CaptureWin::CaptureWin() :
 	m_curWidth(-1),
@@ -77,10 +78,48 @@ void CaptureWin::resetSize()
 	resize(w, h);
 }
 
+int CaptureWin::cropHeight(int width, int height)
+{
+	int validHeight;
+
+	switch (m_cropMethod) {
+	case QV4L2_CROP_W149:
+		validHeight = (int)(width / 1.57);
+		break;
+	case QV4L2_CROP_W169:
+		validHeight = (int)(width / 1.78);
+		break;
+	case QV4L2_CROP_C185:
+		validHeight = (int)(width / 1.85);
+		break;
+	case QV4L2_CROP_C239:
+		validHeight = (int)(width / 2.39);
+		break;
+	case QV4L2_CROP_TB:
+		validHeight = height - 2;
+		break;
+	default:
+		return 0;
+	}
+
+	if (validHeight < MIN_WIN_SIZE_HEIGHT || validHeight >= height)
+		return 0;
+
+	return (height - validHeight) / 2;
+}
+
+
+void CaptureWin::setCropMethod(CropMethod crop)
+{
+	m_cropMethod = crop;
+	QResizeEvent event (QSize(width(), height()), QSize(width(), height()));
+	QCoreApplication::sendEvent(this, &event);
+}
+
 int CaptureWin::actualFrameWidth(int width)
 {
 	if (m_enableScaling)
-		return (int)((double)width * m_pixelAspectRatio);
+		return width * m_pixelAspectRatio;
 
 	return width;
 }
@@ -101,9 +140,8 @@ void CaptureWin::enableScaling(bool enable)
 		QWidget::setMinimumSize(MIN_WIN_SIZE_WIDTH, MIN_WIN_SIZE_HEIGHT);
 	}
 	m_enableScaling = enable;
-	QResizeEvent *event = new QResizeEvent(QSize(width(), height()), QSize(width(), height()));
-	QCoreApplication::sendEvent(this, event);
-	delete event;
+	QResizeEvent event (QSize(width(), height()), QSize(width(), height()));
+	QCoreApplication::sendEvent(this, &event);
 }
 
 void CaptureWin::resize(int width, int height)
@@ -117,8 +155,8 @@ void CaptureWin::resize(int width, int height)
 	m_curHeight = height;
 
 	QSize margins = getMargins();
-	width = actualFrameWidth(width) + margins.width();
-	height += margins.height();
+	height = height + margins.height() - cropHeight(width, height) * 2;
+	width = margins.width() + actualFrameWidth(width);
 
 	QDesktopWidget *screen = QApplication::desktop();
 	QRect resolution = screen->screenGeometry();
@@ -140,7 +178,7 @@ void CaptureWin::resize(int width, int height)
 QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
 {
 	int actualWidth;
-	int actualHeight = frame.height();
+	int actualHeight = frame.height() - cropHeight(frame.width(), frame.height()) * 2;
 
 	if (!m_enableScaling) {
 		window.setWidth(frame.width());
@@ -166,9 +204,8 @@ QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
 void CaptureWin::setPixelAspectRatio(double ratio)
 {
 	m_pixelAspectRatio = ratio;
-	QResizeEvent *event = new QResizeEvent(QSize(width(), height()), QSize(width(), height()));
-	QCoreApplication::sendEvent(this, event);
-	delete event;
+	QResizeEvent event(QSize(width(), height()), QSize(width(), height()));
+	QCoreApplication::sendEvent(this, &event);
 }
 
 void CaptureWin::closeEvent(QCloseEvent *event)

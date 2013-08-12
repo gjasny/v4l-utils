@@ -623,3 +623,26 @@ bool v4l2::get_interval(v4l2_fract &interval)
 
 	return false;
 }
+
+v4l2_fract v4l2::g_pixel_aspect()
+{
+	v4l2_cropcap ratio;
+	v4l2_std_id std;
+	static const v4l2_fract square = { 1, 1 };
+	static const v4l2_fract hz50 = { 11, 12 };
+	static const v4l2_fract hz60 = { 11, 10 };
+
+	ratio.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (ioctl(VIDIOC_CROPCAP, &ratio) < 0) {
+		if (!g_std(std))
+			return square;
+		if (std & V4L2_STD_525_60)
+			return hz60;
+		if (std & V4L2_STD_625_50)
+			return hz50;
+		return square;
+	}
+	if (!ratio.pixelaspect.numerator || !ratio.pixelaspect.denominator)
+		return square;
+	return ratio.pixelaspect;
+}

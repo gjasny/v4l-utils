@@ -230,6 +230,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	}
 #endif
 	connect(m_genTab, SIGNAL(pixelAspectRatioChanged()), this, SLOT(updatePixelAspectRatio()));
+	connect(m_genTab, SIGNAL(cropChanged()), this, SLOT(updateCropping()));
 	m_tabs->addTab(w, "General");
 	addTabs();
 	if (caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE)) {
@@ -815,6 +816,12 @@ void ApplicationWindow::updatePixelAspectRatio()
 {
 	if (m_capture != NULL && m_genTab != NULL)
 		m_capture->setPixelAspectRatio(m_genTab->getPixelAspectRatio());
+}
+
+void ApplicationWindow::updateCropping()
+{
+	if (m_capture != NULL)
+		m_capture->setCropMethod(m_genTab->getCropMethod());
 }
 
 void ApplicationWindow::startAudio()

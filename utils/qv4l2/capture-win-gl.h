@@ -65,6 +65,7 @@ private:
 
 	void clearShader();
 	void changeShader();
+	void paintFrame();
 	void configureTexture(size_t idx);
 	void checkError(const char *msg);
 

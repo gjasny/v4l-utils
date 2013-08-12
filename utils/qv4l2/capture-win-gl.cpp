@@ -261,6 +261,18 @@ void CaptureWinGLEngine::changeShader()
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
+void CaptureWinGLEngine::paintFrame()
+{
+	float crop = (float)CaptureWin::cropHeight(m_frameWidth, m_frameHeight) / m_frameHeight;
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, crop); glVertex2f(0.0, 0);
+	glTexCoord2f(1.0f, crop); glVertex2f(m_frameWidth, 0);
+	glTexCoord2f(1.0f, 1.0f - crop); glVertex2f(m_frameWidth, m_frameHeight);
+	glTexCoord2f(0.0f, 1.0f - crop); glVertex2f(0, m_frameHeight);
+	glEnd();
+}
+
 void CaptureWinGLEngine::paintGL()
 {
 	if (m_frameWidth < 1 || m_frameHeight < 1) {
@@ -271,12 +283,7 @@ void CaptureWinGLEngine::paintGL()
 		changeShader();
 
 	if (m_frameData == NULL) {
-		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0, 0);
-		glTexCoord2f(1.0f, 0.0f); glVertex2f(m_frameWidth, 0);
-		glTexCoord2f(1.0f, 1.0f); glVertex2f(m_frameWidth, m_frameHeight);
-		glTexCoord2f(0.0f, 1.0f); glVertex2f(0, m_frameHeight);
-		glEnd();
+		paintFrame();
 		return;
 	}
 
@@ -329,13 +336,7 @@ void CaptureWinGLEngine::paintGL()
 		checkError("Default paint");
 		break;
 	}
-
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0, 0);
-	glTexCoord2f(1.0f, 0.0f); glVertex2f(m_frameWidth, 0);
-	glTexCoord2f(1.0f, 1.0f); glVertex2f(m_frameWidth, m_frameHeight);
-	glTexCoord2f(0.0f, 1.0f); glVertex2f(0, m_frameHeight);
-	glEnd();
+	paintFrame();
 }
 
 void CaptureWinGLEngine::configureTexture(size_t idx)

@@ -26,6 +26,15 @@
 #include <QShortcut>
 #include <QLabel>
 
+enum CropMethod {
+	QV4L2_CROP_NONE,
+	QV4L2_CROP_W149,
+	QV4L2_CROP_W169,
+	QV4L2_CROP_C185,
+	QV4L2_CROP_C239,
+	QV4L2_CROP_TB
+};
+
 class CaptureWin : public QWidget
 {
 	Q_OBJECT
@@ -35,6 +44,9 @@ public:
 	~CaptureWin();
 
 	void resize(int minw, int minh);
+	void enableScaling(bool enable);
+	void setPixelAspectRatio(double ratio);
+	void setCropMethod(CropMethod crop);
 
 	/**
 	 * @brief Set a frame into the capture window.
@@ -75,18 +87,64 @@ public:
 	 */
 	static bool isSupported() { return false; }
 
-	void enableScaling(bool enable);
-	void setPixelAspectRatio(double ratio);
+	/**
+	 * @brief Return the scaled size.
+	 *
+	 * Scales a frame to fit inside a given window. Preseves aspect ratio.
+	 *
+	 * @param window The window the frame shall scale into
+	 * @param frame The frame to scale
+	 * @return The scaledsizes to use for the frame
+	 */
 	static QSize scaleFrameSize(QSize window, QSize frame);
+
+	/**
+	 * @brief Get the number of pixels to crop.
+	 *
+	 * When cropping is applied this gives the number of pixels to
+	 * remove from top and bottom. To get total multiply the return
+	 * value by 2.
+	 *
+	 * @param width Frame width
+	 * @param height Frame height
+	 * @return The pixels to remove when cropping height
+	 *
+	 * @note The width and height must be original frame size
+	 *       to ensure that the cropping is done correctly.
+	 */
+	static int cropHeight(int width, int height);
+
+	/**
+	 * @brief Get the frame width when aspect ratio is applied.
+	 *
+	 * @param width The original frame width.
+	 * @return The width with aspect ratio correctio (scaling must be enabled).
+	 */
+	static int actualFrameWidth(int width);
 
 public slots:
 	void resetSize();
 
 protected:
 	void closeEvent(QCloseEvent *event);
-	void buildWindow(QWidget *videoSurface);
-	static int actualFrameWidth(int width);
+
+	/**
+	 * @brief Get the amout of space outside the video frame.
+	 *
+	 * The margins are that of the window that encloses the displaying
+	 * video frame. The sizes are total in both width and height.
+	 *
+	 * @return The margins around the video frame.
+	 */
 	QSize getMargins();
+
+	/**
+	 * @brief Creates the content of the window.
+	 *
+	 * Construct the new window layout and adds the video display surface.
+	 * @param videoSurface The widget that contains the renderer.
+	 */
+	void buildWindow(QWidget *videoSurface);
 
 	/**
 	 * @brief A label that can is used to display capture information.
@@ -100,15 +158,12 @@ protected:
 	 */
 	static bool m_enableScaling;
 
-	/**
-	 * @note Aspect ratio it taken care of by scaling, frame size is for square pixels only!
-	 */
-	static double m_pixelAspectRatio;
-
 signals:
 	void close();
 
 private:
+	static double m_pixelAspectRatio;
+	static CropMethod m_cropMethod;
 	QShortcut *m_hotkeyClose;
 	QShortcut *m_hotkeyScaleReset;
 	int m_curWidth;

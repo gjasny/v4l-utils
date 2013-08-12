@@ -54,6 +54,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_qryStandard(NULL),
 	m_videoTimings(NULL),
 	m_pixelAspectRatio(NULL),
+	m_crop(NULL),
 	m_qryTimings(NULL),
 	m_freq(NULL),
 	m_vidCapFormats(NULL),
@@ -175,7 +176,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 				setAudioDeviceBufferSize((fract.numerator * 2000) / fract.denominator);
 			}
 		} else {
-			fprintf(stderr, "BANNA\n");
 			delete m_audioInDevice;
 			delete m_audioOutDevice;
 			m_audioInDevice = NULL;
@@ -226,6 +226,18 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		addLabel("Pixel Aspect Ratio");
 		addWidget(m_pixelAspectRatio);
 		connect(m_pixelAspectRatio, SIGNAL(activated(int)), SLOT(changePixelAspectRatio()));
+
+		m_crop = new QComboBox(parent);
+		m_crop->addItem("None");
+		m_crop->addItem("Top and Bottom Line");
+		m_crop->addItem("Widescreen 14:9");
+		m_crop->addItem("Widescreen 16:9");
+		m_crop->addItem("Cinema 1.85:1");
+		m_crop->addItem("Cinema 2.39:1");
+
+		addLabel("Cropping");
+		addWidget(m_crop);
+		connect(m_crop, SIGNAL(activated(int)), SIGNAL(cropChanged()));
 	}
 
 	if (m_tuner.capability) {
@@ -953,6 +965,7 @@ void GeneralTab::updateStandard()
 		vs.framelines);
 	m_tvStandard->setWhatsThis(what);
 	updateVidCapFormat();
+	changePixelAspectRatio();
 }
 
 void GeneralTab::qryStdClicked()
@@ -1123,6 +1136,24 @@ void GeneralTab::updateFrameSize()
 	updateFrameInterval();
 }
 
+CropMethod GeneralTab::getCropMethod()
+{
+	switch (m_crop->currentIndex()) {
+	case 1:
+		return QV4L2_CROP_TB;
+	case 2:
+		return QV4L2_CROP_W149;
+	case 3:
+		return QV4L2_CROP_W169;
+	case 4:
+		return QV4L2_CROP_C185;
+	case 5:
+		return QV4L2_CROP_C239;
+	default:
+		return QV4L2_CROP_NONE;
+	}
+}
+
 void GeneralTab::changePixelAspectRatio()
 {
 	// Update hints by calling a get
@@ -1133,44 +1164,38 @@ void GeneralTab::changePixelAspectRatio()
 
 double GeneralTab::getPixelAspectRatio()
 {
+	v4l2_fract ratio = { 1, 1 };
+
 	switch (m_pixelAspectRatio->currentIndex()) {
 	case 0:
-		v4l2_cropcap ratio;
-		ratio.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		if (ioctl(VIDIOC_CROPCAP, &ratio) < 0) {
-			m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 1:1");
-			m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 1:1");
-			return 1.0;
-		}
-
-		m_pixelAspectRatio->setStatusTip(QString("Pixel Aspect Ratio %1:%2")
-						 .arg(ratio.pixelaspect.denominator)
-						 .arg(ratio.pixelaspect.numerator));
-		m_pixelAspectRatio->setWhatsThis(QString("Pixel Aspect Ratio %1:%2")
-						 .arg(ratio.pixelaspect.denominator)
-						 .arg(ratio.pixelaspect.numerator));
-		return (double)ratio.pixelaspect.denominator / ratio.pixelaspect.numerator;
+		ratio = g_pixel_aspect();
+		break;
 	case 2:
-		m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 10:11");
-		m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 10:11");
-		return 10.0 / 11.0;
+		ratio.numerator = 11;
+		ratio.denominator = 10;
+		break;
 	case 3:
-		m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 40:33");
-		m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 40:33");
-		return 40.0 / 33.0;
+		ratio.numerator = 33;
+		ratio.denominator = 40;
+		break;
 	case 4:
-		m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 12:11");
-		m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 12:11");
-		return 12.0 / 11.0;
+		ratio.numerator = 11;
+		ratio.denominator = 12;
+		break;
 	case 5:
-		m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 16:11");
-		m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 16:11");
-		return 16.0 / 11.0;
+		ratio.numerator = 11;
+		ratio.denominator = 16;
+		break;
 	default:
-		m_pixelAspectRatio->setStatusTip("Pixel Aspect Ratio 1:1");
-		m_pixelAspectRatio->setWhatsThis("Pixel Aspect Ratio 1:1");
-		return 1.0;
+		break;
 	}
+
+	m_pixelAspectRatio->setWhatsThis(QString("Pixel Aspect Ratio %1:%2")
+			 .arg(ratio.denominator).arg(ratio.numerator));
+	m_pixelAspectRatio->setStatusTip(m_pixelAspectRatio->whatsThis());
+	// Note: ratio is y / x, whereas we want x / y, so we return
+	// denominator / numerator.
+	return (double)ratio.denominator / ratio.numerator;
 }
 
 void GeneralTab::updateFrameInterval()
