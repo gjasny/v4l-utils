@@ -139,6 +139,11 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 
 	dv_timings->type = V4L2_DV_BT_656_1120;
 
+	if (!strcmp(subs, "query")) {
+		query = true;
+		return;
+	}
+
 	while (*subs != '\0') {
 		static const char *const subopts[] = {
 			"width",
@@ -156,7 +161,6 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 			"il_vs",
 			"il_vbp",
 			"index",
-			"query",
 			NULL
 		};
 
@@ -205,9 +209,6 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 			break;
 		case 14:
 			enumerate = strtol(value, 0L, 0);
-			break;
-		case 15:
-			query = true;
 			break;
 		default:
 			stds_usage();
