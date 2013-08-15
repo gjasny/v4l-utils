@@ -364,6 +364,7 @@ static dev_vec list_devices(void)
 	DIR *dp;
 	struct dirent *ep;
 	dev_vec files;
+	dev_vec valid_devices;
 	dev_map links;
 
 	struct v4l2_tuner vt;
@@ -385,22 +386,21 @@ static dev_vec list_devices(void)
 		int fd = open(iter->c_str(), O_RDONLY | O_NONBLOCK);
 		std::string bus_info;
 
-		if (fd < 0) {
-			iter = files.erase(iter);
+		if (fd < 0)
 			continue;
-		}
 		memset(&vt, 0, sizeof(vt));
-		if (doioctl(fd, VIDIOC_G_TUNER, &vt) != 0) {
+		if (ioctl(fd, VIDIOC_G_TUNER, &vt) != 0) {
 			close(fd);
-			iter = files.erase(iter);
 			continue;
 		}
 		/* remove device if it doesn't support rds block I/O */
-		if (!(vt.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO))
+		if (vt.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO)
+			valid_devices.push_back(*iter);
+		else
 			iter = files.erase(iter);
 		close(fd);
 	}
-	return files;
+	return valid_devices;
 }
 
 static int parse_subopt(char **subs, const char * const *subopts, char **value)
