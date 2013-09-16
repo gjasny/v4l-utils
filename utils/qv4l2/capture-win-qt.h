@@ -28,8 +28,10 @@
 #include <QResizeEvent>
 
 struct CropInfo {
-	int crop;
+	int cropH;
+	int cropW;
 	int height;
+	int width;
 	int offset;
 	int bytes;
 };

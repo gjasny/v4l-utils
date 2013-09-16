@@ -29,10 +29,12 @@ CaptureWinQt::CaptureWinQt() :
 	CaptureWin::buildWindow(&m_videoSurface);
 	m_scaledSize.setWidth(0);
 	m_scaledSize.setHeight(0);
-	m_crop.crop = 0;
+	m_crop.cropH  = 0;
+	m_crop.cropW  = 0;
 	m_crop.height = 0;
+	m_crop.width  = 0;
 	m_crop.offset = 0;
-	m_crop.bytes = 0;
+	m_crop.bytes  = 0;
 }
 
 CaptureWinQt::~CaptureWinQt()
@@ -45,14 +47,19 @@ void CaptureWinQt::resizeScaleCrop()
 	m_scaledSize = scaleFrameSize(QSize(m_videoSurface.width(), m_videoSurface.height()),
 				      QSize(m_frame->width(), m_frame->height()));
 
-	if (!m_crop.bytes || m_crop.crop != cropHeight(m_frame->width(), m_frame->height())) {
-		m_crop.crop = cropHeight(m_frame->width(), m_frame->height());
-		m_crop.height = m_frame->height() - (m_crop.crop * 2);
-		m_crop.offset = m_crop.crop * (m_frame->depth() / 8) * m_frame->width();
+	if (!m_crop.bytes || m_crop.cropH != cropHeight(m_frame->width(), m_frame->height())
+	    || m_crop.cropW != cropWidth(m_frame->width(), m_frame->height())) {
+
+		m_crop.cropH  = cropHeight(m_frame->width(), m_frame->height());
+		m_crop.cropW  = cropWidth(m_frame->width(), m_frame->height());
+		m_crop.height = m_frame->height() - (m_crop.cropH * 2);
+		m_crop.width  = m_frame->width() - (m_crop.cropW * 2);
+		m_crop.offset = m_crop.cropH * (m_frame->depth() / 8) * m_frame->width()
+			+ m_crop.cropW * (m_frame->depth() / 8);
 
 		// Even though the values above can be valid, it might be that there is no
 		// data at all. This makes sure that it is.
-		m_crop.bytes = m_crop.height * m_frame->width() * (m_frame->depth() / 8);
+		m_crop.bytes = m_crop.height * m_crop.width * (m_frame->depth() / 8);
 	}
 }
 
@@ -97,15 +104,10 @@ void CaptureWinQt::paintFrame()
 	}
 	m_filled = false;
 
-	unsigned char *data;
+	unsigned char *data = (m_data == NULL) ? m_frame->bits() : m_data;
 
-	if (m_data == NULL)
-		data = m_frame->bits();
-	else
-		data = m_data;
-
-	QImage displayFrame(&data[m_crop.offset], m_frame->width(), m_crop.height,
-			    m_frame->numBytes()/m_frame->height(), m_frame->format());
+	QImage displayFrame(&data[m_crop.offset], m_crop.width, m_crop.height,
+			    m_frame->width() * (m_frame->depth() / 8), m_frame->format());
 
 	QPixmap img = QPixmap::fromImage(displayFrame);
 

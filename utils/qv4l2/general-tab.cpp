@@ -156,6 +156,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_crop->addItem("Widescreen 16:9");
 		m_crop->addItem("Cinema 1.85:1");
 		m_crop->addItem("Cinema 2.39:1");
+		m_crop->addItem("Traditional 4:3");
 
 		addLabel("Cropping");
 		addWidget(m_crop);
@@ -1156,6 +1157,8 @@ CropMethod GeneralTab::getCropMethod()
 		return QV4L2_CROP_C185;
 	case 5:
 		return QV4L2_CROP_C239;
+	case 6:
+		return QV4L2_CROP_P43;
 	default:
 		return QV4L2_CROP_NONE;
 	}

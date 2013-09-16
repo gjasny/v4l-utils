@@ -27,12 +27,16 @@
 #include <QLabel>
 
 enum CropMethod {
+	// Crop Height
 	QV4L2_CROP_NONE,
 	QV4L2_CROP_W149,
 	QV4L2_CROP_W169,
 	QV4L2_CROP_C185,
 	QV4L2_CROP_C239,
-	QV4L2_CROP_TB
+	QV4L2_CROP_TB,
+
+	// Crop Width
+	QV4L2_CROP_P43,
 };
 
 class CaptureWin : public QWidget
@@ -113,6 +117,7 @@ public:
 	 *       to ensure that the cropping is done correctly.
 	 */
 	static int cropHeight(int width, int height);
+	static int cropWidth(int width, int height);
 
 	/**
 	 * @brief Get the frame width when aspect ratio is applied.

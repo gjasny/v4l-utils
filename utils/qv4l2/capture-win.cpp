@@ -108,6 +108,18 @@ int CaptureWin::cropHeight(int width, int height)
 	return (height - validHeight) / 2;
 }
 
+int CaptureWin::cropWidth(int width, int height)
+{
+	if (m_cropMethod != QV4L2_CROP_P43)
+		return 0;
+
+	int validWidth = (int)(height / 1.33);
+
+	if (validWidth < MIN_WIN_SIZE_WIDTH || validWidth >= width)
+		return 0;
+
+	return (width - validWidth) / 2;
+}
 
 void CaptureWin::setCropMethod(CropMethod crop)
 {
@@ -156,7 +168,7 @@ void CaptureWin::resize(int width, int height)
 
 	QSize margins = getMargins();
 	height = height + margins.height() - cropHeight(width, height) * 2;
-	width = margins.width() + actualFrameWidth(width);
+	width = margins.width() - cropWidth(width, height) * 2 + actualFrameWidth(width);
 
 	QDesktopWidget *screen = QApplication::desktop();
 	QRect resolution = screen->screenGeometry();
@@ -177,15 +189,12 @@ void CaptureWin::resize(int width, int height)
 
 QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
 {
-	int actualWidth;
+	int actualWidth = actualFrameWidth(frame.width() - cropWidth(frame.width(), frame.height()) * 2);
 	int actualHeight = frame.height() - cropHeight(frame.width(), frame.height()) * 2;
 
 	if (!m_enableScaling) {
-		window.setWidth(frame.width());
-		window.setHeight(frame.height());
-		actualWidth = frame.width();
-	} else {
-		actualWidth = CaptureWin::actualFrameWidth(frame.width());
+		window.setWidth(actualWidth);
+		window.setHeight(actualHeight);
 	}
 
 	double newW, newH;

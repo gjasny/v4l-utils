@@ -263,13 +263,14 @@ void CaptureWinGLEngine::changeShader()
 
 void CaptureWinGLEngine::paintFrame()
 {
-	float crop = (float)CaptureWin::cropHeight(m_frameWidth, m_frameHeight) / m_frameHeight;
+	float cropH = (float)CaptureWin::cropHeight(m_frameWidth, m_frameHeight) / m_frameHeight;
+	float cropW = (float)CaptureWin::cropWidth(m_frameWidth, m_frameHeight) / m_frameWidth;
 
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, crop); glVertex2f(0.0, 0);
-	glTexCoord2f(1.0f, crop); glVertex2f(m_frameWidth, 0);
-	glTexCoord2f(1.0f, 1.0f - crop); glVertex2f(m_frameWidth, m_frameHeight);
-	glTexCoord2f(0.0f, 1.0f - crop); glVertex2f(0, m_frameHeight);
+	glTexCoord2f(cropW, cropH);               glVertex2f(0, 0);
+	glTexCoord2f(1.0f - cropW, cropH);        glVertex2f(m_frameWidth, 0);
+	glTexCoord2f(1.0f - cropW, 1.0f - cropH); glVertex2f(m_frameWidth, m_frameHeight);
+	glTexCoord2f(cropW, 1.0f - cropH);        glVertex2f(0, m_frameHeight);
 	glEnd();
 }
 
