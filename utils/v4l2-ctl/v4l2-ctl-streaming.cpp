@@ -609,6 +609,9 @@ static void streaming_set_cap(int fd)
 	int fd_flags = fcntl(fd, F_GETFL);
 	buffers b(false, options[OptStreamMmap]);
 	bool use_poll = options[OptStreamPoll];
+	unsigned count = 0, last = 0;
+	struct timeval tv_last;
+	bool eos = false;
 	FILE *fout = NULL;
 
 	if (!(capabilities & V4L2_CAP_VIDEO_CAPTURE) &&
@@ -629,19 +632,15 @@ static void streaming_set_cap(int fd)
 	}
 
 	if (b.reqbufs(fd, reqbufs_count_cap))
-		return;
+		goto done;
 
 	do_setup_cap_buffers(fd, b);
 
 	if (doioctl(fd, VIDIOC_STREAMON, &b.type))
-		return;
+		goto done;
 
 	if (use_poll)
 		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
-
-	unsigned count = 0, last = 0;
-	struct timeval tv_last;
-	bool eos = false;
 
 	while (!eos) {
 		fd_set read_fds;
@@ -660,11 +659,11 @@ static void streaming_set_cap(int fd)
 				continue;
 			fprintf(stderr, "select error: %s\n",
 					strerror(errno));
-			return;
+			goto done;
 		}
 		if (use_poll && r == 0) {
 			fprintf(stderr, "select timeout\n");
-			return;
+			goto done;
 		}
 
 		if (FD_ISSET(fd, &exception_fds)) {
@@ -692,6 +691,7 @@ static void streaming_set_cap(int fd)
 
 	do_release_buffers(b);
 
+done:
 	if (fout && fout != stdout)
 		fclose(fout);
 }
@@ -701,6 +701,8 @@ static void streaming_set_out(int fd)
 	buffers b(true, options[OptStreamOutMmap]);
 	int fd_flags = fcntl(fd, F_GETFL);
 	bool use_poll = options[OptStreamPoll];
+	unsigned count = 0, last = 0;
+	struct timeval tv_last;
 	FILE *fin = NULL;
 
 	if (!(capabilities & V4L2_CAP_VIDEO_OUTPUT) &&
@@ -717,18 +719,15 @@ static void streaming_set_out(int fd)
 	}
 
 	if (b.reqbufs(fd, reqbufs_count_out))
-		return;
+		goto done;
 
 	do_setup_out_buffers(fd, b, fin);
 
 	if (doioctl(fd, VIDIOC_STREAMON, &b.type))
-		return;
+		goto done;
 
 	if (use_poll)
 		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
-
-	unsigned count = 0, last = 0;
-	struct timeval tv_last;
 
 	for (;;) {
 		int r;
@@ -751,12 +750,12 @@ static void streaming_set_out(int fd)
 					continue;
 				fprintf(stderr, "select error: %s\n",
 					strerror(errno));
-				return;
+				goto done;
 			}
 
 			if (r == 0) {
 				fprintf(stderr, "select timeout\n");
-				return;
+				goto done;
 			}
 		}
 		r = do_handle_out(fd, b, fin,
@@ -776,6 +775,7 @@ static void streaming_set_out(int fd)
 
 	do_release_buffers(b);
 
+done:
 	if (fin && fin != stdin)
 		fclose(fin);
 }
@@ -791,7 +791,14 @@ static void streaming_set_m2m(int fd)
 	bool use_poll = options[OptStreamPoll];
 	buffers in(false, options[OptStreamMmap]);
 	buffers out(true, options[OptStreamOutMmap]);
+	unsigned count[2] = { 0, 0 };
+	unsigned last[2] = { 0, 0 };
+	struct timeval tv_last[2];
 	FILE *file[2] = {NULL, NULL};
+	fd_set fds[3];
+	fd_set *rd_fds = &fds[0]; /* for capture */
+	fd_set *ex_fds = &fds[1]; /* for capture */
+	fd_set *wr_fds = &fds[2]; /* for output */
 
 	if (!(capabilities & V4L2_CAP_VIDEO_M2M) &&
 	    !(capabilities & V4L2_CAP_VIDEO_M2M_MPLANE)) {
@@ -821,26 +828,17 @@ static void streaming_set_m2m(int fd)
 
 	if (in.reqbufs(fd, reqbufs_count_cap) ||
 	    out.reqbufs(fd, reqbufs_count_out))
-		return;
+		goto done;
 
 	do_setup_cap_buffers(fd, in);
 	do_setup_out_buffers(fd, out, file[OUT]);
 
 	if (doioctl(fd, VIDIOC_STREAMON, &in.type) ||
 	    doioctl(fd, VIDIOC_STREAMON, &out.type))
-		return;
+		goto done;
 
 	if (use_poll)
 		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
-
-	unsigned count[2] = { 0, 0 };
-	unsigned last[2] = { 0, 0 };
-	struct timeval tv_last[2];
-
-	fd_set fds[3];
-	fd_set *rd_fds = &fds[0]; /* for capture */
-	fd_set *ex_fds = &fds[1]; /* for capture */
-	fd_set *wr_fds = &fds[2]; /* for output */
 
 	while (rd_fds || wr_fds || ex_fds) {
 		struct timeval tv = { use_poll ? 2 : 0, 0 };
@@ -870,11 +868,11 @@ static void streaming_set_m2m(int fd)
 				continue;
 			fprintf(stderr, "select error: %s\n",
 					strerror(errno));
-			return;
+			goto done;
 		}
 		if (use_poll && r == 0) {
 			fprintf(stderr, "select timeout\n");
-			return;
+			goto done;
 		}
 
 		if (rd_fds && FD_ISSET(fd, rd_fds)) {
@@ -924,6 +922,7 @@ static void streaming_set_m2m(int fd)
 	do_release_buffers(in);
 	do_release_buffers(out);
 
+done:
 	if (file[CAP] && file[CAP] != stdout)
 		fclose(file[CAP]);
 
