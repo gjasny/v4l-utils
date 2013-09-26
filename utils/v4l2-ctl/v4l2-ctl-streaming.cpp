@@ -406,6 +406,7 @@ static void do_setup_out_buffers(int fd, buffers &b, FILE *fin)
 				fill_buffer_from_file(b, buf.index, fin);
 		}
 		else {
+			b.num_planes = 1;
 			b.planes[i][0].length = buf.length;
 			buf.bytesused = buf.length;
 			if (b.memory == V4L2_MEMORY_MMAP) {
