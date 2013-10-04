@@ -152,11 +152,11 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_crop = new QComboBox(parent);
 		m_crop->addItem("None");
 		m_crop->addItem("Top and Bottom Line");
-		m_crop->addItem("Widescreen 14:9");
-		m_crop->addItem("Widescreen 16:9");
-		m_crop->addItem("Cinema 1.85:1");
-		m_crop->addItem("Cinema 2.39:1");
-		m_crop->addItem("Traditional 4:3");
+		m_crop->addItem("Widescreen 14:9 (Letterbox)");
+		m_crop->addItem("Widescreen 16:9 (Letterbox)");
+		m_crop->addItem("Cinema 1.85:1 (Letterbox)");
+		m_crop->addItem("Cinema 2.39:1 (Letterbox)");
+		m_crop->addItem("Traditional 4:3 (Pillarbox)");
 
 		addLabel("Cropping");
 		addWidget(m_crop);

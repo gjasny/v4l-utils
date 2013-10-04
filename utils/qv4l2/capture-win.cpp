@@ -80,20 +80,21 @@ void CaptureWin::resetSize()
 
 int CaptureWin::cropHeight(int width, int height)
 {
+	double realWidth = width * m_pixelAspectRatio;
 	int validHeight;
 
 	switch (m_cropMethod) {
 	case QV4L2_CROP_W149:
-		validHeight = (int)(width / 1.57);
+		validHeight = realWidth / (14.0 / 9.0);
 		break;
 	case QV4L2_CROP_W169:
-		validHeight = (int)(width / 1.78);
+		validHeight = realWidth / (16.0 / 9.0);
 		break;
 	case QV4L2_CROP_C185:
-		validHeight = (int)(width / 1.85);
+		validHeight = realWidth / 1.85;
 		break;
 	case QV4L2_CROP_C239:
-		validHeight = (int)(width / 2.39);
+		validHeight = realWidth / 2.39;
 		break;
 	case QV4L2_CROP_TB:
 		validHeight = height - 2;
@@ -113,7 +114,7 @@ int CaptureWin::cropWidth(int width, int height)
 	if (m_cropMethod != QV4L2_CROP_P43)
 		return 0;
 
-	int validWidth = (int)(height / 1.33);
+	int validWidth = (height * 4.0 / 3.0) / m_pixelAspectRatio;
 
 	if (validWidth < MIN_WIN_SIZE_WIDTH || validWidth >= width)
 		return 0;
