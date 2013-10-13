@@ -8,5 +8,5 @@ noinst_LTLIBRARIES = libv4l2rds.la
 endif
 
 libv4l2rds_la_SOURCES = libv4l2rds.c
-libv4l2rds_la_CPPFLAGS = $(CFLAG_VISIBILITY) $(ENFORCE_LIBV4L_STATIC) -std=gnu99
+libv4l2rds_la_CPPFLAGS = $(CFLAG_VISIBILITY) $(ENFORCE_LIBV4L_STATIC)
 libv4l2rds_la_LDFLAGS = $(LIBV4L2RDS_VERSION) -lpthread $(ENFORCE_LIBV4L_STATIC)
