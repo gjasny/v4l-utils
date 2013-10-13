@@ -12,6 +12,7 @@
 *.spec
 .libs
 .deps
+.dirstamp
 config.h
 config.h.in
 config.log
