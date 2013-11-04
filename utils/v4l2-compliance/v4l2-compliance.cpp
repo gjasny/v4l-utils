@@ -262,6 +262,7 @@ static int testCap(struct node *node)
 	const __u32 output_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 			V4L2_CAP_VIDEO_OUTPUT_OVERLAY | V4L2_CAP_VBI_OUTPUT |
 			V4L2_CAP_SLICED_VBI_OUTPUT | V4L2_CAP_MODULATOR;
+	const __u32 overlay_caps = V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY;
 	const __u32 m2m_caps = V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE;
 	const __u32 io_caps = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
 	const __u32 mplane_caps = V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
@@ -301,8 +302,9 @@ static int testCap(struct node *node)
 	fail_on_test(node->is_radio && (dcaps & V4L2_CAP_AUDIO));
 	fail_on_test(node->is_vbi && !(dcaps & vbi_caps));
 	// You can't have both set due to missing buffer type in VIDIOC_G/S_FBUF
-	fail_on_test((dcaps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)) ==
-			(V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY));
+	fail_on_test((dcaps & overlay_caps) == overlay_caps);
+	// Overlay support makes no sense for m2m devices
+	fail_on_test((dcaps & m2m_caps) && (dcaps & overlay_caps));
 	fail_on_test(node->is_video && (dcaps & (vbi_caps | radio_caps)));
 	fail_on_test(node->is_radio && (dcaps & (vbi_caps | video_caps)));
 	fail_on_test(node->is_vbi && (dcaps & (video_caps | radio_caps)));
