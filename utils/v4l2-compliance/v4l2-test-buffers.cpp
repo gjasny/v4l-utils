@@ -83,6 +83,9 @@ int testReqBufs(struct node *node)
 	fail_on_test(ret != EINVAL);
 	fail_on_test(node->node2 == NULL);
 	for (i = 1; i <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; i++) {
+		bool is_overlay = i == V4L2_BUF_TYPE_VIDEO_OVERLAY ||
+				  i == V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY;
+
 		if (node->buftype_pixfmts[i].empty())
 			continue;
 		info("test buftype %d\n", i);
@@ -109,9 +112,9 @@ int testReqBufs(struct node *node)
 		ret = doioctl(node, VIDIOC_REQBUFS, &bufs);
 		fail_on_test(ret && ret != EINVAL);
 		dmabuf_valid = !ret;
-		fail_on_test(can_stream && !mmap_valid && !userptr_valid && !dmabuf_valid);
-		fail_on_test(!can_stream && (mmap_valid || userptr_valid || dmabuf_valid));
-		if (!can_stream)
+		fail_on_test((can_stream && !is_overlay) && !mmap_valid && !userptr_valid && !dmabuf_valid);
+		fail_on_test((!can_stream || is_overlay) && (mmap_valid || userptr_valid || dmabuf_valid));
+		if (!can_stream || is_overlay)
 			continue;
 
 		if (mmap_valid) {
