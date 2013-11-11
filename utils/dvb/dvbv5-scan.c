@@ -46,7 +46,7 @@ const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.co
 
 struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev;
-	unsigned adapter, frontend, demux, get_detected, get_nit;
+	unsigned adapter, n_adapter, adapter_fe, adapter_dmx, frontend, demux, get_detected, get_nit;
 	int force_dvbv3, lnb, sat_number, freq_bpf;
 	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
 	unsigned other_nit;
@@ -521,12 +521,15 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	switch (k) {
 	case 'a':
 		args->adapter = strtoul(optarg, NULL, 0);
+		args->n_adapter++;
 		break;
 	case 'f':
 		args->frontend = strtoul(optarg, NULL, 0);
+		args->adapter_fe = args->adapter;
 		break;
 	case 'd':
 		args->demux = strtoul(optarg, NULL, 0);
+		args->adapter_dmx = args->adapter;
 		break;
 	case 'l':
 		args->lnb_name = optarg;
@@ -593,10 +596,16 @@ int main(int argc, char **argv)
 	args.input_format = FILE_DVBV5;
 	args.output_format = FILE_DVBV5;
 	args.timeout_multiply = 1;
+	args.adapter = (unsigned)-1;
 
 	argp_parse(&argp, argc, argv, 0, &idx, &args);
 	if (args.timeout_multiply == 0)
 		args.timeout_multiply = 1;
+
+	if (args.n_adapter == 1) {
+		args.adapter_fe = args.adapter;
+		args.adapter_dmx = args.adapter;
+	}
 
 	if (args.lnb_name) {
 		lnb = dvb_sat_search_lnb(args.lnb_name);
@@ -626,12 +635,12 @@ int main(int argc, char **argv)
 	}
 
 	asprintf(&args.demux_dev,
-		 "/dev/dvb/adapter%i/demux%i", args.adapter, args.demux);
+		 "/dev/dvb/adapter%i/demux%i", args.adapter_dmx, args.demux);
 
 	if (verbose)
 		fprintf(stderr, "using demux '%s'\n", args.demux_dev);
 
-	struct dvb_v5_fe_parms *parms = dvb_fe_open(args.adapter,
+	struct dvb_v5_fe_parms *parms = dvb_fe_open(args.adapter_fe,
 						    args.frontend,
 						    verbose, args.force_dvbv3);
 	if (!parms)
