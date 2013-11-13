@@ -46,6 +46,7 @@
 #include "descriptors/desc_frequency_list.h"
 #include "descriptors/desc_event_short.h"
 #include "descriptors/desc_event_extended.h"
+#include "descriptors/desc_atsc_service_location.h"
 #include "descriptors/desc_hierarchy.h"
 
 ssize_t dvb_desc_init(const uint8_t *buf, struct dvb_desc *desc)
@@ -302,7 +303,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	[atsc_caption_service_descriptor] = { "atsc_caption_service_descriptor", NULL, NULL, NULL, 0 },
 	[atsc_content_advisory_descriptor] = { "atsc_content_advisory_descriptor", NULL, NULL, NULL, 0 },
 	[atsc_extended_channel_descriptor] = { "atsc_extended_channel_descriptor", NULL, NULL, NULL, 0 },
-	[atsc_service_location_descriptor] = { "atsc_service_location_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_service_location_descriptor] = { "atsc_service_location_descriptor", atsc_desc_service_location_init, atsc_desc_service_location_print, NULL, sizeof(struct atsc_desc_service_location) },
 	[atsc_time_shifted_service_descriptor] = { "atsc_time_shifted_service_descriptor", NULL, NULL, NULL, 0 },
 	[atsc_component_name_descriptor] = { "atsc_component_name_descriptor", NULL, NULL, NULL, 0 },
 	[atsc_DCC_departing_request_descriptor] = { "atsc_DCC_departing_request_descriptor", NULL, NULL, NULL, 0 },
