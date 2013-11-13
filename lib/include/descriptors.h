@@ -266,6 +266,21 @@ enum descriptors {
 	emergency_information_descriptor		= 0xfc,
 	data_component_descriptor			= 0xfd,
 	system_management_descriptor			= 0xfe,
+
+	/* ATSC descriptors - ATSC A/65:2009 spec */
+	atsc_stuffing_descriptor			= 0x80,
+	atsc_ac3_audio_descriptor			= 0x81,
+	atsc_caption_service_descriptor			= 0x86,
+	atsc_content_advisory_descriptor		= 0x87,
+	atsc_extended_channel_descriptor		= 0xa0,
+	atsc_service_location_descriptor		= 0xa1,
+	atsc_time_shifted_service_descriptor		= 0xa2,
+	atsc_component_name_descriptor			= 0xa3,
+	atsc_DCC_departing_request_descriptor		= 0xa8,
+	atsc_DCC_arriving_request_descriptor		= 0xa9,
+	atsc_redistribution_control_descriptor		= 0xaa,
+	atsc_ATSC_private_information_descriptor	= 0xad,
+	atsc_genre_descriptor				= 0xab,
 };
 
 

@@ -297,6 +297,19 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	[emergency_information_descriptor] = { "emergency_information_descriptor", NULL, NULL, NULL, 0 },
 	[data_component_descriptor] = { "data_component_descriptor", NULL, NULL, NULL, 0 },
 	[system_management_descriptor] = { "system_management_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_stuffing_descriptor] = { "atsc_stuffing_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_ac3_audio_descriptor] = { "atsc_ac3_audio_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_caption_service_descriptor] = { "atsc_caption_service_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_content_advisory_descriptor] = { "atsc_content_advisory_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_extended_channel_descriptor] = { "atsc_extended_channel_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_service_location_descriptor] = { "atsc_service_location_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_time_shifted_service_descriptor] = { "atsc_time_shifted_service_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_component_name_descriptor] = { "atsc_component_name_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_DCC_departing_request_descriptor] = { "atsc_DCC_departing_request_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_DCC_arriving_request_descriptor] = { "atsc_DCC_arriving_request_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_redistribution_control_descriptor] = { "atsc_redistribution_control_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_ATSC_private_information_descriptor] = { "atsc_ATSC_private_information_descriptor", NULL, NULL, NULL, 0 },
+	[atsc_genre_descriptor] = { "atsc_genre_descriptor", NULL, NULL, NULL, 0 },
 };
 
 static const char *extension_descriptors[] = {
