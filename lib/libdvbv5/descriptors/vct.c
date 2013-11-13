@@ -27,19 +27,16 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 	const uint8_t *p = buf;
 	struct dvb_table_vct *vct = (struct dvb_table_vct *) table;
 	struct dvb_table_vct_channel **head;
-	int i;
+	int i, n;
 
-	bswap16(vct->bitfield);
-	bswap16(vct->transport_stream_id);
-
-	if (*table_length > 0) {
+	if (*table_length >= offsetof(struct dvb_table_vct, channel)) {
 		/* find end of curent list */
 		head = &vct->channel;
 		while (*head != NULL)
 			head = &(*head)->next;
 	} else {
-		memcpy(vct, p, sizeof(struct dvb_table_vct) - sizeof(vct->channel));
-		*table_length = sizeof(struct dvb_table_vct);
+		memcpy(vct, p, offsetof(struct dvb_table_vct, channel));
+		*table_length = offsetof(struct dvb_table_vct, channel);
 
 		vct->channel = NULL;
 		head = &vct->channel;
@@ -47,7 +44,7 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 	p += sizeof(struct dvb_table_vct) - sizeof(vct->channel);
 
 	struct dvb_table_vct_channel *last = NULL;
-	while ((uint8_t *) p < buf + buflen - 4) {
+	for (n = 0; n < vct->num_channels_in_section; n++) {
 		struct dvb_table_vct_channel *channel = (struct dvb_table_vct_channel *) malloc(sizeof(struct dvb_table_vct_channel));
 
 		memcpy(channel, p, offsetof(struct dvb_table_vct_channel, descriptor));
@@ -76,6 +73,7 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		/* Fill descriptors */
 
 		channel->descriptor = NULL;
+		channel->next = NULL;
 
 		if (!*head)
 			*head = channel;
@@ -112,12 +110,9 @@ void dvb_table_vct_print(struct dvb_v5_fe_parms *parms, struct dvb_table_vct *vc
 		dvb_log("TVCT");
 
 	dvb_table_header_print(parms, &vct->header);
-	dvb_log("|- ts_id                  %d", vct->transport_stream_id);
-	dvb_log("|- version_number         %d", vct->version_number);
-	dvb_log("|- current_next_indicator %d", vct->current_next_indicator);
-	dvb_log("|- section_number         %d", vct->section_number);
-	dvb_log("|- last_section_number    %d", vct->last_section_number);
-	dvb_log("|- ATSC_protocol_version  %d", vct->ATSC_protocol_version);
+
+	dvb_log("|- Protocol version %d", vct->ATSC_protocol_version);
+	dvb_log("|- #channels        %d", vct->num_channels_in_section);
 	dvb_log("|\\  channel_id");
 	const struct dvb_table_vct_channel *channel = vct->channel;
 	uint16_t channels = 0;
