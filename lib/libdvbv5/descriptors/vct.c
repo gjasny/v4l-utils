@@ -29,19 +29,21 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 	struct dvb_table_vct_channel **head;
 	int i, n;
 
-	if (*table_length >= offsetof(struct dvb_table_vct, channel)) {
+	if (*table_length > 0) {
 		/* find end of curent list */
 		head = &vct->channel;
 		while (*head != NULL)
 			head = &(*head)->next;
 	} else {
 		memcpy(vct, p, offsetof(struct dvb_table_vct, channel));
-		*table_length = offsetof(struct dvb_table_vct, channel);
+
+		*table_length = sizeof(struct dvb_table_vct);
 
 		vct->channel = NULL;
+		vct->descriptor = NULL;
 		head = &vct->channel;
 	}
-	p += sizeof(struct dvb_table_vct) - sizeof(vct->channel);
+	p += offsetof(struct dvb_table_vct, channel);
 
 	struct dvb_table_vct_channel *last = NULL;
 	for (n = 0; n < vct->num_channels_in_section; n++) {
@@ -88,6 +90,14 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		p += channel->descriptors_length;
 		last = channel;
 	}
+
+	/* Get extra descriptors */
+	if (p < buf + buflen) {
+		union dvb_table_vct_descriptor_length *d = (void *)p;
+		bswap16(d->descriptor_length);
+		p += sizeof(union dvb_table_vct_descriptor_length);
+		dvb_parse_descriptors(parms, p, d->descriptor_length, &vct->descriptor);
+	}
 }
 
 void dvb_table_vct_free(struct dvb_table_vct *vct)
@@ -99,6 +109,8 @@ void dvb_table_vct_free(struct dvb_table_vct *vct)
 		channel = channel->next;
 		free(tmp);
 	}
+	dvb_free_descriptors((struct dvb_desc **) &vct->descriptor);
+
 	free(vct);
 }
 

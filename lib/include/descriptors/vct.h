@@ -88,8 +88,22 @@ struct dvb_table_vct {
 	uint8_t ATSC_protocol_version;
 	uint8_t num_channels_in_section;
 
+	/*
+	 * Everything after descriptor (including it) won't be bit-mapped
+	 * to the data parsed from the MPEG TS. So, metadata are added there
+	 */
 	struct dvb_table_vct_channel *channel;
+	struct dvb_desc *descriptor;
 } __attribute__((packed));
+
+
+union dvb_table_vct_descriptor_length {
+	uint16_t bitfield;
+	struct {
+		uint16_t descriptor_length:10;
+		uint16_t reserved:6;
+	};
+};
 
 #define dvb_vct_channel_foreach(_service, _vct) \
 	for( struct dvb_table_vct_channel *_channel = _vct->channel; _channel; _channel = _channel->next ) \
