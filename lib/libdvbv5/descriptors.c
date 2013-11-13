@@ -35,6 +35,7 @@
 #include "descriptors/nit.h"
 #include "descriptors/sdt.h"
 #include "descriptors/eit.h"
+#include "descriptors/vct.h"
 #include "descriptors/desc_language.h"
 #include "descriptors/desc_network_name.h"
 #include "descriptors/desc_cable_delivery.h"
@@ -72,6 +73,8 @@ const struct dvb_table_init dvb_table_initializers[] = {
 	[DVB_TABLE_NIT] = { dvb_table_nit_init },
 	[DVB_TABLE_SDT] = { dvb_table_sdt_init },
 	[DVB_TABLE_EIT] = { dvb_table_eit_init },
+	[DVB_TABLE_TVCT] = { dvb_table_vct_init },
+	[DVB_TABLE_CVCT] = { dvb_table_vct_init },
 	[DVB_TABLE_EIT_SCHEDULE] = { dvb_table_eit_init },
 };
 
@@ -83,6 +86,8 @@ static char *table[] = {
 	[PMT] = "PMT",
 	[NIT] = "NIT",
 	[SDT] = "SDT",
+	[TVCT] = "TVCT",
+	[CVCT] = "CVCT",
 };
 
 void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, uint16_t section_length, struct dvb_desc **head_desc)

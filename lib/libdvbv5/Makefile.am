@@ -40,6 +40,7 @@ libdvbv5_la_SOURCES = \
   descriptors/desc_hierarchy.c  ../include/descriptors/desc_hierarchy.h \
   descriptors/nit.c  ../include/descriptors/nit.h \
   descriptors/sdt.c  ../include/descriptors/sdt.h \
+  descriptors/vct.c  ../include/descriptors/vct.h \
   descriptors/eit.c  ../include/descriptors/eit.h
 
 libdvbv5_la_CPPFLAGS = $(ENFORCE_LIBDVBV5_STATIC)

@@ -102,6 +102,8 @@ enum dvb_tables {
 	PMT,
 	NIT,
 	SDT,
+	TVCT,
+	CVCT,
 };
 
 enum descriptors {
