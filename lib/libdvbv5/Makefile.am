@@ -40,6 +40,7 @@ libdvbv5_la_SOURCES = \
   descriptors/desc_event_extended.c  ../include/descriptors/desc_event_extended.h \
   descriptors/desc_atsc_service_location.c ../include/descriptors/desc_atsc_service_location.h \
   descriptors/desc_hierarchy.c  ../include/descriptors/desc_hierarchy.h \
+  descriptors/desc_extension.c  ../include/descriptors/desc_extension.h \
   descriptors/nit.c  ../include/descriptors/nit.h \
   descriptors/sdt.c  ../include/descriptors/sdt.h \
   descriptors/vct.c  ../include/descriptors/vct.h \

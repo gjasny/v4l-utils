@@ -48,6 +48,7 @@
 #include "descriptors/desc_event_extended.h"
 #include "descriptors/desc_atsc_service_location.h"
 #include "descriptors/desc_hierarchy.h"
+#include "descriptors/desc_extension.h"
 
 ssize_t dvb_desc_init(const uint8_t *buf, struct dvb_desc *desc)
 {
@@ -239,7 +240,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	[AAC_descriptor] = { "AAC_descriptor", NULL, NULL, NULL, 0 },
 	[XAIT_location_descriptor] = { "XAIT_location_descriptor", NULL, NULL, NULL, 0 },
 	[FTA_content_management_descriptor] = { "FTA_content_management_descriptor", NULL, NULL, NULL, 0 },
-	[extension_descriptor] = { "extension_descriptor", NULL, NULL, NULL, 0 },
+	[extension_descriptor] = { "extension_descriptor", extension_descriptor_init, NULL, NULL, sizeof(struct dvb_extension_descriptor) },
 
 	[CUE_identifier_descriptor] = { "CUE_identifier_descriptor", NULL, NULL, NULL, 0 },
 

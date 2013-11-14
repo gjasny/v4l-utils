@@ -283,7 +283,7 @@ enum descriptors {
 	atsc_genre_descriptor				= 0xab,
 };
 
-
+/* Parser implemented on desc_extension.c */
 enum extension_descriptors {
 	image_icon_descriptor				= 0x00,
 	cpcm_delivery_signalling_descriptor		= 0x01,
@@ -298,6 +298,5 @@ enum extension_descriptors {
 	target_region_name_descriptor			= 0x0a,
 	service_relocated_descriptor			= 0x0b,
 };
-
 
 #endif
