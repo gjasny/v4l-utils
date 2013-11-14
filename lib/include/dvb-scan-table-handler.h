@@ -145,6 +145,7 @@ struct sdt_table {
 	struct service_table *service_table;
 	unsigned service_table_len;
 };
+
 struct dvb_v5_descriptors {
 	int verbose;
 	uint32_t delivery_system;
@@ -159,10 +160,7 @@ struct dvb_v5_descriptors {
 	unsigned cur_ts;
 };
 
-void parse_descriptor(struct dvb_v5_fe_parms *parms, enum dvb_tables type,
-		struct dvb_v5_descriptors *dvb_desc,
-		const unsigned char *buf, int len);
+struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system,
+						       int verbose);
 
-int has_descriptor(struct dvb_v5_descriptors *dvb_desc,
-		unsigned char needed_descriptor,
-		const unsigned char *buf, int len);
+void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler);

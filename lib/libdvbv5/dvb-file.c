@@ -738,40 +738,40 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 	return 0;
 };
 
-char *dvb_vchannel(struct dvb_v5_descriptors *dvb_desc,
+char *dvb_vchannel(struct dvb_v5_descriptors *dvb_scan_handler,
 		   int service)
 {
-	struct service_table *service_table = &dvb_desc->sdt_table.service_table[service];
-	struct lcn_table *lcn = dvb_desc->nit_table.lcn;
+	struct service_table *service_table = &dvb_scan_handler->sdt_table.service_table[service];
+	struct lcn_table *lcn = dvb_scan_handler->nit_table.lcn;
 	int i;
 	char *buf;
 
 	if (!lcn) {
-		if (!dvb_desc->nit_table.virtual_channel)
+		if (!dvb_scan_handler->nit_table.virtual_channel)
 			return NULL;
 
-		asprintf(&buf, "%d.%d", dvb_desc->nit_table.virtual_channel,
+		asprintf(&buf, "%d.%d", dvb_scan_handler->nit_table.virtual_channel,
 			 service);
 		return buf;
 	}
 
-	for (i = 0; i < dvb_desc->nit_table.lcn_len; i++) {
+	for (i = 0; i < dvb_scan_handler->nit_table.lcn_len; i++) {
 		if (lcn[i].service_id == service_table->service_id) {
 			asprintf(&buf, "%d.%d.%d",
-					dvb_desc->nit_table.virtual_channel,
+					dvb_scan_handler->nit_table.virtual_channel,
 					lcn[i].lcn, service);
 			return buf;
 		}
 	}
-	asprintf(&buf, "%d.%d", dvb_desc->nit_table.virtual_channel,
+	asprintf(&buf, "%d.%d", dvb_scan_handler->nit_table.virtual_channel,
 			service);
 	return buf;
 }
 
 static void handle_std_specific_parms(struct dvb_entry *entry,
-				      struct dvb_v5_descriptors *dvb_desc)
+				      struct dvb_v5_descriptors *dvb_scan_handler)
 {
-	struct nit_table *nit_table = &dvb_desc->nit_table;
+	struct nit_table *nit_table = &dvb_scan_handler->nit_table;
 	int i;
 
 	/*
@@ -889,7 +889,7 @@ static int sort_other_el_pid(const void *a_arg, const void *b_arg)
 
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
-		      struct dvb_v5_descriptors *dvb_desc,
+		      struct dvb_v5_descriptors *dvb_scan_handler,
 		      int get_detected, int get_nit)
 {
 	struct dvb_entry *entry;
@@ -908,9 +908,9 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 	while (entry && entry->next)
 		entry = entry->next;
 
-	for (i = 0; i < dvb_desc->sdt_table.service_table_len; i++) {
-		struct service_table *service_table = &dvb_desc->sdt_table.service_table[i];
-		struct pat_table *pat_table = &dvb_desc->pat_table;
+	for (i = 0; i < dvb_scan_handler->sdt_table.service_table_len; i++) {
+		struct service_table *service_table = &dvb_scan_handler->sdt_table.service_table[i];
+		struct pat_table *pat_table = &dvb_scan_handler->pat_table;
 		struct pid_table *pid_table = NULL;
 
 		if (!entry) {
@@ -935,7 +935,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		}
 		entry->service_id = service_table->service_id;
 
-		entry->vchannel = dvb_vchannel(dvb_desc, i);
+		entry->vchannel = dvb_vchannel(dvb_scan_handler, i);
 
 		/*entry->pol = parms->pol;*/
 		entry->sat_number = parms->sat_number;
@@ -997,7 +997,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		entry->n_props = parms->n_props;
 
 		if (get_nit)
-			handle_std_specific_parms(entry, dvb_desc);
+			handle_std_specific_parms(entry, dvb_scan_handler);
 	}
 
 	return 0;

@@ -325,21 +325,21 @@ static int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
 
 static void add_other_freq_entries(struct dvb_file *dvb_file,
 				   struct dvb_v5_fe_parms *parms,
-				   struct dvb_v5_descriptors *dvb_desc)
+				   struct dvb_v5_descriptors *dvb_scan_handler)
 {
 	int i;
 	uint32_t freq, shift = 0;
 	enum dvb_sat_polarization pol = POLARIZATION_OFF;
 
-	if (!dvb_desc->nit_table.frequency)
+	if (!dvb_scan_handler->nit_table.frequency)
 		return;
 
-	pol = dvb_desc->nit_table.pol;
+	pol = dvb_scan_handler->nit_table.pol;
 
 	shift = estimate_freq_shift(parms);
 
-	for (i = 0; i < dvb_desc->nit_table.frequency_len; i++) {
-		freq = dvb_desc->nit_table.frequency[i];
+	for (i = 0; i < dvb_scan_handler->nit_table.frequency_len; i++) {
+		freq = dvb_scan_handler->nit_table.frequency[i];
 
 		if (new_freq_is_needed(dvb_file->first_entry, NULL, freq, pol,
 				       shift))
@@ -388,7 +388,7 @@ static int run_scan(struct arguments *args,
 	}
 
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
-		struct dvb_v5_descriptors *dvb_desc = NULL;
+		struct dvb_v5_descriptors *dvb_scan_handler = NULL;
 
 		/* First of all, set the delivery system */
 		for (i = 0; i < entry->n_props; i++)
@@ -451,8 +451,8 @@ static int run_scan(struct arguments *args,
 		if (!freq)
 			continue;
 		shift = estimate_freq_shift(parms);
-		if (dvb_desc && !new_freq_is_needed(dvb_file->first_entry, entry,
-					freq, dvb_desc->nit_table.pol, shift))
+		if (dvb_scan_handler && !new_freq_is_needed(dvb_file->first_entry, entry,
+					freq, dvb_scan_handler->nit_table.pol, shift))
 			continue;
 
 		rc = dvb_fe_set_parms(parms);
@@ -474,18 +474,18 @@ static int run_scan(struct arguments *args,
 		if (rc < 0)
 			continue;
 
-		dvb_desc = dvb_get_ts_tables(parms, dmx_fd,
+		dvb_scan_handler = dvb_get_ts_tables(parms, dmx_fd,
 					     parms->current_sys,
 					     args->other_nit,
 					     args->timeout_multiply,
 					     verbose);
-		if (!dvb_desc)
+		if (!dvb_scan_handler)
 			continue;
 
-		for (i = 0; i < dvb_desc->sdt_table.service_table_len; i++) {
-			struct service_table *service_table = &dvb_desc->sdt_table.service_table[i];
+		for (i = 0; i < dvb_scan_handler->sdt_table.service_table_len; i++) {
+			struct service_table *service_table = &dvb_scan_handler->sdt_table.service_table[i];
 
-			entry->vchannel = dvb_vchannel(dvb_desc, i);
+			entry->vchannel = dvb_vchannel(dvb_scan_handler, i);
 			printf("Service #%d (%d)", i,
 				service_table->service_id);
 			if (service_table->service_name)
@@ -495,13 +495,13 @@ static int run_scan(struct arguments *args,
 			printf("\n");
 		}
 
-		store_dvb_channel(&dvb_file_new, parms, dvb_desc,
+		store_dvb_channel(&dvb_file_new, parms, dvb_scan_handler,
 				  args->get_detected, args->get_nit);
 
 		if (!args->dont_add_new_freqs)
-			add_other_freq_entries(dvb_file, parms, dvb_desc);
+			add_other_freq_entries(dvb_file, parms, dvb_scan_handler);
 
-		dvb_free_ts_tables(dvb_desc);
+		dvb_scan_free_handler_table(dvb_scan_handler);
 	}
 
 	if (dvb_file_new)
