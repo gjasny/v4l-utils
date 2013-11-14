@@ -26,6 +26,7 @@
 #include "dvb-file.h"
 #include "dvb-v5-std.h"
 #include "dvb-scan.h"
+#include "dvb-scan-table-handler.h"
 
 /*
  * Generic parse function for all formats each channel is contained into

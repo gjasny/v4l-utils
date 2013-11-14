@@ -50,6 +50,7 @@
 #include "descriptors/nit.h"
 #include "descriptors/sdt.h"
 #include "descriptors/vct.h"
+#include "dvb-scan-table-handler.h"
 
 static int poll(struct dvb_v5_fe_parms *parms, int fd, unsigned int seconds)
 {
@@ -203,11 +204,12 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 	return 0;
 }
 
-struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms, int dmx_fd,
-		uint32_t delivery_system,
-		unsigned other_nit,
-		unsigned timeout_multiply,
-		int verbose)
+struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
+					     int dmx_fd,
+					     uint32_t delivery_system,
+					     unsigned other_nit,
+					     unsigned timeout_multiply,
+					     int verbose)
 {
 	int rc;
 	unsigned pat_pmt_time, sdt_time, nit_time, vct_time;
