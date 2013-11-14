@@ -214,6 +214,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 	int rc;
 	unsigned pat_pmt_time, sdt_time, nit_time, vct_time;
 	int atsc_filter = 0;
+	unsigned num_pmt = 0;
 
 	struct dvb_v5_descriptors *dvb_scan_handler;
 
@@ -295,20 +296,31 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 	}
 
 	/* PMT tables */
+
+	dvb_scan_handler->pmt = NULL;
+
 	dvb_pat_program_foreach(program, dvb_scan_handler->pat) {
 		uint16_t pn = program->service_id;
 		/* Skip PAT, CAT, reserved and NULL packets */
 		if (!pn)
 			continue;
+
+		dvb_scan_handler->pmt = realloc(dvb_scan_handler->pmt,
+					        sizeof(*dvb_scan_handler->pmt) * (num_pmt + 1));
+
 		rc = dvb_read_section(parms, dmx_fd,
 				      DVB_TABLE_PMT, program->pid,
-				      (uint8_t **)&dvb_scan_handler->pmt,
+				      (uint8_t **)&dvb_scan_handler->pmt[num_pmt],
 				      pat_pmt_time * timeout_multiply);
 		if (rc < 0)
 			fprintf(stderr, "error while reading the PMT table for service 0x%04x\n",
 					pn);
-		else if (verbose)
-			dvb_table_pmt_print(parms, dvb_scan_handler->pmt);
+		else {
+			if (verbose)
+				dvb_table_pmt_print(parms, dvb_scan_handler->pmt[num_pmt]);
+
+			num_pmt++;
+		}
 	}
 
 	/* NIT table */
