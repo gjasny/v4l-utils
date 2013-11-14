@@ -29,6 +29,7 @@
 #include "descriptors.h"
 
 #define DVB_TABLE_NIT      0x40
+#define DVB_TABLE_NIT2     0x41
 #define DVB_TABLE_NIT_PID  0x10
 
 union dvb_table_nit_transport_header {

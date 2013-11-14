@@ -29,6 +29,7 @@
 #include "descriptors.h"
 
 #define DVB_TABLE_SDT      0x42
+#define DVB_TABLE_SDT2     0x46
 #define DVB_TABLE_SDT_PID  0x11
 
 struct dvb_table_sdt_service {
