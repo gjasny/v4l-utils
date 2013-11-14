@@ -35,6 +35,7 @@
 #include "descriptors/sdt.h"
 #include "descriptors/eit.h"
 #include "descriptors/vct.h"
+
 #include "descriptors/desc_language.h"
 #include "descriptors/desc_network_name.h"
 #include "descriptors/desc_cable_delivery.h"
@@ -158,6 +159,16 @@ struct dvb_v5_descriptors {
 	unsigned cur_pmt;
 	unsigned cur_service;
 	unsigned cur_ts;
+
+	/* New data */
+
+	struct dvb_table_pat *pat;
+	struct dvb_table_vct *vct;
+	struct dvb_table_pmt *pmt;
+	struct dvb_table_nit *nit;
+	struct dvb_table_sdt *sdt;
+
+	unsigned num_pmt;
 };
 
 struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system,
