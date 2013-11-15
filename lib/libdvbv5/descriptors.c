@@ -41,6 +41,7 @@
 #include "descriptors/desc_cable_delivery.h"
 #include "descriptors/desc_sat.h"
 #include "descriptors/desc_terrestrial_delivery.h"
+#include "descriptors/desc_isdbt_delivery.h"
 #include "descriptors/desc_service.h"
 #include "descriptors/desc_service_list.h"
 #include "descriptors/desc_frequency_list.h"
@@ -1134,10 +1135,10 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	},
 	[ISDBT_delivery_system_descriptor] = {
 		.name  = "ISDBT_delivery_system_descriptor",
-		.init  = NULL,
-		.print = NULL,
-		.size  = 0,
+		.init  = isdbt_desc_delivery_init,
+		.print = isdbt_desc_delivery_print,
 		.free  = NULL,
+		.size  = sizeof(struct isdbt_desc_terrestrial_delivery_system),
 	},
 	[partial_reception_descriptor] = {
 		.name  = "partial_reception_descriptor",
