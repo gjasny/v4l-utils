@@ -37,7 +37,7 @@ union dvb_table_nit_transport_header {
 	struct {
 		uint16_t transport_length:12;
 		uint16_t reserved:4;
-	};
+	} __attribute__((packed));
 };
 
 struct dvb_table_nit_transport {
