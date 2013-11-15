@@ -44,7 +44,11 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		desc_length = t->desc_length;
 
 	} else {
-		memcpy(table, p, sizeof(struct dvb_table_nit) - sizeof(nit->descriptor) - sizeof(nit->transport));
+		if (buflen < offsetof(struct dvb_table_nit, descriptor)) {
+			dvb_logerr("NIT table was truncated");
+			return;
+		}
+		memcpy(table, p, offsetof(struct dvb_table_nit, descriptor));
 		*table_length = sizeof(struct dvb_table_nit);
 
 		bswap16(nit->bitfield);
@@ -54,8 +58,11 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		head = &nit->transport;
 		desc_length = nit->desc_length;
 	}
-	p += sizeof(struct dvb_table_nit) - sizeof(nit->descriptor) - sizeof(nit->transport);
-
+	p += offsetof(struct dvb_table_nit, descriptor);
+	if (buflen - (p - buf) < desc_length) {
+		dvb_logerr("NIT table was truncated");
+		return;
+	}
 	dvb_parse_descriptors(parms, p, desc_length, head_desc);
 	p += desc_length;
 
@@ -63,9 +70,11 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 
 	struct dvb_table_nit_transport *last = NULL;
 	while ((uint8_t *) p < buf + buflen - 4) {
-		struct dvb_table_nit_transport *transport = (struct dvb_table_nit_transport *) malloc(sizeof(struct dvb_table_nit_transport));
-		memcpy(transport, p, sizeof(struct dvb_table_nit_transport) - sizeof(transport->descriptor) - sizeof(transport->next));
-		p += sizeof(struct dvb_table_nit_transport) - sizeof(transport->descriptor) - sizeof(transport->next);
+		struct dvb_table_nit_transport *transport = malloc(sizeof(struct dvb_table_nit_transport));
+		if (!transport)
+			dvb_perror("Out of memory");
+		memcpy(transport, p, offsetof(struct dvb_table_nit_transport, descriptor));
+		p += offsetof(struct dvb_table_nit_transport, descriptor);
 
 		bswap16(transport->transport_id);
 		bswap16(transport->network_id);
