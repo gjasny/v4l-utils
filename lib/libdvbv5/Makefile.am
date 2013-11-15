@@ -42,6 +42,7 @@ libdvbv5_la_SOURCES = \
   descriptors/desc_hierarchy.c  ../include/descriptors/desc_hierarchy.h \
   descriptors/desc_extension.c  ../include/descriptors/desc_extension.h \
   descriptors/desc_isdbt_delivery.c  ../include/descriptors/desc_isdbt_delivery.h \
+  descriptors/desc_ts_info.c  ../include/descriptors/desc_ts_info.h \
   descriptors/nit.c  ../include/descriptors/nit.h \
   descriptors/sdt.c  ../include/descriptors/sdt.h \
   descriptors/vct.c  ../include/descriptors/vct.h \

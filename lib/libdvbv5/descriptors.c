@@ -49,6 +49,7 @@
 #include "descriptors/desc_event_extended.h"
 #include "descriptors/desc_atsc_service_location.h"
 #include "descriptors/desc_hierarchy.h"
+#include "descriptors/desc_ts_info.h"
 #include "descriptors/desc_extension.h"
 
 ssize_t dvb_desc_init(const uint8_t *buf, struct dvb_desc *desc)
@@ -988,10 +989,10 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	},
 	[TS_Information_descriptior] = {
 		.name  = "TS_Information_descriptior",
-		.init  = NULL,
-		.print = NULL,
+		.init  = dvb_desc_ts_info_init,
+		.print = dvb_desc_ts_info_print,
 		.free  = NULL,
-		.size  = 0,
+		.size  = sizeof(struct dvb_desc_ts_info),
 	},
 	[extended_broadcaster_descriptor] = {
 		.name  = "extended_broadcaster_descriptor",

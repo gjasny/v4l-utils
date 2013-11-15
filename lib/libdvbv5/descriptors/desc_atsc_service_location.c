@@ -27,7 +27,7 @@ void atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
 {
 	struct atsc_desc_service_location *s_loc = (struct atsc_desc_service_location *)desc;
 	struct atsc_desc_service_location_elementary *el;
-	const uint8_t *p = buf;
+	unsigned char *p = (unsigned char *)buf;
 	int i;
 	size_t len;
 
