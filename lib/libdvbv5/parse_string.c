@@ -485,7 +485,10 @@ void parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 		*dest = realloc(*dest, strlen(*dest) + 1);
 
 	if (!len2) {
-		free (tmp2);
+		if (tmp2) {
+			free (tmp2);
+			tmp2 = NULL;
+		}
 		free (*emph);
 		*emph = NULL;
 	} else {
@@ -493,7 +496,9 @@ void parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 		*emph = realloc(*emph, strlen(*emph) + 1);
 	}
 
-	free(tmp1);
-	free(tmp2);
+	if (tmp1)
+		free(tmp1);
+	if (tmp2)
+		free(tmp2);
 }
 
