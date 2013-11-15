@@ -33,6 +33,7 @@ libdvbv5_la_SOURCES = \
   descriptors/desc_cable_delivery.c  ../include/descriptors/desc_cable_delivery.h \
   descriptors/desc_sat.c  ../include/descriptors/desc_sat.h \
   descriptors/desc_terrestrial_delivery.c  ../include/descriptors/desc_terrestrial_delivery.h \
+  descriptors/desc_t2_delivery.c  ../include/descriptors/desc_t2_delivery.h \
   descriptors/desc_service.c  ../include/descriptors/desc_service.h \
   descriptors/desc_frequency_list.c  ../include/descriptors/desc_frequency_list.h \
   descriptors/desc_service_list.c  ../include/descriptors/desc_service_list.h \

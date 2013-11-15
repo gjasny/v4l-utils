@@ -20,6 +20,7 @@
 
 #include "descriptors.h"
 #include "descriptors/desc_extension.h"
+#include "descriptors/desc_t2_delivery.h"
 #include "dvb-fe.h"
 
 const struct dvb_descriptor dvb_ext_descriptors[] = {
@@ -53,10 +54,10 @@ const struct dvb_descriptor dvb_ext_descriptors[] = {
 	},
 	[T2_delivery_system_descriptor] = {
 		.name  = "T2_delivery_system_descriptor",
-		.init  = NULL,
-		.print = NULL,
+		.init  = dvb_desc_t2_delivery_init,
+		.print = dvb_desc_t2_delivery_print,
 		.free  = NULL,
-		.size  = 0,
+		.size  = sizeof(struct dvb_desc_t2_delivery),
 	},
 	[SH_delivery_system_descriptor] = {
 		.name  = "SH_delivery_system_descriptor",
