@@ -51,6 +51,7 @@
 #include "descriptors/desc_hierarchy.h"
 #include "descriptors/desc_ts_info.h"
 #include "descriptors/desc_logical_channel.h"
+#include "descriptors/desc_partial_reception.h"
 #include "descriptors/desc_extension.h"
 
 ssize_t dvb_desc_init(const uint8_t *buf, struct dvb_desc *desc)
@@ -1144,10 +1145,10 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	},
 	[partial_reception_descriptor] = {
 		.name  = "partial_reception_descriptor",
-		.init  = NULL,
-		.print = NULL,
+		.init  = isdb_desc_partial_reception_init,
+		.print = isdb_desc_partial_reception_print,
 		.free  = NULL,
-		.size  = 0,
+		.size  = sizeof(struct isdb_desc_partial_reception),
 	},
 	[emergency_information_descriptor] = {
 		.name  = "emergency_information_descriptor",
