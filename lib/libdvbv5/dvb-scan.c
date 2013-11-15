@@ -84,20 +84,20 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			     unsigned char tid, uint16_t pid, int id,
 			     uint8_t **table, unsigned timeout)
 {
-	if (!table)
-		return -4;
-	*table = NULL;
+	uint8_t *buf = NULL;
+	uint8_t *tbl = NULL;
 	ssize_t table_length = 0;
-
 	int first_section = -1;
 	int last_section = -1;
 	int table_id = -1;
 	int sections = 0;
 
+	if (!table)
+		return -4;
+	*table = NULL;
+
 	// FIXME: verify known table
 
-	/* table cannot be reallocated due to linked lists */
-	uint8_t *tbl = NULL;
 
 	struct dmx_sct_filter_params f;
 	memset(&f, 0, sizeof(f));
@@ -113,64 +113,65 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 
 	dvb_log("Parsing table ID %d, program ID %d", tid, pid);
 
+	buf = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE);
+	if (!buf)
+		dvb_perror("Out of memory");
 	while (1) {
 		int available;
-
-		uint8_t *buf = NULL;
 		ssize_t buf_length = 0;
 
 		do {
 			available = poll(parms, dmx_fd, timeout);
 		} while (available < 0 && errno == EOVERFLOW);
+
 		if (parms->abort) {
-			free(tbl);
+			if (tbl)
+				free(tbl);
 			return 0;
 		}
 		if (available <= 0) {
 			dvb_logerr("dvb_read_section: no data read on pid %x table %x",
 				   pid, tid);
-			free(tbl);
+			if (tbl)
+				free(tbl);
 			return -1;
 		}
-		buf = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE);
-		if (!buf)
-			dvb_perror("Out of memory");
 		buf_length = read(dmx_fd, buf, DVB_MAX_PAYLOAD_PACKET_SIZE);
+
 		if (!buf_length) {
 			dvb_logerr("dvb_read_section: not enough data to read on pid %x table %x",
 				   pid, tid);
 			free(buf);
-			free(tbl);
+			if (tbl)
+				free(tbl);
 			return -1;
 		}
 		if (buf_length < 0) {
 			dvb_perror("dvb_read_section: read error");
 			free(buf);
-			free(tbl);
+			if (tbl)
+				free(tbl);
 			return -2;
 		}
-
-		buf = realloc(buf, buf_length);
 
 		uint32_t crc = crc32(buf, buf_length, 0xFFFFFFFF);
 		if (crc != 0) {
 			dvb_logerr("dvb_read_section: crc error");
 			free(buf);
-			free(tbl);
+			if (tbl)
+				free(tbl);
 			return -3;
 		}
 
 		struct dvb_table_header *h = (struct dvb_table_header *) buf;
 		dvb_table_header_init(h);
 		if (id != -1 && h->id != id) { /* search for a specific table id */
-			free(buf);
 			continue;
 		} else {
 			if (table_id == -1)
 				table_id = h->id;
 			else if (h->id != table_id) {
 				dvb_logwarn("dvb_read_section: table ID mismatch reading multi section table: %d != %d", h->id, table_id);
-				free(buf);
 				continue;
 			}
 		}
@@ -179,10 +180,8 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		if (first_section == -1)
 			first_section = h->section_id;
 		else if (h->section_id == first_section)
-		{
-			free(buf);
 			break;
-		}
+
 		if (last_section == -1)
 			last_section = h->last_section;
 
@@ -196,14 +195,15 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		if (dvb_table_initializers[tid].init) {
 			dvb_table_initializers[tid].init(parms, buf, buf_length, tbl, &table_length);
 			tbl = realloc(tbl, table_length);
+			if (!tbl)
+				dvb_perror("Out of memory");
 		} else
 			dvb_logerr("dvb_read_section: no initializer for table %d", tid);
-
-		free(buf);
 
 		if (++sections == last_section + 1)
 			break;
 	}
+	free(buf);
 
 	dvb_dmx_stop(dmx_fd);
 
