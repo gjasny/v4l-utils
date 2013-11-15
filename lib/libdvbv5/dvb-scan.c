@@ -131,6 +131,8 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			return -1;
 		}
 		buf = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE);
+		if (!buf)
+			dvb_perror("Out of memory");
 		buf_length = read(dmx_fd, buf, DVB_MAX_PAYLOAD_PACKET_SIZE);
 		if (!buf_length) {
 			dvb_logerr("dvb_read_section: not enough data to read on pid %x table %x",
@@ -183,8 +185,11 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			last_section = h->last_section;
 
 		//ARRAY_SIZE(vb_table_initializers) >= table
-		if (!tbl)
+		if (!tbl) {
 			tbl = malloc(MAX_TABLE_SIZE);
+			if (!tbl)
+				dvb_perror("Out of memory");
+		}
 
 		if (dvb_table_initializers[tid].init) {
 			dvb_table_initializers[tid].init(parms, buf, buf_length, tbl, &table_length);
