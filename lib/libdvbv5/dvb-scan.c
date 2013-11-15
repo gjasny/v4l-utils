@@ -111,6 +111,8 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		return -1;
 	}
 
+	dvb_log("Parsing table ID %d, program ID %d", tid, pid);
+
 	while (1) {
 		int available;
 
@@ -313,6 +315,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 		dvb_scan_handler->pmt = realloc(dvb_scan_handler->pmt,
 					        sizeof(*dvb_scan_handler->pmt) * (num_pmt + 1));
 
+		dvb_log("Program ID %d", program->pid);
 		rc = dvb_read_section(parms, dmx_fd,
 				      DVB_TABLE_PMT, program->pid,
 				      (uint8_t **)&dvb_scan_handler->pmt[num_pmt],
