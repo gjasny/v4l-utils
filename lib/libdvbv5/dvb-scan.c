@@ -185,18 +185,21 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		if (last_section == -1)
 			last_section = h->last_section;
 
-		//ARRAY_SIZE(vb_table_initializers) >= table
 		if (!tbl) {
-			tbl = malloc(MAX_TABLE_SIZE);
+			if (dvb_table_initializers[tid].size)
+				tbl = malloc(dvb_table_initializers[tid].size);
+			else
+				tbl = malloc(MAX_TABLE_SIZE);
 			if (!tbl)
 				dvb_perror("Out of memory");
 		}
 
 		if (dvb_table_initializers[tid].init) {
 			dvb_table_initializers[tid].init(parms, buf, buf_length, tbl, &table_length);
-			tbl = realloc(tbl, table_length);
 			if (!tbl)
 				dvb_perror("Out of memory");
+			if (!dvb_table_initializers[tid].size)
+				tbl = realloc(tbl, table_length);
 		} else
 			dvb_logerr("dvb_read_section: no initializer for table %d", tid);
 

@@ -39,6 +39,7 @@ typedef void (*dvb_table_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t
 
 struct dvb_table_init {
 	dvb_table_init_func init;
+	ssize_t size;
 };
 
 extern const struct dvb_table_init dvb_table_initializers[];
