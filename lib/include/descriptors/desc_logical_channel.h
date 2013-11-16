@@ -56,6 +56,7 @@ extern "C" {
 
 void dvb_desc_logical_channel_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 void dvb_desc_logical_channel_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+void dvb_desc_logical_channel_free(struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }

@@ -56,7 +56,7 @@ const struct dvb_descriptor dvb_ext_descriptors[] = {
 		.name  = "T2_delivery_system_descriptor",
 		.init  = dvb_desc_t2_delivery_init,
 		.print = dvb_desc_t2_delivery_print,
-		.free  = NULL,
+		.free  = dvb_desc_t2_delivery_free,
 		.size  = sizeof(struct dvb_desc_t2_delivery),
 	},
 	[SH_delivery_system_descriptor] = {
@@ -159,4 +159,19 @@ void extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 	dvb_parse_ext_descriptors(parms, p, ext->length,
 				head_desc);
 	p += ext->length;
+}
+
+void extension_descriptor_free(struct dvb_desc *descriptor)
+{
+	struct dvb_extension_descriptor *ext = (struct dvb_extension_descriptor *)descriptor;
+	struct dvb_desc *desc = ext->descriptor;
+
+	while (desc) {
+		struct dvb_desc *tmp = desc;
+		desc = desc->next;
+		if (dvb_descriptors[tmp->type].free)
+			dvb_descriptors[tmp->type].free(tmp);
+		else
+			free(tmp);
+	}
 }

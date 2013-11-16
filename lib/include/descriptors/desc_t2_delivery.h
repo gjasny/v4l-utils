@@ -65,6 +65,7 @@ extern "C" {
 
 void dvb_desc_t2_delivery_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+void dvb_desc_t2_delivery_free(struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }

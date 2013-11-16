@@ -99,3 +99,14 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_
 		dvb_log("|           transposer frequency   %d", d->subcell[i].transposer_frequency);
 	}
 }
+
+void dvb_desc_t2_delivery_free(struct dvb_desc *desc)
+{
+	const struct dvb_desc_t2_delivery *d = (const struct dvb_desc_t2_delivery *) desc;
+
+	if (d->centre_frequency)
+		free(d->centre_frequency);
+
+	if (d->subcell)
+		free(d->subcell);
+}

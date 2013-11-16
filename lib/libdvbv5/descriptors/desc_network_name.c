@@ -41,6 +41,14 @@ void dvb_desc_network_name_init(struct dvb_v5_fe_parms *parms, const uint8_t *bu
 void dvb_desc_network_name_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_network_name *net = (const struct dvb_desc_network_name *) desc;
+
 	dvb_log("|           network name: '%s'", net->network_name);
 }
 
+void dvb_desc_network_name_free(struct dvb_desc *desc)
+{
+	const struct dvb_desc_network_name *net = (const struct dvb_desc_network_name *) desc;
+
+	free(net->network_name);
+	free(net->network_name_emph);
+}

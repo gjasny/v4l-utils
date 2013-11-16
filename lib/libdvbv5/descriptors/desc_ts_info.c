@@ -78,3 +78,10 @@ void dvb_desc_ts_info_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc
 	for (i = 0; i < t->num_of_service; i++)
 		dvb_log("|           service ID[%d]     %d", i, d->service_id[i]);
 }
+
+void dvb_desc_ts_info_free(struct dvb_desc *desc)
+{
+	const struct dvb_desc_ts_info *d = (const void *) desc;
+
+	free(d->service_id);
+}

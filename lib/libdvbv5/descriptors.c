@@ -408,7 +408,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.name  = "network_name_descriptor",
 		.init  = dvb_desc_network_name_init,
 		.print = dvb_desc_network_name_print,
-		.free  = NULL,
+		.free  = dvb_desc_network_name_free,
 		.size  = sizeof(struct dvb_desc_network_name),
 	},
 	[service_list_descriptor] = {
@@ -849,7 +849,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.name  = "extension_descriptor",
 		.init  = extension_descriptor_init,
 		.print = NULL,
-		.free  = NULL,
+		.free  = extension_descriptor_free,
 		.size  = sizeof(struct dvb_extension_descriptor),
 	},
 
@@ -872,7 +872,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.name  = "logical_channel_number_descriptor",
 		.init  = dvb_desc_logical_channel_init,
 		.print = dvb_desc_logical_channel_print,
-		.free  = NULL,
+		.free  = dvb_desc_logical_channel_free,
 		.size  = sizeof(struct dvb_desc_logical_channel_number),
 	},
 
@@ -993,7 +993,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.name  = "TS_Information_descriptior",
 		.init  = dvb_desc_ts_info_init,
 		.print = dvb_desc_ts_info_print,
-		.free  = NULL,
+		.free  = dvb_desc_ts_info_free,
 		.size  = sizeof(struct dvb_desc_ts_info),
 	},
 	[extended_broadcaster_descriptor] = {
@@ -1140,7 +1140,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.name  = "ISDBT_delivery_system_descriptor",
 		.init  = isdbt_desc_delivery_init,
 		.print = isdbt_desc_delivery_print,
-		.free  = NULL,
+		.free  = isdbt_desc_delivery_free,
 		.size  = sizeof(struct isdbt_desc_terrestrial_delivery_system),
 	},
 	[partial_reception_descriptor] = {

@@ -78,3 +78,10 @@ void isdbt_desc_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_d
 		dvb_log("|           frequency[%d]      %ld Hz", i, d->frequency[i] * 1000000l / 7);
 	}
 }
+
+void isdbt_desc_delivery_free(struct dvb_desc *desc)
+{
+	const struct isdbt_desc_terrestrial_delivery_system *d = (const void *) desc;
+
+	free(d->frequency);
+}
