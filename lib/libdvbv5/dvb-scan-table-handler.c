@@ -112,5 +112,19 @@ void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler)
 		}
 		free(sdt_table->service_table);
 	}
+
+	if (dvb_scan_handler->pat)
+		dvb_table_pat_free(dvb_scan_handler->pat);
+	if (dvb_scan_handler->vct)
+		dvb_table_vct_free(dvb_scan_handler->vct);
+	if (dvb_scan_handler->nit)
+		dvb_table_nit_free(dvb_scan_handler->nit);
+	if (dvb_scan_handler->sdt)
+		dvb_table_sdt_free(dvb_scan_handler->sdt);
+	if (dvb_scan_handler->pmt) {
+		for (i = 0; i < dvb_scan_handler->num_pmt; i++)
+			dvb_table_pmt_free(dvb_scan_handler->pmt[i]);
+	}
+
 	free(dvb_scan_handler);
 }
