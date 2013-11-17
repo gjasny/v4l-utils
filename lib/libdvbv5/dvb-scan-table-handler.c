@@ -68,50 +68,7 @@ struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system
 
 void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler)
 {
-	struct pat_table *pat_table = &dvb_scan_handler->pat_table;
-	struct pid_table *pid_table = dvb_scan_handler->pat_table.pid_table;
-	struct nit_table *nit_table = &dvb_scan_handler->nit_table;
-	struct sdt_table *sdt_table = &dvb_scan_handler->sdt_table;
 	int i;
-
-	if (pid_table) {
-		for (i = 0; i < pat_table->pid_table_len; i++) {
-			if (pid_table[i].video_pid)
-				free(pid_table[i].video_pid);
-			if (pid_table[i].audio_pid)
-				free(pid_table[i].audio_pid);
-			if (pid_table[i].other_el_pid)
-				free(pid_table[i].other_el_pid);
-		}
-		free(pid_table);
-	}
-
-	if (nit_table->lcn)
-		free(nit_table->lcn);
-	if (nit_table->network_name)
-		free(nit_table->network_name);
-	if (nit_table->network_alias)
-		free(nit_table->network_alias);
-	if (nit_table->tr_table)
-		free(nit_table->tr_table);
-	if (nit_table->frequency)
-		free(nit_table->frequency);
-	if (nit_table->orbit)
-		free(nit_table->orbit);
-
-	if (sdt_table->service_table) {
-		for (i = 0; i < sdt_table->service_table_len; i++) {
-			if (sdt_table->service_table[i].provider_name)
-				free(sdt_table->service_table[i].provider_name);
-			if (sdt_table->service_table[i].provider_alias)
-				free(sdt_table->service_table[i].provider_alias);
-			if (sdt_table->service_table[i].service_name)
-				free(sdt_table->service_table[i].service_name);
-			if (sdt_table->service_table[i].service_alias)
-				free(sdt_table->service_table[i].service_alias);
-		}
-		free(sdt_table->service_table);
-	}
 
 	if (dvb_scan_handler->pat)
 		dvb_table_pat_free(dvb_scan_handler->pat);
