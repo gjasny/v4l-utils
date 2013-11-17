@@ -30,6 +30,9 @@ struct dvb_desc_frequency_list {
 	uint8_t length;
 	struct dvb_desc *next;
 
+	uint8_t frequencies;
+	uint32_t *frequency;
+
 	union {
 		uint8_t bitfield;
 		struct {
@@ -37,8 +40,6 @@ struct dvb_desc_frequency_list {
 			uint8_t reserved:6;
 		};
 	};
-	//uint8_t frequencies; // FIXME: make linked list
-	//uint32_t *frequency[];
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;
