@@ -611,6 +611,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	/* Filter out any user DTV_foo property such as DTV_POLARIZATION */
 	tmp_parms.n_props = dvb_copy_fe_props(tmp_parms.dvb_prop, tmp_parms.n_props, tmp_parms.dvb_prop);
 
+	memset(&prop, 0, sizeof(prop));
 	prop.props = tmp_parms.dvb_prop;
 	prop.num = tmp_parms.n_props;
 	prop.props[prop.num].cmd = DTV_TUNE;
