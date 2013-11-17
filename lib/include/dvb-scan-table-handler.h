@@ -58,11 +58,6 @@ struct transport_table {
 	uint16_t tr_id;
 };
 
-struct lcn_table {
-	uint16_t service_id;
-	uint16_t lcn;
-};
-
 struct nit_table {
 	uint16_t network_id;
 	unsigned char version;
@@ -109,23 +104,6 @@ struct nit_table {
 	unsigned lcn_len;
 };
 
-struct service_table {
-	uint16_t service_id;
-	char running;
-	char scrambled;
-	unsigned char type;
-	char *service_name, *service_alias;
-	char *provider_name, *provider_alias;
-};
-
-struct sdt_table {
-	unsigned char version;
-	uint16_t ts_id;
-	struct service_table *service_table;
-	unsigned service_table_len;
-};
-
-
 struct dvb_v5_descriptors_program {
 	struct dvb_table_pat_program *pat_pgm;
 	struct dvb_table_pmt *pmt;
@@ -136,7 +114,6 @@ struct dvb_v5_descriptors {
 	uint32_t delivery_system;
 
 	struct nit_table nit_table;
-	struct sdt_table sdt_table;
 
 	/* New data */
 

@@ -28,6 +28,8 @@
 #include "dvb-scan.h"
 #include "dvb-scan-table-handler.h"
 #include "dvb-log.h"
+#include "descriptors/desc_ts_info.h"
+#include "descriptors/desc_logical_channel.h"
 
 /*
  * Generic parse function for all formats each channel is contained into
@@ -739,34 +741,43 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 	return 0;
 };
 
-char *dvb_vchannel(struct dvb_v5_descriptors *dvb_scan_handler,
-		   int service)
+static char *dvb_vchannel(struct dvb_table_nit *nit, uint16_t service_id)
 {
-	struct service_table *service_table = &dvb_scan_handler->sdt_table.service_table[service];
-	struct lcn_table *lcn = dvb_scan_handler->nit_table.lcn;
 	int i;
 	char *buf;
 
-	if (!lcn) {
-		if (!dvb_scan_handler->nit_table.virtual_channel)
-			return NULL;
+	dvb_desc_find(struct dvb_desc_logical_channel, desc, nit, logical_channel_number_descriptor) {
+		struct dvb_desc_logical_channel *d = (void *)desc;
 
-		asprintf(&buf, "%d.%d", dvb_scan_handler->nit_table.virtual_channel,
-			 service);
-		return buf;
-	}
+		size_t len;
 
-	for (i = 0; i < dvb_scan_handler->nit_table.lcn_len; i++) {
-		if (lcn[i].service_id == service_table->service_id) {
-			asprintf(&buf, "%d.%d.%d",
-					dvb_scan_handler->nit_table.virtual_channel,
-					lcn[i].lcn, service);
-			return buf;
+		len = d->length / sizeof(d->lcn);
+
+		for (i = 0; i < len; i++) {
+			if (service_id == d->lcn[i].service_id) {
+				asprintf(&buf, "%d.%d",
+					d->lcn[i].logical_channel_number, i);
+				return buf;
+			}
 		}
 	}
-	asprintf(&buf, "%d.%d", dvb_scan_handler->nit_table.virtual_channel,
-			service);
-	return buf;
+
+	dvb_desc_find(struct dvb_desc_ts_info, desc, nit, TS_Information_descriptior) {
+		const struct dvb_desc_ts_info *d = (const void *) desc;
+		const struct dvb_desc_ts_info_transmission_type *t;
+
+		t = &d->transmission_type;
+
+		for (i = 0; i < t->num_of_service; i++) {
+			if (d->service_id[i] == service_id) {
+				asprintf(&buf, "%d.%d",
+					d->remote_control_key_id, i);
+				return buf;
+			}
+		}
+	}
+
+	return NULL;
 }
 
 static void handle_std_specific_parms(struct dvb_entry *entry,
@@ -1222,4 +1233,3 @@ int write_file_format(const char *fname,
 
 	return ret;
 }
-

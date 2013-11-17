@@ -69,7 +69,7 @@ struct dvb_table_nit {
 
 
 #define dvb_nit_transport_foreach( tran, nit ) \
-  for( struct dvb_table_nit_transport *tran = nit->transport; tran; tran = tran->next ) \
+  for (struct dvb_table_nit_transport *tran = nit->transport; tran; tran = tran->next) \
 
 struct dvb_v5_fe_parms;
 
