@@ -1026,7 +1026,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 	/* Initialize data */
 	entry->channel = channel;
 	entry->service_id = service_id;
-	entry->vchannel = dvb_vchannel(dvb_scan_handler, i);
+	entry->vchannel = dvb_vchannel(dvb_scan_handler->nit, service_id);
 	entry->sat_number = parms->sat_number;
 	entry->freq_bpf = parms->freq_bpf;
 	entry->diseqc_wait = parms->diseqc_wait;
