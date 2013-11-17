@@ -90,22 +90,23 @@ static inline void dvb_file_free(struct dvb_file *dvb_file)
 	while (entry) {
 		next = entry->next;
 		if (entry->channel)
-			free (entry->channel);
+			free(entry->channel);
 		if (entry->vchannel)
-			free (entry->vchannel);
+			free(entry->vchannel);
 		if (entry->location)
-			free (entry->location);
+			free(entry->location);
 		if (entry->video_pid)
-			free (entry->video_pid);
+			free(entry->video_pid);
 		if (entry->audio_pid)
-			free (entry->audio_pid);
+			free(entry->audio_pid);
 		if (entry->other_el_pid)
-			free (entry->other_el_pid);
+			free(entry->other_el_pid);
 		if (entry->lnb)
-			free (entry->lnb);
+			free(entry->lnb);
+		free(entry);
 		entry = next;
 	}
-	free (dvb_file);
+	free(dvb_file);
 }
 
 /* From dvb-legacy-channel-format.c */

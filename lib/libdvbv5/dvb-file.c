@@ -187,7 +187,8 @@ struct dvb_file *parse_format_oneline(const char *fname,
 		}
 
 	} while (1);
-	fclose (fd);
+	fclose(fd);
+	free(buf);
 	return dvb_file;
 
 error:
@@ -195,6 +196,7 @@ error:
 		 err_msg, line, fname);
 	dvb_file_free(dvb_file);
 	fclose(fd);
+	free(buf);
 	return NULL;
 }
 
@@ -1063,7 +1065,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 	int rc;
 
 	if (!*dvb_file) {
-		*dvb_file = calloc(sizeof(*dvb_file), 1);
+		*dvb_file = calloc(sizeof(**dvb_file), 1);
 		if (!*dvb_file) {
 			dvb_perror("Allocating memory for dvb_file");
 			return -1;
