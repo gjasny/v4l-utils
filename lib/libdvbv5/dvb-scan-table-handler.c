@@ -121,9 +121,11 @@ void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler)
 		dvb_table_nit_free(dvb_scan_handler->nit);
 	if (dvb_scan_handler->sdt)
 		dvb_table_sdt_free(dvb_scan_handler->sdt);
-	if (dvb_scan_handler->pmt) {
-		for (i = 0; i < dvb_scan_handler->num_pmt; i++)
-			dvb_table_pmt_free(dvb_scan_handler->pmt[i]);
+	if (dvb_scan_handler->program) {
+		for (i = 0; i < dvb_scan_handler->num_program; i++)
+			if (dvb_scan_handler->program[i].pmt)
+				dvb_table_pmt_free(dvb_scan_handler->program[i].pmt);
+		free(dvb_scan_handler->program);
 	}
 
 	free(dvb_scan_handler);

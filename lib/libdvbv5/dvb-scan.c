@@ -307,32 +307,39 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 
 	/* PMT tables */
 
-	dvb_scan_handler->pmt = NULL;
+	dvb_scan_handler->program = calloc(dvb_scan_handler->pat->programs,
+					   sizeof(*dvb_scan_handler->program));
 
 	dvb_pat_program_foreach(program, dvb_scan_handler->pat) {
-		uint16_t pn = program->service_id;
-		/* Skip PAT, CAT, reserved and NULL packets */
-		if (!pn)
-			continue;
+		dvb_scan_handler->program->program = program;
 
-		dvb_scan_handler->pmt = realloc(dvb_scan_handler->pmt,
-					        sizeof(*dvb_scan_handler->pmt) * (num_pmt + 1));
+		if (!program->service_id) {
+			dvb_log("Program ID %d has service ID 0. discarding",
+				program->pid);
+			num_pmt++;
+			continue;
+		}
+
+		dvb_scan_handler->program[num_pmt].pmt = calloc(1, sizeof(*dvb_scan_handler->program[num_pmt].pmt));
 
 		dvb_log("Program ID %d", program->pid);
 		rc = dvb_read_section(parms, dmx_fd,
 				      DVB_TABLE_PMT, program->pid,
-				      (uint8_t **)&dvb_scan_handler->pmt[num_pmt],
+				      (uint8_t **)&dvb_scan_handler->program[num_pmt].pmt,
 				      pat_pmt_time * timeout_multiply);
-		if (rc < 0)
-			fprintf(stderr, "error while reading the PMT table for service 0x%04x\n",
-					pn);
-		else {
+		if (rc < 0) {
+			fprintf(stderr,
+				"error while reading the PMT table for service 0x%04x\n",
+				program->service_id);
+			free(dvb_scan_handler->program->pmt);
+			dvb_scan_handler->program->pmt = NULL;
+		} else {
 			if (verbose)
-				dvb_table_pmt_print(parms, dvb_scan_handler->pmt[num_pmt]);
-
-			num_pmt++;
+				dvb_table_pmt_print(parms, dvb_scan_handler->program[num_pmt].pmt);
 		}
+		num_pmt++;
 	}
+	dvb_scan_handler->num_program = num_pmt;
 
 	/* NIT table */
 	rc = dvb_read_section(parms, dmx_fd,

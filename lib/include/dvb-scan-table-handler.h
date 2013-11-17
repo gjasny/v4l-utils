@@ -147,6 +147,10 @@ struct sdt_table {
 	unsigned service_table_len;
 };
 
+struct dvb_v5_descriptors_program {
+	struct dvb_table_pat_program *program;
+	struct dvb_table_pmt *pmt;
+};
 struct dvb_v5_descriptors {
 	int verbose;
 	uint32_t delivery_system;
@@ -164,11 +168,11 @@ struct dvb_v5_descriptors {
 
 	struct dvb_table_pat *pat;
 	struct dvb_table_vct *vct;
-	struct dvb_table_pmt **pmt;
+	struct dvb_v5_descriptors_program *program;
 	struct dvb_table_nit *nit;
 	struct dvb_table_sdt *sdt;
 
-	unsigned num_pmt;
+	unsigned num_program;
 };
 
 struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system,
