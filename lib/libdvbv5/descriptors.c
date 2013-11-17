@@ -145,8 +145,7 @@ void dvb_free_descriptors(struct dvb_desc **list)
 		desc = desc->next;
 		if (dvb_descriptors[tmp->type].free)
 			dvb_descriptors[tmp->type].free(tmp);
-		else
-			free(tmp);
+		free(tmp);
 	}
 	*list = NULL;
 }

@@ -171,7 +171,6 @@ void extension_descriptor_free(struct dvb_desc *descriptor)
 		desc = desc->next;
 		if (dvb_descriptors[tmp->type].free)
 			dvb_descriptors[tmp->type].free(tmp);
-		else
-			free(tmp);
+		free(tmp);
 	}
 }
