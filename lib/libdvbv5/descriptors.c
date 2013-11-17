@@ -1209,7 +1209,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.name  = "atsc_service_location_descriptor",
 		.init  = atsc_desc_service_location_init,
 		.print = atsc_desc_service_location_print,
-		.free  = NULL,
+		.free  = atsc_desc_service_location_free,
 		.size  = sizeof(struct atsc_desc_service_location),
 	},
 	[atsc_time_shifted_service_descriptor] = {
