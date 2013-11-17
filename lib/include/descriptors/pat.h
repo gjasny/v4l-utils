@@ -49,7 +49,7 @@ struct dvb_table_pat {
 
 #define dvb_pat_program_foreach(_program, _pat) \
 	struct dvb_table_pat_program *_program; \
-	for(int _i = 0; _i < _pat->programs && (_program = _pat->program + _i); _i++) \
+	for (int _i = 0; _i < _pat->programs && (_program = _pat->program + _i); _i++) \
 
 struct dvb_v5_fe_parms;
 

@@ -482,19 +482,6 @@ static int run_scan(struct arguments *args,
 		if (!dvb_scan_handler)
 			continue;
 
-		for (i = 0; i < dvb_scan_handler->sdt_table.service_table_len; i++) {
-			struct service_table *service_table = &dvb_scan_handler->sdt_table.service_table[i];
-
-			entry->vchannel = dvb_vchannel(dvb_scan_handler, i);
-			printf("Service #%d (%d)", i,
-				service_table->service_id);
-			if (service_table->service_name)
-				printf(" %s", service_table->service_name);
-			if (entry->vchannel)
-				printf(" channel %s", entry->vchannel);
-			printf("\n");
-		}
-
 		store_dvb_channel(&dvb_file_new, parms, dvb_scan_handler,
 				  args->get_detected, args->get_nit);
 

@@ -100,7 +100,7 @@ struct dvb_table_pmt {
 } __attribute__((packed));
 
 #define dvb_pmt_stream_foreach(_stream, _pmt) \
-  for( struct dvb_table_pmt_stream *_stream = _pmt->stream; _stream; _stream = _stream->next ) \
+  for (struct dvb_table_pmt_stream *_stream = _pmt->stream; _stream; _stream = _stream->next) \
 
 struct dvb_v5_fe_parms;
 

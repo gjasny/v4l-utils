@@ -49,31 +49,9 @@
 #include "descriptors/desc_atsc_service_location.h"
 #include "descriptors/desc_hierarchy.h"
 
-struct pmt_table {
-	uint16_t program_number, pcr_pid;
-	unsigned char version;
-};
-
 struct el_pid {
 	uint8_t  type;
 	uint16_t pid;
-};
-
-struct pid_table {
-	uint16_t service_id;
-	uint16_t pid;
-	struct pmt_table pmt_table;
-	unsigned video_pid_len, audio_pid_len, other_el_pid_len;
-	uint16_t *video_pid;
-	uint16_t *audio_pid;
-	struct el_pid *other_el_pid;
-};
-
-struct pat_table {
-	uint16_t  ts_id;
-	unsigned char version;
-	struct pid_table *pid_table;
-	unsigned pid_table_len;
 };
 
 struct transport_table {
@@ -147,24 +125,23 @@ struct sdt_table {
 	unsigned service_table_len;
 };
 
+
 struct dvb_v5_descriptors_program {
-	struct dvb_table_pat_program *program;
+	struct dvb_table_pat_program *pat_pgm;
 	struct dvb_table_pmt *pmt;
 };
+
 struct dvb_v5_descriptors {
 	int verbose;
 	uint32_t delivery_system;
 
-	struct pat_table pat_table;
 	struct nit_table nit_table;
 	struct sdt_table sdt_table;
 
-	/* Used by descriptors to know where to update a PMT/Service/TS */
-	unsigned cur_pmt;
-	unsigned cur_service;
-	unsigned cur_ts;
-
 	/* New data */
+
+	struct dvb_entry *entry;
+	unsigned num_entry;
 
 	struct dvb_table_pat *pat;
 	struct dvb_table_vct *vct;

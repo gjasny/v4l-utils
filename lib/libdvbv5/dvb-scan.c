@@ -310,7 +310,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 					   sizeof(*dvb_scan_handler->program));
 
 	dvb_pat_program_foreach(program, dvb_scan_handler->pat) {
-		dvb_scan_handler->program->program = program;
+		dvb_scan_handler->program[num_pmt].pat_pgm = program;
 
 		if (!program->service_id) {
 			dvb_log("Program ID %d has service ID 0. discarding",

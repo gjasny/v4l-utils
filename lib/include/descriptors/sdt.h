@@ -57,7 +57,7 @@ struct dvb_table_sdt {
 } __attribute__((packed));
 
 #define dvb_sdt_service_foreach(_service, _sdt) \
-	for( struct dvb_table_sdt_service *_service = _sdt->service; _service; _service = _service->next ) \
+	for (struct dvb_table_sdt_service *_service = _sdt->service; _service; _service = _service->next ) \
 
 struct dvb_v5_fe_parms;
 
