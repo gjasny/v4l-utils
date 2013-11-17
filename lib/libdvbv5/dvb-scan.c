@@ -306,7 +306,6 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 	}
 
 	/* PMT tables */
-
 	dvb_scan_handler->program = calloc(dvb_scan_handler->pat->programs,
 					   sizeof(*dvb_scan_handler->program));
 
@@ -320,8 +319,6 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 			continue;
 		}
 
-		dvb_scan_handler->program[num_pmt].pmt = calloc(1, sizeof(*dvb_scan_handler->program[num_pmt].pmt));
-
 		dvb_log("Program ID %d", program->pid);
 		rc = dvb_read_section(parms, dmx_fd,
 				      DVB_TABLE_PMT, program->pid,
@@ -331,8 +328,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 			fprintf(stderr,
 				"error while reading the PMT table for service 0x%04x\n",
 				program->service_id);
-			free(dvb_scan_handler->program->pmt);
-			dvb_scan_handler->program->pmt = NULL;
+			dvb_scan_handler->program[num_pmt].pmt = NULL;
 		} else {
 			if (verbose)
 				dvb_table_pmt_print(parms, dvb_scan_handler->program[num_pmt].pmt);
