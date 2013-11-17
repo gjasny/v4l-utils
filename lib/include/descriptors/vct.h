@@ -105,8 +105,8 @@ union dvb_table_vct_descriptor_length {
 	};
 };
 
-#define dvb_vct_channel_foreach(_service, _vct) \
-	for( struct dvb_table_vct_channel *_channel = _vct->channel; _channel; _channel = _channel->next ) \
+#define dvb_vct_channel_foreach(_channel, _vct) \
+	for (struct dvb_table_vct_channel *_channel = _vct->channel; _channel; _channel = _channel->next) \
 
 struct dvb_v5_fe_parms;
 

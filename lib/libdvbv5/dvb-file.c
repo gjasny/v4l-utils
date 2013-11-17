@@ -981,7 +981,9 @@ static void get_pmt_descriptors(struct dvb_entry *entry,
 static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 				 struct dvb_file *dvb_file,
 				 struct dvb_v5_descriptors *dvb_scan_handler,
-				 uint16_t service_id, char *channel,
+				 const uint16_t service_id,
+				 char *channel,
+				 char *vchannel,
 				 int get_detected, int get_nit)
 {
 	struct dvb_entry *entry;
@@ -1026,7 +1028,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 	/* Initialize data */
 	entry->channel = channel;
 	entry->service_id = service_id;
-	entry->vchannel = dvb_vchannel(dvb_scan_handler->nit, service_id);
+	entry->vchannel = vchannel;
 	entry->sat_number = parms->sat_number;
 	entry->freq_bpf = parms->freq_bpf;
 	entry->diseqc_wait = parms->diseqc_wait;
@@ -1072,12 +1074,38 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		}
 	}
 
+	if (dvb_scan_handler->vct) {
+		dvb_vct_channel_foreach(d, dvb_scan_handler->vct) {
+			char *channel = NULL;
+			char *vchannel = NULL;
+
+			channel = calloc(1, strlen(d->short_name) + 1);
+			strcpy(channel, d->short_name);
+
+			asprintf(&vchannel, "%d.%d",
+				d->major_channel_number,
+				d->minor_channel_number);
+
+			dvb_log("Found channel %s, name = %s",
+				vchannel, channel);
+
+			rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
+						d->program_number,
+						channel, vchannel,
+						get_detected, get_nit);
+			if (rc < 0)
+				return rc;
+		}
+	}
+
+
 	if (!dvb_scan_handler->sdt) {
 		dvb_logerr("no SDT table - can't store channels");
 		return -1;
 	}
 	dvb_sdt_service_foreach(service, dvb_scan_handler->sdt) {
 		char *channel = NULL;
+		char *vchannel = NULL;
 
 		dvb_desc_find(struct dvb_desc_service, desc, service, service_descriptor) {
 			if (desc->name) {
@@ -1092,9 +1120,12 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		if (!channel)
 			asprintf(&channel, "#%d", service->service_id);
 
+		vchannel = dvb_vchannel(dvb_scan_handler->nit, service->service_id);
+
 		rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
 					   service->service_id,
-					   channel, get_detected, get_nit);
+					   channel, vchannel,
+					   get_detected, get_nit);
 		if (rc < 0)
 			return rc;
 	}
