@@ -59,12 +59,14 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	fd = open(fname, O_RDWR, 0);
 	if (fd == -1) {
 		logfunc(LOG_ERR, "%s while opening %s", strerror(errno), fname);
+		free(fname);
 		return NULL;
 	}
 	parms = calloc(sizeof(*parms), 1);
 	if (!parms) {
 		logfunc(LOG_ERR, "parms calloc: %s", strerror(errno));
 		close(fd);
+		free(fname);
 		return NULL;
 	}
 	parms->fname = fname;
@@ -78,6 +80,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 		dvb_perror("FE_GET_INFO");
 		dvb_v5_free(parms);
 		close(fd);
+		free(fname);
 		return NULL;
 	}
 
@@ -157,6 +160,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 			dvb_logerr("delivery system not detected");
 			dvb_v5_free(parms);
 			close(fd);
+			free(fname);
 			return NULL;
 		}
 	} else {
@@ -168,6 +172,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 			dvb_perror("FE_GET_PROPERTY");
 			dvb_v5_free(parms);
 			close(fd);
+			free(fname);
 			return NULL;
 		}
 		parms->num_systems = parms->dvb_prop[0].u.buffer.len;
@@ -178,6 +183,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 			dvb_logerr("driver died while trying to set the delivery system");
 			dvb_v5_free(parms);
 			close(fd);
+			free(fname);
 			return NULL;
 		}
 	}
