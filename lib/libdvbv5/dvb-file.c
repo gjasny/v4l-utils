@@ -1096,7 +1096,8 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 			if (rc < 0)
 				return rc;
 		}
-		return 0;
+		if (!dvb_scan_handler->sdt)
+			return 0;
 	}
 
 
