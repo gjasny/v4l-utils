@@ -125,6 +125,7 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		} while (available < 0 && errno == EOVERFLOW);
 
 		if (parms->abort) {
+			free(buf);
 			if (tbl)
 				free(tbl);
 			return 0;
@@ -132,6 +133,7 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		if (available <= 0) {
 			dvb_logerr("dvb_read_section: no data read on pid %x table %x",
 				   pid, tid);
+			free(buf);
 			if (tbl)
 				free(tbl);
 			return -1;
