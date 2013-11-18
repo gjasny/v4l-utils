@@ -631,8 +631,10 @@ int main(int argc, char **argv)
 	struct dvb_v5_fe_parms *parms = dvb_fe_open(args.adapter_fe,
 						    args.frontend,
 						    verbose, args.force_dvbv3);
-	if (!parms)
+	if (!parms) {
+		free(args.demux_dev);
 		return -1;
+	}
 	if (lnb >= 0)
 		parms->lnb = dvb_sat_get_lnb(lnb);
 	if (args.sat_number >= 0)
@@ -640,8 +642,11 @@ int main(int argc, char **argv)
 	parms->diseqc_wait = args.diseqc_wait;
 	parms->freq_bpf = args.freq_bpf;
 
-	if (run_scan(&args, parms))
+	if (run_scan(&args, parms)) {
+		dvb_fe_close(parms);
+		free(args.demux_dev);
 		return -1;
+	}
 
 	dvb_fe_close(parms);
 
