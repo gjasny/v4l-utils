@@ -648,7 +648,7 @@ int main(int argc, char **argv)
 		.options = options,
 		.parser = parse_opt,
 		.doc = "DVB zap utility",
-		.args_doc = "<initial file>",
+		.args_doc = "<channel name>",
 	};
 
 	memset(&args, 0, sizeof(args));
