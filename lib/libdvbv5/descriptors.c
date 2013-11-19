@@ -105,7 +105,7 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ui
 			size = dvb_descriptors[desc_type].size;
 		}
 		if (!size) {
-			dvb_logerr("descriptor type %d has no size defined", current->type);
+			dvb_logerr("descriptor type %d has no size defined", desc_type);
 			size = 4096;
 		}
 		current = malloc(size);
