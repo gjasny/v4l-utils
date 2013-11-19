@@ -19,24 +19,28 @@
  * Based on ETSI EN 300 468 V1.11.1 (2010-04)
  */
 
-#include "descriptors/desc_t2_delivery.h"
 #include "descriptors.h"
+#include "descriptors/desc_extension.h"
+#include "descriptors/desc_t2_delivery.h"
 #include "dvb-fe.h"
 
-void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
+			       const uint8_t *buf,
+			       struct dvb_extension_descriptor *ext,
+			       void *desc)
 {
-	struct dvb_desc_t2_delivery *d = (struct dvb_desc_t2_delivery *) desc;
+	struct dvb_desc_t2_delivery *d = desc;
 	unsigned char *p = (unsigned char *) buf;
 	size_t len;
 	int i;
 
-	len = sizeof(*d) - offsetof(struct dvb_desc_t2_delivery, centre_frequency);
+	len = sizeof(*d);
 	memcpy(&d->centre_frequency, p, len);
 	p += len;
 
 	bswap16(d->system_id);
 
-	if (d->length <= 4)
+	if (ext->length - 1 <= 4)
 		return;
 
 	bswap16(d->bitfield);
@@ -70,9 +74,11 @@ void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf
 		bswap16(d->subcell[i].transposer_frequency);
 }
 
-void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
+void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
+				const struct dvb_extension_descriptor *ext,
+				const void *desc)
 {
-	const struct dvb_desc_t2_delivery *d = (const struct dvb_desc_t2_delivery *) desc;
+	const struct dvb_desc_t2_delivery *d = desc;
 	int i;
 
 	dvb_log("|       t2 delivery");
@@ -80,7 +86,7 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_
 	dvb_log("|           plp_id                    %d", d->plp_id);
 	dvb_log("|           system_id                 %d", d->system_id);
 
-	if (d->length <= 4)
+	if (ext->length - 1 <= 4)
 		return;
 
 	dvb_log("|           tfs_flag                  %d", d->tfs_flag);
@@ -100,9 +106,9 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_
 	}
 }
 
-void dvb_desc_t2_delivery_free(struct dvb_desc *desc)
+void dvb_desc_t2_delivery_free(const void *desc)
 {
-	const struct dvb_desc_t2_delivery *d = (const struct dvb_desc_t2_delivery *) desc;
+	const struct dvb_desc_t2_delivery *d = desc;
 
 	if (d->centre_frequency)
 		free(d->centre_frequency);

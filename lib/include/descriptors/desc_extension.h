@@ -24,15 +24,51 @@
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
 
+struct dvb_v5_fe_parms;
+
+enum extension_descriptors {
+	image_icon_descriptor				= 0x00,
+	cpcm_delivery_signalling_descriptor		= 0x01,
+	CP_descriptor					= 0x02,
+	CP_identifier_descriptor			= 0x03,
+	T2_delivery_system_descriptor			= 0x04,
+	SH_delivery_system_descriptor			= 0x05,
+	supplementary_audio_descriptor			= 0x06,
+	network_change_notify_descriptor		= 0x07,
+	message_descriptor				= 0x08,
+	target_region_descriptor			= 0x09,
+	target_region_name_descriptor			= 0x0a,
+	service_relocated_descriptor			= 0x0b,
+};
+
 struct dvb_extension_descriptor {
 	uint8_t type;
 	uint8_t length;
 	struct dvb_desc *next;
 
+	uint8_t extension_code;
+
 	struct dvb_desc *descriptor;
 } __attribute__((packed));
 
-struct dvb_v5_fe_parms;
+
+typedef void (*dvb_desc_ext_init_func) (struct dvb_v5_fe_parms *parms,
+					const uint8_t *buf,
+					struct dvb_extension_descriptor *ext,
+					void *desc);
+typedef void (*dvb_desc_ext_print_func)(struct dvb_v5_fe_parms *parms,
+					const struct dvb_extension_descriptor *ext,
+					const void *desc);
+typedef void (*dvb_desc_ext_free_func) (const void *desc);
+
+struct dvb_ext_descriptor {
+	const char *name;
+	dvb_desc_ext_init_func init;
+	dvb_desc_ext_print_func print;
+	dvb_desc_ext_free_func free;
+	ssize_t size;
+};
+
 
 #ifdef __cplusplus
 extern "C" {

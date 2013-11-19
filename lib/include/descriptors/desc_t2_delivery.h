@@ -31,10 +31,6 @@ struct dvb_desc_t2_delivery_subcell {
 } __attribute__((packed));
 
 struct dvb_desc_t2_delivery {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
-
 	uint32_t *centre_frequency;
 	uint8_t frequency_loop_length;
 	uint8_t subcel_info_loop_length;
@@ -63,9 +59,14 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void dvb_desc_t2_delivery_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
-void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
-void dvb_desc_t2_delivery_free(struct dvb_desc *desc);
+void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
+			       const uint8_t *buf,
+			       struct dvb_extension_descriptor *ext,
+			       void *desc);
+void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
+				const struct dvb_extension_descriptor *ext,
+				const void *desc);
+void dvb_desc_t2_delivery_free(const void *desc);
 
 #ifdef __cplusplus
 }

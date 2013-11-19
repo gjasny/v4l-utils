@@ -23,7 +23,14 @@
 #include "descriptors/desc_t2_delivery.h"
 #include "dvb-fe.h"
 
-const struct dvb_descriptor dvb_ext_descriptors[] = {
+const struct dvb_ext_descriptor dvb_ext_descriptors[] = {
+	[0 ...255 ] = {
+		.name  = "Unknown descriptor",
+		.init  = NULL,
+		.print = NULL,
+		.free  = NULL,
+		.size  = 0,
+	},
 	[image_icon_descriptor] = {
 		.name  = "image_icon_descriptor",
 		.init  = NULL,
@@ -110,55 +117,35 @@ const struct dvb_descriptor dvb_ext_descriptors[] = {
 	},
 };
 
-void dvb_parse_ext_descriptors(struct dvb_v5_fe_parms *parms,
-			       const uint8_t *buf, uint16_t section_length,
-			       struct dvb_desc **head_desc)
-{
-	const uint8_t *ptr = buf;
-	struct dvb_desc *current = NULL;
-	struct dvb_desc *last = NULL;
-	while (ptr < buf + section_length) {
-		int desc_type = ptr[0];
-		int desc_len  = ptr[1];
-		size_t size;
-		dvb_desc_init_func init = dvb_ext_descriptors[desc_type].init;
-		if (!init) {
-			init = dvb_desc_default_init;
-			size = sizeof(struct dvb_desc) + desc_len;
-		} else {
-			size = dvb_descriptors[desc_type].size;
-		}
-		if (!size) {
-			dvb_logerr("descriptor type %d has no size defined", current->type);
-			size = 4096;
-		}
-		current = (struct dvb_desc *) malloc(size);
-		ptr += dvb_desc_init(ptr, current); /* the standard header was read */
-		init(parms, ptr, current);
-		if (!*head_desc)
-			*head_desc = current;
-		if (last)
-			last->next = current;
-		last = current;
-		ptr += current->length;     /* standard descriptor header plus descriptor length */
-	}
-}
-
 void extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 				     const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_extension_descriptor *ext = (struct dvb_extension_descriptor *)desc;
 	unsigned char *p = (unsigned char *)buf;
-	size_t len;
+	unsigned desc_type = *p;
+	size_t size = 0;
+	int desc_len  = ext->length - 1;
+	dvb_desc_ext_init_func init;
 
-	len = sizeof(*ext) - offsetof(struct dvb_extension_descriptor, descriptor);
-	memcpy(&ext->descriptor, p, len);
-	p += len;
+	ext->extension_code = desc_type;
+	p++;
 
-	struct dvb_desc **head_desc = &ext->descriptor;
-	dvb_parse_ext_descriptors(parms, p, ext->length,
-				head_desc);
-	p += ext->length;
+#if 0 /* For an additional level of debug */
+	dvb_log("extension descriptor type 0%x, size %d",
+		desc_type, desc_len);
+	hexdump(parms, "dump: ", p, desc_len);
+#endif
+
+	init = dvb_ext_descriptors[desc_type].init;
+	if (init)
+		size = dvb_descriptors[desc_type].size;
+	if (!size)
+		size = desc_len;
+
+	ext->descriptor = malloc(size);
+	memcpy(ext->descriptor, p, size);
+	if (init)
+		init(parms, p, desc, ext->descriptor);
 }
 
 void extension_descriptor_free(struct dvb_desc *descriptor)
@@ -166,11 +153,6 @@ void extension_descriptor_free(struct dvb_desc *descriptor)
 	struct dvb_extension_descriptor *ext = (struct dvb_extension_descriptor *)descriptor;
 	struct dvb_desc *desc = ext->descriptor;
 
-	while (desc) {
-		struct dvb_desc *tmp = desc;
-		desc = desc->next;
-		if (dvb_descriptors[tmp->type].free)
-			dvb_descriptors[tmp->type].free(tmp);
-		free(tmp);
-	}
+	if (ext->descriptor)
+		free(ext->descriptor);
 }

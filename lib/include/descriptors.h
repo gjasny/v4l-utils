@@ -284,20 +284,6 @@ enum descriptors {
 	atsc_genre_descriptor				= 0xab,
 };
 
-/* Parser implemented on desc_extension.c */
-enum extension_descriptors {
-	image_icon_descriptor				= 0x00,
-	cpcm_delivery_signalling_descriptor		= 0x01,
-	CP_descriptor					= 0x02,
-	CP_identifier_descriptor			= 0x03,
-	T2_delivery_system_descriptor			= 0x04,
-	SH_delivery_system_descriptor			= 0x05,
-	supplementary_audio_descriptor			= 0x06,
-	network_change_notify_descriptor		= 0x07,
-	message_descriptor				= 0x08,
-	target_region_descriptor			= 0x09,
-	target_region_name_descriptor			= 0x0a,
-	service_relocated_descriptor			= 0x0b,
-};
+/* Please see desc_extension.h for extension_descriptor types */
 
 #endif
