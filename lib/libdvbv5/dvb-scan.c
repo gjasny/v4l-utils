@@ -287,10 +287,8 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 			      pat_pmt_time * timeout_multiply);
 	if (rc < 0) {
 		fprintf(stderr, "error while waiting for PAT table\n");
-		if (!atsc_filter) {
-			dvb_scan_free_handler_table(dvb_scan_handler);
-			return NULL;
-		}
+		dvb_scan_free_handler_table(dvb_scan_handler);
+		return NULL;
 	}
 	if (verbose)
 		dvb_table_pat_print(parms, dvb_scan_handler->pat);
