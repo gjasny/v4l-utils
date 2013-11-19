@@ -115,17 +115,17 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ui
 			size = dvb_descriptors[desc_type].size;
 		}
 		if (!size) {
-			dvb_logerr("descriptor type %d has no size defined", desc_type);
+			dvb_logerr("descriptor type 0x%x has no size defined", desc_type);
 			size = 4096;
+		}
+		if (ptr + 2 >=  buf + section_length) {
+			dvb_logerr("descriptor is truncated");
+			return;
 		}
 		current = malloc(size);
 		if (!current)
 			dvb_perror("Out of memory");
 		ptr += dvb_desc_init(ptr, current); /* the standard header was read */
-		if (ptr >=  buf + section_length) {
-			dvb_logerr("descriptor is truncated");
-			return;
-		}
 		init(parms, ptr, current);
 		if(!*head_desc)
 			*head_desc = current;
