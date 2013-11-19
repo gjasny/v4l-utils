@@ -1010,9 +1010,8 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 	if (!found) {
 		fprintf(stderr, "Service ID %d not found on PMT!\n",
 			service_id);
-		return 0;
+		return -1;
 	}
-
 
 	/* Create an entry to store the data */
 	if (!dvb_file->first_entry) {
@@ -1095,8 +1094,10 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 						d->program_number,
 						channel, vchannel,
 						get_detected, get_nit);
-			if (rc < 0)
+			if (rc < 0) {
+				free(channel);
 				return rc;
+			}
 		}
 		if (!dvb_scan_handler->sdt)
 			return 0;
@@ -1131,10 +1132,11 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 					   service->service_id,
 					   channel, vchannel,
 					   get_detected, get_nit);
-		if (rc < 0)
+		if (rc < 0) {
+			free(channel);
 			return rc;
+		}
 	}
-
 
 	return 0;
 }
