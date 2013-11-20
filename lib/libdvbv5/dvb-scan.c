@@ -91,6 +91,8 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 	int last_section = -1;
 	int table_id = -1;
 	int sections = 0;
+	struct dmx_sct_filter_params f;
+	struct dvb_table_header *h;
 
 	if (!table)
 		return -4;
@@ -98,8 +100,6 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 
 	// FIXME: verify known table
 
-
-	struct dmx_sct_filter_params f;
 	memset(&f, 0, sizeof(f));
 	f.pid = pid;
 	f.filter.filter[0] = tid;
@@ -128,6 +128,7 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			free(buf);
 			if (tbl)
 				free(tbl);
+			dvb_dmx_stop(dmx_fd);
 			return 0;
 		}
 		if (available <= 0) {
@@ -136,6 +137,7 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			free(buf);
 			if (tbl)
 				free(tbl);
+			dvb_dmx_stop(dmx_fd);
 			return -1;
 		}
 		buf_length = read(dmx_fd, buf, DVB_MAX_PAYLOAD_PACKET_SIZE);
@@ -146,6 +148,7 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			free(buf);
 			if (tbl)
 				free(tbl);
+			dvb_dmx_stop(dmx_fd);
 			return -1;
 		}
 		if (buf_length < 0) {
@@ -153,6 +156,7 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			free(buf);
 			if (tbl)
 				free(tbl);
+			dvb_dmx_stop(dmx_fd);
 			return -2;
 		}
 
@@ -162,10 +166,11 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			free(buf);
 			if (tbl)
 				free(tbl);
+			dvb_dmx_stop(dmx_fd);
 			return -3;
 		}
 
-		struct dvb_table_header *h = (struct dvb_table_header *) buf;
+		h = (struct dvb_table_header *)buf;
 		dvb_table_header_init(h);
 		if (id != -1 && h->id != id) { /* search for a specific table id */
 			continue;
