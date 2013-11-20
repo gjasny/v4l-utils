@@ -24,9 +24,10 @@
 
 void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
-	const uint8_t *p = buf;
+	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
 	struct dvb_table_sdt *sdt = (struct dvb_table_sdt *) table;
-	struct dvb_table_sdt_service **head;
+	struct dvb_table_sdt_service **head, *last = NULL;
+	size_t size = offsetof(struct dvb_table_sdt, service);
 
 	if (*table_length > 0) {
 		/* find end of curent list */
@@ -34,7 +35,12 @@ void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		while (*head != NULL)
 			head = &(*head)->next;
 	} else {
-		memcpy(sdt, p, sizeof(struct dvb_table_sdt) - sizeof(sdt->service));
+		if (p + size > endbuf) {
+			dvb_logerr("SDT table was truncated. Need %zu bytes, but has only %zu.",
+					size, buflen);
+			return;
+		}
+		memcpy(sdt, p, size);
 		*table_length = sizeof(struct dvb_table_sdt);
 
 		bswap16(sdt->network_id);
@@ -42,13 +48,14 @@ void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		sdt->service = NULL;
 		head = &sdt->service;
 	}
-	p += sizeof(struct dvb_table_sdt) - sizeof(sdt->service);
+	p += size;
 
-	struct dvb_table_sdt_service *last = NULL;
-	while ((uint8_t *) p < buf + buflen - 4) {
-		struct dvb_table_sdt_service *service = (struct dvb_table_sdt_service *) malloc(sizeof(struct dvb_table_sdt_service));
-		memcpy(service, p, sizeof(struct dvb_table_sdt_service) - sizeof(service->descriptor) - sizeof(service->next));
-		p += sizeof(struct dvb_table_sdt_service) - sizeof(service->descriptor) - sizeof(service->next);
+	size = offsetof(struct dvb_table_sdt_service, descriptor);
+	while (p + size <= endbuf) {
+		struct dvb_table_sdt_service *service = malloc(sizeof(struct dvb_table_sdt_service));
+
+		memcpy(service, p, size);
+		p += size;
 
 		bswap16(service->service_id);
 		bswap16(service->bitfield);
@@ -67,6 +74,9 @@ void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		p += service->section_length;
 		last = service;
 	}
+	if (endbuf - p)
+		dvb_logerr("PAT table has %zu spurious bytes at the end.",
+			   endbuf - p);
 }
 
 void dvb_table_sdt_free(struct dvb_table_sdt *sdt)
