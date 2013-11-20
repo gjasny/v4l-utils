@@ -313,8 +313,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 		dvb_scan_handler->program[num_pmt].pat_pgm = program;
 
 		if (!program->service_id) {
-			dvb_log("Program ID %d has service ID 0. discarding",
-				program->pid);
+			dvb_log("Network PID: 0x%02x", program->pid);
 			num_pmt++;
 			continue;
 		}
