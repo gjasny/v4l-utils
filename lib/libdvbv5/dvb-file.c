@@ -748,6 +748,9 @@ static char *dvb_vchannel(struct dvb_table_nit *nit, uint16_t service_id)
 	int i;
 	char *buf;
 
+	if (!nit)
+		return NULL;
+
 	dvb_desc_find(struct dvb_desc_logical_channel, desc, nit, logical_channel_number_descriptor) {
 		struct dvb_desc_logical_channel *d = (void *)desc;
 
