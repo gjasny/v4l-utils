@@ -30,20 +30,23 @@ void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 	size_t size;
 
 	if (*table_length > 0) {
-		dvb_logerr("multisection PAT table not implemented");
-		return;
-	}
+		p += offsetof(struct dvb_table_pat, programs);
 
-	size = offsetof(struct dvb_table_pat, programs);
-	if (p + size > endbuf) {
-		dvb_logerr("PAT table was truncated. Need %zu bytes, but has only %zu.",
-				size, buflen);
-		return;
-	}
-	memcpy(table, buf, size);
-	p += size;
-	pat->programs = 0;
+		size = sizeof(struct dvb_table_pat_program) * pat->programs;
+		size += buflen;
 
+		pat = realloc(pat, size);
+	} else {
+		size = offsetof(struct dvb_table_pat, programs);
+		if (p + size > endbuf) {
+			dvb_logerr("PAT table was truncated. Need %zu bytes, but has only %zu.",
+					size, buflen);
+			return;
+		}
+		memcpy(table, buf, size);
+		p += size;
+		pat->programs = 0;
+	}
 	*table_length = buflen + sizeof(uint16_t);
 
 	size = sizeof(struct dvb_table_pat_program);
