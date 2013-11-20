@@ -27,15 +27,23 @@
 
 void dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
+	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	struct dvb_table_pmt *pmt = (struct dvb_table_pmt *) table;
+	struct dvb_table_pmt_stream *last = NULL, **head;
+	size_t size;
+
 	if (*table_length > 0) {
 		dvb_logerr("multisecttion PMT table not implemented");
 		return;
 	}
-
-	const uint8_t *p = buf;
-	struct dvb_table_pmt *pmt = (struct dvb_table_pmt *) table;
-	memcpy(table, p, sizeof(struct dvb_table_pmt) - sizeof(pmt->stream));
-	p += sizeof(struct dvb_table_pmt) - sizeof(pmt->stream);
+	size = offsetof(struct dvb_table_pmt, stream);
+	if (p + size > endbuf) {
+		dvb_logerr("PMT table was truncated. Need %zu bytes, but has only %zu.",
+			   size, buflen);
+		return;
+	}
+	memcpy(table, p, size);
+	p += size;
 	*table_length = sizeof(struct dvb_table_pmt);
 
 	bswap16(pmt->bitfield);
@@ -46,30 +54,35 @@ void dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 	p += pmt->prog_length;
 
 	/* get the stream entries */
-	struct dvb_table_pmt_stream *last = NULL;
-	struct dvb_table_pmt_stream **head = &pmt->stream;
-	while (p < buf + buflen - 4) {
-		struct dvb_table_pmt_stream *stream = (struct dvb_table_pmt_stream *) malloc(sizeof(struct dvb_table_pmt_stream));
-		memcpy(stream, p, sizeof(struct dvb_table_pmt_stream) - sizeof(stream->descriptor) - sizeof(stream->next));
-		p += sizeof(struct dvb_table_pmt_stream) - sizeof(stream->descriptor) - sizeof(stream->next);
+	head = &pmt->stream;
+	size = offsetof(struct dvb_table_pmt_stream, descriptor);
+	while (p + size <= endbuf) {
+		struct dvb_desc **head_desc;
+		struct dvb_table_pmt_stream *stream = malloc(sizeof(struct dvb_table_pmt_stream));
+
+		memcpy(stream, p, size);
+		p += size;
 
 		bswap16(stream->bitfield);
 		bswap16(stream->bitfield2);
 		stream->descriptor = NULL;
 		stream->next = NULL;
 
-		if(!*head)
+		if (!*head)
 			*head = stream;
-		if(last)
+		if (last)
 			last->next = stream;
 
 		/* get the descriptors for each program */
-		struct dvb_desc **head_desc = &stream->descriptor;
+		head_desc = &stream->descriptor;
 		dvb_parse_descriptors(parms, p, stream->section_length, head_desc);
 
 		p += stream->section_length;
 		last = stream;
 	}
+	if (endbuf - p)
+		dvb_logerr("PAT table has %zu spurious bytes at the end.",
+			   endbuf - p);
 }
 
 void dvb_table_pmt_free(struct dvb_table_pmt *pmt)
