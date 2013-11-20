@@ -25,26 +25,38 @@
 
 void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
+	struct dvb_table_pat *pat = (struct dvb_table_pat *) table;
+	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	size_t size;
+
 	if (*table_length > 0) {
 		dvb_logerr("multisection PAT table not implemented");
 		return;
 	}
 
-	const uint8_t *p = buf;
-	memcpy(table, buf, sizeof(struct dvb_table_pat) - sizeof(uint16_t));
-	p += sizeof(struct dvb_table_pat) - sizeof(uint16_t);
-	*table_length = buflen + sizeof(uint16_t);
-
-	struct dvb_table_pat *pat = (struct dvb_table_pat *) table;
+	size = offsetof(struct dvb_table_pat, programs);
+	if (p + size > endbuf) {
+		dvb_logerr("PAT table was truncated. Need %zu bytes, but has only %zu.",
+				size, buflen);
+		return;
+	}
+	memcpy(table, buf, size);
+	p += size;
 	pat->programs = 0;
 
-	while (p < buf + buflen - 4) {
-		memcpy(pat->program + pat->programs, p, sizeof(struct dvb_table_pat_program));
+	*table_length = buflen + sizeof(uint16_t);
+
+	size = sizeof(struct dvb_table_pat_program);
+	while (p + size <= endbuf) {
+		memcpy(pat->program + pat->programs, p, size);
 		bswap16(pat->program[pat->programs].service_id);
 		bswap16(pat->program[pat->programs].bitfield);
-		p += sizeof(struct dvb_table_pat_program);
+		p += size;
 		pat->programs++;
 	}
+	if (endbuf - p)
+		dvb_logerr("PAT table has %zu spurious bytes at the end.",
+			   endbuf - p);
 }
 
 void dvb_table_pat_free(struct dvb_table_pat *pat)

@@ -127,7 +127,7 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ui
 			dvb_perror("Out of memory");
 		ptr += dvb_desc_init(ptr, current); /* the standard header was read */
 		init(parms, ptr, current);
-		if(!*head_desc)
+		if (!*head_desc)
 			*head_desc = current;
 		if (last)
 			last->next = current;
