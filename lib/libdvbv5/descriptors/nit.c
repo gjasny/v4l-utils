@@ -24,14 +24,17 @@
 
 void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
-	const uint8_t *p = buf;
+	const uint8_t *p = buf, *endbuf = buf + buflen;
 	struct dvb_table_nit *nit = (struct dvb_table_nit *) table;
 	struct dvb_desc **head_desc;
 	struct dvb_table_nit_transport **head;
-	int desc_length;
+	struct dvb_table_nit_transport *last = NULL;
+	size_t size;
 
 	if (*table_length > 0) {
-		/* find end of curent lists */
+		struct dvb_table_nit *t;
+
+		/* find end of current lists */
 		head_desc = &nit->descriptor;
 		while (*head_desc != NULL)
 			head_desc = &(*head_desc)->next;
@@ -39,42 +42,59 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		while (*head != NULL)
 			head = &(*head)->next;
 
-		struct dvb_table_nit *t = (struct dvb_table_nit *) buf;
-		bswap16(t->bitfield);
-		desc_length = t->desc_length;
-
-	} else {
-		if (buflen < offsetof(struct dvb_table_nit, descriptor)) {
-			dvb_logerr("NIT table was truncated");
+		size = offsetof(struct dvb_table_nit, descriptor);
+		if (p + size > endbuf) {
+			dvb_logerr("NIT table (cont) was truncated");
 			return;
 		}
-		memcpy(table, p, offsetof(struct dvb_table_nit, descriptor));
+		p += size;
+		t = (struct dvb_table_nit *)buf;
+
+		bswap16(t->bitfield);
+		size = t->desc_length;
+	} else {
+		size = offsetof(struct dvb_table_nit, descriptor);
+		if (p + size > endbuf) {
+			dvb_logerr("NIT table was truncated while filling dvb_table_nit. Need %zu bytes, but has only %zu.",
+				   size, buflen);
+			return;
+		}
+		memcpy(table, p, size);
+		p += size;
+
 		*table_length = sizeof(struct dvb_table_nit);
 
-		bswap16(nit->bitfield);
 		nit->descriptor = NULL;
 		nit->transport = NULL;
 		head_desc = &nit->descriptor;
 		head = &nit->transport;
-		desc_length = nit->desc_length;
+
+		bswap16(nit->bitfield);
+		size = nit->desc_length;
 	}
-	p += offsetof(struct dvb_table_nit, descriptor);
-	if (buflen - (p - buf) < desc_length) {
-		dvb_logerr("NIT table was truncated");
+	if (p + size > endbuf) {
+		dvb_logerr("NIT table was truncated while getting NIT descriptors. Need %zu bytes, but has only %zu.",
+			   size, endbuf - p);
 		return;
 	}
-	dvb_parse_descriptors(parms, p, desc_length, head_desc);
-	p += desc_length;
+	dvb_parse_descriptors(parms, p, size, head_desc);
+	p += size;
 
-	p += sizeof(union dvb_table_nit_transport_header);
+	size = sizeof(union dvb_table_nit_transport_header);
+	if (p + size > endbuf) {
+		dvb_logerr("NIT table was truncated while getting NIT transports. Need %zu bytes, but has only %zu.",
+			   size, endbuf - p);
+		return;
+	}
+	p += size;
 
-	struct dvb_table_nit_transport *last = NULL;
-	while ((uint8_t *) p < buf + buflen - 4) {
+	size = offsetof(struct dvb_table_nit_transport, descriptor);
+	while (p + size <= endbuf) {
 		struct dvb_table_nit_transport *transport = malloc(sizeof(struct dvb_table_nit_transport));
 		if (!transport)
 			dvb_perror("Out of memory");
-		memcpy(transport, p, offsetof(struct dvb_table_nit_transport, descriptor));
-		p += offsetof(struct dvb_table_nit_transport, descriptor);
+		memcpy(transport, p, size);
+		p += size;
 
 		bswap16(transport->transport_id);
 		bswap16(transport->network_id);
@@ -88,11 +108,21 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 			last->next = transport;
 
 		/* get the descriptors for each transport */
-		struct dvb_desc **head_desc = &transport->descriptor;
-		dvb_parse_descriptors(parms, p, transport->section_length, head_desc);
+		head_desc = &transport->descriptor;
 
+		if (p + transport->section_length > endbuf) {
+			dvb_logerr("NIT table was truncated while getting NIT transport descriptors. Need %u bytes, but has only %zu.",
+				transport->section_length, endbuf - p);
+			return;
+		}
+		dvb_parse_descriptors(parms, p, transport->section_length, head_desc);
 		p += transport->section_length;
+
 		last = transport;
+	}
+	if (endbuf - p != 4) {
+		dvb_logerr("NIT table has %zu spurious bytes at the end.",
+			   endbuf - p);
 	}
 }
 
