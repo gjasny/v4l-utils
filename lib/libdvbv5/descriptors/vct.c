@@ -24,18 +24,24 @@
 
 void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
-	const uint8_t *p = buf;
+	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
 	struct dvb_table_vct *vct = (struct dvb_table_vct *) table;
 	struct dvb_table_vct_channel **head;
 	int i, n;
+	size_t size = offsetof(struct dvb_table_vct, channel);
 
+	if (p + size > endbuf) {
+		dvb_logerr("VCT table was truncated. Need %zu bytes, but has only %zu.",
+				size, buflen);
+		return;
+	}
 	if (*table_length > 0) {
 		/* find end of curent list */
 		head = &vct->channel;
 		while (*head != NULL)
 			head = &(*head)->next;
 	} else {
-		memcpy(vct, p, offsetof(struct dvb_table_vct, channel));
+		memcpy(vct, p, size);
 
 		*table_length = sizeof(struct dvb_table_vct);
 
@@ -43,14 +49,24 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		vct->descriptor = NULL;
 		head = &vct->channel;
 	}
-	p += offsetof(struct dvb_table_vct, channel);
+	p += size;
 
+	size = offsetof(struct dvb_table_vct_channel, descriptor);
 	struct dvb_table_vct_channel *last = NULL;
 	for (n = 0; n < vct->num_channels_in_section; n++) {
-		struct dvb_table_vct_channel *channel = (struct dvb_table_vct_channel *) malloc(sizeof(struct dvb_table_vct_channel));
+		struct dvb_table_vct_channel *channel;
 
-		memcpy(channel, p, offsetof(struct dvb_table_vct_channel, descriptor));
-		p += offsetof(struct dvb_table_vct_channel, descriptor);
+		if (p + size > endbuf) {
+			dvb_logerr("VCT channel table is missing %d elements",
+				   vct->num_channels_in_section - n + 1);
+			vct->num_channels_in_section = n;
+			break;
+		}
+
+		channel = malloc(sizeof(struct dvb_table_vct_channel));
+
+		memcpy(channel, p, size);
+		p += size;
 
 		/* Fix endiannes of the copied fields */
 		for (i = 0; i < ARRAY_SIZE(channel->__short_name); i++)
@@ -92,12 +108,16 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 	}
 
 	/* Get extra descriptors */
-	if (p < buf + buflen) {
+	size = sizeof(union dvb_table_vct_descriptor_length);
+	while (p + size <= endbuf) {
 		union dvb_table_vct_descriptor_length *d = (void *)p;
 		bswap16(d->descriptor_length);
-		p += sizeof(union dvb_table_vct_descriptor_length);
+		p += size;
 		dvb_parse_descriptors(parms, p, d->descriptor_length, &vct->descriptor);
 	}
+	if (endbuf - p)
+		dvb_logerr("VCT table has %zu spurious bytes at the end.",
+			   endbuf - p);
 }
 
 void dvb_table_vct_free(struct dvb_table_vct *vct)
