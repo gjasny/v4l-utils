@@ -481,3 +481,184 @@ struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
 
 	return dvb_scan_handler;
 }
+
+int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
+{
+	uint32_t shift = 0, bw = 0, symbol_rate, ro;
+	int rolloff = 0;
+	int divisor = 100;
+
+	/* Need to handle only cable/satellite and ATSC standards */
+	switch (parms->current_sys) {
+	case SYS_DVBC_ANNEX_A:
+		rolloff = 115;
+		break;
+	case SYS_DVBC_ANNEX_C:
+		rolloff = 115;
+		break;
+	case SYS_DVBS:
+	case SYS_ISDBS:	/* FIXME: not sure if this rollof is right for ISDB-S */
+		divisor = 100000;
+		rolloff = 135;
+		break;
+	case SYS_DVBS2:
+	case SYS_DSS:
+	case SYS_TURBO:
+		divisor = 100000;
+		dvb_fe_retrieve_parm(parms, DTV_ROLLOFF, &ro);
+		switch (ro) {
+		case ROLLOFF_20:
+			rolloff = 120;
+			break;
+		case ROLLOFF_25:
+			rolloff = 125;
+			break;
+		default:
+		case ROLLOFF_AUTO:
+		case ROLLOFF_35:
+			rolloff = 135;
+			break;
+		}
+		break;
+	case SYS_ATSC:
+	case SYS_DVBC_ANNEX_B:
+		bw = 6000000;
+		break;
+	default:
+		break;
+	}
+	if (rolloff) {
+		/*
+		 * This is not 100% correct for DVB-S2, as there is a bw
+		 * guard interval there but it should be enough for the
+		 * purposes of estimating a max frequency shift here.
+		 */
+		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &symbol_rate);
+		bw = (symbol_rate * rolloff) / divisor;
+	}
+	if (!bw)
+		dvb_fe_retrieve_parm(parms, DTV_BANDWIDTH_HZ, &bw);
+
+	/*
+	 * If the max frequency shift between two frequencies is below
+	 * than the used bandwidth / 8, it should be the same channel.
+	 */
+	shift = bw / 8;
+
+	return shift;
+}
+
+int new_freq_is_needed(struct dvb_entry *entry, struct dvb_entry *last_entry,
+		       uint32_t freq, enum dvb_sat_polarization pol, int shift)
+{
+	int i;
+	uint32_t data;
+
+	for (; entry != last_entry; entry = entry->next) {
+		for (i = 0; i < entry->n_props; i++) {
+			data = entry->props[i].u.data;
+			if (entry->props[i].cmd == DTV_POLARIZATION) {
+				if (data != pol)
+					continue;
+			}
+			if (entry->props[i].cmd == DTV_FREQUENCY) {
+				if (( freq >= data - shift) && (freq <= data + shift))
+					return 0;
+			}
+		}
+	}
+
+	return 1;
+}
+
+struct dvb_entry *dvb_scan_add_entry(struct dvb_v5_fe_parms *parms,
+				     struct dvb_entry *first_entry,
+			             struct dvb_entry *entry,
+			             uint32_t freq, uint32_t shift,
+			             enum dvb_sat_polarization pol)
+{
+	struct dvb_entry *new_entry;
+	int i, n = 2;
+
+	if (!new_freq_is_needed(first_entry, NULL, freq, pol, shift))
+		return NULL;
+
+	/* Clone the current entry into a new entry */
+	new_entry = calloc(sizeof(*new_entry), 1);
+	if (!new_entry) {
+		dvb_perror("not enough memory for a new scanning frequency");
+		return NULL;
+	}
+
+	memcpy(new_entry, entry, sizeof(*entry));
+
+	/*
+	 * The frequency should change to the new one. Seek for it and
+	 * replace its value to the desired one.
+	 */
+	for (i = 0; i < new_entry->n_props; i++) {
+		if (new_entry->props[i].cmd == DTV_FREQUENCY) {
+			new_entry->props[i].u.data = freq;
+			/* Navigate to the end of the entry list */
+			while (entry->next) {
+				entry = entry->next;
+				n++;
+			}
+			dvb_log("New transponder/channel found: #%d: %d",
+			        n, freq);
+			entry->next = new_entry;
+			new_entry->next = NULL;
+			return entry;
+		}
+	}
+
+	/* This should never happen */
+	dvb_logerr("BUG: Couldn't add %d to the scan frequency list.", freq);
+	free(new_entry);
+
+	return NULL;
+}
+
+void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
+				 struct dvb_v5_descriptors *dvb_scan_handler,
+				 struct dvb_entry *first_entry,
+				 struct dvb_entry *entry)
+{
+	struct dvb_entry *new;
+	enum dvb_sat_polarization pol = POLARIZATION_OFF;
+	uint32_t shift = 0;
+
+	if (!dvb_scan_handler->nit)
+		return;
+
+	shift = estimate_freq_shift(parms);
+
+	switch (parms->current_sys) {
+	case SYS_DVBC_ANNEX_A:
+	case SYS_DVBC_ANNEX_C:
+		dvb_nit_transport_foreach(tran, dvb_scan_handler->nit) {
+			dvb_desc_find(struct dvb_desc_cable_delivery, cable,
+				      tran, cable_delivery_system_descriptor) {
+				new = dvb_scan_add_entry(parms,
+							 first_entry, entry,
+							 cable->frequency,
+							 shift, pol);
+				if (!new)
+					return;
+
+				/* Set NIT cable props for the transponder */
+				store_entry_prop(entry, DTV_MODULATION,
+						 dvbc_modulation_table[cable->modulation]);
+				store_entry_prop(entry, DTV_SYMBOL_RATE,
+						 cable->symbol_rate);
+				store_entry_prop(entry, DTV_INNER_FEC,
+						 dvbc_fec_table[cable->fec_inner]);
+
+			}
+		}
+		return;
+	default:
+		dvb_log("Transponders detection not implemented for this standard yet.");
+		return;
+	}
+}

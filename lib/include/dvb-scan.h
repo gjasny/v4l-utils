@@ -24,6 +24,8 @@
 
 #include "descriptors.h"
 
+#include "dvb-sat.h"
+
 /* According with ISO/IEC 13818-1:2007 */
 
 #define MAX_TABLE_SIZE 1024 * 1024
@@ -55,6 +57,23 @@ struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
 						void *args,
 						unsigned other_nit,
 						unsigned timeout_multiply);
+
+int estimate_freq_shift(struct dvb_v5_fe_parms *parms);
+
+int new_freq_is_needed(struct dvb_entry *entry, struct dvb_entry *last_entry,
+		       uint32_t freq, enum dvb_sat_polarization pol, int shift);
+
+struct dvb_entry *dvb_scan_add_entry(struct dvb_v5_fe_parms *parms,
+				     struct dvb_entry *first_entry,
+			             struct dvb_entry *entry,
+			             uint32_t freq, uint32_t shift,
+			             enum dvb_sat_polarization pol);
+
+void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
+				 struct dvb_v5_descriptors *dvb_scan_handler,
+				 struct dvb_entry *first_entry,
+				 struct dvb_entry *entry);
+
 
 #ifdef __cplusplus
 }

@@ -57,6 +57,10 @@ extern "C" {
 void dvb_desc_cable_delivery_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 void dvb_desc_cable_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 
+extern const unsigned dvbc_modulation_table[];
+extern const unsigned dvbc_fec_table[];
+
+
 #ifdef __cplusplus
 }
 #endif

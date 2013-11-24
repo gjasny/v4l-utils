@@ -364,8 +364,8 @@ error:
 	return -1;
 }
 
-static int store_entry_prop(struct dvb_entry *entry,
-			    uint32_t cmd, uint32_t value)
+int store_entry_prop(struct dvb_entry *entry,
+		     uint32_t cmd, uint32_t value)
 {
 	int i;
 
@@ -386,6 +386,21 @@ static int store_entry_prop(struct dvb_entry *entry,
 	entry->props[i].u.data = value;
 
 	return 0;
+}
+
+int retrieve_entry_prop(struct dvb_entry *entry,
+			uint32_t cmd, uint32_t *value)
+{
+	int i;
+
+	for (i = 0; i < entry->n_props; i++) {
+		if (cmd == entry->props[i].cmd) {
+			*value = entry->props[i].u.data;
+			return 0;
+		}
+	}
+
+	return -1;
 }
 
 #define CHANNEL "CHANNEL"

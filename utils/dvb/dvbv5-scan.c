@@ -38,6 +38,7 @@
 #include "dvb-v5-std.h"
 #include "dvb-scan.h"
 #include "dvb-scan-table-handler.h"
+#include "descriptors/desc_cable_delivery.h"
 
 #define PROGRAM_NAME	"dvbv5-scan"
 #define DEFAULT_OUTPUT  "dvb_channel.conf"
@@ -193,169 +194,14 @@ static int check_frontend(void *__args,
 	return (status & FE_HAS_LOCK) ? 0 : -1;
 }
 
-static int new_freq_is_needed(struct dvb_entry *entry,
-			      struct dvb_entry *last_entry,
-			      uint32_t freq,
-			      enum dvb_sat_polarization pol,
-			      int shift)
-{
-	int i;
-	uint32_t data;
-
-	for (; entry != last_entry; entry = entry->next) {
-		for (i = 0; i < entry->n_props; i++) {
-			data = entry->props[i].u.data;
-			if (entry->props[i].cmd == DTV_POLARIZATION) {
-				if (data != pol)
-					continue;
-			}
-			if (entry->props[i].cmd == DTV_FREQUENCY) {
-				if (( freq >= data - shift) && (freq <= data + shift))
-					return 0;
-			}
-		}
-	}
-
-	return 1;
-}
-
-static void add_new_freq(struct dvb_entry *entry, uint32_t freq)
-{
-	struct dvb_entry *new_entry;
-	int i, n = 2;
-
-	/* Clone the current entry into a new entry */
-	new_entry = calloc(sizeof(*new_entry), 1);
-	if (!new_entry) {
-		PERROR("not enough memory ofr a new scanning frequency");
-		return;
-	}
-
-	memcpy(new_entry, entry, sizeof(*entry));
-
-	/*
-	 * The frequency should change to the new one. Seek for it and
-	 * replace its value to the desired one.
-	 */
-	for (i = 0; i < new_entry->n_props; i++) {
-		if (new_entry->props[i].cmd == DTV_FREQUENCY) {
-			new_entry->props[i].u.data = freq;
-			/* Navigate to the end of the entry list */
-			while (entry->next) {
-				entry = entry->next;
-				n++;
-			}
-			printf("New transponder/channel found: #%d: %d\n",
-			       n, freq);
-			entry->next = new_entry;
-			new_entry->next = NULL;
-			return;
-		}
-	}
-
-	/* This should never happen */
-	fprintf(stderr, "BUG: Couldn't add %d to the scan frequency list.\n",
-		freq);
-	free(new_entry);
-}
-
-static int estimate_freq_shift(struct dvb_v5_fe_parms *parms)
-{
-	uint32_t shift = 0, bw = 0, symbol_rate, ro;
-	int rolloff = 0;
-	int divisor = 100;
-
-	/* Need to handle only cable/satellite and ATSC standards */
-	switch (parms->current_sys) {
-	case SYS_DVBC_ANNEX_A:
-		rolloff = 115;
-		break;
-	case SYS_DVBC_ANNEX_C:
-		rolloff = 115;
-		break;
-	case SYS_DVBS:
-	case SYS_ISDBS:	/* FIXME: not sure if this rollof is right for ISDB-S */
-		divisor = 100000;
-		rolloff = 135;
-		break;
-	case SYS_DVBS2:
-	case SYS_DSS:
-	case SYS_TURBO:
-		divisor = 100000;
-		dvb_fe_retrieve_parm(parms, DTV_ROLLOFF, &ro);
-		switch (ro) {
-		case ROLLOFF_20:
-			rolloff = 120;
-			break;
-		case ROLLOFF_25:
-			rolloff = 125;
-			break;
-		default:
-		case ROLLOFF_AUTO:
-		case ROLLOFF_35:
-			rolloff = 135;
-			break;
-		}
-		break;
-	case SYS_ATSC:
-	case SYS_DVBC_ANNEX_B:
-		bw = 6000000;
-		break;
-	default:
-		break;
-	}
-	if (rolloff) {
-		/*
-		 * This is not 100% correct for DVB-S2, as there is a bw
-		 * guard interval there but it should be enough for the
-		 * purposes of estimating a max frequency shift here.
-		 */
-		dvb_fe_retrieve_parm(parms, DTV_SYMBOL_RATE, &symbol_rate);
-		bw = (symbol_rate * rolloff) / divisor;
-	}
-	if (!bw)
-		dvb_fe_retrieve_parm(parms, DTV_BANDWIDTH_HZ, &bw);
-
-	/*
-	 * If the max frequency shift between two frequencies is below
-	 * than the used bandwidth / 8, it should be the same channel.
-	 */
-	shift = bw / 8;
-
-	return shift;
-}
-
-static void add_other_freq_entries(struct dvb_file *dvb_file,
-				   struct dvb_v5_fe_parms *parms,
-				   struct dvb_v5_descriptors *dvb_scan_handler)
-{
-	int i;
-	uint32_t freq, shift = 0;
-	enum dvb_sat_polarization pol = POLARIZATION_OFF;
-
-	if (!dvb_scan_handler->nit_table.frequency)
-		return;
-
-	pol = dvb_scan_handler->nit_table.pol;
-
-	shift = estimate_freq_shift(parms);
-
-	for (i = 0; i < dvb_scan_handler->nit_table.frequency_len; i++) {
-		freq = dvb_scan_handler->nit_table.frequency[i];
-
-		if (new_freq_is_needed(dvb_file->first_entry, NULL, freq, pol,
-				       shift))
-			add_new_freq(dvb_file->first_entry, freq);
-	}
-}
-
 static int run_scan(struct arguments *args,
 		    struct dvb_v5_fe_parms *parms)
 {
 	struct dvb_file *dvb_file = NULL, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
-	int i, count = 0, dmx_fd, shift;
+	int count = 0, dmx_fd, shift;
 	uint32_t freq, sys;
+	enum dvb_sat_polarization pol;
 
 	/* This is used only when reading old formats */
 	switch (parms->current_sys) {
@@ -396,18 +242,16 @@ static int run_scan(struct arguments *args,
 		 * If the channel file has duplicated frequencies, or some
 		 * entries without any frequency at all, discard.
 		 */
-		freq = 0;
-		for (i = 0; i < entry->n_props; i++) {
-			if (entry->props[i].cmd == DTV_FREQUENCY) {
-				freq = entry->props[i].u.data;
-				break;
-			}
-		}
-		if (!freq)
+		if (retrieve_entry_prop(entry, DTV_FREQUENCY, &freq))
 			continue;
+
 		shift = estimate_freq_shift(parms);
+
+		if (retrieve_entry_prop(entry, DTV_POLARIZATION, &pol))
+			pol = POLARIZATION_OFF;
+
 		if (dvb_scan_handler && !new_freq_is_needed(dvb_file->first_entry, entry,
-					freq, dvb_scan_handler->nit_table.pol, shift))
+					freq, pol, shift))
 			continue;
 
 		count++;
@@ -416,6 +260,7 @@ static int run_scan(struct arguments *args,
 		/*
 		 * Run the scanning logic
 		 */
+
 		dvb_scan_handler = dvb_scan_transponder(parms, entry, dmx_fd,
 							&check_frontend, args,
 							args->other_nit,
@@ -424,11 +269,22 @@ static int run_scan(struct arguments *args,
 		if (!dvb_scan_handler)
 			continue;
 
+		/*
+		 * Store the service entry
+		 */
 		store_dvb_channel(&dvb_file_new, parms, dvb_scan_handler,
 				  args->get_detected, args->get_nit);
 
+		/*
+		 * Add new transponders based on NIT table information
+		 */
 		if (!args->dont_add_new_freqs)
-			add_other_freq_entries(dvb_file, parms, dvb_scan_handler);
+			dvb_add_scaned_transponders(parms, dvb_scan_handler,
+						    dvb_file->first_entry, entry);
+
+		/*
+		 * Free the scan handler associated with the transponder
+		 */
 
 		dvb_scan_free_handler_table(dvb_scan_handler);
 	}

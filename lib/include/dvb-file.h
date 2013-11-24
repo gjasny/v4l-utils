@@ -130,6 +130,11 @@ struct dvb_file *read_dvb_file(const char *fname);
 
 int write_dvb_file(const char *fname, struct dvb_file *dvb_file);
 
+int store_entry_prop(struct dvb_entry *entry,
+		     uint32_t cmd, uint32_t value);
+int retrieve_entry_prop(struct dvb_entry *entry,
+			uint32_t cmd, uint32_t *value);
+
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_v5_descriptors *dvb_desc,
