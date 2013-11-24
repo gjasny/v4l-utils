@@ -1063,6 +1063,24 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
+/* Service type, according with EN 300 468 V1.3.1 (1998-02) */
+static char *sdt_services[256] = {
+	[0x00 ...0xff] = "reserved",
+	[0x01] = "digital television",
+	[0x02] = "digital radio",
+	[0x03] = "Teletext",
+	[0x04] = "NVOD reference",
+	[0x05] = "NVOD time-shifted",
+	[0x06] = "mosaic",
+	[0x07] = "PAL coded signal",
+	[0x08] = "SECAM coded signal",
+	[0x09] = "D/D2-MAC",
+	[0x0a] = "FM Radio",
+	[0x0b] = "NTSC coded signal",
+	[0x0c] = "data broadcast",
+	[0x80 ...0xfe] = "user defined",
+};
+
 int store_dvb_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_v5_descriptors *dvb_scan_handler,
@@ -1121,8 +1139,9 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 				channel = calloc(strlen(desc->name) + 1, 1);
 				strcpy(channel, desc->name);
 			}
-			dvb_log("Service %s, provider %s, type %d",
-				desc->name, desc->provider, desc->service_type);
+			dvb_log("Service %s, provider %s: %s",
+				desc->name, desc->provider,
+				sdt_services[desc->service_type]);
 			break;
 		}
 
