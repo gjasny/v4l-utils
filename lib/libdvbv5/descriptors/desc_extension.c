@@ -145,13 +145,12 @@ void extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 	ext->descriptor = malloc(size);
 	memcpy(ext->descriptor, p, size);
 	if (init)
-		init(parms, p, desc, ext->descriptor);
+		init(parms, p, ext, ext->descriptor);
 }
 
 void extension_descriptor_free(struct dvb_desc *descriptor)
 {
 	struct dvb_extension_descriptor *ext = (struct dvb_extension_descriptor *)descriptor;
-	struct dvb_desc *desc = ext->descriptor;
 
 	if (ext->descriptor)
 		free(ext->descriptor);
