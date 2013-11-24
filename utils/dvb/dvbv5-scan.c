@@ -38,7 +38,6 @@
 #include "dvb-v5-std.h"
 #include "dvb-scan.h"
 #include "dvb-scan-table-handler.h"
-#include "descriptors/desc_cable_delivery.h"
 
 #define PROGRAM_NAME	"dvbv5-scan"
 #define DEFAULT_OUTPUT  "dvb_channel.conf"

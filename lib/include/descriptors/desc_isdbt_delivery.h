@@ -52,6 +52,9 @@ void isdbt_desc_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 void isdbt_desc_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 void isdbt_desc_delivery_free(struct dvb_desc *desc);
 
+extern const uint32_t isdbt_interval[];
+extern const uint32_t isdbt_mode[];
+
 #ifdef __cplusplus
 }
 #endif

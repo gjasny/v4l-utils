@@ -62,6 +62,20 @@ static const char *tm_name[] = {
 	[3] = "AUTO",
 };
 
+const uint32_t isdbt_interval[] = {
+	[0] = GUARD_INTERVAL_1_32,
+	[1] = GUARD_INTERVAL_1_16,
+	[2] = GUARD_INTERVAL_1_8,
+	[3] = GUARD_INTERVAL_1_4,
+};
+
+const uint32_t isdbt_mode[] = {
+	[0] = TRANSMISSION_MODE_2K,	/* Mode 1 */
+	[1] = TRANSMISSION_MODE_4K,	/* Mode 2 */
+	[2] = TRANSMISSION_MODE_8K,	/* Mode 3 */
+	[3] = TRANSMISSION_MODE_AUTO	/* Reserved */
+};
+
 void isdbt_desc_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct isdbt_desc_terrestrial_delivery_system *d = (const void *) desc;

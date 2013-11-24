@@ -51,6 +51,8 @@
 #include "descriptors/nit.h"
 #include "descriptors/sdt.h"
 #include "descriptors/vct.h"
+#include "descriptors/desc_cable_delivery.h"
+#include "descriptors/desc_isdbt_delivery.h"
 #include "dvb-scan-table-handler.h"
 
 static int poll(struct dvb_v5_fe_parms *parms, int fd, unsigned int seconds)
@@ -627,6 +629,7 @@ void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
 	struct dvb_entry *new;
 	enum dvb_sat_polarization pol = POLARIZATION_OFF;
 	uint32_t shift = 0;
+	int i;
 
 	if (!dvb_scan_handler->nit)
 		return;
@@ -654,6 +657,30 @@ void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
 				store_entry_prop(entry, DTV_INNER_FEC,
 						 dvbc_fec_table[cable->fec_inner]);
 
+			}
+		}
+		return;
+	case SYS_ISDBT:
+		dvb_nit_transport_foreach(tran, dvb_scan_handler->nit) {
+			dvb_desc_find(struct isdbt_desc_terrestrial_delivery_system, d,
+				      tran, ISDBT_delivery_system_descriptor) {
+				uint32_t mode = isdbt_mode[d->transmission_mode];
+				uint32_t guard = isdbt_interval[d->guard_interval];
+
+				for (i = 0; i < d->num_freqs; i++) {
+					uint32_t frq = d->frequency[i] * 1000000l / 7;
+					new = dvb_scan_add_entry(parms,
+								first_entry, entry,
+								frq, shift, pol);
+					store_entry_prop(entry,
+							 DTV_TRANSMISSION_MODE,
+							 mode);
+					store_entry_prop(entry,
+							 DTV_GUARD_INTERVAL,
+							 guard);
+				}
+				if (!new)
+					return;
 			}
 		}
 		return;
