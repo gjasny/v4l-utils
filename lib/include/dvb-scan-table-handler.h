@@ -49,61 +49,6 @@
 #include "descriptors/desc_atsc_service_location.h"
 #include "descriptors/desc_hierarchy.h"
 
-struct el_pid {
-	uint8_t  type;
-	uint16_t pid;
-};
-
-struct transport_table {
-	uint16_t tr_id;
-};
-
-struct nit_table {
-	uint16_t network_id;
-	unsigned char version;
-	char *network_name, *network_alias;
-	struct transport_table *tr_table;
-	unsigned tr_table_len;
-	unsigned virtual_channel;
-	unsigned area_code;
-
-	/* Network Parameters */
-	uint32_t delivery_system;
-	uint32_t guard_interval;
-	uint32_t fec_inner, fec_outer;
-	uint32_t pol;
-	uint32_t modulation;
-	uint32_t rolloff;
-	uint32_t symbol_rate;
-	uint32_t bandwidth;
-	uint32_t code_rate_hp;
-	uint32_t code_rate_lp;
-	uint32_t transmission_mode;
-	uint32_t hierarchy;
-	uint32_t plp_id;
-	uint32_t system_id;
-
-	unsigned has_dvbt:1;
-	unsigned is_hp:1;
-	unsigned has_time_slicing:1;
-	unsigned has_mpe_fec:1;
-	unsigned has_other_frequency:1;
-	unsigned is_in_depth_interleaver:1;
-
-	char *orbit;
-	uint32_t *frequency;
-	unsigned frequency_len;
-
-	uint32_t *other_frequency;
-	unsigned other_frequency_len;
-
-	uint16_t *partial_reception;
-	unsigned partial_reception_len;
-
-	struct lcn_table *lcn;
-	unsigned lcn_len;
-};
-
 struct dvb_v5_descriptors_program {
 	struct dvb_table_pat_program *pat_pgm;
 	struct dvb_table_pmt *pmt;
@@ -112,10 +57,6 @@ struct dvb_v5_descriptors_program {
 struct dvb_v5_descriptors {
 	int verbose;
 	uint32_t delivery_system;
-
-	struct nit_table nit_table;
-
-	/* New data */
 
 	struct dvb_entry *entry;
 	unsigned num_entry;

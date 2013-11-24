@@ -800,113 +800,6 @@ static char *dvb_vchannel(struct dvb_table_nit *nit, uint16_t service_id)
 	return NULL;
 }
 
-static void handle_std_specific_parms(struct dvb_entry *entry,
-				      struct dvb_v5_descriptors *dvb_scan_handler)
-{
-	struct nit_table *nit_table = &dvb_scan_handler->nit_table;
-	int i;
-
-	/*
-	 * If found, parses the NIT tables for the delivery systems
-	 * with the information provided on it. For some delivery systems,
-	 * there are some missing stuff.
-	 */
-	switch (nit_table->delivery_system) {
-	case SYS_ISDBT:
-		store_entry_prop(entry, DTV_GUARD_INTERVAL,
-				 nit_table->guard_interval);
-		store_entry_prop(entry, DTV_TRANSMISSION_MODE,
-				 nit_table->transmission_mode);
-		asprintf(&entry->location, "area %d", nit_table->area_code);
-		for (i = 0; i < nit_table->partial_reception_len; i++) {
-			int par, sid = entry->service_id;
-			par = (sid == nit_table->partial_reception[i]) ?
-			      1 : 0;
-			store_entry_prop(entry, DTV_ISDBT_PARTIAL_RECEPTION,
-					par);
-			break;
-		}
-		break;
-	case SYS_DVBS2:
-		store_entry_prop(entry, DTV_ROLLOFF,
-				 nit_table->rolloff);
-		/* fall through */
-	case SYS_DVBS:
-		if (nit_table->orbit)
-			entry->location = strdup(nit_table->orbit);
-		store_entry_prop(entry, DTV_FREQUENCY,
-				 nit_table->frequency[0]);
-		store_entry_prop(entry, DTV_MODULATION,
-				 nit_table->modulation);
-		store_entry_prop(entry, DTV_POLARIZATION,
-				 nit_table->pol);
-		store_entry_prop(entry, DTV_DELIVERY_SYSTEM,
-				 nit_table->delivery_system);
-		store_entry_prop(entry, DTV_SYMBOL_RATE,
-				 nit_table->symbol_rate);
-		store_entry_prop(entry, DTV_INNER_FEC,
-				 nit_table->fec_inner);
-		break;
-	case SYS_DVBC_ANNEX_A:
-		if (nit_table->network_name)
-			entry->location = strdup(nit_table->network_name);
-		store_entry_prop(entry, DTV_FREQUENCY,
-				 nit_table->frequency[0]);
-		store_entry_prop(entry, DTV_MODULATION,
-				 nit_table->modulation);
-		store_entry_prop(entry, DTV_SYMBOL_RATE,
-				 nit_table->symbol_rate);
-		store_entry_prop(entry, DTV_INNER_FEC,
-				 nit_table->fec_inner);
-		break;
-	case SYS_DVBT:
-		if (nit_table->network_name)
-			entry->location = strdup(nit_table->network_name);
-		store_entry_prop(entry, DTV_FREQUENCY,
-				 nit_table->frequency[0]);
-		store_entry_prop(entry, DTV_MODULATION,
-				 nit_table->modulation);
-		store_entry_prop(entry, DTV_BANDWIDTH_HZ,
-				 nit_table->bandwidth);
-		store_entry_prop(entry, DTV_CODE_RATE_HP,
-				 nit_table->code_rate_hp);
-		store_entry_prop(entry, DTV_CODE_RATE_LP,
-				 nit_table->code_rate_lp);
-		store_entry_prop(entry, DTV_GUARD_INTERVAL,
-				 nit_table->guard_interval);
-		store_entry_prop(entry, DTV_TRANSMISSION_MODE,
-				 nit_table->transmission_mode);
-		store_entry_prop(entry, DTV_HIERARCHY,
-				 nit_table->hierarchy);
-		break;
-	case SYS_DVBT2:
-		if (nit_table->network_name)
-			entry->location = strdup(nit_table->network_name);
-		store_entry_prop(entry, DTV_DVBT2_PLP_ID_LEGACY,
-				 nit_table->plp_id);
-		store_entry_prop(entry, DTV_BANDWIDTH_HZ,
-				 nit_table->bandwidth);
-		store_entry_prop(entry, DTV_GUARD_INTERVAL,
-				 nit_table->guard_interval);
-		store_entry_prop(entry, DTV_TRANSMISSION_MODE,
-				 nit_table->transmission_mode);
-		if (!nit_table->has_dvbt)
-			break;
-
-		/* Fill data from terrestrial descriptor */
-		store_entry_prop(entry, DTV_FREQUENCY,
-				 nit_table->frequency[0]);
-		store_entry_prop(entry, DTV_MODULATION,
-				 nit_table->modulation);
-		store_entry_prop(entry, DTV_CODE_RATE_HP,
-				 nit_table->code_rate_hp);
-		store_entry_prop(entry, DTV_CODE_RATE_LP,
-				 nit_table->code_rate_lp);
-		store_entry_prop(entry, DTV_HIERARCHY,
-				 nit_table->hierarchy);
-	}
-}
-
 static int sort_other_el_pid(const void *a_arg, const void *b_arg)
 {
 	const struct el_pid *a = a_arg, *b = b_arg;
@@ -1071,9 +964,6 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 		entry->props[j].u.data = parms->dvb_prop[j].u.data;
 	}
 	entry->n_props = parms->n_props;
-
-	if (get_nit)
-		handle_std_specific_parms(entry, dvb_scan_handler);
 
 	return 0;
 }

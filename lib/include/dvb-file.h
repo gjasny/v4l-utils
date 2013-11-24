@@ -22,6 +22,11 @@
 
 #include "dvb-fe.h"
 
+struct el_pid {
+	uint8_t  type;
+	uint16_t pid;
+};
+
 struct dvb_entry {
 	struct dtv_property props[DTV_MAX_COMMAND];
 	unsigned int n_props;
