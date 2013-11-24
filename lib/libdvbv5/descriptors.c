@@ -97,11 +97,21 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ui
 		int desc_len  = ptr[1];
 		size_t size;
 
-#if 0 /* For an additional level of debug */
-                dvb_log("descriptor type 0x%x, size %d",
-			desc_type, desc_len);
-                hexdump(parms, "dump: ", ptr + 2, desc_len);
-#endif
+		switch (parms->verbose) {
+		case 0:
+		case 1:
+			break;
+		case 2:
+			if (dvb_descriptors[desc_type].init)
+				break;
+			/* fall through */
+		case 3:
+			dvb_log("%sdescriptor %s type 0x%x, size %d",
+				dvb_descriptors[desc_type].init ? "" : "Not handled ",
+				dvb_descriptors[desc_type].name, desc_type, desc_len);
+			hexdump(parms, "content: ", ptr + 2, desc_len);
+		}
+
 		if (desc_len > section_length - 2) {
 			dvb_logerr("descriptor is too big");
 			return;

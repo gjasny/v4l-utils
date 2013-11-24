@@ -130,11 +130,20 @@ void extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 	ext->extension_code = desc_type;
 	p++;
 
-#if 0 /* For an additional level of debug */
-	dvb_log("extension descriptor type 0%x, size %d",
-		desc_type, desc_len);
-	hexdump(parms, "dump: ", p, desc_len);
-#endif
+	switch (parms->verbose) {
+	case 0:
+	case 1:
+		break;
+	case 2:
+		if (dvb_ext_descriptors[desc_type].init)
+			break;
+		/* fall through */
+	case 3:
+		dvb_log("%sextension descriptor %s type 0x%x, size %d",
+			dvb_ext_descriptors[desc_type].init ? "" : "Not handled ",
+			dvb_ext_descriptors[desc_type].name, desc_type, desc_len);
+		hexdump(parms, "content: ", p, desc_len);
+	}
 
 	init = dvb_ext_descriptors[desc_type].init;
 	if (init)

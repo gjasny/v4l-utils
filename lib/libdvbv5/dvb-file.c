@@ -1090,8 +1090,9 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 				d->major_channel_number,
 				d->minor_channel_number);
 
-			dvb_log("Found channel %s, name = %s",
-				vchannel, channel);
+			if (parms->verbose)
+				dvb_log("Virtual channel %s, name = %s",
+					vchannel, channel);
 
 			rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
 						d->program_number,
@@ -1120,7 +1121,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 				channel = calloc(strlen(desc->name) + 1, 1);
 				strcpy(channel, desc->name);
 			}
-			dvb_log("Found service %s, provider %s, type %d",
+			dvb_log("Service %s, provider %s, type %d",
 				desc->name, desc->provider, desc->service_type);
 			break;
 		}
@@ -1128,7 +1129,8 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		if (!channel)
 			asprintf(&channel, "#%d", service->service_id);
 
-		dvb_log("Storing as channel %s", channel);
+		if (parms->verbose)
+			dvb_log("Storing as channel %s", channel);
 		vchannel = dvb_vchannel(dvb_scan_handler->nit, service->service_id);
 
 		rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
