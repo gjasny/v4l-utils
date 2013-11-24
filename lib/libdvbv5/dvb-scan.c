@@ -42,6 +42,7 @@
 #include "parse_string.h"
 #include "crc32.h"
 #include "dvb-fe.h"
+#include "dvb-file.h"
 #include "dvb-log.h"
 #include "dvb-demux.h"
 #include "descriptors/header.h"
@@ -234,8 +235,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 					     int dmx_fd,
 					     uint32_t delivery_system,
 					     unsigned other_nit,
-					     unsigned timeout_multiply,
-					     int verbose)
+					     unsigned timeout_multiply)
 {
 	int rc;
 	unsigned pat_pmt_time, sdt_time, nit_time, vct_time;
@@ -244,7 +244,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 
 	struct dvb_v5_descriptors *dvb_scan_handler;
 
-	dvb_scan_handler = dvb_scan_alloc_handler_table(delivery_system, verbose);
+	dvb_scan_handler = dvb_scan_alloc_handler_table(delivery_system, parms->verbose);
 	if (!dvb_scan_handler)
 		return NULL;
 
@@ -304,7 +304,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 		dvb_scan_free_handler_table(dvb_scan_handler);
 		return NULL;
 	}
-	if (verbose)
+	if (parms->verbose)
 		dvb_table_pat_print(parms, dvb_scan_handler->pat);
 
 	/* ATSC-specific VCT table */
@@ -315,7 +315,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 				      vct_time * timeout_multiply);
 		if (rc < 0)
 			dvb_logerr("error while waiting for VCT table");
-		else if (verbose)
+		else if (parms->verbose)
 			dvb_table_vct_print(parms, dvb_scan_handler->vct);
 	}
 
@@ -327,12 +327,12 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 		dvb_scan_handler->program[num_pmt].pat_pgm = program;
 
 		if (!program->service_id) {
-			if (verbose)
+			if (parms->verbose)
 				dvb_log("Network PID: 0x%02x", program->pid);
 			num_pmt++;
 			continue;
 		}
-		if (verbose)
+		if (parms->verbose)
 			dvb_log("Program ID %d", program->pid);
 		rc = dvb_read_section(parms, dmx_fd,
 				      DVB_TABLE_PMT, program->pid,
@@ -343,7 +343,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 				   program->service_id);
 			dvb_scan_handler->program[num_pmt].pmt = NULL;
 		} else {
-			if (verbose)
+			if (parms->verbose)
 				dvb_table_pmt_print(parms, dvb_scan_handler->program[num_pmt].pmt);
 		}
 		num_pmt++;
@@ -357,7 +357,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 			      nit_time * timeout_multiply);
 	if (rc < 0)
 		dvb_logerr("error while reading the NIT table");
-	else if (verbose)
+	else if (parms->verbose)
 		dvb_table_nit_print(parms, dvb_scan_handler->nit);
 
 	/* SDT table */
@@ -368,13 +368,13 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 				sdt_time * timeout_multiply);
 		if (rc < 0)
 			dvb_logerr("error while reading the SDT table");
-		else if (verbose)
+		else if (parms->verbose)
 			dvb_table_sdt_print(parms, dvb_scan_handler->sdt);
 	}
 
 	/* NIT/SDT other tables */
 	if (other_nit) {
-		if (verbose)
+		if (parms->verbose)
 			dvb_log("Parsing other NIT/SDT");
 		rc = dvb_read_section(parms, dmx_fd,
 				      DVB_TABLE_NIT2, DVB_TABLE_NIT_PID,
@@ -382,7 +382,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 				      nit_time * timeout_multiply);
 		if (rc < 0)
 			dvb_logerr("error while reading the NIT table");
-		else if (verbose)
+		else if (parms->verbose)
 			dvb_table_nit_print(parms, dvb_scan_handler->nit);
 
 		rc = dvb_read_section(parms, dmx_fd,
@@ -391,9 +391,93 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 				sdt_time * timeout_multiply);
 		if (rc < 0)
 			dvb_logerr("error while reading the SDT table");
-		else if (verbose)
+		else if (parms->verbose)
 			dvb_table_sdt_print(parms, dvb_scan_handler->sdt);
 	}
+
+	return dvb_scan_handler;
+}
+
+struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
+					        struct dvb_entry *entry,
+						int dmx_fd,
+					        check_frontend_t *check_frontend,
+					        void *args,
+						unsigned other_nit,
+						unsigned timeout_multiply)
+{
+	struct dvb_v5_descriptors *dvb_scan_handler = NULL;
+	uint32_t freq;
+	int i, rc;
+
+	/* First of all, set the delivery system */
+	for (i = 0; i < entry->n_props; i++)
+		if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
+			dvb_set_compat_delivery_system(parms,
+							entry->props[i].u.data);
+
+	/* Copy data into parms */
+	for (i = 0; i < entry->n_props; i++) {
+		uint32_t data = entry->props[i].u.data;
+
+		/* Don't change the delivery system */
+		if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
+			continue;
+
+		dvb_fe_store_parm(parms, entry->props[i].cmd, data);
+		if (parms->current_sys == SYS_ISDBT) {
+			dvb_fe_store_parm(parms, DTV_ISDBT_PARTIAL_RECEPTION, 0);
+			dvb_fe_store_parm(parms, DTV_ISDBT_SOUND_BROADCASTING, 0);
+			dvb_fe_store_parm(parms, DTV_ISDBT_LAYER_ENABLED, 0x07);
+			if (entry->props[i].cmd == DTV_CODE_RATE_HP) {
+				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_FEC,
+						data);
+				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_FEC,
+						data);
+				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_FEC,
+						data);
+			} else if (entry->props[i].cmd == DTV_MODULATION) {
+				dvb_fe_store_parm(parms,
+						DTV_ISDBT_LAYERA_MODULATION,
+						data);
+				dvb_fe_store_parm(parms,
+						DTV_ISDBT_LAYERB_MODULATION,
+						data);
+				dvb_fe_store_parm(parms,
+						DTV_ISDBT_LAYERC_MODULATION,
+						data);
+			}
+		}
+		if (parms->current_sys == SYS_ATSC &&
+			entry->props[i].cmd == DTV_MODULATION) {
+			if (data != VSB_8 && data != VSB_16)
+				dvb_fe_store_parm(parms,
+						DTV_DELIVERY_SYSTEM,
+						SYS_DVBC_ANNEX_B);
+		}
+	}
+
+	rc = dvb_fe_set_parms(parms);
+	if (rc < 0) {
+		dvb_perror("dvb_fe_set_parms failed");
+		return NULL;
+	}
+
+	/* As the DVB core emulates it, better to always use auto */
+	dvb_fe_store_parm(parms, DTV_INVERSION, INVERSION_AUTO);
+
+	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
+	if (parms->verbose)
+		dvb_fe_prt_parms(parms);
+
+	rc = check_frontend(args, parms);
+	if (rc < 0)
+		return NULL;
+
+	dvb_scan_handler = dvb_get_ts_tables(parms, dmx_fd,
+					parms->current_sys,
+					other_nit,
+					timeout_multiply);
 
 	return dvb_scan_handler;
 }

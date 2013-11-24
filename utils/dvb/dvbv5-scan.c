@@ -164,8 +164,10 @@ static int print_frontend_stats(struct arguments *args,
 	return 0;
 }
 
-static int check_frontend(struct arguments *args, struct dvb_v5_fe_parms *parms)
+static int check_frontend(void *__args,
+			  struct dvb_v5_fe_parms *parms)
 {
+	struct arguments *args = __args;
 	int rc, i;
 	fe_status_t status;
 
@@ -352,7 +354,7 @@ static int run_scan(struct arguments *args,
 {
 	struct dvb_file *dvb_file = NULL, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
-	int i, rc, count = 0, dmx_fd, shift;
+	int i, count = 0, dmx_fd, shift;
 	uint32_t freq, sys;
 
 	/* This is used only when reading old formats */
@@ -390,53 +392,6 @@ static int run_scan(struct arguments *args,
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
 		struct dvb_v5_descriptors *dvb_scan_handler = NULL;
 
-		/* First of all, set the delivery system */
-		for (i = 0; i < entry->n_props; i++)
-			if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
-				dvb_set_compat_delivery_system(parms,
-							       entry->props[i].u.data);
-
-		/* Copy data into parms */
-		for (i = 0; i < entry->n_props; i++) {
-			uint32_t data = entry->props[i].u.data;
-
-			/* Don't change the delivery system */
-			if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
-				continue;
-
-			dvb_fe_store_parm(parms, entry->props[i].cmd, data);
-			if (parms->current_sys == SYS_ISDBT) {
-				dvb_fe_store_parm(parms, DTV_ISDBT_PARTIAL_RECEPTION, 0);
-				dvb_fe_store_parm(parms, DTV_ISDBT_SOUND_BROADCASTING, 0);
-				dvb_fe_store_parm(parms, DTV_ISDBT_LAYER_ENABLED, 0x07);
-				if (entry->props[i].cmd == DTV_CODE_RATE_HP) {
-					dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_FEC,
-							data);
-					dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_FEC,
-							data);
-					dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_FEC,
-							data);
-				} else if (entry->props[i].cmd == DTV_MODULATION) {
-					dvb_fe_store_parm(parms,
-							DTV_ISDBT_LAYERA_MODULATION,
-							data);
-					dvb_fe_store_parm(parms,
-							DTV_ISDBT_LAYERB_MODULATION,
-							data);
-					dvb_fe_store_parm(parms,
-							DTV_ISDBT_LAYERC_MODULATION,
-							data);
-				}
-			}
-			if (parms->current_sys == SYS_ATSC &&
-			    entry->props[i].cmd == DTV_MODULATION) {
-				if (data != VSB_8 && data != VSB_16)
-					dvb_fe_store_parm(parms,
-							DTV_DELIVERY_SYSTEM,
-							SYS_DVBC_ANNEX_B);
-			}
-		}
-
 		/*
 		 * If the channel file has duplicated frequencies, or some
 		 * entries without any frequency at all, discard.
@@ -455,30 +410,17 @@ static int run_scan(struct arguments *args,
 					freq, dvb_scan_handler->nit_table.pol, shift))
 			continue;
 
-		rc = dvb_fe_set_parms(parms);
-		if (rc < 0) {
-			PERROR("dvb_fe_set_parms failed");
-			return -1;
-		}
-
-		/* As the DVB core emulates it, better to always use auto */
-		dvb_fe_store_parm(parms, DTV_INVERSION, INVERSION_AUTO);
-
-		dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
 		count++;
 		dvb_log("Scanning frequency #%d %d", count, freq);
-		if (verbose)
-			dvb_fe_prt_parms(parms);
 
-		rc = check_frontend(args, parms);
-		if (rc < 0)
-			continue;
+		/*
+		 * Run the scanning logic
+		 */
+		dvb_scan_handler = dvb_scan_transponder(parms, entry, dmx_fd,
+							&check_frontend, args,
+							args->other_nit,
+							args->timeout_multiply);
 
-		dvb_scan_handler = dvb_get_ts_tables(parms, dmx_fd,
-					     parms->current_sys,
-					     args->other_nit,
-					     args->timeout_multiply,
-					     verbose);
 		if (!dvb_scan_handler)
 			continue;
 

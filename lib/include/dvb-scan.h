@@ -32,6 +32,8 @@
 extern "C" {
 #endif
 
+struct dvb_entry;
+
 int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, unsigned char **table,
 		unsigned timeout);
 
@@ -41,9 +43,18 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned
 struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms, int dmx_fd,
 					  uint32_t delivery_system,
 					  unsigned other_nit,
-					  unsigned timeout_multiply,
-					  int verbose);
+					  unsigned timeout_multiply);
 void dvb_free_ts_tables(struct dvb_v5_descriptors *dvb_desc);
+
+typedef int (check_frontend_t)(void *args, struct dvb_v5_fe_parms *parms);
+
+struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
+						struct dvb_entry *entry,
+						int dmx_fd,
+						check_frontend_t *check_frontend,
+						void *args,
+						unsigned other_nit,
+						unsigned timeout_multiply);
 
 #ifdef __cplusplus
 }
