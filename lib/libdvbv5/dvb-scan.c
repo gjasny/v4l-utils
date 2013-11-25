@@ -53,6 +53,7 @@
 #include "descriptors/vct.h"
 #include "descriptors/desc_cable_delivery.h"
 #include "descriptors/desc_isdbt_delivery.h"
+#include "descriptors/desc_terrestrial_delivery.h"
 #include "dvb-scan-table-handler.h"
 
 static int poll(struct dvb_v5_fe_parms *parms, int fd, unsigned int seconds)
@@ -681,6 +682,35 @@ void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
 				}
 				if (!new)
 					return;
+			}
+		}
+		return;
+	case SYS_DVBT:
+		dvb_nit_transport_foreach(tran, dvb_scan_handler->nit) {
+			dvb_desc_find(struct dvb_desc_terrestrial_delivery, d,
+				      tran, terrestrial_delivery_system_descriptor) {
+				new = dvb_scan_add_entry(parms,
+							 first_entry, entry,
+							 d->centre_frequency,
+							 shift, pol);
+				if (!new)
+					return;
+
+				/* Set NIT DVB-T props for the transponder */
+				store_entry_prop(entry, DTV_MODULATION,
+						 dvbt_modulation[d->constellation]);
+				store_entry_prop(entry, DTV_BANDWIDTH_HZ,
+						 dvbt_bw[d->bandwidth]);
+				store_entry_prop(entry, DTV_CODE_RATE_HP,
+						 dvbt_code_rate[d->code_rate_hp_stream]);
+				store_entry_prop(entry, DTV_CODE_RATE_LP,
+						 dvbt_code_rate[d->code_rate_lp_stream]);
+				store_entry_prop(entry, DTV_GUARD_INTERVAL,
+						 dvbt_interval[d->guard_interval]);
+				store_entry_prop(entry, DTV_TRANSMISSION_MODE,
+						 dvbt_transmission_mode[d->transmission_mode]);
+				store_entry_prop(entry, DTV_HIERARCHY,
+						 dvbt_hierarchy[d->hierarchy_information]);
 			}
 		}
 		return;

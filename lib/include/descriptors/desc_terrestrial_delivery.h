@@ -54,6 +54,12 @@ extern "C" {
 
 void dvb_desc_terrestrial_delivery_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 void dvb_desc_terrestrial_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+extern const unsigned dvbt_bw[];
+extern const unsigned dvbt_modulation[];
+extern const unsigned dvbt_hierarchy[];
+extern const unsigned dvbt_code_rate[];
+extern const uint32_t dvbt_interval[];
+extern const unsigned dvbt_transmission_mode[];
 
 #ifdef __cplusplus
 }
