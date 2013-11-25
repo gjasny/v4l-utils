@@ -55,6 +55,11 @@ extern "C" {
 void dvb_desc_sat_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 void dvb_desc_sat_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 
+extern const unsigned dvbs_dvbc_dvbs_freq_inner[];
+extern const unsigned dvbs_polarization[];
+extern const unsigned dvbs_rolloff[];
+extern const unsigned dvbs_modulation[];
+
 #ifdef __cplusplus
 }
 #endif

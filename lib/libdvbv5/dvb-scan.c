@@ -714,6 +714,37 @@ void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
 			}
 		}
 		return;
+	case SYS_DVBS:
+	case SYS_DVBS2:
+		dvb_nit_transport_foreach(tran, dvb_scan_handler->nit) {
+			dvb_desc_find(struct dvb_desc_sat, d,
+				      tran, satellite_delivery_system_descriptor) {
+				new = dvb_scan_add_entry(parms,
+							 first_entry, entry,
+							 d->frequency,
+							 shift, pol);
+				if (!new)
+					return;
+
+				/* Set NIT DVB-S props for the transponder */
+
+				store_entry_prop(entry, DTV_MODULATION,
+						dvbs_modulation[d->modulation_system]);
+				store_entry_prop(entry, DTV_POLARIZATION,
+						dvbs_polarization[d->polarization]);
+				store_entry_prop(entry, DTV_SYMBOL_RATE,
+						d->symbol_rate);
+				store_entry_prop(entry, DTV_INNER_FEC,
+						dvbs_dvbc_dvbs_freq_inner[d->fec]);
+				store_entry_prop(entry, DTV_ROLLOFF,
+						 dvbs_rolloff[d->roll_off]);
+				if (d->roll_off != 0)
+					store_entry_prop(entry, DTV_DELIVERY_SYSTEM,
+							 SYS_DVBS2);
+
+			}
+		}
+		return;
 	default:
 		dvb_log("Transponders detection not implemented for this standard yet.");
 		return;

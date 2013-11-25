@@ -65,3 +65,39 @@ void dvb_desc_sat_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *de
 	dvb_log("|           orbit             %.1f %c", (float) sat->orbit / 10.0, sat->west_east ? 'E' : 'W');
 }
 
+const unsigned dvbs_dvbc_dvbs_freq_inner[] = {
+	[0]  = FEC_AUTO,
+	[1]  = FEC_1_2,
+	[2]  = FEC_2_3,
+	[3]  = FEC_3_4,
+	[4]  = FEC_5_6,
+	[5]  = FEC_7_8,
+	[6]  = FEC_8_9,
+	[7]  = FEC_3_5,
+	[8]  = FEC_4_5,
+	[9]  = FEC_9_10,
+	[10 ...14] = FEC_AUTO,	/* Currently, undefined */
+	[15] = FEC_NONE,
+};
+
+const unsigned dvbs_polarization[] = {
+	[0] = POLARIZATION_H,
+	[1] = POLARIZATION_V,
+	[2] = POLARIZATION_L,
+	[3] = POLARIZATION_R
+};
+
+const unsigned dvbs_rolloff[] = {
+	[0] = ROLLOFF_35,
+	[1] = ROLLOFF_25,
+	[2] = ROLLOFF_20,
+	[3] = ROLLOFF_AUTO,	/* Reserved */
+};
+
+const unsigned dvbs_modulation[] = {
+	[0] = QAM_AUTO,
+	[1] = QPSK,
+	[2] = PSK_8,
+	[3] = QAM_16
+};
+
