@@ -54,6 +54,7 @@
 #include "descriptors/desc_extension.h"
 #include "descriptors/desc_cable_delivery.h"
 #include "descriptors/desc_isdbt_delivery.h"
+#include "descriptors/desc_partial_reception.h"
 #include "descriptors/desc_terrestrial_delivery.h"
 #include "descriptors/desc_t2_delivery.h"
 #include "dvb-scan-table-handler.h"
@@ -694,6 +695,31 @@ static void add_update_nit_isdbt(struct dvb_table_nit *nit,
 	}
 }
 
+static void add_update_nit_1seg(struct dvb_table_nit *nit,
+				struct dvb_table_nit_transport *tran,
+				struct dvb_desc *desc,
+				void *priv)
+{
+	struct update_transponders *tr = priv;
+	struct isdb_desc_partial_reception *d = (void *)desc;
+	size_t len;
+	int i;
+
+	if (!tr->update)
+		return;
+
+	len = d->length / sizeof(d->partial_reception);
+
+	for (i = 0; i < len; i++) {
+		if (tr->entry->service_id == d->partial_reception[i].service_id) {
+			store_entry_prop(tr->entry,
+					 DTV_ISDBT_PARTIAL_RECEPTION, 1);
+			return;
+		}
+	}
+	store_entry_prop(tr->entry, DTV_ISDBT_PARTIAL_RECEPTION, 0);
+}
+
 static void add_update_nit_dvbt2(struct dvb_table_nit *nit,
 				 struct dvb_table_nit_transport *tran,
 				 struct dvb_desc *desc,
@@ -856,7 +882,9 @@ void __dvb_add_update_transponders(struct dvb_v5_fe_parms *parms,
 				       NULL, add_update_nit_dvbc, &tr);
 		return;
 	case SYS_ISDBT:
-		/* FIXME: add some logic here to detect partial reception */
+		nit_descriptor_handler(parms, dvb_scan_handler->nit,
+				       partial_reception_descriptor,
+				       NULL, add_update_nit_1seg, &tr);
 		nit_descriptor_handler(parms, dvb_scan_handler->nit,
 				       ISDBT_delivery_system_descriptor,
 				       NULL, add_update_nit_isdbt, &tr);
