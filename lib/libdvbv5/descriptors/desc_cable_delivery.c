@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  *
+ * Described at ETSI EN 300 468 V1.11.1 (2010-04)
  */
 
 #include "descriptors/desc_cable_delivery.h"
@@ -50,7 +51,7 @@ void dvb_desc_cable_delivery_print(struct dvb_v5_fe_parms *parms, const struct d
 }
 
 const unsigned dvbc_fec_table[] = {
-	[0]  = FEC_AUTO,
+	[0]  = FEC_AUTO,	/* not defined */
 	[1]  = FEC_1_2,
 	[2]  = FEC_2_3,
 	[3]  = FEC_3_4,
@@ -60,17 +61,17 @@ const unsigned dvbc_fec_table[] = {
 	[7]  = FEC_3_5,
 	[8]  = FEC_4_5,
 	[9]  = FEC_9_10,
-	[10 ...14] = FEC_AUTO,	/* Currently, undefined */
+	[10 ...14] = FEC_AUTO,	/* Reserved for future usage */
 	[15] = FEC_NONE,
 };
 
 const unsigned dvbc_modulation_table[] = {
-	[0] = QAM_AUTO,
+	[0] = QAM_AUTO,		/* Not defined */
 	[1] = QAM_16,
 	[2] = QAM_32,
 	[3] = QAM_64,
 	[4] = QAM_128,
 	[5] = QAM_256,
-	[6 ...255] = QAM_AUTO	/* Reserved for future usage*/
+	[6 ...255] = QAM_AUTO	/* Reserved for future usage */
 };
 

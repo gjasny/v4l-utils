@@ -965,6 +965,11 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 	}
 	entry->n_props = parms->n_props;
 
+	if (get_nit)
+		dvb_update_transponders(parms, dvb_scan_handler,
+					    dvb_file->first_entry,
+					    entry);
+
 	return 0;
 }
 

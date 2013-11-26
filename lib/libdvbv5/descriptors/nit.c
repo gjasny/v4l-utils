@@ -155,3 +155,35 @@ void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *ni
 	dvb_log("|_  %d transports", transports);
 }
 
+void nit_descriptor_handler(struct dvb_v5_fe_parms *parms,
+			    struct dvb_table_nit *nit,
+			    enum descriptors descriptor,
+			    nit_handler_callback_t *call_nit,
+			    nit_tran_handler_callback_t *call_tran,
+			    void *priv)
+{
+	if (call_nit || parms->verbose) {
+		dvb_desc_find(struct dvb_desc, desc, nit,
+			      descriptor) {
+			if (call_nit)
+				call_nit(nit, desc, priv);
+			else
+				dvb_logerr("descriptor %s found on NIT but unhandled",
+					   dvb_descriptors[descriptor].name);
+
+		}
+	}
+	if (!call_tran || !parms->verbose)
+		return;
+
+	dvb_nit_transport_foreach(tran, nit) {
+		dvb_desc_find(struct dvb_desc, desc, tran,
+			      descriptor) {
+			if (call_tran)
+				call_tran(nit, tran, desc, priv);
+			else
+				dvb_logerr("descriptor %s found on NIT transport but unhandled",
+					   dvb_descriptors[descriptor].name);
+		}
+	}
+}

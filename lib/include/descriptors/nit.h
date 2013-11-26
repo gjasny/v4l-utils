@@ -67,8 +67,16 @@ struct dvb_table_nit {
 	struct dvb_table_nit_transport *transport;
 } __attribute__((packed));
 
+typedef void nit_handler_callback_t(struct dvb_table_nit *nit,
+				    struct dvb_desc *desc,
+				    void *priv);
 
-#define dvb_nit_transport_foreach( tran, nit ) \
+typedef void nit_tran_handler_callback_t(struct dvb_table_nit *nit,
+					 struct dvb_table_nit_transport *tran,
+					 struct dvb_desc *desc,
+					 void *priv);
+
+			       #define dvb_nit_transport_foreach( tran, nit ) \
   for (struct dvb_table_nit_transport *tran = nit->transport; tran; tran = tran->next) \
 
 struct dvb_v5_fe_parms;
@@ -80,6 +88,13 @@ extern "C" {
 void dvb_table_nit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length);
 void dvb_table_nit_free(struct dvb_table_nit *nit);
 void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *nit);
+
+void nit_descriptor_handler(struct dvb_v5_fe_parms *parms,
+			    struct dvb_table_nit *nit,
+			    enum descriptors descriptor,
+			    nit_handler_callback_t *call_nit,
+			    nit_tran_handler_callback_t *call_tran,
+			    void *priv);
 
 #ifdef __cplusplus
 }

@@ -68,6 +68,10 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 				const void *desc);
 void dvb_desc_t2_delivery_free(const void *desc);
 
+extern const unsigned dvbt2_bw[];
+extern const uint32_t dvbt2_interval[];
+extern const unsigned dvbt2_transmission_mode[];
+
 #ifdef __cplusplus
 }
 #endif

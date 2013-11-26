@@ -116,3 +116,32 @@ void dvb_desc_t2_delivery_free(const void *desc)
 	if (d->subcell)
 		free(d->subcell);
 }
+
+const unsigned dvbt2_bw[] = {
+	[0] =  8000000,
+	[1] =  7000000,
+	[2] =  6000000,
+	[3] =  5000000,
+	[4] = 10000000,
+	[5] =  1712000,
+	[6 ...15] = 0,		/* Reserved */
+};
+const uint32_t dvbt2_interval[] = {
+	[0] = GUARD_INTERVAL_1_32,
+	[1] = GUARD_INTERVAL_1_16,
+	[2] = GUARD_INTERVAL_1_8,
+	[3] = GUARD_INTERVAL_1_4,
+	[4] = GUARD_INTERVAL_1_128,
+	[5] = GUARD_INTERVAL_19_128,
+	[6] = GUARD_INTERVAL_19_256,
+	[7 ...15] = GUARD_INTERVAL_AUTO /* Reserved */
+};
+const unsigned dvbt2_transmission_mode[] = {
+	[0] = TRANSMISSION_MODE_2K,
+	[1] = TRANSMISSION_MODE_8K,
+	[2] = TRANSMISSION_MODE_4K,
+	[3] = TRANSMISSION_MODE_1K,
+	[4] = TRANSMISSION_MODE_16K,
+	[5] = TRANSMISSION_MODE_32K,
+	[6 ...7] = TRANSMISSION_MODE_AUTO,	/* Reserved */
+};

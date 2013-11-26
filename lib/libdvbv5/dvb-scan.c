@@ -624,177 +624,279 @@ struct dvb_entry *dvb_scan_add_entry(struct dvb_v5_fe_parms *parms,
 	return NULL;
 }
 
-void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
-				 struct dvb_v5_descriptors *dvb_scan_handler,
-				 struct dvb_entry *first_entry,
-				 struct dvb_entry *entry)
+struct update_transponders {
+	struct dvb_v5_fe_parms *parms;
+	struct dvb_v5_descriptors *dvb_scan_handler;
+	struct dvb_entry *first_entry;
+	struct dvb_entry *entry;
+	uint32_t update;
+	enum dvb_sat_polarization pol;
+	uint32_t shift;
+};
+
+static void add_update_nit_dvbc(struct dvb_table_nit *nit,
+				struct dvb_table_nit_transport *tran,
+				struct dvb_desc *desc,
+				void *priv)
 {
+	struct update_transponders *tr = priv;
 	struct dvb_entry *new;
-	enum dvb_sat_polarization pol = POLARIZATION_OFF;
-	uint32_t shift = 0;
+	struct dvb_desc_cable_delivery *d = (void *)desc;
+
+	if (tr->update) {
+		uint32_t freq;
+		dvb_fe_retrieve_parm(tr->parms, DTV_FREQUENCY, &freq);
+
+		if (freq != d->frequency)
+			return;
+		new = tr->entry;
+	} else {
+		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
+					 d->frequency, tr->shift, tr->pol);
+		if (!new)
+			return;
+	}
+
+	/* Set NIT props for the transponder */
+	store_entry_prop(new, DTV_MODULATION,
+			 dvbc_modulation_table[d->modulation]);
+	store_entry_prop(new, DTV_SYMBOL_RATE, d->symbol_rate);
+	store_entry_prop(new, DTV_INNER_FEC, dvbc_fec_table[d->fec_inner]);
+
+}
+
+static void add_update_nit_isdbt(struct dvb_table_nit *nit,
+				 struct dvb_table_nit_transport *tran,
+				 struct dvb_desc *desc,
+				 void *priv)
+{
+	struct update_transponders *tr = priv;
+	struct dvb_entry *new;
+	struct isdbt_desc_terrestrial_delivery_system *d = (void *)desc;
 	int i;
+
+	if (tr->update) {
+		uint32_t mode = isdbt_mode[d->transmission_mode];
+		uint32_t guard = isdbt_interval[d->guard_interval];
+
+		store_entry_prop(tr->entry, DTV_TRANSMISSION_MODE, mode);
+		store_entry_prop(tr->entry, DTV_GUARD_INTERVAL, guard);
+		return;
+	}
+
+	for (i = 0; i < d->num_freqs; i++) {
+		uint32_t frq = d->frequency[i] * 1000000l / 7;
+
+		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
+					 frq, tr->shift, tr->pol);
+		if (!new)
+			return;
+	}
+}
+
+static void add_update_nit_dvbt2(struct dvb_table_nit *nit,
+				 struct dvb_table_nit_transport *tran,
+				 struct dvb_desc *desc,
+				 void *priv)
+{
+	struct update_transponders *tr = priv;
+	struct dvb_entry *new;
+	struct dvb_extension_descriptor *d = (void *)desc;
+	struct dvb_desc_t2_delivery *t2 = (void *)d->descriptor;
+	int i;
+
+	if (d->extension_code != T2_delivery_system_descriptor)
+		return;
+
+	if (tr->update) {
+		uint32_t freq;
+		dvb_fe_retrieve_parm(tr->parms, DTV_FREQUENCY, &freq);
+
+		if (tr->entry->service_id != t2->system_id)
+			return;
+		for (i = 0; i < t2->frequency_loop_length; i++) {
+			if (freq != t2->centre_frequency[i])
+				continue;
+
+			store_entry_prop(tr->entry, DTV_DELIVERY_SYSTEM,
+					SYS_DVBT2);
+			store_entry_prop(tr->entry, DTV_STREAM_ID,
+					t2->plp_id);
+			store_entry_prop(tr->entry, DTV_BANDWIDTH_HZ,
+					dvbt2_bw[t2->bandwidth]);
+			store_entry_prop(tr->entry, DTV_GUARD_INTERVAL,
+					dvbt2_interval[t2->guard_interval]);
+			store_entry_prop(tr->entry, DTV_TRANSMISSION_MODE,
+					dvbt2_transmission_mode[t2->transmission_mode]);
+		}
+		return;
+	}
+
+	for (i = 0; i < t2->frequency_loop_length; i++) {
+		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
+					 t2->centre_frequency[i],
+					 tr->shift, tr->pol);
+		if (!new)
+			return;
+		store_entry_prop(new, DTV_DELIVERY_SYSTEM,
+				SYS_DVBT2);
+		store_entry_prop(new, DTV_DELIVERY_SYSTEM,
+				 SYS_DVBT2);
+		store_entry_prop(new, DTV_STREAM_ID,
+				t2->plp_id);
+		store_entry_prop(new, DTV_BANDWIDTH_HZ,
+				dvbt2_bw[t2->bandwidth]);
+		store_entry_prop(new, DTV_GUARD_INTERVAL,
+				dvbt2_interval[t2->guard_interval]);
+		store_entry_prop(new, DTV_TRANSMISSION_MODE,
+				dvbt2_transmission_mode[t2->transmission_mode]);
+	}
+}
+
+static void add_update_nit_dvbt(struct dvb_table_nit *nit,
+				struct dvb_table_nit_transport *tran,
+				struct dvb_desc *desc,
+				void *priv)
+{
+	struct update_transponders *tr = priv;
+	struct dvb_entry *new;
+	struct dvb_desc_terrestrial_delivery *d = (void *)desc;
+
+	if (tr->update)
+		return;
+
+	new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
+				d->centre_frequency, tr->shift, tr->pol);
+	if (!new)
+		return;
+
+	/* Set NIT DVB-T props for the transponder */
+	store_entry_prop(new, DTV_MODULATION,
+				dvbt_modulation[d->constellation]);
+	store_entry_prop(new, DTV_BANDWIDTH_HZ,
+				dvbt_bw[d->bandwidth]);
+	store_entry_prop(new, DTV_CODE_RATE_HP,
+				dvbt_code_rate[d->code_rate_hp_stream]);
+	store_entry_prop(new, DTV_CODE_RATE_LP,
+				dvbt_code_rate[d->code_rate_lp_stream]);
+	store_entry_prop(new, DTV_GUARD_INTERVAL,
+				dvbt_interval[d->guard_interval]);
+	store_entry_prop(new, DTV_TRANSMISSION_MODE,
+				dvbt_transmission_mode[d->transmission_mode]);
+	store_entry_prop(new, DTV_HIERARCHY,
+				dvbt_hierarchy[d->hierarchy_information]);
+}
+
+static void add_update_nit_dvbs(struct dvb_table_nit *nit,
+				struct dvb_table_nit_transport *tran,
+				struct dvb_desc *desc,
+				void *priv)
+{
+	struct update_transponders *tr = priv;
+	struct dvb_entry *new;
+	struct dvb_desc_sat *d = (void *)desc;
+
+	if (tr->update) {
+		uint32_t freq;
+
+		dvb_fe_retrieve_parm(tr->parms, DTV_FREQUENCY, &freq);
+		if (freq != d->frequency)
+			return;
+		new = tr->entry;
+	} else {
+		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
+					 d->frequency, tr->shift, tr->pol);
+		if (!new)
+			return;
+	}
+
+	/* Set NIT DVB-S props for the transponder */
+
+	store_entry_prop(new, DTV_MODULATION,
+			dvbs_modulation[d->modulation_system]);
+	store_entry_prop(new, DTV_POLARIZATION,
+			dvbs_polarization[d->polarization]);
+	store_entry_prop(new, DTV_SYMBOL_RATE,
+			d->symbol_rate);
+	store_entry_prop(new, DTV_INNER_FEC,
+			dvbs_dvbc_dvbs_freq_inner[d->fec]);
+	store_entry_prop(new, DTV_ROLLOFF,
+				dvbs_rolloff[d->roll_off]);
+	if (d->roll_off != 0)
+		store_entry_prop(new, DTV_DELIVERY_SYSTEM,
+					SYS_DVBS2);
+}
+
+
+void __dvb_add_update_transponders(struct dvb_v5_fe_parms *parms,
+				   struct dvb_v5_descriptors *dvb_scan_handler,
+				   struct dvb_entry *first_entry,
+				   struct dvb_entry *entry,
+				   uint32_t update)
+{
+	struct update_transponders tr = {
+		.parms = parms,
+		.dvb_scan_handler = dvb_scan_handler,
+		.first_entry = first_entry,
+		.entry = entry,
+		.update = update,
+		.pol = POLARIZATION_OFF,
+	};
 
 	if (!dvb_scan_handler->nit)
 		return;
 
-	shift = estimate_freq_shift(parms);
+	tr.shift = estimate_freq_shift(parms);
 
 	switch (parms->current_sys) {
 	case SYS_DVBC_ANNEX_A:
 	case SYS_DVBC_ANNEX_C:
-		dvb_nit_transport_foreach(tran, dvb_scan_handler->nit) {
-			dvb_desc_find(struct dvb_desc_cable_delivery, cable,
-				      tran, cable_delivery_system_descriptor) {
-				new = dvb_scan_add_entry(parms,
-							 first_entry, entry,
-							 cable->frequency,
-							 shift, pol);
-				if (!new)
-					return;
-
-				/* Set NIT cable props for the transponder */
-				store_entry_prop(entry, DTV_MODULATION,
-						 dvbc_modulation_table[cable->modulation]);
-				store_entry_prop(entry, DTV_SYMBOL_RATE,
-						 cable->symbol_rate);
-				store_entry_prop(entry, DTV_INNER_FEC,
-						 dvbc_fec_table[cable->fec_inner]);
-
-			}
-		}
+		nit_descriptor_handler(parms, dvb_scan_handler->nit,
+				       cable_delivery_system_descriptor,
+				       NULL, add_update_nit_dvbc, &tr);
 		return;
 	case SYS_ISDBT:
 		/* FIXME: add some logic here to detect partial reception */
-		dvb_nit_transport_foreach(tran, dvb_scan_handler->nit) {
-			dvb_desc_find(struct isdbt_desc_terrestrial_delivery_system, d,
-				      tran, ISDBT_delivery_system_descriptor) {
-				uint32_t mode = isdbt_mode[d->transmission_mode];
-				uint32_t guard = isdbt_interval[d->guard_interval];
-
-				for (i = 0; i < d->num_freqs; i++) {
-					uint32_t frq = d->frequency[i] * 1000000l / 7;
-					new = dvb_scan_add_entry(parms,
-								first_entry, entry,
-								frq, shift, pol);
-					store_entry_prop(entry,
-							 DTV_TRANSMISSION_MODE,
-							 mode);
-					store_entry_prop(entry,
-							 DTV_GUARD_INTERVAL,
-							 guard);
-				}
-				if (!new)
-					return;
-			}
-		}
+		nit_descriptor_handler(parms, dvb_scan_handler->nit,
+				       ISDBT_delivery_system_descriptor,
+				       NULL, add_update_nit_isdbt, &tr);
 		return;
 	case SYS_DVBT:
-		dvb_nit_transport_foreach(tran, dvb_scan_handler->nit) {
-			dvb_desc_find(struct dvb_extension_descriptor, d,
-				      tran, extension_descriptor) {
-				struct dvb_desc_t2_delivery *t2;
-				if (d->extension_code != T2_delivery_system_descriptor)
-					continue;
+	case SYS_DVBT2:
+		nit_descriptor_handler(parms, dvb_scan_handler->nit,
+				       extension_descriptor,
+				       NULL, add_update_nit_dvbt2, &tr);
 
-				t2 = (struct dvb_desc_t2_delivery *)d->descriptor;
-
-				for (i = 0; i < t2->frequency_loop_length; i++) {
-
-					new = dvb_scan_add_entry(parms,
-								 first_entry, entry,
-								 t2->centre_frequency[i],
-								 shift, pol);
-					if (!new)
-						return;
-					store_entry_prop(entry, DTV_DELIVERY_SYSTEM,
-							SYS_DVBT2);
-#if 0
-					store_entry_prop(entry, DTV_DVBT2_PLP_ID_LEGACY,
-							nit_table->plp_id);
-					store_entry_prop(entry, DTV_BANDWIDTH_HZ,
-							nit_table->bandwidth);
-					store_entry_prop(entry, DTV_GUARD_INTERVAL,
-							nit_table->guard_interval);
-					store_entry_prop(entry, DTV_TRANSMISSION_MODE,
-							nit_table->transmission_mode);
-
-					/* Fill data from terrestrial descriptor */
-					store_entry_prop(entry, DTV_FREQUENCY,
-							nit_table->frequency[0]);
-					store_entry_prop(entry, DTV_MODULATION,
-							nit_table->modulation);
-					store_entry_prop(entry, DTV_CODE_RATE_HP,
-							nit_table->code_rate_hp);
-					store_entry_prop(entry, DTV_CODE_RATE_LP,
-							nit_table->code_rate_lp);
-					store_entry_prop(entry, DTV_HIERARCHY,
-							nit_table->hierarchy);
-#endif
-				}
-
-			}
-
-
-			dvb_desc_find(struct dvb_desc_terrestrial_delivery, d,
-				      tran, terrestrial_delivery_system_descriptor) {
-				new = dvb_scan_add_entry(parms,
-							 first_entry, entry,
-							 d->centre_frequency,
-							 shift, pol);
-				if (!new)
-					return;
-
-				/* Set NIT DVB-T props for the transponder */
-				store_entry_prop(entry, DTV_MODULATION,
-						 dvbt_modulation[d->constellation]);
-				store_entry_prop(entry, DTV_BANDWIDTH_HZ,
-						 dvbt_bw[d->bandwidth]);
-				store_entry_prop(entry, DTV_CODE_RATE_HP,
-						 dvbt_code_rate[d->code_rate_hp_stream]);
-				store_entry_prop(entry, DTV_CODE_RATE_LP,
-						 dvbt_code_rate[d->code_rate_lp_stream]);
-				store_entry_prop(entry, DTV_GUARD_INTERVAL,
-						 dvbt_interval[d->guard_interval]);
-				store_entry_prop(entry, DTV_TRANSMISSION_MODE,
-						 dvbt_transmission_mode[d->transmission_mode]);
-				store_entry_prop(entry, DTV_HIERARCHY,
-						 dvbt_hierarchy[d->hierarchy_information]);
-			}
-		}
+		nit_descriptor_handler(parms, dvb_scan_handler->nit,
+				       terrestrial_delivery_system_descriptor,
+				       NULL, add_update_nit_dvbt, &tr);
 		return;
 	case SYS_DVBS:
 	case SYS_DVBS2:
-		dvb_nit_transport_foreach(tran, dvb_scan_handler->nit) {
-			dvb_desc_find(struct dvb_desc_sat, d,
-				      tran, satellite_delivery_system_descriptor) {
-				new = dvb_scan_add_entry(parms,
-							 first_entry, entry,
-							 d->frequency,
-							 shift, pol);
-				if (!new)
-					return;
-
-				/* Set NIT DVB-S props for the transponder */
-
-				store_entry_prop(entry, DTV_MODULATION,
-						dvbs_modulation[d->modulation_system]);
-				store_entry_prop(entry, DTV_POLARIZATION,
-						dvbs_polarization[d->polarization]);
-				store_entry_prop(entry, DTV_SYMBOL_RATE,
-						d->symbol_rate);
-				store_entry_prop(entry, DTV_INNER_FEC,
-						dvbs_dvbc_dvbs_freq_inner[d->fec]);
-				store_entry_prop(entry, DTV_ROLLOFF,
-						 dvbs_rolloff[d->roll_off]);
-				if (d->roll_off != 0)
-					store_entry_prop(entry, DTV_DELIVERY_SYSTEM,
-							 SYS_DVBS2);
-
-			}
-		}
+		nit_descriptor_handler(parms, dvb_scan_handler->nit,
+				       satellite_delivery_system_descriptor,
+				       NULL, add_update_nit_dvbs, &tr);
 		return;
 	default:
 		dvb_log("Transponders detection not implemented for this standard yet.");
 		return;
 	}
+}
+
+void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
+				 struct dvb_v5_descriptors *dvb_scan_handler,
+				 struct dvb_entry *first_entry,
+				 struct dvb_entry *entry)
+{
+	return __dvb_add_update_transponders(parms, dvb_scan_handler,
+					     first_entry, entry, 0);
+}
+
+void dvb_update_transponders(struct dvb_v5_fe_parms *parms,
+			     struct dvb_v5_descriptors *dvb_scan_handler,
+			     struct dvb_entry *first_entry,
+			     struct dvb_entry *entry)
+{
+	return __dvb_add_update_transponders(parms, dvb_scan_handler,
+					     first_entry, entry, 1);
 }
