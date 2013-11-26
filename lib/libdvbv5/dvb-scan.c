@@ -51,9 +51,11 @@
 #include "descriptors/nit.h"
 #include "descriptors/sdt.h"
 #include "descriptors/vct.h"
+#include "descriptors/desc_extension.h"
 #include "descriptors/desc_cable_delivery.h"
 #include "descriptors/desc_isdbt_delivery.h"
 #include "descriptors/desc_terrestrial_delivery.h"
+#include "descriptors/desc_t2_delivery.h"
 #include "dvb-scan-table-handler.h"
 
 static int poll(struct dvb_v5_fe_parms *parms, int fd, unsigned int seconds)
@@ -662,6 +664,7 @@ void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
 		}
 		return;
 	case SYS_ISDBT:
+		/* FIXME: add some logic here to detect partial reception */
 		dvb_nit_transport_foreach(tran, dvb_scan_handler->nit) {
 			dvb_desc_find(struct isdbt_desc_terrestrial_delivery_system, d,
 				      tran, ISDBT_delivery_system_descriptor) {
@@ -687,6 +690,51 @@ void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
 		return;
 	case SYS_DVBT:
 		dvb_nit_transport_foreach(tran, dvb_scan_handler->nit) {
+			dvb_desc_find(struct dvb_extension_descriptor, d,
+				      tran, extension_descriptor) {
+				struct dvb_desc_t2_delivery *t2;
+				if (d->extension_code != T2_delivery_system_descriptor)
+					continue;
+
+				t2 = (struct dvb_desc_t2_delivery *)d->descriptor;
+
+				for (i = 0; i < t2->frequency_loop_length; i++) {
+
+					new = dvb_scan_add_entry(parms,
+								 first_entry, entry,
+								 t2->centre_frequency[i],
+								 shift, pol);
+					if (!new)
+						return;
+					store_entry_prop(entry, DTV_DELIVERY_SYSTEM,
+							SYS_DVBT2);
+#if 0
+					store_entry_prop(entry, DTV_DVBT2_PLP_ID_LEGACY,
+							nit_table->plp_id);
+					store_entry_prop(entry, DTV_BANDWIDTH_HZ,
+							nit_table->bandwidth);
+					store_entry_prop(entry, DTV_GUARD_INTERVAL,
+							nit_table->guard_interval);
+					store_entry_prop(entry, DTV_TRANSMISSION_MODE,
+							nit_table->transmission_mode);
+
+					/* Fill data from terrestrial descriptor */
+					store_entry_prop(entry, DTV_FREQUENCY,
+							nit_table->frequency[0]);
+					store_entry_prop(entry, DTV_MODULATION,
+							nit_table->modulation);
+					store_entry_prop(entry, DTV_CODE_RATE_HP,
+							nit_table->code_rate_hp);
+					store_entry_prop(entry, DTV_CODE_RATE_LP,
+							nit_table->code_rate_lp);
+					store_entry_prop(entry, DTV_HIERARCHY,
+							nit_table->hierarchy);
+#endif
+				}
+
+			}
+
+
 			dvb_desc_find(struct dvb_desc_terrestrial_delivery, d,
 				      tran, terrestrial_delivery_system_descriptor) {
 				new = dvb_scan_add_entry(parms,
