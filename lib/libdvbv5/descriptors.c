@@ -871,7 +871,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	[extension_descriptor] = {
 		.name  = "extension_descriptor",
 		.init  = extension_descriptor_init,
-		.print = NULL,
+		.print = extension_descriptor_print,
 		.free  = extension_descriptor_free,
 		.size  = sizeof(struct dvb_extension_descriptor),
 	},

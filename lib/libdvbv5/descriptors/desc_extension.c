@@ -120,7 +120,7 @@ const struct dvb_ext_descriptor dvb_ext_descriptors[] = {
 void extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 				     const uint8_t *buf, struct dvb_desc *desc)
 {
-	struct dvb_extension_descriptor *ext = (struct dvb_extension_descriptor *)desc;
+	struct dvb_extension_descriptor *ext = (void *)desc;
 	unsigned char *p = (unsigned char *)buf;
 	unsigned desc_type = *p;
 	size_t size = 0;
@@ -139,7 +139,7 @@ void extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 			break;
 		/* fall through */
 	case 3:
-		dvb_log("%sextension descriptor %s type 0x%x, size %d",
+		dvb_log("%sextension descriptor %s type 0x%02x, size %d",
 			dvb_ext_descriptors[desc_type].init ? "" : "Not handled ",
 			dvb_ext_descriptors[desc_type].name, desc_type, desc_len);
 		hexdump(parms, "content: ", p, desc_len);
@@ -147,20 +147,40 @@ void extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 
 	init = dvb_ext_descriptors[desc_type].init;
 	if (init)
-		size = dvb_descriptors[desc_type].size;
+		size = dvb_ext_descriptors[desc_type].size;
 	if (!size)
 		size = desc_len;
 
-	ext->descriptor = malloc(size);
-	memcpy(ext->descriptor, p, size);
+	ext->descriptor = calloc(1, size);
+
 	if (init)
 		init(parms, p, ext, ext->descriptor);
+	else
+		memcpy(ext->descriptor, p, size);
 }
 
 void extension_descriptor_free(struct dvb_desc *descriptor)
 {
-	struct dvb_extension_descriptor *ext = (struct dvb_extension_descriptor *)descriptor;
+	struct dvb_extension_descriptor *ext = (void *)descriptor;
+	uint8_t type = ext->extension_code;
 
-	if (ext->descriptor)
-		free(ext->descriptor);
+	if (!ext->descriptor)
+		return;
+
+	if (dvb_ext_descriptors[type].free)
+		dvb_ext_descriptors[type].free(ext->descriptor);
+
+	free(ext->descriptor);
+}
+
+void extension_descriptor_print(struct dvb_v5_fe_parms *parms,
+				const struct dvb_desc *desc)
+{
+	struct dvb_extension_descriptor *ext = (void *)desc;
+	uint8_t type = ext->extension_code;
+	dvb_log("Extension descriptor %s type 0x%02x",
+		dvb_ext_descriptors[type].name, type);
+
+	if (dvb_ext_descriptors[type].print)
+		dvb_ext_descriptors[type].print(parms, ext, ext->descriptor);
 }
