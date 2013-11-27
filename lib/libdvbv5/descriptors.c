@@ -896,7 +896,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.init  = dvb_desc_logical_channel_init,
 		.print = dvb_desc_logical_channel_print,
 		.free  = dvb_desc_logical_channel_free,
-		.size  = sizeof(struct dvb_desc_logical_channel_number),
+		.size  = sizeof(struct dvb_desc_logical_channel),
 	},
 
 	[carousel_id_descriptor] = {
