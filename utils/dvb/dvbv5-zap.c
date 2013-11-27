@@ -556,6 +556,10 @@ int do_traffic_monitor(struct arguments *args,
 		unsigned char buffer[BSIZE];
 		int pid, ok;
 		ssize_t r;
+
+		if (timeout_flag)
+			break;
+
 		if ((r = read(dvr_fd, buffer, BSIZE)) <= 0) {
 			if (errno == EOVERFLOW) {
 				struct timeval now;
@@ -741,8 +745,14 @@ int main(int argc, char **argv)
 		goto err;
 	}
 
-	if (args.traffic_monitor)
-		return do_traffic_monitor(&args, parms);
+	if (args.traffic_monitor) {
+		signal(SIGALRM, do_timeout);
+		if (args.timeout > 0)
+			alarm(args.timeout);
+
+		err = do_traffic_monitor(&args, parms);
+		goto err;
+	}
 
 	if (args.rec_psi) {
 		if (sid < 0) {
