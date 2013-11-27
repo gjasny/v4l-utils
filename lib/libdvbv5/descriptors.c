@@ -87,7 +87,8 @@ const struct dvb_table_init dvb_table_initializers[] = {
 char *default_charset = "iso-8859-1";
 char *output_charset = "utf-8";
 
-void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, uint16_t section_length, struct dvb_desc **head_desc)
+void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			   uint16_t section_length, struct dvb_desc **head_desc)
 {
 	const uint8_t *ptr = buf;
 	struct dvb_desc *current = NULL;
@@ -106,14 +107,15 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ui
 				break;
 			/* fall through */
 		case 3:
-			dvb_log("%sdescriptor %s type 0x%x, size %d",
+			dvb_log("%sdescriptor %s type 0x%02x, size %d",
 				dvb_descriptors[desc_type].init ? "" : "Not handled ",
 				dvb_descriptors[desc_type].name, desc_type, desc_len);
 			hexdump(parms, "content: ", ptr + 2, desc_len);
 		}
 
 		if (desc_len > section_length - 2) {
-			dvb_logerr("descriptor is too big");
+			dvb_logwarn("descriptor type %0x02x is too big",
+				   desc_type);
 			return;
 		}
 
@@ -125,13 +127,15 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ui
 			size = dvb_descriptors[desc_type].size;
 		}
 		if (!size) {
-			dvb_logerr("descriptor type 0x%x has no size defined", desc_type);
+			dvb_logwarn("descriptor type 0x%02x has no size defined", desc_type);
 			size = 4096;
 		}
 		if (ptr + 2 >=  buf + section_length) {
-			dvb_logerr("descriptor is truncated");
+			dvb_logwarn("descriptor type 0x%02x is truncated: desc len %ld, section len %zd",
+				   desc_type, desc_len, section_length - (ptr - buf));
 			return;
 		}
+
 		current = malloc(size);
 		if (!current)
 			dvb_perror("Out of memory");
