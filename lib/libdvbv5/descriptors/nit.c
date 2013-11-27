@@ -173,7 +173,7 @@ void nit_descriptor_handler(struct dvb_v5_fe_parms *parms,
 
 		}
 	}
-	if (!call_tran || !parms->verbose)
+	if (!call_tran && !parms->verbose)
 		return;
 
 	dvb_nit_transport_foreach(tran, nit) {
