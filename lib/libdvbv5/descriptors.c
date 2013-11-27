@@ -131,7 +131,7 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			size = 4096;
 		}
 		if (ptr + 2 >=  buf + section_length) {
-			dvb_logwarn("descriptor type 0x%02x is truncated: desc len %ld, section len %zd",
+			dvb_logwarn("descriptor type 0x%02x is truncated: desc len %d, section len %zd",
 				   desc_type, desc_len, section_length - (ptr - buf));
 			return;
 		}

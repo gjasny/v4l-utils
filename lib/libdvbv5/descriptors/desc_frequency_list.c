@@ -28,7 +28,7 @@ void dvb_desc_frequency_list_init(struct dvb_v5_fe_parms *parms, const uint8_t *
 	struct dvb_desc_frequency_list *d = (struct dvb_desc_frequency_list *) desc;
 	size_t len;
 	int i;
-	char *p = buf;
+	const uint8_t *p = buf;
 
 	len = sizeof(*d) - offsetof(struct dvb_desc_frequency_list, bitfield);
 	memcpy(&d->bitfield, p, len);
