@@ -40,7 +40,6 @@
 #include "dvb-file.h"
 #include "dvb-demux.h"
 #include "dvb-scan.h"
-#include "dvb-scan-table-handler.h"
 
 #define CHANNEL_FILE	"channels.conf"
 #define PROGRAM_NAME	"dvbv5-zap"

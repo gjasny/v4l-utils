@@ -43,8 +43,10 @@
 #include "crc32.h"
 #include "dvb-fe.h"
 #include "dvb-file.h"
+#include "dvb-scan.h"
 #include "dvb-log.h"
 #include "dvb-demux.h"
+#include "descriptors.h"
 #include "descriptors/header.h"
 #include "descriptors/pat.h"
 #include "descriptors/pmt.h"
@@ -57,7 +59,7 @@
 #include "descriptors/desc_partial_reception.h"
 #include "descriptors/desc_terrestrial_delivery.h"
 #include "descriptors/desc_t2_delivery.h"
-#include "dvb-scan-table-handler.h"
+#include "descriptors/desc_sat.h"
 
 static int poll(struct dvb_v5_fe_parms *parms, int fd, unsigned int seconds)
 {
@@ -235,6 +237,43 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 
 	*table = tbl;
 	return 0;
+}
+
+struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system,
+						       int verbose)
+{
+	struct dvb_v5_descriptors *dvb_scan_handler;
+
+	dvb_scan_handler = calloc(sizeof(*dvb_scan_handler), 1);
+	if (!dvb_scan_handler)
+		return NULL;
+
+	dvb_scan_handler->verbose = verbose;
+	dvb_scan_handler->delivery_system = delivery_system;
+
+	return dvb_scan_handler;
+}
+
+void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler)
+{
+	int i;
+
+	if (dvb_scan_handler->pat)
+		dvb_table_pat_free(dvb_scan_handler->pat);
+	if (dvb_scan_handler->vct)
+		dvb_table_vct_free(dvb_scan_handler->vct);
+	if (dvb_scan_handler->nit)
+		dvb_table_nit_free(dvb_scan_handler->nit);
+	if (dvb_scan_handler->sdt)
+		dvb_table_sdt_free(dvb_scan_handler->sdt);
+	if (dvb_scan_handler->program) {
+		for (i = 0; i < dvb_scan_handler->num_program; i++)
+			if (dvb_scan_handler->program[i].pmt)
+				dvb_table_pmt_free(dvb_scan_handler->program[i].pmt);
+		free(dvb_scan_handler->program);
+	}
+
+	free(dvb_scan_handler);
 }
 
 struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,

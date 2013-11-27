@@ -36,11 +36,37 @@ extern "C" {
 
 struct dvb_entry;
 
+struct dvb_v5_descriptors_program {
+	struct dvb_table_pat_program *pat_pgm;
+	struct dvb_table_pmt *pmt;
+};
+
+struct dvb_v5_descriptors {
+	int verbose;
+	uint32_t delivery_system;
+
+	struct dvb_entry *entry;
+	unsigned num_entry;
+
+	struct dvb_table_pat *pat;
+	struct dvb_table_vct *vct;
+	struct dvb_v5_descriptors_program *program;
+	struct dvb_table_nit *nit;
+	struct dvb_table_sdt *sdt;
+
+	unsigned num_program;
+};
+
 int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, unsigned char **table,
 		unsigned timeout);
 
 int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, int id, uint8_t **table,
 		unsigned timeout);
+
+struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system,
+						       int verbose);
+
+void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler);
 
 struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms, int dmx_fd,
 					  uint32_t delivery_system,
@@ -73,6 +99,11 @@ void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
 				 struct dvb_v5_descriptors *dvb_scan_handler,
 				 struct dvb_entry *first_entry,
 				 struct dvb_entry *entry);
+
+void dvb_update_transponders(struct dvb_v5_fe_parms *parms,
+			     struct dvb_v5_descriptors *dvb_scan_handler,
+			     struct dvb_entry *first_entry,
+			     struct dvb_entry *entry);
 
 
 #ifdef __cplusplus

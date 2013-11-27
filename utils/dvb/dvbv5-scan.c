@@ -37,7 +37,6 @@
 #include "dvb-demux.h"
 #include "dvb-v5-std.h"
 #include "dvb-scan.h"
-#include "dvb-scan-table-handler.h"
 
 #define PROGRAM_NAME	"dvbv5-scan"
 #define DEFAULT_OUTPUT  "dvb_channel.conf"

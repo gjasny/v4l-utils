@@ -26,10 +26,27 @@
 #include "dvb-file.h"
 #include "dvb-v5-std.h"
 #include "dvb-scan.h"
-#include "dvb-scan-table-handler.h"
 #include "dvb-log.h"
+#include "descriptors.h"
+#include "descriptors/nit.h"
+#include "descriptors/sdt.h"
+#include "descriptors/pat.h"
+#include "descriptors/pmt.h"
+#include "descriptors/vct.h"
 #include "descriptors/desc_ts_info.h"
 #include "descriptors/desc_logical_channel.h"
+#include "descriptors/desc_language.h"
+#include "descriptors/desc_network_name.h"
+#include "descriptors/desc_cable_delivery.h"
+#include "descriptors/desc_sat.h"
+#include "descriptors/desc_terrestrial_delivery.h"
+#include "descriptors/desc_service.h"
+#include "descriptors/desc_service_list.h"
+#include "descriptors/desc_frequency_list.h"
+#include "descriptors/desc_event_short.h"
+#include "descriptors/desc_event_extended.h"
+#include "descriptors/desc_atsc_service_location.h"
+#include "descriptors/desc_hierarchy.h"
 
 /*
  * Generic parse function for all formats each channel is contained into
@@ -766,7 +783,9 @@ static char *dvb_vchannel(struct dvb_table_nit *nit, uint16_t service_id)
 	if (!nit)
 		return NULL;
 
-	dvb_desc_find(struct dvb_desc_logical_channel, desc, nit, logical_channel_number_descriptor) {
+for( struct dvb_desc_logical_channel *desc = (struct dvb_desc_logical_channel *) nit->descriptor; desc; desc = (struct dvb_desc_logical_channel *) desc->next ) \
+		if(desc->type == logical_channel_number_descriptor) {
+//	dvb_desc_find(struct dvb_desc_logical_channel, desc, nit, logical_channel_number_descriptor) {
 		struct dvb_desc_logical_channel *d = (void *)desc;
 
 		size_t len;

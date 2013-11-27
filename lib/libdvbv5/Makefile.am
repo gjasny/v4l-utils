@@ -21,7 +21,6 @@ libdvbv5_la_SOURCES = \
   dvb-zap-format.c \
   dvb-sat.c ../include/dvb-sat.h \
   dvb-scan.c ../include/dvb-scan.h \
-  dvb-scan-table-handler.c ../include/dvb-scan-table-handler.h \
   parse_string.c parse_string.h \
   crc32.c crc32.h \
   descriptors.c ../include/descriptors.h \
