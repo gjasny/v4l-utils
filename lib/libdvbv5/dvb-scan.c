@@ -819,10 +819,21 @@ static void add_update_nit_dvbt2(struct dvb_table_nit *nit,
 
 	for (i = 0; i < t2->frequency_loop_length; i++) {
 		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
-					 t2->centre_frequency[i],
+					 t2->centre_frequency[i] * 10,
 					 tr->shift, tr->pol);
 		if (!new)
 			return;
+
+		store_entry_prop(new, DTV_DELIVERY_SYSTEM,
+				 SYS_DVBT2);
+		store_entry_prop(new, DTV_STREAM_ID,
+				t2->plp_id);
+		store_entry_prop(new, DTV_BANDWIDTH_HZ,
+				dvbt2_bw[t2->bandwidth]);
+		store_entry_prop(new, DTV_GUARD_INTERVAL,
+				dvbt2_interval[t2->guard_interval]);
+		store_entry_prop(new, DTV_TRANSMISSION_MODE,
+				dvbt2_transmission_mode[t2->transmission_mode]);
 	}
 }
 
@@ -839,7 +850,7 @@ static void add_update_nit_dvbt(struct dvb_table_nit *nit,
 		return;
 
 	new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
-				d->centre_frequency, tr->shift, tr->pol);
+				d->centre_frequency * 10, tr->shift, tr->pol);
 	if (!new)
 		return;
 

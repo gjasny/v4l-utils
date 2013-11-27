@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  *
+ * Based on ETSI EN 300 468 V1.11.1 (2010-04)
+ *
  */
 
 #ifndef _TERRESTRIAL_DELIVERY_H

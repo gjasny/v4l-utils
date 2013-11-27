@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  *
+ * Based on ETSI EN 300 468 V1.11.1 (2010-04)
+ *
  */
 
 #include "descriptors/desc_terrestrial_delivery.h"
@@ -39,7 +41,7 @@ void dvb_desc_terrestrial_delivery_print(struct dvb_v5_fe_parms *parms, const st
 	const struct dvb_desc_terrestrial_delivery *tdel = (const struct dvb_desc_terrestrial_delivery *) desc;
 	dvb_log("|       terrestrial delivery");
 	dvb_log("|           length                %d", tdel->length);
-	dvb_log("|           centre frequency      %d", tdel->centre_frequency);
+	dvb_log("|           centre frequency      %d", tdel->centre_frequency * 10);
 	dvb_log("|           mpe_fec_indicator     %d", tdel->mpe_fec_indicator);
 	dvb_log("|           time_slice_indicator  %d", tdel->time_slice_indicator);
 	dvb_log("|           priority              %d", tdel->priority);
@@ -63,7 +65,7 @@ const unsigned dvbt_bw[] = {
 const unsigned dvbt_modulation[] = {
 	[0] = QPSK,
 	[1] = QAM_16,
-	[2] = QAM_32,
+	[2] = QAM_64,
 	[3] = QAM_AUTO	/* Reserved */
 };
 const unsigned dvbt_hierarchy[] = {
