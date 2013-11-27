@@ -42,22 +42,23 @@
 
 int dvb_dmx_open(int adapter, int demux)
 {
-  char* demux_name = NULL;
-  asprintf(&demux_name, "/dev/dvb/adapter%i/demux%i", adapter, demux );
-  int fd_demux = open( demux_name, O_RDWR | O_NONBLOCK );
-  free( demux_name );
-  return fd_demux;
+	char* demux_name = NULL;
+
+	asprintf(&demux_name, "/dev/dvb/adapter%i/demux%i", adapter, demux );
+	int fd_demux = open( demux_name, O_RDWR | O_NONBLOCK );
+	free(demux_name);
+	return fd_demux;
 }
 
 void dvb_dmx_close(int dmx_fd)
 {
-  (void) ioctl( dmx_fd, DMX_STOP);
-  close( dmx_fd);
+	(void) ioctl(dmx_fd, DMX_STOP);
+	close( dmx_fd);
 }
 
 void dvb_dmx_stop(int dmx_fd)
 {
-  (void) ioctl( dmx_fd, DMX_STOP);
+	(void) ioctl(dmx_fd, DMX_STOP);
 }
 
 int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type, dmx_output_t output, int buffersize)
