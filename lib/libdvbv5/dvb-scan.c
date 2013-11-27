@@ -795,23 +795,27 @@ static void add_update_nit_dvbt2(struct dvb_table_nit *nit,
 
 		if (tr->entry->service_id != t2->system_id)
 			return;
-		for (i = 0; i < t2->frequency_loop_length; i++) {
-			if (freq != t2->centre_frequency[i])
-				continue;
 
-			store_entry_prop(tr->entry, DTV_DELIVERY_SYSTEM,
-					SYS_DVBT2);
-			store_entry_prop(tr->entry, DTV_STREAM_ID,
-					t2->plp_id);
-			store_entry_prop(tr->entry, DTV_BANDWIDTH_HZ,
-					dvbt2_bw[t2->bandwidth]);
-			store_entry_prop(tr->entry, DTV_GUARD_INTERVAL,
-					dvbt2_interval[t2->guard_interval]);
-			store_entry_prop(tr->entry, DTV_TRANSMISSION_MODE,
-					dvbt2_transmission_mode[t2->transmission_mode]);
-		}
+		store_entry_prop(tr->entry, DTV_DELIVERY_SYSTEM,
+				SYS_DVBT2);
+		store_entry_prop(tr->entry, DTV_STREAM_ID,
+				t2->plp_id);
+
+		if (d->length -1 <= 4)
+			return;
+
+		store_entry_prop(tr->entry, DTV_BANDWIDTH_HZ,
+				dvbt2_bw[t2->bandwidth]);
+		store_entry_prop(tr->entry, DTV_GUARD_INTERVAL,
+				dvbt2_interval[t2->guard_interval]);
+		store_entry_prop(tr->entry, DTV_TRANSMISSION_MODE,
+				dvbt2_transmission_mode[t2->transmission_mode]);
+
 		return;
 	}
+
+	if (d->length -1 <= 4)
+		return;
 
 	for (i = 0; i < t2->frequency_loop_length; i++) {
 		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
@@ -819,18 +823,6 @@ static void add_update_nit_dvbt2(struct dvb_table_nit *nit,
 					 tr->shift, tr->pol);
 		if (!new)
 			return;
-		store_entry_prop(new, DTV_DELIVERY_SYSTEM,
-				SYS_DVBT2);
-		store_entry_prop(new, DTV_DELIVERY_SYSTEM,
-				 SYS_DVBT2);
-		store_entry_prop(new, DTV_STREAM_ID,
-				t2->plp_id);
-		store_entry_prop(new, DTV_BANDWIDTH_HZ,
-				dvbt2_bw[t2->bandwidth]);
-		store_entry_prop(new, DTV_GUARD_INTERVAL,
-				dvbt2_interval[t2->guard_interval]);
-		store_entry_prop(new, DTV_TRANSMISSION_MODE,
-				dvbt2_transmission_mode[t2->transmission_mode]);
 	}
 }
 
