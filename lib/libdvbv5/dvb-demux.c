@@ -69,6 +69,8 @@ int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type, dmx_output_t outp
 			perror("DMX_SET_BUFFER_SIZE failed");
 	}
 
+	memset(&pesfilter, 0, sizeof(pesfilter));
+
 	pesfilter.pid = pid;
 	pesfilter.input = DMX_IN_FRONTEND;
 	pesfilter.output = output;
