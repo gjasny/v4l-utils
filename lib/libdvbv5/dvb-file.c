@@ -938,8 +938,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 	}
 
 	if (!found) {
-		fprintf(stderr, "Service ID %d not found on PMT!\n",
-			service_id);
+		dvb_logwarn("Service ID %d not found on PMT!", service_id);
 		return -1;
 	}
 
@@ -952,7 +951,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 		entry = entry->next;
 	}
 	if (!entry) {
-		fprintf(stderr, "Not enough memory\n");
+		dvb_logerr("Not enough memory");
 		return -1;
 	}
 
