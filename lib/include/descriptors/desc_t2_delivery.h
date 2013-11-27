@@ -31,12 +31,6 @@ struct dvb_desc_t2_delivery_subcell {
 } __attribute__((packed));
 
 struct dvb_desc_t2_delivery {
-	uint32_t *centre_frequency;
-	uint8_t frequency_loop_length;
-	uint8_t subcel_info_loop_length;
-	struct dvb_desc_t2_delivery_subcell *subcell;
-
-	uint8_t descriptor_tag_extension;
 	uint8_t plp_id;
 	uint16_t system_id;
 	union {
@@ -51,6 +45,11 @@ struct dvb_desc_t2_delivery {
 			uint16_t SISO_MISO:2;
 		};
 	};
+
+	uint32_t *centre_frequency;
+	uint8_t frequency_loop_length;
+	uint8_t subcel_info_loop_length;
+	struct dvb_desc_t2_delivery_subcell *subcell;
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;

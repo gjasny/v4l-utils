@@ -31,19 +31,31 @@ void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 {
 	struct dvb_desc_t2_delivery *d = desc;
 	unsigned char *p = (unsigned char *) buf;
-	size_t len;
+	size_t desc_len = ext->length - 1, len, len2;
 	int i;
 
-	len = sizeof(*d);
+	len = offsetof(struct dvb_desc_t2_delivery, bitfield);
+	len2 = offsetof(struct dvb_desc_t2_delivery, centre_frequency);
+
+	if (desc_len < len) {
+		dvb_logwarn("T2 delivery descriptor is too small");
+		return;
+	}
+	if (desc_len < len2) {
+		memcpy(p, buf, len);
+		bswap16(d->system_id);
+
+		if (desc_len != len)
+			dvb_logwarn("T2 delivery descriptor is truncated");
+
+		return;
+	}
+	memcpy(p, buf, len2);
+	p += len2;
+
+	len = desc_len - (p - buf);
 	memcpy(&d->centre_frequency, p, len);
 	p += len;
-
-	bswap16(d->system_id);
-
-	if (ext->length - 1 <= 4)
-		return;
-
-	bswap16(d->bitfield);
 
 	if (d->tfs_flag)
 		d->frequency_loop_length = 1;
@@ -52,9 +64,12 @@ void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 		p++;
 	}
 
-	d->centre_frequency = malloc(sizeof(*d->centre_frequency) * d->frequency_loop_length);
-	if (!d->centre_frequency)
+	d->centre_frequency = calloc(d->frequency_loop_length,
+				     sizeof(*d->centre_frequency));
+	if (!d->centre_frequency) {
 		dvb_perror("Out of memory");
+		return;
+	}
 
 	memcpy(d->centre_frequency, p, sizeof(*d->centre_frequency) * d->frequency_loop_length);
 	p += sizeof(*d->centre_frequency) * d->frequency_loop_length;
@@ -65,9 +80,11 @@ void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 	d->subcel_info_loop_length = *p;
 	p++;
 
-	d->subcell = malloc(sizeof(*d->subcell) * d->subcel_info_loop_length);
-	if (!d->subcell)
+	d->subcell = calloc(d->subcel_info_loop_length, sizeof(*d->subcell));
+	if (!d->subcell) {
 		dvb_perror("Out of memory");
+		return;
+	}
 	memcpy(d->subcell, p, sizeof(*d->subcell) * d->subcel_info_loop_length);
 
 	for (i = 0; i < d->subcel_info_loop_length; i++)
@@ -81,8 +98,7 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 	const struct dvb_desc_t2_delivery *d = desc;
 	int i;
 
-	dvb_log("|       t2 delivery");
-	dvb_log("|           descriptor_tag_extension  %d", d->descriptor_tag_extension);
+	dvb_log("|       DVB-T2 delivery");
 	dvb_log("|           plp_id                    %d", d->plp_id);
 	dvb_log("|           system_id                 %d", d->system_id);
 
