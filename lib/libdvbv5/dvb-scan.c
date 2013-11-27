@@ -344,6 +344,8 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 			      DVB_TABLE_PAT, DVB_TABLE_PAT_PID,
 			      (uint8_t **) &dvb_scan_handler->pat,
 			      pat_pmt_time * timeout_multiply);
+	if (parms->abort)
+		return dvb_scan_handler;
 	if (rc < 0) {
 		dvb_logerr("error while waiting for PAT table");
 		dvb_scan_free_handler_table(dvb_scan_handler);
@@ -358,6 +360,8 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 				      atsc_filter, DVB_TABLE_VCT_PID,
 				      (uint8_t **)&dvb_scan_handler->vct,
 				      vct_time * timeout_multiply);
+		if (parms->abort)
+			return dvb_scan_handler;
 		if (rc < 0)
 			dvb_logerr("error while waiting for VCT table");
 		else if (parms->verbose)
@@ -383,6 +387,10 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 				      DVB_TABLE_PMT, program->pid,
 				      (uint8_t **)&dvb_scan_handler->program[num_pmt].pmt,
 				      pat_pmt_time * timeout_multiply);
+		if (parms->abort) {
+			dvb_scan_handler->num_program = num_pmt + 1;
+			return dvb_scan_handler;
+		}
 		if (rc < 0) {
 			dvb_logerr("error while reading the PMT table for service 0x%04x",
 				   program->service_id);
@@ -400,6 +408,8 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 			      DVB_TABLE_NIT, DVB_TABLE_NIT_PID,
 			      (uint8_t **)&dvb_scan_handler->nit,
 			      nit_time * timeout_multiply);
+	if (parms->abort)
+		return dvb_scan_handler;
 	if (rc < 0)
 		dvb_logerr("error while reading the NIT table");
 	else if (parms->verbose)
@@ -411,6 +421,8 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 				DVB_TABLE_SDT, DVB_TABLE_SDT_PID,
 				(uint8_t **)&dvb_scan_handler->sdt,
 				sdt_time * timeout_multiply);
+		if (parms->abort)
+			return dvb_scan_handler;
 		if (rc < 0)
 			dvb_logerr("error while reading the SDT table");
 		else if (parms->verbose)
@@ -425,6 +437,8 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 				      DVB_TABLE_NIT2, DVB_TABLE_NIT_PID,
 				      (uint8_t **)&dvb_scan_handler->nit,
 				      nit_time * timeout_multiply);
+		if (parms->abort)
+			return dvb_scan_handler;
 		if (rc < 0)
 			dvb_logerr("error while reading the NIT table");
 		else if (parms->verbose)
@@ -434,6 +448,8 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 				DVB_TABLE_SDT2, DVB_TABLE_SDT_PID,
 				(uint8_t **)&dvb_scan_handler->sdt,
 				sdt_time * timeout_multiply);
+		if (parms->abort)
+			return dvb_scan_handler;
 		if (rc < 0)
 			dvb_logerr("error while reading the SDT table");
 		else if (parms->verbose)

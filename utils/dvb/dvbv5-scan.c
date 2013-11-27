@@ -172,6 +172,8 @@ static int check_frontend(void *__args,
 
 	args->n_status_lines = 0;
 	for (i = 0; i < args->timeout_multiply * 40; i++) {
+		if (parms->abort)
+			return 0;
 		rc = dvb_fe_get_stats(parms);
 		if (rc)
 			PERROR("dvb_fe_get_stats failed");
@@ -264,6 +266,10 @@ static int run_scan(struct arguments *args,
 							args->other_nit,
 							args->timeout_multiply);
 
+		if (parms->abort) {
+			dvb_scan_free_handler_table(dvb_scan_handler);
+			break;
+		}
 		if (!dvb_scan_handler)
 			continue;
 
@@ -363,10 +369,26 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	return 0;
 }
 
+static int *timeout_flag;
+
+static void do_timeout(int x)
+{
+	(void)x;
+	if (*timeout_flag == 0) {
+		*timeout_flag = 1;
+		alarm(5);
+		signal(SIGALRM, do_timeout);
+	} else {
+		/* something has gone wrong ... exit */
+		exit(1);
+	}
+}
+
+
 int main(int argc, char **argv)
 {
 	struct arguments args;
-	int lnb = -1,idx = -1;
+	int err, lnb = -1,idx = -1;
 	const struct argp argp = {
 		.options = options,
 		.parser = parse_opt,
@@ -438,15 +460,14 @@ int main(int argc, char **argv)
 	parms->diseqc_wait = args.diseqc_wait;
 	parms->freq_bpf = args.freq_bpf;
 
-	if (run_scan(&args, parms)) {
-		dvb_fe_close(parms);
-		free(args.demux_dev);
-		return -1;
-	}
+	timeout_flag = &parms->abort;
+	signal(SIGTERM, do_timeout);
+	signal(SIGINT, do_timeout);
+
+	err = run_scan(&args, parms);
 
 	dvb_fe_close(parms);
-
 	free(args.demux_dev);
 
-	return 0;
+	return err;
 }
