@@ -747,6 +747,8 @@ int main(int argc, char **argv)
 
 	if (args.traffic_monitor) {
 		signal(SIGALRM, do_timeout);
+		signal(SIGTERM, do_timeout);
+		signal(SIGINT, do_timeout);
 		if (args.timeout > 0)
 			alarm(args.timeout);
 
@@ -825,6 +827,8 @@ int main(int argc, char **argv)
 	}
 
 	signal(SIGALRM, do_timeout);
+	signal(SIGTERM, do_timeout);
+	signal(SIGINT, do_timeout);
 	if (args.timeout > 0)
 		alarm(args.timeout);
 
