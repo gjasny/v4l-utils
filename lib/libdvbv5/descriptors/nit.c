@@ -168,7 +168,7 @@ void nit_descriptor_handler(struct dvb_v5_fe_parms *parms,
 			if (call_nit)
 				call_nit(nit, desc, priv);
 			else
-				dvb_logerr("descriptor %s found on NIT but unhandled",
+				dvb_logwarn("descriptor %s found on NIT but unhandled",
 					   dvb_descriptors[descriptor].name);
 
 		}
@@ -182,7 +182,7 @@ void nit_descriptor_handler(struct dvb_v5_fe_parms *parms,
 			if (call_tran)
 				call_tran(nit, tran, desc, priv);
 			else
-				dvb_logerr("descriptor %s found on NIT transport but unhandled",
+				dvb_logwarn("descriptor %s found on NIT transport but unhandled",
 					   dvb_descriptors[descriptor].name);
 		}
 	}
