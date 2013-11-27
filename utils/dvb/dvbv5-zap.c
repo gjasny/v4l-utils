@@ -145,7 +145,7 @@ static int parse(struct arguments *args,
 		return -2;
 
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
-		if (!strcmp(entry->channel, channel))
+		if (entry->channel && !strcmp(entry->channel, channel))
 			break;
 		if (entry->vchannel && !strcmp(entry->vchannel, channel))
 			break;
@@ -156,10 +156,28 @@ static int parse(struct arguments *args,
 	if (!entry) {
 		for (entry = dvb_file->first_entry; entry != NULL;
 		     entry = entry->next) {
-			if (!strcasecmp(entry->channel, channel))
+			if (entry->channel && !strcasecmp(entry->channel, channel))
 				break;
 		}
 	}
+
+	/*
+	 * In monitor mode, all we need is a frequency. This way, a
+	 * file in "channel" format can be used instead
+	 */
+	if (!entry && args->traffic_monitor) {
+		uint32_t f, freq = atoi(channel);
+		if (freq) {
+			for (entry = dvb_file->first_entry; entry != NULL;
+			entry = entry->next) {
+				retrieve_entry_prop(entry, DTV_FREQUENCY, &f);
+				if (f == freq)
+					break;
+			}
+
+		}
+	}
+
 	if (!entry) {
 		ERROR("Can't find channel");
 		return -3;
@@ -647,7 +665,7 @@ int main(int argc, char **argv)
 		.options = options,
 		.parser = parse_opt,
 		.doc = "DVB zap utility",
-		.args_doc = "<channel name>",
+		.args_doc = "<channel name> [or <frequency> if in monitor mode]",
 	};
 
 	memset(&args, 0, sizeof(args));
