@@ -217,14 +217,15 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 
 		if (dvb_table_initializers[tid].init) {
 			dvb_table_initializers[tid].init(parms, buf, buf_length, tbl, &table_length);
-			if (!tbl) {
-				dvb_perror("Out of memory");
-				free(buf);
-				dvb_dmx_stop(dmx_fd);
-				return -4;
-			}
-			if (!dvb_table_initializers[tid].size)
+			if (!dvb_table_initializers[tid].size) {
 				tbl = realloc(tbl, table_length);
+				if (!tbl) {
+					dvb_perror("Out of memory");
+					free(buf);
+					dvb_dmx_stop(dmx_fd);
+					return -4;
+				}
+			}
 		} else
 			dvb_logerr("dvb_read_section: no initializer for table %d", tid);
 
