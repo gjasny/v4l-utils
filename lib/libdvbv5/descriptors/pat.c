@@ -26,16 +26,16 @@
 void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
 	struct dvb_table_pat *pat = (struct dvb_table_pat *) table;
+	struct dvb_table_pat_program **head, *last = NULL;
+
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
 	size_t size;
 
 	if (*table_length > 0) {
-		p += offsetof(struct dvb_table_pat, programs);
-
-		size = sizeof(struct dvb_table_pat_program) * pat->programs;
-		size += buflen;
-
-		pat = realloc(pat, size);
+		/* find end of current list */
+		head = &pat->program;
+		while (*head != NULL)
+			head = &(*head)->next;
 	} else {
 		size = offsetof(struct dvb_table_pat, programs);
 		if (p + size > endbuf) {
@@ -46,16 +46,33 @@ void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		memcpy(table, buf, size);
 		p += size;
 		pat->programs = 0;
+		pat->program = NULL;
+		head = &pat->program;
 	}
-	*table_length = buflen + sizeof(uint16_t);
+	*table_length = sizeof(struct dvb_table_pat_program);
 
-	size = sizeof(struct dvb_table_pat_program);
+	size = offsetof(struct dvb_table_pat_program, next);
 	while (p + size <= endbuf) {
-		memcpy(pat->program + pat->programs, p, size);
-		bswap16(pat->program[pat->programs].service_id);
-		bswap16(pat->program[pat->programs].bitfield);
+		struct dvb_table_pat_program *pgm;
+
+		pgm = malloc(sizeof(struct dvb_table_pat_program));
+		if (!pgm)
+			dvb_perror("Out of memory");
+
+		memcpy(pgm, p, size);
 		p += size;
+
+		bswap16(pgm->service_id);
+		bswap16(pgm->bitfield);
 		pat->programs++;
+
+		pgm->next = NULL;
+
+		if (!*head)
+			*head = pgm;
+		if (last)
+			last->next = pgm;
+		last = pgm;
 	}
 	if (endbuf - p)
 		dvb_logerr("PAT table has %zu spurious bytes at the end.",
@@ -64,17 +81,27 @@ void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 
 void dvb_table_pat_free(struct dvb_table_pat *pat)
 {
+	struct dvb_table_pat_program *pgm = pat->program;
+
+	while (pgm) {
+		struct dvb_table_pat_program *tmp = pgm;
+		pgm = pgm->next;
+		free(tmp);
+	}
 	free(pat);
 }
 
 void dvb_table_pat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_pat *pat)
 {
+	struct dvb_table_pat_program *pgm = pat->program;
+
 	dvb_log("PAT");
 	dvb_table_header_print(parms, &pat->header);
 	dvb_log("|\\  program  service (%d programs)", pat->programs);
-	int i;
-	for (i = 0; i < pat->programs; i++) {
-		dvb_log("|- %7d %7d", pat->program[i].pid, pat->program[i].service_id);
+
+	while (pgm) {
+		dvb_log("|- %7d %7d", pgm->pid, pgm->service_id);
+		pgm = pgm->next;
 	}
 }
 

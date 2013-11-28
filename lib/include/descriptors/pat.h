@@ -39,17 +39,17 @@ struct dvb_table_pat_program {
 			uint8_t  reserved:3;
 		} __attribute__((packed));
 	};
+	struct dvb_table_pat_program *next;
 } __attribute__((packed));
 
 struct dvb_table_pat {
 	struct dvb_table_header header;
 	uint16_t programs;
-	struct dvb_table_pat_program program[];
+	struct dvb_table_pat_program *program;
 } __attribute__((packed));
 
-#define dvb_pat_program_foreach(_program, _pat) \
-	struct dvb_table_pat_program *_program; \
-	for (int _i = 0; _i < _pat->programs && (_program = _pat->program + _i); _i++) \
+#define dvb_pat_program_foreach(_pgm, _pat) \
+	for (struct dvb_table_pat_program *_pgm = _pat->program; _pgm; _pgm = _pgm->next) \
 
 struct dvb_v5_fe_parms;
 
