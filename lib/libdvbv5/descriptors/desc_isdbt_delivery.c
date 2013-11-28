@@ -40,8 +40,10 @@ void isdbt_desc_delivery_init(struct dvb_v5_fe_parms *parms,
 	if (!len)
 		return;
 	d->frequency = malloc(d->num_freqs * sizeof(*d->frequency));
-	if (!d->frequency)
+	if (!d->frequency) {
 		dvb_perror("Can't allocate space for ISDB-T frequencies");
+		return;
+	}
 	memcpy(d->frequency, p, d->num_freqs * sizeof(*d->frequency));
 
 	for (i = 0; i < d->num_freqs; i++)
