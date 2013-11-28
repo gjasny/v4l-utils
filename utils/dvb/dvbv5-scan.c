@@ -250,7 +250,7 @@ static int run_scan(struct arguments *args,
 		if (retrieve_entry_prop(entry, DTV_POLARIZATION, &pol))
 			pol = POLARIZATION_OFF;
 
-		if (dvb_scan_handler && !new_freq_is_needed(dvb_file->first_entry, entry,
+		if (!new_freq_is_needed(dvb_file->first_entry, entry,
 					freq, pol, shift))
 			continue;
 
