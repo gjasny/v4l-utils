@@ -124,8 +124,11 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		dvb_log("Parsing table ID %d, program ID %d", tid, pid);
 
 	buf = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE);
-	if (!buf)
+	if (!buf) {
 		dvb_perror("Out of memory");
+		dvb_dmx_stop(dmx_fd);
+		return -1;
+	}
 	while (1) {
 		int available;
 		ssize_t buf_length = 0;

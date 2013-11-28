@@ -33,8 +33,10 @@ void isdb_desc_partial_reception_init(struct dvb_v5_fe_parms *parms,
 	int i;
 
 	d->partial_reception = malloc(d->length);
-	if (!d->partial_reception)
+	if (!d->partial_reception) {
 		dvb_perror("Out of memory!");
+		return;
+	}
 
 	memcpy(d->partial_reception, p, d->length);
 

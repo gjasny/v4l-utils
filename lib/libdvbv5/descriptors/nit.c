@@ -93,8 +93,10 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		struct dvb_table_nit_transport *transport;
 
 		transport = malloc(sizeof(struct dvb_table_nit_transport));
-		if (!transport)
+		if (!transport) {
 			dvb_perror("Out of memory");
+			return;
+		}
 		memcpy(transport, p, size);
 		p += size;
 

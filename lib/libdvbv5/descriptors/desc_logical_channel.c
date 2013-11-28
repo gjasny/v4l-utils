@@ -36,8 +36,10 @@ void dvb_desc_logical_channel_init(struct dvb_v5_fe_parms *parms,
 	int i;
 
 	d->lcn = malloc(d->length);
-	if (!d->lcn)
+	if (!d->lcn) {
 		dvb_perror("Out of memory!");
+		return;
+	}
 
 	memcpy(d->lcn, p, d->length);
 
