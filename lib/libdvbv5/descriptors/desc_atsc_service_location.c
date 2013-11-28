@@ -39,8 +39,10 @@ void atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
 
 	if (s_loc->number_elements) {
 		s_loc->elementary = malloc(s_loc->number_elements * sizeof(*s_loc->elementary));
-		if (!s_loc->elementary)
+		if (!s_loc->elementary) {
 			dvb_perror("Can't allocate space for ATSC service location elementary data");
+			return;
+		}
 
 		el = s_loc->elementary;
 
