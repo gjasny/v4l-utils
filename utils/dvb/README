@@ -182,41 +182,13 @@ CURRENT ISSUES
 The dvb-fe-tool and the dvb-format-convert are generic enough to work
 with all delivery systems. However, the other two tools need to do
 some diferent things, depending on the delivery system, as other
-tables and descriptors may be needed.
+MPEG-TS tables and descriptors may be needed.
 
-Currently, the tools were tested with DVB-C, DVB-T, DVB-T2, DVB-S and ISDB-T.
-
-If someone wants to patch the code to improve the tool, the descriptors
-parser is inside descriptors.c file. The scan code that uses it is
-at libscan.c. Finally, the data structure used by the scan parsing
-is at libscan.h. The procedure is basicallt to add a new data field inside
-the libscan.h structures, and then change the descriptors.c file
-to fill it.
-
-The main structure is this one:
-
-struct dvb_descriptors {
-	int verbose;
-
-	struct pat_table pat_table;
-	struct nit_table nit_table;
-	struct sdt_table sdt_table;
-
-	/* Used by descriptors to know where to update a PMT/Service/TS */
-	unsigned cur_pmt;
-	unsigned cur_service;
-	unsigned cur_ts;
-};
-
-While parsing each table, the current item being parsed is pointed by
-one of those unsigned values: cur_pmt, cur_service, cur_ts. Use this
-to fill the data structure.
-
-The dvb-file will likely need changes too, in order to write the
-parsed information inside the channels file.
+Currently, the tools were tested with DVB-C, DVB-T, DVB-T2, DVB-S, DVB-S2,
+ATSC and ISDB-T.
 
 Patches are welcome!
 
 Regards,
 Mauro Carvalho Chehab
-2012-May-15
+2013-Nov-29
