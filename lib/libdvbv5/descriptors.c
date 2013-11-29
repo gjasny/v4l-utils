@@ -136,9 +136,11 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			return;
 		}
 
-		current = malloc(size);
-		if (!current)
+		current = calloc(1, size);
+		if (!current) {
 			dvb_perror("Out of memory");
+			return;
+		}
 		ptr += dvb_desc_init(ptr, current); /* the standard header was read */
 		init(parms, ptr, current);
 		if (!*head_desc)

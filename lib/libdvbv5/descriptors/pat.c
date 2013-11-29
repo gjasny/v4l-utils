@@ -56,8 +56,10 @@ void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		struct dvb_table_pat_program *pgm;
 
 		pgm = malloc(sizeof(struct dvb_table_pat_program));
-		if (!pgm)
+		if (!pgm) {
 			dvb_perror("Out of memory");
+			return;
+		}
 
 		memcpy(pgm, p, size);
 		p += size;
