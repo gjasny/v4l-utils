@@ -208,8 +208,13 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		if (!tbl) {
 			if (dvb_table_initializers[tid].size)
 				tbl = malloc(dvb_table_initializers[tid].size);
-			else
-				tbl = malloc(MAX_TABLE_SIZE);
+			else {
+				dvb_logerr("dvb_read_section: no table size for table %d",
+					   tid);
+				free(buf);
+				dvb_dmx_stop(dmx_fd);
+				return -1;
+			}
 			if (!tbl) {
 				dvb_logerr("Out of memory");
 				free(buf);
