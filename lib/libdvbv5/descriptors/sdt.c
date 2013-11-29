@@ -22,16 +22,16 @@
 #include "descriptors/sdt.h"
 #include "dvb-fe.h"
 
-void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
+void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
-	struct dvb_table_sdt *sdt = (struct dvb_table_sdt *) table;
-	struct dvb_table_sdt_service **head, *last = NULL;
+	struct dvb_table_sdt *sdt = (void *)table;
+	struct dvb_table_sdt_service **head = &sdt->service;
 	size_t size = offsetof(struct dvb_table_sdt, service);
 
 	if (*table_length > 0) {
 		/* find end of curent list */
-		head = &sdt->service;
 		while (*head != NULL)
 			head = &(*head)->next;
 	} else {
@@ -46,13 +46,14 @@ void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		bswap16(sdt->network_id);
 
 		sdt->service = NULL;
-		head = &sdt->service;
 	}
 	p += size;
 
 	size = offsetof(struct dvb_table_sdt_service, descriptor);
 	while (p + size <= endbuf) {
-		struct dvb_table_sdt_service *service = malloc(sizeof(struct dvb_table_sdt_service));
+		struct dvb_table_sdt_service *service;
+
+		service = malloc(sizeof(struct dvb_table_sdt_service));
 
 		memcpy(service, p, size);
 		p += size;
@@ -62,17 +63,14 @@ void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		service->descriptor = NULL;
 		service->next = NULL;
 
-		if(!*head)
-			*head = service;
-		if(last)
-			last->next = service;
+		*head = service;
+		head = &(*head)->next;
 
 		/* get the descriptors for each program */
-		struct dvb_desc **head_desc = &service->descriptor;
-		dvb_parse_descriptors(parms, p, service->section_length, head_desc);
+		dvb_parse_descriptors(parms, p, service->section_length,
+				      &service->descriptor);
 
 		p += service->section_length;
-		last = service;
 	}
 	if (endbuf - p)
 		dvb_logerr("PAT table has %zu spurious bytes at the end.",
