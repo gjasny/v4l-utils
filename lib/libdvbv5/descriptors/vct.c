@@ -22,22 +22,23 @@
 #include "dvb-fe.h"
 #include "parse_string.h"
 
-void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
+void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
-	struct dvb_table_vct *vct = (struct dvb_table_vct *) table;
-	struct dvb_table_vct_channel **head;
+	struct dvb_table_vct *vct = (void *)table;
+	struct dvb_table_vct_channel **head = &vct->channel;
 	int i, n;
 	size_t size = offsetof(struct dvb_table_vct, channel);
 
 	if (p + size > endbuf) {
 		dvb_logerr("VCT table was truncated. Need %zu bytes, but has only %zu.",
-				size, buflen);
+			   size, buflen);
 		return;
 	}
+
 	if (*table_length > 0) {
 		/* find end of curent list */
-		head = &vct->channel;
 		while (*head != NULL)
 			head = &(*head)->next;
 	} else {
@@ -47,12 +48,10 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 
 		vct->channel = NULL;
 		vct->descriptor = NULL;
-		head = &vct->channel;
 	}
 	p += size;
 
 	size = offsetof(struct dvb_table_vct_channel, descriptor);
-	struct dvb_table_vct_channel *last = NULL;
 	for (n = 0; n < vct->num_channels_in_section; n++) {
 		struct dvb_table_vct_channel *channel;
 
@@ -93,18 +92,14 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		channel->descriptor = NULL;
 		channel->next = NULL;
 
-		if (!*head)
-			*head = channel;
-		if (last)
-			last->next = channel;
+		*head = channel;
+		head = &(*head)->next;
 
 		/* get the descriptors for each program */
-		struct dvb_desc **head_desc = &channel->descriptor;
 		dvb_parse_descriptors(parms, p, channel->descriptors_length,
-				      head_desc);
+				      &channel->descriptor);
 
 		p += channel->descriptors_length;
-		last = channel;
 	}
 
 	/* Get extra descriptors */
@@ -113,7 +108,8 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		union dvb_table_vct_descriptor_length *d = (void *)p;
 		bswap16(d->descriptor_length);
 		p += size;
-		dvb_parse_descriptors(parms, p, d->descriptor_length, &vct->descriptor);
+		dvb_parse_descriptors(parms, p, d->descriptor_length,
+				      &vct->descriptor);
 	}
 	if (endbuf - p)
 		dvb_logerr("VCT table has %zu spurious bytes at the end.",
