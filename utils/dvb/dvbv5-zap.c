@@ -40,6 +40,7 @@
 #include "dvb-file.h"
 #include "dvb-demux.h"
 #include "dvb-scan.h"
+#include "descriptors/header.h"
 
 #define CHANNEL_FILE	"channels.conf"
 #define PROGRAM_NAME	"dvbv5-zap"
@@ -554,6 +555,7 @@ int do_traffic_monitor(struct arguments *args,
 
 	while (1) {
 		unsigned char buffer[BSIZE];
+		struct dvb_ts_packet_header *h = (void *)buffer;
 		int pid, ok;
 		ssize_t r;
 
@@ -578,16 +580,24 @@ int do_traffic_monitor(struct arguments *args,
 			fprintf(stderr, "dvbtraffic: only read %zd bytes\n", r);
 			break;
 		}
-		if (buffer[0] != 0x47) {
-			continue;
-			printf("desync (%x)\n", buffer[0]);
-			while (buffer[0] != 0x47)
-				read(fd, buffer, 1);
+
+		if (h->sync_byte != 0x47) {
 			continue;
 		}
+
+		bswap16(h->bitfield);
+
+#if 0
+		/*
+		 * ITU-T Rec. H.222.0 decoders shall discard Transport Stream
+		 * packets with theadaptation_field_control field set to
+		 * a value of '00'.
+		 */
+		if (h->adaptation_field_control == 0)
+			continue;
+#endif
 		ok = 1;
-		pid = ((((unsigned) buffer[1]) << 8) |
-		       ((unsigned) buffer[2])) & 0x1FFF;
+		pid = h->pid;
 
 		if (args->search) {
 			int i, sl = strlen(args->search);

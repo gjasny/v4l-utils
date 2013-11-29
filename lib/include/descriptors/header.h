@@ -25,6 +25,25 @@
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
 
+struct dvb_ts_packet_header {
+	uint8_t  sync_byte;
+	union {
+		uint16_t bitfield;
+		struct {
+			uint16_t pid:13;
+			uint16_t transport_priority:1;
+			uint16_t payload_unit_start_indicator:1;
+			uint16_t transport_error_indicator:1;
+		} __attribute__((packed));
+	};
+	uint8_t continuity_counter:4;
+	uint8_t adaptation_field_control:2;
+	uint8_t transport_scrambling_control:2;
+
+	/* Only if adaptation_field_control > 1 */
+	uint8_t adaptation_field_length;
+} __attribute__((packed));
+
 struct dvb_table_header {
 	uint8_t  table_id;
 	union {
