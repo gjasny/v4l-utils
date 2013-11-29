@@ -26,7 +26,7 @@
 void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
 	struct dvb_table_pat *pat = (struct dvb_table_pat *) table;
-	struct dvb_table_pat_program **head, *last = NULL;
+	struct dvb_table_pat_program **head;
 
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
 	size_t size;
@@ -70,11 +70,8 @@ void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 
 		pgm->next = NULL;
 
-		if (!*head)
-			*head = pgm;
-		if (last)
-			last->next = pgm;
-		last = pgm;
+		*head = pgm;
+		head = &(*head)->next;
 	}
 	if (endbuf - p)
 		dvb_logerr("PAT table has %zu spurious bytes at the end.",
