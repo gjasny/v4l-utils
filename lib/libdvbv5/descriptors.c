@@ -1321,35 +1321,34 @@ int bcd_to_int(const unsigned char *bcd, int bits)
 
 void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *data, int length)
 {
-	if (!data)
-		return;
 	char ascii[17];
 	char hex[50];
 	int i, j = 0;
+
+	if (!data)
+		return;
 	hex[0] = '\0';
-	for (i = 0; i < length; i++)
-	{
+	for (i = 0; i < length; i++) {
 		char t[4];
+
 		snprintf (t, sizeof(t), "%02x ", (unsigned int) data[i]);
-		strncat (hex, t, sizeof(hex));
+		strncat (hex, t, sizeof(hex) - 1);
 		if (data[i] > 31 && data[i] < 128 )
 			ascii[j] = data[i];
 		else
 			ascii[j] = '.';
 		j++;
 		if (j == 8)
-			strncat(hex, " ", sizeof(hex));
-		if (j == 16)
-		{
+			strncat(hex, " ", sizeof(hex) - 1);
+		if (j == 16) {
 			ascii[j] = '\0';
 			dvb_log("%s%s  %s", prefix, hex, ascii);
 			j = 0;
 			hex[0] = '\0';
 		}
 	}
-	if (j > 0 && j < 16)
-	{
-		char spaces[47];
+	if (j > 0 && j < 16) {
+		char spaces[50];
 		spaces[0] = '\0';
 		for (i = strlen(hex); i < 49; i++)
 			strncat(spaces, " ", sizeof(spaces));
