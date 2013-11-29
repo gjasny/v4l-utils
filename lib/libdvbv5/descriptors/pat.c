@@ -23,17 +23,16 @@
 #include "descriptors.h"
 #include "dvb-fe.h"
 
-void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
+void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
-	struct dvb_table_pat *pat = (struct dvb_table_pat *) table;
-	struct dvb_table_pat_program **head;
-
+	struct dvb_table_pat *pat = (void *)table;
+	struct dvb_table_pat_program **head = &pat->program;
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
 	size_t size;
 
 	if (*table_length > 0) {
 		/* find end of current list */
-		head = &pat->program;
 		while (*head != NULL)
 			head = &(*head)->next;
 	} else {
@@ -47,7 +46,6 @@ void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 		p += size;
 		pat->programs = 0;
 		pat->program = NULL;
-		head = &pat->program;
 	}
 	*table_length = sizeof(struct dvb_table_pat_program);
 
