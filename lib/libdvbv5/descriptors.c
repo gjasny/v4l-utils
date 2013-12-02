@@ -1172,7 +1172,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.name  = "partial_reception_descriptor",
 		.init  = isdb_desc_partial_reception_init,
 		.print = isdb_desc_partial_reception_print,
-		.free  = NULL,
+		.free  = isdb_desc_partial_reception_free,
 		.size  = sizeof(struct isdb_desc_partial_reception),
 	},
 	[emergency_information_descriptor] = {

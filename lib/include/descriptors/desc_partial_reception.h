@@ -48,6 +48,7 @@ extern "C" {
 
 void isdb_desc_partial_reception_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 void isdb_desc_partial_reception_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+void isdb_desc_partial_reception_free(const struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }
