@@ -83,5 +83,10 @@ void dvb_desc_ts_info_free(struct dvb_desc *desc)
 {
 	const struct dvb_desc_ts_info *d = (const void *) desc;
 
+	if (d->ts_name)
+	      free(d->ts_name);
+	if (d->ts_name_emph)
+	      free(d->ts_name_emph);
+
 	free(d->service_id);
 }
