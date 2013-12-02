@@ -814,12 +814,21 @@ int main(int argc, char **argv)
 			PERROR("failed opening '%s'", args.demux_dev);
 			goto err;
 		}
+
 		if (args.silent < 2)
 			fprintf(stderr, "  dvb_set_pesfilter %d\n", vpid);
-		if (dvb_set_pesfilter(video_fd, vpid, DMX_PES_VIDEO,
+		if (vpid == 0x2000) {
+			if (ioctl(video_fd, DMX_SET_BUFFER_SIZE, 1024 * 1024) == -1)
+				perror("DMX_SET_BUFFER_SIZE failed");
+			if (dvb_set_pesfilter(video_fd, vpid, DMX_PES_OTHER,
+					      DMX_OUT_TS_TAP, 0) < 0)
+				goto err;
+		} else {
+			if (dvb_set_pesfilter(video_fd, vpid, DMX_PES_VIDEO,
 				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
 				args.dvr ? 64 * 1024 : 0) < 0)
-			goto err;
+				goto err;
+		}
 	}
 
 	if (apid >= 0) {
