@@ -72,7 +72,6 @@ static const struct argp_option options[] = {
 	{"channels",	'c', "file",			0, "read channels list from 'file'", 0},
 	{"demux",	'd', "demux#",			0, "use given demux (default 0)", 0},
 	{"frontend",	'f', "frontend#",		0, "use given frontend (default 0)", 0},
-	{"frontend",	'F', NULL,			0, "set up frontend only, don't touch demux", 0},
 	{"input-format", 'I',	"format",		0, "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)", 0},
 	{"lnbf",	'l', "LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
 	{"search",	'L', NULL,			0, "search/look for a string inside the traffic", 0},
@@ -166,7 +165,7 @@ static int parse(struct arguments *args,
 	 * In monitor mode or when capturing all PIDs, all we need is a frequency.
 	 * This way, a file in "channel" format can be used instead of a zap file.
 	 */
-	if (!entry && args->traffic_monitor || args->all_pids) {
+	if (!entry && (args->traffic_monitor || args->all_pids)) {
 		uint32_t f, freq = atoi(channel);
 		if (freq) {
 			for (entry = dvb_file->first_entry; entry != NULL;
@@ -386,20 +385,24 @@ static int check_frontend(struct arguments *args,
 	fe_status_t status;
 	do {
 		rc = dvb_fe_get_stats(parms);
-		if (rc)
+		if (rc) {
 			PERROR("dvb_fe_get_stats failed");
+			usleep(1000000);
+			continue;
+		}
 
+		status = 0;
 		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
 		if (!args->silent)
 			print_frontend_stats(stderr, args, parms);
-		if (args->exit_after_tuning && (status & FE_HAS_LOCK))
+		if (status & FE_HAS_LOCK)
 			break;
 		usleep(1000000);
 	} while (!timeout_flag);
 	if (args->silent < 2)
 		print_frontend_stats(stderr, args, parms);
 
-	return 0;
+	return status & FE_HAS_LOCK;
 }
 
 #define BUFLEN (188 * 256)
@@ -483,9 +486,6 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		break;
 	case 'v':
 		args->verbose++;
-		break;
-	case 'F':
-		args->frontend_only = 1;
 		break;
 	case 'A':
 		args->n_apid = strtoul(optarg, NULL, 0);
@@ -749,7 +749,7 @@ int main(int argc, char **argv)
 	if (setup_frontend(&args, parms) < 0)
 		goto err;
 
-	if (args.frontend_only) {
+	if (args.exit_after_tuning) {
 		err = 0;
 		check_frontend(&args, parms);
 		goto err;
@@ -853,6 +853,12 @@ int main(int argc, char **argv)
 		alarm(args.timeout);
 	}
 
+	if (!check_frontend(&args, parms)) {
+		err = 1;
+		fprintf(stderr, "frontend doesn't lock\n");
+		goto err;
+	}
+
 	if (args.record) {
 		if (args.filename != NULL) {
 			if (strcmp(args.filename, "-") != 0) {
@@ -887,8 +893,6 @@ int main(int argc, char **argv)
 
 		if (args.silent < 2)
 			print_frontend_stats(stderr, &args, parms);
-	} else {
-		check_frontend(&args, parms);
 	}
 	err = 0;
 
