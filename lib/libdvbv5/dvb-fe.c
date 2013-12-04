@@ -791,7 +791,7 @@ int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
 
 	*value = stat->uvalue;
 
-	if (parms->verbose)
+	if (parms->verbose > 1)
 		dvb_logdbg("Stats for %s = %d", dvb_cmd_name(cmd), *value);
 
 	return 0;
