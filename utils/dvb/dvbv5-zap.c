@@ -163,10 +163,10 @@ static int parse(struct arguments *args,
 	}
 
 	/*
-	 * In monitor mode, all we need is a frequency. This way, a
-	 * file in "channel" format can be used instead
+	 * In monitor mode or when capturing all PIDs, all we need is a frequency.
+	 * This way, a file in "channel" format can be used instead of a zap file.
 	 */
-	if (!entry && args->traffic_monitor) {
+	if (!entry && args->traffic_monitor || args->all_pids) {
 		uint32_t f, freq = atoi(channel);
 		if (freq) {
 			for (entry = dvb_file->first_entry; entry != NULL;
