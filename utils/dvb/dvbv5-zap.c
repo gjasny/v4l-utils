@@ -162,10 +162,14 @@ static int parse(struct arguments *args,
 	}
 
 	/*
-	 * In monitor mode or when capturing all PIDs, all we need is a frequency.
+	 * When this tool is used to just tune to a channel, to monitor it or
+	 * to capture all PIDs, all it needs is a frequency.
+	 * So, let the tool to accept a frequency as the tuning channel on those
+	 * cases.
 	 * This way, a file in "channel" format can be used instead of a zap file.
+	 * It is also easier to use it for testing purposes.
 	 */
-	if (!entry && (args->traffic_monitor || args->all_pids)) {
+	if (!entry && (args->traffic_monitor || args->all_pids || args->exit_after_tuning)) {
 		uint32_t f, freq = atoi(channel);
 		if (freq) {
 			for (entry = dvb_file->first_entry; entry != NULL;
