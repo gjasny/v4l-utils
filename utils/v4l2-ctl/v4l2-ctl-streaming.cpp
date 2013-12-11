@@ -31,6 +31,13 @@ static unsigned reqbufs_count_out = 3;
 static char *file_cap;
 static char *file_out;
 
+static void *test_mmap(void *start, size_t length, int prot, int flags,
+		int fd, int64_t offset)
+{
+ 	return options[OptUseWrapper] ? v4l2_mmap(start, length, prot, flags, fd, offset) :
+		mmap(start, length, prot, flags, fd, offset);
+}
+
 void streaming_usage(void)
 {
 	printf("\nVideo Streaming options:\n"
@@ -312,7 +319,7 @@ static void do_setup_cap_buffers(int fd, buffers &b)
 
 				p.length = planes[j].length;
 				if (b.memory == V4L2_MEMORY_MMAP) {
-					b.bufs[i][j] = mmap(NULL, p.length,
+					b.bufs[i][j] = test_mmap(NULL, p.length,
 							  PROT_READ | PROT_WRITE, MAP_SHARED,
 							  fd, planes[j].m.mem_offset);
 
@@ -333,7 +340,7 @@ static void do_setup_cap_buffers(int fd, buffers &b)
 			b.num_planes = 1;
 			p.length = buf.length;
 			if (b.memory == V4L2_MEMORY_MMAP) {
-				b.bufs[i][0] = mmap(NULL, p.length,
+				b.bufs[i][0] = test_mmap(NULL, p.length,
 						  PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
 
 				if (b.bufs[i][0] == MAP_FAILED) {
