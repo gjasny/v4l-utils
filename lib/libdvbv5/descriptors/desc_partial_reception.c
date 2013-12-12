@@ -46,7 +46,7 @@ void isdb_desc_partial_reception_init(struct dvb_v5_fe_parms *parms,
 		bswap16(d->partial_reception[i].service_id);
 }
 
-void isdb_desc_partial_reception_free(const struct dvb_desc *desc)
+void isdb_desc_partial_reception_free(struct dvb_desc *desc)
 {
 	struct isdb_desc_partial_reception *d = (void *)desc;
 	if (d->partial_reception)
