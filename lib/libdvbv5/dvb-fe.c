@@ -1005,8 +1005,8 @@ static enum dvb_quality dvbv_fe_cnr_to_quality(struct dvb_v5_fe_parms *parms,
 				       ARRAY_SIZE(dvb_s_cnr_2_qual));
 		break;
 	case SYS_ISDBT:
-		dvb_fe_retrieve_parm(parms, DTV_MODULATION, &modulation);
-		dvb_fe_retrieve_parm(parms, DTV_INNER_FEC, &fec);
+		dvb_fe_retrieve_parm(parms, DTV_ISDBT_LAYERA_MODULATION, &modulation);
+		dvb_fe_retrieve_parm(parms, DTV_ISDBT_LAYERA_FEC, &fec);
 		if (modulation == QAM_AUTO)
 			modulation = QAM_64;	/* Assume worse case */
 		qual = cnr_arr_to_qual(modulation, fec, cnr->svalue,
