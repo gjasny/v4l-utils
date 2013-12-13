@@ -1152,7 +1152,7 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
 
 		/* Do a DVBv5.10 stats call */
 		if (ioctl(parms->fd, FE_GET_PROPERTY, &props) == -1)
-			return errno;
+			goto dvbv3_fallback;
 
 		/*
 		 * All props with len=0 mean that this device doesn't have any
