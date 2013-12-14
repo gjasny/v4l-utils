@@ -972,7 +972,8 @@ void GeneralTab::updateStandard()
 	m_tvStandard->setStatusTip(what);
 	m_tvStandard->setWhatsThis(what);
 	updateVidCapFormat();
-	changePixelAspectRatio();
+	if (!isVbi())
+		changePixelAspectRatio();
 }
 
 void GeneralTab::qryStdClicked()
