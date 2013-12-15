@@ -225,11 +225,9 @@ static int parse(struct arguments *args,
 	}
 	*sid = entry->service_id;
 
-	/* First of all, set the delivery system */
-	for (i = 0; i < entry->n_props; i++)
-		if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
-			dvb_set_compat_delivery_system(parms,
-						       entry->props[i].u.data);
+        /* First of all, set the delivery system */
+	retrieve_entry_prop(entry, DTV_DELIVERY_SYSTEM, &sys);
+	dvb_set_compat_delivery_system(parms, sys);
 
 	/* Copy data into parms */
 	for (i = 0; i < entry->n_props; i++) {

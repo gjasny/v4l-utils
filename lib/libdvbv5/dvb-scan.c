@@ -468,14 +468,12 @@ struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
 						unsigned timeout_multiply)
 {
 	struct dvb_v5_descriptors *dvb_scan_handler = NULL;
-	uint32_t freq;
+	uint32_t freq, delsys = SYS_UNDEFINED;
 	int i, rc;
 
 	/* First of all, set the delivery system */
-	for (i = 0; i < entry->n_props; i++)
-		if (entry->props[i].cmd == DTV_DELIVERY_SYSTEM)
-			dvb_set_compat_delivery_system(parms,
-							entry->props[i].u.data);
+	retrieve_entry_prop(entry, DTV_DELIVERY_SYSTEM, &delsys);
+	dvb_set_compat_delivery_system(parms, delsys);
 
 	/* Copy data into parms */
 	for (i = 0; i < entry->n_props; i++) {
