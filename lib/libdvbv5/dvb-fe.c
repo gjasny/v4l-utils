@@ -377,7 +377,6 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 	uint32_t delsys = SYS_UNDEFINED;
 	enum dvbv3_emulation_type type;
 
-
 	/* Check if the desired delivery system is supported */
 	for (i = 0; i < parms->num_systems; i++) {
 		if (parms->systems[i] == desired_system) {
@@ -405,10 +404,12 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 	if (delsys == SYS_UNDEFINED)
 		return -1;
 
-	dvb_set_sys(parms, desired_system);
+	dvb_log("Using a DVBv3 compat file for %s", delivery_system_name[delsys]);
+
+	dvb_set_sys(parms, delsys);
 
 	/* Put ISDB-T into auto mode */
-	if (desired_system == SYS_ISDBT) {
+	if (delsys == SYS_ISDBT) {
 		dvb_fe_store_parm(parms, DTV_BANDWIDTH_HZ, 6000000);
 		dvb_fe_store_parm(parms, DTV_ISDBT_PARTIAL_RECEPTION, 0);
 		dvb_fe_store_parm(parms, DTV_ISDBT_SOUND_BROADCASTING, 0);
