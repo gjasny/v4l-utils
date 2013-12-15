@@ -939,7 +939,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 
 	if (!found) {
 		dvb_logwarn("Service ID %d not found on PMT!", service_id);
-		return -1;
+		return 0;
 	}
 
 	/* Create an entry to store the data */
