@@ -484,29 +484,7 @@ struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
 			continue;
 
 		dvb_fe_store_parm(parms, entry->props[i].cmd, data);
-		if (parms->current_sys == SYS_ISDBT) {
-			dvb_fe_store_parm(parms, DTV_ISDBT_PARTIAL_RECEPTION, 0);
-			dvb_fe_store_parm(parms, DTV_ISDBT_SOUND_BROADCASTING, 0);
-			dvb_fe_store_parm(parms, DTV_ISDBT_LAYER_ENABLED, 0x07);
-			if (entry->props[i].cmd == DTV_CODE_RATE_HP) {
-				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERA_FEC,
-						data);
-				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERB_FEC,
-						data);
-				dvb_fe_store_parm(parms, DTV_ISDBT_LAYERC_FEC,
-						data);
-			} else if (entry->props[i].cmd == DTV_MODULATION) {
-				dvb_fe_store_parm(parms,
-						DTV_ISDBT_LAYERA_MODULATION,
-						data);
-				dvb_fe_store_parm(parms,
-						DTV_ISDBT_LAYERB_MODULATION,
-						data);
-				dvb_fe_store_parm(parms,
-						DTV_ISDBT_LAYERC_MODULATION,
-						data);
-			}
-		}
+
 		if (parms->current_sys == SYS_ATSC &&
 			entry->props[i].cmd == DTV_MODULATION) {
 			if (data != VSB_8 && data != VSB_16)
