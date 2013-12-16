@@ -976,6 +976,8 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 			if (rc == EAGAIN)
 				usleep(100000);
 		} while (rc == EAGAIN);
+		if (rc)
+			dvb_logerr("Couldn't get frontend props");
 	}
 	for (j = 0; j < parms->n_props; j++) {
 		entry->props[j].cmd = parms->dvb_prop[j].cmd;

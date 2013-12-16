@@ -521,7 +521,7 @@ static int dvb_copy_fe_props(const struct dtv_property *from, int n, struct dtv_
 
 int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 {
-	int n = 0;
+	int i, n = 0;
 	const unsigned int *sys_props;
 	struct dtv_properties prop;
 	struct dvb_frontend_parameters v3_parms;
@@ -553,6 +553,11 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
 			dvb_perror("FE_GET_PROPERTY");
 			return errno;
 		}
+
+		/* copy back params from temporary fe_prop */
+		for (i = 0; i < n; i++)
+			dvb_fe_store_parm(parms, fe_prop[i].cmd, fe_prop[i].u.data);
+
 		if (parms->verbose) {
 			dvb_log("Got parameters for %s:",
 			       delivery_system_name[parms->current_sys]);
