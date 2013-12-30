@@ -35,6 +35,13 @@ static void dvb_v5_free(struct dvb_v5_fe_parms *parms)
 	free(parms);
 }
 
+struct dvb_v5_fe_parms dummy_fe;
+struct dvb_v5_fe_parms *dvb_fe_dummy()
+{
+	dummy_fe.logfunc = dvb_default_log;
+	return &dummy_fe;
+}
+
 struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 				    unsigned use_legacy_call)
 {

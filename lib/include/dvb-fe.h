@@ -119,6 +119,8 @@ struct dvb_v5_fe_parms {
 extern "C" {
 #endif
 
+struct dvb_v5_fe_parms *dvb_fe_dummy();
+
 struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
 				    unsigned verbose, unsigned use_legacy_call);
 struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend,

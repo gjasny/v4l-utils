@@ -63,7 +63,13 @@ struct dvb_desc {
 } __attribute__((packed));
 
 void dvb_desc_default_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+#ifdef __cplusplus
+extern "C" {
+#endif
 void dvb_desc_default_print  (struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+#ifdef __cplusplus
+}
+#endif
 
 #define dvb_desc_foreach( _desc, _tbl ) \
 	for( struct dvb_desc *_desc = _tbl->descriptor; _desc; _desc = _desc->next ) \
