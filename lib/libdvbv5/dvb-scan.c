@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include "dvb-scan.h"
 #include "dvb-frontend.h"
