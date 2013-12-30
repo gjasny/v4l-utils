@@ -49,7 +49,7 @@ struct dvb_v5_descriptors {
 	unsigned num_entry;
 
 	struct dvb_table_pat *pat;
-	struct dvb_table_vct *vct;
+	struct atsc_table_vct *vct;
 	struct dvb_v5_descriptors_program *program;
 	struct dvb_table_nit *nit;
 	struct dvb_table_sdt *sdt;

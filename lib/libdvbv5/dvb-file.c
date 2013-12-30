@@ -1027,7 +1027,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 	}
 
 	if (dvb_scan_handler->vct) {
-		dvb_vct_channel_foreach(d, dvb_scan_handler->vct) {
+		atsc_vct_channel_foreach(d, dvb_scan_handler->vct) {
 			char *channel = NULL;
 			char *vchannel = NULL;
 

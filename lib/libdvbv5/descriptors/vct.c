@@ -23,14 +23,14 @@
 #include "dvb-fe.h"
 #include "parse_string.h"
 
-void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+void atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
-	struct dvb_table_vct *vct = (void *)table;
-	struct dvb_table_vct_channel **head = &vct->channel;
+	struct atsc_table_vct *vct = (void *)table;
+	struct atsc_table_vct_channel **head = &vct->channel;
 	int i, n;
-	size_t size = offsetof(struct dvb_table_vct, channel);
+	size_t size = offsetof(struct atsc_table_vct, channel);
 
 	if (p + size > endbuf) {
 		dvb_logerr("VCT table was truncated. Need %zu bytes, but has only %zu.",
@@ -45,16 +45,16 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	} else {
 		memcpy(vct, p, size);
 
-		*table_length = sizeof(struct dvb_table_vct);
+		*table_length = sizeof(struct atsc_table_vct);
 
 		vct->channel = NULL;
 		vct->descriptor = NULL;
 	}
 	p += size;
 
-	size = offsetof(struct dvb_table_vct_channel, descriptor);
+	size = offsetof(struct atsc_table_vct_channel, descriptor);
 	for (n = 0; n < vct->num_channels_in_section; n++) {
-		struct dvb_table_vct_channel *channel;
+		struct atsc_table_vct_channel *channel;
 
 		if (p + size > endbuf) {
 			dvb_logerr("VCT channel table is missing %d elements",
@@ -63,7 +63,7 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			break;
 		}
 
-		channel = malloc(sizeof(struct dvb_table_vct_channel));
+		channel = malloc(sizeof(struct atsc_table_vct_channel));
 
 		memcpy(channel, p, size);
 		p += size;
@@ -104,9 +104,9 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	}
 
 	/* Get extra descriptors */
-	size = sizeof(union dvb_table_vct_descriptor_length);
+	size = sizeof(union atsc_table_vct_descriptor_length);
 	while (p + size <= endbuf) {
-		union dvb_table_vct_descriptor_length *d = (void *)p;
+		union atsc_table_vct_descriptor_length *d = (void *)p;
 		bswap16(d->descriptor_length);
 		p += size;
 		dvb_parse_descriptors(parms, p, d->descriptor_length,
@@ -117,12 +117,12 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			   endbuf - p);
 }
 
-void dvb_table_vct_free(struct dvb_table_vct *vct)
+void atsc_table_vct_free(struct atsc_table_vct *vct)
 {
-	struct dvb_table_vct_channel *channel = vct->channel;
+	struct atsc_table_vct_channel *channel = vct->channel;
 	while(channel) {
 		dvb_free_descriptors((struct dvb_desc **) &channel->descriptor);
-		struct dvb_table_vct_channel *tmp = channel;
+		struct atsc_table_vct_channel *tmp = channel;
 		channel = channel->next;
 		free(tmp);
 	}
@@ -131,19 +131,19 @@ void dvb_table_vct_free(struct dvb_table_vct *vct)
 	free(vct);
 }
 
-void dvb_table_vct_print(struct dvb_v5_fe_parms *parms, struct dvb_table_vct *vct)
+void atsc_table_vct_print(struct dvb_v5_fe_parms *parms, struct atsc_table_vct *vct)
 {
-	if (vct->header.table_id == DVB_TABLE_CVCT)
+	if (vct->header.table_id == ATSC_TABLE_CVCT)
 		dvb_log("CVCT");
 	else
 		dvb_log("TVCT");
 
-	dvb_table_header_print(parms, &vct->header);
+	atsc_table_header_print(parms, &vct->header);
 
 	dvb_log("|- Protocol version %d", vct->ATSC_protocol_version);
 	dvb_log("|- #channels        %d", vct->num_channels_in_section);
 	dvb_log("|\\  channel_id");
-	const struct dvb_table_vct_channel *channel = vct->channel;
+	const struct atsc_table_vct_channel *channel = vct->channel;
 	uint16_t channels = 0;
 	while(channel) {
 		dvb_log("|- Channel                %d.%d: %s",
@@ -159,7 +159,7 @@ void dvb_table_vct_print(struct dvb_v5_fe_parms *parms, struct dvb_table_vct *vc
 		dvb_log("|   access controlled     %d", channel->access_controlled);
 		dvb_log("|   hidden                %d", channel->hidden);
 
-		if (vct->header.table_id == DVB_TABLE_CVCT) {
+		if (vct->header.table_id == ATSC_TABLE_CVCT) {
 			dvb_log("|   path select           %d", channel->path_select);
 			dvb_log("|   out of band           %d", channel->out_of_band);
 		}
@@ -173,4 +173,3 @@ void dvb_table_vct_print(struct dvb_v5_fe_parms *parms, struct dvb_table_vct *vc
 	}
 	dvb_log("|_  %d channels", channels);
 }
-

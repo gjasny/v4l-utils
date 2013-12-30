@@ -25,14 +25,14 @@
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
 
-#include "descriptors/header.h"
+#include "descriptors/atsc_header.h"
 #include "descriptors.h"
 
-#define DVB_TABLE_TVCT     0xc8
-#define DVB_TABLE_CVCT     0xc9
-#define DVB_TABLE_VCT_PID  0x1ffb
+#define ATSC_TABLE_TVCT     0xc8
+#define ATSC_TABLE_CVCT     0xc9
+#define ATSC_TABLE_VCT_PID  0x1ffb
 
-struct dvb_table_vct_channel {
+struct atsc_table_vct_channel {
 	uint16_t	__short_name[7];
 
 	union {
@@ -77,15 +77,15 @@ struct dvb_table_vct_channel {
 	 * to the data parsed from the MPEG TS. So, metadata are added there
 	 */
 	struct dvb_desc *descriptor;
-	struct dvb_table_vct_channel *next;
+	struct atsc_table_vct_channel *next;
 
 	/* The channel_short_name is converted to locale charset by vct.c */
 
 	char short_name[32];
 } __attribute__((packed));
 
-struct dvb_table_vct {
-	struct dvb_table_header header;
+struct atsc_table_vct {
+	struct atsc_table_header header;
 
 	uint8_t ATSC_protocol_version;
 	uint8_t num_channels_in_section;
@@ -94,12 +94,12 @@ struct dvb_table_vct {
 	 * Everything after descriptor (including it) won't be bit-mapped
 	 * to the data parsed from the MPEG TS. So, metadata are added there
 	 */
-	struct dvb_table_vct_channel *channel;
+	struct atsc_table_vct_channel *channel;
 	struct dvb_desc *descriptor;
 } __attribute__((packed));
 
 
-union dvb_table_vct_descriptor_length {
+union atsc_table_vct_descriptor_length {
 	uint16_t bitfield;
 	struct {
 		uint16_t descriptor_length:10;
@@ -107,8 +107,8 @@ union dvb_table_vct_descriptor_length {
 	};
 };
 
-#define dvb_vct_channel_foreach(_channel, _vct) \
-	for (struct dvb_table_vct_channel *_channel = _vct->channel; _channel; _channel = _channel->next) \
+#define atsc_vct_channel_foreach(_channel, _vct) \
+	for (struct atsc_table_vct_channel *_channel = _vct->channel; _channel; _channel = _channel->next) \
 
 struct dvb_v5_fe_parms;
 
@@ -116,9 +116,9 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void dvb_table_vct_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length);
-void dvb_table_vct_free(struct dvb_table_vct *vct);
-void dvb_table_vct_print(struct dvb_v5_fe_parms *parms, struct dvb_table_vct *vct);
+void atsc_table_vct_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length);
+void atsc_table_vct_free(struct atsc_table_vct *vct);
+void atsc_table_vct_print(struct dvb_v5_fe_parms *parms, struct atsc_table_vct *vct);
 
 #ifdef __cplusplus
 }

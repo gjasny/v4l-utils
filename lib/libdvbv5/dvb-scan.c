@@ -261,7 +261,7 @@ void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler)
 	if (dvb_scan_handler->pat)
 		dvb_table_pat_free(dvb_scan_handler->pat);
 	if (dvb_scan_handler->vct)
-		dvb_table_vct_free(dvb_scan_handler->vct);
+		atsc_table_vct_free(dvb_scan_handler->vct);
 	if (dvb_scan_handler->nit)
 		dvb_table_nit_free(dvb_scan_handler->nit);
 	if (dvb_scan_handler->sdt)
@@ -319,14 +319,14 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 			nit_time = 12;
 			break;
 		case SYS_ATSC:
-			atsc_filter = DVB_TABLE_TVCT;
+			atsc_filter = ATSC_TABLE_TVCT;
 			pat_pmt_time = 2;
 			vct_time = 2;
 			sdt_time = 5;
 			nit_time = 5;
 			break;
 		case SYS_DVBC_ANNEX_B:
-			atsc_filter = DVB_TABLE_CVCT;
+			atsc_filter = ATSC_TABLE_CVCT;
 			pat_pmt_time = 2;
 			vct_time = 2;
 			sdt_time = 5;
@@ -357,7 +357,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 	/* ATSC-specific VCT table */
 	if (atsc_filter) {
 		rc = dvb_read_section(parms, dmx_fd,
-				      atsc_filter, DVB_TABLE_VCT_PID,
+				      atsc_filter, ATSC_TABLE_VCT_PID,
 				      (uint8_t **)&dvb_scan_handler->vct,
 				      vct_time * timeout_multiply);
 		if (parms->abort)
@@ -365,7 +365,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 		if (rc < 0)
 			dvb_logerr("error while waiting for VCT table");
 		else if (parms->verbose)
-			dvb_table_vct_print(parms, dvb_scan_handler->vct);
+			atsc_table_vct_print(parms, dvb_scan_handler->vct);
 	}
 
 	/* PMT tables */

@@ -76,14 +76,16 @@ void dvb_desc_default_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc
 }
 
 const struct dvb_table_init dvb_table_initializers[] = {
-	[DVB_TABLE_PAT] = { dvb_table_pat_init, sizeof(struct dvb_table_pat) },
-	[DVB_TABLE_PMT] = { dvb_table_pmt_init, sizeof(struct dvb_table_pmt) },
-	[DVB_TABLE_NIT] = { dvb_table_nit_init, sizeof(struct dvb_table_nit) },
-	[DVB_TABLE_SDT] = { dvb_table_sdt_init, sizeof(struct dvb_table_sdt) },
-	[DVB_TABLE_EIT] = { dvb_table_eit_init, sizeof(struct dvb_table_eit) },
-	[DVB_TABLE_TVCT] = { dvb_table_vct_init, sizeof(struct dvb_table_vct) },
-	[DVB_TABLE_CVCT] = { dvb_table_vct_init, sizeof(struct dvb_table_vct) },
+	[DVB_TABLE_PAT]          = { dvb_table_pat_init, sizeof(struct dvb_table_pat) },
+	[DVB_TABLE_PMT]          = { dvb_table_pmt_init, sizeof(struct dvb_table_pmt) },
+	[DVB_TABLE_NIT]          = { dvb_table_nit_init, sizeof(struct dvb_table_nit) },
+	[DVB_TABLE_SDT]          = { dvb_table_sdt_init, sizeof(struct dvb_table_sdt) },
+	[DVB_TABLE_EIT]          = { dvb_table_eit_init, sizeof(struct dvb_table_eit) },
 	[DVB_TABLE_EIT_SCHEDULE] = { dvb_table_eit_init, sizeof(struct dvb_table_eit) },
+	[ATSC_TABLE_MGT]         = { atsc_table_mgt_init, sizeof(struct atsc_table_mgt) },
+	[ATSC_TABLE_EIT]         = { atsc_table_eit_init, sizeof(struct atsc_table_eit) },
+	[ATSC_TABLE_TVCT]        = { atsc_table_vct_init, sizeof(struct atsc_table_vct) },
+	[ATSC_TABLE_CVCT]        = { atsc_table_vct_init, sizeof(struct atsc_table_vct) },
 };
 
 char *default_charset = "iso-8859-1";
@@ -1355,6 +1357,6 @@ void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned c
 		for (i = strlen(hex); i < 49; i++)
 			strncat(spaces, " ", sizeof(spaces));
 		ascii[j] = '\0';
-		dvb_log("%s%s %s %s", prefix, hex, spaces, ascii);
+		dvb_log("%s %s %s %s", prefix, hex, spaces, ascii);
 	}
 }
