@@ -48,7 +48,7 @@ struct dvb_table_nit_transport {
 		struct {
 			uint16_t section_length:12;
 			uint16_t reserved:4;
-		};
+		} __attribute__((packed));
 	};
 	struct dvb_desc *descriptor;
 	struct dvb_table_nit_transport *next;
@@ -61,7 +61,7 @@ struct dvb_table_nit {
 		struct {
 			uint16_t desc_length:12;
 			uint16_t reserved:4;
-		};
+		} __attribute__((packed));
 	};
 	struct dvb_desc *descriptor;
 	struct dvb_table_nit_transport *transport;
