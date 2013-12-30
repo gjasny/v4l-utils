@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013 - Mauro Carvalho Chehab <m.chehab@samsung.com>
+ * Copyright (c) 2013 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -35,14 +36,14 @@ struct dvb_table_vct_channel {
 	uint16_t	__short_name[7];
 
 	union {
-		uint16_t bitfield1;
+		uint32_t bitfield1;
 		struct {
 			uint32_t	modulation_mode:8;
 			uint32_t	minor_channel_number:10;
 			uint32_t	major_channel_number:10;
 			uint32_t	reserved1:4;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 
 	uint32_t	carrier_frequency;
 	uint16_t	channel_tsid;
@@ -60,7 +61,8 @@ struct dvb_table_vct_channel {
 			uint16_t	ETM_location:2;
 
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
+
 	uint16_t source_id;
 	union {
 		uint16_t bitfield3;
@@ -68,7 +70,7 @@ struct dvb_table_vct_channel {
 			uint16_t descriptors_length:10;
 			uint16_t reserved3:6;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 
 	/*
 	 * Everything after descriptor (including it) won't be bit-mapped

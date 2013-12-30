@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013 - Mauro Carvalho Chehab <m.chehab@samsung.com>
+ * Copyright (c) 2013 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -74,7 +75,7 @@ void dvb_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		bswap32(channel->carrier_frequency);
 		bswap16(channel->channel_tsid);
 		bswap16(channel->program_number);
-		bswap16(channel->bitfield1);
+		bswap32(channel->bitfield1);
 		bswap16(channel->bitfield2);
 		bswap16(channel->source_id);
 		bswap16(channel->bitfield3);
