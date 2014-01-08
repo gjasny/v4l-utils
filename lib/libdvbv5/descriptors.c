@@ -37,6 +37,7 @@
 #include "descriptors/eit.h"
 #include "descriptors/vct.h"
 #include "descriptors/mgt.h"
+#include "descriptors/atsc_eit.h"
 #include "descriptors/desc_language.h"
 #include "descriptors/desc_network_name.h"
 #include "descriptors/desc_cable_delivery.h"
