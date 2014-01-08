@@ -1,4 +1,4 @@
-  /*
+/*
  * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -222,6 +222,8 @@ enum descriptors {
 	/* SCTE 35 2004 */
 	CUE_identifier_descriptor			= 0x8a,
 
+	extended_channel_name				= 0xa0,
+	service_location				= 0xa1,
 	/* From http://www.etherguidesystems.com/Help/SDOs/ATSC/Semantics/Descriptors/Default.aspx */
 	component_name_descriptor			= 0xa3,
 
