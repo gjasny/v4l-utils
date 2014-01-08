@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ * Copyright (c) 2013 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -97,9 +98,12 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 	uint8_t *buf = NULL;
 	uint8_t *tbl = NULL;
 	ssize_t table_length = 0;
+
+	/* variables for section handling */
+	int start_id = -1;
+	int start_section = -1;
 	int first_section = -1;
 	int last_section = -1;
-	int table_id = -1;
 	int sections = 0;
 	struct dmx_sct_filter_params f;
 	struct dvb_table_header *h;
@@ -186,24 +190,27 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 
 		h = (struct dvb_table_header *)buf;
 		dvb_table_header_init(h);
+
+		if (start_id == h->id && start_section == h->section_id) {
+			dvb_logdbg( "dvb_read_section: section repeated, reading done" );
+			break;
+		}
+		if (start_id == -1)
+			start_id = h->id;
+		if (start_section == -1)
+			start_section = h->section_id;
+
 		if (id != -1 && h->id != id) { /* search for a specific table id */
 			continue;
-		} else {
-			if (table_id == -1)
-				table_id = h->id;
-			else if (h->id != table_id) {
-				dvb_logwarn("dvb_read_section: table ID mismatch reading multi section table: %d != %d", h->id, table_id);
-				continue;
-			}
 		}
 
 		/* handle the sections */
 		if (first_section == -1)
 			first_section = h->section_id;
-		else if (h->section_id == first_section)
+		else if (start_id == h->id && h->section_id == first_section)
 			break;
 
-		if (last_section == -1)
+		if (last_section == -1 || h->last_section > last_section)
 			last_section = h->last_section;
 
 		if (!tbl) {
@@ -229,8 +236,10 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		else
 			dvb_logerr("dvb_read_section: no initializer for table %d", tid);
 
-		if (++sections == last_section + 1)
+		if (id != -1 && ++sections == last_section + 1) {
+			dvb_logerr("dvb_read_section: read more sections than last section id: %d / %d", sections, last_section);
 			break;
+		}
 	}
 	free(buf);
 
