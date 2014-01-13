@@ -9,7 +9,7 @@ http://git.linuxtv.org/v4l-utils.git
 v4l libraries (libv4l)
 ----------------------
 
-See README.lib for more information on libv4l, libv4l is released
+See README.libv4l for more information on libv4l, libv4l is released
 under the GNU Lesser General Public License.
 
 

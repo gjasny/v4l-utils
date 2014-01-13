@@ -150,7 +150,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 %files -n libv4l
 %defattr(-,root,root,-)
-%doc COPYING.LIB COPYING ChangeLog README.lib TODO
+%doc COPYING.LIB COPYING ChangeLog README.libv4l TODO
 %{_libdir}/libv4l*.so.*
 %{_libdir}/libv4l
 
