@@ -1,6 +1,23 @@
 v4l-utils-1.0.0
 ---------------
 
+Alain VOLMAT (1):
+      buildsystem: Fix configure.ac --disable-v4l-utils option
+
+Gregor Jasny (4):
+      buildsystem: Create tarball with latest libtool for ppc64le support
+      buildsystem: Do not specify library version for static libs
+      buildsystem: use subdir-objects automake option as suggested by automake
+      buildsystem: Use autoconf variable for symbol visibility flag
+      libv4lconvert: Reject too short source buffer before accessing it
+
+Ricardo Ribalda Delgado (2):
+      libv4lconvert: Support for Y16 pixel format
+      libv4lconvert: Support for RGB32 and BGR32 format
+
+v4l-utils-1.0.0
+---------------
+
 Devin Heitmueller (1):
       Don't call G_TUNER unless actually performing a tuning related call
 
