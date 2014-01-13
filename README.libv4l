@@ -169,4 +169,4 @@ A: Just replace the open call for your device by v4l2_open and all
 Q: I still need an example how to convert my application!
 A: Check out the patches for the VLC media player:
    https://trac.videolan.org/vlc/attachment/ticket/1804/vlc-0.8.6-libv4l1.patch
-   https://trac.videolan.org/vlc/attachment/ticket/1804/vlc-0.8.6-libv4l2.patch
+   https://trac.videolan.org/vlc/attachment/ticket/1804/vlc-0.9.3-libv4l2.patch
