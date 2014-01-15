@@ -241,8 +241,8 @@ enum v4l2_priority {
 struct v4l2_rect {
 	int32_t   left;
 	int32_t   top;
-	int32_t   width;
-	int32_t   height;
+	uint32_t   width;
+	uint32_t   height;
 };
 
 struct v4l2_fract {

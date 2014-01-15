@@ -15,6 +15,7 @@ sync-with-kernel:
 	@if [ ! -f $(KERNEL_DIR)/include/uapi/linux/videodev2.h -o \
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/v4l2-controls.h -o \
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/v4l2-common.h -o \
+	      ! -f $(KERNEL_DIR)/include/uapi/linux/v4l2-subdev.h -o \
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/ivtv.h -o \
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/dvb/frontend.h -o \
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/dvb/dmx.h -o \
@@ -26,6 +27,7 @@ sync-with-kernel:
 	cp -a $(KERNEL_DIR)/include/uapi/linux/videodev2.h $(top_srcdir)/include/linux
 	cp -a $(KERNEL_DIR)/include/uapi/linux/v4l2-controls.h $(top_srcdir)/include/linux
 	cp -a $(KERNEL_DIR)/include/uapi/linux/v4l2-common.h $(top_srcdir)/include/linux
+	cp -a $(KERNEL_DIR)/include/uapi/linux/v4l2-subdev.h $(top_srcdir)/include/linux
 	cp -a $(KERNEL_DIR)/include/uapi/linux/ivtv.h $(top_srcdir)/include/linux
 	cp -a $(KERNEL_DIR)/include/uapi/linux/dvb/frontend.h $(top_srcdir)/include/linux/dvb
 	cp -a $(KERNEL_DIR)/include/uapi/linux/dvb/dmx.h $(top_srcdir)/include/linux/dvb
