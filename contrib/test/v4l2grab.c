@@ -129,7 +129,7 @@ static int capture(char *dev_name, int x_res, int y_res, int n_frames,
 			tv.tv_usec = 0;
 
 			r = select(fd + 1, &fds, NULL, NULL, &tv);
-		} while ((r == -1 && (errno = EINTR)));
+		} while ((r == -1 && (errno == EINTR)));
 		if (r == -1) {
 			perror("select");
 			return errno;
