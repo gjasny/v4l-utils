@@ -391,7 +391,7 @@ void misc_get(int fd)
 				printf("\tFrames per second: %.3f (%d/%d)\n",
 						(1.0 * tf.denominator) / tf.numerator,
 						tf.denominator, tf.numerator);
-			printf("\tRead buffers     : %d\n", parm.parm.output.writebuffers);
+			printf("\tRead buffers     : %d\n", parm.parm.capture.readbuffers);
 		}
 	}
 
