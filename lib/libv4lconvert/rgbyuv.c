@@ -4,7 +4,7 @@
 #             (C) 2008 Hans de Goede <hdegoede@redhat.com>
 
 # RGB565 conversion routines
-#             (C) 2009 Mauro Carvalho Chehab <mchehab@redhat.com>
+#             (C) 2009 Mauro Carvalho Chehab
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by

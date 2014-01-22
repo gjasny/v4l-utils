@@ -1,6 +1,6 @@
 /* keytable.c - This program allows checking/replacing keys at IR
 
-   Copyright (C) 2006-2010 Mauro Carvalho Chehab <mchehab@redhat.com>
+   Copyright (C) 2006-2010 Mauro Carvalho Chehab
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -101,7 +101,7 @@ static int parse_code(char *string)
 }
 
 const char *argp_program_version = "IR keytable control version "V4L_UTILS_VERSION;
-const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
 
 static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
 	"You need to have read permissions on /dev/input for the program to work\n"

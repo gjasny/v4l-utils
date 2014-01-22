@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@
 #define DEFAULT_OUTPUT  "dvb_channel.conf"
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
-const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
 
 struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev;

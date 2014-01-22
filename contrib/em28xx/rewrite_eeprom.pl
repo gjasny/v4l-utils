@@ -3,7 +3,7 @@
 ################################################################################
 #  Copyright (C) 2009
 #
-#  Mauro Carvalho Chehab <mchehab@redhat.com>
+#  Mauro Carvalho Chehab
 #  Douglas Schilling Landgraf <dougsland@redhat.com>
 #
 #  This program is free software; you can redistribute it and/or modify

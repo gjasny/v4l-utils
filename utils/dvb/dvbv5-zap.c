@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,7 +46,7 @@
 #define PROGRAM_NAME	"dvbv5-zap"
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
-const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
 
 struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev, *dvr_dev;

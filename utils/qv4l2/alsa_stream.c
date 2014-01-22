@@ -7,7 +7,7 @@
  *  Derived from the alsa-driver test tool latency.c:
  *    Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *
- *  Copyright (c) 2011 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ *  Copyright (c) 2011 - Mauro Carvalho Chehab
  *	Ported to xawtv, with bug fixes and improvements
  *
  *  This program is free software; you can redistribute it and/or modify
