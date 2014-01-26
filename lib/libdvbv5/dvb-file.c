@@ -49,6 +49,45 @@
 #include "descriptors/desc_atsc_service_location.h"
 #include "descriptors/desc_hierarchy.h"
 
+int store_entry_prop(struct dvb_entry *entry,
+		     uint32_t cmd, uint32_t value)
+{
+	int i;
+
+	for (i = 0; i < entry->n_props; i++) {
+		if (cmd == entry->props[i].cmd)
+			break;
+	}
+	if (i == entry->n_props) {
+		if (i == DTV_MAX_COMMAND) {
+			fprintf(stderr, "Can't add property %s\n",
+			       dvb_v5_name[cmd]);
+			return -1;
+		}
+		entry->n_props++;
+		entry->props[i].cmd = cmd;
+	}
+
+	entry->props[i].u.data = value;
+
+	return 0;
+}
+
+int retrieve_entry_prop(struct dvb_entry *entry,
+			uint32_t cmd, uint32_t *value)
+{
+	int i;
+
+	for (i = 0; i < entry->n_props; i++) {
+		if (cmd == entry->props[i].cmd) {
+			*value = entry->props[i].u.data;
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
 /*
  * Generic parse function for all formats each channel is contained into
  * just one line.
@@ -379,45 +418,6 @@ error:
 	fprintf(stderr, "ERROR: %s while parsing entry %d of %s\n",
 		 err_msg, line, fname);
 	fclose(fp);
-	return -1;
-}
-
-int store_entry_prop(struct dvb_entry *entry,
-		     uint32_t cmd, uint32_t value)
-{
-	int i;
-
-	for (i = 0; i < entry->n_props; i++) {
-		if (cmd == entry->props[i].cmd)
-			break;
-	}
-	if (i == entry->n_props) {
-		if (i == DTV_MAX_COMMAND) {
-			fprintf(stderr, "Can't add property %s\n",
-			       dvb_v5_name[cmd]);
-			return -1;
-		}
-		entry->n_props++;
-		entry->props[i].cmd = cmd;
-	}
-
-	entry->props[i].u.data = value;
-
-	return 0;
-}
-
-int retrieve_entry_prop(struct dvb_entry *entry,
-			uint32_t cmd, uint32_t *value)
-{
-	int i;
-
-	for (i = 0; i < entry->n_props; i++) {
-		if (cmd == entry->props[i].cmd) {
-			*value = entry->props[i].u.data;
-			return 0;
-		}
-	}
-
 	return -1;
 }
 
