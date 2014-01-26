@@ -88,6 +88,32 @@ int retrieve_entry_prop(struct dvb_entry *entry,
 	return -1;
 }
 
+static void adjust_delsys(struct dvb_entry *entry)
+{
+	uint32_t delsys = SYS_UNDEFINED;
+
+	retrieve_entry_prop(entry, DTV_DELIVERY_SYSTEM, &delsys);
+	switch (delsys) {
+	case SYS_ATSC:
+	case SYS_DVBC_ANNEX_B: {
+		uint32_t modulation = VSB_8;
+
+		retrieve_entry_prop(entry, DTV_MODULATION, &modulation);
+		switch (modulation) {
+		case VSB_8:
+		case VSB_16:
+			delsys = SYS_ATSC;
+			break;
+		default:
+			delsys = SYS_DVBC_ANNEX_B;
+			break;
+		}
+		store_entry_prop(entry, DTV_DELIVERY_SYSTEM, delsys);
+		break;
+	}
+	} /* switch */
+}
+
 /*
  * Generic parse function for all formats each channel is contained into
  * just one line.
@@ -242,7 +268,7 @@ struct dvb_file *parse_format_oneline(const char *fname,
 			entry->props[entry->n_props].cmd = DTV_INVERSION;
 			entry->props[entry->n_props++].u.data = INVERSION_AUTO;
 		}
-
+		adjust_delsys(entry);
 	} while (1);
 	fclose(fd);
 	free(buf);
@@ -330,6 +356,7 @@ int write_format_oneline(const char *fname,
 				 delsys);
 			goto error;
 		}
+		adjust_delsys(entry);
 		if (parse_file->has_delsys_id) {
 			fprintf(fp, "%s", formats[i].id);
 			first = 0;
@@ -596,6 +623,7 @@ struct dvb_file *read_dvb_file(const char *fname)
 				dvb_file->first_entry = calloc(sizeof(*entry), 1);
 				entry = dvb_file->first_entry;
 			} else {
+				adjust_delsys(entry);
 				entry->next = calloc(sizeof(*entry), 1);
 				entry = entry->next;
 			}
@@ -644,6 +672,8 @@ struct dvb_file *read_dvb_file(const char *fname)
 			}
 		}
 	} while (1);
+	if (entry)
+		adjust_delsys(entry);
 	fclose(fd);
 	return dvb_file;
 
@@ -668,6 +698,7 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 	}
 
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
+		adjust_delsys(entry);
 		if (entry->channel) {
 			fprintf(fp, "[%s]\n", entry->channel);
 			if (entry->vchannel)
