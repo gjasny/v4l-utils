@@ -294,7 +294,7 @@ static bool fill_buffer_from_file(buffers &b, unsigned idx, FILE *fin)
 	return true;
 }
 
-static void do_setup_cap_buffers(int fd, buffers &b)
+static int do_setup_cap_buffers(int fd, buffers &b)
 {
 	for (unsigned i = 0; i < b.bcount; i++) {
 		struct v4l2_plane planes[VIDEO_MAX_PLANES];
@@ -310,7 +310,7 @@ static void do_setup_cap_buffers(int fd, buffers &b)
 			buf.length = VIDEO_MAX_PLANES;
 		}
 		if (doioctl(fd, VIDIOC_QUERYBUF, &buf))
-			return;
+			return -1;
 
 		if (b.is_mplane) {
 			b.num_planes = buf.length;
@@ -325,7 +325,7 @@ static void do_setup_cap_buffers(int fd, buffers &b)
 
 					if (b.bufs[i][j] == MAP_FAILED) {
 						fprintf(stderr, "mmap failed\n");
-						return;
+						return -1;
 					}
 				}
 				else {
@@ -345,7 +345,7 @@ static void do_setup_cap_buffers(int fd, buffers &b)
 
 				if (b.bufs[i][0] == MAP_FAILED) {
 					fprintf(stderr, "mmap failed\n");
-					return;
+					return -1;
 				}
 			}
 			else {
@@ -354,11 +354,12 @@ static void do_setup_cap_buffers(int fd, buffers &b)
 			}
 		}
 		if (doioctl(fd, VIDIOC_QBUF, &buf))
-			return;
+			return -1;
 	}
+	return 0;
 }
 
-static void do_setup_out_buffers(int fd, buffers &b, FILE *fin)
+static int do_setup_out_buffers(int fd, buffers &b, FILE *fin)
 {
 	struct v4l2_format fmt;
 	memset(&fmt, 0, sizeof(fmt));
@@ -367,7 +368,7 @@ static void do_setup_out_buffers(int fd, buffers &b, FILE *fin)
 
 	if (!precalculate_bars(fmt.fmt.pix.pixelformat, stream_pat)) {
 		fprintf(stderr, "unsupported pixelformat\n");
-		return;
+		return -1;
 	}
 
 	for (unsigned i = 0; i < b.bcount; i++) {
@@ -384,7 +385,7 @@ static void do_setup_out_buffers(int fd, buffers &b, FILE *fin)
 			buf.length = VIDEO_MAX_PLANES;
 		}
 		if (doioctl(fd, VIDIOC_QUERYBUF, &buf))
-			return;
+			return -1;
 
 		if (b.is_mplane) {
 			b.num_planes = buf.length;
@@ -400,7 +401,7 @@ static void do_setup_out_buffers(int fd, buffers &b, FILE *fin)
 
 					if (b.bufs[i][j] == MAP_FAILED) {
 						fprintf(stderr, "mmap failed\n");
-						return;
+						return -1;
 					}
 				}
 				else {
@@ -422,7 +423,7 @@ static void do_setup_out_buffers(int fd, buffers &b, FILE *fin)
 
 				if (b.bufs[i][0] == MAP_FAILED) {
 					fprintf(stderr, "mmap failed\n");
-					return;
+					return -1;
 				}
 			}
 			else {
@@ -433,8 +434,9 @@ static void do_setup_out_buffers(int fd, buffers &b, FILE *fin)
 				fill_buffer(b.bufs[i][0], &fmt.fmt.pix);
 		}
 		if (doioctl(fd, VIDIOC_QBUF, &buf))
-			return;
+			return -1;
 	}
+	return 0;
 }
 
 static void do_release_buffers(buffers &b)
@@ -642,7 +644,8 @@ static void streaming_set_cap(int fd)
 	if (b.reqbufs(fd, reqbufs_count_cap))
 		goto done;
 
-	do_setup_cap_buffers(fd, b);
+	if (do_setup_cap_buffers(fd, b))
+		goto done;
 
 	if (doioctl(fd, VIDIOC_STREAMON, &b.type))
 		goto done;
@@ -729,7 +732,8 @@ static void streaming_set_out(int fd)
 	if (b.reqbufs(fd, reqbufs_count_out))
 		goto done;
 
-	do_setup_out_buffers(fd, b, fin);
+	if (do_setup_out_buffers(fd, b, fin))
+		goto done;
 
 	if (doioctl(fd, VIDIOC_STREAMON, &b.type))
 		goto done;
@@ -838,8 +842,9 @@ static void streaming_set_m2m(int fd)
 	    out.reqbufs(fd, reqbufs_count_out))
 		goto done;
 
-	do_setup_cap_buffers(fd, in);
-	do_setup_out_buffers(fd, out, file[OUT]);
+	if (do_setup_cap_buffers(fd, in) ||
+	    do_setup_out_buffers(fd, out, file[OUT]))
+		goto done;
 
 	if (doioctl(fd, VIDIOC_STREAMON, &in.type) ||
 	    doioctl(fd, VIDIOC_STREAMON, &out.type))
