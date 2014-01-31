@@ -33,7 +33,8 @@ struct media_options
 	const char *entity;
 	const char *formats;
 	const char *links;
-	const char *pad;
+	const char *fmt_pad;
+	const char *dv_pad;
 };
 
 extern struct media_options media_opts;
