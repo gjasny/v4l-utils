@@ -94,7 +94,7 @@ extern "C" {
 #define V4L2_RDS_FLAG_STEREO 		0x01
 #define V4L2_RDS_FLAG_ARTIFICIAL_HEAD	0x02
 #define V4L2_RDS_FLAG_COMPRESSED	0x04
-#define V4L2_RDS_FLAG_STATIC_PTY	0x08
+#define V4L2_RDS_FLAG_DYNAMIC_PTY	0x08
 
 /* TMC related codes
  * used to extract TMC fields from RDS-TMC groups
