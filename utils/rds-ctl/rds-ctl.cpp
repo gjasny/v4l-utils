@@ -489,9 +489,13 @@ static void print_decoder_info(uint8_t di)
 	else
 		printf("No Artificial Head, ");
 	if (di & V4L2_RDS_FLAG_COMPRESSED)
-		printf("Compressed");
+		printf("Compressed, ");
 	else
-		printf("Not Compressed");
+		printf("Not Compressed, ");
+	if (di & V4L2_RDS_FLAG_DYNAMIC_PTY)
+		printf("Dynamic PTY");
+	else
+		printf("Static PTY");
 }
 
 static void print_rds_tmc(const struct v4l2_rds *handle, uint32_t updated_fields)
