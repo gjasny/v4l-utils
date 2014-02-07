@@ -637,6 +637,7 @@ static bool rds_add_af_to_list(struct v4l2_rds_af_set *af_set, uint8_t af, bool 
 {
 	/* convert the frequency to Hz, skip on errors */
 	uint32_t freq = rds_decode_af(af, is_vhf);
+
 	if (freq == 0) 
 		return false;
 
@@ -649,7 +650,7 @@ static bool rds_add_af_to_list(struct v4l2_rds_af_set *af_set, uint8_t af, bool 
 			return false;
 	}
 	/* it's a new AF, add it to the list */
-	af_set->af[(af_set->size)++] = freq;
+	af_set->af[af_set->size++] = freq;
 	return true;
 }
 
@@ -677,9 +678,14 @@ static bool rds_add_af(struct rds_private_state *priv_state)
 		c_lsb = 0; /* invalidate */
 	}
 	/* 224..249: announcement of AF count (224=0, 249=25) */
-	if (c_msb >= 224 && c_msb <= 249)
+	if (c_msb >= 224 && c_msb <= 249) {
+		if (af_set->announced_af != c_msb - 224) {
+			updated_af = true;
+			af_set->size = 0;
+		}
 		af_set->announced_af = c_msb - 224;
-	/* check if the data represents an AF (for 1 =< val <= 204 the
+	}
+	/* check if the data represents an AF (for 1 <= val <= 204 the
 	 * value represents an AF) */
 	if (c_msb < 205)
 		if (rds_add_af_to_list(af_set, c_msb, true))
