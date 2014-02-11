@@ -902,8 +902,10 @@ int main(int argc, char **argv)
 
 	if (options[OptAll]) {
 		options[OptGetVideoFormat] = 1;
+		options[OptGetVideoMplaneFormat] = 1;
 		options[OptGetCrop] = 1;
 		options[OptGetVideoOutFormat] = 1;
+		options[OptGetVideoOutMplaneFormat] = 1;
 		options[OptGetDriverInfo] = 1;
 		options[OptGetInput] = 1;
 		options[OptGetOutput] = 1;
