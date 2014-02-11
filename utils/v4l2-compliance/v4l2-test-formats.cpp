@@ -379,6 +379,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 	unsigned min_sampling_rate;
 	v4l2_std_id std;
 	__u32 service_set = 0;
+	unsigned tot_bytesperline = 0;
 	unsigned cnt = 0;
 
 	if (ret == ENOTTY)
@@ -424,8 +425,9 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 			if (ret)
 				return fail("pix_mp.plane_fmt[%d].reserved not zeroed\n", i);
 			fail_on_test(!pfmt.sizeimage);
-			fail_on_test(pfmt.bytesperline && pfmt.bytesperline < pix_mp.width);
+			tot_bytesperline += pfmt.bytesperline;
 		}
+		fail_on_test(tot_bytesperline && tot_bytesperline < pix_mp.width);
 		break;
 	case V4L2_BUF_TYPE_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_VBI_OUTPUT:
