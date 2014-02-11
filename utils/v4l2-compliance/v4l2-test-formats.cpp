@@ -106,7 +106,8 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt, __u32 w, __u3
 				return fail("invalid min, max or step for frameinterval %d\n", f);
 			if (fract2f(&sw->min) > fract2f(&sw->max))
 				return fail("min > max\n");
-			if (fract2f(&sw->step) > fract2f(&sw->max) - fract2f(&sw->min))
+			if (frmival.type == V4L2_FRMIVAL_TYPE_STEPWISE &&
+			    fract2f(&sw->step) > fract2f(&sw->max) - fract2f(&sw->min))
 				return fail("step > (max - min)\n");
 			break;
 		default:
