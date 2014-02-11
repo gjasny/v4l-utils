@@ -45,10 +45,13 @@
    case is used to retrieve a setting. */
 enum Option {
 	OptSetDevice = 'd',
+	OptSetFreq = 'f',
 	OptHelp = 'h',
+	OptSetInput = 'i',
 	OptNoWarnings = 'n',
+	OptSetOutput = 'o',
 	OptSetRadioDevice = 'r',
-	OptTest = 't',
+	OptStreaming = 's',
 	OptTrace = 'T',
 	OptVerbose = 'v',
 	OptSetVbiDevice = 'V',
@@ -68,6 +71,10 @@ bool wrapper;
 int kernel_version;
 unsigned warnings;
 
+static unsigned select_input;
+static unsigned select_output;
+static double select_freq;
+
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
 	{"radio-device", required_argument, 0, OptSetRadioDevice},
@@ -77,6 +84,10 @@ static struct option long_options[] = {
 	{"no-warnings", no_argument, 0, OptNoWarnings},
 	{"trace", no_argument, 0, OptTrace},
 	{"wrapper", no_argument, 0, OptUseWrapper},
+	{"set-input", required_argument, 0, OptSetInput},
+	{"set-output", required_argument, 0, OptSetOutput},
+	{"set-freq", required_argument, 0, OptSetFreq},
+	{"streaming", no_argument, 0, OptStreaming},
 	{0, 0, 0, 0}
 };
 
@@ -84,13 +95,18 @@ static void usage(void)
 {
 	printf("Usage:\n");
 	printf("Common options:\n");
-	printf("  -d, --device=<dev> use device <dev> as the video device\n");
-	printf("                     if <dev> starts with a digit, then /dev/video<dev> is used\n");
-	printf("  -r, --radio-device=<dev> use device <dev> as the radio device\n");
-	printf("                     if <dev> starts with a digit, then /dev/radio<dev> is used\n");
-	printf("  -V, --vbi-device=<dev> use device <dev> as the vbi device\n");
-	printf("                     if <dev> starts with a digit, then /dev/vbi<dev> is used\n");
-	printf("  -h, --help         display this help message\n");
+	printf("  -d, --device=<dev> use device <dev> as the video device.\n");
+	printf("                     if <dev> starts with a digit, then /dev/video<dev> is used.\n");
+	printf("  -r, --radio-device=<dev> use device <dev> as the radio device.\n");
+	printf("                     if <dev> starts with a digit, then /dev/radio<dev> is used.\n");
+	printf("  -V, --vbi-device=<dev> use device <dev> as the vbi device.\n");
+	printf("                     if <dev> starts with a digit, then /dev/vbi<dev> is used.\n");
+	printf("  -i, --set-input    select input for streaming tests (default is 0).\n");
+	printf("  -o, --set-output   select output for streaming tests (default is 0).\n");
+	printf("  -f, --set-freq     select frequency in MHz (kHz for radio) for streaming tests.\n");
+	printf("  -s, --streaming    enable the streaming tests. Requires a valid input/output and\n");
+	printf("                     frequency (when dealing with a tuner).\n");
+	printf("  -h, --help         display this help message.\n");
 	printf("  -n, --no-warnings  turn off warning messages.\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
 	printf("  -v, --verbose      turn on verbose reporting.\n");
@@ -445,6 +461,15 @@ int main(int argc, char **argv)
 				vbi_device = newdev;
 			}
 			break;
+		case OptSetInput:
+			select_input = strtoul(optarg, NULL, 0);
+			break;
+		case OptSetOutput:
+			select_output = strtoul(optarg, NULL, 0);
+			break;
+		case OptSetFreq:
+			select_freq = strtod(optarg, NULL);
+			break;
 		case OptNoWarnings:
 			show_warnings = false;
 			break;
@@ -685,15 +710,46 @@ int main(int argc, char **argv)
 
 	printf("Buffer ioctls:\n");
 	printf("\ttest VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: %s\n", ok(testReqBufs(&node)));
-	//printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
+	if (options[OptStreaming]) {
+		if (options[OptSetInput])
+			doioctl(&node, VIDIOC_S_INPUT, &select_input);
+		if (options[OptSetOutput])
+			doioctl(&node, VIDIOC_S_OUTPUT, &select_output);
+		if (options[OptSetFreq]) {
+			struct v4l2_frequency f = { 0 };
+			unsigned freq_caps;
+
+			if (node.caps & V4L2_CAP_MODULATOR) {
+				struct v4l2_modulator m = { 0 };
+
+				doioctl(&node, VIDIOC_G_MODULATOR, &m);
+				freq_caps = m.capability;
+				f.type = V4L2_TUNER_RADIO;
+			} else {
+				struct v4l2_tuner t = { 0 };
+
+				doioctl(&node, VIDIOC_G_TUNER, &t);
+				f.type = t.type;
+				freq_caps = t.capability;
+			}
+			if (freq_caps & V4L2_TUNER_CAP_LOW)
+				f.frequency = select_freq / 62.5;
+			else
+				f.frequency = select_freq / 62500;
+			doioctl(&node, VIDIOC_S_FREQUENCY, &f);
+		}
+
+		printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
+		printf("\ttest MMAP: %s\n", ok(testMmap(&node)));
+		printf("\ttest USERPTR: %s\n", ok(testUserPtr(&node)));
+	}
 	printf("\n");
 
 	/* TODO:
 
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP, VIDIOC_G/S_SELECTION
 	   VIDIOC_S_FBUF/OVERLAY
-	   VIDIOC_QBUF/DQBUF/QUERYBUF/PREPARE_BUFS/EXPBUF
-	   VIDIOC_STREAMON/OFF
+	   VIDIOC_EXPBUF
 	   */
 
 	/* Final test report */

@@ -200,5 +200,7 @@ int testDecoder(struct node *node);
 // Buffer ioctl tests
 int testReqBufs(struct node *node);
 int testReadWrite(struct node *node);
+int testMmap(struct node *node);
+int testUserPtr(struct node *node);
 
 #endif
