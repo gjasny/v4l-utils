@@ -740,6 +740,9 @@ int main(int argc, char **argv)
 		}
 
 		printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
+		// Reopen to clear the 'file I/O' mode of the filehandle,
+		// preventing VIDIOC_REQBUFS from working (will return -EBUSY).
+		reopen(&node);
 		printf("\ttest MMAP: %s\n", ok(testMmap(&node)));
 		printf("\ttest USERPTR: %s\n", ok(testUserPtr(&node)));
 	}

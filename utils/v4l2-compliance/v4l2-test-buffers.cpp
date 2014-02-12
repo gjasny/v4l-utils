@@ -376,9 +376,9 @@ int testReadWrite(struct node *node)
 	if (can_rw)
 		fail_on_test((ret < 0 && errno != EAGAIN) || ret > 1);
 	else
-		fail_on_test(ret < 0 && errno != EINVAL);
+		fail_on_test(ret >= 0 || errno != EINVAL);
 	if (!can_rw)
-		goto rw_exit;
+		return 0;
 
 	reopen(node);
 	fcntl(node->fd, F_SETFL, fd_flags | O_NONBLOCK);
@@ -389,8 +389,6 @@ int testReadWrite(struct node *node)
 	else
 		ret = write(node->fd, &buf, 1);
 	fail_on_test((ret < 0 && errno != EAGAIN) || ret > 1);
-rw_exit:
-	reopen(node);
 	return 0;
 }
 
