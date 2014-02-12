@@ -108,11 +108,13 @@ static struct option long_options[] = {
 	{"list-formats-mplane", no_argument, 0, OptListMplaneFormats},
 	{"list-formats-ext", no_argument, 0, OptListFormatsExt},
 	{"list-formats-ext-mplane", no_argument, 0, OptListMplaneFormatsExt},
+	{"list-fields", no_argument, 0, OptListFields},
 	{"list-framesizes", required_argument, 0, OptListFrameSizes},
 	{"list-frameintervals", required_argument, 0, OptListFrameIntervals},
 	{"list-formats-overlay", no_argument, 0, OptListOverlayFormats},
 	{"list-formats-out", no_argument, 0, OptListOutFormats},
 	{"list-formats-out-mplane", no_argument, 0, OptListOutMplaneFormats},
+	{"list-fields-out", no_argument, 0, OptListOutFields},
 	{"get-standard", no_argument, 0, OptGetStandard},
 	{"set-standard", required_argument, 0, OptSetStandard},
 	{"get-detected-standard", no_argument, 0, OptQueryStandard},
@@ -632,16 +634,33 @@ void print_v4lstd(v4l2_std_id std)
 	}
 }
 
-int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat)
+__u32 parse_field(const char *s)
+{
+	if (!strcmp(s, "any")) return V4L2_FIELD_ANY;
+	if (!strcmp(s, "none")) return V4L2_FIELD_NONE;
+	if (!strcmp(s, "top")) return V4L2_FIELD_TOP;
+	if (!strcmp(s, "bottom")) return V4L2_FIELD_BOTTOM;
+	if (!strcmp(s, "interlaced")) return V4L2_FIELD_INTERLACED;
+	if (!strcmp(s, "seq_tb")) return V4L2_FIELD_SEQ_TB;
+	if (!strcmp(s, "seq_bt")) return V4L2_FIELD_SEQ_BT;
+	if (!strcmp(s, "alternate")) return V4L2_FIELD_ALTERNATE;
+	if (!strcmp(s, "interlaced_tb")) return V4L2_FIELD_INTERLACED_TB;
+	if (!strcmp(s, "interlaced_bt")) return V4L2_FIELD_INTERLACED_BT;
+	return V4L2_FIELD_ANY;
+}
+
+int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &field, __u32 &pixelformat)
 {
 	char *value, *subs;
 	int fmts = 0;
 
+	field = V4L2_FIELD_ANY;
 	subs = optarg;
 	while (*subs != '\0') {
 		static const char *const subopts[] = {
 			"width",
 			"height",
+			"field",
 			"pixelformat",
 			NULL
 		};
@@ -656,6 +675,10 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat)
 			fmts |= FmtHeight;
 			break;
 		case 2:
+			field = parse_field(value);
+			fmts |= FmtField;
+			break;
+		case 3:
 			if (strlen(value) == 4)
 				pixelformat =
 					v4l2_fourcc(value[0], value[1],

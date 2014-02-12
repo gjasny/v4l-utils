@@ -117,21 +117,6 @@ static void printfbuf(const struct v4l2_framebuffer &fb)
 	}
 }
 
-static enum v4l2_field parse_field(const char *s)
-{
-	if (!strcmp(s, "any")) return V4L2_FIELD_ANY;
-	if (!strcmp(s, "none")) return V4L2_FIELD_NONE;
-	if (!strcmp(s, "top")) return V4L2_FIELD_TOP;
-	if (!strcmp(s, "bottom")) return V4L2_FIELD_BOTTOM;
-	if (!strcmp(s, "interlaced")) return V4L2_FIELD_INTERLACED;
-	if (!strcmp(s, "seq_tb")) return V4L2_FIELD_SEQ_TB;
-	if (!strcmp(s, "seq_bt")) return V4L2_FIELD_SEQ_BT;
-	if (!strcmp(s, "alternate")) return V4L2_FIELD_ALTERNATE;
-	if (!strcmp(s, "interlaced_tb")) return V4L2_FIELD_INTERLACED_TB;
-	if (!strcmp(s, "interlaced_bt")) return V4L2_FIELD_INTERLACED_BT;
-	return V4L2_FIELD_ANY;
-}
-
 void overlay_cmd(int ch, char *optarg)
 {
 	unsigned int *set_overlay_fmt_ptr = NULL;

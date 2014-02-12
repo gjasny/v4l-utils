@@ -46,25 +46,35 @@ void vidcap_usage(void)
 	       "                     list supported frame intervals for pixelformat <f> and\n"
 	       "                     the given width and height [VIDIOC_ENUM_FRAMEINTERVALS]\n"
 	       "                     pixelformat is the fourcc value as a string\n"
+	       "  --list-fields      list supported fields for the current format\n"
 	       "  -V, --get-fmt-video\n"
 	       "     		     query the video capture format [VIDIOC_G_FMT]\n"
-	       "  -v, --set-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "  -v, --set-fmt-video=width=<w>,height=<h>,pixelformat=<pf>,field=<f>\n"
 	       "                     set the video capture format [VIDIOC_S_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats, or the fourcc value as a string\n"
-	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "                     --list-formats, or the fourcc value as a string.\n"
+	       "                     <f> can be one of:\n"
+	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
+	       "                     alternate, interlaced_tb, interlaced_bt\n"
+	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<pf>,field=<f>\n"
 	       "                     try the video capture format [VIDIOC_TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats, or the fourcc value as a string\n"
+	       "                     --list-formats, or the fourcc value as a string.\n"
+	       "                     <f> can be one of:\n"
+	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
+	       "                     alternate, interlaced_tb, interlaced_bt\n"
 	       "  --get-fmt-video-mplane\n"
 	       "     		     query the video capture format through the multi-planar API\n"
 	       "                     [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-video-mplane\n"
-	       "  --try-fmt-video-mplane=width=<w>,height=<h>,pixelformat=<f>\n"
+	       "  --try-fmt-video-mplane=width=<w>,height=<h>,pixelformat=<pf>,field=<f>\n"
 	       "                     set/try the video capture format using the multi-planar API\n"
 	       "                     [VIDIOC_S/TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats-mplane, or the fourcc value as a string\n"
+	       "                     --list-formats-mplane, or the fourcc value as a string.\n"
+	       "                     <f> can be one of:\n"
+	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
+	       "                     alternate, interlaced_tb, interlaced_bt\n"
 	       );
 }
 
@@ -168,33 +178,68 @@ static void print_video_formats_ext(int fd, enum v4l2_buf_type type)
 	}
 }
 
+static void print_video_fields(int fd)
+{
+	struct v4l2_format fmt;
+	struct v4l2_format tmp;
+	bool is_mplane = capabilities &
+		(V4L2_CAP_VIDEO_CAPTURE_MPLANE |
+		 V4L2_CAP_VIDEO_M2M_MPLANE);
+
+	fmt.type = is_mplane ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+			       V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (test_ioctl(fd, VIDIOC_G_FMT, &fmt) < 0)
+		return;
+
+	printf("Supported Video Fields:\n");
+	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
+		bool ok;
+
+		tmp = fmt;
+		if (is_mplane)
+			tmp.fmt.pix_mp.field = f;
+		else
+			tmp.fmt.pix.field = f;
+		if (test_ioctl(fd, VIDIOC_TRY_FMT, &tmp) < 0)
+			continue;
+		if (is_mplane)
+			ok = tmp.fmt.pix_mp.field == f;
+		else
+			ok = tmp.fmt.pix.field == f;
+		if (ok)
+			printf("\t%s\n", field2s(f).c_str());
+	}
+}
+
 void vidcap_cmd(int ch, char *optarg)
 {
-	__u32 width, height, pixfmt;
+	__u32 width, height, field, pixfmt;
 	char *value, *subs;
 
 	switch (ch) {
 	case OptSetVideoMplaneFormat:
 	case OptTryVideoMplaneFormat:
-		set_fmts = parse_fmt(optarg, width, height, pixfmt);
+		set_fmts = parse_fmt(optarg, width, height, field, pixfmt);
 		if (!set_fmts) {
 			vidcap_usage();
 			exit(1);
 		}
 		vfmt.fmt.pix_mp.width = width;
 		vfmt.fmt.pix_mp.height = height;
+		vfmt.fmt.pix_mp.field = field;
 		vfmt.fmt.pix_mp.pixelformat = pixfmt;
 		break;
 
 	case OptSetVideoFormat:
 	case OptTryVideoFormat:
-		set_fmts = parse_fmt(optarg, width, height, pixfmt);
+		set_fmts = parse_fmt(optarg, width, height, field, pixfmt);
 		if (!set_fmts) {
 			vidcap_usage();
 			exit(1);
 		}
 		vfmt.fmt.pix.width = width;
 		vfmt.fmt.pix.height = height;
+		vfmt.fmt.pix.field = field;
 		vfmt.fmt.pix.pixelformat = pixfmt;
 		break;
 	case OptListFrameSizes:
@@ -339,6 +384,10 @@ void vidcap_list(int fd)
 	if (options[OptListMplaneFormatsExt]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
 		print_video_formats_ext(fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
+	}
+
+	if (options[OptListFields]) {
+		print_video_fields(fd);
 	}
 
 	if (options[OptListFrameSizes]) {

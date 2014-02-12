@@ -69,11 +69,13 @@ enum Option {
 	OptListMplaneFormats,
 	OptListFormatsExt,
 	OptListMplaneFormatsExt,
+	OptListFields,
 	OptListFrameSizes,
 	OptListFrameIntervals,
 	OptListOverlayFormats,
 	OptListOutFormats,
 	OptListOutMplaneFormats,
+	OptListOutFields,
 	OptLogStatus,
 	OptVerbose,
 	OptSilent,
@@ -192,7 +194,8 @@ std::string colorspace2s(int val);
 std::string service2s(unsigned service);
 std::string field2s(int val);
 void print_v4lstd(v4l2_std_id std);
-int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat);
+__u32 parse_field(const char *s);
+int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &field, __u32 &pixelformat);
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane);
 void printfmt(const struct v4l2_format &vfmt);
 void print_video_formats(int fd, enum v4l2_buf_type type);
