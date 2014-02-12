@@ -37,28 +37,22 @@ enum Option {
 	OptSetVideoFormat = 'v',
 	OptUseWrapper = 'w',
 
-	OptGetVideoMplaneFormat = 128,
-	OptSetVideoMplaneFormat,
-	OptGetSlicedVbiOutFormat,
+	OptGetSlicedVbiOutFormat = 128,
 	OptGetOverlayFormat,
 	OptGetOutputOverlayFormat,
 	OptGetVbiFormat,
 	OptGetVbiOutFormat,
 	OptGetVideoOutFormat,
-	OptGetVideoOutMplaneFormat,
 	OptSetSlicedVbiOutFormat,
 	OptSetOutputOverlayFormat,
 	OptSetOverlayFormat,
 	//OptSetVbiFormat, TODO
 	//OptSetVbiOutFormat, TODO
 	OptSetVideoOutFormat,
-	OptSetVideoOutMplaneFormat,
 	OptTryVideoOutFormat,
-	OptTryVideoOutMplaneFormat,
 	OptTrySlicedVbiOutFormat,
 	OptTrySlicedVbiFormat,
 	OptTryVideoFormat,
-	OptTryVideoMplaneFormat,
 	OptTryOutputOverlayFormat,
 	OptTryOverlayFormat,
 	//OptTryVbiFormat, TODO
@@ -66,15 +60,12 @@ enum Option {
 	OptAll,
 	OptListStandards,
 	OptListFormats,
-	OptListMplaneFormats,
 	OptListFormatsExt,
-	OptListMplaneFormatsExt,
 	OptListFields,
 	OptListFrameSizes,
 	OptListFrameIntervals,
 	OptListOverlayFormats,
 	OptListOutFormats,
-	OptListOutMplaneFormats,
 	OptListOutFields,
 	OptLogStatus,
 	OptVerbose,
@@ -164,6 +155,9 @@ enum Option {
 
 extern char options[OptLast];
 extern unsigned capabilities;
+extern bool is_multiplanar;
+extern __u32 vidcap_buftype;
+extern __u32 vidout_buftype;
 extern int verbose;
 
 typedef struct {
@@ -198,7 +192,7 @@ __u32 parse_field(const char *s);
 int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &field, __u32 &pixelformat);
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane);
 void printfmt(const struct v4l2_format &vfmt);
-void print_video_formats(int fd, enum v4l2_buf_type type);
+void print_video_formats(int fd, __u32 type);
 
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 

@@ -59,6 +59,9 @@ static int app_result;
 int verbose;
 
 unsigned capabilities;
+bool is_multiplanar;
+__u32 vidcap_buftype;
+__u32 vidout_buftype;
 
 static struct option long_options[] = {
 	{"list-audio-inputs", no_argument, 0, OptListAudioInputs},
@@ -68,15 +71,9 @@ static struct option long_options[] = {
 	{"get-fmt-video", no_argument, 0, OptGetVideoFormat},
 	{"set-fmt-video", required_argument, 0, OptSetVideoFormat},
 	{"try-fmt-video", required_argument, 0, OptTryVideoFormat},
-	{"get-fmt-video-mplane", no_argument, 0, OptGetVideoMplaneFormat},
-	{"set-fmt-video-mplane", required_argument, 0, OptSetVideoMplaneFormat},
-	{"try-fmt-video-mplane", required_argument, 0, OptTryVideoMplaneFormat},
 	{"get-fmt-video-out", no_argument, 0, OptGetVideoOutFormat},
 	{"set-fmt-video-out", required_argument, 0, OptSetVideoOutFormat},
 	{"try-fmt-video-out", required_argument, 0, OptTryVideoOutFormat},
-	{"get-fmt-video-out-mplane", no_argument, 0, OptGetVideoOutMplaneFormat},
-	{"set-fmt-video-out-mplane", required_argument, 0, OptSetVideoOutMplaneFormat},
-	{"try-fmt-video-out-mplane", required_argument, 0, OptTryVideoOutMplaneFormat},
 	{"help", no_argument, 0, OptHelp},
 	{"help-tuner", no_argument, 0, OptHelpTuner},
 	{"help-io", no_argument, 0, OptHelpIO},
@@ -105,15 +102,12 @@ static struct option long_options[] = {
 	{"set-freq", required_argument, 0, OptSetFreq},
 	{"list-standards", no_argument, 0, OptListStandards},
 	{"list-formats", no_argument, 0, OptListFormats},
-	{"list-formats-mplane", no_argument, 0, OptListMplaneFormats},
 	{"list-formats-ext", no_argument, 0, OptListFormatsExt},
-	{"list-formats-ext-mplane", no_argument, 0, OptListMplaneFormatsExt},
 	{"list-fields", no_argument, 0, OptListFields},
 	{"list-framesizes", required_argument, 0, OptListFrameSizes},
 	{"list-frameintervals", required_argument, 0, OptListFrameIntervals},
 	{"list-formats-overlay", no_argument, 0, OptListOverlayFormats},
 	{"list-formats-out", no_argument, 0, OptListOutFormats},
-	{"list-formats-out-mplane", no_argument, 0, OptListOutMplaneFormats},
 	{"list-fields-out", no_argument, 0, OptListOutFields},
 	{"get-standard", no_argument, 0, OptGetStandard},
 	{"set-standard", required_argument, 0, OptSetStandard},
@@ -474,7 +468,7 @@ std::string fmtdesc2s(unsigned flags)
 	return flags2s(flags, fmtdesc_def);
 }
 
-void print_video_formats(int fd, enum v4l2_buf_type type)
+void print_video_formats(int fd, __u32 type)
 {
 	struct v4l2_fmtdesc fmt;
 
@@ -910,6 +904,15 @@ int main(int argc, char **argv)
 	if (capabilities & V4L2_CAP_DEVICE_CAPS)
 		capabilities = vcap.device_caps;
 
+	is_multiplanar = capabilities & (V4L2_CAP_VIDEO_CAPTURE_MPLANE |
+					 V4L2_CAP_VIDEO_M2M_MPLANE |
+					 V4L2_CAP_VIDEO_OUTPUT_MPLANE);
+
+	vidcap_buftype = is_multiplanar ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+					  V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	vidout_buftype = is_multiplanar ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
+					  V4L2_BUF_TYPE_VIDEO_OUTPUT;
+
 	common_process_controls(fd);
 
 	if (wait_for_event == V4L2_EVENT_CTRL && wait_event_id)
@@ -925,10 +928,8 @@ int main(int argc, char **argv)
 
 	if (options[OptAll]) {
 		options[OptGetVideoFormat] = 1;
-		options[OptGetVideoMplaneFormat] = 1;
 		options[OptGetCrop] = 1;
 		options[OptGetVideoOutFormat] = 1;
-		options[OptGetVideoOutMplaneFormat] = 1;
 		options[OptGetDriverInfo] = 1;
 		options[OptGetInput] = 1;
 		options[OptGetOutput] = 1;

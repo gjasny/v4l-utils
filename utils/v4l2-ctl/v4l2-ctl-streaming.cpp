@@ -234,17 +234,7 @@ class buffers {
 public:
 	buffers(bool is_output, bool is_mmap)
 	{
-		if (is_output) {
-			is_mplane = capabilities &
-				(V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE);
-			type = is_mplane ?
-				V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE : V4L2_BUF_TYPE_VIDEO_OUTPUT;
-		} else {
-			is_mplane = capabilities &
-				(V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE);
-			type = is_mplane ?
-				V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE : V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		}
+		type = is_output ? vidout_buftype : vidcap_buftype;
 		memory = is_mmap ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
 	}
 
@@ -959,21 +949,11 @@ void streaming_set(int fd)
 void streaming_list(int fd)
 {
 	if (options[OptListBuffers]) {
-		bool is_mplane = capabilities &
-			(V4L2_CAP_VIDEO_CAPTURE_MPLANE |
-			 V4L2_CAP_VIDEO_M2M_MPLANE);
-		
-		list_buffers(fd, is_mplane ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
-					     V4L2_BUF_TYPE_VIDEO_CAPTURE);
+		list_buffers(fd, vidcap_buftype);
 	}
 
 	if (options[OptListBuffersOut]) {
-		bool is_mplane = capabilities &
-			(V4L2_CAP_VIDEO_OUTPUT_MPLANE |
-			 V4L2_CAP_VIDEO_M2M_MPLANE);
-		
-		list_buffers(fd, is_mplane ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
-					     V4L2_BUF_TYPE_VIDEO_OUTPUT);
+		list_buffers(fd, vidout_buftype);
 	}
 
 	if (options[OptListBuffersVbi]) {
