@@ -136,7 +136,6 @@ static int checkQueryBuf(struct node *node, const struct v4l2_buffer &buf,
 	}
 
 	if (mode == Dequeued || mode == Prepared) {
-		fail_on_test(!(buf.flags & (V4L2_BUF_FLAG_DONE | V4L2_BUF_FLAG_ERROR)));
 		if (V4L2_TYPE_IS_MULTIPLANAR(type)) {
 			fail_on_test(buf.length <= VIDEO_MAX_PLANES);
 			for (unsigned p = 0; p < buf.length; p++) {
@@ -158,6 +157,7 @@ static int checkQueryBuf(struct node *node, const struct v4l2_buffer &buf,
 		fail_on_test(!buf.timestamp.tv_sec && !buf.timestamp.tv_usec);
 		fail_on_test(buf.field == V4L2_FIELD_ALTERNATE);
 		fail_on_test(buf.field == V4L2_FIELD_ANY);
+		fail_on_test(!(buf.flags & (V4L2_BUF_FLAG_DONE | V4L2_BUF_FLAG_ERROR)));
 		if (cur_fmt.fmt.pix.field == V4L2_FIELD_ALTERNATE) {
 			fail_on_test(buf.field != V4L2_FIELD_BOTTOM &&
 				     buf.field != V4L2_FIELD_TOP);
@@ -409,6 +409,13 @@ static int setupMmap(struct node *node, struct v4l2_requestbuffers &bufs)
 		}
 		fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
 		fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, i, Unqueued, 0));
+
+		// Try a random offset
+		ptrs[i] = test_mmap(NULL, buf.length,
+				  PROT_READ | PROT_WRITE, MAP_SHARED, node->fd, buf.m.offset + 0xdeadbeef);
+		fail_on_test(ptrs[i] != MAP_FAILED);
+
+		// Now with the proper offset
 		ptrs[i] = test_mmap(NULL, buf.length,
 				  PROT_READ | PROT_WRITE, MAP_SHARED, node->fd, buf.m.offset);
 
@@ -599,13 +606,37 @@ static int setupUserPtr(struct node *node, struct v4l2_requestbuffers &bufs)
 		fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, i, Unqueued, 0));
 		ptrs[i] = malloc(buf.length);
 		fail_on_test(ptrs[i] == NULL);
-		buf.m.userptr = (unsigned long)ptrs[i];
 
-		ret = doioctl(node, VIDIOC_PREPARE_BUF, &buf);
-		fail_on_test(ret && ret != ENOTTY);
-		if (ret == 0) {
-			fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
-			fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, i, Prepared, 0));
+		ret = ENOTTY;
+		// Try to use VIDIOC_PREPARE_BUF for every other buffer
+		if ((i & 1) == 0) {
+			buf.m.userptr = 0;
+			ret = doioctl(node, VIDIOC_PREPARE_BUF, &buf);
+			fail_on_test(!ret);
+
+			buf.m.userptr = (unsigned long)ptrs[i] + buf.length / 2;
+			ret = doioctl(node, VIDIOC_PREPARE_BUF, &buf);
+			fail_on_test(!ret);
+
+			buf.m.userptr = (unsigned long)ptrs[i];
+			ret = doioctl(node, VIDIOC_PREPARE_BUF, &buf);
+			fail_on_test(ret && ret != ENOTTY);
+
+			if (ret == 0) {
+				fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
+				fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, i, Prepared, 0));
+			}
+		}
+		if (ret == ENOTTY) {
+			buf.m.userptr = 0;
+			ret = doioctl(node, VIDIOC_QBUF, &buf);
+			fail_on_test(!ret);
+
+			buf.m.userptr = (unsigned long)ptrs[i] + buf.length / 2;
+			ret = doioctl(node, VIDIOC_QBUF, &buf);
+			fail_on_test(!ret);
+
+			buf.m.userptr = (unsigned long)ptrs[i];
 		}
 
 		fail_on_test(doioctl(node, VIDIOC_QBUF, &buf));
