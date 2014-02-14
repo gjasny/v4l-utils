@@ -96,6 +96,12 @@ void atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		*head = channel;
 		head = &(*head)->next;
 
+		if (endbuf - p < channel->descriptors_length) {
+			dvb_logerr("%s: short read %d/%zd bytes", __func__,
+				   channel->descriptors_length, endbuf - p);
+			return;
+		}
+
 		/* get the descriptors for each program */
 		dvb_parse_descriptors(parms, p, channel->descriptors_length,
 				      &channel->descriptor);
@@ -109,6 +115,11 @@ void atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		union atsc_table_vct_descriptor_length *d = (void *)p;
 		bswap16(d->descriptor_length);
 		p += size;
+		if (endbuf - p < d->descriptor_length) {
+			dvb_logerr("%s: short read %d/%zd bytes", __func__,
+				   d->descriptor_length, endbuf - p);
+			return;
+		}
 		dvb_parse_descriptors(parms, p, d->descriptor_length,
 				      &vct->descriptor);
 	}
