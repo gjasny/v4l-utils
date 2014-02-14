@@ -61,7 +61,8 @@ void dvb_dmx_stop(int dmx_fd)
 	(void) ioctl(dmx_fd, DMX_STOP);
 }
 
-int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type, dmx_output_t output, int buffersize)
+int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
+		      dmx_output_t output, int buffersize)
 {
 	struct dmx_pes_filter_params pesfilter;
 
@@ -81,6 +82,39 @@ int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type, dmx_output_t outp
 	if (ioctl(dmxfd, DMX_SET_PES_FILTER, &pesfilter) == -1) {
 		fprintf(stderr, "DMX_SET_PES_FILTER failed "
 		"(PID = 0x%04x): %d %m\n", pid, errno);
+		return -1;
+	}
+
+	return 0;
+}
+
+int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
+			   unsigned char *filter,
+			   unsigned char *mask,
+			   unsigned char *mode,
+			   unsigned int flags)
+{
+	struct dmx_sct_filter_params sctfilter;
+
+	if (filtsize > DMX_FILTER_SIZE)
+		filtsize = DMX_FILTER_SIZE;
+
+	memset(&sctfilter, 0, sizeof(sctfilter));
+
+	sctfilter.pid = pid;
+
+	if (filter)
+		memcpy(sctfilter.filter.filter, filter, filtsize);
+	if (mask)
+		memcpy(sctfilter.filter.mask, mask, filtsize);
+	if (mode)
+		memcpy(sctfilter.filter.mode, mode, filtsize);
+
+	sctfilter.flags = flags;
+
+	if (ioctl(dmxfd, DMX_SET_FILTER, &sctfilter) == -1) {
+		fprintf(stderr, "DMX_SET_FILTER failed (PID = 0x%04x): %d %m\n",
+			pid, errno);
 		return -1;
 	}
 

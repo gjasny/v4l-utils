@@ -98,6 +98,7 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 	uint8_t *buf = NULL;
 	uint8_t *tbl = NULL;
 	ssize_t table_length = 0;
+	uint8_t mask = 0xff;
 
 	/* variables for section handling */
 	int start_id = -1;
@@ -105,7 +106,6 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 	int first_section = -1;
 	int last_section = -1;
 	int sections = 0;
-	struct dmx_sct_filter_params f;
 	struct dvb_table_header *h;
 
 	if (!table)
@@ -114,16 +114,9 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 
 	// FIXME: verify known table
 
-	memset(&f, 0, sizeof(f));
-	f.pid = pid;
-	f.filter.filter[0] = tid;
-	f.filter.mask[0] = 0xff;
-	f.timeout = 0;
-	f.flags = DMX_IMMEDIATE_START | DMX_CHECK_CRC;
-	if (ioctl(dmx_fd, DMX_SET_FILTER, &f) == -1) {
-		dvb_perror("dvb_read_section: ioctl DMX_SET_FILTER failed");
+	if (dvb_set_section_filter(dmx_fd, pid, 1, &tid, &mask, NULL,
+				   DMX_IMMEDIATE_START | DMX_CHECK_CRC))
 		return -1;
-	}
 
 	if (parms->verbose)
 		dvb_log("Parsing table ID %d, program ID %d", tid, pid);

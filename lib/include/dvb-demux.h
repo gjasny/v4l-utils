@@ -39,7 +39,14 @@ int dvb_dmx_open(int adapter, int demux);
 void dvb_dmx_close(int dmx_fd);
 void dvb_dmx_stop(int dmx_fd);
 
-int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type, dmx_output_t output, int buffersize);
+int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
+		      dmx_output_t output, int buffersize);
+
+int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
+			   unsigned char *filter,
+			   unsigned char *mask,
+			   unsigned char *mode,
+			   unsigned int flags);
 
 int get_pmt_pid(const char *dmxdev, int sid);
 
