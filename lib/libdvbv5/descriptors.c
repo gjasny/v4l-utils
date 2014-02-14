@@ -120,7 +120,7 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		}
 
 		if (desc_len > section_length - 2) {
-			dvb_logwarn("descriptor type %0x02x is too big",
+			dvb_logwarn("descriptor type 0x%02x is too big",
 				   desc_type);
 			return;
 		}
