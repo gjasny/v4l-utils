@@ -99,7 +99,8 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	const uint8_t *ptr = buf;
 	struct dvb_desc *current = NULL;
 	struct dvb_desc *last = NULL;
-	while (ptr < buf + section_length) {
+
+	while (ptr + 2 < buf + section_length) {
 		unsigned desc_type = ptr[0];
 		int desc_len  = ptr[1];
 		size_t size;
