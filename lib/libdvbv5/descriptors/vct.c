@@ -151,7 +151,6 @@ void atsc_table_vct_print(struct dvb_v5_fe_parms *parms, struct atsc_table_vct *
 
 	atsc_table_header_print(parms, &vct->header);
 
-	dvb_log("|- Protocol version %d", vct->ATSC_protocol_version);
 	dvb_log("|- #channels        %d", vct->num_channels_in_section);
 	dvb_log("|\\  channel_id");
 	const struct atsc_table_vct_channel *channel = vct->channel;

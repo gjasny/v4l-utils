@@ -87,7 +87,6 @@ struct atsc_table_vct_channel {
 struct atsc_table_vct {
 	struct atsc_table_header header;
 
-	uint8_t ATSC_protocol_version;
 	uint8_t num_channels_in_section;
 
 	/*
