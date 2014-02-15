@@ -542,6 +542,7 @@ int testMmap(struct node *node)
 		fail_on_test(can_stream);
 		return ret;
 	}
+	fail_on_test(!can_stream);
 
 	fail_on_test(doioctl(node, VIDIOC_STREAMON, &bufs.type));
 	fail_on_test(doioctl(node, VIDIOC_STREAMOFF, &bufs.type));
@@ -667,9 +668,10 @@ int testUserPtr(struct node *node)
 	bufs.memory = V4L2_MEMORY_USERPTR;
 	ret = doioctl(node, VIDIOC_REQBUFS, &bufs);
 	if (ret) {
-		fail_on_test(can_stream);
-		return ret;
+		fail_on_test(ret != EINVAL);
+		return ENOTTY;
 	}
+	fail_on_test(!can_stream);
 
 	bufs.count = 1;
 	fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
