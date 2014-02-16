@@ -631,12 +631,23 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	/* Filter out any user DTV_foo property such as DTV_POLARIZATION */
 	tmp_parms.n_props = dvb_copy_fe_props(tmp_parms.dvb_prop, tmp_parms.n_props, tmp_parms.dvb_prop);
 
+	if (parms->lna != LNA_AUTO && !parms->legacy_fe) {
+		memset(&prop, 0, sizeof(prop));
+		prop.props = tmp_parms.dvb_prop;
+
+		prop.props[0].cmd = DTV_LNA;
+		prop.props[0].u.data = parms->lna;
+		prop.num = 1;
+		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
+			dvb_perror("Setting LNA");
+			parms->lna = LNA_AUTO;
+		} else if (parms->lna != LNA_AUTO && parms->verbose)
+			dvb_logdbg("LNA is %s", parms->lna ? "ON" : "OFF");
+	}
+
 	memset(&prop, 0, sizeof(prop));
 	prop.props = tmp_parms.dvb_prop;
 	prop.num = tmp_parms.n_props;
-	prop.props[prop.num].cmd = DTV_LNA;
-	prop.props[prop.num].u.data = parms->lna;
-	prop.num++;
 	prop.props[prop.num].cmd = DTV_TUNE;
 	prop.num++;
 
@@ -647,9 +658,6 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 				dvb_fe_prt_parms(parms);
 			return -1;
 		}
-		if (parms->lna != LNA_AUTO && parms->verbose)
-			dvb_logdbg("LNA is %s", parms->lna ? "ON" : "OFF");
-
 		return 0;
 	}
 	/* DVBv3 call */
