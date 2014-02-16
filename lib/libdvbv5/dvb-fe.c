@@ -82,6 +82,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	parms->sat_number = -1;
 	parms->abort = 0;
 	parms->logfunc = logfunc;
+	parms->lna = LNA_AUTO;
 
 	if (ioctl(fd, FE_GET_INFO, &parms->info) == -1) {
 		dvb_perror("FE_GET_INFO");
@@ -633,6 +634,9 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	memset(&prop, 0, sizeof(prop));
 	prop.props = tmp_parms.dvb_prop;
 	prop.num = tmp_parms.n_props;
+	prop.props[prop.num].cmd = DTV_LNA;
+	prop.props[prop.num].u.data = parms->lna;
+	prop.num++;
 	prop.props[prop.num].cmd = DTV_TUNE;
 	prop.num++;
 
@@ -643,6 +647,9 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 				dvb_fe_prt_parms(parms);
 			return -1;
 		}
+		if (parms->lna != LNA_AUTO && parms->verbose)
+			dvb_logdbg("LNA is %s", parms->lna ? "ON" : "OFF");
+
 		return 0;
 	}
 	/* DVBv3 call */

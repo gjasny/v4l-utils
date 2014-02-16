@@ -97,6 +97,7 @@ struct dvb_v5_fe_parms {
 	struct dtv_property		dvb_prop[DTV_MAX_COMMAND];
 	int				legacy_fe;
 	struct dvb_v5_stats		stats;
+	int				lna;
 
 	/* Satellite specific stuff, specified by the library client */
 	const struct dvb_sat_lnb       	*lnb;
