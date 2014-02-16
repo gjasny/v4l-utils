@@ -52,7 +52,7 @@ struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev, *dvr_dev;
 	char *filename;
 	unsigned adapter, frontend, demux, get_detected, get_nit;
-	int force_dvbv3, lnb, sat_number;
+	int force_dvbv3, lna, lnb, sat_number;
 	unsigned diseqc_wait, silent, verbose, frontend_only, freq_bpf;
 	unsigned timeout, dvr, rec_psi, exit_after_tuning;
 	unsigned record;
@@ -73,6 +73,7 @@ static const struct argp_option options[] = {
 	{"demux",	'd', "demux#",			0, "use given demux (default 0)", 0},
 	{"frontend",	'f', "frontend#",		0, "use given frontend (default 0)", 0},
 	{"input-format", 'I',	"format",		0, "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)", 0},
+	{"lna",		'w', "LNA (0, 1, -1)",		0, "enable/disable/auto LNA power", 0},
 	{"lnbf",	'l', "LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
 	{"search",	'L', NULL,			0, "search/look for a string inside the traffic", 0},
 	{"monitor",	'm', NULL,			0, "monitors de DVB traffic", 0},
@@ -471,6 +472,23 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'c':
 		args->confname = strdup(optarg);
 		break;
+	case 'w':
+		if (!strcasecmp(optarg,"on")) {
+			args->lna = 1;
+		} else if (!strcasecmp(optarg,"off")) {
+			args->lna = 0;
+		} else if (!strcasecmp(optarg,"auto")) {
+			args->lna = LNA_AUTO;
+		} else {
+			int val = strtoul(optarg, NULL, 0);
+			if (!val)
+				args->lna = 0;
+			else if (val > 0)
+				args->lna = 1;
+			else
+				args->lna = LNA_AUTO;
+		}
+		break;
 	case 'l':
 		args->lnb_name = strdup(optarg);
 		break;
@@ -684,6 +702,7 @@ int main(int argc, char **argv)
 
 	memset(&args, 0, sizeof(args));
 	args.sat_number = -1;
+	args.lna = LNA_AUTO;
 
 	argp_parse(&argp, argc, argv, 0, &idx, &args);
 
@@ -744,6 +763,7 @@ int main(int argc, char **argv)
 		parms->sat_number = args.sat_number % 3;
 	parms->diseqc_wait = args.diseqc_wait;
 	parms->freq_bpf = args.freq_bpf;
+	parms->lna = args.lna;
 
 	if (parse(&args, parms, channel, &vpid, &apid, &sid))
 		goto err;

@@ -47,7 +47,7 @@ const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.
 struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev;
 	unsigned adapter, n_adapter, adapter_fe, adapter_dmx, frontend, demux, get_detected, get_nit;
-	int force_dvbv3, lnb, sat_number, freq_bpf;
+	int force_dvbv3, lna, lnb, sat_number, freq_bpf;
 	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
 	unsigned other_nit;
 	enum file_formats input_format, output_format;
@@ -61,6 +61,7 @@ static const struct argp_option options[] = {
 	{"frontend",	'f',	"frontend#",		0, "use given frontend (default 0)", 0},
 	{"demux",	'd',	"demux#",		0, "use given demux (default 0)", 0},
 	{"lnbf",	'l',	"LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
+	{"lna",		'w',	"LNA (0, 1, -1)",	0, "enable/disable/auto LNA power", 0},
 	{"sat_number",	'S',	"satellite_number",	0, "satellite number. If not specified, disable DISEqC", 0},
 	{"freq_bpf",	'U',	"frequency",		0, "SCR/Unicable band-pass filter frequency to use, in kHz", 0},
 	{"wait",	'W',	"time",			0, "adds additional wait time for DISEqC command completion", 0},
@@ -321,6 +322,23 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		args->demux = strtoul(optarg, NULL, 0);
 		args->adapter_dmx = args->adapter;
 		break;
+	case 'w':
+		if (!strcasecmp(optarg,"on")) {
+			args->lna = 1;
+		} else if (!strcasecmp(optarg,"off")) {
+			args->lna = 0;
+		} else if (!strcasecmp(optarg,"auto")) {
+			args->lna = LNA_AUTO;
+		} else {
+			int val = strtoul(optarg, NULL, 0);
+			if (!val)
+				args->lna = 0;
+			else if (val > 0)
+				args->lna = 1;
+			else
+				args->lna = LNA_AUTO;
+		}
+		break;
 	case 'l':
 		args->lnb_name = optarg;
 		break;
@@ -403,6 +421,7 @@ int main(int argc, char **argv)
 	args.output_format = FILE_DVBV5;
 	args.timeout_multiply = 1;
 	args.adapter = (unsigned)-1;
+	args.lna = LNA_AUTO;
 
 	argp_parse(&argp, argc, argv, 0, &idx, &args);
 	if (args.timeout_multiply == 0)
@@ -459,6 +478,7 @@ int main(int argc, char **argv)
 		parms->sat_number = args.sat_number % 3;
 	parms->diseqc_wait = args.diseqc_wait;
 	parms->freq_bpf = args.freq_bpf;
+	parms->lna = args.lna;
 
 	timeout_flag = &parms->abort;
 	signal(SIGTERM, do_timeout);
