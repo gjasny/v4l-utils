@@ -823,17 +823,24 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 		expbuf.flags = O_RDWR;
 		fail_on_test(doioctl(expbuf_node, VIDIOC_EXPBUF, &expbuf));
 	
-		dmabufs[i][0] = buf.m.fd = expbuf.fd;
+		dmabufs[i][0] = expbuf.fd;
 
 		ptrs[i][0] = mmap(NULL, buf.length,
 				  PROT_READ | PROT_WRITE, MAP_SHARED, expbuf.fd, 0);
 		fail_on_test(ptrs[i][0] == MAP_FAILED);
 
+		buf.m.fd = 0xdeadbeef + expbuf.fd;
 		ret = doioctl(node, VIDIOC_PREPARE_BUF, &buf);
-		fail_on_test(ret && ret != ENOTTY);
-		if (ret == 0) {
+		fail_on_test(!ret);
+		if (ret != ENOTTY) {
+			buf.m.fd = expbuf.fd;
+			ret = doioctl(node, VIDIOC_PREPARE_BUF, &buf);
+			fail_on_test(ret);
 			fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
 			fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, i, Prepared));
+		} else {
+			fail_on_test(!doioctl(node, VIDIOC_QBUF, &buf));
+			buf.m.fd = expbuf.fd;
 		}
 
 		fail_on_test(doioctl(node, VIDIOC_QBUF, &buf));
