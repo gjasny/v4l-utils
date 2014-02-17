@@ -56,6 +56,7 @@ enum Option {
 	OptVerbose = 'v',
 	OptSetVbiDevice = 'V',
 	OptUseWrapper = 'w',
+	OptSetExpBufDevice = 128,
 	OptLast = 256
 };
 
@@ -79,6 +80,7 @@ static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
 	{"radio-device", required_argument, 0, OptSetRadioDevice},
 	{"vbi-device", required_argument, 0, OptSetVbiDevice},
+	{"expbuf-device", required_argument, 0, OptSetExpBufDevice},
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
@@ -87,7 +89,7 @@ static struct option long_options[] = {
 	{"set-input", required_argument, 0, OptSetInput},
 	{"set-output", required_argument, 0, OptSetOutput},
 	{"set-freq", required_argument, 0, OptSetFreq},
-	{"streaming", no_argument, 0, OptStreaming},
+	{"streaming", optional_argument, 0, OptStreaming},
 	{0, 0, 0, 0}
 };
 
@@ -101,11 +103,16 @@ static void usage(void)
 	printf("                     if <dev> starts with a digit, then /dev/radio<dev> is used.\n");
 	printf("  -V, --vbi-device=<dev> use device <dev> as the vbi device.\n");
 	printf("                     if <dev> starts with a digit, then /dev/vbi<dev> is used.\n");
+	printf("  --expbuf-device=<dev> use device <dev> to obtain DMABUF handles.\n");
+	printf("                     if <dev> starts with a digit, then /dev/video<dev> is used.\n");
+	printf("                     only /dev/videoX devices are supported.\n");
 	printf("  -i, --set-input    select input for streaming tests (default is 0).\n");
 	printf("  -o, --set-output   select output for streaming tests (default is 0).\n");
 	printf("  -f, --set-freq     select frequency in MHz (kHz for radio) for streaming tests.\n");
-	printf("  -s, --streaming    enable the streaming tests. Requires a valid input/output and\n");
-	printf("                     frequency (when dealing with a tuner).\n");
+	printf("  -s, --streaming=<count> enable the streaming tests. Set <count> to the number of\n");
+	printf("                     frames to stream (default 100). Requires a valid input/output\n");
+	printf("                     and frequency (when dealing with a tuner). For DMABUF testing\n");
+	printf("                     --expbuf-device needs to be set as well.\n");
 	printf("  -h, --help         display this help message.\n");
 	printf("  -n, --no-warnings  turn off warning messages.\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
@@ -402,14 +409,17 @@ int main(int argc, char **argv)
 	struct node radio_node2 = { -1, true };
 	struct node vbi_node = { -1 };
 	struct node vbi_node2 = { -1 };
+	struct node expbuf_node = { -1 };
 
 	/* command args */
 	int ch;
 	const char *device = NULL;
-	const char *video_device = NULL;		/* -d device */
+	const char *video_device = NULL;	/* -d device */
 	const char *radio_device = NULL;	/* -r device */
 	const char *vbi_device = NULL;		/* -V device */
-	struct v4l2_capability vcap;	/* list_cap */
+	const char *expbuf_device = NULL;	/* --expbuf-device device */
+	struct v4l2_capability vcap;		/* list_cap */
+	unsigned frame_count = 100;
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
 
@@ -461,11 +471,24 @@ int main(int argc, char **argv)
 				vbi_device = newdev;
 			}
 			break;
+		case OptSetExpBufDevice:
+			expbuf_device = optarg;
+			if (expbuf_device[0] >= '0' && expbuf_device[0] <= '9' && strlen(expbuf_device) <= 3) {
+				static char newdev[20];
+
+				sprintf(newdev, "/dev/video%s", expbuf_device);
+				expbuf_device = newdev;
+			}
+			break;
 		case OptSetInput:
 			select_input = strtoul(optarg, NULL, 0);
 			break;
 		case OptSetOutput:
 			select_output = strtoul(optarg, NULL, 0);
+			break;
+		case OptStreaming:
+			if (optarg)
+				frame_count = strtoul(optarg, NULL, 0);
 			break;
 		case OptSetFreq:
 			select_freq = strtod(optarg, NULL);
@@ -523,6 +546,12 @@ int main(int argc, char **argv)
 
 	if (vbi_device && (vbi_node.fd = test_open(vbi_device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", vbi_device,
+			strerror(errno));
+		exit(1);
+	}
+
+	if (expbuf_device && (expbuf_node.fd = test_open(expbuf_device, O_RDWR)) < 0) {
+		fprintf(stderr, "Failed to open %s: %s\n", expbuf_device,
 			strerror(errno));
 		exit(1);
 	}
@@ -710,6 +739,7 @@ int main(int argc, char **argv)
 
 	printf("Buffer ioctls:\n");
 	printf("\ttest VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: %s\n", ok(testReqBufs(&node)));
+	printf("\ttest VIDIOC_EXPBUF: %s\n", ok(testExpBuf(&node)));
 	if (options[OptStreaming]) {
 		if (options[OptSetInput])
 			doioctl(&node, VIDIOC_S_INPUT, &select_input);
@@ -743,8 +773,13 @@ int main(int argc, char **argv)
 		// Reopen to clear the 'file I/O' mode of the filehandle,
 		// preventing VIDIOC_REQBUFS from working (will return -EBUSY).
 		reopen(&node);
-		printf("\ttest MMAP: %s\n", ok(testMmap(&node)));
-		printf("\ttest USERPTR: %s\n", ok(testUserPtr(&node)));
+		printf("\ttest MMAP: %s\n", ok(testMmap(&node, frame_count)));
+		printf("\ttest USERPTR: %s\n", ok(testUserPtr(&node, frame_count)));
+		if (options[OptSetExpBufDevice] ||
+		    !(node.valid_memorytype & (1 << V4L2_MEMORY_DMABUF)))
+			printf("\ttest DMABUF: %s\n", ok(testDmaBuf(&expbuf_node, &node, frame_count)));
+		else if (!options[OptSetExpBufDevice])
+			printf("\ttest DMABUF: Cannot test, specify --expbuf-device\n");
 	}
 	printf("\n");
 
@@ -752,7 +787,6 @@ int main(int argc, char **argv)
 
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP, VIDIOC_G/S_SELECTION
 	   VIDIOC_S_FBUF/OVERLAY
-	   VIDIOC_EXPBUF
 	   */
 
 	/* Final test report */

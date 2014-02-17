@@ -73,6 +73,7 @@ struct node {
 	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE + 1];
 	__u32 valid_buftypes;
 	__u32 valid_buftype;
+	__u32 valid_memorytype;
 };
 
 #define info(fmt, args...) 					\
@@ -200,7 +201,9 @@ int testDecoder(struct node *node);
 // Buffer ioctl tests
 int testReqBufs(struct node *node);
 int testReadWrite(struct node *node);
-int testMmap(struct node *node);
-int testUserPtr(struct node *node);
+int testExpBuf(struct node *node);
+int testMmap(struct node *node, unsigned frame_count);
+int testUserPtr(struct node *node, unsigned frame_count);
+int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count);
 
 #endif
