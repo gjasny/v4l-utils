@@ -114,6 +114,7 @@ private slots:
 	void stereoModeChanged();
 	void rdsModeChanged();
 	void vidCapFormatChanged(int);
+	void vidCapFieldChanged(int);
 	void frameWidthChanged();
 	void frameHeightChanged();
 	void frameSizeChanged(int);
@@ -135,6 +136,7 @@ private:
 	void updateFreq();
 	void updateFreqChannel();
 	void updateVidCapFormat();
+	void updateVidCapFields();
 	void updateFrameSize();
 	void updateFrameInterval();
 	void updateVidOutFormat();
@@ -201,6 +203,7 @@ private:
 	QCheckBox *m_rdsMode;
 	QPushButton *m_detectSubchans;
 	QComboBox *m_vidCapFormats;
+	QComboBox *m_vidCapFields;
 	QComboBox *m_frameSize;
 	QSpinBox *m_frameWidth;
 	QSpinBox *m_frameHeight;

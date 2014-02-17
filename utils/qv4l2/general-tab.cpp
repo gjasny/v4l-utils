@@ -58,6 +58,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_qryTimings(NULL),
 	m_freq(NULL),
 	m_vidCapFormats(NULL),
+	m_vidCapFields(NULL),
 	m_frameSize(NULL),
 	m_vidOutFormats(NULL),
 	m_vbiMethods(NULL),
@@ -402,6 +403,11 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_frameInterval->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	addWidget(m_frameInterval);
 	connect(m_frameInterval, SIGNAL(activated(int)), SLOT(frameIntervalChanged(int)));
+
+	addLabel("Field");
+	m_vidCapFields = new QComboBox(parent);
+	addWidget(m_vidCapFields);
+	connect(m_vidCapFields, SIGNAL(activated(int)), SLOT(vidCapFieldChanged(int)));
 
 	updateVideoInput();
 	updateVidCapFormat();
@@ -782,6 +788,49 @@ void GeneralTab::vidCapFormatChanged(int idx)
 	updateVidCapFormat();
 }
 
+static const char *field2s(int val)
+{
+	switch (val) {
+	case V4L2_FIELD_ANY:
+		return "Any";
+	case V4L2_FIELD_NONE:
+		return "None";
+	case V4L2_FIELD_TOP:
+		return "Top";
+	case V4L2_FIELD_BOTTOM:
+		return "Bottom";
+	case V4L2_FIELD_INTERLACED:
+		return "Interlaced";
+	case V4L2_FIELD_SEQ_TB:
+		return "Sequential Top-Bottom";
+	case V4L2_FIELD_SEQ_BT:
+		return "Sequential Bottom-Top";
+	case V4L2_FIELD_ALTERNATE:
+		return "Alternating";
+	case V4L2_FIELD_INTERLACED_TB:
+		return "Interlaced Top-Bottom";
+	case V4L2_FIELD_INTERLACED_BT:
+		return "Interlaced Bottom-Top";
+	default:
+		return "";
+	}
+}
+
+void GeneralTab::vidCapFieldChanged(int idx)
+{
+	v4l2_format fmt;
+
+	g_fmt_cap(fmt);
+	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
+		if (m_vidCapFields->currentText() == QString(field2s(f))) {
+			fmt.fmt.pix.field = f;
+			s_fmt(fmt);
+			break;
+		}
+	}
+	updateVidCapFormat();
+}
+
 void GeneralTab::frameWidthChanged()
 {
 	v4l2_format fmt;
@@ -1092,6 +1141,28 @@ void GeneralTab::updateVidCapFormat()
 	if (desc.pixelformat != fmt.fmt.pix.pixelformat)
 		return;
 	m_vidCapFormats->setCurrentIndex(desc.index);
+	updateVidCapFields();
+}
+
+void GeneralTab::updateVidCapFields()
+{
+	v4l2_format fmt;
+	v4l2_format tmp;
+
+	g_fmt_cap(fmt);
+
+	m_vidCapFields->clear();
+
+	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
+		tmp = fmt;
+		tmp.fmt.pix.field = f;
+		if (!s_fmt(tmp) || tmp.fmt.pix.field != f)
+			continue;
+		m_vidCapFields->addItem(field2s(f));
+		if (fmt.fmt.pix.field == f)
+			m_vidCapFields->setCurrentIndex(m_vidCapFields->count() - 1);
+	}
+	s_fmt(fmt);
 }
 
 void GeneralTab::updateFrameSize()
