@@ -749,6 +749,7 @@ int testSetFormats(struct node *node)
 {
 	struct v4l2_clip clip, clip_set;
 	struct v4l2_format fmt, fmt_set;
+	struct v4l2_format initial_fmts[V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE + 1];
 	int type;
 	int ret;
 	
@@ -759,6 +760,7 @@ int testSetFormats(struct node *node)
 		createInvalidFmt(fmt, clip, type);
 		doioctl(node, VIDIOC_G_FMT, &fmt);
 		
+		initial_fmts[type] = fmt;
 		createInvalidFmt(fmt_set, clip_set, type);
 		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
 		if (ret == EINVAL) {
@@ -846,6 +848,13 @@ int testSetFormats(struct node *node)
 		}
 	}
 
+	/* Restore initial format */
+	for (type = 0; type <= V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE; type++) {
+		if (!(node->valid_buftypes & (1 << type)))
+			continue;
+
+		doioctl(node, VIDIOC_S_FMT, &initial_fmts[type]);
+	}
 	return 0;
 }
 
