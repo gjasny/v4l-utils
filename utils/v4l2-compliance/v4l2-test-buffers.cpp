@@ -147,7 +147,6 @@ static int checkQueryBuf(struct node *node, const struct v4l2_buffer &buf,
 
 	if (mode == Dequeued || mode == Prepared) {
 		if (V4L2_TYPE_IS_MULTIPLANAR(type)) {
-			fail_on_test(buf.length > VIDEO_MAX_PLANES);
 			for (unsigned p = 0; p < buf.length; p++) {
 				struct v4l2_plane *vp = buf.m.planes + p;
 
@@ -155,7 +154,6 @@ static int checkQueryBuf(struct node *node, const struct v4l2_buffer &buf,
 					fail_on_test((void *)vp->m.userptr != ptrs[buf.index][p]);
 				else if (buf.memory == V4L2_MEMORY_DMABUF)
 					fail_on_test(vp->m.fd != dmabufs[buf.index][p]);
-				fail_on_test(vp->data_offset + vp->bytesused > vp->length);
 			}
 		} else {
 			if (buf.memory == V4L2_MEMORY_USERPTR)
@@ -167,11 +165,11 @@ static int checkQueryBuf(struct node *node, const struct v4l2_buffer &buf,
 
 	if (mode == Dequeued) {
 		if (V4L2_TYPE_IS_MULTIPLANAR(type)) {
-			fail_on_test(buf.length > VIDEO_MAX_PLANES);
 			for (unsigned p = 0; p < buf.length; p++) {
 				struct v4l2_plane *vp = buf.m.planes + p;
 
 				fail_on_test(!vp->bytesused);
+				fail_on_test(vp->data_offset >= vp->bytesused);
 				fail_on_test(vp->bytesused > vp->length);
 			}
 		} else {
