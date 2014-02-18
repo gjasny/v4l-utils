@@ -407,18 +407,16 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 	dvb_scan_handler->num_program = num_pmt;
 
 	/* NIT table */
-	if (!dvb_scan_handler->vct || other_nit) {
-		rc = dvb_read_section(parms, dmx_fd,
-				      DVB_TABLE_NIT, DVB_TABLE_NIT_PID,
-				      (uint8_t **)&dvb_scan_handler->nit,
-				      nit_time * timeout_multiply);
-		if (parms->abort)
-			return dvb_scan_handler;
-		if (rc < 0)
-			dvb_logerr("error while reading the NIT table");
-		else if (parms->verbose)
-			dvb_table_nit_print(parms, dvb_scan_handler->nit);
-	}
+	rc = dvb_read_section(parms, dmx_fd,
+			      DVB_TABLE_NIT, DVB_TABLE_NIT_PID,
+			      (uint8_t **)&dvb_scan_handler->nit,
+			      nit_time * timeout_multiply);
+	if (parms->abort)
+		return dvb_scan_handler;
+	if (rc < 0)
+		dvb_logerr("error while reading the NIT table");
+	else if (parms->verbose)
+		dvb_table_nit_print(parms, dvb_scan_handler->nit);
 
 	/* SDT table */
 	if (!dvb_scan_handler->vct || other_nit) {
