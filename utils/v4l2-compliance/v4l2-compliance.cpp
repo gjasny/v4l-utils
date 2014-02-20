@@ -399,6 +399,58 @@ static int testPrio(struct node *node, struct node *node2)
 	return 0;
 }
 
+static void streamingSetup(struct node *node)
+{
+	struct v4l2_input input;
+
+	if (options[OptSetInput])
+		doioctl(node, VIDIOC_S_INPUT, &select_input);
+	if (options[OptSetOutput])
+		doioctl(node, VIDIOC_S_OUTPUT, &select_output);
+	if (options[OptSetFreq]) {
+		struct v4l2_frequency f = { 0 };
+		unsigned freq_caps;
+
+		if (node->caps & V4L2_CAP_MODULATOR) {
+			struct v4l2_modulator m = { 0 };
+
+			doioctl(node, VIDIOC_G_MODULATOR, &m);
+			freq_caps = m.capability;
+			f.type = V4L2_TUNER_RADIO;
+		} else {
+			struct v4l2_tuner t = { 0 };
+
+			doioctl(node, VIDIOC_G_TUNER, &t);
+			f.type = t.type;
+			freq_caps = t.capability;
+		}
+		if (freq_caps & V4L2_TUNER_CAP_LOW)
+			f.frequency = select_freq / 62.5;
+		else
+			f.frequency = select_freq / 62500;
+		doioctl(node, VIDIOC_S_FREQUENCY, &f);
+	}
+
+	memset(&input, 0, sizeof(input));
+	doioctl(node, VIDIOC_G_INPUT, &input.index);
+	doioctl(node, VIDIOC_ENUMINPUT, &input);
+
+	if (input.capabilities & V4L2_IN_CAP_STD) {
+		v4l2_std_id std;
+
+		doioctl(node, VIDIOC_QUERYSTD, &std);
+		if (std)
+			doioctl(node, VIDIOC_S_STD, &std);
+	}
+
+	if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
+		struct v4l2_dv_timings t;
+
+		if (doioctl(node, VIDIOC_QUERY_DV_TIMINGS, &t) == 0)
+			doioctl(node, VIDIOC_S_DV_TIMINGS, &t);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int i;
@@ -740,34 +792,8 @@ int main(int argc, char **argv)
 	printf("Buffer ioctls:\n");
 	printf("\ttest VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: %s\n", ok(testReqBufs(&node)));
 	printf("\ttest VIDIOC_EXPBUF: %s\n", ok(testExpBuf(&node)));
-	if (options[OptStreaming]) {
-		if (options[OptSetInput])
-			doioctl(&node, VIDIOC_S_INPUT, &select_input);
-		if (options[OptSetOutput])
-			doioctl(&node, VIDIOC_S_OUTPUT, &select_output);
-		if (options[OptSetFreq]) {
-			struct v4l2_frequency f = { 0 };
-			unsigned freq_caps;
-
-			if (node.caps & V4L2_CAP_MODULATOR) {
-				struct v4l2_modulator m = { 0 };
-
-				doioctl(&node, VIDIOC_G_MODULATOR, &m);
-				freq_caps = m.capability;
-				f.type = V4L2_TUNER_RADIO;
-			} else {
-				struct v4l2_tuner t = { 0 };
-
-				doioctl(&node, VIDIOC_G_TUNER, &t);
-				f.type = t.type;
-				freq_caps = t.capability;
-			}
-			if (freq_caps & V4L2_TUNER_CAP_LOW)
-				f.frequency = select_freq / 62.5;
-			else
-				f.frequency = select_freq / 62500;
-			doioctl(&node, VIDIOC_S_FREQUENCY, &f);
-		}
+	if (options[OptStreaming] && !node.is_m2m) {
+		streamingSetup(&node);
 
 		printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
 		// Reopen to clear the 'file I/O' mode of the filehandle,

@@ -547,32 +547,12 @@ int testMmap(struct node *node, unsigned frame_count)
 {
 	struct v4l2_requestbuffers bufs;
 	struct v4l2_create_buffers cbufs;
-	struct v4l2_input input;
 	bool can_stream = node->caps & V4L2_CAP_STREAMING;
 	bool have_createbufs = true;
 	int ret;
-	
+
 	if (!(node->caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)))
 		return 0;
-
-	memset(&input, 0, sizeof(input));
-	doioctl(node, VIDIOC_G_INPUT, &input.index);
-	doioctl(node, VIDIOC_ENUMINPUT, &input);
-
-	if (input.capabilities & V4L2_IN_CAP_STD) {
-		v4l2_std_id std;
-
-		doioctl(node, VIDIOC_QUERYSTD, &std);
-		if (std)
-			doioctl(node, VIDIOC_S_STD, &std);
-	}
-
-	if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
-		struct v4l2_dv_timings t;
-
-		if (doioctl(node, VIDIOC_QUERY_DV_TIMINGS, &t) == 0)
-			doioctl(node, VIDIOC_S_DV_TIMINGS, &t);
-	}
 
 	memset(&bufs, 0, sizeof(bufs));
 	bufs.type = (node->caps & V4L2_CAP_VIDEO_CAPTURE) ?
