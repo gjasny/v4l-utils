@@ -21,7 +21,7 @@
 
 #include "v4l2-ctl.h"
 
-static struct v4l2_format vfmt;	/* set_format/get_format for video */
+static struct v4l2_format vfmt_cap;	/* set_format/get_format for video */
 static struct v4l2_frmsizeenum frmsize; /* list frame sizes */
 static struct v4l2_frmivalenum frmival; /* list frame intervals */
 static unsigned set_fmts;
@@ -203,15 +203,15 @@ void vidcap_cmd(int ch, char *optarg)
 			exit(1);
 		}
 		if (is_multiplanar) {
-			vfmt.fmt.pix_mp.width = width;
-			vfmt.fmt.pix_mp.height = height;
-			vfmt.fmt.pix_mp.field = field;
-			vfmt.fmt.pix_mp.pixelformat = pixfmt;
+			vfmt_cap.fmt.pix_mp.width = width;
+			vfmt_cap.fmt.pix_mp.height = height;
+			vfmt_cap.fmt.pix_mp.field = field;
+			vfmt_cap.fmt.pix_mp.pixelformat = pixfmt;
 		} else {
-			vfmt.fmt.pix.width = width;
-			vfmt.fmt.pix.height = height;
-			vfmt.fmt.pix.field = field;
-			vfmt.fmt.pix.pixelformat = pixfmt;
+			vfmt_cap.fmt.pix.width = width;
+			vfmt_cap.fmt.pix.height = height;
+			vfmt_cap.fmt.pix.field = field;
+			vfmt_cap.fmt.pix.pixelformat = pixfmt;
 		}
 		break;
 	case OptListFrameSizes:
@@ -266,11 +266,11 @@ void vidcap_set(int fd)
 		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0) {
 			if (is_multiplanar) {
 				if (set_fmts & FmtWidth)
-					vfmt.fmt.pix_mp.width = vfmt.fmt.pix_mp.width;
+					vfmt.fmt.pix_mp.width = vfmt_cap.fmt.pix_mp.width;
 				if (set_fmts & FmtHeight)
-					vfmt.fmt.pix_mp.height = vfmt.fmt.pix_mp.height;
+					vfmt.fmt.pix_mp.height = vfmt_cap.fmt.pix_mp.height;
 				if (set_fmts & FmtPixelFormat) {
-					vfmt.fmt.pix_mp.pixelformat = vfmt.fmt.pix_mp.pixelformat;
+					vfmt.fmt.pix_mp.pixelformat = vfmt_cap.fmt.pix_mp.pixelformat;
 					if (vfmt.fmt.pix_mp.pixelformat < 256) {
 						vfmt.fmt.pix_mp.pixelformat =
 							find_pixel_format(fd, vfmt.fmt.pix_mp.pixelformat,
@@ -284,11 +284,11 @@ void vidcap_set(int fd)
 					vfmt.fmt.pix_mp.plane_fmt[i].bytesperline = 0;
 			} else {
 				if (set_fmts & FmtWidth)
-					vfmt.fmt.pix.width = vfmt.fmt.pix.width;
+					vfmt.fmt.pix.width = vfmt_cap.fmt.pix.width;
 				if (set_fmts & FmtHeight)
-					vfmt.fmt.pix.height = vfmt.fmt.pix.height;
+					vfmt.fmt.pix.height = vfmt_cap.fmt.pix.height;
 				if (set_fmts & FmtPixelFormat) {
-					vfmt.fmt.pix.pixelformat = vfmt.fmt.pix.pixelformat;
+					vfmt.fmt.pix.pixelformat = vfmt_cap.fmt.pix.pixelformat;
 					if (vfmt.fmt.pix.pixelformat < 256) {
 						vfmt.fmt.pix.pixelformat =
 							find_pixel_format(fd, vfmt.fmt.pix.pixelformat,
@@ -314,9 +314,9 @@ void vidcap_set(int fd)
 void vidcap_get(int fd)
 {
 	if (options[OptGetVideoFormat]) {
-		vfmt.type = vidcap_buftype;
-		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(vfmt);
+		vfmt_cap.type = vidcap_buftype;
+		if (doioctl(fd, VIDIOC_G_FMT, &vfmt_cap) == 0)
+			printfmt(vfmt_cap);
 	}
 }
 
