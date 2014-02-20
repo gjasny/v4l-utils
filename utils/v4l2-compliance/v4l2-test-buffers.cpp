@@ -385,6 +385,81 @@ int testReqBufs(struct node *node)
 	return 0;
 }
 
+int testExpBuf(struct node *node)
+{
+	struct v4l2_requestbuffers bufs;
+	struct v4l2_plane planes[VIDEO_MAX_PLANES];
+	struct v4l2_buffer buf;
+	int err = 0;
+
+	if (!(node->caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)))
+		return 0;
+	if (!(node->valid_memorytype & (1 << V4L2_MEMORY_MMAP)))
+		return ENOTTY;
+
+	memset(planes, 0, sizeof(planes));
+	memset(&bufs, 0, sizeof(bufs));
+	bufs.count = 1;
+	bufs.memory = V4L2_MEMORY_MMAP;
+	bufs.type = (node->caps & V4L2_CAP_VIDEO_CAPTURE) ?
+		    V4L2_BUF_TYPE_VIDEO_CAPTURE :
+		    V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+	fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
+
+	memset(ptrs, 0, sizeof(ptrs));
+
+	for (unsigned i = 0; i < bufs.count; i++) {
+		struct v4l2_exportbuffer expbuf;
+
+		memset(&buf, 0, sizeof(buf));
+		buf.type = bufs.type;
+		buf.memory = bufs.memory;
+		buf.index = i;
+		if (V4L2_TYPE_IS_MULTIPLANAR(bufs.type)) {
+			buf.m.planes = planes;
+			buf.length = VIDEO_MAX_PLANES;
+		}
+		fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
+		unsigned num_planes = process_buf(buf, planes);
+
+		for (unsigned p = 0; p < num_planes; p++) {
+			memset(&expbuf, 0, sizeof(expbuf));
+			expbuf.type = bufs.type;
+			expbuf.index = i;
+			expbuf.plane = p;
+			expbuf.flags = O_RDWR;
+			err = doioctl(node, VIDIOC_EXPBUF, &expbuf);
+			if (err == ENOTTY)
+				break;
+
+			dmabufs[i][p] = expbuf.fd;
+ 
+			ptrs[i][p] = mmap(NULL, planes[p].length,
+					PROT_READ | PROT_WRITE, MAP_SHARED, expbuf.fd, 0);
+			if (ptrs[i][p] == MAP_FAILED) {
+				close(dmabufs[i][p]);
+				ptrs[i][p] = NULL;
+				fail("mmap on DMABUF file descriptor failed\n");
+				err = ENOMEM;
+				break;
+			}
+		}
+	}
+
+	for (unsigned i = 0; i < bufs.count; i++) {
+		for (unsigned p = 0; p < VIDEO_MAX_PLANES; p++) {
+			if (ptrs[i][p]) {
+				munmap(ptrs[i][p], planes[p].length);
+				close(dmabufs[i][p]);
+			}
+		}
+	}
+
+	bufs.count = 0;
+	fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
+	return err;
+}
+
 int testReadWrite(struct node *node)
 {
 	bool can_rw = node->caps & V4L2_CAP_READWRITE;
@@ -415,6 +490,62 @@ int testReadWrite(struct node *node)
 	else
 		ret = write(node->fd, &buf, 1);
 	fail_on_test((ret < 0 && errno != EAGAIN) || ret > 1);
+	return 0;
+}
+
+static int captureBufs(struct node *node, const struct v4l2_requestbuffers &bufs,
+		       unsigned frame_count, bool use_poll)
+{
+	int fd_flags = fcntl(node->fd, F_GETFL);
+	struct v4l2_plane planes[VIDEO_MAX_PLANES];
+	struct v4l2_buffer buf;
+	unsigned count = frame_count;
+	int ret;
+
+	memset(planes, 0, sizeof(planes));
+	memset(&buf, 0, sizeof(buf));
+	if (use_poll)
+		fcntl(node->fd, F_SETFL, fd_flags | O_NONBLOCK);
+	for (;;) {
+		if (use_poll) {
+			struct timeval tv = { 2, 0 };
+			fd_set read_fds;
+
+			FD_ZERO(&read_fds);
+			FD_SET(node->fd, &read_fds);
+			ret = select(node->fd + 1, &read_fds, NULL, NULL, &tv);
+			fail_on_test(ret <= 0);
+			fail_on_test(!FD_ISSET(node->fd, &read_fds));
+		}
+
+		buf.type = bufs.type;
+		buf.memory = bufs.memory;
+		if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
+			buf.m.planes = planes;
+			buf.length = VIDEO_MAX_PLANES;
+		}
+
+		ret = doioctl(node, VIDIOC_DQBUF, &buf);
+		if (ret == EAGAIN)
+			continue;
+		if (show_info)
+			printf("\t\tBuffer: %d Sequence: %d Field: %s Timestamp: %ld.%06lds\n",
+				buf.index, buf.sequence, field2s(buf.field).c_str(),
+				buf.timestamp.tv_sec, buf.timestamp.tv_usec);
+		fail_on_test(ret);
+		fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, buf.index, Dequeued));
+		if (!show_info) {
+			printf("\r\tFrame #%03d%s", frame_count - count, use_poll ? " (polling)" : "");
+			fflush(stdout);
+		}
+		fail_on_test(doioctl(node, VIDIOC_QBUF, &buf));
+		if (--count == 0)
+			break;
+	}
+	if (use_poll)
+		fcntl(node->fd, F_SETFL, fd_flags);
+	if (!show_info)
+		printf("\r\t                       \r");
 	return 0;
 }
 
@@ -484,62 +615,6 @@ static int releaseMmap(struct node *node, struct v4l2_requestbuffers &bufs)
 		for (unsigned p = 0; p < num_planes; p++)
 			munmap(ptrs[i][p], planes[p].length);
 	}
-	return 0;
-}
-
-static int captureBufs(struct node *node, const struct v4l2_requestbuffers &bufs,
-		       unsigned frame_count, bool use_poll)
-{
-	int fd_flags = fcntl(node->fd, F_GETFL);
-	struct v4l2_plane planes[VIDEO_MAX_PLANES];
-	struct v4l2_buffer buf;
-	unsigned count = frame_count;
-	int ret;
-
-	memset(planes, 0, sizeof(planes));
-	memset(&buf, 0, sizeof(buf));
-	if (use_poll)
-		fcntl(node->fd, F_SETFL, fd_flags | O_NONBLOCK);
-	for (;;) {
-		if (use_poll) {
-			struct timeval tv = { 2, 0 };
-			fd_set read_fds;
-
-			FD_ZERO(&read_fds);
-			FD_SET(node->fd, &read_fds);
-			ret = select(node->fd + 1, &read_fds, NULL, NULL, &tv);
-			fail_on_test(ret <= 0);
-			fail_on_test(!FD_ISSET(node->fd, &read_fds));
-		}
-
-		buf.type = bufs.type;
-		buf.memory = bufs.memory;
-		if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
-			buf.m.planes = planes;
-			buf.length = VIDEO_MAX_PLANES;
-		}
-
-		ret = doioctl(node, VIDIOC_DQBUF, &buf);
-		if (ret == EAGAIN)
-			continue;
-		if (show_info)
-			printf("\t\tBuffer: %d Sequence: %d Field: %s Timestamp: %ld.%06lds\n",
-				buf.index, buf.sequence, field2s(buf.field).c_str(),
-				buf.timestamp.tv_sec, buf.timestamp.tv_usec);
-		fail_on_test(ret);
-		fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, buf.index, Dequeued));
-		if (!show_info) {
-			printf("\r\tFrame #%03d%s", frame_count - count, use_poll ? " (polling)" : "");
-			fflush(stdout);
-		}
-		fail_on_test(doioctl(node, VIDIOC_QBUF, &buf));
-		if (--count == 0)
-			break;
-	}
-	if (use_poll)
-		fcntl(node->fd, F_SETFL, fd_flags);
-	if (!show_info)
-		printf("\r\t                       \r");
 	return 0;
 }
 
@@ -771,81 +846,6 @@ int testUserPtr(struct node *node, unsigned frame_count)
 	bufs.count = 0;
 	fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
 	return 0;
-}
-
-int testExpBuf(struct node *node)
-{
-	struct v4l2_requestbuffers bufs;
-	struct v4l2_plane planes[VIDEO_MAX_PLANES];
-	struct v4l2_buffer buf;
-	int err = 0;
-
-	if (!(node->caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)))
-		return 0;
-	if (!(node->valid_memorytype & (1 << V4L2_MEMORY_MMAP)))
-		return ENOTTY;
-
-	memset(planes, 0, sizeof(planes));
-	memset(&bufs, 0, sizeof(bufs));
-	bufs.count = 1;
-	bufs.memory = V4L2_MEMORY_MMAP;
-	bufs.type = (node->caps & V4L2_CAP_VIDEO_CAPTURE) ?
-		    V4L2_BUF_TYPE_VIDEO_CAPTURE :
-		    V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-	fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
-
-	memset(ptrs, 0, sizeof(ptrs));
-
-	for (unsigned i = 0; i < bufs.count; i++) {
-		struct v4l2_exportbuffer expbuf;
-
-		memset(&buf, 0, sizeof(buf));
-		buf.type = bufs.type;
-		buf.memory = bufs.memory;
-		buf.index = i;
-		if (V4L2_TYPE_IS_MULTIPLANAR(bufs.type)) {
-			buf.m.planes = planes;
-			buf.length = VIDEO_MAX_PLANES;
-		}
-		fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
-		unsigned num_planes = process_buf(buf, planes);
-
-		for (unsigned p = 0; p < num_planes; p++) {
-			memset(&expbuf, 0, sizeof(expbuf));
-			expbuf.type = bufs.type;
-			expbuf.index = i;
-			expbuf.plane = p;
-			expbuf.flags = O_RDWR;
-			err = doioctl(node, VIDIOC_EXPBUF, &expbuf);
-			if (err == ENOTTY)
-				break;
-
-			dmabufs[i][p] = expbuf.fd;
- 
-			ptrs[i][p] = mmap(NULL, planes[p].length,
-					PROT_READ | PROT_WRITE, MAP_SHARED, expbuf.fd, 0);
-			if (ptrs[i][p] == MAP_FAILED) {
-				close(dmabufs[i][p]);
-				ptrs[i][p] = NULL;
-				fail("mmap on DMABUF file descriptor failed\n");
-				err = ENOMEM;
-				break;
-			}
-		}
-	}
-
-	for (unsigned i = 0; i < bufs.count; i++) {
-		for (unsigned p = 0; p < VIDEO_MAX_PLANES; p++) {
-			if (ptrs[i][p]) {
-				munmap(ptrs[i][p], planes[p].length);
-				close(dmabufs[i][p]);
-			}
-		}
-	}
-
-	bufs.count = 0;
-	fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
-	return err;
 }
 
 static int setupDmaBuf(struct node *expbuf_node, struct node *node,
