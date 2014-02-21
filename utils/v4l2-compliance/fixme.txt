@@ -8,7 +8,5 @@ here they won't be forgotten.
   error_idx should be set for G/S_EXT_CTRLS and for TRY_EXT_CTRLS (which does
   this slightly differently).
 
-- RGB pixel formats: endianness issues: two tables in the spec.
-
 - Duplicate controls: V4L2_CID_EXPOSURE (user class) and V4L2_CID_EXPOSURE_ABSOLUTE
   (camera class).
