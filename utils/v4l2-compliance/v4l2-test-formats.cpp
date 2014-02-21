@@ -246,7 +246,7 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 		ret = testEnumFrameSizes(node, fmtdesc.pixelformat);
 		if (ret && ret != ENOTTY)
 			return ret;
-		if (ret == 0 && !(node->caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)))
+		if (ret == 0 && !(node->caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)))
 			return fail("found framesizes when no video capture is supported\n");
 		f++;
 		if (type == V4L2_BUF_TYPE_PRIVATE)
