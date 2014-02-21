@@ -647,6 +647,13 @@ int main(int argc, char **argv)
 			 V4L2_CAP_VIDEO_M2M | V4L2_CAP_SLICED_VBI_OUTPUT |
 			 V4L2_CAP_RDS_OUTPUT))
 		node.can_output = true;
+	if (expbuf_device) {
+		doioctl(&expbuf_node, VIDIOC_QUERYCAP, &vcap);
+		if (vcap.capabilities & V4L2_CAP_DEVICE_CAPS)
+			expbuf_node.caps = vcap.device_caps;
+		else
+			expbuf_node.caps = vcap.capabilities;
+	}
 
 	/* Information Opts */
 
@@ -699,7 +706,7 @@ int main(int argc, char **argv)
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&node, &radio_node2)));
-			node.node2 = &video_node2;
+			node.node2 = &radio_node2;
 		}
 	}
 	if (vbi_device) {
@@ -710,7 +717,7 @@ int main(int argc, char **argv)
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&node, &vbi_node2)));
-			node.node2 = &video_node2;
+			node.node2 = &vbi_node2;
 		}
 	}
 	printf("\n");
