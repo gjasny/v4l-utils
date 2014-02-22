@@ -236,6 +236,12 @@ public:
 	{
 		type = is_output ? vidout_buftype : vidcap_buftype;
 		memory = is_mmap ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
+		if (is_output)
+			is_mplane = capabilities & (V4L2_CAP_VIDEO_M2M_MPLANE |
+						    V4L2_CAP_VIDEO_OUTPUT_MPLANE);
+		else
+			is_mplane = capabilities & (V4L2_CAP_VIDEO_M2M_MPLANE |
+						    V4L2_CAP_VIDEO_CAPTURE_MPLANE);
 	}
 
 public:
