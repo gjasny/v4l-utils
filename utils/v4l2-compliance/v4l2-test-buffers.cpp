@@ -759,6 +759,13 @@ static int setupUserPtr(struct node *node, struct v4l2_requestbuffers &bufs)
 		unsigned num_planes = process_buf(buf, planes);
 
 		for (unsigned p = 0; p < num_planes; p++) {
+			// This should not work!
+			ptrs[i][p] = test_mmap(NULL, planes[p].length,
+					PROT_READ | PROT_WRITE, MAP_SHARED, node->fd, 0);
+			fail_on_test(ptrs[i][p] != MAP_FAILED);
+		}
+
+		for (unsigned p = 0; p < num_planes; p++) {
 			ptrs[i][p] = malloc(planes[p].length);
 			fail_on_test(ptrs[i][p] == NULL);
 		}
@@ -944,6 +951,13 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 		if (V4L2_TYPE_IS_MULTIPLANAR(bufs.type))
 			for (unsigned p = 0; p < buf.length; p++)
 				fail_on_test(expbuf_planes[p].length < planes[p].length);
+
+		for (unsigned p = 0; p < num_planes; p++) {
+			// This should not work!
+			ptrs[i][p] = test_mmap(NULL, planes[p].length,
+					PROT_READ | PROT_WRITE, MAP_SHARED, node->fd, 0);
+			fail_on_test(ptrs[i][p] != MAP_FAILED);
+		}
 
 		for (unsigned p = 0; p < num_planes; p++) {
 			memset(&expbuf, 0, sizeof(expbuf));
