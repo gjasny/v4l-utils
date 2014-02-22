@@ -773,7 +773,7 @@ int main(int argc, char **argv)
 	__u32 poll_for_event = 0;	/* poll for this event */
 	const char *poll_event_id = NULL;
 	unsigned secs = 0;
-	char short_options[26 * 2 * 2 + 1];
+	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
 
 	memset(&vcap, 0, sizeof(vcap));
@@ -786,8 +786,12 @@ int main(int argc, char **argv)
 		if (!isalpha(long_options[i].val))
 			continue;
 		short_options[idx++] = long_options[i].val;
-		if (long_options[i].has_arg == required_argument)
+		if (long_options[i].has_arg == required_argument) {
 			short_options[idx++] = ':';
+		} else if (long_options[i].has_arg == optional_argument) {
+			short_options[idx++] = ':';
+			short_options[idx++] = ':';
+		}
 	}
 	while (1) {
 		int option_index = 0;

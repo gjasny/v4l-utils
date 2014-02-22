@@ -45,6 +45,7 @@
    case is used to retrieve a setting. */
 enum Option {
 	OptSetDevice = 'd',
+	OptSetExpBufDevice = 'e',
 	OptSetFreq = 'f',
 	OptHelp = 'h',
 	OptSetInput = 'i',
@@ -56,7 +57,6 @@ enum Option {
 	OptVerbose = 'v',
 	OptSetVbiDevice = 'V',
 	OptUseWrapper = 'w',
-	OptSetExpBufDevice = 128,
 	OptLast = 256
 };
 
@@ -103,7 +103,7 @@ static void usage(void)
 	printf("                     if <dev> starts with a digit, then /dev/radio<dev> is used.\n");
 	printf("  -V, --vbi-device=<dev> use device <dev> as the vbi device.\n");
 	printf("                     if <dev> starts with a digit, then /dev/vbi<dev> is used.\n");
-	printf("  --expbuf-device=<dev> use device <dev> to obtain DMABUF handles.\n");
+	printf("  -e, --expbuf-device=<dev> use device <dev> to obtain DMABUF handles.\n");
 	printf("                     if <dev> starts with a digit, then /dev/video<dev> is used.\n");
 	printf("                     only /dev/videoX devices are supported.\n");
 	printf("  -i, --set-input    select input for streaming tests (default is 0).\n");
@@ -472,15 +472,19 @@ int main(int argc, char **argv)
 	const char *expbuf_device = NULL;	/* --expbuf-device device */
 	struct v4l2_capability vcap;		/* list_cap */
 	unsigned frame_count = 100;
-	char short_options[26 * 2 * 2 + 1];
+	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
 
 	for (i = 0; long_options[i].name; i++) {
 		if (!isalpha(long_options[i].val))
 			continue;
 		short_options[idx++] = long_options[i].val;
-		if (long_options[i].has_arg == required_argument)
+		if (long_options[i].has_arg == required_argument) {
 			short_options[idx++] = ':';
+		} else if (long_options[i].has_arg == optional_argument) {
+			short_options[idx++] = ':';
+			short_options[idx++] = ':';
+		}
 	}
 	while (1) {
 		int option_index = 0;

@@ -375,7 +375,7 @@ int main(int argc, char **argv)
 	struct v4l2_dbg_register get_reg;
 	struct v4l2_dbg_chip_info chip_info;
 	const struct board_list *curr_bd = NULL;
-	char short_options[26 * 2 * 2 + 1];
+	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
 	std::string reg_min_arg, reg_max_arg;
 	std::string reg_set_arg;
@@ -397,8 +397,12 @@ int main(int argc, char **argv)
 		if (!isalpha(long_options[i].val))
 			continue;
 		short_options[idx++] = long_options[i].val;
-		if (long_options[i].has_arg == required_argument)
+		if (long_options[i].has_arg == required_argument) {
 			short_options[idx++] = ':';
+		} else if (long_options[i].has_arg == optional_argument) {
+			short_options[idx++] = ':';
+			short_options[idx++] = ':';
+		}
 	}
 	while (1) {
 		int option_index = 0;
