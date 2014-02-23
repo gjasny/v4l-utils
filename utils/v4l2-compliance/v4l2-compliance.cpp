@@ -121,13 +121,17 @@ static void usage(void)
 	exit(0);
 }
 
-int doioctl_name(struct node *node, unsigned long int request, void *parm, const char *name)
+int doioctl_name(struct node *node, unsigned long int request, void *parm,
+		 const char *name, bool no_wrapper)
 {
 	int retval;
 	int e;
 
 	errno = 0;
-	retval = test_ioctl(node->fd, request, parm);
+	if (no_wrapper)
+		retval = ioctl(node->fd, request, parm);
+	else
+		retval = test_ioctl(node->fd, request, parm);
 	e = errno;
 	if (options[OptTrace])
 		printf("\t\t%s returned %d (%s)\n", name, retval, strerror(e));
@@ -834,6 +838,8 @@ int main(int argc, char **argv)
 	test_close(node.fd);
 	if (node.node2)
 		test_close(node.node2->fd);
+	if (expbuf_device)
+		close(expbuf_node.fd);
 	printf("Total: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 			tests_total, tests_ok, tests_total - tests_ok, warnings);
 	exit(app_result);

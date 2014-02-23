@@ -1116,7 +1116,7 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 	expbuf_bufs.count = bufs.count;
 	expbuf_bufs.memory = V4L2_MEMORY_MMAP;
 	expbuf_bufs.type = expbuf_type;
-	fail_on_test(doioctl(expbuf_node, VIDIOC_REQBUFS, &expbuf_bufs));
+	fail_on_test(doioctl_no_wrap(expbuf_node, VIDIOC_REQBUFS, &expbuf_bufs));
 	fail_on_test(expbuf_bufs.count < bufs.count);
 
 	memset(&expbuf_buf, 0, sizeof(expbuf_buf));
@@ -1126,7 +1126,7 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 		expbuf_buf.m.planes = expbuf_planes;
 		expbuf_buf.length = VIDEO_MAX_PLANES;
 	}
-	fail_on_test(doioctl(expbuf_node, VIDIOC_QUERYBUF, &expbuf_buf));
+	fail_on_test(doioctl_no_wrap(expbuf_node, VIDIOC_QUERYBUF, &expbuf_buf));
 
 	for (unsigned i = 0; i < bufs.count; i++) {
 		struct v4l2_plane planes[VIDEO_MAX_PLANES];
@@ -1166,7 +1166,7 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 			expbuf.index = i;
 			expbuf.plane = p;
 			expbuf.flags = O_RDWR;
-			fail_on_test(doioctl(expbuf_node, VIDIOC_EXPBUF, &expbuf));
+			fail_on_test(doioctl_no_wrap(expbuf_node, VIDIOC_EXPBUF, &expbuf));
 
 			dmabufs[i][p] = expbuf.fd;
 
@@ -1316,7 +1316,7 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 		memset(&expbuf_bufs, 0, sizeof(expbuf_bufs));
 		expbuf_bufs.memory = V4L2_MEMORY_MMAP;
 		expbuf_bufs.type = expbuf_type;
-		fail_on_test(doioctl(expbuf_node, VIDIOC_REQBUFS, &expbuf_bufs));
+		fail_on_test(doioctl_no_wrap(expbuf_node, VIDIOC_REQBUFS, &expbuf_bufs));
 	}
 	return 0;
 }
