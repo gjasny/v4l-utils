@@ -709,7 +709,7 @@ static int testGlobalFormat(struct node *node, int type)
 		    mp1->width == mp2->width && mp1->height == mp2->height) {
 			// This compliance test only succeeds if the two formats
 			// are really different after S_FMT
-			warn("Could not perform global format test\n");
+			info("Could not perform global format test\n");
 			return 0;
 		}
 	} else {
@@ -717,7 +717,7 @@ static int testGlobalFormat(struct node *node, int type)
 		    p1->width == p2->width && p1->height == p2->height) {
 			// This compliance test only succeeds if the two formats
 			// are really different after S_FMT
-			warn("Could not perform global format test\n");
+			info("Could not perform global format test\n");
 			return 0;
 		}
 	}
