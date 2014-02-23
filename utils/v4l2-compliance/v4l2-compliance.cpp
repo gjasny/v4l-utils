@@ -110,7 +110,7 @@ static void usage(void)
 	printf("  -o, --set-output   select output for streaming tests (default is 0).\n");
 	printf("  -f, --set-freq     select frequency in MHz (kHz for radio) for streaming tests.\n");
 	printf("  -s, --streaming=<count> enable the streaming tests. Set <count> to the number of\n");
-	printf("                     frames to stream (default 100). Requires a valid input/output\n");
+	printf("                     frames to stream (default 60). Requires a valid input/output\n");
 	printf("                     and frequency (when dealing with a tuner). For DMABUF testing\n");
 	printf("                     --expbuf-device needs to be set as well.\n");
 	printf("  -h, --help         display this help message.\n");
@@ -471,7 +471,7 @@ int main(int argc, char **argv)
 	const char *vbi_device = NULL;		/* -V device */
 	const char *expbuf_device = NULL;	/* --expbuf-device device */
 	struct v4l2_capability vcap;		/* list_cap */
-	unsigned frame_count = 100;
+	unsigned frame_count = 60;
 	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
 
