@@ -854,7 +854,7 @@ int testMmap(struct node *node, unsigned frame_count)
 		}
 		fail_on_test(!can_stream);
 
-		fail_on_test(doioctl(node, VIDIOC_STREAMON, &bufs.type));
+		fail_on_test(doioctl(node, VIDIOC_STREAMON, &bufs.type) != EINVAL);
 		fail_on_test(doioctl(node, VIDIOC_STREAMOFF, &bufs.type));
 
 		cur_fmt.type = bufs.type;
