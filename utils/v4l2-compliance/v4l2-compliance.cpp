@@ -606,7 +606,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (expbuf_device && (expbuf_node.fd = test_open(expbuf_device, O_RDWR)) < 0) {
+	if (expbuf_device && (expbuf_node.fd = open(expbuf_device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", expbuf_device,
 			strerror(errno));
 		exit(1);
@@ -807,16 +807,19 @@ int main(int argc, char **argv)
 		streamingSetup(&node);
 
 		printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
-		// Reopen to clear the 'file I/O' mode of the filehandle,
-		// preventing VIDIOC_REQBUFS from working (will return -EBUSY).
+		// Reopen after each streaming test to reset the streaming state
+		// in case of any errors in the preceeding test.
 		reopen(&node);
 		printf("\ttest MMAP: %s\n", ok(testMmap(&node, frame_count)));
+		reopen(&node);
 		printf("\ttest USERPTR: %s\n", ok(testUserPtr(&node, frame_count)));
+		reopen(&node);
 		if (options[OptSetExpBufDevice] ||
 		    !(node.valid_memorytype & (1 << V4L2_MEMORY_DMABUF)))
 			printf("\ttest DMABUF: %s\n", ok(testDmaBuf(&expbuf_node, &node, frame_count)));
 		else if (!options[OptSetExpBufDevice])
 			printf("\ttest DMABUF: Cannot test, specify --expbuf-device\n");
+		reopen(&node);
 	}
 	printf("\n");
 
