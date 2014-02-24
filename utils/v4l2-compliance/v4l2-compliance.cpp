@@ -803,7 +803,7 @@ int main(int argc, char **argv)
 	printf("Buffer ioctls:\n");
 	printf("\ttest VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: %s\n", ok(testReqBufs(&node)));
 	printf("\ttest VIDIOC_EXPBUF: %s\n", ok(testExpBuf(&node)));
-	if (options[OptStreaming] && !node.is_m2m) {
+	if (options[OptStreaming]) {
 		streamingSetup(&node);
 
 		printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
