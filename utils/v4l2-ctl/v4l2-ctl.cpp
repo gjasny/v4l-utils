@@ -647,7 +647,21 @@ __u32 parse_field(const char *s)
 	return V4L2_FIELD_ANY;
 }
 
-int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &field, __u32 &pixelformat)
+static __u32 parse_colorspace(const char *s)
+{
+	if (!strcmp(s, "smpte170m")) return V4L2_COLORSPACE_SMPTE170M;
+	if (!strcmp(s, "smpte240m")) return V4L2_COLORSPACE_SMPTE240M;
+	if (!strcmp(s, "rec709")) return V4L2_COLORSPACE_REC709;
+	if (!strcmp(s, "bt878")) return V4L2_COLORSPACE_BT878;
+	if (!strcmp(s, "470m")) return V4L2_COLORSPACE_470_SYSTEM_M;
+	if (!strcmp(s, "470bg")) return V4L2_COLORSPACE_470_SYSTEM_BG;
+	if (!strcmp(s, "jpeg")) return V4L2_COLORSPACE_JPEG;
+	if (!strcmp(s, "srgb")) return V4L2_COLORSPACE_SRGB;
+	return 0;
+}
+
+int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
+	      __u32 &field, __u32 &colorspace)
 {
 	char *value, *subs;
 	int fmts = 0;
@@ -658,8 +672,9 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &field, __u32 &pi
 		static const char *const subopts[] = {
 			"width",
 			"height",
-			"field",
 			"pixelformat",
+			"field",
+			"colorspace",
 			NULL
 		};
 
@@ -673,10 +688,6 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &field, __u32 &pi
 			fmts |= FmtHeight;
 			break;
 		case 2:
-			field = parse_field(value);
-			fmts |= FmtField;
-			break;
-		case 3:
 			if (strlen(value) == 4)
 				pixelformat =
 					v4l2_fourcc(value[0], value[1],
@@ -684,6 +695,17 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &field, __u32 &pi
 			else
 				pixelformat = strtol(value, 0L, 0);
 			fmts |= FmtPixelFormat;
+			break;
+		case 3:
+			field = parse_field(value);
+			fmts |= FmtField;
+			break;
+		case 4:
+			colorspace = parse_colorspace(value);
+			if (colorspace)
+				fmts |= FmtColorspace;
+			else
+				fprintf(stderr, "unknown colorspace %s\n", value);
 			break;
 		default:
 			return 0;

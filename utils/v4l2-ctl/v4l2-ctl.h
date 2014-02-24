@@ -178,6 +178,7 @@ typedef struct {
 #define FmtLeft			(1L<<5)
 #define FmtTop			(1L<<6)
 #define FmtField		(1L<<7)
+#define FmtColorspace		(1L<<8)
 
 // v4l2-ctl.cpp
 int doioctl_name(int fd, unsigned long int request, void *parm, const char *name);
@@ -193,7 +194,8 @@ std::string service2s(unsigned service);
 std::string field2s(int val);
 void print_v4lstd(v4l2_std_id std);
 __u32 parse_field(const char *s);
-int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &field, __u32 &pixelformat);
+int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
+	      __u32 &field, __u32 &colorspace);
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane);
 void printfmt(const struct v4l2_format &vfmt);
 void print_video_formats(int fd, __u32 type);

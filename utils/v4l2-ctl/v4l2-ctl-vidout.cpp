@@ -32,13 +32,15 @@ void vidout_usage(void)
 	       "  --get-fmt-video-out\n"
 	       "     		     query the video output format [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-video-out\n"
-	       "  --try-fmt-video-out=width=<w>,height=<h>,pixelformat=<pf>,field=<f>\n"
-	       "                     set/try the video output format [VIDIOC_TRY_FMT]\n"
+	       "  --try-fmt-video-out=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,colorspace=<c>\n"
+	       "                     set/try the video output format [VIDIOC_S/TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
 	       "                     --list-formats-out, or the fourcc value as a string.\n"
 	       "                     <f> can be one of:\n"
 	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
 	       "                     alternate, interlaced_tb, interlaced_bt\n"
+	       "                     <c> can be one of:\n"
+	       "                     smpte170m, smpte240m, rec709, bt878, 470m, 470bg, jpeg, srgb\n"
 	       );
 }
 
@@ -73,12 +75,12 @@ static void print_video_out_fields(int fd)
 
 void vidout_cmd(int ch, char *optarg)
 {
-	__u32 width, height, field, pixfmt;
+	__u32 width, height, pixfmt, field, colorspace;
 
 	switch (ch) {
 	case OptSetVideoOutFormat:
 	case OptTryVideoOutFormat:
-		set_fmts_out = parse_fmt(optarg, width, height, field, pixfmt);
+		set_fmts_out = parse_fmt(optarg, width, height, pixfmt, field, colorspace);
 		if (!set_fmts_out) {
 			vidcap_usage();
 			exit(1);
@@ -86,13 +88,15 @@ void vidout_cmd(int ch, char *optarg)
 		if (is_multiplanar) {
 			vfmt_out.fmt.pix_mp.width = width;
 			vfmt_out.fmt.pix_mp.height = height;
-			vfmt_out.fmt.pix_mp.field = field;
 			vfmt_out.fmt.pix_mp.pixelformat = pixfmt;
+			vfmt_out.fmt.pix_mp.field = field;
+			vfmt_out.fmt.pix_mp.colorspace = colorspace;
 		} else {
 			vfmt_out.fmt.pix.width = width;
 			vfmt_out.fmt.pix.height = height;
-			vfmt_out.fmt.pix.field = field;
 			vfmt_out.fmt.pix.pixelformat = pixfmt;
+			vfmt_out.fmt.pix.field = field;
+			vfmt_out.fmt.pix.colorspace = colorspace;
 		}
 		break;
 	}
@@ -120,6 +124,10 @@ void vidout_set(int fd)
 									true, true);
 					}
 				}
+				if (set_fmts_out & FmtField)
+					vfmt.fmt.pix_mp.field = vfmt_out.fmt.pix_mp.field;
+				if (set_fmts_out & FmtColorspace)
+					vfmt.fmt.pix_mp.colorspace = vfmt_out.fmt.pix_mp.colorspace;
 				/* G_FMT might return bytesperline values > width,
 				 * reset them to 0 to force the driver to update them
 				 * to the closest value for the new width. */
@@ -138,6 +146,10 @@ void vidout_set(int fd)
 									true, false);
 					}
 				}
+				if (set_fmts_out & FmtField)
+					vfmt.fmt.pix.field = vfmt_out.fmt.pix.field;
+				if (set_fmts_out & FmtColorspace)
+					vfmt.fmt.pix.colorspace = vfmt_out.fmt.pix.colorspace;
 				/* G_FMT might return a bytesperline value > width,
 				 * reset this to 0 to force the driver to update it
 				 * to the closest value for the new width. */
