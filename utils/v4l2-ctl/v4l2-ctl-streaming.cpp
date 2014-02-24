@@ -81,6 +81,17 @@ void streaming_usage(void)
 	       );
 }
 
+static void setTimeStamp(struct v4l2_buffer &buf)
+{
+	struct timespec ts;
+
+	if ((buf.flags & V4L2_BUF_FLAG_TIMESTAMP_MASK) != V4L2_BUF_FLAG_TIMESTAMP_COPY)
+		return;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	buf.timestamp.tv_sec = ts.tv_sec;
+	buf.timestamp.tv_usec = ts.tv_nsec / 1000;
+}
+
 static const flag_def flags_def[] = {
 	{ V4L2_BUF_FLAG_MAPPED, "mapped" },
 	{ V4L2_BUF_FLAG_QUEUED, "queued" },
@@ -429,6 +440,8 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin)
 			if (!fin || !fill_buffer_from_file(b, buf.index, fin))
 				fill_buffer(b.bufs[i][0], &fmt.fmt.pix);
 		}
+		if (V4L2_TYPE_IS_OUTPUT(buf.type))
+			setTimeStamp(buf);
 		if (doioctl(fd, VIDIOC_QBUF, &buf))
 			return -1;
 	}
@@ -579,6 +592,8 @@ static int do_handle_out(int fd, buffers &b, FILE *fin,
 	} else {
 		buf.bytesused = buf.length;
 	}
+	if (V4L2_TYPE_IS_OUTPUT(buf.type))
+		setTimeStamp(buf);
 	if (test_ioctl(fd, VIDIOC_QBUF, &buf))
 		return -1;
 
