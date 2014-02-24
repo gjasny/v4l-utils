@@ -111,6 +111,11 @@ static struct option long_options[] = {
 	{"list-formats-overlay", no_argument, 0, OptListOverlayFormats},
 	{"list-formats-out", no_argument, 0, OptListOutFormats},
 	{"list-fields-out", no_argument, 0, OptListOutFields},
+	{"clear-clips", no_argument, 0, OptClearClips},
+	{"clear-bitmap", no_argument, 0, OptClearBitmap},
+	{"add-clip", required_argument, 0, OptAddClip},
+	{"add-bitmap", required_argument, 0, OptAddBitmap},
+	{"find-fb", no_argument, 0, OptFindFb},
 	{"get-standard", no_argument, 0, OptGetStandard},
 	{"set-standard", required_argument, 0, OptSetStandard},
 	{"get-detected-standard", no_argument, 0, OptQueryStandard},
@@ -130,11 +135,8 @@ static struct option long_options[] = {
 	{"verbose", no_argument, 0, OptVerbose},
 	{"log-status", no_argument, 0, OptLogStatus},
 	{"get-fmt-overlay", no_argument, 0, OptGetOverlayFormat},
-	{"set-fmt-overlay", required_argument, 0, OptSetOverlayFormat},
-	{"try-fmt-overlay", required_argument, 0, OptTryOverlayFormat},
-	{"get-fmt-output-overlay", no_argument, 0, OptGetOutputOverlayFormat},
-	{"set-fmt-output-overlay", required_argument, 0, OptSetOutputOverlayFormat},
-	{"try-fmt-output-overlay", required_argument, 0, OptTryOutputOverlayFormat},
+	{"set-fmt-overlay", optional_argument, 0, OptSetOverlayFormat},
+	{"try-fmt-overlay", optional_argument, 0, OptTryOverlayFormat},
 	{"get-fmt-sliced-vbi", no_argument, 0, OptGetSlicedVbiFormat},
 	{"set-fmt-sliced-vbi", required_argument, 0, OptSetSlicedVbiFormat},
 	{"try-fmt-sliced-vbi", required_argument, 0, OptTrySlicedVbiFormat},
@@ -430,7 +432,26 @@ void printfmt(const struct v4l2_format &vfmt)
 		printf("\tChroma Key  : 0x%08x\n", vfmt.fmt.win.chromakey);
 		printf("\tGlobal Alpha: 0x%02x\n", vfmt.fmt.win.global_alpha);
 		printf("\tClip Count  : %u\n", vfmt.fmt.win.clipcount);
-		printf("\tClip Bitmap : %s\n", vfmt.fmt.win.bitmap ? "Yes" : "No");
+		if (vfmt.fmt.win.clips)
+			for (unsigned i = 0; i < vfmt.fmt.win.clipcount; i++) {
+				struct v4l2_rect &r = vfmt.fmt.win.clips[i].c;
+
+				printf("\t\tClip %2d: %ux%u@%ux%u\n", i,
+						r.width, r.height, r.left, r.top);
+			}
+		printf("\tClip Bitmap : %s", vfmt.fmt.win.bitmap ? "Yes, " : "No\n");
+		if (vfmt.fmt.win.bitmap) {
+			unsigned char *bitmap = (unsigned char *)vfmt.fmt.win.bitmap;
+			unsigned stride = (vfmt.fmt.win.w.width + 7) / 8;
+			unsigned cnt = 0;
+
+			for (unsigned y = 0; y < vfmt.fmt.win.w.height; y++)
+				for (unsigned x = 0; x < vfmt.fmt.win.w.width; x++)
+					if (bitmap[y * stride + x / 8] & (1 << (x & 7)))
+						cnt++;
+			printf("%u bits of %u are set\n", cnt,
+					vfmt.fmt.win.w.width * vfmt.fmt.win.w.height);
+		}
 		break;
 	case V4L2_BUF_TYPE_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_VBI_OUTPUT:
@@ -1001,7 +1022,6 @@ int main(int argc, char **argv)
 		options[OptGetTuner] = 1;
 		options[OptGetModulator] = 1;
 		options[OptGetOverlayFormat] = 1;
-		options[OptGetOutputOverlayFormat] = 1;
 		options[OptGetVbiFormat] = 1;
 		options[OptGetVbiOutFormat] = 1;
 		options[OptGetSlicedVbiFormat] = 1;

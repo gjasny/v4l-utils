@@ -40,12 +40,10 @@ enum Option {
 
 	OptGetSlicedVbiOutFormat = 128,
 	OptGetOverlayFormat,
-	OptGetOutputOverlayFormat,
 	OptGetVbiFormat,
 	OptGetVbiOutFormat,
 	OptGetVideoOutFormat,
 	OptSetSlicedVbiOutFormat,
-	OptSetOutputOverlayFormat,
 	OptSetOverlayFormat,
 	//OptSetVbiFormat, TODO
 	//OptSetVbiOutFormat, TODO
@@ -54,7 +52,6 @@ enum Option {
 	OptTrySlicedVbiOutFormat,
 	OptTrySlicedVbiFormat,
 	OptTryVideoFormat,
-	OptTryOutputOverlayFormat,
 	OptTryOverlayFormat,
 	//OptTryVbiFormat, TODO
 	//OptTryVbiOutFormat, TODO
@@ -68,6 +65,11 @@ enum Option {
 	OptListOverlayFormats,
 	OptListOutFormats,
 	OptListOutFields,
+	OptClearClips,
+	OptClearBitmap,
+	OptAddClip,
+	OptAddBitmap,
+	OptFindFb,
 	OptLogStatus,
 	OptVerbose,
 	OptSilent,
