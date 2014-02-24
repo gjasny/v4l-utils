@@ -59,6 +59,7 @@ static int app_result;
 int verbose;
 
 unsigned capabilities;
+unsigned out_capabilities;
 bool is_multiplanar;
 __u32 vidcap_buftype;
 __u32 vidout_buftype;
@@ -68,6 +69,7 @@ static struct option long_options[] = {
 	{"list-audio-outputs", no_argument, 0, OptListAudioOutputs},
 	{"all", no_argument, 0, OptAll},
 	{"device", required_argument, 0, OptSetDevice},
+	{"out-device", required_argument, 0, OptSetOutDevice},
 	{"get-fmt-video", no_argument, 0, OptGetVideoFormat},
 	{"set-fmt-video", required_argument, 0, OptSetVideoFormat},
 	{"try-fmt-video", required_argument, 0, OptTryVideoFormat},
@@ -196,10 +198,12 @@ static struct option long_options[] = {
 	{"stream-to", required_argument, 0, OptStreamTo},
 	{"stream-mmap", optional_argument, 0, OptStreamMmap},
 	{"stream-user", optional_argument, 0, OptStreamUser},
+	{"stream-dmabuf", no_argument, 0, OptStreamDmaBuf},
 	{"stream-from", required_argument, 0, OptStreamFrom},
 	{"stream-pattern", required_argument, 0, OptStreamPattern},
 	{"stream-out-mmap", optional_argument, 0, OptStreamOutMmap},
 	{"stream-out-user", optional_argument, 0, OptStreamOutUser},
+	{"stream-out-dmabuf", no_argument, 0, OptStreamOutDmaBuf},
 	{0, 0, 0, 0}
 };
 
@@ -763,10 +767,12 @@ int main(int argc, char **argv)
 	int i;
 
 	int fd = -1;
+	int out_fd = -1;
 
 	/* command args */
 	int ch;
 	const char *device = "/dev/video0";	/* -d device */
+	const char *out_device = NULL;
 	struct v4l2_capability vcap;	/* list_cap */
 	__u32 wait_for_event = 0;	/* wait for this event */
 	const char *wait_event_id = NULL;
@@ -849,6 +855,15 @@ int main(int argc, char **argv)
 				device = newdev;
 			}
 			break;
+		case OptSetOutDevice:
+			out_device = optarg;
+			if (out_device[0] >= '0' && out_device[0] <= '9' && strlen(out_device) <= 3) {
+				static char newdev[20];
+
+				sprintf(newdev, "/dev/video%s", out_device);
+				out_device = newdev;
+			}
+			break;
 		case OptWaitForEvent:
 			wait_for_event = parse_event(optarg, &wait_event_id);
 			if (wait_for_event == 0)
@@ -903,7 +918,10 @@ int main(int argc, char **argv)
 	}
 
 	verbose = options[OptVerbose];
-	doioctl(fd, VIDIOC_QUERYCAP, &vcap);
+	if (doioctl(fd, VIDIOC_QUERYCAP, &vcap)) {
+		fprintf(stderr, "%s: not a v4l2 node\n", device);
+		exit(1);
+	}
 	capabilities = vcap.capabilities;
 	if (capabilities & V4L2_CAP_DEVICE_CAPS)
 		capabilities = vcap.device_caps;
@@ -916,6 +934,21 @@ int main(int argc, char **argv)
 					  V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	vidout_buftype = is_multiplanar ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
 					  V4L2_BUF_TYPE_VIDEO_OUTPUT;
+
+	if (out_device) {
+		if ((out_fd = test_open(out_device, O_RDWR)) < 0) {
+			fprintf(stderr, "Failed to open %s: %s\n", out_device,
+					strerror(errno));
+			exit(1);
+		}
+		if (doioctl(out_fd, VIDIOC_QUERYCAP, &vcap)) {
+			fprintf(stderr, "%s: not a v4l2 node\n", out_device);
+			exit(1);
+		}
+		out_capabilities = vcap.capabilities;
+		if (out_capabilities & V4L2_CAP_DEVICE_CAPS)
+			out_capabilities = vcap.device_caps;
+	}
 
 	common_process_controls(fd);
 
@@ -995,7 +1028,7 @@ int main(int argc, char **argv)
 	overlay_set(fd);
 	vbi_set(fd);
 	selection_set(fd);
-	streaming_set(fd);
+	streaming_set(fd, out_fd);
 	misc_set(fd);
 
 	/* Get options */
@@ -1020,7 +1053,7 @@ int main(int argc, char **argv)
 	vidout_list(fd);
 	overlay_list(fd);
 	vbi_list(fd);
-	streaming_list(fd);
+	streaming_list(fd, out_fd);
 
 	if (options[OptWaitForEvent]) {
 		struct v4l2_event_subscription sub;
@@ -1078,5 +1111,7 @@ int main(int argc, char **argv)
 	}
 
 	test_close(fd);
+	if (out_device)
+		test_close(out_fd);
 	exit(app_result);
 }

@@ -15,6 +15,7 @@ enum Option {
 	OptSetCtrl = 'c',
 	OptSetDevice = 'd',
 	OptGetDriverInfo = 'D',
+	OptSetOutDevice = 'e',
 	OptGetFreq = 'F',
 	OptSetFreq = 'f',
 	OptHelp = 'h',
@@ -135,10 +136,12 @@ enum Option {
 	OptStreamTo,
 	OptStreamMmap,
 	OptStreamUser,
+	OptStreamDmaBuf,
 	OptStreamFrom,
 	OptStreamPattern,
 	OptStreamOutMmap,
 	OptStreamOutUser,
+	OptStreamOutDmaBuf,
 	OptHelpTuner,
 	OptHelpIO,
 	OptHelpStds,
@@ -155,6 +158,7 @@ enum Option {
 
 extern char options[OptLast];
 extern unsigned capabilities;
+extern unsigned out_capabilities;
 extern bool is_multiplanar;
 extern __u32 vidcap_buftype;
 extern __u32 vidout_buftype;
@@ -271,8 +275,8 @@ void misc_get(int fd);
 // v4l2-ctl-streaming.cpp
 void streaming_usage(void);
 void streaming_cmd(int ch, char *optarg);
-void streaming_set(int fd);
-void streaming_list(int fd);
+void streaming_set(int fd, int out_fd);
+void streaming_list(int fd, int out_fd);
 
 // v4l2-ctl-test-patterns.cpp
 void fill_buffer(void *buffer, struct v4l2_pix_format *pix);
