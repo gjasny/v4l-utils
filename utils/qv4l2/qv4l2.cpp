@@ -396,6 +396,10 @@ void ApplicationWindow::capVbiFrame()
 		}
 		if (again)
 			return;
+		if (buf.flags & V4L2_BUF_FLAG_ERROR) {
+			qbuf(buf);
+			return;
+		}
 		data = (__u8 *)m_buffers[buf.index].start;
 		s = buf.bytesused;
 		break;
@@ -408,6 +412,10 @@ void ApplicationWindow::capVbiFrame()
 		}
 		if (again)
 			return;
+		if (buf.flags & V4L2_BUF_FLAG_ERROR) {
+			qbuf(buf);
+			return;
+		}
 		data = (__u8 *)buf.m.userptr;
 		s = buf.bytesused;
 		break;
@@ -522,11 +530,17 @@ void ApplicationWindow::capFrame()
 			m_capStartAct->setChecked(false);
 			return;
 		}
+
+		if (again)
+			return;
+		if (buf.flags & V4L2_BUF_FLAG_ERROR) {
+			qbuf(buf);
+			return;
+		}
+
 #ifdef HAVE_ALSA
 		alsa_thread_timestamp(&tv_alsa);
 #endif
-		if (again)
-			return;
 
 		if (showFrames()) {
 			if (m_mustConvert)
@@ -551,11 +565,19 @@ void ApplicationWindow::capFrame()
 			m_capStartAct->setChecked(false);
 			return;
 		}
+		if (again)
+			return;
+		if (buf.flags & V4L2_BUF_FLAG_ERROR) {
+			qbuf(buf);
+			return;
+		}
 #ifdef HAVE_ALSA
 		alsa_thread_timestamp(&tv_alsa);
 #endif
-		if (again)
+		if (buf.flags & V4L2_BUF_FLAG_ERROR) {
+			qbuf(buf);
 			return;
+		}
 
 		if (showFrames()) {
 			if (m_mustConvert)
