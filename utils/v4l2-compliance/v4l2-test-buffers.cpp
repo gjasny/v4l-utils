@@ -748,6 +748,74 @@ static int setupM2M(struct node *node, struct v4l2_requestbuffers &bufs, int typ
 	return 0;
 }
 
+static int bufferOutputErrorTest(struct node *node, const struct v4l2_buffer &orig_buf,
+				 const struct v4l2_plane orig_planes[VIDEO_MAX_PLANES])
+{
+	struct v4l2_plane planes[VIDEO_MAX_PLANES];
+	struct v4l2_buffer buf = orig_buf;
+	bool have_prepare = false;
+	int ret;
+
+	memcpy(planes, orig_planes, sizeof(planes));
+	if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
+		buf.m.planes = planes;
+		for (unsigned p = 0; p < buf.length; p++) {
+			buf.m.planes[p].bytesused = buf.m.planes[p].length + 1;
+			buf.m.planes[p].data_offset = 0;
+		}
+	} else {
+		buf.bytesused = buf.length + 1;
+	}
+	ret = doioctl(node, VIDIOC_PREPARE_BUF, &buf);
+	fail_on_test(ret != EINVAL && ret != ENOTTY);
+	have_prepare = ret != ENOTTY;
+	fail_on_test(doioctl(node, VIDIOC_QBUF, &buf) != EINVAL);
+
+	if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
+		for (unsigned p = 0; p < buf.length; p++) {
+			buf.m.planes[p].bytesused = buf.m.planes[p].length / 2;
+			buf.m.planes[p].data_offset = buf.m.planes[p].bytesused;
+		}
+		if (have_prepare)
+			fail_on_test(doioctl(node, VIDIOC_PREPARE_BUF, &buf) != EINVAL);
+		fail_on_test(doioctl(node, VIDIOC_QBUF, &buf) != EINVAL);
+	}
+	buf = orig_buf;
+	if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
+		buf.m.planes = planes;
+		for (unsigned p = 0; p < buf.length; p++) {
+			buf.m.planes[p].bytesused = 0;
+			buf.m.planes[p].data_offset = 0;
+		}
+	} else {
+		buf.bytesused = 0;
+	}
+	if (have_prepare) {
+		fail_on_test(doioctl(node, VIDIOC_PREPARE_BUF, &buf));
+		fail_on_test(checkQueryBuf(node, buf, buf.type, buf.memory, 0, Prepared, last_seq));
+		buf = orig_buf;
+		if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
+			buf.m.planes = planes;
+			for (unsigned p = 0; p < buf.length; p++) {
+				buf.m.planes[p].bytesused = 0xdeadbeef;
+				buf.m.planes[p].data_offset = 0xdeadbeef;
+			}
+		} else {
+			buf.bytesused = 0xdeadbeef;
+		}
+	}
+	fail_on_test(doioctl(node, VIDIOC_QBUF, &buf));
+	if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
+		for (unsigned p = 0; p < buf.length; p++) {
+			fail_on_test(buf.m.planes[p].bytesused != buf.m.planes[p].length);
+			fail_on_test(buf.m.planes[p].data_offset);
+		}
+	} else {
+		fail_on_test(buf.bytesused != buf.length);
+	}
+	return 0;
+}
+
 static int setupMmap(struct node *node, struct v4l2_requestbuffers &bufs)
 {
 	for (unsigned i = 0; i < bufs.count; i++) {
@@ -781,17 +849,22 @@ static int setupMmap(struct node *node, struct v4l2_requestbuffers &bufs)
 		}
 		if (V4L2_TYPE_IS_OUTPUT(buf.type))
 			fillOutputBuf(buf);
-
-		ret = doioctl(node, VIDIOC_PREPARE_BUF, &buf);
-		fail_on_test(ret && ret != ENOTTY);
-		if (ret == 0) {
+		if (V4L2_TYPE_IS_OUTPUT(buf.type) && i == 0) {
+			fail_on_test(bufferOutputErrorTest(node, buf, planes));
 			fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
-			fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, i, Prepared, last_seq));
-		}
+			fail_on_test(checkQueryBuf(node, buf, buf.type, buf.memory, i, Queued, last_seq));
+		} else {
+			ret = doioctl(node, VIDIOC_PREPARE_BUF, &buf);
+			fail_on_test(ret && ret != ENOTTY);
+			if (ret == 0) {
+				fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
+				fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, i, Prepared, last_seq));
+			}
 
-		if (V4L2_TYPE_IS_OUTPUT(buf.type))
-			fillOutputBuf(buf);
-		fail_on_test(doioctl(node, VIDIOC_QBUF, &buf));
+			if (V4L2_TYPE_IS_OUTPUT(buf.type))
+				fillOutputBuf(buf);
+			fail_on_test(doioctl(node, VIDIOC_QBUF, &buf));
+		}
 		if (V4L2_TYPE_IS_OUTPUT(buf.type))
 			buffer_info[buf.timestamp] = buf;
 		fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
