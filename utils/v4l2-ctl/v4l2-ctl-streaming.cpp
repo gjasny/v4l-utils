@@ -586,14 +586,19 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 		buf.length = VIDEO_MAX_PLANES;
 	}
 
-	ret = test_ioctl(fd, VIDIOC_DQBUF, &buf);
-	if (ret < 0 && errno == EAGAIN)
-		return 0;
-	if (ret < 0) {
-		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
-		return -1;
+	for (;;) {
+		ret = test_ioctl(fd, VIDIOC_DQBUF, &buf);
+		if (ret < 0 && errno == EAGAIN)
+			return 0;
+		if (ret < 0) {
+			fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
+			return -1;
+		}
+		if (!(buf.flags & V4L2_BUF_FLAG_ERROR))
+			break;
+		test_ioctl(fd, VIDIOC_QBUF, &buf);
 	}
-	if (fout && (!stream_skip || ignore_count_skip)) {
+	if (fout && (!stream_skip || ignore_count_skip) && !(buf.flags & V4L2_BUF_FLAG_ERROR)) {
 		for (unsigned j = 0; j < b.num_planes; j++) {
 			unsigned used = b.is_mplane ? planes[j].bytesused : buf.bytesused;
 			unsigned offset = b.is_mplane ? planes[j].data_offset : 0;
