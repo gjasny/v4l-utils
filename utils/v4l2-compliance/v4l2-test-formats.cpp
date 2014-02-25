@@ -360,14 +360,14 @@ static void createInvalidFmt(struct v4l2_format &fmt, struct v4l2_clip &clip, un
 	if (type == V4L2_BUF_TYPE_VIDEO_OVERLAY ||
 	    type == V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY) {
 		memset(&clip, 0xff, sizeof(clip));
-		clip.next = NULL;
+		clip.next = (struct  v4l2_clip *)0xdeadbeef;
 		fmt.fmt.win.clipcount = 1;
 		fmt.fmt.win.clips = &clip;
 		fmt.fmt.win.bitmap = NULL;
 	}
 }
 
-static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4l2_format &fmt)
+static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4l2_format &fmt, bool have_clip = false)
 {
 	pixfmt_set &set = node->buftype_pixfmts[type];
 	pixfmt_set *set_splane;
@@ -480,11 +480,21 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 		fail_on_test(win.field == V4L2_FIELD_ANY);
 		fail_on_test(win.clipcount && !(node->fbuf_caps & V4L2_FBUF_CAP_LIST_CLIPPING));
-		for (struct v4l2_clip *clip = win.clips; clip; win.clipcount--) {
-			fail_on_test(clip == NULL);
-			clip = clip->next;
+		if (have_clip)
+			fail_on_test(!win.clipcount && (node->fbuf_caps & V4L2_FBUF_CAP_LIST_CLIPPING));
+		if (win.clipcount) {
+			struct v4l2_rect *r = &win.clips->c;
+			struct v4l2_framebuffer fb;
+
+			fail_on_test(doioctl(node, VIDIOC_G_FBUF, &fb));
+			fail_on_test(!win.clips);
+			fail_on_test(win.clips->next != (void *)0xdeadbeef);
+			fail_on_test(win.clipcount != 1);
+			fail_on_test(r->left < 0 || r->top < 0);
+			fail_on_test((unsigned)r->left >= fb.fmt.width || (unsigned)r->top >= fb.fmt.height);
+			fail_on_test(r->width == 0 || r->height == 0);
+			fail_on_test(r->left + r->width > fb.fmt.width || r->top + r->height > fb.fmt.height);
 		}
-		fail_on_test(win.clipcount);
 		fail_on_test(win.chromakey && !(node->fbuf_caps & (V4L2_FBUF_CAP_CHROMAKEY | V4L2_FBUF_CAP_SRC_CHROMAKEY)));
 		if (!(node->fbuf_caps & V4L2_FBUF_CAP_BITMAP_CLIPPING))
 			fail_on_test(win.bitmap);
@@ -610,7 +620,7 @@ int testTryFormats(struct node *node)
 			if (ret == EINVAL)
 				return fail("TRY_FMT cannot handle an invalid format\n");
 		}
-		ret = testFormatsType(node, ret, type, fmt);
+		ret = testFormatsType(node, ret, type, fmt, true);
 		if (ret)
 			return fail("%s is valid, but TRY_FMT failed to return a format\n",
 					buftype2s(type).c_str());
@@ -799,7 +809,7 @@ int testSetFormats(struct node *node)
 			if (ret == EINVAL)
 				return fail("S_FMT cannot handle an invalid format\n");
 		}
-		ret = testFormatsType(node, ret, type, fmt_set);
+		ret = testFormatsType(node, ret, type, fmt_set, true);
 		if (ret)
 			return fail("%s is valid, but no S_FMT was implemented\n",
 					buftype2s(type).c_str());
