@@ -663,6 +663,7 @@ void GeneralTab::inputChanged(int input)
 		updateAudioInput();
 
 	updateVideoInput();
+	updateVidCapFormat();
 }
 
 void GeneralTab::outputChanged(int output)
@@ -1148,21 +1149,25 @@ void GeneralTab::updateVidCapFields()
 {
 	v4l2_format fmt;
 	v4l2_format tmp;
+	bool first = true;
 
 	g_fmt_cap(fmt);
-
-	m_vidCapFields->clear();
 
 	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
 		tmp = fmt;
 		tmp.fmt.pix.field = f;
 		if (!s_fmt(tmp) || tmp.fmt.pix.field != f)
 			continue;
+		if (first) {
+			m_vidCapFields->clear();
+			first = false;
+		}
 		m_vidCapFields->addItem(field2s(f));
 		if (fmt.fmt.pix.field == f)
 			m_vidCapFields->setCurrentIndex(m_vidCapFields->count() - 1);
 	}
-	s_fmt(fmt);
+	if (!first)
+		s_fmt(fmt);
 }
 
 void GeneralTab::updateFrameSize()
