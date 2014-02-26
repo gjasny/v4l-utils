@@ -13,6 +13,7 @@ EXTRA_DIST = include COPYING.libv4l README.libv4l README.lib-multi-threading
 
 sync-with-kernel:
 	@if [ ! -f $(KERNEL_DIR)/include/uapi/linux/videodev2.h -o \
+	      ! -f $(KERNEL_DIR)/include/uapi/linux/fb.h -o \
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/v4l2-controls.h -o \
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/v4l2-common.h -o \
 	      ! -f $(KERNEL_DIR)/include/uapi/linux/v4l2-subdev.h -o \
@@ -25,6 +26,7 @@ sync-with-kernel:
 	  exit 1; \
 	fi
 	cp -a $(KERNEL_DIR)/include/uapi/linux/videodev2.h $(top_srcdir)/include/linux
+	cp -a $(KERNEL_DIR)/include/uapi/linux/fb.h $(top_srcdir)/include/linux
 	cp -a $(KERNEL_DIR)/include/uapi/linux/v4l2-controls.h $(top_srcdir)/include/linux
 	cp -a $(KERNEL_DIR)/include/uapi/linux/v4l2-common.h $(top_srcdir)/include/linux
 	cp -a $(KERNEL_DIR)/include/uapi/linux/v4l2-subdev.h $(top_srcdir)/include/linux
