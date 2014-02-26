@@ -155,26 +155,33 @@ void CaptureWinGLEngine::checkError(const char *msg)
 	if (err) fprintf(stderr, "OpenGL Error 0x%x: %s.\n", err, msg);
 }
 
+struct supported_fmt {
+	__u32 fmt;
+	bool uses_shader;
+};
+
 bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
 {
-	static const __u32 supported_fmts[] = {
-		V4L2_PIX_FMT_RGB32,
-		V4L2_PIX_FMT_BGR32,
-		V4L2_PIX_FMT_RGB24,
-		V4L2_PIX_FMT_BGR24,
-		V4L2_PIX_FMT_RGB565,
-		V4L2_PIX_FMT_RGB555,
-		V4L2_PIX_FMT_YUYV,
-		V4L2_PIX_FMT_YVYU,
-		V4L2_PIX_FMT_UYVY,
-		V4L2_PIX_FMT_VYUY,
-		V4L2_PIX_FMT_YVU420,
-		V4L2_PIX_FMT_YUV420,
-		0
+	static const struct supported_fmt supported_fmts[] = {
+		{ V4L2_PIX_FMT_RGB32, false },
+		{ V4L2_PIX_FMT_BGR32, false },
+		{ V4L2_PIX_FMT_RGB24, false },
+		{ V4L2_PIX_FMT_BGR24, true },
+		{ V4L2_PIX_FMT_RGB565, false },
+		{ V4L2_PIX_FMT_RGB555, false },
+		{ V4L2_PIX_FMT_YUYV, true },
+		{ V4L2_PIX_FMT_YVYU, true },
+		{ V4L2_PIX_FMT_UYVY, true },
+		{ V4L2_PIX_FMT_VYUY, true },
+		{ V4L2_PIX_FMT_YVU420, true },
+		{ V4L2_PIX_FMT_YUV420, true },
+		{ 0, false }
 	};
+	bool haveShaders = m_glfunction.hasOpenGLFeature(QGLFunctions::Shaders);
 
-	for (int i = 0; supported_fmts[i]; i++)
-		if (supported_fmts[i] == format)
+	for (int i = 0; supported_fmts[i].fmt; i++)
+		if (supported_fmts[i].fmt == format &&
+		    (!supported_fmts[i].uses_shader || haveShaders))
 			return true;
 
 	return false;
