@@ -351,6 +351,8 @@ static int checkInput(struct node *node, const struct v4l2_input &descr, unsigne
 		return fail("invalid type\n");
 	if (descr.type == V4L2_INPUT_TYPE_CAMERA && descr.tuner)
 		return fail("invalid tuner\n");
+	if (descr.type == V4L2_INPUT_TYPE_TUNER && node->tuners == 0)
+		return fail("no tuners found for tuner input\n");
 	if (!(descr.capabilities & V4L2_IN_CAP_STD) && descr.std)
 		return fail("invalid std\n");
 	if ((descr.capabilities & V4L2_IN_CAP_STD) && !descr.std)
@@ -700,6 +702,8 @@ static int checkOutput(struct node *node, const struct v4l2_output &descr, unsig
 		return fail("invalid type\n");
 	if (descr.type == V4L2_OUTPUT_TYPE_ANALOG && descr.modulator)
 		return fail("invalid modulator\n");
+	if (descr.type == V4L2_OUTPUT_TYPE_MODULATOR && node->modulators == 0)
+		return fail("no modulators found for modulator output\n");
 	if (!(descr.capabilities & V4L2_OUT_CAP_STD) && descr.std)
 		return fail("invalid std\n");
 	if ((descr.capabilities & V4L2_OUT_CAP_STD) && !descr.std)
