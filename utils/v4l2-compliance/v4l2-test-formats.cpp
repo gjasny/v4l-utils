@@ -552,6 +552,42 @@ int testGetFormats(struct node *node)
 	return supported ? 0 : ENOTTY;
 }
 
+static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format &f2)
+{
+	const struct v4l2_pix_format &pix1 = f1.fmt.pix;
+	const struct v4l2_pix_format &pix2 = f2.fmt.pix;
+
+	if (f1.type != f2.type)
+		return false;
+	switch (f1.type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		if (!memcmp(&f1.fmt.pix, &f2.fmt.pix, sizeof(f1.fmt.pix)))
+			return true;
+		printf("\t\tG_FMT:     %dx%d, %x, %d, %d, %d, %d, %d\n",
+			pix1.width, pix1.height, pix1.pixelformat, pix1.field, pix1.bytesperline,
+			pix1.sizeimage, pix1.colorspace, pix1.priv);
+		printf("\t\tTRY/S_FMT: %dx%d, %x, %d, %d, %d, %d, %d\n",
+			pix2.width, pix2.height, pix2.pixelformat, pix2.field, pix2.bytesperline,
+			pix2.sizeimage, pix2.colorspace, pix2.priv);
+		return false;
+	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
+		return !memcmp(&f1.fmt.win, &f2.fmt.win, sizeof(f1.fmt.win));
+	case V4L2_BUF_TYPE_VBI_CAPTURE:
+	case V4L2_BUF_TYPE_VBI_OUTPUT:
+		return !memcmp(&f1.fmt.vbi, &f2.fmt.vbi, sizeof(f1.fmt.vbi));
+	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+		return !memcmp(&f1.fmt.sliced, &f2.fmt.sliced, sizeof(f1.fmt.sliced));
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		return !memcmp(&f1.fmt.pix_mp, &f2.fmt.pix_mp, sizeof(f1.fmt.pix_mp));
+
+	}
+	return false;
+}
+
 int testTryFormats(struct node *node)
 {
 	struct v4l2_clip clip;
@@ -573,7 +609,7 @@ int testTryFormats(struct node *node)
 		ret = testFormatsType(node, ret, type, fmt_try);
 		if (ret)
 			return ret;
-		if (memcmp(&fmt, &fmt_try, sizeof(fmt)))
+		if (!matchFormats(fmt, fmt_try))
 			return fail("%s: TRY_FMT(G_FMT) != G_FMT\n",
 					buftype2s(type).c_str());
 	}
@@ -819,7 +855,7 @@ int testSetFormats(struct node *node)
 		ret = testFormatsType(node, ret, type, fmt_set);
 		if (ret)
 			return ret;
-		if (memcmp(&fmt, &fmt_set, sizeof(fmt)))
+		if (!matchFormats(fmt, fmt_set))
 			return fail("%s: S_FMT(G_FMT) != G_FMT\n",
 					buftype2s(type).c_str());
 	}
