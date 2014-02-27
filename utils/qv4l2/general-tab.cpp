@@ -194,6 +194,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (!isRadio() && enum_audio(vaudio, true)) {
 		addLabel("Input Audio");
 		m_audioInput = new QComboBox(parent);
+		m_audioInput->setMinimumContentsLength(10);
 		do {
 			m_audioInput->addItem((char *)vaudio.name);
 		} while (enum_audio(vaudio));
@@ -206,6 +207,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (!isRadio() && enum_audout(vaudout, true)) {
 		addLabel("Output Audio");
 		m_audioOutput = new QComboBox(parent);
+		m_audioOutput->setMinimumContentsLength(10);
 		do {
 			m_audioOutput->addItem((char *)vaudout.name);
 		} while (enum_audout(vaudout));
@@ -219,6 +221,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 		addLabel("TV Standard");
 		m_tvStandard = new QComboBox(parent);
+		m_tvStandard->setMinimumContentsLength(10);
 		addWidget(m_tvStandard);
 		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
 		refreshStandards();
@@ -233,6 +236,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (needsTimings) {
 		addLabel("Video Timings");
 		m_videoTimings = new QComboBox(parent);
+		m_videoTimings->setMinimumContentsLength(15);
 		addWidget(m_videoTimings);
 		connect(m_videoTimings, SIGNAL(activated(int)), SLOT(timingsChanged(int)));
 		refreshTimings();
@@ -280,6 +284,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		}
 		addLabel("Audio Mode");
 		m_audioMode = new QComboBox(parent);
+		m_audioMode->setMinimumContentsLength(12);
 		m_audioMode->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 		m_audioMode->addItem("Mono");
 		int audIdx = 0;
@@ -370,6 +375,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	v4l2_fmtdesc fmt;
 	addLabel("Capture Image Formats");
 	m_vidCapFormats = new QComboBox(parent);
+	m_vidCapFormats->setMinimumContentsLength(20);
 	if (enum_fmt_cap(fmt, true)) {
 		do {
 			QString s(pixfmt2s(fmt.pixelformat) + " (");
@@ -394,18 +400,21 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 	addLabel("Frame Size");
 	m_frameSize = new QComboBox(parent);
+	m_frameSize->setMinimumContentsLength(10);
 	m_frameSize->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	addWidget(m_frameSize);
 	connect(m_frameSize, SIGNAL(activated(int)), SLOT(frameSizeChanged(int)));
 
 	addLabel("Frame Interval");
 	m_frameInterval = new QComboBox(parent);
+	m_frameInterval->setMinimumContentsLength(6);
 	m_frameInterval->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	addWidget(m_frameInterval);
 	connect(m_frameInterval, SIGNAL(activated(int)), SLOT(frameIntervalChanged(int)));
 
 	addLabel("Field");
 	m_vidCapFields = new QComboBox(parent);
+	m_vidCapFields->setMinimumContentsLength(21);
 	addWidget(m_vidCapFields);
 	connect(m_vidCapFields, SIGNAL(activated(int)), SLOT(vidCapFieldChanged(int)));
 
