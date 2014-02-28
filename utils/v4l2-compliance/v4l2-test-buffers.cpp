@@ -847,6 +847,7 @@ static int setupMmap(struct node *node, struct v4l2_requestbuffers &bufs)
 					PROT_READ | PROT_WRITE, MAP_SHARED, node->fd, planes[p].m.mem_offset);
 			fail_on_test(ptrs[i][p] == MAP_FAILED);
 		}
+		fail_on_test(!doioctl(node, VIDIOC_DQBUF, &buf));
 		if (V4L2_TYPE_IS_OUTPUT(buf.type))
 			fillOutputBuf(buf);
 		if (V4L2_TYPE_IS_OUTPUT(buf.type) && i == 0) {
@@ -859,16 +860,27 @@ static int setupMmap(struct node *node, struct v4l2_requestbuffers &bufs)
 			if (ret == 0) {
 				fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
 				fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, i, Prepared, last_seq));
+				fail_on_test(!doioctl(node, VIDIOC_PREPARE_BUF, &buf));
 			}
 
 			if (V4L2_TYPE_IS_OUTPUT(buf.type))
 				fillOutputBuf(buf);
 			fail_on_test(doioctl(node, VIDIOC_QBUF, &buf));
+			fail_on_test(!doioctl(node, VIDIOC_QBUF, &buf));
+			fail_on_test(!doioctl(node, VIDIOC_PREPARE_BUF, &buf));
+			// Test with invalid buffer index
+			buf.index += VIDEO_MAX_FRAME;
+			fail_on_test(!doioctl(node, VIDIOC_PREPARE_BUF, &buf));
+			fail_on_test(!doioctl(node, VIDIOC_QBUF, &buf));
+			fail_on_test(!doioctl(node, VIDIOC_QUERYBUF, &buf));
+			buf.index -= VIDEO_MAX_FRAME;
+			fail_on_test(buf.index != i);
 		}
 		if (V4L2_TYPE_IS_OUTPUT(buf.type))
 			buffer_info[buf.timestamp] = buf;
 		fail_on_test(doioctl(node, VIDIOC_QUERYBUF, &buf));
 		fail_on_test(checkQueryBuf(node, buf, bufs.type, bufs.memory, i, Queued, last_seq));
+		fail_on_test(!doioctl(node, VIDIOC_DQBUF, &buf));
 	}
 	return 0;
 }
@@ -944,6 +956,8 @@ int testMmap(struct node *node, unsigned frame_count)
 		fail_on_test(ret != ENOTTY && ret != 0);
 		if (ret == ENOTTY)
 			have_createbufs = false;
+		else
+			fail_on_test(cbufs.index != bufs.count);
 		cbufs.count = 1;
 		if (have_createbufs) {
 			if (node->is_video) {
@@ -971,6 +985,8 @@ int testMmap(struct node *node, unsigned frame_count)
 			cbufs.count = 1;
 			cbufs.memory = bufs.memory;
 			fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &cbufs));
+			fail_on_test(cbufs.index != bufs.count);
+			bufs.count = cbufs.index + cbufs.count;
 		}
 		fail_on_test(setupMmap(node, bufs));
 
