@@ -269,7 +269,7 @@ static const char *asus_board_vendor[] = {
 	NULL };
 
 static const char *asus_board_name[] = {
-	"A3[A-Z]*",
+	"A3[A-Z]*", "A7M",
 	"B50[A-Z]*",
 	"F[23579][A-Z]*", "F70[A-Z]*", "F[58]2[A-Z]*",
 	"G[12][A-Z]*", "G[57]0[A-Z]*",
