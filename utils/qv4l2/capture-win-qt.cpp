@@ -83,6 +83,8 @@ void CaptureWinQt::setFrame(int width, int height, __u32 format, unsigned char *
 	    || m_frame->format() != dstFmt) {
 		delete m_frame;
 		m_frame = new QImage(width, height, dstFmt);
+		// Force a recalculation by setting this to 0.
+		m_crop.bytes = 0;
 
 		resizeScaleCrop();
 	}

@@ -837,7 +837,8 @@ void ApplicationWindow::enableScaling(bool enable)
 void ApplicationWindow::updatePixelAspectRatio()
 {
 	if (m_capture != NULL && m_genTab != NULL)
-		m_capture->setPixelAspectRatio(m_genTab->getPixelAspectRatio());
+		m_capture->setPixelAspectRatio(m_genTab->getPixelAspectRatio() /
+						(m_fieldCapture ? 2 : 1));
 }
 
 void ApplicationWindow::updateCropping()
@@ -974,6 +975,10 @@ void ApplicationWindow::capStart(bool start)
 	}
 
 	g_fmt_cap(m_capSrcFormat);
+	m_fieldCapture = m_capSrcFormat.fmt.pix.field == V4L2_FIELD_TOP ||
+			 m_capSrcFormat.fmt.pix.field == V4L2_FIELD_BOTTOM ||
+			 m_capSrcFormat.fmt.pix.field == V4L2_FIELD_ALTERNATE;
+	m_heightDiv = m_fieldCapture ? 2 : 1;
 	s_fmt(m_capSrcFormat);
 	if (m_genTab->get_interval(interval))
 		set_interval(interval);
@@ -999,14 +1004,14 @@ void ApplicationWindow::capStart(bool start)
 	// Ensure that the initial image is large enough for native 32 bit per pixel formats
 	if (dstPix.pixelformat == V4L2_PIX_FMT_RGB32 || dstPix.pixelformat == V4L2_PIX_FMT_BGR32)
 		dstFmt = QImage::Format_ARGB32;
-	m_capImage = new QImage(dstPix.width, dstPix.height, dstFmt);
+	m_capImage = new QImage(dstPix.width, dstPix.height / m_heightDiv, dstFmt);
 	m_capImage->fill(0);
 	
 	updatePixelAspectRatio();
 	
 	m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 			    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), "No frame");
-	m_capture->resize(dstPix.width, dstPix.height);
+	m_capture->resize(dstPix.width, dstPix.height / m_heightDiv);
 	if (showFrames())
 		m_capture->show();
 

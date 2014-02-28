@@ -94,7 +94,7 @@ public:
 	/**
 	 * @brief Return the scaled size.
 	 *
-	 * Scales a frame to fit inside a given window. Preseves aspect ratio.
+	 * Scales a frame to fit inside a given window. Preserves aspect ratio.
 	 *
 	 * @param window The window the frame shall scale into
 	 * @param frame The frame to scale
@@ -120,12 +120,20 @@ public:
 	static int cropWidth(int width, int height);
 
 	/**
-	 * @brief Get the frame width when aspect ratio is applied.
+	 * @brief Get the frame width when aspect ratio is applied if ratio > 1.
 	 *
 	 * @param width The original frame width.
-	 * @return The width with aspect ratio correctio (scaling must be enabled).
+	 * @return The width with aspect ratio correction (scaling must be enabled).
 	 */
 	static int actualFrameWidth(int width);
+
+	/**
+	 * @brief Get the frame height when aspect ratio is applied if ratio < 1.
+	 *
+	 * @param width The original frame width.
+	 * @return The width with aspect ratio correction (scaling must be enabled).
+	 */
+	static int actualFrameHeight(int height);
 
 public slots:
 	void resetSize();

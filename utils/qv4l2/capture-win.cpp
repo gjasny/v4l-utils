@@ -131,10 +131,18 @@ void CaptureWin::setCropMethod(CropMethod crop)
 
 int CaptureWin::actualFrameWidth(int width)
 {
-	if (m_enableScaling)
+	if (m_enableScaling && m_pixelAspectRatio > 1)
 		return width * m_pixelAspectRatio;
 
 	return width;
+}
+
+int CaptureWin::actualFrameHeight(int height)
+{
+	if (m_enableScaling && m_pixelAspectRatio < 1)
+		return height / m_pixelAspectRatio;
+
+	return height;
 }
 
 QSize CaptureWin::getMargins()
@@ -159,6 +167,8 @@ void CaptureWin::enableScaling(bool enable)
 
 void CaptureWin::resize(int width, int height)
 {
+	int h, w;
+
 	// Dont resize window if the frame size is the same in
 	// the event the window has been paused when beeing resized.
 	if (width == m_curWidth && height == m_curHeight)
@@ -168,8 +178,10 @@ void CaptureWin::resize(int width, int height)
 	m_curHeight = height;
 
 	QSize margins = getMargins();
-	height = height + margins.height() - cropHeight(width, height) * 2;
-	width = margins.width() - cropWidth(width, height) * 2 + actualFrameWidth(width);
+	h = margins.height() - cropHeight(width, height) * 2 + actualFrameHeight(height);
+	w = margins.width() - cropWidth(width, height) * 2 + actualFrameWidth(width);
+	height = h;
+	width = w;
 
 	QDesktopWidget *screen = QApplication::desktop();
 	QRect resolution = screen->screenGeometry();
@@ -191,7 +203,7 @@ void CaptureWin::resize(int width, int height)
 QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
 {
 	int actualWidth = actualFrameWidth(frame.width() - cropWidth(frame.width(), frame.height()) * 2);
-	int actualHeight = frame.height() - cropHeight(frame.width(), frame.height()) * 2;
+	int actualHeight = actualFrameHeight(frame.height() - cropHeight(frame.width(), frame.height()) * 2);
 
 	if (!m_enableScaling) {
 		window.setWidth(actualWidth);
