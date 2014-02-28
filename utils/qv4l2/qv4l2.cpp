@@ -658,6 +658,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 	switch (m_capMethod) {
 	case methodRead:
 		m_snapshotAct->setEnabled(true);
+		m_genTab->setHaveBuffers(true);
 		/* Nothing to do. */
 		return true;
 
@@ -714,6 +715,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			goto error;
 		}
 		m_snapshotAct->setEnabled(true);
+		m_genTab->setHaveBuffers(true);
 		return true;
 
 	case methodUser:
@@ -754,6 +756,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			goto error;
 		}
 		m_snapshotAct->setEnabled(true);
+		m_genTab->setHaveBuffers(true);
 		return true;
 	}
 
@@ -808,6 +811,7 @@ void ApplicationWindow::stopCapture()
 	}
 	free(m_buffers);
 	m_buffers = NULL;
+	m_genTab->setHaveBuffers(false);
 	refresh();
 }
 

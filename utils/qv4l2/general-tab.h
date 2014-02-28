@@ -88,6 +88,7 @@ public:
 	}
 	inline bool streamon() { return v4l2::streamon(m_buftype); }
 	inline bool streamoff() { return v4l2::streamoff(m_buftype); }
+	void setHaveBuffers(bool haveBuffers);
 
 public slots:
 	void showAllAudioDevices(bool use);

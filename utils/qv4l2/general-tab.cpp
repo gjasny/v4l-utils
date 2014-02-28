@@ -49,7 +49,10 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_cols(n),
 	m_isRadio(false),
 	m_isVbi(false),
+	m_videoInput(NULL),
+	m_videoOutput(NULL),
 	m_audioInput(NULL),
+	m_audioOutput(NULL),
 	m_tvStandard(NULL),
 	m_qryStandard(NULL),
 	m_videoTimings(NULL),
@@ -57,10 +60,21 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_crop(NULL),
 	m_qryTimings(NULL),
 	m_freq(NULL),
+	m_freqTable(NULL),
+	m_freqChannel(NULL),
+	m_audioMode(NULL),
+	m_subchannels(NULL),
+	m_stereoMode(NULL),
+	m_rdsMode(NULL),
+	m_detectSubchans(NULL),
 	m_vidCapFormats(NULL),
 	m_vidCapFields(NULL),
 	m_frameSize(NULL),
+	m_frameWidth(NULL),
+	m_frameHeight(NULL),
+	m_frameInterval(NULL),
 	m_vidOutFormats(NULL),
+	m_capMethods(NULL),
 	m_vbiMethods(NULL),
 	m_audioInDevice(NULL),
 	m_audioOutDevice(NULL)
@@ -470,6 +484,34 @@ capture_method:
 done:
 	QGridLayout::addWidget(new QWidget(parent), rowCount(), 0, 1, n);
 	setRowStretch(rowCount() - 1, 1);
+}
+
+void GeneralTab::setHaveBuffers(bool haveBuffers)
+{
+	if (m_videoInput)
+		m_videoInput->setDisabled(haveBuffers);
+	if (m_videoOutput)
+		m_videoOutput->setDisabled(haveBuffers);
+	if (m_tvStandard)
+		m_tvStandard->setDisabled(haveBuffers);
+	if (m_videoTimings)
+		m_videoTimings->setDisabled(haveBuffers);
+	if (m_vidCapFormats)
+		m_vidCapFormats->setDisabled(haveBuffers);
+	if (m_vidCapFields)
+		m_vidCapFields->setDisabled(haveBuffers);
+	if (m_frameSize)
+		m_frameSize->setDisabled(haveBuffers);
+	if (m_frameWidth)
+		m_frameWidth->setDisabled(haveBuffers);
+	if (m_frameHeight)
+		m_frameHeight->setDisabled(haveBuffers);
+	if (m_vidOutFormats)
+		m_vidOutFormats->setDisabled(haveBuffers);
+	if (m_capMethods)
+		m_capMethods->setDisabled(haveBuffers);
+	if (m_vbiMethods)
+		m_vbiMethods->setDisabled(haveBuffers);
 }
 
 void GeneralTab::showAllAudioDevices(bool use)
@@ -896,7 +938,6 @@ void GeneralTab::frameIntervalChanged(int idx)
 		if (set_interval(frmival.discrete))
 			m_interval = frmival.discrete;
 	}
-	updateVidCapFormat();
 }
 
 void GeneralTab::vidOutFormatChanged(int idx)
@@ -935,6 +976,20 @@ void GeneralTab::updateVideoInput()
 		m_tvStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
 		if (m_qryStandard)
 			m_qryStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
+		bool enableFreq = in.type == V4L2_INPUT_TYPE_TUNER;
+		if (m_freq)
+			m_freq->setEnabled(enableFreq);
+		if (m_freqTable)
+			m_freqTable->setEnabled(enableFreq);
+		if (m_freqChannel)
+			m_freqChannel->setEnabled(enableFreq);
+		if (m_detectSubchans) {
+			m_detectSubchans->setEnabled(enableFreq);
+			if (!enableFreq)
+				m_subchannels->setText("");
+			else
+				detectSubchansClicked();
+		}
 	}
 	if (m_videoTimings) {
 		refreshTimings();
@@ -942,6 +997,8 @@ void GeneralTab::updateVideoInput()
 		m_videoTimings->setEnabled(in.capabilities & V4L2_IN_CAP_DV_TIMINGS);
 		m_qryTimings->setEnabled(in.capabilities & V4L2_IN_CAP_DV_TIMINGS);
 	}
+	if (m_audioInput)
+		m_audioInput->setEnabled(in.audioset);
 }
 
 void GeneralTab::updateVideoOutput()
