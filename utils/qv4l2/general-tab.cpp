@@ -1042,7 +1042,7 @@ void GeneralTab::qryStdClicked()
 	if (!query_std(std))
 		return;
 
-	if (std == V4L2_STD_ALL) {
+	if (std == V4L2_STD_UNKNOWN) {
 		info("No standard detected\n");
 	} else {
 		s_std(std);
