@@ -949,6 +949,44 @@ int testMmap(struct node *node, unsigned frame_count)
 		fail_on_test(doioctl(node, VIDIOC_STREAMOFF, &bufs.type));
 		last_seq.init();
 
+		// Test queuing buffers...
+		for (unsigned i = 0; i < bufs.count; i++) {
+			struct v4l2_plane planes[VIDEO_MAX_PLANES];
+			struct v4l2_buffer buf;
+
+			memset(&buf, 0, sizeof(buf));
+			buf.type = bufs.type;
+			buf.memory = bufs.memory;
+			buf.index = i;
+			if (V4L2_TYPE_IS_MULTIPLANAR(bufs.type)) {
+				buf.m.planes = planes;
+				buf.length = VIDEO_MAX_PLANES;
+			}
+			fail_on_test(doioctl(node, VIDIOC_QBUF, &buf));
+		}
+		// calling STREAMOFF...
+		fail_on_test(doioctl(node, VIDIOC_STREAMOFF, &bufs.type));
+		// and now we should be able to queue those buffers again since
+		// STREAMOFF should return them back to the dequeued state.
+		for (unsigned i = 0; i < bufs.count; i++) {
+			struct v4l2_plane planes[VIDEO_MAX_PLANES];
+			struct v4l2_buffer buf;
+
+			memset(&buf, 0, sizeof(buf));
+			buf.type = bufs.type;
+			buf.memory = bufs.memory;
+			buf.index = i;
+			if (V4L2_TYPE_IS_MULTIPLANAR(bufs.type)) {
+				buf.m.planes = planes;
+				buf.length = VIDEO_MAX_PLANES;
+			}
+			fail_on_test(doioctl(node, VIDIOC_QBUF, &buf));
+		}
+		// Now request buffers again, freeing the old buffers.
+		// Good check for whether all the internal vb2 calls are in
+		// balance.
+		fail_on_test(doioctl(node, VIDIOC_REQBUFS, &bufs));
+
 		cbufs.format = cur_fmt;
 		cbufs.count = 0;
 		cbufs.memory = bufs.memory;
