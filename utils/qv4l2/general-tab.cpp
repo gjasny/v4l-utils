@@ -248,14 +248,15 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 	if (m_tuner.capability) {
 		QDoubleValidator *val;
-		double factor = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? 16 : 16000;
+		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? "kHz" : "MHz";
 
-		val = new QDoubleValidator(m_tuner.rangelow / factor, m_tuner.rangehigh / factor, 3, parent);
+		val = new QDoubleValidator(m_tuner.rangelow / 16, m_tuner.rangehigh / 16, 3, parent);
 		m_freq = new QLineEdit(parent);
 		m_freq->setValidator(val);
-		m_freq->setWhatsThis(QString("Frequency\nLow: %1\nHigh: %2")
-				     .arg(m_tuner.rangelow / factor)
-				     .arg((double)m_tuner.rangehigh / factor, 0, 'f', 2));
+		m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
+				     .arg(m_tuner.rangelow / 16)
+				     .arg((double)m_tuner.rangehigh / 16, 0, 'f', 2)
+				     .arg(unit));
 		m_freq->setStatusTip(m_freq->whatsThis());
 		connect(m_freq, SIGNAL(lostFocus()), SLOT(freqChanged()));
 		connect(m_freq, SIGNAL(returnPressed()), SLOT(freqChanged()));
@@ -266,7 +267,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 			addLabel("Frequency (MHz)");
 		addWidget(m_freq);
 
-		if (!m_tuner.capability & V4L2_TUNER_CAP_LOW) {
+		if (!(m_tuner.capability & V4L2_TUNER_CAP_LOW)) {
 			addLabel("Frequency Table");
 			m_freqTable = new QComboBox(parent);
 			for (int i = 0; v4l2_channel_lists[i].name; i++) {
@@ -321,14 +322,15 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 	if (m_modulator.capability) {
 		QDoubleValidator *val;
-		double factor = (m_modulator.capability & V4L2_TUNER_CAP_LOW) ? 16 : 16000;
+		const char *unit = (m_modulator.capability & V4L2_TUNER_CAP_LOW) ? "kHz" : "MHz";
 
-		val = new QDoubleValidator(m_modulator.rangelow / factor, m_modulator.rangehigh / factor, 3, parent);
+		val = new QDoubleValidator(m_modulator.rangelow / 16, m_modulator.rangehigh / 16, 3, parent);
 		m_freq = new QLineEdit(parent);
 		m_freq->setValidator(val);
-		m_freq->setWhatsThis(QString("Frequency\nLow: %1\nHigh: %2")
-				     .arg(m_tuner.rangelow / factor)
-				     .arg((double)m_tuner.rangehigh / factor, 0, 'f', 2));
+		m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
+				     .arg(m_tuner.rangelow / 16)
+				     .arg((double)m_tuner.rangehigh / 16, 0, 'f', 2)
+				     .arg(unit));
 		m_freq->setStatusTip(m_freq->whatsThis());
 		connect(m_freq, SIGNAL(lostFocus()), SLOT(freqChanged()));
 		connect(m_freq, SIGNAL(returnPressed()), SLOT(freqChanged()));
@@ -729,7 +731,9 @@ void GeneralTab::freqChanged()
 {
 	double f = m_freq->text().toDouble();
 
-	s_frequency(f * 16, m_isRadio);
+	if (m_freq->hasAcceptableInput())
+		s_frequency(f * 16, m_isRadio);
+	updateFreq();
 }
 
 void GeneralTab::audioModeChanged(int)
