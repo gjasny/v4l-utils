@@ -89,6 +89,10 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb012, 0, "PACKARD BELL BV              ", "EasyNote_F0945",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
+	/* This Asus has its camera the right way up, so we've an entry here
+	   to override the wildcard match from the upside_down table. */
+	{ 0x04f2, 0xb012, 0, "ASUSTeK Computer Inc.        ", "F3Sc      ",
+		0 },
 	{ 0x04f2, 0xb071, 0, "AXIOO", "PICO DJH Model",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x04f2, 0xb071, 0, "PEGATRON CORPORATION", "H54",
