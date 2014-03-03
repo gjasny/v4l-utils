@@ -892,6 +892,8 @@ void GeneralTab::frameWidthChanged()
 	v4l2_format fmt;
 	int val = m_frameWidth->value();
 
+	if (!m_frameWidth->isEnabled())
+		return;
 	g_fmt_cap(fmt);
 	fmt.fmt.pix.width = val;
 	if (try_fmt(fmt))
@@ -905,6 +907,8 @@ void GeneralTab::frameHeightChanged()
 	v4l2_format fmt;
 	int val = m_frameHeight->value();
 
+	if (!m_frameHeight->isEnabled())
+		return;
 	g_fmt_cap(fmt);
 	fmt.fmt.pix.height = val;
 	if (try_fmt(fmt))
