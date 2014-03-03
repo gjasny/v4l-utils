@@ -106,8 +106,6 @@ private:
 	struct buffer *m_buffers;
 	struct v4l2_format m_capSrcFormat;
 	struct v4l2_format m_capDestFormat;
-	bool m_fieldCapture;
-	unsigned m_heightDiv;
 	unsigned char *m_frameData;
 	unsigned m_nbuffers;
 	struct v4lconvert_data *m_convertData;
