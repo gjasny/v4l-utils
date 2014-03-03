@@ -1328,13 +1328,6 @@ int v4lconvert_convert(struct v4lconvert_data *data,
 		return to_copy;
 	}
 
-	/* When field is V4L2_FIELD_ALTERNATE, each buffer only contains half the
-	   lines */
-	if (my_src_fmt.fmt.pix.field == V4L2_FIELD_ALTERNATE) {
-		my_src_fmt.fmt.pix.height /= 2;
-		my_dest_fmt.fmt.pix.height /= 2;
-	}
-
 	/* sanity check, is the dest buffer large enough? */
 	switch (my_dest_fmt.fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_RGB24:
