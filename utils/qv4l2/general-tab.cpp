@@ -1344,10 +1344,10 @@ void GeneralTab::updateFrameSize()
 	}
 	if (!ok) {
 		frmsize.stepwise.min_width = 8;
-		frmsize.stepwise.max_width = 1920;
+		frmsize.stepwise.max_width = 4096;
 		frmsize.stepwise.step_width = 1;
 		frmsize.stepwise.min_height = 8;
-		frmsize.stepwise.max_height = 1200;
+		frmsize.stepwise.max_height = 2160;
 		frmsize.stepwise.step_height = 1;
 	}
 	m_frameWidth->setEnabled(true);
