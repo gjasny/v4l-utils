@@ -36,10 +36,10 @@ void dvb_desc_frequency_list_init(struct dvb_v5_fe_parms *parms, const uint8_t *
 
 	d->frequencies = (d->length - len) / sizeof(d->frequency[0]);
 
-	d->frequency = calloc(1, sizeof(d->frequency));
+	d->frequency = calloc(d->frequencies, sizeof(d->frequency));
 
 	for (i = 0; i < d->frequencies; i++) {
-		d->frequency[i] = ((uint32_t *) buf)[i];
+		d->frequency[i] = ((uint32_t *) p)[i];
 		bswap32(d->frequency[i]);
 		switch (d->freq_type) {
 			case 1: /* satellite - to get kHz */
