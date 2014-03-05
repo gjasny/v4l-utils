@@ -42,11 +42,13 @@ enum Option {
 	OptGetOverlayFormat,
 	OptGetVbiFormat,
 	OptGetVbiOutFormat,
+	OptGetSdrFormat,
 	OptGetVideoOutFormat,
 	OptSetSlicedVbiOutFormat,
 	OptSetOverlayFormat,
 	//OptSetVbiFormat, TODO
 	//OptSetVbiOutFormat, TODO
+	OptSetSdrFormat,
 	OptSetVideoOutFormat,
 	OptTryVideoOutFormat,
 	OptTrySlicedVbiOutFormat,
@@ -55,6 +57,7 @@ enum Option {
 	OptTryOverlayFormat,
 	//OptTryVbiFormat, TODO
 	//OptTryVbiOutFormat, TODO
+	OptTrySdrFormat,
 	OptAll,
 	OptListStandards,
 	OptListFormats,
@@ -63,6 +66,7 @@ enum Option {
 	OptListFrameSizes,
 	OptListFrameIntervals,
 	OptListOverlayFormats,
+	OptListSdrFormats,
 	OptListOutFormats,
 	OptListOutFields,
 	OptClearClips,
@@ -151,6 +155,7 @@ enum Option {
 	OptHelpVidOut,
 	OptHelpOverlay,
 	OptHelpVbi,
+	OptHelpSdr,
 	OptHelpSelection,
 	OptHelpMisc,
 	OptHelpStreaming,
@@ -261,6 +266,13 @@ void vbi_cmd(int ch, char *optarg);
 void vbi_set(int fd);
 void vbi_get(int fd);
 void vbi_list(int fd);
+
+// v4l2-ctl-sdr.cpp
+void sdr_usage(void);
+void sdr_cmd(int ch, char *optarg);
+void sdr_set(int fd);
+void sdr_get(int fd);
+void sdr_list(int fd);
 
 // v4l2-ctl-selection.cpp
 void selection_usage(void);

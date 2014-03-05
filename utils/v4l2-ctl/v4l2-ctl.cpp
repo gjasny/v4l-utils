@@ -84,6 +84,7 @@ static struct option long_options[] = {
 	{"help-vidout", no_argument, 0, OptHelpVidOut},
 	{"help-overlay", no_argument, 0, OptHelpOverlay},
 	{"help-vbi", no_argument, 0, OptHelpVbi},
+	{"help-sdr", no_argument, 0, OptHelpSdr},
 	{"help-selection", no_argument, 0, OptHelpSelection},
 	{"help-misc", no_argument, 0, OptHelpMisc},
 	{"help-streaming", no_argument, 0, OptHelpStreaming},
@@ -109,6 +110,7 @@ static struct option long_options[] = {
 	{"list-framesizes", required_argument, 0, OptListFrameSizes},
 	{"list-frameintervals", required_argument, 0, OptListFrameIntervals},
 	{"list-formats-overlay", no_argument, 0, OptListOverlayFormats},
+	{"list-formats-sdr", no_argument, 0, OptListSdrFormats},
 	{"list-formats-out", no_argument, 0, OptListOutFormats},
 	{"list-fields-out", no_argument, 0, OptListOutFields},
 	{"clear-clips", no_argument, 0, OptClearClips},
@@ -145,6 +147,9 @@ static struct option long_options[] = {
 	{"try-fmt-sliced-vbi-out", required_argument, 0, OptTrySlicedVbiOutFormat},
 	{"get-fmt-vbi", no_argument, 0, OptGetVbiFormat},
 	{"get-fmt-vbi-out", no_argument, 0, OptGetVbiOutFormat},
+	{"get-fmt-sdr", no_argument, 0, OptGetSdrFormat},
+	{"set-fmt-sdr", required_argument, 0, OptSetSdrFormat},
+	{"try-fmt-sdr", required_argument, 0, OptTrySdrFormat},
 	{"get-sliced-vbi-cap", no_argument, 0, OptGetSlicedVbiCap},
 	{"get-sliced-vbi-out-cap", no_argument, 0, OptGetSlicedVbiOutCap},
 	{"get-fbuf", no_argument, 0, OptGetFBuf},
@@ -219,6 +224,7 @@ static void usage_all(void)
        vidout_usage();
        overlay_usage();
        vbi_usage();
+       sdr_usage();
        selection_usage();
        misc_usage();
        streaming_usage();
@@ -287,6 +293,8 @@ std::string buftype2s(int type)
 		return "Sliced VBI Output";
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 		return "Video Output Overlay";
+	case V4L2_BUF_TYPE_SDR_CAPTURE:
+		return "SDR Capture";
 	default:
 		return "Unknown (" + num2s(type) + ")";
 	}
@@ -479,6 +487,9 @@ void printfmt(const struct v4l2_format &vfmt)
 		}
 		printf("\tI/O Size       : %u\n", vfmt.fmt.sliced.io_size);
 		break;
+	case V4L2_BUF_TYPE_SDR_CAPTURE:
+		printf("\tSample Format   : %s\n", fcc2s(vfmt.fmt.sdr.pixelformat).c_str());
+		break;
 	}
 }
 
@@ -540,6 +551,8 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tSliced VBI Capture\n";
 	if (cap & V4L2_CAP_SLICED_VBI_OUTPUT)
 		s += "\t\tSliced VBI Output\n";
+	if (cap & V4L2_CAP_SDR_CAPTURE)
+		s += "\t\tSDR Capture\n";
 	if (cap & V4L2_CAP_RDS_CAPTURE)
 		s += "\t\tRDS Capture\n";
 	if (cap & V4L2_CAP_RDS_OUTPUT)
@@ -800,6 +813,7 @@ __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane)
 	else
 		fmt.type = mplane ?  V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
 			V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
 	if (doioctl(fd, VIDIOC_ENUM_FMT, &fmt))
 		return 0;
 	return fmt.pixelformat;
@@ -877,6 +891,9 @@ int main(int argc, char **argv)
 		case OptHelpVbi:
 			vbi_usage();
 			return 0;
+		case OptHelpSdr:
+			sdr_usage();
+			return 0;
 		case OptHelpSelection:
 			selection_usage();
 			return 0;
@@ -939,6 +956,7 @@ int main(int argc, char **argv)
 			vidout_cmd(ch, optarg);
 			overlay_cmd(ch, optarg);
 			vbi_cmd(ch, optarg);
+			sdr_cmd(ch, optarg);
 			selection_cmd(ch, optarg);
 			misc_cmd(ch, optarg);
 			streaming_cmd(ch, optarg);
@@ -1026,6 +1044,7 @@ int main(int argc, char **argv)
 		options[OptGetVbiOutFormat] = 1;
 		options[OptGetSlicedVbiFormat] = 1;
 		options[OptGetSlicedVbiOutFormat] = 1;
+		options[OptGetSdrFormat] = 1;
 		options[OptGetFBuf] = 1;
 		options[OptGetCropCap] = 1;
 		options[OptGetOutputCropCap] = 1;
@@ -1069,6 +1088,7 @@ int main(int argc, char **argv)
 	vidout_set(fd);
 	overlay_set(fd);
 	vbi_set(fd);
+	sdr_set(fd);
 	selection_set(fd);
 	streaming_set(fd, out_fd);
 	misc_set(fd);
@@ -1083,6 +1103,7 @@ int main(int argc, char **argv)
 	vidout_get(fd);
 	overlay_get(fd);
 	vbi_get(fd);
+	sdr_get(fd);
 	selection_get(fd);
 	misc_get(fd);
 
@@ -1095,6 +1116,7 @@ int main(int argc, char **argv)
 	vidout_list(fd);
 	overlay_list(fd);
 	vbi_list(fd);
+	sdr_list(fd);
 	streaming_list(fd, out_fd);
 
 	if (options[OptWaitForEvent]) {

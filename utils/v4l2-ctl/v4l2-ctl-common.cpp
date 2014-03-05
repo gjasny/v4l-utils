@@ -67,6 +67,7 @@ void common_usage(void)
 	       "  --help-io          input/output options\n"
 	       "  --help-misc        miscellaneous options\n"
 	       "  --help-overlay     overlay format options\n"
+	       "  --help-sdr         SDR format options\n"
 	       "  --help-selection   crop/selection options\n"
 	       "  --help-stds        standards and other video timings options\n"
 	       "  --help-streaming   streaming options\n"
