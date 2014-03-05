@@ -44,7 +44,8 @@ static void *ptrs[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
 static int dmabufs[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
 static struct v4l2_format cur_fmt;
 
-static const unsigned valid_output_flags = V4L2_BUF_FLAG_TIMECODE |
+static const unsigned valid_output_flags =
+	V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_TSTAMP_SRC_MASK |
 	V4L2_BUF_FLAG_KEYFRAME | V4L2_BUF_FLAG_PFRAME | V4L2_BUF_FLAG_BFRAME;
 
 bool operator<(struct timeval const& n1, struct timeval const& n2)
@@ -128,6 +129,8 @@ static int checkQueryBuf(struct node *node, const struct v4l2_buffer &buf,
 		struct buf_seq &seq)
 {
 	unsigned timestamp = buf.flags & V4L2_BUF_FLAG_TIMESTAMP_MASK;
+	bool ts_copy = timestamp == V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	unsigned timestamp_src = buf.flags & V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 	unsigned frame_types = 0;
 	unsigned buf_states = 0;
 
@@ -139,6 +142,10 @@ static int checkQueryBuf(struct node *node, const struct v4l2_buffer &buf,
 	fail_on_test(buf.reserved2 || buf.reserved);
 	fail_on_test(timestamp != V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC &&
 		     timestamp != V4L2_BUF_FLAG_TIMESTAMP_COPY);
+	fail_on_test(timestamp_src != V4L2_BUF_FLAG_TSTAMP_SRC_SOE &&
+		     timestamp_src != V4L2_BUF_FLAG_TSTAMP_SRC_EOF);
+	fail_on_test(!ts_copy && V4L2_TYPE_IS_OUTPUT(buf.type) &&
+		     timestamp_src == V4L2_BUF_FLAG_TSTAMP_SRC_SOE);
 	if (buf.flags & V4L2_BUF_FLAG_KEYFRAME)
 		frame_types++;
 	if (buf.flags & V4L2_BUF_FLAG_PFRAME)
@@ -186,8 +193,7 @@ static int checkQueryBuf(struct node *node, const struct v4l2_buffer &buf,
 		}
 	}
 
-	if (!V4L2_TYPE_IS_OUTPUT(buf.type) &&
-	    timestamp != V4L2_BUF_FLAG_TIMESTAMP_COPY &&
+	if (!V4L2_TYPE_IS_OUTPUT(buf.type) && !ts_copy &&
 	    (buf.flags & V4L2_BUF_FLAG_TIMECODE))
 		warn("V4L2_BUF_FLAG_TIMECODE was used!\n");
 
@@ -229,8 +235,7 @@ static int checkQueryBuf(struct node *node, const struct v4l2_buffer &buf,
 		seq.last_field = buf.field;
 	} else {
 		fail_on_test(buf.sequence);
-		if (mode == Queued && timestamp == V4L2_BUF_FLAG_TIMESTAMP_COPY &&
-		    V4L2_TYPE_IS_OUTPUT(buf.type)) {
+		if (mode == Queued && ts_copy && V4L2_TYPE_IS_OUTPUT(buf.type)) {
 			fail_on_test(!buf.timestamp.tv_sec && !buf.timestamp.tv_usec);
 		} else {
 			fail_on_test(buf.timestamp.tv_sec || buf.timestamp.tv_usec);
@@ -517,6 +522,7 @@ static void fillOutputBuf(struct v4l2_buffer &buf)
 	if ((buf.flags & V4L2_BUF_FLAG_TIMESTAMP_MASK) == V4L2_BUF_FLAG_TIMESTAMP_COPY) {
 		buf.timestamp.tv_sec = ts.tv_sec;
 		buf.timestamp.tv_usec = ts.tv_nsec / 1000;
+		buf.flags |= V4L2_BUF_FLAG_TSTAMP_SRC_SOE;
 	}
 	buf.flags |= V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_KEYFRAME;
 	buf.timecode.type = V4L2_TC_TYPE_30FPS;
