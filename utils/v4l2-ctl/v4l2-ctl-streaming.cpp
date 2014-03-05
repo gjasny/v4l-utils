@@ -267,7 +267,10 @@ class buffers {
 public:
 	buffers(bool is_output)
 	{
-		type = is_output ? vidout_buftype : vidcap_buftype;
+		if (capabilities & V4L2_CAP_SDR_CAPTURE)
+			type = V4L2_BUF_TYPE_SDR_CAPTURE;
+		else
+			type = is_output ? vidout_buftype : vidcap_buftype;
 		if (is_output) {
 			if (options[OptStreamOutMmap])
 				memory = V4L2_MEMORY_MMAP;
@@ -829,7 +832,7 @@ static void streaming_set_cap(int fd)
 
 	if (!(capabilities & (V4L2_CAP_VIDEO_CAPTURE |
 			      V4L2_CAP_VIDEO_CAPTURE_MPLANE |
-			      V4L2_CAP_VIDEO_M2M |
+			      V4L2_CAP_SDR_CAPTURE | V4L2_CAP_VIDEO_M2M |
 			      V4L2_CAP_VIDEO_M2M_MPLANE))) {
 		fprintf(stderr, "unsupported stream type\n");
 		return;
