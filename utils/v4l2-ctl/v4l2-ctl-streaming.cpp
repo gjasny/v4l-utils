@@ -131,6 +131,21 @@ static std::string timestamp_type2s(__u32 flags)
 	}
 }
 
+static std::string timestamp_src2s(__u32 flags)
+{
+	char buf[20];
+
+	switch (flags & V4L2_BUF_FLAG_TSTAMP_SRC_MASK) {
+	case V4L2_BUF_FLAG_TSTAMP_SRC_EOF:
+		return "End-of-Frame";
+	case V4L2_BUF_FLAG_TSTAMP_SRC_SOE:
+		return "Start-of-Exposure";
+	default:
+		sprintf(buf, "Source %d", (flags & V4L2_BUF_FLAG_TSTAMP_SRC_MASK) >> 16);
+		return std::string(buf);
+	}
+}
+
 static const flag_def tc_flags_def[] = {
 	{ V4L2_TC_FLAG_DROPFRAME, "dropframe" },
 	{ V4L2_TC_FLAG_COLORFRAME, "colorframe" },
@@ -149,8 +164,8 @@ static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 	fprintf(f, "\tSequence : %u\n", buf.sequence);
 	fprintf(f, "\tLength   : %u\n", buf.length);
 	fprintf(f, "\tBytesused: %u\n", buf.bytesused);
-	fprintf(f, "\tTimestamp: %lu.%06lus (%s)\n", buf.timestamp.tv_sec, buf.timestamp.tv_usec,
-			timestamp_type2s(buf.flags).c_str());
+	fprintf(f, "\tTimestamp: %lu.%06lus (%s, %s)\n", buf.timestamp.tv_sec, buf.timestamp.tv_usec,
+			timestamp_type2s(buf.flags).c_str(), timestamp_src2s(buf.flags).c_str());
 	if (buf.flags & V4L2_BUF_FLAG_TIMECODE) {
 		static const int fps_types[] = { 0, 24, 25, 30, 50, 60 };
 		int fps = buf.timecode.type;
