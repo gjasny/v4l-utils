@@ -69,7 +69,7 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 		unsigned t, v4l2_std_id std)
 {
 	bool valid_modes[5] = { true, false, false, false, false };
-	bool tv = !node->is_radio;
+	bool tv = node->is_video || node->is_vbi;
 	bool hwseek_caps = tuner.capability & (V4L2_TUNER_CAP_HWSEEK_BOUNDED |
 			V4L2_TUNER_CAP_HWSEEK_WRAP | V4L2_TUNER_CAP_HWSEEK_PROG_LIM);
 	unsigned type = tv ? V4L2_TUNER_ANALOG_TV : V4L2_TUNER_RADIO;
@@ -81,17 +81,24 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 		return fail("invalid name\n");
 	if (check_0(tuner.reserved, sizeof(tuner.reserved)))
 		return fail("non-zero reserved fields\n");
-	if (tuner.type != type)
+	if (node->is_sdr) {
+		fail_on_test(tuner.type != V4L2_TUNER_ADC && tuner.type != V4L2_TUNER_RF);
+	} else if (tuner.type != type) {
 		return fail("invalid tuner type %d\n", tuner.type);
+	}
 	if (tv && (tuner.capability & V4L2_TUNER_CAP_RDS))
 		return fail("RDS for TV tuner?\n");
 	if (!tv && (tuner.capability & (V4L2_TUNER_CAP_NORM |
 					V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2)))
 		return fail("TV capabilities for radio tuner?\n");
-	if (tv && (tuner.capability & V4L2_TUNER_CAP_LOW))
-		return fail("did not expect to see V4L2_TUNER_CAP_LOW set for a tv tuner\n");
-	if (!tv && !(tuner.capability & V4L2_TUNER_CAP_LOW))
+	if (tv && (tuner.capability & (V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_1HZ)))
+		return fail("did not expect to see V4L2_TUNER_CAP_LOW/1HZ set for a tv tuner\n");
+	if (node->is_radio && !(tuner.capability & V4L2_TUNER_CAP_LOW))
 		return fail("V4L2_TUNER_CAP_LOW was not set for a radio tuner\n");
+	fail_on_test((tuner.capability & V4L2_TUNER_CAP_LOW) &&
+		     (tuner.capability & V4L2_TUNER_CAP_1HZ));
+	if (node->is_sdr)
+		fail_on_test(!(V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_1HZ));
 	fail_on_test(!(tuner.capability & V4L2_TUNER_CAP_FREQ_BANDS));
 	fail_on_test(!(node->caps & V4L2_CAP_HW_FREQ_SEEK) && hwseek_caps);
 	fail_on_test((node->caps & V4L2_CAP_HW_FREQ_SEEK) &&
@@ -117,10 +124,11 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
                         (V4L2_TUNER_CAP_RDS_BLOCK_IO | V4L2_TUNER_CAP_RDS_CONTROLS);
 	if (have_rds ^ have_rds_method)
 		return fail("V4L2_TUNER_CAP_RDS is set, but not V4L2_TUNER_CAP_RDS_* or vice versa\n");
+	fail_on_test(node->is_sdr && have_rds);
 	if ((tuner.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
 			!(node->caps & V4L2_CAP_READWRITE))
 		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is set, but not V4L2_CAP_READWRITE\n");
-	if (!tv && !(tuner.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
+	if (node->is_radio && !(tuner.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
 			(node->caps & V4L2_CAP_READWRITE))
 		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is not set, but V4L2_CAP_READWRITE is\n");
 	if (std == V4L2_STD_NTSC_M && (tuner.rxsubchans & V4L2_TUNER_SUB_LANG1))
@@ -222,10 +230,14 @@ int testTunerFreq(struct node *node)
 			return fail("could not get frequency for tuner %d\n", t);
 		if (check_0(freq.reserved, sizeof(freq.reserved)))
 			return fail("reserved was not zeroed\n");
-		if (freq.type != V4L2_TUNER_RADIO && freq.type != V4L2_TUNER_ANALOG_TV)
+		if (freq.type != V4L2_TUNER_RADIO && freq.type != V4L2_TUNER_ANALOG_TV &&
+		    freq.type != V4L2_TUNER_ADC && freq.type != V4L2_TUNER_RF)
 			return fail("returned invalid tuner type %d\n", freq.type);
 		if (freq.type == V4L2_TUNER_RADIO && !(node->caps & V4L2_CAP_RADIO))
 			return fail("radio tuner found but no radio capability set\n");
+		if ((freq.type == V4L2_TUNER_ADC || freq.type == V4L2_TUNER_RF) &&
+		    !(node->caps & V4L2_CAP_SDR_CAPTURE))
+			return fail("sdr tuner found but no sdr capture capability set\n");
 		if (freq.type != tuner.type)
 			return fail("frequency tuner type and tuner type mismatch\n");
 		if (freq.tuner != t)

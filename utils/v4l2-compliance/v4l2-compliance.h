@@ -52,6 +52,7 @@ struct node {
 	bool is_video;
 	bool is_radio;
 	bool is_vbi;
+	bool is_sdr;
 	bool is_m2m;
 	bool can_capture;
 	bool can_output;
@@ -70,7 +71,7 @@ struct node {
 	unsigned priv_controls;
 	qctrl_list controls;
 	__u32 fbuf_caps;
-	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE + 1];
+	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_SDR_CAPTURE + 1];
 	__u32 valid_buftypes;
 	__u32 valid_buftype;
 	__u32 valid_memorytype;

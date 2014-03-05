@@ -53,6 +53,7 @@ enum Option {
 	OptSetOutput = 'o',
 	OptSetRadioDevice = 'r',
 	OptStreaming = 's',
+	OptSetSWRadioDevice = 'S',
 	OptTrace = 'T',
 	OptVerbose = 'v',
 	OptSetVbiDevice = 'V',
@@ -80,6 +81,7 @@ static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
 	{"radio-device", required_argument, 0, OptSetRadioDevice},
 	{"vbi-device", required_argument, 0, OptSetVbiDevice},
+	{"sdr-device", required_argument, 0, OptSetSWRadioDevice},
 	{"expbuf-device", required_argument, 0, OptSetExpBufDevice},
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
@@ -99,10 +101,12 @@ static void usage(void)
 	printf("Common options:\n");
 	printf("  -d, --device=<dev> use device <dev> as the video device.\n");
 	printf("                     if <dev> starts with a digit, then /dev/video<dev> is used.\n");
-	printf("  -r, --radio-device=<dev> use device <dev> as the radio device.\n");
-	printf("                     if <dev> starts with a digit, then /dev/radio<dev> is used.\n");
 	printf("  -V, --vbi-device=<dev> use device <dev> as the vbi device.\n");
 	printf("                     if <dev> starts with a digit, then /dev/vbi<dev> is used.\n");
+	printf("  -r, --radio-device=<dev> use device <dev> as the radio device.\n");
+	printf("                     if <dev> starts with a digit, then /dev/radio<dev> is used.\n");
+	printf("  -S, --sdr-device=<dev> use device <dev> as the SDR device.\n");
+	printf("                     if <dev> starts with a digit, then /dev/swradio<dev> is used.\n");
 	printf("  -e, --expbuf-device=<dev> use device <dev> to obtain DMABUF handles.\n");
 	printf("                     if <dev> starts with a digit, then /dev/video<dev> is used.\n");
 	printf("                     only /dev/videoX devices are supported.\n");
@@ -176,6 +180,8 @@ std::string cap2s(unsigned cap)
 		s += "\t\tRDS Capture\n";
 	if (cap & V4L2_CAP_RDS_OUTPUT)
 		s += "\t\tRDS Output\n";
+	if (cap & V4L2_CAP_SDR_CAPTURE)
+		s += "\t\tSDR Capture\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
 	if (cap & V4L2_CAP_MODULATOR)
@@ -218,6 +224,8 @@ std::string buftype2s(int type)
 		return "Sliced VBI Output";
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 		return "Video Output Overlay";
+	case V4L2_BUF_TYPE_SDR_CAPTURE:
+		return "SDR Capture";
 	case V4L2_BUF_TYPE_PRIVATE:
 		return "Private";
 	default:
@@ -281,11 +289,12 @@ static int testCap(struct node *node)
 			V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY;
 	const __u32 vbi_caps = V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
 			V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT;
+	const __u32 sdr_caps = V4L2_CAP_SDR_CAPTURE;
 	const __u32 radio_caps = V4L2_CAP_RADIO | V4L2_CAP_MODULATOR;
 	const __u32 input_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OVERLAY |
 			V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
 			V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_HW_FREQ_SEEK |
-			V4L2_CAP_TUNER;
+			V4L2_CAP_TUNER | V4L2_CAP_SDR_CAPTURE;
 	const __u32 output_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 			V4L2_CAP_VIDEO_OUTPUT_OVERLAY | V4L2_CAP_VBI_OUTPUT |
 			V4L2_CAP_SLICED_VBI_OUTPUT | V4L2_CAP_MODULATOR;
@@ -325,16 +334,19 @@ static int testCap(struct node *node)
 	fail_on_test(!(dcaps & caps));
 	fail_on_test(node->is_video && !(dcaps & video_caps));
 	fail_on_test(node->is_radio && !(dcaps & radio_caps));
-	// V4L2_CAP_AUDIO is invalid for radio
+	// V4L2_CAP_AUDIO is invalid for radio and sdr
 	fail_on_test(node->is_radio && (dcaps & V4L2_CAP_AUDIO));
+	fail_on_test(node->is_sdr && (dcaps & V4L2_CAP_AUDIO));
 	fail_on_test(node->is_vbi && !(dcaps & vbi_caps));
+	fail_on_test(node->is_sdr && !(dcaps & sdr_caps));
 	// You can't have both set due to missing buffer type in VIDIOC_G/S_FBUF
 	fail_on_test((dcaps & overlay_caps) == overlay_caps);
 	// Overlay support makes no sense for m2m devices
 	fail_on_test((dcaps & m2m_caps) && (dcaps & overlay_caps));
-	fail_on_test(node->is_video && (dcaps & (vbi_caps | radio_caps)));
-	fail_on_test(node->is_radio && (dcaps & (vbi_caps | video_caps)));
-	fail_on_test(node->is_vbi && (dcaps & (video_caps | radio_caps)));
+	fail_on_test(node->is_video && (dcaps & (vbi_caps | radio_caps | sdr_caps)));
+	fail_on_test(node->is_radio && (dcaps & (vbi_caps | video_caps | sdr_caps)));
+	fail_on_test(node->is_vbi && (dcaps & (video_caps | radio_caps | sdr_caps)));
+	fail_on_test(node->is_sdr && (dcaps & (video_caps | radio_caps | vbi_caps)));
 	if (node->is_m2m) {
 		// This will become an error as this combination of caps
 		// is on the feature removal list.
@@ -461,18 +473,21 @@ int main(int argc, char **argv)
 	struct node node = { -1 };
 	struct node video_node = { -1 };
 	struct node video_node2 = { -1 };
-	struct node radio_node = { -1, true };
-	struct node radio_node2 = { -1, true };
 	struct node vbi_node = { -1 };
 	struct node vbi_node2 = { -1 };
+	struct node radio_node = { -1 };
+	struct node radio_node2 = { -1 };
+	struct node sdr_node = { -1 };
+	struct node sdr_node2 = { -1 };
 	struct node expbuf_node = { -1 };
 
 	/* command args */
 	int ch;
 	const char *device = NULL;
 	const char *video_device = NULL;	/* -d device */
-	const char *radio_device = NULL;	/* -r device */
 	const char *vbi_device = NULL;		/* -V device */
+	const char *radio_device = NULL;	/* -r device */
+	const char *sdr_device = NULL;		/* -S device */
 	const char *expbuf_device = NULL;	/* --expbuf-device device */
 	struct v4l2_capability vcap;		/* list_cap */
 	unsigned frame_count = 60;
@@ -513,6 +528,15 @@ int main(int argc, char **argv)
 				video_device = newdev;
 			}
 			break;
+		case OptSetVbiDevice:
+			vbi_device = optarg;
+			if (vbi_device[0] >= '0' && vbi_device[0] <= '9' && strlen(vbi_device) <= 3) {
+				static char newdev[20];
+
+				sprintf(newdev, "/dev/vbi%s", vbi_device);
+				vbi_device = newdev;
+			}
+			break;
 		case OptSetRadioDevice:
 			radio_device = optarg;
 			if (radio_device[0] >= '0' && radio_device[0] <= '9' && strlen(radio_device) <= 3) {
@@ -522,13 +546,13 @@ int main(int argc, char **argv)
 				radio_device = newdev;
 			}
 			break;
-		case OptSetVbiDevice:
-			vbi_device = optarg;
-			if (vbi_device[0] >= '0' && vbi_device[0] <= '9' && strlen(vbi_device) <= 3) {
+		case OptSetSWRadioDevice:
+			sdr_device = optarg;
+			if (sdr_device[0] >= '0' && sdr_device[0] <= '9' && strlen(sdr_device) <= 3) {
 				static char newdev[20];
 
-				sprintf(newdev, "/dev/vbi%s", vbi_device);
-				vbi_device = newdev;
+				sprintf(newdev, "/dev/swradio%s", sdr_device);
+				sdr_device = newdev;
 			}
 			break;
 		case OptSetExpBufDevice:
@@ -589,11 +613,17 @@ int main(int argc, char **argv)
 	if (v1 == 2 && v2 == 6)
 		kernel_version = v3;
 
-	if (!video_device && !radio_device && !vbi_device)
+	if (!video_device && !vbi_device && !radio_device && !sdr_device)
 		video_device = "/dev/video0";
 
 	if (video_device && (video_node.fd = test_open(video_device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", video_device,
+			strerror(errno));
+		exit(1);
+	}
+
+	if (vbi_device && (vbi_node.fd = test_open(vbi_device, O_RDWR)) < 0) {
+		fprintf(stderr, "Failed to open %s: %s\n", vbi_device,
 			strerror(errno));
 		exit(1);
 	}
@@ -604,8 +634,8 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (vbi_device && (vbi_node.fd = test_open(vbi_device, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", vbi_device,
+	if (sdr_device && (sdr_node.fd = test_open(sdr_device, O_RDWR)) < 0) {
+		fprintf(stderr, "Failed to open %s: %s\n", sdr_device,
 			strerror(errno));
 		exit(1);
 	}
@@ -620,15 +650,18 @@ int main(int argc, char **argv)
 		node.fd = video_node.fd;
 		device = video_device;
 		node.is_video = true;
-	} else if (radio_node.fd >= 0) {
-		node.fd = radio_node.fd;
-		device = radio_device;
-		node.is_radio = true;
-		printf("is radio\n");
 	} else if (vbi_node.fd >= 0) {
 		node.fd = vbi_node.fd;
 		device = vbi_device;
 		node.is_vbi = true;
+	} else if (radio_node.fd >= 0) {
+		node.fd = radio_node.fd;
+		device = radio_device;
+		node.is_radio = true;
+	} else if (sdr_node.fd >= 0) {
+		node.fd = sdr_node.fd;
+		device = sdr_device;
+		node.is_sdr = true;
 	}
 	node.device = device;
 
@@ -638,17 +671,15 @@ int main(int argc, char **argv)
 	else
 		node.caps = vcap.capabilities;
 	if (node.caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
-			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_SLICED_VBI_CAPTURE |
-			 V4L2_CAP_RDS_CAPTURE | V4L2_CAP_RADIO | V4L2_CAP_TUNER))
+			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_SLICED_VBI_CAPTURE))
 		node.has_inputs = true;
 	if (node.caps & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VBI_OUTPUT |
-			 V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_SLICED_VBI_OUTPUT |
-			 V4L2_CAP_RDS_OUTPUT | V4L2_CAP_MODULATOR))
+			 V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_SLICED_VBI_OUTPUT))
 		node.has_outputs = true;
 	if (node.caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
 			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE |
 			 V4L2_CAP_VIDEO_M2M | V4L2_CAP_SLICED_VBI_CAPTURE |
-			 V4L2_CAP_RDS_CAPTURE))
+			 V4L2_CAP_RDS_CAPTURE | V4L2_CAP_SDR_CAPTURE))
 		node.can_capture = true;
 	if (node.caps & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VBI_OUTPUT |
 			 V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE |
@@ -706,6 +737,17 @@ int main(int argc, char **argv)
 			node.node2 = &video_node2;
 		}
 	}
+	if (vbi_device) {
+		vbi_node2 = node;
+		printf("\ttest second vbi open: %s\n",
+				ok((vbi_node2.fd = test_open(vbi_device, O_RDWR)) < 0));
+		if (vbi_node2.fd >= 0) {
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
+			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
+					ok(testPrio(&node, &vbi_node2)));
+			node.node2 = &vbi_node2;
+		}
+	}
 	if (radio_device) {
 		radio_node2 = node;
 		printf("\ttest second radio open: %s\n",
@@ -717,15 +759,15 @@ int main(int argc, char **argv)
 			node.node2 = &radio_node2;
 		}
 	}
-	if (vbi_device) {
-		vbi_node2 = node;
-		printf("\ttest second vbi open: %s\n",
-				ok((vbi_node2.fd = test_open(vbi_device, O_RDWR)) < 0));
-		if (vbi_node2.fd >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
+	if (sdr_device) {
+		sdr_node2 = node;
+		printf("\ttest second sdr open: %s\n",
+				ok((sdr_node2.fd = test_open(sdr_device, O_RDWR)) < 0));
+		if (sdr_node2.fd >= 0) {
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&sdr_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
-					ok(testPrio(&node, &vbi_node2)));
-			node.node2 = &vbi_node2;
+					ok(testPrio(&node, &sdr_node2)));
+			node.node2 = &sdr_node2;
 		}
 	}
 	printf("\n");
