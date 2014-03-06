@@ -91,44 +91,196 @@ int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd,
 	return dvb_read_section_with_id(parms, dmx_fd, tid, pid, -1, table, timeout);
 }
 
-int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
-			     unsigned char tid, uint16_t pid, int id,
-			     uint8_t **table, unsigned timeout)
+/*
+ * The code below was inspired on Linux Kernel's bitmask implementation
+ */
+
+#define BITS_PER_LONG		(8 * sizeof(long))
+#define BIT_MASK(nr)		(1UL << ((nr) % BITS_PER_LONG))
+#define BIT_WORD(nr)		((nr) / BITS_PER_LONG)
+#define BITS_TO_LONGS(nr)	((nr +BITS_PER_LONG - 1) / BITS_PER_LONG)
+
+static void set_bit(int nr, unsigned long *addr)
 {
-	uint8_t *buf = NULL;
-	uint8_t *tbl = NULL;
-	ssize_t table_length = 0;
-	uint8_t mask = 0xff;
+	unsigned long mask = BIT_MASK(nr);
+	unsigned long *p = addr + BIT_WORD(nr);
 
-	/* variables for section handling */
-	int start_id = -1;
-	int start_section = -1;
-	int first_section = -1;
-	int last_section = -1;
-	int sections = 0;
-	struct dvb_table_header *h;
+	*p  |= mask;
+}
 
-	if (!table)
+static int test_bit(int nr, unsigned long *addr)
+{
+	unsigned long mask = BIT_MASK(nr);
+	unsigned long *p = addr + BIT_WORD(nr);
+
+	return (*p & mask) ? -1 : 0;
+}
+
+static int is_all_bits_set(int nr, unsigned long *addr)
+{
+	unsigned long mask = BIT_MASK(nr + 1) - 1;
+
+	return (*addr == mask);
+}
+
+
+struct tid_pid_table_priv {
+	int last_section;
+	unsigned long is_read_bits[BITS_TO_LONGS(256)];
+	int done;
+};
+
+struct tid_pid_table {
+	/* Input data */
+	unsigned char tid;
+	uint16_t pid;
+	int ts_id;
+	uint8_t **table;
+
+	/*
+	 * Private temp data used by dvb_read_sections().
+	 * Should not be filled outside dvb-scan.c, as they'll be
+	 * overrided
+	 */
+	void *priv;
+};
+
+static int dvb_parse_section_alloc(struct dvb_v5_fe_parms *parms,
+				   struct tid_pid_table *sect)
+{
+	struct tid_pid_table_priv *priv;
+
+	if (!sect->table) {
+		dvb_logerr("table memory pointer not filled");
 		return -4;
-	*table = NULL;
-
-	// FIXME: verify known table
-
-	if (dvb_set_section_filter(dmx_fd, pid, 1, &tid, &mask, NULL,
-				   DMX_IMMEDIATE_START | DMX_CHECK_CRC))
+	}
+	*sect->table = NULL;
+	priv = calloc(sizeof(struct tid_pid_table_priv), 1);
+	if (!priv) {
+		dvb_perror("Out of memory");
 		return -1;
+	}
+	priv->last_section = -1;
+	sect->priv = priv;
+
+	return 0;
+}
+
+static void dvb_parse_section_free(struct tid_pid_table *sect)
+{
+	if (sect->priv)
+		free(sect->priv);
+}
+
+static int dvb_parse_section(struct dvb_v5_fe_parms *parms,
+			     struct tid_pid_table *sect,
+			     uint8_t *buf, ssize_t buf_length)
+{
+	struct dvb_table_header *h;
+	struct tid_pid_table_priv *priv;
+
+	uint8_t *tbl = NULL;
+	unsigned char tid;
+	ssize_t table_length = 0;
+
+	h = (struct dvb_table_header *)buf;
+	dvb_table_header_init(h);
 
 	if (parms->verbose)
-		dvb_log("Parsing table ID %d, program ID %d", tid, pid);
+		dvb_log("Received table 0x%02x, TS ID 0x%04x, section number 0x%02x, last section 0x%02x",
+			h->table_id, h->id, h->section_id, h->last_section);
 
-	buf = malloc(DVB_MAX_PAYLOAD_PACKET_SIZE);
-	if (!buf) {
-		dvb_perror("Out of memory");
+	if (sect->tid != h->table_id) {
+		dvb_logdbg("Something's wrong: couldn't match ID %d at the active section filters",
+			   h->table_id);
+		return -1;
+	}
+	priv = sect->priv;
+	tid = h->table_id;
+
+	/* Check if the table was already parsed */
+
+	if (priv->last_section < 0)
+		priv->last_section = h->last_section;
+	else if (test_bit(h->section_id, priv->is_read_bits))
+		return 0;
+
+	/* search for an specific TS ID */
+	if (sect->ts_id != -1) {
+		if (h->id != sect->ts_id)
+			return 0;
+	}
+
+	/* handle the sections */
+	set_bit(h->section_id, priv->is_read_bits);
+
+	tbl = *sect->table;
+	if (!tbl) {
+		if (!dvb_table_initializers[tid].size) {
+			dvb_logerr("dvb_read_section: no table size for table %d",
+					tid);
+			return -1;
+		}
+
+		tbl = calloc(dvb_table_initializers[tid].size, 1);
+	}
+
+	if (dvb_table_initializers[tid].init)
+		dvb_table_initializers[tid].init(parms, buf, buf_length,
+						 tbl, &table_length);
+	else
+		dvb_logerr("dvb_read_section: no initializer for table %d",
+			   tid);
+
+	/* Store the table */
+	*sect->table = tbl;
+
+	if (is_all_bits_set(priv->last_section, priv->is_read_bits))
+		priv->done = 1;
+
+	if (!priv->done)
+		return 0;
+
+	/* Section was fully parsed */
+	return 1;
+}
+
+static int dvb_read_sections(struct dvb_v5_fe_parms *parms, int dmx_fd,
+			     struct tid_pid_table *sect,
+			     unsigned timeout)
+{
+	int ret;
+	uint8_t *buf = NULL;
+	uint8_t mask = 0xff;
+
+	/* FIXME: verify if all requested tables are known */
+
+	ret = dvb_parse_section_alloc(parms, sect);
+	if (ret < 0)
+		return ret;
+
+	if (dvb_set_section_filter(dmx_fd, sect->pid, 1,
+				   &sect->tid, &mask, NULL,
+				   DMX_IMMEDIATE_START | DMX_CHECK_CRC)) {
 		dvb_dmx_stop(dmx_fd);
 		return -1;
 	}
-	while (1) {
+	if (parms->verbose)
+		dvb_log("Waiting for table ID %d, program ID %d",
+			sect->tid, sect->pid);
+
+	buf = calloc(DVB_MAX_PAYLOAD_PACKET_SIZE, 1);
+	if (!buf) {
+		dvb_perror("Out of memory");
+		dvb_dmx_stop(dmx_fd);
+		dvb_parse_section_free(sect);
+		return -1;
+	}
+
+
+	do {
 		int available;
+		uint32_t crc;
 		ssize_t buf_length = 0;
 
 		do {
@@ -136,110 +288,59 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		} while (available < 0 && errno == EOVERFLOW);
 
 		if (parms->abort) {
-			free(buf);
-			if (tbl)
-				free(tbl);
-			dvb_dmx_stop(dmx_fd);
-			return 0;
+			ret = 0;
+			break;
 		}
 		if (available <= 0) {
-			dvb_logerr("dvb_read_section: no data read on pid %x table %x",
-				   pid, tid);
-			free(buf);
-			if (tbl)
-				free(tbl);
-			dvb_dmx_stop(dmx_fd);
-			return -1;
+			dvb_logerr("dvb_read_section: no data read on section filter");
+			ret = -1;
+			break;
 		}
 		buf_length = read(dmx_fd, buf, DVB_MAX_PAYLOAD_PACKET_SIZE);
 
 		if (!buf_length) {
-			dvb_logerr("dvb_read_section: not enough data to read on pid %x table %x",
-				   pid, tid);
-			free(buf);
-			if (tbl)
-				free(tbl);
-			dvb_dmx_stop(dmx_fd);
-			return -1;
+			dvb_logerr("dvb_read_section: buf returned an empty buffer");
+			ret = -1;
+			break;
 		}
 		if (buf_length < 0) {
 			dvb_perror("dvb_read_section: read error");
-			free(buf);
-			if (tbl)
-				free(tbl);
-			dvb_dmx_stop(dmx_fd);
-			return -2;
+			ret = -2;
+			break;
 		}
 
-		uint32_t crc = crc32(buf, buf_length, 0xFFFFFFFF);
+		crc = crc32(buf, buf_length, 0xFFFFFFFF);
 		if (crc != 0) {
 			dvb_logerr("dvb_read_section: crc error");
-			free(buf);
-			if (tbl)
-				free(tbl);
-			dvb_dmx_stop(dmx_fd);
-			return -3;
-		}
-
-		h = (struct dvb_table_header *)buf;
-		dvb_table_header_init(h);
-
-		if (start_id == h->id && start_section == h->section_id) {
-			dvb_logdbg( "dvb_read_section: section repeated, reading done" );
+			ret = -3;
 			break;
 		}
-		if (start_id == -1)
-			start_id = h->id;
-		if (start_section == -1)
-			start_section = h->section_id;
 
-		if (id != -1 && h->id != id) { /* search for a specific table id */
-			continue;
-		}
-
-		/* handle the sections */
-		if (first_section == -1)
-			first_section = h->section_id;
-		else if (start_id == h->id && h->section_id == first_section)
-			break;
-
-		if (last_section == -1 || h->last_section > last_section)
-			last_section = h->last_section;
-
-		if (!tbl) {
-			if (dvb_table_initializers[tid].size)
-				tbl = malloc(dvb_table_initializers[tid].size);
-			else {
-				dvb_logerr("dvb_read_section: no table size for table %d",
-					   tid);
-				free(buf);
-				dvb_dmx_stop(dmx_fd);
-				return -1;
-			}
-			if (!tbl) {
-				dvb_logerr("Out of memory");
-				free(buf);
-				dvb_dmx_stop(dmx_fd);
-				return -4;
-			}
-		}
-
-		if (dvb_table_initializers[tid].init)
-			dvb_table_initializers[tid].init(parms, buf, buf_length, tbl, &table_length);
-		else
-			dvb_logerr("dvb_read_section: no initializer for table %d", tid);
-
-		if (id != -1 && ++sections == last_section + 1) {
-			dvb_logerr("dvb_read_section: read more sections than last section id: %d / %d", sections, last_section);
-			break;
-		}
-	}
+		ret = dvb_parse_section(parms, sect, buf, buf_length);
+	} while (!ret);
 	free(buf);
-
 	dvb_dmx_stop(dmx_fd);
+	dvb_parse_section_free(sect);
 
-	*table = tbl;
-	return 0;
+	if (ret > 0)
+		ret = 0;
+
+	return ret;
+}
+
+int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
+			     unsigned char tid, uint16_t pid,
+			     int ts_id,
+			     uint8_t **table, unsigned timeout)
+{
+	struct tid_pid_table tab;
+
+	tab.tid = tid;
+	tab.pid = pid;
+	tab.ts_id = ts_id;
+	tab.table = table;
+
+	return dvb_read_sections(parms, dmx_fd, &tab, timeout);
 }
 
 struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system,
