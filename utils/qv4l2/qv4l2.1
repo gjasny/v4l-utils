@@ -14,11 +14,14 @@ However, it does not (yet) support compressed video streams other than MJPEG
 \fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
 Use device <dev> as the video device. If <dev> is a number, then /dev/video<dev> is used.
 .TP
+\fB\-V\fR, \fB\-\-vbi-device\fR=\fI<dev>\fR
+Use device <dev> as the vbi device. If <dev> is a number, then /dev/vbi<dev> is used.
+.TP
 \fB\-r\fR, \fB\-\-radio-device\fR=\fI<dev>\fR
 Use device <dev> as the radio device. If <dev> is a number, then /dev/radio<dev> is used.
 .TP
-\fB\-V\fR, \fB\-\-vbi-device\fR=\fI<dev>\fR
-Use device <dev> as the vbi device. If <dev> is a number, then /dev/vbi<dev> is used.
+\fB\-S\fR, \fB\-\-sdr-device\fR=\fI<dev>\fR
+Use device <dev> as the SDR device. If <dev> is a number, then /dev/swradio<dev> is used.
 .TP
 \fB\-R\fR, \fB\-\-raw\fR
 Open device in raw mode, i.e. without using the libv4l2 wrapper functions.

@@ -48,7 +48,10 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_col(0),
 	m_cols(n),
 	m_isRadio(false),
+	m_isSDR(false),
 	m_isVbi(false),
+	m_freqFac(16),
+	m_freqRfFac(16),
 	m_videoInput(NULL),
 	m_videoOutput(NULL),
 	m_audioInput(NULL),
@@ -64,6 +67,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_freqChannel(NULL),
 	m_audioMode(NULL),
 	m_subchannels(NULL),
+	m_freqRf(NULL),
 	m_stereoMode(NULL),
 	m_rdsMode(NULL),
 	m_detectSubchans(NULL),
@@ -100,18 +104,23 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	g_tuner(m_tuner);
+	g_tuner(m_tuner_rf, 1);
 	g_modulator(m_modulator);
 
 	v4l2_input vin;
 	bool needsStd = false;
 	bool needsTimings = false;
 
-	if (m_tuner.capability && m_tuner.capability & V4L2_TUNER_CAP_LOW)
+	if (m_tuner.capability &&
+	    (m_tuner.capability & (V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_1HZ)))
 		m_isRadio = true;
-	if (m_modulator.capability && m_modulator.capability & V4L2_TUNER_CAP_LOW)
+	if (m_modulator.capability &&
+	    (m_modulator.capability & (V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_1HZ)))
 		m_isRadio = true;
-	if (m_querycap.capabilities & V4L2_CAP_DEVICE_CAPS)
+	if (m_querycap.capabilities & V4L2_CAP_DEVICE_CAPS) {
 		m_isVbi = caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE);
+		m_isSDR = m_isRadio = caps() & V4L2_CAP_SDR_CAPTURE;
+	}
 
 	if (hasAlsaAudio()) {
 		m_audioInDevice = new QComboBox(parent);
@@ -262,41 +271,48 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 	if (m_tuner.capability) {
 		QDoubleValidator *val;
-		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? "kHz" : "MHz";
+		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? "kHz" :
+			(m_tuner.capability & V4L2_TUNER_CAP_1HZ ? "Hz" : "MHz");
 
-		val = new QDoubleValidator(m_tuner.rangelow / 16, m_tuner.rangehigh / 16, 3, parent);
+		m_freqFac = (m_tuner.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
+		val = new QDoubleValidator(m_tuner.rangelow / m_freqFac, m_tuner.rangehigh / m_freqFac, 3, parent);
 		m_freq = new QLineEdit(parent);
 		m_freq->setValidator(val);
 		m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
-				     .arg(m_tuner.rangelow / 16)
-				     .arg((double)m_tuner.rangehigh / 16, 0, 'f', 2)
+				     .arg(m_tuner.rangelow / m_freqFac)
+				     .arg((double)m_tuner.rangehigh / m_freqFac, 0, 'f', 2)
 				     .arg(unit));
 		m_freq->setStatusTip(m_freq->whatsThis());
 		connect(m_freq, SIGNAL(lostFocus()), SLOT(freqChanged()));
 		connect(m_freq, SIGNAL(returnPressed()), SLOT(freqChanged()));
 		updateFreq();
-		if (m_tuner.capability & V4L2_TUNER_CAP_LOW)
+		if (m_tuner.capability & V4L2_TUNER_CAP_1HZ)
+			addLabel("Frequency (Hz)");
+		else if (m_tuner.capability & V4L2_TUNER_CAP_LOW)
 			addLabel("Frequency (kHz)");
 		else
 			addLabel("Frequency (MHz)");
 		addWidget(m_freq);
+	}
 
-		if (!(m_tuner.capability & V4L2_TUNER_CAP_LOW)) {
-			addLabel("Frequency Table");
-			m_freqTable = new QComboBox(parent);
-			for (int i = 0; v4l2_channel_lists[i].name; i++) {
-				m_freqTable->addItem(v4l2_channel_lists[i].name);
-			}
-			addWidget(m_freqTable);
-			connect(m_freqTable, SIGNAL(activated(int)), SLOT(freqTableChanged(int)));
-
-			addLabel("Channels");
-			m_freqChannel = new QComboBox(parent);
-			m_freqChannel->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-			addWidget(m_freqChannel);
-			connect(m_freqChannel, SIGNAL(activated(int)), SLOT(freqChannelChanged(int)));
-			updateFreqChannel();
+	if (m_tuner.capability && !isRadio()) {
+		addLabel("Frequency Table");
+		m_freqTable = new QComboBox(parent);
+		for (int i = 0; v4l2_channel_lists[i].name; i++) {
+			m_freqTable->addItem(v4l2_channel_lists[i].name);
 		}
+		addWidget(m_freqTable);
+		connect(m_freqTable, SIGNAL(activated(int)), SLOT(freqTableChanged(int)));
+
+		addLabel("Channels");
+		m_freqChannel = new QComboBox(parent);
+		m_freqChannel->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+		addWidget(m_freqChannel);
+		connect(m_freqChannel, SIGNAL(activated(int)), SLOT(freqChannelChanged(int)));
+		updateFreqChannel();
+	}
+
+	if (m_tuner.capability && !isSDR()) {
 		addLabel("Audio Mode");
 		m_audioMode = new QComboBox(parent);
 		m_audioMode->setMinimumContentsLength(12);
@@ -334,26 +350,59 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		detectSubchansClicked();
 	}
 
+	if (m_tuner_rf.capability) {
+		QDoubleValidator *val;
+		const char *unit = (m_tuner_rf.capability & V4L2_TUNER_CAP_LOW) ? "kHz" :
+			(m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ ? "Hz" : "MHz");
+
+		m_freqRfFac = (m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
+		val = new QDoubleValidator(m_tuner_rf.rangelow / m_freqRfFac, m_tuner_rf.rangehigh / m_freqRfFac, 3, parent);
+		val->setNotation(QDoubleValidator::StandardNotation);
+		m_freqRf = new QLineEdit(parent);
+		m_freqRf->setValidator(val);
+		m_freqRf->setWhatsThis(QString("RF Frequency\nLow: %1 %3\nHigh: %2 %3")
+				     .arg(m_tuner_rf.rangelow / m_freqRfFac)
+				     .arg((double)m_tuner_rf.rangehigh / m_freqRfFac, 0, 'f', 2)
+				     .arg(unit));
+		m_freqRf->setStatusTip(m_freqRf->whatsThis());
+		connect(m_freqRf, SIGNAL(lostFocus()), SLOT(freqRfChanged()));
+		connect(m_freqRf, SIGNAL(returnPressed()), SLOT(freqRfChanged()));
+		updateFreqRf();
+		if (m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ)
+			addLabel("RF Frequency (Hz)");
+		else if (m_tuner_rf.capability & V4L2_TUNER_CAP_LOW)
+			addLabel("RF Frequency (kHz)");
+		else
+			addLabel("RF Frequency (MHz)");
+		addWidget(m_freqRf);
+	}
+
 	if (m_modulator.capability) {
 		QDoubleValidator *val;
-		const char *unit = (m_modulator.capability & V4L2_TUNER_CAP_LOW) ? "kHz" : "MHz";
+		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? "kHz" :
+			(m_tuner.capability & V4L2_TUNER_CAP_1HZ ? "Hz" : "MHz");
 
-		val = new QDoubleValidator(m_modulator.rangelow / 16, m_modulator.rangehigh / 16, 3, parent);
+		m_freqFac = (m_tuner.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
+		val = new QDoubleValidator(m_modulator.rangelow / m_freqFac, m_modulator.rangehigh / m_freqFac, 3, parent);
 		m_freq = new QLineEdit(parent);
 		m_freq->setValidator(val);
 		m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
-				     .arg(m_tuner.rangelow / 16)
-				     .arg((double)m_tuner.rangehigh / 16, 0, 'f', 2)
+				     .arg(m_tuner.rangelow / m_freqFac)
+				     .arg((double)m_tuner.rangehigh / m_freqFac, 0, 'f', 2)
 				     .arg(unit));
 		m_freq->setStatusTip(m_freq->whatsThis());
 		connect(m_freq, SIGNAL(lostFocus()), SLOT(freqChanged()));
 		connect(m_freq, SIGNAL(returnPressed()), SLOT(freqChanged()));
 		updateFreq();
-		if (m_modulator.capability & V4L2_TUNER_CAP_LOW)
+		if (m_modulator.capability & V4L2_TUNER_CAP_1HZ)
+			addLabel("Frequency (Hz)");
+		else if (m_modulator.capability & V4L2_TUNER_CAP_LOW)
 			addLabel("Frequency (kHz)");
 		else
 			addLabel("Frequency (MHz)");
 		addWidget(m_freq);
+	}
+	if (m_modulator.capability && !isSDR()) {
 		if (m_modulator.capability & V4L2_TUNER_CAP_STEREO) {
 			addLabel("Stereo");
 			m_stereoMode = new QCheckBox(parent);
@@ -772,10 +821,27 @@ void GeneralTab::freqChannelChanged(int idx)
 void GeneralTab::freqChanged()
 {
 	double f = m_freq->text().toDouble();
+	v4l2_frequency freq;
 
-	if (m_freq->hasAcceptableInput())
-		s_frequency(f * 16, m_isRadio);
+	if (m_freq->hasAcceptableInput()) {
+		g_frequency(freq);
+		freq.frequency = f * m_freqFac;
+		s_frequency(freq);
+	}
 	updateFreq();
+}
+
+void GeneralTab::freqRfChanged()
+{
+	double f = m_freqRf->text().toDouble();
+	v4l2_frequency freq;
+
+	if (m_freqRf->hasAcceptableInput()) {
+		g_frequency(freq, 1);
+		freq.frequency = f * m_freqRfFac;
+		s_frequency(freq);
+	}
+	updateFreqRf();
 }
 
 void GeneralTab::audioModeChanged(int)
@@ -1181,7 +1247,7 @@ void GeneralTab::updateFreq()
 	g_frequency(f);
 	/* m_freq listens to valueChanged block it to avoid recursion */
 	m_freq->blockSignals(true);
-	m_freq->setText(QString::number(f.frequency / 16.0));
+	m_freq->setText(QString::number(f.frequency / m_freqFac));
 	m_freq->blockSignals(false);
 }
 
@@ -1192,6 +1258,17 @@ void GeneralTab::updateFreqChannel()
 	const struct v4l2_channel_list *list = v4l2_channel_lists[tbl].list;
 	for (unsigned i = 0; i < v4l2_channel_lists[tbl].count; i++)
 		m_freqChannel->addItem(list[i].name);
+}
+
+void GeneralTab::updateFreqRf()
+{
+	v4l2_frequency f;
+
+	g_frequency(f, 1);
+	/* m_freqRf listens to valueChanged block it to avoid recursion */
+	m_freqRf->blockSignals(true);
+	m_freqRf->setText(QString::number(f.frequency / m_freqRfFac));
+	m_freqRf->blockSignals(false);
 }
 
 void GeneralTab::updateVidCapFormat()

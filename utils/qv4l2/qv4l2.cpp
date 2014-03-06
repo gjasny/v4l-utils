@@ -252,7 +252,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 
 void ApplicationWindow::opendev()
 {
-	QFileDialog d(this, "Select v4l device", "/dev", "V4L Devices (video* vbi* radio*)");
+	QFileDialog d(this, "Select v4l device", "/dev", "V4L Devices (video* vbi* radio* swradio*)");
 
 	d.setFilter(QDir::AllDirs | QDir::Files | QDir::System);
 	d.setFileMode(QFileDialog::ExistingFile);
@@ -262,7 +262,7 @@ void ApplicationWindow::opendev()
 
 void ApplicationWindow::openrawdev()
 {
-	QFileDialog d(this, "Select v4l device", "/dev", "V4L Devices (video* vbi* radio*)");
+	QFileDialog d(this, "Select v4l device", "/dev", "V4L Devices (video* vbi* radio* swradio*)");
 
 	d.setFilter(QDir::AllDirs | QDir::Files | QDir::System);
 	d.setFileMode(QFileDialog::ExistingFile);
@@ -1205,10 +1205,12 @@ static void usage()
 	       "  qv4l2 [-R] [-h] [-d <dev>] [-r <dev>] [-V <dev>]\n"
 	       "\n  -d, --device=<dev> use device <dev> as the video device\n"
 	       "                     if <dev> is a number, then /dev/video<dev> is used\n"
-	       "  -r, --radio-device=<dev> use device <dev> as the radio device\n"
-	       "                     if <dev> is a number, then /dev/radio<dev> is used\n"
 	       "  -V, --vbi-device=<dev> use device <dev> as the vbi device\n"
 	       "                     if <dev> is a number, then /dev/vbi<dev> is used\n"
+	       "  -r, --radio-device=<dev> use device <dev> as the radio device\n"
+	       "                     if <dev> is a number, then /dev/radio<dev> is used\n"
+	       "  -S, --sdr-device=<dev> use device <dev> as the SDR device\n"
+	       "                     if <dev> is a number, then /dev/swradio<dev> is used\n"
 	       "  -h, --help         display this help message\n"
 	       "  -R, --raw          open device in raw mode.\n");
 }
@@ -1232,8 +1234,9 @@ int main(int argc, char **argv)
 	bool raw = false;
 	QString device;
 	QString video_device;
-	QString radio_device;
 	QString vbi_device;
+	QString radio_device;
+	QString sdr_device;
 
 	a.setWindowIcon(QIcon(":/qv4l2.png"));
 	g_mw = new ApplicationWindow();
@@ -1253,20 +1256,6 @@ int main(int argc, char **argv)
 				usageError("-d");
 				return 0;
 			}
-
-		} else if (args[i] == "-r" || args[i] == "--radio-device") {
-			++i;
-			if (i >= args.size()) {
-				usageError("-r");
-				return 0;
-			}
-
-			radio_device = args[i];
-			if (radio_device.startsWith("-")) {
-				usageError("-r");
-				return 0;
-			}
-
 		} else if (args[i] == "-V" || args[i] == "--vbi-device") {
 			++i;
 			if (i >= args.size()) {
@@ -1279,7 +1268,30 @@ int main(int argc, char **argv)
 				usageError("-V");
 				return 0;
 			}
+		} else if (args[i] == "-r" || args[i] == "--radio-device") {
+			++i;
+			if (i >= args.size()) {
+				usageError("-r");
+				return 0;
+			}
 
+			radio_device = args[i];
+			if (radio_device.startsWith("-")) {
+				usageError("-r");
+				return 0;
+			}
+		} else if (args[i] == "-S" || args[i] == "--sdr-device") {
+			++i;
+			if (i >= args.size()) {
+				usageError("-S");
+				return 0;
+			}
+
+			sdr_device = args[i];
+			if (sdr_device.startsWith("-")) {
+				usageError("-S");
+				return 0;
+			}
 		} else if (args[i].startsWith("--device")) {
 			QStringList param = args[i].split("=");
 			if (param.size() == 2) {
@@ -1288,17 +1300,6 @@ int main(int argc, char **argv)
 				usageError("--device");
 				return 0;
 			}
-
-		} else if (args[i].startsWith("--radio-device")) {
-			QStringList param = args[i].split("=");
-			if (param.size() == 2) {
-				radio_device = param[1];
-			} else {
-				usageError("--radio-device");
-				return 0;
-			}
-
-
 		} else if (args[i].startsWith("--vbi-device")) {
 			QStringList param = args[i].split("=");
 			if (param.size() == 2) {
@@ -1307,7 +1308,22 @@ int main(int argc, char **argv)
 				usageError("--vbi-device");
 				return 0;
 			}
-
+		} else if (args[i].startsWith("--radio-device")) {
+			QStringList param = args[i].split("=");
+			if (param.size() == 2) {
+				radio_device = param[1];
+			} else {
+				usageError("--radio-device");
+				return 0;
+			}
+		} else if (args[i].startsWith("--sdr-device")) {
+			QStringList param = args[i].split("=");
+			if (param.size() == 2) {
+				sdr_device = param[1];
+			} else {
+				usageError("--sdr-device");
+				return 0;
+			}
 		} else if (args[i] == "-h" || args[i] == "--help") {
 			usage();
 			return 0;
@@ -1324,10 +1340,12 @@ int main(int argc, char **argv)
 
 	if (video_device != NULL)
 		device = getDeviceName("/dev/video", video_device);
-	else if (radio_device != NULL)
-		device = getDeviceName("/dev/radio", radio_device);
 	else if (vbi_device != NULL)
 		device = getDeviceName("/dev/vbi", vbi_device);
+	else if (radio_device != NULL)
+		device = getDeviceName("/dev/radio", radio_device);
+	else if (sdr_device != NULL)
+		device = getDeviceName("/dev/swradio", sdr_device);
 	else
 		device = "/dev/video0";
 

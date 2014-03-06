@@ -145,9 +145,10 @@ bool v4l2::querymenu(v4l2_querymenu &qm)
 	return ioctl(VIDIOC_QUERYMENU, &qm) >= 0;
 }
 
-bool v4l2::g_tuner(v4l2_tuner &tuner)
+bool v4l2::g_tuner(v4l2_tuner &tuner, unsigned index)
 {
 	memset(&tuner, 0, sizeof(tuner));
+	tuner.index = index;
 	if (ioctl(VIDIOC_G_TUNER, &tuner) < 0)
 		return false;
 	if (tuner.rangehigh > INT_MAX)
@@ -253,9 +254,10 @@ bool v4l2::query_dv_timings(v4l2_dv_timings &timings)
 }
 
 
-bool v4l2::g_frequency(v4l2_frequency &freq)
+bool v4l2::g_frequency(v4l2_frequency &freq, unsigned index)
 {
 	memset(&freq, 0, sizeof(freq));
+	freq.tuner = index;
 	freq.type = V4L2_TUNER_ANALOG_TV;
 	return ioctl(VIDIOC_G_FREQUENCY, &freq) >= 0;
 }

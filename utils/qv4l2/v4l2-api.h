@@ -59,7 +59,7 @@ public:
 	bool querycap(v4l2_capability &cap);
 	bool queryctrl(v4l2_queryctrl &qc);
 	bool querymenu(v4l2_querymenu &qm);
-	bool g_tuner(v4l2_tuner &tuner);
+	bool g_tuner(v4l2_tuner &tuner, unsigned index = 0);
 	bool s_tuner(v4l2_tuner &tuner);
 	bool g_modulator(v4l2_modulator &modulator);
 	bool s_modulator(v4l2_modulator &modulator);
@@ -77,7 +77,7 @@ public:
 	bool s_dv_timings(v4l2_dv_timings &timings);
 	bool g_dv_timings(v4l2_dv_timings &timings);
 	bool query_dv_timings(v4l2_dv_timings &timings);
-	bool g_frequency(v4l2_frequency &freq);
+	bool g_frequency(v4l2_frequency &freq, unsigned index = 0);
 	bool s_frequency(v4l2_frequency &freq);
 	bool s_frequency(int freq, bool low = false);
 	bool g_fmt_cap(v4l2_format &fmt);

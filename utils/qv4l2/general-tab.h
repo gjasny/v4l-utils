@@ -65,6 +65,7 @@ public:
 	int width() const { return m_width; }
 	int height() const { return m_height; }
 	bool isRadio() const { return m_isRadio; }
+	bool isSDR() const { return m_isSDR; }
 	bool isVbi() const { return m_isVbi; }
 	bool isSlicedVbi() const;
 	__u32 bufType() const { return m_buftype; }
@@ -110,6 +111,7 @@ private slots:
 	void freqTableChanged(int);
 	void freqChannelChanged(int);
 	void freqChanged();
+	void freqRfChanged();
 	void audioModeChanged(int);
 	void detectSubchansClicked();
 	void stereoModeChanged();
@@ -136,6 +138,7 @@ private:
 	void updateTimings();
 	void updateFreq();
 	void updateFreqChannel();
+	void updateFreqRf();
 	void updateVidCapFormat();
 	void updateVidCapFields();
 	void updateFrameSize();
@@ -168,11 +171,15 @@ private:
 	int m_col;
 	int m_cols;
 	bool m_isRadio;
+	bool m_isSDR;
 	bool m_isVbi;
+	double m_freqFac;
+	double m_freqRfFac;
 	__u32 m_buftype;
 	__u32 m_audioModes[5];
 	QString m_device;
 	struct v4l2_tuner m_tuner;
+	struct v4l2_tuner m_tuner_rf;
 	struct v4l2_modulator m_modulator;
 	struct v4l2_capability m_querycap;
 	__u32 m_pixelformat;
@@ -200,6 +207,7 @@ private:
 	QComboBox *m_freqChannel;
 	QComboBox *m_audioMode;
 	QLabel *m_subchannels;
+	QLineEdit *m_freqRf;
 	QCheckBox *m_stereoMode;
 	QCheckBox *m_rdsMode;
 	QPushButton *m_detectSubchans;
