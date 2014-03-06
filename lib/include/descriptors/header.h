@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  *
+ * Described at ISO/IEC 13818-1
  */
 
 #ifndef _HEADER_H
@@ -56,13 +57,13 @@ struct dvb_table_header {
 			uint8_t  syntax:1;
 		} __attribute__((packed));
 	};
-	uint16_t id;
+	uint16_t id;			/* TS ID */
 	uint8_t  current_next:1;
 	uint8_t  version:5;
 	uint8_t  one2:2;
 
-	uint8_t  section_id;
-	uint8_t  last_section;
+	uint8_t  section_id;		/* section_number */
+	uint8_t  last_section;		/* last_section_number */
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;
