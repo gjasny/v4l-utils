@@ -440,7 +440,9 @@ static void streamingSetup(struct node *node)
 			f.type = t.type;
 			freq_caps = t.capability;
 		}
-		if (freq_caps & V4L2_TUNER_CAP_LOW)
+		if (freq_caps & V4L2_TUNER_CAP_1HZ)
+			f.frequency = select_freq * 1000;
+		else if (freq_caps & V4L2_TUNER_CAP_LOW)
 			f.frequency = select_freq / 62.5;
 		else
 			f.frequency = select_freq / 62500;
