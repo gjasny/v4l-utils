@@ -270,28 +270,24 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	if (m_tuner.capability) {
-		QDoubleValidator *val;
-		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? "kHz" :
-			(m_tuner.capability & V4L2_TUNER_CAP_1HZ ? "Hz" : "MHz");
+		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
+			(m_tuner.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
 
 		m_freqFac = (m_tuner.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
-		val = new QDoubleValidator(m_tuner.rangelow / m_freqFac, m_tuner.rangehigh / m_freqFac, 3, parent);
-		m_freq = new QLineEdit(parent);
-		m_freq->setValidator(val);
+		m_freq = new QDoubleSpinBox(parent);
+		m_freq->setMinimum(m_tuner.rangelow / m_freqFac);
+		m_freq->setMaximum(m_tuner.rangehigh / m_freqFac);
+		m_freq->setSingleStep(1.0 / m_freqFac);
+		m_freq->setSuffix(unit);
+		m_freq->setDecimals((m_tuner.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
 		m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
-				     .arg(m_tuner.rangelow / m_freqFac)
+				     .arg((double)m_tuner.rangelow / m_freqFac, 0, 'f', 2)
 				     .arg((double)m_tuner.rangehigh / m_freqFac, 0, 'f', 2)
 				     .arg(unit));
 		m_freq->setStatusTip(m_freq->whatsThis());
-		connect(m_freq, SIGNAL(lostFocus()), SLOT(freqChanged()));
-		connect(m_freq, SIGNAL(returnPressed()), SLOT(freqChanged()));
+		connect(m_freq, SIGNAL(valueChanged(double)), SLOT(freqChanged(double)));
 		updateFreq();
-		if (m_tuner.capability & V4L2_TUNER_CAP_1HZ)
-			addLabel("Frequency (Hz)");
-		else if (m_tuner.capability & V4L2_TUNER_CAP_LOW)
-			addLabel("Frequency (kHz)");
-		else
-			addLabel("Frequency (MHz)");
+		addLabel("Frequency");
 		addWidget(m_freq);
 	}
 
@@ -351,48 +347,44 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	if (m_tuner_rf.capability) {
-		QDoubleValidator *val;
-		const char *unit = (m_tuner_rf.capability & V4L2_TUNER_CAP_LOW) ? "kHz" :
-			(m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ ? "Hz" : "MHz");
+		const char *unit = (m_tuner_rf.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
+			(m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
 
 		m_freqRfFac = (m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
-		val = new QDoubleValidator(m_tuner_rf.rangelow / m_freqRfFac, m_tuner_rf.rangehigh / m_freqRfFac, 3, parent);
-		val->setNotation(QDoubleValidator::StandardNotation);
-		m_freqRf = new QLineEdit(parent);
-		m_freqRf->setValidator(val);
+		m_freqRf = new QDoubleSpinBox(parent);
+		m_freqRf->setMinimum(m_tuner_rf.rangelow / m_freqRfFac);
+		m_freqRf->setMaximum(m_tuner_rf.rangehigh / m_freqRfFac);
+		m_freqRf->setSingleStep(1.0 / m_freqRfFac);
+		m_freqRf->setSuffix(unit);
+		m_freqRf->setDecimals((m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
 		m_freqRf->setWhatsThis(QString("RF Frequency\nLow: %1 %3\nHigh: %2 %3")
-				     .arg(m_tuner_rf.rangelow / m_freqRfFac)
+				     .arg((double)m_tuner_rf.rangelow / m_freqRfFac, 0, 'f', 2)
 				     .arg((double)m_tuner_rf.rangehigh / m_freqRfFac, 0, 'f', 2)
 				     .arg(unit));
 		m_freqRf->setStatusTip(m_freqRf->whatsThis());
-		connect(m_freqRf, SIGNAL(lostFocus()), SLOT(freqRfChanged()));
-		connect(m_freqRf, SIGNAL(returnPressed()), SLOT(freqRfChanged()));
+		connect(m_freqRf, SIGNAL(valueChanged(double)), SLOT(freqRfChanged(double)));
 		updateFreqRf();
-		if (m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ)
-			addLabel("RF Frequency (Hz)");
-		else if (m_tuner_rf.capability & V4L2_TUNER_CAP_LOW)
-			addLabel("RF Frequency (kHz)");
-		else
-			addLabel("RF Frequency (MHz)");
+		addLabel("RF Frequency");
 		addWidget(m_freqRf);
 	}
 
 	if (m_modulator.capability) {
-		QDoubleValidator *val;
-		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? "kHz" :
-			(m_tuner.capability & V4L2_TUNER_CAP_1HZ ? "Hz" : "MHz");
+		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
+			(m_tuner.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
 
 		m_freqFac = (m_tuner.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
-		val = new QDoubleValidator(m_modulator.rangelow / m_freqFac, m_modulator.rangehigh / m_freqFac, 3, parent);
-		m_freq = new QLineEdit(parent);
-		m_freq->setValidator(val);
+		m_freq = new QDoubleSpinBox(parent);
+		m_freq->setMinimum(m_modulator.rangelow / m_freqFac);
+		m_freq->setMaximum(m_modulator.rangehigh / m_freqFac);
+		m_freq->setSingleStep(1.0 / m_freqFac);
+		m_freq->setSuffix(unit);
+		m_freq->setDecimals((m_modulator.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
 		m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
-				     .arg(m_tuner.rangelow / m_freqFac)
-				     .arg((double)m_tuner.rangehigh / m_freqFac, 0, 'f', 2)
+				     .arg((double)m_modulator.rangelow / m_freqFac)
+				     .arg((double)m_modulator.rangehigh / m_freqFac, 0, 'f', 2)
 				     .arg(unit));
 		m_freq->setStatusTip(m_freq->whatsThis());
-		connect(m_freq, SIGNAL(lostFocus()), SLOT(freqChanged()));
-		connect(m_freq, SIGNAL(returnPressed()), SLOT(freqChanged()));
+		connect(m_freq, SIGNAL(valueChanged(double)), SLOT(freqChanged(double)));
 		updateFreq();
 		if (m_modulator.capability & V4L2_TUNER_CAP_1HZ)
 			addLabel("Frequency (Hz)");
@@ -814,33 +806,33 @@ void GeneralTab::freqChannelChanged(int idx)
 {
 	double f = v4l2_channel_lists[m_freqTable->currentIndex()].list[idx].freq;
 
-	m_freq->setText(QString::number(f / 1000.0));
-	freqChanged();
+	m_freq->setValue(f / 1000.0);
+	freqChanged(m_freq->value());
 }
 
-void GeneralTab::freqChanged()
+void GeneralTab::freqChanged(double f)
 {
-	double f = m_freq->text().toDouble();
 	v4l2_frequency freq;
 
-	if (m_freq->hasAcceptableInput()) {
-		g_frequency(freq);
-		freq.frequency = f * m_freqFac;
-		s_frequency(freq);
-	}
+	if (!m_freq->isEnabled())
+		return;
+
+	g_frequency(freq);
+	freq.frequency = f * m_freqFac;
+	s_frequency(freq);
 	updateFreq();
 }
 
-void GeneralTab::freqRfChanged()
+void GeneralTab::freqRfChanged(double f)
 {
-	double f = m_freqRf->text().toDouble();
 	v4l2_frequency freq;
 
-	if (m_freqRf->hasAcceptableInput()) {
-		g_frequency(freq, 1);
-		freq.frequency = f * m_freqRfFac;
-		s_frequency(freq);
-	}
+	if (!m_freqRf->isEnabled())
+		return;
+
+	g_frequency(freq, 1);
+	freq.frequency = f * m_freqRfFac;
+	s_frequency(freq);
 	updateFreqRf();
 }
 
@@ -1247,7 +1239,7 @@ void GeneralTab::updateFreq()
 	g_frequency(f);
 	/* m_freq listens to valueChanged block it to avoid recursion */
 	m_freq->blockSignals(true);
-	m_freq->setText(QString::number(f.frequency / m_freqFac));
+	m_freq->setValue((double)f.frequency / m_freqFac);
 	m_freq->blockSignals(false);
 }
 
@@ -1267,7 +1259,7 @@ void GeneralTab::updateFreqRf()
 	g_frequency(f, 1);
 	/* m_freqRf listens to valueChanged block it to avoid recursion */
 	m_freqRf->blockSignals(true);
-	m_freqRf->setText(QString::number(f.frequency / m_freqRfFac));
+	m_freqRf->setValue((double)f.frequency / m_freqRfFac);
 	m_freqRf->blockSignals(false);
 }
 

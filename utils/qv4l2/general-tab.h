@@ -24,6 +24,7 @@
 #include <config.h>
 
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <sys/time.h>
 #include <linux/videodev2.h>
 #include <map>
@@ -110,8 +111,8 @@ private slots:
 	void qryTimingsClicked();
 	void freqTableChanged(int);
 	void freqChannelChanged(int);
-	void freqChanged();
-	void freqRfChanged();
+	void freqChanged(double);
+	void freqRfChanged(double);
 	void audioModeChanged(int);
 	void detectSubchansClicked();
 	void stereoModeChanged();
@@ -202,12 +203,12 @@ private:
 	QComboBox *m_pixelAspectRatio;
 	QComboBox *m_crop;
 	QPushButton *m_qryTimings;
-	QLineEdit *m_freq;
+	QDoubleSpinBox *m_freq;
 	QComboBox *m_freqTable;
 	QComboBox *m_freqChannel;
 	QComboBox *m_audioMode;
 	QLabel *m_subchannels;
-	QLineEdit *m_freqRf;
+	QDoubleSpinBox *m_freqRf;
 	QCheckBox *m_stereoMode;
 	QCheckBox *m_rdsMode;
 	QPushButton *m_detectSubchans;
