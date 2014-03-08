@@ -38,6 +38,12 @@ static void *test_mmap(void *start, size_t length, int prot, int flags,
 		mmap(start, length, prot, flags, fd, offset);
 }
 
+static int test_munmap(void *start, size_t length)
+{
+ 	return options[OptUseWrapper] ? v4l2_munmap(start, length) :
+		munmap(start, length);
+}
+
 void streaming_usage(void)
 {
 	printf("\nVideo Streaming options:\n"
@@ -421,7 +427,7 @@ static int do_setup_cap_buffers(int fd, buffers &b)
 						return -1;
 					}
 				} else if (b.memory == V4L2_MEMORY_DMABUF) {
-					b.bufs[i][j] = test_mmap(NULL, p.length,
+					b.bufs[i][j] = mmap(NULL, p.length,
 							  PROT_READ | PROT_WRITE, MAP_SHARED,
 							  b.fds[i][j], 0);
 
@@ -449,7 +455,7 @@ static int do_setup_cap_buffers(int fd, buffers &b)
 					return -1;
 				}
 			} else if (b.memory == V4L2_MEMORY_DMABUF) {
-				b.bufs[i][0] = test_mmap(NULL, p.length,
+				b.bufs[i][0] = mmap(NULL, p.length,
 						PROT_READ | PROT_WRITE, MAP_SHARED,
 						b.fds[i][0], 0);
 
@@ -510,7 +516,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 						return -1;
 					}
 				} else if (b.memory == V4L2_MEMORY_DMABUF) {
-					b.bufs[i][j] = test_mmap(NULL, p.length,
+					b.bufs[i][j] = mmap(NULL, p.length,
 							  PROT_READ | PROT_WRITE, MAP_SHARED,
 							  b.fds[i][j], 0);
 
@@ -532,7 +538,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 			b.planes[i][0].length = buf.length;
 			buf.bytesused = buf.length;
 			if (b.memory == V4L2_MEMORY_MMAP) {
-				b.bufs[i][0] = mmap(NULL, buf.length,
+				b.bufs[i][0] = test_mmap(NULL, buf.length,
 						  PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
 
 				if (b.bufs[i][0] == MAP_FAILED) {
@@ -540,7 +546,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 					return -1;
 				}
 			} else if (b.memory == V4L2_MEMORY_DMABUF) {
-				b.bufs[i][0] = test_mmap(NULL, buf.length,
+				b.bufs[i][0] = mmap(NULL, buf.length,
 						PROT_READ | PROT_WRITE, MAP_SHARED,
 						b.fds[i][0], 0);
 
@@ -573,8 +579,10 @@ static void do_release_buffers(buffers &b)
 		for (unsigned j = 0; j < b.num_planes; j++) {
 			if (b.memory == V4L2_MEMORY_USERPTR)
 				free(b.bufs[i][j]);
-			else
+			else if (b.memory == V4L2_MEMORY_DMABUF)
 				munmap(b.bufs[i][j], b.planes[i][j].length);
+			else
+				test_munmap(b.bufs[i][j], b.planes[i][j].length);
 		}
 	}
 }

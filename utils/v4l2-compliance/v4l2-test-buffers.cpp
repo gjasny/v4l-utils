@@ -40,6 +40,11 @@ static inline void *test_mmap(void *start, size_t length, int prot, int flags,
 		mmap(start, length, prot, flags, fd, offset);
 }
 
+static inline int test_munmap(void *start, size_t length)
+{
+ 	return wrapper ? v4l2_munmap(start, length) : munmap(start, length);
+}
+
 static void *ptrs[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
 static int dmabufs[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
 static struct v4l2_format cur_fmt;
@@ -909,7 +914,7 @@ static int releaseMmap(struct node *node, struct v4l2_requestbuffers &bufs)
 		unsigned num_planes = process_buf(buf, planes);
 
 		for (unsigned p = 0; p < num_planes; p++)
-			munmap(ptrs[i][p], planes[p].length);
+			test_munmap(ptrs[i][p], planes[p].length);
 	}
 	return 0;
 }
