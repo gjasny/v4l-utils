@@ -145,8 +145,7 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 			return fail("can do querymenu on a non-menu control\n");
 		return 0;
 	}
-	if (qctrl.maximum >= 32)
-		return fail("currently more than 32 menu items are not supported\n");
+	bool have_default_value = false;
 	for (i = 0; i <= qctrl.maximum + 1; i++) {
 		memset(&qmenu, 0xff, sizeof(qmenu));
 		qmenu.id = qctrl.id;
@@ -165,12 +164,14 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 			return fail("invalid menu name\n");
 		if (qmenu.reserved)
 			return fail("reserved is non-zero\n");
-		qctrl.menu_mask |= 1 << i;
+		if (i == qctrl.default_value)
+			have_default_value = true;
+		if (i < 64)
+			qctrl.menu_mask |= 1ULL << i;
 	}
 	if (qctrl.menu_mask == 0)
 		return fail("no menu items found\n");
-	if (!(qctrl.menu_mask & (1 << qctrl.default_value)))
-		return fail("the default_value is an invalid menu item\n");
+	fail_on_test(!have_default_value);
 	return 0;
 }
 
@@ -405,9 +406,15 @@ int testSimpleControls(struct node *node)
 		}
 
 		if (iter->type == V4L2_CTRL_TYPE_MENU || iter->type == V4L2_CTRL_TYPE_INTEGER_MENU) {
+			int max = iter->maximum;
+
+			/* Currently menu_mask is a 64-bit value, so we can't reliably
+			 * test for menu item > 63. */
+			if (max > 63)
+				max = 63;
 			// check menu items
-			for (i = iter->minimum; i <= iter->maximum; i++) {
-				unsigned valid = iter->menu_mask & (1 << i);
+			for (i = iter->minimum; i <= max; i++) {
+				bool valid = iter->menu_mask & (1ULL << i);
 
 				ctrl.id = iter->id; 
 				ctrl.value = i;

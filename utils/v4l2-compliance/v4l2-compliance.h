@@ -39,7 +39,7 @@ extern int kernel_version;
 extern unsigned warnings;
 
 struct test_queryctrl: v4l2_queryctrl {
-	unsigned menu_mask;
+	__u64 menu_mask;
 };
 
 typedef std::list<test_queryctrl> qctrl_list;
