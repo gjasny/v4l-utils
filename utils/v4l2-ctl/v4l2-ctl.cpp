@@ -696,10 +696,11 @@ static __u32 parse_colorspace(const char *s)
 }
 
 int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
-	      __u32 &field, __u32 &colorspace)
+	      __u32 &field, __u32 &colorspace, __u32 *bytesperline)
 {
 	char *value, *subs;
 	int fmts = 0;
+	unsigned bpl_index = 0;
 
 	field = V4L2_FIELD_ANY;
 	subs = optarg;
@@ -710,16 +711,17 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			"pixelformat",
 			"field",
 			"colorspace",
+			"bytesperline",
 			NULL
 		};
 
 		switch (parse_subopt(&subs, subopts, &value)) {
 		case 0:
-			width = strtol(value, 0L, 0);
+			width = strtoul(value, 0L, 0);
 			fmts |= FmtWidth;
 			break;
 		case 1:
-			height = strtol(value, 0L, 0);
+			height = strtoul(value, 0L, 0);
 			fmts |= FmtHeight;
 			break;
 		case 2:
@@ -741,6 +743,15 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 				fmts |= FmtColorspace;
 			else
 				fprintf(stderr, "unknown colorspace %s\n", value);
+			break;
+		case 5:
+			bytesperline[bpl_index] = strtoul(value, 0L, 0);
+			if (bytesperline[bpl_index] > 0xffff) {
+				fprintf(stderr, "bytesperline can't be more than 65535\n");
+				bytesperline[bpl_index] = 0;
+			}
+			bpl_index++;
+			fmts |= FmtBytesPerLine;
 			break;
 		default:
 			return 0;

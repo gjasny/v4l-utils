@@ -21,8 +21,9 @@
 
 #include "v4l2-ctl.h"
 
-static struct v4l2_format vfmt_out;	/* set_format/get_format for video */
 static unsigned set_fmts_out;
+static __u32 width, height, pixfmt, field, colorspace;
+static __u32 bytesperline[VIDEO_MAX_PLANES];
 
 void vidout_usage(void)
 {
@@ -32,10 +33,11 @@ void vidout_usage(void)
 	       "  --get-fmt-video-out\n"
 	       "     		     query the video output format [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-video-out\n"
-	       "  --try-fmt-video-out=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,colorspace=<c>\n"
+	       "  --try-fmt-video-out=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,colorspace=<c>,bytesperline=<bpl>\n"
 	       "                     set/try the video output format [VIDIOC_S/TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
 	       "                     --list-formats-out, or the fourcc value as a string.\n"
+	       "                     The bytesperline option can be used multiple times, once for each plane.\n"
 	       "                     <f> can be one of:\n"
 	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
 	       "                     alternate, interlaced_tb, interlaced_bt\n"
@@ -75,28 +77,13 @@ static void print_video_out_fields(int fd)
 
 void vidout_cmd(int ch, char *optarg)
 {
-	__u32 width, height, pixfmt, field, colorspace;
-
 	switch (ch) {
 	case OptSetVideoOutFormat:
 	case OptTryVideoOutFormat:
-		set_fmts_out = parse_fmt(optarg, width, height, pixfmt, field, colorspace);
+		set_fmts_out = parse_fmt(optarg, width, height, pixfmt, field, colorspace, bytesperline);
 		if (!set_fmts_out) {
 			vidcap_usage();
 			exit(1);
-		}
-		if (is_multiplanar) {
-			vfmt_out.fmt.pix_mp.width = width;
-			vfmt_out.fmt.pix_mp.height = height;
-			vfmt_out.fmt.pix_mp.pixelformat = pixfmt;
-			vfmt_out.fmt.pix_mp.field = field;
-			vfmt_out.fmt.pix_mp.colorspace = colorspace;
-		} else {
-			vfmt_out.fmt.pix.width = width;
-			vfmt_out.fmt.pix.height = height;
-			vfmt_out.fmt.pix.pixelformat = pixfmt;
-			vfmt_out.fmt.pix.field = field;
-			vfmt_out.fmt.pix.colorspace = colorspace;
 		}
 		break;
 	}
@@ -113,11 +100,11 @@ void vidout_set(int fd)
 		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0) {
 			if (is_multiplanar) {
 				if (set_fmts_out & FmtWidth)
-					vfmt.fmt.pix_mp.width = vfmt_out.fmt.pix_mp.width;
+					vfmt.fmt.pix_mp.width = width;
 				if (set_fmts_out & FmtHeight)
-					vfmt.fmt.pix_mp.height = vfmt_out.fmt.pix_mp.height;
+					vfmt.fmt.pix_mp.height = height;
 				if (set_fmts_out & FmtPixelFormat) {
-					vfmt.fmt.pix_mp.pixelformat = vfmt_out.fmt.pix_mp.pixelformat;
+					vfmt.fmt.pix_mp.pixelformat = pixfmt;
 					if (vfmt.fmt.pix_mp.pixelformat < 256) {
 						vfmt.fmt.pix_mp.pixelformat =
 							find_pixel_format(fd, vfmt.fmt.pix_mp.pixelformat,
@@ -125,21 +112,27 @@ void vidout_set(int fd)
 					}
 				}
 				if (set_fmts_out & FmtField)
-					vfmt.fmt.pix_mp.field = vfmt_out.fmt.pix_mp.field;
+					vfmt.fmt.pix_mp.field = field;
 				if (set_fmts_out & FmtColorspace)
-					vfmt.fmt.pix_mp.colorspace = vfmt_out.fmt.pix_mp.colorspace;
-				/* G_FMT might return bytesperline values > width,
-				 * reset them to 0 to force the driver to update them
-				 * to the closest value for the new width. */
-				for (unsigned i = 0; i < vfmt.fmt.pix_mp.num_planes; i++)
-					vfmt.fmt.pix_mp.plane_fmt[i].bytesperline = 0;
+					vfmt.fmt.pix_mp.colorspace = colorspace;
+				if (set_fmts_out & FmtBytesPerLine) {
+					for (unsigned i = 0; i < VIDEO_MAX_PLANES; i++)
+						vfmt.fmt.pix_mp.plane_fmt[i].bytesperline =
+							bytesperline[i];
+				} else {
+					/* G_FMT might return bytesperline values > width,
+					 * reset them to 0 to force the driver to update them
+					 * to the closest value for the new width. */
+					for (unsigned i = 0; i < vfmt.fmt.pix_mp.num_planes; i++)
+						vfmt.fmt.pix_mp.plane_fmt[i].bytesperline = 0;
+				}
 			} else {
 				if (set_fmts_out & FmtWidth)
-					vfmt.fmt.pix.width = vfmt_out.fmt.pix.width;
+					vfmt.fmt.pix.width = width;
 				if (set_fmts_out & FmtHeight)
-					vfmt.fmt.pix.height = vfmt_out.fmt.pix.height;
+					vfmt.fmt.pix.height = height;
 				if (set_fmts_out & FmtPixelFormat) {
-					vfmt.fmt.pix.pixelformat = vfmt_out.fmt.pix.pixelformat;
+					vfmt.fmt.pix.pixelformat = pixfmt;
 					if (vfmt.fmt.pix.pixelformat < 256) {
 						vfmt.fmt.pix.pixelformat =
 							find_pixel_format(fd, vfmt.fmt.pix.pixelformat,
@@ -147,13 +140,17 @@ void vidout_set(int fd)
 					}
 				}
 				if (set_fmts_out & FmtField)
-					vfmt.fmt.pix.field = vfmt_out.fmt.pix.field;
+					vfmt.fmt.pix.field = field;
 				if (set_fmts_out & FmtColorspace)
-					vfmt.fmt.pix.colorspace = vfmt_out.fmt.pix.colorspace;
-				/* G_FMT might return a bytesperline value > width,
-				 * reset this to 0 to force the driver to update it
-				 * to the closest value for the new width. */
-				vfmt.fmt.pix.bytesperline = 0;
+					vfmt.fmt.pix.colorspace = colorspace;
+				if (set_fmts_out & FmtBytesPerLine) {
+					vfmt.fmt.pix.bytesperline = bytesperline[0];
+				} else {
+					/* G_FMT might return a bytesperline value > width,
+					 * reset this to 0 to force the driver to update it
+					 * to the closest value for the new width. */
+					vfmt.fmt.pix.bytesperline = 0;
+				}
 			}
 
 			if (options[OptSetVideoOutFormat])
@@ -169,9 +166,11 @@ void vidout_set(int fd)
 void vidout_get(int fd)
 {
 	if (options[OptGetVideoOutFormat]) {
-		vfmt_out.type = vidout_buftype;
-		if (doioctl(fd, VIDIOC_G_FMT, &vfmt_out) == 0)
-			printfmt(vfmt_out);
+		struct v4l2_format vfmt;
+
+		vfmt.type = vidout_buftype;
+		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
+			printfmt(vfmt);
 	}
 }
 
