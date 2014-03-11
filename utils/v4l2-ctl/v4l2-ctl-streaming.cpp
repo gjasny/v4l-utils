@@ -163,9 +163,11 @@ static const flag_def tc_flags_def[] = {
 
 static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 {
+	const unsigned ts_flags = V4L2_BUF_FLAG_TIMESTAMP_MASK | V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+
 	fprintf(f, "\tIndex    : %d\n", buf.index);
 	fprintf(f, "\tType     : %s\n", buftype2s(buf.type).c_str());
-	fprintf(f, "\tFlags    : %s\n", flags2s(buf.flags, flags_def).c_str());
+	fprintf(f, "\tFlags    : %s\n", flags2s(buf.flags & ~ts_flags, flags_def).c_str());
 	fprintf(f, "\tField    : %s\n", field2s(buf.field).c_str());
 	fprintf(f, "\tSequence : %u\n", buf.sequence);
 	fprintf(f, "\tLength   : %u\n", buf.length);
@@ -624,6 +626,8 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 		}
 		if (!(buf.flags & V4L2_BUF_FLAG_ERROR))
 			break;
+		if (verbose)
+			print_buffer(stderr, buf);
 		test_ioctl(fd, VIDIOC_QBUF, &buf);
 	}
 	if (fout && (!stream_skip || ignore_count_skip) && !(buf.flags & V4L2_BUF_FLAG_ERROR)) {
