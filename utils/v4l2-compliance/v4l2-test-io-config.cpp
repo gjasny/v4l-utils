@@ -154,10 +154,19 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 {
 	struct v4l2_enum_dv_timings enumtimings;
 	struct v4l2_dv_timings timings;
-	int ret;
+	struct v4l2_format fmt;
+	bool is_mplane = node->caps & (V4L2_CAP_VIDEO_CAPTURE_MPLANE |
+				       V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+				       V4L2_CAP_VIDEO_M2M_MPLANE);
+	unsigned type;
 	unsigned i;
+	int ret;
 
 	memset(&timings, 0xff, sizeof(timings));
+	if (node->can_capture)
+		type = is_mplane ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE : V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	else
+		type = is_mplane ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE : V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	ret = doioctl(node, VIDIOC_G_DV_TIMINGS, &timings);
 	if (ret && has_timings)
 		return fail("TIMINGS cap set, but could not get current timings\n");
@@ -177,6 +186,16 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 			return fail("reserved not zeroed\n");
 		if (enumtimings.index != i)
 			return fail("index changed!\n");
+		fail_on_test(doioctl(node, VIDIOC_S_DV_TIMINGS, &enumtimings.timings));
+		fmt.type = type;
+		fail_on_test(doioctl(node, VIDIOC_G_FMT, &fmt));
+
+		unsigned field = is_mplane ? fmt.fmt.pix_mp.field : fmt.fmt.pix.field;
+
+		if (enumtimings.timings.bt.interlaced)
+			fail_on_test(field == V4L2_FIELD_NONE);
+		else
+			fail_on_test(field != V4L2_FIELD_NONE);
 	}
 	if (i == 0 && has_timings)
 		return fail("TIMINGS cap set, but no timings can be enumerated\n");
@@ -184,6 +203,8 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 		return fail("TIMINGS cap was not set, but timings can be enumerated\n");
 	if (ret != ENOTTY && ret != ENODATA && !has_timings)
 		return fail("TIMINGS cap not set, but got wrong error code for enumeration (%d)\n", ret);
+	if (has_timings)
+		fail_on_test(doioctl(node, VIDIOC_S_DV_TIMINGS, &timings));
 	ret = doioctl(node, VIDIOC_QUERY_DV_TIMINGS, &timings);
 	if (!ret && !has_timings)
 		return fail("TIMINGS cap was not set, but could still query timings\n");
