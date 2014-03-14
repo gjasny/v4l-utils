@@ -31,6 +31,8 @@ void edid_usage(void)
 	       "                     read from the given file. The file format must be in hex as in get-edid.\n"
 	       "                     The 'edid' or 'file' arguments are mutually exclusive. One of the two\n"
 	       "                     must be specified.\n"
+	       "  --clear-edid=<pad>\n"
+	       "                     <pad> is the input or output index for which to clear the EDID.\n"
 	       "  --get-edid=pad=<pad>,startblock=<startblock>,blocks=<blocks>,format=<fmt>,file=<file>\n"
 	       "                     <pad> is the input or output index for which to get the EDID.\n"
 	       "                     <startblock> is the first block number you want to read. Default 0.\n"
@@ -47,36 +49,36 @@ void edid_usage(void)
 
 static void read_edid_file(FILE *f, struct v4l2_subdev_edid *e)
 {
-	char value[4] = { 0 };
-	int blocks = 1;
-	int i = 0;
+	char value[3] = { 0 };
+	unsigned blocks = 1;
+	unsigned i = 0;
 	int c;
 
 	fseek(f, SEEK_SET, 0);
 	e->edid = (unsigned char *)malloc(blocks * 128);
 
 	while ((c = fgetc(f)) != EOF) {
-		if (isxdigit(c)) {
-			if (i & 0x01) {
-				value[1] = c;
-				e->edid[i/2] = strtoul(value, 0, 16);
-			} else {
-				value[0] = c;
-			}
-			i++;
+		if (!isxdigit(c))
+			continue;
+		if (i & 0x01) {
+			value[1] = c;
 			if (i / 2 > blocks * 128) {
 				blocks++;
-				e->edid = (unsigned char*)realloc(e->edid, blocks * 128);
+				if (blocks > 256) {
+					fprintf(stderr, "edid file error: too long\n");
+					free(e->edid);
+					e->edid = NULL;
+					exit(1);
+				}
+				e->edid = (unsigned char *)realloc(e->edid, blocks * 128);
 			}
-			if (blocks > 256) {
-				fprintf(stderr, "edid file error: too long\n");
-				free(e->edid);
-				e->edid = NULL;
-				exit(1);
-			}
+			e->edid[i / 2] = strtoul(value, 0, 16);
+		} else {
+			value[0] = c;
 		}
+		i++;
 	}
-	e->blocks = blocks;
+	e->blocks = i / 256;
 }
 
 static bool crc_ok(unsigned char *b)
@@ -234,6 +236,7 @@ static char *file_in;
 static struct v4l2_subdev_edid gedid;
 static char *file_out;
 static enum format gformat;
+static unsigned clear_pad;
 
 void edid_cmd(int ch, char *optarg)
 {
@@ -290,6 +293,11 @@ void edid_cmd(int ch, char *optarg)
 				exit(1);
 			}
 		}
+		break;
+
+	case OptClearEdid:
+		if (optarg)
+			clear_pad = strtoul(optarg, 0, 0);
 		break;
 
 	case OptGetEdid:
@@ -351,6 +359,14 @@ void edid_cmd(int ch, char *optarg)
 
 void edid_set(int fd)
 {
+	if (options[OptClearEdid]) {
+		struct v4l2_edid edid;
+
+		memset(&edid, 0, sizeof(edid));
+		edid.pad = clear_pad;
+		doioctl(fd, VIDIOC_SUBDEV_S_EDID, &sedid);
+	}
+
 	if (options[OptSetEdid]) {
 		FILE *fin = NULL;
 
@@ -365,8 +381,14 @@ void edid_set(int fd)
 				exit(1);
 			}
 		}
-		if (fin)
+		if (fin) {
 			read_edid_file(fin, &sedid);
+			if (sedid.blocks == 0) {
+				fprintf(stderr, "%s contained an empty EDID, ignoring.\n",
+						file_in ? file_in : "stdin");
+				exit(1);
+			}
+		}
 		doioctl(fd, VIDIOC_SUBDEV_S_EDID, &sedid);
 		if (fin) {
 			if (sedid.edid) {
