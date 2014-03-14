@@ -378,7 +378,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 	struct v4l2_window &win = fmt.fmt.win;
 	struct v4l2_vbi_format &vbi = fmt.fmt.vbi;
 	struct v4l2_sliced_vbi_format &sliced = fmt.fmt.sliced;
-	struct v4l2_format_sdr &sdr = fmt.fmt.sdr;
+	struct v4l2_sdr_format &sdr = fmt.fmt.sdr;
 	unsigned min_data_samples;
 	unsigned min_sampling_rate;
 	v4l2_std_id std;
@@ -696,8 +696,8 @@ static int testGlobalFormat(struct node *node, int type)
 	struct v4l2_pix_format *p2 = &fmt2.fmt.pix;
 	struct v4l2_pix_format_mplane *mp1 = &fmt1.fmt.pix_mp;
 	struct v4l2_pix_format_mplane *mp2 = &fmt2.fmt.pix_mp;
-	struct v4l2_format_sdr *sdr1 = &fmt1.fmt.sdr;
-	struct v4l2_format_sdr *sdr2 = &fmt2.fmt.sdr;
+	struct v4l2_sdr_format *sdr1 = &fmt1.fmt.sdr;
+	struct v4l2_sdr_format *sdr2 = &fmt2.fmt.sdr;
 	__u32 pixfmt1, pixfmt2;
 	__u32 w1 = 0, w2 = 0, h1 = 0, h2 = 0;
 
