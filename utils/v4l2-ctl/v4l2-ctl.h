@@ -149,6 +149,8 @@ enum Option {
 	OptStreamOutMmap,
 	OptStreamOutUser,
 	OptStreamOutDmaBuf,
+	OptSetEdid,
+	OptGetEdid,
 	OptHelpTuner,
 	OptHelpIO,
 	OptHelpStds,
@@ -160,6 +162,7 @@ enum Option {
 	OptHelpSelection,
 	OptHelpMisc,
 	OptHelpStreaming,
+	OptHelpEdid,
 	OptHelpAll,
 	OptLast = 256
 };
@@ -299,5 +302,11 @@ void streaming_list(int fd, int out_fd);
 // v4l2-ctl-test-patterns.cpp
 void fill_buffer(void *buffer, struct v4l2_pix_format *pix);
 bool precalculate_bars(__u32 pixfmt, unsigned pattern);
+
+// v4l2-ctl-edid.cpp
+void edid_usage(void);
+void edid_cmd(int ch, char *optarg);
+void edid_set(int fd);
+void edid_get(int fd);
 
 #endif

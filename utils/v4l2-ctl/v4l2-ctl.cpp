@@ -88,6 +88,7 @@ static struct option long_options[] = {
 	{"help-selection", no_argument, 0, OptHelpSelection},
 	{"help-misc", no_argument, 0, OptHelpMisc},
 	{"help-streaming", no_argument, 0, OptHelpStreaming},
+	{"help-edid", no_argument, 0, OptHelpEdid},
 	{"help-all", no_argument, 0, OptHelpAll},
 	{"wrapper", no_argument, 0, OptUseWrapper},
 	{"concise", no_argument, 0, OptConcise},
@@ -191,6 +192,8 @@ static struct option long_options[] = {
 	{"try-encoder-cmd", required_argument, 0, OptTryEncoderCmd},
 	{"decoder-cmd", required_argument, 0, OptDecoderCmd},
 	{"try-decoder-cmd", required_argument, 0, OptTryDecoderCmd},
+	{"set-edid", optional_argument, 0, OptSetEdid},
+	{"get-edid", optional_argument, 0, OptGetEdid},
 	{"tuner-index", required_argument, 0, OptTunerIndex},
 	{"list-buffers", no_argument, 0, OptListBuffers},
 	{"list-buffers-out", no_argument, 0, OptListBuffersOut},
@@ -229,6 +232,7 @@ static void usage_all(void)
        selection_usage();
        misc_usage();
        streaming_usage();
+       edid_usage();
 }
 
 static int test_open(const char *file, int oflag)
@@ -915,6 +919,9 @@ int main(int argc, char **argv)
 		case OptHelpStreaming:
 			streaming_usage();
 			return 0;
+		case OptHelpEdid:
+			edid_usage();
+			return 0;
 		case OptHelpAll:
 			usage_all();
 			return 0;
@@ -972,6 +979,7 @@ int main(int argc, char **argv)
 			selection_cmd(ch, optarg);
 			misc_cmd(ch, optarg);
 			streaming_cmd(ch, optarg);
+			edid_cmd(ch, optarg);
 			break;
 		}
 	}
@@ -1104,6 +1112,7 @@ int main(int argc, char **argv)
 	selection_set(fd);
 	streaming_set(fd, out_fd);
 	misc_set(fd);
+	edid_set(fd);
 
 	/* Get options */
 
@@ -1118,6 +1127,7 @@ int main(int argc, char **argv)
 	sdr_get(fd);
 	selection_get(fd);
 	misc_get(fd);
+	edid_get(fd);
 
 	/* List options */
 
