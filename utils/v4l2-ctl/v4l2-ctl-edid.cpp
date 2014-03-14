@@ -47,7 +47,7 @@ void edid_usage(void)
 	       );
 }
 
-static void read_edid_file(FILE *f, struct v4l2_subdev_edid *e)
+static void read_edid_file(FILE *f, struct v4l2_edid *e)
 {
 	char value[3] = { 0 };
 	unsigned blocks = 1;
@@ -91,7 +91,7 @@ static bool crc_ok(unsigned char *b)
 	return sum == 0;
 }
 
-static void hexdumpedid(FILE *f, struct v4l2_subdev_edid *e)
+static void hexdumpedid(FILE *f, struct v4l2_edid *e)
 {
 	for (unsigned b = 0; b < e->blocks; b++) {
 		unsigned char *buf = e->edid + 128 * b;
@@ -108,7 +108,7 @@ static void hexdumpedid(FILE *f, struct v4l2_subdev_edid *e)
 	}
 }
 
-static void rawdumpedid(FILE *f, struct v4l2_subdev_edid *e)
+static void rawdumpedid(FILE *f, struct v4l2_edid *e)
 {
 	for (unsigned b = 0; b < e->blocks; b++) {
 		unsigned char *buf = e->edid + 128 * b;
@@ -118,7 +118,7 @@ static void rawdumpedid(FILE *f, struct v4l2_subdev_edid *e)
 	}
 }
 
-static void carraydumpedid(FILE *f, struct v4l2_subdev_edid *e)
+static void carraydumpedid(FILE *f, struct v4l2_edid *e)
 {
 	fprintf(f, "unsigned char edid[] = {\n");
 	for (unsigned b = 0; b < e->blocks; b++) {
@@ -139,7 +139,7 @@ static void carraydumpedid(FILE *f, struct v4l2_subdev_edid *e)
 	fprintf(f, "};\n");
 }
 
-static void printedid(FILE *f, struct v4l2_subdev_edid *e, enum format gf)
+static void printedid(FILE *f, struct v4l2_edid *e, enum format gf)
 {
 	switch (gf) {
 	default:
@@ -230,10 +230,10 @@ static uint8_t hdmi_edid[256] = {
 /******************************************************/
 
 
-static struct v4l2_subdev_edid sedid;
+static struct v4l2_edid sedid;
 static char *file_in;
 
-static struct v4l2_subdev_edid gedid;
+static struct v4l2_edid gedid;
 static char *file_out;
 static enum format gformat;
 static unsigned clear_pad;
@@ -364,7 +364,7 @@ void edid_set(int fd)
 
 		memset(&edid, 0, sizeof(edid));
 		edid.pad = clear_pad;
-		doioctl(fd, VIDIOC_SUBDEV_S_EDID, &sedid);
+		doioctl(fd, VIDIOC_S_EDID, &sedid);
 	}
 
 	if (options[OptSetEdid]) {
@@ -389,7 +389,7 @@ void edid_set(int fd)
 				exit(1);
 			}
 		}
-		doioctl(fd, VIDIOC_SUBDEV_S_EDID, &sedid);
+		doioctl(fd, VIDIOC_S_EDID, &sedid);
 		if (fin) {
 			if (sedid.edid) {
 				free(sedid.edid);
@@ -418,7 +418,7 @@ void edid_get(int fd)
 			}
 		}
 		gedid.edid = (unsigned char *)malloc(gedid.blocks * 128);
-		if (doioctl(fd, VIDIOC_SUBDEV_G_EDID, &gedid) == 0)
+		if (doioctl(fd, VIDIOC_G_EDID, &gedid) == 0)
 			printedid(fout, &gedid, gformat);
 		if (file_out && fout != stdout)
 			fclose(fout);
