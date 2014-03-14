@@ -234,7 +234,7 @@ int testTimings(struct node *node)
 		if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS)
 			has_timings = true;
 		if (checkTimings(node, input.capabilities & V4L2_IN_CAP_DV_TIMINGS, true))
-			return fail("Timings failed for input %d.\n", i);
+			return fail("Timings check failed for input %d.\n", i);
 	}
 
 	for (o = 0; o < node->outputs; o++) {
@@ -317,4 +317,100 @@ int testTimingsCap(struct node *node)
 			return fail("Timings cap check failed for output %d.\n", o);
 	}
 	return has_timings ? 0 : ENOTTY;
+}
+
+static int checkEdid(struct node *node, unsigned pad, bool is_input)
+{
+	struct v4l2_edid edid;
+	__u8 data[256 * 128];
+	unsigned blocks;
+	int ret;
+
+	memset(edid.reserved, 0xff, sizeof(edid.reserved));
+	edid.pad = pad;
+	edid.start_block = 0;
+	edid.blocks = 0;
+	edid.edid = (__u8 *)0xdeadbeef;
+	ret = doioctl(node, VIDIOC_G_EDID, &edid);
+	if (ret == ENOTTY) {
+		memset(&edid, 0, sizeof(edid));
+		edid.pad = pad;
+		fail_on_test(doioctl(node, VIDIOC_S_EDID, &edid) != ENOTTY);
+		return 0;
+	}
+	fail_on_test(ret);
+	fail_on_test(check_0(edid.reserved, sizeof(edid.reserved)));
+	fail_on_test(edid.start_block);
+	fail_on_test(edid.blocks > 256);
+	blocks = edid.blocks;
+	edid.edid = data;
+	fail_on_test(doioctl(node, VIDIOC_G_EDID, &edid));
+	fail_on_test(edid.blocks != blocks);
+	edid.start_block = edid.blocks ? edid.blocks : 1;
+	ret = doioctl(node, VIDIOC_G_EDID, &edid);
+	fail_on_test(ret != EINVAL && ret != ENODATA);
+	if (blocks > 1) {
+		edid.start_block = 1;
+		edid.blocks = blocks;
+		fail_on_test(doioctl(node, VIDIOC_G_EDID, &edid));
+		fail_on_test(edid.blocks != blocks - 1);
+	}
+	edid.start_block = 0;
+	edid.blocks = 256;
+	ret = doioctl(node, VIDIOC_G_EDID, &edid);
+	fail_on_test(ret && ret != ENODATA);
+	if (!ret)
+		fail_on_test(edid.blocks != blocks);
+
+	memset(edid.reserved, 0xff, sizeof(edid.reserved));
+	edid.blocks = blocks;
+	ret = doioctl(node, VIDIOC_S_EDID, &edid);
+	if (ret == ENOTTY)
+		return 0;
+	fail_on_test(!is_input);
+	fail_on_test(ret);
+	fail_on_test(check_0(edid.reserved, sizeof(edid.reserved)));
+	return 0;
+}
+
+int testEdid(struct node *node)
+{
+	bool has_edid = false;
+	unsigned i, o;
+	int ret;
+
+	for (i = 0; i < node->inputs; i++) {
+		struct v4l2_input input;
+
+		input.index = i;
+		ret = doioctl(node, VIDIOC_ENUMINPUT, &input);
+		if (ret)
+			return fail("could not enumerate input %d?!\n", i);
+		ret = doioctl(node, VIDIOC_S_INPUT, &input.index);
+		if (ret)
+			return fail("could not select input %d.\n", i);
+		if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
+			if (checkEdid(node, i, true))
+				return fail("EDID check failed for input %d.\n", i);
+			has_edid = true;
+		}
+	}
+
+	for (o = 0; o < node->outputs; o++) {
+		struct v4l2_output output;
+
+		output.index = o;
+		ret = doioctl(node, VIDIOC_ENUMOUTPUT, &output);
+		if (ret)
+			return fail("could not enumerate output %d?!\n", o);
+		ret = doioctl(node, VIDIOC_S_OUTPUT, &output.index);
+		if (ret)
+			return fail("could not select output %d.\n", o);
+		if (output.capabilities & V4L2_OUT_CAP_DV_TIMINGS) {
+			if (checkEdid(node, o, false))
+				return fail("EDID check failed for output %d.\n", o);
+			has_edid = true;
+		}
+	}
+	return has_edid ? 0 : ENOTTY;
 }

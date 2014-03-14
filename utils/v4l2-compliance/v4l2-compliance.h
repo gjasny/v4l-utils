@@ -186,6 +186,7 @@ int testJpegComp(struct node *node);
 int testStd(struct node *node);
 int testTimings(struct node *node);
 int testTimingsCap(struct node *node);
+int testEdid(struct node *node);
 
 // Format ioctl tests
 int testEnumFormats(struct node *node);

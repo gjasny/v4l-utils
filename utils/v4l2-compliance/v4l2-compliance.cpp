@@ -824,6 +824,7 @@ int main(int argc, char **argv)
 	printf("\ttest VIDIOC_ENUM/G/S/QUERY_STD: %s\n", ok(testStd(&node)));
 	printf("\ttest VIDIOC_ENUM/G/S/QUERY_DV_TIMINGS: %s\n", ok(testTimings(&node)));
 	printf("\ttest VIDIOC_DV_TIMINGS_CAP: %s\n", ok(testTimingsCap(&node)));
+	printf("\ttest VIDIOC_G/S_EDID: %s\n", ok(testEdid(&node)));
 	printf("\n");
 
 	/* Format ioctls */
