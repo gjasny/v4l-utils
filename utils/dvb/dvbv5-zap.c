@@ -853,7 +853,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (apid >= 0) {
+	if (apid > 0) {
 		if (args.silent < 2)
 			fprintf(stderr, "audio pid %d\n", apid);
 		if ((audio_fd = open(args.demux_dev, O_RDWR)) < 0) {
