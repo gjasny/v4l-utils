@@ -56,12 +56,11 @@
 #include <libdvbv5/desc_partial_reception.h>
 #include <libdvbv5/desc_extension.h>
 
-ssize_t dvb_desc_init(const uint8_t *buf, struct dvb_desc *desc)
+static void dvb_desc_init(uint8_t type, uint8_t length, struct dvb_desc *desc)
 {
-	desc->type   = buf[0];
-	desc->length = buf[1];
+	desc->type   = type;
+	desc->length = length;
 	desc->next   = NULL;
-	return 2;
 }
 
 void dvb_desc_default_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
@@ -94,16 +93,26 @@ char *default_charset = "iso-8859-1";
 char *output_charset = "utf-8";
 
 void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			   uint16_t section_length, struct dvb_desc **head_desc)
+			   uint16_t buflen, struct dvb_desc **head_desc)
 {
-	const uint8_t *ptr = buf;
+	const uint8_t *ptr = buf, *endbuf = buf + buflen;
 	struct dvb_desc *current = NULL;
 	struct dvb_desc *last = NULL;
 
-	while (ptr + 2 < buf + section_length) {
-		unsigned desc_type = ptr[0];
-		int desc_len  = ptr[1];
+	*head_desc = NULL;
+
+	while (ptr + 2 <= endbuf ) {
+		uint8_t desc_type = ptr[0];
+		uint8_t desc_len  = ptr[1];
 		size_t size;
+
+		ptr += 2; /* skip type and length */
+
+		if (ptr + desc_len > endbuf) {
+			dvb_logerr("short read of %zd/%d bytes parsing descriptor %#02x",
+				   endbuf - ptr, desc_len, desc_type);
+			return;
+		}
 
 		switch (parms->verbose) {
 		case 0:
@@ -120,12 +129,6 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			hexdump(parms, "content: ", ptr + 2, desc_len);
 		}
 
-		if (desc_len > section_length - 2) {
-			dvb_logwarn("descriptor type 0x%02x is too big",
-				   desc_type);
-			return;
-		}
-
 		dvb_desc_init_func init = dvb_descriptors[desc_type].init;
 		if (!init) {
 			init = dvb_desc_default_init;
@@ -134,12 +137,7 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			size = dvb_descriptors[desc_type].size;
 		}
 		if (!size) {
-			dvb_logwarn("descriptor type 0x%02x has no size defined", desc_type);
-			size = 4096;
-		}
-		if (ptr + 2 >=  buf + section_length) {
-			dvb_logwarn("descriptor type 0x%02x is truncated: desc len %d, section len %zd",
-				   desc_type, desc_len, section_length - (ptr - buf));
+			dvb_logerr("descriptor type 0x%02x has no size defined", desc_type);
 			return;
 		}
 
@@ -148,7 +146,7 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			dvb_perror("Out of memory");
 			return;
 		}
-		ptr += dvb_desc_init(ptr, current); /* the standard header was read */
+		dvb_desc_init(desc_type, desc_len, current); /* initialize the standard header */
 		init(parms, ptr, current);
 		if (!*head_desc)
 			*head_desc = current;
