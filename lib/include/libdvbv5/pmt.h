@@ -27,7 +27,7 @@
 
 #include <libdvbv5/header.h>
 
-#define DVB_TABLE_PMT      2
+#define DVB_TABLE_PMT      0x02
 
 enum dvb_streams {
 	stream_reserved0	= 0x00, // ITU-T | ISO/IEC Reserved
@@ -69,7 +69,7 @@ struct dvb_table_pmt_stream {
 	union {
 		uint16_t bitfield2;
 		struct {
-			uint16_t section_length:10;
+			uint16_t desc_length:10;
 			uint16_t zero:2;
 			uint16_t reserved2:4;
 		} __attribute__((packed));
@@ -91,13 +91,17 @@ struct dvb_table_pmt {
 	union {
 		uint16_t bitfield2;
 		struct {
-			uint16_t prog_length:10;
+			uint16_t desc_length:10;
 			uint16_t zero3:2;
 			uint16_t reserved3:4;
 		} __attribute__((packed));
 	} __attribute__((packed));
+	struct dvb_desc *descriptor;
 	struct dvb_table_pmt_stream *stream;
 } __attribute__((packed));
+
+#define dvb_pmt_field_first header
+#define dvb_pmt_field_last descriptor
 
 #define dvb_pmt_stream_foreach(_stream, _pmt) \
   for (struct dvb_table_pmt_stream *_stream = _pmt->stream; _stream; _stream = _stream->next) \
