@@ -30,15 +30,15 @@ static const struct loglevel {
 	const char *color;
 	int fd;
 } loglevels[9] = {
-	{"EMERG   ", "\033[31m", STDERR_FILENO },
-	{"ALERT   ", "\033[31m", STDERR_FILENO },
-	{"CRITICAL", "\033[31m", STDERR_FILENO },
-	{"ERROR   ", "\033[31m", STDERR_FILENO },
-	{"WARNING ", "\033[33m", STDOUT_FILENO },
-	{"NOTICE  ", "\033[36m", STDOUT_FILENO },
-	{"INFO    ", "\033[36m", STDOUT_FILENO },
-	{"DEBUG   ", "\033[32m", STDOUT_FILENO },
-	{"",         "\033[0m",  STDOUT_FILENO },
+	{"EMERG    ", "\033[31m", STDERR_FILENO },
+	{"ALERT    ", "\033[31m", STDERR_FILENO },
+	{"CRITICAL ", "\033[31m", STDERR_FILENO },
+	{"ERROR    ", "\033[31m", STDERR_FILENO },
+	{"WARNING  ", "\033[33m", STDOUT_FILENO },
+	{"",          "\033[36m", STDOUT_FILENO }, /* NOTICE */
+	{"",          NULL,       STDOUT_FILENO }, /* INFO */
+	{"DEBUG    ", "\033[32m", STDOUT_FILENO },
+	{"",          "\033[0m",  STDOUT_FILENO }, /* reset*/
 };
 #define LOG_COLOROFF 8
 
@@ -49,14 +49,14 @@ void dvb_default_log(int level, const char *fmt, ...)
 	va_list ap;
 	va_start(ap, fmt);
 	FILE *out = stdout;
-	if(STDERR_FILENO == loglevels[level].fd)
+	if (STDERR_FILENO == loglevels[level].fd)
 		out = stderr;
-	if(isatty(loglevels[level].fd))
+	if (loglevels[level].color && isatty(loglevels[level].fd))
 		fputs(loglevels[level].color, out);
-	fprintf(out, "%s ", loglevels[level].name);
+	fprintf(out, "%s", loglevels[level].name);
 	vfprintf(out, fmt, ap);
 	fprintf(out, "\n");
-	if(isatty(loglevels[level].fd))
+	if(loglevels[level].color && isatty(loglevels[level].fd))
 		fputs(loglevels[LOG_COLOROFF].color, out);
 	va_end(ap);
 }
