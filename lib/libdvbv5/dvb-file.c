@@ -807,7 +807,7 @@ int write_dvb_file(const char *fname, struct dvb_file *dvb_file)
 	return 0;
 };
 
-static char *dvb_vchannel(struct dvb_table_nit *nit, uint16_t service_id)
+static char *dvb_vchannel(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *nit, uint16_t service_id)
 {
 	int i;
 	char *buf;
@@ -817,17 +817,18 @@ static char *dvb_vchannel(struct dvb_table_nit *nit, uint16_t service_id)
 
 for( struct dvb_desc_logical_channel *desc = (struct dvb_desc_logical_channel *) nit->descriptor; desc; desc = (struct dvb_desc_logical_channel *) desc->next ) \
 		if(desc->type == logical_channel_number_descriptor) {
-//	dvb_desc_find(struct dvb_desc_logical_channel, desc, nit, logical_channel_number_descriptor) {
+/* FIXME:  dvb_desc_find(struct dvb_desc_logical_channel, desc, nit, logical_channel_number_descriptor) ? */
 		struct dvb_desc_logical_channel *d = (void *)desc;
-
 		size_t len;
+		int r;
 
 		len = d->length / sizeof(d->lcn);
-
 		for (i = 0; i < len; i++) {
 			if (service_id == d->lcn[i].service_id) {
-				asprintf(&buf, "%d.%d",
+				r = asprintf(&buf, "%d.%d",
 					d->lcn[i].logical_channel_number, i);
+				if (r < 0)
+					dvb_perror("asprintf");
 				return buf;
 			}
 		}
@@ -836,13 +837,16 @@ for( struct dvb_desc_logical_channel *desc = (struct dvb_desc_logical_channel *)
 	dvb_desc_find(struct dvb_desc_ts_info, desc, nit, TS_Information_descriptior) {
 		const struct dvb_desc_ts_info *d = (const void *) desc;
 		const struct dvb_desc_ts_info_transmission_type *t;
+		int r;
 
 		t = &d->transmission_type;
 
 		for (i = 0; i < t->num_of_service; i++) {
 			if (d->service_id[i] == service_id) {
-				asprintf(&buf, "%d.%d",
+				r = asprintf(&buf, "%d.%d",
 					d->remote_control_key_id, i);
+				if (r < 0)
+					dvb_perror("asprintf");
 				return buf;
 			}
 		}
@@ -1062,13 +1066,16 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 		atsc_vct_channel_foreach(d, dvb_scan_handler->vct) {
 			char *channel = NULL;
 			char *vchannel = NULL;
+			int r;
 
 			channel = calloc(1, strlen(d->short_name) + 1);
 			strcpy(channel, d->short_name);
 
-			asprintf(&vchannel, "%d.%d",
+			r = asprintf(&vchannel, "%d.%d",
 				d->major_channel_number,
 				d->minor_channel_number);
+			if (r < 0)
+				dvb_perror("asprintf");
 
 			if (parms->verbose)
 				dvb_log("Virtual channel %s, name = %s",
@@ -1095,6 +1102,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 	dvb_sdt_service_foreach(service, dvb_scan_handler->sdt) {
 		char *channel = NULL;
 		char *vchannel = NULL;
+		int r;
 
 		dvb_desc_find(struct dvb_desc_service, desc, service, service_descriptor) {
 			if (desc->name) {
@@ -1107,12 +1115,15 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 			break;
 		}
 
-		if (!channel)
-			asprintf(&channel, "#%d", service->service_id);
+		if (!channel) {
+			r = asprintf(&channel, "#%d", service->service_id);
+			if (r < 0)
+				dvb_perror("asprintf");
+		}
 
 		if (parms->verbose)
 			dvb_log("Storing as channel %s", channel);
-		vchannel = dvb_vchannel(dvb_scan_handler->nit, service->service_id);
+		vchannel = dvb_vchannel(parms, dvb_scan_handler->nit, service->service_id);
 
 		rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
 					   service->service_id,

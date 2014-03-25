@@ -692,6 +692,7 @@ int main(int argc, char **argv)
 	int audio_fd = -1, video_fd = -1;
 	int dvr_fd = -1, file_fd = -1;
 	int err = -1;
+	int r;
 	struct dvb_v5_fe_parms *parms = NULL;
 	const struct argp argp = {
 		.options = options,
@@ -732,11 +733,19 @@ int main(int argc, char **argv)
 		}
 	}
 
-	asprintf(&args.demux_dev,
+	r = asprintf(&args.demux_dev,
 		 "/dev/dvb/adapter%i/demux%i", args.adapter, args.demux);
+	if (r < 0) {
+		fprintf(stderr, "asprintf error\n");
+		return -1;
+	}
 
-	asprintf(&args.dvr_dev,
+	r = asprintf(&args.dvr_dev,
 		 "/dev/dvb/adapter%i/dvr%i", args.adapter, args.demux);
+	if (r < 0) {
+		fprintf(stderr, "asprintf error\n");
+		return -1;
+	}
 
 	if (args.silent < 2)
 		fprintf(stderr, "using demux '%s'\n", args.demux_dev);
@@ -744,11 +753,11 @@ int main(int argc, char **argv)
 	if (!args.confname) {
 		if (!homedir)
 			ERROR("$HOME not set");
-		asprintf(&args.confname, "%s/.tzap/%i/%s",
+		r = asprintf(&args.confname, "%s/.tzap/%i/%s",
 			 homedir, args.adapter, CHANNEL_FILE);
 		if (access(args.confname, R_OK)) {
 			free(args.confname);
-			asprintf(&args.confname, "%s/.tzap/%s",
+			r = asprintf(&args.confname, "%s/.tzap/%s",
 				homedir, CHANNEL_FILE);
 		}
 	}

@@ -43,9 +43,13 @@
 int dvb_dmx_open(int adapter, int demux)
 {
 	char* demux_name = NULL;
+	int fd_demux;
+	int r;
 
-	asprintf(&demux_name, "/dev/dvb/adapter%i/demux%i", adapter, demux );
-	int fd_demux = open( demux_name, O_RDWR | O_NONBLOCK );
+	r = asprintf(&demux_name, "/dev/dvb/adapter%i/demux%i", adapter, demux );
+	if (r < 0)
+		return -1;
+	fd_demux = open( demux_name, O_RDWR | O_NONBLOCK );
 	free(demux_name);
 	return fd_demux;
 }

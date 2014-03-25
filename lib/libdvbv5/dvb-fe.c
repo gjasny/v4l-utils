@@ -52,12 +52,16 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
 struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose,
 				    unsigned use_legacy_call, dvb_logfunc logfunc)
 {
-	int fd, i;
+	int fd, i, r;
 	char *fname;
 	struct dtv_properties dtv_prop;
 	struct dvb_v5_fe_parms *parms = NULL;
 
-	asprintf(&fname, "/dev/dvb/adapter%i/frontend%i", adapter, frontend);
+	r = asprintf(&fname, "/dev/dvb/adapter%i/frontend%i", adapter, frontend);
+	if (r < 0) {
+		logfunc(LOG_ERR, "asprintf error");
+		return NULL;
+	}
 	if (!fname) {
 		logfunc(LOG_ERR, "fname calloc: %s", strerror(errno));
 		return NULL;
