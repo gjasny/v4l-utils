@@ -29,6 +29,11 @@ void dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 	struct dvb_table_eit_event **head;
 
 	if (*table_length > 0) {
+		memcpy(eit, p, sizeof(struct dvb_table_eit) - sizeof(eit->event));
+
+		bswap16(eit->transport_id);
+		bswap16(eit->network_id);
+
 		/* find end of curent list */
 		head = &eit->event;
 		while (*head != NULL)
@@ -48,18 +53,30 @@ void dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize
 	struct dvb_table_eit_event *last = NULL;
 	while ((uint8_t *) p < buf + buflen - 4) {
 		struct dvb_table_eit_event *event = (struct dvb_table_eit_event *) malloc(sizeof(struct dvb_table_eit_event));
-		memcpy(event, p, sizeof(struct dvb_table_eit_event) - sizeof(event->descriptor) - sizeof(event->next) - sizeof(event->start) - sizeof(event->duration));
-		p += sizeof(struct dvb_table_eit_event) - sizeof(event->descriptor) - sizeof(event->next) - sizeof(event->start) - sizeof(event->duration);
+		memcpy(event, p, sizeof(struct dvb_table_eit_event) -
+				 sizeof(event->descriptor) -
+				 sizeof(event->next) -
+				 sizeof(event->start) -
+				 sizeof(event->duration) -
+				 sizeof(event->service_id));
+		p += sizeof(struct dvb_table_eit_event) -
+		     sizeof(event->descriptor) -
+		     sizeof(event->next) -
+		     sizeof(event->start) -
+		     sizeof(event->duration) -
+		     sizeof(event->service_id);
 
 		bswap16(event->event_id);
-		bswap16(event->bitfield);
+		bswap16(event->bitfield1);
 		bswap16(event->bitfield2);
 		event->descriptor = NULL;
 		event->next = NULL;
 		dvb_time(event->dvbstart, &event->start);
-		event->duration = bcd(event->dvbduration[0]) * 3600 +
-				  bcd(event->dvbduration[1]) * 60 +
-				  bcd(event->dvbduration[2]);
+		event->duration = bcd((uint32_t) event->dvbduration[0]) * 3600 +
+				  bcd((uint32_t) event->dvbduration[1]) * 60 +
+				  bcd((uint32_t) event->dvbduration[2]);
+
+		event->service_id = eit->header.id;
 
 		if(!*head)
 			*head = event;
@@ -102,6 +119,7 @@ void dvb_table_eit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_eit *ei
 		char start[255];
 		strftime(start, sizeof(start), "%F %T", &event->start);
 		dvb_log("|- %7d", event->event_id);
+		dvb_log("|   Service               %d", event->service_id);
 		dvb_log("|   Start                 %s UTC", start);
 		dvb_log("|   Duration              %dh %dm %ds", event->duration / 3600, (event->duration % 3600) / 60, event->duration % 60);
 		dvb_log("|   free CA mode          %d", event->free_CA_mode);
@@ -137,9 +155,8 @@ void dvb_time(const uint8_t data[5], struct tm *tm)
   tm->tm_mday  = day;
   tm->tm_mon   = month - 1;
   tm->tm_year  = year;
-  tm->tm_isdst = -1;
-  tm->tm_wday  = 0;
-  tm->tm_yday  = 0;
+  tm->tm_isdst = 1; /* dst in effect, do not adjust */
+  mktime( tm );
 }
 
 

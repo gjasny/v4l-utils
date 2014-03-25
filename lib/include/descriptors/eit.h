@@ -40,7 +40,7 @@
 struct dvb_table_eit_event {
 	uint16_t event_id;
 	union {
-		uint16_t bitfield;
+		uint16_t bitfield1; /* first 2 bytes are MJD, they need to be bswapped */
 		uint8_t dvbstart[5];
 	} __attribute__((packed));
 	uint8_t dvbduration[3];
@@ -56,6 +56,7 @@ struct dvb_table_eit_event {
 	struct dvb_table_eit_event *next;
 	struct tm start;
 	uint32_t duration;
+	uint16_t service_id;
 } __attribute__((packed));
 
 struct dvb_table_eit {
