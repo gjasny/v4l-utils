@@ -55,6 +55,8 @@
 #include <libdvbv5/desc_ts_info.h>
 #include <libdvbv5/desc_logical_channel.h>
 #include <libdvbv5/desc_partial_reception.h>
+#include <libdvbv5/desc_ca.h>
+#include <libdvbv5/desc_ca_identifier.h>
 #include <libdvbv5/desc_extension.h>
 
 static void dvb_desc_init(uint8_t type, uint8_t length, struct dvb_desc *desc)
@@ -242,10 +244,10 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	},
 	[conditional_access_descriptor] = {
 		.name  = "conditional_access_descriptor",
-		.init  = NULL,
-		.print = NULL,
-		.free  = NULL,
-		.size  = 0,
+		.init  = dvb_desc_ca_init,
+		.print = dvb_desc_ca_print,
+		.free  = dvb_desc_ca_free,
+		.size  = sizeof(struct dvb_desc_ca),
 	},
 	[iso639_language_descriptor] = {
 		.name  = "iso639_language_descriptor",
@@ -571,10 +573,10 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	},
 	[CA_identifier_descriptor] = {
 		.name  = "CA_identifier_descriptor",
-		.init  = NULL,
-		.print = NULL,
-		.free  = NULL,
-		.size  = 0,
+		.init  = dvb_desc_ca_identifier_init,
+		.print = dvb_desc_ca_identifier_print,
+		.free  = dvb_desc_ca_identifier_free,
+		.size  = sizeof(struct dvb_desc_ca_identifier),
 	},
 	[content_descriptor] = {
 		.name  = "content_descriptor",

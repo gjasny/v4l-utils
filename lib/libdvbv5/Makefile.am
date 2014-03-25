@@ -33,6 +33,9 @@ otherinclude_HEADERS = \
 	../include/libdvbv5/desc_logical_channel.h \
 	../include/libdvbv5/desc_ts_info.h \
 	../include/libdvbv5/desc_partial_reception.h \
+	../include/libdvbv5/desc_service_location.h \
+	../include/libdvbv5/desc_ca.h \
+	../include/libdvbv5/desc_ca_identifier.h \
 	../include/libdvbv5/nit.h \
 	../include/libdvbv5/sdt.h \
 	../include/libdvbv5/vct.h \
@@ -41,7 +44,6 @@ otherinclude_HEADERS = \
 	../include/libdvbv5/eit.h \
 	../include/libdvbv5/cat.h \
 	../include/libdvbv5/atsc_eit.h \
-	../include/libdvbv5/desc_service_location.h \
 	../include/libdvbv5/mpeg_ts.h \
 	../include/libdvbv5/mpeg_pes.h \
 	../include/libdvbv5/mpeg_es.h
@@ -96,8 +98,10 @@ libdvbv5_la_SOURCES = \
 	descriptors/desc_ts_info.c		\
 	descriptors/desc_partial_reception.c	\
 	descriptors/desc_service_location.c	\
-	descriptors/mpeg_ts.c		\
-	descriptors/mpeg_pes.c		\
+	descriptors/desc_ca.c			\
+	descriptors/desc_ca_identifier.c	\
+	descriptors/mpeg_ts.c			\
+	descriptors/mpeg_pes.c			\
 	descriptors/mpeg_es.c
 
 libdvbv5_la_CPPFLAGS = -I../.. $(ENFORCE_LIBDVBV5_STATIC)
