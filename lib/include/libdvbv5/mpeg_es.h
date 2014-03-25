@@ -47,7 +47,7 @@ struct dvb_mpeg_es_seq_start {
 			uint32_t height:12;
 			uint32_t width:12;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 	union {
 		uint32_t bitfield3;
 		struct {
@@ -58,7 +58,7 @@ struct dvb_mpeg_es_seq_start {
 			uint32_t one:1;
 			uint32_t bitrate:18;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 } __attribute__((packed));
 
 struct dvb_mpeg_es_pic_start {
@@ -77,7 +77,7 @@ struct dvb_mpeg_es_pic_start {
 			uint32_t coding_type:3;
 			uint32_t temporal_ref:10;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 } __attribute__((packed));
 
 enum dvb_mpeg_es_frame_t

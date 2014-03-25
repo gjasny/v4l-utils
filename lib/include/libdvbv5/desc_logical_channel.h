@@ -36,8 +36,8 @@ struct dvb_desc_logical_channel_number {
 			uint16_t logical_channel_number:10;
 			uint16_t reserved:5;
 			uint16_t visible_service_flag:1;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 } __attribute__((packed));
 
 struct dvb_desc_logical_channel {

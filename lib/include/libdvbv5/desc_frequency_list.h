@@ -38,8 +38,8 @@ struct dvb_desc_frequency_list {
 		struct {
 			uint8_t freq_type:2;
 			uint8_t reserved:6;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;

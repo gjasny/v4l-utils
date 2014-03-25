@@ -36,7 +36,7 @@ struct atsc_table_header {
 			uint16_t priv:1;
 			uint16_t syntax:1;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 	uint16_t id;
 	uint8_t  current_next:1;
 	uint8_t  version:5;

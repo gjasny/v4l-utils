@@ -34,9 +34,9 @@ struct dvb_desc_event_extended {
 		struct {
 			uint8_t last_id:4;
 			uint8_t id:4;
-		};
+		} __attribute__((packed));
 		uint8_t ids;
-	};
+	} __attribute__((packed));
 
 	unsigned char language[4];
 	char *text;

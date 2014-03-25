@@ -103,8 +103,8 @@ union atsc_table_vct_descriptor_length {
 	struct {
 		uint16_t descriptor_length:10;
 		uint16_t reserved:6;
-	};
-};
+	} __attribute__((packed));
+} __attribute__((packed));
 
 #define atsc_vct_channel_foreach(_channel, _vct) \
 	for (struct atsc_table_vct_channel *_channel = _vct->channel; _channel; _channel = _channel->next) \

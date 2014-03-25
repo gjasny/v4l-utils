@@ -36,7 +36,7 @@ struct dvb_ts_packet_header {
 			uint16_t payload_unit_start_indicator:1;
 			uint16_t transport_error_indicator:1;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 	uint8_t continuity_counter:4;
 	uint8_t adaptation_field_control:2;
 	uint8_t transport_scrambling_control:2;
@@ -56,7 +56,7 @@ struct dvb_table_header {
 			uint8_t  zero2:1;
 			uint8_t  syntax:1;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 	uint16_t id;			/* TS ID */
 	uint8_t  current_next:1;
 	uint8_t  version:5;

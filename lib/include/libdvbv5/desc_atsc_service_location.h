@@ -32,7 +32,7 @@ struct atsc_desc_service_location_elementary {
 			uint16_t elementary_pid:13;
 			uint16_t reserved:3;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 	char ISO_639_language_code[3];
 } __attribute__((packed));
 
@@ -49,7 +49,7 @@ struct atsc_desc_service_location {
 			uint16_t pcr_pid:13;
 			uint16_t reserved:3;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 
 	uint8_t number_elements;
 } __attribute__((packed));

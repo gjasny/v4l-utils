@@ -37,16 +37,16 @@ struct dvb_desc_cable_delivery {
 		struct {
 			uint16_t fec_outer:4;
 			uint16_t reserved_future_use:12;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 	uint8_t modulation;
 	union {
 		uint32_t bitfield2;
 		struct {
 			uint32_t fec_inner:4;
 			uint32_t symbol_rate:28;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;

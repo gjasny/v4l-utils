@@ -38,7 +38,7 @@ struct dvb_table_pat_program {
 			uint16_t pid:13;
 			uint8_t  reserved:3;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 	struct dvb_table_pat_program *next;
 } __attribute__((packed));
 

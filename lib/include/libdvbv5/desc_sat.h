@@ -42,8 +42,8 @@ struct dvb_desc_sat {
 		struct {
 			uint32_t fec:4;
 			uint32_t symbol_rate:28;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;

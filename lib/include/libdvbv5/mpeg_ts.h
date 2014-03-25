@@ -52,7 +52,7 @@ struct dvb_mpeg_ts {
 			uint16_t payload_start:1;
 			uint16_t tei:1;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 	struct {
 		uint8_t continuity_counter:4;
 		uint8_t payload:1;

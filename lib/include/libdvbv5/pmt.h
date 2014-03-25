@@ -64,16 +64,16 @@ struct dvb_table_pmt_stream {
 		struct {
 			uint16_t elementary_pid:13;
 			uint16_t reserved:3;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 	union {
 		uint16_t bitfield2;
 		struct {
 			uint16_t section_length:10;
 			uint16_t zero:2;
 			uint16_t reserved2:4;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 	struct dvb_desc *descriptor;
 	struct dvb_table_pmt_stream *next;
 } __attribute__((packed));
@@ -85,8 +85,8 @@ struct dvb_table_pmt {
 		struct {
 			uint16_t pcr_pid:13;
 			uint16_t reserved2:3;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 
 	union {
 		uint16_t bitfield2;
@@ -94,8 +94,8 @@ struct dvb_table_pmt {
 			uint16_t prog_length:10;
 			uint16_t zero3:2;
 			uint16_t reserved3:4;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 	struct dvb_table_pmt_stream *stream;
 } __attribute__((packed));
 

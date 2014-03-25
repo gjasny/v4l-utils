@@ -38,8 +38,8 @@ struct isdbt_desc_terrestrial_delivery_system {
 			uint16_t transmission_mode:2;
 			uint16_t guard_interval:2;
 			uint16_t area_code:6;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;

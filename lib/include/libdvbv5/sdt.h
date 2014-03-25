@@ -44,7 +44,7 @@ struct dvb_table_sdt_service {
 			uint16_t free_CA_mode:1;
 			uint16_t running_status:3;
 		} __attribute__((packed));
-	};
+	} __attribute__((packed));
 	struct dvb_desc *descriptor;
 	struct dvb_table_sdt_service *next;
 } __attribute__((packed));

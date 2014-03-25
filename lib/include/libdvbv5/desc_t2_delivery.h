@@ -43,8 +43,8 @@ struct dvb_desc_t2_delivery {
 			uint16_t reserved:2;
 			uint16_t bandwidth:3;
 			uint16_t SISO_MISO:2;
-		};
-	};
+		} __attribute__((packed));
+	} __attribute__((packed));
 
 	uint32_t *centre_frequency;
 	uint8_t frequency_loop_length;
