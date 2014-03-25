@@ -39,6 +39,7 @@ otherinclude_HEADERS = \
 	../include/libdvbv5/atsc_header.h \
 	../include/libdvbv5/mgt.h \
 	../include/libdvbv5/eit.h \
+	../include/libdvbv5/cat.h \
 	../include/libdvbv5/atsc_eit.h \
 	../include/libdvbv5/desc_service_location.h \
 	../include/libdvbv5/mpeg_ts.h \
@@ -74,6 +75,7 @@ libdvbv5_la_SOURCES = \
 	descriptors/vct.c		\
 	descriptors/mgt.c		\
 	descriptors/eit.c		\
+	descriptors/cat.c		\
 	descriptors/atsc_eit.c		\
 	descriptors/desc_language.c		\
 	descriptors/desc_network_name.c		\

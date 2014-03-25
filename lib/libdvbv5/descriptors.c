@@ -31,6 +31,7 @@
 #include <libdvbv5/dvb-log.h>
 
 #include <libdvbv5/pat.h>
+#include <libdvbv5/cat.h>
 #include <libdvbv5/pmt.h>
 #include <libdvbv5/nit.h>
 #include <libdvbv5/sdt.h>
@@ -78,6 +79,7 @@ void dvb_desc_default_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc
 
 const struct dvb_table_init dvb_table_initializers[] = {
 	[DVB_TABLE_PAT]          = { dvb_table_pat_init, sizeof(struct dvb_table_pat) },
+	[DVB_TABLE_CAT]          = { dvb_table_cat_init, sizeof(struct dvb_table_cat) },
 	[DVB_TABLE_PMT]          = { dvb_table_pmt_init, sizeof(struct dvb_table_pmt) },
 	[DVB_TABLE_NIT]          = { dvb_table_nit_init, sizeof(struct dvb_table_nit) },
 	[DVB_TABLE_SDT]          = { dvb_table_sdt_init, sizeof(struct dvb_table_sdt) },
