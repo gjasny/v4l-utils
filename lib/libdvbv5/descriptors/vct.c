@@ -19,9 +19,9 @@
  *
  */
 
-#include "descriptors/vct.h"
-#include "dvb-fe.h"
-#include "parse_string.h"
+#include <libdvbv5/vct.h>
+#include <libdvbv5/dvb-fe.h>
+#include <parse_string.h>
 
 void atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, uint8_t *table, ssize_t *table_length)

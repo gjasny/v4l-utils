@@ -18,9 +18,9 @@
  *
  */
 
-#include "descriptors/atsc_header.h"
-#include "descriptors.h"
-#include "dvb-fe.h"
+#include <libdvbv5/atsc_header.h>
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/dvb-fe.h>
 
 int atsc_table_header_init(struct atsc_table_header *t)
 {

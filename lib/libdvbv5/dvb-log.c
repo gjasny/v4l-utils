@@ -19,7 +19,7 @@
  *
  */
 
-#include "dvb-log.h"
+#include <libdvbv5/dvb-log.h>
 
 #include <stdio.h>
 #include <unistd.h>

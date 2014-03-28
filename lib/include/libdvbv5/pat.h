@@ -19,45 +19,37 @@
  *
  */
 
-#ifndef _SDT_H
-#define _SDT_H
+#ifndef _PAT_H
+#define _PAT_H
 
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
 
-#include "descriptors/header.h"
-#include "descriptors.h"
+#include <libdvbv5/header.h>
 
-#define DVB_TABLE_SDT      0x42
-#define DVB_TABLE_SDT2     0x46
-#define DVB_TABLE_SDT_PID  0x11
+#define DVB_TABLE_PAT      0
+#define DVB_TABLE_PAT_PID  0
 
-struct dvb_table_sdt_service {
+struct dvb_table_pat_program {
 	uint16_t service_id;
-	uint8_t EIT_present_following:1;
-	uint8_t EIT_schedule:1;
-	uint8_t reserved:6;
 	union {
 		uint16_t bitfield;
 		struct {
-			uint16_t section_length:12;
-			uint16_t free_CA_mode:1;
-			uint16_t running_status:3;
+			uint16_t pid:13;
+			uint8_t  reserved:3;
 		} __attribute__((packed));
 	};
-	struct dvb_desc *descriptor;
-	struct dvb_table_sdt_service *next;
+	struct dvb_table_pat_program *next;
 } __attribute__((packed));
 
-struct dvb_table_sdt {
+struct dvb_table_pat {
 	struct dvb_table_header header;
-	uint16_t network_id;
-	uint8_t  reserved;
-	struct dvb_table_sdt_service *service;
+	uint16_t programs;
+	struct dvb_table_pat_program *program;
 } __attribute__((packed));
 
-#define dvb_sdt_service_foreach(_service, _sdt) \
-	for (struct dvb_table_sdt_service *_service = _sdt->service; _service; _service = _service->next ) \
+#define dvb_pat_program_foreach(_pgm, _pat) \
+	for (struct dvb_table_pat_program *_pgm = _pat->program; _pgm; _pgm = _pgm->next) \
 
 struct dvb_v5_fe_parms;
 
@@ -65,9 +57,9 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void dvb_table_sdt_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length);
-void dvb_table_sdt_free(struct dvb_table_sdt *sdt);
-void dvb_table_sdt_print(struct dvb_v5_fe_parms *parms, struct dvb_table_sdt *sdt);
+void dvb_table_pat_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length);
+void dvb_table_pat_free(struct dvb_table_pat *pat);
+void dvb_table_pat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_pat *t);
 
 #ifdef __cplusplus
 }

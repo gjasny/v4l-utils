@@ -19,9 +19,9 @@
  *
  */
 
-#include "descriptors/desc_hierarchy.h"
-#include "descriptors.h"
-#include "dvb-fe.h"
+#include <libdvbv5/desc_hierarchy.h>
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/dvb-fe.h>
 
 void dvb_desc_hierarchy_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {

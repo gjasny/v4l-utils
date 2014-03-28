@@ -3,11 +3,11 @@ v4l-utils
 
 Linux V4L2 and DVB API utilities and v4l libraries (libv4l).
 You can always find the latest development v4l-utils in the git repo:
-http://git.linuxtv.org/v4l-utils.git 
+http://git.linuxtv.org/v4l-utils.git
 
 
-v4l libraries (libv4l)
-----------------------
+v4l libraries (libv4l, libdvbv5)
+--------------------------------
 
 See README.libv4l for more information on libv4l, libv4l is released
 under the GNU Lesser General Public License.

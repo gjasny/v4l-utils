@@ -22,9 +22,9 @@
 #include <stdint.h>
 #include <linux/dvb/dmx.h>
 
-#include "descriptors.h"
+#include <libdvbv5/descriptors.h>
 
-#include "dvb-sat.h"
+#include <libdvbv5/dvb-sat.h>
 
 /* According with ISO/IEC 13818-1:2007 */
 

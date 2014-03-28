@@ -25,8 +25,8 @@
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
 
-#include "descriptors/header.h"
-#include "descriptors.h"
+#include <libdvbv5/header.h>
+#include <libdvbv5/descriptors.h>
 
 #define DVB_TABLE_NIT      0x40
 #define DVB_TABLE_NIT2     0x41

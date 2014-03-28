@@ -33,10 +33,10 @@
 #include <config.h>
 
 #include <linux/dvb/dmx.h>
-#include "dvb-file.h"
-#include "dvb-demux.h"
-#include "dvb-v5-std.h"
-#include "dvb-scan.h"
+#include "libdvbv5/dvb-file.h"
+#include "libdvbv5/dvb-demux.h"
+#include "libdvbv5/dvb-v5-std.h"
+#include "libdvbv5/dvb-scan.h"
 
 #define PROGRAM_NAME	"dvbv5-scan"
 #define DEFAULT_OUTPUT  "dvb_channel.conf"

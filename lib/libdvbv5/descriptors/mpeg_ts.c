@@ -18,9 +18,9 @@
  *
  */
 
-#include "descriptors/mpeg_ts.h"
-#include "descriptors.h"
-#include "dvb-fe.h"
+#include <libdvbv5/mpeg_ts.h>
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/dvb-fe.h>
 
 ssize_t dvb_mpeg_ts_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
 {

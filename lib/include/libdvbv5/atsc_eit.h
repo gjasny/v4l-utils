@@ -25,8 +25,8 @@
 #include <unistd.h> /* ssize_t */
 #include <time.h>
 
-#include "descriptors/atsc_header.h"
-#include "descriptors.h"
+#include <libdvbv5/atsc_header.h>
+#include <libdvbv5/descriptors.h>
 
 #define ATSC_TABLE_EIT        0xCB
 

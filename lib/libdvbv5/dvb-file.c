@@ -24,30 +24,30 @@
 #include <strings.h> /* strcasecmp */
 #include <unistd.h>
 
-#include "dvb-file.h"
-#include "dvb-v5-std.h"
-#include "dvb-scan.h"
-#include "dvb-log.h"
-#include "descriptors.h"
-#include "descriptors/nit.h"
-#include "descriptors/sdt.h"
-#include "descriptors/pat.h"
-#include "descriptors/pmt.h"
-#include "descriptors/vct.h"
-#include "descriptors/desc_ts_info.h"
-#include "descriptors/desc_logical_channel.h"
-#include "descriptors/desc_language.h"
-#include "descriptors/desc_network_name.h"
-#include "descriptors/desc_cable_delivery.h"
-#include "descriptors/desc_sat.h"
-#include "descriptors/desc_terrestrial_delivery.h"
-#include "descriptors/desc_service.h"
-#include "descriptors/desc_service_list.h"
-#include "descriptors/desc_frequency_list.h"
-#include "descriptors/desc_event_short.h"
-#include "descriptors/desc_event_extended.h"
-#include "descriptors/desc_atsc_service_location.h"
-#include "descriptors/desc_hierarchy.h"
+#include <libdvbv5/dvb-file.h>
+#include <libdvbv5/dvb-v5-std.h>
+#include <libdvbv5/dvb-scan.h>
+#include <libdvbv5/dvb-log.h>
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/nit.h>
+#include <libdvbv5/sdt.h>
+#include <libdvbv5/pat.h>
+#include <libdvbv5/pmt.h>
+#include <libdvbv5/vct.h>
+#include <libdvbv5/desc_ts_info.h>
+#include <libdvbv5/desc_logical_channel.h>
+#include <libdvbv5/desc_language.h>
+#include <libdvbv5/desc_network_name.h>
+#include <libdvbv5/desc_cable_delivery.h>
+#include <libdvbv5/desc_sat.h>
+#include <libdvbv5/desc_terrestrial_delivery.h>
+#include <libdvbv5/desc_service.h>
+#include <libdvbv5/desc_service_list.h>
+#include <libdvbv5/desc_frequency_list.h>
+#include <libdvbv5/desc_event_short.h>
+#include <libdvbv5/desc_event_extended.h>
+#include <libdvbv5/desc_atsc_service_location.h>
+#include <libdvbv5/desc_hierarchy.h>
 
 int store_entry_prop(struct dvb_entry *entry,
 		     uint32_t cmd, uint32_t value)

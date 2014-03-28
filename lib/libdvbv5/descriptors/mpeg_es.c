@@ -18,9 +18,9 @@
  *
  */
 
-#include "descriptors/mpeg_es.h"
-#include "descriptors.h"
-#include "dvb-fe.h"
+#include <libdvbv5/mpeg_es.h>
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/dvb-fe.h>
 
 int dvb_mpeg_es_seq_start_init(const uint8_t *buf, ssize_t buflen, struct dvb_mpeg_es_seq_start *seq_start)
 {

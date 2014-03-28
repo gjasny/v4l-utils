@@ -31,9 +31,9 @@
 
 #include <config.h>
 
-#include "dvb-file.h"
-#include "dvb-demux.h"
-#include "dvb-scan.h"
+#include "libdvbv5/dvb-file.h"
+#include "libdvbv5/dvb-demux.h"
+#include "libdvbv5/dvb-scan.h"
 
 #define PROGRAM_NAME	"dvb-format-convert"
 

@@ -26,8 +26,8 @@
 #include <unistd.h> /* ssize_t */
 #include <time.h>
 
-#include "descriptors/header.h"
-#include "descriptors.h"
+#include <libdvbv5/header.h>
+#include <libdvbv5/descriptors.h>
 
 #define DVB_TABLE_EIT        0x4E
 #define DVB_TABLE_EIT_OTHER  0x4F

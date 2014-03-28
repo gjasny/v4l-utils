@@ -18,19 +18,20 @@
  *
  */
 
-#include "descriptors/desc_service_location.h"
-#include "dvb-fe.h"
+#include <libdvbv5/desc_service_location.h>
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/dvb-fe.h>
 
 void dvb_desc_service_location_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_service_location *service_location = (struct dvb_desc_service_location *) desc;
-	uint8_t *endbuf = buf + desc->length;
+	const uint8_t *endbuf = buf + desc->length;
 	ssize_t size = sizeof(struct dvb_desc_service_location) - sizeof(struct dvb_desc);
 	struct dvb_desc_service_location_element *element;
 	int i;
 
 	if (buf + size > endbuf) {
-		dvb_logerr("%s: short read %d/%zd bytes", __FUNCTION__, endbuf - buf, size);
+		dvb_logerr("%s: short read %zd/%zd bytes", __FUNCTION__, endbuf - buf, size);
 		return;
 	}
 
@@ -43,7 +44,7 @@ void dvb_desc_service_location_init(struct dvb_v5_fe_parms *parms, const uint8_t
 
 	size = service_location->elements * sizeof(struct dvb_desc_service_location_element);
 	if (buf + size > endbuf) {
-		dvb_logerr("%s: short read %d/%zd bytes", __FUNCTION__, endbuf - buf, size);
+		dvb_logerr("%s: short read %zd/%zd bytes", __FUNCTION__, endbuf - buf, size);
 		return;
 	}
 	service_location->element = malloc(size);

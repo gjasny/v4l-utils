@@ -18,7 +18,7 @@
  *
  */
 
-#include "dvb-file.h"
+#include "libdvbv5/dvb-file.h"
 #include <config.h>
 #include <argp.h>
 #include <stdlib.h>

@@ -19,10 +19,10 @@
  *
  */
 
-#include "descriptors/desc_event_extended.h"
-#include "descriptors.h"
-#include "dvb-fe.h"
-#include "parse_string.h"
+#include <libdvbv5/desc_event_extended.h>
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/dvb-fe.h>
+#include <parse_string.h>
 
 void dvb_desc_event_extended_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {

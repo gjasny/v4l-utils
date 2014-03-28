@@ -21,7 +21,7 @@
  */
 #include <stddef.h>
 
-#include "dvb-v5-std.h"
+#include <libdvbv5/dvb-v5-std.h>
 #include "dvb-v5.h"
 
 const unsigned int sys_dvbt_props[] = {

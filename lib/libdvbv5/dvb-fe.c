@@ -19,8 +19,8 @@
 #include <sys/types.h>
 
 #include "dvb-v5.h"
-#include "dvb-v5-std.h"
-#include "dvb-fe.h"
+#include <libdvbv5/dvb-v5-std.h>
+#include <libdvbv5/dvb-fe.h>
 
 #include <inttypes.h>
 #include <math.h>

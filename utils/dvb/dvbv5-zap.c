@@ -37,10 +37,10 @@
 #include <config.h>
 
 #include <linux/dvb/dmx.h>
-#include "dvb-file.h"
-#include "dvb-demux.h"
-#include "dvb-scan.h"
-#include "descriptors/header.h"
+#include "libdvbv5/dvb-file.h"
+#include "libdvbv5/dvb-demux.h"
+#include "libdvbv5/dvb-scan.h"
+#include "libdvbv5/header.h"
 
 #define CHANNEL_FILE	"channels.conf"
 #define PROGRAM_NAME	"dvbv5-zap"

@@ -23,8 +23,8 @@
 #include <unistd.h>
 #include <strings.h> /* strcasecmp */
 
-#include "dvb-fe.h"
-#include "dvb-v5-std.h"
+#include <libdvbv5/dvb-fe.h>
+#include <libdvbv5/dvb-v5-std.h>
 
 static const struct dvb_sat_lnb lnb[] = {
 	{

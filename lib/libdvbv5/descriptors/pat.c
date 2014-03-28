@@ -19,9 +19,9 @@
  *
  */
 
-#include "descriptors/pat.h"
-#include "descriptors.h"
-#include "dvb-fe.h"
+#include <libdvbv5/pat.h>
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/dvb-fe.h>
 
 void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, uint8_t *table, ssize_t *table_length)

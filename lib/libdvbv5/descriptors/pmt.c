@@ -19,9 +19,9 @@
  *
  */
 
-#include "descriptors/pmt.h"
-#include "descriptors.h"
-#include "dvb-fe.h"
+#include <libdvbv5/pmt.h>
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/dvb-fe.h>
 
 #include <string.h> /* memcpy */
 

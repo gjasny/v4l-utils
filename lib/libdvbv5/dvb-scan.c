@@ -38,30 +38,30 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#include "dvb-scan.h"
-#include "dvb-frontend.h"
-#include "descriptors.h"
+#include <libdvbv5/dvb-scan.h>
+#include <libdvbv5/dvb-frontend.h>
+#include <libdvbv5/descriptors.h>
 #include "parse_string.h"
 #include "crc32.h"
-#include "dvb-fe.h"
-#include "dvb-file.h"
-#include "dvb-scan.h"
-#include "dvb-log.h"
-#include "dvb-demux.h"
-#include "descriptors.h"
-#include "descriptors/header.h"
-#include "descriptors/pat.h"
-#include "descriptors/pmt.h"
-#include "descriptors/nit.h"
-#include "descriptors/sdt.h"
-#include "descriptors/vct.h"
-#include "descriptors/desc_extension.h"
-#include "descriptors/desc_cable_delivery.h"
-#include "descriptors/desc_isdbt_delivery.h"
-#include "descriptors/desc_partial_reception.h"
-#include "descriptors/desc_terrestrial_delivery.h"
-#include "descriptors/desc_t2_delivery.h"
-#include "descriptors/desc_sat.h"
+#include <libdvbv5/dvb-fe.h>
+#include <libdvbv5/dvb-file.h>
+#include <libdvbv5/dvb-scan.h>
+#include <libdvbv5/dvb-log.h>
+#include <libdvbv5/dvb-demux.h>
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/header.h>
+#include <libdvbv5/pat.h>
+#include <libdvbv5/pmt.h>
+#include <libdvbv5/nit.h>
+#include <libdvbv5/sdt.h>
+#include <libdvbv5/vct.h>
+#include <libdvbv5/desc_extension.h>
+#include <libdvbv5/desc_cable_delivery.h>
+#include <libdvbv5/desc_isdbt_delivery.h>
+#include <libdvbv5/desc_partial_reception.h>
+#include <libdvbv5/desc_terrestrial_delivery.h>
+#include <libdvbv5/desc_t2_delivery.h>
+#include <libdvbv5/desc_sat.h>
 
 static int poll(struct dvb_v5_fe_parms *parms, int fd, unsigned int seconds)
 {

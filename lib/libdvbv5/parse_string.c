@@ -30,8 +30,8 @@
 #include <strings.h> /* strcasecmp */
 
 #include "parse_string.h"
-#include "dvb-log.h"
-#include "dvb-fe.h"
+#include <libdvbv5/dvb-log.h>
+#include <libdvbv5/dvb-fe.h>
 
 #define CS_OPTIONS "//TRANSLIT"
 

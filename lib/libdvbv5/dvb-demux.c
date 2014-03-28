@@ -38,7 +38,7 @@
 #include <fcntl.h>
 #include <stdlib.h> /* free */
 
-#include "dvb-demux.h"
+#include <libdvbv5/dvb-demux.h>
 
 int dvb_dmx_open(int adapter, int demux)
 {

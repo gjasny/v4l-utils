@@ -18,10 +18,10 @@
  *
  */
 
-#include "descriptors.h"
-#include "descriptors/desc_extension.h"
-#include "descriptors/desc_t2_delivery.h"
-#include "dvb-fe.h"
+#include <libdvbv5/descriptors.h>
+#include <libdvbv5/desc_extension.h>
+#include <libdvbv5/desc_t2_delivery.h>
+#include <libdvbv5/dvb-fe.h>
 
 const struct dvb_ext_descriptor dvb_ext_descriptors[] = {
 	[0 ...255 ] = {

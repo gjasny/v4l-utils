@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
 
-#include "descriptors/header.h"
+#include <libdvbv5/header.h>
 
 #define DVB_TABLE_PMT      2
 
