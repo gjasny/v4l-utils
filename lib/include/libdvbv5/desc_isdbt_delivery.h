@@ -22,13 +22,11 @@
 #ifndef _ISDBT_DELIVERY_H
 #define _ISDBT_DELIVERY_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct isdbt_desc_terrestrial_delivery_system {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
+
 	uint16_t *frequency;
 	unsigned num_freqs;
 

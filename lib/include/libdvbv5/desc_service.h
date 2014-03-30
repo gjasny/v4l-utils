@@ -22,13 +22,10 @@
 #ifndef _DESC_SERVICE_H
 #define _DESC_SERVICE_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_service {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	uint8_t service_type;
 	char *name;

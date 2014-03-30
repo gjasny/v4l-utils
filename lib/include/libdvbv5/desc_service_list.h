@@ -22,8 +22,7 @@
 #ifndef _DESC_SERVICE_LIST_H
 #define _DESC_SERVICE_LIST_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_service_list_table {
 	uint16_t service_id;
@@ -31,9 +30,7 @@ struct dvb_desc_service_list_table {
 } __attribute__((packed));
 
 struct dvb_desc_service_list {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	//struct dvb_desc_service_list_table services[];
 } __attribute__((packed));

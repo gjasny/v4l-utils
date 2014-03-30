@@ -24,13 +24,10 @@
 #ifndef _TERRESTRIAL_DELIVERY_H
 #define _TERRESTRIAL_DELIVERY_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_terrestrial_delivery {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	uint32_t centre_frequency;
 	uint8_t reserved_future_use1:2;

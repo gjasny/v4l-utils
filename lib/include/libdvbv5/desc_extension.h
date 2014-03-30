@@ -21,8 +21,7 @@
 #ifndef _EXTENSION_DESC_H
 #define _EXTENSION_DESC_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_v5_fe_parms;
 
@@ -42,9 +41,7 @@ enum extension_descriptors {
 };
 
 struct dvb_extension_descriptor {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	uint8_t extension_code;
 

@@ -22,13 +22,10 @@
 #ifndef _CA_IDENTIFIER_H
 #define _CA_IDENTIFIER_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_ca_identifier {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	uint8_t caid_count;
 	uint16_t *caids;

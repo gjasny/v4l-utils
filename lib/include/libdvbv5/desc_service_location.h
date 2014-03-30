@@ -21,7 +21,7 @@
 #ifndef _SERVICE_LOCATION_H
 #define _SERVICE_LOCATION_H
 
-#include <stdint.h>
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_service_location_element {
 	uint8_t stream_type;
@@ -36,9 +36,7 @@ struct dvb_desc_service_location_element {
 } __attribute__((packed));
 
 struct dvb_desc_service_location {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	union {
 		uint16_t bitfield;

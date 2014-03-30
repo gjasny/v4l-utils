@@ -22,12 +22,10 @@
 #ifndef _HIERARCHY_H
 #define _HIERARCHY_H
 
-#include <stdint.h>
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_hierarchy {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	uint8_t hierarchy_type:4;
 	uint8_t reserved:4;

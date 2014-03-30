@@ -22,13 +22,10 @@
 #ifndef _DESC_EVENT_SHORT_H
 #define _DESC_EVENT_SHORT_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_event_short {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	unsigned char language[4];
 	char *name;

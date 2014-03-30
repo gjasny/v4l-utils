@@ -22,13 +22,10 @@
 #ifndef _DESC_NETWORK_NAME_H
 #define _DESC_NETWORK_NAME_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_network_name {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	char *network_name;
 	char *network_name_emph;

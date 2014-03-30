@@ -25,17 +25,14 @@
 #ifndef _PARTIAL_RECEPTION_H
 #define _PARTIAL_RECEPTION_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct isdb_partial_reception_service_id {
 	uint16_t service_id;
 } __attribute__((packed));
 
 struct isdb_desc_partial_reception {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	struct isdb_partial_reception_service_id *partial_reception;
 } __attribute__((packed));

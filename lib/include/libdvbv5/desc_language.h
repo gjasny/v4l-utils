@@ -22,13 +22,10 @@
 #ifndef _DESC_LANGUAGE_H
 #define _DESC_LANGUAGE_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_language {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	unsigned char language[4];
 	uint8_t audio_type;

@@ -22,8 +22,7 @@
 #ifndef _TS_INFO_H
 #define _TS_INFO_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_ts_info_transmission_type {
 	uint8_t transmission_type_info;
@@ -31,9 +30,7 @@ struct dvb_desc_ts_info_transmission_type {
 } __attribute__((packed));
 
 struct dvb_desc_ts_info {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	char *ts_name, *ts_name_emph;
 	struct dvb_desc_ts_info_transmission_type transmission_type;

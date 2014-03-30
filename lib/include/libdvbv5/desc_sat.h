@@ -22,13 +22,10 @@
 #ifndef _SAT_H
 #define _SAT_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_sat {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	uint32_t frequency;
 	uint16_t orbit;

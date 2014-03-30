@@ -54,10 +54,13 @@ extern char *output_charset;
 	b = ntohl(b); \
 } while (0)
 
+#define DVB_DESC_HEADER() \
+	uint8_t type; \
+	uint8_t length; \
+	struct dvb_desc *next
+
 struct dvb_desc {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	uint8_t data[];
 } __attribute__((packed));

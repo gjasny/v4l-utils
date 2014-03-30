@@ -21,8 +21,7 @@
 #ifndef _ATSC_SERVICE_LOCATION_H
 #define _ATSC_SERVICE_LOCATION_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct atsc_desc_service_location_elementary {
 	uint8_t stream_type;
@@ -37,9 +36,7 @@ struct atsc_desc_service_location_elementary {
 } __attribute__((packed));
 
 struct atsc_desc_service_location {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	struct atsc_desc_service_location_elementary *elementary;
 

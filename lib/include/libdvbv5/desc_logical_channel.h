@@ -25,8 +25,7 @@
 #ifndef _LCN_DESC_H
 #define _LCN_DESC_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_logical_channel_number {
 	uint16_t service_id;
@@ -41,9 +40,7 @@ struct dvb_desc_logical_channel_number {
 } __attribute__((packed));
 
 struct dvb_desc_logical_channel {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	struct dvb_desc_logical_channel_number *lcn;
 } __attribute__((packed));

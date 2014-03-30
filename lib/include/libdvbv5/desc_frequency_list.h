@@ -22,13 +22,10 @@
 #ifndef _DESC_FREQUENCY_LIST_H
 #define _DESC_FREQUENCY_LIST_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_frequency_list {
-	uint8_t type;
-	uint8_t length;
-	struct dvb_desc *next;
+	DVB_DESC_HEADER();
 
 	uint8_t frequencies;
 	uint32_t *frequency;

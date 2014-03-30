@@ -22,8 +22,7 @@
 #ifndef _T2_DELIVERY_H
 #define _T2_DELIVERY_H
 
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
+#include <libdvbv5/descriptors.h>
 
 struct dvb_desc_t2_delivery_subcell {
 	uint8_t cell_id_extension;
@@ -31,6 +30,8 @@ struct dvb_desc_t2_delivery_subcell {
 } __attribute__((packed));
 
 struct dvb_desc_t2_delivery {
+	/* extended descriptor */
+
 	uint8_t plp_id;
 	uint16_t system_id;
 	union {
