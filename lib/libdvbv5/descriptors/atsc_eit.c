@@ -74,6 +74,11 @@ ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
                 atsc_time(event->start_time, &event->start);
 		event->source_id = eit->header.id;
 
+		if(!*head)
+			*head = event;
+		if(last)
+			last->next = event;
+
 		size = event->title_length - 1;
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
@@ -82,11 +87,6 @@ ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		}
                 /* TODO: parse title */
                 p += size;
-
-		if(!*head)
-			*head = event;
-		if(last)
-			last->next = event;
 
 		/* get the descriptors for each program */
 		size = sizeof(union atsc_table_eit_desc_length);
