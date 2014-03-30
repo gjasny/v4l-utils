@@ -22,7 +22,7 @@
 #include <libdvbv5/desc_atsc_service_location.h>
 #include <libdvbv5/dvb-fe.h>
 
-void atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
+int atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
 				     const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct atsc_desc_service_location *s_loc = (struct atsc_desc_service_location *)desc;
@@ -41,7 +41,7 @@ void atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
 		s_loc->elementary = malloc(s_loc->number_elements * sizeof(*s_loc->elementary));
 		if (!s_loc->elementary) {
 			dvb_perror("Can't allocate space for ATSC service location elementary data");
-			return;
+			return -1;
 		}
 
 		el = s_loc->elementary;
@@ -56,6 +56,7 @@ void atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
 	} else {
 		s_loc->elementary = NULL;
 	}
+	return 0;
 }
 
 void atsc_desc_service_location_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)

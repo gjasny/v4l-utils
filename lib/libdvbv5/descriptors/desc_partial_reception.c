@@ -24,7 +24,7 @@
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>
 
-void isdb_desc_partial_reception_init(struct dvb_v5_fe_parms *parms,
+int isdb_desc_partial_reception_init(struct dvb_v5_fe_parms *parms,
 			      const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct isdb_desc_partial_reception *d = (void *)desc;
@@ -35,7 +35,7 @@ void isdb_desc_partial_reception_init(struct dvb_v5_fe_parms *parms,
 	d->partial_reception = malloc(d->length);
 	if (!d->partial_reception) {
 		dvb_perror("Out of memory!");
-		return;
+		return -1;
 	}
 
 	memcpy(d->partial_reception, p, d->length);
@@ -44,6 +44,7 @@ void isdb_desc_partial_reception_init(struct dvb_v5_fe_parms *parms,
 
 	for (i = 0; i < len; i++)
 		bswap16(d->partial_reception[i].service_id);
+	return 0;
 }
 
 void isdb_desc_partial_reception_free(struct dvb_desc *desc)

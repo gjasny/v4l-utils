@@ -117,7 +117,7 @@ const struct dvb_ext_descriptor dvb_ext_descriptors[] = {
 	},
 };
 
-void extension_descriptor_init(struct dvb_v5_fe_parms *parms,
+int extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 				     const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_extension_descriptor *ext = (void *)desc;
@@ -153,10 +153,13 @@ void extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 
 	ext->descriptor = calloc(1, size);
 
-	if (init)
-		init(parms, p, ext, ext->descriptor);
+	if (init) {
+		if (init(parms, p, ext, ext->descriptor) != 0)
+			return -1;
+	}
 	else
 		memcpy(ext->descriptor, p, size);
+	return 0;
 }
 
 void extension_descriptor_free(struct dvb_desc *descriptor)

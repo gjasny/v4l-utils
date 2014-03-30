@@ -25,7 +25,7 @@
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
-void dvb_desc_terrestrial_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+int dvb_desc_terrestrial_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_terrestrial_delivery *tdel = (struct dvb_desc_terrestrial_delivery *) desc;
 	/* copy from .length */
@@ -34,6 +34,7 @@ void dvb_desc_terrestrial_delivery_init(struct dvb_v5_fe_parms *parms, const uin
 			tdel->length);
 	bswap32(tdel->centre_frequency);
 	bswap32(tdel->reserved_future_use2);
+	return 0;
 }
 
 void dvb_desc_terrestrial_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)

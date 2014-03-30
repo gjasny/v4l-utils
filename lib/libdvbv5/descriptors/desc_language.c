@@ -23,7 +23,7 @@
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
-void dvb_desc_language_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+int dvb_desc_language_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_language *lang = (struct dvb_desc_language *) desc;
 
@@ -32,6 +32,7 @@ void dvb_desc_language_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, s
 	lang->language[2] = buf[2];
 	lang->language[3] = '\0';
 	lang->audio_type  = buf[3];
+	return 0;
 }
 
 void dvb_desc_language_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)

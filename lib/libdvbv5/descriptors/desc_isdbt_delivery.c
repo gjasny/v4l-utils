@@ -22,7 +22,7 @@
 #include <libdvbv5/desc_isdbt_delivery.h>
 #include <libdvbv5/dvb-fe.h>
 
-void isdbt_desc_delivery_init(struct dvb_v5_fe_parms *parms,
+int isdbt_desc_delivery_init(struct dvb_v5_fe_parms *parms,
 			      const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct isdbt_desc_terrestrial_delivery_system *d = (void *)desc;
@@ -38,16 +38,17 @@ void isdbt_desc_delivery_init(struct dvb_v5_fe_parms *parms,
 
 	d->num_freqs = d->length / 2;
 	if (!len)
-		return;
+		return -1;
 	d->frequency = malloc(d->num_freqs * sizeof(*d->frequency));
 	if (!d->frequency) {
 		dvb_perror("Can't allocate space for ISDB-T frequencies");
-		return;
+		return -2;
 	}
 	memcpy(d->frequency, p, d->num_freqs * sizeof(*d->frequency));
 
 	for (i = 0; i < d->num_freqs; i++)
 		bswap16(d->frequency[i]);
+	return 0;
 }
 
 static const char *interval_name[] = {

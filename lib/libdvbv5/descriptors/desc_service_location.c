@@ -22,7 +22,7 @@
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
-void dvb_desc_service_location_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+int dvb_desc_service_location_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_service_location *service_location = (struct dvb_desc_service_location *) desc;
 	const uint8_t *endbuf = buf + desc->length;
@@ -32,7 +32,7 @@ void dvb_desc_service_location_init(struct dvb_v5_fe_parms *parms, const uint8_t
 
 	if (buf + size > endbuf) {
 		dvb_logerr("%s: short read %zd/%zd bytes", __FUNCTION__, endbuf - buf, size);
-		return;
+		return -1;
 	}
 
 	memcpy(desc->data, buf, size);
@@ -40,12 +40,12 @@ void dvb_desc_service_location_init(struct dvb_v5_fe_parms *parms, const uint8_t
 	buf += size;
 
 	if (service_location->elements == 0)
-		return;
+		return 0;
 
 	size = service_location->elements * sizeof(struct dvb_desc_service_location_element);
 	if (buf + size > endbuf) {
 		dvb_logerr("%s: short read %zd/%zd bytes", __FUNCTION__, endbuf - buf, size);
-		return;
+		return -2;
 	}
 	service_location->element = malloc(size);
 	element = service_location->element;
@@ -56,6 +56,7 @@ void dvb_desc_service_location_init(struct dvb_v5_fe_parms *parms, const uint8_t
 		bswap16(element->bitfield);
 		element++;
 	}
+	return 0;
 }
 
 void dvb_desc_service_location_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)

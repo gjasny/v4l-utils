@@ -59,7 +59,7 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
+int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 			       const uint8_t *buf,
 			       struct dvb_extension_descriptor *ext,
 			       void *desc);

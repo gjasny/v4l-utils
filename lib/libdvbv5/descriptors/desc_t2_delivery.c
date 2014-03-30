@@ -24,7 +24,7 @@
 #include <libdvbv5/desc_t2_delivery.h>
 #include <libdvbv5/dvb-fe.h>
 
-void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
+int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 			       const uint8_t *buf,
 			       struct dvb_extension_descriptor *ext,
 			       void *desc)
@@ -39,7 +39,7 @@ void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 
 	if (desc_len < len) {
 		dvb_logwarn("T2 delivery descriptor is too small");
-		return;
+		return -1;
 	}
 	if (desc_len < len2) {
 		memcpy(p, buf, len);
@@ -48,7 +48,7 @@ void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 		if (desc_len != len)
 			dvb_logwarn("T2 delivery descriptor is truncated");
 
-		return;
+		return -2;
 	}
 	memcpy(p, buf, len2);
 	p += len2;
@@ -68,7 +68,7 @@ void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 				     sizeof(*d->centre_frequency));
 	if (!d->centre_frequency) {
 		dvb_perror("Out of memory");
-		return;
+		return -3;
 	}
 
 	memcpy(d->centre_frequency, p, sizeof(*d->centre_frequency) * d->frequency_loop_length);
@@ -83,12 +83,13 @@ void dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 	d->subcell = calloc(d->subcel_info_loop_length, sizeof(*d->subcell));
 	if (!d->subcell) {
 		dvb_perror("Out of memory");
-		return;
+		return -4;
 	}
 	memcpy(d->subcell, p, sizeof(*d->subcell) * d->subcel_info_loop_length);
 
 	for (i = 0; i < d->subcel_info_loop_length; i++)
 		bswap16(d->subcell[i].transposer_frequency);
+	return 0;
 }
 
 void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,

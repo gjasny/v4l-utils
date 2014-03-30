@@ -24,7 +24,7 @@
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>
 
-void dvb_desc_ts_info_init(struct dvb_v5_fe_parms *parms,
+int dvb_desc_ts_info_init(struct dvb_v5_fe_parms *parms,
 			      const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_ts_info *d = (void *)desc;
@@ -59,6 +59,7 @@ void dvb_desc_ts_info_init(struct dvb_v5_fe_parms *parms,
 		bswap16(d->service_id[i]);
 
 	p += sizeof(*d->service_id) * t->num_of_service;
+	return 0;
 }
 
 void dvb_desc_ts_info_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)

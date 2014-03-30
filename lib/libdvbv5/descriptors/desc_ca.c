@@ -23,7 +23,7 @@
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
-void dvb_desc_ca_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+int dvb_desc_ca_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	size_t size = offsetof(struct dvb_desc_ca, dvb_desc_ca_field_last) - offsetof(struct dvb_desc_ca, dvb_desc_ca_field_first);
 	struct dvb_desc_ca *d = (struct dvb_desc_ca *) desc;
@@ -43,6 +43,7 @@ void dvb_desc_ca_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct 
 	}
 	/*hexdump(parms, "desc ca ", buf, desc->length);*/
 	/*dvb_desc_ca_print(parms, desc);*/
+	return 0;
 }
 
 void dvb_desc_ca_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)

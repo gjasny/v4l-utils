@@ -27,7 +27,7 @@
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>
 
-void dvb_desc_logical_channel_init(struct dvb_v5_fe_parms *parms,
+int dvb_desc_logical_channel_init(struct dvb_v5_fe_parms *parms,
 			      const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_logical_channel *d = (void *)desc;
@@ -38,7 +38,7 @@ void dvb_desc_logical_channel_init(struct dvb_v5_fe_parms *parms,
 	d->lcn = malloc(d->length);
 	if (!d->lcn) {
 		dvb_perror("Out of memory!");
-		return;
+		return -1;
 	}
 
 	memcpy(d->lcn, p, d->length);
@@ -49,6 +49,7 @@ void dvb_desc_logical_channel_init(struct dvb_v5_fe_parms *parms,
 		bswap16(d->lcn[i].service_id);
 		bswap16(d->lcn[i].bitfield);
 	}
+	return 0;
 }
 
 void dvb_desc_logical_channel_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)

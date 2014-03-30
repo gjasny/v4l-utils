@@ -23,7 +23,7 @@
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
-void dvb_desc_ca_identifier_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+int dvb_desc_ca_identifier_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_ca_identifier *d = (struct dvb_desc_ca_identifier *) desc;
 	int i;
@@ -32,12 +32,13 @@ void dvb_desc_ca_identifier_init(struct dvb_v5_fe_parms *parms, const uint8_t *b
 	d->caids = malloc(d->length);
 	if (!d->caids) {
 		dvb_logerr("dvb_desc_ca_identifier_init: out of memory");
-		return;
+		return -1;
 	}
 	for (i = 0; i < d->caid_count; i++) {
 		d->caids[i] = ((uint16_t *) buf)[i];
 		bswap16(d->caids[i]);
 	}
+	return 0;
 }
 
 void dvb_desc_ca_identifier_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)

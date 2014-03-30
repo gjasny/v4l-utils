@@ -40,7 +40,7 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void dvb_desc_service_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+int dvb_desc_service_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 void dvb_desc_service_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
 void dvb_desc_service_free (struct dvb_desc *desc);
 

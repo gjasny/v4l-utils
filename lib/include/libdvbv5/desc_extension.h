@@ -49,7 +49,7 @@ struct dvb_extension_descriptor {
 } __attribute__((packed));
 
 
-typedef void (*dvb_desc_ext_init_func) (struct dvb_v5_fe_parms *parms,
+typedef int  (*dvb_desc_ext_init_func) (struct dvb_v5_fe_parms *parms,
 					const uint8_t *buf,
 					struct dvb_extension_descriptor *ext,
 					void *desc);
@@ -71,7 +71,7 @@ struct dvb_ext_descriptor {
 extern "C" {
 #endif
 
-void extension_descriptor_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+int extension_descriptor_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
 void extension_descriptor_free(struct dvb_desc *descriptor);
 void extension_descriptor_print(struct dvb_v5_fe_parms *parms,
 				const struct dvb_desc *desc);

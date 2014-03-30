@@ -66,9 +66,10 @@ static void dvb_desc_init(uint8_t type, uint8_t length, struct dvb_desc *desc)
 	desc->next   = NULL;
 }
 
-static void dvb_desc_default_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+static int dvb_desc_default_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	memcpy(desc->data, buf, desc->length);
+	return 0;
 }
 
 static void dvb_desc_default_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
@@ -97,7 +98,7 @@ const struct dvb_table_init dvb_table_initializers[] = {
 char *default_charset = "iso-8859-1";
 char *output_charset = "utf-8";
 
-void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+int dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			   uint16_t buflen, struct dvb_desc **head_desc)
 {
 	const uint8_t *ptr = buf, *endbuf = buf + buflen;
@@ -116,7 +117,7 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		if (ptr + desc_len > endbuf) {
 			dvb_logerr("short read of %zd/%d bytes parsing descriptor %#02x",
 				   endbuf - ptr, desc_len, desc_type);
-			return;
+			return -1;
 		}
 
 		switch (parms->verbose) {
@@ -143,16 +144,19 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		}
 		if (!size) {
 			dvb_logerr("descriptor type 0x%02x has no size defined", desc_type);
-			return;
+			return -2;
 		}
 
 		current = calloc(1, size);
 		if (!current) {
-			dvb_perror("Out of memory");
-			return;
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
 		}
 		dvb_desc_init(desc_type, desc_len, current); /* initialize the standard header */
-		init(parms, ptr, current);
+		if (init(parms, ptr, current) != 0) {
+			free(current);
+			return -4;
+		}
 		if (!*head_desc)
 			*head_desc = current;
 		if (last)
@@ -160,6 +164,7 @@ void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		last = current;
 		ptr += current->length;     /* standard descriptor header plus descriptor length */
 	}
+	return 0;
 }
 
 void dvb_print_descriptors(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc)

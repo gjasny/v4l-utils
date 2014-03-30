@@ -24,7 +24,7 @@
 #include <libdvbv5/dvb-fe.h>
 #include "parse_string.h"
 
-void dvb_desc_network_name_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
+int dvb_desc_network_name_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_network_name *net = (struct dvb_desc_network_name *) desc;
 	uint8_t len;  /* the length of the string in the input data */
@@ -36,6 +36,7 @@ void dvb_desc_network_name_init(struct dvb_v5_fe_parms *parms, const uint8_t *bu
 	net->network_name_emph = NULL;
 	parse_string(parms, &net->network_name, &net->network_name_emph, buf, len1, default_charset, output_charset);
 	buf += len;
+	return 0;
 }
 
 void dvb_desc_network_name_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
