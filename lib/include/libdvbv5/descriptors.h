@@ -65,14 +65,6 @@ struct dvb_desc {
 	uint8_t data[];
 } __attribute__((packed));
 
-void dvb_desc_default_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
-#ifdef __cplusplus
-extern "C" {
-#endif
-void dvb_desc_default_print  (struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
-#ifdef __cplusplus
-}
-#endif
 
 #define dvb_desc_foreach( _desc, _tbl ) \
 	for( struct dvb_desc *_desc = _tbl->descriptor; _desc; _desc = _desc->next ) \
@@ -81,6 +73,10 @@ void dvb_desc_default_print  (struct dvb_v5_fe_parms *parms, const struct dvb_de
 	for( _struct *_desc = (_struct *) _tbl->descriptor; _desc; _desc = (_struct *) _desc->next ) \
 		if(_desc->type == _type) \
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 uint32_t bcd(uint32_t bcd);
 
 void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *buf, int len);
@@ -88,6 +84,10 @@ void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned c
 void dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, uint16_t section_length, struct dvb_desc **head_desc);
 void dvb_free_descriptors(struct dvb_desc **list);
 void dvb_print_descriptors(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc);
+
+#ifdef __cplusplus
+}
+#endif
 
 struct dvb_v5_fe_parms;
 
