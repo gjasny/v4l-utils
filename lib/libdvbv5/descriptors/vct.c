@@ -23,11 +23,10 @@
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>
 
-void atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			ssize_t buflen, uint8_t *table, ssize_t *table_length)
+ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			ssize_t buflen, struct atsc_table_vct *vct, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
-	struct atsc_table_vct *vct = (void *)table;
 	struct atsc_table_vct_channel **head = &vct->channel;
 	int i, n;
 	size_t size = offsetof(struct atsc_table_vct, channel);
@@ -35,7 +34,7 @@ void atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	if (p + size > endbuf) {
 		dvb_logerr("VCT table was truncated. Need %zu bytes, but has only %zu.",
 			   size, buflen);
-		return;
+		return -1;
 	}
 
 	if (*table_length > 0) {
@@ -99,7 +98,7 @@ void atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		if (endbuf - p < channel->descriptors_length) {
 			dvb_logerr("%s: short read %d/%zd bytes", __func__,
 				   channel->descriptors_length, endbuf - p);
-			return;
+			return -2;
 		}
 
 		/* get the descriptors for each program */
@@ -118,7 +117,7 @@ void atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		if (endbuf - p < d->descriptor_length) {
 			dvb_logerr("%s: short read %d/%zd bytes", __func__,
 				   d->descriptor_length, endbuf - p);
-			return;
+			return -3;
 		}
 		dvb_parse_descriptors(parms, p, d->descriptor_length,
 				      &vct->descriptor);
@@ -126,6 +125,8 @@ void atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	if (endbuf - p)
 		dvb_logerr("VCT table has %zu spurious bytes at the end.",
 			   endbuf - p);
+	*table_length = p - buf;
+	return p - buf;
 }
 
 void atsc_table_vct_free(struct atsc_table_vct *vct)

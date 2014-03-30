@@ -22,11 +22,10 @@
 #include <libdvbv5/nit.h>
 #include <libdvbv5/dvb-fe.h>
 
-void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			ssize_t buflen, uint8_t *table, ssize_t *table_length)
+ssize_t dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			ssize_t buflen, struct dvb_table_nit *nit, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
-	struct dvb_table_nit *nit = (void *)table;
 	struct dvb_desc **head_desc = &nit->descriptor;
 	struct dvb_table_nit_transport **head = &nit->transport;
 	size_t size;
@@ -43,7 +42,7 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		size = offsetof(struct dvb_table_nit, descriptor);
 		if (p + size > endbuf) {
 			dvb_logerr("NIT table (cont) was truncated");
-			return;
+			return -1;
 		}
 		p += size;
 		t = (struct dvb_table_nit *)buf;
@@ -55,9 +54,9 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		if (p + size > endbuf) {
 			dvb_logerr("NIT table was truncated while filling dvb_table_nit. Need %zu bytes, but has only %zu.",
 				   size, buflen);
-			return;
+			return -2;
 		}
-		memcpy(table, p, size);
+		memcpy(nit, p, size);
 		p += size;
 
 		*table_length = sizeof(struct dvb_table_nit);
@@ -71,7 +70,7 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	if (p + size > endbuf) {
 		dvb_logerr("NIT table was truncated while getting NIT descriptors. Need %zu bytes, but has only %zu.",
 			   size, endbuf - p);
-		return;
+		return -3;
 	}
 	dvb_parse_descriptors(parms, p, size, head_desc);
 	p += size;
@@ -80,7 +79,7 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	if (p + size > endbuf) {
 		dvb_logerr("NIT table was truncated while getting NIT transports. Need %zu bytes, but has only %zu.",
 			   size, endbuf - p);
-		return;
+		return -4;
 	}
 	p += size;
 
@@ -90,8 +89,8 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 		transport = malloc(sizeof(struct dvb_table_nit_transport));
 		if (!transport) {
-			dvb_perror("Out of memory");
-			return;
+			dvb_perror(__func__);
+			return -5;
 		}
 		memcpy(transport, p, size);
 		p += size;
@@ -111,7 +110,7 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		if (p + transport->section_length > endbuf) {
 			dvb_logerr("NIT table was truncated while getting NIT transport descriptors. Need %u bytes, but has only %zu.",
 				   transport->section_length, endbuf - p);
-			return;
+			return -6;
 		}
 		dvb_parse_descriptors(parms, p, transport->section_length, head_desc);
 		p += transport->section_length;
@@ -119,6 +118,8 @@ void dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	if (endbuf - p)
 		dvb_logerr("NIT table has %zu spurious bytes at the end.",
 			   endbuf - p);
+	*table_length = p - buf;
+	return p - buf;
 }
 
 void dvb_table_nit_free(struct dvb_table_nit *nit)

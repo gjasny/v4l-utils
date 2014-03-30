@@ -25,18 +25,17 @@
 
 #include <string.h> /* memcpy */
 
-void dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			ssize_t buflen, uint8_t *table, ssize_t *table_length)
+ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			ssize_t buflen, struct dvb_table_pmt *pmt, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
-	struct dvb_table_pmt *pmt = (void *)table;
 	struct dvb_table_pmt_stream **head = &pmt->stream;
 	size_t size;
 
 	if (buf[0] != DVB_TABLE_PMT) {
 		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x", __func__, buf[0], DVB_TABLE_PMT);
 		*table_length = 0;
-		return;
+		return -1;
 	}
 
 	if (*table_length > 0) {
@@ -48,7 +47,7 @@ void dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
 				   size, endbuf - p);
-			return;
+			return -2;
 		}
 		memcpy(pmt, p, size);
 		p += size;
@@ -109,6 +108,7 @@ void dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			   __func__, endbuf - p);
 
 	*table_length = p - buf;
+	return p - buf;
 }
 
 void dvb_table_pmt_free(struct dvb_table_pmt *pmt)

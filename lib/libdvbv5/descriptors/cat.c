@@ -22,10 +22,9 @@
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
-void dvb_table_cat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			ssize_t buflen, uint8_t *table, ssize_t *table_length)
+ssize_t dvb_table_cat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			ssize_t buflen, struct dvb_table_cat *cat, ssize_t *table_length)
 {
-	struct dvb_table_cat *cat = (void *)table;
 	struct dvb_desc **head_desc = &cat->descriptor;
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
 	size_t size;
@@ -33,7 +32,7 @@ void dvb_table_cat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	if (buf[0] != DVB_TABLE_CAT) {
 		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x", __func__, buf[0], DVB_TABLE_CAT);
 		*table_length = 0;
-		return;
+		return -1;
 	}
 
 	if (*table_length > 0) {
@@ -46,15 +45,18 @@ void dvb_table_cat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	if (p + size > endbuf) {
 		dvb_logerr("CAT table was truncated while filling dvb_table_cat. Need %zu bytes, but has only %zu.",
 			   size, buflen);
-		return;
+		return -2;
 	}
 
-	memcpy(table, p, size);
+	memcpy(cat, p, size);
 	p += size;
 	*table_length = sizeof(struct dvb_table_cat);
 
 	size = endbuf - p;
 	dvb_parse_descriptors(parms, p, size, head_desc);
+
+	*table_length = p - buf;
+	return p - buf;
 }
 
 void dvb_table_cat_free(struct dvb_table_cat *cat)

@@ -21,10 +21,10 @@
 #include <libdvbv5/mgt.h>
 #include <libdvbv5/dvb-fe.h>
 
-void atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length)
+ssize_t atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+		ssize_t buflen, struct atsc_table_mgt *mgt, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4; /* minus CRC */
-	struct atsc_table_mgt *mgt = (struct atsc_table_mgt *) table;
 	struct dvb_desc **head_desc;
 	struct atsc_table_mgt_table **head;
 	int i = 0;
@@ -34,7 +34,7 @@ void atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssiz
 	if (p + size > endbuf) {
 		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
 			   size, endbuf - p);
-		return;
+		return -1;
 	}
 
 	if (*table_length > 0) {
@@ -48,7 +48,7 @@ void atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssiz
 
 		/* FIXME: read current mgt->tables for loop below */
 	} else {
-		memcpy(table, p, size);
+		memcpy(mgt, p, size);
 		*table_length = sizeof(struct atsc_table_mgt);
 
 		bswap16(mgt->tables);
@@ -67,7 +67,7 @@ void atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssiz
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
 				   size, endbuf - p);
-			return;
+			return -2;
 		}
 		table = (struct atsc_table_mgt_table *) malloc(sizeof(struct atsc_table_mgt_table));
 		memcpy(table, p, size);
@@ -90,14 +90,18 @@ void atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssiz
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
 				   size, endbuf - p);
-			return;
+			return -3;
 		}
 		dvb_parse_descriptors(parms, p, size, &table->descriptor);
 
 		p += size;
 		last = table;
 	}
+
 	/* TODO: parse MGT descriptors here into head_desc */
+
+	*table_length = p - buf;
+	return p - buf;
 }
 
 void atsc_table_mgt_free(struct atsc_table_mgt *mgt)

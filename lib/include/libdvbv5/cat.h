@@ -40,7 +40,7 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void dvb_table_cat_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length);
+ssize_t dvb_table_cat_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct dvb_table_cat *cat, ssize_t *table_length);
 void dvb_table_cat_free(struct dvb_table_cat *cat);
 void dvb_table_cat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_cat *t);
 

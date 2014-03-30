@@ -78,7 +78,7 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void atsc_table_eit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table, ssize_t *table_length);
+ssize_t atsc_table_eit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct atsc_table_eit *eit, ssize_t *table_length);
 void atsc_table_eit_free(struct atsc_table_eit *eit);
 void atsc_table_eit_print(struct dvb_v5_fe_parms *parms, struct atsc_table_eit *eit);
 void atsc_time(const uint32_t start_time, struct tm *tm);

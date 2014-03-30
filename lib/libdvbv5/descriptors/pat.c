@@ -23,10 +23,9 @@
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
-void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			ssize_t buflen, uint8_t *table, ssize_t *table_length)
+ssize_t dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			ssize_t buflen, struct dvb_table_pat *pat, ssize_t *table_length)
 {
-	struct dvb_table_pat *pat = (void *)table;
 	struct dvb_table_pat_program **head = &pat->program;
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
 	size_t size;
@@ -40,9 +39,9 @@ void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		if (p + size > endbuf) {
 			dvb_logerr("PAT table was truncated. Need %zu bytes, but has only %zu.",
 					size, buflen);
-			return;
+			return -1;
 		}
-		memcpy(table, buf, size);
+		memcpy(pat, buf, size);
 		p += size;
 		pat->programs = 0;
 		pat->program = NULL;
@@ -56,7 +55,7 @@ void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		pgm = malloc(sizeof(struct dvb_table_pat_program));
 		if (!pgm) {
 			dvb_perror("Out of memory");
-			return;
+			return -2;
 		}
 
 		memcpy(pgm, p, size);
@@ -74,6 +73,8 @@ void dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	if (endbuf - p)
 		dvb_logerr("PAT table has %zu spurious bytes at the end.",
 			   endbuf - p);
+	*table_length = p - buf;
+	return p - buf;
 }
 
 void dvb_table_pat_free(struct dvb_table_pat *pat)
