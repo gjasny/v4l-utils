@@ -20,7 +20,6 @@
  */
 
 #include <libdvbv5/desc_ca_identifier.h>
-#include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
 int dvb_desc_ca_identifier_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)

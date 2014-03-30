@@ -19,7 +19,6 @@
  * Described on ARIB STD-B10 as TS information descriptor
  */
 
-#include <libdvbv5/descriptors.h>
 #include <libdvbv5/desc_ts_info.h>
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>

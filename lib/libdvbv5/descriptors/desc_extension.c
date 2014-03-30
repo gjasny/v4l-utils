@@ -18,7 +18,6 @@
  *
  */
 
-#include <libdvbv5/descriptors.h>
 #include <libdvbv5/desc_extension.h>
 #include <libdvbv5/desc_t2_delivery.h>
 #include <libdvbv5/dvb-fe.h>

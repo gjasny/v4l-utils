@@ -20,7 +20,6 @@
  */
 
 #include <libdvbv5/desc_event_extended.h>
-#include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>
 

@@ -20,7 +20,6 @@
  */
 
 #include <libdvbv5/desc_service_list.h>
-#include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
 /* FIXME: implement */

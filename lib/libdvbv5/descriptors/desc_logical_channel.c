@@ -22,7 +22,6 @@
  *	http://tdt.telecom.pt/recursos/apresentacoes/Signalling Specifications for DTT deployment in Portugal.pdf
  */
 
-#include <libdvbv5/descriptors.h>
 #include <libdvbv5/desc_logical_channel.h>
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>

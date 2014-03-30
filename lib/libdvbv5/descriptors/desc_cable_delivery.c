@@ -21,7 +21,6 @@
  */
 
 #include <libdvbv5/desc_cable_delivery.h>
-#include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
 int dvb_desc_cable_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
