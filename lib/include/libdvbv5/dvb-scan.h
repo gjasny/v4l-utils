@@ -57,11 +57,32 @@ struct dvb_v5_descriptors {
 	unsigned num_program;
 };
 
-int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, unsigned char **table,
+struct dvb_table_filter {
+	/* Input data */
+	unsigned char tid;
+	uint16_t pid;
+	int ts_id;
+	void **table;
+
+	int allow_section_gaps;
+
+	/*
+	 * Private temp data used by dvb_read_sections().
+	 * Should not be filled outside dvb-scan.c, as they'll be
+	 * overrided
+	 */
+	void *priv;
+};
+
+int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, void **table,
 		unsigned timeout);
 
-int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, int id, uint8_t **table,
+int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, int ts_id, void **table,
 		unsigned timeout);
+
+int dvb_read_sections(struct dvb_v5_fe_parms *parms, int dmx_fd,
+			     struct dvb_table_filter *sect,
+			     unsigned timeout);
 
 struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system,
 						       int verbose);
