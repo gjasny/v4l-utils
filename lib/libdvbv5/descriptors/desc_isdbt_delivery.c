@@ -83,7 +83,6 @@ void isdbt_desc_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_d
 	const struct isdbt_desc_terrestrial_delivery_system *d = (const void *) desc;
 	int i;
 
-	dvb_log("|        ISDB-T delivery");
 	dvb_log("|           transmission mode %s (%d)",
 		tm_name[d->transmission_mode], d->transmission_mode);
 	dvb_log("|           guard interval    %s (%d)",

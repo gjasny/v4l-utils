@@ -39,7 +39,6 @@ void dvb_desc_terrestrial_delivery_init(struct dvb_v5_fe_parms *parms, const uin
 void dvb_desc_terrestrial_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_terrestrial_delivery *tdel = (const struct dvb_desc_terrestrial_delivery *) desc;
-	dvb_log("|       terrestrial delivery");
 	dvb_log("|           length                %d", tdel->length);
 	dvb_log("|           centre frequency      %d", tdel->centre_frequency * 10);
 	dvb_log("|           mpe_fec_indicator     %d", tdel->mpe_fec_indicator);

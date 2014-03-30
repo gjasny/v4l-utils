@@ -109,7 +109,7 @@ void dvb_mpeg_pes_print(struct dvb_v5_fe_parms *parms, struct dvb_mpeg_pes *pes)
 		   pes->stream_id == DVB_MPEG_STREAM_DIRECTORY ||
 		   pes->stream_id == DVB_MPEG_STREAM_DSMCC ||
 		   pes->stream_id == DVB_MPEG_STREAM_H222E ) {
-		dvb_log("  mpeg pes unsupported stream type %#04x", pes->stream_id);
+		dvb_log("  mpeg pes unsupported stream type 0x%04x", pes->stream_id);
 	} else {
 		dvb_loginfo("  mpeg pes optional");
 		dvb_loginfo("   - two                      %d", pes->optional->two);

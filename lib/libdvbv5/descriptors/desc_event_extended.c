@@ -74,6 +74,6 @@ void dvb_desc_event_extended_free(struct dvb_desc *desc)
 void dvb_desc_event_extended_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_event_extended *event = (const struct dvb_desc_event_extended *) desc;
-	dvb_log("|   Description   '%s'", event->text);
+	dvb_log("|           '%s'", event->text);
 }
 

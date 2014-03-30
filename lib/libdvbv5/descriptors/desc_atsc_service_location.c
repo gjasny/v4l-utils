@@ -64,7 +64,6 @@ void atsc_desc_service_location_print(struct dvb_v5_fe_parms *parms, const struc
 	struct atsc_desc_service_location_elementary *el = s_loc->elementary;
 	int i;
 
-	dvb_log("|       service location");
 	dvb_log("|           pcr PID               %d", s_loc->pcr_pid);
 	dvb_log("|\\ elementary service - %d elementaries", s_loc->number_elements);
 	for (i = 0; i < s_loc->number_elements; i++) {

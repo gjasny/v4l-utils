@@ -41,7 +41,6 @@ void dvb_desc_cable_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *
 void dvb_desc_cable_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_cable_delivery *cable = (const struct dvb_desc_cable_delivery *) desc;
-	dvb_log("|        cable delivery");
 	dvb_log("|           length            %d", cable->length);
 	dvb_log("|           frequency         %d", cable->frequency);
 	dvb_log("|           fec outer         %d", cable->fec_outer);

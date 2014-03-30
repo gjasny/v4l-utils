@@ -143,7 +143,7 @@ void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *ni
 	const struct dvb_table_nit_transport *transport = nit->transport;
 	uint16_t transports = 0;
 	while(transport) {
-		dvb_log("|- Transport: %-7d Network: %-7d", transport->transport_id, transport->network_id);
+		dvb_log("|- transport %04x network %04x", transport->transport_id, transport->network_id);
 		dvb_print_descriptors(parms, transport->descriptor);
 		transport = transport->next;
 		transports++;

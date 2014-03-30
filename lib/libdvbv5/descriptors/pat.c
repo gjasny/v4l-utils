@@ -94,10 +94,10 @@ void dvb_table_pat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_pat *pa
 
 	dvb_log("PAT");
 	dvb_table_header_print(parms, &pat->header);
-	dvb_log("|\\  program  service (%d programs)", pat->programs);
+	dvb_log("|\\ %d program%s", pat->programs, pat->programs != 1 ? "s" : "");
 
 	while (pgm) {
-		dvb_log("|- %7d %7d", pgm->pid, pgm->service_id);
+		dvb_log("|- program 0x%04x  ->  service 0x%04x", pgm->pid, pgm->service_id);
 		pgm = pgm->next;
 	}
 }

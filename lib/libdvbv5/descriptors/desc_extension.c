@@ -178,7 +178,7 @@ void extension_descriptor_print(struct dvb_v5_fe_parms *parms,
 {
 	struct dvb_extension_descriptor *ext = (void *)desc;
 	uint8_t type = ext->extension_code;
-	dvb_log("Extension descriptor %s type 0x%02x",
+	dvb_log("|           descriptor %s type 0x%02x",
 		dvb_ext_descriptors[type].name, type);
 
 	if (dvb_ext_descriptors[type].print)

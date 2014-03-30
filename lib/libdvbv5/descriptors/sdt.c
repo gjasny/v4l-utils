@@ -73,7 +73,7 @@ void dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		p += service->section_length;
 	}
 	if (endbuf - p)
-		dvb_logerr("PAT table has %zu spurious bytes at the end.",
+		dvb_logerr("SDT table has %zu spurious bytes at the end.",
 			   endbuf - p);
 }
 
@@ -94,11 +94,11 @@ void dvb_table_sdt_print(struct dvb_v5_fe_parms *parms, struct dvb_table_sdt *sd
 	dvb_log("SDT");
 	dvb_table_header_print(parms, &sdt->header);
 	dvb_log("|- network_id         %d", sdt->network_id);
-	dvb_log("|\\  service_id");
+	dvb_log("|\\");
 	const struct dvb_table_sdt_service *service = sdt->service;
 	uint16_t services = 0;
 	while(service) {
-		dvb_log("|- %7d", service->service_id);
+		dvb_log("|- service 0x%04x", service->service_id);
 		dvb_log("|   EIT schedule          %d", service->EIT_schedule);
 		dvb_log("|   EIT present following %d", service->EIT_present_following);
 		dvb_log("|   free CA mode          %d", service->free_CA_mode);

@@ -59,11 +59,11 @@ void dvb_desc_frequency_list_init(struct dvb_v5_fe_parms *parms, const uint8_t *
 void dvb_desc_frequency_list_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_frequency_list *d = (const struct dvb_desc_frequency_list *) desc;
-	dvb_log("|       frequency list type: %d", d->freq_type);
+	dvb_log("|           type: %d", d->freq_type);
 	int i = 0;
 
 	for (i = 0; i < d->frequencies; i++) {
-		dvb_log("|       frequency : %u", d->frequency[i]);
+		dvb_log("|           frequency : %u", d->frequency[i]);
 	}
 }
 

@@ -98,7 +98,6 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 	const struct dvb_desc_t2_delivery *d = desc;
 	int i;
 
-	dvb_log("|       DVB-T2 delivery");
 	dvb_log("|           plp_id                    %d", d->plp_id);
 	dvb_log("|           system_id                 %d", d->system_id);
 

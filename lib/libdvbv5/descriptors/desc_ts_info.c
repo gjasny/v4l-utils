@@ -69,7 +69,6 @@ void dvb_desc_ts_info_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc
 
 	t = &d->transmission_type;
 
-	dvb_log("|        TS Information");
 	dvb_log("|           remote key ID     %d", d->remote_control_key_id);
 	dvb_log("|           name              %s", d->ts_name);
 	dvb_log("|           emphasis name     %s", d->ts_name_emph);

@@ -28,7 +28,7 @@ ssize_t dvb_mpeg_ts_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssiz
 	const uint8_t *p = buf;
 
 	if (buf[0] != DVB_MPEG_TS) {
-		dvb_logerr("mpeg ts invalid marker %#02x, sould be %#02x", buf[0], DVB_MPEG_TS);
+		dvb_logerr("mpeg ts invalid marker 0x%02x, sould be 0x%02x", buf[0], DVB_MPEG_TS);
 		*table_length = 0;
 		return -1;
 	}
@@ -55,26 +55,25 @@ void dvb_mpeg_ts_free(struct dvb_mpeg_ts *ts)
 
 void dvb_mpeg_ts_print(struct dvb_v5_fe_parms *parms, struct dvb_mpeg_ts *ts)
 {
-	dvb_loginfo("MPEG TS");
-	dvb_loginfo(" - sync byte       0x%02x", ts->sync_byte);
-	dvb_loginfo(" - tei                %d", ts->tei);
-	dvb_loginfo(" - payload_start      %d", ts->payload_start);
-	dvb_loginfo(" - priority           %d", ts->priority);
-	dvb_loginfo(" - pid           0x%04x", ts->pid);
-	dvb_loginfo(" - scrambling         %d", ts->scrambling);
-	dvb_loginfo(" - adaptation_field   %d", ts->adaptation_field);
-	dvb_loginfo(" - payload present    %d", ts->payload);
-	dvb_loginfo(" - continuity_counter %d", ts->continuity_counter);
-	if (ts->adaptation_field) {
-		dvb_loginfo(" Adaption Field");
-                dvb_loginfo("   - length         %d", ts->adaption->length);
-                dvb_loginfo("   - discontinued   %d", ts->adaption->discontinued);
-                dvb_loginfo("   - random_access  %d", ts->adaption->random_access);
-                dvb_loginfo("   - priority       %d", ts->adaption->priority);
-                dvb_loginfo("   - PCR            %d", ts->adaption->PCR);
-                dvb_loginfo("   - OPCR           %d", ts->adaption->OPCR);
-                dvb_loginfo("   - splicing_point %d", ts->adaption->splicing_point);
-                dvb_loginfo("   - private_data   %d", ts->adaption->private_data);
-                dvb_loginfo("   - extension      %d", ts->adaption->extension);
+	dvb_log("MPEG TS");
+	dvb_log(" - sync byte        0x%02x", ts->sync_byte);
+	dvb_log(" - tei                %d", ts->tei);
+	dvb_log(" - payload_start      %d", ts->payload_start);
+	dvb_log(" - priority           %d", ts->priority);
+	dvb_log(" - pid              0x%04x", ts->pid);
+	dvb_log(" - scrambling         %d", ts->scrambling);
+	dvb_log(" - adaptation_field   %d", ts->adaptation_field);
+	dvb_log(" - continuity_counter %d", ts->continuity_counter);
+	if (ts->adaptation_field & 0x2) {
+		dvb_log(" Adaption Field");
+                dvb_log("   - length         %d", ts->adaption->length);
+                dvb_log("   - discontinued   %d", ts->adaption->discontinued);
+                dvb_log("   - random_access  %d", ts->adaption->random_access);
+                dvb_log("   - priority       %d", ts->adaption->priority);
+                dvb_log("   - PCR            %d", ts->adaption->PCR);
+                dvb_log("   - OPCR           %d", ts->adaption->OPCR);
+                dvb_log("   - splicing_point %d", ts->adaption->splicing_point);
+                dvb_log("   - private_data   %d", ts->adaption->private_data);
+                dvb_log("   - extension      %d", ts->adaption->extension);
 	}
 }

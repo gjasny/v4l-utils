@@ -46,7 +46,7 @@ void dvb_desc_ca_identifier_print(struct dvb_v5_fe_parms *parms, const struct dv
 	int i;
 
 	for (i = 0; i < d->caid_count; i++)
-		dvb_log("|           caid %d            %04x", i, d->caids[i]);
+		dvb_log("|           caid %d            0x%04x", i, d->caids[i]);
 }
 
 void dvb_desc_ca_identifier_free(struct dvb_desc *desc)
