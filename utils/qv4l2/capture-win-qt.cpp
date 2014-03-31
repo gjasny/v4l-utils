@@ -69,7 +69,8 @@ void CaptureWinQt::resizeEvent(QResizeEvent *event)
 	paintFrame();
 }
 
-void CaptureWinQt::setFrame(int width, int height, __u32 format, unsigned char *data, const QString &info)
+void CaptureWinQt::setFrame(int width, int height, __u32 format,
+		unsigned char *data, unsigned char *data2, const QString &info)
 {
 	m_data = data;
 

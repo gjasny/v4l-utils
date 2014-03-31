@@ -277,10 +277,10 @@ bool v4l2::s_frequency(int val, bool low)
 	return s_frequency(f);
 }
 
-bool v4l2::g_fmt_cap(v4l2_format &fmt)
+bool v4l2::g_fmt_cap(unsigned type, v4l2_format &fmt)
 {
 	memset(&fmt, 0, sizeof(fmt));
-	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	fmt.type = type;
 	return ioctl(VIDIOC_G_FMT, &fmt) >= 0;
 }
 
@@ -307,14 +307,23 @@ bool v4l2::g_fmt_sliced_vbi(v4l2_format &fmt)
 
 bool v4l2::try_fmt(v4l2_format &fmt)
 {
-	fmt.fmt.pix.field = V4L2_FIELD_ANY;
-	fmt.fmt.pix.bytesperline = 0;
+	if (V4L2_TYPE_IS_MULTIPLANAR(fmt.type)) {
+		fmt.fmt.pix_mp.plane_fmt[0].bytesperline = 0;
+		fmt.fmt.pix_mp.plane_fmt[1].bytesperline = 0;
+	} else {
+		fmt.fmt.pix.bytesperline = 0;
+	}
 	return ioctl("Try Capture Format", VIDIOC_TRY_FMT, &fmt);
 }
 
 bool v4l2::s_fmt(v4l2_format &fmt)
 {
-	fmt.fmt.pix.bytesperline = 0;
+	if (V4L2_TYPE_IS_MULTIPLANAR(fmt.type)) {
+		fmt.fmt.pix_mp.plane_fmt[0].bytesperline = 0;
+		fmt.fmt.pix_mp.plane_fmt[1].bytesperline = 0;
+	} else {
+		fmt.fmt.pix.bytesperline = 0;
+	}
 	return ioctl("Set Capture Format", VIDIOC_S_FMT, &fmt);
 }
 
@@ -380,7 +389,7 @@ bool v4l2::enum_dv_timings(v4l2_enum_dv_timings &timings, bool init, int index)
 	return ioctl(VIDIOC_ENUM_DV_TIMINGS, &timings) >= 0;
 }
 
-bool v4l2::enum_fmt_cap(v4l2_fmtdesc &fmt, bool init, int index)
+bool v4l2::enum_fmt_cap(v4l2_fmtdesc &fmt, unsigned type, bool init, int index)
 {
 	if (init) {
 		memset(&fmt, 0, sizeof(fmt));
@@ -388,7 +397,7 @@ bool v4l2::enum_fmt_cap(v4l2_fmtdesc &fmt, bool init, int index)
 	} else {
 		fmt.index++;
 	}
-	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	fmt.type = type;
 	return ioctl(VIDIOC_ENUM_FMT, &fmt) >= 0;
 }
 
@@ -452,9 +461,13 @@ bool v4l2::reqbufs_mmap(v4l2_requestbuffers &reqbuf, __u32 buftype, int count)
 
 bool v4l2::dqbuf_mmap(v4l2_buffer &buf, __u32 buftype, bool &again)
 {
+	v4l2_plane *planes = buf.m.planes;
+	unsigned length = buf.length;
 	int res;
 
 	memset(&buf, 0, sizeof(buf));
+	buf.length = length;
+	buf.m.planes = planes;
 	buf.type = buftype;
 	buf.memory = V4L2_MEMORY_MMAP;
 	res = ioctl(VIDIOC_DQBUF, &buf);
@@ -464,9 +477,13 @@ bool v4l2::dqbuf_mmap(v4l2_buffer &buf, __u32 buftype, bool &again)
 
 bool v4l2::dqbuf_user(v4l2_buffer &buf, __u32 buftype, bool &again)
 {
+	v4l2_plane *planes = buf.m.planes;
+	unsigned length = buf.length;
 	int res;
 
 	memset(&buf, 0, sizeof(buf));
+	buf.length = length;
+	buf.m.planes = planes;
 	buf.type = buftype;
 	buf.memory = V4L2_MEMORY_USERPTR;
 	res = ioctl(VIDIOC_DQBUF, &buf);
@@ -481,24 +498,37 @@ bool v4l2::qbuf(v4l2_buffer &buf)
 
 bool v4l2::qbuf_mmap(int index, __u32 buftype)
 {
+	v4l2_plane planes[VIDEO_MAX_PLANES];
 	v4l2_buffer buf;
 
 	memset(&buf, 0, sizeof(buf));
 	buf.type = buftype;
 	buf.memory = V4L2_MEMORY_MMAP;
 	buf.index = index;
+	buf.length = 2;
+	buf.m.planes = planes;
 	return qbuf(buf);
 }
 
-bool v4l2::qbuf_user(int index, __u32 buftype, void *ptr, int length)
+bool v4l2::qbuf_user(int index, __u32 buftype, void *ptr[], size_t length[])
 {
+	v4l2_plane planes[VIDEO_MAX_PLANES];
 	v4l2_buffer buf;
 
 	memset(&buf, 0, sizeof(buf));
 	buf.type = buftype;
 	buf.memory = V4L2_MEMORY_USERPTR;
-	buf.m.userptr = (unsigned long)ptr;
-	buf.length = length;
+	if (V4L2_TYPE_IS_MULTIPLANAR(buftype)) {
+		buf.length = 2;
+		buf.m.planes = planes;
+		planes[0].length = length[0];
+		planes[0].m.userptr = (unsigned long)ptr[0];
+		planes[1].length = length[1];
+		planes[1].m.userptr = (unsigned long)ptr[1];
+	} else {
+		buf.m.userptr = (unsigned long)ptr[0];
+		buf.length = length[0];
+	}
 	buf.index = index;
 	return qbuf(buf);
 }
@@ -596,11 +626,11 @@ bool v4l2::dqevent(v4l2_event &ev)
 	return ioctl(VIDIOC_DQEVENT, &ev) >= 0;
 }
 
-bool v4l2::set_interval(v4l2_fract interval)
+bool v4l2::set_interval(unsigned type, v4l2_fract interval)
 {
 	v4l2_streamparm parm;
 
-	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	parm.type = type;
 	if (ioctl(VIDIOC_G_PARM, &parm) < 0)
 		return false;
 
@@ -612,11 +642,11 @@ bool v4l2::set_interval(v4l2_fract interval)
 	return ioctl("Set FPS", VIDIOC_S_PARM, &parm);
 }
 
-bool v4l2::get_interval(v4l2_fract &interval)
+bool v4l2::get_interval(unsigned type, v4l2_fract &interval)
 {
 	v4l2_streamparm parm;
 
-	parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	parm.type = type;
 	if (ioctl(VIDIOC_G_PARM, &parm) >= 0 &&
 	    (parm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME)) {
 		interval = parm.parm.capture.timeperframe;
@@ -626,7 +656,7 @@ bool v4l2::get_interval(v4l2_fract &interval)
 	return false;
 }
 
-v4l2_fract v4l2::g_pixel_aspect()
+v4l2_fract v4l2::g_pixel_aspect(unsigned type)
 {
 	v4l2_cropcap ratio;
 	v4l2_std_id std;
@@ -634,7 +664,7 @@ v4l2_fract v4l2::g_pixel_aspect()
 	static const v4l2_fract hz50 = { 11, 12 };
 	static const v4l2_fract hz60 = { 11, 10 };
 
-	ratio.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	ratio.type = type;
 	if (ioctl(VIDIOC_CROPCAP, &ratio) < 0) {
 		if (!g_std(std))
 			return square;

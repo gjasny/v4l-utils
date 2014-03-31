@@ -42,7 +42,8 @@ public:
 	~CaptureWinGLEngine();
 
 	void stop();
-	void setFrame(int width, int height, __u32 format, unsigned char *data);
+	void setFrame(int width, int height, __u32 format,
+			unsigned char *data, unsigned char *data2);
 	bool hasNativeFormat(__u32 format);
 	void setSize(int width, int height);
 
@@ -54,6 +55,8 @@ protected:
 private:
 	// Colorspace conversion shaders
 	void shader_YUV();
+	void shader_NV16M(__u32 format);
+	QString shader_NV16M_invariant(__u32 format);
 	void shader_BGR();
 	void shader_YUY2(__u32 format);
 	QString shader_YUY2_invariant(__u32 format);
@@ -62,6 +65,7 @@ private:
 	void render_BGR();
 	void render_YUY2();
 	void render_YUV(__u32 format);
+	void render_NV16M(__u32 format);
 
 	void clearShader();
 	void changeShader();
@@ -77,6 +81,7 @@ private:
 	GLuint m_screenTexture[MAX_TEXTURES_NEEDED];
 	QGLFunctions m_glfunction;
 	unsigned char *m_frameData;
+	unsigned char *m_frameData2;
 	QGLShaderProgram m_shaderProgram;
 };
 
@@ -89,7 +94,7 @@ public:
 	~CaptureWinGL();
 
 	void setFrame(int width, int height, __u32 format,
-		      unsigned char *data, const QString &info);
+		      unsigned char *data, unsigned char *data2, const QString &info);
 	void stop();
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported();

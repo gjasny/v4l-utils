@@ -68,8 +68,9 @@ enum RenderMethod {
 };
 
 struct buffer {
-	void   *start;
-	size_t  length;
+	unsigned planes;
+	void   *start[VIDEO_MAX_PLANES];
+	size_t  length[VIDEO_MAX_PLANES];
 };
 
 #define CTRL_FLAG_DISABLED	(V4L2_CTRL_FLAG_READ_ONLY | \

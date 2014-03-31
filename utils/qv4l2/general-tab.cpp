@@ -52,6 +52,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_isVbi(false),
 	m_freqFac(16),
 	m_freqRfFac(16),
+	m_isPlanar(false),
 	m_videoInput(NULL),
 	m_videoOutput(NULL),
 	m_audioInput(NULL),
@@ -121,6 +122,10 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_isVbi = caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE);
 		m_isSDR = m_isRadio = caps() & V4L2_CAP_SDR_CAPTURE;
 	}
+	if (m_querycap.capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE)
+		m_isPlanar = true;
+	m_buftype = (isPlanar() ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+		  V4L2_BUF_TYPE_VIDEO_CAPTURE);
 
 	if (hasAlsaAudio()) {
 		m_audioInDevice = new QComboBox(parent);
@@ -141,7 +146,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 				setAudioDeviceBufferSize(75);
 			} else {
 				v4l2_fract fract;
-				if (!v4l2::get_interval(fract)) {
+				if (!v4l2::get_interval(m_buftype, fract)) {
 					// Default values are for 30 FPS
 					fract.numerator = 33;
 					fract.denominator = 1000;
@@ -433,7 +438,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	addLabel("Capture Image Formats");
 	m_vidCapFormats = new QComboBox(parent);
 	m_vidCapFormats->setMinimumContentsLength(20);
-	if (enum_fmt_cap(fmt, true)) {
+	if (enum_fmt_cap(fmt, m_buftype, true)) {
 		do {
 			QString s(pixfmt2s(fmt.pixelformat) + " (");
 
@@ -441,7 +446,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 				m_vidCapFormats->addItem(s + "Emulated)");
 			else
 				m_vidCapFormats->addItem(s + (const char *)fmt.description + ")");
-		} while (enum_fmt_cap(fmt));
+		} while (enum_fmt_cap(fmt, m_buftype));
 	}
 	addWidget(m_vidCapFormats);
 	connect(m_vidCapFormats, SIGNAL(activated(int)), SLOT(vidCapFormatChanged(int)));
@@ -495,7 +500,9 @@ capture_method:
 	addLabel("Capture Method");
 	m_capMethods = new QComboBox(parent);
 	m_buftype = isSlicedVbi() ? V4L2_BUF_TYPE_SLICED_VBI_CAPTURE :
-		(isVbi() ? V4L2_BUF_TYPE_VBI_CAPTURE : V4L2_BUF_TYPE_VIDEO_CAPTURE);
+		(isVbi() ? V4L2_BUF_TYPE_VBI_CAPTURE : 
+		 (isPlanar() ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+		  V4L2_BUF_TYPE_VIDEO_CAPTURE));
 	if (caps() & V4L2_CAP_STREAMING) {
 		v4l2_requestbuffers reqbuf;
 
@@ -890,12 +897,15 @@ void GeneralTab::vidCapFormatChanged(int idx)
 {
 	v4l2_fmtdesc desc;
 
-	enum_fmt_cap(desc, true, idx);
+	enum_fmt_cap(desc, m_buftype, true, idx);
 
 	v4l2_format fmt;
 
-	g_fmt_cap(fmt);
-	fmt.fmt.pix.pixelformat = desc.pixelformat;
+	g_fmt_cap(m_buftype, fmt);
+	if (isPlanar())
+		fmt.fmt.pix_mp.pixelformat = desc.pixelformat;
+	else
+		fmt.fmt.pix.pixelformat = desc.pixelformat;
 	if (try_fmt(fmt))
 		s_fmt(fmt);
 
@@ -934,10 +944,13 @@ void GeneralTab::vidCapFieldChanged(int idx)
 {
 	v4l2_format fmt;
 
-	g_fmt_cap(fmt);
+	g_fmt_cap(m_buftype, fmt);
 	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
 		if (m_vidCapFields->currentText() == QString(field2s(f))) {
-			fmt.fmt.pix.field = f;
+			if (isPlanar())
+				fmt.fmt.pix_mp.field = f;
+			else
+				fmt.fmt.pix.field = f;
 			s_fmt(fmt);
 			break;
 		}
@@ -952,8 +965,11 @@ void GeneralTab::frameWidthChanged()
 
 	if (!m_frameWidth->isEnabled())
 		return;
-	g_fmt_cap(fmt);
-	fmt.fmt.pix.width = val;
+	g_fmt_cap(m_buftype, fmt);
+	if (isPlanar())
+		fmt.fmt.pix_mp.width = val;
+	else
+		fmt.fmt.pix.width = val;
 	if (try_fmt(fmt))
 		s_fmt(fmt);
 
@@ -967,8 +983,11 @@ void GeneralTab::frameHeightChanged()
 
 	if (!m_frameHeight->isEnabled())
 		return;
-	g_fmt_cap(fmt);
-	fmt.fmt.pix.height = val;
+	g_fmt_cap(m_buftype, fmt);
+	if (isPlanar())
+		fmt.fmt.pix_mp.height = val;
+	else
+		fmt.fmt.pix.height = val;
 	if (try_fmt(fmt))
 		s_fmt(fmt);
 
@@ -982,9 +1001,14 @@ void GeneralTab::frameSizeChanged(int idx)
 	if (enum_framesizes(frmsize, m_pixelformat, idx)) {
 		v4l2_format fmt;
 
-		g_fmt_cap(fmt);
-		fmt.fmt.pix.width = frmsize.discrete.width;
-		fmt.fmt.pix.height = frmsize.discrete.height;
+		g_fmt_cap(m_buftype, fmt);
+		if (isPlanar()) {
+			fmt.fmt.pix_mp.width = frmsize.discrete.width;
+			fmt.fmt.pix_mp.height = frmsize.discrete.height;
+		} else {
+			fmt.fmt.pix.width = frmsize.discrete.width;
+			fmt.fmt.pix.height = frmsize.discrete.height;
+		}
 		if (try_fmt(fmt))
 			s_fmt(fmt);
 	}
@@ -997,7 +1021,7 @@ void GeneralTab::frameIntervalChanged(int idx)
 
 	if (enum_frameintervals(frmival, m_pixelformat, m_width, m_height, idx)
 	    && frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
-		if (set_interval(frmival.discrete))
+		if (set_interval(m_buftype, frmival.discrete))
 			m_interval = frmival.discrete;
 	}
 }
@@ -1020,7 +1044,9 @@ void GeneralTab::vidOutFormatChanged(int idx)
 void GeneralTab::vbiMethodsChanged(int idx)
 {
 	m_buftype = isSlicedVbi() ? V4L2_BUF_TYPE_SLICED_VBI_CAPTURE :
-		(isVbi() ? V4L2_BUF_TYPE_VBI_CAPTURE : V4L2_BUF_TYPE_VIDEO_CAPTURE);
+		(isVbi() ? V4L2_BUF_TYPE_VBI_CAPTURE :
+		 (isPlanar() ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+		  V4L2_BUF_TYPE_VIDEO_CAPTURE));
 }
 
 void GeneralTab::updateVideoInput()
@@ -1270,20 +1296,36 @@ void GeneralTab::updateVidCapFormat()
 
 	if (isVbi())
 		return;
-	g_fmt_cap(fmt);
-	m_pixelformat = fmt.fmt.pix.pixelformat;
-	m_width       = fmt.fmt.pix.width;
-	m_height      = fmt.fmt.pix.height;
+	g_fmt_cap(m_buftype, fmt);
+	if (isPlanar()) {
+		m_pixelformat = fmt.fmt.pix_mp.pixelformat;
+		m_width       = fmt.fmt.pix_mp.width;
+		m_height      = fmt.fmt.pix_mp.height;
+	} else {
+		m_pixelformat = fmt.fmt.pix.pixelformat;
+		m_width       = fmt.fmt.pix.width;
+		m_height      = fmt.fmt.pix.height;
+	}
 	updateFrameSize();
 	updateFrameInterval();
-	if (enum_fmt_cap(desc, true)) {
+	if (enum_fmt_cap(desc, m_buftype, true)) {
 		do {
-			if (desc.pixelformat == fmt.fmt.pix.pixelformat)
-				break;
-		} while (enum_fmt_cap(desc));
+			if (isPlanar()) {
+				if (desc.pixelformat == fmt.fmt.pix_mp.pixelformat)
+					break;
+			} else {
+				if (desc.pixelformat == fmt.fmt.pix.pixelformat)
+					break;
+			}
+		} while (enum_fmt_cap(desc, m_buftype));
 	}
-	if (desc.pixelformat != fmt.fmt.pix.pixelformat)
-		return;
+	if (isPlanar()) {
+		if (desc.pixelformat != fmt.fmt.pix_mp.pixelformat)
+			return;
+	} else {
+		if (desc.pixelformat != fmt.fmt.pix.pixelformat)
+			return;
+	}
 	m_vidCapFormats->setCurrentIndex(desc.index);
 	updateVidCapFields();
 }
@@ -1294,23 +1336,34 @@ void GeneralTab::updateVidCapFields()
 	v4l2_format tmp;
 	bool first = true;
 
-	g_fmt_cap(fmt);
+	g_fmt_cap(m_buftype, fmt);
 
 	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
 		tmp = fmt;
-		tmp.fmt.pix.field = f;
-		if (!s_fmt(tmp) || tmp.fmt.pix.field != f)
-			continue;
-		if (first) {
-			m_vidCapFields->clear();
-			first = false;
+		if (isPlanar()) {
+			tmp.fmt.pix_mp.field = f;
+			if (!try_fmt(tmp) || tmp.fmt.pix_mp.field != f)
+				continue;
+			if (first) {
+				m_vidCapFields->clear();
+				first = false;
+			}
+			m_vidCapFields->addItem(field2s(f));
+			if (fmt.fmt.pix_mp.field == f)
+				m_vidCapFields->setCurrentIndex(m_vidCapFields->count() - 1);
+		} else {
+			tmp.fmt.pix.field = f;
+			if (!try_fmt(tmp) || tmp.fmt.pix.field != f)
+				continue;
+			if (first) {
+				m_vidCapFields->clear();
+				first = false;
+			}
+			m_vidCapFields->addItem(field2s(f));
+			if (fmt.fmt.pix.field == f)
+				m_vidCapFields->setCurrentIndex(m_vidCapFields->count() - 1);
 		}
-		m_vidCapFields->addItem(field2s(f));
-		if (fmt.fmt.pix.field == f)
-			m_vidCapFields->setCurrentIndex(m_vidCapFields->count() - 1);
 	}
-	if (!first)
-		s_fmt(fmt);
 }
 
 void GeneralTab::updateFrameSize()
@@ -1398,7 +1451,7 @@ double GeneralTab::getPixelAspectRatio()
 
 	switch (m_pixelAspectRatio->currentIndex()) {
 	case 0:
-		ratio = g_pixel_aspect();
+		ratio = g_pixel_aspect(m_buftype);
 		break;
 	case 2:
 		ratio.numerator = 11;
@@ -1441,7 +1494,7 @@ void GeneralTab::updateFrameInterval()
 	m_frameInterval->setEnabled(m_has_interval);
 	if (m_has_interval) {
 	        m_interval = frmival.discrete;
-        	curr_ok = v4l2::get_interval(curr);
+        	curr_ok = v4l2::get_interval(m_buftype, curr);
 		do {
 			m_frameInterval->addItem(QString("%1 fps")
 				.arg((double)frmival.discrete.denominator / frmival.discrete.numerator));

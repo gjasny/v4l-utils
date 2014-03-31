@@ -65,7 +65,7 @@ public:
 	 * @param info A string containing capture information.
 	 */
 	virtual void setFrame(int width, int height, __u32 format,
-			      unsigned char *data, const QString &info) = 0;
+			      unsigned char *data, unsigned char *data2, const QString &info) = 0;
 
 	/**
 	 * @brief Called when the capture stream is stopped.

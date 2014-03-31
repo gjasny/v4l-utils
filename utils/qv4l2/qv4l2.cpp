@@ -400,7 +400,7 @@ void ApplicationWindow::capVbiFrame()
 			qbuf(buf);
 			return;
 		}
-		data = (__u8 *)m_buffers[buf.index].start;
+		data = (__u8 *)m_buffers[buf.index].start[0];
 		s = buf.bytesused;
 		break;
 
@@ -471,7 +471,7 @@ void ApplicationWindow::capVbiFrame()
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
 	if (showFrames())
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), status);
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, status);
 
 	curStatus = statusBar()->currentMessage();
 	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
@@ -483,6 +483,7 @@ void ApplicationWindow::capVbiFrame()
 void ApplicationWindow::capFrame()
 {
 	__u32 buftype = m_genTab->bufType();
+	v4l2_plane planes[VIDEO_MAX_PLANES];
 	v4l2_buffer buf;
 	int s = 0;
 	int err = 0;
@@ -492,6 +493,7 @@ void ApplicationWindow::capFrame()
 #endif
 
 	unsigned char *displaybuf = NULL;
+	unsigned char *displaybuf2 = NULL;
 
 	switch (m_capMethod) {
 	case methodRead:
@@ -525,6 +527,9 @@ void ApplicationWindow::capFrame()
 		break;
 
 	case methodMmap:
+		memset(planes, 0, sizeof(planes));
+		buf.length = VIDEO_MAX_PLANES;
+		buf.m.planes = planes;
 		if (!dqbuf_mmap(buf, buftype, again)) {
 			error("dqbuf");
 			m_capStartAct->setChecked(false);
@@ -545,23 +550,32 @@ void ApplicationWindow::capFrame()
 		if (showFrames()) {
 			if (m_mustConvert)
 				err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
-							 (unsigned char *)m_buffers[buf.index].start, buf.bytesused,
+							 (unsigned char *)m_buffers[buf.index].start[0], buf.bytesused,
 							 m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
 			if (m_mustConvert && err != -1)
 				displaybuf = m_capImage->bits();
-			if (!m_mustConvert)
-				displaybuf = (unsigned char *)m_buffers[buf.index].start;
+			if (!m_mustConvert) {
+				displaybuf = (unsigned char *)m_buffers[buf.index].start[0];
+				displaybuf2 = (unsigned char *)m_buffers[buf.index].start[1];
+				if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
+					displaybuf += planes[0].data_offset;
+					displaybuf2 += planes[1].data_offset;
+				}
+			}
 		}
 		if (m_makeSnapshot)
-			makeSnapshot((unsigned char *)m_buffers[buf.index].start, buf.bytesused);
+			makeSnapshot((unsigned char *)m_buffers[buf.index].start[0], buf.bytesused);
 		if (m_saveRaw.openMode())
-			m_saveRaw.write((const char *)m_buffers[buf.index].start, buf.bytesused);
+			m_saveRaw.write((const char *)m_buffers[buf.index].start[0], buf.bytesused);
 
 		break;
 
 	case methodUser:
+		memset(planes, 0, sizeof(planes));
+		buf.length = VIDEO_MAX_PLANES;
+		buf.m.planes = planes;
 		if (!dqbuf_user(buf, buftype, again)) {
-			error("dqbuf");
+			error("dqbuf1");
 			m_capStartAct->setChecked(false);
 			return;
 		}
@@ -586,8 +600,14 @@ void ApplicationWindow::capFrame()
 							 m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
 			if (m_mustConvert && err != -1)
 				displaybuf = m_capImage->bits();
-			if (!m_mustConvert)
-				displaybuf = (unsigned char *)buf.m.userptr;
+			if (!m_mustConvert) {
+				displaybuf = (unsigned char *)m_buffers[buf.index].start[0];
+				displaybuf2 = (unsigned char *)m_buffers[buf.index].start[1];
+				if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
+					displaybuf += planes[0].data_offset;
+					displaybuf2 += planes[1].data_offset;
+				}
+			}
 		}
 		if (m_makeSnapshot)
 			makeSnapshot((unsigned char *)buf.m.userptr, buf.bytesused);
@@ -630,7 +650,7 @@ void ApplicationWindow::capFrame()
 
 	if (showFrames())
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, displaybuf, status);
+				    m_capDestFormat.fmt.pix.pixelformat, displaybuf, displaybuf2, status);
 
 	if (m_capMethod == methodMmap || m_capMethod == methodUser)
 		qbuf(buf);
@@ -683,6 +703,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 		}
 
 		for (m_nbuffers = 0; m_nbuffers < req.count; ++m_nbuffers) {
+			v4l2_plane planes[VIDEO_MAX_PLANES];
 			v4l2_buffer buf;
 
 			memset(&buf, 0, sizeof(buf));
@@ -690,18 +711,32 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			buf.type        = buftype;
 			buf.memory      = V4L2_MEMORY_MMAP;
 			buf.index       = m_nbuffers;
+			buf.length      = VIDEO_MAX_PLANES;
+			buf.m.planes    = planes;
 
 			if (-1 == ioctl(VIDIOC_QUERYBUF, &buf)) {
 				perror("VIDIOC_QUERYBUF");
 				goto error;
 			}
 
-			m_buffers[m_nbuffers].length = buf.length;
-			m_buffers[m_nbuffers].start = mmap(buf.length, buf.m.offset);
-
-			if (MAP_FAILED == m_buffers[m_nbuffers].start) {
-				perror("mmap");
-				goto error;
+			if (V4L2_TYPE_IS_MULTIPLANAR(buftype)) {
+				m_buffers[m_nbuffers].planes = buf.length;
+				for (unsigned p = 0; p < buf.length; p++) {
+					m_buffers[m_nbuffers].length[p] = planes[p].length;
+					m_buffers[m_nbuffers].start[p] = mmap(planes[p].length, planes[p].m.mem_offset);
+					if (MAP_FAILED == m_buffers[m_nbuffers].start[p]) {
+						perror("mmap");
+						goto error;
+					}
+				}
+			} else {
+				m_buffers[m_nbuffers].planes = 1;
+				m_buffers[m_nbuffers].length[0] = buf.length;
+				m_buffers[m_nbuffers].start[0] = mmap(buf.length, buf.m.offset);
+				if (MAP_FAILED == m_buffers[m_nbuffers].start[0]) {
+					perror("mmap");
+					goto error;
+				}
 			}
 		}
 		for (i = 0; i < m_nbuffers; ++i) {
@@ -738,12 +773,41 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 		}
 
 		for (m_nbuffers = 0; m_nbuffers < req.count; ++m_nbuffers) {
-			m_buffers[m_nbuffers].length = buffer_size;
-			m_buffers[m_nbuffers].start = malloc(buffer_size);
+			v4l2_plane planes[VIDEO_MAX_PLANES];
+			v4l2_buffer buf;
 
-			if (!m_buffers[m_nbuffers].start) {
-				error("Out of memory");
+			memset(&buf, 0, sizeof(buf));
+
+			buf.type        = buftype;
+			buf.memory      = V4L2_MEMORY_USERPTR;
+			buf.index       = m_nbuffers;
+			buf.length      = VIDEO_MAX_PLANES;
+			buf.m.planes    = planes;
+
+			if (-1 == ioctl(VIDIOC_QUERYBUF, &buf)) {
+				perror("VIDIOC_QUERYBUF");
 				goto error;
+			}
+
+			if (V4L2_TYPE_IS_MULTIPLANAR(buftype)) {
+				m_buffers[m_nbuffers].planes = buf.length;
+				for (unsigned p = 0; p < buf.length; p++) {
+					m_buffers[m_nbuffers].length[p] = planes[p].length;
+					m_buffers[m_nbuffers].start[p] = malloc(planes[p].length);
+					if (m_buffers[m_nbuffers].start[p] == NULL) {
+						error("Out of memory");
+						goto error;
+					}
+				}
+			} else {
+				m_buffers[m_nbuffers].planes = 1;
+				m_buffers[m_nbuffers].length[0] = buffer_size;
+				m_buffers[m_nbuffers].start[0] = malloc(buffer_size);
+
+				if (!m_buffers[m_nbuffers].start[0]) {
+					error("Out of memory");
+					goto error;
+				}
 			}
 		}
 		for (i = 0; i < m_nbuffers; ++i)
@@ -792,8 +856,9 @@ void ApplicationWindow::stopCapture()
 		if (!streamoff(buftype))
 			perror("VIDIOC_STREAMOFF");
 		for (i = 0; i < m_nbuffers; ++i)
-			if (-1 == munmap(m_buffers[i].start, m_buffers[i].length))
-				perror("munmap");
+			for (unsigned p = 0; p < m_buffers[i].planes; p++)
+				if (-1 == munmap(m_buffers[i].start[p], m_buffers[i].length[p]))
+					perror("munmap");
 		// Free all buffers.
 		reqbufs_mmap(reqbufs, buftype, 1);  // videobuf workaround
 		reqbufs_mmap(reqbufs, buftype, 0);
@@ -806,7 +871,8 @@ void ApplicationWindow::stopCapture()
 		reqbufs_user(reqbufs, buftype, 1);  // videobuf workaround
 		reqbufs_user(reqbufs, buftype, 0);
 		for (i = 0; i < m_nbuffers; ++i)
-			free(m_buffers[i].start);
+			for (unsigned p = 0; p < m_buffers[i].planes; p++)
+				free(m_buffers[i].start[p]);
 		break;
 	}
 	free(m_buffers);
@@ -906,6 +972,11 @@ void ApplicationWindow::capStart(bool start)
 	struct v4l2_fract interval;
 	v4l2_pix_format &srcPix = m_capSrcFormat.fmt.pix;
 	v4l2_pix_format &dstPix = m_capDestFormat.fmt.pix;
+	v4l2_pix_format_mplane &srcMPix = m_capSrcFormat.fmt.pix_mp;
+	v4l2_pix_format_mplane &dstMPix = m_capDestFormat.fmt.pix_mp;
+	__u32 buftype = m_genTab->bufType();
+	bool isPlanar = m_genTab->isPlanar();
+	__u32 width, height, pixfmt;
 
 	if (!start) {
 		stopCapture();
@@ -964,7 +1035,7 @@ void ApplicationWindow::capStart(bool start)
 		m_capImage = new QImage(m_vbiWidth, m_vbiHeight, dstFmt);
 		m_capImage->fill(0);
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), "No frame");
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, "No frame");
 		m_capture->resize(m_vbiWidth, m_vbiHeight);
 		if (showFrames())
 			m_capture->show();
@@ -977,40 +1048,55 @@ void ApplicationWindow::capStart(bool start)
 		return;
 	}
 
-	g_fmt_cap(m_capSrcFormat);
+	g_fmt_cap(buftype, m_capSrcFormat);
 	s_fmt(m_capSrcFormat);
 	if (m_genTab->get_interval(interval))
-		set_interval(interval);
+		set_interval(buftype, interval);
 
-	m_frameData = new unsigned char[srcPix.sizeimage];
+	if (!isPlanar)
+		m_frameData = new unsigned char[srcPix.sizeimage];
+	else
+		m_frameData = new unsigned char[srcMPix.plane_fmt[0].sizeimage + srcMPix.plane_fmt[1].sizeimage];
 	m_capDestFormat = m_capSrcFormat;
-	dstPix.pixelformat = V4L2_PIX_FMT_RGB24;
 
-	if (m_capture->hasNativeFormat(srcPix.pixelformat)) {
+	if (isPlanar) {
+		dstMPix.pixelformat = srcMPix.pixelformat;
+		width = srcMPix.width;
+		height = srcMPix.height;
+		pixfmt = srcMPix.pixelformat;
+		m_mustConvert = false;
+	} else if (m_capture->hasNativeFormat(srcPix.pixelformat)) {
 		dstPix.pixelformat = srcPix.pixelformat;
+		width = srcPix.width;
+		height = srcPix.height;
+		pixfmt = srcPix.pixelformat;
 		m_mustConvert = false;
 	} else {
 		m_mustConvert = true;
 
+		dstPix.pixelformat = V4L2_PIX_FMT_RGB24;
 		v4l2_format copy = m_capSrcFormat;
 		v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
 		// v4lconvert_try_format sometimes modifies the source format if it thinks
 		// that there is a better format available. Restore our selected source
 		// format since we do not want that happening.
 		m_capSrcFormat = copy;
+		width = dstPix.width;
+		height = dstPix.height;
+		pixfmt = dstPix.pixelformat;
 	}
 
 	// Ensure that the initial image is large enough for native 32 bit per pixel formats
-	if (dstPix.pixelformat == V4L2_PIX_FMT_RGB32 || dstPix.pixelformat == V4L2_PIX_FMT_BGR32)
+	if (pixfmt == V4L2_PIX_FMT_RGB32 || pixfmt == V4L2_PIX_FMT_BGR32)
 		dstFmt = QImage::Format_ARGB32;
-	m_capImage = new QImage(dstPix.width, dstPix.height, dstFmt);
+	m_capImage = new QImage(width, height, dstFmt);
 	m_capImage->fill(0);
 	
 	updatePixelAspectRatio();
 	
 	m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-			    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), "No frame");
-	m_capture->resize(dstPix.width, dstPix.height);
+			    pixfmt, m_capImage->bits(), NULL, "No frame");
+	m_capture->resize(width, height);
 	if (showFrames())
 		m_capture->show();
 

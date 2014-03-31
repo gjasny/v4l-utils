@@ -80,7 +80,7 @@ public:
 	bool g_frequency(v4l2_frequency &freq, unsigned index = 0);
 	bool s_frequency(v4l2_frequency &freq);
 	bool s_frequency(int freq, bool low = false);
-	bool g_fmt_cap(v4l2_format &fmt);
+	bool g_fmt_cap(unsigned type, v4l2_format &fmt);
 	bool g_fmt_out(v4l2_format &fmt);
 	bool g_fmt_vbi(v4l2_format &fmt);
 	bool g_fmt_sliced_vbi(v4l2_format &fmt);
@@ -92,7 +92,7 @@ public:
 	bool enum_audout(v4l2_audioout &audout, bool init = false);
 	bool enum_std(v4l2_standard &std, bool init = false, int index = 0);
 	bool enum_dv_timings(v4l2_enum_dv_timings &timings, bool init = false, int index = 0);
-	bool enum_fmt_cap(v4l2_fmtdesc &std, bool init = false, int index = 0);
+	bool enum_fmt_cap(v4l2_fmtdesc &std, unsigned type, bool init = false, int index = 0);
 	bool enum_fmt_out(v4l2_fmtdesc &std, bool init = false, int index = 0);
 	bool enum_framesizes(v4l2_frmsizeenum &frm, __u32 init_pixfmt = 0, int index = 0);
 	bool enum_frameintervals(v4l2_frmivalenum &frm, __u32 init_pixfmt = 0, __u32 w = 0, __u32 h = 0, int index = 0);
@@ -103,10 +103,10 @@ public:
 	bool dqbuf_user(v4l2_buffer &buf, __u32 buftype, bool &again);
 	bool qbuf(v4l2_buffer &buf);
 	bool qbuf_mmap(int index, __u32 buftype);
-	bool qbuf_user(int index, __u32 buftype, void *ptr, int length);
+	bool qbuf_user(int index, __u32 buftype, void *ptr[], size_t length[]);
 	bool streamon(__u32 buftype);
 	bool streamoff(__u32 buftype);
-	v4l2_fract g_pixel_aspect();
+	v4l2_fract g_pixel_aspect(unsigned type);
 
 	inline bool reqbufs_mmap_cap(v4l2_requestbuffers &reqbuf, int count = 0) {
 		return reqbufs_mmap(reqbuf, V4L2_BUF_TYPE_VIDEO_CAPTURE, count);
@@ -119,12 +119,6 @@ public:
 	}
 	inline bool dqbuf_user_cap(v4l2_buffer &buf, bool &again) {
 		return dqbuf_user(buf, V4L2_BUF_TYPE_VIDEO_CAPTURE, again);
-	}
-	inline bool qbuf_mmap_cap(int index) {
-		return qbuf_mmap(index, V4L2_BUF_TYPE_VIDEO_CAPTURE);
-	}
-	inline bool qbuf_user_cap(int index, void *ptr, int length) {
-		return qbuf_user(index, V4L2_BUF_TYPE_VIDEO_CAPTURE, ptr, length);
 	}
 	inline bool streamon_cap() { return streamon(V4L2_BUF_TYPE_VIDEO_CAPTURE); }
 	inline bool streamoff_cap() { return streamoff(V4L2_BUF_TYPE_VIDEO_CAPTURE); }
@@ -141,12 +135,6 @@ public:
 	inline bool dqbuf_user_vbi(v4l2_buffer &buf, bool &again) {
 		return dqbuf_user(buf, V4L2_BUF_TYPE_VBI_CAPTURE, again);
 	}
-	inline bool qbuf_mmap_vbi(int index) {
-		return qbuf_mmap(index, V4L2_BUF_TYPE_VBI_CAPTURE);
-	}
-	inline bool qbuf_user_vbi(int index, void *ptr, int length) {
-		return qbuf_user(index, V4L2_BUF_TYPE_VBI_CAPTURE, ptr, length);
-	}
 	inline bool streamon_vbi() { return streamon(V4L2_BUF_TYPE_VBI_CAPTURE); }
 	inline bool streamoff_vbi() { return streamoff(V4L2_BUF_TYPE_VBI_CAPTURE); }
 
@@ -161,8 +149,8 @@ public:
 	bool subscribe_event(v4l2_event_subscription &sub);
 	bool dqevent(v4l2_event &ev);
 
-	bool set_interval(v4l2_fract interval);
-	bool get_interval(v4l2_fract &interval);
+	bool set_interval(unsigned type, v4l2_fract interval);
+	bool get_interval(unsigned type, v4l2_fract &interval);
 private:
 	void clear() { error(QString()); }
 

@@ -69,24 +69,13 @@ public:
 	bool isSDR() const { return m_isSDR; }
 	bool isVbi() const { return m_isVbi; }
 	bool isSlicedVbi() const;
+	bool isPlanar() const { return m_isPlanar; }
 	__u32 bufType() const { return m_buftype; }
 	inline bool reqbufs_mmap(v4l2_requestbuffers &reqbuf, int count = 0) {
 		return v4l2::reqbufs_mmap(reqbuf, m_buftype, count);
 	}
 	inline bool reqbufs_user(v4l2_requestbuffers &reqbuf, int count = 0) {
 		return v4l2::reqbufs_user(reqbuf, m_buftype, count);
-	}
-	inline bool dqbuf_mmap(v4l2_buffer &buf, bool &again) {
-		return v4l2::dqbuf_mmap(buf, m_buftype, again);
-	}
-	inline bool dqbuf_user(v4l2_buffer &buf, bool &again) {
-		return v4l2::dqbuf_user(buf, m_buftype, again);
-	}
-	inline bool qbuf_mmap(int index) {
-		return v4l2::qbuf_mmap(index, m_buftype);
-	}
-	inline bool qbuf_user(int index, void *ptr, int length) {
-		return v4l2::qbuf_user(index, m_buftype, ptr, length);
 	}
 	inline bool streamon() { return v4l2::streamon(m_buftype); }
 	inline bool streamoff() { return v4l2::streamoff(m_buftype); }
@@ -176,6 +165,7 @@ private:
 	bool m_isVbi;
 	double m_freqFac;
 	double m_freqRfFac;
+	bool m_isPlanar;
 	__u32 m_buftype;
 	__u32 m_audioModes[5];
 	QString m_device;
