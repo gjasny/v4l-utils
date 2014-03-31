@@ -10,7 +10,7 @@ struct v4l_fd {
 	int fd;
 	int (*ioctl)(int fd, unsigned long cmd, ...);
 	void *(*mmap)(void *addr, size_t length, int prot, int flags,
-		      int fd, off_t offset);
+		      int fd, int64_t offset);
 	int (*munmap)(void *addr, size_t length);
 };
 
