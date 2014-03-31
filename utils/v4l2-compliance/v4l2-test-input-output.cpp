@@ -436,6 +436,7 @@ int testInput(struct node *node)
 		return fail("inputs found, but no input capabilities set\n");
 	if (!node->inputs && node->has_inputs)
 		return fail("no inputs found, but input capabilities set\n");
+	fail_on_test(node->is_m2m && node->inputs > 1);
 	return 0;
 }
 
@@ -778,6 +779,7 @@ int testOutput(struct node *node)
 		return fail("outputs found, but no output capabilities set\n");
 	if (!node->outputs && node->has_outputs)
 		return fail("no outputs found, but output capabilities set\n");
+	fail_on_test(node->is_m2m && node->outputs > 1);
 	return 0;
 }
 
