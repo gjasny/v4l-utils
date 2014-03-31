@@ -125,6 +125,14 @@ static void usage(void)
 	exit(0);
 }
 
+static void v4l_fd_test_init(struct v4l_fd *f, int fd)
+{
+	f->fd = fd;
+	f->ioctl = test_ioctl;
+	f->mmap = test_mmap;
+	f->munmap = test_munmap;
+}
+
 int doioctl_name(struct node *node, unsigned long int request, void *parm,
 		 const char *name, bool no_wrapper)
 {
@@ -133,9 +141,9 @@ int doioctl_name(struct node *node, unsigned long int request, void *parm,
 
 	errno = 0;
 	if (no_wrapper)
-		retval = ioctl(node->fd, request, parm);
+		retval = ioctl(node->vfd.fd, request, parm);
 	else
-		retval = test_ioctl(node->fd, request, parm);
+		retval = test_ioctl(node->vfd.fd, request, parm);
 	e = errno;
 	if (options[OptTrace])
 		printf("\t\t%s returned %d (%s)\n", name, retval, strerror(e));
@@ -609,6 +617,7 @@ int main(int argc, char **argv)
 
 	struct utsname uts;
 	int v1, v2, v3;
+	int fd;
 
 	uname(&uts);
 	sscanf(uts.release, "%d.%d.%d", &v1, &v2, &v3);
@@ -618,50 +627,70 @@ int main(int argc, char **argv)
 	if (!video_device && !vbi_device && !radio_device && !sdr_device)
 		video_device = "/dev/video0";
 
-	if (video_device && (video_node.fd = test_open(video_device, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", video_device,
-			strerror(errno));
-		exit(1);
+	if (video_device) {
+		fd = test_open(video_device, O_RDWR);
+		if (fd < 0) {
+			fprintf(stderr, "Failed to open %s: %s\n", video_device,
+				strerror(errno));
+			exit(1);
+		}
+		v4l_fd_test_init(&video_node.vfd, fd);
 	}
 
-	if (vbi_device && (vbi_node.fd = test_open(vbi_device, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", vbi_device,
-			strerror(errno));
-		exit(1);
+	if (vbi_device) {
+		fd = test_open(vbi_device, O_RDWR);
+		if (fd < 0) {
+			fprintf(stderr, "Failed to open %s: %s\n", vbi_device,
+				strerror(errno));
+			exit(1);
+		}
+		v4l_fd_test_init(&vbi_node.vfd, fd);
 	}
 
-	if (radio_device && (radio_node.fd = test_open(radio_device, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", radio_device,
-			strerror(errno));
-		exit(1);
+	if (radio_device) {
+		fd = test_open(radio_device, O_RDWR);
+		if (fd < 0) {
+			fprintf(stderr, "Failed to open %s: %s\n", radio_device,
+					strerror(errno));
+			exit(1);
+		}
+		v4l_fd_test_init(&radio_node.vfd, fd);
 	}
 
-	if (sdr_device && (sdr_node.fd = test_open(sdr_device, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", sdr_device,
-			strerror(errno));
-		exit(1);
+	if (sdr_device) {
+		fd = test_open(sdr_device, O_RDWR);
+		if (fd < 0) {
+			fprintf(stderr, "Failed to open %s: %s\n", sdr_device,
+				strerror(errno));
+			exit(1);
+		}
+		v4l_fd_test_init(&sdr_node.vfd, fd);
 	}
 
-	if (expbuf_device && (expbuf_node.fd = open(expbuf_device, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", expbuf_device,
-			strerror(errno));
-		exit(1);
+	if (expbuf_device) {
+		fd = open(expbuf_device, O_RDWR);
+		if (fd < 0) {
+			fprintf(stderr, "Failed to open %s: %s\n", expbuf_device,
+				strerror(errno));
+			exit(1);
+		}
+		v4l_fd_init(&expbuf_node.vfd, fd);
 	}
 
-	if (video_node.fd >= 0) {
-		node.fd = video_node.fd;
+	if (video_node.vfd.fd >= 0) {
+		node.vfd = video_node.vfd;
 		device = video_device;
 		node.is_video = true;
-	} else if (vbi_node.fd >= 0) {
-		node.fd = vbi_node.fd;
+	} else if (vbi_node.vfd.fd >= 0) {
+		node.vfd = vbi_node.vfd;
 		device = vbi_device;
 		node.is_vbi = true;
-	} else if (radio_node.fd >= 0) {
-		node.fd = radio_node.fd;
+	} else if (radio_node.vfd.fd >= 0) {
+		node.vfd = radio_node.vfd;
 		device = radio_device;
 		node.is_radio = true;
-	} else if (sdr_node.fd >= 0) {
-		node.fd = sdr_node.fd;
+	} else if (sdr_node.vfd.fd >= 0) {
+		node.vfd = sdr_node.vfd;
 		device = sdr_device;
 		node.is_sdr = true;
 	}
@@ -688,6 +717,9 @@ int main(int argc, char **argv)
 			 V4L2_CAP_VIDEO_M2M | V4L2_CAP_SLICED_VBI_OUTPUT |
 			 V4L2_CAP_RDS_OUTPUT))
 		node.can_output = true;
+	if (node.caps & (V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+			 V4L2_CAP_VIDEO_M2M_MPLANE))
+		node.is_planar = true;
 	if (expbuf_device) {
 		doioctl(&expbuf_node, VIDIOC_QUERYCAP, &vcap);
 		if (vcap.capabilities & V4L2_CAP_DEVICE_CAPS)
@@ -731,8 +763,8 @@ int main(int argc, char **argv)
 	if (video_device) {
 		video_node2 = node;
 		printf("\ttest second video open: %s\n",
-				ok((video_node2.fd = test_open(video_device, O_RDWR)) < 0));
-		if (video_node2.fd >= 0) {
+				ok((video_node2.vfd.fd = test_open(video_device, O_RDWR)) < 0));
+		if (video_node2.vfd.fd >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&node, &video_node2)));
@@ -742,8 +774,8 @@ int main(int argc, char **argv)
 	if (vbi_device) {
 		vbi_node2 = node;
 		printf("\ttest second vbi open: %s\n",
-				ok((vbi_node2.fd = test_open(vbi_device, O_RDWR)) < 0));
-		if (vbi_node2.fd >= 0) {
+				ok((vbi_node2.vfd.fd = test_open(vbi_device, O_RDWR)) < 0));
+		if (vbi_node2.vfd.fd >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&node, &vbi_node2)));
@@ -753,8 +785,8 @@ int main(int argc, char **argv)
 	if (radio_device) {
 		radio_node2 = node;
 		printf("\ttest second radio open: %s\n",
-				ok((radio_node2.fd = test_open(radio_device, O_RDWR)) < 0));
-		if (radio_node2.fd >= 0) {
+				ok((radio_node2.vfd.fd = test_open(radio_device, O_RDWR)) < 0));
+		if (radio_node2.vfd.fd >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&node, &radio_node2)));
@@ -764,8 +796,8 @@ int main(int argc, char **argv)
 	if (sdr_device) {
 		sdr_node2 = node;
 		printf("\ttest second sdr open: %s\n",
-				ok((sdr_node2.fd = test_open(sdr_device, O_RDWR)) < 0));
-		if (sdr_node2.fd >= 0) {
+				ok((sdr_node2.vfd.fd = test_open(sdr_device, O_RDWR)) < 0));
+		if (sdr_node2.vfd.fd >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&sdr_node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
 					ok(testPrio(&node, &sdr_node2)));
@@ -880,11 +912,11 @@ int main(int argc, char **argv)
 
 	/* Final test report */
 
-	test_close(node.fd);
+	test_close(node.vfd.fd);
 	if (node.node2)
-		test_close(node.node2->fd);
+		test_close(node.node2->vfd.fd);
 	if (expbuf_device)
-		close(expbuf_node.fd);
+		close(expbuf_node.vfd.fd);
 	printf("Total: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 			tests_total, tests_ok, tests_total - tests_ok, warnings);
 	exit(app_result);

@@ -21,12 +21,14 @@
 #ifndef _V4L2_COMPLIANCE_H_
 #define _V4L2_COMPLIANCE_H_
 
+#include <stdarg.h>
 #include <cerrno>
 #include <string>
 #include <list>
 #include <set>
 #include <linux/videodev2.h>
 #include <libv4l2.h>
+#include <cv4l-helpers.h>
 
 #if !defined(ENODATA) && (defined(__FreeBSD__) || defined(__FreeBSD_kernel__))
 #define ENODATA ENOTSUP
@@ -48,12 +50,13 @@ typedef std::set<__u32> pixfmt_set;
 struct node;
 
 struct node {
-	int fd;
+	struct v4l_fd vfd;
 	bool is_video;
 	bool is_radio;
 	bool is_vbi;
 	bool is_sdr;
 	bool is_m2m;
+	bool is_planar;
 	bool can_capture;
 	bool can_output;
 	const char *device;
@@ -114,17 +117,35 @@ static inline int test_close(int fd)
 
 static inline void reopen(struct node *node)
 {
-	test_close(node->fd);
-	if ((node->fd = test_open(node->device, O_RDWR)) < 0) {
+	test_close(node->vfd.fd);
+	if ((node->vfd.fd = test_open(node->device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", node->device,
 			strerror(errno));
 		exit(1);
 	}
 }
 
-static inline int test_ioctl(int fd, int cmd, void *arg)
+static inline int test_ioctl(int fd, unsigned long cmd, ...)
 {
+	void *arg;
+	va_list ap;
+
+	va_start(ap, cmd);
+	arg = va_arg(ap, void *);
+	va_end(ap);
 	return wrapper ? v4l2_ioctl(fd, cmd, arg) : ioctl(fd, cmd, arg);
+}
+
+static inline void *test_mmap(void *start, size_t length, int prot, int flags,
+		int fd, int64_t offset)
+{
+ 	return wrapper ? v4l2_mmap(start, length, prot, flags, fd, offset) :
+		mmap(start, length, prot, flags, fd, offset);
+}
+
+static inline int test_munmap(void *start, size_t length)
+{
+ 	return wrapper ? v4l2_munmap(start, length) : munmap(start, length);
 }
 
 static inline int check_fract(const struct v4l2_fract *f)
