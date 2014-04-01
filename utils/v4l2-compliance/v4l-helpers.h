@@ -14,11 +14,21 @@ struct v4l_fd {
 	int (*munmap)(void *addr, size_t length);
 };
 
+/*
+ * mmap has a different prototype compared to v4l2_mmap. Because of
+ * this we have to make a wrapper for it.
+ */
+static inline void *v4l_fd_mmap(void *addr, size_t length, int prot, int flags,
+		                      int fd, int64_t offset)
+{
+	return mmap(addr, length, prot, flags, fd, offset);
+}
+
 static inline void v4l_fd_init(struct v4l_fd *f, int fd)
 {
 	f->fd = fd;
 	f->ioctl = ioctl;
-	f->mmap = mmap;
+	f->mmap = v4l_fd_mmap;
 	f->munmap = munmap;
 }
 
