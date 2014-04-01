@@ -6,7 +6,7 @@
 class cv4l_buffer;
 
 class cv4l_queue : v4l_queue {
-	friend cv4l_buffer;
+	friend class cv4l_buffer;
 public:
 	cv4l_queue(v4l_fd *_fd, unsigned type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
 				unsigned memory = V4L2_MEMORY_MMAP)
