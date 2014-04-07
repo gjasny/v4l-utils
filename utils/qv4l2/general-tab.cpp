@@ -376,10 +376,10 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	}
 
 	if (m_modulator.capability) {
-		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
-			(m_tuner.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
+		const char *unit = (m_modulator.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
+			(m_modulator.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
 
-		m_freqFac = (m_tuner.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
+		m_freqFac = (m_modulator.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
 		m_freq = new QDoubleSpinBox(parent);
 		m_freq->setMinimum(m_modulator.rangelow / m_freqFac);
 		m_freq->setMaximum(m_modulator.rangehigh / m_freqFac);
@@ -387,18 +387,13 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_freq->setSuffix(unit);
 		m_freq->setDecimals((m_modulator.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
 		m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
-				     .arg((double)m_modulator.rangelow / m_freqFac)
+				     .arg((double)m_modulator.rangelow / m_freqFac, 0, 'f', 2)
 				     .arg((double)m_modulator.rangehigh / m_freqFac, 0, 'f', 2)
 				     .arg(unit));
 		m_freq->setStatusTip(m_freq->whatsThis());
 		connect(m_freq, SIGNAL(valueChanged(double)), SLOT(freqChanged(double)));
 		updateFreq();
-		if (m_modulator.capability & V4L2_TUNER_CAP_1HZ)
-			addLabel("Frequency (Hz)");
-		else if (m_modulator.capability & V4L2_TUNER_CAP_LOW)
-			addLabel("Frequency (kHz)");
-		else
-			addLabel("Frequency (MHz)");
+		addLabel("Frequency");
 		addWidget(m_freq);
 	}
 	if (m_modulator.capability && !isSDR()) {
