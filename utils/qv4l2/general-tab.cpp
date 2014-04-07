@@ -120,7 +120,9 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_isRadio = true;
 	if (m_querycap.capabilities & V4L2_CAP_DEVICE_CAPS) {
 		m_isVbi = caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE);
-		m_isSDR = m_isRadio = caps() & V4L2_CAP_SDR_CAPTURE;
+		m_isSDR = caps() & V4L2_CAP_SDR_CAPTURE;
+		if (m_isSDR)
+			m_isRadio = true;
 	}
 	if (m_querycap.capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE)
 		m_isPlanar = true;
