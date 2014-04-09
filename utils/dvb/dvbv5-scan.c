@@ -407,6 +407,7 @@ int main(int argc, char **argv)
 {
 	struct arguments args;
 	int err, lnb = -1,idx = -1;
+	int r;
 	const struct argp argp = {
 		.options = options,
 		.parser = parse_opt,
@@ -459,8 +460,12 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	asprintf(&args.demux_dev,
+	r = asprintf(&args.demux_dev,
 		 "/dev/dvb/adapter%i/demux%i", args.adapter_dmx, args.demux);
+	if (r < 0) {
+		fprintf(stderr, "asprintf error\n" );
+		return -1;
+	}
 
 	if (verbose)
 		fprintf(stderr, "using demux '%s'\n", args.demux_dev);
