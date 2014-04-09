@@ -65,7 +65,7 @@ ssize_t dvb_table_cat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	/* parse the descriptors */
 	if (endbuf > p) {
 		uint16_t desc_length = endbuf - p;
-		if (dvb_parse_descriptors(parms, p, desc_length,
+		if (dvb_desc_parse(parms, p, desc_length,
 				      head_desc) != 0) {
 			return -4;
 		}
@@ -82,7 +82,7 @@ ssize_t dvb_table_cat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 void dvb_table_cat_free(struct dvb_table_cat *cat)
 {
-	dvb_free_descriptors((struct dvb_desc **) &cat->descriptor);
+	dvb_desc_free((struct dvb_desc **) &cat->descriptor);
 	free(cat);
 }
 
@@ -90,6 +90,6 @@ void dvb_table_cat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_cat *ca
 {
 	dvb_loginfo("CAT");
 	dvb_table_header_print(parms, &cat->header);
-	dvb_print_descriptors(parms, cat->descriptor);
+	dvb_desc_print(parms, cat->descriptor);
 }
 

@@ -98,7 +98,7 @@ const struct dvb_table_init dvb_table_initializers[] = {
 char *default_charset = "iso-8859-1";
 char *output_charset = "utf-8";
 
-int dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+int dvb_desc_parse(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			   uint16_t buflen, struct dvb_desc **head_desc)
 {
 	const uint8_t *ptr = buf, *endbuf = buf + buflen;
@@ -172,7 +172,7 @@ int dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	return 0;
 }
 
-void dvb_print_descriptors(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc)
+void dvb_desc_print(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc)
 {
 	while (desc) {
 		dvb_desc_print_func print = dvb_descriptors[desc->type].print;
@@ -184,7 +184,7 @@ void dvb_print_descriptors(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc)
 	}
 }
 
-void dvb_free_descriptors(struct dvb_desc **list)
+void dvb_desc_free(struct dvb_desc **list)
 {
 	struct dvb_desc *desc = *list;
 	while (desc) {

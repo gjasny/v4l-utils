@@ -113,7 +113,7 @@ ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 				   endbuf - p, size);
 			return -5;
 		}
-		dvb_parse_descriptors(parms, p, size, &event->descriptor);
+		dvb_desc_parse(parms, p, size, &event->descriptor);
 
 		p += size;
 	}
@@ -129,7 +129,7 @@ void atsc_table_eit_free(struct atsc_table_eit *eit)
 	while (event) {
 		struct atsc_table_eit_event *tmp = event;
 
-		dvb_free_descriptors((struct dvb_desc **) &event->descriptor);
+		dvb_desc_free((struct dvb_desc **) &event->descriptor);
 		event = event->next;
 		free(tmp);
 	}
@@ -154,7 +154,7 @@ void atsc_table_eit_print(struct dvb_v5_fe_parms *parms, struct atsc_table_eit *
 		dvb_loginfo("|   Duration              %dh %dm %ds", event->duration / 3600, (event->duration % 3600) / 60, event->duration % 60);
 		dvb_loginfo("|   ETM                   %d", event->etm);
 		dvb_loginfo("|   title length          %d", event->title_length);
-		dvb_print_descriptors(parms, event->descriptor);
+		dvb_desc_print(parms, event->descriptor);
 		event = event->next;
 		events++;
 	}

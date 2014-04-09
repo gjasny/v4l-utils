@@ -103,7 +103,7 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 					   endbuf - p, desc_length);
 				desc_length = endbuf - p;
 			}
-			if (dvb_parse_descriptors(parms, p, desc_length,
+			if (dvb_desc_parse(parms, p, desc_length,
 					      &event->descriptor) != 0) {
 				return -4;
 			}
@@ -121,7 +121,7 @@ void dvb_table_eit_free(struct dvb_table_eit *eit)
 {
 	struct dvb_table_eit_event *event = eit->event;
 	while (event) {
-		dvb_free_descriptors((struct dvb_desc **) &event->descriptor);
+		dvb_desc_free((struct dvb_desc **) &event->descriptor);
 		struct dvb_table_eit_event *tmp = event;
 		event = event->next;
 		free(tmp);
@@ -149,7 +149,7 @@ void dvb_table_eit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_eit *ei
 		dvb_loginfo("|   Duration              %dh %dm %ds", event->duration / 3600, (event->duration % 3600) / 60, event->duration % 60);
 		dvb_loginfo("|   free CA mode          %d", event->free_CA_mode);
 		dvb_loginfo("|   running status        %d: %s", event->running_status, dvb_eit_running_status_name[event->running_status] );
-		dvb_print_descriptors(parms, event->descriptor);
+		dvb_desc_print(parms, event->descriptor);
 		event = event->next;
 		events++;
 	}

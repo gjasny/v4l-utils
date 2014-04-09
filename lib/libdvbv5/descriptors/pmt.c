@@ -87,7 +87,7 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 				   desc_length, endbuf - p);
 			desc_length = endbuf - p;
 		}
-		if (dvb_parse_descriptors(parms, p, desc_length,
+		if (dvb_desc_parse(parms, p, desc_length,
 				      head_desc) != 0) {
 			return -3;
 		}
@@ -123,7 +123,7 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 					   endbuf - p, desc_length);
 				desc_length = endbuf - p;
 			}
-			if (dvb_parse_descriptors(parms, p, desc_length,
+			if (dvb_desc_parse(parms, p, desc_length,
 					      &stream->descriptor) != 0) {
 				return -4;
 			}
@@ -142,12 +142,12 @@ void dvb_table_pmt_free(struct dvb_table_pmt *pmt)
 {
 	struct dvb_table_pmt_stream *stream = pmt->stream;
 	while(stream) {
-		dvb_free_descriptors((struct dvb_desc **) &stream->descriptor);
+		dvb_desc_free((struct dvb_desc **) &stream->descriptor);
 		struct dvb_table_pmt_stream *tmp = stream;
 		stream = stream->next;
 		free(tmp);
 	}
-	dvb_free_descriptors((struct dvb_desc **) &pmt->descriptor);
+	dvb_desc_free((struct dvb_desc **) &pmt->descriptor);
 	free(pmt);
 }
 
@@ -160,7 +160,7 @@ void dvb_table_pmt_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_p
 	dvb_loginfo("|  descriptor length   %d", pmt->desc_length);
 	dvb_loginfo("|  zero3               %d", pmt->zero3);
 	dvb_loginfo("|  reserved3          %d", pmt->reserved3);
-	dvb_print_descriptors(parms, pmt->descriptor);
+	dvb_desc_print(parms, pmt->descriptor);
 	dvb_loginfo("|\\");
 	const struct dvb_table_pmt_stream *stream = pmt->stream;
 	uint16_t streams = 0;
@@ -168,7 +168,7 @@ void dvb_table_pmt_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_p
 		dvb_loginfo("|- stream 0x%04x: %s (%x)", stream->elementary_pid,
 				pmt_stream_name[stream->type], stream->type);
 		dvb_loginfo("|    descriptor length   %d", stream->desc_length);
-		dvb_print_descriptors(parms, stream->descriptor);
+		dvb_desc_print(parms, stream->descriptor);
 		stream = stream->next;
 		streams++;
 	}

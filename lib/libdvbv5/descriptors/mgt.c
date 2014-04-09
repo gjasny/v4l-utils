@@ -102,7 +102,7 @@ ssize_t atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 				   endbuf - p, size);
 			return -3;
 		}
-		dvb_parse_descriptors(parms, p, size, &table->descriptor);
+		dvb_desc_parse(parms, p, size, &table->descriptor);
 
 		p += size;
 	}
@@ -117,11 +117,11 @@ void atsc_table_mgt_free(struct atsc_table_mgt *mgt)
 {
 	struct atsc_table_mgt_table *table = mgt->table;
 
-	dvb_free_descriptors((struct dvb_desc **) &mgt->descriptor);
+	dvb_desc_free((struct dvb_desc **) &mgt->descriptor);
 	while (table) {
 		struct atsc_table_mgt_table *tmp = table;
 
-		dvb_free_descriptors((struct dvb_desc **) &table->descriptor);
+		dvb_desc_free((struct dvb_desc **) &table->descriptor);
 		table = table->next;
 		free(tmp);
 	}
@@ -144,7 +144,7 @@ void atsc_table_mgt_print(struct dvb_v5_fe_parms *parms, struct atsc_table_mgt *
                 dvb_loginfo("|  size         %d", table->size);
                 dvb_loginfo("|  one3         %d", table->one3);
                 dvb_loginfo("|  desc_length  %d", table->desc_length);
-		dvb_print_descriptors(parms, table->descriptor);
+		dvb_desc_print(parms, table->descriptor);
 		table = table->next;
 		tables++;
 	}

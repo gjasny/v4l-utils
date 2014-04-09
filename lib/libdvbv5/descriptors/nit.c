@@ -77,7 +77,7 @@ ssize_t dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			   endbuf - p, size);
 		return -3;
 	}
-	dvb_parse_descriptors(parms, p, size, head_desc);
+	dvb_desc_parse(parms, p, size, head_desc);
 	p += size;
 
 	size = sizeof(union dvb_table_nit_transport_header);
@@ -117,7 +117,7 @@ ssize_t dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 					   endbuf - p, desc_length);
 				desc_length = endbuf - p;
 			}
-			if (dvb_parse_descriptors(parms, p, desc_length,
+			if (dvb_desc_parse(parms, p, desc_length,
 					      &transport->descriptor) != 0) {
 				return -6;
 			}
@@ -134,9 +134,9 @@ ssize_t dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 void dvb_table_nit_free(struct dvb_table_nit *nit)
 {
 	struct dvb_table_nit_transport *transport = nit->transport;
-	dvb_free_descriptors((struct dvb_desc **) &nit->descriptor);
+	dvb_desc_free((struct dvb_desc **) &nit->descriptor);
 	while (transport) {
-		dvb_free_descriptors((struct dvb_desc **) &transport->descriptor);
+		dvb_desc_free((struct dvb_desc **) &transport->descriptor);
 		struct dvb_table_nit_transport *tmp = transport;
 		transport = transport->next;
 		free(tmp);
@@ -152,10 +152,10 @@ void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *ni
 	dvb_loginfo("NIT");
 	dvb_table_header_print(parms, &nit->header);
 	dvb_loginfo("| desc_length   %d", nit->desc_length);
-	dvb_print_descriptors(parms, nit->descriptor);
+	dvb_desc_print(parms, nit->descriptor);
 	while (transport) {
 		dvb_loginfo("|- transport %04x network %04x", transport->transport_id, transport->network_id);
-		dvb_print_descriptors(parms, transport->descriptor);
+		dvb_desc_print(parms, transport->descriptor);
 		transport = transport->next;
 		transports++;
 	}

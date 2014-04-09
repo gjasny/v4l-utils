@@ -82,9 +82,9 @@ uint32_t bcd(uint32_t bcd);
 
 void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *buf, int len);
 
-int dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf, uint16_t section_length, struct dvb_desc **head_desc);
-void dvb_free_descriptors(struct dvb_desc **list);
-void dvb_print_descriptors(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc);
+int  dvb_desc_parse(struct dvb_v5_fe_parms *parms, const uint8_t *buf, uint16_t section_length, struct dvb_desc **head_desc);
+void dvb_desc_free (struct dvb_desc **list);
+void dvb_desc_print(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }

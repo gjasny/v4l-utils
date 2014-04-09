@@ -115,7 +115,7 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		}
 
 		/* get the descriptors for each program */
-		dvb_parse_descriptors(parms, p, channel->descriptors_length,
+		dvb_desc_parse(parms, p, channel->descriptors_length,
 				      &channel->descriptor);
 
 		p += channel->descriptors_length;
@@ -132,7 +132,7 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 				   d->descriptor_length, endbuf - p);
 			return -3;
 		}
-		dvb_parse_descriptors(parms, p, d->descriptor_length,
+		dvb_desc_parse(parms, p, d->descriptor_length,
 				      &vct->descriptor);
 	}
 	if (endbuf - p)
@@ -146,12 +146,12 @@ void atsc_table_vct_free(struct atsc_table_vct *vct)
 {
 	struct atsc_table_vct_channel *channel = vct->channel;
 	while (channel) {
-		dvb_free_descriptors((struct dvb_desc **) &channel->descriptor);
+		dvb_desc_free((struct dvb_desc **) &channel->descriptor);
 		struct atsc_table_vct_channel *tmp = channel;
 		channel = channel->next;
 		free(tmp);
 	}
-	dvb_free_descriptors((struct dvb_desc **) &vct->descriptor);
+	dvb_desc_free((struct dvb_desc **) &vct->descriptor);
 
 	free(vct);
 }
@@ -192,7 +192,7 @@ void atsc_table_vct_print(struct dvb_v5_fe_parms *parms, struct atsc_table_vct *
 		dvb_loginfo("|   service type          %d", channel->service_type);
 		dvb_loginfo("|   source id            %d", channel->source_id);
 
-		dvb_print_descriptors(parms, channel->descriptor);
+		dvb_desc_print(parms, channel->descriptor);
 		channel = channel->next;
 		channels++;
 	}

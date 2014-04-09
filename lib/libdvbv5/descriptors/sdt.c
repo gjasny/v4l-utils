@@ -97,7 +97,7 @@ ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 					   endbuf - p, desc_length);
 				desc_length = endbuf - p;
 			}
-			if (dvb_parse_descriptors(parms, p, desc_length,
+			if (dvb_desc_parse(parms, p, desc_length,
 					      &service->descriptor) != 0) {
 				return -4;
 			}
@@ -117,7 +117,7 @@ void dvb_table_sdt_free(struct dvb_table_sdt *sdt)
 {
 	struct dvb_table_sdt_service *service = sdt->service;
 	while(service) {
-		dvb_free_descriptors((struct dvb_desc **) &service->descriptor);
+		dvb_desc_free((struct dvb_desc **) &service->descriptor);
 		struct dvb_table_sdt_service *tmp = service;
 		service = service->next;
 		free(tmp);
@@ -141,7 +141,7 @@ void dvb_table_sdt_print(struct dvb_v5_fe_parms *parms, struct dvb_table_sdt *sd
 		dvb_loginfo("|   free CA mode          %d", service->free_CA_mode);
 		dvb_loginfo("|   running status        %d", service->running_status);
 		dvb_loginfo("|   descriptor length     %d", service->desc_length);
-		dvb_print_descriptors(parms, service->descriptor);
+		dvb_desc_print(parms, service->descriptor);
 		service = service->next;
 		services++;
 	}
