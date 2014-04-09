@@ -741,7 +741,9 @@ static int testGlobalFormat(struct node *node, int type)
 	}
 	// Check if we have found different formats, otherwise this
 	// test is pointless.
-	if (pixfmt1 == pixfmt2 && w1 == w2 && h1 == h2)
+	// This test will also never succeed if we are using the libv4l2
+	// wrapper.
+	if (wrapper || (pixfmt1 == pixfmt2 && w1 == w2 && h1 == h2))
 		return 0;
 
 	if (type == V4L2_BUF_TYPE_SDR_CAPTURE) {
