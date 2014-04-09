@@ -48,8 +48,8 @@ void dvb_desc_service_list_print(struct dvb_v5_fe_parms *parms, const struct dvb
 	/*const struct dvb_desc_service_list *slist = (const struct dvb_desc_service_list *) desc;*/
 	/*int i = 0;*/
 	/*while(slist->services[i].service_id != 0) {*/
-		/*dvb_log("|           service id   : '%d'", slist->services[i].service_id);*/
-		/*dvb_log("|           service type : '%d'", slist->services[i].service_type);*/
+		/*dvb_loginfo("|           service id   : '%d'", slist->services[i].service_id);*/
+		/*dvb_loginfo("|           service type : '%d'", slist->services[i].service_type);*/
 		/*++i;*/
 	/*}*/
 }

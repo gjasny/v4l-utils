@@ -145,7 +145,7 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 void atsc_table_vct_free(struct atsc_table_vct *vct)
 {
 	struct atsc_table_vct_channel *channel = vct->channel;
-	while(channel) {
+	while (channel) {
 		dvb_free_descriptors((struct dvb_desc **) &channel->descriptor);
 		struct atsc_table_vct_channel *tmp = channel;
 		channel = channel->next;
@@ -158,42 +158,43 @@ void atsc_table_vct_free(struct atsc_table_vct *vct)
 
 void atsc_table_vct_print(struct dvb_v5_fe_parms *parms, struct atsc_table_vct *vct)
 {
+	const struct atsc_table_vct_channel *channel = vct->channel;
+	uint16_t channels = 0;
+
 	if (vct->header.table_id == ATSC_TABLE_CVCT)
-		dvb_log("CVCT");
+		dvb_loginfo("CVCT");
 	else
-		dvb_log("TVCT");
+		dvb_loginfo("TVCT");
 
 	ATSC_TABLE_HEADER_PRINT(parms, vct);
 
-	dvb_log("|- #channels        %d", vct->num_channels_in_section);
-	dvb_log("|\\  channel_id");
-	const struct atsc_table_vct_channel *channel = vct->channel;
-	uint16_t channels = 0;
-	while(channel) {
-		dvb_log("|- Channel                %d.%d: %s",
+	dvb_loginfo("|- #channels        %d", vct->num_channels_in_section);
+	dvb_loginfo("|\\  channel_id");
+	while (channel) {
+		dvb_loginfo("|- Channel                %d.%d: %s",
 			channel->major_channel_number,
 			channel->minor_channel_number,
 			channel->short_name);
-		dvb_log("|   modulation mode       %d", channel->modulation_mode);
-		dvb_log("|   carrier frequency     %d", channel->carrier_frequency);
-		dvb_log("|   TS ID                 %d", channel->channel_tsid);
-		dvb_log("|   program number        %d", channel->program_number);
+		dvb_loginfo("|   modulation mode       %d", channel->modulation_mode);
+		dvb_loginfo("|   carrier frequency     %d", channel->carrier_frequency);
+		dvb_loginfo("|   TS ID                 %d", channel->channel_tsid);
+		dvb_loginfo("|   program number        %d", channel->program_number);
 
-		dvb_log("|   ETM location          %d", channel->ETM_location);
-		dvb_log("|   access controlled     %d", channel->access_controlled);
-		dvb_log("|   hidden                %d", channel->hidden);
+		dvb_loginfo("|   ETM location          %d", channel->ETM_location);
+		dvb_loginfo("|   access controlled     %d", channel->access_controlled);
+		dvb_loginfo("|   hidden                %d", channel->hidden);
 
 		if (vct->header.table_id == ATSC_TABLE_CVCT) {
-			dvb_log("|   path select           %d", channel->path_select);
-			dvb_log("|   out of band           %d", channel->out_of_band);
+			dvb_loginfo("|   path select           %d", channel->path_select);
+			dvb_loginfo("|   out of band           %d", channel->out_of_band);
 		}
-		dvb_log("|   hide guide            %d", channel->hide_guide);
-		dvb_log("|   service type          %d", channel->service_type);
-		dvb_log("|   source id            %d", channel->source_id);
+		dvb_loginfo("|   hide guide            %d", channel->hide_guide);
+		dvb_loginfo("|   service type          %d", channel->service_type);
+		dvb_loginfo("|   source id            %d", channel->source_id);
 
 		dvb_print_descriptors(parms, channel->descriptor);
 		channel = channel->next;
 		channels++;
 	}
-	dvb_log("|_  %d channels", channels);
+	dvb_loginfo("|_  %d channels", channels);
 }

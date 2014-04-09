@@ -131,29 +131,29 @@ void dvb_table_eit_free(struct dvb_table_eit *eit)
 
 void dvb_table_eit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_eit *eit)
 {
-	dvb_log("EIT");
+	dvb_loginfo("EIT");
 	dvb_table_header_print(parms, &eit->header);
-	dvb_log("|- transport_id       %d", eit->transport_id);
-	dvb_log("|- network_id         %d", eit->network_id);
-	dvb_log("|- last segment       %d", eit->last_segment);
-	dvb_log("|- last table         %d", eit->last_table_id);
-	dvb_log("|\\  event_id");
+	dvb_loginfo("|- transport_id       %d", eit->transport_id);
+	dvb_loginfo("|- network_id         %d", eit->network_id);
+	dvb_loginfo("|- last segment       %d", eit->last_segment);
+	dvb_loginfo("|- last table         %d", eit->last_table_id);
+	dvb_loginfo("|\\  event_id");
 	const struct dvb_table_eit_event *event = eit->event;
 	uint16_t events = 0;
 	while (event) {
 		char start[255];
 		strftime(start, sizeof(start), "%F %T", &event->start);
-		dvb_log("|- %7d", event->event_id);
-		dvb_log("|   Service               %d", event->service_id);
-		dvb_log("|   Start                 %s UTC", start);
-		dvb_log("|   Duration              %dh %dm %ds", event->duration / 3600, (event->duration % 3600) / 60, event->duration % 60);
-		dvb_log("|   free CA mode          %d", event->free_CA_mode);
-		dvb_log("|   running status        %d: %s", event->running_status, dvb_eit_running_status_name[event->running_status] );
+		dvb_loginfo("|- %7d", event->event_id);
+		dvb_loginfo("|   Service               %d", event->service_id);
+		dvb_loginfo("|   Start                 %s UTC", start);
+		dvb_loginfo("|   Duration              %dh %dm %ds", event->duration / 3600, (event->duration % 3600) / 60, event->duration % 60);
+		dvb_loginfo("|   free CA mode          %d", event->free_CA_mode);
+		dvb_loginfo("|   running status        %d: %s", event->running_status, dvb_eit_running_status_name[event->running_status] );
 		dvb_print_descriptors(parms, event->descriptor);
 		event = event->next;
 		events++;
 	}
-	dvb_log("|_  %d events", events);
+	dvb_loginfo("|_  %d events", events);
 }
 
 void dvb_time(const uint8_t data[5], struct tm *tm)

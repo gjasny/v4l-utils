@@ -67,8 +67,8 @@ void dvb_desc_event_short_free(struct dvb_desc *desc)
 void dvb_desc_event_short_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_event_short *event = (const struct dvb_desc_event_short *) desc;
-	dvb_log("|           name          '%s'", event->name);
-	dvb_log("|           language      '%s'", event->language);
-	dvb_log("|           sescription   '%s'", event->text);
+	dvb_loginfo("|           name          '%s'", event->name);
+	dvb_loginfo("|           language      '%s'", event->language);
+	dvb_loginfo("|           sescription   '%s'", event->text);
 }
 

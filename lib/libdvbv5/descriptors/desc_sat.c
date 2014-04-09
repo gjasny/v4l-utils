@@ -57,13 +57,13 @@ void dvb_desc_sat_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *de
 			pol = 'R';
 			break;
 	}
-	dvb_log("|           modulation_system %s", sat->modulation_system ? "DVB-S2" : "DVB-S");
-	dvb_log("|           frequency         %d %c", sat->frequency, pol);
-	dvb_log("|           symbol_rate       %d", sat->symbol_rate);
-	dvb_log("|           fec               %d", sat->fec);
-	dvb_log("|           modulation_type   %d", sat->modulation_type);
-	dvb_log("|           roll_off          %d", sat->roll_off);
-	dvb_log("|           orbit             %.1f %c", (float) sat->orbit / 10.0, sat->west_east ? 'E' : 'W');
+	dvb_loginfo("|           modulation_system %s", sat->modulation_system ? "DVB-S2" : "DVB-S");
+	dvb_loginfo("|           frequency         %d %c", sat->frequency, pol);
+	dvb_loginfo("|           symbol_rate       %d", sat->symbol_rate);
+	dvb_loginfo("|           fec               %d", sat->fec);
+	dvb_loginfo("|           modulation_type   %d", sat->modulation_type);
+	dvb_loginfo("|           roll_off          %d", sat->roll_off);
+	dvb_loginfo("|           orbit             %.1f %c", (float) sat->orbit / 10.0, sat->west_east ? 'E' : 'W');
 }
 
 const unsigned dvbs_dvbc_dvbs_freq_inner[] = {

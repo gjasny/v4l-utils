@@ -62,8 +62,8 @@ void dvb_desc_service_free(struct dvb_desc *desc)
 void dvb_desc_service_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_service *service = (const struct dvb_desc_service *) desc;
-	dvb_log("|           service type  %d", service->service_type);
-	dvb_log("|           name          '%s'", service->name);
-	dvb_log("|           provider      '%s'", service->provider);
+	dvb_loginfo("|           service type  %d", service->service_type);
+	dvb_loginfo("|           provider      '%s'", service->provider);
+	dvb_loginfo("|           name          '%s'", service->name);
 }
 

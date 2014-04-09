@@ -95,7 +95,7 @@ ssize_t atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		*head = table;
 		head = &(*head)->next;
 
-		/* get the descriptors for each table */
+		/* parse the descriptors */
 		size = table->desc_length;
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
@@ -133,21 +133,21 @@ void atsc_table_mgt_print(struct dvb_v5_fe_parms *parms, struct atsc_table_mgt *
 	const struct atsc_table_mgt_table *table = mgt->table;
 	uint16_t tables = 0;
 
-	dvb_log("MGT");
+	dvb_loginfo("MGT");
 	ATSC_TABLE_HEADER_PRINT(parms, mgt);
-	dvb_log("| tables           %d", mgt->tables);
+	dvb_loginfo("| tables           %d", mgt->tables);
 	while (table) {
-                dvb_log("|- type %04x    %d", table->type, table->pid);
-                dvb_log("|  one          %d", table->one);
-                dvb_log("|  one2         %d", table->one2);
-                dvb_log("|  type version %d", table->type_version);
-                dvb_log("|  size         %d", table->size);
-                dvb_log("|  one3         %d", table->one3);
-                dvb_log("|  desc_length  %d", table->desc_length);
+                dvb_loginfo("|- type %04x    %d", table->type, table->pid);
+                dvb_loginfo("|  one          %d", table->one);
+                dvb_loginfo("|  one2         %d", table->one2);
+                dvb_loginfo("|  type version %d", table->type_version);
+                dvb_loginfo("|  size         %d", table->size);
+                dvb_loginfo("|  one3         %d", table->one3);
+                dvb_loginfo("|  desc_length  %d", table->desc_length);
 		dvb_print_descriptors(parms, table->descriptor);
 		table = table->next;
 		tables++;
 	}
-	dvb_log("|_  %d tables", tables);
+	dvb_loginfo("|_  %d tables", tables);
 }
 

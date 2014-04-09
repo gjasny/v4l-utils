@@ -35,9 +35,9 @@ int dvb_desc_hierarchy_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, s
 void dvb_desc_hierarchy_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_hierarchy *hierarchy = (const struct dvb_desc_hierarchy *) desc;
-	dvb_log("|           type           %d", hierarchy->hierarchy_type);
-	dvb_log("|           layer          %d", hierarchy->layer);
-	dvb_log("|           embedded_layer %d", hierarchy->embedded_layer);
-	dvb_log("|           channel        %d", hierarchy->channel);
+	dvb_loginfo("|           type           %d", hierarchy->hierarchy_type);
+	dvb_loginfo("|           layer          %d", hierarchy->layer);
+	dvb_loginfo("|           embedded_layer %d", hierarchy->embedded_layer);
+	dvb_loginfo("|           channel        %d", hierarchy->channel);
 }
 

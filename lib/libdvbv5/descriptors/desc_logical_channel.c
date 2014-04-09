@@ -36,7 +36,7 @@ int dvb_desc_logical_channel_init(struct dvb_v5_fe_parms *parms,
 
 	d->lcn = malloc(d->length);
 	if (!d->lcn) {
-		dvb_perror("Out of memory!");
+		dvb_logerr("%s: out of memory", __func__);
 		return -1;
 	}
 
@@ -60,9 +60,9 @@ void dvb_desc_logical_channel_print(struct dvb_v5_fe_parms *parms, const struct 
 	len = d->length / sizeof(d->lcn);
 
 	for (i = 0; i < len; i++) {
-		dvb_log("|           service ID[%d]     %d", i, d->lcn[i].service_id);
-		dvb_log("|           LCN             %d", d->lcn[i].logical_channel_number);
-		dvb_log("|           visible service %d", d->lcn[i].visible_service_flag);
+		dvb_loginfo("|           service ID[%d]     %d", i, d->lcn[i].service_id);
+		dvb_loginfo("|           LCN             %d", d->lcn[i].logical_channel_number);
+		dvb_loginfo("|           visible service %d", d->lcn[i].visible_service_flag);
 	}
 }
 

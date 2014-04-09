@@ -62,7 +62,7 @@ ssize_t dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 		prog = malloc(sizeof(struct dvb_table_pat_program));
 		if (!prog) {
-			dvb_perror("Out of memory");
+			dvb_logerr("%s: out of memory", __func__);
 			return -3;
 		}
 

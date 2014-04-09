@@ -33,7 +33,7 @@ int isdb_desc_partial_reception_init(struct dvb_v5_fe_parms *parms,
 
 	d->partial_reception = malloc(d->length);
 	if (!d->partial_reception) {
-		dvb_perror("Out of memory!");
+		dvb_logerr("%s: out of memory", __func__);
 		return -1;
 	}
 
@@ -62,6 +62,6 @@ void isdb_desc_partial_reception_print(struct dvb_v5_fe_parms *parms, const stru
 	len = d->length / sizeof(d->partial_reception);
 
 	for (i = 0; i < len; i++) {
-		dvb_log("|           service ID[%d]     %d", i, d->partial_reception[i].service_id);
+		dvb_loginfo("|           service ID[%d]     %d", i, d->partial_reception[i].service_id);
 	}
 }

@@ -39,19 +39,19 @@ int dvb_desc_terrestrial_delivery_init(struct dvb_v5_fe_parms *parms, const uint
 void dvb_desc_terrestrial_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_terrestrial_delivery *tdel = (const struct dvb_desc_terrestrial_delivery *) desc;
-	dvb_log("|           length                %d", tdel->length);
-	dvb_log("|           centre frequency      %d", tdel->centre_frequency * 10);
-	dvb_log("|           mpe_fec_indicator     %d", tdel->mpe_fec_indicator);
-	dvb_log("|           time_slice_indicator  %d", tdel->time_slice_indicator);
-	dvb_log("|           priority              %d", tdel->priority);
-	dvb_log("|           bandwidth             %d", tdel->bandwidth);
-	dvb_log("|           code_rate_hp_stream   %d", tdel->code_rate_hp_stream);
-	dvb_log("|           hierarchy_information %d", tdel->hierarchy_information);
-	dvb_log("|           constellation         %d", tdel->constellation);
-	dvb_log("|           other_frequency_flag  %d", tdel->other_frequency_flag);
-	dvb_log("|           transmission_mode     %d", tdel->transmission_mode);
-	dvb_log("|           guard_interval        %d", tdel->guard_interval);
-	dvb_log("|           code_rate_lp_stream   %d", tdel->code_rate_lp_stream);
+	dvb_loginfo("|           length                %d", tdel->length);
+	dvb_loginfo("|           centre frequency      %d", tdel->centre_frequency * 10);
+	dvb_loginfo("|           mpe_fec_indicator     %d", tdel->mpe_fec_indicator);
+	dvb_loginfo("|           time_slice_indicator  %d", tdel->time_slice_indicator);
+	dvb_loginfo("|           priority              %d", tdel->priority);
+	dvb_loginfo("|           bandwidth             %d", tdel->bandwidth);
+	dvb_loginfo("|           code_rate_hp_stream   %d", tdel->code_rate_hp_stream);
+	dvb_loginfo("|           hierarchy_information %d", tdel->hierarchy_information);
+	dvb_loginfo("|           constellation         %d", tdel->constellation);
+	dvb_loginfo("|           other_frequency_flag  %d", tdel->other_frequency_flag);
+	dvb_loginfo("|           transmission_mode     %d", tdel->transmission_mode);
+	dvb_loginfo("|           guard_interval        %d", tdel->guard_interval);
+	dvb_loginfo("|           code_rate_lp_stream   %d", tdel->code_rate_lp_stream);
 }
 
 const unsigned dvbt_bw[] = {

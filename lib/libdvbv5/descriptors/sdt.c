@@ -127,22 +127,24 @@ void dvb_table_sdt_free(struct dvb_table_sdt *sdt)
 
 void dvb_table_sdt_print(struct dvb_v5_fe_parms *parms, struct dvb_table_sdt *sdt)
 {
-	dvb_log("SDT");
+	dvb_loginfo("SDT");
 	dvb_table_header_print(parms, &sdt->header);
-	dvb_log("|- network_id         %d", sdt->network_id);
-	dvb_log("|\\");
+	dvb_loginfo("| network_id          %d", sdt->network_id);
+	dvb_loginfo("| reserved            %d", sdt->reserved);
+	dvb_loginfo("|\\");
 	const struct dvb_table_sdt_service *service = sdt->service;
 	uint16_t services = 0;
-	while(service) {
-		dvb_log("|- service 0x%04x", service->service_id);
-		dvb_log("|   EIT schedule          %d", service->EIT_schedule);
-		dvb_log("|   EIT present following %d", service->EIT_present_following);
-		dvb_log("|   free CA mode          %d", service->free_CA_mode);
-		dvb_log("|   running status        %d", service->running_status);
+	while (service) {
+		dvb_loginfo("|- service 0x%04x", service->service_id);
+		dvb_loginfo("|   EIT schedule          %d", service->EIT_schedule);
+		dvb_loginfo("|   EIT present following %d", service->EIT_present_following);
+		dvb_loginfo("|   free CA mode          %d", service->free_CA_mode);
+		dvb_loginfo("|   running status        %d", service->running_status);
+		dvb_loginfo("|   descriptor length     %d", service->desc_length);
 		dvb_print_descriptors(parms, service->descriptor);
 		service = service->next;
 		services++;
 	}
-	dvb_log("|_  %d services", services);
+	dvb_loginfo("|_  %d services", services);
 }
 

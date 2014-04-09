@@ -32,16 +32,16 @@ int dvb_table_header_init(struct dvb_table_header *t)
 
 void dvb_table_header_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_header *t)
 {
-	dvb_log("| table_id            %d", t->table_id);
-	dvb_log("| section_length      %d", t->section_length);
-	dvb_log("| one                 %d", t->one);
-	dvb_log("| zero                %d", t->zero);
-	dvb_log("| syntax              %d", t->syntax);
-	dvb_log("| transport_stream_id %d", t->id);
-	dvb_log("| current_next        %d", t->current_next);
-	dvb_log("| version             %d", t->version);
-	dvb_log("| one2                %d", t->one2);
-	dvb_log("| section_number      %d", t->section_id);
-	dvb_log("| last_section_number %d", t->last_section);
+	dvb_loginfo("| table_id         0x%02x", t->table_id);
+	dvb_loginfo("| section_length      %d", t->section_length);
+	dvb_loginfo("| one                 %d", t->one);
+	dvb_loginfo("| zero                %d", t->zero);
+	dvb_loginfo("| syntax              %d", t->syntax);
+	dvb_loginfo("| transport_stream_id %d", t->id);
+	dvb_loginfo("| current_next        %d", t->current_next);
+	dvb_loginfo("| version             %d", t->version);
+	dvb_loginfo("| one2                %d", t->one2);
+	dvb_loginfo("| section_number      %d", t->section_id);
+	dvb_loginfo("| last_section_number %d", t->last_section);
 }
 

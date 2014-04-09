@@ -178,7 +178,7 @@ void dvb_print_descriptors(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc)
 		dvb_desc_print_func print = dvb_descriptors[desc->type].print;
 		if (!print)
 			print = dvb_desc_default_print;
-		dvb_log("|        0x%02x: %s", desc->type, dvb_descriptors[desc->type].name);
+		dvb_loginfo("|        0x%02x: %s", desc->type, dvb_descriptors[desc->type].name);
 		print(parms, desc);
 		desc = desc->next;
 	}
@@ -1374,6 +1374,6 @@ void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned c
 		for (i = strlen(hex); i < 49; i++)
 			strncat(spaces, " ", sizeof(spaces));
 		ascii[j] = '\0';
-		dvb_log("%s%s %s %s", prefix, hex, spaces, ascii);
+		dvb_loginfo("%s%s %s %s", prefix, hex, spaces, ascii);
 	}
 }

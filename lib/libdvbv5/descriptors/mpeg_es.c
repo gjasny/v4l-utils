@@ -35,17 +35,17 @@ int dvb_mpeg_es_seq_start_init(const uint8_t *buf, ssize_t buflen, struct dvb_mp
 
 void dvb_mpeg_es_seq_start_print(struct dvb_v5_fe_parms *parms, struct dvb_mpeg_es_seq_start *seq_start)
 {
-	dvb_log("MPEG ES SEQ START");
-        dvb_log(" - width       %d", seq_start->width);
-        dvb_log(" - height      %d", seq_start->height);
-        dvb_log(" - aspect      %d", seq_start->aspect);
-        dvb_log(" - framerate   %d", seq_start->framerate);
-        dvb_log(" - bitrate     %d", seq_start->bitrate);
-        dvb_log(" - one         %d", seq_start->one);
-        dvb_log(" - vbv         %d", seq_start->vbv);
-        dvb_log(" - constrained %d", seq_start->constrained);
-        dvb_log(" - qm_intra    %d", seq_start->qm_intra);
-        dvb_log(" - qm_nonintra %d", seq_start->qm_nonintra);
+	dvb_loginfo("MPEG ES SEQ START");
+        dvb_loginfo(" - width       %d", seq_start->width);
+        dvb_loginfo(" - height      %d", seq_start->height);
+        dvb_loginfo(" - aspect      %d", seq_start->aspect);
+        dvb_loginfo(" - framerate   %d", seq_start->framerate);
+        dvb_loginfo(" - bitrate     %d", seq_start->bitrate);
+        dvb_loginfo(" - one         %d", seq_start->one);
+        dvb_loginfo(" - vbv         %d", seq_start->vbv);
+        dvb_loginfo(" - constrained %d", seq_start->constrained);
+        dvb_loginfo(" - qm_intra    %d", seq_start->qm_intra);
+        dvb_loginfo(" - qm_nonintra %d", seq_start->qm_nonintra);
 }
 
 const char *dvb_mpeg_es_frame_names[5] = {
@@ -68,8 +68,8 @@ int dvb_mpeg_es_pic_start_init(const uint8_t *buf, ssize_t buflen, struct dvb_mp
 
 void dvb_mpeg_es_pic_start_print(struct dvb_v5_fe_parms *parms, struct dvb_mpeg_es_pic_start *pic_start)
 {
-	dvb_log("MPEG ES PIC START");
-        dvb_log(" - temporal_ref %d", pic_start->temporal_ref);
-        dvb_log(" - coding_type  %d (%s-frame)", pic_start->coding_type, dvb_mpeg_es_frame_names[pic_start->coding_type]);
-        dvb_log(" - vbv_delay    %d", pic_start->vbv_delay);
+	dvb_loginfo("MPEG ES PIC START");
+        dvb_loginfo(" - temporal_ref %d", pic_start->temporal_ref);
+        dvb_loginfo(" - coding_type  %d (%s-frame)", pic_start->coding_type, dvb_mpeg_es_frame_names[pic_start->coding_type]);
+        dvb_loginfo(" - vbv_delay    %d", pic_start->vbv_delay);
 }

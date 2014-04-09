@@ -34,7 +34,7 @@
 
 #define ATSC_TABLE_HEADER_PRINT(_parms, _table) \
 	dvb_table_header_print(_parms, &_table->header); \
-	dvb_log("| protocol_version %d", _table->protocol_version); \
+	dvb_loginfo("| protocol_version %d", _table->protocol_version); \
 
 
 #endif

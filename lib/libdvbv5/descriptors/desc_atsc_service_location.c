@@ -64,13 +64,13 @@ void atsc_desc_service_location_print(struct dvb_v5_fe_parms *parms, const struc
 	struct atsc_desc_service_location_elementary *el = s_loc->elementary;
 	int i;
 
-	dvb_log("|           pcr PID               %d", s_loc->pcr_pid);
-	dvb_log("|\\ elementary service - %d elementaries", s_loc->number_elements);
+	dvb_loginfo("|           pcr PID               %d", s_loc->pcr_pid);
+	dvb_loginfo("|\\ elementary service - %d elementaries", s_loc->number_elements);
 	for (i = 0; i < s_loc->number_elements; i++) {
-		dvb_log("|-  elementary %d", i);
-		dvb_log("|-      | stream type 0x%02x", el[i].stream_type);
-		dvb_log("|-      | PID         %d", el[i].elementary_pid);
-		dvb_log("|-      | Language    %c%c%c",
+		dvb_loginfo("|-  elementary %d", i);
+		dvb_loginfo("|-      | stream type 0x%02x", el[i].stream_type);
+		dvb_loginfo("|-      | PID         %d", el[i].elementary_pid);
+		dvb_loginfo("|-      | Language    %c%c%c",
 			el[i].ISO_639_language_code[0],
 			el[i].ISO_639_language_code[1],
 			el[i].ISO_639_language_code[2]);

@@ -147,7 +147,7 @@ static int dvb_parse_section_alloc(struct dvb_v5_fe_parms *parms,
 	*sect->table = NULL;
 	priv = calloc(sizeof(struct dvb_table_filter_priv), 1);
 	if (!priv) {
-		dvb_perror("Out of memory");
+		dvb_logerr("%s: out of memory", __func__);
 		return -1;
 	}
 	priv->last_section = -1;
@@ -280,7 +280,7 @@ int dvb_read_sections(struct dvb_v5_fe_parms *parms, int dmx_fd,
 
 	buf = calloc(DVB_MAX_PAYLOAD_PACKET_SIZE, 1);
 	if (!buf) {
-		dvb_perror("Out of memory");
+		dvb_logerr("%s: out of memory", __func__);
 		dvb_dmx_stop(dmx_fd);
 		dvb_table_filter_free(sect);
 		return -1;

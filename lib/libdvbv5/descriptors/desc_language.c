@@ -37,6 +37,6 @@ int dvb_desc_language_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, st
 void dvb_desc_language_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_language *lang = (const struct dvb_desc_language *) desc;
-	dvb_log("|           lang: %s (type: %d)", lang->language, lang->audio_type);
+	dvb_loginfo("|           lang: %s (type: %d)", lang->language, lang->audio_type);
 }
 

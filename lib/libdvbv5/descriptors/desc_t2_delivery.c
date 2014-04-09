@@ -66,7 +66,7 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 	d->centre_frequency = calloc(d->frequency_loop_length,
 				     sizeof(*d->centre_frequency));
 	if (!d->centre_frequency) {
-		dvb_perror("Out of memory");
+		dvb_logerr("%s: out of memory", __func__);
 		return -3;
 	}
 
@@ -81,7 +81,7 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 
 	d->subcell = calloc(d->subcel_info_loop_length, sizeof(*d->subcell));
 	if (!d->subcell) {
-		dvb_perror("Out of memory");
+		dvb_logerr("%s: out of memory", __func__);
 		return -4;
 	}
 	memcpy(d->subcell, p, sizeof(*d->subcell) * d->subcel_info_loop_length);
@@ -98,26 +98,26 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 	const struct dvb_desc_t2_delivery *d = desc;
 	int i;
 
-	dvb_log("|           plp_id                    %d", d->plp_id);
-	dvb_log("|           system_id                 %d", d->system_id);
+	dvb_loginfo("|           plp_id                    %d", d->plp_id);
+	dvb_loginfo("|           system_id                 %d", d->system_id);
 
 	if (ext->length - 1 <= 4)
 		return;
 
-	dvb_log("|           tfs_flag                  %d", d->tfs_flag);
-	dvb_log("|           other_frequency_flag      %d", d->other_frequency_flag);
-	dvb_log("|           transmission_mode         %d", d->transmission_mode);
-	dvb_log("|           guard_interval            %d", d->guard_interval);
-	dvb_log("|           reserved                  %d", d->reserved);
-	dvb_log("|           bandwidth                 %d", d->bandwidth);
-	dvb_log("|           SISO MISO                 %d", d->SISO_MISO);
+	dvb_loginfo("|           tfs_flag                  %d", d->tfs_flag);
+	dvb_loginfo("|           other_frequency_flag      %d", d->other_frequency_flag);
+	dvb_loginfo("|           transmission_mode         %d", d->transmission_mode);
+	dvb_loginfo("|           guard_interval            %d", d->guard_interval);
+	dvb_loginfo("|           reserved                  %d", d->reserved);
+	dvb_loginfo("|           bandwidth                 %d", d->bandwidth);
+	dvb_loginfo("|           SISO MISO                 %d", d->SISO_MISO);
 
 	for (i = 0; i < d->frequency_loop_length; i++)
-		dvb_log("|           centre frequency[%d]   %d", i, d->centre_frequency[i]);
+		dvb_loginfo("|           centre frequency[%d]   %d", i, d->centre_frequency[i]);
 
 	for (i = 0; i < d->subcel_info_loop_length; i++) {
-		dvb_log("|           cell_id_extension[%d]  %d", i, d->subcell[i].cell_id_extension);
-		dvb_log("|           transposer frequency   %d", d->subcell[i].transposer_frequency);
+		dvb_loginfo("|           cell_id_extension[%d]  %d", i, d->subcell[i].cell_id_extension);
+		dvb_loginfo("|           transposer frequency   %d", d->subcell[i].transposer_frequency);
 	}
 }
 

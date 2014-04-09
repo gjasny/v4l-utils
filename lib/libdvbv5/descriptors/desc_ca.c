@@ -48,9 +48,9 @@ int dvb_desc_ca_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct d
 void dvb_desc_ca_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_ca *d = (const struct dvb_desc_ca *) desc;
-	dvb_log("|           ca_id             0x%04x", d->ca_id);
-	dvb_log("|           ca_pid            0x%04x", d->ca_pid);
-	dvb_log("|           privdata length   %d", d->privdata_len);
+	dvb_loginfo("|           ca_id             0x%04x", d->ca_id);
+	dvb_loginfo("|           ca_pid            0x%04x", d->ca_pid);
+	dvb_loginfo("|           privdata length   %d", d->privdata_len);
 	if (d->privdata)
 		hexdump(parms, "|           privdata          ", d->privdata, d->privdata_len);
 }

@@ -135,7 +135,7 @@ void dvb_table_nit_free(struct dvb_table_nit *nit)
 {
 	struct dvb_table_nit_transport *transport = nit->transport;
 	dvb_free_descriptors((struct dvb_desc **) &nit->descriptor);
-	while(transport) {
+	while (transport) {
 		dvb_free_descriptors((struct dvb_desc **) &transport->descriptor);
 		struct dvb_table_nit_transport *tmp = transport;
 		transport = transport->next;
@@ -146,19 +146,20 @@ void dvb_table_nit_free(struct dvb_table_nit *nit)
 
 void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *nit)
 {
-	dvb_log("NIT");
-	dvb_table_header_print(parms, &nit->header);
-	dvb_log("| desc_length   %d", nit->desc_length);
-	dvb_print_descriptors(parms, nit->descriptor);
 	const struct dvb_table_nit_transport *transport = nit->transport;
 	uint16_t transports = 0;
-	while(transport) {
-		dvb_log("|- transport %04x network %04x", transport->transport_id, transport->network_id);
+
+	dvb_loginfo("NIT");
+	dvb_table_header_print(parms, &nit->header);
+	dvb_loginfo("| desc_length   %d", nit->desc_length);
+	dvb_print_descriptors(parms, nit->descriptor);
+	while (transport) {
+		dvb_loginfo("|- transport %04x network %04x", transport->transport_id, transport->network_id);
 		dvb_print_descriptors(parms, transport->descriptor);
 		transport = transport->next;
 		transports++;
 	}
-	dvb_log("|_  %d transports", transports);
+	dvb_loginfo("|_  %d transports", transports);
 }
 
 void nit_descriptor_handler(struct dvb_v5_fe_parms *parms,

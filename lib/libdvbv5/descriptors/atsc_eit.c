@@ -138,7 +138,7 @@ void atsc_table_eit_free(struct atsc_table_eit *eit)
 
 void atsc_table_eit_print(struct dvb_v5_fe_parms *parms, struct atsc_table_eit *eit)
 {
-	dvb_log("EIT");
+	dvb_loginfo("EIT");
 	ATSC_TABLE_HEADER_PRINT(parms, eit);
 	const struct atsc_table_eit_event *event = eit->event;
 	uint16_t events = 0;
@@ -147,18 +147,18 @@ void atsc_table_eit_print(struct dvb_v5_fe_parms *parms, struct atsc_table_eit *
 		char start[255];
 
 		strftime(start, sizeof(start), "%F %T", &event->start);
-		dvb_log("|-  event %7d", event->event_id);
-		dvb_log("|   Source                %d", event->source_id);
-		dvb_log("|   Starttime             %d", event->start_time);
-		dvb_log("|   Start                 %s UTC", start);
-		dvb_log("|   Duration              %dh %dm %ds", event->duration / 3600, (event->duration % 3600) / 60, event->duration % 60);
-		dvb_log("|   ETM                   %d", event->etm);
-		dvb_log("|   title length          %d", event->title_length);
+		dvb_loginfo("|-  event %7d", event->event_id);
+		dvb_loginfo("|   Source                %d", event->source_id);
+		dvb_loginfo("|   Starttime             %d", event->start_time);
+		dvb_loginfo("|   Start                 %s UTC", start);
+		dvb_loginfo("|   Duration              %dh %dm %ds", event->duration / 3600, (event->duration % 3600) / 60, event->duration % 60);
+		dvb_loginfo("|   ETM                   %d", event->etm);
+		dvb_loginfo("|   title length          %d", event->title_length);
 		dvb_print_descriptors(parms, event->descriptor);
 		event = event->next;
 		events++;
 	}
-	dvb_log("|_  %d events", events);
+	dvb_loginfo("|_  %d events", events);
 }
 
 void atsc_time(const uint32_t start_time, struct tm *tm)

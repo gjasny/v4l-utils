@@ -65,11 +65,11 @@ void dvb_desc_service_location_print(struct dvb_v5_fe_parms *parms, const struct
 	struct dvb_desc_service_location_element *element = service_location->element;
 	int i;
 
-	dvb_log("|    pcr pid      %d", service_location->pcr_pid);
-	dvb_log("|    streams:");
+	dvb_loginfo("|    pcr pid      %d", service_location->pcr_pid);
+	dvb_loginfo("|    streams:");
 	for (i = 0; i < service_location->elements; i++)
-		dvb_log("|      pid %d, type %d: %s", element[i].elementary_pid, element[i].stream_type, element[i].language);
-	dvb_log("| 	%d elements", service_location->elements);
+		dvb_loginfo("|      pid %d, type %d: %s", element[i].elementary_pid, element[i].stream_type, element[i].language);
+	dvb_loginfo("| 	%d elements", service_location->elements);
 }
 
 void dvb_desc_service_location_free(struct dvb_desc *desc)

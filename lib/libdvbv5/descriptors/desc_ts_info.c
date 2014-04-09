@@ -49,8 +49,10 @@ int dvb_desc_ts_info_init(struct dvb_v5_fe_parms *parms,
 	t = &d->transmission_type;
 
 	d->service_id = malloc(sizeof(*d->service_id) * t->num_of_service);
-	if (!d->service_id)
-		dvb_perror("Out of memory!");
+	if (!d->service_id) {
+		dvb_logerr("%s: out of memory", __func__);
+		return -1;
+	}
 
 	memcpy(d->service_id, p, sizeof(*d->service_id) * t->num_of_service);
 
@@ -69,13 +71,13 @@ void dvb_desc_ts_info_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc
 
 	t = &d->transmission_type;
 
-	dvb_log("|           remote key ID     %d", d->remote_control_key_id);
-	dvb_log("|           name              %s", d->ts_name);
-	dvb_log("|           emphasis name     %s", d->ts_name_emph);
-	dvb_log("|           transmission type %s", d->ts_name_emph);
+	dvb_loginfo("|           remote key ID     %d", d->remote_control_key_id);
+	dvb_loginfo("|           name              %s", d->ts_name);
+	dvb_loginfo("|           emphasis name     %s", d->ts_name_emph);
+	dvb_loginfo("|           transmission type %s", d->ts_name_emph);
 
 	for (i = 0; i < t->num_of_service; i++)
-		dvb_log("|           service ID[%d]     %d", i, d->service_id[i]);
+		dvb_loginfo("|           service ID[%d]     %d", i, d->service_id[i]);
 }
 
 void dvb_desc_ts_info_free(struct dvb_desc *desc)

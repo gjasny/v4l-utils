@@ -83,14 +83,14 @@ void isdbt_desc_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_d
 	const struct isdbt_desc_terrestrial_delivery_system *d = (const void *) desc;
 	int i;
 
-	dvb_log("|           transmission mode %s (%d)",
+	dvb_loginfo("|           transmission mode %s (%d)",
 		tm_name[d->transmission_mode], d->transmission_mode);
-	dvb_log("|           guard interval    %s (%d)",
+	dvb_loginfo("|           guard interval    %s (%d)",
 		interval_name[d->guard_interval], d->guard_interval);
-	dvb_log("|           area code         %d", d->area_code);
+	dvb_loginfo("|           area code         %d", d->area_code);
 
 	for (i = 0; i < d->num_freqs; i++) {
-		dvb_log("|           frequency[%d]      %ld Hz", i, d->frequency[i] * 1000000l / 7);
+		dvb_loginfo("|           frequency[%d]      %ld Hz", i, d->frequency[i] * 1000000l / 7);
 	}
 }
 

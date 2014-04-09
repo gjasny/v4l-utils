@@ -41,12 +41,12 @@ int dvb_desc_cable_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *b
 void dvb_desc_cable_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_cable_delivery *cable = (const struct dvb_desc_cable_delivery *) desc;
-	dvb_log("|           length            %d", cable->length);
-	dvb_log("|           frequency         %d", cable->frequency);
-	dvb_log("|           fec outer         %d", cable->fec_outer);
-	dvb_log("|           modulation        %d", cable->modulation);
-	dvb_log("|           symbol_rate       %d", cable->symbol_rate);
-	dvb_log("|           fec inner         %d", cable->fec_inner);
+	dvb_loginfo("|           length            %d", cable->length);
+	dvb_loginfo("|           frequency         %d", cable->frequency);
+	dvb_loginfo("|           fec outer         %d", cable->fec_outer);
+	dvb_loginfo("|           modulation        %d", cable->modulation);
+	dvb_loginfo("|           symbol_rate       %d", cable->symbol_rate);
+	dvb_loginfo("|           fec inner         %d", cable->fec_inner);
 }
 
 const unsigned dvbc_fec_table[] = {

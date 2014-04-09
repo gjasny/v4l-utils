@@ -138,7 +138,7 @@ int extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 			break;
 		/* fall through */
 	case 3:
-		dvb_log("%sextension descriptor %s type 0x%02x, size %d",
+		dvb_logwarn("%sextension descriptor %s type 0x%02x, size %d",
 			dvb_ext_descriptors[desc_type].init ? "" : "Not handled ",
 			dvb_ext_descriptors[desc_type].name, desc_type, desc_len);
 		hexdump(parms, "content: ", p, desc_len);
@@ -180,7 +180,7 @@ void extension_descriptor_print(struct dvb_v5_fe_parms *parms,
 {
 	struct dvb_extension_descriptor *ext = (void *)desc;
 	uint8_t type = ext->extension_code;
-	dvb_log("|           descriptor %s type 0x%02x",
+	dvb_loginfo("|           descriptor %s type 0x%02x",
 		dvb_ext_descriptors[type].name, type);
 
 	if (dvb_ext_descriptors[type].print)

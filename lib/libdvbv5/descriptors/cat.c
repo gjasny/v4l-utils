@@ -88,7 +88,7 @@ void dvb_table_cat_free(struct dvb_table_cat *cat)
 
 void dvb_table_cat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_cat *cat)
 {
-	dvb_log("CAT");
+	dvb_loginfo("CAT");
 	dvb_table_header_print(parms, &cat->header);
 	dvb_print_descriptors(parms, cat->descriptor);
 }

@@ -42,7 +42,7 @@ void dvb_desc_network_name_print(struct dvb_v5_fe_parms *parms, const struct dvb
 {
 	const struct dvb_desc_network_name *net = (const struct dvb_desc_network_name *) desc;
 
-	dvb_log("|           network name: '%s'", net->network_name);
+	dvb_loginfo("|           network name: '%s'", net->network_name);
 }
 
 void dvb_desc_network_name_free(struct dvb_desc *desc)
