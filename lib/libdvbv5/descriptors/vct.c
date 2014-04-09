@@ -150,7 +150,7 @@ void atsc_table_vct_print(struct dvb_v5_fe_parms *parms, struct atsc_table_vct *
 	else
 		dvb_log("TVCT");
 
-	atsc_table_header_print(parms, &vct->header);
+	ATSC_TABLE_HEADER_PRINT(parms, vct);
 
 	dvb_log("|- #channels        %d", vct->num_channels_in_section);
 	dvb_log("|\\  channel_id");

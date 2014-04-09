@@ -50,10 +50,9 @@ struct dvb_table_header {
 	union {
 		uint16_t bitfield;
 		struct {
-			uint16_t section_length:10;
-			uint8_t  zero:2;
+			uint16_t section_length:12;
 			uint8_t  one:2;
-			uint8_t  zero2:1;
+			uint8_t  zero:1;
 			uint8_t  syntax:1;
 		} __attribute__((packed));
 	} __attribute__((packed));

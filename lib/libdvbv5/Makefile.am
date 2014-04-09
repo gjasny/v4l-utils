@@ -69,7 +69,6 @@ libdvbv5_la_SOURCES = \
 	dvb-scan.c	\
 	descriptors.c	\
 	descriptors/header.c		\
-	descriptors/atsc_header.c	\
 	descriptors/pat.c		\
 	descriptors/pmt.c		\
 	descriptors/nit.c		\

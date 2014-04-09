@@ -64,7 +64,7 @@ union atsc_table_eit_desc_length {
 } __attribute__((packed));
 
 struct atsc_table_eit {
-	struct atsc_table_header header;
+	ATSC_HEADER();
 	uint8_t events;
 	struct atsc_table_eit_event *event;
 } __attribute__((packed));

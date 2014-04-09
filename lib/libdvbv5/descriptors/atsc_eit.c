@@ -132,7 +132,7 @@ void atsc_table_eit_free(struct atsc_table_eit *eit)
 void atsc_table_eit_print(struct dvb_v5_fe_parms *parms, struct atsc_table_eit *eit)
 {
 	dvb_log("EIT");
-	atsc_table_header_print(parms, &eit->header);
+	ATSC_TABLE_HEADER_PRINT(parms, eit);
 	const struct atsc_table_eit_event *event = eit->event;
 	uint16_t events = 0;
 

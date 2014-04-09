@@ -53,7 +53,7 @@ struct atsc_table_mgt_table {
 } __attribute__((packed));
 
 struct atsc_table_mgt {
-	struct atsc_table_header header;
+	ATSC_HEADER();
         uint16_t tables;
         struct atsc_table_mgt_table *table;
 	struct dvb_desc *descriptor;

@@ -34,9 +34,8 @@ void dvb_table_header_print(struct dvb_v5_fe_parms *parms, const struct dvb_tabl
 {
 	dvb_log("| table_id            %d", t->table_id);
 	dvb_log("| section_length      %d", t->section_length);
-	dvb_log("| zero                %d", t->zero);
 	dvb_log("| one                 %d", t->one);
-	dvb_log("| zero2               %d", t->zero2);
+	dvb_log("| zero                %d", t->zero);
 	dvb_log("| syntax              %d", t->syntax);
 	dvb_log("| transport_stream_id %d", t->id);
 	dvb_log("| current_next        %d", t->current_next);

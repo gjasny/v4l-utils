@@ -125,7 +125,7 @@ void atsc_table_mgt_print(struct dvb_v5_fe_parms *parms, struct atsc_table_mgt *
 	uint16_t tables = 0;
 
 	dvb_log("MGT");
-	atsc_table_header_print(parms, &mgt->header);
+	ATSC_TABLE_HEADER_PRINT(parms, mgt);
 	dvb_log("| tables           %d", mgt->tables);
 	while(table) {
                 dvb_log("|- type %04x    %d", table->type, table->pid);

@@ -85,7 +85,7 @@ struct atsc_table_vct_channel {
 } __attribute__((packed));
 
 struct atsc_table_vct {
-	struct atsc_table_header header;
+	ATSC_HEADER();
 
 	uint8_t num_channels_in_section;
 

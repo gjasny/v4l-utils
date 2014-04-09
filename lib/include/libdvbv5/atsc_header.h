@@ -24,40 +24,17 @@
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
 
+#include <libdvbv5/header.h>
+
 #define ATSC_BASE_PID  0x1FFB
 
-struct atsc_table_header {
-	uint8_t  table_id;
-	union {
-		uint16_t bitfield;
-		struct {
-			uint16_t section_length:12;
-			uint16_t one:2;
-			uint16_t priv:1;
-			uint16_t syntax:1;
-		} __attribute__((packed));
-	} __attribute__((packed));
-	uint16_t id;
-	uint8_t  current_next:1;
-	uint8_t  version:5;
-	uint8_t  one2:2;
+#define ATSC_HEADER() \
+	struct dvb_table_header header; \
+	uint8_t  protocol_version; \
 
-	uint8_t  section_id;
-	uint8_t  last_section;
-	uint8_t  protocol_version;
-} __attribute__((packed));
+#define ATSC_TABLE_HEADER_PRINT(_parms, _table) \
+	dvb_table_header_print(_parms, &_table->header); \
+	dvb_log("| protocol_version %d", _table->protocol_version); \
 
-struct dvb_v5_fe_parms;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int  atsc_table_header_init (struct atsc_table_header *t);
-void atsc_table_header_print(struct dvb_v5_fe_parms *parms, const struct atsc_table_header *t);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
