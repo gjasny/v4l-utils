@@ -19,7 +19,7 @@
  *
  */
 
-#include "crc32.h"
+#include <libdvbv5/crc32.h>
 
 static uint32_t crctab[256] = {
   0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b,

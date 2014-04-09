@@ -42,7 +42,7 @@
 #include <libdvbv5/dvb-frontend.h>
 #include <libdvbv5/descriptors.h>
 #include "parse_string.h"
-#include "crc32.h"
+#include <libdvbv5/crc32.h>
 #include <libdvbv5/dvb-fe.h>
 #include <libdvbv5/dvb-file.h>
 #include <libdvbv5/dvb-scan.h>

@@ -6,6 +6,7 @@ otherinclude_HEADERS = \
 	../include/libdvbv5/dvb-demux.h \
 	../include/libdvbv5/dvb-v5-std.h \
 	../include/libdvbv5/dvb-file.h \
+	../include/libdvbv5/crc32.h \
 	../include/libdvbv5/dvb-frontend.h \
 	../include/libdvbv5/dvb-fe.h \
 	../include/libdvbv5/dvb-sat.h \
