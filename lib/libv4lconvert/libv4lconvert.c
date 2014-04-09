@@ -1542,6 +1542,7 @@ int v4lconvert_enum_framesizes(struct v4lconvert_data *data,
 	}
 
 	frmsize->type = data->framesizes[frmsize->index].type;
+	memset(frmsize->reserved, 0, sizeof(frmsize->reserved));
 	switch (frmsize->type) {
 	case V4L2_FRMSIZE_TYPE_DISCRETE:
 		frmsize->discrete = data->framesizes[frmsize->index].discrete;
