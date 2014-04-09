@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
- * Copyright (c) 2012 - Andre Roth <neolynx@gmail.com>
+ * Copyright (c) 2012-2014 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,12 +19,32 @@
  */
 
 #include <libdvbv5/eit.h>
+#include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
-ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct dvb_table_eit *eit, ssize_t *table_length)
+ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+		ssize_t buflen, struct dvb_table_eit *eit, ssize_t *table_length)
 {
-	const uint8_t *p = buf;
+	const uint8_t *p = buf, *endbuf = buf + buflen - 4; /* minus CRC */
 	struct dvb_table_eit_event **head;
+	size_t size;
+
+	size = offsetof(struct dvb_table_eit, event);
+	if (p + size > endbuf) {
+		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
+			   endbuf - p, size);
+		return -1;
+	}
+
+	if ((buf[0] != DVB_TABLE_EIT && buf[0] != DVB_TABLE_EIT_OTHER) &&
+		!(buf[0] >= DVB_TABLE_EIT_SCHEDULE && buf[0] <= DVB_TABLE_EIT_SCHEDULE + 0xF) &&
+		!(buf[0] >= DVB_TABLE_EIT_SCHEDULE_OTHER && buf[0] <= DVB_TABLE_EIT_SCHEDULE_OTHER + 0xF)) {
+		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x, 0x%02x or between 0x%02x and 0x%02x or 0x%02x and 0x%02x",
+				__func__, buf[0], DVB_TABLE_EIT, DVB_TABLE_EIT_OTHER,
+				DVB_TABLE_EIT_SCHEDULE, DVB_TABLE_EIT_SCHEDULE + 0xF,
+				DVB_TABLE_EIT_SCHEDULE_OTHER, DVB_TABLE_EIT_SCHEDULE_OTHER + 0xF);
+		return -2;
+	}
 
 	if (*table_length > 0) {
 		memcpy(eit, p, sizeof(struct dvb_table_eit) - sizeof(eit->event));
@@ -39,7 +58,6 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ss
 			head = &(*head)->next;
 	} else {
 		memcpy(eit, p, sizeof(struct dvb_table_eit) - sizeof(eit->event));
-		*table_length = sizeof(struct dvb_table_eit);
 
 		bswap16(eit->transport_id);
 		bswap16(eit->network_id);
@@ -47,23 +65,20 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ss
 		eit->event = NULL;
 		head = &eit->event;
 	}
-	p += sizeof(struct dvb_table_eit) - sizeof(eit->event);
+	p += size;
 
-	struct dvb_table_eit_event *last = NULL;
-	while ((uint8_t *) p < buf + buflen - 4) {
-		struct dvb_table_eit_event *event = (struct dvb_table_eit_event *) malloc(sizeof(struct dvb_table_eit_event));
-		memcpy(event, p, sizeof(struct dvb_table_eit_event) -
-				 sizeof(event->descriptor) -
-				 sizeof(event->next) -
-				 sizeof(event->start) -
-				 sizeof(event->duration) -
-				 sizeof(event->service_id));
-		p += sizeof(struct dvb_table_eit_event) -
-		     sizeof(event->descriptor) -
-		     sizeof(event->next) -
-		     sizeof(event->start) -
-		     sizeof(event->duration) -
-		     sizeof(event->service_id);
+	/* get the event entries */
+	size = offsetof(struct dvb_table_eit_event, descriptor);
+	while (p + size <= endbuf) {
+		struct dvb_table_eit_event *event;
+
+		event = malloc(sizeof(struct dvb_table_eit_event));
+		if (!event) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
+		memcpy(event, p, size);
+		p += size;
 
 		bswap16(event->event_id);
 		bswap16(event->bitfield1);
@@ -77,18 +92,27 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ss
 
 		event->service_id = eit->header.id;
 
-		if(!*head)
-			*head = event;
-		if(last)
-			last->next = event;
+		*head = event;
+		head = &(*head)->next;
 
-		/* get the descriptors for each program */
-		struct dvb_desc **head_desc = &event->descriptor;
-		dvb_parse_descriptors(parms, p, event->section_length, head_desc);
-
-		p += event->section_length;
-		last = event;
+		/* parse the descriptors */
+		if (event->desc_length > 0) {
+			uint16_t desc_length = event->desc_length;
+			if (p + desc_length > endbuf) {
+				dvb_logwarn("%s: decsriptors short read %zd/%d bytes", __func__,
+					   endbuf - p, desc_length);
+				desc_length = endbuf - p;
+			}
+			if (dvb_parse_descriptors(parms, p, desc_length,
+					      &event->descriptor) != 0) {
+				return -4;
+			}
+			p += desc_length;
+		}
 	}
+	if (p < endbuf)
+		dvb_logwarn("%s: %zu spurious bytes at the end",
+			   __func__, endbuf - p);
 	*table_length = p - buf;
 	return p - buf;
 }

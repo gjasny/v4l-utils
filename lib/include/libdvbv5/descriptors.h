@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
+ * Copyright (c) 2012-2014 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

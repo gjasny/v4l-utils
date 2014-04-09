@@ -27,8 +27,8 @@
 
 #include <libdvbv5/header.h>
 
-#define DVB_TABLE_PAT      0
-#define DVB_TABLE_PAT_PID  0
+#define DVB_TABLE_PAT      0x00
+#define DVB_TABLE_PAT_PID  0x0000
 
 struct dvb_table_pat_program {
 	uint16_t service_id;

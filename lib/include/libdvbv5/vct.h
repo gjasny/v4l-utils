@@ -26,7 +26,6 @@
 #include <unistd.h> /* ssize_t */
 
 #include <libdvbv5/atsc_header.h>
-#include <libdvbv5/descriptors.h>
 
 #define ATSC_TABLE_TVCT     0xc8
 #define ATSC_TABLE_CVCT     0xc9

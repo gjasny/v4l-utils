@@ -25,7 +25,6 @@
 #include <unistd.h> /* ssize_t */
 
 #include <libdvbv5/atsc_header.h>
-#include <libdvbv5/descriptors.h>
 
 #define ATSC_TABLE_MGT 0xC7
 

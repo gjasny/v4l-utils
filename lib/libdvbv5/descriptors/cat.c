@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 - Andre Roth <neolynx@gmail.com>
+ * Copyright (c) 2013-2014 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,37 +23,58 @@
 #include <libdvbv5/dvb-fe.h>
 
 ssize_t dvb_table_cat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			ssize_t buflen, struct dvb_table_cat *cat, ssize_t *table_length)
+		ssize_t buflen, struct dvb_table_cat *cat, ssize_t *table_length)
 {
-	struct dvb_desc **head_desc = &cat->descriptor;
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	struct dvb_desc **head_desc;
 	size_t size;
 
-	if (buf[0] != DVB_TABLE_CAT) {
-		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x", __func__, buf[0], DVB_TABLE_CAT);
-		*table_length = 0;
+	size = offsetof(struct dvb_table_cat, descriptor);
+	if (p + size > endbuf) {
+		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
+			   endbuf - p, size);
 		return -1;
+	}
+
+	if (buf[0] != DVB_TABLE_CAT) {
+		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x",
+				__func__, buf[0], DVB_TABLE_CAT);
+		return -2;
 	}
 
 	if (*table_length > 0) {
 		/* find end of current lists */
+		head_desc = &cat->descriptor;
 		while (*head_desc != NULL)
 			head_desc = &(*head_desc)->next;
-	}
-
-	size = offsetof(struct dvb_table_cat, descriptor);
-	if (p + size > endbuf) {
-		dvb_logerr("CAT table was truncated while filling dvb_table_cat. Need %zu bytes, but has only %zu.",
-			   size, buflen);
-		return -2;
+	} else {
+		head_desc = &cat->descriptor;
 	}
 
 	memcpy(cat, p, size);
 	p += size;
-	*table_length = sizeof(struct dvb_table_cat);
 
-	size = endbuf - p;
-	dvb_parse_descriptors(parms, p, size, head_desc);
+	size = cat->header.section_length + 3 - 4; /* plus header, minus CRC */
+	if (buf + size > endbuf) {
+		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
+			   endbuf - buf, size);
+		return -3;
+	}
+	endbuf = buf + size;
+
+	/* parse the descriptors */
+	if (endbuf > p) {
+		uint16_t desc_length = endbuf - p;
+		if (dvb_parse_descriptors(parms, p, desc_length,
+				      head_desc) != 0) {
+			return -4;
+		}
+		p += desc_length;
+	}
+
+	if (endbuf - p)
+		dvb_logwarn("%s: %zu spurious bytes at the end",
+			   __func__, endbuf - p);
 
 	*table_length = p - buf;
 	return p - buf;

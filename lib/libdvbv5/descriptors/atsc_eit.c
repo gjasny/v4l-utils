@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 - Andre Roth <neolynx@gmail.com>
+ * Copyright (c) 2013-2014 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
  */
 
 #include <libdvbv5/atsc_eit.h>
+#include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
 ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
@@ -26,14 +27,20 @@ ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4; /* minus CRC */;
 	struct atsc_table_eit_event **head;
+	size_t size;
 	int i = 0;
-	struct atsc_table_eit_event *last = NULL;
-	size_t size = offsetof(struct atsc_table_eit, event);
 
+	size = offsetof(struct atsc_table_eit, event);
 	if (p + size > endbuf) {
 		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
-			   size, endbuf - p);
+			   endbuf - p, size);
 		return -1;
+	}
+
+	if (buf[0] != ATSC_TABLE_EIT) {
+		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x",
+				__func__, buf[0], ATSC_TABLE_EIT);
+		return -2;
 	}
 
 	if (*table_length > 0) {
@@ -45,7 +52,6 @@ ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			head = &(*head)->next;
 	} else {
 		memcpy(eit, p, size);
-		*table_length = sizeof(struct atsc_table_eit);
 
 		eit->event = NULL;
 		head = &eit->event;
@@ -59,10 +65,14 @@ ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		size = offsetof(struct atsc_table_eit_event, descriptor);
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
-				   size, endbuf - p);
+				   endbuf - p, size);
 			return -2;
 		}
 		event = (struct atsc_table_eit_event *) malloc(sizeof(struct atsc_table_eit_event));
+		if (!event) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
 		memcpy(event, p, size);
 		p += size;
 
@@ -74,15 +84,13 @@ ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
                 atsc_time(event->start_time, &event->start);
 		event->source_id = eit->header.id;
 
-		if(!*head)
-			*head = event;
-		if(last)
-			last->next = event;
+		*head = event;
+		head = &(*head)->next;
 
 		size = event->title_length - 1;
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
-				   size, endbuf - p);
+				   endbuf - p, size);
 			return -3;
 		}
                 /* TODO: parse title */
@@ -92,7 +100,7 @@ ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		size = sizeof(union atsc_table_eit_desc_length);
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
-				   size, endbuf - p);
+				   endbuf - p, size);
 			return -4;
 		}
 		memcpy(&dl, p, size);
@@ -102,13 +110,12 @@ ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		size = dl.desc_length;
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
-				   size, endbuf - p);
+				   endbuf - p, size);
 			return -5;
 		}
 		dvb_parse_descriptors(parms, p, size, &event->descriptor);
 
 		p += size;
-		last = event;
 	}
 
 	*table_length = p - buf;

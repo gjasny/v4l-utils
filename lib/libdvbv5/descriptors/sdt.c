@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
- * Copyright (c) 2012 - Andre Roth <neolynx@gmail.com>
+ * Copyright (c) 2012-2014 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,40 +20,64 @@
  */
 
 #include <libdvbv5/sdt.h>
+#include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
 ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, struct dvb_table_sdt *sdt, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
-	struct dvb_table_sdt_service **head = &sdt->service;
-	size_t size = offsetof(struct dvb_table_sdt, service);
+	struct dvb_table_sdt_service **head;
+	size_t size;
+
+	size = offsetof(struct dvb_table_sdt, service);
+	if (p + size > endbuf) {
+		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
+			   endbuf - p, size);
+		return -1;
+	}
+
+	if (buf[0] != DVB_TABLE_SDT && buf[0] != DVB_TABLE_SDT2) {
+		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x or 0x%02x",
+				__func__, buf[0], DVB_TABLE_SDT, DVB_TABLE_SDT2);
+		return -2;
+	}
 
 	if (*table_length > 0) {
+		memcpy(sdt, p, size);
+		bswap16(sdt->network_id);
+
 		/* find end of curent list */
+		head = &sdt->service;
 		while (*head != NULL)
 			head = &(*head)->next;
 	} else {
-		if (p + size > endbuf) {
-			dvb_logerr("SDT table was truncated. Need %zu bytes, but has only %zu.",
-					size, buflen);
-			return -1;
-		}
 		memcpy(sdt, p, size);
-		*table_length = sizeof(struct dvb_table_sdt);
-
 		bswap16(sdt->network_id);
 
 		sdt->service = NULL;
+		head = &sdt->service;
 	}
 	p += size;
 
+	size = sdt->header.section_length + 3 - 4; /* plus header, minus CRC */
+	if (buf + size > endbuf) {
+		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
+			   endbuf - buf, size);
+		return -3;
+	}
+	endbuf = buf + size;
+
+	/* get the event entries */
 	size = offsetof(struct dvb_table_sdt_service, descriptor);
 	while (p + size <= endbuf) {
 		struct dvb_table_sdt_service *service;
 
 		service = malloc(sizeof(struct dvb_table_sdt_service));
-
+		if (!service) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -5;
+		}
 		memcpy(service, p, size);
 		p += size;
 
@@ -65,15 +89,25 @@ ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		*head = service;
 		head = &(*head)->next;
 
-		/* get the descriptors for each program */
-		dvb_parse_descriptors(parms, p, service->section_length,
-				      &service->descriptor);
+		/* parse the descriptors */
+		if (service->desc_length > 0) {
+			uint16_t desc_length = service->desc_length;
+			if (p + desc_length > endbuf) {
+				dvb_logwarn("%s: decsriptors short read %zd/%d bytes", __func__,
+					   endbuf - p, desc_length);
+				desc_length = endbuf - p;
+			}
+			if (dvb_parse_descriptors(parms, p, desc_length,
+					      &service->descriptor) != 0) {
+				return -4;
+			}
+			p += desc_length;
+		}
 
-		p += service->section_length;
 	}
 	if (endbuf - p)
-		dvb_logerr("SDT table has %zu spurious bytes at the end.",
-			   endbuf - p);
+		dvb_logwarn("%s: %zu spurious bytes at the end",
+			   __func__, endbuf - p);
 
 	*table_length = p - buf;
 	return p - buf;

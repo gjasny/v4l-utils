@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013 - Mauro Carvalho Chehab <m.chehab@samsung.com>
- * Copyright (c) 2013 - Andre Roth <neolynx@gmail.com>
+ * Copyright (c) 2013-2014 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,6 +20,7 @@
  */
 
 #include <libdvbv5/vct.h>
+#include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>
 
@@ -27,27 +28,35 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, struct atsc_table_vct *vct, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
-	struct atsc_table_vct_channel **head = &vct->channel;
+	struct atsc_table_vct_channel **head;
+	size_t size;
 	int i, n;
-	size_t size = offsetof(struct atsc_table_vct, channel);
 
+	size = offsetof(struct atsc_table_vct, channel);
 	if (p + size > endbuf) {
-		dvb_logerr("VCT table was truncated. Need %zu bytes, but has only %zu.",
-			   size, buflen);
+		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
+			   endbuf - p, size);
 		return -1;
+	}
+
+	if (buf[0] != ATSC_TABLE_TVCT && buf[0] != ATSC_TABLE_CVCT) {
+		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x or 0x%02x",
+				__func__, buf[0], ATSC_TABLE_TVCT, ATSC_TABLE_CVCT);
+		return -2;
 	}
 
 	if (*table_length > 0) {
 		/* find end of curent list */
+		head = &vct->channel;
 		while (*head != NULL)
 			head = &(*head)->next;
 	} else {
 		memcpy(vct, p, size);
 
-		*table_length = sizeof(struct atsc_table_vct);
-
 		vct->channel = NULL;
 		vct->descriptor = NULL;
+
+		head = &vct->channel;
 	}
 	p += size;
 
@@ -56,13 +65,17 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		struct atsc_table_vct_channel *channel;
 
 		if (p + size > endbuf) {
-			dvb_logerr("VCT channel table is missing %d elements",
-				   vct->num_channels_in_section - n + 1);
+			dvb_logerr("%s: channel table is missing %d elements",
+				   __func__, vct->num_channels_in_section - n + 1);
 			vct->num_channels_in_section = n;
 			break;
 		}
 
 		channel = malloc(sizeof(struct atsc_table_vct_channel));
+		if (!channel) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
 
 		memcpy(channel, p, size);
 		p += size;
@@ -123,8 +136,8 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 				      &vct->descriptor);
 	}
 	if (endbuf - p)
-		dvb_logerr("VCT table has %zu spurious bytes at the end.",
-			   endbuf - p);
+		dvb_logwarn("%s: %zu spurious bytes at the end",
+			   __func__, endbuf - p);
 	*table_length = p - buf;
 	return p - buf;
 }

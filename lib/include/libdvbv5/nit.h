@@ -46,7 +46,7 @@ struct dvb_table_nit_transport {
 	union {
 		uint16_t bitfield;
 		struct {
-			uint16_t section_length:12;
+			uint16_t desc_length:12;
 			uint16_t reserved:4;
 		} __attribute__((packed));
 	} __attribute__((packed));

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
- * Copyright (c) 2012 - Andre Roth <neolynx@gmail.com>
+ * Copyright (c) 2012-2014 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,64 +26,77 @@
 ssize_t dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, struct dvb_table_pat *pat, ssize_t *table_length)
 {
-	struct dvb_table_pat_program **head = &pat->program;
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	struct dvb_table_pat_program **head;
 	size_t size;
+
+	size = offsetof(struct dvb_table_pat, programs);
+	if (p + size > endbuf) {
+		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
+			   endbuf - p, size);
+		return -1;
+	}
+
+	if (buf[0] != DVB_TABLE_PAT) {
+		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x",
+				__func__, buf[0], DVB_TABLE_PAT);
+		return -2;
+	}
 
 	if (*table_length > 0) {
 		/* find end of current list */
+		head = &pat->program;
 		while (*head != NULL)
 			head = &(*head)->next;
 	} else {
-		size = offsetof(struct dvb_table_pat, programs);
-		if (p + size > endbuf) {
-			dvb_logerr("PAT table was truncated. Need %zu bytes, but has only %zu.",
-					size, buflen);
-			return -1;
-		}
 		memcpy(pat, buf, size);
 		p += size;
 		pat->programs = 0;
 		pat->program = NULL;
+		head = &pat->program;
 	}
-	*table_length = sizeof(struct dvb_table_pat_program);
 
 	size = offsetof(struct dvb_table_pat_program, next);
 	while (p + size <= endbuf) {
-		struct dvb_table_pat_program *pgm;
+		struct dvb_table_pat_program *prog;
 
-		pgm = malloc(sizeof(struct dvb_table_pat_program));
-		if (!pgm) {
+		prog = malloc(sizeof(struct dvb_table_pat_program));
+		if (!prog) {
 			dvb_perror("Out of memory");
-			return -2;
+			return -3;
 		}
 
-		memcpy(pgm, p, size);
+		memcpy(prog, p, size);
 		p += size;
 
-		bswap16(pgm->service_id);
-		bswap16(pgm->bitfield);
+		bswap16(prog->service_id);
+
+		if (prog->pid == 0x1fff) { /* ignore null packets */
+			free(prog);
+			break;
+		}
+		bswap16(prog->bitfield);
 		pat->programs++;
 
-		pgm->next = NULL;
+		prog->next = NULL;
 
-		*head = pgm;
+		*head = prog;
 		head = &(*head)->next;
 	}
 	if (endbuf - p)
-		dvb_logerr("PAT table has %zu spurious bytes at the end.",
-			   endbuf - p);
+		dvb_logwarn("%s: %zu spurious bytes at the end",
+			   __func__, endbuf - p);
 	*table_length = p - buf;
 	return p - buf;
 }
 
 void dvb_table_pat_free(struct dvb_table_pat *pat)
 {
-	struct dvb_table_pat_program *pgm = pat->program;
+	struct dvb_table_pat_program *prog = pat->program;
 
-	while (pgm) {
-		struct dvb_table_pat_program *tmp = pgm;
-		pgm = pgm->next;
+	while (prog) {
+		struct dvb_table_pat_program *tmp = prog;
+		prog = prog->next;
 		free(tmp);
 	}
 	free(pat);
@@ -91,15 +104,15 @@ void dvb_table_pat_free(struct dvb_table_pat *pat)
 
 void dvb_table_pat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_pat *pat)
 {
-	struct dvb_table_pat_program *pgm = pat->program;
+	struct dvb_table_pat_program *prog = pat->program;
 
-	dvb_log("PAT");
+	dvb_loginfo("PAT");
 	dvb_table_header_print(parms, &pat->header);
-	dvb_log("|\\ %d program%s", pat->programs, pat->programs != 1 ? "s" : "");
+	dvb_loginfo("|\\ %d program pid%s", pat->programs, pat->programs != 1 ? "s" : "");
 
-	while (pgm) {
-		dvb_log("|- program 0x%04x  ->  service 0x%04x", pgm->pid, pgm->service_id);
-		pgm = pgm->next;
+	while (prog) {
+		dvb_loginfo("|  pid 0x%04x: service 0x%04x", prog->pid, prog->service_id);
+		prog = prog->next;
 	}
 }
 

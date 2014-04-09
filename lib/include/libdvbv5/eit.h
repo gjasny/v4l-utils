@@ -27,7 +27,6 @@
 #include <time.h>
 
 #include <libdvbv5/header.h>
-#include <libdvbv5/descriptors.h>
 
 #define DVB_TABLE_EIT        0x4E
 #define DVB_TABLE_EIT_OTHER  0x4F
@@ -47,7 +46,7 @@ struct dvb_table_eit_event {
 	union {
 		uint16_t bitfield2;
 		struct {
-			uint16_t section_length:12;
+			uint16_t desc_length:12;
 			uint16_t free_CA_mode:1;
 			uint16_t running_status:3;
 		} __attribute__((packed));

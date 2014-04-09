@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
- * Copyright (c) 2012-2013 - Andre Roth <neolynx@gmail.com>
+ * Copyright (c) 2012-2014 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,46 +29,69 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, struct dvb_table_pmt *pmt, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
-	struct dvb_table_pmt_stream **head = &pmt->stream;
+	struct dvb_table_pmt_stream **head;
+	struct dvb_desc **head_desc;
 	size_t size;
 
-	if (buf[0] != DVB_TABLE_PMT) {
-		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x", __func__, buf[0], DVB_TABLE_PMT);
-		*table_length = 0;
+	size = offsetof(struct dvb_table_pmt, dvb_pmt_field_last);
+	if (p + size > endbuf) {
+		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
+			   endbuf - p, size);
 		return -1;
 	}
 
-	if (*table_length > 0) {
-		/* find end of current list */
-		while (*head != NULL)
-			head = &(*head)->next;
-	} else {
-		size = offsetof(struct dvb_table_pmt, dvb_pmt_field_last);
-		if (p + size > endbuf) {
-			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
-				   size, endbuf - p);
-			return -2;
-		}
-		memcpy(pmt, p, size);
-		p += size;
+	if (buf[0] != DVB_TABLE_PMT) {
+		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x",
+				__func__, buf[0], DVB_TABLE_PMT);
+		return -2;
+	}
 
+	if (*table_length > 0) {
+		memcpy(pmt, p, size);
 		bswap16(pmt->bitfield);
 		bswap16(pmt->bitfield2);
+
+		/* find end of current list */
+		head = &pmt->stream;
+		while (*head != NULL)
+			head = &(*head)->next;
+		head_desc = &pmt->descriptor;
+		while (*head_desc != NULL)
+			head_desc = &(*head_desc)->next;
+	} else {
+		memcpy(pmt, p, size);
+		bswap16(pmt->bitfield);
+		bswap16(pmt->bitfield2);
+
 		pmt->descriptor = NULL;
 		pmt->stream = NULL;
 
-		/* parse the descriptors */
-		if (pmt->desc_length > 0 ) {
-			size = pmt->desc_length;
-			if (p + size > endbuf) {
-				dvb_logwarn("%s: decsriptors short read %zd/%zd bytes", __func__,
-					   size, endbuf - p);
-				size = endbuf - p;
-			}
-			dvb_parse_descriptors(parms, p, size,
-					      &pmt->descriptor);
-			p += size;
+		head = &pmt->stream;
+		head_desc = &pmt->descriptor;
+	}
+	p += size;
+
+	size = pmt->header.section_length + 3 - 4; /* plus header, minus CRC */
+	if (buf + size > endbuf) {
+		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
+			   endbuf - buf, size);
+		return -3;
+	}
+	endbuf = buf + size;
+
+	/* parse the descriptors */
+	if (pmt->desc_length > 0 ) {
+		uint16_t desc_length = pmt->desc_length;
+		if (p + desc_length > endbuf) {
+			dvb_logwarn("%s: decsriptors short read %d/%zd bytes", __func__,
+				   desc_length, endbuf - p);
+			desc_length = endbuf - p;
 		}
+		if (dvb_parse_descriptors(parms, p, desc_length,
+				      head_desc) != 0) {
+			return -3;
+		}
+		p += desc_length;
 	}
 
 	/* get the stream entries */
@@ -77,7 +100,10 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		struct dvb_table_pmt_stream *stream;
 
 		stream = malloc(sizeof(struct dvb_table_pmt_stream));
-
+		if (!stream) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
 		memcpy(stream, p, size);
 		p += size;
 
@@ -91,16 +117,17 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 		/* parse the descriptors */
 		if (stream->desc_length > 0) {
-			size = stream->desc_length;
-			if (p + size > endbuf) {
-				dvb_logwarn("%s: decsriptors short read %zd/%zd bytes", __func__,
-					   size, endbuf - p);
-				size = endbuf - p;
+			uint16_t desc_length = stream->desc_length;
+			if (p + desc_length > endbuf) {
+				dvb_logwarn("%s: decsriptors short read %zd/%d bytes", __func__,
+					   endbuf - p, desc_length);
+				desc_length = endbuf - p;
 			}
-			dvb_parse_descriptors(parms, p, size,
-					      &stream->descriptor);
-
-			p += size;
+			if (dvb_parse_descriptors(parms, p, desc_length,
+					      &stream->descriptor) != 0) {
+				return -4;
+			}
+			p += desc_length;
 		}
 	}
 	if (p < endbuf)

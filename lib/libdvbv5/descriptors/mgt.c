@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 - Andre Roth <neolynx@gmail.com>
+ * Copyright (c) 2013-2014 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,25 +19,36 @@
  */
 
 #include <libdvbv5/mgt.h>
+#include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
 ssize_t atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		ssize_t buflen, struct atsc_table_mgt *mgt, ssize_t *table_length)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4; /* minus CRC */
-	struct dvb_desc **head_desc;
 	struct atsc_table_mgt_table **head;
+	struct dvb_desc **head_desc;
+	size_t size;
 	int i = 0;
-	struct atsc_table_mgt_table *last = NULL;
-	size_t size = offsetof(struct atsc_table_mgt, table);
 
+	size = offsetof(struct atsc_table_mgt, table);
 	if (p + size > endbuf) {
 		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
-			   size, endbuf - p);
+			   endbuf - p, size);
 		return -1;
 	}
 
+	if (buf[0] != ATSC_TABLE_MGT) {
+		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x",
+				__func__, buf[0], ATSC_TABLE_MGT);
+		return -2;
+	}
+
 	if (*table_length > 0) {
+		memcpy(mgt, p, size);
+
+		bswap16(mgt->tables);
+
 		/* find end of curent lists */
 		head_desc = &mgt->descriptor;
 		while (*head_desc != NULL)
@@ -45,11 +56,8 @@ ssize_t atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		head = &mgt->table;
 		while (*head != NULL)
 			head = &(*head)->next;
-
-		/* FIXME: read current mgt->tables for loop below */
 	} else {
 		memcpy(mgt, p, size);
-		*table_length = sizeof(struct atsc_table_mgt);
 
 		bswap16(mgt->tables);
 
@@ -66,10 +74,14 @@ ssize_t atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		size = offsetof(struct atsc_table_mgt_table, descriptor);
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
-				   size, endbuf - p);
+				   endbuf - p, size);
 			return -2;
 		}
 		table = (struct atsc_table_mgt_table *) malloc(sizeof(struct atsc_table_mgt_table));
+		if (!table) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
 		memcpy(table, p, size);
 		p += size;
 
@@ -80,22 +92,19 @@ ssize_t atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		table->descriptor = NULL;
 		table->next = NULL;
 
-		if(!*head)
-			*head = table;
-		if(last)
-			last->next = table;
+		*head = table;
+		head = &(*head)->next;
 
 		/* get the descriptors for each table */
 		size = table->desc_length;
 		if (p + size > endbuf) {
 			dvb_logerr("%s: short read %zd/%zd bytes", __func__,
-				   size, endbuf - p);
+				   endbuf - p, size);
 			return -3;
 		}
 		dvb_parse_descriptors(parms, p, size, &table->descriptor);
 
 		p += size;
-		last = table;
 	}
 
 	/* TODO: parse MGT descriptors here into head_desc */
@@ -109,7 +118,7 @@ void atsc_table_mgt_free(struct atsc_table_mgt *mgt)
 	struct atsc_table_mgt_table *table = mgt->table;
 
 	dvb_free_descriptors((struct dvb_desc **) &mgt->descriptor);
-	while(table) {
+	while (table) {
 		struct atsc_table_mgt_table *tmp = table;
 
 		dvb_free_descriptors((struct dvb_desc **) &table->descriptor);
@@ -127,7 +136,7 @@ void atsc_table_mgt_print(struct dvb_v5_fe_parms *parms, struct atsc_table_mgt *
 	dvb_log("MGT");
 	ATSC_TABLE_HEADER_PRINT(parms, mgt);
 	dvb_log("| tables           %d", mgt->tables);
-	while(table) {
+	while (table) {
                 dvb_log("|- type %04x    %d", table->type, table->pid);
                 dvb_log("|  one          %d", table->one);
                 dvb_log("|  one2         %d", table->one2);

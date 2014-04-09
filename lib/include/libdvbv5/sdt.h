@@ -26,11 +26,10 @@
 #include <unistd.h> /* ssize_t */
 
 #include <libdvbv5/header.h>
-#include <libdvbv5/descriptors.h>
 
 #define DVB_TABLE_SDT      0x42
 #define DVB_TABLE_SDT2     0x46
-#define DVB_TABLE_SDT_PID  0x11
+#define DVB_TABLE_SDT_PID  0x0011
 
 struct dvb_table_sdt_service {
 	uint16_t service_id;
@@ -40,7 +39,7 @@ struct dvb_table_sdt_service {
 	union {
 		uint16_t bitfield;
 		struct {
-			uint16_t section_length:12;
+			uint16_t desc_length:12;
 			uint16_t free_CA_mode:1;
 			uint16_t running_status:3;
 		} __attribute__((packed));

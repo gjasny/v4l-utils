@@ -112,11 +112,16 @@ int dvb_parse_descriptors(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		uint8_t desc_len  = ptr[1];
 		size_t size;
 
+		if (desc_type == 0xff ) {
+			dvb_logwarn("%s: stopping at invalid descriptor 0xff", __func__);
+			return 0;
+		}
+
 		ptr += 2; /* skip type and length */
 
 		if (ptr + desc_len > endbuf) {
-			dvb_logerr("short read of %zd/%d bytes parsing descriptor %#02x",
-				   endbuf - ptr, desc_len, desc_type);
+			dvb_logerr("%s: short read of %zd/%d bytes parsing descriptor %#02x",
+				   __func__, endbuf - ptr, desc_len, desc_type);
 			return -1;
 		}
 
