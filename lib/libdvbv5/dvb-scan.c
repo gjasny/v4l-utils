@@ -158,10 +158,12 @@ static int dvb_parse_section_alloc(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
-static void dvb_parse_section_free(struct dvb_table_filter *sect)
+void dvb_table_filter_free(struct dvb_table_filter *sect)
 {
-	if (sect->priv)
+	if (sect->priv) {
 		free(sect->priv);
+		sect->priv = NULL;
+	}
 }
 
 static int dvb_parse_section(struct dvb_v5_fe_parms *parms,
@@ -280,7 +282,7 @@ int dvb_read_sections(struct dvb_v5_fe_parms *parms, int dmx_fd,
 	if (!buf) {
 		dvb_perror("Out of memory");
 		dvb_dmx_stop(dmx_fd);
-		dvb_parse_section_free(sect);
+		dvb_table_filter_free(sect);
 		return -1;
 	}
 
@@ -327,7 +329,7 @@ int dvb_read_sections(struct dvb_v5_fe_parms *parms, int dmx_fd,
 	} while (!ret);
 	free(buf);
 	dvb_dmx_stop(dmx_fd);
-	dvb_parse_section_free(sect);
+	dvb_table_filter_free(sect);
 
 	if (ret > 0)
 		ret = 0;

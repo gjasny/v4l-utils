@@ -74,6 +74,8 @@ struct dvb_table_filter {
 	void *priv;
 };
 
+void dvb_table_filter_free(struct dvb_table_filter *sect);
+
 int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, void **table,
 		unsigned timeout);
 
