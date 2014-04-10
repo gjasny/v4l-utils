@@ -44,3 +44,30 @@ export PKG_CONFIG_LIBDIR=/path/to/cross/root/lib
 ./configure --host=arm-linux-gnueabihf --without-jpeg
 make
 
+Android Cross Compiling and Installing:
+----------------
+
+v4l-utils will only build using the complete AOSP source tree, because of the
+stlport dependency.
+
+List of v4l-utils that supply an Android.mk makefile:
+* utils/v4l2-compliance
+* utils/v4l2-ctl
+* utils/v4l2-dbg
+
+To cross compile an utility you must first configure the shell with Android's
+envsetup.sh to add the mm alias, before running lunch to select your target
+device.
+
+cd /path/to/aosp
+source build/envsetup.sh
+lunch
+cd /path/to/v4l-utils
+cd <utility>
+mm
+
+Output binary will be located in the Android out directory, below the
+target/product/<name>/system/bin/<v4l-utils executable name> path.
+
+The binary executable can be pushed to the target Android device using
+adb push <v4l-utils executable> /system/bin
