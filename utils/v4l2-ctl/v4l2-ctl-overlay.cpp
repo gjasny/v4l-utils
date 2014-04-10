@@ -17,7 +17,6 @@
 
 #include <linux/videodev2.h>
 #include <linux/fb.h>
-#include <libv4l2.h>
 #include <string>
 #include <vector>
 
