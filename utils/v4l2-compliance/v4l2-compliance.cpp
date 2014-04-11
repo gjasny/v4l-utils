@@ -87,7 +87,9 @@ static struct option long_options[] = {
 	{"verbose", no_argument, 0, OptVerbose},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
 	{"trace", no_argument, 0, OptTrace},
+#ifndef NO_LIBV4L2
 	{"wrapper", no_argument, 0, OptUseWrapper},
+#endif
 	{"set-input", required_argument, 0, OptSetInput},
 	{"set-output", required_argument, 0, OptSetOutput},
 	{"set-freq", required_argument, 0, OptSetFreq},
@@ -121,7 +123,9 @@ static void usage(void)
 	printf("  -n, --no-warnings  turn off warning messages.\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
 	printf("  -v, --verbose      turn on verbose reporting.\n");
+#ifndef NO_LIBV4L2
 	printf("  -w, --wrapper      use the libv4l2 wrapper library.\n");
+#endif
 	exit(0);
 }
 

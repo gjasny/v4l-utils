@@ -1,6 +1,16 @@
 #ifndef _V4L2_CTL_H
 #define _V4L2_CTL_H
 
+#ifndef NO_LIBV4L2
+#include <libv4l2.h>
+#else
+#define v4l2_open(file, oflag, ...) (-1)
+#define v4l2_close(fd) (-1)
+#define v4l2_ioctl(fd, request, ...) (-1)
+#define v4l2_mmap(start, length, prot, flags, fd, offset) (MAP_FAILED)
+#define v4l2_munmap(_start, length) (-1)
+#endif
+
 /* Available options.
 
    Please keep the first part (options < 128) in alphabetical order.

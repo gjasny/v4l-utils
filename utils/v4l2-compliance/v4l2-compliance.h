@@ -27,7 +27,19 @@
 #include <list>
 #include <set>
 #include <linux/videodev2.h>
+
+#ifndef NO_LIBV4L2
 #include <libv4l2.h>
+#else
+#define v4l2_open(file, oflag, ...) (-1)
+#define v4l2_close(fd) (-1)
+#define v4l2_read(fd, buffer, n) (-1)
+#define v4l2_write(fd, buffer, n) (-1)
+#define v4l2_ioctl(fd, request, ...) (-1)
+#define v4l2_mmap(start, length, prot, flags, fd, offset) (MAP_FAILED)
+#define v4l2_munmap(_start, length) (-1)
+#endif
+
 #include <cv4l-helpers.h>
 
 #if !defined(ENODATA) && (defined(__FreeBSD__) || defined(__FreeBSD_kernel__))
@@ -123,6 +135,16 @@ static inline void reopen(struct node *node)
 			strerror(errno));
 		exit(1);
 	}
+}
+
+static inline ssize_t test_read(int fd, void *buffer, size_t n)
+{
+	return wrapper ? v4l2_read(fd, buffer, n) : read(fd, buffer, n);
+}
+
+static inline ssize_t test_write(int fd, const void *buffer, size_t n)
+{
+	return wrapper ? v4l2_write(fd, buffer, n) : write(fd, buffer, n);
 }
 
 static inline int test_ioctl(int fd, unsigned long cmd, ...)

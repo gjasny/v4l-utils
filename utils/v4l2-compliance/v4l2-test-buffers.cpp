@@ -453,9 +453,9 @@ int testReqBufs(struct node *node)
 			char buf = 0;
 
 			if (node->can_capture)
-				ret = read(node->vfd.fd, &buf, 1);
+				ret = test_read(node->vfd.fd, &buf, 1);
 			else
-				ret = write(node->vfd.fd, &buf, 1);
+				ret = test_write(node->vfd.fd, &buf, 1);
 			if (ret != -1)
 				return fail("Expected -1, got %d\n", ret);
 			if (errno != EBUSY)

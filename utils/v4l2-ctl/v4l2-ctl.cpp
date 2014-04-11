@@ -42,7 +42,6 @@
 #endif
 
 #include <linux/videodev2.h>
-#include <libv4l2.h>
 
 #include <list>
 #include <vector>
@@ -90,7 +89,9 @@ static struct option long_options[] = {
 	{"help-streaming", no_argument, 0, OptHelpStreaming},
 	{"help-edid", no_argument, 0, OptHelpEdid},
 	{"help-all", no_argument, 0, OptHelpAll},
+#ifndef NO_LIBV4L2
 	{"wrapper", no_argument, 0, OptUseWrapper},
+#endif
 	{"concise", no_argument, 0, OptConcise},
 	{"get-output", no_argument, 0, OptGetOutput},
 	{"set-output", required_argument, 0, OptSetOutput},

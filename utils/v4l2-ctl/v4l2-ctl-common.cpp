@@ -20,7 +20,6 @@
 #endif
 
 #include <linux/videodev2.h>
-#include <libv4l2.h>
 
 #include <list>
 #include <vector>
@@ -80,7 +79,9 @@ void common_usage(void)
 	       "  -l, --list-ctrls   display all controls and their values [VIDIOC_QUERYCTRL]\n"
 	       "  -L, --list-ctrls-menus\n"
 	       "		     display all controls and their menus [VIDIOC_QUERYMENU]\n"
+#ifndef NO_LIBV4L2
 	       "  -w, --wrapper      use the libv4l2 wrapper library.\n"
+#endif
 	       "  --list-devices     list all v4l devices\n"
 	       "  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n"
 	       "  --get-priority     query the current access priority [VIDIOC_G_PRIORITY]\n"
