@@ -27,7 +27,7 @@
 struct isdbt_desc_terrestrial_delivery_system {
 	DVB_DESC_HEADER();
 
-	uint16_t *frequency;
+	uint32_t *frequency;
 	unsigned num_freqs;
 
 	union {

@@ -29,6 +29,7 @@ int isdbt_desc_delivery_init(struct dvb_v5_fe_parms *parms,
 	unsigned char *p = (unsigned char *) buf;
 	int i;
 	size_t len;
+	uint16_t frq;
 
 	len = sizeof(*d) - offsetof(struct isdbt_desc_terrestrial_delivery_system, bitfield);
 	memcpy(&d->bitfield, p, len);
@@ -36,18 +37,23 @@ int isdbt_desc_delivery_init(struct dvb_v5_fe_parms *parms,
 
 	bswap16(d->bitfield);
 
-	d->num_freqs = d->length / 2;
-	if (!len)
-		return -1;
+	d->num_freqs = d->length / sizeof(uint16_t);
+	if (!d->num_freqs)
+		return 0;
 	d->frequency = malloc(d->num_freqs * sizeof(*d->frequency));
 	if (!d->frequency) {
 		dvb_perror("Can't allocate space for ISDB-T frequencies");
 		return -2;
 	}
-	memcpy(d->frequency, p, d->num_freqs * sizeof(*d->frequency));
 
-	for (i = 0; i < d->num_freqs; i++)
-		bswap16(d->frequency[i]);
+	for (i = 0; i < d->num_freqs; i++) {
+		frq = *(uint16_t *)p;
+		p += sizeof(uint16_t);
+
+		bswap16(frq);
+
+		d->frequency[i] = (uint32_t)((((uint64_t)frq) * 1000000ul) / 7);
+	}
 	return 0;
 }
 
@@ -91,7 +97,7 @@ void isdbt_desc_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_d
 	dvb_loginfo("|           area code         %d", d->area_code);
 
 	for (i = 0; i < d->num_freqs; i++) {
-		dvb_loginfo("|           frequency[%d]      %" PRIu64 " Hz", i, (((uint64_t)d->frequency[i]) * 1000000ul) / 7);
+		dvb_loginfo("|           frequency[%d]      %u Hz", i, d->frequency[i]);
 	}
 }
 
