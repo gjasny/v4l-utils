@@ -891,9 +891,9 @@ int main(int argc, char **argv)
 	}
 
 	if (args.dvr) {
-		file_fd = STDOUT_FILENO;
-
 		if (args.filename) {
+			file_fd = STDOUT_FILENO;
+
 			if (strcmp(args.filename, "-") != 0) {
 				file_fd = open(args.filename,
 #ifdef O_LARGEFILE
@@ -915,9 +915,16 @@ int main(int argc, char **argv)
 		}
 		if (args.silent < 2)
 			print_frontend_stats(stderr, &args, parms);
-
-		copy_to_file(dvr_fd, file_fd, args.timeout, args.silent);
-
+		if (file_fd >= 0) {
+			if (!timeout_flag)
+				fprintf(stderr, "Record to file '%s' started\n", args.filename);
+			copy_to_file(dvr_fd, file_fd, args.timeout, args.silent);
+		} else {
+			if (!timeout_flag)
+				fprintf(stderr, "DVR interface '%s' opened\n", args.dvr_dev);
+			while (timeout_flag == 0)
+				sleep(1);
+		}
 		if (args.silent < 2)
 			print_frontend_stats(stderr, &args, parms);
 	}
