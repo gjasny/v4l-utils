@@ -74,7 +74,7 @@ static const struct argp_option options[] = {
 	{"input-format", 'I',	"format",		0, "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)", 0},
 	{"lna",		'w', "LNA (0, 1, -1)",		0, "enable/disable/auto LNA power", 0},
 	{"lnbf",	'l', "LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
-	{"search",	'L', NULL,			0, "search/look for a string inside the traffic", 0},
+	{"search",	'L', "string",			0, "search/look for a string inside the traffic", 0},
 	{"monitor",	'm', NULL,			0, "monitors de DVB traffic", 0},
 	{"output",	'o', "file",			0, "output filename (use -o - for stdout)", 0},
 	{"pat",		'p', NULL,			0, "add pat and pmt to TS recording (implies -r)", 0},
@@ -717,6 +717,12 @@ int main(int argc, char **argv)
 
 	if (args.input_format == FILE_UNKNOWN) {
 		fprintf(stderr, "ERROR: Please specify a valid format\n");
+		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
+		return -1;
+	}
+
+	if (!args.traffic_monitor && args.search) {
+		fprintf(stderr, "ERROR: search string can be used only on monitor mode\n");
 		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
 		return -1;
 	}
