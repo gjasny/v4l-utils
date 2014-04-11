@@ -703,6 +703,7 @@ int main(int argc, char **argv)
 	memset(&args, 0, sizeof(args));
 	args.sat_number = -1;
 	args.lna = LNA_AUTO;
+	args.input_format = FILE_DVBV5;
 
 	argp_parse(&argp, argc, argv, 0, &idx, &args);
 
