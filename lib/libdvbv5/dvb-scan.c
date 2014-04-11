@@ -831,7 +831,7 @@ static void add_update_nit_isdbt(struct dvb_table_nit *nit,
 	}
 
 	for (i = 0; i < d->num_freqs; i++) {
-		uint32_t frq = d->frequency[i] * 1000000l / 7;
+		uint32_t frq = (((uint64_t)d->frequency[i]) * 1000000ul / 7);
 
 		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
 					 frq, tr->shift, tr->pol);

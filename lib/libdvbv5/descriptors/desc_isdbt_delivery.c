@@ -20,6 +20,7 @@
 
 #include <libdvbv5/desc_isdbt_delivery.h>
 #include <libdvbv5/dvb-fe.h>
+#include <inttypes.h>
 
 int isdbt_desc_delivery_init(struct dvb_v5_fe_parms *parms,
 			      const uint8_t *buf, struct dvb_desc *desc)
@@ -90,7 +91,7 @@ void isdbt_desc_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_d
 	dvb_loginfo("|           area code         %d", d->area_code);
 
 	for (i = 0; i < d->num_freqs; i++) {
-		dvb_loginfo("|           frequency[%d]      %ld Hz", i, d->frequency[i] * 1000000l / 7);
+		dvb_loginfo("|           frequency[%d]      %" PRIu64 " Hz", i, (((uint64_t)d->frequency[i]) * 1000000ul) / 7);
 	}
 }
 
