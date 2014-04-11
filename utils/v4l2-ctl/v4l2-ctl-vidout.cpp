@@ -13,10 +13,6 @@
 #include <sys/time.h>
 #include <dirent.h>
 #include <math.h>
-#include <config.h>
-
-#include <linux/videodev2.h>
-#include <string>
 
 #include "v4l2-ctl.h"
 

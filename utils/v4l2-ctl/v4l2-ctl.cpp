@@ -35,22 +35,17 @@
 #include <sys/time.h>
 #include <dirent.h>
 #include <math.h>
-#include <config.h>
+
+#include "v4l2-ctl.h"
 
 #ifdef HAVE_SYS_KLOG_H
 #include <sys/klog.h>
 #endif
 
-#include <linux/videodev2.h>
-
 #include <list>
 #include <vector>
 #include <map>
-#include <string>
 #include <algorithm>
-
-
-#include "v4l2-ctl.h"
 
 char options[OptLast];
 

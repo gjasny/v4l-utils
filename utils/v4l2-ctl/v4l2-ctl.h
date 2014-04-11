@@ -1,6 +1,16 @@
 #ifndef _V4L2_CTL_H
 #define _V4L2_CTL_H
 
+#ifdef ANDROID
+#include <android-config.h>
+#else
+#include <config.h>
+#endif
+
+#include <string>
+
+#include <linux/videodev2.h>
+
 #ifndef NO_LIBV4L2
 #include <libv4l2.h>
 #else

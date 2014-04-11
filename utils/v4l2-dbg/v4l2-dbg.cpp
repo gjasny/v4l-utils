@@ -30,7 +30,12 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <math.h>
+
+#ifdef ANDROID
+#include <android-config.h>
+#else
 #include <config.h>
+#endif
 
 #ifdef HAVE_SYS_KLOG_H
 #include <sys/klog.h>

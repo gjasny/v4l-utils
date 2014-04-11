@@ -3,9 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
-#include <string>
-
-#include <linux/videodev2.h>
 
 #include "v4l2-ctl.h"
 

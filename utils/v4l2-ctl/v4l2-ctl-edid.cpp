@@ -7,11 +7,10 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include <linux/videodev2.h>
-#include <linux/v4l2-subdev.h>
-#include <string>
 
 #include "v4l2-ctl.h"
+
+#include <linux/v4l2-subdev.h>
 
 enum format {
 	HEX,
