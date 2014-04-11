@@ -909,19 +909,20 @@ int main(int argc, char **argv)
 			}
 		}
 
-		if ((dvr_fd = open(args.dvr_dev, O_RDONLY)) < 0) {
-			PERROR("failed opening '%s'", args.dvr_dev);
-			goto err;
-		}
 		if (args.silent < 2)
 			print_frontend_stats(stderr, &args, parms);
+
 		if (file_fd >= 0) {
+			if ((dvr_fd = open(args.dvr_dev, O_RDONLY)) < 0) {
+				PERROR("failed opening '%s'", args.dvr_dev);
+				goto err;
+			}
 			if (!timeout_flag)
 				fprintf(stderr, "Record to file '%s' started\n", args.filename);
 			copy_to_file(dvr_fd, file_fd, args.timeout, args.silent);
 		} else {
 			if (!timeout_flag)
-				fprintf(stderr, "DVR interface '%s' opened\n", args.dvr_dev);
+				fprintf(stderr, "DVR interface '%s' can now be opened\n", args.dvr_dev);
 			while (timeout_flag == 0)
 				sleep(1);
 		}
