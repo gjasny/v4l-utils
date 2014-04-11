@@ -55,7 +55,6 @@ struct arguments {
 	int force_dvbv3, lna, lnb, sat_number;
 	unsigned diseqc_wait, silent, verbose, frontend_only, freq_bpf;
 	unsigned timeout, dvr, rec_psi, exit_after_tuning;
-	unsigned record;
 	unsigned n_apid, n_vpid, all_pids;
 	enum file_formats input_format, output_format;
 	unsigned traffic_monitor, low_traffic;
@@ -300,6 +299,7 @@ static int setup_frontend(struct arguments *args,
 static void do_timeout(int x)
 {
 	(void)x;
+
 	if (timeout_flag == 0) {
 		timeout_flag = 1;
 		alarm(2);
@@ -458,7 +458,6 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		break;
 	case 'o':
 		args->filename = strdup(optarg);
-		args->record = 1;
 		/* fall through */
 	case 'r':
 		args->dvr = 1;
@@ -890,11 +889,12 @@ int main(int argc, char **argv)
 		goto err;
 	}
 
-	if (args.record) {
-		if (args.filename != NULL) {
+	if (args.dvr) {
+		file_fd = STDOUT_FILENO;
+
+		if (args.filename) {
 			if (strcmp(args.filename, "-") != 0) {
-				file_fd =
-				    open(args.filename,
+				file_fd = open(args.filename,
 #ifdef O_LARGEFILE
 					 O_LARGEFILE |
 #endif
@@ -905,12 +905,7 @@ int main(int argc, char **argv)
 					       args.filename);
 					return -1;
 				}
-			} else {
-				file_fd = 1;
 			}
-		} else {
-			PERROR("Record mode but no filename!");
-			goto err;
 		}
 
 		if ((dvr_fd = open(args.dvr_dev, O_RDONLY)) < 0) {
