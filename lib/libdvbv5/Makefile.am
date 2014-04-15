@@ -63,27 +63,30 @@ libdvbv5_la_SOURCES = \
 	parse_string.c	 \
 	dvb-demux.c	 \
 	dvb-fe.c	 \
-	dvb-log.c	\
-	dvb-file.c	\
-	dvb-v5-std.c	\
-	dvb-sat.c	\
-	dvb-scan.c	\
-	descriptors.c	\
-	descriptors/header.c		\
-	descriptors/pat.c		\
-	descriptors/pmt.c		\
-	descriptors/nit.c		\
-	descriptors/sdt.c		\
-	descriptors/vct.c		\
-	descriptors/mgt.c		\
-	descriptors/eit.c		\
-	descriptors/cat.c		\
-	descriptors/atsc_eit.c		\
+	dvb-log.c	 \
+	dvb-file.c	 \
+	dvb-v5-std.c	 \
+	dvb-sat.c	 \
+	dvb-scan.c	 \
+	descriptors.c	 \
+	tables/header.c		\
+	tables/pat.c		\
+	tables/pmt.c		\
+	tables/nit.c		\
+	tables/sdt.c		\
+	tables/vct.c		\
+	tables/mgt.c		\
+	tables/eit.c		\
+	tables/cat.c		\
+	tables/atsc_eit.c	\
+	tables/mpeg_ts.c	\
+	tables/mpeg_pes.c	\
+	tables/mpeg_es.c	\
 	descriptors/desc_language.c		\
 	descriptors/desc_network_name.c		\
 	descriptors/desc_cable_delivery.c	\
 	descriptors/desc_sat.c			\
-	descriptors/desc_terrestrial_delivery.c  \
+	descriptors/desc_terrestrial_delivery.c \
 	descriptors/desc_t2_delivery.c		\
 	descriptors/desc_service.c		\
 	descriptors/desc_frequency_list.c	\
@@ -99,10 +102,7 @@ libdvbv5_la_SOURCES = \
 	descriptors/desc_partial_reception.c	\
 	descriptors/desc_service_location.c	\
 	descriptors/desc_ca.c			\
-	descriptors/desc_ca_identifier.c	\
-	descriptors/mpeg_ts.c			\
-	descriptors/mpeg_pes.c			\
-	descriptors/mpeg_es.c
+	descriptors/desc_ca_identifier.c
 
 libdvbv5_la_CPPFLAGS = -I../.. $(ENFORCE_LIBDVBV5_STATIC)
 libdvbv5_la_LDFLAGS = $(LIBDVBV5_VERSION) $(ENFORCE_LIBDVBV5_STATIC) -lm
