@@ -24,9 +24,10 @@
 #include <libdvbv5/dvb-fe.h>
 
 ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			ssize_t buflen, struct dvb_table_sdt *sdt, ssize_t *table_length)
+			ssize_t buflen, struct dvb_table_sdt **table)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	struct dvb_table_sdt *sdt;
 	struct dvb_table_sdt_service **head;
 	size_t size;
 
@@ -43,28 +44,28 @@ ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		return -2;
 	}
 
-	if (*table_length > 0) {
-		memcpy(sdt, p, size);
-		bswap16(sdt->network_id);
-
-		/* find end of curent list */
-		head = &sdt->service;
-		while (*head != NULL)
-			head = &(*head)->next;
-	} else {
-		memcpy(sdt, p, size);
-		bswap16(sdt->network_id);
-
-		sdt->service = NULL;
-		head = &sdt->service;
+	if (!*table) {
+		*table = calloc(sizeof(struct dvb_table_sdt), 1);
+		if (!*table) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
 	}
+	sdt = *table;
+	memcpy(sdt, p, size);
 	p += size;
+	bswap16(sdt->network_id);
+
+	/* find end of curent list */
+	head = &sdt->service;
+	while (*head != NULL)
+		head = &(*head)->next;
 
 	size = sdt->header.section_length + 3 - 4; /* plus header, minus CRC */
 	if (buf + size > endbuf) {
 		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
 			   endbuf - buf, size);
-		return -3;
+		return -4;
 	}
 	endbuf = buf + size;
 
@@ -99,7 +100,7 @@ ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			}
 			if (dvb_desc_parse(parms, p, desc_length,
 					      &service->descriptor) != 0) {
-				return -4;
+				return -6;
 			}
 			p += desc_length;
 		}
@@ -109,7 +110,6 @@ ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		dvb_logwarn("%s: %zu spurious bytes at the end",
 			   __func__, endbuf - p);
 
-	*table_length = p - buf;
 	return p - buf;
 }
 

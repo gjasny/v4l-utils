@@ -78,7 +78,7 @@ extern const char *dvb_eit_running_status_name[8];
 extern "C" {
 #endif
 
-ssize_t dvb_table_eit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct dvb_table_eit *eit, ssize_t *table_length);
+ssize_t dvb_table_eit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct dvb_table_eit **table);
 void dvb_table_eit_free(struct dvb_table_eit *eit);
 void dvb_table_eit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_eit *eit);
 void dvb_time(const uint8_t data[5], struct tm *tm);

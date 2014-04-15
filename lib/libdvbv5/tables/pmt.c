@@ -26,9 +26,10 @@
 #include <string.h> /* memcpy */
 
 ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			ssize_t buflen, struct dvb_table_pmt *pmt, ssize_t *table_length)
+			ssize_t buflen, struct dvb_table_pmt **table)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	struct dvb_table_pmt *pmt;
 	struct dvb_table_pmt_stream **head;
 	struct dvb_desc **head_desc;
 	size_t size;
@@ -46,36 +47,32 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		return -2;
 	}
 
-	if (*table_length > 0) {
-		memcpy(pmt, p, size);
-		bswap16(pmt->bitfield);
-		bswap16(pmt->bitfield2);
-
-		/* find end of current list */
-		head = &pmt->stream;
-		while (*head != NULL)
-			head = &(*head)->next;
-		head_desc = &pmt->descriptor;
-		while (*head_desc != NULL)
-			head_desc = &(*head_desc)->next;
-	} else {
-		memcpy(pmt, p, size);
-		bswap16(pmt->bitfield);
-		bswap16(pmt->bitfield2);
-
-		pmt->descriptor = NULL;
-		pmt->stream = NULL;
-
-		head = &pmt->stream;
-		head_desc = &pmt->descriptor;
+	if (!*table) {
+		*table = calloc(sizeof(struct dvb_table_pmt), 1);
+		if (!*table) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
 	}
+	pmt = *table;
+	memcpy(pmt, p, size);
 	p += size;
+	bswap16(pmt->bitfield);
+	bswap16(pmt->bitfield2);
+
+	/* find end of current list */
+	head = &pmt->stream;
+	while (*head != NULL)
+		head = &(*head)->next;
+	head_desc = &pmt->descriptor;
+	while (*head_desc != NULL)
+		head_desc = &(*head_desc)->next;
 
 	size = pmt->header.section_length + 3 - 4; /* plus header, minus CRC */
 	if (buf + size > endbuf) {
 		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
 			   endbuf - buf, size);
-		return -3;
+		return -4;
 	}
 	endbuf = buf + size;
 
@@ -89,7 +86,7 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		}
 		if (dvb_desc_parse(parms, p, desc_length,
 				      head_desc) != 0) {
-			return -3;
+			return -4;
 		}
 		p += desc_length;
 	}
@@ -102,7 +99,7 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		stream = malloc(sizeof(struct dvb_table_pmt_stream));
 		if (!stream) {
 			dvb_logerr("%s: out of memory", __func__);
-			return -3;
+			return -5;
 		}
 		memcpy(stream, p, size);
 		p += size;
@@ -125,7 +122,7 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			}
 			if (dvb_desc_parse(parms, p, desc_length,
 					      &stream->descriptor) != 0) {
-				return -4;
+				return -6;
 			}
 			p += desc_length;
 		}
@@ -134,7 +131,6 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		dvb_logwarn("%s: %zu spurious bytes at the end",
 			   __func__, endbuf - p);
 
-	*table_length = p - buf;
 	return p - buf;
 }
 

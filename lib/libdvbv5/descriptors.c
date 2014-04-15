@@ -79,9 +79,10 @@ static void dvb_desc_default_print(struct dvb_v5_fe_parms *parms, const struct d
 	hexdump(parms, "|           ", desc->data, desc->length);
 }
 
-#define TABLE_INIT( _x ) { (dvb_table_init_func) _x##_init, sizeof(struct _x) }
+#define TABLE_INIT(_x) (dvb_table_init_func) _x##_init
 
-const struct dvb_table_init dvb_table_initializers[] = {
+const dvb_table_init_func dvb_table_initializers[256] = {
+	[0 ... 255]              = NULL,
 	[DVB_TABLE_PAT]          = TABLE_INIT(dvb_table_pat),
 	[DVB_TABLE_CAT]          = TABLE_INIT(dvb_table_cat),
 	[DVB_TABLE_PMT]          = TABLE_INIT(dvb_table_pmt),

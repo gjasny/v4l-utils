@@ -25,9 +25,10 @@
 #include <parse_string.h>
 
 ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			ssize_t buflen, struct atsc_table_vct *vct, ssize_t *table_length)
+			ssize_t buflen, struct atsc_table_vct **table)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	struct atsc_table_vct *vct;
 	struct atsc_table_vct_channel **head;
 	size_t size;
 	int i, n;
@@ -45,20 +46,21 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		return -2;
 	}
 
-	if (*table_length > 0) {
-		/* find end of curent list */
-		head = &vct->channel;
-		while (*head != NULL)
-			head = &(*head)->next;
-	} else {
-		memcpy(vct, p, size);
-
-		vct->channel = NULL;
-		vct->descriptor = NULL;
-
-		head = &vct->channel;
+	if (!*table) {
+		*table = calloc(sizeof(struct atsc_table_vct), 1);
+		if (!*table) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
 	}
+	vct = *table;
+	memcpy(vct, p, size);
 	p += size;
+
+	/* find end of curent list */
+	head = &vct->channel;
+	while (*head != NULL)
+		head = &(*head)->next;
 
 	size = offsetof(struct atsc_table_vct_channel, descriptor);
 	for (n = 0; n < vct->num_channels_in_section; n++) {
@@ -74,7 +76,7 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		channel = malloc(sizeof(struct atsc_table_vct_channel));
 		if (!channel) {
 			dvb_logerr("%s: out of memory", __func__);
-			return -3;
+			return -4;
 		}
 
 		memcpy(channel, p, size);
@@ -111,12 +113,14 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		if (endbuf - p < channel->descriptors_length) {
 			dvb_logerr("%s: short read %d/%zd bytes", __func__,
 				   channel->descriptors_length, endbuf - p);
-			return -2;
+			return -5;
 		}
 
 		/* get the descriptors for each program */
-		dvb_desc_parse(parms, p, channel->descriptors_length,
-				      &channel->descriptor);
+		if (dvb_desc_parse(parms, p, channel->descriptors_length,
+				      &channel->descriptor) != 0) {
+			return -6;
+		}
 
 		p += channel->descriptors_length;
 	}
@@ -130,15 +134,16 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		if (endbuf - p < d->descriptor_length) {
 			dvb_logerr("%s: short read %d/%zd bytes", __func__,
 				   d->descriptor_length, endbuf - p);
-			return -3;
+			return -7;
 		}
-		dvb_desc_parse(parms, p, d->descriptor_length,
-				      &vct->descriptor);
+		if (dvb_desc_parse(parms, p, d->descriptor_length,
+				      &vct->descriptor) != 0) {
+			return -8;
+		}
 	}
 	if (endbuf - p)
 		dvb_logwarn("%s: %zu spurious bytes at the end",
 			   __func__, endbuf - p);
-	*table_length = p - buf;
 	return p - buf;
 }
 

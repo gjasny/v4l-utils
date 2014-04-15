@@ -23,9 +23,10 @@
 #include <libdvbv5/dvb-fe.h>
 
 ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-		ssize_t buflen, struct dvb_table_eit *eit, ssize_t *table_length)
+		ssize_t buflen, struct dvb_table_eit **table)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4; /* minus CRC */
+	struct dvb_table_eit *eit;
 	struct dvb_table_eit_event **head;
 	size_t size;
 
@@ -46,26 +47,24 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		return -2;
 	}
 
-	if (*table_length > 0) {
-		memcpy(eit, p, sizeof(struct dvb_table_eit) - sizeof(eit->event));
-
-		bswap16(eit->transport_id);
-		bswap16(eit->network_id);
-
-		/* find end of curent list */
-		head = &eit->event;
-		while (*head != NULL)
-			head = &(*head)->next;
-	} else {
-		memcpy(eit, p, sizeof(struct dvb_table_eit) - sizeof(eit->event));
-
-		bswap16(eit->transport_id);
-		bswap16(eit->network_id);
-
-		eit->event = NULL;
-		head = &eit->event;
+	if (!*table) {
+		*table = calloc(sizeof(struct dvb_table_eit), 1);
+		if (!*table) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
 	}
+	eit = *table;
+	memcpy(eit, p, size);
 	p += size;
+
+	bswap16(eit->transport_id);
+	bswap16(eit->network_id);
+
+	/* find end of curent list */
+	head = &eit->event;
+	while (*head != NULL)
+		head = &(*head)->next;
 
 	/* get the event entries */
 	size = offsetof(struct dvb_table_eit_event, descriptor);
@@ -75,7 +74,7 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		event = malloc(sizeof(struct dvb_table_eit_event));
 		if (!event) {
 			dvb_logerr("%s: out of memory", __func__);
-			return -3;
+			return -4;
 		}
 		memcpy(event, p, size);
 		p += size;
@@ -105,7 +104,7 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			}
 			if (dvb_desc_parse(parms, p, desc_length,
 					      &event->descriptor) != 0) {
-				return -4;
+				return -5;
 			}
 			p += desc_length;
 		}
@@ -113,7 +112,6 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	if (p < endbuf)
 		dvb_logwarn("%s: %zu spurious bytes at the end",
 			   __func__, endbuf - p);
-	*table_length = p - buf;
 	return p - buf;
 }
 

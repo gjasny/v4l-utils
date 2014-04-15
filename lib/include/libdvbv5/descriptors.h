@@ -36,14 +36,9 @@
 
 struct dvb_v5_fe_parms;
 
-typedef void (*dvb_table_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, void *table, ssize_t *table_length);
+typedef void (*dvb_table_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, void **table);
 
-struct dvb_table_init {
-	dvb_table_init_func init;
-	ssize_t size;
-};
-
-extern const struct dvb_table_init dvb_table_initializers[];
+extern const dvb_table_init_func dvb_table_initializers[256];
 extern char *default_charset;
 extern char *output_charset;
 
@@ -105,15 +100,6 @@ struct dvb_descriptor {
 };
 
 extern const struct dvb_descriptor dvb_descriptors[];
-
-enum dvb_tables {
-	PAT,
-	PMT,
-	NIT,
-	SDT,
-	TVCT,
-	CVCT,
-};
 
 enum descriptors {
 	/* ISO/IEC 13818-1 */

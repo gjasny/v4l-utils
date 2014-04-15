@@ -57,7 +57,7 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-ssize_t dvb_table_pat_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct dvb_table_pat *pat, ssize_t *table_length);
+ssize_t dvb_table_pat_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct dvb_table_pat **table);
 void dvb_table_pat_free(struct dvb_table_pat *pat);
 void dvb_table_pat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_pat *t);
 

@@ -129,7 +129,6 @@ struct dvb_table_filter_priv {
 	unsigned long is_read_bits[BITS_TO_LONGS(256)];
 
 	/* section gaps and multiple ts_id handling */
-	ssize_t table_length;
 	int first_ts_id;
 	int first_section;
 	int done;
@@ -141,7 +140,8 @@ static int dvb_parse_section_alloc(struct dvb_v5_fe_parms *parms,
 	struct dvb_table_filter_priv *priv;
 
 	if (!sect->table) {
-		dvb_logerr("table memory pointer not filled");
+		dvb_logerr("%s: table memory pointer not filled",
+				__func__);
 		return -4;
 	}
 	*sect->table = NULL;
@@ -173,7 +173,6 @@ static int dvb_parse_section(struct dvb_v5_fe_parms *parms,
 	struct dvb_table_header *h;
 	struct dvb_table_filter_priv *priv;
 
-	uint8_t *tbl = NULL;
 	unsigned char tid;
 
 	h = (struct dvb_table_header *)buf;
@@ -222,26 +221,12 @@ static int dvb_parse_section(struct dvb_v5_fe_parms *parms,
 	if (!sect->allow_section_gaps && sect->ts_id != -1)
 		set_bit(h->section_id, priv->is_read_bits);
 
-	tbl = *sect->table;
-	if (!tbl) {
-		if (!dvb_table_initializers[tid].size) {
-			dvb_logerr("%s: no table size for table %d",
-					__func__, tid);
-			return -1;
-		}
-
-		tbl = calloc(dvb_table_initializers[tid].size, 1);
-	}
-
-	if (dvb_table_initializers[tid].init)
-		dvb_table_initializers[tid].init(parms, buf, buf_length,
-						 tbl, &priv->table_length);
+	if (dvb_table_initializers[tid])
+		dvb_table_initializers[tid](parms, buf, buf_length,
+						 sect->table);
 	else
 		dvb_logerr("%s: no initializer for table %d",
 			   __func__, tid);
-
-	/* Store the table */
-	*sect->table = tbl;
 
 	if (!sect->allow_section_gaps && sect->ts_id != -1 &&
 			is_all_bits_set(priv->last_section, priv->is_read_bits))
@@ -261,8 +246,6 @@ int dvb_read_sections(struct dvb_v5_fe_parms *parms, int dmx_fd,
 	int ret;
 	uint8_t *buf = NULL;
 	uint8_t mask = 0xff;
-
-	/* FIXME: verify if all requested tables are known */
 
 	ret = dvb_parse_section_alloc(parms, sect);
 	if (ret < 0)

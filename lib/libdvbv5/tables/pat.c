@@ -24,9 +24,10 @@
 #include <libdvbv5/dvb-fe.h>
 
 ssize_t dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
-			ssize_t buflen, struct dvb_table_pat *pat, ssize_t *table_length)
+			ssize_t buflen, struct dvb_table_pat **table)
 {
 	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	struct dvb_table_pat *pat;
 	struct dvb_table_pat_program **head;
 	size_t size;
 
@@ -43,18 +44,21 @@ ssize_t dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		return -2;
 	}
 
-	if (*table_length > 0) {
-		/* find end of current list */
-		head = &pat->program;
-		while (*head != NULL)
-			head = &(*head)->next;
-	} else {
-		memcpy(pat, buf, size);
-		p += size;
-		pat->programs = 0;
-		pat->program = NULL;
-		head = &pat->program;
+	if (!*table) {
+		*table = calloc(sizeof(struct dvb_table_pat), 1);
+		if (!*table) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
 	}
+	pat = *table;
+	memcpy(pat, buf, size);
+	p += size;
+
+	/* find end of current list */
+	head = &pat->program;
+	while (*head != NULL)
+		head = &(*head)->next;
 
 	size = offsetof(struct dvb_table_pat_program, next);
 	while (p + size <= endbuf) {
@@ -63,7 +67,7 @@ ssize_t dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		prog = malloc(sizeof(struct dvb_table_pat_program));
 		if (!prog) {
 			dvb_logerr("%s: out of memory", __func__);
-			return -3;
+			return -4;
 		}
 
 		memcpy(prog, p, size);
@@ -86,7 +90,6 @@ ssize_t dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	if (endbuf - p)
 		dvb_logwarn("%s: %zu spurious bytes at the end",
 			   __func__, endbuf - p);
-	*table_length = p - buf;
 	return p - buf;
 }
 
