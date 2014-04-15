@@ -25,7 +25,7 @@
 ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		ssize_t buflen, struct atsc_table_eit **table)
 {
-	const uint8_t *p = buf, *endbuf = buf + buflen - 4; /* minus CRC */;
+	const uint8_t *p = buf, *endbuf = buf + buflen;
 	struct atsc_table_eit *eit;
 	struct atsc_table_eit_event **head;
 	size_t size;

@@ -25,7 +25,7 @@
 ssize_t atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		ssize_t buflen, struct atsc_table_mgt **table)
 {
-	const uint8_t *p = buf, *endbuf = buf + buflen - 4; /* minus CRC */
+	const uint8_t *p = buf, *endbuf = buf + buflen;
 	struct atsc_table_mgt *mgt;
 	struct atsc_table_mgt_table **head;
 	struct dvb_desc **head_desc;

@@ -28,7 +28,7 @@
 ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, struct dvb_table_pmt **table)
 {
-	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	const uint8_t *p = buf, *endbuf = buf + buflen;
 	struct dvb_table_pmt *pmt;
 	struct dvb_table_pmt_stream **head;
 	struct dvb_desc **head_desc;
@@ -68,7 +68,7 @@ ssize_t dvb_table_pmt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	while (*head_desc != NULL)
 		head_desc = &(*head_desc)->next;
 
-	size = pmt->header.section_length + 3 - 4; /* plus header, minus CRC */
+	size = pmt->header.section_length + 3 - DVB_CRC_SIZE; /* plus header, minus CRC */
 	if (buf + size > endbuf) {
 		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
 			   endbuf - buf, size);

@@ -26,7 +26,7 @@
 ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, struct dvb_table_sdt **table)
 {
-	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	const uint8_t *p = buf, *endbuf = buf + buflen;
 	struct dvb_table_sdt *sdt;
 	struct dvb_table_sdt_service **head;
 	size_t size;
@@ -61,7 +61,7 @@ ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	while (*head != NULL)
 		head = &(*head)->next;
 
-	size = sdt->header.section_length + 3 - 4; /* plus header, minus CRC */
+	size = sdt->header.section_length + 3 - DVB_CRC_SIZE; /* plus header, minus CRC */
 	if (buf + size > endbuf) {
 		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
 			   endbuf - buf, size);

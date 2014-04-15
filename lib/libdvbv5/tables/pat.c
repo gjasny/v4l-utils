@@ -26,7 +26,7 @@
 ssize_t dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, struct dvb_table_pat **table)
 {
-	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	const uint8_t *p = buf, *endbuf = buf + buflen;
 	struct dvb_table_pat *pat;
 	struct dvb_table_pat_program **head;
 	size_t size;

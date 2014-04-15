@@ -222,7 +222,7 @@ static int dvb_parse_section(struct dvb_v5_fe_parms *parms,
 		set_bit(h->section_id, priv->is_read_bits);
 
 	if (dvb_table_initializers[tid])
-		dvb_table_initializers[tid](parms, buf, buf_length,
+		dvb_table_initializers[tid](parms, buf, buf_length - DVB_CRC_SIZE,
 						 sect->table);
 	else
 		dvb_logerr("%s: no initializer for table %d",

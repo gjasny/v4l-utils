@@ -31,8 +31,7 @@
 #include <stdint.h>
 
 #define DVB_MAX_PAYLOAD_PACKET_SIZE 4096
-#define DVB_PID_SDT      17
-#define DVB_PMT_TABLE_ID 2
+#define DVB_CRC_SIZE 4
 
 struct dvb_v5_fe_parms;
 

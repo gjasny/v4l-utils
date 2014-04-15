@@ -27,7 +27,7 @@
 ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, struct atsc_table_vct **table)
 {
-	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	const uint8_t *p = buf, *endbuf = buf + buflen;
 	struct atsc_table_vct *vct;
 	struct atsc_table_vct_channel **head;
 	size_t size;

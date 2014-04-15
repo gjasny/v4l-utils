@@ -25,7 +25,7 @@
 ssize_t dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, struct dvb_table_nit **table)
 {
-	const uint8_t *p = buf, *endbuf = buf + buflen - 4;
+	const uint8_t *p = buf, *endbuf = buf + buflen;
 	struct dvb_table_nit *nit;
 	struct dvb_table_nit_transport **head;
 	struct dvb_desc **head_desc;
