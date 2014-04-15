@@ -76,6 +76,32 @@ struct dvb_table_filter {
 
 void dvb_table_filter_free(struct dvb_table_filter *sect);
 
+/* Read DVB table sections
+ *
+ * The following functions can be used to read DVB table sections by
+ * specifying a table ID and a program ID. Optionally a transport
+ * stream ID can be specified as well. The function will read on the
+ * specified demux and return when reading is done or an error has
+ * occurred. If table is not NULL after the call, it has to be freed
+ * with the apropriate free table function (even if an error has
+ * occurred).
+ *
+ * Returns 0 on success or a negative error code.
+ *
+ * Example usage:
+ *
+ * struct dvb_table_pat *pat;
+ * int r = dvb_read_section( parms, dmx_fd, DVB_TABLE_PAT, DVB_TABLE_PAT_PID, (void **) &pat, 5 );
+ * if (r < 0)
+ *	dvb_logerr("error reading PAT table");
+ * else {
+ *	// do something with pat
+ * }
+ * if (pat)
+ *	dvb_table_pat_free( pat );
+ *
+ */
+
 int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd, unsigned char tid, uint16_t pid, void **table,
 		unsigned timeout);
 
