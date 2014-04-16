@@ -53,11 +53,20 @@ ssize_t dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	pat = *table;
 	memcpy(pat, buf, size);
 	p += size;
+	dvb_table_header_init(&pat->header);
 
 	/* find end of current list */
 	head = &pat->program;
 	while (*head != NULL)
 		head = &(*head)->next;
+
+	size = pat->header.section_length + 3 - DVB_CRC_SIZE; /* plus header, minus CRC */
+	if (buf + size > endbuf) {
+		dvb_logerr("%s: short read %zd/%zd bytes", __func__,
+			   endbuf - buf, size);
+		return -4;
+	}
+	endbuf = buf + size;
 
 	size = offsetof(struct dvb_table_pat_program, next);
 	while (p + size <= endbuf) {
@@ -66,7 +75,7 @@ ssize_t dvb_table_pat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		prog = malloc(sizeof(struct dvb_table_pat_program));
 		if (!prog) {
 			dvb_logerr("%s: out of memory", __func__);
-			return -4;
+			return -5;
 		}
 
 		memcpy(prog, p, size);

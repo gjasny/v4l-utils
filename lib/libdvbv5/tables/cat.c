@@ -52,6 +52,7 @@ ssize_t dvb_table_cat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	cat = *table;
 	memcpy(cat, p, size);
 	p += size;
+	dvb_table_header_init(&cat->header);
 
 	/* find end of current lists */
 	head_desc = &cat->descriptor;

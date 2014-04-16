@@ -55,6 +55,7 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	vct = *table;
 	memcpy(vct, p, size);
 	p += size;
+	dvb_table_header_init(&vct->header);
 
 	/* find end of curent list */
 	head = &vct->channel;

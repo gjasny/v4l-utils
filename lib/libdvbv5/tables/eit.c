@@ -56,6 +56,7 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	eit = *table;
 	memcpy(eit, p, size);
 	p += size;
+	dvb_table_header_init(&eit->header);
 
 	bswap16(eit->transport_id);
 	bswap16(eit->network_id);

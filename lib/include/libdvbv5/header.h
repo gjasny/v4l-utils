@@ -71,7 +71,7 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-int  dvb_table_header_init (struct dvb_table_header *t);
+void dvb_table_header_init (struct dvb_table_header *t);
 void dvb_table_header_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_header *t);
 
 #ifdef __cplusplus

@@ -22,11 +22,10 @@
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
-int dvb_table_header_init(struct dvb_table_header *t)
+void dvb_table_header_init(struct dvb_table_header *t)
 {
 	bswap16(t->bitfield);
 	bswap16(t->id);
-	return 0;
 }
 
 void dvb_table_header_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_header *t)

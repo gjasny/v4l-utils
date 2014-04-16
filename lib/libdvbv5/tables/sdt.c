@@ -53,6 +53,7 @@ ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	sdt = *table;
 	memcpy(sdt, p, size);
 	p += size;
+	dvb_table_header_init(&sdt->header);
 	bswap16(sdt->network_id);
 
 	/* find end of curent list */

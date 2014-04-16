@@ -53,6 +53,7 @@ ssize_t dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	nit = *table;
 	memcpy(nit, p, size);
 	p += size;
+	dvb_table_header_init(&nit->header);
 
 	bswap16(nit->bitfield);
 

@@ -167,39 +167,38 @@ void dvb_table_filter_free(struct dvb_table_filter *sect)
 
 static int dvb_parse_section(struct dvb_v5_fe_parms *parms,
 			     struct dvb_table_filter *sect,
-			     uint8_t *buf, ssize_t buf_length)
+			     const uint8_t *buf, ssize_t buf_length)
 {
-	struct dvb_table_header *h;
+	struct dvb_table_header h;
 	struct dvb_table_filter_priv *priv;
-
 	unsigned char tid;
 
-	h = (struct dvb_table_header *)buf;
-	dvb_table_header_init(h);
+	memcpy(&h, buf, sizeof(struct dvb_table_header));
+	dvb_table_header_init(&h);
 
 	if (parms->verbose)
 		dvb_log("%s: received table 0x%02x, TS ID 0x%04x, section %d/%d",
-			__func__, h->table_id, h->id, h->section_id, h->last_section);
+			__func__, h.table_id, h.id, h.section_id, h.last_section);
 
-	if (sect->tid != h->table_id) {
+	if (sect->tid != h.table_id) {
 		dvb_logdbg("%s: couldn't match ID %d at the active section filters",
-			   __func__, h->table_id);
+			   __func__, h.table_id);
 		return -1;
 	}
 	priv = sect->priv;
-	tid = h->table_id;
+	tid = h.table_id;
 
 	if (priv->first_ts_id < 0)
-		priv->first_ts_id = h->id;
+		priv->first_ts_id = h.id;
 	if (priv->first_section < 0)
-		priv->first_section = h->section_id;
+		priv->first_section = h.section_id;
 	if (priv->last_section < 0)
-		priv->last_section = h->last_section;
+		priv->last_section = h.last_section;
 	else { /* Check if the table was already parsed, but not on first pass */
 		if (!sect->allow_section_gaps && sect->ts_id != -1) {
-			if (test_bit(h->section_id, priv->is_read_bits))
+			if (test_bit(h.section_id, priv->is_read_bits))
 				return 0;
-		} else if (priv->first_ts_id == h->id && priv->first_section == h->section_id) {
+		} else if (priv->first_ts_id == h.id && priv->first_section == h.section_id) {
 			/* tables like EIT can increment sections by gaps > 1.
 			 * in this case, reading is done when a already read
 			 * table is reached. */
@@ -212,13 +211,13 @@ static int dvb_parse_section(struct dvb_v5_fe_parms *parms,
 
 	/* search for an specific TS ID */
 	if (sect->ts_id != -1) {
-		if (h->id != sect->ts_id)
+		if (h.id != sect->ts_id)
 			return 0;
 	}
 
 	/* handle the sections */
 	if (!sect->allow_section_gaps && sect->ts_id != -1)
-		set_bit(h->section_id, priv->is_read_bits);
+		set_bit(h.section_id, priv->is_read_bits);
 
 	if (dvb_table_initializers[tid])
 		dvb_table_initializers[tid](parms, buf, buf_length - DVB_CRC_SIZE,
