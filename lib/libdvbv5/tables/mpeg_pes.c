@@ -20,6 +20,7 @@
 #include <libdvbv5/mpeg_pes.h>
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
+#include <inttypes.h>
 
 ssize_t dvb_mpeg_pes_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table)
 {
@@ -126,8 +127,10 @@ void dvb_mpeg_pes_print(struct dvb_v5_fe_parms *parms, struct dvb_mpeg_pes *pes)
 		dvb_loginfo("   - PES_extension            %d", pes->optional->PES_extension);
 		dvb_loginfo("   - length                   %d", pes->optional->length);
 		if (pes->optional->PTS_DTS & 2)
-			dvb_loginfo("   - pts                      %lx (%fs)", pes->optional->pts, (float) pes->optional->pts / 90000.0);
+			dvb_loginfo("   - pts                      %" PRIu64 " (%fs)",
+				    pes->optional->pts, (float) pes->optional->pts / 90000.0);
 		if (pes->optional->PTS_DTS & 1)
-			dvb_loginfo("   - dts                      %lx (%fs)", pes->optional->dts, (float) pes->optional->dts/ 90000.0);
+			dvb_loginfo("   - dts                      %" PRIu64 " (%fs)",
+				    pes->optional->dts, (float) pes->optional->dts/ 90000.0);
 	}
 }
