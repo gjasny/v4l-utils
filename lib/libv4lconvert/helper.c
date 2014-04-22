@@ -212,12 +212,9 @@ void v4lconvert_helper_cleanup(struct v4lconvert_data *data)
 	int status;
 
 	if (data->decompress_pid != -1) {
-		kill(data->decompress_pid, SIGTERM);
-		waitpid(data->decompress_pid, &status, 0);
-
 		close(data->decompress_out_pipe[WRITE_END]);
 		close(data->decompress_in_pipe[READ_END]);
-
+		waitpid(data->decompress_pid, &status, 0);
 		data->decompress_pid = -1;
 	}
 }
