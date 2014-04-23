@@ -629,15 +629,11 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 	struct dvb_frontend_parameters v3_parms;
 	uint32_t bw;
 
-	if (dvb_fe_is_satellite(tmp_parms.current_sys))
-		dvb_sat_set_parms(&tmp_parms);
-
-	/* Filter out any user DTV_foo property such as DTV_POLARIZATION */
-	tmp_parms.n_props = dvb_copy_fe_props(tmp_parms.dvb_prop, tmp_parms.n_props, tmp_parms.dvb_prop);
-
 	if (parms->lna != LNA_AUTO && !parms->legacy_fe) {
+		struct dvb_v5_fe_parms tmp_lna_parms;
+
 		memset(&prop, 0, sizeof(prop));
-		prop.props = tmp_parms.dvb_prop;
+		prop.props = tmp_lna_parms.dvb_prop;
 
 		prop.props[0].cmd = DTV_LNA;
 		prop.props[0].u.data = parms->lna;
@@ -648,6 +644,12 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
 		} else if (parms->lna != LNA_AUTO && parms->verbose)
 			dvb_logdbg("LNA is %s", parms->lna ? "ON" : "OFF");
 	}
+
+	if (dvb_fe_is_satellite(tmp_parms.current_sys))
+		dvb_sat_set_parms(&tmp_parms);
+
+	/* Filter out any user DTV_foo property such as DTV_POLARIZATION */
+	tmp_parms.n_props = dvb_copy_fe_props(tmp_parms.dvb_prop, tmp_parms.n_props, tmp_parms.dvb_prop);
 
 	memset(&prop, 0, sizeof(prop));
 	prop.props = tmp_parms.dvb_prop;
