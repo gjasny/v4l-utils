@@ -116,6 +116,9 @@ int v4lconvert_se401_to_rgb24(struct v4lconvert_data *data,
 	int in, plen, bits, pixels, info;
 	int x = 0, total_pixels = 0;
 
+	if (!src || !dest)
+		goto error;
+
 	for (in = 0; in + 4 < src_size; in += plen) {
 		bits   = src[in + 3] + (src[in + 2] << 8);
 		pixels = src[in + 1] + ((src[in + 0] & 0x3f) << 8);
