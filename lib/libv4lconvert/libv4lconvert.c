@@ -974,6 +974,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			fmt->fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
 			v4lconvert_fixup_fmt(fmt);
 			break;
+		default:
+			V4LCONVERT_ERR("Unknown destination format in conversion\n");
+			errno = EINVAL;
+			return -1;
 		}
 
 		result = v4lconvert_se401_to_rgb24(data, src, src_size, d,
