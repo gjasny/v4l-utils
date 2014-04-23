@@ -64,7 +64,7 @@ void dvb_mpeg_ts_print(struct dvb_v5_fe_parms *parms, struct dvb_mpeg_ts *ts)
 	dvb_loginfo(" - scrambling         %d", ts->scrambling);
 	dvb_loginfo(" - adaptation_field   %d", ts->adaptation_field);
 	dvb_loginfo(" - continuity_counter %d", ts->continuity_counter);
-	if (ts->adaptation_field & 0x2) {
+	if (ts->adaptation_field) {
 		dvb_loginfo(" Adaption Field");
                 dvb_loginfo("   - length         %d", ts->adaption->length);
                 dvb_loginfo("   - discontinued   %d", ts->adaption->discontinued);
