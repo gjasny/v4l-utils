@@ -161,6 +161,7 @@ static void find_fb(int fd)
 			if (si.smem_start == (unsigned long)fbuf.base) {
 				printf("%s is the framebuffer associated with base address %p\n",
 					dev_name, fbuf.base);
+				close(fb_fd);
 				return;
 			}
 		close(fb_fd);
@@ -211,10 +212,12 @@ static int fbuf_fill_from_fb(struct v4l2_framebuffer &fb, const char *fb_device)
 	}
 	if (ioctl(fb_fd, FBIOGET_FSCREENINFO, &si)) {
 		fprintf(stderr, "could not obtain fscreeninfo from %s\n", fb_device);
+		close(fb_fd);
 		return -1;
 	}
 	if (ioctl(fb_fd, FBIOGET_VSCREENINFO, &vi)) {
 		fprintf(stderr, "could not obtain vscreeninfo from %s\n", fb_device);
+		close(fb_fd);
 		return -1;
 	}
 	fb.base = (void *)si.smem_start;
@@ -224,6 +227,7 @@ static int fbuf_fill_from_fb(struct v4l2_framebuffer &fb, const char *fb_device)
 	fb.fmt.bytesperline = si.line_length;
 	if (fb.fmt.height * fb.fmt.bytesperline > fb.fmt.sizeimage) {
 		fprintf(stderr, "height * bytesperline > sizeimage?!\n");
+		close(fb_fd);
 		return -1;
 	}
 	fb.fmt.pixelformat = 0;
