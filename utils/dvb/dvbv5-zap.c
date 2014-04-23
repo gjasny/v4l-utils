@@ -558,6 +558,7 @@ int do_traffic_monitor(struct arguments *args,
 
 	if ((fd = open(args->demux_dev, O_RDWR)) < 0) {
 		PERROR("failed opening '%s'", args->demux_dev);
+		close(dvr_fd);
 		return -1;
 	}
 
