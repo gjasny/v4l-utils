@@ -385,7 +385,7 @@ static int check_frontend(struct arguments *args,
 			  struct dvb_v5_fe_parms *parms)
 {
 	int rc;
-	fe_status_t status;
+	fe_status_t status = 0;
 	do {
 		rc = dvb_fe_get_stats(parms);
 		if (rc) {
