@@ -196,7 +196,7 @@ static int dvb_parse_section(struct dvb_v5_fe_parms *parms,
 	if (priv->last_section < 0)
 		priv->last_section = h.last_section;
 	else { /* Check if the table was already parsed, but not on first pass */
-		if (!sect->allow_section_gaps && sect->ts_id != -1) {
+		if (!sect->allow_section_gaps && sect->ts_id == -1) {
 			if (test_bit(h.section_id, priv->is_read_bits))
 				return 0;
 		} else if (priv->first_ts_id == h.id && priv->first_section == h.section_id) {
@@ -217,7 +217,7 @@ static int dvb_parse_section(struct dvb_v5_fe_parms *parms,
 	}
 
 	/* handle the sections */
-	if (!sect->allow_section_gaps && sect->ts_id != -1)
+	if (!sect->allow_section_gaps && sect->ts_id == -1)
 		set_bit(h.section_id, priv->is_read_bits);
 
 	if (dvb_table_initializers[tid])
@@ -227,7 +227,7 @@ static int dvb_parse_section(struct dvb_v5_fe_parms *parms,
 		dvb_logerr("%s: no initializer for table %d",
 			   __func__, tid);
 
-	if (!sect->allow_section_gaps && sect->ts_id != -1 &&
+	if (!sect->allow_section_gaps && sect->ts_id == -1 &&
 			is_all_bits_set(priv->last_section, priv->is_read_bits))
 		priv->done = 1;
 
