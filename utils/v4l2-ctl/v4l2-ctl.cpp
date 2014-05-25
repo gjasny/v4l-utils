@@ -780,6 +780,9 @@ static void print_event(const struct v4l2_event *ev)
 	case V4L2_EVENT_FRAME_SYNC:
 		printf("frame_sync %d\n", ev->u.frame_sync.frame_sequence);
 		break;
+	case V4L2_EVENT_SOURCE_CHANGE:
+		printf("source_change: pad/input=%d changes: %x\n", ev->id, ev->u.src_change.changes);
+		break;
 	default:
 		if (ev->type >= V4L2_EVENT_PRIVATE_START)
 			printf("unknown private event (%08x)\n", ev->type);
@@ -805,6 +808,9 @@ static __u32 parse_event(const char *e, const char **name)
 	else if (!strncmp(e, "ctrl=", 5)) {
 		event = V4L2_EVENT_CTRL;
 		*name = e + 5;
+	} else if (!strncmp(e, "source_change=", 14)) {
+		event = V4L2_EVENT_SOURCE_CHANGE;
+		*name = e + 14;
 	}
 
 	if (event == 0) {
@@ -1146,6 +1152,8 @@ int main(int argc, char **argv)
 		sub.type = wait_for_event;
 		if (wait_for_event == V4L2_EVENT_CTRL)
 			sub.id = common_find_ctrl_id(wait_event_id);
+		else if (wait_for_event == V4L2_EVENT_SOURCE_CHANGE)
+			sub.id = strtoul(wait_event_id, 0L, 0);
 		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub))
 			if (!doioctl(fd, VIDIOC_DQEVENT, &ev))
 				print_event(&ev);
@@ -1160,6 +1168,8 @@ int main(int argc, char **argv)
 		sub.type = poll_for_event;
 		if (poll_for_event == V4L2_EVENT_CTRL)
 			sub.id = common_find_ctrl_id(poll_event_id);
+		else if (poll_for_event == V4L2_EVENT_SOURCE_CHANGE)
+			sub.id = strtoul(poll_event_id, 0L, 0);
 		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub)) {
 			fd_set fds;
 			__u32 seq = 0;
