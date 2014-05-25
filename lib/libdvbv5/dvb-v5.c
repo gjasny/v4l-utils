@@ -3,7 +3,7 @@
  */
 #include <stddef.h>
 
-#include <libdvbv5/dvb-v5.h>
+#include "dvb-v5.h"
 
 struct fe_caps_name fe_caps_name[31] = {
 	{ FE_CAN_2G_MODULATION,          "CAN_2G_MODULATION" },
