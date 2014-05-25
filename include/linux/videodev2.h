@@ -649,7 +649,6 @@ struct v4l2_plane {
  * @length:	size in bytes of the buffer (NOT its payload) for single-plane
  *		buffers (when type != *_MPLANE); number of elements in the
  *		planes array for multi-plane buffers
- * @input:	input number from which the video data has has been captured
  *
  * Contains data exchanged by application and driver using one of the Streaming
  * I/O methods.
@@ -1080,14 +1079,14 @@ struct v4l2_bt_timings {
 
 /* A few useful defines to calculate the total blanking and frame sizes */
 #define V4L2_DV_BT_BLANKING_WIDTH(bt) \
-	(bt->hfrontporch + bt->hsync + bt->hbackporch)
+	((bt)->hfrontporch + (bt)->hsync + (bt)->hbackporch)
 #define V4L2_DV_BT_FRAME_WIDTH(bt) \
-	(bt->width + V4L2_DV_BT_BLANKING_WIDTH(bt))
+	((bt)->width + V4L2_DV_BT_BLANKING_WIDTH(bt))
 #define V4L2_DV_BT_BLANKING_HEIGHT(bt) \
-	(bt->vfrontporch + bt->vsync + bt->vbackporch + \
-	 bt->il_vfrontporch + bt->il_vsync + bt->il_vbackporch)
+	((bt)->vfrontporch + (bt)->vsync + (bt)->vbackporch + \
+	 (bt)->il_vfrontporch + (bt)->il_vsync + (bt)->il_vbackporch)
 #define V4L2_DV_BT_FRAME_HEIGHT(bt) \
-	(bt->height + V4L2_DV_BT_BLANKING_HEIGHT(bt))
+	((bt)->height + V4L2_DV_BT_BLANKING_HEIGHT(bt))
 
 /** struct v4l2_dv_timings - DV timings
  * @type:	the type of the timings
@@ -1765,6 +1764,7 @@ struct v4l2_streamparm {
 #define V4L2_EVENT_EOS				2
 #define V4L2_EVENT_CTRL				3
 #define V4L2_EVENT_FRAME_SYNC			4
+#define V4L2_EVENT_SOURCE_CHANGE		5
 #define V4L2_EVENT_PRIVATE_START		0x08000000
 
 /* Payload for V4L2_EVENT_VSYNC */
@@ -1796,12 +1796,19 @@ struct v4l2_event_frame_sync {
 	__u32 frame_sequence;
 };
 
+#define V4L2_EVENT_SRC_CH_RESOLUTION		(1 << 0)
+
+struct v4l2_event_src_change {
+	__u32 changes;
+};
+
 struct v4l2_event {
 	__u32				type;
 	union {
 		struct v4l2_event_vsync		vsync;
 		struct v4l2_event_ctrl		ctrl;
 		struct v4l2_event_frame_sync	frame_sync;
+		struct v4l2_event_src_change	src_change;
 		__u8				data[64];
 	} u;
 	__u32				pending;
