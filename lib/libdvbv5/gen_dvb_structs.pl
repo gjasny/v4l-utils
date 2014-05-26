@@ -510,7 +510,7 @@ print OUT <<EOF;
  */
 #include <stddef.h>
 
-#include <libdvbv5/dvb-v5.h>
+#include "dvb-v5.h"
 
 EOF
 output_arrays ("fe_caps_name", \%fe_caps, "unsigned", 1, 0);
