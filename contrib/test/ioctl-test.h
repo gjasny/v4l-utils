@@ -171,15 +171,20 @@ static const struct {
 	ioc(video, VIDIOC_RESERVED),							/*  void */
 	ioc(video, VIDIOC_STREAMOFF),							/*  int */
 	ioc(video, VIDIOC_STREAMON),							/*  int */
+	ioc(subdev, VIDIOC_SUBDEV_DV_TIMINGS_CAP),					/*  struct v4l2_dv_timings_cap */
+	ioc(subdev, VIDIOC_SUBDEV_ENUM_DV_TIMINGS),					/*  struct v4l2_enum_dv_timings */
 	ioc(subdev, VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL),					/*  struct v4l2_subdev_frame_interval_enum */
 	ioc(subdev, VIDIOC_SUBDEV_ENUM_FRAME_SIZE),					/*  struct v4l2_subdev_frame_size_enum */
 	ioc(subdev, VIDIOC_SUBDEV_ENUM_MBUS_CODE),					/*  struct v4l2_subdev_mbus_code_enum */
 	ioc(subdev, VIDIOC_SUBDEV_G_CROP),						/*  struct v4l2_subdev_crop */
+	ioc(subdev, VIDIOC_SUBDEV_G_DV_TIMINGS),					/*  struct v4l2_dv_timings */
 	ioc(subdev, VIDIOC_SUBDEV_G_EDID),						/*  struct v4l2_edid */
 	ioc(subdev, VIDIOC_SUBDEV_G_FMT),						/*  struct v4l2_subdev_format */
 	ioc(subdev, VIDIOC_SUBDEV_G_FRAME_INTERVAL),					/*  struct v4l2_subdev_frame_interval */
 	ioc(subdev, VIDIOC_SUBDEV_G_SELECTION),						/*  struct v4l2_subdev_selection */
+	ioc(subdev, VIDIOC_SUBDEV_QUERY_DV_TIMINGS),					/*  struct v4l2_dv_timings */
 	ioc(subdev, VIDIOC_SUBDEV_S_CROP),						/*  struct v4l2_subdev_crop */
+	ioc(subdev, VIDIOC_SUBDEV_S_DV_TIMINGS),					/*  struct v4l2_dv_timings */
 	ioc(subdev, VIDIOC_SUBDEV_S_EDID),						/*  struct v4l2_edid */
 	ioc(subdev, VIDIOC_SUBDEV_S_FMT),						/*  struct v4l2_subdev_format */
 	ioc(subdev, VIDIOC_SUBDEV_S_FRAME_INTERVAL),					/*  struct v4l2_subdev_frame_interval */

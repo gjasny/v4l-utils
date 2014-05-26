@@ -1140,12 +1140,15 @@ struct v4l2_dv_timings {
 
 /** struct v4l2_enum_dv_timings - DV timings enumeration
  * @index:	enumeration index
+ * @pad:	the pad number for which to enumerate timings (used with
+ *		v4l-subdev nodes only)
  * @reserved:	must be zeroed
  * @timings:	the timings for the given index
  */
 struct v4l2_enum_dv_timings {
 	uint32_t index;
-	uint32_t reserved[3];
+	uint32_t pad;
+	uint32_t reserved[2];
 	struct v4l2_dv_timings timings;
 };
 
@@ -1183,11 +1186,14 @@ struct v4l2_bt_timings_cap {
 
 /** struct v4l2_dv_timings_cap - DV timings capabilities
  * @type:	the type of the timings (same as in struct v4l2_dv_timings)
+ * @pad:	the pad number for which to query capabilities (used with
+ *		v4l-subdev nodes only)
  * @bt:		the BT656/1120 timings capabilities
  */
 struct v4l2_dv_timings_cap {
 	uint32_t type;
-	uint32_t reserved[3];
+	uint32_t pad;
+	uint32_t reserved[2];
 	union {
 		struct v4l2_bt_timings_cap bt;
 		uint32_t raw_data[32];
