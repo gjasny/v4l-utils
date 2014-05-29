@@ -26,7 +26,6 @@
 #ifndef _DESCRIPTORS_H
 #define _DESCRIPTORS_H
 
-#include <arpa/inet.h>
 #include <unistd.h>
 #include <stdint.h>
 
