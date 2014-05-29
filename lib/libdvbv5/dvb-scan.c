@@ -741,7 +741,7 @@ struct dvb_entry *dvb_scan_add_entry(struct dvb_v5_fe_parms *parms,
 			        n, freq);
 			entry->next = new_entry;
 			new_entry->next = NULL;
-			return entry;
+			return new_entry;
 		}
 	}
 
