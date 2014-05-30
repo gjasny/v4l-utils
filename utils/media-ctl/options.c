@@ -41,7 +41,7 @@ static void usage(const char *argv0, int verbose)
 	printf("    --get-v4l2 pad	Print the active format on a given pad\n");
 	printf("-h, --help		Show verbose help and exit\n");
 	printf("-i, --interactive	Modify links interactively\n");
-	printf("-l, --links		Comma-separated list of links descriptors to setup\n");
+	printf("-l, --links links	Comma-separated list of link descriptors to setup\n");
 	printf("-p, --print-topology	Print the device topology\n");
 	printf("    --print-dot		Print the device topology as a dot graph\n");
 	printf("-r, --reset		Reset all links to inactive\n");
@@ -52,6 +52,7 @@ static void usage(const char *argv0, int verbose)
 
 	printf("\n");
 	printf("Links and formats are defined as\n");
+	printf("\tlinks           = link { ',' link } ;\n");
 	printf("\tlink            = pad '->' pad '[' flags ']' ;\n");
 	printf("\tpad             = entity ':' pad-number ;\n");
 	printf("\tentity          = entity-number | ( '\"' entity-name '\"' ) ;\n");
