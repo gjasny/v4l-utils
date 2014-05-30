@@ -24,6 +24,7 @@ AC_CONFIG_FILES([Makefile
 	utils/decode_tm6000/Makefile
 	utils/dvb/Makefile
 	utils/keytable/Makefile
+	utils/media-ctl/Makefile
 	utils/rds/Makefile
 	utils/v4l2-compliance/Makefile
 	utils/v4l2-ctl/Makefile
@@ -144,6 +145,27 @@ if test "x$alsa_pkgconfig" = "xtrue"; then
 else
    AC_MSG_WARN(ALSA library not available)
 fi
+
+AC_ARG_WITH([libudev],
+    AS_HELP_STRING([--with-libudev],
+	[Enable libudev to detect a device name]))
+
+AS_IF([test "x$with_libudev" = "xyes"],
+    [PKG_CHECK_MODULES(libudev, libudev, have_libudev=yes, have_libudev=no)],
+    [have_libudev=no])
+
+AS_IF([test "x$have_libudev" = "xyes"],
+    [
+	AC_DEFINE([HAVE_LIBUDEV], [], [Use libudev])
+	LIBUDEV_CFLAGS="$libudev_CFLAGS"
+	LIBUDEV_LIBS="$libudev_LIBS"
+	AC_SUBST(LIBUDEV_CFLAGS)
+	AC_SUBST(LIBUDEV_LIBS)
+    ],
+    [AS_IF([test "x$with_libudev" = "xyes"],
+	[AC_MSG_ERROR([libudev requested but not found])
+    ])
+])
 
 AC_SUBST([JPEG_LIBS])
 

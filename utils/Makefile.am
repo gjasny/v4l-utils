@@ -4,6 +4,7 @@ SUBDIRS = \
 	libmedia_dev \
 	decode_tm6000 \
 	keytable \
+	media-ctl \
 	v4l2-compliance \
 	v4l2-ctl \
 	v4l2-dbg \
