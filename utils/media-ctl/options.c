@@ -34,7 +34,7 @@ struct media_options media_opts = {
 
 static void usage(const char *argv0, int verbose)
 {
-	printf("%s [options] device\n", argv0);
+	printf("%s [options]\n", argv0);
 	printf("-d, --device dev	Media device name (default: %s)\n", MEDIA_DEVNAME_DEFAULT);
 	printf("-e, --entity name	Print the device name associated with the given entity\n");
 	printf("-V, --set-v4l2 v4l2	Comma-separated list of formats to setup\n");
