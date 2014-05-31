@@ -32,7 +32,7 @@ struct media_options media_opts = {
 	.devname = MEDIA_DEVNAME_DEFAULT,
 };
 
-static void usage(const char *argv0, int verbose)
+static void usage(const char *argv0)
 {
 	printf("%s [options]\n", argv0);
 	printf("-d, --device dev	Media device name (default: %s)\n", MEDIA_DEVNAME_DEFAULT);
@@ -46,10 +46,6 @@ static void usage(const char *argv0, int verbose)
 	printf("    --print-dot		Print the device topology as a dot graph\n");
 	printf("-r, --reset		Reset all links to inactive\n");
 	printf("-v, --verbose		Be verbose\n");
-
-	if (!verbose)
-		return;
-
 	printf("\n");
 	printf("Links and formats are defined as\n");
 	printf("\tlinks           = link { ',' link } ;\n");
@@ -105,7 +101,7 @@ int parse_cmdline(int argc, char **argv)
 	int opt;
 
 	if (argc == 1) {
-		usage(argv[0], 0);
+		usage(argv[0]);
 		return 1;
 	}
 
@@ -131,7 +127,7 @@ int parse_cmdline(int argc, char **argv)
 			break;
 
 		case 'h':
-			usage(argv[0], 1);
+			usage(argv[0]);
 			exit(0);
 
 		case 'i':
