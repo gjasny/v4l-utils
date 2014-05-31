@@ -1,9 +1,14 @@
-lib_LTLIBRARIES = libmediactl.la libv4l2subdev.la
+noinst_LTLIBRARIES = libmediactl.la libv4l2subdev.la
+
 libmediactl_la_SOURCES = libmediactl.c
-libmediactl_la_CFLAGS = $(LIBUDEV_CFLAGS)
-libmediactl_la_LDFLAGS = $(LIBUDEV_LIBS)
+libmediactl_la_CFLAGS = -static $(LIBUDEV_CFLAGS)
+libmediactl_la_LDFLAGS = -static $(LIBUDEV_LIBS)
+
 libv4l2subdev_la_SOURCES = libv4l2subdev.c
 libv4l2subdev_la_LIBADD = libmediactl.la
+libv4l2subdev_la_CFLAGS = -static
+libv4l2subdev_la_LDFLAGS = -static
+
 mediactl_includedir=$(includedir)/mediactl
 mediactl_include_HEADERS = mediactl.h v4l2subdev.h
 
