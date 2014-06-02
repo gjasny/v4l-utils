@@ -1,7 +1,7 @@
 /*
  * V4L2 subdev interface library
  *
- * Copyright (C) 2010-2011 Ideas on board SPRL
+ * Copyright (C) 2010-2014 Ideas on board SPRL
  *
  * Contact: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  *
