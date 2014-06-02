@@ -189,6 +189,78 @@ int v4l2_subdev_set_selection(struct media_entity *entity,
 	return 0;
 }
 
+int v4l2_subdev_get_dv_timings_caps(struct media_entity *entity,
+	struct v4l2_dv_timings_cap *caps)
+{
+	unsigned int pad = caps->pad;
+	int ret;
+
+	ret = v4l2_subdev_open(entity);
+	if (ret < 0)
+		return ret;
+
+	memset(caps, 0, sizeof(*caps));
+	caps->pad = pad;
+
+	ret = ioctl(entity->fd, VIDIOC_SUBDEV_DV_TIMINGS_CAP, caps);
+	if (ret < 0)
+		return -errno;
+
+	return 0;
+}
+
+int v4l2_subdev_query_dv_timings(struct media_entity *entity,
+	struct v4l2_dv_timings *timings)
+{
+	int ret;
+
+	ret = v4l2_subdev_open(entity);
+	if (ret < 0)
+		return ret;
+
+	memset(timings, 0, sizeof(*timings));
+
+	ret = ioctl(entity->fd, VIDIOC_SUBDEV_QUERY_DV_TIMINGS, timings);
+	if (ret < 0)
+		return -errno;
+
+	return 0;
+}
+
+int v4l2_subdev_get_dv_timings(struct media_entity *entity,
+	struct v4l2_dv_timings *timings)
+{
+	int ret;
+
+	ret = v4l2_subdev_open(entity);
+	if (ret < 0)
+		return ret;
+
+	memset(timings, 0, sizeof(*timings));
+
+	ret = ioctl(entity->fd, VIDIOC_SUBDEV_G_DV_TIMINGS, timings);
+	if (ret < 0)
+		return -errno;
+
+	return 0;
+}
+
+int v4l2_subdev_set_dv_timings(struct media_entity *entity,
+	struct v4l2_dv_timings *timings)
+{
+	int ret;
+
+	ret = v4l2_subdev_open(entity);
+	if (ret < 0)
+		return ret;
+
+	ret = ioctl(entity->fd, VIDIOC_SUBDEV_S_DV_TIMINGS, timings);
+	if (ret < 0)
+		return -errno;
+
+	return 0;
+}
+
 int v4l2_subdev_get_frame_interval(struct media_entity *entity,
 				   struct v4l2_fract *interval)
 {
