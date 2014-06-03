@@ -468,7 +468,7 @@ static int media_get_devname_sysfs(struct media_entity *entity)
 
 	sprintf(sysname, "/sys/dev/char/%u:%u", entity->info.v4l.major,
 		entity->info.v4l.minor);
-	ret = readlink(sysname, target, sizeof(target));
+	ret = readlink(sysname, target, sizeof(target) - 1);
 	if (ret < 0)
 		return -errno;
 
