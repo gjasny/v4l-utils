@@ -1,15 +1,13 @@
 --- freebsd/include/linux/dvb/video.h.orig	2012-12-05 10:28:14.000000000 +0100
 +++ freebsd/include/linux/dvb/video.h	2012-12-05 10:29:13.054783858 +0100
-@@ -24,11 +24,9 @@
- #ifndef _UAPI_DVBVIDEO_H_
- #define _UAPI_DVBVIDEO_H_
+@@ -24,9 +24,9 @@
+ #ifndef _DVBVIDEO_H_
+ #define _DVBVIDEO_H_
  
 -#include <linux/types.h>
--#ifndef __KERNEL__
 +#include <sys/types.h>
  #include <stdint.h>
  #include <time.h>
--#endif
  
  typedef enum {
  	VIDEO_FORMAT_4_3,     /* Select 4:3 format */

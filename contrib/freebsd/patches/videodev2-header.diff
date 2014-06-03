@@ -1,14 +1,14 @@
 --- freebsd/include/linux/videodev2.h.orig	2012-12-05 10:23:08.000000000 +0100
 +++ freebsd/include/linux/videodev2.h	2012-12-05 10:25:46.864570965 +0100
-@@ -57,11 +57,45 @@
- #define _UAPI__LINUX_VIDEODEV2_H
+@@ -56,10 +56,44 @@
+ #ifndef __LINUX_VIDEODEV2_H
+ #define __LINUX_VIDEODEV2_H
  
- #ifndef __KERNEL__
 +#include <stdint.h>
  #include <sys/time.h>
 +#include <sys/types.h>
 +#include <sys/ioctl.h>
-+
+ 
 +#ifndef HAVE_LINUX_INTEGER_TYPES
 +/* XXX remove when depending software has been updated */
 +#ifndef __u64
@@ -26,7 +26,7 @@
 +
 +#ifndef __s64
 +typedef int64_t __s64;
- #endif
++#endif
 +#ifndef __s32
 +typedef int32_t __s32;
 +#endif
@@ -38,8 +38,7 @@
 +#endif
 +#endif
 +
-+#else
- #include <linux/compiler.h>
++#ifdef __KERNEL__
  #include <linux/ioctl.h>
  #include <linux/types.h>
 +#endif
