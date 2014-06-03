@@ -208,8 +208,10 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	connect(m_sigMapper, SIGNAL(mapped(int)), this, SLOT(ctrlAction(int)));
 
 	if (!open(device, !rawOpen)) {
+#ifdef HAVE_ALSA
 		m_showAllAudioAct->setEnabled(false);
 		m_audioBufferAct->setEnabled(false);
+#endif
 		return;
 	}
 
