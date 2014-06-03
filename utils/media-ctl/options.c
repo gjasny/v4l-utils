@@ -122,6 +122,7 @@ int parse_cmdline(int argc, char **argv)
 		case 'f':
 			fprintf(stderr, "Warning: the -f option is deprecated "
 				"and has been replaced by -V.\n");
+			/* fall through */
 		case 'V':
 			media_opts.formats = optarg;
 			break;
