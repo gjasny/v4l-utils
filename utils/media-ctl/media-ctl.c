@@ -366,9 +366,9 @@ int main(int argc, char **argv)
 		const struct media_device_info *info = media_get_info(media);
 
 		printf("Media controller API version %u.%u.%u\n\n",
-		       (info->media_version << 16) & 0xff,
-		       (info->media_version << 8) & 0xff,
-		       (info->media_version << 0) & 0xff);
+		       (info->media_version >> 16) & 0xff,
+		       (info->media_version >> 8) & 0xff,
+		       (info->media_version >> 0) & 0xff);
 		printf("Media device information\n"
 		       "------------------------\n"
 		       "driver          %s\n"
@@ -380,9 +380,9 @@ int main(int argc, char **argv)
 		       info->driver, info->model,
 		       info->serial, info->bus_info,
 		       info->hw_revision,
-		       (info->driver_version << 16) & 0xff,
-		       (info->driver_version << 8) & 0xff,
-		       (info->driver_version << 0) & 0xff);
+		       (info->driver_version >> 16) & 0xff,
+		       (info->driver_version >> 8) & 0xff,
+		       (info->driver_version >> 0) & 0xff);
 	}
 
 	if (media_opts.entity) {
