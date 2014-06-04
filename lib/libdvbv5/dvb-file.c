@@ -380,12 +380,15 @@ int write_format_oneline(const char *fname,
 				data = entry->props[j].u.data;
 
 				if (table->prop == DTV_BANDWIDTH_HZ) {
-					if (data < ARRAY_SIZE(fe_bandwidth_name))
-						data = fe_bandwidth_name[data];
-					else
+					for (j = 0; j < ARRAY_SIZE(fe_bandwidth_name); j++) {
+						if (fe_bandwidth_name[j] == data) {
+							data = j;
+							break;
+						}
+					}
+					if (j == ARRAY_SIZE(fe_bandwidth_name))
 						data = BANDWIDTH_AUTO;
 				}
-
 				if (data >= table->size) {
 					sprintf(err_msg,
 						 "value not supported");
