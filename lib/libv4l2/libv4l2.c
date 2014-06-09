@@ -282,7 +282,7 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 		unsigned char *dest, int dest_size)
 {
 	const int max_tries = V4L2_IGNORE_FIRST_FRAME_ERRORS + 1;
-	int result, tries = max_tries;
+	int result, tries = max_tries, frame_info_gen;
 
 	/* Make sure we have the real v4l2 buffers mapped */
 	result = v4l2_map_buffers(index);
@@ -290,9 +290,12 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 		return result;
 
 	do {
+		frame_info_gen = devices[index].frame_info_generation;
+		pthread_mutex_unlock(&devices[index].stream_lock);
 		result = devices[index].dev_ops->ioctl(
 				devices[index].dev_ops_priv,
 				devices[index].fd, VIDIOC_DQBUF, buf);
+		pthread_mutex_lock(&devices[index].stream_lock);
 		if (result) {
 			if (errno != EAGAIN) {
 				int saved_err = errno;
@@ -304,6 +307,11 @@ static int v4l2_dequeue_and_convert(int index, struct v4l2_buffer *buf,
 		}
 
 		devices[index].frame_queued &= ~(1 << buf->index);
+
+		if (frame_info_gen != devices[index].frame_info_generation) {
+			errno = -EINVAL;
+			return -1;
+		}
 
 		result = v4lconvert_convert(devices[index].convert,
 				&devices[index].src_fmt, &devices[index].dest_fmt,
@@ -839,6 +847,7 @@ int v4l2_dup(int fd)
 
 static int v4l2_check_buffer_change_ok(int index)
 {
+	devices[index].frame_info_generation++;
 	v4l2_unmap_buffers(index);
 
 	/* Check if the app itself still is using the stream */
@@ -1294,9 +1303,11 @@ no_capture_request:
 		}
 
 		if (!v4l2_needs_conversion(index)) {
+			pthread_mutex_unlock(&devices[index].stream_lock);
 			result = devices[index].dev_ops->ioctl(
 					devices[index].dev_ops_priv,
 					fd, VIDIOC_DQBUF, buf);
+			pthread_mutex_lock(&devices[index].stream_lock);
 			if (result) {
 				saved_err = errno;
 				V4L2_PERROR("dequeuing buf");

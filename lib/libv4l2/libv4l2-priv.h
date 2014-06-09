@@ -92,6 +92,7 @@ struct v4l2_dev_info {
 	unsigned char *frame_pointers[V4L2_MAX_NO_FRAMES];
 	int frame_sizes[V4L2_MAX_NO_FRAMES];
 	int frame_queued; /* 1 status bit per frame */
+	int frame_info_generation;
 	/* mapping tracking of our fake (converting mmap) frame buffers */
 	unsigned char frame_map_count[V4L2_MAX_NO_FRAMES];
 	/* buffer when doing conversion and using read() for read() */
