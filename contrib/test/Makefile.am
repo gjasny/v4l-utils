@@ -23,7 +23,7 @@ pixfmt_test_CFLAGS = $(X11_CFLAGS)
 pixfmt_test_LDFLAGS = $(X11_LIBS)
 
 v4l2grab_SOURCES = v4l2grab.c
-v4l2grab_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
+v4l2grab_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la -lpthread
 
 v4l2gl_SOURCES = v4l2gl.c
 v4l2gl_LDFLAGS = $(X11_LIBS) $(GL_LIBS) $(GLU_LIBS)
