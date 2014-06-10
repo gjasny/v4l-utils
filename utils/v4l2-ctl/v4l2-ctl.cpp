@@ -799,6 +799,14 @@ static void print_event(const struct v4l2_event *ev)
 	case V4L2_EVENT_SOURCE_CHANGE:
 		printf("source_change: pad/input=%d changes: %x\n", ev->id, ev->u.src_change.changes);
 		break;
+	case V4L2_EVENT_MOTION_DET:
+		if (ev->u.motion_det.flags & V4L2_EVENT_MD_FL_HAVE_FRAME_SEQ)
+			printf("motion_det frame %d, regions 0x%x\n",
+					ev->u.motion_det.frame_sequence,
+					ev->u.motion_det.region_mask);
+		else
+			printf("motion_det regions 0x%x\n", ev->u.motion_det.region_mask);
+		break;
 	default:
 		if (ev->type >= V4L2_EVENT_PRIVATE_START)
 			printf("unknown private event (%08x)\n", ev->type);
@@ -821,6 +829,8 @@ static __u32 parse_event(const char *e, const char **name)
 		event = V4L2_EVENT_VSYNC;
 	else if (!strcmp(e, "frame_sync"))
 		event = V4L2_EVENT_FRAME_SYNC;
+	else if (!strcmp(e, "motion_det"))
+		event = V4L2_EVENT_MOTION_DET;
 	else if (!strncmp(e, "ctrl=", 5)) {
 		event = V4L2_EVENT_CTRL;
 		*name = e + 5;
