@@ -115,6 +115,7 @@ static struct option long_options[] = {
 	{"add-clip", required_argument, 0, OptAddClip},
 	{"add-bitmap", required_argument, 0, OptAddBitmap},
 	{"find-fb", no_argument, 0, OptFindFb},
+	{"subset", required_argument, 0, OptSubset},
 	{"get-standard", no_argument, 0, OptGetStandard},
 	{"set-standard", required_argument, 0, OptSetStandard},
 	{"get-detected-standard", no_argument, 0, OptQueryStandard},

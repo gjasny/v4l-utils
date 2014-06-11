@@ -50,6 +50,7 @@ enum Option {
 	OptSetOutput = 'o',
 	OptGetParm = 'P',
 	OptSetParm = 'p',
+	OptSubset = 'r',
 	OptGetStandard = 'S',
 	OptSetStandard = 's',
 	OptGetTuner = 'T',

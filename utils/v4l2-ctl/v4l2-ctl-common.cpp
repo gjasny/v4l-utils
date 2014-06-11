@@ -25,12 +25,20 @@
 #include <map>
 #include <algorithm>
 
+struct ctrl_subset {
+	unsigned offset[V4L2_CTRL_MAX_DIMS];
+	unsigned size[V4L2_CTRL_MAX_DIMS];
+};
+
 typedef std::map<unsigned, std::vector<struct v4l2_ext_control> > class2ctrls_map;
 
 typedef std::map<std::string, struct v4l2_query_ext_ctrl> ctrl_qmap;
 static ctrl_qmap ctrl_str2q;
 typedef std::map<unsigned, std::string> ctrl_idmap;
 static ctrl_idmap ctrl_id2str;
+
+typedef std::map<std::string, ctrl_subset> ctrl_subset_map;
+static ctrl_subset_map ctrl_subsets;
 
 typedef std::list<std::string> ctrl_get_list;
 static ctrl_get_list get_ctrls;
@@ -75,6 +83,9 @@ void common_usage(void)
 	       "  -l, --list-ctrls   display all controls and their values [VIDIOC_QUERYCTRL]\n"
 	       "  -L, --list-ctrls-menus\n"
 	       "		     display all controls and their menus [VIDIOC_QUERYMENU]\n"
+	       "  -r, --subset=<ctrl>[,<offset>,<size>]+\n"
+	       "                     the subset of the N-dimensional array to get/set for control <ctrl>,\n"
+	       "                     for every dimension an (<offset>, <size>) tuple is given.\n"
 #ifndef NO_LIBV4L2
 	       "  -w, --wrapper      use the libv4l2 wrapper library.\n"
 #endif
@@ -576,6 +587,57 @@ void common_control_event(const struct v4l2_event *ev)
 			ctrl->minimum, ctrl->maximum, ctrl->step, ctrl->default_value);
 }
 
+static bool parse_subset(char *optarg)
+{
+	struct ctrl_subset subset;
+	std::string ctrl_name;
+	unsigned idx = 0;
+	char *p;
+
+	memset(&subset, 0, sizeof(subset));
+	while (*optarg) {
+		p = strchr(optarg, ',');
+		if (p)
+			*p = 0;
+		if (optarg[0] == 0) {
+			fprintf(stderr, "empty string\n");
+			return true;
+		}
+		if (idx == 0) {
+			ctrl_name = optarg;
+		} else {
+			if (idx > V4L2_CTRL_MAX_DIMS * 2) {
+				fprintf(stderr, "too many dimensions\n");
+				return true;
+			}
+			if (idx & 1)
+				subset.offset[idx / 2] = strtoul(optarg, 0, 0);
+			else {
+				subset.size[idx / 2 - 1] = strtoul(optarg, 0, 0);
+				if (subset.size[idx / 2 - 1] == 0) {
+					fprintf(stderr, "<size> cannot be 0\n");
+					return true;
+				}
+			}
+		}
+		idx++;
+		if (p == NULL)
+			break;
+		optarg = p + 1;
+	}
+	if (idx == 1) {
+		fprintf(stderr, "no <offset>, <size> tuples given\n");
+		return true;
+	}
+	if ((idx & 1) == 0) {
+		fprintf(stderr, "<offset> without <size>\n");
+		return true;
+	}
+	ctrl_subsets[ctrl_name] = subset;
+
+	return false;
+}
+
 static bool parse_next_subopt(char **subs, char **value)
 {
 	static char *const subopts[] = {
@@ -628,6 +690,12 @@ void common_cmd(int ch, char *optarg)
 			}
 		}
 		break;
+	case OptSubset:
+		if (parse_subset(optarg)) {
+			common_usage();
+			exit(1);
+		}
+		break;
 	case OptSetPriority:
 		prio = (enum v4l2_priority)strtoul(optarg, 0L, 0);
 		break;
@@ -635,6 +703,50 @@ void common_cmd(int ch, char *optarg)
 		list_devices();
 		break;
 	}
+}
+
+static bool fill_subset(const struct v4l2_query_ext_ctrl &qc, ctrl_subset &subset)
+{
+	unsigned d;
+
+	if (qc.nr_of_dims == 0)
+		return false;
+
+	for (d = 0; d < qc.nr_of_dims; d++) {
+		subset.offset[d] = 0;
+		subset.size[d] = qc.dims[d];
+	}
+
+	if (ctrl_subsets.find(qc.name) != ctrl_subsets.end()) {
+		unsigned ss_dims;
+
+		subset = ctrl_subsets[qc.name];
+		for (ss_dims = 0; ss_dims < V4L2_CTRL_MAX_DIMS && subset.size[ss_dims]; ss_dims++) ;
+		if (ss_dims != qc.nr_of_dims) {
+			fprintf(stderr, "expected %d dimensions but --subset specified %d\n",
+					qc.nr_of_dims, ss_dims);
+			return true;
+		}
+		for (d = 0; d < qc.nr_of_dims; d++) {
+			if (subset.offset[d] + subset.size[d] > qc.dims[d]) {
+				fprintf(stderr, "the subset offset+size for dimension %d is out of range\n", d);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+static bool idx_in_subset(const struct v4l2_query_ext_ctrl &qc, const ctrl_subset &subset,
+			  const unsigned *divide, unsigned idx)
+{
+	for (unsigned d = 0; d < qc.nr_of_dims; d++) {
+		unsigned i = (idx / divide[d]) % qc.dims[d];
+
+		if (i < subset.offset[d] || i >= subset.offset[d] + subset.size[d])
+			return false;
+	}
+	return true;
 }
 
 void common_set(int fd)
@@ -661,23 +773,41 @@ void common_set(int fd)
 			if (qc.type == V4L2_CTRL_TYPE_INTEGER64)
 				use_ext_ctrls = true;
 			if (qc.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {
+				struct v4l2_ext_controls ctrls = { 0, 1 };
+				unsigned divide[V4L2_CTRL_MAX_DIMS] = { 0 };
+				ctrl_subset subset;
 				long long v;
-				unsigned i;
+				unsigned d, i;
 
 				use_ext_ctrls = true;
 				ctrl.size = qc.elems * qc.elem_size;
 				ctrl.ptr = malloc(ctrl.size);
 
+				ctrls.controls = &ctrl;
+				ioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls);
+
+				if (fill_subset(qc, subset))
+					return;
+
+				for (d = 0; d < qc.nr_of_dims; d++) {
+					divide[d] = qc.dims[d];
+					for (i = 0; i < d; i++)
+						divide[i] *= divide[d];
+				}
+
+
 				switch (qc.type) {
 				case V4L2_CTRL_TYPE_U8:
 					v = strtoul(iter->second.c_str(), NULL, 0);
 					for (i = 0; i < qc.elems; i++)
-						ctrl.p_u8[i] = v;
+						if (idx_in_subset(qc, subset, divide, i))
+							ctrl.p_u8[i] = v;
 					break;
 				case V4L2_CTRL_TYPE_U16:
 					v = strtoul(iter->second.c_str(), NULL, 0);
 					for (i = 0; i < qc.elems; i++)
-						ctrl.p_u16[i] = v;
+						if (idx_in_subset(qc, subset, divide, i))
+							ctrl.p_u16[i] = v;
 					break;
 				case V4L2_CTRL_TYPE_STRING:
 					strncpy(ctrl.string, iter->second.c_str(), qc.maximum);
@@ -735,32 +865,50 @@ void common_set(int fd)
 
 static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 {
+	ctrl_subset subset;
 	unsigned divide[V4L2_CTRL_MAX_DIMS] = { 0 };
+	unsigned from, to;
 	unsigned d, i;
+
+	if (fill_subset(qc, subset))
+		return;
 
 	for (d = 0; d < qc.nr_of_dims; d++) {
 		divide[d] = qc.dims[d];
 		for (i = 0; i < d; i++)
 			divide[i] *= divide[d];
 	}
+
+	from = subset.offset[qc.nr_of_dims - 1];
+	to = subset.offset[qc.nr_of_dims - 1] + subset.size[qc.nr_of_dims - 1] - 1;
+
 	for (unsigned idx = 0; idx < qc.elems / qc.dims[qc.nr_of_dims - 1]; idx++) {
+		for (d = 0; d < qc.nr_of_dims - 1; d++) {
+			unsigned i = (idx / divide[d]) % qc.dims[d];
+
+			if (i < subset.offset[d] || i >= subset.offset[d] + subset.size[d])
+				break;
+		}
+		if (d < qc.nr_of_dims - 1)
+			continue;
+
 		printf("%s", qc.name);
-		for (i = 0; i < qc.nr_of_dims - 1; i++)
-			printf("[%u]", (idx / divide[i]) % qc.dims[i]);
+		for (d = 0; d < qc.nr_of_dims - 1; d++)
+			printf("[%u]", (idx / divide[d]) % qc.dims[d]);
 		printf(": ");
 		switch (qc.type) {
 		case V4L2_CTRL_TYPE_U8:
-			for (i = 0; i < qc.dims[qc.nr_of_dims - 1]; i++) {
+			for (i = from; i <= to; i++) {
 				printf("%4d", ((__u8 *)p)[idx + i]);
-				if (i < qc.dims[qc.nr_of_dims - 1] - 1)
+				if (i < to)
 					printf(", ");
 			}
 			printf("\n");
 			break;
 		case V4L2_CTRL_TYPE_U16:
-			for (i = 0; i < qc.dims[qc.nr_of_dims - 1]; i++) {
+			for (i = from; i <= to; i++) {
 				printf("%6d", ((__u16 *)p)[idx + i]);
-				if (i < qc.dims[qc.nr_of_dims - 1] - 1)
+				if (i < to)
 					printf(", ");
 			}
 			printf("\n");
