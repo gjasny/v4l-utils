@@ -141,7 +141,7 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 		qmenu.id = qctrl.id;
 		qmenu.index = qctrl.minimum;
 		ret = doioctl(node, VIDIOC_QUERYMENU, &qmenu);
-		if (ret != EINVAL)
+		if (ret != EINVAL && ret != ENOTTY)
 			return fail("can do querymenu on a non-menu control\n");
 		return 0;
 	}
