@@ -47,7 +47,8 @@ static const __u32 buftype2cap[] = {
 	V4L2_CAP_SDR_CAPTURE,
 };
 
-static int testEnumFrameIntervals(struct node *node, __u32 pixfmt, __u32 w, __u32 h, bool valid)
+static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
+				  __u32 w, __u32 h, __u32 type)
 {
 	struct v4l2_frmivalenum frmival;
 	struct v4l2_frmival_stepwise *sw = &frmival.stepwise;
@@ -66,7 +67,7 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt, __u32 w, __u3
 		if (ret == ENOTTY)
 			return ret;
 		if (f == 0 && ret == EINVAL) {
-			if (valid)
+			if (type == V4L2_FRMSIZE_TYPE_DISCRETE)
 				warn("found framesize %dx%d, but no frame intervals\n", w, h);
 			return ENOTTY;
 		}
@@ -117,7 +118,7 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt, __u32 w, __u3
 
 		f++;
 	}
-	if (!valid)
+	if (type == 0)
 		return fail("found frame intervals for invalid size %dx%d\n", w, h);
 	info("found %d frameintervals for pixel format %08x and size %dx%d\n", f, pixfmt, w, h);
 	return 0;
@@ -157,11 +158,11 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 			if (found_stepwise)
 				return fail("mixing discrete and stepwise is not allowed\n");
 			ret = testEnumFrameIntervals(node, pixfmt,
-					frmsize.discrete.width, frmsize.discrete.height, true);
+					frmsize.discrete.width, frmsize.discrete.height, frmsize.type);
 			if (ret && ret != ENOTTY)
 				return ret;
 			ret = testEnumFrameIntervals(node, pixfmt,
-					frmsize.discrete.width + 1, frmsize.discrete.height, false);
+					frmsize.discrete.width + 1, frmsize.discrete.height, 0);
 			if (ret && ret != ENOTTY)
 				return ret;
 			break;
@@ -181,19 +182,19 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 			    sw->step_height > sw->max_height - sw->min_height)
 				return fail("step > max - min for width or height\n");
 			ret = testEnumFrameIntervals(node, pixfmt,
-					sw->min_width, sw->min_height, true);
+					sw->min_width, sw->min_height, frmsize.type);
 			if (ret && ret != ENOTTY)
 				return ret;
 			ret = testEnumFrameIntervals(node, pixfmt,
-					sw->max_width, sw->max_height, true);
+					sw->max_width, sw->max_height, frmsize.type);
 			if (ret && ret != ENOTTY)
 				return ret;
 			ret = testEnumFrameIntervals(node, pixfmt,
-					sw->min_width - 1, sw->min_height, false);
+					sw->min_width - 1, sw->min_height, 0);
 			if (ret && ret != ENOTTY)
 				return ret;
 			ret = testEnumFrameIntervals(node, pixfmt,
-					sw->max_width, sw->max_height + 1, false);
+					sw->max_width, sw->max_height + 1, 0);
 			if (ret && ret != ENOTTY)
 				return ret;
 			break;
@@ -302,7 +303,7 @@ int testEnumFormats(struct node *node)
 	ret = testEnumFrameSizes(node, 0x20202020);
 	if (ret != ENOTTY)
 		return fail("Accepted framesize for invalid format\n");
-	ret = testEnumFrameIntervals(node, 0x20202020, 640, 480, false);
+	ret = testEnumFrameIntervals(node, 0x20202020, 640, 480, 0);
 	if (ret != ENOTTY)
 		return fail("Accepted frameinterval for invalid format\n");
 	return supported ? 0 : ENOTTY;
