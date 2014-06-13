@@ -203,6 +203,12 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 				needsStd = true;
 			if (vin.capabilities & V4L2_IN_CAP_DV_TIMINGS)
 				needsTimings = true;
+
+			struct v4l2_event_subscription sub = {
+				V4L2_EVENT_SOURCE_CHANGE, vin.index
+			};
+
+			subscribe_event(sub);
 		} while (enum_input(vin));
 		addWidget(m_videoInput);
 		connect(m_videoInput, SIGNAL(activated(int)), SLOT(inputChanged(int)));
@@ -1253,6 +1259,18 @@ void GeneralTab::qryTimingsClicked()
 		s_dv_timings(timings);
 		updateTimings();
 	}
+}
+
+void GeneralTab::sourceChange(const v4l2_event &ev)
+{
+	if (!m_videoInput)
+		return;
+	if ((int)ev.id != m_videoInput->currentIndex())
+		return;
+	if (m_qryStandard && m_qryStandard->isEnabled())
+		m_qryStandard->click();
+	else if (m_qryTimings && m_qryTimings->isEnabled())
+		m_qryTimings->click();
 }
 
 void GeneralTab::updateFreq()

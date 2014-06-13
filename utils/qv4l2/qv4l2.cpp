@@ -305,6 +305,10 @@ void ApplicationWindow::ctrlEvent()
 	v4l2_event ev;
 
 	while (dqevent(ev)) {
+		if (ev.type == V4L2_EVENT_SOURCE_CHANGE) {
+			m_genTab->sourceChange(ev);
+			continue;
+		}
 		if (ev.type != V4L2_EVENT_CTRL)
 			continue;
 		m_ctrlMap[ev.id].flags = ev.u.ctrl.flags;
