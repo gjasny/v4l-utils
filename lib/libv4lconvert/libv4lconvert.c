@@ -1048,11 +1048,6 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 							   width, height);
 			break;
 		}
-		if (result == 0) {
-			V4LCONVERT_ERR("y10b conversion failed\n");
-			errno = EPIPE;
-			result = -1;
-		}
 		break;
 
 	case V4L2_PIX_FMT_RGB565:
