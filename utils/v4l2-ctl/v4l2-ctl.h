@@ -66,8 +66,8 @@ enum Option {
 	OptGetVideoOutFormat,
 	OptSetSlicedVbiOutFormat,
 	OptSetOverlayFormat,
-	//OptSetVbiFormat, TODO
-	//OptSetVbiOutFormat, TODO
+	OptSetVbiFormat,
+	OptSetVbiOutFormat,
 	OptSetSdrFormat,
 	OptSetVideoOutFormat,
 	OptTryVideoOutFormat,
@@ -75,8 +75,8 @@ enum Option {
 	OptTrySlicedVbiFormat,
 	OptTryVideoFormat,
 	OptTryOverlayFormat,
-	//OptTryVbiFormat, TODO
-	//OptTryVbiOutFormat, TODO
+	OptTryVbiFormat,
+	OptTryVbiOutFormat,
 	OptTrySdrFormat,
 	OptAll,
 	OptListStandards,
