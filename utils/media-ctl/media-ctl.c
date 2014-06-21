@@ -584,13 +584,13 @@ int main(int argc, char **argv)
 
 		ret = v4l2_subdev_query_dv_timings(pad->entity, &timings);
 		if (ret < 0) {
-			printf("Failed to query DV timings: %s\n", strerror(ret));
+			printf("Failed to query DV timings: %s\n", strerror(-ret));
 			goto out;
 		}
 
 		ret = v4l2_subdev_set_dv_timings(pad->entity, &timings);
 		if (ret < 0) {
-			printf("Failed to set DV timings: %s\n", strerror(ret));
+			printf("Failed to set DV timings: %s\n", strerror(-ret));
 			goto out;
 		}
 	}
