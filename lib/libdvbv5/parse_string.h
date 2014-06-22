@@ -17,6 +17,10 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
+#if HAVE_VISIBILITY
+#pragma GCC visibility push(hidden)
+#endif
+
 struct dvb_v5_fe_parms;
 
 void iconv_to_charset(struct dvb_v5_fe_parms *parms,
@@ -29,3 +33,7 @@ void iconv_to_charset(struct dvb_v5_fe_parms *parms,
 void parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 		  const unsigned char *src, size_t len,
 		  char *default_charset, char *output_charset);
+
+#if HAVE_VISIBILITY
+#pragma GCC visibility pop
+#endif
