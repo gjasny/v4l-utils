@@ -86,9 +86,9 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		event->descriptor = NULL;
 		event->next = NULL;
 		dvb_time(event->dvbstart, &event->start);
-		event->duration = bcd((uint32_t) event->dvbduration[0]) * 3600 +
-				  bcd((uint32_t) event->dvbduration[1]) * 60 +
-				  bcd((uint32_t) event->dvbduration[2]);
+		event->duration = dvb_bcd((uint32_t) event->dvbduration[0]) * 3600 +
+				  dvb_bcd((uint32_t) event->dvbduration[1]) * 60 +
+				  dvb_bcd((uint32_t) event->dvbduration[2]);
 
 		event->service_id = eit->header.id;
 
@@ -163,9 +163,9 @@ void dvb_time(const uint8_t data[5], struct tm *tm)
   uint16_t mjd;
 
   mjd   = *(uint16_t *) data;
-  hour  = bcd(data[2]);
-  min   = bcd(data[3]);
-  sec   = bcd(data[4]);
+  hour  = dvb_bcd(data[2]);
+  min   = dvb_bcd(data[3]);
+  sec   = dvb_bcd(data[4]);
   year  = ((mjd - 15078.2) / 365.25);
   month = ((mjd - 14956.1 - (int) (year * 365.25)) / 30.6001);
   day   = mjd - 14956 - (int) (year * 365.25) - (int) (month * 30.6001);

@@ -76,7 +76,7 @@ static void dvb_desc_default_print(struct dvb_v5_fe_parms *parms, const struct d
 {
 	if (!parms)
 		parms = dvb_fe_dummy();
-	hexdump(parms, "|           ", desc->data, desc->length);
+	dvb_hexdump(parms, "|           ", desc->data, desc->length);
 }
 
 #define TABLE_INIT(_x) (dvb_table_init_func) _x##_init
@@ -138,7 +138,7 @@ int dvb_desc_parse(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			dvb_log("%sdescriptor %s type 0x%02x, size %d",
 				dvb_descriptors[desc_type].init ? "" : "Not handled ",
 				dvb_descriptors[desc_type].name, desc_type, desc_len);
-			hexdump(parms, "content: ", ptr + 2, desc_len);
+			dvb_hexdump(parms, "content: ", ptr + 2, desc_len);
 		}
 
 		dvb_desc_init_func init = dvb_descriptors[desc_type].init;
@@ -894,9 +894,9 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	},
 	[extension_descriptor] = {
 		.name  = "extension_descriptor",
-		.init  = extension_descriptor_init,
-		.print = extension_descriptor_print,
-		.free  = extension_descriptor_free,
+		.init  = dvb_extension_descriptor_init,
+		.print = dvb_extension_descriptor_print,
+		.free  = dvb_extension_descriptor_free,
 		.size  = sizeof(struct dvb_extension_descriptor),
 	},
 
@@ -1311,7 +1311,7 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	},
 };
 
-uint32_t bcd(uint32_t bcd)
+uint32_t dvb_bcd(uint32_t bcd)
 {
 	uint32_t ret = 0, mult = 1;
 	while (bcd) {
@@ -1322,7 +1322,7 @@ uint32_t bcd(uint32_t bcd)
 	return ret;
 }
 
-int bcd_to_int(const unsigned char *bcd, int bits)
+static int bcd_to_int(const unsigned char *bcd, int bits)
 {
 	int nibble = 0;
 	int ret = 0;
@@ -1341,7 +1341,7 @@ int bcd_to_int(const unsigned char *bcd, int bits)
 	return ret;
 }
 
-void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *data, int length)
+void dvb_hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *data, int length)
 {
 	char ascii[17];
 	char hex[50];

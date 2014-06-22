@@ -58,13 +58,13 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	struct arguments *args = state->input;
 	switch (k) {
 	case 'I':
-		args->input_format = parse_format(optarg);
+		args->input_format = dvb_parse_format(optarg);
 		break;
 	case 'O':
-		args->output_format = parse_format(optarg);
+		args->output_format = dvb_parse_format(optarg);
 		break;
 	case 's':
-		args->delsys = parse_delsys(optarg);
+		args->delsys = dvb_parse_delsys(optarg);
 		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
@@ -87,8 +87,8 @@ static int convert_file(struct arguments *args)
 	}
 
 	printf("Writing file %s\n", args->output_file);
-	ret = write_file_format(args->output_file, dvb_file,
-				args->delsys, args->output_format);
+	ret = dvb_write_file_format(args->output_file, dvb_file,
+				    args->delsys, args->output_format);
 
 	return ret;
 }

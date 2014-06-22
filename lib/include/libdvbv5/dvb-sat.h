@@ -45,8 +45,8 @@ extern "C" {
 
 /* From libsat.c */
 int dvb_sat_search_lnb(const char *name);
-int print_lnb(int i);
-void print_all_lnb(void);
+int dvb_print_lnb(int i);
+void dvb_print_all_lnb(void);
 const struct dvb_sat_lnb *dvb_sat_get_lnb(int i);
 int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms);
 

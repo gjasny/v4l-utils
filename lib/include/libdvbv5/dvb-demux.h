@@ -48,7 +48,7 @@ int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
 			   unsigned char *mode,
 			   unsigned int flags);
 
-int get_pmt_pid(const char *dmxdev, int sid);
+int dvb_get_pmt_pid(const char *dmxdev, int sid);
 
 #ifdef __cplusplus
 }

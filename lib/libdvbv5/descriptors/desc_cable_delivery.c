@@ -33,8 +33,8 @@ int dvb_desc_cable_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *b
 	bswap32(cable->frequency);
 	bswap16(cable->bitfield1);
 	bswap32(cable->bitfield2);
-	cable->frequency   = bcd(cable->frequency) * 100;
-	cable->symbol_rate = bcd(cable->symbol_rate) * 100;
+	cable->frequency   = dvb_bcd(cable->frequency) * 100;
+	cable->symbol_rate = dvb_bcd(cable->symbol_rate) * 100;
 	return 0;
 }
 

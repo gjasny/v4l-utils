@@ -63,7 +63,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		frontend = atoi(arg);
 		break;
 	case 'd':
-		delsys = parse_delsys(arg);
+		delsys = dvb_parse_delsys(arg);
 		if (delsys < 0)
 			return ARGP_ERR_UNKNOWN;
 		break;

@@ -174,7 +174,7 @@ static int parse(struct arguments *args,
 		if (freq) {
 			for (entry = dvb_file->first_entry; entry != NULL;
 			entry = entry->next) {
-				retrieve_entry_prop(entry, DTV_FREQUENCY, &f);
+				dvb_retrieve_entry_prop(entry, DTV_FREQUENCY, &f);
 				if (f == freq)
 					break;
 			}
@@ -232,7 +232,7 @@ static int parse(struct arguments *args,
 	*sid = entry->service_id;
 
         /* First of all, set the delivery system */
-	retrieve_entry_prop(entry, DTV_DELIVERY_SYSTEM, &sys);
+	dvb_retrieve_entry_prop(entry, DTV_DELIVERY_SYSTEM, &sys);
 	dvb_set_compat_delivery_system(parms, sys);
 
 	/* Copy data into parms */
@@ -460,7 +460,7 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		args->timeout = strtoul(optarg, NULL, 0);
 		break;
 	case 'I':
-		args->input_format = parse_format(optarg);
+		args->input_format = dvb_parse_format(optarg);
 		break;
 	case 'o':
 		args->filename = strdup(optarg);
@@ -738,11 +738,11 @@ int main(int argc, char **argv)
 		lnb = dvb_sat_search_lnb(args.lnb_name);
 		if (lnb < 0) {
 			printf("Please select one of the LNBf's below:\n");
-			print_all_lnb();
+			dvb_print_all_lnb();
 			exit(1);
 		} else {
 			printf("Using LNBf ");
-			print_lnb(lnb);
+			dvb_print_lnb(lnb);
 		}
 	}
 
@@ -817,7 +817,7 @@ int main(int argc, char **argv)
 				sid);
 			goto err;
 		}
-		pmtpid = get_pmt_pid(args.demux_dev, sid);
+		pmtpid = dvb_get_pmt_pid(args.demux_dev, sid);
 		if (pmtpid <= 0) {
 			fprintf(stderr, "couldn't find pmt-pid for sid %04x\n",
 				sid);

@@ -72,9 +72,9 @@ struct dvb_desc {
 extern "C" {
 #endif
 
-uint32_t bcd(uint32_t bcd);
+uint32_t dvb_bcd(uint32_t bcd);
 
-void hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *buf, int len);
+void dvb_hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *buf, int len);
 
 int  dvb_desc_parse(struct dvb_v5_fe_parms *parms, const uint8_t *buf, uint16_t section_length, struct dvb_desc **head_desc);
 void dvb_desc_free (struct dvb_desc **list);

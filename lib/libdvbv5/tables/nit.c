@@ -158,7 +158,8 @@ void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *ni
 	dvb_loginfo("|_  %d transports", transports);
 }
 
-void nit_descriptor_handler(struct dvb_v5_fe_parms *parms,
+void dvb_table_nit_descriptor_handler(
+			    struct dvb_v5_fe_parms *parms,
 			    struct dvb_table_nit *nit,
 			    enum descriptors descriptor,
 			    nit_handler_callback_t *call_nit,

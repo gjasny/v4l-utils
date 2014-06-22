@@ -133,10 +133,10 @@ struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
 						unsigned other_nit,
 						unsigned timeout_multiply);
 
-int estimate_freq_shift(struct dvb_v5_fe_parms *parms);
+int dvb_estimate_freq_shift(struct dvb_v5_fe_parms *parms);
 
-int new_freq_is_needed(struct dvb_entry *entry, struct dvb_entry *last_entry,
-		       uint32_t freq, enum dvb_sat_polarization pol, int shift);
+int dvb_new_freq_is_needed(struct dvb_entry *entry, struct dvb_entry *last_entry,
+			   uint32_t freq, enum dvb_sat_polarization pol, int shift);
 
 struct dvb_entry *dvb_scan_add_entry(struct dvb_v5_fe_parms *parms,
 				     struct dvb_entry *first_entry,

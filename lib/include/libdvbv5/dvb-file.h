@@ -121,38 +121,36 @@ extern const struct parse_file channel_file_format;
 extern const struct parse_file channel_file_zap_format;
 
 /* From dvb-file.c */
-struct dvb_file *parse_format_oneline(const char *fname,
-				      uint32_t delsys,
-				      const struct parse_file *parse_file);
-int write_format_oneline(const char *fname,
-			 struct dvb_file *dvb_file,
-			 uint32_t delsys,
-			 const struct parse_file *parse_file);
+struct dvb_file *dvb_parse_format_oneline(const char *fname,
+					  uint32_t delsys,
+					  const struct parse_file *parse_file);
+int dvb_write_format_oneline(const char *fname,
+			     struct dvb_file *dvb_file,
+			     uint32_t delsys,
+			     const struct parse_file *parse_file);
 
+struct dvb_file *dvb_read_file(const char *fname);
 
+int dvb_write_file(const char *fname, struct dvb_file *dvb_file);
 
-struct dvb_file *read_dvb_file(const char *fname);
-
-int write_dvb_file(const char *fname, struct dvb_file *dvb_file);
-
-int store_entry_prop(struct dvb_entry *entry,
+int dvb_store_entry_prop(struct dvb_entry *entry,
 		     uint32_t cmd, uint32_t value);
-int retrieve_entry_prop(struct dvb_entry *entry,
+int dvb_retrieve_entry_prop(struct dvb_entry *entry,
 			uint32_t cmd, uint32_t *value);
 
-int store_dvb_channel(struct dvb_file **dvb_file,
+int dvb_store_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_v5_descriptors *dvb_desc,
 		      int get_detected, int get_nit);
-int parse_delsys(const char *name);
-enum file_formats parse_format(const char *name);
+int dvb_parse_delsys(const char *name);
+enum file_formats dvb_parse_format(const char *name);
 struct dvb_file *dvb_read_file_format(const char *fname,
 					   uint32_t delsys,
 					   enum file_formats format);
-int write_file_format(const char *fname,
-		      struct dvb_file *dvb_file,
-		      uint32_t delsys,
-		      enum file_formats format);
+int dvb_write_file_format(const char *fname,
+			  struct dvb_file *dvb_file,
+			  uint32_t delsys,
+			  enum file_formats format);
 
 #ifdef __cplusplus
 }

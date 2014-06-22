@@ -95,7 +95,7 @@ int dvb_sat_search_lnb(const char *name)
 	return -1;
 }
 
-int print_lnb(int i)
+int dvb_print_lnb(int i)
 {
 	if (i < 0 || i >= ARRAY_SIZE(lnb))
 		return -1;
@@ -122,12 +122,12 @@ int print_lnb(int i)
 	return 0;
 }
 
-void print_all_lnb(void)
+void dvb_print_all_lnb(void)
 {
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(lnb); i++) {
-		print_lnb(i);
+		dvb_print_lnb(i);
 		printf("\n");
 	}
 }

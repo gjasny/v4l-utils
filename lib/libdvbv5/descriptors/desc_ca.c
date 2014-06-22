@@ -40,7 +40,7 @@ int dvb_desc_ca_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct d
 		d->privdata = NULL;
 		d->privdata_len = 0;
 	}
-	/*hexdump(parms, "desc ca ", buf, desc->length);*/
+	/*dvb_hexdump(parms, "desc ca ", buf, desc->length);*/
 	/*dvb_desc_ca_print(parms, desc);*/
 	return 0;
 }
@@ -52,7 +52,7 @@ void dvb_desc_ca_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *des
 	dvb_loginfo("|           ca_pid            0x%04x", d->ca_pid);
 	dvb_loginfo("|           privdata length   %d", d->privdata_len);
 	if (d->privdata)
-		hexdump(parms, "|           privdata          ", d->privdata, d->privdata_len);
+		dvb_hexdump(parms, "|           privdata          ", d->privdata, d->privdata_len);
 }
 
 void dvb_desc_ca_free(struct dvb_desc *desc)

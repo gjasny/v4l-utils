@@ -89,7 +89,8 @@ ssize_t dvb_table_nit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, s
 void dvb_table_nit_free(struct dvb_table_nit *nit);
 void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *nit);
 
-void nit_descriptor_handler(struct dvb_v5_fe_parms *parms,
+void dvb_table_nit_descriptor_handler(
+			    struct dvb_v5_fe_parms *parms,
 			    struct dvb_table_nit *nit,
 			    enum descriptors descriptor,
 			    nit_handler_callback_t *call_nit,

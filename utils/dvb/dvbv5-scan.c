@@ -243,16 +243,16 @@ static int run_scan(struct arguments *args,
 		 * If the channel file has duplicated frequencies, or some
 		 * entries without any frequency at all, discard.
 		 */
-		if (retrieve_entry_prop(entry, DTV_FREQUENCY, &freq))
+		if (dvb_retrieve_entry_prop(entry, DTV_FREQUENCY, &freq))
 			continue;
 
-		shift = estimate_freq_shift(parms);
+		shift = dvb_estimate_freq_shift(parms);
 
-		if (retrieve_entry_prop(entry, DTV_POLARIZATION, &pol))
+		if (dvb_retrieve_entry_prop(entry, DTV_POLARIZATION, &pol))
 			pol = POLARIZATION_OFF;
 
-		if (!new_freq_is_needed(dvb_file->first_entry, entry,
-					freq, pol, shift))
+		if (!dvb_new_freq_is_needed(dvb_file->first_entry, entry,
+					    freq, pol, shift))
 			continue;
 
 		count++;
@@ -277,7 +277,7 @@ static int run_scan(struct arguments *args,
 		/*
 		 * Store the service entry
 		 */
-		store_dvb_channel(&dvb_file_new, parms, dvb_scan_handler,
+		dvb_store_channel(&dvb_file_new, parms, dvb_scan_handler,
 				  args->get_detected, args->get_nit);
 
 		/*
@@ -295,8 +295,8 @@ static int run_scan(struct arguments *args,
 	}
 
 	if (dvb_file_new)
-		write_file_format(args->output, dvb_file_new,
-				  parms->current_sys, args->output_format);
+		dvb_write_file_format(args->output, dvb_file_new,
+				      parms->current_sys, args->output_format);
 
 	dvb_file_free(dvb_file);
 	if (dvb_file_new)
@@ -370,10 +370,10 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		args->timeout_multiply = strtoul(optarg, NULL, 0);
 		break;
 	case 'I':
-		args->input_format = parse_format(optarg);
+		args->input_format = dvb_parse_format(optarg);
 		break;
 	case 'O':
-		args->output_format = parse_format(optarg);
+		args->output_format = dvb_parse_format(optarg);
 		break;
 	case 'o':
 		args->output = optarg;
@@ -437,11 +437,11 @@ int main(int argc, char **argv)
 		lnb = dvb_sat_search_lnb(args.lnb_name);
 		if (lnb < 0) {
 			printf("Please select one of the LNBf's below:\n");
-			print_all_lnb();
+			dvb_print_all_lnb();
 			exit(1);
 		} else {
 			printf("Using LNBf ");
-			print_lnb(lnb);
+			dvb_print_lnb(lnb);
 		}
 	}
 

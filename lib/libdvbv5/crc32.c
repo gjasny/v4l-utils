@@ -67,7 +67,7 @@ static uint32_t crctab[256] = {
   0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4
 };
 
-inline uint32_t crc32(uint8_t *data, size_t len, uint32_t crc)
+inline uint32_t dvb_crc32(uint8_t *data, size_t len, uint32_t crc)
 {
   while(len--)
     crc = (crc << 8) ^ crctab[((crc >> 24) ^ *data++) & 0xff];

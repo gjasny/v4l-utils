@@ -116,8 +116,8 @@ const struct dvb_ext_descriptor dvb_ext_descriptors[] = {
 	},
 };
 
-int extension_descriptor_init(struct dvb_v5_fe_parms *parms,
-				     const uint8_t *buf, struct dvb_desc *desc)
+int dvb_extension_descriptor_init(struct dvb_v5_fe_parms *parms,
+				  const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_extension_descriptor *ext = (void *)desc;
 	unsigned char *p = (unsigned char *)buf;
@@ -141,7 +141,7 @@ int extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 		dvb_logwarn("%sextension descriptor %s type 0x%02x, size %d",
 			dvb_ext_descriptors[desc_type].init ? "" : "Not handled ",
 			dvb_ext_descriptors[desc_type].name, desc_type, desc_len);
-		hexdump(parms, "content: ", p, desc_len);
+		dvb_hexdump(parms, "content: ", p, desc_len);
 	}
 
 	init = dvb_ext_descriptors[desc_type].init;
@@ -161,7 +161,7 @@ int extension_descriptor_init(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
-void extension_descriptor_free(struct dvb_desc *descriptor)
+void dvb_extension_descriptor_free(struct dvb_desc *descriptor)
 {
 	struct dvb_extension_descriptor *ext = (void *)descriptor;
 	uint8_t type = ext->extension_code;
@@ -175,7 +175,7 @@ void extension_descriptor_free(struct dvb_desc *descriptor)
 	free(ext->descriptor);
 }
 
-void extension_descriptor_print(struct dvb_v5_fe_parms *parms,
+void dvb_extension_descriptor_print(struct dvb_v5_fe_parms *parms,
 				const struct dvb_desc *desc)
 {
 	struct dvb_extension_descriptor *ext = (void *)desc;

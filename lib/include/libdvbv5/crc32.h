@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <unistd.h> /* size_t */
 
-uint32_t crc32(uint8_t *data, size_t datalen, uint32_t crc);
+uint32_t dvb_crc32(uint8_t *data, size_t datalen, uint32_t crc);
 
 #endif
 

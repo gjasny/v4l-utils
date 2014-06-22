@@ -125,7 +125,7 @@ int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
 	return 0;
 }
 
-int get_pmt_pid(const char *dmxdev, int sid)
+int dvb_get_pmt_pid(const char *dmxdev, int sid)
 {
 	int patfd, count;
 	int pmt_pid = 0;

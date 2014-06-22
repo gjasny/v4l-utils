@@ -32,9 +32,9 @@ int dvb_desc_sat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct 
 	bswap16(sat->orbit);
 	bswap32(sat->bitfield);
 	bswap32(sat->frequency);
-	sat->orbit = bcd(sat->orbit);
-	sat->frequency   = bcd(sat->frequency) * 10;
-	sat->symbol_rate = bcd(sat->symbol_rate) * 100;
+	sat->orbit = dvb_bcd(sat->orbit);
+	sat->frequency   = dvb_bcd(sat->frequency) * 10;
+	sat->symbol_rate = dvb_bcd(sat->symbol_rate) * 100;
 
 	return 0;
 }
