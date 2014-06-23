@@ -226,7 +226,7 @@ void CaptureWinGLEngine::changeShader()
 		glActiveTexture(GL_TEXTURE0);
 		glGenTextures(m_screenTextureCount, m_screenTexture);
 		configureTexture(0);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, m_frameWidth, m_frameHeight, 0,
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_frameWidth, m_frameHeight, 0,
 			     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, NULL);
 		checkError("RGB32 shader");
 		break;
@@ -236,7 +236,7 @@ void CaptureWinGLEngine::changeShader()
 		glActiveTexture(GL_TEXTURE0);
 		glGenTextures(m_screenTextureCount, m_screenTexture);
 		configureTexture(0);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, m_frameWidth, m_frameHeight, 0,
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_frameWidth, m_frameHeight, 0,
 			     GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
 		checkError("BGR32 shader");
 		break;
