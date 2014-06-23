@@ -17,7 +17,6 @@ EXTRA_DIST = \
 	em28xx \
 	m920x \
 	pci_traffic \
-	qv4l2-qt3 \
 	saa7134 \
 	sn9c201 \
 	tm6000 \
