@@ -82,16 +82,19 @@ sub type_req($)
 	return $s;
 }
 
+my $delay = 0;
+
 while (<>) {
 	tr/A-F/a-f/;
 
-	if (m/([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].)\s*[\<\>]+\s*(.*)/) {
-		my $reqtype = hex($1);
-		my $req = hex($2);
-		my $wvalue = hex("$4$3");
-		my $windex = hex("$6$5");
-		my $wlen = hex("$8$7");
-		my $payload = $9;
+	if (m/(.*)([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].)\s*[\<\>]+\s*(.*)/) {
+		my $prev = $1;
+		my $reqtype = hex($2);
+		my $req = hex($3);
+		my $wvalue = hex("$5$4");
+		my $windex = hex("$7$6");
+		my $wlen = hex("$9$8");
+		my $payload = $10;
 		my @bytes = split(/ /, $payload);
 		for (my $i = 0; $i < scalar(@bytes); $i++) {
 			$bytes[$i] = hex($bytes[$i]);
@@ -101,6 +104,13 @@ while (<>) {
 			$req = $req_map{$req};
 		} else {
 			$req = sprintf "0x%02x", $req;
+		}
+
+		printf "msleep(%d);\n", $delay if ($delay);
+		$delay = 0;
+
+		if (m/(IN|OUT): (\d+) ms \d+ ms/) {
+			$delay = $2 if ($2 > 1);
 		}
 
 		if ($req eq "REQUEST_I2C_READ") {
