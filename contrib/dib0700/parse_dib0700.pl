@@ -14,6 +14,8 @@
 
 use strict;
 
+my $min_delay = 10;
+
 my %req_map = (
 	0x0 => "REQUEST_SET_USB_XFER_LEN",
 	0x2 => "REQUEST_I2C_READ",
@@ -110,7 +112,7 @@ while (<>) {
 		$delay = 0;
 
 		if (m/(IN|OUT): (\d+) ms \d+ ms/) {
-			$delay = $2 if ($2 > 1);
+			$delay = $min_delay * int(($2 + $min_delay / 2) / $min_delay);
 		}
 
 		if ($req eq "REQUEST_I2C_READ") {
