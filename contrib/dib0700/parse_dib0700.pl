@@ -84,7 +84,8 @@ sub type_req($)
 
 while (<>) {
 	tr/A-F/a-f/;
-	if (m/([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].)[\<\>\s]+(.*)/) {
+
+	if (m/([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].)\s*[\<\>]+\s*(.*)/) {
 		my $reqtype = hex($1);
 		my $req = hex($2);
 		my $wvalue = hex("$4$3");
@@ -181,7 +182,7 @@ while (<>) {
 			next;
 		}
 
-		printf("%s, Req %s, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
-			type_req($reqtype), $req, $wvalue, $windex, $wlen, $payload);
+		printf("%s(0x%02x), Req %s, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
+			type_req($reqtype), $reqtype, $req, $wvalue, $windex, $wlen, $payload);
 	}
 }
