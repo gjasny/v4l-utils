@@ -14,6 +14,9 @@
 
 use strict;
 
+# Enable autoflush
+BEGIN { $| = 1 }
+
 my $min_delay = 10;
 
 my %req_map = (
