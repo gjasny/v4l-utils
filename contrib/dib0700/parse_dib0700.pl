@@ -102,24 +102,23 @@ while (<>) {
 			$req = sprintf "0x%02x", $req;
 		}
 
-		my $ok = 0;
 		if ($req eq "REQUEST_I2C_READ") {
 			my $txlen = ($wvalue >> 8) + 2;
 			my $addr = sprintf "0x%02x >> 1", $wvalue & 0xfe;
 			my $val;
 
 			if ($txlen == 2) {
-				$ok = 1;
-				printf("dib0700_i2c_read($addr); /* txlen=$txlen, $payload */\n");
+				printf("dib0700_i2c_read($addr); /* $payload */\n");
+				next;
 			} elsif ($txlen == 3) {
 				$val = $windex >> 8;
-				$ok = 1;
-				printf("dib0700_i2c_read($addr, %d); /* txlen=$txlen, $payload */\n", $val);
+				printf("dib0700_i2c_read($addr, %d); /* $payload */\n", $val);
+				next;
 			} elsif ($txlen == 4) {
 				$val = $windex;
-				printf("dib0700_i2c_read($addr, %d); /* txlen=$txlen, $payload */\n", $val);
-				$ok = 1;
-			}			
+				printf("dib0700_i2c_read($addr, %d); /* $payload */\n", $val);
+				next;
+			}
 		}
 
 		if ($req eq "REQUEST_I2C_WRITE") {
@@ -133,10 +132,10 @@ while (<>) {
 					$val = sprintf "%d", $bytes[4];
 				}
 				printf("dib0700_i2c_write($addr, $reg, $val);\n");
-				$ok = 1;
+				next;
 			}
 		}
-			
+
 		if ($req eq "REQUEST_SET_GPIO") {
 				my $gpio = $bytes[1];
 				my $v = $bytes[2];
@@ -150,13 +149,39 @@ while (<>) {
 				if (!($v & 0x3f)) {
 					$gpio = $gpio_map{$gpio} if (defined($gpio_map{$gpio}));
 					printf("dib0700_set_gpio(adap->dev, $gpio, $dir, $val);\n");
-					$ok = 1;
+					next;
 				}
 		}
 
-		if (!$ok) {
-			printf("%s, Req %s, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
-				type_req($reqtype), $req, $wvalue, $windex, $wlen, $payload);
+		if (($reqtype & 0xf0) == 0xc0) {
+			my $txlen = ($wvalue >> 8) + 2;
+			my $addr = $req;
+			my $val;
+
+			if ($txlen == 2) {
+				printf("dib0700_ctrl_rd(adap->dev, $txlen, { cmd, $addr }, &buf, $wlen); /* $payload */\n");
+				next;
+			} elsif ($txlen == 3) {
+				$val = $windex >> 8;
+				printf("dib0700_ctrl_rd(adap->dev, $txlen, { cmd, $addr, $val }, &buf, $wlen); /* $payload */\n");
+				next;
+			} elsif ($txlen == 4) {
+				$val = $windex;
+				printf("dib0700_ctrl_rd(adap->dev, $txlen, { cmd, $addr, $val }, &buf, $wlen); /* $payload */\n");
+				next;
+			}
 		}
+		if ($wvalue == 0 && $windex == 0 && (($reqtype & 0xf0) == 0x40)) {
+			my $cmd = $req;
+			for (my $i = 0; $i < scalar(@bytes); $i++) {
+				$cmd .= sprintf ", 0x%02x", $bytes[$i];
+			}
+
+			printf("dib0700_ctrl_wr(adap->dev, { $cmd }, %d);\n", $wlen + 1);
+			next;
+		}
+
+		printf("%s, Req %s, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
+			type_req($reqtype), $req, $wvalue, $windex, $wlen, $payload);
 	}
 }
