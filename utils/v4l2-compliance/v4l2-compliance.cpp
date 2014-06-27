@@ -360,10 +360,7 @@ static int testCap(struct node *node)
 	fail_on_test(node->is_vbi && (dcaps & (video_caps | radio_caps | sdr_caps)));
 	fail_on_test(node->is_sdr && (dcaps & (video_caps | radio_caps | vbi_caps)));
 	if (node->is_m2m) {
-		// This will become an error as this combination of caps
-		// is on the feature removal list.
-		if ((dcaps & input_caps) && (dcaps & output_caps))
-			warn("VIDIOC_QUERYCAP: m2m with video input and output caps\n");
+		fail_on_test((dcaps & input_caps) && (dcaps & output_caps));
 	} else {
 		if (dcaps & input_caps)
 			fail_on_test(dcaps & output_caps);
