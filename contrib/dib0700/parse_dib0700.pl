@@ -169,6 +169,17 @@ while (<>) {
 			next;
 		}
 
+		if ($req eq "REQUEST_GET_VERSION") {
+			my $hwversion  = $bytes[0] << 24 | $bytes[1] << 16 | $bytes[2] << 8 | $bytes[3];
+			my $romversion  = $bytes[4] << 24 | $bytes[5] << 16 | $bytes[6] << 8 | $bytes[7];
+			my $fw_version = $bytes[8] << 24 | $bytes[9] << 16 | $bytes[10] << 8 | $bytes[11];
+			my $fwtype = $bytes[12] << 24 | $bytes[13] << 16 | $bytes[14] << 8 | $bytes[15];
+
+			printf("dib0700_get_version(adap->dev, NULL, NULL, NULL, NULL); /* hw: 0x%x rom: 0x%0x fw version: 0x%x, fw type: 0x%x */\n",
+			       $hwversion, $romversion, $fw_version, $fwtype);
+			next;
+		}
+
 		if ($req eq "REQUEST_SET_GPIO") {
 				my $gpio = $bytes[1];
 				my $v = $bytes[2];
