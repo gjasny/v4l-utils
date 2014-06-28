@@ -142,7 +142,7 @@ protected:
 	void closeEvent(QCloseEvent *event);
 
 	/**
-	 * @brief Get the amout of space outside the video frame.
+	 * @brief Get the amount of space outside the video frame.
 	 *
 	 * The margins are that of the window that encloses the displaying
 	 * video frame. The sizes are total in both width and height.

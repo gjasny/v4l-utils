@@ -175,7 +175,7 @@ ApplicationWindow::ApplicationWindow() :
 	captureMenu->addAction(m_showAllAudioAct);
 
 	m_audioBufferAct = new QAction("Set Audio &Buffer Capacity...", this);
-	m_audioBufferAct->setStatusTip("Set audio buffer capacity in amout of ms than can be stored");
+	m_audioBufferAct->setStatusTip("Set audio buffer capacity in amount of ms than can be stored");
 	connect(m_audioBufferAct, SIGNAL(triggered()), this, SLOT(setAudioBufferSize()));
 	captureMenu->addAction(m_audioBufferAct);
 #endif
