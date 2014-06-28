@@ -4,4 +4,4 @@ v4l2_compliance_SOURCES = v4l2-compliance.cpp v4l2-test-debug.cpp v4l2-test-inpu
 	v4l2-test-codecs.cpp v4l2-compliance.h
 v4l2_compliance_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
 
-EXTRA_DIST = fixme.txt
+EXTRA_DIST = Android.mk fixme.txt

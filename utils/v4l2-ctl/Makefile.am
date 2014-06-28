@@ -11,3 +11,5 @@ v4l2_ctl_SOURCES = v4l2-ctl.cpp v4l2-ctl.h v4l2-ctl-common.cpp v4l2-ctl-tuner.cp
 	v4l2-ctl-streaming.cpp v4l2-ctl-test-patterns.cpp v4l2-ctl-sdr.cpp \
 	v4l2-ctl-edid.cpp
 v4l2_ctl_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
+
+EXTRA_DIST = Android.mk
