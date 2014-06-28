@@ -1,3 +1,485 @@
+v4l-utils-1.2.0
+---------------
+
+Alain VOLMAT (1):
+      buildsystem: Fix configure.ac --disable-v4l-utils option
+
+Andreas Weber (2):
+      v4l2-ctl-misc.cpp: bugfix display #of readbuffers
+      v4l2gl/v4l2grab: fix errno assignment in while loop
+
+André Roth (43):
+      libdvbv5: VCT bitmap fixup
+      libdvbv5: fix NIT structures
+      libdvbv5: implement dvb_fe_dummy for logging
+      libdvbv5: prefix VCT with atsc_ instead of dvb_
+      libdvbv5: fix missing includes
+      libdvbv5: cleanup dvb_nit_transport_foreach macro
+      libdvbv5: implement ATSC standard header
+      libdvbv5: implement MGT table parser
+      libdvbv5: implement ATSC EIT
+      libdvbv5: fix reading multisection tables
+      libdvbv5: service location descriptor support
+      libdvbv5: support info info log via dvb_loginfo
+      libdvbv5: fix asprintf compile warnings
+      libdvbv5: mpeg elementary stream parsers
+      libdvbv5: fix EIT parsing
+      libdvbv5: shared lib and installing headers
+      libdvbv5: remove header files from SOURCES in Makefile.am
+      libdvbv5: fix dvb_parse_descriptors and make dvb_desc_init private
+      libdvbv5: add attribute packed to structs and unions
+      libdvbv5: add parser for CAT
+      libdvbv5: add parser for ca and ca_identifier descriptors
+      libdvbv5: fix PMT parser
+      libdvbv5: cleanup printing tables and descriptors
+      libdvbv5: use DVB_DESC_HEADER macro in all descriptors
+      libdvbv5: make dvb_desc_default_init and dvb_desc_default_print private
+      libdvbv5: allow table parsers to get specific pointer to table struct
+      libdvbv5: descriptor parser return int
+      libdvbv5: remove unneeded includes
+      libdvbv5: fix lost ressource in atsc_eit
+      libdvbv5: add support for tables with multiple ts_id and section gaps
+      libdvbv5: reunite atsc_table_header and dvb_table_header
+      libdvbv5: fix asprintf compile warning in dvbv5-scan
+      libdvbv5: make crc32 public
+      libdvbv5: make dvb_table_filter_free public
+      libdvbv5: cleanup table parsers
+      libdvbv5: cleanup printing of tables and descriptors
+      libdvbv5: rename descriptor functions
+      libdvbv5: move table parsers to separate directory
+      libdvbv5: cleanup parser API
+      libdvbv5: short API description
+      libdvbv5: build dynamic libdvbv5 by default
+      libdvbv5: improve CRC size handling
+      libdvbv5: improve DVB header handling
+
+Antonio Ospite (1):
+      libv4lconvert: Fix a regression when converting from Y10B
+
+Antti Palosaari (1):
+      v4l2-ctl: add tuner support for SDR tuners
+
+Baard Eirik Winther (1):
+      qv4l2: Add cropping option to remove pillarbox
+
+Bård Eirik Winther (33):
+      qv4l2: move function ctrlEvent
+      qv4l2: add hotkeys for common operations
+      qv4l2: fix minimum size in capture win to frame size
+      qv4l2: add Capture menu
+      qv4l2: new modular capture window design
+      qv4l2: add OpenGL rendering
+      qv4l2: alter capture menu
+      qv4l2: new ALSA stream source code
+      qv4l2: fix a bug where the alsa thread never stops
+      qv4l2: add ALSA stream to qv4l2
+      qv4l2: add ALSA audio playback
+      qv4l2: fix YUY2 shader
+      qv4l2: fix black screen with opengl after capture
+      qv4l2: show frames option can be toggled during capture
+      qv4l2: add function getMargins
+      qv4l2: add video scaling for CaptureWin
+      qv4l2: add hotkey for reset scaling to frame size
+      qv4l2: add aspect ratio support
+      qv4l2: generalized opengl include guards
+      qv4l2: fix YUY2 shader
+      qv4l2: fix black screen with opengl after capture
+      qv4l2: show frames option can be toggled during capture
+      qv4l2: create function getMargins
+      qv4l2: add video scaling for CaptureWin
+      qv4l2: added resize to frame size in Capture menu
+      qv4l2: add hotkey for reset scaling to frame size
+      qv4l2: add pixel aspect ratio support for CaptureWin
+      qv4l2: change m_scaledFrame to m_scaledSize
+      qv4l2: fix missing status tips
+      qv4l2: fix program input parameters
+      qv4l2: add manpage
+      qv4l2: updated about window
+      qv4l2: fix GeneralTab layout
+
+Gregor Jasny (22):
+      Start v4l-utils 1.1.x development branch
+      libv4lconvert: Reject too short source buffer before accessing it
+      buildsystem: use subdir-objects automake option as suggested by automake
+      buildsystem: Do not specify library version for static libs
+      buildsystem: Use autoconf variable for symbol visibility flag
+      buildsystem: Use C99 by default
+      libdvbv5: Fix compiler warning about signedness
+      libv4lconvert: Add ASUS A7M to upside down table
+      libdvbv5: FIx check for available adaptation field
+      libdvbv5; Fix typo in MPEG TS print function
+      v4l2-ctl: Do not leak framebuffer handle in error paths
+      dvbv5-zap: Close open file descriptor in error path
+      dvbv5-zap: Always initialize status variable
+      libv4lconvert: Error out if source or destination pointers are null
+      libv4lconvert: Gracefully handle unknown SE401 destination formats
+      libdvbv5: Distribute internal header, too
+      mediactl: Distribute internal header, too
+      buildsystem: Distribute Android.mk files
+      v4l2-compliance: Distribute internal header, too
+      qv4l2: Distribute manpage
+      libdvbv5: Do not install libdvbv5 by default
+      Prepare for 1.2.0 release
+
+Hans Verkuil (130):
+      qv4l2: fix a segfault for native 32 bpp formats
+      Revert "qv4l2: add aspect ratio support"
+      Revert "qv4l2: add hotkey for reset scaling to frame size"
+      Revert "qv4l2: add video scaling for CaptureWin"
+      Revert "qv4l2: add function getMargins"
+      Revert "qv4l2: show frames option can be toggled during capture"
+      Revert "qv4l2: fix black screen with opengl after capture"
+      Revert "qv4l2: fix YUY2 shader"
+      qv4l2: add cropping to CaptureWin and Qt render
+      qv4l2: call setFrame before resize to get correct frame size calculation
+      rds-ctl: fix segfault in list_devices()
+      v4l2-ctl: fix '--set-dv-bt-timings query' option.
+      v4l2-ctl: properly close filehandles on error
+      v4l-utils: sync with latest kernel.
+      v4l2-ctl: set b.num_planes to 1 for single plane output formats.
+      qv4l2: crop: take pixel aspect ratio into account.
+      v4l2-compliance: check for invalid m2m + overlay caps
+      v4l2-compliance: check that streaming will fail for overlays
+      v4l2-ctl: use libv4l2 wrapper for mmap as well.
+      qv4l2: fix broken VBI support
+      v4l-utils: run sync-with-kernel, add ioctl32 tests for v4l2-subdev.h
+      v4l2-ctl: errors during streaming setup were ignored
+      libv4l2rds: update the list of AFs if the number of AFs changes
+      libv4l2rds: rename V4L2_RDS_FLAG_STATIC_PTY to _DYNAMIC_PTY
+      rds-ctl: add support for dynamic/static PTY
+      v4l2-ctl: --all should also show multiplanar formats.
+      v4l2-compliance: add bytesperline sanity check for multiplanar formats.
+      v4l2-compliance: add streaming tests
+      v4l2-compliance: fix broken test for V4L2_FRMIVAL_TYPE_CONTINUOUS
+      v4l2-ctl: add support for fields
+      v4l2-compliance: fix read() test and reopen after read/write
+      v4l2-ctl: automatically detect single/multiplanar buffer type.
+      v4l2-compliance: test streaming with bogus v4l2_buffer values.
+      v4l2-compliance: check if USERPTR is actually supported.
+      v4l2-compliance: restore the initial formats after testing S_FMT
+      v4l2-compliance: add EXPBUF and DMABUF streaming tests.
+      v4l2-compliance: test for invalid dmabuf file descriptors.
+      qv4l2: add combobox to select the field format.
+      v4l2-compliance: add tests for multiplanar capture.
+      v4l2-compliance: fix data_offset related tests
+      v4l2-ctl: fix regression when setting vidcap format
+      v4l2-compliance: move streaming setup code to main source.
+      v4l2-compliance: move functions around.
+      v4l2-compliance: Update fixme.txt
+      v4l2-compliance: fix BUF_TYPE vs CAP mixup.
+      v4l2-compliance: obtain expbuf caps and fix radio/vbi bug
+      v4l2-compliance: now support all formats in the streaming tests.
+      v4l2-ctl: is_mplane was never set.
+      v4l2-compliance: add new mmap tests.
+      v4l-utils: fix optional args for short opts
+      v4l2-ctl: set timestamp for output buffers.
+      v4l2-ctl: add streaming between two video devices using dmabuf
+      v4l2-ctl: the colorspace can now be set for outputs.
+      v4l2-ctl: improve the overlay support
+      v4l2-compliance: add M2M streaming support
+      v4l2-compliance: fill output buffers.
+      v4l2-compliance: fix check for correct return code for STREAMON.
+      v4l2-compliance: reopen node after each streaming test.
+      v4l2-compliance: change one warn to info.
+      v4l2-compliance: lower default framecount to 60.
+      v4l2-compliance: bypass libv4l2 for expbuf handling.
+      v4l2-compliance: improve clip checking
+      v4l2-compliance: add tests for output buffer error checking
+      v4l2-ctl: skip captured buffers with flag V4L2_BUF_FLAG_ERROR
+      qv4l2: ignore buffers with flag V4L2_BUF_FLAG_ERROR.
+      sync-with-kernel should also copy fb.h
+      v4l-utils: ran sync-with-kernel which added the fb.h header.
+      qv4l2: two field related fixes
+      qv4l2: support top/bottom/alternate field settings.
+      qv4l2: add check if the shader function is available.
+      v4l2-compliance: check for presence of a tuner/modulator
+      v4l2-compliance: improve format matching code.
+      qv4l2: initialize comboboxes with sensible initial sizes.
+      qv4l2: QUERYSTD returns STD_UNKNOWN if there is no standard
+      qv4l2: fix frequency handling
+      qv4l2: disable what shouldn't be touched while streaming.
+      v4l2-compliance: add tests for queuing operations with invalid indices.
+      v4l2-compliance: more nasty evil stream I/O checks
+      qv4l2: fix incorrect call to s_fmt when disabling width/height
+      qv4l2: fix incorrect handling of fields
+      v4l-utils: sync with latest kernel headers.
+      v4l2-ctl: add support for SDR FMT
+      v4l2-ctl: implement list SDR buffers command
+      v4l2-ctl: add timestamp source support.
+      v4l2-compliance: add timestamp source tests.
+      v4l2-ctl: add missing v4l2-ctl-sdr.cpp file.
+      v4l2-ctl: support SDR capture streaming.
+      v4l2-compliance: add SDR compliance tests.
+      v4l2-compliance: add 1HZ support when setting the frequency.
+      qv4l2: add SDR support.
+      qv4l2: use QDoubleSpinBox for frequency inputs
+      v4l2-compliance: support menu controls with more than 32 items
+      v4l2-ctl/compliance: use the correct mmap/munmap functions.
+      v4l2-ctl: add support for custom bytesperline values.
+      qv4l2: increase max width/height to 4K resolution.
+      v4l2-ctl: fix printing of buffer flags
+      v4l-utils: sync to latest kernel headers
+      v4l2-ctl: add --clear-edid option.
+      v4l2-ctl: rename old v4l2_subdev_edid and VIDIOC_SUBDEV_G/S_EDID
+      v4l2-compliance: add test setting all enumerated timings.
+      v4l2-compliance: add G/S_EDID tests.
+      libv4lconvert: remove broken ALTERNATE handling
+      v4l2-compliance: add helper headers
+      v4l2-compliance: use the new cv4l-helpers.h header.
+      v4l2-compliance: m2m devices should have only one input and output
+      v4l2-compliance: test control/format/codec ioctls for all inputs/outputs
+      qv4l2: add support for V4L2_PIX_FMT_NV16M/61M
+      v4l2-compliance: fix function pointer prototype.
+      v4l2-compliance: add missing 'class' keyword after 'friend'
+      v4l2-compliance: fix 32-bit compilation for v4l_fd_init()
+      qv4l2: only set m_isRadio if m_isSDR is true.
+      qv4l2: fix modulator frequency bugs
+      libv4lconvert: fix a v4l2-compliance error
+      v4l2-compliance: don't do the global format test when using libv4l2.
+      sync-with-kernel: update to latest kernel headers.
+      libdvbv5: fix compile error
+      v4l2-ctl: add support V4L2_EVENT_SOURCE_CHANGE
+      libdvbv5: generate the correct include in dvb-v5.c
+      Synced with latest kernel.
+      Add missing v4l2-mediabus.h
+      Synced with latest kernel
+      qv4l2: fix segmentation fault when compiled without ALSA support.
+      v4l2-compliance: fix broken querymenu check.
+      qv4l2: add support for the V4L2_EVENT_SOURCE_CHANGE event.
+      v4l2-compliance: don't warn about missing frameintervals
+      v4l2-ctl: add support to try/set raw VBI formats
+      v4lgrab/vbi-test: remove these utilities
+      qv4l2-qt3: remove utility
+      qv4l2: fix opengl support for RGB32/BGR32.
+      v4l2-compliance: M2M cap + input or output caps should be an error.
+
+Hans de Goede (6):
+      libv4lcontrol: Check control_flags before doing wildcard maching on upside_down
+      libv4lcontrol: Add Asus F3Sc with 04f2:b012 cam as upside down false positive
+      libv4l2: decomress-helper: close fds then wait for helper to exit
+      rc_keymaps: Add a keymap for the remote shipped with allwinner ba10 tv boxes
+      rc_keymaps: Add a keymap for the remote shipped with allwinner i12-a20 tv boxes
+      rc_keymaps: Add keymap for the remote shipped with the Wobo i5 tv box
+
+Hans-Christian Egtvedt (8):
+      v4l2-ctl: remove unnecessary inclusion of libv4l2.h
+      v4l2-compliance/ctl: drop libv4l2 dependency if NO_LIBV4L2 is defined
+      Add static configuration file for Android builds
+      v4l2-ctl/dbg: include android-config.h header file if ANDROID is set
+      v4l2-compliance: add Android.mk makefile
+      v4l2-ctl: add Android.mk makefile
+      v4l2-dbg: add Android.mk makefile
+      INSTALL: add cross compile and install procedures for Android
+
+Lad, Prabhakar (2):
+      libv4l: Update the README name for libv4l
+      libv4l: Update the link pointing the patch for porting the application to libv4l2
+
+Laurent Pinchart (17):
+      Import the media-ctl utility and libraries
+      media-ctl: Rename source files
+      media-ctl: Remove the obsolete device argument from the help text
+      media-ctl: Document the --links option argument
+      media-ctl: Always print the full help message
+      media-ctl: Don't install libmediactl and libv4l2subdev
+      media-ctl: Update copyright years
+      media-ctl: Fix off-by-one buffer overflow with readlink
+      media-ctl: Fix media device version printing
+      media-ctl: Add fall through comment to fix Coverity warning
+      media-ctl: libv4l2subdev: Add DV timings support
+      media-ctl: Move flags printing code to a new print_flags function
+      media-ctl: Add DV timings support
+      Update sync-with-kernel to use installed kernel headers
+      wip
+      media-ctl: Pass a positive error value to strerror()
+      Revert "wip"
+
+Martin Bugge (1):
+      v4l2-ctl: add EDID get and set options
+
+Mauro Carvalho Chehab (166):
+      dvbv5-scan: Allow using separate adapter for FE and demux
+      libdvbv5: add descriptor parser for ATSC TVCT/CVCT tables
+      libdvbv5: fix VCT parsing
+      libdvbv5: Add ATSC specific descriptors
+      libdvbv5: add parser for ATSC service location
+      libdvbv5: Add support for additional descriptors at VCT table
+      libdvbv5: Add table ID of extra NIT/SDT tables
+      libdvbv5/dvb-scan: Modify to use the newer TS tables parser
+      libdvbv5: move DVB scan handler code to a separate file
+      libdvbv5: move handler code to a separate file
+      libdvbv5: move all tables structs to the handler data
+      libdvbv5: fixup parsing of PMT tables
+      libdvbv5: Add a parser for extension descriptors
+      libdvbv5/dvb-scan: handle allocation errors
+      libdvbv5/dvb-scan: be more verbose in debug mode
+      libdvbv5/dvb-scan: Fix a series of checks at buffer handling
+      libdvbv5/parse_string: don't free twice
+      libdvbv5: better handle memory errors
+      libdvbv5/descriptors: print descriptor number in hexadecimal
+      descriptors/nit: byte struct should be packed
+      libdvbv5/descriptors: Make easier to read/edit the descriptors table
+      libdvbv5: add support for ISDBT terrestrial system descriptor
+      libdvbv5: add parser for TS information descriptor
+      libdvbv5: Add descriptors for virtual channel number
+      libdvbv5: Add support for partial reception
+      libdvbv5: add suport for DVB-T2 delivery descriptor
+      libdvbv5: avoid playing with memory
+      libdvbv5/dvb-scan-table-handler:free the new table descriptors
+      libdvbv5: Add some missing code to free data
+      libdvbv5: Better handle program data
+      libdvbv5/dvb-fe: make valgrind happy
+      libdvbv5/descriptors: descriptors data should always be freed
+      libdvbv5/dvb-scan: fix memory leak
+      libdvbv5/dvb-scan-table-handler: remove free of unallocated structs
+      libdvbv5: produce dvb data from the new structures
+      libdvbv5/dvb-file: use the new descriptors for virtual channel
+      libdvbv5/dvb-file: fix allocation of dvb_file
+      libdvbv5/dvb-file: fix parameters for dvb_vchannel()
+      Fix desc_frequency_list descriptor
+      libdvbv5: add support for ATSC VCT table parsing
+      libdvbv5: On ATSC, only try to get SDT if VCT is not found
+      libdvbv5: don't leak memory on ATSC service location
+      dvb-fe: don't cause memory leak on open errors
+      dvbv5-scan: release resources on errors
+      libdvbv5/dvb-file: Allow using SDT for ATSC
+      libdvbv5/dvb-scan: avoid memory leak on table read timeout
+      dvb/dvbv5-zap: Fix help message
+      libdvbv5/dvb-scan: require PAT also for ATSC
+      libdvbv5/dvb-file: Fix the logic for program found check
+      libdvbv5/descriptors: Fix error handling routine
+      libdvbv5/descriptors: Fix extension descriptor handling
+      libdvbv5/descriptors: don't leak memory on error
+      libdvbv5/dvb-file: Don't leave memory leaks on channel store failure
+      libdvbv5: avoid nit to read out of the buffer
+      libdvbv5: be sure to not go past buffer on PAT parsing
+      libdvbv5: add multisection support for PAT table
+      libdvbv5: fix debug msg for Network PID
+      libdvbv5: don't cause crash if NIT is missing on fe-file.c
+      libdvbv5: Add missing dvb_dmx_stop() on error handling
+      libdvbv5: be sure to not go past buffer on PMT parsing
+      libdvbv5: be sure to not go past buffer on SDT parsing
+      libdvbv5: be sure to not go past buffer on VCT parsing
+      libdvbv5: shut up a few compilation warnings
+      libdvbv5: improve debug messages
+      libdvbv5/dvb-file: describe the service type on the logs
+      dvbv5-scan: move scanning code into dvb_scan_transponder()
+      libdvbv5: Re-add NIT transponders addition
+      libdvbv5: Re-add parser for ISDB-T NIT transponders addition
+      libdvbv5: Re-add parser for ISDB-T NIT transponders addition
+      libdvbv5: add support for DVB-S/S2 at NIT parser
+      libdvbv5: add support for DVB-T2 at NIT parser
+      libdvbv5: remove the remaining bits from the NIT parsers
+      libdvbv5: better implement the NIT parser
+      libdvbv5: properly handle ISDB-T partial reception
+      libdvbv5: get rid of dvb-scan-table-handler.[ch]
+      libdvbv5: handle NIT descriptors when verbose is not enabled
+      libdvbv5: Improve descriptor error logs
+      libdvbv5: Fix the size of the LCN descriptor
+      libdvbv5: some error handling improvements on dvb-file
+      libdvbv5/descriptors.c: fix two warnings
+      dvbv5-zap: allow using transponder frequency while in monitor mode
+      dvbv5-zap: make Valgrind happy
+      libdvbv5: clear data before setting a dmx filter
+      libdvbv5/dvb-demux: fix CodingStyle
+      dvbv5-zap: handle timeout also while in monitor mode
+      dvbv5-zap: exit nicely on SIGTERM/SIGINT
+      dvbv5-scan: handle SIGTERM/SIGINT nicely
+      dvbv5-zap: only handle SIGALRM if need
+      libdvbv5: fix extension descriptor handler
+      libdvbv5: fix T2 delivery descriptor handler
+      libdvbv5: fix dvb-scan handler for T2 descriptor
+      libdvbv5: fix terrestrial delivery constellation table
+      libdvbv5: change log level for the two nit handler messages
+      libdvbv5/dvb-scan: Remove dead code and add a check after realloc()
+      libdvbv5: don't use realloc() inside pat.c
+      dvbv5-scan: fix detection of duplicated freqs at the input file
+      libdvbv5: fix error condition on ATSC service location descriptor
+      libdvbv5: fix error condition on ISDBT delivery descriptor
+      libdvbv5: Fix other error conditions for out of memory
+      dvb5-zap: Better handle the MPEG TS header
+      libdvbv5/dvb-scan: all tables should have an specified size
+      libdvbv5: pack NIT table
+      libdvbv5: fix other error conditions for out of memory
+      libdvbv5: fix some out-of-bound acesses on hexdump()
+      libdvbv5: Simplify PAT handling
+      libdvbv5: simplify NIT table parser
+      libdvbv5: cleanup PAT table parser
+      libdvbv5: simplify PMT table parser
+      libdvbv5: simplify SDT table parser
+      libdvbv5: simplify VCT table parser
+      dvb/README: Remove some obsolete data
+      dvbv5-zap: fix all-pids record mode
+      libdvbv5: fix memory leak at ISDB partial reception handler
+      libdvbv5: Fix memory leak at TS info handler
+      dvb-fe: be a little less verbose with verbosity level 1
+      dvbv5-zap: on all pids mode, we can use the frequency
+      dvbv5-zap: fix frontend status handling
+      dvbv5-zap: allow using a frequency for a channel on exit after tuning
+      libdvbv5: Fix a warning at isdb_desc_partial_reception_free
+      libdvbv5: fix retrieve parameters for ISDB-T
+      libdvbv5/dvb-fe: Fall back to v3 if needed
+      libdvbv5: Only discard the services not found
+      dvb-fe: fix using a DVB-T file for ISDB-T
+      dvb: simplify the logic that sets a (compat) DTV delivery system
+      dvb-scan: remove ISDB-T hack from it
+      libdvbv5: fix get_frontend logic
+      Replace my email address with the new one
+      libdvbv5: move store/retrieve functions upper
+      libdvbv5: better handle ATSC/Annex B
+      dvb-scan: fix a print message
+      descriptors: be sure to not read past the buffer
+      vct: avoid read descriptors past the buffer
+      dvb-demux: add code for DVB section filter
+      dvb: Fix VCT handling
+      dvb-scan: don't handle NIT table by default on ATSC
+      dvb-fe: Add support for setting the LNA before tuning
+      dvb: add support for LNA setting at scan and zap
+      dvb-fe: Use a separate call to change LNA settings
+      Add a parser for drxj
+      Revert "dvb-scan: don't handle NIT table by default on ATSC"
+      libdvbv5: better document some MPEG TS fields
+      libdvbv5: reimplement the logic that gets a full section
+      dvbv5-zap: only start audio filtering if audio PID > 0
+      libdvbv5: Frequency is unsigned. use %u to print it
+      libdvbv5: fix ISDB-T frequency calculus on 32 bits machines
+      libdvbv5: move ISDB-T frq conversion to the descriptors code
+      libdvbv5: fix the area code size on ISDB-T
+      dvbv5-zap: fix usage of --record without --output
+      dvbv5-zap: Make dvbv5 as the default format
+      dvbv5-zap: better implement the --record flag
+      dvbv5-zap: only open the DVR interface if outputing
+      dvb-zap: fix --search argument
+      libdvbv5: Change license to LGPL v2.1
+      libdvbv5: Remove two warnings on 32 bits compilation
+      Revert "libdvbv5: Change license to LGPL v2.1"
+      libdvbv5: don't override a parameter when setting lna
+      libdvbv5: Fix the speedup scan condition
+      dvb-file: Fix bandwidth handling at online write function
+      contrib: add a parser for dib0700
+      parse_dib0700.pl: parse the remaining messages on dib0700
+      parse_dib0700.pl: improve parser
+      parse_dib0700.pl: add support to identify delays
+      parse_dib0700.pl: Make the delays multiple of 10ms
+      parse_dib0700.pl: autoflush writes
+      parse_dib0700.pl: Parse REQUEST_SET_I2C_PARAM
+      parse_dib0700.pl: parse REQUEST_GET_VERSION
+
+Ricardo Ribalda Delgado (2):
+      libv4lconvert: Support for Y16 pixel format
+      libv4lconvert: Support for RGB32 and BGR32 format
+
+Rob Barker (1):
+      libdvbv5: Find other TS in NIT pointer fix
+
+Stefan Ringel (1):
+      v4l-utils: bugfix memory chunk
+
+Thiago Santos (1):
+      libv4l2: release the lock before doing a DQBUF
+
+
+
 v4l-utils-1.0.0
 ---------------
 
