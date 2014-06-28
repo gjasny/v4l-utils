@@ -60,7 +60,9 @@ libdvbv5_la_SOURCES = \
 	dvb-legacy-channel-format.c \
 	dvb-zap-format.c \
 	dvb-v5.c	 \
+	dvb-v5.h	 \
 	parse_string.c	 \
+	parse_string.h	 \
 	dvb-demux.c	 \
 	dvb-fe.c	 \
 	dvb-log.c	 \

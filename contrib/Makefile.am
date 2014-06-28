@@ -14,6 +14,7 @@ EXTRA_DIST = \
 	az6007 \
 	cx231xx \
 	cx25821 \
+	dib0700 \
 	em28xx \
 	m920x \
 	pci_traffic \
