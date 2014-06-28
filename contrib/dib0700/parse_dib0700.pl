@@ -152,6 +152,23 @@ while (<>) {
 			}
 		}
 
+		if ($req eq "REQUEST_SET_I2C_PARAM") {
+			my $divider1 = $bytes[2] << 8 | $bytes[3];
+			my $divider2 = $bytes[4] << 8 | $bytes[5];
+			my $divider3 = $bytes[6] << 8 | $bytes[7];
+
+			my $xclk1 = 30000/$divider1;
+			my $xclk2 = 72000/$divider2;
+			my $xclk3 = 72000/$divider3;
+
+			if ($xclk1 == $xclk2 && $xclk2 == $xclk3) {
+				printf("dib0700_set_i2c_speed(adap->dev, $xclk1 /* kHz */);\n");
+				next;
+			}
+			printf("dib0700_set_i2c_speed: $divider1 ($xclk1 kHz), $divider2 ($xclk2 kHz), $divider3 ($xclk3 kHz)\n");
+			next;
+		}
+
 		if ($req eq "REQUEST_SET_GPIO") {
 				my $gpio = $bytes[1];
 				my $v = $bytes[2];
