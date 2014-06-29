@@ -1,0 +1,13 @@
+Index: freebsd/include/linux/v4l2-common.h
+===================================================================
+--- freebsd.orig/include/linux/v4l2-common.h
++++ freebsd/include/linux/v4l2-common.h
+@@ -29,7 +29,7 @@
+ #ifndef __V4L2_COMMON__
+ #define __V4L2_COMMON__
+ 
+-#include <linux/types.h>
++#include <sys/types.h>
+ 
+ /*
+  *
