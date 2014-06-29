@@ -29,7 +29,7 @@
 #ifndef __V4L2_COMMON__
 #define __V4L2_COMMON__
 
-#include <linux/types.h>
+#include <sys/types.h>
 
 /*
  *
@@ -71,11 +71,11 @@
 #define V4L2_SUBDEV_SEL_FLAG_KEEP_CONFIG V4L2_SEL_FLAG_KEEP_CONFIG
 
 struct v4l2_edid {
-	__u32 pad;
-	__u32 start_block;
-	__u32 blocks;
-	__u32 reserved[5];
-	__u8  *edid;
+	uint32_t pad;
+	uint32_t start_block;
+	uint32_t blocks;
+	uint32_t reserved[5];
+	uint8_t  *edid;
 };
 
 #endif /* __V4L2_COMMON__ */

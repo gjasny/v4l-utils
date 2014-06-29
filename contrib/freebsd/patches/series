@@ -2,10 +2,4 @@ input-header.diff
 uinput-header.diff
 ivtv-header.diff
 videodev2-header.diff
-dvb-audio-header.diff
-dvb-dmx-header.diff
-dvb-frontend-header.diff
-dvb-net-header.diff
-dvb-osd-header.diff
-dvb-video-header.diff
-dvb-video-timestamp.diff
+v4l2-common-header.diff

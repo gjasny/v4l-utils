@@ -271,7 +271,7 @@ AC_ARG_ENABLE(qv4l2,
 
 AM_CONDITIONAL([WITH_LIBDVBV5],     [test x$enable_libdvbv5  = xyes])
 AM_CONDITIONAL([WITH_LIBV4L],       [test x$enable_libv4l    != xno])
-AM_CONDITIONAL([WITH_V4LUTILS],	    [test x$enable_v4l_utils != xno])
+AM_CONDITIONAL([WITH_V4LUTILS],	    [test x$enable_v4l_utils != xno -a x$linux_os = xyes])
 AM_CONDITIONAL([WITH_QV4L2],	    [test ${qt_pkgconfig}  = true -a x$enable_qv4l2 != xno])
 AM_CONDITIONAL([WITH_V4L_PLUGINS],  [test x$enable_libv4l != xno -a x$enable_shared != xno])
 AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$enable_libv4l != xno -a x$enable_shared != xno])
