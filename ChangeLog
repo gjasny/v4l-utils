@@ -1,3 +1,12 @@
+v4l-utils-1.2.1
+---------------
+
+Gregor Jasny (2):
+      qv4l2: Fix typo
+      Fix kFreeBSD build
+
+
+
 v4l-utils-1.2.0
 ---------------
 
