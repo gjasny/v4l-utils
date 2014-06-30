@@ -42,6 +42,11 @@ CaptureWin::CaptureWin() :
 	connect(m_hotkeyClose, SIGNAL(activated()), this, SLOT(close()));
 	m_hotkeyScaleReset = new QShortcut(Qt::CTRL+Qt::Key_F, this);
 	connect(m_hotkeyScaleReset, SIGNAL(activated()), this, SLOT(resetSize()));
+	m_frameInfo.format      =  0;
+	m_frameInfo.frameHeight =  0;
+	m_frameInfo.frameWidth  =  0;
+	m_frameInfo.planeData[0] = NULL;
+	m_frameInfo.planeData[1] = NULL;
 }
 
 CaptureWin::~CaptureWin()
@@ -71,6 +76,7 @@ void CaptureWin::resetSize()
 	if (isMaximized())
 		showNormal();
 
+        // Force resize even if no size change
 	int w = m_curWidth;
 	int h = m_curHeight;
 	m_curWidth = -1;

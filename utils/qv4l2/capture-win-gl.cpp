@@ -55,10 +55,22 @@ void CaptureWinGL::resizeEvent(QResizeEvent *event)
 void CaptureWinGL::setFrame(int width, int height, __u32 format,
 		unsigned char *data, unsigned char *data2, const QString &info)
 {
+        // Set (TODO: move to capture-win)
+        m_frameInfo.frameHeight = height;
+        m_frameInfo.frameWidth  = width;
+        m_frameInfo.format      = format;
+        m_frameInfo.planeData[0] = data;
+        m_frameInfo.planeData[1] = data2;
+        m_frameInfo.info        = info;
+
+	// Get/copy (TODO: remove CaptureWinGLEngine and use direct or use pointer)
 #ifdef HAVE_QTGL
-	m_videoSurface.setFrame(width, height, format, data, data2);
+	m_videoSurface.setFrame(m_frameInfo.frameWidth, m_frameInfo.frameHeight,
+				m_frameInfo.format,
+				m_frameInfo.planeData[0],
+				m_frameInfo.planeData[1]);
 #endif
-	m_information.setText(info);
+	m_information.setText(m_frameInfo.info);
 }
 
 bool CaptureWinGL::hasNativeFormat(__u32 format)

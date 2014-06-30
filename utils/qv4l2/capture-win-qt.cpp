@@ -72,25 +72,34 @@ void CaptureWinQt::resizeEvent(QResizeEvent *event)
 void CaptureWinQt::setFrame(int width, int height, __u32 format,
 		unsigned char *data, unsigned char *data2, const QString &info)
 {
-	m_data = data;
+        // Set (TODO: move to capture-win)
+        m_frameInfo.frameHeight = height;
+        m_frameInfo.frameWidth  = width;
+        m_frameInfo.format      = format;
+        m_frameInfo.planeData[0] = data;
+        m_frameInfo.planeData[1] = data2;
+        m_frameInfo.info        = info;
+
+	// Get/copy (TODO: use direct?)
+	m_data = m_frameInfo.planeData[0];
 
 	QImage::Format dstFmt;
-	m_supportedFormat = findNativeFormat(format, dstFmt);
+	m_supportedFormat = findNativeFormat(m_frameInfo.format, dstFmt);
 	if (!m_supportedFormat)
 		dstFmt = QImage::Format_RGB888;
 
-	if (m_frame->width() != width
-	    || m_frame->height() != height
+	if (m_frame->width() != m_frameInfo.frameWidth
+	    || m_frame->height() != m_frameInfo.frameHeight
 	    || m_frame->format() != dstFmt) {
 		delete m_frame;
-		m_frame = new QImage(width, height, dstFmt);
+		m_frame = new QImage(m_frameInfo.frameWidth, m_frameInfo.frameHeight, dstFmt);
 		// Force a recalculation by setting this to 0.
 		m_crop.bytes = 0;
 
 		resizeScaleCrop();
 	}
 
-	m_information.setText(info);
+	m_information.setText(m_frameInfo.info);
 	paintFrame();
 }
 

@@ -39,6 +39,14 @@ enum CropMethod {
 	QV4L2_CROP_P43,
 };
 
+struct frameInfoStruct {
+        __u32 format;
+	int   frameHeight;
+	int   frameWidth;
+        unsigned char *planeData[2];
+        QString info;
+};
+
 class CaptureWin : public QWidget
 {
 	Q_OBJECT
@@ -169,6 +177,13 @@ protected:
 	 * @note This must be set in the derived class' setFrame() function.
 	 */
 	QLabel m_information;
+
+	/**
+	 * @brief Frame information.
+	 *
+	 * @note Set and accessed from derived render dependent classes.
+	 */
+	struct frameInfoStruct m_frameInfo;
 
 	/**
 	 * @brief Determines if scaling is to be applied to video frame.
