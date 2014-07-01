@@ -188,7 +188,13 @@ static int parse(struct arguments *args,
 		return -3;
 	}
 
-	if (entry->lnb) {
+	/*
+	 * Both the DVBv5 format and the command line parameters may
+	 * specify the LNBf. If both have the definition, use the one
+	 * provided by the command line parameter, overriding the one
+	 * stored in the channel file.
+	 */
+	if (entry->lnb && !parms->lnb) {
 		int lnb = dvb_sat_search_lnb(entry->lnb);
 		if (lnb == -1) {
 			PERROR("unknown LNB %s\n", entry->lnb);
@@ -773,7 +779,7 @@ int main(int argc, char **argv)
 	parms = dvb_fe_open(args.adapter, args.frontend, args.verbose, args.force_dvbv3);
 	if (!parms)
 		goto err;
-	if (lnb)
+	if (lnb >= 0)
 		parms->lnb = dvb_sat_get_lnb(lnb);
 	if (args.sat_number > 0)
 		parms->sat_number = args.sat_number % 3;
