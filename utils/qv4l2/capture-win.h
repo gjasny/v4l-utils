@@ -76,8 +76,8 @@ public:
 	 * @param data The frame data.
 	 * @param info A string containing capture information.
 	 */
-	virtual void setFrame(int width, int height, __u32 format,
-			      unsigned char *data, unsigned char *data2, const QString &info) = 0;
+	void setFrame(int width, int height, __u32 format,
+		      unsigned char *data, unsigned char *data2, const QString &info);
 
 	/**
 	 * @brief Called when the capture stream is stopped.
@@ -186,6 +186,13 @@ protected:
 	struct frameInfoStruct m_frameInfo;
 
 	/**
+	 * @brief Update frame information to renderer.
+	 *
+	 * @note Must be implemented by derived render dependent classes.
+	 */
+	virtual void updateFrameInfo() = 0;
+
+	/**
 	 * @brief Determines if scaling is to be applied to video frame.
 	 */
 	static bool m_enableScaling;
@@ -198,7 +205,7 @@ private:
 	static CropMethod m_cropMethod;
 	QShortcut *m_hotkeyClose;
 	QShortcut *m_hotkeyScaleReset;
-	int m_curWidth;
-	int m_curHeight;
+	int m_curWinWidth;
+	int m_curWinHeight;
 };
 #endif

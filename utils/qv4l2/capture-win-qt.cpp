@@ -69,17 +69,8 @@ void CaptureWinQt::resizeEvent(QResizeEvent *event)
 	paintFrame();
 }
 
-void CaptureWinQt::setFrame(int width, int height, __u32 format,
-		unsigned char *data, unsigned char *data2, const QString &info)
+void CaptureWinQt::updateFrameInfo()
 {
-        // Set (TODO: move to capture-win)
-        m_frameInfo.frameHeight = height;
-        m_frameInfo.frameWidth  = width;
-        m_frameInfo.format      = format;
-        m_frameInfo.planeData[0] = data;
-        m_frameInfo.planeData[1] = data2;
-        m_frameInfo.info        = info;
-
 	// Get/copy (TODO: use direct?)
 	m_data = m_frameInfo.planeData[0];
 

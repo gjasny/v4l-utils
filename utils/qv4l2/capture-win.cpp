@@ -34,8 +34,8 @@ double CaptureWin::m_pixelAspectRatio = 1.0;
 CropMethod CaptureWin::m_cropMethod = QV4L2_CROP_NONE;
 
 CaptureWin::CaptureWin() :
-	m_curWidth(-1),
-	m_curHeight(-1)
+	m_curWinWidth(-1),
+	m_curWinHeight(-1)
 {
 	setWindowTitle("V4L2 Capture");
 	m_hotkeyClose = new QShortcut(Qt::CTRL+Qt::Key_W, this);
@@ -60,6 +60,19 @@ CaptureWin::~CaptureWin()
 	delete m_hotkeyScaleReset;
 }
 
+void CaptureWin::setFrame(int width, int height, __u32 format,
+		unsigned char *data, unsigned char *data2, const QString &info)
+{
+        m_frameInfo.frameHeight = height;
+        m_frameInfo.frameWidth  = width;
+        m_frameInfo.format      = format;
+        m_frameInfo.planeData[0] = data;
+        m_frameInfo.planeData[1] = data2;
+        m_frameInfo.info        = info;
+
+	updateFrameInfo();
+}
+
 void CaptureWin::buildWindow(QWidget *videoSurface)
 {
 	int l, t, r, b;
@@ -77,10 +90,10 @@ void CaptureWin::resetSize()
 		showNormal();
 
         // Force resize even if no size change
-	int w = m_curWidth;
-	int h = m_curHeight;
-	m_curWidth = -1;
-	m_curHeight = -1;
+	int w = m_curWinWidth;
+	int h = m_curWinHeight;
+	m_curWinWidth = -1;
+	m_curWinHeight = -1;
 	resize(w, h);
 }
 
@@ -162,7 +175,7 @@ void CaptureWin::enableScaling(bool enable)
 {
 	if (!enable) {
 		QSize margins = getMargins();
-		QWidget::setMinimumSize(m_curWidth + margins.width(), m_curHeight + margins.height());
+		QWidget::setMinimumSize(m_curWinWidth + margins.width(), m_curWinHeight + margins.height());
 	} else {
 		QWidget::setMinimumSize(MIN_WIN_SIZE_WIDTH, MIN_WIN_SIZE_HEIGHT);
 	}
@@ -177,11 +190,11 @@ void CaptureWin::resize(int width, int height)
 
 	// Dont resize window if the frame size is the same in
 	// the event the window has been paused when beeing resized.
-	if (width == m_curWidth && height == m_curHeight)
+	if (width == m_curWinWidth && height == m_curWinHeight)
 		return;
 
-	m_curWidth = width;
-	m_curHeight = height;
+	m_curWinWidth = width;
+	m_curWinHeight = height;
 
 	QSize margins = getMargins();
 	h = margins.height() - cropHeight(width, height) * 2 + actualFrameHeight(height);

@@ -107,8 +107,6 @@ public:
 	CaptureWinGL();
 	~CaptureWinGL();
 
-	void setFrame(int width, int height, __u32 format,
-		      unsigned char *data, unsigned char *data2, const QString &info);
 	void stop();
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported();
@@ -119,6 +117,7 @@ public:
 
 protected:
 	void resizeEvent(QResizeEvent *event);
+	void updateFrameInfo();
 
 private:
 #ifdef HAVE_QTGL

@@ -42,9 +42,6 @@ public:
 	CaptureWinQt();
 	~CaptureWinQt();
 
-	void setFrame(int width, int height, __u32 format,
-		      unsigned char *data, unsigned char *data2, const QString &info);
-
 	void stop();
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported() { return true; }
@@ -55,6 +52,7 @@ public:
 
 protected:
 	void resizeEvent(QResizeEvent *event);
+	void updateFrameInfo();
 
 private:
 	bool findNativeFormat(__u32 format, QImage::Format &dstFmt);

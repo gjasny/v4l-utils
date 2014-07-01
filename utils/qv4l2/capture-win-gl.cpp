@@ -52,17 +52,8 @@ void CaptureWinGL::resizeEvent(QResizeEvent *event)
 	event->accept();
 }
 
-void CaptureWinGL::setFrame(int width, int height, __u32 format,
-		unsigned char *data, unsigned char *data2, const QString &info)
+void CaptureWinGL::updateFrameInfo()
 {
-        // Set (TODO: move to capture-win)
-        m_frameInfo.frameHeight = height;
-        m_frameInfo.frameWidth  = width;
-        m_frameInfo.format      = format;
-        m_frameInfo.planeData[0] = data;
-        m_frameInfo.planeData[1] = data2;
-        m_frameInfo.info        = info;
-
 	// Get/copy (TODO: remove CaptureWinGLEngine and use direct or use pointer)
 #ifdef HAVE_QTGL
 	m_videoSurface.setFrame(m_frameInfo.frameWidth, m_frameInfo.frameHeight,
@@ -246,7 +237,7 @@ void CaptureWinGLEngine::setSize(int width, int height)
 
 	if (width > 0 && height > 0) {
 		setMaximumSize(width, height);
-		resizeGL(width, height);
+		resizeGL(width, height); // TODO: necessary? Always called by resizeEvent()
 	}
 }
 
