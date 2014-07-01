@@ -117,7 +117,7 @@ public:
 
 protected:
 	void resizeEvent(QResizeEvent *event);
-	void updateFrameInfo();
+	void setRenderFrame();
 
 private:
 #ifdef HAVE_QTGL

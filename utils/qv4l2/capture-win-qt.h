@@ -27,15 +27,6 @@
 #include <QImage>
 #include <QResizeEvent>
 
-struct CropInfo {
-	int cropH;
-	int cropW;
-	int height;
-	int width;
-	int offset;
-	int bytes;
-};
-
 class CaptureWinQt : public CaptureWin
 {
 public:
@@ -52,18 +43,16 @@ public:
 
 protected:
 	void resizeEvent(QResizeEvent *event);
-	void updateFrameInfo();
+	void setRenderFrame();
 
 private:
 	bool findNativeFormat(__u32 format, QImage::Format &dstFmt);
 	void paintFrame();
-	void resizeScaleCrop();
+	void cropOffset();
 
 	QImage *m_frame;
-	struct CropInfo m_crop;
 	unsigned char *m_data;
 	QLabel m_videoSurface;
-	QSize m_scaledSize;
 	bool m_supportedFormat;
 	bool m_filled;
 };

@@ -52,7 +52,7 @@ void CaptureWinGL::resizeEvent(QResizeEvent *event)
 	event->accept();
 }
 
-void CaptureWinGL::updateFrameInfo()
+void CaptureWinGL::setRenderFrame()
 {
 	// Get/copy (TODO: remove CaptureWinGLEngine and use direct or use pointer)
 #ifdef HAVE_QTGL

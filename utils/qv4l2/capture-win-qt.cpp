@@ -29,12 +29,6 @@ CaptureWinQt::CaptureWinQt() :
 	CaptureWin::buildWindow(&m_videoSurface);
 	m_scaledSize.setWidth(0);
 	m_scaledSize.setHeight(0);
-	m_crop.cropH  = 0;
-	m_crop.cropW  = 0;
-	m_crop.height = 0;
-	m_crop.width  = 0;
-	m_crop.offset = 0;
-	m_crop.bytes  = 0;
 }
 
 CaptureWinQt::~CaptureWinQt()
@@ -42,34 +36,30 @@ CaptureWinQt::~CaptureWinQt()
 	delete m_frame;
 }
 
-void CaptureWinQt::resizeScaleCrop()
+void CaptureWinQt::cropOffset()
 {
-	m_scaledSize = scaleFrameSize(QSize(m_videoSurface.width(), m_videoSurface.height()),
-				      QSize(m_frame->width(), m_frame->height()));
+	if (m_cropInfo.updated) {
+	       m_cropInfo.offset = m_cropInfo.cropH * (m_frame->depth() / 8)
+		 * m_frameInfo.frameWidth + m_cropInfo.cropW * (m_frame->depth() / 8);
 
-	if (!m_crop.bytes || m_crop.cropH != cropHeight(m_frame->width(), m_frame->height())
-	    || m_crop.cropW != cropWidth(m_frame->width(), m_frame->height())) {
-
-		m_crop.cropH  = cropHeight(m_frame->width(), m_frame->height());
-		m_crop.cropW  = cropWidth(m_frame->width(), m_frame->height());
-		m_crop.height = m_frame->height() - (m_crop.cropH * 2);
-		m_crop.width  = m_frame->width() - (m_crop.cropW * 2);
-		m_crop.offset = m_crop.cropH * (m_frame->depth() / 8) * m_frame->width()
-			+ m_crop.cropW * (m_frame->depth() / 8);
-
-		// Even though the values above can be valid, it might be that there is no
-		// data at all. This makes sure that it is.
-		m_crop.bytes = m_crop.height * m_crop.width * (m_frame->depth() / 8);
+	       // Even though the values above can be valid, it might be that there is no
+	       // data at all. This makes sure that it is.
+	       m_cropInfo.bytes = m_cropInfo.height * m_cropInfo.width
+		 * (m_frame->depth() / 8);
+	       m_cropInfo.updated = 0;
 	}
 }
 
 void CaptureWinQt::resizeEvent(QResizeEvent *event)
 {
-	resizeScaleCrop();
+	m_curWinWidth  = m_videoSurface.width();
+	m_curWinHeight = m_videoSurface.height();
+	CaptureWin::resizeScaleCrop();
+	cropOffset();
 	paintFrame();
 }
 
-void CaptureWinQt::updateFrameInfo()
+void CaptureWinQt::setRenderFrame()
 {
 	// Get/copy (TODO: use direct?)
 	m_data = m_frameInfo.planeData[0];
@@ -85,9 +75,12 @@ void CaptureWinQt::updateFrameInfo()
 		delete m_frame;
 		m_frame = new QImage(m_frameInfo.frameWidth, m_frameInfo.frameHeight, dstFmt);
 		// Force a recalculation by setting this to 0.
-		m_crop.bytes = 0;
+		m_cropInfo.bytes = 0;
 
-		resizeScaleCrop();
+		m_curWinWidth  = m_videoSurface.width();
+		m_curWinHeight = m_videoSurface.height();
+		CaptureWin::resizeScaleCrop();
+		cropOffset();
 	}
 
 	m_information.setText(m_frameInfo.info);
@@ -96,7 +89,7 @@ void CaptureWinQt::updateFrameInfo()
 
 void CaptureWinQt::paintFrame()
 {
-	if (!m_supportedFormat || !m_crop.bytes) {
+	if (!m_supportedFormat || !m_cropInfo.bytes) {
 		if (!m_filled) {
 			m_filled = true;
 			m_frame->fill(0);
@@ -109,7 +102,7 @@ void CaptureWinQt::paintFrame()
 
 	unsigned char *data = (m_data == NULL) ? m_frame->bits() : m_data;
 
-	QImage displayFrame(&data[m_crop.offset], m_crop.width, m_crop.height,
+	QImage displayFrame(&data[m_cropInfo.offset], m_cropInfo.width, m_cropInfo.height,
 			    m_frame->width() * (m_frame->depth() / 8), m_frame->format());
 
 	QPixmap img = QPixmap::fromImage(displayFrame);

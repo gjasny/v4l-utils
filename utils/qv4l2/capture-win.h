@@ -39,7 +39,17 @@ enum CropMethod {
 	QV4L2_CROP_P43,
 };
 
-struct frameInfoStruct {
+struct cropInfo {
+	int cropH;
+	int cropW;
+	int height;
+	int width;
+	int offset;
+	int bytes;
+	bool updated;
+};
+
+struct frameInfo {
         __u32 format;
 	int   frameHeight;
 	int   frameWidth;
@@ -172,6 +182,12 @@ protected:
 	void buildWindow(QWidget *videoSurface);
 
 	/**
+	 * @brief Calculate source size after pixel aspect scaling and cropping
+	 *
+	 */
+	void resizeScaleCrop();
+
+	/**
 	 * @brief A label that can is used to display capture information.
 	 *
 	 * @note This must be set in the derived class' setFrame() function.
@@ -183,14 +199,20 @@ protected:
 	 *
 	 * @note Set and accessed from derived render dependent classes.
 	 */
-	struct frameInfoStruct m_frameInfo;
+	struct frameInfo m_frameInfo;
+	struct cropInfo  m_cropInfo;    // TODO: Temporary, consolidate with m_framInfo
+	int m_sourceWinWidth;
+	int m_sourceWinHeight;
+	int m_curWinWidth;
+	int m_curWinHeight;
+	QSize m_scaledSize;
 
 	/**
 	 * @brief Update frame information to renderer.
 	 *
 	 * @note Must be implemented by derived render dependent classes.
 	 */
-	virtual void updateFrameInfo() = 0;
+	virtual void setRenderFrame() = 0;
 
 	/**
 	 * @brief Determines if scaling is to be applied to video frame.
@@ -205,7 +227,5 @@ private:
 	static CropMethod m_cropMethod;
 	QShortcut *m_hotkeyClose;
 	QShortcut *m_hotkeyScaleReset;
-	int m_curWinWidth;
-	int m_curWinHeight;
 };
 #endif
