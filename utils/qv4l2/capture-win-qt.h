@@ -48,7 +48,6 @@ protected:
 private:
 	bool findNativeFormat(__u32 format, QImage::Format &dstFmt);
 	void paintFrame();
-	void cropOffset();
 
 	QImage *m_frame;
 	unsigned char *m_data;

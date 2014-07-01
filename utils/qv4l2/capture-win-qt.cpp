@@ -36,26 +36,11 @@ CaptureWinQt::~CaptureWinQt()
 	delete m_frame;
 }
 
-void CaptureWinQt::cropOffset()
-{
-	if (m_cropInfo.updated) {
-	       m_cropInfo.offset = m_cropInfo.cropH * (m_frame->depth() / 8)
-		 * m_frameInfo.frameWidth + m_cropInfo.cropW * (m_frame->depth() / 8);
-
-	       // Even though the values above can be valid, it might be that there is no
-	       // data at all. This makes sure that it is.
-	       m_cropInfo.bytes = m_cropInfo.height * m_cropInfo.width
-		 * (m_frame->depth() / 8);
-	       m_cropInfo.updated = 0;
-	}
-}
-
 void CaptureWinQt::resizeEvent(QResizeEvent *event)
 {
 	m_curWinWidth  = m_videoSurface.width();
 	m_curWinHeight = m_videoSurface.height();
 	CaptureWin::resizeScaleCrop();
-	cropOffset();
 	paintFrame();
 }
 
@@ -80,7 +65,6 @@ void CaptureWinQt::setRenderFrame()
 		m_curWinWidth  = m_videoSurface.width();
 		m_curWinHeight = m_videoSurface.height();
 		CaptureWin::resizeScaleCrop();
-		cropOffset();
 	}
 
 	m_information.setText(m_frameInfo.info);
@@ -89,6 +73,17 @@ void CaptureWinQt::setRenderFrame()
 
 void CaptureWinQt::paintFrame()
 {
+	if (m_cropInfo.updated) {
+	       m_cropInfo.offset = m_cropInfo.cropH * (m_frame->depth() / 8)
+		 * m_frameInfo.frameWidth + m_cropInfo.cropW * (m_frame->depth() / 8);
+
+	       // Even though the values above can be valid, it might be that there is no
+	       // data at all. This makes sure that it is.
+	       m_cropInfo.bytes = m_cropInfo.height * m_cropInfo.width
+		 * (m_frame->depth() / 8);
+	       m_cropInfo.updated = 0;
+	}
+
 	if (!m_supportedFormat || !m_cropInfo.bytes) {
 		if (!m_filled) {
 			m_filled = true;
