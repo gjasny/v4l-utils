@@ -309,6 +309,17 @@ int testEnumFormats(struct node *node)
 	return supported ? 0 : ENOTTY;
 }
 
+static int testColorspace(__u32 pixelformat, __u32 colorspace)
+{
+	fail_on_test(!colorspace);
+	fail_on_test(colorspace == V4L2_COLORSPACE_BT878);
+	fail_on_test(pixelformat == V4L2_PIX_FMT_JPEG &&
+		     colorspace != V4L2_COLORSPACE_JPEG);
+	fail_on_test(pixelformat != V4L2_PIX_FMT_JPEG &&
+		     colorspace == V4L2_COLORSPACE_JPEG);
+	return 0;
+}
+
 int testFBuf(struct node *node)
 {
 	struct v4l2_framebuffer fbuf;
@@ -351,7 +362,7 @@ int testFBuf(struct node *node)
 	}*/
 	fail_on_test(fmt.bytesperline && fmt.bytesperline < fmt.width);
 	fail_on_test(fmt.sizeimage && fmt.sizeimage < fmt.bytesperline * fmt.height);
-	fail_on_test(!fmt.colorspace);
+	fail_on_test(testColorspace(fmt.pixelformat, fmt.colorspace));
 	return 0;
 }
 
@@ -404,7 +415,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 					pix.pixelformat, type);
 		fail_on_test(pix.bytesperline && pix.bytesperline < pix.width);
 		fail_on_test(!pix.sizeimage);
-		fail_on_test(!pix.colorspace);
+		fail_on_test(testColorspace(pix.pixelformat, pix.colorspace));
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		if (pix.priv)
 			return fail("priv is non-zero!\n");
@@ -417,7 +428,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		    set_splane->find(pix_mp.pixelformat) == set_splane->end())
 			return fail("unknown pixelformat %08x for buftype %d\n",
 					pix_mp.pixelformat, type);
-		fail_on_test(!pix_mp.colorspace);
+		fail_on_test(testColorspace(pix_mp.pixelformat, pix_mp.colorspace));
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		ret = check_0(pix_mp.reserved, sizeof(pix_mp.reserved));
 		if (ret)
