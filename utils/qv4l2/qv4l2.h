@@ -136,6 +136,8 @@ private slots:
 	void enableScaling(bool enable);
 	void updatePixelAspectRatio();
 	void updateCropping();
+	void updateColorspace();
+	void updateDisplayColorspace();
 
 	void about();
 

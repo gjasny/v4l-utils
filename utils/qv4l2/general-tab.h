@@ -81,6 +81,8 @@ public:
 	inline bool streamoff() { return v4l2::streamoff(m_buftype); }
 	void setHaveBuffers(bool haveBuffers);
 	void sourceChange(const v4l2_event &ev);
+	unsigned getDisplayColorspace() const;
+	unsigned getColorspace() const;
 
 public slots:
 	void showAllAudioDevices(bool use);
@@ -89,6 +91,8 @@ signals:
 	void audioDeviceChanged();
 	void pixelAspectRatioChanged();
 	void cropChanged();
+	void colorspaceChanged();
+	void displayColorspaceChanged();
 
 private slots:
 	void inputChanged(int);
@@ -192,6 +196,8 @@ private:
 	QPushButton *m_qryStandard;
 	QComboBox *m_videoTimings;
 	QComboBox *m_pixelAspectRatio;
+	QComboBox *m_colorspace;
+	QComboBox *m_displayColorspace;
 	QComboBox *m_crop;
 	QPushButton *m_qryTimings;
 	QDoubleSpinBox *m_freq;

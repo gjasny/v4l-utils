@@ -233,6 +233,8 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 #endif
 	connect(m_genTab, SIGNAL(pixelAspectRatioChanged()), this, SLOT(updatePixelAspectRatio()));
 	connect(m_genTab, SIGNAL(cropChanged()), this, SLOT(updateCropping()));
+	connect(m_genTab, SIGNAL(colorspaceChanged()), this, SLOT(updateColorspace()));
+	connect(m_genTab, SIGNAL(displayColorspaceChanged()), this, SLOT(updateDisplayColorspace()));
 	m_tabs->addTab(w, "General");
 	addTabs();
 	if (caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE)) {
@@ -922,6 +924,31 @@ void ApplicationWindow::updateCropping()
 		m_capture->setCropMethod(m_genTab->getCropMethod());
 }
 
+void ApplicationWindow::updateColorspace()
+{
+	if (m_capture == NULL)
+		return;
+
+	unsigned colorspace = m_genTab->getColorspace();
+
+	if (colorspace == 0) {
+		v4l2_format fmt;
+
+		g_fmt_cap(m_genTab->bufType(), fmt);
+		if (m_genTab->isPlanar())
+			colorspace = fmt.fmt.pix_mp.colorspace;
+		else
+			colorspace = fmt.fmt.pix.colorspace;
+	}
+	m_capture->setColorspace(colorspace);
+}
+
+void ApplicationWindow::updateDisplayColorspace()
+{
+	if (m_capture != NULL)
+		m_capture->setDisplayColorspace(m_genTab->getDisplayColorspace());
+}
+
 void ApplicationWindow::startAudio()
 {
 #ifdef HAVE_ALSA
@@ -983,6 +1010,7 @@ void ApplicationWindow::capStart(bool start)
 	__u32 buftype = m_genTab->bufType();
 	bool isPlanar = m_genTab->isPlanar();
 	__u32 width, height, pixfmt;
+	unsigned colorspace;
 
 	if (!start) {
 		stopCapture();
@@ -1070,12 +1098,14 @@ void ApplicationWindow::capStart(bool start)
 		width = srcMPix.width;
 		height = srcMPix.height;
 		pixfmt = srcMPix.pixelformat;
+		colorspace = srcMPix.colorspace;
 		m_mustConvert = false;
 	} else if (m_capture->hasNativeFormat(srcPix.pixelformat)) {
 		dstPix.pixelformat = srcPix.pixelformat;
 		width = srcPix.width;
 		height = srcPix.height;
 		pixfmt = srcPix.pixelformat;
+		colorspace = srcPix.colorspace;
 		m_mustConvert = false;
 	} else {
 		m_mustConvert = true;
@@ -1090,6 +1120,7 @@ void ApplicationWindow::capStart(bool start)
 		width = dstPix.width;
 		height = dstPix.height;
 		pixfmt = dstPix.pixelformat;
+		colorspace = dstPix.colorspace;
 	}
 
 	// Ensure that the initial image is large enough for native 32 bit per pixel formats
@@ -1099,6 +1130,10 @@ void ApplicationWindow::capStart(bool start)
 	m_capImage->fill(0);
 	
 	updatePixelAspectRatio();
+	if (m_genTab->getColorspace())
+		colorspace = m_genTab->getColorspace();
+	m_capture->setColorspace(colorspace);
+	m_capture->setDisplayColorspace(m_genTab->getDisplayColorspace());
 	
 	m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 			    pixfmt, m_capImage->bits(), NULL, "No frame");

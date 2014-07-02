@@ -50,6 +50,8 @@ public:
 	void resize(int minw, int minh);
 	void enableScaling(bool enable);
 	void setPixelAspectRatio(double ratio);
+	virtual void setColorspace(unsigned colorspace) = 0;
+	virtual void setDisplayColorspace(unsigned colorspace) = 0;
 	void setCropMethod(CropMethod crop);
 
 	/**

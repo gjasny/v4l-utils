@@ -61,6 +61,8 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_qryStandard(NULL),
 	m_videoTimings(NULL),
 	m_pixelAspectRatio(NULL),
+	m_colorspace(NULL),
+	m_displayColorspace(NULL),
 	m_crop(NULL),
 	m_qryTimings(NULL),
 	m_freq(NULL),
@@ -192,6 +194,31 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		addLabel("Cropping");
 		addWidget(m_crop);
 		connect(m_crop, SIGNAL(activated(int)), SIGNAL(cropChanged()));
+
+#ifdef HAVE_QTGL
+		m_colorspace = new QComboBox(parent);
+		m_colorspace->addItem("Autodetect");
+		m_colorspace->addItem("SMPTE 170M");
+		m_colorspace->addItem("SMPTE 240M");
+		m_colorspace->addItem("REC 709");
+		m_colorspace->addItem("470 System M");
+		m_colorspace->addItem("470 System BG");
+		m_colorspace->addItem("sRGB");
+
+		addLabel("Colorspace");
+		addWidget(m_colorspace);
+		connect(m_colorspace, SIGNAL(activated(int)), SIGNAL(colorspaceChanged()));
+
+		m_displayColorspace = new QComboBox(parent);
+		m_displayColorspace->addItem("sRGB");
+		m_displayColorspace->addItem("Linear RGB");
+		m_displayColorspace->addItem("REC 709");
+		m_displayColorspace->addItem("SMPTE 240M");
+
+		addLabel("Display Colorspace");
+		addWidget(m_displayColorspace);
+		connect(m_displayColorspace, SIGNAL(activated(int)), SIGNAL(displayColorspaceChanged()));
+#endif
 	}
 
 	if (!isRadio() && enum_input(vin, true)) {
@@ -535,6 +562,46 @@ capture_method:
 done:
 	QGridLayout::addWidget(new QWidget(parent), rowCount(), 0, 1, n);
 	setRowStretch(rowCount() - 1, 1);
+}
+
+unsigned GeneralTab::getColorspace() const
+{
+	if (m_colorspace == NULL)
+		return 0;
+	switch (m_colorspace->currentIndex()) {
+	case 0: // Autodetect
+		return 0;
+	case 1:
+		return V4L2_COLORSPACE_SMPTE170M;
+	case 2:
+		return V4L2_COLORSPACE_SMPTE240M;
+	case 3:
+		return V4L2_COLORSPACE_REC709;
+	case 4:
+		return V4L2_COLORSPACE_470_SYSTEM_M;
+	case 5:
+		return V4L2_COLORSPACE_470_SYSTEM_BG;
+	case 6:
+	default:
+		return V4L2_COLORSPACE_SRGB;
+	}
+}
+
+unsigned GeneralTab::getDisplayColorspace() const
+{
+	if (m_displayColorspace == NULL)
+		return V4L2_COLORSPACE_SRGB;
+	switch (m_displayColorspace->currentIndex()) {
+	case 0:
+		return V4L2_COLORSPACE_SRGB;
+	case 1: // Linear RGB
+		return 0;
+	case 2:
+	default:
+		return V4L2_COLORSPACE_REC709;
+	case 3:
+		return V4L2_COLORSPACE_SMPTE240M;
+	}
 }
 
 void GeneralTab::setHaveBuffers(bool haveBuffers)
@@ -1263,10 +1330,9 @@ void GeneralTab::qryTimingsClicked()
 
 void GeneralTab::sourceChange(const v4l2_event &ev)
 {
-	if (!m_videoInput)
+	if (!m_videoInput || (int)ev.id != m_videoInput->currentIndex())
 		return;
-	if ((int)ev.id != m_videoInput->currentIndex())
-		return;
+	emit colorspaceChanged();
 	if (m_qryStandard && m_qryStandard->isEnabled())
 		m_qryStandard->click();
 	else if (m_qryTimings && m_qryTimings->isEnabled())
