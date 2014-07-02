@@ -110,7 +110,15 @@ CaptureWinGLEngine::~CaptureWinGLEngine()
 
 void CaptureWinGLEngine::setColorspace(unsigned colorspace)
 {
-	if (colorspace == 0) {
+	switch (colorspace) {
+	case V4L2_COLORSPACE_SMPTE170M:
+	case V4L2_COLORSPACE_SMPTE240M:
+	case V4L2_COLORSPACE_REC709:
+	case V4L2_COLORSPACE_470_SYSTEM_M:
+	case V4L2_COLORSPACE_470_SYSTEM_BG:
+	case V4L2_COLORSPACE_SRGB:
+		break;
+	default:
 		// If the colorspace was not specified, then guess
 		// based on the pixel format.
 		switch (m_frameFormat) {
@@ -132,6 +140,7 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace)
 			colorspace = V4L2_COLORSPACE_SRGB;
 			break;
 		}
+		break;
 	}
 	if (m_colorspace == colorspace)
 		return;
@@ -293,17 +302,8 @@ void CaptureWinGLEngine::changeShader()
 	case V4L2_PIX_FMT_BGR24:
 	case V4L2_PIX_FMT_RGB32:
 	case V4L2_PIX_FMT_BGR32:
-		shader_RGB();
-		break;
-
 	default:
-		m_screenTextureCount = 1;
-		glActiveTexture(GL_TEXTURE0);
-		glGenTextures(m_screenTextureCount, m_screenTexture);
-		configureTexture(0);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, m_frameWidth, m_frameHeight, 0,
-			     GL_RGB, GL_UNSIGNED_BYTE, NULL);
-		checkError("Default shader");
+		shader_RGB();
 		break;
 	}
 
@@ -363,14 +363,8 @@ void CaptureWinGLEngine::paintGL()
 	case V4L2_PIX_FMT_BGR24:
 	case V4L2_PIX_FMT_RGB32:
 	case V4L2_PIX_FMT_BGR32:
-		render_RGB();
-		break;
 	default:
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
-				GL_RGB, GL_UNSIGNED_BYTE, m_frameData);
-		checkError("Default paint");
+		render_RGB();
 		break;
 	}
 	paintFrame();
@@ -826,8 +820,8 @@ void CaptureWinGLEngine::render_YUY2()
 void CaptureWinGLEngine::shader_RGB()
 {
 	m_screenTextureCount = 1;
-	glActiveTexture(GL_TEXTURE0);
 	glGenTextures(m_screenTextureCount, m_screenTexture);
+	glActiveTexture(GL_TEXTURE0);
 	configureTexture(0);
 
 	GLint internalFmt = m_colorspace == V4L2_COLORSPACE_SRGB ?
@@ -849,11 +843,6 @@ void CaptureWinGLEngine::shader_RGB()
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 			     GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
 		break;
-	case V4L2_PIX_FMT_RGB24:
-	case V4L2_PIX_FMT_BGR24:
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
-				GL_RGB, GL_UNSIGNED_BYTE, NULL);
-		break;
 	case V4L2_PIX_FMT_RGB32:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, NULL);
@@ -862,7 +851,14 @@ void CaptureWinGLEngine::shader_RGB()
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 				GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
 		break;
+	case V4L2_PIX_FMT_RGB24:
+	case V4L2_PIX_FMT_BGR24:
+	default:
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
+				GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		break;
 	}
+
 	checkError("RGB shader");
 
 	QString codeHead = QString("uniform sampler2D tex;"
@@ -945,6 +941,7 @@ void CaptureWinGLEngine::render_RGB()
 		break;
 	case V4L2_PIX_FMT_RGB24:
 	case V4L2_PIX_FMT_BGR24:
+	default:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
 				GL_RGB, GL_UNSIGNED_BYTE, m_frameData);
 		break;
