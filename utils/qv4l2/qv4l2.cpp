@@ -254,6 +254,8 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_tabs->setFocus();
 	m_convertData = v4lconvert_create(fd());
 	m_capStartAct->setEnabled(fd() >= 0);
+	m_saveRawAct->setEnabled(fd() >= 0);
+	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
 	m_ctrlNotifier = new QSocketNotifier(fd(), QSocketNotifier::Exception, m_tabs);
 	connect(m_ctrlNotifier, SIGNAL(activated(int)), this, SLOT(ctrlEvent()));
 }
@@ -695,6 +697,8 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 
 	memset(&req, 0, sizeof(req));
 
+	m_useGLAct->setEnabled(false);
+
 	switch (m_capMethod) {
 	case methodRead:
 		m_snapshotAct->setEnabled(true);
@@ -846,6 +850,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 
 error:
 	m_capStartAct->setChecked(false);
+	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
 	return false;
 }
 
@@ -863,6 +868,7 @@ void ApplicationWindow::stopCapture()
 
 	m_capture->stop();
 	m_snapshotAct->setDisabled(true);
+	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
 	switch (m_capMethod) {
 	case methodRead:
 		memset(&cmd, 0, sizeof(cmd));
@@ -1167,6 +1173,7 @@ void ApplicationWindow::closeDevice()
 	m_sigMapper = NULL;
 	m_capStartAct->setEnabled(false);
 	m_capStartAct->setChecked(false);
+	m_saveRawAct->setEnabled(false);
 	if (fd() >= 0) {
 		if (m_capNotifier) {
 			delete m_capNotifier;
