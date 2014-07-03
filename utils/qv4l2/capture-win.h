@@ -52,6 +52,7 @@ public:
 	void setPixelAspectRatio(double ratio);
 	virtual void setColorspace(unsigned colorspace) = 0;
 	virtual void setDisplayColorspace(unsigned colorspace) = 0;
+	virtual void setBlending(bool enable) = 0;
 	void setCropMethod(CropMethod crop);
 
 	/**

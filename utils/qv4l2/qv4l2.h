@@ -123,6 +123,7 @@ private slots:
 	void capVbiFrame();
 	void saveRaw(bool);
 	void setRenderMethod();
+	void setBlending();
 	void changeAudioDevice();
 
 	// gui
@@ -189,6 +190,7 @@ private:
 	QAction *m_saveRawAct;
 	QAction *m_showFramesAct;
 	QAction *m_useGLAct;
+	QAction *m_useBlendingAct;
 	QAction *m_showAllAudioAct;
 	QAction *m_audioBufferAct;
 	QAction *m_scalingAct;

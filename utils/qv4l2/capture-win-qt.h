@@ -48,8 +48,9 @@ public:
 	void stop();
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported() { return true; }
-	virtual void setColorspace(unsigned colorspace) {}
-	virtual void setDisplayColorspace(unsigned colorspace) {}
+	void setColorspace(unsigned colorspace) {}
+	void setDisplayColorspace(unsigned colorspace) {}
+	void setBlending(bool enable) {}
 
 protected:
 	void resizeEvent(QResizeEvent *event);

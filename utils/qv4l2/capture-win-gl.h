@@ -48,6 +48,7 @@ public:
 	void setSize(int width, int height);
 	void setColorspace(unsigned colorspace);
 	void setDisplayColorspace(unsigned colorspace);
+	void setBlending(bool enable) { m_blending = enable; }
 
 protected:
 	void paintGL();
@@ -76,6 +77,7 @@ private:
 	void clearShader();
 	void changeShader();
 	void paintFrame();
+	void paintSquare();
 	void configureTexture(size_t idx);
 	void checkError(const char *msg);
 
@@ -92,6 +94,7 @@ private:
 	unsigned char *m_frameData2;
 	QGLShaderProgram m_shaderProgram;
 	bool m_haveFramebufferSRGB;
+	bool m_blending;
 };
 
 #endif
@@ -109,6 +112,7 @@ public:
 	static bool isSupported();
 	void setColorspace(unsigned colorspace);
 	void setDisplayColorspace(unsigned colorspace);
+	void setBlending(bool enable) { m_videoSurface.setBlending(enable); }
 
 protected:
 	void resizeEvent(QResizeEvent *event);

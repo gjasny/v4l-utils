@@ -98,7 +98,8 @@ CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_screenTextureCount(0),
 	m_formatChange(false),
 	m_frameFormat(0),
-	m_frameData(NULL)
+	m_frameData(NULL),
+	m_blending(false)
 {
 	m_glfunction.initializeGLFunctions(context());
 }
@@ -181,6 +182,8 @@ void CaptureWinGLEngine::initializeGL()
 {
 	glShadeModel(GL_FLAT);
 	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
 
 	// Check if the the GL_FRAMEBUFFER_SRGB feature is available.
 	// If it is, then the GPU can perform the SRGB transfer function
@@ -306,8 +309,6 @@ void CaptureWinGLEngine::changeShader()
 		shader_RGB();
 		break;
 	}
-
-	glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void CaptureWinGLEngine::paintFrame()
@@ -323,6 +324,29 @@ void CaptureWinGLEngine::paintFrame()
 	glEnd();
 }
 
+void CaptureWinGLEngine::paintSquare()
+{
+	// Draw a black square on the white background to
+	// test the alpha channel.
+	unsigned w4 = m_frameWidth / 4;
+	unsigned h4 = m_frameHeight / 4;
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	glBlendFunc(GL_ONE, GL_ZERO);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glBegin(GL_QUADS);
+	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+	glVertex2f(w4, h4);
+	glVertex2f(w4, 3 * h4);
+	glVertex2f(3 * w4, 3 * h4);
+	glVertex2f(3 * w4, h4);
+	glEnd();
+
+	glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+}
+
 void CaptureWinGLEngine::paintGL()
 {
 	if (m_frameWidth < 1 || m_frameHeight < 1) {
@@ -336,6 +360,9 @@ void CaptureWinGLEngine::paintGL()
 		paintFrame();
 		return;
 	}
+
+	if (m_blending)
+		paintSquare();
 
 	switch (m_frameFormat) {
 	case V4L2_PIX_FMT_YUYV:
@@ -514,7 +541,10 @@ QString CaptureWinGLEngine::codeTransformToNonLinear()
 	}
 }
 
-static const QString codeSuffix("   gl_FragColor = vec4(r, g, b, 1.0);"
+static const QString codeSuffix("   gl_FragColor = vec4(r, g, b, 0.0);"
+			  "}");
+
+static const QString codeSuffixWithAlpha("   gl_FragColor = vec4(r, g, b, a);"
 			  "}");
 
 void CaptureWinGLEngine::shader_YUV()
@@ -819,6 +849,8 @@ void CaptureWinGLEngine::render_YUY2()
 
 void CaptureWinGLEngine::shader_RGB()
 {
+	bool hasAlpha = false;
+
 	m_screenTextureCount = 1;
 	glGenTextures(m_screenTextureCount, m_screenTexture);
 	glActiveTexture(GL_TEXTURE0);
@@ -831,11 +863,13 @@ void CaptureWinGLEngine::shader_RGB()
 	case V4L2_PIX_FMT_RGB555:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 			     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, NULL);
+		hasAlpha = true;
 		break;
 
 	case V4L2_PIX_FMT_RGB555X:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 			     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, NULL);
+		hasAlpha = true;
 		break;
 
 	case V4L2_PIX_FMT_RGB565:
@@ -846,10 +880,12 @@ void CaptureWinGLEngine::shader_RGB()
 	case V4L2_PIX_FMT_RGB32:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+		hasAlpha = true;
 		break;
 	case V4L2_PIX_FMT_BGR32:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 				GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+		hasAlpha = true;
 		break;
 	case V4L2_PIX_FMT_RGB24:
 	case V4L2_PIX_FMT_BGR24:
@@ -864,7 +900,8 @@ void CaptureWinGLEngine::shader_RGB()
 	QString codeHead = QString("uniform sampler2D tex;"
 				   "void main()"
 				   "{"
-				   "   vec4 color = texture2D(tex, gl_TexCoord[0].xy);");
+				   "   vec4 color = texture2D(tex, gl_TexCoord[0].xy);"
+				   "   float a = color.a;");
 
 	if (m_frameFormat == V4L2_PIX_FMT_BGR24)
 		codeHead += "   float r = color.b;"
@@ -882,7 +919,7 @@ void CaptureWinGLEngine::shader_RGB()
 
 	codeTail += codeColorspaceConversion() + 
 		    codeTransformToNonLinear() +
-		    codeSuffix;
+		    (hasAlpha ? codeSuffixWithAlpha : codeSuffix);
 
 	bool src_ok = m_shaderProgram.addShaderFromSourceCode(
 				QGLShader::Fragment, QString("%1%2").arg(codeHead, codeTail)

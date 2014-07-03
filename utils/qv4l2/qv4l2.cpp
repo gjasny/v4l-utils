@@ -161,6 +161,13 @@ ApplicationWindow::ApplicationWindow() :
 		m_useGLAct->setChecked(true);
 		connect(m_useGLAct, SIGNAL(triggered()), this, SLOT(setRenderMethod()));
 		captureMenu->addAction(m_useGLAct);
+
+		m_useBlendingAct = new QAction("Enable &Blending", this);
+		m_useBlendingAct->setStatusTip("Enable blending to test the alpha component in the image");
+		m_useBlendingAct->setCheckable(true);
+		m_useBlendingAct->setChecked(false);
+		connect(m_useBlendingAct, SIGNAL(triggered()), this, SLOT(setBlending()));
+		captureMenu->addAction(m_useBlendingAct);
 	} else {
 		m_renderMethod = QV4L2_RENDER_QT;
 	}
@@ -281,12 +288,20 @@ void ApplicationWindow::setRenderMethod()
 		return;
 	}
 
-	if (m_useGLAct->isChecked())
+	if (m_useGLAct->isChecked()) {
 		m_renderMethod = QV4L2_RENDER_GL;
-	else
+	} else {
 		m_renderMethod = QV4L2_RENDER_QT;
+	}
+	m_useBlendingAct->setEnabled(m_renderMethod == QV4L2_RENDER_GL);
 
 	newCaptureWin();
+}
+
+void ApplicationWindow::setBlending()
+{
+	if (m_capture)
+		m_capture->setBlending(m_useBlendingAct->isChecked());
 }
 
 void ApplicationWindow::setAudioBufferSize()
