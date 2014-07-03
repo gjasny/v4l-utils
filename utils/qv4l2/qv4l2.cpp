@@ -85,7 +85,7 @@ ApplicationWindow::ApplicationWindow() :
 	openRawAct->setShortcut(Qt::CTRL+Qt::Key_R);
 	connect(openRawAct, SIGNAL(triggered()), this, SLOT(openrawdev()));
 
-	m_capStartAct = new QAction(QIcon(":/record.png"), "Start &Capturing", this);
+	m_capStartAct = new QAction(QIcon(":/start.png"), "Start &Capturing", this);
 	m_capStartAct->setStatusTip("Start capturing");
 	m_capStartAct->setCheckable(true);
 	m_capStartAct->setDisabled(true);
@@ -133,9 +133,6 @@ ApplicationWindow::ApplicationWindow() :
 	toolBar->addAction(m_capStartAct);
 	toolBar->addAction(m_snapshotAct);
 	toolBar->addAction(m_saveRawAct);
-	toolBar->addAction(m_showFramesAct);
-	toolBar->addSeparator();
-	toolBar->addAction(quitAct);
 
 	m_scalingAct = new QAction("&Enable Video Scaling", this);
 	m_scalingAct->setStatusTip("Scale video frames to match window size if set");
