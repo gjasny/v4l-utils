@@ -1535,29 +1535,31 @@ double GeneralTab::getPixelAspectRatio()
 		ratio = g_pixel_aspect(m_buftype);
 		break;
 	case 2:
-		ratio.numerator = 10;
-		ratio.denominator = 11;
+		ratio.numerator = 11;
+		ratio.denominator = 10;
 		break;
 	case 3:
-		ratio.numerator = 40;
-		ratio.denominator = 33;
+		ratio.numerator = 33;
+		ratio.denominator = 40;
 		break;
 	case 4:
-		ratio.numerator = 12;
-		ratio.denominator = 11;
+		ratio.numerator = 11;
+		ratio.denominator = 12;
 		break;
 	case 5:
-		ratio.numerator = 16;
-		ratio.denominator = 11;
+		ratio.numerator = 11;
+		ratio.denominator = 16;
 		break;
 	default:
 		break;
 	}
 
-	m_pixelAspectRatio->setWhatsThis(QString("Pixel Aspect Ratio %1:%2")
+	m_pixelAspectRatio->setWhatsThis(QString("Pixel Aspect Ratio y:x = %1:%2")
 			 .arg(ratio.numerator).arg(ratio.denominator));
 	m_pixelAspectRatio->setStatusTip(m_pixelAspectRatio->whatsThis());
-	return (double)ratio.numerator / ratio.denominator;
+	// Note: ratio is y / x, whereas we want x / y, so we return
+	// denominator / numerator.
+	return (double)ratio.denominator / ratio.numerator;
 }
 
 void GeneralTab::updateFrameInterval()

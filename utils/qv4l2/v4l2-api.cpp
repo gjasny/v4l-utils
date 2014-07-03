@@ -661,8 +661,8 @@ v4l2_fract v4l2::g_pixel_aspect(unsigned type)
 	v4l2_cropcap ratio;
 	v4l2_std_id std;
 	static const v4l2_fract square = { 1, 1 };
-	static const v4l2_fract hz50 = { 12, 11 };
-	static const v4l2_fract hz60 = { 10, 11 };
+	static const v4l2_fract hz50 = { 11, 12 };
+	static const v4l2_fract hz60 = { 11, 10 };
 
 	ratio.type = type;
 	if (ioctl(VIDIOC_CROPCAP, &ratio) < 0) {
