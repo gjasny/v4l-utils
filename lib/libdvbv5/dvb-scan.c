@@ -473,12 +473,14 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms,
 
 		if (!program->service_id) {
 			if (parms->verbose)
-				dvb_log("Network PID: 0x%02x", program->pid);
+				dvb_log("Program #%d is network PID: 0x%04x",
+					num_pmt, program->pid);
 			num_pmt++;
 			continue;
 		}
 		if (parms->verbose)
-			dvb_log("Program ID %d", program->pid);
+			dvb_log("Program #%d ID 0x%04x, service ID 0x%04x",
+				num_pmt, program->pid, program->service_id);
 		rc = dvb_read_section(parms, dmx_fd,
 				      DVB_TABLE_PMT, program->pid,
 				      (void **)&dvb_scan_handler->program[num_pmt].pmt,
