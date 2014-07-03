@@ -956,7 +956,8 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 				 int get_detected, int get_nit)
 {
 	struct dvb_entry *entry;
-	int i, j, found = 0;
+	int i, j, r, found = 0;
+	uint32_t freq = 0;
 
 	/* Go to the last entry */
 
@@ -995,7 +996,6 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 	}
 
 	/* Initialize data */
-	entry->channel = channel;
 	entry->service_id = service_id;
 	entry->vchannel = vchannel;
 	entry->sat_number = parms->sat_number;
@@ -1021,8 +1021,20 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 	for (j = 0; j < parms->n_props; j++) {
 		entry->props[j].cmd = parms->dvb_prop[j].cmd;
 		entry->props[j].u.data = parms->dvb_prop[j].u.data;
+
+		if (!channel && entry->props[j].cmd == DTV_FREQUENCY)
+			freq = parms->dvb_prop[j].u.data;
 	}
 	entry->n_props = parms->n_props;
+
+	if (!channel) {
+		r = asprintf(&channel, "%.2fMHz#%d", freq/1000000., service_id);
+		if (r < 0)
+			dvb_perror("asprintf");
+		if (parms->verbose)
+			dvb_log("Storing as: '%s'", channel);
+	}
+	entry->channel = channel;
 
 	if (get_nit)
 		dvb_update_transponders(parms, dvb_scan_handler,
@@ -1103,30 +1115,18 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 
 		dvb_logerr("no SDT table - storing channels without their names");
 		for (i = 0; i < dvb_scan_handler->num_program; i++) {
-			char *channel = NULL;
 			unsigned service_id;
-			int r;
 
 			if (!dvb_scan_handler->program[i].pmt)
 				continue;
 
 			service_id = dvb_scan_handler->program[i].pat_pgm->service_id;
 
-			r = asprintf(&channel, "#%d", service_id);
-			if (r < 0)
-				dvb_perror("asprintf");
-
-			if (parms->verbose)
-				dvb_log("Storing as channel %s", channel);
-
 			rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
-						   service_id,
-						   channel, NULL,
+						   service_id, NULL, NULL,
 						   get_detected, get_nit);
-			if (rc < 0) {
-				free(channel);
+			if (rc < 0)
 				return rc;
-			}
 		}
 
 		return 0;
