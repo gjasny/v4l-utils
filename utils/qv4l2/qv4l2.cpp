@@ -108,7 +108,7 @@ ApplicationWindow::ApplicationWindow() :
 	m_showFramesAct->setCheckable(true);
 	m_showFramesAct->setChecked(true);
 
-	QAction *closeAct = new QAction(QIcon(":/fileclose.png"), "&Close", this);
+	QAction *closeAct = new QAction(QIcon(":/fileclose.png"), "&Close Device", this);
 	closeAct->setStatusTip("Close");
 	closeAct->setShortcut(Qt::CTRL+Qt::Key_W);
 	connect(closeAct, SIGNAL(triggered()), this, SLOT(closeDevice()));
@@ -242,7 +242,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	connect(m_genTab, SIGNAL(cropChanged()), this, SLOT(updateCropping()));
 	connect(m_genTab, SIGNAL(colorspaceChanged()), this, SLOT(updateColorspace()));
 	connect(m_genTab, SIGNAL(displayColorspaceChanged()), this, SLOT(updateDisplayColorspace()));
-	m_tabs->addTab(w, "General");
+	m_tabs->addTab(w, "General Settings");
 	addTabs();
 	if (caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE)) {
 		w = new QWidget(m_tabs);
