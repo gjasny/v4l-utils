@@ -1099,8 +1099,37 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 
 
 	if (!dvb_scan_handler->sdt) {
-		dvb_logerr("no SDT table - can't store channels");
-		return -1;
+		int i;
+
+		dvb_logerr("no SDT table - storing channels without their names");
+		for (i = 0; i < dvb_scan_handler->num_program; i++) {
+			char *channel = NULL;
+			unsigned service_id;
+			int r;
+
+			if (!dvb_scan_handler->program[i].pmt)
+				continue;
+
+			service_id = dvb_scan_handler->program[i].pat_pgm->service_id;
+
+			r = asprintf(&channel, "#%d", service_id);
+			if (r < 0)
+				dvb_perror("asprintf");
+
+			if (parms->verbose)
+				dvb_log("Storing as channel %s", channel);
+
+			rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
+						   service_id,
+						   channel, NULL,
+						   get_detected, get_nit);
+			if (rc < 0) {
+				free(channel);
+				return rc;
+			}
+		}
+
+		return 0;
 	}
 	dvb_sdt_service_foreach(service, dvb_scan_handler->sdt) {
 		char *channel = NULL;
