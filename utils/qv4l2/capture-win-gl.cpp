@@ -524,20 +524,20 @@ void CaptureWinGLEngine::shader_YUV()
 
 	glActiveTexture(GL_TEXTURE0);
 	configureTexture(0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_frameWidth, m_frameHeight, 0,
-		     GL_RED, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, m_frameWidth, m_frameHeight, 0,
+		     GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 	checkError("YUV shader texture 0");
 
 	glActiveTexture(GL_TEXTURE1);
 	configureTexture(1);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_frameWidth / 2, m_frameHeight / 2, 0,
-		     GL_RED, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, m_frameWidth / 2, m_frameHeight / 2, 0,
+		     GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 	checkError("YUV shader texture 1");
 
 	glActiveTexture(GL_TEXTURE2);
 	configureTexture(2);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_frameWidth / 2, m_frameHeight / 2, 0,
-		     GL_RED, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, m_frameWidth / 2, m_frameHeight / 2, 0,
+		     GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 	checkError("YUV shader texture 2");
 
 	QString codeHead = QString("uniform sampler2D ytex;"
@@ -583,7 +583,7 @@ void CaptureWinGLEngine::render_YUV(__u32 format)
 	GLint Y = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "ytex");
 	glUniform1i(Y, 0);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
-			GL_RED, GL_UNSIGNED_BYTE, m_frameData);
+			GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData);
 	checkError("YUV paint ytex");
 
 	glActiveTexture(GL_TEXTURE1);
@@ -591,7 +591,7 @@ void CaptureWinGLEngine::render_YUV(__u32 format)
 	GLint U = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "utex");
 	glUniform1i(U, 1);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / 2, m_frameHeight / 2,
-			GL_RED, GL_UNSIGNED_BYTE, m_frameData == NULL ? NULL : &m_frameData[idxU]);
+			GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData == NULL ? NULL : &m_frameData[idxU]);
 	checkError("YUV paint utex");
 
 	glActiveTexture(GL_TEXTURE2);
@@ -599,7 +599,7 @@ void CaptureWinGLEngine::render_YUV(__u32 format)
 	GLint V = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "vtex");
 	glUniform1i(V, 2);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / 2, m_frameHeight / 2,
-			GL_RED, GL_UNSIGNED_BYTE, m_frameData == NULL ? NULL : &m_frameData[idxV]);
+			GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData == NULL ? NULL : &m_frameData[idxV]);
 	checkError("YUV paint vtex");
 }
 
@@ -638,14 +638,14 @@ void CaptureWinGLEngine::shader_NV16M(__u32 format)
 
 	glActiveTexture(GL_TEXTURE0);
 	configureTexture(0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_frameWidth, m_frameHeight, 0,
-		     GL_RED, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, m_frameWidth, m_frameHeight, 0,
+		     GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 	checkError("NV16M shader texture 0");
 
 	glActiveTexture(GL_TEXTURE1);
 	configureTexture(1);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_frameWidth, m_frameHeight, 0,
-		     GL_RED, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, m_frameWidth, m_frameHeight, 0,
+		     GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 	checkError("NV16M shader texture 1");
 
 	QString codeHead = QString("uniform sampler2D ytex;"
@@ -693,7 +693,7 @@ void CaptureWinGLEngine::render_NV16M(__u32 format)
 	GLint Y = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "ytex");
 	glUniform1i(Y, 0);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
-			GL_RED, GL_UNSIGNED_BYTE, m_frameData);
+			GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData);
 	checkError("NV16M paint ytex");
 
 	glActiveTexture(GL_TEXTURE1);
@@ -701,7 +701,7 @@ void CaptureWinGLEngine::render_NV16M(__u32 format)
 	GLint UV = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "uvtex");
 	glUniform1i(UV, 1);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
-			GL_RED, GL_UNSIGNED_BYTE, m_frameData2);
+			GL_LUMINANCE, GL_UNSIGNED_BYTE, m_frameData2);
 	checkError("NV16M paint");
 }
 
