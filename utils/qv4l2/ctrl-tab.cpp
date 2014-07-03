@@ -211,6 +211,10 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 	QSpinBox *spin;
 	QSlider *slider;
 	struct v4l2_querymenu qmenu;
+	QWidget *wContainer = new QWidget();
+	QHBoxLayout *m_boxLayout = new QHBoxLayout(wContainer);
+	m_boxLayout->setMargin(0);
+	unsigned dif;
 
 	switch (qctrl.type) {
 	case V4L2_CTRL_TYPE_INTEGER:
@@ -222,18 +226,41 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 			slider->setMaximum(qctrl.maximum);
 			slider->setSingleStep(qctrl.step);
 			slider->setSliderPosition(qctrl.default_value);
-			addWidget(grid, m_widgetMap[qctrl.id]);
+
+			spin = new QSpinBox(p);
+			spin->setRange(qctrl.minimum, qctrl.maximum);
+
+			m_boxLayout->addWidget(slider);
+			m_boxLayout->addWidget(spin);
+			addWidget(grid, wContainer);
+
+			connect(spin, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
+			connect(slider, SIGNAL(valueChanged(int)), spin, SLOT(setValue(int)));
 			connect(m_widgetMap[qctrl.id], SIGNAL(valueChanged(int)),
 				m_sigMapper, SLOT(map()));
 			break;
 		}
 
-		if (qctrl.maximum - qctrl.minimum <= 255) {
+		dif = qctrl.maximum - qctrl.minimum;
+		if (dif <= 0xffffU) {
 			m_widgetMap[qctrl.id] = spin = new QSpinBox(p);
 			spin->setMinimum(qctrl.minimum);
 			spin->setMaximum(qctrl.maximum);
 			spin->setSingleStep(qctrl.step);
-			addWidget(grid, m_widgetMap[qctrl.id]);
+
+			slider = new QSlider(Qt::Horizontal, p);
+			slider->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+			slider->setMinimum(qctrl.minimum);
+			slider->setMaximum(qctrl.maximum);
+			slider->setSingleStep(qctrl.step);
+			slider->setSliderPosition(qctrl.default_value);
+
+			m_boxLayout->addWidget(slider);
+			m_boxLayout->addWidget(spin);
+			wContainer->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+			addWidget(grid, wContainer);
+			connect(spin, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
+			connect(slider, SIGNAL(valueChanged(int)), spin, SLOT(setValue(int)));
 			connect(m_widgetMap[qctrl.id], SIGNAL(valueChanged(int)),
 				m_sigMapper, SLOT(map()));
 			break;
@@ -459,6 +486,7 @@ int ApplicationWindow::getVal(unsigned id)
 	v4l2_querymenu qmenu;
 	int i, idx;
 	int v = 0;
+	unsigned dif;
 
 	switch (qctrl.type) {
 	case V4L2_CTRL_TYPE_INTEGER:
@@ -467,7 +495,8 @@ int ApplicationWindow::getVal(unsigned id)
 			break;
 		}
 
-		if (qctrl.maximum - qctrl.minimum <= 255) {
+		dif = qctrl.maximum - qctrl.minimum;
+		if (dif <= 0xffffU) {
 			v = static_cast<QSpinBox *>(w)->value();
 			break;
 		}
@@ -732,12 +761,14 @@ void ApplicationWindow::setVal(unsigned id, int v)
 	v4l2_querymenu qmenu;
 	QWidget *w = m_widgetMap[qctrl.id];
 	int i, idx;
+	unsigned dif;
 
 	switch (qctrl.type) {
 	case V4L2_CTRL_TYPE_INTEGER:
+		dif = qctrl.maximum - qctrl.minimum;
 		if (qctrl.flags & V4L2_CTRL_FLAG_SLIDER)
 			static_cast<QSlider *>(w)->setValue(v);
-		else if (qctrl.maximum - qctrl.minimum <= 255)
+		else if (dif <= 0xffffU)
 			static_cast<QSpinBox *>(w)->setValue(v);
 		else
 			static_cast<QLineEdit *>(w)->setText(QString::number(v));
