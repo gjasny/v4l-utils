@@ -81,12 +81,23 @@ bool CaptureWinGL::isSupported()
 
 void CaptureWinGL::setColorspace(unsigned colorspace)
 {
+#ifdef HAVE_QTGL
 	m_videoSurface.setColorspace(colorspace);
+#endif
 }
 
 void CaptureWinGL::setDisplayColorspace(unsigned colorspace)
 {
+#ifdef HAVE_QTGL
 	m_videoSurface.setDisplayColorspace(colorspace);
+#endif
+}
+
+void CaptureWinGL::setBlending(bool enable)
+{
+#ifdef HAVE_QTGL
+	m_videoSurface.setBlending(enable);
+#endif
 }
 
 #ifdef HAVE_QTGL

@@ -112,7 +112,7 @@ public:
 	static bool isSupported();
 	void setColorspace(unsigned colorspace);
 	void setDisplayColorspace(unsigned colorspace);
-	void setBlending(bool enable) { m_videoSurface.setBlending(enable); }
+	void setBlending(bool enable);
 
 protected:
 	void resizeEvent(QResizeEvent *event);
