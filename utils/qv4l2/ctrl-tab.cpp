@@ -219,46 +219,24 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 	switch (qctrl.type) {
 	case V4L2_CTRL_TYPE_INTEGER:
 		addLabel(grid, name);
-		if (qctrl.flags & V4L2_CTRL_FLAG_SLIDER) {
-			m_widgetMap[qctrl.id] = slider = new QSlider(Qt::Horizontal, p);
-			slider->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
-			slider->setMinimum(qctrl.minimum);
-			slider->setMaximum(qctrl.maximum);
-			slider->setSingleStep(qctrl.step);
-			slider->setSliderPosition(qctrl.default_value);
-
-			spin = new QSpinBox(p);
-			spin->setRange(qctrl.minimum, qctrl.maximum);
-
-			m_boxLayout->addWidget(slider);
-			m_boxLayout->addWidget(spin);
-			addWidget(grid, wContainer);
-
-			connect(spin, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
-			connect(slider, SIGNAL(valueChanged(int)), spin, SLOT(setValue(int)));
-			connect(m_widgetMap[qctrl.id], SIGNAL(valueChanged(int)),
-				m_sigMapper, SLOT(map()));
-			break;
-		}
-
 		dif = qctrl.maximum - qctrl.minimum;
-		if (dif <= 0xffffU) {
-			m_widgetMap[qctrl.id] = spin = new QSpinBox(p);
-			spin->setMinimum(qctrl.minimum);
-			spin->setMaximum(qctrl.maximum);
-			spin->setSingleStep(qctrl.step);
-
-			slider = new QSlider(Qt::Horizontal, p);
+		if (dif <= 0xffffU || (qctrl.flags & V4L2_CTRL_FLAG_SLIDER)) {
+			m_sliderMap[qctrl.id] = slider = new QSlider(Qt::Horizontal, p);
 			slider->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
 			slider->setMinimum(qctrl.minimum);
 			slider->setMaximum(qctrl.maximum);
 			slider->setSingleStep(qctrl.step);
 			slider->setSliderPosition(qctrl.default_value);
+
+			m_widgetMap[qctrl.id] = spin = new QSpinBox(p);
+			spin->setRange(qctrl.minimum, qctrl.maximum);
+			spin->setSingleStep(qctrl.step);
 
 			m_boxLayout->addWidget(slider);
 			m_boxLayout->addWidget(spin);
 			wContainer->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 			addWidget(grid, wContainer);
+
 			connect(spin, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
 			connect(slider, SIGNAL(valueChanged(int)), spin, SLOT(setValue(int)));
 			connect(m_widgetMap[qctrl.id], SIGNAL(valueChanged(int)),
@@ -358,8 +336,11 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 	subscribe_event(sub);
 
 	m_sigMapper->setMapping(m_widgetMap[qctrl.id], qctrl.id);
-	if (qctrl.flags & CTRL_FLAG_DISABLED)
+	if (qctrl.flags & CTRL_FLAG_DISABLED) {
 		m_widgetMap[qctrl.id]->setDisabled(true);
+		if (m_sliderMap.find(qctrl.id) != m_sliderMap.end())
+			m_sliderMap[qctrl.id]->setDisabled(true);
+	}
 }
 
 void ApplicationWindow::ctrlAction(int id)
@@ -379,12 +360,6 @@ void ApplicationWindow::ctrlAction(int id)
 	if (ctrl == CTRL_REFRESH) {
 		refresh(ctrl_class);
 		return;
-	}
-	if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER &&
-	    (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_SLIDER)) {
-		QWidget *w = m_widgetMap[id];
-		int v = static_cast<QSlider *>(w)->value();
-		info(QString("Value: %1").arg(v));
 	}
 	if (!update && !all && m_ctrlMap[id].type != V4L2_CTRL_TYPE_BUTTON)
 		return;
@@ -490,13 +465,8 @@ int ApplicationWindow::getVal(unsigned id)
 
 	switch (qctrl.type) {
 	case V4L2_CTRL_TYPE_INTEGER:
-		if (qctrl.flags & V4L2_CTRL_FLAG_SLIDER) {
-			v = static_cast<QSlider *>(w)->value();
-			break;
-		}
-
 		dif = qctrl.maximum - qctrl.minimum;
-		if (dif <= 0xffffU) {
+		if (dif <= 0xffffU || (qctrl.flags & V4L2_CTRL_FLAG_SLIDER)) {
 			v = static_cast<QSpinBox *>(w)->value();
 			break;
 		}
@@ -587,6 +557,42 @@ void ApplicationWindow::updateCtrl(unsigned id)
 	}
 }
 
+void ApplicationWindow::updateCtrlRange(unsigned id)
+{
+	const v4l2_queryctrl &qctrl = m_ctrlMap[id];
+	QLineEdit *edit;
+	QIntValidator *val;
+	unsigned dif;
+
+	switch (qctrl.type) {
+	case V4L2_CTRL_TYPE_INTEGER:
+		dif = qctrl.maximum - qctrl.minimum;
+		if (dif <= 0xffffU || (qctrl.flags & V4L2_CTRL_FLAG_SLIDER)) {
+			QSlider *slider = static_cast<QSlider *>(m_sliderMap[id]);
+			slider->setMinimum(qctrl.minimum);
+			slider->setMaximum(qctrl.maximum);
+			slider->setSingleStep(qctrl.step);
+			slider->setSliderPosition(qctrl.default_value);
+
+			QSpinBox *spin = static_cast<QSpinBox *>(m_widgetMap[id]);
+			spin->setRange(qctrl.minimum, qctrl.maximum);
+			spin->setSingleStep(qctrl.step);
+			break;
+		}
+
+		edit = static_cast<QLineEdit *>(m_widgetMap[id]);
+		val = new QIntValidator(qctrl.minimum, qctrl.maximum, edit->parent());
+		// FIXME: will this delete the old validator?
+		edit->setValidator(val);
+		break;
+
+	case V4L2_CTRL_TYPE_STRING:
+		QLineEdit *edit = static_cast<QLineEdit *>(m_widgetMap[id]);
+		edit->setMaxLength(qctrl.maximum);
+		break;
+	}
+}
+
 void ApplicationWindow::refresh(unsigned ctrl_class)
 {
 	if (!m_haveExtendedUserCtrls && ctrl_class == V4L2_CTRL_CLASS_USER) {
@@ -605,6 +611,8 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 			}
 			setVal(id, c.value);
 			m_widgetMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
+			if (m_sliderMap.find(id) != m_sliderMap.end())
+				m_sliderMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
 		}
 		return;
 	}
@@ -652,6 +660,8 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 			else
 				setVal(id, c[i].value);
 			m_widgetMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
+			if (m_sliderMap.find(id) != m_sliderMap.end())
+				m_sliderMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
 		}
 	}
 	delete [] c;
@@ -766,9 +776,7 @@ void ApplicationWindow::setVal(unsigned id, int v)
 	switch (qctrl.type) {
 	case V4L2_CTRL_TYPE_INTEGER:
 		dif = qctrl.maximum - qctrl.minimum;
-		if (qctrl.flags & V4L2_CTRL_FLAG_SLIDER)
-			static_cast<QSlider *>(w)->setValue(v);
-		else if (dif <= 0xffffU)
+		if (dif <= 0xffffU || (qctrl.flags & V4L2_CTRL_FLAG_SLIDER))
 			static_cast<QSpinBox *>(w)->setValue(v);
 		else
 			static_cast<QLineEdit *>(w)->setText(QString::number(v));

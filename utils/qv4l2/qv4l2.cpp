@@ -333,6 +333,10 @@ void ApplicationWindow::ctrlEvent()
 		m_ctrlMap[ev.id].step = ev.u.ctrl.step;
 		m_ctrlMap[ev.id].default_value = ev.u.ctrl.default_value;
 		m_widgetMap[ev.id]->setDisabled(m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED);
+		if (m_sliderMap.find(ev.id) != m_sliderMap.end())
+			m_sliderMap[ev.id]->setDisabled(m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED);
+		if (ev.u.ctrl.changes & V4L2_EVENT_CTRL_CH_RANGE)
+			updateCtrlRange(ev.id);
 		switch (m_ctrlMap[ev.id].type) {
 		case V4L2_CTRL_TYPE_INTEGER:
 		case V4L2_CTRL_TYPE_INTEGER_MENU:
@@ -1198,6 +1202,7 @@ void ApplicationWindow::closeDevice()
 	}
 	m_ctrlMap.clear();
 	m_widgetMap.clear();
+	m_sliderMap.clear();
 	m_classMap.clear();
 }
 
