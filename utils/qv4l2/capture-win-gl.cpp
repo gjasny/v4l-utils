@@ -47,7 +47,11 @@ void CaptureWinGL::resizeEvent(QResizeEvent *event)
 {
 #ifdef HAVE_QTGL
 	QSize margins = getMargins();
-	m_videoSurface.setSize(width() - margins.width(), height() - margins.height());
+	QSize frame = QSize(width() - margins.width(), height() - margins.height());
+	QSize sizedFrame = CaptureWin::scaleFrameSize(QSize(frame.width(), frame.height()),
+						      QSize(m_frameInfo.frameWidth,
+							    m_frameInfo.frameHeight));
+	m_videoSurface.setSize(sizedFrame.width(), sizedFrame.height());
 #endif
 	event->accept();
 }
@@ -57,6 +61,7 @@ void CaptureWinGL::setRenderFrame()
 	// Get/copy (TODO: remove CaptureWinGLEngine and use direct or use pointer)
 #ifdef HAVE_QTGL
 	m_videoSurface.setFrame(m_frameInfo.frameWidth, m_frameInfo.frameHeight,
+				m_cropInfo.cropW, m_cropInfo.cropH,
 				m_frameInfo.format,
 				m_frameInfo.planeData[0],
 				m_frameInfo.planeData[1]);
@@ -114,6 +119,8 @@ void CaptureWinGL::setBlending(bool enable)
 CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_frameHeight(0),
 	m_frameWidth(0),
+	m_cropHeight(0),
+	m_cropWidth(0),
 	m_colorspace(V4L2_COLORSPACE_REC709),
 	m_displayColorspace(V4L2_COLORSPACE_SRGB),
 	m_screenTextureCount(0),
@@ -230,14 +237,9 @@ void CaptureWinGLEngine::initializeGL()
 
 void CaptureWinGLEngine::setSize(int width, int height)
 {
-	QSize sizedFrame = CaptureWin::scaleFrameSize(QSize(width, height), QSize(m_frameWidth, m_frameHeight));
-
-	width = sizedFrame.width();
-	height = sizedFrame.height();
-
+// TODO: This just locks the aspect ratio, does not limit max size. Why?
 	if (width > 0 && height > 0) {
 		setMaximumSize(width, height);
-		resizeGL(width, height); // TODO: necessary? Always called by resizeEvent()
 	}
 }
 
@@ -246,12 +248,16 @@ void CaptureWinGLEngine::resizeGL(int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-void CaptureWinGLEngine::setFrame(int width, int height, __u32 format, unsigned char *data, unsigned char *data2)
+void CaptureWinGLEngine::setFrame(int width, int height, int cropWidth, int cropHeight,
+				  __u32 format, unsigned char *data, unsigned char *data2)
 {
-	if (format != m_frameFormat || width != m_frameWidth || height != m_frameHeight) {
+	if (format != m_frameFormat || width != m_frameWidth || height != m_frameHeight
+	    || cropWidth != m_cropWidth || cropHeight != m_cropHeight) {
 		m_formatChange = true;
 		m_frameWidth = width;
 		m_frameHeight = height;
+		m_cropWidth = cropWidth;
+		m_cropHeight = cropHeight;
 		m_frameFormat = format;
 	}
 

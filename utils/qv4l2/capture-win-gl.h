@@ -42,8 +42,8 @@ public:
 	~CaptureWinGLEngine();
 
 	void stop();
-	void setFrame(int width, int height, __u32 format,
-			unsigned char *data, unsigned char *data2);
+	void setFrame(int width, int height, int cropWidth, int cropHeight,
+		      __u32 format, unsigned char *data, unsigned char *data2);
 	bool hasNativeFormat(__u32 format);
 	void setSize(int width, int height);
 	void setColorspace(unsigned colorspace);
@@ -84,6 +84,8 @@ private:
 
 	int m_frameHeight;
 	int m_frameWidth;
+	int m_cropHeight;
+	int m_cropWidth;
 	unsigned m_colorspace;
 	unsigned m_field;
 	unsigned m_displayColorspace;
