@@ -106,7 +106,7 @@ public:
 	bool qbuf_user(int index, __u32 buftype, void *ptr[], size_t length[]);
 	bool streamon(__u32 buftype);
 	bool streamoff(__u32 buftype);
-	v4l2_fract g_pixel_aspect(unsigned type);
+	v4l2_fract g_pixel_aspect(unsigned type, unsigned &width, unsigned &height);
 
 	inline bool reqbufs_mmap_cap(v4l2_requestbuffers &reqbuf, int count = 0) {
 		return reqbufs_mmap(reqbuf, V4L2_BUF_TYPE_VIDEO_CAPTURE, count);

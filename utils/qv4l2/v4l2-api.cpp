@@ -318,13 +318,29 @@ bool v4l2::try_fmt(v4l2_format &fmt)
 
 bool v4l2::s_fmt(v4l2_format &fmt)
 {
+	v4l2_selection sel;
+
 	if (V4L2_TYPE_IS_MULTIPLANAR(fmt.type)) {
 		fmt.fmt.pix_mp.plane_fmt[0].bytesperline = 0;
 		fmt.fmt.pix_mp.plane_fmt[1].bytesperline = 0;
 	} else {
 		fmt.fmt.pix.bytesperline = 0;
 	}
-	return ioctl("Set Capture Format", VIDIOC_S_FMT, &fmt);
+	bool res = ioctl("Set Capture Format", VIDIOC_S_FMT, &fmt);
+	if (!res || fmt.type == V4L2_BUF_TYPE_VBI_CAPTURE)
+		return res;
+	memset(&sel, 0, sizeof(sel));
+	sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	sel.target = V4L2_SEL_TGT_COMPOSE;
+	if (V4L2_TYPE_IS_MULTIPLANAR(fmt.type)) {
+		sel.r.width = fmt.fmt.pix_mp.width;
+		sel.r.height = fmt.fmt.pix_mp.height;
+	} else {
+		sel.r.width = fmt.fmt.pix.width;
+		sel.r.height = fmt.fmt.pix.height;
+	}
+	ioctl(VIDIOC_S_SELECTION, &sel);
+	return true;
 }
 
 bool v4l2::enum_input(v4l2_input &in, bool init, int index)
@@ -656,7 +672,7 @@ bool v4l2::get_interval(unsigned type, v4l2_fract &interval)
 	return false;
 }
 
-v4l2_fract v4l2::g_pixel_aspect(unsigned type)
+v4l2_fract v4l2::g_pixel_aspect(unsigned type, unsigned &width, unsigned &height)
 {
 	v4l2_cropcap ratio;
 	v4l2_std_id std;
@@ -665,15 +681,20 @@ v4l2_fract v4l2::g_pixel_aspect(unsigned type)
 	static const v4l2_fract hz60 = { 11, 10 };
 
 	ratio.type = type;
+	width = 720;
+	height = 480;
 	if (ioctl(VIDIOC_CROPCAP, &ratio) < 0) {
 		if (!g_std(std))
 			return square;
 		if (std & V4L2_STD_525_60)
 			return hz60;
+		height = 576;
 		if (std & V4L2_STD_625_50)
 			return hz50;
 		return square;
 	}
+	width = ratio.defrect.width;
+	height = ratio.defrect.height;
 	if (!ratio.pixelaspect.numerator || !ratio.pixelaspect.denominator)
 		return square;
 	return ratio.pixelaspect;

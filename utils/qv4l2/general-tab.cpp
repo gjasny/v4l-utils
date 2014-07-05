@@ -1529,10 +1529,11 @@ void GeneralTab::changePixelAspectRatio()
 double GeneralTab::getPixelAspectRatio()
 {
 	v4l2_fract ratio = { 1, 1 };
+	unsigned w = 720, h = 480;
 
 	switch (m_pixelAspectRatio->currentIndex()) {
 	case 0:
-		ratio = g_pixel_aspect(m_buftype);
+		ratio = g_pixel_aspect(m_buftype, w, h);
 		break;
 	case 2:
 		ratio.numerator = 11;
@@ -1545,10 +1546,12 @@ double GeneralTab::getPixelAspectRatio()
 	case 4:
 		ratio.numerator = 11;
 		ratio.denominator = 12;
+		h = 576;
 		break;
 	case 5:
 		ratio.numerator = 11;
 		ratio.denominator = 16;
+		h = 576;
 		break;
 	default:
 		break;
@@ -1557,9 +1560,39 @@ double GeneralTab::getPixelAspectRatio()
 	m_pixelAspectRatio->setWhatsThis(QString("Pixel Aspect Ratio y:x = %1:%2")
 			 .arg(ratio.numerator).arg(ratio.denominator));
 	m_pixelAspectRatio->setStatusTip(m_pixelAspectRatio->whatsThis());
+
+	v4l2_format fmt;
+	unsigned cur_width, cur_height;
+	unsigned cur_field;
+
+	g_fmt_cap(m_buftype, fmt);
+
+	if (isPlanar()) {
+		cur_width = fmt.fmt.pix_mp.width;
+		cur_height = fmt.fmt.pix_mp.height;
+		cur_field = fmt.fmt.pix_mp.field;
+	} else {
+		cur_width = fmt.fmt.pix.width;
+		cur_height = fmt.fmt.pix.height;
+		cur_field = fmt.fmt.pix.field;
+	}
+	if (cur_field == V4L2_FIELD_TOP ||
+	    cur_field == V4L2_FIELD_BOTTOM ||
+	    cur_field == V4L2_FIELD_ALTERNATE) {
+		// If we only capture a single field, then each pixel is twice
+		// as high and the default image height is half the reported
+		// height.
+		ratio.numerator *= 2;
+		h /= 2;
+	}
+
 	// Note: ratio is y / x, whereas we want x / y, so we return
 	// denominator / numerator.
-	return (double)ratio.denominator / ratio.numerator;
+	// In addition, the ratio is for the unscaled image (i.e., the default
+	// image rectangle as returned by VIDIOC_CROPCAP). So we have to
+	// compensate for the current scaling factor.
+	return (((double)ratio.denominator * w) / cur_width) /
+	       (((double)ratio.numerator * h) / cur_height);
 }
 
 void GeneralTab::updateFrameInterval()
