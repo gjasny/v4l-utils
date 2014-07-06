@@ -758,9 +758,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 
 			if (V4L2_TYPE_IS_MULTIPLANAR(buftype)) {
 				m_buffers[m_nbuffers].planes = buf.length;
-				printf("planes %d\n", buf.length);
 				for (unsigned p = 0; p < buf.length; p++) {
-				printf("plane %d\n", p);
 					m_buffers[m_nbuffers].length[p] = planes[p].length;
 					m_buffers[m_nbuffers].start[p] = mmap(planes[p].length, planes[p].m.mem_offset);
 					if (MAP_FAILED == m_buffers[m_nbuffers].start[p]) {
