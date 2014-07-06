@@ -45,6 +45,7 @@ class QComboBox;
 class QCheckBox;
 class QSpinBox;
 class QPushButton;
+class QSlider;
 
 class GeneralTab: public QGridLayout, public v4l2
 {
@@ -90,8 +91,9 @@ public slots:
 signals:
 	void audioDeviceChanged();
 	void pixelAspectRatioChanged();
-	void cropChanged();
+	void croppingChanged();
 	void colorspaceChanged();
+	void clearBuffers();
 	void displayColorspaceChanged();
 
 private slots:
@@ -121,6 +123,8 @@ private slots:
 	void vbiMethodsChanged(int);
 	void changeAudioDevice();
 	void changePixelAspectRatio();
+	void cropChanged();
+	void composeChanged();
 
 private:
 	void updateVideoInput();
@@ -139,6 +143,8 @@ private:
 	void updateFrameSize();
 	void updateFrameInterval();
 	void updateVidOutFormat();
+	void updateCrop();
+	void updateCompose();
 	int addAudioDevice(void *hint, int deviceNum);
 	bool filterAudioInDevice(QString &deviceName);
 	bool filterAudioOutDevice(QString &deviceName);
@@ -198,7 +204,7 @@ private:
 	QComboBox *m_pixelAspectRatio;
 	QComboBox *m_colorspace;
 	QComboBox *m_displayColorspace;
-	QComboBox *m_crop;
+	QComboBox *m_cropping;
 	QPushButton *m_qryTimings;
 	QDoubleSpinBox *m_freq;
 	QComboBox *m_freqTable;
@@ -220,6 +226,14 @@ private:
 	QComboBox *m_vbiMethods;
 	QComboBox *m_audioInDevice;
 	QComboBox *m_audioOutDevice;
+	QSlider *m_cropWidth;
+	QSlider *m_cropLeft;
+	QSlider *m_cropHeight;
+	QSlider *m_cropTop;
+	QSlider *m_composeWidth;
+	QSlider *m_composeLeft;
+	QSlider *m_composeHeight;
+	QSlider *m_composeTop;
 };
 
 #endif

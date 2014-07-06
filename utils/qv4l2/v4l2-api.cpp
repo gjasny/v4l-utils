@@ -318,29 +318,13 @@ bool v4l2::try_fmt(v4l2_format &fmt)
 
 bool v4l2::s_fmt(v4l2_format &fmt)
 {
-	v4l2_selection sel;
-
 	if (V4L2_TYPE_IS_MULTIPLANAR(fmt.type)) {
 		fmt.fmt.pix_mp.plane_fmt[0].bytesperline = 0;
 		fmt.fmt.pix_mp.plane_fmt[1].bytesperline = 0;
 	} else {
 		fmt.fmt.pix.bytesperline = 0;
 	}
-	bool res = ioctl("Set Capture Format", VIDIOC_S_FMT, &fmt);
-	if (!res || fmt.type == V4L2_BUF_TYPE_VBI_CAPTURE)
-		return res;
-	memset(&sel, 0, sizeof(sel));
-	sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	sel.target = V4L2_SEL_TGT_COMPOSE;
-	if (V4L2_TYPE_IS_MULTIPLANAR(fmt.type)) {
-		sel.r.width = fmt.fmt.pix_mp.width;
-		sel.r.height = fmt.fmt.pix_mp.height;
-	} else {
-		sel.r.width = fmt.fmt.pix.width;
-		sel.r.height = fmt.fmt.pix.height;
-	}
-	ioctl(VIDIOC_S_SELECTION, &sel);
-	return true;
+	return ioctl("Set Capture Format", VIDIOC_S_FMT, &fmt);
 }
 
 bool v4l2::enum_input(v4l2_input &in, bool init, int index)
@@ -698,4 +682,51 @@ v4l2_fract v4l2::g_pixel_aspect(unsigned type, unsigned &width, unsigned &height
 	if (!ratio.pixelaspect.numerator || !ratio.pixelaspect.denominator)
 		return square;
 	return ratio.pixelaspect;
+}
+
+bool v4l2::has_crop()
+{
+	v4l2_crop crop;
+	v4l2_cropcap cropcap;
+
+	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	return ioctl_exists(VIDIOC_G_CROP, &crop) &&
+	       ioctl_exists(VIDIOC_S_CROP, &crop) &&
+	       ioctl_exists(VIDIOC_CROPCAP, &cropcap);
+}
+
+bool v4l2::input_has_crop()
+{
+	v4l2_crop crop;
+	v4l2_cropcap cropcap;
+
+	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	return ioctl(VIDIOC_G_CROP, &crop) == 0 &&
+	       ioctl(VIDIOC_S_CROP, &crop) == 0 &&
+	       ioctl(VIDIOC_CROPCAP, &cropcap) == 0 &&
+	       cropcap.bounds.width && cropcap.bounds.height;
+}
+
+bool v4l2::has_compose()
+{
+	v4l2_selection sel;
+
+	memset(&sel, 0, sizeof(sel));
+	sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	sel.target = V4L2_SEL_TGT_COMPOSE;
+	return ioctl_exists(VIDIOC_G_SELECTION, &sel) &&
+	       ioctl_exists(VIDIOC_S_SELECTION, &sel);
+}
+
+bool v4l2::input_has_compose()
+{
+	v4l2_selection sel;
+
+	memset(&sel, 0, sizeof(sel));
+	sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	sel.target = V4L2_SEL_TGT_COMPOSE;
+	return ioctl(VIDIOC_G_SELECTION, &sel) == 0 &&
+	       ioctl(VIDIOC_S_SELECTION, &sel) == 0;
 }

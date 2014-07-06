@@ -236,9 +236,10 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	}
 #endif
 	connect(m_genTab, SIGNAL(pixelAspectRatioChanged()), this, SLOT(updatePixelAspectRatio()));
-	connect(m_genTab, SIGNAL(cropChanged()), this, SLOT(updateCropping()));
+	connect(m_genTab, SIGNAL(croppingChanged()), this, SLOT(updateCropping()));
 	connect(m_genTab, SIGNAL(colorspaceChanged()), this, SLOT(updateColorspace()));
 	connect(m_genTab, SIGNAL(displayColorspaceChanged()), this, SLOT(updateDisplayColorspace()));
+	connect(m_genTab, SIGNAL(clearBuffers()), this, SLOT(clearBuffers()));
 	m_tabs->addTab(w, "General Settings");
 	addTabs();
 	if (caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE)) {
@@ -678,8 +679,16 @@ void ApplicationWindow::capFrame()
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, displaybuf, displaybuf2, status);
 
-	if (m_capMethod == methodMmap || m_capMethod == methodUser)
+	if (m_capMethod == methodMmap || m_capMethod == methodUser) {
+		if (m_buffers[buf.index].clear) {
+			memset(m_buffers[buf.index].start[0], 0, m_buffers[buf.index].length[0]);
+			if (V4L2_TYPE_IS_MULTIPLANAR(buf.type))
+				memset(m_buffers[buf.index].start[1], 0, m_buffers[buf.index].length[1]);
+			m_buffers[buf.index].clear = false;
+		}
+			
 		qbuf(buf);
+	}
 
 	curStatus = statusBar()->currentMessage();
 	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
@@ -969,6 +978,13 @@ void ApplicationWindow::updateDisplayColorspace()
 {
 	if (m_capture != NULL)
 		m_capture->setDisplayColorspace(m_genTab->getDisplayColorspace());
+}
+
+void ApplicationWindow::clearBuffers()
+{
+	if (m_capture && m_buffers)
+		for (unsigned b = 0; b < m_nbuffers; b++)
+			m_buffers[b].clear = true;
 }
 
 void ApplicationWindow::startAudio()

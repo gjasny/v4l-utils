@@ -107,6 +107,10 @@ public:
 	bool streamon(__u32 buftype);
 	bool streamoff(__u32 buftype);
 	v4l2_fract g_pixel_aspect(unsigned type, unsigned &width, unsigned &height);
+	bool has_crop();
+	bool input_has_crop();
+	bool has_compose();
+	bool input_has_compose();
 
 	inline bool reqbufs_mmap_cap(v4l2_requestbuffers &reqbuf, int count = 0) {
 		return reqbufs_mmap(reqbuf, V4L2_BUF_TYPE_VIDEO_CAPTURE, count);

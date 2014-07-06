@@ -22,6 +22,7 @@
 #include "../libv4l2util/libv4l2util.h"
 
 #include <QSpinBox>
+#include <QSlider>
 #include <QComboBox>
 #include <QCheckBox>
 #include <QPushButton>
@@ -63,7 +64,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_pixelAspectRatio(NULL),
 	m_colorspace(NULL),
 	m_displayColorspace(NULL),
-	m_crop(NULL),
+	m_cropping(NULL),
 	m_qryTimings(NULL),
 	m_freq(NULL),
 	m_freqTable(NULL),
@@ -84,7 +85,15 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_capMethods(NULL),
 	m_vbiMethods(NULL),
 	m_audioInDevice(NULL),
-	m_audioOutDevice(NULL)
+	m_audioOutDevice(NULL),
+	m_cropWidth(NULL),
+	m_cropLeft(NULL),
+	m_cropHeight(NULL),
+	m_cropTop(NULL),
+	m_composeWidth(NULL),
+	m_composeLeft(NULL),
+	m_composeHeight(NULL),
+	m_composeTop(NULL)
 {
 	m_device.append(device);
 	setSpacing(3);
@@ -182,18 +191,18 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		addWidget(m_pixelAspectRatio);
 		connect(m_pixelAspectRatio, SIGNAL(activated(int)), SLOT(changePixelAspectRatio()));
 
-		m_crop = new QComboBox(parent);
-		m_crop->addItem("None");
-		m_crop->addItem("Top and Bottom Line");
-		m_crop->addItem("Widescreen 14:9 (Letterbox)");
-		m_crop->addItem("Widescreen 16:9 (Letterbox)");
-		m_crop->addItem("Cinema 1.85:1 (Letterbox)");
-		m_crop->addItem("Cinema 2.39:1 (Letterbox)");
-		m_crop->addItem("Traditional 4:3 (Pillarbox)");
+		m_cropping = new QComboBox(parent);
+		m_cropping->addItem("None");
+		m_cropping->addItem("Top and Bottom Line");
+		m_cropping->addItem("Widescreen 14:9 (Letterbox)");
+		m_cropping->addItem("Widescreen 16:9 (Letterbox)");
+		m_cropping->addItem("Cinema 1.85:1 (Letterbox)");
+		m_cropping->addItem("Cinema 2.39:1 (Letterbox)");
+		m_cropping->addItem("Traditional 4:3 (Pillarbox)");
 
 		addLabel("Cropping");
-		addWidget(m_crop);
-		connect(m_crop, SIGNAL(activated(int)), SIGNAL(cropChanged()));
+		addWidget(m_cropping);
+		connect(m_cropping, SIGNAL(activated(int)), SIGNAL(croppingChanged()));
 
 #ifdef HAVE_QTGL
 		m_colorspace = new QComboBox(parent);
@@ -219,6 +228,74 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		addWidget(m_displayColorspace);
 		connect(m_displayColorspace, SIGNAL(activated(int)), SIGNAL(displayColorspaceChanged()));
 #endif
+
+		if (has_crop()) {
+			m_cropWidth = new QSlider(Qt::Horizontal, parent);
+			m_cropWidth->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+			m_cropWidth->setRange(1, 100);
+			m_cropWidth->setSliderPosition(100);
+			addLabel("Crop Width");
+			addWidget(m_cropWidth);
+			connect(m_cropWidth, SIGNAL(valueChanged(int)), SLOT(cropChanged()));
+
+			m_cropLeft = new QSlider(Qt::Horizontal, parent);
+			m_cropLeft->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+			m_cropLeft->setRange(0, 100);
+			m_cropLeft->setSliderPosition(0);
+			addLabel("Crop Left Offset");
+			addWidget(m_cropLeft);
+			connect(m_cropLeft, SIGNAL(valueChanged(int)), SLOT(cropChanged()));
+
+			m_cropHeight = new QSlider(Qt::Horizontal, parent);
+			m_cropHeight->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+			m_cropHeight->setRange(1, 100);
+			m_cropHeight->setSliderPosition(100);
+			addLabel("Crop Height");
+			addWidget(m_cropHeight);
+			connect(m_cropHeight, SIGNAL(valueChanged(int)), SLOT(cropChanged()));
+
+			m_cropTop = new QSlider(Qt::Horizontal, parent);
+			m_cropTop->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+			m_cropTop->setRange(0, 100);
+			m_cropTop->setSliderPosition(0);
+			addLabel("Crop Top Offset");
+			addWidget(m_cropTop);
+			connect(m_cropTop, SIGNAL(valueChanged(int)), SLOT(cropChanged()));
+		}
+
+		if (has_compose()) {
+			m_composeWidth = new QSlider(Qt::Horizontal, parent);
+			m_composeWidth->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+			m_composeWidth->setRange(1, 100);
+			m_composeWidth->setSliderPosition(100);
+			addLabel("Compose Width");
+			addWidget(m_composeWidth);
+			connect(m_composeWidth, SIGNAL(valueChanged(int)), SLOT(composeChanged()));
+
+			m_composeLeft = new QSlider(Qt::Horizontal, parent);
+			m_composeLeft->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+			m_composeLeft->setRange(0, 100);
+			m_composeLeft->setSliderPosition(0);
+			addLabel("Compose Left Offset");
+			addWidget(m_composeLeft);
+			connect(m_composeLeft, SIGNAL(valueChanged(int)), SLOT(composeChanged()));
+
+			m_composeHeight = new QSlider(Qt::Horizontal, parent);
+			m_composeHeight->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+			m_composeHeight->setRange(1, 100);
+			m_composeHeight->setSliderPosition(100);
+			addLabel("Compose Height");
+			addWidget(m_composeHeight);
+			connect(m_composeHeight, SIGNAL(valueChanged(int)), SLOT(composeChanged()));
+
+			m_composeTop = new QSlider(Qt::Horizontal, parent);
+			m_composeTop->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+			m_composeTop->setRange(0, 100);
+			m_composeTop->setSliderPosition(0);
+			addLabel("Compose Top Offset");
+			addWidget(m_composeTop);
+			connect(m_composeTop, SIGNAL(valueChanged(int)), SLOT(composeChanged()));
+		}
 	}
 
 	if (!isRadio() && enum_input(vin, true)) {
@@ -1119,6 +1196,43 @@ void GeneralTab::vbiMethodsChanged(int idx)
 		  V4L2_BUF_TYPE_VIDEO_CAPTURE));
 }
 
+void GeneralTab::cropChanged()
+{
+	v4l2_crop crop;
+
+	if (!m_cropWidth->isEnabled())
+		return;
+
+	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	crop.c.width = m_cropWidth->value();
+	crop.c.left = m_cropLeft->value();
+	crop.c.height = m_cropHeight->value();
+	crop.c.top = m_cropTop->value();
+	if (ioctl("Set Crop Rectangle", VIDIOC_S_CROP, &crop))
+		updateVidCapFormat();
+	else
+		updateCrop();
+}
+
+void GeneralTab::composeChanged()
+{
+	v4l2_selection sel;
+
+	if (!m_composeWidth->isEnabled() || !input_has_compose())
+		return;
+
+	sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	sel.target = V4L2_SEL_TGT_COMPOSE;
+	sel.r.width = m_composeWidth->value();
+	sel.r.left = m_composeLeft->value();
+	sel.r.height = m_composeHeight->value();
+	sel.r.top = m_composeTop->value();
+	if (ioctl("Set Compose Rectangle", VIDIOC_S_SELECTION, &sel))
+		updateVidCapFormat();
+	else
+		updateCompose();
+}
+
 void GeneralTab::updateVideoInput()
 {
 	int input;
@@ -1157,6 +1271,22 @@ void GeneralTab::updateVideoInput()
 	}
 	if (m_audioInput)
 		m_audioInput->setEnabled(in.audioset);
+	if (m_cropWidth) {
+		bool has_crop = input_has_crop();
+
+		m_cropWidth->setEnabled(has_crop);
+		m_cropLeft->setEnabled(has_crop);
+		m_cropHeight->setEnabled(has_crop);
+		m_cropTop->setEnabled(has_crop);
+	}
+	if (m_composeWidth) {
+		bool has_compose = input_has_compose();
+
+		m_composeWidth->setEnabled(has_compose);
+		m_composeLeft->setEnabled(has_compose);
+		m_composeHeight->setEnabled(has_compose);
+		m_composeTop->setEnabled(has_compose);
+	}
 }
 
 void GeneralTab::updateVideoOutput()
@@ -1409,6 +1539,8 @@ void GeneralTab::updateVidCapFormat()
 	}
 	m_vidCapFormats->setCurrentIndex(desc.index);
 	updateVidCapFields();
+	updateCrop();
+	updateCompose();
 }
 
 void GeneralTab::updateVidCapFields()
@@ -1445,6 +1577,83 @@ void GeneralTab::updateVidCapFields()
 				m_vidCapFields->setCurrentIndex(m_vidCapFields->count() - 1);
 		}
 	}
+}
+
+void GeneralTab::updateCrop()
+{
+	if (m_cropWidth == NULL || !m_cropWidth->isEnabled())
+		return;
+
+	v4l2_cropcap cropcap;
+	v4l2_rect &b = cropcap.bounds;
+	v4l2_crop crop;
+	v4l2_rect &c = crop.c;
+
+	cropcap.type = crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (ioctl(VIDIOC_CROPCAP, &cropcap) ||
+	    ioctl(VIDIOC_G_CROP, &crop))
+		return;
+
+	m_cropWidth->blockSignals(true);
+	m_cropLeft->blockSignals(true);
+	m_cropHeight->blockSignals(true);
+	m_cropTop->blockSignals(true);
+
+	m_cropWidth->setRange(8, b.width);
+	m_cropWidth->setSliderPosition(c.width);
+	if (b.width != c.width) {
+		m_cropLeft->setRange(b.left, b.left + b.width - c.width);
+		m_cropLeft->setSliderPosition(c.left);
+	}
+	m_cropHeight->setRange(8, b.height);
+	m_cropHeight->setSliderPosition(c.height);
+	if (b.height != c.height) {
+		m_cropTop->setRange(b.top, b.top + b.height - c.height);
+		m_cropTop->setSliderPosition(c.top);
+	}
+
+	m_cropWidth->blockSignals(false);
+	m_cropLeft->blockSignals(false);
+	m_cropHeight->blockSignals(false);
+	m_cropTop->blockSignals(false);
+}
+
+void GeneralTab::updateCompose()
+{
+	if (m_composeWidth == NULL || !m_composeWidth->isEnabled())
+		return;
+
+	v4l2_selection sel;
+	v4l2_rect &r = sel.r;
+
+	sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	sel.target = V4L2_SEL_TGT_COMPOSE;
+	if (ioctl(VIDIOC_G_SELECTION, &sel))
+		return;
+
+	m_composeWidth->blockSignals(true);
+	m_composeLeft->blockSignals(true);
+	m_composeHeight->blockSignals(true);
+	m_composeTop->blockSignals(true);
+
+	m_composeWidth->setRange(8, m_width);
+	m_composeWidth->setSliderPosition(r.width);
+	if (m_width != r.width) {
+		m_composeLeft->setRange(0, m_width - r.width);
+		m_composeLeft->setSliderPosition(r.left);
+	}
+	m_composeHeight->setRange(8, m_height);
+	m_composeHeight->setSliderPosition(r.height);
+	if (m_height != r.height) {
+		m_composeTop->setRange(0, m_height - r.height);
+		m_composeTop->setSliderPosition(r.top);
+	}
+
+	m_composeWidth->blockSignals(false);
+	m_composeLeft->blockSignals(false);
+	m_composeHeight->blockSignals(false);
+	m_composeTop->blockSignals(false);
+	emit clearBuffers();
 }
 
 void GeneralTab::updateFrameSize()
@@ -1500,7 +1709,7 @@ void GeneralTab::updateFrameSize()
 
 CropMethod GeneralTab::getCropMethod()
 {
-	switch (m_crop->currentIndex()) {
+	switch (m_cropping->currentIndex()) {
 	case 1:
 		return QV4L2_CROP_TB;
 	case 2:
