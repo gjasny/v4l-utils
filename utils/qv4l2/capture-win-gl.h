@@ -48,6 +48,7 @@ public:
 	void setSize(int width, int height);
 	void setColorspace(unsigned colorspace);
 	void setDisplayColorspace(unsigned colorspace);
+	void setField(unsigned field);
 	void setBlending(bool enable) { m_blending = enable; }
 
 protected:
@@ -84,6 +85,7 @@ private:
 	int m_frameHeight;
 	int m_frameWidth;
 	unsigned m_colorspace;
+	unsigned m_field;
 	unsigned m_displayColorspace;
 	int m_screenTextureCount;
 	bool m_formatChange;
@@ -111,6 +113,7 @@ public:
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported();
 	void setColorspace(unsigned colorspace);
+	void setField(unsigned field);
 	void setDisplayColorspace(unsigned colorspace);
 	void setBlending(bool enable);
 

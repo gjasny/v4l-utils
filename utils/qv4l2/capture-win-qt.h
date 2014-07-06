@@ -49,6 +49,7 @@ public:
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported() { return true; }
 	void setColorspace(unsigned colorspace) {}
+	void setField(unsigned field) {}
 	void setDisplayColorspace(unsigned colorspace) {}
 	void setBlending(bool enable) {}
 

@@ -758,7 +758,9 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 
 			if (V4L2_TYPE_IS_MULTIPLANAR(buftype)) {
 				m_buffers[m_nbuffers].planes = buf.length;
+				printf("planes %d\n", buf.length);
 				for (unsigned p = 0; p < buf.length; p++) {
+				printf("plane %d\n", p);
 					m_buffers[m_nbuffers].length[p] = planes[p].length;
 					m_buffers[m_nbuffers].start[p] = mmap(planes[p].length, planes[p].m.mem_offset);
 					if (MAP_FAILED == m_buffers[m_nbuffers].start[p]) {
@@ -1048,7 +1050,7 @@ void ApplicationWindow::capStart(bool start)
 	__u32 buftype = m_genTab->bufType();
 	bool isPlanar = m_genTab->isPlanar();
 	__u32 width, height, pixfmt;
-	unsigned colorspace;
+	unsigned colorspace, field;
 
 	if (!start) {
 		stopCapture();
@@ -1137,6 +1139,7 @@ void ApplicationWindow::capStart(bool start)
 		height = srcMPix.height;
 		pixfmt = srcMPix.pixelformat;
 		colorspace = srcMPix.colorspace;
+		field = srcMPix.field;
 		m_mustConvert = false;
 	} else if (m_capture->hasNativeFormat(srcPix.pixelformat)) {
 		dstPix.pixelformat = srcPix.pixelformat;
@@ -1144,6 +1147,7 @@ void ApplicationWindow::capStart(bool start)
 		height = srcPix.height;
 		pixfmt = srcPix.pixelformat;
 		colorspace = srcPix.colorspace;
+		field = srcPix.field;
 		m_mustConvert = false;
 	} else {
 		m_mustConvert = true;
@@ -1159,6 +1163,7 @@ void ApplicationWindow::capStart(bool start)
 		height = dstPix.height;
 		pixfmt = dstPix.pixelformat;
 		colorspace = dstPix.colorspace;
+		field = dstPix.field;
 	}
 
 	// Ensure that the initial image is large enough for native 32 bit per pixel formats
@@ -1171,6 +1176,7 @@ void ApplicationWindow::capStart(bool start)
 	if (m_genTab->getColorspace())
 		colorspace = m_genTab->getColorspace();
 	m_capture->setColorspace(colorspace);
+	m_capture->setField(field);
 	m_capture->setDisplayColorspace(m_genTab->getDisplayColorspace());
 	
 	m_capture->setFrame(m_capImage->width(), m_capImage->height(),

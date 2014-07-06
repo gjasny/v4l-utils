@@ -93,6 +93,13 @@ void CaptureWinGL::setDisplayColorspace(unsigned colorspace)
 #endif
 }
 
+void CaptureWinGL::setField(unsigned field)
+{
+#ifdef HAVE_QTGL
+	m_videoSurface.setField(field);
+#endif
+}
+
 void CaptureWinGL::setBlending(bool enable)
 {
 #ifdef HAVE_QTGL
@@ -171,6 +178,14 @@ void CaptureWinGLEngine::setDisplayColorspace(unsigned colorspace)
 		else
 			glDisable(GL_FRAMEBUFFER_SRGB);
 	}
+	m_formatChange = true;
+}
+
+void CaptureWinGLEngine::setField(unsigned field)
+{
+	if (m_field == field)
+		return;
+	m_field = field;
 	m_formatChange = true;
 }
 
@@ -584,13 +599,20 @@ void CaptureWinGLEngine::shader_YUV()
 	QString codeHead = QString("uniform sampler2D ytex;"
 				   "uniform sampler2D utex;"
 				   "uniform sampler2D vtex;"
+				   "uniform float tex_h;"
 				   "void main()"
 				   "{"
 				   "   vec2 xy = vec2(gl_TexCoord[0].xy);"
-				   "   float y = 1.1640625 * (texture2D(ytex, xy).r - 0.0625);"
+				   "   float ycoord = floor(xy.y * tex_h);");
+
+	if (m_field == V4L2_FIELD_SEQ_TB)
+		codeHead += "   xy.y = (mod(ycoord, 2.0) == 0.0) ? xy.y / 2.0 : xy.y / 2.0 + 0.5;";
+	else if (m_field == V4L2_FIELD_SEQ_BT)
+		codeHead += "   xy.y = (mod(ycoord, 2.0) == 0.0) ? xy.y / 2.0 + 0.5 : xy.y / 2.0;";
+
+	codeHead += 		   "   float y = 1.1640625 * (texture2D(ytex, xy).r - 0.0625);"
 				   "   float u = texture2D(utex, xy).r - 0.5;"
-				   "   float v = texture2D(vtex, xy).r - 0.5;"
-				   );
+				   "   float v = texture2D(vtex, xy).r - 0.5;";
 
 	QString codeTail = codeYUV2RGB() +
 			   codeTransformToLinear() +
@@ -611,6 +633,7 @@ void CaptureWinGLEngine::render_YUV(__u32 format)
 {
 	int idxU;
 	int idxV;
+
 	if (format == V4L2_PIX_FMT_YUV420) {
 		idxU = m_frameWidth * m_frameHeight;
 		idxV = idxU + (idxU / 4);
@@ -618,6 +641,9 @@ void CaptureWinGLEngine::render_YUV(__u32 format)
 		idxV = m_frameWidth * m_frameHeight;
 		idxU = idxV + (idxV / 4);
 	}
+
+	int idx = glGetUniformLocation(m_shaderProgram.programId(), "tex_h"); // Texture height
+	glUniform1f(idx, m_frameHeight);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
@@ -649,21 +675,21 @@ QString CaptureWinGLEngine::shader_NV16M_invariant(__u32 format)
 	switch (format) {
 	case V4L2_PIX_FMT_NV16M:
 		return QString("if (mod(xcoord, 2.0) == 0.0) {"
-			       "   u = texture2D(uvtex, vec2(pixelx, pixely)).r - 0.5;"
-			       "   v = texture2D(uvtex, vec2(pixelx + texl_w, pixely)).r - 0.5;"
+			       "   u = texture2D(uvtex, xy).r - 0.5;"
+			       "   v = texture2D(uvtex, vec2(xy.x + texl_w, xy.y)).r - 0.5;"
 			       "} else {"
-			       "   u = texture2D(uvtex, vec2(pixelx - texl_w, pixely)).r - 0.5;"
-			       "   v = texture2D(uvtex, vec2(pixelx, pixely)).r - 0.5;"
+			       "   u = texture2D(uvtex, vec2(xy.x - texl_w, xy.y)).r - 0.5;"
+			       "   v = texture2D(uvtex, xy).r - 0.5;"
 			       "}"
 			       );
 
 	case V4L2_PIX_FMT_NV61M:
 		return QString("if (mod(xcoord, 2.0) == 0.0) {"
-			       "   u = texture2D(uvtex, vec2(pixelx + texl_w, pixely)).r - 0.5;"
-			       "   v = texture2D(uvtex, vec2(pixelx, pixely)).r - 0.5;"
+			       "   u = texture2D(uvtex, vec2(xy.x + texl_w, xy.y)).r - 0.5;"
+			       "   v = texture2D(uvtex, xy).r - 0.5;"
 			       "} else {"
-			       "   u = texture2D(uvtex, vec2(pixelx, pixely)).r - 0.5;"
-			       "   v = texture2D(uvtex, vec2(pixelx - texl_w, pixely)).r - 0.5;"
+			       "   u = texture2D(uvtex, xy).r - 0.5;"
+			       "   v = texture2D(uvtex, vec2(xy.x - texl_w, xy.y)).r - 0.5;"
 			       "}"
 			       );
 
@@ -693,15 +719,22 @@ void CaptureWinGLEngine::shader_NV16M(__u32 format)
 				   "uniform sampler2D uvtex;"
 				   "uniform float texl_w;"
 				   "uniform float tex_w;"
+				   "uniform float tex_h;"
 				   "void main()"
 				   "{"
 				   "   vec2 xy = vec2(gl_TexCoord[0].xy);"
-				   "   float y = 1.1640625 * (texture2D(ytex, xy).r - 0.0625);"
-				   "   float u, v;"
-				   "   float pixelx = gl_TexCoord[0].x;"
-				   "   float pixely = gl_TexCoord[0].y;"
-				   "   float xcoord = floor(pixelx * tex_w);"
-				   );
+				   "   float ycoord = floor(xy.y * tex_h);");
+
+	if (m_field == V4L2_FIELD_SEQ_TB)
+		codeHead += "   xy.y = (mod(ycoord, 2.0) == 0.0) ? xy.y / 2.0 : xy.y / 2.0 + 0.5;";
+	else if (m_field == V4L2_FIELD_SEQ_BT)
+		codeHead += "   xy.y = (mod(ycoord, 2.0) == 0.0) ? xy.y / 2.0 + 0.5 : xy.y / 2.0;";
+
+	codeHead +=		   "   float u, v;"
+				   "   float xcoord = floor(xy.x * tex_w);"
+				   "   float y = 1.1640625 * (texture2D(ytex, xy).r - 0.0625);";
+
+
 
 	QString codeBody = shader_NV16M_invariant(format);
 
@@ -728,6 +761,8 @@ void CaptureWinGLEngine::render_NV16M(__u32 format)
 	glUniform1f(idx, 1.0 / m_frameWidth);
 	idx = glGetUniformLocation(m_shaderProgram.programId(), "tex_w"); // Texture width
 	glUniform1f(idx, m_frameWidth);
+	idx = glGetUniformLocation(m_shaderProgram.programId(), "tex_h"); // Texture height
+	glUniform1f(idx, m_frameHeight);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
@@ -751,10 +786,10 @@ QString CaptureWinGLEngine::shader_YUY2_invariant(__u32 format)
 	switch (format) {
 	case V4L2_PIX_FMT_YUYV:
 		return QString("if (mod(xcoord, 2.0) == 0.0) {"
-			       "   luma_chroma = texture2D(tex, vec2(pixelx, pixely));"
+			       "   luma_chroma = texture2D(tex, xy);"
 			       "   y = (luma_chroma.r - 0.0625) * 1.1643;"
 			       "} else {"
-			       "   luma_chroma = texture2D(tex, vec2(pixelx - texl_w, pixely));"
+			       "   luma_chroma = texture2D(tex, vec2(xy.x - texl_w, xy.y));"
 			       "   y = (luma_chroma.b - 0.0625) * 1.1643;"
 			       "}"
 			       "u = luma_chroma.g - 0.5;"
@@ -763,10 +798,10 @@ QString CaptureWinGLEngine::shader_YUY2_invariant(__u32 format)
 
 	case V4L2_PIX_FMT_YVYU:
 		return QString("if (mod(xcoord, 2.0) == 0.0) {"
-			       "   luma_chroma = texture2D(tex, vec2(pixelx, pixely));"
+			       "   luma_chroma = texture2D(tex, xy);"
 			       "   y = (luma_chroma.r - 0.0625) * 1.1643;"
 			       "} else {"
-			       "   luma_chroma = texture2D(tex, vec2(pixelx - texl_w, pixely));"
+			       "   luma_chroma = texture2D(tex, vec2(xy.x - texl_w, xy.y));"
 			       "   y = (luma_chroma.b - 0.0625) * 1.1643;"
 			       "}"
 			       "u = luma_chroma.a - 0.5;"
@@ -775,10 +810,10 @@ QString CaptureWinGLEngine::shader_YUY2_invariant(__u32 format)
 
 	case V4L2_PIX_FMT_UYVY:
 		return QString("if (mod(xcoord, 2.0) == 0.0) {"
-			       "   luma_chroma = texture2D(tex, vec2(pixelx, pixely));"
+			       "   luma_chroma = texture2D(tex, xy);"
 			       "   y = (luma_chroma.g - 0.0625) * 1.1643;"
 			       "} else {"
-			       "   luma_chroma = texture2D(tex, vec2(pixelx - texl_w, pixely));"
+			       "   luma_chroma = texture2D(tex, vec2(xy.x - texl_w, xy.y));"
 			       "   y = (luma_chroma.a - 0.0625) * 1.1643;"
 			       "}"
 			       "u = luma_chroma.r - 0.5;"
@@ -787,10 +822,10 @@ QString CaptureWinGLEngine::shader_YUY2_invariant(__u32 format)
 
 	case V4L2_PIX_FMT_VYUY:
 		return QString("if (mod(xcoord, 2.0) == 0.0) {"
-			       "   luma_chroma = texture2D(tex, vec2(pixelx, pixely));"
+			       "   luma_chroma = texture2D(tex, xy);"
 			       "   y = (luma_chroma.g - 0.0625) * 1.1643;"
 			       "} else {"
-			       "   luma_chroma = texture2D(tex, vec2(pixelx - texl_w, pixely));"
+			       "   luma_chroma = texture2D(tex, vec2(xy.x - texl_w, xy.y));"
 			       "   y = (luma_chroma.a - 0.0625) * 1.1643;"
 			       "}"
 			       "u = luma_chroma.b - 0.5;"
@@ -809,19 +844,25 @@ void CaptureWinGLEngine::shader_YUY2(__u32 format)
 	configureTexture(0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_frameWidth / 2, m_frameHeight, 0,
 		     GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
 	checkError("YUY2 shader");
 
 	QString codeHead = QString("uniform sampler2D tex;"
 				   "uniform float texl_w;"
 				   "uniform float tex_w;"
+				   "uniform float tex_h;"
 				   "void main()"
 				   "{"
 				   "   float y, u, v;"
 				   "   vec4 luma_chroma;"
-				   "   float pixelx = gl_TexCoord[0].x;"
-				   "   float pixely = gl_TexCoord[0].y;"
-				   "   float xcoord = floor(pixelx * tex_w);"
-				   );
+				   "   vec2 xy = vec2(gl_TexCoord[0].xy);"
+				   "   float xcoord = floor(xy.x * tex_w);"
+				   "   float ycoord = floor(xy.y * tex_h);");
+
+	if (m_field == V4L2_FIELD_SEQ_TB)
+		codeHead += "   xy.y = (mod(ycoord, 2.0) == 0.0) ? xy.y / 2.0 : xy.y / 2.0 + 0.5;";
+	else if (m_field == V4L2_FIELD_SEQ_BT)
+		codeHead += "   xy.y = (mod(ycoord, 2.0) == 0.0) ? xy.y / 2.0 + 0.5 : xy.y / 2.0;";
 
 	QString codeBody = shader_YUY2_invariant(format);
 
@@ -848,6 +889,8 @@ void CaptureWinGLEngine::render_YUY2()
 	glUniform1f(idx, 1.0 / m_frameWidth);
 	idx = glGetUniformLocation(m_shaderProgram.programId(), "tex_w"); // Texture width
 	glUniform1f(idx, m_frameWidth);
+	idx = glGetUniformLocation(m_shaderProgram.programId(), "tex_h"); // Texture height
+	glUniform1f(idx, m_frameHeight);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
@@ -909,10 +952,19 @@ void CaptureWinGLEngine::shader_RGB()
 	checkError("RGB shader");
 
 	QString codeHead = QString("uniform sampler2D tex;"
+				   "uniform float tex_h;"
 				   "void main()"
 				   "{"
-				   "   vec4 color = texture2D(tex, gl_TexCoord[0].xy);"
-				   "   float a = color.a;");
+				   "   vec2 xy = vec2(gl_TexCoord[0].xy);"
+				   "   float ycoord = floor(xy.y * tex_h);");
+
+	if (m_field == V4L2_FIELD_SEQ_TB)
+		codeHead += "   xy.y = (mod(ycoord, 2.0) == 0.0) ? xy.y / 2.0 : xy.y / 2.0 + 0.5;";
+	else if (m_field == V4L2_FIELD_SEQ_BT)
+		codeHead += "   xy.y = (mod(ycoord, 2.0) == 0.0) ? xy.y / 2.0 + 0.5 : xy.y / 2.0;";
+
+	codeHead +=		   "   vec4 color = texture2D(tex, xy);"
+				   "   float a = color.a;";
 
 	if (m_frameFormat == V4L2_PIX_FMT_BGR24)
 		codeHead += "   float r = color.b;"
@@ -948,6 +1000,9 @@ void CaptureWinGLEngine::render_RGB()
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
 	GLint Y = m_glfunction.glGetUniformLocation(m_shaderProgram.programId(), "tex");
 	glUniform1i(Y, 0);
+	int idx = glGetUniformLocation(m_shaderProgram.programId(), "tex_h"); // Texture height
+	glUniform1f(idx, m_frameHeight);
+
 	switch (m_frameFormat) {
 	case V4L2_PIX_FMT_RGB555:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
