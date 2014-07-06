@@ -1151,6 +1151,9 @@ void ApplicationWindow::capStart(bool start)
 		m_mustConvert = true;
 
 		dstPix.pixelformat = V4L2_PIX_FMT_RGB24;
+		// Make sure sizeimage is large enough. This is necessary if the mplane
+		// plugin is in use since v4lconvert_try_format() bypasses the plugin.
+		dstPix.sizeimage = dstPix.width * dstPix.height * 3;
 		v4l2_format copy = m_capSrcFormat;
 		v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
 		// v4lconvert_try_format sometimes modifies the source format if it thinks
