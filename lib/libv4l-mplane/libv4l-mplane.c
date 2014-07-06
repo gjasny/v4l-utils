@@ -163,7 +163,7 @@ static int try_set_fmt_ioctl(int fd, unsigned long int cmd,
 		fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 		break;
 	default:
-		return SYS_IOCTL(fd, cmd, &fmt);
+		return SYS_IOCTL(fd, cmd, arg);
 	}
 
 	fmt.fmt.pix_mp.width = org->fmt.pix.width;
@@ -205,7 +205,7 @@ static int create_bufs_ioctl(int fd, unsigned long int cmd,
 		fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 		break;
 	default:
-		return SYS_IOCTL(fd, cmd, &fmt);
+		return SYS_IOCTL(fd, cmd, arg);
 	}
 
 	fmt.fmt.pix_mp.width = org->fmt.pix.width;
@@ -246,7 +246,7 @@ static int get_fmt_ioctl(int fd, unsigned long int cmd, struct v4l2_format *arg)
 		fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 		break;
 	default:
-		return SYS_IOCTL(fd, cmd, &fmt);
+		return SYS_IOCTL(fd, cmd, arg);
 	}
 
 	ret = SYS_IOCTL(fd, cmd, &fmt);
@@ -302,6 +302,7 @@ static int buf_ioctl(int fd, unsigned long int cmd, struct v4l2_buffer *arg)
 
 	arg->length = plane.length;
 	arg->bytesused = plane.bytesused;
+	memcpy(&arg->m, &plane.m, sizeof(arg->m));
 
 	return ret;
 }
