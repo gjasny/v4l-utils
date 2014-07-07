@@ -221,6 +221,7 @@ void CaptureWinGLEngine::initializeGL()
 		glEnable(GL_FRAMEBUFFER_SRGB);
 
 	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+	glBlendFunc(GL_ONE, GL_ZERO);
 	checkError("InitializeGL");
 }
 
@@ -358,8 +359,6 @@ void CaptureWinGLEngine::paintSquare()
 	unsigned h4 = m_frameHeight / 4;
 
 	glClear(GL_COLOR_BUFFER_BIT);
-	glBlendFunc(GL_ONE, GL_ZERO);
-
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glBegin(GL_QUADS);
@@ -369,8 +368,6 @@ void CaptureWinGLEngine::paintSquare()
 	glVertex2f(3 * w4, 3 * h4);
 	glVertex2f(3 * w4, h4);
 	glEnd();
-
-	glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 }
 
 void CaptureWinGLEngine::paintGL()
@@ -387,8 +384,10 @@ void CaptureWinGLEngine::paintGL()
 		return;
 	}
 
-	if (m_blending)
+	if (m_blending) {
 		paintSquare();
+		glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+	}
 
 	switch (m_frameFormat) {
 	case V4L2_PIX_FMT_YUYV:
@@ -421,6 +420,9 @@ void CaptureWinGLEngine::paintGL()
 		break;
 	}
 	paintFrame();
+
+	if (m_blending)
+		glBlendFunc(GL_ONE, GL_ZERO);
 }
 
 void CaptureWinGLEngine::configureTexture(size_t idx)
