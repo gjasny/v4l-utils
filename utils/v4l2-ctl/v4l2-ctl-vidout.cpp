@@ -37,7 +37,7 @@ void vidout_usage(void)
 	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
 	       "                     alternate, interlaced_tb, interlaced_bt\n"
 	       "                     <c> can be one of:\n"
-	       "                     smpte170m, smpte240m, rec709, bt878, 470m, 470bg, jpeg, srgb\n"
+	       "                     smpte170m, smpte240m, rec709, 470m, 470bg, jpeg, srgb\n"
 	       );
 }
 

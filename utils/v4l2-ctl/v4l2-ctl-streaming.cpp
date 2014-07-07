@@ -17,14 +17,33 @@
 
 #include "v4l2-ctl.h"
 
+extern "C" {
+#include "vivi-tpg.h"
+}
+
 static unsigned stream_count;
 static unsigned stream_skip;
 static unsigned stream_pat;
 static bool stream_loop;
-static unsigned reqbufs_count_cap = 3;
-static unsigned reqbufs_count_out = 3;
+static bool stream_out_square;
+static bool stream_out_border;
+static bool stream_out_sav;
+static bool stream_out_eav;
+static int stream_out_pixel_aspect = -1;
+static tpg_video_aspect stream_out_video_aspect;
+static u8 stream_out_alpha;
+static bool stream_out_alpha_red_only;
+static unsigned stream_out_perc_fill = 100;
+static v4l2_std_id stream_out_std;
+static bool stream_out_refresh;
+static tpg_move_mode stream_out_hor_mode = TPG_MOVE_NONE;
+static tpg_move_mode stream_out_vert_mode = TPG_MOVE_NONE;
+static unsigned reqbufs_count_cap = 4;
+static unsigned reqbufs_count_out = 4;
 static char *file_cap;
 static char *file_out;
+static struct tpg_data tpg;
+static unsigned output_field = V4L2_FIELD_NONE;
 
 static void *test_mmap(void *start, size_t length, int prot, int flags,
 		int fd, int64_t offset)
@@ -64,17 +83,45 @@ void streaming_usage(void)
 	       "                     If <file> is '-', then the data is read from stdin.\n"
 	       "  --stream-loop      loop when the end of the file we are streaming from is reached.\n"
 	       "                     The default is to stop.\n"
-	       "  --stream-pattern=<count>\n"
-	       "                     choose output pattern. The default is 0.\n"
+	       "  --stream-out-pattern=<count>\n"
+	       "                     choose output test pattern. The default is 0.\n"
+	       "  --stream-out-square\n"
+	       "                     show a square in the middle of the output test pattern.\n"
+	       "  --stream-out-border\n"
+	       "                     show a border around the pillar/letterboxed video.\n"
+	       "  --stream-out-sav   insert an SAV code in every line.\n"
+	       "  --stream-out-eav   insert an EAV code in every line.\n"
+	       "  --stream-out-pixel-aspect=<aspect\n"
+	       "                     select a pixel aspect ratio. The default is to autodetect.\n"
+	       "                     <aspect> can be one of:\n"
+	       "                     square, ntsc, pal\n"
+	       "  --stream-out-video-aspect=<aspect\n"
+	       "                     select a video aspect ratio. The default is to use the frame ratio.\n"
+	       "                     <aspect> can be one of:\n"
+	       "                     4x3, 16x9, anamorphic\n"
+	       "  --stream-out-alpha=<alpha-value>\n"
+	       "                     value to use for the alpha component, range 0-255. The default is 0.\n"
+	       "  --stream-out-alpha-red-only\n"
+	       "                     only use the --stream-out-alpha value for the red colors,\n"
+	       "                     for all others use 0.\n"
+	       "  --stream-out-hor-speed=<speed>\n"
+	       "                     choose speed for horizontal movement. The default is 0,\n"
+	       "                     and the range is [-3...3].\n"
+	       "  --stream-out-vert-speed=<speed>\n"
+	       "                     choose speed for vertical movement. The default is 0,\n"
+	       "                     and the range is [-3...3].\n"
+	       "  --stream-out-perc-fill=<percentage>\n"
+	       "                     percentage of the frame to actually fill. The default is 100%%.\n"
 	       "  --stream-out-mmap=<count>\n"
 	       "                     output video using mmap() [VIDIOC_(D)QBUF]\n"
-	       "                     count: the number of buffers to allocate. The default is 3.\n"
+	       "                     count: the number of buffers to allocate. The default is 4.\n"
 	       "  --stream-out-user=<count>\n"
 	       "                     output video using user pointers [VIDIOC_(D)QBUF]\n"
-	       "                     count: the number of buffers to allocate. The default is 3.\n"
+	       "                     count: the number of buffers to allocate. The default is 4.\n"
 	       "  --stream-out-dmabuf\n"
 	       "                     output video using dmabuf [VIDIOC_(D)QBUF]\n"
 	       "                     Requires a corresponding --stream-mmap option.\n"
+	       "  --list-patterns    list available patterns for use with --stream-pattern.\n"
 	       "  --list-buffers     list all video buffers [VIDIOC_QUERYBUF]\n"
 	       "  --list-buffers-out list all video output buffers [VIDIOC_QUERYBUF]\n"
 	       "  --list-buffers-vbi list all VBI buffers [VIDIOC_QUERYBUF]\n"
@@ -226,6 +273,9 @@ static void list_buffers(int fd, unsigned buftype)
 
 void streaming_cmd(int ch, char *optarg)
 {
+	unsigned i;
+	int speed;
+
 	switch (ch) {
 	case OptStreamCount:
 		stream_count = strtoul(optarg, 0L, 0);
@@ -236,8 +286,68 @@ void streaming_cmd(int ch, char *optarg)
 	case OptStreamLoop:
 		stream_loop = true;
 		break;
-	case OptStreamPattern:
+	case OptStreamOutPattern:
 		stream_pat = strtoul(optarg, 0L, 0);
+		for (i = 0; tpg_pattern_strings[i]; i++) ;
+		if (stream_pat >= i)
+			stream_pat = 0;
+		break;
+	case OptStreamOutSquare:
+		stream_out_square = true;
+		break;
+	case OptStreamOutBorder:
+		stream_out_border = true;
+		break;
+	case OptStreamOutInsertSAV:
+		stream_out_sav = true;
+		break;
+	case OptStreamOutInsertEAV:
+		stream_out_eav = true;
+		break;
+	case OptStreamOutPixelAspect:
+		if (!strcmp(optarg, "square"))
+			stream_out_pixel_aspect = TPG_PIXEL_ASPECT_SQUARE;
+		else if (!strcmp(optarg, "ntsc"))
+			stream_out_pixel_aspect = TPG_PIXEL_ASPECT_NTSC;
+		else if (!strcmp(optarg, "pal"))
+			stream_out_pixel_aspect = TPG_PIXEL_ASPECT_PAL;
+		else
+			streaming_usage();
+		break;
+	case OptStreamOutVideoAspect:
+		if (!strcmp(optarg, "4x3"))
+			stream_out_video_aspect = TPG_VIDEO_ASPECT_4X3;
+		else if (!strcmp(optarg, "16x9"))
+			stream_out_video_aspect = TPG_VIDEO_ASPECT_16X9_CENTRE;
+		else if (!strcmp(optarg, "anamorphic"))
+			stream_out_video_aspect = TPG_VIDEO_ASPECT_16X9_ANAMORPHIC;
+		else
+			streaming_usage();
+		break;
+	case OptStreamOutAlphaComponent:
+		stream_out_alpha = strtoul(optarg, 0L, 0);
+		break;
+	case OptStreamOutAlphaRedOnly:
+		stream_out_alpha_red_only = true;
+		break;
+	case OptStreamOutHorSpeed:
+	case OptStreamOutVertSpeed:
+		speed = strtol(optarg, 0L, 0);
+		if (speed < -3)
+			speed = -3;
+		if (speed > 3)
+			speed = 3;
+		if (ch == OptStreamOutHorSpeed)
+			stream_out_hor_mode = (tpg_move_mode)(speed + 3);
+		else
+			stream_out_vert_mode = (tpg_move_mode)(speed + 3);
+		break;
+	case OptStreamOutPercFill:
+		stream_out_perc_fill = strtoul(optarg, 0L, 0);
+		if (stream_out_perc_fill > 100)
+			stream_out_perc_fill = 100;
+		if (stream_out_perc_fill < 1)
+			stream_out_perc_fill = 1;
 		break;
 	case OptStreamTo:
 		file_cap = optarg;
@@ -474,16 +584,96 @@ static int do_setup_cap_buffers(int fd, buffers &b)
 
 static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 {
+	tpg_pixel_aspect aspect = TPG_PIXEL_ASPECT_SQUARE;
 	struct v4l2_format fmt;
+	u32 field;
+	unsigned factor = 1;
+	bool can_fill;
+
 	memset(&fmt, 0, sizeof(fmt));
 	fmt.type = b.type;
 	doioctl(fd, VIDIOC_G_FMT, &fmt);
+	if (test_ioctl(fd, VIDIOC_G_STD, &stream_out_std)) {
+		struct v4l2_dv_timings timings;
 
-	bool can_fill = precalculate_bars(fmt.fmt.pix.pixelformat, stream_pat);
+		stream_out_std = 0;
+		if (test_ioctl(fd, VIDIOC_G_DV_TIMINGS, &timings))
+			memset(&timings, 0, sizeof(timings));
+		else if (timings.bt.width == 720 && timings.bt.height == 480)
+			aspect = TPG_PIXEL_ASPECT_NTSC;
+		else if (timings.bt.width == 720 && timings.bt.height == 576)
+			aspect = TPG_PIXEL_ASPECT_PAL;
+	} else if (stream_out_std & V4L2_STD_525_60) {
+		aspect = TPG_PIXEL_ASPECT_NTSC;
+	} else if (stream_out_std & V4L2_STD_625_50) {
+		aspect = TPG_PIXEL_ASPECT_PAL;
+	}
+
+
+	if (b.is_mplane)
+		field = fmt.fmt.pix_mp.field;
+	else
+		field = fmt.fmt.pix.field;
+
+	output_field = field;
+	if (V4L2_FIELD_HAS_T_OR_B(field)) {
+		factor = 2;
+		output_field = (stream_out_std & V4L2_STD_525_60) ?
+			V4L2_FIELD_BOTTOM : V4L2_FIELD_TOP;
+	}
+
+	tpg_init(&tpg, 640, 360);
+	if (b.is_mplane) {
+		tpg_alloc(&tpg, fmt.fmt.pix_mp.width);
+		can_fill = tpg_s_fourcc(&tpg, fmt.fmt.pix_mp.pixelformat);
+		tpg_reset_source(&tpg, fmt.fmt.pix_mp.width,
+				 fmt.fmt.pix_mp.height * factor, field);
+		tpg_s_colorspace(&tpg, fmt.fmt.pix_mp.colorspace);
+		if (can_fill) {
+			tpg_s_bytesperline(&tpg, 0, fmt.fmt.pix_mp.plane_fmt[0].bytesperline);
+			tpg_s_bytesperline(&tpg, 1, fmt.fmt.pix_mp.plane_fmt[1].bytesperline);
+		}
+	} else {
+		tpg_alloc(&tpg, fmt.fmt.pix.width);
+		can_fill = tpg_s_fourcc(&tpg, fmt.fmt.pix.pixelformat);
+		tpg_reset_source(&tpg, fmt.fmt.pix.width,
+				 fmt.fmt.pix.height * factor, field);
+		tpg_s_colorspace(&tpg, fmt.fmt.pix.colorspace);
+		tpg_s_bytesperline(&tpg, 0, fmt.fmt.pix.bytesperline);
+	}
+	tpg_s_pattern(&tpg, (tpg_pattern)stream_pat);
+	tpg_s_mv_hor_mode(&tpg, stream_out_hor_mode);
+	tpg_s_mv_vert_mode(&tpg, stream_out_vert_mode);
+	tpg_s_show_square(&tpg, stream_out_square);
+	tpg_s_show_border(&tpg, stream_out_border);
+	tpg_s_insert_sav(&tpg, stream_out_sav);
+	tpg_s_insert_eav(&tpg, stream_out_eav);
+	tpg_s_perc_fill(&tpg, stream_out_perc_fill);
+	tpg_s_alpha_component(&tpg, stream_out_alpha);
+	tpg_s_alpha_mode(&tpg, stream_out_alpha_red_only);
+	tpg_s_video_aspect(&tpg, stream_out_video_aspect);
+	switch (stream_out_pixel_aspect) {
+	case -1:
+		tpg_s_pixel_aspect(&tpg, aspect);
+		break;
+	default:
+		tpg_s_pixel_aspect(&tpg, (tpg_pixel_aspect)stream_out_pixel_aspect);
+		break;
+	}
+	field = output_field;
+	if (can_fill && ((V4L2_FIELD_HAS_T_OR_B(field) && (stream_count & 1)) ||
+			 !tpg_pattern_is_static(&tpg)))
+		stream_out_refresh = true;
 
 	for (unsigned i = 0; i < b.bcount; i++) {
 		struct v4l2_plane planes[VIDEO_MAX_PLANES];
 		struct v4l2_buffer buf;
+
+		tpg_s_field(&tpg, field);
+		if (field == V4L2_FIELD_TOP)
+			field = V4L2_FIELD_BOTTOM;
+		else if (field == V4L2_FIELD_BOTTOM)
+			field = V4L2_FIELD_TOP;
 
 		memset(&buf, 0, sizeof(buf));
 		memset(planes, 0, sizeof(planes));
@@ -497,6 +687,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 		if (doioctl(fd, VIDIOC_QUERYBUF, &buf))
 			return -1;
 
+		buf.field = field;
 		if (b.is_mplane) {
 			for (unsigned j = 0; j < b.num_planes; j++) {
 				struct v4l2_plane &p = b.planes[i][j];
@@ -526,8 +717,9 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 					b.bufs[i][j] = calloc(1, p.length);
 					planes[j].m.userptr = (unsigned long)b.bufs[i][j];
 				}
+				if (can_fill)
+					tpg_fillbuffer(&tpg, NULL, stream_out_std, j, (u8 *)b.bufs[i][j]);
 			}
-			// TODO fill_buffer_mp(bufs[i], &fmt.fmt.pix_mp);
 			if (fin)
 				fill_buffer_from_file(b, buf.index, fin);
 		}
@@ -558,15 +750,18 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 			}
 			if (!fin || !fill_buffer_from_file(b, buf.index, fin))
 				if (can_fill)
-					fill_buffer(b.bufs[i][0], &fmt.fmt.pix);
+					tpg_fillbuffer(&tpg, NULL, stream_out_std, 0, (u8 *)b.bufs[i][0]);
 		}
 		if (qbuf) {
 			if (V4L2_TYPE_IS_OUTPUT(buf.type))
 				setTimeStamp(buf);
 			if (doioctl(fd, VIDIOC_QBUF, &buf))
 				return -1;
+			tpg_update_mv_count(&tpg, V4L2_FIELD_HAS_T_OR_B(field));
 		}
 	}
+	if (qbuf)
+		output_field = field;
 	return 0;
 }
 
@@ -582,6 +777,7 @@ static void do_release_buffers(buffers &b)
 				test_munmap(b.bufs[i][j], b.planes[i][j].length);
 		}
 	}
+	tpg_free(&tpg);
 }
 
 static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
@@ -751,14 +947,32 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
 		return -1;
 	}
+	buf.field = output_field;
+	tpg_s_field(&tpg, output_field);
+	if (output_field == V4L2_FIELD_TOP)
+		output_field = V4L2_FIELD_BOTTOM;
+	else if (output_field == V4L2_FIELD_BOTTOM)
+		output_field = V4L2_FIELD_TOP;
+
 	if (fin && !fill_buffer_from_file(b, buf.index, fin))
 		return -1;
+	if (!fin && stream_out_refresh) {
+		if (b.is_mplane) {
+			for (unsigned j = 0; j < b.num_planes; j++)
+				tpg_fillbuffer(&tpg, NULL, stream_out_std, j, (u8 *)b.bufs[buf.index][j]);
+		} else {
+			tpg_fillbuffer(&tpg, NULL, stream_out_std, 0, (u8 *)b.bufs[buf.index][0]);
+		}
+	}
+
 	if (V4L2_TYPE_IS_OUTPUT(buf.type))
 		setTimeStamp(buf);
+
 	if (test_ioctl(fd, VIDIOC_QBUF, &buf)) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_QBUF", strerror(errno));
 		return -1;
 	}
+	tpg_update_mv_count(&tpg, V4L2_FIELD_HAS_T_OR_B(output_field));
 
 	fprintf(stderr, ">");
 	fflush(stderr);
@@ -1398,5 +1612,11 @@ void streaming_list(int fd, int out_fd)
 
 	if (options[OptListBuffersSdr]) {
 		list_buffers(fd, V4L2_BUF_TYPE_SDR_CAPTURE);
+	}
+
+	if (options[OptListPatterns]) {
+		printf("List of available patterns:\n");
+		for (unsigned i = 0; tpg_pattern_strings[i]; i++)
+			printf("\t%2d: %s\n", i, tpg_pattern_strings[i]);
 	}
 }

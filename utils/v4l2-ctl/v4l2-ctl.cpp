@@ -212,10 +212,22 @@ static struct option long_options[] = {
 	{"stream-user", optional_argument, 0, OptStreamUser},
 	{"stream-dmabuf", no_argument, 0, OptStreamDmaBuf},
 	{"stream-from", required_argument, 0, OptStreamFrom},
-	{"stream-pattern", required_argument, 0, OptStreamPattern},
+	{"stream-out-pattern", required_argument, 0, OptStreamOutPattern},
+	{"stream-out-square", no_argument, 0, OptStreamOutSquare},
+	{"stream-out-border", no_argument, 0, OptStreamOutBorder},
+	{"stream-out-sav", no_argument, 0, OptStreamOutInsertSAV},
+	{"stream-out-eav", no_argument, 0, OptStreamOutInsertEAV},
+	{"stream-out-pixel-aspect", required_argument, 0, OptStreamOutPixelAspect},
+	{"stream-out-video-aspect", required_argument, 0, OptStreamOutVideoAspect},
+	{"stream-out-alpha", required_argument, 0, OptStreamOutAlphaComponent},
+	{"stream-out-alpha-red-only", no_argument, 0, OptStreamOutAlphaRedOnly},
+	{"stream-out-hor-speed", required_argument, 0, OptStreamOutHorSpeed},
+	{"stream-out-vert-speed", required_argument, 0, OptStreamOutVertSpeed},
+	{"stream-out-perc-fill", required_argument, 0, OptStreamOutPercFill},
 	{"stream-out-mmap", optional_argument, 0, OptStreamOutMmap},
 	{"stream-out-user", optional_argument, 0, OptStreamOutUser},
 	{"stream-out-dmabuf", no_argument, 0, OptStreamOutDmaBuf},
+	{"list-patterns", no_argument, 0, OptListPatterns},
 	{0, 0, 0, 0}
 };
 
@@ -692,7 +704,6 @@ static __u32 parse_colorspace(const char *s)
 	if (!strcmp(s, "smpte170m")) return V4L2_COLORSPACE_SMPTE170M;
 	if (!strcmp(s, "smpte240m")) return V4L2_COLORSPACE_SMPTE240M;
 	if (!strcmp(s, "rec709")) return V4L2_COLORSPACE_REC709;
-	if (!strcmp(s, "bt878")) return V4L2_COLORSPACE_BT878;
 	if (!strcmp(s, "470m")) return V4L2_COLORSPACE_470_SYSTEM_M;
 	if (!strcmp(s, "470bg")) return V4L2_COLORSPACE_470_SYSTEM_BG;
 	if (!strcmp(s, "jpeg")) return V4L2_COLORSPACE_JPEG;

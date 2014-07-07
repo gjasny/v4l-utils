@@ -168,10 +168,22 @@ enum Option {
 	OptStreamUser,
 	OptStreamDmaBuf,
 	OptStreamFrom,
-	OptStreamPattern,
+	OptStreamOutPattern,
+	OptStreamOutSquare,
+	OptStreamOutBorder,
+	OptStreamOutInsertSAV,
+	OptStreamOutInsertEAV,
+	OptStreamOutHorSpeed,
+	OptStreamOutVertSpeed,
+	OptStreamOutPercFill,
+	OptStreamOutAlphaComponent,
+	OptStreamOutAlphaRedOnly,
+	OptStreamOutPixelAspect,
+	OptStreamOutVideoAspect,
 	OptStreamOutMmap,
 	OptStreamOutUser,
 	OptStreamOutDmaBuf,
+	OptListPatterns,
 	OptHelpTuner,
 	OptHelpIO,
 	OptHelpStds,
@@ -319,10 +331,6 @@ void streaming_usage(void);
 void streaming_cmd(int ch, char *optarg);
 void streaming_set(int fd, int out_fd);
 void streaming_list(int fd, int out_fd);
-
-// v4l2-ctl-test-patterns.cpp
-void fill_buffer(void *buffer, struct v4l2_pix_format *pix);
-bool precalculate_bars(__u32 pixfmt, unsigned pattern);
 
 // v4l2-ctl-edid.cpp
 void edid_usage(void);
