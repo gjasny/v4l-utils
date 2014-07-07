@@ -353,7 +353,6 @@ static int buf_ioctl(int fd, unsigned long int cmd, struct v4l2_buffer *arg)
 static int plugin_ioctl(void *dev_ops_priv, int fd,
 			unsigned long int cmd, void *arg)
 {
-	struct mplane_plugin *plugin = dev_ops_priv;
 	switch (cmd) {
 	case VIDIOC_QUERYCAP:
 		return querycap_ioctl(fd, cmd, arg);
