@@ -58,6 +58,12 @@ void CaptureWinGL::resizeEvent(QResizeEvent *event)
 
 void CaptureWinGL::setRenderFrame()
 {
+	// Force a recalculation by setting this to 0.
+	m_cropInfo.bytes = 0;
+	m_curWinWidth  = m_videoSurface.width();
+	m_curWinHeight = m_videoSurface.height();
+	CaptureWin::resizeScaleCrop();
+
 	// Get/copy (TODO: remove CaptureWinGLEngine and use direct or use pointer)
 #ifdef HAVE_QTGL
 	m_videoSurface.setFrame(m_frameInfo.frameWidth, m_frameInfo.frameHeight,
@@ -116,10 +122,10 @@ void CaptureWinGL::setBlending(bool enable)
 
 #ifdef HAVE_QTGL
 CaptureWinGLEngine::CaptureWinGLEngine() :
-	m_frameHeight(0),
 	m_frameWidth(0),
-	m_cropHeight(0),
-	m_cropWidth(0),
+	m_frameHeight(0),
+	m_WCrop(0),
+	m_HCrop(0),
 	m_colorspace(V4L2_COLORSPACE_REC709),
 	m_displayColorspace(V4L2_COLORSPACE_SRGB),
 	m_screenTextureCount(0),
@@ -247,16 +253,16 @@ void CaptureWinGLEngine::resizeGL(int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-void CaptureWinGLEngine::setFrame(int width, int height, int cropWidth, int cropHeight,
+void CaptureWinGLEngine::setFrame(int width, int height, int WCrop, int HCrop,
 				  __u32 format, unsigned char *data, unsigned char *data2)
 {
 	if (format != m_frameFormat || width != m_frameWidth || height != m_frameHeight
-	    || cropWidth != m_cropWidth || cropHeight != m_cropHeight) {
+	    || WCrop != m_WCrop || HCrop != m_HCrop) {
 		m_formatChange = true;
 		m_frameWidth = width;
 		m_frameHeight = height;
-		m_cropWidth = cropWidth;
-		m_cropHeight = cropHeight;
+		m_WCrop = WCrop;
+		m_HCrop = HCrop;
 		m_frameFormat = format;
 	}
 
@@ -348,14 +354,14 @@ void CaptureWinGLEngine::changeShader()
 
 void CaptureWinGLEngine::paintFrame()
 {
-	float cropH = (float)CaptureWin::cropHeight(m_frameWidth, m_frameHeight) / m_frameHeight;
-	float cropW = (float)CaptureWin::cropWidth(m_frameWidth, m_frameHeight) / m_frameWidth;
+	float HCrop_f = (float)m_HCrop / m_frameHeight;
+	float WCrop_f = (float)m_WCrop / m_frameWidth;
 
 	glBegin(GL_QUADS);
-	glTexCoord2f(cropW, cropH);               glVertex2f(0, 0);
-	glTexCoord2f(1.0f - cropW, cropH);        glVertex2f(m_frameWidth, 0);
-	glTexCoord2f(1.0f - cropW, 1.0f - cropH); glVertex2f(m_frameWidth, m_frameHeight);
-	glTexCoord2f(cropW, 1.0f - cropH);        glVertex2f(0, m_frameHeight);
+	glTexCoord2f(WCrop_f, HCrop_f);               glVertex2f(0, 0);
+	glTexCoord2f(1.0f - WCrop_f, HCrop_f);        glVertex2f(m_frameWidth, 0);
+	glTexCoord2f(1.0f - WCrop_f, 1.0f - HCrop_f); glVertex2f(m_frameWidth, m_frameHeight);
+	glTexCoord2f(WCrop_f, 1.0f - HCrop_f);        glVertex2f(0, m_frameHeight);
 	glEnd();
 }
 

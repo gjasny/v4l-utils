@@ -82,10 +82,10 @@ private:
 	void configureTexture(size_t idx);
 	void checkError(const char *msg);
 
-	int m_frameHeight;
 	int m_frameWidth;
-	int m_cropHeight;
-	int m_cropWidth;
+	int m_frameHeight;
+	int m_WCrop;
+	int m_HCrop;
 	unsigned m_colorspace;
 	unsigned m_field;
 	unsigned m_displayColorspace;
