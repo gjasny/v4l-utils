@@ -765,6 +765,8 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 						perror("mmap");
 						goto error;
 					}
+					memset(m_buffers[m_nbuffers].start[p], 0,
+					       m_buffers[m_nbuffers].length[p]);
 				}
 			} else {
 				m_buffers[m_nbuffers].planes = 1;
@@ -774,6 +776,8 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 					perror("mmap");
 					goto error;
 				}
+				memset(m_buffers[m_nbuffers].start[0], 0,
+				       m_buffers[m_nbuffers].length[0]);
 			}
 		}
 		for (i = 0; i < m_nbuffers; ++i) {
@@ -830,7 +834,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 				m_buffers[m_nbuffers].planes = buf.length;
 				for (unsigned p = 0; p < buf.length; p++) {
 					m_buffers[m_nbuffers].length[p] = planes[p].length;
-					m_buffers[m_nbuffers].start[p] = malloc(planes[p].length);
+					m_buffers[m_nbuffers].start[p] = calloc(1, planes[p].length);
 					if (m_buffers[m_nbuffers].start[p] == NULL) {
 						error("Out of memory");
 						goto error;
@@ -839,7 +843,7 @@ bool ApplicationWindow::startCapture(unsigned buffer_size)
 			} else {
 				m_buffers[m_nbuffers].planes = 1;
 				m_buffers[m_nbuffers].length[0] = buffer_size;
-				m_buffers[m_nbuffers].start[0] = malloc(buffer_size);
+				m_buffers[m_nbuffers].start[0] = calloc(1, buffer_size);
 
 				if (!m_buffers[m_nbuffers].start[0]) {
 					error("Out of memory");
