@@ -969,7 +969,7 @@ void ApplicationWindow::updateColorspace()
 	if (colorspace == 0) {
 		v4l2_format fmt;
 
-		g_fmt_cap(m_genTab->bufType(), fmt);
+		g_fmt(m_genTab->bufType(), fmt);
 		if (m_genTab->isPlanar())
 			colorspace = fmt.fmt.pix_mp.colorspace;
 		else
@@ -1124,7 +1124,7 @@ void ApplicationWindow::capStart(bool start)
 		return;
 	}
 
-	g_fmt_cap(buftype, m_capSrcFormat);
+	g_fmt(buftype, m_capSrcFormat);
 	s_fmt(m_capSrcFormat);
 	if (m_genTab->get_interval(interval))
 		set_interval(buftype, interval);

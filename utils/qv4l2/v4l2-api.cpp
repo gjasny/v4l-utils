@@ -277,7 +277,7 @@ bool v4l2::s_frequency(int val, bool low)
 	return s_frequency(f);
 }
 
-bool v4l2::g_fmt_cap(unsigned type, v4l2_format &fmt)
+bool v4l2::g_fmt(unsigned type, v4l2_format &fmt)
 {
 	memset(&fmt, 0, sizeof(fmt));
 	fmt.type = type;
@@ -389,7 +389,7 @@ bool v4l2::enum_dv_timings(v4l2_enum_dv_timings &timings, bool init, int index)
 	return ioctl(VIDIOC_ENUM_DV_TIMINGS, &timings) >= 0;
 }
 
-bool v4l2::enum_fmt_cap(v4l2_fmtdesc &fmt, unsigned type, bool init, int index)
+bool v4l2::enum_fmt(v4l2_fmtdesc &fmt, unsigned type, bool init, int index)
 {
 	if (init) {
 		memset(&fmt, 0, sizeof(fmt));
@@ -541,79 +541,6 @@ bool v4l2::streamon(__u32 buftype)
 bool v4l2::streamoff(__u32 buftype)
 {
 	return ioctl("Stop Streaming", VIDIOC_STREAMOFF, &buftype);
-}
-
-bool v4l2::reqbufs_user_out(v4l2_requestbuffers &reqbuf)
-{
-	memset(&reqbuf, 0, sizeof (reqbuf));
-	reqbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	reqbuf.memory = V4L2_MEMORY_USERPTR;
-
-	return ioctl(VIDIOC_REQBUFS, &reqbuf) >= 0;
-}
-
-bool v4l2::reqbufs_mmap_out(v4l2_requestbuffers &reqbuf, int count)
-{
-	memset(&reqbuf, 0, sizeof (reqbuf));
-	reqbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	reqbuf.memory = V4L2_MEMORY_MMAP;
-	reqbuf.count = count;
-
-	return ioctl(VIDIOC_REQBUFS, &reqbuf) >= 0;
-}
-
-bool v4l2::dqbuf_mmap_out(v4l2_buffer &buf)
-{
-	memset(&buf, 0, sizeof(buf));
-	buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	buf.memory = V4L2_MEMORY_MMAP;
-	return ioctl("dqbuf", VIDIOC_DQBUF, &buf);
-}
-
-bool v4l2::dqbuf_user_out(v4l2_buffer &buf)
-{
-	memset(&buf, 0, sizeof(buf));
-	buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	buf.memory = V4L2_MEMORY_USERPTR;
-	return ioctl(VIDIOC_DQBUF, &buf) >= 0;
-}
-
-bool v4l2::qbuf_mmap_out(int index, int bytesused)
-{
-	v4l2_buffer buf;
-
-	memset(&buf, 0, sizeof(buf));
-	buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	buf.memory = V4L2_MEMORY_MMAP;
-	buf.index = index;
-	buf.bytesused = bytesused;
-	return qbuf(buf);
-}
-
-bool v4l2::qbuf_user_out(void *ptr, int length)
-{
-	v4l2_buffer buf;
-
-	memset(&buf, 0, sizeof(buf));
-	buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	buf.memory = V4L2_MEMORY_USERPTR;
-	buf.m.userptr = (unsigned long)ptr;
-	buf.length = length;
-	return qbuf(buf);
-}
-
-bool v4l2::streamon_out()
-{
-	enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-
-	return ioctl("Start Output", VIDIOC_STREAMON, &type);
-}
-
-bool v4l2::streamoff_out()
-{
-	enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-
-	return ioctl("Stop Output", VIDIOC_STREAMOFF, &type);
 }
 
 bool v4l2::subscribe_event(v4l2_event_subscription &sub)

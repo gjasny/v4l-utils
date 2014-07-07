@@ -80,7 +80,7 @@ public:
 	bool g_frequency(v4l2_frequency &freq, unsigned index = 0);
 	bool s_frequency(v4l2_frequency &freq);
 	bool s_frequency(int freq, bool low = false);
-	bool g_fmt_cap(unsigned type, v4l2_format &fmt);
+	bool g_fmt(unsigned type, v4l2_format &fmt);
 	bool g_fmt_out(v4l2_format &fmt);
 	bool g_fmt_vbi(v4l2_format &fmt);
 	bool g_fmt_sliced_vbi(v4l2_format &fmt);
@@ -92,7 +92,7 @@ public:
 	bool enum_audout(v4l2_audioout &audout, bool init = false);
 	bool enum_std(v4l2_standard &std, bool init = false, int index = 0);
 	bool enum_dv_timings(v4l2_enum_dv_timings &timings, bool init = false, int index = 0);
-	bool enum_fmt_cap(v4l2_fmtdesc &std, unsigned type, bool init = false, int index = 0);
+	bool enum_fmt(v4l2_fmtdesc &std, unsigned type, bool init = false, int index = 0);
 	bool enum_fmt_out(v4l2_fmtdesc &std, bool init = false, int index = 0);
 	bool enum_framesizes(v4l2_frmsizeenum &frm, __u32 init_pixfmt = 0, int index = 0);
 	bool enum_frameintervals(v4l2_frmivalenum &frm, __u32 init_pixfmt = 0, __u32 w = 0, __u32 h = 0, int index = 0);
@@ -112,44 +112,6 @@ public:
 	bool has_compose();
 	bool input_has_compose();
 
-	inline bool reqbufs_mmap_cap(v4l2_requestbuffers &reqbuf, int count = 0) {
-		return reqbufs_mmap(reqbuf, V4L2_BUF_TYPE_VIDEO_CAPTURE, count);
-	}
-	inline bool reqbufs_user_cap(v4l2_requestbuffers &reqbuf, int count = 0) {
-		return reqbufs_user(reqbuf, V4L2_BUF_TYPE_VIDEO_CAPTURE, count);
-	}
-	inline bool dqbuf_mmap_cap(v4l2_buffer &buf, bool &again) {
-		return dqbuf_mmap(buf, V4L2_BUF_TYPE_VIDEO_CAPTURE, again);
-	}
-	inline bool dqbuf_user_cap(v4l2_buffer &buf, bool &again) {
-		return dqbuf_user(buf, V4L2_BUF_TYPE_VIDEO_CAPTURE, again);
-	}
-	inline bool streamon_cap() { return streamon(V4L2_BUF_TYPE_VIDEO_CAPTURE); }
-	inline bool streamoff_cap() { return streamoff(V4L2_BUF_TYPE_VIDEO_CAPTURE); }
-
-	inline bool reqbufs_mmap_vbi(v4l2_requestbuffers &reqbuf, int count = 0) {
-		return reqbufs_mmap(reqbuf, V4L2_BUF_TYPE_VBI_CAPTURE, count);
-	}
-	inline bool reqbufs_user_vbi(v4l2_requestbuffers &reqbuf, int count = 0) {
-		return reqbufs_user(reqbuf, V4L2_BUF_TYPE_VBI_CAPTURE, count);
-	}
-	inline bool dqbuf_mmap_vbi(v4l2_buffer &buf, bool &again) {
-		return dqbuf_mmap(buf, V4L2_BUF_TYPE_VBI_CAPTURE, again);
-	}
-	inline bool dqbuf_user_vbi(v4l2_buffer &buf, bool &again) {
-		return dqbuf_user(buf, V4L2_BUF_TYPE_VBI_CAPTURE, again);
-	}
-	inline bool streamon_vbi() { return streamon(V4L2_BUF_TYPE_VBI_CAPTURE); }
-	inline bool streamoff_vbi() { return streamoff(V4L2_BUF_TYPE_VBI_CAPTURE); }
-
-	bool reqbufs_mmap_out(v4l2_requestbuffers &reqbuf, int count = 0);
-	bool reqbufs_user_out(v4l2_requestbuffers &reqbuf);
-	bool dqbuf_mmap_out(v4l2_buffer &buf);
-	bool dqbuf_user_out(v4l2_buffer &buf);
-	bool qbuf_mmap_out(int index, int bytesused);
-	bool qbuf_user_out(void *ptr, int length);
-	bool streamon_out();
-	bool streamoff_out();
 	bool subscribe_event(v4l2_event_subscription &sub);
 	bool dqevent(v4l2_event &ev);
 

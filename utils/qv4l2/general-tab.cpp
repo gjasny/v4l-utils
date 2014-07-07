@@ -547,7 +547,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	addLabel("Capture Image Formats");
 	m_vidCapFormats = new QComboBox(parent);
 	m_vidCapFormats->setMinimumContentsLength(20);
-	if (enum_fmt_cap(fmt, m_buftype, true)) {
+	if (enum_fmt(fmt, m_buftype, true)) {
 		do {
 			QString s(pixfmt2s(fmt.pixelformat) + " (");
 
@@ -555,7 +555,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 				m_vidCapFormats->addItem(s + "Emulated)");
 			else
 				m_vidCapFormats->addItem(s + (const char *)fmt.description + ")");
-		} while (enum_fmt_cap(fmt, m_buftype));
+		} while (enum_fmt(fmt, m_buftype));
 	}
 	addWidget(m_vidCapFormats);
 	connect(m_vidCapFormats, SIGNAL(activated(int)), SLOT(vidCapFormatChanged(int)));
@@ -1048,11 +1048,11 @@ void GeneralTab::vidCapFormatChanged(int idx)
 {
 	v4l2_fmtdesc desc;
 
-	enum_fmt_cap(desc, m_buftype, true, idx);
+	enum_fmt(desc, m_buftype, true, idx);
 
 	v4l2_format fmt;
 
-	g_fmt_cap(m_buftype, fmt);
+	g_fmt(m_buftype, fmt);
 	if (isPlanar())
 		fmt.fmt.pix_mp.pixelformat = desc.pixelformat;
 	else
@@ -1095,7 +1095,7 @@ void GeneralTab::vidCapFieldChanged(int idx)
 {
 	v4l2_format fmt;
 
-	g_fmt_cap(m_buftype, fmt);
+	g_fmt(m_buftype, fmt);
 	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
 		if (m_vidCapFields->currentText() == QString(field2s(f))) {
 			if (isPlanar())
@@ -1115,7 +1115,7 @@ void GeneralTab::frameWidthChanged()
 	int val = m_frameWidth->value();
 
 	if (m_frameWidth->isEnabled()) {
-		g_fmt_cap(m_buftype, fmt);
+		g_fmt(m_buftype, fmt);
 		if (isPlanar())
 			fmt.fmt.pix_mp.width = val;
 		else
@@ -1133,7 +1133,7 @@ void GeneralTab::frameHeightChanged()
 	int val = m_frameHeight->value();
 
 	if (m_frameHeight->isEnabled()) {
-		g_fmt_cap(m_buftype, fmt);
+		g_fmt(m_buftype, fmt);
 		if (isPlanar())
 			fmt.fmt.pix_mp.height = val;
 		else
@@ -1152,7 +1152,7 @@ void GeneralTab::frameSizeChanged(int idx)
 	if (enum_framesizes(frmsize, m_pixelformat, idx)) {
 		v4l2_format fmt;
 
-		g_fmt_cap(m_buftype, fmt);
+		g_fmt(m_buftype, fmt);
 		if (isPlanar()) {
 			fmt.fmt.pix_mp.width = frmsize.discrete.width;
 			fmt.fmt.pix_mp.height = frmsize.discrete.height;
@@ -1511,7 +1511,7 @@ void GeneralTab::updateVidCapFormat()
 
 	if (isVbi())
 		return;
-	g_fmt_cap(m_buftype, fmt);
+	g_fmt(m_buftype, fmt);
 	if (isPlanar()) {
 		m_pixelformat = fmt.fmt.pix_mp.pixelformat;
 		m_width       = fmt.fmt.pix_mp.width;
@@ -1523,7 +1523,7 @@ void GeneralTab::updateVidCapFormat()
 	}
 	updateFrameSize();
 	updateFrameInterval();
-	if (enum_fmt_cap(desc, m_buftype, true)) {
+	if (enum_fmt(desc, m_buftype, true)) {
 		do {
 			if (isPlanar()) {
 				if (desc.pixelformat == fmt.fmt.pix_mp.pixelformat)
@@ -1532,7 +1532,7 @@ void GeneralTab::updateVidCapFormat()
 				if (desc.pixelformat == fmt.fmt.pix.pixelformat)
 					break;
 			}
-		} while (enum_fmt_cap(desc, m_buftype));
+		} while (enum_fmt(desc, m_buftype));
 	}
 	if (isPlanar()) {
 		if (desc.pixelformat != fmt.fmt.pix_mp.pixelformat)
@@ -1553,7 +1553,7 @@ void GeneralTab::updateVidCapFields()
 	v4l2_format tmp;
 	bool first = true;
 
-	g_fmt_cap(m_buftype, fmt);
+	g_fmt(m_buftype, fmt);
 
 	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
 		tmp = fmt;
@@ -1790,7 +1790,7 @@ double GeneralTab::getPixelAspectRatio()
 	unsigned cur_width, cur_height;
 	unsigned cur_field;
 
-	g_fmt_cap(m_buftype, fmt);
+	g_fmt(m_buftype, fmt);
 
 	if (isPlanar()) {
 		cur_width = fmt.fmt.pix_mp.width;
