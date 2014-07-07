@@ -567,29 +567,45 @@ bool v4l2::get_interval(unsigned type, v4l2_fract &interval)
 v4l2_fract v4l2::g_pixel_aspect(unsigned type, unsigned &width, unsigned &height)
 {
 	v4l2_cropcap ratio;
+	v4l2_dv_timings timings;
 	v4l2_std_id std;
 	static const v4l2_fract square = { 1, 1 };
 	static const v4l2_fract hz50 = { 11, 12 };
 	static const v4l2_fract hz60 = { 11, 10 };
 
 	ratio.type = type;
+	if (ioctl(VIDIOC_CROPCAP, &ratio) == 0) {
+		width = ratio.defrect.width;
+		height = ratio.defrect.height;
+		if (ratio.pixelaspect.numerator && ratio.pixelaspect.denominator)
+			return ratio.pixelaspect;
+	}
+
 	width = 720;
 	height = 480;
-	if (ioctl(VIDIOC_CROPCAP, &ratio) < 0) {
-		if (!g_std(std))
-			return square;
+	if (g_std(std)) {
 		if (std & V4L2_STD_525_60)
 			return hz60;
-		height = 576;
-		if (std & V4L2_STD_625_50)
+		if (std & V4L2_STD_625_50) {
+			height = 576;
 			return hz50;
+		}
+	}
+
+	if (g_dv_timings(timings)) {
+		width = timings.bt.width;
+		height = timings.bt.height;
+		if (width == 720 && height == 480)
+			return hz60;
+		if (width == 720 && height == 576) {
+			height = 576;
+			return hz50;
+		}
 		return square;
 	}
-	width = ratio.defrect.width;
-	height = ratio.defrect.height;
-	if (!ratio.pixelaspect.numerator || !ratio.pixelaspect.denominator)
-		return square;
-	return ratio.pixelaspect;
+	width = 0;
+	height = 0;
+	return square;
 }
 
 bool v4l2::has_crop()

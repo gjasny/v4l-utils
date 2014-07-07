@@ -1810,7 +1810,7 @@ void GeneralTab::changePixelAspectRatio()
 double GeneralTab::getPixelAspectRatio()
 {
 	v4l2_fract ratio = { 1, 1 };
-	unsigned w = 720, h = 480;
+	unsigned w = 0, h = 0;
 
 	switch (m_pixelAspectRatio->currentIndex()) {
 	case 0:
@@ -1827,12 +1827,10 @@ double GeneralTab::getPixelAspectRatio()
 	case 4:
 		ratio.numerator = 11;
 		ratio.denominator = 12;
-		h = 576;
 		break;
 	case 5:
 		ratio.numerator = 11;
 		ratio.denominator = 16;
-		h = 576;
 		break;
 	default:
 		break;
@@ -1857,6 +1855,8 @@ double GeneralTab::getPixelAspectRatio()
 		cur_height = fmt.fmt.pix.height;
 		cur_field = fmt.fmt.pix.field;
 	}
+	if (w == 0)
+		w = cur_width;
 	if (cur_field == V4L2_FIELD_TOP ||
 	    cur_field == V4L2_FIELD_BOTTOM ||
 	    cur_field == V4L2_FIELD_ALTERNATE) {
@@ -1866,6 +1866,8 @@ double GeneralTab::getPixelAspectRatio()
 		ratio.numerator *= 2;
 		h /= 2;
 	}
+	if (h == 0)
+		h = cur_height;
 
 	// Note: ratio is y / x, whereas we want x / y, so we return
 	// denominator / numerator.
