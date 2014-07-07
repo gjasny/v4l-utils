@@ -81,7 +81,6 @@ public:
 	bool s_frequency(v4l2_frequency &freq);
 	bool s_frequency(int freq, bool low = false);
 	bool g_fmt(unsigned type, v4l2_format &fmt);
-	bool g_fmt_out(v4l2_format &fmt);
 	bool g_fmt_vbi(v4l2_format &fmt);
 	bool g_fmt_sliced_vbi(v4l2_format &fmt);
 	bool try_fmt(v4l2_format &fmt);
@@ -93,7 +92,6 @@ public:
 	bool enum_std(v4l2_standard &std, bool init = false, int index = 0);
 	bool enum_dv_timings(v4l2_enum_dv_timings &timings, bool init = false, int index = 0);
 	bool enum_fmt(v4l2_fmtdesc &std, unsigned type, bool init = false, int index = 0);
-	bool enum_fmt_out(v4l2_fmtdesc &std, bool init = false, int index = 0);
 	bool enum_framesizes(v4l2_frmsizeenum &frm, __u32 init_pixfmt = 0, int index = 0);
 	bool enum_frameintervals(v4l2_frmivalenum &frm, __u32 init_pixfmt = 0, __u32 w = 0, __u32 h = 0, int index = 0);
 

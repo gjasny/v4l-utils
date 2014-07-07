@@ -284,13 +284,6 @@ bool v4l2::g_fmt(unsigned type, v4l2_format &fmt)
 	return ioctl(VIDIOC_G_FMT, &fmt) >= 0;
 }
 
-bool v4l2::g_fmt_out(v4l2_format &fmt)
-{
-	memset(&fmt, 0, sizeof(fmt));
-	fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	return ioctl(VIDIOC_G_FMT, &fmt) >= 0;
-}
-
 bool v4l2::g_fmt_vbi(v4l2_format &fmt)
 {
 	memset(&fmt, 0, sizeof(fmt));
@@ -398,18 +391,6 @@ bool v4l2::enum_fmt(v4l2_fmtdesc &fmt, unsigned type, bool init, int index)
 		fmt.index++;
 	}
 	fmt.type = type;
-	return ioctl(VIDIOC_ENUM_FMT, &fmt) >= 0;
-}
-
-bool v4l2::enum_fmt_out(v4l2_fmtdesc &fmt, bool init, int index)
-{
-	if (init) {
-		memset(&fmt, 0, sizeof(fmt));
-		fmt.index = index;
-	} else {
-		fmt.index++;
-	}
-	fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	return ioctl(VIDIOC_ENUM_FMT, &fmt) >= 0;
 }
 

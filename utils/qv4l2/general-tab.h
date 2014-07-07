@@ -114,7 +114,7 @@ private slots:
 	void stereoModeChanged();
 	void rdsModeChanged();
 	void vidCapFormatChanged(int);
-	void vidCapFieldChanged(int);
+	void vidFieldChanged(int);
 	void frameWidthChanged();
 	void frameHeightChanged();
 	void frameSizeChanged(int);
@@ -139,12 +139,19 @@ private:
 	void updateFreqChannel();
 	void updateFreqRf();
 	void updateVidCapFormat();
-	void updateVidCapFields();
+	void updateVidFields();
 	void updateFrameSize();
 	void updateFrameInterval();
 	void updateVidOutFormat();
 	void updateCrop();
 	void updateCompose();
+	void updateVidFormat()
+	{
+		if (m_isOutput)
+			updateVidOutFormat();
+		else
+			updateVidCapFormat();
+	}
 	int addAudioDevice(void *hint, int deviceNum);
 	bool filterAudioInDevice(QString &deviceName);
 	bool filterAudioOutDevice(QString &deviceName);
@@ -174,6 +181,7 @@ private:
 	bool m_isRadio;
 	bool m_isSDR;
 	bool m_isVbi;
+	bool m_isOutput;
 	double m_freqFac;
 	double m_freqRfFac;
 	bool m_isPlanar;
@@ -218,7 +226,7 @@ private:
 	QCheckBox *m_rdsMode;
 	QPushButton *m_detectSubchans;
 	QComboBox *m_vidCapFormats;
-	QComboBox *m_vidCapFields;
+	QComboBox *m_vidFields;
 	QComboBox *m_frameSize;
 	QSpinBox *m_frameWidth;
 	QSpinBox *m_frameHeight;
