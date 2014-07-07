@@ -25,6 +25,7 @@
 
 #include <QSpinBox>
 #include <QDoubleSpinBox>
+#include <QStackedWidget>
 #include <sys/time.h>
 #include <linux/videodev2.h>
 #include <map>
@@ -127,6 +128,7 @@ private slots:
 	void composeChanged();
 
 private:
+	void updateGUI(int);
 	void updateVideoInput();
 	void updateVideoOutput();
 	void updateAudioInput();
@@ -204,6 +206,9 @@ private:
 	std::map<QString, QString> m_audioOutDeviceMap;
 
 	// General tab
+	QStackedWidget *m_stackedStandards;
+	QStackedWidget *m_stackedFrameSettings;
+	QStackedWidget *m_stackedFrequency;
 	QComboBox *m_videoInput;
 	QComboBox *m_videoOutput;
 	QComboBox *m_audioInput;
