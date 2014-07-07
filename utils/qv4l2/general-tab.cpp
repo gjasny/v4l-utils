@@ -54,6 +54,8 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_freqFac(16),
 	m_freqRfFac(16),
 	m_isPlanar(false),
+	m_haveBuffers(false),
+	m_discreteSizes(false),
 	m_videoInput(NULL),
 	m_videoOutput(NULL),
 	m_audioInput(NULL),
@@ -683,6 +685,8 @@ unsigned GeneralTab::getDisplayColorspace() const
 
 void GeneralTab::setHaveBuffers(bool haveBuffers)
 {
+	m_haveBuffers = haveBuffers;
+
 	if (m_videoInput)
 		m_videoInput->setDisabled(haveBuffers);
 	if (m_videoOutput)
@@ -695,11 +699,11 @@ void GeneralTab::setHaveBuffers(bool haveBuffers)
 		m_vidCapFormats->setDisabled(haveBuffers);
 	if (m_vidCapFields)
 		m_vidCapFields->setDisabled(haveBuffers);
-	if (m_frameSize)
+	if (m_frameSize && m_discreteSizes)
 		m_frameSize->setDisabled(haveBuffers);
-	if (m_frameWidth)
+	if (m_frameWidth && !m_discreteSizes)
 		m_frameWidth->setDisabled(haveBuffers);
-	if (m_frameHeight)
+	if (m_frameHeight && !m_discreteSizes)
 		m_frameHeight->setDisabled(haveBuffers);
 	if (m_vidOutFormats)
 		m_vidOutFormats->setDisabled(haveBuffers);
@@ -1110,15 +1114,15 @@ void GeneralTab::frameWidthChanged()
 	v4l2_format fmt;
 	int val = m_frameWidth->value();
 
-	if (!m_frameWidth->isEnabled())
-		return;
-	g_fmt_cap(m_buftype, fmt);
-	if (isPlanar())
-		fmt.fmt.pix_mp.width = val;
-	else
-		fmt.fmt.pix.width = val;
-	if (try_fmt(fmt))
-		s_fmt(fmt);
+	if (m_frameWidth->isEnabled()) {
+		g_fmt_cap(m_buftype, fmt);
+		if (isPlanar())
+			fmt.fmt.pix_mp.width = val;
+		else
+			fmt.fmt.pix.width = val;
+		if (try_fmt(fmt))
+			s_fmt(fmt);
+	}
 
 	updateVidCapFormat();
 }
@@ -1128,15 +1132,15 @@ void GeneralTab::frameHeightChanged()
 	v4l2_format fmt;
 	int val = m_frameHeight->value();
 
-	if (!m_frameHeight->isEnabled())
-		return;
-	g_fmt_cap(m_buftype, fmt);
-	if (isPlanar())
-		fmt.fmt.pix_mp.height = val;
-	else
-		fmt.fmt.pix.height = val;
-	if (try_fmt(fmt))
-		s_fmt(fmt);
+	if (m_frameHeight->isEnabled()) {
+		g_fmt_cap(m_buftype, fmt);
+		if (isPlanar())
+			fmt.fmt.pix_mp.height = val;
+		else
+			fmt.fmt.pix.height = val;
+		if (try_fmt(fmt))
+			s_fmt(fmt);
+	}
 
 	updateVidCapFormat();
 }
@@ -1673,15 +1677,21 @@ void GeneralTab::updateFrameSize()
 				m_frameSize->setCurrentIndex(frmsize.index);
 		} while (enum_framesizes(frmsize));
 
+		m_discreteSizes = true;
 		m_frameWidth->setEnabled(false);
-		m_frameHeight->setEnabled(false);
+		m_frameWidth->blockSignals(true);
 		m_frameWidth->setMinimum(m_width);
 		m_frameWidth->setMaximum(m_width);
 		m_frameWidth->setValue(m_width);
+		m_frameWidth->blockSignals(false);
+
+		m_frameHeight->setEnabled(false);
+		m_frameHeight->blockSignals(true);
 		m_frameHeight->setMinimum(m_height);
 		m_frameHeight->setMaximum(m_height);
 		m_frameHeight->setValue(m_height);
-		m_frameSize->setEnabled(true);
+		m_frameHeight->blockSignals(false);
+		m_frameSize->setEnabled(!m_haveBuffers);
 		updateFrameInterval();
 		return;
 	}
@@ -1693,17 +1703,23 @@ void GeneralTab::updateFrameSize()
 		frmsize.stepwise.max_height = 2160;
 		frmsize.stepwise.step_height = 1;
 	}
-	m_frameWidth->setEnabled(true);
-	m_frameHeight->setEnabled(true);
+	m_discreteSizes = false;
 	m_frameSize->setEnabled(false);
+	m_frameWidth->setEnabled(!m_haveBuffers);
+	m_frameWidth->blockSignals(true);
 	m_frameWidth->setMinimum(frmsize.stepwise.min_width);
 	m_frameWidth->setMaximum(frmsize.stepwise.max_width);
 	m_frameWidth->setSingleStep(frmsize.stepwise.step_width);
 	m_frameWidth->setValue(m_width);
+	m_frameWidth->blockSignals(false);
+
+	m_frameHeight->setEnabled(!m_haveBuffers);
+	m_frameHeight->blockSignals(true);
 	m_frameHeight->setMinimum(frmsize.stepwise.min_height);
 	m_frameHeight->setMaximum(frmsize.stepwise.max_height);
 	m_frameHeight->setSingleStep(frmsize.stepwise.step_height);
 	m_frameHeight->setValue(m_height);
+	m_frameHeight->blockSignals(false);
 	updateFrameInterval();
 }
 

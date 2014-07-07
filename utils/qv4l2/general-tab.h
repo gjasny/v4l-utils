@@ -177,6 +177,8 @@ private:
 	double m_freqFac;
 	double m_freqRfFac;
 	bool m_isPlanar;
+	bool m_haveBuffers;
+	bool m_discreteSizes;
 	__u32 m_buftype;
 	__u32 m_audioModes[5];
 	QString m_device;
