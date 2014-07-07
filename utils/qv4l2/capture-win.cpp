@@ -79,6 +79,8 @@ void CaptureWin::setFrame(int width, int height, __u32 format,
         m_frameInfo.planeData[1] = data2;
         m_frameInfo.info        = info;
 
+	m_information.setText(m_frameInfo.info);
+
 	setRenderFrame();
 }
 

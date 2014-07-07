@@ -66,7 +66,6 @@ void CaptureWinGL::setRenderFrame()
 				m_frameInfo.planeData[0],
 				m_frameInfo.planeData[1]);
 #endif
-	m_information.setText(m_frameInfo.info);
 }
 
 bool CaptureWinGL::hasNativeFormat(__u32 format)

@@ -67,7 +67,6 @@ void CaptureWinQt::setRenderFrame()
 		CaptureWin::resizeScaleCrop();
 	}
 
-	m_information.setText(m_frameInfo.info);
 	paintFrame();
 }
 
