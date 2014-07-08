@@ -788,7 +788,7 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 	{
 		.id = V4L2_CID_AUTO_WHITE_BALANCE,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
-		.name =  "Whitebalance (software)",
+		.name =  "White Balance, Automatic",
 		.minimum = 0,
 		.maximum = 1,
 		.step = 1,
@@ -797,7 +797,7 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 	}, {
 		.id = V4L2_CID_HFLIP,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
-		.name =  "Horizontal flip (sw)",
+		.name =  "Horizontal Flip",
 		.minimum = 0,
 		.maximum = 1,
 		.step = 1,
@@ -806,7 +806,7 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 	}, {
 		.id = V4L2_CID_VFLIP,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
-		.name =  "Vertical flip (sw)",
+		.name =  "Vertical Flip",
 		.minimum = 0,
 		.maximum = 1,
 		.step = 1,
@@ -815,17 +815,17 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 	}, {
 		.id = V4L2_CID_GAMMA,
 		.type = V4L2_CTRL_TYPE_INTEGER,
-		.name =  "Gamma (software)",
+		.name =  "Gamma",
 		.minimum = 500,  /* == 0.5 */
 		.maximum = 3000, /* == 3.0 */
 		.step = 1,
 		.default_value = 1000, /* == 1.0 */
-		.flags = 0
+		.flags = V4L2_CTRL_FLAG_SLIDER
 	}, { /* Dummy place holder for V4LCONTROL_AUTO_ENABLE_COUNT */
 	}, {
 		.id = V4L2_CID_AUTOGAIN,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
-		.name =  "Auto Gain (software)",
+		.name =  "Gain, Automatic",
 		.minimum = 0,
 		.maximum = 1,
 		.step = 1,
@@ -834,12 +834,12 @@ static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT] = {
 	}, {
 		.id = V4L2_CTRL_CLASS_USER + 0x2000, /* FIXME */
 		.type = V4L2_CTRL_TYPE_INTEGER,
-		.name =  "Auto Gain target",
+		.name =  "Auto Gain Target",
 		.minimum = 0,
 		.maximum = 255,
 		.step = 1,
 		.default_value = 100,
-		.flags = 0
+		.flags = V4L2_CTRL_FLAG_SLIDER
 	},
 };
 
