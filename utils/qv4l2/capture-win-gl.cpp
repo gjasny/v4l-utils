@@ -46,22 +46,26 @@ void CaptureWinGL::stop()
 void CaptureWinGL::resizeEvent(QResizeEvent *event)
 {
 #ifdef HAVE_QTGL
+	// Get size of frame viewport. Can't use size of m_videoSurface
+	// since it is a subwidget of this widget.
 	QSize margins = getMargins();
-	QSize frame = QSize(width() - margins.width(), height() - margins.height());
-	QSize sizedFrame = CaptureWin::scaleFrameSize(QSize(frame.width(), frame.height()),
-						      QSize(m_frameInfo.frameWidth,
-							    m_frameInfo.frameHeight));
-	m_videoSurface.setSize(sizedFrame.width(), sizedFrame.height());
+	m_curWinWidth  = width() - margins.width();
+	m_curWinHeight = height() - margins.height();
+	// Re-calculate
+	CaptureWin::resizeScaleCrop();
+	// Lock viewport size to follow calculated size
+	m_videoSurface.lockSize(m_scaledSize);
 #endif
 	event->accept();
 }
 
 void CaptureWinGL::setRenderFrame()
 {
-	// Force a recalculation by setting this to 0.
-	m_cropInfo.bytes = 0;
+#ifdef HAVE_QTGL
 	m_curWinWidth  = m_videoSurface.width();
 	m_curWinHeight = m_videoSurface.height();
+#endif
+	// No recalculation is performed if all parameters are unchanged
 	CaptureWin::resizeScaleCrop();
 
 	// Get/copy (TODO: remove CaptureWinGLEngine and use direct or use pointer)
@@ -240,11 +244,10 @@ void CaptureWinGLEngine::initializeGL()
 	checkError("InitializeGL");
 }
 
-void CaptureWinGLEngine::setSize(int width, int height)
+void CaptureWinGLEngine::lockSize(QSize size)
 {
-// TODO: This just locks the aspect ratio, does not limit max size. Why?
-	if (width > 0 && height > 0) {
-		setMaximumSize(width, height);
+	if ((size.width() > 0) && (size.height() > 0)) {
+		setFixedSize(size);
 	}
 }
 

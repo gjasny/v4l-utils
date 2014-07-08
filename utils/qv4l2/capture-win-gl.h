@@ -45,7 +45,7 @@ public:
 	void setFrame(int width, int height, int cropWidth, int cropHeight,
 		      __u32 format, unsigned char *data, unsigned char *data2);
 	bool hasNativeFormat(__u32 format);
-	void setSize(int width, int height);
+	void lockSize(QSize size);
 	void setColorspace(unsigned colorspace);
 	void setDisplayColorspace(unsigned colorspace);
 	void setField(unsigned field);
