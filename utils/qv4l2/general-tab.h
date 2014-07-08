@@ -85,8 +85,6 @@ public:
 	void sourceChange(const v4l2_event &ev);
 	unsigned getDisplayColorspace() const;
 	unsigned getColorspace() const;
-	int getWidth();
-	int getHeight();
 
 public slots:
 	void showAllAudioDevices(bool use);
@@ -130,7 +128,6 @@ private slots:
 	void composeChanged();
 
 private:
-	void fixWidth();
 	void updateGUI(int);
 	void updateVideoInput();
 	void updateVideoOutput();
@@ -167,7 +164,7 @@ private:
 #endif
 
 	void addWidget(QWidget *w, Qt::Alignment align = Qt::AlignLeft);
-	void addLabel(const QString &text, Qt::Alignment align = Qt::AlignLeft)
+	void addLabel(const QString &text, Qt::Alignment align = Qt::AlignRight)
 	{
 		addWidget(new QLabel(text, parentWidget()), align);
 	}
@@ -183,10 +180,6 @@ private:
 	int m_row;
 	int m_col;
 	int m_cols;
-	int m_minWidth;
-	double m_pxw;
-	int m_increment;
-	int m_maxw[4];
 	bool m_isRadio;
 	bool m_isSDR;
 	bool m_isVbi;
@@ -213,7 +206,6 @@ private:
 	std::map<QString, QString> m_audioOutDeviceMap;
 
 	// General tab
-	QList<QGridLayout *> m_grids;
 	QStackedWidget *m_stackedStandards;
 	QStackedWidget *m_stackedFrameSettings;
 	QStackedWidget *m_stackedFrequency;

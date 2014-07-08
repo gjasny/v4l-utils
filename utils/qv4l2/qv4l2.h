@@ -105,7 +105,6 @@ private:
 	void startAudio();
 	void stopAudio();
 
-	int m_maxw[4];
 	struct buffer *m_buffers;
 	struct v4l2_format m_capSrcFormat;
 	struct v4l2_format m_capDestFormat;
@@ -156,12 +155,11 @@ public:
 
 private:
 	void addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment align = Qt::AlignLeft);
-	void addLabel(QGridLayout *grid, const QString &text, Qt::Alignment align = Qt::AlignLeft)
+	void addLabel(QGridLayout *grid, const QString &text, Qt::Alignment align = Qt::AlignRight)
 	{
 		addWidget(grid, new QLabel(text, parentWidget()), align);
 	}
-	void fixWidth(QGridLayout *grid);
-	void addTabs(int size[]);
+	void addTabs();
 	void finishGrid(QGridLayout *grid, unsigned ctrl_class);
 	void addCtrl(QGridLayout *grid, const struct v4l2_queryctrl &qctrl);
 	void updateCtrl(unsigned id);
@@ -188,9 +186,6 @@ private:
 	void updateFreqChannel();
 	bool showFrames();
 
-	double m_pxw;
-	double m_minWidth;
-	int m_increment;
 	GeneralTab *m_genTab;
 	VbiTab *m_vbiTab;
 	QAction *m_capStartAct;
