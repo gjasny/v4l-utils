@@ -221,6 +221,7 @@ static struct option long_options[] = {
 	{"stream-out-video-aspect", required_argument, 0, OptStreamOutVideoAspect},
 	{"stream-out-alpha", required_argument, 0, OptStreamOutAlphaComponent},
 	{"stream-out-alpha-red-only", no_argument, 0, OptStreamOutAlphaRedOnly},
+	{"stream-out-rgb-lim-range", required_argument, 0, OptStreamOutRGBLimitedRange},
 	{"stream-out-hor-speed", required_argument, 0, OptStreamOutHorSpeed},
 	{"stream-out-vert-speed", required_argument, 0, OptStreamOutVertSpeed},
 	{"stream-out-perc-fill", required_argument, 0, OptStreamOutPercFill},

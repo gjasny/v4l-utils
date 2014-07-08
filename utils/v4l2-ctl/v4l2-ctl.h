@@ -178,6 +178,7 @@ enum Option {
 	OptStreamOutPercFill,
 	OptStreamOutAlphaComponent,
 	OptStreamOutAlphaRedOnly,
+	OptStreamOutRGBLimitedRange,
 	OptStreamOutPixelAspect,
 	OptStreamOutVideoAspect,
 	OptStreamOutMmap,

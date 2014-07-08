@@ -33,6 +33,7 @@ static int stream_out_pixel_aspect = -1;
 static tpg_video_aspect stream_out_video_aspect;
 static u8 stream_out_alpha;
 static bool stream_out_alpha_red_only;
+static bool stream_out_rgb_lim_range;
 static unsigned stream_out_perc_fill = 100;
 static v4l2_std_id stream_out_std;
 static bool stream_out_refresh;
@@ -93,17 +94,17 @@ void streaming_usage(void)
 	       "  --stream-out-eav   insert an EAV code in every line.\n"
 	       "  --stream-out-pixel-aspect=<aspect\n"
 	       "                     select a pixel aspect ratio. The default is to autodetect.\n"
-	       "                     <aspect> can be one of:\n"
-	       "                     square, ntsc, pal\n"
+	       "                     <aspect> can be one of: square, ntsc, pal\n"
 	       "  --stream-out-video-aspect=<aspect\n"
 	       "                     select a video aspect ratio. The default is to use the frame ratio.\n"
-	       "                     <aspect> can be one of:\n"
-	       "                     4x3, 16x9, anamorphic\n"
+	       "                     <aspect> can be one of: 4x3, 16x9, anamorphic\n"
 	       "  --stream-out-alpha=<alpha-value>\n"
 	       "                     value to use for the alpha component, range 0-255. The default is 0.\n"
 	       "  --stream-out-alpha-red-only\n"
 	       "                     only use the --stream-out-alpha value for the red colors,\n"
 	       "                     for all others use 0.\n"
+	       "  --stream-out-rgb-lim-range\n"
+	       "                     Encode RGB values as limited [16-235] instead of full range.\n"
 	       "  --stream-out-hor-speed=<speed>\n"
 	       "                     choose speed for horizontal movement. The default is 0,\n"
 	       "                     and the range is [-3...3].\n"
@@ -329,6 +330,9 @@ void streaming_cmd(int ch, char *optarg)
 		break;
 	case OptStreamOutAlphaRedOnly:
 		stream_out_alpha_red_only = true;
+		break;
+	case OptStreamOutRGBLimitedRange:
+		stream_out_rgb_lim_range = true;
 		break;
 	case OptStreamOutHorSpeed:
 	case OptStreamOutVertSpeed:
@@ -649,6 +653,8 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 	tpg_s_insert_sav(&tpg, stream_out_sav);
 	tpg_s_insert_eav(&tpg, stream_out_eav);
 	tpg_s_perc_fill(&tpg, stream_out_perc_fill);
+	if (stream_out_rgb_lim_range)
+		tpg_s_real_rgb_range(&tpg, V4L2_DV_RGB_RANGE_LIMITED);
 	tpg_s_alpha_component(&tpg, stream_out_alpha);
 	tpg_s_alpha_mode(&tpg, stream_out_alpha_red_only);
 	tpg_s_video_aspect(&tpg, stream_out_video_aspect);
