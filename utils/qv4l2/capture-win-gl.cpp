@@ -52,6 +52,7 @@ void CaptureWinGL::resizeEvent(QResizeEvent *event)
 	m_curWinWidth  = width() - margins.width();
 	m_curWinHeight = height() - margins.height();
 	// Re-calculate
+	m_frameInfo.updated = true;
 	CaptureWin::resizeScaleCrop();
 	// Lock viewport size to follow calculated size
 	m_videoSurface.lockSize(m_scaledSize);
@@ -62,20 +63,14 @@ void CaptureWinGL::resizeEvent(QResizeEvent *event)
 void CaptureWinGL::setRenderFrame()
 {
 #ifdef HAVE_QTGL
-	m_curWinWidth  = m_videoSurface.width();
-	m_curWinHeight = m_videoSurface.height();
-#endif
-	// No recalculation is performed if all parameters are unchanged
-	CaptureWin::resizeScaleCrop();
-
-	// Get/copy (TODO: remove CaptureWinGLEngine and use direct or use pointer)
-#ifdef HAVE_QTGL
 	m_videoSurface.setFrame(m_frameInfo.frameWidth, m_frameInfo.frameHeight,
 				m_cropInfo.cropW, m_cropInfo.cropH,
 				m_frameInfo.format,
 				m_frameInfo.planeData[0],
 				m_frameInfo.planeData[1]);
 #endif
+	m_frameInfo.updated = false;
+	m_cropInfo.updated = false;
 }
 
 bool CaptureWinGL::hasNativeFormat(__u32 format)

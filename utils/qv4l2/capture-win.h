@@ -50,11 +50,12 @@ struct cropInfo {
 };
 
 struct frameInfo {
-        __u32 format;
+	__u32 format;
 	int   frameHeight;
 	int   frameWidth;
-        unsigned char *planeData[2];
-        QString info;
+	unsigned char *planeData[2];
+	QString info;
+	bool updated;
 };
 
 class CaptureWin : public QWidget

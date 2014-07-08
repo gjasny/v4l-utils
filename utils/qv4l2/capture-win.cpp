@@ -49,6 +49,8 @@ CaptureWin::CaptureWin() :
 	m_frameInfo.frameWidth  =  0;
 	m_frameInfo.planeData[0] = NULL;
 	m_frameInfo.planeData[1] = NULL;
+	m_scaledSize.setWidth(0);
+	m_scaledSize.setHeight(0);
 	m_cropInfo.cropH  = 0;
 	m_cropInfo.cropW  = 0;
 	m_cropInfo.height = 0;
@@ -70,15 +72,21 @@ CaptureWin::~CaptureWin()
 }
 
 void CaptureWin::setFrame(int width, int height, __u32 format,
-		unsigned char *data, unsigned char *data2, const QString &info)
+			  unsigned char *data, unsigned char *data2, const QString &info)
 {
-        m_frameInfo.frameHeight = height;
-        m_frameInfo.frameWidth  = width;
-        m_frameInfo.format      = format;
-        m_frameInfo.planeData[0] = data;
-        m_frameInfo.planeData[1] = data2;
-        m_frameInfo.info        = info;
+	m_frameInfo.planeData[0] = data;
+	m_frameInfo.planeData[1] = data2;
+	m_frameInfo.info         = info;
 
+	m_frameInfo.updated = false;
+	if (width != m_frameInfo.frameWidth || height != m_frameInfo.frameHeight
+	    || format != m_frameInfo.format) {
+		m_frameInfo.frameHeight  = height;
+		m_frameInfo.frameWidth   = width;
+		m_frameInfo.format       = format;
+		m_frameInfo.updated      = true;
+		resizeScaleCrop();
+	}
 	m_information.setText(m_frameInfo.info);
 
 	setRenderFrame();
@@ -154,12 +162,10 @@ int CaptureWin::cropWidth(int width, int height)
 
 void CaptureWin::resizeScaleCrop()
 {
-	m_scaledSize = scaleFrameSize(QSize(m_curWinWidth, m_curWinHeight),
-				      QSize(m_frameInfo.frameWidth, m_frameInfo.frameHeight));
-        m_cropInfo.updated = 0;
-	if (!m_cropInfo.bytes
-	    || m_cropInfo.cropH != cropHeight(m_frameInfo.frameWidth, m_frameInfo.frameHeight)
-	    || m_cropInfo.cropW != cropWidth(m_frameInfo.frameWidth, m_frameInfo.frameHeight)) {
+	m_cropInfo.updated = 0;
+	if (m_frameInfo.updated) {
+		m_scaledSize = scaleFrameSize(QSize(m_curWinWidth, m_curWinHeight),
+					      QSize(m_frameInfo.frameWidth, m_frameInfo.frameHeight));
 		m_cropInfo.cropH  = cropHeight(m_frameInfo.frameWidth, m_frameInfo.frameHeight);
 		m_cropInfo.cropW  = cropWidth(m_frameInfo.frameWidth, m_frameInfo.frameHeight);
 		m_cropInfo.height = m_frameInfo.frameHeight - (m_cropInfo.cropH * 2);

@@ -25,10 +25,7 @@ CaptureWinQt::CaptureWinQt() :
 	m_supportedFormat(false),
 	m_filled(false)
 {
-
 	CaptureWin::buildWindow(&m_videoSurface);
-	m_scaledSize.setWidth(0);
-	m_scaledSize.setHeight(0);
 }
 
 CaptureWinQt::~CaptureWinQt()
@@ -40,8 +37,10 @@ void CaptureWinQt::resizeEvent(QResizeEvent *event)
 {
 	m_curWinWidth  = m_videoSurface.width();
 	m_curWinHeight = m_videoSurface.height();
+	m_frameInfo.updated = true;
 	CaptureWin::resizeScaleCrop();
 	paintFrame();
+	event->accept();
 }
 
 void CaptureWinQt::setRenderFrame()
@@ -54,18 +53,12 @@ void CaptureWinQt::setRenderFrame()
 	if (!m_supportedFormat)
 		dstFmt = QImage::Format_RGB888;
 
-	if (m_frame->width() != m_frameInfo.frameWidth
-	    || m_frame->height() != m_frameInfo.frameHeight
-	    || m_frame->format() != dstFmt) {
+	if (m_frameInfo.updated || m_frame->format() != dstFmt) {
 		delete m_frame;
 		m_frame = new QImage(m_frameInfo.frameWidth, m_frameInfo.frameHeight, dstFmt);
-		// Force a recalculation by setting this to 0.
-		m_cropInfo.bytes = 0;
-
-		m_curWinWidth  = m_videoSurface.width();
-		m_curWinHeight = m_videoSurface.height();
-		CaptureWin::resizeScaleCrop();
 	}
+
+	m_frameInfo.updated = false;
 
 	paintFrame();
 }
@@ -73,14 +66,14 @@ void CaptureWinQt::setRenderFrame()
 void CaptureWinQt::paintFrame()
 {
 	if (m_cropInfo.updated) {
-	       m_cropInfo.offset = m_cropInfo.cropH * (m_frame->depth() / 8)
-		 * m_frameInfo.frameWidth + m_cropInfo.cropW * (m_frame->depth() / 8);
+		m_cropInfo.offset = m_cropInfo.cropH * (m_frame->depth() / 8)
+			* m_frameInfo.frameWidth + m_cropInfo.cropW * (m_frame->depth() / 8);
 
-	       // Even though the values above can be valid, it might be that there is no
-	       // data at all. This makes sure that it is.
-	       m_cropInfo.bytes = m_cropInfo.height * m_cropInfo.width
-		 * (m_frame->depth() / 8);
-	       m_cropInfo.updated = 0;
+		// Even though the values above can be valid, it might be that there is no
+		// data at all. This makes sure that it is.
+		m_cropInfo.bytes = m_cropInfo.height * m_cropInfo.width
+			* (m_frame->depth() / 8);
+		m_cropInfo.updated = false;
 	}
 
 	if (!m_supportedFormat || !m_cropInfo.bytes) {
