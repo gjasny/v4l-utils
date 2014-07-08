@@ -55,7 +55,7 @@ void overlay_usage(void)
 	       "                     used multiple times.\n"
 	       "                     The bitmap will be passed to --try/set-fmt-overlay\n"
 	       "  --get-fbuf         query the overlay framebuffer data [VIDIOC_G_FBUF]\n"
-	       "  --set-fbuf=chromakey=<b>,global_alpha=<b>,local_alpha=<b>,local_inv_alpha=<b>,fb=<fb>\n"
+	       "  --set-fbuf=chromakey=<b>,src_chromakey=<b>,global_alpha=<b>,local_alpha=<b>,local_inv_alpha=<b>,fb=<fb>\n"
 	       "		     set the overlay framebuffer [VIDIOC_S_FBUF]\n"
 	       "                     <b> is 0 or 1\n"
 	       "                     <fb> is the framebuffer device (/dev/fbX)\n"
@@ -71,6 +71,8 @@ static std::string fbufcap2s(unsigned cap)
 		s += "\t\t\tExtern Overlay\n";
 	if (cap & V4L2_FBUF_CAP_CHROMAKEY)
 		s += "\t\t\tChromakey\n";
+	if (cap & V4L2_FBUF_CAP_SRC_CHROMAKEY)
+		s += "\t\t\tSource Chromakey\n";
 	if (cap & V4L2_FBUF_CAP_GLOBAL_ALPHA)
 		s += "\t\t\tGlobal Alpha\n";
 	if (cap & V4L2_FBUF_CAP_LOCAL_ALPHA)
@@ -95,6 +97,8 @@ static std::string fbufflags2s(unsigned fl)
 		s += "\t\t\tOverlay Matches Capture/Output Size\n";
 	if (fl & V4L2_FBUF_FLAG_CHROMAKEY)
 		s += "\t\t\tChromakey\n";
+	if (fl & V4L2_FBUF_FLAG_SRC_CHROMAKEY)
+		s += "\t\t\tSource Chromakey\n";
 	if (fl & V4L2_FBUF_FLAG_GLOBAL_ALPHA)
 		s += "\t\t\tGlobal Alpha\n";
 	if (fl & V4L2_FBUF_FLAG_LOCAL_ALPHA)
@@ -364,6 +368,7 @@ void overlay_cmd(int ch, char *optarg)
 		while (*subs != '\0') {
 			static const char *const subopts[] = {
 				"chromakey",
+				"src_chromakey",
 				"global_alpha",
 				"local_alpha",
 				"local_inv_alpha",
@@ -375,20 +380,28 @@ void overlay_cmd(int ch, char *optarg)
 			case 0:
 				fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_CHROMAKEY : 0;
 				set_fbuf |= V4L2_FBUF_FLAG_CHROMAKEY;
+				fbuf.flags &= ~V4L2_FBUF_FLAG_SRC_CHROMAKEY;
+				set_fbuf &= ~V4L2_FBUF_FLAG_SRC_CHROMAKEY;
 				break;
 			case 1:
+				fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_SRC_CHROMAKEY : 0;
+				set_fbuf |= V4L2_FBUF_FLAG_SRC_CHROMAKEY;
+				fbuf.flags &= ~V4L2_FBUF_FLAG_CHROMAKEY;
+				set_fbuf &= ~V4L2_FBUF_FLAG_CHROMAKEY;
+				break;
+			case 2:
 				fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_GLOBAL_ALPHA : 0;
 				set_fbuf |= V4L2_FBUF_FLAG_GLOBAL_ALPHA;
 				break;
-			case 2:
+			case 3:
 				fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_LOCAL_ALPHA : 0;
 				set_fbuf |= V4L2_FBUF_FLAG_LOCAL_ALPHA;
 				break;
-			case 3:
+			case 4:
 				fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_LOCAL_INV_ALPHA : 0;
 				set_fbuf |= V4L2_FBUF_FLAG_LOCAL_INV_ALPHA;
 				break;
-			case 4:
+			case 5:
 				fb_device = value;
 				if (fb_device[0] >= '0' && fb_device[0] <= '9' && strlen(fb_device) <= 3) {
 					static char newdev[20];
