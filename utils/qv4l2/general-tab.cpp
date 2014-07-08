@@ -29,6 +29,7 @@
 #include <QLineEdit>
 #include <QDoubleValidator>
 
+#include <math.h>
 #include <stdio.h>
 #include <errno.h>
 #include <QRegExp>
@@ -101,20 +102,24 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_device.append(device);
 	setSpacing(3);
 	setSizeConstraint(QLayout::SetMinimumSize);
+	m_minWidth = 175;
+	for (int i = 0; i < n; i++) {
+		m_maxw[i] = 0;
+	}
 
 
 	if (querycap(m_querycap)) {
 		addLabel("Device:");
-		addLabel(device + (useWrapper() ? " (wrapped)" : ""), Qt::AlignLeft);
+		addLabel(device + (useWrapper() ? " (wrapped)" : ""));
 
 		addLabel("Driver:");
-		addLabel((char *)m_querycap.driver, Qt::AlignLeft);
+		addLabel((char *)m_querycap.driver);
 
 		addLabel("Card:");
-		addLabel((char *)m_querycap.card, Qt::AlignLeft);
+		addLabel((char *)m_querycap.card);
 
 		addLabel("Bus:");
-		addLabel((char *)m_querycap.bus_info, Qt::AlignLeft);
+		addLabel((char *)m_querycap.bus_info);
 	}
 
 	g_tuner(m_tuner);
@@ -182,18 +187,19 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	
 	QWidget *wStd = new QWidget();
 	QGridLayout *m_stdRow = new QGridLayout(wStd);
+	m_grids.append(m_stdRow);
 	
 	if (needsStd) {
 		v4l2_std_id tmp;
 
 		m_tvStandard = new QComboBox(parent);
-		m_stdRow->addWidget(new QLabel("TV Standard", parentWidget()), 0, 0, Qt::AlignRight);
+		m_stdRow->addWidget(new QLabel("TV Standard", parentWidget()), 0, 0, Qt::AlignLeft);
 		m_stdRow->addWidget(m_tvStandard, 0, 1, Qt::AlignLeft);
 		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
 		refreshStandards();
 		if (ioctl_exists(VIDIOC_QUERYSTD, &tmp)) {
 			m_qryStandard = new QPushButton("Query Standard", parent);
-			m_stdRow->addWidget(new QLabel("", parentWidget()), 0, 2, Qt::AlignRight);
+			m_stdRow->addWidget(new QLabel("", parentWidget()), 0, 2, Qt::AlignLeft);
 			m_stdRow->addWidget(m_qryStandard, 0, 3, Qt::AlignLeft);
 			connect(m_qryStandard, SIGNAL(clicked()), SLOT(qryStdClicked()));
 		}
@@ -201,15 +207,16 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 	QWidget *wTim = new QWidget();
 	QGridLayout *m_timRow = new QGridLayout(wTim);
+	m_grids.append(m_timRow);
 
 	if (needsTimings) {
 		m_videoTimings = new QComboBox(parent);
-		m_timRow->addWidget(new QLabel("Video Timings", parentWidget()), 0, 0, Qt::AlignRight);
+		m_timRow->addWidget(new QLabel("Video Timings", parentWidget()), 0, 0, Qt::AlignLeft);
 		m_timRow->addWidget(m_videoTimings, 0, 1, Qt::AlignLeft);
 		connect(m_videoTimings, SIGNAL(activated(int)), SLOT(timingsChanged(int)));
 		refreshTimings();
 		m_qryTimings = new QPushButton("Query Timings", parent);
-		m_timRow->addWidget(new QLabel("", parentWidget()), 0, 2, Qt::AlignRight);
+		m_timRow->addWidget(new QLabel("", parentWidget()), 0, 2, Qt::AlignLeft);
 		m_timRow->addWidget(m_qryTimings, 0, 3, Qt::AlignLeft);
 		connect(m_qryTimings, SIGNAL(clicked()), SLOT(qryTimingsClicked()));
 	}
@@ -223,24 +230,26 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	QWidget *wFrameSR = new QWidget();
 	QGridLayout *m_wh = new QGridLayout(wFrameWH);
 	QGridLayout *m_sr = new QGridLayout(wFrameSR);
+	m_grids.append(m_wh);
+	m_grids.append(m_sr);
 	
-	m_wh->addWidget(new QLabel("Frame Width", parentWidget()), 0, 0, Qt::AlignRight);
+	m_wh->addWidget(new QLabel("Frame Width", parentWidget()), 0, 0, Qt::AlignLeft);
 	m_frameWidth = new QSpinBox(parent);
 	m_wh->addWidget(m_frameWidth, 0, 1, Qt::AlignLeft);
 	connect(m_frameWidth, SIGNAL(editingFinished()), SLOT(frameWidthChanged()));
 	
-	m_wh->addWidget(new QLabel("Frame Height", parentWidget()), 0, 2, Qt::AlignRight);
+	m_wh->addWidget(new QLabel("Frame Height", parentWidget()), 0, 2, Qt::AlignLeft);
 	m_frameHeight = new QSpinBox(parent);
 	m_wh->addWidget(m_frameHeight, 0, 3, Qt::AlignLeft);
 	connect(m_frameHeight, SIGNAL(editingFinished()), SLOT(frameHeightChanged()));
 	
-	m_sr->addWidget(new QLabel("Frame Size", parentWidget()), 0, 0, Qt::AlignRight);
+	m_sr->addWidget(new QLabel("Frame Size", parentWidget()), 0, 0, Qt::AlignLeft);
 	m_frameSize = new QComboBox(parent);
 	m_frameSize->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	m_sr->addWidget(m_frameSize, 0, 1, Qt::AlignLeft);
 	connect(m_frameSize, SIGNAL(activated(int)), SLOT(frameSizeChanged(int)));
 	
-	m_sr->addWidget(new QLabel("Frame Rate", parentWidget()), 0, 2, Qt::AlignRight);
+	m_sr->addWidget(new QLabel("Frame Rate", parentWidget()), 0, 2, Qt::AlignLeft);
 	m_frameInterval = new QComboBox(parent);
 	m_frameInterval->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	m_sr->addWidget(m_frameInterval, 0, 3, Qt::AlignLeft);
@@ -254,6 +263,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	
 	QWidget *wFreq = new QWidget();
 	QGridLayout *m_freqRows = new QGridLayout(wFreq);
+	m_grids.append(m_freqRows);
 	
 	if (m_tuner.capability) {
 		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
@@ -273,14 +283,14 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_freq->setStatusTip(m_freq->whatsThis());
 		connect(m_freq, SIGNAL(valueChanged(double)), SLOT(freqChanged(double)));
 		updateFreq();
-		m_freqRows->addWidget(new QLabel("Frequency", parentWidget()), 0, 0, Qt::AlignRight);
+		m_freqRows->addWidget(new QLabel("Frequency", parentWidget()), 0, 0, Qt::AlignLeft);
 		m_freqRows->addWidget(m_freq, 0, 1, Qt::AlignLeft);
 	}
 
 	if (m_tuner.capability && !isSDR()) {
 		m_subchannels = new QLabel("", parent);
 		m_detectSubchans = new QPushButton("Refresh Tuner Status", parent);
-		m_freqRows->addWidget(m_subchannels, 0, 2, Qt::AlignRight);
+		m_freqRows->addWidget(m_subchannels, 0, 2, Qt::AlignLeft);
 		m_freqRows->addWidget(m_detectSubchans, 0, 3, Qt::AlignLeft);
 		connect(m_detectSubchans, SIGNAL(clicked()), SLOT(detectSubchansClicked()));
 		detectSubchansClicked();
@@ -291,13 +301,13 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		for (int i = 0; v4l2_channel_lists[i].name; i++) {
 			m_freqTable->addItem(v4l2_channel_lists[i].name);
 		}
-		m_freqRows->addWidget(new QLabel("Frequency Table", parentWidget()), 1, 0, Qt::AlignRight);
+		m_freqRows->addWidget(new QLabel("Frequency Table", parentWidget()), 1, 0, Qt::AlignLeft);
 		m_freqRows->addWidget(m_freqTable, 1, 1, Qt::AlignLeft);
 		connect(m_freqTable, SIGNAL(activated(int)), SLOT(freqTableChanged(int)));
 
 		m_freqChannel = new QComboBox(parent);
 		m_freqChannel->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-		m_freqRows->addWidget(new QLabel("Channels", parentWidget()), 1, 2, Qt::AlignRight);
+		m_freqRows->addWidget(new QLabel("Channels", parentWidget()), 1, 2, Qt::AlignLeft);
 		m_freqRows->addWidget(m_freqChannel, 1, 3, Qt::AlignLeft);
 		connect(m_freqChannel, SIGNAL(activated(int)), SLOT(freqChannelChanged(int)));
 		updateFreqChannel();
@@ -691,6 +701,52 @@ done:
 		updateGUI(m_videoInput->currentIndex());
 	else
 		updateGUI(0);
+	fixWidth();
+}
+
+void GeneralTab::fixWidth()
+{
+	m_pxw = 25.0;
+	setContentsMargins(25,20,25,20);
+	setColumnStretch(1,1);
+
+	QList<QWidget *> list = parentWidget()->findChildren<QWidget *>();
+	QList<QWidget *>::iterator it;
+	for (it = list.begin(); it != list.end(); ++it)	{
+		if (((*it)->sizeHint().width()) > m_minWidth) {
+			m_increment = (int) ceil(((*it)->sizeHint().width() - m_minWidth)/m_pxw);
+			(*it)->setMinimumWidth(m_minWidth+(m_increment*m_pxw)); // for stepsize expansion of widgets
+		}
+	}
+	
+	//fix width of subgrids
+	QList<QGridLayout *>::iterator i;
+	for (i = m_grids.begin(); i != m_grids.end(); ++i) {
+		(*i)->setColumnStretch(1,1);
+		(*i)->setContentsMargins(0,0,0,0);
+		for (int n = 0; n < (*i)->count(); n++) {
+			if ((*i)->itemAt(n)->widget()->sizeHint().width() > m_maxw[n % 4]) {
+				m_maxw[n % 4] = (*i)->itemAt(n)->widget()->sizeHint().width();
+			}
+			if (n % 2) {
+				(*i)->itemAt(n)->widget()->setMinimumWidth(m_minWidth); 
+			}else 
+				(*i)->itemAt(n)->widget()->setMinimumWidth(m_maxw[n % 4]); 
+		}
+		for (int j = 0; j < m_cols; j++) { 
+			if (j % 2)
+				(*i)->setColumnMinimumWidth(j,m_maxw[j]+m_pxw);
+			else
+				(*i)->setColumnMinimumWidth(j,m_maxw[j]);
+		}	  
+	}
+
+	for (int j = 0; j < m_cols; j++) {
+		if (j % 2) 
+			setColumnMinimumWidth(j, m_maxw[j]+m_pxw); 
+		else
+			setColumnMinimumWidth(j, m_maxw[j]); 
+	}
 }
 
 unsigned GeneralTab::getColorspace() const
@@ -939,12 +995,35 @@ void GeneralTab::changeAudioDevice()
 
 void GeneralTab::addWidget(QWidget *w, Qt::Alignment align)
 {
+	if (m_col % 2)
+		w->setMinimumWidth(m_minWidth);
+	if (w->sizeHint().width() > m_maxw[m_col]) {
+		m_maxw[m_col] = w->sizeHint().width();
+	}
 	QGridLayout::addWidget(w, m_row, m_col, align | Qt::AlignVCenter);
 	m_col++;
 	if (m_col == m_cols) {
 		m_col = 0;
 		m_row++;
 	}
+}
+
+int GeneralTab::getWidth()
+{
+	int total = 0;
+	for (int i = 0; i < m_cols; i++) {
+		if (i % 2) 
+			total += (m_maxw[i]+m_pxw);
+		else
+			total += (m_maxw[i]);
+	}
+	return total;
+}
+
+int GeneralTab::getHeight()
+{
+	int total = m_row*20;
+	return total;
 }
 
 bool GeneralTab::isSlicedVbi() const
