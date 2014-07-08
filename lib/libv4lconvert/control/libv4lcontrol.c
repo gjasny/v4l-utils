@@ -916,6 +916,81 @@ int v4lcontrol_vidioc_g_ctrl(struct v4lcontrol_data *data, void *arg)
 			VIDIOC_G_CTRL, arg);
 }
 
+static void v4lcontrol_alloc_valid_controls(struct v4lcontrol_data *data,
+			const struct v4l2_ext_controls *src,
+			struct v4l2_ext_controls *dst)
+{
+	struct v4l2_ext_control *ctrl;
+	unsigned i, j;
+
+	*dst = *src;
+	if (data->controls == 0)
+		return;
+	ctrl = malloc(src->count * sizeof(*ctrl));
+	if (ctrl == NULL)
+		return;
+	dst->controls = ctrl;
+	dst->count = 0;
+	for (i = 0; i < src->count; i++) {
+		for (j = 0; j < V4LCONTROL_COUNT; j++)
+			if ((data->controls & (1 << j)) &&
+			    src->controls[i].id == fake_controls[j].id)
+				break;
+		if (j == V4LCONTROL_COUNT)
+			ctrl[dst->count++] = src->controls[i];
+	}
+}
+
+static void v4lcontrol_free_valid_controls(struct v4lcontrol_data *data,
+			struct v4l2_ext_controls *src,
+			struct v4l2_ext_controls *dst)
+{
+	unsigned i, j, k = 0;
+	int inc_idx;
+
+	src->error_idx = dst->error_idx;
+	if (dst->controls == src->controls)
+		return;
+
+	inc_idx = dst->error_idx < dst->count;
+	for (i = 0; i < src->count; i++) {
+		for (j = 0; j < V4LCONTROL_COUNT; j++)
+			if ((data->controls & (1 << j)) &&
+			    src->controls[i].id == fake_controls[j].id)
+				break;
+		if (j == V4LCONTROL_COUNT)
+			src->controls[i] = dst->controls[k++];
+		else if (inc_idx)
+			src->error_idx++;
+	}
+	free(dst->controls);
+}
+
+int v4lcontrol_vidioc_g_ext_ctrls(struct v4lcontrol_data *data, void *arg)
+{
+	struct v4l2_ext_controls *ctrls = arg;
+	struct v4l2_ext_controls dst;
+	int i, j;
+	int res;
+
+	v4lcontrol_alloc_valid_controls(data, ctrls, &dst);
+	res = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+			VIDIOC_G_EXT_CTRLS, &dst);
+	v4lcontrol_free_valid_controls(data, ctrls, &dst);
+	if (res)
+		return res;
+
+	for (i = 0; i < ctrls->count; i++) {
+		for (j = 0; j < V4LCONTROL_COUNT; j++)
+			if ((data->controls & (1 << j)) &&
+			    ctrls->controls[i].id == fake_controls[j].id) {
+				ctrls->controls[i].value = data->shm_values[j];
+				break;
+			}
+	}
+	return 0;
+}
+
 int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
 {
 	int i;
@@ -936,6 +1011,72 @@ int v4lcontrol_vidioc_s_ctrl(struct v4lcontrol_data *data, void *arg)
 
 	return data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
 			VIDIOC_S_CTRL, arg);
+}
+
+static int v4lcontrol_validate_ext_ctrls(struct v4lcontrol_data *data,
+		struct v4l2_ext_controls *ctrls)
+{
+	int i, j;
+
+	if (data->controls == 0)
+		return 0;
+	for (i = 0; i < ctrls->count; i++) {
+		for (j = 0; j < V4LCONTROL_COUNT; j++)
+			if ((data->controls & (1 << j)) &&
+			    ctrls->controls[i].id == fake_controls[j].id) {
+				if (ctrls->controls[i].value > fake_controls[j].maximum ||
+				    ctrls->controls[i].value < fake_controls[j].minimum) {
+					ctrls->error_idx = i;
+					errno = EINVAL;
+					return -1;
+				}
+			}
+	}
+	return 0;
+}
+
+int v4lcontrol_vidioc_try_ext_ctrls(struct v4lcontrol_data *data, void *arg)
+{
+	struct v4l2_ext_controls *ctrls = arg;
+	struct v4l2_ext_controls dst;
+	int res = v4lcontrol_validate_ext_ctrls(data, ctrls);
+
+	if (res)
+		return res;
+
+	v4lcontrol_alloc_valid_controls(data, ctrls, &dst);
+	res = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+			VIDIOC_TRY_EXT_CTRLS, &dst);
+	v4lcontrol_free_valid_controls(data, ctrls, &dst);
+	return res;
+}
+
+int v4lcontrol_vidioc_s_ext_ctrls(struct v4lcontrol_data *data, void *arg)
+{
+	struct v4l2_ext_controls *ctrls = arg;
+	struct v4l2_ext_controls dst;
+	int i, j;
+	int res = v4lcontrol_validate_ext_ctrls(data, ctrls);
+
+	if (res)
+		return res;
+
+	v4lcontrol_alloc_valid_controls(data, ctrls, &dst);
+	res = data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
+			VIDIOC_S_EXT_CTRLS, &dst);
+	v4lcontrol_free_valid_controls(data, ctrls, &dst);
+	if (res)
+		return res;
+
+	for (i = 0; i < ctrls->count; i++) {
+		for (j = 0; j < V4LCONTROL_COUNT; j++)
+			if ((data->controls & (1 << j)) &&
+			    ctrls->controls[i].id == fake_controls[j].id) {
+				data->shm_values[j] = ctrls->controls[i].value;
+				break;
+			}
+	}
+	return 0;
 }
 
 int v4lcontrol_get_bandwidth(struct v4lcontrol_data *data)

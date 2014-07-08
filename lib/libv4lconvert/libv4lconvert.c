@@ -1659,6 +1659,21 @@ int v4lconvert_vidioc_s_ctrl(struct v4lconvert_data *data, void *arg)
 	return v4lcontrol_vidioc_s_ctrl(data->control, arg);
 }
 
+int v4lconvert_vidioc_g_ext_ctrls(struct v4lconvert_data *data, void *arg)
+{
+	return v4lcontrol_vidioc_g_ext_ctrls(data->control, arg);
+}
+
+int v4lconvert_vidioc_try_ext_ctrls(struct v4lconvert_data *data, void *arg)
+{
+	return v4lcontrol_vidioc_try_ext_ctrls(data->control, arg);
+}
+
+int v4lconvert_vidioc_s_ext_ctrls(struct v4lconvert_data *data, void *arg)
+{
+	return v4lcontrol_vidioc_s_ext_ctrls(data->control, arg);
+}
+
 int v4lconvert_get_fps(struct v4lconvert_data *data)
 {
 	return data->fps;

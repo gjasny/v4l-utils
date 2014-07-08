@@ -132,6 +132,12 @@ LIBV4L_PUBLIC int v4lconvert_vidioc_g_ctrl(struct v4lconvert_data *data,
 		void *arg);
 LIBV4L_PUBLIC int v4lconvert_vidioc_s_ctrl(struct v4lconvert_data *data,
 		void *arg);
+LIBV4L_PUBLIC int v4lconvert_vidioc_g_ext_ctrls(struct v4lconvert_data *data,
+		void *arg);
+LIBV4L_PUBLIC int v4lconvert_vidioc_try_ext_ctrls(struct v4lconvert_data *data,
+		void *arg);
+LIBV4L_PUBLIC int v4lconvert_vidioc_s_ext_ctrls(struct v4lconvert_data *data,
+		void *arg);
 
 /* Is the passed in pixelformat supported as destination format? */
 LIBV4L_PUBLIC int v4lconvert_supported_dst_format(unsigned int pixelformat);

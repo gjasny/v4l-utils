@@ -1022,6 +1022,9 @@ int v4l2_ioctl(int fd, unsigned long int request, ...)
 	case VIDIOC_QUERYCTRL:
 	case VIDIOC_G_CTRL:
 	case VIDIOC_S_CTRL:
+	case VIDIOC_G_EXT_CTRLS:
+	case VIDIOC_TRY_EXT_CTRLS:
+	case VIDIOC_S_EXT_CTRLS:
 	case VIDIOC_ENUM_FRAMESIZES:
 	case VIDIOC_ENUM_FRAMEINTERVALS:
 		is_capture_request = 1;
@@ -1127,6 +1130,18 @@ no_capture_request:
 
 	case VIDIOC_S_CTRL:
 		result = v4lconvert_vidioc_s_ctrl(devices[index].convert, arg);
+		break;
+
+	case VIDIOC_G_EXT_CTRLS:
+		result = v4lconvert_vidioc_g_ext_ctrls(devices[index].convert, arg);
+		break;
+
+	case VIDIOC_TRY_EXT_CTRLS:
+		result = v4lconvert_vidioc_try_ext_ctrls(devices[index].convert, arg);
+		break;
+
+	case VIDIOC_S_EXT_CTRLS:
+		result = v4lconvert_vidioc_s_ext_ctrls(devices[index].convert, arg);
 		break;
 
 	case VIDIOC_QUERYCAP: {
