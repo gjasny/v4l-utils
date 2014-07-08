@@ -1121,7 +1121,7 @@ void GeneralTab::vidFieldChanged(int idx)
 			break;
 		}
 	}
-	updateVidCapFormat();
+	updateVidFormat();
 }
 
 void GeneralTab::frameWidthChanged()
