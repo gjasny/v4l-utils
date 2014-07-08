@@ -167,7 +167,6 @@ private:
 #endif
 
 	void addWidget(QWidget *w, Qt::Alignment align = Qt::AlignLeft);
-	void addTitle(const QString &titlename);
 	void addLabel(const QString &text, Qt::Alignment align = Qt::AlignLeft)
 	{
 		addWidget(new QLabel(text, parentWidget()), align);
