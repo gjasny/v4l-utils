@@ -109,6 +109,8 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 
 	if (querycap(m_querycap)) {
+		addTitle("General Information");
+	  
 		addLabel("Device:");
 		addLabel(device + (useWrapper() ? " (wrapped)" : ""));
 
@@ -127,6 +129,10 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	g_modulator(m_modulator);
 
 	v4l2_input vin;
+	v4l2_output vout;
+	v4l2_audio vaudio;
+	v4l2_audioout vaudout;
+	v4l2_fmtdesc fmt;
 	bool needsStd = false;
 	bool needsTimings = false;
 
@@ -162,6 +168,9 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_stackedStandards = new QStackedWidget;
 	m_stackedFrameSettings = new QStackedWidget;
 	m_stackedFrequency = new QStackedWidget;
+	
+	if(enum_input(vin, true) || m_tuner.capability)
+	addTitle("Input Settings");
 	
 	if (!isRadio() && enum_input(vin, true)) {
 		addLabel("Input");
@@ -317,6 +326,100 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	QGridLayout::addWidget(m_stackedFrequency, m_row, 0, 2, m_cols, Qt::AlignVCenter);
 	m_row += 2;
 	
+	if (m_tuner_rf.capability || m_modulator.capability || (!isRadio() && enum_output(vout, true))) {
+		addTitle("Output Settings");
+		
+		if (!isRadio() && enum_output(vout, true)) {
+			addLabel("Output");
+			m_videoOutput = new QComboBox(parent);
+			do {
+				m_videoOutput->addItem((char *)vout.name);
+			} while (enum_output(vout));
+			addWidget(m_videoOutput);
+			connect(m_videoOutput, SIGNAL(activated(int)), SLOT(outputChanged(int)));
+			updateVideoOutput();
+		}
+		
+		if (m_isOutput) {
+		addLabel("Output Image Formats");
+		m_vidOutFormats = new QComboBox(parent);
+		m_vidOutFormats->setMinimumContentsLength(20);
+		if (enum_fmt(fmt, m_buftype, true)) {
+			do {
+				m_vidOutFormats->addItem(pixfmt2s(fmt.pixelformat) +
+						" - " + (const char *)fmt.description);
+			} while (enum_fmt(fmt, m_buftype));
+		}
+		addWidget(m_vidOutFormats);
+		connect(m_vidOutFormats, SIGNAL(activated(int)), SLOT(vidOutFormatChanged(int)));
+		} 
+		
+		
+		if (m_tuner_rf.capability) {
+			const char *unit = (m_tuner_rf.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
+				(m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
+
+			m_freqRfFac = (m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
+			m_freqRf = new QDoubleSpinBox(parent);
+			m_freqRf->setMinimum(m_tuner_rf.rangelow / m_freqRfFac);
+			m_freqRf->setMaximum(m_tuner_rf.rangehigh / m_freqRfFac);
+			m_freqRf->setSingleStep(1.0 / m_freqRfFac);
+			m_freqRf->setSuffix(unit);
+			m_freqRf->setDecimals((m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
+			m_freqRf->setWhatsThis(QString("RF Frequency\nLow: %1 %3\nHigh: %2 %3")
+					    .arg((double)m_tuner_rf.rangelow / m_freqRfFac, 0, 'f', 2)
+					    .arg((double)m_tuner_rf.rangehigh / m_freqRfFac, 0, 'f', 2)
+					    .arg(unit));
+			m_freqRf->setStatusTip(m_freqRf->whatsThis());
+			connect(m_freqRf, SIGNAL(valueChanged(double)), SLOT(freqRfChanged(double)));
+			updateFreqRf();
+			addLabel("RF Frequency");
+			addWidget(m_freqRf);
+		}
+
+		if (m_modulator.capability) {
+			const char *unit = (m_modulator.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
+				(m_modulator.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
+
+			m_freqFac = (m_modulator.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
+			m_freq = new QDoubleSpinBox(parent);
+			m_freq->setMinimum(m_modulator.rangelow / m_freqFac);
+			m_freq->setMaximum(m_modulator.rangehigh / m_freqFac);
+			m_freq->setSingleStep(1.0 / m_freqFac);
+			m_freq->setSuffix(unit);
+			m_freq->setDecimals((m_modulator.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
+			m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
+					    .arg((double)m_modulator.rangelow / m_freqFac, 0, 'f', 2)
+					    .arg((double)m_modulator.rangehigh / m_freqFac, 0, 'f', 2)
+					    .arg(unit));
+			m_freq->setStatusTip(m_freq->whatsThis());
+			connect(m_freq, SIGNAL(valueChanged(double)), SLOT(freqChanged(double)));
+			updateFreq();
+			addLabel("Frequency");
+			addWidget(m_freq);
+		}
+		if (m_modulator.capability && !isSDR()) {
+			if (m_modulator.capability & V4L2_TUNER_CAP_STEREO) {
+				addLabel("Stereo");
+				m_stereoMode = new QCheckBox(parent);
+				m_stereoMode->setCheckState((m_modulator.txsubchans & V4L2_TUNER_SUB_STEREO) ?
+						Qt::Checked : Qt::Unchecked);
+				addWidget(m_stereoMode);
+				connect(m_stereoMode, SIGNAL(clicked()), SLOT(stereoModeChanged()));
+			}
+			if (m_modulator.capability & V4L2_TUNER_CAP_RDS) {
+				addLabel("RDS");
+				m_rdsMode = new QCheckBox(parent);
+				m_rdsMode->setCheckState((m_modulator.txsubchans & V4L2_TUNER_SUB_RDS) ?
+						Qt::Checked : Qt::Unchecked);
+				addWidget(m_rdsMode);
+				connect(m_rdsMode, SIGNAL(clicked()), SLOT(rdsModeChanged()));
+			}
+		}
+	}
+	if (hasAlsaAudio() || (!isRadio() && enum_audio(vaudio, true)) || (!isSDR() && m_tuner.capability) || (!isRadio() && enum_audout(vaudout, true)) )
+	addTitle("Audio Settings");
+	
 	if (hasAlsaAudio()) {
 		m_audioInDevice = new QComboBox(parent);
 		m_audioOutDevice = new QComboBox(parent);
@@ -351,6 +454,67 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 			m_audioOutDevice = NULL;
 		}
 	}
+	
+	if (!isRadio() && enum_audio(vaudio, true)) {
+		addLabel("Input Audio");
+		m_audioInput = new QComboBox(parent);
+		m_audioInput->setMinimumContentsLength(10);
+		do {
+			m_audioInput->addItem((char *)vaudio.name);
+		} while (enum_audio(vaudio));
+		addWidget(m_audioInput);
+		connect(m_audioInput, SIGNAL(activated(int)), SLOT(inputAudioChanged(int)));
+		updateAudioInput();
+	}
+	
+	if (m_tuner.capability && !isSDR()) {
+		addLabel("Audio Mode");
+		m_audioMode = new QComboBox(parent);
+		m_audioMode->setMinimumContentsLength(12);
+		m_audioMode->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+		m_audioMode->addItem("Mono");
+		int audIdx = 0;
+		m_audioModes[audIdx++] = V4L2_TUNER_MODE_MONO;
+		if (m_tuner.capability & V4L2_TUNER_CAP_STEREO) {
+			m_audioMode->addItem("Stereo");
+			m_audioModes[audIdx++] = V4L2_TUNER_MODE_STEREO;
+		}
+		if (m_tuner.capability & V4L2_TUNER_CAP_LANG1) {
+			m_audioMode->addItem("Language 1");
+			m_audioModes[audIdx++] = V4L2_TUNER_MODE_LANG1;
+		}
+		if (m_tuner.capability & V4L2_TUNER_CAP_LANG2) {
+			m_audioMode->addItem("Language 2");
+			m_audioModes[audIdx++] = V4L2_TUNER_MODE_LANG2;
+		}
+		if ((m_tuner.capability & (V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2)) ==
+				(V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2)) {
+			m_audioMode->addItem("Language 1+2");
+			m_audioModes[audIdx++] = V4L2_TUNER_MODE_LANG1_LANG2;
+		}
+		addWidget(m_audioMode);
+		for (int i = 0; i < audIdx; i++)
+			if (m_audioModes[i] == m_tuner.audmode)
+				m_audioMode->setCurrentIndex(i);
+		connect(m_audioMode, SIGNAL(activated(int)), SLOT(audioModeChanged(int)));
+	}
+	
+	if (!isRadio() && enum_audout(vaudout, true)) {
+		addLabel("Output Audio");
+		m_audioOutput = new QComboBox(parent);
+		m_audioOutput->setMinimumContentsLength(10);
+		do {
+			m_audioOutput->addItem((char *)vaudout.name);
+		} while (enum_audout(vaudout));
+		addWidget(m_audioOutput);
+		connect(m_audioOutput, SIGNAL(activated(int)), SLOT(outputAudioChanged(int)));
+		updateAudioOutput();
+	}
+	
+	if (isRadio())
+		goto done;
+	
+	addTitle("Format & Other Settings");
 
 	if (!isRadio() && !isVbi()) {
 		m_pixelAspectRatio = new QComboBox(parent);
@@ -475,141 +639,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		}
 	}
 
-	v4l2_output vout;
-	if (!isRadio() && enum_output(vout, true)) {
-		addLabel("Output");
-		m_videoOutput = new QComboBox(parent);
-		do {
-			m_videoOutput->addItem((char *)vout.name);
-		} while (enum_output(vout));
-		addWidget(m_videoOutput);
-		connect(m_videoOutput, SIGNAL(activated(int)), SLOT(outputChanged(int)));
-		updateVideoOutput();
-	}
-
-	v4l2_audio vaudio;
-	if (!isRadio() && enum_audio(vaudio, true)) {
-		addLabel("Input Audio");
-		m_audioInput = new QComboBox(parent);
-		m_audioInput->setMinimumContentsLength(10);
-		do {
-			m_audioInput->addItem((char *)vaudio.name);
-		} while (enum_audio(vaudio));
-		addWidget(m_audioInput);
-		connect(m_audioInput, SIGNAL(activated(int)), SLOT(inputAudioChanged(int)));
-		updateAudioInput();
-	}
-
-	v4l2_audioout vaudout;
-	if (!isRadio() && enum_audout(vaudout, true)) {
-		addLabel("Output Audio");
-		m_audioOutput = new QComboBox(parent);
-		m_audioOutput->setMinimumContentsLength(10);
-		do {
-			m_audioOutput->addItem((char *)vaudout.name);
-		} while (enum_audout(vaudout));
-		addWidget(m_audioOutput);
-		connect(m_audioOutput, SIGNAL(activated(int)), SLOT(outputAudioChanged(int)));
-		updateAudioOutput();
-	}
-	
-	if (m_tuner.capability && !isSDR()) {
-		addLabel("Audio Mode");
-		m_audioMode = new QComboBox(parent);
-		m_audioMode->setMinimumContentsLength(12);
-		m_audioMode->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-		m_audioMode->addItem("Mono");
-		int audIdx = 0;
-		m_audioModes[audIdx++] = V4L2_TUNER_MODE_MONO;
-		if (m_tuner.capability & V4L2_TUNER_CAP_STEREO) {
-			m_audioMode->addItem("Stereo");
-			m_audioModes[audIdx++] = V4L2_TUNER_MODE_STEREO;
-		}
-		if (m_tuner.capability & V4L2_TUNER_CAP_LANG1) {
-			m_audioMode->addItem("Language 1");
-			m_audioModes[audIdx++] = V4L2_TUNER_MODE_LANG1;
-		}
-		if (m_tuner.capability & V4L2_TUNER_CAP_LANG2) {
-			m_audioMode->addItem("Language 2");
-			m_audioModes[audIdx++] = V4L2_TUNER_MODE_LANG2;
-		}
-		if ((m_tuner.capability & (V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2)) ==
-				(V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2)) {
-			m_audioMode->addItem("Language 1+2");
-			m_audioModes[audIdx++] = V4L2_TUNER_MODE_LANG1_LANG2;
-		}
-		addWidget(m_audioMode);
-		for (int i = 0; i < audIdx; i++)
-			if (m_audioModes[i] == m_tuner.audmode)
-				m_audioMode->setCurrentIndex(i);
-		connect(m_audioMode, SIGNAL(activated(int)), SLOT(audioModeChanged(int)));
-	}
-
-	if (m_tuner_rf.capability) {
-		const char *unit = (m_tuner_rf.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
-			(m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
-
-		m_freqRfFac = (m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
-		m_freqRf = new QDoubleSpinBox(parent);
-		m_freqRf->setMinimum(m_tuner_rf.rangelow / m_freqRfFac);
-		m_freqRf->setMaximum(m_tuner_rf.rangehigh / m_freqRfFac);
-		m_freqRf->setSingleStep(1.0 / m_freqRfFac);
-		m_freqRf->setSuffix(unit);
-		m_freqRf->setDecimals((m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
-		m_freqRf->setWhatsThis(QString("RF Frequency\nLow: %1 %3\nHigh: %2 %3")
-				     .arg((double)m_tuner_rf.rangelow / m_freqRfFac, 0, 'f', 2)
-				     .arg((double)m_tuner_rf.rangehigh / m_freqRfFac, 0, 'f', 2)
-				     .arg(unit));
-		m_freqRf->setStatusTip(m_freqRf->whatsThis());
-		connect(m_freqRf, SIGNAL(valueChanged(double)), SLOT(freqRfChanged(double)));
-		updateFreqRf();
-		addLabel("RF Frequency");
-		addWidget(m_freqRf);
-	}
-
-	if (m_modulator.capability) {
-		const char *unit = (m_modulator.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
-			(m_modulator.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
-
-		m_freqFac = (m_modulator.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
-		m_freq = new QDoubleSpinBox(parent);
-		m_freq->setMinimum(m_modulator.rangelow / m_freqFac);
-		m_freq->setMaximum(m_modulator.rangehigh / m_freqFac);
-		m_freq->setSingleStep(1.0 / m_freqFac);
-		m_freq->setSuffix(unit);
-		m_freq->setDecimals((m_modulator.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
-		m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
-				     .arg((double)m_modulator.rangelow / m_freqFac, 0, 'f', 2)
-				     .arg((double)m_modulator.rangehigh / m_freqFac, 0, 'f', 2)
-				     .arg(unit));
-		m_freq->setStatusTip(m_freq->whatsThis());
-		connect(m_freq, SIGNAL(valueChanged(double)), SLOT(freqChanged(double)));
-		updateFreq();
-		addLabel("Frequency");
-		addWidget(m_freq);
-	}
-	if (m_modulator.capability && !isSDR()) {
-		if (m_modulator.capability & V4L2_TUNER_CAP_STEREO) {
-			addLabel("Stereo");
-			m_stereoMode = new QCheckBox(parent);
-			m_stereoMode->setCheckState((m_modulator.txsubchans & V4L2_TUNER_SUB_STEREO) ?
-					Qt::Checked : Qt::Unchecked);
-			addWidget(m_stereoMode);
-			connect(m_stereoMode, SIGNAL(clicked()), SLOT(stereoModeChanged()));
-		}
-		if (m_modulator.capability & V4L2_TUNER_CAP_RDS) {
-			addLabel("RDS");
-			m_rdsMode = new QCheckBox(parent);
-			m_rdsMode->setCheckState((m_modulator.txsubchans & V4L2_TUNER_SUB_RDS) ?
-					Qt::Checked : Qt::Unchecked);
-			addWidget(m_rdsMode);
-			connect(m_rdsMode, SIGNAL(clicked()), SLOT(rdsModeChanged()));
-		}
-	}
-
-	if (isRadio())
-		goto done;
-
 	if (isVbi()) {
 		addLabel("VBI Capture Method");
 		m_vbiMethods = new QComboBox(parent);
@@ -623,21 +652,7 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		goto capture_method;
 	}
 
-	v4l2_fmtdesc fmt;
-
-	if (m_isOutput) {
-		addLabel("Output Image Formats");
-		m_vidOutFormats = new QComboBox(parent);
-		m_vidOutFormats->setMinimumContentsLength(20);
-		if (enum_fmt(fmt, m_buftype, true)) {
-			do {
-				m_vidOutFormats->addItem(pixfmt2s(fmt.pixelformat) +
-						" - " + (const char *)fmt.description);
-			} while (enum_fmt(fmt, m_buftype));
-		}
-		addWidget(m_vidOutFormats);
-		connect(m_vidOutFormats, SIGNAL(activated(int)), SLOT(vidOutFormatChanged(int)));
-	} else {
+	if(!m_isOutput) {
 		addLabel("Capture Image Formats");
 		m_vidCapFormats = new QComboBox(parent);
 		m_vidCapFormats->setMinimumContentsLength(20);
@@ -1006,6 +1021,26 @@ void GeneralTab::addWidget(QWidget *w, Qt::Alignment align)
 		m_col = 0;
 		m_row++;
 	}
+}
+
+void GeneralTab::addTitle(const QString &titlename)
+{
+	m_row++;
+	QLabel *title_info = new QLabel(titlename, parentWidget());
+	QFont f = title_info->font();
+	f.setBold(true);
+	title_info->setFont(f);
+
+	QGridLayout::addWidget(title_info, m_row, 0, 1, m_cols, Qt::AlignLeft);
+	setRowMinimumHeight(m_row, 25);
+	m_row++;
+	
+	QFrame *m_line = new QFrame(parentWidget());
+	m_line->setFrameShape(QFrame::HLine);
+	m_line->setFrameShadow(QFrame::Sunken);
+	QGridLayout::addWidget(m_line, m_row, 0, 1, m_cols, Qt::AlignVCenter);
+	m_row++;
+	m_col = 0;
 }
 
 int GeneralTab::getWidth()

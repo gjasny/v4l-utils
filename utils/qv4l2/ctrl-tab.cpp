@@ -148,6 +148,20 @@ void ApplicationWindow::addTabs(int size[])
 
 		QGridLayout *grid = new QGridLayout(w);
 		grid->setSpacing(3);
+		if((char *)qctrl.name) {
+			QLabel *title_tab = new QLabel((char *)qctrl.name, parentWidget());
+			QFont f = title_tab->font();
+			f.setBold(true);
+			title_tab->setFont(f);
+			grid->addWidget(title_tab, m_row, m_col, 1, m_cols, Qt::AlignLeft);
+			m_row++;
+			
+			QFrame *m_line = new QFrame(grid->parentWidget());
+			m_line->setFrameShape(QFrame::HLine);
+			m_line->setFrameShadow(QFrame::Sunken);
+			grid->addWidget(m_line, m_row, m_col, 1, m_cols, Qt::AlignVCenter);
+			m_row++;
+		}
 		m_tabs->addTab(t, (char *)qctrl.name);
 		for (i = 0; i < iter->second.size(); i++) {
 			if (i & 1)
