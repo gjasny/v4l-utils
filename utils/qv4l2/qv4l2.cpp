@@ -1102,10 +1102,7 @@ void ApplicationWindow::capStart(bool start)
 		}
 		m_vbiTab->rawFormat(fmt.fmt.vbi);
 		m_vbiWidth = fmt.fmt.vbi.samples_per_line;
-		if (fmt.fmt.vbi.flags & V4L2_VBI_INTERLACED)
-			m_vbiHeight = fmt.fmt.vbi.count[0];
-		else
-			m_vbiHeight = fmt.fmt.vbi.count[0] + fmt.fmt.vbi.count[1];
+		m_vbiHeight = fmt.fmt.vbi.count[0] + fmt.fmt.vbi.count[1];
 		m_vbiSize = m_vbiWidth * m_vbiHeight;
 		m_frameData = new unsigned char[m_vbiSize];
 		m_capImage = new QImage(m_vbiWidth, m_vbiHeight, dstFmt);
