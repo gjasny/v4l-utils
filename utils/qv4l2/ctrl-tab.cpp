@@ -34,6 +34,7 @@
 #include <QPushButton>
 #include <QToolTip>
 
+#include <math.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -58,6 +59,10 @@ static bool is_valid_type(__u32 type)
 
 void ApplicationWindow::addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment align)
 {
+	if (m_col % 2)
+		w->setMinimumWidth(m_minWidth);
+	if (w->sizeHint().width() > m_maxw[m_col])
+		m_maxw[m_col] = w->sizeHint().width();
 	grid->addWidget(w, m_row, m_col, align | Qt::AlignVCenter);
 	m_col++;
 	if (m_col == m_cols) {
@@ -66,7 +71,7 @@ void ApplicationWindow::addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment a
 	}
 }
 
-void ApplicationWindow::addTabs()
+void ApplicationWindow::addTabs(int size[])
 {
 	v4l2_queryctrl qctrl;
 	unsigned ctrl_class;
@@ -130,6 +135,9 @@ void ApplicationWindow::addTabs()
 		id = ctrl_class | 1;
 		m_col = m_row = 0;
 		m_cols = 4;
+		for (int j = 0; j < m_cols; j++) {
+			m_maxw[j] = 0;
+		}
 
 		const v4l2_queryctrl &qctrl = m_ctrlMap[id];
 		QWidget *t = new QWidget(m_tabs);
@@ -139,8 +147,6 @@ void ApplicationWindow::addTabs()
 		vbox->addWidget(w);
 
 		QGridLayout *grid = new QGridLayout(w);
-
-		grid->setSpacing(3);
 		m_tabs->addTab(t, (char *)qctrl.name);
 		for (i = 0; i < iter->second.size(); i++) {
 			if (i & 1)
@@ -153,8 +159,48 @@ void ApplicationWindow::addTabs()
 		grid->setRowStretch(grid->rowCount() - 1, 1);
 		w = new QWidget(t);
 		vbox->addWidget(w);
+		fixWidth(grid);
+
+		int totalw = 0;
+		int totalh = 0;
+		for (int i = 0; i < m_cols; i++) {
+			if (i % 2)
+				totalw += m_maxw[i] + m_pxw;
+			else
+				totalw += m_maxw[i];
+		}
+		totalh = grid->rowCount() * 20;
+		if (totalw > size[0])
+			size[0] = totalw;
+		if (totalh > size[1])
+			size[1] = totalh;
+		setMinimumSize(size[0] + 50, size[1] + 150);
+
 		grid = new QGridLayout(w);
 		finishGrid(grid, ctrl_class);
+	}
+}
+
+void ApplicationWindow::fixWidth(QGridLayout *grid)
+{
+	double m_pxw = 25.0;
+	grid->setContentsMargins(15, 5, 15, 5);
+	grid->setColumnStretch(1, 1);
+	QList<QWidget *> list = grid->parentWidget()->parentWidget()->findChildren<QWidget *>();
+	QList<QWidget *>::iterator it;
+
+	for (it = list.begin(); it != list.end(); ++it)	{
+		if (((*it)->sizeHint().width()) > m_minWidth) {
+			m_increment = (int) ceil(((*it)->sizeHint().width() - m_minWidth) / m_pxw);
+			(*it)->setMinimumWidth(m_minWidth + m_increment * m_pxw); // for stepsize expantion of widgets
+		}
+	}
+
+	for (int j = 0; j < m_cols; j++) {
+		if (j % 2) // only add possible expansion for odd columns
+			grid->setColumnMinimumWidth(j, m_maxw[j] + m_pxw);
+		else
+			grid->setColumnMinimumWidth(j, m_maxw[j]);
 	}
 }
 
@@ -169,6 +215,9 @@ void ApplicationWindow::finishGrid(QGridLayout *grid, unsigned ctrl_class)
 	m_col = 0;
 	m_row = grid->rowCount();
 
+	QWidget *m_w = new QWidget();
+	QHBoxLayout *m_boxLayoutBottom = new QHBoxLayout(m_w);
+
 	QCheckBox *cbox = new QCheckBox("Update on change", w);
 	m_widgetMap[ctrl_class | CTRL_UPDATE_ON_CHANGE] = cbox;
 	addWidget(grid, cbox);
@@ -179,23 +228,24 @@ void ApplicationWindow::finishGrid(QGridLayout *grid, unsigned ctrl_class)
 
 	QPushButton *defBut = new QPushButton("Set Defaults", w);
 	m_widgetMap[ctrl_class | CTRL_DEFAULTS] = defBut;
-	addWidget(grid, defBut);
+	m_boxLayoutBottom->addWidget(defBut);
 	connect(defBut, SIGNAL(clicked()), m_sigMapper, SLOT(map()));
 	m_sigMapper->setMapping(defBut, ctrl_class | CTRL_DEFAULTS);
 
 	QPushButton *refreshBut = new QPushButton("Refresh", w);
 	m_widgetMap[ctrl_class | CTRL_REFRESH] = refreshBut;
-	addWidget(grid, refreshBut);
+	m_boxLayoutBottom->addWidget(refreshBut);
 	connect(refreshBut, SIGNAL(clicked()), m_sigMapper, SLOT(map()));
 	m_sigMapper->setMapping(refreshBut, ctrl_class | CTRL_REFRESH);
 
 	QPushButton *button = new QPushButton("Update", w);
 	m_widgetMap[ctrl_class | CTRL_UPDATE] = button;
-	addWidget(grid, button);
+	m_boxLayoutBottom->addWidget(button);
 	connect(button, SIGNAL(clicked()), m_sigMapper, SLOT(map()));
 	m_sigMapper->setMapping(button, ctrl_class | CTRL_UPDATE);
 	connect(cbox, SIGNAL(toggled(bool)), button, SLOT(setDisabled(bool)));
 
+	grid->addWidget(m_w, m_row, 3, Qt::AlignRight);
 	cbox->setChecked(true);
 
 	refresh(ctrl_class);

@@ -74,6 +74,7 @@ ApplicationWindow::ApplicationWindow() :
 	m_nbuffers = 0;
 	m_buffers = NULL;
 	m_makeSnapshot = false;
+	m_minWidth = 175;
 
 	QAction *openAct = new QAction(QIcon(":/fileopen.png"), "&Open Device", this);
 	openAct->setStatusTip("Open a v4l device, use libv4l2 wrapper if possible");
@@ -194,7 +195,6 @@ ApplicationWindow::ApplicationWindow() :
 	statusBar()->showMessage("Ready", 2000);
 
 	m_tabs = new QTabWidget;
-	m_tabs->setMinimumSize(300, 200);
 	setCentralWidget(m_tabs);
 }
 
@@ -223,6 +223,10 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 
 	QWidget *w = new QWidget(m_tabs);
 	m_genTab = new GeneralTab(device, *this, 4, w);
+	int size[2];
+	size[0] = m_genTab->getWidth();
+	size[1] = m_genTab->getHeight();
+	setMinimumSize(size[0] + 50, size[1] + 150); // +margins, menus
 
 #ifdef HAVE_ALSA
 	if (m_genTab->hasAlsaAudio()) {
@@ -241,7 +245,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	connect(m_genTab, SIGNAL(displayColorspaceChanged()), this, SLOT(updateDisplayColorspace()));
 	connect(m_genTab, SIGNAL(clearBuffers()), this, SLOT(clearBuffers()));
 	m_tabs->addTab(w, "General Settings");
-	addTabs();
+	addTabs(size);
 	if (caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE)) {
 		w = new QWidget(m_tabs);
 		m_vbiTab = new VbiTab(w);
