@@ -49,10 +49,12 @@ private:
 	bool findNativeFormat(__u32 format, QImage::Format &dstFmt);
 	void paintFrame();
 
-	QImage *m_frame;
+	QImage *m_image;
 	unsigned char *m_data;
 	QLabel m_videoSurface;
 	bool m_supportedFormat;
 	bool m_filled;
+	int m_cropBytes;
+	int m_cropOffset;
 };
 #endif

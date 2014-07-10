@@ -20,25 +20,27 @@
 #include "capture-win-qt.h"
 
 CaptureWinQt::CaptureWinQt() :
-	m_frame(new QImage(0, 0, QImage::Format_Invalid)),
+	m_image(new QImage(0, 0, QImage::Format_Invalid)),
 	m_data(NULL),
 	m_supportedFormat(false),
-	m_filled(false)
+	m_filled(false),
+	m_cropBytes(0),
+	m_cropOffset(0)
 {
 	CaptureWin::buildWindow(&m_videoSurface);
 }
 
 CaptureWinQt::~CaptureWinQt()
 {
-	delete m_frame;
+	delete m_image;
 }
 
 void CaptureWinQt::resizeEvent(QResizeEvent *event)
 {
-	m_curWinWidth  = m_videoSurface.width();
-	m_curWinHeight = m_videoSurface.height();
-	m_frameInfo.updated = true;
-	CaptureWin::resizeScaleCrop();
+	m_windowSize.setWidth(m_videoSurface.width());
+	m_windowSize.setHeight(m_videoSurface.height());
+	m_frame.updated = true;
+	CaptureWin::updateSize();
 	paintFrame();
 	event->accept();
 }
@@ -46,51 +48,56 @@ void CaptureWinQt::resizeEvent(QResizeEvent *event)
 void CaptureWinQt::setRenderFrame()
 {
 	// Get/copy (TODO: use direct?)
-	m_data = m_frameInfo.planeData[0];
+	m_data = m_frame.planeData[0];
 
 	QImage::Format dstFmt;
-	m_supportedFormat = findNativeFormat(m_frameInfo.format, dstFmt);
+	m_supportedFormat = findNativeFormat(m_frame.format, dstFmt);
 	if (!m_supportedFormat)
 		dstFmt = QImage::Format_RGB888;
 
-	if (m_frameInfo.updated || m_frame->format() != dstFmt) {
-		delete m_frame;
-		m_frame = new QImage(m_frameInfo.frameWidth, m_frameInfo.frameHeight, dstFmt);
+	if (m_frame.updated || m_image->format() != dstFmt) {
+		delete m_image;
+		m_image = new QImage(m_frame.size.width(),
+				     m_frame.size.height(),
+				     dstFmt);
 	}
 
-	m_frameInfo.updated = false;
+	m_frame.updated = false;
 
 	paintFrame();
 }
 
 void CaptureWinQt::paintFrame()
 {
-	if (m_cropInfo.updated) {
-		m_cropInfo.offset = m_cropInfo.cropH * (m_frame->depth() / 8)
-			* m_frameInfo.frameWidth + m_cropInfo.cropW * (m_frame->depth() / 8);
+	if (m_crop.updated) {
+		m_cropOffset = m_crop.delta.height() * (m_image->depth() / 8)
+			* m_frame.size.width()
+			+ m_crop.delta.width() * (m_image->depth() / 8);
 
-		// Even though the values above can be valid, it might be that there is no
-		// data at all. This makes sure that it is.
-		m_cropInfo.bytes = m_cropInfo.height * m_cropInfo.width
-			* (m_frame->depth() / 8);
-		m_cropInfo.updated = false;
+		// Even though the values above can be valid, it might be that
+		// there is no data at all. This makes sure that it is.
+		m_cropBytes =  m_crop.size.width() * m_crop.size.height()
+			* (m_image->depth() / 8);
+		m_crop.updated = false;
 	}
 
-	if (!m_supportedFormat || !m_cropInfo.bytes) {
+	if (!m_supportedFormat || !m_cropBytes) {
 		if (!m_filled) {
 			m_filled = true;
-			m_frame->fill(0);
-			QPixmap img = QPixmap::fromImage(*m_frame);
+			m_image->fill(0);
+			QPixmap img = QPixmap::fromImage(*m_image);
 			m_videoSurface.setPixmap(img);
 		}
 		return;
 	}
 	m_filled = false;
 
-	unsigned char *data = (m_data == NULL) ? m_frame->bits() : m_data;
+	unsigned char *data = (m_data == NULL) ? m_image->bits() : m_data;
 
-	QImage displayFrame(&data[m_cropInfo.offset], m_cropInfo.width, m_cropInfo.height,
-			    m_frame->width() * (m_frame->depth() / 8), m_frame->format());
+	QImage displayFrame(&data[m_cropOffset],
+			    m_crop.size.width(), m_crop.size.height(),
+			    m_image->width() * (m_image->depth() / 8),
+			    m_image->format());
 
 	QPixmap img = QPixmap::fromImage(displayFrame);
 
@@ -103,7 +110,7 @@ void CaptureWinQt::paintFrame()
 void CaptureWinQt::stop()
 {
 	if (m_data != NULL)
-		memcpy(m_frame->bits(), m_data, m_frame->numBytes());
+		memcpy(m_image->bits(), m_data, m_image->numBytes());
 	m_data = NULL;
 }
 

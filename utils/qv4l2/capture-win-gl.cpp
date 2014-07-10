@@ -49,11 +49,11 @@ void CaptureWinGL::resizeEvent(QResizeEvent *event)
 	// Get size of frame viewport. Can't use size of m_videoSurface
 	// since it is a subwidget of this widget.
 	QSize margins = getMargins();
-	m_curWinWidth  = width() - margins.width();
-	m_curWinHeight = height() - margins.height();
+	m_windowSize.setWidth(width() - margins.width());
+	m_windowSize.setHeight(height() - margins.height());
 	// Re-calculate
-	m_frameInfo.updated = true;
-	CaptureWin::resizeScaleCrop();
+	m_frame.updated = true;
+	CaptureWin::updateSize();
 	// Lock viewport size to follow calculated size
 	m_videoSurface.lockSize(m_scaledSize);
 #endif
@@ -63,14 +63,14 @@ void CaptureWinGL::resizeEvent(QResizeEvent *event)
 void CaptureWinGL::setRenderFrame()
 {
 #ifdef HAVE_QTGL
-	m_videoSurface.setFrame(m_frameInfo.frameWidth, m_frameInfo.frameHeight,
-				m_cropInfo.cropW, m_cropInfo.cropH,
-				m_frameInfo.format,
-				m_frameInfo.planeData[0],
-				m_frameInfo.planeData[1]);
+	m_videoSurface.setFrame(m_frame.size.width(), m_frame.size.height(),
+				m_crop.delta.width(), m_crop.delta.height(),
+				m_frame.format,
+				m_frame.planeData[0],
+				m_frame.planeData[1]);
 #endif
-	m_frameInfo.updated = false;
-	m_cropInfo.updated = false;
+	m_frame.updated = false;
+	m_crop.updated = false;
 }
 
 bool CaptureWinGL::hasNativeFormat(__u32 format)

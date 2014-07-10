@@ -39,24 +39,20 @@ enum CropMethod {
 	QV4L2_CROP_P43,
 };
 
-struct cropInfo {
-	int cropH;
-	int cropW;
-	int height;
-	int width;
-	int offset;
-	int bytes;
-	bool updated;
-};
-
-struct frameInfo {
+struct frame {
 	__u32 format;
-	int   frameHeight;
-	int   frameWidth;
+	QSize size;        // int   frameHeight; int   frameWidth;
 	unsigned char *planeData[2];
 	QString info;
 	bool updated;
 };
+
+struct crop {              // cropInfo
+	QSize delta;       // int cropH; int cropW;
+	QSize size;        // int height; int width;
+	bool updated;
+};
+
 
 class CaptureWin : public QWidget
 {
@@ -186,7 +182,7 @@ protected:
 	 * @brief Calculate source size after pixel aspect scaling and cropping
 	 *
 	 */
-	void resizeScaleCrop();
+	void updateSize();
 
 	/**
 	 * @brief A label that can is used to display capture information.
@@ -200,12 +196,10 @@ protected:
 	 *
 	 * @note Set and accessed from derived render dependent classes.
 	 */
-	struct frameInfo m_frameInfo;
-	struct cropInfo  m_cropInfo;    // TODO: Temporary, consolidate with m_framInfo
-	int m_sourceWinWidth;
-	int m_sourceWinHeight;
-	int m_curWinWidth;
-	int m_curWinHeight;
+	struct frame m_frame;
+	struct crop  m_crop;
+	QSize m_origFrameSize;  // int m_sourceWinWidth; int m_sourceWinHeight;
+	QSize m_windowSize;     // int m_curWinWidth; int m_curWinHeight;
 	QSize m_scaledSize;
 
 	/**
