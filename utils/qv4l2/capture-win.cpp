@@ -114,9 +114,23 @@ void CaptureWin::resetSize()
 	resize(w, h);
 }
 
-int CaptureWin::cropHeight(int width, int height)
+QSize CaptureWin::cropFrameSize(QSize size)
 {
-	double realWidth = width * m_pixelAspectRatio;
+	// Crop width
+	int validWidth;
+
+	if (m_cropMethod == QV4L2_CROP_P43)
+		validWidth = (size.height() * 4.0 / 3.0) / m_pixelAspectRatio;
+	else
+		validWidth = size.width(); // no width crop
+
+	if (validWidth < MIN_WIN_SIZE_WIDTH || validWidth >= size.width())
+		validWidth = size.width();  // no width crop
+
+	int deltaWidth = (size.width() - validWidth) / 2;
+
+	// Crop height
+	double realWidth = size.width() * m_pixelAspectRatio;
 	int validHeight;
 
 	switch (m_cropMethod) {
@@ -133,29 +147,18 @@ int CaptureWin::cropHeight(int width, int height)
 		validHeight = realWidth / 2.39;
 		break;
 	case QV4L2_CROP_TB:
-		validHeight = height - 2;
+		validHeight = size.height() - 2;
 		break;
 	default:
-		return 0;
+		validHeight = size.height();  // No height crop
 	}
 
-	if (validHeight < MIN_WIN_SIZE_HEIGHT || validHeight >= height)
-		return 0;
+	if (validHeight < MIN_WIN_SIZE_HEIGHT || validHeight >= size.height())
+		validHeight = size.height();  // No height crop
 
-	return (height - validHeight) / 2;
-}
+	int deltaHeight = (size.height() - validHeight) / 2;
 
-int CaptureWin::cropWidth(int width, int height)
-{
-	if (m_cropMethod != QV4L2_CROP_P43)
-		return 0;
-
-	int validWidth = (height * 4.0 / 3.0) / m_pixelAspectRatio;
-
-	if (validWidth < MIN_WIN_SIZE_WIDTH || validWidth >= width)
-		return 0;
-
-	return (width - validWidth) / 2;
+	return QSize(deltaWidth, deltaHeight);
 }
 
 void CaptureWin::updateSize()
@@ -163,10 +166,8 @@ void CaptureWin::updateSize()
 	m_crop.updated = 0;
 	if (m_frame.updated) {
 		m_scaledSize = scaleFrameSize(m_windowSize, m_frame.size);
-		m_crop.delta.setHeight(cropHeight(m_frame.size.width(), m_frame.size.height()));
-		m_crop.delta.setWidth(cropWidth(m_frame.size.width(), m_frame.size.height()));
-		m_crop.size.setHeight(m_frame.size.height() - (m_crop.delta.height() * 2));
-		m_crop.size.setWidth(m_frame.size.width() - (m_crop.delta.width() * 2));
+		m_crop.delta = cropFrameSize(m_frame.size);
+		m_crop.size = m_frame.size - 2 * m_crop.delta;
 		m_crop.updated = 1;
 	}
 }
@@ -215,7 +216,7 @@ void CaptureWin::enableScaling(bool enable)
 
 void CaptureWin::resize(int width, int height)
 {
-	int h, w;
+	QSize newSize;
 
 	// Dont resize window if the frame size is the same in
 	// the event the window has been paused when beeing resized.
@@ -226,12 +227,12 @@ void CaptureWin::resize(int width, int height)
 	m_origFrameSize.setHeight(height);
 
 	QSize margins = getMargins();
-	QSize aspectedFrameSize = pixelAspectFrameSize(QSize(width, height));
 
-	h = margins.height() - cropHeight(width, height) * 2 + aspectedFrameSize.height();
-	w = margins.width() - cropWidth(width, height) * 2 + aspectedFrameSize.width();
-	height = h;
-	width = w;
+	newSize =  margins + pixelAspectFrameSize(m_origFrameSize)
+		- 2 * cropFrameSize(m_origFrameSize);
+
+	width =  newSize.width();
+	height = newSize.height();
 
 	QDesktopWidget *screen = QApplication::desktop();
 	QRect resolution = screen->screenGeometry();
@@ -252,8 +253,7 @@ void CaptureWin::resize(int width, int height)
 
 QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
 {
-	QSize croppedSize = frame - QSize((cropWidth(frame.width(), frame.height()) * 2),
-					  (cropHeight(frame.width(), frame.height()) * 2));
+	QSize croppedSize = frame - 2 * cropFrameSize(frame);
 	QSize actualSize = pixelAspectFrameSize(croppedSize);
 
 	if (!m_enableScaling) {

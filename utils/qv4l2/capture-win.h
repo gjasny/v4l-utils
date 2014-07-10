@@ -128,15 +128,13 @@ public:
 	 * remove from top and bottom. To get total multiply the return
 	 * value by 2.
 	 *
-	 * @param width Frame width
-	 * @param height Frame height
-	 * @return The pixels to remove when cropping height
+	 * @param size Frame size
+	 * @return The size (no of height & width pixels) to remove when cropping
 	 *
 	 * @note The width and height must be original frame size
 	 *       to ensure that the cropping is done correctly.
 	 */
-	static int cropHeight(int width, int height);
-	static int cropWidth(int width, int height);
+	static QSize cropFrameSize(QSize size);
 
 	/**
 	 * @brief Get the frame size when aspect ratio is applied and increases size.
