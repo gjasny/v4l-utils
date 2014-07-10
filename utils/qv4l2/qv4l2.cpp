@@ -452,7 +452,7 @@ void ApplicationWindow::capVbiFrame()
 		m_capStartAct->setChecked(false);
 		return;
 	}
-	if (showFrames()) {
+	if (showFrames() && buftype == V4L2_BUF_TYPE_VBI_CAPTURE) {
 		for (unsigned y = 0; y < m_vbiHeight; y++) {
 			__u8 *p = data + y * m_vbiWidth;
 			__u8 *q = m_capImage->bits() + y * m_capImage->bytesPerLine();
@@ -496,7 +496,7 @@ void ApplicationWindow::capVbiFrame()
 		m_tv = tv;
 	}
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
-	if (showFrames())
+	if (showFrames() && buftype == V4L2_BUF_TYPE_VBI_CAPTURE)
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, status);
 
@@ -926,9 +926,11 @@ void ApplicationWindow::stopCapture()
 
 bool ApplicationWindow::showFrames()
 {
-	if (m_showFramesAct->isChecked() && !m_capture->isVisible())
+	if (m_showFramesAct->isChecked() && !m_capture->isVisible() &&
+	    !m_genTab->isSlicedVbi())
 		m_capture->show();
-	if (!m_showFramesAct->isChecked() && m_capture->isVisible())
+	if ((!m_showFramesAct->isChecked() && m_capture->isVisible()) ||
+	    m_genTab->isSlicedVbi())
 		m_capture->hide();
 	return m_showFramesAct->isChecked();
 }
@@ -1078,7 +1080,6 @@ void ApplicationWindow::capStart(bool start)
 		m_vbiTab->slicedFormat(fmt.fmt.sliced);
 		m_vbiSize = fmt.fmt.sliced.io_size;
 		m_frameData = new unsigned char[m_vbiSize];
-		updatePixelAspectRatio();
 		if (startCapture(m_vbiSize)) {
 			m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
 			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capVbiFrame()));
