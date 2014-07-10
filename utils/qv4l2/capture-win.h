@@ -139,20 +139,12 @@ public:
 	static int cropWidth(int width, int height);
 
 	/**
-	 * @brief Get the frame width when aspect ratio is applied if ratio > 1.
+	 * @brief Get the frame size when aspect ratio is applied and increases size.
 	 *
-	 * @param width The original frame width.
-	 * @return The width with aspect ratio correction (scaling must be enabled).
+	 * @param size The original frame size.
+	 * @return The new size with aspect ratio correction (scaling must be enabled).
 	 */
-	static int actualFrameWidth(int width);
-
-	/**
-	 * @brief Get the frame height when aspect ratio is applied if ratio < 1.
-	 *
-	 * @param width The original frame width.
-	 * @return The width with aspect ratio correction (scaling must be enabled).
-	 */
-	static int actualFrameHeight(int height);
+	static QSize pixelAspectFrameSize(QSize size);
 
 public slots:
 	void resetSize();

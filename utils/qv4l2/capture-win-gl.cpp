@@ -49,9 +49,8 @@ void CaptureWinGL::resizeEvent(QResizeEvent *event)
 	// Get size of frame viewport. Can't use size of m_videoSurface
 	// since it is a subwidget of this widget.
 	QSize margins = getMargins();
-	m_windowSize.setWidth(width() - margins.width());
-	m_windowSize.setHeight(height() - margins.height());
-	// Re-calculate
+	m_windowSize = size() - margins;
+	// Re-calculate sizes
 	m_frame.updated = true;
 	CaptureWin::updateSize();
 	// Lock viewport size to follow calculated size

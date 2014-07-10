@@ -178,20 +178,18 @@ void CaptureWin::setCropMethod(CropMethod crop)
 	QCoreApplication::sendEvent(this, &event);
 }
 
-int CaptureWin::actualFrameWidth(int width)
+QSize CaptureWin::pixelAspectFrameSize(QSize size)
 {
-	if (m_enableScaling && m_pixelAspectRatio > 1)
-		return width * m_pixelAspectRatio;
+	if (!m_enableScaling)
+		return size;
 
-	return width;
-}
+	if (m_pixelAspectRatio > 1)
+		size.rwidth() *= m_pixelAspectRatio;
 
-int CaptureWin::actualFrameHeight(int height)
-{
-	if (m_enableScaling && m_pixelAspectRatio < 1)
-		return height / m_pixelAspectRatio;
+	if (m_pixelAspectRatio < 1)
+		size.rheight() /= m_pixelAspectRatio;
 
-	return height;
+	return size;
 }
 
 QSize CaptureWin::getMargins()
@@ -228,8 +226,10 @@ void CaptureWin::resize(int width, int height)
 	m_origFrameSize.setHeight(height);
 
 	QSize margins = getMargins();
-	h = margins.height() - cropHeight(width, height) * 2 + actualFrameHeight(height);
-	w = margins.width() - cropWidth(width, height) * 2 + actualFrameWidth(width);
+	QSize aspectedFrameSize = pixelAspectFrameSize(QSize(width, height));
+
+	h = margins.height() - cropHeight(width, height) * 2 + aspectedFrameSize.height();
+	w = margins.width() - cropWidth(width, height) * 2 + aspectedFrameSize.width();
 	height = h;
 	width = w;
 
@@ -252,25 +252,26 @@ void CaptureWin::resize(int width, int height)
 
 QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
 {
-	int actualWidth = actualFrameWidth(frame.width() - cropWidth(frame.width(), frame.height()) * 2);
-	int actualHeight = actualFrameHeight(frame.height() - cropHeight(frame.width(), frame.height()) * 2);
+	QSize croppedSize = frame - QSize((cropWidth(frame.width(), frame.height()) * 2),
+					  (cropHeight(frame.width(), frame.height()) * 2));
+	QSize actualSize = pixelAspectFrameSize(croppedSize);
 
 	if (!m_enableScaling) {
-		window.setWidth(actualWidth);
-		window.setHeight(actualHeight);
+		window.setWidth(actualSize.width());
+		window.setHeight(actualSize.height());
 	}
 
-	double newW, newH;
+	qreal newW, newH;
 	if (window.width() >= window.height()) {
-		newW = (double)window.width() / actualWidth;
-		newH = (double)window.height() / actualHeight;
+		newW = (qreal)window.width() / actualSize.width();
+		newH = (qreal)window.height() / actualSize.height();
 	} else {
-		newH = (double)window.width() / actualWidth;
-		newW = (double)window.height() / actualHeight;
+		newH = (qreal)window.width() / actualSize.width();
+		newW = (qreal)window.height() / actualSize.height();
 	}
-	double resized = std::min(newW, newH);
+	qreal resized = (qreal)std::min(newW, newH);
 
-	return QSize((int)(actualWidth * resized), (int)(actualHeight * resized));
+	return (actualSize * resized);
 }
 
 void CaptureWin::setPixelAspectRatio(double ratio)

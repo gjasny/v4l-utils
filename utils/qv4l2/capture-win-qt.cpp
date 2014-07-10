@@ -37,10 +37,12 @@ CaptureWinQt::~CaptureWinQt()
 
 void CaptureWinQt::resizeEvent(QResizeEvent *event)
 {
-	m_windowSize.setWidth(m_videoSurface.width());
-	m_windowSize.setHeight(m_videoSurface.height());
+	// Get size of frame viewport.
+	m_windowSize = m_videoSurface.size();
+	// Re-calculate sizes
 	m_frame.updated = true;
 	CaptureWin::updateSize();
+	// Draw
 	paintFrame();
 	event->accept();
 }
