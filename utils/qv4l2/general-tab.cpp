@@ -100,7 +100,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 {
 	m_device.append(device);
 	setSpacing(3);
-
 	setSizeConstraint(QLayout::SetMinimumSize);
 
 
@@ -154,6 +153,159 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	else
 		m_buftype = isPlanar() ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
 			  V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+	m_stackedStandards = new QStackedWidget;
+	m_stackedFrameSettings = new QStackedWidget;
+	m_stackedFrequency = new QStackedWidget;
+
+	if (!isRadio() && enum_input(vin, true)) {
+		addLabel("Input");
+		m_videoInput = new QComboBox(parent);
+		do {
+			m_videoInput->addItem((char *)vin.name);
+			if (vin.capabilities & V4L2_IN_CAP_STD)
+				needsStd = true;
+			if (vin.capabilities & V4L2_IN_CAP_DV_TIMINGS)
+				needsTimings = true;
+
+			struct v4l2_event_subscription sub = {
+				V4L2_EVENT_SOURCE_CHANGE, vin.index
+			};
+
+			subscribe_event(sub);
+		} while (enum_input(vin));
+		addWidget(m_videoInput);
+		connect(m_videoInput, SIGNAL(activated(int)), SLOT(inputChanged(int)));
+		m_row++;
+		m_col = 0;
+	}
+
+	QWidget *wStd = new QWidget();
+	QGridLayout *m_stdRow = new QGridLayout(wStd);
+
+	if (needsStd) {
+		v4l2_std_id tmp;
+
+		m_tvStandard = new QComboBox(parent);
+		m_stdRow->addWidget(new QLabel("TV Standard", parentWidget()), 0, 0, Qt::AlignRight);
+		m_stdRow->addWidget(m_tvStandard, 0, 1, Qt::AlignLeft);
+		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
+		refreshStandards();
+		if (ioctl_exists(VIDIOC_QUERYSTD, &tmp)) {
+			m_qryStandard = new QPushButton("Query Standard", parent);
+			m_stdRow->addWidget(new QLabel("", parentWidget()), 0, 2, Qt::AlignRight);
+			m_stdRow->addWidget(m_qryStandard, 0, 3, Qt::AlignLeft);
+			connect(m_qryStandard, SIGNAL(clicked()), SLOT(qryStdClicked()));
+		}
+	}
+
+	QWidget *wTim = new QWidget();
+	QGridLayout *m_timRow = new QGridLayout(wTim);
+
+	if (needsTimings) {
+		m_videoTimings = new QComboBox(parent);
+		m_timRow->addWidget(new QLabel("Video Timings", parentWidget()), 0, 0, Qt::AlignRight);
+		m_timRow->addWidget(m_videoTimings, 0, 1, Qt::AlignLeft);
+		connect(m_videoTimings, SIGNAL(activated(int)), SLOT(timingsChanged(int)));
+		refreshTimings();
+		m_qryTimings = new QPushButton("Query Timings", parent);
+		m_timRow->addWidget(new QLabel("", parentWidget()), 0, 2, Qt::AlignRight);
+		m_timRow->addWidget(m_qryTimings, 0, 3, Qt::AlignLeft);
+		connect(m_qryTimings, SIGNAL(clicked()), SLOT(qryTimingsClicked()));
+	}
+
+	m_stackedStandards->addWidget(wStd);
+	m_stackedStandards->addWidget(wTim);
+	QGridLayout::addWidget(m_stackedStandards, m_row, 0, 1, m_cols, Qt::AlignVCenter);
+	m_row++;
+
+	QWidget *wFrameWH = new QWidget();
+	QWidget *wFrameSR = new QWidget();
+	QGridLayout *m_wh = new QGridLayout(wFrameWH);
+	QGridLayout *m_sr = new QGridLayout(wFrameSR);
+
+	m_wh->addWidget(new QLabel("Frame Width", parentWidget()), 0, 0, Qt::AlignRight);
+	m_frameWidth = new QSpinBox(parent);
+	m_wh->addWidget(m_frameWidth, 0, 1, Qt::AlignLeft);
+	connect(m_frameWidth, SIGNAL(editingFinished()), SLOT(frameWidthChanged()));
+
+	m_wh->addWidget(new QLabel("Frame Height", parentWidget()), 0, 2, Qt::AlignRight);
+	m_frameHeight = new QSpinBox(parent);
+	m_wh->addWidget(m_frameHeight, 0, 3, Qt::AlignLeft);
+	connect(m_frameHeight, SIGNAL(editingFinished()), SLOT(frameHeightChanged()));
+
+	m_sr->addWidget(new QLabel("Frame Size", parentWidget()), 0, 0, Qt::AlignRight);
+	m_frameSize = new QComboBox(parent);
+	m_frameSize->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	m_sr->addWidget(m_frameSize, 0, 1, Qt::AlignLeft);
+	connect(m_frameSize, SIGNAL(activated(int)), SLOT(frameSizeChanged(int)));
+
+	m_sr->addWidget(new QLabel("Frame Rate", parentWidget()), 0, 2, Qt::AlignRight);
+	m_frameInterval = new QComboBox(parent);
+	m_frameInterval->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	m_sr->addWidget(m_frameInterval, 0, 3, Qt::AlignLeft);
+	connect(m_frameInterval, SIGNAL(activated(int)), SLOT(frameIntervalChanged(int)));
+
+	m_stackedFrameSettings->addWidget(wFrameWH);
+	m_stackedFrameSettings->addWidget(wFrameSR);
+
+	QGridLayout::addWidget(m_stackedFrameSettings, m_row, 0, 1, m_cols, Qt::AlignVCenter);
+	m_row++;
+
+	QWidget *wFreq = new QWidget();
+	QGridLayout *m_freqRows = new QGridLayout(wFreq);
+
+	if (m_tuner.capability) {
+		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
+			(m_tuner.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
+
+		m_freqFac = (m_tuner.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
+		m_freq = new QDoubleSpinBox(parent);
+		m_freq->setMinimum(m_tuner.rangelow / m_freqFac);
+		m_freq->setMaximum(m_tuner.rangehigh / m_freqFac);
+		m_freq->setSingleStep(1.0 / m_freqFac);
+		m_freq->setSuffix(unit);
+		m_freq->setDecimals((m_tuner.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
+		m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
+				     .arg((double)m_tuner.rangelow / m_freqFac, 0, 'f', 2)
+				     .arg((double)m_tuner.rangehigh / m_freqFac, 0, 'f', 2)
+				     .arg(unit));
+		m_freq->setStatusTip(m_freq->whatsThis());
+		connect(m_freq, SIGNAL(valueChanged(double)), SLOT(freqChanged(double)));
+		updateFreq();
+		m_freqRows->addWidget(new QLabel("Frequency", parentWidget()), 0, 0, Qt::AlignRight);
+		m_freqRows->addWidget(m_freq, 0, 1, Qt::AlignLeft);
+	}
+
+	if (m_tuner.capability && !isSDR()) {
+		m_subchannels = new QLabel("", parent);
+		m_detectSubchans = new QPushButton("Refresh Tuner Status", parent);
+		m_freqRows->addWidget(m_subchannels, 0, 2, Qt::AlignRight);
+		m_freqRows->addWidget(m_detectSubchans, 0, 3, Qt::AlignLeft);
+		connect(m_detectSubchans, SIGNAL(clicked()), SLOT(detectSubchansClicked()));
+		detectSubchansClicked();
+	}
+
+	if (m_tuner.capability && !isRadio()) {
+		m_freqTable = new QComboBox(parent);
+		for (int i = 0; v4l2_channel_lists[i].name; i++) {
+			m_freqTable->addItem(v4l2_channel_lists[i].name);
+		}
+		m_freqRows->addWidget(new QLabel("Frequency Table", parentWidget()), 1, 0, Qt::AlignRight);
+		m_freqRows->addWidget(m_freqTable, 1, 1, Qt::AlignLeft);
+		connect(m_freqTable, SIGNAL(activated(int)), SLOT(freqTableChanged(int)));
+
+		m_freqChannel = new QComboBox(parent);
+		m_freqChannel->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+		m_freqRows->addWidget(new QLabel("Channels", parentWidget()), 1, 2, Qt::AlignRight);
+		m_freqRows->addWidget(m_freqChannel, 1, 3, Qt::AlignLeft);
+		connect(m_freqChannel, SIGNAL(activated(int)), SLOT(freqChannelChanged(int)));
+		updateFreqChannel();
+	}
+
+	m_stackedFrequency->addWidget(wFreq);
+	QGridLayout::addWidget(m_stackedFrequency, m_row, 0, 2, m_cols, Qt::AlignVCenter);
+	m_row += 2;
 
 	if (hasAlsaAudio()) {
 		m_audioInDevice = new QComboBox(parent);
@@ -313,26 +465,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		}
 	}
 
-	if (!isRadio() && enum_input(vin, true)) {
-		addLabel("Input");
-		m_videoInput = new QComboBox(parent);
-		do {
-			m_videoInput->addItem((char *)vin.name);
-			if (vin.capabilities & V4L2_IN_CAP_STD)
-				needsStd = true;
-			if (vin.capabilities & V4L2_IN_CAP_DV_TIMINGS)
-				needsTimings = true;
-
-			struct v4l2_event_subscription sub = {
-				V4L2_EVENT_SOURCE_CHANGE, vin.index
-			};
-
-			subscribe_event(sub);
-		} while (enum_input(vin));
-		addWidget(m_videoInput);
-		connect(m_videoInput, SIGNAL(activated(int)), SLOT(inputChanged(int)));
-	}
-
 	v4l2_output vout;
 	if (!isRadio() && enum_output(vout, true)) {
 		addLabel("Output");
@@ -371,77 +503,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		updateAudioOutput();
 	}
 
-	if (needsStd) {
-		v4l2_std_id tmp;
-
-		addLabel("TV Standard");
-		m_tvStandard = new QComboBox(parent);
-		m_tvStandard->setMinimumContentsLength(10);
-		addWidget(m_tvStandard);
-		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
-		refreshStandards();
-		if (!m_isOutput && ioctl_exists(VIDIOC_QUERYSTD, &tmp)) {
-			addLabel("");
-			m_qryStandard = new QPushButton("Query Standard", parent);
-			addWidget(m_qryStandard);
-			connect(m_qryStandard, SIGNAL(clicked()), SLOT(qryStdClicked()));
-		}
-	}
-
-	if (needsTimings) {
-		addLabel("Video Timings");
-		m_videoTimings = new QComboBox(parent);
-		m_videoTimings->setMinimumContentsLength(15);
-		addWidget(m_videoTimings);
-		connect(m_videoTimings, SIGNAL(activated(int)), SLOT(timingsChanged(int)));
-		refreshTimings();
-		if (!m_isOutput) {
-			addLabel("");
-			m_qryTimings = new QPushButton("Query Timings", parent);
-			addWidget(m_qryTimings);
-			connect(m_qryTimings, SIGNAL(clicked()), SLOT(qryTimingsClicked()));
-		}
-	}
-
-	if (m_tuner.capability) {
-		const char *unit = (m_tuner.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
-			(m_tuner.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
-
-		m_freqFac = (m_tuner.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
-		m_freq = new QDoubleSpinBox(parent);
-		m_freq->setMinimum(m_tuner.rangelow / m_freqFac);
-		m_freq->setMaximum(m_tuner.rangehigh / m_freqFac);
-		m_freq->setSingleStep(1.0 / m_freqFac);
-		m_freq->setSuffix(unit);
-		m_freq->setDecimals((m_tuner.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
-		m_freq->setWhatsThis(QString("Frequency\nLow: %1 %3\nHigh: %2 %3")
-				     .arg((double)m_tuner.rangelow / m_freqFac, 0, 'f', 2)
-				     .arg((double)m_tuner.rangehigh / m_freqFac, 0, 'f', 2)
-				     .arg(unit));
-		m_freq->setStatusTip(m_freq->whatsThis());
-		connect(m_freq, SIGNAL(valueChanged(double)), SLOT(freqChanged(double)));
-		updateFreq();
-		addLabel("Frequency");
-		addWidget(m_freq);
-	}
-
-	if (m_tuner.capability && !isRadio()) {
-		addLabel("Frequency Table");
-		m_freqTable = new QComboBox(parent);
-		for (int i = 0; v4l2_channel_lists[i].name; i++) {
-			m_freqTable->addItem(v4l2_channel_lists[i].name);
-		}
-		addWidget(m_freqTable);
-		connect(m_freqTable, SIGNAL(activated(int)), SLOT(freqTableChanged(int)));
-
-		addLabel("Channels");
-		m_freqChannel = new QComboBox(parent);
-		m_freqChannel->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-		addWidget(m_freqChannel);
-		connect(m_freqChannel, SIGNAL(activated(int)), SLOT(freqChannelChanged(int)));
-		updateFreqChannel();
-	}
-
 	if (m_tuner.capability && !isSDR()) {
 		addLabel("Audio Mode");
 		m_audioMode = new QComboBox(parent);
@@ -472,12 +533,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 			if (m_audioModes[i] == m_tuner.audmode)
 				m_audioMode->setCurrentIndex(i);
 		connect(m_audioMode, SIGNAL(activated(int)), SLOT(audioModeChanged(int)));
-		m_subchannels = new QLabel("", parent);
-		addWidget(m_subchannels, Qt::AlignRight);
-		m_detectSubchans = new QPushButton("Refresh Tuner Status", parent);
-		addWidget(m_detectSubchans);
-		connect(m_detectSubchans, SIGNAL(clicked()), SLOT(detectSubchansClicked()));
-		detectSubchansClicked();
 	}
 
 	if (m_tuner_rf.capability) {
@@ -590,29 +645,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		connect(m_vidCapFormats, SIGNAL(activated(int)), SLOT(vidCapFormatChanged(int)));
 	}
 
-	addLabel("Frame Width");
-	m_frameWidth = new QSpinBox(parent);
-	addWidget(m_frameWidth);
-	connect(m_frameWidth, SIGNAL(editingFinished()), SLOT(frameWidthChanged()));
-	addLabel("Frame Height");
-	m_frameHeight = new QSpinBox(parent);
-	addWidget(m_frameHeight);
-	connect(m_frameHeight, SIGNAL(editingFinished()), SLOT(frameHeightChanged()));
-
-	addLabel("Frame Size");
-	m_frameSize = new QComboBox(parent);
-	m_frameSize->setMinimumContentsLength(10);
-	m_frameSize->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-	addWidget(m_frameSize);
-	connect(m_frameSize, SIGNAL(activated(int)), SLOT(frameSizeChanged(int)));
-
-	addLabel("Frame Interval");
-	m_frameInterval = new QComboBox(parent);
-	m_frameInterval->setMinimumContentsLength(6);
-	m_frameInterval->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-	addWidget(m_frameInterval);
-	connect(m_frameInterval, SIGNAL(activated(int)), SLOT(frameIntervalChanged(int)));
-
 	addLabel("Field");
 	m_vidFields = new QComboBox(parent);
 	m_vidFields->setMinimumContentsLength(21);
@@ -655,6 +687,10 @@ capture_method:
 done:
 	QGridLayout::addWidget(new QWidget(parent), rowCount(), 0, 1, n);
 	setRowStretch(rowCount() - 1, 1);
+	if (m_videoInput)
+		updateGUI(m_videoInput->currentIndex());
+	else
+		updateGUI(0);
 }
 
 unsigned GeneralTab::getColorspace() const
@@ -921,6 +957,46 @@ CapMethod GeneralTab::capMethod()
 	return (CapMethod)m_capMethods->itemData(m_capMethods->currentIndex()).toInt();
 }
 
+void GeneralTab::updateGUI(int input)
+{
+	v4l2_input in;
+	enum_input(in, true, input);
+	if (!g_input(input) || m_isRadio) {
+		m_stackedFrameSettings->hide();
+		return;
+	}
+
+	if (in.capabilities & V4L2_IN_CAP_STD && in.type == V4L2_INPUT_TYPE_TUNER) {
+		m_stackedFrameSettings->setCurrentIndex(0);
+		m_stackedFrameSettings->show();
+		m_stackedStandards->setCurrentIndex(0);
+		m_stackedStandards->show();
+		m_stackedFrequency->setCurrentIndex(0);
+		m_stackedFrequency->show();
+	} else if (in.capabilities & V4L2_IN_CAP_STD) {
+		m_stackedFrameSettings->setCurrentIndex(0);
+		m_stackedFrameSettings->show();
+		m_stackedStandards->setCurrentIndex(0);
+		m_stackedStandards->show();
+		m_stackedFrequency->hide();
+	} else if (in.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
+		m_stackedFrameSettings->setCurrentIndex(0);
+		m_stackedFrameSettings->show();
+		m_stackedStandards->setCurrentIndex(1);
+		m_stackedStandards->show();
+		m_stackedFrequency->hide();
+	} else	{
+		m_stackedFrameSettings->setCurrentIndex(1);
+		m_stackedFrameSettings->show();
+		m_stackedStandards->hide();
+		m_stackedFrequency->hide();
+	}
+
+	if (isVbi()) {
+		m_stackedFrameSettings->hide();
+	}
+}
+
 void GeneralTab::inputChanged(int input)
 {
 	s_input(input);
@@ -930,6 +1006,7 @@ void GeneralTab::inputChanged(int input)
 
 	updateVideoInput();
 	updateVidCapFormat();
+	updateGUI(input);
 }
 
 void GeneralTab::outputChanged(int output)
