@@ -1022,10 +1022,10 @@ static time_t rds_decode_mjd(const struct rds_private_state *priv_state)
 	/* add / subtract the local offset to get the local time.
 	 * The offset is expressed in multiples of half hours */
 	if (priv_state->utc_offset & 0x20) { /* bit 5 indicates -/+ */
-		local_hour -= (offset * 2);
+		local_hour -= offset / 2;
 		local_minute -= (offset % 2) * 30;
 	} else {
-		local_hour += (offset * 2);
+		local_hour += offset / 2;
 		local_minute += (offset % 2) * 30;
 	}
 
@@ -1044,14 +1044,14 @@ static time_t rds_decode_mjd(const struct rds_private_state *priv_state)
 	new_time.tm_min = local_minute;
 	new_time.tm_hour = local_hour;
 	new_time.tm_mday = d;
-	new_time.tm_mon = m;
+	new_time.tm_mon = m - 1;
 	new_time.tm_year = y;
 	/* offset (submitted by RDS) that was used to compute the local time,
 	 * expressed in multiples of half hours, bit 5 indicates -/+ */
 	if (priv_state->utc_offset & 0x20)
-		new_time.tm_gmtoff = -2 * offset * 3600;
+		new_time.tm_gmtoff = -offset * 1800;
 	else
-		new_time.tm_gmtoff = 2 * offset * 3600;
+		new_time.tm_gmtoff = offset * 1800;
 
 	/* convert tm struct to time_t value and return it */
 	return mktime(&new_time);
