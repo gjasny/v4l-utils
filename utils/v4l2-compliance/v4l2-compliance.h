@@ -82,6 +82,7 @@ struct node {
 	unsigned audio_inputs;
 	unsigned outputs;
 	unsigned audio_outputs;
+	unsigned cur_io_caps;
 	unsigned std_controls;
 	unsigned priv_controls;
 	qctrl_list controls;

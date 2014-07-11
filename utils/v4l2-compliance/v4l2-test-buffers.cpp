@@ -391,6 +391,17 @@ int testReqBufs(struct node *node)
 
 		if (!(node->valid_buftypes & (1 << i)))
 			continue;
+
+		switch (i) {
+		case V4L2_BUF_TYPE_VBI_CAPTURE:
+		case V4L2_BUF_TYPE_VBI_OUTPUT:
+		case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+		case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+			if (!(node->cur_io_caps & V4L2_IN_CAP_STD))
+				continue;
+			break;
+		}
+
 		info("test buftype %s\n", buftype2s(i).c_str());
 		if (node->valid_buftype == 0)
 			node->valid_buftype = i;
@@ -512,6 +523,16 @@ int testExpBuf(struct node *node)
 			continue;
 		if (v4l_buf_type_is_overlay(type))
 			continue;
+
+		switch (type) {
+		case V4L2_BUF_TYPE_VBI_CAPTURE:
+		case V4L2_BUF_TYPE_VBI_OUTPUT:
+		case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+		case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+			if (!(node->cur_io_caps & V4L2_IN_CAP_STD))
+				continue;
+			break;
+		}
 
 		queue q(node, type, V4L2_MEMORY_MMAP);
 

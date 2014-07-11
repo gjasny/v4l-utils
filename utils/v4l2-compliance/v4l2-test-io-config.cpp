@@ -187,6 +187,8 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 		if (enumtimings.index != i)
 			return fail("index changed!\n");
 		fail_on_test(doioctl(node, VIDIOC_S_DV_TIMINGS, &enumtimings.timings));
+		if (node->is_vbi)
+			continue;
 		fmt.type = type;
 		fail_on_test(doioctl(node, VIDIOC_G_FMT, &fmt));
 

@@ -858,10 +858,21 @@ int main(int argc, char **argv)
 		if (max_io) {
 			printf("Test %s %d:\n\n",
 				node.can_capture ? "input" : "output", io);
-			if (node.can_capture)
+			if (node.can_capture) {
+				struct v4l2_input descr;
+
 				doioctl(&node, VIDIOC_S_INPUT, &io);
-			else
+				descr.index = io;
+				doioctl(&node, VIDIOC_ENUMINPUT, &descr);
+				node.cur_io_caps = descr.capabilities;
+			} else {
+				struct v4l2_output descr;
+
 				doioctl(&node, VIDIOC_S_OUTPUT, &io);
+				descr.index = io;
+				doioctl(&node, VIDIOC_ENUMOUTPUT, &descr);
+				node.cur_io_caps = descr.capabilities;
+			}
 		}
 
 		/* Control ioctls */
@@ -895,14 +906,17 @@ int main(int argc, char **argv)
 		printf("\t\ttest VIDIOC_G_ENC_INDEX: %s\n", ok(testEncIndex(&node)));
 		printf("\t\ttest VIDIOC_(TRY_)DECODER_CMD: %s\n", ok(testDecoder(&node)));
 		printf("\n");
+
+		/* Buffer ioctls */
+
+		printf("\tBuffer ioctls:\n");
+		printf("\t\ttest VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: %s\n", ok(testReqBufs(&node)));
+		printf("\t\ttest VIDIOC_EXPBUF: %s\n", ok(testExpBuf(&node)));
+		printf("\n");
 	}
-
-	/* Buffer ioctls */
-
-	printf("Buffer ioctls:\n");
-	printf("\ttest VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: %s\n", ok(testReqBufs(&node)));
-	printf("\ttest VIDIOC_EXPBUF: %s\n", ok(testExpBuf(&node)));
 	if (options[OptStreaming]) {
+		printf("Streaming ioctls:\n");
+
 		streamingSetup(&node);
 
 		printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));

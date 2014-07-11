@@ -493,7 +493,6 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		break;
 	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
-		fail_on_test(win.field == V4L2_FIELD_ANY);
 		fail_on_test(win.clipcount && !(node->fbuf_caps & V4L2_FBUF_CAP_LIST_CLIPPING));
 		if (have_clip)
 			fail_on_test(!win.clipcount && (node->fbuf_caps & V4L2_FBUF_CAP_LIST_CLIPPING));
@@ -546,23 +545,23 @@ int testGetFormats(struct node *node)
 			supported = true;
 			node->valid_buftypes |= 1 << type;
 		}
-		if (ret && (node->caps & buftype2cap[type]))
-			return fail("%s cap set, but no %s formats defined\n",
+		switch (type) {
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		case V4L2_BUF_TYPE_VIDEO_OVERLAY:
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		case V4L2_BUF_TYPE_SDR_CAPTURE:
+			if (ret && (node->caps & buftype2cap[type]))
+				return fail("%s cap set, but no %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
-		if (!ret && !(node->caps & buftype2cap[type])) {
-			switch (type) {
-			case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-			case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-			case V4L2_BUF_TYPE_VIDEO_OVERLAY:
-			case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
-			case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
-			case V4L2_BUF_TYPE_SDR_CAPTURE:
+			if (!ret && !(node->caps & buftype2cap[type]))
 				return fail("%s cap not set, but %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
-			default:
-				/* ENUMFMT doesn't support other buftypes */
-				break;
-			}
+			break;
+		default:
+			/* ENUMFMT doesn't support other buftypes */
+			break;
 		}
 	}
 
@@ -623,6 +622,16 @@ int testTryFormats(struct node *node)
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 
+		switch (type) {
+		case V4L2_BUF_TYPE_VBI_CAPTURE:
+		case V4L2_BUF_TYPE_VBI_OUTPUT:
+		case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+		case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+			if (!(node->cur_io_caps & V4L2_IN_CAP_STD))
+				continue;
+			break;
+		}
+
 		createInvalidFmt(fmt, clip, type);
 		doioctl(node, VIDIOC_G_FMT, &fmt);
 		fmt_try = fmt;
@@ -641,6 +650,16 @@ int testTryFormats(struct node *node)
 	for (type = 0; type <= V4L2_BUF_TYPE_SDR_CAPTURE; type++) {
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
+
+		switch (type) {
+		case V4L2_BUF_TYPE_VBI_CAPTURE:
+		case V4L2_BUF_TYPE_VBI_OUTPUT:
+		case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+		case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+			if (!(node->cur_io_caps & V4L2_IN_CAP_STD))
+				continue;
+			break;
+		}
 
 		createInvalidFmt(fmt, clip, type);
 		ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
@@ -876,6 +895,11 @@ int testSetFormats(struct node *node)
 				pixelformat = fmt_set.fmt.pix_mp.pixelformat;
 				is_mplane = true;
 				break;
+			case V4L2_BUF_TYPE_VBI_CAPTURE:
+			case V4L2_BUF_TYPE_VBI_OUTPUT:
+			case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+			case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+				continue;
 			default:
 				/* for other formats returning EINVAL is certainly wrong */
 				return fail("TRY_FMT cannot handle an invalid format\n");
@@ -969,7 +993,8 @@ static int testSlicedVBICapType(struct node *node, unsigned type)
 	cap.type = type;
 	ret = doioctl(node, VIDIOC_G_SLICED_VBI_CAP, &cap);
 	if (ret == ENOTTY || ret == EINVAL) {
-		fail_on_test(sliced_type && (node->caps & buftype2cap[type]));
+		if (node->cur_io_caps & V4L2_IN_CAP_STD)
+			fail_on_test(sliced_type && (node->caps & buftype2cap[type]));
 		return ret == ENOTTY ? ret : 0;
 	}
 	fail_on_test(ret);
