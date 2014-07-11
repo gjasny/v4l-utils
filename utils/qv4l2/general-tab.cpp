@@ -562,11 +562,11 @@ format:
 	m_cropping = new QComboBox(parent);
 	m_cropping->addItem("Source Width and Height");
 	m_cropping->addItem("Crop Top and Bottom Line");
+	m_cropping->addItem("Traditional 4:3");
 	m_cropping->addItem("Widescreen 14:9");
 	m_cropping->addItem("Widescreen 16:9");
 	m_cropping->addItem("Cinema 1.85:1");
 	m_cropping->addItem("Cinema 2.39:1");
-	m_cropping->addItem("Traditional 4:3");
 
 	addLabel("Video Aspect Ratio");
 	addWidget(m_cropping);
@@ -1988,15 +1988,15 @@ CropMethod GeneralTab::getCropMethod()
 	case 1:
 		return QV4L2_CROP_TB;
 	case 2:
-		return QV4L2_CROP_W149;
-	case 3:
-		return QV4L2_CROP_W169;
-	case 4:
-		return QV4L2_CROP_C185;
-	case 5:
-		return QV4L2_CROP_C239;
-	case 6:
 		return QV4L2_CROP_P43;
+	case 3:
+		return QV4L2_CROP_W149;
+	case 4:
+		return QV4L2_CROP_W169;
+	case 5:
+		return QV4L2_CROP_C185;
+	case 6:
+		return QV4L2_CROP_C239;
 	default:
 		return QV4L2_CROP_NONE;
 	}
@@ -2018,6 +2018,10 @@ double GeneralTab::getPixelAspectRatio()
 	ratio = g_pixel_aspect(m_buftype, w, h);
 	switch (m_pixelAspectRatio->currentIndex()) {
 	// override ratio if hardcoded, but keep w and h
+	case 1:
+		ratio.numerator = 1;
+		ratio.denominator = 1;
+		break;
 	case 2:
 		ratio.numerator = 11;
 		ratio.denominator = 10;
