@@ -1112,9 +1112,9 @@ void ApplicationWindow::capStart(bool start)
 		m_frameData = new unsigned char[m_vbiSize];
 		m_capImage = new QImage(m_vbiWidth, m_vbiHeight, dstFmt);
 		m_capImage->fill(0);
+		m_capture->setWindowSize(QSize(m_vbiWidth, m_vbiHeight));
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, "No frame");
-		m_capture->resize(m_vbiWidth, m_vbiHeight);
 		if (showFrames())
 			m_capture->show();
 
@@ -1185,10 +1185,10 @@ void ApplicationWindow::capStart(bool start)
 	m_capture->setColorspace(colorspace);
 	m_capture->setField(field);
 	m_capture->setDisplayColorspace(m_genTab->getDisplayColorspace());
-	
+
+	m_capture->setWindowSize(QSize(width, height));
 	m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 			    pixfmt, m_capImage->bits(), NULL, "No frame");
-	m_capture->resize(width, height);
 	if (showFrames())
 		m_capture->show();
 

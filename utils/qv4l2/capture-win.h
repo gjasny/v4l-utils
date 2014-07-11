@@ -62,7 +62,7 @@ public:
 	CaptureWin();
 	~CaptureWin();
 
-	void resize(int minw, int minh);
+	void setWindowSize(QSize size);
 	void enableScaling(bool enable);
 	void setPixelAspectRatio(double ratio);
 	virtual void setColorspace(unsigned colorspace) = 0;

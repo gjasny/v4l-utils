@@ -107,11 +107,11 @@ void CaptureWin::resetSize()
 		showNormal();
 
         // Force resize even if no size change
-	int w = m_origFrameSize.width();
-	int h = m_origFrameSize.height();
+	QSize resetFrameSize = m_origFrameSize;
 	m_origFrameSize.setWidth(0);
 	m_origFrameSize.setHeight(0);
-	resize(w, h);
+
+	setWindowSize(resetFrameSize);
 }
 
 QSize CaptureWin::cropFrameSize(QSize size)
@@ -163,12 +163,12 @@ QSize CaptureWin::cropFrameSize(QSize size)
 
 void CaptureWin::updateSize()
 {
-	m_crop.updated = 0;
+	m_crop.updated = false;
 	if (m_frame.updated) {
 		m_scaledSize = scaleFrameSize(m_windowSize, m_frame.size);
 		m_crop.delta = cropFrameSize(m_frame.size);
 		m_crop.size = m_frame.size - 2 * m_crop.delta;
-		m_crop.updated = 1;
+		m_crop.updated = true;
 	}
 }
 
@@ -214,41 +214,37 @@ void CaptureWin::enableScaling(bool enable)
 	QCoreApplication::sendEvent(this, &event);
 }
 
-void CaptureWin::resize(int width, int height)
+void CaptureWin::setWindowSize(QSize frameSize)
 {
-	QSize newSize;
-
 	// Dont resize window if the frame size is the same in
 	// the event the window has been paused when beeing resized.
-	if (width == m_origFrameSize.width() && height == m_origFrameSize.height())
+	if (frameSize == m_origFrameSize)
 		return;
 
-	m_origFrameSize.setWidth(width);
-	m_origFrameSize.setHeight(height);
+	m_origFrameSize = frameSize;
 
 	QSize margins = getMargins();
-
-	newSize =  margins + pixelAspectFrameSize(m_origFrameSize)
-		- 2 * cropFrameSize(m_origFrameSize);
-
-	width =  newSize.width();
-	height = newSize.height();
-
 	QDesktopWidget *screen = QApplication::desktop();
 	QRect resolution = screen->screenGeometry();
 
-	if (width > resolution.width())
-		width = resolution.width();
-	if (width < MIN_WIN_SIZE_WIDTH)
-		width = MIN_WIN_SIZE_WIDTH;
+	QSize windowSize =  margins + pixelAspectFrameSize(frameSize)
+		- 2 * cropFrameSize(frameSize);
 
-	if (height > resolution.height())
-		height = resolution.height();
-	if (height < MIN_WIN_SIZE_HEIGHT)
-		height = MIN_WIN_SIZE_HEIGHT;
+	if (windowSize.width() > resolution.width())
+		windowSize.setWidth(resolution.width());
+	if (windowSize.width() < MIN_WIN_SIZE_WIDTH)
+		windowSize.setWidth(MIN_WIN_SIZE_WIDTH);
+
+	if (windowSize.height() > resolution.height())
+		windowSize.setHeight(resolution.height());
+	if (windowSize.height() < MIN_WIN_SIZE_HEIGHT)
+		windowSize.setHeight(MIN_WIN_SIZE_HEIGHT);
 
 	QWidget::setMinimumSize(MIN_WIN_SIZE_WIDTH, MIN_WIN_SIZE_HEIGHT);
-	QWidget::resize(width, height);
+
+	m_frame.size = frameSize;
+
+	QWidget::resize(windowSize);
 }
 
 QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
