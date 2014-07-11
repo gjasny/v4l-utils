@@ -2015,10 +2015,9 @@ double GeneralTab::getPixelAspectRatio()
 	v4l2_fract ratio = { 1, 1 };
 	unsigned w = 0, h = 0;
 
+	ratio = g_pixel_aspect(m_buftype, w, h);
 	switch (m_pixelAspectRatio->currentIndex()) {
-	case 0:
-		ratio = g_pixel_aspect(m_buftype, w, h);
-		break;
+	// override ratio if hardcoded, but keep w and h
 	case 2:
 		ratio.numerator = 11;
 		ratio.denominator = 10;
