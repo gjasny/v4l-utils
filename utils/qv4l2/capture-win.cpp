@@ -175,8 +175,7 @@ void CaptureWin::updateSize()
 void CaptureWin::setCropMethod(CropMethod crop)
 {
 	m_cropMethod = crop;
-	QResizeEvent event (QSize(width(), height()), QSize(width(), height()));
-	QCoreApplication::sendEvent(this, &event);
+	resetSize();
 }
 
 QSize CaptureWin::pixelAspectFrameSize(QSize size)
@@ -210,8 +209,7 @@ void CaptureWin::enableScaling(bool enable)
 		QWidget::setMinimumSize(MIN_WIN_SIZE_WIDTH, MIN_WIN_SIZE_HEIGHT);
 	}
 	m_enableScaling = enable;
-	QResizeEvent event (QSize(width(), height()), QSize(width(), height()));
-	QCoreApplication::sendEvent(this, &event);
+	resetSize();
 }
 
 void CaptureWin::setWindowSize(QSize frameSize)
@@ -273,8 +271,7 @@ QSize CaptureWin::scaleFrameSize(QSize window, QSize frame)
 void CaptureWin::setPixelAspectRatio(double ratio)
 {
 	m_pixelAspectRatio = ratio;
-	QResizeEvent event(QSize(width(), height()), QSize(width(), height()));
-	QCoreApplication::sendEvent(this, &event);
+	resetSize();
 }
 
 void CaptureWin::closeEvent(QCloseEvent *event)
