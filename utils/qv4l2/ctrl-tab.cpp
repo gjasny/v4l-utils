@@ -147,7 +147,7 @@ void ApplicationWindow::addTabs(int size[])
 		vbox->addWidget(w);
 
 		QGridLayout *grid = new QGridLayout(w);
-		if((char *)qctrl.name) {
+		if (strlen((char *)qctrl.name)) {
 			QLabel *title_tab = new QLabel((char *)qctrl.name, parentWidget());
 			QFont f = title_tab->font();
 			f.setBold(true);
