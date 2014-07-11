@@ -279,7 +279,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		connect(m_freqTable, SIGNAL(activated(int)), SLOT(freqTableChanged(int)));
 
 		m_freqChannel = new QComboBox(parent);
-		m_freqChannel->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 		m_freqRows->addWidget(new QLabel("Channels", parentWidget()), 1, 2, Qt::AlignLeft);
 		m_freqRows->addWidget(m_freqChannel, 1, 3, Qt::AlignLeft);
 		connect(m_freqChannel, SIGNAL(activated(int)), SLOT(freqChannelChanged(int)));
@@ -309,13 +308,11 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 
 	m_sr->addWidget(new QLabel("Frame Size", parentWidget()), 0, 0, Qt::AlignLeft);
 	m_frameSize = new QComboBox(parent);
-	m_frameSize->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	m_sr->addWidget(m_frameSize, 0, 1, Qt::AlignLeft);
 	connect(m_frameSize, SIGNAL(activated(int)), SLOT(frameSizeChanged(int)));
 
 	m_sr->addWidget(new QLabel("Frame Rate", parentWidget()), 0, 2, Qt::AlignLeft);
 	m_frameInterval = new QComboBox(parent);
-	m_frameInterval->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	m_sr->addWidget(m_frameInterval, 0, 3, Qt::AlignLeft);
 	connect(m_frameInterval, SIGNAL(activated(int)), SLOT(frameIntervalChanged(int)));
 
@@ -423,8 +420,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (hasAlsaAudio()) {
 		m_audioInDevice = new QComboBox(parent);
 		m_audioOutDevice = new QComboBox(parent);
-		m_audioInDevice->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-		m_audioOutDevice->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 	}
 
 	if (createAudioDeviceList() || (!isRadio() && enum_audio(vaudio, true)) ||
@@ -477,7 +472,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		addLabel("Audio Mode");
 		m_audioMode = new QComboBox(parent);
 		m_audioMode->setMinimumContentsLength(12);
-		m_audioMode->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 		m_audioMode->addItem("Mono");
 		int audIdx = 0;
 		m_audioModes[audIdx++] = V4L2_TUNER_MODE_MONO;
