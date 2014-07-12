@@ -1584,7 +1584,8 @@ const char *v4l2_rds_get_language_str(const struct v4l2_rds *handle)
 const char *v4l2_rds_get_coverage_str(const struct v4l2_rds *handle)
 {
 	/* bits 8-11 contain the area coverage code */
-	uint8_t coverage = (handle->pi >> 8) & 0X0f;
+	uint8_t coverage = (handle->pi >> 8) & 0x0f;
+	uint8_t nibble = (handle->pi >> 12) & 0x0f;
 	static const char *coverage_lut[16] = {
 		"Local", "International", "National", "Supra-Regional",
 		"Regional 1", "Regional 2", "Regional 3", "Regional 4",
@@ -1592,7 +1593,14 @@ const char *v4l2_rds_get_coverage_str(const struct v4l2_rds *handle)
 		"Regional 9", "Regional 10", "Regional 11", "Regional 12"
 	};
 
-	return coverage_lut[coverage];
+	/*
+	 * Coverage area codes are restricted to the B, D and E PI code
+	 * blocks for RBDS.
+	 */
+	if (!handle->is_rbds ||
+	    (nibble == 0xb || nibble == 0xd || nibble == 0xe))
+		return coverage_lut[coverage];
+	return "Not Available";
 }
 
 const struct v4l2_rds_group *v4l2_rds_get_group(const struct v4l2_rds *handle)
