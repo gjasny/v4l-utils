@@ -1388,7 +1388,8 @@ uint32_t v4l2_rds_add(struct v4l2_rds *handle, struct v4l2_rds_data *rds_data)
 
 	rds_stats->block_cnt++;
 	/* check for corrected / uncorrectable errors in the data */
-	if (rds_data->block & V4L2_RDS_BLOCK_ERROR) {
+	if ((rds_data->block & V4L2_RDS_BLOCK_ERROR) ||
+	    block_id == V4L2_RDS_BLOCK_INVALID) {
 		block_id = -1;
 		rds_stats->block_error_cnt++;
 	} else if (rds_data->block & V4L2_RDS_BLOCK_CORRECTED) {
