@@ -614,6 +614,37 @@ static void print_rds_eon(const struct v4l2_rds_eon_set *eon_set)
 
 static void print_rds_pi(const struct v4l2_rds *handle)
 {
+	uint16_t pi = handle->pi;
+
+	if (handle->is_rbds) {
+		char callsign[5] = { 0 };
+		uint8_t nibble = handle->pi >> 12;
+
+		if (pi >= 0xafa1 && pi <= 0xafa9)
+			pi = (pi & 0xf) << 12;
+		else if (pi > 0xaf11 && pi <= 0xaf1f)
+			pi = (pi & 0xff) << 8;
+		else if (pi > 0xaf21 && pi <= 0xafaf)
+			pi = (pi & 0xff) << 8;
+
+		if (pi > 0xa100 && pi <= 0xa9ff)
+			pi -= 0x9100;
+		if (pi > 0x1000 && pi <= 0x54a7) {
+			pi -= 4096;
+			callsign[0] = 'K';
+		} else if (pi >= 0x54a8 && pi <= 0x994f) {
+			pi -= 21672;
+			callsign[0] = 'W';
+		}
+		if (callsign[0]) {
+			callsign[1] = 'A' + pi / 676;
+			callsign[2] = 'A' + (pi / 26) % 26;
+			callsign[3] = 'A' + pi % 26;
+			printf("\nCall Sign: %s", callsign);
+		}
+		if (nibble != 0x0b && nibble != 0x0d && nibble != 0x0e)
+			return;
+	}
 	printf("\nArea Coverage: %s", v4l2_rds_get_coverage_str(handle));
 }
 
