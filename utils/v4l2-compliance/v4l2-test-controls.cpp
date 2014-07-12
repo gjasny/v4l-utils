@@ -79,7 +79,8 @@ static int checkQCtrl(struct node *node, struct test_queryctrl &qctrl)
 			return fail("step == 0\n");
 		if (qctrl.step < 0)
 			return fail("step < 0\n");
-		if ((unsigned)qctrl.step > (unsigned)(qctrl.maximum - qctrl.minimum))
+		if ((unsigned)qctrl.step > (unsigned)(qctrl.maximum - qctrl.minimum) &&
+		    qctrl.maximum != qctrl.minimum)
 			return fail("step > max - min\n");
 		if ((qctrl.maximum - qctrl.minimum) % qctrl.step) {
 			// This really should be a fail, but there are so few
