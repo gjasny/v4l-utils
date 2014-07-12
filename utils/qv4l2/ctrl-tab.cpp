@@ -147,8 +147,12 @@ void ApplicationWindow::addTabs(int size[])
 		vbox->addWidget(w);
 
 		QGridLayout *grid = new QGridLayout(w);
-		if (strlen((char *)qctrl.name)) {
-			QLabel *title_tab = new QLabel((char *)qctrl.name, parentWidget());
+		QString tabName((char *)qctrl.name);
+		if (tabName != "User Controls" && tabName.endsWith(" Controls"))
+			tabName.chop(9);
+
+		if (tabName.length()) {
+			QLabel *title_tab = new QLabel(tabName, parentWidget());
 			QFont f = title_tab->font();
 			f.setBold(true);
 			title_tab->setFont(f);
@@ -162,7 +166,7 @@ void ApplicationWindow::addTabs(int size[])
 			grid->addWidget(m_line, m_row, m_col, 1, m_cols, Qt::AlignVCenter);
 			m_row++;
 		}
-		m_tabs->addTab(t, (char *)qctrl.name);
+		m_tabs->addTab(t, tabName);
 		for (i = 0; i < iter->second.size(); i++) {
 			if (i & 1)
 				id = iter->second[(1+iter->second.size()) / 2 + i / 2];
