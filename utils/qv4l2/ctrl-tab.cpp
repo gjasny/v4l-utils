@@ -494,15 +494,19 @@ QString ApplicationWindow::getString(unsigned id)
 	const v4l2_queryctrl &qctrl = m_ctrlMap[id];
 	QWidget *w = m_widgetMap[qctrl.id];
 	QString v;
+	int mod;
 
 	switch (qctrl.type) {
 	case V4L2_CTRL_TYPE_STRING:
 		v = static_cast<QLineEdit *>(w)->text();
+		mod = v.length() % qctrl.step;
+		if (mod)
+			v += QString(qctrl.step - mod, ' ');
 		break;
 	default:
 		break;
 	}
-	setWhat(w, id, v);
+	setWhat(w, id, QString("'") + v + "'");
 	return v;
 }
 
@@ -904,7 +908,7 @@ void ApplicationWindow::setString(unsigned id, const QString &v)
 	default:
 		break;
 	}
-	setWhat(w, id, v);
+	setWhat(w, id, QString("'") + v + "'");
 }
 
 void ApplicationWindow::setDefaults(unsigned ctrl_class)
