@@ -165,6 +165,8 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 					frmsize.discrete.width + 1, frmsize.discrete.height, 0);
 			if (ret && ret != ENOTTY)
 				return ret;
+			if (ret == 0 && !(node->caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)))
+				return fail("found discrete framesizes when no video capture is supported\n");
 			break;
 		case V4L2_FRMSIZE_TYPE_CONTINUOUS:
 			if (frmsize.stepwise.step_width != 1 || frmsize.stepwise.step_height != 1)
@@ -248,8 +250,6 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 		ret = testEnumFrameSizes(node, fmtdesc.pixelformat);
 		if (ret && ret != ENOTTY)
 			return ret;
-		if (ret == 0 && !(node->caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)))
-			return fail("found framesizes when no video capture is supported\n");
 		f++;
 		if (type == V4L2_BUF_TYPE_PRIVATE)
 			continue;
