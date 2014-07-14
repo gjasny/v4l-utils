@@ -105,7 +105,6 @@ private:
 	void startAudio();
 	void stopAudio();
 
-	int m_maxw[4];
 	struct buffer *m_buffers;
 	struct v4l2_format m_capSrcFormat;
 	struct v4l2_format m_capDestFormat;
@@ -188,8 +187,12 @@ private:
 	void updateFreqChannel();
 	bool showFrames();
 
-	double m_pxw;
-	double m_minWidth;
+	const double m_pxw;
+	const int m_minWidth;
+	const int m_vMargin;
+	const int m_hMargin;
+	int m_maxw[4];
+	int m_maxh;
 	int m_increment;
 	GeneralTab *m_genTab;
 	VbiTab *m_vbiTab;

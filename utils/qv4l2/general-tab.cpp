@@ -49,6 +49,11 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	m_row(0),
 	m_col(0),
 	m_cols(n),
+	m_minWidth(175),
+	m_pxw(25.0),
+	m_vMargin(10),
+	m_hMargin(20),
+	m_maxh(0),
 	m_isRadio(false),
 	m_isSDR(false),
 	m_isVbi(false),
@@ -101,7 +106,6 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 {
 	m_device.append(device);
 	setSizeConstraint(QLayout::SetMinimumSize);
-	m_minWidth = 175;
 	for (int i = 0; i < n; i++) {
 		m_maxw[i] = 0;
 	}
@@ -754,9 +758,8 @@ void GeneralTab::cropSection()
 
 void GeneralTab::fixWidth()
 {
-	m_pxw = 25.0;
-	setContentsMargins(20, 10, 20, 10);
-	setColumnStretch(1, 1);
+	setContentsMargins(m_hMargin, m_vMargin, m_hMargin, m_vMargin);
+	setColumnStretch(3, 1);
 
 	QList<QWidget *> list = parentWidget()->findChildren<QWidget *>();
 	QList<QWidget *>::iterator it;
@@ -770,7 +773,7 @@ void GeneralTab::fixWidth()
 	// fix width of subgrids
 	QList<QGridLayout *>::iterator i;
 	for (i = m_grids.begin(); i != m_grids.end(); ++i) {
-		(*i)->setColumnStretch(1, 1);
+		(*i)->setColumnStretch(3, 1);
 		(*i)->setContentsMargins(0, 0, 0, 0);
 		for (int n = 0; n < (*i)->count(); n++) {
 			if ((*i)->itemAt(n)->widget()->sizeHint().width() > m_maxw[n % 4]) {
@@ -1047,6 +1050,8 @@ void GeneralTab::addWidget(QWidget *w, Qt::Alignment align)
 		w->setMinimumWidth(m_minWidth);
 	if (w->sizeHint().width() > m_maxw[m_col])
 		m_maxw[m_col] = w->sizeHint().width();
+	if (w->sizeHint().height() > m_maxh)
+		m_maxh = w->sizeHint().height();
 	QGridLayout::addWidget(w, m_row, m_col, align | Qt::AlignVCenter);
 	m_col++;
 	if (m_col == m_cols) {
@@ -1078,19 +1083,15 @@ void GeneralTab::addTitle(const QString &titlename)
 int GeneralTab::getWidth()
 {
 	int total = 0;
-
 	for (int i = 0; i < m_cols; i++) {
-		if (i % 2)
-			total += m_maxw[i] + m_pxw;
-		else
-			total += m_maxw[i];
+		total += m_maxw[i] + m_pxw;
 	}
 	return total;
 }
 
 int GeneralTab::getHeight()
 {
-	return m_row * 20;
+	return m_row * m_maxh;
 }
 
 bool GeneralTab::isSlicedVbi() const
@@ -1257,7 +1258,9 @@ void GeneralTab::detectSubchansClicked()
 	if (m_tuner.signal && m_tuner.afc)
 		chans += m_tuner.afc < 0 ? " too low" : " too high";
 	chans += ")";
+
 	m_subchannels->setText(chans);
+	fixWidth();
 }
 
 void GeneralTab::stereoModeChanged()
@@ -1497,8 +1500,10 @@ void GeneralTab::updateVideoInput()
 			m_freqChannel->setEnabled(enableFreq);
 		if (m_detectSubchans) {
 			m_detectSubchans->setEnabled(enableFreq);
-			if (!enableFreq)
+			if (!enableFreq) {
 				m_subchannels->setText("");
+				fixWidth();
+			}
 			else
 				detectSubchansClicked();
 		}

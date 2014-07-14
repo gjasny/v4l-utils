@@ -62,6 +62,11 @@ extern "C" {
 
 ApplicationWindow::ApplicationWindow() :
 	m_capture(NULL),
+	m_pxw(25),
+	m_minWidth(175),
+	m_vMargin(15),
+	m_hMargin(5),
+	m_maxh(0),
 	m_genTab(NULL),
 	m_sigMapper(NULL)
 {
@@ -74,7 +79,6 @@ ApplicationWindow::ApplicationWindow() :
 	m_nbuffers = 0;
 	m_buffers = NULL;
 	m_makeSnapshot = false;
-	m_minWidth = 175;
 
 	QAction *openAct = new QAction(QIcon(":/fileopen.png"), "&Open Device", this);
 	openAct->setStatusTip("Open a v4l device, use libv4l2 wrapper if possible");
@@ -226,7 +230,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	int size[2];
 	size[0] = m_genTab->getWidth();
 	size[1] = m_genTab->getHeight();
-	setMinimumSize(size[0] + 50, size[1] + 150); // +margins, menus
+	setMinimumSize(size[0], size[1]);
 
 #ifdef HAVE_ALSA
 	if (m_genTab->hasAlsaAudio()) {

@@ -189,10 +189,13 @@ private:
 	int m_row;
 	int m_col;
 	int m_cols;
-	int m_minWidth;
-	double m_pxw;
+	const int m_minWidth;
+	const double m_pxw;
+	const int m_vMargin;
+	const int m_hMargin;
 	int m_increment;
 	int m_maxw[4];
+	int m_maxh;
 	bool m_isRadio;
 	bool m_isSDR;
 	bool m_isVbi;
