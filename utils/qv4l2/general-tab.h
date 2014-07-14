@@ -130,6 +130,11 @@ private slots:
 	void composeChanged();
 
 private:
+	void inputSection(bool needsStd, bool needsTimings, v4l2_input vin);
+	void outputSection(v4l2_output vout, v4l2_fmtdesc fmt);
+	void audioSection(v4l2_audio vaudio, v4l2_audioout vaudout);
+	void formatSection(v4l2_fmtdesc fmt); 
+	void cropSection(); 
 	void fixWidth();
 	void updateGUI(int);
 	void updateVideoInput();
