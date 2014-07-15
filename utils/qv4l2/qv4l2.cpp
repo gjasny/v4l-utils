@@ -1098,7 +1098,14 @@ void ApplicationWindow::capStart(bool start)
 		v4l2_format fmt;
 		v4l2_std_id std;
 
-		g_fmt_vbi(fmt);
+		if (!g_std(std)) {
+			error("this input isn't suitable for VBI\n");
+			return;
+		}
+		if (!g_fmt_vbi(fmt)) {
+			error("could not obtain a VBI format\n");
+			return;
+		}
 		if (fmt.fmt.vbi.sample_format != V4L2_PIX_FMT_GREY) {
 			error("non-grey pixelformat not supported for VBI\n");
 			return;
