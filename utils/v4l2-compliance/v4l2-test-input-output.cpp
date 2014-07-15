@@ -33,10 +33,14 @@
 
 #define MAGIC 0x1eadbeef
 
-static int checkEnumFreqBands(struct node *node, __u32 tuner, __u32 type, __u32 caps)
+static int checkEnumFreqBands(struct node *node, __u32 tuner, __u32 type, __u32 caps,
+			      __u32 rangelow, __u32 rangehigh)
 {
-	unsigned i;
+	const __u32 band_caps = V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_1HZ;
 	__u32 caps_union = 0;
+	unsigned low = 0xffffffff;
+	unsigned high = 0;
+	unsigned i;
 
 	for (i = 0; ; i++) {
 		struct v4l2_frequency_band band;
@@ -52,16 +56,22 @@ static int checkEnumFreqBands(struct node *node, __u32 tuner, __u32 type, __u32 
 		if (ret)
 			return fail("couldn't get freq band\n");
 		caps_union |= band.capability;
-		if ((caps & V4L2_TUNER_CAP_LOW) != (band.capability & V4L2_TUNER_CAP_LOW))
-			return fail("Inconsistent CAP_LOW usage\n");
+		if ((caps & band_caps) != (band.capability & band_caps))
+			return fail("Inconsistent CAP_LOW/CAP_1HZ usage\n");
 		fail_on_test(band.rangehigh < band.rangelow);
 		fail_on_test(band.index != i);
 		fail_on_test(band.type != type);
 		fail_on_test(band.tuner != tuner);
 		fail_on_test((band.capability & V4L2_TUNER_CAP_FREQ_BANDS) == 0);
 		check_0(band.reserved, sizeof(band.reserved));
+		if (band.rangelow < low)
+			low = band.rangelow;
+		if (band.rangehigh > high)
+			high = band.rangehigh;
 	}
 	fail_on_test(caps_union != caps);
+	fail_on_test(low != rangelow);
+	fail_on_test(high != rangehigh);
 	return 0;
 }
 
@@ -103,8 +113,8 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 	fail_on_test(!(node->caps & V4L2_CAP_HW_FREQ_SEEK) && hwseek_caps);
 	fail_on_test((node->caps & V4L2_CAP_HW_FREQ_SEEK) &&
 		!(tuner.capability & (V4L2_TUNER_CAP_HWSEEK_BOUNDED | V4L2_TUNER_CAP_HWSEEK_WRAP)));
-	if (tuner.rangelow >= tuner.rangehigh)
-		return fail("rangelow >= rangehigh\n");
+	if (tuner.rangelow > tuner.rangehigh)
+		return fail("rangelow > rangehigh\n");
 	if (tuner.rangelow == 0 || tuner.rangehigh == 0xffffffff)
 		return fail("invalid rangelow or rangehigh\n");
 	if (!(tuner.capability & V4L2_TUNER_CAP_STEREO) &&
@@ -161,7 +171,8 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 		if (!valid_modes[tun.audmode])
 			return fail("accepted invalid audmode %d\n", audmode);
 	}
-	return checkEnumFreqBands(node, tuner.index, tuner.type, tuner.capability);
+	return checkEnumFreqBands(node, tuner.index, tuner.type, tuner.capability,
+			tuner.rangelow, tuner.rangehigh);
 }
 
 int testTuner(struct node *node)
@@ -559,8 +570,8 @@ static int checkModulator(struct node *node, const struct v4l2_modulator &mod, u
 					V4L2_TUNER_CAP_LANG1 | V4L2_TUNER_CAP_LANG2))
 		return fail("TV capabilities for radio modulator?\n");
 	fail_on_test(!(mod.capability & V4L2_TUNER_CAP_FREQ_BANDS));
-	if (mod.rangelow >= mod.rangehigh)
-		return fail("rangelow >= rangehigh\n");
+	if (mod.rangelow > mod.rangehigh)
+		return fail("rangelow > rangehigh\n");
 	if (mod.rangelow == 0 || mod.rangehigh == 0xffffffff)
 		return fail("invalid rangelow or rangehigh\n");
 	if (!(mod.capability & V4L2_TUNER_CAP_STEREO) &&
@@ -586,7 +597,8 @@ static int checkModulator(struct node *node, const struct v4l2_modulator &mod, u
 	if (!(mod.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
 			(node->caps & V4L2_CAP_READWRITE))
 		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is not set, but V4L2_CAP_READWRITE is\n");
-	return checkEnumFreqBands(node, mod.index, V4L2_TUNER_RADIO, mod.capability);
+	return checkEnumFreqBands(node, mod.index, V4L2_TUNER_RADIO, mod.capability,
+			mod.rangelow, mod.rangehigh);
 }
 
 int testModulator(struct node *node)
