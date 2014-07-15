@@ -114,16 +114,16 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (querycap(m_querycap)) {
 		addTitle("General Information");
 
-		addLabel("Device:");
+		addLabel("Device");
 		addLabel(device + (useWrapper() ? " (wrapped)" : ""));
 
-		addLabel("Driver:");
+		addLabel("Driver");
 		addLabel((char *)m_querycap.driver);
 
-		addLabel("Card:");
+		addLabel("Card");
 		addLabel((char *)m_querycap.card);
 
-		addLabel("Bus:");
+		addLabel("Bus");
 		addLabel((char *)m_querycap.bus_info);
 	}
 
@@ -1091,7 +1091,7 @@ int GeneralTab::getWidth()
 
 int GeneralTab::getHeight()
 {
-	return m_row * m_maxh;
+	return rowCount() * m_maxh;
 }
 
 bool GeneralTab::isSlicedVbi() const
