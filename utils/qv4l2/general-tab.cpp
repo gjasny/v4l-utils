@@ -1451,10 +1451,8 @@ void GeneralTab::cropChanged()
 	crop.c.left = m_cropLeft->value();
 	crop.c.height = m_cropHeight->value();
 	crop.c.top = m_cropTop->value();
-	if (ioctl("Set Crop Rectangle", VIDIOC_S_CROP, &crop))
-		updateVidCapFormat();
-	else
-		updateCrop();
+	ioctl("Set Crop Rectangle", VIDIOC_S_CROP, &crop);
+	updateVidCapFormat();
 }
 
 void GeneralTab::composeChanged()
@@ -1470,10 +1468,8 @@ void GeneralTab::composeChanged()
 	sel.r.left = m_composeLeft->value();
 	sel.r.height = m_composeHeight->value();
 	sel.r.top = m_composeTop->value();
-	if (ioctl("Set Compose Rectangle", VIDIOC_S_SELECTION, &sel))
-		updateVidCapFormat();
-	else
-		updateCompose();
+	ioctl("Set Compose Rectangle", VIDIOC_S_SELECTION, &sel);
+	updateVidCapFormat();
 }
 
 void GeneralTab::updateVideoInput()
