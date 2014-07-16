@@ -264,7 +264,9 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_convertData = v4lconvert_create(fd());
 	m_capStartAct->setEnabled(fd() >= 0);
 	m_saveRawAct->setEnabled(fd() >= 0);
+#ifdef HAVE_QTGL
 	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
+#endif
 	m_ctrlNotifier = new QSocketNotifier(fd(), QSocketNotifier::Exception, m_tabs);
 	connect(m_ctrlNotifier, SIGNAL(activated(int)), this, SLOT(ctrlEvent()));
 }
