@@ -631,6 +631,8 @@ static int captureBufs(struct node *node, const queue &q,
 				printf("\r\t%s: Frame #%03d%s",
 						buftype2s(q.g_type()).c_str(),
 						frame_count - count, use_poll ? " (polling)" : "");
+				if (node->vfd.trace)
+					printf("\n");
 				fflush(stdout);
 			}
 			if (buf.is_capture() && node->is_m2m && buf.ts_is_copy()) {

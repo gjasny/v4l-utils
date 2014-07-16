@@ -131,23 +131,24 @@ static void usage(void)
 
 static void v4l_fd_test_init(struct v4l_fd *f, int fd)
 {
+	struct v4l2_capability cap;
+
 	f->fd = fd;
 	f->ioctl = test_ioctl;
 	f->mmap = test_mmap;
 	f->munmap = test_munmap;
+	f->trace = options[OptTrace];
+	f->caps = v4l_querycap(f, &cap) ? 0 : v4l_capability_g_caps(&cap);
 }
 
 int doioctl_name(struct node *node, unsigned long int request, void *parm,
-		 const char *name, bool no_wrapper)
+		 const char *name)
 {
 	int retval;
 	int e;
 
 	errno = 0;
-	if (no_wrapper)
-		retval = ioctl(node->vfd.fd, request, parm);
-	else
-		retval = test_ioctl(node->vfd.fd, request, parm);
+	retval = test_ioctl(node->vfd.fd, request, parm);
 	e = errno;
 	if (options[OptTrace])
 		printf("\t\t%s returned %d (%s)\n", name, retval, strerror(e));

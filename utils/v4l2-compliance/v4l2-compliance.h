@@ -184,9 +184,8 @@ static inline double fract2f(const struct v4l2_fract *f)
 }
 
 int doioctl_name(struct node *node, unsigned long int request, void *parm,
-		 const char *name, bool no_wrapper = false);
+		 const char *name);
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
-#define doioctl_no_wrap(n, r, p) doioctl_name(n, r, p, #r, true)
 
 std::string cap2s(unsigned cap);
 std::string buftype2s(int type);

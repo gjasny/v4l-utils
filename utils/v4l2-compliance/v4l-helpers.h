@@ -8,11 +8,29 @@
 
 struct v4l_fd {
 	int fd;
+	__u32 caps;
+	bool trace;
 	int (*ioctl)(int fd, unsigned long cmd, ...);
 	void *(*mmap)(void *addr, size_t length, int prot, int flags,
 		      int fd, int64_t offset);
 	int (*munmap)(void *addr, size_t length);
 };
+
+static inline int v4l_named_ioctl(struct v4l_fd *f, const char *cmd_name,
+		unsigned long cmd, void *arg)
+{
+	int retval;
+	int e;
+
+	errno = 0;
+	retval = f->ioctl(f->fd, cmd, arg);
+	e = errno;
+	if (f->trace)
+		fprintf(stderr, "\t\t%s returned %d (%s)\n", cmd_name, retval, strerror(e));
+	return retval ? e : 0;
+}
+
+#define v4l_ioctl(f, cmd, arg) v4l_named_ioctl(f, #cmd, cmd, arg)
 
 /*
  * mmap has a different prototype compared to v4l2_mmap. Because of
@@ -24,27 +42,6 @@ static inline void *v4l_fd_mmap(void *addr, size_t length, int prot, int flags,
 	return mmap(addr, length, prot, flags, fd, offset);
 }
 
-static inline void v4l_fd_init(struct v4l_fd *f, int fd)
-{
-	f->fd = fd;
-	f->ioctl = ioctl;
-	f->mmap = v4l_fd_mmap;
-	f->munmap = munmap;
-}
-
-#define v4l_fd_libv4l2_init(f, fd)		\
-	do {					\
-		(f)->fd = fd;			\
-		(f)->ioctl = v4l2_ioctl;	\
-		(f)->mmap = v4l2_mmap;		\
-		(f)->munmap = v4l2_munmap;	\
-	} while (0)
-
-static inline int v4l_ioctl(struct v4l_fd *f, unsigned long cmd, void *arg)
-{
-	return f->ioctl(f->fd, cmd, arg) ? errno : 0;
-}
-
 static inline void *v4l_mmap(struct v4l_fd *f, size_t length, off_t offset)
 {
 	return f->mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, f->fd, offset);
@@ -54,6 +51,161 @@ static inline int v4l_munmap(struct v4l_fd *f, void *start, size_t length)
 {
 	return f->munmap(start, length) ? errno : 0;
 }
+
+static inline int v4l_querycap(struct v4l_fd *f, struct v4l2_capability *cap)
+{
+	return v4l_ioctl(f, VIDIOC_QUERYCAP, cap);
+}
+
+static inline __u32 v4l_capability_g_caps(const struct v4l2_capability *cap)
+{
+	return (cap->capabilities & V4L2_CAP_DEVICE_CAPS) ?
+			cap->device_caps : cap->capabilities;
+}
+
+static inline __u32 v4l_g_caps(struct v4l_fd *f)
+{
+	return f->caps;
+}
+
+static inline bool v4l_has_vid_cap(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE);
+}
+
+static inline bool v4l_has_vid_out(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE);
+}
+
+static inline bool v4l_has_vid_m2m(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & (V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE);
+}
+
+static inline bool v4l_has_overlay_cap(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_VIDEO_OVERLAY;
+}
+
+static inline bool v4l_has_overlay_out(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_VIDEO_OUTPUT_OVERLAY;
+}
+
+static inline bool v4l_has_raw_vbi_cap(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_VBI_CAPTURE;
+}
+
+static inline bool v4l_has_sliced_vbi_cap(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_SLICED_VBI_CAPTURE;
+}
+
+static inline bool v4l_has_vbi_cap(struct v4l_fd *f)
+{
+	return v4l_has_raw_vbi_cap(f) || v4l_has_sliced_vbi_cap(f);
+}
+
+static inline bool v4l_has_raw_vbi_out(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_VBI_OUTPUT;
+}
+
+static inline bool v4l_has_sliced_vbi_out(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_SLICED_VBI_OUTPUT;
+}
+
+static inline bool v4l_has_vbi_out(struct v4l_fd *f)
+{
+	return v4l_has_raw_vbi_out(f) || v4l_has_sliced_vbi_out(f);
+}
+
+static inline bool v4l_has_radio_rx(struct v4l_fd *f)
+{
+	return (v4l_g_caps(f) & V4L2_CAP_RADIO) &&
+	       (v4l_g_caps(f) & V4L2_CAP_TUNER);
+}
+
+static inline bool v4l_has_radio_tx(struct v4l_fd *f)
+{
+	return (v4l_g_caps(f) & V4L2_CAP_RADIO) &&
+	       (v4l_g_caps(f) & V4L2_CAP_MODULATOR);
+}
+
+static inline bool v4l_has_rds_cap(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_RDS_CAPTURE;
+}
+
+static inline bool v4l_has_rds_out(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_RDS_OUTPUT;
+}
+
+static inline bool v4l_has_sdr_cap(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_SDR_CAPTURE;
+}
+
+static inline bool v4l_has_hwseek(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_HW_FREQ_SEEK;
+}
+
+static inline bool v4l_has_rw(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_READWRITE;
+}
+
+static inline bool v4l_has_streaming(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_STREAMING;
+}
+
+static inline void v4l_fd_init(struct v4l_fd *f, int fd)
+{
+	struct v4l2_capability cap;
+
+	f->fd = fd;
+	f->ioctl = ioctl;
+	f->mmap = v4l_fd_mmap;
+	f->munmap = munmap;
+	f->caps = v4l_querycap(f, &cap) ? 0 : v4l_capability_g_caps(&cap);
+}
+
+#define v4l_fd_libv4l2_init(f, fd)			\
+	do {						\
+		struct v4l2_capability cap;		\
+							\
+		(f)->fd = fd;				\
+		(f)->ioctl = v4l2_ioctl;		\
+		(f)->mmap = v4l2_mmap;			\
+		(f)->munmap = v4l2_munmap;		\
+		(f)->caps = v4l_querycap(f, &cap) ? 0 :	\
+			v4l_capability_g_caps(&cap);	\
+	} while (0)
+
+static inline __u32 v4l_buf_type_g_vid_cap(struct v4l_fd *f)
+{
+	if (v4l_g_caps(f) & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_M2M))
+		return V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (v4l_g_caps(f) & (V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE))
+		return V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+	return 0;
+}
+
+static inline __u32 v4l_buf_type_g_vid_out(struct v4l_fd *f)
+{
+	if (f->caps & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_M2M))
+		return V4L2_BUF_TYPE_VIDEO_OUTPUT;
+	if (f->caps & (V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE))
+		return V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	return 0;
+}
+
 
 static inline bool v4l_buf_type_is_planar(unsigned type)
 {
@@ -83,7 +235,7 @@ static inline bool v4l_buf_type_is_video(unsigned type)
 	}
 }
 
-static inline bool v4l_buf_type_is_vbi(unsigned type)
+static inline bool v4l_buf_type_is_raw_vbi(unsigned type)
 {
 	return type == V4L2_BUF_TYPE_VBI_CAPTURE ||
 	       type == V4L2_BUF_TYPE_VBI_OUTPUT;
@@ -95,6 +247,11 @@ static inline bool v4l_buf_type_is_sliced_vbi(unsigned type)
 	       type == V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
 }
 
+static inline bool v4l_buf_type_is_vbi(unsigned type)
+{
+	return v4l_buf_type_is_raw_vbi(type) || v4l_buf_type_is_sliced_vbi(type);
+}
+
 static inline bool v4l_buf_type_is_overlay(unsigned type)
 {
 	return type == V4L2_BUF_TYPE_VIDEO_OVERLAY ||
@@ -104,24 +261,6 @@ static inline bool v4l_buf_type_is_overlay(unsigned type)
 static inline bool v4l_buf_type_is_sdr(unsigned type)
 {
 	return type == V4L2_BUF_TYPE_SDR_CAPTURE;
-}
-
-static inline int v4l_querycap(struct v4l_fd *f, struct v4l2_capability *cap)
-{
-	return v4l_ioctl(f, VIDIOC_QUERYCAP, cap);
-}
-
-static inline __u32 v4l_capability_g_caps(const struct v4l2_capability *cap)
-{
-	return (cap->capabilities & V4L2_CAP_DEVICE_CAPS) ?
-			cap->device_caps : cap->capabilities;
-}
-
-static inline __u32 v4l_querycap_g_caps(struct v4l_fd *f)
-{
-	struct v4l2_capability cap;
-
-	return v4l_querycap(f, &cap) ? 0 : v4l_capability_g_caps(&cap);
 }
 
 static inline int v4l_g_fmt(struct v4l_fd *f, struct v4l2_format *fmt, unsigned type)
@@ -849,7 +988,7 @@ static inline int v4l_queue_create_bufs(struct v4l_fd *f,
 	if (fmt) {
 		createbufs.format = *fmt;
 	} else {
-		ret = v4l_ioctl(f, VIDIOC_G_FMT, &createbufs.format);
+		ret = v4l_g_fmt(f, &createbufs.format, q->type);
 		if (ret)
 			return ret;
 	}
