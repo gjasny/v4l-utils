@@ -430,7 +430,29 @@ static inline unsigned v4l_format_g_field(const struct v4l2_format *fmt)
 	}
 }
 
-static inline void v4l_format_s_pix_colorspace(struct v4l2_format *fmt,
+static inline unsigned v4l_format_g_first_field(const struct v4l2_format *fmt,
+						v4l2_std_id std)
+{
+	unsigned field = v4l_format_g_field(fmt);
+
+	if (field != V4L2_FIELD_ALTERNATE)
+		return field;
+	if (std & V4L2_STD_525_60)
+		return V4L2_FIELD_BOTTOM;
+	return V4L2_FIELD_TOP;
+}
+
+static inline unsigned v4l_format_g_flds_per_frm(const struct v4l2_format *fmt)
+{
+	unsigned field = v4l_format_g_field(fmt);
+
+	if (field == V4L2_FIELD_ALTERNATE ||
+	    field == V4L2_FIELD_TOP || field == V4L2_FIELD_BOTTOM)
+		return 2;
+	return 1;
+}
+
+static inline void v4l_format_s_colorspace(struct v4l2_format *fmt,
 					       unsigned colorspace)
 {
 	switch (fmt->type) {
@@ -446,7 +468,7 @@ static inline void v4l_format_s_pix_colorspace(struct v4l2_format *fmt,
 }
 
 static inline unsigned
-v4l_format_g_pix_colorspace(const struct v4l2_format *fmt)
+v4l_format_g_colorspace(const struct v4l2_format *fmt)
 {
 	switch (fmt->type) {
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:

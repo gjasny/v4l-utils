@@ -33,7 +33,7 @@
 #include <map>
 #include "v4l2-compliance.h"
 
-static struct v4l2_format cur_fmt;
+static struct cv4l_fmt cur_fmt;
 
 static const unsigned valid_output_flags =
 	V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_TSTAMP_SRC_MASK |
@@ -307,7 +307,7 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 		if (is_video()) {
 			fail_on_test(g_field() == V4L2_FIELD_ALTERNATE);
 			fail_on_test(g_field() == V4L2_FIELD_ANY);
-			if (v4l_format_g_field(&cur_fmt) == V4L2_FIELD_ALTERNATE) {
+			if (cur_fmt.g_field() == V4L2_FIELD_ALTERNATE) {
 				fail_on_test(g_field() != V4L2_FIELD_BOTTOM &&
 						g_field() != V4L2_FIELD_TOP);
 				fail_on_test(g_field() == seq.last_field);
@@ -317,7 +317,7 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 				else
 					fail_on_test((int)g_sequence() != seq.last_seq + 1);
 			} else {
-				fail_on_test(g_field() != v4l_format_g_field(&cur_fmt));
+				fail_on_test(g_field() != cur_fmt.g_field());
 				fail_on_test((int)g_sequence() != seq.last_seq + 1);
 			}
 		} else {
@@ -331,7 +331,6 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 			fail_on_test(!g_timestamp().tv_sec && !g_timestamp().tv_usec);
 		} else {
 			fail_on_test(g_timestamp().tv_sec || g_timestamp().tv_usec);
-			fail_on_test(g_flags() & V4L2_BUF_FLAG_TIMECODE);
 		}
 		if (!is_output() || mode == Unqueued)
 			fail_on_test(frame_types);
@@ -706,10 +705,10 @@ static int setupM2M(struct node *node, queue &q)
 		fail_on_test(buf.qbuf(q));
 	}
 	if (q.is_video()) {
-		v4l2_format fmt;
+		cv4l_fmt fmt(&node->vfd, q.g_type());
 
-		v4l_g_fmt(&node->vfd, &fmt, q.g_type());
-		last_m2m_seq.last_field = v4l_format_g_field(&fmt);
+		fmt.g_fmt();
+		last_m2m_seq.last_field = fmt.g_field();
 	}
 	fail_on_test(q.streamon());
 	return 0;
@@ -864,26 +863,27 @@ int testMmap(struct node *node, unsigned frame_count)
 		// Good check for whether all the internal vb2 calls are in
 		// balance.
 		fail_on_test(q.reqbufs(q.g_buffers()));
-		v4l_g_fmt(&node->vfd, &cur_fmt, q.g_type());
+		cur_fmt.init(&node->vfd, q.g_type());
+		cur_fmt.g_fmt();
 
 		ret = q.create_bufs(0);
 		fail_on_test(ret != ENOTTY && ret != 0);
 		if (ret == ENOTTY)
 			have_createbufs = false;
 		if (have_createbufs) {
-			v4l2_format fmt = cur_fmt;
+			cv4l_fmt fmt(cur_fmt);
 
 			if (node->is_video) {
-				last_seq.last_field = v4l_format_g_field(&cur_fmt);
-				v4l_format_s_height(&fmt, v4l_format_g_height(&fmt) / 2);
-				for (unsigned p = 0; p < v4l_format_g_num_planes(&fmt); p++)
-					v4l_format_s_sizeimage(&fmt, p, v4l_format_g_sizeimage(&fmt, p) / 2);
+				last_seq.last_field = cur_fmt.g_field();
+				fmt.s_height(fmt.g_height() / 2);
+				for (unsigned p = 0; p < fmt.g_num_planes(); p++)
+					fmt.s_sizeimage(p, fmt.g_sizeimage(p) / 2);
 				ret = q.create_bufs(1, &fmt);
 				fail_on_test(ret != EINVAL);
 				fail_on_test(testQueryBuf(node, cur_fmt.type, q.g_buffers()));
 				fmt = cur_fmt;
-				for (unsigned p = 0; p < v4l_format_g_num_planes(&fmt); p++)
-					v4l_format_s_sizeimage(&fmt, p, v4l_format_g_sizeimage(&fmt, p) * 2);
+				for (unsigned p = 0; p < fmt.g_num_planes(); p++)
+					fmt.s_sizeimage(p, fmt.g_sizeimage(p) * 2);
 			}
 			fail_on_test(q.create_bufs(1, &fmt));
 		}
@@ -994,7 +994,7 @@ int testUserPtr(struct node *node, unsigned frame_count)
 		fail_on_test(q.streamoff());
 		last_seq.init();
 		if (node->is_video)
-			last_seq.last_field = v4l_format_g_field(&cur_fmt);
+			last_seq.last_field = cur_fmt.g_field();
 
 		fail_on_test(setupUserPtr(node, q));
 
@@ -1099,7 +1099,7 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 		fail_on_test(q.streamoff());
 		last_seq.init();
 		if (node->is_video)
-			last_seq.last_field = v4l_format_g_field(&cur_fmt);
+			last_seq.last_field = cur_fmt.g_field();
 
 		fail_on_test(setupDmaBuf(expbuf_node, node, q, exp_q));
 

@@ -3,6 +3,139 @@
 
 #include <v4l-helpers.h>
 
+class cv4l_fmt : public v4l2_format {
+public:
+	cv4l_fmt()
+	{
+		fd = NULL;
+		type = 0;
+		memset(&fmt, 0, sizeof(fmt));
+	}
+	cv4l_fmt(v4l_fd *_fd, unsigned _type = 0)
+	{
+		fd = _fd;
+		memset(&fmt, 0, sizeof(fmt));
+		if (_type == 0)
+			type = v4l_buf_type_g_vid_cap(fd);
+		else
+			type = _type;
+	}
+	cv4l_fmt(v4l_fd *_fd, const v4l2_format &_fmt)
+	{
+		fd = _fd;
+		type = _fmt.type;
+		fmt = _fmt.fmt;
+	}
+	cv4l_fmt(const cv4l_fmt &_fmt)
+	{
+		fd = _fmt.fd;
+		type = _fmt.type;
+		fmt = _fmt.fmt;
+	}
+	void init(v4l_fd *_fd, unsigned _type = 0)
+	{
+		fd = _fd;
+		memset(&fmt, 0, sizeof(fmt));
+		if (_type == 0)
+			type = v4l_buf_type_g_vid_cap(fd);
+		else
+			type = _type;
+	}
+	void init(v4l_fd *_fd, const v4l2_format &_fmt)
+	{
+		fd = _fd;
+		type = _fmt.type;
+		fmt = _fmt.fmt;
+	}
+	int g_fmt(unsigned _type = 0)
+	{
+		return v4l_g_fmt(fd, this, _type ? _type : type);
+	}
+	int try_fmt()
+	{
+		return v4l_try_fmt(fd, this);
+	}
+	int s_fmt()
+	{
+		return v4l_s_fmt(fd, this);
+	}
+	void s_width(__u32 width)
+	{
+		v4l_format_s_width(this, width);
+	}
+	__u32 g_width()
+	{
+		return v4l_format_g_width(this);
+	}
+	void s_height(__u32 height)
+	{
+		v4l_format_s_height(this, height);
+	}
+	__u32 g_height()
+	{
+		return v4l_format_g_height(this);
+	}
+	void s_pixelformat(__u32 pixelformat)
+	{
+		v4l_format_s_pixelformat(this, pixelformat);
+	}
+	__u32 g_pixelformat()
+	{
+		return v4l_format_g_pixelformat(this);
+	}
+	void s_field(unsigned field)
+	{
+		v4l_format_s_field(this, field);
+	}
+	unsigned g_field()
+	{
+		return v4l_format_g_field(this);
+	}
+	unsigned g_first_field(v4l2_std_id std)
+	{
+		return v4l_format_g_first_field(this, std);
+	}
+	unsigned g_flds_per_frm()
+	{
+		return v4l_format_g_flds_per_frm(this);
+	}
+	void s_colorspace(unsigned colorspace)
+	{
+		v4l_format_s_colorspace(this, colorspace);
+	}
+	unsigned g_colorspace()
+	{
+		return v4l_format_g_colorspace(this);
+	}
+	void s_num_planes(__u8 num_planes)
+	{
+		v4l_format_s_num_planes(this, num_planes);
+	}
+	__u8 g_num_planes()
+	{
+		return v4l_format_g_num_planes(this);
+	}
+	void s_bytesperline(unsigned plane, __u32 bytesperline)
+	{
+		v4l_format_s_bytesperline(this, plane, bytesperline);
+	}
+	__u32 g_bytesperline(unsigned plane)
+	{
+		return v4l_format_g_bytesperline(this, plane);
+	}
+	void s_sizeimage(unsigned plane, __u32 sizeimage)
+	{
+		v4l_format_s_sizeimage(this, plane, sizeimage);
+	}
+	__u32 g_sizeimage(unsigned plane)
+	{
+		return v4l_format_g_sizeimage(this, plane);
+	}
+
+protected:
+	v4l_fd *fd;
+};
+
 class cv4l_buffer;
 
 class cv4l_queue : v4l_queue {
