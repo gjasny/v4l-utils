@@ -364,6 +364,21 @@ static int testQueryBuf(struct node *node, unsigned type, unsigned count)
 	return 0;
 }
 
+static int testSetupVbi(struct node *node, int type)
+{
+	if (!v4l_buf_type_is_vbi(type))
+		return 0;
+
+	if (!(node->cur_io_caps & V4L2_IN_CAP_STD))
+		return -1;
+
+	cv4l_fmt vbi_fmt(&node->vfd, type);
+
+	if (!vbi_fmt.g_fmt())
+		vbi_fmt.s_fmt();
+	return 0;
+}
+
 int testReqBufs(struct node *node)
 {
 	bool can_stream = node->caps & V4L2_CAP_STREAMING;
@@ -391,15 +406,8 @@ int testReqBufs(struct node *node)
 		if (!(node->valid_buftypes & (1 << i)))
 			continue;
 
-		switch (i) {
-		case V4L2_BUF_TYPE_VBI_CAPTURE:
-		case V4L2_BUF_TYPE_VBI_OUTPUT:
-		case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
-		case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
-			if (!(node->cur_io_caps & V4L2_IN_CAP_STD))
-				continue;
-			break;
-		}
+		if (testSetupVbi(node, i))
+			continue;
 
 		info("test buftype %s\n", buftype2s(i).c_str());
 		if (node->valid_buftype == 0)
@@ -523,15 +531,8 @@ int testExpBuf(struct node *node)
 		if (v4l_buf_type_is_overlay(type))
 			continue;
 
-		switch (type) {
-		case V4L2_BUF_TYPE_VBI_CAPTURE:
-		case V4L2_BUF_TYPE_VBI_OUTPUT:
-		case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
-		case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
-			if (!(node->cur_io_caps & V4L2_IN_CAP_STD))
-				continue;
-			break;
-		}
+		if (testSetupVbi(node, type))
+			continue;
 
 		queue q(node, type, V4L2_MEMORY_MMAP);
 
@@ -554,6 +555,11 @@ int testReadWrite(struct node *node)
 	int fd_flags = fcntl(node->vfd.fd, F_GETFL);
 	char buf = 0;
 	int ret;
+
+	if (v4l_has_vbi(&node->vfd) &&
+	    !(node->cur_io_caps & V4L2_IN_CAP_STD)) {
+		return 0;
+	}
 
 	fcntl(node->vfd.fd, F_SETFL, fd_flags | O_NONBLOCK);
 	if (node->can_capture)
@@ -826,6 +832,9 @@ int testMmap(struct node *node, unsigned frame_count)
 
 		queue q(node, type, V4L2_MEMORY_MMAP);
 		queue m2m_q(node, invert_buf_type(type));
+	
+		if (testSetupVbi(node, type))
+			continue;
 
 		ret = q.reqbufs(0);
 		if (ret) {
@@ -982,6 +991,9 @@ int testUserPtr(struct node *node, unsigned frame_count)
 		queue q(node, type, V4L2_MEMORY_USERPTR);
 		queue m2m_q(node, invert_buf_type(type));
 
+		if (testSetupVbi(node, type))
+			continue;
+
 		ret = q.reqbufs(0);
 		if (ret) {
 			fail_on_test(ret != EINVAL);
@@ -1087,6 +1099,9 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 		queue q(node, type, V4L2_MEMORY_DMABUF);
 		queue m2m_q(node, invert_buf_type(type));
 		queue exp_q(expbuf_node, expbuf_type, V4L2_MEMORY_MMAP);
+
+		if (testSetupVbi(node, type))
+			continue;
 
 		ret = q.reqbufs(0);
 		if (ret) {

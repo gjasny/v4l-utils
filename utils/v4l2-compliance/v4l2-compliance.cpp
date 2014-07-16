@@ -428,6 +428,7 @@ static int testPrio(struct node *node, struct node *node2)
 static void streamingSetup(struct node *node)
 {
 	struct v4l2_input input;
+	struct v4l2_output output;
 
 	if (options[OptSetInput])
 		doioctl(node, VIDIOC_S_INPUT, &select_input);
@@ -459,23 +460,31 @@ static void streamingSetup(struct node *node)
 		doioctl(node, VIDIOC_S_FREQUENCY, &f);
 	}
 
-	memset(&input, 0, sizeof(input));
-	doioctl(node, VIDIOC_G_INPUT, &input.index);
-	doioctl(node, VIDIOC_ENUMINPUT, &input);
+	if (node->can_capture) {
+		memset(&input, 0, sizeof(input));
+		doioctl(node, VIDIOC_G_INPUT, &input.index);
+		doioctl(node, VIDIOC_ENUMINPUT, &input);
+		node->cur_io_caps = input.capabilities;
 
-	if (input.capabilities & V4L2_IN_CAP_STD) {
-		v4l2_std_id std;
+		if (input.capabilities & V4L2_IN_CAP_STD) {
+			v4l2_std_id std;
 
-		doioctl(node, VIDIOC_QUERYSTD, &std);
-		if (std)
-			doioctl(node, VIDIOC_S_STD, &std);
-	}
+			doioctl(node, VIDIOC_QUERYSTD, &std);
+			if (std)
+				doioctl(node, VIDIOC_S_STD, &std);
+		}
 
-	if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
-		struct v4l2_dv_timings t;
+		if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
+			struct v4l2_dv_timings t;
 
-		if (doioctl(node, VIDIOC_QUERY_DV_TIMINGS, &t) == 0)
-			doioctl(node, VIDIOC_S_DV_TIMINGS, &t);
+			if (doioctl(node, VIDIOC_QUERY_DV_TIMINGS, &t) == 0)
+				doioctl(node, VIDIOC_S_DV_TIMINGS, &t);
+		}
+	} else {
+		memset(&output, 0, sizeof(output));
+		doioctl(node, VIDIOC_G_OUTPUT, &output.index);
+		doioctl(node, VIDIOC_ENUMOUTPUT, &output);
+		node->cur_io_caps = output.capabilities;
 	}
 }
 

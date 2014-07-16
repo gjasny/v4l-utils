@@ -83,6 +83,13 @@ static inline bool v4l_has_vid_m2m(struct v4l_fd *f)
 	return v4l_g_caps(f) & (V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE);
 }
 
+static inline bool v4l_has_vid_mplane(struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & (V4L2_CAP_VIDEO_CAPTURE_MPLANE |
+				V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+				V4L2_CAP_VIDEO_M2M_MPLANE);
+}
+
 static inline bool v4l_has_overlay_cap(struct v4l_fd *f)
 {
 	return v4l_g_caps(f) & V4L2_CAP_VIDEO_OVERLAY;
@@ -121,6 +128,11 @@ static inline bool v4l_has_sliced_vbi_out(struct v4l_fd *f)
 static inline bool v4l_has_vbi_out(struct v4l_fd *f)
 {
 	return v4l_has_raw_vbi_out(f) || v4l_has_sliced_vbi_out(f);
+}
+
+static inline bool v4l_has_vbi(struct v4l_fd *f)
+{
+	return v4l_has_vbi_cap(f) || v4l_has_vbi_out(f);
 }
 
 static inline bool v4l_has_radio_rx(struct v4l_fd *f)
@@ -203,6 +215,28 @@ static inline __u32 v4l_buf_type_g_vid_out(struct v4l_fd *f)
 		return V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	if (f->caps & (V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE))
 		return V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	return 0;
+}
+
+static inline __u32 v4l_g_buf_type(struct v4l_fd *f)
+{
+	if (v4l_has_vid_mplane(f))
+		return v4l_has_vid_cap(f) ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+					    V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	if (v4l_has_vid_cap(f))
+		return V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (v4l_has_vid_out(f))
+		return V4L2_BUF_TYPE_VIDEO_OUTPUT;
+	if (v4l_has_raw_vbi_cap(f))
+		return V4L2_BUF_TYPE_VBI_CAPTURE;
+	if (v4l_has_sliced_vbi_cap(f))
+		return V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+	if (v4l_has_raw_vbi_out(f))
+		return V4L2_BUF_TYPE_VBI_OUTPUT;
+	if (v4l_has_sliced_vbi_out(f))
+		return V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
+	if (v4l_has_sdr_cap(f))
+		return V4L2_BUF_TYPE_SDR_CAPTURE;
 	return 0;
 }
 
