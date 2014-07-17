@@ -323,7 +323,6 @@ static int testColorspace(__u32 pixelformat, __u32 colorspace)
 int testFBuf(struct node *node)
 {
 	struct v4l2_framebuffer fbuf;
-	struct v4l2_pix_format &fmt = fbuf.fmt;
 	__u32 caps;
 	__u32 flags;
 	int ret;
@@ -351,18 +350,18 @@ int testFBuf(struct node *node)
 		fail_on_test(!(caps & V4L2_FBUF_CAP_LOCAL_INV_ALPHA));
 	if (flags & V4L2_FBUF_FLAG_SRC_CHROMAKEY)
 		fail_on_test(!(caps & V4L2_FBUF_CAP_SRC_CHROMAKEY));
-	fail_on_test(!fmt.width || !fmt.height);
-	if (fmt.priv)
+	fail_on_test(!fbuf.fmt.width || !fbuf.fmt.height);
+	if (fbuf.fmt.priv)
 		warn("fbuf.fmt.priv is non-zero\n");
 	/* Not yet: unclear what EXTERNOVERLAY means in a output overlay context
 	if (caps & V4L2_FBUF_CAP_EXTERNOVERLAY) {
-		fail_on_test(fmt.bytesperline);
-		fail_on_test(fmt.sizeimage);
+		fail_on_test(fbuf.fmt.bytesperline);
+		fail_on_test(fbuf.fmt.sizeimage);
 		fail_on_test(fbuf.base);
 	}*/
-	fail_on_test(fmt.bytesperline && fmt.bytesperline < fmt.width);
-	fail_on_test(fmt.sizeimage && fmt.sizeimage < fmt.bytesperline * fmt.height);
-	fail_on_test(testColorspace(fmt.pixelformat, fmt.colorspace));
+	fail_on_test(fbuf.fmt.bytesperline && fbuf.fmt.bytesperline < fbuf.fmt.width);
+	fail_on_test(fbuf.fmt.sizeimage && fbuf.fmt.sizeimage < fbuf.fmt.bytesperline * fbuf.fmt.height);
+	fail_on_test(testColorspace(fbuf.fmt.pixelformat, fbuf.fmt.colorspace));
 	return 0;
 }
 

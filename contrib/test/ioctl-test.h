@@ -57,6 +57,7 @@ union v4l_parms {
 	struct v4l2_jpegcompression		p_v4l2_jpegcompression;
 	struct v4l2_modulator			p_v4l2_modulator;
 	struct v4l2_output			p_v4l2_output;
+	struct v4l2_query_ext_ctrl		p_v4l2_query_ext_ctrl;
 	struct v4l2_queryctrl			p_v4l2_queryctrl;
 	struct v4l2_querymenu			p_v4l2_querymenu;
 	struct v4l2_requestbuffers		p_v4l2_requestbuffers;
@@ -167,6 +168,7 @@ static const struct {
 	ioc(video, VIDIOC_QUERYMENU),							/*  struct v4l2_querymenu */
 	ioc(video, VIDIOC_QUERYSTD),							/*  v4l2_std_id */
 	ioc(video, VIDIOC_QUERY_DV_TIMINGS),						/*  struct v4l2_dv_timings */
+	ioc(video, VIDIOC_QUERY_EXT_CTRL),						/*  struct v4l2_query_ext_ctrl */
 	ioc(video, VIDIOC_REQBUFS),							/*  struct v4l2_requestbuffers */
 	ioc(video, VIDIOC_RESERVED),							/*  void */
 	ioc(video, VIDIOC_STREAMOFF),							/*  int */

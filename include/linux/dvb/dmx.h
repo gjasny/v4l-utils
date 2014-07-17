@@ -21,13 +21,11 @@
  *
  */
 
-#ifndef _UAPI_DVBDMX_H_
-#define _UAPI_DVBDMX_H_
+#ifndef _DVBDMX_H_
+#define _DVBDMX_H_
 
 #include <linux/types.h>
-#ifndef __KERNEL__
 #include <time.h>
-#endif
 
 
 #define DMX_FILTER_SIZE 16
@@ -152,4 +150,4 @@ struct dmx_stc {
 #define DMX_ADD_PID              _IOW('o', 51, __u16)
 #define DMX_REMOVE_PID           _IOW('o', 52, __u16)
 
-#endif /* _UAPI_DVBDMX_H_ */
+#endif /* _DVBDMX_H_ */

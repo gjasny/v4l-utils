@@ -21,6 +21,7 @@
 #ifndef __LINUX_IVTV_H__
 #define __LINUX_IVTV_H__
 
+
 #include <stdint.h>
 #include <sys/types.h>
 #include <linux/videodev2.h>
@@ -49,9 +50,9 @@
 struct ivtv_dma_frame {
 	enum v4l2_buf_type type; /* V4L2_BUF_TYPE_VIDEO_OUTPUT */
 	uint32_t pixelformat;	 /* 0 == same as destination */
-	void  *y_source;   /* if NULL and type == V4L2_BUF_TYPE_VIDEO_OUTPUT,
+	void *y_source;   /* if NULL and type == V4L2_BUF_TYPE_VIDEO_OUTPUT,
 				    then just switch to user DMA YUV output mode */
-	void  *uv_source;  /* Unused for RGB pixelformats */
+	void *uv_source;  /* Unused for RGB pixelformats */
 	struct v4l2_rect src;
 	struct v4l2_rect dst;
 	uint32_t src_width;

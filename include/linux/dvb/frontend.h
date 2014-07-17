@@ -197,7 +197,6 @@ typedef enum fe_transmit_mode {
 	TRANSMISSION_MODE_C3780,
 } fe_transmit_mode_t;
 
-#if defined(__DVB_CORE__) || !defined (__KERNEL__)
 typedef enum fe_bandwidth {
 	BANDWIDTH_8_MHZ,
 	BANDWIDTH_7_MHZ,
@@ -207,7 +206,6 @@ typedef enum fe_bandwidth {
 	BANDWIDTH_10_MHZ,
 	BANDWIDTH_1_712_MHZ,
 } fe_bandwidth_t;
-#endif
 
 typedef enum fe_guard_interval {
 	GUARD_INTERVAL_1_32,
@@ -239,7 +237,6 @@ enum fe_interleaving {
 	INTERLEAVING_720,
 };
 
-#if defined(__DVB_CORE__) || !defined (__KERNEL__)
 struct dvb_qpsk_parameters {
 	__u32		symbol_rate;  /* symbol rate in Symbols per second */
 	fe_code_rate_t	fec_inner;    /* forward error correction (see above) */
@@ -282,7 +279,6 @@ struct dvb_frontend_event {
 	fe_status_t status;
 	struct dvb_frontend_parameters parameters;
 };
-#endif
 
 /* S2API Commands */
 #define DTV_UNDEFINED		0

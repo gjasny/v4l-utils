@@ -21,14 +21,12 @@
  *
  */
 
-#ifndef _UAPI_DVBVIDEO_H_
-#define _UAPI_DVBVIDEO_H_
+#ifndef _DVBVIDEO_H_
+#define _DVBVIDEO_H_
 
 #include <linux/types.h>
-#ifndef __KERNEL__
 #include <stdint.h>
 #include <time.h>
-#endif
 
 typedef enum {
 	VIDEO_FORMAT_4_3,     /* Select 4:3 format */
@@ -154,7 +152,7 @@ struct video_status {
 
 
 struct video_still_picture {
-	char __user *iFrame;        /* pointer to a single iframe in memory */
+	char *iFrame;        /* pointer to a single iframe in memory */
 	__s32 size;
 };
 
@@ -187,7 +185,7 @@ typedef struct video_spu {
 
 typedef struct video_spu_palette {      /* SPU Palette information */
 	int length;
-	__u8 __user *palette;
+	__u8 *palette;
 } video_spu_palette_t;
 
 
@@ -271,4 +269,4 @@ typedef __u16 video_attributes_t;
 #define VIDEO_COMMAND     	   _IOWR('o', 59, struct video_command)
 #define VIDEO_TRY_COMMAND 	   _IOWR('o', 60, struct video_command)
 
-#endif /* _UAPI_DVBVIDEO_H_ */
+#endif /* _DVBVIDEO_H_ */
