@@ -1187,8 +1187,18 @@ void ApplicationWindow::capStart(bool start)
 	}
 
 	// Ensure that the initial image is large enough for native 32 bit per pixel formats
-	if (pixfmt == V4L2_PIX_FMT_RGB32 || pixfmt == V4L2_PIX_FMT_BGR32)
+	switch (pixfmt) {
+	case V4L2_PIX_FMT_RGB32:
+	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_XRGB32:
+	case V4L2_PIX_FMT_XBGR32:
+		dstFmt = QImage::Format_RGB32;
+		break;
+	case V4L2_PIX_FMT_ARGB32:
+	case V4L2_PIX_FMT_ABGR32:
 		dstFmt = QImage::Format_ARGB32;
+		break;
+	}
 	m_capImage = new QImage(width, height, dstFmt);
 	m_capImage->fill(0);
 	

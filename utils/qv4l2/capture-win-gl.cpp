@@ -278,12 +278,18 @@ bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
 {
 	static const __u32 supported_fmts[] = {
 		V4L2_PIX_FMT_RGB32,
+		V4L2_PIX_FMT_XRGB32,
+		V4L2_PIX_FMT_ARGB32,
 		V4L2_PIX_FMT_BGR32,
+		V4L2_PIX_FMT_XBGR32,
+		V4L2_PIX_FMT_ABGR32,
 		V4L2_PIX_FMT_RGB24,
 		V4L2_PIX_FMT_BGR24,
 		V4L2_PIX_FMT_RGB565,
 		V4L2_PIX_FMT_RGB565X,
 		V4L2_PIX_FMT_RGB555,
+		V4L2_PIX_FMT_XRGB555,
+		V4L2_PIX_FMT_ARGB555,
 		V4L2_PIX_FMT_RGB555X,
 		V4L2_PIX_FMT_YUYV,
 		V4L2_PIX_FMT_YVYU,
@@ -336,6 +342,8 @@ void CaptureWinGLEngine::changeShader()
 		break;
 
 	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_XRGB555:
+	case V4L2_PIX_FMT_ARGB555:
 	case V4L2_PIX_FMT_RGB555X:
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
@@ -343,6 +351,10 @@ void CaptureWinGLEngine::changeShader()
 	case V4L2_PIX_FMT_BGR24:
 	case V4L2_PIX_FMT_RGB32:
 	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_XRGB32:
+	case V4L2_PIX_FMT_XBGR32:
+	case V4L2_PIX_FMT_ARGB32:
+	case V4L2_PIX_FMT_ABGR32:
 	default:
 		shader_RGB();
 		break;
@@ -419,6 +431,8 @@ void CaptureWinGLEngine::paintGL()
 		break;
 
 	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_XRGB555:
+	case V4L2_PIX_FMT_ARGB555:
 	case V4L2_PIX_FMT_RGB555X:
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
@@ -426,6 +440,10 @@ void CaptureWinGLEngine::paintGL()
 	case V4L2_PIX_FMT_BGR24:
 	case V4L2_PIX_FMT_RGB32:
 	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_XRGB32:
+	case V4L2_PIX_FMT_XBGR32:
+	case V4L2_PIX_FMT_ARGB32:
+	case V4L2_PIX_FMT_ABGR32:
 	default:
 		render_RGB();
 		break;
@@ -927,10 +945,13 @@ void CaptureWinGLEngine::shader_RGB()
 						GL_SRGB8_ALPHA8 : GL_RGBA8;
 
 	switch (m_frameFormat) {
+	case V4L2_PIX_FMT_ARGB555:
+		hasAlpha = true;
+		/* fall-through */
 	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_XRGB555:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 			     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, NULL);
-		hasAlpha = true;
 		break;
 
 	case V4L2_PIX_FMT_RGB555X:
@@ -944,15 +965,21 @@ void CaptureWinGLEngine::shader_RGB()
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 			     GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
 		break;
+	case V4L2_PIX_FMT_ARGB32:
+		hasAlpha = true;
+		/* fall-through */
 	case V4L2_PIX_FMT_RGB32:
+	case V4L2_PIX_FMT_XRGB32:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, NULL);
-		hasAlpha = true;
 		break;
+	case V4L2_PIX_FMT_ABGR32:
+		hasAlpha = true;
+		/* fall-through */
 	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_XBGR32:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 				GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
-		hasAlpha = true;
 		break;
 	case V4L2_PIX_FMT_RGB24:
 	case V4L2_PIX_FMT_BGR24:
@@ -1018,6 +1045,8 @@ void CaptureWinGLEngine::render_RGB()
 
 	switch (m_frameFormat) {
 	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_XRGB555:
+	case V4L2_PIX_FMT_ARGB555:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
 				GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, m_frameData);
 		break;
@@ -1048,10 +1077,14 @@ void CaptureWinGLEngine::render_RGB()
 		break;
 
 	case V4L2_PIX_FMT_RGB32:
+	case V4L2_PIX_FMT_XRGB32:
+	case V4L2_PIX_FMT_ARGB32:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
 				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, m_frameData);
 		break;
 	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_XBGR32:
+	case V4L2_PIX_FMT_ABGR32:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
 				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, m_frameData);
 		break;
