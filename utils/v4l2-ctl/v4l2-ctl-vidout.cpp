@@ -46,6 +46,8 @@ static void print_video_out_fields(int fd)
 	struct v4l2_format fmt;
 	struct v4l2_format tmp;
 
+	memset(&fmt, 0, sizeof(fmt));
+	fmt.fmt.pix.priv = priv_magic;
 	fmt.type = vidout_buftype;
 	if (test_ioctl(fd, VIDIOC_G_FMT, &fmt) < 0)
 		return;
@@ -91,6 +93,8 @@ void vidout_set(int fd)
 	if (options[OptSetVideoOutFormat] || options[OptTryVideoOutFormat]) {
 		struct v4l2_format vfmt;
 
+		memset(&vfmt, 0, sizeof(vfmt));
+		vfmt.fmt.pix.priv = priv_magic;
 		vfmt.type = vidout_buftype;
 		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0) {
 			if (is_multiplanar) {
@@ -163,6 +167,8 @@ void vidout_get(int fd)
 	if (options[OptGetVideoOutFormat]) {
 		struct v4l2_format vfmt;
 
+		memset(&vfmt, 0, sizeof(vfmt));
+		vfmt.fmt.pix.priv = priv_magic;
 		vfmt.type = vidout_buftype;
 		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
 			printfmt(vfmt);

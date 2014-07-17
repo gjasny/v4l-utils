@@ -595,6 +595,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 	bool can_fill;
 
 	memset(&fmt, 0, sizeof(fmt));
+	fmt.fmt.pix.priv = out_priv_magic;
 	fmt.type = b.type;
 	doioctl(fd, VIDIOC_G_FMT, &fmt);
 	if (test_ioctl(fd, VIDIOC_G_STD, &stream_out_std)) {
@@ -1564,6 +1565,7 @@ void streaming_set(int fd, int out_fd)
 	if (out_fd < 0) {
 		out_fd = fd;
 		out_capabilities = capabilities;
+		out_priv_magic = priv_magic;
 	}
 
 	if (do_cap > 1) {

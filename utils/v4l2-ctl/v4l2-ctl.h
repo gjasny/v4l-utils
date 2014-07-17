@@ -205,6 +205,8 @@ enum Option {
 extern char options[OptLast];
 extern unsigned capabilities;
 extern unsigned out_capabilities;
+extern unsigned priv_magic;
+extern unsigned out_priv_magic;
 extern bool is_multiplanar;
 extern __u32 vidcap_buftype;
 extern __u32 vidout_buftype;

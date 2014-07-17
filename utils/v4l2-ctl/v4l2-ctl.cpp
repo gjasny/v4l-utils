@@ -54,6 +54,8 @@ int verbose;
 
 unsigned capabilities;
 unsigned out_capabilities;
+unsigned priv_magic;
+unsigned out_priv_magic;
 bool is_multiplanar;
 __u32 vidcap_buftype;
 __u32 vidout_buftype;
@@ -403,6 +405,16 @@ std::string flags2s(unsigned val, const flag_def *def)
 }
 
 
+static const flag_def pixflags_def[] = {
+	{ V4L2_PIX_FMT_FLAG_PREMUL_ALPHA,  "premultiplied-alpha" },
+	{ 0, NULL }
+};
+
+std::string pixflags2s(unsigned flags)
+{
+	return flags2s(flags, pixflags_def);
+}
+
 static const flag_def service_def[] = {
 	{ V4L2_SLICED_TELETEXT_B,  "teletext" },
 	{ V4L2_SLICED_VPS,         "vps" },
@@ -434,8 +446,8 @@ void printfmt(const struct v4l2_format &vfmt)
 		printf("\tBytes per Line: %u\n", vfmt.fmt.pix.bytesperline);
 		printf("\tSize Image    : %u\n", vfmt.fmt.pix.sizeimage);
 		printf("\tColorspace    : %s\n", colorspace2s(vfmt.fmt.pix.colorspace).c_str());
-		if (vfmt.fmt.pix.priv)
-			printf("\tCustom Info   : %08x\n", vfmt.fmt.pix.priv);
+		if (vfmt.fmt.pix.priv == V4L2_PIX_FMT_PRIV_MAGIC)
+			printf("\tFlags         : %s\n", pixflags2s(vfmt.fmt.pix.flags).c_str());
 		break;
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
@@ -443,6 +455,7 @@ void printfmt(const struct v4l2_format &vfmt)
 		printf("\tPixel Format      : '%s'\n", fcc2s(vfmt.fmt.pix_mp.pixelformat).c_str());
 		printf("\tField             : %s\n", field2s(vfmt.fmt.pix_mp.field).c_str());
 		printf("\tNumber of planes  : %u\n", vfmt.fmt.pix_mp.num_planes);
+		printf("\tFlags             : %s\n", pixflags2s(vfmt.fmt.pix_mp.flags).c_str());
 		printf("\tColorspace        : %s\n", colorspace2s(vfmt.fmt.pix_mp.colorspace).c_str());
 		for (int i = 0; i < vfmt.fmt.pix_mp.num_planes && i < VIDEO_MAX_PLANES; i++) {
 			printf("\tPlane %d           :\n", i);
@@ -1041,6 +1054,8 @@ int main(int argc, char **argv)
 	if (capabilities & V4L2_CAP_DEVICE_CAPS)
 		capabilities = vcap.device_caps;
 
+	priv_magic = (capabilities & V4L2_CAP_EXT_PIX_FORMAT) ?
+			V4L2_PIX_FMT_PRIV_MAGIC : 0;
 	is_multiplanar = capabilities & (V4L2_CAP_VIDEO_CAPTURE_MPLANE |
 					 V4L2_CAP_VIDEO_M2M_MPLANE |
 					 V4L2_CAP_VIDEO_OUTPUT_MPLANE);
@@ -1063,6 +1078,8 @@ int main(int argc, char **argv)
 		out_capabilities = vcap.capabilities;
 		if (out_capabilities & V4L2_CAP_DEVICE_CAPS)
 			out_capabilities = vcap.device_caps;
+		out_priv_magic = (out_capabilities & V4L2_CAP_EXT_PIX_FORMAT) ?
+				V4L2_PIX_FMT_PRIV_MAGIC : 0;
 	}
 
 	common_process_controls(fd);
