@@ -170,11 +170,17 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
 	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_XRGB555:
+	case V4L2_PIX_FMT_ARGB555:
 	case V4L2_PIX_FMT_RGB555X:
 	case V4L2_PIX_FMT_RGB24:
 	case V4L2_PIX_FMT_BGR24:
 	case V4L2_PIX_FMT_RGB32:
 	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_XRGB32:
+	case V4L2_PIX_FMT_XBGR32:
+	case V4L2_PIX_FMT_ARGB32:
+	case V4L2_PIX_FMT_ABGR32:
 		tpg->is_yuv = 0;
 		break;
 	case V4L2_PIX_FMT_NV16M:
@@ -195,6 +201,8 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
 	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_XRGB555:
+	case V4L2_PIX_FMT_ARGB555:
 	case V4L2_PIX_FMT_RGB555X:
 	case V4L2_PIX_FMT_YUYV:
 	case V4L2_PIX_FMT_UYVY:
@@ -208,6 +216,10 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 		break;
 	case V4L2_PIX_FMT_RGB32:
 	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_XRGB32:
+	case V4L2_PIX_FMT_XBGR32:
+	case V4L2_PIX_FMT_ARGB32:
+	case V4L2_PIX_FMT_ABGR32:
 		tpg->twopixelsize[0] = 2 * 4;
 		break;
 	case V4L2_PIX_FMT_NV16M:
@@ -604,9 +616,14 @@ static void gen_twopix(struct tpg_data *tpg,
 		buf[0][offset] = (r_y << 3) | (g_u >> 3);
 		buf[0][offset + 1] = (g_u << 5) | b_v;
 		break;
-	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_ARGB555:
 		buf[0][offset] = (g_u << 5) | b_v;
 		buf[0][offset + 1] = (alpha & 0x80) | (r_y << 2) | (g_u >> 3);
+		break;
+	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_XRGB555:
+		buf[0][offset] = (g_u << 5) | b_v;
+		buf[0][offset + 1] = (r_y << 2) | (g_u >> 3);
 		break;
 	case V4L2_PIX_FMT_RGB555X:
 		buf[0][offset] = (alpha & 0x80) | (r_y << 2) | (g_u >> 3);
@@ -622,17 +639,31 @@ static void gen_twopix(struct tpg_data *tpg,
 		buf[0][offset + 1] = g_u;
 		buf[0][offset + 2] = r_y;
 		break;
-	case V4L2_PIX_FMT_RGB32:
+	case V4L2_PIX_FMT_ARGB32:
 		buf[0][offset] = alpha;
 		buf[0][offset + 1] = r_y;
 		buf[0][offset + 2] = g_u;
 		buf[0][offset + 3] = b_v;
 		break;
-	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_RGB32:
+	case V4L2_PIX_FMT_XRGB32:
+		buf[0][offset] = 0;
+		buf[0][offset + 1] = r_y;
+		buf[0][offset + 2] = g_u;
+		buf[0][offset + 3] = b_v;
+		break;
+	case V4L2_PIX_FMT_ABGR32:
 		buf[0][offset] = b_v;
 		buf[0][offset + 1] = g_u;
 		buf[0][offset + 2] = r_y;
 		buf[0][offset + 3] = alpha;
+		break;
+	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_XBGR32:
+		buf[0][offset] = b_v;
+		buf[0][offset + 1] = g_u;
+		buf[0][offset + 2] = r_y;
+		buf[0][offset + 3] = 0;
 		break;
 	}
 }
