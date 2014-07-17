@@ -45,7 +45,7 @@ extern "C" {
 class QComboBox;
 class QCheckBox;
 class QSpinBox;
-class QPushButton;
+class QToolButton;
 class QSlider;
 
 class GeneralTab: public QGridLayout, public v4l2
@@ -231,13 +231,13 @@ private:
 	QComboBox *m_audioInput;
 	QComboBox *m_audioOutput;
 	QComboBox *m_tvStandard;
-	QPushButton *m_qryStandard;
+	QToolButton *m_qryStandard;
 	QComboBox *m_videoTimings;
 	QComboBox *m_pixelAspectRatio;
 	QComboBox *m_colorspace;
 	QComboBox *m_displayColorspace;
 	QComboBox *m_cropping;
-	QPushButton *m_qryTimings;
+	QToolButton *m_qryTimings;
 	QDoubleSpinBox *m_freq;
 	QComboBox *m_freqTable;
 	QComboBox *m_freqChannel;
@@ -246,7 +246,7 @@ private:
 	QDoubleSpinBox *m_freqRf;
 	QCheckBox *m_stereoMode;
 	QCheckBox *m_rdsMode;
-	QPushButton *m_detectSubchans;
+	QToolButton *m_detectSubchans;
 	QComboBox *m_vidCapFormats;
 	QComboBox *m_vidFields;
 	QComboBox *m_frameSize;

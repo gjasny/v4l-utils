@@ -26,6 +26,7 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include <QPushButton>
+#include <QToolButton>
 #include <QLineEdit>
 #include <QDoubleValidator>
 
@@ -306,8 +307,9 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
 		refreshStandards();
 		if (ioctl_exists(VIDIOC_QUERYSTD, &tmp)) {
-			m_qryStandard = new QPushButton("Query Standard", parentWidget());
-			m_stdRow->addWidget(new QLabel("", parentWidget()), 0, 2, Qt::AlignLeft);
+			m_qryStandard = new QToolButton(parentWidget());
+			m_qryStandard->setIcon(QIcon(":/enterbutt.png"));
+			m_stdRow->addWidget(new QLabel("Query Standard", parentWidget()), 0, 2, Qt::AlignLeft);
 			m_stdRow->addWidget(m_qryStandard, 0, 3, Qt::AlignLeft);
 			connect(m_qryStandard, SIGNAL(clicked()), SLOT(qryStdClicked()));
 		}
@@ -323,8 +325,9 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 		m_timRow->addWidget(m_videoTimings, 0, 1, Qt::AlignLeft);
 		connect(m_videoTimings, SIGNAL(activated(int)), SLOT(timingsChanged(int)));
 		refreshTimings();
-		m_qryTimings = new QPushButton("Query Timings", parentWidget());
-		m_timRow->addWidget(new QLabel("", parentWidget()), 0, 2, Qt::AlignLeft);
+		m_qryTimings = new QToolButton(parentWidget());
+		m_qryTimings->setIcon(QIcon(":/enterbutt.png"));
+		m_timRow->addWidget(new QLabel("Query Timings", parentWidget()), 0, 2, Qt::AlignLeft);
 		m_timRow->addWidget(m_qryTimings, 0, 3, Qt::AlignLeft);
 		connect(m_qryTimings, SIGNAL(clicked()), SLOT(qryTimingsClicked()));
 	}
@@ -361,10 +364,22 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 	}
 
 	if (m_tuner.capability && !isSDR()) {
-		m_subchannels = new QLabel("", parentWidget());
-		m_detectSubchans = new QPushButton("Refresh Tuner Status", parentWidget());
-		m_freqRows->addWidget(m_subchannels, 0, 2, Qt::AlignLeft);
-		m_freqRows->addWidget(m_detectSubchans, 0, 3, Qt::AlignLeft);
+		QLabel *l = new QLabel("Refresh Tuner Status", parentWidget());
+		QWidget *w = new QWidget(parentWidget());
+		QHBoxLayout *box = new QHBoxLayout(w);
+
+		box->setMargin(0);
+		m_detectSubchans = new QToolButton(w);
+		m_detectSubchans->setIcon(QIcon(":/enterbutt.png"));
+		m_subchannels = new QLabel("", w);
+		//m_detectSubchans->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+		//m_subchannels->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+		box->addWidget(m_detectSubchans, 0, Qt::AlignLeft);
+		box->addWidget(m_subchannels, 0, Qt::AlignLeft);
+		//box->addStretch(1000);
+		//w->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+		m_freqRows->addWidget(l, 0, 2, Qt::AlignLeft);
+		m_freqRows->addWidget(w, 0, 3, Qt::AlignLeft);
 		connect(m_detectSubchans, SIGNAL(clicked()), SLOT(detectSubchansClicked()));
 		detectSubchansClicked();
 	}
@@ -779,10 +794,12 @@ void GeneralTab::fixWidth()
 			if ((*i)->itemAt(n)->widget()->sizeHint().width() > m_maxw[n % 4]) {
 				m_maxw[n % 4] = (*i)->itemAt(n)->widget()->sizeHint().width();
 			}
-			if (n % 2)
-				(*i)->itemAt(n)->widget()->setMinimumWidth(m_minWidth);
-			else
+			if (n % 2) {
+				if (!qobject_cast<QToolButton*>((*i)->itemAt(n)->widget()))
+					(*i)->itemAt(n)->widget()->setMinimumWidth(m_minWidth);
+			} else {
 				(*i)->itemAt(n)->widget()->setMinimumWidth(m_maxw[n % 4]);
+			}
 		}
 		for (int j = 0; j < m_cols; j++) {
 			if (j % 2)
@@ -1046,7 +1063,7 @@ void GeneralTab::changeAudioDevice()
 
 void GeneralTab::addWidget(QWidget *w, Qt::Alignment align)
 {
-	if (m_col % 2)
+	if (m_col % 2 && !qobject_cast<QToolButton*>(w))
 		w->setMinimumWidth(m_minWidth);
 	if (w->sizeHint().width() > m_maxw[m_col])
 		m_maxw[m_col] = w->sizeHint().width();
