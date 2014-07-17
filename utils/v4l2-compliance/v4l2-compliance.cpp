@@ -197,6 +197,8 @@ std::string cap2s(unsigned cap)
 		s += "\t\tSDR Capture\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
+	if (cap & V4L2_CAP_HW_FREQ_SEEK)
+		s += "\t\tHW Frequency Seek\n";
 	if (cap & V4L2_CAP_MODULATOR)
 		s += "\t\tModulator\n";
 	if (cap & V4L2_CAP_AUDIO)
@@ -209,6 +211,8 @@ std::string cap2s(unsigned cap)
 		s += "\t\tAsync I/O\n";
 	if (cap & V4L2_CAP_STREAMING)
 		s += "\t\tStreaming\n";
+	if (cap & V4L2_CAP_EXT_PIX_FORMAT)
+		s += "\t\tExtended Pix Format\n";
 	if (cap & V4L2_CAP_DEVICE_CAPS)
 		s += "\t\tDevice Capabilities\n";
 	return s;

@@ -299,14 +299,10 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tTuner\n";
 	if (cap & V4L2_CAP_MODULATOR)
 		s += "\t\tModulator\n";
-	if (cap & V4L2_CAP_AUDIO)
-		s += "\t\tAudio\n";
 	if (cap & V4L2_CAP_RADIO)
 		s += "\t\tRadio\n";
 	if (cap & V4L2_CAP_READWRITE)
 		s += "\t\tRead/Write\n";
-	if (cap & V4L2_CAP_ASYNCIO)
-		s += "\t\tAsync I/O\n";
 	if (cap & V4L2_CAP_STREAMING)
 		s += "\t\tStreaming\n";
 	if (cap & V4L2_CAP_DEVICE_CAPS)

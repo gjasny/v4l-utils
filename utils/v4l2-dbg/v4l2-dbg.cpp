@@ -196,8 +196,16 @@ static std::string cap2s(unsigned cap)
 
 	if (cap & V4L2_CAP_VIDEO_CAPTURE)
 		s += "\t\tVideo Capture\n";
+	if (cap & V4L2_CAP_VIDEO_CAPTURE_MPLANE)
+		s += "\t\tVideo Capture Multiplanar\n";
 	if (cap & V4L2_CAP_VIDEO_OUTPUT)
 		s += "\t\tVideo Output\n";
+	if (cap & V4L2_CAP_VIDEO_OUTPUT_MPLANE)
+		s += "\t\tVideo Output Multiplanar\n";
+	if (cap & V4L2_CAP_VIDEO_M2M)
+		s += "\t\tVideo Memory-to-Memory\n";
+	if (cap & V4L2_CAP_VIDEO_M2M_MPLANE)
+		s += "\t\tVideo Memory-to-Memory Multiplanar\n";
 	if (cap & V4L2_CAP_VIDEO_OVERLAY)
 		s += "\t\tVideo Overlay\n";
 	if (cap & V4L2_CAP_VIDEO_OUTPUT_OVERLAY)
@@ -212,8 +220,16 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tSliced VBI Output\n";
 	if (cap & V4L2_CAP_RDS_CAPTURE)
 		s += "\t\tRDS Capture\n";
+	if (cap & V4L2_CAP_RDS_OUTPUT)
+		s += "\t\tRDS Output\n";
+	if (cap & V4L2_CAP_SDR_CAPTURE)
+		s += "\t\tSDR Capture\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
+	if (cap & V4L2_CAP_HW_FREQ_SEEK)
+		s += "\t\tHW Frequency Seek\n";
+	if (cap & V4L2_CAP_MODULATOR)
+		s += "\t\tModulator\n";
 	if (cap & V4L2_CAP_AUDIO)
 		s += "\t\tAudio\n";
 	if (cap & V4L2_CAP_RADIO)
@@ -224,6 +240,10 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tAsync I/O\n";
 	if (cap & V4L2_CAP_STREAMING)
 		s += "\t\tStreaming\n";
+	if (cap & V4L2_CAP_EXT_PIX_FORMAT)
+		s += "\t\tExtended Pix Format\n";
+	if (cap & V4L2_CAP_DEVICE_CAPS)
+		s += "\t\tDevice Capabilities\n";
 	return s;
 }
 

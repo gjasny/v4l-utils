@@ -102,8 +102,16 @@ static char *prt_caps(uint32_t caps)
 
 	if (V4L2_CAP_VIDEO_CAPTURE & caps)
 		strcat (s,"CAPTURE ");
+	if (V4L2_CAP_VIDEO_CAPTURE_MPLANE & caps)
+		strcat (s,"CAPTURE_MPLANE ");
 	if (V4L2_CAP_VIDEO_OUTPUT & caps)
 		strcat (s,"OUTPUT ");
+	if (V4L2_CAP_VIDEO_OUTPUT_MPLANE & caps)
+		strcat (s,"OUTPUT_MPLANE ");
+	if (V4L2_CAP_VIDEO_M2M & caps)
+		strcat (s,"M2M ");
+	if (V4L2_CAP_VIDEO_M2M_MPLANE & caps)
+		strcat (s,"M2M_MPLANE ");
 	if (V4L2_CAP_VIDEO_OVERLAY & caps)
 		strcat (s,"OVERLAY ");
 	if (V4L2_CAP_VBI_CAPTURE & caps)
@@ -116,8 +124,16 @@ static char *prt_caps(uint32_t caps)
 		strcat (s,"SLICED_VBI_OUTPUT ");
 	if (V4L2_CAP_RDS_CAPTURE & caps)
 		strcat (s,"RDS_CAPTURE ");
+	if (V4L2_CAP_RDS_OUTPUT & caps)
+		strcat (s,"RDS_OUTPUT ");
+	if (V4L2_CAP_SDR_CAPTURE & caps)
+		strcat (s,"SDR_CAPTURE ");
 	if (V4L2_CAP_TUNER & caps)
 		strcat (s,"TUNER ");
+	if (V4L2_CAP_HW_FREQ_SEEK & caps)
+		strcat (s,"HW_FREQ_SEEK ");
+	if (V4L2_CAP_MODULATOR & caps)
+		strcat (s,"MODULATOR ");
 	if (V4L2_CAP_AUDIO & caps)
 		strcat (s,"AUDIO ");
 	if (V4L2_CAP_RADIO & caps)
@@ -128,6 +144,10 @@ static char *prt_caps(uint32_t caps)
 		strcat (s,"ASYNCIO ");
 	if (V4L2_CAP_STREAMING & caps)
 		strcat (s,"STREAMING ");
+	if (V4L2_CAP_EXT_PIX_FORMAT & caps)
+		strcat (s,"EXT_PIX_FORMAT ");
+	if (V4L2_CAP_DEVICE_CAPS & caps)
+		strcat (s,"DEVICE_CAPS ");
 
 	return s;
 }
@@ -180,12 +200,14 @@ int v4l2_open (char *device, int debug, struct v4l2_driver *drv)
 	ret=xioctl(drv->fd,VIDIOC_QUERYCAP,(void *) &drv->cap);
 	if (!ret && drv->debug) {
 		printf ("driver=%s, card=%s, bus=%s, version=%d.%d.%d, "
-			"capabilities=%s\n",
+			"capabilities=%s, device_caps=%s\n",
 			drv->cap.driver,drv->cap.card,drv->cap.bus_info,
 			(drv->cap.version >> 16) & 0xff,
 			(drv->cap.version >>  8) & 0xff,
 			drv->cap.version         & 0xff,
-			prt_caps(drv->cap.capabilities));
+			prt_caps(drv->cap.capabilities),
+			(drv->cap.capabilities & V4L2_CAP_DEVICE_CAPS) ?
+			prt_caps(drv->cap.device_caps) : "N/A");
 
 
 	}
