@@ -8,5 +8,6 @@
 	<file>saveraw.png</file>
 	<file>video-television.png</file>
 	<file>qv4l2.png</file>
+	<file>enterbutt.png</file>
     </qresource>
 </RCC>

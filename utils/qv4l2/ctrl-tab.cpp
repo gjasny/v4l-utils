@@ -32,6 +32,7 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include <QPushButton>
+#include <QToolButton>
 #include <QToolTip>
 
 #include <math.h>
@@ -59,7 +60,8 @@ static bool is_valid_type(__u32 type)
 
 void ApplicationWindow::addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment align)
 {
-	if (m_col % 2)
+	QToolButton *tb;
+	if (m_col % 2 && !(tb = qobject_cast<QToolButton*>(w)))
 		w->setMinimumWidth(m_minWidth);
 	if (w->sizeHint().width() > m_maxw[m_col])
 		m_maxw[m_col] = w->sizeHint().width();
@@ -371,8 +373,10 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 		break;
 
 	case V4L2_CTRL_TYPE_BUTTON:
-		addLabel(grid, "");
-		m_widgetMap[qctrl.id] = new QPushButton((char *)qctrl.name, p);
+		addLabel(grid, (char *)qctrl.name);
+		QToolButton *button;
+		m_widgetMap[qctrl.id] = button = new QToolButton(p);
+		button->setIcon(QIcon(":/enterbutt.png"));
 		addWidget(grid, m_widgetMap[qctrl.id]);
 		connect(m_widgetMap[qctrl.id], SIGNAL(clicked()),
 				m_sigMapper, SLOT(map()));
