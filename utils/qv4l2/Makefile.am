@@ -19,9 +19,9 @@ endif
 qv4l2_CPPFLAGS += $(ALSA_CFLAGS)
 qv4l2_LDFLAGS += $(ALSA_LIBS) -pthread
 
-EXTRA_DIST = exit.png fileopen.png qv4l2_24x24.png qv4l2_64x64.png qv4l2.png qv4l2.svg snapshot.png \
-  video-television.png fileclose.png qv4l2_16x16.png qv4l2_32x32.png qv4l2.desktop qv4l2.qrc record.png \
-  saveraw.png qv4l2.pro qv4l2.1
+EXTRA_DIST = enterbutt.png exit.png fileopen.png qv4l2_24x24.png qv4l2_64x64.png qv4l2.png qv4l2.svg \
+  snapshot.png video-television.png fileclose.png qv4l2_16x16.png qv4l2_32x32.png qv4l2.desktop \
+  qv4l2.qrc record.png saveraw.png qv4l2.pro qv4l2.1
 
 clean-local:
 	-rm -vf moc_*.cpp qrc_*.cpp qrc_*.o ui_*.h
