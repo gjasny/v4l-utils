@@ -346,6 +346,9 @@ static int testCap(struct node *node)
 	fail_on_test(caps == 0);
 	fail_on_test(caps & V4L2_CAP_ASYNCIO);
 	fail_on_test(!(caps & V4L2_CAP_DEVICE_CAPS));
+	// set by the core, so this really should always be there
+	// for a modern driver.
+	fail_on_test(!(caps & V4L2_CAP_EXT_PIX_FORMAT));
 	fail_on_test(dcaps & V4L2_CAP_DEVICE_CAPS);
 	fail_on_test(dcaps & ~caps);
 	fail_on_test(!(dcaps & caps));
