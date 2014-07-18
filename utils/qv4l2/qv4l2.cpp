@@ -392,10 +392,10 @@ void ApplicationWindow::newCaptureWin()
 
 	switch (m_renderMethod) {
 	case QV4L2_RENDER_GL:
-		m_capture = new CaptureWinGL;
+		m_capture = new CaptureWinGL(this);
 		break;
 	default:
-		m_capture = new CaptureWinQt;
+		m_capture = new CaptureWinQt(this);
 		break;
 	}
 

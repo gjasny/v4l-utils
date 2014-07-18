@@ -26,6 +26,7 @@
 #include <QShortcut>
 #include <QLabel>
 #include <QPushButton>
+#include <QMenu>
 
 enum CropMethod {
 	// Crop Height
@@ -54,13 +55,14 @@ struct crop {              // cropInfo
 	bool updated;
 };
 
+class ApplicationWindow;
 
 class CaptureWin : public QWidget
 {
 	Q_OBJECT
 
 public:
-	CaptureWin();
+	CaptureWin(ApplicationWindow *aw);
 	~CaptureWin();
 
 	void setWindowSize(QSize size);
@@ -72,6 +74,8 @@ public:
 	virtual void setBlending(bool enable) = 0;
 	void setCropMethod(CropMethod crop);
 	void toggleFullScreen();
+	QAction *m_exitFullScreen;
+	QAction *m_enterFullScreen;
 
 	/**
 	 * @brief Set a frame into the capture window.
@@ -148,6 +152,7 @@ public:
 
 public slots:
 	void resetSize();
+	void customMenuRequested(QPoint pos);
 
 private slots:
 	void fullScreen();
@@ -216,6 +221,7 @@ signals:
 	void close();
 
 private:
+	ApplicationWindow *appWin;
 	static double m_pixelAspectRatio;
 	static CropMethod m_cropMethod;
 	QShortcut *m_hotkeyClose;

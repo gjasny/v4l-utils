@@ -9,5 +9,7 @@
 	<file>video-television.png</file>
 	<file>qv4l2.png</file>
 	<file>enterbutt.png</file>
+	<file>fullscreen.png</file>
+	<file>fullscreenexit.png</file>
     </qresource>
 </RCC>

@@ -19,7 +19,8 @@
 
 #include "capture-win-qt.h"
 
-CaptureWinQt::CaptureWinQt() :
+CaptureWinQt::CaptureWinQt(ApplicationWindow *aw) :
+	CaptureWin(aw),
 	m_image(new QImage(0, 0, QImage::Format_Invalid)),
 	m_data(NULL),
 	m_supportedFormat(false),

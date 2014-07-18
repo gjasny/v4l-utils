@@ -30,7 +30,7 @@
 class CaptureWinQt : public CaptureWin
 {
 public:
-	CaptureWinQt();
+	CaptureWinQt(ApplicationWindow *aw);
 	~CaptureWinQt();
 
 	void stop();

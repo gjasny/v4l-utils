@@ -33,7 +33,8 @@ bool CaptureWin::m_enableScaling = true;
 double CaptureWin::m_pixelAspectRatio = 1.0;
 CropMethod CaptureWin::m_cropMethod = QV4L2_CROP_NONE;
 
-CaptureWin::CaptureWin()
+CaptureWin::CaptureWin(ApplicationWindow *aw) :
+	appWin(aw)
 {
 	setWindowTitle("V4L2 Capture");
 	m_hotkeyClose = new QShortcut(Qt::CTRL+Qt::Key_W, this);
@@ -44,6 +45,12 @@ CaptureWin::CaptureWin()
 	connect(m_hotkeyExitFullscreen, SIGNAL(activated()), this, SLOT(escape()));
 	m_hotkeyToggleFullscreen = new QShortcut(Qt::Key_F, this);
 	connect(m_hotkeyToggleFullscreen, SIGNAL(activated()), this, SLOT(fullScreen()));
+	m_exitFullScreen = new QAction(QIcon(":/fullscreenexit.png"), "Exit Fullscreen", this);
+	m_exitFullScreen->setShortcut(Qt::Key_Escape);
+	connect(m_exitFullScreen, SIGNAL(triggered()), this, SLOT(escape()));
+	m_enterFullScreen = new QAction(QIcon(":/fullscreen.png"), "Show Fullscreen", this);
+	m_enterFullScreen->setShortcut(Qt::Key_F);
+	connect(m_enterFullScreen, SIGNAL(triggered()), this, SLOT(fullScreen()));
 	m_frame.format = 0;
 	m_frame.size.setWidth(0);
 	m_frame.size.setHeight(0);
@@ -114,6 +121,9 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 	vbox->addWidget(bottom, 0, Qt::AlignBottom);
 	vbox->getContentsMargins(&l, &t, &r, &b);
 	vbox->setSpacing(t+b);
+	
+	setContextMenuPolicy(Qt::CustomContextMenu);
+	connect(this, SIGNAL(customContextMenuRequested(QPoint)), SLOT(customMenuRequested(QPoint)));
 }
 
 void CaptureWin::resetSize()
@@ -346,6 +356,25 @@ void CaptureWin::toggleFullScreen()
 		m_fullscreenButton->hide();
 		m_information.hide();
 	}
+}
+
+void CaptureWin::customMenuRequested(QPoint pos)
+{
+	QMenu *menu=new QMenu(this);
+	
+	if (isFullScreen()) {
+		menu->addAction(m_exitFullScreen);
+		menu->setStyleSheet("background-color:none;");
+	} else {
+		menu->addAction(m_enterFullScreen);
+	}
+	
+	menu->addAction(appWin->m_resetScalingAct);
+	menu->addAction(appWin->m_useBlendingAct);
+	menu->addAction(appWin->m_snapshotAct);
+	menu->addAction(appWin->m_showFramesAct);
+	
+	menu->popup(mapToGlobal(pos));
 }
 
 void CaptureWin::closeEvent(QCloseEvent *event)

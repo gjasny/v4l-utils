@@ -24,7 +24,8 @@
 
 #include <stdio.h>
 
-CaptureWinGL::CaptureWinGL()
+CaptureWinGL::CaptureWinGL(ApplicationWindow *aw) :
+	CaptureWin(aw)
 {
 #ifdef HAVE_QTGL
 	CaptureWin::buildWindow(&m_videoSurface);

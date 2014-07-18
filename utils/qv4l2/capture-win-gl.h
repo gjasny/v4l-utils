@@ -106,7 +106,7 @@ private:
 class CaptureWinGL : public CaptureWin
 {
 public:
-	CaptureWinGL();
+	CaptureWinGL(ApplicationWindow *aw);
 	~CaptureWinGL();
 
 	void stop();

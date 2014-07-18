@@ -141,7 +141,6 @@ private slots:
 	void updateColorspace();
 	void updateDisplayColorspace();
 	void clearBuffers();
-
 	void about();
 
 public:
@@ -152,6 +151,10 @@ public:
 	void errorCtrl(unsigned id, int err, const QString &v);
 	void info(const QString &info);
 	virtual void closeEvent(QCloseEvent *event);
+	QAction *m_resetScalingAct;
+	QAction *m_useBlendingAct;
+	QAction *m_snapshotAct;
+	QAction *m_showFramesAct;
 
 private:
 	void addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment align = Qt::AlignLeft);
@@ -197,15 +200,11 @@ private:
 	GeneralTab *m_genTab;
 	VbiTab *m_vbiTab;
 	QAction *m_capStartAct;
-	QAction *m_snapshotAct;
 	QAction *m_saveRawAct;
-	QAction *m_showFramesAct;
 	QAction *m_useGLAct;
-	QAction *m_useBlendingAct;
 	QAction *m_showAllAudioAct;
 	QAction *m_audioBufferAct;
 	QAction *m_scalingAct;
-	QAction *m_resetScalingAct;
 	QString m_filename;
 	QSignalMapper *m_sigMapper;
 	QTabWidget *m_tabs;
