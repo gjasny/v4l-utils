@@ -60,8 +60,7 @@ static bool is_valid_type(__u32 type)
 
 void ApplicationWindow::addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment align)
 {
-	QToolButton *tb;
-	if (m_col % 2 && !(tb = qobject_cast<QToolButton*>(w)))
+	if (m_col % 2 && !qobject_cast<QToolButton*>(w))
 		w->setMinimumWidth(m_minWidth);
 	if (w->sizeHint().width() > m_maxw[m_col])
 		m_maxw[m_col] = w->sizeHint().width();
