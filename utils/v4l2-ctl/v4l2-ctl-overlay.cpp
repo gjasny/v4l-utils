@@ -183,18 +183,12 @@ struct bitfield2fmt {
 };
 
 static const struct bitfield2fmt fb_formats[] = {
-	{ 10, 5,  5, 5,  0, 5, 15, 1, V4L2_PIX_FMT_RGB555 },
-	{ 10, 5,  5, 5,  0, 5, 15, 1, V4L2_PIX_FMT_XRGB555 },
 	{ 10, 5,  5, 5,  0, 5, 15, 1, V4L2_PIX_FMT_ARGB555 },
 	{ 11, 5,  5, 6,  0, 5,  0, 0, V4L2_PIX_FMT_RGB565 },
 	{  1, 5,  6, 5, 11, 5,  0, 1, V4L2_PIX_FMT_RGB555X },
 	{  0, 5,  5, 6, 11, 5,  0, 0, V4L2_PIX_FMT_RGB565X },
 	{ 16, 8,  8, 8,  0, 8,  0, 0, V4L2_PIX_FMT_BGR24 },
 	{  0, 8,  8, 8, 16, 8,  0, 0, V4L2_PIX_FMT_RGB24 },
-	{ 16, 8,  8, 8,  0, 8, 24, 8, V4L2_PIX_FMT_BGR32 },
-	{  8, 8, 16, 8, 24, 8,  0, 8, V4L2_PIX_FMT_RGB32 },
-	{ 16, 8,  8, 8,  0, 8, 24, 8, V4L2_PIX_FMT_XBGR32 },
-	{  8, 8, 16, 8, 24, 8,  0, 8, V4L2_PIX_FMT_XRGB32 },
 	{ 16, 8,  8, 8,  0, 8, 24, 8, V4L2_PIX_FMT_ABGR32 },
 	{  8, 8, 16, 8, 24, 8,  0, 8, V4L2_PIX_FMT_ARGB32 },
 	{ }
