@@ -57,6 +57,7 @@ extern "C" {
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <sys/ioctl.h>
 #include <dirent.h>
 #include <libv4l2.h>
 
@@ -981,7 +982,10 @@ void ApplicationWindow::updateColorspace()
 	if (colorspace == 0) {
 		v4l2_format fmt;
 
-		g_fmt(m_genTab->bufType(), fmt);
+		fmt.type = m_genTab->bufType();
+		// don't use the wrapped ioctl since it doesn't
+		// update colorspace correctly.
+		::ioctl(fd(), VIDIOC_G_FMT, &fmt);
 		if (m_genTab->isPlanar())
 			colorspace = fmt.fmt.pix_mp.colorspace;
 		else
