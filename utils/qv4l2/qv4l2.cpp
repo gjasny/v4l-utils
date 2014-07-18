@@ -174,6 +174,12 @@ ApplicationWindow::ApplicationWindow() :
 	} else {
 		m_renderMethod = QV4L2_RENDER_QT;
 	}
+	
+	m_startFullScreenAct = new QAction(QIcon(":/fullscreen.png"), "Enter Fullscreen Mode", this);
+	m_startFullScreenAct->setStatusTip("Start capturing in fullscreen mode");
+	connect(m_startFullScreenAct, SIGNAL(triggered()), this, SLOT(startFullScreen()));
+	captureMenu->addAction(m_startFullScreenAct);
+	toolBar->addAction(m_startFullScreenAct);
 
 #ifdef HAVE_ALSA
 	captureMenu->addSeparator();
@@ -1224,6 +1230,18 @@ void ApplicationWindow::capStart(bool start)
 		m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
 		connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capFrame()));
 	}
+}
+
+void ApplicationWindow::startFullScreen()
+{
+	if (!m_capture || !m_capStartAct->isChecked()){
+		newCaptureWin();
+		m_capStartAct->setChecked(true);
+		m_capture->toggleFullScreen();
+	} else {
+		m_capStartAct->setChecked(true);
+		m_capture->toggleFullScreen();
+	}  
 }
 
 void ApplicationWindow::closeDevice()

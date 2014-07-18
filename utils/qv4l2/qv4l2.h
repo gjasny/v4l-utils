@@ -118,6 +118,7 @@ private:
 
 private slots:
 	void capStart(bool);
+	void startFullScreen();
 	void capFrame();
 	void ctrlEvent();
 	void snapshot();
@@ -205,6 +206,7 @@ private:
 	QAction *m_showAllAudioAct;
 	QAction *m_audioBufferAct;
 	QAction *m_scalingAct;
+	QAction *m_startFullScreenAct;
 	QString m_filename;
 	QSignalMapper *m_sigMapper;
 	QTabWidget *m_tabs;
