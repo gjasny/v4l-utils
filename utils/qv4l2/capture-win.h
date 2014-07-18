@@ -25,6 +25,7 @@
 #include <QWidget>
 #include <QShortcut>
 #include <QLabel>
+#include <QPushButton>
 
 enum CropMethod {
 	// Crop Height
@@ -70,6 +71,7 @@ public:
 	virtual void setDisplayColorspace(unsigned colorspace) = 0;
 	virtual void setBlending(bool enable) = 0;
 	void setCropMethod(CropMethod crop);
+	void toggleFullScreen();
 
 	/**
 	 * @brief Set a frame into the capture window.
@@ -147,8 +149,14 @@ public:
 public slots:
 	void resetSize();
 
+private slots:
+	void fullScreen();
+	void escape();
+
 protected:
 	void closeEvent(QCloseEvent *event);
+	void mouseDoubleClickEvent(QMouseEvent *e);
+	bool eventFilter(QObject *target, QEvent *event);
 
 	/**
 	 * @brief Get the amount of space outside the video frame.
@@ -212,5 +220,10 @@ private:
 	static CropMethod m_cropMethod;
 	QShortcut *m_hotkeyClose;
 	QShortcut *m_hotkeyScaleReset;
+	QShortcut *m_hotkeyExitFullscreen;
+	QShortcut *m_hotkeyToggleFullscreen;
+	QPushButton *m_fullscreenButton;
+	QHBoxLayout *hbox;
+	QFrame *bottom;
 };
 #endif

@@ -40,7 +40,11 @@ CaptureWin::CaptureWin()
 	connect(m_hotkeyClose, SIGNAL(activated()), this, SLOT(close()));
 	m_hotkeyScaleReset = new QShortcut(Qt::CTRL+Qt::Key_F, this);
 	connect(m_hotkeyScaleReset, SIGNAL(activated()), this, SLOT(resetSize()));
-	m_frame.format      =  0;
+	m_hotkeyExitFullscreen = new QShortcut(Qt::Key_Escape, this);
+	connect(m_hotkeyExitFullscreen, SIGNAL(activated()), this, SLOT(escape()));
+	m_hotkeyToggleFullscreen = new QShortcut(Qt::Key_F, this);
+	connect(m_hotkeyToggleFullscreen, SIGNAL(activated()), this, SLOT(fullScreen()));
+	m_frame.format = 0;
 	m_frame.size.setWidth(0);
 	m_frame.size.setHeight(0);
 	m_frame.planeData[0] = NULL;
@@ -96,13 +100,26 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 	QVBoxLayout *vbox = new QVBoxLayout(this);
 	m_information.setText("No Frame");
 	vbox->addWidget(videoSurface, 2000);
-	vbox->addWidget(&m_information, 1, Qt::AlignBottom);
+	bottom = new QFrame(parentWidget());
+	bottom->installEventFilter(this);
+	
+	hbox = new QHBoxLayout(bottom);
+	hbox->addWidget(&m_information, 1, Qt::AlignVCenter);
+	
+	m_fullscreenButton = new QPushButton("Show Fullscreen", bottom);
+	m_fullscreenButton->setMaximumWidth(200);
+	m_fullscreenButton->setMinimumWidth(100);
+	hbox->addWidget(m_fullscreenButton, 1, Qt::AlignVCenter);
+	connect(m_fullscreenButton, SIGNAL(clicked()), SLOT(fullScreen()));
+	vbox->addWidget(bottom, 0, Qt::AlignBottom);
 	vbox->getContentsMargins(&l, &t, &r, &b);
-	vbox->setSpacing(b);
+	vbox->setSpacing(t+b);
 }
 
 void CaptureWin::resetSize()
 {
+	if (isFullScreen())
+		toggleFullScreen();
 	if (isMaximized())
 		showNormal();
 
@@ -272,6 +289,63 @@ void CaptureWin::setPixelAspectRatio(double ratio)
 {
 	m_pixelAspectRatio = ratio;
 	resetSize();
+}
+
+void CaptureWin::mouseDoubleClickEvent( QMouseEvent * e )
+{
+	toggleFullScreen();
+}
+
+bool CaptureWin::eventFilter(QObject *target, QEvent *event)
+{
+	if (target == bottom && isFullScreen()) {
+		if (event->type() == QEvent::Enter) {
+			bottom->setStyleSheet("background-color:#bebebe;");
+			bottom->setFixedHeight(75);
+			m_fullscreenButton->show();
+			m_information.show();
+			return true;
+		}
+		if (event->type() == QEvent::Leave && bottom->geometry().bottom() >= QCursor::pos().y()) {
+			bottom->setMinimumHeight(0);
+			bottom->setStyleSheet("background-color:#000000;");
+			m_fullscreenButton->hide();
+			m_information.hide();
+			return true;
+		}
+	}
+	return false;
+}
+
+void CaptureWin::fullScreen()
+{
+	toggleFullScreen();
+}
+
+void CaptureWin::escape()
+{
+	if(isFullScreen())
+		toggleFullScreen();
+}
+
+void CaptureWin::toggleFullScreen()
+{
+	if (isFullScreen()) {
+		showNormal();
+		bottom->setMinimumHeight(0);
+		bottom->setMaximumHeight(height());
+		m_fullscreenButton->setText("Show Fullscreen");
+		setStyleSheet("background-color:none;");
+		bottom->setStyleSheet("background-color:none;");
+		m_fullscreenButton->show();
+		m_information.show();
+	} else {
+		showFullScreen();
+		m_fullscreenButton->setText("Exit Fullscreen");
+		setStyleSheet("background-color:#000000;");
+		m_fullscreenButton->hide();
+		m_information.hide();
+	}
 }
 
 void CaptureWin::closeEvent(QCloseEvent *event)
