@@ -60,7 +60,9 @@ void CaptureWinQt::setRenderFrame()
 	if (!m_supportedFormat)
 		dstFmt = QImage::Format_RGB888;
 
-	if (m_frame.updated || m_image->format() != dstFmt) {
+	if (m_frame.updated || m_image->format() != dstFmt ||
+	    m_image->width() != m_frame.size.width() ||
+	    m_image->height() != m_frame.size.height()) {
 		delete m_image;
 		m_image = new QImage(m_frame.size.width(),
 				     m_frame.size.height(),
@@ -91,7 +93,6 @@ void CaptureWinQt::paintFrame()
 			m_filled = true;
 			m_image->fill(0);
 			QPixmap img = QPixmap::fromImage(*m_image);
-			printf("%d %d\n", img.width(), img.height());
 			m_videoSurface->setPixmap(img);
 		}
 		return;
