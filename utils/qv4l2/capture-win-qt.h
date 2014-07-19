@@ -51,7 +51,7 @@ private:
 
 	QImage *m_image;
 	unsigned char *m_data;
-	QLabel m_videoSurface;
+	QLabel *m_videoSurface;
 	bool m_supportedFormat;
 	bool m_filled;
 	int m_cropBytes;

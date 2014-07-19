@@ -28,7 +28,8 @@ CaptureWinQt::CaptureWinQt(ApplicationWindow *aw) :
 	m_cropBytes(0),
 	m_cropOffset(0)
 {
-	CaptureWin::buildWindow(&m_videoSurface);
+	m_videoSurface = new QLabel(this);
+	CaptureWin::buildWindow(m_videoSurface);
 }
 
 CaptureWinQt::~CaptureWinQt()
@@ -39,7 +40,8 @@ CaptureWinQt::~CaptureWinQt()
 void CaptureWinQt::resizeEvent(QResizeEvent *event)
 {
 	// Get size of frame viewport.
-	m_windowSize = m_videoSurface.size();
+	QSize margins = getMargins();
+	m_windowSize = size() - margins;
 	// Re-calculate sizes
 	m_frame.updated = true;
 	CaptureWin::updateSize();
@@ -89,7 +91,8 @@ void CaptureWinQt::paintFrame()
 			m_filled = true;
 			m_image->fill(0);
 			QPixmap img = QPixmap::fromImage(*m_image);
-			m_videoSurface.setPixmap(img);
+			printf("%d %d\n", img.width(), img.height());
+			m_videoSurface->setPixmap(img);
 		}
 		return;
 	}
@@ -107,7 +110,7 @@ void CaptureWinQt::paintFrame()
 	// No scaling is performed by scaled() if the scaled size is equal to original size
 	img = img.scaled(m_scaledSize.width(), m_scaledSize.height(), Qt::IgnoreAspectRatio);
 
-	m_videoSurface.setPixmap(img);
+	m_videoSurface->setPixmap(img);
 }
 
 void CaptureWinQt::stop()

@@ -34,7 +34,7 @@ double CaptureWin::m_pixelAspectRatio = 1.0;
 CropMethod CaptureWin::m_cropMethod = QV4L2_CROP_NONE;
 
 CaptureWin::CaptureWin(ApplicationWindow *aw) :
-	appWin(aw)
+	m_appWin(aw)
 {
 	setWindowTitle("V4L2 Capture");
 	m_hotkeyClose = new QShortcut(Qt::CTRL+Qt::Key_W, this);
@@ -66,6 +66,7 @@ CaptureWin::CaptureWin(ApplicationWindow *aw) :
 	m_origFrameSize.setHeight(0);
 	m_windowSize.setWidth(0);
 	m_windowSize.setHeight(0);
+	m_information = new QLabel(this);
 }
 
 CaptureWin::~CaptureWin()
@@ -95,7 +96,7 @@ void CaptureWin::setFrame(int width, int height, __u32 format,
 		m_frame.updated      = true;
 		updateSize();
 	}
-	m_information.setText(m_frame.info);
+	m_information->setText(m_frame.info);
 
 	setRenderFrame();
 }
@@ -103,23 +104,25 @@ void CaptureWin::setFrame(int width, int height, __u32 format,
 void CaptureWin::buildWindow(QWidget *videoSurface)
 {
 	int l, t, r, b;
-	QVBoxLayout *vbox = new QVBoxLayout(this);
-	m_information.setText("No Frame");
-	vbox->addWidget(videoSurface, 2000);
-	bottom = new QFrame(parentWidget());
-	bottom->installEventFilter(this);
+	m_vboxLayout = new QVBoxLayout(this);
+	m_information->setText("No Frame");
+	m_vboxLayout->getContentsMargins(&l, &t, &r, &b);
+	m_vboxSpacing = t + b;
+	m_vboxLayout->setMargin(0);
+	m_vboxLayout->addWidget(videoSurface, 1000, Qt::AlignCenter);
+	m_bottom = new QWidget(parentWidget());
+	m_bottom->installEventFilter(this);
 	
-	hbox = new QHBoxLayout(bottom);
-	hbox->addWidget(&m_information, 1, Qt::AlignVCenter);
+	QHBoxLayout *hbox = new QHBoxLayout(m_bottom);
+	hbox->addWidget(m_information, 1, Qt::AlignLeft);
 	
-	m_fullscreenButton = new QPushButton("Show Fullscreen", bottom);
+	m_fullscreenButton = new QPushButton("Show Fullscreen", m_bottom);
 	m_fullscreenButton->setMaximumWidth(200);
 	m_fullscreenButton->setMinimumWidth(100);
-	hbox->addWidget(m_fullscreenButton, 1, Qt::AlignVCenter);
-	connect(m_fullscreenButton, SIGNAL(clicked()), appWin->m_makeFullScreenAct, SLOT(toggle()));
-	vbox->addWidget(bottom, 0, Qt::AlignBottom);
-	vbox->getContentsMargins(&l, &t, &r, &b);
-	vbox->setSpacing(t+b);
+	hbox->addWidget(m_fullscreenButton, 0, Qt::AlignRight);
+	connect(m_fullscreenButton, SIGNAL(clicked()), m_appWin->m_makeFullScreenAct, SLOT(toggle()));
+	m_vboxLayout->addWidget(m_bottom, 0, Qt::AlignBottom);
+	m_vboxLayout->setSpacing(m_vboxSpacing);
 	
 	setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(this, SIGNAL(customContextMenuRequested(QPoint)), SLOT(customMenuRequested(QPoint)));
@@ -127,7 +130,7 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 
 void CaptureWin::resetSize()
 {
-	if (appWin->m_makeFullScreenAct->isChecked())
+	if (m_appWin->m_makeFullScreenAct->isChecked())
 		escape();
 
         // Force resize even if no size change
@@ -220,7 +223,9 @@ QSize CaptureWin::getMargins()
 {
 	int l, t, r, b;
 	layout()->getContentsMargins(&l, &t, &r, &b);
-	return QSize(l + r, t + b + m_information.minimumSizeHint().height() + layout()->spacing());
+	if (m_information->isVisible())
+		return QSize(l + r, t + b + m_information->minimumSizeHint().height() + layout()->spacing());
+	return QSize(l + r, t + b);
 }
 
 void CaptureWin::enableScaling(bool enable)
@@ -300,24 +305,24 @@ void CaptureWin::setPixelAspectRatio(double ratio)
 
 void CaptureWin::mouseDoubleClickEvent(QMouseEvent *e)
 {
-	appWin->m_makeFullScreenAct->toggle();
+	m_appWin->m_makeFullScreenAct->toggle();
 }
 
 bool CaptureWin::eventFilter(QObject *target, QEvent *event)
 {
-	if (target == bottom && isFullScreen()) {
+	if (target == m_bottom && isFullScreen()) {
 		if (event->type() == QEvent::Enter) {
-			bottom->setStyleSheet("background-color:#bebebe;");
-			bottom->setFixedHeight(75);
+			m_bottom->setStyleSheet("background-color:#bebebe;");
+			m_bottom->setFixedHeight(75);
 			m_fullscreenButton->show();
-			m_information.show();
+			m_information->show();
 			return true;
 		}
-		if (event->type() == QEvent::Leave && bottom->geometry().bottom() >= QCursor::pos().y()) {
-			bottom->setMinimumHeight(0);
-			bottom->setStyleSheet("background-color:#000000;");
+		if (event->type() == QEvent::Leave && m_bottom->geometry().bottom() >= QCursor::pos().y()) {
+			m_bottom->setMinimumHeight(0);
+			m_bottom->setStyleSheet("background-color:#000000;");
 			m_fullscreenButton->hide();
-			m_information.hide();
+			m_information->hide();
 			return true;
 		}
 	}
@@ -326,12 +331,12 @@ bool CaptureWin::eventFilter(QObject *target, QEvent *event)
 
 void CaptureWin::escape()
 {
-	appWin->m_makeFullScreenAct->setChecked(false);
+	m_appWin->m_makeFullScreenAct->setChecked(false);
 }
 
 void CaptureWin::fullScreen()
 {
-	appWin->m_makeFullScreenAct->setChecked(true);
+	m_appWin->m_makeFullScreenAct->setChecked(true);
 }
 
 void CaptureWin::makeFullScreen(bool enable)
@@ -340,18 +345,25 @@ void CaptureWin::makeFullScreen(bool enable)
 		showFullScreen();
 		m_fullscreenButton->setText("Exit Fullscreen");
 		setStyleSheet("background-color:#000000;");
+		m_vboxLayout->setSpacing(0);
 		m_fullscreenButton->hide();
-		m_information.hide();
+		m_information->hide();
 	} else {
 		showNormal();
-		bottom->setMinimumHeight(0);
-		bottom->setMaximumHeight(height());
+		m_vboxLayout->setSpacing(m_vboxSpacing);
+		m_bottom->setMinimumHeight(0);
+		m_bottom->setMaximumHeight(height());
 		m_fullscreenButton->setText("Show Fullscreen");
 		setStyleSheet("background-color:none;");
-		bottom->setStyleSheet("background-color:none;");
+		m_bottom->setStyleSheet("background-color:none;");
 		m_fullscreenButton->show();
-		m_information.show();
+		m_information->show();
 	}
+	QSize resetFrameSize = m_origFrameSize;
+	m_origFrameSize.setWidth(0);
+	m_origFrameSize.setHeight(0);
+
+	setWindowSize(resetFrameSize);
 }
 
 void CaptureWin::customMenuRequested(QPoint pos)
@@ -365,10 +377,10 @@ void CaptureWin::customMenuRequested(QPoint pos)
 		menu->addAction(m_enterFullScreen);
 	}
 	
-	menu->addAction(appWin->m_resetScalingAct);
-	menu->addAction(appWin->m_useBlendingAct);
-	menu->addAction(appWin->m_snapshotAct);
-	menu->addAction(appWin->m_showFramesAct);
+	menu->addAction(m_appWin->m_resetScalingAct);
+	menu->addAction(m_appWin->m_useBlendingAct);
+	menu->addAction(m_appWin->m_snapshotAct);
+	menu->addAction(m_appWin->m_showFramesAct);
 	
 	menu->popup(mapToGlobal(pos));
 }

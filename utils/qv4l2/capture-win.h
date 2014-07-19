@@ -192,7 +192,7 @@ protected:
 	 *
 	 * @note This must be set in the derived class' setFrame() function.
 	 */
-	QLabel m_information;
+	QLabel *m_information;
 
 	/**
 	 * @brief Frame information.
@@ -221,7 +221,7 @@ signals:
 	void close();
 
 private:
-	ApplicationWindow *appWin;
+	ApplicationWindow *m_appWin;
 	static double m_pixelAspectRatio;
 	static CropMethod m_cropMethod;
 	QShortcut *m_hotkeyClose;
@@ -229,7 +229,8 @@ private:
 	QShortcut *m_hotkeyExitFullscreen;
 	QShortcut *m_hotkeyToggleFullscreen;
 	QPushButton *m_fullscreenButton;
-	QHBoxLayout *hbox;
-	QFrame *bottom;
+	QWidget *m_bottom;
+	QVBoxLayout *m_vboxLayout;
+	unsigned m_vboxSpacing;
 };
 #endif
