@@ -416,8 +416,8 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		fail_on_test(!pix.sizeimage);
 		fail_on_test(testColorspace(pix.pixelformat, pix.colorspace));
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
-		if (pix.priv)
-			return fail("priv is non-zero!\n");
+		if (pix.priv && pix.priv != V4L2_PIX_FMT_PRIV_MAGIC)
+			return fail("priv is non-zero and non-magic!\n");
 		break;
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
@@ -584,10 +584,10 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		if (!memcmp(&f1.fmt.pix, &f2.fmt.pix, sizeof(f1.fmt.pix)))
 			return true;
-		printf("\t\tG_FMT:     %dx%d, %x, %d, %d, %d, %d, %d\n",
+		printf("\t\tG_FMT:     %dx%d, %x, %d, %d, %d, %d, %x\n",
 			pix1.width, pix1.height, pix1.pixelformat, pix1.field, pix1.bytesperline,
 			pix1.sizeimage, pix1.colorspace, pix1.priv);
-		printf("\t\tTRY/S_FMT: %dx%d, %x, %d, %d, %d, %d, %d\n",
+		printf("\t\tTRY/S_FMT: %dx%d, %x, %d, %d, %d, %d, %x\n",
 			pix2.width, pix2.height, pix2.pixelformat, pix2.field, pix2.bytesperline,
 			pix2.sizeimage, pix2.colorspace, pix2.priv);
 		return false;
