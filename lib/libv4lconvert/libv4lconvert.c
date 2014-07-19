@@ -1132,6 +1132,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			errno = EPIPE;
 			result = -1;
 		}
+		src++;
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
 			v4lconvert_rgb32_to_rgb24(src, dest, width, height, 0);
