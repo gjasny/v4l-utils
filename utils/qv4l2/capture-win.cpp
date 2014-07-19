@@ -41,15 +41,14 @@ CaptureWin::CaptureWin(ApplicationWindow *aw) :
 	connect(m_hotkeyClose, SIGNAL(activated()), this, SLOT(close()));
 	m_hotkeyScaleReset = new QShortcut(Qt::CTRL+Qt::Key_F, this);
 	connect(m_hotkeyScaleReset, SIGNAL(activated()), this, SLOT(resetSize()));
+	connect(aw->m_resetScalingAct, SIGNAL(triggered()), this, SLOT(resetSize()));
 	m_hotkeyExitFullscreen = new QShortcut(Qt::Key_Escape, this);
 	connect(m_hotkeyExitFullscreen, SIGNAL(activated()), this, SLOT(escape()));
 	m_hotkeyToggleFullscreen = new QShortcut(Qt::Key_F, this);
-	connect(m_hotkeyToggleFullscreen, SIGNAL(activated()), this, SLOT(fullScreen()));
+	connect(m_hotkeyToggleFullscreen, SIGNAL(activated()), aw->m_makeFullScreenAct, SLOT(toggle()));
 	m_exitFullScreen = new QAction(QIcon(":/fullscreenexit.png"), "Exit Fullscreen", this);
-	m_exitFullScreen->setShortcut(Qt::Key_Escape);
 	connect(m_exitFullScreen, SIGNAL(triggered()), this, SLOT(escape()));
 	m_enterFullScreen = new QAction(QIcon(":/fullscreen.png"), "Show Fullscreen", this);
-	m_enterFullScreen->setShortcut(Qt::Key_F);
 	connect(m_enterFullScreen, SIGNAL(triggered()), this, SLOT(fullScreen()));
 	m_frame.format = 0;
 	m_frame.size.setWidth(0);
@@ -117,7 +116,7 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 	m_fullscreenButton->setMaximumWidth(200);
 	m_fullscreenButton->setMinimumWidth(100);
 	hbox->addWidget(m_fullscreenButton, 1, Qt::AlignVCenter);
-	connect(m_fullscreenButton, SIGNAL(clicked()), SLOT(fullScreen()));
+	connect(m_fullscreenButton, SIGNAL(clicked()), appWin->m_makeFullScreenAct, SLOT(toggle()));
 	vbox->addWidget(bottom, 0, Qt::AlignBottom);
 	vbox->getContentsMargins(&l, &t, &r, &b);
 	vbox->setSpacing(t+b);
@@ -128,10 +127,8 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 
 void CaptureWin::resetSize()
 {
-	if (isFullScreen())
-		toggleFullScreen();
-	if (isMaximized())
-		showNormal();
+	if (appWin->m_makeFullScreenAct->isChecked())
+		escape();
 
         // Force resize even if no size change
 	QSize resetFrameSize = m_origFrameSize;
@@ -301,9 +298,9 @@ void CaptureWin::setPixelAspectRatio(double ratio)
 	resetSize();
 }
 
-void CaptureWin::mouseDoubleClickEvent( QMouseEvent * e )
+void CaptureWin::mouseDoubleClickEvent(QMouseEvent *e)
 {
-	toggleFullScreen();
+	appWin->m_makeFullScreenAct->toggle();
 }
 
 bool CaptureWin::eventFilter(QObject *target, QEvent *event)
@@ -327,20 +324,25 @@ bool CaptureWin::eventFilter(QObject *target, QEvent *event)
 	return false;
 }
 
-void CaptureWin::fullScreen()
-{
-	toggleFullScreen();
-}
-
 void CaptureWin::escape()
 {
-	if(isFullScreen())
-		toggleFullScreen();
+	appWin->m_makeFullScreenAct->setChecked(false);
 }
 
-void CaptureWin::toggleFullScreen()
+void CaptureWin::fullScreen()
 {
-	if (isFullScreen()) {
+	appWin->m_makeFullScreenAct->setChecked(true);
+}
+
+void CaptureWin::makeFullScreen(bool enable)
+{
+	if (enable) {
+		showFullScreen();
+		m_fullscreenButton->setText("Exit Fullscreen");
+		setStyleSheet("background-color:#000000;");
+		m_fullscreenButton->hide();
+		m_information.hide();
+	} else {
 		showNormal();
 		bottom->setMinimumHeight(0);
 		bottom->setMaximumHeight(height());
@@ -349,18 +351,12 @@ void CaptureWin::toggleFullScreen()
 		bottom->setStyleSheet("background-color:none;");
 		m_fullscreenButton->show();
 		m_information.show();
-	} else {
-		showFullScreen();
-		m_fullscreenButton->setText("Exit Fullscreen");
-		setStyleSheet("background-color:#000000;");
-		m_fullscreenButton->hide();
-		m_information.hide();
 	}
 }
 
 void CaptureWin::customMenuRequested(QPoint pos)
 {
-	QMenu *menu=new QMenu(this);
+	QMenu *menu = new QMenu(this);
 	
 	if (isFullScreen()) {
 		menu->addAction(m_exitFullScreen);

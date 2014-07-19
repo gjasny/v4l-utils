@@ -73,7 +73,7 @@ public:
 	virtual void setDisplayColorspace(unsigned colorspace) = 0;
 	virtual void setBlending(bool enable) = 0;
 	void setCropMethod(CropMethod crop);
-	void toggleFullScreen();
+	void makeFullScreen(bool);
 	QAction *m_exitFullScreen;
 	QAction *m_enterFullScreen;
 
@@ -155,8 +155,8 @@ public slots:
 	void customMenuRequested(QPoint pos);
 
 private slots:
-	void fullScreen();
 	void escape();
+	void fullScreen();
 
 protected:
 	void closeEvent(QCloseEvent *event);

@@ -145,6 +145,7 @@ ApplicationWindow::ApplicationWindow() :
 	m_scalingAct->setCheckable(true);
 	m_scalingAct->setChecked(true);
 	connect(m_scalingAct, SIGNAL(toggled(bool)), this, SLOT(enableScaling(bool)));
+
 	m_resetScalingAct = new QAction("Resize to &Frame Size", this);
 	m_resetScalingAct->setStatusTip("Resizes the capture window to match frame size");
 	m_resetScalingAct->setShortcut(Qt::CTRL+Qt::Key_F);
@@ -153,7 +154,6 @@ ApplicationWindow::ApplicationWindow() :
 	captureMenu->addAction(m_capStartAct);
 	captureMenu->addAction(m_showFramesAct);
 	captureMenu->addAction(m_scalingAct);
-	captureMenu->addAction(m_resetScalingAct);
 
 	if (CaptureWinGL::isSupported()) {
 		m_renderMethod = QV4L2_RENDER_GL;
@@ -162,24 +162,26 @@ ApplicationWindow::ApplicationWindow() :
 		m_useGLAct->setStatusTip("Use GPU with OpenGL for video capture if set.");
 		m_useGLAct->setCheckable(true);
 		m_useGLAct->setChecked(true);
-		connect(m_useGLAct, SIGNAL(triggered()), this, SLOT(setRenderMethod()));
+		connect(m_useGLAct, SIGNAL(toggled(bool)), this, SLOT(setRenderMethod(bool)));
 		captureMenu->addAction(m_useGLAct);
 
 		m_useBlendingAct = new QAction("Enable &Blending", this);
 		m_useBlendingAct->setStatusTip("Enable blending to test the alpha component in the image");
 		m_useBlendingAct->setCheckable(true);
 		m_useBlendingAct->setChecked(false);
-		connect(m_useBlendingAct, SIGNAL(triggered()), this, SLOT(setBlending()));
+		connect(m_useBlendingAct, SIGNAL(toggled(bool)), this, SLOT(setBlending(bool)));
 		captureMenu->addAction(m_useBlendingAct);
 	} else {
 		m_renderMethod = QV4L2_RENDER_QT;
 	}
+	captureMenu->addAction(m_resetScalingAct);
 	
-	m_startFullScreenAct = new QAction(QIcon(":/fullscreen.png"), "Enter Fullscreen Mode", this);
-	m_startFullScreenAct->setStatusTip("Start capturing in fullscreen mode");
-	connect(m_startFullScreenAct, SIGNAL(triggered()), this, SLOT(startFullScreen()));
-	captureMenu->addAction(m_startFullScreenAct);
-	toolBar->addAction(m_startFullScreenAct);
+	m_makeFullScreenAct = new QAction(QIcon(":/fullscreen.png"), "Show Fullscreen", this);
+	m_makeFullScreenAct->setStatusTip("Capture in fullscreen mode");
+	m_makeFullScreenAct->setCheckable(true);
+	connect(m_makeFullScreenAct, SIGNAL(toggled(bool)), this, SLOT(makeFullScreen(bool)));
+	captureMenu->addAction(m_makeFullScreenAct);
+	toolBar->addAction(m_makeFullScreenAct);
 
 #ifdef HAVE_ALSA
 	captureMenu->addSeparator();
@@ -298,27 +300,23 @@ void ApplicationWindow::openrawdev()
 		setDevice(d.selectedFiles().first(), true);
 }
 
-void ApplicationWindow::setRenderMethod()
+void ApplicationWindow::setRenderMethod(bool checked)
 {
 	if (m_capStartAct->isChecked()) {
 		m_useGLAct->setChecked(m_renderMethod == QV4L2_RENDER_GL);
 		return;
 	}
 
-	if (m_useGLAct->isChecked()) {
-		m_renderMethod = QV4L2_RENDER_GL;
-	} else {
-		m_renderMethod = QV4L2_RENDER_QT;
-	}
+	m_renderMethod = checked ? QV4L2_RENDER_GL : QV4L2_RENDER_QT;
 	m_useBlendingAct->setEnabled(m_renderMethod == QV4L2_RENDER_GL);
 
 	newCaptureWin();
 }
 
-void ApplicationWindow::setBlending()
+void ApplicationWindow::setBlending(bool checked)
 {
 	if (m_capture)
-		m_capture->setBlending(m_useBlendingAct->isChecked());
+		m_capture->setBlending(checked);
 }
 
 void ApplicationWindow::setAudioBufferSize()
@@ -408,7 +406,6 @@ void ApplicationWindow::newCaptureWin()
 	m_capture->setPixelAspectRatio(1.0);
 	m_capture->enableScaling(m_scalingAct->isChecked());
         connect(m_capture, SIGNAL(close()), this, SLOT(closeCaptureWin()));
-	connect(m_resetScalingAct, SIGNAL(triggered()), m_capture, SLOT(resetSize()));
 }
 
 void ApplicationWindow::capVbiFrame()
@@ -1222,6 +1219,7 @@ void ApplicationWindow::capStart(bool start)
 	m_capture->setWindowSize(QSize(width, height));
 	m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 			    pixfmt, m_capImage->bits(), NULL, "No frame");
+	m_capture->makeFullScreen(m_makeFullScreenAct->isChecked());
 	if (showFrames())
 		m_capture->show();
 
@@ -1232,16 +1230,10 @@ void ApplicationWindow::capStart(bool start)
 	}
 }
 
-void ApplicationWindow::startFullScreen()
+void ApplicationWindow::makeFullScreen(bool checked)
 {
-	if (!m_capture || !m_capStartAct->isChecked()){
-		newCaptureWin();
-		m_capStartAct->setChecked(true);
-		m_capture->toggleFullScreen();
-	} else {
-		m_capStartAct->setChecked(true);
-		m_capture->toggleFullScreen();
-	}  
+	if (m_capture && m_capStartAct->isChecked())
+		m_capture->makeFullScreen(checked);
 }
 
 void ApplicationWindow::closeDevice()

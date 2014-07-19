@@ -78,10 +78,13 @@ struct buffer {
 				 V4L2_CTRL_FLAG_INACTIVE | \
 				 V4L2_CTRL_FLAG_GRABBED)
 
+class CaptureWin;
+
 class ApplicationWindow: public QMainWindow, public v4l2
 {
 	Q_OBJECT
 
+	friend CaptureWin;
 public:
 	ApplicationWindow();
 	virtual ~ApplicationWindow();
@@ -118,14 +121,14 @@ private:
 
 private slots:
 	void capStart(bool);
-	void startFullScreen();
+	void makeFullScreen(bool);
 	void capFrame();
 	void ctrlEvent();
 	void snapshot();
 	void capVbiFrame();
 	void saveRaw(bool);
-	void setRenderMethod();
-	void setBlending();
+	void setRenderMethod(bool);
+	void setBlending(bool);
 	void changeAudioDevice();
 
 	// gui
@@ -206,7 +209,7 @@ private:
 	QAction *m_showAllAudioAct;
 	QAction *m_audioBufferAct;
 	QAction *m_scalingAct;
-	QAction *m_startFullScreenAct;
+	QAction *m_makeFullScreenAct;
 	QString m_filename;
 	QSignalMapper *m_sigMapper;
 	QTabWidget *m_tabs;
