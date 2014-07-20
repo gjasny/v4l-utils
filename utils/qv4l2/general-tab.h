@@ -24,6 +24,7 @@
 #include <config.h>
 
 #include <QSpinBox>
+#include <QCheckBox>
 #include <QDoubleSpinBox>
 #include <QStackedWidget>
 #include <sys/time.h>
@@ -71,6 +72,11 @@ public:
 	bool isVbi() const { return m_isVbi; }
 	bool isSlicedVbi() const;
 	bool isPlanar() const { return m_isPlanar; }
+	__u32 usePrio() const
+	{
+		return m_recordPrio->isChecked() ?
+			V4L2_PRIORITY_RECORD : V4L2_PRIORITY_DEFAULT;
+	}
 	void setHaveBuffers(bool haveBuffers);
 	void sourceChange(const v4l2_event &ev);
 	void sourceChangeSubscribe();
@@ -239,6 +245,8 @@ private:
 	int query_dv_timings(v4l2_dv_timings &timings) { return m_fd->query_dv_timings(timings); }
 	int g_frequency(v4l2_frequency &freq, unsigned index = 0) { return m_fd->g_frequency(freq, index); }
 	int s_frequency(v4l2_frequency &freq) { return m_fd->s_frequency(freq); }
+	int g_priority(__u32 &prio) { return m_fd->g_priority(prio); }
+	int s_priority(__u32 prio = V4L2_PRIORITY_DEFAULT) { return m_fd->s_priority(prio); }
 	int streamon(__u32 type = 0) { return m_fd->streamon(type); }
 	int streamoff(__u32 type = 0) { return m_fd->streamoff(type); }
 	int querybuf(v4l_buffer &buf, unsigned index) { return m_fd->querybuf(buf, index); }
@@ -334,6 +342,7 @@ private:
 	QComboBox *m_frameInterval;
 	QComboBox *m_vidOutFormats;
 	QComboBox *m_capMethods;
+	QCheckBox *m_recordPrio;
 	QComboBox *m_vbiMethods;
 	QComboBox *m_audioInDevice;
 	QComboBox *m_audioOutDevice;

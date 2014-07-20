@@ -309,6 +309,16 @@ public:
 		return cv4l_ioctl(VIDIOC_S_FREQUENCY, &freq);
 	}
 
+	int g_priority(__u32 &prio)
+	{
+		return cv4l_ioctl(VIDIOC_G_PRIORITY, &prio);
+	}
+
+	int s_priority(__u32 prio = V4L2_PRIORITY_DEFAULT)
+	{
+		return cv4l_ioctl(VIDIOC_S_PRIORITY, &prio);
+	}
+
 	int streamon(__u32 type = 0)
 	{
 		if (type == 0)

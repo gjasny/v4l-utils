@@ -425,8 +425,10 @@ bool ApplicationWindow::startCapture()
 {
 	startAudio();
 
-	if (m_genTab->isRadio())
+	if (m_genTab->isRadio()) {
+		s_priority(m_genTab->usePrio());
 		return true;
+	}
 
 	m_queue.init(g_type(), m_capMethod);
 
@@ -438,6 +440,7 @@ bool ApplicationWindow::startCapture()
 	case methodRead:
 		m_snapshotAct->setEnabled(true);
 		m_genTab->setHaveBuffers(true);
+		s_priority(m_genTab->usePrio());
 		/* Nothing to do. */
 		return true;
 
@@ -471,6 +474,7 @@ bool ApplicationWindow::startCapture()
 		}
 		m_snapshotAct->setEnabled(true);
 		m_genTab->setHaveBuffers(true);
+		s_priority(m_genTab->usePrio());
 		return true;
 	}
 
@@ -721,6 +725,8 @@ void ApplicationWindow::capFrame()
 void ApplicationWindow::stopCapture()
 {
 	stopAudio();
+
+	s_priority(V4L2_PRIORITY_DEFAULT);
 
 	if (m_genTab->isRadio())
 		return;

@@ -24,7 +24,6 @@
 #include <QSpinBox>
 #include <QSlider>
 #include <QComboBox>
-#include <QCheckBox>
 #include <QPushButton>
 #include <QToolButton>
 #include <QLineEdit>
@@ -223,7 +222,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	formatSection(fmt);
 
 capture_method:
-	addLabel("Capture Method");
+	addLabel("Streaming Method");
 	m_capMethods = new QComboBox(parent);
 	if (has_streaming()) {
 		cv4l_queue q;
@@ -252,6 +251,10 @@ capture_method:
 			m_capMethods->addItem("read()", QVariant(methodRead));
 	}
 	addWidget(m_capMethods);
+
+	addLabel("Use Record Priority");
+	m_recordPrio = new QCheckBox(parentWidget());
+	addWidget(m_recordPrio);
 
 	if (!isRadio() && !isVbi() && !m_isOutput && (has_crop() || has_compose())) {
 		addTitle("Cropping & Compose Settings");
