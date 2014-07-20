@@ -121,6 +121,11 @@ ApplicationWindow::ApplicationWindow() :
 	closeAct->setShortcut(Qt::CTRL+Qt::Key_W);
 	connect(closeAct, SIGNAL(triggered()), this, SLOT(closeDevice()));
 
+	QAction *traceAct = new QAction("&Trace IOCTLs", this);
+	traceAct->setStatusTip("All V4L2 IOCTLs are traced on the console");
+	traceAct->setCheckable(true);
+	connect(traceAct, SIGNAL(toggled(bool)), this, SLOT(traceIoctls(bool)));
+
 	QAction *quitAct = new QAction(QIcon(":/exit.png"), "&Quit", this);
 	quitAct->setStatusTip("Exit the application");
 	quitAct->setShortcut(Qt::CTRL+Qt::Key_Q);
@@ -132,6 +137,8 @@ ApplicationWindow::ApplicationWindow() :
 	fileMenu->addAction(closeAct);
 	fileMenu->addAction(m_snapshotAct);
 	fileMenu->addAction(m_saveRawAct);
+	fileMenu->addSeparator();
+	fileMenu->addAction(traceAct);
 	fileMenu->addSeparator();
 	fileMenu->addAction(quitAct);
 
@@ -745,6 +752,12 @@ bool ApplicationWindow::showFrames()
 	    m_genTab->isSlicedVbi())
 		m_capture->hide();
 	return m_showFramesAct->isChecked();
+}
+
+void ApplicationWindow::traceIoctls(bool enable)
+{
+	s_trace(enable);
+	m_genTab->s_trace(enable);
 }
 
 void ApplicationWindow::enableScaling(bool enable)

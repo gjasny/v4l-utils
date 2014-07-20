@@ -47,7 +47,7 @@ class QSpinBox;
 class QToolButton;
 class QSlider;
 
-class GeneralTab: public QGridLayout, cv4l_fd
+class GeneralTab: public QGridLayout, public cv4l_fd
 {
 	Q_OBJECT
 

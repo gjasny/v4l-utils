@@ -130,6 +130,7 @@ private slots:
 	void saveRaw(bool);
 	void setRenderMethod(bool);
 	void setBlending(bool);
+	void traceIoctls(bool);
 	void changeAudioDevice();
 
 	// gui
