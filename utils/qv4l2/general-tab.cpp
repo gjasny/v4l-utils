@@ -373,12 +373,8 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 		m_detectSubchans = new QToolButton(w);
 		m_detectSubchans->setIcon(QIcon(":/enterbutt.png"));
 		m_subchannels = new QLabel("", w);
-		//m_detectSubchans->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
-		//m_subchannels->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
 		box->addWidget(m_detectSubchans, 0, Qt::AlignLeft);
 		box->addWidget(m_subchannels, 0, Qt::AlignLeft);
-		//box->addStretch(1000);
-		//w->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 		m_freqRows->addWidget(l, 0, 2, Qt::AlignLeft);
 		m_freqRows->addWidget(w, 0, 3, Qt::AlignLeft);
 		connect(m_detectSubchans, SIGNAL(clicked()), SLOT(detectSubchansClicked()));
@@ -1370,6 +1366,9 @@ void GeneralTab::frameWidthChanged()
 	if (m_frameWidth->isEnabled()) {
 		g_fmt(fmt);
 		fmt.s_width(val);
+		// Force the driver to recalculate bytesperline.
+		for (unsigned p = 0; p < fmt.g_num_planes(); p++)
+			fmt.s_bytesperline(0, p);
 		if (try_fmt(fmt) == 0)
 			s_fmt(fmt);
 	}
@@ -1402,6 +1401,9 @@ void GeneralTab::frameSizeChanged(int idx)
 		g_fmt(fmt);
 		fmt.s_width(frmsize.discrete.width);
 		fmt.s_height(frmsize.discrete.height);
+		// Force the driver to recalculate bytesperline.
+		for (unsigned p = 0; p < fmt.g_num_planes(); p++)
+			fmt.s_bytesperline(0, p);
 		if (try_fmt(fmt) == 0)
 			s_fmt(fmt);
 	}
