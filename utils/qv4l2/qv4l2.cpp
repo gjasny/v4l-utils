@@ -17,13 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "qv4l2.h"
-#include "general-tab.h"
-#include "vbi-tab.h"
-#include "capture-win.h"
-#include "capture-win-qt.h"
-#include "capture-win-gl.h"
-
 #ifdef ENABLE_ASLA
 extern "C" {
 #include "alsa_stream.h"
@@ -59,7 +52,15 @@ extern "C" {
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <dirent.h>
-#include <libv4l2.h>
+
+#include "qv4l2.h"
+#include "general-tab.h"
+#include "vbi-tab.h"
+#include "capture-win.h"
+#include "capture-win-qt.h"
+#include "capture-win-gl.h"
+
+#include <libv4lconvert.h>
 
 ApplicationWindow::ApplicationWindow() :
 	m_capture(NULL),
@@ -78,8 +79,9 @@ ApplicationWindow::ApplicationWindow() :
 	m_capImage = NULL;
 	m_frameData = NULL;
 	m_nbuffers = 0;
-	m_buffers = NULL;
 	m_makeSnapshot = false;
+	for (unsigned b = 0; b < sizeof(m_clear); b++)
+		m_clear[b] = false;
 
 	QAction *openAct = new QAction(QIcon(":/fileopen.png"), "&Open Device", this);
 	openAct->setStatusTip("Open a v4l device, use libv4l2 wrapper if possible");
@@ -217,14 +219,15 @@ ApplicationWindow::~ApplicationWindow()
 	closeDevice();
 }
 
-
 void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 {
 	closeDevice();
 	m_sigMapper = new QSignalMapper(this);
 	connect(m_sigMapper, SIGNAL(mapped(int)), this, SLOT(ctrlAction(int)));
 
-	if (!open(device, !rawOpen)) {
+	s_direct(rawOpen);
+
+	if (open(device.toLatin1(), true) < 0) {
 #ifdef HAVE_ALSA
 		m_showAllAudioAct->setEnabled(false);
 		m_audioBufferAct->setEnabled(false);
@@ -235,7 +238,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	newCaptureWin();
 
 	QWidget *w = new QWidget(m_tabs);
-	m_genTab = new GeneralTab(device, *this, 4, w);
+	m_genTab = new GeneralTab(device, this, 4, w);
 	int size[2];
 	size[0] = m_genTab->getWidth();
 	size[1] = m_genTab->getHeight();
@@ -259,7 +262,8 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	connect(m_genTab, SIGNAL(clearBuffers()), this, SLOT(clearBuffers()));
 	m_tabs->addTab(w, "General Settings");
 	addTabs(size);
-	if (caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE)) {
+	m_vbiTab = NULL;
+	if (has_vbi_cap()) {
 		w = new QWidget(m_tabs);
 		m_vbiTab = new VbiTab(w);
 		m_tabs->addTab(w, "VBI");
@@ -270,13 +274,13 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	statusBar()->clearMessage();
 	m_tabs->show();
 	m_tabs->setFocus();
-	m_convertData = v4lconvert_create(fd());
-	m_capStartAct->setEnabled(fd() >= 0);
-	m_saveRawAct->setEnabled(fd() >= 0);
+	m_convertData = v4lconvert_create(g_fd());
+	m_capStartAct->setEnabled(g_fd() >= 0);
+	m_saveRawAct->setEnabled(g_fd() >= 0);
 #ifdef HAVE_QTGL
 	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
 #endif
-	m_ctrlNotifier = new QSocketNotifier(fd(), QSocketNotifier::Exception, m_tabs);
+	m_ctrlNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Exception, m_tabs);
 	connect(m_ctrlNotifier, SIGNAL(activated(int)), this, SLOT(ctrlEvent()));
 }
 
@@ -336,7 +340,7 @@ void ApplicationWindow::ctrlEvent()
 {
 	v4l2_event ev;
 
-	while (dqevent(ev)) {
+	while (dqevent(ev) == 0) {
 		if (ev.type == V4L2_EVENT_SOURCE_CHANGE) {
 			m_genTab->sourceChange(ev);
 			continue;
@@ -381,7 +385,7 @@ void ApplicationWindow::ctrlEvent()
 		ctrls.count = 1;
 		ctrls.ctrl_class = 0;
 		ctrls.controls = &c;
-		if (!ioctl(VIDIOC_G_EXT_CTRLS, &ctrls))
+		if (!cv4l_ioctl(VIDIOC_G_EXT_CTRLS, &ctrls))
 			setString(ev.id, c.string);
 		free(c.string);
 	}
@@ -408,13 +412,73 @@ void ApplicationWindow::newCaptureWin()
         connect(m_capture, SIGNAL(close()), this, SLOT(closeCaptureWin()));
 }
 
+bool ApplicationWindow::startCapture()
+{
+	startAudio();
+
+	if (m_genTab->isRadio())
+		return true;
+
+	m_queue.init(g_type(), m_capMethod);
+
+#ifdef HAVE_QTGL
+	m_useGLAct->setEnabled(false);
+#endif
+
+	switch (m_capMethod) {
+	case methodRead:
+		m_snapshotAct->setEnabled(true);
+		m_genTab->setHaveBuffers(true);
+		/* Nothing to do. */
+		return true;
+
+	case methodMmap:
+	case methodUser:
+		if (m_queue.reqbufs(this, 4)) {
+			error("Cannot capture");
+			break;
+		}
+
+		if (m_queue.g_buffers() < 2) {
+			error("Too few buffers");
+			break;
+		}
+
+		if (m_queue.obtain_bufs(this)) {
+			error("Get buffers");
+			break;
+		}
+
+		for (unsigned i = 0; i < m_queue.g_buffers(); i++) {
+			cv4l_buffer buf;
+	
+			m_queue.buffer_init(buf, i);
+			qbuf(buf); 
+		}
+
+		if (streamon()) {
+			perror("VIDIOC_STREAMON");
+			break;
+		}
+		m_snapshotAct->setEnabled(true);
+		m_genTab->setHaveBuffers(true);
+		return true;
+	}
+
+	m_queue.free(this);
+	reopen(true);
+	m_capStartAct->setChecked(false);
+#ifdef HAVE_QTGL
+	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
+#endif
+	return false;
+}
+
 void ApplicationWindow::capVbiFrame()
 {
-	__u32 buftype = m_genTab->bufType();
-	v4l2_buffer buf;
+	cv4l_buffer buf(m_queue);
 	__u8 *data = NULL;
 	int s = 0;
-	bool again;
 
 	switch (m_capMethod) {
 	case methodRead:
@@ -430,43 +494,28 @@ void ApplicationWindow::capVbiFrame()
 		break;
 
 	case methodMmap:
-		if (!dqbuf_mmap(buf, buftype, again)) {
-			error("dqbuf");
-			m_capStartAct->setChecked(false);
-			return;
-		}
-		if (again)
-			return;
-		if (buf.flags & V4L2_BUF_FLAG_ERROR) {
-			qbuf(buf);
-			return;
-		}
-		data = (__u8 *)m_buffers[buf.index].start[0];
-		s = buf.bytesused;
-		break;
-
 	case methodUser:
-		if (!dqbuf_user(buf, buftype, again)) {
+		if (dqbuf(buf)) {
+			if (errno == EAGAIN)
+				return;
 			error("dqbuf");
 			m_capStartAct->setChecked(false);
 			return;
 		}
-		if (again)
-			return;
-		if (buf.flags & V4L2_BUF_FLAG_ERROR) {
+		if (buf.g_flags() & V4L2_BUF_FLAG_ERROR) {
 			qbuf(buf);
 			return;
 		}
-		data = (__u8 *)buf.m.userptr;
-		s = buf.bytesused;
+		data = (__u8 *)m_queue.g_dataptr(buf.g_index(), 0);
+		s = buf.g_bytesused();
 		break;
 	}
-	if (buftype == V4L2_BUF_TYPE_VBI_CAPTURE && s != m_vbiSize) {
+	if (g_type() == V4L2_BUF_TYPE_VBI_CAPTURE && s != m_vbiSize) {
 		error("incorrect vbi size");
 		m_capStartAct->setChecked(false);
 		return;
 	}
-	if (showFrames() && buftype == V4L2_BUF_TYPE_VBI_CAPTURE) {
+	if (showFrames() && g_type() == V4L2_BUF_TYPE_VBI_CAPTURE) {
 		for (unsigned y = 0; y < m_vbiHeight; y++) {
 			__u8 *p = data + y * m_vbiWidth;
 			__u8 *q = m_capImage->bits() + y * m_capImage->bytesPerLine();
@@ -483,7 +532,7 @@ void ApplicationWindow::capVbiFrame()
 	struct v4l2_sliced_vbi_data sdata[m_vbiHandle.count[0] + m_vbiHandle.count[1]];
 	struct v4l2_sliced_vbi_data *p;
 
-	if (buftype == V4L2_BUF_TYPE_SLICED_VBI_CAPTURE) {
+	if (g_type() == V4L2_BUF_TYPE_SLICED_VBI_CAPTURE) {
 		p = (struct v4l2_sliced_vbi_data *)data;
 	} else {
 		vbi_parse(&m_vbiHandle, data, &sfmt, sdata);
@@ -510,7 +559,7 @@ void ApplicationWindow::capVbiFrame()
 		m_tv = tv;
 	}
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
-	if (showFrames() && buftype == V4L2_BUF_TYPE_VBI_CAPTURE)
+	if (showFrames() && g_type() == V4L2_BUF_TYPE_VBI_CAPTURE)
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, status);
 
@@ -523,22 +572,19 @@ void ApplicationWindow::capVbiFrame()
 
 void ApplicationWindow::capFrame()
 {
-	__u32 buftype = m_genTab->bufType();
-	v4l2_plane planes[VIDEO_MAX_PLANES];
-	v4l2_buffer buf;
+	cv4l_buffer buf(m_queue);
+	unsigned char *plane[2];
+	unsigned bytesused[2];
 	int s = 0;
 	int err = 0;
-	bool again;
 #ifdef HAVE_ALSA
 	struct timeval tv_alsa;
 #endif
 
-	unsigned char *displaybuf = NULL;
-	unsigned char *displaybuf2 = NULL;
-
+	plane[0] = plane[1] = NULL;
 	switch (m_capMethod) {
 	case methodRead:
-		s = read(m_frameData, m_capSrcFormat.fmt.pix.sizeimage);
+		s = read(m_frameData, m_capSrcFormat.g_sizeimage(0));
 #ifdef HAVE_ALSA
 		alsa_thread_timestamp(&tv_alsa);
 #endif
@@ -555,31 +601,26 @@ void ApplicationWindow::capFrame()
 		if (m_saveRaw.openMode())
 			m_saveRaw.write((const char *)m_frameData, s);
 
-		if (!showFrames())
-			break;
-		if (m_mustConvert)
+		plane[0] = m_frameData;
+		if (showFrames() && m_mustConvert) {
 			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
 						 m_frameData, s,
 						 m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-		if (m_mustConvert && err != -1)
-			displaybuf = m_capImage->bits();
-		if (!m_mustConvert)
-			displaybuf = m_frameData;
+			if (err != -1)
+				plane[0] = m_capImage->bits();
+		}
 		break;
 
 	case methodMmap:
-		memset(planes, 0, sizeof(planes));
-		buf.length = VIDEO_MAX_PLANES;
-		buf.m.planes = planes;
-		if (!dqbuf_mmap(buf, buftype, again)) {
+	case methodUser:
+		if (dqbuf(buf)) {
+			if (errno == EAGAIN)
+				return;
 			error("dqbuf");
 			m_capStartAct->setChecked(false);
 			return;
 		}
-
-		if (again)
-			return;
-		if (buf.flags & V4L2_BUF_FLAG_ERROR) {
+		if (buf.g_flags() & V4L2_BUF_FLAG_ERROR) {
 			qbuf(buf);
 			return;
 		}
@@ -588,72 +629,27 @@ void ApplicationWindow::capFrame()
 		alsa_thread_timestamp(&tv_alsa);
 #endif
 
-		if (showFrames()) {
-			if (m_mustConvert)
-				err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
-							 (unsigned char *)m_buffers[buf.index].start[0], buf.bytesused,
-							 m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-			if (m_mustConvert && err != -1)
-				displaybuf = m_capImage->bits();
-			if (!m_mustConvert) {
-				displaybuf = (unsigned char *)m_buffers[buf.index].start[0];
-				displaybuf2 = (unsigned char *)m_buffers[buf.index].start[1];
-				if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
-					displaybuf += planes[0].data_offset;
-					displaybuf2 += planes[1].data_offset;
-				}
+		plane[0] = (__u8 *)m_queue.g_dataptr(buf.g_index(), 0);
+		plane[1] = (__u8 *)m_queue.g_dataptr(buf.g_index(), 1);
+		plane[0] += buf.g_data_offset(0);
+		bytesused[0] = buf.g_bytesused(0) - buf.g_data_offset(0);
+		if (plane[1]) {
+			plane[1] += buf.g_data_offset(1);
+			bytesused[1] = buf.g_bytesused(1) - buf.g_data_offset(1);
+		}
+		if (showFrames() && m_mustConvert) {
+			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
+						 plane[0], bytesused[0], m_capImage->bits(),
+						 m_capDestFormat.fmt.pix.sizeimage);
+			if (err != -1) {
+				plane[0] = m_capImage->bits();
+				bytesused[0] = m_capDestFormat.fmt.pix.sizeimage;
 			}
 		}
 		if (m_makeSnapshot)
-			makeSnapshot((unsigned char *)m_buffers[buf.index].start[0], buf.bytesused);
+			makeSnapshot(plane[0], bytesused[0]);
 		if (m_saveRaw.openMode())
-			m_saveRaw.write((const char *)m_buffers[buf.index].start[0], buf.bytesused);
-
-		break;
-
-	case methodUser:
-		memset(planes, 0, sizeof(planes));
-		buf.length = VIDEO_MAX_PLANES;
-		buf.m.planes = planes;
-		if (!dqbuf_user(buf, buftype, again)) {
-			error("dqbuf1");
-			m_capStartAct->setChecked(false);
-			return;
-		}
-		if (again)
-			return;
-		if (buf.flags & V4L2_BUF_FLAG_ERROR) {
-			qbuf(buf);
-			return;
-		}
-#ifdef HAVE_ALSA
-		alsa_thread_timestamp(&tv_alsa);
-#endif
-		if (buf.flags & V4L2_BUF_FLAG_ERROR) {
-			qbuf(buf);
-			return;
-		}
-
-		if (showFrames()) {
-			if (m_mustConvert)
-				err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
-							 (unsigned char *)buf.m.userptr, buf.bytesused,
-							 m_capImage->bits(), m_capDestFormat.fmt.pix.sizeimage);
-			if (m_mustConvert && err != -1)
-				displaybuf = m_capImage->bits();
-			if (!m_mustConvert) {
-				displaybuf = (unsigned char *)m_buffers[buf.index].start[0];
-				displaybuf2 = (unsigned char *)m_buffers[buf.index].start[1];
-				if (V4L2_TYPE_IS_MULTIPLANAR(buf.type)) {
-					displaybuf += planes[0].data_offset;
-					displaybuf2 += planes[1].data_offset;
-				}
-			}
-		}
-		if (m_makeSnapshot)
-			makeSnapshot((unsigned char *)buf.m.userptr, buf.bytesused);
-		if (m_saveRaw.openMode())
-			m_saveRaw.write((const char *)buf.m.userptr, buf.bytesused);
+			m_saveRaw.write((const char *)plane[0], bytesused[0]);
 
 		break;
 	}
@@ -679,26 +675,26 @@ void ApplicationWindow::capFrame()
 #ifdef HAVE_ALSA
 	if (alsa_thread_is_running()) {
 		if (tv_alsa.tv_sec || tv_alsa.tv_usec) {
-			m_totalAudioLatency.tv_sec += buf.timestamp.tv_sec - tv_alsa.tv_sec;
-			m_totalAudioLatency.tv_usec += buf.timestamp.tv_usec - tv_alsa.tv_usec;
+			m_totalAudioLatency.tv_sec += buf.g_timestamp().tv_sec - tv_alsa.tv_sec;
+			m_totalAudioLatency.tv_usec += buf.g_timestamp().tv_usec - tv_alsa.tv_usec;
 		}
 		status.append(QString(" Average A-V: %3 ms")
 			      .arg((m_totalAudioLatency.tv_sec * 1000 + m_totalAudioLatency.tv_usec / 1000) / m_frame));
 	}
 #endif
-	if (displaybuf == NULL && showFrames())
+	if (plane[0] == NULL && showFrames())
 		status.append(" Error: Unsupported format.");
 
 	if (showFrames())
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, displaybuf, displaybuf2, status);
+				    m_capDestFormat.g_pixelformat(), plane[0], plane[1], status);
 
 	if (m_capMethod == methodMmap || m_capMethod == methodUser) {
-		if (m_buffers[buf.index].clear) {
-			memset(m_buffers[buf.index].start[0], 0, m_buffers[buf.index].length[0]);
-			if (V4L2_TYPE_IS_MULTIPLANAR(buf.type))
-				memset(m_buffers[buf.index].start[1], 0, m_buffers[buf.index].length[1]);
-			m_buffers[buf.index].clear = false;
+		if (m_clear[buf.g_index()]) {
+			memset(m_queue.g_dataptr(buf.g_index(), 0), 0, buf.g_length());
+			if (V4L2_TYPE_IS_MULTIPLANAR(buf.g_type()))
+				memset(m_queue.g_dataptr(buf.g_index(), 1), 0, buf.g_length(1));
+			m_clear[buf.g_index()] = false;
 		}
 			
 		qbuf(buf);
@@ -711,180 +707,6 @@ void ApplicationWindow::capFrame()
 		refresh();
 }
 
-bool ApplicationWindow::startCapture(unsigned buffer_size)
-{
-	startAudio();
-
-	if (m_genTab->isRadio())
-		return true;
-
-	__u32 buftype = m_genTab->bufType();
-	v4l2_requestbuffers req;
-	unsigned int i;
-
-	memset(&req, 0, sizeof(req));
-
-	m_useGLAct->setEnabled(false);
-
-	switch (m_capMethod) {
-	case methodRead:
-		m_snapshotAct->setEnabled(true);
-		m_genTab->setHaveBuffers(true);
-		/* Nothing to do. */
-		return true;
-
-	case methodMmap:
-		if (!reqbufs_mmap(req, buftype, 3)) {
-			error("Cannot capture");
-			break;
-		}
-
-		if (req.count < 2) {
-			error("Too few buffers");
-			reqbufs_mmap(req, buftype);
-			break;
-		}
-
-		m_buffers = (buffer *)calloc(req.count, sizeof(*m_buffers));
-
-		if (!m_buffers) {
-			error("Out of memory");
-			reqbufs_mmap(req, buftype);
-			break;
-		}
-
-		for (m_nbuffers = 0; m_nbuffers < req.count; ++m_nbuffers) {
-			v4l2_plane planes[VIDEO_MAX_PLANES];
-			v4l2_buffer buf;
-
-			memset(&buf, 0, sizeof(buf));
-
-			buf.type        = buftype;
-			buf.memory      = V4L2_MEMORY_MMAP;
-			buf.index       = m_nbuffers;
-			buf.length      = VIDEO_MAX_PLANES;
-			buf.m.planes    = planes;
-
-			if (-1 == ioctl(VIDIOC_QUERYBUF, &buf)) {
-				perror("VIDIOC_QUERYBUF");
-				goto error;
-			}
-
-			if (V4L2_TYPE_IS_MULTIPLANAR(buftype)) {
-				m_buffers[m_nbuffers].planes = buf.length;
-				for (unsigned p = 0; p < buf.length; p++) {
-					m_buffers[m_nbuffers].length[p] = planes[p].length;
-					m_buffers[m_nbuffers].start[p] = mmap(planes[p].length, planes[p].m.mem_offset);
-					if (MAP_FAILED == m_buffers[m_nbuffers].start[p]) {
-						perror("mmap");
-						goto error;
-					}
-					memset(m_buffers[m_nbuffers].start[p], 0,
-					       m_buffers[m_nbuffers].length[p]);
-				}
-			} else {
-				m_buffers[m_nbuffers].planes = 1;
-				m_buffers[m_nbuffers].length[0] = buf.length;
-				m_buffers[m_nbuffers].start[0] = mmap(buf.length, buf.m.offset);
-				if (MAP_FAILED == m_buffers[m_nbuffers].start[0]) {
-					perror("mmap");
-					goto error;
-				}
-				memset(m_buffers[m_nbuffers].start[0], 0,
-				       m_buffers[m_nbuffers].length[0]);
-			}
-		}
-		for (i = 0; i < m_nbuffers; ++i) {
-			if (!qbuf_mmap(i, buftype)) {
-				perror("VIDIOC_QBUF");
-				goto error;
-			}
-		}
-		if (!streamon(buftype)) {
-			perror("VIDIOC_STREAMON");
-			goto error;
-		}
-		m_snapshotAct->setEnabled(true);
-		m_genTab->setHaveBuffers(true);
-		return true;
-
-	case methodUser:
-		if (!reqbufs_user(req, buftype, 3)) {
-			error("Cannot capture");
-			break;
-		}
-
-		if (req.count < 2) {
-			error("Too few buffers");
-			reqbufs_user(req, buftype);
-			break;
-		}
-
-		m_buffers = (buffer *)calloc(req.count, sizeof(*m_buffers));
-
-		if (!m_buffers) {
-			error("Out of memory");
-			break;
-		}
-
-		for (m_nbuffers = 0; m_nbuffers < req.count; ++m_nbuffers) {
-			v4l2_plane planes[VIDEO_MAX_PLANES];
-			v4l2_buffer buf;
-
-			memset(&buf, 0, sizeof(buf));
-
-			buf.type        = buftype;
-			buf.memory      = V4L2_MEMORY_USERPTR;
-			buf.index       = m_nbuffers;
-			buf.length      = VIDEO_MAX_PLANES;
-			buf.m.planes    = planes;
-
-			if (-1 == ioctl(VIDIOC_QUERYBUF, &buf)) {
-				perror("VIDIOC_QUERYBUF");
-				goto error;
-			}
-
-			if (V4L2_TYPE_IS_MULTIPLANAR(buftype)) {
-				m_buffers[m_nbuffers].planes = buf.length;
-				for (unsigned p = 0; p < buf.length; p++) {
-					m_buffers[m_nbuffers].length[p] = planes[p].length;
-					m_buffers[m_nbuffers].start[p] = calloc(1, planes[p].length);
-					if (m_buffers[m_nbuffers].start[p] == NULL) {
-						error("Out of memory");
-						goto error;
-					}
-				}
-			} else {
-				m_buffers[m_nbuffers].planes = 1;
-				m_buffers[m_nbuffers].length[0] = buffer_size;
-				m_buffers[m_nbuffers].start[0] = calloc(1, buffer_size);
-
-				if (!m_buffers[m_nbuffers].start[0]) {
-					error("Out of memory");
-					goto error;
-				}
-			}
-		}
-		for (i = 0; i < m_nbuffers; ++i)
-			if (!qbuf_user(i, buftype, m_buffers[i].start, m_buffers[i].length)) {
-				perror("VIDIOC_QBUF");
-				goto error;
-			}
-		if (!streamon(buftype)) {
-			perror("VIDIOC_STREAMON");
-			goto error;
-		}
-		m_snapshotAct->setEnabled(true);
-		m_genTab->setHaveBuffers(true);
-		return true;
-	}
-
-error:
-	m_capStartAct->setChecked(false);
-	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
-	return false;
-}
-
 void ApplicationWindow::stopCapture()
 {
 	stopAudio();
@@ -892,10 +714,7 @@ void ApplicationWindow::stopCapture()
 	if (m_genTab->isRadio())
 		return;
 
-	__u32 buftype = m_genTab->bufType();
-	v4l2_requestbuffers reqbufs;
 	v4l2_encoder_cmd cmd;
-	unsigned i;
 
 	m_capture->stop();
 	m_snapshotAct->setDisabled(true);
@@ -904,36 +723,15 @@ void ApplicationWindow::stopCapture()
 	case methodRead:
 		memset(&cmd, 0, sizeof(cmd));
 		cmd.cmd = V4L2_ENC_CMD_STOP;
-		ioctl(VIDIOC_ENCODER_CMD, &cmd);
+		cv4l_ioctl(VIDIOC_ENCODER_CMD, &cmd);
 		break;
 
 	case methodMmap:
-		if (m_buffers == NULL)
-			break;
-		if (!streamoff(buftype))
-			perror("VIDIOC_STREAMOFF");
-		for (i = 0; i < m_nbuffers; ++i)
-			for (unsigned p = 0; p < m_buffers[i].planes; p++)
-				if (-1 == munmap(m_buffers[i].start[p], m_buffers[i].length[p]))
-					perror("munmap");
-		// Free all buffers.
-		reqbufs_mmap(reqbufs, buftype, 1);  // videobuf workaround
-		reqbufs_mmap(reqbufs, buftype, 0);
-		break;
-
 	case methodUser:
-		if (!streamoff(buftype))
-			perror("VIDIOC_STREAMOFF");
-		// Free all buffers.
-		reqbufs_user(reqbufs, buftype, 1);  // videobuf workaround
-		reqbufs_user(reqbufs, buftype, 0);
-		for (i = 0; i < m_nbuffers; ++i)
-			for (unsigned p = 0; p < m_buffers[i].planes; p++)
-				free(m_buffers[i].start[p]);
+		m_queue.free(this);
 		break;
 	}
-	free(m_buffers);
-	m_buffers = NULL;
+	reopen(true);
 	m_genTab->setHaveBuffers(false);
 	refresh();
 }
@@ -947,14 +745,6 @@ bool ApplicationWindow::showFrames()
 	    m_genTab->isSlicedVbi())
 		m_capture->hide();
 	return m_showFramesAct->isChecked();
-}
-
-void ApplicationWindow::startOutput(unsigned)
-{
-}
-
-void ApplicationWindow::stopOutput()
-{
 }
 
 void ApplicationWindow::enableScaling(bool enable)
@@ -983,16 +773,13 @@ void ApplicationWindow::updateColorspace()
 	unsigned colorspace = m_genTab->getColorspace();
 
 	if (colorspace == 0) {
-		v4l2_format fmt;
+		cv4l_fmt fmt;
 
-		fmt.type = m_genTab->bufType();
+		g_fmt(fmt);
 		// don't use the wrapped ioctl since it doesn't
 		// update colorspace correctly.
-		::ioctl(fd(), VIDIOC_G_FMT, &fmt);
-		if (m_genTab->isPlanar())
-			colorspace = fmt.fmt.pix_mp.colorspace;
-		else
-			colorspace = fmt.fmt.pix.colorspace;
+		::ioctl(g_fd(), VIDIOC_G_FMT, &fmt);
+		colorspace = fmt.g_colorspace();
 	}
 	m_capture->setColorspace(colorspace);
 }
@@ -1005,9 +792,9 @@ void ApplicationWindow::updateDisplayColorspace()
 
 void ApplicationWindow::clearBuffers()
 {
-	if (m_capture && m_buffers)
-		for (unsigned b = 0; b < m_nbuffers; b++)
-			m_buffers[b].clear = true;
+	if (m_capture)
+		for (unsigned b = 0; b < sizeof(m_clear); b++)
+			m_clear[b] = true;
 }
 
 void ApplicationWindow::startAudio()
@@ -1055,7 +842,7 @@ void ApplicationWindow::capStart(bool start)
 {
 	if (m_genTab->isRadio()) {
 		if (start)
-			startCapture(0);
+			startCapture();
 		else
 			stopCapture();
 
@@ -1064,12 +851,6 @@ void ApplicationWindow::capStart(bool start)
 
 	QImage::Format dstFmt = QImage::Format_RGB888;
 	struct v4l2_fract interval;
-	v4l2_pix_format &srcPix = m_capSrcFormat.fmt.pix;
-	v4l2_pix_format &dstPix = m_capDestFormat.fmt.pix;
-	v4l2_pix_format_mplane &srcMPix = m_capSrcFormat.fmt.pix_mp;
-	v4l2_pix_format_mplane &dstMPix = m_capDestFormat.fmt.pix_mp;
-	__u32 buftype = m_genTab->bufType();
-	bool isPlanar = m_genTab->isPlanar();
 	__u32 width, height, pixfmt;
 	unsigned colorspace, field;
 
@@ -1085,34 +866,42 @@ void ApplicationWindow::capStart(bool start)
 	m_capMethod = m_genTab->capMethod();
 
 	if (m_genTab->isSlicedVbi()) {
-		v4l2_format fmt;
+		cv4l_fmt fmt;
 		v4l2_std_id std;
 
-		g_fmt_sliced_vbi(fmt);
-		g_std(std);
-		fmt.fmt.sliced.service_set = (std & V4L2_STD_625_50) ?
-			V4L2_SLICED_VBI_625 : V4L2_SLICED_VBI_525;
+		s_type(V4L2_BUF_TYPE_SLICED_VBI_CAPTURE);
+		if (g_std(std)) {
+			error("this input isn't suitable for VBI\n");
+			return;
+		}
+		if (g_fmt(fmt)) {
+			error("could not obtain an VBI format\n");
+			return;
+		}
+		fmt.fmt.sliced.service_set = (std & V4L2_STD_525_60) ?
+			V4L2_SLICED_VBI_525 : V4L2_SLICED_VBI_625;
 		s_fmt(fmt);
 		memset(&m_vbiHandle, 0, sizeof(m_vbiHandle));
 		m_vbiTab->slicedFormat(fmt.fmt.sliced);
 		m_vbiSize = fmt.fmt.sliced.io_size;
 		m_frameData = new unsigned char[m_vbiSize];
-		if (startCapture(m_vbiSize)) {
-			m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
+		if (startCapture()) {
+			m_capNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Read, m_tabs);
 			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capVbiFrame()));
 		}
 		return;
 	}
 	if (m_genTab->isVbi()) {
-		v4l2_format fmt;
+		cv4l_fmt fmt;
 		v4l2_std_id std;
 
-		if (!g_std(std)) {
+		s_type(V4L2_BUF_TYPE_VBI_CAPTURE);
+		if (g_std(std)) {
 			error("this input isn't suitable for VBI\n");
 			return;
 		}
-		if (!g_fmt_vbi(fmt)) {
-			error("could not obtain a VBI format\n");
+		if (g_fmt(fmt)) {
+			error("could not obtain an VBI format\n");
 			return;
 		}
 		if (fmt.fmt.vbi.sample_format != V4L2_PIX_FMT_GREY) {
@@ -1120,7 +909,6 @@ void ApplicationWindow::capStart(bool start)
 			return;
 		}
 		s_fmt(fmt);
-		g_std(std);
 		if (!vbi_prepare(&m_vbiHandle, &fmt.fmt.vbi, std)) {
 			error("no services possible\n");
 			return;
@@ -1139,58 +927,49 @@ void ApplicationWindow::capStart(bool start)
 			m_capture->show();
 
 		statusBar()->showMessage("No frame");
-		if (startCapture(m_vbiSize)) {
-			m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
+		if (startCapture()) {
+			m_capNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Read, m_tabs);
 			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capVbiFrame()));
 		}
 		return;
 	}
 
-	g_fmt(buftype, m_capSrcFormat);
+	m_capSrcFormat.s_type(g_type());
+	g_fmt(m_capSrcFormat);
 	s_fmt(m_capSrcFormat);
-	if (m_genTab->get_interval(interval))
-		set_interval(buftype, interval);
+	if (!m_genTab->get_interval(interval))
+		set_interval(interval);
 
-	if (!isPlanar)
-		m_frameData = new unsigned char[srcPix.sizeimage];
-	else
-		m_frameData = new unsigned char[srcMPix.plane_fmt[0].sizeimage + srcMPix.plane_fmt[1].sizeimage];
+	m_frameData = new unsigned char[m_capSrcFormat.g_sizeimage(0) +
+					m_capSrcFormat.g_sizeimage(1)];
 	m_capDestFormat = m_capSrcFormat;
 
-	if (isPlanar) {
-		dstMPix.pixelformat = srcMPix.pixelformat;
-		width = srcMPix.width;
-		height = srcMPix.height;
-		pixfmt = srcMPix.pixelformat;
-		colorspace = srcMPix.colorspace;
-		field = srcMPix.field;
-		m_mustConvert = false;
-	} else if (m_capture->hasNativeFormat(srcPix.pixelformat)) {
-		dstPix.pixelformat = srcPix.pixelformat;
-		width = srcPix.width;
-		height = srcPix.height;
-		pixfmt = srcPix.pixelformat;
-		colorspace = srcPix.colorspace;
-		field = srcPix.field;
+	if (m_capture->hasNativeFormat(m_capSrcFormat.g_pixelformat())) {
+		width = m_capSrcFormat.g_width();
+		height = m_capSrcFormat.g_height();
+		pixfmt = m_capSrcFormat.g_pixelformat();
+		colorspace = m_capSrcFormat.g_colorspace();
+		field = m_capSrcFormat.g_field();
 		m_mustConvert = false;
 	} else {
 		m_mustConvert = true;
 
-		dstPix.pixelformat = V4L2_PIX_FMT_RGB24;
+		m_capDestFormat.s_pixelformat(V4L2_PIX_FMT_RGB24);
 		// Make sure sizeimage is large enough. This is necessary if the mplane
 		// plugin is in use since v4lconvert_try_format() bypasses the plugin.
-		dstPix.sizeimage = dstPix.width * dstPix.height * 3;
-		v4l2_format copy = m_capSrcFormat;
+		m_capDestFormat.s_sizeimage(m_capDestFormat.g_width() *
+					    m_capDestFormat.g_height() * 3);
+		cv4l_fmt copy = m_capSrcFormat;
 		v4lconvert_try_format(m_convertData, &m_capDestFormat, &m_capSrcFormat);
 		// v4lconvert_try_format sometimes modifies the source format if it thinks
 		// that there is a better format available. Restore our selected source
 		// format since we do not want that happening.
 		m_capSrcFormat = copy;
-		width = dstPix.width;
-		height = dstPix.height;
-		pixfmt = dstPix.pixelformat;
-		colorspace = dstPix.colorspace;
-		field = dstPix.field;
+		width = m_capDestFormat.g_width();
+		height = m_capDestFormat.g_height();
+		pixfmt = m_capDestFormat.g_pixelformat();
+		colorspace = m_capDestFormat.g_colorspace();
+		field = m_capDestFormat.g_field();
 	}
 
 	// Ensure that the initial image is large enough for native 32 bit per pixel formats
@@ -1224,8 +1003,8 @@ void ApplicationWindow::capStart(bool start)
 		m_capture->show();
 
 	statusBar()->showMessage("No frame");
-	if (startCapture(srcPix.sizeimage)) {
-		m_capNotifier = new QSocketNotifier(fd(), QSocketNotifier::Read, m_tabs);
+	if (startCapture()) {
+		m_capNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Read, m_tabs);
 		connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capFrame()));
 	}
 }
@@ -1244,7 +1023,7 @@ void ApplicationWindow::closeDevice()
 	m_capStartAct->setEnabled(false);
 	m_capStartAct->setChecked(false);
 	m_saveRawAct->setEnabled(false);
-	if (fd() >= 0) {
+	if (g_fd() >= 0) {
 		if (m_capNotifier) {
 			delete m_capNotifier;
 			delete m_capImage;
@@ -1258,7 +1037,7 @@ void ApplicationWindow::closeDevice()
 		delete m_frameData;
 		m_frameData = NULL;
 		v4lconvert_destroy(m_convertData);
-		v4l2::close();
+		cv4l_fd::close();
 		delete m_capture;
 		m_capture = NULL;
 	}

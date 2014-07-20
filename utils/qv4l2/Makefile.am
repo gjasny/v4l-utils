@@ -1,18 +1,19 @@
 bin_PROGRAMS = qv4l2
 man_MANS = qv4l2.1
 
-qv4l2_SOURCES = qv4l2.cpp general-tab.cpp ctrl-tab.cpp vbi-tab.cpp v4l2-api.cpp capture-win.cpp \
+qv4l2_SOURCES = qv4l2.cpp general-tab.cpp ctrl-tab.cpp vbi-tab.cpp capture-win.cpp \
   capture-win-qt.cpp capture-win-qt.h capture-win-gl.cpp capture-win-gl.h alsa_stream.c alsa_stream.h \
-  raw2sliced.cpp qv4l2.h capture-win.h general-tab.h vbi-tab.h v4l2-api.h raw2sliced.h
+  raw2sliced.cpp qv4l2.h capture-win.h general-tab.h vbi-tab.h raw2sliced.h
 nodist_qv4l2_SOURCES = moc_qv4l2.cpp moc_general-tab.cpp moc_capture-win.cpp moc_vbi-tab.cpp qrc_qv4l2.cpp
 qv4l2_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la ../libv4l2util/libv4l2util.la \
   ../libmedia_dev/libmedia_dev.la
+qv4l2_CPPFLAGS = -I../v4l2-compliance
 
 if WITH_QTGL
-qv4l2_CPPFLAGS = $(QTGL_CFLAGS)
+qv4l2_CPPFLAGS += $(QTGL_CFLAGS)
 qv4l2_LDFLAGS = $(QTGL_LIBS)
 else
-qv4l2_CPPFLAGS = $(QT_CFLAGS)
+qv4l2_CPPFLAGS += $(QT_CFLAGS)
 qv4l2_LDFLAGS = $(QT_LIBS)
 endif
 

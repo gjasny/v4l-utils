@@ -44,9 +44,20 @@ enum audioDeviceAdd {
 	AUDIO_ADD_READWRITE
 };
 
-GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) :
+static QString pixfmt2s(unsigned id)
+{
+	QString pixfmt;
+
+	pixfmt += (char)(id & 0xff);
+	pixfmt += (char)((id >> 8) & 0xff);
+	pixfmt += (char)((id >> 16) & 0xff);
+	pixfmt += (char)((id >> 24) & 0xff);
+	return pixfmt;
+}
+
+GeneralTab::GeneralTab(const QString &device, cv4l_fd *_fd, int n, QWidget *parent) :
 	QGridLayout(parent),
-	v4l2(fd),
+	cv4l_fd(_fd),
 	m_row(0),
 	m_col(0),
 	m_cols(n),
@@ -107,26 +118,26 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 {
 	m_device.append(device);
 	setSizeConstraint(QLayout::SetMinimumSize);
+
 	for (int i = 0; i < n; i++) {
 		m_maxw[i] = 0;
 	}
 
+	cv4l_ioctl(VIDIOC_QUERYCAP, &m_querycap);
 
-	if (querycap(m_querycap)) {
-		addTitle("General Information");
+	addTitle("General Information");
 
-		addLabel("Device");
-		addLabel(device + (useWrapper() ? " (wrapped)" : ""));
+	addLabel("Device");
+	addLabel(device + (g_direct() ? "" : " (wrapped)"));
 
-		addLabel("Driver");
-		addLabel((char *)m_querycap.driver);
+	addLabel("Driver");
+	addLabel((char *)m_querycap.driver);
 
-		addLabel("Card");
-		addLabel((char *)m_querycap.card);
+	addLabel("Card");
+	addLabel((char *)m_querycap.card);
 
-		addLabel("Bus");
-		addLabel((char *)m_querycap.bus_info);
-	}
+	addLabel("Bus");
+	addLabel((char *)m_querycap.bus_info);
 
 	g_tuner(m_tuner);
 	g_tuner(m_tuner_rf, 1);
@@ -147,38 +158,28 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	    (m_modulator.capability & (V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_1HZ)))
 		m_isRadio = true;
 	if (m_querycap.capabilities & V4L2_CAP_DEVICE_CAPS) {
-		m_isVbi = caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE);
-		m_isSDR = caps() & V4L2_CAP_SDR_CAPTURE;
+		m_isVbi = g_caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE);
+		m_isSDR = g_caps() & V4L2_CAP_SDR_CAPTURE;
 		if (m_isSDR)
 			m_isRadio = true;
-		if (caps() & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE))
+		if (g_caps() & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE))
 			m_isOutput = true;
 	}
 
 	if (m_querycap.capabilities &
 		(V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_OUTPUT_MPLANE))
 		m_isPlanar = true;
-	if (isSlicedVbi())
-		m_buftype = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-	else if (isVbi())
-		m_buftype = V4L2_BUF_TYPE_VBI_CAPTURE;
-	else if (m_isOutput)
-		m_buftype = isPlanar() ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
-			  V4L2_BUF_TYPE_VIDEO_OUTPUT;
-	else
-		m_buftype = isPlanar() ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
-			  V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
 	m_stackedStandards = new QStackedWidget;
 	m_stackedFrameSettings = new QStackedWidget;
 	m_stackedFrequency = new QStackedWidget;
 
-	if (enum_input(vin, true) || m_tuner.capability) {
+	if (!enum_input(vin, true) || m_tuner.capability) {
 		addTitle("Input Settings");
 		inputSection(needsStd, needsTimings, vin);
 	}
 
-	if (m_tuner_rf.capability || m_modulator.capability || (!isRadio() && enum_output(vout, true))) {
+	if (m_tuner_rf.capability || m_modulator.capability || (!isRadio() && !enum_output(vout, true))) {
 		addTitle("Output Settings");
 		outputSection(vout, fmt);
 	}
@@ -188,8 +189,8 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 		m_audioOutDevice = new QComboBox(parent);
 	}
 
-	if (!isVbi() && (createAudioDeviceList() || (!isRadio() && enum_audio(vaudio, true)) ||
-	    (!isSDR() && m_tuner.capability) || (!isRadio() && enum_audout(vaudout, true)))) {
+	if (!isVbi() && (createAudioDeviceList() || (!isRadio() && !enum_audio(vaudio, true)) ||
+	    (!isSDR() && m_tuner.capability) || (!isRadio() && !enum_audout(vaudout, true)))) {
 		addTitle("Audio Settings");
 		audioSection(vaudio, vaudout); 
 	}
@@ -209,12 +210,13 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 	if (isVbi()) {
 		addLabel("VBI Capture Method");
 		m_vbiMethods = new QComboBox(parent);
-		if (caps() & V4L2_CAP_VBI_CAPTURE)
+		if (g_caps() & V4L2_CAP_VBI_CAPTURE)
 			m_vbiMethods->addItem("Raw");
-		if (caps() & V4L2_CAP_SLICED_VBI_CAPTURE)
+		if (g_caps() & V4L2_CAP_SLICED_VBI_CAPTURE)
 			m_vbiMethods->addItem("Sliced");
 		addWidget(m_vbiMethods);
 		connect(m_vbiMethods, SIGNAL(activated(int)), SLOT(vbiMethodsChanged(int)));
+		vbiMethodsChanged(0);
 		updateVideoInput();
 		goto capture_method;
 	}
@@ -223,28 +225,27 @@ GeneralTab::GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent) 
 capture_method:
 	addLabel("Capture Method");
 	m_capMethods = new QComboBox(parent);
-	if (caps() & V4L2_CAP_STREAMING) {
-		v4l2_requestbuffers reqbuf;
+	if (g_caps() & V4L2_CAP_STREAMING) {
+		cv4l_queue q;
 
-		// Yuck. The videobuf framework does not accept a count of 0.
+		// Yuck. The videobuf framework does not accept a reqbufs count of 0.
 		// This is out-of-spec, but it means that the only way to test which
-		// method is supported is to give it a non-zero count. But non-videobuf
-		// drivers like uvc do not allow e.g. S_FMT calls after a REQBUFS call
-		// with non-zero counts unless there is a REQBUFS call with count == 0
-		// in between. This is actual proper behavior, although somewhat
-		// unexpected. So the only way at the moment to do this that works
-		// everywhere is to call REQBUFS with a count of 1, and then again with
-		// a count of 0.
-		if (reqbufs_user(reqbuf, 1)) {
+		// method is supported is to give it a non-zero count. But after that
+		// we have to reopen the device to clear the fact that there were
+		// buffers allocated. This is the only really portable way as long
+		// as there are still drivers around that do not support reqbufs(0).
+		q.init(g_type(), V4L2_MEMORY_USERPTR);
+		if (q.reqbufs(this, 1) == 0) {
 			m_capMethods->addItem("User pointer I/O", QVariant(methodUser));
-			reqbufs_user(reqbuf, 0);
+			reopen(true);
 		}
-		if (reqbufs_mmap(reqbuf, 1)) {
+		q.init(g_type(), V4L2_MEMORY_MMAP);
+		if (q.reqbufs(this, 1) == 0) {
 			m_capMethods->addItem("Memory mapped I/O", QVariant(methodMmap));
-			reqbufs_mmap(reqbuf, 0);
+			reopen(true);
 		}
 	}
-	if (caps() & V4L2_CAP_READWRITE) {
+	if (g_caps() & V4L2_CAP_READWRITE) {
 		m_capMethods->addItem("read()", QVariant(methodRead));
 	}
 	addWidget(m_capMethods);
@@ -272,7 +273,7 @@ done:
 
 void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 {
-	if (!isRadio() && enum_input(vin, true)) {
+	if (!isRadio() && !enum_input(vin, true)) {
 		addLabel("Input");
 		m_videoInput = new QComboBox(parentWidget());
 		do {
@@ -287,7 +288,7 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 			};
 
 			subscribe_event(sub);
-		} while (enum_input(vin));
+		} while (!enum_input(vin));
 		addWidget(m_videoInput);
 		connect(m_videoInput, SIGNAL(activated(int)), SLOT(inputChanged(int)));
 		m_row++;
@@ -306,7 +307,7 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 		m_stdRow->addWidget(m_tvStandard, 0, 1, Qt::AlignLeft);
 		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
 		refreshStandards();
-		if (ioctl_exists(VIDIOC_QUERYSTD, &tmp)) {
+		if (ioctl_exists(cv4l_ioctl(VIDIOC_QUERYSTD, &tmp))) {
 			m_qryStandard = new QToolButton(parentWidget());
 			m_qryStandard->setIcon(QIcon(":/enterbutt.png"));
 			m_stdRow->addWidget(new QLabel("Query Standard", parentWidget()), 0, 2, Qt::AlignLeft);
@@ -440,12 +441,12 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 
 void GeneralTab::outputSection(v4l2_output vout, v4l2_fmtdesc fmt)
 {
-	if (!isRadio() && enum_output(vout, true)) {
+	if (!isRadio() && !enum_output(vout, true)) {
 		addLabel("Output");
 		m_videoOutput = new QComboBox(parentWidget());
 		do {
 			m_videoOutput->addItem((char *)vout.name);
-		} while (enum_output(vout));
+		} while (!enum_output(vout));
 		addWidget(m_videoOutput);
 		connect(m_videoOutput, SIGNAL(activated(int)), SLOT(outputChanged(int)));
 		updateVideoOutput();
@@ -455,11 +456,11 @@ void GeneralTab::outputSection(v4l2_output vout, v4l2_fmtdesc fmt)
 		addLabel("Output Image Formats");
 		m_vidOutFormats = new QComboBox(parentWidget());
 		m_vidOutFormats->setMinimumContentsLength(20);
-		if (enum_fmt(fmt, m_buftype, true)) {
+		if (!enum_fmt(fmt, true)) {
 			do {
 				m_vidOutFormats->addItem(pixfmt2s(fmt.pixelformat) +
 					" - " + (const char *)fmt.description);
-			} while (enum_fmt(fmt, m_buftype));
+			} while (!enum_fmt(fmt));
 		}
 		addWidget(m_vidOutFormats);
 		connect(m_vidOutFormats, SIGNAL(activated(int)), SLOT(vidOutFormatChanged(int)));
@@ -545,7 +546,7 @@ void GeneralTab::audioSection(v4l2_audio vaudio, v4l2_audioout vaudout)
 				setAudioDeviceBufferSize(75);
 			} else {
 				v4l2_fract fract;
-				if (!v4l2::get_interval(m_buftype, fract)) {
+				if (cv4l_fd::get_interval(fract)) {
 					// Default values are for 30 FPS
 					fract.numerator = 33;
 					fract.denominator = 1000;
@@ -561,13 +562,13 @@ void GeneralTab::audioSection(v4l2_audio vaudio, v4l2_audioout vaudout)
 		}
 	}
 
-	if (!isRadio() && enum_audio(vaudio, true)) {
+	if (!isRadio() && !enum_audio(vaudio, true)) {
 		addLabel("Input Audio");
 		m_audioInput = new QComboBox(parentWidget());
 		m_audioInput->setMinimumContentsLength(10);
 		do {
 			m_audioInput->addItem((char *)vaudio.name);
-		} while (enum_audio(vaudio));
+		} while (!enum_audio(vaudio));
 		addWidget(m_audioInput);
 		connect(m_audioInput, SIGNAL(activated(int)), SLOT(inputAudioChanged(int)));
 		updateAudioInput();
@@ -604,13 +605,13 @@ void GeneralTab::audioSection(v4l2_audio vaudio, v4l2_audioout vaudout)
 		connect(m_audioMode, SIGNAL(activated(int)), SLOT(audioModeChanged(int)));
 	}
 
-	if (!isRadio() && enum_audout(vaudout, true)) {
+	if (!isRadio() && !enum_audout(vaudout, true)) {
 		addLabel("Output Audio");
 		m_audioOutput = new QComboBox(parentWidget());
 		m_audioOutput->setMinimumContentsLength(10);
 		do {
 			m_audioOutput->addItem((char *)vaudout.name);
-		} while (enum_audout(vaudout));
+		} while (!enum_audout(vaudout));
 		addWidget(m_audioOutput);
 		connect(m_audioOutput, SIGNAL(activated(int)), SLOT(outputAudioChanged(int)));
 		updateAudioOutput();
@@ -623,7 +624,7 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		addLabel("Capture Image Formats");
 		m_vidCapFormats = new QComboBox(parentWidget());
 		m_vidCapFormats->setMinimumContentsLength(20);
-		if (enum_fmt(fmt, m_buftype, true)) {
+		if (!enum_fmt(fmt, true)) {
 			do {
 				QString s(pixfmt2s(fmt.pixelformat) + " (");
 
@@ -631,7 +632,7 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 					m_vidCapFormats->addItem(s + "Emulated)");
 				else
 					m_vidCapFormats->addItem(s + (const char *)fmt.description + ")");
-			} while (enum_fmt(fmt, m_buftype));
+			} while (!enum_fmt(fmt));
 		}
 		addWidget(m_vidCapFormats);
 		connect(m_vidCapFormats, SIGNAL(activated(int)), SLOT(vidCapFormatChanged(int)));
@@ -1125,7 +1126,7 @@ void GeneralTab::updateGUI(int input)
 {
 	v4l2_input in;
 	enum_input(in, true, input);
-	if (!g_input(input) || m_isRadio) {
+	if (g_input(input) || m_isRadio) {
 		m_stackedFrameSettings->hide();
 		return;
 	}
@@ -1306,16 +1307,13 @@ void GeneralTab::vidCapFormatChanged(int idx)
 {
 	v4l2_fmtdesc desc;
 
-	enum_fmt(desc, m_buftype, true, idx);
+	enum_fmt(desc, true, idx);
 
-	v4l2_format fmt;
+	cv4l_fmt fmt;
 
-	g_fmt(m_buftype, fmt);
-	if (isPlanar())
-		fmt.fmt.pix_mp.pixelformat = desc.pixelformat;
-	else
-		fmt.fmt.pix.pixelformat = desc.pixelformat;
-	if (try_fmt(fmt))
+	g_fmt(fmt);
+	fmt.s_pixelformat(desc.pixelformat);
+	if (try_fmt(fmt) == 0)
 		s_fmt(fmt);
 
 	updateVidCapFormat();
@@ -1351,15 +1349,12 @@ static const char *field2s(int val)
 
 void GeneralTab::vidFieldChanged(int idx)
 {
-	v4l2_format fmt;
+	cv4l_fmt fmt;
 
-	g_fmt(m_buftype, fmt);
+	g_fmt(fmt);
 	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
 		if (m_vidFields->currentText() == QString(field2s(f))) {
-			if (isPlanar())
-				fmt.fmt.pix_mp.field = f;
-			else
-				fmt.fmt.pix.field = f;
+			fmt.s_field(f);
 			s_fmt(fmt);
 			break;
 		}
@@ -1369,16 +1364,13 @@ void GeneralTab::vidFieldChanged(int idx)
 
 void GeneralTab::frameWidthChanged()
 {
-	v4l2_format fmt;
+	cv4l_fmt fmt;
 	int val = m_frameWidth->value();
 
 	if (m_frameWidth->isEnabled()) {
-		g_fmt(m_buftype, fmt);
-		if (isPlanar())
-			fmt.fmt.pix_mp.width = val;
-		else
-			fmt.fmt.pix.width = val;
-		if (try_fmt(fmt))
+		g_fmt(fmt);
+		fmt.s_width(val);
+		if (try_fmt(fmt) == 0)
 			s_fmt(fmt);
 	}
 
@@ -1387,16 +1379,13 @@ void GeneralTab::frameWidthChanged()
 
 void GeneralTab::frameHeightChanged()
 {
-	v4l2_format fmt;
+	cv4l_fmt fmt;
 	int val = m_frameHeight->value();
 
 	if (m_frameHeight->isEnabled()) {
-		g_fmt(m_buftype, fmt);
-		if (isPlanar())
-			fmt.fmt.pix_mp.height = val;
-		else
-			fmt.fmt.pix.height = val;
-		if (try_fmt(fmt))
+		g_fmt(fmt);
+		fmt.s_height(val);
+		if (try_fmt(fmt) == 0)
 			s_fmt(fmt);
 	}
 
@@ -1405,20 +1394,15 @@ void GeneralTab::frameHeightChanged()
 
 void GeneralTab::frameSizeChanged(int idx)
 {
-	v4l2_frmsizeenum frmsize;
+	v4l2_frmsizeenum frmsize = { 0 };
 
-	if (enum_framesizes(frmsize, m_pixelformat, idx)) {
-		v4l2_format fmt;
+	if (!enum_framesizes(frmsize, m_pixelformat, idx)) {
+		cv4l_fmt fmt;
 
-		g_fmt(m_buftype, fmt);
-		if (isPlanar()) {
-			fmt.fmt.pix_mp.width = frmsize.discrete.width;
-			fmt.fmt.pix_mp.height = frmsize.discrete.height;
-		} else {
-			fmt.fmt.pix.width = frmsize.discrete.width;
-			fmt.fmt.pix.height = frmsize.discrete.height;
-		}
-		if (try_fmt(fmt))
+		g_fmt(fmt);
+		fmt.s_width(frmsize.discrete.width);
+		fmt.s_height(frmsize.discrete.height);
+		if (try_fmt(fmt) == 0)
 			s_fmt(fmt);
 	}
 	updateVidFormat();
@@ -1426,11 +1410,11 @@ void GeneralTab::frameSizeChanged(int idx)
 
 void GeneralTab::frameIntervalChanged(int idx)
 {
-	v4l2_frmivalenum frmival;
+	v4l2_frmivalenum frmival = { 0 };
 
-	if (enum_frameintervals(frmival, m_pixelformat, m_width, m_height, idx)
+	if (!enum_frameintervals(frmival, m_pixelformat, m_width, m_height, idx)
 	    && frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
-		if (set_interval(m_buftype, frmival.discrete))
+		if (!set_interval(frmival.discrete))
 			m_interval = frmival.discrete;
 	}
 }
@@ -1439,21 +1423,21 @@ void GeneralTab::vidOutFormatChanged(int idx)
 {
 	v4l2_fmtdesc desc;
 
-	enum_fmt(desc, m_buftype, true, idx);
+	enum_fmt(desc, true, idx);
 
-	v4l2_format fmt;
+	cv4l_fmt fmt;
 
-	g_fmt(m_buftype, fmt);
-	fmt.fmt.pix.pixelformat = desc.pixelformat;
-	if (try_fmt(fmt))
+	g_fmt(fmt);
+	fmt.s_pixelformat(desc.pixelformat);
+	if (try_fmt(fmt) == 0)
 		s_fmt(fmt);
 	updateVidOutFormat();
 }
 
 void GeneralTab::vbiMethodsChanged(int idx)
 {
-	m_buftype = isSlicedVbi() ? V4L2_BUF_TYPE_SLICED_VBI_CAPTURE :
-				    V4L2_BUF_TYPE_VBI_CAPTURE;
+	s_type(isSlicedVbi() ? V4L2_BUF_TYPE_SLICED_VBI_CAPTURE :
+				    V4L2_BUF_TYPE_VBI_CAPTURE);
 }
 
 void GeneralTab::cropChanged()
@@ -1468,7 +1452,7 @@ void GeneralTab::cropChanged()
 	crop.c.left = m_cropLeft->value();
 	crop.c.height = m_cropHeight->value();
 	crop.c.top = m_cropTop->value();
-	ioctl("Set Crop Rectangle", VIDIOC_S_CROP, &crop);
+	cv4l_ioctl(VIDIOC_S_CROP, &crop);
 	updateVidCapFormat();
 }
 
@@ -1485,7 +1469,7 @@ void GeneralTab::composeChanged()
 	sel.r.left = m_composeLeft->value();
 	sel.r.height = m_composeHeight->value();
 	sel.r.top = m_composeTop->value();
-	ioctl("Set Compose Rectangle", VIDIOC_S_SELECTION, &sel);
+	cv4l_ioctl(VIDIOC_S_SELECTION, &sel);
 	updateVidCapFormat();
 }
 
@@ -1494,7 +1478,7 @@ void GeneralTab::updateVideoInput()
 	int input;
 	v4l2_input in;
 
-	if (!g_input(input))
+	if (g_input(input))
 		return;
 	enum_input(in, true, input);
 	m_videoInput->setCurrentIndex(input);
@@ -1553,7 +1537,7 @@ void GeneralTab::updateVideoOutput()
 	int output;
 	v4l2_output out;
 
-	if (!g_output(output))
+	if (g_output(output))
 		return;
 	enum_output(out, true, output);
 	m_videoOutput->setCurrentIndex(output);
@@ -1602,10 +1586,10 @@ void GeneralTab::refreshStandards()
 {
 	v4l2_standard vs;
 	m_tvStandard->clear();
-	if (enum_std(vs, true)) {
+	if (!enum_std(vs, true)) {
 		do {
 			m_tvStandard->addItem((char *)vs.name);
-		} while (enum_std(vs));
+		} while (!enum_std(vs));
 	}
 }
 
@@ -1616,18 +1600,18 @@ void GeneralTab::updateStandard()
 	QString what;
 
 	g_std(std);
-	if (enum_std(vs, true)) {
+	if (!enum_std(vs, true)) {
 		do {
 			if (vs.id == std)
 				break;
-		} while (enum_std(vs));
+		} while (!enum_std(vs));
 	}
 	if (vs.id != std) {
-		if (enum_std(vs, true)) {
+		if (!enum_std(vs, true)) {
 			do {
 				if (vs.id & std)
 					break;
-			} while (enum_std(vs));
+			} while (!enum_std(vs));
 		}
 	}
 	if ((vs.id & std) == 0)
@@ -1665,7 +1649,7 @@ void GeneralTab::refreshTimings()
 {
 	v4l2_enum_dv_timings timings;
 	m_videoTimings->clear();
-	if (enum_dv_timings(timings, true)) {
+	if (!enum_dv_timings(timings, true)) {
 		do {
 			v4l2_bt_timings &bt = timings.timings.bt;
 			double tot_height = bt.height +
@@ -1682,7 +1666,7 @@ void GeneralTab::refreshTimings()
 				sprintf(buf, "%dx%dp%.2f", bt.width, bt.height,
 					(double)bt.pixelclock / (tot_width * tot_height));
 			m_videoTimings->addItem(buf);
-		} while (enum_dv_timings(timings));
+		} while (!enum_dv_timings(timings));
 	}
 }
 
@@ -1693,11 +1677,11 @@ void GeneralTab::updateTimings()
 	QString what;
 
 	g_dv_timings(timings);
-	if (enum_dv_timings(p, true)) {
+	if (!enum_dv_timings(p, true)) {
 		do {
 			if (!memcmp(&timings, &p.timings, sizeof(timings)))
 				break;
-		} while (enum_dv_timings(p));
+		} while (!enum_dv_timings(p));
 	}
 	if (memcmp(&timings, &p.timings, sizeof(timings)))
 		return;
@@ -1714,7 +1698,7 @@ void GeneralTab::qryTimingsClicked()
 {
 	v4l2_dv_timings timings;
 
-	if (query_dv_timings(timings)) {
+	if (!query_dv_timings(timings)) {
 		s_dv_timings(timings);
 		updateTimings();
 	}
@@ -1765,40 +1749,24 @@ void GeneralTab::updateFreqRf()
 void GeneralTab::updateVidCapFormat()
 {
 	v4l2_fmtdesc desc;
-	v4l2_format fmt;
+	cv4l_fmt fmt;
 
 	if (isVbi())
 		return;
-	g_fmt(m_buftype, fmt);
-	if (isPlanar()) {
-		m_pixelformat = fmt.fmt.pix_mp.pixelformat;
-		m_width       = fmt.fmt.pix_mp.width;
-		m_height      = fmt.fmt.pix_mp.height;
-	} else {
-		m_pixelformat = fmt.fmt.pix.pixelformat;
-		m_width       = fmt.fmt.pix.width;
-		m_height      = fmt.fmt.pix.height;
-	}
+	g_fmt(fmt);
+	m_pixelformat = fmt.g_pixelformat();
+	m_width = fmt.g_width();
+	m_height = fmt.g_height();
 	updateFrameSize();
 	updateFrameInterval();
-	if (enum_fmt(desc, m_buftype, true)) {
+	if (!enum_fmt(desc, true)) {
 		do {
-			if (isPlanar()) {
-				if (desc.pixelformat == fmt.fmt.pix_mp.pixelformat)
-					break;
-			} else {
-				if (desc.pixelformat == fmt.fmt.pix.pixelformat)
-					break;
-			}
-		} while (enum_fmt(desc, m_buftype));
+			if (desc.pixelformat == m_pixelformat)
+				break;
+		} while (!enum_fmt(desc));
 	}
-	if (isPlanar()) {
-		if (desc.pixelformat != fmt.fmt.pix_mp.pixelformat)
-			return;
-	} else {
-		if (desc.pixelformat != fmt.fmt.pix.pixelformat)
-			return;
-	}
+	if (desc.pixelformat != m_pixelformat)
+		return;
 	m_vidCapFormats->setCurrentIndex(desc.index);
 	updateVidFields();
 	updateCrop();
@@ -1808,75 +1776,46 @@ void GeneralTab::updateVidCapFormat()
 void GeneralTab::updateVidOutFormat()
 {
 	v4l2_fmtdesc desc;
-	v4l2_format fmt;
+	cv4l_fmt fmt;
 
-	g_fmt(m_buftype, fmt);
-	if (isPlanar()) {
-		m_pixelformat = fmt.fmt.pix_mp.pixelformat;
-		m_width       = fmt.fmt.pix_mp.width;
-		m_height      = fmt.fmt.pix_mp.height;
-	} else {
-		m_pixelformat = fmt.fmt.pix.pixelformat;
-		m_width       = fmt.fmt.pix.width;
-		m_height      = fmt.fmt.pix.height;
-	}
+	g_fmt(fmt);
+	m_pixelformat = fmt.g_pixelformat();
+	m_width = fmt.g_width();
+	m_height = fmt.g_height();
 	updateFrameSize();
 	updateFrameInterval();
-	if (enum_fmt(desc, m_buftype, true)) {
+	if (!enum_fmt(desc, true)) {
 		do {
-			if (isPlanar()) {
-				if (desc.pixelformat == fmt.fmt.pix_mp.pixelformat)
-					break;
-			} else {
-				if (desc.pixelformat == fmt.fmt.pix.pixelformat)
-					break;
-			}
-		} while (enum_fmt(desc, m_buftype));
+			if (desc.pixelformat == m_pixelformat)
+				break;
+		} while (!enum_fmt(desc));
 	}
-	if (isPlanar()) {
-		if (desc.pixelformat != fmt.fmt.pix_mp.pixelformat)
-			return;
-	} else {
-		if (desc.pixelformat != fmt.fmt.pix.pixelformat)
-			return;
-	}
+	if (desc.pixelformat == m_pixelformat)
+		return;
 	m_vidOutFormats->setCurrentIndex(desc.index);
 	updateVidFields();
 }
 
 void GeneralTab::updateVidFields()
 {
-	v4l2_format fmt;
-	v4l2_format tmp;
+	cv4l_fmt fmt;
+	cv4l_fmt tmp;
 	bool first = true;
 
-	g_fmt(m_buftype, fmt);
+	g_fmt(fmt);
 
 	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
 		tmp = fmt;
-		if (isPlanar()) {
-			tmp.fmt.pix_mp.field = f;
-			if (!try_fmt(tmp) || tmp.fmt.pix_mp.field != f)
-				continue;
-			if (first) {
-				m_vidFields->clear();
-				first = false;
-			}
-			m_vidFields->addItem(field2s(f));
-			if (fmt.fmt.pix_mp.field == f)
-				m_vidFields->setCurrentIndex(m_vidFields->count() - 1);
-		} else {
-			tmp.fmt.pix.field = f;
-			if (!try_fmt(tmp) || tmp.fmt.pix.field != f)
-				continue;
-			if (first) {
-				m_vidFields->clear();
-				first = false;
-			}
-			m_vidFields->addItem(field2s(f));
-			if (fmt.fmt.pix.field == f)
-				m_vidFields->setCurrentIndex(m_vidFields->count() - 1);
+		tmp.s_field(f);
+		if (try_fmt(tmp) || tmp.g_field() != f)
+			continue;
+		if (first) {
+			m_vidFields->clear();
+			first = false;
 		}
+		m_vidFields->addItem(field2s(f));
+		if (fmt.g_field() == f)
+			m_vidFields->setCurrentIndex(m_vidFields->count() - 1);
 	}
 }
 
@@ -1891,8 +1830,8 @@ void GeneralTab::updateCrop()
 	v4l2_rect &c = crop.c;
 
 	cropcap.type = crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (ioctl(VIDIOC_CROPCAP, &cropcap) ||
-	    ioctl(VIDIOC_G_CROP, &crop))
+	if (cv4l_ioctl(VIDIOC_CROPCAP, &cropcap) ||
+	    cv4l_ioctl(VIDIOC_G_CROP, &crop))
 		return;
 
 	m_cropWidth->blockSignals(true);
@@ -1929,7 +1868,7 @@ void GeneralTab::updateCompose()
 
 	sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	sel.target = V4L2_SEL_TGT_COMPOSE;
-	if (ioctl(VIDIOC_G_SELECTION, &sel))
+	if (cv4l_ioctl(VIDIOC_G_SELECTION, &sel))
 		return;
 
 	m_composeWidth->blockSignals(true);
@@ -1964,7 +1903,7 @@ void GeneralTab::updateFrameSize()
 
 	m_frameSize->clear();
 
-	ok = enum_framesizes(frmsize, m_pixelformat);
+	ok = !enum_framesizes(frmsize, m_pixelformat);
 	if (ok && frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
 		do {
 			m_frameSize->addItem(QString("%1x%2")
@@ -1972,7 +1911,7 @@ void GeneralTab::updateFrameSize()
 			if (frmsize.discrete.width == m_width &&
 			    frmsize.discrete.height == m_height)
 				m_frameSize->setCurrentIndex(frmsize.index);
-		} while (enum_framesizes(frmsize));
+		} while (!enum_framesizes(frmsize));
 
 		m_discreteSizes = true;
 		m_frameWidth->setEnabled(false);
@@ -2053,7 +1992,7 @@ double GeneralTab::getPixelAspectRatio()
 	v4l2_fract ratio = { 1, 1 };
 	unsigned w = 0, h = 0;
 
-	ratio = g_pixel_aspect(m_buftype, w, h);
+	ratio = g_pixel_aspect(w, h);
 	switch (m_pixelAspectRatio->currentIndex()) {
 	// override ratio if hardcoded, but keep w and h
 	case 1:
@@ -2084,21 +2023,15 @@ double GeneralTab::getPixelAspectRatio()
 			 .arg(ratio.numerator).arg(ratio.denominator));
 	m_pixelAspectRatio->setStatusTip(m_pixelAspectRatio->whatsThis());
 
-	v4l2_format fmt;
+	cv4l_fmt fmt;
 	unsigned cur_width, cur_height;
 	unsigned cur_field;
 
-	g_fmt(m_buftype, fmt);
+	g_fmt(fmt);
 
-	if (isPlanar()) {
-		cur_width = fmt.fmt.pix_mp.width;
-		cur_height = fmt.fmt.pix_mp.height;
-		cur_field = fmt.fmt.pix_mp.field;
-	} else {
-		cur_width = fmt.fmt.pix.width;
-		cur_height = fmt.fmt.pix.height;
-		cur_field = fmt.fmt.pix.field;
-	}
+	cur_width = fmt.g_width();
+	cur_height = fmt.g_height();
+	cur_field = fmt.g_field();
 	if (w == 0)
 		w = cur_width;
 	if (cur_field == V4L2_FIELD_TOP ||
@@ -2124,18 +2057,18 @@ double GeneralTab::getPixelAspectRatio()
 
 void GeneralTab::updateFrameInterval()
 {
-	v4l2_frmivalenum frmival;
-	v4l2_fract curr;
+	v4l2_frmivalenum frmival = { 0 };
+	v4l2_fract curr = { 1, 1 };
 	bool curr_ok, ok;
 
 	m_frameInterval->clear();
 
-	ok = enum_frameintervals(frmival, m_pixelformat, m_width, m_height);
+	ok = !enum_frameintervals(frmival, m_pixelformat, m_width, m_height);
 	m_has_interval = ok && frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE;
 	m_frameInterval->setEnabled(m_has_interval);
 	if (m_has_interval) {
 	        m_interval = frmival.discrete;
-        	curr_ok = v4l2::get_interval(m_buftype, curr);
+        	curr_ok = !cv4l_fd::get_interval(curr);
 		do {
 			m_frameInterval->addItem(QString("%1 fps")
 				.arg((double)frmival.discrete.denominator / frmival.discrete.numerator));
@@ -2145,7 +2078,7 @@ void GeneralTab::updateFrameInterval()
 				m_frameInterval->setCurrentIndex(frmival.index);
 				m_interval = frmival.discrete;
                         }
-		} while (enum_frameintervals(frmival));
+		} while (!enum_frameintervals(frmival));
 	}
 }
 

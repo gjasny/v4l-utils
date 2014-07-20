@@ -33,7 +33,10 @@
 #include <map>
 #include <vector>
 
-#include "v4l2-api.h"
+// Must come before cv4l-helpers.h
+#include <libv4l2.h>
+
+#include "cv4l-helpers.h"
 #include "raw2sliced.h"
 #include "capture-win.h"
 
@@ -80,7 +83,7 @@ struct buffer {
 
 class CaptureWin;
 
-class ApplicationWindow: public QMainWindow, public v4l2
+class ApplicationWindow: public QMainWindow, cv4l_fd
 {
 	Q_OBJECT
 
@@ -100,17 +103,15 @@ public:
 private:
 	CaptureWin *m_capture;
 
-	bool startCapture(unsigned buffer_size);
+	bool startCapture();
 	void stopCapture();
-	void startOutput(unsigned buffer_size);
-	void stopOutput();
 	void newCaptureWin();
 	void startAudio();
 	void stopAudio();
 
-	struct buffer *m_buffers;
-	struct v4l2_format m_capSrcFormat;
-	struct v4l2_format m_capDestFormat;
+	bool m_clear[64];
+	cv4l_fmt m_capSrcFormat;
+	cv4l_fmt m_capDestFormat;
 	unsigned char *m_frameData;
 	unsigned m_nbuffers;
 	struct v4lconvert_data *m_convertData;
@@ -193,6 +194,8 @@ private:
 	void updateFreq();
 	void updateFreqChannel();
 	bool showFrames();
+
+	cv4l_queue m_queue;
 
 	const double m_pxw;
 	const int m_minWidth;

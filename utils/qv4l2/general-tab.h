@@ -31,7 +31,6 @@
 #include <map>
 
 #include "qv4l2.h"
-#include "v4l2-api.h"
 #include "capture-win.h"
 
 #ifdef HAVE_ALSA
@@ -48,12 +47,12 @@ class QSpinBox;
 class QToolButton;
 class QSlider;
 
-class GeneralTab: public QGridLayout, public v4l2
+class GeneralTab: public QGridLayout, cv4l_fd
 {
 	Q_OBJECT
 
 public:
-	GeneralTab(const QString &device, v4l2 &fd, int n, QWidget *parent = 0);
+	GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *parent = 0);
 	virtual ~GeneralTab() {}
 
 	CapMethod capMethod();
@@ -72,15 +71,6 @@ public:
 	bool isVbi() const { return m_isVbi; }
 	bool isSlicedVbi() const;
 	bool isPlanar() const { return m_isPlanar; }
-	__u32 bufType() const { return m_buftype; }
-	inline bool reqbufs_mmap(v4l2_requestbuffers &reqbuf, int count = 0) {
-		return v4l2::reqbufs_mmap(reqbuf, m_buftype, count);
-	}
-	inline bool reqbufs_user(v4l2_requestbuffers &reqbuf, int count = 0) {
-		return v4l2::reqbufs_user(reqbuf, m_buftype, count);
-	}
-	inline bool streamon() { return v4l2::streamon(m_buftype); }
-	inline bool streamoff() { return v4l2::streamoff(m_buftype); }
 	void setHaveBuffers(bool haveBuffers);
 	void sourceChange(const v4l2_event &ev);
 	unsigned getDisplayColorspace() const;
@@ -205,7 +195,6 @@ private:
 	bool m_isPlanar;
 	bool m_haveBuffers;
 	bool m_discreteSizes;
-	__u32 m_buftype;
 	__u32 m_audioModes[5];
 	QString m_device;
 	struct v4l2_tuner m_tuner;

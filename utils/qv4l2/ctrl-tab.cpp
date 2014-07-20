@@ -83,7 +83,7 @@ void ApplicationWindow::addTabs(int size[])
 
 	memset(&qctrl, 0, sizeof(qctrl));
 	qctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-	while (queryctrl(qctrl)) {
+	while (!queryctrl(qctrl)) {
 		if (is_valid_type(qctrl.type) &&
 		    (qctrl.flags & V4L2_CTRL_FLAG_DISABLED) == 0) {
 			m_ctrlMap[qctrl.id] = qctrl;
@@ -109,7 +109,7 @@ void ApplicationWindow::addTabs(int size[])
 			m_classMap[V4L2_CTRL_CLASS_USER].push_back(qctrl.id);
 		}
 		for (qctrl.id = V4L2_CID_PRIVATE_BASE;
-				queryctrl(qctrl); qctrl.id++) {
+				!queryctrl(qctrl); qctrl.id++) {
 			if (!is_valid_type(qctrl.type))
 				continue;
 			if (qctrl.flags & V4L2_CTRL_FLAG_DISABLED)
@@ -389,7 +389,7 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 		for (int i = qctrl.minimum; i <= qctrl.maximum; i++) {
 			qmenu.id = qctrl.id;
 			qmenu.index = i;
-			if (!querymenu(qmenu))
+			if (querymenu(qmenu))
 				continue;
 			if (qctrl.type == V4L2_CTRL_TYPE_MENU)
 				combo->addItem((char *)qmenu.name);
@@ -479,7 +479,7 @@ void ApplicationWindow::ctrlAction(int id)
 	ctrls.count = idx;
 	ctrls.ctrl_class = ctrl_class;
 	ctrls.controls = c;
-	if (ioctl(VIDIOC_S_EXT_CTRLS, &ctrls)) {
+	if (cv4l_ioctl(VIDIOC_S_EXT_CTRLS, &ctrls)) {
 		if (ctrls.error_idx >= ctrls.count) {
 			error(errno);
 		}
@@ -565,7 +565,7 @@ int ApplicationWindow::getVal(unsigned id)
 		for (i = qctrl.minimum; i <= qctrl.maximum; i++) {
 			qmenu.id = qctrl.id;
 			qmenu.index = i;
-			if (!querymenu(qmenu))
+			if (querymenu(qmenu))
 				continue;
 			if (idx-- == 0)
 				break;
@@ -594,7 +594,7 @@ void ApplicationWindow::updateCtrl(unsigned id)
 
 		c.id = id;
 		c.value = getVal(id);
-		if (ioctl(VIDIOC_S_CTRL, &c)) {
+		if (cv4l_ioctl(VIDIOC_S_CTRL, &c)) {
 			errorCtrl(id, errno, c.value);
 		}
 		else if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_UPDATE)
@@ -619,7 +619,7 @@ void ApplicationWindow::updateCtrl(unsigned id)
 	ctrls.count = 1;
 	ctrls.ctrl_class = ctrl_class;
 	ctrls.controls = &c;
-	if (ioctl(VIDIOC_S_EXT_CTRLS, &ctrls)) {
+	if (cv4l_ioctl(VIDIOC_S_EXT_CTRLS, &ctrls)) {
 		errorCtrl(id, errno, c.value);
 	}
 	else if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_UPDATE)
@@ -685,7 +685,7 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 			if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_WRITE_ONLY)
 				continue;
 			c.id = id;
-			if (ioctl(VIDIOC_G_CTRL, &c)) {
+			if (cv4l_ioctl(VIDIOC_G_CTRL, &c)) {
 				errorCtrl(id, errno);
 			}
 			setVal(id, c.value);
@@ -717,7 +717,7 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 	ctrls.count = cnt;
 	ctrls.ctrl_class = ctrl_class;
 	ctrls.controls = c;
-	if (ioctl(VIDIOC_G_EXT_CTRLS, &ctrls)) {
+	if (cv4l_ioctl(VIDIOC_G_EXT_CTRLS, &ctrls)) {
 		if (ctrls.error_idx >= ctrls.count) {
 			error(errno);
 		}
@@ -875,7 +875,7 @@ void ApplicationWindow::setVal(unsigned id, int v)
 		for (i = qctrl.minimum; i <= v; i++) {
 			qmenu.id = id;
 			qmenu.index = i;
-			if (!querymenu(qmenu))
+			if (querymenu(qmenu))
 				continue;
 			idx++;
 		}

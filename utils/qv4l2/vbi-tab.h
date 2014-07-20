@@ -22,7 +22,6 @@
 #define VBI_TAB_H
 
 #include "qv4l2.h"
-#include "v4l2-api.h"
 
 class QTableWidget;
 
