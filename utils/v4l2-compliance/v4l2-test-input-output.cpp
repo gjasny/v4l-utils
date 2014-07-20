@@ -110,8 +110,8 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 	if (node->is_sdr)
 		fail_on_test(!(V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_1HZ));
 	fail_on_test(!(tuner.capability & V4L2_TUNER_CAP_FREQ_BANDS));
-	fail_on_test(!(node->caps & V4L2_CAP_HW_FREQ_SEEK) && hwseek_caps);
-	fail_on_test((node->caps & V4L2_CAP_HW_FREQ_SEEK) &&
+	fail_on_test(!(node->g_caps() & V4L2_CAP_HW_FREQ_SEEK) && hwseek_caps);
+	fail_on_test((node->g_caps() & V4L2_CAP_HW_FREQ_SEEK) &&
 		!(tuner.capability & (V4L2_TUNER_CAP_HWSEEK_BOUNDED | V4L2_TUNER_CAP_HWSEEK_WRAP)));
 	if (tuner.rangelow > tuner.rangehigh)
 		return fail("rangelow > rangehigh\n");
@@ -136,10 +136,10 @@ static int checkTuner(struct node *node, const struct v4l2_tuner &tuner,
 		return fail("V4L2_TUNER_CAP_RDS is set, but not V4L2_TUNER_CAP_RDS_* or vice versa\n");
 	fail_on_test(node->is_sdr && have_rds);
 	if ((tuner.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
-			!(node->caps & V4L2_CAP_READWRITE))
+			!(node->g_caps() & V4L2_CAP_READWRITE))
 		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is set, but not V4L2_CAP_READWRITE\n");
 	if (node->is_radio && !(tuner.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
-			(node->caps & V4L2_CAP_READWRITE))
+			(node->g_caps() & V4L2_CAP_READWRITE))
 		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is not set, but V4L2_CAP_READWRITE is\n");
 	if (std == V4L2_STD_NTSC_M && (tuner.rxsubchans & V4L2_TUNER_SUB_LANG1))
 		return fail("LANG1 subchan, but NTSC-M standard\n");
@@ -208,13 +208,13 @@ int testTuner(struct node *node)
 	tuner.index = t;
 	if (doioctl(node, VIDIOC_S_TUNER, &tuner) != EINVAL)
 		return fail("could set invalid tuner %d\n", t);
-	if (node->tuners && !(node->caps & V4L2_CAP_TUNER))
+	if (node->tuners && !(node->g_caps() & V4L2_CAP_TUNER))
 		return fail("tuners found, but no tuner capability set\n");
-	if (!node->tuners && (node->caps & V4L2_CAP_TUNER))
+	if (!node->tuners && (node->g_caps() & V4L2_CAP_TUNER))
 		return fail("no tuners found, but tuner capability set\n");
-	if (has_rds && !(node->caps & V4L2_CAP_RDS_CAPTURE))
+	if (has_rds && !(node->g_caps() & V4L2_CAP_RDS_CAPTURE))
 		return fail("RDS tuner capability, but no RDS capture capability?\n");
-	if (!has_rds && (node->caps & V4L2_CAP_RDS_CAPTURE))
+	if (!has_rds && (node->g_caps() & V4L2_CAP_RDS_CAPTURE))
 		return fail("No RDS tuner capability, but RDS capture capability?\n");
 	return 0;
 }
@@ -244,10 +244,10 @@ int testTunerFreq(struct node *node)
 		if (freq.type != V4L2_TUNER_RADIO && freq.type != V4L2_TUNER_ANALOG_TV &&
 		    freq.type != V4L2_TUNER_ADC && freq.type != V4L2_TUNER_RF)
 			return fail("returned invalid tuner type %d\n", freq.type);
-		if (freq.type == V4L2_TUNER_RADIO && !(node->caps & V4L2_CAP_RADIO))
+		if (freq.type == V4L2_TUNER_RADIO && !(node->g_caps() & V4L2_CAP_RADIO))
 			return fail("radio tuner found but no radio capability set\n");
 		if ((freq.type == V4L2_TUNER_ADC || freq.type == V4L2_TUNER_RF) &&
-		    !(node->caps & V4L2_CAP_SDR_CAPTURE))
+		    !(node->g_caps() & V4L2_CAP_SDR_CAPTURE))
 			return fail("sdr tuner found but no sdr capture capability set\n");
 		if (freq.type != tuner.type)
 			return fail("frequency tuner type and tuner type mismatch\n");
@@ -292,7 +292,7 @@ int testTunerFreq(struct node *node)
 	}
 
 	/* If this is a modulator device, then skip the remaining tests */
-	if (node->caps & V4L2_CAP_MODULATOR)
+	if (node->g_caps() & V4L2_CAP_MODULATOR)
 		return 0;
 
 	freq.tuner = t;
@@ -327,11 +327,11 @@ int testTunerHwSeek(struct node *node)
 		seek.tuner = t;
 		seek.type = V4L2_TUNER_RADIO;
 		ret = doioctl(node, VIDIOC_S_HW_FREQ_SEEK, &seek);
-		if (!(node->caps & V4L2_CAP_HW_FREQ_SEEK) && ret != ENOTTY)
+		if (!(node->g_caps() & V4L2_CAP_HW_FREQ_SEEK) && ret != ENOTTY)
 			return fail("hw seek supported but capability not set\n");
 		if (!node->is_radio && ret != ENOTTY)
 			return fail("hw seek supported on a non-radio node?!\n");
-		if (!node->is_radio || !(node->caps & V4L2_CAP_HW_FREQ_SEEK))
+		if (!node->is_radio || !(node->g_caps() & V4L2_CAP_HW_FREQ_SEEK))
 			return ENOTTY;
 		seek.type = V4L2_TUNER_ANALOG_TV;
 		ret = doioctl(node, VIDIOC_S_HW_FREQ_SEEK, &seek);
@@ -490,7 +490,7 @@ int testEnumInputAudio(struct node *node)
 		node->audio_inputs++;
 		i++;
 	}
-	if (node->audio_inputs && !(node->caps & V4L2_CAP_AUDIO))
+	if (node->audio_inputs && !(node->g_caps() & V4L2_CAP_AUDIO))
 		return fail("audio inputs reported, but no CAP_AUDIO set\n");
 	return 0;
 }
@@ -592,10 +592,10 @@ static int checkModulator(struct node *node, const struct v4l2_modulator &mod, u
 	if (have_rds ^ have_rds_method)
 		return fail("V4L2_TUNER_CAP_RDS is set, but not V4L2_TUNER_CAP_RDS_* or vice versa\n");
 	if ((mod.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
-			!(node->caps & V4L2_CAP_READWRITE))
+			!(node->g_caps() & V4L2_CAP_READWRITE))
 		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is set, but not V4L2_CAP_READWRITE\n");
 	if (!(mod.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO) &&
-			(node->caps & V4L2_CAP_READWRITE))
+			(node->g_caps() & V4L2_CAP_READWRITE))
 		return fail("V4L2_TUNER_CAP_RDS_BLOCK_IO is not set, but V4L2_CAP_READWRITE is\n");
 	return checkEnumFreqBands(node, mod.index, V4L2_TUNER_RADIO, mod.capability,
 			mod.rangelow, mod.rangehigh);
@@ -632,13 +632,13 @@ int testModulator(struct node *node)
 	mod.index = m;
 	if (doioctl(node, VIDIOC_S_MODULATOR, &mod) != EINVAL)
 		return fail("could set invalid modulator %d\n", m);
-	if (node->modulators && !(node->caps & V4L2_CAP_MODULATOR))
+	if (node->modulators && !(node->g_caps() & V4L2_CAP_MODULATOR))
 		return fail("modulators found, but no modulator capability set\n");
-	if (!node->modulators && (node->caps & V4L2_CAP_MODULATOR))
+	if (!node->modulators && (node->g_caps() & V4L2_CAP_MODULATOR))
 		return fail("no modulators found, but modulator capability set\n");
-	if (has_rds && !(node->caps & V4L2_CAP_RDS_OUTPUT))
+	if (has_rds && !(node->g_caps() & V4L2_CAP_RDS_OUTPUT))
 		return fail("RDS modulator capability, but no RDS output capability?\n");
-	if (!has_rds && (node->caps & V4L2_CAP_RDS_OUTPUT))
+	if (!has_rds && (node->g_caps() & V4L2_CAP_RDS_OUTPUT))
 		return fail("No RDS modulator capability, but RDS output capability?\n");
 	return 0;
 }
@@ -699,7 +699,7 @@ int testModulatorFreq(struct node *node)
 	}
 
 	/* If this is a tuner device, then skip the remaining tests */
-	if (node->caps & V4L2_CAP_TUNER)
+	if (node->g_caps() & V4L2_CAP_TUNER)
 		return 0;
 
 	freq.tuner = m;
@@ -833,7 +833,7 @@ int testEnumOutputAudio(struct node *node)
 		o++;
 	}
 
-	if (node->audio_outputs && !(node->caps & V4L2_CAP_AUDIO))
+	if (node->audio_outputs && !(node->g_caps() & V4L2_CAP_AUDIO))
 		return fail("audio outputs reported, but no CAP_AUDIO set\n");
 	return 0;
 }
@@ -893,7 +893,7 @@ int testOutputAudio(struct node *node)
 			return fail("invalid audioset for output %d\n", o);
 	}
 
-	if (node->audio_outputs == 0 && node->audio_inputs == 0 && (node->caps & V4L2_CAP_AUDIO))
+	if (node->audio_outputs == 0 && node->audio_inputs == 0 && (node->g_caps() & V4L2_CAP_AUDIO))
 		return fail("no audio inputs or outputs reported, but CAP_AUDIO set\n");
 	return node->audio_outputs ? 0 : ENOTTY;
 }

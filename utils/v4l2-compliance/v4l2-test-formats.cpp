@@ -165,7 +165,7 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 					frmsize.discrete.width + 1, frmsize.discrete.height, 0);
 			if (ret && ret != ENOTTY)
 				return ret;
-			if (ret == 0 && !(node->caps & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)))
+			if (ret == 0 && !(node->g_caps() & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)))
 				return fail("found discrete framesizes when no video capture is supported\n");
 			break;
 		case V4L2_FRMSIZE_TYPE_CONTINUOUS:
@@ -243,7 +243,7 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 			return fail("fmtdesc.description not set\n");
 		if (!fmtdesc.pixelformat)
 			return fail("fmtdesc.pixelformat not set\n");
-		if (!wrapper && (fmtdesc.flags & V4L2_FMT_FLAG_EMULATED))
+		if (node->g_direct() && (fmtdesc.flags & V4L2_FMT_FLAG_EMULATED))
 			return fail("drivers must never set the emulated flag\n");
 		if (fmtdesc.flags & ~(V4L2_FMT_FLAG_COMPRESSED | V4L2_FMT_FLAG_EMULATED))
 			return fail("unknown flag %08x returned\n", fmtdesc.flags);
@@ -282,10 +282,10 @@ int testEnumFormats(struct node *node)
 		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		case V4L2_BUF_TYPE_SDR_CAPTURE:
-			if (ret && (node->caps & buftype2cap[type]))
+			if (ret && (node->g_caps() & buftype2cap[type]))
 				return fail("%s cap set, but no %s formats defined\n",
 						buftype2s(type).c_str(), buftype2s(type).c_str());
-			if (!ret && !(node->caps & buftype2cap[type]))
+			if (!ret && !(node->g_caps() & buftype2cap[type]))
 				return fail("%s cap not set, but %s formats defined\n",
 						buftype2s(type).c_str(), buftype2s(type).c_str());
 			break;
@@ -330,15 +330,15 @@ int testFBuf(struct node *node)
 	memset(&fbuf, 0xff, sizeof(fbuf));
 	fbuf.fmt.priv = 0;
 	ret = doioctl(node, VIDIOC_G_FBUF, &fbuf);
-	fail_on_test(ret == 0 && !(node->caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
-	fail_on_test(ret == ENOTTY && (node->caps & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
+	fail_on_test(ret == 0 && !(node->g_caps() & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
+	fail_on_test(ret == ENOTTY && (node->g_caps() & (V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY)));
 	if (ret == ENOTTY)
 		return ret;
 	if (ret && ret != EINVAL)
 		return fail("expected EINVAL, but got %d when getting framebuffer format\n", ret);
 	node->fbuf_caps = caps = fbuf.capability;
 	flags = fbuf.flags;
-	if (node->caps & V4L2_CAP_VIDEO_OUTPUT_OVERLAY)
+	if (node->g_caps() & V4L2_CAP_VIDEO_OUTPUT_OVERLAY)
 		fail_on_test(!fbuf.base);
 	if (flags & V4L2_FBUF_FLAG_CHROMAKEY)
 		fail_on_test(!(caps & V4L2_FBUF_CAP_CHROMAKEY));
@@ -551,10 +551,10 @@ int testGetFormats(struct node *node)
 		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		case V4L2_BUF_TYPE_SDR_CAPTURE:
-			if (ret && (node->caps & buftype2cap[type]))
+			if (ret && (node->g_caps() & buftype2cap[type]))
 				return fail("%s cap set, but no %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
-			if (!ret && !(node->caps & buftype2cap[type]))
+			if (!ret && !(node->g_caps() & buftype2cap[type]))
 				return fail("%s cap not set, but %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
 			break;
@@ -773,7 +773,7 @@ static int testGlobalFormat(struct node *node, int type)
 	// test is pointless.
 	// This test will also never succeed if we are using the libv4l2
 	// wrapper.
-	if (wrapper || (pixfmt1 == pixfmt2 && w1 == w2 && h1 == h2))
+	if (!node->g_direct() || (pixfmt1 == pixfmt2 && w1 == w2 && h1 == h2))
 		return 0;
 
 	if (type == V4L2_BUF_TYPE_SDR_CAPTURE) {
@@ -993,13 +993,13 @@ static int testSlicedVBICapType(struct node *node, unsigned type)
 	ret = doioctl(node, VIDIOC_G_SLICED_VBI_CAP, &cap);
 	if (ret == ENOTTY || ret == EINVAL) {
 		if (node->cur_io_caps & V4L2_IN_CAP_STD)
-			fail_on_test(sliced_type && (node->caps & buftype2cap[type]));
+			fail_on_test(sliced_type && (node->g_caps() & buftype2cap[type]));
 		return ret == ENOTTY ? ret : 0;
 	}
 	fail_on_test(ret);
 	fail_on_test(check_0(cap.reserved, sizeof(cap.reserved)));
 	fail_on_test(cap.type != type);
-	fail_on_test(!sliced_type || !(node->caps & buftype2cap[type]));
+	fail_on_test(!sliced_type || !(node->g_caps() & buftype2cap[type]));
 
 	for (int f = 0; f < 2; f++)
 		for (int i = 0; i < 24; i++)
@@ -1035,9 +1035,9 @@ static int testParmStruct(struct node *node, struct v4l2_streamparm &parm)
 		if (ret)
 			return fail("reserved not zeroed\n");
 		fail_on_test(cap->readbuffers > VIDEO_MAX_FRAME);
-		if (!(node->caps & V4L2_CAP_READWRITE))
+		if (!(node->g_caps() & V4L2_CAP_READWRITE))
 			fail_on_test(cap->readbuffers);
-		else if (node->caps & V4L2_CAP_STREAMING)
+		else if (node->g_caps() & V4L2_CAP_STREAMING)
 			fail_on_test(!cap->readbuffers);
 		fail_on_test(cap->capability & ~V4L2_CAP_TIMEPERFRAME);
 		fail_on_test(cap->capturemode & ~V4L2_MODE_HIGHQUALITY);
@@ -1053,9 +1053,9 @@ static int testParmStruct(struct node *node, struct v4l2_streamparm &parm)
 		if (ret)
 			return fail("reserved not zeroed\n");
 		fail_on_test(out->writebuffers > VIDEO_MAX_FRAME);
-		if (!(node->caps & V4L2_CAP_READWRITE))
+		if (!(node->g_caps() & V4L2_CAP_READWRITE))
 			fail_on_test(out->writebuffers);
-		else if (node->caps & V4L2_CAP_STREAMING)
+		else if (node->g_caps() & V4L2_CAP_STREAMING)
 			fail_on_test(!out->writebuffers);
 		fail_on_test(out->capability & ~V4L2_CAP_TIMEPERFRAME);
 		fail_on_test(out->outputmode);
@@ -1117,7 +1117,7 @@ int testParm(struct node *node)
 			    type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
 			    type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
 				return fail("G/S_PARM is only allowed for video capture/output\n");
-			if (!(node->caps & buftype2cap[type]))
+			if (!(node->g_caps() & buftype2cap[type]))
 				return fail("%s cap not set, but G/S_PARM worked\n",
 						buftype2s(type).c_str());
 		}

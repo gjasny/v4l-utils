@@ -721,8 +721,8 @@ int testControlEvents(struct node *node)
 			return fail("subscribe event for control '%s' failed\n", iter->name);
 		//if (iter->type == V4L2_CTRL_TYPE_CTRL_CLASS)
 		FD_ZERO(&set);
-		FD_SET(node->vfd.fd, &set);
-		ret = select(node->vfd.fd + 1, NULL, NULL, &set, &timeout);
+		FD_SET(node->g_fd(), &set);
+		ret = select(node->g_fd() + 1, NULL, NULL, &set, &timeout);
 		if (ret == 0) {
 			if (iter->type != V4L2_CTRL_TYPE_CTRL_CLASS)
 				return fail("failed to find event for control '%s'\n", iter->name);

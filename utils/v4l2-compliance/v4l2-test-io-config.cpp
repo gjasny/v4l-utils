@@ -155,7 +155,7 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 	struct v4l2_enum_dv_timings enumtimings;
 	struct v4l2_dv_timings timings;
 	struct v4l2_format fmt;
-	bool is_mplane = node->caps & (V4L2_CAP_VIDEO_CAPTURE_MPLANE |
+	bool is_mplane = node->g_caps() & (V4L2_CAP_VIDEO_CAPTURE_MPLANE |
 				       V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 				       V4L2_CAP_VIDEO_M2M_MPLANE);
 	unsigned type;

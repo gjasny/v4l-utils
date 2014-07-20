@@ -30,14 +30,6 @@
 
 #ifndef NO_LIBV4L2
 #include <libv4l2.h>
-#else
-#define v4l2_open(file, oflag, ...) (-1)
-#define v4l2_close(fd) (-1)
-#define v4l2_read(fd, buffer, n) (-1)
-#define v4l2_write(fd, buffer, n) (-1)
-#define v4l2_ioctl(fd, request, ...) (-1)
-#define v4l2_mmap(start, length, prot, flags, fd, offset) (MAP_FAILED)
-#define v4l2_munmap(_start, length) (-1)
 #endif
 
 #include <cv4l-helpers.h>
@@ -48,7 +40,6 @@
 
 extern bool show_info;
 extern bool show_warnings;
-extern bool wrapper;
 extern int kernel_version;
 extern unsigned warnings;
 
@@ -59,10 +50,9 @@ struct test_queryctrl: v4l2_queryctrl {
 typedef std::list<test_queryctrl> qctrl_list;
 typedef std::set<__u32> pixfmt_set;
 
-struct node;
+struct base_node;
 
-struct node {
-	struct v4l_fd vfd;
+struct base_node {
 	bool is_video;
 	bool is_radio;
 	bool is_vbi;
@@ -72,7 +62,6 @@ struct node {
 	bool can_capture;
 	bool can_output;
 	const char *device;
-	unsigned caps;
 	struct node *node2;	/* second open filehandle */
 	bool has_outputs;
 	bool has_inputs;
@@ -85,12 +74,17 @@ struct node {
 	unsigned cur_io_caps;
 	unsigned std_controls;
 	unsigned priv_controls;
-	qctrl_list controls;
 	__u32 fbuf_caps;
-	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_SDR_CAPTURE + 1];
 	__u32 valid_buftypes;
 	__u32 valid_buftype;
 	__u32 valid_memorytype;
+};
+
+struct node : public base_node, public cv4l_fd {
+	node() : base_node() {}
+
+	qctrl_list controls;
+	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_SDR_CAPTURE + 1];
 };
 
 #define info(fmt, args...) 					\
@@ -118,59 +112,6 @@ struct node {
 			return fail("%s\n", #test);	\
 	} while (0)
 
-static inline int test_open(const char *file, int oflag)
-{
- 	return wrapper ? v4l2_open(file, oflag) : open(file, oflag);
-}
-
-static inline int test_close(int fd)
-{
-	return wrapper ? v4l2_close(fd) : close(fd);
-}
-
-static inline void reopen(struct node *node)
-{
-	test_close(node->vfd.fd);
-	if ((node->vfd.fd = test_open(node->device, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", node->device,
-			strerror(errno));
-		exit(1);
-	}
-}
-
-static inline ssize_t test_read(int fd, void *buffer, size_t n)
-{
-	return wrapper ? v4l2_read(fd, buffer, n) : read(fd, buffer, n);
-}
-
-static inline ssize_t test_write(int fd, const void *buffer, size_t n)
-{
-	return wrapper ? v4l2_write(fd, buffer, n) : write(fd, buffer, n);
-}
-
-static inline int test_ioctl(int fd, unsigned long cmd, ...)
-{
-	void *arg;
-	va_list ap;
-
-	va_start(ap, cmd);
-	arg = va_arg(ap, void *);
-	va_end(ap);
-	return wrapper ? v4l2_ioctl(fd, cmd, arg) : ioctl(fd, cmd, arg);
-}
-
-static inline void *test_mmap(void *start, size_t length, int prot, int flags,
-		int fd, int64_t offset)
-{
- 	return wrapper ? v4l2_mmap(start, length, prot, flags, fd, offset) :
-		mmap(start, length, prot, flags, fd, offset);
-}
-
-static inline int test_munmap(void *start, size_t length)
-{
- 	return wrapper ? v4l2_munmap(start, length) : munmap(start, length);
-}
-
 static inline int check_fract(const struct v4l2_fract *f)
 {
 	if (f->numerator && f->denominator)
@@ -183,9 +124,7 @@ static inline double fract2f(const struct v4l2_fract *f)
 	return (double)f->numerator / (double)f->denominator;
 }
 
-int doioctl_name(struct node *node, unsigned long int request, void *parm,
-		 const char *name);
-#define doioctl(n, r, p) doioctl_name(n, r, p, #r)
+#define doioctl(n, r, p) v4l_named_ioctl((n)->g_v4l_fd(), #r, r, p)
 
 std::string cap2s(unsigned cap);
 std::string buftype2s(int type);
