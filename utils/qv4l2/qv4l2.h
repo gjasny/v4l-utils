@@ -49,7 +49,7 @@ class CaptureWin;
 
 typedef std::vector<unsigned> ClassIDVec;
 typedef std::map<unsigned, ClassIDVec> ClassMap;
-typedef std::map<unsigned, struct v4l2_queryctrl> CtrlMap;
+typedef std::map<unsigned, struct v4l2_query_ext_ctrl> CtrlMap;
 typedef std::map<unsigned, QWidget *> WidgetMap;
 
 enum {
@@ -171,7 +171,7 @@ private:
 	void fixWidth(QGridLayout *grid);
 	void addTabs(int size[]);
 	void finishGrid(QGridLayout *grid, unsigned ctrl_class);
-	void addCtrl(QGridLayout *grid, const struct v4l2_queryctrl &qctrl);
+	void addCtrl(QGridLayout *grid, const struct v4l2_query_ext_ctrl &qec);
 	void updateCtrl(unsigned id);
 	void updateCtrlRange(unsigned id, __s32 val);
 	void subscribeCtrlEvents();
@@ -226,7 +226,6 @@ private:
 	WidgetMap m_widgetMap;
 	WidgetMap m_sliderMap;
 	ClassMap m_classMap;
-	bool m_haveExtendedUserCtrls;
 	int m_vbiSize;
 	unsigned m_vbiWidth;
 	unsigned m_vbiHeight;

@@ -382,7 +382,7 @@ void ApplicationWindow::ctrlEvent()
 		}
 		if (m_ctrlMap[ev.id].type != V4L2_CTRL_TYPE_STRING)
 			continue;
-		queryctrl(m_ctrlMap[ev.id]);
+		query_ext_ctrl(m_ctrlMap[ev.id]);
 
 		struct v4l2_ext_control c;
 		struct v4l2_ext_controls ctrls;

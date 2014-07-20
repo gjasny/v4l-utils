@@ -25,6 +25,9 @@ struct v4l_fd {
 	__u32 caps;
 	bool trace;
 	bool direct;
+	bool have_query_ext_ctrl;
+	bool have_ext_ctrls;
+	bool have_next_ctrl;
 
 	int (*open)(struct v4l_fd *f, const char *file, int oflag, ...);
 	int (*close)(struct v4l_fd *f);
@@ -387,6 +390,10 @@ static inline __u32 v4l_determine_type(const struct v4l_fd *f)
 
 static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_blocking)
 {
+	struct v4l2_query_ext_ctrl qec = { V4L2_CTRL_FLAG_NEXT_CTRL };
+	struct v4l2_ext_controls ec = { 0, 0 };
+	struct v4l2_queryctrl qc = { V4L2_CTRL_FLAG_NEXT_CTRL };
+
 	f->fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
 
 	if (f->fd < 0)
@@ -399,6 +406,10 @@ static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_block
 		v4l_close(f);
 		return -1;
 	}
+	f->have_query_ext_ctrl = v4l_ioctl(f, VIDIOC_QUERY_EXT_CTRL, &qec) == 0;
+	f->have_ext_ctrls = v4l_ioctl(f, VIDIOC_TRY_EXT_CTRLS, &ec) == 0;
+	f->have_next_ctrl = v4l_ioctl(f, VIDIOC_QUERYCTRL, &qc) == 0;
+
 	f->caps = v4l_capability_g_caps(&f->cap);
 	f->type = v4l_determine_type(f);
 	return f->fd;
@@ -1365,6 +1376,134 @@ static inline void v4l_queue_buffer_init(const struct v4l_queue *q, struct v4l_b
 	default:
 		break;
 	}
+}
+
+static inline int v4l_query_ext_ctrl(v4l_fd *f, struct v4l2_query_ext_ctrl *qec,
+		bool next_ctrl, bool next_compound)
+{
+	struct v4l2_queryctrl qc;
+	int ret;
+
+	if (next_compound && !f->have_query_ext_ctrl) {
+		if (!next_ctrl)
+			return -EINVAL;
+		next_compound = false;
+	}
+	if (next_compound)
+		qec->id |= V4L2_CTRL_FLAG_NEXT_COMPOUND;
+	if (next_ctrl) {
+		if (f->have_next_ctrl)
+			qec->id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+		else
+			qec->id = qec->id ? qec->id + 1 : V4L2_CID_BASE;
+	}
+	if (f->have_query_ext_ctrl)
+		return v4l_ioctl(f, VIDIOC_QUERY_EXT_CTRL, qec);
+
+	for (;;) {
+		if (qec->id == V4L2_CID_LASTP1 && next_ctrl)
+			qec->id = V4L2_CID_PRIVATE_BASE;
+		qc.id = qec->id;
+		ret = v4l_ioctl(f, VIDIOC_QUERYCTRL, &qc);
+		if (!ret)
+			break;
+		if (ret != EINVAL)
+			return ret;
+		if (!next_ctrl || f->have_next_ctrl)
+			return ret;
+		if (qec->id >= V4L2_CID_PRIVATE_BASE)
+			return ret;
+		qec->id++;
+	}
+	qec->id = qc.id;
+	qec->type = qc.type;
+	memcpy(qec->name, qc.name, sizeof(qec->name));
+	qec->minimum = qc.minimum;
+	qec->maximum = qc.maximum;
+	qec->step = qc.step;
+	qec->default_value = qc.default_value;
+	qec->flags = qc.flags;
+	qec->elems = 1;
+	qec->nr_of_dims = 0;
+	memset(qec->dims, 0, sizeof(qec->dims));
+	switch (qec->type) {
+	case V4L2_CTRL_TYPE_INTEGER64:
+		qec->elem_size = sizeof(__s64);
+		qec->minimum = 0x8000000000000000ULL;
+		qec->maximum = 0x7fffffffffffffffULL;
+		qec->step = 1;
+		break;
+	case V4L2_CTRL_TYPE_STRING:
+		qec->elem_size = qc.maximum + 1;
+		break;
+	default:
+		qec->elem_size = sizeof(__s32);
+		break;
+	}
+	memset(qec->reserved, 0, sizeof(qec->reserved));
+	return 0;
+}
+
+static inline int v4l_g_ext_ctrls(v4l_fd *f, struct v4l2_ext_controls *ec)
+{
+	unsigned i;
+
+	if (f->have_ext_ctrls)
+		return v4l_ioctl(f, VIDIOC_G_EXT_CTRLS, ec);
+	if (ec->count == 0)
+		return 0;
+	for (i = 0; i < ec->count; i++) {
+		struct v4l2_control c = { ec->controls[i].id };
+		int ret = v4l_ioctl(f, VIDIOC_G_CTRL, &c);
+
+		if (ret) {
+			ec->error_idx = i;
+			return ret;
+		}
+		ec->controls[i].value = c.value;
+	}
+	return 0;
+}
+
+static inline int v4l_s_ext_ctrls(v4l_fd *f, struct v4l2_ext_controls *ec)
+{
+	unsigned i;
+
+	if (f->have_ext_ctrls)
+		return v4l_ioctl(f, VIDIOC_S_EXT_CTRLS, ec);
+	if (ec->count == 0)
+		return 0;
+	for (i = 0; i < ec->count; i++) {
+		struct v4l2_control c = { ec->controls[i].id, ec->controls[i].value };
+		int ret = v4l_ioctl(f, VIDIOC_S_CTRL, &c);
+
+		if (ret) {
+			ec->error_idx = i;
+			return ret;
+		}
+	}
+	return 0;
+}
+
+static inline int v4l_try_ext_ctrls(v4l_fd *f, struct v4l2_ext_controls *ec)
+{
+	unsigned i;
+
+	if (f->have_ext_ctrls)
+		return v4l_ioctl(f, VIDIOC_TRY_EXT_CTRLS, ec);
+	if (ec->count == 0)
+		return 0;
+	for (i = 0; i < ec->count; i++) {
+		struct v4l2_queryctrl qc = { ec->controls[i].id };
+		int ret = v4l_ioctl(f, VIDIOC_QUERYCTRL, &qc);
+
+		if (ret || qc.type == V4L2_CTRL_TYPE_STRING ||
+			   qc.type == V4L2_CTRL_TYPE_INTEGER64) {
+			ec->error_idx = i;
+			return ret ? ret : EINVAL;
+		}
+	}
+	return 0;
 }
 
 #ifdef __cplusplus

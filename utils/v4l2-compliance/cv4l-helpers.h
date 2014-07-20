@@ -69,6 +69,26 @@ public:
 		return cv4l_ioctl(VIDIOC_QUERYMENU, &qm);
 	}
 
+	int query_ext_ctrl(v4l2_query_ext_ctrl &qec, bool next_ctrl = false, bool next_compound = false)
+	{
+		return v4l_query_ext_ctrl(this, &qec, next_ctrl, next_compound);
+	}
+
+	int g_ext_ctrls(v4l2_ext_controls &ec)
+	{
+		return v4l_g_ext_ctrls(this, &ec);
+	}
+
+	int try_ext_ctrls(v4l2_ext_controls &ec)
+	{
+		return v4l_try_ext_ctrls(this, &ec);
+	}
+
+	int s_ext_ctrls(v4l2_ext_controls &ec)
+	{
+		return v4l_s_ext_ctrls(this, &ec);
+	}
+
 	int g_fmt(v4l2_format &fmt, unsigned type = 0)
 	{
 		return v4l_g_fmt(this, &fmt, type);
