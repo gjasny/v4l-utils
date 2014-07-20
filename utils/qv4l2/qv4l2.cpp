@@ -363,7 +363,7 @@ void ApplicationWindow::ctrlEvent()
 		if (m_sliderMap.find(ev.id) != m_sliderMap.end())
 			m_sliderMap[ev.id]->setDisabled(m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED);
 		if (ev.u.ctrl.changes & V4L2_EVENT_CTRL_CH_RANGE)
-			updateCtrlRange(ev.id);
+			updateCtrlRange(ev.id, ev.u.ctrl.value);
 		switch (m_ctrlMap[ev.id].type) {
 		case V4L2_CTRL_TYPE_INTEGER:
 		case V4L2_CTRL_TYPE_INTEGER_MENU:

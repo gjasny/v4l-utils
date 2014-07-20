@@ -636,7 +636,7 @@ void ApplicationWindow::updateCtrl(unsigned id)
 	}
 }
 
-void ApplicationWindow::updateCtrlRange(unsigned id)
+void ApplicationWindow::updateCtrlRange(unsigned id, __s32 new_val)
 {
 	const v4l2_queryctrl &qctrl = m_ctrlMap[id];
 	QLineEdit *edit;
@@ -651,11 +651,12 @@ void ApplicationWindow::updateCtrlRange(unsigned id)
 			slider->setMinimum(qctrl.minimum);
 			slider->setMaximum(qctrl.maximum);
 			slider->setSingleStep(qctrl.step);
-			slider->setSliderPosition(qctrl.default_value);
+			slider->setSliderPosition(new_val);
 
 			QSpinBox *spin = static_cast<QSpinBox *>(m_widgetMap[id]);
 			spin->setRange(qctrl.minimum, qctrl.maximum);
 			spin->setSingleStep(qctrl.step);
+			spin->setValue(new_val);
 			break;
 		}
 
