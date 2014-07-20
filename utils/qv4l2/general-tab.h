@@ -47,7 +47,7 @@ class QSpinBox;
 class QToolButton;
 class QSlider;
 
-class GeneralTab: public QGridLayout, public cv4l_fd
+class GeneralTab: public QGridLayout
 {
 	Q_OBJECT
 
@@ -73,6 +73,7 @@ public:
 	bool isPlanar() const { return m_isPlanar; }
 	void setHaveBuffers(bool haveBuffers);
 	void sourceChange(const v4l2_event &ev);
+	void sourceChangeSubscribe();
 	unsigned getDisplayColorspace() const;
 	unsigned getColorspace() const;
 	int getWidth();
@@ -175,7 +176,96 @@ private:
 	{
 		g_mw->error(error);
 	}
+	v4l_fd *g_v4l_fd() { return m_fd->g_v4l_fd(); }
 
+	__u32 g_type() const { return m_fd->g_type(); }
+	void s_type(__u32 type) { m_fd->s_type(type); }
+	__u32 g_selection_type() const { return m_fd->g_selection_type(); }
+	__u32 g_caps() const { return m_fd->g_caps(); }
+
+	bool has_vid_cap() const { return m_fd->has_vid_cap(); }
+	bool has_vid_out() const { return m_fd->has_vid_out(); }
+	bool has_vid_m2m() const { return m_fd->has_vid_m2m(); }
+	bool has_vid_mplane() const { return m_fd->has_vid_mplane(); }
+	bool has_overlay_cap() const { return m_fd->has_overlay_cap(); }
+	bool has_overlay_out() const { return m_fd->has_overlay_out(); }
+	bool has_raw_vbi_cap() const { return m_fd->has_raw_vbi_cap(); }
+	bool has_sliced_vbi_cap() const { return m_fd->has_sliced_vbi_cap(); }
+	bool has_vbi_cap() const { return m_fd->has_vbi_cap(); }
+	bool has_raw_vbi_out() const { return m_fd->has_raw_vbi_out(); }
+	bool has_sliced_vbi_out() const { return m_fd->has_sliced_vbi_out(); }
+	bool has_vbi_out() const { return m_fd->has_vbi_out(); }
+	bool has_vbi() const { return m_fd->has_vbi(); }
+	bool has_radio_rx() const { return m_fd->has_radio_rx(); }
+	bool has_radio_tx() const { return m_fd->has_radio_tx(); }
+	bool has_rds_cap() const { return m_fd->has_rds_cap(); }
+	bool has_rds_out() const { return m_fd->has_rds_out(); }
+	bool has_sdr_cap() const { return m_fd->has_sdr_cap(); }
+	bool has_hwseek() const { return m_fd->has_hwseek(); }
+	bool has_rw() const { return m_fd->has_rw(); }
+	bool has_streaming() const { return m_fd->has_streaming(); }
+	bool has_ext_pix_format() const { return m_fd->has_ext_pix_format(); }
+
+	bool g_direct() const { return m_fd->g_direct(); }
+	void s_direct(bool direct) { m_fd->s_direct(direct); }
+	int queryctrl(v4l2_queryctrl &qc) { return m_fd->queryctrl(qc); }
+	int querymenu(v4l2_querymenu &qm) { return m_fd->querymenu(qm); }
+	int g_fmt(v4l2_format &fmt, unsigned type = 0) { return m_fd->g_fmt(fmt); }
+	int try_fmt(v4l2_format &fmt) { return m_fd->try_fmt(fmt); }
+	int s_fmt(v4l2_format &fmt) { return m_fd->s_fmt(fmt); }
+	int g_tuner(v4l2_tuner &tuner, unsigned index = 0) { return m_fd->g_tuner(tuner, index); }
+	int s_tuner(v4l2_tuner &tuner) { return m_fd->g_tuner(tuner); }
+	int g_modulator(v4l2_modulator &modulator) { return m_fd->g_modulator(modulator); }
+	int s_modulator(v4l2_modulator &modulator) { return m_fd->s_modulator(modulator); }
+	int enum_input(v4l2_input &in, bool init = false, int index = 0) { return m_fd->enum_input(in, init, index); }
+	int enum_output(v4l2_output &out, bool init = false, int index = 0) { return m_fd->enum_output(out, init, index); }
+	int enum_audio(v4l2_audio &audio, bool init = false, int index = 0) { return m_fd->enum_audio(audio, init, index); }
+	int enum_audout(v4l2_audioout &audout, bool init = false, int index = 0) { return m_fd->enum_audout(audout, init, index); }
+	int subscribe_event(v4l2_event_subscription &sub) { return m_fd->subscribe_event(sub); }
+	int dqevent(v4l2_event &ev) { return m_fd->dqevent(ev); }
+	int g_input(int &input) { return m_fd->g_input(input); }
+	int s_input(int input) { return m_fd->s_input(input); }
+	int g_output(int &output) { return m_fd->g_output(output); }
+	int s_output(int output) { return m_fd->s_output(output); }
+	int g_audio(v4l2_audio &audio) { return m_fd->g_audio(audio); }
+	int s_audio(int input) { return m_fd->s_audio(input); }
+	int g_audout(v4l2_audioout &audout) { return m_fd->g_audout(audout); }
+	int s_audout(int output) { return m_fd->s_audout(output); }
+	int g_std(v4l2_std_id &std) { return m_fd->g_std(std); }
+	int s_std(v4l2_std_id std) { return m_fd->s_std(std); }
+	int query_std(v4l2_std_id &std) { return m_fd->query_std(std); }
+	int g_dv_timings(v4l2_dv_timings &timings) { return m_fd->g_dv_timings(timings); }
+	int s_dv_timings(v4l2_dv_timings &timings) { return m_fd->s_dv_timings(timings); }
+	int query_dv_timings(v4l2_dv_timings &timings) { return m_fd->query_dv_timings(timings); }
+	int g_frequency(v4l2_frequency &freq, unsigned index = 0) { return m_fd->g_frequency(freq, index); }
+	int s_frequency(v4l2_frequency &freq) { return m_fd->s_frequency(freq); }
+	int streamon(__u32 type = 0) { return m_fd->streamon(type); }
+	int streamoff(__u32 type = 0) { return m_fd->streamoff(type); }
+	int querybuf(v4l_buffer &buf, unsigned index) { return m_fd->querybuf(buf, index); }
+	int dqbuf(v4l_buffer &buf) { return m_fd->dqbuf(buf); }
+	int qbuf(v4l_buffer &buf) { return m_fd->qbuf(buf); }
+	int prepare_buf(v4l_buffer &buf) { return m_fd->prepare_buf(buf); }
+	int enum_std(v4l2_standard &std, bool init = false, int index = 0) { return m_fd->enum_std(std, init, index); }
+	int enum_dv_timings(v4l2_enum_dv_timings &timings, bool init = false, int index = 0) { return m_fd->enum_dv_timings(timings, init, index); }
+	int enum_fmt(v4l2_fmtdesc &fmt, bool init = false, int index = 0, unsigned type = 0) { return m_fd->enum_fmt(fmt, init, index, type); }
+	int enum_framesizes(v4l2_frmsizeenum &frm, __u32 init_pixfmt = 0, int index = 0) { return m_fd->enum_framesizes(frm, init_pixfmt, index); }
+	int enum_frameintervals(v4l2_frmivalenum &frm, __u32 init_pixfmt = 0, __u32 w = 0, __u32 h = 0, int index = 0) { return m_fd->enum_frameintervals(frm, init_pixfmt, w, h, index); }
+	int set_interval(v4l2_fract interval, unsigned type = 0) { return m_fd->set_interval(interval, type); }
+	v4l2_fract g_pixel_aspect(unsigned &width, unsigned &height, unsigned type = 0)
+	{
+		return m_fd->g_pixel_aspect(width, height, type);
+	}
+	bool has_crop() { return m_fd->has_crop(); }
+	bool has_compose() { return m_fd->has_compose(); }
+	bool input_has_crop() { return m_fd->input_has_crop(); }
+	bool input_has_compose() { return m_fd->input_has_compose(); }
+	bool ioctl_exists(int ret)
+	{
+		return ret == 0 || errno != ENOTTY;
+	}
+
+
+	cv4l_fd *m_fd;
 	int m_row;
 	int m_col;
 	int m_cols;

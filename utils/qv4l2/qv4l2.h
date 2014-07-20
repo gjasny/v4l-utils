@@ -174,6 +174,7 @@ private:
 	void addCtrl(QGridLayout *grid, const struct v4l2_queryctrl &qctrl);
 	void updateCtrl(unsigned id);
 	void updateCtrlRange(unsigned id, __s32 val);
+	void subscribeCtrlEvents();
 	void refresh(unsigned ctrl_class);
 	void refresh();
 	void makeSnapshot(unsigned char *buf, unsigned size);

@@ -55,9 +55,9 @@ static QString pixfmt2s(unsigned id)
 	return pixfmt;
 }
 
-GeneralTab::GeneralTab(const QString &device, cv4l_fd *_fd, int n, QWidget *parent) :
+GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *parent) :
 	QGridLayout(parent),
-	cv4l_fd(_fd),
+	m_fd(fd),
 	m_row(0),
 	m_col(0),
 	m_cols(n),
@@ -128,7 +128,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *_fd, int n, QWidget *pare
 	addTitle("General Information");
 
 	addLabel("Device");
-	addLabel(device + (g_direct() ? "" : " (wrapped)"));
+	addLabel(device + (m_fd->g_direct() ? "" : " (wrapped)"));
 
 	addLabel("Driver");
 	addLabel((char *)m_querycap.driver);
@@ -225,7 +225,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *_fd, int n, QWidget *pare
 capture_method:
 	addLabel("Capture Method");
 	m_capMethods = new QComboBox(parent);
-	if (g_caps() & V4L2_CAP_STREAMING) {
+	if (has_streaming()) {
 		cv4l_queue q;
 
 		// Yuck. The videobuf framework does not accept a reqbufs count of 0.
@@ -235,22 +235,23 @@ capture_method:
 		// buffers allocated. This is the only really portable way as long
 		// as there are still drivers around that do not support reqbufs(0).
 		q.init(g_type(), V4L2_MEMORY_USERPTR);
-		if (q.reqbufs(this, 1) == 0) {
+		if (q.reqbufs(m_fd, 1) == 0) {
 			m_capMethods->addItem("User pointer I/O", QVariant(methodUser));
-			reopen(true);
+			m_fd->reopen(true);
 		}
 		q.init(g_type(), V4L2_MEMORY_MMAP);
-		if (q.reqbufs(this, 1) == 0) {
+		if (q.reqbufs(m_fd, 1) == 0) {
 			m_capMethods->addItem("Memory mapped I/O", QVariant(methodMmap));
-			reopen(true);
+			m_fd->reopen(true);
 		}
 	}
-	if (g_caps() & V4L2_CAP_READWRITE) {
-		m_capMethods->addItem("read()", QVariant(methodRead));
+	if (has_rw()) {
+		if (v4l_type_is_output(g_type()))
+			m_capMethods->addItem("write()", QVariant(methodRead));
+		else
+			m_capMethods->addItem("read()", QVariant(methodRead));
 	}
 	addWidget(m_capMethods);
-
-
 
 	if (!isRadio() && !isVbi() && !m_isOutput && (has_crop() || has_compose())) {
 		addTitle("Cropping & Compose Settings");
@@ -271,6 +272,19 @@ done:
 	fixWidth();
 }
 
+void GeneralTab::sourceChangeSubscribe()
+{
+	v4l2_input vin;
+
+	if (!enum_input(vin, true)) {
+		struct v4l2_event_subscription sub = {
+			V4L2_EVENT_SOURCE_CHANGE, vin.index
+		};
+
+		subscribe_event(sub);
+	} while (!enum_input(vin));
+}
+
 void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 {
 	if (!isRadio() && !enum_input(vin, true)) {
@@ -282,12 +296,6 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 				needsStd = true;
 			if (vin.capabilities & V4L2_IN_CAP_DV_TIMINGS)
 				needsTimings = true;
-
-			struct v4l2_event_subscription sub = {
-				V4L2_EVENT_SOURCE_CHANGE, vin.index
-			};
-
-			subscribe_event(sub);
 		} while (!enum_input(vin));
 		addWidget(m_videoInput);
 		connect(m_videoInput, SIGNAL(activated(int)), SLOT(inputChanged(int)));
@@ -542,7 +550,7 @@ void GeneralTab::audioSection(v4l2_audio vaudio, v4l2_audioout vaudout)
 				setAudioDeviceBufferSize(75);
 			} else {
 				v4l2_fract fract;
-				if (cv4l_fd::get_interval(fract)) {
+				if (m_fd->get_interval(fract)) {
 					// Default values are for 30 FPS
 					fract.numerator = 33;
 					fract.denominator = 1000;
@@ -2070,7 +2078,7 @@ void GeneralTab::updateFrameInterval()
 	m_frameInterval->setEnabled(m_has_interval);
 	if (m_has_interval) {
 	        m_interval = frmival.discrete;
-        	curr_ok = !cv4l_fd::get_interval(curr);
+        	curr_ok = !m_fd->get_interval(curr);
 		do {
 			m_frameInterval->addItem(QString("%1 fps")
 				.arg((double)frmival.discrete.denominator / frmival.discrete.numerator));

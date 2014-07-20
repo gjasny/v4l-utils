@@ -287,6 +287,8 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 #ifdef HAVE_QTGL
 	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
 #endif
+	m_genTab->sourceChangeSubscribe();
+	subscribeCtrlEvents();
 	m_ctrlNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Exception, m_tabs);
 	connect(m_ctrlNotifier, SIGNAL(activated(int)), this, SLOT(ctrlEvent()));
 }
@@ -474,6 +476,8 @@ bool ApplicationWindow::startCapture()
 
 	m_queue.free(this);
 	reopen(true);
+	m_genTab->sourceChangeSubscribe();
+	subscribeCtrlEvents();
 	m_capStartAct->setChecked(false);
 #ifdef HAVE_QTGL
 	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
@@ -739,6 +743,8 @@ void ApplicationWindow::stopCapture()
 		break;
 	}
 	reopen(true);
+	m_genTab->sourceChangeSubscribe();
+	subscribeCtrlEvents();
 	m_genTab->setHaveBuffers(false);
 	refresh();
 }
@@ -757,7 +763,6 @@ bool ApplicationWindow::showFrames()
 void ApplicationWindow::traceIoctls(bool enable)
 {
 	s_trace(enable);
-	m_genTab->s_trace(enable);
 }
 
 void ApplicationWindow::enableScaling(bool enable)

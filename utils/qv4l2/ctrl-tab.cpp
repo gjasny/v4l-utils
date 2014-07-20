@@ -404,11 +404,6 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_queryctrl &qctrl)
 	default:
 		return;
 	}
-	struct v4l2_event_subscription sub;
-	memset(&sub, 0, sizeof(sub));
-	sub.type = V4L2_EVENT_CTRL;
-	sub.id = qctrl.id;
-	subscribe_event(sub);
 
 	m_sigMapper->setMapping(m_widgetMap[qctrl.id], qctrl.id);
 	if (qctrl.flags & CTRL_FLAG_DISABLED) {
@@ -670,6 +665,21 @@ void ApplicationWindow::updateCtrlRange(unsigned id, __s32 new_val)
 		QLineEdit *edit = static_cast<QLineEdit *>(m_widgetMap[id]);
 		edit->setMaxLength(qctrl.maximum);
 		break;
+	}
+}
+
+void ApplicationWindow::subscribeCtrlEvents()
+{
+	for (ClassMap::iterator iter = m_classMap.begin(); iter != m_classMap.end(); ++iter) {
+		for (unsigned i = 0; i < m_classMap[iter->first].size(); i++) {
+			unsigned id = m_classMap[iter->first][i];
+			struct v4l2_event_subscription sub;
+
+			memset(&sub, 0, sizeof(sub));
+			sub.type = V4L2_EVENT_CTRL;
+			sub.id = id;
+			subscribe_event(sub);
+		}
 	}
 }
 
