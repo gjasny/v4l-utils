@@ -280,12 +280,14 @@ void GeneralTab::sourceChangeSubscribe()
 	v4l2_input vin;
 
 	if (!enum_input(vin, true)) {
-		struct v4l2_event_subscription sub = {
-			V4L2_EVENT_SOURCE_CHANGE, vin.index
-		};
+		do {
+			struct v4l2_event_subscription sub = {
+				V4L2_EVENT_SOURCE_CHANGE, vin.index
+			};
 
-		subscribe_event(sub);
-	} while (!enum_input(vin));
+			subscribe_event(sub);
+		} while (!enum_input(vin));
+	}
 }
 
 void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
