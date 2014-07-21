@@ -87,7 +87,7 @@ class ApplicationWindow: public QMainWindow, cv4l_fd
 {
 	Q_OBJECT
 
-	friend CaptureWin;
+	friend class CaptureWin;
 public:
 	ApplicationWindow();
 	virtual ~ApplicationWindow();
