@@ -131,9 +131,6 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 
 void CaptureWin::resetSize()
 {
-	if (m_appWin->m_makeFullScreenAct->isChecked())
-		escape();
-
         // Force resize even if no size change
 	QSize resetFrameSize = m_origFrameSize;
 	m_origFrameSize.setWidth(0);
