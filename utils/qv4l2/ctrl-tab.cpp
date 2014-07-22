@@ -64,8 +64,6 @@ void ApplicationWindow::addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment a
 		w->setMinimumWidth(m_minWidth);
 	if (w->sizeHint().width() > m_maxw[m_col])
 		m_maxw[m_col] = w->sizeHint().width();
-	if (w->sizeHint().height() > m_maxh)
-		m_maxh = w->sizeHint().height();
 	grid->addWidget(w, m_row, m_col, align | Qt::AlignVCenter);
 	m_col++;
 	if (m_col == m_cols) {
@@ -74,7 +72,7 @@ void ApplicationWindow::addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment a
 	}
 }
 
-void ApplicationWindow::addTabs(int size[])
+void ApplicationWindow::addTabs(int m_winWidth)
 {
 	v4l2_query_ext_ctrl qec = { 0 };
 	unsigned ctrl_class;
@@ -160,22 +158,16 @@ void ApplicationWindow::addTabs(int size[])
 		fixWidth(grid);
 
 		int totalw = 0;
-		int totalh = 0;
 		int diff = 0;
 		for (int i = 0; i < m_cols; i++) {
 			totalw += m_maxw[i] + m_pxw;
 		}
-		totalh = grid->rowCount() * m_maxh;
-		if (totalw > size[0])
-			size[0] = totalw;
+		if (totalw > m_winWidth)
+			m_winWidth = totalw;
 		else {
-		  diff = size[0] - totalw;
+		  diff = m_winWidth - totalw;
 		  grid->setHorizontalSpacing(diff/5);
 		}
-		if (totalh > size[1])
-			size[1] = totalh;
-		setMinimumSize(size[0], size[1]);
-
 		grid = new QGridLayout(w);
 		finishGrid(grid, ctrl_class);
 	}

@@ -64,7 +64,6 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	m_pxw(25.0),
 	m_vMargin(10),
 	m_hMargin(20),
-	m_maxh(0),
 	m_isRadio(false),
 	m_isSDR(false),
 	m_isVbi(false),
@@ -1077,8 +1076,6 @@ void GeneralTab::addWidget(QWidget *w, Qt::Alignment align)
 		w->setMinimumWidth(m_minWidth);
 	if (w->sizeHint().width() > m_maxw[m_col])
 		m_maxw[m_col] = w->sizeHint().width();
-	if (w->sizeHint().height() > m_maxh)
-		m_maxh = w->sizeHint().height();
 	QGridLayout::addWidget(w, m_row, m_col, align | Qt::AlignVCenter);
 	m_col++;
 	if (m_col == m_cols) {
@@ -1114,11 +1111,6 @@ int GeneralTab::getWidth()
 		total += m_maxw[i] + m_pxw;
 	}
 	return total;
-}
-
-int GeneralTab::getHeight()
-{
-	return rowCount() * m_maxh;
 }
 
 bool GeneralTab::isSlicedVbi() const

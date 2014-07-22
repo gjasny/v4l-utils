@@ -83,7 +83,6 @@ public:
 	unsigned getDisplayColorspace() const;
 	unsigned getColorspace() const;
 	int getWidth();
-	int getHeight();
 
 public slots:
 	void showAllAudioDevices(bool use);

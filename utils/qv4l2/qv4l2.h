@@ -169,7 +169,7 @@ private:
 		addWidget(grid, new QLabel(text, parentWidget()), align);
 	}
 	void fixWidth(QGridLayout *grid);
-	void addTabs(int size[]);
+	void addTabs(int m_winWidth);
 	void finishGrid(QGridLayout *grid, unsigned ctrl_class);
 	void addCtrl(QGridLayout *grid, const struct v4l2_query_ext_ctrl &qec);
 	void updateCtrl(unsigned id);
@@ -204,7 +204,6 @@ private:
 	const int m_vMargin;
 	const int m_hMargin;
 	int m_maxw[4];
-	int m_maxh;
 	int m_increment;
 	GeneralTab *m_genTab;
 	VbiTab *m_vbiTab;

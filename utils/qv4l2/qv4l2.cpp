@@ -68,7 +68,6 @@ ApplicationWindow::ApplicationWindow() :
 	m_minWidth(175),
 	m_vMargin(15),
 	m_hMargin(5),
-	m_maxh(0),
 	m_genTab(NULL),
 	m_sigMapper(NULL)
 {
@@ -246,10 +245,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 
 	QWidget *w = new QWidget(m_tabs);
 	m_genTab = new GeneralTab(device, this, 4, w);
-	int size[2];
-	size[0] = m_genTab->getWidth();
-	size[1] = m_genTab->getHeight();
-	setMinimumSize(size[0], size[1]);
+	int m_winWidth = m_genTab->getWidth();
 
 #ifdef HAVE_ALSA
 	if (m_genTab->hasAlsaAudio()) {
@@ -268,7 +264,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	connect(m_genTab, SIGNAL(displayColorspaceChanged()), this, SLOT(updateDisplayColorspace()));
 	connect(m_genTab, SIGNAL(clearBuffers()), this, SLOT(clearBuffers()));
 	m_tabs->addTab(w, "General Settings");
-	addTabs(size);
+	addTabs(m_winWidth);
 	m_vbiTab = NULL;
 	if (has_vbi_cap()) {
 		w = new QWidget(m_tabs);
