@@ -98,11 +98,6 @@ extern const char * const tpg_aspect_strings[];
 #define TPG_MAX_PLANES 2
 #define TPG_MAX_PAT_LINES 8
 
-#define V4L2_FIELD_HAS_T_OR_B(f) \
-	((f) == V4L2_FIELD_BOTTOM || \
-	 (f) == V4L2_FIELD_TOP || \
-	 (f) == V4L2_FIELD_ALTERNATE)
-
 struct tpg_data {
 	/* Source frame size */
 	unsigned			src_width, src_height;

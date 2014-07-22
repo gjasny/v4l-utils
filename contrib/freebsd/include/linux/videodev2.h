@@ -156,6 +156,10 @@ enum v4l2_field {
 	 (field) == V4L2_FIELD_INTERLACED_BT ||\
 	 (field) == V4L2_FIELD_SEQ_TB ||\
 	 (field) == V4L2_FIELD_SEQ_BT)
+#define V4L2_FIELD_HAS_T_OR_B(field)	\
+	((field) == V4L2_FIELD_BOTTOM ||\
+	 (field) == V4L2_FIELD_TOP ||\
+	 (field) == V4L2_FIELD_ALTERNATE)
 
 enum v4l2_buf_type {
 	V4L2_BUF_TYPE_VIDEO_CAPTURE        = 1,
@@ -481,6 +485,9 @@ struct v4l2_pix_format {
 /* SDR formats - used only for Software Defined Radio devices */
 #define V4L2_SDR_FMT_CU8          v4l2_fourcc('C', 'U', '0', '8') /* IQ u8 */
 #define V4L2_SDR_FMT_CU16LE       v4l2_fourcc('C', 'U', '1', '6') /* IQ u16le */
+#define V4L2_SDR_FMT_CS8          v4l2_fourcc('C', 'S', '0', '8') /* complex s8 */
+#define V4L2_SDR_FMT_CS14LE       v4l2_fourcc('C', 'S', '1', '4') /* complex s14le */
+#define V4L2_SDR_FMT_RU12LE       v4l2_fourcc('R', 'U', '1', '2') /* real u12le */
 
 /* priv field value to indicates that subsequent fields are valid. */
 #define V4L2_PIX_FMT_PRIV_MAGIC		0xfeedcafe
@@ -1667,6 +1674,12 @@ struct v4l2_vbi_format {
 #define V4L2_VBI_UNSYNC		(1 << 0)
 #define V4L2_VBI_INTERLACED	(1 << 1)
 
+/* ITU-R start lines for each field */
+#define V4L2_VBI_ITU_525_F1_START (1)
+#define V4L2_VBI_ITU_525_F2_START (264)
+#define V4L2_VBI_ITU_625_F1_START (1)
+#define V4L2_VBI_ITU_625_F2_START (314)
+
 /* Sliced VBI
  *
  *    This implements is a proposal V4L2 API to allow SLICED VBI
@@ -1808,10 +1821,12 @@ struct v4l2_pix_format_mplane {
 /**
  * struct v4l2_sdr_format - SDR format definition
  * @pixelformat:	little endian four character code (fourcc)
+ * @buffersize:		maximum size in bytes required for data
  */
 struct v4l2_sdr_format {
 	uint32_t				pixelformat;
-	uint8_t				reserved[28];
+	uint32_t				buffersize;
+	uint8_t				reserved[24];
 } __attribute__ ((packed));
 
 /**
