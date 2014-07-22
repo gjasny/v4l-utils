@@ -724,6 +724,8 @@ v4l_format_g_sizeimage(const struct v4l2_format *fmt, unsigned plane)
 	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
 		return plane ? 0 : fmt->fmt.sliced.io_size;
+	case V4L2_BUF_TYPE_SDR_CAPTURE:
+		return plane ? 0 : fmt->fmt.sdr.buffersize;
 	default:
 		return 0;
 	}

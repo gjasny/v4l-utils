@@ -517,6 +517,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		if (set.find(sdr.pixelformat) == set.end())
 			return fail("unknown pixelformat %08x for buftype %d\n",
 					pix.pixelformat, type);
+		fail_on_test(sdr.buffersize == 0);
 		fail_on_test(check_0(sdr.reserved, sizeof(sdr.reserved)));
 		break;
 	case V4L2_BUF_TYPE_PRIVATE:
