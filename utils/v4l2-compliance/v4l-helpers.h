@@ -327,8 +327,7 @@ static inline bool v4l_has_radio_rx(const struct v4l_fd *f)
 
 static inline bool v4l_has_radio_tx(const struct v4l_fd *f)
 {
-	return (v4l_g_caps(f) & V4L2_CAP_RADIO) &&
-	       (v4l_g_caps(f) & V4L2_CAP_MODULATOR);
+	return v4l_g_caps(f) & V4L2_CAP_MODULATOR;
 }
 
 static inline bool v4l_has_rds_cap(const struct v4l_fd *f)

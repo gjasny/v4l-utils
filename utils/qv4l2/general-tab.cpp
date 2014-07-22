@@ -146,8 +146,6 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	v4l2_audio vaudio;
 	v4l2_audioout vaudout;
 	v4l2_fmtdesc fmt;
-	bool needsStd = false;
-	bool needsTimings = false;
 
 	if (m_tuner.capability &&
 	    (m_tuner.capability & (V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_1HZ)))
@@ -156,11 +154,13 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	    (m_modulator.capability & (V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_1HZ)))
 		m_isRadio = true;
 	if (m_querycap.capabilities & V4L2_CAP_DEVICE_CAPS) {
-		m_isVbi = g_caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE);
+		m_isVbi = g_caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
+				      V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT);
 		m_isSDR = g_caps() & V4L2_CAP_SDR_CAPTURE;
 		if (m_isSDR)
 			m_isRadio = true;
-		if (g_caps() & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE))
+		if (g_caps() & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+				V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT))
 			m_isOutput = true;
 	}
 
@@ -168,18 +168,18 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 		(V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_OUTPUT_MPLANE))
 		m_isPlanar = true;
 
-	m_stackedStandards = new QStackedWidget;
-	m_stackedFrameSettings = new QStackedWidget;
-	m_stackedFrequency = new QStackedWidget;
+	m_stackedStandards = new QStackedWidget(parent);
+	m_stackedFrameSettings = new QStackedWidget(parent);
+	m_stackedFrequency = new QStackedWidget(parent);
 
 	if (!enum_input(vin, true) || m_tuner.capability) {
 		addTitle("Input Settings");
-		inputSection(needsStd, needsTimings, vin);
+		inputSection(vin);
 	}
 
-	if (m_tuner_rf.capability || m_modulator.capability || (!isRadio() && !enum_output(vout, true))) {
+	if (m_modulator.capability || (!isRadio() && !enum_output(vout, true))) {
 		addTitle("Output Settings");
-		outputSection(vout, fmt);
+		outputSection(vout);
 	}
 
 	if (hasAlsaAudio()) {
@@ -206,21 +206,23 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 
 	addTitle("Format Settings");
 	if (isVbi()) {
-		addLabel("VBI Capture Method");
-		m_vbiMethods = new QComboBox(parent);
-		if (g_caps() & V4L2_CAP_VBI_CAPTURE)
+		addLabel("VBI Streaming Method");
+		m_vbiMethods = new QComboBox(parentWidget());
+		if (has_raw_vbi_cap() || has_raw_vbi_out())
 			m_vbiMethods->addItem("Raw");
-		if (g_caps() & V4L2_CAP_SLICED_VBI_CAPTURE)
+		if (has_sliced_vbi_cap() || has_sliced_vbi_out())
 			m_vbiMethods->addItem("Sliced");
 		addWidget(m_vbiMethods);
 		connect(m_vbiMethods, SIGNAL(activated(int)), SLOT(vbiMethodsChanged(int)));
 		vbiMethodsChanged(0);
-		updateVideoInput();
-		goto capture_method;
+		if (m_isOutput)
+			updateVideoOutput();
+		else
+			updateVideoInput();
+	} else {
+		formatSection(fmt);
 	}
-	formatSection(fmt);
 
-capture_method:
 	addLabel("Streaming Method");
 	m_capMethods = new QComboBox(parent);
 	if (has_streaming()) {
@@ -260,17 +262,19 @@ capture_method:
 		cropSection();
 	}
 
-	updateVideoInput();
-	updateVideoOutput();
+	if (m_isOutput)
+		updateVideoOutput();
+	else
+		updateVideoInput();
 	updateVidFormat();
 
 done:
 	QGridLayout::addWidget(new QWidget(parent), rowCount(), 0, 1, n);
 	setRowStretch(rowCount() - 1, 1);
 	if (m_videoInput)
-		updateGUI(m_videoInput->currentIndex());
-	else
-		updateGUI(0);
+		updateGUIInput(m_videoInput->currentIndex());
+	else if (m_videoOutput)
+		updateGUIOutput(m_videoOutput->currentIndex());
 	fixWidth();
 }
 
@@ -289,8 +293,11 @@ void GeneralTab::sourceChangeSubscribe()
 	}
 }
 
-void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
+void GeneralTab::inputSection(v4l2_input vin)
 {
+	bool needsStd = false;
+	bool needsTimings = false;
+
 	if (!isRadio() && !enum_input(vin, true)) {
 		addLabel("Input");
 		m_videoInput = new QComboBox(parentWidget());
@@ -376,7 +383,27 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 		m_freqRows->addWidget(m_freq, 0, 1, Qt::AlignLeft);
 	}
 
-	if (m_tuner.capability && !isSDR()) {
+	if (m_tuner_rf.capability) {
+		const char *unit = (m_tuner_rf.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
+			(m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
+
+		m_freqRfFac = (m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
+		m_freqRf = new QDoubleSpinBox(parentWidget());
+		m_freqRf->setMinimum(m_tuner_rf.rangelow / m_freqRfFac);
+		m_freqRf->setMaximum(m_tuner_rf.rangehigh / m_freqRfFac);
+		m_freqRf->setSingleStep(1.0 / m_freqRfFac);
+		m_freqRf->setSuffix(unit);
+		m_freqRf->setDecimals((m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
+		m_freqRf->setWhatsThis(QString("RF Frequency\nLow: %1 %3\nHigh: %2 %3")
+				    .arg((double)m_tuner_rf.rangelow / m_freqRfFac, 0, 'f', 2)
+				    .arg((double)m_tuner_rf.rangehigh / m_freqRfFac, 0, 'f', 2)
+				    .arg(unit));
+		m_freqRf->setStatusTip(m_freqRf->whatsThis());
+		connect(m_freqRf, SIGNAL(valueChanged(double)), SLOT(freqRfChanged(double)));
+		updateFreqRf();
+		m_freqRows->addWidget(new QLabel("RF Frequency", parentWidget()), 0, 2, Qt::AlignLeft);
+		m_freqRows->addWidget(m_freqRf, 0, 3, Qt::AlignLeft);
+	} else if (!isSDR()) {
 		QLabel *l = new QLabel("Refresh Tuner Status", parentWidget());
 		QWidget *w = new QWidget(parentWidget());
 		QHBoxLayout *box = new QHBoxLayout(w);
@@ -413,6 +440,9 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 	QGridLayout::addWidget(m_stackedFrequency, m_row, 0, 2, m_cols, Qt::AlignVCenter);
 	m_row += 2;
 
+	if (isRadio() || isVbi())
+		return;
+
 	QWidget *wFrameWH = new QWidget();
 	QWidget *wFrameSR = new QWidget();
 	QGridLayout *m_wh = new QGridLayout(wFrameWH);
@@ -447,55 +477,56 @@ void GeneralTab::inputSection(bool needsStd, bool needsTimings, v4l2_input vin)
 	m_row++;
 }
 
-void GeneralTab::outputSection(v4l2_output vout, v4l2_fmtdesc fmt)
+void GeneralTab::outputSection(v4l2_output vout)
 {
+	bool needsStd = false;
+	bool needsTimings = false;
+
 	if (!isRadio() && !enum_output(vout, true)) {
 		addLabel("Output");
 		m_videoOutput = new QComboBox(parentWidget());
 		do {
 			m_videoOutput->addItem((char *)vout.name);
+			if (vout.capabilities & V4L2_OUT_CAP_STD)
+				needsStd = true;
+			if (vout.capabilities & V4L2_OUT_CAP_DV_TIMINGS)
+				needsTimings = true;
 		} while (!enum_output(vout));
 		addWidget(m_videoOutput);
 		connect(m_videoOutput, SIGNAL(activated(int)), SLOT(outputChanged(int)));
 		updateVideoOutput();
+		m_row++;
+		m_col = 0;
 	}
 
-	if (m_isOutput) {
-		addLabel("Output Image Formats");
-		m_vidOutFormats = new QComboBox(parentWidget());
-		m_vidOutFormats->setMinimumContentsLength(20);
-		if (!enum_fmt(fmt, true)) {
-			do {
-				m_vidOutFormats->addItem(pixfmt2s(fmt.pixelformat) +
-					" - " + (const char *)fmt.description);
-			} while (!enum_fmt(fmt));
-		}
-		addWidget(m_vidOutFormats);
-		connect(m_vidOutFormats, SIGNAL(activated(int)), SLOT(vidOutFormatChanged(int)));
+	QWidget *wStd = new QWidget();
+	QGridLayout *m_stdRow = new QGridLayout(wStd);
+	m_grids.append(m_stdRow);
+
+	if (needsStd) {
+		m_tvStandard = new QComboBox(parentWidget());
+		m_stdRow->addWidget(new QLabel("TV Standard", parentWidget()), 0, 0, Qt::AlignLeft);
+		m_stdRow->addWidget(m_tvStandard, 0, 1, Qt::AlignLeft);
+		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
+		refreshStandards();
 	}
 
+	QWidget *wTim = new QWidget();
+	QGridLayout *m_timRow = new QGridLayout(wTim);
+	m_grids.append(m_timRow);
 
-	if (m_tuner_rf.capability) {
-		const char *unit = (m_tuner_rf.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
-			(m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ ? " Hz" : " MHz");
-
-		m_freqRfFac = (m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 1 : 16;
-		m_freqRf = new QDoubleSpinBox(parentWidget());
-		m_freqRf->setMinimum(m_tuner_rf.rangelow / m_freqRfFac);
-		m_freqRf->setMaximum(m_tuner_rf.rangehigh / m_freqRfFac);
-		m_freqRf->setSingleStep(1.0 / m_freqRfFac);
-		m_freqRf->setSuffix(unit);
-		m_freqRf->setDecimals((m_tuner_rf.capability & V4L2_TUNER_CAP_1HZ) ? 0 : 4);
-		m_freqRf->setWhatsThis(QString("RF Frequency\nLow: %1 %3\nHigh: %2 %3")
-				    .arg((double)m_tuner_rf.rangelow / m_freqRfFac, 0, 'f', 2)
-				    .arg((double)m_tuner_rf.rangehigh / m_freqRfFac, 0, 'f', 2)
-				    .arg(unit));
-		m_freqRf->setStatusTip(m_freqRf->whatsThis());
-		connect(m_freqRf, SIGNAL(valueChanged(double)), SLOT(freqRfChanged(double)));
-		updateFreqRf();
-		addLabel("RF Frequency");
-		addWidget(m_freqRf);
+	if (needsTimings) {
+		m_videoTimings = new QComboBox(parentWidget());
+		m_timRow->addWidget(new QLabel("Video Timings", parentWidget()), 0, 0, Qt::AlignLeft);
+		m_timRow->addWidget(m_videoTimings, 0, 1, Qt::AlignLeft);
+		connect(m_videoTimings, SIGNAL(activated(int)), SLOT(timingsChanged(int)));
+		refreshTimings();
 	}
+
+	m_stackedStandards->addWidget(wStd);
+	m_stackedStandards->addWidget(wTim);
+	QGridLayout::addWidget(m_stackedStandards, m_row, 0, 1, m_cols, Qt::AlignVCenter);
+	m_row++;
 
 	if (m_modulator.capability) {
 		const char *unit = (m_modulator.capability & V4L2_TUNER_CAP_LOW) ? " kHz" :
@@ -517,8 +548,7 @@ void GeneralTab::outputSection(v4l2_output vout, v4l2_fmtdesc fmt)
 		updateFreq();
 		addLabel("Frequency");
 		addWidget(m_freq);
-	}
-	if (m_modulator.capability && !isSDR()) {
+
 		if (m_modulator.capability & V4L2_TUNER_CAP_STEREO) {
 			addLabel("Stereo");
 			m_stereoMode = new QCheckBox(parentWidget());
@@ -536,6 +566,28 @@ void GeneralTab::outputSection(v4l2_output vout, v4l2_fmtdesc fmt)
 			connect(m_rdsMode, SIGNAL(clicked()), SLOT(rdsModeChanged()));
 		}
 	}
+
+	if (isRadio())
+		return;
+
+	QWidget *wFrameWH = new QWidget();
+	QGridLayout *m_wh = new QGridLayout(wFrameWH);
+	m_grids.append(m_wh);
+
+	m_wh->addWidget(new QLabel("Frame Width", parentWidget()), 0, 0, Qt::AlignLeft);
+	m_frameWidth = new QSpinBox(parentWidget());
+	m_wh->addWidget(m_frameWidth, 0, 1, Qt::AlignLeft);
+	connect(m_frameWidth, SIGNAL(editingFinished()), SLOT(frameWidthChanged()));
+
+	m_wh->addWidget(new QLabel("Frame Height", parentWidget()), 0, 2, Qt::AlignLeft);
+	m_frameHeight = new QSpinBox(parentWidget());
+	m_wh->addWidget(m_frameHeight, 0, 3, Qt::AlignLeft);
+	connect(m_frameHeight, SIGNAL(editingFinished()), SLOT(frameHeightChanged()));
+
+	m_stackedFrameSettings->addWidget(wFrameWH);
+
+	QGridLayout::addWidget(m_stackedFrameSettings, m_row, 0, 1, m_cols, Qt::AlignVCenter);
+	m_row++;
 }
 
 void GeneralTab::audioSection(v4l2_audio vaudio, v4l2_audioout vaudout)
@@ -628,7 +680,19 @@ void GeneralTab::audioSection(v4l2_audio vaudio, v4l2_audioout vaudout)
 
 void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 {
-	if (!m_isOutput) {
+	if (m_isOutput) {
+		addLabel("Output Image Formats");
+		m_vidOutFormats = new QComboBox(parentWidget());
+		m_vidOutFormats->setMinimumContentsLength(20);
+		if (!enum_fmt(fmt, true)) {
+			do {
+				m_vidOutFormats->addItem(pixfmt2s(fmt.pixelformat) +
+					" (" + (const char *)fmt.description + ")");
+			} while (!enum_fmt(fmt));
+		}
+		addWidget(m_vidOutFormats);
+		connect(m_vidOutFormats, SIGNAL(activated(int)), SLOT(vidOutFormatChanged(int)));
+	} else {
 		addLabel("Capture Image Formats");
 		m_vidCapFormats = new QComboBox(parentWidget());
 		m_vidCapFormats->setMinimumContentsLength(20);
@@ -651,6 +715,9 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 	m_vidFields->setMinimumContentsLength(21);
 	addWidget(m_vidFields);
 	connect(m_vidFields, SIGNAL(activated(int)), SLOT(vidFieldChanged(int)));
+
+	if (m_isOutput)
+		return;
 
 	m_cropping = new QComboBox(parentWidget());
 	m_cropping->addItem("Source Width and Height");
@@ -1123,7 +1190,7 @@ CapMethod GeneralTab::capMethod()
 	return (CapMethod)m_capMethods->itemData(m_capMethods->currentIndex()).toInt();
 }
 
-void GeneralTab::updateGUI(int input)
+void GeneralTab::updateGUIInput(int input)
 {
 	v4l2_input in;
 	enum_input(in, true, input);
@@ -1132,7 +1199,7 @@ void GeneralTab::updateGUI(int input)
 		return;
 	}
 
-	if (in.capabilities & V4L2_IN_CAP_STD && in.type == V4L2_INPUT_TYPE_TUNER) {
+	if ((in.capabilities & V4L2_IN_CAP_STD) && in.type == V4L2_INPUT_TYPE_TUNER) {
 		m_stackedFrameSettings->setCurrentIndex(0);
 		m_stackedFrameSettings->show();
 		m_stackedStandards->setCurrentIndex(0);
@@ -1163,6 +1230,39 @@ void GeneralTab::updateGUI(int input)
 	}
 }
 
+void GeneralTab::updateGUIOutput(int output)
+{
+	v4l2_output out;
+	enum_output(out, true, output);
+	if (g_output(output) || m_isRadio) {
+		m_stackedFrameSettings->hide();
+		return;
+	}
+
+	if (out.capabilities & V4L2_OUT_CAP_STD) {
+		m_stackedFrameSettings->setCurrentIndex(0);
+		m_stackedFrameSettings->show();
+		m_stackedStandards->setCurrentIndex(0);
+		m_stackedStandards->show();
+		m_stackedFrequency->hide();
+	} else if (out.capabilities & V4L2_OUT_CAP_DV_TIMINGS) {
+		m_stackedFrameSettings->setCurrentIndex(0);
+		m_stackedFrameSettings->show();
+		m_stackedStandards->setCurrentIndex(1);
+		m_stackedStandards->show();
+		m_stackedFrequency->hide();
+	} else	{
+		m_stackedFrameSettings->setCurrentIndex(1);
+		m_stackedFrameSettings->show();
+		m_stackedStandards->hide();
+		m_stackedFrequency->hide();
+	}
+
+	if (isVbi()) {
+		m_stackedFrameSettings->hide();
+	}
+}
+
 void GeneralTab::inputChanged(int input)
 {
 	s_input(input);
@@ -1172,7 +1272,7 @@ void GeneralTab::inputChanged(int input)
 
 	updateVideoInput();
 	updateVidCapFormat();
-	updateGUI(input);
+	updateGUIInput(input);
 }
 
 void GeneralTab::outputChanged(int output)
@@ -1180,6 +1280,7 @@ void GeneralTab::outputChanged(int output)
 	s_output(output);
 	updateVideoOutput();
 	updateVidOutFormat();
+	updateGUIOutput(output);
 }
 
 void GeneralTab::inputAudioChanged(int input)
@@ -1443,8 +1544,16 @@ void GeneralTab::vidOutFormatChanged(int idx)
 
 void GeneralTab::vbiMethodsChanged(int idx)
 {
-	s_type(isSlicedVbi() ? V4L2_BUF_TYPE_SLICED_VBI_CAPTURE :
+	if (isSlicedVbi())
+		s_type(m_isOutput ? V4L2_BUF_TYPE_SLICED_VBI_OUTPUT :
+				    V4L2_BUF_TYPE_SLICED_VBI_CAPTURE);
+	else
+		s_type(m_isOutput ? V4L2_BUF_TYPE_VBI_OUTPUT :
 				    V4L2_BUF_TYPE_VBI_CAPTURE);
+	cv4l_fmt fmt;
+
+	g_fmt(fmt);
+	s_fmt(fmt);
 }
 
 void GeneralTab::cropChanged()
@@ -1633,7 +1742,7 @@ void GeneralTab::updateStandard()
 	m_tvStandard->setStatusTip(what);
 	m_tvStandard->setWhatsThis(what);
 	updateVidFormat();
-	if (!isVbi())
+	if (!isVbi() && !m_isOutput)
 		changePixelAspectRatio();
 }
 
@@ -1785,19 +1894,20 @@ void GeneralTab::updateVidOutFormat()
 	v4l2_fmtdesc desc;
 	cv4l_fmt fmt;
 
+	if (isVbi())
+		return;
 	g_fmt(fmt);
 	m_pixelformat = fmt.g_pixelformat();
 	m_width = fmt.g_width();
 	m_height = fmt.g_height();
 	updateFrameSize();
-	updateFrameInterval();
 	if (!enum_fmt(desc, true)) {
 		do {
 			if (desc.pixelformat == m_pixelformat)
 				break;
 		} while (!enum_fmt(desc));
 	}
-	if (desc.pixelformat == m_pixelformat)
+	if (desc.pixelformat != m_pixelformat)
 		return;
 	m_vidOutFormats->setCurrentIndex(desc.index);
 	updateVidFields();
@@ -1908,7 +2018,8 @@ void GeneralTab::updateFrameSize()
 	v4l2_frmsizeenum frmsize;
 	bool ok = false;
 
-	m_frameSize->clear();
+	if (m_frameSize)
+		m_frameSize->clear();
 
 	ok = !enum_framesizes(frmsize, m_pixelformat);
 	if (ok && frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
@@ -1947,7 +2058,8 @@ void GeneralTab::updateFrameSize()
 		frmsize.stepwise.step_height = 1;
 	}
 	m_discreteSizes = false;
-	m_frameSize->setEnabled(false);
+	if (m_frameSize)
+		m_frameSize->setEnabled(false);
 	m_frameWidth->setEnabled(!m_haveBuffers);
 	m_frameWidth->blockSignals(true);
 	m_frameWidth->setMinimum(frmsize.stepwise.min_width);
@@ -2067,6 +2179,9 @@ void GeneralTab::updateFrameInterval()
 	v4l2_frmivalenum frmival = { 0 };
 	v4l2_fract curr = { 1, 1 };
 	bool curr_ok, ok;
+
+	if (m_frameInterval == NULL)
+		return;
 
 	m_frameInterval->clear();
 

@@ -278,8 +278,12 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_tabs->show();
 	m_tabs->setFocus();
 	m_convertData = v4lconvert_create(g_fd());
-	m_capStartAct->setEnabled(g_fd() >= 0);
-	m_saveRawAct->setEnabled(g_fd() >= 0);
+	bool canStream = g_fd() >= 0 && v4l_type_is_capture(g_type()) &&
+					!has_radio_rx() && !has_radio_tx() &&
+					!has_sdr_cap();
+	m_capStartAct->setEnabled(canStream);
+	m_saveRawAct->setEnabled(canStream);
+	m_snapshotAct->setEnabled(canStream && has_vid_cap());
 #ifdef HAVE_QTGL
 	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
 #endif
