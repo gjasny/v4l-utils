@@ -522,6 +522,7 @@ void printfmt(const struct v4l2_format &vfmt)
 		break;
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
 		printf("\tSample Format   : %s\n", fcc2s(vfmt.fmt.sdr.pixelformat).c_str());
+		printf("\tBuffer Size     : %u\n", vfmt.fmt.sdr.buffersize);
 		break;
 	}
 }
