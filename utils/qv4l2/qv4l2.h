@@ -127,6 +127,7 @@ private slots:
 	void ctrlEvent();
 	void snapshot();
 	void capVbiFrame();
+	void capSdrFrame();
 	void saveRaw(bool);
 	void setRenderMethod(bool);
 	void setBlending(bool);
@@ -229,6 +230,7 @@ private:
 	unsigned m_vbiWidth;
 	unsigned m_vbiHeight;
 	struct vbi_handle m_vbiHandle;
+	int m_sdrSize;
 	unsigned m_frame;
 	unsigned m_lastFrame;
 	unsigned m_fps;

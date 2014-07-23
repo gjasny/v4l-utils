@@ -201,7 +201,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 		m_audioOutDevice = NULL;
 	}
 	
-	if (isRadio())
+	if (!isSDR() && isRadio())
 		goto done;
 
 	addTitle("Format Settings");
@@ -219,7 +219,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 			updateVideoOutput();
 		else
 			updateVideoInput();
-	} else {
+	} else if (!isSDR()) {
 		formatSection(fmt);
 	}
 
@@ -262,11 +262,13 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 		cropSection();
 	}
 
-	if (m_isOutput)
-		updateVideoOutput();
-	else
-		updateVideoInput();
-	updateVidFormat();
+	if (!isSDR()) {
+		if (m_isOutput)
+			updateVideoOutput();
+		else
+			updateVideoInput();
+		updateVidFormat();
+	}
 
 done:
 	QGridLayout::addWidget(new QWidget(parent), rowCount(), 0, 1, n);

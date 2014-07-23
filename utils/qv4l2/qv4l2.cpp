@@ -62,6 +62,9 @@ extern "C" {
 
 #include <libv4lconvert.h>
 
+#define SDR_WIDTH 1024
+#define SDR_HEIGHT 512
+
 ApplicationWindow::ApplicationWindow() :
 	m_capture(NULL),
 	m_pxw(25),
@@ -279,8 +282,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_tabs->setFocus();
 	m_convertData = v4lconvert_create(g_fd());
 	bool canStream = g_fd() >= 0 && v4l_type_is_capture(g_type()) &&
-					!has_radio_rx() && !has_radio_tx() &&
-					!has_sdr_cap();
+					!has_radio_rx() && !has_radio_tx();
 	m_capStartAct->setEnabled(canStream);
 	m_saveRawAct->setEnabled(canStream);
 	m_snapshotAct->setEnabled(canStream && has_vid_cap());
@@ -425,7 +427,7 @@ bool ApplicationWindow::startCapture()
 {
 	startAudio();
 
-	if (m_genTab->isRadio()) {
+	if (!m_genTab->isSDR() && m_genTab->isRadio()) {
 		s_priority(m_genTab->usePrio());
 		return true;
 	}
@@ -585,6 +587,107 @@ void ApplicationWindow::capVbiFrame()
 		refresh();
 }
 
+void ApplicationWindow::capSdrFrame()
+{
+	cv4l_buffer buf(m_queue);
+	__u8 *data = NULL;
+	int s = 0;
+
+	switch (m_capMethod) {
+	case methodRead:
+		s = read(m_frameData, m_sdrSize);
+		if (s < 0) {
+			if (errno != EAGAIN) {
+				error("read");
+				m_capStartAct->setChecked(false);
+			}
+			return;
+		}
+		data = m_frameData;
+		break;
+
+	case methodMmap:
+	case methodUser:
+		if (dqbuf(buf)) {
+			if (errno == EAGAIN)
+				return;
+			error("dqbuf");
+			m_capStartAct->setChecked(false);
+			return;
+		}
+		if (buf.g_flags() & V4L2_BUF_FLAG_ERROR) {
+			qbuf(buf);
+			return;
+		}
+		data = (__u8 *)m_queue.g_dataptr(buf.g_index(), 0);
+		s = buf.g_bytesused();
+		break;
+	}
+	if (s != m_sdrSize) {
+		error("incorrect sdr size");
+		m_capStartAct->setChecked(false);
+		return;
+	}
+	if (showFrames()) {
+		unsigned width = m_sdrSize / 2 - 1;
+
+		if (SDR_WIDTH < width)
+			width = SDR_WIDTH;
+
+		m_capImage->fill(0);
+		/*
+		 * Draw two waveforms, each consisting of the first 'width + 1' samples
+		 * of the buffer, the top is for the I, the bottom is for the Q values.
+		 */
+		for (unsigned i = 0; i < 2; i++) {
+			unsigned start = 255 - data[i];
+
+			for (unsigned x = 0; x < width; x++) {
+				unsigned next = 255 - data[2 + 2 * x + i];
+				unsigned low = start < next ? start : next;
+				unsigned high = start > next ? start : next;
+				__u8 *q = m_capImage->bits() + x * 3 +
+					(i * 256 + low) * m_capImage->bytesPerLine();
+
+				while (low++ <= high) {
+					q[0] = 255;
+					q[1] = 255;
+					q[2] = 255;
+					q += m_capImage->bytesPerLine();
+				}
+				start = next;
+			}
+		}
+	}
+
+	if (m_capMethod != methodRead)
+		qbuf(buf);
+
+	QString status, curStatus;
+	struct timeval tv, res;
+
+	if (m_frame == 0)
+		gettimeofday(&m_tv, NULL);
+	gettimeofday(&tv, NULL);
+	timersub(&tv, &m_tv, &res);
+	if (res.tv_sec) {
+		m_fps = (100 * (m_frame - m_lastFrame)) /
+			(res.tv_sec * 100 + res.tv_usec / 10000);
+		m_lastFrame = m_frame;
+		m_tv = tv;
+	}
+	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
+	if (showFrames())
+		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, status);
+
+	curStatus = statusBar()->currentMessage();
+	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
+		statusBar()->showMessage(status);
+	if (m_frame == 1)
+		refresh();
+}
+
 void ApplicationWindow::capFrame()
 {
 	cv4l_buffer buf(m_queue);
@@ -728,7 +831,7 @@ void ApplicationWindow::stopCapture()
 
 	s_priority(V4L2_PRIORITY_DEFAULT);
 
-	if (m_genTab->isRadio())
+	if (!m_genTab->isSDR() && m_genTab->isRadio())
 		return;
 
 	v4l2_encoder_cmd cmd;
@@ -864,7 +967,7 @@ void ApplicationWindow::closeCaptureWin()
 
 void ApplicationWindow::capStart(bool start)
 {
-	if (m_genTab->isRadio()) {
+	if (!m_genTab->isSDR() && m_genTab->isRadio()) {
 		if (start)
 			startCapture();
 		else
@@ -954,6 +1057,35 @@ void ApplicationWindow::capStart(bool start)
 		if (startCapture()) {
 			m_capNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Read, m_tabs);
 			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capVbiFrame()));
+		}
+		return;
+	}
+
+	if (m_genTab->isSDR()) {
+		cv4l_fmt fmt;
+
+		if (g_fmt(fmt)) {
+			error("could not obtain an VBI format\n");
+			return;
+		}
+		if (fmt.fmt.sdr.pixelformat != V4L2_SDR_FMT_CU8) {
+			error("only CU8 is supported for SDR\n");
+			return;
+		}
+		m_sdrSize = fmt.fmt.sdr.buffersize;
+		m_frameData = new unsigned char[m_sdrSize];
+		m_capImage = new QImage(SDR_WIDTH, SDR_HEIGHT, dstFmt);
+		m_capImage->fill(0);
+		m_capture->setWindowSize(QSize(SDR_WIDTH, SDR_HEIGHT));
+		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, "No frame");
+		if (showFrames())
+			m_capture->show();
+
+		statusBar()->showMessage("No frame");
+		if (startCapture()) {
+			m_capNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Read, m_tabs);
+			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capSdrFrame()));
 		}
 		return;
 	}
