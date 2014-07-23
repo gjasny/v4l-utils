@@ -1,6 +1,43 @@
+/*
+ * vivid-color.c - A table that converts colors to various colorspaces
+ *
+ * The test pattern generator uses the tpg_colors for its test patterns.
+ * For testing colorspaces the first 8 colors of that table need to be
+ * converted to their equivalent in the target colorspace.
+ *
+ * The tpg_csc_colors[] table is the result of that conversion and since
+ * it is precalculated the colorspace conversion is just a simple table
+ * lookup.
+ *
+ * This source also contains the code used to generate the tpg_csc_colors
+ * table. Run the following command to compile it:
+ *
+ *	gcc vivid-colors.c -DCOMPILE_APP -o gen-colors -lm
+ *
+ * and run the utility.
+ *
+ * Note that the converted colors are in the range 0x000-0xff0 (so times 16)
+ * in order to preserve precision.
+ *
+ * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you may redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <linux/videodev2.h>
 
-#include "vivi-colors.h"
+#include "vivid-tpg-colors.h"
 
 /* sRGB colors with range [0-255] */
 const struct color tpg_colors[TPG_COLOR_MAX] = {

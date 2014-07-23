@@ -1,4 +1,26 @@
-#include "vivi-tpg.h"
+/*
+ * vivid-tpg.c - Test Pattern Generator
+ *
+ * Note: gen_twopix and tpg_gen_text are based on code from vivi.c. See the
+ * vivid-core.c source for the copyright information of those functions.
+ *
+ * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you may redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include "vivid-tpg.h"
 
 /* Must remain in sync with enum tpg_pattern */
 const char * const tpg_pattern_strings[] = {
@@ -231,8 +253,11 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	return true;
 }
 
-void tpg_s_crop_compose(struct tpg_data *tpg)
+void tpg_s_crop_compose(struct tpg_data *tpg, const struct v4l2_rect *crop,
+		const struct v4l2_rect *compose)
 {
+	tpg->crop = *crop;
+	tpg->compose = *compose;
 	tpg->scaled_width = (tpg->src_width * tpg->compose.width +
 				 tpg->crop.width - 1) / tpg->crop.width;
 	tpg->scaled_width &= ~1;
@@ -538,6 +563,8 @@ static void precalculate_color(struct tpg_data *tpg, int k)
 			b >>= 7;
 			break;
 		case V4L2_PIX_FMT_RGB555:
+		case V4L2_PIX_FMT_XRGB555:
+		case V4L2_PIX_FMT_ARGB555:
 		case V4L2_PIX_FMT_RGB555X:
 			r >>= 7;
 			g >>= 7;
@@ -616,14 +643,13 @@ static void gen_twopix(struct tpg_data *tpg,
 		buf[0][offset] = (r_y << 3) | (g_u >> 3);
 		buf[0][offset + 1] = (g_u << 5) | b_v;
 		break;
+	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_XRGB555:
+		alpha = 0;
+		/* fall through */
 	case V4L2_PIX_FMT_ARGB555:
 		buf[0][offset] = (g_u << 5) | b_v;
 		buf[0][offset + 1] = (alpha & 0x80) | (r_y << 2) | (g_u >> 3);
-		break;
-	case V4L2_PIX_FMT_RGB555:
-	case V4L2_PIX_FMT_XRGB555:
-		buf[0][offset] = (g_u << 5) | b_v;
-		buf[0][offset + 1] = (r_y << 2) | (g_u >> 3);
 		break;
 	case V4L2_PIX_FMT_RGB555X:
 		buf[0][offset] = (alpha & 0x80) | (r_y << 2) | (g_u >> 3);
@@ -639,31 +665,25 @@ static void gen_twopix(struct tpg_data *tpg,
 		buf[0][offset + 1] = g_u;
 		buf[0][offset + 2] = r_y;
 		break;
+	case V4L2_PIX_FMT_RGB32:
+	case V4L2_PIX_FMT_XRGB32:
+		alpha = 0;
+		/* fall through */
 	case V4L2_PIX_FMT_ARGB32:
 		buf[0][offset] = alpha;
 		buf[0][offset + 1] = r_y;
 		buf[0][offset + 2] = g_u;
 		buf[0][offset + 3] = b_v;
 		break;
-	case V4L2_PIX_FMT_RGB32:
-	case V4L2_PIX_FMT_XRGB32:
-		buf[0][offset] = 0;
-		buf[0][offset + 1] = r_y;
-		buf[0][offset + 2] = g_u;
-		buf[0][offset + 3] = b_v;
-		break;
+	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_XBGR32:
+		alpha = 0;
+		/* fall through */
 	case V4L2_PIX_FMT_ABGR32:
 		buf[0][offset] = b_v;
 		buf[0][offset + 1] = g_u;
 		buf[0][offset + 2] = r_y;
 		buf[0][offset + 3] = alpha;
-		break;
-	case V4L2_PIX_FMT_BGR32:
-	case V4L2_PIX_FMT_XBGR32:
-		buf[0][offset] = b_v;
-		buf[0][offset + 1] = g_u;
-		buf[0][offset + 2] = r_y;
-		buf[0][offset + 3] = 0;
 		break;
 	}
 }
@@ -1118,8 +1138,20 @@ static unsigned tpg_calc_buffer_line(struct tpg_data *tpg, unsigned y,
 	}
 }
 
-void tpg_fillbuffer(struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
-		v4l2_std_id std, unsigned p, u8 *vbuf)
+void tpg_calc_text_basep(const struct tpg_data *tpg,
+		u8 *basep[TPG_MAX_PLANES][2], unsigned p, u8 *vbuf)
+{
+	unsigned stride = tpg->bytesperline[p];
+
+	basep[p][0] = vbuf;
+	basep[p][1] = vbuf;
+	if (tpg->field == V4L2_FIELD_SEQ_TB)
+		basep[p][1] += tpg->buf_height * stride / 2;
+	else if (tpg->field == V4L2_FIELD_SEQ_BT)
+		basep[p][0] += tpg->buf_height * stride / 2;
+}
+
+void tpg_fillbuffer(struct tpg_data *tpg, v4l2_std_id std, unsigned p, u8 *vbuf)
 {
 	bool is_tv = std;
 	bool is_60hz = is_tv && (std & V4L2_STD_525_60);
@@ -1167,15 +1199,6 @@ void tpg_fillbuffer(struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
 	if (wss_width > tpg->crop.width)
 		wss_width = tpg->crop.width;
 	wss_width = wss_width * tpg->scaled_width / tpg->src_width;
-
-	if (basep) {
-		basep[p][0] = vbuf;
-		basep[p][1] = vbuf;
-		if (tpg->field == V4L2_FIELD_SEQ_TB)
-			basep[p][1] += tpg->buf_height * stride / 2;
-		else if (tpg->field == V4L2_FIELD_SEQ_BT)
-			basep[p][0] += tpg->buf_height * stride / 2;
-	}
 
 	vbuf += tpg->compose.left * twopixsize / 2;
 	line_offset = tpg->crop.left * tpg->scaled_width / tpg->src_width;

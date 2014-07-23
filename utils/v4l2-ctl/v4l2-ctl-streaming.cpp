@@ -18,7 +18,7 @@
 #include "v4l2-ctl.h"
 
 extern "C" {
-#include "vivi-tpg.h"
+#include "vivid-tpg.h"
 }
 
 static unsigned stream_count;
@@ -725,7 +725,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 					planes[j].m.userptr = (unsigned long)b.bufs[i][j];
 				}
 				if (can_fill)
-					tpg_fillbuffer(&tpg, NULL, stream_out_std, j, (u8 *)b.bufs[i][j]);
+					tpg_fillbuffer(&tpg, stream_out_std, j, (u8 *)b.bufs[i][j]);
 			}
 			if (fin)
 				fill_buffer_from_file(b, buf.index, fin);
@@ -757,7 +757,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 			}
 			if (!fin || !fill_buffer_from_file(b, buf.index, fin))
 				if (can_fill)
-					tpg_fillbuffer(&tpg, NULL, stream_out_std, 0, (u8 *)b.bufs[i][0]);
+					tpg_fillbuffer(&tpg, stream_out_std, 0, (u8 *)b.bufs[i][0]);
 		}
 		if (qbuf) {
 			if (V4L2_TYPE_IS_OUTPUT(buf.type))
@@ -966,9 +966,9 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 	if (!fin && stream_out_refresh) {
 		if (b.is_mplane) {
 			for (unsigned j = 0; j < b.num_planes; j++)
-				tpg_fillbuffer(&tpg, NULL, stream_out_std, j, (u8 *)b.bufs[buf.index][j]);
+				tpg_fillbuffer(&tpg, stream_out_std, j, (u8 *)b.bufs[buf.index][j]);
 		} else {
-			tpg_fillbuffer(&tpg, NULL, stream_out_std, 0, (u8 *)b.bufs[buf.index][0]);
+			tpg_fillbuffer(&tpg, stream_out_std, 0, (u8 *)b.bufs[buf.index][0]);
 		}
 	}
 

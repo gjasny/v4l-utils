@@ -1,5 +1,24 @@
-#ifndef _VIVI_TPG_H_
-#define _VIVI_TPG_H_
+/*
+ * vivid-tpg.h - Test Pattern Generator
+ *
+ * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
+ *
+ * This program is free software; you may redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#ifndef _VIVID_TPG_H_
+#define _VIVID_TPG_H_
 
 #include <linux/types.h>
 #include <linux/videodev2.h>
@@ -36,7 +55,7 @@ static inline void *vzalloc(unsigned long size)
 	__val = __val < __min ? __min: __val;	\
 	__val > __max ? __max: __val; })
 
-#include "vivi-colors.h"
+#include "vivid-tpg-colors.h"
 
 enum tpg_pattern {
 	TPG_PAT_75_COLORBAR,
@@ -176,12 +195,14 @@ void tpg_reset_source(struct tpg_data *tpg, unsigned width, unsigned height,
 		       u32 field);
 
 void tpg_set_font(const u8 *f);
-void tpg_gen_text(struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
-		int y, int x, char *text);
-void tpg_fillbuffer(struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
-		v4l2_std_id std, unsigned p, u8 *vbuf);
+void tpg_gen_text(struct tpg_data *tpg,
+		u8 *basep[TPG_MAX_PLANES][2], int y, int x, char *text);
+void tpg_calc_text_basep(const struct tpg_data *tpg,
+		u8 *basep[TPG_MAX_PLANES][2], unsigned p, u8 *vbuf);
+void tpg_fillbuffer(struct tpg_data *tpg, v4l2_std_id std, unsigned p, u8 *vbuf);
 bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc);
-void tpg_s_crop_compose(struct tpg_data *tpg);
+void tpg_s_crop_compose(struct tpg_data *tpg, const struct v4l2_rect *crop,
+		const struct v4l2_rect *compose);
 
 static inline void tpg_s_pattern(struct tpg_data *tpg, enum tpg_pattern pattern)
 {
@@ -316,16 +337,6 @@ static inline void tpg_s_buf_height(struct tpg_data *tpg, unsigned h)
 	tpg->buf_height = h;
 }
 
-static inline struct v4l2_rect *tpg_g_crop(struct tpg_data *tpg)
-{
-	return &tpg->crop;
-}
-
-static inline struct v4l2_rect *tpg_g_compose(struct tpg_data *tpg)
-{
-	return &tpg->compose;
-}
-
 static inline void tpg_s_field(struct tpg_data *tpg, unsigned field)
 {
 	tpg->field = field;
@@ -355,6 +366,11 @@ static inline void tpg_s_video_aspect(struct tpg_data *tpg,
 		return;
 	tpg->vid_aspect = vid_aspect;
 	tpg->recalc_square_border = true;
+}
+
+static inline enum tpg_video_aspect tpg_g_video_aspect(const struct tpg_data *tpg)
+{
+	return tpg->vid_aspect;
 }
 
 static inline void tpg_s_pixel_aspect(struct tpg_data *tpg,
