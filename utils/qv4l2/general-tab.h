@@ -182,6 +182,10 @@ private:
 	{
 		g_mw->error(error);
 	}
+	virtual void error(int error)
+	{
+		g_mw->error(error);
+	}
 	v4l_fd *g_v4l_fd() { return m_fd->g_v4l_fd(); }
 
 	__u32 g_type() const { return m_fd->g_type(); }

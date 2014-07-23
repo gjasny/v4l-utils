@@ -1750,7 +1750,7 @@ void GeneralTab::qryStdClicked()
 {
 	v4l2_std_id std;
 
-	if (!query_std(std))
+	if (query_std(std))
 		return;
 
 	if (std == V4L2_STD_UNKNOWN) {
@@ -1813,10 +1813,25 @@ void GeneralTab::updateTimings()
 void GeneralTab::qryTimingsClicked()
 {
 	v4l2_dv_timings timings;
+	int err = query_dv_timings(timings);
 
-	if (!query_dv_timings(timings)) {
+	switch (err) {
+	case ENOLINK:
+		info("No signal found\n");
+		break;
+	case ENOLCK:
+		info("Could not lock to signal\n");
+		break;
+	case ERANGE:
+		info("Frequency out of range\n");
+		break;
+	case 0:
 		s_dv_timings(timings);
 		updateTimings();
+		break;
+	default:
+		error(err);
+		break;
 	}
 }
 
