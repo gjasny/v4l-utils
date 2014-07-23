@@ -855,6 +855,11 @@ void GeneralTab::fixWidth()
 	QList<QWidget *> list = parentWidget()->findChildren<QWidget *>();
 	QList<QWidget *>::iterator it;
 	for (it = list.begin(); it != list.end(); ++it)	{
+		if (!qobject_cast<QComboBox *>(*it) &&
+		    !qobject_cast<QSpinBox *>(*it) &&
+		    !qobject_cast<QSlider *>(*it))
+			continue;
+
 		if (((*it)->sizeHint().width()) > m_minWidth) {
 			m_increment = (int) ceil(((*it)->sizeHint().width() - m_minWidth) / m_pxw);
 			(*it)->setMinimumWidth(m_minWidth + m_increment * m_pxw); // for stepsize expansion of widgets
