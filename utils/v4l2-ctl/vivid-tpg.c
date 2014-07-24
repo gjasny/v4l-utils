@@ -467,7 +467,7 @@ static void precalculate_color(struct tpg_data *tpg, int k)
 		r = g = b = k - TPG_COLOR_RAMP;
 	}
 
-	if (tpg->pattern == TPG_PAT_CSC_COLORBAR) {
+	if (tpg->pattern == TPG_PAT_CSC_COLORBAR && col <= TPG_COLOR_CSC_BLACK) {
 		r = tpg_csc_colors[tpg->colorspace][col].r;
 		g = tpg_csc_colors[tpg->colorspace][col].g;
 		b = tpg_csc_colors[tpg->colorspace][col].b;
@@ -876,11 +876,22 @@ static void tpg_calculate_square_border(struct tpg_data *tpg)
 
 static void tpg_precalculate_line(struct tpg_data *tpg)
 {
-	enum tpg_color contrast = tpg->pattern == TPG_PAT_GREEN ?
-				TPG_COLOR_100_RED : TPG_COLOR_100_GREEN;
+	enum tpg_color contrast;
 	unsigned pat;
 	unsigned p;
 	unsigned x;
+
+	switch (tpg->pattern) {
+	case TPG_PAT_GREEN:
+		contrast = TPG_COLOR_100_RED;
+		break;
+	case TPG_PAT_CSC_COLORBAR:
+		contrast = TPG_COLOR_CSC_GREEN;
+		break;
+	default:
+		contrast = TPG_COLOR_100_GREEN;
+		break;
+	}
 
 	for (pat = 0; pat < tpg_get_pat_lines(tpg); pat++) {
 		/* Coarse scaling with Bresenham */
