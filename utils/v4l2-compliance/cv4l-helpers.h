@@ -74,6 +74,16 @@ public:
 		return v4l_query_ext_ctrl(this, &qec, next_ctrl, next_compound);
 	}
 
+	int g_ctrl(v4l2_control &ctrl)
+	{
+		return cv4l_ioctl(VIDIOC_G_CTRL, &ctrl);
+	}
+
+	int s_ctrl(v4l2_control &ctrl)
+	{
+		return cv4l_ioctl(VIDIOC_S_CTRL, &ctrl);
+	}
+
 	int g_ext_ctrls(v4l2_ext_controls &ec)
 	{
 		return v4l_g_ext_ctrls(this, &ec);
@@ -236,22 +246,22 @@ public:
 		return cv4l_ioctl(VIDIOC_DQEVENT, &ev);
 	}
 
-	int g_input(int &input)
+	int g_input(__u32 &input)
 	{
 		return cv4l_ioctl(VIDIOC_G_INPUT, &input);
 	}
 
-	int s_input(int input)
+	int s_input(__u32 input)
 	{
 		return cv4l_ioctl(VIDIOC_S_INPUT, &input);
 	}
 
-	int g_output(int &output)
+	int g_output(__u32 &output)
 	{
 		return cv4l_ioctl(VIDIOC_G_OUTPUT, &output);
 	}
 
-	int s_output(int output)
+	int s_output(__u32 output)
 	{
 		return cv4l_ioctl(VIDIOC_S_OUTPUT, &output);
 	}
@@ -262,7 +272,7 @@ public:
 		return cv4l_ioctl(VIDIOC_G_AUDIO, &audio);
 	}
 
-	int s_audio(int input)
+	int s_audio(__u32 input)
 	{
 		v4l2_audio audio;
 
@@ -277,7 +287,7 @@ public:
 		return cv4l_ioctl(VIDIOC_G_AUDOUT, &audout);
 	}
 
-	int s_audout(int output)
+	int s_audout(__u32 output)
 	{
 		v4l2_audioout audout;
 

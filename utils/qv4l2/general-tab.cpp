@@ -1197,7 +1197,7 @@ CapMethod GeneralTab::capMethod()
 	return (CapMethod)m_capMethods->itemData(m_capMethods->currentIndex()).toInt();
 }
 
-void GeneralTab::updateGUIInput(int input)
+void GeneralTab::updateGUIInput(__u32 input)
 {
 	v4l2_input in;
 	enum_input(in, true, input);
@@ -1237,7 +1237,7 @@ void GeneralTab::updateGUIInput(int input)
 	}
 }
 
-void GeneralTab::updateGUIOutput(int output)
+void GeneralTab::updateGUIOutput(__u32 output)
 {
 	v4l2_output out;
 	enum_output(out, true, output);
@@ -1272,7 +1272,7 @@ void GeneralTab::updateGUIOutput(int output)
 
 void GeneralTab::inputChanged(int input)
 {
-	s_input(input);
+	s_input((__u32)input);
 
 	if (m_audioInput)
 		updateAudioInput();
@@ -1284,7 +1284,7 @@ void GeneralTab::inputChanged(int input)
 
 void GeneralTab::outputChanged(int output)
 {
-	s_output(output);
+	s_output((__u32)output);
 	updateVideoOutput();
 	updateVidOutFormat();
 	updateGUIOutput(output);
@@ -1292,13 +1292,13 @@ void GeneralTab::outputChanged(int output)
 
 void GeneralTab::inputAudioChanged(int input)
 {
-	s_audio(input);
+	s_audio((__u32)input);
 	updateAudioInput();
 }
 
 void GeneralTab::outputAudioChanged(int output)
 {
-	s_audout(output);
+	s_audout((__u32)output);
 	updateAudioOutput();
 }
 
@@ -1598,7 +1598,7 @@ void GeneralTab::composeChanged()
 
 void GeneralTab::updateVideoInput()
 {
-	int input;
+	__u32 input;
 	v4l2_input in;
 
 	if (g_input(input))
@@ -1657,7 +1657,7 @@ void GeneralTab::updateVideoInput()
 
 void GeneralTab::updateVideoOutput()
 {
-	int output;
+	__u32 output;
 	v4l2_output out;
 
 	if (g_output(output))
@@ -1676,6 +1676,7 @@ void GeneralTab::updateVideoOutput()
 		updateTimings();
 		m_videoTimings->setEnabled(out.capabilities & V4L2_OUT_CAP_DV_TIMINGS);
 	}
+	g_mw->updateLimRGBRange();
 }
 
 void GeneralTab::updateAudioInput()
@@ -1815,6 +1816,7 @@ void GeneralTab::updateTimings()
 	m_videoTimings->setStatusTip(what);
 	m_videoTimings->setWhatsThis(what);
 	updateVidFormat();
+	g_mw->updateLimRGBRange();
 }
 
 void GeneralTab::qryTimingsClicked()

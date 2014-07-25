@@ -132,8 +132,8 @@ private:
 	void formatSection(v4l2_fmtdesc fmt); 
 	void cropSection(); 
 	void fixWidth();
-	void updateGUIInput(int);
-	void updateGUIOutput(int);
+	void updateGUIInput(__u32);
+	void updateGUIOutput(__u32);
 	void updateVideoInput();
 	void updateVideoOutput();
 	void updateAudioInput();
@@ -233,14 +233,14 @@ private:
 	int enum_audout(v4l2_audioout &audout, bool init = false, int index = 0) { return m_fd->enum_audout(audout, init, index); }
 	int subscribe_event(v4l2_event_subscription &sub) { return m_fd->subscribe_event(sub); }
 	int dqevent(v4l2_event &ev) { return m_fd->dqevent(ev); }
-	int g_input(int &input) { return m_fd->g_input(input); }
-	int s_input(int input) { return m_fd->s_input(input); }
-	int g_output(int &output) { return m_fd->g_output(output); }
-	int s_output(int output) { return m_fd->s_output(output); }
+	int g_input(__u32 &input) { return m_fd->g_input(input); }
+	int s_input(__u32 input) { return m_fd->s_input(input); }
+	int g_output(__u32 &output) { return m_fd->g_output(output); }
+	int s_output(__u32 output) { return m_fd->s_output(output); }
 	int g_audio(v4l2_audio &audio) { return m_fd->g_audio(audio); }
-	int s_audio(int input) { return m_fd->s_audio(input); }
+	int s_audio(__u32 input) { return m_fd->s_audio(input); }
 	int g_audout(v4l2_audioout &audout) { return m_fd->g_audout(audout); }
-	int s_audout(int output) { return m_fd->s_audout(output); }
+	int s_audout(__u32 output) { return m_fd->s_audout(output); }
 	int g_std(v4l2_std_id &std) { return m_fd->g_std(std); }
 	int s_std(v4l2_std_id std) { return m_fd->s_std(std); }
 	int query_std(v4l2_std_id &std) { return m_fd->query_std(std); }

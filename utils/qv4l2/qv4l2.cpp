@@ -77,11 +77,13 @@ ApplicationWindow::ApplicationWindow() :
 	setAttribute(Qt::WA_DeleteOnClose, true);
 
 	m_capNotifier = NULL;
+	m_outNotifier = NULL;
 	m_ctrlNotifier = NULL;
 	m_capImage = NULL;
 	m_frameData = NULL;
 	m_nbuffers = 0;
 	m_makeSnapshot = false;
+	m_tpgLimRGBRange = NULL;
 	for (unsigned b = 0; b < sizeof(m_clear); b++)
 		m_clear[b] = false;
 
@@ -267,6 +269,14 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	connect(m_genTab, SIGNAL(displayColorspaceChanged()), this, SLOT(updateDisplayColorspace()));
 	connect(m_genTab, SIGNAL(clearBuffers()), this, SLOT(clearBuffers()));
 	m_tabs->addTab(w, "General Settings");
+
+	m_tpgLimRGBRange = NULL;
+	if (has_vid_out()) {
+		addTpgTab(m_minWidth);
+		tpg_init(&m_tpg, 640, 360);
+		updateLimRGBRange();
+	}
+
 	addTabs(m_winWidth);
 	m_vbiTab = NULL;
 	if (has_vbi_cap()) {
@@ -281,7 +291,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_tabs->show();
 	m_tabs->setFocus();
 	m_convertData = v4lconvert_create(g_fd());
-	bool canStream = g_fd() >= 0 && v4l_type_is_capture(g_type()) &&
+	bool canStream = g_fd() >= 0 && (v4l_type_is_capture(g_type()) || has_vid_out()) &&
 					!has_radio_rx() && !has_radio_tx();
 	m_capStartAct->setEnabled(canStream);
 	m_saveRawAct->setEnabled(canStream);
@@ -423,7 +433,7 @@ void ApplicationWindow::newCaptureWin()
         connect(m_capture, SIGNAL(close()), this, SLOT(closeCaptureWin()));
 }
 
-bool ApplicationWindow::startCapture()
+bool ApplicationWindow::startStreaming()
 {
 	startAudio();
 
@@ -463,11 +473,23 @@ bool ApplicationWindow::startCapture()
 			break;
 		}
 
-		for (unsigned i = 0; i < m_queue.g_buffers(); i++) {
-			cv4l_buffer buf;
-	
-			m_queue.buffer_init(buf, i);
-			qbuf(buf); 
+		if (v4l_type_is_capture(g_type())) {
+			for (unsigned i = 0; i < m_queue.g_buffers(); i++) {
+				cv4l_buffer buf;
+
+				m_queue.buffer_init(buf, i);
+				qbuf(buf); 
+			}
+		} else {
+			for (unsigned i = 0; i < m_queue.g_buffers(); i++) {
+				cv4l_buffer buf;
+
+				m_queue.buffer_init(buf, i);
+				for (unsigned p = 0; p < m_queue.g_num_planes(); p++)
+					tpg_fillbuffer(&m_tpg, m_tpgStd, p, (u8 *)m_queue.g_dataptr(i, p));
+				qbuf(buf); 
+				tpg_update_mv_count(&m_tpg, V4L2_FIELD_HAS_T_OR_B(m_tpgField));
+			}
 		}
 
 		if (streamon()) {
@@ -688,6 +710,76 @@ void ApplicationWindow::capSdrFrame()
 		refresh();
 }
 
+void ApplicationWindow::outFrame()
+{
+	cv4l_buffer buf(m_queue);
+	int s = 0;
+
+	switch (m_capMethod) {
+	case methodRead:
+		tpg_fillbuffer(&m_tpg, m_tpgStd, 0, (u8 *)m_frameData);
+		s = write(m_frameData, m_tpgSizeImage);
+		tpg_update_mv_count(&m_tpg, V4L2_FIELD_HAS_T_OR_B(m_tpgField));
+
+		if (s < 0) {
+			if (errno != EAGAIN) {
+				error("write");
+				m_capStartAct->setChecked(false);
+			}
+			return;
+		}
+		break;
+
+	case methodMmap:
+	case methodUser:
+		if (dqbuf(buf)) {
+			if (errno == EAGAIN)
+				return;
+			error("dqbuf");
+			m_capStartAct->setChecked(false);
+			return;
+		}
+		m_queue.buffer_init(buf, buf.g_index());
+		for (unsigned p = 0; p < m_queue.g_num_planes(); p++)
+			tpg_fillbuffer(&m_tpg, m_tpgStd, p, (u8 *)m_queue.g_dataptr(buf.g_index(), p));
+		tpg_update_mv_count(&m_tpg, V4L2_FIELD_HAS_T_OR_B(m_tpgField));
+		break;
+	}
+
+	QString status, curStatus;
+	struct timeval tv, res;
+
+	if (m_frame == 0)
+		gettimeofday(&m_tv, NULL);
+	gettimeofday(&tv, NULL);
+	timersub(&tv, &m_tv, &res);
+	if (res.tv_sec) {
+		m_fps = (100 * (m_frame - m_lastFrame)) /
+			(res.tv_sec * 100 + res.tv_usec / 10000);
+		m_lastFrame = m_frame;
+		m_tv = tv;
+	}
+
+
+	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
+
+	if (m_capMethod == methodMmap || m_capMethod == methodUser) {
+		if (m_clear[buf.g_index()]) {
+			for (unsigned p = 0; p < m_queue.g_num_planes(); p++)
+				memset(m_queue.g_dataptr(buf.g_index(), p), 0, buf.g_length(p));
+			m_clear[buf.g_index()] = false;
+		}
+			
+		qbuf(buf);
+	}
+
+	curStatus = statusBar()->currentMessage();
+	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
+		statusBar()->showMessage(status);
+	if (m_frame == 1)
+		refresh();
+}
+
 void ApplicationWindow::capFrame()
 {
 	cv4l_buffer buf(m_queue);
@@ -825,8 +917,10 @@ void ApplicationWindow::capFrame()
 		refresh();
 }
 
-void ApplicationWindow::stopCapture()
+void ApplicationWindow::stopStreaming()
 {
+	v4l2_encoder_cmd cmd;
+
 	stopAudio();
 
 	s_priority(V4L2_PRIORITY_DEFAULT);
@@ -834,16 +928,18 @@ void ApplicationWindow::stopCapture()
 	if (!m_genTab->isSDR() && m_genTab->isRadio())
 		return;
 
-	v4l2_encoder_cmd cmd;
+	if (v4l_type_is_capture(g_type()))
+		m_capture->stop();
 
-	m_capture->stop();
 	m_snapshotAct->setDisabled(true);
 	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
 	switch (m_capMethod) {
 	case methodRead:
-		memset(&cmd, 0, sizeof(cmd));
-		cmd.cmd = V4L2_ENC_CMD_STOP;
-		cv4l_ioctl(VIDIOC_ENCODER_CMD, &cmd);
+		if (v4l_type_is_capture(g_type())) {
+			memset(&cmd, 0, sizeof(cmd));
+			cmd.cmd = V4L2_ENC_CMD_STOP;
+			cv4l_ioctl(VIDIOC_ENCODER_CMD, &cmd);
+		}
 		break;
 
 	case methodMmap:
@@ -965,13 +1061,88 @@ void ApplicationWindow::closeCaptureWin()
 	m_capStartAct->setChecked(false);
 }
 
+void ApplicationWindow::outStart(bool start)
+{
+	if (start) {
+		cv4l_fmt fmt;
+		v4l2_output out;
+		v4l2_control ctrl = { V4L2_CID_DV_TX_RGB_RANGE };
+		int factor = 1;
+
+		g_output(out.index);
+		enum_output(out, true, out.index);
+		m_frame = m_lastFrame = m_fps = 0;
+		m_capMethod = m_genTab->capMethod();
+		g_fmt(fmt);
+		if (out.capabilities & V4L2_OUT_CAP_STD)
+			g_std(m_tpgStd);
+		else
+			m_tpgStd = 0;
+		m_tpgField = fmt.g_field();
+		m_tpgSizeImage = fmt.g_sizeimage(0);
+		tpg_alloc(&m_tpg, fmt.g_width());
+		m_useTpg = tpg_s_fourcc(&m_tpg, fmt.g_pixelformat());
+		if (V4L2_FIELD_HAS_T_OR_B(fmt.g_field()))
+			factor = 2;
+		tpg_reset_source(&m_tpg, fmt.g_width(), fmt.g_height() * factor, fmt.g_field());
+		tpg_init_mv_count(&m_tpg);
+		if (g_ctrl(ctrl))
+			tpg_s_rgb_range(&m_tpg, V4L2_DV_RGB_RANGE_AUTO);
+		else
+			tpg_s_rgb_range(&m_tpg, ctrl.value);
+		if (m_tpgColorspace == 0)
+			fmt.s_colorspace(defaultColorspace(false));
+		else
+			fmt.s_colorspace(m_tpgColorspace);
+		s_fmt(fmt);
+
+		if (out.capabilities & V4L2_OUT_CAP_STD) {
+			tpg_s_pixel_aspect(&m_tpg, (m_tpgStd & V4L2_STD_525_60) ?
+					TPG_PIXEL_ASPECT_NTSC : TPG_PIXEL_ASPECT_PAL);
+		} else if (out.capabilities & V4L2_OUT_CAP_DV_TIMINGS) {
+			v4l2_dv_timings timings;
+
+			g_dv_timings(timings);
+			if (timings.bt.width == 720 && timings.bt.height <= 576)
+				tpg_s_pixel_aspect(&m_tpg, timings.bt.height == 480 ?
+					TPG_PIXEL_ASPECT_NTSC : TPG_PIXEL_ASPECT_PAL);
+			else
+				tpg_s_pixel_aspect(&m_tpg, TPG_PIXEL_ASPECT_SQUARE);
+		} else {
+			tpg_s_pixel_aspect(&m_tpg, TPG_PIXEL_ASPECT_SQUARE);
+		}
+
+		tpg_s_colorspace(&m_tpg, m_tpgColorspace ? m_tpgColorspace : fmt.g_colorspace());
+		tpg_s_bytesperline(&m_tpg, 0, fmt.g_bytesperline(0));
+		tpg_s_bytesperline(&m_tpg, 1, fmt.g_bytesperline(1));
+		if (m_capMethod == methodRead)
+			m_frameData = new unsigned char[fmt.g_sizeimage(0)];
+		if (startStreaming()) {
+			m_outNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Write, m_tabs);
+			connect(m_outNotifier, SIGNAL(activated(int)), this, SLOT(outFrame()));
+		}
+	} else {
+		stopStreaming();
+		tpg_free(&m_tpg);
+		delete m_frameData;
+		m_frameData = NULL;
+		delete m_outNotifier;
+		m_outNotifier = NULL;
+	}
+}
+
 void ApplicationWindow::capStart(bool start)
 {
+	if (has_vid_out()) {
+		outStart(start);
+		return;
+	}
+
 	if (!m_genTab->isSDR() && m_genTab->isRadio()) {
 		if (start)
-			startCapture();
+			startStreaming();
 		else
-			stopCapture();
+			stopStreaming();
 
 		return;
 	}
@@ -982,7 +1153,7 @@ void ApplicationWindow::capStart(bool start)
 	unsigned colorspace, field;
 
 	if (!start) {
-		stopCapture();
+		stopStreaming();
 		delete m_capNotifier;
 		m_capNotifier = NULL;
 		delete m_capImage;
@@ -1012,7 +1183,7 @@ void ApplicationWindow::capStart(bool start)
 		m_vbiTab->slicedFormat(fmt.fmt.sliced);
 		m_vbiSize = fmt.fmt.sliced.io_size;
 		m_frameData = new unsigned char[m_vbiSize];
-		if (startCapture()) {
+		if (startStreaming()) {
 			m_capNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Read, m_tabs);
 			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capVbiFrame()));
 		}
@@ -1054,7 +1225,7 @@ void ApplicationWindow::capStart(bool start)
 			m_capture->show();
 
 		statusBar()->showMessage("No frame");
-		if (startCapture()) {
+		if (startStreaming()) {
 			m_capNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Read, m_tabs);
 			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capVbiFrame()));
 		}
@@ -1083,7 +1254,7 @@ void ApplicationWindow::capStart(bool start)
 			m_capture->show();
 
 		statusBar()->showMessage("No frame");
-		if (startCapture()) {
+		if (startStreaming()) {
 			m_capNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Read, m_tabs);
 			connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capSdrFrame()));
 		}
@@ -1159,7 +1330,7 @@ void ApplicationWindow::capStart(bool start)
 		m_capture->show();
 
 	statusBar()->showMessage("No frame");
-	if (startCapture()) {
+	if (startStreaming()) {
 		m_capNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Read, m_tabs);
 		connect(m_capNotifier, SIGNAL(activated(int)), this, SLOT(capFrame()));
 	}
@@ -1185,6 +1356,10 @@ void ApplicationWindow::closeDevice()
 			delete m_capImage;
 			m_capNotifier = NULL;
 			m_capImage = NULL;
+		}
+		if (m_outNotifier) {
+			delete m_outNotifier;
+			m_outNotifier = NULL;
 		}
 		if (m_ctrlNotifier) {
 			delete m_ctrlNotifier;

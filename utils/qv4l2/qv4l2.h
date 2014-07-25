@@ -36,12 +36,16 @@
 // Must come before cv4l-helpers.h
 #include <libv4l2.h>
 
+extern "C" {
+#include <vivid-tpg.h>
+}
 #include "cv4l-helpers.h"
 #include "raw2sliced.h"
 #include "capture-win.h"
 
 class QComboBox;
 class QSpinBox;
+class QCheckBox;
 class GeneralTab;
 class VbiTab;
 class QCloseEvent;
@@ -103,11 +107,14 @@ public:
 private:
 	CaptureWin *m_capture;
 
-	bool startCapture();
-	void stopCapture();
+	bool startStreaming();
+	void stopStreaming();
 	void newCaptureWin();
 	void startAudio();
 	void stopAudio();
+	bool startOutput();
+	void stopOutput();
+	__u32 defaultColorspace(bool capture);
 
 	bool m_clear[64];
 	cv4l_fmt m_capSrcFormat;
@@ -122,8 +129,10 @@ private:
 
 private slots:
 	void capStart(bool);
+	void outStart(bool);
 	void makeFullScreen(bool);
 	void capFrame();
+	void outFrame();
 	void ctrlEvent();
 	void snapshot();
 	void capVbiFrame();
@@ -150,6 +159,22 @@ private slots:
 	void clearBuffers();
 	void about();
 
+	// tpg
+private slots:
+	void testPatternChanged(int val);
+	void horMovementChanged(int val);
+	void vertMovementChanged(int val);
+	void showBorderChanged(int val);
+	void showSquareChanged(int val);
+	void insSAVChanged(int val);
+	void insEAVChanged(int val);
+	void videoAspectRatioChanged(int val);
+	void colorspaceChanged(int val);
+	void limRGBRangeChanged(int val);
+	void fillPercentageChanged(int val);
+	void alphaComponentChanged(int val);
+	void applyToRedChanged(int val);
+
 public:
 	virtual void error(const QString &text);
 	void error(int err);
@@ -158,6 +183,7 @@ public:
 	void errorCtrl(unsigned id, int err, const QString &v);
 	void info(const QString &info);
 	virtual void closeEvent(QCloseEvent *event);
+	void updateLimRGBRange();
 	QAction *m_resetScalingAct;
 	QAction *m_useBlendingAct;
 	QAction *m_snapshotAct;
@@ -171,6 +197,7 @@ private:
 	}
 	void fixWidth(QGridLayout *grid);
 	void addTabs(int m_winWidth);
+	void addTpgTab(int m_winWidth);
 	void finishGrid(QGridLayout *grid, unsigned ctrl_class);
 	void addCtrl(QGridLayout *grid, const struct v4l2_query_ext_ctrl &qec);
 	void updateCtrl(unsigned id);
@@ -198,6 +225,14 @@ private:
 	void updateFreqChannel();
 	bool showFrames();
 
+	struct tpg_data m_tpg;
+	v4l2_std_id m_tpgStd;
+	unsigned m_tpgField;
+	unsigned m_tpgSizeImage;
+	unsigned m_tpgColorspace;
+	bool m_useTpg;
+	QCheckBox *m_tpgLimRGBRange;
+
 	cv4l_queue m_queue;
 
 	const double m_pxw;
@@ -219,6 +254,7 @@ private:
 	QSignalMapper *m_sigMapper;
 	QTabWidget *m_tabs;
 	QSocketNotifier *m_capNotifier;
+	QSocketNotifier *m_outNotifier;
 	QSocketNotifier *m_ctrlNotifier;
 	QImage *m_capImage;
 	int m_row, m_col, m_cols;
