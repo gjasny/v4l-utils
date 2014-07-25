@@ -61,16 +61,19 @@ sub type_req($)
 }
 
 while (<>) {
-	tr/A-F/a-f/;
-	if (m/([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].)[\<\>\s]+(.*)/) {
-		my $reqtype = hex($1);
-		my $req = hex($2);
-		my $wvalue = hex("$4$3");
-		my $windex = hex("$6$5");
-		my $wlen = hex("$8$7");
-		my $payload = $9;
+	if (m/(.*)([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].) ([0-9a-f].)[\<\>\s]+(.*)/) {
+		my $timestamp = $1;
+		my $reqtype = hex($2);
+		my $req = hex($3);
+		my $wvalue = hex("$5$4");
+		my $windex = hex("$7$6");
+		my $wlen = hex("$9$8");
+		my $payload = $10;
 
-		printf("%s, Req %3d, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
-			type_req($reqtype), $req, $wvalue, $windex, $wlen, $payload);
+		$timestamp =~ s/^\s+//;
+		$timestamp =~ s/\s+$//;
+
+		printf("%s %s(0x%02x), Req 0x%02x, wValue: 0x%04x, wIndex 0x%04x, wlen %d: %s\n",
+			$timestamp, type_req($reqtype), $reqtype, $req, $wvalue, $windex, $wlen, $payload);
 	}
 }
