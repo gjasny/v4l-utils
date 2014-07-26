@@ -31,7 +31,6 @@
    be adjusted! */
 #define V4L2_MAX_NO_FRAMES 32
 #define V4L2_DEFAULT_NREADBUFFERS 4
-#define V4L2_FRAME_BUF_SIZE (4096 * 4096)
 #define V4L2_IGNORE_FIRST_FRAME_ERRORS 3
 #define V4L2_DEFAULT_FPS 30
 
@@ -88,6 +87,8 @@ struct v4l2_dev_info {
 	int first_frame;
 	struct v4lconvert_data *convert;
 	unsigned char *convert_mmap_buf;
+	size_t convert_mmap_buf_size;
+	size_t convert_mmap_frame_size;
 	/* Frame bookkeeping is only done when in read or mmap-conversion mode */
 	unsigned char *frame_pointers[V4L2_MAX_NO_FRAMES];
 	int frame_sizes[V4L2_MAX_NO_FRAMES];
