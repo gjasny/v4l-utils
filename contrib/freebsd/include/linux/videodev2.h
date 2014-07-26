@@ -1320,6 +1320,7 @@ struct v4l2_ext_control {
 		char *string;
 		uint8_t *p_u8;
 		uint16_t *p_u16;
+		uint32_t *p_u32;
 		void *ptr;
 	};
 } __attribute__ ((packed));
@@ -1352,6 +1353,7 @@ enum v4l2_ctrl_type {
 	V4L2_CTRL_COMPOUND_TYPES     = 0x0100,
 	V4L2_CTRL_TYPE_U8	     = 0x0100,
 	V4L2_CTRL_TYPE_U16	     = 0x0101,
+	V4L2_CTRL_TYPE_U32	     = 0x0102,
 };
 
 /*  Used in the VIDIOC_QUERYCTRL ioctl for querying controls */
