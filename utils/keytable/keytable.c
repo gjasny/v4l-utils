@@ -1174,6 +1174,12 @@ static int set_proto(struct rc_device *rc_dev)
 {
 	int rc = 0;
 
+	rc_dev->current &= rc_dev->supported;
+	if (!rc_dev->current) {
+		fprintf(stderr, "Invalid protocols selected\n");
+		return EINVAL;
+	}
+
 	if (rc_dev->version == VERSION_2) {
 		rc = v2_set_protocols(rc_dev);
 		return rc;
