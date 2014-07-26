@@ -471,6 +471,8 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 				ch_proto |= LIRC;
 			else if (!strcasecmp(p,"rc-5-sz"))
 				ch_proto |= RC_5_SZ;
+			else if (!strcasecmp(p,"all"))
+				ch_proto |= ~0;
 			else
 				goto err_inval;
 			p = strtok(NULL, ",;");
