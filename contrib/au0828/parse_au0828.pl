@@ -136,10 +136,11 @@ while (<>) {
 
 		if (($reqtype == 0xc0) && ($reg == 0x0209)) {
 			# I2C read data
-			push @i2c_rbuf, $val;
+			my @bytes = split(/ /, $payload);
+			push @i2c_rbuf, hex($_) foreach(@bytes);
 
 			if (!$i2c_hold) {
-				printf "$timestamp au0828 I2C read addr = 0x%02x (speed = %s) ", $i2c_addr, $i2c_speed;
+				printf "$timestamp au0828 I2C read addr = 0x%02x (speed = %s, len=%d) ", $i2c_addr, $i2c_speed, scalar(@i2c_rbuf);
 				printf "0x%02x ", $_ foreach (@i2c_rbuf);
 				print "\n";
 
