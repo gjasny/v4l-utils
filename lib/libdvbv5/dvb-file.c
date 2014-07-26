@@ -1022,12 +1022,12 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 		entry->props[j].cmd = parms->dvb_prop[j].cmd;
 		entry->props[j].u.data = parms->dvb_prop[j].u.data;
 
-		if (!channel && entry->props[j].cmd == DTV_FREQUENCY)
+		if (!*channel && entry->props[j].cmd == DTV_FREQUENCY)
 			freq = parms->dvb_prop[j].u.data;
 	}
 	entry->n_props = parms->n_props;
 
-	if (!channel) {
+	if (!*channel) {
 		r = asprintf(&channel, "%.2fMHz#%d", freq/1000000., service_id);
 		if (r < 0)
 			dvb_perror("asprintf");
@@ -1113,8 +1113,9 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 	if (!dvb_scan_handler->sdt) {
 		int i;
 
-		dvb_logerr("no SDT table - storing channels without their names");
+		dvb_log("WARNING: no SDT table - storing channels without their names");
 		for (i = 0; i < dvb_scan_handler->num_program; i++) {
+			char *channel = NULL;
 			unsigned service_id;
 
 			if (!dvb_scan_handler->program[i].pmt)
@@ -1123,7 +1124,7 @@ int store_dvb_channel(struct dvb_file **dvb_file,
 			service_id = dvb_scan_handler->program[i].pat_pgm->service_id;
 
 			rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
-						   service_id, NULL, NULL,
+						   service_id, channel, NULL,
 						   get_detected, get_nit);
 			if (rc < 0)
 				return rc;
