@@ -28,6 +28,7 @@
 
 #include <unistd.h>
 #include <stdint.h>
+#include <arpa/inet.h>
 
 #define DVB_MAX_PAYLOAD_PACKET_SIZE 4096
 #define DVB_CRC_SIZE 4
