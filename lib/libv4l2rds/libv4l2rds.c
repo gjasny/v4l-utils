@@ -807,28 +807,28 @@ static uint32_t rds_decode_group0(struct rds_private_state *priv_state)
 
 	/* bit 2 of block B contains 1 bit of the Decoder Control Information (DI)
 	 * the segment number defines the bit position
-	 * New bits are only accepted the segments arrive in the correct order */
+	 * New bits are only accepted if the segments arrive in the correct order */
 	bool bit2 = grp->data_b_lsb & 0x04;
 	if (segment == 0 || segment == priv_state->next_di_segment) {
 		switch (segment) {
 		case 0:
 			priv_state->new_di = set_bit(priv_state->new_di,
-				V4L2_RDS_FLAG_STEREO, bit2);
+				V4L2_RDS_FLAG_DYNAMIC_PTY, bit2);
 			priv_state->next_di_segment = 1;
 			break;
 		case 1:
 			priv_state->new_di = set_bit(priv_state->new_di,
-				V4L2_RDS_FLAG_ARTIFICIAL_HEAD, bit2);
+				V4L2_RDS_FLAG_COMPRESSED, bit2);
 			priv_state->next_di_segment = 2;
 			break;
 		case 2:
 			priv_state->new_di = set_bit(priv_state->new_di,
-				V4L2_RDS_FLAG_COMPRESSED, bit2);
+				V4L2_RDS_FLAG_ARTIFICIAL_HEAD, bit2);
 			priv_state->next_di_segment = 3;
 			break;
 		case 3:
 			priv_state->new_di = set_bit(priv_state->new_di,
-				V4L2_RDS_FLAG_DYNAMIC_PTY, bit2);
+				V4L2_RDS_FLAG_STEREO, bit2);
 			/* check if the value of DI has changed, and store
 			 * and signal DI update in case */
 			if (handle->di != priv_state->new_di) {
