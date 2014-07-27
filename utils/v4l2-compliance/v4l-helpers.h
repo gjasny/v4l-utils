@@ -28,6 +28,7 @@ struct v4l_fd {
 	bool have_query_ext_ctrl;
 	bool have_ext_ctrls;
 	bool have_next_ctrl;
+	bool have_selection;
 
 	int (*open)(struct v4l_fd *f, const char *file, int oflag, ...);
 	int (*close)(struct v4l_fd *f);
@@ -392,6 +393,7 @@ static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_block
 	struct v4l2_query_ext_ctrl qec = { V4L2_CTRL_FLAG_NEXT_CTRL };
 	struct v4l2_ext_controls ec = { 0, 0 };
 	struct v4l2_queryctrl qc = { V4L2_CTRL_FLAG_NEXT_CTRL };
+	struct v4l2_selection sel = { 0 };
 
 	f->fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
 
@@ -405,12 +407,17 @@ static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_block
 		v4l_close(f);
 		return -1;
 	}
+	f->caps = v4l_capability_g_caps(&f->cap);
+	f->type = v4l_determine_type(f);
+
 	f->have_query_ext_ctrl = v4l_ioctl(f, VIDIOC_QUERY_EXT_CTRL, &qec) == 0;
 	f->have_ext_ctrls = v4l_ioctl(f, VIDIOC_TRY_EXT_CTRLS, &ec) == 0;
 	f->have_next_ctrl = v4l_ioctl(f, VIDIOC_QUERYCTRL, &qc) == 0;
+	sel.type = v4l_g_selection_type(f);
+	sel.target = sel.type == V4L2_BUF_TYPE_VIDEO_CAPTURE ?
+			V4L2_SEL_TGT_CROP : V4L2_SEL_TGT_COMPOSE;
+	f->have_selection = v4l_ioctl(f, VIDIOC_G_SELECTION, &sel) == 0;
 
-	f->caps = v4l_capability_g_caps(&f->cap);
-	f->type = v4l_determine_type(f);
 	return f->fd;
 }
 
@@ -1505,6 +1512,76 @@ static inline int v4l_try_ext_ctrls(v4l_fd *f, struct v4l2_ext_controls *ec)
 		}
 	}
 	return 0;
+}
+
+static inline int v4l_g_selection(v4l_fd *f, struct v4l2_selection *sel)
+{
+	struct v4l2_cropcap cc;
+	struct v4l2_crop crop;
+	int ret;
+
+	if (f->have_selection)
+		return v4l_ioctl(f, VIDIOC_G_SELECTION, sel);
+	crop.type = sel->type;
+	cc.type = sel->type;
+	ret = v4l_ioctl(f, VIDIOC_CROPCAP, &cc);
+	if (ret)
+		return ret;
+	ret = v4l_ioctl(f, VIDIOC_G_CROP, &crop);
+	if (ret)
+		return ret;
+	if (sel->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+		switch (sel->target) {
+		case V4L2_SEL_TGT_CROP:
+			sel->r = crop.c;
+			return 0;
+		case V4L2_SEL_TGT_CROP_DEFAULT:
+			sel->r = cc.defrect;
+			return 0;
+		case V4L2_SEL_TGT_CROP_BOUNDS:
+			sel->r = cc.bounds;
+			return 0;
+		default:
+			return EINVAL;
+		}
+	}
+	switch (sel->target) {
+	case V4L2_SEL_TGT_COMPOSE:
+		sel->r = crop.c;
+		return 0;
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
+		sel->r = cc.defrect;
+		return 0;
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+		sel->r = cc.bounds;
+		return 0;
+	default:
+		return EINVAL;
+	}
+}
+
+static inline int v4l_s_selection(v4l_fd *f, struct v4l2_selection *sel)
+{
+	struct v4l2_crop crop;
+	int ret;
+
+	if (f->have_selection)
+		return v4l_ioctl(f, VIDIOC_S_SELECTION, sel);
+	crop.type = sel->type;
+	ret = v4l_ioctl(f, VIDIOC_G_CROP, &crop);
+	if (ret)
+		return ret;
+	if (sel->type == V4L2_BUF_TYPE_VIDEO_CAPTURE &&
+	    sel->target == V4L2_SEL_TGT_CROP) {
+		crop.c = sel->r;
+		return v4l_ioctl(f, VIDIOC_S_CROP, &crop);
+	}
+	if (sel->type == V4L2_BUF_TYPE_VIDEO_OUTPUT &&
+	    sel->target == V4L2_SEL_TGT_COMPOSE) {
+		crop.c = sel->r;
+		return v4l_ioctl(f, VIDIOC_S_CROP, &crop);
+	}
+	return EINVAL;
 }
 
 #ifdef __cplusplus

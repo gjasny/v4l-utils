@@ -223,6 +223,8 @@ private:
 	int g_fmt(v4l2_format &fmt, unsigned type = 0) { return m_fd->g_fmt(fmt); }
 	int try_fmt(v4l2_format &fmt) { return m_fd->try_fmt(fmt); }
 	int s_fmt(v4l2_format &fmt) { return m_fd->s_fmt(fmt); }
+	int g_selection(v4l2_selection &sel) { return m_fd->g_selection(sel); }
+	int s_selection(v4l2_selection &sel) { return m_fd->s_selection(sel); }
 	int g_tuner(v4l2_tuner &tuner, unsigned index = 0) { return m_fd->g_tuner(tuner, index); }
 	int s_tuner(v4l2_tuner &tuner) { return m_fd->g_tuner(tuner); }
 	int g_modulator(v4l2_modulator &modulator) { return m_fd->g_modulator(modulator); }
@@ -269,8 +271,8 @@ private:
 	}
 	bool has_crop() { return m_fd->has_crop(); }
 	bool has_compose() { return m_fd->has_compose(); }
-	bool input_has_crop() { return m_fd->input_has_crop(); }
-	bool input_has_compose() { return m_fd->input_has_compose(); }
+	bool cur_io_has_crop() { return m_fd->cur_io_has_crop(); }
+	bool cur_io_has_compose() { return m_fd->cur_io_has_compose(); }
 	bool ioctl_exists(int ret)
 	{
 		return ret == 0 || errno != ENOTTY;

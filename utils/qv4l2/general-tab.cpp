@@ -257,7 +257,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	m_recordPrio = new QCheckBox(parentWidget());
 	addWidget(m_recordPrio);
 
-	if (!isRadio() && !isVbi() && !m_isOutput && (has_crop() || has_compose())) {
+	if (!isRadio() && !isVbi() && (has_crop() || has_compose())) {
 		addTitle("Cropping & Compose Settings");
 		cropSection();
 	}
@@ -1285,6 +1285,10 @@ void GeneralTab::inputChanged(int input)
 void GeneralTab::outputChanged(int output)
 {
 	s_output((__u32)output);
+
+	if (m_audioOutput)
+		updateAudioOutput();
+
 	updateVideoOutput();
 	updateVidOutFormat();
 	updateGUIOutput(output);
@@ -1565,35 +1569,36 @@ void GeneralTab::vbiMethodsChanged(int idx)
 
 void GeneralTab::cropChanged()
 {
-	v4l2_crop crop;
+	v4l2_selection sel;
 
-	if (!m_cropWidth->isEnabled())
+	if (!m_cropWidth->isEnabled() || !cur_io_has_crop())
 		return;
 
-	crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	crop.c.width = m_cropWidth->value();
-	crop.c.left = m_cropLeft->value();
-	crop.c.height = m_cropHeight->value();
-	crop.c.top = m_cropTop->value();
-	cv4l_ioctl(VIDIOC_S_CROP, &crop);
-	updateVidCapFormat();
+	sel.type = g_selection_type();
+	sel.target = V4L2_SEL_TGT_CROP;
+	sel.r.width = m_cropWidth->value();
+	sel.r.left = m_cropLeft->value();
+	sel.r.height = m_cropHeight->value();
+	sel.r.top = m_cropTop->value();
+	s_selection(sel);
+	updateVidFormat();
 }
 
 void GeneralTab::composeChanged()
 {
 	v4l2_selection sel;
 
-	if (!m_composeWidth->isEnabled() || !input_has_compose())
+	if (!m_composeWidth->isEnabled() || !cur_io_has_compose())
 		return;
 
-	sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	sel.type = g_selection_type();
 	sel.target = V4L2_SEL_TGT_COMPOSE;
 	sel.r.width = m_composeWidth->value();
 	sel.r.left = m_composeLeft->value();
 	sel.r.height = m_composeHeight->value();
 	sel.r.top = m_composeTop->value();
-	cv4l_ioctl(VIDIOC_S_SELECTION, &sel);
-	updateVidCapFormat();
+	s_selection(sel);
+	updateVidFormat();
 }
 
 void GeneralTab::updateVideoInput()
@@ -1638,7 +1643,7 @@ void GeneralTab::updateVideoInput()
 	if (m_audioInput)
 		m_audioInput->setEnabled(in.audioset);
 	if (m_cropWidth) {
-		bool has_crop = input_has_crop();
+		bool has_crop = cur_io_has_crop();
 
 		m_cropWidth->setEnabled(has_crop);
 		m_cropLeft->setEnabled(has_crop);
@@ -1646,7 +1651,7 @@ void GeneralTab::updateVideoInput()
 		m_cropTop->setEnabled(has_crop);
 	}
 	if (m_composeWidth) {
-		bool has_compose = input_has_compose();
+		bool has_compose = cur_io_has_compose();
 
 		m_composeWidth->setEnabled(has_compose);
 		m_composeLeft->setEnabled(has_compose);
@@ -1675,6 +1680,24 @@ void GeneralTab::updateVideoOutput()
 		refreshTimings();
 		updateTimings();
 		m_videoTimings->setEnabled(out.capabilities & V4L2_OUT_CAP_DV_TIMINGS);
+	}
+	if (m_audioOutput)
+		m_audioOutput->setEnabled(out.audioset);
+	if (m_cropWidth) {
+		bool has_crop = cur_io_has_crop();
+
+		m_cropWidth->setEnabled(has_crop);
+		m_cropLeft->setEnabled(has_crop);
+		m_cropHeight->setEnabled(has_crop);
+		m_cropTop->setEnabled(has_crop);
+	}
+	if (m_composeWidth) {
+		bool has_compose = cur_io_has_compose();
+
+		m_composeWidth->setEnabled(has_compose);
+		m_composeLeft->setEnabled(has_compose);
+		m_composeHeight->setEnabled(has_compose);
+		m_composeTop->setEnabled(has_compose);
 	}
 	g_mw->updateLimRGBRange();
 }
@@ -1935,6 +1958,8 @@ void GeneralTab::updateVidOutFormat()
 		return;
 	m_vidOutFormats->setCurrentIndex(desc.index);
 	updateVidFields();
+	updateCrop();
+	updateCompose();
 }
 
 void GeneralTab::updateVidFields()
@@ -1965,14 +1990,19 @@ void GeneralTab::updateCrop()
 	if (m_cropWidth == NULL || !m_cropWidth->isEnabled())
 		return;
 
-	v4l2_cropcap cropcap;
-	v4l2_rect &b = cropcap.bounds;
-	v4l2_crop crop;
-	v4l2_rect &c = crop.c;
+	v4l2_selection sel;
+	v4l2_rect &r = sel.r;
+	v4l2_rect b = { 0, 0, m_width, m_height };
 
-	cropcap.type = crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (cv4l_ioctl(VIDIOC_CROPCAP, &cropcap) ||
-	    cv4l_ioctl(VIDIOC_G_CROP, &crop))
+	sel.type = g_selection_type();
+	if (sel.type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+		sel.target = V4L2_SEL_TGT_CROP_BOUNDS;
+		if (g_selection(sel))
+			return;
+		b = sel.r;
+	}
+	sel.target = V4L2_SEL_TGT_CROP;
+	if (g_selection(sel))
 		return;
 
 	m_cropWidth->blockSignals(true);
@@ -1981,16 +2011,16 @@ void GeneralTab::updateCrop()
 	m_cropTop->blockSignals(true);
 
 	m_cropWidth->setRange(8, b.width);
-	m_cropWidth->setSliderPosition(c.width);
-	if (b.width != c.width) {
-		m_cropLeft->setRange(b.left, b.left + b.width - c.width);
-		m_cropLeft->setSliderPosition(c.left);
+	m_cropWidth->setSliderPosition(r.width);
+	if (b.width != r.width) {
+		m_cropLeft->setRange(b.left, b.left + b.width - r.width);
+		m_cropLeft->setSliderPosition(r.left);
 	}
 	m_cropHeight->setRange(8, b.height);
-	m_cropHeight->setSliderPosition(c.height);
-	if (b.height != c.height) {
-		m_cropTop->setRange(b.top, b.top + b.height - c.height);
-		m_cropTop->setSliderPosition(c.top);
+	m_cropHeight->setSliderPosition(r.height);
+	if (b.height != r.height) {
+		m_cropTop->setRange(b.top, b.top + b.height - r.height);
+		m_cropTop->setSliderPosition(r.top);
 	}
 
 	m_cropWidth->blockSignals(false);
@@ -2006,10 +2036,17 @@ void GeneralTab::updateCompose()
 
 	v4l2_selection sel;
 	v4l2_rect &r = sel.r;
+	v4l2_rect b = { 0, 0, m_width, m_height };
 
-	sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	sel.type = g_selection_type();
+	if (sel.type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
+		sel.target = V4L2_SEL_TGT_COMPOSE_BOUNDS;
+		if (g_selection(sel))
+			return;
+		b = sel.r;
+	}
 	sel.target = V4L2_SEL_TGT_COMPOSE;
-	if (cv4l_ioctl(VIDIOC_G_SELECTION, &sel))
+	if (g_selection(sel))
 		return;
 
 	m_composeWidth->blockSignals(true);
@@ -2017,16 +2054,16 @@ void GeneralTab::updateCompose()
 	m_composeHeight->blockSignals(true);
 	m_composeTop->blockSignals(true);
 
-	m_composeWidth->setRange(8, m_width);
+	m_composeWidth->setRange(8, b.width);
 	m_composeWidth->setSliderPosition(r.width);
-	if (m_width != r.width) {
-		m_composeLeft->setRange(0, m_width - r.width);
+	if (b.width != r.width) {
+		m_composeLeft->setRange(b.left, b.left + b.width - r.width);
 		m_composeLeft->setSliderPosition(r.left);
 	}
-	m_composeHeight->setRange(8, m_height);
+	m_composeHeight->setRange(8, b.height);
 	m_composeHeight->setSliderPosition(r.height);
-	if (m_height != r.height) {
-		m_composeTop->setRange(0, m_height - r.height);
+	if (b.height != r.height) {
+		m_composeTop->setRange(b.top, b.top + b.height - r.height);
 		m_composeTop->setSliderPosition(r.top);
 	}
 

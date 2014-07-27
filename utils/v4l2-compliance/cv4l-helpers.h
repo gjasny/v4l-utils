@@ -114,6 +114,16 @@ public:
 		return v4l_s_fmt(this, &fmt);
 	}
 
+	int g_selection(v4l2_selection &sel)
+	{
+		return v4l_g_selection(this, &sel);
+	}
+
+	int s_selection(v4l2_selection &sel)
+	{
+		return v4l_s_selection(this, &sel);
+	}
+
 	int g_tuner(v4l2_tuner &tuner, unsigned index = 0)
 	{
 		memset(&tuner, 0, sizeof(tuner));
@@ -191,14 +201,12 @@ public:
 
 	bool has_crop()
 	{
-		v4l2_crop crop;
-		v4l2_cropcap cropcap;
+		v4l2_selection sel;
 
-		crop.type = g_selection_type();
-		cropcap.type = crop.type;
-		return ioctl_exists(cv4l_ioctl(VIDIOC_G_CROP, &crop)) &&
-		       ioctl_exists(cv4l_ioctl(VIDIOC_S_CROP, &crop)) &&
-		       ioctl_exists(cv4l_ioctl(VIDIOC_CROPCAP, &cropcap));
+		memset(&sel, 0, sizeof(sel));
+		sel.type = g_selection_type();
+		sel.target = V4L2_SEL_TGT_CROP;
+		return ioctl_exists(g_selection(sel));
 	}
 
 	bool has_compose()
@@ -208,32 +216,27 @@ public:
 		memset(&sel, 0, sizeof(sel));
 		sel.type = g_selection_type();
 		sel.target = V4L2_SEL_TGT_COMPOSE;
-		return ioctl_exists(cv4l_ioctl(VIDIOC_G_SELECTION, &sel)) &&
-		       ioctl_exists(cv4l_ioctl(VIDIOC_S_SELECTION, &sel));
+		return ioctl_exists(g_selection(sel));
 	}
 
-	bool input_has_crop()
+	bool cur_io_has_crop()
 	{
-		v4l2_crop crop;
-		v4l2_cropcap cropcap;
+		v4l2_selection sel;
 
-		crop.type = g_selection_type();
-		cropcap.type = crop.type;
-		return cv4l_ioctl(VIDIOC_G_CROP, &crop) == 0 &&
-		       cv4l_ioctl(VIDIOC_S_CROP, &crop) == 0 &&
-		       cv4l_ioctl(VIDIOC_CROPCAP, &cropcap) == 0 &&
-		       cropcap.bounds.width && cropcap.bounds.height;
+		memset(&sel, 0, sizeof(sel));
+		sel.type = g_selection_type();
+		sel.target = V4L2_SEL_TGT_CROP;
+		return g_selection(sel) == 0;
 	}
 
-	bool input_has_compose()
+	bool cur_io_has_compose()
 	{
 		v4l2_selection sel;
 
 		memset(&sel, 0, sizeof(sel));
 		sel.type = g_selection_type();
 		sel.target = V4L2_SEL_TGT_COMPOSE;
-		return cv4l_ioctl(VIDIOC_G_SELECTION, &sel) == 0 &&
-		       cv4l_ioctl(VIDIOC_S_SELECTION, &sel) == 0;
+		return g_selection(sel) == 0;
 	}
 
 	int subscribe_event(v4l2_event_subscription &sub)
