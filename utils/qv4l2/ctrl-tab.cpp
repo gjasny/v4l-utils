@@ -375,7 +375,10 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_query_ext_ctrl &qe
 
 	m_sigMapper->setMapping(m_widgetMap[qec.id], qec.id);
 	if (qec.flags & CTRL_FLAG_DISABLED) {
-		m_widgetMap[qec.id]->setDisabled(true);
+		if (qobject_cast<QLineEdit *>(m_widgetMap[qec.id]))
+			static_cast<QLineEdit *>(m_widgetMap[qec.id])->setReadOnly(true);
+		else
+			m_widgetMap[qec.id]->setDisabled(true);
 		if (m_sliderMap.find(qec.id) != m_sliderMap.end())
 			m_sliderMap[qec.id]->setDisabled(true);
 	}
@@ -674,9 +677,15 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 			}
 			else
 				setVal(id, c[i].value);
-			m_widgetMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
+
+			bool disabled = m_ctrlMap[id].flags & CTRL_FLAG_DISABLED;
+
+			if (qobject_cast<QLineEdit *>(m_widgetMap[id]))
+				static_cast<QLineEdit *>(m_widgetMap[id])->setReadOnly(disabled);
+			else
+				m_widgetMap[id]->setDisabled(disabled);
 			if (m_sliderMap.find(id) != m_sliderMap.end())
-				m_sliderMap[id]->setDisabled(m_ctrlMap[id].flags & CTRL_FLAG_DISABLED);
+				m_sliderMap[id]->setDisabled(disabled);
 		}
 	}
 	delete [] c;
