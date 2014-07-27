@@ -676,12 +676,6 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 		struct v4l2_plane planes[VIDEO_MAX_PLANES];
 		struct v4l2_buffer buf;
 
-		tpg_s_field(&tpg, field);
-		if (field == V4L2_FIELD_TOP)
-			field = V4L2_FIELD_BOTTOM;
-		else if (field == V4L2_FIELD_BOTTOM)
-			field = V4L2_FIELD_TOP;
-
 		memset(&buf, 0, sizeof(buf));
 		memset(planes, 0, sizeof(planes));
 		buf.type = b.type;
@@ -695,6 +689,12 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 			return -1;
 
 		buf.field = field;
+		tpg_s_field(&tpg, field);
+		if (field == V4L2_FIELD_TOP)
+			field = V4L2_FIELD_BOTTOM;
+		else if (field == V4L2_FIELD_BOTTOM)
+			field = V4L2_FIELD_TOP;
+
 		if (b.is_mplane) {
 			for (unsigned j = 0; j < b.num_planes; j++) {
 				struct v4l2_plane &p = b.planes[i][j];
