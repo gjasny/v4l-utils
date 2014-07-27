@@ -126,6 +126,8 @@ void tpg_init(struct tpg_data *tpg, unsigned w, unsigned h)
 	tpg->contrast = 128;
 	tpg->saturation = 128;
 	tpg->hue = 0;
+	tpg->mv_hor_mode = TPG_MOVE_NONE;
+	tpg->mv_vert_mode = TPG_MOVE_NONE;
 	tpg->field = V4L2_FIELD_NONE;
 	tpg_s_fourcc(tpg, V4L2_PIX_FMT_RGB24);
 	tpg->colorspace = V4L2_COLORSPACE_SRGB;
