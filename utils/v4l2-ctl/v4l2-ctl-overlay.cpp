@@ -514,7 +514,8 @@ free:
 void overlay_set(int fd)
 {
 	if ((options[OptSetOverlayFormat] || options[OptTryOverlayFormat]) &&
-			(set_overlay_fmt || bitmap_rects.size() || clips.size())) {
+			(set_overlay_fmt || options[OptClearClips] || options[OptClearBitmap] ||
+			 bitmap_rects.size() || clips.size())) {
 		struct v4l2_format fmt;
 
 		memset(&fmt, 0, sizeof(fmt));
