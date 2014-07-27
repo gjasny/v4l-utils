@@ -373,9 +373,15 @@ void ApplicationWindow::ctrlEvent()
 		m_ctrlMap[ev.id].maximum = ev.u.ctrl.maximum;
 		m_ctrlMap[ev.id].step = ev.u.ctrl.step;
 		m_ctrlMap[ev.id].default_value = ev.u.ctrl.default_value;
-		m_widgetMap[ev.id]->setDisabled(m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED);
+
+		bool disabled = m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED;
+
+		if (qobject_cast<QLineEdit *>(m_widgetMap[ev.id]))
+			static_cast<QLineEdit *>(m_widgetMap[ev.id])->setReadOnly(disabled);
+		else
+			m_widgetMap[ev.id]->setDisabled(disabled);
 		if (m_sliderMap.find(ev.id) != m_sliderMap.end())
-			m_sliderMap[ev.id]->setDisabled(m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED);
+			m_sliderMap[ev.id]->setDisabled(disabled);
 		if (ev.u.ctrl.changes & V4L2_EVENT_CTRL_CH_RANGE)
 			updateCtrlRange(ev.id, ev.u.ctrl.value);
 		switch (m_ctrlMap[ev.id].type) {
