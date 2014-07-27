@@ -661,7 +661,7 @@ static void print_rds_data(const struct v4l2_rds *handle, uint32_t updated_field
 	}
 
 	if (updated_fields & V4L2_RDS_PTY && handle->valid_fields & V4L2_RDS_PTY)
-		printf("\nPTY: %0u -> %s",handle->pty, v4l2_rds_get_pty_str(handle));
+		printf("\nPTY: %0u -> %s", handle->pty, v4l2_rds_get_pty_str(handle));
 
 	if (updated_fields & V4L2_RDS_PTYN && handle->valid_fields & V4L2_RDS_PTYN) {
 		printf("\nPTYN: %s", handle->ptyn);
@@ -674,11 +674,12 @@ static void print_rds_data(const struct v4l2_rds *handle, uint32_t updated_field
 		printf("\nRT: %s", handle->rt);
 	}
 
-	if (updated_fields & V4L2_RDS_TP && handle->valid_fields & V4L2_RDS_TP)
-		printf("\nTP: %s  TA: %s", (handle->tp)? "yes":"no",
-			handle->ta? "yes":"no");
+	if ((updated_fields & (V4L2_RDS_TP | V4L2_RDS_TA)) &&
+	    (handle->valid_fields & (V4L2_RDS_TP | V4L2_RDS_TA)))
+		printf("\nTP: %s  TA: %s", (handle->tp) ? "yes" : "no",
+			handle->ta ? "yes" : "no");
 	if (updated_fields & V4L2_RDS_MS && handle->valid_fields & V4L2_RDS_MS)
-		printf("\nMS Flag: %s", (handle->ms)? "Music" : "Speech");
+		printf("\nMS Flag: %s", (handle->ms) ? "Music" : "Speech");
 	if (updated_fields & V4L2_RDS_ECC && handle->valid_fields & V4L2_RDS_ECC)
 		printf("\nECC: %X%x, Country: %u -> %s",
 		handle->ecc >> 4, handle->ecc & 0x0f, handle->pi >> 12,
@@ -691,7 +692,7 @@ static void print_rds_data(const struct v4l2_rds *handle, uint32_t updated_field
 	if (updated_fields & V4L2_RDS_ODA &&
 			handle->decode_information & V4L2_RDS_ODA) {
 		for (int i = 0; i < handle->rds_oda.size; ++i)
-			printf("\nODA Group: %02u%c, AID: %08x",handle->rds_oda.oda[i].group_id,
+			printf("\nODA Group: %02u%c, AID: %08x", handle->rds_oda.oda[i].group_id,
 			handle->rds_oda.oda[i].group_version, handle->rds_oda.oda[i].aid);
 	}
 	if (updated_fields & V4L2_RDS_AF && handle->valid_fields & V4L2_RDS_AF)
