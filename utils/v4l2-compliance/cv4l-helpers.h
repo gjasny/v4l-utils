@@ -194,11 +194,6 @@ public:
 		return cv4l_ioctl(VIDIOC_ENUMAUDOUT, &audout);
 	}
 
-	bool ioctl_exists(int ret)
-	{
-		return ret == 0 || errno != ENOTTY;
-	}
-
 	bool has_crop()
 	{
 		v4l2_selection sel;
@@ -206,7 +201,7 @@ public:
 		memset(&sel, 0, sizeof(sel));
 		sel.type = g_selection_type();
 		sel.target = V4L2_SEL_TGT_CROP;
-		return ioctl_exists(g_selection(sel));
+		return g_selection(sel) != ENOTTY;
 	}
 
 	bool has_compose()
@@ -216,7 +211,7 @@ public:
 		memset(&sel, 0, sizeof(sel));
 		sel.type = g_selection_type();
 		sel.target = V4L2_SEL_TGT_COMPOSE;
-		return ioctl_exists(g_selection(sel));
+		return g_selection(sel) != ENOTTY;
 	}
 
 	bool cur_io_has_crop()

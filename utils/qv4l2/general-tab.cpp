@@ -328,7 +328,7 @@ void GeneralTab::inputSection(v4l2_input vin)
 		m_stdRow->addWidget(m_tvStandard, 0, 1, Qt::AlignLeft);
 		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
 		refreshStandards();
-		if (ioctl_exists(cv4l_ioctl(VIDIOC_QUERYSTD, &tmp))) {
+		if (query_std(tmp) != ENOTTY) {
 			m_qryStandard = new QToolButton(parentWidget());
 			m_qryStandard->setIcon(QIcon(":/enterbutt.png"));
 			m_stdRow->addWidget(new QLabel("Query Standard", parentWidget()), 0, 2, Qt::AlignLeft);
