@@ -412,7 +412,7 @@ void ApplicationWindow::ctrlEvent()
 		ctrls.count = 1;
 		ctrls.ctrl_class = 0;
 		ctrls.controls = &c;
-		if (!cv4l_ioctl(VIDIOC_G_EXT_CTRLS, &ctrls))
+		if (!g_ext_ctrls(ctrls))
 			setString(ev.id, c.string);
 		free(c.string);
 	}
@@ -956,7 +956,7 @@ void ApplicationWindow::stopStreaming()
 		if (v4l_type_is_capture(g_type())) {
 			memset(&cmd, 0, sizeof(cmd));
 			cmd.cmd = V4L2_ENC_CMD_STOP;
-			cv4l_ioctl(VIDIOC_ENCODER_CMD, &cmd);
+			encoder_cmd(cmd);
 		}
 		break;
 

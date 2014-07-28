@@ -121,7 +121,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 		m_maxw[i] = 0;
 	}
 
-	cv4l_ioctl(VIDIOC_QUERYCAP, &m_querycap);
+	querycap(m_querycap);
 
 	addTitle("General Information");
 

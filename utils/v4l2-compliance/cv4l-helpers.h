@@ -59,6 +59,11 @@ public:
 	bool has_streaming() const { return v4l_has_streaming(this); }
 	bool has_ext_pix_format() const { return v4l_has_ext_pix_format(this); }
 
+	void querycap(v4l2_capability &cap)
+	{
+		cap = this->cap;
+	}
+
 	int queryctrl(v4l2_queryctrl &qc)
 	{
 		return cv4l_ioctl(VIDIOC_QUERYCTRL, &qc);
@@ -467,6 +472,26 @@ public:
 		}
 
 		return -1;
+	}
+
+	int encoder_cmd(v4l2_encoder_cmd &cmd)
+	{
+		return cv4l_ioctl(VIDIOC_ENCODER_CMD, &cmd);
+	}
+
+	int try_encoder_cmd(v4l2_encoder_cmd &cmd)
+	{
+		return cv4l_ioctl(VIDIOC_TRY_ENCODER_CMD, &cmd);
+	}
+
+	int decoder_cmd(v4l2_decoder_cmd &cmd)
+	{
+		return cv4l_ioctl(VIDIOC_DECODER_CMD, &cmd);
+	}
+
+	int try_decoder_cmd(v4l2_decoder_cmd &cmd)
+	{
+		return cv4l_ioctl(VIDIOC_TRY_DECODER_CMD, &cmd);
 	}
 
 	v4l2_fract g_pixel_aspect(unsigned &width, unsigned &height, unsigned type = 0)
