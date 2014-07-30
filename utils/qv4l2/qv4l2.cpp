@@ -270,7 +270,6 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	connect(m_genTab, SIGNAL(clearBuffers()), this, SLOT(clearBuffers()));
 	m_tabs->addTab(w, "General Settings");
 
-	m_tpgLimRGBRange = NULL;
 	if (has_vid_out()) {
 		addTpgTab(m_minWidth);
 		tpg_init(&m_tpg, 640, 360);
@@ -1398,6 +1397,7 @@ void ApplicationWindow::closeDevice()
 	m_widgetMap.clear();
 	m_sliderMap.clear();
 	m_classMap.clear();
+	m_tpgLimRGBRange = NULL;
 }
 
 bool SaveDialog::setBuffer(unsigned char *buf, unsigned size)
