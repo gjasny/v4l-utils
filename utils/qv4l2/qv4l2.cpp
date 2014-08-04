@@ -1279,9 +1279,12 @@ void ApplicationWindow::capStart(bool start)
 	}
 
 	m_capSrcFormat.s_type(g_type());
-	g_fmt(m_capSrcFormat);
+	if (g_fmt(m_capSrcFormat)) {
+		error("could not obtain a source format\n");
+		return;
+	}
 	s_fmt(m_capSrcFormat);
-	if (!m_genTab->get_interval(interval))
+	if (m_genTab->get_interval(interval))
 		set_interval(interval);
 
 	m_frameData = new unsigned char[m_capSrcFormat.g_sizeimage(0) +
@@ -1382,7 +1385,7 @@ void ApplicationWindow::closeDevice()
 			delete m_ctrlNotifier;
 			m_ctrlNotifier = NULL;
 		}
-		delete m_frameData;
+		delete [] m_frameData;
 		m_frameData = NULL;
 		v4lconvert_destroy(m_convertData);
 		cv4l_fd::close();
@@ -1393,6 +1396,7 @@ void ApplicationWindow::closeDevice()
 		m_tabs->removeTab(0);
 		delete page;
 	}
+	m_genTab = NULL;
 	m_ctrlMap.clear();
 	m_widgetMap.clear();
 	m_sliderMap.clear();

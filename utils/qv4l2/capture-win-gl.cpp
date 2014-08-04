@@ -126,6 +126,7 @@ CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_WCrop(0),
 	m_HCrop(0),
 	m_colorspace(V4L2_COLORSPACE_REC709),
+	m_field(V4L2_FIELD_NONE),
 	m_displayColorspace(V4L2_COLORSPACE_SRGB),
 	m_screenTextureCount(0),
 	m_formatChange(false),

@@ -1571,7 +1571,7 @@ void GeneralTab::vbiMethodsChanged(int idx)
 
 void GeneralTab::cropChanged()
 {
-	v4l2_selection sel;
+	v4l2_selection sel = { 0 };
 
 	if (!m_cropWidth->isEnabled() || !cur_io_has_crop())
 		return;
@@ -1588,7 +1588,7 @@ void GeneralTab::cropChanged()
 
 void GeneralTab::composeChanged()
 {
-	v4l2_selection sel;
+	v4l2_selection sel = { 0 };
 
 	if (!m_composeWidth->isEnabled() || !cur_io_has_compose())
 		return;
@@ -1748,13 +1748,14 @@ void GeneralTab::updateStandard()
 	v4l2_standard vs;
 	QString what;
 
-	g_std(std);
-	if (!enum_std(vs, true)) {
-		do {
-			if (vs.id == std)
-				break;
-		} while (!enum_std(vs));
-	}
+	if (g_std(std))
+		return;
+	if (enum_std(vs, true))
+		return;
+	do {
+		if (vs.id == std)
+			break;
+	} while (!enum_std(vs));
 	if (vs.id != std) {
 		if (!enum_std(vs, true)) {
 			do {
@@ -1825,13 +1826,14 @@ void GeneralTab::updateTimings()
 	v4l2_enum_dv_timings p;
 	QString what;
 
-	g_dv_timings(timings);
-	if (!enum_dv_timings(p, true)) {
-		do {
-			if (!memcmp(&timings, &p.timings, sizeof(timings)))
-				break;
-		} while (!enum_dv_timings(p));
-	}
+	if (g_dv_timings(timings))
+		return;
+	if (enum_dv_timings(p, true))
+		return;
+	do {
+		if (!memcmp(&timings, &p.timings, sizeof(timings)))
+			break;
+	} while (!enum_dv_timings(p));
 	if (memcmp(&timings, &p.timings, sizeof(timings)))
 		return;
 	m_videoTimings->setCurrentIndex(p.index);
@@ -1992,7 +1994,7 @@ void GeneralTab::updateCrop()
 	if (m_cropWidth == NULL || !m_cropWidth->isEnabled())
 		return;
 
-	v4l2_selection sel;
+	v4l2_selection sel = { 0 };
 	v4l2_rect &r = sel.r;
 	v4l2_rect b = { 0, 0, m_width, m_height };
 
@@ -2036,7 +2038,7 @@ void GeneralTab::updateCompose()
 	if (m_composeWidth == NULL || !m_composeWidth->isEnabled())
 		return;
 
-	v4l2_selection sel;
+	v4l2_selection sel = { 0 };
 	v4l2_rect &r = sel.r;
 	v4l2_rect b = { 0, 0, m_width, m_height };
 

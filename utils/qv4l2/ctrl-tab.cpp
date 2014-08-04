@@ -642,6 +642,8 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 	for (unsigned i = 0; i < count; i++) {
 		unsigned id = c[cnt].id = m_classMap[ctrl_class][i];
 		
+		c[cnt].size = 0;
+		c[cnt].reserved2[0] = 0;
 		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_BUTTON)
 			continue;
 		if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_WRITE_ONLY)

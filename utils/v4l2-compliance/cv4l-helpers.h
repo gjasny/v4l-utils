@@ -451,6 +451,7 @@ public:
 		v4l2_streamparm parm;
 
 		parm.type = type ? type : g_type();
+		memset(parm.parm.capture.reserved, 0, sizeof(parm.parm.capture.reserved));
 		if (cv4l_ioctl(VIDIOC_G_PARM, &parm) ||
 		    !(parm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME))
 			return -1;
@@ -465,6 +466,7 @@ public:
 		v4l2_streamparm parm;
 
 		parm.type = type ? type : g_type();
+		memset(parm.parm.capture.reserved, 0, sizeof(parm.parm.capture.reserved));
 		if (cv4l_ioctl(VIDIOC_G_PARM, &parm) == 0 &&
 		    (parm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME)) {
 			interval = parm.parm.capture.timeperframe;
