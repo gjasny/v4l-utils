@@ -129,19 +129,15 @@ public:
 	static QSize scaleFrameSize(QSize window, QSize frame);
 
 	/**
-	 * @brief Get the number of pixels to crop.
+	 * @brief Crop size
 	 *
-	 * When cropping is applied this gives the number of pixels to
-	 * remove from top and bottom. To get total multiply the return
-	 * value by 2.
+	 * Reduces size width or height according to m_cropMethod
 	 *
-	 * @param size Frame size
-	 * @return The size (no of height & width pixels) to remove when cropping
+	 * @param size Input size
+	 * @return Cropped size
 	 *
-	 * @note The width and height must be original frame size
-	 *       to ensure that the cropping is done correctly.
 	 */
-	static QSize cropFrameSize(QSize size);
+	static QSize cropSize(QSize size);
 
 	/**
 	 * @brief Get the frame size when aspect ratio is applied and increases size.
