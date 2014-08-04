@@ -611,7 +611,7 @@ void ApplicationWindow::capVbiFrame()
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
 	if (showFrames() && g_type() == V4L2_BUF_TYPE_VBI_CAPTURE)
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, status);
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL);
 
 	curStatus = statusBar()->currentMessage();
 	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
@@ -712,7 +712,7 @@ void ApplicationWindow::capSdrFrame()
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
 	if (showFrames())
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, status);
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL);
 
 	curStatus = statusBar()->currentMessage();
 	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
@@ -914,7 +914,7 @@ void ApplicationWindow::capFrame()
 
 	if (showFrames())
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.g_pixelformat(), plane[0], plane[1], status);
+				    m_capDestFormat.g_pixelformat(), plane[0], plane[1]);
 
 	if (m_capMethod == methodMmap || m_capMethod == methodUser) {
 		if (m_clear[buf.g_index()]) {
@@ -1237,7 +1237,7 @@ void ApplicationWindow::capStart(bool start)
 		m_capImage->fill(0);
 		m_capture->setWindowSize(QSize(m_vbiWidth, m_vbiHeight));
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, "No frame");
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL);
 		if (showFrames())
 			m_capture->show();
 
@@ -1266,7 +1266,7 @@ void ApplicationWindow::capStart(bool start)
 		m_capImage->fill(0);
 		m_capture->setWindowSize(QSize(SDR_WIDTH, SDR_HEIGHT));
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, "No frame");
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL);
 		if (showFrames())
 			m_capture->show();
 
@@ -1344,7 +1344,7 @@ void ApplicationWindow::capStart(bool start)
 
 	m_capture->setWindowSize(QSize(width, height));
 	m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-			    pixfmt, m_capImage->bits(), NULL, "No frame");
+			    pixfmt, m_capImage->bits(), NULL);
 	m_capture->makeFullScreen(m_makeFullScreenAct->isChecked());
 	if (showFrames())
 		m_capture->show();

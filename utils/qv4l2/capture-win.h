@@ -45,7 +45,6 @@ struct frame {
 	__u32 format;
 	QSize size;        // int   frameHeight; int   frameWidth;
 	unsigned char *planeData[2];
-	QString info;
 	bool updated;
 };
 
@@ -90,7 +89,7 @@ public:
 	 * @param info A string containing capture information.
 	 */
 	void setFrame(int width, int height, __u32 format,
-		      unsigned char *data, unsigned char *data2, const QString &info);
+		      unsigned char *data, unsigned char *data2);
 
 	/**
 	 * @brief Called when the capture stream is stopped.
@@ -161,7 +160,6 @@ private slots:
 protected:
 	void closeEvent(QCloseEvent *event);
 	void mouseDoubleClickEvent(QMouseEvent *e);
-	bool eventFilter(QObject *target, QEvent *event);
 
 	/**
 	 * @brief Get the amount of space outside the video frame.
@@ -186,13 +184,6 @@ protected:
 	 *
 	 */
 	void updateSize();
-
-	/**
-	 * @brief A label that can is used to display capture information.
-	 *
-	 * @note This must be set in the derived class' setFrame() function.
-	 */
-	QLabel *m_information;
 
 	/**
 	 * @brief Frame information.
@@ -228,8 +219,6 @@ private:
 	QShortcut *m_hotkeyScaleReset;
 	QShortcut *m_hotkeyExitFullscreen;
 	QShortcut *m_hotkeyToggleFullscreen;
-	QPushButton *m_fullscreenButton;
-	QWidget *m_bottom;
 	QVBoxLayout *m_vboxLayout;
 	unsigned m_vboxSpacing;
 };

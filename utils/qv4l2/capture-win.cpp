@@ -67,7 +67,6 @@ CaptureWin::CaptureWin(ApplicationWindow *aw) :
 	m_origFrameSize.setHeight(0);
 	m_windowSize.setWidth(0);
 	m_windowSize.setHeight(0);
-	m_information = new QLabel(this);
 }
 
 CaptureWin::~CaptureWin()
@@ -82,11 +81,10 @@ CaptureWin::~CaptureWin()
 }
 
 void CaptureWin::setFrame(int width, int height, __u32 format,
-			  unsigned char *data, unsigned char *data2, const QString &info)
+			  unsigned char *data, unsigned char *data2)
 {
 	m_frame.planeData[0] = data;
 	m_frame.planeData[1] = data2;
-	m_frame.info         = info;
 
 	m_frame.updated = false;
 	if (width != m_frame.size.width() || height != m_frame.size.height()
@@ -97,7 +95,6 @@ void CaptureWin::setFrame(int width, int height, __u32 format,
 		m_frame.updated      = true;
 		updateSize();
 	}
-	m_information->setText(m_frame.info);
 
 	setRenderFrame();
 }
@@ -106,25 +103,10 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 {
 	int l, t, r, b;
 	m_vboxLayout = new QVBoxLayout(this);
-	m_information->setText("No Frame");
 	m_vboxLayout->getContentsMargins(&l, &t, &r, &b);
-	m_vboxSpacing = t + b;
 	m_vboxLayout->setMargin(0);
 	m_vboxLayout->addWidget(videoSurface, 1000, Qt::AlignCenter);
-	m_bottom = new QWidget(parentWidget());
-	m_bottom->installEventFilter(this);
-	
-	QHBoxLayout *hbox = new QHBoxLayout(m_bottom);
-	hbox->addWidget(m_information, 1, Qt::AlignLeft);
-	
-	m_fullscreenButton = new QPushButton("Show Fullscreen", m_bottom);
-	m_fullscreenButton->setMaximumWidth(200);
-	m_fullscreenButton->setMinimumWidth(100);
-	hbox->addWidget(m_fullscreenButton, 0, Qt::AlignRight);
-	connect(m_fullscreenButton, SIGNAL(clicked()), m_appWin->m_makeFullScreenAct, SLOT(toggle()));
-	m_vboxLayout->addWidget(m_bottom, 0, Qt::AlignBottom);
-	m_vboxLayout->setSpacing(m_vboxSpacing);
-	
+
 	setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(this, SIGNAL(customContextMenuRequested(QPoint)), SLOT(customMenuRequested(QPoint)));
 }
@@ -221,8 +203,6 @@ QSize CaptureWin::getMargins()
 {
 	int l, t, r, b;
 	layout()->getContentsMargins(&l, &t, &r, &b);
-	if (m_information->isVisible())
-		return QSize(l + r, t + b + m_information->minimumSizeHint().height() + layout()->spacing());
 	return QSize(l + r, t + b);
 }
 
@@ -306,27 +286,6 @@ void CaptureWin::mouseDoubleClickEvent(QMouseEvent *e)
 	m_appWin->m_makeFullScreenAct->toggle();
 }
 
-bool CaptureWin::eventFilter(QObject *target, QEvent *event)
-{
-	if (target == m_bottom && isFullScreen()) {
-		if (event->type() == QEvent::Enter) {
-			m_bottom->setStyleSheet("background-color:#bebebe;");
-			m_bottom->setFixedHeight(75);
-			m_fullscreenButton->show();
-			m_information->show();
-			return true;
-		}
-		if (event->type() == QEvent::Leave && m_bottom->geometry().bottom() >= QCursor::pos().y()) {
-			m_bottom->setMinimumHeight(0);
-			m_bottom->setStyleSheet("background-color:#000000;");
-			m_fullscreenButton->hide();
-			m_information->hide();
-			return true;
-		}
-	}
-	return false;
-}
-
 void CaptureWin::escape()
 {
 	m_appWin->m_makeFullScreenAct->setChecked(false);
@@ -341,21 +300,10 @@ void CaptureWin::makeFullScreen(bool enable)
 {
 	if (enable) {
 		showFullScreen();
-		m_fullscreenButton->setText("Exit Fullscreen");
 		setStyleSheet("background-color:#000000;");
-		m_vboxLayout->setSpacing(0);
-		m_fullscreenButton->hide();
-		m_information->hide();
 	} else {
 		showNormal();
-		m_vboxLayout->setSpacing(m_vboxSpacing);
-		m_bottom->setMinimumHeight(0);
-		m_bottom->setMaximumHeight(height());
-		m_fullscreenButton->setText("Show Fullscreen");
 		setStyleSheet("background-color:none;");
-		m_bottom->setStyleSheet("background-color:none;");
-		m_fullscreenButton->show();
-		m_information->show();
 	}
 	QSize resetFrameSize = m_origFrameSize;
 	m_origFrameSize.setWidth(0);
