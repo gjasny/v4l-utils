@@ -200,6 +200,7 @@ static int v4l2_map_buffers(int index)
 		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory = V4L2_MEMORY_MMAP;
 		buf.index = i;
+		buf.reserved = buf.reserved2 = 0;
 		result = devices[index].dev_ops->ioctl(
 				devices[index].dev_ops_priv,
 				devices[index].fd, VIDIOC_QUERYBUF, &buf);
@@ -588,6 +589,7 @@ static int v4l2_buffers_mapped(int index)
 			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 			buf.memory = V4L2_MEMORY_MMAP;
 			buf.index = i;
+			buf.reserved = buf.reserved2 = 0;
 			if (devices[index].dev_ops->ioctl(
 					devices[index].dev_ops_priv,
 					devices[index].fd, VIDIOC_QUERYBUF,
@@ -1242,7 +1244,7 @@ no_capture_request:
 	case VIDIOC_S_STD:
 	case VIDIOC_S_INPUT:
 	case VIDIOC_S_DV_TIMINGS: {
-		struct v4l2_format src_fmt;
+		struct v4l2_format src_fmt = { 0 };
 
 		result = devices[index].dev_ops->ioctl(
 				devices[index].dev_ops_priv,
