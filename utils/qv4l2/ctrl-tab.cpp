@@ -125,8 +125,6 @@ void ApplicationWindow::addTabs(int m_winWidth)
 
 		QGridLayout *grid = new QGridLayout(w);
 		QString tabName(qec.name);
-		if (tabName != "User Controls" && tabName.endsWith(" Controls"))
-			tabName.chop(9);
 
 		if (tabName.length()) {
 			QLabel *title_tab = new QLabel(tabName, parentWidget());
