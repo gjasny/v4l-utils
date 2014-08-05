@@ -26,6 +26,8 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
+#include <math.h>
+
 #define MIN_WIN_SIZE_WIDTH 160
 #define MIN_WIN_SIZE_HEIGHT 120
 
@@ -279,6 +281,28 @@ void CaptureWin::setPixelAspectRatio(double ratio)
 {
 	m_pixelAspectRatio = ratio;
 	resetSize();
+}
+
+float CaptureWin::getHorScaleFactor()
+{
+	float ow, sw, wscale;
+
+	sw = m_scaledSize.width();
+	ow = m_origFrameSize.width();
+	wscale = floor(100 * (sw / ow)) / 100.0;
+
+	return wscale;
+}
+
+float CaptureWin::getVertScaleFactor()
+{
+	float oh, sh, hscale;
+
+	sh = m_scaledSize.height();
+	oh = m_origFrameSize.height();
+	hscale = floor(100 * (sh / oh)) / 100.0;
+
+	return hscale;
 }
 
 void CaptureWin::mouseDoubleClickEvent(QMouseEvent *e)

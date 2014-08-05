@@ -777,7 +777,6 @@ void ApplicationWindow::outFrame()
 		m_tv = tv;
 	}
 
-
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
 
 	if (m_capMethod == methodMmap || m_capMethod == methodUser) {
@@ -897,8 +896,9 @@ void ApplicationWindow::capFrame()
 		m_tv = tv;
 	}
 
-
-	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
+	float wscale = m_capture->getHorScaleFactor();
+	float hscale = m_capture->getVertScaleFactor();
+	status = QString("Frame: %1 Fps: %2 Scale Factors: %3x%4").arg(++m_frame).arg(m_fps).arg(wscale).arg(hscale);
 #ifdef HAVE_ALSA
 	if (alsa_thread_is_running()) {
 		if (tv_alsa.tv_sec || tv_alsa.tv_usec) {

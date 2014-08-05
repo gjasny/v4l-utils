@@ -67,6 +67,8 @@ public:
 	void setWindowSize(QSize size);
 	void enableScaling(bool enable);
 	void setPixelAspectRatio(double ratio);
+	float getHorScaleFactor();
+	float getVertScaleFactor();
 	virtual void setColorspace(unsigned colorspace) = 0;
 	virtual void setField(unsigned field) = 0;
 	virtual void setDisplayColorspace(unsigned colorspace) = 0;
