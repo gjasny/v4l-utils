@@ -2192,12 +2192,12 @@ double GeneralTab::getPixelAspectRatio()
 		ratio.denominator = 40;
 		break;
 	case 4:
-		ratio.numerator = 11;
-		ratio.denominator = 12;
+		ratio.numerator = 54;
+		ratio.denominator = 59;
 		break;
 	case 5:
-		ratio.numerator = 11;
-		ratio.denominator = 16;
+		ratio.numerator = 81;
+		ratio.denominator = 118;
 		break;
 	default:
 		break;
