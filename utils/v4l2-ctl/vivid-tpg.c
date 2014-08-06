@@ -2,7 +2,7 @@
  * vivid-tpg.c - Test Pattern Generator
  *
  * Note: gen_twopix and tpg_gen_text are based on code from vivi.c. See the
- * vivid-core.c source for the copyright information of those functions.
+ * vivi.c source for the copyright information of those functions.
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  *
@@ -80,30 +80,7 @@ static const s8 sin[257] = {
 	   0,
 };
 
-/*
- * Cosinus table: cos[0] = 127 * cos(-180 degrees)
- *                cos[128] = 127 * cos(0 degrees)
- *                cos[256] = 127 * cos(180 degrees)
- */
-static const s8 cos[257] = {
-	-127, -127, -127, -127, -126, -126, -125, -125, -124, -124, -123, -122, -121, -120, -119, -118,
-	-117, -116, -114, -113, -111, -110, -109, -107, -105, -103, -101, -100,  -97,  -96,  -93,  -91,
-	 -90,  -87,  -85,  -82,  -80,  -76,  -75,  -73,  -69,  -67,  -63,  -62,  -60,  -56,  -54,  -50,
-	 -48,  -46,  -41,  -39,  -35,  -33,  -31,  -26,  -24,  -20,  -18,  -15,  -11,   -9,   -4,   -2,
-	   0,    4,    7,   11,   13,   18,   20,   22,   26,   29,   33,   35,   37,   41,   43,   48,
-	  50,   52,   56,   58,   62,   64,   65,   69,   71,   75,   76,   78,   82,   83,   87,   88,
-	  90,   93,   94,   97,   99,  101,  103,  104,  107,  108,  110,  111,  112,  114,  115,  117,
-	 118,  119,  120,  121,  122,  123,  123,  124,  125,  125,  126,  126,  127,  127,  127,  127,
-	 127,  127,  127,  127,  127,  126,  126,  125,  125,  124,  123,  123,  122,  121,  120,  119,
-	 118,  117,  115,  114,  112,  111,  110,  108,  107,  104,  103,  101,   99,   97,   94,   93,
-	  90,   88,   87,   83,   82,   78,   76,   75,   71,   69,   65,   64,   62,   58,   56,   52,
-	  50,   48,   43,   41,   37,   35,   33,   29,   26,   22,   20,   18,   13,   11,    7,    4,
-	   0,   -2,   -4,   -9,  -11,  -15,  -18,  -20,  -24,  -26,  -31,  -33,  -35,  -39,  -41,  -46,
-	 -48,  -50,  -54,  -56,  -60,  -62,  -63,  -67,  -69,  -73,  -75,  -76,  -80,  -82,  -85,  -87,
-	 -90,  -91,  -93,  -96,  -97, -100, -101, -103, -105, -107, -109, -110, -111, -113, -114, -116,
-	-117, -118, -119, -120, -121, -122, -123, -124, -124, -125, -125, -126, -126, -127, -127, -127,
-	-127,
-};
+#define cos(idx) sin[((idx) + 64) % sizeof(sin)]
 
 /* Global font descriptor */
 static const u8 *font8x16;
@@ -531,8 +508,8 @@ static void precalculate_color(struct tpg_data *tpg, int k)
 
 		cb -= 128 << 4;
 		cr -= 128 << 4;
-		tmp_cb = (cb * cos[128 + tpg->hue]) / 127 + (cr * sin[128 + tpg->hue]) / 127;
-		tmp_cr = (cr * cos[128 + tpg->hue]) / 127 - (cb * sin[128 + tpg->hue]) / 127;
+		tmp_cb = (cb * cos(128 + tpg->hue)) / 127 + (cr * sin[128 + tpg->hue]) / 127;
+		tmp_cr = (cr * cos(128 + tpg->hue)) / 127 - (cb * sin[128 + tpg->hue]) / 127;
 
 		cb = (128 << 4) + (tmp_cb * tpg->contrast * tpg->saturation) / (128 * 128);
 		cr = (128 << 4) + (tmp_cr * tpg->contrast * tpg->saturation) / (128 * 128);
@@ -857,7 +834,7 @@ static void tpg_calculate_square_border(struct tpg_data *tpg)
 		break;
 	case TPG_VIDEO_ASPECT_16X9_CENTRE:
 		if (tpg->pix_aspect) {
-			tpg->border.height = tpg->pix_aspect == TPG_PIXEL_ASPECT_NTSC ? 400 : 430;
+			tpg->border.height = tpg->pix_aspect == TPG_PIXEL_ASPECT_NTSC ? 368 : 442;
 			tpg->border.top = (h - tpg->border.height) / 2;
 			break;
 		}
@@ -1151,10 +1128,29 @@ static unsigned tpg_calc_buffer_line(struct tpg_data *tpg, unsigned y,
 	}
 }
 
-void tpg_calc_text_basep(const struct tpg_data *tpg,
+static void tpg_recalc(struct tpg_data *tpg)
+{
+	if (tpg->recalc_colors) {
+		tpg->recalc_colors = false;
+		tpg->recalc_lines = true;
+		tpg_precalculate_colors(tpg);
+	}
+	if (tpg->recalc_square_border) {
+		tpg->recalc_square_border = false;
+		tpg_calculate_square_border(tpg);
+	}
+	if (tpg->recalc_lines) {
+		tpg->recalc_lines = false;
+		tpg_precalculate_line(tpg);
+	}
+}
+
+void tpg_calc_text_basep(struct tpg_data *tpg,
 		u8 *basep[TPG_MAX_PLANES][2], unsigned p, u8 *vbuf)
 {
 	unsigned stride = tpg->bytesperline[p];
+
+	tpg_recalc(tpg);
 
 	basep[p][0] = vbuf;
 	basep[p][1] = vbuf;
@@ -1191,19 +1187,7 @@ void tpg_fillbuffer(struct tpg_data *tpg, v4l2_std_id std, unsigned p, u8 *vbuf)
 	unsigned src_y = 0;
 	unsigned error = 0;
 
-	if (tpg->recalc_colors) {
-		tpg->recalc_colors = false;
-		tpg->recalc_lines = true;
-		tpg_precalculate_colors(tpg);
-	}
-	if (tpg->recalc_square_border) {
-		tpg->recalc_square_border = false;
-		tpg_calculate_square_border(tpg);
-	}
-	if (tpg->recalc_lines) {
-		tpg->recalc_lines = false;
-		tpg_precalculate_line(tpg);
-	}
+	tpg_recalc(tpg);
 
 	mv_hor_old = (mv_hor_old * tpg->scaled_width / tpg->src_width) & ~1;
 	mv_hor_new = (mv_hor_new * tpg->scaled_width / tpg->src_width) & ~1;
