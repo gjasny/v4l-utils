@@ -128,28 +128,36 @@ QSize CaptureWin::cropSize(QSize size)
 	QSize croppedSize = size;
 	double realWidth = size.width() * m_pixelAspectRatio;
 	double realHeight = size.height() / m_pixelAspectRatio;
+	double aspectRatio = 1;
 
 	switch (m_cropMethod) {
 	case QV4L2_CROP_P43:
-		croppedSize.setWidth(realHeight * 4.0 / 3.0);
+		aspectRatio = 4.0 / 3.0;
 		break;
 	case QV4L2_CROP_W149:
-		croppedSize.setHeight(realWidth / (14.0 / 9.0));
+		aspectRatio = 14.0 / 9.0;
 		break;
 	case QV4L2_CROP_W169:
-		croppedSize.setHeight(realWidth / (16.0 / 9.0));
+		aspectRatio = 16.0 / 9.0;
 		break;
 	case QV4L2_CROP_C185:
-		croppedSize.setHeight(realWidth / 1.85);
+		aspectRatio = 1.85;
 		break;
 	case QV4L2_CROP_C239:
-		croppedSize.setHeight(realWidth / 2.39);
+		aspectRatio = 2.39;
 		break;
 	case QV4L2_CROP_TB:
 		croppedSize.setHeight(size.height() - 2);
 		break;
 	default:
-		;  // No cropping
+		break;  // No cropping
+	}
+
+	if ((m_cropMethod != QV4L2_CROP_TB) && (m_cropMethod != QV4L2_CROP_NONE)) {
+		if (realWidth / size.height() < aspectRatio)
+			croppedSize.setHeight(realWidth / aspectRatio);
+		else
+			croppedSize.setWidth(realHeight * aspectRatio);
 	}
 
 	if (croppedSize.width() < MIN_WIN_SIZE_WIDTH || croppedSize.width() >= size.width())
