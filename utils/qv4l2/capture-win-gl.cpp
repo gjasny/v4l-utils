@@ -119,6 +119,13 @@ void CaptureWinGL::setBlending(bool enable)
 #endif
 }
 
+void CaptureWinGL::setLinearFilter(bool enable)
+{
+#ifdef HAVE_QTGL
+	m_videoSurface.setLinearFilter(enable);
+#endif
+}
+
 #ifdef HAVE_QTGL
 CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_frameWidth(0),
@@ -132,7 +139,9 @@ CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_formatChange(false),
 	m_frameFormat(0),
 	m_frameData(NULL),
-	m_blending(false)
+	m_blending(false),
+	m_mag_filter(GL_NEAREST),
+	m_min_filter(GL_NEAREST)
 {
 	m_glfunction.initializeGLFunctions(context());
 }
@@ -201,6 +210,19 @@ void CaptureWinGLEngine::setField(unsigned field)
 	if (m_field == field)
 		return;
 	m_field = field;
+	m_formatChange = true;
+}
+
+void CaptureWinGLEngine::setLinearFilter(bool enable)
+{
+	if (enable) {
+		m_mag_filter = GL_LINEAR;
+		m_min_filter = GL_LINEAR;
+	}
+	else {
+		m_mag_filter = GL_NEAREST;
+		m_min_filter = GL_NEAREST;
+	}
 	m_formatChange = true;
 }
 
@@ -459,8 +481,8 @@ void CaptureWinGLEngine::paintGL()
 void CaptureWinGLEngine::configureTexture(size_t idx)
 {
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[idx]);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_min_filter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_mag_filter);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 }

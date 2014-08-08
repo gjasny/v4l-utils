@@ -73,6 +73,7 @@ public:
 	virtual void setField(unsigned field) = 0;
 	virtual void setDisplayColorspace(unsigned colorspace) = 0;
 	virtual void setBlending(bool enable) = 0;
+	virtual void setLinearFilter(bool enable) = 0;
 	void setCropMethod(CropMethod crop);
 	void makeFullScreen(bool);
 	QAction *m_exitFullScreen;

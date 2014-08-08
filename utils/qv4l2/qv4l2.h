@@ -140,6 +140,7 @@ private slots:
 	void saveRaw(bool);
 	void setRenderMethod(bool);
 	void setBlending(bool);
+	void setLinearFilter(bool);
 	void traceIoctls(bool);
 	void changeAudioDevice();
 
@@ -186,6 +187,7 @@ public:
 	void updateLimRGBRange();
 	QAction *m_resetScalingAct;
 	QAction *m_useBlendingAct;
+	QAction *m_useLinearAct;
 	QAction *m_snapshotAct;
 	QAction *m_showFramesAct;
 

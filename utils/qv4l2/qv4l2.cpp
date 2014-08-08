@@ -184,6 +184,14 @@ ApplicationWindow::ApplicationWindow() :
 		m_useBlendingAct->setChecked(false);
 		connect(m_useBlendingAct, SIGNAL(toggled(bool)), this, SLOT(setBlending(bool)));
 		captureMenu->addAction(m_useBlendingAct);
+
+		m_useLinearAct = new QAction("Enable &Linear filter", this);
+		m_useLinearAct->setStatusTip("Enable linear scaling filter");
+		m_useLinearAct->setCheckable(true);
+		m_useLinearAct->setChecked(false);
+		connect(m_useLinearAct, SIGNAL(toggled(bool)), this, SLOT(setLinearFilter(bool)));
+		captureMenu->addAction(m_useLinearAct);
+
 	} else {
 		m_renderMethod = QV4L2_RENDER_QT;
 	}
@@ -341,6 +349,12 @@ void ApplicationWindow::setBlending(bool checked)
 {
 	if (m_capture)
 		m_capture->setBlending(checked);
+}
+
+void ApplicationWindow::setLinearFilter(bool checked)
+{
+	if (m_capture)
+		m_capture->setLinearFilter(checked);
 }
 
 void ApplicationWindow::setAudioBufferSize()

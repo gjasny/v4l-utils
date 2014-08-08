@@ -50,6 +50,7 @@ public:
 	void setDisplayColorspace(unsigned colorspace);
 	void setField(unsigned field);
 	void setBlending(bool enable) { m_blending = enable; }
+	void setLinearFilter(bool enable);
 
 protected:
 	void paintGL();
@@ -99,6 +100,8 @@ private:
 	QGLShaderProgram m_shaderProgram;
 	bool m_haveFramebufferSRGB;
 	bool m_blending;
+	GLint m_mag_filter;
+	GLint m_min_filter;
 };
 
 #endif
@@ -116,6 +119,7 @@ public:
 	void setField(unsigned field);
 	void setDisplayColorspace(unsigned colorspace);
 	void setBlending(bool enable);
+	void setLinearFilter(bool enable);
 
 protected:
 	void resizeEvent(QResizeEvent *event);

@@ -40,6 +40,7 @@ public:
 	void setField(unsigned field) {}
 	void setDisplayColorspace(unsigned colorspace) {}
 	void setBlending(bool enable) {}
+	void setLinearFilter(bool enable) {}
 
 protected:
 	void resizeEvent(QResizeEvent *event);
