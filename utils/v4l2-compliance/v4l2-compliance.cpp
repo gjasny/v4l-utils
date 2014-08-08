@@ -829,6 +829,7 @@ int main(int argc, char **argv)
 	unsigned max_io = node.inputs > node.outputs ? node.inputs : node.outputs;
 
 	for (unsigned io = 0; io < (max_io ? max_io : 1); io++) {
+		node.std_controls = node.priv_controls = 0;
 		node.controls.clear();
 		for (unsigned idx = 0; idx < V4L2_BUF_TYPE_SDR_CAPTURE + 1; idx++)
 			node.buftype_pixfmts[idx].clear();
