@@ -379,7 +379,7 @@ int testSimpleControls(struct node *node)
 			ctrl.id = iter->id;
 			ctrl.value = iter->minimum - 1;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-			if (ret && ret != ERANGE)
+			if (ret && ret != EIO && ret != ERANGE)
 				return fail("invalid minimum range check\n");
 			if (!ret && checkSimpleCtrl(ctrl, *iter))
 				return fail("invalid control %08x\n", iter->id);
@@ -389,7 +389,7 @@ int testSimpleControls(struct node *node)
 			ctrl.id = iter->id;
 			ctrl.value = iter->maximum + 1;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-			if (ret && ret != ERANGE)
+			if (ret && ret != EIO && ret != ERANGE)
 				return fail("invalid maximum range check\n");
 			if (!ret && checkSimpleCtrl(ctrl, *iter))
 				return fail("invalid control %08x\n", iter->id);
@@ -402,7 +402,7 @@ int testSimpleControls(struct node *node)
 			if (ret == ERANGE)
 				warn("%s: returns ERANGE for in-range, but non-step-multiple value\n",
 						iter->name);
-			else if (ret)
+			else if (ret && ret != EIO)
 				return fail("returns error for in-range, but non-step-multiple value\n");
 		}
 
@@ -432,15 +432,15 @@ int testSimpleControls(struct node *node)
 			ctrl.id = iter->id; 
 			ctrl.value = iter->minimum;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-			if (ret)
+			if (ret && ret != EIO)
 				return fail("could not set minimum value\n");
 			ctrl.value = iter->maximum;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-			if (ret)
+			if (ret && ret != EIO)
 				return fail("could not set maximum value\n");
 			ctrl.value = iter->default_value;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-			if (ret)
+			if (ret && ret != EIO)
 				return fail("could not set default value\n");
 		}
 	}
