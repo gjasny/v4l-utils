@@ -102,6 +102,7 @@ void ApplicationWindow::addTpgTab(int m_winWidth)
 	combo = new QComboBox(w);
 	combo->addItem("Source Width x Height");
 	combo->addItem("4x3");
+	combo->addItem("14x9");
 	combo->addItem("16x9");
 	combo->addItem("16x9 Anamorphic");
 	addWidget(grid, combo);

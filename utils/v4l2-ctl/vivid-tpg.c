@@ -50,6 +50,7 @@ const char * const tpg_pattern_strings[] = {
 const char * const tpg_aspect_strings[] = {
 	"Source Width x Height",
 	"4x3",
+	"14x9",
 	"16x9",
 	"16x9 Anamorphic",
 	NULL
@@ -830,6 +831,22 @@ static void tpg_calculate_square_border(struct tpg_data *tpg)
 			break;
 		}
 		tpg->border.height = ((3 * w) / 4) & ~1;
+		tpg->border.top = (h - tpg->border.height) / 2;
+		break;
+	case TPG_VIDEO_ASPECT_14X9_CENTRE:
+		if (tpg->pix_aspect) {
+			tpg->border.height = tpg->pix_aspect == TPG_PIXEL_ASPECT_NTSC ? 420 : 506;
+			tpg->border.top = (h - tpg->border.height) / 2;
+			break;
+		}
+		if (9 * w >= 14 * h) {
+			tpg->border.width = ((14 * h) / 9) & ~1;
+			if (((w - tpg->border.width) / 2) & ~1)
+				tpg->border.width -= 2;
+			tpg->border.left = (w - tpg->border.width) / 2;
+			break;
+		}
+		tpg->border.height = ((9 * w) / 14) & ~1;
 		tpg->border.top = (h - tpg->border.height) / 2;
 		break;
 	case TPG_VIDEO_ASPECT_16X9_CENTRE:

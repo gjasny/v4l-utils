@@ -97,7 +97,7 @@ void streaming_usage(void)
 	       "                     <aspect> can be one of: square, ntsc, pal\n"
 	       "  --stream-out-video-aspect=<aspect\n"
 	       "                     select a video aspect ratio. The default is to use the frame ratio.\n"
-	       "                     <aspect> can be one of: 4x3, 16x9, anamorphic\n"
+	       "                     <aspect> can be one of: 4x3, 14x9, 16x9, anamorphic\n"
 	       "  --stream-out-alpha=<alpha-value>\n"
 	       "                     value to use for the alpha component, range 0-255. The default is 0.\n"
 	       "  --stream-out-alpha-red-only\n"
@@ -318,6 +318,8 @@ void streaming_cmd(int ch, char *optarg)
 	case OptStreamOutVideoAspect:
 		if (!strcmp(optarg, "4x3"))
 			stream_out_video_aspect = TPG_VIDEO_ASPECT_4X3;
+		else if (!strcmp(optarg, "14x9"))
+			stream_out_video_aspect = TPG_VIDEO_ASPECT_14X9_CENTRE;
 		else if (!strcmp(optarg, "16x9"))
 			stream_out_video_aspect = TPG_VIDEO_ASPECT_16X9_CENTRE;
 		else if (!strcmp(optarg, "anamorphic"))
