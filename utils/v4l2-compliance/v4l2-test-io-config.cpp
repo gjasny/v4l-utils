@@ -372,6 +372,12 @@ static int checkEdid(struct node *node, unsigned pad, bool is_input)
 	fail_on_test(!is_input);
 	fail_on_test(ret);
 	fail_on_test(check_0(edid.reserved, sizeof(edid.reserved)));
+	if (blocks == 256)
+		return 0;
+	edid.blocks = 256;
+	ret = doioctl(node, VIDIOC_S_EDID, &edid);
+	fail_on_test(ret != E2BIG);
+	fail_on_test(edid.blocks == 0 || edid.blocks >= 256);
 	return 0;
 }
 
