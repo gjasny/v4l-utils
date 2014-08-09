@@ -963,7 +963,9 @@ void ApplicationWindow::stopStreaming()
 		m_capture->stop();
 
 	m_snapshotAct->setDisabled(true);
+#ifdef HAVE_QTGL
 	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
+#endif
 	switch (m_capMethod) {
 	case methodRead:
 		if (v4l_type_is_capture(g_type())) {
