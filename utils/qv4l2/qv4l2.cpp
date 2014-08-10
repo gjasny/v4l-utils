@@ -207,12 +207,6 @@ ApplicationWindow::ApplicationWindow() :
 #ifdef HAVE_ALSA
 	captureMenu->addSeparator();
 
-	m_showAllAudioAct = new QAction("Show All Audio &Devices", this);
-	m_showAllAudioAct->setStatusTip("Show all audio input and output devices if set");
-	m_showAllAudioAct->setCheckable(true);
-	m_showAllAudioAct->setChecked(false);
-	captureMenu->addAction(m_showAllAudioAct);
-
 	m_audioBufferAct = new QAction("Set Audio &Buffer Capacity...", this);
 	m_audioBufferAct->setStatusTip("Set audio buffer capacity in amount of ms than can be stored");
 	connect(m_audioBufferAct, SIGNAL(triggered()), this, SLOT(setAudioBufferSize()));
@@ -248,7 +242,6 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 
 	if (open(device.toLatin1(), true) < 0) {
 #ifdef HAVE_ALSA
-		m_showAllAudioAct->setEnabled(false);
 		m_audioBufferAct->setEnabled(false);
 #endif
 		return;
@@ -262,12 +255,9 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 
 #ifdef HAVE_ALSA
 	if (m_genTab->hasAlsaAudio()) {
-		connect(m_showAllAudioAct, SIGNAL(toggled(bool)), m_genTab, SLOT(showAllAudioDevices(bool)));
 		connect(m_genTab, SIGNAL(audioDeviceChanged()), this, SLOT(changeAudioDevice()));
-		m_showAllAudioAct->setEnabled(true);
 		m_audioBufferAct->setEnabled(true);
 	} else {
-		m_showAllAudioAct->setEnabled(false);
 		m_audioBufferAct->setEnabled(false);
 	}
 #endif
@@ -299,7 +289,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_tabs->setFocus();
 	m_convertData = v4lconvert_create(g_fd());
 	bool canStream = g_fd() >= 0 && (v4l_type_is_capture(g_type()) || has_vid_out()) &&
-					!has_radio_rx() && !has_radio_tx();
+					 !has_radio_tx();
 	m_capStartAct->setEnabled(canStream);
 	m_saveRawAct->setEnabled(canStream);
 	m_snapshotAct->setEnabled(canStream && has_vid_cap());
@@ -1166,6 +1156,13 @@ void ApplicationWindow::outStart(bool start)
 
 void ApplicationWindow::capStart(bool start)
 {
+	if (m_genTab->isRadio()) {
+		if (start)
+			startAudio();
+		else
+			stopAudio();
+		return;
+	}
 	if (has_vid_out()) {
 		outStart(start);
 		return;

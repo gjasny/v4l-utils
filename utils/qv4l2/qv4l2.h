@@ -248,7 +248,6 @@ private:
 	QAction *m_capStartAct;
 	QAction *m_saveRawAct;
 	QAction *m_useGLAct;
-	QAction *m_showAllAudioAct;
 	QAction *m_audioBufferAct;
 	QAction *m_scalingAct;
 	QAction *m_makeFullScreenAct;

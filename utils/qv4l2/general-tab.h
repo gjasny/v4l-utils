@@ -84,9 +84,6 @@ public:
 	unsigned getColorspace() const;
 	int getWidth();
 
-public slots:
-	void showAllAudioDevices(bool use);
-
 signals:
 	void audioDeviceChanged();
 	void pixelAspectRatioChanged();
@@ -160,12 +157,11 @@ private:
 			updateVidCapFormat();
 	}
 	int addAudioDevice(void *hint, int deviceNum);
-	bool filterAudioInDevice(QString &deviceName);
-	bool filterAudioOutDevice(QString &deviceName);
+	bool filterAudioDevice(QString &deviceName);
 	bool createAudioDeviceList();
 #ifdef HAVE_ALSA
 	int matchAudioDevice();
-	int checkMatchAudioDevice(void *md, const char *vid, const enum device_type type);
+	int checkMatchAudioDevice(void *md, const char *vid, enum device_type type);
 #endif
 
 	void addWidget(QWidget *w, Qt::Alignment align = Qt::AlignLeft);

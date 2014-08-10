@@ -972,65 +972,10 @@ void GeneralTab::setHaveBuffers(bool haveBuffers)
 		m_vbiMethods->setDisabled(haveBuffers);
 }
 
-void GeneralTab::showAllAudioDevices(bool use)
+bool GeneralTab::filterAudioDevice(QString &deviceName)
 {
-	QString oldIn(m_audioInDevice->currentText());
-	QString oldOut(m_audioOutDevice->currentText());
-
-	m_fullAudioName = use;
-	if (oldIn == NULL || oldOut == NULL || !createAudioDeviceList())
-		return;
-
-	// Select a similar device as before the listings method change
-	// check by comparing old selection with any matching in the new list
-	bool setIn = false, setOut = false;
-	int listSize = std::max(m_audioInDevice->count(), m_audioOutDevice->count());
-
-	for (int i = 0; i < listSize; i++) {
-		QString oldInCmp(oldIn.left(std::min(m_audioInDevice->itemText(i).length(), oldIn.length())));
-		QString oldOutCmp(oldOut.left(std::min(m_audioOutDevice->itemText(i).length(), oldOut.length())));
-
-		if (!setIn && i < m_audioInDevice->count()
-		    && m_audioInDevice->itemText(i).startsWith(oldInCmp)) {
-			setIn = true;
-			m_audioInDevice->setCurrentIndex(i);
-		}
-
-		if (!setOut && i < m_audioOutDevice->count()
-		    && m_audioOutDevice->itemText(i).startsWith(oldOutCmp)) {
-			setOut = true;
-			m_audioOutDevice->setCurrentIndex(i);
-		}
-	}
-}
-
-bool GeneralTab::filterAudioInDevice(QString &deviceName)
-{
-	// Removes S/PDIF, front speakers and surround from input devices
-	// as they are output devices, not input
-	if (deviceName.contains("surround")
-	    || deviceName.contains("front")
-	    || deviceName.contains("iec958"))
-		return false;
-
-	// Removes sysdefault too if not full audio mode listings
-	if (!m_fullAudioName && deviceName.contains("sysdefault"))
-		return false;
-
-	return true;
-}
-
-bool GeneralTab::filterAudioOutDevice(QString &deviceName)
-{
-	// Removes advanced options if not full audio mode listings
-	if (!m_fullAudioName && (deviceName.contains("surround")
-				 || deviceName.contains("front")
-				 || deviceName.contains("iec958")
-				 || deviceName.contains("sysdefault"))) {
-		return false;
-	}
-
-	return true;
+	// Only show hw devices
+	return deviceName.contains("hw") && !deviceName.contains("plughw");
 }
 
 int GeneralTab::addAudioDevice(void *hint, int deviceNum)
@@ -1075,13 +1020,13 @@ int GeneralTab::addAudioDevice(void *hint, int deviceNum)
 			listName.append(QString(" %1").arg(devNo));
 	}
 
-	if ((iotype == NULL || strncmp(iotype, "Input", 5) == 0) && filterAudioInDevice(deviceName)) {
+	if ((iotype == NULL || strncmp(iotype, "Input", 5) == 0) && filterAudioDevice(deviceName)) {
 		m_audioInDevice->addItem(listName);
 		m_audioInDeviceMap[listName] = snd_device_name_get_hint(hint, "NAME");
 		added += AUDIO_ADD_READ;
 	}
 
-	if ((iotype == NULL || strncmp(iotype, "Output", 6) == 0)  && filterAudioOutDevice(deviceName)) {
+	if ((iotype == NULL || strncmp(iotype, "Output", 6) == 0)  && filterAudioDevice(deviceName)) {
 		m_audioOutDevice->addItem(listName);
 		m_audioOutDeviceMap[listName] = snd_device_name_get_hint(hint, "NAME");
 		added += AUDIO_ADD_WRITE;
@@ -2304,11 +2249,12 @@ int GeneralTab::getAudioDeviceBufferSize()
 }
 
 #ifdef HAVE_ALSA
-int GeneralTab::checkMatchAudioDevice(void *md, const char *vid, const enum device_type type)
+int GeneralTab::checkMatchAudioDevice(void *md, const char *vid, enum device_type type)
 {
 	const char *devname = NULL;
+	enum device_type dtype = isRadio() ? MEDIA_V4L_RADIO : MEDIA_V4L_VIDEO;
 
-	while ((devname = get_associated_device(md, devname, type, vid, MEDIA_V4L_VIDEO)) != NULL) {
+	while ((devname = get_associated_device(md, devname, type, vid, dtype)) != NULL) {
 		if (type == MEDIA_SND_CAP) {
 			QStringList devAddr = QString(devname).split(QRegExp("[:,]"));
 			return devAddr.value(1).toInt();
@@ -2321,19 +2267,13 @@ int GeneralTab::matchAudioDevice()
 {
 	QStringList devPath = m_device.split("/");
 	QString curDev = devPath.value(devPath.count() - 1);
-
 	void *media;
-	const char *video = NULL;
 	int match;
 
 	media = discover_media_devices();
 
-	while ((video = get_associated_device(media, video, MEDIA_V4L_VIDEO, NULL, NONE)) != NULL)
-		if (curDev.compare(video) == 0)
-			for (int i = 0; i <= MEDIA_SND_HW; i++)
-				if ((match = checkMatchAudioDevice(media, video, static_cast<device_type>(i))) != -1)
-					return match;
-
+	if ((match = checkMatchAudioDevice(media, curDev.toAscii(), MEDIA_SND_CAP)) != -1)
+		return match;
 	return -1;
 }
 #endif
