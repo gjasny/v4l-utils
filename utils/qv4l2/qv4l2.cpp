@@ -1156,7 +1156,7 @@ void ApplicationWindow::outStart(bool start)
 
 void ApplicationWindow::capStart(bool start)
 {
-	if (m_genTab->isRadio()) {
+	if (m_genTab->isRadio() && !m_genTab->isSDR()) {
 		if (start)
 			startAudio();
 		else
