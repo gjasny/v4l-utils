@@ -1590,6 +1590,42 @@ static QString getDeviceName(QString dev, QString &name)
 	return ok ? QString("%1%2").arg(dev).arg(name) : name;
 }
 
+static bool processShortOption(const QStringList &args, int &i, QString &dev)
+{
+	if (args[i].length() < 2)
+		return false;
+	if (args[i].length() == 2) {
+		if (i + 1 >= args.size()) {
+			usageError(args[i].toAscii());
+			return false;
+		}
+		dev = args[++i];
+		return true;
+	}
+	dev = args[i].mid(2);
+	return true;
+}
+
+static bool processLongOption(const QStringList &args, int &i, QString &dev)
+{
+	int index = args[i].indexOf('=');
+
+	if (index >= 0) {
+		dev = args[i].mid(index + 1);
+		if (dev.length() == 0) {
+			usageError("--device");
+			return false;
+		}
+		return true;
+	}
+	if (i + 1 >= args.size()) {
+		usageError(args[i].toAscii());
+		return false;
+	}
+	dev = args[++i];
+	return true;
+}
+
 int main(int argc, char **argv)
 {
 	QApplication a(argc, argv);
@@ -1606,94 +1642,36 @@ int main(int argc, char **argv)
 
 	QStringList args = a.arguments();
 	for (int i = 1; i < args.size(); i++) {
-		if (args[i] == "-d" || args[i] == "--device") {
-			++i;
-			if (i >= args.size()) {
-				usageError("-d");
+		if (args[i].startsWith("-d")) {
+			if (!processShortOption(args, i, video_device))
 				return 0;
-			}
-
-			video_device = args[i];
-			if (video_device.startsWith("-")) {
-				usageError("-d");
-				return 0;
-			}
-		} else if (args[i] == "-V" || args[i] == "--vbi-device") {
-			++i;
-			if (i >= args.size()) {
-				usageError("-V");
-				return 0;
-			}
-
-			vbi_device = args[i];
-			if (vbi_device.startsWith("-")) {
-				usageError("-V");
-				return 0;
-			}
-		} else if (args[i] == "-r" || args[i] == "--radio-device") {
-			++i;
-			if (i >= args.size()) {
-				usageError("-r");
-				return 0;
-			}
-
-			radio_device = args[i];
-			if (radio_device.startsWith("-")) {
-				usageError("-r");
-				return 0;
-			}
-		} else if (args[i] == "-S" || args[i] == "--sdr-device") {
-			++i;
-			if (i >= args.size()) {
-				usageError("-S");
-				return 0;
-			}
-
-			sdr_device = args[i];
-			if (sdr_device.startsWith("-")) {
-				usageError("-S");
-				return 0;
-			}
 		} else if (args[i].startsWith("--device")) {
-			QStringList param = args[i].split("=");
-			if (param.size() == 2) {
-				video_device = param[1];
-			} else {
-				usageError("--device");
+			if (!processLongOption(args, i, video_device))
 				return 0;
-			}
+		} else if (args[i].startsWith("-V")) {
+			if (!processShortOption(args, i, vbi_device))
+				return 0;
 		} else if (args[i].startsWith("--vbi-device")) {
-			QStringList param = args[i].split("=");
-			if (param.size() == 2) {
-				vbi_device = param[1];
-			} else {
-				usageError("--vbi-device");
+			if (!processLongOption(args, i, vbi_device))
 				return 0;
-			}
+		} else if (args[i].startsWith("-r")) {
+			if (!processShortOption(args, i, radio_device))
+				return 0;
 		} else if (args[i].startsWith("--radio-device")) {
-			QStringList param = args[i].split("=");
-			if (param.size() == 2) {
-				radio_device = param[1];
-			} else {
-				usageError("--radio-device");
+			if (!processLongOption(args, i, radio_device))
 				return 0;
-			}
+		} else if (args[i].startsWith("-S")) {
+			if (!processShortOption(args, i, sdr_device))
+				return 0;
 		} else if (args[i].startsWith("--sdr-device")) {
-			QStringList param = args[i].split("=");
-			if (param.size() == 2) {
-				sdr_device = param[1];
-			} else {
-				usageError("--sdr-device");
+			if (!processLongOption(args, i, sdr_device))
 				return 0;
-			}
 		} else if (args[i] == "-h" || args[i] == "--help") {
 			usage();
 			return 0;
 
 		} else if (args[i] == "-R" || args[i] == "--raw") {
 			raw = true;
-
-
 		} else {
 			printf("Invalid argument %s\n", args[i].toAscii().data());
 			return 0;
