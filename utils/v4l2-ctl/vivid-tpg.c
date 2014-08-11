@@ -1086,7 +1086,8 @@ void tpg_update_mv_step(struct tpg_data *tpg)
 		tpg->mv_hor_step = 0;
 		break;
 	}
-	tpg->mv_hor_step *= factor;
+	if (factor < 0)
+		tpg->mv_hor_step = tpg->src_width - tpg->mv_hor_step;
 
 	factor = tpg->mv_vert_mode > TPG_MOVE_NONE ? -1 : 1;
 	switch (tpg->mv_vert_mode) {
@@ -1106,7 +1107,8 @@ void tpg_update_mv_step(struct tpg_data *tpg)
 		tpg->mv_vert_step = 0;
 		break;
 	}
-	tpg->mv_vert_step *= factor;
+	if (factor < 0)
+		tpg->mv_vert_step = tpg->src_height - tpg->mv_vert_step;
 }
 
 /* Map the line number relative to the crop rectangle to a frame line number */
