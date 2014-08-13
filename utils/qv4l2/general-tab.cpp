@@ -1373,6 +1373,9 @@ void GeneralTab::vidCapFormatChanged(int idx)
 
 	g_fmt(fmt);
 	fmt.s_pixelformat(desc.pixelformat);
+	// Force the driver to recalculate bytesperline.
+	for (unsigned p = 0; p < fmt.g_num_planes(); p++)
+		fmt.s_bytesperline(0, p);
 	if (try_fmt(fmt) == 0)
 		s_fmt(fmt);
 
