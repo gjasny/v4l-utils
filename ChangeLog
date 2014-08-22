@@ -1,3 +1,224 @@
+v4l-utils-1.3.90 (Development snapshot)
+---------------------------------------
+
+André Roth (1):
+      libdvbv5: provide crc32 to c++
+
+Anton Arbring (20):
+      qv4l2: clarified two strings
+      qv4l2: changed and removed icons
+      qv4l2: correctly disable two menu items
+      qv4l2: added user controls
+      qv4l2: hiding disabled GUI items
+      qv4l2: alignment and size mods
+      qv4l2: added titles and moved settings
+      qv4l2: hiding disabled GUI items
+      qv4l2: alignment and size mods
+      qv4l2: added titles and moved settings
+      qv4l2: refactoring general-tab.cpp
+      qv4l2: bugfix and dynamic adjustments
+      qv4l2: removed colon and correct rowcount
+      qv4l2: added icon and moved label
+      qv4l2: added fullscreen functionality for capture window
+      qv4l2: added right click menu to capturewin
+      qv4l2: adding fullscreen option to toolbar main window
+      qv4l2: removed redundant set size
+      qv4l2: Removed bottom layout from capturewin
+      qv4l2: Adding width and height scaling to the status bar
+
+Gregor Jasny (8):
+      Start v4l-utils 1.3.x development
+      Revert "libdvbv5: Do not install libdvbv5 by default"
+      qv4l2: Fix typo
+      Fix kFreeBSD build
+      fixed BSDfication of V4L related headers
+      Disabled libdvbv5 and v4l-utils build
+      Hide parse_string.h content in shared library interface
+      Prefix exported functions with dvb_
+      libv4l2: Lazily allocate convert_mmap_buf
+      qv4l2: Clean up icon distribution list
+
+Hans Verkuil (133):
+      qv4l2: add extensive colorspace support
+      v4l2-compliance: improve colorspace checks.
+      qv4l2: colorspace & opengl improvements
+      qv4l2: GL_RED is not supported everywhere, use GL_LUMINANCE.
+      qv4l2: add a 'blending' mode to test images with an alpha channel.
+      qv4l2: fix pixel aspect ratio calculation
+      qv4l2: revert most of the previous patch
+      qv4l2: fix compilation error if HAVE_QTGL is undefined
+      qv4l2: fix control range handling and broken slider disabling.
+      qv4l2: fix pixel aspect handling and set compose rectangle
+      qv4l2: add support for crop and compose
+      qv4l2: implement SEQ_TB/BT support for the openGL renderer
+      qv4l2: remove two forgotten debug printfs
+      qv4l2: make the destination sizeimage large enough
+      libv4l-mplane: copy back v4l2_buffer.m, fix type problems
+      libv4l-mplane: v4l2-compliance fixes
+      libv4l-mplane: fix compile warning
+      qv4l2: fix incorrect disabling of the blending mode
+      qv4l2: zero initial buffers
+      qv4l2: fix enabling/disable frame width/height/size
+      qv4l2: get rid of unused v4l2 class methods.
+      qv4l2: improve video output support, esp. multiplanar.
+      qv4l2: improve pixel aspect detection
+      v4l2-ctl: vastly improve the test pattern generator.
+      v4l2-ctl: add missing source chromakey support.
+      v4l2-ctl: the alpha flags are mutually exclusive.
+      v4l2-ctl: add support for generating limited range RGB
+      qv4l2: fix a bug in vidFieldChanged
+      v4l2-ctl: missing support for continuous frameintervals.
+      Revert "qv4l2: added titles and moved settings"
+      Revert "qv4l2: alignment and size mods"
+      Revert "qv4l2: hiding disabled GUI items"
+      qv4l2: fix broken handling of V4L2_VBI_INTERLACED.
+      qv4l2: fix sliced vbi support
+      qv4l2: fix height calculation when overriding pixel aspect ratio
+      v4l2-compliance: fix various VBI tests.
+      qv4l2: fix square aspect ratio handling and improve Video Aspect Ratio
+      qv4l2: refactor window size setting at capture start
+      qv4l2: reset size after changing aspect ratios or scaling mode
+      qv4l2: drop setSizeAdjustPolicy(QComboBox::AdjustToContents)
+      libv4l2rds: fix date-time handling
+      qv4l2: fix coverity defect
+      qv4l2: make tab labels more compact.
+      qv4l2: better handling of string controls with a step > 1
+      libv4l2rds: handle V4L2_RDS_BLOCK_INVALID.
+      libv4l2rds: Area Coverage is only partially available for RBDS
+      rds-ctl: print RBDS call sign.
+      v4l2-compliance: fix control test
+      v4l2-compliance: only discrete framesizes are not allowed for output
+      libv4lconvert: add support for extended controls
+      libv4lcontrol: sync control strings/flags with the kernel
+      v4l2-compliance: allow frequency bands of just one frequency
+      qv4l2: fix a confusing error message when capturing VBI.
+      v4l2-compliance: improved v4l helpers header, add tracing
+      v4l2-compliance: add v4l2_format support to cv4l-helpers.h
+      v4l2-compliance: fix problems with vbi streaming.
+      qv4l2: always do updateVidCapFormat when changing crop/compose
+      qv4l2: m_useGLAct is only available if HAVE_QTGL is set.
+      qv4l2: add new png to the list of distributed files
+      qv4l2: use the new toolbutton for three buttons in the general tab
+      contrib/freebsd/Makefile.am: fix syntax error.
+      v4l-utils: update the headers to the latest kernel version.
+      v4l2-ctl: add support for the motion detection event
+      v4l2-ctl: add support for array controls
+      v4l2-ctl: allow setting/getting subsets
+      v4l-utils: add new V4L2_CAP_EXT_PIX_FORMAT capability
+      v4l2-compliance: check for the presence of V4L2_CAP_EXT_PIX_FORMAT
+      v4l2-ctl: add support for new extended format flags field.
+      v4l2-compliance: also check for V4L2_CAP_EXT_PIX_FORMAT in device_caps
+      qv4l2: add support for new alpha-aware pixelformats.
+      v4l2-ctl: add support for the new alpha-aware pixelformats.
+      libv4lconvert: add support for new pixelformats
+      v4l2-ctl: fix returned pixelformats that map to fbdev
+      qv4l2: bypass libv4l2 when obtaining the colorspace
+      qv4l2: fix a coverity defect
+      qv4l2: add the two new png's to the EXTRA_DIST list
+      v4l2-compliance: fix broken priv test
+      qv4l2: improve full-screen handling
+      qv4l2: center frame and drop margins in full screen mode
+      qv4l2: add Q shortcut to close the video window
+      qv4l2: QImage could be the wrong size
+      v4l2-compliance: reworked the (c)v4l-helpers.h headers
+      qv4l2: integrate with the cv4l-helpers.h header
+      qv4l2: force bytesperline recalculation when changing the width.
+      qv4l2: add Trace IOCTLs option
+      qv4l2: set the new value immediately when updating a control range.
+      qv4l2: correctly resubscribe events after a reopen.
+      qv4l2: add 'Use Record Priority' option
+      libv4lconvert: fix RGB32 conversion
+      qv4l2: use new control helpers
+      qv4l2: hopefully fix a i386 ubuntu build error
+      qv4l2: honor the fullscreen setting when starting capturing
+      qv4l2: bug fix in re-subscribing source change events
+      v4l-utils: sync with latest kernel
+      v4l2-ctl: print new SDR buffersize format field.
+      v4l2-compliance: add sdr buffersize check
+      qv4l2: support output devices
+      qv4l2: fix querystd and query_dv_timings
+      qv4l2: fix layout issues related to stacked widgets
+      v4l2-ctl: upgrade to the latest version of the test pattern generator
+      qv4l2: add SDR visualization.
+      v4l2-ctl: fix csc colorbar color pre-calculation
+      qv4l2: add support for output video devices
+      v4l-utils: sync with latest kernel headers
+      descriptors.h: include <arpa/inet.h> for ntohs
+      v4l2-ctl: --clear-bitmap or --clear-clips didn't actually clear it
+      v4l2-ctl/qv4l2: init mv_hor/vert_mode correctly.
+      v4l2-ctl: the field setting of the initially queued buffer is wrong.
+      qv4l2: implement cropping and composing for video output.
+      rds-ctl: changes in the TA bit weren't detected.
+      libv4l2rds: DI segment order was swapped
+      qv4l2: use setResdOnly for disabled QLineEdit controls
+      qv4l2: missed one more place where QLineEdits were disabled.
+      (c)v4l-helpers: fix broken tests for existence of ioctls.
+      qv4l2: convert the last direct ioctl calls to a cv4l-helper.
+      libv4l-mplane: make it aware of the extended pix_format fields
+      qv4l2: zero m_tpgLimRGBRange when the device is closed
+      qv4l2: use "ADC Frequency" for SDR instead of just "Frequency"
+      qv4l2: fix valgrind warnings
+      libv4l2: valgrind fixes
+      qv4l2: keep the "Controls" text
+      v4l2-ctl/qv4l2: sync to latest vivid-tpg.c
+      qv4l2: correct PAL pixel aspect values
+      v4l2-compliance: add test for S_EDID and the E2BIG corner case
+      qv4l2/v4l2-ctl: add support for 14x9 video aspect ratio.
+      v4l2-compliance: allow EIO for control ioctls
+      v4l2-compliance: reset control counters
+      qv4l2: fix segfault when openGL is not compiled in.
+      qv4l2: fix audio looping
+      qv4l2: allow '-d1' option
+      v4l2-ctl/qv4l2: fix movement counter calculation
+      qv4l2: fix broken SDR support
+      qv4l2: reset bytesperline when changing pixelformat.
+
+Marcel J.E. Mol (1):
+      [v4l-utils] keytable: add support for XMP IR protocol
+
+Mauro Carvalho Chehab (13):
+      dvbv5-zap: Fix LNBf selection
+      libdvbv5: Improve debug logs while scanning PMT
+      dvb-file: store services even when SDT is not found
+      dvb-file: better store channels without SDT
+      parse_usb.pl: fix handling of ./parse_tcpdump_log.pl logs
+      keytable: add a way to add all protocols on raw decoders
+      ir-keytable: add the list of supported protocols at man page
+      keytable: add support for sharp and mce-kbd protocols
+      parse_au0828.pl: Add a parser to help with au0828 debug
+      dvb-file: fix memory-deallocation bug
+      parse_au0828.pl: fix I2C read payload
+      keytable: Mask selected protocols with the supported ones
+      ir-keytable.1: add XMP protocol at manpage
+
+Ove Brynestad (15):
+      qv4l2: add and use storage for renderer independent frame info
+      qv4l2: move setFrame out of renderer specific classes
+      qv4l2: moved Qt scale/crop to common class
+      qv4l2: removed separate crop offset function
+      qv4l2: Made cropsize available to glengine
+      qv4l2: moved frame/rate count assignment to common class
+      qv4l2: moved crop calculation out of GL renderer
+      qv4l2: update common size variables at GL resize
+      qv4l2: moved scaling calculations from setRenderFrame
+      qv4l2: refactored capwin variables
+      qv4l2: refactor aspect size calculation
+      qv4l2: refactor crop size calculation
+      qv4l2: refactored cropSize to deliver cropped size
+      qv4l2: Fixed cropping bug
+      qv4l2: Add option to enable linear scaling filter
+
+Reynaldo H. Verdejo Pinochet (1):
+      [libdvbv5] dvb-sat: add universal Ku band (extended) LNBF def
+
+Rob Barker (1):
+      v4l-utils: libdvbv5: fix compilation issue
+
+Thiago Santos (1):
+      v4l2grab: Add threaded producer/consumer option
+
+
+
 v4l-utils-1.2.0
 ---------------
 
