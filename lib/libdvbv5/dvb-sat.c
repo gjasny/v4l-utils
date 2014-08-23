@@ -405,10 +405,3 @@ ret:
 	return rc;
 }
 
-const char *dvbsat_polarization_name[5] = {
-	"OFF",
-	"H",
-	"V",
-	"L",
-	"R",
-};

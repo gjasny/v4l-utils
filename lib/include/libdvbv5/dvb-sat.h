@@ -37,8 +37,6 @@ struct dvb_sat_lnb {
 
 struct dvb_v5_fe_parms;
 
-extern const char *dvbsat_polarization_name[5];
-
 #ifdef __cplusplus
 extern "C" {
 #endif
