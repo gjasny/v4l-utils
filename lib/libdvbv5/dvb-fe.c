@@ -944,7 +944,7 @@ struct cnr_to_qual_s dvb_s2_cnr_2_qual[] = {
  * Minimum values from ARIB STD-B21 for DVB_QUAL_OK.
  * As ARIB doesn't define a max value, assume +2dB for DVB_QUAL_GOOD
  */
-struct cnr_to_qual_s isdb_t_cnr_2_qual[] = {
+static struct cnr_to_qual_s isdb_t_cnr_2_qual[] = {
 	{  DQPSK, FEC_1_2,  6.2,  8.2},
 	{  DQPSK, FEC_2_3,  7.7,  9.7},
 	{  DQPSK, FEC_3_4,  8.7, 10.7},
@@ -974,7 +974,7 @@ struct cnr_to_qual_s isdb_t_cnr_2_qual[] = {
  * Values obtained from table A.1 of ETSI EN 300 744 v1.6.1
  * OK corresponds to Ricean fading; Good to Rayleigh fading
  */
-struct cnr_to_qual_s dvb_t_cnr_2_qual[] = {
+static struct cnr_to_qual_s dvb_t_cnr_2_qual[] = {
 	{   QPSK, FEC_1_2,  4.1,  5.9},
 	{   QPSK, FEC_2_3,  6.1,  9.6},
 	{   QPSK, FEC_3_4,  7.2, 12.4},
