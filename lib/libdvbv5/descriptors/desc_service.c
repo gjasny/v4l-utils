@@ -37,7 +37,7 @@ int dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, str
 	len = buf[0];
 	buf++;
 	len1 = len;
-	parse_string(parms, &service->provider, &service->provider_emph, buf, len1, default_charset, output_charset);
+	parse_string(parms, &service->provider, &service->provider_emph, buf, len1, dvb_default_charset, dvb_output_charset);
 	buf += len;
 
 	service->name = NULL;
@@ -45,7 +45,7 @@ int dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, str
 	len = buf[0];
 	len2 = len;
 	buf++;
-	parse_string(parms, &service->name, &service->name_emph, buf, len2, default_charset, output_charset);
+	parse_string(parms, &service->name, &service->name_emph, buf, len2, dvb_default_charset, dvb_output_charset);
 	buf += len;
 	return 0;
 }

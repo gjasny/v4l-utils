@@ -38,8 +38,6 @@ struct dvb_v5_fe_parms;
 typedef void (*dvb_table_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, void **table);
 
 extern const dvb_table_init_func dvb_table_initializers[256];
-extern char *default_charset;
-extern char *output_charset;
 
 #define bswap16(b) do {\
 	b = ntohs(b); \

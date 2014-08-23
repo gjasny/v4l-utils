@@ -101,7 +101,7 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 				 (const unsigned char *)channel->__short_name,
 				 sizeof(channel->__short_name),
 				 "UTF-16",
-				 output_charset);
+				 dvb_output_charset);
 
 		/* Fill descriptors */
 

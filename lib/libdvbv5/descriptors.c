@@ -96,9 +96,6 @@ const dvb_table_init_func dvb_table_initializers[256] = {
 	[ATSC_TABLE_CVCT]        = TABLE_INIT(atsc_table_vct),
 };
 
-char *default_charset = "iso-8859-1";
-char *output_charset = "utf-8";
-
 int dvb_desc_parse(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			   uint16_t buflen, struct dvb_desc **head_desc)
 {

@@ -40,7 +40,7 @@ int dvb_desc_ts_info_init(struct dvb_v5_fe_parms *parms,
 	d->ts_name = NULL;
 	d->ts_name_emph = NULL;
 	parse_string(parms, &d->ts_name, &d->ts_name_emph, buf, len,
-		     default_charset, output_charset);
+		     dvb_default_charset, dvb_output_charset);
 	p += len;
 
 	memcpy(&d->transmission_type, p, sizeof(d->transmission_type));

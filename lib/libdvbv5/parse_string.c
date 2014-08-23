@@ -35,6 +35,9 @@
 
 #define CS_OPTIONS "//TRANSLIT"
 
+char *dvb_default_charset = "iso-8859-1";
+char *dvb_output_charset = "utf-8";
+
 struct charset_conv {
 	unsigned len;
 	unsigned char  data[3];
