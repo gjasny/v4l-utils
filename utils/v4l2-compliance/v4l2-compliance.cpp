@@ -375,10 +375,6 @@ static int testPrio(struct node *node, struct node *node2)
 	enum v4l2_priority prio;
 	int err;
 
-	if (node->is_m2m) {
-		fail_on_test(doioctl(node, VIDIOC_G_PRIORITY, &prio) != ENOTTY);
-		return 0;
-	}
 	err = check_prio(node, node2, V4L2_PRIORITY_DEFAULT);
 	if (err)
 		return err;
