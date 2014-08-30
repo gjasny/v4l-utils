@@ -52,6 +52,35 @@
 #define DTV_SNR				DTV_STAT_CNR
 #define DTV_UNCORRECTED_BLOCKS		DTV_STAT_ERROR_BLOCK_COUNT
 
+/**
+ * struct dvb_v5_fe_parms - Keeps data needed to handle the DVB frontend
+ *
+ * @info:		Contains the DVB info properties (RO)
+ * @version:		Version of the Linux DVB API (RO)
+ * @has_v5_stats:	a value different than 0 indicates that the frontend
+ * 			supports DVBv5 stats (RO)
+ * @current_sys:	currently selected delivery system (RO)
+ * @num_systems:	number of delivery systems  (RO)
+ * @systems:		delivery systems supported by the hardware (RO)
+ * @legacy_fe:		a value different than 0 indicates a legacy Kernel
+ *			driver using DVBv3 API only, or that DVBv3 only mode
+ *			was forced by the client (RO)
+ * @abort:		Client should set it to abort a pending operation
+ *			like DTV scan (RW)
+ * @lna:		sets the LNA mode: 0 disables; 1 enables, -1 uses
+ *			auto mode (RW)
+ * @lnb:		LNBf description (RW)
+ * @sat_number:		number of the satellite (used by DISEqC setup) (RW)
+ * @freq_bpf:		SCR/Unicable band-pass filter frequency to use, in kHz
+ * @verbose:		Verbosity level of the library (RW)
+ * @dvb_logfunc:	Function used to write log messages (RO)
+ * @default_charset:	Name of the charset used by the DVB standard (RW)
+ * @output_charset:	Name of the charset to output (system specific) (RW)
+ *
+ * The fields marked as RO should not be changed by the client, as otherwise
+ * undesired effects may happen. The ones marked as RW are ok to either read
+ * or write by the client.
+ */
 
 struct dvb_v5_fe_parms {
 	/* Information visible to the client - don't override those values */
