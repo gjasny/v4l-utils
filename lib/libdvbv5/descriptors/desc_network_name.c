@@ -21,7 +21,7 @@
 
 #include <libdvbv5/desc_network_name.h>
 #include <libdvbv5/dvb-fe.h>
-#include "parse_string.h"
+#include <parse_string.h>
 
 int dvb_desc_network_name_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {

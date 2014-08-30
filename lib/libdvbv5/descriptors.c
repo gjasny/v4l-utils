@@ -25,7 +25,6 @@
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 #include <libdvbv5/dvb-scan.h>
-#include "parse_string.h"
 #include <libdvbv5/dvb-frontend.h>
 #include <libdvbv5/dvb-v5-std.h>
 #include <libdvbv5/dvb-log.h>

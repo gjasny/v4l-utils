@@ -29,7 +29,7 @@
 #include <string.h>
 #include <strings.h> /* strcasecmp */
 
-#include "parse_string.h"
+#include <parse_string.h>
 #include <libdvbv5/dvb-log.h>
 #include <libdvbv5/dvb-fe.h>
 
