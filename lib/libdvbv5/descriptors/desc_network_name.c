@@ -33,7 +33,7 @@ int dvb_desc_network_name_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf
 	len1 = len;
 	net->network_name = NULL;
 	net->network_name_emph = NULL;
-	parse_string(parms, &net->network_name, &net->network_name_emph, buf, len1, dvb_default_charset, dvb_output_charset);
+	dvb_parse_string(parms, &net->network_name, &net->network_name_emph, buf, len1);
 	buf += len;
 	return 0;
 }

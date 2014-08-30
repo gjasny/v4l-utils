@@ -42,7 +42,7 @@ int dvb_desc_event_short_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	len = buf[0];
 	buf++;
 	len1 = len;
-	parse_string(parms, &event->name, &event->name_emph, buf, len1, dvb_default_charset, dvb_output_charset);
+	dvb_parse_string(parms, &event->name, &event->name_emph, buf, len1);
 	buf += len;
 
 	event->text = NULL;
@@ -50,7 +50,7 @@ int dvb_desc_event_short_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	len = buf[0];
 	len2 = len;
 	buf++;
-	parse_string(parms, &event->text, &event->text_emph, buf, len2, dvb_default_charset, dvb_output_charset);
+	dvb_parse_string(parms, &event->text, &event->text_emph, buf, len2);
 	buf += len;
 	return 0;
 }

@@ -87,6 +87,8 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 	parms->abort = 0;
 	parms->logfunc = logfunc;
 	parms->lna = LNA_AUTO;
+	parms->default_charset = "iso-8859-1";
+	parms->output_charset = "utf-8";
 
 	if (ioctl(fd, FE_GET_INFO, &parms->info) == -1) {
 		dvb_perror("FE_GET_INFO");

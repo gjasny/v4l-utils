@@ -99,6 +99,10 @@ struct dvb_v5_fe_parms {
 	struct dvb_v5_stats		stats;
 	int				lna;
 
+	/* Charsets to be used by the conversion utilities */
+	char				*default_charset;
+	char				*output_charset;
+
 	/* Satellite specific stuff, specified by the library client */
 	const struct dvb_sat_lnb       	*lnb;
 	int				sat_number;

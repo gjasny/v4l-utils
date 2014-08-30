@@ -96,12 +96,12 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		bswap16(channel->bitfield3);
 
 		/* Short name is always UTF-16 */
-		iconv_to_charset(parms, channel->short_name,
-				 sizeof(channel->short_name),
-				 (const unsigned char *)channel->__short_name,
-				 sizeof(channel->__short_name),
-				 "UTF-16",
-				 dvb_output_charset);
+		dvb_iconv_to_charset(parms, channel->short_name,
+				     sizeof(channel->short_name),
+				     (const unsigned char *)channel->__short_name,
+				     sizeof(channel->__short_name),
+				     "UTF-16",
+				     parms->output_charset);
 
 		/* Fill descriptors */
 

@@ -59,7 +59,7 @@ int dvb_desc_event_extended_init(struct dvb_v5_fe_parms *parms, const uint8_t *b
 	len = *buf;
 	len1 = len;
 	buf++;
-	parse_string(parms, &event->text, &event->text_emph, buf, len1, dvb_default_charset, dvb_output_charset);
+	dvb_parse_string(parms, &event->text, &event->text_emph, buf, len1);
 	buf += len;
 	return 0;
 }
