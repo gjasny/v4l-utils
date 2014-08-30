@@ -1287,7 +1287,7 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *p)
 
 	if (ioctl(parms->fd, FE_GET_EVENT, &event) == -1) {
 		dvb_perror("FE_GET_EVENT");
-		return -1;
+		return errno;
 	}
 	status = event.status;
 	if (parms->p.verbose > 1) {
@@ -1326,7 +1326,7 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *p)
 		dvb_fe_retrieve_parm(&parms->p, DTV_HIERARCHY, &event.parameters.u.ofdm.hierarchy_information);
 		break;
 	default:
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	return dvb_fe_get_stats(&parms->p);
