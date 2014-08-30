@@ -24,6 +24,7 @@
 #include <strings.h> /* strcasecmp */
 #include <unistd.h>
 
+#include "dvb-fe-priv.h"
 #include <libdvbv5/dvb-file.h>
 #include <libdvbv5/dvb-v5-std.h>
 #include <libdvbv5/dvb-scan.h>
@@ -810,7 +811,8 @@ int dvb_write_file(const char *fname, struct dvb_file *dvb_file)
 	return 0;
 };
 
-static char *dvb_vchannel(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *nit, uint16_t service_id)
+static char *dvb_vchannel(struct dvb_v5_fe_parms_priv *parms,
+			  struct dvb_table_nit *nit, uint16_t service_id)
 {
 	int i;
 	char *buf;
@@ -818,7 +820,7 @@ static char *dvb_vchannel(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *n
 	if (!nit)
 		return NULL;
 
-for( struct dvb_desc_logical_channel *desc = (struct dvb_desc_logical_channel *) nit->descriptor; desc; desc = (struct dvb_desc_logical_channel *) desc->next ) \
+	for( struct dvb_desc_logical_channel *desc = (struct dvb_desc_logical_channel *) nit->descriptor; desc; desc = (struct dvb_desc_logical_channel *) desc->next ) \
 		if(desc->type == logical_channel_number_descriptor) {
 /* FIXME:  dvb_desc_find(struct dvb_desc_logical_channel, desc, nit, logical_channel_number_descriptor) ? */
 		struct dvb_desc_logical_channel *d = (void *)desc;
@@ -947,7 +949,7 @@ static void get_pmt_descriptors(struct dvb_entry *entry,
 	      sizeof(*entry->other_el_pid), sort_other_el_pid);
 }
 
-static int get_program_and_store(struct dvb_v5_fe_parms *parms,
+static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 				 struct dvb_file *dvb_file,
 				 struct dvb_v5_descriptors *dvb_scan_handler,
 				 const uint16_t service_id,
@@ -998,11 +1000,11 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 	/* Initialize data */
 	entry->service_id = service_id;
 	entry->vchannel = vchannel;
-	entry->sat_number = parms->sat_number;
-	entry->freq_bpf = parms->freq_bpf;
-	entry->diseqc_wait = parms->diseqc_wait;
-	if (parms->lnb)
-		entry->lnb = strdup(parms->lnb->alias);
+	entry->sat_number = parms->p.sat_number;
+	entry->freq_bpf = parms->p.freq_bpf;
+	entry->diseqc_wait = parms->p.diseqc_wait;
+	if (parms->p.lnb)
+		entry->lnb = strdup(parms->p.lnb->alias);
 
 	/* Get PIDs for each elementary inside the service ID */
 	get_pmt_descriptors(entry, dvb_scan_handler->program[i].pmt);
@@ -1011,7 +1013,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 	if (get_detected) {
 		int rc;
 		do {
-			rc = dvb_fe_get_parms(parms);
+			rc = dvb_fe_get_parms(&parms->p);
 			if (rc == EAGAIN)
 				usleep(100000);
 		} while (rc == EAGAIN);
@@ -1031,15 +1033,15 @@ static int get_program_and_store(struct dvb_v5_fe_parms *parms,
 		r = asprintf(&channel, "%.2fMHz#%d", freq/1000000., service_id);
 		if (r < 0)
 			dvb_perror("asprintf");
-		if (parms->verbose)
+		if (parms->p.verbose)
 			dvb_log("Storing as: '%s'", channel);
 	}
 	entry->channel = channel;
 
 	if (get_nit)
-		dvb_update_transponders(parms, dvb_scan_handler,
-					    dvb_file->first_entry,
-					    entry);
+		dvb_update_transponders(&parms->p, dvb_scan_handler,
+					dvb_file->first_entry,
+					entry);
 
 	return 0;
 }
@@ -1063,10 +1065,11 @@ static char *sdt_services[256] = {
 };
 
 int dvb_store_channel(struct dvb_file **dvb_file,
-		      struct dvb_v5_fe_parms *parms,
+		      struct dvb_v5_fe_parms *__p,
 		      struct dvb_v5_descriptors *dvb_scan_handler,
 		      int get_detected, int get_nit)
 {
+	struct dvb_v5_fe_parms_priv *parms = (void *)__p;
 	int rc;
 
 	if (!*dvb_file) {
@@ -1092,7 +1095,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 			if (r < 0)
 				dvb_perror("asprintf");
 
-			if (parms->verbose)
+			if (parms->p.verbose)
 				dvb_log("Virtual channel %s, name = %s",
 					vchannel, channel);
 
@@ -1154,7 +1157,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 				dvb_perror("asprintf");
 		}
 
-		if (parms->verbose)
+		if (parms->p.verbose)
 			dvb_log("Storing as channel %s", channel);
 		vchannel = dvb_vchannel(parms, dvb_scan_handler->nit, service->service_id);
 

@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <strings.h> /* strcasecmp */
 
-#include <libdvbv5/dvb-fe.h>
+#include "dvb-fe-priv.h"
 #include <libdvbv5/dvb-v5-std.h>
 
 static const struct dvb_sat_lnb lnb[] = {
@@ -227,7 +227,8 @@ static void dvbsat_diseqc_prep_frame_addr(struct diseqc_cmd *cmd,
 //struct dvb_v5_fe_parms *parms; // legacy code, used for parms->fd, FIXME anyway
 
 /* Inputs are numbered from 1 to 16, according with the spec */
-static int dvbsat_diseqc_write_to_port_group(struct dvb_v5_fe_parms *parms, struct diseqc_cmd *cmd,
+static int dvbsat_diseqc_write_to_port_group(struct dvb_v5_fe_parms_priv *parms,
+					     struct diseqc_cmd *cmd,
 					     int high_band,
 					     int pol_v,
 					     int sat_number)
@@ -246,10 +247,11 @@ static int dvbsat_diseqc_write_to_port_group(struct dvb_v5_fe_parms *parms, stru
 	/* Instead of using position/option, use a number from 0 to 3 */
 	cmd->data0 |= (sat_number % 0x3) << 2;
 
-	return dvb_fe_diseqc_cmd(parms, cmd->len, cmd->msg);
+	return dvb_fe_diseqc_cmd(&parms->p, cmd->len, cmd->msg);
 }
 
-static int dvbsat_scr_odu_channel_change(struct dvb_v5_fe_parms *parms, struct diseqc_cmd *cmd,
+static int dvbsat_scr_odu_channel_change(struct dvb_v5_fe_parms_priv *parms,
+					 struct diseqc_cmd *cmd,
 					 int high_band,
 					 int pol_v,
 					 int sat_number,
@@ -277,17 +279,18 @@ static int dvbsat_scr_odu_channel_change(struct dvb_v5_fe_parms *parms, struct d
 	cmd->data0 |= pol_v ? 8 : 0;
 	cmd->data0 |= pos_b ? 16 : 0;
 
-	return dvb_fe_diseqc_cmd(parms, cmd->len, cmd->msg);
+	return dvb_fe_diseqc_cmd(&parms->p, cmd->len, cmd->msg);
 }
 
-static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
+static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
+				   uint16_t t)
 {
 	int rc;
 	enum dvb_sat_polarization pol;
-	dvb_fe_retrieve_parm(parms, DTV_POLARIZATION, &pol);
+	dvb_fe_retrieve_parm(&parms->p, DTV_POLARIZATION, &pol);
 	int pol_v = (pol == POLARIZATION_V) || (pol == POLARIZATION_R);
 	int high_band = parms->high_band;
-	int sat_number = parms->sat_number;
+	int sat_number = parms->p.sat_number;
 	int vol_high = 0;
 	int tone_on = 0;
 	int mini_b = 0;
@@ -303,19 +306,19 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 		high_band = 1;
 	} else {
 		/* Adjust voltage/tone accordingly */
-		if (parms->sat_number < 2) {
+		if (parms->p.sat_number < 2) {
 			vol_high = pol_v ? 0 : 1;
 			tone_on = high_band;
-			mini_b = parms->sat_number & 1;
+			mini_b = parms->p.sat_number & 1;
 		}
 	}
 
-	rc = dvb_fe_sec_voltage(parms, 1, vol_high);
+	rc = dvb_fe_sec_voltage(&parms->p, 1, vol_high);
 	if (rc)
 		return rc;
 
-	if (parms->sat_number > 0) {
-		rc = dvb_fe_sec_tone(parms, SEC_TONE_OFF);
+	if (parms->p.sat_number > 0) {
+		rc = dvb_fe_sec_tone(&parms->p, SEC_TONE_OFF);
 		if (rc)
 			return rc;
 
@@ -332,15 +335,15 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
 			dvb_logerr("sending diseq failed");
 			return rc;
 		}
-		usleep((15 + parms->diseqc_wait) * 1000);
+		usleep((15 + parms->p.diseqc_wait) * 1000);
 
-		rc = dvb_fe_diseqc_burst(parms, mini_b);
+		rc = dvb_fe_diseqc_burst(&parms->p, mini_b);
 		if (rc)
 			return rc;
 		usleep(15 * 1000);
 	}
 
-	rc = dvb_fe_sec_tone(parms, tone_on ? SEC_TONE_ON : SEC_TONE_OFF);
+	rc = dvb_fe_sec_tone(&parms->p, tone_on ? SEC_TONE_ON : SEC_TONE_OFF);
 
 	return rc;
 }
@@ -350,16 +353,17 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms *parms, uint16_t t)
  */
 
 
-int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
+int dvb_sat_set_parms(struct dvb_v5_fe_parms *p)
 {
+	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	const struct dvb_sat_lnb *lnb = parms->lnb;
 	enum dvb_sat_polarization pol;
-	dvb_fe_retrieve_parm(parms, DTV_POLARIZATION, &pol);
+	dvb_fe_retrieve_parm(&parms->p, DTV_POLARIZATION, &pol);
 	uint32_t freq;
 	uint16_t t = 0;
 	int rc;
 
-	dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
+	dvb_fe_retrieve_parm(&parms->p, DTV_FREQUENCY, &freq);
 
 	if (!lnb) {
 		dvb_logerr("Need a LNBf to work");
@@ -391,8 +395,8 @@ int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
 		parms->freq_offset = lnb->lowfreq * 1000;
 
 	/* For SCR/Unicable setups */
-	if (parms->freq_bpf) {
-		t = (((freq / 1000) + parms->freq_bpf + 2) / 4) - 350;
+	if (parms->p.freq_bpf) {
+		t = (((freq / 1000) + parms->p.freq_bpf + 2) / 4) - 350;
 		parms->freq_offset += ((t + 350) * 4) * 1000;
 	}
 
@@ -400,7 +404,7 @@ ret:
 	rc = dvbsat_diseqc_set_input(parms, t);
 
 	freq = abs(freq - parms->freq_offset);
-	dvb_fe_store_parm(parms, DTV_FREQUENCY, freq);
+	dvb_fe_store_parm(&parms->p, DTV_FREQUENCY, freq);
 
 	return rc;
 }

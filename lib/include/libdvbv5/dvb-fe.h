@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
+ * Copyright (c) 2011-2014 - Mauro Carvalho Chehab
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,69 +52,38 @@
 #define DTV_SNR				DTV_STAT_CNR
 #define DTV_UNCORRECTED_BLOCKS		DTV_STAT_ERROR_BLOCK_COUNT
 
-enum dvbv3_emulation_type {
-	DVBV3_UNKNOWN = -1,
-	DVBV3_QPSK,
-	DVBV3_QAM,
-	DVBV3_OFDM,
-	DVBV3_ATSC,
-};
-
-struct dvb_v5_counters {
-	uint64_t			pre_bit_count;
-	uint64_t			pre_bit_error;
-	uint64_t			post_bit_count;
-	uint64_t			post_bit_error;
-	uint64_t			block_count;
-	uint64_t			block_error;
-};
-
-struct dvb_v5_stats {
-	struct dtv_property		prop[DTV_NUM_STATS_PROPS];
-
-	struct dvb_v5_counters		prev[MAX_DTV_STATS];
-	struct dvb_v5_counters		cur[MAX_DTV_STATS];
-
-	int				has_post_ber[MAX_DTV_STATS];
-	int				has_pre_ber[MAX_DTV_STATS];
-	int				has_per[MAX_DTV_STATS];
-
-	fe_status_t prev_status;
-
-};
 
 struct dvb_v5_fe_parms {
-	int				fd;
-	char				*fname;
-	unsigned			verbose;
+	/* Information visible to the client - don't override those values */
 	struct dvb_frontend_info	info;
 	uint32_t			version;
 	int				has_v5_stats;
 	fe_delivery_system_t		current_sys;
 	int				num_systems;
 	fe_delivery_system_t		systems[MAX_DELIVERY_SYSTEMS];
-	int				n_props;
-	struct dtv_property		dvb_prop[DTV_MAX_COMMAND];
 	int				legacy_fe;
-	struct dvb_v5_stats		stats;
+
+	/* The values below are specified by the library client */
+
+	/* Flags from the client to the library */
+	int				abort;
+
+	/* Linear Amplifier settings */
 	int				lna;
+
+	/* Satellite settings */
+	const struct dvb_sat_lnb       	*lnb;
+	int				sat_number;
+	unsigned			freq_bpf;
+	unsigned			diseqc_wait;
+
+	/* Function to write DVB logs */
+	unsigned			verbose;
+	dvb_logfunc                     logfunc;
 
 	/* Charsets to be used by the conversion utilities */
 	char				*default_charset;
 	char				*output_charset;
-
-	/* Satellite specific stuff, specified by the library client */
-	const struct dvb_sat_lnb       	*lnb;
-	int				sat_number;
-	unsigned			freq_bpf;
-
-	/* Satellite specific stuff, used internally */
-	int				high_band;
-	unsigned			diseqc_wait;
-	unsigned			freq_offset;
-
-	int				abort;
-	dvb_logfunc                     logfunc;
 };
 
 

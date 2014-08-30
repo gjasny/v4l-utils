@@ -26,6 +26,8 @@
 
 typedef void (*dvb_logfunc)(int level, const char *fmt, ...) __attribute__ (( format( printf, 2, 3 )));
 
+#ifndef __DVB_FE_PRIV_H
+
 #define dvb_log(fmt, arg...) do {\
 	parms->logfunc(LOG_INFO, fmt, ##arg); \
 } while (0)
@@ -42,10 +44,33 @@ typedef void (*dvb_logfunc)(int level, const char *fmt, ...) __attribute__ (( fo
 	parms->logfunc(LOG_NOTICE, fmt, ##arg); \
 } while (0)
 
-
 #define dvb_perror(msg) do {\
 	parms->logfunc(LOG_ERR, "%s: %s", msg, strerror(errno)); \
 } while (0)
+
+#else
+
+#define dvb_log(fmt, arg...) do {\
+	parms->p.logfunc(LOG_INFO, fmt, ##arg); \
+} while (0)
+#define dvb_logerr(fmt, arg...) do {\
+	parms->p.logfunc(LOG_ERR, fmt, ##arg); \
+} while (0)
+#define dvb_logdbg(fmt, arg...) do {\
+	parms->p.logfunc(LOG_DEBUG, fmt, ##arg); \
+} while (0)
+#define dvb_logwarn(fmt, arg...) do {\
+	parms->p.logfunc(LOG_WARNING, fmt, ##arg); \
+} while (0)
+#define dvb_loginfo(fmt, arg...) do {\
+	parms->p.logfunc(LOG_NOTICE, fmt, ##arg); \
+} while (0)
+
+#define dvb_perror(msg) do {\
+	parms->p.logfunc(LOG_ERR, "%s: %s", msg, strerror(errno)); \
+} while (0)
+
+#endif
 
 void dvb_default_log(int level, const char *fmt, ...) __attribute__ (( format( printf, 2, 3 )));
 
