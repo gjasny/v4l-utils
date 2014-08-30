@@ -289,10 +289,12 @@ void dvb_fe_close(struct dvb_v5_fe_parms *p)
 }
 
 
-int dvb_add_parms_for_sys(struct dtv_property *dvb_prop,
-			  unsigned max_size,
+int dvb_add_parms_for_sys(struct dvb_v5_fe_parms *p,
 			  fe_delivery_system_t sys)
 {
+	struct dvb_v5_fe_parms_priv *parms = (void *)p;
+	struct dtv_property *dvb_prop = parms->dvb_prop;
+	unsigned max_size = ARRAY_SIZE(parms->dvb_prop);
 	const unsigned int *sys_props;
 	int n;
 
@@ -303,7 +305,7 @@ int dvb_add_parms_for_sys(struct dtv_property *dvb_prop,
 		return EINVAL;
 
 	n = 0;
-	while (sys_props[n]) {
+	while (sys_props[n] && n < max_size - 1) {
 		dvb_prop[n].cmd = sys_props[n];
 		dvb_prop[n].u.data = 0;
 		n++;
@@ -343,8 +345,7 @@ int dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 		}
 	}
 
-	rc = dvb_add_parms_for_sys(parms->dvb_prop,
-				   ARRAY_SIZE(parms->dvb_prop), sys);
+	rc = dvb_add_parms_for_sys(&parms->p, sys);
 	if (rc < 0)
 		return EINVAL;
 
