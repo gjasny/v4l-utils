@@ -1370,9 +1370,9 @@ void dvb_hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsign
 	}
 	if (j > 0 && j < 16) {
 		char spaces[50];
-		spaces[0] = '\0';
-		for (i = strlen(hex); i < 49; i++)
-			strncat(spaces, " ", sizeof(spaces));
+		for (i = 0; i < sizeof(spaces) - 1 - strlen(hex); i++)
+			spaces[i] = ' ';
+		spaces[i] = '\0';
 		ascii[j] = '\0';
 		dvb_loginfo("%s%s %s %s", prefix, hex, spaces, ascii);
 	}
