@@ -457,9 +457,9 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *p,
 
 const char *dvb_cmd_name(int cmd)
 {
-	if (cmd >= 0 && cmd < DTV_USER_COMMAND_START)
+	if (cmd >= 0 && cmd < ARRAY_SIZE(dvb_v5_name))
 		return dvb_v5_name[cmd];
-	else if (cmd >= 0 && cmd <= DTV_MAX_STAT_COMMAND)
+	else if (cmd >= DTV_USER_COMMAND_START && cmd <= DTV_MAX_STAT_COMMAND)
 		return dvb_user_name[cmd - DTV_USER_COMMAND_START];
 	return NULL;
 }
