@@ -62,7 +62,7 @@
 #include <libdvbv5/desc_t2_delivery.h>
 #include <libdvbv5/desc_sat.h>
 
-static int poll(struct dvb_v5_fe_parms *parms, int fd, unsigned int seconds)
+static int dvb_poll(struct dvb_v5_fe_parms_priv *parms, int fd, unsigned int seconds)
 {
 	fd_set set;
 	struct timeval timeout;
@@ -78,7 +78,7 @@ static int poll(struct dvb_v5_fe_parms *parms, int fd, unsigned int seconds)
 
 	/* `select' logfuncreturns 0 if timeout, 1 if input available, -1 if error. */
 	do ret = select (FD_SETSIZE, &set, NULL, NULL, &timeout);
-	while (!parms->abort && ret == -1 && errno == EINTR);
+	while (!parms->p.abort && ret == -1 && errno == EINTR);
 
 	return ret;
 }
@@ -276,7 +276,7 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 		ssize_t buf_length = 0;
 
 		do {
-			available = poll(&parms->p, dmx_fd, timeout);
+			available = dvb_poll(parms, dmx_fd, timeout);
 		} while (available < 0 && errno == EOVERFLOW);
 
 		if (parms->p.abort) {
