@@ -77,6 +77,7 @@ static void dvb_desc_default_print(struct dvb_v5_fe_parms *parms, const struct d
 		parms = dvb_fe_dummy();
 		dvb_hexdump(parms, "|           ", desc->data, desc->length);
 		free(parms);
+		return;
 	}
 	dvb_hexdump(parms, "|           ", desc->data, desc->length);
 }
