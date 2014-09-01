@@ -466,9 +466,10 @@ const char *dvb_cmd_name(int cmd)
 
 const char *const *dvb_attr_names(int cmd)
 {
-	if (cmd >= 0 && cmd < ARRAY_SIZE(dvb_v5_attr_names))
+	if (cmd >= 0 && cmd < DTV_MAX_COMMAND)
 		return dvb_v5_attr_names[cmd];
-	else if (cmd >= DTV_USER_COMMAND_START && cmd <= DTV_MAX_STAT_COMMAND)
+
+	if (cmd >= DTV_USER_COMMAND_START && cmd <= DTV_MAX_STAT_COMMAND)
 		return dvb_user_attr_names[cmd - DTV_USER_COMMAND_START];
 	return NULL;
 }
