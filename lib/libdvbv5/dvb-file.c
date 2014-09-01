@@ -1020,6 +1020,13 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 		if (rc)
 			dvb_logerr("Couldn't get frontend props");
 	}
+	if (!*channel) {
+		r = asprintf(&channel, "%.2fMHz#%d", freq/1000000., service_id);
+		if (r < 0)
+			dvb_perror("asprintf");
+		if (parms->p.verbose)
+			dvb_log("Storing as: '%s'", channel);
+	}
 	for (j = 0; j < parms->n_props; j++) {
 		entry->props[j].cmd = parms->dvb_prop[j].cmd;
 		entry->props[j].u.data = parms->dvb_prop[j].u.data;
@@ -1028,14 +1035,6 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 			freq = parms->dvb_prop[j].u.data;
 	}
 	entry->n_props = parms->n_props;
-
-	if (!*channel) {
-		r = asprintf(&channel, "%.2fMHz#%d", freq/1000000., service_id);
-		if (r < 0)
-			dvb_perror("asprintf");
-		if (parms->p.verbose)
-			dvb_log("Storing as: '%s'", channel);
-	}
 	entry->channel = channel;
 
 	if (get_nit)
