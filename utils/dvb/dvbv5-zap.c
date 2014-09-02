@@ -682,7 +682,8 @@ int do_traffic_monitor(struct arguments *args,
 			}
 		}
 	}
-	close (fd);
+	close(dvr_fd);
+	close(fd);
 	return 0;
 }
 
