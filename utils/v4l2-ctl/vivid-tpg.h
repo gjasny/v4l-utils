@@ -55,6 +55,11 @@ static inline void *vzalloc(unsigned long size)
 	__val = __val < __min ? __min: __val;	\
 	__val > __max ? __max: __val; })
 
+static inline u32 prandom_u32_max(u32 ep_ro)
+{
+	return rand() % ep_ro;
+}
+
 #include "vivid-tpg-colors.h"
 
 enum tpg_pattern {
@@ -461,11 +466,6 @@ static inline bool tpg_pattern_is_static(const struct tpg_data *tpg)
 	return tpg->pattern != TPG_PAT_NOISE &&
 	       tpg->mv_hor_mode == TPG_MOVE_NONE &&
 	       tpg->mv_vert_mode == TPG_MOVE_NONE;
-}
-
-static inline u32 prandom_u32_max(u32 ep_ro)
-{
-	return rand() % ep_ro;
 }
 
 #endif

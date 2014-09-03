@@ -57,9 +57,9 @@ const char * const tpg_aspect_strings[] = {
 };
 
 /*
- * Sinus table: sin[0] = 127 * sin(-180 degrees)
- *              sin[128] = 127 * sin(0 degrees)
- *              sin[256] = 127 * sin(180 degrees)
+ * Sine table: sin[0] = 127 * sin(-180 degrees)
+ *             sin[128] = 127 * sin(0 degrees)
+ *             sin[256] = 127 * sin(180 degrees)
  */
 static const s8 sin[257] = {
 	   0,   -4,   -7,  -11,  -13,  -18,  -20,  -22,  -26,  -29,  -33,  -35,  -37,  -41,  -43,  -48,
