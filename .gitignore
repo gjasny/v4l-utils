@@ -28,3 +28,4 @@ libtool
 stamp-h1
 po
 ABOUT-NLS
+lib/include/dvb-frontend.h
