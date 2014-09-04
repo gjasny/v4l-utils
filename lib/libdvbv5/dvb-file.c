@@ -781,31 +781,6 @@ int dvb_write_file(const char *fname, struct dvb_file *dvb_file)
 					*attr_name);
 		}
 		fprintf(fp, "\n");
-
-		for (i = 0; i < entry->n_props; i++) {
-		  if (entry->props[i].cmd < DTV_USER_COMMAND_START)
-		    continue;
-			const char * const *attr_name = dvb_user_attr_names[entry->props[i].cmd - DTV_USER_COMMAND_START];
-			if (attr_name) {
-				int j;
-
-				for (j = 0; j < entry->props[i].u.data; j++) {
-					if (!*attr_name)
-						break;
-					attr_name++;
-				}
-			}
-
-			if (!attr_name || !*attr_name)
-				fprintf(fp, "\t%s = %u\n",
-					dvb_user_name[entry->props[i].cmd - DTV_USER_COMMAND_START],
-					entry->props[i].u.data);
-			else
-				fprintf(fp, "\t%s = %s\n",
-					dvb_user_name[entry->props[i].cmd - DTV_USER_COMMAND_START],
-					*attr_name);
-		}
-		fprintf(fp, "\n");
 	}
 	fclose(fp);
 	return 0;
