@@ -105,6 +105,13 @@ static const char *channel_parse_polarization[] = {
 	[POLARIZATION_R] = "R",
 };
 
+static const char *channel_parse_rolloff[] = {
+	[ROLLOFF_20] = "20",
+	[ROLLOFF_25] = "25",
+	[ROLLOFF_35] = "35",
+	[ROLLOFF_AUTO] = "AUTO",
+};
+
 static const struct parse_table sys_atsc_table[] = {
 	{ DTV_FREQUENCY, NULL, 0 },
 	{ DTV_MODULATION, PTABLE(channel_parse_modulation) },
@@ -123,6 +130,15 @@ static const struct parse_table sys_dvbs_table[] = {
 	{ DTV_POLARIZATION, PTABLE(channel_parse_polarization) },
 	{ DTV_SYMBOL_RATE, NULL, 0 },
 	{ DTV_INNER_FEC, PTABLE(channel_parse_code_rate) },
+};
+
+static const struct parse_table sys_dvbs2_table[] = {
+	{ DTV_FREQUENCY, NULL, 0 },
+	{ DTV_POLARIZATION, PTABLE(channel_parse_polarization) },
+	{ DTV_SYMBOL_RATE, NULL, 0 },
+	{ DTV_INNER_FEC, PTABLE(channel_parse_code_rate) },
+	{ DTV_ROLLOFF, PTABLE(channel_parse_rolloff) },
+	{ DTV_MODULATION, PTABLE(channel_parse_modulation) },
 };
 
 static const struct parse_table sys_dvbt_table[] = {
@@ -152,6 +168,10 @@ const struct parse_file channel_file_format = {
 			.id		= "S",
 			.delsys		= SYS_DVBS,
 			PTABLE(sys_dvbs_table),
+		}, {
+			.id		= "S2",
+			.delsys		= SYS_DVBS2,
+			PTABLE(sys_dvbs2_table),
 		}, {
 			.id		= "T",
 			.delsys		= SYS_DVBT,
