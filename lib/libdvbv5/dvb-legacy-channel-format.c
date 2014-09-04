@@ -138,7 +138,7 @@ static const struct parse_table sys_dvbt_table[] = {
 
 const struct parse_file channel_file_format = {
 	.has_delsys_id = 1,
-	.delimiter = " \n",
+	.delimiter = " \n\t",
 	.formats = {
 		{
 			.id		= "A",
