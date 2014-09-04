@@ -25,13 +25,13 @@
 #include <libdvbv5/dvb-v5-std.h>
 
 /*
- * Standard channel.conf format for DVB-T, DVB-C, DVB-S and ATSC
+ * Standard channel.conf format for DVB-T, DVB-C, DVB-S, DVB-S2 and ATSC
  */
 static const char *channel_parse_modulation[] = {
-	[APSK_16] =  "APSK16",
-	[APSK_32] =  "APSK32",
+	[APSK_16] =  "16APSK",
+	[APSK_32] =  "32APSK",
 	[DQPSK] =    "DQPSK",
-	[PSK_8] =    "PSK8",
+	[PSK_8] =    "8PSK",
 	[QAM_16] =   "QAM16",
 	[QAM_32] =   "QAM32",
 	[QAM_64] =   "QAM64",
