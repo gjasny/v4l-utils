@@ -89,9 +89,78 @@ int dvb_retrieve_entry_prop(struct dvb_entry *entry,
 	return -1;
 }
 
+static uint32_t dvbv5_default_value(int cmd)
+{
+	switch (cmd) {
+		case DTV_MODULATION:
+		case DTV_ISDBT_LAYERA_MODULATION:
+		case DTV_ISDBT_LAYERB_MODULATION:
+		case DTV_ISDBT_LAYERC_MODULATION:
+			return QAM_AUTO;
+
+		case DTV_BANDWIDTH_HZ:
+			return 0;
+
+		case DTV_INVERSION:
+			return INVERSION_AUTO;
+
+		case DTV_CODE_RATE_HP:
+		case DTV_CODE_RATE_LP:
+		case DTV_INNER_FEC:
+		case DTV_ISDBT_LAYERA_FEC:
+		case DTV_ISDBT_LAYERB_FEC:
+		case DTV_ISDBT_LAYERC_FEC:
+			return FEC_AUTO;
+
+		case DTV_GUARD_INTERVAL:
+			return GUARD_INTERVAL_AUTO;
+
+		case DTV_TRANSMISSION_MODE:
+			return TRANSMISSION_MODE_AUTO;
+
+		case DTV_HIERARCHY:
+			return HIERARCHY_AUTO;
+
+		case DTV_STREAM_ID:
+			return 0;
+
+		case DTV_ISDBT_LAYER_ENABLED:
+			return 7;
+
+		case DTV_ISDBT_PARTIAL_RECEPTION:
+			return 1;
+
+		case DTV_ISDBT_SOUND_BROADCASTING:
+		case DTV_ISDBT_SB_SUBCHANNEL_ID:
+		case DTV_ISDBT_SB_SEGMENT_IDX:
+		case DTV_ISDBT_SB_SEGMENT_COUNT:
+			return 0;
+
+		case DTV_ISDBT_LAYERA_TIME_INTERLEAVING:
+		case DTV_ISDBT_LAYERB_TIME_INTERLEAVING:
+		case DTV_ISDBT_LAYERC_TIME_INTERLEAVING:
+			return INTERLEAVING_AUTO;
+
+		case DTV_POLARIZATION:
+			return POLARIZATION_OFF;
+
+		case DTV_ISDBT_LAYERA_SEGMENT_COUNT:
+			return (uint32_t)-1;
+
+		case DTV_ROLLOFF:
+			return ROLLOFF_AUTO;
+
+		default:
+			return (uint32_t)-1;
+	}
+}
+
 static void adjust_delsys(struct dvb_entry *entry)
 {
 	uint32_t delsys = SYS_UNDEFINED;
+	const unsigned int *sys_props;
+	int n;
+	uint32_t v;
 
 	dvb_retrieve_entry_prop(entry, DTV_DELIVERY_SYSTEM, &delsys);
 	switch (delsys) {
@@ -113,6 +182,20 @@ static void adjust_delsys(struct dvb_entry *entry)
 		break;
 	}
 	} /* switch */
+
+	/* Fill missing mandatory properties with auto values */
+
+	sys_props = dvb_v5_delivery_system[delsys];
+	if (!sys_props)
+		return;
+
+	n = 0;
+	while (sys_props[n]) {
+		if (dvb_retrieve_entry_prop(entry, sys_props[n], &v) == -1) {
+			dvb_store_entry_prop(entry, sys_props[n], dvbv5_default_value(sys_props[n]));
+		}
+		n++;
+	}
 }
 
 /*
