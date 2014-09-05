@@ -436,14 +436,20 @@ int dvb_write_format_oneline(const char *fname,
 					break;
 				default:
 					if (j >= entry->n_props) {
-						fprintf(stderr,
-							"property %s not supported while parsing entry %d of %s\n",
-							dvb_cmd_name(table->prop),
-							line, fname);
-					}
+						if (fmt->table[i].has_default_value) {
+							data = fmt->table[i].default_value;
+						} else {
+							fprintf(stderr,
+								"property %s not supported while parsing entry %d of %s\n",
+								dvb_cmd_name(table->prop),
+								line, fname);
+							data = 0;
+						}
+					} else {
+						data = entry->props[j].u.data;
 
-					data = entry->props[j].u.data;
 					fprintf(fp, "%d", data);
+				}
 					break;
 				}
 			}
