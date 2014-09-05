@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
+ * Copyright (c) 2011-2014 - Mauro Carvalho Chehab
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,22 +56,7 @@ extern const void *dvb_v5_attr_names[];
 
 #define DTV_MAX_USER_COMMAND    DTV_FREQ_BPF
 
-/* For status and statistics */
-
-#define DTV_STATUS              (DTV_MAX_USER_COMMAND + 1)
-#define DTV_BER                 (DTV_MAX_USER_COMMAND + 2)
-#define DTV_PER                 (DTV_MAX_USER_COMMAND + 3)
-#define DTV_QUALITY             (DTV_MAX_USER_COMMAND + 4)
-#define DTV_PRE_BER		(DTV_MAX_USER_COMMAND + 5)
-
-#define DTV_MAX_STAT_COMMAND	DTV_PRE_BER
-
-#define DTV_USER_NAME_SIZE	(1 + DTV_MAX_STAT_COMMAND - DTV_USER_COMMAND_START)
-
-/* There are currently 8 stats provided on Kernelspace */
-#define DTV_NUM_KERNEL_STATS	8
-
-#define DTV_NUM_STATS_PROPS	(DTV_NUM_KERNEL_STATS + DTV_MAX_STAT_COMMAND - DTV_MAX_USER_COMMAND)
+#define DTV_USER_NAME_SIZE	(1 + DTV_MAX_USER_COMMAND - DTV_USER_COMMAND_START)
 
 enum dvb_sat_polarization {
 	POLARIZATION_OFF	= 0,
@@ -81,6 +66,23 @@ enum dvb_sat_polarization {
 	POLARIZATION_R		= 4,
 };
 
+#define DTV_STAT_COMMAND_START 512
+
+#define DTV_STATUS              (DTV_STAT_COMMAND_START + 0)
+#define DTV_BER                 (DTV_STAT_COMMAND_START + 1)
+#define DTV_PER                 (DTV_STAT_COMMAND_START + 2)
+#define DTV_QUALITY             (DTV_STAT_COMMAND_START + 3)
+#define DTV_PRE_BER		(DTV_STAT_COMMAND_START + 4)
+
+#define DTV_MAX_STAT_COMMAND	DTV_PRE_BER
+
+#define DTV_STAT_NAME_SIZE	(1 + DTV_MAX_STAT_COMMAND - DTV_STAT_COMMAND_START)
+
+/* There are currently 8 stats provided on Kernelspace */
+#define DTV_NUM_KERNEL_STATS	8
+
+#define DTV_NUM_STATS_PROPS	(DTV_NUM_KERNEL_STATS + DTV_STAT_NAME_SIZE)
+
 enum dvb_quality {
 	DVB_QUAL_UNKNOWN = 0,
 	DVB_QUAL_POOR,
@@ -89,7 +91,8 @@ enum dvb_quality {
 };
 
 extern const char *dvb_sat_pol_name[6];
-extern const char *dvb_user_name[DTV_USER_NAME_SIZE];
+extern const char *dvb_user_name[DTV_USER_NAME_SIZE + 1];
+extern const char *dvb_stat_name[DTV_STAT_NAME_SIZE + 1];
 extern const void *dvb_user_attr_names[];
 
 #endif
