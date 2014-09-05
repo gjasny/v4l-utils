@@ -153,6 +153,18 @@ static const struct parse_table sys_dvbt_table[] = {
 	{ DTV_HIERARCHY, PTABLE(channel_parse_hierarchy) },
 };
 
+static const struct parse_table sys_dvbt2_table[] = {
+	{ DTV_FREQUENCY, NULL, 0 },
+	{ DTV_BANDWIDTH_HZ, PTABLE(channel_parse_bandwidth) },
+	{ DTV_CODE_RATE_HP, PTABLE(channel_parse_code_rate) },
+	{ DTV_CODE_RATE_LP, PTABLE(channel_parse_code_rate) },
+	{ DTV_MODULATION, PTABLE(channel_parse_modulation) },
+	{ DTV_TRANSMISSION_MODE, PTABLE(channel_parse_trans_mode) },
+	{ DTV_GUARD_INTERVAL, PTABLE(channel_parse_guard_interval) },
+	{ DTV_HIERARCHY, PTABLE(channel_parse_hierarchy) },
+	{ DTV_STREAM_ID, NULL, 0, 1, -1 },
+};
+
 const struct parse_file channel_file_format = {
 	.has_delsys_id = 1,
 	.delimiter = " \n\t",
@@ -177,6 +189,10 @@ const struct parse_file channel_file_format = {
 			.id		= "T",
 			.delsys		= SYS_DVBT,
 			PTABLE(sys_dvbt_table),
+		}, {
+			.id		= "T2",
+			.delsys		= SYS_DVBT,
+			PTABLE(sys_dvbt2_table),
 		}, {
 			NULL, 0, NULL, 0,
 		}
