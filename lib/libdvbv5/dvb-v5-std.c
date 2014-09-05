@@ -138,6 +138,7 @@ const unsigned int sys_dvbs2_props[] = {
 	DTV_PILOT,
 	DTV_ROLLOFF,
 	DTV_POLARIZATION,
+	DTV_STREAM_ID,
 	0
 };
 
