@@ -212,7 +212,9 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 				p = strtok(p, delimiter);
 			} else
 				p = strtok(NULL, delimiter);
-			if (!p) {
+			if (p && *p == '#')
+				p = NULL;
+			if (!p && !fmt->table[i].has_default_value) {
 				sprintf(err_msg, "parameter %i (%s) missing",
 					i, dvb_cmd_name(table->prop));
 				goto error;
@@ -231,7 +233,13 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 				entry->props[entry->n_props].cmd = table->prop;
                                 entry->props[entry->n_props++].u.data = j;
 			} else {
-				long v = atol(p);
+				long v;
+
+				if (!p)
+					v = fmt->table[i].default_value;
+				else
+					v = atol(p);
+
 				if (table->mult_factor)
 					v *= table->mult_factor;
 
@@ -374,7 +382,8 @@ int dvb_write_format_oneline(const char *fname,
 			for (j = 0; j < entry->n_props; j++)
 				if (entry->props[j].cmd == table->prop)
 					break;
-
+			if (fmt->table[i].has_default_value && fmt->table[i].default_value == entry->props[j].u.data && i == fmt->size - 1)
+				break;
 			if (table->size && j < entry->n_props) {
 				data = entry->props[j].u.data;
 

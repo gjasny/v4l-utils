@@ -57,6 +57,8 @@ struct parse_table {
 	const char **table;
 	unsigned int size;
 	int	mult_factor;	/* Factor to muliply from file parsing POV */
+	int	has_default_value;	/* Mark an optional integer field - should be the last fields */
+	int	default_value;		/* default for the optional field */
 };
 
 struct parse_struct {
