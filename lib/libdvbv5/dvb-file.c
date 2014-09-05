@@ -228,12 +228,8 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 				}
 				if (table->prop == DTV_BANDWIDTH_HZ)
 					j = fe_bandwidth_name[j];
-				/*if (table->prop == DTV_POLARIZATION) {*/
-					/*entry->pol = j;*/
-				/*} else {*/
-					entry->props[entry->n_props].cmd = table->prop;
-					entry->props[entry->n_props++].u.data = j;
-				/*}*/
+				entry->props[entry->n_props].cmd = table->prop;
+                                entry->props[entry->n_props++].u.data = j;
 			} else {
 				long v = atol(p);
 				if (table->mult_factor)
