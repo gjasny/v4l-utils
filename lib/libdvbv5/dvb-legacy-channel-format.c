@@ -191,7 +191,7 @@ const struct parse_file channel_file_format = {
 			PTABLE(sys_dvbt_table),
 		}, {
 			.id		= "T2",
-			.delsys		= SYS_DVBT,
+			.delsys		= SYS_DVBT2,
 			PTABLE(sys_dvbt2_table),
 		}, {
 			NULL, 0, NULL, 0,
