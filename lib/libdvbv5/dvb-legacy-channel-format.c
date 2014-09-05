@@ -139,7 +139,7 @@ static const struct parse_table sys_dvbs2_table[] = {
 	{ DTV_INNER_FEC, PTABLE(channel_parse_code_rate) },
 	{ DTV_ROLLOFF, PTABLE(channel_parse_rolloff) },
 	{ DTV_MODULATION, PTABLE(channel_parse_modulation) },
-	{ DTV_STREAM_ID, NULL, 0, 1, -1 },
+	{ DTV_STREAM_ID, NULL, 0, 0, 1, -1 },
 };
 
 static const struct parse_table sys_dvbt_table[] = {
@@ -162,7 +162,7 @@ static const struct parse_table sys_dvbt2_table[] = {
 	{ DTV_TRANSMISSION_MODE, PTABLE(channel_parse_trans_mode) },
 	{ DTV_GUARD_INTERVAL, PTABLE(channel_parse_guard_interval) },
 	{ DTV_HIERARCHY, PTABLE(channel_parse_hierarchy) },
-	{ DTV_STREAM_ID, NULL, 0, 1, -1 },
+	{ DTV_STREAM_ID, NULL, 0, 0, 1, -1 },
 };
 
 const struct parse_file channel_file_format = {
