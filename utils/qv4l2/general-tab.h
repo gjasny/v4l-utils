@@ -223,7 +223,7 @@ private:
 	int g_selection(v4l2_selection &sel) { return m_fd->g_selection(sel); }
 	int s_selection(v4l2_selection &sel) { return m_fd->s_selection(sel); }
 	int g_tuner(v4l2_tuner &tuner, unsigned index = 0) { return m_fd->g_tuner(tuner, index); }
-	int s_tuner(v4l2_tuner &tuner) { return m_fd->g_tuner(tuner); }
+	int s_tuner(v4l2_tuner &tuner) { return m_fd->s_tuner(tuner); }
 	int g_modulator(v4l2_modulator &modulator) { return m_fd->g_modulator(modulator); }
 	int s_modulator(v4l2_modulator &modulator) { return m_fd->s_modulator(modulator); }
 	int enum_input(v4l2_input &in, bool init = false, int index = 0) { return m_fd->enum_input(in, init, index); }
