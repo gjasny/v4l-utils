@@ -382,7 +382,9 @@ int dvb_write_format_oneline(const char *fname,
 			for (j = 0; j < entry->n_props; j++)
 				if (entry->props[j].cmd == table->prop)
 					break;
-			if (fmt->table[i].has_default_value && (fmt->table[i].default_value == entry->props[j].u.data) && (i == fmt->size - 1))
+			if (fmt->table[i].has_default_value &&
+			   (j < entry->n_props) &&
+			   (fmt->table[i].default_value == entry->props[j].u.data))
 				break;
 			if (table->size && j < entry->n_props) {
 				data = entry->props[j].u.data;
