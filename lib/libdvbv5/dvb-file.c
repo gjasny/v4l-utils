@@ -344,11 +344,13 @@ int dvb_write_format_oneline(const char *fname,
 			if (formats[i].delsys == delsys)
 				break;
 		}
-		delsys_compat = get_compat_format(delsys);
-		for (i = 0; formats[i].delsys != 0; i++) {
-			if (formats[i].delsys == delsys_compat) {
-				delsys = delsys_compat;
-				break;
+		if (!formats[i].delsys) {
+			delsys_compat = get_compat_format(delsys);
+			for (i = 0; formats[i].delsys != 0; i++) {
+				if (formats[i].delsys == delsys_compat) {
+					delsys = delsys_compat;
+					break;
+				}
 			}
 		}
 		if (formats[i].delsys == 0) {
