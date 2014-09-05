@@ -16,7 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  *
- * Per-delivery system properties, according with the specs:
+ * Per-delivery system properties defined at libdvbv5 scope, following
+ * the same model as defined at the Linux DVB media specs:
  * 	http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html
  */
 #ifndef _DVB_V5_STD_H
@@ -25,21 +26,18 @@
 #include <stddef.h>
 #include "dvb-frontend.h"
 
-extern const unsigned int sys_dvbt_props[];
-extern const unsigned int sys_dvbt2_props[];
-extern const unsigned int sys_isdbt_props[];
-extern const unsigned int sys_atsc_props[];
-extern const unsigned int sys_atscmh_props[];
-extern const unsigned int sys_dvbc_annex_ac_props[];
-extern const unsigned int sys_dvbc_annex_b_props[];
-extern const unsigned int sys_dvbs_props[];
-extern const unsigned int sys_dvbs2_props[];
-extern const unsigned int sys_turbo_props[];
-extern const unsigned int sys_isdbs_props[];
-extern const unsigned int *dvb_v5_delivery_system[];
-extern const void *dvb_v5_attr_names[];
+/*
+ * User DTV codes, for internal usage. There are two sets of
+ * properties. One for DTV properties and another one for statistics
+ */
 
-/* User DTV codes, for internal usage */
+/*
+ * First set: DTV properties that don't belong to Kernelspace
+ *
+ * Those properties contain data that comes from the MPEG-TS
+ * tables, like audio/video/other PIDs, and satellite config
+ */
+
 
 #define DTV_USER_COMMAND_START 256
 
@@ -66,6 +64,15 @@ enum dvb_sat_polarization {
 	POLARIZATION_R		= 4,
 };
 
+/*
+ * Second set: DTV statistics
+ *
+ * Those properties contain statistics measurements that aren't
+ * either provided by the Kernel via property cmd/value pair,
+ * like status (with has its own ioctl), or that are derivated
+ * measures from two or more Kernel reported stats.
+ */
+
 #define DTV_STAT_COMMAND_START 512
 
 #define DTV_STATUS              (DTV_STAT_COMMAND_START + 0)
@@ -90,10 +97,31 @@ enum dvb_quality {
 	DVB_QUAL_GOOD,
 };
 
+/*
+ * Some tables to translate from value to string
+ */
+
+/*
+ * The tables below are raw ways to translate from some DTV
+ * values into strings. The better is to use the API-provided
+ * function dvb_cmd_name() and dvb_dvb_attr_names(), instead
+ * of using the tables directly.
+ */
+extern const unsigned int sys_dvbt_props[];
+extern const unsigned int sys_dvbt2_props[];
+extern const unsigned int sys_isdbt_props[];
+extern const unsigned int sys_atsc_props[];
+extern const unsigned int sys_atscmh_props[];
+extern const unsigned int sys_dvbc_annex_ac_props[];
+extern const unsigned int sys_dvbc_annex_b_props[];
+extern const unsigned int sys_dvbs_props[];
+extern const unsigned int sys_dvbs2_props[];
+extern const unsigned int sys_turbo_props[];
+extern const unsigned int sys_isdbs_props[];
+extern const unsigned int *dvb_v5_delivery_system[];
 extern const char *dvb_sat_pol_name[6];
 extern const char *dvb_user_name[DTV_USER_NAME_SIZE + 1];
 extern const char *dvb_stat_name[DTV_STAT_NAME_SIZE + 1];
 extern const void *dvb_user_attr_names[];
 
 #endif
-
