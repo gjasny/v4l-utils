@@ -436,7 +436,7 @@ int dvb_write_format_oneline(const char *fname,
 					if (j >= entry->n_props) {
 						fprintf(stderr,
 							"property %s not supported while parsing entry %d of %s\n",
-							dvb_v5_name[entry->props[i].cmd],
+							dvb_cmd_name(table->prop),
 							line, fname);
 					}
 
