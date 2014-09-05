@@ -51,8 +51,10 @@
 #define DTV_DISEQC_WAIT         (DTV_USER_COMMAND_START + 7)
 #define DTV_DISEQC_LNB          (DTV_USER_COMMAND_START + 8)
 #define DTV_FREQ_BPF            (DTV_USER_COMMAND_START + 9)
+#define DTV_PLS_CODE		(DTV_USER_COMMAND_START + 10)	/* Used only for format conversion */
+#define DTV_PLS_MODE		(DTV_USER_COMMAND_START + 11)	/* Used only for format conversion */
 
-#define DTV_MAX_USER_COMMAND    DTV_FREQ_BPF
+#define DTV_MAX_USER_COMMAND    DTV_PLS_MODE
 
 #define DTV_USER_NAME_SIZE	(1 + DTV_MAX_USER_COMMAND - DTV_USER_COMMAND_START)
 

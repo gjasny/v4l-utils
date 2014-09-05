@@ -567,13 +567,33 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 		entry->other_el_pid_len = len;
 	}
 
-	/*
-	 * If the key is not known, just discard.
-	 * This way, it provides forward compatibility with new keys
-	 * that may be added in the future.
-	 */
-	if (!is_video && !is_audio)
+	if (!is_video && !is_audio) {
+		int cmd = 0;
+
+		for (i = 0; i < DTV_USER_NAME_SIZE; i++) {
+			cmd = i + DTV_USER_COMMAND_START;
+
+			if (!strcasecmp(key, dvb_user_name[i]))
+				break;
+		}
+
+		/*
+		 * If the key is not known, just discard.
+		 * This way, it provides forward compatibility with new keys
+		 * that may be added in the future.
+		 */
+
+		if (i >= DTV_USER_NAME_SIZE)
+			return 0;
+
+		/* FIXME: this works only for integer values */
+		n_prop = entry->n_props;
+		entry->props[n_prop].cmd = cmd;
+		entry->props[n_prop].u.data = atol(value);
+		entry->n_props++;
+
 		return 0;
+	}
 
 	/* Video and audio may have multiple values */
 
@@ -784,6 +804,14 @@ int dvb_write_file(const char *fname, struct dvb_file *dvb_file)
 						break;
 					attr_name++;
 				}
+			}
+
+			/* Handle parameters with optional values */
+			switch (entry->props[i].cmd) {
+			case DTV_PLS_CODE:
+			case DTV_PLS_MODE:
+				if (entry->props[i].u.data == -1)
+				continue;
 			}
 
 			if (!attr_name || !*attr_name)

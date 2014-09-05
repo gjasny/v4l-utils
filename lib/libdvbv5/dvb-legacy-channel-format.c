@@ -140,6 +140,8 @@ static const struct parse_table sys_dvbs2_table[] = {
 	{ DTV_ROLLOFF, PTABLE(channel_parse_rolloff) },
 	{ DTV_MODULATION, PTABLE(channel_parse_modulation) },
 	{ DTV_STREAM_ID, NULL, 0, 0, 1, 0 },
+	{ DTV_PLS_CODE, NULL, 0, 0, 1, -1 },
+	{ DTV_PLS_MODE, NULL, 0, 0, 1, -1 },
 };
 
 static const struct parse_table sys_dvbt_table[] = {
