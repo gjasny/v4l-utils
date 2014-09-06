@@ -25,6 +25,9 @@
 #include <libdvbv5/dvb-file.h>
 #include <libdvbv5/dvb-v5-std.h>
 
+#define PTABLE(a) .table = a, .size=ARRAY_SIZE(a)
+
+
 /*
  * Standard channel.conf format for DVB-T, DVB-C, DVB-S and ATSC
  */

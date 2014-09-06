@@ -136,9 +136,6 @@ enum dvb_file_formats {
 	FILE_DVBV5,
 };
 
-#define PTABLE(a) .table = a, .size=ARRAY_SIZE(a)
-
-
 struct dvb_v5_descriptors;
 
 #ifdef __cplusplus
