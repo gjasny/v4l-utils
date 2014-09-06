@@ -113,7 +113,7 @@ static const char *zap_parse_polarization[] = {
 	[POLARIZATION_R] = "R",
 };
 
-static const struct parse_table sys_atsc_table[] = {
+static const struct dvb_parse_table sys_atsc_table[] = {
 	{ DTV_CH_NAME, NULL, 0 },
 
 	{ DTV_FREQUENCY, NULL, 0 },
@@ -125,7 +125,7 @@ static const struct parse_table sys_atsc_table[] = {
 
 };
 
-static const struct parse_table sys_dvbc_table[] = {
+static const struct dvb_parse_table sys_dvbc_table[] = {
 	{ DTV_CH_NAME, NULL, 0 },
 
 	{ DTV_FREQUENCY, NULL, 0 },
@@ -140,7 +140,7 @@ static const struct parse_table sys_dvbc_table[] = {
 };
 
 /* Note: On DVB-S, frequency and symbol rate are divided by 1000 */
-static const struct parse_table sys_dvbs_table[] = {
+static const struct dvb_parse_table sys_dvbs_table[] = {
 	{ DTV_CH_NAME, NULL, 0 },
 
 	{ DTV_FREQUENCY, NULL, 0 },
@@ -153,7 +153,7 @@ static const struct parse_table sys_dvbs_table[] = {
 
 };
 
-static const struct parse_table sys_dvbt_table[] = {
+static const struct dvb_parse_table sys_dvbt_table[] = {
 	{ DTV_CH_NAME, NULL, 0 },
 
 	{ DTV_FREQUENCY, NULL, 0 },
@@ -171,7 +171,7 @@ static const struct parse_table sys_dvbt_table[] = {
 	{ DTV_SERVICE_ID, NULL, 0 },
 };
 
-const struct parse_file channel_file_zap_format = {
+const struct dvb_parse_file channel_file_zap_format = {
 	.has_delsys_id = 0,
 	.delimiter = ":\n",
 	.formats = {

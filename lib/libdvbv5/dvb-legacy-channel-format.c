@@ -112,12 +112,12 @@ static const char *channel_parse_rolloff[] = {
 	[ROLLOFF_AUTO] = "AUTO",
 };
 
-static const struct parse_table sys_atsc_table[] = {
+static const struct dvb_parse_table sys_atsc_table[] = {
 	{ DTV_FREQUENCY, NULL, 0 },
 	{ DTV_MODULATION, PTABLE(channel_parse_modulation) },
 };
 
-static const struct parse_table sys_dvbc_table[] = {
+static const struct dvb_parse_table sys_dvbc_table[] = {
 	{ DTV_FREQUENCY, NULL, 0 },
 	{ DTV_SYMBOL_RATE, NULL, 0 },
 	{ DTV_INNER_FEC, PTABLE(channel_parse_code_rate) },
@@ -125,14 +125,14 @@ static const struct parse_table sys_dvbc_table[] = {
 };
 
 /* Note: On DVB-S, frequency is divided by 1000 */
-static const struct parse_table sys_dvbs_table[] = {
+static const struct dvb_parse_table sys_dvbs_table[] = {
 	{ DTV_FREQUENCY, NULL, 0 },
 	{ DTV_POLARIZATION, PTABLE(channel_parse_polarization) },
 	{ DTV_SYMBOL_RATE, NULL, 0 },
 	{ DTV_INNER_FEC, PTABLE(channel_parse_code_rate) },
 };
 
-static const struct parse_table sys_dvbs2_table[] = {
+static const struct dvb_parse_table sys_dvbs2_table[] = {
 	{ DTV_FREQUENCY, NULL, 0 },
 	{ DTV_POLARIZATION, PTABLE(channel_parse_polarization) },
 	{ DTV_SYMBOL_RATE, NULL, 0 },
@@ -144,7 +144,7 @@ static const struct parse_table sys_dvbs2_table[] = {
 	{ DTV_PLS_MODE, NULL, 0, 0, 1, -1 },
 };
 
-static const struct parse_table sys_dvbt_table[] = {
+static const struct dvb_parse_table sys_dvbt_table[] = {
 	{ DTV_FREQUENCY, NULL, 0 },
 	{ DTV_BANDWIDTH_HZ, PTABLE(channel_parse_bandwidth) },
 	{ DTV_CODE_RATE_HP, PTABLE(channel_parse_code_rate) },
@@ -155,7 +155,7 @@ static const struct parse_table sys_dvbt_table[] = {
 	{ DTV_HIERARCHY, PTABLE(channel_parse_hierarchy) },
 };
 
-static const struct parse_table sys_dvbt2_table[] = {
+static const struct dvb_parse_table sys_dvbt2_table[] = {
 	{ DTV_FREQUENCY, NULL, 0 },
 	{ DTV_BANDWIDTH_HZ, PTABLE(channel_parse_bandwidth) },
 	{ DTV_CODE_RATE_HP, PTABLE(channel_parse_code_rate) },
@@ -167,7 +167,7 @@ static const struct parse_table sys_dvbt2_table[] = {
 	{ DTV_STREAM_ID, NULL, 0, 0, 1, -1 },
 };
 
-const struct parse_file channel_file_format = {
+const struct dvb_parse_file channel_file_format = {
 	.has_delsys_id = 1,
 	.delimiter = " \n\t",
 	.formats = {

@@ -204,19 +204,19 @@ static void adjust_delsys(struct dvb_entry *entry)
  */
 struct dvb_file *dvb_parse_format_oneline(const char *fname,
 					  uint32_t delsys,
-					  const struct parse_file *parse_file)
+					  const struct dvb_parse_file *parse_file)
 {
 	const char *delimiter = parse_file->delimiter;
-	const struct parse_struct *formats = parse_file->formats;
+	const struct dvb_parse_struct *formats = parse_file->formats;
 	char *buf = NULL, *p;
 	size_t size = 0;
 	int len = 0;
 	int i, j, line = 0;
 	struct dvb_file *dvb_file;
 	FILE *fd;
-	const struct parse_struct *fmt;
+	const struct dvb_parse_struct *fmt;
 	struct dvb_entry *entry = NULL;
-	const struct parse_table *table;
+	const struct dvb_parse_table *table;
 	char err_msg[80];
 	int has_inversion;
 
@@ -400,15 +400,15 @@ static uint32_t get_compat_format(uint32_t delivery_system)
 int dvb_write_format_oneline(const char *fname,
 			     struct dvb_file *dvb_file,
 			     uint32_t delsys,
-			     const struct parse_file *parse_file)
+			     const struct dvb_parse_file *parse_file)
 {
 	const char delimiter = parse_file->delimiter[0];
-	const struct parse_struct *formats = parse_file->formats;
+	const struct dvb_parse_struct *formats = parse_file->formats;
 	int i, j, line = 0, first;
 	FILE *fp;
-	const struct parse_struct *fmt;
+	const struct dvb_parse_struct *fmt;
 	struct dvb_entry *entry;
-	const struct parse_table *table;
+	const struct dvb_parse_table *table;
 	uint32_t data;
 	char err_msg[80];
 	uint32_t delsys_compat = 0;

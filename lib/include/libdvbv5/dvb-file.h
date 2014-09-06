@@ -106,7 +106,7 @@ struct dvb_file {
  * commonly found on DVB legacy applications.
  */
 
-struct parse_table {
+struct dvb_parse_table {
 	unsigned int prop;
 	const char **table;
 	unsigned int size;
@@ -115,17 +115,17 @@ struct parse_table {
 	int	default_value;		/* default for the optional field */
 };
 
-struct parse_struct {
+struct dvb_parse_struct {
 	char				*id;
 	uint32_t			delsys;
-	const struct parse_table	*table;
+	const struct dvb_parse_table	*table;
 	unsigned int			size;
 };
 
-struct parse_file {
+struct dvb_parse_file {
 	int has_delsys_id;
 	char *delimiter;
-	struct parse_struct formats[];
+	struct dvb_parse_struct formats[];
 };
 
 /* Known file formats */
@@ -171,19 +171,19 @@ static inline void dvb_file_free(struct dvb_file *dvb_file)
 }
 
 /* From dvb-legacy-channel-format.c */
-extern const struct parse_file channel_file_format;
+extern const struct dvb_parse_file channel_file_format;
 
 /* From dvb-zap-format.c */
-extern const struct parse_file channel_file_zap_format;
+extern const struct dvb_parse_file channel_file_zap_format;
 
 /* From dvb-file.c */
 struct dvb_file *dvb_parse_format_oneline(const char *fname,
 					  uint32_t delsys,
-					  const struct parse_file *parse_file);
+					  const struct dvb_parse_file *parse_file);
 int dvb_write_format_oneline(const char *fname,
 			     struct dvb_file *dvb_file,
 			     uint32_t delsys,
-			     const struct parse_file *parse_file);
+			     const struct dvb_parse_file *parse_file);
 
 struct dvb_file *dvb_read_file(const char *fname);
 
