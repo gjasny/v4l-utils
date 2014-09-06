@@ -414,6 +414,23 @@ static int check_frontend(struct arguments *args,
 	return status & FE_HAS_LOCK;
 }
 
+static void get_show_stats(struct arguments *args,
+			   struct dvb_v5_fe_parms *parms,
+			   int loop)
+{
+	int rc;
+	fe_status_t status = 0;
+
+	args->n_status_lines = 0;
+	do {
+		rc = dvb_fe_get_stats(parms);
+		if (!rc)
+			print_frontend_stats(stderr, args, parms);
+		if (!timeout_flag && loop)
+			usleep(1000000);
+	} while (!timeout_flag && loop);
+}
+
 #define BUFLEN (188 * 256)
 static void copy_to_file(int in_fd, int out_fd, int timeout, int silent)
 {
@@ -937,8 +954,8 @@ int main(int argc, char **argv)
 		} else {
 			if (!timeout_flag)
 				fprintf(stderr, "DVR interface '%s' can now be opened\n", args.dvr_dev);
-			while (timeout_flag == 0)
-				sleep(1);
+
+			get_show_stats(&args, parms, 1);
 		}
 		if (args.silent < 2)
 			print_frontend_stats(stderr, &args, parms);
