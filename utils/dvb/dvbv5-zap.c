@@ -694,7 +694,7 @@ int do_traffic_monitor(struct arguments *args,
 				     pidt[_pid] * 1000. / diff * 8 * 188 / 1024,
 				     pidt[_pid] * 188 / 1024);
 				printf("\n\n");
-				print_frontend_stats(stdout, args, parms);
+				get_show_stats(args, parms, 0);
 				wait += 1000;
 			}
 		}
@@ -941,7 +941,7 @@ int main(int argc, char **argv)
 		}
 
 		if (args.silent < 2)
-			print_frontend_stats(stderr, &args, parms);
+			get_show_stats(&args, parms, 0);
 
 		if (file_fd >= 0) {
 			if ((dvr_fd = open(args.dvr_dev, O_RDONLY)) < 0) {
@@ -958,7 +958,7 @@ int main(int argc, char **argv)
 			get_show_stats(&args, parms, 1);
 		}
 		if (args.silent < 2)
-			print_frontend_stats(stderr, &args, parms);
+			get_show_stats(&args, parms, 0);
 	}
 	err = 0;
 
