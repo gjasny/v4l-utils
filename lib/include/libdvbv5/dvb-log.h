@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
+ * Copyright (c) 2011-2014 - Mauro Carvalho Chehab
  * Copyright (c) 2012 - Andre Roth <neolynx@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,10 @@
 #include <syslog.h>
 
 typedef void (*dvb_logfunc)(int level, const char *fmt, ...) __attribute__ (( format( printf, 2, 3 )));
+
+/*
+ * Macros used internally inside libdvbv5 frontend part, to output logs
+ */
 
 #ifndef __DVB_FE_PRIV_H
 
@@ -72,6 +76,10 @@ typedef void (*dvb_logfunc)(int level, const char *fmt, ...) __attribute__ (( fo
 
 #endif
 
+/*
+ * This is the prototype of the internal log function that it is used,
+ * if the library client doesn't desire to override with something else.
+ */
 void dvb_default_log(int level, const char *fmt, ...) __attribute__ (( format( printf, 2, 3 )));
 
 #endif
