@@ -128,7 +128,19 @@ struct dvb_parse_file {
 	struct dvb_parse_struct formats[];
 };
 
-/* Known file formats */
+/**
+ * enum dvb_file_formats - Known file formats
+ *
+ * @FILE_UNKNOWN:	File format is unknown
+ * @FILE_ZAP:		File is at the dvb-apps "dvbzap" format
+ * @FILE_CHANNEL:	File is at the dvb-apps output format for dvb-zap
+ * @FILE_DVBV5:		File is at libdvbv5 format
+ *
+ * Please notice that the channel format defined here has a few optional
+ * fields that aren't part of the dvb-apps format, for DVB-S2 and for DVB-T2.
+ * They're there to match the formats found at dtv-scan-tables package up to
+ * September, 5 2014.
+ */
 enum dvb_file_formats {
 	FILE_UNKNOWN,
 	FILE_ZAP,
@@ -142,6 +154,14 @@ struct dvb_v5_descriptors;
 extern "C" {
 #endif
 
+/**
+ * dvb_file_free() - Deallocates memory associated with a struct dvb_file
+ *
+ * @dvb_file:	dvb_file struct to be deallocated
+ *
+ * This function assumes that several functions were dynamically allocated
+ * by the library file functions.
+ */
 static inline void dvb_file_free(struct dvb_file *dvb_file)
 {
 	struct dvb_entry *entry = dvb_file->first_entry, *next;
@@ -167,24 +187,71 @@ static inline void dvb_file_free(struct dvb_file *dvb_file)
 	free(dvb_file);
 }
 
+/*
+ * File format description structures defined for the several formats that
+ * the library can read natively.
+ */
+
 /* From dvb-legacy-channel-format.c */
 extern const struct dvb_parse_file channel_file_format;
 
 /* From dvb-zap-format.c */
 extern const struct dvb_parse_file channel_file_zap_format;
 
-/* From dvb-file.c */
-struct dvb_file *dvb_parse_format_oneline(const char *fname,
-					  uint32_t delsys,
-					  const struct dvb_parse_file *parse_file);
-int dvb_write_format_oneline(const char *fname,
-			     struct dvb_file *dvb_file,
-			     uint32_t delsys,
-			     const struct dvb_parse_file *parse_file);
+/*
+ * Prototypes for the several functions defined at dvb-file.c
+ */
 
+/**
+ * dvb_read_file() - Read a file at libdvbv5 format
+ *
+ * @fname:	file name
+ *
+ * It returns a pointer to struct dvb_file describing the entries that
+ * were read from the file. If it fails, NULL is returned.
+ */
 struct dvb_file *dvb_read_file(const char *fname);
 
+/**
+ * dvb_write_file() - Write a file at libdvbv5 format
+ *
+ * @fname:	file name
+ * @dvb_file:	contents of the file to be written
+ *
+ * It returns zero if success, or a positive error number if it fails.
+ */
 int dvb_write_file(const char *fname, struct dvb_file *dvb_file);
+
+/**
+ * dvb_read_file_format() - Read a file on any format natively supported by
+ *			    the library
+ *
+ * @fname:	file name
+ * @delsys:	Delivery system, as specified by enum fe_delivery_system
+ * @format:	Name of the format to be read
+ *
+ * It returns a pointer to struct dvb_file describing the entries that
+ * were read from the file. If it fails, NULL is returned.
+ */
+struct dvb_file *dvb_read_file_format(const char *fname,
+					   uint32_t delsys,
+					   enum dvb_file_formats format);
+
+/**
+ * dvb_write_file() - Write a file on any format natively supported by
+ *			    the library
+ *
+ * @fname:	file name
+ * @dvb_file:	contents of the file to be written
+ * @delsys:	Delivery system, as specified by enum fe_delivery_system
+ * @format:	Name of the format to be read
+ *
+ * It returns zero if success, or a positive error number if it fails.
+ */
+int dvb_write_file_format(const char *fname,
+			  struct dvb_file *dvb_file,
+			  uint32_t delsys,
+			  enum dvb_file_formats format);
 
 int dvb_store_entry_prop(struct dvb_entry *entry,
 		     uint32_t cmd, uint32_t value);
@@ -197,13 +264,19 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 		      int get_detected, int get_nit);
 int dvb_parse_delsys(const char *name);
 enum dvb_file_formats dvb_parse_format(const char *name);
-struct dvb_file *dvb_read_file_format(const char *fname,
-					   uint32_t delsys,
-					   enum dvb_file_formats format);
-int dvb_write_file_format(const char *fname,
-			  struct dvb_file *dvb_file,
-			  uint32_t delsys,
-			  enum dvb_file_formats format);
+
+/*
+ * Routines to read a non-libdvbv5 format. They're called by
+ * dvb_read_file_format() or dvb_write_file_format()
+ */
+
+struct dvb_file *dvb_parse_format_oneline(const char *fname,
+					  uint32_t delsys,
+					  const struct dvb_parse_file *parse_file);
+int dvb_write_format_oneline(const char *fname,
+			     struct dvb_file *dvb_file,
+			     uint32_t delsys,
+			     const struct dvb_parse_file *parse_file);
 
 #ifdef __cplusplus
 }
