@@ -336,8 +336,7 @@ int dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
 	return dvb_read_sections(parms, dmx_fd, &tab, timeout);
 }
 
-struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system,
-						       int verbose)
+struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system)
 {
 	struct dvb_v5_descriptors *dvb_scan_handler;
 
@@ -386,7 +385,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 
 	struct dvb_v5_descriptors *dvb_scan_handler;
 
-	dvb_scan_handler = dvb_scan_alloc_handler_table(delivery_system, parms->p.verbose);
+	dvb_scan_handler = dvb_scan_alloc_handler_table(delivery_system);
 	if (!dvb_scan_handler)
 		return NULL;
 

@@ -111,8 +111,7 @@ int dvb_read_sections(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			     struct dvb_table_filter *sect,
 			     unsigned timeout);
 
-struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system,
-						       int verbose);
+struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system);
 
 void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler);
 
