@@ -302,7 +302,7 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 					i, dvb_cmd_name(table->prop));
 				goto error;
 			}
-			if (table->size) {
+			if (p && table->size) {
 				for (j = 0; j < table->size; j++)
 					if (!table->table[j] || !strcasecmp(table->table[j], p))
 						break;
