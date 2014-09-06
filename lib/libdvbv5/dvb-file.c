@@ -1274,7 +1274,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 	return 0;
 }
 
-enum file_formats dvb_parse_format(const char *name)
+enum dvb_file_formats dvb_parse_format(const char *name)
 {
 	if (!strcasecmp(name, "ZAP"))
 		return FILE_ZAP;
@@ -1351,7 +1351,7 @@ int dvb_parse_delsys(const char *name)
 
 struct dvb_file *dvb_read_file_format(const char *fname,
 				  uint32_t delsys,
-				  enum file_formats format)
+				  enum dvb_file_formats format)
 {
 	struct dvb_file *dvb_file;
 
@@ -1380,7 +1380,7 @@ struct dvb_file *dvb_read_file_format(const char *fname,
 int dvb_write_file_format(const char *fname,
 			  struct dvb_file *dvb_file,
 			  uint32_t delsys,
-			  enum file_formats format)
+			  enum dvb_file_formats format)
 {
 	int ret;
 

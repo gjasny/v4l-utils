@@ -39,7 +39,7 @@
 
 struct arguments {
 	char *input_file, *output_file;
-	enum file_formats input_format, output_format;
+	enum dvb_file_formats input_format, output_format;
 	int delsys;
 };
 

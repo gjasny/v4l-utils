@@ -56,7 +56,7 @@ struct arguments {
 	unsigned diseqc_wait, silent, verbose, frontend_only, freq_bpf;
 	unsigned timeout, dvr, rec_psi, exit_after_tuning;
 	unsigned n_apid, n_vpid, all_pids;
-	enum file_formats input_format, output_format;
+	enum dvb_file_formats input_format, output_format;
 	unsigned traffic_monitor, low_traffic;
 	char *search;
 

@@ -129,7 +129,7 @@ struct dvb_parse_file {
 };
 
 /* Known file formats */
-enum file_formats {
+enum dvb_file_formats {
 	FILE_UNKNOWN,
 	FILE_ZAP,
 	FILE_CHANNEL,
@@ -199,14 +199,14 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_descriptors *dvb_desc,
 		      int get_detected, int get_nit);
 int dvb_parse_delsys(const char *name);
-enum file_formats dvb_parse_format(const char *name);
+enum dvb_file_formats dvb_parse_format(const char *name);
 struct dvb_file *dvb_read_file_format(const char *fname,
 					   uint32_t delsys,
-					   enum file_formats format);
+					   enum dvb_file_formats format);
 int dvb_write_file_format(const char *fname,
 			  struct dvb_file *dvb_file,
 			  uint32_t delsys,
-			  enum file_formats format);
+			  enum dvb_file_formats format);
 
 #ifdef __cplusplus
 }

@@ -50,7 +50,7 @@ struct arguments {
 	int force_dvbv3, lna, lnb, sat_number, freq_bpf;
 	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
 	unsigned other_nit;
-	enum file_formats input_format, output_format;
+	enum dvb_file_formats input_format, output_format;
 
 	/* Used by status print */
 	unsigned n_status_lines;
