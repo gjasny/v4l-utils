@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 - Mauro Carvalho Chehab
+ * Copyright (c) 2011-2014 - Mauro Carvalho Chehab
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -10,23 +10,63 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
- *
  */
 #ifndef _DVB_FILE_H
 #define _DVB_FILE_H
 
 #include "dvb-fe.h"
 
+/*
+ * DVB structures used to represent all files opened by the libdvbv5 library.
+ *
+ * Those structs represents each individual entry on a file, and the file
+ * as a hole.
+ */
+
+/**
+ * struct dvb_elementary_pid - associates an elementary stream type with its PID
+ *
+ * @type:	Elementary stream type
+ * @pid:	Elementary stream Program ID
+ */
 struct dvb_elementary_pid {
 	uint8_t  type;
 	uint16_t pid;
 };
 
+/**
+ * struct dvb_entry - Represents one entry on a DTV file.
+ *
+ * @props:		a property key/value pair. The keys are the ones
+ *			specified at the DVB API, plus the ones defined
+ *			internally by libdvbv5, at the dvb-v5-std.h header file.
+ * @next:		a pointer to the next entry. NULL if this is the last
+ *			one.
+ * @service_id:		Service ID associated with a program inside a
+ *			transponder. Please note that pure "channel" files
+ *			will have this field filled with 0.
+ * @video_pid:		Array with the video program IDs inside a service
+ * @audio_pid:		Array with the audio program IDs inside a service
+ * @other_el_pid:	Array with all non-audio/video  program IDs inside a
+ *			service
+ * @video_pid_len:	Size of the video_pid array
+ * @audio_pid_len:	Size of the audio_pid array
+ * @other_el_pid_len:	Size of the other_el_pid array
+ * @channel:		String containing the name of the channel
+ * @vchannel:		String representing the Number of the channel
+ * @location:		String representing the location of the channel
+ * @sat_number:		For satellite streams, this represents the number of
+ *			the satellite dish on a DiSeqC arrangement. Should be
+ *			zero on arrangements without DiSeqC.
+ * @freq_bpf:		SCR/Unicable band-pass filter frequency to use, in kHz.
+ *			For non SRC/Unicable arrangements, it should be zero.
+ * @diseqc_wait:	Extra time to wait for DiSeqC commands to complete,
+ *			in ms. The library will use 15 ms as the minimal time,
+ *			plus the time specified on this field.
+ * @lnb:		String with the name of the LNBf to be used for
+ *			satellite tuning. The names should match the names
+ *			provided by dvb_sat_get_lnb() call (see dvb-sat.h).
+ */
 struct dvb_entry {
 	struct dtv_property props[DTV_MAX_COMMAND];
 	unsigned int n_props;
@@ -46,11 +86,25 @@ struct dvb_entry {
 	char *lnb;
 };
 
+/**
+ * struct dvb_file - Describes an entire DVB file opened
+ *
+ * @fname:		name of the file
+ * @n_entries:		number of the entries read
+ * @first_entry:	entry for the first entry. NULL if the file is empty.
+ */
 struct dvb_file {
 	char *fname;
 	int n_entries;
 	struct dvb_entry *first_entry;
 };
+
+/*
+ * DVB file format tables
+ *
+ * The structs below are used to represent oneline formats like the ones
+ * commonly found on DVB legacy applications.
+ */
 
 struct parse_table {
 	unsigned int prop;
