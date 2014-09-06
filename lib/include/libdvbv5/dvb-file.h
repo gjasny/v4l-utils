@@ -253,16 +253,102 @@ int dvb_write_file_format(const char *fname,
 			  uint32_t delsys,
 			  enum dvb_file_formats format);
 
+
+/**
+ * dvb_store_entry_prop() - Stores a key/value pair on a DVB file entry
+ *
+ * @entry:	entry to be filled
+ * @cmd:	key for the property to be used. It be one of the DVBv5
+ * 		properties, plus the libdvbv5 ones, as defined at dvb-v5-std.h
+ * @value:	value for the property.
+ *
+ * This function seeks for a property with the name specified by cmd and
+ * fills it with value. If the entry doesn't exist, it creates a new key.
+ *
+ * Returns 0 if success, or, if the entry has already DTV_MAX_COMMAND
+ * properties, it returns -1.
+ */
 int dvb_store_entry_prop(struct dvb_entry *entry,
 		     uint32_t cmd, uint32_t value);
+
+/**
+ * dvb_retrieve_entry_prop() - Retrieves the value associated witha key on
+ *			       a DVB file entry
+ *
+ * @entry:	entry to be used
+ * @cmd:	key for the property to be found. It be one of the DVBv5
+ * 		properties, plus the libdvbv5 ones, as defined at dvb-v5-std.h
+ * @value:	pointer to store the value associated with the property.
+ *
+ * This function seeks for a property with the name specified by cmd and
+ * fills value with its contents.
+ *
+ * Returns 0 if success, or, -1 if the entry doesn't exist.
+ */
 int dvb_retrieve_entry_prop(struct dvb_entry *entry,
 			uint32_t cmd, uint32_t *value);
 
+/**
+ * dvb_store_channel() - stored a new scanned channel into a dvb_file struct
+ * @dvb_file:		file struct to be filled
+ * @parms:		struct dvb_v5_fe_parms used by libdvbv5 frontend
+ * @dvb_desc:		struct dvb_desc as described at descriptors.h, filled
+ *			with the descriptors associated with a DVB channel.
+ *			those descriptors can be filled by calling one of the
+ *			scan functions defined at dvb-sat.h.
+ * @get_detected:	if different than zero, uses the frontend parameters
+ *			obtained from the device driver (such as modulation,
+ *			FEC, etc)
+ * @get_nit:		if true, uses the parameters obtained from the MPEG-TS
+ *			NIT table to add newly detected transponders.
+ *
+ * This function should be used to store the services found on a scanned
+ * transponder. Initially, it copies the same parameters used to set the
+ * frontend, that came from a file where the Service ID and Elementary Stream
+ * PIDs are unknown. At tuning time, it is common to set the device to tune
+ * on auto-detection mode (e. g. using QAM/AUTO, for example, to autodetect
+ * the QAM modulation). The libdvbv5's logic will be to check the detected
+ * values. So, the modulation might, for example, have changed to QAM/256.
+ * In such case, if get_detected is 0, it will store QAM/AUTO at the struct.
+ * If get_detected is different than zero, it will store QAM/256.
+ * If get_nit is different than zero, and if the MPEG-TS has info about other
+ * physical channels/transponders, this function will add newer entries to
+ * dvb_file, for it to seek for new transponders. This is very useful especially
+ * for DVB-C, where all transponders belong to the same operator. Knowing one
+ * frequency is generally enough to get all DVB-C transponders.
+ */
 int dvb_store_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
 		      struct dvb_v5_descriptors *dvb_desc,
 		      int get_detected, int get_nit);
+
+/**
+ * dvb_parse_delsys() - Ancillary function that seeks for a delivery system
+ *
+ * @name:	string containing the name of the Delivery System to seek
+ *
+ * If the name is found, this function returns the DVBv5 property that
+ * corresponds to the string given. The function is case-insensitive, and
+ * it can check for alternate ways to write the name of a Delivery System.
+ * Currently, it supports: DVB-C, DVB-H, DVB-S, DVB-S2, DVB-T, DVB-T2,
+ * ISDB-C, ISDB-S, ISDB-T, ATSC-MH, DVBC/ANNEX_A, DVBC/ANNEX_B, DVBT, DSS,
+ * DVBS, DVBS2, DVBH, ISDBT, ISDBS, ISDBC, ATSC, ATSCMH, DTMB, CMMB, DAB,
+ * DVBT2, TURBO, DVBC/ANNEX_C.
+ * Please notice that this doesn't mean that all those standards are properly
+ * supported by the library.
+ */
 int dvb_parse_delsys(const char *name);
+
+/**
+ * dvb_parse_format() - Ancillary function that parses the name of a file
+ * 			format
+ * @name:	string containing the name of the format
+ *		Current valid names are: ZAP, CHANNEL and DVBV5. The name is
+ *		case-insensitive.
+ *
+ * It returns FILE_ZAP, FILE_CHANNEL, FILE_DVBV5 if the name was translated,
+ * or FILE_UNKNOWN otherwise.
+ */
 enum dvb_file_formats dvb_parse_format(const char *name);
 
 /*
