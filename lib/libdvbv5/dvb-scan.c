@@ -345,7 +345,6 @@ struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system
 	if (!dvb_scan_handler)
 		return NULL;
 
-	dvb_scan_handler->verbose = verbose;
 	dvb_scan_handler->delivery_system = delivery_system;
 
 	return dvb_scan_handler;

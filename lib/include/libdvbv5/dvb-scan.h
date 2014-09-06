@@ -42,7 +42,6 @@ struct dvb_v5_descriptors_program {
 };
 
 struct dvb_v5_descriptors {
-	int verbose;
 	uint32_t delivery_system;
 
 	struct dvb_entry *entry;
