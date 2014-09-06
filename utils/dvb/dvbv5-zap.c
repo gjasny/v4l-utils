@@ -419,7 +419,6 @@ static void get_show_stats(struct arguments *args,
 			   int loop)
 {
 	int rc;
-	fe_status_t status = 0;
 
 	args->n_status_lines = 0;
 	do {
