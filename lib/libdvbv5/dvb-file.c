@@ -963,7 +963,7 @@ static char *dvb_vchannel(struct dvb_v5_fe_parms_priv *parms,
 
 static int sort_other_el_pid(const void *a_arg, const void *b_arg)
 {
-	const struct el_pid *a = a_arg, *b = b_arg;
+	const struct dvb_elementary_pid *a = a_arg, *b = b_arg;
 	int r;
 
 	r = b->type - a->type;

@@ -22,7 +22,7 @@
 
 #include "dvb-fe.h"
 
-struct el_pid {
+struct dvb_elementary_pid {
 	uint8_t  type;
 	uint16_t pid;
 };
@@ -33,7 +33,7 @@ struct dvb_entry {
 	struct dvb_entry *next;
 	uint16_t service_id;
 	uint16_t *video_pid, *audio_pid;
-	struct el_pid *other_el_pid;
+	struct dvb_elementary_pid *other_el_pid;
 	unsigned video_pid_len, audio_pid_len, other_el_pid_len;
 	char *channel;
 	char *vchannel;
