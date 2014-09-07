@@ -29,44 +29,48 @@ extern "C" {
 #endif
 
 /**
- * dvb_dmx_open() - Opens a DVB demux in read/write mode
+ * @fn dvb_dmx_open
+ * @brief Opens a DVB demux in read/write mode
  *
- * @adapter:	DVB adapter number to open
- * @demux:	DVB demux number to open
+ * @param adapter	DVB adapter number to open
+ * @param demux		DVB demux number to open
  *
  * This is a wrapper function to open. File is always opened in blocking mode.
  */
 int dvb_dmx_open(int adapter, int demux);
 
 /**
- * dvb_dmx_close() - Stops the DMX filter for the file descriptor and closes
+ * @fn dvb_dmx_close
+ * @brief Stops the DMX filter for the file descriptor and closes
  *
- * @dmx_fd:	File descriptor to close
+ * @param dmx_fd	File descriptor to close
  *
  * This is a wrapper function to open.
  */
 void dvb_dmx_close(int dmx_fd);
 
 /**
- * dvb_dmx_stop() - Stops the DMX filter for a given file descriptor
+ * @fn dvb_dmx_stop
+ * @brief Stops the DMX filter for a given file descriptor
  *
- * @dmx_fd:	File descriptor to close
+ * @param dmx_fd	File descriptor to close
  *
  * This is a wrapper function to open.
  */
 void dvb_dmx_stop(int dmx_fd);
 
 /**
- * dvb_set_pesfilter - Start a filter for a MPEG-TS Packetized Elementary
+ * @fn dvb_set_pesfilter
+ * @brief Start a filter for a MPEG-TS Packetized Elementary
  * 		       Stream (PES)
  *
- * @dmx_fd:	File descriptor for the demux device
- * @pid:	Program ID to filter. Use 0x2000 to select all PIDs
- * @type:	type of the PID (DMX_PES_VIDEO, DMX_PES_AUDIO, DMX_PES_OTHER,
- *		etc).
- * @output:	Where the data will be output (DMX_OUT_TS_TAP, DMX_OUT_DECODER,
- *		etc).
- * @buffersize:	Size of the buffer to be allocated to store the filtered data.
+ * @param dmx_fd	File descriptor for the demux device
+ * @param pid		Program ID to filter. Use 0x2000 to select all PIDs
+ * @param type		type of the PID (DMX_PES_VIDEO, DMX_PES_AUDIO,
+ *			DMX_PES_OTHER, etc).
+ * @param output	Where the data will be output (DMX_OUT_TS_TAP,
+ *			DMX_OUT_DECODER, etc).
+ * @param buffersize	Size of the buffer to be allocated to store the filtered data.
  *
  * This is a wrapper function for DMX_SET_PES_FILTER ioctl.
  * See http://linuxtv.org/downloads/v4l-dvb-apis/dvb_demux.html
@@ -76,15 +80,16 @@ int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
 		      dmx_output_t output, int buffersize);
 
 /**
- * dvb_set_section_filter - Sets a MPEG-TS section filter
+ * @fn dvb_set_section_filter
+ * @brief Sets a MPEG-TS section filter
  *
- * @dmx_fd:	File descriptor for the demux device
- * @filtsize:	Size of the filter (up to 18 btyes)
- * @filter:	data to filter. Can be NULL or should have filtsize length
- * @mask:	filter mask. Can be NULL or should have filtsize length
- * @mode:	mode mask. Can be NULL or should have filtsize length
- * @flags:	flags for set filter (DMX_CHECK_CRC,DMX_ONESHOT,
- *		DMX_IMMEDIATE_START).
+ * @param dmx_fd	File descriptor for the demux device
+ * @param filtsize	Size of the filter (up to 18 btyes)
+ * @param filter	data to filter. Can be NULL or should have filtsize length
+ * @param mask		filter mask. Can be NULL or should have filtsize length
+ * @param mode		mode mask. Can be NULL or should have filtsize length
+ * @param flags		flags for set filter (DMX_CHECK_CRC,DMX_ONESHOT,
+ *			DMX_IMMEDIATE_START).
  *
  * This is a wrapper function for DMX_SET_FILTER ioctl.
  * See http://linuxtv.org/downloads/v4l-dvb-apis/dvb_demux.html
@@ -97,10 +102,11 @@ int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
 			   unsigned int flags);
 
 /**
- * dvb_get_pmt_pid - read the contents of the MPEG-TS PAT table, seeking for
- *		     an specific service ID
+ * @fn dvb_get_pmt_pid
+ * @brief read the contents of the MPEG-TS PAT table, seeking for
+ *		      	an specific service ID
  *
- * @sid:	Session ID to seeking
+ * @param sid	Session ID to seeking
  *
  * This function currently assumes that the hope PAT fits into one session.
  * At return, it returns a negative value if error or the PID associated with

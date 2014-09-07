@@ -24,10 +24,11 @@
  */
 
 /**
- * struct dvb_elementary_pid - associates an elementary stream type with its PID
+ * @struct dvb_elementary_pid
+ * @brief associates an elementary stream type with its PID
  *
- * @type:	Elementary stream type
- * @pid:	Elementary stream Program ID
+ * @param type	Elementary stream type
+ * @param pid	Elementary stream Program ID
  */
 struct dvb_elementary_pid {
 	uint8_t  type;
@@ -35,35 +36,36 @@ struct dvb_elementary_pid {
 };
 
 /**
- * struct dvb_entry - Represents one entry on a DTV file.
+ * @struct dvb_entry
+ * @brief  Represents one entry on a DTV file
  *
- * @props:		a property key/value pair. The keys are the ones
+ * @param props		a property key/value pair. The keys are the ones
  *			specified at the DVB API, plus the ones defined
  *			internally by libdvbv5, at the dvb-v5-std.h header file.
- * @next:		a pointer to the next entry. NULL if this is the last
+ * @param next		a pointer to the next entry. NULL if this is the last
  *			one.
- * @service_id:		Service ID associated with a program inside a
+ * @param service_id		Service ID associated with a program inside a
  *			transponder. Please note that pure "channel" files
  *			will have this field filled with 0.
- * @video_pid:		Array with the video program IDs inside a service
- * @audio_pid:		Array with the audio program IDs inside a service
- * @other_el_pid:	Array with all non-audio/video  program IDs inside a
+ * @param video_pid		Array with the video program IDs inside a service
+ * @param audio_pid		Array with the audio program IDs inside a service
+ * @param other_el_pid	Array with all non-audio/video  program IDs inside a
  *			service
- * @video_pid_len:	Size of the video_pid array
- * @audio_pid_len:	Size of the audio_pid array
- * @other_el_pid_len:	Size of the other_el_pid array
- * @channel:		String containing the name of the channel
- * @vchannel:		String representing the Number of the channel
- * @location:		String representing the location of the channel
- * @sat_number:		For satellite streams, this represents the number of
+ * @param video_pid_len	Size of the video_pid array
+ * @param audio_pid_len	Size of the audio_pid array
+ * @param other_el_pid_len	Size of the other_el_pid array
+ * @param channel		String containing the name of the channel
+ * @param vchannel		String representing the Number of the channel
+ * @param location		String representing the location of the channel
+ * @param sat_number		For satellite streams, this represents the number of
  *			the satellite dish on a DiSeqC arrangement. Should be
  *			zero on arrangements without DiSeqC.
- * @freq_bpf:		SCR/Unicable band-pass filter frequency to use, in kHz.
+ * @param freq_bpf		SCR/Unicable band-pass filter frequency to use, in kHz.
  *			For non SRC/Unicable arrangements, it should be zero.
- * @diseqc_wait:	Extra time to wait for DiSeqC commands to complete,
+ * @param diseqc_wait	Extra time to wait for DiSeqC commands to complete,
  *			in ms. The library will use 15 ms as the minimal time,
  *			plus the time specified on this field.
- * @lnb:		String with the name of the LNBf to be used for
+ * @param lnb		String with the name of the LNBf to be used for
  *			satellite tuning. The names should match the names
  *			provided by dvb_sat_get_lnb() call (see dvb-sat.h).
  */
@@ -87,11 +89,12 @@ struct dvb_entry {
 };
 
 /**
- * struct dvb_file - Describes an entire DVB file opened
+ * @struct dvb_file
+ * @brief  Describes an entire DVB file opened
  *
- * @fname:		name of the file
- * @n_entries:		number of the entries read
- * @first_entry:	entry for the first entry. NULL if the file is empty.
+ * @param fname		name of the file
+ * @param n_entries		number of the entries read
+ * @param first_entry	entry for the first entry. NULL if the file is empty.
  */
 struct dvb_file {
 	char *fname;
@@ -107,7 +110,8 @@ struct dvb_file {
  */
 
 /**
- * @struct dvb_parse_table	Describes the fields to parse on a file
+ * @struct dvb_parse_table
+ * @brief  Describes the fields to parse on a file
  *
  * @param prop		Name of the DVBv5 or libdvbv5 property field
  * @param table		Name of a translation table for string to int conversion
@@ -127,8 +131,8 @@ struct dvb_parse_table {
 	int	default_value;
 };
 /**
- * @struct dvb_parse_struct	Describes the format to parse an specific
- *				delivery system
+ * @struct dvb_parse_struct
+ * @brief  Describes the format to parse an specific delivery system
  * @param id		String that identifies the delivery system on the
  * 			file to be parsed
  * @param delsys	Delivery system
@@ -144,7 +148,8 @@ struct dvb_parse_struct {
 };
 
 /**
- * @struct dvb_parse_file	Describes an entire file format
+ * @struct dvb_parse_file
+ * @brief  Describes an entire file format
  *
  * @param has_delsys_id		A non-zero value indicates that the id field
  *				at the formats vector should be used
@@ -160,12 +165,13 @@ struct dvb_parse_file {
 };
 
 /**
- * enum dvb_file_formats - Known file formats
+ * @enum  dvb_file_formats
+ * @brief Known file formats
  *
- * @FILE_UNKNOWN:	File format is unknown
- * @FILE_ZAP:		File is at the dvb-apps "dvbzap" format
- * @FILE_CHANNEL:	File is at the dvb-apps output format for dvb-zap
- * @FILE_DVBV5:		File is at libdvbv5 format
+ * @param FILE_UNKNOWN	File format is unknown
+ * @param FILE_ZAP		File is at the dvb-apps "dvbzap" format
+ * @param FILE_CHANNEL	File is at the dvb-apps output format for dvb-zap
+ * @param FILE_DVBV5		File is at libdvbv5 format
  *
  * Please notice that the channel format defined here has a few optional
  * fields that aren't part of the dvb-apps format, for DVB-S2 and for DVB-T2.
@@ -186,9 +192,10 @@ extern "C" {
 #endif
 
 /**
- * dvb_file_free() - Deallocates memory associated with a struct dvb_file
+ * @fn dvb_file_free
+ * @brief Deallocates memory associated with a struct dvb_file
  *
- * @dvb_file:	dvb_file struct to be deallocated
+ * @param dvb_file	dvb_file struct to be deallocated
  *
  * This function assumes that several functions were dynamically allocated
  * by the library file functions.
@@ -234,9 +241,10 @@ extern const struct dvb_parse_file channel_file_zap_format;
  */
 
 /**
- * dvb_read_file() - Read a file at libdvbv5 format
+ * @fn dvb_read_file
+ * @brief Read a file at libdvbv5 format
  *
- * @fname:	file name
+ * @param fname	file name
  *
  * It returns a pointer to struct dvb_file describing the entries that
  * were read from the file. If it fails, NULL is returned.
@@ -244,22 +252,24 @@ extern const struct dvb_parse_file channel_file_zap_format;
 struct dvb_file *dvb_read_file(const char *fname);
 
 /**
- * dvb_write_file() - Write a file at libdvbv5 format
+ * @fn dvb_write_file
+ * @brief Write a file at libdvbv5 format
  *
- * @fname:	file name
- * @dvb_file:	contents of the file to be written
+ * @param fname	file name
+ * @param dvb_file	contents of the file to be written
  *
  * It returns zero if success, or a positive error number if it fails.
  */
 int dvb_write_file(const char *fname, struct dvb_file *dvb_file);
 
 /**
- * dvb_read_file_format() - Read a file on any format natively supported by
+ * @fn dvb_read_file_format
+ * @brief Read a file on any format natively supported by
  *			    the library
  *
- * @fname:	file name
- * @delsys:	Delivery system, as specified by enum fe_delivery_system
- * @format:	Name of the format to be read
+ * @param fname	file name
+ * @param delsys	Delivery system, as specified by enum fe_delivery_system
+ * @param format	Name of the format to be read
  *
  * It returns a pointer to struct dvb_file describing the entries that
  * were read from the file. If it fails, NULL is returned.
@@ -269,13 +279,14 @@ struct dvb_file *dvb_read_file_format(const char *fname,
 					   enum dvb_file_formats format);
 
 /**
- * dvb_write_file() - Write a file on any format natively supported by
+ * @fn dvb_write_file
+ * @brief Write a file on any format natively supported by
  *			    the library
  *
- * @fname:	file name
- * @dvb_file:	contents of the file to be written
- * @delsys:	Delivery system, as specified by enum fe_delivery_system
- * @format:	Name of the format to be read
+ * @param fname	file name
+ * @param dvb_file	contents of the file to be written
+ * @param delsys	Delivery system, as specified by enum fe_delivery_system
+ * @param format	Name of the format to be read
  *
  * It returns zero if success, or a positive error number if it fails.
  */
@@ -286,12 +297,13 @@ int dvb_write_file_format(const char *fname,
 
 
 /**
- * dvb_store_entry_prop() - Stores a key/value pair on a DVB file entry
+ * @fn dvb_store_entry_prop
+ * @brief Stores a key/value pair on a DVB file entry
  *
- * @entry:	entry to be filled
- * @cmd:	key for the property to be used. It be one of the DVBv5
+ * @param entry	entry to be filled
+ * @param cmd	key for the property to be used. It be one of the DVBv5
  * 		properties, plus the libdvbv5 ones, as defined at dvb-v5-std.h
- * @value:	value for the property.
+ * @param value	value for the property.
  *
  * This function seeks for a property with the name specified by cmd and
  * fills it with value. If the entry doesn't exist, it creates a new key.
@@ -303,13 +315,13 @@ int dvb_store_entry_prop(struct dvb_entry *entry,
 		     uint32_t cmd, uint32_t value);
 
 /**
- * dvb_retrieve_entry_prop() - Retrieves the value associated witha key on
- *			       a DVB file entry
+ * @fn dvb_retrieve_entry_prop
+ * @brief Retrieves the value associated witha key on a DVB file entry
  *
- * @entry:	entry to be used
- * @cmd:	key for the property to be found. It be one of the DVBv5
+ * @param entry	entry to be used
+ * @param cmd	key for the property to be found. It be one of the DVBv5
  * 		properties, plus the libdvbv5 ones, as defined at dvb-v5-std.h
- * @value:	pointer to store the value associated with the property.
+ * @param value	pointer to store the value associated with the property.
  *
  * This function seeks for a property with the name specified by cmd and
  * fills value with its contents.
@@ -320,17 +332,19 @@ int dvb_retrieve_entry_prop(struct dvb_entry *entry,
 			uint32_t cmd, uint32_t *value);
 
 /**
- * dvb_store_channel() - stored a new scanned channel into a dvb_file struct
- * @dvb_file:		file struct to be filled
- * @parms:		struct dvb_v5_fe_parms used by libdvbv5 frontend
- * @dvb_desc:		struct dvb_desc as described at descriptors.h, filled
+ * @fn dvb_store_channel
+ * @brief stored a new scanned channel into a dvb_file struct
+ *
+ * @param dvb_file	file struct to be filled
+ * @param parms		struct dvb_v5_fe_parms used by libdvbv5 frontend
+ * @param dvb_desc		struct dvb_desc as described at descriptors.h, filled
  *			with the descriptors associated with a DVB channel.
  *			those descriptors can be filled by calling one of the
  *			scan functions defined at dvb-sat.h.
- * @get_detected:	if different than zero, uses the frontend parameters
+ * @param get_detected	if different than zero, uses the frontend parameters
  *			obtained from the device driver (such as modulation,
  *			FEC, etc)
- * @get_nit:		if true, uses the parameters obtained from the MPEG-TS
+ * @param get_nit		if true, uses the parameters obtained from the MPEG-TS
  *			NIT table to add newly detected transponders.
  *
  * This function should be used to store the services found on a scanned
@@ -354,9 +368,10 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 		      int get_detected, int get_nit);
 
 /**
- * dvb_parse_delsys() - Ancillary function that seeks for a delivery system
+ * @fn dvb_parse_delsys
+ * @brief Ancillary function that seeks for a delivery system
  *
- * @name:	string containing the name of the Delivery System to seek
+ * @param name	string containing the name of the Delivery System to seek
  *
  * If the name is found, this function returns the DVBv5 property that
  * corresponds to the string given. The function is case-insensitive, and
@@ -371,9 +386,9 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 int dvb_parse_delsys(const char *name);
 
 /**
- * dvb_parse_format() - Ancillary function that parses the name of a file
- * 			format
- * @name:	string containing the name of the format
+ * @fn dvb_parse_format
+ * @brief Ancillary function that parses the name of a file format
+ * @param name	string containing the name of the format
  *		Current valid names are: ZAP, CHANNEL and DVBV5. The name is
  *		case-insensitive.
  *

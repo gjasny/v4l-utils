@@ -26,27 +26,29 @@
  */
 
 /**
- * struct dvbsat_freqrange - Defines a frequency range used by Satellite
+ * @struct dvbsat_freqrange
+ * @brief Defines a frequency range used by Satellite
  *
- * @low:	low frequency, in kHz
- * @high:	high frequency, in kHz
+ * @param low	low frequency, in kHz
+ * @param high	high frequency, in kHz
  */
 struct dvbsat_freqrange {
 	unsigned low, high;
 };
 
 /**
- * struct dvb_sat_lnb - Stores the information of a LNBf
+ * @struct dvb_sat_lnb
+ * @brief Stores the information of a LNBf
  *
- * @name:		long name of the LNBf type
- * @alias:		short name for the LNBf type
- * @lowfreq:		Low frequency Intermediate Frequency of the LNBf, in kHz
- * @highfreq:		High frequency Intermediate frequency of the LNBf,
+ * @param name		long name of the LNBf type
+ * @param alias		short name for the LNBf type
+ * @param lowfreq	Low frequency Intermediate Frequency of the LNBf, in kHz
+ * @param highfreq	High frequency Intermediate frequency of the LNBf,
  *			in kHz
- * @rangeswitch:	For LNBf that has multiple frequency ranges controlled
+ * @param rangeswitch	For LNBf that has multiple frequency ranges controlled
  *			by a voltage change, specify the start frequency where
  *			the second range will be applied.
- * @freqrange:		Contains the range(s) of frequencies supported by a
+ * @param freqrange	Contains the range(s) of frequencies supported by a
  *			given LNBf.
  *
  * The LNBf (low-noise block downconverter) is a type of amplifier that is
@@ -75,9 +77,10 @@ extern "C"
 /* From libsat.c */
 
 /**
- * dvb_sat_search_lnb() - search for a LNBf entry
+ * @fn dvb_sat_search_lnb
+ * @brief search for a LNBf entry
  *
- * @name:	name of the LNBf entry to seek.
+ * @param name	name of the LNBf entry to seek.
  *
  * On sucess, it returns a non-negative number with corresponds to the LNBf
  * entry inside the LNBf structure at dvb-sat.c.
@@ -86,9 +89,10 @@ extern "C"
 int dvb_sat_search_lnb(const char *name);
 
 /**
- * dvb_print_lnb() - prints the contents of a LNBf entry at STDOUT.
+ * @fn dvb_print_lnb
+ * @brief prints the contents of a LNBf entry at STDOUT.
  *
- * @i:		index for the entry
+ * @param i		index for the entry
  *
  * returns -1 if the index is out of range, zero otherwise.
  */
@@ -103,18 +107,20 @@ int dvb_print_lnb(int i);
 void dvb_print_all_lnb(void);
 
 /**
- * dvb_sat_get_lnb() - gets a LNBf entry at its internal database
+ * @fn dvb_sat_get_lnb()
+ * @brief gets a LNBf entry at its internal database
  *
- * @i:		index for the entry.
+ * @param i		index for the entry.
  *
  * returns NULL if not found, of a struct dvb_sat_lnb pointer otherwise.
  */
 const struct dvb_sat_lnb *dvb_sat_get_lnb(int i);
 
 /**
- * dvb_sat_set_parms() - sets the satellite parameters
+ * @fn dvb_sat_set_parms()
+ * @brief sets the satellite parameters
  *
- * @parms:	struct dvb_v5_fe_parms pointer.
+ * @param parms	struct dvb_v5_fe_parms pointer.
  *
  * This function is called internally by the library to set the LNBf
  * parameters, if the dvb_v5_fe_parms::lnb field is filled.
