@@ -47,29 +47,34 @@
 #define DTV_USER_COMMAND_START 256
 
 /**
- * enum libdvbv5_properties - properties used internally on userspace
- *
- * @param DTV_POLARIZATION	Satellite polarization (for Satellite delivery systems)
- * @param DTV_AUDIO_PID	Audio PID
- * @param DTV_VIDEO_PID	Video PID
- * @param DTV_SERVICE_ID	MPEG TS service ID
- * @param DTV_CH_NAME	Digital TV service name
- * @param DTV_VCHANNEL	Digital TV channel number. May contain symbols
- * @param DTV_SAT_NUMBER	Number of the satellite (used on multi-dish Satellite
- *			systems)
- * @param DTV_DISEQC_WAIT	Extra time needed to wait for DiSeqC to complete, in ms.
- *			The minimal wait time is 15 ms. The time here will be
- *			added to the minimal time.
- * @param DTV_DISEQC_LNB	LNBf name
- * @param DTV_FREQ_BPF	SCR/Unicable band-pass filter frequency in kHz
- * @param DTV_PLS_CODE	DVB-T2 PLS code. Not used internally. It is needed
+ * @def DTV_POLARIZATION
+ *	 @brief Satellite polarization (for Satellite delivery systems)
+ * @def DTV_AUDIO_PID
+ * 	@brief Audio PID
+ * @def DTV_VIDEO_PID
+ *	@brief Video PID
+ * @def DTV_SERVICE_ID
+ *	@brief MPEG TS service ID
+ * @def DTV_CH_NAME
+ *	@brief Digital TV service name
+ * @def DTV_VCHANNEL
+ *	@brief Digital TV channel number. May contain symbols
+ * @def DTV_SAT_NUMBER
+ *	@brief Number of the satellite (used on multi-dish Satellite systems)
+ * @def DTV_DISEQC_WAIT
+ *	@brief Extra time needed to wait for DiSeqC to complete, in ms.
+ *		The minimal wait time is 15 ms. The time here will be
+ *		added to the minimal time.
+ * @def DTV_DISEQC_LNB
+ *	@brief LNBf name
+ * @def DTV_FREQ_BPF
+ *	@brief SCR/Unicable band-pass filter frequency in kHz
+ * @def DTV_PLS_CODE
+ *	@brief DVB-T2 PLS code. Not used internally. It is needed
  *			only for file conversion.
- * @param DTV_PLS_MODE	DVB-T2 PLS mode. Not used internally. It is needed
+ * @def DTV_PLS_MODE
+ *	@brief DVB-T2 PLS mode. Not used internally. It is needed
  *			only for file conversion.
- *
- * This is not actually an enum, as c++ has problems when the number of
- * enums change. So, we map internally as enum, to avoid compatibility
- * issues with binaries compiled with an older version of the library.
  */
 #define DTV_POLARIZATION        (DTV_USER_COMMAND_START + 0)
 #define DTV_VIDEO_PID           (DTV_USER_COMMAND_START + 1)
@@ -117,26 +122,25 @@ enum dvb_sat_polarization {
 #define DTV_STAT_COMMAND_START 512
 
 /**
- * enum libdvbv5_prop_stats - statistics properties used internally on userspace
- *
- * @param DTV_STATUS		Lock status of a DTV frontend. This actually comes from
+ * @def DTV_STATUS
+ *	@brief Lock status of a DTV frontend. This actually comes from
  *			the Kernel, but it uses a separate ioctl.
- * @param DTV_BER		Bit Error Rate. This is a parameter that it is
+ * @def DTV_BER
+ * 	@brief Bit Error Rate. This is a parameter that it is
  *			derivated from two counters at the Kernel side
- * @param DTV_PER		Packet Error Rate. This is a parameter that it is
+ * @def DTV_PER
+ *	@brief Packet Error Rate. This is a parameter that it is
  *			derivated from two counters at the Kernel side
- * @param DTV_QUALITY	A quality indicator that represents if a locked
+ * @def DTV_QUALITY
+ * 	@brief A quality indicator that represents if a locked
  *			channel provides a good, OK or poor signal. This is
  *			estimated considering the error rates, signal strengh
  *			and/or S/N ratio of the carrier.
- * @param DTV_PRE_BER	Bit Error Rate before Viterbi. This is the error rate
+ * @def DTV_PRE_BER
+ *	@brief Bit Error Rate before Viterbi. This is the error rate
  *			before applying the Forward Error Correction. This is
  *			a parameter that it is derivated from two counters
  *			at the Kernel side.
- *
- * This is not actually an enum, as c++ has problems when the number of
- * enums change. So, we map internally as enum, to avoid compatibility
- * issues with binaries compiled with an older version of the library.
  */
 #define DTV_STATUS              (DTV_STAT_COMMAND_START + 0)
 #define DTV_BER                 (DTV_STAT_COMMAND_START + 1)
