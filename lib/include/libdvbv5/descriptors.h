@@ -18,8 +18,17 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
-/*
- * Descriptors, as defined on ETSI EN 300 468 V1.11.1 (2010-04)
+/**
+ * @file descriptors.h
+ * @brief Provides a way to handle MPEG-TS descriptors found on Digital TV
+ * 	streams.
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ * @author Andre Roth
+ *
+ * Most of the descriptors are defined on ETSI EN 300 468 V1.11.1 (2010-04)
+ *
+ * Please submit bug report and patches to linux-media@vger.kernel.org
  */
 
 
@@ -30,15 +39,24 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 
+/** @brief Maximum size of a table session to be parsed */
 #define DVB_MAX_PAYLOAD_PACKET_SIZE 4096
+
+/** @brief number of bytes for the descriptor's CRC check */
 #define DVB_CRC_SIZE 4
 
-struct dvb_v5_fe_parms;
 
+#ifndef _DOXYGEN
+struct dvb_v5_fe_parms;
+#endif
+
+/** @brief Function prototype for a function that initializes the descriptors parsing */
 typedef void (*dvb_table_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, void **table);
 
+/** @brief Table with all possible descriptors */
 extern const dvb_table_init_func dvb_table_initializers[256];
 
+#ifndef _DOXYGEN
 #define bswap16(b) do {\
 	b = ntohs(b); \
 } while (0)
@@ -52,12 +70,26 @@ extern const dvb_table_init_func dvb_table_initializers[256];
 	uint8_t length; \
 	struct dvb_desc *next
 
+#endif /* _DOXYGEN */
+
+/**
+ * @struct dvb_desc
+ * @brief Linked list containing the several descriptors found on a
+ * 	  MPEG-TS table
+ *
+ * @param type		Descriptor type
+ * @param length	Length of the descriptor
+ * @param next		pointer to the next descriptor
+ * @param data		Descriptor data
+ */
+
 struct dvb_desc {
 	DVB_DESC_HEADER();
 
 	uint8_t data[];
 } __attribute__((packed));
 
+#ifndef _DOXYGEN
 
 #define dvb_desc_foreach( _desc, _tbl ) \
 	for( struct dvb_desc *_desc = _tbl->descriptor; _desc; _desc = _desc->next ) \
@@ -66,28 +98,93 @@ struct dvb_desc {
 	for( _struct *_desc = (_struct *) _tbl->descriptor; _desc; _desc = (_struct *) _desc->next ) \
 		if(_desc->type == _type) \
 
+#endif /* _DOXYGEN */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+ * @brief Converts from BCD to CPU integer internal representation
+ *
+ * @param bcd	value in BCD encoding
+ */
 uint32_t dvb_bcd(uint32_t bcd);
 
-void dvb_hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *buf, int len);
+/**
+ * @brief dumps data into the logs in hexadecimal format
+ *
+ * @param parms			Struct dvb_v5_fe_parms pointer
+ * @param prefix	String to be printed before the dvb_hexdump
+ * @param buf		Buffer to hex dump
+ * @param len		Number of bytes to show
+ */
+void dvb_hexdump(struct dvb_v5_fe_parms *parms, const char *prefix,
+		 const unsigned char *buf, int len);
 
-int  dvb_desc_parse(struct dvb_v5_fe_parms *parms, const uint8_t *buf, uint16_t section_length, struct dvb_desc **head_desc);
+/**
+ * @brief parse MPEG-TS descriptors
+ *
+ * @param parms		Struct dvb_v5_fe_parms pointer
+ * @param buf		Buffer with data to be parsed
+ * @param buflen	Size of the buffer to be parsed
+ * @param head_desc	pointer to the place to store the parsed data
+ *
+ * This function takes a buf as argument and parses it to find the
+ * MPEG-TS descriptors inside it, creating a linked list.
+ *
+ * On success, head_desc will be allocated and filled with a linked list
+ * with the descriptors found inside the buffer.
+ *
+ * This function is used by the several MPEG-TS table handlers to parse
+ * the entire table that got read by dvb_read_sessions and other similar
+ * functions.
+ *
+ * @return Returns 0 on success, a negative value otherwise.
+ */
+int  dvb_desc_parse(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+		    uint16_t buflen, struct dvb_desc **head_desc);
+
+/**
+ * @brief frees a dvb_desc linked list
+ *
+ * @param list	struct dvb_desc pointer.
+ */
 void dvb_desc_free (struct dvb_desc **list);
+
+/**
+ * @brief prints the contents of a struct dvb_desc linked list
+ *
+ * @param parms		Struct dvb_v5_fe_parms pointer
+ * @param desc	struct dvb_desc pointer.
+ */
 void dvb_desc_print(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }
 #endif
 
-struct dvb_v5_fe_parms;
-
+/** @brief Function prototype for the descriptors parsing init code */
 typedef int (*dvb_desc_init_func) (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+
+/** @brief Function prototype for the descriptors parsing print code */
 typedef void (*dvb_desc_print_func)(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+
+/** @brief Function prototype for the descriptors memory free code */
 typedef void (*dvb_desc_free_func) (struct dvb_desc *desc);
 
+/**
+ * @struct dvb_descriptor
+ * @brief Contains the parser information for the MPEG-TS parser code
+ *
+ * @param name		String containing the name of the descriptor
+ * @param init		Pointer to a function to initialize the descriptor
+ *			parser. This function fills the descriptor-specific
+ *			internal structures
+ * @param print		Prints the content of the descriptor
+ * @param free		Frees all memory blocks allocated by the init function
+ * @param size		Descriptor's size, in bytes.
+ */
 struct dvb_descriptor {
 	const char *name;
 	dvb_desc_init_func init;
@@ -96,8 +193,14 @@ struct dvb_descriptor {
 	ssize_t size;
 };
 
+/**
+ * @brief Contains the parsers for the several descriptors
+ */
 extern const struct dvb_descriptor dvb_descriptors[];
 
+/**
+ * @brief List containing all descriptors used by Digital TV MPEG-TS
+ */
 enum descriptors {
 	/* ISO/IEC 13818-1 */
 	video_stream_descriptor				= 0x02,

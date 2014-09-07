@@ -39,12 +39,7 @@
  * @brief typedef used by dvb_fe_open2 for the log function
  */
 
-/* Doxygen gets confused by __attribute__ */
-#ifndef _DOXYGEN
 typedef void (*dvb_logfunc)(int level, const char *fmt, ...) __attribute__ (( format( printf, 2, 3 )));
-#else
-typedef void (*dvb_logfunc)(int level, const char *fmt, ...);
-#endif
 
 /*
  * Macros used internally inside libdvbv5 frontend part, to output logs
