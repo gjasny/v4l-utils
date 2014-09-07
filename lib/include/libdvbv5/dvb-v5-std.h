@@ -41,6 +41,31 @@
 
 #define DTV_USER_COMMAND_START 256
 
+/**
+ * enum libdvbv5_properties - properties used internally on userspace
+ *
+ * @DTV_POLARIZATION:	Satellite polarization (for Satellite delivery systems)
+ * @DTV_AUDIO_PID:	Audio PID
+ * @DTV_VIDEO_PID:	Video PID
+ * @DTV_SERVICE_ID:	MPEG TS service ID
+ * @DTV_CH_NAME:	Digital TV service name
+ * @DTV_VCHANNEL:	Digital TV channel number. May contain symbols
+ * @DTV_SAT_NUMBER:	Number of the satellite (used on multi-dish Satellite
+ *			systems)
+ * @DTV_DISEQC_WAIT:	Extra time needed to wait for DiSeqC to complete, in ms.
+ *			The minimal wait time is 15 ms. The time here will be
+ *			added to the minimal time.
+ * @DTV_DISEQC_LNB:	LNBf name
+ * @DTV_FREQ_BPF:	SCR/Unicable band-pass filter frequency in kHz
+ * @DTV_PLS_CODE:	DVB-T2 PLS code. Not used internally. It is needed
+ *			only for file conversion.
+ * @DTV_PLS_MODE:	DVB-T2 PLS mode. Not used internally. It is needed
+ *			only for file conversion.
+ *
+ * This is not actually an enum, as c++ has problems when the number of
+ * enums change. So, we map internally as enum, to avoid compatibility
+ * issues with binaries compiled with an older version of the library.
+ */
 #define DTV_POLARIZATION        (DTV_USER_COMMAND_START + 0)
 #define DTV_VIDEO_PID           (DTV_USER_COMMAND_START + 1)
 #define DTV_AUDIO_PID           (DTV_USER_COMMAND_START + 2)
@@ -51,13 +76,22 @@
 #define DTV_DISEQC_WAIT         (DTV_USER_COMMAND_START + 7)
 #define DTV_DISEQC_LNB          (DTV_USER_COMMAND_START + 8)
 #define DTV_FREQ_BPF            (DTV_USER_COMMAND_START + 9)
-#define DTV_PLS_CODE		(DTV_USER_COMMAND_START + 10)	/* Used only for format conversion */
-#define DTV_PLS_MODE		(DTV_USER_COMMAND_START + 11)	/* Used only for format conversion */
+#define DTV_PLS_CODE		(DTV_USER_COMMAND_START + 10)
+#define DTV_PLS_MODE		(DTV_USER_COMMAND_START + 11)
 
 #define DTV_MAX_USER_COMMAND    DTV_PLS_MODE
 
 #define DTV_USER_NAME_SIZE	(1 + DTV_MAX_USER_COMMAND - DTV_USER_COMMAND_START)
 
+/**
+ * enum dvb_sat_polarization - Polarization types for Satellite systems
+ *
+ * @POLARIZATION_OFF:		Polarization disabled/unused.
+ * @POLARIZATION_H:		Horizontal polarization
+ * @POLARIZATION_V:		Vertical polarization
+ * @POLARIZATION_L:		Left circular polarization (C-band)
+ * @POLARIZATION_R:		Right circular polarization (C-band)
+ */
 enum dvb_sat_polarization {
 	POLARIZATION_OFF	= 0,
 	POLARIZATION_H		= 1,
@@ -77,6 +111,28 @@ enum dvb_sat_polarization {
 
 #define DTV_STAT_COMMAND_START 512
 
+/**
+ * enum libdvbv5_prop_stats - statistics properties used internally on userspace
+ *
+ * @DTV_STATUS:		Lock status of a DTV frontend. This actually comes from
+ *			the Kernel, but it uses a separate ioctl.
+ * @DTV_BER:		Bit Error Rate. This is a parameter that it is
+ *			derivated from two counters at the Kernel side
+ * @DTV_PER:		Packet Error Rate. This is a parameter that it is
+ *			derivated from two counters at the Kernel side
+ * @DTV_QUALITY:	A quality indicator that represents if a locked
+ *			channel provides a good, OK or poor signal. This is
+ *			estimated considering the error rates, signal strengh
+ *			and/or S/N ratio of the carrier.
+ * @DTV_PRE_BER:	Bit Error Rate before Viterbi. This is the error rate
+ *			before applying the Forward Error Correction. This is
+ *			a parameter that it is derivated from two counters
+ *			at the Kernel side.
+ *
+ * This is not actually an enum, as c++ has problems when the number of
+ * enums change. So, we map internally as enum, to avoid compatibility
+ * issues with binaries compiled with an older version of the library.
+ */
 #define DTV_STATUS              (DTV_STAT_COMMAND_START + 0)
 #define DTV_BER                 (DTV_STAT_COMMAND_START + 1)
 #define DTV_PER                 (DTV_STAT_COMMAND_START + 2)
@@ -92,6 +148,21 @@ enum dvb_sat_polarization {
 
 #define DTV_NUM_STATS_PROPS	(DTV_NUM_KERNEL_STATS + DTV_STAT_NAME_SIZE)
 
+/**
+ * enum dvb_quality - provides an estimation about the user's experience
+ *		      while watching to a given MPEG stream
+ *
+ * @DVB_QUAL_UNKNOWN:	Quality could not be estimated, as the Kernel driver
+ *			doesn't provide enough statistics
+ *
+ * @DVB_QUAL_POOR:	The signal reception is poor. Signal loss or packets
+ *			can be lost too frequently.
+ * @DVB_QUAL_OK:	The signal reception is ok. Eventual artifacts could
+ *			be expected, but it should work.
+ * @DVB_QUAL_GOOD:	The signal is good, and not many errors are happening.
+ *			The user should have a good experience watching the
+ *			stream.
+ */
 enum dvb_quality {
 	DVB_QUAL_UNKNOWN = 0,
 	DVB_QUAL_POOR,
