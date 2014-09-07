@@ -26,7 +26,14 @@
  * @author Mauro Carvalho Chehab
  * @author Andre Roth
  *
- * Most of the descriptors are defined on ETSI EN 300 468 V1.11.1 (2010-04)
+ * The descriptors are defined on:
+ * - ISO/IEC 13818-1
+ * - ETSI EN 300 468 V1.11.1 (2010-04)
+ * - SCTE 35 2004
+ * - http://www.etherguidesystems.com/Help/SDOs/ATSC/Semantics/Descriptors/Default.aspx
+ * - http://www.coolstf.com/tsreader/descriptors.html
+ * - ABNT NBR 15603-1 2007
+ * - ATSC A/65:2009 spec
  *
  * Please submit bug report and patches to linux-media@vger.kernel.org
  */
