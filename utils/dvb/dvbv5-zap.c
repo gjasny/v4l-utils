@@ -711,7 +711,7 @@ int main(int argc, char **argv)
 	int lnb = -1, idx = -1;
 	int vpid = -1, apid = -1, sid = -1;
 	int pmtpid = 0;
-	int pat_fd = -1, pmt_fd = -1;
+	int pat_fd = -1, pmt_fd = -1, sid_fd = -1;
 	int audio_fd = -1, video_fd = -1;
 	int dvr_fd = -1, file_fd = -1;
 	int err = -1;
@@ -834,10 +834,18 @@ int main(int argc, char **argv)
 				sid);
 			goto err;
 		}
-		pmtpid = dvb_get_pmt_pid(args.demux_dev, sid);
+
+		sid_fd = dvb_dmx_open(args.adapter, args.demux);
+		if (sid_fd < 0) {
+			perror("opening pat demux failed");
+			return -1;
+		}
+		pmtpid = dvb_get_pmt_pid(sid_fd, sid);
+		dvb_dmx_close(sid_fd);
 		if (pmtpid <= 0) {
 			fprintf(stderr, "couldn't find pmt-pid for sid %04x\n",
 				sid);
+
 			goto err;
 		}
 

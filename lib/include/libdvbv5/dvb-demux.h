@@ -114,18 +114,19 @@ int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
 			   unsigned int flags);
 
 /**
- * @fn dvb_get_pmt_pid(const char *dmxdev, int sid)
+ * @fn int dvb_get_pmt_pid(int dmxfd, int sid)
  * @brief read the contents of the MPEG-TS PAT table, seeking for
  *		      	an specific service ID
  *
- * @param dmxdev	File name of the demux to be opened
+ * @param dmxfd		File descriptor for the demux device
  * @param sid		Session ID to seeking
  *
  * This function currently assumes that the hope PAT fits into one session.
- * At return, it returns a negative value if error or the PID associated with
+ *
+ * @return At return, it returns a negative value if error or the PID associated with
  * the desired Session ID.
  */
-int dvb_get_pmt_pid(const char *dmxdev, int sid);
+int dvb_get_pmt_pid(int dmxfd, int sid);
 
 #ifdef __cplusplus
 }
