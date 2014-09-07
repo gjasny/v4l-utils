@@ -106,15 +106,36 @@ struct dvb_file {
  * commonly found on DVB legacy applications.
  */
 
+/**
+ * @struct dvb_parse_table	Describes the fields to parse on a file
+ *
+ * @param prop		Name of the DVBv5 or libdvbv5 property field
+ * @param table		Name of a translation table for string to int conversion
+ * @param size		Size of the translation table
+ * @param mult_factor	Multiply factor - Used, for example, to multiply the
+ *			symbol rate read from a DVB-S table by 1000.
+ * @param has_default_value	It is different than zero when the property can be
+ *			optional. In this case, the next field should be present
+ * @param default_value	Default value for the optional field
+ */
 struct dvb_parse_table {
 	unsigned int prop;
 	const char **table;
 	unsigned int size;
-	int	mult_factor;	/* Factor to muliply from file parsing POV */
-	int	has_default_value;	/* Mark an optional integer field - should be the last fields */
-	int	default_value;		/* default for the optional field */
+	int	mult_factor;
+	int	has_default_value;
+	int	default_value;
 };
-
+/**
+ * @struct dvb_parse_struct	Describes the format to parse an specific
+ *				delivery system
+ * @param id		String that identifies the delivery system on the
+ * 			file to be parsed
+ * @param delsys	Delivery system
+ * @param table		the struct dvb_parse_table used to parse for this
+ *			specific delivery system
+ * @param size		Size of the table
+ */
 struct dvb_parse_struct {
 	char				*id;
 	uint32_t			delsys;
@@ -122,6 +143,16 @@ struct dvb_parse_struct {
 	unsigned int			size;
 };
 
+/**
+ * @struct dvb_parse_file	Describes an entire file format
+ *
+ * @param has_delsys_id		A non-zero value indicates that the id field
+ *				at the formats vector should be used
+ * @param delimiter		Delimiters to split entries on the format
+ * @param formats		A struct dvb_parse_struct vector with the
+ *				per delivery system parsers. This table should
+ *				terminate with an empty entry.
+ */
 struct dvb_parse_file {
 	int has_delsys_id;
 	char *delimiter;
