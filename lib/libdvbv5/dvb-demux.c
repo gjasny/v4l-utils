@@ -125,9 +125,9 @@ int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
 	return 0;
 }
 
-int dvb_get_pmt_pid(int dmxfd, int sid)
+int dvb_get_pmt_pid(int patfd, int sid)
 {
-	int patfd, count;
+	int count;
 	int pmt_pid = 0;
 	int patread = 0;
 	int section_length;
@@ -144,7 +144,6 @@ int dvb_get_pmt_pid(int dmxfd, int sid)
 
 	if (ioctl(patfd, DMX_SET_FILTER, &f) == -1) {
 		perror("ioctl DMX_SET_FILTER failed");
-		close(patfd);
 		return -1;
 	}
 
@@ -153,7 +152,6 @@ int dvb_get_pmt_pid(int dmxfd, int sid)
 		count = read(patfd, buf, sizeof(buft));
 		if (count < 0) {
 		perror("read_sections: read error");
-		close(patfd);
 		return -1;
 		}
 
