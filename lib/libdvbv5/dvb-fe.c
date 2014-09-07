@@ -424,7 +424,7 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *p,
 	}
 
 	if (delsys == SYS_UNDEFINED)
-		return -1;
+		return EINVAL;
 
 	dvb_log("Using a DVBv3 compat file for %s", delivery_system_name[delsys]);
 
@@ -597,7 +597,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 	/* DVBv3 call */
 	if (ioctl(parms->fd, FE_GET_FRONTEND, &v3_parms) == -1) {
 		dvb_perror("FE_GET_FRONTEND");
-		return -1;
+		return EINVAL;
 	}
 
 	dvb_fe_store_parm(&parms->p, DTV_FREQUENCY, v3_parms.frequency);
@@ -630,7 +630,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 		dvb_fe_store_parm(&parms->p, DTV_HIERARCHY, v3_parms.u.ofdm.hierarchy_information);
 		break;
 	default:
-		return -EINVAL;
+		return EINVAL;
 	}
 
 	return 0;
@@ -719,13 +719,13 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 		dvb_fe_retrieve_parm(&tmp_parms.p, DTV_HIERARCHY, &v3_parms.u.ofdm.hierarchy_information);
 		break;
 	default:
-		return -EINVAL;
+		return EINVAL;
 	}
 	if (ioctl(tmp_parms.fd, FE_SET_FRONTEND, &v3_parms) == -1) {
 		dvb_perror("FE_SET_FRONTEND");
 		if (tmp_parms.p.verbose)
 			dvb_fe_prt_parms(&tmp_parms.p);
-		return -1;
+		return EINVAL;
 	}
 
 	return 0;

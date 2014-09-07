@@ -18,7 +18,22 @@
 
 /**
  * @file dvb-file.h
+ * @brief Provides interfaces to deal with DVB channel and program files.
+ * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
+ *
+ * There are basically two types of files used for DVB:
+ * - files that describe the physical channels (also called as transponders);
+ * - files that describe the several programs found on a MPEG-TS (also called
+ *   as zap files).
+ *
+ * The libdvbv5 library defines an unified type for both types. Other
+ * applications generally use different formats.
+ *
+ * The purpose of the functions and structures defined herein is to provide
+ * support to read and write to those different formats.
+ *
+ * Please submit bug report and patches to linux-media@vger.kernel.org
  */
 
 /*
@@ -197,7 +212,7 @@ extern "C" {
 #endif
 
 /**
- * @fn dvb_file_free(struct dvb_file *dvb_file)
+ * @fn void dvb_file_free(struct dvb_file *dvb_file)
  * @brief Deallocates memory associated with a struct dvb_file
  *
  * @param dvb_file	dvb_file struct to be deallocated
@@ -235,10 +250,10 @@ static inline void dvb_file_free(struct dvb_file *dvb_file)
  * the library can read natively.
  */
 
-/* From dvb-legacy-channel-format.c */
+/** @brief File format definitions for dvb-apps channel format */
 extern const struct dvb_parse_file channel_file_format;
 
-/* From dvb-zap-format.c */
+/** @brief File format definitions for dvb-apps zap format */
 extern const struct dvb_parse_file channel_file_zap_format;
 
 /*
@@ -246,7 +261,7 @@ extern const struct dvb_parse_file channel_file_zap_format;
  */
 
 /**
- * @fn dvb_read_file(const char *fname)
+ * @fn struct dvb_file *dvb_read_file(const char *fname)
  * @brief Read a file at libdvbv5 format
  *
  * @param fname	file name
@@ -257,7 +272,7 @@ extern const struct dvb_parse_file channel_file_zap_format;
 struct dvb_file *dvb_read_file(const char *fname);
 
 /**
- * @fn dvb_write_file(const char *fname, struct dvb_file *dvb_file)
+ * @fn int dvb_write_file(const char *fname, struct dvb_file *dvb_file)
  * @brief Write a file at libdvbv5 format
  *
  * @param fname	file name
@@ -268,7 +283,7 @@ struct dvb_file *dvb_read_file(const char *fname);
 int dvb_write_file(const char *fname, struct dvb_file *dvb_file);
 
 /**
- * @fn dvb_read_file_format(const char *fname,
+ * @fn struct dvb_file *dvb_read_file_format(const char *fname,
  *					   uint32_t delsys,
  *					   enum dvb_file_formats format)
  * @brief Read a file on any format natively supported by
@@ -286,7 +301,7 @@ struct dvb_file *dvb_read_file_format(const char *fname,
 					   enum dvb_file_formats format);
 
 /**
- * @fn dvb_write_file(const char *fname,
+ * @fn int dvb_write_file(const char *fname,
 			  struct dvb_file *dvb_file,
 			  uint32_t delsys,
 			  enum dvb_file_formats format)
@@ -307,7 +322,7 @@ int dvb_write_file_format(const char *fname,
 
 
 /**
- * @fn dvb_store_entry_prop(struct dvb_entry *entry,
+ * @fn int dvb_store_entry_prop(struct dvb_entry *entry,
  *		     uint32_t cmd, uint32_t value)
  * @brief Stores a key/value pair on a DVB file entry
  *
@@ -326,7 +341,7 @@ int dvb_store_entry_prop(struct dvb_entry *entry,
 		     uint32_t cmd, uint32_t value);
 
 /**
- * @fn dvb_retrieve_entry_prop(struct dvb_entry *entry,
+ * @fn int dvb_retrieve_entry_prop(struct dvb_entry *entry,
  *			uint32_t cmd, uint32_t *value)
  * @brief Retrieves the value associated witha key on a DVB file entry
  *
@@ -344,7 +359,7 @@ int dvb_retrieve_entry_prop(struct dvb_entry *entry,
 			uint32_t cmd, uint32_t *value);
 
 /**
- * @fn dvb_store_channel(struct dvb_file **dvb_file,
+ * @fn int dvb_store_channel(struct dvb_file **dvb_file,
  *		      struct dvb_v5_fe_parms *parms,
  *		      struct dvb_v5_descriptors *dvb_desc,
  *		      int get_detected, int get_nit)
@@ -377,6 +392,8 @@ int dvb_retrieve_entry_prop(struct dvb_entry *entry,
  * dvb_file, for it to seek for new transponders. This is very useful especially
  * for DVB-C, where all transponders belong to the same operator. Knowing one
  * frequency is generally enough to get all DVB-C transponders.
+ *
+ * @return Returns 0 if success, or, -1 if error.
  */
 int dvb_store_channel(struct dvb_file **dvb_file,
 		      struct dvb_v5_fe_parms *parms,
@@ -384,7 +401,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 		      int get_detected, int get_nit);
 
 /**
- * @fn dvb_parse_delsys(const char *name)
+ * @fn int dvb_parse_delsys(const char *name)
  * @brief Ancillary function that seeks for a delivery system
  *
  * @param name	string containing the name of the Delivery System to seek
@@ -398,11 +415,13 @@ int dvb_store_channel(struct dvb_file **dvb_file,
  * DVBT2, TURBO, DVBC/ANNEX_C.
  * Please notice that this doesn't mean that all those standards are properly
  * supported by the library.
+ *
+ * @return Returns the Delivery System property number if success, -1 if error.
  */
 int dvb_parse_delsys(const char *name);
 
 /**
- * @fn dvb_parse_format(const char *name)
+ * @fn enum dvb_file_formats dvb_parse_format(const char *name)
  * @brief Ancillary function that parses the name of a file format
  * @param name	string containing the name of the format
  *		Current valid names are: ZAP, CHANNEL and DVBV5. The name is
@@ -418,6 +437,7 @@ enum dvb_file_formats dvb_parse_format(const char *name);
  * dvb_read_file_format() or dvb_write_file_format()
  */
 
+#ifndef _DOXYGEN
 struct dvb_file *dvb_parse_format_oneline(const char *fname,
 					  uint32_t delsys,
 					  const struct dvb_parse_file *parse_file);
@@ -425,6 +445,7 @@ int dvb_write_format_oneline(const char *fname,
 			     struct dvb_file *dvb_file,
 			     uint32_t delsys,
 			     const struct dvb_parse_file *parse_file);
+#endif
 
 #ifdef __cplusplus
 }

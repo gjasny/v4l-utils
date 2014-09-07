@@ -23,7 +23,11 @@
 
 /**
  * @file dvb-sat.h
+ * @brief Provides interfaces to deal with DVB Satellite systems.
+ * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
+ *
+ * Please submit bug report and patches to linux-media@vger.kernel.org
  */
 
 /*
@@ -82,29 +86,30 @@ extern "C"
 /* From libsat.c */
 
 /**
- * @fn dvb_sat_search_lnb(const char *name)
+ * @fn int dvb_sat_search_lnb(const char *name)
  * @brief search for a LNBf entry
  *
  * @param name	name of the LNBf entry to seek.
  *
  * On sucess, it returns a non-negative number with corresponds to the LNBf
  * entry inside the LNBf structure at dvb-sat.c.
- * A -1 return code indicates that the LNBf was not found.
+ *
+ * @return A -1 return code indicates that the LNBf was not found.
  */
 int dvb_sat_search_lnb(const char *name);
 
 /**
- * @fn dvb_print_lnb(int i)
+ * @fn int dvb_print_lnb(int i)
  * @brief prints the contents of a LNBf entry at STDOUT.
  *
  * @param i		index for the entry
  *
- * returns -1 if the index is out of range, zero otherwise.
+ * @return returns -1 if the index is out of range, zero otherwise.
  */
 int dvb_print_lnb(int i);
 
 /**
- * @fn dvb_print_all_lnb()
+ * @fn void dvb_print_all_lnb()
  * @brief Prints all LNBf entries at STDOUT.
  *
  * This function doesn't return anything. Internally, it calls dvb_print_lnb()
@@ -113,23 +118,25 @@ int dvb_print_lnb(int i);
 void dvb_print_all_lnb(void);
 
 /**
- * @fn dvb_sat_get_lnb(int i)
+ * @fn const struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
  * @brief gets a LNBf entry at its internal database
  *
  * @param i		index for the entry.
  *
- * returns NULL if not found, of a struct dvb_sat_lnb pointer otherwise.
+ * @return returns NULL if not found, of a struct dvb_sat_lnb pointer otherwise.
  */
 const struct dvb_sat_lnb *dvb_sat_get_lnb(int i);
 
 /**
- * @fn dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
+ * @fn int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
  * @brief sets the satellite parameters
  *
  * @param parms	struct dvb_v5_fe_parms pointer.
  *
  * This function is called internally by the library to set the LNBf
  * parameters, if the dvb_v5_fe_parms::lnb field is filled.
+ *
+ * @return 0 on success.
  */
 int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms);
 

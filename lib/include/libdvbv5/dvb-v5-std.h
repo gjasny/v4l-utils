@@ -28,7 +28,11 @@
 
 /**
  * @file dvb-v5-std.h
+ * @brief Provides libdvbv5 defined properties for the frontend.
+ * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
+ *
+ * Please submit bug report and patches to linux-media@vger.kernel.org
  */
 
 /*
@@ -43,10 +47,9 @@
  * tables, like audio/video/other PIDs, and satellite config
  */
 
-
-#define DTV_USER_COMMAND_START 256
-
 /**
+ * @def DTV_USER_COMMAND_START
+ *	 @brief Start number for libdvbv5 user commands
  * @def DTV_POLARIZATION
  *	 @brief Satellite polarization (for Satellite delivery systems)
  * @def DTV_AUDIO_PID
@@ -75,7 +78,14 @@
  * @def DTV_PLS_MODE
  *	@brief DVB-T2 PLS mode. Not used internally. It is needed
  *			only for file conversion.
+ * @def DTV_MAX_USER_COMMAND
+ *	 @brief Last user command
+ * @def DTV_USER_NAME_SIZE
+ *	 @brief Number of user commands
  */
+
+#define DTV_USER_COMMAND_START 256
+
 #define DTV_POLARIZATION        (DTV_USER_COMMAND_START + 0)
 #define DTV_VIDEO_PID           (DTV_USER_COMMAND_START + 1)
 #define DTV_AUDIO_PID           (DTV_USER_COMMAND_START + 2)
@@ -119,9 +129,9 @@ enum dvb_sat_polarization {
  * measures from two or more Kernel reported stats.
  */
 
-#define DTV_STAT_COMMAND_START 512
-
 /**
+ * @def DTV_STAT_COMMAND_START
+ *	 @brief Start number for libdvbv5 statistics commands
  * @def DTV_STATUS
  *	@brief Lock status of a DTV frontend. This actually comes from
  *			the Kernel, but it uses a separate ioctl.
@@ -141,7 +151,18 @@ enum dvb_sat_polarization {
  *			before applying the Forward Error Correction. This is
  *			a parameter that it is derivated from two counters
  *			at the Kernel side.
+ * @def DTV_MAX_STAT_COMMAND
+ *	 @brief Last statistics command
+ * @def DTV_STAT_NAME_SIZE
+ *	 @brief Number of statistics commands
+ * @def DTV_NUM_KERNEL_STATS
+ *	@brief Number of statistics commands provided by the Kernel
+ * @def DTV_NUM_STATS_PROPS
+ *	@brief Total number of statistics commands
  */
+
+#define DTV_STAT_COMMAND_START 512
+
 #define DTV_STATUS              (DTV_STAT_COMMAND_START + 0)
 #define DTV_BER                 (DTV_STAT_COMMAND_START + 1)
 #define DTV_PER                 (DTV_STAT_COMMAND_START + 2)
@@ -179,16 +200,16 @@ enum dvb_quality {
 	DVB_QUAL_GOOD,
 };
 
-/*
- * Some tables to translate from value to string
- */
+#ifndef _DOXYGEN
 
 /*
- * The tables below are raw ways to translate from some DTV
- * values into strings. The better is to use the API-provided
- * function dvb_cmd_name() and dvb_dvb_attr_names(), instead
- * of using the tables directly.
+ * Some tables to translate from value to string
+ *
+ * These tables are raw ways to translate from some DTV  values into strings.
+ * Please use the API-provided function dvb_cmd_name() and dvb_dvb_attr_names(),
+ * instead of using the tables directly.
  */
+
 extern const unsigned int sys_dvbt_props[];
 extern const unsigned int sys_dvbt2_props[];
 extern const unsigned int sys_isdbt_props[];
@@ -205,5 +226,7 @@ extern const char *dvb_sat_pol_name[6];
 extern const char *dvb_user_name[DTV_USER_NAME_SIZE + 1];
 extern const char *dvb_stat_name[DTV_STAT_NAME_SIZE + 1];
 extern const void *dvb_user_attr_names[];
+
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 #endif

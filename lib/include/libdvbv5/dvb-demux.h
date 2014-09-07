@@ -19,33 +19,40 @@
  *
  *	Originally licensed as GPLv2 or upper
  */
+
+/**
+ * @file dvb-demux.h
+ * @brief Provides interfaces to deal with DVB demux.
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ *
+ * Please submit bug report and patches to linux-media@vger.kernel.org
+ */
+
 #ifndef _DVB_DEMUX_H
 #define _DVB_DEMUX_H
 
 #include <linux/dvb/dmx.h>
-
-/**
- * @file dvb-demux.h
- * @author Mauro Carvalho Chehab
- */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @fn dvb_dmx_open(int adapter, int demux)
+ * @fn int dvb_dmx_open(int adapter, int demux)
  * @brief Opens a DVB demux in read/write mode
  *
  * @param adapter	DVB adapter number to open
  * @param demux		DVB demux number to open
  *
  * @details This is a wrapper function to open. File is always opened in blocking mode.
+ *
+ * @return Returns a file descriptor on success, -1 otherwise.
  */
 int dvb_dmx_open(int adapter, int demux);
 
 /**
- * @fn dvb_dmx_close(int dmx_fd)
+ * @fn void dvb_dmx_close(int dmx_fd)
  * @brief Stops the DMX filter for the file descriptor and closes
  *
  * @param dmx_fd	File descriptor to close
@@ -55,7 +62,7 @@ int dvb_dmx_open(int adapter, int demux);
 void dvb_dmx_close(int dmx_fd);
 
 /**
- * @fn dvb_dmx_stop(int dmx_fd)
+ * @fn void dvb_dmx_stop(int dmx_fd)
  * @brief Stops the DMX filter for a given file descriptor
  *
  * @param dmx_fd	File descriptor to close
@@ -65,7 +72,7 @@ void dvb_dmx_close(int dmx_fd);
 void dvb_dmx_stop(int dmx_fd);
 
 /**
- * @fn dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
+ * @fn int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
  *		      dmx_output_t output, int buffersize)
  * @brief Start a filter for a MPEG-TS Packetized Elementary
  * 		       Stream (PES)
@@ -81,12 +88,14 @@ void dvb_dmx_stop(int dmx_fd);
  * This is a wrapper function for DMX_SET_PES_FILTER ioctl.
  * See http://linuxtv.org/downloads/v4l-dvb-apis/dvb_demux.html
  * for more details.
+ *
+ * @return Retuns zero on success, -1 otherwise.
  */
 int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
 		      dmx_output_t output, int buffersize);
 
 /**
- * @fn dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
+ * @fn int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
  *			   unsigned char *filter,
  *			   unsigned char *mask,
  *			   unsigned char *mode,
@@ -106,6 +115,8 @@ int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
  * This is a wrapper function for DMX_SET_FILTER ioctl.
  * See http://linuxtv.org/downloads/v4l-dvb-apis/dvb_demux.html
  * for more details.
+ *
+ * @return Retuns zero on success, -1 otherwise.
  */
 int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
 			   unsigned char *filter,
@@ -121,7 +132,7 @@ int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
  * @param dmxfd		File descriptor for the demux device
  * @param sid		Session ID to seeking
  *
- * This function currently assumes that the hope PAT fits into one session.
+ * @warning This function currently assumes that the PAT fits into one session.
  *
  * @return At return, it returns a negative value if error or the PID associated with
  * the desired Session ID.
