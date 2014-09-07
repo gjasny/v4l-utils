@@ -124,9 +124,6 @@ struct dvb_table_filter {
 void dvb_table_filter_free(struct dvb_table_filter *sect);
 
 /**
- * @fn dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd,
- *		     unsigned char tid, uint16_t pid, void **table,
- *		     unsigned timeout)
  * @brief read MPEG-TS tables that comes from a DTV card
  *
  * @param parms	pointer to struct dvb_v5_fe_parms created when the frontend is
@@ -152,7 +149,7 @@ void dvb_table_filter_free(struct dvb_table_filter *sect);
  * Returns 0 on success or a negative error code.
  *
  * Example usage:
- *
+ * @code
  * struct dvb_table_pat *pat;
  * int r = dvb_read_section( parms, dmx_fd, DVB_TABLE_PAT, DVB_TABLE_PAT_PID,
  *			    (void **) &pat, 5 );
@@ -163,16 +160,13 @@ void dvb_table_filter_free(struct dvb_table_filter *sect);
  * }
  * if (pat)
  *	dvb_table_pat_free( pat );
- *
+ * @endcode
  */
 int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd,
 		     unsigned char tid, uint16_t pid, void **table,
 		     unsigned timeout);
 
 /**
- * @fn dvb_read_section_with_id(struct dvb_v5_fe_parms *parms, int dmx_fd,
- *			      unsigned char tid, uint16_t pid, int ts_id,
- *			      void **table, unsigned timeout)
  * @brief read MPEG-TS tables that comes from a DTV card
  *				with an specific table section ID
  *
@@ -194,9 +188,6 @@ int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			      void **table, unsigned timeout);
 
 /**
- * @fn dvb_read_sections(struct dvb_v5_fe_parms *parms, int dmx_fd,
- *			     struct dvb_table_filter *sect,
- *			     unsigned timeout)
  * @brief read MPEG-TS tables that comes from a DTV card
  *
  * @param parms	pointer to struct dvb_v5_fe_parms created when the frontend is
@@ -213,7 +204,6 @@ int dvb_read_sections(struct dvb_v5_fe_parms *parms, int dmx_fd,
 			     unsigned timeout);
 
 /**
- * @fn dvb_scan_alloc_handler_table(uint32_t delivery_system)
  * @brief allocates a struct dvb_v5_descriptors
  *
  * @param delivery_system	Delivery system to be used on the table
@@ -223,7 +213,6 @@ int dvb_read_sections(struct dvb_v5_fe_parms *parms, int dmx_fd,
 struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system);
 
 /**
- * @fn dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler)
  * @brief frees a struct dvb_v5_descriptors
  *
  * @param dvb_scan_handler	pointer to the struct to be freed.
@@ -231,11 +220,6 @@ struct dvb_v5_descriptors *dvb_scan_alloc_handler_table(uint32_t delivery_system
 void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler);
 
 /**
- * @fn dvb_get_ts_tables(struct dvb_v5_fe_parms *parms, int dmx_fd,
- *					  uint32_t delivery_system,
- *					  unsigned other_nit,
- *					  unsigned timeout_multiply)
- *
  * @brief Scans a DVB stream, looking for the tables needed to
  *			 identify the programs inside a MPEG-TS
  *
@@ -260,7 +244,6 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms, int 
 					  unsigned timeout_multiply);
 
 /**
- * @fn dvb_free_ts_tables(struct dvb_v5_descriptors *dvb_desc)
  * @brief frees a struct dvb_v5_descriptors
  *
  * @param dvb_desc	pointed to the structure to be freed.
@@ -273,13 +256,6 @@ void dvb_free_ts_tables(struct dvb_v5_descriptors *dvb_desc);
 typedef int (check_frontend_t)(void *args, struct dvb_v5_fe_parms *parms);
 
 /**
- * @fn dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
- *						struct dvb_entry *entry,
- *						int dmx_fd,
- *						check_frontend_t *check_frontend,
- *						void *args,
- *						unsigned other_nit,
- *						unsigned timeout_multiply)
  * @brief Scans a DVB dvb_add_scaned_transponder
  *
  * @param parms		pointer to struct dvb_v5_fe_parms created when the
@@ -303,6 +279,7 @@ typedef int (check_frontend_t)(void *args, struct dvb_v5_fe_parms *parms);
  * a frontend. Then, seek for the MPEG tables on all the transponder
  * frequencies with:
  *
+ * @code
  * for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
  *	struct dvb_v5_descriptors *dvb_scan_handler = NULL;
  *
@@ -320,6 +297,7 @@ typedef int (check_frontend_t)(void *args, struct dvb_v5_fe_parms *parms);
  *		dvb_scan_free_handler_table(dvb_scan_handler);
  * 	}
  * }
+ * @endcode
  */
 struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
 						struct dvb_entry *entry,
@@ -331,10 +309,6 @@ struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
 
 
 /**
- * @fn dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
- *				 struct dvb_v5_descriptors *dvb_scan_handler,
- *				 struct dvb_entry *first_entry,
- *				 struct dvb_entry *entry)
  * @brief Add new transponders to a dvb_file
  *
  * @param parms		pointer to struct dvb_v5_fe_parms created when the
@@ -350,6 +324,7 @@ struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
  * the dvb_scan_transponder(), to add new channels.
  *
  * Example:
+ * @code
  * for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
  *	struct dvb_v5_descriptors *dvb_scan_handler = NULL;
  *
@@ -372,6 +347,7 @@ struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *parms,
  *		dvb_scan_free_handler_table(dvb_scan_handler);
  * 	}
  * }
+ * @endcode
  */
 void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
 				 struct dvb_v5_descriptors *dvb_scan_handler,
