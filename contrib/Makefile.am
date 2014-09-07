@@ -11,6 +11,7 @@ EXTRA_DIST = \
 	usbmon2usbsnoop.pl \
 	v4l_rec.pl \
 	\
+	au0828 \
 	az6007 \
 	cx231xx \
 	cx25821 \
