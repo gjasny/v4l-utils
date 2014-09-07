@@ -1322,25 +1322,6 @@ uint32_t dvb_bcd(uint32_t bcd)
 	return ret;
 }
 
-static int bcd_to_int(const unsigned char *bcd, int bits)
-{
-	int nibble = 0;
-	int ret = 0;
-
-	while (bits) {
-		ret *= 10;
-		if (!nibble)
-			ret += *bcd >> 4;
-		else
-			ret += *bcd & 0x0f;
-		bits -= 4;
-		nibble = !nibble;
-		if (!nibble)
-			bcd++;
-	}
-	return ret;
-}
-
 void dvb_hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsigned char *data, int length)
 {
 	char ascii[17];
