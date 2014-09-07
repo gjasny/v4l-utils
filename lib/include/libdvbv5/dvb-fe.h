@@ -33,6 +33,11 @@
 #include "dvb-sat.h"
 #include "dvb-log.h"
 
+/**
+ * @file dvb-fe.h
+ * @author Mauro Carvalho Chehab
+ */
+
 #define ARRAY_SIZE(x)	(sizeof(x)/sizeof((x)[0]))
 
 /* Max number of delivery systems for a given frontend. */
@@ -86,7 +91,7 @@
  * @param default_charset	Name of the charset used by the DVB standard (RW)
  * @param output_charset	Name of the charset to output (system specific) (RW)
  *
- * The fields marked as RO should not be changed by the client, as otherwise
+ * @details The fields marked as RO should not be changed by the client, as otherwise
  * undesired effects may happen. The ones marked as RW are ok to either read
  * or write by the client.
  */
@@ -128,16 +133,17 @@ extern "C" {
 #endif
 
 /**
- * @fn dvb_fe_dummy
+ * @fn dvb_fe_dummy()
  * @brief Allocates a dummy frontend structure
  *
- * This is useful for some applications that may want to just use the
+ * @details This is useful for some applications that may want to just use the
  * frontend structure internally, without associating it with a real hardware
  */
 struct dvb_v5_fe_parms *dvb_fe_dummy();
 
 /**
- * @fn dvb_fe_open
+ * @fn dvb_fe_open(int adapter, int frontend,
+ *				    unsigned verbose, unsigned use_legacy_call)
  * @brief Opens a frontend and allocates a structure to work with
  *
  * @param adapter		Number of the adapter to open
@@ -146,8 +152,8 @@ struct dvb_v5_fe_parms *dvb_fe_dummy();
  * @param use_legacy_call	Force to use the DVBv3 calls, instead of using the
  * 			DVBv5 API
  *
- * This function should be called before using any other function at the
- * frontend library (or the other alternatives: dvb_fe_open2() or
+ * @details This function should be called before using any other function at
+ * the frontend library (or the other alternatives: dvb_fe_open2() or
  * dvb_fe_dummy().
  *
  * Returns NULL on error.
@@ -156,7 +162,9 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
 				    unsigned verbose, unsigned use_legacy_call);
 
 /**
- * @fn dvb_fe_open2
+ * @fn dvb_fe_open2(int adapter, int frontend,
+ *				    unsigned verbose, unsigned use_legacy_call,
+ *				    dvb_logfunc logfunc)
  * @brief Opens a frontend and allocates a structure to work with
  *
  * @param adapter		Number of the adapter to open
@@ -168,29 +176,30 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
  *			happens. Can either store the event into a file or to
  *			print it at the TUI/GUI.
  *
- * This function should be called before using any other function at the
- * frontend library (or the other alternatives: dvb_fe_open() or
+ * @details This function should be called before using any other function at
+ * the frontend library (or the other alternatives: dvb_fe_open() or
  * dvb_fe_dummy().
  *
- * Returns NULL on error.
+ * @return Returns NULL on error.
  */
 struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend,
 				    unsigned verbose, unsigned use_legacy_call,
 				    dvb_logfunc logfunc);
 
 /**
- * @fn dvb_fe_close
+ * @fn dvb_fe_close(struct dvb_v5_fe_parms *parms)
  * @brief Closes the frontend and frees allocated resources
  */
 void dvb_fe_close(struct dvb_v5_fe_parms *parms);
 
 /**
- * dvb_cmd_name() - Returns the string name associated with a DVBv5 command
+ * @fn dvb_cmd_name(int cmd)
+ * @brief Returns the string name associated with a DVBv5 command
  *
  * @param cmd	DVBv5 or libdvbv5 property
  *
- * This function gets an integer argument (cmd) and returns a string that
- * corresponds to the name of that property.
+ * @details This function gets an integer argument (cmd) and returns a string
+ * that corresponds to the name of that property.
  * For example:
  * 	dvb_cmd_name(DTV_GUARD_INTERVAL) would return "GUARD_INTERVAL"
  * It also returns names for the properties used internally by libdvbv5.
@@ -198,7 +207,7 @@ void dvb_fe_close(struct dvb_v5_fe_parms *parms);
 const char *dvb_cmd_name(int cmd);
 
 /**
- * @fn dvb_attr_names
+ * @fn dvb_attr_names(int cmd)
  * @brief Returns an string array with the valid string values associated with a DVBv5 command
  *
  * @param cmd	DVBv5 or libdvbv5 property
@@ -217,7 +226,8 @@ const char *const *dvb_attr_names(int cmd);
 /* Get/set delivery system parameters */
 
 /**
- * @fn dvb_fe_retrieve_parm
+ * @fn dvb_fe_retrieve_parm(const struct dvb_v5_fe_parms *parms,
+ *			unsigned cmd, uint32_t *value)
  * @brief Retrieves the value of a DVBv5/libdvbv5 property
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
@@ -227,13 +237,14 @@ const char *const *dvb_attr_names(int cmd);
  * This reads the value of a property stored at the cache. Before using it,
  * a dvb_fe_get_parms() is likely required.
  *
- * Return 0 if success, EINVAL otherwise.
+ * @return Return 0 if success, EINVAL otherwise.
  */
 int dvb_fe_retrieve_parm(const struct dvb_v5_fe_parms *parms,
 			unsigned cmd, uint32_t *value);
 
 /**
- * @fn dvb_fe_store_parm
+ * @fn dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
+ *		      unsigned cmd, uint32_t value)
  * @brief Stores the value of a DVBv5/libdvbv5 property
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
@@ -243,13 +254,14 @@ int dvb_fe_retrieve_parm(const struct dvb_v5_fe_parms *parms,
  * This stores the value of a property at the cache. The value will only
  * be send to the hardware after calling dvb_fe_set_parms().
  *
- * Return 0 if success, EINVAL otherwise.
+ * @return Return 0 if success, EINVAL otherwise.
  */
 int dvb_fe_store_parm(struct dvb_v5_fe_parms *parms,
 		      unsigned cmd, uint32_t value);
 
 /**
- * @fn dvb_set_sys
+ * @fn dvb_set_sys(struct dvb_v5_fe_parms *parms,
+ *		   fe_delivery_system_t sys)
  * @brief Sets the delivery system
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
@@ -265,7 +277,8 @@ int dvb_set_sys(struct dvb_v5_fe_parms *parms,
 		   fe_delivery_system_t sys);
 
 /**
- * @fn dvb_add_parms_for_sys
+ * @fn dvb_add_parms_for_sys(struct dvb_v5_fe_parms *parms,
+			  fe_delivery_system_t sys)
  * @brief Make dvb properties reflect the current standard
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
@@ -280,11 +293,13 @@ int dvb_add_parms_for_sys(struct dvb_v5_fe_parms *parms,
 			  fe_delivery_system_t sys);
 
 /**
- * @fn dvb_set_compat_delivery_system
+ * @fn dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
+ *				   uint32_t desired_system)
  * @brief Sets the delivery system
  *
- * @param parms	struct dvb_v5_fe_parms pointer to the opened device
- * @param sys	delivery system to be selected
+ * @param parms			struct dvb_v5_fe_parms pointer to the opened
+ *				device
+ * @param desired_system	delivery system to be selected
  *
  * This function changes the delivery system of the frontend. By default,
  * the libdvbv5 will use the first available delivery system. If another
@@ -299,7 +314,7 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 				   uint32_t desired_system);
 
 /**
- * @fn dvb_fe_prt_parms
+ * @fn dvb_fe_prt_parms(const struct dvb_v5_fe_parms *parms)
  * @brief Prints all the properties at the cache
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
@@ -309,7 +324,7 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *parms,
 void dvb_fe_prt_parms(const struct dvb_v5_fe_parms *parms);
 
 /**
- * @fn dvb_fe_set_parms
+ * @fn dvb_fe_set_parms(struct dvb_v5_fe_parms *parms)
  * @brief Prints all the properties at the cache
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
@@ -321,7 +336,7 @@ void dvb_fe_prt_parms(const struct dvb_v5_fe_parms *parms);
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *parms);
 
 /**
- * @fn dvb_fe_get_parms
+ * @fn dvb_fe_get_parms(struct dvb_v5_fe_parms *parms)
  * @brief Prints all the properties at the cache
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
@@ -340,7 +355,8 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms);
  */
 
 /**
- * @fn dvb_fe_retrieve_stats_layer
+ * @fn dvb_fe_retrieve_stats_layer(struct dvb_v5_fe_parms *parms,
+ *                                 unsigned cmd, unsigned layer)
  * @brief Retrieve the stats for a DTV layer from cache
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
@@ -360,42 +376,44 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *parms);
  *
  * For it to be valid, dvb_fe_get_stats() should be called first.
  *
- * It returns a struct dtv_stats if succeed or NULL otherwise.
+ * @return It returns a struct dtv_stats if succeed or NULL otherwise.
  */
 struct dtv_stats *dvb_fe_retrieve_stats_layer(struct dvb_v5_fe_parms *parms,
                                               unsigned cmd, unsigned layer);
 
 /**
- * @fn dvb_fe_retrieve_stats
+ * @fn dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
+ *			  unsigned cmd, uint32_t *value)
  * @brief Retrieve the stats for a DTV layer from cache
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param cmd	DVBv5 or libdvbv5 property
- * @param layer	DTV layer
+ * @param value	DTV value pointer
  *
  * Gets the value for one stats property for layer = 0.
  *
  * For it to be valid, dvb_fe_get_stats() should be called first.
  *
- * The returned value is 0 if success, EINVAL otherwise.
+ * @return The returned value is 0 if success, EINVAL otherwise.
  */
 int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *parms,
 			  unsigned cmd, uint32_t *value);
 
 /**
- * @fn dvb_fe_get_stats
+ * @fn dvb_fe_get_stats(struct dvb_v5_fe_parms *parms)
  * @brief Retrieve the stats from the Kernel
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  *
  * Updates the stats cache from the available stats at the Kernel.
  *
- * The returned value is 0 if success, EINVAL otherwise.
+ * @return The returned value is 0 if success, EINVAL otherwise.
  */
 int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms);
 
 /**
- * @fn dvb_fe_retrieve_ber
+ * @fn dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *parms, unsigned layer,
+ *                         enum fecap_scale_params *scale)
  * @brief Retrieve the BER stats from cache
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
@@ -417,18 +435,17 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *parms);
  *
  * a scale equal to FE_SCALE_NOT_AVAILABLE means that BER is not available.
  *
- * It returns a float for the BER value.
+ * @return It returns a float for the BER value.
  */
 float dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *parms, unsigned layer,
                           enum fecap_scale_params *scale);
 
 /**
- * @fn dvb_fe_retrieve_per
+ * @fn dvb_fe_retrieve_per(struct dvb_v5_fe_parms *parms, unsigned layer)
  * @brief Retrieve the PER stats from cache
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param layer	DTV layer
- * @param scale
  *
  * Gets the value for BER stats from stats cache, on a given layer. Layer 0 is
  * always present. On DTV standards that doesn't have layers, it returns
@@ -443,12 +460,12 @@ float dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *parms, unsigned layer,
  *
  * For it to be valid, dvb_fe_get_stats() should be called first.
  *
- * A negative value indicates error.
+ * @return A negative value indicates error.
  */
 float dvb_fe_retrieve_per(struct dvb_v5_fe_parms *parms, unsigned layer);
 
 /**
- * @fn dvb_fe_snprintf_eng
+ * @fn dvb_fe_snprintf_eng(char *buf, int len, float val)
  * @brief Ancillary function to sprintf on ENG format
  *
  * @param buf	buffer to store the value
@@ -458,13 +475,15 @@ float dvb_fe_retrieve_per(struct dvb_v5_fe_parms *parms, unsigned layer);
  * On ENG notation, the exponential value should be multiple of 3. This is
  * good to display some values, like BER.
  *
- * At return, it shows the actual size of the print.
+ * @return At return, it shows the actual size of the print.
  */
 int dvb_fe_snprintf_eng(char *buf, int len, float val);
 
 
 /**
- * @fn dvb_fe_snprintf_eng
+ * @fn dvb_fe_snprintf_eng(struct dvb_v5_fe_parms *parms, uint32_t cmd,
+ *			  char *display_name, int layer,
+ *		          char **buf, int *len, int *show_layer_name)
  * @brief Ancillary function to sprintf on ENG format
  *
  * @param parms		struct dvb_v5_fe_parms pointer to the opened device
@@ -486,14 +505,14 @@ int dvb_fe_snprintf_eng(char *buf, int len, float val);
 		          char **buf, int *len, int *show_layer_name);
 
 /**
- * @fn dvb_fe_get_event
+ * @fn dvb_fe_get_event(struct dvb_v5_fe_parms *parms)
  * @brief Get both status statistics and dvb parameters
  *
  * @param parms		struct dvb_v5_fe_parms pointer to the opened device
  *
  * That's similar of calling both dvb_fe_get_parms() and dvb_fe_get_stats().
  *
- * It returns 0 if success or an errorno otherwise.
+ * @return It returns 0 if success or an errorno otherwise.
  */
 int dvb_fe_get_event(struct dvb_v5_fe_parms *parms);
 

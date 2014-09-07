@@ -24,23 +24,28 @@
 
 #include <linux/dvb/dmx.h>
 
+/**
+ * @file dvb-demux.h
+ * @author Mauro Carvalho Chehab
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @fn dvb_dmx_open
+ * @fn dvb_dmx_open(int adapter, int demux)
  * @brief Opens a DVB demux in read/write mode
  *
  * @param adapter	DVB adapter number to open
  * @param demux		DVB demux number to open
  *
- * This is a wrapper function to open. File is always opened in blocking mode.
+ * @details This is a wrapper function to open. File is always opened in blocking mode.
  */
 int dvb_dmx_open(int adapter, int demux);
 
 /**
- * @fn dvb_dmx_close
+ * @fn dvb_dmx_close(int dmx_fd)
  * @brief Stops the DMX filter for the file descriptor and closes
  *
  * @param dmx_fd	File descriptor to close
@@ -50,7 +55,7 @@ int dvb_dmx_open(int adapter, int demux);
 void dvb_dmx_close(int dmx_fd);
 
 /**
- * @fn dvb_dmx_stop
+ * @fn dvb_dmx_stop(int dmx_fd)
  * @brief Stops the DMX filter for a given file descriptor
  *
  * @param dmx_fd	File descriptor to close
@@ -60,11 +65,12 @@ void dvb_dmx_close(int dmx_fd);
 void dvb_dmx_stop(int dmx_fd);
 
 /**
- * @fn dvb_set_pesfilter
+ * @fn dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
+ *		      dmx_output_t output, int buffersize)
  * @brief Start a filter for a MPEG-TS Packetized Elementary
  * 		       Stream (PES)
  *
- * @param dmx_fd	File descriptor for the demux device
+ * @param dmxfd	File descriptor for the demux device
  * @param pid		Program ID to filter. Use 0x2000 to select all PIDs
  * @param type		type of the PID (DMX_PES_VIDEO, DMX_PES_AUDIO,
  *			DMX_PES_OTHER, etc).
@@ -80,10 +86,16 @@ int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
 		      dmx_output_t output, int buffersize);
 
 /**
- * @fn dvb_set_section_filter
+ * @fn dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
+ *			   unsigned char *filter,
+ *			   unsigned char *mask,
+ *			   unsigned char *mode,
+ *			   unsigned int flags)
+
  * @brief Sets a MPEG-TS section filter
  *
- * @param dmx_fd	File descriptor for the demux device
+ * @param dmxfd		File descriptor for the demux device
+ * @param pid		Program ID to filter. Use 0x2000 to select all PIDs
  * @param filtsize	Size of the filter (up to 18 btyes)
  * @param filter	data to filter. Can be NULL or should have filtsize length
  * @param mask		filter mask. Can be NULL or should have filtsize length
@@ -102,11 +114,12 @@ int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
 			   unsigned int flags);
 
 /**
- * @fn dvb_get_pmt_pid
+ * @fn dvb_get_pmt_pid(const char *dmxdev, int sid)
  * @brief read the contents of the MPEG-TS PAT table, seeking for
  *		      	an specific service ID
  *
- * @param sid	Session ID to seeking
+ * @param dmxdev	File name of the demux to be opened
+ * @param sid		Session ID to seeking
  *
  * This function currently assumes that the hope PAT fits into one session.
  * At return, it returns a negative value if error or the PID associated with

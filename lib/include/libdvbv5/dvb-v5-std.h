@@ -26,6 +26,11 @@
 #include <stddef.h>
 #include "dvb-frontend.h"
 
+/**
+ * @file dvb-v5-std.h
+ * @author Mauro Carvalho Chehab
+ */
+
 /*
  * User DTV codes, for internal usage. There are two sets of
  * properties. One for DTV properties and another one for statistics

@@ -16,6 +16,11 @@
 
 #include "dvb-fe.h"
 
+/**
+ * @file dvb-file.h
+ * @author Mauro Carvalho Chehab
+ */
+
 /*
  * DVB structures used to represent all files opened by the libdvbv5 library.
  *
@@ -192,7 +197,7 @@ extern "C" {
 #endif
 
 /**
- * @fn dvb_file_free
+ * @fn dvb_file_free(struct dvb_file *dvb_file)
  * @brief Deallocates memory associated with a struct dvb_file
  *
  * @param dvb_file	dvb_file struct to be deallocated
@@ -241,29 +246,31 @@ extern const struct dvb_parse_file channel_file_zap_format;
  */
 
 /**
- * @fn dvb_read_file
+ * @fn dvb_read_file(const char *fname)
  * @brief Read a file at libdvbv5 format
  *
  * @param fname	file name
  *
- * It returns a pointer to struct dvb_file describing the entries that
+ * @return It returns a pointer to struct dvb_file describing the entries that
  * were read from the file. If it fails, NULL is returned.
  */
 struct dvb_file *dvb_read_file(const char *fname);
 
 /**
- * @fn dvb_write_file
+ * @fn dvb_write_file(const char *fname, struct dvb_file *dvb_file)
  * @brief Write a file at libdvbv5 format
  *
  * @param fname	file name
  * @param dvb_file	contents of the file to be written
  *
- * It returns zero if success, or a positive error number if it fails.
+ * @return It returns zero if success, or a positive error number if it fails.
  */
 int dvb_write_file(const char *fname, struct dvb_file *dvb_file);
 
 /**
- * @fn dvb_read_file_format
+ * @fn dvb_read_file_format(const char *fname,
+ *					   uint32_t delsys,
+ *					   enum dvb_file_formats format)
  * @brief Read a file on any format natively supported by
  *			    the library
  *
@@ -271,7 +278,7 @@ int dvb_write_file(const char *fname, struct dvb_file *dvb_file);
  * @param delsys	Delivery system, as specified by enum fe_delivery_system
  * @param format	Name of the format to be read
  *
- * It returns a pointer to struct dvb_file describing the entries that
+ * @return It returns a pointer to struct dvb_file describing the entries that
  * were read from the file. If it fails, NULL is returned.
  */
 struct dvb_file *dvb_read_file_format(const char *fname,
@@ -279,7 +286,10 @@ struct dvb_file *dvb_read_file_format(const char *fname,
 					   enum dvb_file_formats format);
 
 /**
- * @fn dvb_write_file
+ * @fn dvb_write_file(const char *fname,
+			  struct dvb_file *dvb_file,
+			  uint32_t delsys,
+			  enum dvb_file_formats format)
  * @brief Write a file on any format natively supported by
  *			    the library
  *
@@ -288,7 +298,7 @@ struct dvb_file *dvb_read_file_format(const char *fname,
  * @param delsys	Delivery system, as specified by enum fe_delivery_system
  * @param format	Name of the format to be read
  *
- * It returns zero if success, or a positive error number if it fails.
+ * @return It returns zero if success, or a positive error number if it fails.
  */
 int dvb_write_file_format(const char *fname,
 			  struct dvb_file *dvb_file,
@@ -297,7 +307,8 @@ int dvb_write_file_format(const char *fname,
 
 
 /**
- * @fn dvb_store_entry_prop
+ * @fn dvb_store_entry_prop(struct dvb_entry *entry,
+ *		     uint32_t cmd, uint32_t value)
  * @brief Stores a key/value pair on a DVB file entry
  *
  * @param entry	entry to be filled
@@ -308,14 +319,15 @@ int dvb_write_file_format(const char *fname,
  * This function seeks for a property with the name specified by cmd and
  * fills it with value. If the entry doesn't exist, it creates a new key.
  *
- * Returns 0 if success, or, if the entry has already DTV_MAX_COMMAND
+ * @return Returns 0 if success, or, if the entry has already DTV_MAX_COMMAND
  * properties, it returns -1.
  */
 int dvb_store_entry_prop(struct dvb_entry *entry,
 		     uint32_t cmd, uint32_t value);
 
 /**
- * @fn dvb_retrieve_entry_prop
+ * @fn dvb_retrieve_entry_prop(struct dvb_entry *entry,
+ *			uint32_t cmd, uint32_t *value)
  * @brief Retrieves the value associated witha key on a DVB file entry
  *
  * @param entry	entry to be used
@@ -326,13 +338,17 @@ int dvb_store_entry_prop(struct dvb_entry *entry,
  * This function seeks for a property with the name specified by cmd and
  * fills value with its contents.
  *
- * Returns 0 if success, or, -1 if the entry doesn't exist.
+ * @return Returns 0 if success, or, -1 if the entry doesn't exist.
  */
 int dvb_retrieve_entry_prop(struct dvb_entry *entry,
 			uint32_t cmd, uint32_t *value);
 
 /**
- * @fn dvb_store_channel
+ * @fn dvb_store_channel(struct dvb_file **dvb_file,
+ *		      struct dvb_v5_fe_parms *parms,
+ *		      struct dvb_v5_descriptors *dvb_desc,
+ *		      int get_detected, int get_nit)
+ *
  * @brief stored a new scanned channel into a dvb_file struct
  *
  * @param dvb_file	file struct to be filled
@@ -368,7 +384,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 		      int get_detected, int get_nit);
 
 /**
- * @fn dvb_parse_delsys
+ * @fn dvb_parse_delsys(const char *name)
  * @brief Ancillary function that seeks for a delivery system
  *
  * @param name	string containing the name of the Delivery System to seek
@@ -386,7 +402,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 int dvb_parse_delsys(const char *name);
 
 /**
- * @fn dvb_parse_format
+ * @fn dvb_parse_format(const char *name)
  * @brief Ancillary function that parses the name of a file format
  * @param name	string containing the name of the format
  *		Current valid names are: ZAP, CHANNEL and DVBV5. The name is

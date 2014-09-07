@@ -21,6 +21,11 @@
 
 #include "dvb-v5-std.h"
 
+/**
+ * @file dvb-sat.h
+ * @author Mauro Carvalho Chehab
+ */
+
 /*
  * Satellite handling functions
  */
@@ -77,7 +82,7 @@ extern "C"
 /* From libsat.c */
 
 /**
- * @fn dvb_sat_search_lnb
+ * @fn dvb_sat_search_lnb(const char *name)
  * @brief search for a LNBf entry
  *
  * @param name	name of the LNBf entry to seek.
@@ -89,7 +94,7 @@ extern "C"
 int dvb_sat_search_lnb(const char *name);
 
 /**
- * @fn dvb_print_lnb
+ * @fn dvb_print_lnb(int i)
  * @brief prints the contents of a LNBf entry at STDOUT.
  *
  * @param i		index for the entry
@@ -99,7 +104,8 @@ int dvb_sat_search_lnb(const char *name);
 int dvb_print_lnb(int i);
 
 /**
- * dvb_print_all_lnb() - Prints all LNBf entries at STDOUT.
+ * @fn dvb_print_all_lnb()
+ * @brief Prints all LNBf entries at STDOUT.
  *
  * This function doesn't return anything. Internally, it calls dvb_print_lnb()
  * for all entries inside its LNBf database.
@@ -107,7 +113,7 @@ int dvb_print_lnb(int i);
 void dvb_print_all_lnb(void);
 
 /**
- * @fn dvb_sat_get_lnb()
+ * @fn dvb_sat_get_lnb(int i)
  * @brief gets a LNBf entry at its internal database
  *
  * @param i		index for the entry.
@@ -117,7 +123,7 @@ void dvb_print_all_lnb(void);
 const struct dvb_sat_lnb *dvb_sat_get_lnb(int i);
 
 /**
- * @fn dvb_sat_set_parms()
+ * @fn dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
  * @brief sets the satellite parameters
  *
  * @param parms	struct dvb_v5_fe_parms pointer.
