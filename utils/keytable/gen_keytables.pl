@@ -142,6 +142,11 @@ sub parse_dir()
 	parse_file $file;
 }
 
+sub sort_dir()
+{
+	sort @_;
+}
+
 sub parse_rc_map_names($)
 {
 	my $filename = shift;
@@ -198,7 +203,7 @@ print OUT_MAP << "EOF";
 #driver table                    file
 EOF
 
-find({wanted => \&parse_dir, no_chdir => 1}, "$kernel_dir/drivers/media/rc/keymaps");
+find({wanted => \&parse_dir, preprocess => \&sort_dir, no_chdir => 1}, "$kernel_dir/drivers/media/rc/keymaps");
 
 foreach my $file (@ir_files) {
 	parse_file "$kernel_dir/$file";
