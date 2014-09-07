@@ -26,7 +26,7 @@
 
 /**
  * @file dvb-scan.h
- * @brief Provides interfaces to deal with DVB demux.
+ * @brief Provides interfaces to scan programs inside MPEG-TS digital TV streams.
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
  *

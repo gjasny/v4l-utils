@@ -35,7 +35,7 @@
 
 /**
  * @file dvb-fe.h
- * @brief Provides interfaces to deal with DVB demux.
+ * @brief Provides interfaces to deal with DVB frontend.
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
  *

@@ -26,7 +26,7 @@
 
 /**
  * @file dvb-log.h
- * @brief Provides interfaces to deal with DVB demux.
+ * @brief Provides interfaces to handle libdvbv5 log messages.
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
  * @author Andre Roth
