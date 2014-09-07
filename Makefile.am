@@ -9,6 +9,8 @@ endif
 
 EXTRA_DIST = android-config.h include COPYING.libv4l README.libv4l README.lib-multi-threading
 
+include $(top_srcdir)/aminclude.am
+
 # custom targets
 
 sync-with-kernel:

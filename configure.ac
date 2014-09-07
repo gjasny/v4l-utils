@@ -59,6 +59,7 @@ AC_PROG_LIBTOOL
 AC_PROG_MKDIR_P
 AC_PROG_LN_S
 PKG_PROG_PKG_CONFIG
+DX_INIT_DOXYGEN($PACKAGE_NAME, doxygen_libdvbv5.cfg)
 
 # sync-with-kernel and keytable install could make use of them
 #AC_PROG_GREP
