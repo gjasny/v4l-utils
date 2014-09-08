@@ -1,3 +1,102 @@
+v4l-utils-1.4.0
+---------------
+
+Gregor Jasny (11):
+      Start v4l-utils 1.3.91 development cycle
+      libdvbv5: Remove dvbsat_polarization_name (same as dvb_sat_pol_name)
+      libdvbv5: Rename and hide charset definitions
+      libdvbv5: Hide unused and unexposed cnr_to_qual_s tables
+      libdvbv5: Make dummy_fe static
+      libdvbv5: Add doxygen config file to distribution list
+      libdvbv5: Add dvb-fe-priv.h to sources list
+      contrib: Add au0828 directory to extra distribution list
+      media-ctl: process pkgconfig files
+      v4l2-ctl: Distribute vivid-tpg.h.patch
+      ir-keytable: Genrate stable map file by sorting directory before parsing
+
+Hans Verkuil (6):
+      v4l2-compliance: require G/S_PRIORITY support for m2m devices
+      v4l2-ctl/qv4l2: sync to latest vivid-tpg code
+      v4l-utils: sync-with-kernel
+      Add the generated lib/include/dvb-frontend.h to .gitignore
+      Copy the vivid-tpg* sources from the kernel
+      qv4l2: fix bug in setting the audio mode
+
+Mauro Carvalho Chehab (72):
+      libdvbv5: be coherent with parse_string.h header
+      libdvbv5: Move charsets to be inside the parms struct
+      libdvbv5: move internal parameters to a separate structure
+      libdvbv5: Properly document struct dvb_v5_fe_parms
+      libdvbv5: Fix parameters dvb_add_parms_for_sys()
+      libdvbv5: Fix return values for dvb_fe_get_event()
+      libdvbv5: Add documentation for dvb-fe.h
+      libdvbv5: add the private structure to the tree
+      libdvbv5: Rename internally-defined poll function as dvb_poll
+      libdvbv5: fix a memory leak at descriptors
+      libdvbv5: reimplement the spaces filling logic
+      libdvbv5: Don't go past the size of dvb_v5_name
+      libdvbv5: Don't go past the size of dvb_v5_attr_names
+      libdvbv5: Fix changeset 04accf23
+      libdvbv5: Allocate channel earlier
+      libdvbv5: add a missing return
+      dvbv5-zap: close dvr_fd at the end of do_traffic_monitor()
+      libdvbv5: Improve parsing of dvb channel format
+      libdvbv5: add support for parsing scan-s2 DVB-S2 channels
+      libdvbv5: don't write polarization and user parms twice
+      libdvbv5: Fix modulation formats for legacy channel on DVB-S2
+      libdvbv5: only use emulated formats if the original one is not found
+      libdvbv5: remove some commented dead code
+      libdvbv5: add support for optional parameters on oneline formats
+      libdvbv5: add support for optional MIS parameter
+      libdvbv5: Add support for parsing DVB-T2 channel format
+      libdvbv5: Fix delivery system for channel on DVB-T2 format
+      Stop using the legacy name for PLP/MIS property
+      libdvbv5: fix parsing of the default_value
+      libdvbv5: Split libdvbv5 properties from stats
+      libdvbv5: better document dvb-v5-std.h
+      libdvbv5: Add MIS to DVB-S2 properties
+      libdvbv5: Fix the error message when a props is not found
+      libdvbv5: avoid checking past data
+      libdvbv5: use default values if an entry is missing
+      libdvbv5: MIS default should be zero
+      libdvbv5: add support for PLS code/mode for file read/write
+      libdvbv5: make sure that all needed properties are filled
+      libdvbv5: Fix the property limits check
+      libdvbv5: fix a corner case reported by Coverity
+      dvbv5-zap: keep monitoring stats at DVB record mode
+      dvbv5-zap: Be sure to get stats before printing
+      dvbv5-zap: remove an unused var
+      libdvbv5: add documentation for dvb-demux.h
+      libdvbv5: rename struct el_pid
+      libdvbv5: Add a description for DVB file entries
+      dvb-file.h: prepend parsing structs with "dvb_"
+      libdvbv5: rename enum file_formats to dvb_file_formats
+      libdvbv5: move PTABLE macro to the *.c files
+      libdvbv5: add documentation about format read/write functions
+      libdvbv5: Add documentation for other functions at dvb-file.h
+      libdvbv5: Document dvb-log.h and dvb-sat.h
+      libdvbv5: Remove an unused parameter at struct dvb_v5_descriptors
+      libdvbv5: remove unused parameter at dvb_scan_alloc_handler_table()
+      libdvbv5: add documentation for the DVB scan functions
+      libdvbv5: Document the libdvbv5 properties
+      libdvbv5: Document the last undocumented structs at dvb-file.h
+      libdvbv5: Convert documentation to javadoc format
+      Add support to generate Doxygen documentation for libdvbv5
+      libdvbv5: Improve doxygen format
+      Ignore the generate doxygen-doc directory
+      libdvbv5: Fix function definitions at doxygen book
+      libdvbv5: Properly document macros at dvb-v5-std.h
+      libdvbv5: fix dvb_get_pmt_pid API
+      libdvbv5: improve doxygen documentation
+      libdvbv5 doxygen: Fix a few file descriptions
+      libdvbv5: Fix dvb_get_pmt_pid()
+      libdvbv5: Provide a quality indicator for DVB-T
+      libdvbv5: get rid of bcd_to_int()
+      libdvbv5: add documentation for descriptors.h
+      libdvbv5: Add more data about the descriptors definition
+      libdvbv5 doxygen: Some improvements for dvb-scan.h and descriptors.h
+
+
 v4l-utils-1.3.90 (Development snapshot)
 ---------------------------------------
 
