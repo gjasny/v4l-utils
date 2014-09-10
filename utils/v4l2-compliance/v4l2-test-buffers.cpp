@@ -253,8 +253,6 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 		buf_states++;
 	if (g_flags() & V4L2_BUF_FLAG_DONE)
 		buf_states++;
-	if (g_flags() & V4L2_BUF_FLAG_ERROR)
-		buf_states++;
 	if (g_flags() & V4L2_BUF_FLAG_PREPARED)
 		buf_states++;
 	fail_on_test(buf_states > 1);
