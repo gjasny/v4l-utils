@@ -207,6 +207,332 @@ extern const struct dvb_descriptor dvb_descriptors[];
 
 /**
  * @brief List containing all descriptors used by Digital TV MPEG-TS
+ *
+
+ * @var video_stream_descriptor
+ *	@brief	video_stream descriptor - ISO/IEC 13818-1
+ * @var audio_stream_descriptor
+ *	@brief	audio_stream descriptor - ISO/IEC 13818-1
+ * @var hierarchy_descriptor
+ *	@brief	hierarchy descriptor - ISO/IEC 13818-1
+ * @var registration_descriptor
+ *	@brief	registration descriptor - ISO/IEC 13818-1
+ * @var ds_alignment_descriptor
+ *	@brief	ds_alignment descriptor - ISO/IEC 13818-1
+ * @var target_background_grid_descriptor
+ *	@brief	target_background_grid descriptor - ISO/IEC 13818-1
+ * @var video_window_descriptor
+ *	@brief	video_window descriptor - ISO/IEC 13818-1
+ * @var conditional_access_descriptor
+ *	@brief	conditional_access descriptor - ISO/IEC 13818-1
+ * @var iso639_language_descriptor
+ *	@brief	iso639_language descriptor - ISO/IEC 13818-1
+ * @var system_clock_descriptor
+ *	@brief	system_clock descriptor - ISO/IEC 13818-1
+ * @var multiplex_buffer_utilization_descriptor
+ *	@brief	multiplex_buffer_utilization descriptor - ISO/IEC 13818-1
+ * @var copyright_descriptor
+ *	@brief	copyright descriptor - ISO/IEC 13818-1
+ * @var maximum_bitrate_descriptor
+ *	@brief	maximum_bitrate descriptor - ISO/IEC 13818-1
+ * @var private_data_indicator_descriptor
+ *	@brief	private_data_indicator descriptor - ISO/IEC 13818-1
+ * @var smoothing_buffer_descriptor
+ *	@brief	smoothing_buffer descriptor - ISO/IEC 13818-1
+ * @var std_descriptor
+ *	@brief	std descriptor - ISO/IEC 13818-1
+ * @var ibp_descriptor
+ *	@brief	ibp descriptor - ISO/IEC 13818-1
+ * @var mpeg4_video_descriptor
+ *	@brief	mpeg4_video descriptor - ISO/IEC 13818-1
+ * @var mpeg4_audio_descriptor
+ *	@brief	mpeg4_audio descriptor - ISO/IEC 13818-1
+ * @var iod_descriptor
+ *	@brief	iod descriptor - ISO/IEC 13818-1
+ * @var sl_descriptor
+ *	@brief	sl descriptor - ISO/IEC 13818-1
+ * @var fmc_descriptor
+ *	@brief	fmc descriptor - ISO/IEC 13818-1
+ * @var external_es_id_descriptor
+ *	@brief	external_es_id descriptor - ISO/IEC 13818-1
+ * @var muxcode_descriptor
+ *	@brief	muxcode descriptor - ISO/IEC 13818-1
+ * @var fmxbuffersize_descriptor
+ *	@brief	fmxbuffersize descriptor - ISO/IEC 13818-1
+ * @var multiplexbuffer_descriptor
+ *	@brief	multiplexbuffer descriptor - ISO/IEC 13818-1
+ * @var content_labeling_descriptor
+ *	@brief	content_labeling descriptor - ISO/IEC 13818-1
+ * @var metadata_pointer_descriptor
+ *	@brief	metadata_pointer descriptor - ISO/IEC 13818-1
+ * @var metadata_descriptor
+ *	@brief	metadata descriptor - ISO/IEC 13818-1
+ * @var metadata_std_descriptor
+ *	@brief	metadata_std descriptor - ISO/IEC 13818-1
+ * @var AVC_video_descriptor
+ *	@brief	AVC_video descriptor - ISO/IEC 13818-1
+ * @var ipmp_descriptor
+ *	@brief	ipmp descriptor - ISO/IEC 13818-1
+ * @var AVC_timing_and_HRD_descriptor
+ *	@brief	AVC_timing_and_HRD descriptor - ISO/IEC 13818-1
+ * @var mpeg2_aac_audio_descriptor
+ *	@brief	mpeg2_aac_audio descriptor - ISO/IEC 13818-1
+ * @var flexmux_timing_descriptor
+ *	@brief	flexmux_timing descriptor - ISO/IEC 13818-1
+ * @var network_name_descriptor
+ *
+ *	@brief	network_name descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var service_list_descriptor
+ *	@brief	service_list descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var stuffing_descriptor
+ *	@brief	stuffing descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var satellite_delivery_system_descriptor
+ *	@brief	satellite_delivery_system descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var cable_delivery_system_descriptor
+ *	@brief	cable_delivery_system descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var VBI_data_descriptor
+ *	@brief	VBI_data descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var VBI_teletext_descriptor
+ *	@brief	VBI_teletext descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var bouquet_name_descriptor
+ *	@brief	bouquet_name descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var service_descriptor
+ *	@brief	service descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var country_availability_descriptor
+ *	@brief	country_availability descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var linkage_descriptor
+ *	@brief	linkage descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var NVOD_reference_descriptor
+ *	@brief	NVOD_reference descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var time_shifted_service_descriptor
+ *	@brief	time_shifted_service descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var short_event_descriptor
+ *	@brief	short_event descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var extended_event_descriptor
+ *	@brief	extended_event descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var time_shifted_event_descriptor
+ *	@brief	time_shifted_event descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var component_descriptor
+ *	@brief	component descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var mosaic_descriptor
+ *	@brief	mosaic descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var stream_identifier_descriptor
+ *	@brief	stream_identifier descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var CA_identifier_descriptor
+ *	@brief	CA_identifier descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var content_descriptor
+ *	@brief	content descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var parental_rating_descriptor
+ *	@brief	parental_rating descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var teletext_descriptor
+ *	@brief	teletext descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var telephone_descriptor
+ *	@brief	telephone descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var local_time_offset_descriptor
+ *	@brief	local_time_offset descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var subtitling_descriptor
+ *	@brief	subtitling descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var terrestrial_delivery_system_descriptor
+ *	@brief	terrestrial_delivery_system descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var multilingual_network_name_descriptor
+ *	@brief	multilingual_network_name descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var multilingual_bouquet_name_descriptor
+ *	@brief	multilingual_bouquet_name descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var multilingual_service_name_descriptor
+ *	@brief	multilingual_service_name descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var multilingual_component_descriptor
+ *	@brief	multilingual_component descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var private_data_specifier_descriptor
+ *	@brief	private_data_specifier descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var service_move_descriptor
+ *	@brief	service_move descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var short_smoothing_buffer_descriptor
+ *	@brief	short_smoothing_buffer descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var frequency_list_descriptor
+ *	@brief	frequency_list descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var partial_transport_stream_descriptor
+ *	@brief	partial_transport_stream descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var data_broadcast_descriptor
+ *	@brief	data_broadcast descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var scrambling_descriptor
+ *	@brief	scrambling descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var data_broadcast_id_descriptor
+ *	@brief	data_broadcast_id descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var transport_stream_descriptor
+ *	@brief	transport_stream descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var DSNG_descriptor
+ *	@brief	DSNG descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var PDC_descriptor
+ *	@brief	PDC descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var AC_3_descriptor
+ *	@brief	AC_3 descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var ancillary_data_descriptor
+ *	@brief	ancillary_data descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var cell_list_descriptor
+ *	@brief	cell_list descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var cell_frequency_link_descriptor
+ *	@brief	cell_frequency_link descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var announcement_support_descriptor
+ *	@brief	announcement_support descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var application_signalling_descriptor
+ *	@brief	application_signalling descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var adaptation_field_data_descriptor
+ *	@brief	adaptation_field_data descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var service_identifier_descriptor
+ *	@brief	service_identifier descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var service_availability_descriptor
+ *	@brief	service_availability descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var default_authority_descriptor
+ *	@brief	default_authority descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var related_content_descriptor
+ *	@brief	related_content descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var TVA_id_descriptor
+ *	@brief	TVA_id descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var content_identifier_descriptor
+ *	@brief	content_identifier descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var time_slice_fec_identifier_descriptor
+ *	@brief	time_slice_fec_identifier descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var ECM_repetition_rate_descriptor
+ *	@brief	ECM_repetition_rate descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var S2_satellite_delivery_system_descriptor
+ *	@brief	S2_satellite_delivery_system descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var enhanced_AC_3_descriptor
+ *	@brief	enhanced_AC_3 descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var DTS_descriptor
+ *	@brief	DTS descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var AAC_descriptor
+ *	@brief	AAC descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var XAIT_location_descriptor
+ *	@brief	XAIT_location descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var FTA_content_management_descriptor
+ *	@brief	FTA_content_management descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var extension_descriptor
+ *	@brief	extension descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
+ * @var CUE_identifier_descriptor
+ *	@brief	CUE_identifier descriptor - SCTE 35 2004
+ * @var extended_channel_name
+ *	@brief	extended_channel_name descriptor - SCTE 35 2004
+ * @var service_location
+ *	@brief service_location descriptor - SCTE 35 2004
+ * @var component_name_descriptor
+ *	@brief	component_name descriptor - SCTE 35 2004
+ *	@see http://www.etherguidesystems.com/Help/SDOs/ATSC/Semantics/Descriptors/Default.aspx
+ * @var logical_channel_number_descriptor
+ *	@brief	logical_channel_number descriptor - SCTE 35 2004
+ *	@see http://www.coolstf.com/tsreader/descriptors.html
+ *
+ * @var carousel_id_descriptor
+ *	@brief	carousel_id descriptor - ABNT NBR 15603-1 2007
+ * @var association_tag_descriptor
+ *	@brief	association_tag descriptor - ABNT NBR 15603-1 2007
+ * @var deferred_association_tags_descriptor
+ *	@brief	deferred_association_tags descriptor - ABNT NBR 15603-1 2007
+
+ * @var hierarchical_transmission_descriptor
+ *	@brief	hierarchical_transmission descriptor - ABNT NBR 15603-1 2007
+ * @var digital_copy_control_descriptor
+ *	@brief	digital_copy_control descriptor - ABNT NBR 15603-1 2007
+ * @var network_identifier_descriptor
+ *	@brief	network_identifier descriptor - ABNT NBR 15603-1 2007
+ * @var partial_transport_stream_time_descriptor
+ *	@brief	partial_transport_stream_time descriptor - ABNT NBR 15603-1 2007
+ * @var audio_component_descriptor
+ *	@brief	audio_component descriptor - ABNT NBR 15603-1 2007
+ * @var hyperlink_descriptor
+ *	@brief	hyperlink descriptor - ABNT NBR 15603-1 2007
+ * @var target_area_descriptor
+ *	@brief	target_area descriptor - ABNT NBR 15603-1 2007
+ * @var data_contents_descriptor
+ *	@brief	data_contents descriptor - ABNT NBR 15603-1 2007
+ * @var video_decode_control_descriptor
+ *	@brief	video_decode_control descriptor - ABNT NBR 15603-1 2007
+ * @var download_content_descriptor
+ *	@brief	download_content descriptor - ABNT NBR 15603-1 2007
+ * @var CA_EMM_TS_descriptor
+ *	@brief	CA_EMM_TS descriptor - ABNT NBR 15603-1 2007
+ * @var CA_contract_information_descriptor
+ *	@brief	CA_contract_information descriptor - ABNT NBR 15603-1 2007
+ * @var CA_service_descriptor
+ *	@brief	CA_service descriptor - ABNT NBR 15603-1 2007
+ * @var TS_Information_descriptior
+ *	@brief transport_stream_information descriptor - ABNT NBR 15603-1 2007
+ * @var extended_broadcaster_descriptor
+ *	@brief	extended_broadcaster descriptor - ABNT NBR 15603-1 2007
+ * @var logo_transmission_descriptor
+ *	@brief	logo_transmission descriptor - ABNT NBR 15603-1 2007
+ * @var basic_local_event_descriptor
+ *	@brief	basic_local_event descriptor - ABNT NBR 15603-1 2007
+ * @var reference_descriptor
+ *	@brief	reference descriptor - ABNT NBR 15603-1 2007
+ * @var node_relation_descriptor
+ *	@brief	node_relation descriptor - ABNT NBR 15603-1 2007
+ * @var short_node_information_descriptor
+ *	@brief	short_node_information descriptor - ABNT NBR 15603-1 2007
+ * @var STC_reference_descriptor
+ *	@brief	STC_reference descriptor - ABNT NBR 15603-1 2007
+ * @var series_descriptor
+ *	@brief	series descriptor - ABNT NBR 15603-1 2007
+ * @var event_group_descriptor
+ *	@brief	event_group descriptor - ABNT NBR 15603-1 2007
+ * @var SI_parameter_descriptor
+ *	@brief	SI_parameter descriptor - ABNT NBR 15603-1 2007
+ * @var broadcaster_Name_Descriptor
+ * 	@brief broadcaster_Name descriptor - ABNT NBR 15603-1 2007
+ * @var component_group_descriptor
+ *	@brief	component_group descriptor - ABNT NBR 15603-1 2007
+ * @var SI_prime_TS_descriptor
+ *	@brief	SI_prime_transport_stream descriptor - ABNT NBR 15603-1 2007
+ * @var board_information_descriptor
+ *	@brief	board_information descriptor - ABNT NBR 15603-1 2007
+ * @var LDT_linkage_descriptor
+ *	@brief	LDT_linkage descriptor - ABNT NBR 15603-1 2007
+ * @var connected_transmission_descriptor
+ *	@brief	connected_transmission descriptor - ABNT NBR 15603-1 2007
+ * @var content_availability_descriptor
+ *	@brief	content_availability descriptor - ABNT NBR 15603-1 2007
+ * @var service_group_descriptor
+ *	@brief	service_group descriptor - ABNT NBR 15603-1 2007
+ * @var carousel_compatible_composite_descriptor
+ *	@brief	carousel_compatible_composite descriptor - ABNT NBR 15603-1 2007
+ * @var conditional_playback_descriptor
+ *	@brief	conditional_playback descriptor - ABNT NBR 15603-1 2007
+ * @var ISDBT_delivery_system_descriptor
+ *	@brief	ISDBT terrestrial_delivery_system descriptor - ABNT NBR 15603-1 2007
+ * @var partial_reception_descriptor
+ *	@brief	partial_reception descriptor - ABNT NBR 15603-1 2007
+ * @var emergency_information_descriptor
+ *	@brief	emergency_information descriptor - ABNT NBR 15603-1 2007
+ * @var data_component_descriptor
+ *	@brief	data_component descriptor - ABNT NBR 15603-1 2007
+ * @var system_management_descriptor
+ *	@brief	system_management descriptor - ABNT NBR 15603-1 2007
+ *
+ * @var atsc_stuffing_descriptor
+ *	@brief	atsc_stuffing descriptor - ATSC A/65:2009
+ * @var atsc_ac3_audio_descriptor
+ *	@brief	atsc_ac3_audio descriptor - ATSC A/65:2009
+ * @var atsc_caption_service_descriptor
+ *	@brief	atsc_caption_service descriptor - ATSC A/65:2009
+ * @var atsc_content_advisory_descriptor
+ *	@brief	atsc_content_advisory descriptor - ATSC A/65:2009
+ * @var atsc_extended_channel_descriptor
+ *	@brief	atsc_extended_channel descriptor - ATSC A/65:2009
+ * @var atsc_service_location_descriptor
+ *	@brief	atsc_service_location descriptor - ATSC A/65:2009
+ * @var atsc_time_shifted_service_descriptor
+ *	@brief	atsc_time_shifted_service descriptor - ATSC A/65:2009
+ * @var atsc_component_name_descriptor
+ *	@brief	atsc_component_name descriptor - ATSC A/65:2009
+ * @var atsc_DCC_departing_request_descriptor
+ *	@brief	atsc_DCC_departing_request descriptor - ATSC A/65:2009
+ * @var atsc_DCC_arriving_request_descriptor
+ *	@brief	atsc_DCC_arriving_request descriptor - ATSC A/65:2009
+ * @var atsc_redistribution_control_descriptor
+ *	@brief	atsc_redistribution_control descriptor - ATSC A/65:2009
+ * @var atsc_ATSC_private_information_descriptor
+ *	@brief	atsc_ATSC_private_information descriptor - ATSC A/65:2009
+ * @var atsc_genre_descriptor
+ *	@brief	atsc_genre descriptor - ATSC A/65:2009
  */
 enum descriptors {
 	/* ISO/IEC 13818-1 */
