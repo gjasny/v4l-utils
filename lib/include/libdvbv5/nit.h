@@ -28,10 +28,49 @@
 #include <libdvbv5/header.h>
 #include <libdvbv5/descriptors.h>
 
+/**
+ * @file nit.h
+ * @brief Provides the descriptors for NIT MPEG-TS table
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ * @author Andre Roth
+ *
+ * @par Bug Report
+ * Please submit bug report and patches to linux-media@vger.kernel.org
+ *
+ * @par Descriptors
+ * The descriptors herein are defined on:
+ * - ISO/IEC 13818-1
+ * - ETSI EN 300 468
+ *
+ * @see http://www.etherguidesystems.com/Help/SDOs/dvb/syntax/tablesections/NIT.aspx
+ */
+
+/**
+ * @def DVB_TABLE_NIT
+ *	@brief NIT table ID
+ * @def DVB_TABLE_NIT2
+ *	@brief NIT table ID (alternative table ID)
+ * @def DVB_TABLE_NIT_PID
+ *	@brief NIT Program ID
+ */
 #define DVB_TABLE_NIT      0x40
 #define DVB_TABLE_NIT2     0x41
 #define DVB_TABLE_NIT_PID  0x10
 
+/**
+ * @union dvb_table_nit_transport_header
+ * @brief MPEG-TS NIT transport header
+ *
+ * @param transport_length	transport length
+ *
+ * This structure is used to store the original NIT transport header,
+ * converting the integer fields to the CPU endianness.
+ *
+ * The undocumented parameters are used only internally by the API and/or
+ * are fields that are reserved. They shouldn't be used, as they may change
+ * on future API releases.
+ */
 union dvb_table_nit_transport_header {
 	uint16_t bitfield;
 	struct {
@@ -40,6 +79,27 @@ union dvb_table_nit_transport_header {
 	} __attribute__((packed));
 } __attribute__((packed));
 
+/**
+ * @struct dvb_table_nit_transport
+ * @brief MPEG-TS NIT transport table
+ *
+ * @param transport_id	transport id
+ * @param network_id	network id
+ * @param desc_length	desc length
+ * @param descriptor	pointer to struct descriptor
+ * @param next	pointer to struct next
+ *
+ * This structure is used to store the original NIT transport table,
+ * converting the integer fields to the CPU endianness.
+ *
+ * The undocumented parameters are used only internally by the API and/or
+ * are fields that are reserved. They shouldn't be used, as they may change
+ * on future API releases.
+ *
+ * Everything after dvb_table_nit_transport::descriptor (including it) won't
+ * be bit-mapped to the data parsed from the MPEG TS. So, metadata are added
+ * there.
+ */
 struct dvb_table_nit_transport {
 	uint16_t transport_id;
 	uint16_t network_id;
@@ -54,6 +114,24 @@ struct dvb_table_nit_transport {
 	struct dvb_table_nit_transport *next;
 } __attribute__((packed));
 
+/**
+ * @struct dvb_table_nit
+ * @brief MPEG-TS NIT table
+ *
+ * @param desc_length	desc length
+ * @param descriptor	pointer to struct descriptor
+ * @param transport	pointer to struct transport
+ *
+ * This structure is used to store the original NIT table,
+ * converting the integer fields to the CPU endianness.
+ *
+ * The undocumented parameters are used only internally by the API and/or
+ * are fields that are reserved. They shouldn't be used, as they may change
+ * on future API releases.
+ *
+ * Everything after dvb_table_nit::descriptor (including it) won't be bit-mapped
+ * to the data parsed from the MPEG TS. So, metadata are added there.
+ */
 struct dvb_table_nit {
 	struct dvb_table_header header;
 	union {
@@ -67,15 +145,36 @@ struct dvb_table_nit {
 	struct dvb_table_nit_transport *transport;
 } __attribute__((packed));
 
+/**
+ * @brief typedef for a callback used when a NIT table entry is found
+ *
+ * @param nit	a struct dvb_table_nit pointer
+ * @param desc	a struct dvb_desc pointer
+ * @param priv	an opaque optional pointer
+ */
 typedef void nit_handler_callback_t(struct dvb_table_nit *nit,
 				    struct dvb_desc *desc,
 				    void *priv);
 
+/**
+ * @brief typedef for a callback used when a NIT transport table entry is found
+ *
+ * @param nit	a struct dvb_table_nit pointer
+ * @param tran	a struct dvb_table_nit_transport pointer
+ * @param desc	a struct dvb_desc pointer
+ * @param priv	an opaque optional pointer
+ */
 typedef void nit_tran_handler_callback_t(struct dvb_table_nit *nit,
 					 struct dvb_table_nit_transport *tran,
 					 struct dvb_desc *desc,
 					 void *priv);
 
+/**
+ * @brief Macro used to find a transport inside a NIT table
+ *
+ * @param _tran		transport to seek
+ * @param _nit		pointer to struct dvb_table_pat_program
+ */
 #define dvb_nit_transport_foreach( _tran, _nit ) \
   for (struct dvb_table_nit_transport *_tran = _nit->transport; _tran; _tran = _tran->next) \
 
@@ -85,13 +184,70 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-ssize_t dvb_table_nit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct dvb_table_nit **table);
-void dvb_table_nit_free(struct dvb_table_nit *nit);
-void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *nit);
+/**
+ * @brief Initializes and parses NIT table
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param buf buffer containing the NIT raw data
+ * @param buflen length of the buffer
+ * @param table pointer to struct dvb_table_sdt to be allocated and filled
+ *
+ * This function allocates a NIT table and fills the fields inside
+ * the struct. It also makes sure that all fields will follow the CPU
+ * endianness. Due to that, the content of the buffer may change.
+ *
+ * @return On success, it returns the size of the allocated struct.
+ *	   A negative value indicates an error.
+ */
+ssize_t dvb_table_nit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			    ssize_t buflen, struct dvb_table_nit **table);
 
+/**
+ * @brief Frees all data allocated by the NIT table parser
+ *
+ * @param table pointer to struct dvb_table_sdt to be freed
+ */
+void dvb_table_nit_free(struct dvb_table_nit *table);
+
+/**
+ * @brief Prints the content of the NIT table
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param table	pointer to struct dvb_table_sdt
+ */
+void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *table);
+
+/**
+ * @brief For each entry at NIT and NIT transport tables, call a callback
+ *
+ * @param parms		struct dvb_v5_fe_parms pointer to the opened device
+ * @param table		pointer to struct dvb_table_sdt
+ * @param descriptor	indicates the NIT table descriptor to seek
+ * @param call_nit	a nit_handler_callback_t function to be called when a
+ *			new entry at the NIT table is found (or NULL).
+ * @param call_tran	a nit_tran_handler_callback_t function to be called
+ *			when a new entry at the NIT transport table is found
+ *			(or NULL).
+ * @param priv		an opaque pointer to be optionally used by the
+ *			callbacks. The function won't touch on it, just use
+ *			as an argument for the callback functions.
+ *
+ * When parsing a NIT entry, we need to call some code to properly handle
+ * when a given descriptor in the table is found. This is used, for example,
+ * to create newer transponders to seek during scan.
+ *
+ * For example, to seek for the CATV delivery system descriptor and call a
+ * function that would add a new transponder to a scan procedure:
+ * @code
+ * 	dvb_table_nit_descriptor_handler(
+ *				&parms->p, dvb_scan_handler->nit,
+ *				cable_delivery_system_descriptor,
+ *				NULL, add_update_nit_dvbc, &tr);
+ * @endcode
+ */
 void dvb_table_nit_descriptor_handler(
 			    struct dvb_v5_fe_parms *parms,
-			    struct dvb_table_nit *nit,
+			    struct dvb_table_nit *table,
 			    enum descriptors descriptor,
 			    nit_handler_callback_t *call_nit,
 			    nit_tran_handler_callback_t *call_tran,
