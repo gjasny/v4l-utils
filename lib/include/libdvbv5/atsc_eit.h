@@ -129,8 +129,10 @@ union atsc_table_eit_desc_length {
  * @struct atsc_table_eit
  * @brief ATSC EIT table
  *
- * @param events	events
- * @param event	pointer to struct event
+ * @param header			struct dvb_table_header content
+ * @param protocol_version		protocol version
+ * @param events			events
+ * @param event				pointer to struct event
  *
  * This structure is used to store the original ATSC EIT table,
  * converting the integer fields to the CPU endianness.
@@ -140,7 +142,8 @@ union atsc_table_eit_desc_length {
  * there.
  */
 struct atsc_table_eit {
-	ATSC_HEADER();
+	struct dvb_table_header header;
+	uint8_t  protocol_version;
 	uint8_t events;
 	struct atsc_table_eit_event *event;
 } __attribute__((packed));
@@ -148,8 +151,8 @@ struct atsc_table_eit {
 /**
  * @brief Macro used to find event on an ATSC EIT table
  *
- * @param _event	event to seek
- * @param _eit		pointer to struct atsc_table_eit_event
+ * @param _event			event to seek
+ * @param _eit				pointer to struct atsc_table_eit_event
  */
 #define atsc_eit_event_foreach(_event, _eit) \
 	for( struct atsc_table_eit_event *_event = _eit->event; _event; _event = _event->next ) \

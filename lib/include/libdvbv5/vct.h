@@ -151,6 +151,8 @@ struct atsc_table_vct_channel {
  * @struct atsc_table_vct
  * @brief ATSC VCT table (covers both CVCT and TVCT)
  *
+ * @param header			struct dvb_table_header content
+ * @param protocol_version		protocol version
  * @param num_channels_in_section	num channels in section
  *
  * @param channel			pointer to struct channel
@@ -160,7 +162,8 @@ struct atsc_table_vct_channel {
  * to the data parsed from the MPEG TS. So, metadata are added there
  */
 struct atsc_table_vct {
-	ATSC_HEADER();
+	struct dvb_table_header header;
+	uint8_t  protocol_version;
 
 	uint8_t num_channels_in_section;
 
