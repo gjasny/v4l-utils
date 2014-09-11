@@ -27,13 +27,7 @@
  * @author Andre Roth
  *
  * @par Bug Report
- * Please submit bug report and patches to linux-media@vger.kernel.org
- *
- * @par Descriptors
- * The descriptors herein are defined on:
- * - ISO/IEC 13818-1
- *
- * @see http://www.etherguidesystems.com/help/sdos/mpeg/syntax/tablesections/pat.aspx
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
 
 #ifndef _CRC32_H

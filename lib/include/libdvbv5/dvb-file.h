@@ -33,7 +33,8 @@
  * The purpose of the functions and structures defined herein is to provide
  * support to read and write to those different formats.
  *
- * Please submit bug report and patches to linux-media@vger.kernel.org
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
 
 /*

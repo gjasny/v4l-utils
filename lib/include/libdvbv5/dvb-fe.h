@@ -52,7 +52,8 @@
  * Just like the DTV properties, the stats are cached. That warrants that
  * all stats are got at the same time, when dvb_fe_get_stats() is called.
  *
- * Please submit bug report and patches to linux-media@vger.kernel.org
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
 
 /**

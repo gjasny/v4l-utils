@@ -26,12 +26,12 @@
  * @author Mauro Carvalho Chehab
  * @author Andre Roth
  *
- * @par Bug Report
- * Please submit bug report and patches to linux-media@vger.kernel.org
- *
  * @par Relevant specs
- * The table described herein is defined on:
+ * The table described herein is defined at:
  * - ETSI EN 300 468
+ *
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
 
 #ifndef _EIT_H
@@ -150,7 +150,7 @@ struct dvb_table_eit {
 
 struct dvb_v5_fe_parms;
 
-/** @brief Converts a running_status fielt into string */
+/** @brief Converts a running_status field into string */
 extern const char *dvb_eit_running_status_name[8];
 
 #ifdef __cplusplus

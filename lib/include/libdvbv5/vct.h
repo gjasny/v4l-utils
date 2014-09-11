@@ -26,17 +26,16 @@
  * @author Mauro Carvalho Chehab
  * @author Andre Roth
  *
- * @par Bug Report
- * Please submit bug report and patches to linux-media@vger.kernel.org
- *
- * @par Descriptors
- * The descriptors herein are defined on:
+ * @par Relevant specs
+ * The table described herein is defined at:
  * - ATSC A/65:2009 spec
  *
  * @see http://www.etherguidesystems.com/help/sdos/atsc/syntax/tablesections/TVCT.aspx
  * @see http://www.etherguidesystems.com/help/sdos/atsc/syntax/tablesections/CVCT.aspx
+ *
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
-
 
 #ifndef _VCT_H
 #define _VCT_H

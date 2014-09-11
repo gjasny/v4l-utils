@@ -27,7 +27,8 @@
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
  *
- * Please submit bug report and patches to linux-media@vger.kernel.org
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
 
 /*

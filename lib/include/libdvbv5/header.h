@@ -34,7 +34,7 @@
  * @author Andre Roth
  *
  * @par Bug Report
- * Please submit bug report and patches to linux-media@vger.kernel.org
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
 
 /**

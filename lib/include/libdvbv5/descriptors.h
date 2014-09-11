@@ -26,7 +26,8 @@
  * @author Mauro Carvalho Chehab
  * @author Andre Roth
  *
- * The descriptors are defined on:
+ * @par Relevant specs
+ * The descriptors herein are defined on the following specs:
  * - ISO/IEC 13818-1
  * - ETSI EN 300 468 V1.11.1 (2010-04)
  * - SCTE 35 2004
@@ -35,7 +36,8 @@
  * - ABNT NBR 15603-1 2007
  * - ATSC A/65:2009 spec
  *
- * Please submit bug report and patches to linux-media@vger.kernel.org
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
 
 

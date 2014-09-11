@@ -38,12 +38,13 @@
  * @par Bug Report
  * Please submit bug report and patches to linux-media@vger.kernel.org
  *
- * @par Descriptors
- * The descriptors herein are defined on:
+ * @par Relevant specs
+ * The table described herein is defined at:
  * - ISO/IEC 13818-1
  * - ETSI EN 300 468
  *
- * @see http://www.etherguidesystems.com/Help/SDOs/dvb/syntax/tablesections/NIT.aspx
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
 
 /**

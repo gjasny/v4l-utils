@@ -31,7 +31,8 @@
  * @author Mauro Carvalho Chehab
  * @author Andre Roth
  *
- * Please submit bug report and patches to linux-media@vger.kernel.org
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
 
 /**

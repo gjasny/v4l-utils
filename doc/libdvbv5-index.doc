@@ -1,0 +1,169 @@
+/*
+ * Copyright (c) 2014 - Mauro Carvalho Chehab <m.chehab@samsung.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation version 2
+ * of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ *
+ */
+
+/**
+@mainpage The libdvbv5 API documentation
+@copyright GNU General Public License version 2 (GPLv2)
+@author Mauro Carvalho Chehab <m.chehab@samsung.com>
+@par Source code
+The source code for libdvbv5 is available together with v4l-utils source
+code, at: http://git.linuxtv.org/cgit.cgi/v4l-utils.git/
+
+@see For DVBv5 Kernel API specification, see
+     http://linuxtv.org/downloads/v4l-dvb-apis/dvbapi.html.
+
+@par Bug Report
+Please submit bug report and patches to linux-media@vger.kernel.org
+
+@section intro Introduction
+
+This is a library that provides access to DVB adapter cards using the
+Linux DVB API version 5, as defined at
+http://linuxtv.org/downloads/v4l-dvb-apis/dvbapi.html.
+
+It also provides backward compatibility to a a driver that supports only the
+legacy DVBv3 API.
+
+@note	The DVBv3 API was deprecated at the Linux Kernel. Any Kernel since
+	version 3.3 supports the DVBv5 API.
+
+The DVBv3 API was replaced because its support is limited to just 4
+standards, without covering their innovations: ATSC, DVB-C, DVB-T and
+DVB-S.
+
+The DVBv5 API was originally introduced to support DVB-S2 (also called as
+DVB S2API, at the time it was merged), and were designed in a way that it
+can easily support any newer standards. So, extensions were added to support
+other standards, like ATSC-MH, DVB-T2, DVB-S2, ISDB, CMDB, etc.
+
+Most of those standards are supported by libdvbv5.
+
+As the libdvbv5 API is maintained by the same people that maintains the
+Linux DVB drivers, and it is used as the reference library, together with
+the dvbv5 applications, all new improvements at the Linux DVB API gets merged,
+the corresponding support at libdvbv5 is also included.
+
+@section feature Features provided by libdvbv5
+
+The libdvbv5 provides the following features:
+
+- It uses the latest DVBv5 API speck to talk with the Digital TV devices on
+  Linux, falling back to older versions of it, up to the latest version of
+  the DVBv3 API;
+
+- It supports several Satellite Equipment Control (SEC) types and systems;
+
+- It supports SCR/Unicable setups for Satellite;
+
+- It supports several DiSEqC satellite system configurations;
+
+- It provides a standard way to scan for DVB channels for several different
+  types of standards: DVB-S, DVB-S2, DVB-S Turbo, DVB-C DVB-T, DVB-T2, ATSC
+  and ISDB-T;
+
+- It is flexible enough to be extended to support newer standards and newer
+  features;
+
+- It provides a way to activate/deactivate the Low Noise Amplifier (LNA) on
+  devices that support such feature;
+
+- It parses the MPEG-TS main tables found on Digital TV systems, like
+  PAT, PMT, SDT, TVCT, CVCT, NIT, EIT, MGT and CAT;
+
+- Provides enhanced statistics indication about the Quality of Service
+  provided by a tuned transponder.
+
+@section dvbv5_intro Introduction to DVBv5 key value properties
+
+@subsection dvbv5_props DVBv5 and libdvbv5 properties
+
+The deprecated DVBv3 frontend API used to declare an union that contains 4
+structs inside, one for each of the supported standards (ATSC and DVB-T/C/S).
+
+This gives no flexibility to extend, as adding more structs at the union
+would change the size of the struct, breaking the Kernelspace to userspace
+API, and causing all DVB applications to break.
+
+So, instead of keeping using this approach, the DVBv5 API came with a
+different way: it passes a series of values using key/value properties.
+
+Those values feed a in-Kernel cache. There are two special properties:
+- DTV_CLEAR - clears the Kernel cache
+- DTV_TUNE - sends the cache for the DTV driver to tune into a transponder.
+
+See http://linuxtv.org/downloads/v4l-dvb-apis/FE_GET_SET_PROPERTY.html for
+more details.
+
+The same way as DVBv5, the libdvbv5 API also works with a set of key/value
+properties.
+
+Inside libdvbv5, there are two types of properties:
+
+- The ones defined at the Kernel's frontent API, that are found at
+  /usr/include/linux/dvb/frontend.h (actually, it uses a local copy
+  of that file, stored at ./include/linux/dvb/frontend.h);
+
+- Some extra properties used by libdvbv5. Those can be found at
+  lib/include/libdvbv5/dvb-v5-std.h and start at DTV_USER_COMMAND_START.
+
+Those extra properties allow to control other parameters that are visible
+only on userspace, like the Service ID that will be used, and the corresponding
+audio and video program IDs.
+
+@subsection dvbv5_stats DVBv5 and libdvbv5 statistics
+
+Just like what happens with DVBv3 frontend setting, the statistics provided
+by DVBv3 has several issues.
+
+On DVBv3, there are a number of special ioctls designed to get the
+statistics from a DTV device.
+
+Those DVBv3 statistics are not flexible, and they lack the scales that
+are provided by each call. So, for example, a FE_READ_SNR ioctl returns
+a number from 0 to 65535, but there's no way to know if this number is
+a value in dB (or a submultiple) or if it is just a relative quality number
+related to the Signal/Noise ratio.
+
+Also, some delivery systems like ISDB provide up to 4 statistics for each
+parameter, because it allows to set different modulation parameters to the
+several different layers of the stream.
+
+Starting with DVBv5 version 5.10 (added on Kernel 3.8), there's now a new
+mechanism to retrieve the statistics. This mechanism provides a way to
+discover the scale used internally by the Kernel, allowing the userspace
+applications to properly present the statistics.
+
+It also allows to obtain per-layer statistics, plus a global ponderated
+mean statistics for the transponder as a hole, on standards like ISDB.
+
+Just like the DTV properties, the stats are cached. That warrants that
+all stats are got at the same time, when dvb_fe_get_stats() is called.
+The Kernel drivers internally also warrant that those stats are also
+obtained for the same period of time, making them more coherent.
+
+The libdvbv5 automatically detects if the Digital TV driver in usage
+provides the DVBv5 version 5.10 statistics mechanism. If it doesn't,
+it falls back to DVBv3 way.
+
+If DVB version 5.10 is supported, it also provides an extra Quality of
+service indicator that tells if a received transponder has Poor, OK or
+Good quality.
+
+ */

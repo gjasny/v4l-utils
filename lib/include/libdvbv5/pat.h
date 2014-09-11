@@ -26,14 +26,14 @@
  * @author Mauro Carvalho Chehab
  * @author Andre Roth
  *
- * @par Bug Report
- * Please submit bug report and patches to linux-media@vger.kernel.org
- *
- * @par Descriptors
- * The descriptors herein are defined on:
+ * @par Relevant specs
+ * The table described herein is defined at:
  * - ISO/IEC 13818-1
  *
  * @see http://www.etherguidesystems.com/help/sdos/mpeg/syntax/tablesections/pat.aspx
+ *
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
  */
 
 #ifndef _PAT_H
