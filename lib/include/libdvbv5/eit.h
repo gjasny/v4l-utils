@@ -19,6 +19,21 @@
  *
  */
 
+/**
+ * @file eit.h
+ * @brief Provides the table parser for EIT (Event Information Table)
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ * @author Andre Roth
+ *
+ * @par Bug Report
+ * Please submit bug report and patches to linux-media@vger.kernel.org
+ *
+ * @par Relevant specs
+ * The table described herein is defined on:
+ * - ETSI EN 300 468
+ */
+
 #ifndef _EIT_H
 #define _EIT_H
 
@@ -28,14 +43,54 @@
 
 #include <libdvbv5/header.h>
 
+/**
+ * @def DVB_TABLE_EIT
+ *	@brief EIT table ID for the actual TS
+ * @def DVB_TABLE_EIT_OTHER
+ *	@brief EIT table ID for other TS
+ * @def DVB_TABLE_EIT_PID
+ *	@brief EIT Program ID
+ * @def DVB_TABLE_EIT_SCHEDULE
+ *	@brief Start table ID for the EIT schedule data on the actual TS
+ * @def DVB_TABLE_EIT_SCHEDULE_OTHER
+ *	@brief Start table ID for the EIT schedule data on other TS
+ */
 #define DVB_TABLE_EIT        0x4E
 #define DVB_TABLE_EIT_OTHER  0x4F
+#define DVB_TABLE_EIT_PID  0x12
 
 #define DVB_TABLE_EIT_SCHEDULE 0x50       /* - 0x5F */
 #define DVB_TABLE_EIT_SCHEDULE_OTHER 0x60 /* - 0x6F */
 
-#define DVB_TABLE_EIT_PID  0x12
-
+/**
+ * @struct dvb_table_eit_event
+ * @brief DVB EIT event table
+ *
+ * @param event_id		an uniquelly (inside a service ID) event ID
+ * @param desc_length		descriptor's length
+ * @param free_CA_mode		free CA mode. 0 indicates that the event
+ *				is not scrambled
+ * @param running_status	running status of the event. The status can
+ *				be translated to string via
+ *				dvb_eit_running_status_name string table.
+ * @param descriptor		pointer to struct descriptor
+ * @param next			pointer to struct next
+ * @param tm_start		event start (in struct tm format)
+ * @param duration		duration in seconds
+ * @param service_id		service ID
+ *
+ * This structure is used to store the original EIT event table,
+ * converting the integer fields to the CPU endianness, and converting the
+ * timestamps to a way that it is better handled on Linux.
+ *
+ * The undocumented parameters are used only internally by the API and/or
+ * are fields that are reserved. They shouldn't be used, as they may change
+ * on future API releases.
+ *
+ * Everything after dvb_table_eit_event::descriptor (including it) won't
+ * be bit-mapped to the data parsed from the MPEG TS. So, metadata are added
+ * there.
+ */
 struct dvb_table_eit_event {
 	uint16_t event_id;
 	union {
@@ -58,6 +113,23 @@ struct dvb_table_eit_event {
 	uint16_t service_id;
 } __attribute__((packed));
 
+/**
+ * @struct dvb_table_eit
+ * @brief DVB EIT table
+ *
+ * @param transport_id	transport id
+ * @param network_id	network id
+ * @param last_segment	last segment
+ * @param last_table_id	last table id
+ * @param event		pointer to struct dvb_table_eit_event
+ *
+ * This structure is used to store the original EIT table,
+ * converting the integer fields to the CPU endianness.
+ *
+ * Everything after dvb_table_eit::event (including it) won't
+ * be bit-mapped to the data parsed from the MPEG TS. So, metadata are added
+ * there.
+ */
 struct dvb_table_eit {
 	struct dvb_table_header header;
 	uint16_t transport_id;
@@ -67,20 +139,65 @@ struct dvb_table_eit {
 	struct dvb_table_eit_event *event;
 } __attribute__((packed));
 
+/**
+ * @brief Macro used to find event on a EIT table
+ *
+ * @param _event	event to seek
+ * @param _eit		pointer to struct dvb_table_eit_event
+ */
 #define dvb_eit_event_foreach(_event, _eit) \
 	for( struct dvb_table_eit_event *_event = _eit->event; _event; _event = _event->next ) \
 
 struct dvb_v5_fe_parms;
 
+/** @brief Converts a running_status fielt into string */
 extern const char *dvb_eit_running_status_name[8];
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-ssize_t dvb_table_eit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct dvb_table_eit **table);
-void dvb_table_eit_free(struct dvb_table_eit *eit);
-void dvb_table_eit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_eit *eit);
+/**
+ * @brief Initializes and parses EIT table
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param buf buffer containing the EIT raw data
+ * @param buflen length of the buffer
+ * @param table pointer to struct dvb_table_pat to be allocated and filled
+ *
+ * This function allocates an EIT table and fills the fields inside
+ * the struct. It also makes sure that all fields will follow the CPU
+ * endianness. Due to that, the content of the buffer may change.
+ *
+ * @return On success, it returns the size of the allocated struct.
+ *	   A negative value indicates an error.
+ */
+ssize_t dvb_table_eit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			    ssize_t buflen, struct dvb_table_eit **table);
+
+/**
+ * @brief Frees all data allocated by the EIT table parser
+ *
+ * @param table pointer to struct dvb_table_eit to be freed
+ */
+void dvb_table_eit_free(struct dvb_table_eit *table);
+
+/**
+ * @brief Prints the content of the EIT table
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param table pointe to struct dvb_table_eit
+ */
+void dvb_table_eit_print(struct dvb_v5_fe_parms *parms,
+			 struct dvb_table_eit *table);
+
+/**
+ * @brief Converts a DVB EIT formatted timestamp into struct tm
+ *
+ * @param data		event on DVB EIT time format
+ * @param tm		pointer to struct tm where the converted timestamp will
+ *			be stored.
+ */
 void dvb_time(const uint8_t data[5], struct tm *tm);
 
 #ifdef __cplusplus
