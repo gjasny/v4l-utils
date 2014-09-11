@@ -26,6 +26,33 @@
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
 
+/**
+ * @file header.h
+ * @brief Provides the MPEG TS table headers
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ * @author Andre Roth
+ *
+ * @par Bug Report
+ * Please submit bug report and patches to linux-media@vger.kernel.org
+ */
+
+/**
+ * @struct dvb_ts_packet_header
+ * @brief Header of a MPEG-TS transport packet
+ *
+ * @param sync_byte			sync byte
+ * @param pid				Program ID
+ * @param transport_priority		transport priority
+ * @param payload_unit_start_indicator	payload unit start indicator
+ * @param transport_error_indicator	transport error indicator
+ * @param continuity_counter		continuity counter
+ * @param adaptation_field_control	adaptation field control
+ * @param transport_scrambling_control	transport scrambling control
+ * @param adaptation_field_length	adaptation field length
+ *
+ * @see http://www.etherguidesystems.com/Help/SDOs/MPEG/Semantics/MPEG-2/transport_packet.aspx
+ */
 struct dvb_ts_packet_header {
 	uint8_t  sync_byte;
 	union {
@@ -45,6 +72,24 @@ struct dvb_ts_packet_header {
 	uint8_t adaptation_field_length;
 } __attribute__((packed));
 
+/**
+ * @struct dvb_table_header
+ * @brief Header of a MPEG-TS table
+ *
+ * @param table_id		table id
+ * @param section_length	section length
+ * @param one			one
+ * @param zero			zero
+ * @param syntax		syntax
+ * @param id			TS ID
+ * @param current_next		current next
+ * @param version		version
+ * @param one2			one2
+ * @param section_id		section number
+ * @param last_section		last section number
+ *
+ * All MPEG-TS tables start with this header.
+ */
 struct dvb_table_header {
 	uint8_t  table_id;
 	union {
@@ -71,8 +116,20 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-void dvb_table_header_init (struct dvb_table_header *t);
-void dvb_table_header_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_header *t);
+/**
+ * @brief Initializes and parses MPEG-TS table header
+ *
+ * @param header pointer to struct dvb_table_header to be parsed
+ */
+void dvb_table_header_init (struct dvb_table_header *header);
+/**
+ * @brief Prints the content of the MPEG-TS table header
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param header pointer to struct dvb_table_header to be printed
+ */
+void dvb_table_header_print(struct dvb_v5_fe_parms *parms,
+			    const struct dvb_table_header *header);
 
 #ifdef __cplusplus
 }
