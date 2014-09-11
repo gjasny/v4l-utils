@@ -61,7 +61,7 @@
  * @param pid	pid
  * @param next	pointer to struct next
  *
- * This structure is used to store the original VCT channel table,
+ * This structure is used to store the original PAT program table,
  * converting the integer fields to the CPU endianness.
  *
  * The undocumented parameters are used only internally by the API and/or
@@ -90,6 +90,15 @@ struct dvb_table_pat_program {
  * @param programs	programs
  * @param program	pointer to struct program
  *
+ * This structure is used to store the original PAT table,
+ * converting the integer fields to the CPU endianness.
+ *
+ * The undocumented parameters are used only internally by the API and/or
+ * are fields that are reserved. They shouldn't be used, as they may change
+ * on future API releases.
+ *
+ * Everything after dvb_table_pat_program::program (including it) won't be bit-mapped
+ * to the data parsed from the MPEG TS. So, metadata are added there.
  */
 struct dvb_table_pat {
 	struct dvb_table_header header;
