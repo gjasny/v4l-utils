@@ -69,15 +69,16 @@
  * @param descriptor	pointer to struct descriptor
  * @param next	pointer to struct next
  *
- * This structure is used to store the original SDT channel table,
+ * This structure is used to store the original SDT service table,
  * converting the integer fields to the CPU endianness.
  *
  * The undocumented parameters are used only internally by the API and/or
  * are fields that are reserved. They shouldn't be used, as they may change
  * on future API releases.
  *
- * Everything after dvb_table_sdt_service::next (including it) won't be bit-mapped
- * to the data parsed from the MPEG TS. So, metadata are added there.
+ * Everything after dvb_table_sdt_service::descriptor (including it) won't
+ * be bit-mapped to the data parsed from the MPEG TS. So, metadata are added
+ * there.
  */
 struct dvb_table_sdt_service {
 	uint16_t service_id;
@@ -110,7 +111,7 @@ struct dvb_table_sdt_service {
  * are fields that are reserved. They shouldn't be used, as they may change
  * on future API releases.
  *
- * Everything after dvb_table_sdt_service::service (including it) won't be bit-mapped
+ * Everything after dvb_table_sdt::service (including it) won't be bit-mapped
  * to the data parsed from the MPEG TS. So, metadata are added there.
  */
 struct dvb_table_sdt {
