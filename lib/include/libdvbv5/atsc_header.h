@@ -21,13 +21,28 @@
 #ifndef _ATSC_HEADER_H
 #define _ATSC_HEADER_H
 
+/**
+ * @file atsc_header.h
+ * @brief Provides some common ATSC stuff
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Andre Roth
+ *
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
+ */
+
 #include <stdint.h>
 #include <unistd.h> /* ssize_t */
 
 #include <libdvbv5/header.h>
 
+/**
+ * @def ATSC_BASE_PID
+ *	@brief ATSC PID for the Program and System Information Protocol
+ */
 #define ATSC_BASE_PID  0x1FFB
 
+#ifndef _DOXYGEN
 #define ATSC_HEADER() \
 	struct dvb_table_header header; \
 	uint8_t  protocol_version; \
@@ -36,5 +51,6 @@
 	dvb_table_header_print(_parms, &_table->header); \
 	dvb_loginfo("| protocol_version %d", _table->protocol_version); \
 
+#endif /* _DOXYGEN */
 
-#endif
+#endif /* _ATSC_HEADER_H */

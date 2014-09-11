@@ -47,7 +47,7 @@
 
 /**
  * @def ATSC_TABLE_EIT
- *	@brief ATSC EIT table ID for the actual TS
+ *	@brief ATSC EIT table ID
  */
 #define ATSC_TABLE_EIT        0xCB
 
