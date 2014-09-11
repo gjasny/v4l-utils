@@ -19,6 +19,23 @@
  *
  */
 
+/**
+ * @file pat.h
+ * @brief Provides the descriptors for PAT MPEG-TS table
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ * @author Andre Roth
+ *
+ * @par Bug Report
+ * Please submit bug report and patches to linux-media@vger.kernel.org
+ *
+ * @par Descriptors
+ * The descriptors herein are defined on:
+ * - ISO/IEC 13818-1
+ *
+ * @see http://www.etherguidesystems.com/help/sdos/mpeg/syntax/tablesections/pat.aspx
+ */
+
 #ifndef _PAT_H
 #define _PAT_H
 
@@ -27,9 +44,33 @@
 
 #include <libdvbv5/header.h>
 
+/**
+ * @def DVB_TABLE_PAT
+ *	@brief PAT table ID
+ * @def DVB_TABLE_PAT_PID
+ *	@brief PAT Program ID
+ */
 #define DVB_TABLE_PAT      0x00
 #define DVB_TABLE_PAT_PID  0x0000
 
+/**
+ * @struct dvb_table_pat_program
+ * @brief MPEG-TS PAT program table
+ *
+ * @param service_id	service id
+ * @param pid	pid
+ * @param next	pointer to struct next
+ *
+ * This structure is used to store the original VCT channel table,
+ * converting the integer fields to the CPU endianness.
+ *
+ * The undocumented parameters are used only internally by the API and/or
+ * are fields that are reserved. They shouldn't be used, as they may change
+ * on future API releases.
+ *
+ * Everything after dvb_table_pat_program::next (including it) won't be bit-mapped
+ * to the data parsed from the MPEG TS. So, metadata are added there.
+ */
 struct dvb_table_pat_program {
 	uint16_t service_id;
 	union {
@@ -42,12 +83,26 @@ struct dvb_table_pat_program {
 	struct dvb_table_pat_program *next;
 } __attribute__((packed));
 
+/**
+ * @struct dvb_table_pat
+ * @brief MPEG-TS PAT table
+ *
+ * @param programs	programs
+ * @param program	pointer to struct program
+ *
+ */
 struct dvb_table_pat {
 	struct dvb_table_header header;
 	uint16_t programs;
 	struct dvb_table_pat_program *program;
 } __attribute__((packed));
 
+/**
+ * @brief Macro used to find all channels on a VCT table
+ *
+ * @param _pgm		program to seek
+ * @param _pat		pointer to struct dvb_table_pat_program
+ */
 #define dvb_pat_program_foreach(_pgm, _pat) \
 	for (struct dvb_table_pat_program *_pgm = _pat->program; _pgm; _pgm = _pgm->next) \
 
@@ -57,9 +112,39 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-ssize_t dvb_table_pat_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct dvb_table_pat **table);
-void dvb_table_pat_free(struct dvb_table_pat *pat);
-void dvb_table_pat_print(struct dvb_v5_fe_parms *parms, struct dvb_table_pat *t);
+/**
+ * @brief Initializes and parses PAT table
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param buf buffer containing the PAT raw data
+ * @param buflen length of the buffer
+ * @param table pointer to struct dvb_table_pat to be allocated and filled
+ *
+ * This function allocates a PAT table and fills the fields inside
+ * the struct. It also makes sure that all fields will follow the CPU
+ * endianness. Due to that, the content of the buffer may change.
+ *
+ * @return On success, it returns the size of the allocated struct.
+ *	   A negative value indicates an error.
+ */
+ssize_t dvb_table_pat_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			    ssize_t buflen, struct dvb_table_pat **table);
+
+/**
+ * @brief Frees all data allocated by the PAT table parser
+ *
+ * @param table pointer to struct dvb_table_pat to be freed
+ */
+void dvb_table_pat_free(struct dvb_table_pat *table);
+
+/**
+ * @brief Prints the content of the PAT table
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param table pointe to struct dvb_table_pat
+ */
+void dvb_table_pat_print(struct dvb_v5_fe_parms *parms,
+			 struct dvb_table_pat *table);
 
 #ifdef __cplusplus
 }
