@@ -19,6 +19,23 @@
  *
  */
 
+/**
+ * @file pmt.h
+ * @brief Provides the descriptors for PMT MPEG-TS table
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ * @author Andre Roth
+ *
+ * @par Bug Report
+ * Please submit bug report and patches to linux-media@vger.kernel.org
+ *
+ * @par Descriptors
+ * The descriptors herein are defined on:
+ * - ISO/IEC 13818-1
+ *
+ * @see http://www.etherguidesystems.com/help/sdos/mpeg/syntax/tablesections/pmts.aspx
+ */
+
 #ifndef _PMT_H
 #define _PMT_H
 
@@ -27,36 +44,115 @@
 
 #include <libdvbv5/header.h>
 
+/**
+ * @def DVB_TABLE_PMT
+ *	@brief PMT table ID
+ */
 #define DVB_TABLE_PMT      0x02
 
+/**
+ * @enum dvb_streams
+ *	 @brief Add support for MPEG-TS Stream types
+ *
+ * @var stream_reserved0
+ *	@brief	ITU-T | ISO/IEC Reserved
+ * @var stream_video
+ *	@brief	ISO/IEC 11172 Video
+ * @var stream_video_h262
+ *	@brief	ITU-T Rec. H.262 | ISO/IEC 13818-2 Video or ISO/IEC 11172-2 constrained parameter video stream
+ * @var stream_audio
+ *	@brief	ISO/IEC 11172 Audio
+ * @var stream_audio_13818_3
+ *	@brief	ISO/IEC 13818-3 Audio
+ * @var stream_private_sections
+ *	@brief	ITU-T Rec. H.222.0 | ISO/IEC 13818-1 private_sections
+ * @var stream_private_data
+ *	@brief	ITU-T Rec. H.222.0 | ISO/IEC 13818-1 PES packets containing private data
+ * @var stream_mheg
+ *	@brief	ISO/IEC 13522 MHEG
+ * @var stream_h222
+ *	@brief	ITU-T Rec. H.222.0 | ISO/IEC 13818-1 Annex A DSM-CC
+ * @var stream_h222_1
+ *	@brief	ITU-T Rec. H.222.1
+ * @var stream_13818_6_A
+ *	@brief	ISO/IEC 13818-6 type A
+ * @var stream_13818_6_B
+ *	@brief	ISO/IEC 13818-6 type B
+ * @var stream_13818_6_C
+ *	@brief	ISO/IEC 13818-6 type C
+ * @var stream_13818_6_D
+ *	@brief	ISO/IEC 13818-6 type D
+ * @var stream_h222_aux
+ *	@brief	ITU-T Rec. H.222.0 | ISO/IEC 13818-1 auxiliary
+ * @var stream_audio_adts
+ *	@brief	ISO/IEC 13818-7 Audio with ADTS transport syntax
+ * @var stream_video_14496_2
+ *	@brief	ISO/IEC 14496-2 Visual
+ * @var stream_audio_latm
+ *	@brief	ISO/IEC 14496-3 Audio with the LATM transport syntax as defined in ISO/IEC 14496-3 / AMD 1
+ * @var stream_14496_1_pes
+ *	@brief	ISO/IEC 14496-1 SL-packetized stream or FlexMux stream carried in PES packets
+ * @var stream_14496_1_iso
+ *	@brief	ISO/IEC 14496-1 SL-packetized stream or FlexMux stream carried in ISO/IEC14496_sections.
+ * @var stream_download
+ *	@brief	ISO/IEC 13818-6 Synchronized Download Protocol
+ * @var stream_reserved
+ *	@brief	ITU-T Rec. H.222.0 | ISO/IEC 13818-1 Reserved (from 0x15 to 0x7f)
+ * @var stream_private
+ *	@brief	User Private (from 0x80 to 0xff)
+ */
 enum dvb_streams {
-	stream_reserved0	= 0x00, // ITU-T | ISO/IEC Reserved
-	stream_video		= 0x01, // ISO/IEC 11172 Video
-	stream_video_h262	= 0x02, // ITU-T Rec. H.262 | ISO/IEC 13818-2 Video or ISO/IEC 11172-2 constrained parameter video stream
-	stream_audio		= 0x03, // ISO/IEC 11172 Audio
-	stream_audio_13818_3	= 0x04, // ISO/IEC 13818-3 Audio
-	stream_private_sections	= 0x05, // ITU-T Rec. H.222.0 | ISO/IEC 13818-1 private_sections
-	stream_private_data	= 0x06, // ITU-T Rec. H.222.0 | ISO/IEC 13818-1 PES packets containing private data
-	stream_mheg		= 0x07, // ISO/IEC 13522 MHEG
-	stream_h222		= 0x08, // ITU-T Rec. H.222.0 | ISO/IEC 13818-1 Annex A DSM-CC
-	stream_h222_1		= 0x09, // ITU-T Rec. H.222.1
-	stream_13818_6_A	= 0x0A, // ISO/IEC 13818-6 type A
-	stream_13818_6_B	= 0x0B, // ISO/IEC 13818-6 type B
-	stream_13818_6_C	= 0x0C, // ISO/IEC 13818-6 type C
-	stream_13818_6_D	= 0x0D, // ISO/IEC 13818-6 type D
-	stream_h222_aux		= 0x0E, // ITU-T Rec. H.222.0 | ISO/IEC 13818-1 auxiliary
-	stream_audio_adts	= 0x0F, // ISO/IEC 13818-7 Audio with ADTS transport syntax
-	stream_video_14496_2	= 0x10, // ISO/IEC 14496-2 Visual
-	stream_audio_latm	= 0x11, // ISO/IEC 14496-3 Audio with the LATM transport syntax as defined in ISO/IEC 14496-3 / AMD 1
-	stream_14496_1_pes	= 0x12, // ISO/IEC 14496-1 SL-packetized stream or FlexMux stream carried in PES packets
-	stream_14496_1_iso	= 0x13, // ISO/IEC 14496-1 SL-packetized stream or FlexMux stream carried in ISO/IEC14496_sections.
-	stream_download		= 0x14, // ISO/IEC 13818-6 Synchronized Download Protocol
-	stream_reserved		= 0x15, // - 0x7F, ITU-T Rec. H.222.0 | ISO/IEC 13818-1 Reserved
-	stream_private		= 0x80  // - 0xFF, User Private
+	stream_reserved0	= 0x00,
+	stream_video		= 0x01,
+	stream_video_h262	= 0x02,
+	stream_audio		= 0x03,
+	stream_audio_13818_3	= 0x04,
+	stream_private_sections	= 0x05,
+	stream_private_data	= 0x06,
+	stream_mheg		= 0x07,
+	stream_h222		= 0x08,
+	stream_h222_1		= 0x09,
+	stream_13818_6_A	= 0x0A,
+	stream_13818_6_B	= 0x0B,
+	stream_13818_6_C	= 0x0C,
+	stream_13818_6_D	= 0x0D,
+	stream_h222_aux		= 0x0E,
+	stream_audio_adts	= 0x0F,
+	stream_video_14496_2	= 0x10,
+	stream_audio_latm	= 0x11,
+	stream_14496_1_pes	= 0x12,
+	stream_14496_1_iso	= 0x13,
+	stream_download		= 0x14,
+	stream_reserved		= 0x15,
+	stream_private		= 0x80
 };
 
+/**
+ * @brief Converts from enum dvb_streams into a string
+ */
 extern const char *pmt_stream_name[];
 
+/**
+ * @struct dvb_table_pmt_stream
+ * @brief MPEG-TS PMT stream table
+ *
+ * @param type			stream type
+ * @param elementary_pid	elementary pid
+ * @param desc_length		descriptor length
+ * @param zero			zero
+ * @param descriptor		pointer to struct descriptor
+ * @param next			pointer to struct next
+ *
+ * This structure is used to store the original PMT stream table,
+ * converting the integer fields to the CPU endianness.
+ *
+ * The undocumented parameters are used only internally by the API and/or
+ * are fields that are reserved. They shouldn't be used, as they may change
+ * on future API releases.
+ *
+ * Everything after dvb_table_pmt_stream::descriptor (including it) won't be
+ * bit-mapped to the data parsed from the MPEG TS. So, metadata are added there.
+ */
 struct dvb_table_pmt_stream {
 	uint8_t type;
 	union {
@@ -78,6 +174,26 @@ struct dvb_table_pmt_stream {
 	struct dvb_table_pmt_stream *next;
 } __attribute__((packed));
 
+/**
+ * @struct dvb_table_pmt
+ * @brief MPEG-TS PMT table
+ *
+ * @param pcr_pid	PCR PID
+ * @param desc_length	descriptor length
+ * @param zero3		zero3
+ * @param descriptor	pointer to struct descriptor
+ * @param stream	pointer to struct stream
+ *
+ * This structure is used to store the original PMT stream table,
+ * converting the integer fields to the CPU endianness.
+ *
+ * The undocumented parameters are used only internally by the API and/or
+ * are fields that are reserved. They shouldn't be used, as they may change
+ * on future API releases.
+ *
+ * Everything after dvb_table_pmt::descriptor (including it) won't be
+ * bit-mapped to the data parsed from the MPEG TS. So, metadata are added there.
+ */
 struct dvb_table_pmt {
 	struct dvb_table_header header;
 	union {
@@ -100,9 +216,18 @@ struct dvb_table_pmt {
 	struct dvb_table_pmt_stream *stream;
 } __attribute__((packed));
 
+/** @brief First field at the struct */
 #define dvb_pmt_field_first header
+
+/** @brief First field that are not part of the received data */
 #define dvb_pmt_field_last descriptor
 
+/**
+ * @brief Macro used to find all streams on a PMT table
+ *
+ * @param _stream	stream to seek
+ * @param _pmt		pointer to struct dvb_table_pmt_stream
+ */
 #define dvb_pmt_stream_foreach(_stream, _pmt) \
   for (struct dvb_table_pmt_stream *_stream = _pmt->stream; _stream; _stream = _stream->next) \
 
@@ -112,9 +237,39 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-ssize_t dvb_table_pmt_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct dvb_table_pmt **table);
-void dvb_table_pmt_free(struct dvb_table_pmt *pmt);
-void dvb_table_pmt_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_pmt *pmt);
+/**
+ * @brief Initializes and parses PMT table
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param buf buffer containing the PMT raw data
+ * @param buflen length of the buffer
+ * @param table pointer to struct dvb_table_pmt to be allocated and filled
+ *
+ * This function allocates a PMT table and fills the fields inside
+ * the struct. It also makes sure that all fields will follow the CPU
+ * endianness. Due to that, the content of the buffer may change.
+ *
+ * @return On success, it returns the size of the allocated struct.
+ *	   A negative value indicates an error.
+ */
+ssize_t dvb_table_pmt_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			    ssize_t buflen, struct dvb_table_pmt **table);
+
+/**
+ * @brief Frees all data allocated by the PMT table parser
+ *
+ * @param table pointer to struct dvb_table_pmt to be freed
+ */
+void dvb_table_pmt_free(struct dvb_table_pmt *table);
+
+/**
+ * @brief Prints the content of the PAT table
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param table pointe to struct dvb_table_pmt
+ */
+void dvb_table_pmt_print(struct dvb_v5_fe_parms *parms,
+			 const struct dvb_table_pmt *table);
 
 #ifdef __cplusplus
 }
