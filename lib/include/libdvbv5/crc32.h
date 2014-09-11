@@ -19,6 +19,23 @@
  *
  */
 
+/**
+ * @file crc32.h
+ * @brief Provides ancillary code to calculate DVB crc32 checksum
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ * @author Andre Roth
+ *
+ * @par Bug Report
+ * Please submit bug report and patches to linux-media@vger.kernel.org
+ *
+ * @par Descriptors
+ * The descriptors herein are defined on:
+ * - ISO/IEC 13818-1
+ *
+ * @see http://www.etherguidesystems.com/help/sdos/mpeg/syntax/tablesections/pat.aspx
+ */
+
 #ifndef _CRC32_H
 #define _CRC32_H
 
@@ -29,6 +46,7 @@
 extern "C" {
 #endif
 
+/** @brief Calculates the crc-32 as defined at the MPEG-TS specs */
 uint32_t dvb_crc32(uint8_t *data, size_t datalen, uint32_t crc);
 
 #ifdef __cplusplus
