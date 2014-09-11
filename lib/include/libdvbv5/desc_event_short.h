@@ -25,7 +25,9 @@
 #include <libdvbv5/descriptors.h>
 
 struct dvb_desc_event_short {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	unsigned char language[4];
 	char *name;

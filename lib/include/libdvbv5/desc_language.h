@@ -25,7 +25,9 @@
 #include <libdvbv5/descriptors.h>
 
 struct dvb_desc_language {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	unsigned char language[4];
 	uint8_t audio_type;

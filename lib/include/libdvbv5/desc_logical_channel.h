@@ -40,7 +40,9 @@ struct dvb_desc_logical_channel_number {
 } __attribute__((packed));
 
 struct dvb_desc_logical_channel {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	struct dvb_desc_logical_channel_number *lcn;
 } __attribute__((packed));

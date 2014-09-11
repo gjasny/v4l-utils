@@ -25,7 +25,9 @@
 #include <libdvbv5/descriptors.h>
 
 struct dvb_desc_ca {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	uint16_t ca_id;
 	union {

@@ -32,7 +32,9 @@ struct isdb_partial_reception_service_id {
 } __attribute__((packed));
 
 struct isdb_desc_partial_reception {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	struct isdb_partial_reception_service_id *partial_reception;
 } __attribute__((packed));

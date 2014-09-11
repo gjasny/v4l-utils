@@ -74,6 +74,7 @@ extern const dvb_table_init_func dvb_table_initializers[256];
 	b = ntohl(b); \
 } while (0)
 
+/* Deprecated */
 #define DVB_DESC_HEADER() \
 	uint8_t type; \
 	uint8_t length; \
@@ -93,7 +94,9 @@ extern const dvb_table_init_func dvb_table_initializers[256];
  */
 
 struct dvb_desc {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	uint8_t data[];
 } __attribute__((packed));

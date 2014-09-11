@@ -30,7 +30,9 @@ struct dvb_desc_ts_info_transmission_type {
 } __attribute__((packed));
 
 struct dvb_desc_ts_info {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	char *ts_name, *ts_name_emph;
 	struct dvb_desc_ts_info_transmission_type transmission_type;

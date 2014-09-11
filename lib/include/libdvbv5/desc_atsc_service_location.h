@@ -36,7 +36,9 @@ struct atsc_desc_service_location_elementary {
 } __attribute__((packed));
 
 struct atsc_desc_service_location {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	struct atsc_desc_service_location_elementary *elementary;
 

@@ -36,7 +36,9 @@ struct dvb_desc_service_location_element {
 } __attribute__((packed));
 
 struct dvb_desc_service_location {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	union {
 		uint16_t bitfield;

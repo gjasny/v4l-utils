@@ -30,7 +30,9 @@ struct dvb_desc_service_list_table {
 } __attribute__((packed));
 
 struct dvb_desc_service_list {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	//struct dvb_desc_service_list_table services[];
 } __attribute__((packed));

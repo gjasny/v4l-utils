@@ -41,7 +41,9 @@ enum extension_descriptors {
 };
 
 struct dvb_extension_descriptor {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	uint8_t extension_code;
 

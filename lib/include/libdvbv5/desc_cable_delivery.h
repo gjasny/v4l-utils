@@ -26,7 +26,9 @@
 #include <libdvbv5/descriptors.h>
 
 struct dvb_desc_cable_delivery {
-	DVB_DESC_HEADER();
+	uint8_t type;
+	uint8_t length;
+	struct dvb_desc *next;
 
 	uint32_t frequency;
 	union {
