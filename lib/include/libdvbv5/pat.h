@@ -98,7 +98,7 @@ struct dvb_table_pat {
 } __attribute__((packed));
 
 /**
- * @brief Macro used to find all channels on a VCT table
+ * @brief Macro used to find all programs on a PAT table
  *
  * @param _pgm		program to seek
  * @param _pat		pointer to struct dvb_table_pat_program
