@@ -21,7 +21,7 @@
 
 /**
  * @file eit.h
- * @brief Provides the table parser for EIT (Event Information Table)
+ * @brief Provides the table parser for the DVB EIT (Event Information Table)
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
  * @author Andre Roth
@@ -29,6 +29,9 @@
  * @par Relevant specs
  * The table described herein is defined at:
  * - ETSI EN 300 468
+ *
+ * @see
+ * http://www.etherguidesystems.com/Help/SDOs/dvb/syntax/tablesections/EIT.aspx
  *
  * @par Bug Report
  * Please submit bug reports and patches to linux-media@vger.kernel.org
@@ -45,15 +48,15 @@
 
 /**
  * @def DVB_TABLE_EIT
- *	@brief EIT table ID for the actual TS
+ *	@brief DVB EIT table ID for the actual TS
  * @def DVB_TABLE_EIT_OTHER
- *	@brief EIT table ID for other TS
+ *	@brief DVB EIT table ID for other TS
  * @def DVB_TABLE_EIT_PID
- *	@brief EIT Program ID
+ *	@brief DVB EIT Program ID
  * @def DVB_TABLE_EIT_SCHEDULE
- *	@brief Start table ID for the EIT schedule data on the actual TS
+ *	@brief Start table ID for the DVB EIT schedule data on the actual TS
  * @def DVB_TABLE_EIT_SCHEDULE_OTHER
- *	@brief Start table ID for the EIT schedule data on other TS
+ *	@brief Start table ID for the DVB EIT schedule data on other TS
  */
 #define DVB_TABLE_EIT        0x4E
 #define DVB_TABLE_EIT_OTHER  0x4F
@@ -140,7 +143,7 @@ struct dvb_table_eit {
 } __attribute__((packed));
 
 /**
- * @brief Macro used to find event on a EIT table
+ * @brief Macro used to find event on a DVB EIT table
  *
  * @param _event	event to seek
  * @param _eit		pointer to struct dvb_table_eit_event
@@ -163,7 +166,7 @@ extern "C" {
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param buf buffer containing the EIT raw data
  * @param buflen length of the buffer
- * @param table pointer to struct dvb_table_pat to be allocated and filled
+ * @param table pointer to struct dvb_table_eit to be allocated and filled
  *
  * This function allocates an EIT table and fills the fields inside
  * the struct. It also makes sure that all fields will follow the CPU
@@ -176,14 +179,14 @@ ssize_t dvb_table_eit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			    ssize_t buflen, struct dvb_table_eit **table);
 
 /**
- * @brief Frees all data allocated by the EIT table parser
+ * @brief Frees all data allocated by the DVB EIT table parser
  *
  * @param table pointer to struct dvb_table_eit to be freed
  */
 void dvb_table_eit_free(struct dvb_table_eit *table);
 
 /**
- * @brief Prints the content of the EIT table
+ * @brief Prints the content of the DVB EIT table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param table pointe to struct dvb_table_eit

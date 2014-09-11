@@ -18,6 +18,24 @@
  *
  */
 
+/**
+ * @file atsc_eit.h
+ * @brief Provides the table parser for the ATSC EIT (Event Information Table)
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ * @author Andre Roth
+ *
+ * @par Relevant specs
+ * The table described herein is defined at:
+ * - ATSC A/65:2009
+ *
+ * @see
+ * http://www.etherguidesystems.com/help/sdos/atsc/syntax/tablesections/eitks.aspx
+ *
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
+ */
+
 #ifndef _ATSC_EIT_H
 #define _ATSC_EIT_H
 
@@ -27,8 +45,39 @@
 
 #include <libdvbv5/atsc_header.h>
 
+/**
+ * @def ATSC_TABLE_EIT
+ *	@brief ATSC EIT table ID for the actual TS
+ */
 #define ATSC_TABLE_EIT        0xCB
 
+/**
+ * @struct atsc_table_eit_event
+ * @brief ATSC EIT event table
+ *
+ * @param event_id	an uniquelly (inside a service ID) event ID
+ * @param one		Always '1'
+ * @param title_length	title length. Zero means no title
+ * @param duration	duration in seconds
+ * @param etm		Extended Text Message location
+ * @param one2		Always '1'
+ * @param descriptor	pointer to struct descriptor
+ * @param next		pointer to struct next
+ * @param source_id	source id (obtained from ATSC header)
+ * @param start		event start (in struct tm format)
+ *
+ * This structure is used to store the original ATSC EIT event table,
+ * converting the integer fields to the CPU endianness, and converting the
+ * timestamps to a way that it is better handled on Linux.
+ *
+ * The undocumented parameters are used only internally by the API and/or
+ * are fields that are reserved. They shouldn't be used, as they may change
+ * on future API releases.
+ *
+ * Everything after atsc_table_eit_event::descriptor (including it) won't
+ * be bit-mapped to the data parsed from the MPEG TS. So, metadata are added
+ * there.
+ */
 struct atsc_table_eit_event {
 	union {
 		uint16_t bitfield;
@@ -54,6 +103,20 @@ struct atsc_table_eit_event {
 	uint16_t source_id;
 } __attribute__((packed));
 
+/**
+ * @union atsc_table_eit_desc_length
+ * @brief ATSC EIT descriptor length
+ *
+ * @param desc_length	descriptor length
+ *
+ * This structure is used to store the original ATSC EIT event table,
+ * converting the integer fields to the CPU endianness, and converting the
+ * timestamps to a way that it is better handled on Linux.
+ *
+ * The undocumented parameters are used only internally by the API and/or
+ * are fields that are reserved. They shouldn't be used, as they may change
+ * on future API releases.
+ */
 union atsc_table_eit_desc_length {
 	uint16_t bitfield;
 	struct {
@@ -62,12 +125,32 @@ union atsc_table_eit_desc_length {
 	} __attribute__((packed));
 } __attribute__((packed));
 
+/**
+ * @struct atsc_table_eit
+ * @brief ATSC EIT table
+ *
+ * @param events	events
+ * @param event	pointer to struct event
+ *
+ * This structure is used to store the original ATSC EIT table,
+ * converting the integer fields to the CPU endianness.
+ *
+ * Everything after atsc_table_eit::event (including it) won't
+ * be bit-mapped to the data parsed from the MPEG TS. So, metadata are added
+ * there.
+ */
 struct atsc_table_eit {
 	ATSC_HEADER();
 	uint8_t events;
 	struct atsc_table_eit_event *event;
 } __attribute__((packed));
 
+/**
+ * @brief Macro used to find event on an ATSC EIT table
+ *
+ * @param _event	event to seek
+ * @param _eit		pointer to struct atsc_table_eit_event
+ */
 #define atsc_eit_event_foreach(_event, _eit) \
 	for( struct atsc_table_eit_event *_event = _eit->event; _event; _event = _event->next ) \
 
@@ -77,9 +160,47 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-ssize_t atsc_table_eit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, struct atsc_table_eit **table);
-void atsc_table_eit_free(struct atsc_table_eit *eit);
-void atsc_table_eit_print(struct dvb_v5_fe_parms *parms, struct atsc_table_eit *eit);
+/**
+ * @brief Initializes and parses ATSC EIT table
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param buf buffer containing the EIT raw data
+ * @param buflen length of the buffer
+ * @param table pointer to struct atsc_table_eit to be allocated and filled
+ *
+ * This function allocates an ATSC EIT table and fills the fields inside
+ * the struct. It also makes sure that all fields will follow the CPU
+ * endianness. Due to that, the content of the buffer may change.
+ *
+ * @return On success, it returns the size of the allocated struct.
+ *	   A negative value indicates an error.
+ */
+ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
+			    ssize_t buflen, struct atsc_table_eit **table);
+
+/**
+ * @brief Frees all data allocated by the ATSC EIT table parser
+ *
+ * @param table pointer to struct atsc_table_eit to be freed
+ */
+void atsc_table_eit_free(struct atsc_table_eit *table);
+
+/**
+ * @brief Prints the content of the ATSC EIT table
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param table pointe to struct atsc_table_eit
+ */
+void atsc_table_eit_print(struct dvb_v5_fe_parms *parms,
+			  struct atsc_table_eit *table);
+
+/**
+ * @brief Converts an ATSC EIT formatted timestamp into struct tm
+ *
+ * @param start_time	event on ATSC EIT time format
+ * @param tm		pointer to struct tm where the converted timestamp will
+ *			be stored.
+ */
 void atsc_time(const uint32_t start_time, struct tm *tm);
 
 #ifdef __cplusplus

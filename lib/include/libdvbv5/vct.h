@@ -28,7 +28,7 @@
  *
  * @par Relevant specs
  * The table described herein is defined at:
- * - ATSC A/65:2009 spec
+ * - ATSC A/65:2009
  *
  * @see http://www.etherguidesystems.com/help/sdos/atsc/syntax/tablesections/TVCT.aspx
  * @see http://www.etherguidesystems.com/help/sdos/atsc/syntax/tablesections/CVCT.aspx
