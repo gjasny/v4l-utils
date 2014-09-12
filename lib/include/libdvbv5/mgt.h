@@ -168,7 +168,7 @@ void atsc_table_mgt_free(struct atsc_table_mgt *table);
  * @brief Prints the content of the MGT table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
- * @param table pointe to struct atsc_table_mgt
+ * @param table pointer to struct atsc_table_mgt
  */
 void atsc_table_mgt_print(struct dvb_v5_fe_parms *parms,
 			  struct atsc_table_mgt *table);

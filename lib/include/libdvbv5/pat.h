@@ -58,8 +58,8 @@
  * @brief MPEG-TS PAT program table
  *
  * @param service_id	service id
- * @param pid	pid
- * @param next	pointer to struct next
+ * @param pid		pid
+ * @param next		pointer to struct dvb_table_pat_program
  *
  * This structure is used to store the original PAT program table,
  * converting the integer fields to the CPU endianness.
@@ -87,9 +87,10 @@ struct dvb_table_pat_program {
  * @struct dvb_table_pat
  * @brief MPEG-TS PAT table
  *
- * @param programs	programs
- * @param program	pointer to struct program
- *
+ * @param header	struct dvb_table_header content
+ * @param programs	number of programs
+ * @param program	pointer to struct dvb_table_pat_program
+
  * This structure is used to store the original PAT table,
  * converting the integer fields to the CPU endianness.
  *
@@ -107,7 +108,7 @@ struct dvb_table_pat {
 } __attribute__((packed));
 
 /**
- * @brief Macro used to find all programs on a PAT table
+ * @brief Macro used to find programs on a PAT table
  *
  * @param _pgm		program to seek
  * @param _pat		pointer to struct dvb_table_pat_program
@@ -150,7 +151,7 @@ void dvb_table_pat_free(struct dvb_table_pat *table);
  * @brief Prints the content of the PAT table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
- * @param table pointe to struct dvb_table_pat
+ * @param table pointer to struct dvb_table_pat
  */
 void dvb_table_pat_print(struct dvb_v5_fe_parms *parms,
 			 struct dvb_table_pat *table);

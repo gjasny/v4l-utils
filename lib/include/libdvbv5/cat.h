@@ -92,7 +92,7 @@ void dvb_table_cat_free(struct dvb_table_cat *table);
  * @brief Prints the content of the CAT table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
- * @param table pointe to struct dvb_table_cat
+ * @param table pointer to struct dvb_table_cat
  */
 void dvb_table_cat_print(struct dvb_v5_fe_parms *parms,
 			 struct dvb_table_cat *table);

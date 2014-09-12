@@ -43,6 +43,8 @@
 #define ATSC_BASE_PID  0x1FFB
 
 #ifndef _DOXYGEN
+
+/* Deprecated, as it causes troubles with doxygen */
 #define ATSC_HEADER() \
 	struct dvb_table_header header; \
 	uint8_t  protocol_version; \

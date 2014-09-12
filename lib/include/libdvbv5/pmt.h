@@ -140,8 +140,9 @@ extern const char *pmt_stream_name[];
  * @param elementary_pid	elementary pid
  * @param desc_length		descriptor length
  * @param zero			zero
- * @param descriptor		pointer to struct descriptor
- * @param next			pointer to struct next
+ * @param descriptor		pointer to struct dvb_desc
+ * @param next			pointer to struct dvb_table_pmt_stream
+
  *
  * This structure is used to store the original PMT stream table,
  * converting the integer fields to the CPU endianness.
@@ -177,12 +178,12 @@ struct dvb_table_pmt_stream {
 /**
  * @struct dvb_table_pmt
  * @brief MPEG-TS PMT table
- *
+ * 
+ * @param header	struct dvb_table_header content
  * @param pcr_pid	PCR PID
  * @param desc_length	descriptor length
- * @param zero3		zero3
- * @param descriptor	pointer to struct descriptor
- * @param stream	pointer to struct stream
+ * @param descriptor	pointer to struct dvb_desc
+ * @param stream	pointer to struct dvb_table_pmt_stream
  *
  * This structure is used to store the original PMT stream table,
  * converting the integer fields to the CPU endianness.
@@ -223,7 +224,7 @@ struct dvb_table_pmt {
 #define dvb_pmt_field_last descriptor
 
 /**
- * @brief Macro used to find all streams on a PMT table
+ * @brief Macro used to find streams on a PMT table
  *
  * @param _stream	stream to seek
  * @param _pmt		pointer to struct dvb_table_pmt_stream
@@ -266,7 +267,7 @@ void dvb_table_pmt_free(struct dvb_table_pmt *table);
  * @brief Prints the content of the PAT table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
- * @param table pointe to struct dvb_table_pmt
+ * @param table pointer to struct dvb_table_pmt
  */
 void dvb_table_pmt_print(struct dvb_v5_fe_parms *parms,
 			 const struct dvb_table_pmt *table);

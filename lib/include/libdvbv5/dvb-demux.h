@@ -40,7 +40,6 @@ extern "C" {
 #endif
 
 /**
- * @fn int dvb_dmx_open(int adapter, int demux)
  * @brief Opens a DVB demux in read/write mode
  *
  * @param adapter	DVB adapter number to open
@@ -53,7 +52,6 @@ extern "C" {
 int dvb_dmx_open(int adapter, int demux);
 
 /**
- * @fn void dvb_dmx_close(int dmx_fd)
  * @brief Stops the DMX filter for the file descriptor and closes
  *
  * @param dmx_fd	File descriptor to close
@@ -73,8 +71,6 @@ void dvb_dmx_close(int dmx_fd);
 void dvb_dmx_stop(int dmx_fd);
 
 /**
- * @fn int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
- *		      dmx_output_t output, int buffersize)
  * @brief Start a filter for a MPEG-TS Packetized Elementary
  * 		       Stream (PES)
  *
@@ -96,12 +92,6 @@ int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
 		      dmx_output_t output, int buffersize);
 
 /**
- * @fn int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
- *			   unsigned char *filter,
- *			   unsigned char *mask,
- *			   unsigned char *mode,
- *			   unsigned int flags)
-
  * @brief Sets a MPEG-TS section filter
  *
  * @param dmxfd		File descriptor for the demux device
@@ -126,7 +116,6 @@ int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
 			   unsigned int flags);
 
 /**
- * @fn int dvb_get_pmt_pid(int dmxfd, int sid)
  * @brief read the contents of the MPEG-TS PAT table, seeking for
  *		      	an specific service ID
  *

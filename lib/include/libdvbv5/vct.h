@@ -154,7 +154,6 @@ struct atsc_table_vct_channel {
  * @param header			struct dvb_table_header content
  * @param protocol_version		protocol version
  * @param num_channels_in_section	num channels in section
- *
  * @param channel			pointer to struct channel
  * @param descriptor			pointer to struct descriptor
  *
@@ -188,7 +187,7 @@ union atsc_table_vct_descriptor_length {
 } __attribute__((packed));
 
 /**
- * @brief Macro used to find all channels on a VCT table
+ * @brief Macro used to find channels on a VCT table
  *
  * @param _channel	channel to seek
  * @param _vct		pointer to struct atsc_table_vct_channel
@@ -229,7 +228,7 @@ void atsc_table_vct_free(struct atsc_table_vct *table);
  * @brief Prints the content of the VCT table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
- * @param table pointe to struct atsc_table_vct
+ * @param table pointer to struct atsc_table_vct
  */
 void atsc_table_vct_print(struct dvb_v5_fe_parms *parms,
 			  struct atsc_table_vct *table);

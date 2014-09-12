@@ -76,8 +76,8 @@
  * @param running_status	running status of the event. The status can
  *				be translated to string via
  *				dvb_eit_running_status_name string table.
- * @param descriptor		pointer to struct descriptor
- * @param next			pointer to struct next
+ * @param descriptor		pointer to struct dvb_desc
+ * @param next			pointer to struct dvb_table_eit_event
  * @param tm_start		event start (in struct tm format)
  * @param duration		duration in seconds
  * @param service_id		service ID
@@ -120,6 +120,7 @@ struct dvb_table_eit_event {
  * @struct dvb_table_eit
  * @brief DVB EIT table
  *
+ * @param header	struct dvb_table_header content
  * @param transport_id	transport id
  * @param network_id	network id
  * @param last_segment	last segment
@@ -189,7 +190,7 @@ void dvb_table_eit_free(struct dvb_table_eit *table);
  * @brief Prints the content of the DVB EIT table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
- * @param table pointe to struct dvb_table_eit
+ * @param table pointer to struct dvb_table_eit
  */
 void dvb_table_eit_print(struct dvb_v5_fe_parms *parms,
 			 struct dvb_table_eit *table);

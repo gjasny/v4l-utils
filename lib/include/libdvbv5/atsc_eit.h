@@ -56,15 +56,13 @@
  * @brief ATSC EIT event table
  *
  * @param event_id	an uniquelly (inside a service ID) event ID
- * @param one		Always '1'
  * @param title_length	title length. Zero means no title
  * @param duration	duration in seconds
  * @param etm		Extended Text Message location
- * @param one2		Always '1'
- * @param descriptor	pointer to struct descriptor
- * @param next		pointer to struct next
- * @param source_id	source id (obtained from ATSC header)
+ * @param descriptor	pointer to struct dvb_desc
+ * @param next		pointer to struct atsc_table_eit_event
  * @param start		event start (in struct tm format)
+ * @param source_id	source id (obtained from ATSC header)
  *
  * This structure is used to store the original ATSC EIT event table,
  * converting the integer fields to the CPU endianness, and converting the
@@ -132,7 +130,7 @@ union atsc_table_eit_desc_length {
  * @param header			struct dvb_table_header content
  * @param protocol_version		protocol version
  * @param events			events
- * @param event				pointer to struct event
+ * @param event				pointer to struct atsc_table_eit_event
  *
  * This structure is used to store the original ATSC EIT table,
  * converting the integer fields to the CPU endianness.
@@ -192,7 +190,7 @@ void atsc_table_eit_free(struct atsc_table_eit *table);
  * @brief Prints the content of the ATSC EIT table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
- * @param table pointe to struct atsc_table_eit
+ * @param table pointer to struct atsc_table_eit
  */
 void atsc_table_eit_print(struct dvb_v5_fe_parms *parms,
 			  struct atsc_table_eit *table);

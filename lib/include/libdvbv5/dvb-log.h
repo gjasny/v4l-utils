@@ -99,6 +99,9 @@ typedef void (*dvb_logfunc)(int level, const char *fmt, ...) __attribute__ (( fo
 /**
  * @brief This is the prototype of the internal log function that it is used,
  * if the library client doesn't desire to override with something else.
+ *
+ * @param level		level of the message, as defined at syslog.h
+ * @param fmt		format string (same as format string on sprintf)
  */
 void dvb_default_log(int level, const char *fmt, ...) __attribute__ (( format( printf, 2, 3 )));
 

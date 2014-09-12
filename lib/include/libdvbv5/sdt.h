@@ -60,14 +60,14 @@
  * @struct dvb_table_sdt_service
  * @brief MPEG-TS SDT service table
  *
- * @param service_id	service id
+ * @param service_id		service id
  * @param EIT_present_following	EIT present following
- * @param EIT_schedule	EIT schedule
- * @param desc_length	desc length
- * @param free_CA_mode	free CA mode
+ * @param EIT_schedule		EIT schedule
+ * @param desc_length		desc length
+ * @param free_CA_mode		free CA mode
  * @param running_status	running status
- * @param descriptor	pointer to struct descriptor
- * @param next	pointer to struct next
+ * @param descriptor		pointer to struct dvb_desc
+ * @param next			pointer to struct dvb_table_sdt_service
  *
  * This structure is used to store the original SDT service table,
  * converting the integer fields to the CPU endianness.
@@ -101,8 +101,9 @@ struct dvb_table_sdt_service {
  * @struct dvb_table_sdt
  * @brief MPEG-TS SDT table
  *
+ * @param header	struct dvb_table_header content
  * @param network_id	network id
- * @param service	pointer to struct service
+ * @param service	pointer to struct dvb_table_sdt_service
  *
  * This structure is used to store the original SDT table,
  * converting the integer fields to the CPU endianness.
@@ -125,7 +126,7 @@ struct dvb_table_sdt {
  * @brief Macro used to find services on a SDT table
  *
  * @param _service	service to seek
- * @param _sdt		pointer to struct dvb_table_pat_program
+ * @param _sdt		pointer to struct dvb_table_sdt_service
  */
 #define dvb_sdt_service_foreach(_service, _sdt) \
 	for (struct dvb_table_sdt_service *_service = _sdt->service; _service; _service = _service->next ) \
@@ -165,7 +166,7 @@ void dvb_table_sdt_free(struct dvb_table_sdt *table);
  * @brief Prints the content of the SDT table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
- * @param table pointe to struct dvb_table_sdt
+ * @param table pointer to struct dvb_table_sdt
  */
 void dvb_table_sdt_print(struct dvb_v5_fe_parms *parms, struct dvb_table_sdt *table);
 

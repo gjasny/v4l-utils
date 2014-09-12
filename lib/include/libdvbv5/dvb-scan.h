@@ -117,7 +117,6 @@ struct dvb_table_filter {
 	void *priv;
 };
 /**
- * @fn dvb_table_filter_free(struct dvb_table_filter *sect)
  * @brief deallocates all data associated with a table filter
  *
  * @param sect	table filter pointer
@@ -127,12 +126,12 @@ void dvb_table_filter_free(struct dvb_table_filter *sect);
 /**
  * @brief read MPEG-TS tables that comes from a DTV card
  *
- * @param parms	pointer to struct dvb_v5_fe_parms created when the frontend is
- *		opened
+ * @param parms		pointer to struct dvb_v5_fe_parms created when the
+ *			frontend is opened
  * @param dmx_fd	an opened demux file descriptor
- * @param tid	Table ID
- * @param pid	Program ID
- * @param table	pointer to a pointer for the table struct to be filled
+ * @param tid		Table ID
+ * @param pid		Program ID
+ * @param table		pointer to a pointer for the table struct to be filled
  * @param timeout	Limit, in seconds, to read a MPEG-TS table
  *
  * This function is used to read the DVB tables by specifying a table ID and
@@ -171,15 +170,15 @@ int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd,
  * @brief read MPEG-TS tables that comes from a DTV card
  *				with an specific table section ID
  *
- * @param parms	pointer to struct dvb_v5_fe_parms created when the frontend is
- *		opened
+ * @param parms		pointer to struct dvb_v5_fe_parms created when the
+ * 			frontend is opened
  * @param dmx_fd	an opened demux file descriptor
- * @param tid	Table ID
- * @param pid	Program ID
- * @param ts_id	Table section ID (for multisession filtering). If no
- *		specific table section is needed, -1 should be used
- * @param table	pointer to a pointer for the table struct to be filled
- * @param timeout	Limit, in seconds, to read a MPEG-TS table
+ * @param tid		Table ID
+ * @param pid		Program ID
+ * @param ts_id		Table section ID (for multisession filtering). If no
+ *			specific table section is needed, -1 should be used
+ * @param table		pointer to a pointer for the table struct to be filled
+ * @param timeout	limit, in seconds, to read a MPEG-TS table
  *
  * This is a variant of dvb_read_section() that also seeks for an specific
  * table section ID given by ts_id.
@@ -191,11 +190,11 @@ int dvb_read_section(struct dvb_v5_fe_parms *parms, int dmx_fd,
 /**
  * @brief read MPEG-TS tables that comes from a DTV card
  *
- * @param parms	pointer to struct dvb_v5_fe_parms created when the frontend is
- *		opened
+ * @param parms		pointer to struct dvb_v5_fe_parms created when the
+ *			frontend is opened
  * @param dmx_fd	an opened demux file descriptor
- * @param sect	section filter pointer
- * @param timeout	Limit, in seconds, to read a MPEG-TS table
+ * @param sect		section filter pointer
+ * @param timeout	limit, in seconds, to read a MPEG-TS table
  *
  * This is a variant of dvb_read_section() that uses a struct dvb_table_filter
  * to specify the filter to use.
@@ -224,13 +223,14 @@ void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler);
  * @brief Scans a DVB stream, looking for the tables needed to
  *			 identify the programs inside a MPEG-TS
  *
- * @param parms		pointer to struct dvb_v5_fe_parms created when the
- *			frontend is opened
+ * @param parms			pointer to struct dvb_v5_fe_parms created when
+ *				the frontend is opened
  * @param dmx_fd		an opened demux file descriptor
- * @param delivery_system	Delivery system to be scanned
- * @param other_nit		Use alternate table IDs for NIT and other tables
- * @param timeout_multiply	Improves the timeout for each table reception, by
- *			using a value that will multiply the wait time.
+ * @param delivery_system	delivery system to be scanned
+ * @param other_nit		use alternate table IDs for NIT and other tables
+ * @param timeout_multiply	improves the timeout for each table reception
+ * 				by using a value that will multiply the wait
+ *				time.
  *
  * Given an opened frontend and demux, this function seeks for all programs
  * available at the transport stream, and parses the following tables:
@@ -254,6 +254,14 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *parms, int 
  */
 void dvb_free_ts_tables(struct dvb_v5_descriptors *dvb_desc);
 
+/**
+ * @brief Callback for the application to show the frontend status
+ *
+ * @param args		a pointer, opaque to libdvbv5, to be used by the
+ *			application if needed.
+ * @param parms		pointer to struct dvb_v5_fe_parms created when the
+ *			frontend is opened
+ */
 typedef int (check_frontend_t)(void *args, struct dvb_v5_fe_parms *parms);
 
 /**
@@ -355,6 +363,7 @@ void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
 				 struct dvb_entry *first_entry,
 				 struct dvb_entry *entry);
 
+#ifndef _DOXYGEN
 /*
  * Some ancillary functions used internally inside the library, used to
  * identify duplicated transport streams and add new found transponder entries
@@ -374,7 +383,7 @@ void dvb_update_transponders(struct dvb_v5_fe_parms *parms,
 			     struct dvb_v5_descriptors *dvb_scan_handler,
 			     struct dvb_entry *first_entry,
 			     struct dvb_entry *entry);
-
+#endif
 
 #ifdef __cplusplus
 }

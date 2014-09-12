@@ -87,7 +87,6 @@ extern "C"
 /* From libsat.c */
 
 /**
- * @fn int dvb_sat_search_lnb(const char *name)
  * @brief search for a LNBf entry
  *
  * @param name	name of the LNBf entry to seek.
@@ -100,17 +99,15 @@ extern "C"
 int dvb_sat_search_lnb(const char *name);
 
 /**
- * @fn int dvb_print_lnb(int i)
  * @brief prints the contents of a LNBf entry at STDOUT.
  *
- * @param i		index for the entry
+ * @param index		index for the entry
  *
  * @return returns -1 if the index is out of range, zero otherwise.
  */
-int dvb_print_lnb(int i);
+int dvb_print_lnb(int index);
 
 /**
- * @fn void dvb_print_all_lnb()
  * @brief Prints all LNBf entries at STDOUT.
  *
  * This function doesn't return anything. Internally, it calls dvb_print_lnb()
@@ -119,17 +116,15 @@ int dvb_print_lnb(int i);
 void dvb_print_all_lnb(void);
 
 /**
- * @fn const struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
  * @brief gets a LNBf entry at its internal database
  *
- * @param i		index for the entry.
+ * @param index		index for the entry.
  *
  * @return returns NULL if not found, of a struct dvb_sat_lnb pointer otherwise.
  */
-const struct dvb_sat_lnb *dvb_sat_get_lnb(int i);
+const struct dvb_sat_lnb *dvb_sat_get_lnb(int index);
 
 /**
- * @fn int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms)
  * @brief sets the satellite parameters
  *
  * @param parms	struct dvb_v5_fe_parms pointer.

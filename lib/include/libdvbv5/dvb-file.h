@@ -60,35 +60,41 @@ struct dvb_elementary_pid {
  * @struct dvb_entry
  * @brief  Represents one entry on a DTV file
  *
- * @param props		a property key/value pair. The keys are the ones
- *			specified at the DVB API, plus the ones defined
- *			internally by libdvbv5, at the dvb-v5-std.h header file.
- * @param next		a pointer to the next entry. NULL if this is the last
- *			one.
+ * @param props			A property key/value pair. The keys are the ones
+ *				specified at the DVB API, plus the ones defined
+ *				internally by libdvbv5, at the dvb-v5-std.h
+ *				header file.
+ * @param next			a pointer to the next entry. NULL if this is
+ *				the last one.
  * @param service_id		Service ID associated with a program inside a
- *			transponder. Please note that pure "channel" files
- *			will have this field filled with 0.
+ *				transponder. Please note that pure "channel"
+ *				files will have this field filled with 0.
  * @param video_pid		Array with the video program IDs inside a service
  * @param audio_pid		Array with the audio program IDs inside a service
- * @param other_el_pid	Array with all non-audio/video  program IDs inside a
- *			service
- * @param video_pid_len	Size of the video_pid array
- * @param audio_pid_len	Size of the audio_pid array
+ * @param other_el_pid		Array with all non-audio/video  program IDs
+ *				inside a service
+ * @param video_pid_len		Size of the video_pid array
+ * @param audio_pid_len		Size of the audio_pid array
  * @param other_el_pid_len	Size of the other_el_pid array
  * @param channel		String containing the name of the channel
  * @param vchannel		String representing the Number of the channel
  * @param location		String representing the location of the channel
- * @param sat_number		For satellite streams, this represents the number of
- *			the satellite dish on a DiSeqC arrangement. Should be
- *			zero on arrangements without DiSeqC.
- * @param freq_bpf		SCR/Unicable band-pass filter frequency to use, in kHz.
- *			For non SRC/Unicable arrangements, it should be zero.
- * @param diseqc_wait	Extra time to wait for DiSeqC commands to complete,
- *			in ms. The library will use 15 ms as the minimal time,
- *			plus the time specified on this field.
- * @param lnb		String with the name of the LNBf to be used for
- *			satellite tuning. The names should match the names
- *			provided by dvb_sat_get_lnb() call (see dvb-sat.h).
+ * @param sat_number		For satellite streams, this represents the
+ *				number of the satellite dish on a DiSeqC
+ *				arrangement. Should be zero on arrangements
+ *				without DiSeqC.
+ * @param freq_bpf		SCR/Unicable band-pass filter frequency to
+ *				use, in kHz.
+ *				For non SRC/Unicable arrangements, it should
+ *				be zero.
+ * @param diseqc_wait		Extra time to wait for DiSeqC commands to
+ *				complete, in ms. The library will use 15 ms
+ *				as the minimal time,
+ *				plus the time specified on this field.
+ * @param lnb			String with the name of the LNBf to be used for
+ *				satellite tuning. The names should match the
+ *				names provided by dvb_sat_get_lnb() call
+ *				(see dvb-sat.h).
  */
 struct dvb_entry {
 	struct dtv_property props[DTV_MAX_COMMAND];
@@ -114,7 +120,7 @@ struct dvb_entry {
  * @brief  Describes an entire DVB file opened
  *
  * @param fname		name of the file
- * @param n_entries		number of the entries read
+ * @param n_entries	number of the entries read
  * @param first_entry	entry for the first entry. NULL if the file is empty.
  */
 struct dvb_file {
@@ -134,14 +140,17 @@ struct dvb_file {
  * @struct dvb_parse_table
  * @brief  Describes the fields to parse on a file
  *
- * @param prop		Name of the DVBv5 or libdvbv5 property field
- * @param table		Name of a translation table for string to int conversion
- * @param size		Size of the translation table
- * @param mult_factor	Multiply factor - Used, for example, to multiply the
- *			symbol rate read from a DVB-S table by 1000.
- * @param has_default_value	It is different than zero when the property can be
- *			optional. In this case, the next field should be present
- * @param default_value	Default value for the optional field
+ * @param prop			Name of the DVBv5 or libdvbv5 property field
+ * @param table			Name of a translation table for string to
+ *				int conversion
+ * @param size			Size of the translation table
+ * @param mult_factor		Multiply factor - Used, for example, to
+ *				multiply the symbol rate read from a DVB-S
+ *				table by 1000.
+ * @param has_default_value	It is different than zero when the property
+ *				can be optional. In this case, the next field
+ *				should be present
+ * @param default_value		Default value for the optional field
  */
 struct dvb_parse_table {
 	unsigned int prop;
@@ -154,6 +163,7 @@ struct dvb_parse_table {
 /**
  * @struct dvb_parse_struct
  * @brief  Describes the format to parse an specific delivery system
+ *
  * @param id		String that identifies the delivery system on the
  * 			file to be parsed
  * @param delsys	Delivery system
@@ -213,7 +223,6 @@ extern "C" {
 #endif
 
 /**
- * @fn void dvb_file_free(struct dvb_file *dvb_file)
  * @brief Deallocates memory associated with a struct dvb_file
  *
  * @param dvb_file	dvb_file struct to be deallocated
@@ -262,10 +271,9 @@ extern const struct dvb_parse_file channel_file_zap_format;
  */
 
 /**
- * @fn struct dvb_file *dvb_read_file(const char *fname)
  * @brief Read a file at libdvbv5 format
  *
- * @param fname	file name
+ * @param fname		file name
  *
  * @return It returns a pointer to struct dvb_file describing the entries that
  * were read from the file. If it fails, NULL is returned.
@@ -273,10 +281,9 @@ extern const struct dvb_parse_file channel_file_zap_format;
 struct dvb_file *dvb_read_file(const char *fname);
 
 /**
- * @fn int dvb_write_file(const char *fname, struct dvb_file *dvb_file)
  * @brief Write a file at libdvbv5 format
  *
- * @param fname	file name
+ * @param fname		file name
  * @param dvb_file	contents of the file to be written
  *
  * @return It returns zero if success, or a positive error number if it fails.
@@ -284,13 +291,10 @@ struct dvb_file *dvb_read_file(const char *fname);
 int dvb_write_file(const char *fname, struct dvb_file *dvb_file);
 
 /**
- * @fn struct dvb_file *dvb_read_file_format(const char *fname,
- *					   uint32_t delsys,
- *					   enum dvb_file_formats format)
  * @brief Read a file on any format natively supported by
  *			    the library
  *
- * @param fname	file name
+ * @param fname		file name
  * @param delsys	Delivery system, as specified by enum fe_delivery_system
  * @param format	Name of the format to be read
  *
@@ -302,10 +306,6 @@ struct dvb_file *dvb_read_file_format(const char *fname,
 					   enum dvb_file_formats format);
 
 /**
- * @fn int dvb_write_file(const char *fname,
-			  struct dvb_file *dvb_file,
-			  uint32_t delsys,
-			  enum dvb_file_formats format)
  * @brief Write a file on any format natively supported by
  *			    the library
  *
@@ -314,7 +314,7 @@ struct dvb_file *dvb_read_file_format(const char *fname,
  * @param delsys	Delivery system, as specified by enum fe_delivery_system
  * @param format	Name of the format to be read
  *
- * @return It returns zero if success, or a positive error number if it fails.
+ * @return It a pointer to struct dvb_file on success, NULL otherwise.
  */
 int dvb_write_file_format(const char *fname,
 			  struct dvb_file *dvb_file,
@@ -323,8 +323,6 @@ int dvb_write_file_format(const char *fname,
 
 
 /**
- * @fn int dvb_store_entry_prop(struct dvb_entry *entry,
- *		     uint32_t cmd, uint32_t value)
  * @brief Stores a key/value pair on a DVB file entry
  *
  * @param entry	entry to be filled
@@ -342,8 +340,6 @@ int dvb_store_entry_prop(struct dvb_entry *entry,
 		     uint32_t cmd, uint32_t value);
 
 /**
- * @fn int dvb_retrieve_entry_prop(struct dvb_entry *entry,
- *			uint32_t cmd, uint32_t *value)
  * @brief Retrieves the value associated witha key on a DVB file entry
  *
  * @param entry	entry to be used
@@ -360,11 +356,6 @@ int dvb_retrieve_entry_prop(struct dvb_entry *entry,
 			uint32_t cmd, uint32_t *value);
 
 /**
- * @fn int dvb_store_channel(struct dvb_file **dvb_file,
- *		      struct dvb_v5_fe_parms *parms,
- *		      struct dvb_v5_descriptors *dvb_desc,
- *		      int get_detected, int get_nit)
- *
  * @brief stored a new scanned channel into a dvb_file struct
  *
  * @param dvb_file	file struct to be filled
@@ -402,7 +393,6 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 		      int get_detected, int get_nit);
 
 /**
- * @fn int dvb_parse_delsys(const char *name)
  * @brief Ancillary function that seeks for a delivery system
  *
  * @param name	string containing the name of the Delivery System to seek
@@ -422,7 +412,6 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 int dvb_parse_delsys(const char *name);
 
 /**
- * @fn enum dvb_file_formats dvb_parse_format(const char *name)
  * @brief Ancillary function that parses the name of a file format
  * @param name	string containing the name of the format
  *		Current valid names are: ZAP, CHANNEL and DVBV5. The name is
@@ -438,15 +427,37 @@ enum dvb_file_formats dvb_parse_format(const char *name);
  * dvb_read_file_format() or dvb_write_file_format()
  */
 
-#ifndef _DOXYGEN
+/**
+ * @brief Read and parses a one line file format
+ *
+ * @param fname		file name
+ * @param delsys	delivery system
+ * @param parse_file	pointer struct dvb_parse_file
+ *
+ * @return It a pointer to struct dvb_file on success, NULL otherwise.
+ *
+ * This function is called internally by dvb_read_file_format.
+ */
 struct dvb_file *dvb_parse_format_oneline(const char *fname,
 					  uint32_t delsys,
 					  const struct dvb_parse_file *parse_file);
+
+/**
+ * @brief Writes a file into an one line file format
+ *
+ * @param fname		file name
+ * @param dvb_file	contents of the file to be written
+ * @param delsys	delivery system
+ * @param parse_file	pointer struct dvb_parse_file
+ *
+ * @return It returns zero if success, or a positive error number if it fails.
+ *
+ * This function is called internally by dvb_write_file_format.
+ */
 int dvb_write_format_oneline(const char *fname,
 			     struct dvb_file *dvb_file,
 			     uint32_t delsys,
 			     const struct dvb_parse_file *parse_file);
-#endif
 
 #ifdef __cplusplus
 }

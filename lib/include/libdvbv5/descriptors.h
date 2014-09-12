@@ -59,8 +59,19 @@
 struct dvb_v5_fe_parms;
 #endif
 
-/** @brief Function prototype for a function that initializes the descriptors parsing */
-typedef void (*dvb_table_init_func)(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, void **table);
+/**
+ * @brief Function prototype for a function that initializes the
+ *	  descriptors parsing on a table
+ *
+ * @param parms		Struct dvb_v5_fe_parms pointer
+ * @param buf		Buffer with data to be parsed
+ * @param buflen	Size of the buffer to be parsed
+ * @param table		pointer to a place where the allocated memory with the
+ *			table structure will be stored.
+ */
+typedef void (*dvb_table_init_func)(struct dvb_v5_fe_parms *parms,
+				    const uint8_t *buf, ssize_t buflen,
+				    void **table);
 
 /** @brief Table with all possible descriptors */
 extern const dvb_table_init_func dvb_table_initializers[256];
@@ -89,10 +100,9 @@ extern const dvb_table_init_func dvb_table_initializers[256];
  *
  * @param type		Descriptor type
  * @param length	Length of the descriptor
- * @param next		pointer to the next descriptor
+ * @param next		pointer to the dvb_desc descriptor
  * @param data		Descriptor data
  */
-
 struct dvb_desc {
 	uint8_t type;
 	uint8_t length;
@@ -126,7 +136,7 @@ uint32_t dvb_bcd(uint32_t bcd);
 /**
  * @brief dumps data into the logs in hexadecimal format
  *
- * @param parms			Struct dvb_v5_fe_parms pointer
+ * @param parms		Struct dvb_v5_fe_parms pointer
  * @param prefix	String to be printed before the dvb_hexdump
  * @param buf		Buffer to hex dump
  * @param len		Number of bytes to show
@@ -168,7 +178,7 @@ void dvb_desc_free (struct dvb_desc **list);
  * @brief prints the contents of a struct dvb_desc linked list
  *
  * @param parms		Struct dvb_v5_fe_parms pointer
- * @param desc	struct dvb_desc pointer.
+ * @param desc		struct dvb_desc pointer.
  */
 void dvb_desc_print(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc);
 
@@ -176,13 +186,30 @@ void dvb_desc_print(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc);
 }
 #endif
 
-/** @brief Function prototype for the descriptors parsing init code */
-typedef int (*dvb_desc_init_func) (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
+/**
+ * @brief Function prototype for the descriptors parsing init code
+ *
+ * @param parms		Struct dvb_v5_fe_parms pointer
+ * @param buf		buffer with the content of the descriptor
+ * @param desc		struct dvb_desc pointer
+ */
+typedef int (*dvb_desc_init_func) (struct dvb_v5_fe_parms *parms,
+				   const uint8_t *buf, struct dvb_desc *desc);
 
-/** @brief Function prototype for the descriptors parsing print code */
-typedef void (*dvb_desc_print_func)(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+/**
+ * @brief Function prototype for the descriptors parsing print code
+ *
+ * @param parms		Struct dvb_v5_fe_parms pointer
+ * @param desc		struct dvb_desc pointer
+ */
+typedef void (*dvb_desc_print_func)(struct dvb_v5_fe_parms *parms,
+				    const struct dvb_desc *desc);
 
-/** @brief Function prototype for the descriptors memory free code */
+/**
+ * @brief Function prototype for the descriptors memory free code
+ *
+ * @param desc		pointer to struct dvb_desc pointer to be freed
+ */
 typedef void (*dvb_desc_free_func) (struct dvb_desc *desc);
 
 /**

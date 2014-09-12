@@ -78,13 +78,10 @@ struct dvb_ts_packet_header {
  *
  * @param table_id		table id
  * @param section_length	section length
- * @param one			one
- * @param zero			zero
  * @param syntax		syntax
  * @param id			TS ID
  * @param current_next		current next
  * @param version		version
- * @param one2			one2
  * @param section_id		section number
  * @param last_section		last section number
  *
