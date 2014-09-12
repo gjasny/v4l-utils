@@ -20,6 +20,7 @@
 
 /**
  * @file atsc_eit.h
+ * @ingroup dvb_table
  * @brief Provides the table parser for the ATSC EIT (Event Information Table)
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -54,6 +55,7 @@
 /**
  * @struct atsc_table_eit_event
  * @brief ATSC EIT event table
+ * @ingroup dvb_table
  *
  * @param event_id	an uniquelly (inside a service ID) event ID
  * @param title_length	title length. Zero means no title
@@ -104,6 +106,7 @@ struct atsc_table_eit_event {
 /**
  * @union atsc_table_eit_desc_length
  * @brief ATSC EIT descriptor length
+ * @ingroup dvb_table
  *
  * @param desc_length	descriptor length
  *
@@ -126,6 +129,7 @@ union atsc_table_eit_desc_length {
 /**
  * @struct atsc_table_eit
  * @brief ATSC EIT table
+ * @ingroup dvb_table
  *
  * @param header			struct dvb_table_header content
  * @param protocol_version		protocol version
@@ -148,6 +152,7 @@ struct atsc_table_eit {
 
 /**
  * @brief Macro used to find event on an ATSC EIT table
+ * @ingroup dvb_table
  *
  * @param _event			event to seek
  * @param _eit				pointer to struct atsc_table_eit_event
@@ -163,6 +168,7 @@ extern "C" {
 
 /**
  * @brief Initializes and parses ATSC EIT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param buf buffer containing the EIT raw data
@@ -181,6 +187,7 @@ ssize_t atsc_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 /**
  * @brief Frees all data allocated by the ATSC EIT table parser
+ * @ingroup dvb_table
  *
  * @param table pointer to struct atsc_table_eit to be freed
  */
@@ -188,6 +195,7 @@ void atsc_table_eit_free(struct atsc_table_eit *table);
 
 /**
  * @brief Prints the content of the ATSC EIT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param table pointer to struct atsc_table_eit
@@ -197,6 +205,7 @@ void atsc_table_eit_print(struct dvb_v5_fe_parms *parms,
 
 /**
  * @brief Converts an ATSC EIT formatted timestamp into struct tm
+ * @ingroup ancillary
  *
  * @param start_time	event on ATSC EIT time format
  * @param tm		pointer to struct tm where the converted timestamp will

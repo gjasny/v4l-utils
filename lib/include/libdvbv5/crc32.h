@@ -21,6 +21,7 @@
 
 /**
  * @file crc32.h
+ * @ingroup ancillary
  * @brief Provides ancillary code to calculate DVB crc32 checksum
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -41,6 +42,7 @@ extern "C" {
 #endif
 
 /** @brief Calculates the crc-32 as defined at the MPEG-TS specs
+ * @ingroup ancillary
  *
  * @param data		Pointer to the buffer to be checked
  * @param datalen	Length of the buffer

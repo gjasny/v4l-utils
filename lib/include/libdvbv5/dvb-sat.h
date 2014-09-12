@@ -23,6 +23,7 @@
 
 /**
  * @file dvb-sat.h
+ * @ingroup satellite
  * @brief Provides interfaces to deal with DVB Satellite systems.
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -38,6 +39,7 @@
 /**
  * @struct dvbsat_freqrange
  * @brief Defines a frequency range used by Satellite
+ * @ingroup satellite
  *
  * @param low	low frequency, in kHz
  * @param high	high frequency, in kHz
@@ -49,6 +51,7 @@ struct dvbsat_freqrange {
 /**
  * @struct dvb_sat_lnb
  * @brief Stores the information of a LNBf
+ * @ingroup satellite
  *
  * @param name		long name of the LNBf type
  * @param alias		short name for the LNBf type
@@ -88,6 +91,7 @@ extern "C"
 
 /**
  * @brief search for a LNBf entry
+ * @ingroup satellite
  *
  * @param name	name of the LNBf entry to seek.
  *
@@ -100,6 +104,7 @@ int dvb_sat_search_lnb(const char *name);
 
 /**
  * @brief prints the contents of a LNBf entry at STDOUT.
+ * @ingroup satellite
  *
  * @param index		index for the entry
  *
@@ -109,6 +114,7 @@ int dvb_print_lnb(int index);
 
 /**
  * @brief Prints all LNBf entries at STDOUT.
+ * @ingroup satellite
  *
  * This function doesn't return anything. Internally, it calls dvb_print_lnb()
  * for all entries inside its LNBf database.
@@ -117,6 +123,7 @@ void dvb_print_all_lnb(void);
 
 /**
  * @brief gets a LNBf entry at its internal database
+ * @ingroup satellite
  *
  * @param index		index for the entry.
  *
@@ -126,6 +133,7 @@ const struct dvb_sat_lnb *dvb_sat_get_lnb(int index);
 
 /**
  * @brief sets the satellite parameters
+ * @ingroup satellite
  *
  * @param parms	struct dvb_v5_fe_parms pointer.
  *

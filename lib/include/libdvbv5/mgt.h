@@ -20,6 +20,7 @@
 
 /**
  * @file mgt.h
+ * @ingroup dvb_table
  * @brief Provides the table parser for the ATSC MGT (Master Guide Table)
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Andre Roth
@@ -46,12 +47,14 @@
 /**
  * @def ATSC_TABLE_MGT
  *	@brief ATSC MGT table ID
+ *	@ingroup dvb_table
  */
 #define ATSC_TABLE_MGT 0xC7
 
 /**
  * @struct atsc_table_mgt_table
  * @brief ATSC tables descrition at MGT table
+ * @ingroup dvb_table
  *
  * @param type		table type
  * @param pid		table type pid
@@ -98,6 +101,7 @@ struct atsc_table_mgt_table {
 /**
  * @struct atsc_table_mgt
  * @brief ATSC MGT table
+ * @ingroup dvb_table
  *
  * @param header		struct dvb_table_header content
  * @param protocol_version	protocol version
@@ -141,6 +145,7 @@ extern "C" {
 
 /**
  * @brief Initializes and parses MGT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param buf buffer containing the MGT raw data
@@ -159,6 +164,7 @@ ssize_t atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 /**
  * @brief Frees all data allocated by the MGT table parser
+ * @ingroup dvb_table
  *
  * @param table pointer to struct atsc_table_mgt to be freed
  */
@@ -166,6 +172,7 @@ void atsc_table_mgt_free(struct atsc_table_mgt *table);
 
 /**
  * @brief Prints the content of the MGT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param table pointer to struct atsc_table_mgt

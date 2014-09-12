@@ -30,6 +30,7 @@
 
 /**
  * @file nit.h
+ * @ingroup dvb_table
  * @brief Provides the descriptors for NIT MPEG-TS table
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -50,10 +51,13 @@
 /**
  * @def DVB_TABLE_NIT
  *	@brief NIT table ID
+ *	@ingroup dvb_table
  * @def DVB_TABLE_NIT2
  *	@brief NIT table ID (alternative table ID)
+ *	@ingroup dvb_table
  * @def DVB_TABLE_NIT_PID
  *	@brief NIT Program ID
+ *	@ingroup dvb_table
  */
 #define DVB_TABLE_NIT      0x40
 #define DVB_TABLE_NIT2     0x41
@@ -62,6 +66,7 @@
 /**
  * @union dvb_table_nit_transport_header
  * @brief MPEG-TS NIT transport header
+ * @ingroup dvb_table
  *
  * @param transport_length	transport length
  *
@@ -83,6 +88,7 @@ union dvb_table_nit_transport_header {
 /**
  * @struct dvb_table_nit_transport
  * @brief MPEG-TS NIT transport table
+ * @ingroup dvb_table
  *
  * @param transport_id	transport id
  * @param network_id	network id
@@ -118,6 +124,7 @@ struct dvb_table_nit_transport {
 /**
  * @struct dvb_table_nit
  * @brief MPEG-TS NIT table
+ * @ingroup dvb_table
  *
  * @param header	struct dvb_table_header content
  * @param desc_length	descriptor length
@@ -149,6 +156,7 @@ struct dvb_table_nit {
 
 /**
  * @brief typedef for a callback used when a NIT table entry is found
+ * @ingroup dvb_table
  *
  * @param nit	a struct dvb_table_nit pointer
  * @param desc	a struct dvb_desc pointer
@@ -160,6 +168,7 @@ typedef void nit_handler_callback_t(struct dvb_table_nit *nit,
 
 /**
  * @brief typedef for a callback used when a NIT transport table entry is found
+ * @ingroup dvb_table
  *
  * @param nit	a struct dvb_table_nit pointer
  * @param tran	a struct dvb_table_nit_transport pointer
@@ -173,6 +182,7 @@ typedef void nit_tran_handler_callback_t(struct dvb_table_nit *nit,
 
 /**
  * @brief Macro used to find a transport inside a NIT table
+ * @ingroup dvb_table
  *
  * @param _tran		transport to seek
  * @param _nit		pointer to struct dvb_table_nit_transport
@@ -188,6 +198,7 @@ extern "C" {
 
 /**
  * @brief Initializes and parses NIT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param buf buffer containing the NIT raw data
@@ -206,6 +217,7 @@ ssize_t dvb_table_nit_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 /**
  * @brief Frees all data allocated by the NIT table parser
+ * @ingroup dvb_table
  *
  * @param table pointer to struct dvb_table_nit to be freed
  */
@@ -213,6 +225,7 @@ void dvb_table_nit_free(struct dvb_table_nit *table);
 
 /**
  * @brief Prints the content of the NIT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param table	pointer to struct dvb_table_nit
@@ -221,6 +234,7 @@ void dvb_table_nit_print(struct dvb_v5_fe_parms *parms, struct dvb_table_nit *ta
 
 /**
  * @brief For each entry at NIT and NIT transport tables, call a callback
+ * @ingroup dvb_table
  *
  * @param parms		struct dvb_v5_fe_parms pointer to the opened device
  * @param table		pointer to struct dvb_table_nit

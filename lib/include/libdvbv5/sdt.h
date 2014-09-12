@@ -24,6 +24,7 @@
 
 /**
  * @file sdt.h
+ * @ingroup dvb_table
  * @brief Provides the descriptors for SDT MPEG-TS table
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -47,10 +48,13 @@
 /**
  * @def DVB_TABLE_SDT
  *	@brief SDT table ID
+ *	@ingroup dvb_table
  * @def DVB_TABLE_SDT2
  *	@brief SDT table ID (alternative table ID)
+ *	@ingroup dvb_table
  * @def DVB_TABLE_SDT_PID
  *	@brief SDT Program ID
+ *	@ingroup dvb_table
  */
 #define DVB_TABLE_SDT      0x42
 #define DVB_TABLE_SDT2     0x46
@@ -59,6 +63,7 @@
 /**
  * @struct dvb_table_sdt_service
  * @brief MPEG-TS SDT service table
+ * @ingroup dvb_table
  *
  * @param service_id		service id
  * @param EIT_present_following	EIT present following
@@ -100,6 +105,7 @@ struct dvb_table_sdt_service {
 /**
  * @struct dvb_table_sdt
  * @brief MPEG-TS SDT table
+ * @ingroup dvb_table
  *
  * @param header	struct dvb_table_header content
  * @param network_id	network id
@@ -124,6 +130,7 @@ struct dvb_table_sdt {
 
 /**
  * @brief Macro used to find services on a SDT table
+ * @ingroup dvb_table
  *
  * @param _service	service to seek
  * @param _sdt		pointer to struct dvb_table_sdt_service
@@ -139,6 +146,7 @@ extern "C" {
 
 /**
  * @brief Initializes and parses SDT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param buf buffer containing the SDT raw data
@@ -157,6 +165,7 @@ ssize_t dvb_table_sdt_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 /**
  * @brief Frees all data allocated by the SDT table parser
+ * @ingroup dvb_table
  *
  * @param table pointer to struct dvb_table_sdt to be freed
  */
@@ -164,6 +173,7 @@ void dvb_table_sdt_free(struct dvb_table_sdt *table);
 
 /**
  * @brief Prints the content of the SDT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param table pointer to struct dvb_table_sdt

@@ -20,6 +20,7 @@
 
 /**
  * @file cat.h
+ * @ingroup dvb_table
  * @brief Provides the table parser for the CAT (Conditional Access Table)
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Andre Roth
@@ -39,8 +40,10 @@
 /**
  * @def DVB_TABLE_CAT
  *	@brief ATSC CAT table ID
+ * 	@ingroup dvb_table
  * @def DVB_TABLE_CAT_PID
  *	@brief ATSC PID table ID
+ * 	@ingroup dvb_table
  */
 #define DVB_TABLE_CAT      0x01
 #define DVB_TABLE_CAT_PID  0x0001

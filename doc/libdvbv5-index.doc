@@ -166,4 +166,12 @@ If DVB version 5.10 is supported, it also provides an extra Quality of
 service indicator that tells if a received transponder has Poor, OK or
 Good quality.
 
+@defgroup frontend Digital TV frontend control
+@defgroup frontend_scan Digital TV frontend scan
+@defgroup satellite Satellite Equipment Control
+@defgroup ancillary Ancillary functions and macros
+@defgroup dvb_table Digital TV table parsing
+@defgroup demux Digital TV demux
+@defgroup file Channel and transponder file read/write
+
  */

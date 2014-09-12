@@ -26,6 +26,7 @@
 
 /**
  * @file dvb-log.h
+ * @ingroup ancillary
  * @brief Provides interfaces to handle libdvbv5 log messages.
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -38,6 +39,7 @@
 /**
  * @typedef void (*dvb_logfunc)(int level, const char *fmt, ...)
  * @brief typedef used by dvb_fe_open2 for the log function
+ * @ingroup ancillary
  */
 
 typedef void (*dvb_logfunc)(int level, const char *fmt, ...) __attribute__ (( format( printf, 2, 3 )));
@@ -98,7 +100,8 @@ typedef void (*dvb_logfunc)(int level, const char *fmt, ...) __attribute__ (( fo
 
 /**
  * @brief This is the prototype of the internal log function that it is used,
- * if the library client doesn't desire to override with something else.
+ *	  if the library client doesn't desire to override with something else.
+ * @ingroup ancillary
  *
  * @param level		level of the message, as defined at syslog.h
  * @param fmt		format string (same as format string on sprintf)

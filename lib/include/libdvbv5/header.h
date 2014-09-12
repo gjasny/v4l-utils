@@ -28,6 +28,7 @@
 
 /**
  * @file header.h
+ * @ingroup dvb_table
  * @brief Provides the MPEG TS table headers
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -40,6 +41,7 @@
 /**
  * @struct dvb_ts_packet_header
  * @brief Header of a MPEG-TS transport packet
+ * @ingroup dvb_table
  *
  * @param sync_byte			sync byte
  * @param pid				Program ID
@@ -75,6 +77,7 @@ struct dvb_ts_packet_header {
 /**
  * @struct dvb_table_header
  * @brief Header of a MPEG-TS table
+ * @ingroup dvb_table
  *
  * @param table_id		table id
  * @param section_length	section length
@@ -115,12 +118,14 @@ extern "C" {
 
 /**
  * @brief Initializes and parses MPEG-TS table header
+ * @ingroup dvb_table
  *
  * @param header pointer to struct dvb_table_header to be parsed
  */
 void dvb_table_header_init (struct dvb_table_header *header);
 /**
  * @brief Prints the content of the MPEG-TS table header
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param header pointer to struct dvb_table_header to be printed

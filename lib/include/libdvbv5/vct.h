@@ -21,6 +21,7 @@
 
 /**
  * @file vct.h
+ * @ingroup dvb_table
  * @brief Provides the descriptors for TVCT and CVCT tables
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -48,10 +49,13 @@
 /**
  * @def ATSC_TABLE_TVCT
  *	@brief TVCT table ID
+ *	@ingroup dvb_table
  * @def ATSC_TABLE_CVCT
  *	@brief CVCT table ID
+ *	@ingroup dvb_table
  * @def ATSC_TABLE_VCT_PID
  *	@brief Program ID with the VCT tables on it
+ *	@ingroup dvb_table
  */
 #define ATSC_TABLE_TVCT     0xc8
 #define ATSC_TABLE_CVCT     0xc9
@@ -60,6 +64,7 @@
 /**
  * @struct atsc_table_vct_channel
  * @brief ATSC VCT channel table (covers both CVCT and TVCT)
+ * @ingroup dvb_table
  *
  * @param modulation_mode	modulation mode
  * @param minor_channel_number	minor channel number
@@ -150,6 +155,7 @@ struct atsc_table_vct_channel {
 /**
  * @struct atsc_table_vct
  * @brief ATSC VCT table (covers both CVCT and TVCT)
+ * @ingroup dvb_table
  *
  * @param header			struct dvb_table_header content
  * @param protocol_version		protocol version
@@ -173,6 +179,7 @@ struct atsc_table_vct {
 /**
  * @union atsc_table_vct_descriptor_length
  * @brief ATSC VCT descriptor length
+ * @ingroup dvb_table
  *
  * @param descriptor_length	descriptor length
  *
@@ -188,6 +195,7 @@ union atsc_table_vct_descriptor_length {
 
 /**
  * @brief Macro used to find channels on a VCT table
+ * @ingroup dvb_table
  *
  * @param _channel	channel to seek
  * @param _vct		pointer to struct atsc_table_vct_channel
@@ -203,6 +211,7 @@ extern "C" {
 
 /**
  * @brief Initializes and parses VCT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param buf buffer containing the VCT raw data
@@ -220,12 +229,14 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			    ssize_t buflen, struct atsc_table_vct **table);
 /**
  * @brief Frees all data allocated by the VCT table parser
+ * @ingroup dvb_table
  *
  * @param table pointer to struct atsc_table_vct to be freed
  */
 void atsc_table_vct_free(struct atsc_table_vct *table);
 /**
  * @brief Prints the content of the VCT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param table pointer to struct atsc_table_vct

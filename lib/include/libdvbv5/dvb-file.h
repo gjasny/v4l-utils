@@ -18,6 +18,7 @@
 
 /**
  * @file dvb-file.h
+ * @ingroup file
  * @brief Provides interfaces to deal with DVB channel and program files.
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -47,6 +48,7 @@
 /**
  * @struct dvb_elementary_pid
  * @brief associates an elementary stream type with its PID
+ * @ingroup file
  *
  * @param type	Elementary stream type
  * @param pid	Elementary stream Program ID
@@ -59,6 +61,7 @@ struct dvb_elementary_pid {
 /**
  * @struct dvb_entry
  * @brief  Represents one entry on a DTV file
+ * @ingroup file
  *
  * @param props			A property key/value pair. The keys are the ones
  *				specified at the DVB API, plus the ones defined
@@ -139,6 +142,7 @@ struct dvb_file {
 /**
  * @struct dvb_parse_table
  * @brief  Describes the fields to parse on a file
+ * @ingroup file
  *
  * @param prop			Name of the DVBv5 or libdvbv5 property field
  * @param table			Name of a translation table for string to
@@ -163,6 +167,7 @@ struct dvb_parse_table {
 /**
  * @struct dvb_parse_struct
  * @brief  Describes the format to parse an specific delivery system
+ * @ingroup file
  *
  * @param id		String that identifies the delivery system on the
  * 			file to be parsed
@@ -198,16 +203,23 @@ struct dvb_parse_file {
 /**
  * @enum  dvb_file_formats
  * @brief Known file formats
+ * @ingroup file
  *
- * @param FILE_UNKNOWN	File format is unknown
- * @param FILE_ZAP		File is at the dvb-apps "dvbzap" format
- * @param FILE_CHANNEL	File is at the dvb-apps output format for dvb-zap
- * @param FILE_DVBV5		File is at libdvbv5 format
- *
+ * @details
  * Please notice that the channel format defined here has a few optional
  * fields that aren't part of the dvb-apps format, for DVB-S2 and for DVB-T2.
  * They're there to match the formats found at dtv-scan-tables package up to
  * September, 5 2014.
+ *
+ * @var FILE_UNKNOWN
+ *	@brief File format is unknown
+ * @var FILE_ZAP
+ *	@brief File is at the dvb-apps "dvbzap" format
+ * @var FILE_CHANNEL
+ *	@brief File is at the dvb-apps output format for dvb-zap
+ * @var FILE_DVBV5
+ *	@brief File is at libdvbv5 format
+ *
  */
 enum dvb_file_formats {
 	FILE_UNKNOWN,
@@ -224,6 +236,7 @@ extern "C" {
 
 /**
  * @brief Deallocates memory associated with a struct dvb_file
+ * @ingroup file
  *
  * @param dvb_file	dvb_file struct to be deallocated
  *
@@ -260,10 +273,16 @@ static inline void dvb_file_free(struct dvb_file *dvb_file)
  * the library can read natively.
  */
 
-/** @brief File format definitions for dvb-apps channel format */
+/**
+ * @brief File format definitions for dvb-apps channel format
+ * @ingroup file
+ */
 extern const struct dvb_parse_file channel_file_format;
 
-/** @brief File format definitions for dvb-apps zap format */
+/**
+ * @brief File format definitions for dvb-apps zap format
+ * @ingroup file
+ */
 extern const struct dvb_parse_file channel_file_zap_format;
 
 /*
@@ -272,6 +291,7 @@ extern const struct dvb_parse_file channel_file_zap_format;
 
 /**
  * @brief Read a file at libdvbv5 format
+ * @ingroup file
  *
  * @param fname		file name
  *
@@ -282,6 +302,7 @@ struct dvb_file *dvb_read_file(const char *fname);
 
 /**
  * @brief Write a file at libdvbv5 format
+ * @ingroup file
  *
  * @param fname		file name
  * @param dvb_file	contents of the file to be written
@@ -293,6 +314,7 @@ int dvb_write_file(const char *fname, struct dvb_file *dvb_file);
 /**
  * @brief Read a file on any format natively supported by
  *			    the library
+ * @ingroup file
  *
  * @param fname		file name
  * @param delsys	Delivery system, as specified by enum fe_delivery_system
@@ -308,6 +330,7 @@ struct dvb_file *dvb_read_file_format(const char *fname,
 /**
  * @brief Write a file on any format natively supported by
  *			    the library
+ * @ingroup file
  *
  * @param fname	file name
  * @param dvb_file	contents of the file to be written
@@ -324,6 +347,7 @@ int dvb_write_file_format(const char *fname,
 
 /**
  * @brief Stores a key/value pair on a DVB file entry
+ * @ingroup file
  *
  * @param entry	entry to be filled
  * @param cmd	key for the property to be used. It be one of the DVBv5
@@ -341,6 +365,7 @@ int dvb_store_entry_prop(struct dvb_entry *entry,
 
 /**
  * @brief Retrieves the value associated witha key on a DVB file entry
+ * @ingroup file
  *
  * @param entry	entry to be used
  * @param cmd	key for the property to be found. It be one of the DVBv5
@@ -357,6 +382,7 @@ int dvb_retrieve_entry_prop(struct dvb_entry *entry,
 
 /**
  * @brief stored a new scanned channel into a dvb_file struct
+ * @ingroup file
  *
  * @param dvb_file	file struct to be filled
  * @param parms		struct dvb_v5_fe_parms used by libdvbv5 frontend
@@ -394,6 +420,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 
 /**
  * @brief Ancillary function that seeks for a delivery system
+ * @ingroup file
  *
  * @param name	string containing the name of the Delivery System to seek
  *
@@ -413,6 +440,8 @@ int dvb_parse_delsys(const char *name);
 
 /**
  * @brief Ancillary function that parses the name of a file format
+ * @ingroup file
+ *
  * @param name	string containing the name of the format
  *		Current valid names are: ZAP, CHANNEL and DVBV5. The name is
  *		case-insensitive.
@@ -429,6 +458,7 @@ enum dvb_file_formats dvb_parse_format(const char *name);
 
 /**
  * @brief Read and parses a one line file format
+ * @ingroup file
  *
  * @param fname		file name
  * @param delsys	delivery system
@@ -444,6 +474,7 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 
 /**
  * @brief Writes a file into an one line file format
+ * @ingroup file
  *
  * @param fname		file name
  * @param dvb_file	contents of the file to be written

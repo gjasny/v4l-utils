@@ -23,6 +23,7 @@
 
 /**
  * @file atsc_header.h
+ * @ingroup dvb_table
  * @brief Provides some common ATSC stuff
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Andre Roth
@@ -39,6 +40,7 @@
 /**
  * @def ATSC_BASE_PID
  *	@brief ATSC PID for the Program and System Information Protocol
+ * @ingroup dvb_table
  */
 #define ATSC_BASE_PID  0x1FFB
 

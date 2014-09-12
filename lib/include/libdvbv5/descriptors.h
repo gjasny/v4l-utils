@@ -20,6 +20,7 @@
 
 /**
  * @file descriptors.h
+ * @ingroup dvb_table
  * @brief Provides a way to handle MPEG-TS descriptors found on Digital TV
  * 	streams.
  * @copyright GNU General Public License version 2 (GPLv2)
@@ -48,10 +49,16 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 
-/** @brief Maximum size of a table session to be parsed */
+/**
+ * @brief Maximum size of a table session to be parsed
+ * @ingroup dvb_table
+ */
 #define DVB_MAX_PAYLOAD_PACKET_SIZE 4096
 
-/** @brief number of bytes for the descriptor's CRC check */
+/**
+ * @brief number of bytes for the descriptor's CRC check
+ * @ingroup dvb_table
+ */
 #define DVB_CRC_SIZE 4
 
 
@@ -62,6 +69,7 @@ struct dvb_v5_fe_parms;
 /**
  * @brief Function prototype for a function that initializes the
  *	  descriptors parsing on a table
+ * @ingroup dvb_table
  *
  * @param parms		Struct dvb_v5_fe_parms pointer
  * @param buf		Buffer with data to be parsed
@@ -73,7 +81,10 @@ typedef void (*dvb_table_init_func)(struct dvb_v5_fe_parms *parms,
 				    const uint8_t *buf, ssize_t buflen,
 				    void **table);
 
-/** @brief Table with all possible descriptors */
+/**
+ * @brief Table with all possible descriptors
+ * @ingroup dvb_table
+ */
 extern const dvb_table_init_func dvb_table_initializers[256];
 
 #ifndef _DOXYGEN
@@ -97,6 +108,7 @@ extern const dvb_table_init_func dvb_table_initializers[256];
  * @struct dvb_desc
  * @brief Linked list containing the several descriptors found on a
  * 	  MPEG-TS table
+ * @ingroup dvb_table
  *
  * @param type		Descriptor type
  * @param length	Length of the descriptor
@@ -128,6 +140,7 @@ extern "C" {
 
 /**
  * @brief Converts from BCD to CPU integer internal representation
+ * @ingroup dvb_table
  *
  * @param bcd	value in BCD encoding
  */
@@ -135,6 +148,7 @@ uint32_t dvb_bcd(uint32_t bcd);
 
 /**
  * @brief dumps data into the logs in hexadecimal format
+ * @ingroup dvb_table
  *
  * @param parms		Struct dvb_v5_fe_parms pointer
  * @param prefix	String to be printed before the dvb_hexdump
@@ -146,6 +160,7 @@ void dvb_hexdump(struct dvb_v5_fe_parms *parms, const char *prefix,
 
 /**
  * @brief parse MPEG-TS descriptors
+ * @ingroup dvb_table
  *
  * @param parms		Struct dvb_v5_fe_parms pointer
  * @param buf		Buffer with data to be parsed
@@ -169,6 +184,7 @@ int  dvb_desc_parse(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 /**
  * @brief frees a dvb_desc linked list
+ * @ingroup dvb_table
  *
  * @param list	struct dvb_desc pointer.
  */
@@ -176,6 +192,7 @@ void dvb_desc_free (struct dvb_desc **list);
 
 /**
  * @brief prints the contents of a struct dvb_desc linked list
+ * @ingroup dvb_table
  *
  * @param parms		Struct dvb_v5_fe_parms pointer
  * @param desc		struct dvb_desc pointer.
@@ -188,6 +205,7 @@ void dvb_desc_print(struct dvb_v5_fe_parms *parms, struct dvb_desc *desc);
 
 /**
  * @brief Function prototype for the descriptors parsing init code
+ * @ingroup dvb_table
  *
  * @param parms		Struct dvb_v5_fe_parms pointer
  * @param buf		buffer with the content of the descriptor
@@ -198,6 +216,7 @@ typedef int (*dvb_desc_init_func) (struct dvb_v5_fe_parms *parms,
 
 /**
  * @brief Function prototype for the descriptors parsing print code
+ * @ingroup dvb_table
  *
  * @param parms		Struct dvb_v5_fe_parms pointer
  * @param desc		struct dvb_desc pointer
@@ -207,6 +226,7 @@ typedef void (*dvb_desc_print_func)(struct dvb_v5_fe_parms *parms,
 
 /**
  * @brief Function prototype for the descriptors memory free code
+ * @ingroup dvb_table
  *
  * @param desc		pointer to struct dvb_desc pointer to be freed
  */
@@ -215,6 +235,7 @@ typedef void (*dvb_desc_free_func) (struct dvb_desc *desc);
 /**
  * @struct dvb_descriptor
  * @brief Contains the parser information for the MPEG-TS parser code
+ * @ingroup dvb_table
  *
  * @param name		String containing the name of the descriptor
  * @param init		Pointer to a function to initialize the descriptor
@@ -234,13 +255,15 @@ struct dvb_descriptor {
 
 /**
  * @brief Contains the parsers for the several descriptors
+ * @ingroup dvb_table
  */
 extern const struct dvb_descriptor dvb_descriptors[];
 
 /**
+ * @enum descriptors
  * @brief List containing all descriptors used by Digital TV MPEG-TS
+ * @ingroup dvb_table
  *
-
  * @var video_stream_descriptor
  *	@brief	video_stream descriptor - ISO/IEC 13818-1
  * @var audio_stream_descriptor

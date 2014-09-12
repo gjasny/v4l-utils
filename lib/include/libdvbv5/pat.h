@@ -21,6 +21,7 @@
 
 /**
  * @file pat.h
+ * @ingroup dvb_table
  * @brief Provides the descriptors for PAT MPEG-TS table
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -47,8 +48,10 @@
 /**
  * @def DVB_TABLE_PAT
  *	@brief PAT table ID
+ *	@ingroup dvb_table
  * @def DVB_TABLE_PAT_PID
  *	@brief PAT Program ID
+ *	@ingroup dvb_table
  */
 #define DVB_TABLE_PAT      0x00
 #define DVB_TABLE_PAT_PID  0x0000
@@ -56,6 +59,7 @@
 /**
  * @struct dvb_table_pat_program
  * @brief MPEG-TS PAT program table
+ * @ingroup dvb_table
  *
  * @param service_id	service id
  * @param pid		pid
@@ -86,6 +90,7 @@ struct dvb_table_pat_program {
 /**
  * @struct dvb_table_pat
  * @brief MPEG-TS PAT table
+ * @ingroup dvb_table
  *
  * @param header	struct dvb_table_header content
  * @param programs	number of programs
@@ -109,6 +114,7 @@ struct dvb_table_pat {
 
 /**
  * @brief Macro used to find programs on a PAT table
+ * @ingroup dvb_table
  *
  * @param _pgm		program to seek
  * @param _pat		pointer to struct dvb_table_pat_program
@@ -124,6 +130,7 @@ extern "C" {
 
 /**
  * @brief Initializes and parses PAT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param buf buffer containing the PAT raw data
@@ -142,6 +149,7 @@ ssize_t dvb_table_pat_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 /**
  * @brief Frees all data allocated by the PAT table parser
+ * @ingroup dvb_table
  *
  * @param table pointer to struct dvb_table_pat to be freed
  */
@@ -149,6 +157,7 @@ void dvb_table_pat_free(struct dvb_table_pat *table);
 
 /**
  * @brief Prints the content of the PAT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param table pointer to struct dvb_table_pat

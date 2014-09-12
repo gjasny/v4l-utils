@@ -21,6 +21,7 @@
 
 /**
  * @file pmt.h
+ * @ingroup dvb_table
  * @brief Provides the descriptors for PMT MPEG-TS table
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -47,12 +48,14 @@
 /**
  * @def DVB_TABLE_PMT
  *	@brief PMT table ID
+ *	@ingroup dvb_table
  */
 #define DVB_TABLE_PMT      0x02
 
 /**
  * @enum dvb_streams
- *	 @brief Add support for MPEG-TS Stream types
+ * @brief Add support for MPEG-TS Stream types
+ * @ingroup dvb_table
  *
  * @var stream_reserved0
  *	@brief	ITU-T | ISO/IEC Reserved
@@ -129,12 +132,14 @@ enum dvb_streams {
 
 /**
  * @brief Converts from enum dvb_streams into a string
+ * @ingroup dvb_table
  */
 extern const char *pmt_stream_name[];
 
 /**
  * @struct dvb_table_pmt_stream
  * @brief MPEG-TS PMT stream table
+ * @ingroup dvb_table
  *
  * @param type			stream type
  * @param elementary_pid	elementary pid
@@ -178,7 +183,8 @@ struct dvb_table_pmt_stream {
 /**
  * @struct dvb_table_pmt
  * @brief MPEG-TS PMT table
- * 
+ * @ingroup dvb_table
+ *
  * @param header	struct dvb_table_header content
  * @param pcr_pid	PCR PID
  * @param desc_length	descriptor length
@@ -225,6 +231,7 @@ struct dvb_table_pmt {
 
 /**
  * @brief Macro used to find streams on a PMT table
+ * @ingroup dvb_table
  *
  * @param _stream	stream to seek
  * @param _pmt		pointer to struct dvb_table_pmt_stream
@@ -240,6 +247,7 @@ extern "C" {
 
 /**
  * @brief Initializes and parses PMT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param buf buffer containing the PMT raw data
@@ -258,6 +266,7 @@ ssize_t dvb_table_pmt_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 
 /**
  * @brief Frees all data allocated by the PMT table parser
+ * @ingroup dvb_table
  *
  * @param table pointer to struct dvb_table_pmt to be freed
  */
@@ -265,6 +274,7 @@ void dvb_table_pmt_free(struct dvb_table_pmt *table);
 
 /**
  * @brief Prints the content of the PAT table
+ * @ingroup dvb_table
  *
  * @param parms	struct dvb_v5_fe_parms pointer to the opened device
  * @param table pointer to struct dvb_table_pmt

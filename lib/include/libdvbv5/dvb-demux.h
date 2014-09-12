@@ -22,6 +22,7 @@
 
 /**
  * @file dvb-demux.h
+ * @ingroup demux
  * @brief Provides interfaces to deal with DVB demux.
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -41,6 +42,7 @@ extern "C" {
 
 /**
  * @brief Opens a DVB demux in read/write mode
+ * @ingroup demux
  *
  * @param adapter	DVB adapter number to open
  * @param demux		DVB demux number to open
@@ -53,6 +55,7 @@ int dvb_dmx_open(int adapter, int demux);
 
 /**
  * @brief Stops the DMX filter for the file descriptor and closes
+ * @ingroup demux
  *
  * @param dmx_fd	File descriptor to close
  *
@@ -61,8 +64,8 @@ int dvb_dmx_open(int adapter, int demux);
 void dvb_dmx_close(int dmx_fd);
 
 /**
- * @fn void dvb_dmx_stop(int dmx_fd)
  * @brief Stops the DMX filter for a given file descriptor
+ * @ingroup demux
  *
  * @param dmx_fd	File descriptor to close
  *
@@ -73,6 +76,7 @@ void dvb_dmx_stop(int dmx_fd);
 /**
  * @brief Start a filter for a MPEG-TS Packetized Elementary
  * 		       Stream (PES)
+ * @ingroup demux
  *
  * @param dmxfd	File descriptor for the demux device
  * @param pid		Program ID to filter. Use 0x2000 to select all PIDs
@@ -93,6 +97,7 @@ int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
 
 /**
  * @brief Sets a MPEG-TS section filter
+ * @ingroup demux
  *
  * @param dmxfd		File descriptor for the demux device
  * @param pid		Program ID to filter. Use 0x2000 to select all PIDs
@@ -118,6 +123,7 @@ int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
 /**
  * @brief read the contents of the MPEG-TS PAT table, seeking for
  *		      	an specific service ID
+ * @ingroup demux
  *
  * @param dmxfd		File descriptor for the demux device
  * @param sid		Session ID to seeking

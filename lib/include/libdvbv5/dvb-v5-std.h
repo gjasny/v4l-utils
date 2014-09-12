@@ -28,6 +28,7 @@
 
 /**
  * @file dvb-v5-std.h
+ * @ingroup frontend
  * @brief Provides libdvbv5 defined properties for the frontend.
  * @copyright GNU General Public License version 2 (GPLv2)
  * @author Mauro Carvalho Chehab
@@ -50,39 +51,54 @@
 
 /**
  * @def DTV_USER_COMMAND_START
- *	 @brief Start number for libdvbv5 user commands
+ *	@brief Start number for libdvbv5 user commands
+ *	@ingroup frontend
  * @def DTV_POLARIZATION
- *	 @brief Satellite polarization (for Satellite delivery systems)
+ *	@brief Satellite polarization (for Satellite delivery systems)
+ *	@ingroup frontend
  * @def DTV_AUDIO_PID
  * 	@brief Audio PID
+ *	@ingroup frontend
  * @def DTV_VIDEO_PID
  *	@brief Video PID
+ *	@ingroup frontend
  * @def DTV_SERVICE_ID
  *	@brief MPEG TS service ID
+ *	@ingroup frontend
  * @def DTV_CH_NAME
  *	@brief Digital TV service name
+ *	@ingroup frontend
  * @def DTV_VCHANNEL
  *	@brief Digital TV channel number. May contain symbols
+ *	@ingroup frontend
  * @def DTV_SAT_NUMBER
  *	@brief Number of the satellite (used on multi-dish Satellite systems)
+ *	@ingroup frontend
  * @def DTV_DISEQC_WAIT
  *	@brief Extra time needed to wait for DiSeqC to complete, in ms.
  *		The minimal wait time is 15 ms. The time here will be
  *		added to the minimal time.
+ *	@ingroup frontend
  * @def DTV_DISEQC_LNB
  *	@brief LNBf name
+ *	@ingroup frontend
  * @def DTV_FREQ_BPF
  *	@brief SCR/Unicable band-pass filter frequency in kHz
+ *	@ingroup frontend
  * @def DTV_PLS_CODE
  *	@brief DVB-T2 PLS code. Not used internally. It is needed
  *			only for file conversion.
+ *	@ingroup frontend
  * @def DTV_PLS_MODE
  *	@brief DVB-T2 PLS mode. Not used internally. It is needed
  *			only for file conversion.
+ *	@ingroup frontend
  * @def DTV_MAX_USER_COMMAND
  *	 @brief Last user command
+ *	@ingroup frontend
  * @def DTV_USER_NAME_SIZE
  *	 @brief Number of user commands
+ *	@ingroup frontend
  */
 
 #define DTV_USER_COMMAND_START 256
@@ -105,7 +121,9 @@
 #define DTV_USER_NAME_SIZE	(1 + DTV_MAX_USER_COMMAND - DTV_USER_COMMAND_START)
 
 /**
- * enum dvb_sat_polarization - Polarization types for Satellite systems
+ * @enum dvb_sat_polarization
+ * @brief Polarization types for Satellite systems
+ * @ingroup satellite
  *
  * @param POLARIZATION_OFF		Polarization disabled/unused.
  * @param POLARIZATION_H		Horizontal polarization
@@ -132,34 +150,44 @@ enum dvb_sat_polarization {
 
 /**
  * @def DTV_STAT_COMMAND_START
- *	 @brief Start number for libdvbv5 statistics commands
+ *	@brief Start number for libdvbv5 statistics commands
+ *	@ingroup frontend
  * @def DTV_STATUS
  *	@brief Lock status of a DTV frontend. This actually comes from
  *			the Kernel, but it uses a separate ioctl.
+ *	@ingroup frontend
  * @def DTV_BER
  * 	@brief Bit Error Rate. This is a parameter that it is
  *			derivated from two counters at the Kernel side
+ *	@ingroup frontend
  * @def DTV_PER
  *	@brief Packet Error Rate. This is a parameter that it is
  *			derivated from two counters at the Kernel side
+ *	@ingroup frontend
  * @def DTV_QUALITY
  * 	@brief A quality indicator that represents if a locked
  *			channel provides a good, OK or poor signal. This is
  *			estimated considering the error rates, signal strengh
  *			and/or S/N ratio of the carrier.
+ *	@ingroup frontend
  * @def DTV_PRE_BER
  *	@brief Bit Error Rate before Viterbi. This is the error rate
  *			before applying the Forward Error Correction. This is
  *			a parameter that it is derivated from two counters
  *			at the Kernel side.
+ *	@ingroup frontend
  * @def DTV_MAX_STAT_COMMAND
- *	 @brief Last statistics command
+ *	@brief Last statistics command
+ *	@ingroup frontend
  * @def DTV_STAT_NAME_SIZE
- *	 @brief Number of statistics commands
+ *	@brief Number of statistics commands
+ *	@ingroup frontend
  * @def DTV_NUM_KERNEL_STATS
  *	@brief Number of statistics commands provided by the Kernel
+ *	@ingroup frontend
  * @def DTV_NUM_STATS_PROPS
  *	@brief Total number of statistics commands
+ *	@ingroup frontend
  */
 
 #define DTV_STAT_COMMAND_START 512
@@ -180,8 +208,10 @@ enum dvb_sat_polarization {
 #define DTV_NUM_STATS_PROPS	(DTV_NUM_KERNEL_STATS + DTV_STAT_NAME_SIZE)
 
 /**
- * enum dvb_quality - provides an estimation about the user's experience
- *		      while watching to a given MPEG stream
+ * @enum dvb_quality
+ * @brief Provides an estimation about the user's experience
+ *	  while watching to a given MPEG stream
+ * @ingroup frontend
  *
  * @param DVB_QUAL_UNKNOWN	Quality could not be estimated, as the Kernel driver
  *			doesn't provide enough statistics
