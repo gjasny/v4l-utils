@@ -109,14 +109,14 @@ public:
 		return v4l_g_fmt(this, &fmt, type);
 	}
 
-	int try_fmt(v4l2_format &fmt)
+	int try_fmt(v4l2_format &fmt, bool zero_bpl = true)
 	{
-		return v4l_try_fmt(this, &fmt);
+		return v4l_try_fmt(this, &fmt, zero_bpl);
 	}
 
-	int s_fmt(v4l2_format &fmt)
+	int s_fmt(v4l2_format &fmt, bool zero_bpl = true)
 	{
-		return v4l_s_fmt(this, &fmt);
+		return v4l_s_fmt(this, &fmt, zero_bpl);
 	}
 
 	int g_selection(v4l2_selection &sel)
@@ -565,9 +565,9 @@ public:
 	__u8 g_num_planes() { return v4l_format_g_num_planes(this); }
 	void s_num_planes(__u8 num_planes) { v4l_format_s_num_planes(this, num_planes); }
 	__u32 g_bytesperline(unsigned plane = 0) { return v4l_format_g_bytesperline(this, plane); }
-	void s_bytesperline(__u32 bytesperline, unsigned plane = 0) { v4l_format_s_bytesperline(this, bytesperline, plane); }
+	void s_bytesperline(__u32 bytesperline, unsigned plane = 0) { v4l_format_s_bytesperline(this, plane, bytesperline); }
 	__u32 g_sizeimage(unsigned plane = 0) { return v4l_format_g_sizeimage(this, plane); }
-	void s_sizeimage(__u32 sizeimage, unsigned plane = 0) { v4l_format_s_sizeimage(this, sizeimage, plane); }
+	void s_sizeimage(__u32 sizeimage, unsigned plane = 0) { v4l_format_s_sizeimage(this, plane, sizeimage); }
 	unsigned g_field() { return v4l_format_g_field(this); }
 	void s_field(unsigned field) { v4l_format_s_field(this, field); }
 	unsigned g_first_field(v4l2_std_id std) { return v4l_format_g_first_field(this, std); }
