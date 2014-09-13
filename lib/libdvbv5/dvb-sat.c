@@ -356,7 +356,7 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
 int dvb_sat_set_parms(struct dvb_v5_fe_parms *p)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
-	const struct dvb_sat_lnb *lnb = parms->lnb;
+	const struct dvb_sat_lnb *lnb = p->lnb;
 	enum dvb_sat_polarization pol;
 	dvb_fe_retrieve_parm(&parms->p, DTV_POLARIZATION, &pol);
 	uint32_t freq;

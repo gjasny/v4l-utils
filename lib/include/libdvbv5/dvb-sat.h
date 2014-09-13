@@ -84,7 +84,7 @@ struct dvb_sat_lnb {
 struct dvb_v5_fe_parms;
 
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif
 
 /* From libsat.c */
