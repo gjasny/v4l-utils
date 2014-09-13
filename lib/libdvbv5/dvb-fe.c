@@ -43,6 +43,9 @@ struct dvb_v5_fe_parms *dvb_fe_dummy()
 	if (!parms)
 		return NULL;
 	parms->p.logfunc = dvb_default_log;
+	parms->fd = -1;
+	parms->p.default_charset = "iso-8859-1";
+	parms->p.output_charset = "utf-8";
 	return &parms->p;
 }
 
