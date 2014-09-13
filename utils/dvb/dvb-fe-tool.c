@@ -39,7 +39,9 @@ static const struct argp_option options[] = {
 	{"adapter",	'a',	"ADAPTER",	0,	"dvb adapter", 0},
 	{"frontend",	'f',	"FRONTEND",	0,	"dvb frontend", 0},
 	{"set-delsys",	'd',	"PARAMS",	0,	"set delivery system", 0},
+#if 0 /* Currently not implemented */
 	{"set",		's',	"PARAMS",	0,	"set frontend", 0},
+#endif
 	{"get",		'g',	0,		0,	"get frontend", 0},
 	{"dvbv3",	'3',	0,		0,	"Use DVBv3 only", 0},
 	{ 0, 0, 0, 0, 0, 0 }
@@ -49,7 +51,7 @@ static int adapter = 0;
 static int frontend = 0;
 static unsigned get = 0;
 static char *set_params = NULL;
-static int verbose = 1;		/* FIXME */
+static int verbose = 0;
 static int dvbv3 = 0;
 static int delsys = 0;
 
@@ -67,9 +69,11 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		if (delsys < 0)
 			return ARGP_ERR_UNKNOWN;
 		break;
+#if 0
 	case 's':
 		set_params = arg;
 		break;
+#endif
 	case 'g':
 		get++;
 		break;
@@ -97,6 +101,13 @@ int main(int argc, char *argv[])
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
+	/*
+	 * If called without any option, be verbose, to print the
+	 * DVB frontend information.
+	 */
+	if (!get && !delsys && !set_params)
+		verbose++;
+
 	parms = dvb_fe_open(adapter, frontend, verbose, dvbv3);
 	if (!parms)
 		return -1;
@@ -105,6 +116,7 @@ int main(int argc, char *argv[])
 		printf("Changing delivery system to: %s\n",
 			delivery_system_name[delsys]);
 		dvb_set_sys(parms, delsys);
+		goto ret;
 	}
 
 #if 0
@@ -116,6 +128,7 @@ int main(int argc, char *argv[])
 		dvb_fe_prt_parms(parms);
 	}
 
+ret:
 	dvb_fe_close(parms);
 
 	return 0;
