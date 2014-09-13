@@ -34,7 +34,8 @@ struct dvb_desc_service_list {
 	uint8_t length;
 	struct dvb_desc *next;
 
-	//struct dvb_desc_service_list_table services[];
+	/* FIXME */
+	/* struct dvb_desc_service_list_table services[]; */
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;

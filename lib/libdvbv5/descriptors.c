@@ -1345,7 +1345,7 @@ void dvb_hexdump(struct dvb_v5_fe_parms *parms, const char *prefix, const unsign
 			strncat(hex, " ", sizeof(hex) - 1);
 		if (j == 16) {
 			ascii[j] = '\0';
-			dvb_log("%s%s  %s", prefix, hex, ascii);
+			dvb_loginfo("%s%s  %s", prefix, hex, ascii);
 			j = 0;
 			hex[0] = '\0';
 		}

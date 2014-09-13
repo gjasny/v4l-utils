@@ -25,10 +25,14 @@
 int dvb_desc_sat_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_sat *sat = (struct dvb_desc_sat *) desc;
-	/* copy from .length */
-	memcpy(((uint8_t *) sat ) + sizeof(sat->type) + sizeof(sat->next) + sizeof(sat->length),
-		buf,
-		sat->length);
+	ssize_t size = sizeof(struct dvb_desc_sat) - sizeof(struct dvb_desc);
+
+	if (size > desc->length) {
+		dvb_logerr("dvb_desc_sat_init short read %d/%zd bytes", desc->length, size);
+		return -1;
+	}
+
+	memcpy(desc->data, buf, size);
 	bswap16(sat->orbit);
 	bswap32(sat->bitfield);
 	bswap32(sat->frequency);

@@ -26,27 +26,59 @@
 int dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_service *service = (struct dvb_desc_service *) desc;
+	const uint8_t *endbuf = buf + desc->length;
 	uint8_t len;        /* the length of the string in the input data */
 	uint8_t len1, len2; /* the lenght of the output strings */
 
+	service->provider = NULL;
+	service->provider_emph = NULL;
+	service->name = NULL;
+	service->name_emph = NULL;
+
+	if (buf + 1 > endbuf) {
+		dvb_logerr("%s: short read %d bytes", __func__, 1);
+		return -1;
+	}
 	service->service_type = buf[0];
 	buf++;
 
-	service->provider = NULL;
-	service->provider_emph = NULL;
-	len = buf[0];
-	buf++;
-	len1 = len;
-	dvb_parse_string(parms, &service->provider, &service->provider_emph, buf, len1);
-	buf += len;
+	if (buf + 1 > endbuf) {
+		dvb_logerr("%s: a short read %d bytes", __func__, 1);
+		return -1;
+	}
 
-	service->name = NULL;
-	service->name_emph = NULL;
+	len = buf[0];
+	len1 = len;
+	buf++;
+
+	if (buf + len > endbuf) {
+		dvb_logerr("%s: b short read %d bytes", __func__, len);
+		return -1;
+	}
+
+	if (len) {
+		dvb_parse_string(parms, &service->provider, &service->provider_emph, buf, len1);
+		buf += len;
+	}
+
+	if (buf + 1 > endbuf) {
+		dvb_logerr("%s: c short read %d bytes", __func__, 1);
+		return -1;
+	}
+
 	len = buf[0];
 	len2 = len;
 	buf++;
-	dvb_parse_string(parms, &service->name, &service->name_emph, buf, len2);
-	buf += len;
+
+	if (buf + len > endbuf) {
+		dvb_logerr("%s: d short read %d bytes", __func__, len);
+		return -1;
+	}
+
+	if (len) {
+		dvb_parse_string(parms, &service->name, &service->name_emph, buf, len2);
+		buf += len;
+	}
 	return 0;
 }
 
