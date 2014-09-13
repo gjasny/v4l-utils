@@ -219,13 +219,16 @@ struct dvb_parse_file {
  *	@brief File is at the dvb-apps output format for dvb-zap
  * @var FILE_DVBV5
  *	@brief File is at libdvbv5 format
- *
+ * @var FILE_VDR
+ *	@brief File is at DVR format (as supported on version 2.1.6).
+ *	       Note: this is only supported as an output format.
  */
 enum dvb_file_formats {
 	FILE_UNKNOWN,
 	FILE_ZAP,
 	FILE_CHANNEL,
 	FILE_DVBV5,
+	FILE_VDR,
 };
 
 struct dvb_v5_descriptors;
@@ -443,11 +446,11 @@ int dvb_parse_delsys(const char *name);
  * @ingroup file
  *
  * @param name	string containing the name of the format
- *		Current valid names are: ZAP, CHANNEL and DVBV5. The name is
- *		case-insensitive.
+ *		Current valid names are: ZAP, CHANNEL, VDR and DVBV5.
+ *		The name is case-insensitive.
  *
- * It returns FILE_ZAP, FILE_CHANNEL, FILE_DVBV5 if the name was translated,
- * or FILE_UNKNOWN otherwise.
+ * @return It returns FILE_ZAP, FILE_CHANNEL, FILE_VDR or  FILE_DVBV5
+ * if the name was translated. FILE_UNKNOWN otherwise.
  */
 enum dvb_file_formats dvb_parse_format(const char *name);
 
@@ -489,6 +492,20 @@ int dvb_write_format_oneline(const char *fname,
 			     struct dvb_file *dvb_file,
 			     uint32_t delsys,
 			     const struct dvb_parse_file *parse_file);
+
+/**
+ * @brief Writes a file into vdr format (compatible up to version 2.1)
+ * @ingroup file
+ *
+ * @param fname		file name
+ * @param dvb_file	contents of the file to be written
+ *
+ * @return It returns zero if success, or a positive error number if it fails.
+ *
+ * This function is called internally by dvb_write_file_format.
+ */
+int dvb_write_format_vdr(const char *fname,
+			 struct dvb_file *dvb_file);
 
 #ifdef __cplusplus
 }

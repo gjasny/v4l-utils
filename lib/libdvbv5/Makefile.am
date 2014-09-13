@@ -59,6 +59,7 @@ libdvbv5_la_SOURCES = \
 	crc32.c \
 	dvb-legacy-channel-format.c \
 	dvb-zap-format.c \
+	dvb-vdr-format.c \
 	dvb-v5.c	 \
 	dvb-v5.h	 \
 	parse_string.c	 \

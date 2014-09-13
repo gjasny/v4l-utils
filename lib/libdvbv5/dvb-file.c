@@ -1282,6 +1282,8 @@ enum dvb_file_formats dvb_parse_format(const char *name)
 		return FILE_CHANNEL;
 	if (!strcasecmp(name, "DVBV5"))
 		return FILE_DVBV5;
+	if (!strcasecmp(name, "VDR"))
+		return FILE_VDR;
 
 	fprintf(stderr, "File format %s is unknown\n", name);
 	return FILE_UNKNOWN;
@@ -1369,6 +1371,10 @@ struct dvb_file *dvb_read_file_format(const char *fname,
 	case FILE_DVBV5:
 		dvb_file = dvb_read_file(fname);
 		break;
+	case FILE_VDR:
+		/* FIXME: add support for VDR input */
+		fprintf(stderr, "Currently, VDR format is supported only for output\n");
+		return NULL;
 	default:
 		fprintf(stderr, "Format is not supported\n");
 		return NULL;
@@ -1399,6 +1405,9 @@ int dvb_write_file_format(const char *fname,
 		break;
 	case FILE_DVBV5:
 		ret = dvb_write_file(fname, dvb_file);
+		break;
+	case FILE_VDR:
+		ret = dvb_write_format_vdr(fname, dvb_file);
 		break;
 	default:
 		return -1;
