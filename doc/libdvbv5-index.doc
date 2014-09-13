@@ -165,7 +165,569 @@ it falls back to DVBv3 way.
 If DVB version 5.10 is supported, it also provides an extra Quality of
 service indicator that tells if a received transponder has Poor, OK or
 Good quality.
+*/
 
+/**
+@page dvbv5-tools DVBv5 Tools
+@brief Set of DVBv5 tools, bundled together with libdvbv5
+@section dvbv5-tools-intro Introduction
+
+DVBv5 Tools  is a small set of command line utilities that was developed
+to be compliant with the newer features provided by version 5 of the DVB API.
+The tools should also be backward compatible with the older v3 DVB API.
+They were written using libdvbv5.
+
+It is composed of 4 tools:
+
+- dvbv5-scan - Scans the channel transponders and gets the services available
+  there;
+- dvbv5-zap - Locks into a channel (zap), allowing other applications to get
+  the stream at the dvr devices or to monitor the stream;
+- dvb-fe-tool - Lists frontend properties and allow to manually set the DVB
+  frontend
+- dvb-format-convert - Converts from/to other formats used by DVBv3 apps into
+  the dvbv5 format.
+
+The DVBv5 default file format is formed by a channel name, followed by a series
+of key/value properties. Those tools also support the legacy formats used by
+dvb-apps.
+
+For example, this is a channel file with one DVB-C channel on it:
+@code{.unparsed}
+[CHANNEL]
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+	FREQUENCY = 573000000
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	MODULATION = QAM/256
+	INVERSION = AUTO
+@endcode
+And this is (part of) a service (zap) file, produced from the above channel
+definition using dvbv5-scan:
+
+@code{.unparsed}
+[SBT]
+	SERVICE_ID = 4
+	VIDEO_PID = 42
+	AUDIO_PID = 257
+	PID_f1 = 768
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+[TNT]
+	SERVICE_ID = 48
+	VIDEO_PID = 336
+	AUDIO_PID = 337 338 849
+	PID_86 = 816
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+@endcode
+*/
+
+/**
+@page dvbv5-scan dvbv5-scan
+@brief The dvbv5-scan - DVBv5 tool for frequency scanning
+
+@section dvbv5-scan-intro Description
+
+dvbv5-scan is a command line frequency scanning tool for digital TV services
+that is compliant with version 5 of the DVB API, and backward compatable with
+the older v3 DVB API.
+
+dvbv5-scan uses by default the new channel/service file format that it is
+capable of supporting all types of Digital TV standards. It can also support
+the legacy format used by the legacy dvb-apps.
+
+A single physical channel (also called as transponder) may have several
+virtual channels inside it, encapsulated via a MPEG Transport stream.
+
+Those virtual channels are called as "service" at the MPEG-TS terminology,
+and may have one or more audio, video and other types of elements inside it.
+
+The dvbv5-scan goal is to scan for a list of physical channels/transponders
+and identify there the MPEG-TS services available.
+
+The dvbv5-scan tool is smart enough to retrieve the information at the MPEG-TS
+Network Information Table (NIT) about other channels available on the stream.
+
+Example:
+
+@code{.unparsed}
+$ dvbv5-scan ~/dvbc-test
+Scanning frequency #1 573000000
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= -13.80dB UCB= 0 postBER= 3.14x10^-3 PER= 0
+Service SBT, provider (null): digital television
+Service Globo, provider Globo: digital television
+Service Record, provider (null): digital television
+Service Band, provider (null): digital television
+...
+Service Trilhas Sonoras, provider (null): digital radio
+New transponder/channel found: #2: 579000000
+...
+New transponder/channel found: #39: 507000000
+@endcode
+
+The scan process will then scan the other 38 discovered new transponders,
+and generate a dvb_channel.com with several entries with will have not only
+the physical channel/transponder info, but also the Service ID, and the
+corresponding audio/video/other program IDs (PID), like:
+
+@code{.unparsed}
+[Globo]
+	SERVICE_ID = 5
+	VIDEO_PID = 288
+	AUDIO_PID = 289
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = OFF
+	SYMBOL_RATE = 5247500
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+@endcode
+
+@section dvbv5-scan-c Source Code
+@include dvbv5-scan.c
+*/
+
+/**
+@page dvbv5-zap dvbv5-zap
+@brief The dvbv5-zap - DVBv5 tool for service tuning
+
+dvbv5-zap is a command line tuning tool for digital TV services that is
+compliant with version 5 of the DVB API, and backward compatable with the
+older v3 DVB API.
+
+dvbv5-zap uses by default a new channel/service file format that it is
+capable of supporting all types of Digital TV standards. It can also support
+the legacy format used by the legacy dvb-apps.
+
+The dvbv5-zap tool can be used on several different modes, depending on the
+parameters used.
+
+The typical use is to tune into a channel and put it into record mode:
+
+$ dvbv5-zap -c dvb_channel.conf "trilhas sonoras" -r
+using demux '/dev/dvb/adapter0/demux0'
+reading channels from file 'dvb_channel.conf'
+service has pid type 05:  204
+tuning to 573000000 Hz
+audio pid 104
+  dvb_set_pesfilter 104
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= -13.80dB UCB= 70 postBER= 3.14x10^-3 PER= 0
+DVR interface '/dev/dvb/adapter0/dvr0' can now be opened
+
+The channel can be watched by playing the contents of the DVR interface, with some player that recognizes the MPEG-TS format.
+
+For example (in this specific case, it is an audio only channel, but the same could be used for audio/video):
+
+@code{.unparsed}
+$ mplayer -cache 800 /dev/dvb/adapter0/dvr0
+MPlayer SVN-r37077-4.8.2 (C) 2000-2014 MPlayer Team
+TS file format detected.
+NO VIDEO! AUDIO MPA(pid=104) NO SUBS (yet)!  PROGRAM N. 0
+==================================================================
+Opening audio decoder: [mpg123] MPEG 1.0/2.0/2.5 layers I, II, III
+AUDIO: 48000 Hz, 2 ch, s16le, 192.0 kbit/12.50% (ratio: 24000->192000)
+Selected audio codec: [mpg123] afm: mpg123 (MPEG 1.0/2.0/2.5 layers I, II, III)
+==================================================================
+AO: [alsa] 48000Hz 2ch s16le (2 bytes per sample)
+Video: no video
+Starting playback...
+@endcode
+
+The dvbv5-zap tool can also be used to monitor a DVB channel:
+
+@code{.unparsed}
+$ dvbv5-zap -c dvb_channel.conf 573000000 -m
+using demux '/dev/dvb/adapter0/demux0'
+reading channels from file 'dvb_channel.conf'
+service has pid type 05:  204
+tuning to 573000000 Hz
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= -13.90dB UCB= 384 postBER= 96.8x10^-6 PER= 0
+  dvb_set_pesfilter to 0x2000
+
+PID 	FREQ 	SPEED 	TOTAL
+0000 	9.88 p/s 	14.5 Kbps 	1 KB
+0001 	1.98 p/s 	2.9 Kbps 	376 B
+0010 	18.77 p/s 	27.6 Kbps 	3 KB
+0011 	48.42 p/s 	71.1 Kbps 	8 KB
+0012 	1455.53 p/s 	2137.8 Kbps 	270 KB
+...
+1fff 	1033.60 p/s 	1518.1 Kbps 	192 KB
+TOT 	25296.44 p/s 	37154.2 Kbps 	4700 KB
+
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= -13.90dB UCB= 384 postBER= 96.8x10^-6 PER= 0
+@endcode
+
+@section dvbv5-zap-c Source Code
+@include dvbv5-zap.c
+*/
+
+/**
+@page dvb-fe-tool dvb-fe-tool
+@brief The dvbv5-fe-tool - DVBv5 tool for frontend settings inspect/change
+
+dvbv5-fe-tool is a command line tool for digital TV services that is compliant
+with version 5 of the DVB API, and backward compatable with the older v3
+DVB API.
+
+dvb-fe-tool is a tool to inspect and change the tuning parameters directly
+at the Digital TV frontend. If called without any parameter, it will show
+the device capabilities:
+
+@code{.unparsed}
+$ dvb-fe-tool
+Device DRXK DVB-C DVB-T (/dev/dvb/adapter0/frontend0) capabilities:
+     CAN_FEC_1_2
+     CAN_FEC_2_3
+     CAN_FEC_3_4
+     CAN_FEC_5_6
+     CAN_FEC_7_8
+     CAN_FEC_AUTO
+     CAN_GUARD_INTERVAL_AUTO
+     CAN_HIERARCHY_AUTO
+     CAN_INVERSION_AUTO
+     CAN_MUTE_TS
+     CAN_QAM_16
+     CAN_QAM_32
+     CAN_QAM_64
+     CAN_QAM_128
+     CAN_QAM_256
+     CAN_RECOVER
+     CAN_TRANSMISSION_MODE_AUTO
+DVB API Version 5.10, Current v5 delivery system: DVBC/ANNEX_A
+Supported delivery systems:
+    [DVBC/ANNEX_A]
+     DVBC/ANNEX_C
+     DVBT
+@endcode
+
+It can also be used to change some parameters. For example, if one wants to run a legacy DVBv3 application to work with DVB-C in Japan, it could do:
+
+@code{.unparsed}
+$ dvb-fe-tool -d dvbc/annex_c
+
+It can also be used to get the current settings:
+
+$ dvb-fe-tool -g
+...
+Got parameters for DVBC/ANNEX_A:
+FREQUENCY = 573000000
+MODULATION = QAM/256
+INVERSION = AUTO
+SYMBOL_RATE = 5217000
+INNER_FEC = NONE
+@endcode
+
+@section dvb-fe-tool-c Source Code
+@include dvb-fe-tool.c
+*/
+
+/**
+@page dvb-format-convert dvb-format-convert
+@brief The dvb-format-convert - DVBv5 tool for file format conversions
+
+dvb-format-convert is a command line tool for digital TV services that is
+compliant with version 5 of the DVB API, and backward compatable with the
+older v3 DVB API.
+
+dvb-format-convert is a tool meant to convert among different file formats.
+
+There are currently 3 different formats supported:
+- dvbv5 - the standard format at libdvbv5, capable of representing all
+  different TV standards;
+- channel - the dvb-apps legacy channel format, with supports only ATSC,
+  DVB-C, DVB-S and DVB-T standards, extended to also support s2-scan format
+  for DVB-S2 files, and to support DVB-T2.
+- zap - the dvb-apps legacy format for tuning, with supports only ATSC, DVB-C,
+  DVB-S and DVB-T standards.
+
+Unfortunately, the dvb-apps legacy zap format doesn't store the DVB standard.
+So, any conversions to and/or from this format requires an extra parameter,
+to specify the delivery system.
+
+Examples:
+
+To convert a channel file from legacy dvb-apps format:
+
+@code{.unparsed}
+$ dvb-format-convert -I channel -O dvbv5 dvbc-channel-legacy dvbc-channel
+Reading file dvbc-channel-legacy
+Writing file dvbc-channel
+@endcode
+
+To convert a dvbv5 file with services on it to legacy dvb-apps zap format:
+
+@code{.unparsed}
+$ dvb-format-convert -I dvbv5 -O zap -s dvbc/annex_a dvb_channel.conf legacy.conf
+Reading file dvb_channel.conf
+Writing file legacy.conf
+WARNING: missing video PID while parsing entry 8 of legacy.conf
+WARNING: missing audio PID while parsing entry 8 of legacy.conf
+WARNING: missing video PID while parsing entry 9 of legacy.conf
+WARNING: missing audio PID while parsing entry 9 of legacy.conf
+WARNING: missing video PID while parsing entry 10 of legacy.conf
+WARNING: missing video PID while parsing entry 11 of legacy.conf
+WARNING: missing video PID while parsing entry 12 of legacy.conf
+WARNING: missing video PID while parsing entry 13 of legacy.conf
+WARNING: missing video PID while parsing entry 14 of legacy.conf
+WARNING: missing video PID while parsing entry 15 of legacy.conf
+WARNING: missing audio PID while parsing entry 15 of legacy.conf
+WARNING: missing video PID while parsing entry 16 of legacy.conf
+WARNING: missing audio PID while parsing entry 16 of legacy.conf
+@endcode
+
+Please notice that the legacy dvb-apps format assumes that every channel will have one (and just one) audio PID and one (and just one) video PID, while the dvbv5 format supports multiple PID per service type.
+
+The above warnings happened on pure-audio channels and on data-only channels:
+
+Original dvb_channel.conf file:
+
+@code{.unparsed}
+[SBT]
+	SERVICE_ID = 4
+	VIDEO_PID = 42
+	AUDIO_PID = 257
+	PID_f1 = 768
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Globo]
+	SERVICE_ID = 5
+	VIDEO_PID = 288
+	AUDIO_PID = 289
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Record]
+	SERVICE_ID = 7
+	VIDEO_PID = 36
+	AUDIO_PID = 305
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Band]
+	SERVICE_ID = 13
+	VIDEO_PID = 272
+	AUDIO_PID = 273
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Boa Vontade TV]
+	SERVICE_ID = 18
+	VIDEO_PID = 368
+	AUDIO_PID = 369
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[TNT]
+	SERVICE_ID = 48
+	VIDEO_PID = 336
+	AUDIO_PID = 337 338 849
+	PID_86 = 816
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Boomerang]
+	SERVICE_ID = 57
+	VIDEO_PID = 352
+	AUDIO_PID = 353 354
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Cartoon]
+	SERVICE_ID = 104
+	VIDEO_PID = 320
+	AUDIO_PID = 321 322
+	PID_86 = 1840
+	PID_05 = 3295
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[NET Games]
+	SERVICE_ID = 252
+	PID_05 = 3047 3046 3045 3044 3042
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[NET Música]
+	SERVICE_ID = 300
+	PID_05 = 3314
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Pagode]
+	SERVICE_ID = 307
+	AUDIO_PID = 102
+	PID_05 = 202
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Axé]
+	SERVICE_ID = 309
+	AUDIO_PID = 101
+	PID_05 = 201
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Festa]
+	SERVICE_ID = 326
+	AUDIO_PID = 103
+	PID_05 = 203
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Trilhas Sonoras]
+	SERVICE_ID = 342
+	AUDIO_PID = 104
+	PID_05 = 204
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[Rádio Globo RJ]
+	SERVICE_ID = 347
+	AUDIO_PID = 629
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[01070138]
+	SERVICE_ID = 800
+	PID_05 = 40
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+
+
+[01070238]
+	SERVICE_ID = 801
+	PID_05 = 7441
+	FREQUENCY = 573000000
+	MODULATION = QAM/256
+	INVERSION = AUTO
+	SYMBOL_RATE = 5217000
+	INNER_FEC = NONE
+	DELIVERY_SYSTEM = DVBC/ANNEX_A
+@endcode
+
+So, for the channels with multiple PIDs, the converted legacy.conf file will
+have just the first one.
+
+For the channels without an audio or video PID, it will store PID=0.
+
+This is the output file for the above channel list.
+
+@code{.unparsed}
+SBT:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:42:257:4
+Globo:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:288:289:5
+Record:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:36:305:7
+Band:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:272:273:13
+Boa Vontade TV:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:368:369:18
+TNT:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:336:337:48
+Boomerang:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:352:353:57
+Cartoon:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:320:321:104
+NET Games:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:0:252
+NET Música:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:0:300
+Pagode:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:102:307
+Axé:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:101:309
+Festa:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:103:326
+Trilhas Sonoras:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:104:342
+Rádio Globo RJ:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:629:347
+01070138:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:0:800
+01070238:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:0:801
+@endcode
+
+@section dvb-format-convert-c Source Code
+@include dvb-format-convert.c
+
+*/
+
+/**
 @defgroup frontend Digital TV frontend control
 @defgroup frontend_scan Digital TV frontend scan
 @defgroup satellite Satellite Equipment Control
@@ -173,5 +735,4 @@ Good quality.
 @defgroup dvb_table Digital TV table parsing
 @defgroup demux Digital TV demux
 @defgroup file Channel and transponder file read/write
-
  */
