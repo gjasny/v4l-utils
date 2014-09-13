@@ -46,7 +46,7 @@ static const struct dvb_sat_lnb lnb[] = {
 		}
     }, {
         .name = "Astra 1E, European Universal Ku (extended)",
-        .alias = "EXTENDEDU",
+        .alias = "EXTENDED",
 		.lowfreq = 9750,
 		.highfreq = 10600,
 		.rangeswitch = 11700,
