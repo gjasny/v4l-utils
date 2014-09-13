@@ -49,6 +49,7 @@
 /**
  * @def ATSC_TABLE_EIT
  *	@brief ATSC EIT table ID
+ *	@ingroup dvb_table
  */
 #define ATSC_TABLE_EIT        0xCB
 
