@@ -244,6 +244,11 @@ public:
 		return cv4l_ioctl(VIDIOC_SUBSCRIBE_EVENT, &sub);
 	}
 
+	int unsubscribe_event(v4l2_event_subscription &sub)
+	{
+		return cv4l_ioctl(VIDIOC_UNSUBSCRIBE_EVENT, &sub);
+	}
+
 	int dqevent(v4l2_event &ev)
 	{
 		return cv4l_ioctl(VIDIOC_DQEVENT, &ev);
@@ -312,6 +317,11 @@ public:
 	int query_std(v4l2_std_id &std)
 	{
 		return cv4l_ioctl(VIDIOC_QUERYSTD, &std);
+	}
+
+	int dv_timings_cap(v4l2_dv_timings_cap &cap)
+	{
+		return cv4l_ioctl(VIDIOC_DV_TIMINGS_CAP, &cap);
 	}
 
 	int g_dv_timings(v4l2_dv_timings &timings)
@@ -397,6 +407,22 @@ public:
 		return cv4l_ioctl(VIDIOC_ENUMSTD, &std);
 	}
 
+	int enum_freq_bands(v4l2_frequency_band &band, unsigned tuner, bool init = false, int index = 0)
+	{
+		if (init) {
+			memset(&band, 0, sizeof(band));
+			band.index = index;
+		} else {
+			band.index++;
+		}
+		band.tuner = tuner;
+		if (has_radio_tx() || has_radio_rx())
+			band.type = V4L2_TUNER_RADIO;
+		else
+			band.type = V4L2_TUNER_ANALOG_TV;
+		return cv4l_ioctl(VIDIOC_ENUM_FREQ_BANDS, &band);
+	}
+
 	int enum_dv_timings(v4l2_enum_dv_timings &timings, bool init = false, int index = 0)
 	{
 		if (init) {
@@ -476,13 +502,77 @@ public:
 		return -1;
 	}
 
+	int g_fbuf(v4l2_framebuffer &fbuf)
+	{
+		return cv4l_ioctl(VIDIOC_G_FBUF, &fbuf);
+	}
+
+	int s_fbuf(v4l2_framebuffer &fbuf)
+	{
+		fbuf.fmt.priv = 0;
+		return cv4l_ioctl(VIDIOC_S_FBUF, &fbuf);
+	}
+
+	int overlay(bool enable)
+	{
+		int ena = enable;
+
+		return cv4l_ioctl(VIDIOC_OVERLAY, &ena);
+	}
+
+	int g_jpegcomp(v4l2_jpegcompression &jpeg)
+	{
+		return cv4l_ioctl(VIDIOC_G_JPEGCOMP, &jpeg);
+	}
+
+	int s_jpegcomp(v4l2_jpegcompression &jpeg)
+	{
+		return cv4l_ioctl(VIDIOC_S_JPEGCOMP, &jpeg);
+	}
+
+	int g_edid(v4l2_edid &edid)
+	{
+		memset(edid.reserved, 0, sizeof(edid.reserved));
+		return cv4l_ioctl(VIDIOC_G_EDID, &edid);
+	}
+
+	int s_edid(v4l2_edid &edid)
+	{
+		memset(edid.reserved, 0, sizeof(edid.reserved));
+		return cv4l_ioctl(VIDIOC_S_EDID, &edid);
+	}
+
+	int g_sliced_vbi_cap(v4l2_sliced_vbi_cap &cap)
+	{
+		memset(cap.reserved, 0, sizeof(cap.reserved));
+		return cv4l_ioctl(VIDIOC_G_SLICED_VBI_CAP, &cap);
+	}
+
+	int g_enc_index(v4l2_enc_idx &enc_idx)
+	{
+		return cv4l_ioctl(VIDIOC_G_ENC_INDEX, &enc_idx);
+	}
+
+	int s_hw_freq_seek(v4l2_hw_freq_seek &seek)
+	{
+		memset(seek.reserved, 0, sizeof(seek.reserved));
+		return cv4l_ioctl(VIDIOC_S_HW_FREQ_SEEK, &seek);
+	}
+
+	int log_status()
+	{
+		return cv4l_ioctl(VIDIOC_LOG_STATUS, NULL);
+	}
+
 	int encoder_cmd(v4l2_encoder_cmd &cmd)
 	{
+		memset(&cmd.raw, 0, sizeof(cmd.raw));
 		return cv4l_ioctl(VIDIOC_ENCODER_CMD, &cmd);
 	}
 
 	int try_encoder_cmd(v4l2_encoder_cmd &cmd)
 	{
+		memset(&cmd.raw, 0, sizeof(cmd.raw));
 		return cv4l_ioctl(VIDIOC_TRY_ENCODER_CMD, &cmd);
 	}
 
