@@ -147,8 +147,30 @@ static int print_frontend_stats(FILE *fd,
 
 		dvb_fe_snprintf_stat(parms, DTV_PER, "PER",
 				     i,  &p, &len, &show);
-
 		if (p != buf) {
+			if (isatty(fileno(fd))) {
+				enum dvb_quality qual;
+				int color;
+
+				qual = dvb_fe_retrieve_quality(parms, 0);
+				switch (qual) {
+				case DVB_QUAL_POOR:
+					color = 31;
+					break;
+				case DVB_QUAL_OK:
+					color = 36;
+					break;
+				case DVB_QUAL_GOOD:
+					color = 32;
+					break;
+				case DVB_QUAL_UNKNOWN:
+				default:
+					color = 0;
+					break;
+				}
+				fprintf(fd, "\033[%dm", color);
+			}
+
 			if (n_status_lines)
 				fprintf(fd, "\t%s\n", buf);
 			else
