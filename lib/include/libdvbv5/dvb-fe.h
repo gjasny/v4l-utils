@@ -169,18 +169,34 @@ struct dvb_v5_fe_parms *dvb_fe_dummy(void);
  *
  * @param adapter		Number of the adapter to open
  * @param frontend		Number of the frontend to open
- * @param verbose		Verbosity level of the messages that will be printed
- * @param use_legacy_call	Force to use the DVBv3 calls, instead of using the
- * 			DVBv5 API
+ * @param verbose		Verbosity level of the messages that will be
+ *				printed
+ * @param use_legacy_call	Force to use the DVBv3 calls, instead of using
+ *				the DVBv5 API
+ * @param logfunc		Callback function to be called when a log event
+ *				happens. Can either store the event into a file
+ *				or to print it at the TUI/GUI. If NULL, the
+ *				library will use its internal handler.
+ * @param flags			Flags to be passed to open. Currently only two
+ *				flags are supported: O_RDONLY or O_RDWR.
+ *				Using O_NONBLOCK may hit unexpected issues.
+ *
+ * @todo Add/check support for O_NONBLOCK at the scan routines.
  *
  * @details This function should be called before using any other function at
- * the frontend library (or the other alternatives: dvb_fe_open2() or
+ * the frontend library (or the other alternatives: dvb_fe_open() or
  * dvb_fe_dummy().
+ *
+ * In general, this is called using O_RDWR, except if all that it is wanted
+ * is to check the DVB frontend statistics.
  *
  * @return Returns a pointer to an allocated data pointer or NULL on error.
  */
-struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
-				    unsigned verbose, unsigned use_legacy_call);
+struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
+					  unsigned verbose,
+					  unsigned use_legacy_call,
+					  dvb_logfunc logfunc,
+					  int flags);
 
 /**
  * @brief Opens a frontend and allocates a structure to work with
@@ -188,12 +204,39 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
  *
  * @param adapter		Number of the adapter to open
  * @param frontend		Number of the frontend to open
- * @param verbose		Verbosity level of the messages that will be printed
- * @param use_legacy_call	Force to use the DVBv3 calls, instead of using the
- *			DVBv5 API
+ * @param verbose		Verbosity level of the messages that will be
+ * 				printed
+ * @param use_legacy_call	Force to use the DVBv3 calls, instead of using
+ *				the DVBv5 API
+ *
+ * @details This function should be called before using any other function at
+ * the frontend library (or the other alternatives: dvb_fe_open2() or
+ * dvb_fe_dummy().
+ *
+ * @return Returns a pointer to an allocated data pointer or NULL on error.
+ */
+static inline struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
+						  unsigned verbose,
+						  unsigned use_legacy_call)
+{
+	return dvb_fe_open_flags(adapter, frontend, verbose, use_legacy_call,
+				 NULL, O_RDWR);
+
+};
+
+/**
+ * @brief Opens a frontend and allocates a structure to work with
+ * @ingroup frontend
+ *
+ * @param adapter		Number of the adapter to open
+ * @param frontend		Number of the frontend to open
+ * @param verbose		Verbosity level of the messages that will be
+ *				printed
+ * @param use_legacy_call	Force to use the DVBv3 calls, instead of using
+ *				the DVBv5 API
  * @param logfunc		Callback function to be called when a log event
- *			happens. Can either store the event into a file or to
- *			print it at the TUI/GUI.
+ *				happens. Can either store the event into a file
+ *				or to print it at the TUI/GUI.
  *
  * @details This function should be called before using any other function at
  * the frontend library (or the other alternatives: dvb_fe_open() or
@@ -201,9 +244,13 @@ struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
  *
  * @return Returns a pointer to an allocated data pointer or NULL on error.
  */
-struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend,
+static inline struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend,
 				    unsigned verbose, unsigned use_legacy_call,
-				    dvb_logfunc logfunc);
+				    dvb_logfunc logfunc)
+{
+	return dvb_fe_open_flags(adapter, frontend, verbose, use_legacy_call,
+				 logfunc, O_RDWR);
+}
 
 /**
  * @brief Closes the frontend and frees allocated resources

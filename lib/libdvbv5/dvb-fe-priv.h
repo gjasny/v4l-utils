@@ -59,6 +59,7 @@ struct dvb_v5_fe_parms_priv {
 	struct dvb_v5_fe_parms		p;
 
 	int				fd;
+	int				fe_flags;	/* open() flags */
 	char				*fname;
 	int				n_props;
 	struct dtv_property		dvb_prop[DTV_MAX_COMMAND];

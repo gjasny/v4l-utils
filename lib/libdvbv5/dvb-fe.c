@@ -49,20 +49,19 @@ struct dvb_v5_fe_parms *dvb_fe_dummy()
 	return &parms->p;
 }
 
-struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend, unsigned verbose,
-				    unsigned use_legacy_call)
-{
-  return dvb_fe_open2(adapter, frontend, verbose, use_legacy_call,
-		      dvb_default_log);
-}
-
-struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose,
-				    unsigned use_legacy_call, dvb_logfunc logfunc)
+struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
+					  unsigned verbose,
+					  unsigned use_legacy_call,
+					  dvb_logfunc logfunc,
+					  int flags)
 {
 	int fd, i, r;
 	char *fname;
 	struct dtv_properties dtv_prop;
 	struct dvb_v5_fe_parms_priv *parms = NULL;
+
+	if (logfunc == NULL)
+		logfunc = dvb_default_log;
 
 	r = asprintf(&fname, "/dev/dvb/adapter%i/frontend%i", adapter, frontend);
 	if (r < 0) {
@@ -74,7 +73,7 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 		return NULL;
 	}
 
-	fd = open(fname, O_RDWR, 0);
+	fd = open(fname, flags, 0);
 	if (fd == -1) {
 		logfunc(LOG_ERR, "%s while opening %s", strerror(errno), fname);
 		free(fname);
@@ -88,8 +87,9 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 		return NULL;
 	}
 	parms->fname = fname;
-	parms->p.verbose = verbose;
 	parms->fd = fd;
+	parms->fe_flags = flags;
+	parms->p.verbose = verbose;
 	parms->p.default_charset = "iso-8859-1";
 	parms->p.output_charset = "utf-8";
 	parms->p.logfunc = logfunc;
@@ -231,7 +231,10 @@ struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend, unsigned verbose
 		parms->p.current_sys = parms->p.systems[0];
 
 	/* Prepare to use the delivery system */
-	dvb_set_sys(&parms->p, parms->p.current_sys);
+	parms->n_props = dvb_add_parms_for_sys(&parms->p, parms->p.current_sys);
+
+	if ((flags & O_ACCMODE) == O_RDWR)
+		dvb_set_sys(&parms->p, parms->p.current_sys);
 
 	/*
 	 * Prepare the status struct - DVBv5.10 parameters should
