@@ -410,22 +410,60 @@ Supported delivery systems:
      DVBT
 @endcode
 
-It can also be used to change some parameters. For example, if one wants to run a legacy DVBv3 application to work with DVB-C in Japan, it could do:
+It can also be used to change some parameters. For example, if one wants to
+run a legacy DVBv3 application to work with DVB-C in Japan, it could do:
 
 @code{.unparsed}
 $ dvb-fe-tool -d dvbc/annex_c
+Changing delivery system to: DVBC/ANNEX_C
+@endcode
 
 It can also be used to get the current settings:
 
+@code{.unparsed}
 $ dvb-fe-tool -g
-...
-Got parameters for DVBC/ANNEX_A:
 FREQUENCY = 573000000
 MODULATION = QAM/256
 INVERSION = AUTO
 SYMBOL_RATE = 5217000
 INNER_FEC = NONE
+DELIVERY_SYSTEM = DVBC/ANNEX_A
 @endcode
+
+The dvb-fe-tool can also be used to monitor a DVB frontend statistics without
+touching on the device, using the --femon (or -m) parameter. The typical usage
+is to be able to read the statistics while some other DVB program or
+application is in use.
+
+
+On this mode, it will keep printing the frontend statistics on every second,
+until the program is aborted with CTRL-C:
+
+For example, while dvbv5-zap is tuning some channel, it will produce:
+
+@code{.unparsed}
+$ dvb-fe-tool --femon
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.40dB UCB= 370 postBER= 28.0x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.80dB UCB= 370 postBER= 25.3x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.30dB UCB= 370 postBER= 25.7x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.30dB UCB= 370 postBER= 28.4x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.50dB UCB= 370 postBER= 26.5x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.50dB UCB= 370 postBER= 26.9x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.20dB UCB= 370 postBER= 28.6x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.70dB UCB= 370 postBER= 26.7x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.80dB UCB= 370 postBER= 23.3x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.50dB UCB= 370 postBER= 26.7x10^-6 PER= 0
+@endcode
+
+If the standard error device is the console, the messages will be colored
+according with the signal quality.
+
+On this mode, it also supports to output an audible signal if the quality is
+good, using the "-A" parameter.
+
+Please notice that, on modern Linux systems, the system audio should be
+enabled at your window manager and the audio theme should be set to produce
+an audio when BELL (\a character) is sent to the terminal.
 
 @section dvb-fe-tool-c Source Code
 @include dvb-fe-tool.c
