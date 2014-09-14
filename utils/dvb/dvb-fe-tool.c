@@ -98,6 +98,7 @@ static struct argp argp = {
 int main(int argc, char *argv[])
 {
 	struct dvb_v5_fe_parms *parms;
+	int fe_flags = O_RDWR;
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
@@ -108,7 +109,11 @@ int main(int argc, char *argv[])
 	if (!get && !delsys && !set_params)
 		verbose++;
 
-	parms = dvb_fe_open(adapter, frontend, verbose, dvbv3);
+	if (!delsys && !set_params)
+		fe_flags = O_RDONLY;
+
+	parms = dvb_fe_open_flags(adapter, frontend, verbose, dvbv3,
+				  NULL, fe_flags);
 	if (!parms)
 		return -1;
 
