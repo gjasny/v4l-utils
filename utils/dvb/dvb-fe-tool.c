@@ -41,6 +41,7 @@ static const struct argp_option options[] = {
 	{"frontend",	'f',	"FRONTEND",	0,	"dvb frontend", 0},
 	{"set-delsys",	'd',	"PARAMS",	0,	"set delivery system", 0},
 	{"femon",	'm',	0,		0,	"monitors frontend stats on an streaming frontend", 0},
+	{"acoustical",	'A',	0,		0,	"bips if signal quality is good. Also enables femon mode. Please notice that console bip should be enabled on your wm.", 0},
 #if 0 /* Currently not implemented */
 	{"set",		's',	"PARAMS",	0,	"set frontend", 0},
 #endif
@@ -57,6 +58,7 @@ static int verbose = 0;
 static int dvbv3 = 0;
 static int delsys = 0;
 static int femon = 0;
+static int acoustical = 0;
 
 #define PERROR(x...)                                                    \
 	do {                                                            \
@@ -81,6 +83,10 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		break;
 	case 'm':
 		femon++;
+		break;
+	case 'A':
+		femon++;
+		acoustical++;
 		break;
 #if 0
 	case 's':
@@ -153,6 +159,7 @@ static int print_frontend_stats(FILE *fd,
 				int color;
 
 				qual = dvb_fe_retrieve_quality(parms, 0);
+
 				switch (qual) {
 				case DVB_QUAL_POOR:
 					color = 31;
@@ -169,6 +176,22 @@ static int print_frontend_stats(FILE *fd,
 					break;
 				}
 				fprintf(fd, "\033[%dm", color);
+				/*
+				 * It would be great to change the BELL
+				 * tone depending on the quality. The legacy
+				 * femon used to to that, but this doesn't
+				 * work anymore with modern Linux distros.
+				 *
+				 * So, just print a bell if quality is good.
+				 *
+				 * The console audio should be enabled
+				 * at the window manater for this to
+				 * work.
+				 */
+				if (acoustical) {
+					if (qual == DVB_QUAL_GOOD)
+						fprintf(fd, "\a");
+				}
 			}
 
 			if (n_status_lines)
