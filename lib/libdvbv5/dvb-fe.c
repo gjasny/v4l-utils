@@ -1446,10 +1446,11 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
 				break;
 			}
 		}
-		if (i < 0)
+		if (i < 0) {
 			size = snprintf(*buf, *len, "%7s", "");
-		*buf += size;
-		len -= size;
+			*buf += size;
+			len -= size;
+		}
 
 		/* Add the status bits */
 		size = snprintf(*buf, *len, "(0x%02x)", status);
