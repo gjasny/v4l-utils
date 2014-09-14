@@ -181,7 +181,6 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 			dvb_logerr("delivery system not detected");
 			dvb_v5_free(parms);
 			close(fd);
-			free(fname);
 			return NULL;
 		}
 	} else {
@@ -193,7 +192,6 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 			dvb_perror("FE_GET_PROPERTY");
 			dvb_v5_free(parms);
 			close(fd);
-			free(fname);
 			return NULL;
 		}
 		parms->p.num_systems = parms->dvb_prop[0].u.buffer.len;
@@ -201,10 +199,9 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 			parms->p.systems[i] = parms->dvb_prop[0].u.buffer.data[i];
 
 		if (parms->p.num_systems == 0) {
-			dvb_logerr("driver died while trying to set the delivery system");
+			dvb_logerr("driver returned 0 supported delivery systems!");
 			dvb_v5_free(parms);
 			close(fd);
-			free(fname);
 			return NULL;
 		}
 	}
