@@ -1098,9 +1098,10 @@ static enum dvb_quality dvbv_fe_cnr_to_quality(struct dvb_v5_fe_parms_priv *parm
 	return qual;
 };
 
-static enum dvb_quality dvb_fe_retrieve_quality(struct dvb_v5_fe_parms_priv *parms,
-						unsigned layer)
+enum dvb_quality dvb_fe_retrieve_quality(struct dvb_v5_fe_parms *p,
+					 unsigned layer)
 {
+	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	float ber, per;
 	struct dtv_stats *cnr;
 	enum dvb_quality qual = DVB_QUAL_UNKNOWN;
@@ -1482,7 +1483,7 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
 		scale = FE_SCALE_COUNTER;
 		break;
 	case DTV_QUALITY:
-		qual = dvb_fe_retrieve_quality(parms, layer);
+		qual = dvb_fe_retrieve_quality(&parms->p, layer);
 		if (qual == DVB_QUAL_UNKNOWN)
 			return 0;
 		break;

@@ -531,6 +531,33 @@ float dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *parms, unsigned layer,
  */
 float dvb_fe_retrieve_per(struct dvb_v5_fe_parms *parms, unsigned layer);
 
+
+/**
+ * @brief Retrieve the quality stats from cache
+ * @ingroup frontend
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param layer	DTV layer
+ *
+ * Gets a quality measure for a given layer. Layer 0 is
+ * always present. On DTV standards that doesn't have layers, it returns
+ * the same value as dvb_fe_retrieve_stats() for layer = 0.
+ *
+ * For DTV standards with multiple layers, like ISDB, layer=1 is layer 'A',
+ * layer=2 is layer 'B' and layer=3 is layer 'C'. Please notice that not all
+ * frontends support per-layer stats. Also, the layer value is only valid if
+ * the layer exists at the original stream.
+ * Also, on such standards, layer 0 is typically a mean value of the layers,
+ * or a sum of events (if FE_SCALE_COUNTER).
+ *
+ * For it to be valid, dvb_fe_get_stats() should be called first.
+ *
+ * @return returns an enum dvb_quantity, where DVB_QUAL_UNKNOWN means that
+ * the stat isnot available.
+ */
+enum dvb_quality dvb_fe_retrieve_quality(struct dvb_v5_fe_parms *parms,
+					 unsigned layer);
+
 /**
  * @brief Ancillary function to sprintf on ENG format
  * @ingroup frontend
