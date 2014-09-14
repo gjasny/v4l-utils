@@ -1443,19 +1443,21 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
 		for (i = ARRAY_SIZE(sig_bits) - 1; i >= 0 ; i--) {
 			if ((1 << i) & status) {
 				size = snprintf(*buf, *len, "%-7s", sig_bits[i]);
+				*buf += size;
+				*len -= size;
 				break;
 			}
 		}
 		if (i < 0) {
 			size = snprintf(*buf, *len, "%7s", "");
 			*buf += size;
-			len -= size;
+			*len -= size;
 		}
 
 		/* Add the status bits */
 		size = snprintf(*buf, *len, "(0x%02x)", status);
 		*buf += size;
-		len -= size;
+		*len -= size;
 
 		return initial_len - *len;
 	}
