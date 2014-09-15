@@ -51,6 +51,8 @@ typedef std::map<std::string, std::string> dev_map;
 
 static enum v4l2_priority prio = V4L2_PRIORITY_UNSET;
 
+static bool have_query_ext_ctrl;
+
 void common_usage(void)
 {
 	printf("\nGeneral/Common options:\n"
@@ -451,9 +453,11 @@ static int query_ext_ctrl_ioctl(int fd, struct v4l2_query_ext_ctrl &qctrl)
 	struct v4l2_queryctrl qc;
 	int rc;
 
-	rc = test_ioctl(fd, VIDIOC_QUERY_EXT_CTRL, &qctrl);
-	if (errno != ENOTTY)
-		return rc;
+	if (have_query_ext_ctrl) {
+		rc = test_ioctl(fd, VIDIOC_QUERY_EXT_CTRL, &qctrl);
+		if (errno != ENOTTY)
+			return rc;
+	}
 	qc.id = qctrl.id;
 	rc = test_ioctl(fd, VIDIOC_QUERYCTRL, &qc);
 	if (rc == 0) {
@@ -553,6 +557,14 @@ int common_find_ctrl_id(const char *name)
 
 void common_process_controls(int fd)
 {
+	struct v4l2_query_ext_ctrl qc = {
+		V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND
+	};
+	int rc;
+
+	rc = test_ioctl(fd, VIDIOC_QUERY_EXT_CTRL, &qc);
+	have_query_ext_ctrl = rc == 0;
+
 	find_controls(fd);
 	for (ctrl_get_list::iterator iter = get_ctrls.begin(); iter != get_ctrls.end(); ++iter) {
 	    if (ctrl_str2q.find(*iter) == ctrl_str2q.end()) {
