@@ -390,7 +390,7 @@ static inline __u32 v4l_determine_type(const struct v4l_fd *f)
 
 static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_blocking)
 {
-	struct v4l2_query_ext_ctrl qec = { V4L2_CTRL_FLAG_NEXT_CTRL };
+	struct v4l2_query_ext_ctrl qec = { V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND };
 	struct v4l2_ext_controls ec = { 0, 0 };
 	struct v4l2_queryctrl qc = { V4L2_CTRL_FLAG_NEXT_CTRL };
 	struct v4l2_selection sel = { 0 };
@@ -410,9 +410,9 @@ static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_block
 	f->caps = v4l_capability_g_caps(&f->cap);
 	f->type = v4l_determine_type(f);
 
-	f->have_query_ext_ctrl = v4l_ioctl(f, VIDIOC_QUERY_EXT_CTRL, &qec) != ENOTTY;
-	f->have_ext_ctrls = v4l_ioctl(f, VIDIOC_TRY_EXT_CTRLS, &ec) != ENOTTY;
-	f->have_next_ctrl = v4l_ioctl(f, VIDIOC_QUERYCTRL, &qc) != ENOTTY;
+	f->have_query_ext_ctrl = v4l_ioctl(f, VIDIOC_QUERY_EXT_CTRL, &qec) == 0;
+	f->have_ext_ctrls = v4l_ioctl(f, VIDIOC_TRY_EXT_CTRLS, &ec) == 0;
+	f->have_next_ctrl = v4l_ioctl(f, VIDIOC_QUERYCTRL, &qc) == 0;
 	sel.type = v4l_g_selection_type(f);
 	sel.target = sel.type == V4L2_BUF_TYPE_VIDEO_CAPTURE ?
 			V4L2_SEL_TGT_CROP : V4L2_SEL_TGT_COMPOSE;
