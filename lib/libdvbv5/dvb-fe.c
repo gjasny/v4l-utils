@@ -49,6 +49,23 @@ struct dvb_v5_fe_parms *dvb_fe_dummy()
 	return &parms->p;
 }
 
+struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
+						  unsigned verbose,
+						  unsigned use_legacy_call)
+{
+	return dvb_fe_open_flags(adapter, frontend, verbose, use_legacy_call,
+				 NULL, O_RDWR);
+
+}
+
+struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend,
+				    unsigned verbose, unsigned use_legacy_call,
+				    dvb_logfunc logfunc)
+{
+	return dvb_fe_open_flags(adapter, frontend, verbose, use_legacy_call,
+				 logfunc, O_RDWR);
+}
+
 struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 					  unsigned verbose,
 					  unsigned use_legacy_call,

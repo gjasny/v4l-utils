@@ -215,14 +215,9 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
  *
  * @return Returns a pointer to an allocated data pointer or NULL on error.
  */
-static inline struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
+struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
 						  unsigned verbose,
-						  unsigned use_legacy_call)
-{
-	return dvb_fe_open_flags(adapter, frontend, verbose, use_legacy_call,
-				 NULL, O_RDWR);
-
-};
+						  unsigned use_legacy_call);
 
 /**
  * @brief Opens a frontend and allocates a structure to work with
@@ -244,13 +239,9 @@ static inline struct dvb_v5_fe_parms *dvb_fe_open(int adapter, int frontend,
  *
  * @return Returns a pointer to an allocated data pointer or NULL on error.
  */
-static inline struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend,
+struct dvb_v5_fe_parms *dvb_fe_open2(int adapter, int frontend,
 				    unsigned verbose, unsigned use_legacy_call,
-				    dvb_logfunc logfunc)
-{
-	return dvb_fe_open_flags(adapter, frontend, verbose, use_legacy_call,
-				 logfunc, O_RDWR);
-}
+				    dvb_logfunc logfunc);
 
 /**
  * @brief Closes the frontend and frees allocated resources
