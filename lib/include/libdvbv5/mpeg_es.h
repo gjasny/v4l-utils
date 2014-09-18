@@ -170,6 +170,9 @@ enum dvb_mpeg_es_frame_t
 	DVB_MPEG_ES_FRAME_D
 };
 
+/**
+ * @brief Vector that translates from enum dvb_mpeg_es_frame_t to string.
+ */
 extern const char *dvb_mpeg_es_frame_names[5];
 
 struct dvb_v5_fe_parms;
@@ -182,7 +185,7 @@ extern "C" {
  * @brief Initialize a struct dvb_mpeg_es_seq_start from buffer
  *
  * @param buf		Buffer
- * @param buflen	Lenght of buffer
+ * @param buflen	Length of buffer
  * @param seq_start	Pointer to allocated struct dvb_mpeg_es_seq_start
  *
  * @return		If buflen too small, return -1, 0 otherwise.
@@ -209,7 +212,7 @@ void dvb_mpeg_es_seq_start_print(struct dvb_v5_fe_parms *parms,
  * @brief Initialize a struct dvb_mpeg_es_pic_start from buffer
  *
  * @param buf		Buffer
- * @param buflen	Lenght of buffer
+ * @param buflen	Length of buffer
  * @param pic_start	Pointer to allocated structdvb_mpeg_es_pic_start
  *
  * @return		If buflen too small, return -1, 0 otherwise.
