@@ -54,6 +54,7 @@
 /**
  * @struct dvb_mpeg_ts_adaption
  * @brief MPEG TS header adaption field
+ * @ingroup dvb_table
  *
  * @param type			DVB_MPEG_ES_SEQ_START
  * @param length		1 bit	Adaptation Field Length
@@ -85,6 +86,7 @@ struct dvb_mpeg_ts_adaption {
 /**
  * @struct dvb_mpeg_ts
  * @brief MPEG TS header
+ * @ingroup dvb_table
  *
  * @param sync_byte		DVB_MPEG_TS
  * @param tei			1 bit	Transport Error Indicator
@@ -125,6 +127,7 @@ extern "C" {
 
 /**
  * @brief Initialize a struct dvb_mpeg_ts from buffer
+ * @ingroup dvb_table
  *
  * @param parms		struct dvb_v5_fe_parms for log functions
  * @param buf		Buffer
@@ -135,25 +138,26 @@ extern "C" {
  * @return		Length of data in table
  *
  * This function copies the length of struct dvb_mpeg_ts
- * to table and fixes endianness. table has to be allocated
- * with malloc.
+ * to table and fixes endianness. The pointer table has to be allocated
+ * on stack or dynamically.
  */
 ssize_t dvb_mpeg_ts_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen,
 		uint8_t *table, ssize_t *table_length);
 
 /**
  * @brief Deallocate memory associated with a struct dvb_mpeg_ts
- * @ingroup file
+ * @ingroup dvb_table
  *
  * @param ts	struct dvb_mpeg_ts to be deallocated
  *
- * This function assumes frees dynamically allocated memory by the
- * dvb_mpeg_ts_init function.
+ * If ts was allocated dynamically, this function
+ * can be used to free the memory.
  */
 void dvb_mpeg_ts_free(struct dvb_mpeg_ts *ts);
 
 /**
  * @brief Print details of struct dvb_mpeg_ts
+ * @ingroup dvb_table
  *
  * @param parms		struct dvb_v5_fe_parms for log functions
  * @param ts    	Pointer to struct dvb_mpeg_ts to print

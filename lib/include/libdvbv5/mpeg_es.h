@@ -70,7 +70,8 @@
 
 /**
  * @struct dvb_mpeg_es_seq_start
- * @brief Sequence header
+ * @brief MPEG ES Sequence header
+ * @ingroup dvb_table
  *
  * @param type		DVB_MPEG_ES_SEQ_START
  * @param sync		Sync bytes
@@ -117,7 +118,8 @@ struct dvb_mpeg_es_seq_start {
 
 /**
  * @struct dvb_mpeg_es_pic_start
- * @brief Picture start header
+ * @brief MPEG ES Picture start header
+ * @ingroup dvb_table
  *
  * @param type		DVB_MPEG_ES_PIC_START
  * @param sync		Sync bytes
@@ -172,6 +174,7 @@ enum dvb_mpeg_es_frame_t
 
 /**
  * @brief Vector that translates from enum dvb_mpeg_es_frame_t to string.
+ * @ingroup dvb_table
  */
 extern const char *dvb_mpeg_es_frame_names[5];
 
@@ -183,6 +186,7 @@ extern "C" {
 
 /**
  * @brief Initialize a struct dvb_mpeg_es_seq_start from buffer
+ * @ingroup dvb_table
  *
  * @param buf		Buffer
  * @param buflen	Length of buffer
@@ -199,6 +203,7 @@ int  dvb_mpeg_es_seq_start_init (const uint8_t *buf, ssize_t buflen,
 
 /**
  * @brief Print details of struct dvb_mpeg_es_seq_start
+ * @ingroup dvb_table
  *
  * @param parms		struct dvb_v5_fe_parms for log functions
  * @param seq_start	Pointer to struct dvb_mpeg_es_seq_start to print
@@ -210,6 +215,7 @@ void dvb_mpeg_es_seq_start_print(struct dvb_v5_fe_parms *parms,
 
 /**
  * @brief Initialize a struct dvb_mpeg_es_pic_start from buffer
+ * @ingroup dvb_table
  *
  * @param buf		Buffer
  * @param buflen	Length of buffer
@@ -226,6 +232,7 @@ int  dvb_mpeg_es_pic_start_init (const uint8_t *buf, ssize_t buflen,
 
 /**
  * @brief Print details of struct dvb_mpeg_es_pic_start
+ * @ingroup dvb_table
  *
  * @param parms		struct dvb_v5_fe_parms for log functions
  * @param pic_start	Pointer to struct dvb_mpeg_es_pic_start to print
