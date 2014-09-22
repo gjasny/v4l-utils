@@ -55,6 +55,7 @@
  * @param text			text string
  * @param text_emph		text emphasis string
  *
+ * @details
  * The emphasis text is the one that uses asterisks. For example, in the text:
  *	"the quick *fox* jumps over the lazy table" the emphasis would be "fox".
  */

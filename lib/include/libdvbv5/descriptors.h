@@ -335,7 +335,6 @@ extern const struct dvb_descriptor dvb_descriptors[];
  * @var flexmux_timing_descriptor
  *	@brief	flexmux_timing descriptor - ISO/IEC 13818-1
  * @var network_name_descriptor
- *
  *	@brief	network_name descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
  * @var service_list_descriptor
  *	@brief	service_list descriptor - ETSI EN 300 468 V1.11.1 (2010-04)
