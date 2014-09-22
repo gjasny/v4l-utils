@@ -19,11 +19,42 @@
  *
  */
 
+/**
+ * @file desc_hierarchy.h
+ * @ingroup descriptors
+ * @brief Provides the descriptors for the hierarchy descriptor
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ * @author Andre Roth
+ *
+ * @par Relevant specs
+ * The descriptor described herein is defined at:
+ * - ISO/IEC 13818-1
+ *
+ * @see
+ *
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
+ */
+
 #ifndef _HIERARCHY_H
 #define _HIERARCHY_H
 
 #include <libdvbv5/descriptors.h>
 
+/**
+ * @struct dvb_desc_hierarchy
+ * @ingroup descriptors
+ * @brief Structure containing the hierarchy descriptor
+ *
+ * @param type			descriptor tag
+ * @param length		descriptor length
+ * @param next			pointer to struct dvb_desc
+ * @param hierarchy_type	hierarchy type
+ * @param layer			hierarchy layer index
+ * @param embedded_layer	hierarchy embedded layer  index
+ * @param channel		hierarchy channel
+ */
 struct dvb_desc_hierarchy {
 	uint8_t type;
 	uint8_t length;
@@ -48,8 +79,34 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
-int dvb_desc_hierarchy_init (struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc);
-void dvb_desc_hierarchy_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc);
+/**
+ * @brief Initializes and parses the hierarchy descriptor
+ * @ingroup descriptors
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param buf	buffer containing the descriptor's raw data
+ * @param desc	pointer to struct dvb_desc to be allocated and filled
+ *
+ * This function initializes and makes sure that all fields will follow the CPU
+ * endianness. Due to that, the content of the buffer may change.
+ *
+ * Currently, no memory is allocated internally.
+ *
+ * @return On success, it returns the size of the allocated struct.
+ *	   A negative value indicates an error.
+ */
+int dvb_desc_hierarchy_init (struct dvb_v5_fe_parms *parms,
+			     const uint8_t *buf, struct dvb_desc *desc);
+
+/**
+ * @brief Prints the content of the hierarchy descriptor
+ * @ingroup descriptors
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param desc	pointer to struct dvb_desc
+ */
+void dvb_desc_hierarchy_print(struct dvb_v5_fe_parms *parms,
+			      const struct dvb_desc *desc);
 
 #ifdef __cplusplus
 }
