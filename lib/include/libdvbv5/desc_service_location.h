@@ -18,11 +18,38 @@
  *
  */
 
+/**
+ * @file desc_service_location.h
+ * @ingroup descriptors
+ * @brief Provides the descriptors for the DVB service location
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Andre Roth
+ *
+ * @par Relevant specs
+ * The descriptor described herein is defined at:
+ *
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
+ *
+ * @todo DOES THIS DESCRIPTOR EXISTS? IF SO, WHERE?
+ *
+ * FIXME: this seems to be a duplicated copy of the ATSC service location.
+ */
+
 #ifndef _SERVICE_LOCATION_H
 #define _SERVICE_LOCATION_H
 
 #include <libdvbv5/descriptors.h>
 
+/**
+ * @struct dvb_desc_service_location_element
+ * @ingroup descriptors
+ * @brief
+ *
+ * @param stream_type	stream type
+ * @param elementary_pid	elementary pid
+ * @param language	language
+ */
 struct dvb_desc_service_location_element {
 	uint8_t stream_type;
 	union {
@@ -35,6 +62,18 @@ struct dvb_desc_service_location_element {
 	uint8_t language[4];
 } __attribute__((packed));
 
+/**
+ * @struct dvb_desc_service_location
+ * @ingroup descriptors
+ * @brief
+ *
+ * @param type	type
+ * @param length	length
+ * @param next	pointer to struct dvb_desc
+ * @param pcr_pid	pcr pid
+ * @param elements	elements
+ * @param element	pointer to struct dvb_desc_service_location_element
+ */
 struct dvb_desc_service_location {
 	uint8_t type;
 	uint8_t length;
