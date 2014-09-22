@@ -771,6 +771,7 @@ Rádio Globo RJ:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:629:347
 @defgroup satellite Satellite Equipment Control
 @defgroup ancillary Ancillary functions and macros
 @defgroup dvb_table Digital TV table parsing
+@defgroup descriptors Parsers for several MPEG-TS descriptors
 @defgroup demux Digital TV demux
 @defgroup file Channel and transponder file read/write
  */
