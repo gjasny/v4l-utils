@@ -44,7 +44,7 @@
 /**
  * @struct dvb_desc_cable_delivery
  * @ingroup descriptors
- * @brief structure containing the cable delivery system descriptor
+ * @brief Structure containing the cable delivery system descriptor
  *
  * @param type			descriptor tag
  * @param length		descriptor length
