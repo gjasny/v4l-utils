@@ -24,14 +24,11 @@
  * @ingroup descriptors
  * @brief Provides the descriptors for the Conditional Access identifier
  * @copyright GNU General Public License version 2 (GPLv2)
- * @author Mauro Carvalho Chehab
  * @author Andre Roth
  *
  * @par Relevant specs
  * The descriptor described herein is defined at:
  * - ETSI EN 300 468 V1.11.1 (2010-04)
- *
- * @see
  *
  * @par Bug Report
  * Please submit bug reports and patches to linux-media@vger.kernel.org
