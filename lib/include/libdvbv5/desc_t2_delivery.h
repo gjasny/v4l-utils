@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 - Mauro Carvalho Chehab <m.chehab@samsung.com>
+ * Copyright (c) 2013-2014 - Mauro Carvalho Chehab <m.chehab@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,16 +19,61 @@
  * Based on ETSI EN 300 468 V1.11.1 (2010-04)
  */
 
+/**
+ * @file desc_t2_delivery.h
+ * @ingroup descriptors
+ * @brief Provides the descriptors for the DVB-T2 delivery system descriptor
+ * @copyright GNU General Public License version 2 (GPLv2)
+ * @author Mauro Carvalho Chehab
+ *
+ * @par Relevant specs
+ * The descriptor described herein is defined at:
+ * - ETSI EN 300 468 V1.11.1
+ *
+ * @par Bug Report
+ * Please submit bug reports and patches to linux-media@vger.kernel.org
+ */
+
 #ifndef _T2_DELIVERY_H
 #define _T2_DELIVERY_H
 
 #include <libdvbv5/descriptors.h>
 
+/**
+ * @struct dvb_desc_t2_delivery_subcell
+ * @ingroup descriptors
+ * @brief Structure to describe transponder subcell extension and frequencies
+ *
+ * @param cell_id_extension	cell id extension
+ * @param transposer_frequency	transposer frequency
+ */
 struct dvb_desc_t2_delivery_subcell {
 	uint8_t cell_id_extension;
 	uint16_t transposer_frequency;
 } __attribute__((packed));
 
+/**
+ * @struct dvb_desc_t2_delivery
+ * @ingroup descriptors
+ * @brief Structure containing the T2 delivery system descriptor
+ *
+ * @param plp_id		data PLP id
+ * @param system_id		T2 system id
+ * @param SISO_MISO		SISO MISO
+ * @param bandwidth		bandwidth
+ * @param guard_interval	guard interval
+ * @param transmission_mode	transmission mode
+ * @param other_frequency_flag	other frequency flag
+ * @param tfs_flag		tfs flag
+ *
+ * @param centre_frequency	centre frequency vector
+ * @param frequency_loop_length	size of the dvb_desc_t2_delivery::centre_frequency
+ *				vector
+ *
+ * @param subcel_info_loop_length size of the dvb_desc_t2_delivery::subcell
+ *				  vector
+ * @param subcell		pointer to struct dvb_desc_t2_delivery_subcell
+ */
 struct dvb_desc_t2_delivery {
 	/* extended descriptor */
 
@@ -59,17 +104,62 @@ struct dvb_v5_fe_parms;
 extern "C" {
 #endif
 
+/**
+ * @brief Initializes and parses the T2 delivery system descriptor
+ * @ingroup descriptors
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param buf	buffer containing the descriptor's raw data
+ * @param ext	struct dvb_extension_descriptor pointer
+ * @param desc	pointer to struct dvb_desc to be allocated and filled
+ *
+ * This function allocates a the descriptor and fills the fields inside
+ * the struct. It also makes sure that all fields will follow the CPU
+ * endianness. Due to that, the content of the buffer may change.
+ *
+ * @return On success, it returns the size of the allocated struct.
+ *	   A negative value indicates an error.
+ */
 int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 			       const uint8_t *buf,
 			       struct dvb_extension_descriptor *ext,
 			       void *desc);
+
+/**
+ * @brief Prints the content of the T2 delivery system descriptor
+ * @ingroup descriptors
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer to the opened device
+ * @param ext	struct dvb_extension_descriptor pointer
+ * @param desc	pointer to struct dvb_desc
+ */
 void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 				const struct dvb_extension_descriptor *ext,
 				const void *desc);
+
+/**
+ * @brief Frees all data allocated by the T2 delivery system descriptor
+ * @ingroup descriptors
+ *
+ * @param desc pointer to struct dvb_desc to be freed
+ */
 void dvb_desc_t2_delivery_free(const void *desc);
 
+/**
+ * @brief converts from internal representation into bandwidth in Hz
+ */
 extern const unsigned dvbt2_bw[];
+
+/**
+ * @brief converts from internal representation into enum fe_guard_interval,
+ * as defined at DVBv5 API.
+ */
 extern const uint32_t dvbt2_interval[];
+
+/**
+ * @brief converts from the descriptor's transmission mode into
+ *	  enum fe_transmit_mode, as defined by DVBv5 API.
+ */
 extern const unsigned dvbt2_transmission_mode[];
 
 #ifdef __cplusplus
