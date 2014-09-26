@@ -1241,6 +1241,7 @@ void ApplicationWindow::capStart(bool start)
 			error("no services possible\n");
 			return;
 		}
+		m_capDestFormat.s_pixelformat(V4L2_PIX_FMT_RGB24);
 		m_vbiTab->rawFormat(fmt.fmt.vbi);
 		m_vbiWidth = fmt.fmt.vbi.samples_per_line;
 		m_vbiHeight = fmt.fmt.vbi.count[0] + fmt.fmt.vbi.count[1];
@@ -1274,6 +1275,7 @@ void ApplicationWindow::capStart(bool start)
 			return;
 		}
 		m_sdrSize = fmt.fmt.sdr.buffersize;
+		m_capDestFormat.s_pixelformat(V4L2_PIX_FMT_RGB24);
 		m_frameData = new unsigned char[m_sdrSize];
 		m_capImage = new QImage(SDR_WIDTH, SDR_HEIGHT, dstFmt);
 		m_capImage->fill(0);
