@@ -221,13 +221,13 @@ int testTuner(struct node *node)
 
 int testTunerFreq(struct node *node)
 {
-	struct v4l2_frequency freq;
+	struct v4l2_frequency freq = { 0 };
 	enum v4l2_tuner_type last_type = V4L2_TUNER_ANALOG_TV;
 	unsigned t;
 	int ret;
 
 	for (t = 0; t < node->tuners; t++) {
-		struct v4l2_tuner tuner;
+		struct v4l2_tuner tuner = { 0 };
 		
 		tuner.index = t;
 		ret = doioctl(node, VIDIOC_G_TUNER, &tuner);
@@ -316,7 +316,7 @@ int testTunerHwSeek(struct node *node)
 	int ret;
 
 	for (t = 0; t < node->tuners; t++) {
-		struct v4l2_tuner tuner;
+		struct v4l2_tuner tuner = { 0 };
 		
 		tuner.index = t;
 		ret = doioctl(node, VIDIOC_G_TUNER, &tuner);
@@ -497,7 +497,7 @@ int testEnumInputAudio(struct node *node)
 
 static int checkInputAudioSet(struct node *node, __u32 audioset)
 {
-	struct v4l2_audio input;
+	struct v4l2_audio input = { 0 };
 	unsigned i;
 	int ret;
 
@@ -531,7 +531,7 @@ static int checkInputAudioSet(struct node *node, __u32 audioset)
 
 int testInputAudio(struct node *node)
 {
-	struct v4l2_input vinput;
+	struct v4l2_input vinput = { 0 };
 	unsigned i = 0;
 	int ret;
 
@@ -645,7 +645,7 @@ int testModulator(struct node *node)
 
 int testModulatorFreq(struct node *node)
 {
-	struct v4l2_frequency freq;
+	struct v4l2_frequency freq = { 0 };
 	unsigned m;
 	int ret;
 

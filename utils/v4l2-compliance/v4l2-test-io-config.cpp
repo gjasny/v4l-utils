@@ -34,7 +34,7 @@
 static int checkStd(struct node *node, bool has_std, v4l2_std_id mask, bool is_input)
 {
 	v4l2_std_id std_mask = 0;
-	v4l2_std_id std;
+	v4l2_std_id std = 0;
 	struct v4l2_standard enumstd;
 	unsigned i;
 	int ret;
@@ -154,7 +154,7 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 {
 	struct v4l2_enum_dv_timings enumtimings;
 	struct v4l2_dv_timings timings;
-	struct v4l2_format fmt;
+	struct v4l2_format fmt = { 0 };
 	bool is_mplane = node->g_caps() & (V4L2_CAP_VIDEO_CAPTURE_MPLANE |
 				       V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 				       V4L2_CAP_VIDEO_M2M_MPLANE);
@@ -324,7 +324,7 @@ int testTimingsCap(struct node *node)
 static int checkEdid(struct node *node, unsigned pad, bool is_input)
 {
 	struct v4l2_edid edid;
-	__u8 data[256 * 128];
+	__u8 data[256 * 128] = { 0 };
 	unsigned blocks;
 	int ret;
 
