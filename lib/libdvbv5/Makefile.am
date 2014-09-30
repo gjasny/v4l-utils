@@ -34,7 +34,6 @@ otherinclude_HEADERS = \
 	../include/libdvbv5/desc_logical_channel.h \
 	../include/libdvbv5/desc_ts_info.h \
 	../include/libdvbv5/desc_partial_reception.h \
-	../include/libdvbv5/desc_service_location.h \
 	../include/libdvbv5/desc_ca.h \
 	../include/libdvbv5/desc_ca_identifier.h \
 	../include/libdvbv5/nit.h \
@@ -56,6 +55,7 @@ noinst_LTLIBRARIES = libdvbv5.la
 endif
 
 libdvbv5_la_SOURCES = \
+        compat-soname.c \
 	crc32.c \
 	dvb-legacy-channel-format.c \
 	dvb-zap-format.c \
@@ -104,7 +104,6 @@ libdvbv5_la_SOURCES = \
 	descriptors/desc_logical_channel.c	\
 	descriptors/desc_ts_info.c		\
 	descriptors/desc_partial_reception.c	\
-	descriptors/desc_service_location.c	\
 	descriptors/desc_ca.c			\
 	descriptors/desc_ca_identifier.c
 
