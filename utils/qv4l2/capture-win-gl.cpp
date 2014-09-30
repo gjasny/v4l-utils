@@ -174,7 +174,7 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace)
 		case V4L2_PIX_FMT_NV16M:
 		case V4L2_PIX_FMT_NV61M:
 			// SDTV or HDTV?
-			if (m_frameWidth <= 720 && m_frameHeight <= 575)
+			if (m_frameWidth <= 720 && m_frameHeight <= 576)
 				colorspace = V4L2_COLORSPACE_SMPTE170M;
 			else
 				colorspace = V4L2_COLORSPACE_REC709;
