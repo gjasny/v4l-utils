@@ -1245,6 +1245,8 @@ no_capture_request:
 	case VIDIOC_S_INPUT:
 	case VIDIOC_S_DV_TIMINGS: {
 		struct v4l2_format src_fmt = { 0 };
+		unsigned int orig_dest_pixelformat =
+			devices[index].dest_fmt.fmt.pix.pixelformat;
 
 		result = devices[index].dev_ops->ioctl(
 				devices[index].dev_ops_priv,
@@ -1274,8 +1276,7 @@ no_capture_request:
 		devices[index].src_fmt  = src_fmt;
 		devices[index].dest_fmt = src_fmt;
 		/* and try to restore the last set destination pixelformat. */
-		src_fmt.fmt.pix.pixelformat =
-			devices[index].dest_fmt.fmt.pix.pixelformat;
+		src_fmt.fmt.pix.pixelformat = orig_dest_pixelformat;
 		result = v4l2_s_fmt(index, &src_fmt);
 		if (result) {
 			V4L2_LOG_WARN("restoring destination pixelformat after %s failed\n",
