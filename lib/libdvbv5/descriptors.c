@@ -45,7 +45,6 @@
 #include <libdvbv5/desc_terrestrial_delivery.h>
 #include <libdvbv5/desc_isdbt_delivery.h>
 #include <libdvbv5/desc_service.h>
-#include <libdvbv5/desc_service_list.h>
 #include <libdvbv5/desc_frequency_list.h>
 #include <libdvbv5/desc_event_short.h>
 #include <libdvbv5/desc_event_extended.h>
@@ -457,13 +456,6 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.print = dvb_desc_network_name_print,
 		.free  = dvb_desc_network_name_free,
 		.size  = sizeof(struct dvb_desc_network_name),
-	},
-	[service_list_descriptor] = {
-		.name  = "service_list_descriptor",
-		.init  = dvb_desc_service_list_init,
-		.print = dvb_desc_service_list_print,
-		.free  = NULL,
-		.size  = sizeof(struct dvb_desc_service_list),
 	},
 	[stuffing_descriptor] = {
 		.name  = "stuffing_descriptor",
