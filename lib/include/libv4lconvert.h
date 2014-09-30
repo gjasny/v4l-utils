@@ -147,6 +147,9 @@ LIBV4L_PUBLIC int v4lconvert_supported_dst_format(unsigned int pixelformat);
 LIBV4L_PUBLIC int v4lconvert_get_fps(struct v4lconvert_data *data);
 LIBV4L_PUBLIC void v4lconvert_set_fps(struct v4lconvert_data *data, int fps);
 
+/* Fixup bytesperline and sizeimage for supported destination formats */
+LIBV4L_PUBLIC void v4lconvert_fixup_fmt(struct v4l2_format *fmt);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
