@@ -1,0 +1,2 @@
+- On next SONAME bump
+  - clean up dvb_fe_open* and re-apply 9eaa2327da63fffd0dcaaa02b7641e66f881e20d
