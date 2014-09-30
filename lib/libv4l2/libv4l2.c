@@ -765,16 +765,6 @@ no_capture:
 	v4l2_set_src_and_dest_format(index, &devices[index].src_fmt,
 				     &devices[index].dest_fmt);
 
-	/* When a user does a try_fmt with the current dest_fmt and the dest_fmt
-	   is a supported one we will align the resolution (see try_fmt for why).
-	   Do the same here now, so that a try_fmt on the result of a get_fmt done
-	   immediately after open leaves the fmt unchanged. */
-	if (v4lconvert_supported_dst_format(
-				devices[index].dest_fmt.fmt.pix.pixelformat)) {
-		devices[index].dest_fmt.fmt.pix.width &= ~7;
-		devices[index].dest_fmt.fmt.pix.height &= ~1;
-	}
-
 	pthread_mutex_init(&devices[index].stream_lock, NULL);
 
 	devices[index].no_frames = 0;
@@ -948,6 +938,18 @@ static int v4l2_pix_fmt_identical(struct v4l2_format *a, struct v4l2_format *b)
 static void v4l2_set_src_and_dest_format(int index,
 		struct v4l2_format *src_fmt, struct v4l2_format *dest_fmt)
 {
+	/*
+	 * When a user does a try_fmt with the current dest_fmt and the
+	 * dest_fmt is a supported one we will align the resolution (see
+	 * libv4lconvert_try_fmt). We do this here too, in case dest_fmt gets
+	 * set without having gone through libv4lconvert_try_fmt, so that a
+	 * try_fmt on the result of a get_fmt always returns the same result.
+	 */
+	if (v4lconvert_supported_dst_format(dest_fmt->fmt.pix.pixelformat)) {
+		dest_fmt->fmt.pix.width &= ~7;
+		dest_fmt->fmt.pix.height &= ~1;
+	}
+
 	/* Sigh some drivers (pwc) do not properly reflect what one really gets
 	   after a s_fmt in their try_fmt answer. So update dest format (which we
 	   report as result from s_fmt / g_fmt to the app) with all info from the src
@@ -958,7 +960,8 @@ static void v4l2_set_src_and_dest_format(int index,
 	if (v4l2_pix_fmt_compat(src_fmt, dest_fmt)) {
 		dest_fmt->fmt.pix.bytesperline = src_fmt->fmt.pix.bytesperline;
 		dest_fmt->fmt.pix.sizeimage = src_fmt->fmt.pix.sizeimage;
-	}
+	} else
+		v4lconvert_fixup_fmt(dest_fmt);
 
 	devices[index].src_fmt = *src_fmt;
 	devices[index].dest_fmt = *dest_fmt;
