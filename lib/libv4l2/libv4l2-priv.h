@@ -76,6 +76,7 @@ struct v4l2_dev_info {
 	int flags;
 	int open_count;
 	int gone; /* Set to 1 when a device is detached (ENODEV encountered) */
+	long page_size;
 	/* actual format of the cam */
 	struct v4l2_format src_fmt;
 	/* fmt as seen by the application (iow after conversion) */
