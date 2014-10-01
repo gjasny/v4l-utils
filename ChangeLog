@@ -1,3 +1,102 @@
+v4l-utils-1.5.90 (Development snapshot)
+---------------------------------------
+
+André Roth (7):
+      libdvbv5: cleanup logging, some memory checks
+      libdvbv5: fix satellite LNBf handling
+      libdvbv5: fix dvb_fe_dummy()
+      libdvbv5: MPEG ES parser documentation
+      libdvbv5: use hyperlinks in doxygen PDF
+      libdvbv5: MPEG TS parser documentation
+      libdvbv5: MPEG TS parser documentation and cleanups
+
+Gregor Jasny (5):
+      Start v4l-utils 1.5.0 development cycle
+      buildsystem: Use latest ax_prog_doxygen from GNU Autoconf Archive
+      libdvbv5: Add todo file
+      libdvbv5: remove service_location descriptor
+      libdvbv5: remove service_list descriptor
+      doxygen: distribute doc/libdvbv5-index.doc in tarball
+
+Hans Verkuil (9):
+      v4l2-compliance: fix buffer state test
+      (c)v4l-helpers: zero bytesperline, swap arg order
+      qv4l2: the helper now zeroes bytesperline
+      cv4l-helpers: add missing ioctls
+      v4l2-ctl: fix control support for old kernels.
+      v4l-helpers.h: fix control ioctls checks
+      qv4l2: init dest format when starting vbi/swradio streaming
+      v4l2-compliance: fix valgrind warnings
+      qv4l2: fix typo: 576 instead of 575
+
+Hans de Goede (3):
+      libv4l2: Fix restoring of original dest-fmt after a VIDIOC_S_DV_TIMING
+      libv4l2: Set convert_mmap_frame_size as soon as we've a dest_fmt
+      libv4l2: Move alignment of dest_fmt resolution to v4l2_set_src_and_dest_format
+
+Mauro Carvalho Chehab (60):
+      libdvbv5: add doxygen tags for header.h
+      libdvbv5: add doxygen tags to vct.h
+      libdvbv5: add doxygen tags to pat.h
+      doxygen_libdvbv5.cfg: add header.h, vct.h and pat.h
+      libdvbv5: fix some cut-and-paste errors at documentation
+      libdvbv5: add doxygen tags to pmt.h
+      libdvbv5: better comment the descriptors
+      libdvbv5: fix some issues at PAT documentation
+      libdvbv5: add documentation for sdt.h
+      libdvbv5: some documentation fixups for sdt.h
+      libdvbv5: add documentation for the NIT table parser
+      libdvbv5: add documentation for crc32.h
+      libdvbv5: Add documentation for EIT DVB parser
+      libdvbv5: Add a mainpage to the documentation
+      libdvbv5: add documentation for ATSC EIT.
+      libdvbv5: don't use ATSC_HEADER() macro
+      libdvbv5: don't use DVB_DESC_HEADER() macro
+      libdvbv5: add documentation for cat.h and atsc_header.h
+      libdvbv5: add support for mgt.h
+      libdvbv5 documentation review
+      libdvbv5: group documentation into modules
+      libdvbv5: add a missing macro to dvb_table group for documentation
+      doxygen: add dvbv5-tools to the documentation
+      dvb-fe-tool: Fix verbosity and comment unused option
+      libdvbv5: fix a typo at ASTRA 1E extended LNBf
+      Add support for VDR format (only for output)
+      libdvbv5: Add support for opening FE on read only mode
+      dvb-fe-tool: add support to open DVB FE in read only mode
+      libdvbv5: Don't double-free the file name
+      dvb-fe-tool: add femon parameter
+      libdvbv5: fix a nasty bug when printing stats
+      libdvbv5: Re-add the status name at the stats report
+      libdvbv5: export dvb_fe_retrieve_quality()
+      dvb-fe-tool: Colorize the status report
+      dvb-fe-tool: implement acoustic mode
+      update dvb-fe-tool Doxygen documentation
+      libdvbv5: revert an ABI breakage
+      libdvbv5: Create doxygen docs for mpeg_es.h
+      libdvbv5: add documentation for ATSC service location
+      libdvbv5: Add documentation for CA descriptor
+      libdvbv5: Add documentation for CA identifier descriptor
+      libdvbv5: add documentation for cable delivery system descriptor
+      libdvbv5: add documentation for the extended event descriptor
+      libdvbv5: add documentation for the short event descriptor
+      libdvbv5: add documentation for the extended descriptor
+      libdvbv5: add documentation for the frequency list descriptor
+      libdvbv5: Document the hierarchy descriptor
+      libdvbv5: Add documentation for ISDB-T terrestrial descriptor
+      libdvbv5: add documentation for the language descriptor
+      libdvbv5: Add description for the LCN descriptor
+      libdvbv5: add documentation for the network name descriptor
+      libdvbv5: add documentation for ISDB partial reception descriptor
+      libdvbv5: document the Satellite delivery system descriptor
+      libdvbv5: add documentation for the service descriptor
+      libdvbv5: Add documentation for desc_service_list.h
+      libdvbv5: add documentation for the T2 delivery system descriptor
+      libdvbv5: documents the terrestrial delivery system descriptor
+      libdvbv5: Documents ISDB TS information descriptor
+      libdvbv5: add javadoc markups for desc_service_location.h
+      dvb-file: Fix a core dump issue
+
+
 v4l-utils-1.4.0
 ---------------
 
