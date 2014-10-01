@@ -239,7 +239,7 @@ definition using dvbv5-scan:
 @section dvbv5-scan-intro Description
 
 dvbv5-scan is a command line frequency scanning tool for digital TV services
-that is compliant with version 5 of the DVB API, and backward compatable with
+that is compliant with version 5 of the DVB API, and backward compatible with
 the older v3 DVB API.
 
 dvbv5-scan uses by default the new channel/service file format that it is
@@ -302,7 +302,7 @@ corresponding audio/video/other program IDs (PID), like:
 @brief The dvbv5-zap - DVBv5 tool for service tuning
 
 dvbv5-zap is a command line tuning tool for digital TV services that is
-compliant with version 5 of the DVB API, and backward compatable with the
+compliant with version 5 of the DVB API, and backward compatible with the
 older v3 DVB API.
 
 dvbv5-zap uses by default a new channel/service file format that it is
@@ -376,7 +376,7 @@ Lock   (0x1f) Quality= Good Signal= 100.00% C/N= -13.90dB UCB= 384 postBER= 96.8
 @brief The dvbv5-fe-tool - DVBv5 tool for frontend settings inspect/change
 
 dvbv5-fe-tool is a command line tool for digital TV services that is compliant
-with version 5 of the DVB API, and backward compatable with the older v3
+with version 5 of the DVB API, and backward compatible with the older v3
 DVB API.
 
 dvb-fe-tool is a tool to inspect and change the tuning parameters directly
@@ -474,7 +474,7 @@ an audio when BELL (\a character) is sent to the terminal.
 @brief The dvb-format-convert - DVBv5 tool for file format conversions
 
 dvb-format-convert is a command line tool for digital TV services that is
-compliant with version 5 of the DVB API, and backward compatable with the
+compliant with version 5 of the DVB API, and backward compatible with the
 older v3 DVB API.
 
 dvb-format-convert is a tool meant to convert among different file formats.
