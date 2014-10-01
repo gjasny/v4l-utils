@@ -43,7 +43,6 @@
 #include <libdvbv5/desc_sat.h>
 #include <libdvbv5/desc_terrestrial_delivery.h>
 #include <libdvbv5/desc_service.h>
-#include <libdvbv5/desc_service_list.h>
 #include <libdvbv5/desc_frequency_list.h>
 #include <libdvbv5/desc_event_short.h>
 #include <libdvbv5/desc_event_extended.h>
