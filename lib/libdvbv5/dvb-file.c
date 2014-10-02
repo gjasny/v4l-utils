@@ -1226,9 +1226,9 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 
 
 	if (!dvb_scan_handler->sdt) {
+		int warned = 0;
 		int i;
 
-		dvb_log("WARNING: no SDT table - storing channels without their names");
 		for (i = 0; i < dvb_scan_handler->num_program; i++) {
 			char *channel = "";
 			unsigned service_id;
@@ -1237,6 +1237,10 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 				continue;
 
 			service_id = dvb_scan_handler->program[i].pat_pgm->service_id;
+			if (!warned) {
+				dvb_log("WARNING: no SDT table - storing channel(s) without their names");
+				warned = 1;
+			}
 
 			rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
 						   service_id, channel, NULL,
