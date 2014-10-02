@@ -358,7 +358,8 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 		adjust_delsys(entry);
 	} while (1);
 	fclose(fd);
-	free(buf);
+	if (buf)
+		free(buf);
 	return dvb_file;
 
 error:
@@ -366,7 +367,8 @@ error:
 		 err_msg, line, fname);
 	dvb_file_free(dvb_file);
 	fclose(fd);
-	free(buf);
+	if (buf)
+		free(buf);
 	return NULL;
 }
 
@@ -793,6 +795,8 @@ struct dvb_file *dvb_read_file(const char *fname)
 			}
 		}
 	} while (1);
+	if (buf)
+		free(buf);
 	if (entry)
 		adjust_delsys(entry);
 	fclose(fd);
@@ -801,6 +805,8 @@ struct dvb_file *dvb_read_file(const char *fname)
 error:
 	fprintf (stderr, "ERROR %s while parsing line %d of %s\n",
 		 err_msg, line, fname);
+	if (buf)
+		free(buf);
 	dvb_file_free(dvb_file);
 	fclose(fd);
 	return NULL;
