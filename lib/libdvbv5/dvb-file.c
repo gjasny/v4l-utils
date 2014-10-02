@@ -1193,10 +1193,13 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 		atsc_vct_channel_foreach(d, dvb_scan_handler->vct) {
 			char *channel = NULL;
 			char *vchannel = NULL;
+			char *p = d->short_name;
 			int r;
 
-			channel = calloc(1, strlen(d->short_name) + 1);
-			strcpy(channel, d->short_name);
+			while (*p == ' ')
+				p++;
+			channel = calloc(1, strlen(p) + 1);
+			strcpy(channel, p);
 
 			r = asprintf(&vchannel, "%d.%d",
 				d->major_channel_number,
@@ -1251,8 +1254,12 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 
 		dvb_desc_find(struct dvb_desc_service, desc, service, service_descriptor) {
 			if (desc->name) {
-				channel = calloc(strlen(desc->name) + 1, 1);
-				strcpy(channel, desc->name);
+				char *p = desc->name;
+
+				while (*p == ' ')
+					p++;
+				channel = calloc(strlen(p) + 1, 1);
+				strcpy(channel, p);
 			}
 			dvb_log("Service %s, provider %s: %s",
 				desc->name, desc->provider,
