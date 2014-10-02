@@ -1084,9 +1084,13 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 			break;
 		}
 	}
-
 	if (!found) {
-		dvb_logwarn("Service ID %d not found on PMT!", service_id);
+		dvb_logwarn("Channel %s (service ID %d) not found on PMT. Skipping it.",
+			    channel, service_id);
+		if (channel)
+			free(channel);
+		if (vchannel)
+			free(vchannel);
 		return 0;
 	}
 
