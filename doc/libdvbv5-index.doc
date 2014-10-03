@@ -293,8 +293,7 @@ corresponding audio/video/other program IDs (PID), like:
 	DELIVERY_SYSTEM = DVBC/ANNEX_A
 @endcode
 
-@section dvbv5-scan-c Source Code
-@include dvbv5-scan.c
+@example dvbv5-scan.c
 */
 
 /**
@@ -367,8 +366,7 @@ TOT 	25296.44 p/s 	37154.2 Kbps 	4700 KB
 Lock   (0x1f) Quality= Good Signal= 100.00% C/N= -13.90dB UCB= 384 postBER= 96.8x10^-6 PER= 0
 @endcode
 
-@section dvbv5-zap-c Source Code
-@include dvbv5-zap.c
+@example dvbv5-zap.c
 */
 
 /**
@@ -465,8 +463,7 @@ Please notice that, on modern Linux systems, the system audio should be
 enabled at your window manager and the audio theme should be set to produce
 an audio when BELL (\a character) is sent to the terminal.
 
-@section dvb-fe-tool-c Source Code
-@include dvb-fe-tool.c
+@example dvb-fe-tool.c
 */
 
 /**
@@ -760,8 +757,7 @@ Rádio Globo RJ:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:629:347
 01070238:573000000:INVERSION_AUTO:5217000:FEC_NONE:QAM_256:0:0:801
 @endcode
 
-@section dvb-format-convert-c Source Code
-@include dvb-format-convert.c
+@example dvb-format-convert.c
 
 */
 
