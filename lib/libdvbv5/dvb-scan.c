@@ -729,7 +729,9 @@ struct dvb_entry *dvb_scan_add_entry(struct dvb_v5_fe_parms *__p,
 		return NULL;
 	}
 
-	memcpy(new_entry, entry, sizeof(*entry));
+	printf("Sizeof a full entry=%d, size of props=%d\n", sizeof(entry), sizeof(entry->props));
+	memcpy(new_entry->props, entry->props, sizeof(entry->props));
+	new_entry->n_props = entry->props;
 
 	/*
 	 * The frequency should change to the new one. Seek for it and
