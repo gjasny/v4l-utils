@@ -399,7 +399,7 @@ void dvb_parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 		case 0x09:	type = "ISO-8859-13";		break;
 		case 0x0a:	type = "ISO-8859-14";		break;
 		case 0x0b:	type = "ISO-8859-15";		break;
-		case 0x11:	type = "ISO-10646";		break;
+		case 0x11:	type = "ISO-10646/UCS2";	break;
 		case 0x12:	type = "ISO-2022-KR";		break;
 		case 0x13:	type = "GB2312";		break;
 		case 0x14:	type = "UTF-16BE";		break;
@@ -441,7 +441,7 @@ void dvb_parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 	*emph = malloc(destlen + 1);
 
 	/* Remove special chars */
-	if (!strncasecmp(type, "ISO-8859", 8) || !strcasecmp(type, "ISO-6937")) {
+	if (!strncasecmp(type, "ISO-8859", 8) || !strcasecmp(type, "ISO-6937") || !strcasecmp(type, "ISO-10646/UTF-8")) {
 		/*
 		 * Handles the ISO/IEC 10646 1-byte control codes
 		 * (EN 300 468 v1.11.1 Table A.1)
@@ -466,12 +466,41 @@ void dvb_parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 		*p2 = '\0';
 		len = p - (char *)tmp1;
 		len2 = p2 - (char *)tmp2;
-	} else {
-		dvb_logerr("charset %s not implemented", type);
+	} else if (!strcasecmp(type, "ISO-10646/UCS2")) {
 		/*
-		 * FIXME: need to handle the ISO/IEC 10646 2-byte control codes
+		 * Handles the ISO/IEC 10646 2-bytes control codes
 		 * (EN 300 468 v1.11.1 Table A.2)
 		 */
+		uint16_t *in_code = (void *)src;
+		uint16_t *out_code;
+		uint16_t *out_emph;
+
+		tmp1 = malloc(len + 2);
+		tmp2 = malloc(len + 2);
+		out_code = (void *)tmp1;
+		out_emph = (void *)tmp2;
+
+		for (i = 0; i < len / 2; i ++, in_code++) {
+			uint16_t code = *in_code;
+
+			/*
+			 * FIXME: should it do bswap16(code) here?
+			 */
+			if (code == 0xe086)
+				emphasis = 1;
+			else if (code == 0xe087 && emphasis)
+				emphasis = 0;
+			else if (code >= 0xe080 && code <= 0xe09f)
+				continue;
+
+			*out_code++ = code;
+			if (emphasis)
+				*out_emph++ = code;
+		}
+		*out_code = 0;
+		*out_emph = 0;
+		len = (char *)out_code - (char *)tmp1;
+		len2 = (char *)out_emph - (char *)tmp2;
 	}
 
 	if (tmp1)
