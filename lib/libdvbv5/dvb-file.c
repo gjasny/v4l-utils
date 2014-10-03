@@ -1134,10 +1134,10 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 		entry->props[j].cmd = parms->dvb_prop[j].cmd;
 		entry->props[j].u.data = parms->dvb_prop[j].u.data;
 
-		if (!*channel && entry->props[j].cmd == DTV_FREQUENCY)
+		if (!channel && entry->props[j].cmd == DTV_FREQUENCY)
 			freq = parms->dvb_prop[j].u.data;
 	}
-	if (!*channel) {
+	if (!channel) {
 		r = asprintf(&channel, "%.2fMHz#%d", freq/1000000., service_id);
 		if (r < 0)
 			dvb_perror("asprintf");
@@ -1229,7 +1229,6 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 		int i;
 
 		for (i = 0; i < dvb_scan_handler->num_program; i++) {
-			char *channel = "";
 			unsigned service_id;
 
 			if (!dvb_scan_handler->program[i].pmt)
@@ -1242,7 +1241,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 			}
 
 			rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
-						   service_id, channel, NULL,
+						   service_id, NULL, NULL,
 						   get_detected, get_nit);
 			if (rc < 0)
 				return rc;
