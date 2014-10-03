@@ -83,12 +83,12 @@ struct dvb_desc_ts_info {
 	struct dvb_desc_ts_info_transmission_type transmission_type;
 	uint16_t *service_id;
 
-	uint8_t remote_control_key_id;
 	union {
-		uint8_t bitfield;
+		uint16_t bitfield;
 		struct {
 			uint8_t transmission_type_count:2;
 			uint8_t length_of_ts_name:6;
+			uint8_t remote_control_key_id:8;
 		} __attribute__((packed));
 	};
 } __attribute__((packed));

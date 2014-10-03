@@ -32,14 +32,16 @@ int dvb_desc_ts_info_init(struct dvb_v5_fe_parms *parms,
 	size_t len;
 	int i;
 
-	len = sizeof(*d) - offsetof(struct dvb_desc_ts_info, remote_control_key_id);
-	memcpy(&d->remote_control_key_id, p, len);
+	len = sizeof(*d) - offsetof(struct dvb_desc_ts_info, bitfield);
+	memcpy(&d->bitfield, p, len);
 	p += len;
+
+	bswap16(d->bitfield);
 
 	len = d->length_of_ts_name;
 	d->ts_name = NULL;
 	d->ts_name_emph = NULL;
-	dvb_parse_string(parms, &d->ts_name, &d->ts_name_emph, buf, len);
+	dvb_parse_string(parms, &d->ts_name, &d->ts_name_emph, p, len);
 	p += len;
 
 	memcpy(&d->transmission_type, p, sizeof(d->transmission_type));
