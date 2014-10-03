@@ -89,6 +89,7 @@ static int convert_file(struct arguments *args)
 	printf("Writing file %s\n", args->output_file);
 	ret = dvb_write_file_format(args->output_file, dvb_file,
 				    args->delsys, args->output_format);
+	dvb_file_free(dvb_file);
 
 	return ret;
 }
