@@ -729,9 +729,18 @@ struct dvb_entry *dvb_scan_add_entry(struct dvb_v5_fe_parms *__p,
 		return NULL;
 	}
 
-	printf("Sizeof a full entry=%d, size of props=%d\n", sizeof(entry), sizeof(entry->props));
+	/*
+	 * We can't just copy the entire entry struct, as some strings
+	 * like lnb, channel, vchannel will be freed multiple times.
+	 * So, copy the props and the Satellite parameters only.
+	 */
 	memcpy(new_entry->props, entry->props, sizeof(entry->props));
-	new_entry->n_props = entry->props;
+	new_entry->n_props = entry->n_props;
+	new_entry->sat_number = entry->sat_number;
+	new_entry->freq_bpf = entry->freq_bpf;
+	new_entry->diseqc_wait = entry->diseqc_wait;
+	if (entry->lnb)
+		new_entry->lnb = strdup(entry->lnb);
 
 	/*
 	 * The frequency should change to the new one. Seek for it and
