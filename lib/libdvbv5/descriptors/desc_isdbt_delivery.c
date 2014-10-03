@@ -97,7 +97,7 @@ void isdbt_desc_delivery_print(struct dvb_v5_fe_parms *parms, const struct dvb_d
 	dvb_loginfo("|           area code         %d", d->area_code);
 
 	for (i = 0; i < d->num_freqs; i++) {
-		dvb_loginfo("|           frequency[%d]      %u Hz", i, d->frequency[i]);
+		dvb_loginfo("|           frequency[%d]      %.4f MHz", i, d->frequency[i]/1000000.);
 	}
 }
 
