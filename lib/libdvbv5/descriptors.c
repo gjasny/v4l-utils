@@ -137,7 +137,7 @@ int dvb_desc_parse(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			dvb_log("%sdescriptor %s type 0x%02x, size %d",
 				dvb_descriptors[desc_type].init ? "" : "Not handled ",
 				dvb_descriptors[desc_type].name, desc_type, desc_len);
-			dvb_hexdump(parms, "content: ", ptr + 2, desc_len);
+			dvb_hexdump(parms, "content: ", ptr, desc_len);
 		}
 
 		dvb_desc_init_func init = dvb_descriptors[desc_type].init;
