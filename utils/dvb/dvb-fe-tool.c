@@ -21,6 +21,7 @@
 #include "libdvbv5/dvb-file.h"
 #include <config.h>
 #include <argp.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -59,6 +60,21 @@ static int dvbv3 = 0;
 static int delsys = 0;
 static int femon = 0;
 static int acoustical = 0;
+static int timeout_flag = 0;
+
+static void do_timeout(int x)
+{
+	(void)x;
+
+	if (timeout_flag == 0) {
+		timeout_flag = 1;
+		alarm(2);
+		signal(SIGALRM, do_timeout);
+	} else {
+		/* something has gone wrong ... exit */
+		exit(1);
+	}
+}
 
 #define PERROR(x...)                                                    \
 	do {                                                            \
@@ -215,12 +231,16 @@ static void get_show_stats(struct dvb_v5_fe_parms *parms)
 {
 	int rc;
 
+	signal(SIGTERM, do_timeout);
+	signal(SIGINT, do_timeout);
+
 	do {
 		rc = dvb_fe_get_stats(parms);
 		if (!rc)
 			print_frontend_stats(stderr, parms);
-		usleep(1000000);
-	} while (1);
+		if (!timeout_flag)
+			usleep(1000000);
+	} while (!timeout_flag);
 }
 
 int main(int argc, char *argv[])
