@@ -34,6 +34,8 @@ int dvb_desc_ca_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct d
 	if (d->length > size) {
 		size = d->length - size;
 		d->privdata = malloc(size);
+		if (!d->privdata)
+			return -1;
 		d->privdata_len = size;
 		memcpy(d->privdata, buf + 4, size);
 	} else {
