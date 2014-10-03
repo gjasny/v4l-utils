@@ -1104,6 +1104,10 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 	}
 	if (!entry) {
 		dvb_logerr("Not enough memory");
+		if (channel)
+			free(channel);
+		if (vchannel)
+			free(vchannel);
 		return -1;
 	}
 
@@ -1214,10 +1218,8 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 						d->program_number,
 						channel, vchannel,
 						get_detected, get_nit);
-			if (rc < 0) {
-				free(channel);
+			if (rc < 0)
 				return rc;
-			}
 		}
 		if (!dvb_scan_handler->sdt)
 			return 0;
@@ -1283,10 +1285,8 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 					   service->service_id,
 					   channel, vchannel,
 					   get_detected, get_nit);
-		if (rc < 0) {
-			free(channel);
+		if (rc < 0)
 			return rc;
-		}
 	}
 
 	return 0;
