@@ -1,0 +1,215 @@
+.TH "dvbv5-zap" 1 "Fri Oct 3 2014" "DVBv5 Utils" "User Commands"
+.SH NAME
+dvbv5\-zap \\- DVBv5 tool for service tuning
+.SH SYNOPSIS
+.B dvbv5\-zap
+[\fIOPTION\fR]... \fBchannel-name\fR
+.PP
+.B dvbv5\-zap
+[\fIOPTION\fR]... \fBfrequency-name\fR (for monitor or all PIDs mode)
+.SH DESCRIPTION
+dvbv5\-zap is a command line tuning tool for digital TV services that is
+compliant with version 5 of the DVB API, and backward compatible with the
+older v3 DVB API.
+.PP
+dvbv5\-zap uses by default a new channel/service file format that it is
+capable of supporting all types of Digital TV standards. It can also support
+the legacy format used by the legacy dvb\-apps.
+.PP
+The dvbv5\-zap tool can be used on several different modes, depending
+on the parameters used.
+.PP
+Please note that, in order to be able to use it in record mode, where both
+the audio and video Packet IDs (PIDs) are output to a dvr record node,
+the input file should contain the PIDs, e. g. they should have been produced
+by a digital TV zap application like dvbv5-zap.
+.SH "OPTIONS"
+.TP
+\fB\-c\fR, \fB\-\-channels\fR= \fBchannel-name-file\fR
+Read channels list from 'file'.
+Defaults to \fB~/.tzap/channels.conf\fR.
+.TP
+\fB\-3\fR, \fB\-\-dvbv3\fR
+Force dvbv5\-zap to use DVBv3 only.
+Useful to test if the legacy API support is working.
+.TP
+\fB\-a\fR, \fB\-\-adapter\fR=\fIadapter#\fR
+Use the given adapter. Default value: 0.
+.TP
+\fB\-A\fR, \fB\-\-audio_pid\fR=\fIaudio_pid#\fR
+Select a different audio Packet ID (PID).
+The default is to use the first audio PID found at the \fBchannel-name-file\fR.
+.TP
+\fB\-d\fR, \fB\-\-demux\fR=\fIdemux#\fR
+Use the given demux. Default value: 0.
+.TP
+\fB\-f\fR, \fB\-\-frontend\fR=\fIfrontend#\fR
+Use the given frontend. Default value: 0.
+.TP
+\fB\-I\fR, \fB\-\-input\-format\fR=\fIformat\fR
+Format of the input file. Please notice that caps is ignored. It can be:
+.RS
+.TP
+\fIchannel\fR         \- for dvb-apps compatible channel file;
+.PP
+\fIzap\fR             \- for dvb-apps compatible zap file;
+.PP
+\fIdvbv5\fR (default) \- for the dvbv5 apps format.
+.RE
+.TP
+\fB\-l\fR, \fB\-\-lnbf\fR=\fILNBf_type\fR
+Type of LNBf to use 'help' lists the available ones.
+.TP
+\fB\-L\fR, \fB\-\-search\fR=\fIstring\fR
+Search/look for a string inside the traffic.
+Used only on monitor mode.
+.TP
+\fB\-m\fR, \fB\-\-monitor\fR
+Enable monitor mode. On this mode, it will monitor de DVB traffic for all
+Packet IDs (PIDs) received by the device, showing the Packet IDs (optionally
+filtered by a \fIstring\fR), and presenting some traffic statistics:
+number of packets per second, number of Kbytes per second and total traffic.
+Those statistics are shown per PID and the total per MPEG-TS.
+.TP
+\fB\-o\fR, \fB\-\-output\fR=\fIfile\fR
+Output filename. If specified, it will output the content of the MPEG-TS into
+the file with the first video PID and the first audio PID (or the one specified
+by \fIaudio_pid#\fR).
+Use \fB\-o\fR \- for directing the output to \fBstdout\fR.
+.TP
+\fB\-p\fR, \fB\-\-pat\fR
+Add PAT and PMT MPEG-TS tables to TS recording (implies \fB\-r)\fR.
+.TP
+\fB\-P\fR, \fB\-\-all\-pids\fR
+Don't filter any pids. Instead, outputs all of them.
+.TP
+\fB\-r\fR, \fB\-\-record\fR
+Sets up the /dev/dvb/adapter\fIadapter#\fR/dvr0 for MPEG-TS record.
+.TP
+\fB\-s\fR, \fB\-\-silence\fR
+Increases silence (can be used more than once).
+.TP
+\fB\-S\fR, \fB\-\-sat_number\fR=\fIsatellite_number\fR
+Satellite number.
+Used only on satellite delivery systems.
+If not specified, disable DISEqC satellite switch.
+.TP
+\fB\-t\fR, \fB\-\-timeout\fR=\fIseconds\fR
+Amount of seconds to keep the tool running for zapping and for recording.
+Useful if you want to record a program that you know its duration.
+.TP
+\fB\-U\fR, \fB\-\-freq_bpf\fR=\fIfrequency\fR
+SCR/Unicable band-pass filter frequency to use, in kHz.
+Used only on satellite delivery systems.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Be verbose. Useful to check if the MPEG-TS is happenning fine.
+This option can be used multiple times to increase verbosity.
+.TP
+\fB\-V\fR, \fB\-\-video_pid\fR=\fIvideo_pid#\fR
+video pid program to use (default 0)
+.TP
+\fB\-w\fR, \fB\-\-lna\fR=\fILNA\fR
+Enable, disable or put LNA power in auto mode. Not all frontends support it.
+Valid values are:
+.RS
+.TP
+ 0 \- disable
+.TP
+ 1 \- enable
+.TP
+\-1 \- auto
+.RE
+.TP
+\fB\-W\fR, \fB\-\-wait\fR=\fItime\fR
+Adds additional wait time for DISEqC command completion.
+.TP
+\fB\-x\fR, \fB\-\-exit\fR
+Exit after tuning.
+.TP
+\fB\-X\fR, \fB\-\-low_traffic\fR
+Also shows DVB traffic with less then 1 packet per second.
+Used only in monitor mode.
+.TP
+\fB\-?\fR, \fB\-\-help\fR
+Outputs the usage help.
+.TP
+\fB\-\-usage\fR
+Gives a short usage message.
+.TP
+\fB\-\-version\fR
+Prints program version.
+.SH EXIT STATUS
+On success, it returns 0.
+.SH EXAMPLES
+.RS
+.SS Recording a channel
+.PP
+The typical use is to tune into a channel and put it into record mode:
+.PP
+.nf
+$ \fBdvbv5\-zap \-c dvb_channel.conf 'music' \-r\fR
+using demux '/dev/dvb/adapter0/demux0'
+reading channels from file 'dvb_channel.conf'
+service has pid type 05: 204
+tuning to 573000000 Hz
+audio pid 104
+dvb_set_pesfilter 104
+Lock (0x1f) Quality= Good Signal= 100.00% C/N= \-13.80dB UCB= 70 postBER= 3.14x10^\-3 PER= 0
+DVR interface '/dev/dvb/adapter0/dvr0' can now be opened
+.fi
+.PP
+The channel can be watched by playing the contents of the DVR interface,
+with some player that recognizes the MPEG\-TS format.
+.PP
+For example, this audio-only channel can be playew with mplayer:
+.PP
+.nf
+$ \fBmplayer \-cache 800 /dev/dvb/adapter0/dvr0\fR
+MPlayer SVN\-r37077\-4.8.2 (C) 2000\-2014 MPlayer Team
+TS file format detected.
+NO VIDEO! AUDIO MPA(pid=104) NO SUBS (yet)!  PROGRAM N. 0
+==================================================================
+Opening audio decoder: [mpg123] MPEG 1.0/2.0/2.5 layers I, II, III
+AUDIO: 48000 Hz, 2 ch, s16le, 192.0 kbit/12.50% (ratio: 24000\->192000)
+Selected audio codec: [mpg123] afm: mpg123 (MPEG 1.0/2.0/2.5 layers I, II, III)
+==================================================================
+AO: [alsa] 48000Hz 2ch s16le (2 bytes per sample)
+Video: no video
+Starting playback...
+.fi
+.SS Monitoring a channel
+.PP
+The dvbv5\-zap tool can also be used to monitor a DVB channel:
+.PP
+.nf
+$ \fBdvbv5\-zap \-c dvb_channel.conf 573000000 \-m\fR
+using demux '/dev/dvb/adapter0/demux0'
+reading channels from file 'dvb_channel.conf'
+service has pid type 05:  204
+tuning to 573000000 Hz
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= \-13.90dB UCB= 384 postBER= 96.8x10^\-6 PER= 0
+  dvb_set_pesfilter to 0x2000
+
+PID     FREQ    SPEED   TOTAL
+0000    9.88 p/s        14.5 Kbps       1 KB
+0001    1.98 p/s        2.9 Kbps        376 B
+0010    18.77 p/s       27.6 Kbps       3 KB
+0011    48.42 p/s       71.1 Kbps       8 KB
+0012    1455.53 p/s     2137.8 Kbps     270 KB
+...
+1fff    1033.60 p/s     1518.1 Kbps     192 KB
+TOT     25296.44 p/s    37154.2 Kbps    4700 KB
+
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= \-13.90dB UCB= 384 postBER= 96.8x10^\-6 PER= 0
+.fi
+.RE
+.SH BUGS
+Report bugs to Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+.SH COPYRIGHT
+Copyright (c) 2011\-2014 by Mauro Carvalho Chehab.
+.PP
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

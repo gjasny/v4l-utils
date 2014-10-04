@@ -170,7 +170,6 @@ Good quality.
 /**
 @page dvbv5-tools DVBv5 Tools
 @brief Set of DVBv5 tools, bundled together with libdvbv5
-@section dvbv5-tools-intro Introduction
 
 DVBv5 Tools  is a small set of command line utilities that was developed
 to be compliant with the newer features provided by version 5 of the DVB API.
@@ -232,84 +231,10 @@ definition using dvbv5-scan:
 @endcode
 
 @example dvbv5-scan.c
+@example dvbv5-zap.c
 @example dvb-fe-tool.c
 @example dvb-format-convert.c
-*/
 
-/**
-@page dvbv5-zap dvbv5-zap
-@brief The dvbv5-zap - DVBv5 tool for service tuning
-
-dvbv5-zap is a command line tuning tool for digital TV services that is
-compliant with version 5 of the DVB API, and backward compatible with the
-older v3 DVB API.
-
-dvbv5-zap uses by default a new channel/service file format that it is
-capable of supporting all types of Digital TV standards. It can also support
-the legacy format used by the legacy dvb-apps.
-
-The dvbv5-zap tool can be used on several different modes, depending on the
-parameters used.
-
-The typical use is to tune into a channel and put it into record mode:
-
-$ dvbv5-zap -c dvb_channel.conf "trilhas sonoras" -r
-using demux '/dev/dvb/adapter0/demux0'
-reading channels from file 'dvb_channel.conf'
-service has pid type 05:  204
-tuning to 573000000 Hz
-audio pid 104
-  dvb_set_pesfilter 104
-Lock   (0x1f) Quality= Good Signal= 100.00% C/N= -13.80dB UCB= 70 postBER= 3.14x10^-3 PER= 0
-DVR interface '/dev/dvb/adapter0/dvr0' can now be opened
-
-The channel can be watched by playing the contents of the DVR interface, with some player that recognizes the MPEG-TS format.
-
-For example (in this specific case, it is an audio only channel, but the same could be used for audio/video):
-
-@code{.unparsed}
-$ mplayer -cache 800 /dev/dvb/adapter0/dvr0
-MPlayer SVN-r37077-4.8.2 (C) 2000-2014 MPlayer Team
-TS file format detected.
-NO VIDEO! AUDIO MPA(pid=104) NO SUBS (yet)!  PROGRAM N. 0
-==================================================================
-Opening audio decoder: [mpg123] MPEG 1.0/2.0/2.5 layers I, II, III
-AUDIO: 48000 Hz, 2 ch, s16le, 192.0 kbit/12.50% (ratio: 24000->192000)
-Selected audio codec: [mpg123] afm: mpg123 (MPEG 1.0/2.0/2.5 layers I, II, III)
-==================================================================
-AO: [alsa] 48000Hz 2ch s16le (2 bytes per sample)
-Video: no video
-Starting playback...
-@endcode
-
-The dvbv5-zap tool can also be used to monitor a DVB channel:
-
-@code{.unparsed}
-$ dvbv5-zap -c dvb_channel.conf 573000000 -m
-using demux '/dev/dvb/adapter0/demux0'
-reading channels from file 'dvb_channel.conf'
-service has pid type 05:  204
-tuning to 573000000 Hz
-Lock   (0x1f) Quality= Good Signal= 100.00% C/N= -13.90dB UCB= 384 postBER= 96.8x10^-6 PER= 0
-  dvb_set_pesfilter to 0x2000
-
-PID 	FREQ 	SPEED 	TOTAL
-0000 	9.88 p/s 	14.5 Kbps 	1 KB
-0001 	1.98 p/s 	2.9 Kbps 	376 B
-0010 	18.77 p/s 	27.6 Kbps 	3 KB
-0011 	48.42 p/s 	71.1 Kbps 	8 KB
-0012 	1455.53 p/s 	2137.8 Kbps 	270 KB
-...
-1fff 	1033.60 p/s 	1518.1 Kbps 	192 KB
-TOT 	25296.44 p/s 	37154.2 Kbps 	4700 KB
-
-Lock   (0x1f) Quality= Good Signal= 100.00% C/N= -13.90dB UCB= 384 postBER= 96.8x10^-6 PER= 0
-@endcode
-
-@example dvbv5-zap.c
-*/
-
-/**
 @defgroup frontend Digital TV frontend control
 @defgroup frontend_scan Digital TV frontend scan
 @defgroup satellite Satellite Equipment Control

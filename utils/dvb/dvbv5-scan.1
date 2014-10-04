@@ -3,7 +3,7 @@
 dvbv5-scan \- DVBv5 tool for frequency scanning
 .SH SYNOPSIS
 .B dvbv5-scan
-[\fIOPTION\fR]... \fIinitial file\fR
+[\fIOPTION\fR]... \fIinitial-file\fR
 .SH DESCRIPTION
 dvbv5-scan is a command line frequency scanning tool for digital TV services
 that is compliant with version 5 of the DVB API, and backward compatible with
@@ -30,7 +30,7 @@ on the stream.
 The following options are valid:
 .TP
 \fB\-3\fR, \fB\-\-dvbv3\fR
-Force dvbv5-scan to use DVBv3 only.
+Force dvbv5\-scan to use DVBv3 only.
 .TP
 \fB\-a\fR, \fB\-\-adapter\fR=\fIadapter#\fR
 Use the given adapter. Default value: 0.
@@ -66,7 +66,7 @@ Format of the input file. Please notice that caps is ignored. It can be:
 .RE
 .TP
 \fB\-l\fR, \fB\-\-lnbf\fR=\fILNBf_type\fR
-Type of LNBf to use 'help' lists the available ones
+Type of LNBf to use 'help' lists the available ones.
 .TP
 \fB\-N\fR, \fB\-\-nit\fR
 Use data from NIT table on the output file. By default, dvbv5-scan will
@@ -78,7 +78,7 @@ by the broadcaster via the MPEG-TS Network Information Table (NIT), instead
 of the ones that came from the source channel file.
 .TP
 \fB\-o\fR, \fB\-\-output\fR=\fIfile\fR
-output filename (default: dvb_channel.conf)
+output filename (default: \fBdvb_channel.conf\fR)
 .TP
 \fB\-O\fR, \fB\-\-output\-format\fR=\fIformat\fR
 Output format:
