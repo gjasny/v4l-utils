@@ -1100,8 +1100,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 		entry = dvb_file->first_entry;
 	} else {
 		entry->next = calloc(sizeof(*entry), 1);
-		if (entry)
-			entry = entry->next;
+		entry = entry->next;
 	}
 	if (!entry) {
 		dvb_logerr("Not enough memory");
