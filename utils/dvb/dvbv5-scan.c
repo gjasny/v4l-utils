@@ -73,7 +73,7 @@ static const struct argp_option options[] = {
 	{"timeout-multiply", 'T', "factor",		0, "Multiply scan timeouts by this factor", 0},
 	{"parse-other-nit", 'p', NULL,			0, "Parse the other NIT/SDT tables", 0},
 	{"input-format", 'I',	"format",		0, "Input format: CHANNEL, DVBV5 (default: DVBV5)", 0},
-	{"output-format", 'O',	"format",		0, "Output format: CHANNEL, ZAP, DVBV5 (default: DVBV5)", 0},
+	{"output-format", 'O',	"format",		0, "Output format: VDR, CHANNEL, ZAP, DVBV5 (default: DVBV5)", 0},
 	{"dvbv3",	'3',	0,			0, "Use DVBv3 only", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
