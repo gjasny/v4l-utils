@@ -30,3 +30,4 @@ po
 ABOUT-NLS
 lib/include/dvb-frontend.h
 doxygen-doc/
+patches/
