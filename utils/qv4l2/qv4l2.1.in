@@ -1,4 +1,4 @@
-.TH "QV4L2" "1" "August 2013" "v4l-utils" "User Commands"
+.TH "QV4L2" "1" "August 2013" "v4l-utils @PACKAGE_VERSION@" "User Commands"
 .SH NAME
 qv4l2 - A test bench application for video4linux devices
 .SH SYNOPSIS

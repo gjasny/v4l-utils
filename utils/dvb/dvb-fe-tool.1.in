@@ -1,4 +1,4 @@
-.TH "dvb-fe-tool" 1 "Fri Oct 3 2014" "DVBv5 Utils" "User Commands"
+.TH "dvb-fe-tool" 1 "Fri Oct 3 2014" "DVBv5 Utils @PACKAGE_VERSION@" "User Commands"
 .SH NAME
 dvb\-fe\-tool \- DVBv5 tool for frontend settings inspect/change
 .SH SYNOPSIS

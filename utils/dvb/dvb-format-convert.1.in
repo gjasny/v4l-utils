@@ -1,4 +1,4 @@
-.TH "dvb-format-convert" 1 "Fri Oct 3 2014" "DVBv5 Utils" "User Commands"
+.TH "dvb-format-convert" 1 "Fri Oct 3 2014" "DVBv5 Utils @PACKAGE_VERSION@" "User Commands"
 .SH NAME
 dvb-format-convert \- DVBv5 tool for file format conversions
 .SH SYNOPSIS

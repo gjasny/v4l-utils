@@ -46,6 +46,13 @@ AC_CONFIG_FILES([Makefile
 	lib/libv4l2rds/libv4l2rds.pc
 	utils/media-ctl/libmediactl.pc
 	utils/media-ctl/libv4l2subdev.pc
+
+	utils/qv4l2/qv4l2.1
+	utils/keytable/ir-keytable.1
+	utils/dvb/dvb-fe-tool.1
+	utils/dvb/dvbv5-scan.1
+	utils/dvb/dvb-format-convert.1
+	utils/dvb/dvbv5-zap.1
 ])
 
 AM_INIT_AUTOMAKE([1.9 subdir-objects no-dist-gzip dist-bzip2 -Wno-portability]) # 1.10 is needed for target_LIBTOOLFLAGS

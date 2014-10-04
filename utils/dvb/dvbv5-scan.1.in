@@ -1,4 +1,4 @@
-.TH "dvbv5-scan" 1 "Fri Oct 3 2014" "DVBv5 Utils" "User Commands"
+.TH "dvbv5-scan" 1 "Fri Oct 3 2014" "DVBv5 Utils @PACKAGE_VERSION@" "User Commands"
 .SH NAME
 dvbv5-scan \- DVBv5 tool for frequency scanning
 .SH SYNOPSIS

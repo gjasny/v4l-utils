@@ -1,4 +1,4 @@
-.TH "IR\-KEYTABLE" "1" "Fri Oct 3 2014" "v4l-utils" "User Commands"
+.TH "IR\-KEYTABLE" "1" "Fri Oct 3 2014" "v4l-utils @PACKAGE_VERSION@" "User Commands"
 .SH NAME
 ir\-keytable \- a swiss\-knife tool to handle Remote Controllers.
 .SH SYNOPSIS
