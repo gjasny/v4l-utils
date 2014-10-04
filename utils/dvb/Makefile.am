@@ -1,5 +1,5 @@
 bin_PROGRAMS = dvb-fe-tool dvbv5-zap dvbv5-scan dvb-format-convert
-man_MANS = dvbv5-scan.1
+man_MANS = dvb-fe-tool.1 dvbv5-scan.1
 
 dvb_fe_tool_SOURCES = dvb-fe-tool.c
 dvb_fe_tool_LDADD = ../../lib/libdvbv5/libdvbv5.la

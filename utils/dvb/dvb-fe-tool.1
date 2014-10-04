@@ -1,0 +1,166 @@
+.TH "dvb-fe-tool" 1 "Fri Oct 3 2014" "DVBv5 Utils" "User Commands"
+.SH NAME
+dvb\-fe\-tool \- DVBv5 tool for frontend settings inspect/change
+.SH SYNOPSIS
+.B dvb\-fe\-tool
+[\fIOPTION\fR]...
+.SH DESCRIPTION
+dvbv5\-fe\-tool is a command line tool for digital TV services that is compliant
+with version 5 of the DVB API, and backward compatible with the older
+v3 DVB API.
+.PP
+dvb\-fe\-tool is a tool to inspect and change the tuning parameters directly
+at the Digital TV frontend. If called without any parameter, it will show
+the device capabilities.
+.SH "OPTIONS"
+.TP
+The following options are valid:
+.TP
+\fB\-3\fR, \fB\-\-dvbv3\fR
+Use DVBv3 only
+.TP
+\fB\-a\fR, \fB\-\-adapter\fR=\fIADAPTER\fR
+Digital TV adapter to use. Default: 0.
+.TP
+\fB\-A\fR, \fB\-\-acoustical\fR
+bips if signal quality is good. Also enables femon mode. Please notice that
+console bip should be enabled on your wm.
+.TP
+\fB\-d\fR, \fB\-\-set\-delsys\fR=\fIPARAMS\fR
+Sets delivery system to the one specified at \fIPARAMS\fR. use \fIhelp\fR to
+show all supported delivery systems.
+.TP
+\fB\-f\fR, \fB\-\-frontend\fR=\fIFRONTEND\fR
+Digital TV frontend to use. Default: 0.
+.TP
+\fB\-g\fR, \fB\-\-get\fR
+Gets frontend parameters.
+.TP
+\fB\-m\fR, \fB\-\-femon\fR
+Monitors the frontend locking status and the available statistics for a
+frontend that it is already being streaming via some other application.
+This opens the frontend on read-only mode.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Enables debug messages.
+.TP
+\fB\-?\fR, \fB\-\-help\fR
+Outputs the usage help.
+.TP
+\fB\-\-usage\fR
+Gives a short usage message.
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Prints program version.
+.SH EXIT STATUS
+On success, it returns 0.
+.SH EXAMPLES
+.RS
+.SS Showing device capabilities
+This is the default behavior. It will open the frontend and show what
+capabilities it supports and what's the version of the DVB API.
+.PP
+.nf
+$ \fBdvb\-fe\-tool\fR
+Device DRXK DVB\-C DVB\-T (/dev/dvb/adapter0/frontend0) capabilities:
+     CAN_FEC_1_2
+     CAN_FEC_2_3
+     CAN_FEC_3_4
+     CAN_FEC_5_6
+     CAN_FEC_7_8
+     CAN_FEC_AUTO
+     CAN_GUARD_INTERVAL_AUTO
+     CAN_HIERARCHY_AUTO
+     CAN_INVERSION_AUTO
+     CAN_MUTE_TS
+     CAN_QAM_16
+     CAN_QAM_32
+     CAN_QAM_64
+     CAN_QAM_128
+     CAN_QAM_256
+     CAN_RECOVER
+     CAN_TRANSMISSION_MODE_AUTO
+DVB API Version 5.10, Current v5 delivery system: DVBC/ANNEX_A
+Supported delivery systems:
+    [DVBC/ANNEX_A]
+     DVBC/ANNEX_C
+     DVBT
+.fi
+.SS Setting the delivery system
+Some devices (like the above example) supports multiple delivery systems.
+Older DVB applications might not be able to switch from one delivery system
+to another one, as this feature were added only on DVB API version 5.5.
+.PP
+This feature allows to use those legacy applications.
+.PP
+.nf
+$ \fBdvb\-fe\-tool \-d dvbc/annex_c\fR
+Changing delivery system to: DVBC/ANNEX_C
+.fi
+.SS Getting the current frontend settings
+.PP
+The tool can also be used to get the current settings. In this case, it will
+open the frontend at read-only mode, allowing it to be called while some other
+digital TV application is running.
+.PP
+.nf
+$ \fBdvb\-fe\-tool \-g\fR
+FREQUENCY = 573000000
+MODULATION = QAM/256
+INVERSION = AUTO
+SYMBOL_RATE = 5217000
+INNER_FEC = NONE
+DELIVERY_SYSTEM = DVBC/ANNEX_A
+.fi
+.SS Monitoring the frontend
+.PP
+The dvb\-fe\-tool can also be used to monitor a DVB frontend statistics
+without touching on the device, using the \-\-femon (or \-m) parameter.
+The typical usage is to be able to read the statistics while some other
+DVB program or application is in use.
+.PP
+On this mode, it will keep printing the frontend statistics on every second,
+until the program is aborted with CTRL\-C:
+.PP
+For example, while dvbv5\-zap is tuning some channel, it will produce:
+.PP
+.nf
+$ \fBdvb\-fe\-tool \-\-femon\fR
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.40dB UCB= 370 postBER= 28.0x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.80dB UCB= 370 postBER= 25.3x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.30dB UCB= 370 postBER= 25.7x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.30dB UCB= 370 postBER= 28.4x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.50dB UCB= 370 postBER= 26.5x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.50dB UCB= 370 postBER= 26.9x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.20dB UCB= 370 postBER= 28.6x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.70dB UCB= 370 postBER= 26.7x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.80dB UCB= 370 postBER= 23.3x10^-6 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= 36.50dB UCB= 370 postBER= 26.7x10^-6 PER= 0
+.fi
+.PP
+If the standard error device is the console, the messages will be colored
+according with the signal quality.
+.PP
+The presented statistics types and unities will depend on the ones that the
+hardware you're using support. So, it may vary from hardware to hardware.
+.PP
+On this mode, it also supports to output an audible signal if the quality is
+good, using the '\-A' parameter.
+.PP
+Please notice that, on modern Linux systems, the system audio should be
+enabled at your window manager and the audio theme should be set to produce
+an audio when BELL (\fIcharacter\fP) is sent to the terminal.
+.SS NOTE:
+C/N on the above stats means Carrier to Noise ratio. This is the Signal to
+Noise ratio measured at the pilot carrier or just the Signal to Noise ratio
+for modulation types where just one carrier is used, like DVB-C or DVB-S.
+.RE
+.SH BUGS
+Report bugs to Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+.SH COPYRIGHT
+Copyright (c) 2011\-2014 by Mauro Carvalho Chehab.
+.PP
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
