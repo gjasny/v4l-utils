@@ -35,7 +35,7 @@ int dvb_desc_frequency_list_init(struct dvb_v5_fe_parms *parms, const uint8_t *b
 
 	d->frequencies = (d->length - len) / sizeof(d->frequency[0]);
 
-	d->frequency = calloc(d->frequencies, sizeof(d->frequency));
+	d->frequency = calloc(d->frequencies, sizeof(*d->frequency));
 
 	for (i = 0; i < d->frequencies; i++) {
 		d->frequency[i] = ((uint32_t *) p)[i];
