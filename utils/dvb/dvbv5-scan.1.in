@@ -109,7 +109,7 @@ Multiply the scan lock wait time and MPEG-TS table parsing by this factor.
 SCR/Unicable band-pass filter frequency to use, in kHz.
 Used only on satellite delivery systems.
 .TP
-\fB-\v\fR, \fB\-\-verbose\fR
+\fB\-v\fR, \fB\-\-verbose\fR
 Be (very) verbose. Useful to check if the MPEG-TS is happenning fine.
 This option can be used multiple times to increase verbosity.
 .TP
