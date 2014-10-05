@@ -153,7 +153,7 @@ On success, it returns 0.
 $ \fBdvbv5-scan /usr/share/dvbv5/dvb-c/the-brownfox\fR
 
 Scanning frequency #1 573000000
-Lock   (0x1f) Quality= Good Signal= 100.00% C/N= -13.80dB UCB= 0 postBER= 3.14x10^-3 PER= 0
+Lock   (0x1f) Quality= Good Signal= 100.00% C/N= \-13.80dB UCB= 0 postBER= 3.14x10^\-3 PER= 0
 Service The, provider (null): digital television
 Service Quick, provider BrownFox: digital television
 Service Brown, provider (null): digital television
