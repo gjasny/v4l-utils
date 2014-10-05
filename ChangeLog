@@ -1,3 +1,43 @@
+v4l-utils-1.5.91 (Development snapshot)
+---------------------------------------
+
+Gregor Jasny (3):
+      Start v4l-utils 1.5.91 development cycle
+      libdvbv5: Remove left over include of desc_service_list.h
+      libdvbv5: Fix typo in doxygen index file
+
+Mauro Carvalho Chehab (30):
+      dvb-file: Fix a memory leak
+      dvb-file: frees channel/vchannel if service id not found
+      dvb-file: Remove spaces at the beginning of channel name
+      dvb-file: Only print SDT warning if are there any channel to be stored
+      dvb-file: Fix channel name when SDT is not found
+      libdvbv5/descriptors: Fix content hexdump
+      libdvbv5: Fix the number of frequencies at ISDB-T delivery sys descriptor
+      libdvbv5: print ISDB-T frequencies in MHz
+      libdvbv5: add a parser for ISO-10646/UCS2 strings
+      libdvbv5: Fix ISDB-T TS info descriptor
+      dvb-file: Fix no-SDT channel name allocation
+      dvb-file: fix the memory deallocation on error
+      dvb-file: don't dereference a NULL pointer
+      libdvbv5: check for alloc errors at desc_ca
+      dvb-format-convert: make valgrind happy
+      libdvbv5: fix a nasty to track double-free bug
+      dvb-fe-tool: abort nicely on femon mode
+      libdvbv5: replace @include by @example
+      man: move dvb-scan.1 out of Doxygen
+      man: move dvb-fe-tool.1 out of Doxygen
+      dvb-format-convert: Fix help message
+      man: move dvb-format-convert.1 out of Doxygen
+      man: add a utils/dvb/dvbv5-zap.1 page and remove from doxygen
+      user man pages: Change report bugs to linux media ML
+      Revert "dvb-file: don't dereference a NULL pointer"
+      libdvbv5: Fix frequency table alloc size at desc_frequency_list
+      .gitignore: Ignore quilt patches/ dir
+      dvbv5-scan: add vdr format for the --help parameter
+      user man pages: Add version to the man pages
+
+
 v4l-utils-1.5.90 (Development snapshot)
 ---------------------------------------
 
