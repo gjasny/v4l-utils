@@ -197,7 +197,8 @@ PID     FREQ    SPEED   TOTAL
 0010    18.77 p/s       27.6 Kbps       3 KB
 0011    48.42 p/s       71.1 Kbps       8 KB
 0012    1455.53 p/s     2137.8 Kbps     270 KB
-...
+.schar \[u2026] ...
+\[u2026]
 1fff    1033.60 p/s     1518.1 Kbps     192 KB
 TOT     25296.44 p/s    37154.2 Kbps    4700 KB
 
