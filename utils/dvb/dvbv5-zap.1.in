@@ -1,6 +1,6 @@
 .TH "dvbv5-zap" 1 "Fri Oct 3 2014" "DVBv5 Utils @PACKAGE_VERSION@" "User Commands"
 .SH NAME
-dvbv5\-zap \\- DVBv5 tool for service tuning
+dvbv5\-zap \- DVBv5 tool for service tuning
 .SH SYNOPSIS
 .B dvbv5\-zap
 [\fIOPTION\fR]... \fBchannel-name\fR
