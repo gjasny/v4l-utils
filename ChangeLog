@@ -1,3 +1,14 @@
+v4l-utils-1.6.0
+---------------
+
+Gregor Jasny (5):
+      man: Fix typo in dvb-fe-tool man page
+      man: Replace hyphen with minus sign
+      man: place escape to correct position
+      man: Use Unicode character for ellipsis and fall back to ...
+      qv4l2: Add keywords to desktop file
+
+
 v4l-utils-1.5.91 (Development snapshot)
 ---------------------------------------
 
