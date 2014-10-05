@@ -150,6 +150,7 @@ On success, it returns 0.
 .SH EXAMPLE
 .PP
 .nf
+.schar \[u2026] ...
 $ \fBdvbv5-scan /usr/share/dvbv5/dvb-c/the-brownfox\fR
 
 Scanning frequency #1 573000000
@@ -158,10 +159,10 @@ Service The, provider (null): digital television
 Service Quick, provider BrownFox: digital television
 Service Brown, provider (null): digital television
 Service Jumps, provider (null): digital television
-...
+\[u2026]
 Service Dog, provider (null): digital television
 New transponder/channel found: #2: 579000000
-...
+\[u2026]
 New transponder/channel found: #39: 507000000
 .fi
 .PP
