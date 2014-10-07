@@ -8,7 +8,7 @@ qv4l2_SOURCES = qv4l2.cpp general-tab.cpp ctrl-tab.cpp vbi-tab.cpp capture-win.c
 nodist_qv4l2_SOURCES = moc_qv4l2.cpp moc_general-tab.cpp moc_capture-win.cpp moc_vbi-tab.cpp qrc_qv4l2.cpp
 qv4l2_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la ../libv4l2util/libv4l2util.la \
   ../libmedia_dev/libmedia_dev.la
-qv4l2_CPPFLAGS = -I../v4l2-compliance -I../v4l2-ctl
+qv4l2_CPPFLAGS = -I$(srcdir)/../v4l2-compliance -I$(srcdir)/../v4l2-ctl
 
 if WITH_QTGL
 qv4l2_CPPFLAGS += $(QTGL_CFLAGS)
