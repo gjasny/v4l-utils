@@ -1,20 +1,124 @@
 v4l-utils
 ---------
 
-Linux V4L2 and DVB API utilities and v4l libraries (libv4l).
+Linux utilities and libraries to handle media devices (TV devices,
+capture devices, radio devices, remote controllers).
+
 You can always find the latest development v4l-utils in the git repo:
-http://git.linuxtv.org/v4l-utils.git
+	http://git.linuxtv.org/v4l-utils.git
+
+Those utilities follow the latest Linux Kernel media API, as documented
+at:
+	http://linuxtv.org/downloads/v4l-dvb-apis/
+
+----------
+versioning
+----------
+
+The v4l-utils doesn't quite follow the release versioning defined
+at semver.org.
+
+Instead, since version 1.0, it uses:
+
+	MAJOR.MINOR.PATCH
+
+Where:
+
+	MINOR - an odd number means a development version. When
+		the development is closed, we release an even
+		numbered version and start a newer odd version;
+
+	MAJOR - It is incremented when MINOR number starts to be
+		too big. The last change occurred from 0.9.x to 1.0.
+
+	All numbers start with 0.
+
+All versions have their own tags, except for the current
+deveopment version (with uses the master branch at the git tree).
+
+The PATCH meaning actually depends if the version is stable
+or developent.
+
+For even MAJOR.MINOR versions (1.0, 1.2, 1.4, 1.6, ...)
+
+	PATCH is incremented when just bug fixes are added;
+
+For odd MAJOR.MINOR versions (1.1, 1.3, 1.5, 1.7, ...)
+	PATCH is incremented for release candidate versions.
+
+API/ABI stability:
+-----------------
+
+There should not have any API/ABI changes when PATCH is incremented.
+
+When MAJOR and/or MINOR are incremented, the API/ABI for the
+libraries might change, although we do all the efforts for not
+doing it, except when inevitable.
+
+The TODO files should specify the events that will generate
+API/ABI breaks.
+
+---------------
+media libraries
+---------------
+
+There are currently three media libraries defined at /lib directory,
+meant to be used internally and by other applications.
+
+libv4l
+------
+
+This library is meant to be used by applications that need to
+talk with V4L2 devices (webcams, analog TV, stream grabbers).
+
+It can be found on the following directories:
+	lib/libv4l1
+	lib/libv4l2
+	lib/libv4l-mplane
+	lib/libv4lconvert
+
+See README.libv4l for more information on libv4l.
+
+The libv4l is released under the GNU Lesser General Public License.
+
+libdvbv5
+--------
+
+This library is meant to be used by digital TV applications that
+need to talk with media hardware.
+
+Full documentation is provided via Doxygen. It can be built,
+after configuring the package, with:
+	$ make doxygen-run
+
+It is possible to generate documentation in html, man pages and pdf
+formats.
+
+The documentation is also available via web, at:
+	http://linuxtv.org/docs/libdvbv5/
+
+It can be found on the following directory:
+	lib/libdvbv5
+
+The libdvbv5 is released under GPL version 2.
 
 
-v4l libraries (libv4l, libdvbv5)
---------------------------------
+libv4l2rds
+----------
 
-See README.libv4l for more information on libv4l, libv4l is released
-under the GNU Lesser General Public License.
+This library provides support for RDS radio applications.
 
+It can be found on the following directory:
+	lib/libv4l2rds
 
-v4l-utils
+The libv4l is released under the GNU Lesser General Public License.
+
 ---------
+Utilities
+---------
+
+The utilities are stored under /util directory.
+
 The (for now for v4l-utils private use only) libv4l2util library is
 released under the GNU Lesser General Public License, all other code is
 released under the GNU General Public License.
