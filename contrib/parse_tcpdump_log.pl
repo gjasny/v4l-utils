@@ -354,10 +354,18 @@ sub print_frame($$)
 
 	# Extra data
 
-	if ($type > 128) {
-		printf " <<<";
+	if ($resp{TransferType} == 2) {
+		if ($type > 128) {
+			printf " <<<";
+		} else {
+			printf " >>>";
+		}
 	} else {
-		printf " >>>";
+		if ($resp{Endpoint} < 0x80) {
+			print " <<<";
+		} else {
+			print " >>>";
+		}
 	}
 
 	$app_data = substr($req{"Payload"}, 24 * 2);
