@@ -414,10 +414,6 @@ sub process_frame($) {
 		return;
 	}
 
-# skip unwanted URBs
-	return
-		if $usbdev != -1 and $usbdev != $frame{'Device'};
-
 	# Seek for operation origin
 	my $related = $frame{"ID"};
 	if (!$related) {
@@ -428,7 +424,10 @@ sub process_frame($) {
 		if ($related eq $pending[$i]{"ID"}) {
 			my %req = %{$pending[$i]};
 
-			print_frame (\%req, \%frame);
+# skip unwanted URBs
+			if ($usbdev == -1 or $usbdev == $frame{'Device'}) {
+				print_frame(\%req, \%frame);
+			}
 
 			# Remove from array, as it were already used
 			splice(@pending, $i, 1);
