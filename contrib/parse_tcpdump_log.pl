@@ -42,7 +42,6 @@ my $debug = 0;
 my $man = 0;
 my $help = 0;
 my $pcap = 0;
-my $all = 0;
 my $list_devices = 0;
 my $device;
 my $usbdev = -1;
@@ -51,7 +50,6 @@ my $frame_processor;
 GetOptions('debug=i' => \$debug,
 	   'help|?' => \$help,
 	   'pcap' => \$pcap,
-	   'all' => \$all,
 	   'device=s' => \$device,
 	    man => \$man,
 	   'usbdev=i' => \$usbdev,
@@ -411,12 +409,6 @@ sub process_frame($) {
 		print "PARSED data:\n";
 		print "\t\tRAW: $key => $value\n" while (($key, $value) = each(%frame));
 		print "\n";
-	}
-
-	# For now, we'll take a look only on control frames
-	if ($frame{"TransferType"} ne "2" && $all) {
-		printf "Transfer type: %s\n", $frametype{$frame{"TransferType"}};
-		return;
 	}
 
 	if ($frame{"Status"} eq "-115") {
