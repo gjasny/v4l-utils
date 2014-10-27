@@ -1142,7 +1142,9 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 			freq = parms->dvb_prop[j].u.data;
 	}
 	if (!channel) {
-		r = asprintf(&channel, "%.2fMHz#%d", freq/1000000., service_id);
+		r = asprintf(&channel, "%.2f%cHz#%d", freq / 1000000.,
+			dvb_fe_is_satellite(parms->p.current_sys) ? 'G' : 'M',
+			service_id);
 		if (r < 0)
 			dvb_perror("asprintf");
 		dvb_log("Storing Service ID %d: '%s'", service_id, channel);
