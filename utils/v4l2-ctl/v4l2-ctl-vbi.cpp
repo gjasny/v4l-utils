@@ -91,41 +91,35 @@ void vbi_cmd(int ch, char *optarg)
 	case OptSetSlicedVbiFormat:
 	case OptTrySlicedVbiFormat:
 		fmt->fmt.sliced.service_set = 0;
-		subs = optarg;
-		while (*subs != '\0') {
-			static const char *const subopts[] = {
-				"off",
-				"teletext",
-				"cc",
-				"wss",
-				"vps",
-				NULL
-			};
+		if (optarg[0] == 0) {
+			fprintf(stderr, "empty string\n");
+			vbi_usage();
+			exit(1);
+		}
+		while (*optarg) {
+			subs = strchr(optarg, ',');
+			if (subs)
+				*subs = 0;
 
-			switch (parse_subopt(&subs, subopts, &value)) {
-			case 0:
+			if (!strcmp(optarg, "off"))
 				found_off = true;
-				break;
-			case 1:
+			else if (!strcmp(optarg, "teletext"))
 				fmt->fmt.sliced.service_set |=
 					V4L2_SLICED_TELETEXT_B;
-				break;
-			case 2:
+			else if (!strcmp(optarg, "cc"))
 				fmt->fmt.sliced.service_set |=
 					V4L2_SLICED_CAPTION_525;
-				break;
-			case 3:
+			else if (!strcmp(optarg, "wss"))
 				fmt->fmt.sliced.service_set |=
 					V4L2_SLICED_WSS_625;
-				break;
-			case 4:
+			else if (!strcmp(optarg, "vps"))
 				fmt->fmt.sliced.service_set |=
 					V4L2_SLICED_VPS;
-				break;
-			default:
+			else
 				vbi_usage();
+			if (subs == NULL)
 				break;
-			}
+			optarg = subs + 1;
 		}
 		if (found_off && fmt->fmt.sliced.service_set) {
 			fprintf(stderr, "Sliced VBI mode 'off' cannot be combined with other modes\n");
