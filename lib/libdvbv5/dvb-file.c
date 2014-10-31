@@ -1138,6 +1138,20 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 		entry->props[j].cmd = parms->dvb_prop[j].cmd;
 		entry->props[j].u.data = parms->dvb_prop[j].u.data;
 
+		/* [ISDB-S]
+		 * Update DTV_STREAM_ID if it was not specified by a user
+		 * or set to a wrong one.
+		 * In those cases, demod must have selected the first TS_ID.
+		 * The update must be after the above dvb_fe_get_parms() call,
+		 * since a lazy FE driver that does not update stream_id prop
+		 * cache in FE.get_frontend() may overwrite the setting again
+		 * with the initial / user-specified wrong value.
+		 */
+		if (entry->props[j].cmd == DTV_STREAM_ID
+		    && entry->props[j].u.data == 0
+		    && parms->p.current_sys == SYS_ISDBS)
+			entry->props[j].u.data = dvb_scan_handler->pat->header.id;
+
 		if (!channel && entry->props[j].cmd == DTV_FREQUENCY)
 			freq = parms->dvb_prop[j].u.data;
 	}

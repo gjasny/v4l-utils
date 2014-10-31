@@ -263,6 +263,15 @@ static int run_scan(struct arguments *args,
 		dvb_log("Scanning frequency #%d %d", count, freq);
 
 		/*
+		 * update params->lnb only if it differs from entry->lnb
+		 * (and "--lnbf" option was not provided),
+		 * to avoid linear search of LNB types for every entries.
+		 */
+		if (!args->lnb_name && entry->lnb &&
+		    (!parms->lnb || strcasecmp(entry->lnb, parms->lnb->alias)))
+			parms->lnb = dvb_sat_get_lnb(dvb_sat_search_lnb(entry->lnb));
+
+		/*
 		 * Run the scanning logic
 		 */
 

@@ -372,6 +372,8 @@ int dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 	parms->p.current_sys = sys;
 	parms->n_props = rc;
 
+	if (sys == SYS_ISDBS /* || sys == SYS_ISDBT */)
+		parms->p.default_charset = "arib-std-b24";
 	return 0;
 }
 

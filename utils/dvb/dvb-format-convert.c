@@ -126,7 +126,8 @@ int main(int argc, char **argv)
 		fprintf(stderr, "ERROR: Please specify a valid output file\n");
 		missing = 1;
 	} else if (((args.input_format == FILE_ZAP) ||
-		   (args.output_format == FILE_ZAP)) && args.delsys <= 0) {
+		   (args.output_format == FILE_ZAP)) &&
+		   (args.delsys <= 0 || args.delsys == SYS_ISDBS)) {
 		fprintf(stderr, "ERROR: Please specify a valid delivery system for ZAP format\n");
 		missing = 1;
 	}

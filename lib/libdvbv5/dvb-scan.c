@@ -635,7 +635,6 @@ int dvb_estimate_freq_shift(struct dvb_v5_fe_parms *__p)
 		rolloff = 115;
 		break;
 	case SYS_DVBS:
-	case SYS_ISDBS:	/* FIXME: not sure if this rollof is right for ISDB-S */
 		divisor = 100000;
 		rolloff = 135;
 		break;
@@ -662,6 +661,12 @@ int dvb_estimate_freq_shift(struct dvb_v5_fe_parms *__p)
 	case SYS_DVBC_ANNEX_B:
 		bw = 6000000;
 		break;
+	case SYS_ISDBS:
+		/* since ISDBS uses fixed symbol_rate & rolloff,
+		 * those parameters are not mandatory in channel config file.
+		 */
+		bw = 28860 * 135 / 100;
+		break;
 	default:
 		break;
 	}
@@ -676,7 +681,9 @@ int dvb_estimate_freq_shift(struct dvb_v5_fe_parms *__p)
 	}
 	if (!bw)
 		dvb_fe_retrieve_parm(&parms->p, DTV_BANDWIDTH_HZ, &bw);
-
+	if (!bw)
+		dvb_log("Cannot calc frequency shift. " \
+			"Either bandwidth/symbol-rate is unavailable (yet).");
 	/*
 	 * If the max frequency shift between two frequencies is below
 	 * than the used bandwidth / 8, it should be the same channel.
@@ -1015,6 +1022,45 @@ static void add_update_nit_dvbs(struct dvb_table_nit *nit,
 				     SYS_DVBS2);
 }
 
+static void add_update_nit_isdbs(struct dvb_table_nit *nit,
+				 struct dvb_table_nit_transport *tran,
+				 struct dvb_desc *desc,
+				 void *priv)
+{
+	struct update_transponders *tr = priv;
+	struct dvb_entry *new;
+	/* FIXME:
+	 * use the ISDB-S specific satellite delsys descriptor structure,
+	 * instead of overloading to the EN300-468's one, dvb_desc_sat.
+	 * The following members are incompatible:
+	 *  {.modulation_type, .modulation_system, .roll_off, .fec}
+	 */
+	struct dvb_desc_sat *d = (void *)desc;
+	uint32_t ts_id;
+
+	if (tr->update)
+		return;
+
+	ts_id = tran->transport_id;
+	new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
+				 d->frequency, tr->shift, tr->pol, ts_id);
+	if (!new)
+		return;
+
+	/* Set (optional) ISDB-S props for the transponder */
+	/* FIXME: fill in other props like DTV_MODULATION, DTV_INNER_FEC.
+	 *   This requires extending the enum definitions in DVBv5 API
+	 *   to include the ISDB-S/T specific modulation/fec values,
+	 *   such as "BPSK" and "look TMCC".
+	 * Since even "AUTO" is not defined, skip setting them now.
+	 */
+	dvb_store_entry_prop(new, DTV_POLARIZATION,
+			     dvbs_polarization[d->polarization]);
+	dvb_store_entry_prop(new, DTV_SYMBOL_RATE,
+			     d->symbol_rate);
+}
+
+
 static void __dvb_add_update_transponders(struct dvb_v5_fe_parms_priv *parms,
 					  struct dvb_v5_descriptors *dvb_scan_handler,
 					  struct dvb_entry *first_entry,
@@ -1072,6 +1118,14 @@ static void __dvb_add_update_transponders(struct dvb_v5_fe_parms_priv *parms,
 				satellite_delivery_system_descriptor,
 				NULL, add_update_nit_dvbs, &tr);
 		return;
+	case SYS_ISDBS:
+		/* see the FIXME: in add_update_nit_isdbs() */
+		dvb_table_nit_descriptor_handler(
+				&parms->p, dvb_scan_handler->nit,
+				satellite_delivery_system_descriptor,
+				NULL, add_update_nit_isdbs, &tr);
+		return;
+
 	default:
 		dvb_log("Transponders detection not implemented for this standard yet.");
 		return;

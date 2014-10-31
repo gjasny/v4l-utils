@@ -319,6 +319,8 @@ void dvb_iconv_to_charset(struct dvb_v5_fe_parms *parms,
 		p[len] = '\0';
 		dvb_logerr("Conversion from %s to %s not supported\n",
 				input_charset, output_charset);
+		if (!strcasecmp(input_charset, "ARIB-STD-B24"))
+			dvb_log("Try setting GCONV_PATH to the bundled gconv dir.\n");
 	} else {
 		iconv(cd, (ICONV_CONST char **)&src, &len, &p, &destlen);
 		iconv_close(cd);
@@ -386,7 +388,11 @@ void dvb_parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 	if (!len)
 		return;
 
-	if (*src < 0x20) {
+	/*
+	 * Strings in ISDB-S/T(JP) do not start with a charset identifier,
+	 * and can start with a control character (< 0x20).
+	 */
+	if (strcasecmp(type, "ARIB-STD-B24") && *src < 0x20) {
 		switch (*src) {
 		case 0x00:	type = "ISO-6937";		break;
 		case 0x01:	type = "ISO-8859-5";		break;
