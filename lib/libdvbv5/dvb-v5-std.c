@@ -154,11 +154,7 @@ const unsigned int sys_turbo_props[] = {
 
 const unsigned int sys_isdbs_props[] = {
 	DTV_FREQUENCY,
-	DTV_INVERSION,
-	DTV_SYMBOL_RATE,
-	DTV_INNER_FEC,
 	DTV_STREAM_ID,
-	DTV_POLARIZATION,
 	0
 };
 

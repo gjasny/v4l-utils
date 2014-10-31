@@ -91,6 +91,13 @@ static const struct dvb_sat_lnb lnb[] = {
 		.freqrange = {
 			{ 12200, 12700 }
 		}
+	}, {
+		.name = "Japan 110BS/CS LNBf",
+		.alias = "110BS",
+		.lowfreq = 10678,
+		.freqrange = {
+			{ 11710, 12751 }
+		}
 	},
 };
 
@@ -304,6 +311,8 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
 		 */
 		pol_v = 0;
 		high_band = 1;
+		if (parms->p.current_sys == SYS_ISDBS)
+			vol_high = 1;
 	} else {
 		/* Adjust voltage/tone accordingly */
 		if (parms->p.sat_number < 2) {
