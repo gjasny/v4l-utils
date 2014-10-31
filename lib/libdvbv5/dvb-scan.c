@@ -925,7 +925,7 @@ static void add_update_nit_dvbt2(struct dvb_table_nit *nit,
 					 t2->centre_frequency[i] * 10,
 					 tr->shift, tr->pol, t2->plp_id);
 		if (!new)
-			return;
+			continue;
 
 		dvb_store_entry_prop(new, DTV_DELIVERY_SYSTEM,
 				     SYS_DVBT2);
