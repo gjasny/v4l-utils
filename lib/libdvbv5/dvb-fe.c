@@ -604,8 +604,12 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 		}
 
 		/* copy back params from temporary fe_prop */
-		for (i = 0; i < n; i++)
+		for (i = 0; i < n; i++) {
+			if (dvb_fe_is_satellite(p->current_sys)
+			    && fe_prop[i].cmd == DTV_FREQUENCY)
+				fe_prop[i].u.data += parms->freq_offset;
 			dvb_fe_store_parm(&parms->p, fe_prop[i].cmd, fe_prop[i].u.data);
+		}
 
 		if (parms->p.verbose) {
 			dvb_log("Got parameters for %s:",
@@ -683,8 +687,19 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 			dvb_logdbg("LNA is %s", parms->p.lna ? "ON" : "OFF");
 	}
 
-	if (dvb_fe_is_satellite(tmp_parms.p.current_sys))
+	if (dvb_fe_is_satellite(tmp_parms.p.current_sys)) {
 		dvb_sat_set_parms(&tmp_parms.p);
+		/*
+		 * even though the frequncy prop is kept un-modified here,
+		 * a later call to dvb_fe_get_parms() issues FE_GET_PROPERTY
+		 * ioctl and overwrites it with the offset-ed value from
+		 * the FE. So we need to save the offset here and
+		 * re-add it in dvb_fe_get_parms().
+		 * note that dvbv5-{scan,zap} utilities call dvb_fe_get_parms()
+		 * indirectly from check_frontend() via dvb_fe_get_stats().
+		 */
+		parms->freq_offset = tmp_parms.freq_offset;
+	}
 
 	/* Filter out any user DTV_foo property such as DTV_POLARIZATION */
 	tmp_parms.n_props = dvb_copy_fe_props(tmp_parms.dvb_prop,
