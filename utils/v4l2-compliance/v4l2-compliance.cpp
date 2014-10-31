@@ -853,7 +853,8 @@ int main(int argc, char **argv)
 		/* Control ioctls */
 
 		printf("\tControl ioctls:\n");
-		printf("\t\ttest VIDIOC_QUERYCTRL/MENU: %s\n", ok(testQueryControls(&node)));
+		printf("\t\ttest VIDIOC_QUERY_EXT_CTRL/QUERYMENU: %s\n", ok(testQueryExtControls(&node)));
+		printf("\t\ttest VIDIOC_QUERYCTRL: %s\n", ok(testQueryControls(&node)));
 		printf("\t\ttest VIDIOC_G/S_CTRL: %s\n", ok(testSimpleControls(&node)));
 		printf("\t\ttest VIDIOC_G/S/TRY_EXT_CTRLS: %s\n", ok(testExtendedControls(&node)));
 		printf("\t\ttest VIDIOC_(UN)SUBSCRIBE_EVENT/DQEVENT: %s\n", ok(testControlEvents(&node)));

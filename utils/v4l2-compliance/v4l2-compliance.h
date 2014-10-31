@@ -24,7 +24,7 @@
 #include <stdarg.h>
 #include <cerrno>
 #include <string>
-#include <list>
+#include <map>
 #include <set>
 #include <linux/videodev2.h>
 
@@ -43,11 +43,11 @@ extern bool show_warnings;
 extern int kernel_version;
 extern unsigned warnings;
 
-struct test_queryctrl: v4l2_queryctrl {
+struct test_query_ext_ctrl: v4l2_query_ext_ctrl {
 	__u64 menu_mask;
 };
 
-typedef std::list<test_queryctrl> qctrl_list;
+typedef std::map<__u32, struct test_query_ext_ctrl> qctrl_map;
 typedef std::set<__u32> pixfmt_set;
 
 struct base_node;
@@ -83,7 +83,7 @@ struct base_node {
 struct node : public base_node, public cv4l_fd {
 	node() : base_node() {}
 
-	qctrl_list controls;
+	qctrl_map controls;
 	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_SDR_CAPTURE + 1];
 };
 
@@ -158,6 +158,7 @@ int testOutput(struct node *node);
 int testOutputAudio(struct node *node);
 
 // Control ioctl tests
+int testQueryExtControls(struct node *node);
 int testQueryControls(struct node *node);
 int testSimpleControls(struct node *node);
 int testExtendedControls(struct node *node);
