@@ -37,6 +37,7 @@
 #include "libdvbv5/dvb-demux.h"
 #include "libdvbv5/dvb-v5-std.h"
 #include "libdvbv5/dvb-scan.h"
+#include "libdvbv5/countries.h"
 
 #define PROGRAM_NAME	"dvbv5-scan"
 #define DEFAULT_OUTPUT  "dvb_channel.conf"
@@ -51,6 +52,7 @@ struct arguments {
 	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
 	unsigned other_nit;
 	enum dvb_file_formats input_format, output_format;
+	const char *cc;
 
 	/* Used by status print */
 	unsigned n_status_lines;
@@ -75,6 +77,7 @@ static const struct argp_option options[] = {
 	{"input-format", 'I',	"format",		0, "Input format: CHANNEL, DVBV5 (default: DVBV5)", 0},
 	{"output-format", 'O',	"format",		0, "Output format: VDR, CHANNEL, ZAP, DVBV5 (default: DVBV5)", 0},
 	{"dvbv3",	'3',	0,			0, "Use DVBv3 only", 0},
+	{"cc",		'C',	"country_code",		0, "use default parameters for given country", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -394,6 +397,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case '3':
 		args->force_dvbv3 = 1;
 		break;
+	case 'C':
+		args->cc = strndup(optarg, 2);
+		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
 	};
@@ -497,6 +503,9 @@ int main(int argc, char **argv)
 	parms->diseqc_wait = args.diseqc_wait;
 	parms->freq_bpf = args.freq_bpf;
 	parms->lna = args.lna;
+	r = dvb_fe_set_default_country(parms, args.cc);
+	if (r < 0)
+		fprintf(stderr, "Failed to set the country code:%s\n", args.cc);
 
 	timeout_flag = &parms->abort;
 	signal(SIGTERM, do_timeout);

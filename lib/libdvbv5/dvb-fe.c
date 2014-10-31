@@ -20,6 +20,7 @@
 
 #include "dvb-fe-priv.h"
 #include "dvb-v5.h"
+#include <libdvbv5/countries.h>
 #include <libdvbv5/dvb-v5-std.h>
 
 #include <inttypes.h>
@@ -113,6 +114,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	parms->p.lna = LNA_AUTO;
 	parms->p.sat_number = -1;
 	parms->p.abort = 0;
+	parms->country = COUNTRY_UNKNOWN;
 
 	if (ioctl(fd, FE_GET_INFO, &parms->p.info) == -1) {
 		dvb_perror("FE_GET_INFO");
@@ -372,8 +374,6 @@ int dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 	parms->p.current_sys = sys;
 	parms->n_props = rc;
 
-	if (sys == SYS_ISDBS /* || sys == SYS_ISDBT */)
-		parms->p.default_charset = "arib-std-b24";
 	return 0;
 }
 
@@ -662,6 +662,56 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 	return 0;
 }
 
+/* set the delsys default/fixed parameters and replace DVBv5 default values */
+static void dvb_setup_delsys_default(struct dvb_v5_fe_parms *p)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)p;
+	uint32_t cc;
+
+	switch (p->current_sys) {
+	case SYS_ISDBT:
+		/* Set country code. */
+		/* if the default country is not known, fallback to BR */
+		cc = COUNTRY_UNKNOWN;
+		dvb_fe_retrieve_parm(p, DTV_COUNTRY_CODE, &cc);
+		if (cc == COUNTRY_UNKNOWN) {
+			cc = (parms->country == COUNTRY_UNKNOWN)
+				? BR : parms->country;
+			dvb_fe_store_parm(p, DTV_COUNTRY_CODE, cc);
+		}
+		switch (cc) {
+		case JP:
+			p->default_charset = "arib-std-b24";
+			dvb_fe_store_parm(p, DTV_BANDWIDTH_HZ, 6000000);
+			break;
+		/* Americas (SBTVD) */
+		case AR:
+		case BO:
+		case BR:
+		case CL:
+		case CR:
+		case EC:
+		case GT:
+		case HN:
+		case NI:
+		case PE:
+		case PY:
+		case UY:
+		case VE:
+			p->default_charset = "iso8859-15";
+			break;
+		}
+		break;
+	case SYS_ISDBS:
+		p->default_charset = "arib-std-b24";
+		if (!p->lnb);
+			p->lnb = dvb_sat_get_lnb(dvb_sat_search_lnb("110BS"));
+		break;
+	default:
+		break;
+	}
+}
+
 int dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
@@ -702,6 +752,8 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 		 */
 		parms->freq_offset = tmp_parms.freq_offset;
 	}
+
+	dvb_setup_delsys_default(p);
 
 	/* Filter out any user DTV_foo property such as DTV_POLARIZATION */
 	tmp_parms.n_props = dvb_copy_fe_props(tmp_parms.dvb_prop,
@@ -1713,4 +1765,24 @@ int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *p, unsigned *len, char *buf,
 	memcpy(buf, reply.msg, reply.msg_len);
 
 	return 0;
+}
+
+int dvb_fe_set_default_country(struct dvb_v5_fe_parms *p, const char *cc)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)p;
+
+	if (!cc) {
+		parms->country = dvb_guess_user_country();
+		if (parms->p.verbose) {
+			if (parms->country != COUNTRY_UNKNOWN)
+				dvb_log("Assuming you're in %s.\n",
+					dvb_country_to_2letters(parms->country));
+			else
+				dvb_log("Failed to guess country from the current locale setting.\n");
+		}
+		return 0;
+	}
+
+	parms->country = dvb_country_a2_to_id(cc);
+	return (parms->country == COUNTRY_UNKNOWN) ? -EINVAL : 0;
 }

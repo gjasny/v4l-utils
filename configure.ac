@@ -55,6 +55,8 @@ AC_CONFIG_FILES([Makefile
 	utils/dvb/dvbv5-zap.1
 ])
 
+AC_GNU_SOURCE
+
 AM_INIT_AUTOMAKE([1.9 subdir-objects no-dist-gzip dist-bzip2 -Wno-portability]) # 1.10 is needed for target_LIBTOOLFLAGS
 
 AM_MAINTAINER_MODE
@@ -79,6 +81,8 @@ gl_VISIBILITY
 
 AC_CHECK_HEADERS([sys/klog.h])
 AC_CHECK_FUNCS([klogctl])
+
+AC_CHECK_FUNCS([__secure_getenv secure_getenv])
 
 # Check host os
 case "$host_os" in

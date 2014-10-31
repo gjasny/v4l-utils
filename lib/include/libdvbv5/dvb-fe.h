@@ -719,6 +719,20 @@ int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *parms, unsigned *len, char *buf,
  */
 int dvb_fe_is_satellite(uint32_t delivery_system);
 
+/**
+ * @brief Set default country variant of delivery systems like ISDB-T
+ * @ingroup frontend
+ *
+ * @param parms		struct dvb_v5_fe_parms pointer to the opened device
+ * @param country	default country, in ISO 3316-1 two letter code
+ * @return 0 if success or an errorno otherwise.
+ *
+ * If this function is called with @ref country NULL,
+ * the default country is guessed from the locale environment variables.
+ * "COUNTRY" property in dvb_fe_set_parm() overrides the setting.
+ */
+int dvb_fe_set_default_country(struct dvb_v5_fe_parms *parms, const char *cc);
+
 #ifdef __cplusplus
 }
 #endif

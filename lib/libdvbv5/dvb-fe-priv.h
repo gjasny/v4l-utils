@@ -22,6 +22,7 @@
 #define __DVB_FE_PRIV_H
 
 #include <libdvbv5/dvb-fe.h>
+#include <libdvbv5/countries.h>
 
 enum dvbv3_emulation_type {
 	DVBV3_UNKNOWN = -1,
@@ -64,6 +65,9 @@ struct dvb_v5_fe_parms_priv {
 	int				n_props;
 	struct dtv_property		dvb_prop[DTV_MAX_COMMAND];
 	struct dvb_v5_stats		stats;
+
+	/* country variant of the delivery system */
+	enum dvb_country_t		country;
 
 	/* Satellite specific stuff */
 	int				high_band;

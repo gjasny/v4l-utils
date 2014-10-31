@@ -48,6 +48,7 @@
 #include <libdvbv5/desc_event_extended.h>
 #include <libdvbv5/desc_atsc_service_location.h>
 #include <libdvbv5/desc_hierarchy.h>
+#include <libdvbv5/countries.h>
 
 int dvb_store_entry_prop(struct dvb_entry *entry,
 			 uint32_t cmd, uint32_t value)
@@ -148,6 +149,9 @@ static uint32_t dvbv5_default_value(int cmd)
 
 		case DTV_ROLLOFF:
 			return ROLLOFF_AUTO;
+
+		case DTV_COUNTRY_CODE:
+			return COUNTRY_UNKNOWN;
 
 		default:
 			return (uint32_t)-1;
@@ -617,6 +621,14 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 		return 0;
 	}
 
+	if (!strcasecmp(key, "COUNTRY")) {
+		enum dvb_country_t id = dvb_country_a2_to_id(value);
+		if (id == COUNTRY_UNKNOWN)
+			return -2;
+		dvb_store_entry_prop(entry, DTV_COUNTRY_CODE, id);
+		return 0;
+	}
+
 	if (!strcasecmp(key, "VIDEO_PID"))
 		is_video = 1;
 	else if (!strcasecmp(key, "AUDIO_PID"))
@@ -884,6 +896,8 @@ int dvb_write_file(const char *fname, struct dvb_file *dvb_file)
 
 		for (i = 0; i < entry->n_props; i++) {
 			const char * const *attr_name = dvb_attr_names(entry->props[i].cmd);
+			const char *buf;
+
 			if (attr_name) {
 				int j;
 
@@ -892,6 +906,11 @@ int dvb_write_file(const char *fname, struct dvb_file *dvb_file)
 						break;
 					attr_name++;
 				}
+			}
+
+			if (entry->props[i].cmd == DTV_COUNTRY_CODE) {
+				buf = dvb_country_to_2letters(entry->props[i].u.data);
+				attr_name = &buf;
 			}
 
 			/* Handle parameters with optional values */

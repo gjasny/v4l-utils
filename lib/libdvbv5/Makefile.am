@@ -6,6 +6,7 @@ otherinclude_HEADERS = \
 	../include/libdvbv5/dvb-demux.h \
 	../include/libdvbv5/dvb-v5-std.h \
 	../include/libdvbv5/dvb-file.h \
+	../include/libdvbv5/countries.h \
 	../include/libdvbv5/crc32.h \
 	../include/libdvbv5/dvb-frontend.h \
 	../include/libdvbv5/dvb-fe.h \
@@ -56,6 +57,7 @@ endif
 libdvbv5_la_SOURCES = \
         compat-soname.c \
 	crc32.c \
+	countries.c \
 	dvb-legacy-channel-format.c \
 	dvb-zap-format.c \
 	dvb-vdr-format.c \

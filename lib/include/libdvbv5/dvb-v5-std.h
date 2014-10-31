@@ -93,6 +93,10 @@
  *	@brief DVB-T2 PLS mode. Not used internally. It is needed
  *			only for file conversion.
  *	@ingroup frontend
+ * @def DTV_COUNTRY_CODE
+ *	@brief Country variant of international delivery system standard.
+		in ISO 3166-1 two letter code.
+ *	@ingroup frontend
  * @def DTV_MAX_USER_COMMAND
  *	 @brief Last user command
  *	@ingroup frontend
@@ -115,8 +119,9 @@
 #define DTV_FREQ_BPF            (DTV_USER_COMMAND_START + 9)
 #define DTV_PLS_CODE		(DTV_USER_COMMAND_START + 10)
 #define DTV_PLS_MODE		(DTV_USER_COMMAND_START + 11)
+#define DTV_COUNTRY_CODE	(DTV_USER_COMMAND_START + 12)
 
-#define DTV_MAX_USER_COMMAND    DTV_PLS_MODE
+#define DTV_MAX_USER_COMMAND    DTV_COUNTRY_CODE
 
 #define DTV_USER_NAME_SIZE	(1 + DTV_MAX_USER_COMMAND - DTV_USER_COMMAND_START)
 

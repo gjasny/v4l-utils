@@ -41,6 +41,7 @@
 #include "libdvbv5/dvb-demux.h"
 #include "libdvbv5/dvb-scan.h"
 #include "libdvbv5/header.h"
+#include "libdvbv5/countries.h"
 
 #define CHANNEL_FILE	"channels.conf"
 #define PROGRAM_NAME	"dvbv5-zap"
@@ -59,6 +60,7 @@ struct arguments {
 	enum dvb_file_formats input_format, output_format;
 	unsigned traffic_monitor, low_traffic;
 	char *search;
+	const char *cc;
 
 	/* Used by status print */
 	unsigned n_status_lines;
@@ -89,6 +91,7 @@ static const struct argp_option options[] = {
 	{"wait",	'W', "time",			0, "adds additional wait time for DISEqC command completion", 0},
 	{"exit",	'x', NULL,			0, "exit after tuning", 0},
 	{"low_traffic",	'X', NULL,			0, "also shows DVB traffic with less then 1 packet per second", 0},
+	{"cc",		'C', "country_code",		0, "use default parameters for given country", 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -549,6 +552,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'L':
 		args->search = strdup(optarg);
 		break;
+	case 'C':
+		args->cc = strndup(optarg, 2);
+		break;
 	default:
 		return ARGP_ERR_UNKNOWN;
 	};
@@ -803,6 +809,10 @@ int main(int argc, char **argv)
 	parms->diseqc_wait = args.diseqc_wait;
 	parms->freq_bpf = args.freq_bpf;
 	parms->lna = args.lna;
+
+	r = dvb_fe_set_default_country(parms, args.cc);
+	if (r < 0)
+		fprintf(stderr, "Failed to set the country code:%s\n", args.cc);
 
 	if (parse(&args, parms, channel, &vpid, &apid, &sid))
 		goto err;
