@@ -724,14 +724,16 @@ int dvb_fe_is_satellite(uint32_t delivery_system);
  * @ingroup frontend
  *
  * @param parms		struct dvb_v5_fe_parms pointer to the opened device
- * @param country	default country, in ISO 3316-1 two letter code
+ * @param country	default country, in ISO 3316-1 two letter code. If
+ *			NULL, default charset is guessed from locale environment
+ *			variables.
+ *
  * @return 0 if success or an errorno otherwise.
  *
- * If this function is called with @ref country NULL,
- * the default country is guessed from the locale environment variables.
  * "COUNTRY" property in dvb_fe_set_parm() overrides the setting.
  */
-int dvb_fe_set_default_country(struct dvb_v5_fe_parms *parms, const char *cc);
+int dvb_fe_set_default_country(struct dvb_v5_fe_parms *parms,
+			       const char *country);
 
 #ifdef __cplusplus
 }
