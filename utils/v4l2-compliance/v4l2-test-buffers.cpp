@@ -512,7 +512,7 @@ int testExpBuf(struct node *node)
 
 		cv4l_queue q(type, V4L2_MEMORY_MMAP);
 
-		fail_on_test(q.reqbufs(node, 1));
+		fail_on_test(q.reqbufs(node, 2));
 		if (q.has_expbuf(node)) {
 			fail_on_test(q.export_bufs(node));
 			have_expbuf = true;
@@ -679,7 +679,7 @@ static int setupM2M(struct node *node, cv4l_queue &q)
 {
 	last_m2m_seq.init();
 
-	fail_on_test(q.reqbufs(node, 1));
+	fail_on_test(q.reqbufs(node, 2));
 	for (unsigned i = 0; i < q.g_buffers(); i++) {
 		buffer buf(q);
 
@@ -823,7 +823,7 @@ int testMmap(struct node *node, unsigned frame_count)
 		fail_on_test(node->streamoff(q.g_type()));
 
 		q.init(type, V4L2_MEMORY_MMAP);
-		fail_on_test(q.reqbufs(node, 1));
+		fail_on_test(q.reqbufs(node, 2));
 		fail_on_test(node->streamoff(q.g_type()));
 		last_seq.init();
 
@@ -979,7 +979,7 @@ int testUserPtr(struct node *node, unsigned frame_count)
 		fail_on_test(!can_stream);
 
 		q.init(type, V4L2_MEMORY_USERPTR);
-		fail_on_test(q.reqbufs(node, 1));
+		fail_on_test(q.reqbufs(node, 2));
 		fail_on_test(node->streamoff(q.g_type()));
 		last_seq.init();
 		if (node->is_video)
@@ -1086,7 +1086,7 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 		}
 		fail_on_test(!can_stream);
 
-		fail_on_test(q.reqbufs(node, 1));
+		fail_on_test(q.reqbufs(node, 2));
 		fail_on_test(node->streamoff(q.g_type()));
 		last_seq.init();
 		if (node->is_video)
