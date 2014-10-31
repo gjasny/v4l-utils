@@ -686,24 +686,37 @@ int dvb_estimate_freq_shift(struct dvb_v5_fe_parms *__p)
 	return shift;
 }
 
-int dvb_new_freq_is_needed(struct dvb_entry *entry, struct dvb_entry *last_entry,
-			   uint32_t freq, enum dvb_sat_polarization pol, int shift)
+int dvb_new_entry_is_needed(struct dvb_entry *entry,
+			    struct dvb_entry *last_entry,
+			    uint32_t freq, int shift,
+			    enum dvb_sat_polarization pol, uint32_t stream_id)
 {
-	int i;
-	uint32_t data;
-
 	for (; entry != last_entry; entry = entry->next) {
+		int i;
+
 		for (i = 0; i < entry->n_props; i++) {
-			data = entry->props[i].u.data;
-			if (entry->props[i].cmd == DTV_POLARIZATION) {
-				if (data != pol)
-					continue;
-			}
+			uint32_t data = entry->props[i].u.data;
+
 			if (entry->props[i].cmd == DTV_FREQUENCY) {
-				if (( freq >= data - shift) && (freq <= data + shift))
-					return 0;
+				if (freq < data - shift || freq > data + shift)
+					break;
+			}
+			if (pol != POLARIZATION_OFF
+			    && entry->props[i].cmd == DTV_POLARIZATION) {
+				if (data != pol)
+					break;
+			}
+			/* NO_STREAM_ID_FILTER: stream_id is not used.
+			 * 0: unspecified/auto. libdvbv5 default value.
+			 */
+			if (stream_id != NO_STREAM_ID_FILTER && stream_id != 0
+			    && entry->props[i].cmd == DTV_STREAM_ID) {
+				if (data != stream_id)
+					break;
 			}
 		}
+		if (i == entry->n_props && entry->n_props > 0)
+			return 0;
 	}
 
 	return 1;
@@ -713,19 +726,21 @@ struct dvb_entry *dvb_scan_add_entry(struct dvb_v5_fe_parms *__p,
 				     struct dvb_entry *first_entry,
 			             struct dvb_entry *entry,
 			             uint32_t freq, uint32_t shift,
-			             enum dvb_sat_polarization pol)
+			             enum dvb_sat_polarization pol,
+				     uint32_t stream_id)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)__p;
 	struct dvb_entry *new_entry;
 	int i, n = 2;
 
-	if (!dvb_new_freq_is_needed(first_entry, NULL, freq, pol, shift))
+	if (!dvb_new_entry_is_needed(first_entry, NULL, freq, shift, pol,
+				     stream_id))
 		return NULL;
 
 	/* Clone the current entry into a new entry */
 	new_entry = calloc(sizeof(*new_entry), 1);
 	if (!new_entry) {
-		dvb_perror("not enough memory for a new scanning frequency");
+		dvb_perror("not enough memory for a new scanning frequency/TS");
 		return NULL;
 	}
 
@@ -797,7 +812,7 @@ static void add_update_nit_dvbc(struct dvb_table_nit *nit,
 		new = tr->entry;
 	} else {
 		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
-					 d->frequency, tr->shift, tr->pol);
+					 d->frequency, tr->shift, tr->pol, 0);
 		if (!new)
 			return;
 	}
@@ -831,7 +846,8 @@ static void add_update_nit_isdbt(struct dvb_table_nit *nit,
 
 	for (i = 0; i < d->num_freqs; i++) {
 		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
-					 d->frequency[i], tr->shift, tr->pol);
+					 d->frequency[i], tr->shift,
+					 tr->pol, 0);
 		if (!new)
 			return;
 	}
@@ -907,7 +923,7 @@ static void add_update_nit_dvbt2(struct dvb_table_nit *nit,
 	for (i = 0; i < t2->frequency_loop_length; i++) {
 		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
 					 t2->centre_frequency[i] * 10,
-					 tr->shift, tr->pol);
+					 tr->shift, tr->pol, t2->plp_id);
 		if (!new)
 			return;
 
@@ -937,7 +953,8 @@ static void add_update_nit_dvbt(struct dvb_table_nit *nit,
 		return;
 
 	new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
-				d->centre_frequency * 10, tr->shift, tr->pol);
+				d->centre_frequency * 10, tr->shift,
+				tr->pol, 0);
 	if (!new)
 		return;
 
@@ -976,7 +993,7 @@ static void add_update_nit_dvbs(struct dvb_table_nit *nit,
 		new = tr->entry;
 	} else {
 		new = dvb_scan_add_entry(tr->parms, tr->first_entry, tr->entry,
-					 d->frequency, tr->shift, tr->pol);
+					 d->frequency, tr->shift, tr->pol, 0);
 		if (!new)
 			return;
 	}
@@ -997,7 +1014,6 @@ static void add_update_nit_dvbs(struct dvb_table_nit *nit,
 		dvb_store_entry_prop(new, DTV_DELIVERY_SYSTEM,
 				     SYS_DVBS2);
 }
-
 
 static void __dvb_add_update_transponders(struct dvb_v5_fe_parms_priv *parms,
 					  struct dvb_v5_descriptors *dvb_scan_handler,

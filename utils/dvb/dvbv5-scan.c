@@ -238,6 +238,7 @@ static int run_scan(struct arguments *args,
 
 	for (entry = dvb_file->first_entry; entry != NULL; entry = entry->next) {
 		struct dvb_v5_descriptors *dvb_scan_handler = NULL;
+		uint32_t stream_id;
 
 		/*
 		 * If the channel file has duplicated frequencies, or some
@@ -251,8 +252,11 @@ static int run_scan(struct arguments *args,
 		if (dvb_retrieve_entry_prop(entry, DTV_POLARIZATION, &pol))
 			pol = POLARIZATION_OFF;
 
-		if (!dvb_new_freq_is_needed(dvb_file->first_entry, entry,
-					    freq, pol, shift))
+		if (dvb_retrieve_entry_prop(entry, DTV_STREAM_ID, &stream_id))
+			stream_id = NO_STREAM_ID_FILTER;
+
+		if (!dvb_new_entry_is_needed(dvb_file->first_entry, entry,
+						  freq, shift, pol, stream_id))
 			continue;
 
 		count++;

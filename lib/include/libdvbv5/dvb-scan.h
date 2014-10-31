@@ -385,14 +385,17 @@ void dvb_add_scaned_transponders(struct dvb_v5_fe_parms *parms,
  */
 int dvb_estimate_freq_shift(struct dvb_v5_fe_parms *parms);
 
-int dvb_new_freq_is_needed(struct dvb_entry *entry, struct dvb_entry *last_entry,
-			   uint32_t freq, enum dvb_sat_polarization pol, int shift);
+int dvb_new_entry_is_needed(struct dvb_entry *entry,
+			   struct dvb_entry *last_entry,
+			   uint32_t freq, int shift,
+			   enum dvb_sat_polarization pol, uint32_t stream_id);
 
 struct dvb_entry *dvb_scan_add_entry(struct dvb_v5_fe_parms *parms,
 				     struct dvb_entry *first_entry,
 			             struct dvb_entry *entry,
 			             uint32_t freq, uint32_t shift,
-			             enum dvb_sat_polarization pol);
+			             enum dvb_sat_polarization pol,
+			             uint32_t stream_id);
 
 void dvb_update_transponders(struct dvb_v5_fe_parms *parms,
 			     struct dvb_v5_descriptors *dvb_scan_handler,
