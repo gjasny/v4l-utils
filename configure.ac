@@ -37,6 +37,7 @@ AC_CONFIG_FILES([Makefile
 	contrib/Makefile
 	contrib/freebsd/Makefile
 	contrib/test/Makefile
+	contrib/gconv/Makefile
 
 	v4l-utils.spec
 	lib/libv4lconvert/libv4lconvert.pc
@@ -231,6 +232,13 @@ AC_ARG_WITH(udevdir,
    	[],
 	[with_udevdir=`$PKG_CONFIG --variable=udevdir udev || echo /lib/udev`])
 
+
+AC_ARG_WITH(gconvdir,
+	AS_HELP_STRING([--with-gconvdir=DIR],
+		       [set system's gconv directory (default=/usr/lib/gconv)]),
+	[],
+	[with_gconvdir=`find /usr/lib -type -d -name gconv || echo /usr/lib/gconv`])
+
 AC_SUBST([libv4l1subdir], [$with_libv4l1subdir])
 AC_SUBST([libv4l2subdir], [$with_libv4l2subdir])
 AC_SUBST([libv4l1privdir], [$libdir/$with_libv4l1subdir])
@@ -241,6 +249,7 @@ AC_SUBST([keytablesystemdir], [$with_udevdir/rc_keymaps])
 AC_SUBST([keytableuserdir], [$sysconfdir/rc_keymaps])
 AC_SUBST([udevrulesdir], [$with_udevdir/rules.d])
 AC_SUBST([pkgconfigdir], [$libdir/pkgconfig])
+AC_SUBST([gconvsysdir], [$with_gconvdir])
 
 AC_DEFINE_UNQUOTED([V4L_UTILS_VERSION], ["$PACKAGE_VERSION"], [v4l-utils version string])
 AC_DEFINE_DIR([LIBV4L1_PRIV_DIR], [libv4l1privdir], [libv4l1 private lib directory])
@@ -284,6 +293,14 @@ AC_ARG_ENABLE(qv4l2,
    esac]
 )
 
+AC_ARG_ENABLE(gconv,
+  AS_HELP_STRING([--enable-gconv], [enable compilation of gconv modules]),
+  [case "${enableval}" in
+    yes | no ) [test x$enable_shared == xno -o x$LIBICONV != x && enable_gconv = no] ;;
+    *) AC_MSG_ERROR(bad value ${enableval} for --enable-gconv) ;;
+   esac]
+)
+
 AM_CONDITIONAL([WITH_LIBDVBV5],     [test x$enable_libdvbv5  != xno])
 AM_CONDITIONAL([WITH_LIBV4L],       [test x$enable_libv4l    != xno])
 AM_CONDITIONAL([WITH_V4LUTILS],	    [test x$enable_v4l_utils != xno -a x$linux_os = xyes])
@@ -291,6 +308,7 @@ AM_CONDITIONAL([WITH_QV4L2],	    [test ${qt_pkgconfig}  = true -a x$enable_qv4l2
 AM_CONDITIONAL([WITH_V4L_PLUGINS],  [test x$enable_libv4l != xno -a x$enable_shared != xno])
 AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$enable_libv4l != xno -a x$enable_shared != xno])
 AM_CONDITIONAL([WITH_QTGL],	    [test ${qt_pkgconfig_gl} = true])
+AM_CONDITIONAL([WITH_GCONV],        [test x${enable_gconv} = xyes])
 
 # append -static to libtool compile and link command to enforce static libs
 AS_IF([test x$enable_libdvbv5 = xno], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])

@@ -4,6 +4,14 @@ else
 SUBDIRS = freebsd
 endif
 
+if WITH_GCONV
+SUBDIRS += gconv
+endif
+
+if WITH_GCONV
+SUBDIRS += gconv
+endif
+
 EXTRA_DIST = \
 	parse-sniffusb2.pl \
 	parse_tcpdump_log.pl \

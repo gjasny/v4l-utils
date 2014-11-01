@@ -1,0 +1,8 @@
+#	from			to			module		cost
+alias	ARIB-B24//		ARIB-STD-B24//
+module	ARIB-STD-B24//		INTERNAL		ARIB-STD-B24	1
+module	INTERNAL		ARIB-STD-B24//		ARIB-STD-B24	1
+
+#	from			to			module		cost
+module	EN300-468-TAB00//	INTERNAL		EN300-468-TAB00 1
+module	INTERNAL		EN300-468-TAB00//	EN300-468-TAB00 1
