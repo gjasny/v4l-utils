@@ -704,7 +704,7 @@ static void dvb_setup_delsys_default(struct dvb_v5_fe_parms *p)
 		break;
 	case SYS_ISDBS:
 		p->default_charset = "arib-std-b24";
-		if (!p->lnb);
+		if (!p->lnb)
 			p->lnb = dvb_sat_get_lnb(dvb_sat_search_lnb("110BS"));
 		break;
 	default:
