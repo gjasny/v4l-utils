@@ -395,12 +395,12 @@ enum dvb_country_t dvb_guess_user_country(void)
 		if (! buf || strlen(buf) < 2)
 			continue;
 
-		buf = strdup(buf);
-		pbuf= buf;
-
 		if (! strncmp(buf, "POSIX", MIN(strlen(buf), 5)) ||
 		    ! (strncmp(buf, "en", MIN(strlen(buf), 2)) && !isalpha(buf[2])) )
 			continue;
+
+		buf = strdup(buf);
+		pbuf= buf;
 
 		// assuming 'language_country.encoding@variant'
 
