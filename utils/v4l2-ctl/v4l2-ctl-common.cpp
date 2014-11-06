@@ -207,7 +207,7 @@ static void list_devices()
 	}
 }
 
-static std::string name2var(char *name)
+static std::string name2var(const char *name)
 {
 	std::string s;
 	int add_underscore = 0;
@@ -735,10 +735,12 @@ static bool fill_subset(const struct v4l2_query_ext_ctrl &qc, ctrl_subset &subse
 		subset.size[d] = qc.dims[d];
 	}
 
-	if (ctrl_subsets.find(qc.name) != ctrl_subsets.end()) {
+	std::string s = name2var(qc.name);
+
+	if (ctrl_subsets.find(s) != ctrl_subsets.end()) {
 		unsigned ss_dims;
 
-		subset = ctrl_subsets[qc.name];
+		subset = ctrl_subsets[s];
 		for (ss_dims = 0; ss_dims < V4L2_CTRL_MAX_DIMS && subset.size[ss_dims]; ss_dims++) ;
 		if (ss_dims != qc.nr_of_dims) {
 			fprintf(stderr, "expected %d dimensions but --subset specified %d\n",
@@ -807,8 +809,9 @@ void common_set(int fd)
 				if (fill_subset(qc, subset))
 					return;
 
-				for (d = 0; d < qc.nr_of_dims; d++) {
-					divide[d] = qc.dims[d];
+				divide[qc.nr_of_dims - 1] = 1;
+				for (d = 0; d < qc.nr_of_dims - 1; d++) {
+					divide[d] = qc.dims[d + 1];
 					for (i = 0; i < d; i++)
 						divide[i] *= divide[d];
 				}
@@ -897,8 +900,9 @@ static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 	if (fill_subset(qc, subset))
 		return;
 
-	for (d = 0; d < qc.nr_of_dims; d++) {
-		divide[d] = qc.dims[d];
+	divide[qc.nr_of_dims - 1] = 1;
+	for (d = 0; d < qc.nr_of_dims - 1; d++) {
+		divide[d] = qc.dims[d + 1];
 		for (i = 0; i < d; i++)
 			divide[i] *= divide[d];
 	}
@@ -906,7 +910,7 @@ static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 	from = subset.offset[qc.nr_of_dims - 1];
 	to = subset.offset[qc.nr_of_dims - 1] + subset.size[qc.nr_of_dims - 1] - 1;
 
-	for (unsigned idx = 0; idx < qc.elems / qc.dims[qc.nr_of_dims - 1]; idx++) {
+	for (unsigned idx = 0; idx < qc.elems; idx += qc.dims[qc.nr_of_dims - 1]) {
 		for (d = 0; d < qc.nr_of_dims - 1; d++) {
 			unsigned i = (idx / divide[d]) % qc.dims[d];
 
