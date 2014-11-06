@@ -343,6 +343,12 @@ static void print_qctrl(int fd, struct v4l2_query_ext_ctrl *queryctrl,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->step, queryctrl->default_value);
 		break;
+	case V4L2_CTRL_TYPE_U32:
+		printf("%31s (u32)    : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(),
+				queryctrl->minimum, queryctrl->maximum,
+				queryctrl->step, queryctrl->default_value);
+		break;
 	default:
 		printf("%31s (unknown): type=%x", s.c_str(), queryctrl->type);
 		break;
@@ -821,6 +827,12 @@ void common_set(int fd)
 						if (idx_in_subset(qc, subset, divide, i))
 							ctrl.p_u16[i] = v;
 					break;
+				case V4L2_CTRL_TYPE_U32:
+					v = strtoul(iter->second.c_str(), NULL, 0);
+					for (i = 0; i < qc.elems; i++)
+						if (idx_in_subset(qc, subset, divide, i))
+							ctrl.p_u32[i] = v;
+					break;
 				case V4L2_CTRL_TYPE_STRING:
 					strncpy(ctrl.string, iter->second.c_str(), qc.maximum);
 					ctrl.string[qc.maximum] = 0;
@@ -925,6 +937,14 @@ static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 			}
 			printf("\n");
 			break;
+		case V4L2_CTRL_TYPE_U32:
+			for (i = from; i <= to; i++) {
+				printf("%6d", ((__u32 *)p)[idx + i]);
+				if (i < to)
+					printf(", ");
+			}
+			printf("\n");
+			break;
 		}
 	}
 }
@@ -983,6 +1003,7 @@ void common_get(int fd)
 						switch (qc.type) {
 						case V4L2_CTRL_TYPE_U8:
 						case V4L2_CTRL_TYPE_U16:
+						case V4L2_CTRL_TYPE_U32:
 							print_array(qc, ctrl.ptr);
 							break;
 						case V4L2_CTRL_TYPE_STRING:
