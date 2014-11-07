@@ -386,7 +386,7 @@ static int checkInput(struct node *node, const struct v4l2_input &descr, unsigne
 		return fail("non-zero reserved fields\n");
 	if (descr.status & ~0x07070337)
 		return fail("invalid status\n");
-	if (descr.status & 0x02070000)
+	if (descr.status & 0x02060000)
 		return fail("use of deprecated digital video status\n");
 	if (descr.audioset & ~mask)
 		return fail("invalid audioset\n");
