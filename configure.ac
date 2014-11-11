@@ -232,12 +232,12 @@ AC_ARG_WITH(udevdir,
    	[],
 	[with_udevdir=`$PKG_CONFIG --variable=udevdir udev || echo /lib/udev`])
 
-
+def_gconv_dir=`for i in /lib64 /usr/lib64 /usr/local/lib64 /lib /usr/lib /usr/local/lib; do if @<:@ -d \$i/gconv @:>@; then echo \$i/gconv; break; fi; done || echo /usr/lib/gconv`
 AC_ARG_WITH(gconvdir,
 	AS_HELP_STRING([--with-gconvdir=DIR],
 		       [set system's gconv directory (default=/usr/lib/gconv)]),
 	[],
-	[with_gconvdir=`find /usr/lib -type -d -name gconv || echo /usr/lib/gconv`])
+	[with_gconvdir=$def_gconv_dir])
 
 AC_SUBST([libv4l1subdir], [$with_libv4l1subdir])
 AC_SUBST([libv4l2subdir], [$with_libv4l2subdir])
