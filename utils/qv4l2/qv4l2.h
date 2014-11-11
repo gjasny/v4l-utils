@@ -125,10 +125,12 @@ private:
 	bool m_mustConvert;
 	CapMethod m_capMethod;
 	bool m_makeSnapshot;
+	bool m_singleStep;
 	RenderMethod m_renderMethod;
 
 private slots:
 	void capStart(bool);
+	void capStep(bool);
 	void outStart(bool);
 	void makeFullScreen(bool);
 	void capFrame();
@@ -246,6 +248,7 @@ private:
 	GeneralTab *m_genTab;
 	VbiTab *m_vbiTab;
 	QAction *m_capStartAct;
+	QAction *m_capStepAct;
 	QAction *m_saveRawAct;
 	QAction *m_useGLAct;
 	QAction *m_audioBufferAct;

@@ -83,6 +83,7 @@ public:
 	unsigned getDisplayColorspace() const;
 	unsigned getColorspace() const;
 	int getWidth();
+	unsigned getNumBuffers() const;
 
 signals:
 	void audioDeviceChanged();
@@ -345,6 +346,7 @@ private:
 	QComboBox *m_frameInterval;
 	QComboBox *m_vidOutFormats;
 	QComboBox *m_capMethods;
+	QSpinBox *m_numBuffers;
 	QCheckBox *m_recordPrio;
 	QComboBox *m_vbiMethods;
 	QComboBox *m_audioInDevice;

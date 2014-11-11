@@ -102,6 +102,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	m_frameInterval(NULL),
 	m_vidOutFormats(NULL),
 	m_capMethods(NULL),
+	m_numBuffers(NULL),
 	m_vbiMethods(NULL),
 	m_audioInDevice(NULL),
 	m_audioOutDevice(NULL),
@@ -114,6 +115,8 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	m_composeHeight(NULL),
 	m_composeTop(NULL)
 {
+	bool hasStreamIO = false;
+
 	m_device.append(device);
 	setSizeConstraint(QLayout::SetMinimumSize);
 
@@ -238,11 +241,13 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 		if (q.reqbufs(m_fd, 1) == 0) {
 			m_capMethods->addItem("User pointer I/O", QVariant(methodUser));
 			m_fd->reopen(true);
+			hasStreamIO = true;
 		}
 		q.init(g_type(), V4L2_MEMORY_MMAP);
 		if (q.reqbufs(m_fd, 1) == 0) {
 			m_capMethods->addItem("Memory mapped I/O", QVariant(methodMmap));
 			m_fd->reopen(true);
+			hasStreamIO = true;
 		}
 	}
 	if (has_rw()) {
@@ -252,6 +257,14 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 			m_capMethods->addItem("read()", QVariant(methodRead));
 	}
 	addWidget(m_capMethods);
+
+	if (hasStreamIO) {
+		addLabel("Number of Buffers");
+		m_numBuffers = new QSpinBox(parent);
+		m_numBuffers->setRange(1, VIDEO_MAX_FRAME);
+		m_numBuffers->setValue(4);
+		addWidget(m_numBuffers);
+	}
 
 	addLabel("Use Record Priority");
 	m_recordPrio = new QCheckBox(parentWidget());
@@ -900,6 +913,11 @@ void GeneralTab::fixWidth()
 		else
 			setColumnMinimumWidth(j, m_maxw[j]);
 	}
+}
+
+unsigned GeneralTab::getNumBuffers() const
+{
+	return m_numBuffers ? m_numBuffers->value() : 4;
 }
 
 unsigned GeneralTab::getColorspace() const

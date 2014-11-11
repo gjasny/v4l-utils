@@ -83,6 +83,7 @@ ApplicationWindow::ApplicationWindow() :
 	m_frameData = NULL;
 	m_nbuffers = 0;
 	m_makeSnapshot = false;
+	m_singleStep = false;
 	m_tpgLimRGBRange = NULL;
 	for (unsigned b = 0; b < sizeof(m_clear); b++)
 		m_clear[b] = false;
@@ -103,6 +104,10 @@ ApplicationWindow::ApplicationWindow() :
 	m_capStartAct->setDisabled(true);
 	m_capStartAct->setShortcut(Qt::CTRL+Qt::Key_V);
 	connect(m_capStartAct, SIGNAL(toggled(bool)), this, SLOT(capStart(bool)));
+
+	m_capStepAct = new QAction(QIcon(":/step.png"), "Single Step", this);
+	m_capStepAct->setDisabled(true);
+	connect(m_capStepAct, SIGNAL(triggered(bool)), this, SLOT(capStep(bool)));
 
 	m_snapshotAct = new QAction(QIcon(":/snapshot.png"), "&Make Snapshot", this);
 	m_snapshotAct->setStatusTip("Make snapshot");
@@ -150,6 +155,7 @@ ApplicationWindow::ApplicationWindow() :
 	toolBar->setObjectName("toolBar");
 	toolBar->addAction(openAct);
 	toolBar->addAction(m_capStartAct);
+	toolBar->addAction(m_capStepAct);
 	toolBar->addAction(m_snapshotAct);
 	toolBar->addAction(m_saveRawAct);
 
@@ -165,6 +171,7 @@ ApplicationWindow::ApplicationWindow() :
 
 	QMenu *captureMenu = menuBar()->addMenu("&Capture");
 	captureMenu->addAction(m_capStartAct);
+	captureMenu->addAction(m_capStepAct);
 	captureMenu->addAction(m_showFramesAct);
 	captureMenu->addAction(m_scalingAct);
 
@@ -291,6 +298,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	bool canStream = g_fd() >= 0 && (v4l_type_is_capture(g_type()) || has_vid_out()) &&
 					 !has_radio_tx();
 	m_capStartAct->setEnabled(canStream);
+	m_capStepAct->setEnabled(canStream && v4l_type_is_capture(g_type()));
 	m_saveRawAct->setEnabled(canStream);
 	m_snapshotAct->setEnabled(canStream && has_vid_cap());
 #ifdef HAVE_QTGL
@@ -467,7 +475,7 @@ bool ApplicationWindow::startStreaming()
 
 	case methodMmap:
 	case methodUser:
-		if (m_queue.reqbufs(this, 4)) {
+		if (m_queue.reqbufs(this, m_genTab->getNumBuffers())) {
 			error("Cannot capture");
 			break;
 		}
@@ -533,6 +541,9 @@ void ApplicationWindow::capVbiFrame()
 	cv4l_buffer buf(m_queue);
 	__u8 *data = NULL;
 	int s = 0;
+
+	if (m_singleStep)
+		m_capNotifier->setEnabled(false);
 
 	switch (m_capMethod) {
 	case methodRead:
@@ -629,6 +640,9 @@ void ApplicationWindow::capSdrFrame()
 	cv4l_buffer buf(m_queue);
 	__u8 *data = NULL;
 	int s = 0;
+
+	if (m_singleStep)
+		m_capNotifier->setEnabled(false);
 
 	switch (m_capMethod) {
 	case methodRead:
@@ -811,6 +825,9 @@ void ApplicationWindow::capFrame()
 	struct timeval tv_alsa;
 #endif
 
+	if (m_singleStep)
+		m_capNotifier->setEnabled(false);
+
 	plane[0] = plane[1] = NULL;
 	switch (m_capMethod) {
 	case methodRead:
@@ -851,6 +868,7 @@ void ApplicationWindow::capFrame()
 			return;
 		}
 		if (buf.g_flags() & V4L2_BUF_FLAG_ERROR) {
+			printf("error\n");
 			qbuf(buf);
 			return;
 		}
@@ -903,13 +921,15 @@ void ApplicationWindow::capFrame()
 	float wscale = m_capture->getHorScaleFactor();
 	float hscale = m_capture->getVertScaleFactor();
 	status = QString("Frame: %1 Fps: %2 Scale Factors: %3x%4").arg(++m_frame).arg(m_fps).arg(wscale).arg(hscale);
+	if (m_capMethod != methodRead)
+		status.append(QString(" SeqNr: %1").arg(buf.g_sequence()));
 #ifdef HAVE_ALSA
-	if (alsa_thread_is_running()) {
+	if (m_capMethod != methodRead && alsa_thread_is_running()) {
 		if (tv_alsa.tv_sec || tv_alsa.tv_usec) {
 			m_totalAudioLatency.tv_sec += buf.g_timestamp().tv_sec - tv_alsa.tv_sec;
 			m_totalAudioLatency.tv_usec += buf.g_timestamp().tv_usec - tv_alsa.tv_usec;
 		}
-		status.append(QString(" Average A-V: %3 ms")
+		status.append(QString(" Average A-V: %1 ms")
 			      .arg((m_totalAudioLatency.tv_sec * 1000 + m_totalAudioLatency.tv_usec / 1000) / m_frame));
 	}
 #endif
@@ -932,7 +952,7 @@ void ApplicationWindow::capFrame()
 	}
 
 	curStatus = statusBar()->currentMessage();
-	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
+	if (curStatus.isEmpty() || curStatus.startsWith("Frame: ") || curStatus.startsWith("No frame"))
 		statusBar()->showMessage(status);
 	if (m_frame == 1)
 		refresh();
@@ -940,8 +960,12 @@ void ApplicationWindow::capFrame()
 
 void ApplicationWindow::stopStreaming()
 {
+	bool canStream = g_fd() >= 0 && (v4l_type_is_capture(g_type()) || has_vid_out()) &&
+					 !has_radio_tx();
 	v4l2_encoder_cmd cmd;
 
+	m_singleStep = false;
+	m_capStepAct->setEnabled(canStream && v4l_type_is_capture(g_type()));
 	stopAudio();
 
 	s_priority(V4L2_PRIORITY_DEFAULT);
@@ -1154,8 +1178,20 @@ void ApplicationWindow::outStart(bool start)
 	}
 }
 
+void ApplicationWindow::capStep(bool checked)
+{
+	if (!m_capStartAct->isChecked()) {
+		m_singleStep = true;
+		m_capStartAct->setChecked(true);
+	} else if (m_singleStep) {
+		m_capNotifier->setEnabled(true);
+	}
+}
+
 void ApplicationWindow::capStart(bool start)
 {
+	if (!m_singleStep)
+		m_capStepAct->setDisabled(true);
 	if (m_genTab->isRadio() && !m_genTab->isSDR()) {
 		if (start)
 			startAudio();
@@ -1384,6 +1420,7 @@ void ApplicationWindow::closeDevice()
 	m_sigMapper = NULL;
 	m_capStartAct->setEnabled(false);
 	m_capStartAct->setChecked(false);
+	m_capStepAct->setEnabled(false);
 	m_saveRawAct->setEnabled(false);
 	if (g_fd() >= 0) {
 		if (m_capNotifier) {
