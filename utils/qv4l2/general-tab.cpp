@@ -1056,7 +1056,7 @@ int GeneralTab::addAudioDevice(void *hint, int deviceNum)
 bool GeneralTab::createAudioDeviceList()
 {
 #ifdef HAVE_ALSA
-	if (m_audioInDevice == NULL || m_audioOutDevice == NULL)
+	if (m_audioInDevice == NULL || m_audioOutDevice == NULL || m_isOutput)
 		return false;
 
 	m_audioInDevice->clear();
