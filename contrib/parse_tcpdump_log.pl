@@ -354,7 +354,7 @@ sub print_frame($$)
 
 	# Extra data
 
-	if ($resp{TransferType} == 2) {
+	if ($resp{TransferType} == 2 || $resp{"Endpoint"} != 0x80) {
 		if ($type > 128) {
 			printf " <<<";
 		} else {
