@@ -57,6 +57,35 @@ my %cmd_map = (
 
 my @stack;
 
+sub print_send_race($$$$$$$)
+{
+	my ( $timestamp, $ep, $len, $seq, $mbox, $cmd, $payload ) = @_;
+
+	my $data = pop @stack;
+	if (!$data && !$payload =~ /ERROR/) {
+		printf "Missing control cmd\n";
+		return;
+	}
+
+	$payload=", bytes = $payload" if ($payload);
+
+	my ( $ctrl_ts, $ctrl_ep, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, $ctrl_hsize, @ctrl_bytes ) = @$data;
+
+	printf("%slen=%d, seq %d, mbox=0x%02x, cmd=%s, bytes=",
+		$ctrl_ts, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd);
+		for (my $i = $ctrl_hsize; $i < scalar(@ctrl_bytes) - 2; $i++) {
+			printf "%02x ", $ctrl_bytes[$i];
+		}
+	printf("\n");
+
+	if ($payload =~ /ERROR/) {
+		printf("\t$payload\n");
+	} else {
+		printf("\t%slen=%d, seq %d, mbox=0x%02x, cmd=%s%s\n",
+			$timestamp, $len, $seq, $mbox, $cmd, $payload);
+	}
+}
+
 while (<>) {
 	if (m/(\d+)\s+ms\s+(\d+)\s+ms\s+\((\d+)\s+us\s+EP\=([\da-fA-F]+).*[\<\>]+\s*(.*)/) {
 		my $timestamp = sprintf "%09u ms %6u ms %7u us ", $1, $2, $3;
@@ -68,19 +97,7 @@ while (<>) {
 		$timestamp = "" if (!$show_timestamp);
 
 		if ($payload =~ /ERROR/) {
-			my $data = pop @stack;
-			if ($data) {
-				my ( $ctrl_ts, $ctrl_ep, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, $ctrl_hsize, @ctrl_bytes ) = @$data;
-
-				printf("%slen=%d, seq %d, mbox=0x%02x, cmd=%s, bytes=",
-					$ctrl_ts, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd);
-				for (my $i = $ctrl_hsize; $i < scalar(@ctrl_bytes) - 2; $i++) {
-					printf "%02x ", $ctrl_bytes[$i];
-				}
-				printf("\n");
-			}
-
-			printf("\t%sEP=0x%02x: %s\n", $timestamp, $ep, $payload);
+			print_send_race($timestamp, $ep, 0, 0, 0, 0, $payload);
 			next;
 		}
 
@@ -113,26 +130,12 @@ while (<>) {
 			my @data = ( $timestamp, $ep, $len, $seq, $mbox, $cmd, $header_size, @bytes );
 			push @stack, \@data;
 		} else {
-			my $data = pop @stack;
-			if (!$data) {
-				printf "Missing control cmd\n";
-			}
-			my ( $ctrl_ts, $ctrl_ep, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, $ctrl_hsize, @ctrl_bytes ) = @$data;
-
-			printf("%slen=%d, seq %d, mbox=0x%02x, cmd=%s, bytes=",
-				$ctrl_ts, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd);
-			for (my $i = $ctrl_hsize; $i < scalar(@ctrl_bytes) - 2; $i++) {
-				printf "%02x ", $ctrl_bytes[$i];
-			}
-			printf("\n");
-
-			printf("\t%slen=%d, seq %d, mbox=0x%02x, cmd=%s, bytes=",
-				$timestamp, $len, $seq, $mbox, $cmd);
+			my $pay;
 			# Print everything, except the checksum
 			for (my $i = $header_size; $i < scalar(@bytes) - 2; $i++) {
-				printf "%02x ", $bytes[$i];
+				$pay .= sprintf "%02x ", $bytes[$i];
 			}
-			printf("\n");
+			print_send_race($timestamp, $ep, $len, $seq, $mbox, $cmd, $pay);
 		}
 	}
 }
