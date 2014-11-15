@@ -113,6 +113,12 @@ sub print_send_race($$$$$$)
 		}
 	}
 
+	if ($cmd eq "CMD_MEM_RD" && ($ctrl_cmd =~ /CMD_FW_(QUERYINFO|DL_BEGIN|DL_END)/)) {
+		my $comment = "\t/* read: $payload */" if ($payload);
+		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n";
+		next;
+	}
+
 	my $ctrl_pay;
 	for (my $i = 0; $i < scalar(@ctrl_bytes); $i++) {
 		if ($i == 0) {
@@ -120,6 +126,11 @@ sub print_send_race($$$$$$)
 		} else {
 			$ctrl_pay .= sprintf ", 0x%02x", $ctrl_bytes[$i];
 		}
+	}
+
+	if ($ctrl_cmd eq "CMD_FW_DL") {
+		printf "af9015_wr_fw_block($len, { $ctrl_pay };\n";
+		next;
 	}
 
 	$payload=", bytes = $payload" if ($payload);
