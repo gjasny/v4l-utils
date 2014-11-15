@@ -183,7 +183,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	case V4L2_PIX_FMT_XBGR32:
 	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_ABGR32:
-		tpg->is_yuv = 0;
+		tpg->is_yuv = false;
 		break;
 	case V4L2_PIX_FMT_NV16M:
 	case V4L2_PIX_FMT_NV61M:
@@ -193,7 +193,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	case V4L2_PIX_FMT_UYVY:
 	case V4L2_PIX_FMT_YVYU:
 	case V4L2_PIX_FMT_VYUY:
-		tpg->is_yuv = 1;
+		tpg->is_yuv = true;
 		break;
 	default:
 		return false;
@@ -249,7 +249,7 @@ void tpg_s_crop_compose(struct tpg_data *tpg, const struct v4l2_rect *crop,
 }
 
 void tpg_reset_source(struct tpg_data *tpg, unsigned width, unsigned height,
-		       enum v4l2_field field)
+		       u32 field)
 {
 	unsigned p;
 
