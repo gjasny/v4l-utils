@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 use strict;
+use Getopt::Long;
 
 #   Copyright (C) 2014 Mauro Carvalho Chehab
 #
@@ -22,7 +23,17 @@ use strict;
 # is not hard to parse some USB analyzers log into the expected format.
 #
 
-my $debug = 1; # FIXME: convert it into a command line option
+my $debug = 0;
+my $show_timestamp = 0;
+
+my $argerr = "Invalid arguments.\nUse $0 [--debug] [--show_timestamp]\n";
+
+GetOptions(
+	'show_timestamp' => \$show_timestamp,
+	'debug' => \$debug,
+) or die $argerr;
+
+
 my $ctrl_ep = 0x02;
 my $resp_ep = 0x81;
 
@@ -46,16 +57,18 @@ my %cmd_map = (
 
 while (<>) {
 	if (m/(\d+)\s+ms\s+(\d+)\s+ms\s+\((\d+)\s+us\s+EP\=([\da-fA-F]+).*[\<\>]+\s*(.*)/) {
-		my $timestamp = sprintf "%09u ms %6u ms %7u us", $1, $2, $3;
+		my $timestamp = sprintf "%09u ms %6u ms %7u us ", $1, $2, $3;
 		my $ep = hex($4);
 		my $payload = $5;
 
+		printf("// %sEP=0x%02x: %s\n", $timestamp, $ep, $payload) if ($debug);
+
+		$timestamp = "" if (!$show_timestamp);
+
 		if ($payload =~ /ERROR/) {
-			printf("%s EP=0x%02x: %s\n", $timestamp, $ep, $payload);
+			printf("%sEP=0x%02x: %s\n", $timestamp, $ep, $payload);
 			next;
 		}
-
-		printf("// %s EP=0x%02x: %s\n", $timestamp, $ep, $payload) if ($debug);
 
 		next if (!($ep == $ctrl_ep || $ep == $resp_ep));
 
@@ -82,7 +95,7 @@ while (<>) {
 		}
 		my $seq = $bytes[3];
 
-		printf("%s EP=0x%02x: len=%d, seq %d, mbox=0x%02x, cmd=%s, bytes=",
+		printf("%sEP=0x%02x: len=%d, seq %d, mbox=0x%02x, cmd=%s, bytes=",
 			$timestamp, $ep, $len, $seq, $mbox, $cmd);
 		# Print everything, except the checksum
 		for (my $i = $header_size; $i < scalar(@bytes) - 2; $i++) {
