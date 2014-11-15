@@ -1,4 +1,4 @@
-# table imon_mce, type: RC6_MCE
+# table imon_mce, type: RC6
 0x800ff415 KEY_REWIND
 0x800ff414 KEY_FASTFORWARD
 0x800ff41b KEY_PREVIOUS
