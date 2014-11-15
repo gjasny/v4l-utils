@@ -226,7 +226,7 @@ static error_t parse_keyfile(char *fname, char **table)
 							goto err_einval;
 						if (!strcasecmp(p,"rc5") || !strcasecmp(p,"rc-5"))
 							ch_proto |= RC_5;
-						else if (!strcasecmp(p,"rc6") || !strcasecmp(p,"rc-6"))
+						else if (!strcasecmp(p,"rc6") || !strcasecmp(p,"rc-6") || !strcasecmp(p,"rc6-mce") || !strcasecmp(p,"rc6_mce"))
 							ch_proto |= RC_6;
 						else if (!strcasecmp(p,"nec"))
 							ch_proto |= NEC;
