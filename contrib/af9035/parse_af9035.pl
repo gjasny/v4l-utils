@@ -44,17 +44,23 @@ my %cmd_map = (
 
 while (<>) {
 	if (m/(\d+)\s+ms\s+(\d+)\s+ms\s+\((\d+)\s+us\s+EP\=([\da-fA-F]+).*[\<\>]+\s*(.*)/) {
-		my $timestamp = sprintf "%09u ms %6u ms %6u us", $1, $2, $3;
+		my $timestamp = sprintf "%09u ms %6u ms %7u us", $1, $2, $3;
 		my $ep = hex($4);
 		my $payload = $5;
-		my @bytes = split(/ /, $payload);
-		for (my $i = 0; $i < scalar(@bytes); $i++) {
-			$bytes[$i] = hex($bytes[$i]);
+
+		if ($payload =~ /ERROR/) {
+			printf("%s EP=0x%02x: %s\n", $timestamp, $ep, $payload);
+			next;
 		}
 
 		printf("// %s EP=0x%02x: %s\n", $timestamp, $ep, $payload) if ($debug);
 
 		next if (!($ep == $ctrl_ep || $ep == $resp_ep));
+
+		my @bytes = split(/ /, $payload);
+		for (my $i = 0; $i < scalar(@bytes); $i++) {
+			$bytes[$i] = hex($bytes[$i]);
+		}
 
 		my $len = $bytes[0];
 		my $header_size;
