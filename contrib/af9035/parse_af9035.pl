@@ -129,7 +129,7 @@ sub print_send_race($$$$$$)
 	}
 
 	if ($ctrl_cmd eq "CMD_FW_DL") {
-		printf "af9015_wr_fw_block($len, { $ctrl_pay };\n";
+		printf "af9015_wr_fw_block(%d, { $ctrl_pay };\n", scalar(@ctrl_bytes);
 		next;
 	}
 
