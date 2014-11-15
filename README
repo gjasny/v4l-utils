@@ -166,3 +166,30 @@ Installed by make install under <prefix>/bin.
 xc3028-firmware:
 Xceive XC2028/3028 tuner module firmware manipulation tool.
 xc3028-firmware does not get installed by make install.
+
+-------------------
+Syncing with Kernel
+-------------------
+
+There are a number of files on this package that depends on the Linux Kernel.
+
+In order to make easier to keep it in sync, there's a target on this
+package to do the synchronism.
+
+There are some steps required:
+
+step 1) at the Kernel git tree:
+
+We need to sanitize the headers to be installed. To do that, you should
+run
+
+	$ make headers_install INSTALL_HDR_PATH=usr/
+
+This will create the dir "usr/" inside the Kernel tree.
+
+step 2) at v4l-utils tree:
+
+	$ KERNEL_DIR=location/of/the/kernel/tree
+	$ make sync-with-kernel
+
+step3) remove the usr/ from the Kernel tree.
