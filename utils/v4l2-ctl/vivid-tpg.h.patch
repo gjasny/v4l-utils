@@ -1,8 +1,8 @@
-diff --git b/utils/v4l2-ctl/vivid-tpg.h a/utils/v4l2-ctl/vivid-tpg.h
-index 51ef7d1..76c373a 100644
---- b/utils/v4l2-ctl/vivid-tpg.h
-+++ a/utils/v4l2-ctl/vivid-tpg.h
-@@ -20,13 +20,46 @@
+diff --git a/devel/v4l/patchwork//drivers/media/platform/vivid/vivid-tpg.h b/utils/v4l2-ctl/vivid-tpg.h
+index 8ef3e52ba3be..76c373a7b4f1 100644
+--- a/devel/v4l/patchwork//drivers/media/platform/vivid/vivid-tpg.h
++++ b/utils/v4l2-ctl/vivid-tpg.h
+@@ -20,14 +20,46 @@
  #ifndef _VIVID_TPG_H_
  #define _VIVID_TPG_H_
  
@@ -11,6 +11,7 @@ index 51ef7d1..76c373a 100644
 -#include <linux/errno.h>
 -#include <linux/random.h>
 -#include <linux/slab.h>
+-#include <linux/vmalloc.h>
  #include <linux/videodev2.h>
  
 +#include <stdbool.h>
