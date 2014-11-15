@@ -57,9 +57,9 @@ my %cmd_map = (
 
 my @stack;
 
-sub print_send_race($$$$$$$)
+sub print_send_race($$$$$$)
 {
-	my ( $timestamp, $ep, $len, $seq, $mbox, $cmd, $payload ) = @_;
+	my ( $timestamp, $ep, $len, $mbox, $cmd, $payload ) = @_;
 
 	my $data = pop @stack;
 	if (!$data && !$payload =~ /ERROR/) {
@@ -67,22 +67,70 @@ sub print_send_race($$$$$$$)
 		return;
 	}
 
+	my ( $ctrl_ts, $ctrl_ep, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, @ctrl_bytes ) = @$data;
+
+	if ($cmd eq "CMD_MEM_RD" && scalar(@ctrl_bytes) >= 6 && ($ctrl_cmd eq "CMD_MEM_WR" || $ctrl_cmd eq "CMD_MEM_RD")) {
+		my $wlen;
+
+		$wlen = shift @ctrl_bytes;
+		shift @ctrl_bytes;
+		shift @ctrl_bytes;
+		shift @ctrl_bytes;
+
+		my $reg = $ctrl_mbox << 16;
+		$reg |= (shift @ctrl_bytes) << 8;
+		$reg |= (shift @ctrl_bytes);
+
+		my $ctrl_pay;
+		for (my $i =  0; $i < scalar(@ctrl_bytes); $i++) {
+			if ($i == 0) {
+				$ctrl_pay .= sprintf "0x%02x", $ctrl_bytes[$i];
+			} else {
+				$ctrl_pay .= sprintf ", 0x%02x", $ctrl_bytes[$i];
+			}
+		}
+
+		if ($ctrl_cmd eq "CMD_MEM_WR") {
+			my $comment;
+
+			$comment = "\t/* $payload */" if ($payload =~ /ERROR/);
+
+			if (scalar(@ctrl_bytes) > 1) {
+				printf "ret = af9035_wr_regs(d, 0x%04x, $ctrl_len, { $ctrl_pay });$comment\n", $reg;
+			} else {
+				printf "ret = af9035_wr_reg(d, 0x%04x, $ctrl_pay);$comment\n", $reg;
+			}
+			return;
+		}
+		if ($ctrl_cmd eq "CMD_MEM_RD") {
+			my $comment = "\t/* read: $payload */";
+			if (scalar(@ctrl_bytes) > 0) {
+				printf "ret = af9035_rd_regs(d, 0x%04x, $ctrl_len, { $ctrl_pay }, $len, rbuf);$comment\n", $reg;
+			} else {
+				printf "ret = af9035_rd_reg(d, 0x%04x, &val);$comment\n", $reg;
+			}
+			return;
+		}
+	}
+
+	my $ctrl_pay;
+	for (my $i = 0; $i < scalar(@ctrl_bytes); $i++) {
+		if ($i == 0) {
+			$ctrl_pay .= sprintf "0x%02x", $ctrl_bytes[$i];
+		} else {
+			$ctrl_pay .= sprintf ", 0x%02x", $ctrl_bytes[$i];
+		}
+	}
+
 	$payload=", bytes = $payload" if ($payload);
 
-	my ( $ctrl_ts, $ctrl_ep, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, $ctrl_hsize, @ctrl_bytes ) = @$data;
-
-	printf("%slen=%d, seq %d, mbox=0x%02x, cmd=%s, bytes=",
-		$ctrl_ts, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd);
-		for (my $i = $ctrl_hsize; $i < scalar(@ctrl_bytes) - 2; $i++) {
-			printf "%02x ", $ctrl_bytes[$i];
-		}
-	printf("\n");
-
+	printf("%slen=%d, seq %d, mbox=0x%02x, cmd=%s, bytes= %s\n",
+		$ctrl_ts, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, $ctrl_pay);
 	if ($payload =~ /ERROR/) {
 		printf("\t$payload\n");
-	} else {
-		printf("\t%slen=%d, seq %d, mbox=0x%02x, cmd=%s%s\n",
-			$timestamp, $len, $seq, $mbox, $cmd, $payload);
+	} elsif ($cmd ne "CMD_FW_DL") {
+		printf("\t%sACK: len=%d, mbox=0x%02x, cmd=%s%s\n",
+			$timestamp, $len, $mbox, $cmd, $payload);
 	}
 }
 
@@ -97,7 +145,7 @@ while (<>) {
 		$timestamp = "" if (!$show_timestamp);
 
 		if ($payload =~ /ERROR/) {
-			print_send_race($timestamp, $ep, 0, 0, 0, 0, $payload);
+			print_send_race($timestamp, $ep, 0, 0, 0, $payload);
 			next;
 		}
 
@@ -108,34 +156,49 @@ while (<>) {
 			$bytes[$i] = hex($bytes[$i]);
 		}
 
-		my $len = $bytes[0];
+		my $len = shift @bytes;
+		my $mbox = shift @bytes;
+		my $cmd = shift @bytes;
+		my $seq;
+
 		my $header_size;
 		# Discount checksum and header length
 		if ($ep == $ctrl_ep) {
+			$seq = shift @bytes;
 			$header_size = 4;
 		} else {
 			$header_size = 3;
 		}
 		$len -= 1 + $header_size;
-		my $mbox = $bytes[1];
-		my $cmd = $bytes[2];
 		if (defined($cmd_map{$cmd})) {
 			$cmd = $cmd_map{$cmd};
 		} else {
 			$cmd = sprintf "unknown 0x%02x", $cmd;
 		}
-		my $seq = $bytes[3];
+		my $checksum = pop @bytes;
+		$checksum |= (pop @bytes) << 8;
 
 		if ($ep == $ctrl_ep) {
-			my @data = ( $timestamp, $ep, $len, $seq, $mbox, $cmd, $header_size, @bytes );
+			my @data = ( $timestamp, $ep, $len, $seq, $mbox, $cmd, @bytes );
 			push @stack, \@data;
-		} else {
-			my $pay;
-			# Print everything, except the checksum
-			for (my $i = $header_size; $i < scalar(@bytes) - 2; $i++) {
-				$pay .= sprintf "%02x ", $bytes[$i];
+
+			if ($cmd eq "CMD_FW_DL") {
+				print_send_race($timestamp, $ep, 0, 0, $cmd, "");
 			}
-			print_send_race($timestamp, $ep, $len, $seq, $mbox, $cmd, $pay);
+
+			next;
 		}
+
+		my $pay;
+		# Print everything, except the checksum
+		for (my $i = 0; $i < scalar(@bytes); $i++) {
+			if (!$i) {
+				$pay .= sprintf "0x%02x", $bytes[$i];
+			} else {
+				$pay .= sprintf ", 0x%02x", $bytes[$i];
+			}
+		}
+
+		print_send_race($timestamp, $ep, $len, $mbox, $cmd, $pay);
 	}
 }
