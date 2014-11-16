@@ -120,6 +120,12 @@ sub print_send_race($$$$$$)
 		next;
 	}
 
+	if ($cmd eq "CMD_MEM_WR" && $ctrl_cmd eq "CMD_IR_GET") {
+		my $comment = "\t/* read: $payload */" if ($payload);
+		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n";
+		next;
+	}
+
 	my $ctrl_pay;
 	for (my $i = 0; $i < scalar(@ctrl_bytes); $i++) {
 		if ($i == 0) {
