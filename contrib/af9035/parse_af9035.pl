@@ -126,7 +126,7 @@ sub print_send_race($$$$$$)
 		}
 	}
 
-	if ($cmd eq "CMD_MEM_RD" && ($ctrl_cmd =~ /CMD_FW_(QUERYINFO|DL_BEGIN|DL_END)/)) {
+	if ($cmd eq "CMD_MEM_RD" && ($ctrl_cmd =~ /CMD_FW_(QUERYINFO|DL_BEGIN|DL_END|BOOT)/)) {
 		my $comment = "\t/* read: $payload */" if ($payload);
 		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n" if (!$hide_fw);
 		next;
