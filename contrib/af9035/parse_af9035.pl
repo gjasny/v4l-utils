@@ -25,11 +25,19 @@ use Getopt::Long;
 
 my $debug = 0;
 my $show_timestamp = 0;
+my $hide_ir;
+my $hide_fw;
+my $hide_rd;
+my $hide_wr;
 
-my $argerr = "Invalid arguments.\nUse $0 [--debug] [--show_timestamp]\n";
+my $argerr = "Invalid arguments.\nUse $0 [--debug] [--show_timestamp] [--hide-ir] [--hide-fw] [--hide-rd] [--hide-wr]\n";
 
 GetOptions(
 	'show_timestamp' => \$show_timestamp,
+	'hide_ir|hide-ir|hide-rc|hide_rc' => \$hide_ir,
+	'hide_fw|hide-fw' => \$hide_fw,
+	'hide_rd|hide-rd' => \$hide_rd,
+	'hide_wr|hide-wr' => \$hide_wr,
 	'debug' => \$debug,
 ) or die $argerr;
 
@@ -92,6 +100,8 @@ sub print_send_race($$$$$$)
 		}
 
 		if ($ctrl_cmd eq "CMD_MEM_WR") {
+			return if ($hide_wr);
+
 			my $comment;
 
 			$comment = "\t/* $payload */" if ($payload =~ /ERROR/);
@@ -104,6 +114,8 @@ sub print_send_race($$$$$$)
 			return;
 		}
 		if ($ctrl_cmd eq "CMD_MEM_RD") {
+			return if ($hide_rd);
+
 			my $comment = "\t/* read: $payload */";
 			if (scalar(@ctrl_bytes) > 0) {
 				printf "ret = af9035_rd_regs(d, 0x%04x, $ctrl_len, { $ctrl_pay }, $len, rbuf);$comment\n", $reg;
@@ -116,13 +128,13 @@ sub print_send_race($$$$$$)
 
 	if ($cmd eq "CMD_MEM_RD" && ($ctrl_cmd =~ /CMD_FW_(QUERYINFO|DL_BEGIN|DL_END)/)) {
 		my $comment = "\t/* read: $payload */" if ($payload);
-		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n";
+		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n" if (!$hide_fw);
 		next;
 	}
 
 	if ($cmd eq "CMD_MEM_WR" && $ctrl_cmd eq "CMD_IR_GET") {
 		my $comment = "\t/* read: $payload */" if ($payload);
-		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n";
+		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n" if (!$hide_ir);
 		next;
 	}
 
@@ -136,7 +148,7 @@ sub print_send_race($$$$$$)
 	}
 
 	if ($ctrl_cmd eq "CMD_FW_DL") {
-		printf "af9015_wr_fw_block(%d, { $ctrl_pay };\n", scalar(@ctrl_bytes);
+		printf "af9015_wr_fw_block(%d, { $ctrl_pay };\n", scalar(@ctrl_bytes) if (!$hide_fw);
 		next;
 	}
 
