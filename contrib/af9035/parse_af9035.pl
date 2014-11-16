@@ -62,7 +62,8 @@ sub print_send_race($$$$$$)
 	my ( $timestamp, $ep, $len, $mbox, $cmd, $payload ) = @_;
 
 	my $data = pop @stack;
-	if (!$data && !$payload =~ /ERROR/) {
+	if (!$data) {
+		printf("\t$payload\n") if ($payload =~ /ERROR/);
 		printf "Missing control cmd\n";
 		return;
 	}
