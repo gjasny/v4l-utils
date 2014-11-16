@@ -29,6 +29,8 @@ my $hide_ir;
 my $hide_fw;
 my $hide_rd;
 my $hide_wr;
+my $hide_i2c_rd;
+my $hide_i2c_wr;
 
 my $argerr = "Invalid arguments.\nUse $0 [--debug] [--show_timestamp] [--hide-ir] [--hide-fw] [--hide-rd] [--hide-wr]\n";
 
@@ -38,6 +40,8 @@ GetOptions(
 	'hide_fw|hide-fw' => \$hide_fw,
 	'hide_rd|hide-rd' => \$hide_rd,
 	'hide_wr|hide-wr' => \$hide_wr,
+	'hide_i2c_rd|hide-i2c-rd' => \$hide_i2c_rd,
+	'hide_i2c_wr|hide-i2c-wr' => \$hide_i2c_wr,
 	'debug' => \$debug,
 ) or die $argerr;
 
@@ -77,6 +81,36 @@ sub print_send_race($$$$$$)
 	}
 
 	my ( $ctrl_ts, $ctrl_ep, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, @ctrl_bytes ) = @$data;
+
+	if ($cmd eq "CMD_MEM_RD" && scalar(@ctrl_bytes) >= 3 && ($ctrl_cmd =~ /CMD_GENERIC_I2C_(RD|WR)/)) {
+		my @old = @ctrl_bytes;
+		my $len = shift @ctrl_bytes;
+		my $bus = shift @ctrl_bytes;
+		my $addr = (shift @ctrl_bytes) >> 1;
+
+		if (!scalar(@ctrl_bytes) && ($ctrl_cmd eq "CMD_GENERIC_I2C_RD")) {
+			my @b = split(/ /, $payload);
+			my $comment = "\t/* read: $payload */";
+
+			printf "i2c_master_recv(bus%d, 0x%02x >> 1, &buf, %d);%s\n", $bus, $addr, scalar(@b), $comment if (!$hide_i2c_rd);
+			return;
+		} elsif ($ctrl_cmd eq "CMD_GENERIC_I2C_WR") {
+			my $comment = "\t/* $payload */" if ($payload =~ /ERROR/);
+
+			my $ctrl_pay;
+			for (my $i =  0; $i < scalar(@ctrl_bytes); $i++) {
+				if ($i == 0) {
+					$ctrl_pay .= sprintf "0x%02x", $ctrl_bytes[$i];
+				} else {
+					$ctrl_pay .= sprintf ", 0x%02x", $ctrl_bytes[$i];
+				}
+			}
+
+			printf "i2c_master_send(bus%d, 0x%02x >> 1, { %s }, %d);%s\n", $bus, $addr, $ctrl_pay, scalar(@ctrl_bytes), $comment if (!$hide_i2c_wr);
+			return;
+		}
+		@ctrl_bytes = @old;
+	}
 
 	if ($cmd eq "CMD_MEM_RD" && scalar(@ctrl_bytes) >= 6 && ($ctrl_cmd eq "CMD_MEM_WR" || $ctrl_cmd eq "CMD_MEM_RD")) {
 		my $wlen;
