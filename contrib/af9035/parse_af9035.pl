@@ -132,7 +132,7 @@ sub print_send_race($$$$$$)
 		next;
 	}
 
-	if ($cmd eq "CMD_MEM_WR" && $ctrl_cmd eq "CMD_IR_GET") {
+	if ($cmd =~ /CMD_MEM_(WR|RD)/ && $ctrl_cmd eq "CMD_IR_GET") {
 		my $comment = "\t/* read: $payload */" if ($payload);
 		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n" if (!$hide_ir);
 		next;
