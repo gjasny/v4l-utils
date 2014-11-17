@@ -31,6 +31,7 @@ my $hide_rd;
 my $hide_wr;
 my $hide_i2c_rd;
 my $hide_i2c_wr;
+my $hide_errors;
 
 my $argerr = "Invalid arguments.\nUse $0 [--debug] [--show_timestamp] [--hide-ir] [--hide-fw] [--hide-rd] [--hide-wr]\n";
 
@@ -42,6 +43,7 @@ GetOptions(
 	'hide_wr|hide-wr' => \$hide_wr,
 	'hide_i2c_rd|hide-i2c-rd' => \$hide_i2c_rd,
 	'hide_i2c_wr|hide-i2c-wr' => \$hide_i2c_wr,
+	'hide_errors|hide-errors' => \$hide_errors,
 	'debug' => \$debug,
 ) or die $argerr;
 
@@ -75,6 +77,7 @@ sub print_send_recv($$$$$$)
 
 	my $data = pop @stack;
 	if (!$data) {
+		return if ($hide_errors);
 		$payload = ", recv_bytes = $payload" if ($payload && !($payload =~ /ERROR/));
 		printf "Missing control cmd:\n";
 		printf("\t%sRECV: len=%d, seq=%d, status=%d%s\n",
@@ -85,6 +88,7 @@ sub print_send_recv($$$$$$)
 	my ( $ctrl_ts, $ctrl_ep, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, @ctrl_bytes ) = @$data;
 
 	if ($len && !$status && $ctrl_seq != $seq) {
+		return if ($hide_errors);
 		$payload = ", recv_bytes = $payload" if ($payload && !($payload =~ /ERROR/));
 		printf "Wrong sequence number:\n";
 		printf("\t%sSEND: len=%d, seq %d, mbox=0x%02x, cmd=%s%s",
@@ -223,6 +227,8 @@ while (<>) {
 		my $payload = $5;
 
 		printf("// %sEP=0x%02x: %s\n", $timestamp, $ep, $payload) if ($debug);
+
+		next if (!$payload);
 
 		$timestamp = "" if (!$show_timestamp);
 
