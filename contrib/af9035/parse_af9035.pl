@@ -69,20 +69,36 @@ my %cmd_map = (
 
 my @stack;
 
-sub print_send_race($$$$$$)
+sub print_send_recv($$$$$$)
 {
-	my ( $timestamp, $ep, $len, $mbox, $cmd, $payload ) = @_;
+	my ( $timestamp, $ep, $len, $seq, $status, $payload ) = @_;
 
 	my $data = pop @stack;
 	if (!$data) {
-		printf("\t$payload\n") if ($payload =~ /ERROR/);
-		printf "Missing control cmd\n";
+		$payload = ", recv_bytes = $payload" if ($payload && !($payload =~ /ERROR/));
+		printf "Missing control cmd:\n";
+		printf("\t%sRECV: len=%d, seq=%d, status=%d%s\n",
+			$timestamp, $len, $seq, $status, $payload);
 		return;
 	}
 
 	my ( $ctrl_ts, $ctrl_ep, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, @ctrl_bytes ) = @$data;
 
-	if ($cmd eq "CMD_MEM_RD" && scalar(@ctrl_bytes) >= 3 && ($ctrl_cmd =~ /CMD_GENERIC_I2C_(RD|WR)/)) {
+	if ($len && !$status && $ctrl_seq != $seq) {
+		$payload = ", recv_bytes = $payload" if ($payload && !($payload =~ /ERROR/));
+		printf "Wrong sequence number:\n";
+		printf("\t%sSEND: len=%d, seq %d, mbox=0x%02x, cmd=%s%s",
+			$ctrl_ts, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, $payload);
+		$timestamp = "($timestamp)" if ($timestamp);
+		printf(" RECV: len=%d, seq=%d, status=%d%s\n",
+			$len, $seq, $status, $timestamp);
+		print "\n";
+		return;
+	}
+
+	$payload .= " - ERROR: af9035 status = $status" if ($status);
+
+	if (scalar(@ctrl_bytes) >= 3 && ($ctrl_cmd =~ /CMD_GENERIC_I2C_(RD|WR)/)) {
 		my @old = @ctrl_bytes;
 		my $len = shift @ctrl_bytes;
 		my $bus = shift @ctrl_bytes;
@@ -112,7 +128,7 @@ sub print_send_race($$$$$$)
 		@ctrl_bytes = @old;
 	}
 
-	if ($cmd eq "CMD_MEM_RD" && scalar(@ctrl_bytes) >= 6 && ($ctrl_cmd eq "CMD_MEM_WR" || $ctrl_cmd eq "CMD_MEM_RD")) {
+	if (scalar(@ctrl_bytes) >= 6 && ($ctrl_cmd eq "CMD_MEM_WR" || $ctrl_cmd eq "CMD_MEM_RD")) {
 		my $wlen;
 
 		$wlen = shift @ctrl_bytes;
@@ -160,13 +176,13 @@ sub print_send_race($$$$$$)
 		}
 	}
 
-	if ($cmd eq "CMD_MEM_RD" && ($ctrl_cmd =~ /CMD_FW_(QUERYINFO|DL_BEGIN|DL_END|BOOT)/)) {
+	if ($ctrl_cmd =~ /CMD_FW_(QUERYINFO|DL_BEGIN|DL_END|BOOT)/) {
 		my $comment = "\t/* read: $payload */" if ($payload);
 		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n" if (!$hide_fw);
 		next;
 	}
 
-	if ($cmd =~ /CMD_MEM_(WR|RD)/ && $ctrl_cmd eq "CMD_IR_GET") {
+	if ($ctrl_cmd eq "CMD_IR_GET") {
 		my $comment = "\t/* read: $payload */" if ($payload);
 		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n" if (!$hide_ir);
 		next;
@@ -186,16 +202,18 @@ sub print_send_race($$$$$$)
 		next;
 	}
 
-	$payload=", bytes = $payload" if ($payload);
 
-	printf("%slen=%d, seq %d, mbox=0x%02x, cmd=%s, bytes= %s\n",
-		$ctrl_ts, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, $ctrl_pay);
-	if ($payload =~ /ERROR/) {
-		printf("\t$payload\n");
-	} elsif ($cmd ne "CMD_FW_DL") {
-		printf("\t%sACK: len=%d, mbox=0x%02x, cmd=%s%s\n",
-			$timestamp, $len, $mbox, $cmd, $payload);
+	$payload = ", recv_bytes = $payload" if ($payload && !($payload =~ /^ERROR/));
+	$ctrl_pay = ", bytes = $ctrl_pay" if ($ctrl_pay);
+
+	printf("%sSEND: len=%d, seq %d, mbox=0x%02x, cmd=%s%s%s",
+		$ctrl_ts, $ctrl_len, $ctrl_seq, $ctrl_mbox, $ctrl_cmd, $ctrl_pay, $payload);
+	if ($ctrl_cmd ne "CMD_FW_DL") {
+		$timestamp = "($timestamp)" if ($timestamp);
+		printf(" RECV: len=%d, seq=%d, status=%d%s",
+			$len, $seq, $status, $timestamp) if ($status);
 	}
+	print "\n";
 }
 
 while (<>) {
@@ -208,11 +226,6 @@ while (<>) {
 
 		$timestamp = "" if (!$show_timestamp);
 
-		if ($payload =~ /ERROR/) {
-			print_send_race($timestamp, $ep, 0, 0, 0, $payload);
-			next;
-		}
-
 		next if (!($ep == $ctrl_ep || $ep == $resp_ep));
 
 		my @bytes = split(/ /, $payload);
@@ -221,23 +234,26 @@ while (<>) {
 		}
 
 		my $len = shift @bytes;
-		my $mbox = shift @bytes;
-		my $cmd = shift @bytes;
-		my $seq;
+		my ($mbox, $cmd, $seq, $status);
 
-		my $header_size;
 		# Discount checksum and header length
 		if ($ep == $ctrl_ep) {
+			$mbox = shift @bytes;	# Actually, part of CMD
+			$cmd = shift @bytes;
 			$seq = shift @bytes;
-			$header_size = 4;
+
+			if (defined($cmd_map{$cmd})) {
+				$cmd = $cmd_map{$cmd};
+			} else {
+				$cmd = sprintf "unknown 0x%02x", $cmd;
+			}
+
+			$len -= 4 + 1;
 		} else {
-			$header_size = 3;
-		}
-		$len -= 1 + $header_size;
-		if (defined($cmd_map{$cmd})) {
-			$cmd = $cmd_map{$cmd};
-		} else {
-			$cmd = sprintf "unknown 0x%02x", $cmd;
+			$seq = shift @bytes;
+			$status = shift @bytes;
+
+			$len -= 3 + 1;
 		}
 		my $checksum = pop @bytes;
 		$checksum |= (pop @bytes) << 8;
@@ -247,7 +263,7 @@ while (<>) {
 			push @stack, \@data;
 
 			if ($cmd eq "CMD_FW_DL") {
-				print_send_race($timestamp, $ep, 0, 0, $cmd, "");
+				print_send_recv($timestamp, $ep, 0, 0, 0, "");
 			}
 
 			next;
@@ -263,6 +279,6 @@ while (<>) {
 			}
 		}
 
-		print_send_race($timestamp, $ep, $len, $mbox, $cmd, $pay);
+		print_send_recv($timestamp, $ep, $len, $seq, $status, $pay);
 	}
 }
