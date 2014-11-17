@@ -132,6 +132,45 @@ sub print_send_recv($$$$$$)
 		@ctrl_bytes = @old;
 	}
 
+	if (scalar(@ctrl_bytes) >= 3 && ($ctrl_cmd =~ /CMD_I2C_(RD|WR)/)) {
+		my @old = @ctrl_bytes;
+		my $addr = (shift @ctrl_bytes) >> 1;
+		my $len = shift @ctrl_bytes;
+		my $rlen = shift @ctrl_bytes;
+		my $msb_raddr = shift @ctrl_bytes;
+		my $lsb_raddr = shift @ctrl_bytes;
+
+		if ($rlen == 2) {
+			unshift(@ctrl_bytes, $lsb_raddr);
+			unshift(@ctrl_bytes, $msb_raddr);
+		} elsif ($rlen == 1) {
+			unshift(@ctrl_bytes, $lsb_raddr);
+		}
+
+		if (!scalar(@ctrl_bytes) && ($ctrl_cmd eq "CMD_I2C_RD")) {
+			my @b = split(/ /, $payload);
+			my $comment = "\t/* read: $payload */";
+
+			printf "i2c_master_recv(client, 0x%02x >> 1, &buf, %d);%s\n", $addr, scalar(@b), $comment if (!$hide_i2c_rd);
+			return;
+		} elsif ($ctrl_cmd eq "CMD_I2C_WR") {
+			my $comment = "\t/* $payload */" if ($payload =~ /ERROR/);
+
+			my $ctrl_pay;
+			for (my $i =  0; $i < scalar(@ctrl_bytes); $i++) {
+				if ($i == 0) {
+					$ctrl_pay .= sprintf "0x%02x", $ctrl_bytes[$i];
+				} else {
+					$ctrl_pay .= sprintf ", 0x%02x", $ctrl_bytes[$i];
+				}
+			}
+
+			printf "i2c_master_send(client, 0x%02x >> 1, { %s }, %d);%s\n", $addr, $ctrl_pay, scalar(@ctrl_bytes), $comment if (!$hide_i2c_wr);
+			return;
+		}
+		@ctrl_bytes = @old;
+	}
+
 	if (scalar(@ctrl_bytes) >= 6 && ($ctrl_cmd eq "CMD_MEM_WR" || $ctrl_cmd eq "CMD_MEM_RD")) {
 		my $wlen;
 
