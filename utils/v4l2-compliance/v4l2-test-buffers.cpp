@@ -596,7 +596,8 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 				ret = select(node->g_fd() + 1, NULL, &fds, NULL, &tv);
 			else
 				ret = select(node->g_fd() + 1, &fds, NULL, NULL, &tv);
-			fail_on_test(ret <= 0);
+			fail_on_test(ret == 0);
+			fail_on_test(ret < 0);
 			fail_on_test(!FD_ISSET(node->g_fd(), &fds));
 		}
 
