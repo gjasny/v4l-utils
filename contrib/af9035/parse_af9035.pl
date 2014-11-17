@@ -192,12 +192,9 @@ sub print_send_recv($$$$$$)
 			}
 		}
 
+		return if ($hide_wr);
 		if ($ctrl_cmd eq "CMD_MEM_WR") {
-			return if ($hide_wr);
-
-			my $comment;
-
-			$comment = "\t/* $payload */" if ($payload =~ /ERROR/);
+			my $comment = "\t/* $payload */" if ($payload =~ /ERROR/);
 
 			if (scalar(@ctrl_bytes) > 1) {
 				printf "ret = af9035_wr_regs(d, 0x%04x, $ctrl_len, { $ctrl_pay });$comment\n", $reg;
@@ -205,10 +202,7 @@ sub print_send_recv($$$$$$)
 				printf "ret = af9035_wr_reg(d, 0x%04x, $ctrl_pay);$comment\n", $reg;
 			}
 			return;
-		}
-		if ($ctrl_cmd eq "CMD_MEM_RD") {
-			return if ($hide_rd);
-
+		} else {
 			my $comment = "\t/* read: $payload */";
 			if (scalar(@ctrl_bytes) > 0) {
 				printf "ret = af9035_rd_regs(d, 0x%04x, $ctrl_len, { $ctrl_pay }, $len, rbuf);$comment\n", $reg;
