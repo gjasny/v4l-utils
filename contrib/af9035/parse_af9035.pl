@@ -134,8 +134,8 @@ sub print_send_recv($$$$$$)
 
 	if (scalar(@ctrl_bytes) >= 3 && ($ctrl_cmd =~ /CMD_I2C_(RD|WR)/)) {
 		my @old = @ctrl_bytes;
-		my $addr = (shift @ctrl_bytes) >> 1;
 		my $len = shift @ctrl_bytes;
+		my $addr = (shift @ctrl_bytes) >> 1;
 		my $rlen = shift @ctrl_bytes;
 		my $msb_raddr = shift @ctrl_bytes;
 		my $lsb_raddr = shift @ctrl_bytes;
