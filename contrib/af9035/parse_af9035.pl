@@ -29,11 +29,15 @@ my $hide_ir;
 my $hide_fw;
 my $hide_rd;
 my $hide_wr;
+my $hide_rw;
 my $hide_i2c_rd;
 my $hide_i2c_wr;
+my $hide_i2c_rw;
 my $hide_errors;
+my $help;
 
-my $argerr = "Invalid arguments.\nUse $0 [--debug] [--show_timestamp] [--hide-ir] [--hide-fw] [--hide-rd] [--hide-wr]\n";
+my $helpmsg = "Use $0 [--debug] [--help] [--show_timestamp] [--hide-ir] [--hide-fw] [--hide-rd] [--hide-wr] [--hide-rw] [--hide-i2c-rd] [--hide-i2c-wr] [--hide-i2c-rw] [--hide-errors]\n";
+my $argerr = "Invalid arguments.\n$helpmsg";
 
 GetOptions(
 	'show_timestamp' => \$show_timestamp,
@@ -41,12 +45,29 @@ GetOptions(
 	'hide_fw|hide-fw' => \$hide_fw,
 	'hide_rd|hide-rd' => \$hide_rd,
 	'hide_wr|hide-wr' => \$hide_wr,
+	'hide_wr|hide-rw' => \$hide_rw,
 	'hide_i2c_rd|hide-i2c-rd' => \$hide_i2c_rd,
 	'hide_i2c_wr|hide-i2c-wr' => \$hide_i2c_wr,
+	'hide_i2c_rw|hide-i2c-rw' => \$hide_i2c_rw,
 	'hide_errors|hide-errors' => \$hide_errors,
-	'debug' => \$debug,
+	'debug|v|d' => \$debug,
+	'h|help' => \$help,
 ) or die $argerr;
 
+if ($help) {
+	print $helpmsg;
+	exit;
+}
+
+if ($hide_rw) {
+	$hide_rd = 1;
+	$hide_wr = 1;
+}
+
+if ($hide_i2c_rw) {
+	$hide_i2c_rd = 1;
+	$hide_i2c_wr = 1;
+}
 
 my $ctrl_ep = 0x02;
 my $resp_ep = 0x81;
