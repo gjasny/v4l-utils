@@ -392,7 +392,7 @@ static enum dvbv3_emulation_type dvbv3_type(uint32_t delivery_system)
 	case SYS_DVBT:
 	case SYS_DVBT2:
 	case SYS_ISDBT:
-	case SYS_DMBTH:
+	case SYS_DTMB:
 		return DVBV3_OFDM;
 	case SYS_ATSC:
 	case SYS_ATSCMH:
@@ -1172,7 +1172,7 @@ static enum dvb_quality dvbv_fe_cnr_to_quality(struct dvb_v5_fe_parms_priv *parm
 	case SYS_TURBO:
 	case SYS_ISDBS:
 	case SYS_DSS:
-	case SYS_DMBTH:
+	case SYS_DTMB:
 	case SYS_ATSC:
 	case SYS_ATSCMH:
 	case SYS_DVBC_ANNEX_B:

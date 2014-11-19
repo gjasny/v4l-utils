@@ -222,6 +222,7 @@ static int run_scan(struct arguments *args,
 		sys = SYS_ATSC;
 		break;
 	case SYS_ISDBT:
+	case SYS_DTMB:
 		sys = SYS_DVBT;
 		break;
 	default:
@@ -249,7 +250,6 @@ static int run_scan(struct arguments *args,
 		 */
 		if (dvb_retrieve_entry_prop(entry, DTV_FREQUENCY, &freq))
 			continue;
-
 		shift = dvb_estimate_freq_shift(parms);
 
 		if (dvb_retrieve_entry_prop(entry, DTV_POLARIZATION, &pol))

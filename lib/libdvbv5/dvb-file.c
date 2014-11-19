@@ -395,6 +395,7 @@ static uint32_t get_compat_format(uint32_t delivery_system)
 	case SYS_ISDBT:
 	case SYS_DVBT:
 	case SYS_DVBT2:
+	case SYS_DTMB:
 		return SYS_DVBT;
 	default:
 		return 0;
@@ -1356,7 +1357,8 @@ static struct {
 	{ SYS_ISDBS,		"ISDB-S" },
 	{ SYS_ISDBT,		"ISDB-T" },
 	{ SYS_ATSCMH,		"ATSC-MH" },
-	{ SYS_DMBTH,		"DMB-TH" },
+	{ SYS_DTMB,		"DMB-TH" },
+	{ SYS_DTMB,		"DMB" },
 };
 
 int dvb_parse_delsys(const char *name)

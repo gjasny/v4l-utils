@@ -1117,6 +1117,7 @@ static void __dvb_add_update_transponders(struct dvb_v5_fe_parms_priv *parms,
 		return;
 	case SYS_DVBT:
 	case SYS_DVBT2:
+	case SYS_DTMB:	/* FIXME: are DTMB nit tables equal to DVB-T? */
 		dvb_table_nit_descriptor_handler(
 				&parms->p, dvb_scan_handler->nit,
 				extension_descriptor,

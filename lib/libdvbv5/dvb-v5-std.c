@@ -159,6 +159,18 @@ const unsigned int sys_isdbs_props[] = {
 	0
 };
 
+const unsigned int sys_dtmb_props[] = {
+	DTV_FREQUENCY,
+	DTV_MODULATION,
+	DTV_BANDWIDTH_HZ,
+	DTV_INVERSION,
+	DTV_INNER_FEC,
+	DTV_GUARD_INTERVAL,
+	DTV_TRANSMISSION_MODE,
+	DTV_INTERLEAVING,
+	0
+};
+
 const unsigned int *dvb_v5_delivery_system[] = {
 	[SYS_ATSC] =          sys_atsc_props,
 	[SYS_ATSCMH] =        sys_atscmh_props,
@@ -172,10 +184,10 @@ const unsigned int *dvb_v5_delivery_system[] = {
 	[SYS_ISDBS] =         sys_isdbs_props,
 	[SYS_ISDBT] =         sys_isdbt_props,
 	[SYS_TURBO] =         sys_turbo_props,
+	[SYS_DTMB] =          sys_dtmb_props,
 	[SYS_ATSCMH] =        NULL,
 	[SYS_CMMB] =          NULL,
 	[SYS_DAB] =           NULL,
-	[SYS_DMBTH] =         NULL,
 	[SYS_DSS] =           NULL,
 	[SYS_DVBH] =          NULL,
 	[SYS_ISDBC] =         NULL,

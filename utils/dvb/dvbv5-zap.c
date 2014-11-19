@@ -136,6 +136,7 @@ static int parse(struct arguments *args,
 		sys = SYS_ATSC;
 		break;
 	case SYS_ISDBT:
+	case SYS_DTMB:
 		sys = SYS_DVBT;
 		break;
 	default:
