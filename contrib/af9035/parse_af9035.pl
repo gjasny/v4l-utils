@@ -197,7 +197,7 @@ sub print_send_recv($$$$$$)
 			my $comment = "\t/* $payload */" if ($payload =~ /ERROR/);
 
 			if (scalar(@ctrl_bytes) > 1) {
-				printf "ret = af9035_wr_regs(d, 0x%04x, $ctrl_len, { $ctrl_pay });$comment\n", $reg;
+				printf "ret = af9035_wr_regs(d, 0x%04x, %d, { $ctrl_pay });$comment\n", $reg, scalar(@ctrl_bytes);
 			} else {
 				printf "ret = af9035_wr_reg(d, 0x%04x, $ctrl_pay);$comment\n", $reg;
 			}
@@ -205,7 +205,7 @@ sub print_send_recv($$$$$$)
 		} else {
 			my $comment = "\t/* read: $payload */";
 			if (scalar(@ctrl_bytes) > 0) {
-				printf "ret = af9035_rd_regs(d, 0x%04x, $ctrl_len, { $ctrl_pay }, $len, rbuf);$comment\n", $reg;
+				printf "ret = af9035_rd_regs(d, 0x%04x, %d, { $ctrl_pay }, $len, rbuf);$comment\n", $reg, scalar(@ctrl_bytes);
 			} else {
 				printf "ret = af9035_rd_reg(d, 0x%04x, &val);$comment\n", $reg;
 			}
