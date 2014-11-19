@@ -192,8 +192,8 @@ sub print_send_recv($$$$$$)
 			}
 		}
 
-		return if ($hide_wr);
 		if ($ctrl_cmd eq "CMD_MEM_WR") {
+			return if ($hide_wr);
 			my $comment = "\t/* $payload */" if ($payload =~ /ERROR/);
 
 			if (scalar(@ctrl_bytes) > 1) {
@@ -203,6 +203,7 @@ sub print_send_recv($$$$$$)
 			}
 			return;
 		} else {
+			return if ($hide_rd);
 			my $comment = "\t/* read: $payload */";
 			if (scalar(@ctrl_bytes) > 0) {
 				printf "ret = af9035_rd_regs(d, 0x%04x, %d, { $ctrl_pay }, $len, rbuf);$comment\n", $reg, scalar(@ctrl_bytes);
@@ -216,13 +217,13 @@ sub print_send_recv($$$$$$)
 	if ($ctrl_cmd =~ /CMD_FW_(QUERYINFO|DL_BEGIN|DL_END|BOOT)/) {
 		my $comment = "\t/* read: $payload */" if ($payload);
 		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n" if (!$hide_fw);
-		next;
+		return;
 	}
 
 	if ($ctrl_cmd eq "CMD_IR_GET") {
 		my $comment = "\t/* read: $payload */" if ($payload);
 		printf "struct usb_req req = { $ctrl_cmd, $ctrl_mbox, $len, wbuf, sizeof(rbuf), rbuf }; ret = af9035_ctrl_msg(d, &req);$comment\n" if (!$hide_ir);
-		next;
+		return;
 	}
 
 	my $ctrl_pay;
@@ -236,7 +237,7 @@ sub print_send_recv($$$$$$)
 
 	if ($ctrl_cmd eq "CMD_FW_DL") {
 		printf "af9015_wr_fw_block(%d, { $ctrl_pay };\n", scalar(@ctrl_bytes) if (!$hide_fw);
-		next;
+		return;
 	}
 
 
