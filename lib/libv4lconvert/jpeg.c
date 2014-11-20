@@ -242,23 +242,34 @@ static int decode_libjpeg_h_samp2(struct v4lconvert_data *data,
 			y_rows[y] = ydest;
 			ydest += width;
 		}
-		for (y = 0; y < 8; y++) {
-			u_rows[y] = udest;
-			v_rows[y] = vdest;
-			udest += width / 2;
-			vdest += width / 2;
+		/*
+		 * For v_samp == 1 were going to get 1 set of uv values per
+		 * line, but we need only 1 set per 2 lines since our output
+		 * has v_samp == 2. We store every 2 sets in 1 line,
+		 * effectively using the second set for each output line.
+		 */
+		if (v_samp == 1) {
+			for (y = 0; y < 8; y++) {
+				u_rows[y] = udest;
+				v_rows[y] = vdest;
+				y++;
+				u_rows[y] = udest;
+				v_rows[y] = vdest;
+				udest += width / 2;
+				vdest += width / 2;
+			}
+		} else { /* v_samp == 2 */
+			for (y = 0; y < 8; y++) {
+				u_rows[y] = udest;
+				v_rows[y] = vdest;
+				udest += width / 2;
+				vdest += width / 2;
+			}
 		}
+
 		y = jpeg_read_raw_data(cinfo, rows, 8 * v_samp);
 		if (y != 8 * v_samp)
 			return -1;
-
-		/* For v_samp == 1 were going to get another set of uv values,
-		   but we need only 1 set since our output has v_samp == 2, so
-		   rewind u and vdest and overwrite the previous set. */
-		if (cinfo->output_scanline % 16) {
-			udest -= width * 8 / 2;
-			vdest -= width * 8 / 2;
-		}
 	}
 	return 0;
 }
