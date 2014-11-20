@@ -485,7 +485,7 @@ sub decode_frame($) {
 		print "\n";
 	}
 
-	my ($frame_id, $setuprequest, $hasdata, $tsSecHigh, $tsSecLow, $tsUsec);
+	my ($frame_id, $tsSecHigh, $tsSecLow, $tsUsec);
 
 	($frame_id, $frame{"Type"}, $frame{"TransferType"},
 		$frame{"Endpoint"}, $frame{"Device"}, $frame{"BusID"},
@@ -496,16 +496,6 @@ sub decode_frame($) {
 	$frame{"ID"} = "0x";
 	for (my $i = 7; $i >= 0; $i--) {
 		$frame{"ID"} .= sprintf "%02x", ord(substr($frame_id, $i, 1));
-	}
-	if ($setuprequest == 0) {
-		$frame{"SetupRequest"} = "present";
-	} else {
-		$frame{"SetupRequest"} = "not present";
-	}
-	if ($hasdata == 0) {
-		$frame{"HasData"} = "present";
-	} else {
-		$frame{"HasData"} = "not present";
 	}
 	$frame{"Type"} = chr($frame{"Type"});
 	$frame{"ArrivalTime"} = sprintf "%d.%06d", $tsSecHigh << 32 | $tsSecLow, $tsUsec;
