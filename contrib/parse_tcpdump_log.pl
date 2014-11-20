@@ -345,15 +345,18 @@ sub print_frame($$)
 
 	printf " EP=%02x)", $resp{"Endpoint"};
 
-	my $app_data = substr($req{"Payload"}, 0, 8 * 2);
-	my $type = hex(substr($app_data, 0, 2));
-	while ($app_data ne "") {
-		printf " %s", substr($app_data, 0, 2);
-		$app_data = substr($app_data, 2);
+	my ($app_data, $type);
+
+	if ($req{"Endpoint"} == 0x80 || $req{"SetupFlag"} == 0) {
+		$app_data = substr($req{"Payload"}, 0, 8 * 2);
+		$type = hex(substr($app_data, 0, 2));
+		while ($app_data ne "") {
+			printf " %s", substr($app_data, 0, 2);
+			$app_data = substr($app_data, 2);
+		}
 	}
 
 	# Extra data
-
 	if ($resp{TransferType} == 2 || $resp{"Endpoint"} != 0x80) {
 		if ($type > 128) {
 			printf " <<<";
@@ -486,7 +489,8 @@ sub decode_frame($) {
 
 	($frame_id, $frame{"Type"}, $frame{"TransferType"},
 		$frame{"Endpoint"}, $frame{"Device"}, $frame{"BusID"},
-		$setuprequest, $hasdata, $tsSecHigh, $tsSecLow, $tsUsec,
+		$frame{"SetupFlag"}, $frame{"DataFlag"},
+		$tsSecHigh, $tsSecLow, $tsUsec,
 		$frame{"Status"}, $frame{"URBLength"},
 		$frame{"DataLength"}) = unpack("A8CCCCvCCVVVlVV", $strdata);
 	$frame{"ID"} = "0x";
