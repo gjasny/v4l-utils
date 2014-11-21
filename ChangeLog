@@ -1,3 +1,14 @@
+v4l-utils-1.6.2
+---------------
+
+Hans Verkuil (5):
+      v4l2-ctl: fix sliced vbi mode parsing
+      v4l2-compliance: when streaming used at least 2 buffers.
+      v4l2-compliance: add initial checks for VIDIOC_QUERY_EXT_CTRL
+      v4l2-ctl: add support for U32 control type.
+      v4l2-ctl: fix array handling
+
+
 v4l-utils-1.6.1
 ---------------
 
