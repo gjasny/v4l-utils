@@ -1,3 +1,30 @@
+v4l-utils-1.6.1
+---------------
+
+Gregor Jasny (5):
+      man: remove duplicate backslash from NAME section
+      man: Use Unicode character for ellipsis and fall back to ...
+      man: add generated files to .gitignore
+      v4l2-compliance: Explicitely link against rt library
+      v4l2-ctl: Explicitely link against rt library
+
+Hans Verkuil (1):
+      qv4l2/v4l2-ctl: fix buffer overrun in vivid-tpg.
+
+Hans de Goede (2):
+      rc_keymaps: allwinner: S/KEY_HOME/KEY_HOMEPAGE/
+      v4lconvert: Fix decoding of jpeg data with no vertical sub-sampling
+
+Mauro Carvalho Chehab (4):
+      libdvbv5: properly represent Satellite frequencies
+      README: better document the package
+      ir-keytable: fix a regression introduced by fe2aa5f767eba
+      rc: Update the protocol name at RC6 tables
+
+Niels Ole Salscheider (1):
+      qv4l2: Fix out-of-source build
+
+
 v4l-utils-1.6.0
 ---------------
 
