@@ -148,7 +148,7 @@ else
    AC_MSG_WARN(Qt4 or higher is not available)
 fi
 
-PKG_CHECK_MODULES(QTGL, [QtOpenGL >= 4.4 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
+PKG_CHECK_MODULES(QTGL, [QtOpenGL >= 4.8 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
 if test "x$qt_pkgconfig_gl" = "xtrue"; then
    AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
 else
