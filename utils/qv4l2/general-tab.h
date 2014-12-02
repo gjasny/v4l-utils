@@ -72,16 +72,23 @@ public:
 	bool isVbi() const { return m_isVbi; }
 	bool isSlicedVbi() const;
 	bool isPlanar() const { return m_isPlanar; }
+	bool isSDTV() const { return m_isSDTV; }
 	__u32 usePrio() const
 	{
 		return m_recordPrio->isChecked() ?
 			V4L2_PRIORITY_RECORD : V4L2_PRIORITY_DEFAULT;
 	}
 	void setHaveBuffers(bool haveBuffers);
+	unsigned getNumBuffers()
+	{
+		return m_numBuffers->value();
+	}
 	void sourceChange(const v4l2_event &ev);
 	void sourceChangeSubscribe();
 	unsigned getDisplayColorspace() const;
 	unsigned getColorspace() const;
+	unsigned getYCbCrEnc() const;
+	unsigned getQuantRange() const;
 	int getWidth();
 	unsigned getNumBuffers() const;
 
@@ -90,6 +97,8 @@ signals:
 	void pixelAspectRatioChanged();
 	void croppingChanged();
 	void colorspaceChanged();
+	void ycbcrEncChanged();
+	void quantRangeChanged();
 	void clearBuffers();
 	void displayColorspaceChanged();
 
@@ -292,6 +301,7 @@ private:
 	bool m_isSDR;
 	bool m_isVbi;
 	bool m_isOutput;
+	bool m_isSDTV;
 	double m_freqFac;
 	double m_freqRfFac;
 	bool m_isPlanar;
@@ -326,6 +336,8 @@ private:
 	QComboBox *m_videoTimings;
 	QComboBox *m_pixelAspectRatio;
 	QComboBox *m_colorspace;
+	QComboBox *m_ycbcrEnc;
+	QComboBox *m_quantRange;
 	QComboBox *m_displayColorspace;
 	QComboBox *m_cropping;
 	QToolButton *m_qryTimings;

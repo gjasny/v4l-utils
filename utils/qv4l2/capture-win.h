@@ -69,7 +69,7 @@ public:
 	void setPixelAspectRatio(double ratio);
 	float getHorScaleFactor();
 	float getVertScaleFactor();
-	virtual void setColorspace(unsigned colorspace) = 0;
+	virtual void setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv) = 0;
 	virtual void setField(unsigned field) = 0;
 	virtual void setDisplayColorspace(unsigned colorspace) = 0;
 	virtual void setBlending(bool enable) = 0;

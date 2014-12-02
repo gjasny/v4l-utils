@@ -91,10 +91,10 @@ bool CaptureWinGL::isSupported()
 #endif
 }
 
-void CaptureWinGL::setColorspace(unsigned colorspace)
+void CaptureWinGL::setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv)
 {
 #ifdef HAVE_QTGL
-	m_videoSurface.setColorspace(colorspace);
+	m_videoSurface.setColorspace(colorspace, ycbcr_enc, quantization, is_sdtv);
 #endif
 }
 
@@ -133,6 +133,9 @@ CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_WCrop(0),
 	m_HCrop(0),
 	m_colorspace(V4L2_COLORSPACE_REC709),
+	m_ycbcr_enc(V4L2_YCBCR_ENC_DEFAULT),
+	m_quantization(V4L2_QUANTIZATION_DEFAULT),
+	m_is_sdtv(false),
 	m_field(V4L2_FIELD_NONE),
 	m_displayColorspace(V4L2_COLORSPACE_SRGB),
 	m_screenTextureCount(0),
@@ -151,7 +154,7 @@ CaptureWinGLEngine::~CaptureWinGLEngine()
 	clearShader();
 }
 
-void CaptureWinGLEngine::setColorspace(unsigned colorspace)
+void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv)
 {
 	switch (colorspace) {
 	case V4L2_COLORSPACE_SMPTE170M:
@@ -160,6 +163,8 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace)
 	case V4L2_COLORSPACE_470_SYSTEM_M:
 	case V4L2_COLORSPACE_470_SYSTEM_BG:
 	case V4L2_COLORSPACE_SRGB:
+	case V4L2_COLORSPACE_ADOBERGB:
+	case V4L2_COLORSPACE_BT2020:
 		break;
 	default:
 		// If the colorspace was not specified, then guess
@@ -174,7 +179,7 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace)
 		case V4L2_PIX_FMT_NV16M:
 		case V4L2_PIX_FMT_NV61M:
 			// SDTV or HDTV?
-			if (m_frameWidth <= 720 && m_frameHeight <= 576)
+			if (is_sdtv)
 				colorspace = V4L2_COLORSPACE_SMPTE170M;
 			else
 				colorspace = V4L2_COLORSPACE_REC709;
@@ -185,9 +190,13 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace)
 		}
 		break;
 	}
-	if (m_colorspace == colorspace)
+	if (m_colorspace == colorspace && m_ycbcr_enc == ycbcr_enc &&
+	    m_quantization == quantization && m_is_sdtv == is_sdtv)
 		return;
 	m_colorspace = colorspace;
+	m_ycbcr_enc = ycbcr_enc;
+	m_quantization = quantization;
+	m_is_sdtv = is_sdtv;
 	m_formatChange = true;
 }
 
@@ -487,6 +496,45 @@ void CaptureWinGLEngine::configureTexture(size_t idx)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 }
 
+// Normalize y to [0...1] and uv to [-0.5...0.5], taking into account the
+// colorspace.
+QString CaptureWinGLEngine::codeYUVNormalize()
+{
+	switch (m_colorspace) {
+	case V4L2_COLORSPACE_SRGB:
+		if (m_ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT ||
+		    m_ycbcr_enc == V4L2_YCBCR_ENC_BT2020_CONST_LUM)
+			// sYCC is always full range
+			return "";
+		/* fall through */
+	case V4L2_COLORSPACE_REC709:
+	case V4L2_COLORSPACE_SMPTE240M:
+	case V4L2_COLORSPACE_SMPTE170M:
+	case V4L2_COLORSPACE_470_SYSTEM_M:
+	case V4L2_COLORSPACE_470_SYSTEM_BG:
+	case V4L2_COLORSPACE_ADOBERGB:
+	case V4L2_COLORSPACE_BT2020:
+	default:
+		if (m_ycbcr_enc == V4L2_YCBCR_ENC_XV601 ||
+		    m_ycbcr_enc == V4L2_YCBCR_ENC_XV709 ||
+		    m_quantization == V4L2_QUANTIZATION_FULL_RANGE)
+			return "";
+		return QString("   y = (255.0 / 219.0) * (y - (16.0 / 255.0));"
+			       "   u = (255.0 / 224.0) * u;"
+			       "   v = (255.0 / 224.0) * v;"
+			       );
+	}
+}
+
+// Normalize r, g and b to [0...1]
+QString CaptureWinGLEngine::codeRGBNormalize()
+{
+	return QString("   r = (255.0 / 219.0) * (r - (16.0 / 255.0));"
+		       "   g = (255.0 / 219.0) * (g - (16.0 / 255.0));"
+		       "   b = (255.0 / 219.0) * (b - (16.0 / 255.0));"
+		       );
+}
+
 // Convert Y'CbCr (aka YUV) to R'G'B', taking into account the
 // colorspace.
 QString CaptureWinGLEngine::codeYUV2RGB()
@@ -495,25 +543,53 @@ QString CaptureWinGLEngine::codeYUV2RGB()
 	case V4L2_COLORSPACE_SMPTE240M:
 		// Old obsolete HDTV standard. Replaced by REC 709.
 		// SMPTE 240M has its own luma coefficients
-		return QString("   float r = y + 1.8007 * v;"
-			       "   float g = y - 0.2575 * u - 0.57143 * v;"
-			       "   float b = y + 2.088 * u;"
+		return QString("   float r = y + 1.5756 * v;"
+			       "   float g = y - 0.2253 * u - 0.4768 * v;"
+			       "   float b = y + 1.8270 * u;"
+			       );
+	case V4L2_COLORSPACE_BT2020:
+		if (m_ycbcr_enc != V4L2_YCBCR_ENC_BT2020_CONST_LUM) {
+			// BT.2020 luma coefficients
+			return QString("   float r = y + 1.4719 * v;"
+				       "   float g = y - 0.1646 * u - 0.5703 * v;"
+				       "   float b = y + 1.8814 * u;"
+				       );
+		}
+		// BT.2020_CONST_LUM luma coefficients
+		return QString("   float b = u <= 0.0 ? y + 1.9404 * u : y + 1.5816 * u;"
+			       "   float r = v <= 0.0 ? y + 1.7184 * v : y + 0.9936 * v;"
+			       "   float lin_r = (r < 0.081) ? r / 4.5 : pow((r + 0.099) / 1.099, 1.0 / 0.45);"
+			       "   float lin_b = (b < 0.081) ? b / 4.5 : pow((b + 0.099) / 1.099, 1.0 / 0.45);"
+			       "   float lin_y = (y < 0.081) ? y / 4.5 : pow((y + 0.099) / 1.099, 1.0 / 0.45);"
+			       "   float lin_g = lin_y / 0.6780 - lin_r * 0.2627 / 0.6780 - lin_b * 0.0593 / 0.6780;"
+			       "   float g = (lin_g < 0.018) ? lin_g * 4.5 : 1.099 * pow(lin_g, 0.45) - 0.099;"
 			       );
 	case V4L2_COLORSPACE_SMPTE170M:
 	case V4L2_COLORSPACE_470_SYSTEM_M:
 	case V4L2_COLORSPACE_470_SYSTEM_BG:
-		// These SDTV colorspaces all use the BT.601 luma coefficients
-		return QString("   float r = y + 1.5958 * v;"
-			       "   float g = y - 0.39173 * u - 0.81290 * v;"
-			       "   float b = y + 2.017 * u;"
-			       );
-	case V4L2_COLORSPACE_REC709:
 	case V4L2_COLORSPACE_SRGB:
+	case V4L2_COLORSPACE_ADOBERGB:
+		if (m_ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT ||
+		    m_ycbcr_enc == V4L2_YCBCR_ENC_BT2020_CONST_LUM)
+			// These colorspaces all use the BT.601 luma coefficients
+			return QString("   float r = y + 1.403 * v;"
+			       "   float g = y - 0.344 * u - 0.714 * v;"
+			       "   float b = y + 1.773 * u;"
+			       );
+		/* fall-through */
+	case V4L2_COLORSPACE_REC709:
+		if (m_ycbcr_enc == V4L2_YCBCR_ENC_601 ||
+		    m_ycbcr_enc == V4L2_YCBCR_ENC_XV601)
+			return QString("   float r = y + 1.403 * v;"
+				       "   float g = y - 0.344 * u - 0.714 * v;"
+				       "   float b = y + 1.773 * u;"
+				       );
+		/* fall-through */
 	default:
-		// The HDTV/graphics colorspaces all use REC 709 luma coefficients
-		return QString("   float r = y + 1.79274 * v;"
-			       "   float g = y - 0.21325 * u - 0.53291 * v;"
-			       "   float b = y + 2.1124 * u;"
+		// The HDTV colorspaces all use REC 709 luma coefficients
+		return QString("   float r = y + 1.5701 * v;"
+			       "   float g = y - 0.1870 * u - 0.4664 * v;"
+			       "   float b = y + 1.8556 * u;"
 			       );
 	}
 }
@@ -532,16 +608,27 @@ QString CaptureWinGLEngine::codeTransformToLinear()
 			       );
 	case V4L2_COLORSPACE_SRGB:
 		// This is used for sRGB as specified by the IEC FDIS 61966-2-1 standard
-		return QString("   r = (r <= 0.03928) ? r / 12.92 : pow((r + 0.055) / 1.055, 2.4);"
-			       "   g = (g <= 0.03928) ? g / 12.92 : pow((g + 0.055) / 1.055, 2.4);"
-			       "   b = (b <= 0.03928) ? b / 12.92 : pow((b + 0.055) / 1.055, 2.4);"
+		return QString("   r = (r < -0.04045) ? -pow((-r + 0.055) / 1.055, 2.4) : "
+			       "        ((r <= 0.04045) ? r / 12.92 : pow((r + 0.055) / 1.055, 2.4));"
+			       "   g = (g < -0.04045) ? -pow((-g + 0.055) / 1.055, 2.4) : "
+			       "        ((g <= 0.04045) ? g / 12.92 : pow((g + 0.055) / 1.055, 2.4));"
+			       "   b = (b < -0.04045) ? -pow((-b + 0.055) / 1.055, 2.4) : "
+			       "        ((b <= 0.04045) ? b / 12.92 : pow((b + 0.055) / 1.055, 2.4));"
 			       );
+	case V4L2_COLORSPACE_ADOBERGB:
+		return QString("   r = pow(r, 2.19921875);"
+			       "   g = pow(g, 2.19921875);"
+			       "   b = pow(b, 2.19921875);");
 	case V4L2_COLORSPACE_REC709:
+	case V4L2_COLORSPACE_BT2020:
 	default:
 		// All others use the transfer function specified by REC 709
-		return QString("   r = (r < 0.081) ? r / 4.5 : pow((r + 0.099) / 1.099, 1.0 / 0.45);"
-			       "   g = (g < 0.081) ? g / 4.5 : pow((g + 0.099) / 1.099, 1.0 / 0.45);"
-			       "   b = (b < 0.081) ? b / 4.5 : pow((b + 0.099) / 1.099, 1.0 / 0.45);"
+		return QString("   r = (r <= -0.081) ? -pow((r - 0.099) / -1.099, 1.0 / 0.45) : "
+			       "        ((r < 0.081) ? r / 4.5 : pow((r + 0.099) / 1.099, 1.0 / 0.45));"
+			       "   g = (g <= -0.081) ? -pow((g - 0.099) / -1.099, 1.0 / 0.45) : "
+			       "        ((g < 0.081) ? g / 4.5 : pow((g + 0.099) / 1.099, 1.0 / 0.45));"
+			       "   b = (b <= -0.081) ? -pow((b - 0.099) / -1.099, 1.0 / 0.45) : "
+			       "        ((b < 0.081) ? b / 4.5 : pow((b + 0.099) / 1.099, 1.0 / 0.45));"
 			       );
 	}
 }
@@ -552,19 +639,12 @@ QString CaptureWinGLEngine::codeColorspaceConversion()
 {
 	switch (m_colorspace) {
 	case V4L2_COLORSPACE_SMPTE170M:
+	case V4L2_COLORSPACE_SMPTE240M:
 		// Current SDTV standard, although slowly being replaced by REC 709.
 		// Use the SMPTE 170M aka SMPTE-C aka SMPTE RP 145 conversion matrix.
 		return QString("   float rr =  0.939536 * r + 0.050215 * g + 0.001789 * b;"
 			       "   float gg =  0.017743 * r + 0.965758 * g + 0.016243 * b;"
 			       "   float bb = -0.001591 * r - 0.004356 * g + 1.005951 * b;"
-			       "   r = rr; g = gg; b = bb;"
-			       );
-	case V4L2_COLORSPACE_SMPTE240M:
-		// Old obsolete HDTV standard. Replaced by REC 709.
-		// Use the SMPTE 240M conversion matrix.
-		return QString("   float rr =  1.4086 * r - 0.4086 * g;"
-			       "   float gg = -0.0257 * r + 1.0457 * g;"
-			       "   float bb = -0.0254 * r - 0.0440 * g + 1.0695 * b;"
 			       "   r = rr; g = gg; b = bb;"
 			       );
 	case V4L2_COLORSPACE_470_SYSTEM_M:
@@ -581,6 +661,17 @@ QString CaptureWinGLEngine::codeColorspaceConversion()
 		return QString("   float rr = 1.0440 * r - 0.0440 * g;"
 			       "   float bb = -0.0119 * g + 1.0119 * b;"
 			       "   r = rr; b = bb;"
+			       );
+	case V4L2_COLORSPACE_ADOBERGB:
+		return QString("   float rr =  1.3982832 * r - 0.3982831 * g;"
+			       "   float bb = -0.0429383 * g + 1.0429383 * b;"
+			       "   r = rr; b = bb;"
+			       );
+	case V4L2_COLORSPACE_BT2020:
+		return QString("   float rr =  1.6603627 * r - 0.5875400 * g - 0.0728227 * b;"
+			       "   float gg = -0.1245635 * r + 1.1329114 * g - 0.0083478 * b;"
+			       "   float bb = -0.0181566 * r - 0.1006017 * g + 1.1187583 * b;"
+			       "   r = rr; g = gg; b = bb;"
 			       );
 	case V4L2_COLORSPACE_REC709:
 	case V4L2_COLORSPACE_SRGB:
@@ -608,16 +699,28 @@ QString CaptureWinGLEngine::codeTransformToNonLinear()
 		// is available.
 		if (m_haveFramebufferSRGB)
 			return "";
-		return QString("   r = (r <= 0.0031308) ? r * 12.92 : 1.055 * pow(r, 1.0 / 2.4) - 0.055;"
-			       "   g = (g <= 0.0031308) ? g * 12.92 : 1.055 * pow(g, 1.0 / 2.4) - 0.055;"
-			       "   b = (b <= 0.0031308) ? b * 12.92 : 1.055 * pow(b, 1.0 / 2.4) - 0.055;"
+		return QString("   r = (r < -0.0031308) ? -1.055 * pow(-r, 1.0 / 2.4) + 0.055 : "
+			       "        ((r <= 0.0031308) ? r * 12.92 : 1.055 * pow(r, 1.0 / 2.4) - 0.055);"
+			       "   g = (g < -0.0031308) ? -1.055 * pow(-g, 1.0 / 2.4) + 0.055 : "
+			       "        ((g <= 0.0031308) ? g * 12.92 : 1.055 * pow(g, 1.0 / 2.4) - 0.055);"
+			       "   b = (b < -0.0031308) ? -1.055 * pow(-b, 1.0 / 2.4) + 0.055 : "
+			       "        ((b <= 0.0031308) ? b * 12.92 : 1.055 * pow(b, 1.0 / 2.4) - 0.055);"
+			       );
+	case V4L2_COLORSPACE_ADOBERGB:
+		// Use the AdobeRGB transfer function
+		return QString("   r = pow(r, 1.0 / 2.19921875);"
+			       "   g = pow(g, 1.0 / 2.19921875);"
+			       "   b = pow(b, 1.0 / 2.19921875);"
 			       );
 	case V4L2_COLORSPACE_REC709:
 	default:
 		// Use the REC 709 transfer function
-		return QString("   r = (r < 0.018) ? r * 4.5 : 1.099 * pow(r, 0.45) - 0.099;"
-			       "   g = (g < 0.018) ? g * 4.5 : 1.099 * pow(g, 0.45) - 0.099;"
-			       "   b = (b < 0.018) ? b * 4.5 : 1.099 * pow(b, 0.45) - 0.099;"
+		return QString("   r = (r <= -0.018) ? -1.099 * pow(-r, 0.45) + 0.099 : "
+			       "        ((r < 0.018) ? r * 4.5 : 1.099 * pow(r, 0.45) - 0.099);"
+			       "   g = (g <= -0.018) ? -1.099 * pow(-g, 0.45) + 0.099 : "
+			       "        ((g < 0.018) ? g * 4.5 : 1.099 * pow(g, 0.45) - 0.099);"
+			       "   b = (b <= -0.018) ? -1.099 * pow(-b, 0.45) + 0.099 : "
+			       "        ((b < 0.018) ? b * 4.5 : 1.099 * pow(b, 0.45) - 0.099);"
 			       );
 	}
 }
@@ -665,11 +768,12 @@ void CaptureWinGLEngine::shader_YUV()
 	else if (m_field == V4L2_FIELD_SEQ_BT)
 		codeHead += "   xy.y = (mod(ycoord, 2.0) == 0.0) ? xy.y / 2.0 + 0.5 : xy.y / 2.0;";
 
-	codeHead += 		   "   float y = 1.1640625 * (texture2D(ytex, xy).r - 0.0625);"
-				   "   float u = texture2D(utex, xy).r - 0.5;"
-				   "   float v = texture2D(vtex, xy).r - 0.5;";
+	codeHead += "   float y = texture2D(ytex, xy).r;"
+		    "   float u = texture2D(utex, xy).r - 0.5;"
+		    "   float v = texture2D(vtex, xy).r - 0.5;";
 
-	QString codeTail = codeYUV2RGB() +
+	QString codeTail = codeYUVNormalize() +
+			   codeYUV2RGB() +
 			   codeTransformToLinear() +
 			   codeColorspaceConversion() +
 			   codeTransformToNonLinear() +
@@ -785,15 +889,14 @@ void CaptureWinGLEngine::shader_NV16M(__u32 format)
 	else if (m_field == V4L2_FIELD_SEQ_BT)
 		codeHead += "   xy.y = (mod(ycoord, 2.0) == 0.0) ? xy.y / 2.0 + 0.5 : xy.y / 2.0;";
 
-	codeHead +=		   "   float u, v;"
-				   "   float xcoord = floor(xy.x * tex_w);"
-				   "   float y = 1.1640625 * (texture2D(ytex, xy).r - 0.0625);";
-
-
+	codeHead += "   float u, v;"
+		    "   float xcoord = floor(xy.x * tex_w);"
+		    "   float y = texture2D(ytex, xy).r;";
 
 	QString codeBody = shader_NV16M_invariant(format);
 
-	QString codeTail = codeYUV2RGB() +
+	QString codeTail = codeYUVNormalize() +
+			   codeYUV2RGB() +
 			   codeTransformToLinear() +
 			   codeColorspaceConversion() +
 			   codeTransformToNonLinear() +
@@ -842,10 +945,10 @@ QString CaptureWinGLEngine::shader_YUY2_invariant(__u32 format)
 	case V4L2_PIX_FMT_YUYV:
 		return QString("if (mod(xcoord, 2.0) == 0.0) {"
 			       "   luma_chroma = texture2D(tex, xy);"
-			       "   y = (luma_chroma.r - 0.0625) * 1.1643;"
+			       "   y = luma_chroma.r;"
 			       "} else {"
 			       "   luma_chroma = texture2D(tex, vec2(xy.x - texl_w, xy.y));"
-			       "   y = (luma_chroma.b - 0.0625) * 1.1643;"
+			       "   y = luma_chroma.b;"
 			       "}"
 			       "u = luma_chroma.g - 0.5;"
 			       "v = luma_chroma.a - 0.5;"
@@ -854,10 +957,10 @@ QString CaptureWinGLEngine::shader_YUY2_invariant(__u32 format)
 	case V4L2_PIX_FMT_YVYU:
 		return QString("if (mod(xcoord, 2.0) == 0.0) {"
 			       "   luma_chroma = texture2D(tex, xy);"
-			       "   y = (luma_chroma.r - 0.0625) * 1.1643;"
+			       "   y = luma_chroma.r;"
 			       "} else {"
 			       "   luma_chroma = texture2D(tex, vec2(xy.x - texl_w, xy.y));"
-			       "   y = (luma_chroma.b - 0.0625) * 1.1643;"
+			       "   y = luma_chroma.b;"
 			       "}"
 			       "u = luma_chroma.a - 0.5;"
 			       "v = luma_chroma.g - 0.5;"
@@ -866,10 +969,10 @@ QString CaptureWinGLEngine::shader_YUY2_invariant(__u32 format)
 	case V4L2_PIX_FMT_UYVY:
 		return QString("if (mod(xcoord, 2.0) == 0.0) {"
 			       "   luma_chroma = texture2D(tex, xy);"
-			       "   y = (luma_chroma.g - 0.0625) * 1.1643;"
+			       "   y = luma_chroma.g;"
 			       "} else {"
 			       "   luma_chroma = texture2D(tex, vec2(xy.x - texl_w, xy.y));"
-			       "   y = (luma_chroma.a - 0.0625) * 1.1643;"
+			       "   y = luma_chroma.a;"
 			       "}"
 			       "u = luma_chroma.r - 0.5;"
 			       "v = luma_chroma.b - 0.5;"
@@ -878,10 +981,10 @@ QString CaptureWinGLEngine::shader_YUY2_invariant(__u32 format)
 	case V4L2_PIX_FMT_VYUY:
 		return QString("if (mod(xcoord, 2.0) == 0.0) {"
 			       "   luma_chroma = texture2D(tex, xy);"
-			       "   y = (luma_chroma.g - 0.0625) * 1.1643;"
+			       "   y = luma_chroma.g;"
 			       "} else {"
 			       "   luma_chroma = texture2D(tex, vec2(xy.x - texl_w, xy.y));"
-			       "   y = (luma_chroma.a - 0.0625) * 1.1643;"
+			       "   y = luma_chroma.a;"
 			       "}"
 			       "u = luma_chroma.b - 0.5;"
 			       "v = luma_chroma.r - 0.5;"
@@ -921,7 +1024,8 @@ void CaptureWinGLEngine::shader_YUY2(__u32 format)
 
 	QString codeBody = shader_YUY2_invariant(format);
 
-	QString codeTail = codeYUV2RGB() +
+	QString codeTail = codeYUVNormalize() +
+			   codeYUV2RGB() +
 			   codeTransformToLinear() +
 			   codeColorspaceConversion() +
 			   codeTransformToNonLinear() +
@@ -965,8 +1069,9 @@ void CaptureWinGLEngine::shader_RGB()
 	glActiveTexture(GL_TEXTURE0);
 	configureTexture(0);
 
-	GLint internalFmt = m_colorspace == V4L2_COLORSPACE_SRGB ?
-						GL_SRGB8_ALPHA8 : GL_RGBA8;
+	GLint internalFmt = (m_quantization != V4L2_QUANTIZATION_LIM_RANGE &&
+				m_colorspace == V4L2_COLORSPACE_SRGB) ?
+					GL_SRGB8_ALPHA8 : GL_RGBA8;
 
 	switch (m_frameFormat) {
 	case V4L2_PIX_FMT_ARGB555:
@@ -1041,7 +1146,10 @@ void CaptureWinGLEngine::shader_RGB()
 
 	QString codeTail;
 	
-	if (m_colorspace != V4L2_COLORSPACE_SRGB)
+	if (m_quantization == V4L2_QUANTIZATION_LIM_RANGE)
+		codeTail += codeRGBNormalize();
+	if (m_quantization == V4L2_QUANTIZATION_LIM_RANGE ||
+	    m_colorspace != V4L2_COLORSPACE_SRGB)
 		codeTail += codeTransformToLinear();
 
 	codeTail += codeColorspaceConversion() + 

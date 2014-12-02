@@ -46,7 +46,7 @@ public:
 		      __u32 format, unsigned char *data, unsigned char *data2);
 	bool hasNativeFormat(__u32 format);
 	void lockSize(QSize size);
-	void setColorspace(unsigned colorspace);
+	void setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv);
 	void setDisplayColorspace(unsigned colorspace);
 	void setField(unsigned field);
 	void setBlending(bool enable) { m_blending = enable; }
@@ -65,6 +65,8 @@ private:
 	void shader_RGB();
 	void shader_YUY2(__u32 format);
 	QString shader_YUY2_invariant(__u32 format);
+	QString codeYUVNormalize();
+	QString codeRGBNormalize();
 	QString codeYUV2RGB();
 	QString codeTransformToLinear();
 	QString codeColorspaceConversion();
@@ -88,6 +90,9 @@ private:
 	int m_WCrop;
 	int m_HCrop;
 	unsigned m_colorspace;
+	unsigned m_ycbcr_enc;
+	unsigned m_quantization;
+	bool m_is_sdtv;
 	unsigned m_field;
 	unsigned m_displayColorspace;
 	int m_screenTextureCount;
@@ -115,7 +120,7 @@ public:
 	void stop();
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported();
-	void setColorspace(unsigned colorspace);
+	void setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv);
 	void setField(unsigned field);
 	void setDisplayColorspace(unsigned colorspace);
 	void setBlending(bool enable);

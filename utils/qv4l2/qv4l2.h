@@ -173,6 +173,8 @@ private slots:
 	void insEAVChanged(int val);
 	void videoAspectRatioChanged(int val);
 	void colorspaceChanged(int val);
+	void ycbcrEncodingChanged(int val);
+	void quantRangeChanged(int val);
 	void limRGBRangeChanged(int val);
 	void fillPercentageChanged(int val);
 	void alphaComponentChanged(int val);
@@ -234,6 +236,8 @@ private:
 	unsigned m_tpgField;
 	unsigned m_tpgSizeImage;
 	unsigned m_tpgColorspace;
+	unsigned m_tpgYCbCrEnc;
+	unsigned m_tpgQuantRange;
 	bool m_useTpg;
 	QCheckBox *m_tpgLimRGBRange;
 

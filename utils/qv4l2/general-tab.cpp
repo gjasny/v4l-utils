@@ -68,6 +68,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	m_isSDR(false),
 	m_isVbi(false),
 	m_isOutput(false),
+	m_isSDTV(false),
 	m_freqFac(16),
 	m_freqRfFac(16),
 	m_isPlanar(false),
@@ -82,6 +83,8 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	m_videoTimings(NULL),
 	m_pixelAspectRatio(NULL),
 	m_colorspace(NULL),
+	m_ycbcrEnc(NULL),
+	m_quantRange(NULL),
 	m_displayColorspace(NULL),
 	m_cropping(NULL),
 	m_qryTimings(NULL),
@@ -341,6 +344,7 @@ void GeneralTab::inputSection(v4l2_input vin)
 		m_stdRow->addWidget(m_tvStandard, 0, 1, Qt::AlignLeft);
 		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
 		refreshStandards();
+		m_isSDTV = true;
 		if (query_std(tmp) != ENOTTY) {
 			m_qryStandard = new QToolButton(parentWidget());
 			m_qryStandard->setIcon(QIcon(":/enterbutt.png"));
@@ -525,6 +529,7 @@ void GeneralTab::outputSection(v4l2_output vout)
 		m_stdRow->addWidget(new QLabel("TV Standard", parentWidget()), 0, 0, Qt::AlignLeft);
 		m_stdRow->addWidget(m_tvStandard, 0, 1, Qt::AlignLeft);
 		connect(m_tvStandard, SIGNAL(activated(int)), SLOT(standardChanged(int)));
+		m_isSDTV = true;
 		refreshStandards();
 	}
 
@@ -609,7 +614,7 @@ void GeneralTab::outputSection(v4l2_output vout)
 
 void GeneralTab::audioSection(v4l2_audio vaudio, v4l2_audioout vaudout)
 {
-	if (hasAlsaAudio()) {
+	if (hasAlsaAudio() && !m_isOutput) {
 		if (createAudioDeviceList()) {
 			addLabel("Audio Input Device");
 			connect(m_audioInDevice, SIGNAL(activated(int)), SLOT(changeAudioDevice()));
@@ -769,21 +774,48 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		m_colorspace = new QComboBox(parentWidget());
 		m_colorspace->addItem("Autodetect");
 		m_colorspace->addItem("SMPTE 170M");
-		m_colorspace->addItem("SMPTE 240M");
 		m_colorspace->addItem("REC 709");
+		m_colorspace->addItem("sRGB");
+		m_colorspace->addItem("Adobe RGB");
+		m_colorspace->addItem("BT.2020 YCbCr");
+		m_colorspace->addItem("SMPTE 240M");
 		m_colorspace->addItem("470 System M");
 		m_colorspace->addItem("470 System BG");
-		m_colorspace->addItem("sRGB");
 
 		addLabel("Colorspace");
 		addWidget(m_colorspace);
 		connect(m_colorspace, SIGNAL(activated(int)), SIGNAL(colorspaceChanged()));
+
+		m_ycbcrEnc = new QComboBox(parentWidget());
+		m_ycbcrEnc->addItem("Autodetect");
+		m_ycbcrEnc->addItem("ITU-R 601");
+		m_ycbcrEnc->addItem("Rec. 709");
+		m_ycbcrEnc->addItem("xvYCC 601");
+		m_ycbcrEnc->addItem("xvYCC 709");
+		m_ycbcrEnc->addItem("sYCC");
+		m_ycbcrEnc->addItem("BT.2020");
+		m_ycbcrEnc->addItem("BT.2020 Constant Luminance");
+		m_ycbcrEnc->addItem("SMPTE 240M");
+
+		addLabel("Y'CbCr Encoding");
+		addWidget(m_ycbcrEnc);
+		connect(m_ycbcrEnc, SIGNAL(activated(int)), SIGNAL(ycbcrEncChanged()));
+
+		m_quantRange = new QComboBox(parentWidget());
+		m_quantRange->addItem("Autodetect");
+		m_quantRange->addItem("Full Range");
+		m_quantRange->addItem("Limited Range");
+
+		addLabel("Quantization");
+		addWidget(m_quantRange);
+		connect(m_quantRange, SIGNAL(activated(int)), SIGNAL(quantRangeChanged()));
 
 		m_displayColorspace = new QComboBox(parentWidget());
 		m_displayColorspace->addItem("sRGB");
 		m_displayColorspace->addItem("Linear RGB");
 		m_displayColorspace->addItem("REC 709");
 		m_displayColorspace->addItem("SMPTE 240M");
+		m_displayColorspace->addItem("AdobeRGB");
 
 		addLabel("Display Colorspace");
 		addWidget(m_displayColorspace);
@@ -930,16 +962,60 @@ unsigned GeneralTab::getColorspace() const
 	case 1:
 		return V4L2_COLORSPACE_SMPTE170M;
 	case 2:
-		return V4L2_COLORSPACE_SMPTE240M;
-	case 3:
 		return V4L2_COLORSPACE_REC709;
-	case 4:
-		return V4L2_COLORSPACE_470_SYSTEM_M;
-	case 5:
-		return V4L2_COLORSPACE_470_SYSTEM_BG;
-	case 6:
+	case 3:
 	default:
 		return V4L2_COLORSPACE_SRGB;
+	case 4:
+		return V4L2_COLORSPACE_ADOBERGB;
+	case 5:
+		return V4L2_COLORSPACE_BT2020;
+	case 6:
+		return V4L2_COLORSPACE_SMPTE240M;
+	case 7:
+		return V4L2_COLORSPACE_470_SYSTEM_M;
+	case 8:
+		return V4L2_COLORSPACE_470_SYSTEM_BG;
+	}
+}
+
+unsigned GeneralTab::getYCbCrEnc() const
+{
+	if (m_ycbcrEnc == NULL)
+		return V4L2_YCBCR_ENC_DEFAULT;
+	switch (m_ycbcrEnc->currentIndex()) {
+	case 1:
+		return V4L2_YCBCR_ENC_601;
+	case 2:
+		return V4L2_YCBCR_ENC_709;
+	case 3:
+		return V4L2_YCBCR_ENC_XV601;
+	case 4:
+		return V4L2_YCBCR_ENC_XV709;
+	case 5:
+		return V4L2_YCBCR_ENC_SYCC;
+	case 6:
+		return V4L2_YCBCR_ENC_BT2020;
+	case 7:
+		return V4L2_YCBCR_ENC_BT2020_CONST_LUM;
+	case 8:
+		return V4L2_YCBCR_ENC_SMPTE240M;
+	default:
+		return V4L2_YCBCR_ENC_DEFAULT;
+	}
+}
+
+unsigned GeneralTab::getQuantRange() const
+{
+	if (m_quantRange == NULL)
+		return V4L2_QUANTIZATION_DEFAULT;
+	switch (m_quantRange->currentIndex()) {
+	case 1:
+		return V4L2_QUANTIZATION_FULL_RANGE;
+	case 2:
+		return V4L2_QUANTIZATION_LIM_RANGE;
+	default:
+		return V4L2_QUANTIZATION_DEFAULT;
 	}
 }
 
@@ -957,6 +1033,8 @@ unsigned GeneralTab::getDisplayColorspace() const
 		return V4L2_COLORSPACE_REC709;
 	case 3:
 		return V4L2_COLORSPACE_SMPTE240M;
+	case 4:
+		return V4L2_COLORSPACE_ADOBERGB;
 	}
 }
 
@@ -1797,6 +1875,7 @@ void GeneralTab::updateTimings()
 	what.sprintf("Video Timings (%u)\n"
 		"Frame %ux%u\n",
 		p.index, p.timings.bt.width, p.timings.bt.height);
+	m_isSDTV = p.timings.bt.width <= 720 && p.timings.bt.height <= 576;
 	m_videoTimings->setStatusTip(what);
 	m_videoTimings->setWhatsThis(what);
 	updateVidFormat();

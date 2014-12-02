@@ -131,8 +131,34 @@ void ApplicationWindow::addTpgTab(int m_winWidth)
 	combo->addItem("470 System M");
 	combo->addItem("470 System BG");
 	combo->addItem("sRGB");
+	combo->addItem("Adobe RGB");
+	combo->addItem("BT.2020");
 	addWidget(grid, combo);
 	connect(combo, SIGNAL(activated(int)), SLOT(colorspaceChanged(int)));
+
+	m_tpgYCbCrEnc = 0;
+	addLabel(grid, "Y'CbCr Encoding");
+	combo = new QComboBox(w);
+	combo->addItem("Default");
+	combo->addItem("ITU-R 601");
+	combo->addItem("Rec. 709");
+	combo->addItem("xvYCC 601");
+	combo->addItem("xvYCC 709");
+	combo->addItem("sYCC");
+	combo->addItem("BT.2020");
+	combo->addItem("BT.2020 Constant Luminance");
+	combo->addItem("SMPTE 240M");
+	addWidget(grid, combo);
+	connect(combo, SIGNAL(activated(int)), SLOT(ycbcrEncodingChanged(int)));
+
+	m_tpgQuantRange = 0;
+	addLabel(grid, "Quantization Range");
+	combo = new QComboBox(w);
+	combo->addItem("Default");
+	combo->addItem("Full Range");
+	combo->addItem("Limited Range");
+	addWidget(grid, combo);
+	connect(combo, SIGNAL(activated(int)), SLOT(quantRangeChanged(int)));
 
 	addLabel(grid, "Show Border");
 	check = new QCheckBox(w);
@@ -212,6 +238,12 @@ void ApplicationWindow::horMovementChanged(int val)
 void ApplicationWindow::vertMovementChanged(int val)
 {
 	tpg_s_mv_vert_mode(&m_tpg, (tpg_move_mode)val);
+}
+
+void ApplicationWindow::quantRangeChanged(int val)
+{
+	m_tpgQuantRange = val;
+	tpg_s_quantization(&m_tpg, val);
 }
 
 void ApplicationWindow::showBorderChanged(int val)
@@ -321,6 +353,12 @@ void ApplicationWindow::colorspaceChanged(int val)
 	case 5:
 		m_tpgColorspace = V4L2_COLORSPACE_470_SYSTEM_BG;
 		break;
+	case 7:
+		m_tpgColorspace = V4L2_COLORSPACE_ADOBERGB;
+		break;
+	case 8:
+		m_tpgColorspace = V4L2_COLORSPACE_BT2020;
+		break;
 	case 6:
 	default:
 		m_tpgColorspace = V4L2_COLORSPACE_SRGB;
@@ -338,8 +376,64 @@ void ApplicationWindow::colorspaceChanged(int val)
 		fmt.s_colorspace(defaultColorspace(false));
 	else
 		fmt.s_colorspace(m_tpgColorspace);
+	fmt.s_ycbcr_enc(m_tpgYCbCrEnc);
+	fmt.s_quantization(tpg_g_quantization(&m_tpg));
 	s_fmt(fmt);
 	tpg_s_colorspace(&m_tpg, m_tpgColorspace ? m_tpgColorspace : fmt.g_colorspace());
+	tpg_s_ycbcr_enc(&m_tpg, m_tpgColorspace ? m_tpgYCbCrEnc : fmt.g_ycbcr_enc());
+	tpg_s_quantization(&m_tpg, m_tpgColorspace ? m_tpgQuantRange : fmt.g_quantization());
+}
+
+void ApplicationWindow::ycbcrEncodingChanged(int val)
+{
+	m_tpgYCbCrEnc = V4L2_YCBCR_ENC_DEFAULT;
+	switch (val) {
+	case 0:
+	default:
+		break;
+	case 1:
+		m_tpgYCbCrEnc = V4L2_YCBCR_ENC_601;
+		break;
+	case 2:
+		m_tpgYCbCrEnc = V4L2_YCBCR_ENC_709;
+		break;
+	case 3:
+		m_tpgYCbCrEnc = V4L2_YCBCR_ENC_XV601;
+		break;
+	case 4:
+		m_tpgYCbCrEnc = V4L2_YCBCR_ENC_XV709;
+		break;
+	case 5:
+		m_tpgYCbCrEnc = V4L2_YCBCR_ENC_SYCC;
+		break;
+	case 6:
+		m_tpgYCbCrEnc = V4L2_YCBCR_ENC_BT2020;
+		break;
+	case 7:
+		m_tpgYCbCrEnc = V4L2_YCBCR_ENC_BT2020_CONST_LUM;
+		break;
+	case 8:
+		m_tpgYCbCrEnc = V4L2_YCBCR_ENC_SMPTE240M;
+		break;
+	}
+
+	cv4l_fmt fmt;
+	v4l2_output out;
+
+	g_output(out.index);
+	enum_output(out, true, out.index);
+
+	g_fmt(fmt);
+	if (m_tpgColorspace == 0)
+		fmt.s_colorspace(defaultColorspace(false));
+	else
+		fmt.s_colorspace(m_tpgColorspace);
+	fmt.s_ycbcr_enc(m_tpgYCbCrEnc);
+	fmt.s_quantization(tpg_g_quantization(&m_tpg));
+	s_fmt(fmt);
+	tpg_s_colorspace(&m_tpg, m_tpgColorspace ? m_tpgColorspace : fmt.g_colorspace());
+	tpg_s_ycbcr_enc(&m_tpg, m_tpgColorspace ? m_tpgYCbCrEnc : fmt.g_ycbcr_enc());
+	tpg_s_quantization(&m_tpg, m_tpgColorspace ? m_tpgQuantRange : fmt.g_quantization());
 }
 
 void ApplicationWindow::limRGBRangeChanged(int val)

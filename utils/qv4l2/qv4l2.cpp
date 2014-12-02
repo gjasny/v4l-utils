@@ -271,6 +271,8 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	connect(m_genTab, SIGNAL(pixelAspectRatioChanged()), this, SLOT(updatePixelAspectRatio()));
 	connect(m_genTab, SIGNAL(croppingChanged()), this, SLOT(updateCropping()));
 	connect(m_genTab, SIGNAL(colorspaceChanged()), this, SLOT(updateColorspace()));
+	connect(m_genTab, SIGNAL(ycbcrEncChanged()), this, SLOT(updateColorspace()));
+	connect(m_genTab, SIGNAL(quantRangeChanged()), this, SLOT(updateColorspace()));
 	connect(m_genTab, SIGNAL(displayColorspaceChanged()), this, SLOT(updateDisplayColorspace()));
 	connect(m_genTab, SIGNAL(clearBuffers()), this, SLOT(clearBuffers()));
 	m_tabs->addTab(w, "General Settings");
@@ -1041,17 +1043,22 @@ void ApplicationWindow::updateColorspace()
 		return;
 
 	unsigned colorspace = m_genTab->getColorspace();
+	unsigned ycbcrEnc = m_genTab->getYCbCrEnc();
+	unsigned quantRange = m_genTab->getQuantRange();
+	cv4l_fmt fmt;
 
-	if (colorspace == 0) {
-		cv4l_fmt fmt;
+	g_fmt(fmt);
+	// don't use the wrapped ioctl since it doesn't
+	// update colorspace correctly.
+	::ioctl(g_fd(), VIDIOC_G_FMT, &fmt);
 
-		g_fmt(fmt);
-		// don't use the wrapped ioctl since it doesn't
-		// update colorspace correctly.
-		::ioctl(g_fd(), VIDIOC_G_FMT, &fmt);
+	if (colorspace == 0)
 		colorspace = fmt.g_colorspace();
-	}
-	m_capture->setColorspace(colorspace);
+	if (ycbcrEnc == 0)
+		ycbcrEnc = fmt.g_ycbcr_enc();
+	if (quantRange == 0)
+		quantRange = fmt.g_quantization();
+	m_capture->setColorspace(colorspace, ycbcrEnc, quantRange, m_genTab->isSDTV());
 }
 
 void ApplicationWindow::updateDisplayColorspace()
@@ -1137,10 +1144,15 @@ void ApplicationWindow::outStart(bool start)
 			tpg_s_rgb_range(&m_tpg, V4L2_DV_RGB_RANGE_AUTO);
 		else
 			tpg_s_rgb_range(&m_tpg, ctrl.value);
-		if (m_tpgColorspace == 0)
+		if (m_tpgColorspace == 0) {
 			fmt.s_colorspace(defaultColorspace(false));
-		else
+			fmt.s_ycbcr_enc(V4L2_YCBCR_ENC_DEFAULT);
+			fmt.s_flags(0);
+		} else {
 			fmt.s_colorspace(m_tpgColorspace);
+			fmt.s_ycbcr_enc(m_tpgYCbCrEnc);
+			fmt.s_quantization(m_tpgQuantRange);
+		}
 		s_fmt(fmt);
 
 		if (out.capabilities & V4L2_OUT_CAP_STD) {
@@ -1160,6 +1172,8 @@ void ApplicationWindow::outStart(bool start)
 		}
 
 		tpg_s_colorspace(&m_tpg, m_tpgColorspace ? m_tpgColorspace : fmt.g_colorspace());
+		tpg_s_ycbcr_enc(&m_tpg, m_tpgColorspace ? m_tpgYCbCrEnc : fmt.g_ycbcr_enc());
+		tpg_s_quantization(&m_tpg, m_tpgColorspace ? m_tpgQuantRange : fmt.g_quantization());
 		tpg_s_bytesperline(&m_tpg, 0, fmt.g_bytesperline(0));
 		tpg_s_bytesperline(&m_tpg, 1, fmt.g_bytesperline(1));
 		if (m_capMethod == methodRead)
@@ -1216,7 +1230,8 @@ void ApplicationWindow::capStart(bool start)
 	QImage::Format dstFmt = QImage::Format_RGB888;
 	struct v4l2_fract interval;
 	__u32 width, height, pixfmt;
-	unsigned colorspace, field;
+	unsigned colorspace, ycbcr_enc, field;
+	unsigned quantization;
 
 	if (!start) {
 		stopStreaming();
@@ -1347,6 +1362,8 @@ void ApplicationWindow::capStart(bool start)
 		height = m_capSrcFormat.g_height();
 		pixfmt = m_capSrcFormat.g_pixelformat();
 		colorspace = m_capSrcFormat.g_colorspace();
+		ycbcr_enc = m_capSrcFormat.g_ycbcr_enc();
+		quantization = m_capSrcFormat.g_quantization();
 		field = m_capSrcFormat.g_field();
 		m_mustConvert = false;
 	} else {
@@ -1367,6 +1384,8 @@ void ApplicationWindow::capStart(bool start)
 		height = m_capDestFormat.g_height();
 		pixfmt = m_capDestFormat.g_pixelformat();
 		colorspace = m_capDestFormat.g_colorspace();
+		ycbcr_enc = m_capDestFormat.g_ycbcr_enc();
+		quantization = m_capDestFormat.g_quantization();
 		field = m_capDestFormat.g_field();
 	}
 
@@ -1387,9 +1406,12 @@ void ApplicationWindow::capStart(bool start)
 	m_capImage->fill(0);
 	
 	updatePixelAspectRatio();
-	if (m_genTab->getColorspace())
+	if (m_genTab->getColorspace()) {
 		colorspace = m_genTab->getColorspace();
-	m_capture->setColorspace(colorspace);
+		ycbcr_enc = m_genTab->getYCbCrEnc();
+		quantization = m_genTab->getQuantRange();
+	}
+	m_capture->setColorspace(colorspace, ycbcr_enc, quantization, m_genTab->isSDTV());
 	m_capture->setField(field);
 	m_capture->setDisplayColorspace(m_genTab->getDisplayColorspace());
 
