@@ -636,6 +636,8 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 		tpg_reset_source(&tpg, fmt.fmt.pix_mp.width,
 				 fmt.fmt.pix_mp.height * factor, field);
 		tpg_s_colorspace(&tpg, fmt.fmt.pix_mp.colorspace);
+		tpg_s_ycbcr_enc(&tpg, fmt.fmt.pix_mp.ycbcr_enc);
+		tpg_s_quantization(&tpg, fmt.fmt.pix_mp.quantization);
 		if (can_fill) {
 			tpg_s_bytesperline(&tpg, 0, fmt.fmt.pix_mp.plane_fmt[0].bytesperline);
 			tpg_s_bytesperline(&tpg, 1, fmt.fmt.pix_mp.plane_fmt[1].bytesperline);
@@ -646,6 +648,8 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 		tpg_reset_source(&tpg, fmt.fmt.pix.width,
 				 fmt.fmt.pix.height * factor, field);
 		tpg_s_colorspace(&tpg, fmt.fmt.pix.colorspace);
+		tpg_s_ycbcr_enc(&tpg, fmt.fmt.pix.ycbcr_enc);
+		tpg_s_quantization(&tpg, fmt.fmt.pix.quantization);
 		tpg_s_bytesperline(&tpg, 0, fmt.fmt.pix.bytesperline);
 	}
 	tpg_s_pattern(&tpg, (tpg_pattern)stream_pat);

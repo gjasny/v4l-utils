@@ -17,7 +17,7 @@
 #include "v4l2-ctl.h"
 
 static unsigned set_fmts_out;
-static __u32 width, height, pixfmt, field, colorspace;
+static __u32 width, height, pixfmt, field, colorspace, ycbcr, quantization, flags;
 static __u32 bytesperline[VIDEO_MAX_PLANES];
 
 void vidout_usage(void)
@@ -28,16 +28,23 @@ void vidout_usage(void)
 	       "  --get-fmt-video-out\n"
 	       "     		     query the video output format [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-video-out\n"
-	       "  --try-fmt-video-out=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,colorspace=<c>,bytesperline=<bpl>\n"
+	       "  --try-fmt-video-out=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,colorspace=<c>,\n"
+	       "                      ycbcr=<y>,quantization=<q>,premul-alpha,bytesperline=<bpl>\n"
 	       "                     set/try the video output format [VIDIOC_S/TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
 	       "                     --list-formats-out, or the fourcc value as a string.\n"
+	       "                     premul-alpha sets V4L2_PIX_FMT_FLAG_PREMUL_ALPHA.\n"
 	       "                     The bytesperline option can be used multiple times, once for each plane.\n"
 	       "                     <f> can be one of:\n"
 	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
 	       "                     alternate, interlaced_tb, interlaced_bt\n"
 	       "                     <c> can be one of:\n"
-	       "                     smpte170m, smpte240m, rec709, 470m, 470bg, jpeg, srgb\n"
+	       "                     smpte170m, smpte240m, rec709, 470m, 470bg, jpeg, srgb,\n"
+	       "                     adobergb, bt2020\n"
+	       "                     <y> can be one of:\n"
+	       "                     default, 601, 709, xv601, xv709, sycc, bt2020, bt2020c, smpte240m\n"
+	       "                     <q> can be one of:\n"
+	       "                     default, full-range, lim-range\n"
 	       );
 }
 
@@ -77,7 +84,8 @@ void vidout_cmd(int ch, char *optarg)
 	switch (ch) {
 	case OptSetVideoOutFormat:
 	case OptTryVideoOutFormat:
-		set_fmts_out = parse_fmt(optarg, width, height, pixfmt, field, colorspace, bytesperline);
+		set_fmts_out = parse_fmt(optarg, width, height, pixfmt, field,
+				colorspace, ycbcr, quantization, flags, bytesperline);
 		if (!set_fmts_out) {
 			vidcap_usage();
 			exit(1);
@@ -114,6 +122,12 @@ void vidout_set(int fd)
 					vfmt.fmt.pix_mp.field = field;
 				if (set_fmts_out & FmtColorspace)
 					vfmt.fmt.pix_mp.colorspace = colorspace;
+				if (set_fmts_out & FmtYCbCr)
+					vfmt.fmt.pix_mp.ycbcr_enc = ycbcr;
+				if (set_fmts_out & FmtQuantization)
+					vfmt.fmt.pix_mp.quantization = quantization;
+				if (set_fmts_out & FmtFlags)
+					vfmt.fmt.pix_mp.flags = flags;
 				if (set_fmts_out & FmtBytesPerLine) {
 					for (unsigned i = 0; i < VIDEO_MAX_PLANES; i++)
 						vfmt.fmt.pix_mp.plane_fmt[i].bytesperline =
@@ -142,6 +156,12 @@ void vidout_set(int fd)
 					vfmt.fmt.pix.field = field;
 				if (set_fmts_out & FmtColorspace)
 					vfmt.fmt.pix.colorspace = colorspace;
+				if (set_fmts_out & FmtYCbCr)
+					vfmt.fmt.pix.ycbcr_enc = ycbcr;
+				if (set_fmts_out & FmtQuantization)
+					vfmt.fmt.pix.quantization = quantization;
+				if (set_fmts_out & FmtFlags)
+					vfmt.fmt.pix.flags = flags;
 				if (set_fmts_out & FmtBytesPerLine) {
 					vfmt.fmt.pix.bytesperline = bytesperline[0];
 				} else {

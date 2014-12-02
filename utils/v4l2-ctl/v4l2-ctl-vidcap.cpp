@@ -19,7 +19,7 @@
 static struct v4l2_frmsizeenum frmsize; /* list frame sizes */
 static struct v4l2_frmivalenum frmival; /* list frame intervals */
 static unsigned set_fmts;
-static __u32 width, height, pixfmt, field;
+static __u32 width, height, pixfmt, field, flags;
 static __u32 bytesperline[VIDEO_MAX_PLANES];
 
 void vidcap_usage(void)
@@ -40,14 +40,18 @@ void vidcap_usage(void)
 	       "  -V, --get-fmt-video\n"
 	       "     		     query the video capture format [VIDIOC_G_FMT]\n"
 	       "  -v, --set-fmt-video\n"
-	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,bytesperline=<bpl>\n"
+	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,quantization=<q>,"
+	       "                         premul-alpha,bytesperline=<bpl>\n"
 	       "                     set/try the video capture format [VIDIOC_S/TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
 	       "                     --list-formats, or the fourcc value as a string.\n"
 	       "                     The bytesperline option can be used multiple times, once for each plane.\n"
+	       "                     premul-alpha sets V4L2_PIX_FMT_FLAG_PREMUL_ALPHA.\n"
 	       "                     <f> can be one of:\n"
 	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
 	       "                     alternate, interlaced_tb, interlaced_bt\n"
+	       "                     <q> can be one of:\n"
+	       "                     default, full-range, lim-range\n"
 	       );
 }
 
@@ -190,14 +194,15 @@ static void print_video_fields(int fd)
 
 void vidcap_cmd(int ch, char *optarg)
 {
-	__u32 colorspace;
+	__u32 colorspace, ycbcr, quantization;
 	char *value, *subs;
 
 	switch (ch) {
 	case OptSetVideoFormat:
 	case OptTryVideoFormat:
-		set_fmts = parse_fmt(optarg, width, height, pixfmt, field, colorspace, bytesperline);
-		if (!set_fmts || (set_fmts & FmtColorspace)) {
+		set_fmts = parse_fmt(optarg, width, height, pixfmt, field, colorspace,
+				ycbcr, quantization, flags, bytesperline);
+		if (!set_fmts || (set_fmts & (FmtColorspace | FmtYCbCr | FmtQuantization))) {
 			vidcap_usage();
 			exit(1);
 		}
@@ -270,6 +275,8 @@ void vidcap_set(int fd)
 				}
 				if (set_fmts & FmtField)
 					vfmt.fmt.pix_mp.field = field;
+				if (set_fmts & FmtFlags)
+					vfmt.fmt.pix_mp.flags = flags;
 				if (set_fmts & FmtBytesPerLine) {
 					for (unsigned i = 0; i < VIDEO_MAX_PLANES; i++)
 						vfmt.fmt.pix_mp.plane_fmt[i].bytesperline =
@@ -296,6 +303,8 @@ void vidcap_set(int fd)
 				}
 				if (set_fmts & FmtField)
 					vfmt.fmt.pix.field = field;
+				if (set_fmts & FmtFlags)
+					vfmt.fmt.pix.flags = flags;
 				if (set_fmts & FmtBytesPerLine) {
 					vfmt.fmt.pix.bytesperline = bytesperline[0];
 				} else {
