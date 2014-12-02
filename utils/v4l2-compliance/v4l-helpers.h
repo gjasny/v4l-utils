@@ -633,6 +633,96 @@ v4l_format_g_colorspace(const struct v4l2_format *fmt)
 	}
 }
 
+static inline void v4l_format_s_ycbcr_enc(struct v4l2_format *fmt,
+					       unsigned ycbcr_enc)
+{
+	switch (fmt->type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		fmt->fmt.pix.ycbcr_enc = ycbcr_enc;
+		break;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		fmt->fmt.pix_mp.ycbcr_enc = ycbcr_enc;
+		break;
+	}
+}
+
+static inline unsigned
+v4l_format_g_ycbcr_enc(const struct v4l2_format *fmt)
+{
+	switch (fmt->type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		return fmt->fmt.pix.ycbcr_enc;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		return fmt->fmt.pix_mp.ycbcr_enc;
+	default:
+		return 0;
+	}
+}
+
+static inline void v4l_format_s_quantization(struct v4l2_format *fmt,
+					       unsigned quantization)
+{
+	switch (fmt->type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		fmt->fmt.pix.quantization = quantization;
+		break;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		fmt->fmt.pix_mp.quantization = quantization;
+		break;
+	}
+}
+
+static inline unsigned
+v4l_format_g_quantization(const struct v4l2_format *fmt)
+{
+	switch (fmt->type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		return fmt->fmt.pix.quantization;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		return fmt->fmt.pix_mp.quantization;
+	default:
+		return 0;
+	}
+}
+
+static inline void v4l_format_s_flags(struct v4l2_format *fmt,
+					       unsigned flags)
+{
+	switch (fmt->type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		fmt->fmt.pix.flags = flags;
+		break;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		fmt->fmt.pix_mp.flags = flags;
+		break;
+	}
+}
+
+static inline unsigned
+v4l_format_g_flags(const struct v4l2_format *fmt)
+{
+	switch (fmt->type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		return fmt->fmt.pix.flags;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		return fmt->fmt.pix_mp.flags;
+	default:
+		return 0;
+	}
+}
+
 static inline void v4l_format_s_num_planes(struct v4l2_format *fmt, __u8 num_planes)
 {
 	switch (fmt->type) {

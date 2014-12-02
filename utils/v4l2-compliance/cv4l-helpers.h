@@ -652,6 +652,12 @@ public:
 	void s_pixelformat(__u32 pixelformat) { v4l_format_s_pixelformat(this, pixelformat); }
 	unsigned g_colorspace() { return v4l_format_g_colorspace(this); }
 	void s_colorspace(unsigned colorspace) { v4l_format_s_colorspace(this, colorspace); }
+	unsigned g_ycbcr_enc() { return v4l_format_g_ycbcr_enc(this); }
+	void s_ycbcr_enc(unsigned ycbcr_enc) { v4l_format_s_ycbcr_enc(this, ycbcr_enc); }
+	unsigned g_quantization() { return v4l_format_g_quantization(this); }
+	void s_quantization(unsigned quantization) { v4l_format_s_quantization(this, quantization); }
+	unsigned g_flags() { return v4l_format_g_flags(this); }
+	void s_flags(unsigned flags) { v4l_format_s_flags(this, flags); }
 	__u8 g_num_planes() { return v4l_format_g_num_planes(this); }
 	void s_num_planes(__u8 num_planes) { v4l_format_s_num_planes(this, num_planes); }
 	__u32 g_bytesperline(unsigned plane = 0) { return v4l_format_g_bytesperline(this, plane); }
