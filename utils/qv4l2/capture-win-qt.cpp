@@ -117,7 +117,11 @@ void CaptureWinQt::paintFrame()
 void CaptureWinQt::stop()
 {
 	if (m_data != NULL)
+#if QT_VERSION >= 0x050000
+		memcpy(m_image->bits(), m_data, m_image->byteCount());
+#else
 		memcpy(m_image->bits(), m_data, m_image->numBytes());
+#endif
 	m_data = NULL;
 }
 
