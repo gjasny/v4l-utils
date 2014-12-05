@@ -131,29 +131,43 @@ AS_IF([test "x$with_jpeg" != xno],
 
 AM_CONDITIONAL([HAVE_JPEG], [$have_jpeg])
 
-PKG_CHECK_MODULES(QT, [QtCore >= 4.4 QtGui >= 4.4], [qt_pkgconfig=true], [qt_pkgconfig=false])
+PKG_CHECK_MODULES(QT5, [Qt5Core >= 5.0 Qt5Gui >= 5.0 Qt5Widgets >= 5.0], [qt_pkgconfig=true], [qt_pkgconfig=false])
 if test "x$qt_pkgconfig" = "xtrue"; then
+   QT_CFLAGS="$QT5_CFLAGS -fPIC"
+   QT_LIBS="$QT5_LIBS"
    AC_SUBST(QT_CFLAGS)
    AC_SUBST(QT_LIBS)
-   MOC=`$PKG_CONFIG --variable=moc_location QtCore`
-   UIC=`$PKG_CONFIG --variable=uic_location QtCore`
-   RCC=`$PKG_CONFIG --variable=rcc_location QtCore`
-   if test -z "$RCC"; then
-      RCC="rcc"
-   fi
+   AC_CHECK_PROGS(MOC, [moc-qt5 moc])
+   AC_CHECK_PROGS(UIC, [uic-qt5 uic])
+   AC_CHECK_PROGS(RCC, [rcc-qt5 rcc])
    AC_SUBST(MOC)
    AC_SUBST(UIC)
    AC_SUBST(RCC)
+# disable QTGL for qt5 because qv4l2 crash
+   qt_pkgconfig_gl=false
 else
-   AC_MSG_WARN(Qt4 or higher is not available)
+   PKG_CHECK_MODULES(QT, [QtCore >= 4.0 QtGui >= 4.0], [qt_pkgconfig=true], [qt_pkgconfig=false])
+   if test "x$qt_pkgconfig" = "xtrue"; then
+      MOC=`$PKG_CONFIG --variable=moc_location QtCore`
+      UIC=`$PKG_CONFIG --variable=uic_location QtCore`
+      RCC=`$PKG_CONFIG --variable=rcc_location QtCore`
+      if test -z "$RCC"; then
+         RCC="rcc"
+      fi
+      AC_SUBST(MOC)
+      AC_SUBST(UIC)
+      AC_SUBST(RCC)
+      PKG_CHECK_MODULES(QTGL, [QtOpenGL >= 4.8 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
+      if test "x$qt_pkgconfig_gl" = "xtrue"; then
+         AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
+      else
+         AC_MSG_WARN(Qt4 OpenGL is not available)
+      fi
+   else
+      AC_MSG_WARN(Qt4 or higher is not available)
+   fi
 fi
 
-PKG_CHECK_MODULES(QTGL, [QtOpenGL >= 4.8 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
-if test "x$qt_pkgconfig_gl" = "xtrue"; then
-   AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
-else
-   AC_MSG_WARN(Qt4 OpenGL or higher is not available)
-fi
 
 PKG_CHECK_MODULES(ALSA, [alsa], [alsa_pkgconfig=true], [alsa_pkgconfig=false])
 if test "x$alsa_pkgconfig" = "xtrue"; then
