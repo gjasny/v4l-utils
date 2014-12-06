@@ -827,6 +827,8 @@ int main(int argc, char **argv)
 	for (unsigned io = 0; io < (max_io ? max_io : 1); io++) {
 		node.std_controls = node.priv_controls = 0;
 		node.controls.clear();
+		node.frmsizes.clear();
+		node.frmsizes_count.clear();
 		for (unsigned idx = 0; idx < V4L2_BUF_TYPE_SDR_CAPTURE + 1; idx++)
 			node.buftype_pixfmts[idx].clear();
 
@@ -873,6 +875,9 @@ int main(int argc, char **argv)
 		printf("\t\ttest VIDIOC_TRY_FMT: %s\n", ok(testTryFormats(&node)));
 		printf("\t\ttest VIDIOC_S_FMT: %s\n", ok(testSetFormats(&node)));
 		printf("\t\ttest VIDIOC_G_SLICED_VBI_CAP: %s\n", ok(testSlicedVBICap(&node)));
+		printf("\t\ttest Cropping: %s\n", ok(testCropping(&node)));
+		printf("\t\ttest Composing: %s\n", ok(testComposing(&node)));
+		printf("\t\ttest Scaling: %s\n", ok(testScaling(&node)));
 		printf("\n");
 
 		/* Codec ioctls */
