@@ -364,6 +364,10 @@ int testTunerHwSeek(struct node *node)
 
 static int checkInput(struct node *node, const struct v4l2_input &descr, unsigned i)
 {
+	struct v4l2_selection sel = {
+		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+		.target = V4L2_SEL_TGT_NATIVE_SIZE,
+	};
 	__u32 mask = (1 << node->audio_inputs) - 1;
 
 	if (descr.index != i)
@@ -380,6 +384,12 @@ static int checkInput(struct node *node, const struct v4l2_input &descr, unsigne
 		return fail("invalid std\n");
 	if ((descr.capabilities & V4L2_IN_CAP_STD) && !descr.std)
 		return fail("std == 0\n");
+	if (descr.capabilities & V4L2_IN_CAP_NATIVE_SIZE) {
+		fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel));
+		fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel));
+	} else if (!doioctl(node, VIDIOC_G_SELECTION, &sel)) {
+		fail_on_test(!doioctl(node, VIDIOC_S_SELECTION, &sel));
+	}
 	if (descr.capabilities & ~0x7)
 		return fail("invalid capabilities\n");
 	if (check_0(descr.reserved, sizeof(descr.reserved)))
@@ -717,6 +727,10 @@ int testModulatorFreq(struct node *node)
 
 static int checkOutput(struct node *node, const struct v4l2_output &descr, unsigned o)
 {
+	struct v4l2_selection sel = {
+		.type = V4L2_BUF_TYPE_VIDEO_OUTPUT,
+		.target = V4L2_SEL_TGT_NATIVE_SIZE,
+	};
 	__u32 mask = (1 << node->audio_outputs) - 1;
 
 	if (descr.index != o)
@@ -733,6 +747,12 @@ static int checkOutput(struct node *node, const struct v4l2_output &descr, unsig
 		return fail("invalid std\n");
 	if ((descr.capabilities & V4L2_OUT_CAP_STD) && !descr.std)
 		return fail("std == 0\n");
+	if (descr.capabilities & V4L2_OUT_CAP_NATIVE_SIZE) {
+		fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel));
+		fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel));
+	} else if (!doioctl(node, VIDIOC_G_SELECTION, &sel)) {
+		fail_on_test(!doioctl(node, VIDIOC_S_SELECTION, &sel));
+	}
 	if (descr.capabilities & ~0x7)
 		return fail("invalid capabilities\n");
 	if (check_0(descr.reserved, sizeof(descr.reserved)))
