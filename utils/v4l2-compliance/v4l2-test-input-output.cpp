@@ -414,6 +414,8 @@ int testInput(struct node *node)
 	int i = 0;
 
 	if (ret == ENOTTY) {
+		if (node->has_inputs)
+			return fail("G_INPUT not supported for a capture device\n");
 		descr.index = 0;
 		ret = doioctl(node, VIDIOC_ENUMINPUT, &descr);
 		if (ret != ENOTTY)
@@ -773,6 +775,8 @@ int testOutput(struct node *node)
 	int o = 0;
 
 	if (ret == ENOTTY) {
+		if (node->has_outputs)
+			return fail("G_OUTPUT not supported for an output device\n");
 		descr.index = 0;
 		ret = doioctl(node, VIDIOC_ENUMOUTPUT, &descr);
 		if (ret != ENOTTY)
