@@ -317,7 +317,7 @@ int testEnumFormats(struct node *node)
 	return supported ? 0 : ENOTTY;
 }
 
-static int testColorspace(__u32 pixelformat, __u32 colorspace)
+static int testColorspace(__u32 pixelformat, __u32 colorspace, __u32 ycbcr_enc, __u32 quantization)
 {
 	fail_on_test(!colorspace);
 	fail_on_test(colorspace == V4L2_COLORSPACE_BT878);
@@ -325,6 +325,9 @@ static int testColorspace(__u32 pixelformat, __u32 colorspace)
 		     colorspace != V4L2_COLORSPACE_JPEG);
 	fail_on_test(pixelformat != V4L2_PIX_FMT_JPEG &&
 		     colorspace == V4L2_COLORSPACE_JPEG);
+	fail_on_test(colorspace >= 0xff);
+	fail_on_test(ycbcr_enc >= 0xff);
+	fail_on_test(quantization >= 0xff);
 	return 0;
 }
 
@@ -369,7 +372,7 @@ int testFBuf(struct node *node)
 	}*/
 	fail_on_test(fbuf.fmt.bytesperline && fbuf.fmt.bytesperline < fbuf.fmt.width);
 	fail_on_test(fbuf.fmt.sizeimage && fbuf.fmt.sizeimage < fbuf.fmt.bytesperline * fbuf.fmt.height);
-	fail_on_test(testColorspace(fbuf.fmt.pixelformat, fbuf.fmt.colorspace));
+	fail_on_test(testColorspace(fbuf.fmt.pixelformat, fbuf.fmt.colorspace, 0, 0));
 	return 0;
 }
 
@@ -422,7 +425,8 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 					pix.pixelformat, type);
 		fail_on_test(pix.bytesperline && pix.bytesperline < pix.width);
 		fail_on_test(!pix.sizeimage);
-		fail_on_test(testColorspace(pix.pixelformat, pix.colorspace));
+		fail_on_test(testColorspace(pix.pixelformat, pix.colorspace,
+					    pix.ycbcr_enc, pix.quantization));
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		if (pix.priv && pix.priv != V4L2_PIX_FMT_PRIV_MAGIC)
 			return fail("priv is non-zero and non-magic!\n");
@@ -435,7 +439,8 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		    set_splane->find(pix_mp.pixelformat) == set_splane->end())
 			return fail("unknown pixelformat %08x for buftype %d\n",
 					pix_mp.pixelformat, type);
-		fail_on_test(testColorspace(pix_mp.pixelformat, pix_mp.colorspace));
+		fail_on_test(testColorspace(pix_mp.pixelformat, pix_mp.colorspace, 
+                                            pix.ycbcr_enc, pix.quantization));
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		ret = check_0(pix_mp.reserved, sizeof(pix_mp.reserved));
 		if (ret)
@@ -593,12 +598,12 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		if (!memcmp(&f1.fmt.pix, &f2.fmt.pix, sizeof(f1.fmt.pix)))
 			return true;
-		printf("\t\tG_FMT:     %dx%d, %x, %d, %d, %d, %d, %x\n",
+		printf("\t\tG_FMT:     %dx%d, %x, %d, %d, %d, %d, %d, %d, %x\n",
 			pix1.width, pix1.height, pix1.pixelformat, pix1.field, pix1.bytesperline,
-			pix1.sizeimage, pix1.colorspace, pix1.priv);
-		printf("\t\tTRY/S_FMT: %dx%d, %x, %d, %d, %d, %d, %x\n",
+			pix1.sizeimage, pix1.colorspace, pix1.ycbcr_enc, pix1.quantization, pix1.priv);
+		printf("\t\tTRY/S_FMT: %dx%d, %x, %d, %d, %d, %d, %d, %d, %x\n",
 			pix2.width, pix2.height, pix2.pixelformat, pix2.field, pix2.bytesperline,
-			pix2.sizeimage, pix2.colorspace, pix2.priv);
+			pix2.sizeimage, pix2.colorspace, pix2.ycbcr_enc, pix2.quantization, pix2.priv);
 		return false;
 	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
