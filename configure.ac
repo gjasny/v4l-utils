@@ -39,6 +39,8 @@ AC_CONFIG_FILES([Makefile
 	contrib/test/Makefile
 	contrib/gconv/Makefile
 
+	po/Makefile.in
+
 	v4l-utils.spec
 	lib/libv4lconvert/libv4lconvert.pc
 	lib/libv4l1/libv4l1.pc
@@ -73,6 +75,33 @@ AC_PROG_LN_S
 PKG_PROG_PKG_CONFIG
 DX_DOT_FEATURE(ON)
 DX_INIT_DOXYGEN($PACKAGE_NAME, doxygen_libdvbv5.cfg)
+ALL_LINGUAS=""
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.19])
+
+# Define localedir
+AC_DEFUN([V4L_EXPAND_PREFIX], [
+	$1=$2
+	dnl expanding twice, since from autoconf 2.60 on, $datadir refers to
+	dnl $datarootdir which in turn refers to $prefix
+	$1=`(	test "x$prefix" = xNONE && prefix="$ac_default_prefix"
+		eval tmp_v4l_prefix=\""[$]$1"\"
+		eval echo $tmp_v4l_prefix
+		)`
+])
+
+V4L_EXPAND_PREFIX(v4l_localedir, "$datadir/locale")
+localedir="\$(datadir)/locale"
+
+AC_ARG_WITH(localedir,
+	[  --with-localedir=PATH      Where the locale files are installed ])
+if test "x$with_localedir" != "x"; then
+	v4l_localedir="$with_localedir"
+	localedir="$with_localedir"
+fi
+
+AC_DEFINE_UNQUOTED(LOCALEDIR, "$v4l_localedir", [locale directory])
+AC_SUBST(localedir)
 
 # sync-with-kernel and keytable install could make use of them
 #AC_PROG_GREP
