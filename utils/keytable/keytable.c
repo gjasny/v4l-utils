@@ -28,6 +28,17 @@
 
 #include "parse.h"
 
+#ifdef ENABLE_NLS
+# define _(string) gettext(string)
+# include "gettext.h"
+# include <locale.h>
+# include <langinfo.h>
+# include <iconv.h>
+#else
+# define _(string) string
+#endif
+
+
 struct input_keymap_entry_v2 {
 #define KEYMAP_BY_INDEX	(1 << 0)
 	u_int8_t  flags;
@@ -194,7 +205,7 @@ static error_t parse_keyfile(char *fname, char **table)
 	*table = NULL;
 
 	if (debug)
-		fprintf(stderr, "Parsing %s keycode file\n", fname);
+		fprintf(stderr, _("Parsing %s keycode file\n"), fname);
 
 	fin = fopen(fname, "r");
 	if (!fin) {
@@ -247,7 +258,7 @@ static error_t parse_keyfile(char *fname, char **table)
 						else if (!strcasecmp(p,"other") || !strcasecmp(p,"unknown"))
 							ch_proto |= OTHER;
 						else {
-							fprintf(stderr, "Protocol %s invalid\n", p);
+							fprintf(stderr, _("Protocol %s invalid\n"), p);
 							goto err_einval;
 						}
 						p = strtok(NULL, " ,\n");
@@ -277,15 +288,15 @@ static error_t parse_keyfile(char *fname, char **table)
 			goto err_einval;
 
 		if (debug)
-			fprintf(stderr, "parsing %s=%s:", scancode, keycode);
+			fprintf(stderr, _("parsing %s=%s:"), scancode, keycode);
 		value = parse_code(keycode);
 		if (debug)
-			fprintf(stderr, "\tvalue=%d\n", value);
+			fprintf(stderr, _("\tvalue=%d\n"), value);
 
 		if (value == -1) {
 			value = strtol(keycode, NULL, 0);
 			if (errno)
-				perror("value");
+				perror(_("value"));
 		}
 
 		nextkey->codes[0] = (unsigned) strtoul(scancode, NULL, 0);
@@ -302,7 +313,7 @@ static error_t parse_keyfile(char *fname, char **table)
 	return 0;
 
 err_einval:
-	fprintf(stderr, "Invalid parameter on line %d of %s\n",
+	fprintf(stderr, _("Invalid parameter on line %d of %s\n"),
 		line, fname);
 	return EINVAL;
 
@@ -318,11 +329,11 @@ static error_t parse_cfgfile(char *fname)
 	char *driver, *table, *filename;
 
 	if (debug)
-		fprintf(stderr, "Parsing %s config file\n", fname);
+		fprintf(stderr, _("Parsing %s config file\n"), fname);
 
 	fin = fopen(fname, "r");
 	if (!fin) {
-		perror("opening keycode file");
+		perror(_("opening keycode file"));
 		return errno;
 	}
 
@@ -349,7 +360,7 @@ static error_t parse_cfgfile(char *fname)
 			goto err_einval;
 
 		if (debug)
-			fprintf(stderr, "Driver %s, Table %s => file %s\n",
+			fprintf(stderr, _("Driver %s, Table %s => file %s\n"),
 				driver, table, filename);
 
 		nextcfg->driver = malloc(strlen(driver) + 1);
@@ -373,7 +384,7 @@ static error_t parse_cfgfile(char *fname)
 	return 0;
 
 err_einval:
-	fprintf(stderr, "Invalid parameter on line %d of %s\n",
+	fprintf(stderr, _("Invalid parameter on line %d of %s\n"),
 		line, fname);
 	return EINVAL;
 
@@ -417,7 +428,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		if (rc)
 			goto err_inval;
 		if (name)
-			fprintf(stderr, "Read %s table\n", name);
+			fprintf(stderr, _("Read %s table\n"), name);
 		break;
 	}
 	case 'a': {
@@ -447,12 +458,12 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			nextkey->codes[1] = key;
 
 			if (debug)
-				fprintf(stderr, "scancode 0x%04x=%u\n",
+				fprintf(stderr, _("scancode 0x%04x=%u\n"),
 					nextkey->codes[0], nextkey->codes[1]);
 
 			nextkey->next = calloc(1, sizeof(keys));
 			if (!nextkey->next) {
-				perror("No memory!\n");
+				perror(_("No memory!\n"));
 				return ENOMEM;
 			}
 			nextkey = nextkey->next;
@@ -500,7 +511,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	return 0;
 
 err_inval:
-	fprintf(stderr, "Invalid parameter(s)\n");
+	fprintf(stderr, _("Invalid parameter(s)\n"));
 	return ARGP_ERR_UNKNOWN;
 
 }
@@ -518,15 +529,15 @@ static void prtcode(int *codes)
 
 	for (p = key_events; p->name != NULL; p++) {
 		if (p->value == (unsigned)codes[1]) {
-			printf("scancode 0x%04x = %s (0x%02x)\n", codes[0], p->name, codes[1]);
+			printf(_("scancode 0x%04x = %s (0x%02x)\n"), codes[0], p->name, codes[1]);
 			return;
 		}
 	}
 
 	if (isprint (codes[1]))
-		printf("scancode 0x%04x = '%c' (0x%02x)\n", codes[0], codes[1], codes[1]);
+		printf(_("scancode 0x%04x = '%c' (0x%02x)\n"), codes[0], codes[1], codes[1]);
 	else
-		printf("scancode 0x%04x = 0x%02x\n", codes[0], codes[1]);
+		printf(_("scancode 0x%04x = 0x%02x\n"), codes[0], codes[1]);
 }
 
 static void free_names(struct sysfs_names *names)
@@ -576,7 +587,7 @@ static struct sysfs_names *seek_sysfs_dir(char *dname, char *node_name)
 	closedir(dir);
 
 	if (names == cur_name) {
-		fprintf(stderr, "Couldn't find any node at %s%s*.\n",
+		fprintf(stderr, _("Couldn't find any node at %s%s*.\n"),
 			dname, node_name);
 		free (names);
 		names = NULL;
@@ -584,7 +595,7 @@ static struct sysfs_names *seek_sysfs_dir(char *dname, char *node_name)
 	return names;
 
 err:
-	perror("Seek dir");
+	perror(_("Seek dir"));
 	free_names(names);
 	return NULL;
 }
@@ -616,7 +627,7 @@ static struct uevents *read_sysfs_uevents(char *dname)
 	strcat(file, event);
 
 	if (debug)
-		fprintf(stderr, "Parsing uevent %s\n", file);
+		fprintf(stderr, _("Parsing uevent %s\n"), file);
 
 
 	fp = fopen(file, "r");
@@ -640,7 +651,7 @@ static struct uevents *read_sysfs_uevents(char *dname)
 
 		p = strtok(NULL, "\n");
 		if (!p) {
-			fprintf(stderr, "Error on uevent information\n");
+			fprintf(stderr, _("Error on uevent information\n"));
 			fclose(fp);
 			free(file);
 			free_uevent(uevent);
@@ -656,7 +667,7 @@ static struct uevents *read_sysfs_uevents(char *dname)
 		strcpy(next->value, p);
 
 		if (debug)
-			fprintf(stderr, "%s uevent %s=%s\n", file, next->key, next->value);
+			fprintf(stderr, _("%s uevent %s=%s\n"), file, next->key, next->value);
 
 		next->next = calloc(1, sizeof(*next));
 		if (!next->next) {
@@ -689,7 +700,7 @@ static struct sysfs_names *find_device(char *name)
 
 	if (debug) {
 		for (cur = names; cur->next; cur = cur->next) {
-			fprintf(stderr, "Found device %s\n", cur->name);
+			fprintf(stderr, _("Found device %s\n"), cur->name);
 		}
 	}
 
@@ -713,7 +724,7 @@ static struct sysfs_names *find_device(char *name)
 		free(n);
 		if (!found) {
 			free_names(names);
-			fprintf(stderr, "Not found device %s\n", name);
+			fprintf(stderr, _("Not found device %s\n"), name);
 			return NULL;
 		}
 		tmp = calloc(sizeof(*names), 1);
@@ -747,7 +758,7 @@ static enum ir_protocols v1_get_hw_protocols(char *name)
 	p = strtok(buf, " \n");
 	while (p) {
 		if (debug)
-			fprintf(stderr, "%s protocol %s\n", name, p);
+			fprintf(stderr, _("%s protocol %s\n"), name, p);
 		if (!strcmp(p, "rc-5"))
 			proto |= RC_5;
 		else if (!strcmp(p, "rc-6"))
@@ -861,15 +872,15 @@ static int v1_get_sw_enabled_protocol(char *dirname)
 
 	p = strtok(buf, " \n");
 	if (!p) {
-		fprintf(stderr, "%s has invalid content: '%s'\n", name, buf);
+		fprintf(stderr, _("%s has invalid content: '%s'\n"), name, buf);
 		return 0;
 	}
 
 	rc = atoi(p);
 
 	if (debug)
-		fprintf(stderr, "protocol %s is %s\n",
-			name, rc? "enabled" : "disabled");
+		fprintf(stderr, _("protocol %s is %s\n"),
+			name, rc? _("enabled") : _("disabled"));
 
 	if (atoi(p) == 1)
 		return 1;
@@ -935,8 +946,8 @@ static enum ir_protocols v2_get_protocols(struct rc_device *rc_dev, char *name)
 			enabled = 0;
 
 		if (debug)
-			fprintf(stderr, "%s protocol %s (%s)\n", name, p,
-				enabled? "enabled" : "disabled");
+			fprintf(stderr, _("%s protocol %s (%s)\n"), name, p,
+				enabled? _("enabled") : _("disabled"));
 
 		if (!strcmp(p, "rc-5"))
 			proto = RC_5;
@@ -1061,7 +1072,7 @@ static void show_proto(	enum ir_protocols proto)
 	if (proto & XMP)
 		fprintf (stderr, "XMP ");
 	if (proto & OTHER)
-		fprintf (stderr, "other ");
+		fprintf (stderr, _("other "));
 }
 
 static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
@@ -1080,12 +1091,11 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 	if (!input_names)
 		return EINVAL;
 	if (input_names->next->next) {
-		fprintf(stderr, "Found more than one input interface."
-				"This is currently unsupported\n");
+		fprintf(stderr, _("Found more than one input interface.This is currently unsupported\n"));
 		return EINVAL;
 	}
 	if (debug)
-		fprintf(stderr, "Input sysfs node is %s\n", input_names->name);
+		fprintf(stderr, _("Input sysfs node is %s\n"), input_names->name);
 
 	event_names = seek_sysfs_dir(input_names->name, event);
 	free_names(input_names);
@@ -1095,12 +1105,11 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 	}
 	if (event_names->next->next) {
 		free_names(event_names);
-		fprintf(stderr, "Found more than one event interface."
-				"This is currently unsupported\n");
+		fprintf(stderr, _("Found more than one event interface. This is currently unsupported\n"));
 		return EINVAL;
 	}
 	if (debug)
-		fprintf(stderr, "Event sysfs node is %s\n", event_names->name);
+		fprintf(stderr, _("Event sysfs node is %s\n"), event_names->name);
 
 	uevent = read_sysfs_uevents(event_names->name);
 	free_names(event_names);
@@ -1119,7 +1128,7 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 	free_uevent(uevent);
 
 	if (!rc_dev->input_name) {
-		fprintf(stderr, "Input device name not found.\n");
+		fprintf(stderr, _("Input device name not found.\n"));
 		return EINVAL;
 	}
 
@@ -1140,7 +1149,7 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 	free_uevent(uevent);
 
 	if (debug)
-		fprintf(stderr, "input device is %s\n", rc_dev->input_name);
+		fprintf(stderr, _("input device is %s\n"), rc_dev->input_name);
 
 	sysfs++;
 
@@ -1198,7 +1207,7 @@ static int set_proto(struct rc_device *rc_dev)
 
 	rc_dev->current &= rc_dev->supported;
 	if (!rc_dev->current) {
-		fprintf(stderr, "Invalid protocols selected\n");
+		fprintf(stderr, _("Invalid protocols selected\n"));
 		return EINVAL;
 	}
 
@@ -1237,12 +1246,12 @@ static int get_input_protocol_version(int fd)
 {
 	if (ioctl(fd, EVIOCGVERSION, &input_protocol_version) < 0) {
 		fprintf(stderr,
-			"Unable to query evdev protocol version: %s\n",
+			_("Unable to query evdev protocol version: %s\n"),
 			strerror(errno));
 		return errno;
 	}
 	if (debug)
-		fprintf(stderr, "Input Protocol version: 0x%08x\n",
+		fprintf(stderr, _("Input Protocol version: 0x%08x\n"),
 			input_protocol_version);
 
 	return 0;
@@ -1273,7 +1282,7 @@ static void clear_table(int fd)
 
 			i++;
 			if (debug)
-				fprintf(stderr, "Deleting entry %d\n", i);
+				fprintf(stderr, _("Deleting entry %d\n"), i);
 		} while (ioctl(fd, EVIOCSKEYCODE_V2, &entry) == 0);
 	}
 }
@@ -1293,7 +1302,7 @@ static int add_keys(int fd)
 
 		if (ioctl(fd, EVIOCSKEYCODE, nextkey->codes)) {
 			fprintf(stderr,
-				"Setting scancode 0x%04x with 0x%04x via ",
+				_("Setting scancode 0x%04x with 0x%04x via "),
 				nextkey->codes[0], nextkey->codes[1]);
 			perror("EVIOCSKEYCODE");
 		}
@@ -1309,9 +1318,9 @@ static int add_keys(int fd)
 static void display_proto(struct rc_device *rc_dev)
 {
 	if (rc_dev->type == HARDWARE_DECODER)
-		fprintf(stderr, "Current protocols: ");
+		fprintf(stderr, _("Current protocols: "));
 	else
-		fprintf(stderr, "Enabled protocols: ");
+		fprintf(stderr, _("Enabled protocols: "));
 	show_proto(rc_dev->current);
 	fprintf(stderr, "\n");
 }
@@ -1333,17 +1342,17 @@ static void test_event(int fd)
 	struct input_event ev[64];
 	int rd, i;
 
-	printf ("Testing events. Please, press CTRL-C to abort.\n");
+	printf (_("Testing events. Please, press CTRL-C to abort.\n"));
 	while (1) {
 		rd = read(fd, ev, sizeof(ev));
 
 		if (rd < (int) sizeof(struct input_event)) {
-			perror("Error reading event");
+			perror(_("Error reading event"));
 			return;
 		}
 
 		for (i = 0; i < rd / sizeof(struct input_event); i++) {
-			printf("%ld.%06ld: event type %s(0x%02x)",
+			printf(_("%ld.%06ld: event type %s(0x%02x)"),
 				ev[i].time.tv_sec, ev[i].time.tv_usec,
 				get_event_name(events_type, ev[i].type), ev[i].type);
 
@@ -1352,33 +1361,33 @@ static void test_event(int fd)
 				printf(".\n");
 				break;
 			case EV_KEY:
-				printf(" key_%s: %s(0x%04x)\n",
-					(ev[i].value == 0) ? "up" : "down",
+				printf(_(" key_%s: %s(0x%04x)\n"),
+					(ev[i].value == 0) ? _("up") : _("down"),
 					get_event_name(key_events, ev[i].code),
 					ev[i].type);
 				break;
 			case EV_REL:
-				printf(": %s (0x%04x) value=%d\n",
+				printf(_(": %s (0x%04x) value=%d\n"),
 					get_event_name(rel_events, ev[i].code),
 					ev[i].type,
 					ev[i].value);
 				break;
 			case EV_ABS:
-				printf(": %s (0x%04x) value=%d\n",
+				printf(_(": %s (0x%04x) value=%d\n"),
 					get_event_name(abs_events, ev[i].code),
 					ev[i].type,
 					ev[i].value);
 				break;
 			case EV_MSC:
 				if (ev[i].code == MSC_SCAN)
-					printf(": scancode = 0x%02x\n", ev[i].value);
+					printf(_(": scancode = 0x%02x\n"), ev[i].value);
 				else
-					printf(": code = %s(0x%02x), value = %d\n",
+					printf(_(": code = %s(0x%02x), value = %d\n"),
 						get_event_name(msc_events, ev[i].code),
 						ev[i].code, ev[i].value);
 				break;
 			case EV_REP:
-				printf(": value = %d\n", ev[i].value);
+				printf(_(": value = %d\n"), ev[i].value);
 				break;
 			case EV_SW:
 			case EV_LED:
@@ -1387,7 +1396,7 @@ static void test_event(int fd)
 			case EV_PWR:
 			case EV_FF_STATUS:
 			default:
-				printf(": code = 0x%02x, value = %d\n",
+				printf(_(": code = 0x%02x, value = %d\n"),
 					ev[i].code, ev[i].value);
 				break;
 			}
@@ -1456,7 +1465,7 @@ static int set_rate(int fd, unsigned int delay, unsigned int period)
 		return -1;
 	}
 
-	printf("Changed Repeat delay to %d ms and repeat period to %d ms\n", delay, period);
+	printf(_("Changed Repeat delay to %d ms and repeat period to %d ms\n"), delay, period);
 	return 0;
 }
 
@@ -1470,7 +1479,7 @@ static int get_rate(int fd, unsigned int *delay, unsigned int *period)
 	}
 	*delay = rep[0];
 	*period = rep[1];
-	printf("Repeat delay = %d ms, repeat period = %d ms\n", *delay, *period);
+	printf(_("Repeat delay = %d ms, repeat period = %d ms\n"), *delay, *period);
 	return 0;
 }
 
@@ -1490,14 +1499,14 @@ static void device_info(int fd, char *prepend)
 
 	rc = ioctl(fd, EVIOCGNAME(sizeof(buf)), buf);
 	if (rc >= 0)
-		fprintf(stderr,"%sName: %.*s\n",prepend, rc, buf);
+		fprintf(stderr,_("%sName: %.*s\n"),prepend, rc, buf);
 	else
 		perror ("EVIOCGNAME");
 
 	rc = ioctl(fd, EVIOCGID, &id);
 	if (rc >= 0)
 		fprintf(stderr,
-			"%sbus: %d, vendor/product: %04x:%04x, version: 0x%04x\n",
+			_("%sbus: %d, vendor/product: %04x:%04x, version: 0x%04x\n"),
 			prepend, id.bustype, id.vendor, id.product, id.version);
 	else
 		perror ("EVIOCGID");
@@ -1515,13 +1524,13 @@ static int show_sysfs_attribs(struct rc_device *rc_dev)
 		if (cur->name) {
 			if (get_attribs(rc_dev, cur->name))
 				return -1;
-			fprintf(stderr, "Found %s (%s) with:\n",
+			fprintf(stderr, _("Found %s (%s) with:\n"),
 				rc_dev->sysfs_name,
 				rc_dev->input_name);
-			fprintf(stderr, "\tDriver %s, table %s\n",
+			fprintf(stderr, _("\tDriver %s, table %s\n"),
 				rc_dev->drv_name,
 				rc_dev->keytable_name);
-			fprintf(stderr, "\tSupported protocols: ");
+			fprintf(stderr, _("\tSupported protocols: "));
 			show_proto(rc_dev->supported);
 			fprintf(stderr, "\n\t");
 			display_proto(rc_dev);
@@ -1531,7 +1540,7 @@ static int show_sysfs_attribs(struct rc_device *rc_dev)
 				show_evdev_attribs(fd);
 				close(fd);
 			} else {
-				printf("\tExtra capabilities: <access denied>\n");
+				printf(_("\tExtra capabilities: <access denied>\n"));
 			}
 		}
 	}
@@ -1545,6 +1554,10 @@ int main(int argc, char *argv[])
 	static struct sysfs_names *names;
 	struct rc_device	  rc_dev;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
 	/* Just list all devices */
@@ -1552,7 +1565,7 @@ int main(int argc, char *argv[])
 		if (devicename) {
 			fd = open(devicename, O_RDONLY);
 			if (fd < 0) {
-				perror("Can't open device");
+				perror(_("Can't open device"));
 				return -1;
 			}
 			device_info(fd, "");
@@ -1566,7 +1579,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (cfg.next && (clear || keys.next || ch_proto || devicename)) {
-		fprintf (stderr, "Auto-mode can be used only with --read, --debug and --sysdev options\n");
+		fprintf (stderr, _("Auto-mode can be used only with --read, --debug and --sysdev options\n"));
 		return -1;
 	}
 	if (!devicename) {
@@ -1600,19 +1613,19 @@ int main(int argc, char *argv[])
 
 		if (!cur->next) {
 			if (debug)
-				fprintf(stderr, "Table for %s, %s not found. Keep as-is\n",
+				fprintf(stderr, _("Table for %s, %s not found. Keep as-is\n"),
 				       rc_dev.drv_name, rc_dev.keytable_name);
 			return 0;
 		}
 		if (debug)
-			fprintf(stderr, "Table for %s, %s is on %s file.\n",
+			fprintf(stderr, _("Table for %s, %s is on %s file.\n"),
 				rc_dev.drv_name, rc_dev.keytable_name,
 				cur->fname);
 		if (cur->fname[0] == '/' || ((cur->fname[0] == '.') && strchr(cur->fname, '/'))) {
 			fname = cur->fname;
 			rc = parse_keyfile(fname, &name);
 			if (rc < 0) {
-				fprintf(stderr, "Can't load %s table\n", fname);
+				fprintf(stderr, _("Can't load %s table\n"), fname);
 				return -1;
 			}
 		} else {
@@ -1629,19 +1642,19 @@ int main(int argc, char *argv[])
 				rc = parse_keyfile(fname, &name);
 			}
 			if (rc != 0) {
-				fprintf(stderr, "Can't load %s table from %s or %s\n", cur->fname, IR_KEYTABLE_USER_DIR, IR_KEYTABLE_SYSTEM_DIR);
+				fprintf(stderr, _("Can't load %s table from %s or %s\n"), cur->fname, IR_KEYTABLE_USER_DIR, IR_KEYTABLE_SYSTEM_DIR);
 				return -1;
 			}
 		}
 		if (!keys.next) {
-			fprintf(stderr, "Empty table %s\n", fname);
+			fprintf(stderr, _("Empty table %s\n"), fname);
 			return -1;
 		}
 		clear = 1;
 	}
 
 	if (debug)
-		fprintf(stderr, "Opening %s\n", devicename);
+		fprintf(stderr, _("Opening %s\n"), devicename);
 	fd = open(devicename, O_RDONLY);
 	if (fd < 0) {
 		perror(devicename);
@@ -1657,7 +1670,7 @@ int main(int argc, char *argv[])
 	 */
 	if (clear) {
 		clear_table(fd);
-		fprintf(stderr, "Old keytable cleared\n");
+		fprintf(stderr, _("Old keytable cleared\n"));
 	}
 
 	/*
@@ -1665,7 +1678,7 @@ int main(int argc, char *argv[])
 	 */
 	write_cnt = add_keys(fd);
 	if (write_cnt)
-		fprintf(stderr, "Wrote %d keycode(s) to driver\n", write_cnt);
+		fprintf(stderr, _("Wrote %d keycode(s) to driver\n"), write_cnt);
 
 	/*
 	 * Third step: change protocol
@@ -1673,9 +1686,9 @@ int main(int argc, char *argv[])
 	if (ch_proto) {
 		rc_dev.current = ch_proto;
 		if (set_proto(&rc_dev))
-			fprintf(stderr, "Couldn't change the IR protocols\n");
+			fprintf(stderr, _("Couldn't change the IR protocols\n"));
 		else {
-			fprintf(stderr, "Protocols changed to ");
+			fprintf(stderr, _("Protocols changed to "));
 			show_proto(rc_dev.current);
 			fprintf(stderr, "\n");
 		}
