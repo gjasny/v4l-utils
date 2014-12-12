@@ -1,1 +1,3 @@
 # List of source files which contain translatable strings.
+
+utils/keytable/keytable.c

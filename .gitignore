@@ -30,3 +30,8 @@ ABOUT-NLS
 lib/include/dvb-frontend.h
 doxygen-doc/
 patches/
+po/*.gmo
+po/POTFILES
+po/stamp-po
+po/*.mo
+po/remove-potcdate.sed
