@@ -32,6 +32,16 @@
 
 #include <config.h>
 
+#ifdef ENABLE_NLS
+# define _(string) gettext(string)
+# include "gettext.h"
+# include <locale.h>
+# include <langinfo.h>
+# include <iconv.h>
+#else
+# define _(string) string
+#endif
+
 #include <linux/dvb/dmx.h>
 #include "libdvbv5/dvb-file.h"
 #include "libdvbv5/dvb-demux.h"
@@ -86,14 +96,14 @@ static int verbose = 0;
 
 #define ERROR(x...)                                                     \
 	do {                                                            \
-		fprintf(stderr, "ERROR: ");                             \
+		fprintf(stderr, _("ERROR: "));                             \
 		fprintf(stderr, x);                                     \
 		fprintf(stderr, "\n");                                 \
 	} while (0)
 
 #define PERROR(x...)                                                    \
 	do {                                                            \
-		fprintf(stderr, "ERROR: ");                             \
+		fprintf(stderr, _("ERROR: "));                             \
 		fprintf(stderr, x);                                     \
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
@@ -128,25 +138,25 @@ static int print_frontend_stats(struct arguments *args,
 	for (i = 0; i < MAX_DTV_STATS; i++) {
 		show = 1;
 
-		dvb_fe_snprintf_stat(parms, DTV_QUALITY, "Quality",
+		dvb_fe_snprintf_stat(parms, DTV_QUALITY, _("Quality"),
 				     i, &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_STAT_SIGNAL_STRENGTH, "Signal",
+		dvb_fe_snprintf_stat(parms, DTV_STAT_SIGNAL_STRENGTH, _("Signal"),
 				     i, &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_STAT_CNR, "C/N",
+		dvb_fe_snprintf_stat(parms, DTV_STAT_CNR, _("C/N"),
 				     i, &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_STAT_ERROR_BLOCK_COUNT, "UCB",
+		dvb_fe_snprintf_stat(parms, DTV_STAT_ERROR_BLOCK_COUNT, _("UCB"),
 				     i,  &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_BER, "postBER",
+		dvb_fe_snprintf_stat(parms, DTV_BER, _("postBER"),
 				     i,  &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_PRE_BER, "preBER",
+		dvb_fe_snprintf_stat(parms, DTV_PRE_BER, _("preBER"),
 				     i,  &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_PER, "PER",
+		dvb_fe_snprintf_stat(parms, DTV_PER, _("PER"),
 				     i,  &p, &len, &show);
 
 		if (p != buf) {
@@ -180,7 +190,7 @@ static int check_frontend(void *__args,
 			return 0;
 		rc = dvb_fe_get_stats(parms);
 		if (rc)
-			PERROR("dvb_fe_get_stats failed");
+			PERROR(_("dvb_fe_get_stats failed"));
 
 		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
 		if (rc)
@@ -236,7 +246,7 @@ static int run_scan(struct arguments *args,
 
 	dmx_fd = open(args->demux_dev, O_RDWR);
 	if (dmx_fd < 0) {
-		perror("openening pat demux failed");
+		perror(_("openening pat demux failed"));
 		return -3;
 	}
 
@@ -263,7 +273,7 @@ static int run_scan(struct arguments *args,
 			continue;
 
 		count++;
-		dvb_log("Scanning frequency #%d %d", count, freq);
+		dvb_log(_("Scanning frequency #%d %d"), count, freq);
 
 		/*
 		 * update params->lnb only if it differs from entry->lnb
@@ -430,9 +440,13 @@ int main(int argc, char **argv)
 	const struct argp argp = {
 		.options = options,
 		.parser = parse_opt,
-		.doc = "scan DVB services using the channel file",
-		.args_doc = "<initial file>",
+		.doc = _("scan DVB services using the channel file"),
+		.args_doc = _("<initial file>"),
 	};
+
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
 
 	memset(&args, 0, sizeof(args));
 	args.sat_number = -1;
@@ -455,11 +469,11 @@ int main(int argc, char **argv)
 	if (args.lnb_name) {
 		lnb = dvb_sat_search_lnb(args.lnb_name);
 		if (lnb < 0) {
-			printf("Please select one of the LNBf's below:\n");
+			printf(_("Please select one of the LNBf's below:\n"));
 			dvb_print_all_lnb();
 			exit(1);
 		} else {
-			printf("Using LNBf ");
+			printf(_("Using LNBf "));
 			dvb_print_lnb(lnb);
 		}
 	}
@@ -474,7 +488,7 @@ int main(int argc, char **argv)
 	if ((args.input_format == FILE_ZAP) ||
 		   (args.input_format == FILE_UNKNOWN) ||
 		   (args.output_format == FILE_UNKNOWN)) {
-		fprintf(stderr, "ERROR: Please specify a valid format\n");
+		fprintf(stderr, _("ERROR: Please specify a valid format\n"));
 		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
 		return -1;
 	}
@@ -482,12 +496,12 @@ int main(int argc, char **argv)
 	r = asprintf(&args.demux_dev,
 		 "/dev/dvb/adapter%i/demux%i", args.adapter_dmx, args.demux);
 	if (r < 0) {
-		fprintf(stderr, "asprintf error\n" );
+		fprintf(stderr, _("asprintf error\n") );
 		return -1;
 	}
 
 	if (verbose)
-		fprintf(stderr, "using demux '%s'\n", args.demux_dev);
+		fprintf(stderr, _("using demux '%s'\n"), args.demux_dev);
 
 	struct dvb_v5_fe_parms *parms = dvb_fe_open(args.adapter_fe,
 						    args.frontend,
@@ -505,7 +519,7 @@ int main(int argc, char **argv)
 	parms->lna = args.lna;
 	r = dvb_fe_set_default_country(parms, args.cc);
 	if (r < 0)
-		fprintf(stderr, "Failed to set the country code:%s\n", args.cc);
+		fprintf(stderr, _("Failed to set the country code:%s\n"), args.cc);
 
 	timeout_flag = &parms->abort;
 	signal(SIGTERM, do_timeout);

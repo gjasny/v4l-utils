@@ -26,6 +26,16 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#ifdef ENABLE_NLS
+# define _(string) gettext(string)
+# include "gettext.h"
+# include <locale.h>
+# include <langinfo.h>
+# include <iconv.h>
+#else
+# define _(string) string
+#endif
+
 #define PROGRAM_NAME	"dvb-fe-tool"
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
@@ -78,7 +88,7 @@ static void do_timeout(int x)
 
 #define PERROR(x...)                                                    \
 	do {                                                            \
-		fprintf(stderr, "ERROR: ");                             \
+		fprintf(stderr, _("ERROR: "));                          \
 		fprintf(stderr, x);                                     \
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
@@ -138,7 +148,7 @@ static int print_frontend_stats(FILE *fd,
 
 	rc = dvb_fe_get_stats(parms);
 	if (rc) {
-		PERROR("dvb_fe_get_stats failed");
+		PERROR(_("dvb_fe_get_stats failed"));
 		return -1;
 	}
 
@@ -149,25 +159,25 @@ static int print_frontend_stats(FILE *fd,
 	for (i = 0; i < MAX_DTV_STATS; i++) {
 		show = 1;
 
-		dvb_fe_snprintf_stat(parms, DTV_QUALITY, "Quality",
+		dvb_fe_snprintf_stat(parms, DTV_QUALITY, _("Quality"),
 				     i, &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_STAT_SIGNAL_STRENGTH, "Signal",
+		dvb_fe_snprintf_stat(parms, DTV_STAT_SIGNAL_STRENGTH, _("Signal"),
 				     i, &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_STAT_CNR, "C/N",
+		dvb_fe_snprintf_stat(parms, DTV_STAT_CNR, _("C/N"),
 				     i, &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_STAT_ERROR_BLOCK_COUNT, "UCB",
+		dvb_fe_snprintf_stat(parms, DTV_STAT_ERROR_BLOCK_COUNT, _("UCB"),
 				     i,  &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_BER, "postBER",
+		dvb_fe_snprintf_stat(parms, DTV_BER, _("postBER"),
 				     i,  &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_PRE_BER, "preBER",
+		dvb_fe_snprintf_stat(parms, DTV_PRE_BER, _("preBER"),
 				     i,  &p, &len, &show);
 
-		dvb_fe_snprintf_stat(parms, DTV_PER, "PER",
+		dvb_fe_snprintf_stat(parms, DTV_PER, _("PER"),
 				     i,  &p, &len, &show);
 		if (p != buf) {
 			if (isatty(fileno(fd))) {
@@ -248,6 +258,10 @@ int main(int argc, char *argv[])
 	struct dvb_v5_fe_parms *parms;
 	int fe_flags = O_RDWR;
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
 	/*
@@ -266,7 +280,7 @@ int main(int argc, char *argv[])
 		return -1;
 
 	if (delsys) {
-		printf("Changing delivery system to: %s\n",
+		printf(_("Changing delivery system to: %s\n"),
 			delivery_system_name[delsys]);
 		dvb_set_sys(parms, delsys);
 		goto ret;

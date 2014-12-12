@@ -31,6 +31,16 @@
 
 #include <config.h>
 
+#ifdef ENABLE_NLS
+# define _(string) gettext(string)
+# include "gettext.h"
+# include <locale.h>
+# include <langinfo.h>
+# include <iconv.h>
+#else
+# define _(string) string
+#endif
+
 #include "libdvbv5/dvb-file.h"
 #include "libdvbv5/dvb-demux.h"
 #include "libdvbv5/dvb-scan.h"
@@ -77,16 +87,16 @@ static int convert_file(struct arguments *args)
 	struct dvb_file *dvb_file = NULL;
 	int ret;
 
-	printf("Reading file %s\n", args->input_file);
+	printf(_("Reading file %s\n"), args->input_file);
 
 	dvb_file = dvb_read_file_format(args->input_file, args->delsys,
 				    args->input_format);
 	if (!dvb_file) {
-		fprintf(stderr, "Error reading file %s\n", args->input_file);
+		fprintf(stderr, _("Error reading file %s\n"), args->input_file);
 		return -1;
 	}
 
-	printf("Writing file %s\n", args->output_file);
+	printf(_("Writing file %s\n"), args->output_file);
 	ret = dvb_write_file_format(args->output_file, dvb_file,
 				    args->delsys, args->output_format);
 	dvb_file_free(dvb_file);
@@ -101,9 +111,13 @@ int main(int argc, char **argv)
 	const struct argp argp = {
 		.options = options,
 		.parser = parse_opt,
-		.doc = "scan DVB services using the channel file",
-		.args_doc = "<input file> <output file>",
+		.doc = _("scan DVB services using the channel file"),
+		.args_doc = _("<input file> <output file>"),
 	};
+
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
 
 	memset(&args, 0, sizeof(args));
 	argp_parse(&argp, argc, argv, 0, &idx, &args);
@@ -114,21 +128,21 @@ int main(int argc, char **argv)
 	}
 
 	if (args.input_format == FILE_UNKNOWN) {
-		fprintf(stderr, "ERROR: Please specify a valid input format\n");
+		fprintf(stderr, _("ERROR: Please specify a valid input format\n"));
 		missing = 1;
 	} else if (!args.input_file) {
-		fprintf(stderr, "ERROR: Please specify a valid input file\n");
+		fprintf(stderr, _("ERROR: Please specify a valid input file\n"));
 		missing = 1;
 	} else if (args.output_format == FILE_UNKNOWN) {
-		fprintf(stderr, "ERROR: Please specify a valid output format\n");
+		fprintf(stderr, _("ERROR: Please specify a valid output format\n"));
 		missing = 1;
 	} else if (!args.output_file) {
-		fprintf(stderr, "ERROR: Please specify a valid output file\n");
+		fprintf(stderr, _("ERROR: Please specify a valid output file\n"));
 		missing = 1;
 	} else if (((args.input_format == FILE_ZAP) ||
 		   (args.output_format == FILE_ZAP)) &&
 		   (args.delsys <= 0 || args.delsys == SYS_ISDBS)) {
-		fprintf(stderr, "ERROR: Please specify a valid delivery system for ZAP format\n");
+		fprintf(stderr, _("ERROR: Please specify a valid delivery system for ZAP format\n"));
 		missing = 1;
 	}
 	if (missing) {
