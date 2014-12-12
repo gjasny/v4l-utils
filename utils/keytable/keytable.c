@@ -38,6 +38,7 @@
 # define _(string) string
 #endif
 
+# define N_(string) string
 
 struct input_keymap_entry_v2 {
 #define KEYMAP_BY_INDEX	(1 << 0)
@@ -114,10 +115,11 @@ static int parse_code(char *string)
 	return -1;
 }
 
-const char *argp_program_version = "IR keytable control version "V4L_UTILS_VERSION;
+const char *argp_program_version = N_("IR keytable control version ") V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
 
-static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
+static const char doc[] = N_(
+	"\nAllows get/set IR keycode/scancode tables\n"
 	"You need to have read permissions on /dev/input for the program to work\n"
 	"\nOn the options bellow, the arguments are:\n"
 	"  DEV      - the /dev/input/event* device to control\n"
@@ -129,28 +131,28 @@ static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
 	"  DELAY    - Delay before repeating a keystroke\n"
 	"  PERIOD   - Period to repeat a keystroke\n"
 	"  CFGFILE  - configuration file that associates a driver/table name with a keymap file\n"
-	"\nOptions can be combined together.";
+	"\nOptions can be combined together.");
 
 static const struct argp_option options[] = {
-	{"verbose",	'v',	0,		0,	"enables debug messages", 0},
-	{"clear",	'c',	0,		0,	"clears the old table", 0},
-	{"sysdev",	's',	"SYSDEV",	0,	"ir class device to control", 0},
-	{"test",	't',	0,		0,	"test if IR is generating events", 0},
-	{"device",	'd',	"DEV",		0,	"ir device to control", 0},
-	{"read",	'r',	0,		0,	"reads the current scancode/keycode table", 0},
-	{"write",	'w',	"TABLE",	0,	"write (adds) the scancodes to the device scancode/keycode table from an specified file", 0},
-	{"set-key",	'k',	"SCANKEY",	0,	"Change scan/key pairs", 0},
-	{"protocol",	'p',	"PROTOCOL",	0,	"Protocol to enable (the other ones will be disabled). To enable more than one, use the option more than one time", 0},
-	{"delay",	'D',	"DELAY",	0,	"Sets the delay before repeating a keystroke", 0},
-	{"period",	'P',	"PERIOD",	0,	"Sets the period to repeat a keystroke", 0},
-	{"auto-load",	'a',	"CFGFILE",	0,	"Auto-load a table, based on a configuration file. Only works with sysdev.", 0},
+	{"verbose",	'v',	0,		0,	N_("enables debug messages"), 0},
+	{"clear",	'c',	0,		0,	N_("clears the old table"), 0},
+	{"sysdev",	's',	N_("SYSDEV"),	0,	N_("ir class device to control"), 0},
+	{"test",	't',	0,		0,	N_("test if IR is generating events"), 0},
+	{"device",	'd',	N_("DEV"),	0,	N_("ir device to control"), 0},
+	{"read",	'r',	0,		0,	N_("reads the current scancode/keycode table"), 0},
+	{"write",	'w',	N_("TABLE"),	0,	N_("write (adds) the scancodes to the device scancode/keycode table from an specified file"), 0},
+	{"set-key",	'k',	N_("SCANKEY"),	0,	N_("Change scan/key pairs"), 0},
+	{"protocol",	'p',	N_("PROTOCOL"),	0,	N_("Protocol to enable (the other ones will be disabled). To enable more than one, use the option more than one time"), 0},
+	{"delay",	'D',	N_("DELAY"),	0,	N_("Sets the delay before repeating a keystroke"), 0},
+	{"period",	'P',	N_("PERIOD"),	0,	N_("Sets the period to repeat a keystroke"), 0},
+	{"auto-load",	'a',	N_("CFGFILE"),	0,	N_("Auto-load a table, based on a configuration file. Only works with sysdev."), 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
-static const char args_doc[] =
+static const char args_doc[] = N_(
 	"--device [/dev/input/event* device]\n"
 	"--sysdev [ir class (f. ex. rc0)]\n"
-	"[for using the rc0 sysdev]";
+	"[for using the rc0 sysdev]");
 
 /* Static vars to store the parameters */
 static char *devclass = "rc0";
