@@ -15,9 +15,9 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 # line and the line '#define HAVE_QTGL 1' from ../../config.h
 lessThan(QT_MAJOR_VERSION, 5): QT += opengl
 
-INCLUDEPATH += /home/seiderer/Work/v4l_utils/v4l-utils
-INCLUDEPATH += /home/seiderer/Work/v4l_utils/v4l-utils/utils/v4l2-ctl/
-INCLUDEPATH += /home/seiderer/Work/v4l_utils/v4l-utils/utils/v4l2-compliance
+INCLUDEPATH += $$PWD/../..
+INCLUDEPATH += $$PWD/../v4l2-ctl/
+INCLUDEPATH += $$PWD/../v4l2-compliance
 
 # Input
 HEADERS += alsa_stream.h
@@ -44,9 +44,9 @@ SOURCES += vbi-tab.cpp
 SOURCES += ../v4l2-ctl/vivid-tpg.c
 SOURCES += ../v4l2-ctl/vivid-tpg-colors.c
 
-LIBS += -L$$PWD/../../lib/libv4l2 -lv4l2
-LIBS += -L$$PWD/../../lib/libv4lconvert -lv4lconvert
-LIBS += -L$$PWD/../libv4l2util -lv4l2util 
+LIBS += -L$$PWD/../../lib/libv4l2/.libs -lv4l2
+LIBS += -L$$PWD/../../lib/libv4lconvert/.libs -lv4lconvert
+LIBS += -L$$PWD/../libv4l2util/.libs -lv4l2util 
 LIBS += -lrt -ldl -ljpeg
 
 RESOURCES += qv4l2.qrc
