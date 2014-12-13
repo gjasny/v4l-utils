@@ -743,6 +743,10 @@ int main(int argc, char **argv)
 		.args_doc = N_("<channel name> [or <frequency> if in monitor mode]"),
 	};
 
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
+
 	memset(&args, 0, sizeof(args));
 	args.sat_number = -1;
 	args.lna = LNA_AUTO;
