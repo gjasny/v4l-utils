@@ -41,6 +41,8 @@ static int libdvbv5_initialized = 0;
 # define _(string) string
 #endif
 
+# define N_(string) string
+
 static void libdvbv5_initialize(void)
 {
 #ifdef ENABLE_NLS
@@ -1509,19 +1511,19 @@ int dvb_fe_snprintf_eng(char *buf, int len, float val)
 }
 
 static char *sig_bits[7] = {
-	[0] = "RF",
-	[1] = "Carrier",
-	[2] = "Viterbi",
-	[3] = "Sync",
-	[4] = "Lock",
-	[5] = "Timeout",
-	[6] = "Reinit",
+	[0] = N_("RF"),
+	[1] = N_("Carrier"),
+	[2] = N_("Viterbi"),
+	[3] = N_("Sync"),
+	[4] = N_("Lock"),
+	[5] = N_("Timeout"),
+	[6] = N_("Reinit"),
 };
 
 static char *qual_name[] = {
-	[DVB_QUAL_POOR] = "Poor",
-	[DVB_QUAL_OK]   = "Ok",
-	[DVB_QUAL_GOOD] = "Good",
+	[DVB_QUAL_POOR] = N_("Poor"),
+	[DVB_QUAL_OK]   = N_("Ok"),
+	[DVB_QUAL_GOOD] = N_("Good"),
 };
 
 int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
@@ -1556,7 +1558,7 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
 		/* Get the name of the highest status bit */
 		for (i = ARRAY_SIZE(sig_bits) - 1; i >= 0 ; i--) {
 			if ((1 << i) & status) {
-				size = snprintf(*buf, *len, "%-7s", sig_bits[i]);
+				size = snprintf(*buf, *len, "%-7s", gettext(sig_bits[i]));
 				*buf += size;
 				*len -= size;
 				break;
@@ -1621,7 +1623,7 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
 
 	/* Quality measure */
 	if (qual != DVB_QUAL_UNKNOWN) {
-		size = snprintf(*buf, *len, " %-4s", qual_name[qual]);
+		size = snprintf(*buf, *len, " %-4s", gettext(qual_name[qual]));
 		*buf += size;
 		*len -= size;
 		return initial_len - *len;
