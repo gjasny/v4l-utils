@@ -39,7 +39,7 @@ AC_CONFIG_FILES([Makefile
 	contrib/test/Makefile
 	contrib/gconv/Makefile
 
-	po/Makefile.in
+	v4l-utils-po/Makefile.in
 
 	v4l-utils.spec
 	lib/libv4lconvert/libv4lconvert.pc
