@@ -41,6 +41,8 @@
 # define _(string) string
 #endif
 
+# define N_(string) string
+
 #include "libdvbv5/dvb-file.h"
 #include "libdvbv5/dvb-demux.h"
 #include "libdvbv5/dvb-scan.h"
@@ -54,9 +56,9 @@ struct arguments {
 };
 
 static const struct argp_option options[] = {
-	{"input-format",	'I',	"format",	0, "Valid input formats: ZAP, CHANNEL, DVBV5", 0},
-	{"output-format",	'O',	"format",	0, "Valid output formats: VDR, ZAP, CHANNEL, DVBV5", 0},
-	{"delsys",		's',	"system",	0, "Delivery system type. Needed if input or output format is ZAP", 0},
+	{"input-format",	'I',	N_("format"),	0, N_("Valid input formats: ZAP, CHANNEL, DVBV5"), 0},
+	{"output-format",	'O',	N_("format"),	0, N_("Valid output formats: VDR, ZAP, CHANNEL, DVBV5"), 0},
+	{"delsys",		's',	N_("system"),	0, N_("Delivery system type. Needed if input or output format is ZAP"), 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -111,8 +113,8 @@ int main(int argc, char **argv)
 	const struct argp argp = {
 		.options = options,
 		.parser = parse_opt,
-		.doc = _("scan DVB services using the channel file"),
-		.args_doc = _("<input file> <output file>"),
+		.doc = N_("scan DVB services using the channel file"),
+		.args_doc = N_("<input file> <output file>"),
 	};
 
 	setlocale (LC_ALL, "");

@@ -46,6 +46,8 @@
 # define _(string) string
 #endif
 
+# define N_(string) string
+
 #include <linux/dvb/dmx.h>
 #include "libdvbv5/dvb-file.h"
 #include "libdvbv5/dvb-demux.h"
@@ -77,31 +79,31 @@ struct arguments {
 };
 
 static const struct argp_option options[] = {
-	{"dvbv3",	'3', NULL,			0, "Use DVBv3 only", 0},
-	{"adapter",	'a', "adapter#",		0, "use given adapter (default 0)", 0},
-	{"audio_pid",	'A', "audio_pid#",		0, "audio pid program to use (default 0)", 0},
-	{"channels",	'c', "file",			0, "read channels list from 'file'", 0},
-	{"demux",	'd', "demux#",			0, "use given demux (default 0)", 0},
-	{"frontend",	'f', "frontend#",		0, "use given frontend (default 0)", 0},
-	{"input-format", 'I',	"format",		0, "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)", 0},
-	{"lna",		'w', "LNA (0, 1, -1)",		0, "enable/disable/auto LNA power", 0},
-	{"lnbf",	'l', "LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
-	{"search",	'L', "string",			0, "search/look for a string inside the traffic", 0},
-	{"monitor",	'm', NULL,			0, "monitors de DVB traffic", 0},
-	{"output",	'o', "file",			0, "output filename (use -o - for stdout)", 0},
-	{"pat",		'p', NULL,			0, "add pat and pmt to TS recording (implies -r)", 0},
-	{"all-pids",	'P', NULL,			0, "don't filter any pids. Instead, outputs all of them", 0 },
-	{"record",	'r', NULL,			0, "set up /dev/dvb/adapterX/dvr0 for TS recording", 0},
-	{"silence",	's', NULL,			0, "increases silence (can be used more than once)", 0},
-	{"sat_number",	'S', "satellite_number",	0, "satellite number. If not specified, disable DISEqC", 0},
-	{"timeout",	't', "seconds",			0, "timeout for zapping and for recording", 0},
-	{"freq_bpf",	'U', "frequency",		0, "SCR/Unicable band-pass filter frequency to use, in kHz", 0},
-	{"verbose",	'v', NULL,			0, "verbose debug messages (can be used more than once)", 0},
-	{"video_pid",	'V', "video_pid#",		0, "video pid program to use (default 0)", 0},
-	{"wait",	'W', "time",			0, "adds additional wait time for DISEqC command completion", 0},
-	{"exit",	'x', NULL,			0, "exit after tuning", 0},
-	{"low_traffic",	'X', NULL,			0, "also shows DVB traffic with less then 1 packet per second", 0},
-	{"cc",		'C', "country_code",		0, "use default parameters for given country", 0},
+	{"dvbv3",	'3', NULL,			0, N_("Use DVBv3 only"), 0},
+	{"adapter",	'a', N_("adapter#"),		0, N_("use given adapter (default 0)"), 0},
+	{"audio_pid",	'A', N_("audio_pid#"),		0, N_("audio pid program to use (default 0)"), 0},
+	{"channels",	'c', N_("file"),		0, N_("read channels list from 'file'"), 0},
+	{"demux",	'd', N_("demux#"),		0, N_("use given demux (default 0)"), 0},
+	{"frontend",	'f', N_("frontend#"),		0, N_("use given frontend (default 0)"), 0},
+	{"input-format", 'I',	N_("format"),		0, N_("Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)"), 0},
+	{"lna",		'w', N_("LNA (0, 1, -1)"),	0, N_("enable/disable/auto LNA power"), 0},
+	{"lnbf",	'l', N_("LNBf_type"),		0, N_("type of LNBf to use. 'help' lists the available ones"), 0},
+	{"search",	'L', N_("string"),		0, N_("search/look for a string inside the traffic"), 0},
+	{"monitor",	'm', NULL,			0, N_("monitors de DVB traffic"), 0},
+	{"output",	'o', N_("file"),		0, N_("output filename (use -o - for stdout)"), 0},
+	{"pat",		'p', NULL,			0, N_("add pat and pmt to TS recording (implies -r)"), 0},
+	{"all-pids",	'P', NULL,			0, N_("don't filter any pids. Instead, outputs all of them"), 0 },
+	{"record",	'r', NULL,			0, N_("set up /dev/dvb/adapterX/dvr0 for TS recording"), 0},
+	{"silence",	's', NULL,			0, N_("increases silence (can be used more than once)"), 0},
+	{"sat_number",	'S', N_("satellite_number"),	0, N_("satellite number. If not specified, disable DISEqC"), 0},
+	{"timeout",	't', N_("seconds"),		0, N_("timeout for zapping and for recording"), 0},
+	{"freq_bpf",	'U', N_("frequency"),		0, N_("SCR/Unicable band-pass filter frequency to use, in kHz"), 0},
+	{"verbose",	'v', NULL,			0, N_("verbose debug messages (can be used more than once)"), 0},
+	{"video_pid",	'V', N_("video_pid#"),		0, N_("video pid program to use (default 0)"), 0},
+	{"wait",	'W', N_("time"),		0, N_("adds additional wait time for DISEqC command completion"), 0},
+	{"exit",	'x', NULL,			0, N_("exit after tuning"), 0},
+	{"low_traffic",	'X', NULL,			0, N_("also shows DVB traffic with less then 1 packet per second"), 0},
+	{"cc",		'C', N_("country_code"),	0, N_("use default parameters for given country"), 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -737,8 +739,8 @@ int main(int argc, char **argv)
 	const struct argp argp = {
 		.options = options,
 		.parser = parse_opt,
-		.doc = _("DVB zap utility"),
-		.args_doc = _("<channel name> [or <frequency> if in monitor mode]"),
+		.doc = N_("DVB zap utility"),
+		.args_doc = N_("<channel name> [or <frequency> if in monitor mode]"),
 	};
 
 	memset(&args, 0, sizeof(args));

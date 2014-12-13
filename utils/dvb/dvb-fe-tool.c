@@ -36,28 +36,31 @@
 # define _(string) string
 #endif
 
+# define N_(string) string
+
 #define PROGRAM_NAME	"dvb-fe-tool"
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
 
-static const char doc[] = "\nA DVB frontend tool using API version 5\n"
+static const char doc[] = N_(
+	"\nA DVB frontend tool using API version 5\n"
 	"\nOn the options bellow, the arguments are:\n"
 	"  ADAPTER      - the dvb adapter to control\n"
-	"  FRONTEND     - the dvb frontend to control";
+	"  FRONTEND     - the dvb frontend to control");
 
 static const struct argp_option options[] = {
-	{"verbose",	'v',	0,		0,	"enables debug messages", 0},
-	{"adapter",	'a',	"ADAPTER",	0,	"dvb adapter", 0},
-	{"frontend",	'f',	"FRONTEND",	0,	"dvb frontend", 0},
-	{"set-delsys",	'd',	"PARAMS",	0,	"set delivery system", 0},
-	{"femon",	'm',	0,		0,	"monitors frontend stats on an streaming frontend", 0},
-	{"acoustical",	'A',	0,		0,	"bips if signal quality is good. Also enables femon mode. Please notice that console bip should be enabled on your wm.", 0},
+	{"verbose",	'v',	0,		0,	N_("enables debug messages"), 0},
+	{"adapter",	'a',	N_("ADAPTER"),	0,	N_("dvb adapter"), 0},
+	{"frontend",	'f',	N_("FRONTEND"),	0,	N_("dvb frontend"), 0},
+	{"set-delsys",	'd',	N_("PARAMS"),	0,	N_("set delivery system"), 0},
+	{"femon",	'm',	0,		0,	N_("monitors frontend stats on an streaming frontend"), 0},
+	{"acoustical",	'A',	0,		0,	N_("bips if signal quality is good. Also enables femon mode. Please notice that console bip should be enabled on your wm."), 0},
 #if 0 /* Currently not implemented */
-	{"set",		's',	"PARAMS",	0,	"set frontend", 0},
+	{"set",		's',	N_("PARAMS"),	0,	N_("set frontend"), 0},
 #endif
-	{"get",		'g',	0,		0,	"get frontend", 0},
-	{"dvbv3",	'3',	0,		0,	"Use DVBv3 only", 0},
+	{"get",		'g',	0,		0,	N_("get frontend"), 0},
+	{"dvbv3",	'3',	0,		0,	N_("Use DVBv3 only"), 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 

@@ -42,6 +42,8 @@
 # define _(string) string
 #endif
 
+# define N_(string) string
+
 #include <linux/dvb/dmx.h>
 #include "libdvbv5/dvb-file.h"
 #include "libdvbv5/dvb-demux.h"
@@ -69,25 +71,25 @@ struct arguments {
 };
 
 static const struct argp_option options[] = {
-	{"adapter",	'a',	"adapter#",		0, "use given adapter (default 0)", 0},
-	{"frontend",	'f',	"frontend#",		0, "use given frontend (default 0)", 0},
-	{"demux",	'd',	"demux#",		0, "use given demux (default 0)", 0},
-	{"lnbf",	'l',	"LNBf_type",		0, "type of LNBf to use. 'help' lists the available ones", 0},
-	{"lna",		'w',	"LNA (0, 1, -1)",	0, "enable/disable/auto LNA power", 0},
-	{"sat_number",	'S',	"satellite_number",	0, "satellite number. If not specified, disable DISEqC", 0},
-	{"freq_bpf",	'U',	"frequency",		0, "SCR/Unicable band-pass filter frequency to use, in kHz", 0},
-	{"wait",	'W',	"time",			0, "adds additional wait time for DISEqC command completion", 0},
-	{"nit",		'N',	NULL,			0, "use data from NIT table on the output file", 0},
-	{"get_frontend",'G',	NULL,			0, "use data from get_frontend on the output file", 0},
-	{"verbose",	'v',	NULL,			0, "be (very) verbose", 0},
-	{"output",	'o',	"file",			0, "output filename (default: " DEFAULT_OUTPUT ")", 0},
-	{"file-freqs-only", 'F', NULL,			0, "don't use the other frequencies discovered during scan", 0},
-	{"timeout-multiply", 'T', "factor",		0, "Multiply scan timeouts by this factor", 0},
-	{"parse-other-nit", 'p', NULL,			0, "Parse the other NIT/SDT tables", 0},
-	{"input-format", 'I',	"format",		0, "Input format: CHANNEL, DVBV5 (default: DVBV5)", 0},
-	{"output-format", 'O',	"format",		0, "Output format: VDR, CHANNEL, ZAP, DVBV5 (default: DVBV5)", 0},
-	{"dvbv3",	'3',	0,			0, "Use DVBv3 only", 0},
-	{"cc",		'C',	"country_code",		0, "use default parameters for given country", 0},
+	{"adapter",	'a',	N_("adapter#"),		0, N_("use given adapter (default 0)"), 0},
+	{"frontend",	'f',	N_("frontend#"),	0, N_("use given frontend (default 0)"), 0},
+	{"demux",	'd',	N_("demux#"),		0, N_("use given demux (default 0)"), 0},
+	{"lnbf",	'l',	N_("LNBf_type"),	0, N_("type of LNBf to use. 'help' lists the available ones"), 0},
+	{"lna",		'w',	N_("LNA (0, 1, -1)"),	0, N_("enable/disable/auto LNA power"), 0},
+	{"sat_number",	'S',	N_("satellite_number"),	0, N_("satellite number. If not specified, disable DISEqC"), 0},
+	{"freq_bpf",	'U',	N_("frequency"),	0, N_("SCR/Unicable band-pass filter frequency to use, in kHz"), 0},
+	{"wait",	'W',	N_("time"),		0, N_("adds additional wait time for DISEqC command completion"), 0},
+	{"nit",		'N',	NULL,			0, N_("use data from NIT table on the output file"), 0},
+	{"get_frontend",'G',	NULL,			0, N_("use data from get_frontend on the output file"), 0},
+	{"verbose",	'v',	NULL,			0, N_("be (very) verbose"), 0},
+	{"output",	'o',	N_("file"),		0, N_("output filename (default: ") DEFAULT_OUTPUT ")", 0},
+	{"file-freqs-only", 'F', NULL,			0, N_("don't use the other frequencies discovered during scan"), 0},
+	{"timeout-multiply", 'T', N_("factor"),		0, N_("Multiply scan timeouts by this factor"), 0},
+	{"parse-other-nit", 'p', NULL,			0, N_("Parse the other NIT/SDT tables"), 0},
+	{"input-format", 'I',	N_("format"),		0, N_("Input format: CHANNEL, DVBV5 (default: DVBV5)"), 0},
+	{"output-format", 'O',	N_("format"),		0, N_("Output format: VDR, CHANNEL, ZAP, DVBV5 (default: DVBV5)"), 0},
+	{"dvbv3",	'3',	0,			0, N_("Use DVBv3 only"), 0},
+	{"cc",		'C',	N_("country_code"),	0, N_("use default parameters for given country"), 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -440,8 +442,8 @@ int main(int argc, char **argv)
 	const struct argp argp = {
 		.options = options,
 		.parser = parse_opt,
-		.doc = _("scan DVB services using the channel file"),
-		.args_doc = _("<initial file>"),
+		.doc = N_("scan DVB services using the channel file"),
+		.args_doc = N_("<initial file>"),
 	};
 
 	setlocale (LC_ALL, "");
