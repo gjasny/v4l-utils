@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: v4l-utils 1.7.0\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
-"POT-Creation-Date: 2014-12-12 20:50-0200\n"
+"POT-Creation-Date: 2014-12-13 00:18-0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -43,7 +43,7 @@ msgid ""
 "Options can be combined together."
 msgstr ""
 
-#: utils/keytable/keytable.c:137
+#: utils/keytable/keytable.c:137 utils/dvb/dvb-fe-tool.c:53
 msgid "enables debug messages"
 msgstr ""
 
@@ -495,310 +495,581 @@ msgstr ""
 msgid "Protocols changed to "
 msgstr ""
 
-#: utils/dvb/dvb-fe-tool.c:91 utils/dvb/dvbv5-scan.c:99
-#: utils/dvb/dvbv5-scan.c:106 utils/dvb/dvbv5-zap.c:112
-#: utils/dvb/dvbv5-zap.c:119
+#: utils/dvb/dvb-fe-tool.c:47
+msgid ""
+"\n"
+"A DVB frontend tool using API version 5\n"
+"\n"
+"On the options bellow, the arguments are:\n"
+"  ADAPTER      - the dvb adapter to control\n"
+"  FRONTEND     - the dvb frontend to control"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:54
+msgid "ADAPTER"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:54
+msgid "dvb adapter"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:55
+msgid "FRONTEND"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:55
+msgid "dvb frontend"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:56 utils/dvb/dvb-fe-tool.c:60
+msgid "PARAMS"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:56
+msgid "set delivery system"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:57
+msgid "monitors frontend stats on an streaming frontend"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:58
+msgid ""
+"bips if signal quality is good. Also enables femon mode. Please notice that "
+"console bip should be enabled on your wm."
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:60
+msgid "set frontend"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:62
+msgid "get frontend"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:63 utils/dvb/dvbv5-scan.c:91
+#: utils/dvb/dvbv5-zap.c:82
+msgid "Use DVBv3 only"
+msgstr ""
+
+#: utils/dvb/dvb-fe-tool.c:94 utils/dvb/dvbv5-scan.c:101
+#: utils/dvb/dvbv5-scan.c:108 utils/dvb/dvbv5-zap.c:114
+#: utils/dvb/dvbv5-zap.c:121
 #, c-format
 msgid "ERROR: "
 msgstr ""
 
-#: utils/dvb/dvb-fe-tool.c:151 utils/dvb/dvbv5-scan.c:193
-#: utils/dvb/dvbv5-zap.c:349 utils/dvb/dvbv5-zap.c:412
+#: utils/dvb/dvb-fe-tool.c:154 utils/dvb/dvbv5-scan.c:195
+#: utils/dvb/dvbv5-zap.c:351 utils/dvb/dvbv5-zap.c:414
 msgid "dvb_fe_get_stats failed"
 msgstr ""
 
-#: utils/dvb/dvb-fe-tool.c:162 utils/dvb/dvbv5-scan.c:141
-#: utils/dvb/dvbv5-zap.c:360
+#: utils/dvb/dvb-fe-tool.c:165 utils/dvb/dvbv5-scan.c:143
+#: utils/dvb/dvbv5-zap.c:362
 msgid "Quality"
 msgstr ""
 
-#: utils/dvb/dvb-fe-tool.c:165 utils/dvb/dvbv5-scan.c:144
-#: utils/dvb/dvbv5-zap.c:363
+#: utils/dvb/dvb-fe-tool.c:168 utils/dvb/dvbv5-scan.c:146
+#: utils/dvb/dvbv5-zap.c:365
 msgid "Signal"
 msgstr ""
 
-#: utils/dvb/dvb-fe-tool.c:168 utils/dvb/dvbv5-scan.c:147
-#: utils/dvb/dvbv5-zap.c:366
+#: utils/dvb/dvb-fe-tool.c:171 utils/dvb/dvbv5-scan.c:149
+#: utils/dvb/dvbv5-zap.c:368
 msgid "C/N"
 msgstr ""
 
-#: utils/dvb/dvb-fe-tool.c:171 utils/dvb/dvbv5-scan.c:150
-#: utils/dvb/dvbv5-zap.c:369
+#: utils/dvb/dvb-fe-tool.c:174 utils/dvb/dvbv5-scan.c:152
+#: utils/dvb/dvbv5-zap.c:371
 msgid "UCB"
 msgstr ""
 
-#: utils/dvb/dvb-fe-tool.c:174 utils/dvb/dvbv5-scan.c:153
-#: utils/dvb/dvbv5-zap.c:372
+#: utils/dvb/dvb-fe-tool.c:177 utils/dvb/dvbv5-scan.c:155
+#: utils/dvb/dvbv5-zap.c:374
 msgid "postBER"
 msgstr ""
 
-#: utils/dvb/dvb-fe-tool.c:177 utils/dvb/dvbv5-scan.c:156
-#: utils/dvb/dvbv5-zap.c:375
+#: utils/dvb/dvb-fe-tool.c:180 utils/dvb/dvbv5-scan.c:158
+#: utils/dvb/dvbv5-zap.c:377
 msgid "preBER"
 msgstr ""
 
-#: utils/dvb/dvb-fe-tool.c:180 utils/dvb/dvbv5-scan.c:159
-#: utils/dvb/dvbv5-zap.c:378
+#: utils/dvb/dvb-fe-tool.c:183 utils/dvb/dvbv5-scan.c:161
+#: utils/dvb/dvbv5-zap.c:380
 msgid "PER"
 msgstr ""
 
-#: utils/dvb/dvb-fe-tool.c:283
+#: utils/dvb/dvb-fe-tool.c:286
 #, c-format
 msgid "Changing delivery system to: %s\n"
 msgstr ""
 
-#: utils/dvb/dvb-format-convert.c:90
+#: utils/dvb/dvb-format-convert.c:59 utils/dvb/dvb-format-convert.c:60
+#: utils/dvb/dvbv5-scan.c:89 utils/dvb/dvbv5-scan.c:90
+#: utils/dvb/dvbv5-zap.c:88
+msgid "format"
+msgstr ""
+
+#: utils/dvb/dvb-format-convert.c:59
+msgid "Valid input formats: ZAP, CHANNEL, DVBV5"
+msgstr ""
+
+#: utils/dvb/dvb-format-convert.c:60
+msgid "Valid output formats: VDR, ZAP, CHANNEL, DVBV5"
+msgstr ""
+
+#: utils/dvb/dvb-format-convert.c:61
+msgid "system"
+msgstr ""
+
+#: utils/dvb/dvb-format-convert.c:61
+msgid "Delivery system type. Needed if input or output format is ZAP"
+msgstr ""
+
+#: utils/dvb/dvb-format-convert.c:92
 #, c-format
 msgid "Reading file %s\n"
 msgstr ""
 
-#: utils/dvb/dvb-format-convert.c:95
+#: utils/dvb/dvb-format-convert.c:97
 #, c-format
 msgid "Error reading file %s\n"
 msgstr ""
 
-#: utils/dvb/dvb-format-convert.c:99
+#: utils/dvb/dvb-format-convert.c:101
 #, c-format
 msgid "Writing file %s\n"
 msgstr ""
 
-#: utils/dvb/dvb-format-convert.c:114 utils/dvb/dvbv5-scan.c:443
+#: utils/dvb/dvb-format-convert.c:116 utils/dvb/dvbv5-scan.c:445
 msgid "scan DVB services using the channel file"
 msgstr ""
 
-#: utils/dvb/dvb-format-convert.c:115
+#: utils/dvb/dvb-format-convert.c:117
 msgid "<input file> <output file>"
 msgstr ""
 
-#: utils/dvb/dvb-format-convert.c:131
+#: utils/dvb/dvb-format-convert.c:133
 #, c-format
 msgid "ERROR: Please specify a valid input format\n"
 msgstr ""
 
-#: utils/dvb/dvb-format-convert.c:134
+#: utils/dvb/dvb-format-convert.c:136
 #, c-format
 msgid "ERROR: Please specify a valid input file\n"
 msgstr ""
 
-#: utils/dvb/dvb-format-convert.c:137
+#: utils/dvb/dvb-format-convert.c:139
 #, c-format
 msgid "ERROR: Please specify a valid output format\n"
 msgstr ""
 
-#: utils/dvb/dvb-format-convert.c:140
+#: utils/dvb/dvb-format-convert.c:142
 #, c-format
 msgid "ERROR: Please specify a valid output file\n"
 msgstr ""
 
-#: utils/dvb/dvb-format-convert.c:145
+#: utils/dvb/dvb-format-convert.c:147
 #, c-format
 msgid "ERROR: Please specify a valid delivery system for ZAP format\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:249
+#: utils/dvb/dvbv5-scan.c:74 utils/dvb/dvbv5-zap.c:83
+msgid "adapter#"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:74 utils/dvb/dvbv5-zap.c:83
+msgid "use given adapter (default 0)"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:75 utils/dvb/dvbv5-zap.c:87
+msgid "frontend#"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:75 utils/dvb/dvbv5-zap.c:87
+msgid "use given frontend (default 0)"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:76 utils/dvb/dvbv5-zap.c:86
+msgid "demux#"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:76 utils/dvb/dvbv5-zap.c:86
+msgid "use given demux (default 0)"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:77 utils/dvb/dvbv5-zap.c:90
+msgid "LNBf_type"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:77 utils/dvb/dvbv5-zap.c:90
+msgid "type of LNBf to use. 'help' lists the available ones"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:78 utils/dvb/dvbv5-zap.c:89
+msgid "LNA (0, 1, -1)"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:78 utils/dvb/dvbv5-zap.c:89
+msgid "enable/disable/auto LNA power"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:79 utils/dvb/dvbv5-zap.c:98
+msgid "satellite_number"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:79 utils/dvb/dvbv5-zap.c:98
+msgid "satellite number. If not specified, disable DISEqC"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:80 utils/dvb/dvbv5-zap.c:100
+msgid "frequency"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:80 utils/dvb/dvbv5-zap.c:100
+msgid "SCR/Unicable band-pass filter frequency to use, in kHz"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:81 utils/dvb/dvbv5-zap.c:103
+msgid "time"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:81 utils/dvb/dvbv5-zap.c:103
+msgid "adds additional wait time for DISEqC command completion"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:82
+msgid "use data from NIT table on the output file"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:83
+msgid "use data from get_frontend on the output file"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:84
+msgid "be (very) verbose"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:85 utils/dvb/dvbv5-zap.c:85 utils/dvb/dvbv5-zap.c:93
+msgid "file"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:85
+msgid "output filename (default: "
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:86
+msgid "don't use the other frequencies discovered during scan"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:87
+msgid "factor"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:87
+msgid "Multiply scan timeouts by this factor"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:88
+msgid "Parse the other NIT/SDT tables"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:89
+msgid "Input format: CHANNEL, DVBV5 (default: DVBV5)"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:90
+msgid "Output format: VDR, CHANNEL, ZAP, DVBV5 (default: DVBV5)"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:92 utils/dvb/dvbv5-zap.c:106
+msgid "country_code"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:92 utils/dvb/dvbv5-zap.c:106
+msgid "use default parameters for given country"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:251
 msgid "openening pat demux failed"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:276
+#: utils/dvb/dvbv5-scan.c:278
 #, c-format
 msgid "Scanning frequency #%d %d"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:444
+#: utils/dvb/dvbv5-scan.c:446
 msgid "<initial file>"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:472 utils/dvb/dvbv5-zap.c:774
+#: utils/dvb/dvbv5-scan.c:474 utils/dvb/dvbv5-zap.c:776
 #, c-format
 msgid "Please select one of the LNBf's below:\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:476 utils/dvb/dvbv5-zap.c:778
+#: utils/dvb/dvbv5-scan.c:478 utils/dvb/dvbv5-zap.c:780
 #, c-format
 msgid "Using LNBf "
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:491 utils/dvb/dvbv5-zap.c:760
+#: utils/dvb/dvbv5-scan.c:493 utils/dvb/dvbv5-zap.c:762
 #, c-format
 msgid "ERROR: Please specify a valid format\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:499 utils/dvb/dvbv5-zap.c:786
-#: utils/dvb/dvbv5-zap.c:793
+#: utils/dvb/dvbv5-scan.c:501 utils/dvb/dvbv5-zap.c:788
+#: utils/dvb/dvbv5-zap.c:795
 #, c-format
 msgid "asprintf error\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:504 utils/dvb/dvbv5-zap.c:798
+#: utils/dvb/dvbv5-scan.c:506 utils/dvb/dvbv5-zap.c:800
 #, c-format
 msgid "using demux '%s'\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:522 utils/dvb/dvbv5-zap.c:826
+#: utils/dvb/dvbv5-scan.c:524 utils/dvb/dvbv5-zap.c:828
 #, c-format
 msgid "Failed to set the country code:%s\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:200
+#: utils/dvb/dvbv5-zap.c:84
+msgid "audio_pid#"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:84
+msgid "audio pid program to use (default 0)"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:85
+msgid "read channels list from 'file'"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:88
+msgid "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:91
+msgid "string"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:91
+msgid "search/look for a string inside the traffic"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:92
+msgid "monitors de DVB traffic"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:93
+msgid "output filename (use -o - for stdout)"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:94
+msgid "add pat and pmt to TS recording (implies -r)"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:95
+msgid "don't filter any pids. Instead, outputs all of them"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:96
+msgid "set up /dev/dvb/adapterX/dvr0 for TS recording"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:97
+msgid "increases silence (can be used more than once)"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:99
+msgid "seconds"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:99
+msgid "timeout for zapping and for recording"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:101
+msgid "verbose debug messages (can be used more than once)"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:102
+msgid "video_pid#"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:102
+msgid "video pid program to use (default 0)"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:104
+msgid "exit after tuning"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:105
+msgid "also shows DVB traffic with less then 1 packet per second"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:202
 msgid "Can't find channel"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:214
+#: utils/dvb/dvbv5-zap.c:216
 #, c-format
 msgid "unknown LNB %s\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:240
+#: utils/dvb/dvbv5-zap.c:242
 #, c-format
 msgid "service has pid type %02x: "
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:304
+#: utils/dvb/dvbv5-zap.c:306
 msgid "can't get the frequency"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:307
+#: utils/dvb/dvbv5-zap.c:309
 #, c-format
 msgid "tuning to %i Hz\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:312
+#: utils/dvb/dvbv5-zap.c:314
 msgid "dvb_fe_set_parms failed"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:457
+#: utils/dvb/dvbv5-zap.c:459
 #, c-format
 msgid "buffer overrun\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:460
+#: utils/dvb/dvbv5-zap.c:462
 msgid "Read failed"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:464
+#: utils/dvb/dvbv5-zap.c:466
 msgid "Write failed"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:470
+#: utils/dvb/dvbv5-zap.c:472
 #, c-format
 msgid "copied %lld bytes (%lld Kbytes/sec)\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:591 utils/dvb/dvbv5-zap.c:599
-#: utils/dvb/dvbv5-zap.c:904 utils/dvb/dvbv5-zap.c:928
-#: utils/dvb/dvbv5-zap.c:976
+#: utils/dvb/dvbv5-zap.c:593 utils/dvb/dvbv5-zap.c:601
+#: utils/dvb/dvbv5-zap.c:906 utils/dvb/dvbv5-zap.c:930
+#: utils/dvb/dvbv5-zap.c:978
 #, c-format
 msgid "failed opening '%s'"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:596 utils/dvb/dvbv5-zap.c:912
+#: utils/dvb/dvbv5-zap.c:598 utils/dvb/dvbv5-zap.c:914
 msgid "DMX_SET_BUFFER_SIZE failed"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:605
+#: utils/dvb/dvbv5-zap.c:607
 #, c-format
 msgid "  dvb_set_pesfilter to 0x2000\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:608
+#: utils/dvb/dvbv5-zap.c:610
 msgid "couldn't set filter"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:632
+#: utils/dvb/dvbv5-zap.c:634
 #, c-format
 msgid "%.2fs: buffer overrun\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:635
+#: utils/dvb/dvbv5-zap.c:637
 msgid "read"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:639
+#: utils/dvb/dvbv5-zap.c:641
 #, c-format
 msgid "dvbtraffic: only read %zd bytes\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:691
+#: utils/dvb/dvbv5-zap.c:693
 #, c-format
 msgid " PID          FREQ         SPEED       TOTAL\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:740
+#: utils/dvb/dvbv5-zap.c:742
 msgid "DVB zap utility"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:741
+#: utils/dvb/dvbv5-zap.c:743
 msgid "<channel name> [or <frequency> if in monitor mode]"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:766
+#: utils/dvb/dvbv5-zap.c:768
 #, c-format
 msgid "ERROR: search string can be used only on monitor mode\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:802
+#: utils/dvb/dvbv5-zap.c:804
 msgid "$HOME not set"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:811
+#: utils/dvb/dvbv5-zap.c:813
 #, c-format
 msgid "reading channels from file '%s'\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:854
+#: utils/dvb/dvbv5-zap.c:856
 #, c-format
 msgid "Service id 0x%04x was not specified at the file\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:861 utils/dvb/dvbv5-zap.c:874
+#: utils/dvb/dvbv5-zap.c:863 utils/dvb/dvbv5-zap.c:876
 msgid "opening pat demux failed"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:867
+#: utils/dvb/dvbv5-zap.c:869
 #, c-format
 msgid "couldn't find pmt-pid for sid %04x\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:883
+#: utils/dvb/dvbv5-zap.c:885
 msgid "opening pmt demux failed"
-msgstr ""
-
-#: utils/dvb/dvbv5-zap.c:899
-#, c-format
-msgid "pass all PID's to TS\n"
 msgstr ""
 
 #: utils/dvb/dvbv5-zap.c:901
 #, c-format
+msgid "pass all PID's to TS\n"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:903
+#, c-format
 msgid "video pid %d\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:909 utils/dvb/dvbv5-zap.c:932
+#: utils/dvb/dvbv5-zap.c:911 utils/dvb/dvbv5-zap.c:934
 #, c-format
 msgid "  dvb_set_pesfilter %d\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:926
+#: utils/dvb/dvbv5-zap.c:928
 #, c-format
 msgid "audio pid %d\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:948
+#: utils/dvb/dvbv5-zap.c:950
 #, c-format
 msgid "frontend doesn't lock\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:964
+#: utils/dvb/dvbv5-zap.c:966
 #, c-format
 msgid "open of '%s' failed"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:980
+#: utils/dvb/dvbv5-zap.c:982
 #, c-format
 msgid "Record to file '%s' started\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:984
+#: utils/dvb/dvbv5-zap.c:986
 #, c-format
 msgid "DVR interface '%s' can now be opened\n"
 msgstr ""
