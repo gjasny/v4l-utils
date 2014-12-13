@@ -1558,14 +1558,14 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
 		/* Get the name of the highest status bit */
 		for (i = ARRAY_SIZE(sig_bits) - 1; i >= 0 ; i--) {
 			if ((1 << i) & status) {
-				size = snprintf(*buf, *len, "%-7s", gettext(sig_bits[i]));
+				size = snprintf(*buf, *len, _("%-7s"), _(sig_bits[i]));
 				*buf += size;
 				*len -= size;
 				break;
 			}
 		}
 		if (i < 0) {
-			size = snprintf(*buf, *len, "%7s", "");
+			size = snprintf(*buf, *len, _("%7s"), "");
 			*buf += size;
 			*len -= size;
 		}
@@ -1623,7 +1623,7 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
 
 	/* Quality measure */
 	if (qual != DVB_QUAL_UNKNOWN) {
-		size = snprintf(*buf, *len, " %-4s", gettext(qual_name[qual]));
+		size = snprintf(*buf, *len, " %-4s", _(qual_name[qual]));
 		*buf += size;
 		*len -= size;
 		return initial_len - *len;
