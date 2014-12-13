@@ -1,2 +1,3 @@
 # List of source files which contain translatable strings.
 
+lib/libdvbv5/dvb-fe.c

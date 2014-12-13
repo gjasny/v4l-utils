@@ -28,6 +28,29 @@
 #include <stddef.h>
 #include <unistd.h>
 
+#include <config.h>
+
+#ifdef ENABLE_NLS
+# include "gettext.h"
+# include <libintl.h>
+# define _(string) dgettext(LIBDVBV5_DOMAIN, string)
+
+static int libdvbv5_initialized = 0;
+
+#else
+# define _(string) string
+#endif
+
+static void libdvbv5_initialize(void)
+{
+#ifdef ENABLE_NLS
+	if (libdvbv5_initialized)
+		return;
+	bindtextdomain(LIBDVBV5_DOMAIN, LOCALEDIR);
+	libdvbv5_initialized = 1;
+#endif
+}
+
 static void dvb_v5_free(struct dvb_v5_fe_parms_priv *parms)
 {
 	if (parms->fname)
@@ -39,6 +62,8 @@ static void dvb_v5_free(struct dvb_v5_fe_parms_priv *parms)
 struct dvb_v5_fe_parms *dvb_fe_dummy()
 {
 	struct dvb_v5_fe_parms_priv *parms = NULL;
+
+	libdvbv5_initialize();
 
 	parms = calloc(sizeof(*parms), 1);
 	if (!parms)
@@ -78,28 +103,30 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	struct dtv_properties dtv_prop;
 	struct dvb_v5_fe_parms_priv *parms = NULL;
 
+	libdvbv5_initialize();
+
 	if (logfunc == NULL)
 		logfunc = dvb_default_log;
 
 	r = asprintf(&fname, "/dev/dvb/adapter%i/frontend%i", adapter, frontend);
 	if (r < 0) {
-		logfunc(LOG_ERR, "asprintf error");
+		logfunc(LOG_ERR, _("asprintf error"));
 		return NULL;
 	}
 	if (!fname) {
-		logfunc(LOG_ERR, "fname calloc: %s", strerror(errno));
+		logfunc(LOG_ERR, _("fname calloc: %s"), strerror(errno));
 		return NULL;
 	}
 
 	fd = open(fname, flags, 0);
 	if (fd == -1) {
-		logfunc(LOG_ERR, "%s while opening %s", strerror(errno), fname);
+		logfunc(LOG_ERR, _("%s while opening %s"), strerror(errno), fname);
 		free(fname);
 		return NULL;
 	}
 	parms = calloc(sizeof(*parms), 1);
 	if (!parms) {
-		logfunc(LOG_ERR, "parms calloc: %s", strerror(errno));
+		logfunc(LOG_ERR, _("parms calloc: %s"), strerror(errno));
 		close(fd);
 		free(fname);
 		return NULL;
@@ -127,7 +154,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	if (verbose) {
 		fe_caps_t caps = parms->p.info.caps;
 
-		dvb_log("Device %s (%s) capabilities:",
+		dvb_log(_("Device %s (%s) capabilities:"),
 			parms->p.info.name, fname);
 		for (i = 0; i < ARRAY_SIZE(fe_caps_name); i++) {
 			if (caps & fe_caps_name[i].idx)
@@ -149,10 +176,10 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	parms->p.version = parms->dvb_prop[0].u.data;
 	parms->p.current_sys = parms->dvb_prop[1].u.data;
 	if (verbose)
-		dvb_log ("DVB API Version %d.%d%s, Current v5 delivery system: %s",
+		dvb_log (_("DVB API Version %d.%d%s, Current v5 delivery system: %s"),
 			parms->p.version / 256,
 			parms->p.version % 256,
-			use_legacy_call ? " (forcing DVBv3 calls)" : "",
+			use_legacy_call ? _(" (forcing DVBv3 calls)") : "",
 			delivery_system_name[parms->p.current_sys]);
 
 	if (parms->p.version < 0x500)
@@ -197,7 +224,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 			break;
 		}
 		if (!parms->p.num_systems) {
-			dvb_logerr("delivery system not detected");
+			dvb_logerr(_("delivery system not detected"));
 			dvb_v5_free(parms);
 			close(fd);
 			return NULL;
@@ -218,7 +245,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 			parms->p.systems[i] = parms->dvb_prop[0].u.buffer.data[i];
 
 		if (parms->p.num_systems == 0) {
-			dvb_logerr("driver returned 0 supported delivery systems!");
+			dvb_logerr(_("driver returned 0 supported delivery systems!"));
 			dvb_v5_free(parms);
 			close(fd);
 			return NULL;
@@ -226,7 +253,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	}
 
 	if (verbose) {
-		dvb_log("Supported delivery system%s: ",
+		dvb_log(_("Supported delivery system%s: "),
 		       (parms->p.num_systems > 1) ? "s" : "");
 		for (i = 0; i < parms->p.num_systems; i++) {
 			if (parms->p.systems[i] == parms->p.current_sys)
@@ -237,7 +264,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 					delivery_system_name[parms->p.systems[i]]);
 		}
 		if (use_legacy_call || parms->p.version < 0x505)
-			dvb_log("Warning: new delivery systems like ISDB-T, ISDB-S, DMB-TH, DSS, ATSC-MH will be miss-detected by a DVBv5.4 or earlier API call");
+			dvb_log(_("Warning: new delivery systems like ISDB-T, ISDB-S, DMB-TH, DSS, ATSC-MH will be miss-detected by a DVBv5.4 or earlier API call"));
 	}
 
 	/*
@@ -362,7 +389,7 @@ int dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 		prop.props = dvb_prop;
 
 		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
-			dvb_perror("Set delivery system");
+			dvb_perror(_("Set delivery system"));
 			return errno;
 		}
 	}
@@ -448,7 +475,7 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *p,
 	if (delsys == SYS_UNDEFINED)
 		return EINVAL;
 
-	dvb_log("Using a DVBv3 compat file for %s", delivery_system_name[delsys]);
+	dvb_log(_("Using a DVBv3 compat file for %s"), delivery_system_name[delsys]);
 
 	dvb_set_sys(&parms->p, delsys);
 
@@ -537,7 +564,7 @@ int dvb_fe_retrieve_parm(const struct dvb_v5_fe_parms *p,
 		*value = parms->dvb_prop[i].u.data;
 		return 0;
 	}
-	dvb_logerr("command %s (%d) not found during retrieve",
+	dvb_logerr(_("command %s (%d) not found during retrieve"),
 		dvb_cmd_name(cmd), cmd);
 
 	return EINVAL;
@@ -554,7 +581,7 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *p,
 		parms->dvb_prop[i].u.data = value;
 		return 0;
 	}
-	dvb_logerr("command %s (%d) not found during store",
+	dvb_logerr(_("command %s (%d) not found during store"),
 		dvb_cmd_name(cmd), cmd);
 
 	return EINVAL;
@@ -614,7 +641,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 		}
 
 		if (parms->p.verbose) {
-			dvb_log("Got parameters for %s:",
+			dvb_log(_("Got parameters for %s:"),
 			       delivery_system_name[parms->p.current_sys]);
 			dvb_fe_prt_parms(&parms->p);
 		}
@@ -733,10 +760,10 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 		prop.props[0].u.data = parms->p.lna;
 		prop.num = 1;
 		if (ioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
-			dvb_perror("Setting LNA");
+			dvb_perror(_("Setting LNA"));
 			parms->p.lna = LNA_AUTO;
 		} else if (parms->p.lna != LNA_AUTO && parms->p.verbose)
-			dvb_logdbg("LNA is %s", parms->p.lna ? "ON" : "OFF");
+			dvb_logdbg(_("LNA is %s"), parms->p.lna ? _("ON") : _("OFF"));
 	}
 
 	if (dvb_fe_is_satellite(tmp_parms.p.current_sys)) {
@@ -837,7 +864,7 @@ static struct dtv_stats *dvb_fe_store_stats(struct dvb_v5_fe_parms_priv *parms,
 			parms->stats.prop[i].u.st.len = layer + 1;
 		return &parms->stats.prop[i].u.st.stat[layer];
 	}
-	dvb_logerr("%s not found on store", dvb_cmd_name(cmd));
+	dvb_logerr(_("%s not found on store"), dvb_cmd_name(cmd));
 
 	return NULL;
 }
@@ -909,7 +936,7 @@ struct dtv_stats *dvb_fe_retrieve_stats_layer(struct dvb_v5_fe_parms *p,
 			return NULL;
 		return &parms->stats.prop[i].u.st.stat[layer];
 	}
-	dvb_logerr("%s not found on retrieve", dvb_cmd_name(cmd));
+	dvb_logerr(_("%s not found on retrieve"), dvb_cmd_name(cmd));
 
 	return NULL;
 }
@@ -924,21 +951,21 @@ int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *p,
 	stat = dvb_fe_retrieve_stats_layer(&parms->p, cmd, 0);
 	if (!stat) {
 		if (parms->p.verbose)
-			dvb_logdbg("%s not found on retrieve", dvb_cmd_name(cmd));
+			dvb_logdbg(_("%s not found on retrieve"), dvb_cmd_name(cmd));
 		return EINVAL;
 	}
 
 	scale = stat->scale;
 	if (scale == FE_SCALE_NOT_AVAILABLE) {
 		if (parms->p.verbose)
-			dvb_logdbg("%s not available", dvb_cmd_name(cmd));
+			dvb_logdbg(_("%s not available"), dvb_cmd_name(cmd));
 		return EINVAL;
 	}
 
 	*value = stat->uvalue;
 
 	if (parms->p.verbose > 1)
-		dvb_logdbg("Stats for %s = %d", dvb_cmd_name(cmd), *value);
+		dvb_logdbg(_("Stats for %s = %d"), dvb_cmd_name(cmd), *value);
 
 	return 0;
 }
@@ -1360,12 +1387,12 @@ dvbv3_fallback:
 	dvb_fe_store_stats(parms, DTV_STAT_ERROR_BLOCK_COUNT, scale, 0, snr);
 
 	if (parms->p.verbose > 1) {
-		dvb_log("Status: ");
+		dvb_log(_("Status: "));
 		for (i = 0; i < ARRAY_SIZE(fe_status_name); i++) {
 			if (status & fe_status_name[i].idx)
 				dvb_log ("    %s", fe_status_name[i].name);
 		}
-		dvb_log("BER: %d, Strength: %d, SNR: %d, UCB: %d",
+		dvb_log(_("BER: %d, Strength: %d, SNR: %d, UCB: %d"),
 		       ber, strength, snr, ucb);
 	}
 	return 0;
@@ -1390,7 +1417,7 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *p)
 	}
 	status = event.status;
 	if (parms->p.verbose > 1) {
-		dvb_log("Status: ");
+		dvb_log(_("Status: "));
 		for (i = 0; i < ARRAY_SIZE(fe_status_name); i++) {
 			if (status & fe_status_name[i].idx)
 				dvb_log ("    %s", fe_status_name[i].name);
@@ -1517,7 +1544,7 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
 			return 0;
 
 		if (dvb_fe_retrieve_stats(&parms->p, DTV_STATUS, &status)) {
-			dvb_logerr ("Error: no adapter status");
+			dvb_logerr (_("Error: no adapter status"));
 			return -1;
 		}
 		if (display_name) {
@@ -1581,7 +1608,7 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
 
 	/* If requested, prints the layer name */
 	if (*show_layer_name && layer) {
-		size = snprintf(*buf, *len, "  Layer %c:", 'A' + layer - 1);
+		size = snprintf(*buf, *len, _("  Layer %c:"), 'A' + layer - 1);
 		*buf += size;
 		*len -= size;
 		*show_layer_name = 0;
@@ -1656,11 +1683,11 @@ int dvb_fe_sec_voltage(struct dvb_v5_fe_parms *p, int on, int v18)
 	if (!on) {
 		v = SEC_VOLTAGE_OFF;
 		if (parms->p.verbose)
-			dvb_log("DiSEqC VOLTAGE: OFF");
+			dvb_log(_("DiSEqC VOLTAGE: OFF"));
 	} else {
 		v = v18 ? SEC_VOLTAGE_18 : SEC_VOLTAGE_13;
 		if (parms->p.verbose)
-			dvb_log("DiSEqC VOLTAGE: %s", v18 ? "18" : "13");
+			dvb_log(_("DiSEqC VOLTAGE: %s"), v18 ? "18" : "13");
 	}
 	rc = ioctl(parms->fd, FE_SET_VOLTAGE, v);
 	if (rc == -1)
@@ -1673,7 +1700,7 @@ int dvb_fe_sec_tone(struct dvb_v5_fe_parms *p, fe_sec_tone_mode_t tone)
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	int rc;
 	if (parms->p.verbose)
-		dvb_log( "DiSEqC TONE: %s", fe_tone_name[tone] );
+		dvb_log( _("DiSEqC TONE: %s"), fe_tone_name[tone] );
 	rc = ioctl(parms->fd, FE_SET_TONE, tone);
 	if (rc == -1)
 		dvb_perror("FE_SET_TONE");
@@ -1687,7 +1714,7 @@ int dvb_fe_lnb_high_voltage(struct dvb_v5_fe_parms *p, int on)
 
 	if (on) on = 1;
 	if (parms->p.verbose)
-		dvb_log( "DiSEqC HIGH LNB VOLTAGE: %s", on ? "ON" : "OFF" );
+		dvb_log( _("DiSEqC HIGH LNB VOLTAGE: %s"), on ? _("ON") : _("OFF") );
 	rc = ioctl(parms->fd, FE_ENABLE_HIGH_LNB_VOLTAGE, on);
 	if (rc == -1)
 		dvb_perror("FE_ENABLE_HIGH_LNB_VOLTAGE");
@@ -1703,7 +1730,7 @@ int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *p, int mini_b)
 	mini = mini_b ? SEC_MINI_B : SEC_MINI_A;
 
 	if (parms->p.verbose)
-		dvb_log( "DiSEqC BURST: %s", mini_b ? "SEC_MINI_B" : "SEC_MINI_A" );
+		dvb_log( _("DiSEqC BURST: %s"), mini_b ? "SEC_MINI_B" : "SEC_MINI_A" );
 	rc = ioctl(parms->fd, FE_DISEQC_SEND_BURST, mini);
 	if (rc == -1)
 		dvb_perror("FE_DISEQC_SEND_BURST");
@@ -1727,7 +1754,7 @@ int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *p, const unsigned len,
 		int i;
 		char log[len * 3 + 20], *p = log;
 
-		p += sprintf(p, "DiSEqC command: ");
+		p += sprintf(p, _("DiSEqC command: "));
 		for (i = 0; i < len; i++)
 			p += sprintf (p, "%02x ", buf[i]);
 		dvb_log("%s", log);
@@ -1775,10 +1802,10 @@ int dvb_fe_set_default_country(struct dvb_v5_fe_parms *p, const char *cc)
 		parms->country = dvb_guess_user_country();
 		if (parms->p.verbose) {
 			if (parms->country != COUNTRY_UNKNOWN)
-				dvb_log("Assuming you're in %s.\n",
+				dvb_log(_("Assuming you're in %s.\n"),
 					dvb_country_to_2letters(parms->country));
 			else
-				dvb_log("Failed to guess country from the current locale setting.\n");
+				dvb_log(_("Failed to guess country from the current locale setting.\n"));
 		}
 		return 0;
 	}
