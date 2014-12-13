@@ -1,3 +1,10 @@
+# Portuguese translations for v4l-utils package
+# Traduções em português brasileiro para o pacote v4l-utils.
+# Copyright (C) 2014 Mauro Carvalho Chehab
+# This file is distributed under the same license as the v4l-utils package.
+# Mauro Carvalho Chehab <mchehab@osg.samsung.com>, 2014.
+#
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: v4l-utils 1.7.0\n"
@@ -5,20 +12,20 @@ msgstr ""
 "POT-Creation-Date: 2014-12-13 00:31-0200\n"
 "PO-Revision-Date: 2014-12-13 00:31-0300\n"
 "Last-Translator: Mauro Carvalho Chehab <mchehab@osg.samsung.com>\n"
-"Language-Team: Mauro Carvalho Chehab <mchehab@osg.samsung.com>\n"
+"Language-Team: Brazilian Portuguese\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.5.4\n"
-"X-Poedit-KeywordsList: _;gettext;gettext_noop;N_\n"
-"X-Poedit-Basepath: utils\n"
+"X-Poedit-KeywordsList: _;N_\n"
+"X-Poedit-Basepath: .\n"
 "X-Poedit-SourceCharset: UTF-8\n"
-"X-Poedit-SearchPath-0: /devel/v4l/v4l-utils\n"
+"X-Poedit-SearchPath-0: ../utils\n"
 
 #: utils/keytable/keytable.c:118
 msgid "IR keytable control version "
-msgstr "Ferramenta para configuração de Controle Remoto  versão"
+msgstr "Ferramenta para configuração de Controle Remoto versão"
 
 #: utils/keytable/keytable.c:122
 msgid ""
