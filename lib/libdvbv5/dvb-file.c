@@ -50,6 +50,19 @@
 #include <libdvbv5/desc_hierarchy.h>
 #include <libdvbv5/countries.h>
 
+#include <config.h>
+
+#ifdef ENABLE_NLS
+# include "gettext.h"
+# include <libintl.h>
+# define _(string) dgettext(LIBDVBV5_DOMAIN, string)
+
+#else
+# define _(string) string
+#endif
+
+# define N_(string) string
+
 int dvb_store_entry_prop(struct dvb_entry *entry,
 			 uint32_t cmd, uint32_t value)
 {
@@ -61,7 +74,7 @@ int dvb_store_entry_prop(struct dvb_entry *entry,
 	}
 	if (i == entry->n_props) {
 		if (i == DTV_MAX_COMMAND) {
-			fprintf(stderr, "Can't add property %s\n",
+			fprintf(stderr, _("Can't add property %s\n"),
 			       dvb_v5_name[cmd]);
 			return -1;
 		}
@@ -225,7 +238,7 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 
 	dvb_file = calloc(sizeof(*dvb_file), 1);
 	if (!dvb_file) {
-		perror("Allocating memory for dvb_file");
+		perror(_("Allocating memory for dvb_file"));
 		return NULL;
 	}
 
@@ -251,7 +264,7 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 		if (parse_file->has_delsys_id) {
 			p = strtok(p, delimiter);
 			if (!p) {
-				sprintf(err_msg, "unknown delivery system type for %s",
+				sprintf(err_msg, _("unknown delivery system type for %s"),
 					p);
 				goto error;
 			}
@@ -262,7 +275,7 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 					break;
 			}
 			if (!formats[i].id) {
-				sprintf(err_msg, "Doesn't know how to handle delimiter '%s'",
+				sprintf(err_msg, _("Doesn't know how to handle delimiter '%s'"),
 					p);
 				goto error;
 			}
@@ -273,7 +286,7 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 					break;
 			}
 			if (!formats[i].delsys) {
-				sprintf(err_msg, "Doesn't know how to parse delivery system %d",
+				sprintf(err_msg, _("Doesn't know how to parse delivery system %d"),
 					delsys);
 				goto error;
 			}
@@ -301,7 +314,7 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 			if (p && *p == '#')
 				p = NULL;
 			if (!p && !fmt->table[i].has_default_value) {
-				sprintf(err_msg, "parameter %i (%s) missing",
+				sprintf(err_msg, _("parameter %i (%s) missing"),
 					i, dvb_cmd_name(table->prop));
 				goto error;
 			}
@@ -310,7 +323,7 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 					if (!table->table[j] || !strcasecmp(table->table[j], p))
 						break;
 				if (j == table->size) {
-					sprintf(err_msg, "parameter %s invalid: %s",
+					sprintf(err_msg, _("parameter %s invalid: %s"),
 						dvb_cmd_name(table->prop), p);
 					goto error;
 				}
@@ -367,7 +380,7 @@ struct dvb_file *dvb_parse_format_oneline(const char *fname,
 	return dvb_file;
 
 error:
-	fprintf (stderr, "ERROR %s while parsing line %d of %s\n",
+	fprintf (stderr, _("ERROR %s while parsing line %d of %s\n"),
 		 err_msg, line, fname);
 	dvb_file_free(dvb_file);
 	fclose(fd);
@@ -448,7 +461,7 @@ int dvb_write_format_oneline(const char *fname,
 		}
 		if (formats[i].delsys == 0) {
 			sprintf(err_msg,
-				 "delivery system %d not supported on this format",
+				 _("delivery system %d not supported on this format"),
 				 delsys);
 			goto error;
 		}
@@ -490,7 +503,7 @@ int dvb_write_format_oneline(const char *fname,
 				}
 				if (data >= table->size) {
 					sprintf(err_msg,
-						 "value not supported");
+						 _("value not supported"));
 					goto error;
 				}
 
@@ -500,7 +513,7 @@ int dvb_write_format_oneline(const char *fname,
 				case DTV_VIDEO_PID:
 					if (!entry->video_pid) {
 						fprintf(stderr,
-							"WARNING: missing video PID while parsing entry %d of %s\n",
+							_("WARNING: missing video PID while parsing entry %d of %s\n"),
 							line, fname);
 						fprintf(fp, "%d",0);
 					} else
@@ -510,7 +523,7 @@ int dvb_write_format_oneline(const char *fname,
 				case DTV_AUDIO_PID:
 					if (!entry->audio_pid) {
 						fprintf(stderr,
-							"WARNING: missing audio PID while parsing entry %d of %s\n",
+							_("WARNING: missing audio PID while parsing entry %d of %s\n"),
 							line, fname);
 						fprintf(fp, "%d",0);
 					} else
@@ -529,7 +542,7 @@ int dvb_write_format_oneline(const char *fname,
 							data = fmt->table[i].default_value;
 						} else {
 							fprintf(stderr,
-								"property %s not supported while parsing entry %d of %s\n",
+								_("property %s not supported while parsing entry %d of %s\n"),
 								dvb_cmd_name(table->prop),
 								line, fname);
 							data = 0;
@@ -550,7 +563,7 @@ int dvb_write_format_oneline(const char *fname,
 	return 0;
 
 error:
-	fprintf(stderr, "ERROR: %s while parsing entry %d of %s\n",
+	fprintf(stderr, _("ERROR: %s while parsing entry %d of %s\n"),
 		 err_msg, line, fname);
 	fclose(fp);
 	return -1;
@@ -731,7 +744,7 @@ struct dvb_file *dvb_read_file(const char *fname)
 
 	dvb_file = calloc(sizeof(*dvb_file), 1);
 	if (!dvb_file) {
-		perror("Allocating memory for dvb_file");
+		perror(_("Allocating memory for dvb_file"));
 		return NULL;
 	}
 
@@ -767,7 +780,7 @@ struct dvb_file *dvb_read_file(const char *fname)
 			p++;
 			p = strtok(p, "]");
 			if (!p) {
-				sprintf(err_msg, "Missing channel group");
+				sprintf(err_msg, _("Missing channel group"));
 				goto error;
 			}
 			if (!strcasecmp(p, CHANNEL))
@@ -780,12 +793,12 @@ struct dvb_file *dvb_read_file(const char *fname)
 			}
 		} else {
 			if (!entry) {
-				sprintf(err_msg, "key/value without a channel group");
+				sprintf(err_msg, _("key/value without a channel group"));
 				goto error;
 			}
 			key = strtok(p, "=");
 			if (!key) {
-				sprintf(err_msg, "missing key");
+				sprintf(err_msg, _("missing key"));
 				goto error;
 			}
 			p = &key[strlen(key) - 1];
@@ -794,7 +807,7 @@ struct dvb_file *dvb_read_file(const char *fname)
 			*p = 0;
 			value = strtok(NULL, "\n");
 			if (!value) {
-				sprintf(err_msg, "missing value");
+				sprintf(err_msg, _("missing value"));
 				goto error;
 			}
 			while (*value == ' ' || *value == '\t')
@@ -802,7 +815,7 @@ struct dvb_file *dvb_read_file(const char *fname)
 
 			rc = fill_entry(entry, key, value);
 			if (rc == -2) {
-				sprintf(err_msg, "value %s is invalid for %s",
+				sprintf(err_msg, _("value %s is invalid for %s"),
 					value, key);
 				goto error;
 			}
@@ -816,7 +829,7 @@ struct dvb_file *dvb_read_file(const char *fname)
 	return dvb_file;
 
 error:
-	fprintf (stderr, "ERROR %s while parsing line %d of %s\n",
+	fprintf (stderr, _("ERROR %s while parsing line %d of %s\n"),
 		 err_msg, line, fname);
 	if (buf)
 		free(buf);
@@ -1105,7 +1118,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 		}
 	}
 	if (!found) {
-		dvb_logwarn("Channel %s (service ID %d) not found on PMT. Skipping it.",
+		dvb_logwarn(_("Channel %s (service ID %d) not found on PMT. Skipping it."),
 			    channel, service_id);
 		if (channel)
 			free(channel);
@@ -1123,7 +1136,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 		entry = entry->next;
 	}
 	if (!entry) {
-		dvb_logerr("Not enough memory");
+		dvb_logerr(_("Not enough memory"));
 		if (channel)
 			free(channel);
 		if (vchannel)
@@ -1152,7 +1165,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 				usleep(100000);
 		} while (rc == EAGAIN);
 		if (rc)
-			dvb_logerr("Couldn't get frontend props");
+			dvb_logerr(_("Couldn't get frontend props"));
 	}
 	for (j = 0; j < parms->n_props; j++) {
 		entry->props[j].cmd = parms->dvb_prop[j].cmd;
@@ -1181,7 +1194,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 			service_id);
 		if (r < 0)
 			dvb_perror("asprintf");
-		dvb_log("Storing Service ID %d: '%s'", service_id, channel);
+		dvb_log(_("Storing Service ID %d: '%s'"), service_id, channel);
 	}
 	entry->n_props = parms->n_props;
 	entry->channel = channel;
@@ -1196,20 +1209,20 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 
 /* Service type, according with EN 300 468 V1.3.1 (1998-02) */
 static char *sdt_services[256] = {
-	[0x00 ...0xff] = "reserved",
-	[0x01] = "digital television",
-	[0x02] = "digital radio",
-	[0x03] = "Teletext",
-	[0x04] = "NVOD reference",
-	[0x05] = "NVOD time-shifted",
-	[0x06] = "mosaic",
-	[0x07] = "PAL coded signal",
-	[0x08] = "SECAM coded signal",
-	[0x09] = "D/D2-MAC",
-	[0x0a] = "FM Radio",
-	[0x0b] = "NTSC coded signal",
-	[0x0c] = "data broadcast",
-	[0x80 ...0xfe] = "user defined",
+	[0x00 ...0xff] = N_("reserved"),
+	[0x01] = N_("digital television"),
+	[0x02] = N_("digital radio"),
+	[0x03] = N_("Teletext"),
+	[0x04] = N_("NVOD reference"),
+	[0x05] = N_("NVOD time-shifted"),
+	[0x06] = N_("mosaic"),
+	[0x07] = N_("PAL coded signal"),
+	[0x08] = N_("SECAM coded signal"),
+	[0x09] = N_("D/D2-MAC"),
+	[0x0a] = N_("FM Radio"),
+	[0x0b] = N_("NTSC coded signal"),
+	[0x0c] = N_("data broadcast"),
+	[0x80 ...0xfe] = N_("user defined"),
 };
 
 int dvb_store_channel(struct dvb_file **dvb_file,
@@ -1223,7 +1236,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 	if (!*dvb_file) {
 		*dvb_file = calloc(sizeof(**dvb_file), 1);
 		if (!*dvb_file) {
-			dvb_perror("Allocating memory for dvb_file");
+			dvb_perror(_("Allocating memory for dvb_file"));
 			return -1;
 		}
 	}
@@ -1247,7 +1260,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 				dvb_perror("asprintf");
 
 			if (parms->p.verbose)
-				dvb_log("Virtual channel %s, name = %s",
+				dvb_log(_("Virtual channel %s, name = %s"),
 					vchannel, channel);
 
 			rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
@@ -1274,7 +1287,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 
 			service_id = dvb_scan_handler->program[i].pat_pgm->service_id;
 			if (!warned) {
-				dvb_log("WARNING: no SDT table - storing channel(s) without their names");
+				dvb_log(_("WARNING: no SDT table - storing channel(s) without their names"));
 				warned = 1;
 			}
 
@@ -1301,9 +1314,9 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 				channel = calloc(strlen(p) + 1, 1);
 				strcpy(channel, p);
 			}
-			dvb_log("Service %s, provider %s: %s",
+			dvb_log(_("Service %s, provider %s: %s"),
 				desc->name, desc->provider,
-				sdt_services[desc->service_type]);
+				_(sdt_services[desc->service_type]));
 			break;
 		}
 
@@ -1314,7 +1327,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 		}
 
 		if (parms->p.verbose)
-			dvb_log("Storing as channel %s", channel);
+			dvb_log(_("Storing as channel %s"), channel);
 		vchannel = dvb_vchannel(parms, dvb_scan_handler->nit, service->service_id);
 
 		rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
@@ -1339,7 +1352,7 @@ enum dvb_file_formats dvb_parse_format(const char *name)
 	if (!strcasecmp(name, "VDR"))
 		return FILE_VDR;
 
-	fprintf(stderr, "File format %s is unknown\n", name);
+	fprintf(stderr, _("File format %s is unknown\n"), name);
 	return FILE_UNKNOWN;
 }
 
@@ -1384,7 +1397,7 @@ int dvb_parse_delsys(const char *name)
 	 * Not found. Print all possible values, except for
 	 * SYS_UNDEFINED.
 	 */
-	fprintf(stderr, "ERROR: Delivery system %s is not known. Valid values are:\n",
+	fprintf(stderr, _("ERROR: Delivery system %s is not known. Valid values are:\n"),
 		name);
 	for (i = 0; i < ARRAY_SIZE(alt_names) - 1; i++) {
 		if (!(cnt % 5))
@@ -1428,10 +1441,10 @@ struct dvb_file *dvb_read_file_format(const char *fname,
 		break;
 	case FILE_VDR:
 		/* FIXME: add support for VDR input */
-		fprintf(stderr, "Currently, VDR format is supported only for output\n");
+		fprintf(stderr, _("Currently, VDR format is supported only for output\n"));
 		return NULL;
 	default:
-		fprintf(stderr, "Format is not supported\n");
+		fprintf(stderr, _("Format is not supported\n"));
 		return NULL;
 	}
 

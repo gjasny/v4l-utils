@@ -24,6 +24,20 @@
 #include <libdvbv5/dvb-file.h>
 #include <libdvbv5/dvb-v5-std.h>
 
+#include <config.h>
+
+#ifdef ENABLE_NLS
+# include "gettext.h"
+# include <libintl.h>
+# define _(string) dgettext(LIBDVBV5_DOMAIN, string)
+
+#else
+# define _(string) string
+#endif
+
+# define N_(string) string
+
+
 #define PTABLE(a) .table = a, .size=ARRAY_SIZE(a)
 
 /*
@@ -272,7 +286,7 @@ int dvb_write_format_vdr(const char *fname,
 		}
 		if (formats[i].delsys == 0) {
 			fprintf(stderr,
-				"WARNING: entry %d: delivery system %d not supported on this format. skipping entry\n",
+				_("WARNING: entry %d: delivery system %d not supported on this format. skipping entry\n"),
 				 line, delsys);
 			continue;
 		}
@@ -280,14 +294,14 @@ int dvb_write_format_vdr(const char *fname,
 
 		if (!entry->channel) {
 			fprintf(stderr,
-				"WARNING: entry %d: channel name not found. skipping entry\n",
+				_("WARNING: entry %d: channel name not found. skipping entry\n"),
 				 line);
 			continue;
 		}
 
 		if (dvb_retrieve_entry_prop(entry, DTV_FREQUENCY, &freq) < 0) {
 			fprintf(stderr,
-				"WARNING: entry %d: frequency not found. skipping entry\n",
+				_("WARNING: entry %d: frequency not found. skipping entry\n"),
 				 line);
 			continue;
 		}
@@ -330,7 +344,7 @@ int dvb_write_format_vdr(const char *fname,
 			}
 			if (data >= table->size) {
 				sprintf(err_msg,
-						"value not supported");
+						_("value not supported"));
 				goto error;
 			}
 
@@ -359,7 +373,7 @@ int dvb_write_format_vdr(const char *fname,
 		case SYS_DVBC_ANNEX_A:
 			if (dvb_retrieve_entry_prop(entry, DTV_SYMBOL_RATE, &srate) < 0) {
 				sprintf(err_msg,
-						"symbol rate not found");
+						_("symbol rate not found"));
 				goto error;
 			}
 		}
@@ -404,7 +418,7 @@ int dvb_write_format_vdr(const char *fname,
 	return 0;
 
 error:
-	fprintf(stderr, "ERROR: %s while parsing entry %d of %s\n",
+	fprintf(stderr, _("ERROR: %s while parsing entry %d of %s\n"),
 		 err_msg, line, fname);
 	fclose(fp);
 	return -1;

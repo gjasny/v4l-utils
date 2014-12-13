@@ -1,3 +1,8 @@
 # List of source files which contain translatable strings.
 
 lib/libdvbv5/dvb-fe.c
+lib/libdvbv5/dvb-file.c
+lib/libdvbv5/dvb-log.c
+lib/libdvbv5/dvb-sat.c
+lib/libdvbv5/dvb-scan.c
+lib/libdvbv5/dvb-vdr-format.c

@@ -25,20 +25,34 @@
 #include <unistd.h>
 #include <stdarg.h>
 
+#include <config.h>
+
+#ifdef ENABLE_NLS
+# include "gettext.h"
+# include <libintl.h>
+# define _(string) dgettext(LIBDVBV5_DOMAIN, string)
+
+#else
+# define _(string) string
+#endif
+
+# define N_(string) string
+
+
 static const struct loglevel {
 	const char *name;
 	const char *color;
 	int fd;
 } loglevels[9] = {
-	{"EMERG    ", "\033[31m", STDERR_FILENO },
-	{"ALERT    ", "\033[31m", STDERR_FILENO },
-	{"CRITICAL ", "\033[31m", STDERR_FILENO },
-	{"ERROR    ", "\033[31m", STDERR_FILENO },
-	{"WARNING  ", "\033[33m", STDOUT_FILENO },
-	{"",          "\033[36m", STDOUT_FILENO }, /* NOTICE */
-	{"",          NULL,       STDOUT_FILENO }, /* INFO */
-	{"DEBUG    ", "\033[32m", STDOUT_FILENO },
-	{"",          "\033[0m",  STDOUT_FILENO }, /* reset*/
+	{N_("EMERG    "), "\033[31m", STDERR_FILENO },
+	{N_("ALERT    "), "\033[31m", STDERR_FILENO },
+	{N_("CRITICAL "), "\033[31m", STDERR_FILENO },
+	{N_("ERROR    "), "\033[31m", STDERR_FILENO },
+	{N_("WARNING  "), "\033[33m", STDOUT_FILENO },
+	{NULL,            "\033[36m", STDOUT_FILENO }, /* NOTICE */
+	{NULL,            NULL,       STDOUT_FILENO }, /* INFO */
+	{N_("DEBUG    "), "\033[32m", STDOUT_FILENO },
+	{NULL,            "\033[0m",  STDOUT_FILENO }, /* reset*/
 };
 #define LOG_COLOROFF 8
 
@@ -53,7 +67,8 @@ void dvb_default_log(int level, const char *fmt, ...)
 		out = stderr;
 	if (loglevels[level].color && isatty(loglevels[level].fd))
 		fputs(loglevels[level].color, out);
-	fprintf(out, "%s", loglevels[level].name);
+	if (loglevels[level].name)
+		fprintf(out, "%s", _(loglevels[level].name));
 	vfprintf(out, fmt, ap);
 	fprintf(out, "\n");
 	if(loglevels[level].color && isatty(loglevels[level].fd))
