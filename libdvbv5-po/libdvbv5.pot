@@ -1,0 +1,18 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Mauro Carvalho Chehab
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: libdvbv5 1.7.0\n"
+"Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
+"POT-Creation-Date: 2014-12-13 00:31-0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"

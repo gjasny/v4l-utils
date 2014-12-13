@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = v4l-utils-po lib
+SUBDIRS = v4l-utils-po libdvbv5-po lib
 
 if WITH_V4LUTILS
 SUBDIRS += utils contrib
