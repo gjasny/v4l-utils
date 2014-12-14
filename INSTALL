@@ -8,21 +8,30 @@ Building:
 ---------
 
 If you checked out the source repository you need to install the autotools
-environment and gettext first. Then type "autoreconf -vfi" to generate the
-configure script.
+environment and gettext first.
 
-Then execute "configure" with any desired options. You can get a summary via
-the --help option.
-After configuration simply type "make" to start the build process.
+The autotools/gettext should be updated to the version that are shipped
+on your distro. This can be done by running:
+	$ ./bootstrap.sh
+
+Then you need to configure any any desired options with:
+	$ ./configure
+
+You can get a summary of possible configurations via the --help option.
+If used without arguments, it will set the install prefix to /usr/local/.
+
+After configuration you need to start the build process with:
+	$ make
 
 Installing:
 -----------
 
-To install do "make install". The configured paths will be used.
+To install it at the prefix configured by ./configure, do, as root:
+	# make install
 
 Note that v4l-utils' "make install" supports DESTDIR for installing into
 a build root for example:
-make install DESTDIR=/mnt/sysimage
+	# make install DESTDIR=/mnt/sysimage
 
 Cross Compiling:
 ----------------
