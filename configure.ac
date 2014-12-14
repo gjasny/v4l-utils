@@ -78,7 +78,6 @@ DX_DOT_FEATURE(ON)
 DX_INIT_DOXYGEN($PACKAGE_NAME, doxygen_libdvbv5.cfg)
 ALL_LINGUAS=""
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.19])
 
 LIBDVBV5_DOMAIN="libdvbv5"
 AC_DEFINE([LIBDVBV5_DOMAIN], "libdvbv5", [libdvbv5 domain])
