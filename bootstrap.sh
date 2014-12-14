@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mkdir build-aux/ 2>/dev/null
-touch build-aux/config.rpath
+touch build-aux/config.rpath libdvbv5-po/Makefile.in.in v4l-utils-po/Makefile.in.in
 autoreconf -vfi
 
 GETTEXTIZE=$(which gettextize)
