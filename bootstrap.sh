@@ -1,5 +1,6 @@
 #!/bin/bash
 
+touch build-aux/config.rpath
 autoreconf -vfi
 
 GETTEXTIZE=$(which gettextize)
