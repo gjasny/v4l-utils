@@ -104,6 +104,9 @@ static const struct argp_option options[] = {
 	{"exit",	'x', NULL,			0, N_("exit after tuning"), 0},
 	{"low_traffic",	'X', NULL,			0, N_("also shows DVB traffic with less then 1 packet per second"), 0},
 	{"cc",		'C', N_("country_code"),	0, N_("use default parameters for given country"), 0},
+	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
+	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
+	{"version",	-4,	0,		0,	N_("Print program version"), -1},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -568,6 +571,18 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'C':
 		args->cc = strndup(optarg, 2);
 		break;
+	case '?':
+		argp_state_help(state, state->out_stream,
+				ARGP_HELP_SHORT_USAGE | ARGP_HELP_LONG
+				| ARGP_HELP_DOC);
+		fprintf(state->out_stream, _("\nReport bugs to %s.\n"), argp_program_bug_address);
+		exit(0);
+	case -4:
+		fprintf (state->out_stream, "%s\n", argp_program_version);
+		exit(0);
+	case -3:
+		argp_state_help(state, state->out_stream, ARGP_HELP_USAGE);
+		exit(0);
 	default:
 		return ARGP_ERR_UNKNOWN;
 	};
@@ -752,7 +767,7 @@ int main(int argc, char **argv)
 	args.lna = LNA_AUTO;
 	args.input_format = FILE_DVBV5;
 
-	argp_parse(&argp, argc, argv, 0, &idx, &args);
+	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, &idx, &args);
 
 	if (idx < argc)
 		channel = argv[idx];

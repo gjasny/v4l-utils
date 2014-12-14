@@ -61,6 +61,9 @@ static const struct argp_option options[] = {
 #endif
 	{"get",		'g',	0,		0,	N_("get frontend"), 0},
 	{"dvbv3",	'3',	0,		0,	N_("Use DVBv3 only"), 0},
+	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
+	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
+	{"version",	'V',	0,		0,	N_("Print program version"), -1},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -131,6 +134,18 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	case 'v':
 		verbose	++;
 		break;
+	case '?':
+		argp_state_help(state, state->out_stream,
+				ARGP_HELP_SHORT_USAGE | ARGP_HELP_LONG
+				| ARGP_HELP_DOC);
+		fprintf(state->out_stream, _("\nReport bugs to %s.\n"), argp_program_bug_address);
+		exit(0);
+	case 'V':
+		fprintf (state->out_stream, "%s\n", argp_program_version);
+		exit(0);
+	case -3:
+		argp_state_help(state, state->out_stream, ARGP_HELP_USAGE);
+		exit(0);
 	default:
 		return ARGP_ERR_UNKNOWN;
 	}
@@ -265,7 +280,7 @@ int main(int argc, char *argv[])
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	argp_parse(&argp, argc, argv, 0, 0, 0);
+	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, 0, 0);
 
 	/*
 	 * If called without any option, be verbose, to print the

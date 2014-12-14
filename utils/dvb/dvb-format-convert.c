@@ -59,6 +59,9 @@ static const struct argp_option options[] = {
 	{"input-format",	'I',	N_("format"),	0, N_("Valid input formats: ZAP, CHANNEL, DVBV5"), 0},
 	{"output-format",	'O',	N_("format"),	0, N_("Valid output formats: VDR, ZAP, CHANNEL, DVBV5"), 0},
 	{"delsys",		's',	N_("system"),	0, N_("Delivery system type. Needed if input or output format is ZAP"), 0},
+	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
+	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
+	{"version",	'V',	0,		0,	N_("Print program version"), -1},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -78,6 +81,18 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 's':
 		args->delsys = dvb_parse_delsys(optarg);
 		break;
+	case '?':
+		argp_state_help(state, state->out_stream,
+				ARGP_HELP_SHORT_USAGE | ARGP_HELP_LONG
+				| ARGP_HELP_DOC);
+		fprintf(state->out_stream, _("\nReport bugs to %s.\n"), argp_program_bug_address);
+		exit(0);
+	case 'V':
+		fprintf (state->out_stream, "%s\n", argp_program_version);
+		exit(0);
+	case -3:
+		argp_state_help(state, state->out_stream, ARGP_HELP_USAGE);
+		exit(0);
 	default:
 		return ARGP_ERR_UNKNOWN;
 	};
@@ -122,7 +137,7 @@ int main(int argc, char **argv)
 	textdomain (PACKAGE);
 
 	memset(&args, 0, sizeof(args));
-	argp_parse(&argp, argc, argv, 0, &idx, &args);
+	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, &idx, &args);
 
 	if (idx + 1 < argc) {
 		args.input_file = argv[idx];

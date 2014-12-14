@@ -115,7 +115,7 @@ static int parse_code(char *string)
 	return -1;
 }
 
-const char *argp_program_version = N_("IR keytable control version ") V4L_UTILS_VERSION;
+const char *argp_program_version = "IR keytable control version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
 
 static const char doc[] = N_(
@@ -127,7 +127,7 @@ static const char doc[] = N_(
 	"  TABLE    - a file with a set of scancode=keycode value pairs\n"
 	"  SCANKEY  - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
 	"  PROTOCOL - protocol name (nec, rc-5, rc-6, jvc, sony, sanyo, rc-5-sz, lirc,\n"
-        "                            sharp, mce_kbd, xmp, other, all) to be enabled\n"
+	"                            sharp, mce_kbd, xmp, other, all) to be enabled\n"
 	"  DELAY    - Delay before repeating a keystroke\n"
 	"  PERIOD   - Period to repeat a keystroke\n"
 	"  CFGFILE  - configuration file that associates a driver/table name with a keymap file\n"
@@ -146,6 +146,9 @@ static const struct argp_option options[] = {
 	{"delay",	'D',	N_("DELAY"),	0,	N_("Sets the delay before repeating a keystroke"), 0},
 	{"period",	'P',	N_("PERIOD"),	0,	N_("Sets the period to repeat a keystroke"), 0},
 	{"auto-load",	'a',	N_("CFGFILE"),	0,	N_("Auto-load a table, based on a configuration file. Only works with sysdev."), 0},
+	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
+	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
+	{"version",	'V',	0,		0,	N_("Print program version"), -1},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -507,6 +510,18 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			p = strtok(NULL, ",;");
 		} while (p);
 		break;
+	case '?':
+		argp_state_help(state, state->out_stream,
+				ARGP_HELP_SHORT_USAGE | ARGP_HELP_LONG
+				| ARGP_HELP_DOC);
+		fprintf(state->out_stream, _("\nReport bugs to %s.\n"), argp_program_bug_address);
+		exit(0);
+	case 'V':
+		fprintf (state->out_stream, "%s\n", argp_program_version);
+		exit(0);
+	case -3:
+		argp_state_help(state, state->out_stream, ARGP_HELP_USAGE);
+		exit(0);
 	default:
 		return ARGP_ERR_UNKNOWN;
 	}
@@ -1560,7 +1575,7 @@ int main(int argc, char *argv[])
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 
-	argp_parse(&argp, argc, argv, 0, 0, 0);
+	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, 0, 0);
 
 	/* Just list all devices */
 	if (!clear && !readtable && !keys.next && !ch_proto && !cfg.next && !test && !delay && !period) {
