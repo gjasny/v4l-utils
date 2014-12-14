@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir build-aux/ 2>/dev/null
 touch build-aux/config.rpath
 autoreconf -vfi
 
