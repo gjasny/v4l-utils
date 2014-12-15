@@ -8,12 +8,9 @@ CONFIG += debug
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-#
-# qt5: opengl support for disabled (will crash on startup)
-#
-# qt4: to disable opengl suppport comment out the following
+# opengl: to disable opengl suppport comment out the following
 # line and the line '#define HAVE_QTGL 1' from ../../config.h
-lessThan(QT_MAJOR_VERSION, 5): QT += opengl
+QT += opengl
 
 INCLUDEPATH += $$PWD/../..
 INCLUDEPATH += $$PWD/../v4l2-ctl/

@@ -176,8 +176,16 @@ if test "x$qt_pkgconfig" = "xtrue"; then
    AC_SUBST(MOC)
    AC_SUBST(UIC)
    AC_SUBST(RCC)
-# disable QTGL for qt5 because qv4l2 crash
-   qt_pkgconfig_gl=false
+   PKG_CHECK_MODULES(QT5GL, [Qt5OpenGL >= 5.0 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
+   if test "x$qt_pkgconfig_gl" = "xtrue"; then
+      QTGL_CFLAGS="$QT5GL_CFLAGS -fPIC"
+      QTGL_LIBS="$QT5GL_LIBS"
+      AC_SUBST(QT_CFLAGS)
+      AC_SUBST(QT_LIBS)
+      AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
+   else
+      AC_MSG_WARN(Qt5 OpenGL is not available)
+    fi
 else
    PKG_CHECK_MODULES(QT, [QtCore >= 4.0 QtGui >= 4.0], [qt_pkgconfig=true], [qt_pkgconfig=false])
    if test "x$qt_pkgconfig" = "xtrue"; then
