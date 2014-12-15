@@ -146,7 +146,7 @@ CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_mag_filter(GL_NEAREST),
 	m_min_filter(GL_NEAREST)
 {
-	m_glfunction.initializeGLFunctions(context());
+
 }
 
 CaptureWinGLEngine::~CaptureWinGLEngine()
@@ -238,8 +238,10 @@ void CaptureWinGLEngine::setLinearFilter(bool enable)
 void CaptureWinGLEngine::clearShader()
 {
 	glDeleteTextures(m_screenTextureCount, m_screenTexture);
-	m_shaderProgram.release();
-	m_shaderProgram.removeAllShaders();
+	if (m_shaderProgram.isLinked()) {
+		m_shaderProgram.release();
+		m_shaderProgram.removeAllShaders();
+	}
 }
 
 void CaptureWinGLEngine::stop()
@@ -252,6 +254,8 @@ void CaptureWinGLEngine::stop()
 
 void CaptureWinGLEngine::initializeGL()
 {
+	m_glfunction.initializeGLFunctions(context());
+
 	glShadeModel(GL_FLAT);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
