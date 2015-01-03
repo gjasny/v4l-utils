@@ -155,7 +155,11 @@ struct media_entity *media_get_default_entity(struct media_device *media,
 		return media->def.fb;
 	case MEDIA_ENT_T_DEVNODE_ALSA:
 		return media->def.alsa;
-	case MEDIA_ENT_T_DEVNODE_DVB:
+	case MEDIA_ENT_T_DEVNODE_DVB_FE:
+	case MEDIA_ENT_T_DEVNODE_DVB_DEMUX:
+	case MEDIA_ENT_T_DEVNODE_DVB_DVR:
+	case MEDIA_ENT_T_DEVNODE_DVB_CA:
+	case MEDIA_ENT_T_DEVNODE_DVB_NET:
 		return media->def.dvb;
 	}
 
@@ -561,7 +565,11 @@ static int media_enum_entities(struct media_device *media)
 			case MEDIA_ENT_T_DEVNODE_ALSA:
 				media->def.alsa = entity;
 				break;
-			case MEDIA_ENT_T_DEVNODE_DVB:
+			case MEDIA_ENT_T_DEVNODE_DVB_FE:
+			case MEDIA_ENT_T_DEVNODE_DVB_DEMUX:
+			case MEDIA_ENT_T_DEVNODE_DVB_DVR:
+			case MEDIA_ENT_T_DEVNODE_DVB_CA:
+			case MEDIA_ENT_T_DEVNODE_DVB_NET:
 				media->def.dvb = entity;
 				break;
 			}
@@ -770,7 +778,11 @@ int media_device_add_entity(struct media_device *media,
 		defent = &media->def.alsa;
 		entity->info.alsa = desc->alsa;
 		break;
-	case MEDIA_ENT_T_DEVNODE_DVB:
+	case MEDIA_ENT_T_DEVNODE_DVB_FE:
+	case MEDIA_ENT_T_DEVNODE_DVB_DEMUX:
+	case MEDIA_ENT_T_DEVNODE_DVB_DVR:
+	case MEDIA_ENT_T_DEVNODE_DVB_CA:
+	case MEDIA_ENT_T_DEVNODE_DVB_NET:
 		defent = &media->def.dvb;
 		entity->info.dvb = desc->dvb;
 		break;
