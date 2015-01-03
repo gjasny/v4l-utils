@@ -187,9 +187,15 @@ run
 
 This will create the dir "usr/" inside the Kernel tree.
 
-step 2) at v4l-utils tree:
+step 2)
 
-	$ KERNEL_DIR=location/of/the/kernel/tree
-	$ make sync-with-kernel
+Be sure that you have installed both glibc development packages for
+32 and 64 bits, as otherwise the next step will fail.
 
-step3) remove the usr/ from the Kernel tree.
+step 3) at v4l-utils tree:
+
+	$ KERNEL_DIR=location/of/the/kernel/tree make sync-with-kernel
+
+step 4)
+
+Remove the usr/ from the Kernel tree.
