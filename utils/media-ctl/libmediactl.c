@@ -478,6 +478,20 @@ static int media_get_devname_sysfs(struct media_entity *entity)
 		return -EINVAL;
 
 	sprintf(devname, "/dev/%s", p + 1);
+	if (strstr(p + 1, "dvb")) {
+		char *s = p + 1;
+
+		if (strncmp(s, "dvb", 3))
+			return -EINVAL;
+		s += 3;
+		p = strchr(s, '.');
+		if (!p)
+			return -EINVAL;
+		*p = '/';
+		sprintf(devname, "/dev/dvb/adapter%s", s);
+	} else {
+		sprintf(devname, "/dev/%s", p + 1);
+	}
 	ret = stat(devname, &devstat);
 	if (ret < 0)
 		return -errno;
@@ -555,7 +569,8 @@ static int media_enum_entities(struct media_device *media)
 
 		/* Find the corresponding device name. */
 		if (media_entity_type(entity) != MEDIA_ENT_T_DEVNODE &&
-		    media_entity_type(entity) != MEDIA_ENT_T_V4L2_SUBDEV)
+		    media_entity_type(entity) != MEDIA_ENT_T_V4L2_SUBDEV &&
+		    entity->info.type == MEDIA_ENT_T_DEVNODE_ALSA)
 			continue;
 
 		/* Try to get the device name via udev */
