@@ -296,6 +296,8 @@ static const char *media_entity_subtype_to_string(unsigned type)
 		"Sensor",
 		"Flash",
 		"Lens",
+		"Decoder",
+		"Tuner",
 	};
 
 	unsigned int subtype = type & MEDIA_ENT_SUBTYPE_MASK;
