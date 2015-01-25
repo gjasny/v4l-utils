@@ -23,10 +23,11 @@ pixfmt_test_CFLAGS = $(X11_CFLAGS)
 pixfmt_test_LDFLAGS = $(X11_LIBS)
 
 v4l2grab_SOURCES = v4l2grab.c
+v4l2grab_LDFLAGS = $(ARGP_LIBS)
 v4l2grab_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la -lpthread
 
 v4l2gl_SOURCES = v4l2gl.c
-v4l2gl_LDFLAGS = $(X11_LIBS) $(GL_LIBS) $(GLU_LIBS)
+v4l2gl_LDFLAGS = $(X11_LIBS) $(GL_LIBS) $(GLU_LIBS) $(ARGP_LIBS)
 v4l2gl_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
 
 ioctl_test_SOURCES = ioctl-test.c ioctl-test.h ioctl_32.h ioctl_64.h
