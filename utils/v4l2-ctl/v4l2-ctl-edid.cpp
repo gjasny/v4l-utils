@@ -42,6 +42,8 @@ void edid_usage(void)
 	       "                     carray: c-program struct\n"
 	       "                     If <file> is '-' or not the 'file' argument is not supplied, then the data\n"
 	       "                     is written to stdout.\n"
+	       "  --fix-edid-checksums\n"
+	       "                     If specified then any checksum errors will be fixed silently.\n"
 	       );
 }
 
@@ -79,14 +81,45 @@ static void read_edid_file(FILE *f, struct v4l2_edid *e)
 	e->blocks = i / 256;
 }
 
-static bool crc_ok(unsigned char *b)
+static unsigned char crc_calc(const unsigned char *b)
 {
 	unsigned char sum = 0;
 	int i;
 
-	for (i = 0; i < 128; i++)
+	for (i = 0; i < 127; i++)
 		sum += b[i];
-	return sum == 0;
+	return 256 - sum;
+}
+
+static bool crc_ok(const unsigned char *b)
+{
+	return crc_calc(b) == b[127];
+}
+
+static void fix_edid(struct v4l2_edid *e)
+{
+	for (unsigned b = 0; b < e->blocks; b++) {
+		unsigned char *buf = e->edid + 128 * b;
+
+		if (!crc_ok(buf))
+			buf[127] = crc_calc(buf);
+	}
+}
+
+static bool verify_edid(struct v4l2_edid *e)
+{
+	bool valid = true;
+
+	for (unsigned b = 0; b < e->blocks; b++) {
+		const unsigned char *buf = e->edid + 128 * b;
+
+		if (!crc_ok(buf)) {
+			fprintf(stderr, "Block %u has a checksum error (should be 0x%02x)\n",
+					b, crc_calc(buf));
+			valid = false;
+		}
+	}
+	return valid;
 }
 
 static void hexdumpedid(FILE *f, struct v4l2_edid *e)
@@ -102,7 +135,8 @@ static void hexdumpedid(FILE *f, struct v4l2_edid *e)
 			fprintf(f, "\n");
 		}
 		if (!crc_ok(buf))
-			fprintf(f, "Block has a checksum error\n");
+			fprintf(f, "Block %u has a checksum error (should be 0x%02x)\n",
+					b, crc_calc(buf));
 	}
 }
 
@@ -113,6 +147,9 @@ static void rawdumpedid(FILE *f, struct v4l2_edid *e)
 
 		for (unsigned i = 0; i < 128; i++)
 			fprintf(f, "%c", buf[i]);
+		if (!crc_ok(buf))
+			fprintf(stderr, "Block %u has a checksum error (should be %02x)\n",
+					b, crc_calc(buf));
 	}
 }
 
@@ -132,7 +169,8 @@ static void carraydumpedid(FILE *f, struct v4l2_edid *e)
 			fprintf(f, "\n");
 		}
 		if (!crc_ok(buf))
-			fprintf(f, "\t/* Block has a checksum error */\n");
+			fprintf(f, "\t/* Block %u has a checksum error (should be 0x%02x) */\n",
+					b, crc_calc(buf));
 	}
 	fprintf(f, "};\n");
 }
@@ -387,7 +425,12 @@ void edid_set(int fd)
 				exit(1);
 			}
 		}
-		doioctl(fd, VIDIOC_S_EDID, &sedid);
+		if (options[OptFixEdidChecksums])
+			fix_edid(&sedid);
+		if (verify_edid(&sedid))
+			doioctl(fd, VIDIOC_S_EDID, &sedid);
+		else
+			fprintf(stderr, "EDID not set due to checksum errors\n");
 		if (fin) {
 			if (sedid.edid) {
 				free(sedid.edid);
@@ -416,8 +459,11 @@ void edid_get(int fd)
 			}
 		}
 		gedid.edid = (unsigned char *)malloc(gedid.blocks * 128);
-		if (doioctl(fd, VIDIOC_G_EDID, &gedid) == 0)
+		if (doioctl(fd, VIDIOC_G_EDID, &gedid) == 0) {
+			if (options[OptFixEdidChecksums])
+				fix_edid(&gedid);
 			printedid(fout, &gedid, gformat);
+		}
 		if (file_out && fout != stdout)
 			fclose(fout);
 		free(gedid.edid);
