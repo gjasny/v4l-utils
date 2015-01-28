@@ -146,7 +146,7 @@ CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_mag_filter(GL_NEAREST),
 	m_min_filter(GL_NEAREST)
 {
-
+	m_glfunction.initializeGLFunctions(context());
 }
 
 CaptureWinGLEngine::~CaptureWinGLEngine()
@@ -254,8 +254,6 @@ void CaptureWinGLEngine::stop()
 
 void CaptureWinGLEngine::initializeGL()
 {
-	m_glfunction.initializeGLFunctions(context());
-
 	glShadeModel(GL_FLAT);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -507,7 +505,7 @@ QString CaptureWinGLEngine::codeYUVNormalize()
 	switch (m_colorspace) {
 	case V4L2_COLORSPACE_SRGB:
 		if (m_ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT ||
-		    m_ycbcr_enc == V4L2_YCBCR_ENC_BT2020_CONST_LUM)
+		    m_ycbcr_enc == V4L2_YCBCR_ENC_SYCC)
 			// sYCC is always full range
 			return "";
 		/* fall through */
@@ -574,7 +572,7 @@ QString CaptureWinGLEngine::codeYUV2RGB()
 	case V4L2_COLORSPACE_SRGB:
 	case V4L2_COLORSPACE_ADOBERGB:
 		if (m_ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT ||
-		    m_ycbcr_enc == V4L2_YCBCR_ENC_BT2020_CONST_LUM)
+		    m_ycbcr_enc == V4L2_YCBCR_ENC_SYCC)
 			// These colorspaces all use the BT.601 luma coefficients
 			return QString("   float r = y + 1.403 * v;"
 			       "   float g = y - 0.344 * u - 0.714 * v;"
