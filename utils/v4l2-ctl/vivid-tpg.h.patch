@@ -2,12 +2,11 @@ diff --git a/devel/v4l/patchwork//drivers/media/platform/vivid/vivid-tpg.h b/uti
 index 8ef3e52ba3be..76c373a7b4f1 100644
 --- a/devel/v4l/patchwork//drivers/media/platform/vivid/vivid-tpg.h
 +++ b/utils/v4l2-ctl/vivid-tpg.h
-@@ -20,14 +20,46 @@
+@@ -20,13 +20,45 @@
  #ifndef _VIVID_TPG_H_
  #define _VIVID_TPG_H_
  
--#include <linux/version.h>
- #include <linux/types.h>
+-#include <linux/types.h>
 -#include <linux/errno.h>
 -#include <linux/random.h>
 -#include <linux/slab.h>
