@@ -777,7 +777,7 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		m_colorspace->addItem("REC 709");
 		m_colorspace->addItem("sRGB");
 		m_colorspace->addItem("Adobe RGB");
-		m_colorspace->addItem("BT.2020 YCbCr");
+		m_colorspace->addItem("BT.2020");
 		m_colorspace->addItem("SMPTE 240M");
 		m_colorspace->addItem("470 System M");
 		m_colorspace->addItem("470 System BG");
