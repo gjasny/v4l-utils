@@ -887,6 +887,11 @@ int testMmap(struct node *node, unsigned frame_count)
 		fail_on_test(node->streamoff(q.g_type()));
 		q.munmap_bufs(node);
 		fail_on_test(q.reqbufs(node, 0));
+		if (node->is_m2m) {
+			fail_on_test(node->streamoff(m2m_q.g_type()));
+			m2m_q.munmap_bufs(node);
+			fail_on_test(m2m_q.reqbufs(node, 0));
+		}
 	}
 	return 0;
 }
@@ -998,6 +1003,11 @@ int testUserPtr(struct node *node, unsigned frame_count)
 		fail_on_test(captureBufs(node, q, m2m_q, frame_count, true));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
+		if (node->is_m2m) {
+			fail_on_test(node->streamoff(m2m_q.g_type()));
+			m2m_q.munmap_bufs(node);
+			fail_on_test(m2m_q.reqbufs(node, 0));
+		}
 	}
 	return 0;
 }
