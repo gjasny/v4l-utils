@@ -425,7 +425,8 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 					pix.pixelformat, type);
 		fail_on_test(pix.bytesperline && pix.bytesperline < pix.width);
 		fail_on_test(!pix.sizeimage);
-		fail_on_test(testColorspace(pix.pixelformat, pix.colorspace,
+		if (!node->is_m2m)
+			fail_on_test(testColorspace(pix.pixelformat, pix.colorspace,
 					    pix.ycbcr_enc, pix.quantization));
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		if (pix.priv && pix.priv != V4L2_PIX_FMT_PRIV_MAGIC)
@@ -439,7 +440,8 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		    set_splane->find(pix_mp.pixelformat) == set_splane->end())
 			return fail("unknown pixelformat %08x for buftype %d\n",
 					pix_mp.pixelformat, type);
-		fail_on_test(testColorspace(pix_mp.pixelformat, pix_mp.colorspace, 
+		if (!node->is_m2m)
+			fail_on_test(testColorspace(pix_mp.pixelformat, pix_mp.colorspace, 
                                             pix.ycbcr_enc, pix.quantization));
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		ret = check_0(pix_mp.reserved, sizeof(pix_mp.reserved));
