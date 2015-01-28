@@ -240,12 +240,6 @@ void ApplicationWindow::vertMovementChanged(int val)
 	tpg_s_mv_vert_mode(&m_tpg, (tpg_move_mode)val);
 }
 
-void ApplicationWindow::quantRangeChanged(int val)
-{
-	m_tpgQuantRange = val;
-	tpg_s_quantization(&m_tpg, val);
-}
-
 void ApplicationWindow::showBorderChanged(int val)
 {
 	tpg_s_show_border(&m_tpg, val);
@@ -332,6 +326,23 @@ __u32 ApplicationWindow::defaultColorspace(bool capture)
 	return V4L2_COLORSPACE_REC709;
 }
 
+void ApplicationWindow::tpgFmtChanged()
+{
+	cv4l_fmt fmt;
+
+	g_fmt(fmt);
+	if (m_tpgColorspace == 0)
+		fmt.s_colorspace(defaultColorspace(false));
+	else
+		fmt.s_colorspace(m_tpgColorspace);
+	fmt.s_ycbcr_enc(m_tpgYCbCrEnc);
+	fmt.s_quantization(m_tpgQuantRange);
+	s_fmt(fmt);
+	tpg_s_colorspace(&m_tpg, m_tpgColorspace ? m_tpgColorspace : fmt.g_colorspace());
+	tpg_s_ycbcr_enc(&m_tpg, m_tpgColorspace ? m_tpgYCbCrEnc : fmt.g_ycbcr_enc());
+	tpg_s_quantization(&m_tpg, m_tpgColorspace ? m_tpgQuantRange : fmt.g_quantization());
+}
+
 void ApplicationWindow::colorspaceChanged(int val)
 {
 	switch (val) {
@@ -365,23 +376,7 @@ void ApplicationWindow::colorspaceChanged(int val)
 		break;
 	}
 
-	cv4l_fmt fmt;
-	v4l2_output out;
-
-	g_output(out.index);
-	enum_output(out, true, out.index);
-
-	g_fmt(fmt);
-	if (m_tpgColorspace == 0)
-		fmt.s_colorspace(defaultColorspace(false));
-	else
-		fmt.s_colorspace(m_tpgColorspace);
-	fmt.s_ycbcr_enc(m_tpgYCbCrEnc);
-	fmt.s_quantization(tpg_g_quantization(&m_tpg));
-	s_fmt(fmt);
-	tpg_s_colorspace(&m_tpg, m_tpgColorspace ? m_tpgColorspace : fmt.g_colorspace());
-	tpg_s_ycbcr_enc(&m_tpg, m_tpgColorspace ? m_tpgYCbCrEnc : fmt.g_ycbcr_enc());
-	tpg_s_quantization(&m_tpg, m_tpgColorspace ? m_tpgQuantRange : fmt.g_quantization());
+	tpgFmtChanged();
 }
 
 void ApplicationWindow::ycbcrEncodingChanged(int val)
@@ -417,23 +412,14 @@ void ApplicationWindow::ycbcrEncodingChanged(int val)
 		break;
 	}
 
-	cv4l_fmt fmt;
-	v4l2_output out;
+	tpgFmtChanged();
+}
 
-	g_output(out.index);
-	enum_output(out, true, out.index);
+void ApplicationWindow::quantRangeChanged(int val)
+{
+	m_tpgQuantRange = val;
 
-	g_fmt(fmt);
-	if (m_tpgColorspace == 0)
-		fmt.s_colorspace(defaultColorspace(false));
-	else
-		fmt.s_colorspace(m_tpgColorspace);
-	fmt.s_ycbcr_enc(m_tpgYCbCrEnc);
-	fmt.s_quantization(tpg_g_quantization(&m_tpg));
-	s_fmt(fmt);
-	tpg_s_colorspace(&m_tpg, m_tpgColorspace ? m_tpgColorspace : fmt.g_colorspace());
-	tpg_s_ycbcr_enc(&m_tpg, m_tpgColorspace ? m_tpgYCbCrEnc : fmt.g_ycbcr_enc());
-	tpg_s_quantization(&m_tpg, m_tpgColorspace ? m_tpgQuantRange : fmt.g_quantization());
+	tpgFmtChanged();
 }
 
 void ApplicationWindow::limRGBRangeChanged(int val)

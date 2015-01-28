@@ -240,6 +240,7 @@ private:
 	unsigned m_tpgQuantRange;
 	bool m_useTpg;
 	QCheckBox *m_tpgLimRGBRange;
+	void tpgFmtChanged();
 
 	cv4l_queue m_queue;
 
