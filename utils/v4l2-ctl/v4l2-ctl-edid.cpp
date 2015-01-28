@@ -127,6 +127,8 @@ static void hexdumpedid(FILE *f, struct v4l2_edid *e)
 	for (unsigned b = 0; b < e->blocks; b++) {
 		unsigned char *buf = e->edid + 128 * b;
 
+		if (b)
+			fprintf(f, "\n");
 		for (unsigned i = 0; i < 128; i += 0x10) {
 			fprintf(f, "%02x", buf[i]);
 			for (unsigned j = 1; j < 0x10; j++) {
