@@ -84,6 +84,9 @@ ApplicationWindow::ApplicationWindow() :
 	m_nbuffers = 0;
 	m_makeSnapshot = false;
 	m_singleStep = false;
+	m_tpgColorspace = 0;
+	m_tpgYCbCrEnc = 0;
+	m_tpgQuantRange = 0;
 	m_tpgLimRGBRange = NULL;
 	for (unsigned b = 0; b < sizeof(m_clear); b++)
 		m_clear[b] = false;

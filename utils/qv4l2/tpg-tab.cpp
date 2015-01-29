@@ -18,6 +18,7 @@
  */
 
 #include "qv4l2.h"
+#include "general-tab.h"
 
 #include <QFrame>
 #include <QVBoxLayout>
@@ -120,48 +121,6 @@ void ApplicationWindow::addTpgTab(int m_winWidth)
 	combo->setCurrentIndex(3);
 	addWidget(grid, combo);
 	connect(combo, SIGNAL(activated(int)), SLOT(vertMovementChanged(int)));
-
-	m_tpgColorspace = 0;
-	addLabel(grid, "Colorspace");
-	combo = new QComboBox(w);
-	combo->addItem("Autodetect");
-	combo->addItem("SMPTE 170M");
-	combo->addItem("REC 709");
-	combo->addItem("sRGB");
-	combo->addItem("Adobe RGB");
-	combo->addItem("BT.2020");
-	combo->addItem("SMPTE 240M");
-	combo->addItem("470 System M");
-	combo->addItem("470 System BG");
-	addWidget(grid, combo);
-	m_tpgComboColorspace = combo;
-	connect(combo, SIGNAL(activated(int)), SLOT(colorspaceChanged(int)));
-
-	m_tpgYCbCrEnc = 0;
-	addLabel(grid, "Y'CbCr Encoding");
-	combo = new QComboBox(w);
-	combo->addItem("Default");
-	combo->addItem("ITU-R 601");
-	combo->addItem("Rec. 709");
-	combo->addItem("xvYCC 601");
-	combo->addItem("xvYCC 709");
-	combo->addItem("sYCC");
-	combo->addItem("BT.2020");
-	combo->addItem("BT.2020 Constant Luminance");
-	combo->addItem("SMPTE 240M");
-	addWidget(grid, combo);
-	m_tpgComboYCbCrEnc = combo;
-	connect(combo, SIGNAL(activated(int)), SLOT(ycbcrEncodingChanged(int)));
-
-	m_tpgQuantRange = 0;
-	addLabel(grid, "Quantization Range");
-	combo = new QComboBox(w);
-	combo->addItem("Default");
-	combo->addItem("Full Range");
-	combo->addItem("Limited Range");
-	addWidget(grid, combo);
-	m_tpgComboQuantRange = combo;
-	connect(combo, SIGNAL(activated(int)), SLOT(quantRangeChanged(int)));
 
 	addLabel(grid, "Show Border");
 	check = new QCheckBox(w);
@@ -374,9 +333,9 @@ void ApplicationWindow::tpgFmtChanged()
 			index = 3;
 			break;
 		}
-		m_tpgComboColorspace->setCurrentIndex(index);
-		m_tpgComboYCbCrEnc->setCurrentIndex(m_tpgYCbCrEnc);
-		m_tpgComboQuantRange->setCurrentIndex(m_tpgQuantRange);
+		m_genTab->m_tpgComboColorspace->setCurrentIndex(index);
+		m_genTab->m_tpgComboYCbCrEnc->setCurrentIndex(m_tpgYCbCrEnc);
+		m_genTab->m_tpgComboQuantRange->setCurrentIndex(m_tpgQuantRange);
 	}
 	tpg_s_colorspace(&m_tpg, m_tpgColorspace ? m_tpgColorspace : fmt.g_colorspace());
 	tpg_s_ycbcr_enc(&m_tpg, m_tpgYCbCrEnc);
@@ -385,15 +344,15 @@ void ApplicationWindow::tpgFmtChanged()
 
 void ApplicationWindow::colorspaceChanged(int val)
 {
-	m_tpgComboYCbCrEnc->setEnabled(val);
-	m_tpgComboQuantRange->setEnabled(val);
+	m_genTab->m_tpgComboYCbCrEnc->setEnabled(val);
+	m_genTab->m_tpgComboQuantRange->setEnabled(val);
 	switch (val) {
 	case 0:
 		m_tpgColorspace = 0;
 		m_tpgYCbCrEnc = V4L2_YCBCR_ENC_DEFAULT;
-		m_tpgComboYCbCrEnc->setCurrentIndex(m_tpgYCbCrEnc);
+		m_genTab->m_tpgComboYCbCrEnc->setCurrentIndex(m_tpgYCbCrEnc);
 		m_tpgQuantRange = V4L2_QUANTIZATION_DEFAULT;
-		m_tpgComboQuantRange->setCurrentIndex(m_tpgQuantRange);
+		m_genTab->m_tpgComboQuantRange->setCurrentIndex(m_tpgQuantRange);
 		break;
 	case 1:
 		m_tpgColorspace = V4L2_COLORSPACE_SMPTE170M;

@@ -91,6 +91,9 @@ public:
 	unsigned getQuantRange() const;
 	int getWidth();
 	unsigned getNumBuffers() const;
+	QComboBox *m_tpgComboColorspace;
+	QComboBox *m_tpgComboYCbCrEnc;
+	QComboBox *m_tpgComboQuantRange;
 
 signals:
 	void audioDeviceChanged();

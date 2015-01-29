@@ -738,8 +738,50 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 	addWidget(m_vidFields);
 	connect(m_vidFields, SIGNAL(activated(int)), SLOT(vidFieldChanged(int)));
 
-	if (m_isOutput)
+	if (m_isOutput) {
+		QComboBox *combo;
+
+		combo = new QComboBox(parentWidget());
+		combo->addItem("Autodetect");
+		combo->addItem("SMPTE 170M");
+		combo->addItem("Rec. 709");
+		combo->addItem("sRGB");
+		combo->addItem("Adobe RGB");
+		combo->addItem("BT.2020");
+		combo->addItem("SMPTE 240M");
+		combo->addItem("470 System M");
+		combo->addItem("470 System BG");
+		addLabel("Colorspace");
+		addWidget(combo);
+		m_tpgComboColorspace = combo;
+		connect(combo, SIGNAL(activated(int)), g_mw, SLOT(colorspaceChanged(int)));
+
+		combo = new QComboBox(parentWidget());
+		combo->addItem("Default");
+		combo->addItem("ITU-R 601");
+		combo->addItem("Rec. 709");
+		combo->addItem("xvYCC 601");
+		combo->addItem("xvYCC 709");
+		combo->addItem("sYCC");
+		combo->addItem("BT.2020");
+		combo->addItem("BT.2020 Constant Luminance");
+		combo->addItem("SMPTE 240M");
+		addLabel("Y'CbCr Encoding");
+		addWidget(combo);
+		m_tpgComboYCbCrEnc = combo;
+		connect(combo, SIGNAL(activated(int)), g_mw, SLOT(ycbcrEncodingChanged(int)));
+
+		combo = new QComboBox(parentWidget());
+		combo->addItem("Default");
+		combo->addItem("Full Range");
+		combo->addItem("Limited Range");
+		addLabel("Quantization Range");
+		addWidget(combo);
+		m_tpgComboQuantRange = combo;
+		connect(combo, SIGNAL(activated(int)), g_mw, SLOT(quantRangeChanged(int)));
+
 		return;
+	}
 
 	m_cropping = new QComboBox(parentWidget());
 	m_cropping->addItem("Source Width and Height");
@@ -774,7 +816,7 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		m_colorspace = new QComboBox(parentWidget());
 		m_colorspace->addItem("Autodetect");
 		m_colorspace->addItem("SMPTE 170M");
-		m_colorspace->addItem("REC 709");
+		m_colorspace->addItem("Rec. 709");
 		m_colorspace->addItem("sRGB");
 		m_colorspace->addItem("Adobe RGB");
 		m_colorspace->addItem("BT.2020");
@@ -813,7 +855,7 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		m_displayColorspace = new QComboBox(parentWidget());
 		m_displayColorspace->addItem("sRGB");
 		m_displayColorspace->addItem("Linear RGB");
-		m_displayColorspace->addItem("REC 709");
+		m_displayColorspace->addItem("Rec. 709");
 		m_displayColorspace->addItem("SMPTE 240M");
 		m_displayColorspace->addItem("AdobeRGB");
 
