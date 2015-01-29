@@ -366,19 +366,19 @@ std::string colorspace2s(int val)
 {
 	switch (val) {
 	case V4L2_COLORSPACE_SMPTE170M:
-		return "Broadcast NTSC/PAL (SMPTE170M/ITU601)";
+		return "SMPTE 170M";
 	case V4L2_COLORSPACE_SMPTE240M:
-		return "1125-Line (US) HDTV (SMPTE240M)";
+		return "SMPTE 240M";
 	case V4L2_COLORSPACE_REC709:
-		return "HDTV and modern devices (ITU709)";
+		return "Rec. 709";
 	case V4L2_COLORSPACE_BT878:
 		return "Broken Bt878";
 	case V4L2_COLORSPACE_470_SYSTEM_M:
-		return "NTSC/M (ITU470/ITU601)";
+		return "470 System M";
 	case V4L2_COLORSPACE_470_SYSTEM_BG:
-		return "PAL/SECAM BG (ITU470/ITU601)";
+		return "470 System BG";
 	case V4L2_COLORSPACE_JPEG:
-		return "JPEG (JFIF/ITU601)";
+		return "JPEG";
 	case V4L2_COLORSPACE_SRGB:
 		return "sRGB";
 	case V4L2_COLORSPACE_ADOBERGB:
@@ -394,9 +394,9 @@ std::string ycbcr_enc2s(int val)
 {
 	switch (val) {
 	case V4L2_YCBCR_ENC_DEFAULT:
-		return "default";
+		return "Default";
 	case V4L2_YCBCR_ENC_601:
-		return "BT.601";
+		return "ITU-R 601";
 	case V4L2_YCBCR_ENC_709:
 		return "Rec. 709";
 	case V4L2_YCBCR_ENC_XV601:
@@ -420,11 +420,11 @@ std::string quantization2s(int val)
 {
 	switch (val) {
 	case V4L2_QUANTIZATION_DEFAULT:
-		return "default";
+		return "Default";
 	case V4L2_QUANTIZATION_FULL_RANGE:
-		return "full-range";
+		return "Full Range";
 	case V4L2_QUANTIZATION_LIM_RANGE:
-		return "lim-range";
+		return "Limited Range";
 	default:
 		return "Unknown (" + num2s(val) + ")";
 	}
