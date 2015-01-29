@@ -239,6 +239,9 @@ private:
 	unsigned m_tpgYCbCrEnc;
 	unsigned m_tpgQuantRange;
 	bool m_useTpg;
+	QComboBox *m_tpgComboColorspace;
+	QComboBox *m_tpgComboYCbCrEnc;
+	QComboBox *m_tpgComboQuantRange;
 	QCheckBox *m_tpgLimRGBRange;
 	void tpgFmtChanged();
 
