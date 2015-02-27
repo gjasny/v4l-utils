@@ -506,7 +506,7 @@ static void list_controls(int fd, int show_menus)
 		print_control(fd, qctrl, show_menus);
 		qctrl.id |= next_fl;
 	}
-	if (!(qctrl.id & next_fl))
+	if (qctrl.id != next_fl)
 		return;
 	for (id = V4L2_CID_USER_BASE; id < V4L2_CID_LASTP1; id++) {
 		qctrl.id = id;
@@ -535,7 +535,7 @@ static void find_controls(int fd)
 		}
 		qctrl.id |= next_fl;
 	}
-	if (!(qctrl.id & next_fl))
+	if (qctrl.id != next_fl)
 		return;
 	for (id = V4L2_CID_USER_BASE; id < V4L2_CID_LASTP1; id++) {
 		qctrl.id = id;
