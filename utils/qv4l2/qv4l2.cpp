@@ -1129,6 +1129,7 @@ void ApplicationWindow::outStart(bool start)
 		cv4l_fmt fmt;
 		v4l2_output out;
 		v4l2_control ctrl = { V4L2_CID_DV_TX_RGB_RANGE };
+		unsigned p;
 		int factor = 1;
 
 		g_output(out.index);
@@ -1184,8 +1185,8 @@ void ApplicationWindow::outStart(bool start)
 		tpg_s_colorspace(&m_tpg, m_tpgColorspace ? m_tpgColorspace : fmt.g_colorspace());
 		tpg_s_ycbcr_enc(&m_tpg, m_tpgColorspace ? m_tpgYCbCrEnc : fmt.g_ycbcr_enc());
 		tpg_s_quantization(&m_tpg, m_tpgColorspace ? m_tpgQuantRange : fmt.g_quantization());
-		tpg_s_bytesperline(&m_tpg, 0, fmt.g_bytesperline(0));
-		tpg_s_bytesperline(&m_tpg, 1, fmt.g_bytesperline(1));
+		for (p = 0; p < fmt.g_num_planes(); p++)
+			tpg_s_bytesperline(&m_tpg, p, fmt.g_bytesperline(p));
 		if (m_capMethod == methodRead)
 			m_frameData = new unsigned char[fmt.g_sizeimage(0)];
 		if (startStreaming()) {

@@ -595,6 +595,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 	struct v4l2_format fmt;
 	u32 field;
 	unsigned factor = 1;
+	unsigned p;
 	bool can_fill;
 
 	memset(&fmt, 0, sizeof(fmt));
@@ -640,10 +641,10 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 		tpg_s_colorspace(&tpg, fmt.fmt.pix_mp.colorspace);
 		tpg_s_ycbcr_enc(&tpg, fmt.fmt.pix_mp.ycbcr_enc);
 		tpg_s_quantization(&tpg, fmt.fmt.pix_mp.quantization);
-		if (can_fill) {
-			tpg_s_bytesperline(&tpg, 0, fmt.fmt.pix_mp.plane_fmt[0].bytesperline);
-			tpg_s_bytesperline(&tpg, 1, fmt.fmt.pix_mp.plane_fmt[1].bytesperline);
-		}
+		if (can_fill)
+			for (p = 0; p < fmt.fmt.pix_mp.num_planes; p++)
+				tpg_s_bytesperline(&tpg, p,
+						fmt.fmt.pix_mp.plane_fmt[p].bytesperline);
 	} else {
 		tpg_alloc(&tpg, fmt.fmt.pix.width);
 		can_fill = tpg_s_fourcc(&tpg, fmt.fmt.pix.pixelformat);
