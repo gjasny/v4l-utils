@@ -442,7 +442,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 					pix_mp.pixelformat, type);
 		if (!node->is_m2m)
 			fail_on_test(testColorspace(pix_mp.pixelformat, pix_mp.colorspace, 
-                                            pix.ycbcr_enc, pix.quantization));
+                                            pix_mp.ycbcr_enc, pix_mp.quantization));
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		ret = check_0(pix_mp.reserved, sizeof(pix_mp.reserved));
 		if (ret)
