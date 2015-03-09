@@ -1147,6 +1147,7 @@ void ApplicationWindow::outStart(bool start)
 		if (V4L2_FIELD_HAS_T_OR_B(fmt.g_field()))
 			factor = 2;
 		tpg_reset_source(&m_tpg, fmt.g_width(), fmt.g_height() * factor, fmt.g_field());
+		tpg_update_mv_step(&m_tpg);
 		tpg_init_mv_count(&m_tpg);
 		if (g_ctrl(ctrl))
 			tpg_s_rgb_range(&m_tpg, V4L2_DV_RGB_RANGE_AUTO);
