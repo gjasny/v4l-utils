@@ -326,6 +326,8 @@ bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
 		V4L2_PIX_FMT_XRGB555,
 		V4L2_PIX_FMT_ARGB555,
 		V4L2_PIX_FMT_RGB555X,
+		V4L2_PIX_FMT_XRGB555X,
+		V4L2_PIX_FMT_ARGB555X,
 		V4L2_PIX_FMT_YUYV,
 		V4L2_PIX_FMT_YVYU,
 		V4L2_PIX_FMT_UYVY,
@@ -380,6 +382,8 @@ void CaptureWinGLEngine::changeShader()
 	case V4L2_PIX_FMT_XRGB555:
 	case V4L2_PIX_FMT_ARGB555:
 	case V4L2_PIX_FMT_RGB555X:
+	case V4L2_PIX_FMT_XRGB555X:
+	case V4L2_PIX_FMT_ARGB555X:
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
 	case V4L2_PIX_FMT_RGB24:
@@ -469,6 +473,8 @@ void CaptureWinGLEngine::paintGL()
 	case V4L2_PIX_FMT_XRGB555:
 	case V4L2_PIX_FMT_ARGB555:
 	case V4L2_PIX_FMT_RGB555X:
+	case V4L2_PIX_FMT_XRGB555X:
+	case V4L2_PIX_FMT_ARGB555X:
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
 	case V4L2_PIX_FMT_RGB24:
@@ -1085,7 +1091,11 @@ void CaptureWinGLEngine::shader_RGB()
 			     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, NULL);
 		break;
 
+	case V4L2_PIX_FMT_ARGB555X:
+		hasAlpha = true;
+		/* fall-through */
 	case V4L2_PIX_FMT_RGB555X:
+	case V4L2_PIX_FMT_XRGB555X:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 			     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, NULL);
 		hasAlpha = true;
@@ -1186,6 +1196,8 @@ void CaptureWinGLEngine::render_RGB()
 		break;
 
 	case V4L2_PIX_FMT_RGB555X:
+	case V4L2_PIX_FMT_XRGB555X:
+	case V4L2_PIX_FMT_ARGB555X:
 		// Note: most likely for big-endian systems SWAP_BYTES should be true
 		// for the RGB555 format, and false for this format. This would have
 		// to be tested first, though.
