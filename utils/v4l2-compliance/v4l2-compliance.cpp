@@ -32,6 +32,7 @@
 #include <sys/time.h>
 #include <math.h>
 #include <sys/utsname.h>
+#include <signal.h>
 #include <vector>
 
 #include "v4l2-compliance.h"
@@ -71,6 +72,7 @@ int kernel_version;
 unsigned warnings;
 
 struct dev_state {
+	struct node *node;
 	std::vector<v4l2_ext_control> control_vec;
 	v4l2_ext_controls controls;
 	v4l2_rect crop;
@@ -296,6 +298,7 @@ static void storeStateTimings(struct node *node, __u32 caps)
 
 static void storeState(struct node *node)
 {
+	state.node = node;
 	if (node->has_inputs) {
 		__u32 input;
 
@@ -374,8 +377,10 @@ static void restoreStateTimings(struct node *node, __u32 caps)
 	}
 }
 
-static void restoreState(struct node *node)
+static void restoreState()
 {
+	struct node *node = state.node;
+
 	if (node->has_inputs) {
 		node->s_input(state.input.index);
 		if (state.input.audioset)
@@ -413,6 +418,12 @@ static void restoreState(struct node *node)
 		node->set_interval(state.interval);
 
 	node->s_ext_ctrls(state.controls);
+}
+
+static void signal_handler_interrupt(int signum)
+{
+	restoreState();
+	exit(-1);
 }
 
 static int testCap(struct node *node)
@@ -883,6 +894,9 @@ int main(int argc, char **argv)
 
 	storeState(&node);
 
+	/* register signal handler for interrupt signal, to exit gracefully */
+	signal(SIGINT, signal_handler_interrupt);
+
 	/* Debug ioctls */
 
 	printf("Debug ioctls:\n");
@@ -1001,7 +1015,7 @@ int main(int argc, char **argv)
 	if (options[OptStreaming]) {
 		printf("Streaming ioctls:\n");
 
-		restoreState(&node);
+		restoreState();
 		streamingSetup(&node);
 
 		printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
@@ -1028,7 +1042,7 @@ int main(int argc, char **argv)
 		if (node.is_m2m) {
 			printf("\tNot supported for M2M devices\n");
 		} else {
-			restoreState(&node);
+			restoreState();
 			streamingSetup(&node);
 			streamAllFormats(&node);
 		}
@@ -1041,7 +1055,7 @@ int main(int argc, char **argv)
 	   VIDIOC_S_FBUF/OVERLAY
 	   */
 
-	restoreState(&node);
+	restoreState();
 
 	/* Final test report */
 
