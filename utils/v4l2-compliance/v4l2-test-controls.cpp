@@ -601,6 +601,7 @@ int testExtendedControls(struct node *node)
 		info("checking extended control '%s' (0x%08x)\n", qctrl.name, qctrl.id);
 		ctrl.id = qctrl.id;
 		ctrl.size = 0;
+		ctrl.ptr = NULL;
 		ctrl.reserved2[0] = 0;
 		ctrls.count = 1;
 

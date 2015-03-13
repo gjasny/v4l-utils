@@ -665,6 +665,7 @@ int testModulatorFreq(struct node *node)
 		struct v4l2_modulator modulator;
 		
 		modulator.index = m;
+		memset(modulator.reserved, 0, sizeof(modulator.reserved));
 		ret = doioctl(node, VIDIOC_G_MODULATOR, &modulator);
 		if (ret)
 			return fail("could not get modulator %d\n", m);
@@ -868,6 +869,7 @@ static int checkOutputAudioSet(struct node *node, __u32 audioset)
 	unsigned i;
 	int ret;
 
+	memset(output.reserved, 0, sizeof(output.reserved));
 	ret = doioctl(node, VIDIOC_G_AUDOUT, &output);
 	if (audioset == 0 && ret != EINVAL && ret != ENOTTY)
 		return fail("No audio outputs, but G_AUDOUT did not return EINVAL or ENOTTY\n");
