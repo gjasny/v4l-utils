@@ -202,5 +202,6 @@ int testExpBuf(struct node *node);
 int testMmap(struct node *node, unsigned frame_count);
 int testUserPtr(struct node *node, unsigned frame_count);
 int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count);
+void streamAllFormats(struct node *node);
 
 #endif

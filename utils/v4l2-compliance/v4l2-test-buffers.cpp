@@ -70,6 +70,21 @@ enum QueryBufMode {
 typedef std::map<struct timeval, struct v4l2_buffer> buf_info_map;
 static buf_info_map buffer_info;
 
+static std::string pixfmt2s(unsigned id)
+{
+	std::string pixfmt;
+
+	if (id & (1 << 31)) {
+		id &= ~(1 << 31);
+		pixfmt += "BE-";
+	}
+	pixfmt += (char)(id & 0xff);
+	pixfmt += (char)((id >> 8) & 0xff);
+	pixfmt += (char)((id >> 16) & 0xff);
+	pixfmt += (char)((id >> 24) & 0xff);
+	return pixfmt;
+}
+
 static std::string num2s(unsigned num)
 {
 	char buf[10];
@@ -1117,4 +1132,157 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 		fail_on_test(node->streamoff(q.g_type()));
 	}
 	return 0;
+}
+
+static int testStreaming(struct node *node, unsigned frame_count)
+{
+	int type = node->g_type();
+
+	if (!(node->valid_buftypes & (1 << type)))
+		return ENOTTY;
+
+	buffer_info.clear();
+
+	cur_fmt.s_type(type);
+	node->g_fmt(cur_fmt);
+
+	if (node->g_caps() & V4L2_CAP_STREAMING) {
+		cv4l_queue q(type, V4L2_MEMORY_MMAP);
+		bool alternate = cur_fmt.g_field() == V4L2_FIELD_ALTERNATE;
+		v4l2_std_id std = 0;
+
+		node->g_std(std);
+
+		unsigned field = cur_fmt.g_first_field(std);
+		cv4l_buffer buf(q);
+	
+		q.reqbufs(node, 4);
+		q.obtain_bufs(node);
+		for (unsigned i = 0; i < q.g_buffers(); i++) {
+			buf.init(q, i);
+			buf.s_field(field);
+			if (alternate)
+				field ^= 1;
+			int ret = node->qbuf(buf);
+			if (ret)
+				return ret;
+		}
+		q.queue_all(node);
+		node->streamon();
+
+		while (node->dqbuf(buf) == 0) {
+			buf.s_field(field);
+			if (alternate)
+				field ^= 1;
+			node->qbuf(buf);
+			if (frame_count-- == 0)
+				break;
+		}
+		q.free(node);
+		return 0;
+	}
+	fail_on_test(!(node->g_caps() & V4L2_CAP_READWRITE));
+
+	int size = cur_fmt.g_sizeimage();
+	void *tmp = malloc(size);
+
+	for (unsigned i = 0; i < frame_count; i++) {
+		int ret;
+
+		if (node->can_capture)
+			ret = node->read(tmp, size);
+		else
+			ret = node->write(tmp, size);
+		fail_on_test(ret != size);
+	}
+	return 0;
+}
+
+static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4l2_fract *f)
+{
+	for (unsigned field = V4L2_FIELD_NONE;
+			field <= V4L2_FIELD_INTERLACED_BT; field++) {
+		cv4l_fmt fmt;
+		char hz[32] = "";
+
+		node->g_fmt(fmt);
+		fmt.s_pixelformat(pixelformat);
+		fmt.s_width(w);
+		fmt.s_height(h);
+		fmt.s_field(field);
+		node->s_fmt(fmt);
+		if (fmt.g_field() != field)
+			continue;
+		if (f) {
+			node->set_interval(*f);
+			sprintf(hz, ", %.2f Hz", 1.0 / fract2f(f));
+		}
+		const char *op = (node->g_caps() & V4L2_CAP_STREAMING) ? "MMAP" :
+			(node->can_capture ? "read()" : "write()");
+		printf("\ttest %s for Format %s, %ux%u, Field %s%s: %s\n", op,
+				pixfmt2s(pixelformat).c_str(),
+				fmt.g_width(), fmt.g_height(),
+				field2s(field).c_str(), hz,
+				ok(testStreaming(node, f ? 1.0 / fract2f(f) : 10)));
+		node->reopen();
+	}
+}
+
+static void streamIntervals(struct node *node, __u32 pixelformat, __u32 w, __u32 h)
+{
+	v4l2_frmivalenum frmival = { 0 };
+
+	if (node->enum_frameintervals(frmival, pixelformat, w, h)) {
+		streamFmt(node, pixelformat, w, h, NULL);
+		return;
+	}
+
+	if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+		do {
+			streamFmt(node, pixelformat, w, h, &frmival.discrete);
+		} while (!node->enum_frameintervals(frmival));
+		return;
+	}
+	streamFmt(node, pixelformat, w, h, &frmival.stepwise.min);
+	streamFmt(node, pixelformat, w, h, &frmival.stepwise.max);
+}
+
+void streamAllFormats(struct node *node)
+{
+	v4l2_fmtdesc fmtdesc;
+
+	if (node->enum_fmt(fmtdesc, true))
+		return;
+	do {
+		v4l2_frmsizeenum frmsize;
+		cv4l_fmt fmt;
+
+		node->g_fmt(fmt);
+
+		if (node->enum_framesizes(frmsize, fmtdesc.pixelformat)) {
+			streamIntervals(node, fmtdesc.pixelformat,
+					fmt.g_width(), fmt.g_height());
+			continue;
+		}
+
+		v4l2_frmsize_stepwise &ss = frmsize.stepwise;
+
+		switch (frmsize.type) {
+		case V4L2_FRMSIZE_TYPE_DISCRETE:
+			do {
+				streamIntervals(node, fmtdesc.pixelformat,
+						frmsize.discrete.width,
+						frmsize.discrete.height);
+			} while (node->enum_framesizes(frmsize));
+			break;
+		default:
+			streamIntervals(node, fmtdesc.pixelformat,
+					ss.min_width, ss.min_height);
+			streamIntervals(node, fmtdesc.pixelformat,
+					ss.max_width, ss.max_height);
+			streamIntervals(node, fmtdesc.pixelformat,
+					fmt.g_width(), fmt.g_height());
+			break;
+		}
+	} while (!node->enum_fmt(fmtdesc));
 }

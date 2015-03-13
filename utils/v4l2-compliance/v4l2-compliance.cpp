@@ -46,6 +46,7 @@
 enum Option {
 	OptSetDevice = 'd',
 	OptSetExpBufDevice = 'e',
+	OptStreamAllFormats = 'f',
 	OptHelp = 'h',
 	OptNoWarnings = 'n',
 	OptSetRadioDevice = 'r',
@@ -104,6 +105,7 @@ static struct option long_options[] = {
 	{"wrapper", no_argument, 0, OptUseWrapper},
 #endif
 	{"streaming", optional_argument, 0, OptStreaming},
+	{"stream-all-formats", no_argument, 0, OptStreamAllFormats},
 	{0, 0, 0, 0}
 };
 
@@ -126,6 +128,10 @@ static void usage(void)
 	printf("                     frames to stream (default 60). Requires a valid input/output\n");
 	printf("                     and frequency (when dealing with a tuner). For DMABUF testing\n");
 	printf("                     --expbuf-device needs to be set as well.\n");
+	printf("  -f, --stream-all-formats test streaming all available formats.\n");
+	printf("                     This attempts to stream using MMAP mode or read/write\n");
+	printf("                     for one second for all formats, at all sizes, at all intervals\n");
+	printf("                     and with all field values.\n");
 	printf("  -h, --help         display this help message.\n");
 	printf("  -n, --no-warnings  turn off warning messages.\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
@@ -996,7 +1002,6 @@ int main(int argc, char **argv)
 		printf("Streaming ioctls:\n");
 
 		restoreState(&node);
-
 		streamingSetup(&node);
 
 		printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
@@ -1008,11 +1013,25 @@ int main(int argc, char **argv)
 		printf("\ttest USERPTR: %s\n", ok(testUserPtr(&node, frame_count)));
 		node.reopen();
 		if (options[OptSetExpBufDevice] ||
-		    !(node.valid_memorytype & (1 << V4L2_MEMORY_DMABUF)))
+				!(node.valid_memorytype & (1 << V4L2_MEMORY_DMABUF)))
 			printf("\ttest DMABUF: %s\n", ok(testDmaBuf(&expbuf_node, &node, frame_count)));
 		else if (!options[OptSetExpBufDevice])
 			printf("\ttest DMABUF: Cannot test, specify --expbuf-device\n");
 		node.reopen();
+
+		printf("\n");
+	}
+
+	if (node.is_video && options[OptStreamAllFormats]) {
+		printf("Stream using all formats:\n");
+
+		if (node.is_m2m) {
+			printf("\tNot supported for M2M devices\n");
+		} else {
+			restoreState(&node);
+			streamingSetup(&node);
+			streamAllFormats(&node);
+		}
 	}
 	printf("\n");
 
