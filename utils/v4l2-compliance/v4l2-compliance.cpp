@@ -32,6 +32,7 @@
 #include <sys/time.h>
 #include <math.h>
 #include <sys/utsname.h>
+#include <vector>
 
 #include "v4l2-compliance.h"
 
@@ -74,6 +75,27 @@ unsigned warnings;
 static unsigned select_input;
 static unsigned select_output;
 static double select_freq;
+
+struct dev_state {
+	std::vector<v4l2_ext_control> control_vec;
+	v4l2_ext_controls controls;
+	v4l2_rect crop;
+	v4l2_rect compose;
+	v4l2_rect native_size;
+	v4l2_format fmt;
+	v4l2_input input;
+	v4l2_output output;
+	v4l2_audio ainput;
+	v4l2_audioout aoutput;
+	v4l2_frequency freq;
+	v4l2_tuner tuner;
+	v4l2_modulator modulator;
+	v4l2_std_id std;
+	v4l2_dv_timings timings;
+	v4l2_fract interval;
+};
+
+static struct dev_state state;
 
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
@@ -260,6 +282,144 @@ int check_0(const void *p, int len)
 		if (*q++)
 			return 1;
 	return 0;
+}
+
+static void storeStateTimings(struct node *node, __u32 caps)
+{
+	if (caps & V4L2_IN_CAP_STD)
+		node->g_std(state.std);
+	if (caps & V4L2_IN_CAP_DV_TIMINGS)
+		node->g_dv_timings(state.timings);
+	if (caps & V4L2_IN_CAP_NATIVE_SIZE) {
+		v4l2_selection sel = {
+			node->g_selection_type(),
+			V4L2_SEL_TGT_NATIVE_SIZE
+		};
+
+		node->g_selection(sel);
+		state.native_size = sel.r;
+	}
+}
+
+static void storeState(struct node *node)
+{
+	if (node->has_inputs) {
+		__u32 input;
+
+		node->g_input(input);
+		node->enum_input(state.input, true, input);
+		if (state.input.audioset)
+			node->g_audio(state.ainput);
+		if (state.input.type == V4L2_INPUT_TYPE_TUNER) {
+			node->g_tuner(state.tuner, state.input.tuner);
+			node->g_frequency(state.freq, state.input.tuner);
+		}
+		storeStateTimings(node, state.input.capabilities);
+	}
+	if (node->has_outputs) {
+		__u32 output;
+
+		node->g_output(output);
+		node->enum_output(state.output, true, output);
+		if (state.output.audioset)
+			node->g_audout(state.aoutput);
+		if (state.output.type == V4L2_OUTPUT_TYPE_MODULATOR) {
+			node->g_modulator(state.modulator, state.output.modulator);
+			node->g_frequency(state.freq, state.output.modulator);
+		}
+		storeStateTimings(node, state.output.capabilities);
+	}
+	node->g_fmt(state.fmt);
+
+	v4l2_selection sel = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_CROP
+	};
+	if (!node->g_selection(sel))
+		state.crop = sel.r;
+	sel.target = V4L2_SEL_TGT_COMPOSE;
+	if (!node->g_selection(sel))
+		state.compose = sel.r;
+	node->get_interval(state.interval);
+
+	v4l2_query_ext_ctrl qec = { 0 };
+
+	while (!node->query_ext_ctrl(qec, true, true)) {
+		if (qec.flags & (V4L2_CTRL_FLAG_DISABLED |
+				 V4L2_CTRL_FLAG_READ_ONLY |
+				 V4L2_CTRL_FLAG_WRITE_ONLY |
+				 V4L2_CTRL_FLAG_VOLATILE))
+			continue;
+		v4l2_ext_control ctrl = { qec.id };
+		if (qec.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {
+			ctrl.size = qec.elems * qec.elem_size;
+			ctrl.ptr = malloc(ctrl.size);
+		}
+		state.control_vec.push_back(ctrl);
+	}
+	if (state.control_vec.empty())
+		return;
+	state.controls.count = state.control_vec.size();
+	state.controls.controls = &state.control_vec[0];
+	node->g_ext_ctrls(state.controls);
+}
+
+static void restoreStateTimings(struct node *node, __u32 caps)
+{
+	if (caps & V4L2_IN_CAP_STD)
+		node->s_std(state.std);
+	if (caps & V4L2_IN_CAP_DV_TIMINGS)
+		node->s_dv_timings(state.timings);
+	if (caps & V4L2_IN_CAP_NATIVE_SIZE) {
+		v4l2_selection sel = {
+			node->g_selection_type(),
+			V4L2_SEL_TGT_NATIVE_SIZE,
+			0, state.native_size
+		};
+
+		node->s_selection(sel);
+	}
+}
+
+static void restoreState(struct node *node)
+{
+	if (node->has_inputs) {
+		node->s_input(state.input.index);
+		if (state.input.audioset)
+			node->s_audio(state.ainput.index);
+		if (state.input.type == V4L2_INPUT_TYPE_TUNER) {
+			node->s_tuner(state.tuner);
+			node->s_frequency(state.freq);
+		}
+		restoreStateTimings(node, state.input.capabilities);
+	}
+	if (node->has_outputs) {
+		node->s_output(state.output.index);
+		if (state.output.audioset)
+		node->s_audout(state.aoutput.index);
+		if (state.output.type == V4L2_OUTPUT_TYPE_MODULATOR) {
+			node->s_modulator(state.modulator);
+			node->s_frequency(state.freq);
+		}
+		restoreStateTimings(node, state.output.capabilities);
+	}
+	node->s_fmt(state.fmt);
+
+	v4l2_selection sel = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_CROP
+	};
+	sel.r = state.crop;
+	if (sel.r.width && sel.r.height)
+		node->s_selection(sel);
+	sel.target = V4L2_SEL_TGT_COMPOSE;
+	sel.r = state.compose;
+	if (sel.r.width && sel.r.height)
+		node->s_selection(sel);
+	if (state.interval.denominator)
+		node->set_interval(state.interval);
+
+	node->s_ext_ctrls(state.controls);
 }
 
 static int testCap(struct node *node)
@@ -781,6 +941,8 @@ int main(int argc, char **argv)
 	}
 	printf("\n");
 
+	storeState(&node);
+
 	/* Debug ioctls */
 
 	printf("Debug ioctls:\n");
@@ -895,8 +1057,11 @@ int main(int argc, char **argv)
 		printf("\t\ttest VIDIOC_EXPBUF: %s\n", ok(testExpBuf(&node)));
 		printf("\n");
 	}
+
 	if (options[OptStreaming]) {
 		printf("Streaming ioctls:\n");
+
+		restoreState(&node);
 
 		streamingSetup(&node);
 
@@ -922,6 +1087,8 @@ int main(int argc, char **argv)
 	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP, VIDIOC_G/S_SELECTION
 	   VIDIOC_S_FBUF/OVERLAY
 	   */
+
+	restoreState(&node);
 
 	/* Final test report */
 

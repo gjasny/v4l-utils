@@ -144,9 +144,10 @@ public:
 		return cv4l_ioctl(VIDIOC_S_TUNER, &tuner);
 	}
 
-	int g_modulator(v4l2_modulator &modulator)
+	int g_modulator(v4l2_modulator &modulator, unsigned index = 0)
 	{
 		memset(&modulator, 0, sizeof(modulator));
+		modulator.index = index;
 		return cv4l_ioctl(VIDIOC_G_MODULATOR, &modulator);
 	}
 
