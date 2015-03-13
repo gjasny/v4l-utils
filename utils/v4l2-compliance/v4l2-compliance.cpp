@@ -46,11 +46,8 @@
 enum Option {
 	OptSetDevice = 'd',
 	OptSetExpBufDevice = 'e',
-	OptSetFreq = 'f',
 	OptHelp = 'h',
-	OptSetInput = 'i',
 	OptNoWarnings = 'n',
-	OptSetOutput = 'o',
 	OptSetRadioDevice = 'r',
 	OptStreaming = 's',
 	OptSetSWRadioDevice = 'S',
@@ -71,10 +68,6 @@ bool show_info;
 bool show_warnings = true;
 int kernel_version;
 unsigned warnings;
-
-static unsigned select_input;
-static unsigned select_output;
-static double select_freq;
 
 struct dev_state {
 	std::vector<v4l2_ext_control> control_vec;
@@ -110,9 +103,6 @@ static struct option long_options[] = {
 #ifndef NO_LIBV4L2
 	{"wrapper", no_argument, 0, OptUseWrapper},
 #endif
-	{"set-input", required_argument, 0, OptSetInput},
-	{"set-output", required_argument, 0, OptSetOutput},
-	{"set-freq", required_argument, 0, OptSetFreq},
 	{"streaming", optional_argument, 0, OptStreaming},
 	{0, 0, 0, 0}
 };
@@ -132,9 +122,6 @@ static void usage(void)
 	printf("  -e, --expbuf-device=<dev> use device <dev> to obtain DMABUF handles.\n");
 	printf("                     if <dev> starts with a digit, then /dev/video<dev> is used.\n");
 	printf("                     only /dev/videoX devices are supported.\n");
-	printf("  -i, --set-input    select input for streaming tests (default is 0).\n");
-	printf("  -o, --set-output   select output for streaming tests (default is 0).\n");
-	printf("  -f, --set-freq     select frequency in MHz (kHz for radio) for streaming tests.\n");
 	printf("  -s, --streaming=<count> enable the streaming tests. Set <count> to the number of\n");
 	printf("                     frames to stream (default 60). Requires a valid input/output\n");
 	printf("                     and frequency (when dealing with a tuner). For DMABUF testing\n");
@@ -557,60 +544,16 @@ static int testPrio(struct node *node, struct node *node2)
 
 static void streamingSetup(struct node *node)
 {
-	struct v4l2_input input;
-	struct v4l2_output output;
-
-	if (options[OptSetInput])
-		doioctl(node, VIDIOC_S_INPUT, &select_input);
-	if (options[OptSetOutput])
-		doioctl(node, VIDIOC_S_OUTPUT, &select_output);
-	if (options[OptSetFreq]) {
-		struct v4l2_frequency f = { 0 };
-		unsigned freq_caps;
-
-		if (node->g_caps() & V4L2_CAP_MODULATOR) {
-			struct v4l2_modulator m = { 0 };
-
-			doioctl(node, VIDIOC_G_MODULATOR, &m);
-			freq_caps = m.capability;
-			f.type = V4L2_TUNER_RADIO;
-		} else {
-			struct v4l2_tuner t = { 0 };
-
-			doioctl(node, VIDIOC_G_TUNER, &t);
-			f.type = t.type;
-			freq_caps = t.capability;
-		}
-		if (freq_caps & V4L2_TUNER_CAP_1HZ)
-			f.frequency = select_freq * 1000;
-		else if (freq_caps & V4L2_TUNER_CAP_LOW)
-			f.frequency = select_freq / 62.5;
-		else
-			f.frequency = select_freq / 62500;
-		doioctl(node, VIDIOC_S_FREQUENCY, &f);
-	}
-
 	if (node->can_capture) {
+		struct v4l2_input input;
+
 		memset(&input, 0, sizeof(input));
 		doioctl(node, VIDIOC_G_INPUT, &input.index);
 		doioctl(node, VIDIOC_ENUMINPUT, &input);
 		node->cur_io_caps = input.capabilities;
+	} else if (node->can_output) {
+		struct v4l2_output output;
 
-		if (input.capabilities & V4L2_IN_CAP_STD) {
-			v4l2_std_id std;
-
-			doioctl(node, VIDIOC_QUERYSTD, &std);
-			if (std)
-				doioctl(node, VIDIOC_S_STD, &std);
-		}
-
-		if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
-			struct v4l2_dv_timings t;
-
-			if (doioctl(node, VIDIOC_QUERY_DV_TIMINGS, &t) == 0)
-				doioctl(node, VIDIOC_S_DV_TIMINGS, &t);
-		}
-	} else {
 		memset(&output, 0, sizeof(output));
 		doioctl(node, VIDIOC_G_OUTPUT, &output.index);
 		doioctl(node, VIDIOC_ENUMOUTPUT, &output);
@@ -715,18 +658,9 @@ int main(int argc, char **argv)
 				expbuf_device = newdev;
 			}
 			break;
-		case OptSetInput:
-			select_input = strtoul(optarg, NULL, 0);
-			break;
-		case OptSetOutput:
-			select_output = strtoul(optarg, NULL, 0);
-			break;
 		case OptStreaming:
 			if (optarg)
 				frame_count = strtoul(optarg, NULL, 0);
-			break;
-		case OptSetFreq:
-			select_freq = strtod(optarg, NULL);
 			break;
 		case OptNoWarnings:
 			show_warnings = false;
