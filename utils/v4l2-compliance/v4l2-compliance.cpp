@@ -401,19 +401,40 @@ static void restoreState()
 		}
 		restoreStateTimings(node, state.output.capabilities);
 	}
+
+	/* First restore the format */
 	node->s_fmt(state.fmt);
 
-	v4l2_selection sel = {
+	v4l2_selection sel_compose = {
 		node->g_selection_type(),
-		V4L2_SEL_TGT_CROP
+		V4L2_SEL_TGT_COMPOSE,
+		0, state.compose
 	};
-	sel.r = state.crop;
-	if (sel.r.width && sel.r.height)
-		node->s_selection(sel);
-	sel.target = V4L2_SEL_TGT_COMPOSE;
-	sel.r = state.compose;
-	if (sel.r.width && sel.r.height)
-		node->s_selection(sel);
+	v4l2_selection sel_crop = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_CROP,
+		0, state.crop
+	};
+	if (node->has_inputs) {
+		/*
+		 * For capture restore the compose rectangle
+		 * before the crop rectangle.
+		 */
+		if (sel_compose.r.width && sel_compose.r.height)
+			node->s_selection(sel_compose);
+		if (sel_crop.r.width && sel_crop.r.height)
+			node->s_selection(sel_crop);
+	}
+	if (node->has_outputs) {
+		/*
+		 * For output the crop rectangle should be
+		 * restored before the compose rectangle.
+		 */
+		if (sel_crop.r.width && sel_crop.r.height)
+			node->s_selection(sel_crop);
+		if (sel_compose.r.width && sel_compose.r.height)
+			node->s_selection(sel_compose);
+	}
 	if (state.interval.denominator)
 		node->set_interval(state.interval);
 
