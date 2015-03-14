@@ -1172,6 +1172,96 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 	return 0;
 }
 
+static int restoreFormat(struct node *node)
+{
+	cv4l_fmt fmt;
+	unsigned h;
+
+	node->g_fmt(fmt);
+
+	h = fmt.g_height();
+	if (node->cur_io_caps & V4L2_IN_CAP_STD) {
+		v4l2_std_id std;
+
+		fail_on_test(node->g_std(std));
+		fmt.s_width(720);
+		h = (std & V4L2_STD_525_60) ? 480 : 576;
+		if (V4L2_FIELD_HAS_T_OR_B(fmt.g_field()))
+			h /= 2;
+	}
+	if (node->cur_io_caps & V4L2_IN_CAP_DV_TIMINGS) {
+		v4l2_dv_timings timings;
+
+		fail_on_test(node->g_dv_timings(timings));
+		fmt.s_width(timings.bt.width);
+		h = timings.bt.height;
+		if (V4L2_FIELD_HAS_T_OR_B(fmt.g_field()))
+			h /= 2;
+	}
+	if (node->cur_io_caps & V4L2_IN_CAP_NATIVE_SIZE) {
+		v4l2_selection sel = {
+			node->g_selection_type(),
+			V4L2_SEL_TGT_NATIVE_SIZE,
+		};
+
+		fail_on_test(node->g_selection(sel));
+		fmt.s_width(sel.r.width);
+		h = sel.r.height;
+		if (V4L2_FIELD_HAS_T_OR_B(fmt.g_field()))
+			h /= 2;
+	}
+	fmt.s_height(h);
+	/* First restore the format */
+	node->s_fmt(fmt);
+
+	v4l2_selection sel_compose = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_COMPOSE,
+	};
+	v4l2_selection sel_crop = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_CROP,
+	};
+	sel_compose.r.width = fmt.g_width();
+	sel_compose.r.height = fmt.g_height();
+	sel_crop.r.width = fmt.g_width();
+	sel_crop.r.height = fmt.g_height();
+	if (node->has_inputs) {
+		/*
+		 * For capture restore the compose rectangle
+		 * before the crop rectangle.
+		 */
+		if (sel_compose.r.width && sel_compose.r.height)
+			node->s_selection(sel_compose);
+		/*
+		 * The crop rectangle is related to the frame size,
+		 * not field size.
+		 */
+		if (V4L2_FIELD_HAS_T_OR_B(fmt.g_field()))
+			sel_crop.r.height *= 2;
+		if (sel_crop.r.width && sel_crop.r.height)
+			node->s_selection(sel_crop);
+		node->g_fmt(fmt);
+	}
+	if (node->has_outputs) {
+		/*
+		 * For output the crop rectangle should be
+		 * restored before the compose rectangle.
+		 */
+		if (sel_crop.r.width && sel_crop.r.height)
+			node->s_selection(sel_crop);
+		/*
+		 * The compose rectangle is related to the frame size,
+		 * not field size.
+		 */
+		if (V4L2_FIELD_HAS_T_OR_B(fmt.g_field()))
+			sel_compose.r.height *= 2;
+		if (sel_compose.r.width && sel_compose.r.height)
+			node->s_selection(sel_compose);
+	}
+	return 0;
+}
+
 static int testStreaming(struct node *node, unsigned frame_count)
 {
 	int type = node->g_type();
@@ -1247,7 +1337,7 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 		node->g_fmt(fmt);
 		fmt.s_pixelformat(pixelformat);
 		fmt.s_width(w);
-		fmt.s_height(h);
+		fmt.s_height(V4L2_FIELD_HAS_T_OR_B(field) ? h / 2 : h);
 		fmt.s_field(field);
 		node->s_fmt(fmt);
 		if (fmt.g_field() != field)
@@ -1258,9 +1348,23 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 		}
 		const char *op = (node->g_caps() & V4L2_CAP_STREAMING) ? "MMAP" :
 			(node->can_capture ? "read()" : "write()");
-		printf("\r\ttest %s for Format %s, %ux%u, Field %s%s: %s\n", op,
+		printf("\r\ttest %s for Format %s, Size %ux%u, Stride %u, Field %s%s: %s\n", op,
 				pixfmt2s(pixelformat).c_str(),
 				fmt.g_width(), fmt.g_height(),
+				fmt.g_bytesperline(),
+				field2s(field).c_str(), hz,
+				ok(testStreaming(node, f ? 1.0 / fract2f(f) : 10)));
+		node->reopen();
+		node->g_fmt(fmt);
+		unsigned bpl = fmt.g_bytesperline();
+		fmt.s_bytesperline(bpl + 64);
+		node->s_fmt(fmt, false);
+		if (fmt.g_bytesperline() == bpl)
+			continue;
+		printf("\r\ttest %s for Format %s, Size %ux%u, Stride %u, Field %s%s: %s\n", op,
+				pixfmt2s(pixelformat).c_str(),
+				fmt.g_width(), fmt.g_height(),
+				fmt.g_bytesperline(),
 				field2s(field).c_str(), hz,
 				ok(testStreaming(node, f ? 1.0 / fract2f(f) : 10)));
 		node->reopen();
@@ -1296,9 +1400,9 @@ void streamAllFormats(struct node *node)
 		v4l2_frmsizeenum frmsize;
 		cv4l_fmt fmt;
 
-		node->g_fmt(fmt);
-
 		if (node->enum_framesizes(frmsize, fmtdesc.pixelformat)) {
+			restoreFormat(node);
+			node->g_fmt(fmt);
 			streamIntervals(node, fmtdesc.pixelformat,
 					fmt.g_width(), fmt.g_height());
 			continue;
@@ -1315,10 +1419,14 @@ void streamAllFormats(struct node *node)
 			} while (node->enum_framesizes(frmsize));
 			break;
 		default:
+			restoreFormat(node);
 			streamIntervals(node, fmtdesc.pixelformat,
 					ss.min_width, ss.min_height);
+			restoreFormat(node);
 			streamIntervals(node, fmtdesc.pixelformat,
 					ss.max_width, ss.max_height);
+			restoreFormat(node);
+			node->g_fmt(fmt);
 			streamIntervals(node, fmtdesc.pixelformat,
 					fmt.g_width(), fmt.g_height());
 			break;
