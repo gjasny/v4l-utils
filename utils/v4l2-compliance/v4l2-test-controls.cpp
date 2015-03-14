@@ -180,6 +180,7 @@ int testQueryExtControls(struct node *node)
 {
 	struct test_query_ext_ctrl qctrl;
 	__u32 id = 0;
+	int result = 0;
 	int ret;
 	__u32 ctrl_class = 0;
 	bool found_ctrl_class = false;
@@ -208,7 +209,7 @@ int testQueryExtControls(struct node *node)
 			return fail("no V4L2_CID_PRIVATE_BASE allowed\n");
 		if (V4L2_CTRL_ID2CLASS(id) != ctrl_class) {
 			if (ctrl_class && !found_ctrl_class)
-				fail("missing control class for class %08x\n", ctrl_class);
+				result = fail("missing control class for class %08x\n", ctrl_class);
 			if (ctrl_class && !class_count)
 				return fail("no controls in class %08x\n", ctrl_class);
 			ctrl_class = V4L2_CTRL_ID2CLASS(id);
@@ -237,7 +238,7 @@ int testQueryExtControls(struct node *node)
 		node->controls[qctrl.id] = qctrl;
 	}
 	if (ctrl_class && !found_ctrl_class)
-		return fail("missing control class for class %08x\n", ctrl_class);
+		result = fail("missing control class for class %08x\n", ctrl_class);
 	if (ctrl_class && !class_count)
 		return fail("no controls in class %08x\n", ctrl_class);
 
@@ -281,7 +282,7 @@ int testQueryExtControls(struct node *node)
 	if (priv_user_controls != priv_user_controls_check)
 		return fail("expected %d private controls, got %d\n",
 			priv_user_controls_check, priv_user_controls);
-	return 0;
+	return result;
 }
 
 int testQueryControls(struct node *node)

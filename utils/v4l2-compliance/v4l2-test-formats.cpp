@@ -630,6 +630,7 @@ int testTryFormats(struct node *node)
 {
 	struct v4l2_clip clip;
 	struct v4l2_format fmt, fmt_try;
+	int result = 0;
 	int type;
 	int ret;
 	
@@ -658,7 +659,7 @@ int testTryFormats(struct node *node)
 		if (ret)
 			return ret;
 		if (!matchFormats(fmt, fmt_try))
-			return fail("%s: TRY_FMT(G_FMT) != G_FMT\n",
+			result = fail("%s: TRY_FMT(G_FMT) != G_FMT\n",
 					buftype2s(type).c_str());
 	}
 
@@ -730,7 +731,7 @@ int testTryFormats(struct node *node)
 	ret = doioctl(node, VIDIOC_TRY_FMT, &fmt);
 	if (ret != ENOTTY && ret != EINVAL)
 		return fail("Buffer type PRIVATE allowed!\n");
-	return node->valid_buftypes ? 0 : ENOTTY;
+	return node->valid_buftypes ? result : ENOTTY;
 }
 
 static int testGlobalFormat(struct node *node, int type)
