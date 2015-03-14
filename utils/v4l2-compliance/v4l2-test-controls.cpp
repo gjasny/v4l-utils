@@ -208,7 +208,7 @@ int testQueryExtControls(struct node *node)
 			return fail("no V4L2_CID_PRIVATE_BASE allowed\n");
 		if (V4L2_CTRL_ID2CLASS(id) != ctrl_class) {
 			if (ctrl_class && !found_ctrl_class)
-				return fail("missing control class for class %08x\n", ctrl_class);
+				fail("missing control class for class %08x\n", ctrl_class);
 			if (ctrl_class && !class_count)
 				return fail("no controls in class %08x\n", ctrl_class);
 			ctrl_class = V4L2_CTRL_ID2CLASS(id);
@@ -678,8 +678,9 @@ int testExtendedControls(struct node *node)
 	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
 	if (ret != EINVAL)
 		return fail("g_ext_ctrls accepted invalid control ID\n");
+	fail_on_test(ctrls.error_idx > ctrls.count);
 	if (ctrls.error_idx != ctrls.count)
-		return fail("g_ext_ctrls(0) invalid error_idx %u\n", ctrls.error_idx);
+		warn("g_ext_ctrls(0) invalid error_idx %u\n", ctrls.error_idx);
 	ctrl.id = 0;
 	ctrl.size = 0;
 	ctrl.value = 0;
@@ -737,7 +738,7 @@ int testExtendedControls(struct node *node)
 	if (ret != EINVAL && multiple_classes)
 		return fail("should get EINVAL when getting mixed-class controls\n");
 	if (multiple_classes && ctrls.error_idx != ctrls.count)
-		return fail("error_idx should be equal to count\n");
+		warn("error_idx should be equal to count\n");
 	ret = doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls);
 	if (ret && !multiple_classes)
 		return fail("could not try all controls of a specific class\n");
@@ -755,7 +756,7 @@ int testExtendedControls(struct node *node)
 	if (ret != EINVAL && multiple_classes)
 		return fail("should get EINVAL when setting mixed-class controls\n");
 	if (multiple_classes && ctrls.error_idx != ctrls.count)
-		return fail("error_idx should be equal to count\n");
+		warn("error_idx should be equal to count\n");
 	return 0;
 }
 
