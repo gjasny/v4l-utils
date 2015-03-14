@@ -1156,25 +1156,26 @@ static int testStreaming(struct node *node, unsigned frame_count)
 		unsigned field = cur_fmt.g_first_field(std);
 		cv4l_buffer buf(q);
 	
-		q.reqbufs(node, 4);
-		q.obtain_bufs(node);
+		fail_on_test(q.reqbufs(node, 3));
+		fail_on_test(q.obtain_bufs(node));
 		for (unsigned i = 0; i < q.g_buffers(); i++) {
 			buf.init(q, i);
 			buf.s_field(field);
 			if (alternate)
 				field ^= 1;
-			int ret = node->qbuf(buf);
-			if (ret)
-				return ret;
+			fail_on_test(node->qbuf(buf));
 		}
-		q.queue_all(node);
-		node->streamon();
+		fail_on_test(node->streamon());
 
 		while (node->dqbuf(buf) == 0) {
+			printf("\r\t%s: Frame #%03d Field %s",
+					buftype2s(q.g_type()).c_str(),
+					buf.g_sequence(), field2s(buf.g_field()).c_str());
+			fflush(stdout);
 			buf.s_field(field);
 			if (alternate)
 				field ^= 1;
-			node->qbuf(buf);
+			fail_on_test(node->qbuf(buf));
 			if (frame_count-- == 0)
 				break;
 		}
@@ -1219,7 +1220,7 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 		}
 		const char *op = (node->g_caps() & V4L2_CAP_STREAMING) ? "MMAP" :
 			(node->can_capture ? "read()" : "write()");
-		printf("\ttest %s for Format %s, %ux%u, Field %s%s: %s\n", op,
+		printf("\r\ttest %s for Format %s, %ux%u, Field %s%s: %s\n", op,
 				pixfmt2s(pixelformat).c_str(),
 				fmt.g_width(), fmt.g_height(),
 				field2s(field).c_str(), hz,
