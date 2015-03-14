@@ -370,6 +370,32 @@ static int testSetupVbi(struct node *node, int type)
 	return 0;
 }
 
+static int testCanSetSameTimings(struct node *node)
+{
+	if (node->cur_io_caps & V4L2_IN_CAP_STD) {
+		v4l2_std_id std;
+
+		fail_on_test(node->g_std(std));
+		fail_on_test(node->s_std(std));
+	}
+	if (node->cur_io_caps & V4L2_IN_CAP_DV_TIMINGS) {
+		v4l2_dv_timings timings;
+
+		fail_on_test(node->g_dv_timings(timings));
+		fail_on_test(node->s_dv_timings(timings));
+	}
+	if (node->cur_io_caps & V4L2_IN_CAP_NATIVE_SIZE) {
+		v4l2_selection sel = {
+			node->g_selection_type(),
+			V4L2_SEL_TGT_NATIVE_SIZE,
+		};
+
+		fail_on_test(node->g_selection(sel));
+		fail_on_test(node->s_selection(sel));
+	}
+	return 0;
+}
+
 int testReqBufs(struct node *node)
 {
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
@@ -457,6 +483,12 @@ int testReqBufs(struct node *node)
 			fail_on_test(testQueryBuf(node, i, q.g_buffers()));
 			node->valid_memorytype |= 1 << V4L2_MEMORY_DMABUF;
 		}
+
+		/*
+		 * It should be possible to set the same std, timings or
+		 * native size even after reqbufs was called.
+		 */
+		fail_on_test(testCanSetSameTimings(node));
 
 		if (can_rw) {
 			char buf = 0;
@@ -593,6 +625,12 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 			buftype2s(q.g_type()).c_str(),
 			use_poll ? " (polling)" : "");
 	}
+
+	/*
+	 * It should be possible to set the same std, timings or
+	 * native size even while streaming.
+	 */
+	fail_on_test(testCanSetSameTimings(node));
 
 	if (use_poll)
 		fcntl(node->g_fd(), F_SETFL, fd_flags | O_NONBLOCK);

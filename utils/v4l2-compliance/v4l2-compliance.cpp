@@ -568,6 +568,7 @@ static void streamingSetup(struct node *node)
 		doioctl(node, VIDIOC_G_INPUT, &input.index);
 		doioctl(node, VIDIOC_ENUMINPUT, &input);
 		node->cur_io_caps = input.capabilities;
+		printf("\tStream from input %d:\n", input.index);
 	} else if (node->can_output) {
 		struct v4l2_output output;
 
@@ -575,6 +576,7 @@ static void streamingSetup(struct node *node)
 		doioctl(node, VIDIOC_G_OUTPUT, &output.index);
 		doioctl(node, VIDIOC_ENUMOUTPUT, &output);
 		node->cur_io_caps = output.capabilities;
+		printf("\tStream to output %d:\n", output.index);
 	}
 }
 
