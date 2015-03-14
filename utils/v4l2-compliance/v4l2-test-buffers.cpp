@@ -1416,7 +1416,7 @@ void streamAllFormats(struct node *node)
 				streamIntervals(node, fmtdesc.pixelformat,
 						frmsize.discrete.width,
 						frmsize.discrete.height);
-			} while (node->enum_framesizes(frmsize));
+			} while (!node->enum_framesizes(frmsize));
 			break;
 		default:
 			restoreFormat(node);
