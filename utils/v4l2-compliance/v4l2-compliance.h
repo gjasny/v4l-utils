@@ -107,6 +107,19 @@ struct node : public base_node, public cv4l_fd {
  			printf("\t\twarn: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
 	} while (0)
 
+#define warn_once(fmt, args...)						\
+	do {								\
+		static bool show;					\
+									\
+		if (!show) {						\
+			show = true;					\
+			warnings++;					\
+			if (show_warnings)				\
+				printf("\t\twarn: %s(%d): " fmt,	\
+					__FILE__, __LINE__, ##args); 	\
+		}							\
+	} while (0)
+
 #define fail(fmt, args...) 						\
 ({ 									\
  	printf("\t\tfail: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\

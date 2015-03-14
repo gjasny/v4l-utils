@@ -284,7 +284,7 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 
 	if (v4l_type_is_capture(g_type()) && !ts_copy &&
 	    (g_flags() & V4L2_BUF_FLAG_TIMECODE))
-		warn("V4L2_BUF_FLAG_TIMECODE was used!\n");
+		warn_once("V4L2_BUF_FLAG_TIMECODE was used!\n");
 
 	if (mode == Dequeued) {
 		for (unsigned p = 0; p < g_num_planes(); p++) {
