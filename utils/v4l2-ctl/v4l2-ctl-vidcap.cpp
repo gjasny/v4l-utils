@@ -40,7 +40,7 @@ void vidcap_usage(void)
 	       "  -V, --get-fmt-video\n"
 	       "     		     query the video capture format [VIDIOC_G_FMT]\n"
 	       "  -v, --set-fmt-video\n"
-	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,quantization=<q>,"
+	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,quantization=<q>,\n"
 	       "                         premul-alpha,bytesperline=<bpl>\n"
 	       "                     set/try the video capture format [VIDIOC_S/TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
