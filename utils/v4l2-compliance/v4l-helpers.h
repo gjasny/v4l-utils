@@ -603,6 +603,22 @@ static inline unsigned v4l_format_g_flds_per_frm(const struct v4l2_format *fmt)
 	return 1;
 }
 
+static inline void v4l_format_s_frame_height(struct v4l2_format *fmt, __u32 height)
+{
+	if (V4L2_FIELD_HAS_T_OR_B(v4l_format_g_field(fmt)))
+		height /= 2;
+	v4l_format_s_height(fmt, height);
+}
+
+static inline __u32 v4l_format_g_frame_height(const struct v4l2_format *fmt)
+{
+	__u32 height = v4l_format_g_height(fmt);
+
+	if (V4L2_FIELD_HAS_T_OR_B(v4l_format_g_field(fmt)))
+		return height * 2;
+	return height;
+}
+
 static inline void v4l_format_s_colorspace(struct v4l2_format *fmt,
 					       unsigned colorspace)
 {
@@ -1694,6 +1710,55 @@ static inline int v4l_s_selection(v4l_fd *f, struct v4l2_selection *sel)
 		return v4l_ioctl(f, VIDIOC_S_CROP, &crop);
 	}
 	return EINVAL;
+}
+
+static inline void v4l_frame_selection(struct v4l2_selection *sel, bool to_frame)
+{
+	switch (sel->target) {
+	case V4L2_SEL_TGT_CROP:
+	case V4L2_SEL_TGT_CROP_DEFAULT:
+	case V4L2_SEL_TGT_CROP_BOUNDS:
+		if (!V4L2_TYPE_IS_OUTPUT(sel->type))
+			return;
+		break;
+	case V4L2_SEL_TGT_COMPOSE:
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+	case V4L2_SEL_TGT_COMPOSE_PADDED:
+		if (V4L2_TYPE_IS_OUTPUT(sel->type))
+			return;
+		break;
+	default:
+		return;
+	}
+	if (to_frame) {
+		sel->r.top *= 2;
+		sel->r.height *= 2;
+	} else {
+		sel->r.top /= 2;
+		sel->r.height /= 2;
+	}
+}
+
+static inline int v4l_g_frame_selection(v4l_fd *f, struct v4l2_selection *sel, __u32 field)
+{
+	int ret = v4l_g_selection(f, sel);
+
+	if (V4L2_FIELD_HAS_T_OR_B(field))
+		v4l_frame_selection(sel, true);
+	return ret;
+}
+
+static inline int v4l_s_frame_selection(v4l_fd *f, struct v4l2_selection *sel, __u32 field)
+{
+	int ret;
+
+	if (V4L2_FIELD_HAS_T_OR_B(field))
+		v4l_frame_selection(sel, false);
+	ret = v4l_s_selection(f, sel);
+	if (V4L2_FIELD_HAS_T_OR_B(field))
+		v4l_frame_selection(sel, true);
+	return ret;
 }
 
 #ifdef __cplusplus

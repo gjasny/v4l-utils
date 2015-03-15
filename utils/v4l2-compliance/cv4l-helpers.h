@@ -129,6 +129,16 @@ public:
 		return v4l_s_selection(this, &sel);
 	}
 
+	int g_frame_selection(v4l2_selection &sel, __u32 field)
+	{
+		return v4l_g_frame_selection(this, &sel, field);
+	}
+
+	int s_frame_selection(v4l2_selection &sel, __u32 field)
+	{
+		return v4l_s_frame_selection(this, &sel, field);
+	}
+
 	int g_tuner(v4l2_tuner &tuner, unsigned index = 0)
 	{
 		memset(&tuner, 0, sizeof(tuner));
@@ -649,6 +659,8 @@ public:
 	void s_width(__u32 width) { v4l_format_s_width(this, width); }
 	__u32 g_height() { return v4l_format_g_height(this); }
 	void s_height(__u32 height) { v4l_format_s_height(this, height); }
+	__u32 g_frame_height() { return v4l_format_g_frame_height(this); }
+	void s_frame_height(__u32 height) { v4l_format_s_frame_height(this, height); }
 	__u32 g_pixelformat() { return v4l_format_g_pixelformat(this); }
 	void s_pixelformat(__u32 pixelformat) { v4l_format_s_pixelformat(this, pixelformat); }
 	unsigned g_colorspace() { return v4l_format_g_colorspace(this); }
