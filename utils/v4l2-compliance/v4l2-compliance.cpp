@@ -444,6 +444,7 @@ static void restoreState()
 static void signal_handler_interrupt(int signum)
 {
 	restoreState();
+	printf("\n");
 	exit(-1);
 }
 
