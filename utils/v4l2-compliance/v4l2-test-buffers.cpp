@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <map>
+#include <vector>
 #include "v4l2-compliance.h"
 
 static struct cv4l_fmt cur_fmt;
@@ -1172,6 +1173,30 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 	return 0;
 }
 
+static void restoreCropCompose(struct node *node, __u32 field,
+		v4l2_selection &crop, v4l2_selection &compose)
+{
+	if (node->has_inputs) {
+		/*
+		 * For capture restore the compose rectangle
+		 * before the crop rectangle.
+		 */
+		if (compose.r.width)
+			node->s_frame_selection(compose, field);
+		if (crop.r.width)
+			node->s_frame_selection(crop, field);
+	} else {
+		/*
+		 * For output the crop rectangle should be
+		 * restored before the compose rectangle.
+		 */
+		if (crop.r.width)
+			node->s_frame_selection(crop, field);
+		if (compose.r.width)
+			node->s_frame_selection(compose, field);
+	}
+}
+
 static int restoreFormat(struct node *node)
 {
 	cv4l_fmt fmt;
@@ -1220,27 +1245,7 @@ static int restoreFormat(struct node *node)
 	sel_compose.r.height = fmt.g_frame_height();
 	sel_crop.r.width = fmt.g_width();
 	sel_crop.r.height = fmt.g_frame_height();
-	if (node->has_inputs) {
-		/*
-		 * For capture restore the compose rectangle
-		 * before the crop rectangle.
-		 */
-		if (sel_compose.r.width && sel_compose.r.height)
-			node->s_frame_selection(sel_compose, fmt.g_field());
-		if (sel_crop.r.width && sel_crop.r.height)
-			node->s_frame_selection(sel_crop, fmt.g_field());
-		node->g_fmt(fmt);
-	}
-	if (node->has_outputs) {
-		/*
-		 * For output the crop rectangle should be
-		 * restored before the compose rectangle.
-		 */
-		if (sel_crop.r.width && sel_crop.r.height)
-			node->s_frame_selection(sel_crop, fmt.g_field());
-		if (sel_compose.r.width && sel_compose.r.height)
-			node->s_frame_selection(sel_compose, fmt.g_field());
-	}
+	restoreCropCompose(node, fmt.g_field(), sel_crop, sel_compose);
 	return 0;
 }
 
@@ -1313,12 +1318,33 @@ static int testStreaming(struct node *node, unsigned frame_count)
 	return 0;
 }
 
-static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4l2_fract *f)
+/*
+ * Remember which combination of fmt, crop and compose rectangles have been
+ * used to test streaming.
+ * This helps prevent duplicate streaming tests.
+ */
+struct selTest {
+	unsigned fmt_w, fmt_h, fmt_field;
+	unsigned crop_w, crop_h;
+	unsigned compose_w, compose_h;
+};
+
+static std::vector<selTest> selTests;
+
+static selTest createSelTest(const cv4l_fmt &fmt,
+		const v4l2_selection &crop, const v4l2_selection &compose)
 {
-	const char *op = (node->g_caps() & V4L2_CAP_STREAMING) ? "MMAP" :
-		(node->can_capture ? "read()" : "write()");
-	bool has_compose = node->cur_io_has_compose();
-	bool has_crop = node->cur_io_has_crop();
+	selTest st = {
+		fmt.g_width(), fmt.g_height(), fmt.g_field(),
+		crop.r.width, crop.r.height,
+		compose.r.width, compose.r.height
+	};
+
+	return st;
+}
+
+static selTest createSelTest(struct node *node)
+{
 	v4l2_selection crop = {
 		node->g_selection_type(),
 		V4L2_SEL_TGT_CROP
@@ -1328,6 +1354,77 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 		V4L2_SEL_TGT_COMPOSE
 	};
 	cv4l_fmt fmt;
+
+	node->g_fmt(fmt);
+	node->g_selection(crop);
+	node->g_selection(compose);
+	return createSelTest(fmt, crop, compose);
+}
+
+static bool haveSelTest(const selTest &test)
+{
+	for (unsigned i = 0; i < selTests.size(); i++)
+		if (!memcmp(&selTests[i], &test, sizeof(test)))
+			return true;
+	return false;
+}
+
+static void streamFmtRun(struct node *node, cv4l_fmt &fmt, unsigned frame_count,
+		bool testSelection = false)
+{
+	v4l2_selection crop = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_CROP
+	};
+	v4l2_selection compose = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_COMPOSE
+	};
+	bool has_compose = node->cur_io_has_compose();
+	bool has_crop = node->cur_io_has_crop();
+	char s_crop[32] = "";
+	char s_compose[32] = "";
+
+	if (has_crop) {
+		node->g_frame_selection(crop, fmt.g_field());
+		sprintf(s_crop, "Crop %ux%u@%ux%u, ",
+				crop.r.width, crop.r.height,
+				crop.r.left, crop.r.top);
+	}
+	if (has_compose) {
+		node->g_frame_selection(compose, fmt.g_field());
+		sprintf(s_compose, "Compose %ux%u@%ux%u, ",
+				compose.r.width, compose.r.height,
+				compose.r.left, compose.r.top);
+	}
+	printf("\r\t\t%s%sStride %u, Field %s%s: %s   \n",
+			s_crop, s_compose,
+			fmt.g_bytesperline(),
+			field2s(fmt.g_field()).c_str(),
+			testSelection ? ", SelTest" : "",
+			ok(testStreaming(node, frame_count)));
+	node->reopen();
+}
+
+static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4l2_fract *f)
+{
+	const char *op = (node->g_caps() & V4L2_CAP_STREAMING) ? "MMAP" :
+		(node->can_capture ? "read()" : "write()");
+	unsigned frame_count = f ? 1.0 / fract2f(f) : 10;
+	bool has_compose = node->cur_io_has_compose();
+	bool has_crop = node->cur_io_has_crop();
+	__u32 default_field;
+	v4l2_selection crop = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_CROP
+	};
+	v4l2_selection min_crop, max_crop;
+	v4l2_selection compose = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_COMPOSE
+	};
+	v4l2_selection min_compose, max_compose;
+	cv4l_fmt fmt;
 	char hz[32] = "";
 
 	node->g_fmt(fmt);
@@ -1336,8 +1433,9 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 	fmt.s_field(V4L2_FIELD_ANY);
 	fmt.s_height(h);
 	node->try_fmt(fmt);
+	default_field = fmt.g_field();
 	fmt.s_frame_height(h);
-	node->try_fmt(fmt);
+	node->s_fmt(fmt);
 	if (f) {
 		node->set_interval(*f);
 		sprintf(hz, "@%.2f Hz", 1.0 / fract2f(f));
@@ -1347,11 +1445,13 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 				pixfmt2s(pixelformat).c_str(),
 				fmt.g_width(), fmt.g_frame_height(), hz);
 
+	if (has_crop)
+		node->g_frame_selection(crop, fmt.g_field());
+	if (has_compose)
+		node->g_frame_selection(compose, fmt.g_field());
+
 	for (unsigned field = V4L2_FIELD_NONE;
 			field <= V4L2_FIELD_INTERLACED_BT; field++) {
-		char s_crop[32] = "";
-		char s_compose[32] = "";
-
 		node->g_fmt(fmt);
 		fmt.s_field(field);
 		fmt.s_width(w);
@@ -1359,29 +1459,9 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 		node->s_fmt(fmt);
 		if (fmt.g_field() != field)
 			continue;
-		if (f) {
-			node->set_interval(*f);
-			sprintf(hz, ", %.2f Hz", 1.0 / fract2f(f));
-		}
-		if (has_crop) {
-			node->g_frame_selection(crop, field);
-			sprintf(s_crop, "Crop %ux%u@%ux%u, ",
-				crop.r.width, crop.r.height,
-				crop.r.left, crop.r.top);
-		}
-		if (has_compose) {
-			node->g_frame_selection(compose, field);
-			sprintf(s_compose, "Compose %ux%u@%ux%u, ",
-				compose.r.width, compose.r.height,
-				compose.r.left, compose.r.top);
-		}
 
-		printf("\r\t\t%s%sStride %u, Field %s: %s   \n",
-				s_crop, s_compose,
-				fmt.g_bytesperline(),
-				field2s(field).c_str(),
-				ok(testStreaming(node, f ? 1.0 / fract2f(f) : 10)));
-		node->reopen();
+		restoreCropCompose(node, fmt.g_field(), crop, compose);
+		streamFmtRun(node, fmt, frame_count);
 
 		// Test if the driver allows for user-specified 'bytesperline' values
 		node->g_fmt(fmt);
@@ -1393,25 +1473,158 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 			continue;
 		if (fmt.g_sizeimage() <= size)
 			fail("fmt.g_sizeimage() <= size\n");
-		if (has_crop) {
-			node->g_frame_selection(crop, field);
-			sprintf(s_crop, "Crop %ux%u@%ux%u, ",
-				crop.r.width, crop.r.height,
-				crop.r.left, crop.r.top);
-		}
-		if (has_compose) {
-			node->g_frame_selection(compose, field);
-			sprintf(s_compose, "Compose %ux%u@%ux%u, ",
-				compose.r.width, compose.r.height,
-				compose.r.left, compose.r.top);
-		}
-		printf("\r\t\t%s%sStride %u, Field %s: %s   \n",
-				s_crop, s_compose,
-				fmt.g_bytesperline(),
-				field2s(field).c_str(),
-				ok(testStreaming(node, f ? 1.0 / fract2f(f) : 10)));
-		node->reopen();
+		streamFmtRun(node, fmt, frame_count);
 	}
+
+	fmt.s_field(default_field);
+	fmt.s_frame_height(h);
+	node->s_fmt(fmt);
+	restoreCropCompose(node, fmt.g_field(), crop, compose);
+
+	if (has_crop) {
+		min_crop = crop;
+		min_crop.r.width = 0;
+		min_crop.r.height = 0;
+		node->s_frame_selection(min_crop, fmt.g_field());
+		node->s_fmt(fmt);
+		node->g_frame_selection(min_crop, fmt.g_field());
+		max_crop = crop;
+		max_crop.r.width = ~0;
+		max_crop.r.height = ~0;
+		node->s_frame_selection(max_crop, fmt.g_field());
+		node->s_fmt(fmt);
+		node->g_frame_selection(max_crop, fmt.g_field());
+		restoreCropCompose(node, fmt.g_field(), crop, compose);
+	}
+
+	if (has_compose) {
+		min_compose = compose;
+		min_compose.r.width = 0;
+		min_compose.r.height = 0;
+		node->s_frame_selection(min_compose, fmt.g_field());
+		node->s_fmt(fmt);
+		node->g_frame_selection(min_compose, fmt.g_field());
+		max_compose = compose;
+		max_compose.r.width = ~0;
+		max_compose.r.height = ~0;
+		node->s_frame_selection(max_compose, fmt.g_field());
+		node->s_fmt(fmt);
+		node->g_frame_selection(max_compose, fmt.g_field());
+		restoreCropCompose(node, fmt.g_field(), crop, compose);
+	}
+
+	if (min_crop.r.width == max_crop.r.width &&
+	    min_crop.r.height == max_crop.r.height)
+		has_crop = false;
+	if (min_compose.r.width == max_compose.r.width &&
+	    min_compose.r.height == max_compose.r.height)
+		has_compose = false;
+
+	if (!has_crop && !has_compose)
+		return;
+
+	if (!has_compose) {
+		cv4l_fmt tmp;
+
+		node->s_frame_selection(min_crop, fmt.g_field());
+		node->g_fmt(tmp);
+		if (tmp.g_width() != fmt.g_width() ||
+		    tmp.g_height() != fmt.g_height())
+			fail("Format resolution changed after changing to min crop\n");
+		selTest test = createSelTest(node);
+		if (!haveSelTest(test)) {
+			selTests.push_back(test);
+			streamFmtRun(node, fmt, frame_count, true);
+		}
+		node->s_frame_selection(max_crop, fmt.g_field());
+		node->g_fmt(tmp);
+		if (tmp.g_width() != fmt.g_width() ||
+		    tmp.g_height() != fmt.g_height())
+			fail("Format resolution changed after changing to max crop\n");
+		test = createSelTest(node);
+		if (!haveSelTest(test)) {
+			selTests.push_back(test);
+			streamFmtRun(node, fmt, frame_count, true);
+		}
+		restoreCropCompose(node, fmt.g_field(), crop, compose);
+		return;
+	}
+	if (!has_crop) {
+		cv4l_fmt tmp;
+		node->s_frame_selection(min_compose, fmt.g_field());
+		node->g_fmt(tmp);
+		if (tmp.g_width() != fmt.g_width() ||
+		    tmp.g_height() != fmt.g_height())
+			fail("Format resolution changed after changing to min compose\n");
+		selTest test = createSelTest(node);
+		if (!haveSelTest(test)) {
+			selTests.push_back(test);
+			streamFmtRun(node, fmt, frame_count, true);
+		}
+		node->s_frame_selection(max_compose, fmt.g_field());
+		node->g_fmt(tmp);
+		if (tmp.g_width() != fmt.g_width() ||
+		    tmp.g_height() != fmt.g_height())
+			fail("Format resolution changed after changing to max compose\n");
+		test = createSelTest(node);
+		if (!haveSelTest(test)) {
+			selTests.push_back(test);
+			streamFmtRun(node, fmt, frame_count, true);
+		}
+		restoreCropCompose(node, fmt.g_field(), crop, compose);
+		return;
+	}
+
+	v4l2_selection *selections[2][4] = {
+		{ &min_crop, &max_crop, &min_compose, &max_compose },
+		{ &min_compose, &max_compose, &min_crop, &max_crop }
+	};
+
+	selTest test = createSelTest(node);
+	if (!haveSelTest(test)) 
+		selTests.push_back(createSelTest(node));
+
+	for (unsigned i = 0; i < 8; i++) {
+		v4l2_selection *sel1 = selections[node->can_output][i & 1];
+		v4l2_selection *sel2 = selections[node->can_output][2 + ((i & 2) >> 1)];
+		v4l2_selection *sel3 = selections[node->can_output][(i & 4) >> 2];
+		cv4l_fmt tmp;
+
+		restoreCropCompose(node, fmt.g_field(), crop, compose);
+		node->s_frame_selection(*sel1, fmt.g_field());
+		node->g_fmt(tmp);
+		if (tmp.g_width() != fmt.g_width() ||
+		    tmp.g_height() != fmt.g_height())
+			fail("Format resolution changed after changing first selection\n");
+		selTest test = createSelTest(node);
+		if (!haveSelTest(test)) {
+			selTests.push_back(test);
+			streamFmtRun(node, fmt, frame_count, true);
+		}
+
+		node->s_frame_selection(*sel2, fmt.g_field());
+		node->g_fmt(tmp);
+		if (tmp.g_width() != fmt.g_width() ||
+		    tmp.g_height() != fmt.g_height())
+			fail("Format resolution changed after changing second selection\n");
+		test = createSelTest(node);
+		if (!haveSelTest(test)) {
+			selTests.push_back(test);
+			streamFmtRun(node, fmt, frame_count, true);
+		}
+
+		node->s_frame_selection(*sel3, fmt.g_field());
+		node->g_fmt(tmp);
+		if (tmp.g_width() != fmt.g_width() ||
+		    tmp.g_height() != fmt.g_height())
+			fail("Format resolution changed after changing third selection\n");
+		test = createSelTest(node);
+		if (!haveSelTest(test)) {
+			selTests.push_back(test);
+			streamFmtRun(node, fmt, frame_count, true);
+		}
+	}
+	restoreCropCompose(node, fmt.g_field(), crop, compose);
 }
 
 static void streamIntervals(struct node *node, __u32 pixelformat, __u32 w, __u32 h)
@@ -1439,6 +1652,7 @@ void streamAllFormats(struct node *node)
 
 	if (node->enum_fmt(fmtdesc, true))
 		return;
+	selTests.clear();
 	do {
 		v4l2_frmsizeenum frmsize;
 		cv4l_fmt fmt;
