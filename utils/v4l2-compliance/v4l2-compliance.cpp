@@ -45,6 +45,7 @@
    In general the lower case is used to set something and the upper
    case is used to retrieve a setting. */
 enum Option {
+	OptStreamAllIO = 'a',
 	OptSetDevice = 'd',
 	OptSetExpBufDevice = 'e',
 	OptStreamAllFormats = 'f',
@@ -108,6 +109,7 @@ static struct option long_options[] = {
 #endif
 	{"streaming", optional_argument, 0, OptStreaming},
 	{"stream-all-formats", no_argument, 0, OptStreamAllFormats},
+	{"stream-all-io", no_argument, 0, OptStreamAllIO},
 	{0, 0, 0, 0}
 };
 
@@ -134,6 +136,9 @@ static void usage(void)
 	printf("                     This attempts to stream using MMAP mode or read/write\n");
 	printf("                     for one second for all formats, at all sizes, at all intervals\n");
 	printf("                     and with all field values.\n");
+	printf("  -a, --stream-all-io do streaming tests for all inputs or outputs instead of just\n");
+	printf("                     the current input or output. This requires that a valid video\n");
+	printf("                     signal is present on all inputs and all outputs are hooked up.\n");
 	printf("  -h, --help         display this help message.\n");
 	printf("  -n, --no-warnings  turn off warning messages.\n");
 	printf("  -T, --trace        trace all called ioctls.\n");
@@ -1036,39 +1041,55 @@ int main(int argc, char **argv)
 		printf("\n");
 	}
 
-	if (options[OptStreaming]) {
-		printf("Streaming ioctls:\n");
+	unsigned cur_io = node.has_inputs ? state.input.index : state.output.index;
+	unsigned min_io = 0;
 
-		restoreState();
-		streamingSetup(&node);
-
-		printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
-		// Reopen after each streaming test to reset the streaming state
-		// in case of any errors in the preceeding test.
-		node.reopen();
-		printf("\ttest MMAP: %s\n", ok(testMmap(&node, frame_count)));
-		node.reopen();
-		printf("\ttest USERPTR: %s\n", ok(testUserPtr(&node, frame_count)));
-		node.reopen();
-		if (options[OptSetExpBufDevice] ||
-				!(node.valid_memorytype & (1 << V4L2_MEMORY_DMABUF)))
-			printf("\ttest DMABUF: %s\n", ok(testDmaBuf(&expbuf_node, &node, frame_count)));
-		else if (!options[OptSetExpBufDevice])
-			printf("\ttest DMABUF: Cannot test, specify --expbuf-device\n");
-		node.reopen();
-
-		printf("\n");
+	if (!options[OptStreamAllIO]) {
+		min_io = cur_io;
+		max_io = min_io + 1;
 	}
 
-	if (node.is_video && options[OptStreamAllFormats]) {
-		printf("Stream using all formats:\n");
+	for (unsigned io = min_io; io < (max_io ? max_io : 1); io++) {
+		restoreState();
 
-		if (node.is_m2m) {
-			printf("\tNot supported for M2M devices\n");
-		} else {
-			restoreState();
+		printf("Test %s %d:\n\n",
+				node.can_capture ? "input" : "output", io);
+		if (node.can_capture)
+			doioctl(&node, VIDIOC_S_INPUT, &io);
+		else
+			doioctl(&node, VIDIOC_S_OUTPUT, &io);
+
+		if (options[OptStreaming]) {
+			printf("Streaming ioctls:\n");
 			streamingSetup(&node);
-			streamAllFormats(&node);
+
+			printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
+			// Reopen after each streaming test to reset the streaming state
+			// in case of any errors in the preceeding test.
+			node.reopen();
+			printf("\ttest MMAP: %s\n", ok(testMmap(&node, frame_count)));
+			node.reopen();
+			printf("\ttest USERPTR: %s\n", ok(testUserPtr(&node, frame_count)));
+			node.reopen();
+			if (options[OptSetExpBufDevice] ||
+					!(node.valid_memorytype & (1 << V4L2_MEMORY_DMABUF)))
+				printf("\ttest DMABUF: %s\n", ok(testDmaBuf(&expbuf_node, &node, frame_count)));
+			else if (!options[OptSetExpBufDevice])
+				printf("\ttest DMABUF: Cannot test, specify --expbuf-device\n");
+			node.reopen();
+
+			printf("\n");
+		}
+
+		if (node.is_video && options[OptStreamAllFormats]) {
+			printf("Stream using all formats:\n");
+
+			if (node.is_m2m) {
+				printf("\tNot supported for M2M devices\n");
+			} else {
+				streamingSetup(&node);
+				streamAllFormats(&node);
+			}
 		}
 	}
 	printf("\n");
