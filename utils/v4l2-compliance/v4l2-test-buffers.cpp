@@ -1278,7 +1278,7 @@ static int testStreaming(struct node *node, unsigned frame_count)
 		fail_on_test(node->streamon());
 
 		while (node->dqbuf(buf) == 0) {
-			printf("\r\t%s: Frame #%03d Field %s   ",
+			printf("\r\t\t%s: Frame #%03d Field %s   ",
 					buftype2s(q.g_type()).c_str(),
 					buf.g_sequence(), field2s(buf.g_field()).c_str());
 			fflush(stdout);
@@ -1290,6 +1290,7 @@ static int testStreaming(struct node *node, unsigned frame_count)
 				break;
 		}
 		q.free(node);
+		printf("\r\t\t                                                            ");
 		return 0;
 	}
 	fail_on_test(!(node->g_caps() & V4L2_CAP_READWRITE));
@@ -1305,21 +1306,55 @@ static int testStreaming(struct node *node, unsigned frame_count)
 		else
 			ret = node->write(tmp, size);
 		fail_on_test(ret != size);
+		printf("\r\t\t%s: Frame #%03d", buftype2s(type).c_str(), i);
+		fflush(stdout);
 	}
+	printf("\r\t\t                                                            ");
 	return 0;
 }
 
 static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4l2_fract *f)
 {
+	const char *op = (node->g_caps() & V4L2_CAP_STREAMING) ? "MMAP" :
+		(node->can_capture ? "read()" : "write()");
+	bool has_compose = node->cur_io_has_compose();
+	bool has_crop = node->cur_io_has_crop();
+	v4l2_selection crop = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_CROP
+	};
+	v4l2_selection compose = {
+		node->g_selection_type(),
+		V4L2_SEL_TGT_COMPOSE
+	};
+	cv4l_fmt fmt;
+	char hz[32] = "";
+
+	node->g_fmt(fmt);
+	fmt.s_pixelformat(pixelformat);
+	fmt.s_width(w);
+	fmt.s_field(V4L2_FIELD_ANY);
+	fmt.s_height(h);
+	node->try_fmt(fmt);
+	fmt.s_frame_height(h);
+	node->try_fmt(fmt);
+	if (f) {
+		node->set_interval(*f);
+		sprintf(hz, "@%.2f Hz", 1.0 / fract2f(f));
+	}
+
+	printf("\ttest %s for Format %s, Frame Size %ux%u%s:\n", op,
+				pixfmt2s(pixelformat).c_str(),
+				fmt.g_width(), fmt.g_frame_height(), hz);
+
 	for (unsigned field = V4L2_FIELD_NONE;
 			field <= V4L2_FIELD_INTERLACED_BT; field++) {
-		cv4l_fmt fmt;
-		char hz[32] = "";
+		char s_crop[32] = "";
+		char s_compose[32] = "";
 
 		node->g_fmt(fmt);
-		fmt.s_pixelformat(pixelformat);
-		fmt.s_width(w);
 		fmt.s_field(field);
+		fmt.s_width(w);
 		fmt.s_frame_height(h);
 		node->s_fmt(fmt);
 		if (fmt.g_field() != field)
@@ -1328,15 +1363,27 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 			node->set_interval(*f);
 			sprintf(hz, ", %.2f Hz", 1.0 / fract2f(f));
 		}
-		const char *op = (node->g_caps() & V4L2_CAP_STREAMING) ? "MMAP" :
-			(node->can_capture ? "read()" : "write()");
-		printf("\r\ttest %s for Format %s, Frame Size %ux%u, Stride %u, Field %s%s: %s   \n", op,
-				pixfmt2s(pixelformat).c_str(),
-				fmt.g_width(), fmt.g_frame_height(),
+		if (has_crop) {
+			node->g_frame_selection(crop, field);
+			sprintf(s_crop, "Crop %ux%u@%ux%u, ",
+				crop.r.width, crop.r.height,
+				crop.r.left, crop.r.top);
+		}
+		if (has_compose) {
+			node->g_frame_selection(compose, field);
+			sprintf(s_compose, "Compose %ux%u@%ux%u, ",
+				compose.r.width, compose.r.height,
+				compose.r.left, compose.r.top);
+		}
+
+		printf("\r\t\t%s%sStride %u, Field %s: %s   \n",
+				s_crop, s_compose,
 				fmt.g_bytesperline(),
-				field2s(field).c_str(), hz,
+				field2s(field).c_str(),
 				ok(testStreaming(node, f ? 1.0 / fract2f(f) : 10)));
 		node->reopen();
+
+		// Test if the driver allows for user-specified 'bytesperline' values
 		node->g_fmt(fmt);
 		unsigned bpl = fmt.g_bytesperline();
 		unsigned size = fmt.g_sizeimage();
@@ -1346,11 +1393,22 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 			continue;
 		if (fmt.g_sizeimage() <= size)
 			fail("fmt.g_sizeimage() <= size\n");
-		printf("\r\ttest %s for Format %s, Frame Size %ux%u, Stride %u, Field %s%s: %s   \n", op,
-				pixfmt2s(pixelformat).c_str(),
-				fmt.g_width(), fmt.g_frame_height(),
+		if (has_crop) {
+			node->g_frame_selection(crop, field);
+			sprintf(s_crop, "Crop %ux%u@%ux%u, ",
+				crop.r.width, crop.r.height,
+				crop.r.left, crop.r.top);
+		}
+		if (has_compose) {
+			node->g_frame_selection(compose, field);
+			sprintf(s_compose, "Compose %ux%u@%ux%u, ",
+				compose.r.width, compose.r.height,
+				compose.r.left, compose.r.top);
+		}
+		printf("\r\t\t%s%sStride %u, Field %s: %s   \n",
+				s_crop, s_compose,
 				fmt.g_bytesperline(),
-				field2s(field).c_str(), hz,
+				field2s(field).c_str(),
 				ok(testStreaming(node, f ? 1.0 / fract2f(f) : 10)));
 		node->reopen();
 	}
