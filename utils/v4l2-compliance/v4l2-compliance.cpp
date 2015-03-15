@@ -1094,11 +1094,10 @@ int main(int argc, char **argv)
 	}
 	printf("\n");
 
-	/* TODO:
-
-	   VIDIOC_CROPCAP, VIDIOC_G/S_CROP, VIDIOC_G/S_SELECTION
-	   VIDIOC_S_FBUF/OVERLAY
-	   */
+	/*
+	 * TODO: VIDIOC_S_FBUF/OVERLAY
+	 * 	 S_SELECTION flags tests
+	 */
 
 	restoreState();
 

@@ -1216,10 +1216,38 @@ static int testBasicCrop(struct node *node, unsigned type)
 	return 0;
 }
 
+static int testLegacyCrop(struct node *node)
+{
+	struct v4l2_cropcap cap = {
+		node->g_selection_type()
+	};
+	struct v4l2_crop crop = {
+		node->g_selection_type()
+	};
+	struct v4l2_selection sel = {
+		node->g_selection_type()
+	};
+
+	sel.target = node->can_capture ? V4L2_SEL_TGT_CROP : V4L2_SEL_TGT_COMPOSE;
+	/*
+	 * If either CROPCAP or G_CROP works, then G_SELECTION should
+	 * work as well.
+	 * If neither CROPCAP nor G_CROP work, then G_SELECTION shouldn't
+	 * work either.
+	 */
+	if (!doioctl(node, VIDIOC_CROPCAP, &cap) ||
+	    !doioctl(node, VIDIOC_G_CROP, &crop))
+		fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel));
+	else
+		fail_on_test(!doioctl(node, VIDIOC_G_SELECTION, &sel));
+	return 0;
+}
+
 int testCropping(struct node *node)
 {
 	int ret = ENOTTY;
 
+	fail_on_test(testLegacyCrop(node));
 	if (node->can_capture && node->is_video)
 		ret = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_CAPTURE, V4L2_SEL_TGT_CROP);
 	if (node->can_output && node->is_video)
