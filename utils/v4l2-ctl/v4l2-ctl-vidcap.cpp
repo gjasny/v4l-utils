@@ -241,7 +241,7 @@ void vidcap_cmd(int ch, char *optarg)
 				break;
 			default:
 				vidcap_usage();
-				break;
+				exit(1);
 			}
 		}
 		break;
