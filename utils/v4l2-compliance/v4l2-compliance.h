@@ -157,6 +157,8 @@ const char *ok(int res);
 int check_string(const char *s, size_t len);
 int check_ustring(const __u8 *s, int len);
 int check_0(const void *p, int len);
+int restoreFormat(struct node *node);
+std::string pixfmt2s(unsigned id);
 
 // Debug ioctl tests
 int testRegister(struct node *node);
@@ -216,5 +218,9 @@ int testMmap(struct node *node, unsigned frame_count);
 int testUserPtr(struct node *node, unsigned frame_count);
 int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count);
 void streamAllFormats(struct node *node);
+
+// Color tests
+int testColorsAllFormats(struct node *node, unsigned component,
+			 unsigned skip, unsigned perc);
 
 #endif

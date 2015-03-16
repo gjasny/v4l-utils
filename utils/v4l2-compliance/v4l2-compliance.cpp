@@ -46,6 +46,7 @@
    case is used to retrieve a setting. */
 enum Option {
 	OptStreamAllIO = 'a',
+	OptStreamAllColorTest = 'c',
 	OptSetDevice = 'd',
 	OptSetExpBufDevice = 'e',
 	OptStreamAllFormats = 'f',
@@ -71,6 +72,10 @@ bool show_info;
 bool show_warnings = true;
 int kernel_version;
 unsigned warnings;
+
+static unsigned color_component;
+static unsigned color_skip;
+static unsigned color_perc = 90;
 
 struct dev_state {
 	struct node *node;
@@ -110,6 +115,7 @@ static struct option long_options[] = {
 	{"streaming", optional_argument, 0, OptStreaming},
 	{"stream-all-formats", no_argument, 0, OptStreamAllFormats},
 	{"stream-all-io", no_argument, 0, OptStreamAllIO},
+	{"stream-all-color", required_argument, 0, OptStreamAllColorTest},
 	{0, 0, 0, 0}
 };
 
@@ -117,34 +123,49 @@ static void usage(void)
 {
 	printf("Usage:\n");
 	printf("Common options:\n");
-	printf("  -d, --device=<dev> use device <dev> as the video device.\n");
-	printf("                     if <dev> starts with a digit, then /dev/video<dev> is used.\n");
-	printf("  -V, --vbi-device=<dev> use device <dev> as the vbi device.\n");
-	printf("                     if <dev> starts with a digit, then /dev/vbi<dev> is used.\n");
-	printf("  -r, --radio-device=<dev> use device <dev> as the radio device.\n");
-	printf("                     if <dev> starts with a digit, then /dev/radio<dev> is used.\n");
-	printf("  -S, --sdr-device=<dev> use device <dev> as the SDR device.\n");
-	printf("                     if <dev> starts with a digit, then /dev/swradio<dev> is used.\n");
-	printf("  -e, --expbuf-device=<dev> use device <dev> to obtain DMABUF handles.\n");
-	printf("                     if <dev> starts with a digit, then /dev/video<dev> is used.\n");
+	printf("  -d, --device=<dev> Use device <dev> as the video device.\n");
+	printf("                     If <dev> starts with a digit, then /dev/video<dev> is used.\n");
+	printf("  -V, --vbi-device=<dev>\n");
+	printf("                     Use device <dev> as the vbi device.\n");
+	printf("                     If <dev> starts with a digit, then /dev/vbi<dev> is used.\n");
+	printf("  -r, --radio-device=<dev>\n");
+	printf("                     Use device <dev> as the radio device.\n");
+	printf("                     If <dev> starts with a digit, then /dev/radio<dev> is used.\n");
+	printf("  -S, --sdr-device=<dev>\n");
+	printf("                     Use device <dev> as the SDR device.\n");
+	printf("                     If <dev> starts with a digit, then /dev/swradio<dev> is used.\n");
+	printf("  -e, --expbuf-device=<dev>\n");
+	printf("                     Use device <dev> to obtain DMABUF handles.\n");
+	printf("                     If <dev> starts with a digit, then /dev/video<dev> is used.\n");
 	printf("                     only /dev/videoX devices are supported.\n");
-	printf("  -s, --streaming=<count> enable the streaming tests. Set <count> to the number of\n");
+	printf("  -s, --streaming=<count>\n");
+	printf("                     Enable the streaming tests. Set <count> to the number of\n");
 	printf("                     frames to stream (default 60). Requires a valid input/output\n");
 	printf("                     and frequency (when dealing with a tuner). For DMABUF testing\n");
 	printf("                     --expbuf-device needs to be set as well.\n");
-	printf("  -f, --stream-all-formats test streaming all available formats.\n");
+	printf("  -f, --stream-all-formats\n");
+	printf("                     Test streaming all available formats.\n");
 	printf("                     This attempts to stream using MMAP mode or read/write\n");
 	printf("                     for one second for all formats, at all sizes, at all intervals\n");
 	printf("                     and with all field values.\n");
-	printf("  -a, --stream-all-io do streaming tests for all inputs or outputs instead of just\n");
+	printf("  -a, --stream-all-io\n");
+	printf("                     Do streaming tests for all inputs or outputs instead of just\n");
 	printf("                     the current input or output. This requires that a valid video\n");
 	printf("                     signal is present on all inputs and all outputs are hooked up.\n");
-	printf("  -h, --help         display this help message.\n");
-	printf("  -n, --no-warnings  turn off warning messages.\n");
-	printf("  -T, --trace        trace all called ioctls.\n");
-	printf("  -v, --verbose      turn on verbose reporting.\n");
+	printf("  -c, --stream-all-color=color=red|green|blue,skip=<skip>,perc=<percentage>\n");
+	printf("                     For all formats stream <skip + 1> frames and check if\n");
+	printf("                     the last frame has at least <perc> percent of the pixels with\n");
+	printf("                     a <color> component that is higher than the other two color\n");
+	printf("                     components. This requires that a valid red, green or blue video\n");
+	printf("                     signal is present on the input(s). If <skip> is not specified,\n");
+	printf("                     then just capture the first frame. If <perc> is not specified,\n");
+	printf("                     then this defaults to 90%%.\n");
+	printf("  -h, --help         Display this help message.\n");
+	printf("  -n, --no-warnings  Turn off warning messages.\n");
+	printf("  -T, --trace        Trace all called ioctls.\n");
+	printf("  -v, --verbose      Turn on verbose reporting.\n");
 #ifndef NO_LIBV4L2
-	printf("  -w, --wrapper      use the libv4l2 wrapper library.\n");
+	printf("  -w, --wrapper      Use the libv4l2 wrapper library.\n");
 #endif
 	exit(0);
 }
@@ -595,7 +616,6 @@ static void streamingSetup(struct node *node)
 		doioctl(node, VIDIOC_G_INPUT, &input.index);
 		doioctl(node, VIDIOC_ENUMINPUT, &input);
 		node->cur_io_caps = input.capabilities;
-		printf("\tStream from input %d:\n", input.index);
 	} else if (node->can_output) {
 		struct v4l2_output output;
 
@@ -603,8 +623,23 @@ static void streamingSetup(struct node *node)
 		doioctl(node, VIDIOC_G_OUTPUT, &output.index);
 		doioctl(node, VIDIOC_ENUMOUTPUT, &output);
 		node->cur_io_caps = output.capabilities;
-		printf("\tStream to output %d:\n", output.index);
 	}
+}
+
+static int parse_subopt(char **subs, const char * const *subopts, char **value)
+{
+	int opt = getsubopt(subs, (char * const *)subopts, value);
+
+	if (opt == -1) {
+		fprintf(stderr, "Invalid suboptions specified\n");
+		return -1;
+	}
+	if (*value == NULL) {
+		fprintf(stderr, "No value given to suboption <%s>\n",
+				subopts[opt]);
+		return -1;
+	}
+	return opt;
 }
 
 int main(int argc, char **argv)
@@ -632,6 +667,7 @@ int main(int argc, char **argv)
 	struct v4l2_capability vcap;		/* list_cap */
 	unsigned frame_count = 60;
 	char short_options[26 * 2 * 3 + 1];
+	char *value, *subs;
 	int idx = 0;
 
 	for (i = 0; long_options[i].name; i++) {
@@ -707,6 +743,45 @@ int main(int argc, char **argv)
 		case OptStreaming:
 			if (optarg)
 				frame_count = strtoul(optarg, NULL, 0);
+			break;
+		case OptStreamAllColorTest:
+			subs = optarg;
+			while (*subs != '\0') {
+				static const char *const subopts[] = {
+					"color",
+					"skip",
+					"perc",
+					NULL
+				};
+
+				switch (parse_subopt(&subs, subopts, &value)) {
+				case 0:
+					if (!strcmp(value, "red"))
+						color_component = 0;
+					else if (!strcmp(value, "green"))
+						color_component = 1;
+					else if (!strcmp(value, "blue"))
+						color_component = 2;
+					else {
+						usage();
+						exit(1);
+					}
+					break;
+				case 1:
+					color_skip = strtoul(value, 0L, 0);
+					break;
+				case 2:
+					color_perc = strtoul(value, 0L, 0);
+					if (color_perc == 0)
+						color_perc = 90;
+					if (color_perc > 100)
+						color_perc = 100;
+					break;
+				default:
+					usage();
+					exit(1);
+				}
+			}
 			break;
 		case OptNoWarnings:
 			show_warnings = false;
@@ -1089,6 +1164,18 @@ int main(int argc, char **argv)
 			} else {
 				streamingSetup(&node);
 				streamAllFormats(&node);
+			}
+		}
+
+		if (node.is_video && node.can_capture && options[OptStreamAllColorTest]) {
+			printf("Stream using all formats and do a color check:\n");
+
+			if (node.is_m2m) {
+				printf("\tNot supported for M2M devices\n");
+			} else {
+				streamingSetup(&node);
+				testColorsAllFormats(&node, color_component,
+						     color_skip, color_perc);
 			}
 		}
 	}

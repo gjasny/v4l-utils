@@ -71,7 +71,7 @@ enum QueryBufMode {
 typedef std::map<struct timeval, struct v4l2_buffer> buf_info_map;
 static buf_info_map buffer_info;
 
-static std::string pixfmt2s(unsigned id)
+std::string pixfmt2s(unsigned id)
 {
 	std::string pixfmt;
 
@@ -1197,7 +1197,7 @@ static void restoreCropCompose(struct node *node, __u32 field,
 	}
 }
 
-static int restoreFormat(struct node *node)
+int restoreFormat(struct node *node)
 {
 	cv4l_fmt fmt;
 	unsigned h;
