@@ -52,6 +52,7 @@ AC_CONFIG_FILES([Makefile
 	utils/media-ctl/libv4l2subdev.pc
 
 	utils/qv4l2/qv4l2.1
+	utils/v4l2-compliance/v4l2-compliance.1
 	utils/keytable/ir-keytable.1
 	utils/dvb/dvb-fe-tool.1
 	utils/dvb/dvbv5-scan.1

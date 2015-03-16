@@ -1,0 +1,138 @@
+.TH "V4L2-COMPLIANCE" "1" "March 2015" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.SH NAME
+v4l2-compliance - An application to test video4linux drivers
+.SH SYNOPSIS
+.B v4l2-compliance
+[\fI-h\fR] [\fI-d <dev>\fR] [\fI-r <dev>\fR] [\fI-V <dev>\fR] [\fI-S <dev>\fR] [\fI-e <dev>\fR]
+[\fI-s <count>\fR] [\fI-f\fR] [\fI-a\fR] [\fI-c color=<color>,skip=<skip>,perc=<perc>\fR]
+[\fI-n\fR] [\fI-T\fR] [\fI-v\fR] [\fI-w\fR]
+.SH DESCRIPTION
+The v4l2-compliance tool is used to test video4linux devices, either video, vbi, radio
+or swradio, both input and output. It attempts to test almost all aspects of a V4L2 device
+and it covers almost all V4L2 ioctls. It has very good support for video capture and output,
+VBI capture and output and (software) radio tuning and transmitting.
+
+The support for memory-to-memory devices is limited at the moment.
+
+If you have questions about v4l2-compliance then mail those to the linux-media@vger.kernel.org
+mailinglist.
+
+When testing a driver always compile the utility from the latest source code from the
+git repository (http://git.linuxtv.org/cgit.cgi/v4l-utils.git/). The version supplied
+by linux distributions is almost certainly too old.
+
+In addition, if a test fails then it will output the source and line where the failure
+occured, so you often need access to the source code to see what that test is all about.
+
+Note that v4l2-compliance not only tests for compliance against the V4L2 API, but also
+whether the driver is using all the correct frameworks. These frameworks often automatically
+provide ioctls that are strictly speaking optional, but that come for free if you use
+those frameworks. By requiring their presence the v4l2-compliance utility will enforce
+their use.
+
+If you want to submit a new V4L2 driver, then that driver must pass the v4l2-compliance
+tests without fails. The best method of using this tool to test your driver is to first
+test without any streaming options and fix any failures from the first reported failure
+to the last. Sometimes earlier failures can generate later failures, so just start fixing
+them in order and test again after each fix.
+
+Next test your driver with the \fB\-s\fR option to do the basic streaming tests. This
+requires that there is a valid input or output.
+
+Whenever you run v4l2-compliance it will save the current driver state and restore it
+after all tests are done (including when you press Ctrl-C). All the streaming tests are
+performed using the saved configuration. This makes it possible to prepare for the streaming
+tests by configuring the device before calling v4l2-compliance.
+
+Finally you should test your driver using the \fB\-f\fR and \fB\-c\fR options to
+verify that all video pixel formats are correctly supported. You need to perform
+all three streaming tests for all inputs and outputs. You can use the \fB\-a\fR option
+to automate that if that is possible for your hardware.
+
+If your driver passes all tests, then your can be confident that your driver is in
+very good shape!
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
+Use device <dev> as the video device. If <dev> is a number, then /dev/video<dev> is used.
+.TP
+\fB\-V\fR, \fB\-\-vbi-device\fR=\fI<dev>\fR
+Use device <dev> as the vbi device. If <dev> is a number, then /dev/vbi<dev> is used.
+.TP
+\fB\-r\fR, \fB\-\-radio-device\fR=\fI<dev>\fR
+Use device <dev> as the radio device. If <dev> is a number, then /dev/radio<dev> is used.
+.TP
+\fB\-S\fR, \fB\-\-sdr-device\fR=\fI<dev>\fR
+Use device <dev> as the SDR device. If <dev> is a number, then /dev/swradio<dev> is used.
+.TP
+\fB\-e\fR, \fB\-\-exp-buf-device\fR=\fI<dev>\fR
+Use device <dev> as the video device used to export DMABUFfers for doing DMABUF
+streaming tests. If <dev> is a number, then /dev/video<dev> is used. If this option
+is not specified, then the DMABUF streaming tests will be skipped.
+.TP
+\fB\-s\fR, \fB\-\-streaming\fR=\fI<count>\fR
+Enable the streaming tests. Set <count> to the number of frames to stream (default 60).
+This requires that before v4l2-compliance is called the device has been configured with
+a valid input (or output) and frequency (when the device has a tuner). For DMABUF testing
+--expbuf-device needs to be set as well.
+
+The configuration of the driver at the time v4l2-compliance was called
+will be used for the streaming tests.
+.TP
+\fB\-f\fR, \fB\-\-stream-all-formats\fR
+Test whether all available formats can be streamed. This attempts to stream using
+MMAP mode or read/write (if V4L2_MEMORY_MMAP is not available) for one second for all
+formats, at all sizes, at all intervals and with all field values. In addition, if the
+driver supports scaling, cropping or composing it will test that as well in various
+combinations. If the driver supports a lot of combinations then this test can take
+a long time.
+
+The configuration of the driver at the time v4l2-compliance was called
+will be used for the streaming tests.
+.TP
+\fB\-c\fR, \fB\-\-stream-all-color\fR=\fBcolor\fR=\fIred|green|blue\fR,\fBskip\fR=\fI<skip>\fR,\fBperc\fR=\fI<perc>\fR
+For all supported, non-compressed formats stream <skip + 1> frames. For the
+last frame go over all pixels and calculate which of the R, G and B color components
+of a pixel has the highest value and count that as a red, green or blue pixel.
+The test succeeds if at least \fIperc\fR percent of the frame has the given \fIcolor\fR.
+This requires that a valid and predominantly red, green or blue video signal is present
+on the input(s). If \fIskip\fR is not specified, then just capture the first frame. A
+non-zero \fIskip\fR value is useful if it takes a few frames for the device to
+calibrate. If \fIperc\fR is not specified, then this defaults to 90%.
+
+Most signal generators are able to generate pure red, blue or green video. For cameras
+you can print a completely red, green or blue picture and hold it before the camera.
+
+The goal of this test is to determine if all pixel formats will interpret the red,
+green and blue colors correctly and that no color components are swapped.
+
+The configuration of the driver at the time v4l2-compliance was called
+will be used for the streaming tests.
+.TP
+\fB\-a\fR, \fB\-\-stream-all-io\fR
+Do the \fB\-s\fR, \fB\-c\fR and \fB\-f\fR streaming tests for all inputs or outputs
+instead of just the current input or output. This requires that a valid video
+signal is present on all inputs or that all outputs are hooked up.
+.TP
+\fB\-n\fR, \fB\-\-no-warnings\fR
+Turn off warning messages. They are still counted in the summary, but you won't see them.
+.TP
+\fB\-T\fR, \fB\-\-trace\fR
+Trace all called ioctls.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Turn on verbose reporting.
+.TP
+\fB\-w\fR, \fB\-\-wrapper\fR
+Use the libv4l2 wrapper library for all V4L2 device accesses. Note that doing this will
+cause some tests to fail because the libv4l2 library isn't fully V4L2 compliant. By
+default v4l2-compliance will bypass libv4l2 and access the V4L2 devices directly.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Prints the help message.
+.SH EXIT STATUS
+On success, it returns 0. Otherwise, it will return the error code.
+.SH BUGS
+This is a work in progress, and every so often it turns out that some tests done by
+v4l2-compliance are too strict or plain wrong. If you suspect that might be the case,
+then report such bugs to the linux-media@vger.kernel.org mailinglist.
