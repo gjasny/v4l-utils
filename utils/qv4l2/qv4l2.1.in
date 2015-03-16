@@ -1,12 +1,13 @@
-.TH "QV4L2" "1" "August 2013" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.TH "QV4L2" "1" "March 2015" "v4l-utils @PACKAGE_VERSION@" "User Commands"
 .SH NAME
 qv4l2 - A test bench application for video4linux devices
 .SH SYNOPSIS
 .B qv4l2
-[\fI-R\fR] [\fI-h\fR] [\fI-d <dev>\fR] [\fI-r <dev>\fR] [\fI-V <dev>\fR]
+[\fI-R\fR] [\fI-h\fR] [\fI-d <dev>\fR] [\fI-r <dev>\fR] [\fI-V <dev>\fR] [\fI-S <dev>\fR]
 .SH DESCRIPTION
-The qv4l2 tool is used to test video4linux capture devices, either video, vbi or radio.
-This application can also serve as a generic video/TV viewer application.
+The qv4l2 tool is used to test video4linux capture and output devices, either video, vbi,
+radio or swradio. This application can also serve as a generic video/TV viewer application
+or as a video generator for video output devices.
 .PP
 However, it does not (yet) support compressed video streams other than MJPEG
 .SH OPTIONS

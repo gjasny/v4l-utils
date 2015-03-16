@@ -1638,7 +1638,7 @@ ApplicationWindow *g_mw;
 static void usage()
 {
 	printf("  Usage:\n"
-	       "  qv4l2 [-R] [-h] [-d <dev>] [-r <dev>] [-V <dev>]\n"
+	       "  qv4l2 [-R] [-h] [-d <dev>] [-r <dev>] [-V <dev>] [-S <dev>]\n"
 	       "\n  -d, --device=<dev> use device <dev> as the video device\n"
 	       "                     if <dev> is a number, then /dev/video<dev> is used\n"
 	       "  -V, --vbi-device=<dev> use device <dev> as the vbi device\n"
