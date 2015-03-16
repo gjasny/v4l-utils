@@ -311,7 +311,7 @@ static void storeState(struct node *node)
 		node->enum_input(state.input, true, input);
 		if (state.input.audioset)
 			node->g_audio(state.ainput);
-		if (state.input.type == V4L2_INPUT_TYPE_TUNER) {
+		if (node->g_caps() & V4L2_CAP_TUNER) {
 			node->g_tuner(state.tuner, state.input.tuner);
 			node->g_frequency(state.freq, state.input.tuner);
 		}
@@ -324,7 +324,7 @@ static void storeState(struct node *node)
 		node->enum_output(state.output, true, output);
 		if (state.output.audioset)
 			node->g_audout(state.aoutput);
-		if (state.output.type == V4L2_OUTPUT_TYPE_MODULATOR) {
+		if (node->g_caps() & V4L2_CAP_MODULATOR) {
 			node->g_modulator(state.modulator, state.output.modulator);
 			node->g_frequency(state.freq, state.output.modulator);
 		}
@@ -390,7 +390,7 @@ static void restoreState()
 		node->s_input(state.input.index);
 		if (state.input.audioset)
 			node->s_audio(state.ainput.index);
-		if (state.input.type == V4L2_INPUT_TYPE_TUNER) {
+		if (node->g_caps() & V4L2_CAP_TUNER) {
 			node->s_tuner(state.tuner);
 			node->s_frequency(state.freq);
 		}
@@ -400,7 +400,7 @@ static void restoreState()
 		node->s_output(state.output.index);
 		if (state.output.audioset)
 		node->s_audout(state.aoutput.index);
-		if (state.output.type == V4L2_OUTPUT_TYPE_MODULATOR) {
+		if (node->g_caps() & V4L2_CAP_MODULATOR) {
 			node->s_modulator(state.modulator);
 			node->s_frequency(state.freq);
 		}
