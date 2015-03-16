@@ -467,7 +467,7 @@ static int testColorsFmt(struct node *node, unsigned component,
 		 * 50 Hz (PAL/SECAM) formats have a garbage first half-line,
 		 * so skip that.
 		 */
-		for (unsigned x = (h == 0 && is_50hz) ? w / 2 : 0; x < w; x++) {
+		for (unsigned x = (y == 0 && is_50hz) ? w / 2 : 0; x < w; x++) {
 			color c = { 0, 0, 0, 0 };
 
 			getColor(fmt, planes, y, x, c);
