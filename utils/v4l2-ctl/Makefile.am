@@ -1,4 +1,5 @@
 bin_PROGRAMS = cx18-ctl ivtv-ctl v4l2-ctl
+man_MANS = v4l2-ctl.1
 
 cx18_ctl_SOURCES = cx18-ctl.c
 
@@ -12,4 +13,4 @@ v4l2_ctl_SOURCES = v4l2-ctl.cpp v4l2-ctl.h v4l2-ctl-common.cpp v4l2-ctl-tuner.cp
 v4l2_ctl_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
 v4l2_ctl_LDFLAGS = -lrt
 
-EXTRA_DIST = Android.mk vivid-tpg.h.patch
+EXTRA_DIST = Android.mk vivid-tpg.h.patch v4l2-ctl.1
