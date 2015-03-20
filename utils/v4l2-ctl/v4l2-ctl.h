@@ -347,4 +347,12 @@ void edid_cmd(int ch, char *optarg);
 void edid_set(int fd);
 void edid_get(int fd);
 
+/* v4l2-ctl-modes.cpp */
+bool calc_cvt_modeline(int image_width, int image_height,
+		       int refresh_rate, bool reduced_blanking,
+		       bool interlaced, struct v4l2_bt_timings *cvt);
+
+bool calc_gtf_modeline(int image_width, int image_height,
+		       int refresh_rate, bool reduced_blanking,
+		       bool interlaced, struct v4l2_bt_timings *gtf);
 #endif
