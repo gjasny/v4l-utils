@@ -502,8 +502,7 @@ int testColorsAllFormats(struct node *node, unsigned component,
 	if (node->enum_fmt(fmtdesc, true))
 		return 0;
 	do {
-		if ((fmtdesc.flags & V4L2_FMT_FLAG_COMPRESSED) &&
-		    (node->g_direct() || fmtdesc.pixelformat != V4L2_PIX_FMT_MJPEG))
+		if (fmtdesc.flags & V4L2_FMT_FLAG_COMPRESSED)
 			continue;
 		if (fmtdesc.pixelformat == V4L2_PIX_FMT_GREY)
 			continue;
