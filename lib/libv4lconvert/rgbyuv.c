@@ -591,6 +591,9 @@ void v4lconvert_y16_to_rgb24(const unsigned char *src, unsigned char *dest,
 		int width, int height)
 {
 	int j;
+
+	src++; /*Y16 is little endian*/
+
 	while (--height >= 0) {
 		for (j = 0; j < width; j++) {
 			*dest++ = *src;
@@ -605,6 +608,8 @@ void v4lconvert_y16_to_yuv420(const unsigned char *src, unsigned char *dest,
 		const struct v4l2_format *src_fmt)
 {
 	int x, y;
+
+	src++; /*Y16 is little endian*/
 
 	/* Y */
 	for (y = 0; y < src_fmt->fmt.pix.height; y++)
