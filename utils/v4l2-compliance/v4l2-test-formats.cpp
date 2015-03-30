@@ -1228,15 +1228,21 @@ static int testLegacyCrop(struct node *node)
 		node->g_selection_type()
 	};
 
-	sel.target = node->can_capture ? V4L2_SEL_TGT_CROP : V4L2_SEL_TGT_COMPOSE;
+	sel.target = node->can_capture ? V4L2_SEL_TGT_CROP_DEFAULT :
+					 V4L2_SEL_TGT_COMPOSE_DEFAULT;
 	/*
 	 * If either CROPCAP or G_CROP works, then G_SELECTION should
 	 * work as well.
 	 * If neither CROPCAP nor G_CROP work, then G_SELECTION shouldn't
 	 * work either.
 	 */
-	if (!doioctl(node, VIDIOC_CROPCAP, &cap) ||
-	    !doioctl(node, VIDIOC_G_CROP, &crop))
+	if (!doioctl(node, VIDIOC_CROPCAP, &cap))
+		fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel));
+	else
+		fail_on_test(!doioctl(node, VIDIOC_G_SELECTION, &sel));
+	sel.target = node->can_capture ? V4L2_SEL_TGT_CROP :
+					 V4L2_SEL_TGT_COMPOSE;
+	if (!doioctl(node, VIDIOC_G_CROP, &crop))
 		fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel));
 	else
 		fail_on_test(!doioctl(node, VIDIOC_G_SELECTION, &sel));
