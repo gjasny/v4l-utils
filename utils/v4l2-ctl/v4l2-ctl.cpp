@@ -327,15 +327,12 @@ std::string fcc2s(unsigned int val)
 {
 	std::string s;
 
-	if (val & (1 << 31)) {
-		val &= ~(1 << 31);
-		/* marks a big-endian format */
-		s += "BE-";
-	}
-	s += val & 0xff;
-	s += (val >> 8) & 0xff;
-	s += (val >> 16) & 0xff;
-	s += (val >> 24) & 0xff;
+	s += val & 0x7f;
+	s += (val >> 8) & 0x7f;
+	s += (val >> 16) & 0x7f;
+	s += (val >> 24) & 0x7f;
+	if (val & (1 << 31))
+		s += "-BE";
 	return s;
 }
 
@@ -845,9 +842,9 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			fmts |= FmtHeight;
 			break;
 		case 2:
-			be_pixfmt = strlen(value) == 7 && !memcmp(value, "BE-", 3);
-			if(be_pixfmt)
-				value += 3;
+			be_pixfmt = strlen(value) == 7 && !memcmp(value + 4, "-BE", 3);
+			if (be_pixfmt)
+				value[4] = 0;
 			if (strlen(value) == 4) {
 				pixelformat =
 					v4l2_fourcc(value[0], value[1],

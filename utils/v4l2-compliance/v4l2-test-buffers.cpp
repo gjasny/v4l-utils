@@ -75,14 +75,12 @@ std::string pixfmt2s(unsigned id)
 {
 	std::string pixfmt;
 
-	if (id & (1 << 31)) {
-		id &= ~(1 << 31);
-		pixfmt += "BE-";
-	}
-	pixfmt += (char)(id & 0xff);
-	pixfmt += (char)((id >> 8) & 0xff);
-	pixfmt += (char)((id >> 16) & 0xff);
-	pixfmt += (char)((id >> 24) & 0xff);
+	pixfmt += (char)(id & 0x7f);
+	pixfmt += (char)((id >> 8) & 0x7f);
+	pixfmt += (char)((id >> 16) & 0x7f);
+	pixfmt += (char)((id >> 24) & 0x7f);
+	if (id & (1 << 31))
+		pixfmt += "-BE";
 	return pixfmt;
 }
 
