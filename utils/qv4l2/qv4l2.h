@@ -234,6 +234,7 @@ private:
 	struct tpg_data m_tpg;
 	v4l2_std_id m_tpgStd;
 	unsigned m_tpgField;
+	bool m_tpgFieldAlt;
 	unsigned m_tpgSizeImage;
 	unsigned m_tpgColorspace;
 	unsigned m_tpgYCbCrEnc;

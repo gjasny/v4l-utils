@@ -508,7 +508,7 @@ bool ApplicationWindow::startStreaming()
 
 				m_queue.buffer_init(buf, i);
 				buf.s_field(m_tpgField);
-				tpg_s_field(&m_tpg, m_tpgField);
+				tpg_s_field(&m_tpg, m_tpgField, m_tpgFieldAlt);
 				if (m_tpgField == V4L2_FIELD_TOP)
 					m_tpgField = V4L2_FIELD_BOTTOM;
 				else if (m_tpgField == V4L2_FIELD_BOTTOM)
@@ -775,7 +775,7 @@ void ApplicationWindow::outFrame()
 		}
 		m_queue.buffer_init(buf, buf.g_index());
 		buf.s_field(m_tpgField);
-		tpg_s_field(&m_tpg, m_tpgField);
+		tpg_s_field(&m_tpg, m_tpgField, m_tpgFieldAlt);
 		if (m_tpgField == V4L2_FIELD_TOP)
 			m_tpgField = V4L2_FIELD_BOTTOM;
 		else if (m_tpgField == V4L2_FIELD_BOTTOM)
@@ -1141,6 +1141,7 @@ void ApplicationWindow::outStart(bool start)
 		else
 			m_tpgStd = 0;
 		m_tpgField = fmt.g_first_field(m_tpgStd);
+		m_tpgFieldAlt = fmt.g_field() == V4L2_FIELD_ALTERNATE;
 		m_tpgSizeImage = fmt.g_sizeimage(0);
 		tpg_alloc(&m_tpg, fmt.g_width());
 		m_useTpg = tpg_s_fourcc(&m_tpg, fmt.g_pixelformat());
