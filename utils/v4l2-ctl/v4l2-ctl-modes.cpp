@@ -139,7 +139,6 @@ bool calc_cvt_modeline(int image_width, int image_height,
 	int active_h_pixel;
 	int active_v_lines;
 	int total_h_pixel;
-	int total_v_lines;
 
 	int h_blank;
 	int v_blank;
@@ -223,7 +222,6 @@ bool calc_cvt_modeline(int image_width, int image_height,
 
 		v_blank = v_sync_bp + CVT_MIN_V_PORCH_RND;
 
-		total_v_lines = active_v_lines + v_blank + interlace;
 		total_h_pixel = active_h_pixel + h_blank;
 
 		h_sync  = (total_h_pixel * CVT_HSYNC_PERCENT) / 100;
@@ -249,8 +247,6 @@ bool calc_cvt_modeline(int image_width, int image_height,
 
 		if (vbi_lines < (CVT_RB_V_FPORCH + v_sync + CVT_MIN_V_BPORCH))
 			vbi_lines = CVT_RB_V_FPORCH + v_sync + CVT_MIN_V_BPORCH;
-
-		total_v_lines = active_v_lines + vbi_lines;
 
 		total_h_pixel = active_h_pixel + CVT_RB_H_BLANK;
 
