@@ -16,7 +16,11 @@
 # Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
+#ifdef ANDROID
+#include <android-config.h>
+#else
 #include <config.h>
+#endif
 #include <errno.h>
 #include <stdlib.h>
 #include "libv4lconvert-priv.h"

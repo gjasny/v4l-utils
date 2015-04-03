@@ -16,7 +16,11 @@
 
 /* this is not a core library module, so it doesn't define JPEG_INTERNALS */
 
+#ifdef ANDROID
+#include <android-config.h>
+#else
 #include <config.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 

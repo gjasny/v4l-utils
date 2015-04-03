@@ -23,7 +23,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef ANDROID
+#include <android-config.h>
+#else
 #include <config.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 

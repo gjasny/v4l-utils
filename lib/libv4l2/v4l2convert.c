@@ -25,7 +25,11 @@
 
 #define _LARGEFILE64_SOURCE 1
 
+#ifdef ANDROID
+#include <android-config.h>
+#else
 #include <config.h>
+#endif
 #include <stdarg.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -111,6 +115,7 @@ LIBV4L_PUBLIC int open64(const char *file, int oflag, ...)
 }
 #endif
 
+#ifndef ANDROID
 LIBV4L_PUBLIC int close(int fd)
 {
 	return v4l2_close(fd);
@@ -156,4 +161,4 @@ LIBV4L_PUBLIC int munmap(void *start, size_t length)
 {
 	return v4l2_munmap(start, length);
 }
-
+#endif

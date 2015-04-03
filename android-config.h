@@ -1,3 +1,5 @@
+#ifndef __V4L_ANDROID_CONFIG_H__
+#define __V4L_ANDROID_CONFIG_H__
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
@@ -358,3 +360,4 @@ getsubopt (char **optionp, char *const *tokens, char **valuep)
 
   return -1;
 }
+#endif

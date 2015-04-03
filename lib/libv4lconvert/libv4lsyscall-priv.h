@@ -36,7 +36,7 @@
 
 #ifdef linux
 #include <sys/time.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <linux/types.h>
 #include <linux/ioctl.h>
 /* On 32 bits archs we always use mmap2, on 64 bits archs there is no mmap2 */
@@ -59,6 +59,10 @@
 #define	_IOC_SIZE(cmd) IOCPARM_LEN(cmd)
 #define	MAP_ANONYMOUS MAP_ANON
 #define	MMAP2_PAGE_SHIFT 0
+typedef off_t __off_t;
+#endif
+
+#if defined(ANDROID)
 typedef off_t __off_t;
 #endif
 

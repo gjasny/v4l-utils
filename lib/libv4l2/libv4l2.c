@@ -55,7 +55,11 @@
    When modifications are made, one should be careful that this behavior is
    preserved.
  */
+#ifdef ANDROID
+#include <android-config.h>
+#else
 #include <config.h>
+#endif
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
