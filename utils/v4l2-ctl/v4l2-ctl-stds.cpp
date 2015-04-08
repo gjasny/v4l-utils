@@ -348,6 +348,7 @@ static const flag_def dv_flags_def[] = {
 	{ V4L2_DV_FL_CAN_REDUCE_FPS, "framerate can be reduced by 1/1.001" },
 	{ V4L2_DV_FL_REDUCED_FPS, "framerate is reduced by 1/1.001" },
 	{ V4L2_DV_FL_HALF_LINE, "half-line" },
+	{ V4L2_DV_FL_IS_CE_VIDEO, "CE-video" },
 	{ 0, NULL }
 };
 

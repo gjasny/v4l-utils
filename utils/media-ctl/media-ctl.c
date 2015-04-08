@@ -161,6 +161,7 @@ static const struct flag_name bt_flags[] = {
 	{ V4L2_DV_FL_CAN_REDUCE_FPS, "can-reduce-fps" },
 	{ V4L2_DV_FL_REDUCED_FPS, "reduced-fps" },
 	{ V4L2_DV_FL_HALF_LINE, "half-line" },
+	{ V4L2_DV_FL_IS_CE_VIDEO, "CE-video" },
 };
 
 static void v4l2_subdev_print_dv_timings(const struct v4l2_dv_timings *timings,
