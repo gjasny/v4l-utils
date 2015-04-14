@@ -171,9 +171,12 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	dtv_prop.props = parms->dvb_prop;
 
 	/* Detect a DVBv3 device */
-	if (ioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1) {
+	while (ioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1) {
+		if (errno == EAGAIN)
+			continue;
 		parms->dvb_prop[0].u.data = 0x300;
 		parms->dvb_prop[1].u.data = SYS_UNDEFINED;
+		break;
 	}
 	parms->p.version = parms->dvb_prop[0].u.data;
 	parms->p.current_sys = parms->dvb_prop[1].u.data;
@@ -1336,8 +1339,11 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *p)
 		props.props = parms->stats.prop;
 
 		/* Do a DVBv5.10 stats call */
-		if (ioctl(parms->fd, FE_GET_PROPERTY, &props) == -1)
+		if (ioctl(parms->fd, FE_GET_PROPERTY, &props) == -1) {
+			if (errno == EAGAIN)
+				return 0;
 			goto dvbv3_fallback;
+		}
 
 		/*
 		 * All props with len=0 mean that this device doesn't have any
