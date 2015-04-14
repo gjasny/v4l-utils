@@ -366,6 +366,9 @@ void dvb_scan_free_handler_table(struct dvb_v5_descriptors *dvb_scan_handler)
 {
 	int i;
 
+	if (!dvb_scan_handler)
+		return;
+
 	if (dvb_scan_handler->pat)
 		dvb_table_pat_free(dvb_scan_handler->pat);
 	if (dvb_scan_handler->vct)
