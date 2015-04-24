@@ -631,7 +631,8 @@ void ApplicationWindow::capVbiFrame()
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
 	if (showFrames() && g_type() == V4L2_BUF_TYPE_VBI_CAPTURE)
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL);
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(),
+				    NULL, NULL);
 
 	curStatus = statusBar()->currentMessage();
 	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
@@ -735,7 +736,8 @@ void ApplicationWindow::capSdrFrame()
 	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
 	if (showFrames())
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL);
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(),
+				    NULL, NULL);
 
 	curStatus = statusBar()->currentMessage();
 	if (curStatus.isEmpty() || curStatus.startsWith("Frame: "))
@@ -822,8 +824,8 @@ void ApplicationWindow::outFrame()
 void ApplicationWindow::capFrame()
 {
 	cv4l_buffer buf(m_queue);
-	unsigned char *plane[2];
-	unsigned bytesused[2];
+	unsigned char *plane[3];
+	unsigned bytesused[3];
 	int s = 0;
 	int err = 0;
 #ifdef HAVE_ALSA
@@ -833,7 +835,7 @@ void ApplicationWindow::capFrame()
 	if (m_singleStep)
 		m_capNotifier->setEnabled(false);
 
-	plane[0] = plane[1] = NULL;
+	plane[0] = plane[1] = plane[2] = NULL;
 	switch (m_capMethod) {
 	case methodRead:
 		s = read(m_frameData, m_capSrcFormat.g_sizeimage(0));
@@ -884,11 +886,16 @@ void ApplicationWindow::capFrame()
 
 		plane[0] = (__u8 *)m_queue.g_dataptr(buf.g_index(), 0);
 		plane[1] = (__u8 *)m_queue.g_dataptr(buf.g_index(), 1);
+		plane[2] = (__u8 *)m_queue.g_dataptr(buf.g_index(), 2);
 		plane[0] += buf.g_data_offset(0);
 		bytesused[0] = buf.g_bytesused(0) - buf.g_data_offset(0);
 		if (plane[1]) {
 			plane[1] += buf.g_data_offset(1);
 			bytesused[1] = buf.g_bytesused(1) - buf.g_data_offset(1);
+		}
+		if (plane[2]) {
+			plane[2] += buf.g_data_offset(2);
+			bytesused[2] = buf.g_bytesused(2) - buf.g_data_offset(2);
 		}
 		if (showFrames() && m_mustConvert) {
 			err = v4lconvert_convert(m_convertData, &m_capSrcFormat, &m_capDestFormat,
@@ -943,13 +950,17 @@ void ApplicationWindow::capFrame()
 
 	if (showFrames())
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.g_pixelformat(), plane[0], plane[1]);
+				    m_capDestFormat.g_pixelformat(),
+				    plane[0], plane[1], plane[2]);
 
 	if (m_capMethod == methodMmap || m_capMethod == methodUser) {
 		if (m_clear[buf.g_index()]) {
 			memset(m_queue.g_dataptr(buf.g_index(), 0), 0, buf.g_length());
-			if (V4L2_TYPE_IS_MULTIPLANAR(buf.g_type()))
+			if (V4L2_TYPE_IS_MULTIPLANAR(buf.g_type())) {
 				memset(m_queue.g_dataptr(buf.g_index(), 1), 0, buf.g_length(1));
+				if (m_queue.g_dataptr(buf.g_index(), 2))
+					memset(m_queue.g_dataptr(buf.g_index(), 2), 0, buf.g_length(2));
+			}
 			m_clear[buf.g_index()] = false;
 		}
 			
@@ -1313,7 +1324,7 @@ void ApplicationWindow::capStart(bool start)
 		m_capImage->fill(0);
 		m_capture->setWindowSize(QSize(m_vbiWidth, m_vbiHeight));
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL);
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, NULL);
 		if (showFrames())
 			m_capture->show();
 
@@ -1343,7 +1354,7 @@ void ApplicationWindow::capStart(bool start)
 		m_capImage->fill(0);
 		m_capture->setWindowSize(QSize(SDR_WIDTH, SDR_HEIGHT));
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL);
+				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(), NULL, NULL);
 		if (showFrames())
 			m_capture->show();
 
@@ -1410,6 +1421,7 @@ void ApplicationWindow::capStart(bool start)
 		break;
 	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_ABGR32:
+	case V4L2_PIX_FMT_YUV32:
 		dstFmt = QImage::Format_ARGB32;
 		break;
 	}
@@ -1428,7 +1440,7 @@ void ApplicationWindow::capStart(bool start)
 
 	m_capture->setWindowSize(QSize(width, height));
 	m_capture->setFrame(m_capImage->width(), m_capImage->height(),
-			    pixfmt, m_capImage->bits(), NULL);
+			    pixfmt, m_capImage->bits(), NULL, NULL);
 	m_capture->makeFullScreen(m_makeFullScreenAct->isChecked());
 	if (showFrames())
 		m_capture->show();

@@ -44,7 +44,7 @@ enum CropMethod {
 struct frame {
 	__u32 format;
 	QSize size;        // int   frameHeight; int   frameWidth;
-	unsigned char *planeData[2];
+	unsigned char *planeData[3];
 	bool updated;
 };
 
@@ -92,7 +92,7 @@ public:
 	 * @param info A string containing capture information.
 	 */
 	void setFrame(int width, int height, __u32 format,
-		      unsigned char *data, unsigned char *data2);
+		      unsigned char *data, unsigned char *data2, unsigned char *data3);
 
 	/**
 	 * @brief Called when the capture stream is stopped.

@@ -58,6 +58,7 @@ CaptureWin::CaptureWin(ApplicationWindow *aw) :
 	m_frame.size.setHeight(0);
 	m_frame.planeData[0] = NULL;
 	m_frame.planeData[1] = NULL;
+	m_frame.planeData[2] = NULL;
 	m_crop.delta.setWidth(0);
 	m_crop.delta.setHeight(0);
 	m_crop.size.setWidth(0);
@@ -83,10 +84,11 @@ CaptureWin::~CaptureWin()
 }
 
 void CaptureWin::setFrame(int width, int height, __u32 format,
-			  unsigned char *data, unsigned char *data2)
+	  unsigned char *data, unsigned char *data2, unsigned char *data3)
 {
 	m_frame.planeData[0] = data;
 	m_frame.planeData[1] = data2;
+	m_frame.planeData[2] = data3;
 
 	m_frame.updated = false;
 	if (width != m_frame.size.width() || height != m_frame.size.height()

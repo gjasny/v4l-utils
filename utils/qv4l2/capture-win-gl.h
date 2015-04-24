@@ -43,7 +43,8 @@ public:
 
 	void stop();
 	void setFrame(int width, int height, int cropWidth, int cropHeight,
-		      __u32 format, unsigned char *data, unsigned char *data2);
+		      __u32 format, unsigned char *data, unsigned char *data2,
+		      unsigned char *data3);
 	bool hasNativeFormat(__u32 format);
 	void lockSize(QSize size);
 	void setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv);
@@ -59,10 +60,16 @@ protected:
 
 private:
 	// Colorspace conversion shaders
-	void shader_YUV();
-	void shader_NV16M(__u32 format);
-	QString shader_NV16M_invariant(__u32 format);
-	void shader_RGB();
+	void shader_YUV(__u32 format);
+	QString shader_NV12_invariant(__u32 format);
+	void shader_NV12(__u32 format);
+	void shader_NV16(__u32 format);
+	QString shader_NV16_invariant(__u32 format);
+	void shader_NV24(__u32 format);
+	QString shader_NV24_invariant(__u32 format);
+	void shader_RGB(__u32 format);
+	void shader_Bayer(__u32 format);
+	void shader_YUV_packed(__u32 format);
 	void shader_YUY2(__u32 format);
 	QString shader_YUY2_invariant(__u32 format);
 	QString codeYUVNormalize();
@@ -73,10 +80,14 @@ private:
 	QString codeTransformToNonLinear();
 
 	// Colorspace conversion render
-	void render_RGB();
-	void render_YUY2();
+	void render_RGB(__u32 format);
+	void render_Bayer(__u32 format);
+	void render_YUY2(__u32 format);
 	void render_YUV(__u32 format);
-	void render_NV16M(__u32 format);
+	void render_YUV_packed(__u32 format);
+	void render_NV12(__u32 format);
+	void render_NV16(__u32 format);
+	void render_NV24(__u32 format);
 
 	void clearShader();
 	void changeShader();
@@ -102,6 +113,7 @@ private:
 	QGLFunctions m_glfunction;
 	unsigned char *m_frameData;
 	unsigned char *m_frameData2;
+	unsigned char *m_frameData3;
 	QGLShaderProgram m_shaderProgram;
 	bool m_haveFramebufferSRGB;
 	bool m_blending;
