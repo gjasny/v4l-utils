@@ -513,8 +513,10 @@ bool ApplicationWindow::startStreaming()
 					m_tpgField = V4L2_FIELD_BOTTOM;
 				else if (m_tpgField == V4L2_FIELD_BOTTOM)
 					m_tpgField = V4L2_FIELD_TOP;
-				for (unsigned p = 0; p < m_queue.g_num_planes(); p++)
+				for (unsigned p = 0; p < m_queue.g_num_planes(); p++) {
 					tpg_fillbuffer(&m_tpg, m_tpgStd, p, (u8 *)m_queue.g_dataptr(i, p));
+					buf.s_bytesused(buf.g_length(p), p);
+				}
 				qbuf(buf); 
 				tpg_update_mv_count(&m_tpg, V4L2_FIELD_HAS_T_OR_B(m_tpgField));
 			}
@@ -782,8 +784,10 @@ void ApplicationWindow::outFrame()
 			m_tpgField = V4L2_FIELD_BOTTOM;
 		else if (m_tpgField == V4L2_FIELD_BOTTOM)
 			m_tpgField = V4L2_FIELD_TOP;
-		for (unsigned p = 0; p < m_queue.g_num_planes(); p++)
+		for (unsigned p = 0; p < m_queue.g_num_planes(); p++) {
 			tpg_fillbuffer(&m_tpg, m_tpgStd, p, (u8 *)m_queue.g_dataptr(buf.g_index(), p));
+			buf.s_bytesused(buf.g_length(p), p);
+		}
 		tpg_update_mv_count(&m_tpg, V4L2_FIELD_HAS_T_OR_B(m_tpgField));
 		break;
 	}
