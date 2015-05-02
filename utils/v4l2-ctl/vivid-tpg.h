@@ -24,6 +24,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
@@ -34,6 +35,7 @@ typedef __u8 u8;
 typedef __s8 s8;
 
 #define __packed __attribute__((packed))
+#define pr_info printf
 
 static inline void vfree(void *p)
 {
@@ -224,6 +226,7 @@ int tpg_alloc(struct tpg_data *tpg, unsigned max_w);
 void tpg_free(struct tpg_data *tpg);
 void tpg_reset_source(struct tpg_data *tpg, unsigned width, unsigned height,
 		       u32 field);
+void tpg_log_status(struct tpg_data *tpg);
 
 void tpg_set_font(const u8 *f);
 void tpg_gen_text(const struct tpg_data *tpg,
