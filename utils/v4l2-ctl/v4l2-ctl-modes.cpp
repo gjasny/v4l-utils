@@ -457,12 +457,13 @@ bool calc_gtf_modeline(int image_width, int image_height,
 
 	h_blank = active_h_pixel * ideal_blank_duty_cycle /
 			 (100 * HV_FACTOR - ideal_blank_duty_cycle);
-	h_blank -= h_blank % (2 * GTF_CELL_GRAN);
+	h_blank = ((h_blank + GTF_CELL_GRAN) / (2 * GTF_CELL_GRAN))
+			  * (2 * GTF_CELL_GRAN);
 
 	total_h_pixel = active_h_pixel + h_blank;
 
-	h_sync  = (total_h_pixel * GTF_HSYNC_PERCENT) / 100;
-	h_sync -= h_sync % GTF_CELL_GRAN;
+	h_sync = (total_h_pixel * GTF_HSYNC_PERCENT) / 100;
+	h_sync = ((h_sync + GTF_CELL_GRAN / 2) / GTF_CELL_GRAN) * GTF_CELL_GRAN;
 
 	h_fp = h_blank / 2 - h_sync;
 	h_bp = h_fp + h_sync;
