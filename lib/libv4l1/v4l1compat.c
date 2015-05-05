@@ -62,7 +62,7 @@ LIBV4L_PUBLIC int open(const char *file, int oflag, ...)
 	return fd;
 }
 
-#ifdef linux
+#if defined(linux) && defined(__GLIBC__)
 LIBV4L_PUBLIC int open64(const char *file, int oflag, ...)
 {
 	int fd;
@@ -117,7 +117,7 @@ LIBV4L_PUBLIC void *mmap(void *start, size_t length, int prot, int flags, int fd
 	return v4l1_mmap(start, length, prot, flags, fd, offset);
 }
 
-#ifdef linux
+#if defined(linux) && defined(__GLIBC__)
 LIBV4L_PUBLIC void *mmap64(void *start, size_t length, int prot, int flags, int fd,
 		__off64_t offset)
 {
