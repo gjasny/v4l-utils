@@ -126,7 +126,11 @@ LIBV4L_PUBLIC int dup(int fd)
 	return v4l2_dup(fd);
 }
 
+#ifdef HAVE_POSIX_IOCTL
+LIBV4L_PUBLIC int ioctl(int fd, int request, ...)
+#else
 LIBV4L_PUBLIC int ioctl(int fd, unsigned long int request, ...)
+#endif
 {
 	void *arg;
 	va_list ap;
