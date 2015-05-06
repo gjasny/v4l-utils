@@ -1,3 +1,20 @@
+v4l-utils-1.6.3
+---------------
+
+Gregor Jasny (2):
+      v4lconvert: Add ASUS A7Sn to upside down table
+      v4lconvert: Add ASUS A6R to upside down table
+
+Mauro Carvalho Chehab (4):
+      Synchronize with the Kernel
+      vivid-tpg.h.patch: update to match current upstream tree
+      sync-with-kernel: add include/linux/media.h
+      configure.ac: fix qv4l2 if QGLFunctions doesn't exist
+
+Ricardo Ribalda Delgado (1):
+      libv4lconvert: Fix support for Y16 pixel format
+
+
 v4l-utils-1.6.2
 ---------------
 
