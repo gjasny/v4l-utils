@@ -35,6 +35,9 @@ Force dvbv5\-scan to use DVBv3 only.
 \fB\-a\fR, \fB\-\-adapter\fR=\fIadapter#\fR
 Use the given adapter. Default value: 0.
 .TP
+\fB\-C\fR, \fB\-\-cc\fR=\fIcountry_code\fR
+Use the default parameters for the given country code.
+.TP
 \fB\-d\fR, \fB\-\-demux\fR=\fIdemux#\fR
 Use the given demux. Default value: 0.
 .TP
