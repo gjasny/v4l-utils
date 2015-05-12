@@ -1251,13 +1251,16 @@ static int testLegacyCrop(struct node *node)
 
 int testCropping(struct node *node)
 {
-	int ret = ENOTTY;
+	int ret_cap, ret_out;
+
+	ret_cap = ENOTTY;
+	ret_out = ENOTTY;
 
 	fail_on_test(testLegacyCrop(node));
 	if (node->can_capture && node->is_video)
-		ret = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_CAPTURE, V4L2_SEL_TGT_CROP);
+		ret_cap = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_CAPTURE, V4L2_SEL_TGT_CROP);
 	if (node->can_output && node->is_video)
-		ret = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_OUTPUT, V4L2_SEL_TGT_CROP);
+		ret_out = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_OUTPUT, V4L2_SEL_TGT_CROP);
 	if ((!node->can_capture && !node->can_output) || !node->is_video) {
 		struct v4l2_selection sel = {
 			V4L2_BUF_TYPE_VIDEO_CAPTURE,
@@ -1269,14 +1272,15 @@ int testCropping(struct node *node)
 		fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel) != ENOTTY);
 		fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel) != ENOTTY);
 	}
-	if (ret)
-		return ret;
+	if (ret_cap && ret_out)
+		return ret_cap;
 
-	if (node->can_capture)
+	if (!ret_cap)
 		fail_on_test(testBasicCrop(node, V4L2_BUF_TYPE_VIDEO_CAPTURE));
-	if (node->can_output)
+	if (!ret_out)
 		fail_on_test(testBasicCrop(node, V4L2_BUF_TYPE_VIDEO_OUTPUT));
-	return ret;
+
+	return 0;
 }
 
 static int testBasicCompose(struct node *node, unsigned type)
@@ -1321,12 +1325,15 @@ static int testBasicCompose(struct node *node, unsigned type)
 
 int testComposing(struct node *node)
 {
-	int ret = ENOTTY;
+	int ret_cap, ret_out;
+
+	ret_cap = ENOTTY;
+	ret_out = ENOTTY;
 
 	if (node->can_capture && node->is_video)
-		ret = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_CAPTURE, V4L2_SEL_TGT_COMPOSE);
+		ret_cap = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_CAPTURE, V4L2_SEL_TGT_COMPOSE);
 	if (node->can_output && node->is_video)
-		ret = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_OUTPUT, V4L2_SEL_TGT_COMPOSE);
+		ret_out = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_OUTPUT, V4L2_SEL_TGT_COMPOSE);
 	if ((!node->can_capture && !node->can_output) || !node->is_video) {
 		struct v4l2_selection sel = {
 			V4L2_BUF_TYPE_VIDEO_OUTPUT,
@@ -1338,14 +1345,15 @@ int testComposing(struct node *node)
 		fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel) != ENOTTY);
 		fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel) != ENOTTY);
 	}
-	if (ret)
-		return ret;
+	if (ret_cap && ret_out)
+		return ret_cap;
 
-	if (node->can_capture)
+	if (ret_cap)
 		fail_on_test(testBasicCompose(node, V4L2_BUF_TYPE_VIDEO_CAPTURE));
-	if (node->can_output)
+	if (ret_out)
 		fail_on_test(testBasicCompose(node, V4L2_BUF_TYPE_VIDEO_OUTPUT));
-	return ret;
+
+	return 0;
 }
 
 static int testBasicScaling(struct node *node, const struct v4l2_format &cur)
