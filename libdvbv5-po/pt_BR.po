@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libdvbv5 1.7.0\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
-"POT-Creation-Date: 2014-12-13 13:10-0200\n"
-"PO-Revision-Date: 2014-12-13 13:16-0300\n"
+"POT-Creation-Date: 2015-05-13 19:29-0300\n"
+"PO-Revision-Date: 2015-05-13 19:33-0300\n"
 "Last-Translator: Mauro Carvalho Chehab <mchehab@osg.samsung.com>\n"
 "Language-Team: Brazilian Portuguese\n"
 "Language: pt_BR\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.7.5\n"
 "X-Poedit-KeywordsList: _;N_\n"
 "X-Poedit-Basepath: ../\n"
 "X-Poedit-SourceCharset: UTF-8\n"
@@ -568,46 +568,46 @@ msgstr "dvb_read_section: erro de leitura"
 msgid "%s: crc error"
 msgstr "%s: erro de CRC"
 
-#: lib/libdvbv5/dvb-scan.c:459
+#: lib/libdvbv5/dvb-scan.c:462
 msgid "error while waiting for PAT table"
 msgstr "erro enquanto espera por tabela PAT"
 
-#: lib/libdvbv5/dvb-scan.c:475
+#: lib/libdvbv5/dvb-scan.c:478
 msgid "error while waiting for VCT table"
 msgstr "erro enquanto espera por tabela VCT"
 
-#: lib/libdvbv5/dvb-scan.c:489
+#: lib/libdvbv5/dvb-scan.c:492
 #, c-format
 msgid "Program #%d is network PID: 0x%04x"
 msgstr "Programa #%d é PID de rede: 0x%04x"
 
-#: lib/libdvbv5/dvb-scan.c:495
+#: lib/libdvbv5/dvb-scan.c:498
 #, c-format
 msgid "Program #%d ID 0x%04x, service ID 0x%04x"
 msgstr "Programa #%d ID 0x%04x, ID de serviço 0x%04x"
 
-#: lib/libdvbv5/dvb-scan.c:506
+#: lib/libdvbv5/dvb-scan.c:509
 #, c-format
 msgid "error while reading the PMT table for service 0x%04x"
 msgstr "erro ao ler tabela PMT para o serviço 0x%04x"
 
-#: lib/libdvbv5/dvb-scan.c:526 lib/libdvbv5/dvb-scan.c:555
+#: lib/libdvbv5/dvb-scan.c:529 lib/libdvbv5/dvb-scan.c:558
 msgid "error while reading the NIT table"
 msgstr "erro ao ler tabela de NIT"
 
-#: lib/libdvbv5/dvb-scan.c:539 lib/libdvbv5/dvb-scan.c:566
+#: lib/libdvbv5/dvb-scan.c:542 lib/libdvbv5/dvb-scan.c:569
 msgid "error while reading the SDT table"
 msgstr "erro ao ler tabela de SDT"
 
-#: lib/libdvbv5/dvb-scan.c:547
+#: lib/libdvbv5/dvb-scan.c:550
 msgid "Parsing other NIT/SDT"
 msgstr "Analisando outro NIT/SDT"
 
-#: lib/libdvbv5/dvb-scan.c:612
+#: lib/libdvbv5/dvb-scan.c:615
 msgid "dvb_fe_set_parms failed"
 msgstr "dvb_fe_set_parms falhou"
 
-#: lib/libdvbv5/dvb-scan.c:698
+#: lib/libdvbv5/dvb-scan.c:701
 msgid ""
 "Cannot calc frequency shift. Either bandwidth/symbol-rate is unavailable "
 "(yet)."
@@ -615,22 +615,22 @@ msgstr ""
 "Não é calcular deslocamento de frequência. Ou banda ou taxa de símbolo não "
 "está disponível (ainda)."
 
-#: lib/libdvbv5/dvb-scan.c:780
+#: lib/libdvbv5/dvb-scan.c:783
 msgid "not enough memory for a new scanning frequency/TS"
 msgstr "não há memória suficiente para uma nova varredura de frequência/TS"
 
-#: lib/libdvbv5/dvb-scan.c:809
+#: lib/libdvbv5/dvb-scan.c:812
 #, c-format
 msgid "New transponder/channel found: #%d: %d"
 msgstr "Novo transponder/canal encontrado: #%d: %d"
 
-#: lib/libdvbv5/dvb-scan.c:818
+#: lib/libdvbv5/dvb-scan.c:821
 #, c-format
 msgid "BUG: Couldn't add %d to the scan frequency list."
 msgstr ""
 "BUG: Não foi possível adicionar %d na lista de freqüências de varredura."
 
-#: lib/libdvbv5/dvb-scan.c:1160
+#: lib/libdvbv5/dvb-scan.c:1163
 msgid "Transponders detection not implemented for this standard yet."
 msgstr "Detecção de transponders não implementado para este padrão ainda."
 

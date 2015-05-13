@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: v4l-utils 1.7.0\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
-"POT-Creation-Date: 2014-12-14 13:25-0200\n"
+"POT-Creation-Date: 2015-05-13 19:29-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -810,7 +810,7 @@ msgid "country_code"
 msgstr ""
 
 #: utils/dvb/dvbv5-scan.c:92 utils/dvb/dvbv5-zap.c:106
-msgid "use default parameters for given country"
+msgid "Set the default country to be used (in ISO 3316-1 two letter code)"
 msgstr ""
 
 #: utils/dvb/dvbv5-scan.c:254

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: v4l-utils 1.7.0\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
-"POT-Creation-Date: 2014-12-13 13:10-0200\n"
+"POT-Creation-Date: 2015-05-13 19:29-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -558,66 +558,66 @@ msgstr ""
 msgid "%s: crc error"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:459
+#: lib/libdvbv5/dvb-scan.c:462
 msgid "error while waiting for PAT table"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:475
+#: lib/libdvbv5/dvb-scan.c:478
 msgid "error while waiting for VCT table"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:489
+#: lib/libdvbv5/dvb-scan.c:492
 #, c-format
 msgid "Program #%d is network PID: 0x%04x"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:495
+#: lib/libdvbv5/dvb-scan.c:498
 #, c-format
 msgid "Program #%d ID 0x%04x, service ID 0x%04x"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:506
+#: lib/libdvbv5/dvb-scan.c:509
 #, c-format
 msgid "error while reading the PMT table for service 0x%04x"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:526 lib/libdvbv5/dvb-scan.c:555
+#: lib/libdvbv5/dvb-scan.c:529 lib/libdvbv5/dvb-scan.c:558
 msgid "error while reading the NIT table"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:539 lib/libdvbv5/dvb-scan.c:566
+#: lib/libdvbv5/dvb-scan.c:542 lib/libdvbv5/dvb-scan.c:569
 msgid "error while reading the SDT table"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:547
+#: lib/libdvbv5/dvb-scan.c:550
 msgid "Parsing other NIT/SDT"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:612
+#: lib/libdvbv5/dvb-scan.c:615
 msgid "dvb_fe_set_parms failed"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:698
+#: lib/libdvbv5/dvb-scan.c:701
 msgid ""
 "Cannot calc frequency shift. Either bandwidth/symbol-rate is unavailable "
 "(yet)."
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:780
+#: lib/libdvbv5/dvb-scan.c:783
 msgid "not enough memory for a new scanning frequency/TS"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:809
+#: lib/libdvbv5/dvb-scan.c:812
 #, c-format
 msgid "New transponder/channel found: #%d: %d"
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:818
+#: lib/libdvbv5/dvb-scan.c:821
 #, c-format
 msgid "BUG: Couldn't add %d to the scan frequency list."
 msgstr ""
 
-#: lib/libdvbv5/dvb-scan.c:1160
+#: lib/libdvbv5/dvb-scan.c:1163
 msgid "Transponders detection not implemented for this standard yet."
 msgstr ""
 
