@@ -100,7 +100,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 					  dvb_logfunc logfunc,
 					  int flags)
 {
-	int fd, i, r;
+	int fd, i, r, retry;
 	char *fname;
 	struct dtv_properties dtv_prop;
 	struct dvb_v5_fe_parms_priv *parms = NULL;
@@ -171,13 +171,22 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	dtv_prop.props = parms->dvb_prop;
 
 	/* Detect a DVBv3 device */
-	while (ioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1) {
+	for (retry = 0; retry < 10; retry++) {
+		if (ioctl(fd, FE_GET_PROPERTY, &dtv_prop) != -1)
+			break;
 		if (errno == EAGAIN)
 			continue;
 		parms->dvb_prop[0].u.data = 0x300;
 		parms->dvb_prop[1].u.data = SYS_UNDEFINED;
 		break;
 	}
+	if (retry == 10) {
+		dvb_logerr(_("Too many retry attempts on FE_GET_PROPERTY"));
+		dvb_v5_free(parms);
+		close(fd);
+		return NULL;
+	}
+
 	parms->p.version = parms->dvb_prop[0].u.data;
 	parms->p.current_sys = parms->dvb_prop[1].u.data;
 	if (verbose)
