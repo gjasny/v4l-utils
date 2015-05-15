@@ -181,7 +181,7 @@ ApplicationWindow::ApplicationWindow() :
 	m_resetScalingAct->setStatusTip("Resizes the capture window to match frame size");
 	m_resetScalingAct->setShortcut(Qt::CTRL+Qt::Key_F);
 
-	m_overrideColorspace = 0;
+	m_overrideColorspace = -1;
 	QMenu *menu = new QMenu("Override Colorspace");
 	m_overrideColorspaceMenu = menu;
 	QActionGroup *grp = new QActionGroup(menu);
@@ -196,7 +196,7 @@ ApplicationWindow::ApplicationWindow() :
 	addSubMenuItem(grp, menu, "470 System BG", V4L2_COLORSPACE_470_SYSTEM_BG);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(overrideColorspaceChanged(QAction *)));
 
-	m_overrideYCbCrEnc = V4L2_YCBCR_ENC_DEFAULT;
+	m_overrideYCbCrEnc = -1;
 	menu = new QMenu("Override Y'CbCr Encoding");
 	m_overrideYCbCrEncMenu = menu;
 	grp = new QActionGroup(menu);
@@ -211,7 +211,7 @@ ApplicationWindow::ApplicationWindow() :
 	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_YCBCR_ENC_SMPTE240M);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(overrideYCbCrEncChanged(QAction *)));
 
-	m_overrideQuantization = V4L2_QUANTIZATION_DEFAULT;
+	m_overrideQuantization = -1;
 	menu = new QMenu("Override Quantization");
 	m_overrideQuantizationMenu = menu;
 	grp = new QActionGroup(menu);
