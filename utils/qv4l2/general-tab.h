@@ -151,6 +151,7 @@ private:
 	void updateFreqChannel();
 	void updateFreqRf();
 	void updateColorspace();
+	void clearColorspace(cv4l_fmt &fmt);
 	void updateVidCapFormat();
 	void updateVidFields();
 	void updateFrameSize();

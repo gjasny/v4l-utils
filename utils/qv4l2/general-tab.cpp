@@ -1370,6 +1370,8 @@ void GeneralTab::colorspaceChanged(int idx)
 
 	g_fmt(fmt);
 	fmt.s_colorspace(m_colorspace->itemData(idx).toInt());
+	fmt.s_ycbcr_enc(m_ycbcrEnc->itemData(m_ycbcrEnc->currentIndex()).toInt());
+	fmt.s_quantization(m_quantRange->itemData(m_quantRange->currentIndex()).toInt());
 	if (try_fmt(fmt) == 0)
 		s_fmt(fmt);
 	updateVidFormat();
@@ -1380,7 +1382,9 @@ void GeneralTab::ycbcrEncChanged(int idx)
 	cv4l_fmt fmt;
 
 	g_fmt(fmt);
+	fmt.s_colorspace(m_colorspace->itemData(m_colorspace->currentIndex()).toInt());
 	fmt.s_ycbcr_enc(m_ycbcrEnc->itemData(idx).toInt());
+	fmt.s_quantization(m_quantRange->itemData(m_quantRange->currentIndex()).toInt());
 	if (try_fmt(fmt) == 0)
 		s_fmt(fmt);
 	updateVidFormat();
@@ -1391,10 +1395,22 @@ void GeneralTab::quantRangeChanged(int idx)
 	cv4l_fmt fmt;
 
 	g_fmt(fmt);
+	fmt.s_colorspace(m_colorspace->itemData(m_colorspace->currentIndex()).toInt());
+	fmt.s_ycbcr_enc(m_ycbcrEnc->itemData(m_ycbcrEnc->currentIndex()).toInt());
 	fmt.s_quantization(m_quantRange->itemData(idx).toInt());
 	if (try_fmt(fmt) == 0)
 		s_fmt(fmt);
 	updateVidFormat();
+}
+
+void GeneralTab::clearColorspace(cv4l_fmt &fmt)
+{
+	if (m_colorspace->currentIndex() == 0)
+		fmt.s_colorspace(0);
+	if (m_ycbcrEnc->currentIndex() == 0)
+		fmt.s_ycbcr_enc(V4L2_YCBCR_ENC_DEFAULT);
+	if (m_quantRange->currentIndex() == 0)
+		fmt.s_quantization(V4L2_QUANTIZATION_DEFAULT);
 }
 
 void GeneralTab::vidCapFormatChanged(int idx)
@@ -1407,6 +1423,7 @@ void GeneralTab::vidCapFormatChanged(int idx)
 
 	g_fmt(fmt);
 	fmt.s_pixelformat(desc.pixelformat);
+	clearColorspace(fmt);
 	if (try_fmt(fmt) == 0)
 		s_fmt(fmt);
 
@@ -1449,6 +1466,7 @@ void GeneralTab::vidFieldChanged(int idx)
 	for (__u32 f = V4L2_FIELD_NONE; f <= V4L2_FIELD_INTERLACED_BT; f++) {
 		if (m_vidFields->currentText() == QString(field2s(f))) {
 			fmt.s_field(f);
+			clearColorspace(fmt);
 			s_fmt(fmt);
 			break;
 		}
@@ -1464,6 +1482,7 @@ void GeneralTab::frameWidthChanged()
 	if (m_frameWidth->isEnabled()) {
 		g_fmt(fmt);
 		fmt.s_width(val);
+		clearColorspace(fmt);
 		if (try_fmt(fmt) == 0)
 			s_fmt(fmt);
 	}
@@ -1479,6 +1498,7 @@ void GeneralTab::frameHeightChanged()
 	if (m_frameHeight->isEnabled()) {
 		g_fmt(fmt);
 		fmt.s_height(val);
+		clearColorspace(fmt);
 		if (try_fmt(fmt) == 0)
 			s_fmt(fmt);
 	}
@@ -1496,6 +1516,7 @@ void GeneralTab::frameSizeChanged(int idx)
 		g_fmt(fmt);
 		fmt.s_width(frmsize.discrete.width);
 		fmt.s_height(frmsize.discrete.height);
+		clearColorspace(fmt);
 		if (try_fmt(fmt) == 0)
 			s_fmt(fmt);
 	}
@@ -1523,6 +1544,7 @@ void GeneralTab::vidOutFormatChanged(int idx)
 
 	g_fmt(fmt);
 	fmt.s_pixelformat(desc.pixelformat);
+	clearColorspace(fmt);
 	if (try_fmt(fmt) == 0)
 		s_fmt(fmt);
 	updateVidOutFormat();
