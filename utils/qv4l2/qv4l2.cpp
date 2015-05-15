@@ -65,6 +65,15 @@ extern "C" {
 #define SDR_WIDTH 1024
 #define SDR_HEIGHT 512
 
+static QAction *addSubMenuItem(QActionGroup *grp, QMenu *menu, const QString &text, int val)
+{
+	QAction *a = grp->addAction(menu->addAction(text));
+
+	a->setData(QVariant(val));
+	a->setCheckable(true);
+	return a;
+}
+
 ApplicationWindow::ApplicationWindow() :
 	m_capture(NULL),
 	m_pxw(25),
@@ -172,11 +181,65 @@ ApplicationWindow::ApplicationWindow() :
 	m_resetScalingAct->setStatusTip("Resizes the capture window to match frame size");
 	m_resetScalingAct->setShortcut(Qt::CTRL+Qt::Key_F);
 
-	QMenu *captureMenu = menuBar()->addMenu("&Capture");
-	captureMenu->addAction(m_capStartAct);
-	captureMenu->addAction(m_capStepAct);
-	captureMenu->addAction(m_showFramesAct);
-	captureMenu->addAction(m_scalingAct);
+	m_overrideColorspace = 0;
+	QMenu *menu = new QMenu("Override Colorspace");
+	m_overrideColorspaceMenu = menu;
+	QActionGroup *grp = new QActionGroup(menu);
+	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
+	addSubMenuItem(grp, menu, "SMPTE 170M", V4L2_COLORSPACE_SMPTE170M);
+	addSubMenuItem(grp, menu, "Rec. 709", V4L2_COLORSPACE_SMPTE170M);
+	addSubMenuItem(grp, menu, "sRGB", V4L2_COLORSPACE_SRGB);
+	addSubMenuItem(grp, menu, "Adobe RGB", V4L2_COLORSPACE_ADOBERGB);
+	addSubMenuItem(grp, menu, "BT.2020", V4L2_COLORSPACE_BT2020);
+	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_COLORSPACE_SMPTE240M);
+	addSubMenuItem(grp, menu, "470 System M", V4L2_COLORSPACE_470_SYSTEM_M);
+	addSubMenuItem(grp, menu, "470 System BG", V4L2_COLORSPACE_470_SYSTEM_BG);
+	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(overrideColorspaceChanged(QAction *)));
+
+	m_overrideYCbCrEnc = V4L2_YCBCR_ENC_DEFAULT;
+	menu = new QMenu("Override Y'CbCr Encoding");
+	m_overrideYCbCrEncMenu = menu;
+	grp = new QActionGroup(menu);
+	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
+	addSubMenuItem(grp, menu, "ITU-R 601", V4L2_YCBCR_ENC_601);
+	addSubMenuItem(grp, menu, "Rec. 709", V4L2_YCBCR_ENC_709);
+	addSubMenuItem(grp, menu, "xvYCC 601", V4L2_YCBCR_ENC_XV601);
+	addSubMenuItem(grp, menu, "xvYCC 709", V4L2_YCBCR_ENC_XV709);
+	addSubMenuItem(grp, menu, "sYCC", V4L2_YCBCR_ENC_SYCC);
+	addSubMenuItem(grp, menu, "BT.2020", V4L2_YCBCR_ENC_BT2020);
+	addSubMenuItem(grp, menu, "BT.2020 Constant Luminance", V4L2_YCBCR_ENC_BT2020_CONST_LUM);
+	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_YCBCR_ENC_SMPTE240M);
+	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(overrideYCbCrEncChanged(QAction *)));
+
+	m_overrideQuantization = V4L2_QUANTIZATION_DEFAULT;
+	menu = new QMenu("Override Quantization");
+	m_overrideQuantizationMenu = menu;
+	grp = new QActionGroup(menu);
+	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
+	addSubMenuItem(grp, menu, "Full Range", V4L2_QUANTIZATION_FULL_RANGE);
+	addSubMenuItem(grp, menu, "Limited Range", V4L2_QUANTIZATION_LIM_RANGE);
+	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(overrideQuantChanged(QAction *)));
+
+	m_displayColorspace = V4L2_COLORSPACE_SRGB;
+	menu = new QMenu("Display Colorspace");
+	m_displayColorspaceMenu = menu;
+	grp = new QActionGroup(menu);
+	addSubMenuItem(grp, menu, "sRGB", V4L2_COLORSPACE_SRGB)->setChecked(true);
+	addSubMenuItem(grp, menu, "Linear RGB", 0);
+	addSubMenuItem(grp, menu, "Rec. 709", V4L2_COLORSPACE_REC709);
+	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_COLORSPACE_SMPTE240M);
+	addSubMenuItem(grp, menu, "Adobe RGB", V4L2_COLORSPACE_ADOBERGB);
+	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(displayColorspaceChanged(QAction *)));
+
+	m_capMenu = menuBar()->addMenu("&Capture");
+	m_capMenu->addAction(m_capStartAct);
+	m_capMenu->addAction(m_capStepAct);
+	m_capMenu->addMenu(m_overrideColorspaceMenu);
+	m_capMenu->addMenu(m_overrideYCbCrEncMenu);
+	m_capMenu->addMenu(m_overrideQuantizationMenu);
+	m_capMenu->addMenu(m_displayColorspaceMenu);
+	m_capMenu->addAction(m_showFramesAct);
+	m_capMenu->addAction(m_scalingAct);
 
 	if (CaptureWinGL::isSupported()) {
 		m_renderMethod = QV4L2_RENDER_GL;
@@ -186,41 +249,41 @@ ApplicationWindow::ApplicationWindow() :
 		m_useGLAct->setCheckable(true);
 		m_useGLAct->setChecked(true);
 		connect(m_useGLAct, SIGNAL(toggled(bool)), this, SLOT(setRenderMethod(bool)));
-		captureMenu->addAction(m_useGLAct);
+		m_capMenu->addAction(m_useGLAct);
 
 		m_useBlendingAct = new QAction("Enable &Blending", this);
 		m_useBlendingAct->setStatusTip("Enable blending to test the alpha component in the image");
 		m_useBlendingAct->setCheckable(true);
 		m_useBlendingAct->setChecked(false);
 		connect(m_useBlendingAct, SIGNAL(toggled(bool)), this, SLOT(setBlending(bool)));
-		captureMenu->addAction(m_useBlendingAct);
+		m_capMenu->addAction(m_useBlendingAct);
 
 		m_useLinearAct = new QAction("Enable &Linear filter", this);
 		m_useLinearAct->setStatusTip("Enable linear scaling filter");
 		m_useLinearAct->setCheckable(true);
 		m_useLinearAct->setChecked(false);
 		connect(m_useLinearAct, SIGNAL(toggled(bool)), this, SLOT(setLinearFilter(bool)));
-		captureMenu->addAction(m_useLinearAct);
+		m_capMenu->addAction(m_useLinearAct);
 
 	} else {
 		m_renderMethod = QV4L2_RENDER_QT;
 	}
-	captureMenu->addAction(m_resetScalingAct);
+	m_capMenu->addAction(m_resetScalingAct);
 	
 	m_makeFullScreenAct = new QAction(QIcon(":/fullscreen.png"), "Show Fullscreen", this);
 	m_makeFullScreenAct->setStatusTip("Capture in fullscreen mode");
 	m_makeFullScreenAct->setCheckable(true);
 	connect(m_makeFullScreenAct, SIGNAL(toggled(bool)), this, SLOT(makeFullScreen(bool)));
-	captureMenu->addAction(m_makeFullScreenAct);
+	m_capMenu->addAction(m_makeFullScreenAct);
 	toolBar->addAction(m_makeFullScreenAct);
 
 #ifdef HAVE_ALSA
-	captureMenu->addSeparator();
+	m_capMenu->addSeparator();
 
 	m_audioBufferAct = new QAction("Set Audio &Buffer Capacity...", this);
 	m_audioBufferAct->setStatusTip("Set audio buffer capacity in amount of ms than can be stored");
 	connect(m_audioBufferAct, SIGNAL(triggered()), this, SLOT(setAudioBufferSize()));
-	captureMenu->addAction(m_audioBufferAct);
+	m_capMenu->addAction(m_audioBufferAct);
 #endif
 
 	QMenu *helpMenu = menuBar()->addMenu("&Help");
@@ -240,6 +303,60 @@ ApplicationWindow::ApplicationWindow() :
 ApplicationWindow::~ApplicationWindow()
 {
 	closeDevice();
+}
+
+void ApplicationWindow::updateColorspace()
+{
+	if (!m_capture)
+		return;
+
+	int colorspace = m_overrideColorspace;
+	int ycbcrEnc = m_overrideYCbCrEnc;
+	int quantRange = m_overrideQuantization;
+	cv4l_fmt fmt;
+
+	// don't use the wrapped ioctl since it doesn't
+	// update colorspace correctly.
+	::ioctl(g_fd(), VIDIOC_G_FMT, &fmt);
+
+	if (colorspace == -1)
+		colorspace = fmt.g_colorspace();
+	if (ycbcrEnc == -1)
+		ycbcrEnc = fmt.g_ycbcr_enc();
+	if (quantRange == -1)
+		quantRange = fmt.g_quantization();
+	m_capture->setColorspace(colorspace, ycbcrEnc, quantRange,
+			m_genTab ? m_genTab->isSDTV() : true);
+}
+
+void ApplicationWindow::overrideColorspaceChanged(QAction *a)
+{
+	m_overrideColorspace = a->data().toInt();
+	updateColorspace();
+}
+
+void ApplicationWindow::overrideYCbCrEncChanged(QAction *a)
+{
+	m_overrideYCbCrEnc = a->data().toInt();
+	updateColorspace();
+}
+
+void ApplicationWindow::overrideQuantChanged(QAction *a)
+{
+	m_overrideQuantization = a->data().toInt();
+	updateColorspace();
+}
+
+void ApplicationWindow::updateDisplayColorspace()
+{
+	if (m_capture != NULL)
+		m_capture->setDisplayColorspace(m_displayColorspace);
+}
+
+void ApplicationWindow::displayColorspaceChanged(QAction *a)
+{
+	m_displayColorspace = a->data().toInt();
+	updateDisplayColorspace();
 }
 
 void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
@@ -273,10 +390,6 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 #endif
 	connect(m_genTab, SIGNAL(pixelAspectRatioChanged()), this, SLOT(updatePixelAspectRatio()));
 	connect(m_genTab, SIGNAL(croppingChanged()), this, SLOT(updateCropping()));
-	connect(m_genTab, SIGNAL(colorspaceChanged()), this, SLOT(updateColorspace()));
-	connect(m_genTab, SIGNAL(ycbcrEncChanged()), this, SLOT(updateColorspace()));
-	connect(m_genTab, SIGNAL(quantRangeChanged()), this, SLOT(updateColorspace()));
-	connect(m_genTab, SIGNAL(displayColorspaceChanged()), this, SLOT(updateDisplayColorspace()));
 	connect(m_genTab, SIGNAL(clearBuffers()), this, SLOT(clearBuffers()));
 	m_tabs->addTab(w, "General Settings");
 
@@ -300,12 +413,13 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	m_tabs->show();
 	m_tabs->setFocus();
 	m_convertData = v4lconvert_create(g_fd());
-	bool canStream = g_fd() >= 0 && (v4l_type_is_capture(g_type()) || has_vid_out()) &&
-					 !has_radio_tx();
+	bool canStream = has_rw() || has_streaming();
+	bool isCapture = v4l_type_is_capture(g_type());
 	m_capStartAct->setEnabled(canStream);
-	m_capStepAct->setEnabled(canStream && v4l_type_is_capture(g_type()));
-	m_saveRawAct->setEnabled(canStream);
+	m_capStepAct->setEnabled(canStream && isCapture);
+	m_saveRawAct->setEnabled(canStream && has_vid_cap());
 	m_snapshotAct->setEnabled(canStream && has_vid_cap());
+	m_capMenu->setEnabled(canStream && isCapture && !has_radio_rx());
 #ifdef HAVE_QTGL
 	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
 #endif
@@ -1055,36 +1169,6 @@ void ApplicationWindow::updateCropping()
 		m_capture->setCropMethod(m_genTab->getCropMethod());
 }
 
-void ApplicationWindow::updateColorspace()
-{
-	if (m_capture == NULL)
-		return;
-
-	unsigned colorspace = m_genTab->getColorspace();
-	unsigned ycbcrEnc = m_genTab->getYCbCrEnc();
-	unsigned quantRange = m_genTab->getQuantRange();
-	cv4l_fmt fmt;
-
-	g_fmt(fmt);
-	// don't use the wrapped ioctl since it doesn't
-	// update colorspace correctly.
-	::ioctl(g_fd(), VIDIOC_G_FMT, &fmt);
-
-	if (colorspace == 0)
-		colorspace = fmt.g_colorspace();
-	if (ycbcrEnc == 0)
-		ycbcrEnc = fmt.g_ycbcr_enc();
-	if (quantRange == 0)
-		quantRange = fmt.g_quantization();
-	m_capture->setColorspace(colorspace, ycbcrEnc, quantRange, m_genTab->isSDTV());
-}
-
-void ApplicationWindow::updateDisplayColorspace()
-{
-	if (m_capture != NULL)
-		m_capture->setDisplayColorspace(m_genTab->getDisplayColorspace());
-}
-
 void ApplicationWindow::clearBuffers()
 {
 	if (m_capture)
@@ -1152,6 +1236,7 @@ void ApplicationWindow::outStart(bool start)
 		m_frame = m_lastFrame = m_fps = 0;
 		m_capMethod = m_genTab->capMethod();
 		g_fmt(fmt);
+		fmt.s_flags(0);
 		if (out.capabilities & V4L2_OUT_CAP_STD)
 			g_std(m_tpgStd);
 		else
@@ -1170,15 +1255,7 @@ void ApplicationWindow::outStart(bool start)
 			tpg_s_rgb_range(&m_tpg, V4L2_DV_RGB_RANGE_AUTO);
 		else
 			tpg_s_rgb_range(&m_tpg, ctrl.value);
-		if (m_tpgColorspace == 0) {
-			fmt.s_colorspace(defaultColorspace(false));
-			fmt.s_ycbcr_enc(V4L2_YCBCR_ENC_DEFAULT);
-			fmt.s_flags(0);
-		} else {
-			fmt.s_colorspace(m_tpgColorspace);
-			fmt.s_ycbcr_enc(m_tpgYCbCrEnc);
-			fmt.s_quantization(m_tpgQuantRange);
-		}
+		tpgColorspaceChanged();
 		s_fmt(fmt);
 
 		if (out.capabilities & V4L2_OUT_CAP_STD) {
@@ -1197,9 +1274,6 @@ void ApplicationWindow::outStart(bool start)
 			tpg_s_pixel_aspect(&m_tpg, TPG_PIXEL_ASPECT_SQUARE);
 		}
 
-		tpg_s_colorspace(&m_tpg, m_tpgColorspace ? m_tpgColorspace : fmt.g_colorspace());
-		tpg_s_ycbcr_enc(&m_tpg, m_tpgColorspace ? m_tpgYCbCrEnc : fmt.g_ycbcr_enc());
-		tpg_s_quantization(&m_tpg, m_tpgColorspace ? m_tpgQuantRange : fmt.g_quantization());
 		for (p = 0; p < fmt.g_num_planes(); p++)
 			tpg_s_bytesperline(&m_tpg, p, fmt.g_bytesperline(p));
 		if (m_capMethod == methodRead)
@@ -1256,8 +1330,7 @@ void ApplicationWindow::capStart(bool start)
 	QImage::Format dstFmt = QImage::Format_RGB888;
 	struct v4l2_fract interval;
 	__u32 width, height, pixfmt;
-	unsigned colorspace, ycbcr_enc, field;
-	unsigned quantization;
+	unsigned field;
 
 	if (!start) {
 		stopStreaming();
@@ -1387,9 +1460,6 @@ void ApplicationWindow::capStart(bool start)
 		width = m_capSrcFormat.g_width();
 		height = m_capSrcFormat.g_height();
 		pixfmt = m_capSrcFormat.g_pixelformat();
-		colorspace = m_capSrcFormat.g_colorspace();
-		ycbcr_enc = m_capSrcFormat.g_ycbcr_enc();
-		quantization = m_capSrcFormat.g_quantization();
 		field = m_capSrcFormat.g_field();
 		m_mustConvert = false;
 	} else {
@@ -1409,9 +1479,6 @@ void ApplicationWindow::capStart(bool start)
 		width = m_capDestFormat.g_width();
 		height = m_capDestFormat.g_height();
 		pixfmt = m_capDestFormat.g_pixelformat();
-		colorspace = m_capDestFormat.g_colorspace();
-		ycbcr_enc = m_capDestFormat.g_ycbcr_enc();
-		quantization = m_capDestFormat.g_quantization();
 		field = m_capDestFormat.g_field();
 	}
 
@@ -1433,14 +1500,9 @@ void ApplicationWindow::capStart(bool start)
 	m_capImage->fill(0);
 	
 	updatePixelAspectRatio();
-	if (m_genTab->getColorspace()) {
-		colorspace = m_genTab->getColorspace();
-		ycbcr_enc = m_genTab->getYCbCrEnc();
-		quantization = m_genTab->getQuantRange();
-	}
-	m_capture->setColorspace(colorspace, ycbcr_enc, quantization, m_genTab->isSDTV());
+	updateColorspace();
+	updateDisplayColorspace();
 	m_capture->setField(field);
-	m_capture->setDisplayColorspace(m_genTab->getDisplayColorspace());
 
 	m_capture->setWindowSize(QSize(width, height));
 	m_capture->setFrame(m_capImage->width(), m_capImage->height(),

@@ -85,10 +85,6 @@ public:
 	}
 	void sourceChange(const v4l2_event &ev);
 	void sourceChangeSubscribe();
-	unsigned getDisplayColorspace() const;
-	unsigned getColorspace() const;
-	unsigned getYCbCrEnc() const;
-	unsigned getQuantRange() const;
 	int getWidth();
 	unsigned getNumBuffers() const;
 	QComboBox *m_tpgComboColorspace;
@@ -99,11 +95,7 @@ signals:
 	void audioDeviceChanged();
 	void pixelAspectRatioChanged();
 	void croppingChanged();
-	void colorspaceChanged();
-	void ycbcrEncChanged();
-	void quantRangeChanged();
 	void clearBuffers();
-	void displayColorspaceChanged();
 
 private slots:
 	void inputChanged(int);
@@ -134,6 +126,9 @@ private slots:
 	void changePixelAspectRatio();
 	void cropChanged();
 	void composeChanged();
+	void colorspaceChanged(int);
+	void ycbcrEncChanged(int);
+	void quantRangeChanged(int);
 
 private:
 	void inputSection(v4l2_input vin);
@@ -155,6 +150,7 @@ private:
 	void updateFreq();
 	void updateFreqChannel();
 	void updateFreqRf();
+	void updateColorspace();
 	void updateVidCapFormat();
 	void updateVidFields();
 	void updateFrameSize();
@@ -341,7 +337,6 @@ private:
 	QComboBox *m_colorspace;
 	QComboBox *m_ycbcrEnc;
 	QComboBox *m_quantRange;
-	QComboBox *m_displayColorspace;
 	QComboBox *m_cropping;
 	QToolButton *m_qryTimings;
 	QDoubleSpinBox *m_freq;

@@ -114,7 +114,6 @@ private:
 	void stopAudio();
 	bool startOutput();
 	void stopOutput();
-	__u32 defaultColorspace(bool capture);
 
 	bool m_clear[64];
 	cv4l_fmt m_capSrcFormat;
@@ -127,6 +126,10 @@ private:
 	bool m_makeSnapshot;
 	bool m_singleStep;
 	RenderMethod m_renderMethod;
+	int m_overrideColorspace;
+	int m_overrideYCbCrEnc;
+	int m_overrideQuantization;
+	int m_displayColorspace;
 
 private slots:
 	void capStart(bool);
@@ -157,10 +160,13 @@ private slots:
 	void enableScaling(bool enable);
 	void updatePixelAspectRatio();
 	void updateCropping();
-	void updateColorspace();
 	void updateDisplayColorspace();
 	void clearBuffers();
 	void about();
+	void overrideColorspaceChanged(QAction *a);
+	void overrideYCbCrEncChanged(QAction *a);
+	void overrideQuantChanged(QAction *a);
+	void displayColorspaceChanged(QAction *a);
 
 	// tpg
 private slots:
@@ -172,13 +178,12 @@ private slots:
 	void insSAVChanged(int val);
 	void insEAVChanged(int val);
 	void videoAspectRatioChanged(int val);
-	void colorspaceChanged(int val);
-	void ycbcrEncodingChanged(int val);
-	void quantRangeChanged(int val);
 	void limRGBRangeChanged(int val);
 	void fillPercentageChanged(int val);
 	void alphaComponentChanged(int val);
 	void applyToRedChanged(int val);
+	__u32 tpgDefaultColorspace();
+	void tpgColorspaceChanged();
 
 public:
 	virtual void error(const QString &text);
@@ -189,11 +194,16 @@ public:
 	void info(const QString &info);
 	virtual void closeEvent(QCloseEvent *event);
 	void updateLimRGBRange();
+	void updateColorspace();
 	QAction *m_resetScalingAct;
 	QAction *m_useBlendingAct;
 	QAction *m_useLinearAct;
 	QAction *m_snapshotAct;
 	QAction *m_showFramesAct;
+	QMenu *m_overrideColorspaceMenu;
+	QMenu *m_overrideYCbCrEncMenu;
+	QMenu *m_overrideQuantizationMenu;
+	QMenu *m_displayColorspaceMenu;
 
 private:
 	void addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment align = Qt::AlignLeft);
@@ -231,17 +241,17 @@ private:
 	void updateFreqChannel();
 	bool showFrames();
 
+	// tpg
 	struct tpg_data m_tpg;
 	v4l2_std_id m_tpgStd;
 	unsigned m_tpgField;
 	bool m_tpgFieldAlt;
 	unsigned m_tpgSizeImage;
-	unsigned m_tpgColorspace;
-	unsigned m_tpgYCbCrEnc;
-	unsigned m_tpgQuantRange;
+	QComboBox *m_tpgColorspace;
+	QComboBox *m_tpgYCbCrEnc;
+	QComboBox *m_tpgQuantRange;
 	bool m_useTpg;
 	QCheckBox *m_tpgLimRGBRange;
-	void tpgFmtChanged();
 
 	cv4l_queue m_queue;
 
@@ -253,6 +263,7 @@ private:
 	int m_increment;
 	GeneralTab *m_genTab;
 	VbiTab *m_vbiTab;
+	QMenu *m_capMenu;
 	QAction *m_capStartAct;
 	QAction *m_capStepAct;
 	QAction *m_saveRawAct;
