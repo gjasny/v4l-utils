@@ -156,26 +156,26 @@ static int parse_timing_subopt(char **subopt_str, int *value)
 	char *opt_str;
 
 	static const char * const subopt_list[] = {
-	[WIDTH] = "width",
-	[HEIGHT] = "height",
-	[INTERLACED] = "interlaced",
-	[POLARITIES] = "polarities",
-	[PIXEL_CLOCK] = "pixelclock",
-	[HORZ_FRONT_PORCH] = "hfp",
-	[HORZ_SYNC] = "hs",
-	[HORZ_BACK_PORCH] = "hbp",
-	[VERT_FRONT_PORCH] = "vfp",
-	[VERT_SYNC] = "vs",
-	[VERT_BACK_PORCH] = "vbp",
-	[IL_VERT_FRONT_PORCH] = "il_vfp",
-	[IL_VERT_SYNC] = "il_vs",
-	[IL_VERT_BACK_PORCH] = "il_vbp",
-	[INDEX] = "index",
-	[CVT] = "cvt",
-	[GTF] = "gtf",
-	[FPS] = "fps",
-	[REDUCED_BLANK] = "reduced-blanking",
-	NULL
+		"width",
+		"height",
+		"interlaced",
+		"polarities",
+		"pixelclock",
+		"hfp",
+		"hs",
+		"hbp",
+		"vfp",
+		"vs",
+		"vbp",
+		"il_vfp",
+		"il_vs",
+		"il_vbp",
+		"index",
+		"cvt",
+		"gtf",
+		"fps",
+		"reduced-blanking",
+		NULL
 	};
 
 	opt = getsubopt(subopt_str, (char* const*) subopt_list, &opt_str);
