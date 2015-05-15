@@ -24,6 +24,33 @@
 
 #include <stdio.h>
 
+/*
+ * These two helper defines are taken from code that is not yet merged
+ * in the kernel, but since they are very useful I've copied them here
+ * for the time being.
+ */
+
+/*
+ * Determine how YCBCR_ENC_DEFAULT should map to a proper Y'CbCr encoding.
+ * This depends on the colorspace.
+ */
+#define V4L2_MAP_YCBCR_ENC_DEFAULT(colsp) \
+	((colsp) == V4L2_COLORSPACE_REC709 ? V4L2_YCBCR_ENC_709 : \
+	 ((colsp) == V4L2_COLORSPACE_BT2020 ? V4L2_YCBCR_ENC_BT2020 : \
+	  ((colsp) == V4L2_COLORSPACE_SMPTE240M ? V4L2_YCBCR_ENC_SMPTE240M : \
+	   V4L2_YCBCR_ENC_601)))
+
+/*
+ * Determine how QUANTIZATION_DEFAULT should map to a proper quantization.
+ * This depends on whether the image is RGB or not, the colorspace and the
+ * Y'CbCr encoding.
+ */
+#define V4L2_MAP_QUANTIZATION_DEFAULT(is_rgb, colsp, ycbcr_enc) \
+	(((is_rgb) && (colsp) == V4L2_COLORSPACE_BT2020) ? V4L2_QUANTIZATION_LIM_RANGE : \
+	 (((is_rgb) || (ycbcr_enc) == V4L2_YCBCR_ENC_XV601 || \
+	  (ycbcr_enc) == V4L2_YCBCR_ENC_XV709 || (colsp) == V4L2_COLORSPACE_JPEG) ? \
+	 V4L2_QUANTIZATION_FULL_RANGE : V4L2_QUANTIZATION_LIM_RANGE))
+
 CaptureWinGL::CaptureWinGL(ApplicationWindow *aw) :
 	CaptureWin(aw)
 {
@@ -157,6 +184,36 @@ CaptureWinGLEngine::~CaptureWinGLEngine()
 
 void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv)
 {
+	bool is_rgb = true;
+
+	switch (m_frameFormat) {
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_YVYU:
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_VYUY:
+	case V4L2_PIX_FMT_YUV422P:
+	case V4L2_PIX_FMT_YVU420:
+	case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_YVU420M:
+	case V4L2_PIX_FMT_YUV420M:
+	case V4L2_PIX_FMT_NV12:
+	case V4L2_PIX_FMT_NV21:
+	case V4L2_PIX_FMT_NV12M:
+	case V4L2_PIX_FMT_NV21M:
+	case V4L2_PIX_FMT_NV16:
+	case V4L2_PIX_FMT_NV61:
+	case V4L2_PIX_FMT_NV16M:
+	case V4L2_PIX_FMT_NV61M:
+	case V4L2_PIX_FMT_NV24:
+	case V4L2_PIX_FMT_NV42:
+	case V4L2_PIX_FMT_YUV444:
+	case V4L2_PIX_FMT_YUV555:
+	case V4L2_PIX_FMT_YUV565:
+	case V4L2_PIX_FMT_YUV32:
+		is_rgb = false;
+		break;
+	}
+
 	switch (colorspace) {
 	case V4L2_COLORSPACE_SMPTE170M:
 	case V4L2_COLORSPACE_SMPTE240M:
@@ -170,46 +227,22 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned ycbcr_enc, 
 	default:
 		// If the colorspace was not specified, then guess
 		// based on the pixel format.
-		switch (m_frameFormat) {
-		case V4L2_PIX_FMT_YUYV:
-		case V4L2_PIX_FMT_YVYU:
-		case V4L2_PIX_FMT_UYVY:
-		case V4L2_PIX_FMT_VYUY:
-		case V4L2_PIX_FMT_YUV422P:
-		case V4L2_PIX_FMT_YVU420:
-		case V4L2_PIX_FMT_YUV420:
-		case V4L2_PIX_FMT_YVU420M:
-		case V4L2_PIX_FMT_YUV420M:
-		case V4L2_PIX_FMT_NV12:
-		case V4L2_PIX_FMT_NV21:
-		case V4L2_PIX_FMT_NV12M:
-		case V4L2_PIX_FMT_NV21M:
-		case V4L2_PIX_FMT_NV16:
-		case V4L2_PIX_FMT_NV61:
-		case V4L2_PIX_FMT_NV16M:
-		case V4L2_PIX_FMT_NV61M:
-		case V4L2_PIX_FMT_NV24:
-		case V4L2_PIX_FMT_NV42:
-		case V4L2_PIX_FMT_YUV444:
-		case V4L2_PIX_FMT_YUV555:
-		case V4L2_PIX_FMT_YUV565:
-		case V4L2_PIX_FMT_YUV32:
-			// SDTV or HDTV?
-			if (is_sdtv)
-				colorspace = V4L2_COLORSPACE_SMPTE170M;
-			else
-				colorspace = V4L2_COLORSPACE_REC709;
-			break;
-		default:
+		if (is_rgb)
 			colorspace = V4L2_COLORSPACE_SRGB;
-			break;
-		}
+		else if (is_sdtv)
+			colorspace = V4L2_COLORSPACE_SMPTE170M;
+		else
+			colorspace = V4L2_COLORSPACE_REC709;
 		break;
 	}
 	if (m_colorspace == colorspace && m_ycbcr_enc == ycbcr_enc &&
 	    m_quantization == quantization && m_is_sdtv == is_sdtv)
 		return;
 	m_colorspace = colorspace;
+	if (ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
+		ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(colorspace);
+	if (quantization == V4L2_QUANTIZATION_DEFAULT)
+		quantization = V4L2_MAP_QUANTIZATION_DEFAULT(is_rgb, colorspace, ycbcr_enc);
 	m_ycbcr_enc = ycbcr_enc;
 	m_quantization = quantization;
 	m_is_sdtv = is_sdtv;
@@ -625,25 +658,10 @@ void CaptureWinGLEngine::configureTexture(size_t idx)
 // colorspace.
 QString CaptureWinGLEngine::codeYUVNormalize()
 {
-	switch (m_colorspace) {
-	case V4L2_COLORSPACE_SRGB:
-		if (m_ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT ||
-		    m_ycbcr_enc == V4L2_YCBCR_ENC_SYCC)
-			// sYCC is always full range
-			return "";
-		/* fall through */
-	case V4L2_COLORSPACE_REC709:
-	case V4L2_COLORSPACE_SMPTE240M:
-	case V4L2_COLORSPACE_SMPTE170M:
-	case V4L2_COLORSPACE_470_SYSTEM_M:
-	case V4L2_COLORSPACE_470_SYSTEM_BG:
-	case V4L2_COLORSPACE_ADOBERGB:
-	case V4L2_COLORSPACE_BT2020:
+	switch (m_quantization) {
+	case V4L2_QUANTIZATION_FULL_RANGE:
+		return "";
 	default:
-		if (m_ycbcr_enc == V4L2_YCBCR_ENC_XV601 ||
-		    m_ycbcr_enc == V4L2_YCBCR_ENC_XV709 ||
-		    m_quantization == V4L2_QUANTIZATION_FULL_RANGE)
-			return "";
 		return QString("   y = (255.0 / 219.0) * (y - (16.0 / 255.0));"
 			       "   u = (255.0 / 224.0) * u;"
 			       "   v = (255.0 / 224.0) * v;"
@@ -654,32 +672,36 @@ QString CaptureWinGLEngine::codeYUVNormalize()
 // Normalize r, g and b to [0...1]
 QString CaptureWinGLEngine::codeRGBNormalize()
 {
-	return QString("   r = (255.0 / 219.0) * (r - (16.0 / 255.0));"
-		       "   g = (255.0 / 219.0) * (g - (16.0 / 255.0));"
-		       "   b = (255.0 / 219.0) * (b - (16.0 / 255.0));"
-		       );
+	switch (m_quantization) {
+	case V4L2_QUANTIZATION_FULL_RANGE:
+			return "";
+	default:
+		return QString("   r = (255.0 / 219.0) * (r - (16.0 / 255.0));"
+			       "   g = (255.0 / 219.0) * (g - (16.0 / 255.0));"
+			       "   b = (255.0 / 219.0) * (b - (16.0 / 255.0));"
+			       );
+	}
 }
 
 // Convert Y'CbCr (aka YUV) to R'G'B', taking into account the
 // colorspace.
 QString CaptureWinGLEngine::codeYUV2RGB()
 {
-	switch (m_colorspace) {
-	case V4L2_COLORSPACE_SMPTE240M:
+	switch (m_ycbcr_enc) {
+	case V4L2_YCBCR_ENC_SMPTE240M:
 		// Old obsolete HDTV standard. Replaced by REC 709.
 		// SMPTE 240M has its own luma coefficients
 		return QString("   float r = y + 1.5756 * v;"
 			       "   float g = y - 0.2253 * u - 0.4768 * v;"
 			       "   float b = y + 1.8270 * u;"
 			       );
-	case V4L2_COLORSPACE_BT2020:
-		if (m_ycbcr_enc != V4L2_YCBCR_ENC_BT2020_CONST_LUM) {
-			// BT.2020 luma coefficients
-			return QString("   float r = y + 1.4719 * v;"
-				       "   float g = y - 0.1646 * u - 0.5703 * v;"
-				       "   float b = y + 1.8814 * u;"
-				       );
-		}
+	case V4L2_YCBCR_ENC_BT2020:
+		// BT.2020 luma coefficients
+		return QString("   float r = y + 1.4719 * v;"
+			       "   float g = y - 0.1646 * u - 0.5703 * v;"
+			       "   float b = y + 1.8814 * u;"
+			       );
+	case V4L2_YCBCR_ENC_BT2020_CONST_LUM:
 		// BT.2020_CONST_LUM luma coefficients
 		return QString("   float b = u <= 0.0 ? y + 1.9404 * u : y + 1.5816 * u;"
 			       "   float r = v <= 0.0 ? y + 1.7184 * v : y + 0.9936 * v;"
@@ -689,27 +711,14 @@ QString CaptureWinGLEngine::codeYUV2RGB()
 			       "   float lin_g = lin_y / 0.6780 - lin_r * 0.2627 / 0.6780 - lin_b * 0.0593 / 0.6780;"
 			       "   float g = (lin_g < 0.018) ? lin_g * 4.5 : 1.099 * pow(lin_g, 0.45) - 0.099;"
 			       );
-	case V4L2_COLORSPACE_SMPTE170M:
-	case V4L2_COLORSPACE_470_SYSTEM_M:
-	case V4L2_COLORSPACE_470_SYSTEM_BG:
-	case V4L2_COLORSPACE_SRGB:
-	case V4L2_COLORSPACE_ADOBERGB:
-		if (m_ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT ||
-		    m_ycbcr_enc == V4L2_YCBCR_ENC_SYCC)
-			// These colorspaces all use the BT.601 luma coefficients
-			return QString("   float r = y + 1.403 * v;"
-			       "   float g = y - 0.344 * u - 0.714 * v;"
-			       "   float b = y + 1.773 * u;"
-			       );
-		/* fall-through */
-	case V4L2_COLORSPACE_REC709:
-		if (m_ycbcr_enc == V4L2_YCBCR_ENC_601 ||
-		    m_ycbcr_enc == V4L2_YCBCR_ENC_XV601)
-			return QString("   float r = y + 1.403 * v;"
-				       "   float g = y - 0.344 * u - 0.714 * v;"
-				       "   float b = y + 1.773 * u;"
-				       );
-		/* fall-through */
+	case V4L2_YCBCR_ENC_601:
+	case V4L2_YCBCR_ENC_XV601:
+	case V4L2_YCBCR_ENC_SYCC:
+		// These colorspaces all use the BT.601 luma coefficients
+		return QString("   float r = y + 1.403 * v;"
+		       "   float g = y - 0.344 * u - 0.714 * v;"
+		       "   float b = y + 1.773 * u;"
+		       );
 	default:
 		// The HDTV colorspaces all use REC 709 luma coefficients
 		return QString("   float r = y + 1.5701 * v;"
@@ -1584,8 +1593,7 @@ void CaptureWinGLEngine::shader_RGB(__u32 format)
 	
 	if (m_quantization == V4L2_QUANTIZATION_LIM_RANGE)
 		codeTail += codeRGBNormalize();
-	if (m_quantization == V4L2_QUANTIZATION_LIM_RANGE ||
-	    m_colorspace != V4L2_COLORSPACE_SRGB)
+	if (manualTransform)
 		codeTail += codeTransformToLinear();
 
 	codeTail += codeColorspaceConversion() + 
