@@ -387,6 +387,7 @@ bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
 		V4L2_PIX_FMT_YUV32,
 		V4L2_PIX_FMT_GREY,
 		V4L2_PIX_FMT_Y16,
+		V4L2_PIX_FMT_Y16_BE,
 		0
 	};
 
@@ -483,6 +484,7 @@ void CaptureWinGLEngine::changeShader()
 	case V4L2_PIX_FMT_ABGR32:
 	case V4L2_PIX_FMT_GREY:
 	case V4L2_PIX_FMT_Y16:
+	case V4L2_PIX_FMT_Y16_BE:
 	default:
 		shader_RGB(m_frameFormat);
 		break;
@@ -591,6 +593,7 @@ void CaptureWinGLEngine::paintGL()
 
 	case V4L2_PIX_FMT_GREY:
 	case V4L2_PIX_FMT_Y16:
+	case V4L2_PIX_FMT_Y16_BE:
 	case V4L2_PIX_FMT_RGB332:
 	case V4L2_PIX_FMT_BGR666:
 	case V4L2_PIX_FMT_RGB555:
@@ -1523,6 +1526,7 @@ void CaptureWinGLEngine::shader_RGB(__u32 format)
 			     GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 		break;
 	case V4L2_PIX_FMT_Y16:
+	case V4L2_PIX_FMT_Y16_BE:
 		internalFmt = manualTransform ? GL_LUMINANCE : GL_SLUMINANCE;
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 			     GL_LUMINANCE, GL_UNSIGNED_SHORT, NULL);
@@ -1627,6 +1631,12 @@ void CaptureWinGLEngine::render_RGB(__u32 format)
 	case V4L2_PIX_FMT_Y16:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
 				GL_LUMINANCE, GL_UNSIGNED_SHORT, m_frameData);
+		break;
+	case V4L2_PIX_FMT_Y16_BE:
+		glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+				GL_LUMINANCE, GL_UNSIGNED_SHORT, m_frameData);
+		glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
 		break;
 
 	case V4L2_PIX_FMT_RGB555X:
