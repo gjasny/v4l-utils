@@ -20,6 +20,7 @@ EXTRA_DIST = \
 	v4l_rec.pl \
 	\
 	au0828 \
+	cobalt \
 	az6007 \
 	cx231xx \
 	cx25821 \
