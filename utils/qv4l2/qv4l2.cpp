@@ -1186,13 +1186,8 @@ void ApplicationWindow::startAudio()
 	QString audOut = m_genTab->getAudioOutDevice();
 
 	if (audIn != NULL && audOut != NULL && audIn.compare("None") && audIn.compare(audOut) != 0) {
-#if QT_VERSION >= 0x050000
 		alsa_thread_startup(audOut.toLatin1().data(), audIn.toLatin1().data(),
 				    m_genTab->getAudioDeviceBufferSize(), NULL, 0);
-#else
-		alsa_thread_startup(audOut.toAscii().data(), audIn.toAscii().data(),
-				    m_genTab->getAudioDeviceBufferSize(), NULL, 0);
-#endif
 
 		if (m_genTab->isRadio())
 			statusBar()->showMessage("Capturing audio");
@@ -1671,11 +1666,7 @@ void ApplicationWindow::error(const QString &error)
 {
 	statusBar()->showMessage(error, 20000);
 	if (!error.isEmpty())
-#if QT_VERSION >= 0x050000
 		fprintf(stderr, "%s\n", error.toLatin1().data());
-#else
-		fprintf(stderr, "%s\n", error.toAscii().data());
-#endif
 }
 
 void ApplicationWindow::error(int err)
@@ -1750,11 +1741,7 @@ static bool processShortOption(const QStringList &args, int &i, QString &dev)
 		return false;
 	if (args[i].length() == 2) {
 		if (i + 1 >= args.size()) {
-#if QT_VERSION >= 0x050000
 			usageError(args[i].toLatin1());
-#else
-			usageError(args[i].toAscii());
-#endif
 			return false;
 		}
 		dev = args[++i];
@@ -1777,11 +1764,7 @@ static bool processLongOption(const QStringList &args, int &i, QString &dev)
 		return true;
 	}
 	if (i + 1 >= args.size()) {
-#if QT_VERSION >= 0x050000
 		usageError(args[i].toLatin1());
-#else
-		usageError(args[i].toAscii());
-#endif
 		return false;
 	}
 	dev = args[++i];
@@ -1835,11 +1818,7 @@ int main(int argc, char **argv)
 		} else if (args[i] == "-R" || args[i] == "--raw") {
 			raw = true;
 		} else {
-#if QT_VERSION >= 0x050000
 			printf("Invalid argument %s\n", args[i].toLatin1().data());
-#else
-			printf("Invalid argument %s\n", args[i].toAscii().data());
-#endif
 			return 0;
 		}
 	}

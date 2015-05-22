@@ -2343,7 +2343,7 @@ int GeneralTab::matchAudioDevice()
 
 	media = discover_media_devices();
 
-	if ((match = checkMatchAudioDevice(media, curDev.toAscii(), MEDIA_SND_CAP)) != -1)
+	if ((match = checkMatchAudioDevice(media, curDev.toLatin1(), MEDIA_SND_CAP)) != -1)
 		return match;
 	return -1;
 }
