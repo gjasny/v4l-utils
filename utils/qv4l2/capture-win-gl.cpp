@@ -174,6 +174,7 @@ CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_mag_filter(GL_NEAREST),
 	m_min_filter(GL_NEAREST)
 {
+	makeCurrent();
 	m_glfunction.initializeGLFunctions(context());
 }
 
