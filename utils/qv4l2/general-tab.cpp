@@ -739,7 +739,6 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 	addWidget(m_vidFields);
 	connect(m_vidFields, SIGNAL(activated(int)), SLOT(vidFieldChanged(int)));
 
-#ifdef HAVE_QTGL
 	if (!isRadio() && !isVbi()) {
 		m_colorspace = new QComboBox(parentWidget());
 		m_colorspace->addItem(m_isOutput ? "Default" : "Autodetect", QVariant(0));
@@ -780,7 +779,7 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		addWidget(m_quantRange);
 		connect(m_quantRange, SIGNAL(activated(int)), SLOT(quantRangeChanged(int)));
 	}
-#endif
+
 	if (m_isOutput)
 		return;
 
