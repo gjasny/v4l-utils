@@ -606,7 +606,7 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *parms);
 /*
  * Other functions, associated to SEC/LNB/DISEqC
  *
- * The functions bellow are just wrappers for the Kernel calls, in order to
+ * The functions below are just wrappers for the Kernel calls, in order to
  * manually control satellite systems.
  *
  * Instead of using most them, the best is to set the LNBf parameters, and let

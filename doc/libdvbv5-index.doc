@@ -151,7 +151,7 @@ discover the scale used internally by the Kernel, allowing the userspace
 applications to properly present the statistics.
 
 It also allows to obtain per-layer statistics, plus a global ponderated
-mean statistics for the transponder as a hole, on standards like ISDB.
+mean statistics for the transponder as a whole, on standards like ISDB.
 
 Just like the DTV properties, the stats are cached. That warrants that
 all stats are got at the same time, when dvb_fe_get_stats() is called.

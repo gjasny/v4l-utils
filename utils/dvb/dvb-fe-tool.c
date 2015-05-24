@@ -45,7 +45,7 @@ const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.
 
 static const char doc[] = N_(
 	"\nA DVB frontend tool using API version 5\n"
-	"\nOn the options bellow, the arguments are:\n"
+	"\nOn the options below, the arguments are:\n"
 	"  ADAPTER      - the dvb adapter to control\n"
 	"  FRONTEND     - the dvb frontend to control");
 

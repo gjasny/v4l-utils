@@ -192,7 +192,7 @@ const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.
 static const char doc[] = N_(
 	"\nAllows get/set IR keycode/scancode tables\n"
 	"You need to have read permissions on /dev/input for the program to work\n"
-	"\nOn the options bellow, the arguments are:\n"
+	"\nOn the options below, the arguments are:\n"
 	"  DEV      - the /dev/input/event* device to control\n"
 	"  SYSDEV   - the ir class as found at /sys/class/rc\n"
 	"  TABLE    - a file with a set of scancode=keycode value pairs\n"

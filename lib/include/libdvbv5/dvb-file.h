@@ -42,7 +42,7 @@
  * DVB structures used to represent all files opened by the libdvbv5 library.
  *
  * Those structs represents each individual entry on a file, and the file
- * as a hole.
+ * as a whole.
  */
 
 /**
