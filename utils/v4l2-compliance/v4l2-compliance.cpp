@@ -407,6 +407,7 @@ static void restoreState()
 {
 	struct node *node = state.node;
 
+	node->reopen();
 	if (node->has_inputs) {
 		node->s_input(state.input.index);
 		if (state.input.audioset)
