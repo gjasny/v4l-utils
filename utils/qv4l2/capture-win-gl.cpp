@@ -24,33 +24,6 @@
 
 #include <stdio.h>
 
-/*
- * These two helper defines are taken from code that is not yet merged
- * in the kernel, but since they are very useful I've copied them here
- * for the time being.
- */
-
-/*
- * Determine how YCBCR_ENC_DEFAULT should map to a proper Y'CbCr encoding.
- * This depends on the colorspace.
- */
-#define V4L2_MAP_YCBCR_ENC_DEFAULT(colsp) \
-	((colsp) == V4L2_COLORSPACE_REC709 ? V4L2_YCBCR_ENC_709 : \
-	 ((colsp) == V4L2_COLORSPACE_BT2020 ? V4L2_YCBCR_ENC_BT2020 : \
-	  ((colsp) == V4L2_COLORSPACE_SMPTE240M ? V4L2_YCBCR_ENC_SMPTE240M : \
-	   V4L2_YCBCR_ENC_601)))
-
-/*
- * Determine how QUANTIZATION_DEFAULT should map to a proper quantization.
- * This depends on whether the image is RGB or not, the colorspace and the
- * Y'CbCr encoding.
- */
-#define V4L2_MAP_QUANTIZATION_DEFAULT(is_rgb, colsp, ycbcr_enc) \
-	(((is_rgb) && (colsp) == V4L2_COLORSPACE_BT2020) ? V4L2_QUANTIZATION_LIM_RANGE : \
-	 (((is_rgb) || (ycbcr_enc) == V4L2_YCBCR_ENC_XV601 || \
-	  (ycbcr_enc) == V4L2_YCBCR_ENC_XV709 || (colsp) == V4L2_COLORSPACE_JPEG) ? \
-	 V4L2_QUANTIZATION_FULL_RANGE : V4L2_QUANTIZATION_LIM_RANGE))
-
 CaptureWinGL::CaptureWinGL(ApplicationWindow *aw) :
 	CaptureWin(aw)
 {

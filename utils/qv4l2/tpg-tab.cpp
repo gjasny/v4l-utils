@@ -330,9 +330,9 @@ void ApplicationWindow::tpgColorspaceChanged()
 	int quantization = combo2int(m_tpgQuantRange);
 
 	g_fmt(fmt);
-	if (colorspace == 0)
+	if (colorspace == V4L2_COLORSPACE_DEFAULT)
 		colorspace = fmt.g_colorspace();
-	if (colorspace == 0)
+	if (colorspace == V4L2_COLORSPACE_DEFAULT)
 		colorspace = tpgDefaultColorspace();
 	if (ycbcrEnc == V4L2_YCBCR_ENC_DEFAULT)
 		ycbcrEnc = fmt.g_ycbcr_enc();

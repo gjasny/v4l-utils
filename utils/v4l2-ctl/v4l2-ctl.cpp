@@ -367,6 +367,8 @@ std::string field2s(int val)
 std::string colorspace2s(int val)
 {
 	switch (val) {
+	case V4L2_COLORSPACE_DEFAULT:
+		return "Default";
 	case V4L2_COLORSPACE_SMPTE170M:
 		return "SMPTE 170M";
 	case V4L2_COLORSPACE_SMPTE240M:
@@ -387,6 +389,8 @@ std::string colorspace2s(int val)
 		return "AdobeRGB";
 	case V4L2_COLORSPACE_BT2020:
 		return "BT.2020";
+	case V4L2_COLORSPACE_RAW:
+		return "Raw";
 	default:
 		return "Unknown (" + num2s(val) + ")";
 	}

@@ -434,7 +434,7 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 	   so we should be able to get away with this. */
 	dest_fmt->fmt.pix.bytesperline = 0;
 	dest_fmt->fmt.pix.sizeimage = 0;
-	dest_fmt->fmt.pix.colorspace = 0;
+	dest_fmt->fmt.pix.colorspace = V4L2_COLORSPACE_DEFAULT;
 	dest_fmt->fmt.pix.priv = 0;
 
 	*src_fmt = *dest_fmt;

@@ -741,7 +741,7 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 
 	if (!isRadio() && !isVbi()) {
 		m_colorspace = new QComboBox(parentWidget());
-		m_colorspace->addItem(m_isOutput ? "Default" : "Autodetect", QVariant(0));
+		m_colorspace->addItem(m_isOutput ? "Default" : "Autodetect", QVariant(V4L2_COLORSPACE_DEFAULT));
 		m_colorspace->addItem("SMPTE 170M", QVariant(V4L2_COLORSPACE_SMPTE170M));
 		m_colorspace->addItem("Rec. 709", QVariant(V4L2_COLORSPACE_REC709));
 		m_colorspace->addItem("sRGB", QVariant(V4L2_COLORSPACE_SRGB));
@@ -1405,7 +1405,7 @@ void GeneralTab::quantRangeChanged(int idx)
 void GeneralTab::clearColorspace(cv4l_fmt &fmt)
 {
 	if (m_colorspace->currentIndex() == 0)
-		fmt.s_colorspace(0);
+		fmt.s_colorspace(V4L2_COLORSPACE_DEFAULT);
 	if (m_ycbcrEnc->currentIndex() == 0)
 		fmt.s_ycbcr_enc(V4L2_YCBCR_ENC_DEFAULT);
 	if (m_quantRange->currentIndex() == 0)
