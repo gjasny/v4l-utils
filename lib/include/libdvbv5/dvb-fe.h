@@ -753,7 +753,7 @@ int dvb_fe_set_default_country(struct dvb_v5_fe_parms *parms,
 extern const unsigned fe_bandwidth_name[8];
 extern const char *dvb_v5_name[71];
 extern const void *dvb_v5_attr_names[];
-extern const char *delivery_system_name[20];
+extern const char *delivery_system_name[22];
 extern const char *fe_code_rate_name[14];
 extern const char *fe_modulation_name[15];
 extern const char *fe_transmission_mode_name[10];

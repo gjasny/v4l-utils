@@ -57,12 +57,12 @@ sub gen_fe($)
     #
     # Mode FE_CAPS
     #
-    if (m/typedef enum fe_caps\ {/) {
+    if (m/enum fe_caps\ {/) {
       $mode = FE_CAPS;
       next;
     }
     if ($mode == FE_CAPS) {
-      if (m/\} fe_caps_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -76,12 +76,12 @@ sub gen_fe($)
     #
     # Mode FE_STATUS
     #
-    if (m/typedef enum fe_status\ {/) {
+    if (m/enum fe_status\ {/) {
       $mode = FE_STATUS;
       next;
     }
     if ($mode == FE_STATUS) {
-      if (m/\} fe_status_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -97,12 +97,12 @@ sub gen_fe($)
     #
     # Mode FE_CODERATE
     #
-    if (m/typedef enum fe_code_rate \{/) {
+    if (m/enum fe_code_rate \{/) {
       $mode = FE_CODERATE;
       next;
     }
     if ($mode == FE_CODERATE) {
-      if (m/\} fe_code_rate_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -117,12 +117,12 @@ sub gen_fe($)
     #
     # Mode FE_MODULATION
     #
-    if (m/typedef enum fe_modulation \{/) {
+    if (m/enum fe_modulation \{/) {
       $mode = FE_MODULATION;
       next;
     }
     if ($mode == FE_MODULATION) {
-      if (m/\} fe_modulation_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -137,12 +137,12 @@ sub gen_fe($)
     #
     # Mode FE_TMODE
     #
-    if (m/typedef enum fe_transmit_mode \{/) {
+    if (m/enum fe_transmit_mode \{/) {
       $mode = FE_TMODE;
       next;
     }
     if ($mode == FE_TMODE) {
-      if (m/\} fe_transmit_mode_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -157,12 +157,12 @@ sub gen_fe($)
     #
     # Mode FE_BW
     #
-    if (m/typedef enum fe_bandwidth \{/) {
+    if (m/enum fe_bandwidth \{/) {
       $mode = FE_BW;
       next;
     }
     if ($mode == FE_BW) {
-      if (m/\} fe_bandwidth_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -183,12 +183,12 @@ sub gen_fe($)
     #
     # Mode FE_GINTERVAL
     #
-    if (m/typedef enum fe_guard_interval \{/) {
+    if (m/enum fe_guard_interval \{/) {
       $mode = FE_GINTERVAL;
       next;
     }
     if ($mode == FE_GINTERVAL) {
-      if (m/\} fe_guard_interval_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -203,12 +203,12 @@ sub gen_fe($)
     #
     # Mode FE_HIERARCHY
     #
-    if (m/typedef enum fe_hierarchy \{/) {
+    if (m/enum fe_hierarchy \{/) {
       $mode = FE_HIERARCHY;
       next;
     }
     if ($mode == FE_HIERARCHY) {
-      if (m/\} fe_hierarchy_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -223,12 +223,12 @@ sub gen_fe($)
     #
     # Mode FE_VOLTAGE
     #
-    if (m/typedef enum fe_sec_voltage \{/) {
+    if (m/enum fe_sec_voltage \{/) {
       $mode = FE_VOLTAGE;
       next;
     }
     if ($mode == FE_VOLTAGE) {
-      if (m/\} fe_sec_voltage_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -243,12 +243,12 @@ sub gen_fe($)
     #
     # Mode FE_TONE
     #
-    if (m/typedef enum fe_sec_tone_mode \{/) {
+    if (m/enum fe_sec_tone_mode \{/) {
       $mode = FE_TONE;
       next;
     }
     if ($mode == FE_TONE) {
-      if (m/\} fe_sec_tone_mode_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -263,12 +263,12 @@ sub gen_fe($)
     #
     # Mode FE_INVERSION
     #
-    if (m/typedef enum fe_spectral_inversion \{/) {
+    if (m/enum fe_spectral_inversion \{/) {
       $mode = FE_INVERSION;
       next;
     }
     if ($mode == FE_INVERSION) {
-      if (m/\} fe_spectral_inversion_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -283,12 +283,12 @@ sub gen_fe($)
     #
     # Mode FE_PILOT
     #
-    if (m/typedef enum fe_pilot \{/) {
+    if (m/enum fe_pilot \{/) {
       $mode = FE_PILOT;
       next;
     }
     if ($mode == FE_PILOT) {
-      if (m/\} fe_pilot_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -303,12 +303,12 @@ sub gen_fe($)
     #
     # Mode FE_ROLLOFF
     #
-    if (m/typedef enum fe_rolloff \{/) {
+    if (m/enum fe_rolloff \{/) {
       $mode =FE_ROLLOFF;
       next;
     }
     if ($mode == FE_ROLLOFF) {
-      if (m/\} fe_rolloff_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
@@ -333,12 +333,12 @@ sub gen_fe($)
     #
     # Mode FE_DTS
     #
-    if (m/typedef enum fe_delivery_system \{/) {
+    if (m/enum fe_delivery_system \{/) {
       $mode = FE_DTS;
       next;
     }
     if ($mode == FE_DTS) {
-      if (m/\} fe_delivery_system_t;/) {
+      if (m/\};/) {
         $mode = NORMAL;
         next;
       }
