@@ -1530,6 +1530,7 @@ void CaptureWinGLEngine::shader_RGB(__u32 format)
 		internalFmt = manualTransform ? GL_LUMINANCE : GL_SLUMINANCE;
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 			     GL_LUMINANCE, GL_UNSIGNED_SHORT, NULL);
+		break;
 	case V4L2_PIX_FMT_RGB24:
 	case V4L2_PIX_FMT_BGR24:
 	default:
