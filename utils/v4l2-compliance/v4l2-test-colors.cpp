@@ -504,8 +504,19 @@ int testColorsAllFormats(struct node *node, unsigned component,
 	do {
 		if (fmtdesc.flags & V4L2_FMT_FLAG_COMPRESSED)
 			continue;
-		if (fmtdesc.pixelformat == V4L2_PIX_FMT_GREY)
+		switch (fmtdesc.pixelformat) {
+		case V4L2_PIX_FMT_GREY:
+		case V4L2_PIX_FMT_Y4:
+		case V4L2_PIX_FMT_Y6:
+		case V4L2_PIX_FMT_Y10:
+		case V4L2_PIX_FMT_Y12:
+		case V4L2_PIX_FMT_Y16:
+		case V4L2_PIX_FMT_Y16_BE:
+		case V4L2_PIX_FMT_Y10BPACK:
+		case V4L2_PIX_FMT_PAL8:
+		case V4L2_PIX_FMT_UV8:
 			continue;
+		}
 
 		restoreFormat(node);
 
