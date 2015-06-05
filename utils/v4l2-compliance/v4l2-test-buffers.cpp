@@ -901,8 +901,7 @@ int testMmap(struct node *node, unsigned frame_count)
 		// Good check for whether all the internal vb2 calls are in
 		// balance.
 		fail_on_test(q.reqbufs(node, q.g_buffers()));
-		cur_fmt.s_type(q.g_type());
-		node->g_fmt(cur_fmt);
+		fail_on_test(node->g_fmt(cur_fmt, q.g_type()));
 
 		ret = q.create_bufs(node, 0);
 		fail_on_test(ret != ENOTTY && ret != 0);
@@ -924,6 +923,7 @@ int testMmap(struct node *node, unsigned frame_count)
 					fmt.s_sizeimage(fmt.g_sizeimage(p) * 2, p);
 			}
 			fail_on_test(q.create_bufs(node, 1, &fmt));
+			fail_on_test(q.reqbufs(node, 2));
 		}
 		fail_on_test(setupMmap(node, q));
 
