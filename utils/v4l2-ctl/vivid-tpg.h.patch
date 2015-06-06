@@ -2,7 +2,7 @@ diff --git a/devel/v4l/patchwork//drivers/media/platform/vivid/vivid-tpg.h b/uti
 index 8ef3e52ba3be..76c373a7b4f1 100644
 --- a/devel/v4l/patchwork//drivers/media/platform/vivid/vivid-tpg.h
 +++ b/utils/v4l2-ctl/vivid-tpg.h
-@@ -20,13 +20,47 @@
+@@ -20,13 +20,48 @@
  #ifndef _VIVID_TPG_H_
  #define _VIVID_TPG_H_
  
@@ -27,6 +27,7 @@ index 8ef3e52ba3be..76c373a7b4f1 100644
 +
 +#define __packed __attribute__((packed))
 +#define pr_info printf
++#define noinline
 +
 +static inline void vfree(void *p)
 +{

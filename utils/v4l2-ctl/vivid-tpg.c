@@ -706,9 +706,9 @@ static void precalculate_color(struct tpg_data *tpg, int k)
 	}
 
 	if (tpg->pattern == TPG_PAT_CSC_COLORBAR && col <= TPG_COLOR_CSC_BLACK) {
-		r = tpg_csc_colors[tpg->colorspace][col].r;
-		g = tpg_csc_colors[tpg->colorspace][col].g;
-		b = tpg_csc_colors[tpg->colorspace][col].b;
+		r = tpg_csc_colors[tpg->colorspace][tpg->real_xfer_func][col].r;
+		g = tpg_csc_colors[tpg->colorspace][tpg->real_xfer_func][col].g;
+		b = tpg_csc_colors[tpg->colorspace][tpg->real_xfer_func][col].b;
 	} else {
 		r <<= 4;
 		g <<= 4;
@@ -1462,42 +1462,10 @@ static void tpg_precalculate_line(struct tpg_data *tpg)
 /* need this to do rgb24 rendering */
 typedef struct { u16 __; u8 _; } __packed x24;
 
-void tpg_gen_text(const struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
-		  int y, int x, char *text)
-{
-	int line;
-	unsigned step = V4L2_FIELD_HAS_T_OR_B(tpg->field) ? 2 : 1;
-	unsigned div = step;
-	unsigned first = 0;
-	unsigned len = strlen(text);
-	unsigned p;
-
-	if (font8x16 == NULL || basep == NULL)
-		return;
-
-	/* Checks if it is possible to show string */
-	if (y + 16 >= tpg->compose.height || x + 8 >= tpg->compose.width)
-		return;
-
-	if (len > (tpg->compose.width - x) / 8)
-		len = (tpg->compose.width - x) / 8;
-	if (tpg->vflip)
-		y = tpg->compose.height - y - 16;
-	if (tpg->hflip)
-		x = tpg->compose.width - x - 8;
-	y += tpg->compose.top;
-	x += tpg->compose.left;
-	if (tpg->field == V4L2_FIELD_BOTTOM)
-		first = 1;
-	else if (tpg->field == V4L2_FIELD_SEQ_TB || tpg->field == V4L2_FIELD_SEQ_BT)
-		div = 2;
-
-	for (p = 0; p < tpg->planes; p++) {
-		unsigned vdiv = tpg->vdownsampling[p];
-		unsigned hdiv = tpg->hdownsampling[p];
-
-		/* Print text */
 #define PRINTSTR(PIXTYPE) do {	\
+	unsigned vdiv = tpg->vdownsampling[p]; \
+	unsigned hdiv = tpg->hdownsampling[p]; \
+	int line;	\
 	PIXTYPE fg;	\
 	PIXTYPE bg;	\
 	memcpy(&fg, tpg->textfg[p], sizeof(PIXTYPE));	\
@@ -1548,15 +1516,82 @@ void tpg_gen_text(const struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
 	}	\
 } while (0)
 
+static noinline void tpg_print_str_2(const struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
+			unsigned p, unsigned first, unsigned div, unsigned step,
+			int y, int x, char *text, unsigned len)
+{
+	PRINTSTR(u8);
+}
+
+static noinline void tpg_print_str_4(const struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
+			unsigned p, unsigned first, unsigned div, unsigned step,
+			int y, int x, char *text, unsigned len)
+{
+	PRINTSTR(u16);
+}
+
+static noinline void tpg_print_str_6(const struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
+			unsigned p, unsigned first, unsigned div, unsigned step,
+			int y, int x, char *text, unsigned len)
+{
+	PRINTSTR(x24);
+}
+
+static noinline void tpg_print_str_8(const struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
+			unsigned p, unsigned first, unsigned div, unsigned step,
+			int y, int x, char *text, unsigned len)
+{
+	PRINTSTR(u32);
+}
+
+void tpg_gen_text(const struct tpg_data *tpg, u8 *basep[TPG_MAX_PLANES][2],
+		  int y, int x, char *text)
+{
+	unsigned step = V4L2_FIELD_HAS_T_OR_B(tpg->field) ? 2 : 1;
+	unsigned div = step;
+	unsigned first = 0;
+	unsigned len = strlen(text);
+	unsigned p;
+
+	if (font8x16 == NULL || basep == NULL)
+		return;
+
+	/* Checks if it is possible to show string */
+	if (y + 16 >= tpg->compose.height || x + 8 >= tpg->compose.width)
+		return;
+
+	if (len > (tpg->compose.width - x) / 8)
+		len = (tpg->compose.width - x) / 8;
+	if (tpg->vflip)
+		y = tpg->compose.height - y - 16;
+	if (tpg->hflip)
+		x = tpg->compose.width - x - 8;
+	y += tpg->compose.top;
+	x += tpg->compose.left;
+	if (tpg->field == V4L2_FIELD_BOTTOM)
+		first = 1;
+	else if (tpg->field == V4L2_FIELD_SEQ_TB || tpg->field == V4L2_FIELD_SEQ_BT)
+		div = 2;
+
+	for (p = 0; p < tpg->planes; p++) {
+		/* Print text */
 		switch (tpg->twopixelsize[p]) {
 		case 2:
-			PRINTSTR(u8); break;
+			tpg_print_str_2(tpg, basep, p, first, div, step, y, x,
+					text, len);
+			break;
 		case 4:
-			PRINTSTR(u16); break;
+			tpg_print_str_4(tpg, basep, p, first, div, step, y, x,
+					text, len);
+			break;
 		case 6:
-			PRINTSTR(x24); break;
+			tpg_print_str_6(tpg, basep, p, first, div, step, y, x,
+					text, len);
+			break;
 		case 8:
-			PRINTSTR(u32); break;
+			tpg_print_str_8(tpg, basep, p, first, div, step, y, x,
+					text, len);
+			break;
 		}
 	}
 }
@@ -1650,8 +1685,14 @@ static void tpg_recalc(struct tpg_data *tpg)
 	if (tpg->recalc_colors) {
 		tpg->recalc_colors = false;
 		tpg->recalc_lines = true;
+		tpg->real_xfer_func = tpg->xfer_func;
 		tpg->real_ycbcr_enc = tpg->ycbcr_enc;
 		tpg->real_quantization = tpg->quantization;
+
+		if (tpg->xfer_func == V4L2_XFER_FUNC_DEFAULT)
+			tpg->real_xfer_func =
+				V4L2_MAP_XFER_FUNC_DEFAULT(tpg->colorspace);
+
 		if (tpg->ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
 			tpg->real_ycbcr_enc =
 				V4L2_MAP_YCBCR_ENC_DEFAULT(tpg->colorspace);
@@ -1715,6 +1756,7 @@ void tpg_log_status(struct tpg_data *tpg)
 	pr_info("tpg compose: %ux%u@%dx%d\n", tpg->compose.width, tpg->compose.height,
 			tpg->compose.left, tpg->compose.top);
 	pr_info("tpg colorspace: %d\n", tpg->colorspace);
+	pr_info("tpg transfer function: %d/%d\n", tpg->xfer_func, tpg->real_xfer_func);
 	pr_info("tpg Y'CbCr encoding: %d/%d\n", tpg->ycbcr_enc, tpg->real_ycbcr_enc);
 	pr_info("tpg quantization: %d/%d\n", tpg->quantization, tpg->real_quantization);
 	pr_info("tpg RGB range: %d/%d\n", tpg->rgb_range, tpg->real_rgb_range);
