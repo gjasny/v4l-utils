@@ -665,6 +665,8 @@ public:
 	void s_pixelformat(__u32 pixelformat) { v4l_format_s_pixelformat(this, pixelformat); }
 	unsigned g_colorspace() const { return v4l_format_g_colorspace(this); }
 	void s_colorspace(unsigned colorspace) { v4l_format_s_colorspace(this, colorspace); }
+	unsigned g_xfer_func() const { return v4l_format_g_xfer_func(this); }
+	void s_xfer_func(unsigned xfer_func) { v4l_format_s_xfer_func(this, xfer_func); }
 	unsigned g_ycbcr_enc() const { return v4l_format_g_ycbcr_enc(this); }
 	void s_ycbcr_enc(unsigned ycbcr_enc) { v4l_format_s_ycbcr_enc(this, ycbcr_enc); }
 	unsigned g_quantization() const { return v4l_format_g_quantization(this); }

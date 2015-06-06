@@ -649,6 +649,36 @@ v4l_format_g_colorspace(const struct v4l2_format *fmt)
 	}
 }
 
+static inline void v4l_format_s_xfer_func(struct v4l2_format *fmt,
+					       unsigned xfer_func)
+{
+	switch (fmt->type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		fmt->fmt.pix.xfer_func = xfer_func;
+		break;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		fmt->fmt.pix_mp.xfer_func = xfer_func;
+		break;
+	}
+}
+
+static inline unsigned
+v4l_format_g_xfer_func(const struct v4l2_format *fmt)
+{
+	switch (fmt->type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		return fmt->fmt.pix.xfer_func;
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		return fmt->fmt.pix_mp.xfer_func;
+	default:
+		return 0;
+	}
+}
+
 static inline void v4l_format_s_ycbcr_enc(struct v4l2_format *fmt,
 					       unsigned ycbcr_enc)
 {
