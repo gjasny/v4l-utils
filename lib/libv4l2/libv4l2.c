@@ -960,6 +960,9 @@ static void v4l2_set_src_and_dest_format(int index,
 	   format not changed by conversion */
 	dest_fmt->fmt.pix.field = src_fmt->fmt.pix.field;
 	dest_fmt->fmt.pix.colorspace = src_fmt->fmt.pix.colorspace;
+	dest_fmt->fmt.pix.xfer_func = src_fmt->fmt.pix.xfer_func;
+	dest_fmt->fmt.pix.ycbcr_enc = src_fmt->fmt.pix.ycbcr_enc;
+	dest_fmt->fmt.pix.quantization = src_fmt->fmt.pix.quantization;
 	/* When we're not converting use bytesperline and imagesize from src_fmt */
 	if (v4l2_pix_fmt_compat(src_fmt, dest_fmt)) {
 		dest_fmt->fmt.pix.bytesperline = src_fmt->fmt.pix.bytesperline;
