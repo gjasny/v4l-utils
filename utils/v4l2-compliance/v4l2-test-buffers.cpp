@@ -397,6 +397,8 @@ static int testCanSetSameTimings(struct node *node)
 
 int testReqBufs(struct node *node)
 {
+	struct v4l2_create_buffers crbufs = { };
+	struct v4l2_requestbuffers reqbufs = { };
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
 	bool can_rw = node->g_caps() & V4L2_CAP_READWRITE;
 	bool mmap_valid;
@@ -515,7 +517,14 @@ int testReqBufs(struct node *node)
 				fail_on_test(q2.reqbufs(node->node2, 1));
 				fail_on_test(q2.reqbufs(node->node2));
 			}
-			fail_on_test(q.reqbufs(node));
+			memset(&reqbufs, 0xff, sizeof(reqbufs));
+			reqbufs.count = 0;
+			reqbufs.type = i;
+			reqbufs.memory = m;
+			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &reqbufs));
+			fail_on_test(check_0(reqbufs.reserved, sizeof(reqbufs.reserved)));
+			q.reqbufs(node);
+
 			ret = q.create_bufs(node, 1);
 			if (ret == ENOTTY) {
 				warn("VIDIOC_CREATE_BUFS not supported\n");
@@ -529,6 +538,14 @@ int testReqBufs(struct node *node)
 			fail_on_test(testQueryBuf(node, i, q.g_buffers()));
 			if (!node->is_m2m)
 				fail_on_test(q2.create_bufs(node->node2, 1) != EBUSY);
+
+			memset(&crbufs, 0xff, sizeof(crbufs));
+			node->g_fmt(crbufs.format, i);
+			crbufs.count = 0;
+			crbufs.memory = m;
+			fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs));
+			fail_on_test(check_0(crbufs.reserved, sizeof(crbufs.reserved)));
+			fail_on_test(crbufs.index != q.g_buffers());
 		}
 		fail_on_test(q.reqbufs(node));
 	}
