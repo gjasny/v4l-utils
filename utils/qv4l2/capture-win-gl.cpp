@@ -626,7 +626,17 @@ QString CaptureWinGLEngine::codeYUVNormalize()
 {
 	switch (m_quantization) {
 	case V4L2_QUANTIZATION_FULL_RANGE:
-		return "";
+		if (m_ycbcr_enc != V4L2_YCBCR_ENC_XV601 &&
+		    m_ycbcr_enc != V4L2_YCBCR_ENC_XV709)
+			return "";
+		/*
+		 * xv709 and xv601 have full range quantization, but they still
+		 * need to be normalized as if they were limited range. But the
+		 * result are values outside the normal 0-1 range, which is the
+		 * point of these extended gamut encodings.
+		 */
+
+		/* fall-through */
 	default:
 		return QString("   y = (255.0 / 219.0) * (y - (16.0 / 255.0));"
 			       "   u = (255.0 / 224.0) * u;"
