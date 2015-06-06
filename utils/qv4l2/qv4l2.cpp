@@ -316,7 +316,7 @@ void ApplicationWindow::updateColorspace()
 	int xferFunc = m_overrideXferFunc;
 	int ycbcrEnc = m_overrideYCbCrEnc;
 	int quantRange = m_overrideQuantization;
-	cv4l_fmt fmt;
+	cv4l_fmt fmt(g_type());
 
 	// don't use the wrapped ioctl since it doesn't
 	// update colorspace correctly.
