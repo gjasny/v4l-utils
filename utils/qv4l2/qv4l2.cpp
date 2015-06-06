@@ -646,9 +646,12 @@ bool ApplicationWindow::startStreaming()
 	}
 
 	m_queue.free(this);
+	delete m_ctrlNotifier;
 	reopen(true);
 	m_genTab->sourceChangeSubscribe();
 	subscribeCtrlEvents();
+	m_ctrlNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Exception, m_tabs);
+	connect(m_ctrlNotifier, SIGNAL(activated(int)), this, SLOT(ctrlEvent()));
 	m_capStartAct->setChecked(false);
 #ifdef HAVE_QTGL
 	m_useGLAct->setEnabled(CaptureWinGL::isSupported());
@@ -1127,9 +1130,12 @@ void ApplicationWindow::stopStreaming()
 		m_queue.free(this);
 		break;
 	}
+	delete m_ctrlNotifier;
 	reopen(true);
 	m_genTab->sourceChangeSubscribe();
 	subscribeCtrlEvents();
+	m_ctrlNotifier = new QSocketNotifier(g_fd(), QSocketNotifier::Exception, m_tabs);
+	connect(m_ctrlNotifier, SIGNAL(activated(int)), this, SLOT(ctrlEvent()));
 	m_genTab->setHaveBuffers(false);
 	refresh();
 }
