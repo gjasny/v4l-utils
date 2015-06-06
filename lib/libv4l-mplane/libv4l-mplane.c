@@ -225,6 +225,9 @@ static int try_set_fmt_ioctl(int fd, unsigned long int cmd,
 	fmt.fmt.pix_mp.pixelformat = org->fmt.pix.pixelformat;
 	fmt.fmt.pix_mp.field = org->fmt.pix.field;
 	fmt.fmt.pix_mp.colorspace = org->fmt.pix.colorspace;
+	fmt.fmt.pix_mp.xfer_func = org->fmt.pix.xfer_func;
+	fmt.fmt.pix_mp.ycbcr_enc = org->fmt.pix.ycbcr_enc;
+	fmt.fmt.pix_mp.quantization = org->fmt.pix.quantization;
 	fmt.fmt.pix_mp.num_planes = 1;
 	fmt.fmt.pix_mp.flags = org->fmt.pix.flags;
 	fmt.fmt.pix_mp.plane_fmt[0].bytesperline = org->fmt.pix.bytesperline;
@@ -239,6 +242,9 @@ static int try_set_fmt_ioctl(int fd, unsigned long int cmd,
 	org->fmt.pix.pixelformat = fmt.fmt.pix_mp.pixelformat;
 	org->fmt.pix.field = fmt.fmt.pix_mp.field;
 	org->fmt.pix.colorspace = fmt.fmt.pix_mp.colorspace;
+	org->fmt.pix.xfer_func = fmt.fmt.pix_mp.xfer_func;
+	org->fmt.pix.ycbcr_enc = fmt.fmt.pix_mp.ycbcr_enc;
+	org->fmt.pix.quantization = fmt.fmt.pix_mp.quantization;
 	org->fmt.pix.bytesperline = fmt.fmt.pix_mp.plane_fmt[0].bytesperline;
 	org->fmt.pix.sizeimage = fmt.fmt.pix_mp.plane_fmt[0].sizeimage;
 	org->fmt.pix.flags = fmt.fmt.pix_mp.flags;
@@ -278,6 +284,9 @@ static int create_bufs_ioctl(int fd, unsigned long int cmd,
 	fmt->fmt.pix_mp.pixelformat = org->fmt.pix.pixelformat;
 	fmt->fmt.pix_mp.field = org->fmt.pix.field;
 	fmt->fmt.pix_mp.colorspace = org->fmt.pix.colorspace;
+	fmt->fmt.pix_mp.xfer_func = org->fmt.pix.xfer_func;
+	fmt->fmt.pix_mp.ycbcr_enc = org->fmt.pix.ycbcr_enc;
+	fmt->fmt.pix_mp.quantization = org->fmt.pix.quantization;
 	fmt->fmt.pix_mp.num_planes = 1;
 	fmt->fmt.pix_mp.flags = org->fmt.pix.flags;
 	fmt->fmt.pix_mp.plane_fmt[0].bytesperline = org->fmt.pix.bytesperline;
@@ -292,6 +301,9 @@ static int create_bufs_ioctl(int fd, unsigned long int cmd,
 	org->fmt.pix.pixelformat = fmt->fmt.pix_mp.pixelformat;
 	org->fmt.pix.field = fmt->fmt.pix_mp.field;
 	org->fmt.pix.colorspace = fmt->fmt.pix_mp.colorspace;
+	org->fmt.pix.xfer_func = fmt->fmt.pix_mp.xfer_func;
+	org->fmt.pix.ycbcr_enc = fmt->fmt.pix_mp.ycbcr_enc;
+	org->fmt.pix.quantization = fmt->fmt.pix_mp.quantization;
 	org->fmt.pix.bytesperline = fmt->fmt.pix_mp.plane_fmt[0].bytesperline;
 	org->fmt.pix.sizeimage = fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
 	org->fmt.pix.flags = fmt->fmt.pix_mp.flags;
@@ -330,6 +342,9 @@ static int get_fmt_ioctl(int fd, unsigned long int cmd, struct v4l2_format *arg)
 	org->fmt.pix.pixelformat = fmt.fmt.pix_mp.pixelformat;
 	org->fmt.pix.field = fmt.fmt.pix_mp.field;
 	org->fmt.pix.colorspace = fmt.fmt.pix_mp.colorspace;
+	org->fmt.pix.xfer_func = fmt.fmt.pix_mp.xfer_func;
+	org->fmt.pix.ycbcr_enc = fmt.fmt.pix_mp.ycbcr_enc;
+	org->fmt.pix.quantization = fmt.fmt.pix_mp.quantization;
 	org->fmt.pix.bytesperline = fmt.fmt.pix_mp.plane_fmt[0].bytesperline;
 	org->fmt.pix.sizeimage = fmt.fmt.pix_mp.plane_fmt[0].sizeimage;
 	org->fmt.pix.priv = V4L2_PIX_FMT_PRIV_MAGIC;
