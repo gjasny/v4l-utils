@@ -101,13 +101,6 @@ void CaptureWinGL::setColorspace(unsigned colorspace, unsigned xfer_func,
 #endif
 }
 
-void CaptureWinGL::setDisplayColorspace(unsigned colorspace)
-{
-#ifdef HAVE_QTGL
-	m_videoSurface.setDisplayColorspace(colorspace);
-#endif
-}
-
 void CaptureWinGL::setField(unsigned field)
 {
 #ifdef HAVE_QTGL
@@ -141,7 +134,6 @@ CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_quantization(V4L2_QUANTIZATION_DEFAULT),
 	m_is_sdtv(false),
 	m_field(V4L2_FIELD_NONE),
-	m_displayColorspace(V4L2_COLORSPACE_SRGB),
 	m_screenTextureCount(0),
 	m_formatChange(false),
 	m_frameFormat(0),
@@ -228,20 +220,6 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned xfer_func,
 	m_ycbcr_enc = ycbcr_enc;
 	m_quantization = quantization;
 	m_is_sdtv = is_sdtv;
-	m_formatChange = true;
-}
-
-void CaptureWinGLEngine::setDisplayColorspace(unsigned colorspace)
-{
-	if (colorspace == m_displayColorspace)
-		return;
-	m_displayColorspace = colorspace;
-	if (m_haveFramebufferSRGB) {
-		if (m_displayColorspace == V4L2_COLORSPACE_SRGB)
-			glEnable(GL_FRAMEBUFFER_SRGB);
-		else
-			glDisable(GL_FRAMEBUFFER_SRGB);
-	}
 	m_formatChange = true;
 }
 
@@ -807,45 +785,17 @@ QString CaptureWinGLEngine::codeColorspaceConversion()
 // given display colorspace.
 QString CaptureWinGLEngine::codeTransformToNonLinear()
 {
-	switch (m_displayColorspace) {
-	case V4L2_COLORSPACE_DEFAULT:	// Keep as linear RGB
+	// Use the sRGB transfer function. Do nothing if the GL_FRAMEBUFFER_SRGB
+	// is available.
+	if (m_haveFramebufferSRGB)
 		return "";
-
-	case V4L2_COLORSPACE_SMPTE240M:
-		// Use the SMPTE 240M transfer function
-		return QString("   r = (r < 0.0228) ? r * 4.0 : 1.1115 * pow(r, 0.45) - 0.1115;"
-			       "   g = (g < 0.0228) ? g * 4.0 : 1.1115 * pow(g, 0.45) - 0.1115;"
-			       "   b = (b < 0.0228) ? b * 4.0 : 1.1115 * pow(b, 0.45) - 0.1115;"
-			       );
-	case V4L2_COLORSPACE_SRGB:
-		// Use the sRGB transfer function. Do nothing if the GL_FRAMEBUFFER_SRGB
-		// is available.
-		if (m_haveFramebufferSRGB)
-			return "";
-		return QString("   r = (r < -0.0031308) ? -1.055 * pow(-r, 1.0 / 2.4) + 0.055 : "
-			       "        ((r <= 0.0031308) ? r * 12.92 : 1.055 * pow(r, 1.0 / 2.4) - 0.055);"
-			       "   g = (g < -0.0031308) ? -1.055 * pow(-g, 1.0 / 2.4) + 0.055 : "
-			       "        ((g <= 0.0031308) ? g * 12.92 : 1.055 * pow(g, 1.0 / 2.4) - 0.055);"
-			       "   b = (b < -0.0031308) ? -1.055 * pow(-b, 1.0 / 2.4) + 0.055 : "
-			       "        ((b <= 0.0031308) ? b * 12.92 : 1.055 * pow(b, 1.0 / 2.4) - 0.055);"
-			       );
-	case V4L2_COLORSPACE_ADOBERGB:
-		// Use the AdobeRGB transfer function
-		return QString("   r = pow(r, 1.0 / 2.19921875);"
-			       "   g = pow(g, 1.0 / 2.19921875);"
-			       "   b = pow(b, 1.0 / 2.19921875);"
-			       );
-	case V4L2_COLORSPACE_REC709:
-	default:
-		// Use the REC 709 transfer function
-		return QString("   r = (r <= -0.018) ? -1.099 * pow(-r, 0.45) + 0.099 : "
-			       "        ((r < 0.018) ? r * 4.5 : 1.099 * pow(r, 0.45) - 0.099);"
-			       "   g = (g <= -0.018) ? -1.099 * pow(-g, 0.45) + 0.099 : "
-			       "        ((g < 0.018) ? g * 4.5 : 1.099 * pow(g, 0.45) - 0.099);"
-			       "   b = (b <= -0.018) ? -1.099 * pow(-b, 0.45) + 0.099 : "
-			       "        ((b < 0.018) ? b * 4.5 : 1.099 * pow(b, 0.45) - 0.099);"
-			       );
-	}
+	return QString("   r = (r < -0.0031308) ? -1.055 * pow(-r, 1.0 / 2.4) + 0.055 : "
+		       "        ((r <= 0.0031308) ? r * 12.92 : 1.055 * pow(r, 1.0 / 2.4) - 0.055);"
+		       "   g = (g < -0.0031308) ? -1.055 * pow(-g, 1.0 / 2.4) + 0.055 : "
+		       "        ((g <= 0.0031308) ? g * 12.92 : 1.055 * pow(g, 1.0 / 2.4) - 0.055);"
+		       "   b = (b < -0.0031308) ? -1.055 * pow(-b, 1.0 / 2.4) + 0.055 : "
+		       "        ((b <= 0.0031308) ? b * 12.92 : 1.055 * pow(b, 1.0 / 2.4) - 0.055);"
+		       );
 }
 
 static const QString codeSuffix("   gl_FragColor = vec4(r, g, b, 0.0);"

@@ -39,7 +39,6 @@ public:
 	void setColorspace(unsigned colorspace, unsigned xfer_func,
 			unsigned ycbcr_enc, unsigned quantization, bool is_sdtv) {}
 	void setField(unsigned field) {}
-	void setDisplayColorspace(unsigned colorspace) {}
 	void setBlending(bool enable) {}
 	void setLinearFilter(bool enable) {}
 

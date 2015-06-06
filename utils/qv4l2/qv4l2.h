@@ -130,7 +130,6 @@ private:
 	int m_overrideXferFunc;
 	int m_overrideYCbCrEnc;
 	int m_overrideQuantization;
-	int m_displayColorspace;
 
 private slots:
 	void capStart(bool);
@@ -161,14 +160,12 @@ private slots:
 	void enableScaling(bool enable);
 	void updatePixelAspectRatio();
 	void updateCropping();
-	void updateDisplayColorspace();
 	void clearBuffers();
 	void about();
 	void overrideColorspaceChanged(QAction *a);
 	void overrideXferFuncChanged(QAction *a);
 	void overrideYCbCrEncChanged(QAction *a);
 	void overrideQuantChanged(QAction *a);
-	void displayColorspaceChanged(QAction *a);
 
 	// tpg
 private slots:
@@ -206,7 +203,6 @@ public:
 	QMenu *m_overrideXferFuncMenu;
 	QMenu *m_overrideYCbCrEncMenu;
 	QMenu *m_overrideQuantizationMenu;
-	QMenu *m_displayColorspaceMenu;
 
 private:
 	void addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment align = Qt::AlignLeft);

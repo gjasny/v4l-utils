@@ -354,7 +354,6 @@ void CaptureWin::customMenuRequested(QPoint pos)
 	menu->addMenu(m_appWin->m_overrideXferFuncMenu);
 	menu->addMenu(m_appWin->m_overrideYCbCrEncMenu);
 	menu->addMenu(m_appWin->m_overrideQuantizationMenu);
-	menu->addMenu(m_appWin->m_displayColorspaceMenu);
 	
 	menu->popup(mapToGlobal(pos));
 }

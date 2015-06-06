@@ -49,7 +49,6 @@ public:
 	void lockSize(QSize size);
 	void setColorspace(unsigned colorspace, unsigned xfer_func,
 			unsigned ycbcr_enc, unsigned quantization, bool is_sdtv);
-	void setDisplayColorspace(unsigned colorspace);
 	void setField(unsigned field);
 	void setBlending(bool enable) { m_blending = enable; }
 	void setLinearFilter(bool enable);
@@ -107,7 +106,6 @@ private:
 	unsigned m_quantization;
 	bool m_is_sdtv;
 	unsigned m_field;
-	unsigned m_displayColorspace;
 	int m_screenTextureCount;
 	bool m_formatChange;
 	__u32 m_frameFormat;
@@ -137,7 +135,6 @@ public:
 	void setColorspace(unsigned colorspace, unsigned xfer_func,
 			unsigned ycbcr_enc, unsigned quantization, bool is_sdtv);
 	void setField(unsigned field);
-	void setDisplayColorspace(unsigned colorspace);
 	void setBlending(bool enable);
 	void setLinearFilter(bool enable);
 

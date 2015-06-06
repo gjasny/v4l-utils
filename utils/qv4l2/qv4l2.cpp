@@ -233,17 +233,6 @@ ApplicationWindow::ApplicationWindow() :
 	addSubMenuItem(grp, menu, "Limited Range", V4L2_QUANTIZATION_LIM_RANGE);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(overrideQuantChanged(QAction *)));
 
-	m_displayColorspace = V4L2_COLORSPACE_SRGB;
-	menu = new QMenu("Display Colorspace");
-	m_displayColorspaceMenu = menu;
-	grp = new QActionGroup(menu);
-	addSubMenuItem(grp, menu, "sRGB", V4L2_COLORSPACE_SRGB)->setChecked(true);
-	addSubMenuItem(grp, menu, "Linear RGB", 0);
-	addSubMenuItem(grp, menu, "Rec. 709", V4L2_COLORSPACE_REC709);
-	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_COLORSPACE_SMPTE240M);
-	addSubMenuItem(grp, menu, "Adobe RGB", V4L2_COLORSPACE_ADOBERGB);
-	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(displayColorspaceChanged(QAction *)));
-
 	m_capMenu = menuBar()->addMenu("&Capture");
 	m_capMenu->addAction(m_capStartAct);
 	m_capMenu->addAction(m_capStepAct);
@@ -251,7 +240,6 @@ ApplicationWindow::ApplicationWindow() :
 	m_capMenu->addMenu(m_overrideXferFuncMenu);
 	m_capMenu->addMenu(m_overrideYCbCrEncMenu);
 	m_capMenu->addMenu(m_overrideQuantizationMenu);
-	m_capMenu->addMenu(m_displayColorspaceMenu);
 	m_capMenu->addAction(m_showFramesAct);
 	m_capMenu->addAction(m_scalingAct);
 
@@ -368,18 +356,6 @@ void ApplicationWindow::overrideQuantChanged(QAction *a)
 {
 	m_overrideQuantization = a->data().toInt();
 	updateColorspace();
-}
-
-void ApplicationWindow::updateDisplayColorspace()
-{
-	if (m_capture != NULL)
-		m_capture->setDisplayColorspace(m_displayColorspace);
-}
-
-void ApplicationWindow::displayColorspaceChanged(QAction *a)
-{
-	m_displayColorspace = a->data().toInt();
-	updateDisplayColorspace();
 }
 
 void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
@@ -1519,7 +1495,6 @@ void ApplicationWindow::capStart(bool start)
 	
 	updatePixelAspectRatio();
 	updateColorspace();
-	updateDisplayColorspace();
 	m_capture->setField(field);
 
 	m_capture->setWindowSize(QSize(width, height));
