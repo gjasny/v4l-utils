@@ -127,6 +127,7 @@ private:
 	bool m_singleStep;
 	RenderMethod m_renderMethod;
 	int m_overrideColorspace;
+	int m_overrideXferFunc;
 	int m_overrideYCbCrEnc;
 	int m_overrideQuantization;
 	int m_displayColorspace;
@@ -164,6 +165,7 @@ private slots:
 	void clearBuffers();
 	void about();
 	void overrideColorspaceChanged(QAction *a);
+	void overrideXferFuncChanged(QAction *a);
 	void overrideYCbCrEncChanged(QAction *a);
 	void overrideQuantChanged(QAction *a);
 	void displayColorspaceChanged(QAction *a);
@@ -201,6 +203,7 @@ public:
 	QAction *m_snapshotAct;
 	QAction *m_showFramesAct;
 	QMenu *m_overrideColorspaceMenu;
+	QMenu *m_overrideXferFuncMenu;
 	QMenu *m_overrideYCbCrEncMenu;
 	QMenu *m_overrideQuantizationMenu;
 	QMenu *m_displayColorspaceMenu;
@@ -248,6 +251,7 @@ private:
 	bool m_tpgFieldAlt;
 	unsigned m_tpgSizeImage;
 	QComboBox *m_tpgColorspace;
+	QComboBox *m_tpgXferFunc;
 	QComboBox *m_tpgYCbCrEnc;
 	QComboBox *m_tpgQuantRange;
 	bool m_useTpg;

@@ -88,6 +88,7 @@ public:
 	int getWidth();
 	unsigned getNumBuffers() const;
 	QComboBox *m_tpgComboColorspace;
+	QComboBox *m_tpgComboXferFunc;
 	QComboBox *m_tpgComboYCbCrEnc;
 	QComboBox *m_tpgComboQuantRange;
 
@@ -127,6 +128,7 @@ private slots:
 	void cropChanged();
 	void composeChanged();
 	void colorspaceChanged(int);
+	void xferFuncChanged(int);
 	void ycbcrEncChanged(int);
 	void quantRangeChanged(int);
 
@@ -336,6 +338,7 @@ private:
 	QComboBox *m_videoTimings;
 	QComboBox *m_pixelAspectRatio;
 	QComboBox *m_colorspace;
+	QComboBox *m_xferFunc;
 	QComboBox *m_ycbcrEnc;
 	QComboBox *m_quantRange;
 	QComboBox *m_cropping;

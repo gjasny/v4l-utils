@@ -163,6 +163,17 @@ void ApplicationWindow::addTpgTab(int m_winWidth)
 	addWidget(grid, m_tpgColorspace);
 	connect(m_tpgColorspace, SIGNAL(activated(int)), SLOT(tpgColorspaceChanged()));
 
+	addLabel(grid, "Transfer Function");
+	m_tpgXferFunc = new QComboBox(w);
+	m_tpgXferFunc->addItem("Use Format", QVariant(V4L2_XFER_FUNC_DEFAULT));
+	m_tpgXferFunc->addItem("Rec. 709", QVariant(V4L2_XFER_FUNC_709));
+	m_tpgXferFunc->addItem("sRGB", QVariant(V4L2_XFER_FUNC_SRGB));
+	m_tpgXferFunc->addItem("Adobe RGB", QVariant(V4L2_XFER_FUNC_ADOBERGB));
+	m_tpgXferFunc->addItem("SMPTE 240M", QVariant(V4L2_XFER_FUNC_SMPTE240M));
+	m_tpgXferFunc->addItem("None", QVariant(V4L2_XFER_FUNC_NONE));
+	addWidget(grid, m_tpgXferFunc);
+	connect(m_tpgXferFunc, SIGNAL(activated(int)), SLOT(tpgXferFuncChanged()));
+
 	addLabel(grid, "Y'CbCr Encoding");
 	m_tpgYCbCrEnc = new QComboBox(w);
 	m_tpgYCbCrEnc->addItem("Use Format", QVariant(V4L2_YCBCR_ENC_DEFAULT));
@@ -326,6 +337,7 @@ void ApplicationWindow::tpgColorspaceChanged()
 {
 	cv4l_fmt fmt;
 	int colorspace = combo2int(m_tpgColorspace);
+	int xferFunc = combo2int(m_tpgXferFunc);
 	int ycbcrEnc = combo2int(m_tpgYCbCrEnc);
 	int quantization = combo2int(m_tpgQuantRange);
 
@@ -334,11 +346,14 @@ void ApplicationWindow::tpgColorspaceChanged()
 		colorspace = fmt.g_colorspace();
 	if (colorspace == V4L2_COLORSPACE_DEFAULT)
 		colorspace = tpgDefaultColorspace();
+	if (xferFunc == V4L2_XFER_FUNC_DEFAULT)
+		xferFunc = fmt.g_xfer_func();
 	if (ycbcrEnc == V4L2_YCBCR_ENC_DEFAULT)
 		ycbcrEnc = fmt.g_ycbcr_enc();
 	if (quantization == V4L2_QUANTIZATION_DEFAULT)
 		quantization = fmt.g_quantization();
 	tpg_s_colorspace(&m_tpg, colorspace);
+	tpg_s_xfer_func(&m_tpg, xferFunc);
 	tpg_s_ycbcr_enc(&m_tpg, ycbcrEnc);
 	tpg_s_quantization(&m_tpg, quantization);
 }

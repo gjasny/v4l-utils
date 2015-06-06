@@ -94,6 +94,7 @@ ApplicationWindow::ApplicationWindow() :
 	m_makeSnapshot = false;
 	m_singleStep = false;
 	m_tpgColorspace = 0;
+	m_tpgXferFunc = 0;
 	m_tpgYCbCrEnc = 0;
 	m_tpgQuantRange = 0;
 	m_tpgLimRGBRange = NULL;
@@ -196,6 +197,18 @@ ApplicationWindow::ApplicationWindow() :
 	addSubMenuItem(grp, menu, "470 System BG", V4L2_COLORSPACE_470_SYSTEM_BG);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(overrideColorspaceChanged(QAction *)));
 
+	m_overrideXferFunc = -1;
+	menu = new QMenu("Override Transfer Function");
+	m_overrideXferFuncMenu = menu;
+	grp = new QActionGroup(menu);
+	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
+	addSubMenuItem(grp, menu, "Rec. 709", V4L2_XFER_FUNC_709);
+	addSubMenuItem(grp, menu, "sRGB", V4L2_XFER_FUNC_SRGB);
+	addSubMenuItem(grp, menu, "Adobe RGB", V4L2_XFER_FUNC_ADOBERGB);
+	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_XFER_FUNC_SMPTE240M);
+	addSubMenuItem(grp, menu, "None", V4L2_XFER_FUNC_NONE);
+	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(overrideXferFuncChanged(QAction *)));
+
 	m_overrideYCbCrEnc = -1;
 	menu = new QMenu("Override Y'CbCr Encoding");
 	m_overrideYCbCrEncMenu = menu;
@@ -235,6 +248,7 @@ ApplicationWindow::ApplicationWindow() :
 	m_capMenu->addAction(m_capStartAct);
 	m_capMenu->addAction(m_capStepAct);
 	m_capMenu->addMenu(m_overrideColorspaceMenu);
+	m_capMenu->addMenu(m_overrideXferFuncMenu);
 	m_capMenu->addMenu(m_overrideYCbCrEncMenu);
 	m_capMenu->addMenu(m_overrideQuantizationMenu);
 	m_capMenu->addMenu(m_displayColorspaceMenu);
@@ -311,6 +325,7 @@ void ApplicationWindow::updateColorspace()
 		return;
 
 	int colorspace = m_overrideColorspace;
+	int xferFunc = m_overrideXferFunc;
 	int ycbcrEnc = m_overrideYCbCrEnc;
 	int quantRange = m_overrideQuantization;
 	cv4l_fmt fmt;
@@ -321,17 +336,25 @@ void ApplicationWindow::updateColorspace()
 
 	if (colorspace == -1)
 		colorspace = fmt.g_colorspace();
+	if (xferFunc == -1)
+		xferFunc = fmt.g_xfer_func();
 	if (ycbcrEnc == -1)
 		ycbcrEnc = fmt.g_ycbcr_enc();
 	if (quantRange == -1)
 		quantRange = fmt.g_quantization();
-	m_capture->setColorspace(colorspace, ycbcrEnc, quantRange,
+	m_capture->setColorspace(colorspace, xferFunc, ycbcrEnc, quantRange,
 			m_genTab ? m_genTab->isSDTV() : true);
 }
 
 void ApplicationWindow::overrideColorspaceChanged(QAction *a)
 {
 	m_overrideColorspace = a->data().toInt();
+	updateColorspace();
+}
+
+void ApplicationWindow::overrideXferFuncChanged(QAction *a)
+{
+	m_overrideXferFunc = a->data().toInt();
 	updateColorspace();
 }
 

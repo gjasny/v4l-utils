@@ -85,6 +85,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	m_videoTimings(NULL),
 	m_pixelAspectRatio(NULL),
 	m_colorspace(NULL),
+	m_xferFunc(NULL),
 	m_ycbcrEnc(NULL),
 	m_quantRange(NULL),
 	m_cropping(NULL),
@@ -755,6 +756,18 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		addWidget(m_colorspace);
 		connect(m_colorspace, SIGNAL(activated(int)), SLOT(colorspaceChanged(int)));
 
+		m_xferFunc = new QComboBox(parentWidget());
+		m_xferFunc->addItem(m_isOutput ? "Default" : "Autodetect", QVariant(V4L2_XFER_FUNC_DEFAULT));
+		m_xferFunc->addItem("Rec. 709", QVariant(V4L2_XFER_FUNC_709));
+		m_xferFunc->addItem("sRGB", QVariant(V4L2_XFER_FUNC_SRGB));
+		m_xferFunc->addItem("Adobe RGB", QVariant(V4L2_XFER_FUNC_ADOBERGB));
+		m_xferFunc->addItem("SMPTE 240M", QVariant(V4L2_XFER_FUNC_SMPTE240M));
+		m_xferFunc->addItem("None", QVariant(V4L2_XFER_FUNC_NONE));
+
+		addLabel("Transfer Function");
+		addWidget(m_xferFunc);
+		connect(m_xferFunc, SIGNAL(activated(int)), SLOT(xferFuncChanged(int)));
+
 		m_ycbcrEnc = new QComboBox(parentWidget());
 		m_ycbcrEnc->addItem(m_isOutput ? "Default" : "Autodetect", QVariant(V4L2_YCBCR_ENC_DEFAULT));
 		m_ycbcrEnc->addItem("ITU-R 601", QVariant(V4L2_YCBCR_ENC_601));
@@ -1369,6 +1382,21 @@ void GeneralTab::colorspaceChanged(int idx)
 
 	g_fmt(fmt);
 	fmt.s_colorspace(m_colorspace->itemData(idx).toInt());
+	fmt.s_xfer_func(m_xferFunc->itemData(m_xferFunc->currentIndex()).toInt());
+	fmt.s_ycbcr_enc(m_ycbcrEnc->itemData(m_ycbcrEnc->currentIndex()).toInt());
+	fmt.s_quantization(m_quantRange->itemData(m_quantRange->currentIndex()).toInt());
+	if (try_fmt(fmt) == 0)
+		s_fmt(fmt);
+	updateVidFormat();
+}
+
+void GeneralTab::xferFuncChanged(int idx)
+{
+	cv4l_fmt fmt;
+
+	g_fmt(fmt);
+	fmt.s_colorspace(m_colorspace->itemData(m_colorspace->currentIndex()).toInt());
+	fmt.s_xfer_func(m_xferFunc->itemData(idx).toInt());
 	fmt.s_ycbcr_enc(m_ycbcrEnc->itemData(m_ycbcrEnc->currentIndex()).toInt());
 	fmt.s_quantization(m_quantRange->itemData(m_quantRange->currentIndex()).toInt());
 	if (try_fmt(fmt) == 0)
@@ -1382,6 +1410,7 @@ void GeneralTab::ycbcrEncChanged(int idx)
 
 	g_fmt(fmt);
 	fmt.s_colorspace(m_colorspace->itemData(m_colorspace->currentIndex()).toInt());
+	fmt.s_xfer_func(m_xferFunc->itemData(m_xferFunc->currentIndex()).toInt());
 	fmt.s_ycbcr_enc(m_ycbcrEnc->itemData(idx).toInt());
 	fmt.s_quantization(m_quantRange->itemData(m_quantRange->currentIndex()).toInt());
 	if (try_fmt(fmt) == 0)
@@ -1395,6 +1424,7 @@ void GeneralTab::quantRangeChanged(int idx)
 
 	g_fmt(fmt);
 	fmt.s_colorspace(m_colorspace->itemData(m_colorspace->currentIndex()).toInt());
+	fmt.s_xfer_func(m_xferFunc->itemData(m_xferFunc->currentIndex()).toInt());
 	fmt.s_ycbcr_enc(m_ycbcrEnc->itemData(m_ycbcrEnc->currentIndex()).toInt());
 	fmt.s_quantization(m_quantRange->itemData(idx).toInt());
 	if (try_fmt(fmt) == 0)
@@ -1406,6 +1436,8 @@ void GeneralTab::clearColorspace(cv4l_fmt &fmt)
 {
 	if (m_colorspace->currentIndex() == 0)
 		fmt.s_colorspace(V4L2_COLORSPACE_DEFAULT);
+	if (m_xferFunc->currentIndex() == 0)
+		fmt.s_xfer_func(V4L2_XFER_FUNC_DEFAULT);
 	if (m_ycbcrEnc->currentIndex() == 0)
 		fmt.s_ycbcr_enc(V4L2_YCBCR_ENC_DEFAULT);
 	if (m_quantRange->currentIndex() == 0)
@@ -1917,6 +1949,9 @@ void GeneralTab::updateColorspace()
 	idx = m_colorspace->findData(fmt.g_colorspace());
 	if (m_colorspace->currentIndex())
 		m_colorspace->setCurrentIndex(idx >= 0 ? idx : 0);
+	idx = m_xferFunc->findData(fmt.g_xfer_func());
+	if (m_xferFunc->currentIndex())
+		m_xferFunc->setCurrentIndex(idx >= 0 ? idx : 0);
 	idx = m_ycbcrEnc->findData(fmt.g_ycbcr_enc());
 	if (m_ycbcrEnc->currentIndex())
 		m_ycbcrEnc->setCurrentIndex(idx >= 0 ? idx : 0);

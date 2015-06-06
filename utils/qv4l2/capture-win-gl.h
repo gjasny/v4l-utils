@@ -47,7 +47,8 @@ public:
 		      unsigned char *data3);
 	bool hasNativeFormat(__u32 format);
 	void lockSize(QSize size);
-	void setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv);
+	void setColorspace(unsigned colorspace, unsigned xfer_func,
+			unsigned ycbcr_enc, unsigned quantization, bool is_sdtv);
 	void setDisplayColorspace(unsigned colorspace);
 	void setField(unsigned field);
 	void setBlending(bool enable) { m_blending = enable; }
@@ -101,6 +102,7 @@ private:
 	int m_WCrop;
 	int m_HCrop;
 	unsigned m_colorspace;
+	unsigned m_xfer_func;
 	unsigned m_ycbcr_enc;
 	unsigned m_quantization;
 	bool m_is_sdtv;
@@ -132,7 +134,8 @@ public:
 	void stop();
 	bool hasNativeFormat(__u32 format);
 	static bool isSupported();
-	void setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv);
+	void setColorspace(unsigned colorspace, unsigned xfer_func,
+			unsigned ycbcr_enc, unsigned quantization, bool is_sdtv);
 	void setField(unsigned field);
 	void setDisplayColorspace(unsigned colorspace);
 	void setBlending(bool enable);

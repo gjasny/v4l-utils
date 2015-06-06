@@ -92,10 +92,12 @@ bool CaptureWinGL::isSupported()
 #endif
 }
 
-void CaptureWinGL::setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv)
+void CaptureWinGL::setColorspace(unsigned colorspace, unsigned xfer_func,
+		unsigned ycbcr_enc, unsigned quantization, bool is_sdtv)
 {
 #ifdef HAVE_QTGL
-	m_videoSurface.setColorspace(colorspace, ycbcr_enc, quantization, is_sdtv);
+	m_videoSurface.setColorspace(colorspace, xfer_func,
+			ycbcr_enc, quantization, is_sdtv);
 #endif
 }
 
@@ -134,6 +136,7 @@ CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_WCrop(0),
 	m_HCrop(0),
 	m_colorspace(V4L2_COLORSPACE_REC709),
+	m_xfer_func(V4L2_XFER_FUNC_DEFAULT),
 	m_ycbcr_enc(V4L2_YCBCR_ENC_DEFAULT),
 	m_quantization(V4L2_QUANTIZATION_DEFAULT),
 	m_is_sdtv(false),
@@ -156,7 +159,8 @@ CaptureWinGLEngine::~CaptureWinGLEngine()
 	clearShader();
 }
 
-void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned ycbcr_enc, unsigned quantization, bool is_sdtv)
+void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned xfer_func,
+		unsigned ycbcr_enc, unsigned quantization, bool is_sdtv)
 {
 	bool is_rgb = true;
 
@@ -209,14 +213,18 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned ycbcr_enc, 
 			colorspace = V4L2_COLORSPACE_REC709;
 		break;
 	}
-	if (m_colorspace == colorspace && m_ycbcr_enc == ycbcr_enc &&
-	    m_quantization == quantization && m_is_sdtv == is_sdtv)
+	if (m_colorspace == colorspace && m_xfer_func == xfer_func &&
+	    m_ycbcr_enc == ycbcr_enc && m_quantization == quantization &&
+	    m_is_sdtv == is_sdtv)
 		return;
 	m_colorspace = colorspace;
+	if (xfer_func == V4L2_XFER_FUNC_DEFAULT)
+		xfer_func = V4L2_MAP_XFER_FUNC_DEFAULT(colorspace);
 	if (ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
 		ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(colorspace);
 	if (quantization == V4L2_QUANTIZATION_DEFAULT)
 		quantization = V4L2_MAP_QUANTIZATION_DEFAULT(is_rgb, colorspace, ycbcr_enc);
+	m_xfer_func = xfer_func;
 	m_ycbcr_enc = ycbcr_enc;
 	m_quantization = quantization;
 	m_is_sdtv = is_sdtv;
@@ -654,7 +662,7 @@ QString CaptureWinGLEngine::codeRGBNormalize()
 {
 	switch (m_quantization) {
 	case V4L2_QUANTIZATION_FULL_RANGE:
-			return "";
+		return "";
 	default:
 		return QString("   r = (255.0 / 219.0) * (r - (16.0 / 255.0));"
 			       "   g = (255.0 / 219.0) * (g - (16.0 / 255.0));"
@@ -712,15 +720,15 @@ QString CaptureWinGLEngine::codeYUV2RGB()
 // colorspace.
 QString CaptureWinGLEngine::codeTransformToLinear()
 {
-	switch (m_colorspace) {
-	case V4L2_COLORSPACE_SMPTE240M:
+	switch (m_xfer_func) {
+	case V4L2_XFER_FUNC_SMPTE240M:
 		// Old obsolete HDTV standard. Replaced by REC 709.
 		// This is the transfer function for SMPTE 240M
 		return QString("   r = (r < 0.0913) ? r / 4.0 : pow((r + 0.1115) / 1.1115, 1.0 / 0.45);"
 			       "   g = (g < 0.0913) ? g / 4.0 : pow((g + 0.1115) / 1.1115, 1.0 / 0.45);"
 			       "   b = (b < 0.0913) ? b / 4.0 : pow((b + 0.1115) / 1.1115, 1.0 / 0.45);"
 			       );
-	case V4L2_COLORSPACE_SRGB:
+	case V4L2_XFER_FUNC_SRGB:
 		// This is used for sRGB as specified by the IEC FDIS 61966-2-1 standard
 		return QString("   r = (r < -0.04045) ? -pow((-r + 0.055) / 1.055, 2.4) : "
 			       "        ((r <= 0.04045) ? r / 12.92 : pow((r + 0.055) / 1.055, 2.4));"
@@ -729,12 +737,13 @@ QString CaptureWinGLEngine::codeTransformToLinear()
 			       "   b = (b < -0.04045) ? -pow((-b + 0.055) / 1.055, 2.4) : "
 			       "        ((b <= 0.04045) ? b / 12.92 : pow((b + 0.055) / 1.055, 2.4));"
 			       );
-	case V4L2_COLORSPACE_ADOBERGB:
+	case V4L2_XFER_FUNC_ADOBERGB:
 		return QString("   r = pow(r, 2.19921875);"
 			       "   g = pow(g, 2.19921875);"
 			       "   b = pow(b, 2.19921875);");
-	case V4L2_COLORSPACE_REC709:
-	case V4L2_COLORSPACE_BT2020:
+	case V4L2_XFER_FUNC_NONE:
+		return "";
+	case V4L2_XFER_FUNC_709:
 	default:
 		// All others use the transfer function specified by REC 709
 		return QString("   r = (r <= -0.081) ? -pow((r - 0.099) / -1.099, 1.0 / 0.45) : "
@@ -799,7 +808,7 @@ QString CaptureWinGLEngine::codeColorspaceConversion()
 QString CaptureWinGLEngine::codeTransformToNonLinear()
 {
 	switch (m_displayColorspace) {
-	case 0:	// Keep as linear RGB
+	case V4L2_COLORSPACE_DEFAULT:	// Keep as linear RGB
 		return "";
 
 	case V4L2_COLORSPACE_SMPTE240M:
@@ -1456,7 +1465,7 @@ void CaptureWinGLEngine::shader_RGB(__u32 format)
 	configureTexture(0);
 
 	manualTransform = m_quantization == V4L2_QUANTIZATION_LIM_RANGE ||
-                          m_colorspace != V4L2_COLORSPACE_SRGB ||
+                          m_xfer_func != V4L2_XFER_FUNC_SRGB ||
 			  format == V4L2_PIX_FMT_BGR666;
 	GLint internalFmt = manualTransform ? GL_RGBA8 : GL_SRGB8_ALPHA8;
 
@@ -1698,7 +1707,7 @@ void CaptureWinGLEngine::shader_Bayer(__u32 format)
 	configureTexture(0);
 
 	GLint internalFmt = (m_quantization == V4L2_QUANTIZATION_LIM_RANGE ||
-			     m_colorspace != V4L2_COLORSPACE_SRGB) ?
+			     m_xfer_func != V4L2_XFER_FUNC_SRGB) ?
 				GL_LUMINANCE : GL_SLUMINANCE;
 
 	switch (format) {
@@ -1764,7 +1773,7 @@ void CaptureWinGLEngine::shader_Bayer(__u32 format)
 	if (m_quantization == V4L2_QUANTIZATION_LIM_RANGE)
 		codeTail += codeRGBNormalize();
 	if (m_quantization == V4L2_QUANTIZATION_LIM_RANGE ||
-	    m_colorspace != V4L2_COLORSPACE_SRGB)
+	    m_xfer_func != V4L2_XFER_FUNC_SRGB)
 		codeTail += codeTransformToLinear();
 
 	codeTail += codeColorspaceConversion() +
