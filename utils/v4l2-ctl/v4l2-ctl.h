@@ -232,6 +232,7 @@ typedef struct {
 #define FmtQuantization		(1L<<10)
 #define FmtFlags		(1L<<11)
 #define FmtBytesPerLine		(1L<<12)
+#define FmtXferFunc		(1L<<13)
 
 // v4l2-ctl.cpp
 int doioctl_name(int fd, unsigned long int request, void *parm, const char *name);
@@ -248,8 +249,8 @@ std::string field2s(int val);
 void print_v4lstd(v4l2_std_id std);
 __u32 parse_field(const char *s);
 int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
-	      __u32 &field, __u32 &colorspace, __u32 &ycbcr, __u32 &quantization,
-	      __u32 &flags, __u32 *bytesperline);
+	      __u32 &field, __u32 &colorspace, __u32 &xfer, __u32 &ycbcr,
+	      __u32 &quantization, __u32 &flags, __u32 *bytesperline);
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane);
 void printfmt(const struct v4l2_format &vfmt);
 void print_video_formats(int fd, __u32 type);

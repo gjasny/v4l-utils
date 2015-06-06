@@ -40,18 +40,25 @@ void vidcap_usage(void)
 	       "  -V, --get-fmt-video\n"
 	       "     		     query the video capture format [VIDIOC_G_FMT]\n"
 	       "  -v, --set-fmt-video\n"
-	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,quantization=<q>,\n"
-	       "                         premul-alpha,bytesperline=<bpl>\n"
+	       "  --try-fmt-video=width=<w>,height=<h>,pixelformat=<pf>,field=<f>,colorspace=<c>,\n"
+	       "                  xfer=<xf>,ycbcr=<y>,quantization=<q>,premul-alpha,bytesperline=<bpl>\n"
 	       "                     set/try the video capture format [VIDIOC_S/TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
-	       "                     --list-formats, or the fourcc value as a string.\n"
+	       "                       --list-formats, or the fourcc value as a string.\n"
 	       "                     The bytesperline option can be used multiple times, once for each plane.\n"
 	       "                     premul-alpha sets V4L2_PIX_FMT_FLAG_PREMUL_ALPHA.\n"
-	       "                     <f> can be one of:\n"
-	       "                     any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
-	       "                     alternate, interlaced_tb, interlaced_bt\n"
-	       "                     <q> can be one of:\n"
-	       "                     default, full-range, lim-range\n"
+	       "                     <f> can be one of the following field layouts:\n"
+	       "                       any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
+	       "                       alternate, interlaced_tb, interlaced_bt\n"
+	       "                     <c> can be one of the following colorspaces:\n"
+	       "                       smpte170m, smpte240m, rec709, 470m, 470bg, jpeg, srgb,\n"
+	       "                       adobergb, bt2020\n"
+	       "                     <xf> can be one of the following transfer functions:\n"
+	       "                       default, 709, srgb, adobergb, smpte240m, none\n"
+	       "                     <y> can be one of the following Y'CbCr encodings:\n"
+	       "                       default, 601, 709, xv601, xv709, sycc, bt2020, bt2020c, smpte240m\n"
+	       "                     <q> can be one of the following quantization methods:\n"
+	       "                       default, full-range, lim-range\n"
 	       );
 }
 
@@ -194,15 +201,16 @@ static void print_video_fields(int fd)
 
 void vidcap_cmd(int ch, char *optarg)
 {
-	__u32 colorspace, ycbcr, quantization;
+	__u32 colorspace, xfer_func, ycbcr, quantization;
 	char *value, *subs;
 
 	switch (ch) {
 	case OptSetVideoFormat:
 	case OptTryVideoFormat:
 		set_fmts = parse_fmt(optarg, width, height, pixfmt, field, colorspace,
-				ycbcr, quantization, flags, bytesperline);
-		if (!set_fmts || (set_fmts & (FmtColorspace | FmtYCbCr | FmtQuantization))) {
+				xfer_func, ycbcr, quantization, flags, bytesperline);
+		if (!set_fmts ||
+		    (set_fmts & (FmtColorspace | FmtYCbCr | FmtQuantization | FmtXferFunc))) {
 			vidcap_usage();
 			exit(1);
 		}

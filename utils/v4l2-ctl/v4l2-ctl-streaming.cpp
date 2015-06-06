@@ -640,6 +640,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 		tpg_reset_source(&tpg, fmt.fmt.pix_mp.width,
 				 fmt.fmt.pix_mp.height * factor, field);
 		tpg_s_colorspace(&tpg, fmt.fmt.pix_mp.colorspace);
+		tpg_s_xfer_func(&tpg, fmt.fmt.pix_mp.xfer_func);
 		tpg_s_ycbcr_enc(&tpg, fmt.fmt.pix_mp.ycbcr_enc);
 		tpg_s_quantization(&tpg, fmt.fmt.pix_mp.quantization);
 		if (can_fill)
@@ -652,6 +653,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 		tpg_reset_source(&tpg, fmt.fmt.pix.width,
 				 fmt.fmt.pix.height * factor, field);
 		tpg_s_colorspace(&tpg, fmt.fmt.pix.colorspace);
+		tpg_s_xfer_func(&tpg, fmt.fmt.pix.xfer_func);
 		tpg_s_ycbcr_enc(&tpg, fmt.fmt.pix.ycbcr_enc);
 		tpg_s_quantization(&tpg, fmt.fmt.pix.quantization);
 		tpg_s_bytesperline(&tpg, 0, fmt.fmt.pix.bytesperline);
