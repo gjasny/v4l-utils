@@ -664,12 +664,11 @@ static bool parse_next_subopt(char **subs, char **value)
 	};
 	int opt = getsubopt(subs, subopts, value);
 
-	if (*value == NULL) {
-		fprintf(stderr, "No value given to suboption <%s>\n",
-				subopts[opt]);
-		return true;
-	}
-	return false;
+	if (opt < 0 || *value)
+		return false;
+	fprintf(stderr, "No value given to suboption <%s>\n",
+			subopts[opt]);
+	return true;
 }
 
 void common_cmd(int ch, char *optarg)
