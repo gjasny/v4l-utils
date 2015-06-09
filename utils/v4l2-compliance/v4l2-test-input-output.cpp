@@ -63,7 +63,7 @@ static int checkEnumFreqBands(struct node *node, __u32 tuner, __u32 type, __u32 
 		fail_on_test(band.type != type);
 		fail_on_test(band.tuner != tuner);
 		fail_on_test((band.capability & V4L2_TUNER_CAP_FREQ_BANDS) == 0);
-		check_0(band.reserved, sizeof(band.reserved));
+		fail_on_test(check_0(band.reserved, sizeof(band.reserved)));
 		if (band.rangelow < low)
 			low = band.rangelow;
 		if (band.rangehigh > high)
