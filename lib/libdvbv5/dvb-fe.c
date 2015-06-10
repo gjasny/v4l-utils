@@ -861,13 +861,13 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 		dvb_fe_retrieve_parm(&tmp_parms.p, DTV_HIERARCHY, &v3_parms.u.ofdm.hierarchy_information);
 		break;
 	default:
-		return EINVAL;
+		return -1;
 	}
 	if (xioctl(tmp_parms.fd, FE_SET_FRONTEND, &v3_parms) == -1) {
 		dvb_perror("FE_SET_FRONTEND");
 		if (tmp_parms.p.verbose)
 			dvb_fe_prt_parms(&tmp_parms.p);
-		return EINVAL;
+		return -1;
 	}
 
 	return 0;
