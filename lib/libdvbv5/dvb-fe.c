@@ -26,6 +26,7 @@
 #include <inttypes.h>
 #include <math.h>
 #include <stddef.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <config.h>
@@ -43,12 +44,25 @@ static int libdvbv5_initialized = 0;
 
 # define N_(string) string
 
+#define MAX_TIME		10	/* 1.0 seconds */
+
 #define xioctl(fh, request, arg...) ({					\
-	int __rc, __retry;						\
+	int __rc;							\
+	struct timespec __start, __end;					\
 									\
-	for (__retry = 0; __retry < 10; __retry++) {			\
+	clock_gettime(CLOCK_MONOTONIC, &__start);			\
+	do {								\
 		__rc = ioctl(fh, request, ##arg);			\
-	} while (__rc == -1 && ((errno == EINTR) || (errno == EAGAIN)));\
+		if (__rc != -1)						\
+			break;						\
+		if ((errno != EINTR) && (errno != EAGAIN))		\
+			break;						\
+		clock_gettime(CLOCK_MONOTONIC, &__end);			\
+		if (__end.tv_sec * 10 + __end.tv_nsec / 100000000 >	\
+		    __start.tv_sec * 10 + __start.tv_nsec / 100000000 +	\
+		    MAX_TIME)						\
+			break;						\
+	} while (1);							\
 									\
 	__rc;								\
 })
@@ -182,13 +196,9 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 
 	/* Detect a DVBv3 device */
 	if (xioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1) {
-		dvb_logerr(_("Too many retry attempts on FE_GET_PROPERTY"));
-		dvb_v5_free(parms);
-		close(fd);
-		return NULL;
+		parms->dvb_prop[0].u.data = 0x300;
+		parms->dvb_prop[1].u.data = SYS_UNDEFINED;
 	}
-	parms->dvb_prop[0].u.data = 0x300;
-	parms->dvb_prop[1].u.data = SYS_UNDEFINED;
 
 	parms->p.version = parms->dvb_prop[0].u.data;
 	parms->p.current_sys = parms->dvb_prop[1].u.data;
@@ -820,7 +830,6 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 		return 0;
 	}
 	/* DVBv3 call */
-
 	dvb_fe_retrieve_parm(&tmp_parms.p, DTV_FREQUENCY, &v3_parms.frequency);
 	dvb_fe_retrieve_parm(&tmp_parms.p, DTV_INVERSION, &v3_parms.inversion);
 	switch (tmp_parms.p.current_sys) {

@@ -30,6 +30,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <time.h>
 #include <errno.h>
 
 #include <sys/ioctl.h>
@@ -40,12 +41,25 @@
 
 #include <libdvbv5/dvb-demux.h>
 
+#define MAX_TIME		10	/* 1.0 seconds */
+
 #define xioctl(fh, request, arg...) ({					\
-	int __rc, __retry;						\
+	int __rc;							\
+	struct timespec __start, __end;					\
 									\
-	for (__retry = 0; __retry < 10; __retry++) {			\
+	clock_gettime(CLOCK_MONOTONIC, &__start);			\
+	do {								\
 		__rc = ioctl(fh, request, ##arg);			\
-	} while (__rc == -1 && ((errno == EINTR) || (errno == EAGAIN)));\
+		if (__rc != -1)						\
+			break;						\
+		if ((errno != EINTR) && (errno != EAGAIN))		\
+			break;						\
+		clock_gettime(CLOCK_MONOTONIC, &__end);			\
+		if (__end.tv_sec * 10 + __end.tv_nsec / 100000000 >	\
+		    __start.tv_sec * 10 + __start.tv_nsec / 100000000 +	\
+		    MAX_TIME)						\
+			break;						\
+	} while (1);							\
 									\
 	__rc;								\
 })
