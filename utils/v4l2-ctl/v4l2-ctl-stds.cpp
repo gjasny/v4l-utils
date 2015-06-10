@@ -482,6 +482,8 @@ void stds_set(int fd)
 			doioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &et);
 			dv_timings = et.timings;
 		}
+		if (verbose)
+			print_dv_timings(&dv_timings);
 		if (doioctl(fd, VIDIOC_S_DV_TIMINGS, &dv_timings) >= 0) {
 			printf("BT timings set\n");
 		}
