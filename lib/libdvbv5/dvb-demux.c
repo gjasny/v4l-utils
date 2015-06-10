@@ -40,6 +40,16 @@
 
 #include <libdvbv5/dvb-demux.h>
 
+#define xioctl(fh, request, arg...) ({					\
+	int __rc, __retry;						\
+									\
+	for (__retry = 0; __retry < 10; __retry++) {			\
+		__rc = ioctl(fh, request, ##arg);			\
+	} while (__rc == -1 && ((errno == EINTR) || (errno == EAGAIN)));\
+									\
+	__rc;								\
+})
+
 int dvb_dmx_open(int adapter, int demux)
 {
 	char* demux_name = NULL;
@@ -56,13 +66,13 @@ int dvb_dmx_open(int adapter, int demux)
 
 void dvb_dmx_close(int dmx_fd)
 {
-	(void) ioctl(dmx_fd, DMX_STOP);
+	(void)xioctl(dmx_fd, DMX_STOP);
 	close( dmx_fd);
 }
 
 void dvb_dmx_stop(int dmx_fd)
 {
-	(void) ioctl(dmx_fd, DMX_STOP);
+	(void)xioctl(dmx_fd, DMX_STOP);
 }
 
 int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
@@ -71,7 +81,7 @@ int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
 	struct dmx_pes_filter_params pesfilter;
 
 	if (buffersize) {
-		if (ioctl(dmxfd, DMX_SET_BUFFER_SIZE, buffersize) == -1)
+		if (xioctl(dmxfd, DMX_SET_BUFFER_SIZE, buffersize) == -1)
 			perror("DMX_SET_BUFFER_SIZE failed");
 	}
 
@@ -83,7 +93,7 @@ int dvb_set_pesfilter(int dmxfd, int pid, dmx_pes_type_t type,
 	pesfilter.pes_type = type;
 	pesfilter.flags = DMX_IMMEDIATE_START;
 
-	if (ioctl(dmxfd, DMX_SET_PES_FILTER, &pesfilter) == -1) {
+	if (xioctl(dmxfd, DMX_SET_PES_FILTER, &pesfilter) == -1) {
 		fprintf(stderr, "DMX_SET_PES_FILTER failed "
 		"(PID = 0x%04x): %d %m\n", pid, errno);
 		return -1;
@@ -116,7 +126,7 @@ int dvb_set_section_filter(int dmxfd, int pid, unsigned filtsize,
 
 	sctfilter.flags = flags;
 
-	if (ioctl(dmxfd, DMX_SET_FILTER, &sctfilter) == -1) {
+	if (xioctl(dmxfd, DMX_SET_FILTER, &sctfilter) == -1) {
 		fprintf(stderr, "DMX_SET_FILTER failed (PID = 0x%04x): %d %m\n",
 			pid, errno);
 		return -1;
@@ -142,7 +152,7 @@ int dvb_get_pmt_pid(int patfd, int sid)
 	f.timeout = 0;
 	f.flags = DMX_IMMEDIATE_START | DMX_CHECK_CRC;
 
-	if (ioctl(patfd, DMX_SET_FILTER, &f) == -1) {
+	if (xioctl(patfd, DMX_SET_FILTER, &f) == -1) {
 		perror("ioctl DMX_SET_FILTER failed");
 		return -1;
 	}
