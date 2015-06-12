@@ -343,14 +343,26 @@ static const flag_def dv_standards_def[] = {
 	{ 0, NULL }
 };
 
-static const flag_def dv_flags_def[] = {
-	{ V4L2_DV_FL_REDUCED_BLANKING, "reduced blanking" },
-	{ V4L2_DV_FL_CAN_REDUCE_FPS, "framerate can be reduced by 1/1.001" },
-	{ V4L2_DV_FL_REDUCED_FPS, "framerate is reduced by 1/1.001" },
-	{ V4L2_DV_FL_HALF_LINE, "half-line" },
-	{ V4L2_DV_FL_IS_CE_VIDEO, "CE-video" },
-	{ 0, NULL }
-};
+static std::string dvflags2s(unsigned vsync, int val)
+{
+	std::string s;
+
+	if (val & V4L2_DV_FL_REDUCED_BLANKING)
+		s += vsync == 8 ?
+			"reduced blanking v2, " :
+			"reduced blanking, ";
+	if (val & V4L2_DV_FL_CAN_REDUCE_FPS)
+		s += "framerate can be reduced by 1/1.001, ";
+	if (val & V4L2_DV_FL_REDUCED_FPS)
+		s += "framerate is reduced by 1/1.001, ";
+	if (val & V4L2_DV_FL_HALF_LINE)
+		s += "half-line, ";
+	if (val & V4L2_DV_FL_IS_CE_VIDEO)
+		s += "CE-video, ";
+	if (s.length())
+		return s.erase(s.length() - 2, 2);
+	return s;
+}
 
 static void print_dv_timings(const struct v4l2_dv_timings *t)
 {
@@ -371,7 +383,7 @@ static void print_dv_timings(const struct v4l2_dv_timings *t)
 				bt->interlaced ? 'i' : 'p',
 				(double)bt->pixelclock /
 					(tot_width * (tot_height / (bt->interlaced ? 2 : 1))),
-				flags2s(bt->flags, dv_flags_def).c_str());
+				dvflags2s(bt->vsync, bt->flags).c_str());
 			break;
 		}
 		printf("\tActive width: %d\n", bt->width);
@@ -411,7 +423,7 @@ static void print_dv_timings(const struct v4l2_dv_timings *t)
 			printf("\tVertical backporch: %d\n", bt->il_vbackporch);
 		}
 		printf("\tStandards: %s\n", flags2s(bt->standards, dv_standards_def).c_str());
-		printf("\tFlags: %s\n", flags2s(bt->flags, dv_flags_def).c_str());
+		printf("\tFlags: %s\n", dvflags2s(bt->vsync, bt->flags).c_str());
 		break;
 	default:
 		printf("Timing type not defined\n");
