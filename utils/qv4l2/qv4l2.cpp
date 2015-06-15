@@ -188,7 +188,7 @@ ApplicationWindow::ApplicationWindow() :
 	QActionGroup *grp = new QActionGroup(menu);
 	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
 	addSubMenuItem(grp, menu, "SMPTE 170M", V4L2_COLORSPACE_SMPTE170M);
-	addSubMenuItem(grp, menu, "Rec. 709", V4L2_COLORSPACE_SMPTE170M);
+	addSubMenuItem(grp, menu, "Rec. 709", V4L2_COLORSPACE_REC709);
 	addSubMenuItem(grp, menu, "sRGB", V4L2_COLORSPACE_SRGB);
 	addSubMenuItem(grp, menu, "Adobe RGB", V4L2_COLORSPACE_ADOBERGB);
 	addSubMenuItem(grp, menu, "BT.2020", V4L2_COLORSPACE_BT2020);
