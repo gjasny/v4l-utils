@@ -1638,12 +1638,15 @@ void GeneralTab::updateVideoInput()
 		return;
 	enum_input(in, true, input);
 	m_videoInput->setCurrentIndex(input);
+	m_isSDTV = false;
 	if (m_tvStandard) {
 		refreshStandards();
 		updateStandard();
 		m_tvStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
 		if (m_qryStandard)
 			m_qryStandard->setEnabled(in.capabilities & V4L2_IN_CAP_STD);
+		if (in.capabilities & V4L2_IN_CAP_STD)
+			m_isSDTV = true;
 		bool enableFreq = in.type == V4L2_INPUT_TYPE_TUNER;
 		if (m_freq)
 			m_freq->setEnabled(enableFreq);
@@ -1697,12 +1700,15 @@ void GeneralTab::updateVideoOutput()
 		return;
 	enum_output(out, true, output);
 	m_videoOutput->setCurrentIndex(output);
+	m_isSDTV = false;
 	if (m_tvStandard) {
 		refreshStandards();
 		updateStandard();
 		m_tvStandard->setEnabled(out.capabilities & V4L2_OUT_CAP_STD);
 		if (m_qryStandard)
 			m_qryStandard->setEnabled(out.capabilities & V4L2_OUT_CAP_STD);
+		if (out.capabilities & V4L2_OUT_CAP_STD)
+			m_isSDTV = true;
 	}
 	if (m_videoTimings) {
 		refreshTimings();
