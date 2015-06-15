@@ -105,6 +105,7 @@ private:
 	unsigned m_ycbcr_enc;
 	unsigned m_quantization;
 	bool m_is_sdtv;
+	bool m_is_rgb;
 	unsigned m_field;
 	int m_screenTextureCount;
 	bool m_formatChange;

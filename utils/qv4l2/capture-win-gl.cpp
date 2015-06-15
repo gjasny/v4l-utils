@@ -133,6 +133,7 @@ CaptureWinGLEngine::CaptureWinGLEngine() :
 	m_ycbcr_enc(V4L2_YCBCR_ENC_DEFAULT),
 	m_quantization(V4L2_QUANTIZATION_DEFAULT),
 	m_is_sdtv(false),
+	m_is_rgb(false),
 	m_field(V4L2_FIELD_NONE),
 	m_screenTextureCount(0),
 	m_formatChange(false),
@@ -207,7 +208,7 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned xfer_func,
 	}
 	if (m_colorspace == colorspace && m_xfer_func == xfer_func &&
 	    m_ycbcr_enc == ycbcr_enc && m_quantization == quantization &&
-	    m_is_sdtv == is_sdtv)
+	    m_is_sdtv == is_sdtv && m_is_rgb == is_rgb)
 		return;
 	m_colorspace = colorspace;
 	if (xfer_func == V4L2_XFER_FUNC_DEFAULT)
@@ -220,6 +221,7 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned xfer_func,
 	m_ycbcr_enc = ycbcr_enc;
 	m_quantization = quantization;
 	m_is_sdtv = is_sdtv;
+	m_is_rgb = is_rgb;
 	m_formatChange = true;
 }
 

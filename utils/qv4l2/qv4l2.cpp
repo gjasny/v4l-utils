@@ -1500,13 +1500,13 @@ void ApplicationWindow::capStart(bool start)
 	m_capImage->fill(0);
 	
 	updatePixelAspectRatio();
-	updateColorspace();
 	m_capture->setField(field);
 
 	m_capture->setWindowSize(QSize(width, height));
 	m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 			    pixfmt, m_capImage->bits(), NULL, NULL);
 	m_capture->makeFullScreen(m_makeFullScreenAct->isChecked());
+	updateColorspace();
 	if (showFrames())
 		m_capture->show();
 
