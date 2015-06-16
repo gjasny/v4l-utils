@@ -410,7 +410,7 @@ bool calc_gtf_modeline(int image_width, int image_height,
 
 	if (interlaced) {
 		interlace = 1;
-		v_lines_rnd = v_lines / 2;
+		v_lines_rnd = (v_lines + 1) / 2;
 		v_refresh = v_refresh * 2;
 	} else {
 		interlace = 0;
