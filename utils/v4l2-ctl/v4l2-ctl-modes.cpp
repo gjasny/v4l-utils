@@ -229,7 +229,6 @@ bool calc_cvt_modeline(int image_width, int image_height,
 
 		h_bp = h_blank / 2;
 		h_fp = h_blank - h_bp - h_sync;
-
 	} else {
 		/* Reduced blanking */
 
@@ -424,12 +423,12 @@ bool calc_gtf_modeline(int image_width, int image_height,
 	active_h_pixel = h_pixel_rnd;
 	active_v_lines = v_lines_rnd;
 
-		/* estimate the horizontal period */
+	/* estimate the horizontal period */
 	tmp1 = HV_FACTOR * 1000000  -
 		   GTF_MIN_VSYNC_BP * HV_FACTOR * v_refresh;
-	tmp2 = active_v_lines + GTF_MIN_PORCH + interlace;
+	tmp2 = 2 * (active_v_lines + GTF_MIN_PORCH) + interlace;
 
-	h_period_est = tmp1 / (tmp2 * v_refresh);
+	h_period_est = 2 * tmp1 / (tmp2 * v_refresh);
 
 	v_sync_bp = GTF_MIN_VSYNC_BP * HV_FACTOR * 100 / h_period_est;
 	v_sync_bp = (v_sync_bp + 50) / 100;
@@ -439,10 +438,10 @@ bool calc_gtf_modeline(int image_width, int image_height,
 	v_fp = GTF_MIN_PORCH;
 
 	v_blank = v_sync + v_bp + v_fp;
-	total_v_lines = active_v_lines + v_blank + interlace;
+	total_v_lines = active_v_lines + v_blank;
 
-	v_refresh_est = (HV_FACTOR * (long long)1000000) /
-			(h_period_est * total_v_lines / HV_FACTOR);
+	v_refresh_est = (2 * HV_FACTOR * (long long)1000000) /
+			(h_period_est * (2 * total_v_lines + interlace) / HV_FACTOR);
 
 	h_period = ((long long)h_period_est * v_refresh_est) /
 		   (v_refresh * HV_FACTOR);
@@ -454,12 +453,10 @@ bool calc_gtf_modeline(int image_width, int image_height,
 		ideal_blank_duty_cycle = (GTF_S_C_PRIME * HV_FACTOR) -
 				      GTF_S_M_PRIME * h_period / 1000;
 
-
 	h_blank = active_h_pixel * (long long)ideal_blank_duty_cycle /
 			 (100 * HV_FACTOR - ideal_blank_duty_cycle);
 	h_blank = ((h_blank + GTF_CELL_GRAN) / (2 * GTF_CELL_GRAN))
 			  * (2 * GTF_CELL_GRAN);
-
 	total_h_pixel = active_h_pixel + h_blank;
 
 	h_sync = (total_h_pixel * GTF_HSYNC_PERCENT) / 100;
@@ -475,7 +472,6 @@ bool calc_gtf_modeline(int image_width, int image_height,
 	 * truncation
 	 * */
 	/*pixel_clock -= pixel_clock  % GTF_PXL_CLK_GRAN;*/
-
 	gtf->standards 	 = V4L2_DV_BT_STD_GTF;
 
 	gtf->width       = h_pixel;
