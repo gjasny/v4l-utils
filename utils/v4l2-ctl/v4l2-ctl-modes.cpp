@@ -139,6 +139,7 @@ bool calc_cvt_modeline(int image_width, int image_height,
 	int active_h_pixel;
 	int active_v_lines;
 	int total_h_pixel;
+	int total_v_lines;
 
 	int h_blank;
 	int v_blank;
@@ -229,6 +230,10 @@ bool calc_cvt_modeline(int image_width, int image_height,
 
 		h_bp = h_blank / 2;
 		h_fp = h_blank - h_bp - h_sync;
+
+		pixel_clock =  ((long long)total_h_pixel * HV_FACTOR * 1000000)
+				/ h_period;
+		pixel_clock -= pixel_clock  % CVT_PXL_CLK_GRAN;
 	} else {
 		/* Reduced blanking */
 
@@ -247,10 +252,11 @@ bool calc_cvt_modeline(int image_width, int image_height,
 		if (vbi_lines < (CVT_RB_V_FPORCH + v_sync + CVT_MIN_V_BPORCH))
 			vbi_lines = CVT_RB_V_FPORCH + v_sync + CVT_MIN_V_BPORCH;
 
-		total_h_pixel = active_h_pixel + CVT_RB_H_BLANK;
-
 		h_blank = CVT_RB_H_BLANK;
 		v_blank = vbi_lines;
+
+		total_h_pixel = active_h_pixel + h_blank;
+		total_v_lines = active_v_lines + v_blank;
 
 		h_sync = CVT_RB_H_SYNC;
 
@@ -259,11 +265,11 @@ bool calc_cvt_modeline(int image_width, int image_height,
 
 		v_fp = CVT_RB_V_FPORCH;
 		v_bp = v_blank - v_fp - v_sync;
-	}
 
-	pixel_clock =  ((long long)total_h_pixel * HV_FACTOR * 1000000)
-			/ h_period;
-	pixel_clock -= pixel_clock  % CVT_PXL_CLK_GRAN;
+		pixel_clock = v_refresh * total_h_pixel *
+			      (2 * total_v_lines + interlace) / 2;
+		pixel_clock -= pixel_clock  % CVT_PXL_CLK_GRAN;
+	}
 
 	cvt->standards 	 = V4L2_DV_BT_STD_CVT;
 
