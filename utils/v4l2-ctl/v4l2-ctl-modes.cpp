@@ -52,6 +52,7 @@ static bool valid_params(int width, int height, int refresh_rate)
  */
 
 #define CVT_PXL_CLK_GRAN    (250000)  /* pixel clock granularity */
+#define CVT_PXL_CLK_GRAN_RB_V2 (1000)	/* granularity for reduced blanking v2*/
 
 /* Normal blanking */
 #define CVT_MIN_V_BPORCH     (7)  /* lines */
@@ -76,6 +77,12 @@ static bool valid_params(int width, int height, int refresh_rate)
 #define CVT_RB_H_SYNC         (32)       /* pixels */
 #define CVT_RB_H_BPORCH       (80)       /* pixels */
 #define CVT_RB_H_BLANK       (160)       /* pixels */
+
+/* Reduce blanking Version 2 */
+#define CVT_RB_V2_H_BLANK     80       /* pixels */
+#define CVT_RB_MIN_V_FPORCH    3       /* lines  */
+#define CVT_RB_V2_MIN_V_FPORCH 1       /* lines  */
+#define CVT_RB_V_BPORCH        6       /* lines  */
 
 static int v_sync_from_aspect_ratio(int width, int height)
 {
@@ -112,7 +119,8 @@ static int v_sync_from_aspect_ratio(int width, int height)
  * @image_width
  * @image_height
  * @refresh_rate
- * @reduced_blanking: whether to use reduced blanking
+ * @reduced_blanking: This value, if greater than 0, indicates that
+ * reduced blanking is to be used and value indicates the version.
  * @interlaced: whether to compute an interlaced mode
  * @cvt: stores results of cvt timing calculation
  *
@@ -122,7 +130,7 @@ static int v_sync_from_aspect_ratio(int width, int height)
  */
 
 bool calc_cvt_modeline(int image_width, int image_height,
-		       int refresh_rate, bool reduced_blanking,
+		       int refresh_rate, int reduced_blanking,
 		       bool interlaced, struct v4l2_bt_timings *cvt)
 {
 	int h_sync;
@@ -149,9 +157,17 @@ bool calc_cvt_modeline(int image_width, int image_height,
 	int interlace;
 	int v_refresh;
 	int pixel_clock;
+	int clk_gran;
+	bool use_rb = false;
+	bool rb_v2 = false;
 
 	if (!valid_params(image_width, image_height, refresh_rate))
 		return false;
+
+	use_rb = (reduced_blanking > 0) ? true : false;
+	rb_v2 = (reduced_blanking == 2) ? true : false;
+
+	clk_gran = rb_v2 ? CVT_PXL_CLK_GRAN_RB_V2 : CVT_PXL_CLK_GRAN;
 
 	h_pixel = image_width;
 	v_lines = image_height;
@@ -187,9 +203,9 @@ bool calc_cvt_modeline(int image_width, int image_height,
 	active_h_pixel = h_pixel_rnd;
 	active_v_lines = v_lines_rnd;
 
-	v_sync = v_sync_from_aspect_ratio(h_pixel, v_lines);
+	v_sync = rb_v2 ? 8 : v_sync_from_aspect_ratio(h_pixel, v_lines);
 
-	if (!reduced_blanking) {
+	if (!use_rb) {
 		int tmp1, tmp2;
 		int ideal_blank_duty_cycle;
 		int v_sync_bp;
@@ -233,12 +249,13 @@ bool calc_cvt_modeline(int image_width, int image_height,
 
 		pixel_clock =  ((long long)total_h_pixel * HV_FACTOR * 1000000)
 				/ h_period;
-		pixel_clock -= pixel_clock  % CVT_PXL_CLK_GRAN;
+		pixel_clock -= pixel_clock  % clk_gran;
 	} else {
 		/* Reduced blanking */
 
 		int vbi_lines;
 		int tmp1, tmp2;
+		int min_vbi_lines;
 
 		/* estimate horizontal period. */
 		tmp1 = HV_FACTOR * 1000000 -
@@ -249,10 +266,15 @@ bool calc_cvt_modeline(int image_width, int image_height,
 
 		vbi_lines = CVT_RB_MIN_V_BLANK * HV_FACTOR / h_period + 1;
 
-		if (vbi_lines < (CVT_RB_V_FPORCH + v_sync + CVT_MIN_V_BPORCH))
-			vbi_lines = CVT_RB_V_FPORCH + v_sync + CVT_MIN_V_BPORCH;
+		if (rb_v2)
+			min_vbi_lines = CVT_RB_V2_MIN_V_FPORCH + v_sync + CVT_RB_V_BPORCH;
+		else
+			min_vbi_lines = CVT_RB_V_FPORCH + v_sync + CVT_MIN_V_BPORCH;
 
-		h_blank = CVT_RB_H_BLANK;
+		if (vbi_lines < min_vbi_lines)
+			vbi_lines = min_vbi_lines;
+
+		h_blank = rb_v2 ? CVT_RB_V2_H_BLANK : CVT_RB_H_BLANK;
 		v_blank = vbi_lines;
 
 		total_h_pixel = active_h_pixel + h_blank;
@@ -263,12 +285,17 @@ bool calc_cvt_modeline(int image_width, int image_height,
 		h_bp = h_blank / 2;
 		h_fp = h_blank - h_bp - h_sync;
 
-		v_fp = CVT_RB_V_FPORCH;
-		v_bp = v_blank - v_fp - v_sync;
+		if (rb_v2) {
+			v_bp = CVT_RB_V_BPORCH;
+			v_fp = v_blank - v_bp - v_sync;
+		} else {
+			v_fp = CVT_RB_V_FPORCH;
+			v_bp = v_blank - v_fp - v_sync;
+		}
 
 		pixel_clock = v_refresh * total_h_pixel *
 			      (2 * total_v_lines + interlace) / 2;
-		pixel_clock -= pixel_clock  % CVT_PXL_CLK_GRAN;
+		pixel_clock -= pixel_clock  % clk_gran;
 	}
 
 	cvt->standards 	 = V4L2_DV_BT_STD_CVT;
@@ -300,7 +327,7 @@ bool calc_cvt_modeline(int image_width, int image_height,
 		cvt->flags |= V4L2_DV_FL_HALF_LINE;
 		cvt->il_vbackporch += 1;
 	}
-	if (reduced_blanking) {
+	if (use_rb) {
 		cvt->polarities = V4L2_DV_HSYNC_POS_POL;
 		cvt->flags |= V4L2_DV_FL_REDUCED_BLANKING;
 	} else
@@ -354,7 +381,8 @@ bool calc_cvt_modeline(int image_width, int image_height,
  * @image_width
  * @image_height
  * @refresh_rate
- * @reduced_blanking: whether to use reduced blanking
+ * @reduced_blanking: This value, if greater than 0, indicates that
+ * reduced blanking is to be used.
  * @interlaced: whether to compute an interlaced mode
  * @gtf: stores results of gtf timing calculation
  *
@@ -364,7 +392,7 @@ bool calc_cvt_modeline(int image_width, int image_height,
  */
 
 bool calc_gtf_modeline(int image_width, int image_height,
-		       int refresh_rate, bool reduced_blanking,
+		       int refresh_rate, int reduced_blanking,
 		       bool interlaced, struct v4l2_bt_timings *gtf)
 {
 	int h_sync;
@@ -397,6 +425,7 @@ bool calc_gtf_modeline(int image_width, int image_height,
 	int v_sync_bp;
 	int tmp1, tmp2;
 	int ideal_blank_duty_cycle;
+	bool use_rb = false;
 
 	if (!gtf) {
 		fprintf(stderr, "Null pointer to gtf modeline structure\n");
@@ -405,6 +434,8 @@ bool calc_gtf_modeline(int image_width, int image_height,
 
 	if (!valid_params(image_width, image_height, refresh_rate))
 		return false;
+
+	use_rb = (reduced_blanking > 0) ? true : false;
 
 	h_pixel = image_width;
 	v_lines = image_height;
@@ -452,7 +483,7 @@ bool calc_gtf_modeline(int image_width, int image_height,
 	h_period = ((long long)h_period_est * v_refresh_est) /
 		   (v_refresh * HV_FACTOR);
 
-	if (!reduced_blanking)
+	if (!use_rb)
 		ideal_blank_duty_cycle = (GTF_D_C_PRIME * HV_FACTOR) -
 				      GTF_D_M_PRIME * h_period / 1000;
 	else
@@ -507,7 +538,7 @@ bool calc_gtf_modeline(int image_width, int image_height,
 		gtf->flags |= V4L2_DV_FL_HALF_LINE;
 		gtf->il_vbackporch += 1;
 	}
-	if (reduced_blanking) {
+	if (use_rb) {
 		gtf->polarities = V4L2_DV_HSYNC_POS_POL;
 		gtf->flags |= V4L2_DV_FL_REDUCED_BLANKING;
 	} else
