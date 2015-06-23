@@ -41,7 +41,11 @@ void stds_usage(void)
 	       "                     index=<index>: use the index as provided by --list-dv-timings\n"
 	       "                     or specify timings using cvt/gtf options as follows:\n"
 	       "                     cvt/gtf,width=<width>,height=<height>,fps=<frames per sec>\n"
-	       "                     interlaced=<0/1>,reduced-blanking=<0/1>\n"
+	       "                     interlaced=<0/1>,reduced-blanking=<0/1/2>\n"
+	       "                     The value of reduced-blanking, if greater than 0, indicates\n"
+	       "                     that reduced blanking is to be used and the value indicate the\n"
+	       "                     version. For gtf, there is no version 2 for reduced blanking, and\n"
+	       "		     the value 1 or 2 will give same results.\n"
 	       "                     or give a fully specified timings:\n"
 	       "                     width=<width>,height=<height>,interlaced=<0/1>,\n"
 	       "                     polarities=<polarities mask>,pixelclock=<pixelclock Hz>,\n"
@@ -205,7 +209,6 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 	int fps = 0;
 	int r_blank = 0;
 	int interlaced = 0;
-
 	bool timings_valid = false;
 
 	char *subopt_str = subopt;
