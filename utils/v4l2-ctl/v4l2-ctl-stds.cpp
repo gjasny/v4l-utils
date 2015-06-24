@@ -241,7 +241,7 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 
 	if (standard == V4L2_DV_BT_STD_CVT) {
 		timings_valid = calc_cvt_modeline(width, height, fps, r_blank,
-						  interlaced == 1 ? true : false, bt);
+						  interlaced == 1 ? true : false, false, bt);
 	} else {
 		timings_valid = calc_gtf_modeline(width, height, fps, r_blank,
 						  interlaced == 1 ? true : false, bt);

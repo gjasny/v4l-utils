@@ -122,6 +122,7 @@ static int v_sync_from_aspect_ratio(int width, int height)
  * @reduced_blanking: This value, if greater than 0, indicates that
  * reduced blanking is to be used and value indicates the version.
  * @interlaced: whether to compute an interlaced mode
+ * @reduced_fps: reduce fps by factor of 1000 / 1001
  * @cvt: stores results of cvt timing calculation
  *
  * Returns:
@@ -131,7 +132,8 @@ static int v_sync_from_aspect_ratio(int width, int height)
 
 bool calc_cvt_modeline(int image_width, int image_height,
 		       int refresh_rate, int reduced_blanking,
-		       bool interlaced, struct v4l2_bt_timings *cvt)
+		       bool interlaced, bool reduced_fps,
+		       struct v4l2_bt_timings *cvt)
 {
 	int h_sync;
 	int v_sync;
@@ -295,6 +297,9 @@ bool calc_cvt_modeline(int image_width, int image_height,
 
 		pixel_clock = v_refresh * total_h_pixel *
 			      (2 * total_v_lines + interlace) / 2;
+		if (reduced_fps && v_refresh % 6 == 0)
+			pixel_clock = ((long long)pixel_clock * 1000) / 1001;
+
 		pixel_clock -= pixel_clock  % clk_gran;
 	}
 
