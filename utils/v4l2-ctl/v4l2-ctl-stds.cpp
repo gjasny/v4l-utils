@@ -214,7 +214,7 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 	int height = 0;
 	int fps = 0;
 	int r_blank = 0;
-	int interlaced = 0;
+	bool interlaced = false;
 	bool reduced_fps = false;
 	bool timings_valid = false;
 
@@ -239,7 +239,7 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 			r_blank = opt_val;
 			break;
 		case INTERLACED:
-			interlaced = opt_val;
+			interlaced = (opt_val == 1) ? true : false;
 			break;
 		case REDUCED_FPS:
 			reduced_fps = (opt_val == 1) ? true : false;
@@ -249,13 +249,12 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 		}
 	}
 
-	if (standard == V4L2_DV_BT_STD_CVT) {
+	if (standard == V4L2_DV_BT_STD_CVT)
 		timings_valid = calc_cvt_modeline(width, height, fps, r_blank,
-						  interlaced == 1 ? true : false, reduced_fps, bt);
-	} else {
+						  interlaced, reduced_fps, bt);
+	else
 		timings_valid = calc_gtf_modeline(width, height, fps, r_blank,
-						  interlaced == 1 ? true : false, bt);
-	}
+						  interlaced, bt);
 
 	if (!timings_valid) {
 		stds_usage();
