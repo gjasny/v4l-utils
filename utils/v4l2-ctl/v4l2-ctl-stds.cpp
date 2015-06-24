@@ -41,11 +41,15 @@ void stds_usage(void)
 	       "                     index=<index>: use the index as provided by --list-dv-timings\n"
 	       "                     or specify timings using cvt/gtf options as follows:\n"
 	       "                     cvt/gtf,width=<width>,height=<height>,fps=<frames per sec>\n"
-	       "                     interlaced=<0/1>,reduced-blanking=<0/1/2>\n"
+	       "                     interlaced=<0/1>,reduced-blanking=<0/1/2>,reduced-fps=<0/1>\n"
 	       "                     The value of reduced-blanking, if greater than 0, indicates\n"
 	       "                     that reduced blanking is to be used and the value indicate the\n"
 	       "                     version. For gtf, there is no version 2 for reduced blanking, and\n"
 	       "		     the value 1 or 2 will give same results.\n"
+	       "		     reduced-fps = 1, slows down pixel clock by factor of 1000 / 1001, allowing\n"
+	       "		     to support NTSC frame rates like 29.97 or 59.94.\n"
+	       "		     Reduced fps flag takes effect only with reduced blanking version 2 and,\n"
+	       "		     when refresh rate is an integer multiple of 6, say, fps = 24,30,60 etc.\n"
 	       "                     or give a fully specified timings:\n"
 	       "                     width=<width>,height=<height>,interlaced=<0/1>,\n"
 	       "                     polarities=<polarities mask>,pixelclock=<pixelclock Hz>,\n"
@@ -152,6 +156,7 @@ enum timing_opts {
 	GTF,
 	FPS,
 	REDUCED_BLANK,
+	REDUCED_FPS,
 };
 
 static int parse_timing_subopt(char **subopt_str, int *value)
@@ -179,6 +184,7 @@ static int parse_timing_subopt(char **subopt_str, int *value)
 		"gtf",
 		"fps",
 		"reduced-blanking",
+		"reduced-fps",
 		NULL
 	};
 
@@ -209,6 +215,7 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 	int fps = 0;
 	int r_blank = 0;
 	int interlaced = 0;
+	bool reduced_fps = false;
 	bool timings_valid = false;
 
 	char *subopt_str = subopt;
@@ -234,6 +241,9 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 		case INTERLACED:
 			interlaced = opt_val;
 			break;
+		case REDUCED_FPS:
+			reduced_fps = (opt_val == 1) ? true : false;
+			break;
 		default:
 			break;
 		}
@@ -241,7 +251,7 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 
 	if (standard == V4L2_DV_BT_STD_CVT) {
 		timings_valid = calc_cvt_modeline(width, height, fps, r_blank,
-						  interlaced == 1 ? true : false, false, bt);
+						  interlaced == 1 ? true : false, reduced_fps, bt);
 	} else {
 		timings_valid = calc_gtf_modeline(width, height, fps, r_blank,
 						  interlaced == 1 ? true : false, bt);
