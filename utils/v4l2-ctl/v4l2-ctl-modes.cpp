@@ -160,14 +160,14 @@ bool calc_cvt_modeline(int image_width, int image_height,
 	int v_refresh;
 	int pixel_clock;
 	int clk_gran;
-	bool use_rb = false;
-	bool rb_v2 = false;
+	bool use_rb;
+	bool rb_v2;
 
 	if (!valid_params(image_width, image_height, refresh_rate))
 		return false;
 
-	use_rb = (reduced_blanking > 0) ? true : false;
-	rb_v2 = (reduced_blanking == 2) ? true : false;
+	use_rb = reduced_blanking > 0;
+	rb_v2 = reduced_blanking == 2;
 
 	clk_gran = rb_v2 ? CVT_PXL_CLK_GRAN_RB_V2 : CVT_PXL_CLK_GRAN;
 
@@ -397,7 +397,7 @@ bool calc_cvt_modeline(int image_width, int image_height,
  */
 
 bool calc_gtf_modeline(int image_width, int image_height,
-		       int refresh_rate, int reduced_blanking,
+		       int refresh_rate, bool reduced_blanking,
 		       bool interlaced, struct v4l2_bt_timings *gtf)
 {
 	int h_sync;
@@ -430,7 +430,6 @@ bool calc_gtf_modeline(int image_width, int image_height,
 	int v_sync_bp;
 	int tmp1, tmp2;
 	int ideal_blank_duty_cycle;
-	bool use_rb = false;
 
 	if (!gtf) {
 		fprintf(stderr, "Null pointer to gtf modeline structure\n");
@@ -439,8 +438,6 @@ bool calc_gtf_modeline(int image_width, int image_height,
 
 	if (!valid_params(image_width, image_height, refresh_rate))
 		return false;
-
-	use_rb = (reduced_blanking > 0) ? true : false;
 
 	h_pixel = image_width;
 	v_lines = image_height;
@@ -488,7 +485,7 @@ bool calc_gtf_modeline(int image_width, int image_height,
 	h_period = ((long long)h_period_est * v_refresh_est) /
 		   (v_refresh * HV_FACTOR);
 
-	if (!use_rb)
+	if (!reduced_blanking)
 		ideal_blank_duty_cycle = (GTF_D_C_PRIME * HV_FACTOR) -
 				      GTF_D_M_PRIME * h_period / 1000;
 	else
@@ -543,7 +540,7 @@ bool calc_gtf_modeline(int image_width, int image_height,
 		gtf->flags |= V4L2_DV_FL_HALF_LINE;
 		gtf->il_vbackporch += 1;
 	}
-	if (use_rb) {
+	if (reduced_blanking) {
 		gtf->polarities = V4L2_DV_HSYNC_POS_POL;
 		gtf->flags |= V4L2_DV_FL_REDUCED_BLANKING;
 	} else

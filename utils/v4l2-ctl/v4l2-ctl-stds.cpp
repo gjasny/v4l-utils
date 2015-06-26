@@ -239,10 +239,10 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 			r_blank = opt_val;
 			break;
 		case INTERLACED:
-			interlaced = (opt_val == 1) ? true : false;
+			interlaced = opt_val;
 			break;
 		case REDUCED_FPS:
-			reduced_fps = (opt_val == 1) ? true : false;
+			reduced_fps = opt_val;
 			break;
 		default:
 			break;
