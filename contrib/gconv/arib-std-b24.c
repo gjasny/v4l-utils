@@ -1555,15 +1555,12 @@ find_extsym_idx (uint32_t ch)
 	goto next;							      \
       }									      \
 									      \
-    /* prefer KANJI(>= 0x7521) or EXTRA_SYMBOLS over JISX0213_{1,2} */	      \
+    /* KANJI shares some chars with EXTRA_SYMBOLS, but prefer extra symbols*/ \
     r = find_extsym_idx (ch);						      \
     if (r >= 0)								      \
       {									      \
 	ch = ucs4_to_extsym[r][1];					      \
-	if ((ch & 0xff00) >= 0x7a00)					      \
-	  r = out_kanji (&st, ch, &outptr, outend);			      \
-	else								      \
-	  r = out_extsym (&st, ch, &outptr, outend);			      \
+	r = out_extsym (&st, ch, &outptr, outend);			      \
 	goto next;							      \
       }									      \
 									      \
