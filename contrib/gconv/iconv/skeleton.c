@@ -501,8 +501,14 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
     }
   else
     {
+#if ! __GLIBC_PREREQ(2,21)
       /* We preserve the initial values of the pointer variables.  */
       const unsigned char *inptr = *inptrp;
+#else
+      /* We preserve the initial values of the pointer variables,
+	 but only some conversion modules need it.  */
+      const unsigned char *inptr __attribute__ ((__unused__)) = *inptrp;
+#endif
       unsigned char *outbuf = (__builtin_expect (outbufstart == NULL, 1)
 			       ? data->__outbuf : *outbufstart);
       unsigned char *outend = data->__outbufend;
@@ -592,8 +598,10 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 
       while (1)
 	{
+#if ! __GLIBC_PREREQ(2,21)
 	  struct __gconv_trans_data *trans;
 
+#endif
 	  /* Remember the start value for this round.  */
 	  inptr = *inptrp;
 	  /* The outbuf buffer is empty.  */
@@ -640,6 +648,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 	      return status;
 	    }
 
+#if  ! __GLIBC_PREREQ(2,21)
 	  /* Give the transliteration module the chance to store the
 	     original text and the result in case it needs a context.  */
 	  for (trans = data->__trans; trans != NULL; trans = trans->__next)
@@ -647,6 +656,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 	      DL_CALL_FCT (trans->__trans_context_fct,
 			   (trans->__data, inptr, *inptrp, outstart, outbuf));
 
+#endif
 	  /* We finished one use of the loops.  */
 	  ++data->__invocation_counter;
 

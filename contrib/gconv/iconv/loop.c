@@ -211,6 +211,7 @@
    transcription functions and ignoring of errors.  Note that we cannot use
    the do while (0) trick since `break' and `continue' must reach certain
    points.  */
+#if ! __GLIBC_PREREQ(2,21)
 #define STANDARD_TO_LOOP_ERR_HANDLER(Incr) \
   {									      \
     struct __gconv_trans_data *trans;					      \
@@ -258,6 +259,49 @@
        that "iconv -c" must give the same exitcode as "iconv".  */	      \
     continue;								      \
   }
+#else
+#define STANDARD_TO_LOOP_ERR_HANDLER(Incr) \
+  {									      \
+    result = __GCONV_ILLEGAL_INPUT;					      \
+									      \
+    if (irreversible == NULL)						      \
+      /* This means we are in call from __gconv_transliterate.  In this	      \
+	 case we are not doing any error recovery outself.  */		      \
+      break;								      \
+									      \
+    /* If needed, flush any conversion state, so that __gconv_transliterate   \
+       starts with current shift state.  */				      \
+    UPDATE_PARAMS;							      \
+									      \
+    /* First try the transliteration methods.  */			      \
+    if ((step_data->__flags & __GCONV_TRANSLIT) != 0)			      \
+      result = __gconv_transliterate					      \
+	(step, step_data, *inptrp,					      \
+	 &inptr, inend, &outptr, irreversible);			      \
+									      \
+    REINIT_PARAMS;							      \
+									      \
+    /* If any of them recognized the input continue with the loop.  */	      \
+    if (result != __GCONV_ILLEGAL_INPUT)				      \
+      {									      \
+	if (__glibc_unlikely (result == __GCONV_FULL_OUTPUT))		      \
+	  break;							      \
+									      \
+	continue;							      \
+      }									      \
+									      \
+    /* Next see whether we have to ignore the error.  If not, stop.  */	      \
+    if (! ignore_errors_p ())						      \
+      break;								      \
+									      \
+    /* When we come here it means we ignore the character.  */		      \
+    ++*irreversible;							      \
+    inptr += Incr;							      \
+    /* But we keep result == __GCONV_ILLEGAL_INPUT, because of the constraint \
+       that "iconv -c" must give the same exitcode as "iconv".  */	      \
+    continue;								      \
+  }
+#endif									      \
 
 
 /* Handling of Unicode 3.1 TAG characters.  Unicode recommends
