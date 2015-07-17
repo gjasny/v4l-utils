@@ -64,12 +64,14 @@ enum Option {
 	OptGetVbiFormat,
 	OptGetVbiOutFormat,
 	OptGetSdrFormat,
+	OptGetSdrOutFormat,
 	OptGetVideoOutFormat,
 	OptSetSlicedVbiOutFormat,
 	OptSetOverlayFormat,
 	OptSetVbiFormat,
 	OptSetVbiOutFormat,
 	OptSetSdrFormat,
+	OptSetSdrOutFormat,
 	OptSetVideoOutFormat,
 	OptTryVideoOutFormat,
 	OptTrySlicedVbiOutFormat,
@@ -79,6 +81,7 @@ enum Option {
 	OptTryVbiFormat,
 	OptTryVbiOutFormat,
 	OptTrySdrFormat,
+	OptTrySdrOutFormat,
 	OptAll,
 	OptListStandards,
 	OptListFormats,
@@ -88,6 +91,7 @@ enum Option {
 	OptListFrameIntervals,
 	OptListOverlayFormats,
 	OptListSdrFormats,
+	OptListSdrOutFormats,
 	OptListOutFormats,
 	OptListOutFields,
 	OptClearClips,
@@ -161,6 +165,7 @@ enum Option {
 	OptListBuffersVbiOut,
 	OptListBuffersSlicedVbiOut,
 	OptListBuffersSdr,
+	OptListBuffersSdrOut,
 	OptStreamCount,
 	OptStreamSkip,
 	OptStreamLoop,
@@ -200,7 +205,7 @@ enum Option {
 	OptHelpStreaming,
 	OptHelpEdid,
 	OptHelpAll,
-	OptLast = 256
+	OptLast = 512
 };
 
 extern char options[OptLast];

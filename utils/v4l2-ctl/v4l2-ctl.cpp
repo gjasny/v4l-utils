@@ -110,6 +110,7 @@ static struct option long_options[] = {
 	{"list-frameintervals", required_argument, 0, OptListFrameIntervals},
 	{"list-formats-overlay", no_argument, 0, OptListOverlayFormats},
 	{"list-formats-sdr", no_argument, 0, OptListSdrFormats},
+	{"list-formats-sdr-out", no_argument, 0, OptListSdrOutFormats},
 	{"list-formats-out", no_argument, 0, OptListOutFormats},
 	{"list-fields-out", no_argument, 0, OptListOutFields},
 	{"clear-clips", no_argument, 0, OptClearClips},
@@ -154,6 +155,9 @@ static struct option long_options[] = {
 	{"get-fmt-sdr", no_argument, 0, OptGetSdrFormat},
 	{"set-fmt-sdr", required_argument, 0, OptSetSdrFormat},
 	{"try-fmt-sdr", required_argument, 0, OptTrySdrFormat},
+	{"get-fmt-sdr-out", no_argument, 0, OptGetSdrOutFormat},
+	{"set-fmt-sdr-out", required_argument, 0, OptSetSdrOutFormat},
+	{"try-fmt-sdr-out", required_argument, 0, OptTrySdrOutFormat},
 	{"get-sliced-vbi-cap", no_argument, 0, OptGetSlicedVbiCap},
 	{"get-sliced-vbi-out-cap", no_argument, 0, OptGetSlicedVbiOutCap},
 	{"get-fbuf", no_argument, 0, OptGetFBuf},
@@ -207,6 +211,7 @@ static struct option long_options[] = {
 	{"list-buffers-vbi-out", no_argument, 0, OptListBuffersVbiOut},
 	{"list-buffers-sliced-vbi-out", no_argument, 0, OptListBuffersSlicedVbiOut},
 	{"list-buffers-sdr", no_argument, 0, OptListBuffersSdr},
+	{"list-buffers-sdr-out", no_argument, 0, OptListBuffersSdrOut},
 	{"stream-count", required_argument, 0, OptStreamCount},
 	{"stream-skip", required_argument, 0, OptStreamSkip},
 	{"stream-loop", no_argument, 0, OptStreamLoop},
@@ -318,6 +323,8 @@ std::string buftype2s(int type)
 		return "Video Output Overlay";
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
 		return "SDR Capture";
+	case V4L2_BUF_TYPE_SDR_OUTPUT:
+		return "SDR Output";
 	default:
 		return "Unknown (" + num2s(type) + ")";
 	}
@@ -604,6 +611,7 @@ void printfmt(const struct v4l2_format &vfmt)
 		printf("\tI/O Size       : %u\n", vfmt.fmt.sliced.io_size);
 		break;
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
+	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		printf("\tSample Format   : %s\n", fcc2s(vfmt.fmt.sdr.pixelformat).c_str());
 		printf("\tBuffer Size     : %u\n", vfmt.fmt.sdr.buffersize);
 		break;
@@ -674,6 +682,8 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tRDS Output\n";
 	if (cap & V4L2_CAP_SDR_CAPTURE)
 		s += "\t\tSDR Capture\n";
+	if (cap & V4L2_CAP_SDR_OUTPUT)
+		s += "\t\tSDR Output\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
 	if (cap & V4L2_CAP_HW_FREQ_SEEK)
@@ -1267,6 +1277,7 @@ int main(int argc, char **argv)
 		options[OptGetSlicedVbiFormat] = 1;
 		options[OptGetSlicedVbiOutFormat] = 1;
 		options[OptGetSdrFormat] = 1;
+		options[OptGetSdrOutFormat] = 1;
 		options[OptGetFBuf] = 1;
 		options[OptGetCropCap] = 1;
 		options[OptGetOutputCropCap] = 1;

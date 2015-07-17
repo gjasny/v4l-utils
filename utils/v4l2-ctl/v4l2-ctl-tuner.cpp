@@ -380,7 +380,9 @@ void tuner_get(int fd)
 		}
 		vf.tuner = tuner_index;
 		if (doioctl(fd, VIDIOC_G_FREQUENCY, &vf) == 0)
-			printf("Frequency for tuner %d: %d (%f MHz)\n",
+			printf("Frequency for %s %d: %d (%f MHz)\n",
+			       (capabilities & V4L2_CAP_MODULATOR) ?
+					"modulator" : "tuner",
 			       vf.tuner, vf.frequency, vf.frequency / fac);
 	}
 
@@ -423,6 +425,9 @@ void tuner_get(int fd)
 			if (mt.capability & V4L2_TUNER_CAP_LOW)
 				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
 				     mt.rangelow / 16000.0, mt.rangehigh / 16000.0);
+			else if (mt.capability & V4L2_TUNER_CAP_1HZ)
+				printf("\tFrequency range      : %.6f MHz - %.6f MHz\n",
+				     mt.rangelow / 1000000.0, mt.rangehigh / 1000000.0);
 			else
 				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
 				     mt.rangelow / 16.0, mt.rangehigh / 16.0);

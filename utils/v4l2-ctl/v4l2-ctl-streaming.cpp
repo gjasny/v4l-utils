@@ -135,6 +135,8 @@ void streaming_usage(void)
 	       "                     list all sliced VBI output buffers [VIDIOC_QUERYBUF]\n"
 	       "  --list-buffers-sdr\n"
 	       "                     list all SDR RX buffers [VIDIOC_QUERYBUF]\n"
+	       "  --list-buffers-sdr-out\n"
+	       "                     list all SDR TX buffers [VIDIOC_QUERYBUF]\n"
 	       );
 }
 
@@ -390,6 +392,8 @@ public:
 	{
 		if (capabilities & V4L2_CAP_SDR_CAPTURE)
 			type = V4L2_BUF_TYPE_SDR_CAPTURE;
+		else if (capabilities & V4L2_CAP_SDR_OUTPUT)
+			type = V4L2_BUF_TYPE_SDR_OUTPUT;
 		else
 			type = is_output ? vidout_buftype : vidcap_buftype;
 		if (is_output) {
@@ -1170,6 +1174,7 @@ static void streaming_set_out(int fd)
 
 	if (!(capabilities & (V4L2_CAP_VIDEO_OUTPUT |
 			      V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+			      V4L2_CAP_SDR_OUTPUT |
 			      V4L2_CAP_VIDEO_M2M |
 			      V4L2_CAP_VIDEO_M2M_MPLANE))) {
 		fprintf(stderr, "unsupported stream type\n");
@@ -1632,6 +1637,10 @@ void streaming_list(int fd, int out_fd)
 
 	if (options[OptListBuffersSdr]) {
 		list_buffers(fd, V4L2_BUF_TYPE_SDR_CAPTURE);
+	}
+
+	if (options[OptListBuffersSdrOut]) {
+		list_buffers(fd, V4L2_BUF_TYPE_SDR_OUTPUT);
 	}
 
 	if (options[OptListPatterns]) {
