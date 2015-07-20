@@ -132,8 +132,10 @@ public:
 	{
 		return node->querybuf(*this, index);
 	}
-	int prepare_buf(node *node)
+	int prepare_buf(node *node, bool fill_bytesused = true)
 	{
+		if (v4l_type_is_output(g_type()))
+			fill_output_buf(fill_bytesused);
 		return node->prepare_buf(*this);
 	}
 	int dqbuf(node *node)
@@ -786,7 +788,7 @@ static int bufferOutputErrorTest(struct node *node, const buffer &orig_buf)
 		buf.s_bytesused(buf.g_length(p) + 1, p);
 		buf.s_data_offset(0, p);
 	}
-	ret = buf.prepare_buf(node);
+	ret = buf.prepare_buf(node, false);
 	fail_on_test(ret != EINVAL && ret != ENOTTY);
 	have_prepare = ret != ENOTTY;
 	fail_on_test(buf.qbuf(node, false) != EINVAL);
@@ -797,16 +799,16 @@ static int bufferOutputErrorTest(struct node *node, const buffer &orig_buf)
 			buf.s_data_offset(buf.g_bytesused(p), p);
 		}
 		if (have_prepare)
-			fail_on_test(buf.prepare_buf(node) != EINVAL);
+			fail_on_test(buf.prepare_buf(node, false) != EINVAL);
 		fail_on_test(buf.qbuf(node, false) != EINVAL);
 	}
 	buf.init(orig_buf);
 	for (unsigned p = 0; p < buf.g_num_planes(); p++) {
-		buf.s_bytesused(0, p);
+		buf.s_bytesused(buf.g_length(p), p);
 		buf.s_data_offset(0, p);
 	}
 	if (have_prepare) {
-		fail_on_test(buf.prepare_buf(node));
+		fail_on_test(buf.prepare_buf(node, false));
 		fail_on_test(buf.check(Prepared, 0));
 		buf.init(orig_buf);
 		for (unsigned p = 0; p < buf.g_num_planes(); p++) {
