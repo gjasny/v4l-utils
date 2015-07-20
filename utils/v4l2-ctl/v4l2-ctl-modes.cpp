@@ -336,7 +336,7 @@ bool calc_cvt_modeline(int image_width, int image_height,
 	} else {
 		cvt->polarities = V4L2_DV_VSYNC_POS_POL;
 	}
-	if (reduced_fps && v_refresh % 6 == 0)
+	if (rb_v2 && reduced_fps && v_refresh % 6 == 0)
 		cvt->flags |= V4L2_DV_FL_REDUCED_FPS;
 
 	return true;
