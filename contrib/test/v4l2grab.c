@@ -43,7 +43,8 @@ static void xioctl(int fh, unsigned long int request, void *arg)
 	} while (r == -1 && ((errno == EINTR) || (errno == EAGAIN)));
 
 	if (r == -1) {
-		fprintf(stderr, "error %d, %s\n", errno, strerror(errno));
+		fprintf(stderr, "%s(%lu): error %d, %s\n", __func__,
+			_IOC_NR(request), errno, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 }
