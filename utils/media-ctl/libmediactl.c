@@ -338,14 +338,6 @@ static int media_enum_links(struct media_device *media)
 		unsigned int i;
 
 		links.entity = entity->info.id;
-
-		media_dbg(media,
-			 "MEDIA_IOC_ENUM_LINKS entity#%d has %d pads and %d links.\n",
-			 links.entity, entity->info.pads, entity->info.links);
-
-		if (!entity->info.pads || !entity->info.links)
-			return 0;
-
 		links.pads = calloc(entity->info.pads, sizeof(struct media_pad_desc));
 		links.links = calloc(entity->info.links, sizeof(struct media_link_desc));
 
