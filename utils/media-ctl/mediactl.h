@@ -306,11 +306,7 @@ struct media_entity *media_get_entity(struct media_device *media, unsigned int i
  *	MEDIA_ENT_T_DEVNODE_V4L
  *	MEDIA_ENT_T_DEVNODE_FB
  *	MEDIA_ENT_T_DEVNODE_ALSA
- *	MEDIA_ENT_T_DEVNODE_DVB_FE
- *	MEDIA_ENT_T_DEVNODE_DVB_DEMUX
- *	MEDIA_ENT_T_DEVNODE_DVB_DVR
- *	MEDIA_ENT_T_DEVNODE_DVB_CA
- *	MEDIA_ENT_T_DEVNODE_DVB_NET
+ *	MEDIA_ENT_T_DEVNODE_DVB
  *
  * @return A pointer to the default entity for the type if it exists, or NULL
  * otherwise.

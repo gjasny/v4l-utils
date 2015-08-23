@@ -285,11 +285,7 @@ static const char *media_entity_subtype_to_string(unsigned type)
 		"V4L",
 		"FB",
 		"ALSA",
-		"DVB FE",
-		"DVB DEMUX",
-		"DVB DVR",
-		"DVB CA",
-		"DVB NET",
+		"DVB",
 	};
 	static const char *subdev_types[] = {
 		"Unknown",
