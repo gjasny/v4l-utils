@@ -4,6 +4,7 @@ noinst_PROGRAMS = \
 	sliced-vbi-detect	\
 	v4l2grab		\
 	driver-test		\
+	mc_nextgen_test		\
 	stress-buffer		\
 	capture-example
 
