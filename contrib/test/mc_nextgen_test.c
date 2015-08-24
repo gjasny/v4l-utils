@@ -324,9 +324,11 @@ static void media_show_entities(struct media_controller *mc)
 	int i, j;
 
 	for (i = 0; i < topo->num_entities; i++) {
-		char *obj;
 		struct media_v2_entity *entity = &topo->entities[i];
+		char *obj;
 		int num_pads = 0;
+		int num_sinks = 0;
+		int num_sources = 0;
 
 		/*
 		 * Count the number of patches - If this would be a
@@ -337,13 +339,25 @@ static void media_show_entities(struct media_controller *mc)
 		 * about performance.
 		 */
 		for (j = 0; j < topo->num_pads; j++) {
-			if (topo->pads[j].entity_id == entity->id)
-				num_pads++;
+			if (topo->pads[j].entity_id != entity->id)
+				continue;
+
+			num_pads++;
+			if (topo->pads[j].flags == MEDIA_PAD_FL_SINK)
+				num_sinks++;
+			if (topo->pads[j].flags == MEDIA_PAD_FL_SOURCE)
+				num_sources++;
 		}
 
 		obj = objname(entity->id);
-		show(YELLOW, 0, "entity %s: %s, num pads = %d",
+		show(YELLOW, 0, "entity %s: %s, %d pad(s)",
 		     obj, entity->name, num_pads);
+		if (num_sinks)
+			show(YELLOW, 0,", %d sink(s)", num_sinks);
+		if (num_sources)
+			show(YELLOW, 0,", %d source(s)", num_sources);
+		printf("\n");
+
 		free(obj);
 	}
 }
