@@ -19,19 +19,11 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * */
 
+#include <config.h>
 
-#if 0
-/*
- * this assumes that a copy of the new media.h to be at the same
- * directory as this test utility
- */
-#define _GNU_SOURCE
-#define __user
-#include "media.h"
-#else
 #include <linux/media.h>
-#endif
 
+#include <argp.h>
 
 #include <syslog.h>
 #include <stdio.h>
@@ -45,6 +37,79 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
+
+#define PROGRAM_NAME	"mc_nextgen_test"
+
+const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
+
+static const char doc[] = "\nA testing tool for the MC next geneneration API\n";
+
+static const struct argp_option options[] = {
+	{"entities",	'e',	0,		0,	"show entities", 0},
+	{"interfaces",	'i',	0,		0,	"show pads", 0},
+	{"data-links",	'l',	0,		0,	"show data links", 0},
+	{"intf-links",	'I',	0,		0,	"show interface links", 0},
+
+	{"device",	'd',	"DEVICE",	0,	"media controller device (default: /dev/media0", 0},
+
+	{"help",        '?',	0,		0,	"Give this help list", -1},
+	{"usage",	-3,	0,		0,	"Give a short usage message"},
+	{"version",	'V',	0,		0,	"Print program version", -1},
+	{ 0, 0, 0, 0, 0, 0 }
+};
+
+static int show_entities = 0;
+static int show_interfaces = 0;
+static int show_data_links = 0;
+static int show_intf_links = 0;
+static char media_device[256] = "/dev/media0";
+
+static error_t parse_opt(int k, char *arg, struct argp_state *state)
+{
+	switch (k) {
+	case 'e':
+		show_entities++;
+		break;
+	case 'i':
+		show_interfaces++;
+		break;
+	case 'l':
+		show_data_links++;
+		break;
+	case 'I':
+		show_intf_links++;
+		break;
+
+	case 'd':
+		strncpy(media_device, arg, sizeof(media_device) - 1);
+		media_device[sizeof(media_device)-1] = '\0';
+
+	case '?':
+		argp_state_help(state, state->out_stream,
+				ARGP_HELP_SHORT_USAGE | ARGP_HELP_LONG
+				| ARGP_HELP_DOC);
+		fprintf(state->out_stream, "\nReport bugs to %s.\n",
+			argp_program_bug_address);
+		exit(0);
+	case 'V':
+		fprintf (state->out_stream, "%s\n", argp_program_version);
+		exit(0);
+	case -3:
+		argp_state_help(state, state->out_stream, ARGP_HELP_USAGE);
+		exit(0);
+	default:
+		return ARGP_ERR_UNKNOWN;
+	}
+	return 0;
+}
+
+static struct argp argp = {
+	.options = options,
+	.parser = parse_opt,
+	.doc = doc,
+};
+
 
 /*
  * Those came from media-entity.h and bitops.h
@@ -238,8 +303,6 @@ static int media_init_graph_obj(struct media_controller *mc)
 	for (i = 0; i < topo->num_pads; i++) {
 		mc->gobj[i].id = topo->pads[i].id;
 		mc->gobj[i].pad = &topo->pads[i];
-dbg("pad 0x%08x, entity id: 0x%08x", mc->gobj[i].id, topo->pads[i].entity_id);
-
 	}
 	for (i = 0; i < topo->num_links; i++) {
 		mc->gobj[i].id = topo->links[i].id;
@@ -273,10 +336,92 @@ struct graph_obj *find_gobj(struct media_controller *mc, uint32_t id)
 	return NULL;
 }
 
+static void media_show_entities(struct media_controller *mc)
+{
+	struct media_v2_topology *topo = &mc->topo;
+	int i, j;
+
+	for (i = 0; i < topo->num_entities; i++) {
+		char *obj;
+		struct media_v2_entity *entity = &topo->entities[i];
+		int num_pads = 0;
+
+		/*
+		 * Count the number of patches - If this would be a
+		 * real application/library, we would likely be creating
+		 * either a list of an array to associate entities/pads/links
+		 *
+		 * However, we just want to test the API, so we don't care
+		 * about performance.
+		 */
+		for (j = 0; j < topo->num_pads; j++) {
+			if (topo->pads[j].entity_id == entity->id)
+				num_pads++;
+		}
+
+		obj = objname(entity->id);
+		info("entity %s: %s, num pads = %d",
+		     obj, entity->name, num_pads);
+		free(obj);
+	}
+}
+
+static void media_show_interfaces(struct media_controller *mc)
+{
+	struct media_v2_topology *topo = &mc->topo;
+	int i;
+
+	for (i = 0; i < topo->num_interfaces; i++) {
+		char *obj;
+		struct media_v2_interface *intf = &topo->interfaces[i];
+		struct media_v2_intf_devnode *devnode;
+
+		/* For now, all interfaces are devnodes */
+		devnode = &intf->devnode;
+
+		obj = objname(intf->id);
+		info("interface %s: %s (%d,%d)",
+		     obj, intf_type(intf->intf_type),
+		     devnode->major, devnode->minor);
+		free(obj);
+	}
+}
+
+static void media_show_links(struct media_controller *mc)
+{
+	struct media_v2_topology *topo = &mc->topo;
+	int i;
+
+	for (i = 0; i < topo->num_links; i++) {
+		struct media_v2_link *link = &topo->links[i];
+		char *obj, *source_obj, *sink_obj;
+
+		if (media_type(link->source_id) == MEDIA_GRAPH_PAD) {
+			if (!show_data_links)
+				continue;
+		}
+
+		if (media_type(link->source_id) == MEDIA_GRAPH_INTF_DEVNODE) {
+			if (!show_intf_links)
+				continue;
+		}
+
+		obj = objname(link->id);
+		source_obj = objname(link->source_id);
+		sink_obj = objname(link->sink_id);
+
+		info("link %s: %s and %s",
+		     obj, source_obj, sink_obj);
+
+		free(obj);
+		free(source_obj);
+		free(sink_obj);
+	}
+}
 static int media_get_topology(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
-	int i, j, ret = 0, topology_version;
+	int ret = 0, topology_version;
 
 	/* First call: get the amount of elements */
 	memset(topo, 0, sizeof(*topo));
@@ -341,61 +486,14 @@ static int media_get_topology(struct media_controller *mc)
 
 	media_init_graph_obj(mc);
 
-	for (i = 0; i < topo->num_entities; i++) {
-		char *obj;
-		struct media_v2_entity *entity = &topo->entities[i];
-		int num_pads = 0;
+	if (show_entities)
+		media_show_entities(mc);
 
-		/*
-		 * Count the number of patches - If this would be a
-		 * real application/library, we would likely be creating
-		 * either a list of an array to associate entities/pads/links
-		 *
-		 * However, we just want to test the API, so we don't care
-		 * about performance.
-		 */
-		for (j = 0; j < topo->num_pads; j++) {
-			if (topo->pads[j].entity_id == entity->id)
-				num_pads++;
-		}
+	if (show_interfaces)
+		media_show_interfaces(mc);
 
-		obj = objname(entity->id);
-		info("entity %s: %s, num pads = %d",
-		     obj, entity->name, num_pads);
-		free(obj);
-
-	}
-
-	for (i = 0; i < topo->num_interfaces; i++) {
-		char *obj;
-		struct media_v2_interface *intf = &topo->interfaces[i];
-		struct media_v2_intf_devnode *devnode;
-
-		/* For now, all interfaces are devnodes */
-		devnode = &intf->devnode;
-
-		obj = objname(intf->id);
-		info("interface %s: %s (%d,%d)",
-		     obj, intf_type(intf->intf_type),
-		     devnode->major, devnode->minor);
-		free(obj);
-	}
-
-	for (i = 0; i < topo->num_links; i++) {
-		struct media_v2_link *link = &topo->links[i];
-		char *obj, *source_obj, *sink_obj;
-
-		obj = objname(link->id);
-		source_obj = objname(link->source_id);
-		sink_obj = objname(link->sink_id);
-
-		info("link %s: %s and %s",
-		     obj, source_obj, sink_obj);
-
-		free(obj);
-		free(source_obj);
-		free(sink_obj);
-	}
+	if (show_data_links || show_intf_links)
+		media_show_links(mc);
 
 	return 0;
 
@@ -453,11 +551,13 @@ static int mc_close(struct media_controller *mc)
 	return ret;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	struct media_controller *mc;
 
-	mc = mc_open("/dev/media0");
+	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, 0, 0);
+
+	mc = mc_open(media_device);
 
 	media_get_topology(mc);
 
