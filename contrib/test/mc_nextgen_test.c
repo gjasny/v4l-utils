@@ -396,7 +396,7 @@ static void media_show_links(struct media_controller *mc)
 		if (media_type(link->source_id) == MEDIA_GRAPH_PAD) {
 			if (!show_data_links)
 				continue;
-			color = MAGENTA;
+			color = CYAN;
 		}
 
 		if (media_type(link->source_id) == MEDIA_GRAPH_INTF_DEVNODE) {
@@ -408,8 +408,22 @@ static void media_show_links(struct media_controller *mc)
 		source_obj = objname(link->source_id);
 		sink_obj = objname(link->sink_id);
 
-		show(color, 0, "link %s: %s and %s\n",
-		     obj, source_obj, sink_obj);
+		if (link->flags & MEDIA_NEW_LNK_FL_INTERFACE_LINK)
+			show(color, 0, "interface ");
+		else
+			show(color, 0, "data ");
+		show(color, 0, "link %s: %s %s %s",
+		     obj, source_obj,
+		     (link->flags & MEDIA_NEW_LNK_FL_INTERFACE_LINK) ? "<=>" : "=>",
+		     sink_obj);
+		if (link->flags & MEDIA_LNK_FL_IMMUTABLE)
+			show(color, 0, " [IMMUTABLE]");
+		if (link->flags & MEDIA_LNK_FL_DYNAMIC)
+			show(color, 0, " [DYNAMIC]");
+		if (link->flags & MEDIA_LNK_FL_ENABLED)
+			show(color, 1, " [ENABLED]");
+
+		printf("\n");
 
 		free(obj);
 		free(source_obj);
