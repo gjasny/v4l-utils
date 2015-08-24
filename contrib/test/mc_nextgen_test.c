@@ -199,61 +199,43 @@ static char *objname(uint32_t id)
 	return name;
 }
 
-/* Shamelessly copied from libdvbv5 dvb-log.c and dvb-log.h */
-
-static const struct loglevel {
-	const char *name;
-	const char *color;
-	int fd;
-} loglevels[9] = {
-	{"EMERG    ", "\033[31m", STDERR_FILENO },
-	{"ALERT    ", "\033[31m", STDERR_FILENO },
-	{"CRITICAL ", "\033[31m", STDERR_FILENO },
-	{"ERROR    ", "\033[31m", STDERR_FILENO },
-	{"WARNING  ", "\033[33m", STDOUT_FILENO },
-	{NULL,            "\033[36m", STDOUT_FILENO }, /* NOTICE */
-	{NULL,            NULL,       STDOUT_FILENO }, /* INFO */
-	{"DEBUG    ", "\033[32m", STDOUT_FILENO },
-	{NULL,            "\033[0m",  STDOUT_FILENO }, /* reset*/
+enum ansi_colors {
+	BLACK = 30,
+	RED,
+	GREEN,
+	YELLOW,
+	BLUE,
+	MAGENTA,
+	CYAN,
+	WHITE
 };
-#define LOG_COLOROFF 8
 
-void __log(int level, const char *fmt, ...)
+#define NORMAL_COLOR "\033[0;%dm"
+#define BRIGHT_COLOR "\033[1;%dm"
+
+void show(int color, int bright, const char *fmt, ...)
 {
-	if(level > sizeof(loglevels) / sizeof(struct loglevel) - 2) // ignore LOG_COLOROFF as well
-		level = LOG_INFO;
 	va_list ap;
+
 	va_start(ap, fmt);
-	FILE *out = stdout;
-	if (STDERR_FILENO == loglevels[level].fd)
-		out = stderr;
-	if (loglevels[level].color && isatty(loglevels[level].fd))
-		fputs(loglevels[level].color, out);
-	if (loglevels[level].name)
-		fprintf(out, "%s", loglevels[level].name);
-	vfprintf(out, fmt, ap);
-	fprintf(out, "\n");
-	if(loglevels[level].color && isatty(loglevels[level].fd))
-		fputs(loglevels[LOG_COLOROFF].color, out);
+
+	if (isatty(STDOUT_FILENO)) {
+		if (bright)
+			printf(BRIGHT_COLOR, color);
+		else
+			printf(NORMAL_COLOR, color);
+	}
+
+	vprintf(fmt, ap);
+
 	va_end(ap);
 }
 
-#define err(fmt, arg...) do {\
-	__log(LOG_ERR, fmt, ##arg); \
-} while (0)
-#define dbg(fmt, arg...) do {\
-	__log(LOG_DEBUG, fmt, ##arg); \
-} while (0)
-#define warn(fmt, arg...) do {\
-	__log(LOG_WARNING, fmt, ##arg); \
-} while (0)
-#define info(fmt, arg...) do {\
-	__log(LOG_NOTICE, fmt, ##arg); \
+#define logperror(msg) do {\
+       show(RED, 0, "%s: %s", msg, strerror(errno)); \
 } while (0)
 
-#define logperror(msg) do {\
-	__log(LOG_ERR, "%s: %s", msg, strerror(errno)); \
-} while (0)
+
 
 /*
  * The real code starts here
@@ -360,7 +342,7 @@ static void media_show_entities(struct media_controller *mc)
 		}
 
 		obj = objname(entity->id);
-		info("entity %s: %s, num pads = %d",
+		show(YELLOW, 0, "entity %s: %s, num pads = %d",
 		     obj, entity->name, num_pads);
 		free(obj);
 	}
@@ -380,7 +362,7 @@ static void media_show_interfaces(struct media_controller *mc)
 		devnode = &intf->devnode;
 
 		obj = objname(intf->id);
-		info("interface %s: %s (%d,%d)",
+		show(GREEN, 0, "interface %s: %s (%d,%d)\n",
 		     obj, intf_type(intf->intf_type),
 		     devnode->major, devnode->minor);
 		free(obj);
@@ -390,15 +372,17 @@ static void media_show_interfaces(struct media_controller *mc)
 static void media_show_links(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
-	int i;
+	int i, color;
 
 	for (i = 0; i < topo->num_links; i++) {
 		struct media_v2_link *link = &topo->links[i];
 		char *obj, *source_obj, *sink_obj;
 
+		color = BLUE;
 		if (media_type(link->source_id) == MEDIA_GRAPH_PAD) {
 			if (!show_data_links)
 				continue;
+			color = MAGENTA;
 		}
 
 		if (media_type(link->source_id) == MEDIA_GRAPH_INTF_DEVNODE) {
@@ -410,7 +394,7 @@ static void media_show_links(struct media_controller *mc)
 		source_obj = objname(link->source_id);
 		sink_obj = objname(link->sink_id);
 
-		info("link %s: %s and %s",
+		show(color, 0, "link %s: %s and %s\n",
 		     obj, source_obj, sink_obj);
 
 		free(obj);
@@ -427,17 +411,17 @@ static int media_get_topology(struct media_controller *mc)
 	memset(topo, 0, sizeof(*topo));
 	ret = ioctl(mc->fd, MEDIA_IOC_G_TOPOLOGY, topo);
 	if (ret < 0) {
-		logperror("MEDIA_IOC_G_TOPOLOGY faled to get numbers");
+		logperror("MEDIA_IOC_G_TOPOLOGY faled to get numbers\n");
 		goto error;
 	}
 
 	topology_version = topo->topology_version;
 
-	info("version: %d", topology_version);
-	info("number of entities: %d", topo->num_entities);
-	info("number of interfaces: %d", topo->num_interfaces);
-	info("number of pads: %d", topo->num_pads);
-	info("number of links: %d", topo->num_links);
+	show(WHITE, 0, "version: %d", topology_version);
+	show(WHITE, 0, "number of entities: %d\n", topo->num_entities);
+	show(WHITE, 0, "number of interfaces: %d\n", topo->num_interfaces);
+	show(WHITE, 0, "number of pads: %d\n", topo->num_pads);
+	show(WHITE, 0, "number of links: %d\n", topo->num_links);
 
 	do {
 		topo->entities = calloc(topo->num_entities,
@@ -463,7 +447,7 @@ static int media_get_topology(struct media_controller *mc)
 		ret = ioctl(mc->fd, MEDIA_IOC_G_TOPOLOGY, topo);
 		if (ret < 0) {
 			if (topo->topology_version != topology_version) {
-				warn("Topology changed from version %d to %d. trying again.",
+				show(WHITE, 0, "Topology changed from version %d to %d. trying again.\n",
 					  topology_version,
 					  topo->topology_version);
 				/*
@@ -478,7 +462,7 @@ static int media_get_topology(struct media_controller *mc)
 				topology_version = topo->topology_version;
 				continue;
 			}
-			logperror("MEDIA_IOC_G_TOPOLOGY faled");
+			logperror("MEDIA_IOC_G_TOPOLOGY faled\n");
 			goto error;
 		}
 	} while (ret < 0);
