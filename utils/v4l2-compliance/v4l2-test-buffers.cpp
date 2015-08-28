@@ -1060,7 +1060,8 @@ int testUserPtr(struct node *node, unsigned frame_count)
 
 		ret = q.reqbufs(node, 0);
 		if (ret) {
-			fail_on_test(ret != EINVAL);
+			fail_on_test(!can_stream && ret != ENOTTY);
+			fail_on_test(can_stream && ret != EINVAL);
 			return ENOTTY;
 		}
 		fail_on_test(!can_stream);
@@ -1173,7 +1174,8 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 
 		ret = q.reqbufs(node, 0);
 		if (ret) {
-			fail_on_test(ret != EINVAL);
+			fail_on_test(!can_stream && ret != ENOTTY);
+			fail_on_test(can_stream && ret != EINVAL);
 			return ENOTTY;
 		}
 		fail_on_test(!can_stream);
