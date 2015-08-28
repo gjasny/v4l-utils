@@ -288,7 +288,7 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_query_ext_ctrl &qe
 		edit->setValidator(val);
 		addWidget(grid, edit);
 		m_widgetMap[qec.id] = edit;
-		connect(m_widgetMap[qec.id], SIGNAL(lostFocus()),
+		connect(m_widgetMap[qec.id], SIGNAL(editingFinished()),
 				m_sigMapper, SLOT(map()));
 		connect(m_widgetMap[qec.id], SIGNAL(returnPressed()),
 				m_sigMapper, SLOT(map()));
@@ -299,7 +299,7 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_query_ext_ctrl &qe
 		edit = new QLineEdit(p);
 		m_widgetMap[qec.id] = edit;
 		addWidget(grid, edit);
-		connect(m_widgetMap[qec.id], SIGNAL(lostFocus()),
+		connect(m_widgetMap[qec.id], SIGNAL(editingFinished()),
 				m_sigMapper, SLOT(map()));
 		connect(m_widgetMap[qec.id], SIGNAL(returnPressed()),
 				m_sigMapper, SLOT(map()));
@@ -311,7 +311,7 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_query_ext_ctrl &qe
 		edit->setInputMask("HHHHHHHH");
 		addWidget(grid, edit);
 		m_widgetMap[qec.id] = edit;
-		connect(m_widgetMap[qec.id], SIGNAL(lostFocus()),
+		connect(m_widgetMap[qec.id], SIGNAL(editingFinished()),
 				m_sigMapper, SLOT(map()));
 		connect(m_widgetMap[qec.id], SIGNAL(returnPressed()),
 				m_sigMapper, SLOT(map()));
@@ -323,7 +323,7 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_query_ext_ctrl &qe
 		m_widgetMap[qec.id] = edit;
 		edit->setMaxLength(qec.maximum);
 		addWidget(grid, edit);
-		connect(m_widgetMap[qec.id], SIGNAL(lostFocus()),
+		connect(m_widgetMap[qec.id], SIGNAL(editingFinished()),
 				m_sigMapper, SLOT(map()));
 		connect(m_widgetMap[qec.id], SIGNAL(returnPressed()),
 				m_sigMapper, SLOT(map()));
