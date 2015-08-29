@@ -11,6 +11,33 @@ Those utilities follow the latest Linux Kernel media API, as documented
 at:
 	http://linuxtv.org/downloads/v4l-dvb-apis/
 
+
+--------
+Building
+--------
+
+A number of packages is required to fully build v4l-utils. The first
+step is to install those packages. The package names are different on
+each distro.
+
+On Debian and derivated distributions, you need to install the following
+packages with apt-get or aptitude:
+	debhelper dh-autoreconf autotools-dev doxygen graphviz libasound2-dev
+	libtool libjpeg-dev libqt4-dev libqt4-opengl-dev libudev-dev libx11-dev
+	pkg-config udev git
+
+(git is only requiried if you're cloning from the main git repository at
+ linuxtv.org).
+
+After downloading and installing the needed packages, you should run:
+
+	./bootstrap.sh
+	./configure
+	make
+
+And, to install on your system:
+	sudo make install
+
 ----------
 versioning
 ----------
