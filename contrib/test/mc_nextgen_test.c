@@ -50,6 +50,7 @@ static const struct argp_option options[] = {
 	{"interfaces",	'i',	0,		0,	"show pads", 0},
 	{"data-links",	'l',	0,		0,	"show data links", 0},
 	{"intf-links",	'I',	0,		0,	"show interface links", 0},
+	{"dot",		'D',	0,		0,	"show in Graphviz format", 0},
 
 	{"device",	'd',	"DEVICE",	0,	"media controller device (default: /dev/media0", 0},
 
@@ -63,6 +64,7 @@ static int show_entities = 0;
 static int show_interfaces = 0;
 static int show_data_links = 0;
 static int show_intf_links = 0;
+static int show_dot = 0;
 static char media_device[256] = "/dev/media0";
 
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
@@ -79,6 +81,9 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		break;
 	case 'I':
 		show_intf_links++;
+		break;
+	case 'D':
+		show_dot++;
 		break;
 
 	case 'd':
@@ -191,10 +196,10 @@ static inline const char *intf_type(uint32_t intf_type)
 
 /* Ancilary function to produce an human readable ID for an object */
 
-static char *objname(uint32_t id)
+static char *objname(uint32_t id, char delimiter)
 {
 	char *name;
-	asprintf(&name, "%s#%d", gobj_type(id), media_localid(id));
+	asprintf(&name, "%s%c%d", gobj_type(id), delimiter, media_localid(id));
 
 	return name;
 }
@@ -250,6 +255,7 @@ struct graph_obj {
 		struct media_v2_interface *intf;
 		struct media_v2_link *link;
 	};
+	struct graph_obj *parent;
 };
 
 struct media_controller {
@@ -278,8 +284,8 @@ struct graph_obj *find_gobj(struct media_controller *mc, uint32_t id)
 static int media_init_graph_obj(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
-	int i, num_gobj;
-	int j = 0;
+	int i, j, num_gobj;
+	int idx = 0;
 
 	num_gobj = topo->num_entities + topo->num_interfaces
 		   + topo->num_pads + topo->num_links;
@@ -289,28 +295,43 @@ static int media_init_graph_obj(struct media_controller *mc)
 		logperror("couldn't allocate space for graph_obj");
 		return -ENOMEM;
 	}
+
+	for (i = 0; i < topo->num_pads; i++) {
+		mc->gobj[idx].id = topo->pads[i].id;
+		mc->gobj[idx].pad = &topo->pads[i];
+		idx++;
+	}
+
 	mc->num_gobj = num_gobj;
 
 	for (i = 0; i < topo->num_entities; i++) {
-		mc->gobj[j].id = topo->entities[i].id;
-		mc->gobj[j].entity = &topo->entities[i];
-		j++;
+		struct graph_obj *gobj;
+
+		mc->gobj[idx].id = topo->entities[i].id;
+		mc->gobj[idx].entity = &topo->entities[i];
+
+		/* Set the parent object for the pads */
+		for (j = 0; j < topo->num_pads; j++) {
+			if (topo->pads[j].entity_id != topo->entities[i].id)
+				continue;
+			gobj = find_gobj(mc, topo->pads[j].id);
+			if (gobj)
+				gobj->parent = &mc->gobj[idx];
+		}
+		idx++;
 	}
 	for (i = 0; i < topo->num_interfaces; i++) {
-		mc->gobj[j].id = topo->interfaces[i].id;
-		mc->gobj[j].intf = &topo->interfaces[i];
-		j++;
-	}
-	for (i = 0; i < topo->num_pads; i++) {
-		mc->gobj[j].id = topo->pads[i].id;
-		mc->gobj[j].pad = &topo->pads[i];
-		j++;
+		mc->gobj[idx].id = topo->interfaces[i].id;
+		mc->gobj[idx].intf = &topo->interfaces[i];
+		idx++;
 	}
 	for (i = 0; i < topo->num_links; i++) {
-		mc->gobj[j].id = topo->links[i].id;
-		mc->gobj[j].link = &topo->links[i];
-		j++;
+		mc->gobj[idx].id = topo->links[i].id;
+		mc->gobj[idx].link = &topo->links[i];
+		idx++;
 	}
+
+	mc->num_gobj = num_gobj;
 
 	/*
 	 * If we were concerned about performance, we could now sort
@@ -355,7 +376,7 @@ static void media_show_entities(struct media_controller *mc)
 				num_sources++;
 		}
 
-		obj = objname(entity->id);
+		obj = objname(entity->id, '#');
 		show(YELLOW, 0, "entity %s: %s, %d pad(s)",
 		     obj, entity->name, num_pads);
 		if (num_sinks)
@@ -381,7 +402,7 @@ static void media_show_interfaces(struct media_controller *mc)
 		/* For now, all interfaces are devnodes */
 		devnode = &intf->devnode;
 
-		obj = objname(intf->id);
+		obj = objname(intf->id, '#');
 		show(GREEN, 0, "interface %s: %s (%d,%d)\n",
 		     obj, intf_type(intf->intf_type),
 		     devnode->major, devnode->minor);
@@ -410,9 +431,9 @@ static void media_show_links(struct media_controller *mc)
 				continue;
 		}
 
-		obj = objname(link->id);
-		source_obj = objname(link->source_id);
-		sink_obj = objname(link->sink_id);
+		obj = objname(link->id, '#');
+		source_obj = objname(link->source_id, '#');
+		sink_obj = objname(link->sink_id, '#');
 
 		if (link->flags & MEDIA_NEW_LNK_FL_INTERFACE_LINK)
 			show(color, 0, "interface ");
@@ -451,11 +472,13 @@ static int media_get_topology(struct media_controller *mc)
 
 	topology_version = topo->topology_version;
 
-	show(WHITE, 0, "version: %d\n", topology_version);
-	show(WHITE, 0, "number of entities: %d\n", topo->num_entities);
-	show(WHITE, 0, "number of interfaces: %d\n", topo->num_interfaces);
-	show(WHITE, 0, "number of pads: %d\n", topo->num_pads);
-	show(WHITE, 0, "number of links: %d\n", topo->num_links);
+	if (!show_dot) {
+		show(WHITE, 0, "version: %d\n", topology_version);
+		show(WHITE, 0, "number of entities: %d\n", topo->num_entities);
+		show(WHITE, 0, "number of interfaces: %d\n", topo->num_interfaces);
+		show(WHITE, 0, "number of pads: %d\n", topo->num_pads);
+		show(WHITE, 0, "number of links: %d\n", topo->num_links);
+	}
 
 	do {
 		topo->entities = calloc(topo->num_entities,
@@ -500,7 +523,6 @@ static int media_get_topology(struct media_controller *mc)
 			goto error;
 		}
 	} while (ret < 0);
-
 
 	media_init_graph_obj(mc);
 
@@ -560,6 +582,139 @@ static int mc_close(struct media_controller *mc)
 	return ret;
 }
 
+/* Graphviz styles */
+#define STYLE_INTF	"shape=box, style=filled, fillcolor=yellow"
+#define STYLE_ENTITY	"shape=Mrecord, style=filled, fillcolor=lightblue"
+#define STYLE_DATA_LINK	"color=blue"
+#define STYLE_INTF_LINK	"dir=\"none\" color=\"orange\""
+#define DOT_HEADER	"digraph board {\n\trankdir=TB\n\tcolorscheme=x11\n"
+
+static void media_show_graphviz(struct media_controller *mc)
+{
+	struct media_v2_topology *topo = &mc->topo;
+	int i, j;
+	char *obj;
+
+	printf("%s", DOT_HEADER);
+
+	for (i = 0; i < topo->num_interfaces; i++) {
+		struct media_v2_interface *intf = &topo->interfaces[i];
+		struct media_v2_intf_devnode *devnode;
+
+		/* For now, all interfaces are devnodes */
+		devnode = &intf->devnode;
+
+		obj = objname(intf->id, '_');
+		printf("\t%s [label=\"%s\\n%s\\ndevnode (%d,%d)\", " STYLE_INTF"]\n",
+		       obj, obj, intf_type(intf->intf_type),
+		     devnode->major, devnode->minor);
+		free(obj);
+	}
+
+	for (i = 0; i < topo->num_entities; i++) {
+		struct media_v2_entity *entity = &topo->entities[i];
+		int first, idx;
+
+		obj = objname(entity->id, '_');
+		printf("\t%s [label=\"{{", obj);
+		free(obj);
+
+		/* Print the sink pads */
+		first = 1;
+		idx = 0;
+		for (j = 0; j < topo->num_pads; j++) {
+			if (topo->pads[j].entity_id != entity->id)
+				continue;
+
+			if (topo->pads[j].flags == MEDIA_PAD_FL_SINK) {
+				if (first)
+					first = 0;
+				else
+					printf (" | ");
+
+				obj = objname(topo->pads[j].id, '_');
+				printf("<%s> %d", obj, idx);
+				free(obj);
+			}
+			idx++;
+		}
+		obj = objname(entity->id, '_');
+		printf("} | %s\\n%s | {", obj, entity->name);
+		free(obj);
+		/* Print the source pads */
+		first = 1;
+		idx = 0;
+		for (j = 0; j < topo->num_pads; j++) {
+			if (topo->pads[j].entity_id != entity->id)
+				continue;
+
+			if (topo->pads[j].flags == MEDIA_PAD_FL_SOURCE) {
+				if (first)
+					first = 0;
+				else
+					printf (" | ");
+
+				obj = objname(topo->pads[j].id, '_');
+				printf("<%s> %d", obj, idx);
+				free(obj);
+			}
+			idx++;
+		}
+		printf("}}\", " STYLE_ENTITY"]\n");
+	}
+
+	for (i = 0; i < topo->num_links; i++) {
+		struct media_v2_link *link = &topo->links[i];
+		char *source_pad_obj, *sink_pad_obj;
+		char *source_ent_obj, *sink_ent_obj;
+
+		if (media_type(link->source_id) == MEDIA_GRAPH_PAD) {
+			struct media_v2_entity *source, *sink;
+			struct graph_obj *gobj, *parent;
+
+			gobj = find_gobj(mc, link->source_id);
+			parent = gobj->parent;
+			source = parent->entity;
+			source_pad_obj = objname(link->source_id, '_');
+			source_ent_obj = objname(source->id, '_');
+
+			gobj = find_gobj(mc, link->sink_id);
+			parent = gobj->parent;
+			sink = parent->entity;
+			sink_pad_obj = objname(link->sink_id, '_');
+			sink_ent_obj = objname(sink->id, '_');
+
+			printf("\t%s:%s -> %s:%s [" STYLE_DATA_LINK,
+			       source_ent_obj, source_pad_obj,
+			       sink_ent_obj, sink_pad_obj);
+			if (!(link->flags & MEDIA_LNK_FL_ENABLED))
+				printf(" style=\"dashed\"");
+			printf("]\n");
+
+			free(source_pad_obj);
+			free(sink_pad_obj);
+			free(source_ent_obj);
+			free(sink_ent_obj);
+		}
+
+		if (media_type(link->source_id) == MEDIA_GRAPH_INTF_DEVNODE) {
+			source_ent_obj = objname(link->source_id, '_');
+			sink_ent_obj = objname(link->sink_id, '_');
+
+			printf("\t%s -> %s [" STYLE_INTF_LINK,
+			       source_ent_obj, sink_ent_obj);
+			if (!(link->flags & MEDIA_LNK_FL_ENABLED))
+				printf(" style=\"dashed\"");
+			printf("]\n");
+
+			free(source_ent_obj);
+			free(sink_ent_obj);
+		}
+	}
+
+	printf ("}\n");
+}
+
 int main(int argc, char *argv[])
 {
 	struct media_controller *mc;
@@ -577,14 +732,18 @@ int main(int argc, char *argv[])
 		return -2;
 	}
 
-	if (show_entities)
-		media_show_entities(mc);
+	if (show_dot) {
+		media_show_graphviz(mc);
+	} else {
+		if (show_entities)
+			media_show_entities(mc);
 
-	if (show_interfaces)
-		media_show_interfaces(mc);
+		if (show_interfaces)
+			media_show_interfaces(mc);
 
-	if (show_data_links || show_intf_links)
-		media_show_links(mc);
+		if (show_data_links || show_intf_links)
+			media_show_links(mc);
+	}
 
 	mc_close(mc);
 
