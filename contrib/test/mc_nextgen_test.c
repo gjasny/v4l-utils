@@ -169,15 +169,15 @@ static inline const char *intf_type(uint32_t intf_type)
 	case MEDIA_INTF_T_V4L_RADIO:
 		return "radio";
 	case MEDIA_INTF_T_V4L_SUBDEV:
-		return "v4l2_subdev";
+		return "v4l2-subdev";
 	case MEDIA_INTF_T_V4L_SWRADIO:
 		return "swradio";
 	case MEDIA_INTF_T_ALSA_PCM_CAPTURE:
-		return "pcm_capture";
+		return "pcm-capture";
 	case MEDIA_INTF_T_ALSA_PCM_PLAYBACK:
-		return "pcm_playback";
+		return "pcm-playback";
 	case MEDIA_INTF_T_ALSA_CONTROL:
-		return "alsa_control";
+		return "alsa-control";
 	case MEDIA_INTF_T_ALSA_COMPRESS:
 		return "compress";
 	case MEDIA_INTF_T_ALSA_RAWMIDI:
@@ -233,6 +233,7 @@ void show(int color, int bright, const char *fmt, ...)
 
 #define logperror(msg) do {\
        show(RED, 0, "%s: %s", msg, strerror(errno)); \
+       printf("\n"); \
 } while (0)
 
 
@@ -269,7 +270,7 @@ static int media_init_graph_obj(struct media_controller *mc)
 
 	mc->gobj = calloc(num_gobj, sizeof(*mc->gobj));
 	if (!mc->gobj) {
-		logperror("couldn't allocate space for graph_obj\n");
+		logperror("couldn't allocate space for graph_obj");
 		return -ENOMEM;
 	}
 	mc->num_gobj = num_gobj;
@@ -439,13 +440,13 @@ static int media_get_topology(struct media_controller *mc)
 	memset(topo, 0, sizeof(*topo));
 	ret = ioctl(mc->fd, MEDIA_IOC_G_TOPOLOGY, topo);
 	if (ret < 0) {
-		logperror("MEDIA_IOC_G_TOPOLOGY faled to get numbers\n");
+		logperror("MEDIA_IOC_G_TOPOLOGY faled to get numbers");
 		goto error;
 	}
 
 	topology_version = topo->topology_version;
 
-	show(WHITE, 0, "version: %d", topology_version);
+	show(WHITE, 0, "version: %d\n", topology_version);
 	show(WHITE, 0, "number of entities: %d\n", topo->num_entities);
 	show(WHITE, 0, "number of interfaces: %d\n", topo->num_interfaces);
 	show(WHITE, 0, "number of pads: %d\n", topo->num_pads);
@@ -490,22 +491,13 @@ static int media_get_topology(struct media_controller *mc)
 				topology_version = topo->topology_version;
 				continue;
 			}
-			logperror("MEDIA_IOC_G_TOPOLOGY faled\n");
+			logperror("MEDIA_IOC_G_TOPOLOGY faled");
 			goto error;
 		}
 	} while (ret < 0);
 
 
 	media_init_graph_obj(mc);
-
-	if (show_entities)
-		media_show_entities(mc);
-
-	if (show_interfaces)
-		media_show_interfaces(mc);
-
-	if (show_data_links || show_intf_links)
-		media_show_links(mc);
 
 	return 0;
 
@@ -535,8 +527,8 @@ static struct media_controller *mc_open(char *devname)
 
 	mc->fd = open(devname, O_RDWR);
 	if (mc->fd < 0) {
-		perror("Can't open media device");
-		exit errno;
+		logperror("Can't open media device");
+		return NULL;
 	}
 
 	return mc;
@@ -566,12 +558,28 @@ static int mc_close(struct media_controller *mc)
 int main(int argc, char *argv[])
 {
 	struct media_controller *mc;
+	int rc;
 
 	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, 0, 0);
 
 	mc = mc_open(media_device);
+	if (!mc)
+	return -1;
 
-	media_get_topology(mc);
+	rc = media_get_topology(mc);
+	if (rc) {
+		mc_close(mc);
+		return -2;
+	}
+
+	if (show_entities)
+		media_show_entities(mc);
+
+	if (show_interfaces)
+		media_show_interfaces(mc);
+
+	if (show_data_links || show_intf_links)
+		media_show_links(mc);
 
 	mc_close(mc);
 
