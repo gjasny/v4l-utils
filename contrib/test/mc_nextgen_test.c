@@ -672,16 +672,44 @@ static void media_show_graphviz(struct media_controller *mc)
 			struct media_v2_entity *source, *sink;
 			struct graph_obj *gobj, *parent;
 
-			gobj = find_gobj(mc, link->source_id);
-			parent = gobj->parent;
-			source = parent->entity;
 			source_pad_obj = objname(link->source_id, '_');
-			source_ent_obj = objname(source->id, '_');
+			gobj = find_gobj(mc, link->source_id);
+			if (!gobj) {
+				show(RED, 0, "Graph object for %s not found\n",
+				     source_pad_obj);
+				free(source_pad_obj);
+				continue;
+			}
+			parent = gobj->parent;
+			if (!parent) {
+				show(RED, 0, "Sink entity for %s not found\n",
+				     source_pad_obj);
+				free(source_pad_obj);
+				continue;
+			}
+			source = parent->entity;
+
+			sink_pad_obj = objname(link->sink_id, '_');
 
 			gobj = find_gobj(mc, link->sink_id);
+			if (!gobj) {
+				show(RED, 0, "Graph object for %s not found\n",
+				     sink_pad_obj);
+				free(source_pad_obj);
+				free(sink_pad_obj);
+				continue;
+			}
 			parent = gobj->parent;
+			if (!parent) {
+				show(RED, 0, "Sink entity for %s not found\n",
+				     sink_pad_obj);
+				free(source_pad_obj);
+				free(sink_pad_obj);
+				continue;
+			}
 			sink = parent->entity;
-			sink_pad_obj = objname(link->sink_id, '_');
+
+			source_ent_obj = objname(source->id, '_');
 			sink_ent_obj = objname(sink->id, '_');
 
 			printf("\t%s:%s -> %s:%s [" STYLE_DATA_LINK,
