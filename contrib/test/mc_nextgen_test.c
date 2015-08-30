@@ -370,9 +370,9 @@ static void media_show_entities(struct media_controller *mc)
 				continue;
 
 			num_pads++;
-			if (topo->pads[j].flags == MEDIA_PAD_FL_SINK)
+			if (topo->pads[j].flags & MEDIA_PAD_FL_SINK)
 				num_sinks++;
-			if (topo->pads[j].flags == MEDIA_PAD_FL_SOURCE)
+			if (topo->pads[j].flags & MEDIA_PAD_FL_SOURCE)
 				num_sources++;
 		}
 
@@ -626,7 +626,7 @@ static void media_show_graphviz(struct media_controller *mc)
 			if (topo->pads[j].entity_id != entity->id)
 				continue;
 
-			if (topo->pads[j].flags == MEDIA_PAD_FL_SINK) {
+			if (topo->pads[j].flags & MEDIA_PAD_FL_SINK) {
 				if (first)
 					first = 0;
 				else
@@ -648,7 +648,7 @@ static void media_show_graphviz(struct media_controller *mc)
 			if (topo->pads[j].entity_id != entity->id)
 				continue;
 
-			if (topo->pads[j].flags == MEDIA_PAD_FL_SOURCE) {
+			if (topo->pads[j].flags & MEDIA_PAD_FL_SOURCE) {
 				if (first)
 					first = 0;
 				else
