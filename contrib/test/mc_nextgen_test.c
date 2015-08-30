@@ -264,6 +264,7 @@ static int media_init_graph_obj(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
 	int i, num_gobj;
+	int j = 0;
 
 	num_gobj = topo->num_entities + topo->num_interfaces
 		   + topo->num_pads + topo->num_links;
@@ -276,20 +277,24 @@ static int media_init_graph_obj(struct media_controller *mc)
 	mc->num_gobj = num_gobj;
 
 	for (i = 0; i < topo->num_entities; i++) {
-		mc->gobj[i].id = topo->entities[i].id;
-		mc->gobj[i].entity = &topo->entities[i];
+		mc->gobj[j].id = topo->entities[i].id;
+		mc->gobj[j].entity = &topo->entities[i];
+		j++;
 	}
 	for (i = 0; i < topo->num_interfaces; i++) {
-		mc->gobj[i].id = topo->interfaces[i].id;
-		mc->gobj[i].intf = &topo->interfaces[i];
+		mc->gobj[j].id = topo->interfaces[i].id;
+		mc->gobj[j].intf = &topo->interfaces[i];
+		j++;
 	}
 	for (i = 0; i < topo->num_pads; i++) {
-		mc->gobj[i].id = topo->pads[i].id;
-		mc->gobj[i].pad = &topo->pads[i];
+		mc->gobj[j].id = topo->pads[i].id;
+		mc->gobj[j].pad = &topo->pads[i];
+		j++;
 	}
 	for (i = 0; i < topo->num_links; i++) {
-		mc->gobj[i].id = topo->links[i].id;
-		mc->gobj[i].link = &topo->links[i];
+		mc->gobj[j].id = topo->links[i].id;
+		mc->gobj[j].link = &topo->links[i];
+		j++;
 	}
 
 	/*
