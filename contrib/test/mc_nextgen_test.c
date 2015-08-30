@@ -260,6 +260,21 @@ struct media_controller {
 	struct graph_obj *gobj;
 };
 
+static inline
+struct graph_obj *find_gobj(struct media_controller *mc, uint32_t id)
+{
+	int i;
+
+	/*
+	 * If we were concerned about performance, we could use bsearch
+	 */
+	for (i = 0; i < mc->num_gobj; i++) {
+		if (mc->gobj[i].id == id)
+			return &mc->gobj[i];
+	}
+	return NULL;
+}
+
 static int media_init_graph_obj(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
@@ -307,21 +322,6 @@ static int media_init_graph_obj(struct media_controller *mc)
 	 * However, this is just a test program, so let's keep it simple
 	 */
 	return 0;
-}
-
-static inline
-struct graph_obj *find_gobj(struct media_controller *mc, uint32_t id)
-{
-	int i;
-
-	/*
-	 * If we were concerned about performance, we could use bsearch
-	 */
-	for (i = 0; i < mc->num_gobj; i++) {
-		if (mc->gobj[i].id == id)
-			return &mc->gobj[i];
-	}
-	return NULL;
 }
 
 static void media_show_entities(struct media_controller *mc)
