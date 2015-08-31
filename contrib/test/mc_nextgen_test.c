@@ -255,7 +255,10 @@ struct graph_obj {
 		struct media_v2_interface *intf;
 		struct media_v2_link *link;
 	};
+	/* Currently, used only for pads->entity */
 	struct graph_obj *parent;
+	/* Used only for entities */
+	int num_pads, num_pad_sinks, num_pad_sources;
 };
 
 struct media_controller {
@@ -314,6 +317,14 @@ static int media_init_graph_obj(struct media_controller *mc)
 		for (j = 0; j < topo->num_pads; j++) {
 			if (topo->pads[j].entity_id != topo->entities[i].id)
 				continue;
+
+			/* The data below is useful for Graphviz generation */
+			mc->gobj[idx].num_pads++;
+			if (topo->pads[j].flags & MEDIA_PAD_FL_SINK)
+				mc->gobj[idx].num_pad_sinks++;
+			if (topo->pads[j].flags & MEDIA_PAD_FL_SOURCE)
+				mc->gobj[idx].num_pad_sources++;
+
 			gobj = find_gobj(mc, topo->pads[j].id);
 			if (gobj)
 				gobj->parent = &mc->gobj[idx];
@@ -583,11 +594,13 @@ static int mc_close(struct media_controller *mc)
 }
 
 /* Graphviz styles */
+#define DOT_HEADER	"digraph board {\n\trankdir=TB\n\tcolorscheme=x11\n"
 #define STYLE_INTF	"shape=box, style=filled, fillcolor=yellow"
 #define STYLE_ENTITY	"shape=Mrecord, style=filled, fillcolor=lightblue"
+#define STYLE_ENT_SRC	"shape=Mrecord, style=filled, fillcolor=cadetblue"
+#define STYLE_ENT_SINK	"shape=Mrecord, style=filled, fillcolor=aquamarine"
 #define STYLE_DATA_LINK	"color=blue"
 #define STYLE_INTF_LINK	"dir=\"none\" color=\"orange\""
-#define DOT_HEADER	"digraph board {\n\trankdir=TB\n\tcolorscheme=x11\n"
 
 static void media_show_graphviz(struct media_controller *mc)
 {
@@ -613,54 +626,71 @@ static void media_show_graphviz(struct media_controller *mc)
 
 	for (i = 0; i < topo->num_entities; i++) {
 		struct media_v2_entity *entity = &topo->entities[i];
+		struct graph_obj *gobj;
 		int first, idx;
 
+		gobj = find_gobj(mc, entity->id);
+
 		obj = objname(entity->id, '_');
-		printf("\t%s [label=\"{{", obj);
+		printf("\t%s [label=\"{", obj);
 		free(obj);
 
 		/* Print the sink pads */
-		first = 1;
-		idx = 0;
-		for (j = 0; j < topo->num_pads; j++) {
-			if (topo->pads[j].entity_id != entity->id)
-				continue;
+		if (!gobj || gobj->num_pad_sinks) {
+			first = 1;
+			idx = 0;
+			printf("{");
+			for (j = 0; j < topo->num_pads; j++) {
+				if (topo->pads[j].entity_id != entity->id)
+					continue;
 
-			if (topo->pads[j].flags & MEDIA_PAD_FL_SINK) {
-				if (first)
-					first = 0;
-				else
-					printf (" | ");
+				if (topo->pads[j].flags & MEDIA_PAD_FL_SINK) {
+					if (first)
+						first = 0;
+					else
+						printf (" | ");
 
-				obj = objname(topo->pads[j].id, '_');
-				printf("<%s> %d", obj, idx);
-				free(obj);
+					obj = objname(topo->pads[j].id, '_');
+					printf("<%s> %d", obj, idx);
+					free(obj);
+				}
+				idx++;
 			}
-			idx++;
+			printf("} | ");
 		}
 		obj = objname(entity->id, '_');
-		printf("} | %s\\n%s | {", obj, entity->name);
+		printf("%s\\n%s", obj, entity->name);
 		free(obj);
 		/* Print the source pads */
-		first = 1;
-		idx = 0;
-		for (j = 0; j < topo->num_pads; j++) {
-			if (topo->pads[j].entity_id != entity->id)
-				continue;
+		if (!gobj || gobj->num_pad_sources) {
+			first = 1;
+			idx = 0;
+			printf(" | {");
+			for (j = 0; j < topo->num_pads; j++) {
+				if (topo->pads[j].entity_id != entity->id)
+					continue;
 
-			if (topo->pads[j].flags & MEDIA_PAD_FL_SOURCE) {
-				if (first)
-					first = 0;
-				else
-					printf (" | ");
+				if (topo->pads[j].flags & MEDIA_PAD_FL_SOURCE) {
+					if (first)
+						first = 0;
+					else
+						printf (" | ");
 
-				obj = objname(topo->pads[j].id, '_');
-				printf("<%s> %d", obj, idx);
-				free(obj);
+					obj = objname(topo->pads[j].id, '_');
+					printf("<%s> %d", obj, idx);
+					free(obj);
+				}
+				idx++;
 			}
-			idx++;
+			printf("}");
 		}
-		printf("}}\", " STYLE_ENTITY"]\n");
+		printf("}\", ");
+		if (!gobj || (gobj->num_pad_sources && gobj->num_pad_sinks))
+			printf(STYLE_ENTITY"]\n");
+		else if (gobj->num_pad_sinks)
+			printf(STYLE_ENT_SINK"]\n");
+		else
+			printf(STYLE_ENT_SRC"]\n");
 	}
 
 	for (i = 0; i < topo->num_links; i++) {
