@@ -24,6 +24,8 @@ AC_CONFIG_FILES([Makefile
 	utils/decode_tm6000/Makefile
 	utils/dvb/Makefile
 	utils/keytable/Makefile
+	utils/cx18-ctl/Makefile
+	utils/ivtv-ctl/Makefile
 	utils/media-ctl/Makefile
 	utils/rds/Makefile
 	utils/v4l2-compliance/Makefile

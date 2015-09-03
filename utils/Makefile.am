@@ -3,6 +3,8 @@ SUBDIRS = \
 	libv4l2util \
 	libmedia_dev \
 	decode_tm6000 \
+	ivtv-ctl \
+	cx18-ctl \
 	keytable \
 	media-ctl \
 	v4l2-compliance \
