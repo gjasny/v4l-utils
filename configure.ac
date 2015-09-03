@@ -359,6 +359,22 @@ AC_ARG_ENABLE(v4l-utils,
    esac]
 )
 
+AC_ARG_ENABLE(v4l2-compliance-libv4l,
+  AS_HELP_STRING([--disable-v4l2-compliance-libv4l], [disable use of libv4l in v4l2-compliance]),
+  [case "${enableval}" in
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-v4l2-compliance-libv4l) ;;
+   esac]
+)
+
+AC_ARG_ENABLE(v4l2-ctl-libv4l,
+  AS_HELP_STRING([--disable-v4l2-ctl-libv4l], [disable use of libv4l in v4l2-ctl]),
+  [case "${enableval}" in
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-v4l2-ctl-libv4l) ;;
+   esac]
+)
+
 AC_ARG_ENABLE(qv4l2,
   AS_HELP_STRING([--disable-qv4l2], [disable qv4l2 compilation]),
   [case "${enableval}" in
@@ -383,6 +399,8 @@ AM_CONDITIONAL([WITH_V4L_PLUGINS],  [test x$enable_libv4l != xno -a x$enable_sha
 AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$enable_libv4l != xno -a x$enable_shared != xno])
 AM_CONDITIONAL([WITH_QTGL],	    [test ${qt_pkgconfig_gl} = true])
 AM_CONDITIONAL([WITH_GCONV],        [test x${enable_gconv} = xyes])
+AM_CONDITIONAL([WITH_V4L2_CTL_LIBV4L], [test x${enable_v4l2_ctl_libv4l} != xno])
+AM_CONDITIONAL([WITH_V4L2_COMPLIANCE_LIBV4L], [test x${enable_v4l2_compliance_libv4l} != xno])
 
 # append -static to libtool compile and link command to enforce static libs
 AS_IF([test x$enable_libdvbv5 = xno], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])
