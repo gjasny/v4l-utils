@@ -446,13 +446,13 @@ static void media_show_links(struct media_controller *mc)
 		source_obj = objname(link->source_id, '#');
 		sink_obj = objname(link->sink_id, '#');
 
-		if (link->flags & MEDIA_NEW_LNK_FL_INTERFACE_LINK)
+		if ((link->flags & MEDIA_LNK_FL_LINK_TYPE) == MEDIA_LNK_FL_INTERFACE_LINK)
 			show(color, 0, "interface ");
 		else
 			show(color, 0, "data ");
 		show(color, 0, "link %s: %s %s %s",
 		     obj, source_obj,
-		     (link->flags & MEDIA_NEW_LNK_FL_INTERFACE_LINK) ? "<=>" : "=>",
+		     ((link->flags & MEDIA_LNK_FL_LINK_TYPE) == MEDIA_LNK_FL_INTERFACE_LINK) ? "<=>" : "=>",
 		     sink_obj);
 		if (link->flags & MEDIA_LNK_FL_IMMUTABLE)
 			show(color, 0, " [IMMUTABLE]");
