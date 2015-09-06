@@ -154,6 +154,7 @@ static inline const char *gobj_type(uint32_t id)
 		return "unknown";
 	}
 }
+
 static inline const char *intf_type(uint32_t intf_type)
 {
 	switch (intf_type) {
@@ -193,6 +194,44 @@ static inline const char *intf_type(uint32_t intf_type)
 		return "unknown_intf";
 	}
 };
+
+static inline const char *ent_function(uint32_t function)
+{
+	switch (function) {
+	case MEDIA_ENT_F_DTV_DEMOD:
+		return "DTV demod";
+	case MEDIA_ENT_F_MPEG_TS_DEMUX:
+		return "MPEG-TS demux";
+	case MEDIA_ENT_F_DTV_CA:
+		return "DTV CA";
+	case MEDIA_ENT_F_DTV_NET_DECAP:
+		return "DTV Network decap";
+	case MEDIA_ENT_F_CONN_RF:
+		return "RF connector";
+	case MEDIA_ENT_F_CONN_SVIDEO:
+		return "S-Video connector";
+	case MEDIA_ENT_F_CONN_COMPOSITE:
+		return "Composite connector";
+	case MEDIA_ENT_F_CONN_TEST:
+		return "Test connector";
+	case MEDIA_ENT_F_IO:
+		return "I/O";
+	case MEDIA_ENT_F_CAM_SENSOR:
+		return "Camera Sensor";
+	case MEDIA_ENT_F_FLASH:
+		return "Flash LED/light";
+	case MEDIA_ENT_F_LENS:
+		return "Lens";
+	case MEDIA_ENT_F_ATV_DECODER:
+		return "ATV decoder";
+	case MEDIA_ENT_F_TUNER:
+		return "tuner";
+	case MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN:
+		return "unknown V4L2 subdev";
+	default:
+		return "unknown";
+	}
+}
 
 /* Ancilary function to produce an human readable ID for an object */
 
@@ -388,8 +427,9 @@ static void media_show_entities(struct media_controller *mc)
 		}
 
 		obj = objname(entity->id, '#');
-		show(YELLOW, 0, "entity %s: %s, %d pad(s)",
-		     obj, entity->name, num_pads);
+		show(YELLOW, 0, "entity %s: '%s' %s, %d pad(s)",
+		     obj, ent_function(entity->function),
+		     entity->name, num_pads);
 		if (num_sinks)
 			show(YELLOW, 0,", %d sink(s)", num_sinks);
 		if (num_sources)
@@ -659,7 +699,7 @@ static void media_show_graphviz(struct media_controller *mc)
 			printf("} | ");
 		}
 		obj = objname(entity->id, '_');
-		printf("%s\\n%s", obj, entity->name);
+		printf("%s\\n%s\\n%s", obj, ent_function(entity->function), entity->name);
 		free(obj);
 		/* Print the source pads */
 		if (!gobj || gobj->num_pad_sources) {
