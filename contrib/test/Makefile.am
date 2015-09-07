@@ -31,6 +31,10 @@ v4l2gl_SOURCES = v4l2gl.c
 v4l2gl_LDFLAGS = $(X11_LIBS) $(GL_LIBS) $(GLU_LIBS) $(ARGP_LIBS)
 v4l2gl_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
 
+mc_nextgen_test_CFLAGS = $(LIBUDEV_CFLAGS)
+mc_nextgen_test_LDFLAGS = $(LIBUDEV_LIBS)
+
+
 ioctl_test_SOURCES = ioctl-test.c ioctl-test.h ioctl_32.h ioctl_64.h
 
 sliced_vbi_test_SOURCES = sliced-vbi-test.c

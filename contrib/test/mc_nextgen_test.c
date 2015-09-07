@@ -280,7 +280,129 @@ void show(int color, int bright, const char *fmt, ...)
        printf("\n"); \
 } while (0)
 
+/*
+ * Code to convert devnode major, minor into a name
+ *
+ * This code was imported from the Media controller interface library (libmediactl.c) under LGPL v2.1
+ *      Copyright (C) 2010-2014 Ideas on board SPRL
+ *      Contact: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ */
+#ifdef HAVE_LIBUDEV
 
+#include <libudev.h>
+
+static int media_open_ifname(void **priv)
+{
+	struct udev **udev = (struct udev **)priv;
+
+	*udev = udev_new();
+	if (*udev == NULL)
+		return -ENOMEM;
+	return 0;
+}
+
+static void media_close_ifname(void *priv)
+{
+	struct udev *udev = (struct udev *)priv;
+
+	if (udev != NULL)
+		udev_unref(udev);
+}
+
+static char *media_get_ifname_udev(struct media_v2_intf_devnode *devnode, struct udev *udev)
+{
+	struct udev_device *device;
+	dev_t devnum;
+	const char *p;
+	char *name = NULL;
+
+	if (udev == NULL)
+		return NULL;
+
+	devnum = makedev(devnode->major, devnode->minor);
+	device = udev_device_new_from_devnum(udev, 'c', devnum);
+	if (device) {
+		p = udev_device_get_devnode(device);
+		if (p) {
+			asprintf(&name, "%s", p);
+		}
+	}
+
+	udev_device_unref(device);
+
+	return name;
+}
+#else
+static inline char *media_open_ifname(void **priv) { return NULL; } ;
+static void media_close_ifname(void *priv) {};
+#endif	/* HAVE_LIBUDEV */
+
+char *media_get_ifname(struct media_v2_interface *intf, void *priv)
+{
+	struct media_v2_intf_devnode *devnode;
+	struct stat devstat;
+	char devname[32];
+	char sysname[32];
+	char target[1024];
+	char *p, *name = NULL;
+	int ret;
+
+	/* Only handles Devnode interfaces */
+	if (media_type(intf->id) != MEDIA_GRAPH_INTF_DEVNODE)
+		return NULL;
+
+	devnode = &intf->devnode;
+
+#ifdef HAVE_LIBUDEV
+	/* Try first to convert using udev */
+	name = media_get_ifname_udev(devnode, priv);
+	if (name)
+		return name;
+#endif
+
+	/* Failed. Let's fallback to get it via sysfs */
+
+	sprintf(sysname, "/sys/dev/char/%u:%u",
+		devnode->major, devnode->minor);
+
+	ret = readlink(sysname, target, sizeof(target) - 1);
+	if (ret < 0)
+		return NULL;
+
+	target[ret] = '\0';
+	p = strrchr(target, '/');
+	if (p == NULL)
+		return NULL;
+
+	sprintf(devname, "/dev/%s", p + 1);
+	if (strstr(p + 1, "dvb")) {
+		char *s = p + 1;
+
+		if (strncmp(s, "dvb", 3))
+			return NULL;
+		s += 3;
+		p = strchr(s, '.');
+		if (!p)
+			return NULL;
+		*p = '/';
+		sprintf(devname, "/dev/dvb/adapter%s", s);
+	} else {
+		sprintf(devname, "/dev/%s", p + 1);
+	}
+	ret = stat(devname, &devstat);
+	if (ret < 0)
+		return NULL;
+
+	/* Sanity check: udev might have reordered the device nodes.
+	 * Make sure the major/minor match. We should really use
+	 * libudev.
+	 */
+	if (major(devstat.st_rdev) == intf->devnode.major &&
+	    minor(devstat.st_rdev) == intf->devnode.minor)
+		asprintf(&name, "%s", devname);
+
+	return name;
+}
 
 /*
  * The real code starts here
@@ -443,22 +565,23 @@ static void media_show_entities(struct media_controller *mc)
 static void media_show_interfaces(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
+	void *priv = NULL;
 	int i;
 
+	media_open_ifname(&priv);
 	for (i = 0; i < topo->num_interfaces; i++) {
-		char *obj;
+		char *obj, *devname;
 		struct media_v2_interface *intf = &topo->interfaces[i];
-		struct media_v2_intf_devnode *devnode;
-
-		/* For now, all interfaces are devnodes */
-		devnode = &intf->devnode;
 
 		obj = objname(intf->id, '#');
-		show(GREEN, 0, "interface %s: %s (%d,%d)\n",
+		devname = media_get_ifname(intf, priv);
+		show(GREEN, 0, "interface %s: %s %s\n",
 		     obj, intf_type(intf->intf_type),
-		     devnode->major, devnode->minor);
+		     devname);
 		free(obj);
+		free(devname);
 	}
+	media_close_ifname(priv);
 }
 
 static void media_show_links(struct media_controller *mc)
