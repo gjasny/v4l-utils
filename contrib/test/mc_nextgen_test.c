@@ -770,22 +770,25 @@ static void media_show_graphviz(struct media_controller *mc)
 	struct media_v2_topology *topo = &mc->topo;
 	int i, j;
 	char *obj;
+	void *priv = NULL;
 
 	printf("%s", DOT_HEADER);
 
+	 media_open_ifname(&priv);
 	for (i = 0; i < topo->num_interfaces; i++) {
 		struct media_v2_interface *intf = &topo->interfaces[i];
-		struct media_v2_intf_devnode *devnode;
-
-		/* For now, all interfaces are devnodes */
-		devnode = &intf->devnode;
+		char *devname;
 
 		obj = objname(intf->id, '_');
-		printf("\t%s [label=\"%s\\n%s\\ndevnode (%d,%d)\", " STYLE_INTF"]\n",
+		devname = media_get_ifname(intf, priv);
+		printf("\t%s [label=\"%s\\n%s\\n%s\", " STYLE_INTF"]\n",
 		       obj, obj, intf_type(intf->intf_type),
-		     devnode->major, devnode->minor);
+		     devname);
 		free(obj);
+		free(devname);
 	}
+	media_close_ifname(priv);
+
 
 	for (i = 0; i < topo->num_entities; i++) {
 		struct media_v2_entity *entity = &topo->entities[i];
