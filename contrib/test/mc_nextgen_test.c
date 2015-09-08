@@ -151,7 +151,7 @@ static inline const char *gobj_type(uint32_t id)
 	case MEDIA_GRAPH_INTF_DEVNODE:
 		return "intf_devnode";
 	default:
-		return "unknown";
+		return "unknown intf type";
 	}
 }
 
@@ -227,9 +227,8 @@ static inline const char *ent_function(uint32_t function)
 	case MEDIA_ENT_F_TUNER:
 		return "tuner";
 	case MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN:
-		return "unknown V4L2 subdev";
 	default:
-		return "unknown";
+		return "unknown entity type";
 	}
 }
 
