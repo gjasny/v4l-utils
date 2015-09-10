@@ -574,6 +574,12 @@ int main(int argc, char **argv)
 			usage();
 		set_reg.reg = parse_reg(curr_bd, reg_set_arg);
 		while (optind < argc) {
+			unsigned size = 0;
+
+			if (doioctl(fd, VIDIOC_DBG_G_REGISTER, &set_reg,
+				    "VIDIOC_DBG_G_REGISTER") >= 0)
+				size = set_reg.size;
+
 			set_reg.val = strtoull(argv[optind++], NULL, 0);
 			if (doioctl(fd, VIDIOC_DBG_S_REGISTER, &set_reg,
 						"VIDIOC_DBG_S_REGISTER") >= 0) {
@@ -591,7 +597,7 @@ int main(int argc, char **argv)
 				printf("Failed to set register 0x%08llx value 0x%llx: %s\n",
 					set_reg.reg, set_reg.val, strerror(errno));
 			}
-			set_reg.reg++;
+			set_reg.reg += size ? : (forcedstride ? : 1);
 		}
 	}
 
