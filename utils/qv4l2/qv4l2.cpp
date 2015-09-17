@@ -499,9 +499,14 @@ void ApplicationWindow::ctrlEvent()
 			continue;
 		m_ctrlMap[ev.id].flags = ev.u.ctrl.flags;
 		m_ctrlMap[ev.id].minimum = ev.u.ctrl.minimum;
-		m_ctrlMap[ev.id].maximum = ev.u.ctrl.maximum;
+		if (m_ctrlMap[ev.id].type == V4L2_CTRL_TYPE_BITMASK) {
+			m_ctrlMap[ev.id].maximum = (__u32)ev.u.ctrl.maximum;
+			m_ctrlMap[ev.id].default_value = (__u32)ev.u.ctrl.default_value;
+		} else {
+			m_ctrlMap[ev.id].maximum = ev.u.ctrl.maximum;
+			m_ctrlMap[ev.id].default_value = ev.u.ctrl.default_value;
+		}
 		m_ctrlMap[ev.id].step = ev.u.ctrl.step;
-		m_ctrlMap[ev.id].default_value = ev.u.ctrl.default_value;
 
 		bool disabled = m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED;
 

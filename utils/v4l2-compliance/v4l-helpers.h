@@ -1585,9 +1585,14 @@ static inline int v4l_query_ext_ctrl(v4l_fd *f, struct v4l2_query_ext_ctrl *qec,
 	qec->type = qc.type;
 	memcpy(qec->name, qc.name, sizeof(qec->name));
 	qec->minimum = qc.minimum;
-	qec->maximum = qc.maximum;
+	if (qc.type == V4L2_CTRL_TYPE_BITMASK) {
+		qec->maximum = (__u32)qc.maximum;
+		qec->default_value = (__u32)qc.default_value;
+	} else {
+		qec->maximum = qc.maximum;
+		qec->default_value = qc.default_value;
+	}
 	qec->step = qc.step;
-	qec->default_value = qc.default_value;
 	qec->flags = qc.flags;
 	qec->elems = 1;
 	qec->nr_of_dims = 0;

@@ -471,9 +471,14 @@ static int query_ext_ctrl_ioctl(int fd, struct v4l2_query_ext_ctrl &qctrl)
 		qctrl.type = qc.type;
 		memcpy(qctrl.name, qc.name, sizeof(qctrl.name));
 		qctrl.minimum = qc.minimum;
-		qctrl.maximum = qc.maximum;
+		if (qc.type == V4L2_CTRL_TYPE_BITMASK) {
+			qctrl.maximum = (__u32)qc.maximum;
+			qctrl.default_value = (__u32)qc.default_value;
+		} else {
+			qctrl.maximum = qc.maximum;
+			qctrl.default_value = qc.default_value;
+		}
 		qctrl.step = qc.step;
-		qctrl.default_value = qc.default_value;
 		qctrl.flags = qc.flags;
 		qctrl.elems = 1;
 		qctrl.nr_of_dims = 0;
@@ -596,14 +601,21 @@ void common_control_event(const struct v4l2_event *ev)
 	if (ctrl->changes & V4L2_EVENT_CTRL_CH_VALUE) {
 		if (ctrl->type == V4L2_CTRL_TYPE_INTEGER64)
 			printf("\tvalue: %lld 0x%llx\n", ctrl->value64, ctrl->value64);
+		else if (ctrl->type == V4L2_CTRL_TYPE_BITMASK)
+			printf("\tvalue: %u 0x%08x\n", ctrl->value, ctrl->value);
 		else
 			printf("\tvalue: %d 0x%x\n", ctrl->value, ctrl->value);
 	}
 	if (ctrl->changes & V4L2_EVENT_CTRL_CH_FLAGS)
 		printf("\tflags: %s\n", ctrlflags2s(ctrl->flags).c_str());
-	if (ctrl->changes & V4L2_EVENT_CTRL_CH_RANGE)
-		printf("\trange: min=%d max=%d step=%d default=%d\n",
-			ctrl->minimum, ctrl->maximum, ctrl->step, ctrl->default_value);
+	if (ctrl->changes & V4L2_EVENT_CTRL_CH_RANGE) {
+		if (ctrl->type == V4L2_CTRL_TYPE_BITMASK)
+			printf("\trange: max=0x%08x default=0x%08x\n",
+				ctrl->maximum, ctrl->default_value);
+		else
+			printf("\trange: min=%d max=%d step=%d default=%d\n",
+				ctrl->minimum, ctrl->maximum, ctrl->step, ctrl->default_value);
+	}
 }
 
 static bool parse_subset(char *optarg)
