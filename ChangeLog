@@ -1,3 +1,330 @@
+v4l-utils-1.8.0
+---------------
+
+Akihiro Tsukada (11):
+      libdvbv5, dvbv5-scan: generalize channel duplication check
+      libdvbv5: add as many channels as possible in scanning DVB-T2
+      libdvbv5: wrong frequency in the output of satellite delsys scans
+      libdvbv5: add support for ISDB-S tuning
+      libdvbv5: add support for ISDB-S scanning
+      libdvbv5: add COUNTRY property
+      v4l-utils/libdvbv5: restore deleted functions to keep API/ABI compatible
+      v4l-utils/libdvbv5: fix memory leak in dvb_guess_user_country()
+      v4l-utils/libdvbv5: add gconv module for the text conversions of ISDB-S/T.
+      contrib/gconv: fix wrong conversion to ARIB-STD-B24
+      v4l-utils/contrib/gconv: fix build error with glibc 2.21+
+
+Baruch Siach (1):
+      v4l2grab: print function name and ioctl number on failure
+
+Benjamin Gaignard (1):
+      libv4l2: Changes for compilation in Android 5.0
+
+David Härdeman (3):
+      ir-keytable: clarify the meaning of ir protocols
+      ir-keytable: replace more sysfs if-else code with loops
+      ir-keytable: cleanup keytable code
+
+Fabien Dessenne (1):
+      v4l2-compliance: test SELECTION only for the supported buf_type
+
+Felix Janda (3):
+      contrib/test: Add missing LIB_ARGP
+      libv4l: Wrap LFS64 functions only if linux && __GLIBC__
+      libv4l: Test for ioctl() function signature
+
+Gregor Jasny (11):
+      Start v4l-utils 1.7.0 development cycle
+      man: remove duplicate backslash from NAME section
+      man: Use Unicode character for ellipsis and fall back to ...
+      man: add generated files to .gitignore
+      libdvbv5: Remove stray semicolon
+      v4l2-compliance: Explicitely link against rt library
+      v4l2-ctl: Explicitely link against rt library
+      v4lconvert: Add ASUS A7Sn to upside down table
+      v4lconvert: Add ASUS A6R to upside down table
+      v4lconvert: Add ASUS A7J to upside down table
+      buildsystem: Add missing files to extra distribution list
+
+Hans Verkuil (132):
+      qv4l2/v4l2-ctl: fix buffer overrun in vivid-tpg.
+      v4l2-ctl: fix sliced vbi mode parsing
+      v4l2-compliance: when streaming used at least 2 buffers.
+      v4l2-compliance: add initial checks for VIDIOC_QUERY_EXT_CTRL
+      v4l2-ctl: add support for U32 control type.
+      v4l2-ctl: fix array handling
+      v4l2-compliance: allow the V4L2_IN_ST_NO_SYNC status flag.
+      qv4l2: add single step support
+      qv4l2: don't select alsa device for video output.
+      v4l2-compliance: select(): split "ret <= 0" test in two
+      v4l-utils: sync with latest kernel
+      (c)v4l-helpers.h: add functions for flags, ycbcr_enc and quantization
+      v4l2-ctl: support the new ycbcr_enc and quantization fields.
+      qv4l2: add support for ycbcr_enc and quantization
+      v4l-utils: sync-with-kernel
+      v4l2-ctl: add V4L2_SEL_TGT_NATIVE_SIZE support
+      v4l2-compliance: add checks for V4L2_IN/OUT_CAP_NATIVE_SIZE
+      v4l2-compliance: add basic crop/compose/scale tests.
+      v4l2-compliance/fixme.txt: update
+      v4l2-compliance: add check for missing G_INPUT/OUTPUT
+      v4l2-compliance: add more ycbcr_enc and quantization checks
+      v4l2-compliance: fix compilation problem
+      v4l2-ctl: report and optionally fix EDID checksum errors
+      v4l2-ctl: signal support for RGB/YUV quantization
+      Sync with latest kernel
+      v4l2-compliance: don't check colorspace for m2m devices
+      v4l2-compliance: add missing cleanup for m2m devices
+      qv4l2: fix incorrect colorspace string
+      qv4l2: fix init and fix wrong ycbcr_enc tests
+      v4l2-ctl: add newline after each EDID block
+      qv4l2: changing the quantization didn't update the format.
+      qv4l2: update colorspace information
+      v4l2-ctl: sync colorspace names with qv4l2
+      qv4l2: move the colorspace fields to the general tab
+      v4l2-ctl: fix control listing code
+      v4l2-compliance: fix multiplanar colorspace check
+      v4l2-ctl: support pixelformats with bit 31 set
+      qv4l2: handle pixelformats with bit 31 set
+      qv4l2: add support for [AX]RGB555X formats.
+      qv4l2: update the movement values before starting the TPG
+      v4l2-compliance: store the state of the driver
+      v4l2-compliance: remove the -i, -o and -f options
+      v4l2-compliance: add new -f streaming option
+      v4l2-compliance: fix valgrind warnings
+      v4l2-compliance: restore state on Ctrl-C
+      v4l2-compliance: improve error checking and logging
+      v4l2-compliance: check if the same timings can always be set
+      v4l2-compliance: restore crop/compose state in the correct order
+      v4l2-compliance: implement warn_once
+      v4l2-compliance: restore format based on timings, add bpl tests
+      v4l2-compliance: fix inverted 'while' condition
+      v4l2-compliance: relax error_idx checks
+      v4l2-ctl: add missing newline in --help-vidcap output
+      v4l2-compliance: continue testing with some failures
+      v4l2-compliance: write newline to stdout on ctrl-C
+      v4l2-compliance: add 'frame-height' helpers
+      v4l2-compliance: use the new helpers, check for min/max fmt
+      v4l2-compliance: show crop/compose rectangles
+      v4l2-compliance: add -a option to stream all inputs/outputs
+      v4l2-compliance: make cv4l_fmt methods const where applicable
+      v4l2-compliance: test many crop/compose combinations
+      v4l2-compliance: add CROPCAP/G_CROP checks
+      v4l2-ctl: exit after showing usage()
+      v4l2-compliance: fix save/restore state
+      v4l2-compliance: add color checking tests
+      v4l2-compliance: add the manual page
+      qv4l2: update manual page and usage message
+      v4l2-compliance: fix typo
+      v4l2-compliance: add v4l2-compliance.1 to .gitignore
+      v4l2-ctl: add a manual page
+      v4l2-compliance: always skip compressed formats
+      v4l2-compliance: improve crop/selection legacy test.
+      fourcc-be: improve handling of big-endian flag
+      v4l-utils: sync with kernel
+      v4l-utils: sync with kernel, now updating headers as well
+      v4l2-ctl: update Android.mk
+      v4l2-ctl: remove unused variable total_v_lines
+      jl2005bcd.c: use unix newlines, not dos.
+      sync with latest kernel
+      media-ctl/v4l2-ctl: support new control and timing flags.
+      qv4l2/v4l2-ctl: fix YUV 4:2:0 support
+      qv4l2: add openGL support for a large number of new formats
+      qv4l2: fill in bytesused for the output stream.
+      Sync with latest kernel
+      qv4l2: reorganize colorspace handling
+      sync to latest kernel
+      v4l2-ctl: add support for V4L2_BUF_FLAG_LAST
+      qv4l2: simplify openGL handling
+      qv4l2: fix incorrect initial override values.
+      qv4l2: fix colorspace format handling bugs
+      v4l2-ctl: don't use [IDX] = "foo": some compilers don't like this
+      qv4l2: use toLatin1 instead of toAscii
+      qv4l2: add missing makeCurrent() call for Qt5 support
+      qv4l2: fix crash if openGL is not available
+      v4l-utils: fix typos
+      v4l2-compliance: reopen the node before restoring state
+      v4l2-compliance: fix incorrect condition
+      sync-with-kernel: update to the latest kernel
+      v4l-utils: update to new colorspace defines
+      qv4l2: add missing break
+      v4l2-compliance: skip grayscale and other non-color formats
+      v4l2-compliance: m2m streaming fixes
+      v4l-utils: sync-with-kernel
+      libv4l-mplane: copy missing colorspace fields
+      (c)v4l-helpers.h: support the new xfer_func field.
+      v4l2-ctl: add support for colorspace transfer functions
+      qv4l2: support the new transfer function field
+      qv4l2: remove the display colorspace
+      libv4l2: also update xfer_func, ycbcr_enc and quantization
+      qv4l2: the cv4l_fmt type wasn't set
+      qv4l2: fix XV601/709 handling
+      qv4l2: after a reopen m_ctrlNotifier needs to be recreated
+      v4l2-compliance: add additional checks for zeroed reserved arrays
+      v4l2-ctl: fix coverity warning
+      v4l2-compliance: fail if check_0 returns true
+      v4l2-ctl: show timings you want to set if --verbose
+      v4l2-ctl: log whether the timings uses reduced blanking v2
+      qv4l2: fix copy-paste bug
+      qv4l2: correctly update m_isSDTV
+      qv4l2: fix rgb check
+      sync-with-kernel update
+      cobalt-ctl: add utility to flash the cobalt firmware
+      v4l2-ctl: some more bool-related cleanups/simplifications
+      v4l2-ctl: fix reduced fps support
+      v4l2-compliance: warn for non-consecutive sequence numbers
+      v4l2-compliance: fix prepare_buf tests, drop bytesused == 0 test
+      v4l2-compliance: fix userptr and dmabuf streaming check
+      qv4l2: replace lostFocus signal by editingFinished
+      v4l2-ctl: split off cx18-ctl and ivtv-ctl
+      v4l2-ctl/compliance: add configure option to disable libv4l use
+      v4l2-dbg: auto-increment should use register size
+      qv4l2/v4l2-ctl/v4l2-compliance: fix V4L2_CTRL_TYPE_BITMASK handling
+
+Hans de Goede (2):
+      rc_keymaps: allwinner: S/KEY_HOME/KEY_HOMEPAGE/
+      v4lconvert: Fix decoding of jpeg data with no vertical sub-sampling
+
+Mats Randgaard (1):
+      v4l2-ctl: Remove file entry from Android.mk
+
+Mauro Carvalho Chehab (91):
+      libdvbv5: properly represent Satellite frequencies
+      README: better document the package
+      libdvbv5: Fix some Doxygen warnings at dvb-fe.h
+      Doxygen: Document libdvbv5 countries.h
+      configure.ac: Fix gconv compilation with 64 bits
+      parse_tcpdump_log.pl: only adjust direction for control EP
+      contrib: add a parser for af9035
+      parse_af9035.pl: properly handle URB errors
+      parse_af9035.pl: Add two other commands from ITE driver
+      parse_af9035.pl: add arguments to show timestamp and debug
+      parse_af9035.pl: group write/read URBs
+      parse_af9035.pl: create a routine to print send/race
+      parse_af9035.pl: print read/write as C lines
+      parse_af9035.pl: add support for firmware commands
+      parse_af9035.pl: fix firmware write size
+      ir-keytable: fix a regression introduced by fe2aa5f767eba
+      gen_keytables.pl: Fix a regression at RC map file generation
+      rc: Update the protocol name at RC6 tables
+      rc_maps.cfg: reorder entries alphabetically
+      rc: sync with Kernel
+      rc: copy userspace-only maps to a separate dir
+      README: Add the steps needed to syncronize with the Kernel tree
+      vivid-tpg.h.patch: update to match current upstream tree
+      Synchronize with the Kernel
+      parse_af9035.pl: proper handle when stack is not filled
+      parse_af9035.pl: add support for CMD_IR_GET
+      parse_af9035.pl: add options to hide part of the messages
+      parse_af9035.pl: Add firmware boot message to the parser
+      parse_af9035.pl: improve IR handling
+      parse_af9035.pl: add support for generic I2C read/write
+      parse_af9035.pl: better handle the read data
+      parse_af9035.pl: allow to hide parsing errors
+      parse_af9035.pl: add support for standard I2C commands
+      parse_af9035.pl: some cleanups
+      parse_af9035.pl: Fix decoding order at I2C read/write
+      parse_af9035.pl: Fix size on rd/wr regs prints
+      parse_af9035.pl: Fix some hide conditions
+      parse_af9035.pl: Improve argument handling
+      libdvbv5: add experimental DTMB support
+      parse_tcpdump_log.pl: simplify non-control data
+      parse_tcpdump_log.pl: remove some leftovers
+      sync-with-kernel: add include/linux/media.h
+      configure.ac: fix qv4l2 if QGLFunctions doesn't exist
+      gettextize: add support for internationalization
+      keytable: add internacionalization to msg strings
+      keytable: add translation to pt_BR
+      dvb: add locale support
+      DVB tools: add pt_BR translations
+      keytable: add locale messages also for argp strings
+      keytable: add pt_BR translations for argp strings
+      dvb: add locale messages also for argp strings
+      dvb: Add translation to pt_BR for help messages
+      dvbv5-zap: Add missing init code for locale
+      Move po files to a separate dir
+      gettextize: Add locale settings for libdvbv5
+      libdvbv5: add translation support for dvb-fe.c
+      Add Brazilian portuguese translation for dvb-fe.c
+      dvb: add translation for two static tables inside dvb-fe
+      dvb: Add Brazilian Portuguese translation for dvb-fe static tables
+      v4l-utils-po/pt_BR.po: Update meta-tags
+      dvb: add locale support for more files
+      dvb: add Brazilian Portuguese translation for the core
+      Update INSTALL instructions and add a script to configure
+      bootstrap.sh: remove an extra uneeded space from the script
+      bootstrap.sh: be less verbose
+      Remove two files that shouldn't be at the tree
+      bootstrap.sh: create a build-aux/config.rpath
+      configure.ac: remove gettext version
+      bootstrap.sh: need also to create build-aux dir
+      po: Remove some auto-generated files from the git tree
+      po files: remove the remaining auto-generated files
+      .gitignore: update it for the last *-po changes
+      dvb, keytable: Workaround a glibc bug when handling locale domain
+      README: update the sync-with-kernel procedure
+      Synchronize with latest header versions
+      dvb-fe: avoid races when CTRL-C is used
+      libmediactl: make it parse the DVB devnode
+      libmediactl: add support for the new DVB devnodes
+      media-ctl: Update V4L2 subdev types
+      dvbv5 utils: Improve the message for the country code parameter
+      dvbv5 utils: Update the pt-BR translation
+      libdvbv5: Retry FE_GET_PROPERTY ioctl if it returns EAGAIN
+      libdvbv5: don't retry an ioctl forever
+      libdvbv5: better handle EINTR/EAGAIN
+      libdvbv5: use a timeout for ioctl
+      dvb-fe: return a negative number on error
+      libmediactl: Don't free an already freed address if no links
+      Revert "libmediactl: Don't free an already freed address if no links"
+      README: add the instructions about how to build v4l-utils
+      Revert "libmediactl: add support for the new DVB devnodes"
+      sync-with-kernel update
+
+Niels Ole Salscheider (1):
+      qv4l2: Fix out-of-source build
+
+Patrick Boettcher (4):
+      parse_tcpdump_log.pl: skip filtered frames and remove them from pending
+      parse_tcpdump_log.pl: show transfer-direction for non-ctrl-transfers
+      parse_tcpdump_log.pl: add external frame_processor-option
+      parse_tcpdump_log.pl: remove --all option which was not documented and not working as expected
+
+Peter Seiderer (6):
+      configure.ac: add qt5 detection support
+      qv4l2: fix qt5 compile
+      qv4l2: update qmake project file
+      qv4l2: fix qmake project file
+      qv4l2: enable qt5 opengl build
+      qv4l2: fix qt5 opengl runtime errors
+
+Prashant Laddha (14):
+      v4l2-ctl-stds: Restructured suboption parsing code
+      v4l2-ctl-stds: Support cvt/gtf options in set-dv-bt-timings
+      v4l2-ctl: Add support for CVT, GTF modeline calculation
+      v4l2-ctl-modes: fix hblank, hsync rounding in gtf calculation
+      v4l2-utils: fix overflow in cvt, gtf calculations
+      v4l2-utils: handle interlace fraction correctly in gtf
+      v4l2-utils gtf: use round instead of roundown for v_lines_rnd
+      v4l2-utils: fix pixel clock calc for cvt reduced blanking
+      v4l2-ctl-modes: add support for reduced blanking version 2
+      v4l2-utils: Modify usage for set-dv-timing to support RB V2
+      v4l2-utils: add support for reduced fps in cvt modeline
+      v4l2-utils: extend set-dv-timings to support reduced fps
+      v4l2-utils: use boolean for interlaced flag
+      v4l2-ctl-modes: use reduced fps only with reduced blanking v2
+
+Ricardo Ribalda (2):
+      qv4l2: gl: Add support for V4L2_PIX_FMT_Y16
+      qv4l2: gl: Add support for V4L2_PIX_FMT_Y16_BE
+
+Ricardo Ribalda Delgado (2):
+      libv4lconvert: Fix support for Y16 pixel format
+      libv4lconvert: Add support for V4L2_PIX_FMT_Y16_BE
+
+Vincent McIntyre (1):
+      dvb-utils: add -C to manpages
+
+
 v4l-utils-1.6.0
 ---------------
 
