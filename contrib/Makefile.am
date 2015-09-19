@@ -19,6 +19,7 @@ EXTRA_DIST = \
 	usbmon2usbsnoop.pl \
 	v4l_rec.pl \
 	\
+	af9035 \
 	au0828 \
 	cobalt \
 	az6007 \

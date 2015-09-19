@@ -9,3 +9,5 @@ if LINUX_OS
 SUBDIRS += \
 	libdvbv5
 endif
+
+EXTRA_DIST = Android.mk

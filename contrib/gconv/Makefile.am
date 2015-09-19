@@ -14,3 +14,4 @@ ARIB_STD_B24_la_LDFLAGS = $(gconv_ldflags) -L@gconvsysdir@ -R @gconvsysdir@ -lJI
 EN300_468_TAB00_la_SOURCES = en300-468-tab00.c
 EN300_468_TAB00_la_LDFLAGS = $(gconv_ldflags)
 
+EXTRA_DIST = $(gconv_base_sources) $(gconv_DATA) gconv.map

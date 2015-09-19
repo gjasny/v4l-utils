@@ -28,3 +28,4 @@ ov511_decomp_SOURCES = ov511-decomp.c
 
 ov518_decomp_SOURCES = ov518-decomp.c
 
+EXTRA_DIST = Android.mk

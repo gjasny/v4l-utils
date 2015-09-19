@@ -7,7 +7,8 @@ if WITH_V4LUTILS
 SUBDIRS += utils contrib
 endif
 
-EXTRA_DIST = android-config.h doxygen_libdvbv5.cfg include COPYING.libv4l README.libv4l README.lib-multi-threading TODO.libdvbv5 \
+EXTRA_DIST = android-config.h bootstrap.sh doxygen_libdvbv5.cfg include COPYING.libv4l \
+        README.libv4l README.lib-multi-threading TODO.libdvbv5 \
         doc/libdvbv5-index.doc
 
 include $(top_srcdir)/aminclude.am
