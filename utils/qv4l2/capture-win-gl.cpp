@@ -354,6 +354,14 @@ bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
 		V4L2_PIX_FMT_SGBRG8,
 		V4L2_PIX_FMT_SGRBG8,
 		V4L2_PIX_FMT_SRGGB8,
+		V4L2_PIX_FMT_SBGGR10,
+		V4L2_PIX_FMT_SGBRG10,
+		V4L2_PIX_FMT_SGRBG10,
+		V4L2_PIX_FMT_SRGGB10,
+		V4L2_PIX_FMT_SBGGR12,
+		V4L2_PIX_FMT_SGBRG12,
+		V4L2_PIX_FMT_SGRBG12,
+		V4L2_PIX_FMT_SRGGB12,
 		V4L2_PIX_FMT_YUYV,
 		V4L2_PIX_FMT_YVYU,
 		V4L2_PIX_FMT_UYVY,
@@ -450,6 +458,14 @@ void CaptureWinGLEngine::changeShader()
 	case V4L2_PIX_FMT_SGBRG8:
 	case V4L2_PIX_FMT_SGRBG8:
 	case V4L2_PIX_FMT_SRGGB8:
+	case V4L2_PIX_FMT_SBGGR10:
+	case V4L2_PIX_FMT_SGBRG10:
+	case V4L2_PIX_FMT_SGRBG10:
+	case V4L2_PIX_FMT_SRGGB10:
+	case V4L2_PIX_FMT_SBGGR12:
+	case V4L2_PIX_FMT_SGBRG12:
+	case V4L2_PIX_FMT_SGRBG12:
+	case V4L2_PIX_FMT_SRGGB12:
 		shader_Bayer(m_frameFormat);
 		break;
 
@@ -580,6 +596,14 @@ void CaptureWinGLEngine::paintGL()
 	case V4L2_PIX_FMT_SGBRG8:
 	case V4L2_PIX_FMT_SGRBG8:
 	case V4L2_PIX_FMT_SRGGB8:
+	case V4L2_PIX_FMT_SBGGR10:
+	case V4L2_PIX_FMT_SGBRG10:
+	case V4L2_PIX_FMT_SGRBG10:
+	case V4L2_PIX_FMT_SRGGB10:
+	case V4L2_PIX_FMT_SBGGR12:
+	case V4L2_PIX_FMT_SGBRG12:
+	case V4L2_PIX_FMT_SGRBG12:
+	case V4L2_PIX_FMT_SRGGB12:
 		render_Bayer(m_frameFormat);
 		break;
 
@@ -1724,6 +1748,17 @@ void CaptureWinGLEngine::shader_Bayer(__u32 format)
 		glTexImage2D(GL_TEXTURE_2D, 0, m_glRed, m_frameWidth, m_frameHeight, 0,
 			     m_glRed, GL_UNSIGNED_BYTE, NULL);
 		break;
+	case V4L2_PIX_FMT_SBGGR10:
+	case V4L2_PIX_FMT_SGBRG10:
+	case V4L2_PIX_FMT_SGRBG10:
+	case V4L2_PIX_FMT_SRGGB10:
+	case V4L2_PIX_FMT_SBGGR12:
+	case V4L2_PIX_FMT_SGBRG12:
+	case V4L2_PIX_FMT_SGRBG12:
+	case V4L2_PIX_FMT_SRGGB12:
+		glTexImage2D(GL_TEXTURE_2D, 0, m_glRed, m_frameWidth, m_frameHeight, 0,
+			     m_glRed, GL_UNSIGNED_SHORT, NULL);
+		break;
 	}
 
 	checkError("Bayer shader");
@@ -1753,24 +1788,51 @@ void CaptureWinGLEngine::shader_Bayer(__u32 format)
 	/* Poor quality Bayer to RGB conversion, but good enough for now */
 	switch (format) {
 	case V4L2_PIX_FMT_SBGGR8:
+	case V4L2_PIX_FMT_SBGGR10:
+	case V4L2_PIX_FMT_SBGGR12:
 		codeHead +=	   "   r = texture2D(tex, vec2(cell.x + texl_w, cell.y + texl_h)).r;"
 				   "   g = texture2D(tex, vec2((cell.y == xy.y) ? cell.x + texl_w : cell.x, xy.y)).r;"
 				   "   b = texture2D(tex, cell).r;";
 		break;
 	case V4L2_PIX_FMT_SGBRG8:
+	case V4L2_PIX_FMT_SGBRG10:
+	case V4L2_PIX_FMT_SGBRG12:
 		codeHead +=	   "   r = texture2D(tex, vec2(cell.x, cell.y + texl_h)).r;"
 				   "   g = texture2D(tex, vec2((cell.y == xy.y) ? cell.x : cell.x + texl_w, xy.y)).r;"
 				   "   b = texture2D(tex, vec2(cell.x + texl_w, cell.y)).r;";
 		break;
 	case V4L2_PIX_FMT_SGRBG8:
+	case V4L2_PIX_FMT_SGRBG10:
+	case V4L2_PIX_FMT_SGRBG12:
 		codeHead +=	   "   r = texture2D(tex, vec2(cell.x + texl_w, cell.y)).r;"
 				   "   g = texture2D(tex, vec2((cell.y == xy.y) ? cell.x : cell.x + texl_w, xy.y)).r;"
 				   "   b = texture2D(tex, vec2(cell.x, cell.y + texl_h)).r;";
 		break;
 	case V4L2_PIX_FMT_SRGGB8:
+	case V4L2_PIX_FMT_SRGGB10:
+	case V4L2_PIX_FMT_SRGGB12:
 		codeHead +=	   "   b = texture2D(tex, vec2(cell.x + texl_w, cell.y + texl_h)).r;"
 				   "   g = texture2D(tex, vec2((cell.y == xy.y) ? cell.x + texl_w : cell.x, xy.y)).r;"
 				   "   r = texture2D(tex, cell).r;";
+		break;
+	}
+
+	switch (format) {
+	case V4L2_PIX_FMT_SBGGR10:
+	case V4L2_PIX_FMT_SGBRG10:
+	case V4L2_PIX_FMT_SGRBG10:
+	case V4L2_PIX_FMT_SRGGB10:
+		codeHead +=	   "   b = b * (65535.0 / 1023.0);"
+				   "   g = g * (65535.0 / 1023.0);"
+				   "   r = r * (65535.0 / 1023.0);";
+		break;
+	case V4L2_PIX_FMT_SBGGR12:
+	case V4L2_PIX_FMT_SGBRG12:
+	case V4L2_PIX_FMT_SGRBG12:
+	case V4L2_PIX_FMT_SRGGB12:
+		codeHead +=	   "   b = b * (65535.0 / 4095.0);"
+				   "   g = g * (65535.0 / 4095.0);"
+				   "   r = r * (65535.0 / 4095.0);";
 		break;
 	}
 
@@ -1816,6 +1878,17 @@ void CaptureWinGLEngine::render_Bayer(__u32 format)
 	case V4L2_PIX_FMT_SRGGB8:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
 				m_glRed, GL_UNSIGNED_BYTE, m_frameData);
+		break;
+	case V4L2_PIX_FMT_SBGGR10:
+	case V4L2_PIX_FMT_SGBRG10:
+	case V4L2_PIX_FMT_SGRBG10:
+	case V4L2_PIX_FMT_SRGGB10:
+	case V4L2_PIX_FMT_SBGGR12:
+	case V4L2_PIX_FMT_SGBRG12:
+	case V4L2_PIX_FMT_SGRBG12:
+	case V4L2_PIX_FMT_SRGGB12:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+				m_glRed, GL_UNSIGNED_SHORT, m_frameData);
 		break;
 	}
 	checkError("Bayer paint");
