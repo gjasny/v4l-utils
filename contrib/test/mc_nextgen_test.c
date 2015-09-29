@@ -89,6 +89,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	case 'd':
 		strncpy(media_device, arg, sizeof(media_device) - 1);
 		media_device[sizeof(media_device)-1] = '\0';
+		break;
 
 	case '?':
 		argp_state_help(state, state->out_stream,
