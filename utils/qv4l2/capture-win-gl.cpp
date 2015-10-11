@@ -194,6 +194,7 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned xfer_func,
 	case V4L2_COLORSPACE_SRGB:
 	case V4L2_COLORSPACE_ADOBERGB:
 	case V4L2_COLORSPACE_BT2020:
+	case V4L2_COLORSPACE_DCI_P3:
 		break;
 	default:
 		// If the colorspace was not specified, then guess
@@ -731,6 +732,22 @@ QString CaptureWinGLEngine::codeTransformToLinear()
 		return QString("   r = pow(r, 2.19921875);"
 			       "   g = pow(g, 2.19921875);"
 			       "   b = pow(b, 2.19921875);");
+	case V4L2_XFER_FUNC_DCI_P3:
+		return QString("   r = pow(r, 2.6);"
+			       "   g = pow(g, 2.6);"
+			       "   b = pow(b, 2.6);");
+	case V4L2_XFER_FUNC_SMPTE2084:
+		return QString("   float m1 = 1.0 / ((2610.0 / 4096.0) / 4.0);"
+			       "   float m2 = 1.0 / (128.0 * 2523.0 / 4096.0);"
+			       "   float c1 = 3424.0 / 4096.0;"
+			       "   float c2 = 32.0 * 2413.0 / 4096.0;"
+			       "   float c3 = 32.0 * 2392.0 / 4096.0;"
+			       "   r = pow(r, m2);"
+			       "   g = pow(g, m2);"
+			       "   b = pow(b, m2);"
+			       "   r = pow(max(r - c1, 0.0) / (c2 - c3 * r), m1);"
+			       "   g = pow(max(g - c1, 0.0) / (c2 - c3 * g), m1);"
+			       "   b = pow(max(b - c1, 0.0) / (c2 - c3 * b), m1);");
 	case V4L2_XFER_FUNC_NONE:
 		return "";
 	case V4L2_XFER_FUNC_709:
@@ -754,7 +771,7 @@ QString CaptureWinGLEngine::codeColorspaceConversion()
 	case V4L2_COLORSPACE_SMPTE170M:
 	case V4L2_COLORSPACE_SMPTE240M:
 		// Current SDTV standard, although slowly being replaced by REC 709.
-		// Use the SMPTE 170M aka SMPTE-C aka SMPTE RP 145 conversion matrix.
+		// Uses the SMPTE 170M aka SMPTE-C aka SMPTE RP 145 conversion matrix.
 		return QString("   float rr =  0.939536 * r + 0.050215 * g + 0.001789 * b;"
 			       "   float gg =  0.017743 * r + 0.965758 * g + 0.016243 * b;"
 			       "   float bb = -0.001591 * r - 0.004356 * g + 1.005951 * b;"
@@ -762,15 +779,16 @@ QString CaptureWinGLEngine::codeColorspaceConversion()
 			       );
 	case V4L2_COLORSPACE_470_SYSTEM_M:
 		// Old obsolete NTSC standard. Replaced by REC 709.
-		// Use the NTSC 1953 conversion matrix.
-		return QString("   float rr =  1.5073 * r - 0.3725 * g - 0.0832 * b;"
-			       "   float gg = -0.0275 * r + 0.9350 * g + 0.0670 * b;"
-			       "   float bb = -0.0272 * r - 0.0401 * g + 1.1677 * b;"
+		// Uses the NTSC 1953 conversion matrix and the Bradford method to
+		// compensate for the different whitepoints.
+		return QString("   float rr =  1.4858417 * r - 0.4033361 * g - 0.0825056 * b;"
+			       "   float gg = -0.0251179 * r + 0.9541568 * g + 0.0709611 * b;"
+			       "   float bb = -0.0272254 * r - 0.0440815 * g + 1.0713068 * b;"
 			       "   r = rr; g = gg; b = bb;"
 			       );
 	case V4L2_COLORSPACE_470_SYSTEM_BG:
 		// Old obsolete PAL/SECAM standard. Replaced by REC 709.
-		// Use the EBU Tech. 3213 conversion matrix.
+		// Uses the EBU Tech. 3213 conversion matrix.
 		return QString("   float rr = 1.0440 * r - 0.0440 * g;"
 			       "   float bb = -0.0119 * g + 1.0119 * b;"
 			       "   r = rr; b = bb;"
@@ -779,6 +797,12 @@ QString CaptureWinGLEngine::codeColorspaceConversion()
 		return QString("   float rr =  1.3982832 * r - 0.3982831 * g;"
 			       "   float bb = -0.0429383 * g + 1.0429383 * b;"
 			       "   r = rr; b = bb;"
+			       );
+	case V4L2_COLORSPACE_DCI_P3:
+		// Uses the Bradford method to compensate for the different whitepoints.
+		return QString("   float rr =  1.1574000 * r - 0.1548597 * g - 0.0025403 * b;"
+			       "   float gg = -0.0415052 * r + 1.0455684 * g - 0.0040633 * b;"
+			       "   float bb = -0.0180562 * r - 0.0785993 * g + 1.0966555 * b;"
 			       );
 	case V4L2_COLORSPACE_BT2020:
 		return QString("   float rr =  1.6603627 * r - 0.5875400 * g - 0.0728227 * b;"

@@ -192,6 +192,7 @@ ApplicationWindow::ApplicationWindow() :
 	addSubMenuItem(grp, menu, "sRGB", V4L2_COLORSPACE_SRGB);
 	addSubMenuItem(grp, menu, "Adobe RGB", V4L2_COLORSPACE_ADOBERGB);
 	addSubMenuItem(grp, menu, "BT.2020", V4L2_COLORSPACE_BT2020);
+	addSubMenuItem(grp, menu, "DCI-P3", V4L2_COLORSPACE_DCI_P3);
 	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_COLORSPACE_SMPTE240M);
 	addSubMenuItem(grp, menu, "470 System M", V4L2_COLORSPACE_470_SYSTEM_M);
 	addSubMenuItem(grp, menu, "470 System BG", V4L2_COLORSPACE_470_SYSTEM_BG);
@@ -205,6 +206,8 @@ ApplicationWindow::ApplicationWindow() :
 	addSubMenuItem(grp, menu, "Rec. 709", V4L2_XFER_FUNC_709);
 	addSubMenuItem(grp, menu, "sRGB", V4L2_XFER_FUNC_SRGB);
 	addSubMenuItem(grp, menu, "Adobe RGB", V4L2_XFER_FUNC_ADOBERGB);
+	addSubMenuItem(grp, menu, "DCI-P3", V4L2_XFER_FUNC_DCI_P3);
+	addSubMenuItem(grp, menu, "SMPTE 2084", V4L2_XFER_FUNC_SMPTE2084);
 	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_XFER_FUNC_SMPTE240M);
 	addSubMenuItem(grp, menu, "None", V4L2_XFER_FUNC_NONE);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(overrideXferFuncChanged(QAction *)));
@@ -499,14 +502,9 @@ void ApplicationWindow::ctrlEvent()
 			continue;
 		m_ctrlMap[ev.id].flags = ev.u.ctrl.flags;
 		m_ctrlMap[ev.id].minimum = ev.u.ctrl.minimum;
-		if (m_ctrlMap[ev.id].type == V4L2_CTRL_TYPE_BITMASK) {
-			m_ctrlMap[ev.id].maximum = (__u32)ev.u.ctrl.maximum;
-			m_ctrlMap[ev.id].default_value = (__u32)ev.u.ctrl.default_value;
-		} else {
-			m_ctrlMap[ev.id].maximum = ev.u.ctrl.maximum;
-			m_ctrlMap[ev.id].default_value = ev.u.ctrl.default_value;
-		}
+		m_ctrlMap[ev.id].maximum = ev.u.ctrl.maximum;
 		m_ctrlMap[ev.id].step = ev.u.ctrl.step;
+		m_ctrlMap[ev.id].default_value = ev.u.ctrl.default_value;
 
 		bool disabled = m_ctrlMap[ev.id].flags & CTRL_FLAG_DISABLED;
 

@@ -157,6 +157,7 @@ void ApplicationWindow::addTpgTab(int m_winWidth)
 	m_tpgColorspace->addItem("sRGB", QVariant(V4L2_COLORSPACE_SRGB));
 	m_tpgColorspace->addItem("Adobe RGB", QVariant(V4L2_COLORSPACE_ADOBERGB));
 	m_tpgColorspace->addItem("BT.2020", QVariant(V4L2_COLORSPACE_BT2020));
+	m_tpgColorspace->addItem("DCI-P3", QVariant(V4L2_COLORSPACE_DCI_P3));
 	m_tpgColorspace->addItem("SMPTE 240M", QVariant(V4L2_COLORSPACE_SMPTE240M));
 	m_tpgColorspace->addItem("470 System M", QVariant(V4L2_COLORSPACE_470_SYSTEM_M));
 	m_tpgColorspace->addItem("470 System BG", QVariant(V4L2_COLORSPACE_470_SYSTEM_BG));
@@ -169,6 +170,8 @@ void ApplicationWindow::addTpgTab(int m_winWidth)
 	m_tpgXferFunc->addItem("Rec. 709", QVariant(V4L2_XFER_FUNC_709));
 	m_tpgXferFunc->addItem("sRGB", QVariant(V4L2_XFER_FUNC_SRGB));
 	m_tpgXferFunc->addItem("Adobe RGB", QVariant(V4L2_XFER_FUNC_ADOBERGB));
+	m_tpgXferFunc->addItem("DCI-P3", QVariant(V4L2_XFER_FUNC_DCI_P3));
+	m_tpgXferFunc->addItem("SMPTE 2084", QVariant(V4L2_XFER_FUNC_SMPTE2084));
 	m_tpgXferFunc->addItem("SMPTE 240M", QVariant(V4L2_XFER_FUNC_SMPTE240M));
 	m_tpgXferFunc->addItem("None", QVariant(V4L2_XFER_FUNC_NONE));
 	addWidget(grid, m_tpgXferFunc);

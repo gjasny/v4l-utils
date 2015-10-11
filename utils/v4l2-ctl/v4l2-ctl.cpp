@@ -387,6 +387,8 @@ std::string colorspace2s(int val)
 		return "sRGB";
 	case V4L2_COLORSPACE_ADOBERGB:
 		return "AdobeRGB";
+	case V4L2_COLORSPACE_DCI_P3:
+		return "DCI-P3";
 	case V4L2_COLORSPACE_BT2020:
 		return "BT.2020";
 	case V4L2_COLORSPACE_RAW:
@@ -407,6 +409,10 @@ static std::string xfer_func2s(int val)
 		return "sRGB";
 	case V4L2_XFER_FUNC_ADOBERGB:
 		return "AdobeRGB";
+	case V4L2_XFER_FUNC_DCI_P3:
+		return "DCI-P3";
+	case V4L2_XFER_FUNC_SMPTE2084:
+		return "SMPTE 2084";
 	case V4L2_XFER_FUNC_SMPTE240M:
 		return "SMPTE 240M";
 	case V4L2_XFER_FUNC_NONE:
@@ -807,6 +813,7 @@ static __u32 parse_colorspace(const char *s)
 	if (!strcmp(s, "srgb")) return V4L2_COLORSPACE_SRGB;
 	if (!strcmp(s, "adobergb")) return V4L2_COLORSPACE_ADOBERGB;
 	if (!strcmp(s, "bt2020")) return V4L2_COLORSPACE_BT2020;
+	if (!strcmp(s, "dcip3")) return V4L2_COLORSPACE_DCI_P3;
 	return 0;
 }
 
@@ -817,6 +824,8 @@ static __u32 parse_xfer_func(const char *s)
 	if (!strcmp(s, "rec709")) return V4L2_XFER_FUNC_709;
 	if (!strcmp(s, "srgb")) return V4L2_XFER_FUNC_SRGB;
 	if (!strcmp(s, "adobergb")) return V4L2_XFER_FUNC_ADOBERGB;
+	if (!strcmp(s, "dcip3")) return V4L2_XFER_FUNC_DCI_P3;
+	if (!strcmp(s, "smpte2084")) return V4L2_XFER_FUNC_SMPTE2084;
 	if (!strcmp(s, "none")) return V4L2_XFER_FUNC_NONE;
 	return 0;
 }

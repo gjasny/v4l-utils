@@ -748,6 +748,7 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		m_colorspace->addItem("sRGB", QVariant(V4L2_COLORSPACE_SRGB));
 		m_colorspace->addItem("Adobe RGB", QVariant(V4L2_COLORSPACE_ADOBERGB));
 		m_colorspace->addItem("BT.2020", QVariant(V4L2_COLORSPACE_BT2020));
+		m_colorspace->addItem("DCI-P3", QVariant(V4L2_COLORSPACE_DCI_P3));
 		m_colorspace->addItem("SMPTE 240M", QVariant(V4L2_COLORSPACE_SMPTE240M));
 		m_colorspace->addItem("470 System M", QVariant(V4L2_COLORSPACE_470_SYSTEM_M));
 		m_colorspace->addItem("470 System BG", QVariant(V4L2_COLORSPACE_470_SYSTEM_BG));
@@ -761,6 +762,8 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		m_xferFunc->addItem("Rec. 709", QVariant(V4L2_XFER_FUNC_709));
 		m_xferFunc->addItem("sRGB", QVariant(V4L2_XFER_FUNC_SRGB));
 		m_xferFunc->addItem("Adobe RGB", QVariant(V4L2_XFER_FUNC_ADOBERGB));
+		m_xferFunc->addItem("DCI-P3", QVariant(V4L2_XFER_FUNC_DCI_P3));
+		m_xferFunc->addItem("SMPTE 2084", QVariant(V4L2_XFER_FUNC_SMPTE2084));
 		m_xferFunc->addItem("SMPTE 240M", QVariant(V4L2_XFER_FUNC_SMPTE240M));
 		m_xferFunc->addItem("None", QVariant(V4L2_XFER_FUNC_NONE));
 
