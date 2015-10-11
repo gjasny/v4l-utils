@@ -21,7 +21,7 @@ EXTRA_DIST = \
 	\
 	af9035 \
 	au0828 \
-	cobalt \
+	cobalt-ctl \
 	az6007 \
 	cx231xx \
 	cx25821 \

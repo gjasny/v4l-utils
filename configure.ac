@@ -40,7 +40,7 @@ AC_CONFIG_FILES([Makefile
 	contrib/freebsd/Makefile
 	contrib/test/Makefile
 	contrib/gconv/Makefile
-	contrib/cobalt/Makefile
+	contrib/cobalt-ctl/Makefile
 
 	v4l-utils-po/Makefile.in
 	libdvbv5-po/Makefile.in
