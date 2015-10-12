@@ -1,3 +1,10 @@
+v4l-utils-1.8.1
+---------------
+
+Gregor Jasny (1):
+      libdvbv5: link against rt library for clock_gettime
+
+
 v4l-utils-1.8.0
 ---------------
 
