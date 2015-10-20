@@ -1277,7 +1277,7 @@ static void test_event(int fd)
 				printf(_(" key_%s: %s(0x%04x)\n"),
 					(ev[i].value == 0) ? _("up") : _("down"),
 					get_event_name(key_events, ev[i].code),
-					ev[i].type);
+					ev[i].code);
 				break;
 			case EV_REL:
 				printf(_(": %s (0x%04x) value=%d\n"),
