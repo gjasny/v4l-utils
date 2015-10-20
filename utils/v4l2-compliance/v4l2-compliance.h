@@ -55,6 +55,8 @@ typedef std::map<__u32, unsigned> frmsizes_count_map;
 
 struct base_node;
 
+#define V4L2_BUF_TYPE_LAST V4L2_BUF_TYPE_SDR_OUTPUT
+
 struct base_node {
 	bool is_video;
 	bool is_radio;
@@ -79,7 +81,7 @@ struct base_node {
 	unsigned std_controls;
 	unsigned priv_controls;
 	__u32 fbuf_caps;
-	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_SDR_CAPTURE + 1];
+	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
 	frmsizes_set frmsizes;
 	frmsizes_count_map frmsizes_count;
 	__u32 valid_buftypes;
@@ -91,7 +93,7 @@ struct node : public base_node, public cv4l_fd {
 	node() : base_node() {}
 
 	qctrl_map controls;
-	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_SDR_CAPTURE + 1];
+	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
 };
 
 #define info(fmt, args...) 					\

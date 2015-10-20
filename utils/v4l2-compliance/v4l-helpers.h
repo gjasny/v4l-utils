@@ -346,6 +346,11 @@ static inline bool v4l_has_sdr_cap(const struct v4l_fd *f)
 	return v4l_g_caps(f) & V4L2_CAP_SDR_CAPTURE;
 }
 
+static inline bool v4l_has_sdr_out(const struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_SDR_OUTPUT;
+}
+
 static inline bool v4l_has_hwseek(const struct v4l_fd *f)
 {
 	return v4l_g_caps(f) & V4L2_CAP_HW_FREQ_SEEK;
@@ -385,6 +390,8 @@ static inline __u32 v4l_determine_type(const struct v4l_fd *f)
 		return V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
 	if (v4l_has_sdr_cap(f))
 		return V4L2_BUF_TYPE_SDR_CAPTURE;
+	if (v4l_has_sdr_out(f))
+		return V4L2_BUF_TYPE_SDR_OUTPUT;
 	return 0;
 }
 
@@ -518,6 +525,7 @@ static inline void v4l_format_s_pixelformat(struct v4l2_format *fmt, __u32 pixel
 		fmt->fmt.pix_mp.pixelformat = pixelformat;
 		break;
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
+	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		fmt->fmt.sdr.pixelformat = pixelformat;
 		break;
 	case V4L2_BUF_TYPE_VBI_CAPTURE:
@@ -537,6 +545,7 @@ static inline __u32 v4l_format_g_pixelformat(const struct v4l2_format *fmt)
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		return fmt->fmt.pix_mp.pixelformat;
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
+	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		return fmt->fmt.sdr.pixelformat;
 	case V4L2_BUF_TYPE_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_VBI_OUTPUT:
@@ -867,6 +876,7 @@ v4l_format_g_sizeimage(const struct v4l2_format *fmt, unsigned plane)
 	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
 		return plane ? 0 : fmt->fmt.sliced.io_size;
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
+	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		return plane ? 0 : fmt->fmt.sdr.buffersize;
 	default:
 		return 0;
@@ -982,7 +992,8 @@ static inline bool v4l_type_is_overlay(unsigned type)
 
 static inline bool v4l_type_is_sdr(unsigned type)
 {
-       return type == V4L2_BUF_TYPE_SDR_CAPTURE;
+       return type == V4L2_BUF_TYPE_SDR_CAPTURE ||
+	      type == V4L2_BUF_TYPE_SDR_OUTPUT;
 }
 
 static inline unsigned v4l_buffer_g_num_planes(const struct v4l_buffer *buf)

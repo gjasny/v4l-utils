@@ -54,6 +54,7 @@ public:
 	bool has_rds_cap() const { return v4l_has_rds_cap(this); }
 	bool has_rds_out() const { return v4l_has_rds_out(this); }
 	bool has_sdr_cap() const { return v4l_has_sdr_cap(this); }
+	bool has_sdr_out() const { return v4l_has_sdr_out(this); }
 	bool has_hwseek() const { return v4l_has_hwseek(this); }
 	bool has_rw() const { return v4l_has_rw(this); }
 	bool has_streaming() const { return v4l_has_streaming(this); }

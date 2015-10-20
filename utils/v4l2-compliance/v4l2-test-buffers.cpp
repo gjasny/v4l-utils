@@ -430,7 +430,7 @@ int testReqBufs(struct node *node)
 	}
 	fail_on_test(ret != EINVAL);
 	fail_on_test(node->node2 == NULL);
-	for (i = 1; i <= V4L2_BUF_TYPE_SDR_CAPTURE; i++) {
+	for (i = 1; i <= V4L2_BUF_TYPE_LAST; i++) {
 		bool is_overlay = v4l_type_is_overlay(i);
 
 		if (!(node->valid_buftypes & (1 << i)))
@@ -576,7 +576,7 @@ int testExpBuf(struct node *node)
 		return ENOTTY;
 	}
 
-	for (type = 0; type <= V4L2_BUF_TYPE_SDR_CAPTURE; type++) {
+	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 		if (v4l_type_is_overlay(type))
@@ -882,7 +882,7 @@ int testMmap(struct node *node, unsigned frame_count)
 		return ENOTTY;
 
 	buffer_info.clear();
-	for (type = 0; type <= V4L2_BUF_TYPE_SDR_CAPTURE; type++) {
+	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 		if (v4l_type_is_overlay(type))
@@ -1046,7 +1046,7 @@ int testUserPtr(struct node *node, unsigned frame_count)
 		return ENOTTY;
 
 	buffer_info.clear();
-	for (type = 0; type <= V4L2_BUF_TYPE_SDR_CAPTURE; type++) {
+	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 		if (v4l_type_is_overlay(type))
@@ -1148,7 +1148,7 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 		return ENOTTY;
 
 	buffer_info.clear();
-	for (type = 0; type <= V4L2_BUF_TYPE_SDR_CAPTURE; type++) {
+	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 		if (v4l_type_is_sdr(type))

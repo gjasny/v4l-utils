@@ -204,6 +204,8 @@ std::string cap2s(unsigned cap)
 		s += "\t\tRDS Output\n";
 	if (cap & V4L2_CAP_SDR_CAPTURE)
 		s += "\t\tSDR Capture\n";
+	if (cap & V4L2_CAP_SDR_OUTPUT)
+		s += "\t\tSDR Output\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
 	if (cap & V4L2_CAP_HW_FREQ_SEEK)
@@ -252,6 +254,8 @@ std::string buftype2s(int type)
 		return "Video Output Overlay";
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
 		return "SDR Capture";
+	case V4L2_BUF_TYPE_SDR_OUTPUT:
+		return "SDR Output";
 	case V4L2_BUF_TYPE_PRIVATE:
 		return "Private";
 	default:
@@ -485,7 +489,7 @@ static int testCap(struct node *node)
 			V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY;
 	const __u32 vbi_caps = V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
 			V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT;
-	const __u32 sdr_caps = V4L2_CAP_SDR_CAPTURE;
+	const __u32 sdr_caps = V4L2_CAP_SDR_CAPTURE | V4L2_CAP_SDR_OUTPUT;
 	const __u32 radio_caps = V4L2_CAP_RADIO | V4L2_CAP_MODULATOR;
 	const __u32 input_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OVERLAY |
 			V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
@@ -493,7 +497,8 @@ static int testCap(struct node *node)
 			V4L2_CAP_TUNER | V4L2_CAP_SDR_CAPTURE;
 	const __u32 output_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 			V4L2_CAP_VIDEO_OUTPUT_OVERLAY | V4L2_CAP_VBI_OUTPUT |
-			V4L2_CAP_SLICED_VBI_OUTPUT | V4L2_CAP_MODULATOR;
+			V4L2_CAP_SDR_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT |
+			V4L2_CAP_MODULATOR;
 	const __u32 overlay_caps = V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY;
 	const __u32 m2m_caps = V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE;
 	const __u32 io_caps = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
@@ -546,7 +551,7 @@ static int testCap(struct node *node)
 	fail_on_test(node->is_video && (dcaps & (vbi_caps | radio_caps | sdr_caps)));
 	fail_on_test(node->is_radio && (dcaps & (vbi_caps | video_caps | sdr_caps)));
 	fail_on_test(node->is_vbi && (dcaps & (video_caps | radio_caps | sdr_caps)));
-	fail_on_test(node->is_sdr && (dcaps & (video_caps | radio_caps | vbi_caps)));
+	fail_on_test(node->is_sdr && (dcaps & (video_caps | V4L2_CAP_RADIO | vbi_caps)));
 	if (node->is_m2m) {
 		fail_on_test((dcaps & input_caps) && (dcaps & output_caps));
 	} else {
@@ -913,7 +918,7 @@ int main(int argc, char **argv)
 	if (node.g_caps() & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VBI_OUTPUT |
 			 V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE |
 			 V4L2_CAP_VIDEO_M2M | V4L2_CAP_SLICED_VBI_OUTPUT |
-			 V4L2_CAP_RDS_OUTPUT))
+			 V4L2_CAP_RDS_OUTPUT | V4L2_CAP_SDR_OUTPUT))
 		node.can_output = true;
 	if (node.g_caps() & (V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 			 V4L2_CAP_VIDEO_M2M_MPLANE))
@@ -1050,7 +1055,7 @@ int main(int argc, char **argv)
 		node.controls.clear();
 		node.frmsizes.clear();
 		node.frmsizes_count.clear();
-		for (unsigned idx = 0; idx < V4L2_BUF_TYPE_SDR_CAPTURE + 1; idx++)
+		for (unsigned idx = 0; idx < V4L2_BUF_TYPE_LAST + 1; idx++)
 			node.buftype_pixfmts[idx].clear();
 
 		if (max_io) {
