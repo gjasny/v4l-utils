@@ -294,7 +294,7 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 			fail_on_test(g_bytesused(p) > g_length(p));
 		}
 		fail_on_test(!g_timestamp().tv_sec && !g_timestamp().tv_usec);
-		fail_on_test(!(g_flags() & (V4L2_BUF_FLAG_DONE | V4L2_BUF_FLAG_ERROR)));
+		fail_on_test(!(g_flags() & V4L2_BUF_FLAG_DONE));
 		fail_on_test((int)g_sequence() < seq.last_seq + 1);
 		if (v4l_type_is_video(g_type())) {
 			fail_on_test(g_field() == V4L2_FIELD_ALTERNATE);
