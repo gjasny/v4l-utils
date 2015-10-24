@@ -810,7 +810,7 @@ msgid "country_code"
 msgstr ""
 
 #: utils/dvb/dvbv5-scan.c:92 utils/dvb/dvbv5-zap.c:106
-msgid "Set the default country to be used (in ISO 3316-1 two letter code)"
+msgid "Set the default country to be used (in ISO 3166-1 two letter code)"
 msgstr ""
 
 #: utils/dvb/dvbv5-scan.c:254

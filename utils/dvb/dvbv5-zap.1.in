@@ -41,7 +41,7 @@ Select a different audio Packet ID (PID).
 The default is to use the first audio PID found at the \fBchannel-name-file\fR.
 .TP
 \fB\-C\fR, \fB\-\-cc\fR=\fIcountry_code\fR
-Set the default country to be used by the MPEG-TS parsers, in ISO 3316-1 two
+Set the default country to be used by the MPEG-TS parsers, in ISO 3166-1 two
 letter code. If not specified, the default charset is guessed from the
 locale environment variables.
 .TP

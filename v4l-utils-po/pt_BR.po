@@ -865,9 +865,9 @@ msgid "country_code"
 msgstr "código_país"
 
 #: utils/dvb/dvbv5-scan.c:92 utils/dvb/dvbv5-zap.c:106
-msgid "Set the default country to be used (in ISO 3316-1 two letter code)"
+msgid "Set the default country to be used (in ISO 3166-1 two letter code)"
 msgstr ""
-"Configura o país padrão a ser utilizado (em código de 2 letras ISO 3316-1)"
+"Configura o país padrão a ser utilizado (em código de 2 letras ISO 3166-1)"
 
 #: utils/dvb/dvbv5-scan.c:254
 msgid "openening pat demux failed"

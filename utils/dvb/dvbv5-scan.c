@@ -89,7 +89,7 @@ static const struct argp_option options[] = {
 	{"input-format", 'I',	N_("format"),		0, N_("Input format: CHANNEL, DVBV5 (default: DVBV5)"), 0},
 	{"output-format", 'O',	N_("format"),		0, N_("Output format: VDR, CHANNEL, ZAP, DVBV5 (default: DVBV5)"), 0},
 	{"dvbv3",	'3',	0,			0, N_("Use DVBv3 only"), 0},
-	{"cc",		'C',	N_("country_code"),	0, N_("Set the default country to be used (in ISO 3316-1 two letter code)"), 0},
+	{"cc",		'C',	N_("country_code"),	0, N_("Set the default country to be used (in ISO 3166-1 two letter code)"), 0},
 	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
 	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
 	{"version",	'V',	0,		0,	N_("Print program version"), -1},
