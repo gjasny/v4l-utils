@@ -804,13 +804,14 @@ static void do_release_buffers(buffers &b)
 }
 
 static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
-			 unsigned &count, unsigned &last, struct timeval &tv_last)
+			 unsigned &count, struct timespec &ts_last)
 {
 	char ch = '<';
 	int ret;
 	struct v4l2_plane planes[VIDEO_MAX_PLANES];
 	struct v4l2_buffer buf;
 	bool ignore_count_skip = false;
+	static unsigned last_sec;
 
 	memset(&buf, 0, sizeof(buf));
 	memset(planes, 0, sizeof(planes));
@@ -882,18 +883,23 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 	}
 
 	if (count == 0) {
-		gettimeofday(&tv_last, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &ts_last);
+		last_sec = 0;
 	} else {
-		struct timeval tv_cur, res;
+		struct timespec ts_cur, res;
 
-		gettimeofday(&tv_cur, NULL);
-		timersub(&tv_cur, &tv_last, &res);
-		if (res.tv_sec) {
-			unsigned fps = (100 * (count - last)) /
-				(res.tv_sec * 100 + res.tv_usec / 10000);
-			last = count;
-			tv_last = tv_cur;
-			fprintf(stderr, " %d fps\n", fps);
+		clock_gettime(CLOCK_MONOTONIC, &ts_cur);
+		res.tv_sec = ts_cur.tv_sec - ts_last.tv_sec;
+		res.tv_nsec = ts_cur.tv_nsec - ts_last.tv_nsec;
+		if (res.tv_nsec < 0) {
+			res.tv_sec--;
+			res.tv_nsec += 1000000000;
+		}
+		if (res.tv_sec > last_sec) {
+			unsigned fps = (10000 * count) /
+				(res.tv_sec * 100 + res.tv_nsec / 10000000);
+			last_sec = res.tv_sec;
+			fprintf(stderr, " %d.%02d fps\n", fps / 100, fps % 100);
 		}
 	}
 	count++;
@@ -914,8 +920,9 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 }
 
 static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
-			 unsigned &count, unsigned &last, struct timeval &tv_last)
+			 unsigned &count, struct timespec &ts_last)
 {
+	static unsigned last_sec;
 	struct v4l2_plane planes[VIDEO_MAX_PLANES];
 	struct v4l2_buffer buf;
 	int ret;
@@ -1001,18 +1008,23 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 	fflush(stderr);
 
 	if (count == 0) {
-		gettimeofday(&tv_last, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &ts_last);
+		last_sec = 0;
 	} else {
-		struct timeval tv_cur, res;
+		struct timespec ts_cur, res;
 
-		gettimeofday(&tv_cur, NULL);
-		timersub(&tv_cur, &tv_last, &res);
-		if (res.tv_sec) {
-			unsigned fps = (100 * (count - last)) /
-				(res.tv_sec * 100 + res.tv_usec / 10000);
-			last = count;
-			tv_last = tv_cur;
-			fprintf(stderr, " %d fps\n", fps);
+		clock_gettime(CLOCK_MONOTONIC, &ts_cur);
+		res.tv_sec = ts_cur.tv_sec - ts_last.tv_sec;
+		res.tv_nsec = ts_cur.tv_nsec - ts_last.tv_nsec;
+		if (res.tv_nsec < 0) {
+			res.tv_sec--;
+			res.tv_nsec += 1000000000;
+		}
+		if (res.tv_sec > last_sec) {
+			unsigned fps = (10000 * count) /
+				(res.tv_sec * 100 + res.tv_nsec / 10000000);
+			last_sec = res.tv_sec;
+			fprintf(stderr, " %d.%02d fps\n", fps / 100, fps % 100);
 		}
 	}
 	count++;
@@ -1069,8 +1081,8 @@ static void streaming_set_cap(int fd)
 	int fd_flags = fcntl(fd, F_GETFL);
 	buffers b(false);
 	bool use_poll = options[OptStreamPoll];
-	unsigned count = 0, last = 0;
-	struct timeval tv_last;
+	unsigned count = 0;
+	struct timespec ts_last;
 	bool eos = false;
 	FILE *fout = NULL;
 
@@ -1146,7 +1158,7 @@ static void streaming_set_cap(int fd)
 
 		if (FD_ISSET(fd, &read_fds)) {
 			r  = do_handle_cap(fd, b, fout, NULL,
-					   count, last, tv_last);
+					   count, ts_last);
 			if (r == -1)
 				break;
 		}
@@ -1168,8 +1180,8 @@ static void streaming_set_out(int fd)
 	buffers b(true);
 	int fd_flags = fcntl(fd, F_GETFL);
 	bool use_poll = options[OptStreamPoll];
-	unsigned count = 0, last = 0;
-	struct timeval tv_last;
+	unsigned count = 0;
+	struct timespec ts_last;
 	FILE *fin = NULL;
 
 	if (!(capabilities & (V4L2_CAP_VIDEO_OUTPUT |
@@ -1234,7 +1246,7 @@ static void streaming_set_out(int fd)
 			}
 		}
 		r = do_handle_out(fd, b, fin, NULL,
-				   count, last, tv_last);
+				   count, ts_last);
 		if (r == -1)
 			break;
 
@@ -1267,8 +1279,7 @@ static void streaming_set_m2m(int fd)
 	buffers in(false);
 	buffers out(true);
 	unsigned count[2] = { 0, 0 };
-	unsigned last[2] = { 0, 0 };
-	struct timeval tv_last[2];
+	struct timespec ts_last[2];
 	FILE *file[2] = {NULL, NULL};
 	fd_set fds[3];
 	fd_set *rd_fds = &fds[0]; /* for capture */
@@ -1357,7 +1368,7 @@ static void streaming_set_m2m(int fd)
 
 		if (rd_fds && FD_ISSET(fd, rd_fds)) {
 			r  = do_handle_cap(fd, in, file[CAP], NULL,
-					   count[CAP], last[CAP], tv_last[CAP]);
+					   count[CAP], ts_last[CAP]);
 			if (r < 0) {
 				rd_fds = NULL;
 				ex_fds = NULL;
@@ -1367,7 +1378,7 @@ static void streaming_set_m2m(int fd)
 
 		if (wr_fds && FD_ISSET(fd, wr_fds)) {
 			r  = do_handle_out(fd, out, file[OUT], NULL,
-					   count[OUT], last[OUT], tv_last[OUT]);
+					   count[OUT], ts_last[OUT]);
 			if (r < 0)  {
 				wr_fds = NULL;
 
@@ -1418,8 +1429,7 @@ static void streaming_set_cap2out(int fd, int out_fd)
 	buffers in(false);
 	buffers out(true);
 	unsigned count[2] = { 0, 0 };
-	unsigned last[2] = { 0, 0 };
-	struct timeval tv_last[2];
+	struct timespec ts_last[2];
 	FILE *file[2] = {NULL, NULL};
 	fd_set fds;
 	unsigned cnt = 0;
@@ -1526,7 +1536,7 @@ static void streaming_set_cap2out(int fd, int out_fd)
 			int index = -1;
 
 			r = do_handle_cap(fd, in, file[CAP], &index,
-					   count[CAP], last[CAP], tv_last[CAP]);
+					   count[CAP], ts_last[CAP]);
 			if (r)
 				fprintf(stderr, "handle cap %d\n", r);
 			if (!r) {
@@ -1544,7 +1554,7 @@ static void streaming_set_cap2out(int fd, int out_fd)
 				if (test_ioctl(fd, VIDIOC_QUERYBUF, &buf))
 					break;
 				r = do_handle_out(out_fd, out, file[OUT], &buf,
-					   count[OUT], last[OUT], tv_last[OUT]);
+					   count[OUT], ts_last[OUT]);
 			}
 			if (r)
 				fprintf(stderr, "handle out %d\n", r);
