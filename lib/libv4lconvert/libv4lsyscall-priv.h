@@ -59,11 +59,6 @@
 #define	_IOC_SIZE(cmd) IOCPARM_LEN(cmd)
 #define	MAP_ANONYMOUS MAP_ANON
 #define	MMAP2_PAGE_SHIFT 0
-typedef off_t __off_t;
-#endif
-
-#if defined(ANDROID)
-typedef off_t __off_t;
 #endif
 
 #undef SYS_OPEN
@@ -95,15 +90,15 @@ typedef off_t __off_t;
 #if defined(__FreeBSD__)
 #define SYS_MMAP(addr, len, prot, flags, fd, off) \
 	__syscall(SYS_mmap, (void *)(addr), (size_t)(len), \
-			(int)(prot), (int)(flags), (int)(fd), (__off_t)(off))
+			(int)(prot), (int)(flags), (int)(fd), (off_t)(off))
 #elif defined(__FreeBSD_kernel__)
 #define SYS_MMAP(addr, len, prot, flags, fd, off) \
 	syscall(SYS_mmap, (void *)(addr), (size_t)(len), \
-			(int)(prot), (int)(flags), (int)(fd), (__off_t)(off))
+			(int)(prot), (int)(flags), (int)(fd), (off_t)(off))
 #else
 #define SYS_MMAP(addr, len, prot, flags, fd, off) \
 	syscall(SYS_mmap2, (void *)(addr), (size_t)(len), \
-			(int)(prot), (int)(flags), (int)(fd), (__off_t)((off) >> MMAP2_PAGE_SHIFT))
+			(int)(prot), (int)(flags), (int)(fd), (off_t)((off) >> MMAP2_PAGE_SHIFT))
 #endif
 
 #define SYS_MUNMAP(addr, len) \

@@ -26,7 +26,6 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <libv4l1.h>
-#include "../libv4lconvert/libv4lsyscall-priv.h" /* for __off_t */
 
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -116,7 +115,7 @@ LIBV4L_PUBLIC ssize_t read(int fd, void *buffer, size_t n)
 }
 
 LIBV4L_PUBLIC void *mmap(void *start, size_t length, int prot, int flags, int fd,
-		__off_t offset)
+		off_t offset)
 {
 	return v4l1_mmap(start, length, prot, flags, fd, offset);
 }
