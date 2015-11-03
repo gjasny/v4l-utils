@@ -41,7 +41,9 @@
 #include <linux/ioctl.h>
 /* On 32 bits archs we always use mmap2, on 64 bits archs there is no mmap2 */
 #ifdef __NR_mmap2
+#if !defined(SYS_mmap2)
 #define	SYS_mmap2 __NR_mmap2
+#endif
 #define	MMAP2_PAGE_SHIFT 12
 #else
 #define	SYS_mmap2 SYS_mmap
