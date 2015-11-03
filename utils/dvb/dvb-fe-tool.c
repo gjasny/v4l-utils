@@ -276,9 +276,11 @@ int main(int argc, char *argv[])
 	struct dvb_v5_fe_parms *parms;
 	int fe_flags = O_RDWR;
 
+#ifdef ENABLE_NLS
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
+#endif
 
 	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, 0, 0);
 

@@ -461,9 +461,11 @@ int main(int argc, char **argv)
 		.args_doc = N_("<initial file>"),
 	};
 
+#ifdef ENABLE_NLS
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
+#endif
 
 	memset(&args, 0, sizeof(args));
 	args.sat_number = -1;

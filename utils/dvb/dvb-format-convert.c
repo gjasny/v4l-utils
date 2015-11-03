@@ -132,9 +132,11 @@ int main(int argc, char **argv)
 		.args_doc = N_("<input file> <output file>"),
 	};
 
+#ifdef ENABLE_NLS
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
+#endif
 
 	memset(&args, 0, sizeof(args));
 	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, &idx, &args);

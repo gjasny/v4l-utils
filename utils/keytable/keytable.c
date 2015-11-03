@@ -1467,9 +1467,11 @@ int main(int argc, char *argv[])
 	static struct sysfs_names *names;
 	struct rc_device	  rc_dev;
 
+#ifdef ENABLE_NLS
 	setlocale (LC_ALL, "");
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
+#endif
 
 	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, 0, 0);
 
