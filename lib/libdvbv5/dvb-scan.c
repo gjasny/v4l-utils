@@ -905,7 +905,7 @@ static void add_update_nit_1seg(struct dvb_table_nit *nit,
 	if (!tr->update)
 		return;
 
-	len = d->length / sizeof(d->partial_reception);
+       len = d->length / sizeof(*d->partial_reception);
 
 	for (i = 0; i < len; i++) {
 		if (tr->entry->service_id == d->partial_reception[i].service_id) {

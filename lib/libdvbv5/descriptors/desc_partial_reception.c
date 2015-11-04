@@ -38,7 +38,7 @@ int isdb_desc_partial_reception_init(struct dvb_v5_fe_parms *parms,
 
 	memcpy(d->partial_reception, p, d->length);
 
-	len = d->length / sizeof(d->partial_reception);
+       len = d->length / sizeof(*d->partial_reception);
 
 	for (i = 0; i < len; i++)
 		bswap16(d->partial_reception[i].service_id);
@@ -58,7 +58,7 @@ void isdb_desc_partial_reception_print(struct dvb_v5_fe_parms *parms, const stru
 	int i;
 	size_t len;
 
-	len = d->length / sizeof(d->partial_reception);
+       len = d->length / sizeof(*d->partial_reception);
 
 	for (i = 0; i < len; i++) {
 		dvb_loginfo("|           service ID[%d]     %d", i, d->partial_reception[i].service_id);
