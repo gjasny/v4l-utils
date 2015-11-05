@@ -719,6 +719,7 @@ static const struct {
 	const char *name;
 	enum v4l2_mbus_pixelcode code;
 } mbus_formats[] = {
+#include "media-bus-format-names.h"
 	{ "Y8", MEDIA_BUS_FMT_Y8_1X8},
 	{ "Y10", MEDIA_BUS_FMT_Y10_1X10 },
 	{ "Y12", MEDIA_BUS_FMT_Y12_1X12 },
