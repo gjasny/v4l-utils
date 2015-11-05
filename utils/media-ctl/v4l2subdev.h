@@ -279,4 +279,15 @@ const char *v4l2_subdev_field_to_string(enum v4l2_field field);
 enum v4l2_field v4l2_subdev_string_to_field(const char *string,
 					    unsigned int length);
 
+/**
+ * @brief Enumerate library supported media bus pixel codes.
+ * @param length - the number of the supported pixel codes
+ *
+ * Obtain pixel codes supported by libv4l2subdev.
+ *
+ * @return A pointer to the pixel code array
+ */
+const enum v4l2_mbus_pixelcode *v4l2_subdev_pixelcode_list(
+	unsigned int *length);
+
 #endif

@@ -821,3 +821,14 @@ enum v4l2_field v4l2_subdev_string_to_field(const char *string,
 
 	return fields[i].field;
 }
+
+static const enum v4l2_mbus_pixelcode mbus_codes[] = {
+#include "media-bus-format-codes.h"
+};
+
+const enum v4l2_mbus_pixelcode *v4l2_subdev_pixelcode_list(unsigned int *length)
+{
+	*length = ARRAY_SIZE(mbus_codes);
+
+	return mbus_codes;
+}
