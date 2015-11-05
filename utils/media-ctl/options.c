@@ -22,7 +22,9 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+#include <v4l2subdev.h>
 
 #include <linux/videodev2.h>
 
@@ -48,6 +50,7 @@ static void usage(const char *argv0)
 	printf("-h, --help		Show verbose help and exit\n");
 	printf("-i, --interactive	Modify links interactively\n");
 	printf("-l, --links links	Comma-separated list of link descriptors to setup\n");
+	printf("    --known-mbus-fmts	List known media bus formats and their numeric values\n");
 	printf("-p, --print-topology	Print the device topology\n");
 	printf("    --print-dot		Print the device topology as a dot graph\n");
 	printf("-r, --reset		Reset all links to inactive\n");
@@ -88,9 +91,10 @@ static void usage(const char *argv0)
 		       v4l2_subdev_field_to_string(i));
 }
 
-#define OPT_PRINT_DOT		256
-#define OPT_GET_FORMAT		257
-#define OPT_SET_DV		258
+#define OPT_PRINT_DOT			256
+#define OPT_GET_FORMAT			257
+#define OPT_SET_DV			258
+#define OPT_LIST_KNOWN_MBUS_FMTS	259
 
 static struct option opts[] = {
 	{"device", 1, 0, 'd'},
@@ -103,12 +107,34 @@ static struct option opts[] = {
 	{"help", 0, 0, 'h'},
 	{"interactive", 0, 0, 'i'},
 	{"links", 1, 0, 'l'},
+	{"known-mbus-fmts", 0, 0, OPT_LIST_KNOWN_MBUS_FMTS},
 	{"print-dot", 0, 0, OPT_PRINT_DOT},
 	{"print-topology", 0, 0, 'p'},
 	{"reset", 0, 0, 'r'},
 	{"verbose", 0, 0, 'v'},
 	{ },
 };
+
+static void list_known_mbus_formats(void)
+{
+	unsigned int ncodes;
+	const unsigned int *code = v4l2_subdev_pixelcode_list(&ncodes);
+
+	while (ncodes--) {
+		const char *str = v4l2_subdev_pixelcode_to_string(*code);
+		int spaces = 30 - (int)strlen(str);
+
+		if (*code == 0)
+			break;
+
+		if (spaces < 0)
+			spaces = 0;
+
+		printf("%s %*c 0x%4.4x\n", str, spaces, ' ', *code);
+
+		code++;
+	}
+}
 
 int parse_cmdline(int argc, char **argv)
 {
@@ -120,7 +146,8 @@ int parse_cmdline(int argc, char **argv)
 	}
 
 	/* parse options */
-	while ((opt = getopt_long(argc, argv, "d:e:f:hil:prvV:", opts, NULL)) != -1) {
+	while ((opt = getopt_long(argc, argv, "d:e:f:hil:prvV:",
+				  opts, NULL)) != -1) {
 		switch (opt) {
 		case 'd':
 			media_opts.devname = optarg;
@@ -176,6 +203,10 @@ int parse_cmdline(int argc, char **argv)
 		case OPT_SET_DV:
 			media_opts.dv_pad = optarg;
 			break;
+
+		case OPT_LIST_KNOWN_MBUS_FMTS:
+			list_known_mbus_formats();
+			exit(0);
 
 		default:
 			printf("Invalid option -%c\n", opt);
