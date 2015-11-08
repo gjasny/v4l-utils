@@ -662,6 +662,32 @@ bool ApplicationWindow::startStreaming()
 	return false;
 }
 
+void ApplicationWindow::calculateFps()
+{
+	static unsigned last_sec;
+
+	if (m_frame == 0) {
+		clock_gettime(CLOCK_MONOTONIC, &m_startTimestamp);
+		last_sec = 0;
+	} else {
+		struct timespec ts_cur, res;
+
+		clock_gettime(CLOCK_MONOTONIC, &ts_cur);
+		res.tv_sec = ts_cur.tv_sec - m_startTimestamp.tv_sec;
+		res.tv_nsec = ts_cur.tv_nsec - m_startTimestamp.tv_nsec;
+		if (res.tv_nsec < 0) {
+			res.tv_sec--;
+			res.tv_nsec += 1000000000;
+		}
+		if (res.tv_sec > last_sec) {
+			m_fps = (10000 * m_frame) /
+				(res.tv_sec * 100 + res.tv_nsec / 10000000);
+			m_fps /= 100.0;
+			last_sec = res.tv_sec;
+		}
+	}
+}
+
 void ApplicationWindow::capVbiFrame()
 {
 	cv4l_buffer buf(m_queue);
@@ -737,19 +763,9 @@ void ApplicationWindow::capVbiFrame()
 	m_vbiTab->slicedData(p, s / sizeof(p[0]));
 
 	QString status, curStatus;
-	struct timeval tv, res;
 
-	if (m_frame == 0)
-		gettimeofday(&m_tv, NULL);
-	gettimeofday(&tv, NULL);
-	timersub(&tv, &m_tv, &res);
-	if (res.tv_sec) {
-		m_fps = (100 * (m_frame - m_lastFrame)) /
-			(res.tv_sec * 100 + res.tv_usec / 10000);
-		m_lastFrame = m_frame;
-		m_tv = tv;
-	}
-	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
+	calculateFps();
+	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps, 0, 'f', 2, '0');
 	if (showFrames() && g_type() == V4L2_BUF_TYPE_VBI_CAPTURE)
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(),
@@ -842,19 +858,9 @@ void ApplicationWindow::capSdrFrame()
 		qbuf(buf);
 
 	QString status, curStatus;
-	struct timeval tv, res;
 
-	if (m_frame == 0)
-		gettimeofday(&m_tv, NULL);
-	gettimeofday(&tv, NULL);
-	timersub(&tv, &m_tv, &res);
-	if (res.tv_sec) {
-		m_fps = (100 * (m_frame - m_lastFrame)) /
-			(res.tv_sec * 100 + res.tv_usec / 10000);
-		m_lastFrame = m_frame;
-		m_tv = tv;
-	}
-	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
+	calculateFps();
+	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps, 0, 'f', 2, '0');
 	if (showFrames())
 		m_capture->setFrame(m_capImage->width(), m_capImage->height(),
 				    m_capDestFormat.fmt.pix.pixelformat, m_capImage->bits(),
@@ -912,20 +918,9 @@ void ApplicationWindow::outFrame()
 	}
 
 	QString status, curStatus;
-	struct timeval tv, res;
 
-	if (m_frame == 0)
-		gettimeofday(&m_tv, NULL);
-	gettimeofday(&tv, NULL);
-	timersub(&tv, &m_tv, &res);
-	if (res.tv_sec) {
-		m_fps = (100 * (m_frame - m_lastFrame)) /
-			(res.tv_sec * 100 + res.tv_usec / 10000);
-		m_lastFrame = m_frame;
-		m_tv = tv;
-	}
-
-	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps);
+	calculateFps();
+	status = QString("Frame: %1 Fps: %2").arg(++m_frame).arg(m_fps, 0, 'f', 2, '0');
 
 	if (m_capMethod == methodMmap || m_capMethod == methodUser) {
 		if (m_clear[buf.g_index()]) {
@@ -1040,22 +1035,13 @@ void ApplicationWindow::capFrame()
 		error(v4lconvert_get_error_message(m_convertData));
 
 	QString status, curStatus;
-	struct timeval tv, res;
 
-	if (m_frame == 0)
-		gettimeofday(&m_tv, NULL);
-	gettimeofday(&tv, NULL);
-	timersub(&tv, &m_tv, &res);
-	if (res.tv_sec) {
-		m_fps = (100 * (m_frame - m_lastFrame)) /
-			(res.tv_sec * 100 + res.tv_usec / 10000);
-		m_lastFrame = m_frame;
-		m_tv = tv;
-	}
+	calculateFps();
 
 	float wscale = m_capture->getHorScaleFactor();
 	float hscale = m_capture->getVertScaleFactor();
-	status = QString("Frame: %1 Fps: %2 Scale Factors: %3x%4").arg(++m_frame).arg(m_fps).arg(wscale).arg(hscale);
+	status = QString("Frame: %1 Fps: %2 Scale Factors: %3x%4").arg(++m_frame)
+			 .arg(m_fps, 0, 'f', 2, '0').arg(wscale).arg(hscale);
 	if (m_capMethod != methodRead)
 		status.append(QString(" SeqNr: %1").arg(buf.g_sequence()));
 #ifdef HAVE_ALSA
@@ -1236,7 +1222,7 @@ void ApplicationWindow::outStart(bool start)
 
 		g_output(out.index);
 		enum_output(out, true, out.index);
-		m_frame = m_lastFrame = m_fps = 0;
+		m_frame = m_fps = 0;
 		m_capMethod = m_genTab->capMethod();
 		g_fmt(fmt);
 		fmt.s_flags(0);
@@ -1343,7 +1329,7 @@ void ApplicationWindow::capStart(bool start)
 		m_capImage = NULL;
 		return;
 	}
-	m_frame = m_lastFrame = m_fps = 0;
+	m_frame = m_fps = 0;
 	m_capMethod = m_genTab->capMethod();
 
 	if (m_genTab->isSlicedVbi()) {

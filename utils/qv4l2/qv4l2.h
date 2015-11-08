@@ -220,6 +220,7 @@ private:
 	void subscribeCtrlEvents();
 	void refresh(unsigned ctrl_class);
 	void refresh();
+	void calculateFps();
 	void makeSnapshot(unsigned char *buf, unsigned size);
 	void setDefaults(unsigned ctrl_class);
 	int getVal(unsigned id);
@@ -289,9 +290,8 @@ private:
 	struct vbi_handle m_vbiHandle;
 	int m_sdrSize;
 	unsigned m_frame;
-	unsigned m_lastFrame;
-	unsigned m_fps;
-	struct timeval m_tv;
+	double m_fps;
+	struct timespec m_startTimestamp;
 	struct timeval m_totalAudioLatency;
 	QFile m_saveRaw;
 };
