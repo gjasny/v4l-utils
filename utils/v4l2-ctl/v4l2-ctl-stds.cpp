@@ -19,7 +19,9 @@
 static v4l2_std_id standard;		/* get_std/set_std */
 static struct v4l2_dv_timings dv_timings; /* set_dv_bt_timings/get_dv_timings/query_dv_timings */
 static bool query_and_set_dv_timings = false;
+static bool cleared_dv_timings = false;
 static int enum_and_set_dv_timings = -1;
+static unsigned set_dv_timing_opts;
 
 void stds_usage(void)
 {
@@ -50,7 +52,7 @@ void stds_usage(void)
 	       "		     to support NTSC frame rates like 29.97 or 59.94.\n"
 	       "		     Reduced fps flag takes effect only with reduced blanking version 2 and,\n"
 	       "		     when refresh rate is an integer multiple of 6, say, fps = 24,30,60 etc.\n"
-	       "                     or give a fully specified timings:\n"
+	       "                     or update all or part of the current timings fields:\n"
 	       "                     width=<width>,height=<height>,interlaced=<0/1>,\n"
 	       "                     polarities=<polarities mask>,pixelclock=<pixelclock Hz>,\n"
 	       "                     hfp=<horizontal front porch>,hs=<horizontal sync>,\n"
@@ -58,7 +60,8 @@ void stds_usage(void)
 	       "                     vs=<vertical sync>,vbp=<vertical back porch>,\n"
 	       "                     il_vfp=<vertical front porch for bottom field>,\n"
 	       "                     il_vs=<vertical sync for bottom field>,\n"
-	       "                     il_vbp=<vertical back porch for bottom field>,\n"
+	       "                     il_vbp=<vertical back porch for bottom field>.\n"
+	       "                     clear: start with zeroed timings instead of the current timings.\n"
 	       "                     set the digital video timings according to the BT 656/1120\n"
 	       "                     standard [VIDIOC_S_DV_TIMINGS]\n"
 	       "  --get-dv-timings   get the digital video timings in use [VIDIOC_G_DV_TIMINGS]\n"
@@ -157,6 +160,8 @@ enum timing_opts {
 	FPS,
 	REDUCED_BLANK,
 	REDUCED_FPS,
+	CLEAR,
+	MAX_TIMINGS_OPTIONS
 };
 
 static int parse_timing_subopt(char **subopt_str, int *value)
@@ -185,6 +190,7 @@ static int parse_timing_subopt(char **subopt_str, int *value)
 		"fps",
 		"reduced-blanking",
 		"reduced-fps",
+		"clear",
 		NULL
 	};
 
@@ -195,7 +201,7 @@ static int parse_timing_subopt(char **subopt_str, int *value)
 		stds_usage();
 		exit(1);
 	}
-	if (opt_str == NULL && opt != CVT && opt != GTF) {
+	if (opt_str == NULL && opt != CVT && opt != GTF && opt != CLEAR) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopt_list[opt]);
 		stds_usage();
@@ -262,8 +268,7 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 	}
 }
 
-static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings,
-		bool &query, int &enumerate)
+static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings)
 {
 	char *subs = optarg;
 	struct v4l2_bt_timings *bt = &dv_timings->bt;
@@ -272,7 +277,7 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 	dv_timings->type = V4L2_DV_BT_656_1120;
 
 	if (!strcmp(subs, "query")) {
-		query = true;
+		query_and_set_dv_timings = true;
 		return;
 	}
 
@@ -326,7 +331,7 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 			bt->il_vbackporch = opt_val;
 			break;
 		case INDEX:
-			enumerate = opt_val;
+			enum_and_set_dv_timings = opt_val;
 			break;
 		case CVT:
 			parse_cvt_gtf = true;
@@ -336,10 +341,17 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 			parse_cvt_gtf = true;
 			get_cvt_gtf_timings(subs, V4L2_DV_BT_STD_GTF, bt);
 			break;
+		case REDUCED_FPS:
+			bt->flags |= opt_val ? V4L2_DV_FL_REDUCED_FPS : 0;
+			break;
+		case CLEAR:
+			cleared_dv_timings = true;
+			break;
 		default:
 			stds_usage();
 			exit(1);
 		}
+		set_dv_timing_opts |= 1 << opt;
 	}
 }
 
@@ -470,8 +482,7 @@ void stds_cmd(int ch, char *optarg)
 		}
 		break;
 	case OptSetDvBtTimings:
-		parse_dv_bt_timings(optarg, &dv_timings,
-				query_and_set_dv_timings, enum_and_set_dv_timings);
+		parse_dv_bt_timings(optarg, &dv_timings);
 		break;
 	}
 }
@@ -493,18 +504,77 @@ void stds_set(int fd)
 
 	if (options[OptSetDvBtTimings]) {
 		struct v4l2_enum_dv_timings et;
+		struct v4l2_dv_timings new_dv_timings = {};
 
 		if (query_and_set_dv_timings)
-			doioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &dv_timings);
-		if (enum_and_set_dv_timings >= 0) {
+			doioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings);
+		else if (enum_and_set_dv_timings >= 0) {
 			memset(&et, 0, sizeof(et));
 			et.index = enum_and_set_dv_timings;
 			doioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &et);
-			dv_timings = et.timings;
+			new_dv_timings = et.timings;
+		} else {
+			struct v4l2_bt_timings *bt = &new_dv_timings.bt;
+			struct v4l2_bt_timings *update_bt = &dv_timings.bt;
+
+			if (!cleared_dv_timings)
+				doioctl(fd, VIDIOC_G_DV_TIMINGS, &new_dv_timings);
+			for (unsigned i = 0; i < MAX_TIMINGS_OPTIONS; i++) {
+				if (!(set_dv_timing_opts & (1 << i)))
+					continue;
+				switch (i) {
+				case WIDTH:
+					bt->width = update_bt->width;
+					break;
+				case HEIGHT:
+					bt->height = update_bt->height;
+					break;
+				case INTERLACED:
+					bt->interlaced = update_bt->interlaced;
+					break;
+				case POLARITIES:
+					bt->polarities = update_bt->polarities;
+					break;
+				case PIXEL_CLOCK:
+					bt->pixelclock = update_bt->pixelclock;
+					break;
+				case HORZ_FRONT_PORCH:
+					bt->hfrontporch = update_bt->hfrontporch;
+					break;
+				case HORZ_SYNC:
+					bt->hsync = update_bt->hsync;
+					break;
+				case HORZ_BACK_PORCH:
+					bt->hbackporch = update_bt->hbackporch;
+					break;
+				case VERT_FRONT_PORCH:
+					bt->vfrontporch = update_bt->vfrontporch;
+					break;
+				case VERT_SYNC:
+					bt->vsync = update_bt->vsync;
+					break;
+				case VERT_BACK_PORCH:
+					bt->vbackporch = update_bt->vbackporch;
+					break;
+				case IL_VERT_FRONT_PORCH:
+					bt->il_vfrontporch = update_bt->il_vfrontporch;
+					break;
+				case IL_VERT_SYNC:
+					bt->il_vsync = update_bt->il_vsync;
+					break;
+				case IL_VERT_BACK_PORCH:
+					bt->il_vbackporch = update_bt->il_vbackporch;
+					break;
+				case REDUCED_FPS:
+					bt->flags &= ~V4L2_DV_FL_REDUCED_FPS;
+					bt->flags |= update_bt->flags & V4L2_DV_FL_REDUCED_FPS;
+					break;
+				}
+			}
 		}
 		if (verbose)
-			print_dv_timings(&dv_timings);
-		if (doioctl(fd, VIDIOC_S_DV_TIMINGS, &dv_timings) >= 0) {
+			print_dv_timings(&new_dv_timings);
+		if (doioctl(fd, VIDIOC_S_DV_TIMINGS, &new_dv_timings) >= 0) {
 			printf("BT timings set\n");
 		}
 	}
