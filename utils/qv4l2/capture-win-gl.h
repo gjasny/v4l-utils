@@ -117,6 +117,9 @@ private:
 	unsigned char *m_frameData3;
 	QGLShaderProgram m_shaderProgram;
 	bool m_haveFramebufferSRGB;
+	bool m_hasGLRed;
+	unsigned m_glRed;
+	unsigned m_glRedGreen;
 	bool m_blending;
 	GLint m_mag_filter;
 	GLint m_min_filter;
