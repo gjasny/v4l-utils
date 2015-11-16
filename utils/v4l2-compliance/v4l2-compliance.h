@@ -49,7 +49,7 @@ struct test_query_ext_ctrl: v4l2_query_ext_ctrl {
 };
 
 typedef std::map<__u32, struct test_query_ext_ctrl> qctrl_map;
-typedef std::set<__u32> pixfmt_set;
+typedef std::map<__u32, __u32> pixfmt_map;
 typedef std::set<__u64> frmsizes_set;
 typedef std::map<__u32, unsigned> frmsizes_count_map;
 
@@ -81,7 +81,7 @@ struct base_node {
 	unsigned std_controls;
 	unsigned priv_controls;
 	__u32 fbuf_caps;
-	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
+	pixfmt_map buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
 	frmsizes_set frmsizes;
 	frmsizes_count_map frmsizes_count;
 	__u32 valid_buftypes;
@@ -93,7 +93,7 @@ struct node : public base_node, public cv4l_fd {
 	node() : base_node() {}
 
 	qctrl_map controls;
-	pixfmt_set buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
+	pixfmt_map buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
 };
 
 #define info(fmt, args...) 					\

@@ -36,10 +36,6 @@
 
 static struct cv4l_fmt cur_fmt;
 
-static const unsigned valid_output_flags =
-	V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_TSTAMP_SRC_MASK |
-	V4L2_BUF_FLAG_KEYFRAME | V4L2_BUF_FLAG_PFRAME | V4L2_BUF_FLAG_BFRAME;
-
 bool operator<(struct timeval const& n1, struct timeval const& n2)
 {
 	return n1.tv_sec < n2.tv_sec ||
@@ -643,7 +639,11 @@ int testReadWrite(struct node *node)
 static int captureBufs(struct node *node, const cv4l_queue &q,
 		const cv4l_queue &m2m_q, unsigned frame_count, bool use_poll)
 {
+	unsigned valid_output_flags =
+		V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_TSTAMP_SRC_MASK |
+		V4L2_BUF_FLAG_KEYFRAME | V4L2_BUF_FLAG_PFRAME | V4L2_BUF_FLAG_BFRAME;
 	int fd_flags = fcntl(node->g_fd(), F_GETFL);
+	cv4l_fmt fmt_q;
 	buffer buf(q);
 	unsigned count = frame_count;
 	int ret;
@@ -659,6 +659,17 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 	 * native size even while streaming.
 	 */
 	fail_on_test(testCanSetSameTimings(node));
+
+	node->g_fmt(fmt_q, q.g_type());
+	if (node->buftype_pixfmts[q.g_type()][fmt_q.g_pixelformat()] &
+		V4L2_FMT_FLAG_COMPRESSED)
+		valid_output_flags = V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+	if (node->is_m2m) {
+		node->g_fmt(fmt_q, m2m_q.g_type());
+		if (node->buftype_pixfmts[m2m_q.g_type()][fmt_q.g_pixelformat()] &
+			V4L2_FMT_FLAG_COMPRESSED)
+			valid_output_flags = V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+	}
 
 	if (use_poll)
 		fcntl(node->g_fd(), F_SETFL, fd_flags | O_NONBLOCK);

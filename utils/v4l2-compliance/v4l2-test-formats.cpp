@@ -221,7 +221,7 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 
 static int testEnumFormatsType(struct node *node, unsigned type)
 {
-	pixfmt_set &set = node->buftype_pixfmts[type];
+	pixfmt_map &map = node->buftype_pixfmts[type];
 	struct v4l2_fmtdesc fmtdesc;
 	unsigned f = 0;
 	int ret;
@@ -264,9 +264,9 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 			continue;
 		// Update define in v4l2-compliance.h if new buffer types are added
 		assert(type <= V4L2_BUF_TYPE_LAST);
-		if (set.find(fmtdesc.pixelformat) != set.end())
+		if (map.find(fmtdesc.pixelformat) != map.end())
 			return fail("duplicate format %08x\n", fmtdesc.pixelformat);
-		set.insert(fmtdesc.pixelformat);
+		map[fmtdesc.pixelformat] = fmtdesc.flags;
 	}
 	info("found %d formats for buftype %d\n", f, type);
 	return 0;
@@ -395,8 +395,8 @@ static void createInvalidFmt(struct v4l2_format &fmt, struct v4l2_clip &clip, un
 
 static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4l2_format &fmt, bool have_clip = false)
 {
-	pixfmt_set &set = node->buftype_pixfmts[type];
-	pixfmt_set *set_splane;
+	pixfmt_map &map = node->buftype_pixfmts[type];
+	pixfmt_map *map_splane;
 	struct v4l2_pix_format &pix = fmt.fmt.pix;
 	struct v4l2_pix_format_mplane &pix_mp = fmt.fmt.pix_mp;
 	struct v4l2_window &win = fmt.fmt.win;
@@ -422,7 +422,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		fail_on_test(!pix.width || !pix.height);
-		if (set.find(pix.pixelformat) == set.end())
+		if (map.find(pix.pixelformat) == map.end())
 			return fail("unknown pixelformat %08x for buftype %d\n",
 					pix.pixelformat, type);
 		fail_on_test(pix.bytesperline && pix.bytesperline < pix.width);
@@ -437,9 +437,9 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		fail_on_test(!pix_mp.width || !pix_mp.height);
-		set_splane = &node->buftype_pixfmts[type - 8];
-		if (set.find(pix_mp.pixelformat) == set.end() &&
-		    set_splane->find(pix_mp.pixelformat) == set_splane->end())
+		map_splane = &node->buftype_pixfmts[type - 8];
+		if (map.find(pix_mp.pixelformat) == map.end() &&
+		    map_splane->find(pix_mp.pixelformat) == map_splane->end())
 			return fail("unknown pixelformat %08x for buftype %d\n",
 					pix_mp.pixelformat, type);
 		if (!node->is_m2m)
@@ -532,7 +532,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		break;
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
-		if (set.find(sdr.pixelformat) == set.end())
+		if (map.find(sdr.pixelformat) == map.end())
 			return fail("unknown pixelformat %08x for buftype %d\n",
 					pix.pixelformat, type);
 		fail_on_test(sdr.buffersize == 0);
