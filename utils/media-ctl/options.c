@@ -97,6 +97,7 @@ static struct option opts[] = {
 	{"print-topology", 0, 0, 'p'},
 	{"reset", 0, 0, 'r'},
 	{"verbose", 0, 0, 'v'},
+	{ },
 };
 
 int parse_cmdline(int argc, char **argv)
