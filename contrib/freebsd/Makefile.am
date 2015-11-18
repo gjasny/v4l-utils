@@ -5,7 +5,7 @@ EXTRA_DIST = \
 sync-with-kernel:
 	rm -rf .pc
 
-	for i in input.h ivtv.h uinput.h videodev2.h v4l2-controls.h v4l2-common.h; do \
+	for i in input.h input-event-codes.h ivtv.h uinput.h videodev2.h v4l2-controls.h v4l2-common.h; do \
 	    mkdir -p include/linux/$$(dirname $$i); \
 	    cp $(KERNEL_DIR)/usr/include/linux/$$i include/linux/$$i; \
 	done
