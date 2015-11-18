@@ -422,12 +422,12 @@ static int print_control(int fd, struct v4l2_query_ext_ctrl &qctrl, int show_men
 		print_qctrl(fd, &qctrl, NULL, show_menus);
 		return 1;
 	}
-	ctrls.ctrl_class = V4L2_CTRL_ID2CLASS(qctrl.id);
+	ctrls.which = V4L2_CTRL_ID2WHICH(qctrl.id);
 	ctrls.count = 1;
 	ctrls.controls = &ext_ctrl;
 	if (qctrl.type == V4L2_CTRL_TYPE_INTEGER64 ||
 	    qctrl.type == V4L2_CTRL_TYPE_STRING ||
-	    (V4L2_CTRL_ID2CLASS(qctrl.id) != V4L2_CTRL_CLASS_USER &&
+	    (V4L2_CTRL_ID2WHICH(qctrl.id) != V4L2_CTRL_CLASS_USER &&
 	     qctrl.id < V4L2_CID_PRIVATE_BASE)) {
 		if (qctrl.type == V4L2_CTRL_TYPE_STRING) {
 		    ext_ctrl.size = qctrl.maximum + 1;
@@ -862,7 +862,7 @@ void common_set(int fd)
 					use_ext_ctrls = true;
 				ctrl.value = strtol(iter->second.c_str(), NULL, 0);
 			}
-			class2ctrls[V4L2_CTRL_ID2CLASS(ctrl.id)].push_back(ctrl);
+			class2ctrls[V4L2_CTRL_ID2WHICH(ctrl.id)].push_back(ctrl);
 		}
 		for (class2ctrls_map::iterator iter = class2ctrls.begin();
 				iter != class2ctrls.end(); ++iter) {
@@ -883,7 +883,7 @@ void common_set(int fd)
 				continue;
 			}
 			if (iter->second.size()) {
-				ctrls.ctrl_class = iter->first;
+				ctrls.which = iter->first;
 				ctrls.count = iter->second.size();
 				ctrls.controls = &iter->second[0];
 				if (doioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls)) {
@@ -989,7 +989,7 @@ void common_get(int fd)
 			}
 			if (V4L2_CTRL_DRIVER_PRIV(ctrl.id))
 				use_ext_ctrls = true;
-			class2ctrls[V4L2_CTRL_ID2CLASS(ctrl.id)].push_back(ctrl);
+			class2ctrls[V4L2_CTRL_ID2WHICH(ctrl.id)].push_back(ctrl);
 		}
 		for (class2ctrls_map::iterator iter = class2ctrls.begin();
 				iter != class2ctrls.end(); ++iter) {
@@ -1006,7 +1006,7 @@ void common_get(int fd)
 				continue;
 			}
 			if (iter->second.size()) {
-				ctrls.ctrl_class = iter->first;
+				ctrls.which = iter->first;
 				ctrls.count = iter->second.size();
 				ctrls.controls = &iter->second[0];
 				doioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls);

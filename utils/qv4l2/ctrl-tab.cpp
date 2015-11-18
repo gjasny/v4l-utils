@@ -75,7 +75,7 @@ void ApplicationWindow::addWidget(QGridLayout *grid, QWidget *w, Qt::Alignment a
 void ApplicationWindow::addTabs(int m_winWidth)
 {
 	v4l2_query_ext_ctrl qec = { 0 };
-	unsigned ctrl_class;
+	unsigned which;
 	unsigned i;
 	int id;
 
@@ -84,7 +84,7 @@ void ApplicationWindow::addTabs(int m_winWidth)
 		    (qec.flags & V4L2_CTRL_FLAG_DISABLED) == 0) {
 			m_ctrlMap[qec.id] = qec;
 			if (qec.type != V4L2_CTRL_TYPE_CTRL_CLASS)
-				m_classMap[V4L2_CTRL_ID2CLASS(qec.id)].push_back(qec.id);
+				m_classMap[V4L2_CTRL_ID2WHICH(qec.id)].push_back(qec.id);
 		}
 	}
 	if (m_classMap.find(V4L2_CTRL_CLASS_USER) != m_classMap.end() &&
@@ -108,8 +108,8 @@ void ApplicationWindow::addTabs(int m_winWidth)
 	for (ClassMap::iterator iter = m_classMap.begin(); iter != m_classMap.end(); ++iter) {
 		if (iter->second.size() == 0)
 			continue;
-		ctrl_class = V4L2_CTRL_ID2CLASS(iter->second[0]);
-		id = ctrl_class | 1;
+		which = V4L2_CTRL_ID2WHICH(iter->second[0]);
+		id = which | 1;
 		m_col = m_row = 0;
 		m_cols = 4;
 		for (int j = 0; j < m_cols; j++) {
@@ -167,7 +167,7 @@ void ApplicationWindow::addTabs(int m_winWidth)
 		  grid->setHorizontalSpacing(diff/5);
 		}
 		grid = new QGridLayout(w);
-		finishGrid(grid, ctrl_class);
+		finishGrid(grid, which);
 	}
 }
 
@@ -193,7 +193,7 @@ void ApplicationWindow::fixWidth(QGridLayout *grid)
 	}
 }
 
-void ApplicationWindow::finishGrid(QGridLayout *grid, unsigned ctrl_class)
+void ApplicationWindow::finishGrid(QGridLayout *grid, unsigned which)
 {
 	QWidget *w = grid->parentWidget();
 
@@ -208,36 +208,36 @@ void ApplicationWindow::finishGrid(QGridLayout *grid, unsigned ctrl_class)
 	QHBoxLayout *m_boxLayoutBottom = new QHBoxLayout(m_w);
 
 	QCheckBox *cbox = new QCheckBox("Update on change", w);
-	m_widgetMap[ctrl_class | CTRL_UPDATE_ON_CHANGE] = cbox;
+	m_widgetMap[which | CTRL_UPDATE_ON_CHANGE] = cbox;
 	addWidget(grid, cbox);
 	connect(cbox, SIGNAL(clicked()), m_sigMapper, SLOT(map()));
-	m_sigMapper->setMapping(cbox, ctrl_class | CTRL_UPDATE_ON_CHANGE);
+	m_sigMapper->setMapping(cbox, which | CTRL_UPDATE_ON_CHANGE);
 
 	grid->setColumnStretch(0, 1);
 
 	QPushButton *defBut = new QPushButton("Set Defaults", w);
-	m_widgetMap[ctrl_class | CTRL_DEFAULTS] = defBut;
+	m_widgetMap[which | CTRL_DEFAULTS] = defBut;
 	m_boxLayoutBottom->addWidget(defBut);
 	connect(defBut, SIGNAL(clicked()), m_sigMapper, SLOT(map()));
-	m_sigMapper->setMapping(defBut, ctrl_class | CTRL_DEFAULTS);
+	m_sigMapper->setMapping(defBut, which | CTRL_DEFAULTS);
 
 	QPushButton *refreshBut = new QPushButton("Refresh", w);
-	m_widgetMap[ctrl_class | CTRL_REFRESH] = refreshBut;
+	m_widgetMap[which | CTRL_REFRESH] = refreshBut;
 	m_boxLayoutBottom->addWidget(refreshBut);
 	connect(refreshBut, SIGNAL(clicked()), m_sigMapper, SLOT(map()));
-	m_sigMapper->setMapping(refreshBut, ctrl_class | CTRL_REFRESH);
+	m_sigMapper->setMapping(refreshBut, which | CTRL_REFRESH);
 
 	QPushButton *button = new QPushButton("Update", w);
-	m_widgetMap[ctrl_class | CTRL_UPDATE] = button;
+	m_widgetMap[which | CTRL_UPDATE] = button;
 	m_boxLayoutBottom->addWidget(button);
 	connect(button, SIGNAL(clicked()), m_sigMapper, SLOT(map()));
-	m_sigMapper->setMapping(button, ctrl_class | CTRL_UPDATE);
+	m_sigMapper->setMapping(button, which | CTRL_UPDATE);
 	connect(cbox, SIGNAL(toggled(bool)), button, SLOT(setDisabled(bool)));
 
 	grid->addWidget(m_w, m_row, 3, Qt::AlignRight);
 	cbox->setChecked(true);
 
-	refresh(ctrl_class);
+	refresh(which);
 }
 
 void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_query_ext_ctrl &qec)
@@ -384,20 +384,20 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_query_ext_ctrl &qe
 
 void ApplicationWindow::ctrlAction(int id)
 {
-	unsigned ctrl_class = V4L2_CTRL_ID2CLASS(id);
-	if (ctrl_class == V4L2_CID_PRIVATE_BASE)
-		ctrl_class = V4L2_CTRL_CLASS_USER;
+	unsigned which = V4L2_CTRL_ID2WHICH(id);
+	if (which == V4L2_CID_PRIVATE_BASE)
+		which = V4L2_CTRL_CLASS_USER;
 	unsigned ctrl = id & 0xffff;
-	QCheckBox *cbox = static_cast<QCheckBox *>(m_widgetMap[ctrl_class | CTRL_UPDATE_ON_CHANGE]);
+	QCheckBox *cbox = static_cast<QCheckBox *>(m_widgetMap[which | CTRL_UPDATE_ON_CHANGE]);
 	bool update = cbox->isChecked();
 	bool all = (ctrl == CTRL_UPDATE || (update && ctrl == CTRL_UPDATE_ON_CHANGE));
 
 	if (ctrl == CTRL_DEFAULTS) {
-		setDefaults(ctrl_class);
+		setDefaults(which);
 		return;
 	}
 	if (ctrl == CTRL_REFRESH) {
-		refresh(ctrl_class);
+		refresh(which);
 		return;
 	}
 	if (!update && !all && m_ctrlMap[id].type != V4L2_CTRL_TYPE_BUTTON)
@@ -406,13 +406,13 @@ void ApplicationWindow::ctrlAction(int id)
 		updateCtrl(id);
 		return;
 	}
-	unsigned count = m_classMap[ctrl_class].size();
+	unsigned count = m_classMap[which].size();
 	struct v4l2_ext_control *c = new v4l2_ext_control[count];
 	struct v4l2_ext_controls ctrls;
 	int idx = 0;
 
 	for (unsigned i = 0; i < count; i++) {
-		unsigned id = m_classMap[ctrl_class][i];
+		unsigned id = m_classMap[which][i];
 
 		if (m_ctrlMap[id].flags & CTRL_FLAG_DISABLED)
 			continue;
@@ -431,7 +431,7 @@ void ApplicationWindow::ctrlAction(int id)
 	}
 	memset(&ctrls, 0, sizeof(ctrls));
 	ctrls.count = idx;
-	ctrls.ctrl_class = ctrl_class;
+	ctrls.which = which;
 	ctrls.controls = c;
 	if (s_ext_ctrls(ctrls)) {
 		if (ctrls.error_idx >= ctrls.count) {
@@ -446,7 +446,7 @@ void ApplicationWindow::ctrlAction(int id)
 			free(c[i].string);
 	}
 	delete [] c;
-	refresh(ctrl_class);
+	refresh(which);
 }
 
 QString ApplicationWindow::getString(unsigned id)
@@ -536,9 +536,9 @@ int ApplicationWindow::getVal(unsigned id)
 
 void ApplicationWindow::updateCtrl(unsigned id)
 {
-	unsigned ctrl_class = V4L2_CTRL_ID2CLASS(id);
-	if (ctrl_class == V4L2_CID_PRIVATE_BASE)
-		ctrl_class = V4L2_CTRL_CLASS_USER;
+	unsigned which = V4L2_CTRL_ID2WHICH(id);
+	if (which == V4L2_CID_PRIVATE_BASE)
+		which = V4L2_CTRL_CLASS_USER;
 
 	if (m_ctrlMap[id].flags & CTRL_FLAG_DISABLED)
 		return;
@@ -559,13 +559,13 @@ void ApplicationWindow::updateCtrl(unsigned id)
 	else
 		c.value = getVal(id);
 	ctrls.count = 1;
-	ctrls.ctrl_class = ctrl_class;
+	ctrls.which = which;
 	ctrls.controls = &c;
 	if (s_ext_ctrls(ctrls)) {
 		errorCtrl(id, errno, c.value);
 	}
 	else if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_UPDATE)
-		refresh(ctrl_class);
+		refresh(which);
 	else {
 		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_INTEGER64)
 			setVal64(id, c.value64);
@@ -630,15 +630,15 @@ void ApplicationWindow::subscribeCtrlEvents()
 	}
 }
 
-void ApplicationWindow::refresh(unsigned ctrl_class)
+void ApplicationWindow::refresh(unsigned which)
 {
-	unsigned count = m_classMap[ctrl_class].size();
+	unsigned count = m_classMap[which].size();
 	unsigned cnt = 0;
 	struct v4l2_ext_control *c = new v4l2_ext_control[count];
 	struct v4l2_ext_controls ctrls;
 
 	for (unsigned i = 0; i < count; i++) {
-		unsigned id = c[cnt].id = m_classMap[ctrl_class][i];
+		unsigned id = c[cnt].id = m_classMap[which][i];
 		
 		c[cnt].size = 0;
 		c[cnt].reserved2[0] = 0;
@@ -654,7 +654,7 @@ void ApplicationWindow::refresh(unsigned ctrl_class)
 	}
 	memset(&ctrls, 0, sizeof(ctrls));
 	ctrls.count = cnt;
-	ctrls.ctrl_class = ctrl_class;
+	ctrls.which = which;
 	ctrls.controls = c;
 	if (g_ext_ctrls(ctrls)) {
 		if (ctrls.error_idx >= ctrls.count) {
@@ -867,10 +867,10 @@ void ApplicationWindow::setString(unsigned id, const QString &v)
 	setWhat(w, id, QString("'") + v + "'");
 }
 
-void ApplicationWindow::setDefaults(unsigned ctrl_class)
+void ApplicationWindow::setDefaults(unsigned which)
 {
-	for (unsigned i = 0; i < m_classMap[ctrl_class].size(); i++) {
-		unsigned id = m_classMap[ctrl_class][i];
+	for (unsigned i = 0; i < m_classMap[which].size(); i++) {
+		unsigned id = m_classMap[which][i];
 
 		if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_READ_ONLY)
 			continue;
@@ -883,7 +883,7 @@ void ApplicationWindow::setDefaults(unsigned ctrl_class)
 		else if (m_ctrlMap[id].type != V4L2_CTRL_TYPE_BUTTON)
 			setVal(id, m_ctrlMap[id].default_value);
 	}
-	ctrlAction(ctrl_class | CTRL_UPDATE);
+	ctrlAction(which | CTRL_UPDATE);
 }
 
 QString ApplicationWindow::getCtrlFlags(unsigned flags)

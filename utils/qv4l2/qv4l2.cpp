@@ -542,7 +542,7 @@ void ApplicationWindow::ctrlEvent()
 		c.string = (char *)malloc(c.size);
 		memset(&ctrls, 0, sizeof(ctrls));
 		ctrls.count = 1;
-		ctrls.ctrl_class = 0;
+		ctrls.which = 0;
 		ctrls.controls = &c;
 		if (!g_ext_ctrls(ctrls))
 			setString(ev.id, c.string);

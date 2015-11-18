@@ -182,7 +182,7 @@ int testQueryExtControls(struct node *node)
 	__u32 id = 0;
 	int result = 0;
 	int ret;
-	__u32 ctrl_class = 0;
+	__u32 which = 0;
 	bool found_ctrl_class = false;
 	unsigned user_controls = 0;
 	unsigned priv_user_controls = 0;
@@ -207,12 +207,12 @@ int testQueryExtControls(struct node *node)
 		id = qctrl.id;
 		if (id >= V4L2_CID_PRIVATE_BASE)
 			return fail("no V4L2_CID_PRIVATE_BASE allowed\n");
-		if (V4L2_CTRL_ID2CLASS(id) != ctrl_class) {
-			if (ctrl_class && !found_ctrl_class)
-				result = fail("missing control class for class %08x\n", ctrl_class);
-			if (ctrl_class && !class_count)
-				return fail("no controls in class %08x\n", ctrl_class);
-			ctrl_class = V4L2_CTRL_ID2CLASS(id);
+		if (V4L2_CTRL_ID2WHICH(id) != which) {
+			if (which && !found_ctrl_class)
+				result = fail("missing control class for class %08x\n", which);
+			if (which && !class_count)
+				return fail("no controls in class %08x\n", which);
+			which = V4L2_CTRL_ID2WHICH(id);
 			found_ctrl_class = false;
 			class_count = 0;
 		}
@@ -222,7 +222,7 @@ int testQueryExtControls(struct node *node)
 			class_count++;
 		}
 
-		if (ctrl_class == V4L2_CTRL_CLASS_USER &&
+		if (which == V4L2_CTRL_CLASS_USER &&
 		    qctrl.type != V4L2_CTRL_TYPE_INTEGER64 &&
 		    qctrl.type != V4L2_CTRL_TYPE_STRING &&
 		    qctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS) {
@@ -237,10 +237,10 @@ int testQueryExtControls(struct node *node)
 			node->std_controls++;
 		node->controls[qctrl.id] = qctrl;
 	}
-	if (ctrl_class && !found_ctrl_class)
-		result = fail("missing control class for class %08x\n", ctrl_class);
-	if (ctrl_class && !class_count)
-		return fail("no controls in class %08x\n", ctrl_class);
+	if (which && !found_ctrl_class)
+		result = fail("missing control class for class %08x\n", which);
+	if (which && !class_count)
+		return fail("no controls in class %08x\n", which);
 
 	for (id = V4L2_CID_BASE; id < V4L2_CID_LASTP1; id++) {
 		memset(&qctrl, 0xff, sizeof(qctrl));
@@ -562,7 +562,7 @@ int testExtendedControls(struct node *node)
 	std::vector<struct v4l2_ext_control> total_vec;
 	std::vector<struct v4l2_ext_control> class_vec;
 	struct v4l2_ext_control ctrl;
-	__u32 ctrl_class = 0;
+	__u32 which = 0;
 	bool multiple_classes = false;
 	int ret;
 
@@ -574,8 +574,8 @@ int testExtendedControls(struct node *node)
 		return fail("g_ext_ctrls does not support count == 0\n");
 	if (node->controls.empty())
 		return fail("g_ext_ctrls worked even when no controls are present\n");
-	if (ctrls.ctrl_class)
-		return fail("field ctrl_class changed\n");
+	if (ctrls.which)
+		return fail("field which changed\n");
 	if (ctrls.count)
 		return fail("field count changed\n");
 	if (check_0(ctrls.reserved, sizeof(ctrls.reserved)))
@@ -589,8 +589,8 @@ int testExtendedControls(struct node *node)
 		return fail("try_ext_ctrls does not support count == 0\n");
 	if (node->controls.empty())
 		return fail("try_ext_ctrls worked even when no controls are present\n");
-	if (ctrls.ctrl_class)
-		return fail("field ctrl_class changed\n");
+	if (ctrls.which)
+		return fail("field which changed\n");
 	if (ctrls.count)
 		return fail("field count changed\n");
 	if (check_0(ctrls.reserved, sizeof(ctrls.reserved)))
@@ -607,7 +607,7 @@ int testExtendedControls(struct node *node)
 		ctrls.count = 1;
 
 		// Either should work, so try both semi-randomly
-		ctrls.ctrl_class = (ctrl.id & 1) ? 0 : V4L2_CTRL_ID2CLASS(ctrl.id);
+		ctrls.which = (ctrl.id & 1) ? 0 : V4L2_CTRL_ID2WHICH(ctrl.id);
 		ctrls.controls = &ctrl;
 
 		// Get the current value
@@ -673,7 +673,7 @@ int testExtendedControls(struct node *node)
 		ctrl.string = NULL;
 	}
 
-	ctrls.ctrl_class = 0;
+	ctrls.which = 0;
 	ctrl.id = 0;
 	ctrl.size = 0;
 	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
@@ -709,9 +709,9 @@ int testExtendedControls(struct node *node)
 			ctrl.string = new char[ctrl.size];
 		}
 		ctrl.reserved2[0] = 0;
-		if (!ctrl_class)
-			ctrl_class = V4L2_CTRL_ID2CLASS(ctrl.id);
-		else if (ctrl_class != V4L2_CTRL_ID2CLASS(ctrl.id))
+		if (!which)
+			which = V4L2_CTRL_ID2WHICH(ctrl.id);
+		else if (which != V4L2_CTRL_ID2WHICH(ctrl.id))
 			multiple_classes = true;
 		total_vec.push_back(ctrl);
 	}
@@ -732,7 +732,7 @@ int testExtendedControls(struct node *node)
 	if (ret)
 		return fail("could not set all controls\n");
 
-	ctrls.ctrl_class = ctrl_class;
+	ctrls.which = which;
 	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
 	if (ret && !multiple_classes)
 		return fail("could not get all controls of a specific class\n");
