@@ -1915,7 +1915,8 @@ void GeneralTab::sourceChange(const v4l2_event &ev)
 		m_qryStandard->click();
 	else if (m_qryTimings && m_qryTimings->isEnabled())
 		m_qryTimings->click();
-	updateColorspace();
+	if (has_vid_cap() || has_vid_out())
+		updateColorspace();
 }
 
 void GeneralTab::updateFreq()
