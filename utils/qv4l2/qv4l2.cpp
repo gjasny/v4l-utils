@@ -616,7 +616,10 @@ bool ApplicationWindow::startStreaming()
 				cv4l_buffer buf;
 
 				m_queue.buffer_init(buf, i);
-				qbuf(buf); 
+				if (qbuf(buf)) {
+					error("Couldn't queue buffer\n");
+					goto error;
+				}
 			}
 		} else {
 			for (unsigned i = 0; i < m_queue.g_buffers(); i++) {
@@ -633,7 +636,10 @@ bool ApplicationWindow::startStreaming()
 					tpg_fillbuffer(&m_tpg, m_tpgStd, p, (u8 *)m_queue.g_dataptr(i, p));
 					buf.s_bytesused(buf.g_length(p), p);
 				}
-				qbuf(buf); 
+				if (qbuf(buf)) {
+					error("Couldn't queue buffer\n");
+					goto error;
+				}
 				tpg_update_mv_count(&m_tpg, V4L2_FIELD_HAS_T_OR_B(m_tpgField));
 			}
 		}
@@ -648,6 +654,7 @@ bool ApplicationWindow::startStreaming()
 		return true;
 	}
 
+error:
 	m_queue.free(this);
 	delete m_ctrlNotifier;
 	reopen(true);
@@ -720,7 +727,10 @@ void ApplicationWindow::capVbiFrame()
 			return;
 		}
 		if (buf.g_flags() & V4L2_BUF_FLAG_ERROR) {
-			qbuf(buf);
+			if (qbuf(buf)) {
+				error("Couldn't queue buffer\n");
+				m_capStartAct->setChecked(false);
+			}
 			return;
 		}
 		data = (__u8 *)m_queue.g_dataptr(buf.g_index(), 0);
@@ -757,8 +767,13 @@ void ApplicationWindow::capVbiFrame()
 		p = sdata;
 	}
 
-	if (m_capMethod != methodRead)
-		qbuf(buf);
+	if (m_capMethod != methodRead) {
+		if (qbuf(buf)) {
+			error("Couldn't queue buffer\n");
+			m_capStartAct->setChecked(false);
+			return;
+		}
+	}
 
 	m_vbiTab->slicedData(p, s / sizeof(p[0]));
 
@@ -810,7 +825,10 @@ void ApplicationWindow::capSdrFrame()
 			return;
 		}
 		if (buf.g_flags() & V4L2_BUF_FLAG_ERROR) {
-			qbuf(buf);
+			if (qbuf(buf)) {
+				error("Couldn't queue buffer\n");
+				m_capStartAct->setChecked(false);
+			}
 			return;
 		}
 		data = (__u8 *)m_queue.g_dataptr(buf.g_index(), 0);
@@ -854,8 +872,13 @@ void ApplicationWindow::capSdrFrame()
 		}
 	}
 
-	if (m_capMethod != methodRead)
-		qbuf(buf);
+	if (m_capMethod != methodRead) {
+		if (qbuf(buf)) {
+			error("Couldn't queue buffer\n");
+			m_capStartAct->setChecked(false);
+			return;
+		}
+	}
 
 	QString status, curStatus;
 
@@ -929,7 +952,11 @@ void ApplicationWindow::outFrame()
 			m_clear[buf.g_index()] = false;
 		}
 			
-		qbuf(buf);
+		if (qbuf(buf)) {
+			error("Couldn't queue buffer\n");
+			m_capStartAct->setChecked(false);
+			return;
+		}
 	}
 
 	curStatus = statusBar()->currentMessage();
@@ -994,7 +1021,10 @@ void ApplicationWindow::capFrame()
 		}
 		if (buf.g_flags() & V4L2_BUF_FLAG_ERROR) {
 			printf("error\n");
-			qbuf(buf);
+			if (qbuf(buf)) {
+				error("Couldn't queue buffer\n");
+				m_capStartAct->setChecked(false);
+			}
 			return;
 		}
 
@@ -1073,7 +1103,11 @@ void ApplicationWindow::capFrame()
 			m_clear[buf.g_index()] = false;
 		}
 			
-		qbuf(buf);
+		if (qbuf(buf)) {
+			error("Couldn't queue buffer\n");
+			m_capStartAct->setChecked(false);
+			return;
+		}
 	}
 
 	curStatus = statusBar()->currentMessage();
