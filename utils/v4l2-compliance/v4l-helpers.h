@@ -397,10 +397,17 @@ static inline __u32 v4l_determine_type(const struct v4l_fd *f)
 
 static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_blocking)
 {
-	struct v4l2_query_ext_ctrl qec = { V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND };
-	struct v4l2_ext_controls ec = { 0, 0 };
-	struct v4l2_queryctrl qc = { V4L2_CTRL_FLAG_NEXT_CTRL };
-	struct v4l2_selection sel = { 0 };
+	struct v4l2_query_ext_ctrl qec;
+	struct v4l2_ext_controls ec;
+	struct v4l2_queryctrl qc;
+	struct v4l2_selection sel;
+
+	memset(&qec, 0, sizeof(qec));
+	qec.flags = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
+	memset(&ec, 0, sizeof(ec));
+	memset(&qc, 0, sizeof(qc));
+	qc.flags = V4L2_CTRL_FLAG_NEXT_CTRL;
+	memset(&sel, 0, sizeof(sel));
 
 	f->fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
 
@@ -1676,8 +1683,12 @@ static inline int v4l_try_ext_ctrls(v4l_fd *f, struct v4l2_ext_controls *ec)
 	if (ec->count == 0)
 		return 0;
 	for (i = 0; i < ec->count; i++) {
-		struct v4l2_queryctrl qc = { ec->controls[i].id };
-		int ret = v4l_ioctl(f, VIDIOC_QUERYCTRL, &qc);
+		struct v4l2_queryctrl qc;
+		int ret;
+
+		memset(&qc, 0, sizeof(qc));
+		qc.id = ec->controls[i].id;
+		ret = v4l_ioctl(f, VIDIOC_QUERYCTRL, &qc);
 
 		if (ret || qc.type == V4L2_CTRL_TYPE_STRING ||
 			   qc.type == V4L2_CTRL_TYPE_INTEGER64) {
