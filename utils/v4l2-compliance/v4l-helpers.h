@@ -1642,7 +1642,7 @@ static inline int v4l_g_ext_ctrls(v4l_fd *f, struct v4l2_ext_controls *ec)
 	if (ec->count == 0)
 		return 0;
 	for (i = 0; i < ec->count; i++) {
-		struct v4l2_control c = { ec->controls[i].id };
+		struct v4l2_control c = { ec->controls[i].id, 0 };
 		int ret = v4l_ioctl(f, VIDIOC_G_CTRL, &c);
 
 		if (ret) {
