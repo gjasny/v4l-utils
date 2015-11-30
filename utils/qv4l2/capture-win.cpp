@@ -28,8 +28,8 @@
 
 #include <math.h>
 
-#define MIN_WIN_SIZE_WIDTH 160
-#define MIN_WIN_SIZE_HEIGHT 120
+#define MIN_WIN_SIZE_WIDTH 16
+#define MIN_WIN_SIZE_HEIGHT 12
 
 bool CaptureWin::m_enableScaling = true;
 double CaptureWin::m_pixelAspectRatio = 1.0;
