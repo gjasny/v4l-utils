@@ -1037,14 +1037,14 @@ int GeneralTab::addAudioDevice(void *hint, int deviceNum)
 	}
 
 	if ((iotype == NULL || strncmp(iotype, "Input", 5) == 0) && filterAudioDevice(deviceName)) {
+		m_audioInDeviceMap[m_audioInDevice->count()] = snd_device_name_get_hint(hint, "NAME");
 		m_audioInDevice->addItem(listName);
-		m_audioInDeviceMap[listName] = snd_device_name_get_hint(hint, "NAME");
 		added += AUDIO_ADD_READ;
 	}
 
 	if ((iotype == NULL || strncmp(iotype, "Output", 6) == 0)  && filterAudioDevice(deviceName)) {
+		m_audioOutDeviceMap[m_audioOutDevice->count()] = snd_device_name_get_hint(hint, "NAME");
 		m_audioOutDevice->addItem(listName);
-		m_audioOutDeviceMap[listName] = snd_device_name_get_hint(hint, "NAME");
 		added += AUDIO_ADD_WRITE;
 	}
 #endif
@@ -1064,8 +1064,8 @@ bool GeneralTab::createAudioDeviceList()
 
 	m_audioInDevice->addItem("None");
 	m_audioOutDevice->addItem("Default");
-	m_audioInDeviceMap["None"] = "None";
-	m_audioOutDeviceMap["Default"] = "default";
+	m_audioInDeviceMap[0] = "None";
+	m_audioOutDeviceMap[0] = "default";
 
 	int deviceNum = -1;
 	int audioDevices = 0;
@@ -2342,7 +2342,7 @@ QString GeneralTab::getAudioInDevice()
 	if (m_audioInDevice == NULL)
 		return NULL;
 
-	return m_audioInDeviceMap[m_audioInDevice->currentText()];
+	return m_audioInDeviceMap[m_audioInDevice->currentIndex()];
 }
 
 QString GeneralTab::getAudioOutDevice()
@@ -2350,7 +2350,7 @@ QString GeneralTab::getAudioOutDevice()
 	if (m_audioOutDevice == NULL)
 		return NULL;
 
-	return m_audioOutDeviceMap[m_audioOutDevice->currentText()];
+	return m_audioOutDeviceMap[m_audioOutDevice->currentIndex()];
 }
 
 void GeneralTab::setAudioDeviceBufferSize(int size)

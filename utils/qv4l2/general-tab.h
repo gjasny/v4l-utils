@@ -321,8 +321,8 @@ private:
 	bool m_has_interval;
 	int m_audioDeviceBufferSize;
 	static bool m_fullAudioName;
-	std::map<QString, QString> m_audioInDeviceMap;
-	std::map<QString, QString> m_audioOutDeviceMap;
+	std::map<int, QString> m_audioInDeviceMap;
+	std::map<int, QString> m_audioOutDeviceMap;
 
 	// General tab
 	QList<QGridLayout *> m_grids;
