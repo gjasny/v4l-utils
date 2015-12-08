@@ -24,6 +24,7 @@
 
 #include <linux/v4l2-subdev.h>
 
+struct media_device;
 struct media_entity;
 
 /**
