@@ -90,6 +90,9 @@ static void v4l2_subdev_print_format(struct media_entity *entity,
 	       v4l2_subdev_pixelcode_to_string(format.code),
 	       format.width, format.height);
 
+	if (format.field)
+		printf(" field:%s", v4l2_subdev_field_to_string(format.field));
+
 	ret = v4l2_subdev_get_selection(entity, &rect, pad,
 					V4L2_SEL_TGT_CROP_BOUNDS,
 					which);

@@ -24,7 +24,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <linux/videodev2.h>
+
 #include "options.h"
+#include "v4l2subdev.h"
 
 #define MEDIA_DEVNAME_DEFAULT		"/dev/media0"
 
@@ -34,6 +37,8 @@ struct media_options media_opts = {
 
 static void usage(const char *argv0)
 {
+	unsigned int i;
+
 	printf("%s [options]\n", argv0);
 	printf("-d, --device dev	Media device name (default: %s)\n", MEDIA_DEVNAME_DEFAULT);
 	printf("-e, --entity name	Print the device name associated with the given entity\n");
@@ -58,7 +63,7 @@ static void usage(const char *argv0)
 	printf("\tv4l2-properties = v4l2-property { ',' v4l2-property } ;\n");
 	printf("\tv4l2-property   = v4l2-mbusfmt | v4l2-crop | v4l2-interval\n");
 	printf("\t                | v4l2-compose | v4l2-interval ;\n");
-	printf("\tv4l2-mbusfmt    = 'fmt:' fcc '/' size ;\n");
+	printf("\tv4l2-mbusfmt    = 'fmt:' fcc '/' size ; { 'field:' v4l2-field ; }\n");
 	printf("\tv4l2-crop       = 'crop:' rectangle ;\n");
 	printf("\tv4l2-compose    = 'compose:' rectangle ;\n");
 	printf("\tv4l2-interval   = '@' numerator '/' denominator ;\n");
@@ -76,6 +81,11 @@ static void usage(const char *argv0)
 	printf("\theight          Image height in pixels\n");
 	printf("\tnumerator       Frame interval numerator\n");
 	printf("\tdenominator     Frame interval denominator\n");
+	printf("\tv4l2-field      One of the following:\n");
+
+	for (i = V4L2_FIELD_ANY; i <= V4L2_FIELD_INTERLACED_BT; i++)
+		printf("\t                %s\n",
+		       v4l2_subdev_field_to_string(i));
 }
 
 #define OPT_PRINT_DOT		256

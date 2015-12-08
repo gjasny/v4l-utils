@@ -473,6 +473,26 @@ static struct media_pad *v4l2_subdev_parse_pad_format(
 			continue;
 		}
 
+		if (strhazit("field:", &p)) {
+			enum v4l2_field field;
+
+			for (end = (char *)p; isalpha(*end) || *end == '-';
+			     ++end);
+
+			field = v4l2_subdev_string_to_field(p, end - p);
+			if (field == (enum v4l2_field)-1) {
+				media_dbg(media, "Invalid field value '%*s'\n",
+					  end - p, p);
+				*endp = (char *)p;
+				return NULL;
+			}
+
+			format->field = field;
+
+			p = end;
+			continue;
+		}
+
 		/*
 		 * Backward compatibility: crop rectangles can be specified
 		 * implicitly without the 'crop:' property name.
@@ -757,4 +777,48 @@ enum v4l2_mbus_pixelcode v4l2_subdev_string_to_pixelcode(const char *string,
 		return (enum v4l2_mbus_pixelcode)-1;
 
 	return mbus_formats[i].code;
+}
+
+static struct {
+	const char *name;
+	enum v4l2_field field;
+} fields[] = {
+	{ "any", V4L2_FIELD_ANY },
+	{ "none", V4L2_FIELD_NONE },
+	{ "top", V4L2_FIELD_TOP },
+	{ "bottom", V4L2_FIELD_BOTTOM },
+	{ "interlaced", V4L2_FIELD_INTERLACED },
+	{ "seq-tb", V4L2_FIELD_SEQ_TB },
+	{ "seq-bt", V4L2_FIELD_SEQ_BT },
+	{ "alternate", V4L2_FIELD_ALTERNATE },
+	{ "interlaced-tb", V4L2_FIELD_INTERLACED_TB },
+	{ "interlaced-bt", V4L2_FIELD_INTERLACED_BT },
+};
+
+const char *v4l2_subdev_field_to_string(enum v4l2_field field)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(fields); ++i) {
+		if (fields[i].field == field)
+			return fields[i].name;
+	}
+
+	return "unknown";
+}
+
+enum v4l2_field v4l2_subdev_string_to_field(const char *string,
+					    unsigned int length)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(fields); ++i) {
+		if (strncasecmp(fields[i].name, string, length) == 0)
+			break;
+	}
+
+	if (i == ARRAY_SIZE(fields))
+		return (enum v4l2_field)-1;
+
+	return fields[i].field;
 }

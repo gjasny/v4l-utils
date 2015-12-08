@@ -248,7 +248,7 @@ const char *v4l2_subdev_pixelcode_to_string(enum v4l2_mbus_pixelcode code);
 /**
  * @brief Parse string to media bus pixel code.
  * @param string - input string
- * @param lenght - length of the string
+ * @param length - length of the string
  *
  * Parse human readable string @a string to an media bus pixel code.
  *
@@ -256,4 +256,27 @@ const char *v4l2_subdev_pixelcode_to_string(enum v4l2_mbus_pixelcode code);
  */
 enum v4l2_mbus_pixelcode v4l2_subdev_string_to_pixelcode(const char *string,
 							 unsigned int length);
+
+/**
+ * @brief Convert a field order to string.
+ * @param field - field order
+ *
+ * Convert field order @a field to a human-readable string.
+ *
+ * @return A pointer to a string on success, NULL on failure.
+ */
+const char *v4l2_subdev_field_to_string(enum v4l2_field field);
+
+/**
+ * @brief Parse string to field order.
+ * @param string - input string
+ * @param length - length of the string
+ *
+ * Parse human readable string @a string to field order.
+ *
+ * @return field order on success, -1 on failure.
+ */
+enum v4l2_field v4l2_subdev_string_to_field(const char *string,
+					    unsigned int length);
+
 #endif
