@@ -769,14 +769,12 @@ enum v4l2_mbus_pixelcode v4l2_subdev_string_to_pixelcode(const char *string,
 	unsigned int i;
 
 	for (i = 0; i < ARRAY_SIZE(mbus_formats); ++i) {
-		if (strncmp(mbus_formats[i].name, string, length) == 0)
-			break;
+		if (strncmp(mbus_formats[i].name, string, length) == 0
+		    && mbus_formats[i].name[length] == '\0')
+			return mbus_formats[i].code;
 	}
 
-	if (i == ARRAY_SIZE(mbus_formats))
-		return (enum v4l2_mbus_pixelcode)-1;
-
-	return mbus_formats[i].code;
+	return (enum v4l2_mbus_pixelcode)-1;
 }
 
 static struct {
