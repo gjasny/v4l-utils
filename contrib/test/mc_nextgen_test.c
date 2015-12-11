@@ -246,7 +246,11 @@ static inline const char *ent_function(uint32_t function)
 static char *objname(uint32_t id, char delimiter)
 {
 	char *name;
-	asprintf(&name, "%s%c%d", gobj_type(id), delimiter, media_localid(id));
+	int ret;
+
+	ret = asprintf(&name, "%s%c%d", gobj_type(id), delimiter, media_localid(id));
+	if (ret < 0)
+		return NULL;
 
 	return name;
 }
@@ -323,6 +327,7 @@ static char *media_get_ifname_udev(struct media_v2_intf_devnode *devnode, struct
 	dev_t devnum;
 	const char *p;
 	char *name = NULL;
+	int ret;
 
 	if (udev == NULL)
 		return NULL;
@@ -332,7 +337,9 @@ static char *media_get_ifname_udev(struct media_v2_intf_devnode *devnode, struct
 	if (device) {
 		p = udev_device_get_devnode(device);
 		if (p) {
-			asprintf(&name, "%s", p);
+			ret = asprintf(&name, "%s", p);
+			if (ret < 0)
+				return NULL;
 		}
 	}
 
@@ -406,9 +413,11 @@ char *media_get_ifname(struct media_v2_interface *intf, void *priv)
 	 * libudev.
 	 */
 	if (major(devstat.st_rdev) == intf->devnode.major &&
-	    minor(devstat.st_rdev) == intf->devnode.minor)
-		asprintf(&name, "%s", devname);
-
+	    minor(devstat.st_rdev) == intf->devnode.minor) {
+		ret = asprintf(&name, "%s", devname);
+		if (ret < 0)
+			return NULL;
+	}
 	return name;
 }
 
