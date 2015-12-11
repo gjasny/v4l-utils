@@ -179,6 +179,7 @@ static inline const char *intf_type(uint32_t intf_type)
 		return "v4l2-subdev";
 	case MEDIA_INTF_T_V4L_SWRADIO:
 		return "swradio";
+#if 0
 	case MEDIA_INTF_T_ALSA_PCM_CAPTURE:
 		return "pcm-capture";
 	case MEDIA_INTF_T_ALSA_PCM_PLAYBACK:
@@ -191,6 +192,7 @@ static inline const char *intf_type(uint32_t intf_type)
 		return "rawmidi";
 	case MEDIA_INTF_T_ALSA_HWDEP:
 		return "hwdep";
+#endif
 	default:
 		return "unknown_intf";
 	}
@@ -201,7 +203,7 @@ static inline const char *ent_function(uint32_t function)
 	switch (function) {
 	case MEDIA_ENT_F_DTV_DEMOD:
 		return "DTV demod";
-	case MEDIA_ENT_F_MPEG_TS_DEMUX:
+	case MEDIA_ENT_F_TS_DEMUX:
 		return "MPEG-TS demux";
 	case MEDIA_ENT_F_DTV_CA:
 		return "DTV CA";
@@ -215,8 +217,14 @@ static inline const char *ent_function(uint32_t function)
 		return "Composite connector";
 	case MEDIA_ENT_F_CONN_TEST:
 		return "Test connector";
-	case MEDIA_ENT_F_IO:
-		return "I/O";
+	case MEDIA_ENT_F_IO_V4L:
+		return "V4L I/O";
+	case MEDIA_ENT_F_IO_DTV:
+		return "DTV I/O";
+	case MEDIA_ENT_F_IO_SWRADIO:
+		return "SDR I/O";
+	case MEDIA_ENT_F_IO_VBI:
+		return "VBI I/O";
 	case MEDIA_ENT_F_CAM_SENSOR:
 		return "Camera Sensor";
 	case MEDIA_ENT_F_FLASH:
@@ -450,6 +458,10 @@ static int media_init_graph_obj(struct media_controller *mc)
 	struct media_v2_topology *topo = &mc->topo;
 	int i, j, num_gobj;
 	int idx = 0;
+	struct media_v2_entity *entities = media_get_uptr(topo->ptr_entities);
+	struct media_v2_interface *interfaces = media_get_uptr(topo->ptr_interfaces);
+	struct media_v2_pad *pads = media_get_uptr(topo->ptr_pads);
+	struct media_v2_link *links = media_get_uptr(topo->ptr_links);
 
 	num_gobj = topo->num_entities + topo->num_interfaces
 		   + topo->num_pads + topo->num_links;
@@ -461,8 +473,8 @@ static int media_init_graph_obj(struct media_controller *mc)
 	}
 
 	for (i = 0; i < topo->num_pads; i++) {
-		mc->gobj[idx].id = topo->pads[i].id;
-		mc->gobj[idx].pad = &topo->pads[i];
+		mc->gobj[idx].id = pads[i].id;
+		mc->gobj[idx].pad = &pads[i];
 		idx++;
 	}
 
@@ -471,35 +483,35 @@ static int media_init_graph_obj(struct media_controller *mc)
 	for (i = 0; i < topo->num_entities; i++) {
 		struct graph_obj *gobj;
 
-		mc->gobj[idx].id = topo->entities[i].id;
-		mc->gobj[idx].entity = &topo->entities[i];
+		mc->gobj[idx].id = entities[i].id;
+		mc->gobj[idx].entity = &entities[i];
 
 		/* Set the parent object for the pads */
 		for (j = 0; j < topo->num_pads; j++) {
-			if (topo->pads[j].entity_id != topo->entities[i].id)
+			if (pads[j].entity_id != entities[i].id)
 				continue;
 
 			/* The data below is useful for Graphviz generation */
 			mc->gobj[idx].num_pads++;
-			if (topo->pads[j].flags & MEDIA_PAD_FL_SINK)
+			if (pads[j].flags & MEDIA_PAD_FL_SINK)
 				mc->gobj[idx].num_pad_sinks++;
-			if (topo->pads[j].flags & MEDIA_PAD_FL_SOURCE)
+			if (pads[j].flags & MEDIA_PAD_FL_SOURCE)
 				mc->gobj[idx].num_pad_sources++;
 
-			gobj = find_gobj(mc, topo->pads[j].id);
+			gobj = find_gobj(mc, pads[j].id);
 			if (gobj)
 				gobj->parent = &mc->gobj[idx];
 		}
 		idx++;
 	}
 	for (i = 0; i < topo->num_interfaces; i++) {
-		mc->gobj[idx].id = topo->interfaces[i].id;
-		mc->gobj[idx].intf = &topo->interfaces[i];
+		mc->gobj[idx].id = interfaces[i].id;
+		mc->gobj[idx].intf = &interfaces[i];
 		idx++;
 	}
 	for (i = 0; i < topo->num_links; i++) {
-		mc->gobj[idx].id = topo->links[i].id;
-		mc->gobj[idx].link = &topo->links[i];
+		mc->gobj[idx].id = links[i].id;
+		mc->gobj[idx].link = &links[i];
 		idx++;
 	}
 
@@ -520,10 +532,12 @@ static int media_init_graph_obj(struct media_controller *mc)
 static void media_show_entities(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
+	struct media_v2_entity *entities = media_get_uptr(topo->ptr_entities);
+	struct media_v2_pad *pads = media_get_uptr(topo->ptr_pads);
 	int i, j;
 
 	for (i = 0; i < topo->num_entities; i++) {
-		struct media_v2_entity *entity = &topo->entities[i];
+		struct media_v2_entity *entity = &entities[i];
 		char *obj;
 		int num_pads = 0;
 		int num_sinks = 0;
@@ -538,13 +552,13 @@ static void media_show_entities(struct media_controller *mc)
 		 * about performance.
 		 */
 		for (j = 0; j < topo->num_pads; j++) {
-			if (topo->pads[j].entity_id != entity->id)
+			if (pads[j].entity_id != entity->id)
 				continue;
 
 			num_pads++;
-			if (topo->pads[j].flags & MEDIA_PAD_FL_SINK)
+			if (pads[j].flags & MEDIA_PAD_FL_SINK)
 				num_sinks++;
-			if (topo->pads[j].flags & MEDIA_PAD_FL_SOURCE)
+			if (pads[j].flags & MEDIA_PAD_FL_SOURCE)
 				num_sources++;
 		}
 
@@ -565,13 +579,14 @@ static void media_show_entities(struct media_controller *mc)
 static void media_show_interfaces(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
+	struct media_v2_interface *interfaces = media_get_uptr(topo->ptr_interfaces);
 	void *priv = NULL;
 	int i;
 
 	media_open_ifname(&priv);
 	for (i = 0; i < topo->num_interfaces; i++) {
 		char *obj, *devname;
-		struct media_v2_interface *intf = &topo->interfaces[i];
+		struct media_v2_interface *intf = &interfaces[i];
 
 		obj = objname(intf->id, '#');
 		devname = media_get_ifname(intf, priv);
@@ -587,10 +602,11 @@ static void media_show_interfaces(struct media_controller *mc)
 static void media_show_links(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
+	struct media_v2_link *links = media_get_uptr(topo->ptr_links);
 	int i, color;
 
 	for (i = 0; i < topo->num_links; i++) {
-		struct media_v2_link *link = &topo->links[i];
+		struct media_v2_link *link = &links[i];
 		char *obj, *source_obj, *sink_obj;
 
 		color = BLUE;
@@ -655,24 +671,24 @@ static int media_get_topology(struct media_controller *mc)
 	}
 
 	do {
-		topo->entities = calloc(topo->num_entities,
-					sizeof(*topo->entities));
-		if (topo->num_entities && !topo->entities)
+		topo->ptr_entities = (__u64)calloc(topo->num_entities,
+					sizeof(struct media_v2_entity));
+		if (topo->num_entities && !topo->ptr_entities)
 			goto error;
 
-		topo->interfaces = calloc(topo->num_interfaces,
-					  sizeof(*topo->interfaces));
-		if (topo->num_interfaces && !topo->interfaces)
+		topo->ptr_interfaces = (__u64)calloc(topo->num_interfaces,
+					  sizeof(struct media_v2_interface));
+		if (topo->num_interfaces && !topo->ptr_interfaces)
 			goto error;
 
-		topo->pads = calloc(topo->num_pads,
-				   sizeof(*topo->pads));
-		if (topo->num_pads && !topo->pads)
+		topo->ptr_pads = (__u64)calloc(topo->num_pads,
+				   sizeof(struct media_v2_pad));
+		if (topo->num_pads && !topo->ptr_pads)
 			goto error;
 
-		topo->links = calloc(topo->num_links,
-				     sizeof(*topo->links));
-		if (topo->num_links && !topo->links)
+		topo->ptr_links = (__u64)calloc(topo->num_links,
+				     sizeof(struct media_v2_link));
+		if (topo->num_links && !topo->ptr_links)
 			goto error;
 
 		ret = ioctl(mc->fd, MEDIA_IOC_G_TOPOLOGY, topo);
@@ -686,10 +702,10 @@ static int media_get_topology(struct media_controller *mc)
 				 * topology changes should be rare, this
 				 * should do the work
 				 */
-				free(topo->entities);
-				free(topo->interfaces);
-				free(topo->pads);
-				free(topo->links);
+				free((void *)topo->ptr_entities);
+				free((void *)topo->ptr_interfaces);
+				free((void *)topo->ptr_pads);
+				free((void *)topo->ptr_links);
 				topology_version = topo->topology_version;
 				continue;
 			}
@@ -703,19 +719,19 @@ static int media_get_topology(struct media_controller *mc)
 	return 0;
 
 error:
-	if (topo->entities)
-		free(topo->entities);
-	if (topo->interfaces)
-		free(topo->interfaces);
-	if (topo->pads)
-		free(topo->pads);
-	if (topo->links)
-		free(topo->links);
+	if (topo->ptr_entities)
+		free((void *)topo->ptr_entities);
+	if (topo->ptr_interfaces)
+		free((void *)topo->ptr_interfaces);
+	if (topo->ptr_pads)
+		free((void *)topo->ptr_pads);
+	if (topo->ptr_links)
+		free((void *)topo->ptr_links);
 
-	topo->entities = NULL;
-	topo->interfaces = NULL;
-	topo->pads = NULL;
-	topo->links = NULL;
+	topo->ptr_entities = 0;
+	topo->ptr_interfaces = 0;
+	topo->ptr_pads = 0;
+	topo->ptr_links = 0;
 
 	return ret;
 }
@@ -743,14 +759,14 @@ static int mc_close(struct media_controller *mc)
 
 	if (mc->gobj)
 		free(mc->gobj);
-	if (mc->topo.entities)
-		free(mc->topo.entities);
-	if (mc->topo.interfaces)
-		free(mc->topo.interfaces);
-	if (mc->topo.pads)
-		free(mc->topo.pads);
-	if (mc->topo.links)
-		free(mc->topo.links);
+	if (mc->topo.ptr_entities)
+		free((void *)mc->topo.ptr_entities);
+	if (mc->topo.ptr_interfaces)
+		free((void *)mc->topo.ptr_interfaces);
+	if (mc->topo.ptr_pads)
+		free((void *)mc->topo.ptr_pads);
+	if (mc->topo.ptr_links)
+		free((void *)mc->topo.ptr_links);
 	free(mc);
 
 	return ret;
@@ -768,6 +784,11 @@ static int mc_close(struct media_controller *mc)
 static void media_show_graphviz(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
+	struct media_v2_entity *entities = media_get_uptr(topo->ptr_entities);
+	struct media_v2_interface *interfaces = media_get_uptr(topo->ptr_interfaces);
+	struct media_v2_pad *pads = media_get_uptr(topo->ptr_pads);
+	struct media_v2_link *links = media_get_uptr(topo->ptr_links);
+
 	int i, j;
 	char *obj;
 	void *priv = NULL;
@@ -776,7 +797,7 @@ static void media_show_graphviz(struct media_controller *mc)
 
 	 media_open_ifname(&priv);
 	for (i = 0; i < topo->num_interfaces; i++) {
-		struct media_v2_interface *intf = &topo->interfaces[i];
+		struct media_v2_interface *intf = &interfaces[i];
 		char *devname;
 
 		obj = objname(intf->id, '_');
@@ -791,7 +812,7 @@ static void media_show_graphviz(struct media_controller *mc)
 
 
 	for (i = 0; i < topo->num_entities; i++) {
-		struct media_v2_entity *entity = &topo->entities[i];
+		struct media_v2_entity *entity = &entities[i];
 		struct graph_obj *gobj;
 		int first, idx;
 
@@ -807,16 +828,16 @@ static void media_show_graphviz(struct media_controller *mc)
 			idx = 0;
 			printf("{");
 			for (j = 0; j < topo->num_pads; j++) {
-				if (topo->pads[j].entity_id != entity->id)
+				if (pads[j].entity_id != entity->id)
 					continue;
 
-				if (topo->pads[j].flags & MEDIA_PAD_FL_SINK) {
+				if (pads[j].flags & MEDIA_PAD_FL_SINK) {
 					if (first)
 						first = 0;
 					else
 						printf (" | ");
 
-					obj = objname(topo->pads[j].id, '_');
+					obj = objname(pads[j].id, '_');
 					printf("<%s> %d", obj, idx);
 					free(obj);
 				}
@@ -833,16 +854,16 @@ static void media_show_graphviz(struct media_controller *mc)
 			idx = 0;
 			printf(" | {");
 			for (j = 0; j < topo->num_pads; j++) {
-				if (topo->pads[j].entity_id != entity->id)
+				if (pads[j].entity_id != entity->id)
 					continue;
 
-				if (topo->pads[j].flags & MEDIA_PAD_FL_SOURCE) {
+				if (pads[j].flags & MEDIA_PAD_FL_SOURCE) {
 					if (first)
 						first = 0;
 					else
 						printf (" | ");
 
-					obj = objname(topo->pads[j].id, '_');
+					obj = objname(pads[j].id, '_');
 					printf("<%s> %d", obj, idx);
 					free(obj);
 				}
@@ -860,7 +881,7 @@ static void media_show_graphviz(struct media_controller *mc)
 	}
 
 	for (i = 0; i < topo->num_links; i++) {
-		struct media_v2_link *link = &topo->links[i];
+		struct media_v2_link *link = &links[i];
 		char *source_pad_obj, *sink_pad_obj;
 		char *source_ent_obj, *sink_ent_obj;
 
