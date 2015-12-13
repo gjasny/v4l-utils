@@ -51,7 +51,7 @@ static const struct argp_option options[] = {
 	{"data-links",	'l',	0,		0,	"show data links", 0},
 	{"intf-links",	'I',	0,		0,	"show interface links", 0},
 	{"dot",		'D',	0,		0,	"show in Graphviz format", 0},
-
+	{"max_tsout",	't',	"NUM_TSOUT",	0,	"max number of DTV TS out entities/interfaces in graphviz output (default: 5)", 0},
 	{"device",	'd',	"DEVICE",	0,	"media controller device (default: /dev/media0", 0},
 
 	{"help",        '?',	0,		0,	"Give this help list", -1},
@@ -65,6 +65,7 @@ static int show_interfaces = 0;
 static int show_data_links = 0;
 static int show_intf_links = 0;
 static int show_dot = 0;
+static int max_tsout = 5;
 static char media_device[256] = "/dev/media0";
 
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
@@ -819,14 +820,27 @@ static void media_show_graphviz(struct media_controller *mc)
 	}
 	media_close_ifname(priv);
 
+#define DEMUX_TSOUT	"demux-tsout #"
+#define DVR_TSOUT	"dvr-tsout #"
 
 	for (i = 0; i < topo->num_entities; i++) {
 		struct media_v2_entity *entity = &entities[i];
 		struct graph_obj *gobj;
 		int first, idx;
 
-		gobj = find_gobj(mc, entity->id);
+		if (max_tsout) {
+			int i = 0;
 
+			if (!strncmp(entity->name, DEMUX_TSOUT, strlen(DEMUX_TSOUT)))
+				i = atoi(&entity->name[strlen(DEMUX_TSOUT)]);
+			else if (!strncmp(entity->name, DVR_TSOUT, strlen(DVR_TSOUT)))
+				i = atoi(&entity->name[strlen(DVR_TSOUT)]);
+
+			if (i >= max_tsout)
+				continue;
+		}
+
+		gobj = find_gobj(mc, entity->id);
 		obj = objname(entity->id, '_');
 		printf("\t%s [label=\"{", obj);
 		free(obj);
@@ -857,14 +871,21 @@ static void media_show_graphviz(struct media_controller *mc)
 		obj = objname(entity->id, '_');
 		printf("%s\\n%s\\n%s", obj, ent_function(entity->function), entity->name);
 		free(obj);
+
 		/* Print the source pads */
 		if (!gobj || gobj->num_pad_sources) {
+			int pad_count = 0;
 			first = 1;
 			idx = 0;
 			printf(" | {");
+
 			for (j = 0; j < topo->num_pads; j++) {
 				if (pads[j].entity_id != entity->id)
 					continue;
+
+				if (entity->function == MEDIA_ENT_F_TS_DEMUX && pad_count > max_tsout)
+					continue;
+				pad_count++;
 
 				if (pads[j].flags & MEDIA_PAD_FL_SOURCE) {
 					if (first)
@@ -935,6 +956,17 @@ static void media_show_graphviz(struct media_controller *mc)
 			}
 			sink = parent->entity;
 
+			if (max_tsout) {
+				int i = 0;
+
+				if (!strncmp(sink->name, DEMUX_TSOUT, strlen(DEMUX_TSOUT)))
+					i = atoi(&sink->name[strlen(DEMUX_TSOUT)]);
+				else if (!strncmp(sink->name, DVR_TSOUT, strlen(DVR_TSOUT)))
+					i = atoi(&sink->name[strlen(DVR_TSOUT)]);
+				if (i >= max_tsout)
+					continue;
+			}
+
 			source_ent_obj = objname(source->id, '_');
 			sink_ent_obj = objname(sink->id, '_');
 
@@ -952,8 +984,31 @@ static void media_show_graphviz(struct media_controller *mc)
 		}
 
 		if (media_type(link->source_id) == MEDIA_GRAPH_INTF_DEVNODE) {
-			source_ent_obj = objname(link->source_id, '_');
+			struct media_v2_entity *sink;
+			struct graph_obj *gobj;
+
 			sink_ent_obj = objname(link->sink_id, '_');
+			gobj = find_gobj(mc, link->sink_id);
+			if (!gobj) {
+				show(RED, 0, "Graph object for %s not found\n",
+				     sink_ent_obj);
+				free(sink_ent_obj);
+				continue;
+			}
+			sink = gobj->entity;
+
+			if (max_tsout) {
+				int i = 0;
+
+				if (!strncmp(sink->name, DEMUX_TSOUT, strlen(DEMUX_TSOUT)))
+					i = atoi(&sink->name[strlen(DEMUX_TSOUT)]);
+				else if (!strncmp(sink->name, DVR_TSOUT, strlen(DVR_TSOUT)))
+					i = atoi(&sink->name[strlen(DVR_TSOUT)]);
+				if (i >= max_tsout)
+					continue;
+			}
+
+			source_ent_obj = objname(link->source_id, '_');
 
 			printf("\t%s -> %s [" STYLE_INTF_LINK,
 			       source_ent_obj, sink_ent_obj);
