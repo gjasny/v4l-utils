@@ -92,6 +92,10 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		media_device[sizeof(media_device)-1] = '\0';
 		break;
 
+	case 't':
+		max_tsout = atoi(arg);
+		break;
+
 	case '?':
 		argp_state_help(state, state->out_stream,
 				ARGP_HELP_SHORT_USAGE | ARGP_HELP_LONG
