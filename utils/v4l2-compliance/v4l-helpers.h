@@ -403,10 +403,10 @@ static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_block
 	struct v4l2_selection sel;
 
 	memset(&qec, 0, sizeof(qec));
-	qec.flags = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
+	qec.id = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
 	memset(&ec, 0, sizeof(ec));
 	memset(&qc, 0, sizeof(qc));
-	qc.flags = V4L2_CTRL_FLAG_NEXT_CTRL;
+	qc.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	memset(&sel, 0, sizeof(sel));
 
 	f->fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
