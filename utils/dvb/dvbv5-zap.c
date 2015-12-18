@@ -855,6 +855,13 @@ int main(int argc, char **argv)
 		goto err;
 
 	if (args.exit_after_tuning) {
+		signal(SIGTERM, do_timeout);
+		signal(SIGINT, do_timeout);
+		if (args.timeout > 0) {
+			signal(SIGALRM, do_timeout);
+			alarm(args.timeout);
+		}
+
 		err = 0;
 		check_frontend(&args, parms);
 		goto err;
