@@ -959,10 +959,10 @@ int main(int argc, char **argv)
 			goto err;
 	}
 
-	signal(SIGALRM, do_timeout);
 	signal(SIGTERM, do_timeout);
+	signal(SIGINT, do_timeout);
 	if (args.timeout > 0) {
-		signal(SIGINT, do_timeout);
+		signal(SIGALRM, do_timeout);
 		alarm(args.timeout);
 	}
 
