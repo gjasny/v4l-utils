@@ -737,6 +737,16 @@ int do_traffic_monitor(struct arguments *args,
 	return 0;
 }
 
+static void set_signals(struct arguments *args)
+{
+	signal(SIGTERM, do_timeout);
+	signal(SIGINT, do_timeout);
+	if (args->timeout > 0) {
+		signal(SIGALRM, do_timeout);
+		alarm(args->timeout);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	struct arguments args;
@@ -855,26 +865,14 @@ int main(int argc, char **argv)
 		goto err;
 
 	if (args.exit_after_tuning) {
-		signal(SIGTERM, do_timeout);
-		signal(SIGINT, do_timeout);
-		if (args.timeout > 0) {
-			signal(SIGALRM, do_timeout);
-			alarm(args.timeout);
-		}
-
+		set_signals(&args);
 		err = 0;
 		check_frontend(&args, parms);
 		goto err;
 	}
 
 	if (args.traffic_monitor) {
-		signal(SIGTERM, do_timeout);
-		signal(SIGINT, do_timeout);
-		if (args.timeout > 0) {
-			signal(SIGALRM, do_timeout);
-			alarm(args.timeout);
-		}
-
+		set_signals(&args);
 		err = do_traffic_monitor(&args, parms);
 		goto err;
 	}
@@ -966,12 +964,7 @@ int main(int argc, char **argv)
 			goto err;
 	}
 
-	signal(SIGTERM, do_timeout);
-	signal(SIGINT, do_timeout);
-	if (args.timeout > 0) {
-		signal(SIGALRM, do_timeout);
-		alarm(args.timeout);
-	}
+	set_signals(&args);
 
 	if (!check_frontend(&args, parms)) {
 		err = 1;
