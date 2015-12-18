@@ -38,6 +38,7 @@
 #include <sys/mman.h>
 #include <linux/videodev2.h>
 #include <libv4l2.h>
+#include "../libv4lconvert/libv4lsyscall-priv.h"
 
 /* Check that open/read/mmap is not a define */
 #if defined open || defined read || defined mmap
