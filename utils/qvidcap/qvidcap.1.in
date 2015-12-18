@@ -1,0 +1,223 @@
+.TH "QVIDCAP" "1" "June 2016" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.SH NAME
+qvidcap - A v4l2 video capture viewer
+.SH SYNOPSIS
+.B qvidcap
+[\fI<options>\fR]
+.SH DESCRIPTION
+The qvidcap tool is used to test video4linux capture devices, either using a video device, a file,
+or over network. This application can also serve as a generic video/TV viewer application.
+.PP
+It does not (yet) support compressed video streams other than MJPEG
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
+Use device <dev> as the video device if <dev> is a number, then /dev/video<dev> is used
+.TP
+\fB\-f\fR, \fB\-\-file\fR=\fI<file>\fR
+Read from the file <file> for the raw frame data
+.TP
+\fB\-p\fR, \fB\-\-port\fR\fI[=<port>]\fR
+Listen for a network connection on the given port. The default port is 8362
+.TP
+\fB\-T\fR, \fB\-\-tpg\fR
+Use the test pattern generator. If neither -d, -f nor -T is specified then use /dev/video0.
+.TP
+\fB\-c\fR, \fB\-\-count\fR=\fI<cnt>\fR
+Stop after <cnt> captured frames
+.TP
+\fB\-b\fR, \fB\-\-buffers\fR=\fI<bufs>\fR
+Request <bufs> buffers (default 4) when streaming from a video device.
+.TP
+\fB\-s\fR, \fB\-\-single\-step\fR\fI[=<frm>]\fR
+Starting with frame <frm> (default 1), pause after displaying each frame
+until Space is pressed.
+.TP
+\fB\-C\fR, \fB\-\-colorspace\fR=\fI<c>\fR
+Override colorspace. <c> can be one of the following colorspaces: smpte170m, smpte240m, rec709, 470m, 470bg, jpeg, srgb, adobergb, bt2020, dcip3
+.TP
+\fB\-X\fR, \fB\-\-xfer-func\fR=\fI<x>\fR
+Override transfer function. <x> can be one of the following transfer functions: default, 709, srgb, adobergb, smpte240m, smpte2084, dcip3, none
+.TP
+\fB\-Y\fR, \fB\-\-ycbcr-enc\fR=\fI<y>\fR
+Override Y'CbCr encoding. <y> can be one of the following Y'CbCr encodings: default, 601, 709, xv601, xv709, bt2020, bt2020c, smpte240m
+.TP
+\fB\-Q\fR, \fB\-\-quant\fR=\fI<q>\fR
+Override quantization. <q> can be one of the following quantization methods: default, full-range, lim-range
+.TP
+\fB\-l\fR, \fB\-\-list-format\fRs
+Display all supported formats
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display this help message
+.TP
+\fB\-t\fR, \fB\-\-timing\fRs
+Report frame render timings
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Be more verbose
+.TP
+\fB\-R\fR, \fB\-\-raw\fR
+Open device in raw mode
+.TP
+\fB\--opengl\fR
+Force openGL to display the video
+.TP
+\fB\--opengles\fR
+Force openGL ES to display the video
+.TP
+The following options are ignored when capturing from a video device:
+.TP
+\fB\-W,-\-width\fR=\fI<width>\fR
+Set width
+.TP
+\fB\-H,-\-height\fR=\fI<height>\fR
+Set frame (not field!) height
+.TP
+\fB--fps\fR=\fI<fps>\fR
+Set frames-per-second (default is 30)
+.TP
+The following options are only valid when reading from a file:
+.TP
+\fB\-F\fR, \fB-\-field\fR=\fI<f>\fR
+Override field setting. <f> can be one of the following field layouts: any, none, top, bottom, interlaced, seq_tb, seq_bt, alternate, interlaced_tb, interlaced_bt
+.TP
+\fB\-P\fR, \fB-\-pixelformat\fR=\fI<p>\fR
+Override pixel format setting. use -l to see the list of supported pixel formats
+.TP
+The following options are specific to the test pattern generator:
+.TP
+\fB--list-patterns\fR
+List available patterns for use with --pattern
+.TP
+\fB--pattern\fR=\fI<pat>\fR
+Choose output test pattern, the default is 0
+.TP
+\fB--square\fR
+Show a square in the middle of the output test pattern
+.TP
+\fB--border\fR
+Show a border around the pillar/letterboxed video
+.TP
+\fB--sav\fR
+Insert an SAV code in every line
+.TP
+\fB--eav\fR
+Insert an EAV code in every line
+.TP
+\fB--pixel-aspect\fR=\fI<aspect>\fR
+Select a pixel aspect ratio, the default is to autodetect. <aspect> can be one of: square, ntsc, pal
+.TP
+\fB--video-aspect\fR=\fI<aspect>\fR
+Select a video aspect ratio, the default is to use the frame ratio. <aspect> can be one of: 4  x3, 14x9, 16x9, anamorphic
+.TP
+\fB--alpha\fR=\fI<alpha-value>\fR
+Value to use for the alpha component, range 0-255, the default is 0
+.TP
+\fB--alpha-red-only\fR
+Only use the --alpha value for the red colors, for all others use 0
+.TP
+\fB--rgb-lim-range\fR
+Encode RGB values as limited [16-235] instead of full range
+.TP
+\fB--hor-speed\fR=\fI<speed>\fR
+Choose speed for horizontal movement, the default is 0 and the range is [-3...3]
+.TP
+\fB--vert-speed\fR=\fI<speed>\fR
+Choose speed for vertical movement, the default is 0 and the range is [-3...3]
+.TP
+\fB--perc-fill\fR=\fI<percentage>\fR
+Percentage of the frame to actually fill. the default is 100%
+.TP
+These options use the test pattern generator to test the OpenGL backend:
+.TP
+\fB--test\fR=\fI<count>\fR
+Test all formats, each test generates <count> frames.
+.TP
+\fB--test-mask\fR=\fI<mask>\fR
+Mask which tests are performed. <mask> is a bit mask with these values:
+.br
+0x01: Mask iterating over pixel formats
+.br
+0x02: Mask iterating over fields
+.br
+0x04: Mask iterating over colorspaces
+.br
+0x08: Mask iterating over transfer functions
+.br
+0x10: Mask iterating over Y'CbCr encodings
+.br
+0x20: Mask iterating over quantization ranges
+.SH HOTKEYS
+.TP
+\fIQ\fR
+Quit application.
+.TP
+\fIP\fR
+Cycle forwards through all the supported pixel formats.
+With Shift pressed: cycle backwards.
+With Ctrl pressed: restore the original pixel format.
+Only available with --file.
+.TP
+\fII\fR
+Cycle forwards through all the supported interlaced field settings.
+With Shift pressed: cycle backwards.
+With Ctrl pressed: restore the original interlaced field setting.
+Only available with --file.
+.TP
+\fIC\fR
+Cycle forwards through all the supported colorspaces.
+With Shift pressed: cycle backwards.
+With Ctrl pressed: restore the original colorspace.
+.TP
+\fIX\fR
+Cycle forwards through all the supported transfer functions.
+With Shift pressed: cycle backwards.
+With Ctrl pressed: restore the original transfer function.
+.TP
+\fIY\fR
+Cycle forwards through all the supported Y'CbCr encodings.
+With Shift pressed: cycle backwards.
+With Ctrl pressed: restore the original Y'CbCr encoding.
+.TP
+\fIH\fR
+Cycle forwards through all the supported HSV encodings.
+With Shift pressed: cycle backwards.
+With Ctrl pressed: restore the original HSV encoding.
+.TP
+\fIR\fR
+Cycle forwards through all the supported quantization ranges.
+With Shift pressed: cycle backwards.
+With Ctrl pressed: restore the original quantization range.
+.TP
+\fIRight-Click\fR
+Open menu.
+.TP
+\fIDouble left-click\fR
+Toggle fullscreen on and off.
+.TP
+\fIF\fR
+Toggle fullscreen on and off.
+.TP
+\fIESC\fR
+Exit fullscreen.
+.TP
+\fISpace\fR
+When in test mode (\fB\-\-test\fR) pressing Space will skip to the next test.
+When single-stepping, continue to the next frame.
+.TP
+\fIUp\fR
+Reduce the resolution by two pixels in height. Only available when "Override resolution" is enabled.
+.TP
+\fIDown\fR
+Increase the resolution by two pixels in height. Only available when "Override resolution" is enabled.
+.TP
+\fILeft\fR
+Reduce the resolution by two pixels in width. Only available when "Override resolution" is enabled.
+.TP
+\fIRight\fR
+Increase the resolution by two pixels in width. Only available when "Override resolution" is enabled.
+.SH EXIT STATUS
+On success, it returns 0. Otherwise, it will return the number of errors.
+.SH BUGS
+Report bugs to Hans Verkuil <hverkuil@xs4all.nl>

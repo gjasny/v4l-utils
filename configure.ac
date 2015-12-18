@@ -39,6 +39,7 @@ AC_CONFIG_FILES([Makefile
 	utils/cec-compliance/cec-compliance.1
 	utils/cec-follower/Makefile
 	utils/cec-follower/cec-follower.1
+	utils/qvidcap/Makefile
 	utils/rds-ctl/Makefile
 
 	contrib/Makefile
@@ -65,6 +66,7 @@ AC_CONFIG_FILES([Makefile
 	lib/include/libdvbv5/libdvb-version.h
 
 	utils/qv4l2/qv4l2.1
+	utils/qvidcap/qvidcap.1
 	utils/v4l2-compliance/v4l2-compliance.1
 	utils/v4l2-ctl/v4l2-ctl.1
 	utils/keytable/ir-keytable.1
@@ -216,6 +218,7 @@ AM_CONDITIONAL([HAVE_JPEG], [test x$have_jpeg = xyes])
 QT_VERSION="none"
 
 PKG_CHECK_MODULES(QT5, [Qt5Core >= 5.0 Qt5Gui >= 5.0 Qt5Widgets >= 5.0], [qt_pkgconfig=true], [qt_pkgconfig=false])
+PKG_CHECK_MODULES(QT5, [Qt5Core >= 5.4 Qt5Gui >= 5.4 Qt5Widgets >= 5.4], [qt54_pkgconfig=true], [qt54_pkgconfig=false])
 if test "x$qt_pkgconfig" = "xtrue"; then
    QT_CFLAGS="$QT5_CFLAGS -fPIC"
    QT_LIBS="$QT5_LIBS"
@@ -227,16 +230,28 @@ if test "x$qt_pkgconfig" = "xtrue"; then
    AC_SUBST(MOC)
    AC_SUBST(UIC)
    AC_SUBST(RCC)
-   PKG_CHECK_MODULES(QT5GL, [Qt5OpenGL >= 5.0 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
+   if test "x$qt54_pkgconfig" = "xtrue"; then
+      PKG_CHECK_MODULES(QT5GL, [Qt5OpenGL >= 5.4 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
+   else
+      PKG_CHECK_MODULES(QT5GL, [Qt5OpenGL >= 5.0 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
+   fi
    if test "x$qt_pkgconfig_gl" = "xtrue"; then
       QTGL_CFLAGS="$QT5GL_CFLAGS -fPIC"
       QTGL_LIBS="$QT5GL_LIBS"
       AC_SUBST(QT_CFLAGS)
       AC_SUBST(QT_LIBS)
       AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
-      QT_VERSION="v5 with QtGL"
+      if test "x$qt54_pkgconfig" = "xtrue"; then
+        QT_VERSION="v5.4 with QtGL"
+      else
+        QT_VERSION="v5 with QtGL"
+      fi
    else
-      QT_VERSION="v5"
+      if test "x$qt54_pkgconfig" = "xtrue"; then
+        QT_VERSION="v5.4"
+      else
+        QT_VERSION="v5"
+      fi
       AC_MSG_WARN(Qt5 OpenGL is not available)
     fi
 else
@@ -437,6 +452,14 @@ AC_ARG_ENABLE(qv4l2,
    esac]
 )
 
+AC_ARG_ENABLE(qvidcap,
+  AS_HELP_STRING([--disable-qvidcap], [disable qvidcap compilation]),
+  [case "${enableval}" in
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-qvidcap) ;;
+   esac]
+)
+
 AC_ARG_ENABLE(gconv,
   AS_HELP_STRING([--enable-gconv], [enable compilation of gconv modules]),
   [case "${enableval}" in
@@ -459,6 +482,7 @@ AM_CONDITIONAL([WITH_DVBV5_REMOTE], [test x$enable_libdvbv5  != xno -a x$have_li
 AM_CONDITIONAL([WITH_DYN_LIBV4L],   [test x$enable_dyn_libv4l != xno])
 AM_CONDITIONAL([WITH_V4LUTILS],	    [test x$enable_v4l_utils != xno -a x$linux_os = xyes])
 AM_CONDITIONAL([WITH_QV4L2],	    [test x${qt_pkgconfig} = xtrue -a x$enable_qv4l2 != xno])
+AM_CONDITIONAL([WITH_QVIDCAP],	    [test x${qt_pkgconfig} = xtrue -a x$enable_qvidcap != xno])
 AM_CONDITIONAL([WITH_V4L_PLUGINS],  [test x$enable_dyn_libv4l != xno -a x$enable_shared != xno])
 AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$enable_dyn_libv4l != xno -a x$enable_shared != xno])
 AM_CONDITIONAL([WITH_QTGL],	    [test x${qt_pkgconfig_gl} = xtrue])

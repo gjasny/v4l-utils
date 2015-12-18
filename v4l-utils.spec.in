@@ -9,6 +9,8 @@ URL:            http://www.linuxtv.org/downloads/v4l-utils/
 Source0:        http://linuxtv.org/downloads/v4l-utils/v4l-utils-%{version}.tar.bz2
 Source1:        qv4l2.desktop
 Source2:        qv4l2.svg
+Source3:        qvidcap.desktop
+Source4:        qvidcap.svg
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  qt4-devel libsysfs-devel kernel-headers desktop-file-utils elfutils-libelf-devel clang
 # For /etc/udev/rules.d ownership
@@ -39,6 +41,17 @@ Requires:       libv4l = %{version}-%{release}
 
 %description -n qv4l2
 QT v4l2 test control and streaming test application.
+
+
+%package -n     qvidcap
+Summary:        QT v4l2 video capture application
+License:        GPLv2+
+Requires:       libv4l = %{version}-%{release}
+
+%description -n qvidcap
+QT v4l2 video capture application for capturing from a video device, but also
+from a file, from a v4l2-ctl compliant network stream, or from a test pattern
+generator.
 
 
 %package -n     libv4l
@@ -120,6 +133,19 @@ fi
 gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
+%post -n qvidcap
+touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
+
+%postun -n qvidcap
+if [ $1 -eq 0 ] ; then
+    touch --no-create %{_datadir}/icons/hicolor &>/dev/null
+    gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+fi
+
+%posttrans -n qvidcap
+gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+
+
 %files
 %defattr(-,root,root,-)
 %doc README
@@ -149,6 +175,13 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_bindir}/qv4l2
 %{_datadir}/applications/qv4l2.desktop
 %{_datadir}/icons/hicolor/scalable/apps/qv4l2.svg
+
+%files -n qvidcap
+%defattr(-,root,root,-)
+%doc README
+%{_bindir}/qvidcap
+%{_datadir}/applications/qvidcap.desktop
+%{_datadir}/icons/hicolor/scalable/apps/qvidcap.svg
 
 %files -n libv4l
 %defattr(-,root,root,-)
