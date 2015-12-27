@@ -167,7 +167,7 @@ DVR interface '/dev/dvb/adapter0/dvr0' can now be opened
 The channel can be watched by playing the contents of the DVR interface,
 with some player that recognizes the MPEG\-TS format.
 .PP
-For example, this audio-only channel can be playew with mplayer:
+For example, this audio-only channel can be played with mplayer:
 .PP
 .nf
 $ \fBmplayer \-cache 800 /dev/dvb/adapter0/dvr0\fR

@@ -172,7 +172,7 @@ New transponder/channel found: #39: 507000000
 .fi
 .PP
 The scan process will then scan the other 38 discovered new transponders,
-and generate a dvb_channel.com with several entries with will have not only
+and generate a dvb_channel.conf with several entries with will have not only
 the physical channel/transponder info, but also the Service ID, and the
 corresponding audio/video/other program IDs (PID), like:
 .PP
