@@ -248,6 +248,12 @@ static inline const char *ent_function(uint32_t function)
 		return "IF video decoder";
 	case MEDIA_ENT_F_IF_AUD_DECODER:
 		return "IF sound decoder";
+	case MEDIA_ENT_F_AUDIO_CAPTURE:
+		return "Audio Capture";
+	case MEDIA_ENT_F_AUDIO_PLAYBACK:
+		return "Audio Playback";
+	case MEDIA_ENT_F_AUDIO_MIXER:
+		return "Audio Mixer";
 	case MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN:
 	default:
 		return "unknown entity type";
