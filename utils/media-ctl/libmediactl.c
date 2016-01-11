@@ -212,8 +212,8 @@ int media_setup_link(struct media_device *media,
 		     struct media_pad *sink,
 		     __u32 flags)
 {
+	struct media_link_desc ulink = { { 0 } };
 	struct media_link *link;
-	struct media_link_desc ulink;
 	unsigned int i;
 	int ret;
 
@@ -324,7 +324,7 @@ static int media_enum_links(struct media_device *media)
 
 	for (id = 1; id <= media->entities_count; id++) {
 		struct media_entity *entity = &media->entities[id - 1];
-		struct media_links_enum links;
+		struct media_links_enum links = { 0 };
 		unsigned int i;
 
 		links.entity = entity->info.id;
@@ -592,6 +592,8 @@ int media_device_enumerate(struct media_device *media)
 	ret = media_device_open(media);
 	if (ret < 0)
 		return ret;
+
+	memset(&media->info, 0, sizeof(media->info));
 
 	ret = ioctl(media->fd, MEDIA_IOC_DEVICE_INFO, &media->info);
 	if (ret < 0) {
