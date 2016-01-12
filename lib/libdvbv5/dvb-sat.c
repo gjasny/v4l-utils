@@ -75,6 +75,20 @@ static const struct dvb_sat_lnb lnb[] = {
 			{ 10945, 11450 }
 		},
 	}, {
+		.name = "L10700",
+		.alias = "L10700",
+		.lowfreq = 10700,
+		.freqrange = {
+		       { 11750, 12750 }
+		},
+	}, {
+		.name = "L11300",
+		.alias = "L11300",
+		.lowfreq = 11300,
+		.freqrange = {
+			{ 12250, 12750 }
+		},
+	}, {
 		.name = "Astra",
 		.alias = "ENHANCED",
 		.lowfreq = 9750,
