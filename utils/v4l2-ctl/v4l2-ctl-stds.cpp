@@ -335,10 +335,12 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 			break;
 		case CVT:
 			parse_cvt_gtf = true;
+			cleared_dv_timings = true;
 			get_cvt_gtf_timings(subs, V4L2_DV_BT_STD_CVT, bt);
 			break;
 		case GTF:
 			parse_cvt_gtf = true;
+			cleared_dv_timings = true;
 			get_cvt_gtf_timings(subs, V4L2_DV_BT_STD_GTF, bt);
 			break;
 		case REDUCED_FPS:
@@ -513,12 +515,13 @@ void stds_set(int fd)
 			et.index = enum_and_set_dv_timings;
 			doioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &et);
 			new_dv_timings = et.timings;
+		} else if (cleared_dv_timings) {
+			new_dv_timings = dv_timings;
 		} else {
 			struct v4l2_bt_timings *bt = &new_dv_timings.bt;
 			struct v4l2_bt_timings *update_bt = &dv_timings.bt;
 
-			if (!cleared_dv_timings)
-				doioctl(fd, VIDIOC_G_DV_TIMINGS, &new_dv_timings);
+			doioctl(fd, VIDIOC_G_DV_TIMINGS, &new_dv_timings);
 			for (unsigned i = 0; i < MAX_TIMINGS_OPTIONS; i++) {
 				if (!(set_dv_timing_opts & (1 << i)))
 					continue;
