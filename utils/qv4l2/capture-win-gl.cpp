@@ -1519,7 +1519,6 @@ void CaptureWinGLEngine::shader_RGB(__u32 format)
 	case V4L2_PIX_FMT_XRGB555X:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_frameWidth, m_frameHeight, 0,
 			     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, NULL);
-		hasAlpha = true;
 		break;
 
 	case V4L2_PIX_FMT_BGR666:
