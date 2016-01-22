@@ -142,6 +142,9 @@ case "$host_os" in
   linux*)
     linux_os="yes"
     ;;
+  freebsd*)
+    freebsd_os="yes"
+    ;;
 esac
 
 AM_CONDITIONAL([LINUX_OS], [test x$linux_os = xyes])
@@ -400,7 +403,7 @@ AS_IF([test x$enable_libv4l = xno],   [AC_SUBST([ENFORCE_LIBV4L_STATIC],   ["-st
 
 if test "x$linux_os" = "xyes"; then
   CPPFLAGS="-I\$(top_srcdir)/include $CPPFLAGS"
-else
+elif test "x$freebsd_os" = "xyes"; then
   CPPFLAGS="-I\$(top_srcdir)/contrib/freebsd/include $CPPFLAGS"
 fi
 

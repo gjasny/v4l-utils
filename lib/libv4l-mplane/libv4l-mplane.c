@@ -26,7 +26,12 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
+#if defined(__OpenBSD__)
+#include <sys/videoio.h>
+#include <sys/ioctl.h>
+#else
 #include <linux/videodev2.h>
+#endif
 
 #include "libv4l-plugin.h"
 

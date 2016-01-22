@@ -63,6 +63,15 @@
 #define	MMAP2_PAGE_SHIFT 0
 #endif
 
+#if defined(__OpenBSD__)
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#define	_IOC_NR(cmd) ((cmd) & 0xFF)
+#define	_IOC_TYPE(cmd) IOCGROUP(cmd)
+#define	MMAP2_PAGE_SHIFT 0
+#endif
+
 #undef SYS_OPEN
 #undef SYS_CLOSE
 #undef SYS_IOCTL
@@ -97,6 +106,11 @@
 #define SYS_MMAP(addr, len, prot, flags, fd, off) \
 	syscall(SYS_mmap, (void *)(addr), (size_t)(len), \
 			(int)(prot), (int)(flags), (int)(fd), (off_t)(off))
+#elif defined(__OpenBSD__)
+register_t __syscall(quad_t, ...);
+#define SYS_MMAP(addr, len, prot, flags, fd, offset) \
+	__syscall((quad_t)SYS_mmap, (void *)(addr), (size_t)(len), \
+			(int)(prot), (int)(flags), (int)(fd), 0, (off_t)(offset))
 #else
 #define SYS_MMAP(addr, len, prot, flags, fd, off) \
 	syscall(SYS_mmap2, (void *)(addr), (size_t)(len), \

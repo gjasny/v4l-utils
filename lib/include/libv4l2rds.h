@@ -24,7 +24,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if defined(__OpenBSD__)
+#include <sys/videoio.h>
+#else
 #include <linux/videodev2.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

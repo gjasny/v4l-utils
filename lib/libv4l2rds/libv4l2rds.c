@@ -27,7 +27,11 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
+#if defined(__OpenBSD__)
+#include <sys/videoio.h>
+#else
 #include <linux/videodev2.h>
+#endif
 
 #include "../include/libv4l2rds.h"
 

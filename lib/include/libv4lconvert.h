@@ -28,7 +28,7 @@
 #include <linux/ioctl.h>
 #endif
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -36,7 +36,11 @@
 
 /* end broken header workaround includes */
 
+#if defined(__OpenBSD__)
+#include <sys/videoio.h>
+#else
 #include <linux/videodev2.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
