@@ -1,3 +1,70 @@
+v4l-utils-1.10.0
+----------------
+
+Felipe Eduardo Concha Avello (1):
+      libdvbv5: fix the count of partial receptions
+
+Gregor Jasny (2):
+      Start v4l-utils 1.9.0 development cycle
+      libdvbv5: link against rt library for clock_gettime
+
+Hans Verkuil (29):
+      v4l-utils: sync-with-kernel
+      cobalt-ctl: rename cobalt directory to cobalt
+      cobalt-ctl: add binary to .gitignore
+      qv4l2/v4l2-ctl: add DCI-P3 and SMPTE 2084 colorspace support
+      v4l-utils: sync-with-kernel
+      v4l2-ctl: add SDR output support
+      v4l2-ctl: show tuner/modulator type
+      v4l2-compliance: add SDR output support
+      v4l2-compliance: always check for V4L2_BUF_FLAG_DONE after DQBUF
+      v4l2-ctl: improve accuracy of fps reporting
+      qv4l2: fix compiler warning
+      qv4l2: increase fps precision
+      v4l2-ctl: improve dv_timings handling
+      qv4l2: use GL_RED for OpenGL version >= 3 instead of GL_LUMINANCE.
+      qv4l2: add support for Bayer 10 and 12 bits.
+      v4l2-compliance: fix buffer flags check
+      v4l-utils: sync with the latest kernel
+      qv4l2/v4l2-ctl/v4l2-compliance: replace ctrl_class by which
+      qv4l2: updateColorspace is only valid for video capture.
+      qv4l2: s_pixelformat(V4L2_PIX_FMT_RGB24) failed due to wrong type
+      v4l-helpers.h: don't use fancy initializers
+      v4l-helpers.h: one more incomplete initializer.
+      qv4l2: add qbuf error checking
+      qv4l2: fix audio device selection
+      qv4l2: reduce the minimum allowed width/height
+      v4l-helpers.h: fix regression
+      v4l2convert.c: squash compiler warning
+      v4l2-ctl: fix cvt/gtf and 'clear timings' bug
+      qv4l2: remove duplicate hasAlpha assignment
+
+Laurent Pinchart (3):
+      media-ctl: libv4l2subdev: Switch to MEDIA_BUS_FMT_*
+      media-ctl: libv4l2subdev: Add missing formats
+      media-ctl: Add field support for the media bus format
+
+Mauro Carvalho Chehab (1):
+      keytable: Fix display of the key code
+
+Nick Morrott (1):
+      dvb: Correct references to ISO 3166-1 in help/translations
+
+Peter Seiderer (1):
+      dvb/keytable: fix missing libintl linking
+
+Sakari Ailus (2):
+      media-ctl: Fix bad long option crash
+      libv4l2subdev: Add a forward definition for missing struct media_device
+
+Thomas Petazzoni (5):
+      libv4lsyscall-priv.h: Use off_t instead of __off_t
+      utils: Properly use ENABLE_NLS for locale related code
+      utils/v4l2-compliance: Include <fcntl.h> instead of <sys/fcntl.h>
+      libv4lsyscall-priv.h: Only define SYS_mmap2 if needed
+      libv4lconvert: only expose jpeg_mem_*() protoypes when JPEG_LIB_VERSION < 80
+
+
 v4l-utils-1.8.0
 ---------------
 
