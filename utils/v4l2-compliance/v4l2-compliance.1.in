@@ -22,7 +22,7 @@ git repository (http://git.linuxtv.org/cgit.cgi/v4l-utils.git/). The version sup
 by linux distributions is almost certainly too old.
 
 In addition, if a test fails then it will output the source and line where the failure
-occured, so you often need access to the source code to see what that test is all about.
+occurred, so you often need access to the source code to see what that test is all about.
 
 Note that v4l2-compliance not only tests for compliance against the V4L2 API, but also
 whether the driver is using all the correct frameworks. These frameworks often automatically
