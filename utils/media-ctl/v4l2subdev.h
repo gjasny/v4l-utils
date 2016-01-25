@@ -247,15 +247,13 @@ const char *v4l2_subdev_pixelcode_to_string(enum v4l2_mbus_pixelcode code);
 
 /**
  * @brief Parse string to media bus pixel code.
- * @param string - input string
- * @param length - length of the string
+ * @param string - nul terminalted string, textual media bus pixel code
  *
  * Parse human readable string @a string to an media bus pixel code.
  *
  * @return media bus pixelcode on success, -1 on failure.
  */
-enum v4l2_mbus_pixelcode v4l2_subdev_string_to_pixelcode(const char *string,
-							 unsigned int length);
+enum v4l2_mbus_pixelcode v4l2_subdev_string_to_pixelcode(const char *string);
 
 /**
  * @brief Convert a field order to string.
@@ -269,15 +267,13 @@ const char *v4l2_subdev_field_to_string(enum v4l2_field field);
 
 /**
  * @brief Parse string to field order.
- * @param string - input string
- * @param length - length of the string
+ * @param string - nul terminated string, textual media bus pixel code
  *
  * Parse human readable string @a string to field order.
  *
  * @return field order on success, -1 on failure.
  */
-enum v4l2_field v4l2_subdev_string_to_field(const char *string,
-					    unsigned int length);
+enum v4l2_field v4l2_subdev_string_to_field(const char *string);
 
 /**
  * @brief Enumerate library supported media bus pixel codes.
