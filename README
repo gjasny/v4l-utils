@@ -221,7 +221,11 @@ Be sure that you have installed both glibc development packages for
 
 step 3) at v4l-utils tree:
 
-	$ KERNEL_DIR=location/of/the/kernel/tree make sync-with-kernel
+	$ export KERNEL_DIR=location/of/the/kernel/tree make sync-with-kernel
+
+Alternatively, steps 1 to 3 can be replaced with:
+
+export KERNEL_DIR=location/of/the/kernel/tree && (cd $KERNEL_DIR && make headers_install INSTALL_HDR_PATH=usr/) && make sync-with-kernel
 
 step 4)
 
