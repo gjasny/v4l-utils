@@ -715,7 +715,7 @@ int v4l2_subdev_parse_setup_formats(struct media_device *media, const char *p)
 	return *end ? -EINVAL : 0;
 }
 
-static struct {
+static const struct {
 	const char *name;
 	enum v4l2_mbus_pixelcode code;
 } mbus_formats[] = {
