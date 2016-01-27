@@ -240,6 +240,10 @@ static inline const char *ent_function(uint32_t function)
 		return "ATV decoder";
 	case MEDIA_ENT_F_TUNER:
 		return "tuner";
+	case MEDIA_ENT_F_IF_VID_DECODER:
+		return "IF video decoder";
+	case MEDIA_ENT_F_IF_AUD_DECODER:
+		return "IF sound decoder";
 	case MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN:
 	default:
 		return "unknown entity type";
