@@ -40,10 +40,12 @@ SOURCES += tpg-tab.cpp
 SOURCES += vbi-tab.cpp
 SOURCES += ../v4l2-ctl/vivid-tpg.c
 SOURCES += ../v4l2-ctl/vivid-tpg-colors.c
+SOURCES += alsa_stream.c
 
 LIBS += -L$$PWD/../../lib/libv4l2/.libs -lv4l2
 LIBS += -L$$PWD/../../lib/libv4lconvert/.libs -lv4lconvert
 LIBS += -L$$PWD/../libv4l2util/.libs -lv4l2util 
-LIBS += -lrt -ldl -ljpeg
+LIBS += -L$$PWD/../libmedia_dev/.libs -lmedia_dev
+LIBS += -lrt -ldl -ljpeg -lasound
 
 RESOURCES += qv4l2.qrc
