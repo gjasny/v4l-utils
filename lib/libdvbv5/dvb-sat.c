@@ -57,9 +57,9 @@ static const struct dvb_sat_lnb lnb[] = {
 		.freqrange = {
 			{ 12200, 12700 }
 		}
-    }, {
-        .name = "Astra 1E, European Universal Ku (extended)",
-        .alias = "EXTENDED",
+	}, {
+		.name = "Astra 1E, European Universal Ku (extended)",
+		.alias = "EXTENDED",
 		.lowfreq = 9750,
 		.highfreq = 10600,
 		.rangeswitch = 11700,
