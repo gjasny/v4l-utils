@@ -451,6 +451,7 @@ struct graph_obj {
 struct media_controller {
 	int fd;
 	struct media_v2_topology topo;
+	struct media_device_info info;
 
 	int num_gobj;
 	struct graph_obj *gobj;
@@ -665,10 +666,33 @@ static void media_show_links(struct media_controller *mc)
 		free(sink_obj);
 	}
 }
+
+static void media_get_device_info(struct media_controller *mc)
+{
+	struct media_device_info *info = &mc->info;
+	int ret = 0;
+
+	ret = ioctl(mc->fd, MEDIA_IOC_DEVICE_INFO, info);
+	if (ret < 0) {
+		logperror("MEDIA_IOC_DEVICE_INFO failed");
+		return;
+	}
+	if (show_dot)
+		return;
+
+	show(WHITE, 0, "Device: %s (driver %s)\n",
+	     info->model, info->driver);
+	if (info->serial[0])
+		show(WHITE, 0, "Serial: %s\n", info->serial);
+	show(WHITE, 0, "Bus: %s\n", info->bus_info);
+}
+
 static int media_get_topology(struct media_controller *mc)
 {
 	struct media_v2_topology *topo = &mc->topo;
 	int ret = 0, topology_version;
+
+	media_get_device_info(mc);
 
 	/* First call: get the amount of elements */
 	memset(topo, 0, sizeof(*topo));
@@ -812,6 +836,9 @@ static void media_show_graphviz(struct media_controller *mc)
 	void *priv = NULL;
 
 	printf("%s", DOT_HEADER);
+
+	if (mc->info.model[0])
+		printf("\tlabelloc=\"t\"\n\tlabel=\"%s\"\n", mc->info.model);
 
 	 media_open_ifname(&priv);
 	for (i = 0; i < topo->num_interfaces; i++) {
