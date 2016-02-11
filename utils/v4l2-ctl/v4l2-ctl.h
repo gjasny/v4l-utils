@@ -152,6 +152,7 @@ enum Option {
 	OptClearEdid,
 	OptGetEdid,
 	OptFixEdidChecksums,
+	OptGetPhysAddr,
 	OptFreqSeek,
 	OptEncoderCmd,
 	OptTryEncoderCmd,

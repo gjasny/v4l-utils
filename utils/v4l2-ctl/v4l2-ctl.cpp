@@ -203,6 +203,7 @@ static struct option long_options[] = {
 	{"clear-edid", optional_argument, 0, OptClearEdid},
 	{"get-edid", optional_argument, 0, OptGetEdid},
 	{"fix-edid-checksums", no_argument, 0, OptFixEdidChecksums},
+	{"get-phys-addr", optional_argument, 0, OptGetPhysAddr},
 	{"tuner-index", required_argument, 0, OptTunerIndex},
 	{"list-buffers", no_argument, 0, OptListBuffers},
 	{"list-buffers-out", no_argument, 0, OptListBuffersOut},
