@@ -838,9 +838,10 @@ static void media_show_graphviz(struct media_controller *mc)
 	printf("%s", DOT_HEADER);
 
 	if (mc->info.model[0])
-		printf("\tlabelloc=\"t\"\n\tlabel=\"%s\"\n", mc->info.model);
+		printf("\tlabelloc=\"t\"\n\tlabel=\"%s\n driver:%s, bus: %s\n\"\n",
+		       mc->info.model, mc->info.driver, mc->info.bus_info);
 
-	 media_open_ifname(&priv);
+	media_open_ifname(&priv);
 	for (i = 0; i < topo->num_interfaces; i++) {
 		struct media_v2_interface *intf = &interfaces[i];
 		char *devname;
