@@ -24,7 +24,12 @@ On Debian and derivated distributions, you need to install the following
 packages with apt-get or aptitude:
 	debhelper dh-autoreconf autotools-dev doxygen graphviz libasound2-dev
 	libtool libjpeg-dev libqt4-dev libqt4-opengl-dev libudev-dev libx11-dev
-	pkg-config udev git
+	pkg-config udev make gcc gcc-c++ git
+
+On Fedora (and similar rpm-based distributions), you need to install the
+following packages with dnf:
+	alsa-lib-devel doxygen libjpeg-turbo-devel qt-devel automake
+	libtool gettext-devel make gcc gcc-c++ git
 
 (git is only requiried if you're cloning from the main git repository at
  linuxtv.org).
