@@ -29,7 +29,7 @@ packages with apt-get or aptitude:
 On Fedora (and similar rpm-based distributions), you need to install the
 following packages with dnf:
 	alsa-lib-devel doxygen libjpeg-turbo-devel qt-devel automake
-	libtool gettext-devel make gcc gcc-c++ git
+	libtool gettext-devel make gcc gcc-c++ qt5-qtbase-devel git
 
 (git is only requiried if you're cloning from the main git repository at
  linuxtv.org).
