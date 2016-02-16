@@ -220,8 +220,6 @@ static inline const char *ent_function(uint32_t function)
 		return "S-Video connector";
 	case MEDIA_ENT_F_CONN_COMPOSITE:
 		return "Composite connector";
-	case MEDIA_ENT_F_CONN_TEST:
-		return "Test connector";
 	case MEDIA_ENT_F_IO_V4L:
 		return "V4L I/O";
 	case MEDIA_ENT_F_IO_DTV:
