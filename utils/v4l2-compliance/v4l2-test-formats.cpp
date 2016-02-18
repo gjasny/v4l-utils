@@ -121,7 +121,8 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
 	}
 	if (type == 0)
 		return fail("found frame intervals for invalid size %dx%d\n", w, h);
-	info("found %d frameintervals for pixel format %08x and size %dx%d\n", f, pixfmt, w, h);
+	info("found %d frameintervals for pixel format %08x (%s) and size %dx%d\n",
+	     f, pixfmt, fcc2s(pixfmt).c_str(), w, h);
 	return 0;
 }
 
@@ -215,7 +216,8 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 		f++;
 	}
 	node->frmsizes_count[pixfmt] = count;
-	info("found %d framesizes for pixel format %08x\n", f, pixfmt);
+	info("found %d framesizes for pixel format %08x (%s)\n",
+	     f, pixfmt, fcc2s(pixfmt).c_str());
 	return 0;
 }
 
@@ -265,7 +267,8 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 		// Update define in v4l2-compliance.h if new buffer types are added
 		assert(type <= V4L2_BUF_TYPE_LAST);
 		if (map.find(fmtdesc.pixelformat) != map.end())
-			return fail("duplicate format %08x\n", fmtdesc.pixelformat);
+			return fail("duplicate format %08x (%s)\n",
+				    fmtdesc.pixelformat, fcc2s(fmtdesc.pixelformat).c_str());
 		map[fmtdesc.pixelformat] = fmtdesc.flags;
 	}
 	info("found %d formats for buftype %d\n", f, type);
@@ -423,8 +426,8 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		fail_on_test(!pix.width || !pix.height);
 		if (map.find(pix.pixelformat) == map.end())
-			return fail("unknown pixelformat %08x for buftype %d\n",
-					pix.pixelformat, type);
+			return fail("pixelformat %08x (%s) for buftype %d not reported by ENUM_FMT\n",
+					pix.pixelformat, fcc2s(pix.pixelformat).c_str(), type);
 		fail_on_test(pix.bytesperline && pix.bytesperline < pix.width);
 		fail_on_test(!pix.sizeimage);
 		if (!node->is_m2m)
@@ -440,8 +443,8 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		map_splane = &node->buftype_pixfmts[type - 8];
 		if (map.find(pix_mp.pixelformat) == map.end() &&
 		    map_splane->find(pix_mp.pixelformat) == map_splane->end())
-			return fail("unknown pixelformat %08x for buftype %d\n",
-					pix_mp.pixelformat, type);
+			return fail("pixelformat %08x (%s) for buftype %d not reported by ENUM_FMT\n",
+					pix_mp.pixelformat, fcc2s(pix_mp.pixelformat).c_str(), type);
 		if (!node->is_m2m)
 			fail_on_test(testColorspace(pix_mp.pixelformat, pix_mp.colorspace, 
                                             pix_mp.ycbcr_enc, pix_mp.quantization));
@@ -533,8 +536,8 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		if (map.find(sdr.pixelformat) == map.end())
-			return fail("unknown pixelformat %08x for buftype %d\n",
-					pix.pixelformat, type);
+			return fail("pixelformat %08x (%s) for buftype %d not reported by ENUM_FMT\n",
+					pix.pixelformat, fcc2s(pix.pixelformat).c_str(), type);
 		fail_on_test(sdr.buffersize == 0);
 		fail_on_test(check_0(sdr.reserved, sizeof(sdr.reserved)));
 		break;
@@ -875,8 +878,9 @@ static int testGlobalFormat(struct node *node, int type)
 		h2 = p2->height;
 	}
 	if (pixfmt1 != pixfmt2 || w1 != w2 || h1 != h2)
-		return fail("Global format mismatch: %08x/%dx%d vs %08x/%dx%d\n",
-				pixfmt1, w1, h1, pixfmt2, w2, h2);
+		return fail("Global format mismatch: %08x(%s)/%dx%d vs %08x(%s)/%dx%d\n",
+			    pixfmt1, fcc2s(pixfmt1).c_str(), w1, h1,
+			    pixfmt2, fcc2s(pixfmt2).c_str(), w2, h2);
 	info("Global format check succeeded for type %d\n", type);
 	return 0;
 }

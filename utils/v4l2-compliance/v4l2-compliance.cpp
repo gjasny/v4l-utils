@@ -229,6 +229,19 @@ std::string cap2s(unsigned cap)
 	return s;
 }
 
+std::string fcc2s(unsigned int val)
+{
+	std::string s;
+
+	s += val & 0x7f;
+	s += (val >> 8) & 0x7f;
+	s += (val >> 16) & 0x7f;
+	s += (val >> 24) & 0x7f;
+	if (val & (1 << 31))
+		s += "-BE";
+	return s;
+}
+
 std::string buftype2s(int type)
 {
 	switch (type) {

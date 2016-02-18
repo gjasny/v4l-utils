@@ -150,6 +150,8 @@ static inline double fract2f(const struct v4l2_fract *f)
 
 std::string cap2s(unsigned cap);
 std::string buftype2s(int type);
+std::string fcc2s(unsigned int val);
+
 static inline std::string buftype2s(enum v4l2_buf_type type)
 {
        return buftype2s((int)type);
