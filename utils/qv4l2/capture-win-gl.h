@@ -20,17 +20,22 @@
 
 #include <config.h>
 
+#ifdef HAVE_QTGL
+#define GL_GLEXT_PROTOTYPES
+#define QT_NO_OPENGL_ES_2
+
+#include <QGLWidget>
+#include <QGLShader>
+#include <QGLShaderProgram>
+#include <QGLFunctions>
+#endif
+
 #include "qv4l2.h"
 #include "capture-win.h"
 
 #include <QResizeEvent>
 
 #ifdef HAVE_QTGL
-#define GL_GLEXT_PROTOTYPES
-#include <QGLWidget>
-#include <QGLShader>
-#include <QGLShaderProgram>
-#include <QGLFunctions>
 
 // This must be equal to the max number of textures that any shader uses
 #define MAX_TEXTURES_NEEDED 3
