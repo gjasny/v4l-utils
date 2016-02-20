@@ -211,10 +211,24 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 		      (planes[1][offset + xeven + 1] << 8) +
 		      planes[1][offset + xeven];
 		break;
+	case V4L2_PIX_FMT_YVU422M:
+		v32 = (p8[x] << 16) +
+		      (planes[2][hoffset + x / 2] << 8) +
+		      planes[1][hoffset + x / 2];
+		break;
+	case V4L2_PIX_FMT_YUV422M:
 	case V4L2_PIX_FMT_YUV422P:
 		v32 = (p8[x] << 16) +
 		      (planes[1][hoffset + x / 2] << 8) +
 		      planes[2][hoffset + x / 2];
+		break;
+	case V4L2_PIX_FMT_YUV444M:
+		v32 = (p8[x] << 16) + (planes[1][offset + x] << 8) +
+		      planes[2][offset + x];
+		break;
+	case V4L2_PIX_FMT_YVU444M:
+		v32 = (p8[x] << 16) + (planes[2][offset + x] << 8) +
+		      planes[1][offset + x];
 		break;
 	case V4L2_PIX_FMT_YUV420:
 	case V4L2_PIX_FMT_YUV420M:
@@ -317,6 +331,8 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 	case V4L2_PIX_FMT_NV16M:
 	case V4L2_PIX_FMT_NV61:
 	case V4L2_PIX_FMT_NV61M:
+	case V4L2_PIX_FMT_YUV422M:
+	case V4L2_PIX_FMT_YVU422M:
 	case V4L2_PIX_FMT_YUV422P:
 	case V4L2_PIX_FMT_YUV420:
 	case V4L2_PIX_FMT_YUV420M:
@@ -324,6 +340,8 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 	case V4L2_PIX_FMT_YVU420M:
 	case V4L2_PIX_FMT_NV24:
 	case V4L2_PIX_FMT_NV42:
+	case V4L2_PIX_FMT_YUV444M:
+	case V4L2_PIX_FMT_YVU444M:
 		break;
 	default:
 		if (fmt.g_quantization() == V4L2_QUANTIZATION_LIM_RANGE ||
