@@ -162,6 +162,8 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned xfer_func,
 	case V4L2_PIX_FMT_YVYU:
 	case V4L2_PIX_FMT_UYVY:
 	case V4L2_PIX_FMT_VYUY:
+	case V4L2_PIX_FMT_YUV422M:
+	case V4L2_PIX_FMT_YVU422M:
 	case V4L2_PIX_FMT_YUV422P:
 	case V4L2_PIX_FMT_YVU420:
 	case V4L2_PIX_FMT_YUV420:
@@ -177,6 +179,8 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned xfer_func,
 	case V4L2_PIX_FMT_NV61M:
 	case V4L2_PIX_FMT_NV24:
 	case V4L2_PIX_FMT_NV42:
+	case V4L2_PIX_FMT_YUV444M:
+	case V4L2_PIX_FMT_YVU444M:
 	case V4L2_PIX_FMT_YUV444:
 	case V4L2_PIX_FMT_YUV555:
 	case V4L2_PIX_FMT_YUV565:
@@ -366,6 +370,8 @@ bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
 		V4L2_PIX_FMT_YVYU,
 		V4L2_PIX_FMT_UYVY,
 		V4L2_PIX_FMT_VYUY,
+		V4L2_PIX_FMT_YUV422M,
+		V4L2_PIX_FMT_YVU422M,
 		V4L2_PIX_FMT_YUV422P,
 		V4L2_PIX_FMT_YVU420,
 		V4L2_PIX_FMT_YUV420,
@@ -375,6 +381,8 @@ bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
 		V4L2_PIX_FMT_NV61,
 		V4L2_PIX_FMT_NV24,
 		V4L2_PIX_FMT_NV42,
+		V4L2_PIX_FMT_YUV444M,
+		V4L2_PIX_FMT_YVU444M,
 		V4L2_PIX_FMT_NV16M,
 		V4L2_PIX_FMT_NV61M,
 		V4L2_PIX_FMT_YVU420M,
@@ -451,6 +459,10 @@ void CaptureWinGLEngine::changeShader()
 	case V4L2_PIX_FMT_YVU420:
 	case V4L2_PIX_FMT_YUV420M:
 	case V4L2_PIX_FMT_YVU420M:
+	case V4L2_PIX_FMT_YUV422M:
+	case V4L2_PIX_FMT_YVU422M:
+	case V4L2_PIX_FMT_YUV444M:
+	case V4L2_PIX_FMT_YVU444M:
 		shader_YUV(m_frameFormat);
 		break;
 
@@ -582,6 +594,10 @@ void CaptureWinGLEngine::paintGL()
 	case V4L2_PIX_FMT_YVU420:
 	case V4L2_PIX_FMT_YUV420M:
 	case V4L2_PIX_FMT_YVU420M:
+	case V4L2_PIX_FMT_YUV422M:
+	case V4L2_PIX_FMT_YVU422M:
+	case V4L2_PIX_FMT_YUV444M:
+	case V4L2_PIX_FMT_YVU444M:
 		render_YUV(m_frameFormat);
 		break;
 
@@ -869,7 +885,19 @@ static const QString codeSuffixWithAlpha("   gl_FragColor = vec4(r, g, b, a);"
 
 void CaptureWinGLEngine::shader_YUV(__u32 format)
 {
-	unsigned vdiv = format == V4L2_PIX_FMT_YUV422P ? 1 : 2;
+	unsigned vdiv = 2, hdiv = 2;
+
+	switch (format) {
+	case V4L2_PIX_FMT_YUV422P:
+	case V4L2_PIX_FMT_YUV422M:
+	case V4L2_PIX_FMT_YVU422M:
+		vdiv = 1;
+		break;
+	case V4L2_PIX_FMT_YUV444M:
+	case V4L2_PIX_FMT_YVU444M:
+		vdiv = hdiv = 1;
+		break;
+	}
 
 	m_screenTextureCount = 3;
 	glGenTextures(m_screenTextureCount, m_screenTexture);
@@ -882,13 +910,13 @@ void CaptureWinGLEngine::shader_YUV(__u32 format)
 
 	glActiveTexture(GL_TEXTURE1);
 	configureTexture(1);
-	glTexImage2D(GL_TEXTURE_2D, 0, m_glRed, m_frameWidth / 2, m_frameHeight / vdiv, 0,
+	glTexImage2D(GL_TEXTURE_2D, 0, m_glRed, m_frameWidth / hdiv, m_frameHeight / vdiv, 0,
 		     m_glRed, GL_UNSIGNED_BYTE, NULL);
 	checkError("YUV shader texture 1");
 
 	glActiveTexture(GL_TEXTURE2);
 	configureTexture(2);
-	glTexImage2D(GL_TEXTURE_2D, 0, m_glRed, m_frameWidth / 2, m_frameHeight / vdiv, 0,
+	glTexImage2D(GL_TEXTURE_2D, 0, m_glRed, m_frameWidth / hdiv, m_frameHeight / vdiv, 0,
 		     m_glRed, GL_UNSIGNED_BYTE, NULL);
 	checkError("YUV shader texture 2");
 
@@ -928,20 +956,32 @@ void CaptureWinGLEngine::shader_YUV(__u32 format)
 
 void CaptureWinGLEngine::render_YUV(__u32 format)
 {
-	unsigned vdiv = 2;
+	unsigned vdiv = 2, hdiv = 2;
 	int idxU = 0;
 	int idxV = 0;
 
-	if (format == V4L2_PIX_FMT_YUV422P) {
+	switch (format) {
+	case V4L2_PIX_FMT_YUV444M:
+	case V4L2_PIX_FMT_YVU444M:
+		vdiv = hdiv = 1;
+		break;
+	case V4L2_PIX_FMT_YUV422P:
 		idxU = m_frameWidth * m_frameHeight;
 		idxV = idxU + (idxU / 2);
 		vdiv = 1;
-	} else if (format == V4L2_PIX_FMT_YUV420) {
+		break;
+	case V4L2_PIX_FMT_YUV422M:
+	case V4L2_PIX_FMT_YVU422M:
+		vdiv = 1;
+		break;
+	case V4L2_PIX_FMT_YUV420:
 		idxU = m_frameWidth * m_frameHeight;
 		idxV = idxU + (idxU / 4);
-	} else if (format == V4L2_PIX_FMT_YVU420) {
+		break;
+	case V4L2_PIX_FMT_YVU420:
 		idxV = m_frameWidth * m_frameHeight;
 		idxU = idxV + (idxV / 4);
+		break;
 	}
 
 	int idx = glGetUniformLocation(m_shaderProgram.programId(), "tex_h"); // Texture height
@@ -963,15 +1003,19 @@ void CaptureWinGLEngine::render_YUV(__u32 format)
 	case V4L2_PIX_FMT_YUV422P:
 	case V4L2_PIX_FMT_YUV420:
 	case V4L2_PIX_FMT_YVU420:
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / 2, m_frameHeight / vdiv,
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / hdiv, m_frameHeight / vdiv,
 			m_glRed, GL_UNSIGNED_BYTE, m_frameData == NULL ? NULL : &m_frameData[idxU]);
 		break;
 	case V4L2_PIX_FMT_YUV420M:
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / 2, m_frameHeight / vdiv,
+	case V4L2_PIX_FMT_YUV422M:
+	case V4L2_PIX_FMT_YUV444M:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / hdiv, m_frameHeight / vdiv,
 			m_glRed, GL_UNSIGNED_BYTE, m_frameData2);
 		break;
 	case V4L2_PIX_FMT_YVU420M:
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / 2, m_frameHeight / vdiv,
+	case V4L2_PIX_FMT_YVU422M:
+	case V4L2_PIX_FMT_YVU444M:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / hdiv, m_frameHeight / vdiv,
 			m_glRed, GL_UNSIGNED_BYTE, m_frameData3);
 		break;
 	}
@@ -985,15 +1029,19 @@ void CaptureWinGLEngine::render_YUV(__u32 format)
 	case V4L2_PIX_FMT_YUV422P:
 	case V4L2_PIX_FMT_YUV420:
 	case V4L2_PIX_FMT_YVU420:
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / 2, m_frameHeight / vdiv,
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / hdiv, m_frameHeight / vdiv,
 			m_glRed, GL_UNSIGNED_BYTE, m_frameData == NULL ? NULL : &m_frameData[idxV]);
 		break;
 	case V4L2_PIX_FMT_YUV420M:
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / 2, m_frameHeight / vdiv,
+	case V4L2_PIX_FMT_YUV422M:
+	case V4L2_PIX_FMT_YUV444M:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / hdiv, m_frameHeight / vdiv,
 			m_glRed, GL_UNSIGNED_BYTE, m_frameData3);
 		break;
 	case V4L2_PIX_FMT_YVU420M:
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / 2, m_frameHeight / vdiv,
+	case V4L2_PIX_FMT_YVU422M:
+	case V4L2_PIX_FMT_YVU444M:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth / hdiv, m_frameHeight / vdiv,
 			m_glRed, GL_UNSIGNED_BYTE, m_frameData2);
 		break;
 	}
