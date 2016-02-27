@@ -207,8 +207,9 @@ if test "x$qt_pkgconfig" = "xtrue"; then
       AC_SUBST(QT_CFLAGS)
       AC_SUBST(QT_LIBS)
       AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
-      QT_VERSION="v5"
+      QT_VERSION="v5 with QtGL"
    else
+      QT_VERSION="v5"
       AC_MSG_WARN(Qt5 OpenGL is not available)
     fi
 else
@@ -226,8 +227,9 @@ else
       PKG_CHECK_MODULES(QTGL, [QtOpenGL >= 4.8 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
       if test "x$qt_pkgconfig_gl" = "xtrue"; then
          AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
-         QT_VERSION="v4"
+         QT_VERSION="v4 with QtGL"
       else
+         QT_VERSION="v4"
          AC_MSG_WARN(Qt4 OpenGL is not available)
       fi
    else
