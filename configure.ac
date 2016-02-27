@@ -186,6 +186,8 @@ AS_IF([test "x$with_jpeg" != xno],
 
 AM_CONDITIONAL([HAVE_JPEG], [$have_jpeg])
 
+QT_VERSION="none"
+
 PKG_CHECK_MODULES(QT5, [Qt5Core >= 5.0 Qt5Gui >= 5.0 Qt5Widgets >= 5.0], [qt_pkgconfig=true], [qt_pkgconfig=false])
 if test "x$qt_pkgconfig" = "xtrue"; then
    QT_CFLAGS="$QT5_CFLAGS -fPIC"
@@ -205,6 +207,7 @@ if test "x$qt_pkgconfig" = "xtrue"; then
       AC_SUBST(QT_CFLAGS)
       AC_SUBST(QT_LIBS)
       AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
+      QT_VERSION="v5"
    else
       AC_MSG_WARN(Qt5 OpenGL is not available)
     fi
@@ -223,6 +226,7 @@ else
       PKG_CHECK_MODULES(QTGL, [QtOpenGL >= 4.8 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
       if test "x$qt_pkgconfig_gl" = "xtrue"; then
          AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
+         QT_VERSION="v4"
       else
          AC_MSG_WARN(Qt4 OpenGL is not available)
       fi
@@ -410,3 +414,21 @@ fi
 CPPFLAGS="-I\$(top_srcdir)/lib/include -Wall -Wpointer-arith -D_GNU_SOURCE $CPPFLAGS"
 
 AC_OUTPUT
+
+dnl ---------------------------------------------------------------------
+dnl compile time options summary
+
+cat <<EOF
+
+compile time options summary
+============================
+
+    X11			: $x11_pkgconfig
+    GL			: $gl_pkgconfig
+    glu			: $glu_pkgconfig
+    libjpeg		: $with_jpeg
+    libudev		: $have_libudev
+    QT version		: $QT_VERSION
+    ALSA support	: $alsa_pkgconfig
+
+EOF
