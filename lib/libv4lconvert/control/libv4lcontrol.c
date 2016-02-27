@@ -75,9 +75,6 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	/* A re-branded ASUS notebook */
 	{ 0x04f2, 0xb012, 0, "Founder PC", "T14MF",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
-	/* Note no whitespace padding for board vendor, this is not a typo */
-	{ 0x04f2, 0xb012, 0, "PEGATRON CORPORATION", "X71TL     ",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	/* These 3 PACKARD BELL's seem to be Asus notebook in disguise */
 	{ 0x04f2, 0xb012, 0, "Packard Bell BV", "T32A      ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
@@ -152,10 +149,6 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x064e, 0xa111, 0, "Acer, Inc.", "Prespa1         ", 
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
 		"Acer, inc.", "Aspire 5570     " },
-	{ 0x064e, 0xa111, 0, "PEGATRON CORPORATION         ", "F5C     ",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
-	{ 0x064e, 0xa111, 0, "PEGATRON CORPORATION         ", "F5SR    ",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	/* 2 reports:
 	   Unknown laptop model -> System Vendor: "  IDEALMAX"
 	   Síragon SL-6120      -> System Vendor: "PEGA PC"
@@ -164,8 +157,6 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
 		NULL, "H34" },
 	{ 0x064e, 0xa212, 0, "MEDIONAG", "WeTab ",
-		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
-	{ 0x174f, 0x5a35, 0, "PEGATRON CORPORATION         ", "F5SL    ",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED },
 	{ 0x174f, 0x6a51, 0, NULL, "S96S",
 		V4LCONTROL_HFLIPPED | V4LCONTROL_VFLIPPED, 0,
@@ -270,6 +261,7 @@ static const char *asus_board_vendor[] = {
 	"ASUSTeK Computer Inc.",
 	"ASUSTeK Computer INC.",
 	"ASUS CORPORATION",
+	"PEGATRON CORPORATION",
 	NULL };
 
 static const char *asus_board_name[] = {
