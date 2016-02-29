@@ -1332,8 +1332,6 @@ static int testBasicCompose(struct node *node, unsigned type)
 	if (!ret) {
 		fail_on_test(!rect_is_inside(&sel_padded.r, &sel_bounds.r));
 		fail_on_test(!sel_padded.r.width || !sel_padded.r.height);
-		if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			fail_on_test(sel_padded.r.left || sel_padded.r.top);
 	}
 	return 0;
 }
