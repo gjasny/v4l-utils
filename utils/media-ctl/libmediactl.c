@@ -569,8 +569,11 @@ static int media_enum_entities(struct media_device *media)
 
 		/* Find the corresponding device name. */
 		if (media_entity_type(entity) != MEDIA_ENT_T_DEVNODE &&
-		    media_entity_type(entity) != MEDIA_ENT_T_V4L2_SUBDEV &&
-		    entity->info.type == MEDIA_ENT_T_DEVNODE_ALSA)
+		    media_entity_type(entity) != MEDIA_ENT_T_V4L2_SUBDEV)
+			continue;
+
+		/* Don't try to parse empty major,minor */
+		if (!entity->info.dev.major && !entity->info.dev.minor)
 			continue;
 
 		/* Try to get the device name via udev */
