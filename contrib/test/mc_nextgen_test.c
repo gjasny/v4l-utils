@@ -180,6 +180,7 @@ static inline const char *intf_type(uint32_t intf_type)
 		return  "CA";
 	case MEDIA_INTF_T_DVB_NET:
 		return "dvbnet";
+
 	case MEDIA_INTF_T_V4L_VIDEO:
 		return "video";
 	case MEDIA_INTF_T_V4L_VBI:
@@ -190,7 +191,7 @@ static inline const char *intf_type(uint32_t intf_type)
 		return "v4l2-subdev";
 	case MEDIA_INTF_T_V4L_SWRADIO:
 		return "swradio";
-#if 0
+
 	case MEDIA_INTF_T_ALSA_PCM_CAPTURE:
 		return "pcm-capture";
 	case MEDIA_INTF_T_ALSA_PCM_PLAYBACK:
@@ -203,7 +204,10 @@ static inline const char *intf_type(uint32_t intf_type)
 		return "rawmidi";
 	case MEDIA_INTF_T_ALSA_HWDEP:
 		return "hwdep";
-#endif
+	case MEDIA_INTF_T_ALSA_SEQUENCER:
+		return "sequencer";
+	case MEDIA_INTF_T_ALSA_TIMER:
+		return "ALSA timer";
 	default:
 		return "unknown_intf";
 	}
