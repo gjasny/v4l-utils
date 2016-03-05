@@ -68,6 +68,12 @@ static int show_dot = 0;
 static int max_tsout = 5;
 static char media_device[256] = "/dev/media0";
 
+
+static inline void *media_get_uptr(__u64 arg)
+{
+	return (void *)(uintptr_t)arg;
+}
+
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
 	switch (k) {
