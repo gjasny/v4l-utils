@@ -351,6 +351,9 @@ static void media_print_topology_dot(struct media_device *media)
 		unsigned int num_links = media_entity_get_links_count(entity);
 		unsigned int npads;
 
+		if (!devname)
+			devname = "";
+
 		switch (media_entity_type(entity)) {
 		case MEDIA_ENT_T_DEVNODE:
 			printf("\tn%08x [label=\"%s\\n%s\", shape=box, style=filled, "
@@ -508,6 +511,7 @@ int main(int argc, char **argv)
 {
 	struct media_device *media;
 	int ret = -1;
+	const char *devname;
 
 	if (parse_cmdline(argc, argv))
 		return EXIT_FAILURE;
@@ -562,7 +566,9 @@ int main(int argc, char **argv)
 			goto out;
 		}
 
-		printf("%s\n", media_entity_get_devname(entity));
+		devname = media_entity_get_devname(entity);
+		if (devname)
+			printf("%s\n", devname);
 	}
 
 	if (media_opts.fmt_pad) {
