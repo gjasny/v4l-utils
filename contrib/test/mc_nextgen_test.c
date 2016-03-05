@@ -212,6 +212,8 @@ static inline const char *intf_type(uint32_t intf_type)
 static inline const char *ent_function(uint32_t function)
 {
 	switch (function) {
+
+	/* DVB entities */
 	case MEDIA_ENT_F_DTV_DEMOD:
 		return "DTV demod";
 	case MEDIA_ENT_F_TS_DEMUX:
@@ -220,20 +222,40 @@ static inline const char *ent_function(uint32_t function)
 		return "DTV CA";
 	case MEDIA_ENT_F_DTV_NET_DECAP:
 		return "DTV Network decap";
+
+	/* I/O entities */
+	case MEDIA_ENT_F_IO_DTV:
+		return "DTV I/O";
+	case MEDIA_ENT_F_IO_VBI:
+		return "VBI I/O";
+	case MEDIA_ENT_F_IO_SWRADIO:
+		return "SDR I/O";
+
+	/*Analog TV IF-PLL decoders */
+	case MEDIA_ENT_F_IF_VID_DECODER:
+		return "IF video decoder";
+	case MEDIA_ENT_F_IF_AUD_DECODER:
+		return "IF sound decoder";
+
+	/* Audio Entity Functions */
+	case MEDIA_ENT_F_AUDIO_CAPTURE:
+		return "Audio Capture";
+	case MEDIA_ENT_F_AUDIO_PLAYBACK:
+		return "Audio Playback";
+	case MEDIA_ENT_F_AUDIO_MIXER:
+		return "Audio Mixer";
+
+	/* Connectors */
 	case MEDIA_ENT_F_CONN_RF:
 		return "RF connector";
 	case MEDIA_ENT_F_CONN_SVIDEO:
 		return "S-Video connector";
 	case MEDIA_ENT_F_CONN_COMPOSITE:
 		return "Composite connector";
+
+	/* Entities based on MEDIA_ENT_F_OLD_BASE */
 	case MEDIA_ENT_F_IO_V4L:
 		return "V4L I/O";
-	case MEDIA_ENT_F_IO_DTV:
-		return "DTV I/O";
-	case MEDIA_ENT_F_IO_SWRADIO:
-		return "SDR I/O";
-	case MEDIA_ENT_F_IO_VBI:
-		return "VBI I/O";
 	case MEDIA_ENT_F_CAM_SENSOR:
 		return "Camera Sensor";
 	case MEDIA_ENT_F_FLASH:
@@ -244,16 +266,8 @@ static inline const char *ent_function(uint32_t function)
 		return "ATV decoder";
 	case MEDIA_ENT_F_TUNER:
 		return "tuner";
-	case MEDIA_ENT_F_IF_VID_DECODER:
-		return "IF video decoder";
-	case MEDIA_ENT_F_IF_AUD_DECODER:
-		return "IF sound decoder";
-	case MEDIA_ENT_F_AUDIO_CAPTURE:
-		return "Audio Capture";
-	case MEDIA_ENT_F_AUDIO_PLAYBACK:
-		return "Audio Playback";
-	case MEDIA_ENT_F_AUDIO_MIXER:
-		return "Audio Mixer";
+
+	/* Anything else */
 	case MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN:
 	default:
 		return "unknown entity type";
