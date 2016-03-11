@@ -723,6 +723,7 @@ int v4l2_subdev_parse_setup_formats(struct media_device *media, const char *p)
 		if (ret < 0)
 			return ret;
 
+		for (; isspace(*end); end++);
 		p = end + 1;
 	} while (*end == ',');
 
