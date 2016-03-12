@@ -772,22 +772,22 @@ QString CaptureWinGLEngine::codeTransformToLinear()
 			       "        ((b <= 0.04045) ? b / 12.92 : pow((b + 0.055) / 1.055, 2.4));"
 			       );
 	case V4L2_XFER_FUNC_ADOBERGB:
-		return QString("   r = pow(r, 2.19921875);"
-			       "   g = pow(g, 2.19921875);"
-			       "   b = pow(b, 2.19921875);");
+		return QString("   r = pow(max(r, 0.0), 2.19921875);"
+			       "   g = pow(max(g, 0.0), 2.19921875);"
+			       "   b = pow(max(b, 0.0), 2.19921875);");
 	case V4L2_XFER_FUNC_DCI_P3:
-		return QString("   r = pow(r, 2.6);"
-			       "   g = pow(g, 2.6);"
-			       "   b = pow(b, 2.6);");
+		return QString("   r = pow(max(r, 0.0), 2.6);"
+			       "   g = pow(max(g, 0.0), 2.6);"
+			       "   b = pow(max(b, 0.0), 2.6);");
 	case V4L2_XFER_FUNC_SMPTE2084:
 		return QString("   float m1 = 1.0 / ((2610.0 / 4096.0) / 4.0);"
 			       "   float m2 = 1.0 / (128.0 * 2523.0 / 4096.0);"
 			       "   float c1 = 3424.0 / 4096.0;"
 			       "   float c2 = 32.0 * 2413.0 / 4096.0;"
 			       "   float c3 = 32.0 * 2392.0 / 4096.0;"
-			       "   r = pow(r, m2);"
-			       "   g = pow(g, m2);"
-			       "   b = pow(b, m2);"
+			       "   r = pow(max(r, 0.0), m2);"
+			       "   g = pow(max(g, 0.0), m2);"
+			       "   b = pow(max(b, 0.0), m2);"
 			       "   r = pow(max(r - c1, 0.0) / (c2 - c3 * r), m1);"
 			       "   g = pow(max(g - c1, 0.0) / (c2 - c3 * g), m1);"
 			       "   b = pow(max(b - c1, 0.0) / (c2 - c3 * b), m1);");
