@@ -98,6 +98,8 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_YUYV,		16,	 5,	 4,	0 },
 	{ V4L2_PIX_FMT_YVYU,		16,	 5,	 4,	0 },
 	{ V4L2_PIX_FMT_UYVY,		16,	 5,	 4,	0 },
+	{ V4L2_PIX_FMT_NV16,		16,	 5,	 4,	1 },
+	{ V4L2_PIX_FMT_NV61,		16,	 5,	 4,	1 },
 	/* yuv 4:2:0 formats */
 	{ V4L2_PIX_FMT_SPCA501,		12,      6,	 3,	1 },
 	{ V4L2_PIX_FMT_SPCA505,		12,	 6,	 3,	1 },
@@ -1229,6 +1231,20 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 		}
 		break;
 
+	case V4L2_PIX_FMT_NV16: {
+		unsigned char *tmpbuf;
+
+		tmpbuf = v4lconvert_alloc_buffer(width * height * 2,
+				&data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
+		if (!tmpbuf)
+			return v4lconvert_oom_error(data);
+
+		v4lconvert_nv16_to_yuyv(src, tmpbuf, width, height);
+		src_pix_fmt = V4L2_PIX_FMT_YUYV;
+		src = tmpbuf;
+		bytesperline = bytesperline * 2;
+		/* fall through */
+	}
 	case V4L2_PIX_FMT_YUYV:
 		if (src_size < (width * height * 2)) {
 			V4LCONVERT_ERR("short yuyv data frame\n");
@@ -1251,6 +1267,21 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 		}
 		break;
 
+	case V4L2_PIX_FMT_NV61: {
+		unsigned char *tmpbuf;
+
+		tmpbuf = v4lconvert_alloc_buffer(width * height * 2,
+				&data->convert_pixfmt_buf, &data->convert_pixfmt_buf_size);
+		if (!tmpbuf)
+			return v4lconvert_oom_error(data);
+
+		/* Note NV61 is NV16 with U and V swapped so this becomes yvyu. */
+		v4lconvert_nv16_to_yuyv(src, tmpbuf, width, height);
+		src_pix_fmt = V4L2_PIX_FMT_YVYU;
+		src = tmpbuf;
+		bytesperline = bytesperline * 2;
+		/* fall through */
+	}
 	case V4L2_PIX_FMT_YVYU:
 		if (src_size < (width * height * 2)) {
 			V4LCONVERT_ERR("short yvyu data frame\n");

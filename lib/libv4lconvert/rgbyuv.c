@@ -295,6 +295,21 @@ void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dest,
 	}
 }
 
+void v4lconvert_nv16_to_yuyv(const unsigned char *src, unsigned char *dest,
+		int width, int height)
+{
+	const unsigned char *y, *cbcr;
+	int count = 0;
+
+	y = src;
+	cbcr = src + width*height;
+
+	while (count++ < width*height) {
+		*dest++ = *y++;
+		*dest++ = *cbcr++;
+	}
+}
+
 void v4lconvert_yvyu_to_bgr24(const unsigned char *src, unsigned char *dest,
 		int width, int height, int stride)
 {
