@@ -706,10 +706,12 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 
 		buf.field = field;
 		tpg_s_field(&tpg, field, output_field_alt);
-		if (field == V4L2_FIELD_TOP)
-			field = V4L2_FIELD_BOTTOM;
-		else if (field == V4L2_FIELD_BOTTOM)
-			field = V4L2_FIELD_TOP;
+		if (output_field_alt) {
+			if (field == V4L2_FIELD_TOP)
+				field = V4L2_FIELD_BOTTOM;
+			else if (field == V4L2_FIELD_BOTTOM)
+				field = V4L2_FIELD_TOP;
+		}
 
 		if (b.is_mplane) {
 			for (unsigned j = 0; j < b.num_planes; j++) {
@@ -979,10 +981,12 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 	}
 	buf.field = output_field;
 	tpg_s_field(&tpg, output_field, output_field_alt);
-	if (output_field == V4L2_FIELD_TOP)
-		output_field = V4L2_FIELD_BOTTOM;
-	else if (output_field == V4L2_FIELD_BOTTOM)
-		output_field = V4L2_FIELD_TOP;
+	if (output_field_alt) {
+		if (output_field == V4L2_FIELD_TOP)
+			output_field = V4L2_FIELD_BOTTOM;
+		else if (output_field == V4L2_FIELD_BOTTOM)
+			output_field = V4L2_FIELD_TOP;
+	}
 
 	if (fin && !fill_buffer_from_file(b, buf.index, fin))
 		return -1;
