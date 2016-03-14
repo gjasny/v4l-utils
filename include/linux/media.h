@@ -142,6 +142,10 @@ struct media_device_info {
 #define MEDIA_ENT_TYPE_MASK		0x00ff0000
 #define MEDIA_ENT_SUBTYPE_MASK		0x0000ffff
 
+/* End of the old subdev reserved numberspace */
+#define MEDIA_ENT_T_DEVNODE_UNKNOWN	(MEDIA_ENT_T_DEVNODE | \
+					 MEDIA_ENT_SUBTYPE_MASK)
+
 #define MEDIA_ENT_T_DEVNODE		MEDIA_ENT_F_OLD_BASE
 #define MEDIA_ENT_T_DEVNODE_V4L		MEDIA_ENT_F_IO_V4L
 #define MEDIA_ENT_T_DEVNODE_FB		(MEDIA_ENT_T_DEVNODE + 2)
@@ -315,14 +319,14 @@ struct media_v2_entity {
 	__u32 id;
 	char name[64];		/* FIXME: move to a property? (RFC says so) */
 	__u32 function;		/* Main function of the entity */
-	__u16 reserved[12];
-};
+	__u32 reserved[6];
+} __attribute__ ((packed));
 
 /* Should match the specific fields at media_intf_devnode */
 struct media_v2_intf_devnode {
 	__u32 major;
 	__u32 minor;
-};
+} __attribute__ ((packed));
 
 struct media_v2_interface {
 	__u32 id;
@@ -334,22 +338,22 @@ struct media_v2_interface {
 		struct media_v2_intf_devnode devnode;
 		__u32 raw[16];
 	};
-};
+} __attribute__ ((packed));
 
 struct media_v2_pad {
 	__u32 id;
 	__u32 entity_id;
 	__u32 flags;
-	__u16 reserved[9];
-};
+	__u32 reserved[5];
+} __attribute__ ((packed));
 
 struct media_v2_link {
 	__u32 id;
 	__u32 source_id;
 	__u32 sink_id;
 	__u32 flags;
-	__u32 reserved[5];
-};
+	__u32 reserved[6];
+} __attribute__ ((packed));
 
 struct media_v2_topology {
 	__u64 topology_version;
@@ -369,7 +373,7 @@ struct media_v2_topology {
 	__u32 num_links;
 	__u32 reserved4;
 	__u64 ptr_links;
-};
+} __attribute__ ((packed));
 
 /* ioctls */
 
