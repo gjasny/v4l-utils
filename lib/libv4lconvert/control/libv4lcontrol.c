@@ -20,6 +20,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/sysmacros.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <sys/stat.h>
