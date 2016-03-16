@@ -103,12 +103,26 @@ void common_usage(void)
 	       );
 }
 
+static const char *prefixes[] = {
+	"video",
+	"radio",
+	"vbi",
+	"swradio",
+	"v4l-subdev",
+	NULL
+};
+
 static bool is_v4l_dev(const char *name)
 {
-	return !memcmp(name, "video", 5) ||
-		!memcmp(name, "radio", 5) ||
-		!memcmp(name, "vbi", 3) ||
-		!memcmp(name, "v4l-subdev", 10);
+	for (unsigned i = 0; prefixes[i]; i++) {
+		unsigned l = strlen(prefixes[i]);
+
+		if (!memcmp(name, prefixes[i], l)) {
+			if (isdigit(name[l]))
+				return true;
+		}
+	}
+	return false;
 }
 
 static int calc_node_val(const char *s)
@@ -116,12 +130,17 @@ static int calc_node_val(const char *s)
 	int n = 0;
 
 	s = strrchr(s, '/') + 1;
-	if (!memcmp(s, "video", 5)) n = 0;
-	else if (!memcmp(s, "radio", 5)) n = 0x100;
-	else if (!memcmp(s, "vbi", 3)) n = 0x200;
-	else if (!memcmp(s, "v4l-subdev", 10)) n = 0x300;
-	n += atol(s + (n >= 0x200 ? 3 : 5));
-	return n;
+
+	for (unsigned i = 0; prefixes[i]; i++) {
+		unsigned l = strlen(prefixes[i]);
+
+		if (!memcmp(s, prefixes[i], l)) {
+			n = i << 8;
+			n += atol(s + l);
+			return n;
+		}
+	}
+	return 0;
 }
 
 static bool sort_on_device_name(const std::string &s1, const std::string &s2)
@@ -191,8 +210,10 @@ static void list_devices()
 
 		if (fd < 0)
 			continue;
-		doioctl(fd, VIDIOC_QUERYCAP, &vcap);
+		int err = ioctl(fd, VIDIOC_QUERYCAP, &vcap);
 		close(fd);
+		if (err)
+			continue;
 		bus_info = (const char *)vcap.bus_info;
 		if (cards[bus_info].empty())
 			cards[bus_info] += std::string((char *)vcap.card) + " (" + bus_info + "):\n";
