@@ -559,8 +559,7 @@ int main(int argc, char **argv)
 	if (media_opts.entity) {
 		struct media_entity *entity;
 
-		entity = media_get_entity_by_name(media, media_opts.entity,
-						  strlen(media_opts.entity));
+		entity = media_get_entity_by_name(media, media_opts.entity);
 		if (entity == NULL) {
 			printf("Entity '%s' not found\n", media_opts.entity);
 			goto out;

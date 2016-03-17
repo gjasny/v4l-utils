@@ -66,21 +66,14 @@ struct media_pad *media_entity_remote_source(struct media_pad *pad)
 }
 
 struct media_entity *media_get_entity_by_name(struct media_device *media,
-					      const char *name, size_t length)
+					      const char *name)
 {
 	unsigned int i;
-
-	/* A match is impossible if the entity name is longer than the maximum
-	 * size we can get from the kernel.
-	 */
-	if (length >= FIELD_SIZEOF(struct media_entity_desc, name))
-		return NULL;
 
 	for (i = 0; i < media->entities_count; ++i) {
 		struct media_entity *entity = &media->entities[i];
 
-		if (strncmp(entity->info.name, name, length) == 0 &&
-		    entity->info.name[length] == '\0')
+		if (strcmp(entity->info.name, name) == 0)
 			return entity;
 	}
 
@@ -804,6 +797,8 @@ struct media_pad *media_parse_pad(struct media_device *media,
 	for (; isspace(*p); ++p);
 
 	if (*p == '"' || *p == '\'') {
+		char *name;
+
 		for (end = (char *)p + 1; *end && *end != '"' && *end != '\''; ++end);
 		if (*end != '"' && *end != '\'') {
 			media_dbg(media, "missing matching '\"'\n");
@@ -811,7 +806,11 @@ struct media_pad *media_parse_pad(struct media_device *media,
 			return NULL;
 		}
 
-		entity = media_get_entity_by_name(media, p + 1, end - p - 1);
+		name = strndup(p + 1, end - p - 1);
+		if (!name)
+			return NULL;
+		entity = media_get_entity_by_name(media, name);
+		free(name);
 		if (entity == NULL) {
 			media_dbg(media, "no such entity \"%.*s\"\n", end - p - 1, p + 1);
 			*endp = (char *)p + 1;
