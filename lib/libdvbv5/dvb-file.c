@@ -647,8 +647,8 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 	else if (!strcasecmp(key, "AUDIO_PID"))
 		is_audio = 1;
 	else if (!strcasecmp(key, "POLARIZATION")) {
-		for (j = 0; ARRAY_SIZE(dvb_sat_pol_name); j++)
-			if (!strcasecmp(value, dvb_sat_pol_name[j]))
+		for (j = 0; j < ARRAY_SIZE(dvb_sat_pol_name); j++)
+			if (dvb_sat_pol_name[j] && !strcasecmp(value, dvb_sat_pol_name[j]))
 				break;
 		if (j == ARRAY_SIZE(dvb_sat_pol_name))
 			return -2;
