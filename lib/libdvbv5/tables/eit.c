@@ -99,7 +99,7 @@ ssize_t dvb_table_eit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		if (event->desc_length > 0) {
 			uint16_t desc_length = event->desc_length;
 			if (p + desc_length > endbuf) {
-				dvb_logwarn("%s: decsriptors short read %zd/%d bytes", __func__,
+				dvb_logwarn("%s: descriptors short read %zd/%d bytes", __func__,
 					   endbuf - p, desc_length);
 				desc_length = endbuf - p;
 			}
