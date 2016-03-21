@@ -96,9 +96,6 @@ struct media_device_info {
  * Connectors
  */
 /* It is a responsibility of the entity drivers to add connectors and links */
-#define MEDIA_ENT_F_CONN_RF		(MEDIA_ENT_F_BASE + 0x30001)
-#define MEDIA_ENT_F_CONN_SVIDEO		(MEDIA_ENT_F_BASE + 0x30002)
-#define MEDIA_ENT_F_CONN_COMPOSITE	(MEDIA_ENT_F_BASE + 0x30003)
 
 /*
  * Don't touch on those. The ranges MEDIA_ENT_F_OLD_BASE and

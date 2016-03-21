@@ -249,6 +249,7 @@ static inline const char *ent_function(uint32_t function)
 	case MEDIA_ENT_F_AUDIO_MIXER:
 		return "Audio Mixer";
 
+#if 0
 	/* Connectors */
 	case MEDIA_ENT_F_CONN_RF:
 		return "RF connector";
@@ -256,6 +257,7 @@ static inline const char *ent_function(uint32_t function)
 		return "S-Video connector";
 	case MEDIA_ENT_F_CONN_COMPOSITE:
 		return "Composite connector";
+#endif
 
 	/* Entities based on MEDIA_ENT_F_OLD_BASE */
 	case MEDIA_ENT_F_IO_V4L:
