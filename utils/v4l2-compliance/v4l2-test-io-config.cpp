@@ -179,6 +179,7 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 		memset(&enumtimings, 0xff, sizeof(enumtimings));
 
 		enumtimings.index = i;
+		enumtimings.pad = 0;
 		ret = doioctl(node, VIDIOC_ENUM_DV_TIMINGS, &enumtimings);
 		if (ret)
 			break;
@@ -263,6 +264,7 @@ static int checkTimingsCap(struct node *node, bool has_timings)
 	int ret;
 
 	memset(&timingscap, 0xff, sizeof(timingscap));
+	timingscap.pad = 0;
 	ret = doioctl(node, VIDIOC_DV_TIMINGS_CAP, &timingscap);
 	if (ret && has_timings)
 		return fail("TIMINGS cap set, but could not get timings caps\n");

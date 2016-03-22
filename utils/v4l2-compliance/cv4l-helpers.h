@@ -333,6 +333,8 @@ public:
 
 	int dv_timings_cap(v4l2_dv_timings_cap &cap)
 	{
+		cap.pad = 0;
+		memset(cap.reserved, 0, sizeof(cap.reserved));
 		return cv4l_ioctl(VIDIOC_DV_TIMINGS_CAP, &cap);
 	}
 

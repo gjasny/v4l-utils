@@ -505,13 +505,12 @@ void stds_set(int fd)
 	}
 
 	if (options[OptSetDvBtTimings]) {
-		struct v4l2_enum_dv_timings et;
+		struct v4l2_enum_dv_timings et = {};
 		struct v4l2_dv_timings new_dv_timings = {};
 
 		if (query_and_set_dv_timings)
 			doioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings);
 		else if (enum_and_set_dv_timings >= 0) {
-			memset(&et, 0, sizeof(et));
 			et.index = enum_and_set_dv_timings;
 			doioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &et);
 			new_dv_timings = et.timings;
@@ -600,7 +599,7 @@ void stds_get(int fd)
 	}
 
 	if (options[OptGetDvTimingsCap]) {
-		struct v4l2_dv_timings_cap dv_timings_cap;
+		struct v4l2_dv_timings_cap dv_timings_cap = {};
 
 		if (doioctl(fd, VIDIOC_DV_TIMINGS_CAP, &dv_timings_cap) >= 0) {
 			static const flag_def dv_caps_def[] = {
@@ -670,9 +669,8 @@ void stds_list(int fd)
 	}
 
 	if (options[OptListDvTimings]) {
-		struct v4l2_enum_dv_timings dv_enum_timings;
+		struct v4l2_enum_dv_timings dv_enum_timings = {};
 
-		dv_enum_timings.index = 0;
 		printf("ioctl: VIDIOC_ENUM_DV_TIMINGS\n");
 		while (test_ioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &dv_enum_timings) >= 0) {
 			if (options[OptConcise]) {
