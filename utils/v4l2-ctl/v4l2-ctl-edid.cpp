@@ -517,7 +517,7 @@ void edid_set(int fd)
 
 		memset(&edid, 0, sizeof(edid));
 		edid.pad = clear_pad;
-		doioctl(fd, VIDIOC_S_EDID, &sedid);
+		doioctl(fd, VIDIOC_S_EDID, &edid);
 	}
 
 	if (options[OptSetEdid]) {
