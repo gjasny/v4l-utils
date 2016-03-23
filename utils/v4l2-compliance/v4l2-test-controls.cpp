@@ -761,7 +761,7 @@ int testExtendedControls(struct node *node)
 	return 0;
 }
 
-int testControlEvents(struct node *node)
+int testEvents(struct node *node)
 {
 	qctrl_map::iterator iter;
 
@@ -801,6 +801,27 @@ int testControlEvents(struct node *node)
 		if (ret)
 			return fail("unsubscribe event for control '%s' failed\n", qctrl.name);
 	}
+	if (node->cur_io_caps & V4L2_IN_CAP_DV_TIMINGS) {
+		struct v4l2_event_subscription sub = { };
+		int id;
+
+		if (node->can_capture) {
+			fail_on_test(doioctl(node, VIDIOC_G_INPUT, &id));
+			if (node->controls.find(V4L2_CID_DV_RX_POWER_PRESENT) == node->controls.end())
+				warn("V4L2_CID_DV_RX_POWER_PRESENT not found for input %d\n", id);
+		} else {
+			fail_on_test(doioctl(node, VIDIOC_G_OUTPUT, &id));
+			if (node->controls.find(V4L2_CID_DV_TX_HOTPLUG) == node->controls.end())
+				warn("V4L2_CID_DV_TX_HOTPLUG not found for output %d\n", id);
+			if (node->controls.find(V4L2_CID_DV_TX_EDID_PRESENT) == node->controls.end())
+				warn("V4L2_CID_DV_TX_EDID_PRESENT not found for output %d\n", id);
+		}
+		sub.type = V4L2_EVENT_SOURCE_CHANGE;
+		sub.id = id;
+		fail_on_test(doioctl(node, VIDIOC_SUBSCRIBE_EVENT, &sub));
+		fail_on_test(doioctl(node, VIDIOC_UNSUBSCRIBE_EVENT, &sub));
+	}
+
 	if (node->controls.empty())
 		return ENOTTY;
 	return 0;

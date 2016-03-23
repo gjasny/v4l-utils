@@ -1098,7 +1098,7 @@ int main(int argc, char **argv)
 		printf("\t\ttest VIDIOC_QUERYCTRL: %s\n", ok(testQueryControls(&node)));
 		printf("\t\ttest VIDIOC_G/S_CTRL: %s\n", ok(testSimpleControls(&node)));
 		printf("\t\ttest VIDIOC_G/S/TRY_EXT_CTRLS: %s\n", ok(testExtendedControls(&node)));
-		printf("\t\ttest VIDIOC_(UN)SUBSCRIBE_EVENT/DQEVENT: %s\n", ok(testControlEvents(&node)));
+		printf("\t\ttest VIDIOC_(UN)SUBSCRIBE_EVENT/DQEVENT: %s\n", ok(testEvents(&node)));
 		printf("\t\ttest VIDIOC_G/S_JPEGCOMP: %s\n", ok(testJpegComp(&node)));
 		printf("\t\tStandard Controls: %d Private Controls: %d\n",
 				node.std_controls, node.priv_controls);
