@@ -208,6 +208,11 @@ There are a number of files on this package that depends on the Linux Kernel.
 In order to make easier to keep it in sync, there's a target on this
 package to do the synchronism.
 
+For the sync to work, you need to run it on with 64 bits userspace and
+be sure that glibc has the development package for 32 bits.
+
+For Fedora, this is provided via this package: glibc-devel.i686
+
 There are some steps required:
 
 step 1) at the Kernel git tree:
