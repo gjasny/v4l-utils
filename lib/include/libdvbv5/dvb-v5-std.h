@@ -1,17 +1,16 @@
 /*
  * Copyright (c) 2011-2014 - Mauro Carvalho Chehab
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation version 2
- * of the License.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation version 2.1 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
@@ -30,7 +29,7 @@
  * @file dvb-v5-std.h
  * @ingroup frontend
  * @brief Provides libdvbv5 defined properties for the frontend.
- * @copyright GNU General Public License version 2 (GPLv2)
+ * @copyright GNU Lesser General Public License version 2.1 (LGPLv2.1)
  * @author Mauro Carvalho Chehab
  *
  * @par Bug Report
