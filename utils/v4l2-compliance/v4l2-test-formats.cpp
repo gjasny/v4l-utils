@@ -1200,6 +1200,20 @@ static int testBasicSelection(struct node *node, unsigned type, unsigned target)
 	__u32 pixfmt = v4l_format_g_pixelformat(&fmt);
 	if (node->frmsizes_count.find(pixfmt) != node->frmsizes_count.end())
 		fail_on_test(node->frmsizes_count[pixfmt] > 1);
+
+	// _MPLANE types are not allowed
+	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+	else
+		sel.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel) != EINVAL);
+	// Check handling of invalid type.
+	sel.type = 0xff;
+	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel) != EINVAL);
+	// Check handling of invalid target.
+	sel.type = type;
+	sel.target = 0xffff;
+	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel) != EINVAL);
 	return 0;
 }
 
@@ -1228,6 +1242,24 @@ static int testBasicCrop(struct node *node, unsigned type)
 		fail_on_test(sel_bounds.r.left || sel_bounds.r.top);
 	fail_on_test(!rect_is_inside(&sel_crop.r, &sel_bounds.r));
 	fail_on_test(!rect_is_inside(&sel_def.r, &sel_bounds.r));
+
+	sel_crop.type = type;
+	sel_crop.target = V4L2_SEL_TGT_CROP;
+	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel_crop));
+
+	// _MPLANE types are not allowed
+	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		sel_crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+	else
+		sel_crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
+	// Check handling of invalid type.
+	sel_crop.type = 0xff;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
+	// Check handling of invalid target.
+	sel_crop.type = type;
+	sel_crop.target = 0xffff;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
 	return 0;
 }
 
@@ -1333,6 +1365,24 @@ static int testBasicCompose(struct node *node, unsigned type)
 		fail_on_test(!rect_is_inside(&sel_padded.r, &sel_bounds.r));
 		fail_on_test(!sel_padded.r.width || !sel_padded.r.height);
 	}
+
+	sel_compose.type = type;
+	sel_compose.target = V4L2_SEL_TGT_COMPOSE;
+	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel_compose));
+
+	// _MPLANE types are not allowed
+	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		sel_compose.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+	else
+		sel_compose.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	// Check handling of invalid type.
+	sel_compose.type = 0xff;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	// Check handling of invalid target.
+	sel_compose.type = type;
+	sel_compose.target = 0xffff;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
 	return 0;
 }
 
