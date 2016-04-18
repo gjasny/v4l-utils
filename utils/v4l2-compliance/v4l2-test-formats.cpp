@@ -1283,10 +1283,20 @@ static int testLegacyCrop(struct node *node)
 	 * If neither CROPCAP nor G_CROP work, then G_SELECTION shouldn't
 	 * work either.
 	 */
-	if (!doioctl(node, VIDIOC_CROPCAP, &cap))
+	if (!doioctl(node, VIDIOC_CROPCAP, &cap)) {
 		fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel));
-	else
+
+		// Checks for invalid types
+		if (cap.type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			cap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+		else
+			cap.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+		fail_on_test(doioctl(node, VIDIOC_CROPCAP, &cap) != EINVAL);
+		cap.type = 0xff;
+		fail_on_test(doioctl(node, VIDIOC_CROPCAP, &cap) != EINVAL);
+	} else {
 		fail_on_test(!doioctl(node, VIDIOC_G_SELECTION, &sel));
+	}
 	sel.target = node->can_capture ? V4L2_SEL_TGT_CROP :
 					 V4L2_SEL_TGT_COMPOSE;
 	if (!doioctl(node, VIDIOC_G_CROP, &crop))
