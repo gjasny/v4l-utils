@@ -1,5 +1,5 @@
 /*
- * vivid-tpg.c - Test Pattern Generator
+ * v4l2-tpg-core.c - Test Pattern Generator
  *
  * Note: gen_twopix and tpg_gen_text are based on code from vivi.c. See the
  * vivi.c source for the copyright information of those functions.
@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include "vivid-tpg.h"
+#include "v4l2-tpg.h"
 
 /* Must remain in sync with enum tpg_pattern */
 const char * const tpg_pattern_strings[] = {

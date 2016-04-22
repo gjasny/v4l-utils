@@ -18,7 +18,7 @@
 #include "v4l2-ctl.h"
 
 extern "C" {
-#include "vivid-tpg.h"
+#include "v4l2-tpg.h"
 }
 
 static unsigned stream_count;

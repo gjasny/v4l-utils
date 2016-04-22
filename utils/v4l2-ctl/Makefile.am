@@ -6,7 +6,7 @@ v4l2_ctl_SOURCES = v4l2-ctl.cpp v4l2-ctl.h v4l2-ctl-common.cpp v4l2-ctl-tuner.cp
 	v4l2-ctl-io.cpp v4l2-ctl-stds.cpp v4l2-ctl-vidcap.cpp v4l2-ctl-vidout.cpp \
 	v4l2-ctl-overlay.cpp v4l2-ctl-vbi.cpp v4l2-ctl-selection.cpp v4l2-ctl-misc.cpp \
 	v4l2-ctl-streaming.cpp v4l2-ctl-sdr.cpp v4l2-ctl-edid.cpp v4l2-ctl-modes.cpp \
-	vivid-tpg-colors.c vivid-tpg.c
+	v4l2-tpg-colors.c v4l2-tpg-core.c
 v4l2_ctl_LDFLAGS = -lrt
 
 if WITH_V4L2_CTL_LIBV4L
@@ -15,4 +15,4 @@ else
 DEFS += -DNO_LIBV4L2
 endif
 
-EXTRA_DIST = Android.mk vivid-tpg.h.patch v4l2-ctl.1
+EXTRA_DIST = Android.mk v4l2-tpg.h.patch v4l2-ctl.1

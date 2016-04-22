@@ -37,7 +37,7 @@
 #include <libv4l2.h>
 
 extern "C" {
-#include <vivid-tpg.h>
+#include <v4l2-tpg.h>
 }
 #include "cv4l-helpers.h"
 #include "raw2sliced.h"

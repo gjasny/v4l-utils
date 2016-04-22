@@ -25,8 +25,8 @@ HEADERS += general-tab.h
 HEADERS += qv4l2.h
 HEADERS += raw2sliced.h
 HEADERS += vbi-tab.h
-HEADERS += ../v4l2-ctl/vivid-tpg.h
-HEADERS += ../v4l2-ctl/vivid-tpg-colors.h
+HEADERS += ../v4l2-ctl/v4l2-tpg.h
+HEADERS += ../v4l2-ctl/v4l2-tpg-colors.h
 HEADERS += ../../config.h
 
 SOURCES += capture-win.cpp
@@ -38,8 +38,8 @@ SOURCES += qv4l2.cpp
 SOURCES += raw2sliced.cpp
 SOURCES += tpg-tab.cpp
 SOURCES += vbi-tab.cpp
-SOURCES += ../v4l2-ctl/vivid-tpg.c
-SOURCES += ../v4l2-ctl/vivid-tpg-colors.c
+SOURCES += ../v4l2-ctl/v4l2-tpg-core.c
+SOURCES += ../v4l2-ctl/v4l2-tpg-colors.c
 
 LIBS += -L$$PWD/../../lib/libv4l2/.libs -lv4l2
 LIBS += -L$$PWD/../../lib/libv4lconvert/.libs -lv4lconvert

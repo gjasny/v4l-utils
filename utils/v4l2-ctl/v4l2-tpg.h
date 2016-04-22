@@ -1,5 +1,5 @@
 /*
- * vivid-tpg.h - Test Pattern Generator
+ * v4l2-tpg.h - Test Pattern Generator
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  *
@@ -17,8 +17,8 @@
  * SOFTWARE.
  */
 
-#ifndef _VIVID_TPG_H_
-#define _VIVID_TPG_H_
+#ifndef _V4L2_TPG_H_
+#define _V4L2_TPG_H_
 
 #include <linux/videodev2.h>
 
@@ -62,7 +62,7 @@ static inline u32 prandom_u32_max(u32 ep_ro)
 	return rand() % ep_ro;
 }
 
-#include "vivid-tpg-colors.h"
+#include "v4l2-tpg-colors.h"
 
 enum tpg_pattern {
 	TPG_PAT_75_COLORBAR,
