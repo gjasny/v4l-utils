@@ -955,8 +955,7 @@ int testMmap(struct node *node, unsigned frame_count)
 				fmt.s_height(fmt.g_height() / 2);
 				for (unsigned p = 0; p < fmt.g_num_planes(); p++)
 					fmt.s_sizeimage(fmt.g_sizeimage(p) / 2, p);
-				ret = q.create_bufs(node, 1, &fmt);
-				fail_on_test(ret != EINVAL);
+				fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
 				fail_on_test(testQueryBuf(node, cur_fmt.type, q.g_buffers()));
 				fmt = cur_fmt;
 				for (unsigned p = 0; p < fmt.g_num_planes(); p++)
