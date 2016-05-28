@@ -11,6 +11,7 @@ LOCAL_CFLAGS += -Wno-missing-field-initializers
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../.. \
     $(LOCAL_PATH)/../../include \
+    $(LOCAL_PATH)/../common \
     bionic \
     external/stlport/stlport
 

@@ -1,5 +1,5 @@
---- utils/v4l2-ctl/v4l2-tpg.h.bak	2016-04-22 09:22:11.168936563 +0200
-+++ utils/v4l2-ctl/v4l2-tpg.h	2016-04-22 09:23:07.337262639 +0200
+--- utils/common/v4l2-tpg.h.bak	2016-04-22 09:22:11.168936563 +0200
++++ utils/common/v4l2-tpg.h	2016-04-22 09:23:07.337262639 +0200
 @@ -20,13 +20,49 @@
  #ifndef _V4L2_TPG_H_
  #define _V4L2_TPG_H_
@@ -57,7 +57,7 @@
  enum tpg_pattern {
  	TPG_PAT_75_COLORBAR,
 --- ../media-git/drivers/media/common/v4l2-tpg/v4l2-tpg-core.c	2016-04-21 08:15:35.439610205 +0200
-+++ utils/v4l2-ctl/v4l2-tpg-core.c	2016-04-22 09:29:50.955939090 +0200
++++ utils/common/v4l2-tpg-core.c	2016-04-22 09:29:50.955939090 +0200
 @@ -20,8 +20,7 @@
   * SOFTWARE.
   */
@@ -198,7 +198,7 @@
 -MODULE_AUTHOR("Hans Verkuil");
 -MODULE_LICENSE("GPL");
 --- ../media-git/drivers/media/common/v4l2-tpg/v4l2-tpg-colors.c	2016-04-21 08:15:35.439610205 +0200
-+++ utils/v4l2-ctl/v4l2-tpg-colors.c	2016-04-22 09:26:24.638509385 +0200
++++ utils/common/v4l2-tpg-colors.c	2016-04-22 09:26:24.638509385 +0200
 @@ -36,7 +36,7 @@
   */
  

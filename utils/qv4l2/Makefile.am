@@ -4,11 +4,11 @@ man_MANS = qv4l2.1
 qv4l2_SOURCES = qv4l2.cpp general-tab.cpp ctrl-tab.cpp vbi-tab.cpp capture-win.cpp tpg-tab.cpp \
   capture-win-qt.cpp capture-win-qt.h capture-win-gl.cpp capture-win-gl.h alsa_stream.c alsa_stream.h \
   raw2sliced.cpp qv4l2.h capture-win.h general-tab.h vbi-tab.h raw2sliced.h \
-  ../v4l2-ctl/v4l2-tpg-core.c ../v4l2-ctl/v4l2-tpg.h ../v4l2-ctl/v4l2-tpg-colors.c ../v4l2-ctl/v4l2-tpg-colors.h
+  v4l2-tpg-core.c v4l2-tpg-colors.c
 nodist_qv4l2_SOURCES = moc_qv4l2.cpp moc_general-tab.cpp moc_capture-win.cpp moc_vbi-tab.cpp qrc_qv4l2.cpp
-qv4l2_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la ../libv4l2util/libv4l2util.la \
-  ../libmedia_dev/libmedia_dev.la
-qv4l2_CPPFLAGS = -I$(srcdir)/../v4l2-compliance -I$(srcdir)/../v4l2-ctl
+qv4l2_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la \
+  ../libv4l2util/libv4l2util.la ../libmedia_dev/libmedia_dev.la
+qv4l2_CPPFLAGS = -I../common
 
 if WITH_QTGL
 qv4l2_CPPFLAGS += $(QTGL_CFLAGS)
