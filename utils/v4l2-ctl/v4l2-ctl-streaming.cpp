@@ -6,6 +6,9 @@
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
@@ -16,10 +19,12 @@
 #include <math.h>
 
 #include "v4l2-ctl.h"
+#include "v4l-stream.h"
 
 extern "C" {
 #include "v4l2-tpg.h"
 }
+#include "cv4l-helpers.h"
 
 static unsigned stream_count;
 static unsigned stream_skip;
@@ -42,7 +47,15 @@ static tpg_move_mode stream_out_vert_mode = TPG_MOVE_NONE;
 static unsigned reqbufs_count_cap = 4;
 static unsigned reqbufs_count_out = 4;
 static char *file_cap;
+static char *host_cap;
+static unsigned host_port_cap = V4L_STREAM_PORT;
+static int host_fd_cap = -1;
+static unsigned rle_perc;
+static unsigned rle_perc_count;
 static char *file_out;
+static char *host_out;
+static unsigned host_port_out = V4L_STREAM_PORT;
+static int host_fd_out = -1;
 static struct tpg_data tpg;
 static unsigned output_field = V4L2_FIELD_NONE;
 static bool output_field_alt;
@@ -72,6 +85,7 @@ void streaming_usage(void)
 	       "  --stream-to=<file> stream to this file. The default is to discard the\n"
 	       "                     data. If <file> is '-', then the data is written to stdout\n"
 	       "                     and the --silent option is turned on automatically.\n"
+	       "  --stream-to-host=<hostname[:port]> stream to this host. The default port is %d.\n"
 	       "  --stream-poll      use non-blocking mode and select() to stream.\n"
 	       "  --stream-mmap=<count>\n"
 	       "                     capture video using mmap() [VIDIOC_(D)QBUF]\n"
@@ -83,6 +97,7 @@ void streaming_usage(void)
 	       "                     Requires a corresponding --stream-out-mmap option.\n"
 	       "  --stream-from=<file> stream from this file. The default is to generate a pattern.\n"
 	       "                     If <file> is '-', then the data is read from stdin.\n"
+	       "  --stream-from-host=<hostname[:port]> stream from this host. The default port is %d.\n"
 	       "  --stream-loop      loop when the end of the file we are streaming from is reached.\n"
 	       "                     The default is to stop.\n"
 	       "  --stream-out-pattern=<count>\n"
@@ -136,8 +151,8 @@ void streaming_usage(void)
 	       "  --list-buffers-sdr\n"
 	       "                     list all SDR RX buffers [VIDIOC_QUERYBUF]\n"
 	       "  --list-buffers-sdr-out\n"
-	       "                     list all SDR TX buffers [VIDIOC_QUERYBUF]\n"
-	       );
+	       "                     list all SDR TX buffers [VIDIOC_QUERYBUF]\n",
+		V4L_STREAM_PORT, V4L_STREAM_PORT);
 }
 
 static void setTimeStamp(struct v4l2_buffer &buf)
@@ -149,6 +164,20 @@ static void setTimeStamp(struct v4l2_buffer &buf)
 	clock_gettime(CLOCK_MONOTONIC, &ts);
 	buf.timestamp.tv_sec = ts.tv_sec;
 	buf.timestamp.tv_usec = ts.tv_nsec / 1000;
+}
+
+static __u32 read_u32(FILE *f)
+{
+	__u32 v;
+
+	fread(&v, 1, sizeof(v), f);
+	return ntohl(v);
+}
+
+static void write_u32(FILE *f, __u32 v)
+{
+	v = htonl(v);
+	fwrite(&v, 1, sizeof(v), f);
 }
 
 static const flag_def flags_def[] = {
@@ -364,8 +393,14 @@ void streaming_cmd(int ch, char *optarg)
 		if (!strcmp(file_cap, "-"))
 			options[OptSilent] = true;
 		break;
+	case OptStreamToHost:
+		host_cap = optarg;
+		break;
 	case OptStreamFrom:
 		file_out = optarg;
+		break;
+	case OptStreamFromHost:
+		host_out = optarg;
 		break;
 	case OptStreamMmap:
 	case OptStreamUser:
@@ -437,6 +472,7 @@ public:
 	struct v4l2_plane planes[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
 	void *bufs[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
 	int fds[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
+	unsigned bpl[VIDEO_MAX_PLANES];
 
 	int reqbufs(int fd, unsigned buf_count)
 	{
@@ -494,6 +530,76 @@ public:
 
 static bool fill_buffer_from_file(buffers &b, unsigned idx, FILE *fin)
 {
+	if (host_fd_out >= 0) {
+		for (;;) {
+			unsigned packet = read_u32(fin);
+
+			if (packet == V4L_STREAM_PACKET_END) {
+				fprintf(stderr, "END packet read\n");
+				return false;
+			}
+
+			char buf[1024];
+			unsigned sz = read_u32(fin);
+
+			if (packet == V4L_STREAM_PACKET_FRAME_VIDEO)
+				break;
+
+			fprintf(stderr, "expected FRAME_VIDEO, got 0x%08x\n", packet);
+			while (sz) {
+				unsigned rdsize = sz > sizeof(buf) ? sizeof(buf) : sz;
+
+				int n = fread(buf, 1, rdsize, fin);
+				if (n < 0) {
+					fprintf(stderr, "error reading %d bytes\n", sz);
+					return false;
+				}
+				sz -= n;
+			}
+		}
+
+		unsigned sz = read_u32(fin);
+
+		if (sz != V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_HDR) {
+			fprintf(stderr, "unsupported FRAME_VIDEO size\n");
+			return false;
+		}
+		read_u32(fin);  // ignore field
+		read_u32(fin);  // ignore flags
+		for (unsigned j = 0; j < b.num_planes; j++) {
+			__u8 *buf = (__u8 *)b.bufs[idx][j];
+			struct v4l2_plane &p = b.planes[idx][j];
+
+			sz = read_u32(fin);
+			if (sz != V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_PLANE_HDR) {
+				fprintf(stderr, "unsupported FRAME_VIDEO plane size\n");
+				return false;
+			}
+			__u32 size = read_u32(fin);
+			__u32 rle_size = read_u32(fin);
+			__u32 offset = size - rle_size;
+			unsigned sz = rle_size;
+
+			if (size > p.length) {
+				fprintf(stderr, "plane size is too large (%u > %u)\n",
+					size, p.length);
+				return false;
+			}
+			while (sz) {
+				int n = fread(buf + offset, 1, sz, fin);
+				if (n < 0) {
+					fprintf(stderr, "error reading %d bytes\n", sz);
+					return false;
+				}
+				if ((__u32)n == sz)
+					break;
+				offset += n;
+				sz -= n;
+			}
+			rle_decompress(buf, size, rle_size, b.bpl[j]);
+		}
+		return true;
+	}
 	for (unsigned j = 0; j < b.num_planes; j++) {
 		void *buf = b.bufs[idx][j];
 		struct v4l2_plane &p = b.planes[idx][j];
@@ -848,8 +954,31 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 		test_ioctl(fd, VIDIOC_QBUF, &buf);
 	}
 	if (fout && (!stream_skip || ignore_count_skip) && !(buf.flags & V4L2_BUF_FLAG_ERROR)) {
+		unsigned rle_size[VIDEO_MAX_PLANES];
+
+		if (host_fd_cap >= 0) {
+			unsigned tot_rle_size = 0;
+			unsigned tot_used = 0;
+
+			for (unsigned j = 0; j < b.num_planes; j++) {
+				__u32 used = b.is_mplane ? planes[j].bytesused : buf.bytesused;
+				unsigned offset = b.is_mplane ? planes[j].data_offset : 0;
+
+				rle_size[j] = rle_compress((__u8 *)b.bufs[buf.index][j] + offset,
+							   used - offset, b.bpl[j]);
+				tot_rle_size += rle_size[j];
+				tot_used += used - offset;
+			}
+			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO);
+			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE(b.num_planes) + tot_rle_size);
+			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_HDR);
+			write_u32(fout, buf.field);
+			write_u32(fout, buf.flags);
+			rle_perc += (tot_rle_size * 100 / tot_used);
+			rle_perc_count++;
+		}
 		for (unsigned j = 0; j < b.num_planes; j++) {
-			unsigned used = b.is_mplane ? planes[j].bytesused : buf.bytesused;
+			__u32 used = b.is_mplane ? planes[j].bytesused : buf.bytesused;
 			unsigned offset = b.is_mplane ? planes[j].data_offset : 0;
 			unsigned sz;
 
@@ -860,11 +989,19 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 				offset = 0;
 			}
 			used -= offset;
+			if (host_fd_cap >= 0) {
+				write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_PLANE_HDR);
+				write_u32(fout, used);
+				write_u32(fout, rle_size[j]);
+				used = rle_size[j];
+			}
 			sz = fwrite((char *)b.bufs[buf.index][j] + offset, 1, used, fout);
 
 			if (sz != used)
 				fprintf(stderr, "%u != %u\n", sz, used);
 		}
+		if (host_fd_cap >= 0)
+			fflush(fout);
 	}
 	if (buf.flags & V4L2_BUF_FLAG_KEYFRAME)
 		ch = 'K';
@@ -902,7 +1039,11 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 
 			fps /= (__u64)res.tv_sec * 100ULL + (__u64)res.tv_nsec / 10000000ULL;
 			last_sec = res.tv_sec;
-			fprintf(stderr, " %llu.%02llu fps\n", fps / 100ULL, fps % 100ULL);
+			fprintf(stderr, " %llu.%02llu fps", fps / 100ULL, fps % 100ULL);
+			if (host_fd_cap >= 0)
+				fprintf(stderr, " %d%% compression", 100 - rle_perc / rle_perc_count);
+			rle_perc_count = rle_perc = 0;
+			fprintf(stderr, "\n");
 		}
 	}
 	count++;
@@ -1113,6 +1254,76 @@ static void streaming_set_cap(int fd)
 			fout = stdout;
 		else
 			fout = fopen(file_cap, "w+");
+	} else if (host_cap) {
+		char *p = strchr(host_cap, ':');
+		struct sockaddr_in serv_addr;
+		struct hostent *server;
+		struct v4l2_format fmt = {
+			.type = b.type,
+		};
+		struct v4l2_cropcap cropcap = {
+			.type = b.type,
+		};
+
+		ioctl(fd, VIDIOC_G_FMT, &fmt);
+
+		cv4l_fmt cfmt(fmt);
+
+		if (ioctl(fd, VIDIOC_CROPCAP, &cropcap) ||
+		    !cropcap.pixelaspect.numerator ||
+		    !cropcap.pixelaspect.denominator) {
+			cropcap.pixelaspect.numerator = 1;
+			cropcap.pixelaspect.denominator = 1;
+		}
+		if (p) {
+			host_port_cap = strtoul(p + 1, 0L, 0);
+			*p = '\0';
+		}
+		host_fd_cap = socket(AF_INET, SOCK_STREAM, 0);
+		if (host_fd_cap < 0) {
+			fprintf(stderr, "cannot open socket");
+			exit(0);
+		}
+		server = gethostbyname(host_cap);
+		if (server == NULL) {
+			fprintf(stderr, "no such host %s\n", host_cap);
+			exit(0);
+		}
+		memset((char *)&serv_addr, 0, sizeof(serv_addr));
+		serv_addr.sin_family = AF_INET;
+		memcpy((char *)&serv_addr.sin_addr.s_addr,
+		       (char *)server->h_addr,
+		       server->h_length);
+		serv_addr.sin_port = htons(host_port_cap);
+		if (connect(host_fd_cap, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+			fprintf(stderr, "could not connect\n");
+			exit(0);
+		}
+		fout = fdopen(host_fd_cap, "a");
+		write_u32(fout, V4L_STREAM_ID);
+		write_u32(fout, V4L_STREAM_VERSION);
+		write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO);
+		write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO_SIZE(cfmt.g_num_planes()));
+		write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT);
+		write_u32(fout, cfmt.g_num_planes());
+		write_u32(fout, cfmt.g_pixelformat());
+		write_u32(fout, cfmt.g_width());
+		write_u32(fout, cfmt.g_height());
+		write_u32(fout, cfmt.g_field());
+		write_u32(fout, cfmt.g_colorspace());
+		write_u32(fout, cfmt.g_ycbcr_enc());
+		write_u32(fout, cfmt.g_quantization());
+		write_u32(fout, cfmt.g_xfer_func());
+		write_u32(fout, cfmt.g_flags());
+		write_u32(fout, cropcap.pixelaspect.numerator);
+		write_u32(fout, cropcap.pixelaspect.denominator);
+		for (unsigned i = 0; i < cfmt.g_num_planes(); i++) {
+			write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT_PLANE);
+			write_u32(fout, cfmt.g_sizeimage(i));
+			write_u32(fout, cfmt.g_bytesperline(i));
+			b.bpl[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
+		}
+		fflush(fout);
 	}
 
 	if (b.reqbufs(fd, reqbufs_count_cap))
@@ -1177,8 +1388,11 @@ static void streaming_set_cap(int fd)
 	do_release_buffers(b);
 
 done:
-	if (fout && fout != stdout)
+	if (fout && fout != stdout) {
+		if (host_fd_cap >= 0)
+			write_u32(fout, V4L_STREAM_PACKET_END);
 		fclose(fout);
+	}
 }
 
 static void streaming_set_out(int fd)
@@ -1208,6 +1422,113 @@ static void streaming_set_out(int fd)
 			fin = stdin;
 		else
 			fin = fopen(file_out, "r");
+	} else if (host_out) {
+		char *p = strchr(host_out, ':');
+		int listen_fd;
+		socklen_t clilen;
+		struct sockaddr_in serv_addr = {}, cli_addr;
+
+		if (p) {
+			host_port_out = strtoul(p + 1, 0L, 0);
+			*p = '\0';
+		}
+		listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+		if (listen_fd < 0) {
+			fprintf(stderr, "could not opening socket\n");
+			exit(1);
+		}
+		serv_addr.sin_family = AF_INET;
+		serv_addr.sin_addr.s_addr = INADDR_ANY;
+		serv_addr.sin_port = htons(host_port_out);
+		if (bind(listen_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+			fprintf(stderr, "could not bind\n");
+			exit(1);
+		}
+		listen(listen_fd, 1);
+		clilen = sizeof(cli_addr);
+		host_fd_out = accept(listen_fd, (struct sockaddr *)&cli_addr, &clilen);
+		if (host_fd_out < 0) {
+			fprintf(stderr, "could not accept\n");
+			exit(1);
+		}
+		fin = fdopen(host_fd_out, "r");
+		if (read_u32(fin) != V4L_STREAM_ID) {
+			fprintf(stderr, "unknown protocol ID\n");
+			goto done;
+		}
+		if (read_u32(fin) != V4L_STREAM_VERSION) {
+			fprintf(stderr, "unknown protocol version\n");
+			goto done;
+		}
+		for (;;) {
+			__u32 packet = read_u32(fin);
+			char buf[1024];
+
+			if (packet == V4L_STREAM_PACKET_END) {
+				fprintf(stderr, "END packet read\n");
+				goto done;
+			}
+
+			if (packet == V4L_STREAM_PACKET_FMT_VIDEO)
+				break;
+
+			unsigned sz = read_u32(fin);
+			while (sz) {
+				unsigned rdsize = sz > sizeof(buf) ? sizeof(buf) : sz;
+				int n;
+
+				n = fread(buf, 1, rdsize, fin);
+				if (n < 0) {
+					fprintf(stderr, "error reading %d bytes\n", sz);
+					goto done;
+				}
+				sz -= n;
+			}
+		}
+		read_u32(fin);
+
+		cv4l_fmt cfmt;
+
+		if (capabilities & (V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE))
+			cfmt.s_type(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
+		else
+			cfmt.s_type(V4L2_BUF_TYPE_VIDEO_OUTPUT);
+
+		unsigned sz = read_u32(fin);
+
+		if (sz != V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT) {
+			fprintf(stderr, "unsupported FMT_VIDEO size\n");
+			goto done;
+		}
+		cfmt.s_num_planes(read_u32(fin));
+		cfmt.s_pixelformat(read_u32(fin));
+		cfmt.s_width(read_u32(fin));
+		cfmt.s_height(read_u32(fin));
+		cfmt.s_field(read_u32(fin));
+		cfmt.s_colorspace(read_u32(fin));
+		cfmt.s_ycbcr_enc(read_u32(fin));
+		cfmt.s_quantization(read_u32(fin));
+		cfmt.s_xfer_func(read_u32(fin));
+		cfmt.s_flags(read_u32(fin));
+
+		read_u32(fin); // pixelaspect.numerator
+		read_u32(fin); // pixelaspect.denominator
+
+		for (unsigned i = 0; i < cfmt.g_num_planes(); i++) {
+			unsigned sz = read_u32(fin);
+
+			if (sz != V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT_PLANE) {
+				fprintf(stderr, "unsupported FMT_VIDEO plane size\n");
+				goto done;
+			}
+			cfmt.s_sizeimage(read_u32(fin), i);
+			cfmt.s_bytesperline(read_u32(fin), i);
+			b.bpl[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
+		}
+		if (doioctl(fd, VIDIOC_S_FMT, &cfmt)) {
+			fprintf(stderr, "failed to set new format\n");
+			goto done;
+		}
 	}
 
 	if (b.reqbufs(fd, reqbufs_count_out))
@@ -1299,6 +1620,11 @@ static void streaming_set_m2m(int fd)
 	}
 	if (options[OptStreamDmaBuf] || options[OptStreamOutDmaBuf]) {
 		fprintf(stderr, "--stream-dmabuf or --stream-out-dmabuf not supported for m2m devices\n");
+		return;
+	}
+	if (options[OptStreamToHost] || options[OptStreamFromHost]) {
+		/* Too lazy to implement this */
+		fprintf(stderr, "--stream-to-host or --stream-from-host not supported for m2m devices\n");
 		return;
 	}
 
