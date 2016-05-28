@@ -653,7 +653,7 @@ public:
 	}
 	cv4l_fmt(const v4l2_format &_fmt)
 	{
-		*this = _fmt;
+		memcpy(this, &_fmt, sizeof(_fmt));
 	}
 
 	__u32 g_type() { return type; }
@@ -801,7 +801,7 @@ public:
 	}
 	void init(const cv4l_buffer &b)
 	{
-		*this = b;
+		memcpy(this, &b, sizeof(b));
 		if (v4l_type_is_planar(g_type()))
 			buf.m.planes = planes;
 	}
