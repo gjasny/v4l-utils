@@ -1026,10 +1026,11 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 			res.tv_nsec += 1000000000;
 		}
 		if (res.tv_sec > last_sec) {
-			unsigned fps = (10000 * count) /
-				(res.tv_sec * 100 + res.tv_nsec / 10000000);
+			__u64 fps = 10000ULL * count;
+
+			fps /= (__u64)res.tv_sec * 100ULL + (__u64)res.tv_nsec / 10000000ULL;
 			last_sec = res.tv_sec;
-			fprintf(stderr, " %d.%02d fps\n", fps / 100, fps % 100);
+			fprintf(stderr, " %llu.%02llu fps\n", fps / 100ULL, fps % 100ULL);
 		}
 	}
 	count++;
