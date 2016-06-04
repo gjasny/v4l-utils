@@ -1258,13 +1258,11 @@ static void streaming_set_cap(int fd)
 		char *p = strchr(host_cap, ':');
 		struct sockaddr_in serv_addr;
 		struct hostent *server;
-		struct v4l2_format fmt = {
-			.type = b.type,
-		};
-		struct v4l2_cropcap cropcap = {
-			.type = b.type,
-		};
+		struct v4l2_format fmt = { };
+		struct v4l2_cropcap cropcap = { };
 
+		fmt.type = b.type;
+		cropcap.type = b.type;
 		ioctl(fd, VIDIOC_G_FMT, &fmt);
 
 		cv4l_fmt cfmt(fmt);
