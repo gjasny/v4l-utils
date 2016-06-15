@@ -31,7 +31,7 @@
 
 /* libjpeg8 and later come with their own (API compatible) memory source
    and dest */
-#if JPEG_LIB_VERSION < 80
+#if JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)
 
 /* Expanded data source object for memory input */
 
@@ -309,5 +309,5 @@ jpeg_mem_dest (j_compress_ptr cinfo, unsigned char ** outbuffer,
 	dest->pub.free_in_buffer = dest->buf_size;
 }
 
-#endif /* JPEG_LIB_VERSION < 80 */
+#endif /* JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED) */
 #endif /* HAVE_JPEG */
