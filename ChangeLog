@@ -1,3 +1,14 @@
+v4l-utils-1.10.1
+----------------
+
+Gregor Jasny (2):
+      libdvbv5: Fix decsriptors typo
+      libv4lconvert: Exclude memsrc implementation for libjpeg-turbo
+
+Hans de Goede (1):
+      v4lconvert: Add "PEGATRON CORPORATION" to asus_board_vendor
+
+
 v4l-utils-1.10.0
 ----------------
 
