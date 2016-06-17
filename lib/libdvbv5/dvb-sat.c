@@ -185,8 +185,6 @@ const struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
 
 const char *dvb_sat_get_lnb_name(int i)
 {
-	static char s[1024];
-
 	if (i < 0 || i >= ARRAY_SIZE(lnb))
 		return NULL;
 
