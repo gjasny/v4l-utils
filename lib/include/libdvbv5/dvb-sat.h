@@ -127,8 +127,22 @@ void dvb_print_all_lnb(void);
  * @param index		index for the entry.
  *
  * @return returns NULL if not found, of a struct dvb_sat_lnb pointer otherwise.
+ *
+ * NOTE: none of the strings are i18n translated. In order to get the
+ * translated name, you should use dvb_sat_get_lnb_name()
  */
 const struct dvb_sat_lnb *dvb_sat_get_lnb(int index);
+
+/**
+ * @brief gets a LNBf entry at its internal database
+ * @ingroup satellite
+ *
+ * @param index		index for the entry.
+ *
+ * @return returns NULL if not found, of the name of a LNBf,
+ * translated to the user language, if translation is available.
+ */
+const char *dvb_sat_get_lnb_name(int i);
 
 /**
  * @brief sets the satellite parameters

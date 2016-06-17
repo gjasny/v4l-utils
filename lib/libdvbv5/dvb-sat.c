@@ -40,7 +40,7 @@
 
 static const struct dvb_sat_lnb lnb[] = {
 	{
-		.name = "Europe",
+		.name = N_("Universal, Europe"),
 		.alias = "UNIVERSAL",
 		.lowfreq = 9750,
 		.highfreq = 10600,
@@ -50,14 +50,14 @@ static const struct dvb_sat_lnb lnb[] = {
 			{ 11600, 12700 },
 		}
 	}, {
-		.name = "Expressvu, North America",
+		.name = N_("Expressvu, North America"),
 		.alias = "DBS",
 		.lowfreq = 11250,
 		.freqrange = {
 			{ 12200, 12700 }
 		}
 	}, {
-		.name = "Astra 1E, European Universal Ku (extended)",
+		.name = N_("Astra 1E, European Universal Ku (extended)"),
 		.alias = "EXTENDED",
 		.lowfreq = 9750,
 		.highfreq = 10600,
@@ -67,42 +67,42 @@ static const struct dvb_sat_lnb lnb[] = {
 			{ 11700, 12750 },
 		}
 	}, {
-		.name = "Standard",
+		.name = N_("Standard"),
 		.alias = "STANDARD",
 		.lowfreq = 10000,
 		.freqrange = {
 			{ 10945, 11450 }
 		},
 	}, {
-		.name = "L10700",
+		.name = N_("L10700"),
 		.alias = "L10700",
 		.lowfreq = 10700,
 		.freqrange = {
 		       { 11750, 12750 }
 		},
 	}, {
-		.name = "L11300",
+		.name = N_("L11300"),
 		.alias = "L11300",
 		.lowfreq = 11300,
 		.freqrange = {
 			{ 12250, 12750 }
 		},
 	}, {
-		.name = "Astra",
+		.name = N_("Astra"),
 		.alias = "ENHANCED",
 		.lowfreq = 9750,
 		.freqrange = {
 			{ 10700, 11700 }
 		},
 	}, {
-		.name = "Big Dish - Monopoint LNBf",
+		.name = N_("Big Dish - Monopoint LNBf"),
 		.alias = "C-BAND",
 		.lowfreq = 5150,
 		.freqrange = {
 			{ 3700, 4200 }
 		},
 	}, {
-		.name = "Big Dish - Multipoint LNBf",
+		.name = N_("Big Dish - Multipoint LNBf"),
 		.alias = "C-MULT",
 		.lowfreq = 5150,
 		.highfreq = 5750,
@@ -110,7 +110,7 @@ static const struct dvb_sat_lnb lnb[] = {
 			{ 3700, 4200 }
 		},
 	}, {
-		.name = "DishPro LNBf",
+		.name = N_("DishPro LNBf"),
 		.alias = "DISHPRO",
 		.lowfreq = 11250,
 		.highfreq = 14350,
@@ -118,7 +118,7 @@ static const struct dvb_sat_lnb lnb[] = {
 			{ 12200, 12700 }
 		}
 	}, {
-		.name = "Japan 110BS/CS LNBf",
+		.name = N_("Japan 110BS/CS LNBf"),
 		.alias = "110BS",
 		.lowfreq = 10678,
 		.freqrange = {
@@ -143,7 +143,7 @@ int dvb_print_lnb(int i)
 	if (i < 0 || i >= ARRAY_SIZE(lnb))
 		return -1;
 
-	printf("%s\n\t%s\n", lnb[i].alias, lnb[i].name);
+	printf("%s\n\t%s\n", lnb[i].alias, dvb_sat_get_lnb_name(i));
 	printf(_("\t%d to %d MHz"),
 	       lnb[i].freqrange[0].low, lnb[i].freqrange[0].high);
 	if (lnb[i].freqrange[1].low)
@@ -182,6 +182,17 @@ const struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
 
 	return &lnb[i];
 }
+
+const char *dvb_sat_get_lnb_name(int i)
+{
+	static char s[1024];
+
+	if (i < 0 || i >= ARRAY_SIZE(lnb))
+		return NULL;
+
+	return _(lnb[i].name);
+}
+
 
 /*
  * DVB satellite Diseqc specifics
