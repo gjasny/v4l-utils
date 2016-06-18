@@ -1231,6 +1231,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)__p;
 	int rc;
+	int num_services = 0;
 
 	if (!*dvb_file) {
 		*dvb_file = calloc(sizeof(**dvb_file), 1);
@@ -1273,32 +1274,6 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 			return 0;
 	}
 
-
-	if (!dvb_scan_handler->sdt) {
-		int warned = 0;
-		int i;
-
-		for (i = 0; i < dvb_scan_handler->num_program; i++) {
-			unsigned service_id;
-
-			if (!dvb_scan_handler->program[i].pmt)
-				continue;
-
-			service_id = dvb_scan_handler->program[i].pat_pgm->service_id;
-			if (!warned) {
-				dvb_log(_("WARNING: no SDT table - storing channel(s) without their names"));
-				warned = 1;
-			}
-
-			rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
-						   service_id, NULL, NULL,
-						   get_detected, get_nit);
-			if (rc < 0)
-				return rc;
-		}
-
-		return 0;
-	}
 	dvb_sdt_service_foreach(service, dvb_scan_handler->sdt) {
 		char *channel = NULL;
 		char *vchannel = NULL;
@@ -1335,6 +1310,47 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 					   get_detected, get_nit);
 		if (rc < 0)
 			return rc;
+
+		num_services++;
+	}
+
+	if (!dvb_scan_handler->sdt || num_services < dvb_scan_handler->num_program) {
+		int warned = 0;
+		int i;
+
+		for (i = 0; i < dvb_scan_handler->num_program; i++) {
+			int found = 0;
+			unsigned service_id;
+
+			if (!dvb_scan_handler->program[i].pmt)
+				continue;
+
+			service_id = dvb_scan_handler->program[i].pat_pgm->service_id;
+			dvb_sdt_service_foreach(service, dvb_scan_handler->sdt) {
+				if (service->service_id == service_id) {
+					found = 1;
+					break;
+				}
+			}
+			if (found)
+				continue;
+
+			if (!warned) {
+				if (!dvb_scan_handler->sdt)
+					dvb_log(_("WARNING: no SDT table - storing channel(s) without their names"));
+				else
+					dvb_log(_("WARNING: Some Service IDs are not at the SDT table"));
+				warned = 1;
+			}
+
+			rc = get_program_and_store(parms, *dvb_file, dvb_scan_handler,
+						   service_id, NULL, NULL,
+						   get_detected, get_nit);
+			if (rc < 0)
+				return rc;
+		}
+
+		return 0;
 	}
 
 	return 0;
