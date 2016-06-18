@@ -37,9 +37,9 @@ ssize_t dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		return -1;
 	}
 
-	if (buf[0] != DVB_TABLE_NIT) {
-		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x",
-				__func__, buf[0], DVB_TABLE_NIT);
+	if (buf[0] != DVB_TABLE_NIT && (buf[0] != DVB_TABLE_NIT2)) {
+		dvb_logerr("%s: invalid marker 0x%02x, should be 0x%02x or 0x%02x",
+				__func__, buf[0], DVB_TABLE_NIT, DVB_TABLE_NIT2);
 		return -2;
 	}
 
