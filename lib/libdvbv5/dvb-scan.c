@@ -688,15 +688,13 @@ struct dvb_v5_descriptors *dvb_scan_transponder(struct dvb_v5_fe_parms *__p,
 int dvb_estimate_freq_shift(struct dvb_v5_fe_parms *__p)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)__p;
-	uint32_t shift = 0, bw = 0, symbol_rate, ro;
+	uint32_t shift = 0, bw = 0, min_bw = 0, symbol_rate, ro;
 	int rolloff = 0;
 	int divisor = 100;
 
 	/* Need to handle only cable/satellite and ATSC standards */
 	switch (parms->p.current_sys) {
 	case SYS_DVBC_ANNEX_A:
-		rolloff = 115;
-		break;
 	case SYS_DVBC_ANNEX_C:
 		rolloff = 115;
 		break;
@@ -733,6 +731,15 @@ int dvb_estimate_freq_shift(struct dvb_v5_fe_parms *__p)
 		 */
 		bw = 28860 * 135 / 100;
 		break;
+	case SYS_DVBT2:
+		min_bw = 1700000;
+		break;
+	case SYS_ISDBT:
+	case SYS_DVBT:
+	case SYS_DTMB:
+		/* FIXME: does it also apply for DTMB? */
+		min_bw = 6000000;
+		break;
 	default:
 		break;
 	}
@@ -747,6 +754,8 @@ int dvb_estimate_freq_shift(struct dvb_v5_fe_parms *__p)
 	}
 	if (!bw)
 		dvb_fe_retrieve_parm(&parms->p, DTV_BANDWIDTH_HZ, &bw);
+	if (!bw)
+		bw = min_bw;
 	if (!bw)
 		dvb_log(_("Cannot calc frequency shift. " \
 			  "Either bandwidth/symbol-rate is unavailable (yet)."));
