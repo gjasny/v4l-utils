@@ -407,6 +407,7 @@ int dvb_sat_set_parms(struct dvb_v5_fe_parms *p)
 	uint16_t t = 0;
 	int rc;
 
+	parms->high_band = 0;
 	dvb_fe_retrieve_parm(&parms->p, DTV_FREQUENCY, &freq);
 
 	if (!lnb) {
@@ -442,9 +443,14 @@ int dvb_sat_set_parms(struct dvb_v5_fe_parms *p)
 	if (parms->p.freq_bpf) {
 		t = (((freq / 1000) + parms->p.freq_bpf + 2) / 4) - 350;
 		parms->freq_offset += ((t + 350) * 4) * 1000;
+		if (parms->p.verbose)
+			dvb_log("BPF: %d KHz", parms->p.freq_bpf);
 	}
 
 ret:
+	if (parms->p.verbose)
+		dvb_log("frequency: %.2f MHz, high_band: %d", freq / 1000., parms->high_band);
+
 	rc = dvbsat_diseqc_set_input(parms, t);
 
 	freq = abs(freq - parms->freq_offset);
