@@ -135,14 +135,19 @@ static int is_all_bits_set(int nr, unsigned long *addr)
 }
 
 
-struct dvb_table_filter_priv {
+struct dvb_table_filter_ext_priv {
 	int last_section;
 	unsigned long is_read_bits[BITS_TO_LONGS(256)];
 
 	/* section gaps and multiple ts_id handling */
-	int first_ts_id;
+	int ext_id;
 	int first_section;
 	int done;
+};
+
+struct dvb_table_filter_priv {
+	int num_extensions;
+	struct dvb_table_filter_ext_priv *extensions;
 };
 
 static int dvb_parse_section_alloc(struct dvb_v5_fe_parms_priv *parms,
@@ -161,9 +166,6 @@ static int dvb_parse_section_alloc(struct dvb_v5_fe_parms_priv *parms,
 		dvb_logerr(_("%s: out of memory"), __func__);
 		return -1;
 	}
-	priv->last_section = -1;
-	priv->first_section = -1;
-	priv->first_ts_id = -1;
 	sect->priv = priv;
 
 	return 0;
@@ -171,8 +173,11 @@ static int dvb_parse_section_alloc(struct dvb_v5_fe_parms_priv *parms,
 
 void dvb_table_filter_free(struct dvb_table_filter *sect)
 {
-	if (sect->priv) {
-		free(sect->priv);
+	struct dvb_table_filter_priv *priv = sect->priv;
+
+	if (priv) {
+		free (priv->extensions);
+		free(priv);
 		sect->priv = NULL;
 	}
 }
@@ -183,7 +188,9 @@ static int dvb_parse_section(struct dvb_v5_fe_parms_priv *parms,
 {
 	struct dvb_table_header h;
 	struct dvb_table_filter_priv *priv;
+	struct dvb_table_filter_ext_priv *ext;
 	unsigned char tid;
+	int i = 0, new = 0;
 
 	memcpy(&h, buf, sizeof(struct dvb_table_header));
 	dvb_table_header_init(&h);
@@ -198,38 +205,71 @@ static int dvb_parse_section(struct dvb_v5_fe_parms_priv *parms,
 		return -1;
 	}
 	priv = sect->priv;
+	ext = priv->extensions;
 	tid = h.table_id;
 
-	if (priv->first_ts_id < 0)
-		priv->first_ts_id = h.id;
-	if (priv->first_section < 0)
-		priv->first_section = h.section_id;
-	if (priv->last_section < 0)
-		priv->last_section = h.last_section;
-	else { /* Check if the table was already parsed, but not on first pass */
-		if (!sect->allow_section_gaps && sect->ts_id == -1) {
-			if (test_bit(h.section_id, priv->is_read_bits))
+	if (!ext) {
+		ext = calloc(sizeof(struct dvb_table_filter_ext_priv), 1);
+		if (!ext) {
+			dvb_logerr(_("%s: out of memory"), __func__);
+			return -1;
+		}
+		ext->ext_id = h.id;
+		ext->first_section = h.section_id;
+		ext->last_section = h.last_section;
+		priv->extensions = ext;
+		new = 1;
+	} else {
+		/* search for an specific TS ID */
+		if (sect->ts_id != -1) {
+			if (h.id != sect->ts_id)
 				return 0;
-		} else if (priv->first_ts_id == h.id && priv->first_section == h.section_id) {
-			/* tables like EIT can increment sections by gaps > 1.
-			 * in this case, reading is done when a already read
-			 * table is reached. */
-			dvb_log(_("%s: section repeated, reading done"), __func__);
-			priv->done = 1;
-			return 1;
+		}
+
+		for (i = 0; i < priv->num_extensions; i++, ext++) {
+			if (ext->ext_id == h.id)
+				break;
+		}
+		if (i == priv->num_extensions) {
+			priv->num_extensions++;
+			priv->extensions = realloc(priv->extensions, sizeof(struct dvb_table_filter_ext_priv) * (priv->num_extensions));
+			ext = priv->extensions;
+			if (!ext) {
+				dvb_logerr(_("%s: out of memory"), __func__);
+				return -1;
+			}
+			ext += i;
+
+			memset(ext, 0, sizeof(*ext));
+			ext->ext_id = h.id;
+			ext->first_section = h.section_id;
+			ext->last_section = h.last_section;
+			new = 1;
 		}
 	}
 
+	if (!new) { /* Check if the table was already parsed, but not on first pass */
+		if (!sect->allow_section_gaps && sect->ts_id == -1) {
+			if (test_bit(h.section_id, ext->is_read_bits))
+				return 0;
+		} else if (ext->ext_id == h.id && ext->first_section == h.section_id) {
+			/* tables like EIT can increment sections by gaps > 1.
+			 * in this case, reading is done when a already read
+			 * table is reached.
+			 */
+			if (parms->p.verbose)
+				dvb_log(_("%s: section repeated on table 0x%02x, extension ID 0x%04x: done"),
+					__func__, h.table_id, h.id);
 
-	/* search for an specific TS ID */
-	if (sect->ts_id != -1) {
-		if (h.id != sect->ts_id)
-			return 0;
+			ext->done = 1;
+
+			goto ret;
+		}
 	}
 
 	/* handle the sections */
 	if (!sect->allow_section_gaps && sect->ts_id == -1)
-		set_bit(h.section_id, priv->is_read_bits);
+		set_bit(h.section_id, ext->is_read_bits);
 
 	if (dvb_table_initializers[tid])
 		dvb_table_initializers[tid](&parms->p, buf,
@@ -240,11 +280,22 @@ static int dvb_parse_section(struct dvb_v5_fe_parms_priv *parms,
 			   __func__, tid);
 
 	if (!sect->allow_section_gaps && sect->ts_id == -1 &&
-			is_all_bits_set(priv->last_section, priv->is_read_bits))
-		priv->done = 1;
+			is_all_bits_set(ext->last_section, ext->is_read_bits)) {
+		if (parms->p.verbose)
+			dvb_log(_("%s: table 0x%02x, extension ID 0x%04x: done"),
+				__func__, h.table_id, h.id);
+		ext->done = 1;
+	}
 
-	if (!priv->done)
+	if (!ext->done)
 		return 0;
+
+ret:
+	/* Check if all extensions are done */
+	for (ext = priv->extensions, i = 0; i < priv->num_extensions; i++, ext++) {
+		if (!ext->done)
+			return 0;
+	}
 
 	/* Section was fully parsed */
 	return 1;
