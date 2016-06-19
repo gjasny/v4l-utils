@@ -1711,11 +1711,11 @@ int dvb_fe_sec_voltage(struct dvb_v5_fe_parms *p, int on, int v18)
 	if (!on) {
 		v = SEC_VOLTAGE_OFF;
 		if (parms->p.verbose)
-			dvb_log(_("DiSEqC VOLTAGE: OFF"));
+			dvb_log(_("SEC: set voltage to OFF"));
 	} else {
 		v = v18 ? SEC_VOLTAGE_18 : SEC_VOLTAGE_13;
 		if (parms->p.verbose)
-			dvb_log(_("DiSEqC VOLTAGE: %s"), v18 ? "18" : "13");
+			dvb_log(_("SEC: set voltage to %sV"), v18 ? "18" : "13");
 	}
 	rc = xioctl(parms->fd, FE_SET_VOLTAGE, v);
 	if (rc == -1)
