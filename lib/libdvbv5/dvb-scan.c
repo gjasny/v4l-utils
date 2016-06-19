@@ -189,7 +189,7 @@ static int dvb_parse_section(struct dvb_v5_fe_parms_priv *parms,
 	dvb_table_header_init(&h);
 
 	if (parms->p.verbose)
-		dvb_log(_("%s: received table 0x%02x, TS ID 0x%04x, section %d/%d"),
+		dvb_log(_("%s: received table 0x%02x, extension ID 0x%04x, section %d/%d"),
 			__func__, h.table_id, h.id, h.section_id, h.last_section);
 
 	if (sect->tid != h.table_id) {
