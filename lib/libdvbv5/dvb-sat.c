@@ -448,6 +448,10 @@ ret:
 	rc = dvbsat_diseqc_set_input(parms, t);
 
 	freq = abs(freq - parms->freq_offset);
+
+	if (parms->p.verbose)
+		dvb_log("L-Band frequency: %.2f MHz (offset = %.2f MHz)", freq / 1000., parms->freq_offset/1000.);
+
 	dvb_fe_store_parm(&parms->p, DTV_FREQUENCY, freq);
 
 	return rc;
