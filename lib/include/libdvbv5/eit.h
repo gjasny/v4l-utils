@@ -58,17 +58,19 @@
  *	@ingroup dvb_table
  * @def DVB_TABLE_EIT_SCHEDULE
  *	@brief Start table ID for the DVB EIT schedule data on the actual TS
+ *		The range has 0x0f elements (0x50 to 0x5F).
  *	@ingroup dvb_table
  * @def DVB_TABLE_EIT_SCHEDULE_OTHER
  *	@brief Start table ID for the DVB EIT schedule data on other TS
+ *		The range has 0x0f elements (0x60 to 0x6F).
  *	@ingroup dvb_table
  */
 #define DVB_TABLE_EIT        0x4E
 #define DVB_TABLE_EIT_OTHER  0x4F
 #define DVB_TABLE_EIT_PID  0x12
 
-#define DVB_TABLE_EIT_SCHEDULE 0x50       /* - 0x5F */
-#define DVB_TABLE_EIT_SCHEDULE_OTHER 0x60 /* - 0x6F */
+#define DVB_TABLE_EIT_SCHEDULE 0x50
+#define DVB_TABLE_EIT_SCHEDULE_OTHER 0x60
 
 /**
  * @struct dvb_table_eit_event
