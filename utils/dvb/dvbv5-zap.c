@@ -70,7 +70,7 @@ struct arguments {
 	unsigned timeout, dvr, rec_psi, exit_after_tuning;
 	unsigned n_apid, n_vpid, all_pids;
 	enum dvb_file_formats input_format, output_format;
-	unsigned traffic_monitor, low_traffic;
+	unsigned traffic_monitor, low_traffic, non_human;
 	char *search;
 	const char *cc;
 
@@ -104,6 +104,7 @@ static const struct argp_option options[] = {
 	{"exit",	'x', NULL,			0, N_("exit after tuning"), 0},
 	{"low_traffic",	'X', NULL,			0, N_("also shows DVB traffic with less then 1 packet per second"), 0},
 	{"cc",		'C', N_("country_code"),	0, N_("Set the default country to be used (in ISO 3166-1 two letter code)"), 0},
+	{"non-numan",	'N', NULL,			0, N_("Non-human formatted stats (useful for scripts)"), 0},
 	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
 	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
 	{"version",	-4,	0,		0,	N_("Print program version"), -1},
@@ -335,6 +336,40 @@ static void do_timeout(int x)
 	}
 }
 
+static int print_non_human_stats(FILE *fd, struct dvb_v5_fe_parms *parms)
+{
+	int rc;
+	fe_status_t status;
+	uint32_t snr = 0, _signal = 0, quality = 0;
+	uint32_t ber = 0, per = 0, pre_ber = 0, uncorrected_blocks = 0;
+
+	rc = dvb_fe_get_stats(parms);
+	if (rc < 0) {
+		PERROR("dvb_fe_get_stats failed");
+		return -1;
+	}
+
+	dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
+	dvb_fe_retrieve_stats(parms, DTV_QUALITY, &quality);
+	dvb_fe_retrieve_stats(parms, DTV_STAT_SIGNAL_STRENGTH, &_signal);
+	dvb_fe_retrieve_stats(parms, DTV_STAT_CNR, &snr);
+	dvb_fe_retrieve_stats(parms, DTV_BER, &ber);
+	dvb_fe_retrieve_stats(parms, DTV_STAT_ERROR_BLOCK_COUNT, &uncorrected_blocks);
+	dvb_fe_retrieve_stats(parms, DTV_PRE_BER, &pre_ber);
+	dvb_fe_retrieve_stats(parms, DTV_PER, &per);
+
+	fprintf(fd,"status %02x | quality %02x | signal %04x | snr %04x | ber %08x | unc %08x | pre_ber %08x | per %08x | ",
+		status, quality, _signal, snr, ber, uncorrected_blocks, pre_ber, per);
+
+	if (status & FE_HAS_LOCK)
+		fprintf(fd, "FE_HAS_LOCK");
+
+	fprintf(fd, "\n");
+	fflush(fd);
+
+	return 0;
+}
+
 static int print_frontend_stats(FILE *fd,
 				struct arguments *args,
 				struct dvb_v5_fe_parms *parms)
@@ -342,6 +377,9 @@ static int print_frontend_stats(FILE *fd,
 	char buf[512], *p;
 	int rc, i, len, show;
 	uint32_t status = 0;
+
+	if (args->non_human)
+		return print_non_human_stats(fd, parms);
 
 	/* Move cursor up and cleans down */
 	if (isatty(fileno(fd)) && args->n_status_lines)
@@ -561,6 +599,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		break;
 	case 'm':
 		args->traffic_monitor = 1;
+		break;
+	case 'N':
+		args->non_human = 1;
 		break;
 	case 'X':
 		args->low_traffic = 1;
