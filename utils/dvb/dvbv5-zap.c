@@ -189,7 +189,7 @@ static int parse(struct arguments *args,
 	 * This way, a file in "channel" format can be used instead of a zap file.
 	 * It is also easier to use it for testing purposes.
 	 */
-	if (!entry && (args->traffic_monitor || args->all_pids || args->exit_after_tuning)) {
+	if (!entry && (!args->dvr && !args->rec_psi)) {
 		uint32_t f, freq = atoi(channel);
 		if (freq) {
 			for (entry = dvb_file->first_entry; entry != NULL;
