@@ -820,7 +820,10 @@ int main(int argc, char **argv)
 	args.lna = LNA_AUTO;
 	args.input_format = FILE_DVBV5;
 
-	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, &idx, &args);
+	if (argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, &idx, &args)) {
+		argp_help(&argp, stderr, ARGP_HELP_SHORT_USAGE, PROGRAM_NAME);
+		return -1;
+	}
 
 	if (idx < argc)
 		channel = argv[idx];

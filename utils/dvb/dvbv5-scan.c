@@ -476,7 +476,11 @@ int main(int argc, char **argv)
 	args.adapter = (unsigned)-1;
 	args.lna = LNA_AUTO;
 
-	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, &idx, &args);
+	if (argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, &idx, &args)) {
+		argp_help(&argp, stderr, ARGP_HELP_SHORT_USAGE, PROGRAM_NAME);
+		return -1;
+	}
+
 	if (args.timeout_multiply == 0)
 		args.timeout_multiply = 1;
 
