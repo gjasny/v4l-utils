@@ -1051,6 +1051,12 @@ int main(int argc, char **argv)
 		}
 		if (args.silent < 2)
 			get_show_stats(&args, parms, 0);
+	} else {
+		/* Wait until timeout or being killed */
+		while (1) {
+			get_show_stats(&args, parms, 1);
+			usleep(1000000);
+		}
 	}
 	err = 0;
 
