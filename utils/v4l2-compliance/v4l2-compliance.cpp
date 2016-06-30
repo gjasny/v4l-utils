@@ -1216,5 +1216,11 @@ int main(int argc, char **argv)
 		expbuf_node.close();
 	printf("Total: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 			tests_total, tests_ok, tests_total - tests_ok, warnings);
+	if (!strcmp((const char *)vcap.driver, "vivid") && tests_total - tests_ok > 19) {
+		printf("\nThis vivid driver has error injection controls that cause the compliance\n");
+	        printf("tests to fail unless you load the vivid module with the no_error_inj=1\n");
+		printf("module option to disable those error injection controls. It looks from\n");
+		printf("the number of failures that that wasn't done.\n");
+	}
 	exit(app_result);
 }
