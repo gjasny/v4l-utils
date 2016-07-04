@@ -175,6 +175,11 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 	if (ret != ENOTTY && ret != ENODATA && !has_timings)
 		return fail("TIMINGS cap not set, but got wrong error code (%d)\n", ret);
 
+	if (!ret) {
+		fail_on_test(timings.type != V4L2_DV_BT_656_1120);
+		fail_on_test(check_0(timings.bt.reserved, sizeof(timings.bt.reserved)));
+	}
+
 	for (i = 0; ; i++) {
 		memset(&enumtimings, 0xff, sizeof(enumtimings));
 
@@ -185,9 +190,15 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 			break;
 		if (check_0(enumtimings.reserved, sizeof(enumtimings.reserved)))
 			return fail("reserved not zeroed\n");
+		fail_on_test(check_0(enumtimings.timings.bt.reserved,
+				     sizeof(enumtimings.timings.bt.reserved)));
 		if (enumtimings.index != i)
 			return fail("index changed!\n");
+		memset(enumtimings.timings.bt.reserved, 0xff,
+		       sizeof(enumtimings.timings.bt.reserved));
 		fail_on_test(doioctl(node, VIDIOC_S_DV_TIMINGS, &enumtimings.timings));
+		fail_on_test(check_0(enumtimings.timings.bt.reserved,
+				     sizeof(enumtimings.timings.bt.reserved)));
 		if (node->is_vbi)
 			continue;
 		fmt.type = type;
@@ -209,6 +220,8 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 	if (has_timings)
 		fail_on_test(doioctl(node, VIDIOC_S_DV_TIMINGS, &timings));
 	ret = doioctl(node, VIDIOC_QUERY_DV_TIMINGS, &timings);
+	if (!ret)
+		fail_on_test(check_0(timings.bt.reserved, sizeof(timings.bt.reserved)));
 	if (!ret && !has_timings)
 		return fail("TIMINGS cap was not set, but could still query timings\n");
 	if (ret != ENOTTY && ret != ENODATA && !has_timings)
