@@ -381,6 +381,9 @@ public:
 
 	int s_dv_timings(v4l2_dv_timings &timings)
 	{
+		if (timings.type == V4L2_DV_BT_656_1120)
+			memset(timings.bt.reserved, 0,
+			       sizeof(timings.bt.reserved));
 		return cv4l_ioctl(VIDIOC_S_DV_TIMINGS, &timings);
 	}
 
