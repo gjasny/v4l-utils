@@ -816,10 +816,12 @@ int testEvents(struct node *node)
 			if (node->controls.find(V4L2_CID_DV_TX_EDID_PRESENT) == node->controls.end())
 				warn("V4L2_CID_DV_TX_EDID_PRESENT not found for output %d\n", id);
 		}
-		sub.type = V4L2_EVENT_SOURCE_CHANGE;
-		sub.id = id;
-		fail_on_test(doioctl(node, VIDIOC_SUBSCRIBE_EVENT, &sub));
-		fail_on_test(doioctl(node, VIDIOC_UNSUBSCRIBE_EVENT, &sub));
+		if (node->can_capture) {
+			sub.type = V4L2_EVENT_SOURCE_CHANGE;
+			sub.id = id;
+			fail_on_test(doioctl(node, VIDIOC_SUBSCRIBE_EVENT, &sub));
+			fail_on_test(doioctl(node, VIDIOC_UNSUBSCRIBE_EVENT, &sub));
+		}
 	}
 
 	if (node->controls.empty())
