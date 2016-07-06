@@ -90,6 +90,7 @@ struct base_node {
 	pixfmt_map buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
 	frmsizes_set frmsizes;
 	frmsizes_count_map frmsizes_count;
+	bool has_frmintervals;
 	__u32 valid_buftypes;
 	__u32 valid_buftype;
 	__u32 valid_memorytype;

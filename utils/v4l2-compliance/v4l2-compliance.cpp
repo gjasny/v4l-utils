@@ -1068,6 +1068,7 @@ int main(int argc, char **argv)
 		node.controls.clear();
 		node.frmsizes.clear();
 		node.frmsizes_count.clear();
+		node.has_frmintervals = false;
 		for (unsigned idx = 0; idx < V4L2_BUF_TYPE_LAST + 1; idx++)
 			node.buftype_pixfmts[idx].clear();
 

@@ -118,6 +118,7 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
 		}
 
 		f++;
+		node->has_frmintervals = true;
 	}
 	if (type == 0)
 		return fail("found frame intervals for invalid size %dx%d\n", w, h);
@@ -1072,6 +1073,7 @@ static int testParmStruct(struct node *node, struct v4l2_streamparm &parm)
 		else if (node->g_caps() & V4L2_CAP_STREAMING)
 			fail_on_test(!cap->readbuffers);
 		fail_on_test(cap->capability & ~V4L2_CAP_TIMEPERFRAME);
+		fail_on_test(node->has_frmintervals && !cap->capability);
 		fail_on_test(cap->capturemode & ~V4L2_MODE_HIGHQUALITY);
 		if (cap->capturemode & V4L2_MODE_HIGHQUALITY)
 			warn("V4L2_MODE_HIGHQUALITY is poorly defined\n");
@@ -1109,6 +1111,15 @@ static int testParmType(struct node *node, unsigned type)
 	memset(&parm, 0, sizeof(parm));
 	parm.type = type;
 	ret = doioctl(node, VIDIOC_G_PARM, &parm);
+	switch (type) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		if (type && (node->g_caps() & buftype2cap[type]))
+			fail_on_test(ret && node->has_frmintervals);
+		break;
+	}
 	if (ret == ENOTTY)
 		return ret;
 	if (ret == EINVAL)
@@ -1123,6 +1134,8 @@ static int testParmType(struct node *node, unsigned type)
 	memset(&parm, 0, sizeof(parm));
 	parm.type = type;
 	ret = doioctl(node, VIDIOC_S_PARM, &parm);
+	if (type && (node->g_caps() & buftype2cap[type]))
+		fail_on_test(ret && node->has_frmintervals);
 	if (ret == ENOTTY)
 		return 0;
 	if (ret)
