@@ -1119,6 +1119,12 @@ static int testParmType(struct node *node, unsigned type)
 		if (type && (node->g_caps() & buftype2cap[type]))
 			fail_on_test(ret && node->has_frmintervals);
 		break;
+	default:
+		fail_on_test(ret == 0);
+		memset(&parm, 0, sizeof(parm));
+		parm.type = type;
+		fail_on_test(!doioctl(node, VIDIOC_S_PARM, &parm));
+		break;
 	}
 	if (ret == ENOTTY)
 		return ret;
@@ -1134,8 +1140,9 @@ static int testParmType(struct node *node, unsigned type)
 	memset(&parm, 0, sizeof(parm));
 	parm.type = type;
 	ret = doioctl(node, VIDIOC_S_PARM, &parm);
-	if (type && (node->g_caps() & buftype2cap[type]))
-		fail_on_test(ret && node->has_frmintervals);
+	fail_on_test(ret && node->has_frmintervals);
+	if (!ret && !node->has_frmintervals)
+		warn("S_PARM is supported for buftype %d, but not ENUM_FRAMEINTERVALS\n", type);
 	if (ret == ENOTTY)
 		return 0;
 	if (ret)
