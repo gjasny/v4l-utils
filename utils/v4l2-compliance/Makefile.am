@@ -15,3 +15,17 @@ DEFS += -DNO_LIBV4L2
 endif
 
 EXTRA_DIST = Android.mk fixme.txt v4l2-compliance.1
+
+v4l2-compliance.cpp: version.h
+
+version.h:
+	@if git show-ref -s HEAD >/dev/null 2>&1; then \
+		echo -n "#define SHA " >$@ ; \
+		git show-ref -s HEAD >>$@ ; \
+	else \
+		touch $@ ; \
+	fi
+
+clean-local:
+	-rm -vf version.h
+

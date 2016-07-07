@@ -36,6 +36,9 @@
 #include <vector>
 
 #include "v4l2-compliance.h"
+#ifndef ANDROID
+#include "version.h"
+#endif
 
 /* Short option list
 
@@ -939,10 +942,17 @@ int main(int argc, char **argv)
 
 	/* Information Opts */
 
+#ifdef SHA
+#define STR(x) #x
+#define STRING(x) STR(x)
+	printf("v4l2-compliance SHA   : %s\n", STRING(SHA));
+#else
+	printf("v4l2-compliance SHA   : not available\n");
+#endif
 	if (kernel_version)
-		printf("Running on 2.6.%d\n\n", kernel_version);
+		printf("Running on 2.6.%d\n", kernel_version);
 
-	printf("Driver Info:\n");
+	printf("\nDriver Info:\n");
 	printf("\tDriver name   : %s\n", vcap.driver);
 	printf("\tCard type     : %s\n", vcap.card);
 	printf("\tBus info      : %s\n", vcap.bus_info);
