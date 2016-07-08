@@ -48,6 +48,8 @@ sync-with-kernel:
 	cp -a $(KERNEL_DIR)/drivers/media/common/v4l2-tpg/v4l2-tpg-colors.c $(top_srcdir)/utils/common
 	cp -a $(KERNEL_DIR)/include/media/v4l2-tpg* $(top_srcdir)/utils/common
 	patch -p0 <$(top_srcdir)/utils/common/v4l2-tpg.patch
+	cp -a $(KERNEL_DIR)/include/linux/cec.h $(top_srcdir)/include/linux
+	cp -a $(KERNEL_DIR)/include/linux/cec-funcs.h $(top_srcdir)/include/linux
 
 	$(MAKE) -C utils/keytable $@
 	$(MAKE) -C utils/xc3028-firmware $@
