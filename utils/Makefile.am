@@ -11,6 +11,7 @@ SUBDIRS = \
 	v4l2-ctl \
 	v4l2-dbg \
 	v4l2-sysfs-path \
+	cec-ctl \
 	rds-ctl
 
 if LINUX_OS
