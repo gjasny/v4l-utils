@@ -1,0 +1,192 @@
+.TH "IR\-CTL" "1" "Tue Jul 5 2016" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.SH NAME
+ir\-ctl \- a swiss\-knife tool to handle raw IR and to set lirc options
+.SH SYNOPSIS
+.B ir\-ctl
+[\fIOPTION\fR]...
+.br
+.B ir\-ctl
+[\fIOPTION\fR]... \fI\-\-features\fR
+.br
+.B ir\-ctl
+[\fIOPTION\fR]... \fI\-\-send\fR [\fIpulse and space file to send\fR]
+.br
+.B ir\-ctl
+[\fIOPTION\fR]... \fI\-\-record\fR [\fIsave to file\fR]
+.SH DESCRIPTION
+ir\-ctl is a tool that allows one to list the features of a lirc device,
+set its options, record raw IR and send raw IR.
+.PP
+Note: You need to have read or write permissions on the /dev/lirc device
+for options to work.
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-device\fR=\fIDEV\fR
+lirc device to control, /dev/lirc0 by default
+.TP
+\fB\-f\fR, \fB\-\-features\fR
+List the features of the lirc device.
+.TP
+\fB\-r\fR, \fB\-\-record\fR=[\fIFILE\fR]
+Record IR and print to standard output if no file is specified, else
+save to the filename.
+.TP
+\fB\-s\fR, \fB\-\-send\fR=\fIFILE\fR
+Send IR in text file. It must be in the format described below. If this
+option is specified multiple times, send all files in order with 125ms delay
+between them.
+.TP
+\fB\-1\fR, \fB\-\-oneshot\fR
+When recording, stop recording after the first message, i.e. after a space or
+timeout of more than 19ms is received.
+.TP
+\fB\-w\fR, \fB\-\-wideband\fR
+Use the wideband receiver if available on the hardware. This is also
+known as learning mode. The measurements should be more precise and any
+carrier frequency should be accepted.
+.TP
+\fB\-n\fR, \fB\-\-no-wideband\fR
+Switches back to the normal, narrowband receiver if the wideband receiver
+was enabled.
+.TP
+\fB\-R\fR, \fB\-\-carrier-range\fR=\fIRANGE\fR
+Set the accepted carrier range for the narrowband receiver. It should be
+specified in the form \fI30000-50000\fR.
+.TP
+\fB\-m\fR, \fB\-\-measure\-carrier\fR
+If the hardware supports it, report what the carrier frequency is on
+recording. You will get the keyword \fIcarrier\fR followed by the frequency.
+This might use the wideband receiver although this is hardware specific.
+.TP
+\fB\-M\fR, \fB\-\-no\-measure\-carrier\fR
+Disable reporting of the carrier frequency. This should make it possible
+to use the narrowband receiver. This is the default.
+.TP
+\fB\-p\fR, \fB\-\-timeout\-reports\fR
+When the IR receiver times out due to inactivity, a timeout message is
+reported. When recording you will get the keyword \fItimeout\fR followed by
+the length of time that no IR was detected for.
+.TP
+\fB\-P\fR, \fB\-\-no\-timeout\-reports\fR
+When the IR receiver times out due to inactivity, do not report this.
+This is the default.
+.TP
+\fB\-t\fR, \fB\-\-timeout\fR=\fITIMEOUT\fR
+Set the length of a space at which the recorder goes idle, specified in
+microseconds.
+.TP
+\fB\-c\fR, \fB\-\-carrier\fR=\fICARRIER\fR
+Sets the send carrier frequency.
+.TP
+\fB\-D\fR, \fB\-\-duty\-cycle\fR=\fIDUTY\fR
+Set the duty cycle for sending in percent if the hardware support it.
+.TP
+\fB\-e\fR, \fB\-\-emitters\fR=\fIEMITTERS\fR
+Comma separated list of emitters to use for sending. The first emitter is
+number 1. Some devices only support enabling one emitter (the winbond-cir
+driver).
+.TP
+\fB\-?\fR, \fB\-\-help\fR
+Prints the help message
+.TP
+\fB\-\-usage\fR
+Give a short usage message
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+print the v4l2\-utils version
+.PP
+.SS Format of pulse and space file
+When sending IR, the format of the file should be as follows. A comment
+start with #. The carrier frequency can be specified as:
+.PP
+	carrier 38000
+.PP
+The file should contain alternating lines with pulse and space, followed
+by length in microseconds. The following is a rc-5 encoded message:
+.PP
+	carrier 36000
+.br
+	pulse 920
+.br
+	space 110
+.br
+	pulse 270
+.br
+	space 380
+.br
+	pulse 1800
+.br
+	space 1560
+.br
+	pulse 1730
+.br
+	space 1630
+.br
+	pulse 1730
+.br
+	space 1640
+.br
+	pulse 850
+.br
+	space 830
+.br
+	pulse 1690
+.br
+	space 820
+.br
+	pulse 860
+.br
+	space 1660
+.br
+	pulse 1690
+.br
+	space 830
+.br
+	pulse 850
+.SS Wideband and narrowband receiver
+Most IR receivers have a narrowband and wideband receiver. The narrowband
+receiver can receive over longer distances (usually around 10 metres without
+interference) and is limited to certain carrier frequencies.
+.PP
+The wideband receiver is for higher precision measurements and when the
+carrier frequency is unknown; however it only works over very short
+distances (about 5 centimetres). This is also known as \fBlearning mode\fR.
+.PP
+For most drivers, enabling \fBcarrier reports\fR using \fB\-m\fR also enables
+the wideband receiver.
+.SS Global state
+All the options which can be set for lirc devices are maintained until
+the device is powered down or a new option is set.
+.SH EXIT STATUS
+On success, it returns 0. Otherwise, it will return the error code.
+.SH EXAMPLES
+To list all capabilities of /dev/lirc2:
+.br
+	\fBir\-ctl \-f \-d /dev/lirc2\fR
+.PP
+To show the IR of the first button press on a remote in learning mode:
+.br
+	\fBir\-ctl \-r \-m \-w\fR
+.PP
+Note that \fBir\-ctl \-rmw\fR would record to a file called \fBmw\fR.
+.PP
+To restore the normal (longer distance) receiver:
+.br
+	\fBir\-ctl \-n \-M\fR
+.PP
+To send the pulse and space file \fBplay\fR on emitter 3:
+.br
+	\fBir\-ctl \-e 3 \-\-send=play\fR
+.PP
+To restore the IR receiver on /dev/lirc2 to the default state:
+.br
+	\fBir\-ctl \-PMn \-\-timeout 125000 \-\-device=/dev/lirc2\fR
+.SH BUGS
+Report bugs to \fBLinux Media Mailing List <linux-media@vger.kernel.org>\fR
+.SH COPYRIGHT
+Copyright (c) 2016 by Sean Young.
+.PP
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

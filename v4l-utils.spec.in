@@ -17,8 +17,8 @@ Requires:       libv4l = %{version}-%{release}
 
 %description
 v4l-utils is a collection of various video4linux (V4L) and DVB utilities. The
-main v4l-utils package contains cx18-ctl, ir-keytable, ivtv-ctl, v4l2-ctl and
-v4l2-sysfs-path.
+main v4l-utils package contains cx18-ctl, ir-keytable, ir-ctl, ivtv-ctl,
+v4l2-ctl and v4l2-sysfs-path.
 
 
 %package        devel-tools
@@ -129,10 +129,12 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %config(noreplace) %{_sysconfdir}/udev/rules.d/70-infrared.rules
 %{_bindir}/cx18-ctl
 %{_bindir}/ir-keytable
+%{_bindir}/ir-ctl
 %{_bindir}/ivtv-ctl
 %{_bindir}/v4l2-ctl
 %{_bindir}/v4l2-sysfs-path
 %{_mandir}/man1/ir-keytable.1*
+%{_mandir}/man1/ir-ctl.1*
 
 %files devel-tools
 %defattr(-,root,root,-)

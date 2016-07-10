@@ -24,6 +24,7 @@ AC_CONFIG_FILES([Makefile
 	utils/decode_tm6000/Makefile
 	utils/dvb/Makefile
 	utils/keytable/Makefile
+	utils/ir-ctl/Makefile
 	utils/cx18-ctl/Makefile
 	utils/ivtv-ctl/Makefile
 	utils/media-ctl/Makefile
@@ -59,6 +60,7 @@ AC_CONFIG_FILES([Makefile
 	utils/v4l2-compliance/v4l2-compliance.1
 	utils/v4l2-ctl/v4l2-ctl.1
 	utils/keytable/ir-keytable.1
+	utils/ir-ctl/ir-ctl.1
 	utils/dvb/dvb-fe-tool.1
 	utils/dvb/dvbv5-scan.1
 	utils/dvb/dvb-format-convert.1

@@ -4,6 +4,7 @@ SUBDIRS = \
 	libmedia_dev \
 	decode_tm6000 \
 	ivtv-ctl \
+	ir-ctl \
 	cx18-ctl \
 	keytable \
 	media-ctl \
