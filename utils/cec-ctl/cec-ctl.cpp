@@ -1418,7 +1418,7 @@ int main(int argc, char **argv)
 		}
 	}
 	if (node.num_log_addrs == 0) {
-		if (options[OptMonitor])
+		if (options[OptMonitor] || options[OptMonitorAll])
 			goto skip_la;
 		return 0;
 	}
