@@ -92,7 +92,7 @@ static const struct argp_option options[] = {
 	{ "timeout-reports", 'p', 0,		0,	N_("report when a timeout occurs") },
 	{ "no-timeout-reports", 'P', 0,		0,	N_("disable reporting when a timeout occurs") },
 	{ "timeout",	't',	N_("TIMEOUT"),	0,	N_("set recording timeout") },
-		{ .doc = "Sending options:" },
+		{ .doc = N_("Sending options:") },
 	{ "carrier",	'c',	N_("CARRIER"),	0,	N_("set send carrier") },
 	{ "duty-cycle",	'D',	N_("DUTY"),	0,	N_("set duty cycle") },
 	{ "emitters",	'e',	N_("EMITTERS"),	0,	N_("set send emitters") },
