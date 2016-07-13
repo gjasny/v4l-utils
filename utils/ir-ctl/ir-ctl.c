@@ -115,8 +115,8 @@ static const char doc[] = N_(
 	"  DUTY     - the duty cycle to use for sending\n"
 	"  EMITTERS - comma separated list of emitters to use for sending, e.g. 1,2\n"
 	"  RANGE    - set range of accepted carrier frequencies, e.g. 20000-40000\n"
-	"  TIMEOUT  - set length of space before recording stops in µs (microseonds)\n"
-	"\nNote that most lirc setting have global state, i.e. the device will remain\n"
+	"  TIMEOUT  - set length of space before recording stops in microseonds\n\n"
+	"Note that most lirc setting have global state, i.e. the device will remain\n"
 	"in this state until set otherwise.");
 
 static int strtoint(const char *p, const char *unit)
@@ -568,7 +568,7 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 			}
 
 			if (min_timeout || max_timeout)
-				printf(_(" - Can set recording timeout min:%uµs max:%uµs\n"), min_timeout, max_timeout);
+				printf(_(" - Can set recording timeout min:%u microseconds max:%u microseconds\n"), min_timeout, max_timeout);
 		}
 	} else {
 		printf(_(" - Device cannot receive\n"));
