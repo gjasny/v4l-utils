@@ -26,7 +26,7 @@
 
 #include <config.h>
 
-#include <media/lirc.h>
+#include <linux/lirc.h>
 
 #ifdef ENABLE_NLS
 # define _(string) gettext(string)
