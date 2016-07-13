@@ -1,6 +1,7 @@
 # List of source files which contain translatable strings.
 
 utils/keytable/keytable.c
+utils/ir-ctl/ir-ctl.c
 utils/dvb/dvb-fe-tool.c
 utils/dvb/dvb-format-convert.c
 utils/dvb/dvbv5-scan.c

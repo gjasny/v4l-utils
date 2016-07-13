@@ -710,6 +710,12 @@ int main(int argc, char *argv[])
 {
 	struct arguments args = {};
 
+#ifdef ENABLE_NLS
+        setlocale (LC_ALL, "");
+        bindtextdomain (PACKAGE, LOCALEDIR);
+        textdomain (PACKAGE);
+#endif
+
 	argp_parse(&argp, argc, argv, 0, 0, &args);
 
 	if (args.device == NULL)
