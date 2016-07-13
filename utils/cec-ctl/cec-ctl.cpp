@@ -1006,7 +1006,8 @@ static void log_event(struct cec_event &ev)
 		printf("Event: Unknown (0x%x)\n", ev.event);
 		break;
 	}
-	printf("\tTimestamp: %llu.%09llus\n", ev.ts / 1000000000, ev.ts % 1000000000);
+	printf("\tTimestamp: %llu.%03llus\n", ev.ts / 1000000000,
+	       (ev.ts % 1000000000) / 1000000);
 }
 
 static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
@@ -1449,8 +1450,15 @@ int main(int argc, char **argv)
 			       cec_msg_initiator(&msg));
 			log_msg(&msg);
 		}
-		printf("\tSequence: %u Timestamp: %llu.%09llus\n",
-			msg.sequence, msg.ts / 1000000000, msg.ts % 1000000000);
+		printf("\tSequence: %u Tx Timestamp: %llu.%03llus",
+			msg.sequence,
+			msg.tx_ts / 1000000000,
+			(msg.tx_ts % 1000000000) / 1000000);
+		if (msg.rx_ts)
+			printf(" Rx Timestamp: %llu.%03llus",
+				msg.rx_ts / 1000000000,
+				(msg.rx_ts % 1000000000) / 1000000);
+		printf("\n");
 		if (!cec_msg_status_is_ok(&msg))
 			printf("\t%s\n", status2s(msg).c_str());
 	}
@@ -1499,8 +1507,10 @@ skip_la:
 				       transmitted ? "Transmitted by" : "Received from",
 				       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
 				log_msg(&msg);
-				printf("\tSequence: %u Timestamp: %llu.%09llus\n",
-				       msg.sequence, msg.ts / 1000000000, msg.ts % 1000000000);
+				printf("\tSequence: %u Rx Timestamp: %llu.%03llus\n",
+				       msg.sequence,
+				       msg.rx_ts / 1000000000,
+				       (msg.rx_ts % 1000000000) / 1000000);
 			}
 			if (FD_ISSET(fd, &ex_fds)) {
 				struct cec_event ev;
