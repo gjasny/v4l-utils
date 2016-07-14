@@ -511,8 +511,11 @@ void stds_set(int fd)
 		if (query_and_set_dv_timings)
 			doioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings);
 		else if (enum_and_set_dv_timings >= 0) {
+			__u32 reduced_fps = dv_timings.bt.flags & V4L2_DV_FL_REDUCED_FPS;
+
 			et.index = enum_and_set_dv_timings;
 			doioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &et);
+			et.timings.bt.flags |= reduced_fps;
 			new_dv_timings = et.timings;
 		} else if (cleared_dv_timings) {
 			new_dv_timings = dv_timings;
