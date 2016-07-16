@@ -975,8 +975,7 @@ static void log_unknown_msg(const struct cec_msg *msg)
 		printf("\n");
 		break;
 	default:
-		printf("CEC_MSG 0x%02x:\n", msg->msg[1]);
-		printf("\tpayload:");
+		printf("CEC_MSG (0x%02x)%s", msg->msg[1], msg->len > 2 ? ":\n\tpayload:" : "");
 		for (i = 2; i < msg->len; i++)
 			printf(" 0x%02x", msg->msg[i]);
 		printf("\n");

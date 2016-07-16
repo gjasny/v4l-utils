@@ -72,7 +72,7 @@ sub process_func
 		}
 		if (@args == 0) {
 			$logswitch .= "\tcase $cec_msg:\n";
-			$logswitch .= "\t\tprintf(\"$cec_msg (0x%02x):\\n\", $cec_msg);\n";
+			$logswitch .= "\t\tprintf(\"$cec_msg (0x%02x)\\n\", $cec_msg);\n";
 			$logswitch .= "\t\tbreak;\n\n";
 		} else {
 			$logswitch .= "\tcase $cec_msg: {\n";
@@ -438,7 +438,7 @@ print <<'EOF';
 void log_msg(const struct cec_msg *msg)
 {
 	if (msg->len == 1)
-		printf("CEC_MSG_POLL:\n");
+		printf("CEC_MSG_POLL\n");
 	if ((msg->tx_status && !(msg->tx_status & CEC_TX_STATUS_OK)) ||
 	    (msg->rx_status && !(msg->rx_status & (CEC_RX_STATUS_OK | CEC_RX_STATUS_FEATURE_ABORT))))
 		printf("\t%s\n", status2s(*msg).c_str());
