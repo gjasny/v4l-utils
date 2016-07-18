@@ -629,6 +629,7 @@ enum Option {
 	OptMonitor = 'm',
 	OptMonitorAll = 'M',
 	OptNoReply = 'n',
+	OptOsdName = 'o',
 	OptPhysAddr = 'p',
 	OptShowTopology = 'S',
 	OptTo = 't',
@@ -678,6 +679,7 @@ static struct option long_options[] = {
 	{ "help", no_argument, 0, OptHelp },
 	{ "trace", no_argument, 0, OptTrace },
 	{ "verbose", no_argument, 0, OptVerbose },
+	{ "osd-name", required_argument, 0, OptOsdName },
 	{ "phys-addr", required_argument, 0, OptPhysAddr },
 	{ "vendor-id", required_argument, 0, OptVendorID },
 	{ "cec-version-1.4", no_argument, 0, OptCECVersion1_4 },
@@ -709,38 +711,37 @@ static struct option long_options[] = {
 static void usage(void)
 {
 	printf("Usage:\n"
-	       "  -d, --device=<dev> Use device <dev> instead of /dev/cec0\n"
-	       "                     If <dev> starts with a digit, then /dev/cec<dev> is used.\n"
-	       "  -p, --phys-addr=<addr>\n"
-	       "		     Use this physical address\n"
-	       "  -V, --vendor-id=<id>\n"
-	       "		     Use this vendor ID\n"
-	       "  -C, --clear        Clear all logical addresses\n"
-	       "  -m, --monitor      Monitor CEC traffic\n"
-	       "  -M, --monitor-all  Monitor all CEC traffic\n"
-	       "  -n, --no-reply     Don't wait for a reply\n"
-	       "  -t, --to=<la>      Send message to the given logical address\n"
-	       "  -f, --from=<la>    Send message from the given logical address\n"
-	       "  -S, --show-topology Show the CEC topology\n"
-	       "                     By default use the first assigned logical address\n"
-	       "  --cec-version-1.4  Use CEC Version 1.4 instead of 2.0\n"
-	       "  --list-ui-commands List all UI commands that can be used with --user-control-pressed\n"
-	       "  --log-status       Log the CEC adapter status to the kernel log\n"
+	       "  -d, --device=<dev>       Use device <dev> instead of /dev/cec0\n"
+	       "                           If <dev> starts with a digit, then /dev/cec<dev> is used.\n"
+	       "  -p, --phys-addr=<addr>   Use this physical address\n"
+	       "  -o, --osd-name=<name>    Use this OSD name\n"
+	       "  -V, --vendor-id=<id>     Use this vendor ID\n"
+	       "  -C, --clear              Clear all logical addresses\n"
+	       "  -m, --monitor            Monitor CEC traffic\n"
+	       "  -M, --monitor-all        Monitor all CEC traffic\n"
+	       "  -n, --no-reply           Don't wait for a reply\n"
+	       "  -t, --to=<la>            Send message to the given logical address\n"
+	       "  -f, --from=<la>          Send message from the given logical address\n"
+	       "  -S, --show-topology      Show the CEC topology\n"
+	       "                           By default use the first assigned logical address\n"
+	       "  --cec-version-1.4        Use CEC Version 1.4 instead of 2.0\n"
+	       "  --list-ui-commands       List all UI commands that can be used with --user-control-pressed\n"
+	       "  --log-status             Log the CEC adapter status to the kernel log\n"
 	       "\n"
-	       "  --tv               This is a TV\n"
-	       "  --record           This is a recording device\n"
-	       "  --tuner            This is a tuner device\n"
-	       "  --playback         This is a playback device\n"
-	       "  --audio            This is an audio system device\n"
-	       "  --processor        This is a processor device\n"
-	       "  --switch           This is a pure CEC switch\n"
-	       "  --cdc-only         This is a CDC-only device\n"
-	       "  --unregistered     This is an unregistered device\n"
+	       "  --tv                     This is a TV\n"
+	       "  --record                 This is a recording device\n"
+	       "  --tuner                  This is a tuner device\n"
+	       "  --playback               This is a playback device\n"
+	       "  --audio                  This is an audio system device\n"
+	       "  --processor              This is a processor device\n"
+	       "  --switch                 This is a pure CEC switch\n"
+	       "  --cdc-only               This is a CDC-only device\n"
+	       "  --unregistered           This is an unregistered device\n"
 	       "\n"
-	       "  -h, --help         Display this help message\n"
-	       "  --help-all         Show all messages\n"
-	       "  -T, --trace        Trace all called ioctls\n"
-	       "  -v, --verbose      Turn on verbose reporting\n"
+	       "  -h, --help               Display this help message\n"
+	       "  --help-all               Show all messages\n"
+	       "  -T, --trace              Trace all called ioctls\n"
+	       "  -v, --verbose            Turn on verbose reporting\n"
 	       CEC_USAGE
 	       );
 }
@@ -1095,6 +1096,7 @@ int main(int argc, char **argv)
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	__u16 phys_addr;
 	__u8 from = 0, to = 0;
+	const char *osd_name = "";
 	bool reply = true;
 	int idx = 0;
 	int fd = -1;
@@ -1151,6 +1153,9 @@ int main(int argc, char **argv)
 			break;
 		case OptPhysAddr:
 			phys_addr = parse_phys_addr(optarg);
+			break;
+		case OptOsdName:
+			osd_name = optarg;
 			break;
 		case OptVendorID:
 			vendor_id = strtoul(optarg, NULL, 0) & 0x00ffffff;
@@ -1231,9 +1236,10 @@ int main(int argc, char **argv)
 	node.available_log_addrs = caps.available_log_addrs;
 
 	unsigned flags = 0;
-	const char *osd_name;
 
-	if (options[OptTV])
+	if (options[OptOsdName])
+		;
+	else if (options[OptTV])
 		osd_name = "TV";
 	else if (options[OptRecord])
 		osd_name = "Record";
@@ -1301,7 +1307,8 @@ int main(int argc, char **argv)
 
 		laddrs.cec_version = options[OptCECVersion1_4] ?
 			CEC_OP_CEC_VERSION_1_4 : CEC_OP_CEC_VERSION_2_0;
-		strcpy(laddrs.osd_name, osd_name);
+		strncpy(laddrs.osd_name, osd_name, sizeof(laddrs.osd_name));
+		laddrs.osd_name[sizeof(laddrs.osd_name) - 1] = 0;
 		laddrs.vendor_id = vendor_id;
 
 		for (unsigned i = 0; i < 8; i++) {
@@ -1360,6 +1367,7 @@ int main(int argc, char **argv)
 	printf("\tCEC Version                : %s\n", version2s(laddrs.cec_version));
 	if (laddrs.vendor_id != CEC_VENDOR_ID_NONE)
 		printf("\tVendor ID                  : 0x%06x\n", laddrs.vendor_id);
+	printf("\tOSD Name                   : '%s'\n", laddrs.osd_name);
 	printf("\tLogical Addresses          : %u\n", laddrs.num_log_addrs);
 	for (unsigned i = 0; i < laddrs.num_log_addrs; i++) {
 		if (laddrs.log_addr[i] == CEC_LOG_ADDR_INVALID)
