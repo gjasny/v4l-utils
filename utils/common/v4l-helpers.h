@@ -291,12 +291,14 @@ static inline __u32 v4l_g_caps(const struct v4l_fd *f)
 
 static inline bool v4l_has_vid_cap(const struct v4l_fd *f)
 {
-	return v4l_g_caps(f) & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE);
+	return v4l_g_caps(f) & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE |
+				V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE);
 }
 
 static inline bool v4l_has_vid_out(const struct v4l_fd *f)
 {
-	return v4l_g_caps(f) & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE);
+	return v4l_g_caps(f) & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+				V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE);
 }
 
 static inline bool v4l_has_vid_m2m(const struct v4l_fd *f)
@@ -1037,6 +1039,17 @@ static inline bool v4l_type_is_sdr(unsigned type)
 {
        return type == V4L2_BUF_TYPE_SDR_CAPTURE ||
 	      type == V4L2_BUF_TYPE_SDR_OUTPUT;
+}
+
+static inline unsigned v4l_type_invert(unsigned type)
+{
+	if (v4l_type_is_planar(type))
+		return v4l_type_is_output(type) ?
+			V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+			V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	return v4l_type_is_output(type) ?
+		V4L2_BUF_TYPE_VIDEO_CAPTURE :
+		V4L2_BUF_TYPE_VIDEO_OUTPUT;
 }
 
 static inline unsigned v4l_buffer_g_num_planes(const struct v4l_buffer *buf)
