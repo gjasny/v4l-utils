@@ -1296,6 +1296,8 @@ int main(int argc, char **argv)
 
 	if ((node.caps & CEC_CAP_LOG_ADDRS) && flags) {
 		struct cec_log_addrs laddrs = {};
+		__u8 all_dev_types = 0;
+		__u8 prim_type = 0xff;
 
 		doioctl(&node, CEC_ADAP_S_LOG_ADDRS, &laddrs);
 		memset(&laddrs, 0, sizeof(laddrs));
@@ -1308,10 +1310,11 @@ int main(int argc, char **argv)
 
 		for (unsigned i = 0; i < 8; i++) {
 			unsigned la_type;
-			unsigned all_dev_type;
 
 			if (!(flags & (1 << i)))
 				continue;
+			if (prim_type == 0xff)
+				prim_type = i;
 			if (laddrs.num_log_addrs == node.available_log_addrs) {
 				fprintf(stderr, "Attempt to define too many logical addresses\n");
 				exit(-1);
@@ -1319,37 +1322,42 @@ int main(int argc, char **argv)
 			switch (i) {
 			case CEC_OP_PRIM_DEVTYPE_TV:
 				la_type = CEC_LOG_ADDR_TYPE_TV;
-				all_dev_type = CEC_OP_ALL_DEVTYPE_TV;
+				all_dev_types |= CEC_OP_ALL_DEVTYPE_TV;
+				prim_type = i;
 				break;
 			case CEC_OP_PRIM_DEVTYPE_RECORD:
 				la_type = CEC_LOG_ADDR_TYPE_RECORD;
-				all_dev_type = CEC_OP_ALL_DEVTYPE_RECORD;
+				all_dev_types |= CEC_OP_ALL_DEVTYPE_RECORD;
 				break;
 			case CEC_OP_PRIM_DEVTYPE_TUNER:
 				la_type = CEC_LOG_ADDR_TYPE_TUNER;
-				all_dev_type = CEC_OP_ALL_DEVTYPE_TUNER;
+				all_dev_types |= CEC_OP_ALL_DEVTYPE_TUNER;
 				break;
 			case CEC_OP_PRIM_DEVTYPE_PLAYBACK:
 				la_type = CEC_LOG_ADDR_TYPE_PLAYBACK;
-				all_dev_type = CEC_OP_ALL_DEVTYPE_PLAYBACK;
+				all_dev_types |= CEC_OP_ALL_DEVTYPE_PLAYBACK;
 				break;
 			case CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM:
 				la_type = CEC_LOG_ADDR_TYPE_AUDIOSYSTEM;
-				all_dev_type = CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM;
+				all_dev_types |= CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM;
+				if (prim_type != CEC_OP_PRIM_DEVTYPE_TV)
+					prim_type = i;
 				break;
 			case CEC_OP_PRIM_DEVTYPE_PROCESSOR:
 				la_type = CEC_LOG_ADDR_TYPE_SPECIFIC;
-				all_dev_type = CEC_OP_ALL_DEVTYPE_SWITCH;
+				all_dev_types |= CEC_OP_ALL_DEVTYPE_SWITCH;
 				break;
 			case CEC_OP_PRIM_DEVTYPE_SWITCH:
 			default:
 				la_type = CEC_LOG_ADDR_TYPE_UNREGISTERED;
-				all_dev_type = CEC_OP_ALL_DEVTYPE_SWITCH;
+				all_dev_types |= CEC_OP_ALL_DEVTYPE_SWITCH;
 				break;
 			}
-			laddrs.log_addr_type[laddrs.num_log_addrs] = la_type;
-			laddrs.all_device_types[laddrs.num_log_addrs] = all_dev_type;
-			laddrs.primary_device_type[laddrs.num_log_addrs++] = i;
+			laddrs.log_addr_type[laddrs.num_log_addrs++] = la_type;
+		}
+		for (unsigned i = 0; i < laddrs.num_log_addrs; i++) {
+			laddrs.primary_device_type[i] = prim_type;
+			laddrs.all_device_types[i] = all_dev_types;
 		}
 
 		doioctl(&node, CEC_ADAP_S_LOG_ADDRS, &laddrs);
