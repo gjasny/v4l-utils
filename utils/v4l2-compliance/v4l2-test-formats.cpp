@@ -714,9 +714,9 @@ int testTryFormats(struct node *node)
 				/* for other formats returning EINVAL is certainly wrong */
 				return fail("TRY_FMT cannot handle an invalid format\n");
 			}
-			warn("TRY_FMT cannot handle an invalid pixelformat.\n");
-			warn("This may or may not be a problem. For more information see:\n");
-			warn("http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html\n");
+			warn_once("TRY_FMT cannot handle an invalid pixelformat.\n");
+			warn_once("This may or may not be a problem. For more information see:\n");
+			warn_once("http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html\n");
 
 			/* Now try again, but pass a valid pixelformat. */
 			createInvalidFmt(fmt, clip, type);
@@ -935,9 +935,9 @@ int testSetFormats(struct node *node)
 				/* for other formats returning EINVAL is certainly wrong */
 				return fail("TRY_FMT cannot handle an invalid format\n");
 			}
-			warn("S_FMT cannot handle an invalid pixelformat.\n");
-			warn("This may or may not be a problem. For more information see:\n");
-			warn("http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html\n");
+			warn_once("S_FMT cannot handle an invalid pixelformat.\n");
+			warn_once("This may or may not be a problem. For more information see:\n");
+			warn_once("http://www.mail-archive.com/linux-media@vger.kernel.org/msg56550.html\n");
 
 			/* Now try again, but pass a valid pixelformat. */
 			createInvalidFmt(fmt_set, clip_set, type);
