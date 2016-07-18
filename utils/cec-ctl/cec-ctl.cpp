@@ -722,14 +722,17 @@ static void usage(void)
 	       "  -n, --no-reply           Don't wait for a reply\n"
 	       "  -t, --to=<la>            Send message to the given logical address\n"
 	       "  -f, --from=<la>          Send message from the given logical address\n"
-	       "  -S, --show-topology      Show the CEC topology\n"
 	       "                           By default use the first assigned logical address\n"
+	       "  -S, --show-topology      Show the CEC topology\n"
+	       "  -h, --help               Display this help message\n"
+	       "  --help-all               Show all help messages\n"
+	       "  -T, --trace              Trace all called ioctls\n"
+	       "  -v, --verbose            Turn on verbose reporting\n"
 	       "  --cec-version-1.4        Use CEC Version 1.4 instead of 2.0\n"
 	       "  --list-ui-commands       List all UI commands that can be used with --user-control-pressed\n"
-	       "  --log-status             Log the CEC adapter status to the kernel log\n"
 	       "\n"
 	       "  --tv                     This is a TV\n"
-	       "  --record                 This is a recording device\n"
+	       "  --record                 This is a recording and playback device\n"
 	       "  --tuner                  This is a tuner device\n"
 	       "  --playback               This is a playback device\n"
 	       "  --audio                  This is an audio system device\n"
@@ -738,10 +741,6 @@ static void usage(void)
 	       "  --cdc-only               This is a CDC-only device\n"
 	       "  --unregistered           This is an unregistered device\n"
 	       "\n"
-	       "  -h, --help               Display this help message\n"
-	       "  --help-all               Show all messages\n"
-	       "  -T, --trace              Trace all called ioctls\n"
-	       "  -v, --verbose            Turn on verbose reporting\n"
 	       CEC_USAGE
 	       );
 }
@@ -1167,35 +1166,31 @@ int main(int argc, char **argv)
 				       type_ui_cmd[i].type_name, type_ui_cmd[i].value);
 			printf("\n");
 			break;
+		case OptPlayback:
+		case OptRecord:
+			if (options[OptPlayback] && options[OptRecord]) {
+				fprintf(stderr, "--playback and --record cannot be combined.\n\n");
+				usage();
+				return 1;
+			}
+			break;
 		case OptSwitch:
-			if (options[OptCDCOnly] || options[OptUnregistered]) {
-				fprintf(stderr, "--switch cannot be combined with --cdc-only or --unregistered.\n");
-				usage();
-				return 1;
-			}
-			break;
 		case OptCDCOnly:
-			if (options[OptSwitch] || options[OptUnregistered]) {
-				fprintf(stderr, "--cdc-only cannot be combined with --switch or --unregistered.\n");
-				usage();
-				return 1;
-			}
-			break;
 		case OptUnregistered:
-			if (options[OptCDCOnly] || options[OptSwitch]) {
-				fprintf(stderr, "--unregistered cannot be combined with --cdc-only or --switch.\n");
+			if (options[OptCDCOnly] + options[OptUnregistered] + options[OptSwitch] > 1) {
+				fprintf(stderr, "--switch, --cdc-only and --unregistered cannot be combined.\n\n");
 				usage();
 				return 1;
 			}
 			break;
 		case ':':
-			fprintf(stderr, "Option '%s' requires a value\n",
+			fprintf(stderr, "Option '%s' requires a value\n\n",
 				argv[optind]);
 			usage();
 			return 1;
 		case '?':
 			if (argv[optind])
-				fprintf(stderr, "Unknown argument '%s'\n", argv[optind]);
+				fprintf(stderr, "Unknown argument '%s'\n\n", argv[optind]);
 			usage();
 			return 1;
 		default:

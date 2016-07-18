@@ -399,7 +399,7 @@ unless ($is_log) {
 		chop $usage;
 		printf "%s;\n\n", $usage;
 		s/_/-/g;
-		$help_features .= sprintf("\t\"  --help-%-28s Show messages for the $name feature\\n\" \\\n", $_);
+		$help_features .= sprintf("\t\"  --help-%-28s Show help for the $name feature\\n\" \\\n", $_);
 		$opt = "OptHelp" . $name;
 		$opt =~ s/ //g;
 		$help .= "\tif (options[OptHelpAll] || options\[$opt\]) {\n";
