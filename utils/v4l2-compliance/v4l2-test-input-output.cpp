@@ -371,7 +371,9 @@ static int checkInput(struct node *node, const struct v4l2_input &descr, unsigne
 		return fail("invalid index\n");
 	if (check_ustring(descr.name, sizeof(descr.name)))
 		return fail("invalid name\n");
-	if (descr.type != V4L2_INPUT_TYPE_TUNER && descr.type != V4L2_INPUT_TYPE_CAMERA)
+	if (descr.type != V4L2_INPUT_TYPE_TUNER &&
+      descr.type != V4L2_INPUT_TYPE_CAMERA &&
+      descr.type != V4L2_INPUT_TYPE_TOUCH)
 		return fail("invalid type\n");
 	if (descr.type == V4L2_INPUT_TYPE_CAMERA && descr.tuner)
 		return fail("invalid tuner\n");

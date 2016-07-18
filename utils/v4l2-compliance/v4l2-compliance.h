@@ -68,6 +68,7 @@ struct base_node {
 	bool is_radio;
 	bool is_vbi;
 	bool is_sdr;
+	bool is_touch;
 	bool is_m2m;
 	bool is_planar;
 	bool can_capture;
