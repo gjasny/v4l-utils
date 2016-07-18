@@ -591,6 +591,36 @@ static int testCap(struct node *node)
 	return 0;
 }
 
+#define NR_OPENS 100
+static int testUnlimitedOpens(struct node *node)
+{
+	int fds[NR_OPENS];
+	unsigned i;
+	bool ok;
+
+	/*
+	 * There should *not* be an artificial limit to the number
+	 * of open()s you can do on a V4L2 device node. So test whether
+	 * you can open a device node at least 100 times.
+	 *
+	 * And please don't start rejecting opens in your driver at 101!
+	 * There really shouldn't be a limit in the driver.
+	 *
+	 * If there are resource limits, then check against those limits
+	 * where they are actually needed.
+	 */
+	for (i = 0; i < NR_OPENS; i++) {
+		fds[i] = open(node->device, O_RDWR);
+		if (fds[i] < 0)
+			break;
+	}
+	ok = i == NR_OPENS;
+	while (i--)
+		close(fds[i]);
+	fail_on_test(!ok);
+	return 0;
+}
+
 static int check_prio(struct node *node, struct node *node2, enum v4l2_priority match)
 {
 	enum v4l2_priority prio;
@@ -1023,6 +1053,8 @@ int main(int argc, char **argv)
 			node.node2 = &sdr_node2;
 		}
 	}
+	printf("\ttest for unlimited opens: %s\n",
+		ok(testUnlimitedOpens(&node)));
 	printf("\n");
 
 	storeState(&node);
