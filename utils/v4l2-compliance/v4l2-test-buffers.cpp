@@ -761,17 +761,6 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 	return 0;
 }
 
-static unsigned invert_buf_type(unsigned type)
-{
-	if (v4l_type_is_planar(type))
-		return v4l_type_is_output(type) ?
-			V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
-			V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-	return v4l_type_is_output(type) ?
-		V4L2_BUF_TYPE_VIDEO_CAPTURE :
-		V4L2_BUF_TYPE_VIDEO_OUTPUT;
-}
-
 static int setupM2M(struct node *node, cv4l_queue &q)
 {
 	last_m2m_seq.init();
@@ -907,7 +896,7 @@ int testMmap(struct node *node, unsigned frame_count)
 			continue;
 
 		cv4l_queue q(type, V4L2_MEMORY_MMAP);
-		cv4l_queue m2m_q(invert_buf_type(type));
+		cv4l_queue m2m_q(v4l_type_invert(type));
 	
 		if (testSetupVbi(node, type))
 			continue;
@@ -1073,7 +1062,7 @@ int testUserPtr(struct node *node, unsigned frame_count)
 			continue;
 
 		cv4l_queue q(type, V4L2_MEMORY_USERPTR);
-		cv4l_queue m2m_q(invert_buf_type(type));
+		cv4l_queue m2m_q(v4l_type_invert(type));
 
 		if (testSetupVbi(node, type))
 			continue;
@@ -1187,7 +1176,7 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 			expbuf_type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 
 		cv4l_queue q(type, V4L2_MEMORY_DMABUF);
-		cv4l_queue m2m_q(invert_buf_type(type));
+		cv4l_queue m2m_q(v4l_type_invert(type));
 		cv4l_queue exp_q(expbuf_type, V4L2_MEMORY_MMAP);
 
 		if (testSetupVbi(node, type))

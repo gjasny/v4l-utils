@@ -744,6 +744,45 @@ int testTryFormats(struct node *node)
 	return node->valid_buftypes ? result : ENOTTY;
 }
 
+static int testM2MFormats(struct node *node)
+{
+	cv4l_fmt fmt_out;
+	cv4l_fmt fmt_cap;
+	__u32 cap_type = node->g_type();
+	__u32 out_type = v4l_type_invert(cap_type);
+	__u32 col, ycbcr_enc, quant, xfer_func;
+
+	fail_on_test(node->g_fmt(fmt_out, out_type));
+	node->g_fmt(fmt_cap, cap_type);
+	fail_on_test(fmt_cap.g_colorspace() != fmt_out.g_colorspace());
+	fail_on_test(fmt_cap.g_ycbcr_enc() != fmt_out.g_ycbcr_enc());
+	fail_on_test(fmt_cap.g_quantization() != fmt_out.g_quantization());
+	fail_on_test(fmt_cap.g_xfer_func() != fmt_out.g_xfer_func());
+	col = fmt_out.g_colorspace() == V4L2_COLORSPACE_SMPTE170M ?
+		V4L2_COLORSPACE_REC709 : V4L2_COLORSPACE_SMPTE170M;
+	ycbcr_enc = fmt_out.g_ycbcr_enc() == V4L2_YCBCR_ENC_601 ?
+		V4L2_YCBCR_ENC_709 : V4L2_YCBCR_ENC_601;
+	quant = fmt_out.g_quantization() == V4L2_QUANTIZATION_LIM_RANGE ?
+		V4L2_QUANTIZATION_FULL_RANGE : V4L2_QUANTIZATION_LIM_RANGE;
+	xfer_func = fmt_out.g_xfer_func() == V4L2_XFER_FUNC_SRGB ?
+		V4L2_XFER_FUNC_709 : V4L2_XFER_FUNC_SRGB;
+	fmt_out.s_colorspace(col);
+	fmt_out.s_xfer_func(xfer_func);
+	fmt_out.s_ycbcr_enc(ycbcr_enc);
+	fmt_out.s_quantization(quant);
+	node->s_fmt(fmt_out);
+	fail_on_test(fmt_out.g_colorspace() != col);
+	fail_on_test(fmt_out.g_xfer_func() != xfer_func);
+	fail_on_test(fmt_out.g_ycbcr_enc() != ycbcr_enc);
+	fail_on_test(fmt_out.g_quantization() != quant);
+	node->g_fmt(fmt_cap);
+	fail_on_test(fmt_cap.g_colorspace() != col);
+	fail_on_test(fmt_cap.g_xfer_func() != xfer_func);
+	fail_on_test(fmt_cap.g_ycbcr_enc() != ycbcr_enc);
+	fail_on_test(fmt_cap.g_quantization() != quant);
+	return 0;
+}
+
 static int testGlobalFormat(struct node *node, int type)
 {
 	struct v4l2_fmtdesc fdesc;
@@ -977,9 +1016,12 @@ int testSetFormats(struct node *node)
 	// filehandles.
 	if (node->node2 == NULL)
 		return 0;
-	// m2m devices are unique in that the format is often per-filehandle.
+
+	// m2m devices are special in that the format is often per-filehandle.
+	// But colorspace information should be passed from output to capture,
+	// so test that.
 	if (node->is_m2m)
-		return 0;
+		return testM2MFormats(node);
 
 	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
 		switch (type) {
