@@ -917,6 +917,10 @@ static std::string dev_feat2s(unsigned feat)
 		s += "\t\tSupports Deck Control\n";
 	if (feat & CEC_OP_FEAT_DEV_HAS_SET_AUDIO_RATE)
 		s += "\t\tSource Supports <Set Audio Rate>\n";
+	if (feat & CEC_OP_FEAT_DEV_SINK_HAS_ARC_TX)
+		s += "\t\tSink Supports ARC Tx\n";
+	if (feat & CEC_OP_FEAT_DEV_SOURCE_HAS_ARC_RX)
+		s += "\t\tSource Supports ARC Rx\n";
 	return s;
 }
 
