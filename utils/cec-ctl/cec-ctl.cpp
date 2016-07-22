@@ -760,6 +760,23 @@ static void usage(void)
 	       "  --cec-version-1.4        Use CEC Version 1.4 instead of 2.0\n"
 	       "  --list-ui-commands       List all UI commands that can be used with --user-control-pressed\n"
 	       "\n"
+	       "  --tv                     This is a TV\n"
+	       "  --record                 This is a recording and playback device\n"
+	       "  --tuner                  This is a tuner device\n"
+	       "  --playback               This is a playback device\n"
+	       "  --audio                  This is an audio system device\n"
+	       "  --processor              This is a processor device\n"
+	       "  --switch                 This is a pure CEC switch\n"
+	       "  --cdc-only               This is a CDC-only device\n"
+	       "  --unregistered           This is an unregistered device\n"
+	       "\n"
+	       "  --feat-record-tv-screen  Signal the Record TV Screen feature\n"
+	       "  --feat-set-osd-string    Signal the Set OSD String feature\n"
+	       "  --feat-deck-control      Signal the Deck Control feature\n"
+	       "  --feat-set-audio-rate    Signal the Set Audio Rate feature\n"
+	       "  --feat-sink-has-arc-tx   Signal the sink ARC Tx feature\n"
+	       "  --feat-source-has-arc-rx Signal the source ARC Rx feature\n"
+	       "\n"
 	       "  --rc-tv-profile-1        Signal RC TV Profile 1\n"
 	       "  --rc-tv-profile-2        Signal RC TV Profile 2\n"
 	       "  --rc-tv-profile-3        Signal RC TV Profile 3\n"
@@ -770,23 +787,6 @@ static void usage(void)
 	       "  --rc-src-contents        Signal that the RC source has a Contents Menu\n"
 	       "  --rc-src-media-top       Signal that the RC source has a Media Top Menu\n"
 	       "  --rc-src-media-context   Signal that the RC source has a Media Context Menu\n"
-	       "\n"
-	       "  --feat-record-tv-screen  Signal the Record TV Screen feature\n"
-	       "  --feat-set-osd-string    Signal the Set OSD String feature\n"
-	       "  --feat-deck-control      Signal the Deck Control feature\n"
-	       "  --feat-set-audio-rate    Signal the Set Audio Rate feature\n"
-	       "  --feat-sink-has-arc-tx   Signal the sink ARC Tx feature\n"
-	       "  --feat-source-has-arc-rx Signal the source ARC Rx feature\n"
-	       "\n"
-	       "  --tv                     This is a TV\n"
-	       "  --record                 This is a recording and playback device\n"
-	       "  --tuner                  This is a tuner device\n"
-	       "  --playback               This is a playback device\n"
-	       "  --audio                  This is an audio system device\n"
-	       "  --processor              This is a processor device\n"
-	       "  --switch                 This is a pure CEC switch\n"
-	       "  --cdc-only               This is a CDC-only device\n"
-	       "  --unregistered           This is an unregistered device\n"
 	       "\n"
 	       CEC_USAGE
 	       );
@@ -1397,6 +1397,12 @@ int main(int argc, char **argv)
 		flags |= 1 << CEC_OP_PRIM_DEVTYPE_PROCESSOR;
 	if (options[OptSwitch] || options[OptCDCOnly] || options[OptUnregistered])
 		flags |= 1 << CEC_OP_PRIM_DEVTYPE_SWITCH;
+
+	if (flags == 0 && (rc_tv || rc_src || dev_features)) {
+		fprintf(stderr, "The --feat- and --rc- options can only be used in combination with selecting the device type.\n\n");
+		usage();
+		return 1;
+	}
 
 	printf("Driver Info:\n");
 	printf("\tDriver Name                : %s\n", caps.driver);
