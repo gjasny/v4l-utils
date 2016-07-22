@@ -648,7 +648,21 @@ enum Option {
 	OptUnregistered,
 	OptCECVersion1_4,
 	OptListUICommands,
-	CEC_FEATURE_OPTIONS
+	OptRcTVProfile1,
+	OptRcTVProfile2,
+	OptRcTVProfile3,
+	OptRcTVProfile4,
+	OptRcSrcDevRoot,
+	OptRcSrcDevSetup,
+	OptRcSrcContents,
+	OptRcSrcMediaTop,
+	OptRcSrcMediaContext,
+	OptFeatRecordTVScreen,
+	OptFeatSetOSDString,
+	OptFeatDeckControl,
+	OptFeatSetAudioRate,
+	OptFeatSinkHasARCTx,
+	OptFeatSourceHasARCRx,
 };
 
 struct node {
@@ -691,6 +705,21 @@ static struct option long_options[] = {
 	{ "from", required_argument, 0, OptFrom },
 	{ "show-topology", no_argument, 0, OptShowTopology },
 	{ "list-ui-commands", no_argument, 0, OptListUICommands },
+	{ "rc-tv-profile-1", no_argument, 0, OptRcTVProfile1 },
+	{ "rc-tv-profile-2", no_argument, 0, OptRcTVProfile2 },
+	{ "rc-tv-profile-3", no_argument, 0, OptRcTVProfile3 },
+	{ "rc-tv-profile-4", no_argument, 0, OptRcTVProfile4 },
+	{ "rc-src-dev-root", no_argument, 0, OptRcSrcDevRoot },
+	{ "rc-src-dev-setup", no_argument, 0, OptRcSrcDevSetup },
+	{ "rc-src-contents", no_argument, 0, OptRcSrcContents },
+	{ "rc-src-media-top", no_argument, 0, OptRcSrcMediaTop },
+	{ "rc-src-media-context", no_argument, 0, OptRcSrcMediaContext },
+	{ "feat-record-tv-screen", no_argument, 0, OptFeatRecordTVScreen },
+	{ "feat-set-osd-string", no_argument, 0, OptFeatSetOSDString },
+	{ "feat-deck-control", no_argument, 0, OptFeatDeckControl },
+	{ "feat-set-audio-rate", no_argument, 0, OptFeatSetAudioRate },
+	{ "feat-sink-has-arc-tx", no_argument, 0, OptFeatSinkHasARCTx },
+	{ "feat-source-has-arc-rx", no_argument, 0, OptFeatSourceHasARCRx },
 
 	{ "tv", no_argument, 0, OptTV },
 	{ "record", no_argument, 0, OptRecord },
@@ -730,6 +759,24 @@ static void usage(void)
 	       "  -v, --verbose            Turn on verbose reporting\n"
 	       "  --cec-version-1.4        Use CEC Version 1.4 instead of 2.0\n"
 	       "  --list-ui-commands       List all UI commands that can be used with --user-control-pressed\n"
+	       "\n"
+	       "  --rc-tv-profile-1        Signal RC TV Profile 1\n"
+	       "  --rc-tv-profile-2        Signal RC TV Profile 2\n"
+	       "  --rc-tv-profile-3        Signal RC TV Profile 3\n"
+	       "  --rc-tv-profile-4        Signal RC TV Profile 4\n"
+	       "\n"
+	       "  --rc-src-dev-root        Signal that the RC source has a Dev Root Menu\n"
+	       "  --rc-src-dev-setup       Signal that the RC source has a Dev Setup Menu\n"
+	       "  --rc-src-contents        Signal that the RC source has a Contents Menu\n"
+	       "  --rc-src-media-top       Signal that the RC source has a Media Top Menu\n"
+	       "  --rc-src-media-context   Signal that the RC source has a Media Context Menu\n"
+	       "\n"
+	       "  --feat-record-tv-screen  Signal the Record TV Screen feature\n"
+	       "  --feat-set-osd-string    Signal the Set OSD String feature\n"
+	       "  --feat-deck-control      Signal the Deck Control feature\n"
+	       "  --feat-set-audio-rate    Signal the Set Audio Rate feature\n"
+	       "  --feat-sink-has-arc-tx   Signal the sink ARC Tx feature\n"
+	       "  --feat-source-has-arc-rx Signal the source ARC Rx feature\n"
 	       "\n"
 	       "  --tv                     This is a TV\n"
 	       "  --record                 This is a recording and playback device\n"
@@ -906,7 +953,7 @@ static std::string dev_feat2s(unsigned feat)
 {
 	std::string s;
 
-	feat &= 0x3e;
+	feat &= 0x7e;
 	if (feat == 0)
 		return "\t\tNone\n";
 	if (feat & CEC_OP_FEAT_DEV_HAS_RECORD_TV_SCREEN)
@@ -1099,6 +1146,9 @@ int main(int argc, char **argv)
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	__u16 phys_addr;
 	__u8 from = 0, to = 0;
+	__u8 dev_features = 0;
+	__u8 rc_tv = 0;
+	__u8 rc_src = 0;
 	const char *osd_name = "";
 	bool reply = true;
 	int idx = 0;
@@ -1170,6 +1220,51 @@ int main(int argc, char **argv)
 				       type_ui_cmd[i].type_name, type_ui_cmd[i].value);
 			printf("\n");
 			break;
+		case OptRcTVProfile1:
+			rc_tv = CEC_OP_FEAT_RC_TV_PROFILE_1;
+			break;
+		case OptRcTVProfile2:
+			rc_tv = CEC_OP_FEAT_RC_TV_PROFILE_2;
+			break;
+		case OptRcTVProfile3:
+			rc_tv = CEC_OP_FEAT_RC_TV_PROFILE_3;
+			break;
+		case OptRcTVProfile4:
+			rc_tv = CEC_OP_FEAT_RC_TV_PROFILE_4;
+			break;
+		case OptRcSrcDevRoot:
+			rc_src |= CEC_OP_FEAT_RC_SRC_HAS_DEV_ROOT_MENU;
+			break;
+		case OptRcSrcDevSetup:
+			rc_src |= CEC_OP_FEAT_RC_SRC_HAS_DEV_SETUP_MENU;
+			break;
+		case OptRcSrcContents:
+			rc_src |= CEC_OP_FEAT_RC_SRC_HAS_CONTENTS_MENU;
+			break;
+		case OptRcSrcMediaTop:
+			rc_src |= CEC_OP_FEAT_RC_SRC_HAS_MEDIA_TOP_MENU;
+			break;
+		case OptRcSrcMediaContext:
+			rc_src |= CEC_OP_FEAT_RC_SRC_HAS_MEDIA_CONTEXT_MENU;
+			break;
+		case OptFeatRecordTVScreen:
+			dev_features |= CEC_OP_FEAT_DEV_HAS_RECORD_TV_SCREEN;
+			break;
+		case OptFeatSetOSDString:
+			dev_features |= CEC_OP_FEAT_DEV_HAS_SET_OSD_STRING;
+			break;
+		case OptFeatDeckControl:
+			dev_features |= CEC_OP_FEAT_DEV_HAS_DECK_CONTROL;
+			break;
+		case OptFeatSetAudioRate:
+			dev_features |= CEC_OP_FEAT_DEV_HAS_SET_AUDIO_RATE;
+			break;
+		case OptFeatSinkHasARCTx:
+			dev_features |= CEC_OP_FEAT_DEV_SINK_HAS_ARC_TX;
+			break;
+		case OptFeatSourceHasARCRx:
+			dev_features |= CEC_OP_FEAT_DEV_SOURCE_HAS_ARC_RX;
+			break;
 		case OptPlayback:
 		case OptRecord:
 			if (options[OptPlayback] && options[OptRecord]) {
@@ -1215,6 +1310,39 @@ int main(int argc, char **argv)
 		while (optind < argc)
 			printf("%s ", argv[optind++]);
 		printf("\n");
+		usage();
+		return 1;
+	}
+
+	if (rc_tv && rc_src) {
+		fprintf(stderr, "--rc-tv- and --rc-src- options cannot be combined.\n\n");
+		usage();
+		return 1;
+	}
+
+	if (rc_tv && !options[OptTV]) {
+		fprintf(stderr, "--rc-tv- can only be used in combination with --tv.\n\n");
+		usage();
+		return 1;
+	}
+
+	if (rc_src && options[OptTV]) {
+		fprintf(stderr, "--rc-src- can't be used in combination with --tv.\n\n");
+		usage();
+		return 1;
+	}
+
+	if ((dev_features & (CEC_OP_FEAT_DEV_SOURCE_HAS_ARC_RX |
+			     CEC_OP_FEAT_DEV_HAS_DECK_CONTROL |
+			     CEC_OP_FEAT_DEV_HAS_SET_AUDIO_RATE)) && options[OptTV]) {
+		fprintf(stderr, "--feat-deck-control, --feat-set-audio-rate and --feat-source-has-arc-rx cannot be used in combination with --tv.\n\n");
+		usage();
+		return 1;
+	}
+
+	if ((dev_features & (CEC_OP_FEAT_DEV_HAS_RECORD_TV_SCREEN |
+			     CEC_OP_FEAT_DEV_HAS_SET_OSD_STRING)) && !options[OptTV]) {
+		fprintf(stderr, "--feat-set-osd-string and --feat-record-tv-screen can only be used in combination with --tv.\n\n");
 		usage();
 		return 1;
 	}
@@ -1362,6 +1490,8 @@ int main(int argc, char **argv)
 		for (unsigned i = 0; i < laddrs.num_log_addrs; i++) {
 			laddrs.primary_device_type[i] = prim_type;
 			laddrs.all_device_types[i] = all_dev_types;
+			laddrs.features[i][0] = rc_tv | rc_src;
+			laddrs.features[i][1] = dev_features;
 		}
 
 		doioctl(&node, CEC_ADAP_S_LOG_ADDRS, &laddrs);
