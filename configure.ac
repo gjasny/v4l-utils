@@ -432,6 +432,7 @@ AM_COND_IF([WITH_V4L_WRAPPERS], [USE_V4L_WRAPPERS="yes"], [USE_V4L_WRAPPERS="no"
 AM_COND_IF([WITH_GCONV], [USE_GCONV="yes"], [USE_GCONV="no"])
 AM_COND_IF([WITH_V4L2_CTL_LIBV4L], [USE_V4L2_CTL="yes"], [USE_V4L2_CTL="no"])
 AM_COND_IF([WITH_V4L2_COMPLIANCE_LIBV4L], [USE_V4L2_COMPLIANCE="yes"], [USE_V4L2_COMPLIANCE="no"])
+AS_IF([test "x$alsa_pkgconfig" = "xtrue"], [USE_ALSA="yes"], [USE_ALSA="no"])
 
 cat <<EOF
 
@@ -444,7 +445,8 @@ compile time options summary
     libjpeg		: $with_jpeg
     libudev		: $have_libudev
     QT version		: $QT_VERSION
-    ALSA support	: $alsa_pkgconfig
+    ALSA support	: $USE_ALSA
+
     gconv		: $USE_GCONV
 
     libv4l		: $USE_LIBV4L
