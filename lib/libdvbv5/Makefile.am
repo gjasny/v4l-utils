@@ -8,6 +8,7 @@ otherinclude_HEADERS = \
 	../include/libdvbv5/dvb-file.h \
 	../include/libdvbv5/countries.h \
 	../include/libdvbv5/crc32.h \
+	../include/libdvbv5/dvb-dev.h \
 	../include/libdvbv5/dvb-frontend.h \
 	../include/libdvbv5/dvb-fe.h \
 	../include/libdvbv5/dvb-sat.h \
@@ -66,6 +67,7 @@ libdvbv5_la_SOURCES = \
 	parse_string.c	 \
 	parse_string.h	 \
 	dvb-demux.c	 \
+	dvb-dev.c	 \
 	dvb-fe.c	 \
 	dvb-fe-priv.h    \
 	dvb-log.c	 \

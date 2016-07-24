@@ -235,6 +235,7 @@ definition using dvbv5-scan:
 @example dvb-fe-tool.c
 @example dvb-format-convert.c
 
+@defgroup dvb_device Digital TV device enumeration
 @defgroup frontend Digital TV frontend control
 @defgroup frontend_scan Digital TV frontend scan
 @defgroup satellite Satellite Equipment Control
