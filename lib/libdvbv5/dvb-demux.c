@@ -39,6 +39,7 @@
 #include <stdlib.h> /* free */
 
 #include <libdvbv5/dvb-demux.h>
+#include <libdvbv5/dvb-dev.h>
 
 #define MAX_TIME		10	/* 1.0 seconds */
 
@@ -65,15 +66,20 @@
 
 int dvb_dmx_open(int adapter, int demux)
 {
-	char* demux_name = NULL;
 	int fd_demux;
-	int r;
+	struct dvb_device *dvb;
+	struct dvb_device_list *dvb_dev;
 
-	r = asprintf(&demux_name, "/dev/dvb/adapter%i/demux%i", adapter, demux );
-	if (r < 0)
-		return -1;
-	fd_demux = open( demux_name, O_RDWR | O_NONBLOCK );
-	free(demux_name);
+	dvb = alloc_dvb_device();
+	find_dvb_devices(dvb, 0);
+	dvb_dev = get_device_by_sysname(dvb, adapter, demux, DVB_DEVICE_DEMUX);
+	if (!dvb_dev) {
+		free_dvb_device(dvb);
+		return NULL;
+	}
+
+	fd_demux = open(dvb_dev->path, O_RDWR | O_NONBLOCK);
+	free_dvb_device(dvb);
 	return fd_demux;
 }
 

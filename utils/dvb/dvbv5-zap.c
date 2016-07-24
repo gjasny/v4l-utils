@@ -51,6 +51,7 @@
 #include <linux/dvb/dmx.h>
 #include "libdvbv5/dvb-file.h"
 #include "libdvbv5/dvb-demux.h"
+#include "libdvbv5/dvb-dev.h"
 #include "libdvbv5/dvb-scan.h"
 #include "libdvbv5/header.h"
 #include "libdvbv5/countries.h"
@@ -802,6 +803,8 @@ int main(int argc, char **argv)
 	int err = -1;
 	int r;
 	struct dvb_v5_fe_parms *parms = NULL;
+	struct dvb_device *dvb;
+	struct dvb_device_list *dvb_dev;
 	const struct argp argp = {
 		.options = options,
 		.parser = parse_opt,
@@ -857,19 +860,24 @@ int main(int argc, char **argv)
 		}
 	}
 
-	r = asprintf(&args.demux_dev,
-		 "/dev/dvb/adapter%i/demux%i", args.adapter, args.demux);
-	if (r < 0) {
-		fprintf(stderr, _("asprintf error\n"));
-		return -1;
-	}
+	dvb = alloc_dvb_device();
+	find_dvb_devices(dvb, 0);
 
-	r = asprintf(&args.dvr_dev,
-		 "/dev/dvb/adapter%i/dvr%i", args.adapter, args.demux);
-	if (r < 0) {
-		fprintf(stderr, _("asprintf error\n"));
+	dvb_dev = get_device_by_sysname(dvb, args.adapter, args.demux, DVB_DEVICE_DEMUX);
+	if (!dvb_dev) {
+		fprintf(stderr, _("Couldn't find demux device node\n"));
+		free_dvb_device(dvb);
 		return -1;
 	}
+	args.demux_dev = dvb_dev->path;
+
+	dvb_dev = get_device_by_sysname(dvb, args.adapter, args.demux, DVB_DEVICE_DVR);
+	if (!dvb_dev) {
+		fprintf(stderr, _("Couldn't find dvr device node\n"));
+		free_dvb_device(dvb);
+		return -1;
+	}
+	args.dvr_dev = dvb_dev->path;
 
 	if (args.silent < 2)
 		fprintf(stderr, _("using demux '%s'\n"), args.demux_dev);
@@ -1080,10 +1088,7 @@ err:
 		dvb_fe_close(parms);
 	if (args.confname)
 		free(args.confname);
-	if (args.demux_dev)
-		free(args.demux_dev);
-	if (args.dvr_dev)
-		free(args.dvr_dev);
+	free_dvb_device(dvb);
 
 	return err;
 }

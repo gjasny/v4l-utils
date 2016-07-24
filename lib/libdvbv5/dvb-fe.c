@@ -19,6 +19,7 @@
 
 #include "dvb-fe-priv.h"
 #include "dvb-v5.h"
+#include <libdvbv5/dvb-dev.h>
 #include <libdvbv5/countries.h>
 #include <libdvbv5/dvb-v5-std.h>
 
@@ -123,9 +124,11 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 					  dvb_logfunc logfunc,
 					  int flags)
 {
-	int fd, i, r;
+	int fd, i;
 	char *fname;
 	struct dtv_properties dtv_prop;
+	struct dvb_device *dvb;
+	struct dvb_device_list *dvb_dev;
 	struct dvb_v5_fe_parms_priv *parms = NULL;
 
 	libdvbv5_initialize();
@@ -133,11 +136,18 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	if (logfunc == NULL)
 		logfunc = dvb_default_log;
 
-	r = asprintf(&fname, "/dev/dvb/adapter%i/frontend%i", adapter, frontend);
-	if (r < 0) {
-		logfunc(LOG_ERR, _("asprintf error"));
+	dvb = alloc_dvb_device();
+	find_dvb_devices(dvb, 0);
+	dvb_dev = get_device_by_sysname(dvb, adapter, frontend,
+				     DVB_DEVICE_FRONTEND);
+	if (!dvb_dev) {
+		logfunc(LOG_ERR, _("adapter %d, frontend %d not found"),
+			adapter, frontend);
+		free_dvb_device(dvb);
 		return NULL;
 	}
+	fname = strdup(dvb_dev->path);
+	free_dvb_device(dvb);
 	if (!fname) {
 		logfunc(LOG_ERR, _("fname calloc: %s"), strerror(errno));
 		return NULL;
