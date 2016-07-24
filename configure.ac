@@ -423,6 +423,16 @@ AC_OUTPUT
 dnl ---------------------------------------------------------------------
 dnl compile time options summary
 
+AM_COND_IF([WITH_LIBDVBV5], [USE_LIBDVBV5="yes"], [USE_LIBDVBV5="no"])
+AM_COND_IF([WITH_LIBV4L], [USE_LIBV4L="yes"], [USE_LIBV4L="no"])
+AM_COND_IF([WITH_V4LUTILS], [USE_V4LUTILS="yes"], [USE_V4LUTILS="no"])
+AM_COND_IF([WITH_QV4L2], [USE_QV4L2="yes"], [USE_QV4L2="no"])
+AM_COND_IF([WITH_V4L_PLUGINS], [USE_V4L_PLUGINS="yes"], [USE_V4L_PLUGINS="no"])
+AM_COND_IF([WITH_V4L_WRAPPERS], [USE_V4L_WRAPPERS="yes"], [USE_V4L_WRAPPERS="no"])
+AM_COND_IF([WITH_GCONV], [USE_GCONV="yes"], [USE_GCONV="no"])
+AM_COND_IF([WITH_V4L2_CTL_LIBV4L], [USE_V4L2_CTL="yes"], [USE_V4L2_CTL="no"])
+AM_COND_IF([WITH_V4L2_COMPLIANCE_LIBV4L], [USE_V4L2_COMPLIANCE="yes"], [USE_V4L2_COMPLIANCE="no"])
+
 cat <<EOF
 
 compile time options summary
@@ -435,5 +445,14 @@ compile time options summary
     libudev		: $have_libudev
     QT version		: $QT_VERSION
     ALSA support	: $alsa_pkgconfig
+    gconv		: $USE_GCONV
 
+    libv4l		: $USE_LIBV4L
+    v4l_plugins		: $USE_V4L_PLUGINS
+    v4l_wrappers	: $USE_V4L_WRAPPERS
+    libdvbv5		: $USE_LIBDVBV5
+    v4lutils		: $USE_V4LUTILS
+    qv4l2		: $USE_QV4L2
+    v4l2-ctrl		: $USE_V4L2_CTL
+    v4l2-compliance	: $USE_V4L2_COMPLIANCE
 EOF
