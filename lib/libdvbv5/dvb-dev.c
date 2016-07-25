@@ -37,7 +37,7 @@ struct dvb_device_priv {
 	struct udev_monitor *mon;
 };
 
-static void free_dvb_dev(struct dvb_device_list *dvb_dev)
+static void free_dvb_dev(struct dvb_dev_list *dvb_dev)
 {
 	if (dvb_dev->path)
 		free (dvb_dev->path);
@@ -55,12 +55,12 @@ static void free_dvb_dev(struct dvb_device_list *dvb_dev)
 		free(dvb_dev->serial);
 }
 
-struct dvb_device *alloc_dvb_device(void)
+struct dvb_device *dvb_dev_alloc(void)
 {
 	return calloc(1, sizeof(struct dvb_device_priv));
 }
 
-static void free_dvb_devices(struct dvb_device_priv *dvb)
+static void dvb_dev_frees(struct dvb_device_priv *dvb)
 {
 	int i;
 
@@ -72,13 +72,13 @@ static void free_dvb_devices(struct dvb_device_priv *dvb)
 	dvb->d.num_devices = 0;
 }
 
-void free_dvb_device(struct dvb_device *d)
+void dvb_dev_free(struct dvb_device *d)
 {
 	struct dvb_device_priv *dvb = (void *)d;
 
-	free_dvb_devices(dvb);
+	dvb_dev_frees(dvb);
 
-	/* Wait for find_dvb_devices() to stop */
+	/* Wait for dvb_dev_find() to stop */
 	while (dvb->udev) {
 		dvb->monitor = 0;
 		usleep(1000);
@@ -92,10 +92,10 @@ static const char * const dnames[] = {
         "frontend", "demux", "dvr", "net", "ca"
 };
 
-struct dvb_device_list *get_device_by_sysname(struct dvb_device *d,
+struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
 					   unsigned int adapter,
 					   unsigned int num,
-					   enum dvb_type type)
+					   enum dvb_dev_type type)
 {
 	struct dvb_device_priv *dvb = (void *)d;
 	int ret, i;
@@ -123,7 +123,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 				const char *action)
 {
 	struct udev_device *parent = NULL;
-	struct dvb_device_list dev_list, *dvb_dev;
+	struct dvb_dev_list dev_list, *dvb_dev;
 	const char *bus_type, *p;
 	char *buf;
 	int i, ret;
@@ -245,7 +245,7 @@ err:
 	return -1;
 }
 
-int find_dvb_devices(struct dvb_device *d, int enable_monitor)
+int dvb_dev_find(struct dvb_device *d, int enable_monitor)
 {
 	struct dvb_device_priv *dvb = (void *)d;
 	struct udev_enumerate *enumerate;
@@ -255,7 +255,7 @@ int find_dvb_devices(struct dvb_device *d, int enable_monitor)
 
 	/* Free a previous list of devices */
 	if (dvb->d.num_devices)
-		free_dvb_devices(dvb);
+		dvb_dev_frees(dvb);
 
 	/* Create the udev object */
 	dvb->udev = udev_new();
@@ -320,7 +320,7 @@ int find_dvb_devices(struct dvb_device *d, int enable_monitor)
 	return 0;
 }
 
-void stop_monitor_mode(struct dvb_device *d)
+void dvb_dev_stop_monitor(struct dvb_device *d)
 {
 	struct dvb_device_priv *dvb = (void *)d;
 

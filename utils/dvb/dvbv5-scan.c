@@ -456,7 +456,7 @@ int main(int argc, char **argv)
 	int err, lnb = -1,idx = -1;
 	int r;
 	struct dvb_device *dvb;
-	struct dvb_device_list *dvb_dev;
+	struct dvb_dev_list *dvb_dev;
 	const struct argp argp = {
 		.options = options,
 		.parser = parse_opt,
@@ -519,13 +519,13 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	dvb = alloc_dvb_device();
-	find_dvb_devices(dvb, 0);
+	dvb = dvb_dev_alloc();
+	dvb_dev_find(dvb, 0);
 
-	dvb_dev = get_device_by_sysname(dvb, args.adapter_dmx, args.demux, DVB_DEVICE_DEMUX);
+	dvb_dev = dvb_dev_seek_by_sysname(dvb, args.adapter_dmx, args.demux, DVB_DEVICE_DEMUX);
 	if (!dvb_dev) {
 		fprintf(stderr, _("Couldn't find demux device node\n"));
-		free_dvb_device(dvb);
+		dvb_dev_free(dvb);
 		return -1;
 	}
 	args.demux_dev = dvb_dev->path;
@@ -558,7 +558,7 @@ int main(int argc, char **argv)
 	err = run_scan(&args, parms);
 
 	dvb_fe_close(parms);
-	free_dvb_device(dvb);
+	dvb_dev_free(dvb);
 
 	return err;
 }

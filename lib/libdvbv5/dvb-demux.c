@@ -68,18 +68,18 @@ int dvb_dmx_open(int adapter, int demux)
 {
 	int fd_demux;
 	struct dvb_device *dvb;
-	struct dvb_device_list *dvb_dev;
+	struct dvb_dev_list *dvb_dev;
 
-	dvb = alloc_dvb_device();
-	find_dvb_devices(dvb, 0);
-	dvb_dev = get_device_by_sysname(dvb, adapter, demux, DVB_DEVICE_DEMUX);
+	dvb = dvb_dev_alloc();
+	dvb_dev_find(dvb, 0);
+	dvb_dev = dvb_dev_seek_by_sysname(dvb, adapter, demux, DVB_DEVICE_DEMUX);
 	if (!dvb_dev) {
-		free_dvb_device(dvb);
+		dvb_dev_free(dvb);
 		return NULL;
 	}
 
 	fd_demux = open(dvb_dev->path, O_RDWR | O_NONBLOCK);
-	free_dvb_device(dvb);
+	dvb_dev_free(dvb);
 	return fd_demux;
 }
 

@@ -16,6 +16,9 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
+#ifndef _DVB_DEV_H
+#define _DVB_DEV_H
+
 /**
  * @file dvb-dev.h
  * @ingroup dvb_device
@@ -36,7 +39,7 @@
  */
 
 /**
- * @struct dvb_device_list
+ * @struct dvb_dev_list
  *	@brief Digital TV device node properties
  * @ingroup dvb_device
  *
@@ -53,7 +56,7 @@
  * @param product	Device's product name (optional, only on USB)
  * @param serial	Device's serial name (optional, only on USB)
  */
-struct dvb_device_list {
+struct dvb_dev_list {
 	char *path;
 	char *sysname;
 	char *dvb_type;
@@ -69,17 +72,17 @@ struct dvb_device_list {
  *	@brief Digital TV list of devices
  * @ingroup dvb_device
  *
- * @param devices	Array with a dvb_device_list of devices. Each device
+ * @param devices	Array with a dvb_dev_list of devices. Each device
  *			node is a different entry at the list.
  * @param num_devices	number of elements at the devices array.
  */
 struct dvb_device {
-	struct dvb_device_list *devices;
+	struct dvb_dev_list *devices;
 	int num_devices;
 };
 
 /**
- * @enum dvb_type
+ * @enum dvb_dev_type
  *	@brief Type of a device entry to search
  * @ingroup dvb_device
  *
@@ -89,7 +92,7 @@ struct dvb_device {
  * @param DVB_DEVICE_NET	Digital TV network interface control
  * @param DVB_DEVICE_CA		Digital TV Conditional Access
  */
-enum dvb_type {
+enum dvb_dev_type {
 	DVB_DEVICE_FRONTEND,
 	DVB_DEVICE_DEMUX,
 	DVB_DEVICE_DVR,
@@ -104,7 +107,7 @@ enum dvb_type {
  * @note Before using the dvb device function calls, the struct dvb_device should
  * be allocated via this function call.
  */
-struct dvb_device *alloc_dvb_device(void);
+struct dvb_device *dvb_dev_alloc(void);
 
 /**
  * @brief free a struct dvb_device
@@ -112,7 +115,7 @@ struct dvb_device *alloc_dvb_device(void);
  *
  * @param dvb pointer to struct dvb_device to be freed
  */
-void free_dvb_device(struct dvb_device *dvb);
+void dvb_dev_free(struct dvb_device *dvb);
 
 /**
  * @brief finds all DVB devices on the local machine
@@ -129,13 +132,13 @@ void free_dvb_device(struct dvb_device *dvb);
  *
  * In monitor mode, it will not only enumerate all devices, but it will also
  * keep waiting for device changes. The device seek loop will only be
- * interrupted after calling stop_monitor_mode().
+ * interrupted after calling dvb_dev_stop_monitor().
  *
  * Please notice that, in such mode, the function will wait forever. So, it
  * is up to the application to put start a separate thread to handle it in
  * monitor mode, and add the needed mutexes to make it thread safe.
  */
-int find_dvb_devices(struct dvb_device *dvb, int enable_monitor);
+int dvb_dev_find(struct dvb_device *dvb, int enable_monitor);
 
 /**
  * @brief Find a device that matches the search criteria given by this
@@ -146,20 +149,21 @@ int find_dvb_devices(struct dvb_device *dvb, int enable_monitor);
  * @param adapter	Adapter number, as defined internally at the Kernel.
  *			Always start with 0;
  * @param num		Digital TV device number (e. g. frontend0, net0, etc);
- * @param type		Type of the device, as given by enum dvb_type;
+ * @param type		Type of the device, as given by enum dvb_dev_type;
  */
-struct dvb_device_list *get_device_by_sysname(struct dvb_device *dvb,
+struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *dvb,
 					   unsigned int adapter,
 					   unsigned int num,
-					   enum dvb_type type);
+					   enum dvb_dev_type type);
 
 /**
- * @brief Stop the find_dvb_devices loop
+ * @brief Stop the dvb_dev_find loop
  *
  * @param dvb pointer to struct dvb_device to be used
  *
- * This function stops find_dvb_devices() if it is running in monitor
+ * This function stops dvb_dev_find() if it is running in monitor
  * mode. It does nothing on other modes. Can be called even if the
  * monitor mode was already stopped.
  */
-void stop_monitor_mode(struct dvb_device *dvb);
+void dvb_dev_stop_monitor(struct dvb_device *dvb);
+#endif

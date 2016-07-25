@@ -128,7 +128,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	char *fname;
 	struct dtv_properties dtv_prop;
 	struct dvb_device *dvb;
-	struct dvb_device_list *dvb_dev;
+	struct dvb_dev_list *dvb_dev;
 	struct dvb_v5_fe_parms_priv *parms = NULL;
 
 	libdvbv5_initialize();
@@ -136,18 +136,18 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	if (logfunc == NULL)
 		logfunc = dvb_default_log;
 
-	dvb = alloc_dvb_device();
-	find_dvb_devices(dvb, 0);
-	dvb_dev = get_device_by_sysname(dvb, adapter, frontend,
+	dvb = dvb_dev_alloc();
+	dvb_dev_find(dvb, 0);
+	dvb_dev = dvb_dev_seek_by_sysname(dvb, adapter, frontend,
 				     DVB_DEVICE_FRONTEND);
 	if (!dvb_dev) {
 		logfunc(LOG_ERR, _("adapter %d, frontend %d not found"),
 			adapter, frontend);
-		free_dvb_device(dvb);
+		dvb_dev_free(dvb);
 		return NULL;
 	}
 	fname = strdup(dvb_dev->path);
-	free_dvb_device(dvb);
+	dvb_dev_free(dvb);
 	if (!fname) {
 		logfunc(LOG_ERR, _("fname calloc: %s"), strerror(errno));
 		return NULL;

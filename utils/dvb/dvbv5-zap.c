@@ -804,7 +804,7 @@ int main(int argc, char **argv)
 	int r;
 	struct dvb_v5_fe_parms *parms = NULL;
 	struct dvb_device *dvb;
-	struct dvb_device_list *dvb_dev;
+	struct dvb_dev_list *dvb_dev;
 	const struct argp argp = {
 		.options = options,
 		.parser = parse_opt,
@@ -860,21 +860,21 @@ int main(int argc, char **argv)
 		}
 	}
 
-	dvb = alloc_dvb_device();
-	find_dvb_devices(dvb, 0);
+	dvb = dvb_dev_alloc();
+	dvb_dev_find(dvb, 0);
 
-	dvb_dev = get_device_by_sysname(dvb, args.adapter, args.demux, DVB_DEVICE_DEMUX);
+	dvb_dev = dvb_dev_seek_by_sysname(dvb, args.adapter, args.demux, DVB_DEVICE_DEMUX);
 	if (!dvb_dev) {
 		fprintf(stderr, _("Couldn't find demux device node\n"));
-		free_dvb_device(dvb);
+		dvb_dev_free(dvb);
 		return -1;
 	}
 	args.demux_dev = dvb_dev->path;
 
-	dvb_dev = get_device_by_sysname(dvb, args.adapter, args.demux, DVB_DEVICE_DVR);
+	dvb_dev = dvb_dev_seek_by_sysname(dvb, args.adapter, args.demux, DVB_DEVICE_DVR);
 	if (!dvb_dev) {
 		fprintf(stderr, _("Couldn't find dvr device node\n"));
-		free_dvb_device(dvb);
+		dvb_dev_free(dvb);
 		return -1;
 	}
 	args.dvr_dev = dvb_dev->path;
@@ -1088,7 +1088,7 @@ err:
 		dvb_fe_close(parms);
 	if (args.confname)
 		free(args.confname);
-	free_dvb_device(dvb);
+	dvb_dev_free(dvb);
 
 	return err;
 }
