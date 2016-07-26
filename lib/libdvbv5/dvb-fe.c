@@ -77,7 +77,7 @@ static void libdvbv5_initialize(void)
 #endif
 }
 
-static void dvb_v5_free(struct dvb_v5_fe_parms_priv *parms)
+void dvb_v5_free(struct dvb_v5_fe_parms_priv *parms)
 {
 	if (parms->fname)
 		free(parms->fname);
@@ -85,7 +85,7 @@ static void dvb_v5_free(struct dvb_v5_fe_parms_priv *parms)
 	free(parms);
 }
 
-struct dvb_v5_fe_parms *dvb_fe_dummy()
+struct dvb_v5_fe_parms *dvb_fe_dummy(void)
 {
 	struct dvb_v5_fe_parms_priv *parms = NULL;
 
@@ -98,6 +98,11 @@ struct dvb_v5_fe_parms *dvb_fe_dummy()
 	parms->fd = -1;
 	parms->p.default_charset = "iso-8859-1";
 	parms->p.output_charset = "utf-8";
+	parms->p.lna = LNA_AUTO;
+	parms->p.sat_number = -1;
+	parms->p.abort = 0;
+	parms->country = COUNTRY_UNKNOWN;
+
 	return &parms->p;
 }
 

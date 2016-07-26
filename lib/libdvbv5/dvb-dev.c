@@ -25,6 +25,7 @@
 
 #include <config.h>
 
+#include "dvb-fe-priv.h"
 #include <libdvbv5/dvb-dev.h>
 
 struct dvb_device_priv {
@@ -57,7 +58,19 @@ static void free_dvb_dev(struct dvb_dev_list *dvb_dev)
 
 struct dvb_device *dvb_dev_alloc(void)
 {
-	return calloc(1, sizeof(struct dvb_device_priv));
+	struct dvb_device *dvb;
+
+	dvb = calloc(1, sizeof(struct dvb_device_priv));
+	if (!dvb)
+		return NULL;
+
+	dvb->fe_parms = dvb_fe_dummy();
+	if (!dvb->fe_parms) {
+		dvb_dev_free(dvb);
+		return NULL;
+	}
+
+	return dvb;
 }
 
 static void dvb_dev_frees(struct dvb_device_priv *dvb)
@@ -75,6 +88,7 @@ static void dvb_dev_frees(struct dvb_device_priv *dvb)
 void dvb_dev_free(struct dvb_device *d)
 {
 	struct dvb_device_priv *dvb = (void *)d;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 
 	dvb_dev_frees(dvb);
 
@@ -84,6 +98,7 @@ void dvb_dev_free(struct dvb_device *d)
 		usleep(1000);
 	}
 
+	dvb_v5_free(parms);
 	free(dvb);
 }
 
@@ -325,4 +340,15 @@ void dvb_dev_stop_monitor(struct dvb_device *d)
 	struct dvb_device_priv *dvb = (void *)d;
 
 	dvb->monitor = 0;
+}
+
+void dvb_dev_set_log(struct dvb_device *dvb, unsigned verbose,
+		     dvb_logfunc logfunc)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->fe_parms;
+
+	parms->p.verbose = verbose;
+
+	if (logfunc != NULL)
+			parms->p.logfunc = logfunc;
 }

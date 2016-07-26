@@ -73,4 +73,6 @@ struct dvb_v5_fe_parms_priv {
 	unsigned			freq_offset;
 };
 
+void dvb_v5_free(struct dvb_v5_fe_parms_priv *parms);
+
 #endif

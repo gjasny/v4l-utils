@@ -19,6 +19,8 @@
 #ifndef _DVB_DEV_H
 #define _DVB_DEV_H
 
+#include "dvb-fe.h"
+
 /**
  * @file dvb-dev.h
  * @ingroup dvb_device
@@ -77,8 +79,12 @@ struct dvb_dev_list {
  * @param num_devices	number of elements at the devices array.
  */
 struct dvb_device {
+	/* Digital TV device lists */
 	struct dvb_dev_list *devices;
 	int num_devices;
+
+	/* Digital TV frontend access */
+	struct dvb_v5_fe_parms *fe_parms;
 };
 
 /**
@@ -106,6 +112,9 @@ enum dvb_dev_type {
  *
  * @note Before using the dvb device function calls, the struct dvb_device should
  * be allocated via this function call.
+ *
+ * @return on success, returns a pointer to the allocated struct dvb_device or
+ *	NULL if not enough memory to allocate the struct.
  */
 struct dvb_device *dvb_dev_alloc(void);
 
@@ -145,16 +154,15 @@ int dvb_dev_find(struct dvb_device *dvb, int enable_monitor);
  *	functions's parameters.
  *
  * @param dvb		pointer to struct dvb_device to be used
- *
  * @param adapter	Adapter number, as defined internally at the Kernel.
  *			Always start with 0;
  * @param num		Digital TV device number (e. g. frontend0, net0, etc);
  * @param type		Type of the device, as given by enum dvb_dev_type;
  */
 struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *dvb,
-					   unsigned int adapter,
-					   unsigned int num,
-					   enum dvb_dev_type type);
+					     unsigned int adapter,
+					     unsigned int num,
+					     enum dvb_dev_type type);
 
 /**
  * @brief Stop the dvb_dev_find loop
@@ -166,4 +174,24 @@ struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *dvb,
  * monitor mode was already stopped.
  */
 void dvb_dev_stop_monitor(struct dvb_device *dvb);
+
+/**
+ * @brief Sets the DVB verbosity and log function
+ *
+ * @param dvb		pointer to struct dvb_device to be used
+ * @param verbose	Verbosity level of the messages that will be printed
+ * @param logfunc	Callback function to be called when a log event
+ *			happens. Can either store the event into a file or
+ *			to print it at the TUI/GUI. Can be null.
+ *
+ * @details Sets the function to report log errors and to set the verbosity
+ *	level of debug report messages. If not called, or if logfunc is
+ *	NULL, the libdvbv5 will report error and debug messages via stderr,
+ *	and will use colors for the debug messages.
+ *
+ */
+void dvb_dev_set_log(struct dvb_device *dvb,
+		     unsigned verbose,
+		     dvb_logfunc logfunc);
+
 #endif
