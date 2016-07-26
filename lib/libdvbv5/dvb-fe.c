@@ -193,7 +193,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 	if (fd == -1) {
 		dvb_logerr(_("%s while opening %s"), strerror(errno), fname);
 		free(fname);
-		return -1;
+		return errno;
 	}
 
 	if (xioctl(fd, FE_GET_INFO, &parms->p.info) == -1) {
@@ -201,7 +201,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 		dvb_v5_free(parms);
 		close(fd);
 		free(fname);
-		return -1;
+		return errno;
 	}
 
 	if (parms->p.verbose) {
@@ -284,7 +284,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 			dvb_logerr(_("delivery system not detected"));
 			dvb_v5_free(parms);
 			close(fd);
-			return -1;
+			return EINVAL;
 		}
 	} else {
 		parms->dvb_prop[0].cmd = DTV_ENUM_DELSYS;
@@ -295,7 +295,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 			dvb_perror("FE_GET_PROPERTY");
 			dvb_v5_free(parms);
 			close(fd);
-			return -1;
+			return errno;
 		}
 		parms->p.num_systems = parms->dvb_prop[0].u.buffer.len;
 		for (i = 0; i < parms->p.num_systems; i++)
@@ -305,7 +305,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 			dvb_logerr(_("driver returned 0 supported delivery systems!"));
 			dvb_v5_free(parms);
 			close(fd);
-			return -1;
+			return EINVAL;
 		}
 	}
 
