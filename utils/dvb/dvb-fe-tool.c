@@ -282,7 +282,10 @@ int main(int argc, char *argv[])
 	textdomain (PACKAGE);
 #endif
 
-	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, 0, 0);
+	if (argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, 0, 0)) {
+		argp_help(&argp, stderr, ARGP_HELP_SHORT_USAGE, PROGRAM_NAME);
+		return -1;
+	}
 
 	/*
 	 * If called without any option, be verbose, to print the
