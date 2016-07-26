@@ -44,8 +44,6 @@ static void free_dvb_dev(struct dvb_dev_list *dvb_dev)
 		free (dvb_dev->path);
 	if (dvb_dev->sysname)
 		free(dvb_dev->sysname);
-	if (dvb_dev->dvb_type)
-		free(dvb_dev->dvb_type);
 	if (dvb_dev->bus_addr)
 		free(dvb_dev->bus_addr);
 	if (dvb_dev->manufacturer)
@@ -102,9 +100,8 @@ void dvb_dev_free(struct dvb_device *d)
 	free(dvb);
 }
 
-
-static const char * const dnames[] = {
-        "frontend", "demux", "dvr", "net", "ca"
+static const char * const dev_type_names[] = {
+        "frontend", "demux", "dvr", "net", "ca", "sec"
 };
 
 struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
@@ -116,10 +113,10 @@ struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
 	int ret, i;
 	char *p;
 
-	if (type > sizeof(dnames)/sizeof(*dnames))
+	if (type > sizeof(dev_type_names)/sizeof(*dev_type_names))
 		return NULL;
 
-	ret = asprintf(&p, "dvb%d.%s%d", adapter, dnames[type], num);
+	ret = asprintf(&p, "dvb%d.%s%d", adapter, dev_type_names[type], num);
 	if (ret < 0)
 		return NULL;
 
@@ -141,7 +138,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	struct dvb_dev_list dev_list, *dvb_dev;
 	const char *bus_type, *p;
 	char *buf;
-	int i, ret;
+	int i, ret, len;
 
 	/* remove, change, move should all remove the device first */
 	if (strcmp(action,"add")) {
@@ -173,6 +170,19 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	dvb_dev = &dev_list;
 	memset(dvb_dev, 0, sizeof(*dvb_dev));
 
+	p = udev_device_get_property_value(dev, "DVB_DEVICE_TYPE");
+	if (!p)
+		goto err;
+	len = sizeof(dev_type_names)/sizeof(*dev_type_names);
+	for (i = 0; i < len; i++) {
+		if (!strcmp(p, dev_type_names[i])) {
+			dvb_dev->dvb_type = i;
+			break;
+		}
+	}
+	if (i == len)
+		goto err;
+
 	p = udev_device_get_devnode(dev);
 	if (!p)
 		goto err;
@@ -183,10 +193,6 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 		goto err;
 	dvb_dev->sysname = strdup(p);
 
-	p = udev_device_get_property_value(dev, "DVB_DEVICE_TYPE");
-	if (!p)
-		goto err;
-	dvb_dev->dvb_type = strdup(p);
 
 	parent = udev_device_get_parent(dev);
 	if (!parent)

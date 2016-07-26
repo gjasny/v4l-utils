@@ -41,6 +41,27 @@
  */
 
 /**
+ * @enum dvb_dev_type
+ *	@brief Type of a device entry to search
+ * @ingroup dvb_device
+ *
+ * @param DVB_DEVICE_FRONTEND	Digital TV frontend
+ * @param DVB_DEVICE_DEMUX	Digital TV demux
+ * @param DVB_DEVICE_DVR	Digital TV Digital Video Record
+ * @param DVB_DEVICE_NET	Digital TV network interface control
+ * @param DVB_DEVICE_CA		Digital TV Conditional Access
+ * @param DVB_DEVICE_CA_SEC	Digital TV Conditional Access serial
+ */
+enum dvb_dev_type {
+	DVB_DEVICE_FRONTEND,
+	DVB_DEVICE_DEMUX,
+	DVB_DEVICE_DVR,
+	DVB_DEVICE_NET,
+	DVB_DEVICE_CA,
+	DVB_DEVICE_CA_SEC,
+};
+
+/**
  * @struct dvb_dev_list
  *	@brief Digital TV device node properties
  * @ingroup dvb_device
@@ -48,8 +69,7 @@
  * @param path		path for the /dev file handler
  * @param sysname	Kernel's system name for the device (dvb?.frontend?,
  *			for example)
- * @param dvb_type	type of the DVB device (sec, frontend, demux, dvr, ca
- *			or net)
+ * @param dvb_type	type of the DVB device, as defined by enum dvb_dev_type
  * @param bus_addr	address of the device at the bus. For USB devices,
  *			it will be like: usb:3-1.1.4; for PCI devices:
  *			pci:0000:01:00.0)
@@ -61,7 +81,7 @@
 struct dvb_dev_list {
 	char *path;
 	char *sysname;
-	char *dvb_type;
+	enum dvb_dev_type dvb_type;
 	char *bus_addr;
 	char *bus_id;
 	char *manufacturer;
@@ -85,25 +105,6 @@ struct dvb_device {
 
 	/* Digital TV frontend access */
 	struct dvb_v5_fe_parms *fe_parms;
-};
-
-/**
- * @enum dvb_dev_type
- *	@brief Type of a device entry to search
- * @ingroup dvb_device
- *
- * @param DVB_DEVICE_FRONTEND	Digital TV frontend
- * @param DVB_DEVICE_DEMUX	Digital TV demux
- * @param DVB_DEVICE_DVR	Digital TV Digital Video Record
- * @param DVB_DEVICE_NET	Digital TV network interface control
- * @param DVB_DEVICE_CA		Digital TV Conditional Access
- */
-enum dvb_dev_type {
-	DVB_DEVICE_FRONTEND,
-	DVB_DEVICE_DEMUX,
-	DVB_DEVICE_DVR,
-	DVB_DEVICE_NET,
-	DVB_DEVICE_CA,
 };
 
 /**
