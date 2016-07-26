@@ -19,6 +19,7 @@
  */
 
 #include "libdvbv5/dvb-file.h"
+#include "libdvbv5/dvb-dev.h"
 #include <config.h>
 #include <argp.h>
 #include <signal.h>
@@ -60,7 +61,6 @@ static const struct argp_option options[] = {
 	{"set",		's',	N_("PARAMS"),	0,	N_("set frontend"), 0},
 #endif
 	{"get",		'g',	0,		0,	N_("get frontend"), 0},
-	{"dvbv3",	'3',	0,		0,	N_("Use DVBv3 only"), 0},
 	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
 	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
 	{"version",	'V',	0,		0,	N_("Print program version"), -1},
@@ -72,7 +72,6 @@ static int frontend = 0;
 static unsigned get = 0;
 static char *set_params = NULL;
 static int verbose = 0;
-static int dvbv3 = 0;
 static int delsys = 0;
 static int femon = 0;
 static int acoustical = 0;
@@ -127,9 +126,6 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 #endif
 	case 'g':
 		get++;
-		break;
-	case '3':
-		dvbv3++;
 		break;
 	case 'v':
 		verbose	++;
@@ -273,8 +269,10 @@ static void get_show_stats(struct dvb_v5_fe_parms *parms)
 
 int main(int argc, char *argv[])
 {
+	struct dvb_device *dvb;
+	struct dvb_dev_list *dvb_dev;
 	struct dvb_v5_fe_parms *parms;
-	int fe_flags = O_RDWR;
+	int ret, fe_flags = O_RDWR;
 
 #ifdef ENABLE_NLS
 	setlocale (LC_ALL, "");
@@ -297,9 +295,20 @@ int main(int argc, char *argv[])
 	if (!delsys && !set_params)
 		fe_flags = O_RDONLY;
 
-	parms = dvb_fe_open_flags(adapter, frontend, verbose, dvbv3,
-				  NULL, fe_flags);
-	if (!parms)
+	dvb = dvb_dev_alloc();
+	if (!dvb)
+		return -1;
+	dvb_dev_set_log(dvb, verbose, NULL);
+	dvb_dev_find(dvb, 0);
+	parms = dvb->fe_parms;
+
+	dvb_dev = dvb_dev_seek_by_sysname(dvb, adapter, frontend,
+					  DVB_DEVICE_FRONTEND);
+	if (!dvb_dev)
+		return -1;
+
+	ret = dvb_dev_open(dvb, dvb_dev->sysname, fe_flags);
+	if (ret < 0)
 		return -1;
 
 	if (delsys) {
@@ -322,7 +331,7 @@ int main(int argc, char *argv[])
 		get_show_stats(parms);
 
 ret:
-	dvb_fe_close(parms);
+	dvb_dev_free(dvb);
 
 	return 0;
 }

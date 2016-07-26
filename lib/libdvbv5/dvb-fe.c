@@ -382,8 +382,10 @@ void dvb_fe_close(struct dvb_v5_fe_parms *p)
 	if (!parms)
 		return;
 
-	if (parms->fd < 0)
+	if (parms->fd < 0) {
+		dvb_v5_free(parms);
 		return;
+	}
 
 	/* Disable LNBf power */
 	if (dvb_fe_is_satellite(parms->p.current_sys))
