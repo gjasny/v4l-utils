@@ -114,6 +114,31 @@ static const char * const dev_type_names[] = {
         "frontend", "demux", "dvr", "net", "ca", "sec"
 };
 
+static void dump_device(char *msg,
+			struct dvb_v5_fe_parms_priv *parms,
+			struct dvb_dev_list *dev)
+{
+	if (!parms->p.verbose)
+		return;
+
+	dvb_log(msg, dev_type_names[dev->dvb_type], dev->sysname);
+
+	if (dev->path)
+		dvb_log(_("  path: %s"), dev->path);
+	if (dev->syspath)
+		dvb_log(_("  sysfs path: %s"), dev->syspath);
+	if (dev->bus_addr)
+		dvb_log(_("  bus addr: %s"), dev->bus_addr);
+	if (dev->bus_id)
+		dvb_log(_("  bus ID: %s"), dev->bus_id);
+	if (dev->manufacturer)
+		dvb_log(_("  manufacturer: %s"), dev->manufacturer);
+	if (dev->product)
+		dvb_log(_("  product: %s"), dev->product);
+	if (dev->serial)
+		dvb_log(_("  serial: %s"), dev->serial);
+}
+
 struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
 					   unsigned int adapter,
 					   unsigned int num,
@@ -134,15 +159,16 @@ struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
 		dvb_logerr(_("error %d when seeking for device's filename"), errno);
 		return NULL;
 	}
-
 	for (i = 0; i < dvb->d.num_devices; i++) {
 		if (!strcmp(p, dvb->d.devices[i].sysname)) {
 			free(p);
+			dump_device(_("Selected dvb %s device: %s"), parms,
+				    &dvb->d.devices[i]);
 			return &dvb->d.devices[i];
 		}
 	}
 
-	dvb_logwarn(_("device filename for %s not found"), p);
+	dvb_logwarn(_("device %s not found"), p);
 	return NULL;
 }
 
@@ -232,15 +258,15 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 
 	parent = udev_device_get_parent(dev);
 	if (!parent)
-		return 0;
+		goto added;
 
 	bus_type = udev_device_get_subsystem(parent);
 	if (!bus_type) {
 		dvb_logwarn(_("Can't get bus type for device %s"), dvb_dev->path);
-		return 0;
+		goto added;
 	}
 
-	ret = asprintf(&buf, "%s:%s\n", bus_type, udev_device_get_sysname(parent));
+	ret = asprintf(&buf, "%s:%s", bus_type, udev_device_get_sysname(parent));
 	if (ret < 0) {
 		dvb_logerr(_("error %d when storing bus address"), errno);
 		goto err;
@@ -258,6 +284,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 
 	dvb->d.devices = dvb_dev;
 	dvb->d.devices[dvb->d.num_devices - 1] = dev_list;
+	dvb_dev = &dvb->d.devices[dvb->d.num_devices - 1];
 
 	/* Get optional per-bus fields associated with the device parent */
 	if (!strcmp(bus_type, "pci")) {
@@ -268,7 +295,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 		pci_vend = udev_device_get_sysattr_value(parent, "subsystem_vendor");
 
 		if (!pci_dev || !pci_vend)
-			return 0;
+			goto added;
 
 		p = strstr(pci_dev, "0x");
 		if (p)
@@ -300,6 +327,8 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 		if (p)
 			dvb_dev->serial = strdup(p);
 	}
+added:
+	dump_device(_("Found dvb %s device: %s"), parms, dvb_dev);
 
 	return 0;
 
