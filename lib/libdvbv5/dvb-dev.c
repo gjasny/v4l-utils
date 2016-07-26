@@ -28,6 +28,14 @@
 #include "dvb-fe-priv.h"
 #include <libdvbv5/dvb-dev.h>
 
+#ifdef ENABLE_NLS
+# include "gettext.h"
+# include <libintl.h>
+# define _(string) dgettext(LIBDVBV5_DOMAIN, string)
+#else
+# define _(string) string
+#endif
+
 struct dvb_device_priv {
 	struct dvb_device d;
 
@@ -110,15 +118,20 @@ struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
 					   enum dvb_dev_type type)
 {
 	struct dvb_device_priv *dvb = (void *)d;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	int ret, i;
 	char *p;
 
-	if (type > sizeof(dev_type_names)/sizeof(*dev_type_names))
+	if (type > sizeof(dev_type_names)/sizeof(*dev_type_names)){
+		dvb_logerr(_("Unexpected device type found!"));
 		return NULL;
+	}
 
 	ret = asprintf(&p, "dvb%d.%s%d", adapter, dev_type_names[type], num);
-	if (ret < 0)
+	if (ret < 0) {
+		dvb_logerr(_("error %d when seeking for device's filename"), errno);
 		return NULL;
+	}
 
 	for (i = 0; i < dvb->d.num_devices; i++) {
 		if (!strcmp(p, dvb->d.devices[i].sysname)) {
@@ -127,6 +140,7 @@ struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
 		}
 	}
 
+	dvb_logwarn(_("device filename for %s not found"), p);
 	return NULL;
 }
 
@@ -134,6 +148,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 				struct udev_device *dev,
 				const char *action)
 {
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct udev_device *parent = NULL;
 	struct dvb_dev_list dev_list, *dvb_dev;
 	const char *bus_type, *p;
@@ -143,8 +158,10 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	/* remove, change, move should all remove the device first */
 	if (strcmp(action,"add")) {
 		p = udev_device_get_sysname(dev);
-		if (!p)
+		if (!p) {
+			dvb_logerr(_("udev_device_get_sysname failed"));
 			return -1;
+		}
 
 		for (i = 0; i < dvb->d.num_devices; i++) {
 			if (!strcmp(p, dvb->d.devices[i].sysname)) {
@@ -155,8 +172,10 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 
 				p = realloc(dvb->d.devices,
 					    sizeof(*dvb->d.devices) * dvb->d.num_devices);
-				if (!p)
+				if (!p) {
+					dvb_logerr(_("Can't remove a device from the list of DVB devices"));
 					return -2;
+				}
 				break;
 			}
 		}
@@ -170,6 +189,13 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	dvb_dev = &dev_list;
 	memset(dvb_dev, 0, sizeof(*dvb_dev));
 
+	p = udev_device_get_devnode(dev);
+	if (!p) {
+		dvb_logwarn(_("Can't get device node filename"));
+		goto err;
+	}
+	dvb_dev->path = strdup(p);
+
 	p = udev_device_get_property_value(dev, "DVB_DEVICE_TYPE");
 	if (!p)
 		goto err;
@@ -180,17 +206,16 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 			break;
 		}
 	}
-	if (i == len)
+	if (i == len) {
+		dvb_logwarn(_("Ignoring device %s"), dvb_dev->path);
 		goto err;
-
-	p = udev_device_get_devnode(dev);
-	if (!p)
-		goto err;
-	dvb_dev->path = strdup(p);
+	}
 
 	p = udev_device_get_sysname(dev);
-	if (!p)
+	if (!p) {
+		dvb_logwarn(_("Can't get sysname for device %s"), dvb_dev->path);
 		goto err;
+	}
 	dvb_dev->sysname = strdup(p);
 
 
@@ -199,20 +224,26 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 		return 0;
 
 	bus_type = udev_device_get_subsystem(parent);
-	if (!bus_type)
-		goto err;
+	if (!bus_type) {
+		dvb_logwarn(_("Can't get bus type for device %s"), dvb_dev->path);
+		return 0;
+	}
 
 	ret = asprintf(&buf, "%s:%s\n", bus_type, udev_device_get_sysname(parent));
-	if (ret < 0)
+	if (ret < 0) {
+		dvb_logerr(_("error %d when storing bus address"), errno);
 		goto err;
+	}
 
 	dvb_dev->bus_addr = buf;
 
 	/* Add new element */
 	dvb->d.num_devices++;
 	dvb_dev = realloc(dvb->d.devices, sizeof(*dvb->d.devices) * dvb->d.num_devices);
-	if (!dvb_dev)
+	if (!dvb_dev) {
+		dvb_logerr(_("Not enough memory to store the list of DVB devices"));
 		goto err;
+	}
 
 	dvb->d.devices = dvb_dev;
 	dvb->d.devices[dvb->d.num_devices - 1] = dev_list;
@@ -269,6 +300,7 @@ err:
 int dvb_dev_find(struct dvb_device *d, int enable_monitor)
 {
 	struct dvb_device_priv *dvb = (void *)d;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct udev_enumerate *enumerate;
 	struct udev_list_entry *devices, *dev_list_entry;
 	struct udev_device *dev;
@@ -281,7 +313,7 @@ int dvb_dev_find(struct dvb_device *d, int enable_monitor)
 	/* Create the udev object */
 	dvb->udev = udev_new();
 	if (!dvb->udev) {
-		printf("Can't create udev\n");
+		dvb_logerr(_("Can't create an udev object\n"));
 		return -1;
 	}
 
