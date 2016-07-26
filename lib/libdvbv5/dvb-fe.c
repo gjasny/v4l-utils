@@ -129,9 +129,8 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 					  dvb_logfunc logfunc,
 					  int flags)
 {
-	int fd, i;
+	int ret;
 	char *fname;
-	struct dtv_properties dtv_prop;
 	struct dvb_device *dvb;
 	struct dvb_dev_list *dvb_dev;
 	struct dvb_v5_fe_parms_priv *parms = NULL;
@@ -157,23 +156,12 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 		logfunc(LOG_ERR, _("fname calloc: %s"), strerror(errno));
 		return NULL;
 	}
-
-	fd = open(fname, flags, 0);
-	if (fd == -1) {
-		logfunc(LOG_ERR, _("%s while opening %s"), strerror(errno), fname);
-		free(fname);
-		return NULL;
-	}
 	parms = calloc(sizeof(*parms), 1);
 	if (!parms) {
 		logfunc(LOG_ERR, _("parms calloc: %s"), strerror(errno));
-		close(fd);
 		free(fname);
 		return NULL;
 	}
-	parms->fname = fname;
-	parms->fd = fd;
-	parms->fe_flags = flags;
 	parms->p.verbose = verbose;
 	parms->p.default_charset = "iso-8859-1";
 	parms->p.output_charset = "utf-8";
@@ -183,15 +171,40 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	parms->p.abort = 0;
 	parms->country = COUNTRY_UNKNOWN;
 
+	if (use_legacy_call)
+		parms->p.legacy_fe = 1;
+
+	ret = dvb_fe_open_fname(parms, fname, flags);
+	if (ret < 0) {
+		free(parms);
+		return NULL;
+	}
+
+	return &parms->p;
+}
+
+int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
+		      int flags)
+{
+	struct dtv_properties dtv_prop;
+	int fd, i;
+
+	fd = open(fname, flags, 0);
+	if (fd == -1) {
+		dvb_logerr(_("%s while opening %s"), strerror(errno), fname);
+		free(fname);
+		return -1;
+	}
+
 	if (xioctl(fd, FE_GET_INFO, &parms->p.info) == -1) {
 		dvb_perror("FE_GET_INFO");
 		dvb_v5_free(parms);
 		close(fd);
 		free(fname);
-		return NULL;
+		return -1;
 	}
 
-	if (verbose) {
+	if (parms->p.verbose) {
 		fe_caps_t caps = parms->p.info.caps;
 
 		dvb_log(_("Device %s (%s) capabilities:"),
@@ -202,6 +215,9 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 		}
 	}
 
+	parms->fname = fname;
+	parms->fd = fd;
+	parms->fe_flags = flags;
 	parms->dvb_prop[0].cmd = DTV_API_VERSION;
 	parms->dvb_prop[1].cmd = DTV_DELIVERY_SYSTEM;
 
@@ -216,22 +232,22 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 
 	parms->p.version = parms->dvb_prop[0].u.data;
 	parms->p.current_sys = parms->dvb_prop[1].u.data;
-	if (verbose)
+	if (parms->p.verbose)
 		dvb_log (_("DVB API Version %d.%d%s, Current v5 delivery system: %s"),
 			parms->p.version / 256,
 			parms->p.version % 256,
-			use_legacy_call ? _(" (forcing DVBv3 calls)") : "",
+			parms->p.legacy_fe ? _(" (forcing DVBv3 calls)") : "",
 			delivery_system_name[parms->p.current_sys]);
 
 	if (parms->p.version < 0x500)
-		use_legacy_call = 1;
+		parms->p.legacy_fe = 1;
 
 	if (parms->p.version >= 0x50a)
 		parms->p.has_v5_stats = 1;
 	else
 		parms->p.has_v5_stats = 0;
 
-	if (use_legacy_call || parms->p.version < 0x505) {
+	if (parms->p.legacy_fe || parms->p.version < 0x505) {
 		parms->p.legacy_fe = 1;
 		switch(parms->p.info.type) {
 		case FE_QPSK:
@@ -268,7 +284,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 			dvb_logerr(_("delivery system not detected"));
 			dvb_v5_free(parms);
 			close(fd);
-			return NULL;
+			return -1;
 		}
 	} else {
 		parms->dvb_prop[0].cmd = DTV_ENUM_DELSYS;
@@ -279,7 +295,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 			dvb_perror("FE_GET_PROPERTY");
 			dvb_v5_free(parms);
 			close(fd);
-			return NULL;
+			return -1;
 		}
 		parms->p.num_systems = parms->dvb_prop[0].u.buffer.len;
 		for (i = 0; i < parms->p.num_systems; i++)
@@ -289,11 +305,11 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 			dvb_logerr(_("driver returned 0 supported delivery systems!"));
 			dvb_v5_free(parms);
 			close(fd);
-			return NULL;
+			return -1;
 		}
 	}
 
-	if (verbose) {
+	if (parms->p.verbose) {
 		dvb_log(_("Supported delivery system%s: "),
 		       (parms->p.num_systems > 1) ? "s" : "");
 		for (i = 0; i < parms->p.num_systems; i++) {
@@ -304,7 +320,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 				dvb_log ("     %s",
 					delivery_system_name[parms->p.systems[i]]);
 		}
-		if (use_legacy_call || parms->p.version < 0x505)
+		if (parms->p.legacy_fe || parms->p.version < 0x505)
 			dvb_log(_("Warning: new delivery systems like ISDB-T, ISDB-S, DMB-TH, DSS, ATSC-MH will be miss-detected by a DVBv5.4 or earlier API call"));
 	}
 
@@ -340,7 +356,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	parms->stats.prop[11].cmd = DTV_QUALITY;
 	parms->stats.prop[12].cmd = DTV_PRE_BER;
 
-	return &parms->p;
+	return 0;
 }
 
 

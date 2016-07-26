@@ -73,6 +73,9 @@ struct dvb_v5_fe_parms_priv {
 	unsigned			freq_offset;
 };
 
+/* Functions used internally by dvb-dev.c. Aren't part of the API */
+int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
+		      int flags);
 void dvb_v5_free(struct dvb_v5_fe_parms_priv *parms);
 
 #endif
