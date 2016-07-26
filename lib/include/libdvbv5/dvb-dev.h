@@ -148,6 +148,8 @@ void dvb_dev_free(struct dvb_device *dvb);
  * Please notice that, in such mode, the function will wait forever. So, it
  * is up to the application to put start a separate thread to handle it in
  * monitor mode, and add the needed mutexes to make it thread safe.
+ *
+ * @return returns 0 on success, a negative value otherwise.
  */
 int dvb_dev_find(struct dvb_device *dvb, int enable_monitor);
 
@@ -160,6 +162,9 @@ int dvb_dev_find(struct dvb_device *dvb, int enable_monitor);
  *			Always start with 0;
  * @param num		Digital TV device number (e. g. frontend0, net0, etc);
  * @param type		Type of the device, as given by enum dvb_dev_type;
+ *
+ * @return returns a pointer to a struct dvb_dev_list object or NULL if the
+ *	desired device was not found.
  */
 struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *dvb,
 					     unsigned int adapter,
@@ -168,6 +173,7 @@ struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *dvb,
 
 /**
  * @brief Stop the dvb_dev_find loop
+ * @ingroup dvb_device
  *
  * @param dvb pointer to struct dvb_device to be used
  *
@@ -179,6 +185,7 @@ void dvb_dev_stop_monitor(struct dvb_device *dvb);
 
 /**
  * @brief Sets the DVB verbosity and log function
+ * @ingroup dvb_device
  *
  * @param dvb		pointer to struct dvb_device to be used
  * @param verbose	Verbosity level of the messages that will be printed
@@ -195,5 +202,31 @@ void dvb_dev_stop_monitor(struct dvb_device *dvb);
 void dvb_dev_set_log(struct dvb_device *dvb,
 		     unsigned verbose,
 		     dvb_logfunc logfunc);
+
+/**
+ * @brief Opens a dvb device
+ * @ingroup dvb_device
+ *
+ * @param dvb		pointer to struct dvb_device to be used
+ * @param sysname	Kernel's name of the device to be opened, as obtained
+ *			via dvb_dev_seek_by_sysname().
+ * @param flags		Flags to be passed to open: O_RDONLY, O_RDWR and/or
+ *			O_NONBLOCK
+ *
+ *
+ * @note Please notice that O_NONBLOCK is not supported for frontend devices,
+ *	and will be silently ignored.
+ *
+ * @note the sysname will only work if a previous call to dvb_dev_find()
+ * 	is issued.
+ *
+ * @details This function is equivalent to open(2) system call: it opens a
+ *	Digital TV given by the dev parameter, using the flags.
+ *
+ * @return returns a file descriptor on success, a negative value with -errno
+ *	on errors.
+ *
+ */
+int dvb_dev_open(struct dvb_device *d, char *sysname, int flags);
 
 #endif

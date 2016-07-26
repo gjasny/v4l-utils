@@ -81,7 +81,7 @@ struct dvb_device *dvb_dev_alloc(void)
 	return dvb;
 }
 
-static void dvb_dev_frees(struct dvb_device_priv *dvb)
+static void dvb_dev_free_devices(struct dvb_device_priv *dvb)
 {
 	int i;
 
@@ -96,17 +96,15 @@ static void dvb_dev_frees(struct dvb_device_priv *dvb)
 void dvb_dev_free(struct dvb_device *d)
 {
 	struct dvb_device_priv *dvb = (void *)d;
-	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 
-	dvb_dev_frees(dvb);
+	dvb_dev_free_devices(dvb);
 
 	/* Wait for dvb_dev_find() to stop */
 	while (dvb->udev) {
 		dvb->monitor = 0;
 		usleep(1000);
 	}
-
-	dvb_v5_free(parms);
+	dvb_fe_close(dvb->d.fe_parms);
 	free(dvb);
 }
 
@@ -118,7 +116,7 @@ static void dump_device(char *msg,
 			struct dvb_v5_fe_parms_priv *parms,
 			struct dvb_dev_list *dev)
 {
-	if (!parms->p.verbose)
+	if (parms->p.verbose < 2)
 		return;
 
 	dvb_log(msg, dev_type_names[dev->dvb_type], dev->sysname);
@@ -348,7 +346,7 @@ int dvb_dev_find(struct dvb_device *d, int enable_monitor)
 
 	/* Free a previous list of devices */
 	if (dvb->d.num_devices)
-		dvb_dev_frees(dvb);
+		dvb_dev_free_devices(dvb);
 
 	/* Create the udev object */
 	dvb->udev = udev_new();
@@ -429,4 +427,42 @@ void dvb_dev_set_log(struct dvb_device *dvb, unsigned verbose,
 
 	if (logfunc != NULL)
 			parms->p.logfunc = logfunc;
+}
+
+int dvb_dev_open(struct dvb_device *d, char *sysname, int flags)
+{
+	struct dvb_device_priv *dvb = (void *)d;
+	struct dvb_v5_fe_parms_priv *parms = (void *)d->fe_parms;
+	struct dvb_dev_list *dev = NULL;
+	int ret, i;
+
+	if (!sysname) {
+		dvb_logerr(_("Device not specified"));
+		return -ENOENT;
+	}
+
+	for (i = 0; i < dvb->d.num_devices; i++) {
+		if (!strcmp(sysname, dvb->d.devices[i].sysname)) {
+			dev = &dvb->d.devices[i];
+			break;
+		}
+	}
+	if (!dev) {
+		dvb_logerr(_("Can't find device %s"), sysname);
+		return -ENOENT;
+	}
+
+	if (dev->dvb_type == DVB_DEVICE_FRONTEND) {
+		ret = dvb_fe_open_fname(parms, dev->path, flags);
+		if (ret)
+			return -ret;
+		return parms->fd;
+	}
+
+	/* We don't need special handling for other DVB device types */
+	ret = open(dev->path, flags);
+	if (ret == -1)
+		return -errno;
+
+	return ret;
 }
