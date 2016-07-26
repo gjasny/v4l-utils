@@ -24,7 +24,7 @@
 /**
  * @file dvb-dev.h
  * @ingroup dvb_device
- * @brief Provides interfaces to handle Digital TV devices enumeration.
+ * @brief Provides interfaces to handle Digital TV devices.
  * @copyright GNU Lesser General Public License version 2.1 (LGPLv2.1)
  * @author Mauro Carvalho Chehab
  *
@@ -79,6 +79,7 @@ enum dvb_dev_type {
  * @param serial	Device's serial name (optional, only on USB)
  */
 struct dvb_dev_list {
+	char *syspath;
 	char *path;
 	char *sysname;
 	enum dvb_dev_type dvb_type;

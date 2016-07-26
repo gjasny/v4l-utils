@@ -50,6 +50,8 @@ static void free_dvb_dev(struct dvb_dev_list *dvb_dev)
 {
 	if (dvb_dev->path)
 		free (dvb_dev->path);
+	if (dvb_dev->syspath)
+		free (dvb_dev->syspath);
 	if (dvb_dev->sysname)
 		free(dvb_dev->sysname);
 	if (dvb_dev->bus_addr)
@@ -146,6 +148,7 @@ struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
 
 static int handle_device_change(struct dvb_device_priv *dvb,
 				struct udev_device *dev,
+				const char *syspath,
 				const char *action)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
@@ -189,6 +192,15 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	dvb_dev = &dev_list;
 	memset(dvb_dev, 0, sizeof(*dvb_dev));
 
+	if (!syspath) {
+		syspath = udev_device_get_devnode(dev);
+		if (!syspath) {
+			dvb_logwarn(_("Can't get device node filename"));
+			goto err;
+		}
+	}
+	dvb_dev->syspath = strdup(syspath);
+
 	p = udev_device_get_devnode(dev);
 	if (!p) {
 		dvb_logwarn(_("Can't get device node filename"));
@@ -217,7 +229,6 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 		goto err;
 	}
 	dvb_dev->sysname = strdup(p);
-
 
 	parent = udev_device_get_parent(dev);
 	if (!parent)
@@ -338,7 +349,7 @@ int dvb_dev_find(struct dvb_device *d, int enable_monitor)
 		path = udev_list_entry_get_name(dev_list_entry);
 		dev = udev_device_new_from_syspath(dvb->udev, path);
 
-		handle_device_change(dvb, dev, "add");
+		handle_device_change(dvb, dev, path, "add");
 		udev_device_unref(dev);
 	}
 
@@ -363,7 +374,7 @@ int dvb_dev_find(struct dvb_device *d, int enable_monitor)
 			dev = udev_monitor_receive_device(dvb->mon);
 			if (dev) {
 				const char *action = udev_device_get_action(dev);
-				handle_device_change(dvb, dev, action);
+				handle_device_change(dvb, dev, NULL, action);
 			}
 		}
 	}
