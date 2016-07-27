@@ -142,7 +142,7 @@ const struct dvb_sat_lnb *dvb_sat_get_lnb(int index);
  * @return returns NULL if not found, of the name of a LNBf,
  * translated to the user language, if translation is available.
  */
-const char *dvb_sat_get_lnb_name(int i);
+const char *dvb_sat_get_lnb_name(int index);
 
 /**
  * @brief sets the satellite parameters
