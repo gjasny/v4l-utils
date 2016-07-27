@@ -20,6 +20,7 @@
 #define _DVB_DEV_H
 
 #include "dvb-fe.h"
+#include <linux/dvb/dmx.h>
 
 /**
  * @file dvb-dev.h
@@ -89,6 +90,13 @@ struct dvb_dev_list {
 	char *product;
 	char *serial;
 };
+
+/**
+ * @struct dvb_open_descriptor
+ *
+ * Opaque struct with a DVB open file descriptor
+ */
+struct dvb_open_descriptor;
 
 /**
  * @struct dvb_device
@@ -223,10 +231,141 @@ void dvb_dev_set_log(struct dvb_device *dvb,
  * @details This function is equivalent to open(2) system call: it opens a
  *	Digital TV given by the dev parameter, using the flags.
  *
- * @return returns a file descriptor on success, a negative value with -errno
- *	on errors.
- *
+ * @return returns a pointer to the dvb_open_descriptor that should be used
+ * 	on further calls if sucess. NULL otherwise.
  */
-int dvb_dev_open(struct dvb_device *d, char *sysname, int flags);
+struct dvb_open_descriptor *dvb_dev_open(struct dvb_device *dvb,
+					 char *sysname, int flags);
+
+/**
+ * @brief Closes a dvb device
+ * @ingroup dvb_device
+ *
+ * @param open_dev	Points to the struct dvb_open_descriptor to be
+ * closed.
+ */
+void dvb_dev_close(struct dvb_open_descriptor *open_dev);
+
+/**
+ * @brief read from a dvb demux or dvr file
+ * @ingroup dvb_device
+ *
+ * @param open_dev	Points to the struct dvb_open_descriptor to be
+ * closed.
+ * @param buf		Buffer to store the data
+ * @param count		number of bytes to read
+ *
+ * @return On success, returns the number of bytes read. Returns -1 on
+ * error.
+ */
+ssize_t dvb_dev_read(struct dvb_open_descriptor *open_dev,
+		     void *buf, size_t count);
+
+/**
+ * @brief Stops the demux filter for a given file descriptor
+ * @ingroup dvb_device
+ *
+ * @param open_dev	Points to the struct dvb_open_descriptor
+ *
+ * This is a wrapper function for DMX_STOP ioctl.
+ *
+ * See http://linuxtv.org/downloads/v4l-dvb-apis/dvb_demux.html
+ * for more details.
+ *
+ * @note valid only for DVB_DEVICE_DEMUX.
+ */
+void dvb_dev_dmx_stop(struct dvb_open_descriptor *open_dev);
+
+/**
+ * @brief Start a demux or dvr buffer size
+ * @ingroup dvb_device
+ *
+ * @param open_dev	Points to the struct dvb_open_descriptor
+ * @param buffersize	Size of the buffer to be allocated to store the filtered data.
+ *
+ * This is a wrapper function for DMX_SET_BUFFER_SIZE ioctl.
+ *
+ * See http://linuxtv.org/downloads/v4l-dvb-apis/dvb_demux.html
+ * for more details.
+ *
+ * @return Retuns zero on success, -1 otherwise.
+ *
+ * @note valid only for DVB_DEVICE_DEMUX or DVB_DEVICE_DVR.
+ */
+int dvb_dev_set_bufsize(struct dvb_open_descriptor *open_dev,
+			int buffersize);
+
+/**
+ * @brief Start a filter for a MPEG-TS Packetized Elementary
+ * 		       Stream (PES)
+ * @ingroup dvb_device
+ *
+ * @param open_dev	Points to the struct dvb_open_descriptor
+ * @param pid		Program ID to filter. Use 0x2000 to select all PIDs
+ * @param type		type of the PID (DMX_PES_VIDEO, DMX_PES_AUDIO,
+ *			DMX_PES_OTHER, etc).
+ * @param output	Where the data will be output (DMX_OUT_TS_TAP,
+ *			DMX_OUT_DECODER, etc).
+ * @param buffersize	Size of the buffer to be allocated to store the filtered data.
+ *
+ * This is a wrapper function for DMX_SET_PES_FILTER and DMX_SET_BUFFER_SIZE
+ * ioctls.
+ *
+ * See http://linuxtv.org/downloads/v4l-dvb-apis/dvb_demux.html
+ * for more details.
+ *
+ * @return Retuns zero on success, -1 otherwise.
+ *
+ * @note valid only for DVB_DEVICE_DEMUX.
+ */
+int dvb_dev_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
+			      int pid, dmx_pes_type_t type,
+			      dmx_output_t output, int buffersize);
+
+/**
+ * @brief Sets a MPEG-TS section filter
+ * @ingroup dvb_device
+ *
+ * @param open_dev	Points to the struct dvb_open_descriptor
+ * @param pid		Program ID to filter. Use 0x2000 to select all PIDs
+ * @param filtsize	Size of the filter (up to 18 btyes)
+ * @param filter	data to filter. Can be NULL or should have filtsize length
+ * @param mask		filter mask. Can be NULL or should have filtsize length
+ * @param mode		mode mask. Can be NULL or should have filtsize length
+ * @param flags		flags for set filter (DMX_CHECK_CRC,DMX_ONESHOT,
+ *			DMX_IMMEDIATE_START).
+ *
+ * This is a wrapper function for DMX_SET_FILTER ioctl.
+ *
+ * See http://linuxtv.org/downloads/v4l-dvb-apis/dvb_demux.html
+ * for more details.
+ *
+ * @return Retuns zero on success, -1 otherwise.
+ *
+ * @note valid only for DVB_DEVICE_DEMUX.
+ */
+int dvb_dev_dmx_set_section_filter(struct dvb_open_descriptor *open_dev,
+				   int pid, unsigned filtsize,
+				   unsigned char *filter,
+				   unsigned char *mask,
+				   unsigned char *mode,
+				   unsigned int flags);
+
+/**
+ * @brief read the contents of the MPEG-TS PAT table, seeking for
+ *		      	an specific service ID
+ * @ingroup dvb_device
+ *
+ * @param open_dev	Points to the struct dvb_open_descriptor
+ * @param sid		Session ID to seeking
+ *
+ * @return At return, it returns a negative value if error or the PID
+ * associated with the desired Session ID.
+ *
+ * @warning This function currently assumes that the PAT fits into one session.
+ *
+ * @note valid only for DVB_DEVICE_DEMUX.
+ */
+int dvb_dev_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int sid);
 
 #endif

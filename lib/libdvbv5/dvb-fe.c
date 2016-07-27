@@ -374,6 +374,18 @@ int dvb_fe_is_satellite(uint32_t delivery_system)
 	}
 }
 
+void __dvb_fe_close(struct dvb_v5_fe_parms_priv *parms)
+{
+	if (!parms || parms->fd < 0)
+		return;
+
+	/* Disable LNBf power */
+	if (dvb_fe_is_satellite(parms->p.current_sys))
+		dvb_fe_sec_voltage(&parms->p, 0, 0);
+
+	close(parms->fd);
+	parms->fd = -1;
+}
 
 void dvb_fe_close(struct dvb_v5_fe_parms *p)
 {

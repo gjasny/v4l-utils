@@ -488,13 +488,14 @@ static void get_show_stats(struct arguments *args,
 }
 
 #define BUFLEN (188 * 256)
-static void copy_to_file(int in_fd, int out_fd, int timeout, int silent)
+static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
+			 int timeout, int silent)
 {
 	char buf[BUFLEN];
 	int r;
 	long long int rc = 0LL;
 	while (timeout_flag == 0) {
-		r = read(in_fd, buf, BUFLEN);
+		r = dvb_dev_read(in_fd, buf, BUFLEN);
 		if (r < 0) {
 			if (errno == EOVERFLOW) {
 				fprintf(stderr, _("buffer overrun\n"));
@@ -631,7 +632,7 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 
 int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 {
-	int fd, dvr_fd;
+	struct dvb_open_descriptor *fd, *dvr_fd;
 	long long unsigned pidt[0x2001], wait;
 	int packets = 0;
 	struct timeval startt;
@@ -642,27 +643,24 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 	args->exit_after_tuning = 1;
 	check_frontend(args, parms);
 
-	dvr_fd = dvb_dev_open(dvb, args->dvr_dev, O_RDWR);
-	if (dvr_fd < 0) {
-		PERROR(_("failed opening '%s'"), args->dvr_dev);
+	dvr_fd = dvb_dev_open(dvb, args->dvr_dev, O_RDONLY);
+	if (!dvr_fd)
 		return -1;
-	}
 
-	if (ioctl(dvr_fd, DMX_SET_BUFFER_SIZE, 1024 * 1024) == -1)
-		perror(_("DMX_SET_BUFFER_SIZE failed"));
+	dvb_dev_set_bufsize(dvr_fd, 1024 * 1024);
 
 	fd = dvb_dev_open(dvb, args->demux_dev, O_RDWR);
-	if (fd < 0) {
-		PERROR(_("failed opening '%s'"), args->demux_dev);
-		close(dvr_fd);
+	if (!fd) {
+		dvb_dev_close(dvr_fd);
 		return -1;
 	}
 
 	if (args->silent < 2)
 		fprintf(stderr, _("  dvb_set_pesfilter to 0x2000\n"));
-	if (dvb_set_pesfilter(fd, 0x2000, DMX_PES_OTHER,
-			      DMX_OUT_TS_TAP, 0) < 0) {
-		PERROR(_("couldn't set filter"));
+	if (dvb_dev_dmx_set_pesfilter(fd, 0x2000, DMX_PES_OTHER,
+				      DMX_OUT_TS_TAP, 0) < 0) {
+		dvb_dev_close(dvr_fd);
+		dvb_dev_close(fd);
 		return -1;
 	}
 
@@ -678,7 +676,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 		if (timeout_flag)
 			break;
 
-		if ((r = read(dvr_fd, buffer, BSIZE)) <= 0) {
+		if ((r = dvb_dev_read(dvr_fd, buffer, BSIZE)) <= 0) {
 			if (errno == EOVERFLOW) {
 				struct timeval now;
 				int diff;
@@ -689,7 +687,6 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 				fprintf(stderr, _("%.2fs: buffer overrun\n"), diff / 1000.);
 				continue;
 			}
-			perror(_("read"));
 			break;
 		}
 		if (r != BSIZE) {
@@ -772,8 +769,8 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 			}
 		}
 	}
-	close(dvr_fd);
-	dvb_dmx_close(fd);
+	dvb_dev_close(dvr_fd);
+	dvb_dev_close(fd);
 	return 0;
 }
 
@@ -795,9 +792,10 @@ int main(int argc, char **argv)
 	int lnb = -1, idx = -1;
 	int vpid = -1, apid = -1, sid = -1;
 	int pmtpid = 0;
-	int pat_fd = -1, pmt_fd = -1, sid_fd = -1;
-	int audio_fd = -1, video_fd = -1;
-	int dvr_fd = -1, file_fd = -1;
+	struct dvb_open_descriptor *pat_fd = NULL, *pmt_fd = NULL;
+	struct dvb_open_descriptor *sid_fd = NULL, *dvr_fd = NULL;
+	struct dvb_open_descriptor *audio_fd = NULL, *video_fd = NULL;
+	int file_fd = -1;
 	int err = -1;
 	int r;
 	struct dvb_v5_fe_parms *parms = NULL;
@@ -903,8 +901,7 @@ int main(int argc, char **argv)
 	if (!dvb_dev)
 		return -1;
 
-	err = dvb_dev_open(dvb, dvb_dev->sysname, O_RDWR);
-	if (err < 0)
+	if (!dvb_dev_open(dvb, dvb_dev->sysname, O_RDWR))
 		goto err;
 	if (lnb >= 0)
 		parms->lnb = dvb_sat_get_lnb(lnb);
@@ -945,12 +942,12 @@ int main(int argc, char **argv)
 		}
 
 		sid_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
-		if (sid_fd < 0) {
+		if (!sid_fd) {
 			perror(_("opening sid demux failed"));
 			return -1;
 		}
-		pmtpid = dvb_get_pmt_pid(sid_fd, sid);
-		dvb_dmx_close(sid_fd);
+		pmtpid = dvb_dev_dmx_get_pmt_pid(sid_fd, sid);
+		dvb_dev_close(sid_fd);
 		if (pmtpid <= 0) {
 			fprintf(stderr, _("couldn't find pmt-pid for sid %04x\n"),
 				sid);
@@ -959,21 +956,21 @@ int main(int argc, char **argv)
 		}
 
 		pat_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
-		if (pat_fd < 0) {
+		if (!pat_fd) {
 			perror(_("opening pat demux failed"));
 			goto err;
 		}
-		if (dvb_set_pesfilter(pat_fd, 0, DMX_PES_OTHER,
+		if (dvb_dev_dmx_set_pesfilter(pat_fd, 0, DMX_PES_OTHER,
 				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
 				args.dvr ? 64 * 1024 : 0) < 0)
 			goto err;
 
 		pmt_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
-		if (pmt_fd < 0) {
+		if (!pmt_fd) {
 			perror(_("opening pmt demux failed"));
 			goto err;
 		}
-		if (dvb_set_pesfilter(pmt_fd, pmtpid, DMX_PES_OTHER,
+		if (dvb_dev_dmx_set_pesfilter(pmt_fd, pmtpid, DMX_PES_OTHER,
 				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
 				args.dvr ? 64 * 1024 : 0) < 0)
 			goto err;
@@ -991,7 +988,7 @@ int main(int argc, char **argv)
 				fprintf(stderr, _("video pid %d\n"), vpid);
 		}
 		video_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
-		if (video_fd < 0) {
+		if (!video_fd) {
 			PERROR(_("failed opening '%s'"), args.demux_dev);
 			goto err;
 		}
@@ -999,13 +996,12 @@ int main(int argc, char **argv)
 		if (args.silent < 2)
 			fprintf(stderr, _("  dvb_set_pesfilter %d\n"), vpid);
 		if (vpid == 0x2000) {
-			if (ioctl(video_fd, DMX_SET_BUFFER_SIZE, 1024 * 1024) == -1)
-				perror(_("DMX_SET_BUFFER_SIZE failed"));
-			if (dvb_set_pesfilter(video_fd, vpid, DMX_PES_OTHER,
+			dvb_dev_set_bufsize(video_fd, 1024 * 1024);
+			if (dvb_dev_dmx_set_pesfilter(video_fd, vpid, DMX_PES_OTHER,
 					      DMX_OUT_TS_TAP, 0) < 0)
 				goto err;
 		} else {
-			if (dvb_set_pesfilter(video_fd, vpid, DMX_PES_VIDEO,
+			if (dvb_dev_dmx_set_pesfilter(video_fd, vpid, DMX_PES_VIDEO,
 				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
 				args.dvr ? 64 * 1024 : 0) < 0)
 				goto err;
@@ -1016,13 +1012,13 @@ int main(int argc, char **argv)
 		if (args.silent < 2)
 			fprintf(stderr, _("audio pid %d\n"), apid);
 		audio_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
-		if (audio_fd < 0) {
+		if (!audio_fd) {
 			PERROR(_("failed opening '%s'"), args.demux_dev);
 			goto err;
 		}
 		if (args.silent < 2)
 			fprintf(stderr, _("  dvb_set_pesfilter %d\n"), apid);
-		if (dvb_set_pesfilter(audio_fd, apid, DMX_PES_AUDIO,
+		if (dvb_dev_dmx_set_pesfilter(audio_fd, apid, DMX_PES_AUDIO,
 				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
 				args.dvr ? 64 * 1024 : 0) < 0)
 			goto err;
@@ -1060,7 +1056,7 @@ int main(int argc, char **argv)
 
 		if (file_fd >= 0) {
 			dvr_fd = dvb_dev_open(dvb, args.dvr_dev, O_RDWR);
-			if (dvr_fd < 0) {
+			if (!dvr_fd) {
 				PERROR(_("failed opening '%s'"), args.dvr_dev);
 				goto err;
 			}
@@ -1085,18 +1081,6 @@ int main(int argc, char **argv)
 	err = 0;
 
 err:
-	if (file_fd > 0)
-		dvb_dmx_close(file_fd);
-	if (dvr_fd > 0)
-		close(dvr_fd);
-	if (pat_fd > 0)
-		dvb_dmx_close(pat_fd);
-	if (pmt_fd > 0)
-		dvb_dmx_close(pmt_fd);
-	if (audio_fd > 0)
-		dvb_dmx_close(audio_fd);
-	if (video_fd > 0)
-		dvb_dmx_close(video_fd);
 	if (args.confname)
 		free(args.confname);
 	dvb_dev_free(dvb);

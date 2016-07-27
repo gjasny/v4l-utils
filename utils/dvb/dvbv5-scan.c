@@ -249,7 +249,8 @@ static int run_scan(struct arguments *args, struct dvb_device *dvb)
 	if (!dvb_file)
 		return -2;
 
-	dmx_fd = dvb_dev_open(dvb, args->demux_dev, O_RDWR);
+	/* FIXME: should be replaced by dvb_dev_open() */
+	dmx_fd = open(args->demux_dev, O_RDWR);
 	if (dmx_fd < 0) {
 		perror(_("openening pat demux failed"));
 		return -3;
@@ -538,8 +539,7 @@ int main(int argc, char **argv)
 	if (!dvb_dev)
 		return -1;
 
-	err = dvb_dev_open(dvb, dvb_dev->sysname, O_RDWR);
-	if (err < 0) {
+	if (!dvb_dev_open(dvb, dvb_dev->sysname, O_RDWR)) {
 		free(args.demux_dev);
 		return -1;
 	}

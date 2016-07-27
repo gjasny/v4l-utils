@@ -272,7 +272,7 @@ int main(int argc, char *argv[])
 	struct dvb_device *dvb;
 	struct dvb_dev_list *dvb_dev;
 	struct dvb_v5_fe_parms *parms;
-	int ret, fe_flags = O_RDWR;
+	int fe_flags = O_RDWR;
 
 #ifdef ENABLE_NLS
 	setlocale (LC_ALL, "");
@@ -307,8 +307,7 @@ int main(int argc, char *argv[])
 	if (!dvb_dev)
 		return -1;
 
-	ret = dvb_dev_open(dvb, dvb_dev->sysname, fe_flags);
-	if (ret < 0)
+	if (!dvb_dev_open(dvb, dvb_dev->sysname, fe_flags))
 		return -1;
 
 	if (delsys) {

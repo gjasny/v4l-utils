@@ -77,5 +77,6 @@ struct dvb_v5_fe_parms_priv {
 int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 		      int flags);
 void dvb_v5_free(struct dvb_v5_fe_parms_priv *parms);
+void __dvb_fe_close(struct dvb_v5_fe_parms_priv *parms);
 
 #endif
