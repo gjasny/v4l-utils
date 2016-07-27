@@ -59,7 +59,7 @@ const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
 
 struct arguments {
-	char *confname, *lnb_name, *output, *demux_dev;
+	char *confname, *lnb_name, *output, *demux_dev, *demux_fname;
 	unsigned adapter, n_adapter, adapter_fe, adapter_dmx, frontend, demux, get_detected, get_nit;
 	int lna, lnb, sat_number, freq_bpf;
 	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
@@ -250,9 +250,9 @@ static int run_scan(struct arguments *args, struct dvb_device *dvb)
 		return -2;
 
 	/* FIXME: should be replaced by dvb_dev_open() */
-	dmx_fd = open(args->demux_dev, O_RDWR);
+	dmx_fd = open(args->demux_fname, O_RDWR);
 	if (dmx_fd < 0) {
-		perror(_("openening pat demux failed"));
+		perror(_("opening demux failed"));
 		return -3;
 	}
 
@@ -530,6 +530,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	args.demux_dev = dvb_dev->sysname;
+	args.demux_fname = dvb_dev->path;
 
 	if (verbose)
 		fprintf(stderr, _("using demux '%s'\n"), args.demux_dev);
