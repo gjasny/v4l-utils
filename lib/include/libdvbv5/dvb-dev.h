@@ -20,6 +20,8 @@
 #define _DVB_DEV_H
 
 #include "dvb-fe.h"
+#include "dvb-scan.h"
+
 #include <linux/dvb/dmx.h>
 
 /**
@@ -367,5 +369,33 @@ int dvb_dev_dmx_set_section_filter(struct dvb_open_descriptor *open_dev,
  * @note valid only for DVB_DEVICE_DEMUX.
  */
 int dvb_dev_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int sid);
+
+/**
+ * @brief Scans a DVB dvb_add_scaned_transponder
+ * @ingroup frontend_scan
+ *
+ * @param entry		DVB file entry that corresponds to a transponder to be
+ * 			tuned
+ * @param open_dev	Points to the struct dvb_open_descriptor
+ * @param check_frontend a pointer to a function that will show the frontend
+ *			status while tuning into a transponder
+ * @param args		a pointer, opaque to libdvbv5, that will be used when
+ *			calling check_frontend. It should contain any parameters
+ *			that could be needed by check_frontend.
+ * @param other_nit	Use alternate table IDs for NIT and other tables
+ * @param timeout_multiply Improves the timeout for each table reception, by
+ *
+ * This is the function that applications should use when doing a transponders
+ * scan. It does everything needed to fill the entries with DVB programs
+ * (virtual channels) and detect the PIDs associated with them.
+ *
+ * This is the dvb_device variant of dvb_scan_transponder().
+ */
+struct dvb_v5_descriptors *dvb_dev_scan(struct dvb_open_descriptor *open_dev,
+					struct dvb_entry *entry,
+					check_frontend_t *check_frontend,
+					void *args,
+					unsigned other_nit,
+					unsigned timeout_multiply);
 
 #endif

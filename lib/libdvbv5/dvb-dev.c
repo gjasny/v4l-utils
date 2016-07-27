@@ -757,3 +757,27 @@ int dvb_dev_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int sid)
 
 	return pmt_pid;
 }
+
+struct dvb_v5_descriptors *dvb_dev_scan(struct dvb_open_descriptor *open_dev,
+					struct dvb_entry *entry,
+					check_frontend_t *check_frontend,
+					void *args,
+					unsigned other_nit,
+					unsigned timeout_multiply)
+{
+	struct dvb_dev_list *dev = open_dev->dev;
+	struct dvb_device_priv *dvb = open_dev->dvb;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_v5_descriptors *desc;
+	int fd = open_dev->fd;
+
+	if (dev->dvb_type != DVB_DEVICE_DEMUX) {
+		dvb_logerr(_("dvb_dev_scan: expecting a demux descriptor"));
+		return NULL;
+	}
+
+	desc = dvb_scan_transponder(dvb->d.fe_parms, entry, fd, check_frontend,
+				    args, other_nit, timeout_multiply);
+
+	return desc;
+}

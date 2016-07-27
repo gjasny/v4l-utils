@@ -59,7 +59,7 @@ const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
 
 struct arguments {
-	char *confname, *lnb_name, *output, *demux_dev, *demux_fname;
+	char *confname, *lnb_name, *output, *demux_dev;
 	unsigned adapter, n_adapter, adapter_fe, adapter_dmx, frontend, demux, get_detected, get_nit;
 	int lna, lnb, sat_number, freq_bpf;
 	unsigned diseqc_wait, dont_add_new_freqs, timeout_multiply;
@@ -218,7 +218,8 @@ static int run_scan(struct arguments *args, struct dvb_device *dvb)
 	struct dvb_v5_fe_parms *parms = dvb->fe_parms;
 	struct dvb_file *dvb_file = NULL, *dvb_file_new = NULL;
 	struct dvb_entry *entry;
-	int count = 0, dmx_fd, shift;
+	struct dvb_open_descriptor *dmx_fd;
+	int count = 0, shift;
 	uint32_t freq, sys;
 	enum dvb_sat_polarization pol;
 
@@ -250,8 +251,8 @@ static int run_scan(struct arguments *args, struct dvb_device *dvb)
 		return -2;
 
 	/* FIXME: should be replaced by dvb_dev_open() */
-	dmx_fd = open(args->demux_fname, O_RDWR);
-	if (dmx_fd < 0) {
+	dmx_fd = dvb_dev_open(dvb, args->demux_dev, O_RDWR);
+	if (!dmx_fd) {
 		perror(_("opening demux failed"));
 		return -3;
 	}
@@ -294,10 +295,10 @@ static int run_scan(struct arguments *args, struct dvb_device *dvb)
 		 * Run the scanning logic
 		 */
 
-		dvb_scan_handler = dvb_scan_transponder(parms, entry, dmx_fd,
-							&check_frontend, args,
-							args->other_nit,
-							args->timeout_multiply);
+		dvb_scan_handler = dvb_dev_scan(dmx_fd, entry,
+						&check_frontend, args,
+						args->other_nit,
+						args->timeout_multiply);
 
 		if (parms->abort) {
 			dvb_scan_free_handler_table(dvb_scan_handler);
@@ -334,7 +335,7 @@ static int run_scan(struct arguments *args, struct dvb_device *dvb)
 	if (dvb_file_new)
 		dvb_file_free(dvb_file_new);
 
-	dvb_dmx_close(dmx_fd);
+	dvb_dev_close(dmx_fd);
 	return 0;
 }
 
@@ -530,7 +531,6 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	args.demux_dev = dvb_dev->sysname;
-	args.demux_fname = dvb_dev->path;
 
 	if (verbose)
 		fprintf(stderr, _("using demux '%s'\n"), args.demux_dev);
