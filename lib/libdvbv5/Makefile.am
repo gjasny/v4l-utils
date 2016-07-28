@@ -67,7 +67,7 @@ libdvbv5_la_SOURCES = \
 	parse_string.c	 \
 	parse_string.h	 \
 	dvb-demux.c	 \
-	dvb-dev.c	 \
+	dvb-dev-local.c	 \
 	dvb-fe.c	 \
 	dvb-fe-priv.h    \
 	dvb-log.c	 \
