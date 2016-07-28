@@ -181,13 +181,15 @@ AS_IF([test "x$with_jpeg" != xno],
       [AC_CHECK_HEADER([jpeglib.h],
                        [AC_CHECK_LIB([jpeg],
                                      [jpeg_read_header],
-                                     [have_jpeg=:
+                                     [have_jpeg=yes
                                       JPEG_LIBS="-ljpeg"
                                       AC_DEFINE([HAVE_JPEG],[1],[whether we use libjpeg])],
-                                     [AC_MSG_ERROR(cannot find libjpeg (v6 or later required))])],
-                       [AC_MSG_ERROR(cannot find jpeglib.h)])])
+                                     [have_jpeg=no
+                                      AC_MSG_WARN(cannot find libjpeg (v6 or later required))])],
+                       [have_jpeg=no
+                        AC_MSG_WARN(cannot find libjpeg)])])
 
-AM_CONDITIONAL([HAVE_JPEG], [$have_jpeg])
+AM_CONDITIONAL([HAVE_JPEG], [test x$have_jpeg = xyes])
 
 QT_VERSION="none"
 
@@ -442,7 +444,7 @@ compile time options summary
     X11			: $x11_pkgconfig
     GL			: $gl_pkgconfig
     glu			: $glu_pkgconfig
-    libjpeg		: $with_jpeg
+    libjpeg		: $have_jpeg
     libudev		: $have_libudev
     QT version		: $QT_VERSION
     ALSA support	: $USE_ALSA
