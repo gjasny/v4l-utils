@@ -395,7 +395,7 @@ AC_ARG_ENABLE(gconv,
    esac]
 )
 
-AM_CONDITIONAL([WITH_LIBDVBV5],     [test x$enable_libdvbv5  != xno])
+AM_CONDITIONAL([WITH_LIBDVBV5],     [test x$enable_libdvbv5  != xno -a x$have_libudev = xyes])
 AM_CONDITIONAL([WITH_LIBV4L],       [test x$enable_libv4l    != xno])
 AM_CONDITIONAL([WITH_V4LUTILS],	    [test x$enable_v4l_utils != xno -a x$linux_os = xyes])
 AM_CONDITIONAL([WITH_QV4L2],	    [test x${qt_pkgconfig} = xtrue -a x$enable_qv4l2 != xno])
@@ -441,6 +441,7 @@ cat <<EOF
 compile time options summary
 ============================
 
+    Host OS             : $host_os
     X11			: $x11_pkgconfig
     GL			: $gl_pkgconfig
     glu			: $glu_pkgconfig

@@ -5,7 +5,7 @@ SUBDIRS = \
 	libv4l2rds \
 	libv4l-mplane
 
-if LINUX_OS
+if WITH_LIBDVBV5
 SUBDIRS += \
 	libdvbv5
 endif
