@@ -26,7 +26,7 @@
 #include <config.h>
 
 #include "dvb-fe-priv.h"
-#include <libdvbv5/dvb-dev.h>
+#include "dvb-dev-priv.h"
 
 #ifdef ENABLE_NLS
 # include "gettext.h"
@@ -35,161 +35,6 @@
 #else
 # define _(string) string
 #endif
-
-struct dvb_device_priv;
-
-struct dvb_open_descriptor {
-	int fd;
-	struct dvb_dev_list *dev;
-	struct dvb_device_priv *dvb;
-	struct dvb_open_descriptor *next;
-};
-
-struct dvb_device_priv {
-	struct dvb_device d;
-
-	volatile int monitor;
-
-	/* udev control fields */
-	struct udev *udev;
-	struct udev_monitor *mon;
-
-	struct dvb_open_descriptor open_list;
-};
-
-static void free_dvb_dev(struct dvb_dev_list *dvb_dev)
-{
-	if (dvb_dev->path)
-		free (dvb_dev->path);
-	if (dvb_dev->syspath)
-		free (dvb_dev->syspath);
-	if (dvb_dev->sysname)
-		free(dvb_dev->sysname);
-	if (dvb_dev->bus_addr)
-		free(dvb_dev->bus_addr);
-	if (dvb_dev->manufacturer)
-		free(dvb_dev->manufacturer);
-	if (dvb_dev->product)
-		free(dvb_dev->product);
-	if (dvb_dev->serial)
-		free(dvb_dev->serial);
-}
-
-struct dvb_device *dvb_dev_alloc(void)
-{
-	struct dvb_device *dvb;
-
-	dvb = calloc(1, sizeof(struct dvb_device_priv));
-	if (!dvb)
-		return NULL;
-
-	dvb->fe_parms = dvb_fe_dummy();
-	if (!dvb->fe_parms) {
-		dvb_dev_free(dvb);
-		return NULL;
-	}
-
-	return dvb;
-}
-
-static void dvb_dev_free_devices(struct dvb_device_priv *dvb)
-{
-	int i;
-
-	for (i = 0; i < dvb->d.num_devices; i++)
-		free_dvb_dev(&dvb->d.devices[i]);
-	free(dvb->d.devices);
-
-	dvb->d.devices = NULL;
-	dvb->d.num_devices = 0;
-}
-
-void dvb_dev_free(struct dvb_device *d)
-{
-	struct dvb_device_priv *dvb = (void *)d;
-	struct dvb_open_descriptor *cur, *next;
-	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
-
-	/* Close all devices */
-	cur = dvb->open_list.next;
-	while (cur) {
-		next = cur->next;
-		dvb_dev_close(cur);
-		cur = next;
-	}
-
-	dvb_dev_free_devices(dvb);
-
-	/* Wait for dvb_dev_find() to stop */
-	while (dvb->udev) {
-		dvb->monitor = 0;
-		usleep(1000);
-	}
-	__dvb_fe_close(parms);
-	free(dvb);
-}
-
-static const char * const dev_type_names[] = {
-        "frontend", "demux", "dvr", "net", "ca", "sec"
-};
-
-static void dump_device(char *msg,
-			struct dvb_v5_fe_parms_priv *parms,
-			struct dvb_dev_list *dev)
-{
-	if (parms->p.verbose < 2)
-		return;
-
-	dvb_log(msg, dev_type_names[dev->dvb_type], dev->sysname);
-
-	if (dev->path)
-		dvb_log(_("  path: %s"), dev->path);
-	if (dev->syspath)
-		dvb_log(_("  sysfs path: %s"), dev->syspath);
-	if (dev->bus_addr)
-		dvb_log(_("  bus addr: %s"), dev->bus_addr);
-	if (dev->bus_id)
-		dvb_log(_("  bus ID: %s"), dev->bus_id);
-	if (dev->manufacturer)
-		dvb_log(_("  manufacturer: %s"), dev->manufacturer);
-	if (dev->product)
-		dvb_log(_("  product: %s"), dev->product);
-	if (dev->serial)
-		dvb_log(_("  serial: %s"), dev->serial);
-}
-
-struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
-					   unsigned int adapter,
-					   unsigned int num,
-					   enum dvb_dev_type type)
-{
-	struct dvb_device_priv *dvb = (void *)d;
-	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
-	int ret, i;
-	char *p;
-
-	if (type > sizeof(dev_type_names)/sizeof(*dev_type_names)){
-		dvb_logerr(_("Unexpected device type found!"));
-		return NULL;
-	}
-
-	ret = asprintf(&p, "dvb%d.%s%d", adapter, dev_type_names[type], num);
-	if (ret < 0) {
-		dvb_logerr(_("error %d when seeking for device's filename"), errno);
-		return NULL;
-	}
-	for (i = 0; i < dvb->d.num_devices; i++) {
-		if (!strcmp(p, dvb->d.devices[i].sysname)) {
-			free(p);
-			dump_device(_("Selected dvb %s device: %s"), parms,
-				    &dvb->d.devices[i]);
-			return &dvb->d.devices[i];
-		}
-	}
-
-	dvb_logwarn(_("device %s not found"), p);
-	return NULL;
-}
 
 static int handle_device_change(struct dvb_device_priv *dvb,
 				struct udev_device *dev,
@@ -201,7 +46,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	struct dvb_dev_list dev_list, *dvb_dev;
 	const char *bus_type, *p;
 	char *buf;
-	int i, ret, len;
+	int i, ret;
 
 	/* remove, change, move should all remove the device first */
 	if (strcmp(action,"add")) {
@@ -256,14 +101,13 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	p = udev_device_get_property_value(dev, "DVB_DEVICE_TYPE");
 	if (!p)
 		goto err;
-	len = sizeof(dev_type_names)/sizeof(*dev_type_names);
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < dev_type_names_size; i++) {
 		if (!strcmp(p, dev_type_names[i])) {
 			dvb_dev->dvb_type = i;
 			break;
 		}
 	}
-	if (i == len) {
+	if (i == dev_type_names_size) {
 		dvb_logwarn(_("Ignoring device %s"), dvb_dev->path);
 		goto err;
 	}
@@ -347,7 +191,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 			dvb_dev->serial = strdup(p);
 	}
 added:
-	dump_device(_("Found dvb %s device: %s"), parms, dvb_dev);
+	dvb_dev_dump_device(_("Found dvb %s device: %s"), parms, dvb_dev);
 
 	return 0;
 
@@ -356,9 +200,8 @@ err:
 	return -1;
 }
 
-int dvb_dev_find(struct dvb_device *d, int enable_monitor)
+static int dvb_local_find(struct dvb_device_priv *dvb, int enable_monitor)
 {
-	struct dvb_device_priv *dvb = (void *)d;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct udev_enumerate *enumerate;
 	struct udev_list_entry *devices, *dev_list_entry;
@@ -432,29 +275,15 @@ int dvb_dev_find(struct dvb_device *d, int enable_monitor)
 	return 0;
 }
 
-void dvb_dev_stop_monitor(struct dvb_device *d)
+static void dvb_local_stop_monitor(struct dvb_device_priv *dvb)
 {
-	struct dvb_device_priv *dvb = (void *)d;
-
 	dvb->monitor = 0;
 }
 
-void dvb_dev_set_log(struct dvb_device *dvb, unsigned verbose,
-		     dvb_logfunc logfunc)
-{
-	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->fe_parms;
-
-	parms->p.verbose = verbose;
-
-	if (logfunc != NULL)
-			parms->p.logfunc = logfunc;
-}
-
-struct dvb_open_descriptor *dvb_dev_open(struct dvb_device *d,
+static struct dvb_open_descriptor *dvb_local_open(struct dvb_device_priv *dvb,
 					 char *sysname, int flags)
 {
-	struct dvb_device_priv *dvb = (void *)d;
-	struct dvb_v5_fe_parms_priv *parms = (void *)d->fe_parms;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_list *dev = NULL;
 	struct dvb_open_descriptor *open_dev, *cur;
 	int ret, i;
@@ -520,7 +349,7 @@ struct dvb_open_descriptor *dvb_dev_open(struct dvb_device *d,
 	return open_dev;
 }
 
-void dvb_dev_close(struct dvb_open_descriptor *open_dev)
+static void dvb_local_close(struct dvb_open_descriptor *open_dev)
 {
 	struct dvb_dev_list *dev = open_dev->dev;
 	struct dvb_device_priv *dvb = open_dev->dvb;
@@ -571,7 +400,7 @@ void dvb_dev_close(struct dvb_open_descriptor *open_dev)
 	__rc;								\
 })
 
-void dvb_dev_dmx_stop(struct dvb_open_descriptor *open_dev)
+static void dvb_local_dmx_stop(struct dvb_open_descriptor *open_dev)
 {
 	struct dvb_dev_list *dev = open_dev->dev;
 	struct dvb_device_priv *dvb = open_dev->dvb;
@@ -586,7 +415,7 @@ void dvb_dev_dmx_stop(struct dvb_open_descriptor *open_dev)
 		dvb_perror(_("DMX_STOP failed"));
 }
 
-int dvb_dev_set_bufsize(struct dvb_open_descriptor *open_dev,
+static int dvb_local_set_bufsize(struct dvb_open_descriptor *open_dev,
 			int buffersize)
 {
 	struct dvb_dev_list *dev = open_dev->dev;
@@ -605,7 +434,7 @@ int dvb_dev_set_bufsize(struct dvb_open_descriptor *open_dev,
 	return 0;
 }
 
-ssize_t dvb_dev_read(struct dvb_open_descriptor *open_dev,
+static ssize_t dvb_local_read(struct dvb_open_descriptor *open_dev,
 		     void *buf, size_t count)
 {
 	struct dvb_dev_list *dev = open_dev->dev;
@@ -624,7 +453,7 @@ ssize_t dvb_dev_read(struct dvb_open_descriptor *open_dev,
 	return ret;
 }
 
-int dvb_dev_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
+static int dvb_local_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
 			      int pid, dmx_pes_type_t type,
 			      dmx_output_t output, int bufsize)
 {
@@ -658,7 +487,7 @@ int dvb_dev_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
 	return 0;
 }
 
-int dvb_dev_dmx_set_section_filter(struct dvb_open_descriptor *open_dev,
+static int dvb_local_dmx_set_section_filter(struct dvb_open_descriptor *open_dev,
 				   int pid, unsigned filtsize,
 				   unsigned char *filter,
 				   unsigned char *mask,
@@ -699,7 +528,7 @@ int dvb_dev_dmx_set_section_filter(struct dvb_open_descriptor *open_dev,
 	return 0;
 }
 
-int dvb_dev_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int sid)
+static int dvb_local_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int sid)
 {
 	struct dvb_dev_list *dev = open_dev->dev;
 	struct dvb_device_priv *dvb = open_dev->dvb;
@@ -758,7 +587,7 @@ int dvb_dev_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int sid)
 	return pmt_pid;
 }
 
-struct dvb_v5_descriptors *dvb_dev_scan(struct dvb_open_descriptor *open_dev,
+static struct dvb_v5_descriptors *dvb_local_scan(struct dvb_open_descriptor *open_dev,
 					struct dvb_entry *entry,
 					check_frontend_t *check_frontend,
 					void *args,
@@ -780,4 +609,23 @@ struct dvb_v5_descriptors *dvb_dev_scan(struct dvb_open_descriptor *open_dev,
 				    args, other_nit, timeout_multiply);
 
 	return desc;
+}
+
+void dvb_dev_local_init(struct dvb_device_priv *dvb)
+{
+	struct dvb_dev_ops *ops = &dvb->ops;
+
+
+	ops->find = dvb_local_find;
+	ops->stop_monitor = dvb_local_stop_monitor;
+	ops->open = dvb_local_open;
+	ops->close = dvb_local_close;
+
+	ops->dmx_stop = dvb_local_dmx_stop;
+	ops->set_bufsize = dvb_local_set_bufsize;
+	ops->read = dvb_local_read;
+	ops->dmx_set_pesfilter = dvb_local_dmx_set_pesfilter;
+	ops->dmx_set_section_filter = dvb_local_dmx_set_section_filter;
+	ops->dmx_get_pmt_pid = dvb_local_dmx_get_pmt_pid;
+	ops->scan = dvb_local_scan;
 }
