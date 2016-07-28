@@ -26,13 +26,20 @@ packages with apt-get or aptitude:
 	libtool libjpeg-dev libqt4-dev libqt4-opengl-dev libudev-dev libx11-dev
 	pkg-config udev make gcc git
 
-On Fedora (and similar rpm-based distributions), you need to install the
-following packages with dnf:
-	alsa-lib-devel doxygen libjpeg-turbo-devel qt-devel automake
-	libtool gettext-devel make gcc gcc-c++ qt5-qtbase-devel git
+
+On Fedora, the package list for a minimal install with dnf or yum is:
+	git automake autoconf libtool make gcc gcc-c++ which perl gettext-devel
 
 (git is only requiried if you're cloning from the main git repository at
  linuxtv.org).
+
+And, to be able to compile it with all usual functionality with qt5,
+you'll need also:
+	alsa-lib-devel doxygen libjpeg-turbo-devel qt5-qtbase-devel
+	libudev-devel mesa-libGLU-devel
+
+(Or qt-devel instead of qt5-qtbase-devel for qt4)
+
 
 After downloading and installing the needed packages, you should run:
 
@@ -42,6 +49,18 @@ After downloading and installing the needed packages, you should run:
 
 And, to install on your system:
 	sudo make install
+
+Optional features
+^^^^^^^^^^^^^^^^^
+
+Please notice that there's an extra feature to add an extra table to
+decode Japanese DVB tables via iconv. This is meant to be used when
+the iconv itself doesn't come with the ARIB-STD-B24 and EN300-468-TAB00
+tables.
+
+That requires not only the gconv package, but it also needs to be manually
+enabled with:
+	--enable-gconv
 
 ----------
 versioning
