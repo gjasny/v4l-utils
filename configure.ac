@@ -160,13 +160,13 @@ AC_SUBST([X11_LIBS])
 AM_CONDITIONAL([HAVE_X11], [test x$x11_pkgconfig = xyes])
 
 AS_IF([test "x$x11_pkgconfig" = xyes],
-      [PKG_CHECK_MODULES(GL, [gl], [gl_pkgconfig=yes], [gl_pkgconfig=no])])
+      [PKG_CHECK_MODULES(GL, [gl], [gl_pkgconfig=yes], [gl_pkgconfig=no])], [gl_pkgconfig=no])
 AC_SUBST([GL_CFLAGS])
 AC_SUBST([GL_LIBS])
 AM_CONDITIONAL([HAVE_GL], [test x$gl_pkgconfig = xyes])
 
 AS_IF([test "x$gl_pkgconfig" = xyes],
-      [PKG_CHECK_MODULES(GLU, [glu], [glu_pkgconfig=yes], [glu_pkgconfig=no])])
+      [PKG_CHECK_MODULES(GLU, [glu], [glu_pkgconfig=yes], [glu_pkgconfig=no])], [glu_pkgconfig=no])
 
 AC_SUBST([GLU_CFLAGS])
 AC_SUBST([GLU_LIBS])
