@@ -75,7 +75,7 @@ int dvb_dmx_open(int adapter, int demux)
 	dvb_dev = dvb_dev_seek_by_sysname(dvb, adapter, demux, DVB_DEVICE_DEMUX);
 	if (!dvb_dev) {
 		dvb_dev_free(dvb);
-		return NULL;
+		return -1;
 	}
 
 	fd_demux = open(dvb_dev->path, O_RDWR | O_NONBLOCK);
@@ -86,7 +86,7 @@ int dvb_dmx_open(int adapter, int demux)
 void dvb_dmx_close(int dmx_fd)
 {
 	(void)xioctl(dmx_fd, DMX_STOP);
-	close( dmx_fd);
+	close(dmx_fd);
 }
 
 void dvb_dmx_stop(int dmx_fd)
