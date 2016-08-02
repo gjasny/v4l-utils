@@ -62,6 +62,7 @@ struct dvb_dev_ops {
 					   void *args,
 					   unsigned other_nit,
 					   unsigned timeout_multiply);
+	void (*free)(struct dvb_device_priv *dvb);
 };
 
 struct dvb_device_priv {
@@ -75,6 +76,9 @@ struct dvb_device_priv {
 	struct udev_monitor *mon;
 
 	struct dvb_open_descriptor open_list;
+
+	/* private data to be used by implementation, if needed */
+	void *priv;
 };
 
 

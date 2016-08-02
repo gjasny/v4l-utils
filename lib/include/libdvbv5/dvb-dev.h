@@ -21,6 +21,7 @@
 
 #include "dvb-fe.h"
 #include "dvb-scan.h"
+#include <config.h>
 
 #include <linux/dvb/dmx.h>
 
@@ -397,5 +398,37 @@ struct dvb_v5_descriptors *dvb_dev_scan(struct dvb_open_descriptor *open_dev,
 					void *args,
 					unsigned other_nit,
 					unsigned timeout_multiply);
+
+
+
+/* From dvb-dev-remote.c */
+
+#ifdef HAVE_DVBV5_REMOTE
+
+/* Better to be at least 4096 + encoding size */
+#define REMOTE_BUF_SIZE 8192
+
+/**
+ * @brief initialize the dvb-dev to use a remote device running the
+ *	dvbv5-daemon.
+ *
+ * @param dvb		pointer to struct dvb_device to be used
+ * @param server	server hostname or address
+ * @param port		server port
+ *
+ * @note The protocol between the dvbv5-daemon and the dvb_dev library is
+ * highly experimental and is subject to changes in a near future. So,
+ * while this is not stable enough, you will only work if both the client
+ * and the server are running the same version of the v4l-utils library.
+ */
+int dvb_dev_remote_init(struct dvb_device *d, char *server, int port);
+
+#else
+
+int dvb_dev_remote_init(struct dvb_device *d, char *server, int port)
+{ return -1; };
+
+#endif
+
 
 #endif

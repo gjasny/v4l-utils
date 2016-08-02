@@ -108,6 +108,10 @@ void dvb_dev_free(struct dvb_device *d)
 		cur = next;
 	}
 
+	/* Call an implementation-specific free method, if defined */
+	if (ops->free)
+		ops->free(dvb);
+
 	dvb_dev_free_devices(dvb);
 
 	/* Wait for dvb_dev_find() to stop */

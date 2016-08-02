@@ -400,6 +400,8 @@ AC_ARG_ENABLE(gconv,
 )
 
 AM_CONDITIONAL([WITH_LIBDVBV5],     [test x$enable_libdvbv5  != xno -a x$have_libudev = xyes])
+AM_CONDITIONAL([WITH_DVBV5_REMOTE], [test x$enable_libdvbv5  != xno -a x$have_libudev = xyes -a x$have_pthread = xyes])
+
 AM_CONDITIONAL([WITH_LIBV4L],       [test x$enable_libv4l    != xno])
 AM_CONDITIONAL([WITH_V4LUTILS],	    [test x$enable_v4l_utils != xno -a x$linux_os = xyes])
 AM_CONDITIONAL([WITH_QV4L2],	    [test x${qt_pkgconfig} = xtrue -a x$enable_qv4l2 != xno])
@@ -424,12 +426,10 @@ fi
 
 CPPFLAGS="-I\$(top_srcdir)/lib/include -Wall -Wpointer-arith -D_GNU_SOURCE $CPPFLAGS"
 
-AC_OUTPUT
-
-dnl ---------------------------------------------------------------------
-dnl compile time options summary
-
 AM_COND_IF([WITH_LIBDVBV5], [USE_LIBDVBV5="yes"], [USE_LIBDVBV5="no"])
+AM_COND_IF([WITH_DVBV5_REMOTE], [USE_DVBV5_REMOTE="yes"
+				 AC_DEFINE([HAVE_DVBV5_REMOTE], [1], [Usage of DVBv5 remote enabled])],
+			        [USE_DVBV5_REMOTE="no"])
 AM_COND_IF([WITH_LIBV4L], [USE_LIBV4L="yes"], [USE_LIBV4L="no"])
 AM_COND_IF([WITH_V4LUTILS], [USE_V4LUTILS="yes"], [USE_V4LUTILS="no"])
 AM_COND_IF([WITH_QV4L2], [USE_QV4L2="yes"], [USE_QV4L2="no"])
@@ -466,6 +466,7 @@ compile time options summary
     v4l_plugins		: $USE_V4L_PLUGINS
     v4l_wrappers	: $USE_V4L_WRAPPERS
     libdvbv5		: $USE_LIBDVBV5
+    dvbv5-daemon	: $USE_DVBV5_REMOTE
     v4lutils		: $USE_V4LUTILS
     qv4l2		: $USE_QV4L2
     v4l2-ctrl		: $USE_V4L2_CTL

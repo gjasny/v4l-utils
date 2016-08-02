@@ -110,6 +110,11 @@ libdvbv5_la_SOURCES = \
 	descriptors/desc_ca.c			\
 	descriptors/desc_ca_identifier.c
 
+if WITH_DVBV5_REMOTE
+libdvbv5_la_SOURCES += \
+	dvb-dev-remote.c
+endif
+
 libdvbv5_la_CPPFLAGS = -I../.. $(ENFORCE_LIBDVBV5_STATIC)
 libdvbv5_la_LDFLAGS = $(LIBDVBV5_VERSION) $(ENFORCE_LIBDVBV5_STATIC) -lm -lrt
 libdvbv5_la_LIBADD = $(LTLIBICONV)

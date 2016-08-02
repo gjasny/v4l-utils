@@ -1,0 +1,1010 @@
+/*
+ * Copyright (c) 2016 - Mauro Carvalho Chehab
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation version 2.1 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ */
+
+#include <libudev.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <locale.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <resolv.h>
+#include <string.h>
+#include <sys/socket.h>
+
+#include <config.h>
+
+#include "dvb-fe-priv.h"
+#include "dvb-dev-priv.h"
+
+#ifdef ENABLE_NLS
+# include "gettext.h"
+# include <libintl.h>
+# define _(string) dgettext(LIBDVBV5_DOMAIN, string)
+#else
+# define _(string) string
+#endif
+
+
+/*
+ * Expected server version
+ *
+ * Please notice that the daemon and the library should match the version,
+ * as, right now, we don't warrant that the protocol between the server
+ * and the client won't change on newer versions. So, both the daemon and
+ * the client should have the same version.
+ */
+const char *daemon_version = "dvbv5-daemon version " V4L_UTILS_VERSION;
+
+/*
+ * Internal data structures
+ */
+
+struct dvb_descriptors {
+	int uid;
+	struct dvb_open_descriptor *open_dev;
+};
+
+struct queued_msg {
+	int seq;
+	char cmd[80];
+
+	pthread_mutex_t lock;
+	pthread_cond_t cond;
+
+	char args[REMOTE_BUF_SIZE];
+	ssize_t args_size;
+
+	struct queued_msg *next;
+};
+
+struct dvb_dev_remote_priv {
+	int fd;
+	struct sockaddr_in addr;
+
+	int seq;
+
+	pthread_t recv_id;
+	pthread_mutex_t lock_io;
+
+	struct queued_msg msgs;
+};
+
+/*
+ * Functions to send/receive messages to the server
+ */
+
+static struct queued_msg *send_cmd(struct dvb_device_priv *dvb, int fd,
+				   const char *cmd, const char *fmt, ...)
+	__attribute__ (( format( printf, 4, 5 )));
+
+static struct queued_msg *send_cmd(struct dvb_device_priv *dvb, int fd,
+				   const char *cmd, const char *fmt, ...)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct queued_msg *msg, *msgs;
+	char buf[4096], *p = buf, *endp = &buf[sizeof(buf)], *s;
+	int ret, len;
+	int32_t i32;
+	va_list ap;
+
+	msg = calloc(1, sizeof(*msg));
+	if (!msg) {
+		dvb_logerr("calloc queued_msg");
+		return NULL;
+	}
+
+	pthread_mutex_init(&msg->lock, NULL);
+	pthread_cond_init(&msg->cond, NULL);
+	strcpy(msg->cmd, cmd);
+
+	pthread_mutex_lock(&priv->lock_io);
+	msg->seq = ++priv->seq;
+
+	/* Encode sequence number */
+	i32 = htobe32(msg->seq);
+	if (p + 4 > endp) {
+		dvb_logdbg("buffer to short for int32_t");
+		return NULL;
+	}
+	memcpy(p, &i32, 4);
+	p += 4;
+
+	/* Encode command */
+	len = strlen(cmd);
+	if (p + len + 4 > endp) {
+		dvb_logdbg("buffer too short for command: pos: %zd, len:%d, buffer size:%zd",
+				p - buf, len, sizeof(buf));
+		return NULL;
+	}
+	i32 = htobe32(len);
+	memcpy(p, &i32, 4);
+	p += 4;
+	memcpy(p, cmd, len);
+	p += len;
+
+	/* Encode other parameters */
+
+	va_start(ap, fmt);
+
+	while (*fmt && *fmt != '%') fmt++;
+	if (*fmt == '%') fmt++;
+	while (*fmt) {
+		switch (*fmt++) {
+		case 's':              /* string */
+			s = va_arg(ap, char *);
+			len = strlen(s);
+			if (p + len + 4 > endp) {
+				dvb_logdbg("buffer too short for string: pos: %zd, len:%d, buffer size:%zd",
+					   p - buf, len, sizeof(buf));
+				return NULL;
+			}
+			i32 = htobe32(len);
+			memcpy(p, &i32, 4);
+			p += 4;
+			memcpy(p, s, len);
+			p += len;
+			break;
+		case 'p':              /* binary data with specified length */
+			s = va_arg(ap, char *);
+			len = va_arg(ap, ssize_t);
+			if (p + len + 4 > endp) {
+				dvb_logdbg("buffer too short for binary data: pos: %zd, len:%d, buffer size:%zd",
+					   p - buf, len, sizeof(buf));
+				return NULL;
+			}
+			i32 = htobe32(len);
+			memcpy(p, &i32, 4);
+			p += 4;
+			memcpy(p, s, len);
+			p += len;
+			break;
+		case 'i':              /* 32-bit int */
+			if (p + 4 > endp) {
+				dvb_logdbg("buffer to short for int32_t");
+				return NULL;
+			}
+
+			i32 = htobe32(va_arg(ap, int32_t));
+			memcpy(p, &i32, 4);
+			p += 4;
+			break;
+		default:
+			dvb_logdbg("invalid format character: '%c'", *fmt);
+		}
+		while (*fmt && *fmt != '%') fmt++;
+		if (*fmt == '%') fmt++;
+	}
+	va_end(ap);
+
+	ret = write(fd, buf, p - buf);
+	if (ret < 0 || (ret < p - buf)) {
+		pthread_mutex_destroy(&msg->lock);
+		pthread_cond_destroy(&msg->cond);
+		free(msg);
+		msg = NULL;
+		if (ret < 0)
+			dvb_perror("write");
+		else
+			dvb_logerr("incomplete send");
+	} else {
+		/* Add it to the message queue */
+		for (msgs = &priv->msgs; msgs->next; msgs = msgs->next);
+		msgs->next = msg;
+	}
+	pthread_mutex_unlock(&priv->lock_io);
+
+	return msg;
+}
+
+static void free_msg(struct dvb_device_priv *dvb, struct queued_msg *msg)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct queued_msg *msgs;
+
+	pthread_mutex_lock(&priv->lock_io);
+	for (msgs = &priv->msgs; msgs; msgs = msgs->next) {
+		if (msgs->next == msg) {
+			msgs->next = msg->next;
+			pthread_mutex_unlock(&priv->lock_io);
+
+			pthread_cond_destroy(&msg->cond);
+			pthread_mutex_destroy(&msg->lock);
+			free(msg);
+			return;
+		}
+	}
+	pthread_mutex_unlock(&priv->lock_io);
+	dvb_logerr("message for cmd %s not found at the message queue!", msg->cmd);
+};
+
+static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
+			 int buf_size, const char *fmt, ...)
+	__attribute__ (( format( scanf, 4, 5 )));
+
+static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
+			 int buf_size, const char *fmt, ...)
+{
+	char *p = buf, *endp = &buf[buf_size], *s;
+	int len;
+	int32_t *i32;
+	ssize_t *count;
+	va_list ap;
+
+	va_start(ap, fmt);
+	while (*fmt && *fmt != '%') fmt++;
+	if (*fmt == '%') fmt++;
+	while (*fmt) {
+		switch (*fmt++) {
+		case 's':              /* string */
+			s = va_arg(ap, char *);
+			if (p + 4 > endp) {
+				dvb_logdbg("buffer to short for string length: pos: %zd, len:%d, buffer size:%d",
+					   p - buf, 4, buf_size);;
+				return -1;
+			}
+			len = be32toh(*(int32_t *)p);
+			p += 4;
+			if (p + len > endp) {
+				dvb_logdbg("buffer too short for string: pos: %zd, len:%d, buffer size:%d",
+					   p - buf, len, buf_size);
+				return -1;
+			}
+
+			memcpy(s, p, len);
+			s[len] = '\0';
+			p += len;
+			break;
+		case 'p':              /* binary data with specified length */
+			s = va_arg(ap, char *);
+			if (p + 4 > endp) {
+				dvb_logdbg("buffer to short for binary data length: pos: %zd, len:%d, buffer size:%d",
+					   p - buf, 4, buf_size);
+				return -1;
+			}
+			len = be32toh(*(int32_t *)p);
+			p += 4;
+			if (p + len > endp) {
+				dvb_logdbg("buffer too short for binary data: pos: %zd, len:%d, buffer size:%d",
+					   p - buf, len, buf_size);
+				return -1;
+			}
+
+			memcpy(s, p, len);
+			count = va_arg(ap, ssize_t *);
+			*count = len;
+
+			p += len;
+			break;
+		case 'i':              /* 32-bit int */
+			if (p + 4 > endp) {
+				dvb_logdbg("buffer to short for int32_t");
+				return -1;
+			}
+			i32 = va_arg(ap, int32_t *);
+
+			*i32 = be32toh(*(int32_t *)p);
+			p += 4;
+			break;
+		default:
+			dvb_logdbg("invalid format character: '%c'", *fmt);
+		}
+		while (*fmt && *fmt != '%') fmt++;
+		if (*fmt == '%') fmt++;
+	}
+	va_end(ap);
+
+	return p - buf;
+}
+
+static void *receive_data(void *privdata)
+{
+	struct dvb_device_priv *dvb = privdata;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct queued_msg *msg;
+	char buf[REMOTE_BUF_SIZE + 8], cmd[REMOTE_BUF_SIZE], *args;
+	ssize_t size, args_size;
+	int ret, level, seq, handled;
+
+	do {
+		size = recv(priv->fd, buf, sizeof(buf), 0);
+		if (size <= 0) {
+			dvb_perror("recv");
+			return NULL;
+		}
+
+		args = buf;
+		args_size = size;
+		while (args_size > 0) {
+			ret = scan_data(parms, args, args_size, "%i%s", &seq, cmd);
+			if (ret < 0) {
+				dvb_logerr("invalid protocol message: '%s' (size %zd)", args, args_size);
+				break;
+			}
+			args += ret;
+			args_size -= ret;
+
+			/* Check for messages that aren't command responses */
+			if (seq)
+				break;
+
+			if (!strcmp(cmd, "log")) {
+				ret = scan_data(parms, args, args_size,
+						"%i%s", &level, cmd);
+				if (ret > 0) {
+					dvb_loglevel(level, cmd);
+					args += ret;
+					args_size -= ret;
+				}
+			} else {
+				dvb_logerr("unexpected message type: %s", cmd);
+				ret = -1;
+				break;
+			}
+		}
+		if (ret <= 0 || !seq)
+			continue;
+
+		/* Handle command responses */
+		pthread_mutex_lock(&priv->lock_io);
+
+		handled = 0;
+		for (msg = &priv->msgs; msg; msg = msg->next) {
+			if (seq != msg->seq)
+				continue;
+
+			handled = 1;
+
+			if (strcmp(msg->cmd, cmd)) {
+				dvb_logerr("msg #%d: Expecting '%s', got '%s'",
+						seq, msg->cmd, cmd);
+				free_msg(dvb, msg);
+				break;
+			}
+			memcpy(msg->args, args, args_size);
+			msg->args_size = args_size;
+			pthread_mutex_unlock(&priv->lock_io);
+			pthread_mutex_lock(&msg->lock);
+			ret = pthread_cond_signal(&msg->cond);
+			pthread_mutex_unlock(&msg->lock);
+
+			if (ret < 0)
+				dvb_perror("pthread_cond_signal");
+			break;
+		}
+		if (handled)
+			continue;
+
+		pthread_mutex_unlock(&priv->lock_io);
+		dvb_logerr("unexpected command response: %s", cmd);
+	} while (1);
+}
+
+/*
+ * Function handlers
+ */
+static int dvb_remote_get_version(struct dvb_device_priv *dvb)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct queued_msg *msg;
+	char version[REMOTE_BUF_SIZE];
+	int ret;
+
+	msg = send_cmd(dvb, priv->fd, "daemon_get_version", "-");
+	if (!msg)
+		return -1;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%s", version);
+	if (ret < 0) {
+		dvb_logerr("Can't get sever's version");
+		goto error;
+	}
+
+	if (strcmp(version, daemon_version)) {
+		dvb_logerr("Wrong version. Expecting '%s', received '%s'",
+			daemon_version, version);
+		ret = 0;
+		goto error;
+	}
+
+	/* version matches */
+	ret = 1;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return ret;
+}
+
+static int dvb_remote_find(struct dvb_device_priv *dvb, int enable_monitor)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct queued_msg *msg;
+	int ret, retval;
+
+	msg = send_cmd(dvb, priv->fd, "dev_find", "%i", enable_monitor);
+	if (!msg)
+		return -1;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	ret = retval;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return ret;
+}
+
+static int dvb_remote_stop_monitor(struct dvb_device_priv *dvb)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct queued_msg *msg;
+	int ret, retval;
+
+	msg = send_cmd(dvb, priv->fd, "dev_stop_monitor", "-");
+	if (!msg)
+		return -1;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	ret = retval;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return ret;
+}
+
+struct dvb_dev_list *dvb_remote_seek_by_sysname(struct dvb_device_priv *dvb,
+						unsigned int adapter,
+						unsigned int num,
+						enum dvb_dev_type type)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_dev_list *dev = NULL;
+	struct queued_msg *msg;
+	int ret, int_type;
+
+	msg = send_cmd(dvb, priv->fd, "dev_seek_by_sysname", "%i%i%i",
+				adapter, num, type);
+	if (!msg)
+		return NULL;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	/*
+	 * FIXME: dev should be freed. The best would actually to implement
+	 * this locally, but that would require device insert/removal
+	 * notifications. So, let's postpone it.
+	 */
+	dev = calloc(1, sizeof(*dev));
+	if (!dev)
+		goto error;
+	dev->syspath = malloc(msg->args_size);
+	dev->path = malloc(msg->args_size);
+	dev->sysname = malloc(msg->args_size);
+	dev->bus_addr = malloc(msg->args_size);
+	dev->bus_id = malloc(msg->args_size);
+	dev->manufacturer = malloc(msg->args_size);
+	dev->product = malloc(msg->args_size);
+	dev->serial = malloc(msg->args_size);
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%s%s%s%i%s%s%s%s%s",
+			dev->syspath, dev->path, dev->sysname,
+			&int_type, dev->bus_addr, dev->bus_id,
+			dev->manufacturer, dev->product, dev->serial);
+
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	if (!*dev->syspath) {
+		free(dev);
+		dev = NULL;
+		goto error;
+	}
+
+	dev->dvb_type = int_type;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return dev;
+}
+
+static struct dvb_open_descriptor *dvb_remote_open(struct dvb_device_priv *dvb,
+						   const char *sysname,
+						   int flags)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_open_descriptor *open_dev, *cur;
+	struct queued_msg *msg;
+	int ret, retval;
+
+	open_dev = calloc(1, sizeof(*open_dev));
+	if (!open_dev) {
+		dvb_perror("Can't create file descriptor");
+		return NULL;
+	}
+
+	msg = send_cmd(dvb, priv->fd, "dev_open", "%s%i", sysname, flags);
+	if (!msg)
+		return NULL;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+
+	/* Add the fd to the open descriptor's list */
+	open_dev->fd = retval;
+	open_dev->dev = NULL;
+	open_dev->dvb = dvb;
+
+	cur = &dvb->open_list;
+	while (cur->next)
+		cur = cur->next;
+	cur->next = open_dev;
+
+	return open_dev;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return NULL;
+}
+
+static int dvb_remote_close(struct dvb_open_descriptor *open_dev)
+{
+	struct dvb_device_priv *dvb = open_dev->dvb;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_open_descriptor *cur;
+	struct queued_msg *msg;
+	int ret = -1, retval;
+
+	msg = send_cmd(dvb, priv->fd, "dev_close", "%i", open_dev->fd);
+	/* Even with errors, we need to close our end */
+	if (!msg)
+		goto error;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	ret = retval;
+
+error:
+	/*
+	 * Even if it can't free the resources remotely, but it needs to
+	 * free locally. If the error was due to a remote disconnect,
+	 * the code at the dvbv5-daemon will free the remote resources anyway.
+	 */
+	for (cur = &dvb->open_list; cur->next; cur = cur->next) {
+		if (cur->next == open_dev) {
+			cur->next = open_dev->next;
+			free(open_dev);
+			goto ret;
+		}
+	}
+
+	/* Should never happen */
+	dvb_logerr("Couldn't free device");
+ret:
+	if (msg) {
+		msg->seq = 0; /* Avoids any risk of a recursive call */
+		pthread_mutex_unlock(&msg->lock);
+
+		free_msg(dvb, msg);
+	}
+	return ret;
+}
+
+static int dvb_remote_dmx_stop(struct dvb_open_descriptor *open_dev)
+{
+	struct dvb_device_priv *dvb = open_dev->dvb;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct queued_msg *msg;
+	int ret, retval;
+
+	msg = send_cmd(dvb, priv->fd, "dev_dmx_stop", "%i", open_dev->fd);
+	if (!msg)
+		return -1;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	ret = retval;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return ret;
+}
+
+static int dvb_remote_set_bufsize(struct dvb_open_descriptor *open_dev,
+			int bufsize)
+{
+	struct dvb_device_priv *dvb = open_dev->dvb;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct queued_msg *msg;
+	int ret, retval;
+
+	msg = send_cmd(dvb, priv->fd, "dev_set_bufsize", "%i%i",
+		       open_dev->fd, bufsize);
+	if (!msg)
+		return -1;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	ret = retval;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return ret;
+}
+
+static ssize_t dvb_remote_read(struct dvb_open_descriptor *open_dev,
+		     void *buf, size_t count)
+{
+	struct dvb_device_priv *dvb = open_dev->dvb;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct queued_msg *msg;
+	int ret, size;
+
+	size = count;
+	msg = send_cmd(dvb, priv->fd, "dev_read", "%i%i",
+		       open_dev->fd, size);
+	if (!msg)
+		return -1;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%i%s",
+			&size, (char *)buf);
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	ret = size;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return ret;
+}
+
+static int dvb_remote_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
+			      int pid, dmx_pes_type_t type,
+			      dmx_output_t output, int bufsize)
+{
+	struct dvb_device_priv *dvb = open_dev->dvb;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct queued_msg *msg;
+	int ret, retval;
+
+	msg = send_cmd(dvb, priv->fd, "dev_dmx_set_pesfilter", "%i%i%i%i%i",
+		       open_dev->fd, pid, type, output, bufsize);
+	if (!msg)
+		return -1;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	ret = retval;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return ret;
+}
+
+static int dvb_remote_dmx_set_section_filter(struct dvb_open_descriptor *open_dev,
+				   int pid, unsigned filtsize,
+				   unsigned char *filter,
+				   unsigned char *mask,
+				   unsigned char *mode,
+				   unsigned int flags)
+{
+	struct dvb_device_priv *dvb = open_dev->dvb;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct queued_msg *msg;
+	int ret, retval;
+
+	msg = send_cmd(dvb, priv->fd, "dmx_set_section_filter",
+		       "%i%i%i%s%s%s%i", open_dev->fd, pid, filtsize,
+		       filter, mask, mode, flags);
+	if (!msg)
+		return -1;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	ret = retval;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return ret;
+}
+
+static int dvb_remote_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int sid)
+{
+	struct dvb_device_priv *dvb = open_dev->dvb;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct queued_msg *msg;
+	int ret, retval;
+
+	msg = send_cmd(dvb, priv->fd, "dev_set_bufsize", "%i%i",
+		       open_dev->fd, sid);
+	if (!msg)
+		return -1;
+
+	pthread_mutex_lock(&msg->lock);
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	ret = retval;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return ret;
+}
+
+static struct dvb_v5_descriptors *dvb_remote_scan(struct dvb_open_descriptor *open_dev,
+					struct dvb_entry *entry,
+					check_frontend_t *check_frontend,
+					void *args,
+					unsigned other_nit,
+					unsigned timeout_multiply)
+{
+	/* FIXME: not implemented yet*/
+	return NULL;
+}
+
+static void dvb_dev_remote_free(struct dvb_device_priv *dvb)
+{
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct queued_msg *msg, *next;
+
+	/*
+	 * If the application was well-written, the last message would be
+	 * a dev_close(). At this point, no other log messages should
+	 * happen.
+	 */
+
+	pthread_cancel(priv->recv_id);
+
+	/* Free any pending message */
+	msg = priv->msgs.next;
+	while (msg) {
+		next = msg->next;
+		free(msg);
+		msg = next;
+	}
+
+	pthread_mutex_destroy(&priv->lock_io);
+
+	free(priv);
+}
+
+int dvb_dev_remote_init(struct dvb_device *d, char *server, int port)
+{
+	struct dvb_device_priv *dvb = (void *)d;
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_remote_priv *priv;
+	struct dvb_dev_ops *ops = &dvb->ops;
+	int fd, ret;
+
+	dvb->priv = priv = calloc(1, sizeof(*priv));
+
+	/* open socket */
+
+	fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (fd < 0) {
+		dvb_perror("socket");
+		return -1;
+	}
+	priv->fd = fd;
+
+	/* connect socket to the server */
+
+	priv->addr.sin_family = AF_INET;
+	priv->addr.sin_port = htons(port);
+	if (!inet_aton(server, &priv->addr.sin_addr))
+	{
+		dvb_perror(server);
+		return -1;
+	}
+	ret = connect(fd, (struct sockaddr*)&priv->addr, sizeof(priv->addr));
+
+	if (ret) {
+		dvb_perror("connect");
+		return -1;
+	}
+
+	/* Start receiving messsages from the server */
+	pthread_mutex_init(&priv->lock_io, NULL);
+	ret = pthread_create(&priv->recv_id, NULL, receive_data, dvb);
+	if (ret < 0) {
+		dvb_perror("pthread_create");
+		pthread_mutex_destroy(&priv->lock_io);
+		return -1;
+	}
+
+	/* Do protocol handshake */
+	ret = dvb_remote_get_version(dvb);
+	if (ret <= 0) {
+		pthread_mutex_destroy(&priv->lock_io);
+		pthread_cancel(priv->recv_id);
+	}
+
+	/* Everything is OK, initialize data structs */
+	ops->find = dvb_remote_find;
+	ops->seek_by_sysname = dvb_remote_seek_by_sysname;
+	ops->stop_monitor = dvb_remote_stop_monitor;
+	ops->open = dvb_remote_open;
+	ops->close = dvb_remote_close;
+
+	ops->dmx_stop = dvb_remote_dmx_stop;
+	ops->set_bufsize = dvb_remote_set_bufsize;
+	ops->read = dvb_remote_read;
+	ops->dmx_set_pesfilter = dvb_remote_dmx_set_pesfilter;
+	ops->dmx_set_section_filter = dvb_remote_dmx_set_section_filter;
+	ops->dmx_get_pmt_pid = dvb_remote_dmx_get_pmt_pid;
+	ops->scan = dvb_remote_scan;
+	ops->free = dvb_dev_remote_free;
+
+	return 0;
+}
