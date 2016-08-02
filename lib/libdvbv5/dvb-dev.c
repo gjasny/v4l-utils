@@ -98,6 +98,7 @@ void dvb_dev_free(struct dvb_device *d)
 	struct dvb_device_priv *dvb = (void *)d;
 	struct dvb_open_descriptor *cur, *next;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_ops *ops = &dvb->ops;
 
 	/* Close all devices */
 	cur = dvb->open_list.next;
@@ -144,37 +145,17 @@ void dvb_dev_dump_device(char *msg,
 }
 
 struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
-					   unsigned int adapter,
-					   unsigned int num,
-					   enum dvb_dev_type type)
+					     unsigned int adapter,
+					     unsigned int num,
+					     enum dvb_dev_type type)
 {
 	struct dvb_device_priv *dvb = (void *)d;
-	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
-	int ret, i;
-	char *p;
+	struct dvb_dev_ops *ops = &dvb->ops;
 
-	if (type > dev_type_names_size){
-		dvb_logerr(_("Unexpected device type found!"));
+	if (!ops->seek_by_sysname)
 		return NULL;
-	}
 
-	ret = asprintf(&p, "dvb%d.%s%d", adapter, dev_type_names[type], num);
-	if (ret < 0) {
-		dvb_logerr(_("error %d when seeking for device's filename"),
-			   errno);
-		return NULL;
-	}
-	for (i = 0; i < dvb->d.num_devices; i++) {
-		if (!strcmp(p, dvb->d.devices[i].sysname)) {
-			free(p);
-			dvb_dev_dump_device(_("Selected dvb %s device: %s"),
-					    parms, &dvb->d.devices[i]);
-			return &dvb->d.devices[i];
-		}
-	}
-
-	dvb_logwarn(_("device %s not found"), p);
-	return NULL;
+	return ops->seek_by_sysname(dvb, adapter, num, type);
 }
 
 void dvb_dev_set_log(struct dvb_device *dvb, unsigned verbose,
@@ -210,7 +191,7 @@ void dvb_dev_stop_monitor(struct dvb_device *d)
 }
 
 struct dvb_open_descriptor *dvb_dev_open(struct dvb_device *d,
-					 char *sysname, int flags)
+					 const char *sysname, int flags)
 {
 	struct dvb_device_priv *dvb = (void *)d;
 	struct dvb_dev_ops *ops = &dvb->ops;

@@ -275,13 +275,49 @@ static int dvb_local_find(struct dvb_device_priv *dvb, int enable_monitor)
 	return 0;
 }
 
-static void dvb_local_stop_monitor(struct dvb_device_priv *dvb)
+static int dvb_local_stop_monitor(struct dvb_device_priv *dvb)
 {
 	dvb->monitor = 0;
+
+	return 0;
 }
 
-static struct dvb_open_descriptor *dvb_local_open(struct dvb_device_priv *dvb,
-					 char *sysname, int flags)
+struct dvb_dev_list *dvb_local_seek_by_sysname(struct dvb_device_priv *dvb,
+					       unsigned int adapter,
+					       unsigned int num,
+					       enum dvb_dev_type type)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	int ret, i;
+	char *p;
+
+	if (type > dev_type_names_size){
+		dvb_logerr(_("Unexpected device type found!"));
+		return NULL;
+	}
+
+	ret = asprintf(&p, "dvb%d.%s%d", adapter, dev_type_names[type], num);
+	if (ret < 0) {
+		dvb_logerr(_("error %d when seeking for device's filename"),
+			   errno);
+		return NULL;
+	}
+	for (i = 0; i < dvb->d.num_devices; i++) {
+		if (!strcmp(p, dvb->d.devices[i].sysname)) {
+			free(p);
+			dvb_dev_dump_device(_("Selected dvb %s device: %s"),
+					    parms, &dvb->d.devices[i]);
+			return &dvb->d.devices[i];
+		}
+	}
+
+	dvb_logwarn(_("device %s not found"), p);
+	return NULL;
+}
+
+static struct dvb_open_descriptor
+*dvb_local_open(struct dvb_device_priv *dvb,
+		const char *sysname, int flags)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_list *dev = NULL;
@@ -349,7 +385,7 @@ static struct dvb_open_descriptor *dvb_local_open(struct dvb_device_priv *dvb,
 	return open_dev;
 }
 
-static void dvb_local_close(struct dvb_open_descriptor *open_dev)
+static int dvb_local_close(struct dvb_open_descriptor *open_dev)
 {
 	struct dvb_dev_list *dev = open_dev->dev;
 	struct dvb_device_priv *dvb = open_dev->dvb;
@@ -369,12 +405,14 @@ static void dvb_local_close(struct dvb_open_descriptor *open_dev)
 		if (cur->next == open_dev) {
 			cur->next = open_dev->next;
 			free(open_dev);
-			return;
+			return 0;
 		}
 	}
 
 	/* Should never happen */
 	dvb_logerr(_("Couldn't free device\n"));
+
+	return -1;
 }
 
 #define MAX_TIME		10	/* 1.0 seconds */
@@ -400,7 +438,7 @@ static void dvb_local_close(struct dvb_open_descriptor *open_dev)
 	__rc;								\
 })
 
-static void dvb_local_dmx_stop(struct dvb_open_descriptor *open_dev)
+static int dvb_local_dmx_stop(struct dvb_open_descriptor *open_dev)
 {
 	struct dvb_dev_list *dev = open_dev->dev;
 	struct dvb_device_priv *dvb = open_dev->dvb;
@@ -408,11 +446,13 @@ static void dvb_local_dmx_stop(struct dvb_open_descriptor *open_dev)
 	int ret, fd = open_dev->fd;
 
 	if (dev->dvb_type != DVB_DEVICE_DEMUX)
-		return;
+		return -1;
 
 	ret = xioctl(fd, DMX_STOP);
 	if (ret == -1)
 		dvb_perror(_("DMX_STOP failed"));
+
+	return 0;
 }
 
 static int dvb_local_set_bufsize(struct dvb_open_descriptor *open_dev,
@@ -615,8 +655,8 @@ void dvb_dev_local_init(struct dvb_device_priv *dvb)
 {
 	struct dvb_dev_ops *ops = &dvb->ops;
 
-
 	ops->find = dvb_local_find;
+	ops->seek_by_sysname = dvb_local_seek_by_sysname;
 	ops->stop_monitor = dvb_local_stop_monitor;
 	ops->open = dvb_local_open;
 	ops->close = dvb_local_close;

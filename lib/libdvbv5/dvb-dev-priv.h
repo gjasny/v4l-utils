@@ -33,11 +33,15 @@ struct dvb_open_descriptor {
 
 struct dvb_dev_ops {
 	int (*find)(struct dvb_device_priv *dvb, int enable_monitor);
-	void (*stop_monitor)(struct dvb_device_priv *dvb);
+	struct dvb_dev_list * (*seek_by_sysname)(struct dvb_device_priv *dvb,
+						 unsigned int adapter,
+						 unsigned int num,
+						 enum dvb_dev_type type);
+	int (*stop_monitor)(struct dvb_device_priv *dvb);
 	struct dvb_open_descriptor *(*open)(struct dvb_device_priv *dvb,
-					    char *sysname, int flags);
-	void (*close)(struct dvb_open_descriptor *open_dev);
-	void (*dmx_stop)(struct dvb_open_descriptor *open_dev);
+					    const char *sysname, int flags);
+	int (*close)(struct dvb_open_descriptor *open_dev);
+	int (*dmx_stop)(struct dvb_open_descriptor *open_dev);
 	int (*set_bufsize)(struct dvb_open_descriptor *open_dev,
 			   int buffersize);
 	ssize_t (*read)(struct dvb_open_descriptor *open_dev,

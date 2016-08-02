@@ -237,7 +237,7 @@ void dvb_dev_set_log(struct dvb_device *dvb,
  * 	on further calls if sucess. NULL otherwise.
  */
 struct dvb_open_descriptor *dvb_dev_open(struct dvb_device *dvb,
-					 char *sysname, int flags);
+					 const char *sysname, int flags);
 
 /**
  * @brief Closes a dvb device
