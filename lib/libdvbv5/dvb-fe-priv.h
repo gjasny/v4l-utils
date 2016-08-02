@@ -54,9 +54,13 @@ struct dvb_v5_stats {
 
 };
 
+struct dvb_device_priv;
+
 struct dvb_v5_fe_parms_priv {
 	/* dvbv_v4_fe_parms should be the first element on this struct */
 	struct dvb_v5_fe_parms		p;
+
+	struct dvb_device_priv		*dvb;
 
 	int				fd;
 	int				fe_flags;	/* open() flags */
@@ -78,5 +82,11 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 		      int flags);
 void dvb_v5_free(struct dvb_v5_fe_parms_priv *parms);
 void __dvb_fe_close(struct dvb_v5_fe_parms_priv *parms);
+
+/* Functions that can be overriden to be executed remotely */
+int __dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys);
+int __dvb_fe_get_parms(struct dvb_v5_fe_parms *p);
+int __dvb_fe_set_parms(struct dvb_v5_fe_parms *p);
+int __dvb_fe_get_stats(struct dvb_v5_fe_parms *p);
 
 #endif

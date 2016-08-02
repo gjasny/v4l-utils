@@ -62,6 +62,12 @@ struct dvb_dev_ops {
 					   void *args,
 					   unsigned other_nit,
 					   unsigned timeout_multiply);
+
+	int (*fe_set_sys)(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys);
+	int (*fe_get_parms)(struct dvb_v5_fe_parms *p);
+	int (*fe_set_parms)(struct dvb_v5_fe_parms *p);
+	int (*fe_get_stats)(struct dvb_v5_fe_parms *p);
+
 	void (*free)(struct dvb_device_priv *dvb);
 };
 

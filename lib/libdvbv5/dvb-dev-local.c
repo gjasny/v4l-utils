@@ -651,6 +651,29 @@ static struct dvb_v5_descriptors *dvb_local_scan(struct dvb_open_descriptor *ope
 	return desc;
 }
 
+/* Frontend functions that can be overriden */
+
+int dvb_local_fe_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
+{
+	return __dvb_set_sys(p, sys);
+}
+
+int dvb_local_fe_get_parms(struct dvb_v5_fe_parms *p)
+{
+	return __dvb_fe_get_parms(p);
+}
+
+int dvb_local_fe_set_parms(struct dvb_v5_fe_parms *p)
+{
+	return __dvb_fe_set_parms(p);
+}
+
+int dvb_local_fe_get_stats(struct dvb_v5_fe_parms *p)
+{
+	return __dvb_fe_get_stats(p);
+}
+
+/* Initialize for local usage */
 void dvb_dev_local_init(struct dvb_device_priv *dvb)
 {
 	struct dvb_dev_ops *ops = &dvb->ops;
@@ -667,5 +690,11 @@ void dvb_dev_local_init(struct dvb_device_priv *dvb)
 	ops->dmx_set_pesfilter = dvb_local_dmx_set_pesfilter;
 	ops->dmx_set_section_filter = dvb_local_dmx_set_section_filter;
 	ops->dmx_get_pmt_pid = dvb_local_dmx_get_pmt_pid;
+
 	ops->scan = dvb_local_scan;
+
+	ops->fe_set_sys = dvb_local_fe_set_sys;
+	ops->fe_get_parms = dvb_local_fe_get_parms;
+	ops->fe_set_parms = dvb_local_fe_set_parms;
+	ops->fe_get_stats = dvb_local_fe_get_stats;
 }

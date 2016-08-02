@@ -437,7 +437,7 @@ int dvb_add_parms_for_sys(struct dvb_v5_fe_parms *p,
 	return n;
 }
 
-int dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
+int __dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	struct dtv_property dvb_prop[1];
@@ -667,7 +667,7 @@ static int dvb_copy_fe_props(const struct dtv_property *from, int n, struct dtv_
 	return j;
 }
 
-int dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
+int __dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	int i, n = 0;
@@ -810,7 +810,7 @@ static void dvb_setup_delsys_default(struct dvb_v5_fe_parms *p)
 	}
 }
 
-int dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
+int __dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	/* Use a temporary copy of the parameters so we can safely perform
@@ -1374,7 +1374,7 @@ static void dvb_fe_update_counters(struct dvb_v5_fe_parms_priv *parms)
 	}
 }
 
-int dvb_fe_get_stats(struct dvb_v5_fe_parms *p)
+int __dvb_fe_get_stats(struct dvb_v5_fe_parms *p)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	fe_status_t status = 0;

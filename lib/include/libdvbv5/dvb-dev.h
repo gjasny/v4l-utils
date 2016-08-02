@@ -399,8 +399,6 @@ struct dvb_v5_descriptors *dvb_dev_scan(struct dvb_open_descriptor *open_dev,
 					unsigned other_nit,
 					unsigned timeout_multiply);
 
-
-
 /* From dvb-dev-remote.c */
 
 #ifdef HAVE_DVBV5_REMOTE

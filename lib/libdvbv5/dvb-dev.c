@@ -64,6 +64,7 @@ void free_dvb_dev(struct dvb_dev_list *dvb_dev)
 struct dvb_device *dvb_dev_alloc(void)
 {
 	struct dvb_device_priv *dvb;
+	struct dvb_v5_fe_parms_priv *parms;
 
 	dvb = calloc(1, sizeof(struct dvb_device_priv));
 	if (!dvb)
@@ -74,6 +75,8 @@ struct dvb_device *dvb_dev_alloc(void)
 		dvb_dev_free(&dvb->d);
 		return NULL;
 	}
+	parms = (void *)dvb->d.fe_parms;
+	parms->dvb = dvb;
 
 	/* Initialize it to use the local DVB devices */
 	dvb_dev_local_init(dvb);
@@ -304,4 +307,50 @@ struct dvb_v5_descriptors *dvb_dev_scan(struct dvb_open_descriptor *open_dev,
 
 	return ops->scan(open_dev, entry, check_frontend, args, other_nit,
 			 timeout_multiply);
+}
+
+/* Frontend functions that can be overriden */
+
+int dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)p;
+	struct dvb_device_priv *dvb = parms->dvb;
+
+	if (!parms->dvb && !dvb->ops.fe_set_sys)
+		return __dvb_set_sys(p, sys);
+
+	return dvb->ops.fe_set_sys(p, sys);
+}
+
+int dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)p;
+	struct dvb_device_priv *dvb = parms->dvb;
+
+	if (!parms->dvb && !dvb->ops.fe_get_parms)
+		return __dvb_fe_get_parms(p);
+
+	return dvb->ops.fe_get_parms(p);
+}
+
+int dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)p;
+	struct dvb_device_priv *dvb = parms->dvb;
+
+	if (!parms->dvb && !dvb->ops.fe_set_parms)
+		return __dvb_fe_set_parms(p);
+
+	return dvb->ops.fe_set_parms(p);
+}
+
+int dvb_fe_get_stats(struct dvb_v5_fe_parms *p)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)p;
+	struct dvb_device_priv *dvb = parms->dvb;
+
+	if (!parms->dvb && !dvb->ops.fe_get_stats)
+		return __dvb_fe_get_stats(p);
+
+	return dvb->ops.fe_get_stats(p);
 }
