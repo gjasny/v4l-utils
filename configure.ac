@@ -263,6 +263,10 @@ fi
 
 AC_SUBST([JPEG_LIBS])
 
+# Check for pthread
+
+AX_PTHREAD([have_pthread=yes], [have_pthread=no])
+
 # The dlopen() function is in the C library for *BSD and in
 # libdl on GLIBC-based systems
 
@@ -436,6 +440,11 @@ AM_COND_IF([WITH_V4L2_CTL_LIBV4L], [USE_V4L2_CTL="yes"], [USE_V4L2_CTL="no"])
 AM_COND_IF([WITH_V4L2_COMPLIANCE_LIBV4L], [USE_V4L2_COMPLIANCE="yes"], [USE_V4L2_COMPLIANCE="no"])
 AS_IF([test "x$alsa_pkgconfig" = "xtrue"], [USE_ALSA="yes"], [USE_ALSA="no"])
 
+AC_OUTPUT
+
+dnl ---------------------------------------------------------------------
+dnl compile time options summary
+
 cat <<EOF
 
 compile time options summary
@@ -447,6 +456,7 @@ compile time options summary
     glu			: $glu_pkgconfig
     libjpeg		: $have_jpeg
     libudev		: $have_libudev
+    pthread		: $have_pthread
     QT version		: $QT_VERSION
     ALSA support	: $USE_ALSA
 
