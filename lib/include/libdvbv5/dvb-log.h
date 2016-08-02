@@ -88,6 +88,9 @@ typedef void (*dvb_logfunc)(int level, const char *fmt, ...) __attribute__ (( fo
 #define dvb_loginfo(fmt, arg...) do {\
 	parms->p.logfunc(LOG_NOTICE, fmt, ##arg); \
 } while (0)
+#define dvb_loglevel(level, fmt, arg...) do {\
+	parms->p.logfunc(level, fmt, ##arg); \
+} while (0)
 
 #define dvb_perror(msg) do {\
 	parms->p.logfunc(LOG_ERR, "%s: %s", msg, strerror(errno)); \
