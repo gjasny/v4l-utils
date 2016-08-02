@@ -48,7 +48,9 @@ static const char doc[] = N_(
 	"\nA DVB frontend tool using API version 5\n"
 	"\nOn the options below, the arguments are:\n"
 	"  ADAPTER      - the dvb adapter to control\n"
-	"  FRONTEND     - the dvb frontend to control");
+	"  FRONTEND     - the dvb frontend to control\n"
+	"  SERVER       - server address whith is running the dvb5-daemon\n"
+	"  PORT         - server port used by the dvb5-daemon\n");
 
 static const struct argp_option options[] = {
 	{"verbose",	'v',	0,		0,	N_("enables debug messages"), 0},
@@ -61,6 +63,8 @@ static const struct argp_option options[] = {
 	{"set",		's',	N_("PARAMS"),	0,	N_("set frontend"), 0},
 #endif
 	{"get",		'g',	0,		0,	N_("get frontend"), 0},
+	{"server",	'H',	N_("SERVER"),	0, 	N_("dvbv5-daemon host IP address"), 0},
+	{"tcp-port",	'T',	N_("PORT"),	0, 	N_("dvbv5-daemon host tcp port"), 0},
 	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
 	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
 	{"version",	'V',	0,		0,	N_("Print program version"), -1},
@@ -71,6 +75,8 @@ static int adapter = 0;
 static int frontend = 0;
 static unsigned get = 0;
 static char *set_params = NULL;
+static char *server = NULL;
+static unsigned port = 0;
 static int verbose = 0;
 static int delsys = 0;
 static int femon = 0;
@@ -126,6 +132,12 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 #endif
 	case 'g':
 		get++;
+		break;
+	case 'H':
+		server = arg;
+		break;
+	case 'T':
+		port = atoi(arg);
 		break;
 	case 'v':
 		verbose	++;
@@ -272,7 +284,7 @@ int main(int argc, char *argv[])
 	struct dvb_device *dvb;
 	struct dvb_dev_list *dvb_dev;
 	struct dvb_v5_fe_parms *parms;
-	int fe_flags = O_RDWR;
+	int ret, fe_flags = O_RDWR;
 
 #ifdef ENABLE_NLS
 	setlocale (LC_ALL, "");
@@ -298,6 +310,14 @@ int main(int argc, char *argv[])
 	dvb = dvb_dev_alloc();
 	if (!dvb)
 		return -1;
+
+	if (server && port) {
+		printf(_("Connecting to %s:%d\n"), server, port);
+		ret = dvb_dev_remote_init(dvb, server, port);
+		if (ret < 0)
+			return -1;
+	}
+
 	dvb_dev_set_log(dvb, verbose, NULL);
 	dvb_dev_find(dvb, 0);
 	parms = dvb->fe_parms;
