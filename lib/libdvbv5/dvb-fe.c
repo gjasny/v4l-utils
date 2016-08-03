@@ -1385,7 +1385,7 @@ int __dvb_fe_get_stats(struct dvb_v5_fe_parms *p)
 
 	if (xioctl(parms->fd, FE_READ_STATUS, &status) == -1) {
 		dvb_perror("FE_READ_STATUS");
-		return EINVAL;
+		return -EINVAL;
 	}
 	dvb_fe_store_stats(parms, DTV_STATUS, FE_SCALE_RELATIVE, 0, status);
 
