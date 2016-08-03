@@ -288,6 +288,7 @@ static ssize_t prepare_data(char *buf, const size_t size,
 	char *p = buf, *endp = &buf[size], *s;
 	int len;
 	int32_t i32;
+	uint64_t u64;
 
 	while (*fmt && *fmt != '%') fmt++;
 	if (*fmt == '%') fmt++;
@@ -328,6 +329,19 @@ static ssize_t prepare_data(char *buf, const size_t size,
 			i32 = htobe32(va_arg(ap, int32_t));
 			memcpy(p, &i32, 4);
 			p += 4;
+			break;
+		case 'l':              /* 64-bit unsigned int */
+			if (*fmt++ != 'u') {
+				dbg("invalid long format character: '%c'", *fmt);
+				break;
+			}
+			if (p + 8 > endp) {
+				dbg("buffer to short for uint64_t");
+				return -1;
+			}
+			u64 = htobe64(va_arg(ap, uint64_t));
+			memcpy(p, &u64, 8);
+			p += 8;
 			break;
 		default:
 			dbg("invalid format character: '%c'", *fmt);
@@ -374,6 +388,7 @@ static ssize_t scan_data(char *buf, int buf_size, const char *fmt, ...)
 	char *p = buf, *endp = &buf[buf_size], *s;
 	int len;
 	int32_t *i32;
+	uint64_t *u64;
 	ssize_t *count;
 	va_list ap;
 
@@ -427,6 +442,20 @@ static ssize_t scan_data(char *buf, int buf_size, const char *fmt, ...)
 
 			*i32 = be32toh(*(int32_t *)p);
 			p += 4;
+			break;
+		case 'l':              /* 64-bit unsigned int */
+			if (*fmt++ != 'u') {
+				dbg("invalid long format character: '%c'", *fmt);
+				break;
+			}
+			if (p + 8 > endp) {
+				dbg("buffer to short for uint64_t");
+				return -1;
+			}
+			u64 = va_arg(ap, uint64_t *);
+
+			*u64 = be32toh(*(uint64_t *)p);
+			p += 8;
 			break;
 		default:
 			dbg("invalid format character: '%c'", *fmt);

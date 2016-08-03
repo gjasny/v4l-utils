@@ -101,6 +101,7 @@ static struct queued_msg *send_cmd(struct dvb_device_priv *dvb, int fd,
 	char buf[4096], *p = buf, *endp = &buf[sizeof(buf)], *s;
 	int ret, len;
 	int32_t i32;
+	uint64_t u64;
 	va_list ap;
 
 	msg = calloc(1, sizeof(*msg));
@@ -184,6 +185,19 @@ static struct queued_msg *send_cmd(struct dvb_device_priv *dvb, int fd,
 			memcpy(p, &i32, 4);
 			p += 4;
 			break;
+		case 'l':              /* 64-bit unsigned int */
+			if (*fmt++ != 'u') {
+				dvb_logdbg("invalid long format character: '%c'", *fmt);
+				break;
+			}
+			if (p + 8 > endp) {
+				dvb_logdbg("buffer to short for uint64_t");
+				return NULL;
+			}
+			u64 = htobe64(va_arg(ap, uint64_t));
+			memcpy(p, &u64, 8);
+			p += 8;
+			break;
 		default:
 			dvb_logdbg("invalid format character: '%c'", *fmt);
 		}
@@ -244,6 +258,7 @@ static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
 	char *p = buf, *endp = &buf[buf_size], *s;
 	int len;
 	int32_t *i32;
+	uint64_t *u64;
 	ssize_t *count;
 	va_list ap;
 
@@ -301,6 +316,20 @@ static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
 
 			*i32 = be32toh(*(int32_t *)p);
 			p += 4;
+			break;
+		case 'l':              /* 64-bit unsigned int */
+			if (*fmt++ != 'u') {
+				dvb_logdbg("invalid long format character: '%c'", *fmt);
+				break;
+			}
+			if (p + 8 > endp) {
+				dvb_logdbg("buffer to short for uint64_t");
+				return -1;
+			}
+			u64 = va_arg(ap, uint64_t *);
+
+			*u64 = be32toh(*(uint64_t *)p);
+			p += 8;
 			break;
 		default:
 			dvb_logdbg("invalid format character: '%c'", *fmt);
