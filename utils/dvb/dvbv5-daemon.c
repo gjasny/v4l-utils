@@ -38,6 +38,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
+#include "../../lib/libdvbv5/dvb-fe-priv.h"
 #include "libdvbv5/dvb-file.h"
 #include "libdvbv5/dvb-dev.h"
 
@@ -189,6 +190,10 @@ static struct dvb_device *dvb = NULL;
 static void *desc_root = NULL;
 static int dvb_fd = -1;
 
+static char output_charset[256] = "utf-8";
+static char default_charset[256] = "iso-8859-1";
+
+
 /*
  * Open dev descriptor handling
  */
@@ -282,8 +287,8 @@ static void restore_sigterm_handler(void)
  * Functions to send/receive messages to the client
  */
 
-static ssize_t prepare_data(char *buf, const size_t size,
-			    const char *fmt, va_list ap)
+static ssize_t __prepare_data(char *buf, const size_t size,
+			      const char *fmt, va_list ap)
 {
 	char *p = buf, *endp = &buf[size], *s;
 	int len;
@@ -353,6 +358,36 @@ static ssize_t prepare_data(char *buf, const size_t size,
 }
 
 
+static ssize_t prepare_data(char *buf, const size_t size,
+			      const char *fmt, ...)
+	__attribute__ (( format( printf, 3, 4 )));
+
+static ssize_t prepare_data(char *buf, const size_t size,
+			      const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = __prepare_data(buf, size, fmt, ap);
+	va_end(ap);
+
+	return ret;
+}
+
+static int send_buf(int fd, const char *buf, size_t size)
+{
+	int ret;
+
+	pthread_mutex_lock(&msg_mutex);
+	ret = write(fd, buf, size);
+	pthread_mutex_unlock(&msg_mutex);
+	if (ret < 0)
+		local_perror("write");
+
+	return ret;
+}
+
 static ssize_t send_data(int fd, const char *fmt, ...)
 	__attribute__ (( format( printf, 2, 3 )));
 
@@ -366,18 +401,12 @@ static ssize_t send_data(int fd, const char *fmt, ...)
 		dbg("called %s(fd, \"%s\", ...)", __FUNCTION__, fmt);
 
 	va_start(ap, fmt);
-	ret = prepare_data(buf, sizeof(buf), fmt, ap);
+	ret = __prepare_data(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (ret < 0)
 		return ret;
 
-	pthread_mutex_lock(&msg_mutex);
-	ret = write(fd, buf, ret);
-	pthread_mutex_unlock(&msg_mutex);
-	if (ret < 0)
-		local_perror("write");
-
-	return ret;
+	return send_buf(fd, buf, ret);
 }
 
 static ssize_t scan_data(char *buf, int buf_size, const char *fmt, ...)
@@ -671,7 +700,7 @@ static int dev_read(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 {
 	struct dvb_open_descriptor *open_dev;
 	int uid, ret, i;
-	char outbuf[4100];
+	char outbuf[REMOTE_BUF_SIZE];
 	size_t count;
 
 	ret = scan_data(buf, size, "%i%i",  &uid, &i);
@@ -679,8 +708,8 @@ static int dev_read(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 		goto error;
 	count = i;
 
-	if (count > sizeof(buf))
-		count = sizeof(buf);
+	if (count > sizeof(outbuf))
+		count = sizeof(outbuf);
 
 	open_dev = get_open_dev(uid);
 	if (!open_dev) {
@@ -691,8 +720,11 @@ static int dev_read(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 
 	ret = dvb_dev_read(open_dev, outbuf, count);
 
+	if (verbose)
+		dbg("read %zd bytes", count);
+
 error:
-	return send_data(fd, "%i%s%i%p", seq, cmd, ret, outbuf);
+	return send_data(fd, "%i%s%i%p", seq, cmd, ret, outbuf, ret);
 }
 
 static int dev_dmx_set_pesfilter(uint32_t seq, char *cmd, int fd,
@@ -724,10 +756,10 @@ static int dev_dmx_set_section_filter(uint32_t seq, char *cmd, int fd,
 {
 	struct dvb_open_descriptor *open_dev;
 	int uid, ret, pid, filtsize, flags;
-	unsigned char *filter, *mask, *mode;
+	unsigned char filter[17], mask[17], mode[17];
 
-	ret = scan_data(buf, size, "%i%i%i%p%p%p%i",
-			&uid, &pid, &filtsize, &filter, &mask, &mode, &flags);
+	ret = scan_data(buf, size, "%i%i%i%s%s%s%i",
+			&uid, &pid, &filtsize, filter, mask, &mode, &flags);
 	if (ret < 0)
 		goto error;
 
@@ -801,8 +833,260 @@ error:
 #endif
 }
 
+static int dev_set_sys(uint32_t seq, char *cmd, int fd,
+		       char *buf, ssize_t size)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->fe_parms;
+	struct dvb_v5_fe_parms *p = (void *)parms;
+	int sys = 0, ret;
+
+	ret = scan_data(buf, size, "%i", &sys);
+	if (ret < 0)
+		goto error;
+
+	ret = __dvb_set_sys(p, sys);
+error:
+	return send_data(fd, "%i%s%i", seq, cmd, ret);
+}
+
+static int dev_get_parms(uint32_t seq, char *cmd, int fd,
+			 char *inbuf, ssize_t insize)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->fe_parms;
+	struct dvb_v5_fe_parms *par = (void *)parms;
+	struct dvb_frontend_info *info = &par->info;
+	int ret, i;
+	char buf[REMOTE_BUF_SIZE], lnb_name[80] = "", *p = buf;
+	size_t size = sizeof(buf);
+
+	if (verbose)
+		dbg("dev_get_parms called");
+
+	ret = __dvb_fe_get_parms(par);
+	if (ret < 0)
+		goto error;
+
+	/* Send first the public params */
+
+	ret = prepare_data(p, size, "%i%s%s%i%i%i%i%i%i%i", seq, cmd,
+			   info->name, info->frequency_min,
+			   info->frequency_max, info->frequency_stepsize,
+			   info->frequency_tolerance, info->symbol_rate_min,
+			   info->symbol_rate_max, info->symbol_rate_tolerance);
+	if (ret < 0)
+		goto error;
+
+	p += ret;
+	size -= ret;
+
+	if (par->lnb)
+		strcpy(lnb_name, par->lnb->name);
+
+	ret = prepare_data(p, size, "%i%i%i%i%i%i%i%s%i%i%i%i%s%s",
+			   par->version, par->has_v5_stats, par->current_sys,
+			   par->num_systems, par->legacy_fe, par->abort,
+		           par->lna, lnb_name,
+			   par->sat_number, par->freq_bpf, par->diseqc_wait,
+			   par->verbose, par->default_charset,
+			   par->output_charset);
+	if (ret < 0)
+		goto error;
+
+	p += ret;
+	size -= ret;
+
+	for (i = 0; i < MAX_DELIVERY_SYSTEMS; i++) {
+		ret = prepare_data(p, size, "%i", par->systems[i]);
+		if (ret < 0)
+			goto error;
+
+		p += ret;
+		size -= ret;
+	}
+
+	/* Now, send the private ones - except for stats */
+
+	ret = prepare_data(p, size, "%i%i%i%i",
+			   parms->n_props,
+			   parms->country,
+			   parms->high_band,
+			   parms->freq_offset);
+	if (ret < 0)
+		goto error;
+
+	p += ret;
+	size -= ret;
+
+	for (i = 0; i < parms->n_props; i++) {
+		ret = prepare_data(p, size, "%i%i",
+				   parms->dvb_prop[i].cmd,
+				   parms->dvb_prop[i].u.data);
+		if (ret < 0)
+			goto error;
+
+		p += ret;
+		size -= ret;
+	}
+
+	strcpy(output_charset, par->output_charset);
+	strcpy(default_charset, par->default_charset);
+
+	send_buf(fd, buf, p - buf);
+error:
+	return ret;
+}
+
+static int dev_set_parms(uint32_t seq, char *cmd, int fd,
+			 char *buf, ssize_t size)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->fe_parms;
+	struct dvb_v5_fe_parms *par = (void *)parms;
+	int ret, i;
+	char *p = buf;
+	const char *old_lnb = "";
+	char new_lnb[256];
+
+	if (verbose)
+		dbg("dev_set_parms called");
+
+	/* first the public params that aren't read only */
+
+	/* Get current LNB name */
+	if (par->lnb)
+		old_lnb = par->lnb->name;
+
+	ret = scan_data(p, size, "%i%i%s%i%i%i%i%s%s",
+			&par->abort, &par->lna, new_lnb,
+			&par->sat_number, &par->freq_bpf, &par->diseqc_wait,
+			&par->verbose, default_charset, output_charset);
+
+	if (ret < 0)
+		goto error;
+
+	p += ret;
+	size -= ret;
+
+	/* Now, the private ones */
+
+	ret = scan_data(p, size, "%i", &i);
+	if (ret < 0)
+		goto error;
+	parms->country = i;
+
+	p += ret;
+	size -= ret;
+
+	for (i = 0; i < parms->n_props; i++) {
+		ret = scan_data(p, size, "%i%i",
+				&parms->dvb_prop[i].cmd,
+				&parms->dvb_prop[i].u.data);
+		if (ret < 0)
+			goto error;
+
+		p += ret;
+		size -= ret;
+	}
+
+	if (!*new_lnb) {
+		par->lnb = NULL;
+	} else if (strcmp(old_lnb, new_lnb)) {
+		int lnb = dvb_sat_search_lnb(new_lnb);
+
+		if (lnb < 0) {
+			dvb_logerr("Invalid lnb: %s", new_lnb);
+			ret = -1;
+			goto error;
+		}
+
+		par->lnb = dvb_sat_get_lnb(lnb);
+	}
+
+	par->output_charset = output_charset;
+	par->default_charset = default_charset;
+
+	ret = __dvb_fe_set_parms(par);
+
+error:
+	return send_data(fd, "%i%s%i", seq, cmd, ret);
+}
+
+static int dev_get_stats(uint32_t seq, char *cmd, int fd,
+			 char *inbuf, ssize_t insize)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->fe_parms;
+	struct dvb_v5_stats *st = &parms->stats;
+	struct dvb_v5_fe_parms *par = (void *)parms;
+	int ret, i;
+	char buf[REMOTE_BUF_SIZE], *p = buf;
+	size_t size = sizeof(buf);
+
+	if (verbose)
+		dbg("dev_get_stats called");
+
+	ret = __dvb_fe_get_stats(par);
+	if (ret < 0)
+		goto error;
+
+	ret = prepare_data(p, size, "%i%s%i", seq, cmd, st->prev_status);
+	if (ret < 0)
+		goto error;
+
+	p += ret;
+	size -= ret;
+
+	for (i = 0; i < DTV_NUM_STATS_PROPS; i++) {
+		ret = prepare_data(p, size, "%i%i",
+				   st->prop[i].cmd,
+				   st->prop[i].u.data);
+		if (ret < 0)
+			goto error;
+
+		p += ret;
+		size -= ret;
+	}
+	for (i = 0; i < MAX_DTV_STATS; i++) {
+		struct dvb_v5_counters *prev = st->prev;
+		struct dvb_v5_counters *cur = st->cur;
+
+		ret = prepare_data(p, size, "%i%i%i",
+				   st->has_post_ber[i],
+				   st->has_pre_ber[i],
+				   st->has_per[i]);
+		if (ret < 0)
+			goto error;
+
+		p += ret;
+		size -= ret;
+
+		ret = prepare_data(p, size,
+				   "%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu",
+				   prev->pre_bit_count,
+				   prev->pre_bit_error,
+				   prev->post_bit_count,
+				   prev->post_bit_error,
+				   prev->block_count,
+				   prev->block_error,
+				   cur->pre_bit_count,
+				   cur->pre_bit_error,
+				   cur->post_bit_count,
+				   cur->post_bit_error,
+				   cur->block_count,
+				   cur->block_error);
+
+		if (ret < 0)
+			goto error;
+
+		p += ret;
+		size -= ret;
+	}
+
+	send_buf(fd, buf, p - buf);
+error:
+	return ret;
+}
+
 /*
- * Structure with all methods with XML-RPC calls
+ * Structure with all methods with RPC calls
  */
 
 typedef int (*method_handler) (uint32_t seq, char *cmd, int fd,
@@ -827,7 +1111,14 @@ static const struct method_types const methods[] = {
 	{"dev_dmx_set_pesfilter", &dev_dmx_set_pesfilter, 0},
 	{"dev_dmx_set_section_filter", &dev_dmx_set_section_filter, 0},
 	{"dev_dmx_get_pmt_pid", &dev_dmx_get_pmt_pid, 0},
+
 	{"dev_scan", &dev_scan, 0},
+
+	{"dev_set_sys", &dev_set_sys, 0},
+	{"fe_get_parms", &dev_get_parms, 0},
+	{"fe_set_parms", &dev_set_parms, 0},
+	{"fe_get_stats", &dev_get_stats, 0},
+
 	{}
 };
 
