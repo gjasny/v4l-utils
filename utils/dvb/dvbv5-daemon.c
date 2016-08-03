@@ -282,19 +282,12 @@ static void restore_sigterm_handler(void)
  * Functions to send/receive messages to the client
  */
 
-static ssize_t send_data(int fd, const char *fmt, ...)
-	__attribute__ (( format( printf, 2, 3 )));
-
-static ssize_t send_data(int fd, const char *fmt, ...)
+static ssize_t prepare_data(char *buf, const size_t size,
+			    const char *fmt, va_list ap)
 {
-	char buf[REMOTE_BUF_SIZE], *p = buf, *endp = &buf[sizeof(buf)], *s;
-	int ret, len;
+	char *p = buf, *endp = &buf[size], *s;
+	int len;
 	int32_t i32;
-	va_list ap;
-
-	if (verbose)
-		dbg("called %s(fd, \"%s\", ...)", __FUNCTION__, fmt);
-	va_start(ap, fmt);
 
 	while (*fmt && *fmt != '%') fmt++;
 	if (*fmt == '%') fmt++;
@@ -342,10 +335,30 @@ static ssize_t send_data(int fd, const char *fmt, ...)
 		while (*fmt && *fmt != '%') fmt++;
 		if (*fmt == '%') fmt++;
 	}
+	return p - buf;
+}
+
+
+static ssize_t send_data(int fd, const char *fmt, ...)
+	__attribute__ (( format( printf, 2, 3 )));
+
+static ssize_t send_data(int fd, const char *fmt, ...)
+{
+	char buf[REMOTE_BUF_SIZE];
+	va_list ap;
+	int ret;
+
+	if (verbose)
+		dbg("called %s(fd, \"%s\", ...)", __FUNCTION__, fmt);
+
+	va_start(ap, fmt);
+	ret = prepare_data(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
+	if (ret < 0)
+		return ret;
 
 	pthread_mutex_lock(&msg_mutex);
-	ret = write(fd, buf, p - buf);
+	ret = write(fd, buf, ret);
 	pthread_mutex_unlock(&msg_mutex);
 	if (ret < 0)
 		local_perror("write");
