@@ -71,8 +71,8 @@ struct arguments {
 	unsigned timeout, dvr, rec_psi, exit_after_tuning;
 	unsigned n_apid, n_vpid, all_pids;
 	enum dvb_file_formats input_format, output_format;
-	unsigned traffic_monitor, low_traffic, non_human;
-	char *search;
+	unsigned traffic_monitor, low_traffic, non_human, port;
+	char *search, *server;
 	const char *cc;
 
 	/* Used by status print */
@@ -105,9 +105,11 @@ static const struct argp_option options[] = {
 	{"low_traffic",	'X', NULL,			0, N_("also shows DVB traffic with less then 1 packet per second"), 0},
 	{"cc",		'C', N_("country_code"),	0, N_("Set the default country to be used (in ISO 3166-1 two letter code)"), 0},
 	{"non-numan",	'N', NULL,			0, N_("Non-human formatted stats (useful for scripts)"), 0},
-	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
-	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
-	{"version",	-4,	0,		0,	N_("Print program version"), -1},
+	{"server",	'H', N_("SERVER"),		0, N_("dvbv5-daemon host IP address"), 0},
+	{"tcp-port",	'T', N_("PORT"),		0, N_("dvbv5-daemon host tcp port"), 0},
+	{"help",        '?', 0,				0, N_("Give this help list"), -1},
+	{"usage",	-3,  0,				0, N_("Give a short usage message")},
+	{"version",	-4,  0,				0, N_("Print program version"), -1},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -610,6 +612,12 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'C':
 		args->cc = strndup(optarg, 2);
 		break;
+	case 'H':
+		args->server = strdup(optarg);
+		break;
+	case 'T':
+		args->port = atoi(optarg);
+		break;
 	case '?':
 		argp_state_help(state, state->out_stream,
 				ARGP_HELP_SHORT_USAGE | ARGP_HELP_LONG
@@ -797,7 +805,7 @@ int main(int argc, char **argv)
 	struct dvb_open_descriptor *audio_fd = NULL, *video_fd = NULL;
 	int file_fd = -1;
 	int err = -1;
-	int r;
+	int r, ret;
 	struct dvb_v5_fe_parms *parms = NULL;
 	struct dvb_device *dvb;
 	struct dvb_dev_list *dvb_dev;
@@ -859,6 +867,14 @@ int main(int argc, char **argv)
 	dvb = dvb_dev_alloc();
 	if (!dvb)
 		return -1;
+
+	if (args.server && args.port) {
+		printf(_("Connecting to %s:%d\n"), args.server, args.port);
+		ret = dvb_dev_remote_init(dvb, args.server, args.port);
+		if (ret < 0)
+			return -1;
+	}
+
 	dvb_dev_set_log(dvb, args.verbose, NULL);
 	dvb_dev_find(dvb, 0);
 	parms = dvb->fe_parms;
