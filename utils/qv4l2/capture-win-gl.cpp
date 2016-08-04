@@ -735,7 +735,6 @@ QString CaptureWinGLEngine::codeYUV2RGB()
 			       );
 	case V4L2_YCBCR_ENC_601:
 	case V4L2_YCBCR_ENC_XV601:
-	case V4L2_YCBCR_ENC_SYCC:
 		// These colorspaces all use the BT.601 luma coefficients
 		return QString("   float r = y + 1.403 * v;"
 		       "   float g = y - 0.344 * u - 0.714 * v;"

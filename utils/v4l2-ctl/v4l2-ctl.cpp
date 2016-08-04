@@ -445,8 +445,6 @@ static std::string ycbcr_enc2s(int val)
 		return "xvYCC 601";
 	case V4L2_YCBCR_ENC_XV709:
 		return "xvYCC 709";
-	case V4L2_YCBCR_ENC_SYCC:
-		return "sYCC";
 	case V4L2_YCBCR_ENC_BT2020:
 		return "BT.2020";
 	case V4L2_YCBCR_ENC_BT2020_CONST_LUM:
@@ -850,7 +848,6 @@ static __u32 parse_ycbcr(const char *s)
 	if (!strcmp(s, "709")) return V4L2_YCBCR_ENC_709;
 	if (!strcmp(s, "xv601")) return V4L2_YCBCR_ENC_XV601;
 	if (!strcmp(s, "xv709")) return V4L2_YCBCR_ENC_XV709;
-	if (!strcmp(s, "sycc")) return V4L2_YCBCR_ENC_SYCC;
 	if (!strcmp(s, "bt2020")) return V4L2_YCBCR_ENC_BT2020;
 	if (!strcmp(s, "bt2020c")) return V4L2_YCBCR_ENC_BT2020_CONST_LUM;
 	if (!strcmp(s, "smpte240m")) return V4L2_YCBCR_ENC_SMPTE240M;

@@ -777,7 +777,6 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		m_ycbcrEnc->addItem("Rec. 709", QVariant(V4L2_YCBCR_ENC_709));
 		m_ycbcrEnc->addItem("xvYCC 601", QVariant(V4L2_YCBCR_ENC_XV601));
 		m_ycbcrEnc->addItem("xvYCC 709", QVariant(V4L2_YCBCR_ENC_XV709));
-		m_ycbcrEnc->addItem("sYCC", QVariant(V4L2_YCBCR_ENC_SYCC));
 		m_ycbcrEnc->addItem("BT.2020", QVariant(V4L2_YCBCR_ENC_BT2020));
 		m_ycbcrEnc->addItem("BT.2020 Constant Luminance", QVariant(V4L2_YCBCR_ENC_BT2020_CONST_LUM));
 		m_ycbcrEnc->addItem("SMPTE 240M", QVariant(V4L2_YCBCR_ENC_SMPTE240M));

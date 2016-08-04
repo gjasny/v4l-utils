@@ -184,7 +184,6 @@ void ApplicationWindow::addTpgTab(int m_winWidth)
 	m_tpgYCbCrEnc->addItem("Rec. 709", QVariant(V4L2_YCBCR_ENC_709));
 	m_tpgYCbCrEnc->addItem("xvYCC 601", QVariant(V4L2_YCBCR_ENC_XV601));
 	m_tpgYCbCrEnc->addItem("xvYCC 709", QVariant(V4L2_YCBCR_ENC_XV709));
-	m_tpgYCbCrEnc->addItem("sYCC", QVariant(V4L2_YCBCR_ENC_SYCC));
 	m_tpgYCbCrEnc->addItem("BT.2020", QVariant(V4L2_YCBCR_ENC_BT2020));
 	m_tpgYCbCrEnc->addItem("BT.2020 Constant Luminance", QVariant(V4L2_YCBCR_ENC_BT2020_CONST_LUM));
 	m_tpgYCbCrEnc->addItem("SMPTE 240M", QVariant(V4L2_YCBCR_ENC_SMPTE240M));

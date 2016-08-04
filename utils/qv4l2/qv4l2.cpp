@@ -221,7 +221,6 @@ ApplicationWindow::ApplicationWindow() :
 	addSubMenuItem(grp, menu, "Rec. 709", V4L2_YCBCR_ENC_709);
 	addSubMenuItem(grp, menu, "xvYCC 601", V4L2_YCBCR_ENC_XV601);
 	addSubMenuItem(grp, menu, "xvYCC 709", V4L2_YCBCR_ENC_XV709);
-	addSubMenuItem(grp, menu, "sYCC", V4L2_YCBCR_ENC_SYCC);
 	addSubMenuItem(grp, menu, "BT.2020", V4L2_YCBCR_ENC_BT2020);
 	addSubMenuItem(grp, menu, "BT.2020 Constant Luminance", V4L2_YCBCR_ENC_BT2020_CONST_LUM);
 	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_YCBCR_ENC_SMPTE240M);

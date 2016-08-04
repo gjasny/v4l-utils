@@ -44,7 +44,7 @@ void vidout_usage(void)
 	       "                     <xf> can be one of the following transfer functions:\n"
 	       "                       default, 709, srgb, adobergb, smpte240m, smpte2084, dcip3, none\n"
 	       "                     <y> can be one of the following Y'CbCr encodings:\n"
-	       "                       default, 601, 709, xv601, xv709, sycc, bt2020, bt2020c, smpte240m\n"
+	       "                       default, 601, 709, xv601, xv709, bt2020, bt2020c, smpte240m\n"
 	       "                     <q> can be one of the following quantization methods:\n"
 	       "                       default, full-range, lim-range\n"
 	       );
