@@ -163,6 +163,10 @@ void local_log(int level, const char *fmt, ...)
 	local_log(LOG_INFO, fmt, ##arg); \
 } while (0)
 
+#define warn(fmt, arg...) do {\
+	local_log(LOG_WARNING, fmt, ##arg); \
+} while (0)
+
 #define err(fmt, arg...) do {\
 	local_log(LOG_ERR, "%s: " fmt, __FUNCTION__, ##arg); \
 } while (0)
@@ -1277,7 +1281,16 @@ int main(int argc, char *argv[])
 	pthread_mutex_init(&uid_mutex, NULL);
 
 	/* Accept actual connection from the client */
+
+	warn("Support for Digital TV remote access is still highly experimental.\n"
+	     "\nKnown issues:\n"
+	     "  - Error handling is not right: on error, the client may wait forever;\n"
+	     "  - The libdvbv5 API support is incomplete: it misses satellite, scan\n"
+	     "    and other functions;\n"
+	     "  - Currently, dvbv5-zap doesn't map the dvr file to be used remotely\n\n");
+
 	info(PROGRAM_NAME" started.");
+
 	while (1) {
 		int fd;
 		pthread_t id;
