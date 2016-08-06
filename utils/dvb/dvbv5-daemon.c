@@ -418,7 +418,6 @@ static ssize_t scan_data(char *buf, int buf_size, const char *fmt, ...)
 	int len;
 	int32_t *i32;
 	uint64_t *u64;
-	ssize_t *count;
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -441,25 +440,6 @@ static ssize_t scan_data(char *buf, int buf_size, const char *fmt, ...)
 
 			memcpy(s, p, len);
 			s[len] = '\0';
-			p += len;
-			break;
-		case 'p':              /* binary data with specified length */
-			s = va_arg(ap, char *);
-			if (p + 4 > endp) {
-				dbg("buffer to short for string length");
-				return -1;
-			}
-			len = be32toh(*(int32_t *)p);
-			p += 4;
-			if (p + len > endp) {
-				dbg("buffer to short for string");
-				return -1;
-			}
-
-			memcpy(s, p, len);
-			count = va_arg(ap, ssize_t *);
-			*count = len;
-
 			p += len;
 			break;
 		case 'i':              /* 32-bit int */
@@ -696,20 +676,23 @@ error:
  * FIXME: reimplement it to be async and use poll()
  */
 
-static int dev_read(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
+static int dev_read(uint32_t seq, char *cmd, int fd,
+		    char *inbuf, ssize_t insize)
 {
 	struct dvb_open_descriptor *open_dev;
 	int uid, ret, i;
-	char outbuf[REMOTE_BUF_SIZE];
+	char databuf[REMOTE_BUF_SIZE];
+	char buf[REMOTE_BUF_SIZE], *p = buf;
+	size_t size = sizeof(buf);
 	size_t count;
 
-	ret = scan_data(buf, size, "%i%i",  &uid, &i);
+	ret = scan_data(inbuf, insize, "%i%i",  &uid, &i);
 	if (ret < 0)
 		goto error;
 	count = i;
 
-	if (count > sizeof(outbuf))
-		count = sizeof(outbuf);
+	if (count > sizeof(databuf))
+		count = sizeof(databuf);
 
 	open_dev = get_open_dev(uid);
 	if (!open_dev) {
@@ -718,13 +701,32 @@ static int dev_read(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 		goto error;
 	}
 
-	ret = dvb_dev_read(open_dev, outbuf, count);
+	ret = dvb_dev_read(open_dev, databuf, count);
 
 	if (verbose)
-		dbg("read %zd bytes", count);
+		dbg("read %zd bytes", ret);
+
+	count = ret;
 
 error:
-	return send_data(fd, "%i%s%i%p", seq, cmd, ret, outbuf, ret);
+	if (ret < 0)
+		return ret;
+
+	ret = prepare_data(p, size, "%i%s%i", seq, cmd, ret);
+	if (ret < 0)
+		return ret;
+
+	p += ret;
+	size -= ret;
+
+	if (size < count) {
+		dbg("buffer to short to store read data");
+		return -1;
+	}
+	memcpy(p, databuf, count);
+	p += count;
+
+	return send_buf(fd, buf, p - buf);
 }
 
 static int dev_dmx_set_pesfilter(uint32_t seq, char *cmd, int fd,
@@ -759,7 +761,7 @@ static int dev_dmx_set_section_filter(uint32_t seq, char *cmd, int fd,
 	unsigned char filter[17], mask[17], mode[17];
 
 	ret = scan_data(buf, size, "%i%i%i%s%s%s%i",
-			&uid, &pid, &filtsize, filter, mask, &mode, &flags);
+			&uid, &pid, &filtsize, filter, mask, mode, &flags);
 	if (ret < 0)
 		goto error;
 
@@ -931,7 +933,7 @@ static int dev_get_parms(uint32_t seq, char *cmd, int fd,
 	strcpy(output_charset, par->output_charset);
 	strcpy(default_charset, par->default_charset);
 
-	send_buf(fd, buf, p - buf);
+	return send_buf(fd, buf, p - buf);
 error:
 	return ret;
 }

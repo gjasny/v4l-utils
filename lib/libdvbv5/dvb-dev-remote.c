@@ -118,20 +118,6 @@ static ssize_t __prepare_data(struct dvb_v5_fe_parms_priv *parms,
 			memcpy(p, s, len);
 			p += len;
 			break;
-		case 'p':              /* binary data with specified length */
-			s = va_arg(ap, char *);
-			len = va_arg(ap, ssize_t);
-			if (p + len + 4 > endp) {
-				dvb_logdbg("buffer too short for binary data: pos: %zd, len:%d, buffer size:%zd",
-					   p - buf, len, sizeof(buf));
-				return -1;
-			}
-			i32 = htobe32(len);
-			memcpy(p, &i32, 4);
-			p += 4;
-			memcpy(p, s, len);
-			p += len;
-			break;
 		case 'i':              /* 32-bit int */
 			if (p + 4 > endp) {
 				dvb_logdbg("buffer to short for int32_t");
@@ -379,7 +365,6 @@ static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
 	int len;
 	int32_t *i32;
 	uint64_t *u64;
-	ssize_t *count;
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -404,27 +389,6 @@ static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
 
 			memcpy(s, p, len);
 			s[len] = '\0';
-			p += len;
-			break;
-		case 'p':              /* binary data with specified length */
-			s = va_arg(ap, char *);
-			if (p + 4 > endp) {
-				dvb_logdbg("buffer to short for binary data length: pos: %zd, len:%d, buffer size:%d",
-					   p - buf, 4, buf_size);
-				return -1;
-			}
-			len = be32toh(*(int32_t *)p);
-			p += 4;
-			if (p + len > endp) {
-				dvb_logdbg("buffer too short for binary data: pos: %zd, len:%d, buffer size:%d",
-					   p - buf, len, buf_size);
-				return -1;
-			}
-
-			memcpy(s, p, len);
-			count = va_arg(ap, ssize_t *);
-			*count = len;
-
 			p += len;
 			break;
 		case 'i':              /* 32-bit int */
@@ -914,6 +878,7 @@ static ssize_t dvb_remote_read(struct dvb_open_descriptor *open_dev,
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
 	int ret, size;
+	char *p;
 
 	size = count;
 	msg = send_fmt(dvb, priv->fd, "dev_read", "%i%i",
@@ -928,13 +893,25 @@ static ssize_t dvb_remote_read(struct dvb_open_descriptor *open_dev,
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i%s",
-			&size, (char *)buf);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
+	ret = scan_data(parms, msg->args, msg->args_size, "%i", &size);
+	if (ret < 0)
+		goto error;
+
+	msg->args_size -= ret;
+	p = msg->args + ret;
+
+	ret = size;
+	if (ret < 0)
+		goto error;
+
+
+	if (msg->args_size < size) {
+		dvb_logdbg("too few binary data: received %zd bytes instead of %d bytes", msg->args_size, size);
+		ret = -1;
 		goto error;
 	}
-	ret = size;
+
+	memcpy(buf, p, size);
 
 error:
 	msg->seq = 0; /* Avoids any risk of a recursive call */
