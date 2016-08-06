@@ -16,6 +16,10 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
+#define _FILE_OFFSET_BITS 64
+#define _LARGEFILE_SOURCE 1
+#define _LARGEFILE64_SOURCE 1
+
 #include <libudev.h>
 #include <stdio.h>
 #include <stdlib.h>

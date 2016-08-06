@@ -16,6 +16,10 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
+#define _FILE_OFFSET_BITS 64
+#define _LARGEFILE_SOURCE 1
+#define _LARGEFILE64_SOURCE 1
+
 #include <libudev.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -234,7 +238,8 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 
 	p += ret;
 
-	ret = write(fd, buf, p - buf);
+	pthread_mutex_lock(&msg->lock);
+	ret = send(fd, buf, p - buf, MSG_CONFIRM);
 	if (ret < 0 || (ret < p - buf)) {
 		pthread_mutex_destroy(&msg->lock);
 		pthread_cond_destroy(&msg->cond);
@@ -525,7 +530,6 @@ static int dvb_remote_get_version(struct dvb_device_priv *dvb)
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -567,7 +571,6 @@ static int dvb_remote_find(struct dvb_device_priv *dvb, int enable_monitor)
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -600,7 +603,6 @@ static int dvb_remote_stop_monitor(struct dvb_device_priv *dvb)
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -638,7 +640,6 @@ struct dvb_dev_list *dvb_remote_seek_by_sysname(struct dvb_device_priv *dvb,
 	if (!msg)
 		return NULL;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -709,7 +710,6 @@ static struct dvb_open_descriptor *dvb_remote_open(struct dvb_device_priv *dvb,
 	if (!msg)
 		return NULL;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -760,7 +760,6 @@ static int dvb_remote_close(struct dvb_open_descriptor *open_dev)
 	if (!msg)
 		goto error;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -812,7 +811,6 @@ static int dvb_remote_dmx_stop(struct dvb_open_descriptor *open_dev)
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -848,7 +846,6 @@ static int dvb_remote_set_bufsize(struct dvb_open_descriptor *open_dev,
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -886,7 +883,6 @@ static ssize_t dvb_remote_read(struct dvb_open_descriptor *open_dev,
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -918,6 +914,10 @@ error:
 	pthread_mutex_unlock(&msg->lock);
 
 	free_msg(dvb, msg);
+
+	if (ret < 0)
+		errno = -ret;
+
 	return ret;
 }
 
@@ -936,7 +936,6 @@ static int dvb_remote_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -977,7 +976,6 @@ static int dvb_remote_dmx_set_section_filter(struct dvb_open_descriptor *open_de
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -1012,7 +1010,6 @@ static int dvb_remote_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int 
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -1046,7 +1043,6 @@ int dvb_remote_fe_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -1083,7 +1079,6 @@ int dvb_remote_fe_get_parms(struct dvb_v5_fe_parms *par)
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -1227,7 +1222,6 @@ int dvb_remote_fe_set_parms(struct dvb_v5_fe_parms *par)
 	if (!msg)
 		goto error;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
@@ -1269,7 +1263,6 @@ int dvb_remote_fe_get_stats(struct dvb_v5_fe_parms *par)
 	if (!msg)
 		return -1;
 
-	pthread_mutex_lock(&msg->lock);
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);

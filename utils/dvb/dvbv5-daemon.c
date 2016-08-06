@@ -21,6 +21,10 @@
 #define _XOPEN_SOURCE 600
 #define WIN32_LEAN_AND_MEAN  /* required by xmlrpc-c/server_abyss.h */
 
+#define _FILE_OFFSET_BITS 64
+#define _LARGEFILE_SOURCE 1
+#define _LARGEFILE64_SOURCE 1
+
 #include <argp.h>
 #include <config.h>
 #include <endian.h>
@@ -235,7 +239,7 @@ static void free_opendevs(void *node)
 	struct dvb_descriptors *desc = node;
 
 	if (verbose)
-		dbg("closing dev %p\n", desc, desc->open_dev);
+		dbg("closing dev %p", desc, desc->open_dev);
 
 	dvb_dev_close(desc->open_dev);
 	free (desc);
@@ -680,7 +684,7 @@ static int dev_read(uint32_t seq, char *cmd, int fd,
 		    char *inbuf, ssize_t insize)
 {
 	struct dvb_open_descriptor *open_dev;
-	int uid, ret, i;
+	int uid, ret, read_ret = -1, i;
 	char databuf[REMOTE_BUF_SIZE];
 	char buf[REMOTE_BUF_SIZE], *p = buf;
 	size_t size = sizeof(buf);
@@ -701,30 +705,34 @@ static int dev_read(uint32_t seq, char *cmd, int fd,
 		goto error;
 	}
 
-	ret = dvb_dev_read(open_dev, databuf, count);
-
-	if (verbose)
-		dbg("read %zd bytes", ret);
-
-	count = ret;
+	read_ret = dvb_dev_read(open_dev, databuf, count);
+	if (read_ret < 0) {
+		read_ret = -errno;
+		if (verbose)
+			dbg("%d: read error: %d", seq, read_ret);
+	} else {
+		if (verbose)
+			dbg("%d: read %d bytes", seq, read_ret);
+	}
 
 error:
-	if (ret < 0)
+	ret = prepare_data(p, size, "%i%s%i", seq, cmd, read_ret);
+	if (ret < 0) {
+		err("Failed to prepare answer to dvb_read()");
 		return ret;
-
-	ret = prepare_data(p, size, "%i%s%i", seq, cmd, ret);
-	if (ret < 0)
-		return ret;
+	}
 
 	p += ret;
 	size -= ret;
 
-	if (size < count) {
-		dbg("buffer to short to store read data");
-		return -1;
+	if (read_ret > 0) {
+		if (size < read_ret) {
+			dbg("buffer to short to store read data");
+			return -1;
+		}
+		memcpy(p, databuf, read_ret);
+		p += read_ret;
 	}
-	memcpy(p, databuf, count);
-	p += count;
 
 	return send_buf(fd, buf, p - buf);
 }
