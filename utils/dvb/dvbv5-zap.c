@@ -64,7 +64,7 @@ const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.
 
 struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev, *dvr_dev, *dvr_fname;
-	char *filename;
+	char *filename, *dvr_pipe;
 	unsigned adapter, frontend, demux, get_detected, get_nit;
 	int lna, lnb, sat_number;
 	unsigned diseqc_wait, silent, verbose, frontend_only, freq_bpf;
@@ -107,6 +107,7 @@ static const struct argp_option options[] = {
 	{"non-numan",	'N', NULL,			0, N_("Non-human formatted stats (useful for scripts)"), 0},
 	{"server",	'H', N_("SERVER"),		0, N_("dvbv5-daemon host IP address"), 0},
 	{"tcp-port",	'T', N_("PORT"),		0, N_("dvbv5-daemon host tcp port"), 0},
+	{"dvr-pipe",	'D', N_("PIPE"),		0, N_("Named pipe for DVR output, when using remote access (by default: /tmp/dvr-pipe)"), 0},
 	{"help",        '?', 0,				0, N_("Give this help list"), -1},
 	{"usage",	-3,  0,				0, N_("Give a short usage message")},
 	{"version",	-4,  0,				0, N_("Print program version"), -1},
@@ -621,6 +622,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'T':
 		args->port = atoi(optarg);
 		break;
+	case 'D':
+		args->dvr_pipe = strdup(optarg);
+		break;
 	case '?':
 		argp_state_help(state, state->out_stream,
 				ARGP_HELP_SHORT_USAGE | ARGP_HELP_LONG
@@ -829,6 +833,7 @@ int main(int argc, char **argv)
 	args.sat_number = -1;
 	args.lna = LNA_AUTO;
 	args.input_format = FILE_DVBV5;
+	args.dvr_pipe = "/tmp/dvr-pipe";
 
 	if (argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, &idx, &args)) {
 		argp_help(&argp, stderr, ARGP_HELP_SHORT_USAGE, PROGRAM_NAME);
@@ -1081,6 +1086,45 @@ int main(int argc, char **argv)
 			}
 			if (!timeout_flag)
 				fprintf(stderr, _("Record to file '%s' started\n"), args.filename);
+			copy_to_file(dvr_fd, file_fd, args.timeout, args.silent);
+		} else if (args.server && args.port) {
+			struct stat st;
+			if (stat(args.dvr_pipe, &st) == -1) {
+				if (mknod(args.dvr_pipe,
+					S_IRUSR | S_IWUSR | S_IFIFO, 0) < 0) {
+					PERROR("Can't create pipe %s",
+					args.dvr_pipe);
+					return -1;
+				}
+			} else {
+				if (!S_ISFIFO(st.st_mode)) {
+					ERROR("%s exists but is not a pipe",
+					args.dvr_pipe);
+					return -1;
+				}
+			}
+
+			fprintf(stderr, _("DVR pipe interface '%s' will be opened\n"), args.dvr_pipe);
+
+			dvr_fd = dvb_dev_open(dvb, args.dvr_dev, O_RDONLY);
+			if (!dvr_fd) {
+				ERROR("failed opening '%s'", args.dvr_dev);
+				err = -1;
+				goto err;
+			}
+
+			file_fd = open(args.dvr_pipe,
+#ifdef O_LARGEFILE
+					O_LARGEFILE |
+#endif
+					O_WRONLY,
+					0644);
+			if (file_fd < 0) {
+				PERROR(_("open of '%s' failed"),
+					args.filename);
+				err = -1;
+				goto err;
+			}
 			copy_to_file(dvr_fd, file_fd, args.timeout, args.silent);
 		} else {
 			if (!timeout_flag)

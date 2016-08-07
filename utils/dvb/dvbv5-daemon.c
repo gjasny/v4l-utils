@@ -1295,10 +1295,11 @@ int main(int argc, char *argv[])
 
 	warn("Support for Digital TV remote access is still highly experimental.\n"
 	     "\nKnown issues:\n"
-	     "  - Error handling is not right: on error, the client may wait forever;\n"
+	     "  - Abort needed to be implemented in a proper way;\n"
+	     "  - Need to make more stuff opaque, as touching on fields at the local\n"
+	     "    end is not automatically reflected remotely;\n"
 	     "  - The libdvbv5 API support is incomplete: it misses satellite, scan\n"
-	     "    and other functions;\n"
-	     "  - Currently, dvbv5-zap doesn't map the dvr file to be used remotely\n\n");
+	     "    and other functions;\n\n");
 
 	info(PROGRAM_NAME" started.");
 
