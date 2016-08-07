@@ -97,12 +97,13 @@ static void do_timeout(int x)
 	}
 }
 
-#define PERROR(x...)                                                    \
+#define ERROR(x...)                                                     \
 	do {                                                            \
-		fprintf(stderr, _("ERROR: "));                          \
+		fprintf(stderr, _("ERROR: "));                             \
 		fprintf(stderr, x);                                     \
-		fprintf(stderr, " (%s)\n", strerror(errno));		\
+		fprintf(stderr, "\n");                                 \
 	} while (0)
+
 
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
@@ -174,7 +175,7 @@ static int print_frontend_stats(FILE *fd,
 
 	rc = dvb_fe_get_stats(parms);
 	if (rc) {
-		PERROR(_("dvb_fe_get_stats failed"));
+		ERROR(_("dvb_fe_get_stats failed"));
 		return -1;
 	}
 

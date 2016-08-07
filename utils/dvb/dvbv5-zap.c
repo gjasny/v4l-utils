@@ -205,7 +205,7 @@ static int parse(struct arguments *args,
 	}
 
 	if (!entry) {
-		ERROR(_("Can't find channel"));
+		ERROR("Can't find channel");
 		dvb_file_free(dvb_file);
 		return -3;
 	}
@@ -219,7 +219,7 @@ static int parse(struct arguments *args,
 	if (entry->lnb && !parms->lnb) {
 		int lnb = dvb_sat_search_lnb(entry->lnb);
 		if (lnb == -1) {
-			PERROR(_("unknown LNB %s\n"), entry->lnb);
+			ERROR("unknown LNB %s\n", entry->lnb);
 			dvb_file_free(dvb_file);
 			return -1;
 		}
@@ -309,7 +309,7 @@ static int setup_frontend(struct arguments *args,
 	if (args->silent < 2) {
 		rc = dvb_fe_retrieve_parm(parms, DTV_FREQUENCY, &freq);
 		if (rc < 0) {
-			PERROR(_("can't get the frequency"));
+			ERROR("can't get the frequency");
 			return -1;
 		}
 		fprintf(stderr, _("tuning to %i Hz\n"), freq);
@@ -317,7 +317,7 @@ static int setup_frontend(struct arguments *args,
 
 	rc = dvb_fe_set_parms(parms);
 	if (rc < 0) {
-		PERROR(_("dvb_fe_set_parms failed"));
+		ERROR("dvb_fe_set_parms failed");
 		return -1;
 	}
 
@@ -391,7 +391,7 @@ static int print_frontend_stats(FILE *fd,
 
 	rc = dvb_fe_get_stats(parms);
 	if (rc) {
-		PERROR(_("dvb_fe_get_stats failed"));
+		ERROR("dvb_fe_get_stats failed");
 		return -1;
 	}
 
@@ -454,7 +454,7 @@ static int check_frontend(struct arguments *args,
 	do {
 		rc = dvb_fe_get_stats(parms);
 		if (rc) {
-			PERROR(_("dvb_fe_get_stats failed"));
+			ERROR("dvb_fe_get_stats failed");
 			usleep(1000000);
 			continue;
 		}
@@ -499,11 +499,11 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 	while (timeout_flag == 0) {
 		r = dvb_dev_read(in_fd, buf, BUFLEN);
 		if (r < 0) {
-			if (errno == EOVERFLOW) {
+			if (r == EOVERFLOW) {
 				fprintf(stderr, _("buffer overrun\n"));
 				continue;
 			}
-			PERROR(_("Read failed"));
+			ERROR("Read failed");
 			break;
 		}
 		if (write(out_fd, buf, r) < 0) {
@@ -685,7 +685,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 			break;
 
 		if ((r = dvb_dev_read(dvr_fd, buffer, BSIZE)) <= 0) {
-			if (errno == EOVERFLOW) {
+			if (r == EOVERFLOW) {
 				struct timeval now;
 				int diff;
 				gettimeofday(&now, 0);
@@ -841,13 +841,13 @@ int main(int argc, char **argv)
 	}
 
 	if (args.input_format == FILE_UNKNOWN) {
-		fprintf(stderr, _("ERROR: Please specify a valid format\n"));
+		ERROR("Please specify a valid format\n");
 		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
 		return -1;
 	}
 
 	if (!args.traffic_monitor && args.search) {
-		fprintf(stderr, _("ERROR: search string can be used only on monitor mode\n"));
+		ERROR("search string can be used only on monitor mode\n");
 		argp_help(&argp, stderr, ARGP_HELP_STD_HELP, PROGRAM_NAME);
 		return -1;
 	}
@@ -901,7 +901,7 @@ int main(int argc, char **argv)
 
 	if (!args.confname) {
 		if (!homedir)
-			ERROR(_("$HOME not set"));
+			ERROR("$HOME not set");
 		r = asprintf(&args.confname, "%s/.tzap/%i/%s",
 			 homedir, args.adapter, CHANNEL_FILE);
 		if (access(args.confname, R_OK)) {
@@ -959,7 +959,7 @@ int main(int argc, char **argv)
 
 		sid_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
 		if (!sid_fd) {
-			perror(_("opening sid demux failed"));
+			ERROR("opening sid demux failed");
 			return -1;
 		}
 		pmtpid = dvb_dev_dmx_get_pmt_pid(sid_fd, sid);
@@ -973,7 +973,7 @@ int main(int argc, char **argv)
 
 		pat_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
 		if (!pat_fd) {
-			perror(_("opening pat demux failed"));
+			ERROR("opening pat demux failed");
 			goto err;
 		}
 		if (dvb_dev_dmx_set_pesfilter(pat_fd, 0, DMX_PES_OTHER,
@@ -983,7 +983,7 @@ int main(int argc, char **argv)
 
 		pmt_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
 		if (!pmt_fd) {
-			perror(_("opening pmt demux failed"));
+			ERROR("opening pmt demux failed");
 			goto err;
 		}
 		if (dvb_dev_dmx_set_pesfilter(pmt_fd, pmtpid, DMX_PES_OTHER,
@@ -1005,7 +1005,7 @@ int main(int argc, char **argv)
 		}
 		video_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
 		if (!video_fd) {
-			PERROR(_("failed opening '%s'"), args.demux_dev);
+			ERROR("failed opening '%s'", args.demux_dev);
 			goto err;
 		}
 
@@ -1029,7 +1029,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, _("audio pid %d\n"), apid);
 		audio_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
 		if (!audio_fd) {
-			PERROR(_("failed opening '%s'"), args.demux_dev);
+			ERROR("failed opening '%s'", args.demux_dev);
 			goto err;
 		}
 		if (args.silent < 2)
@@ -1073,7 +1073,7 @@ int main(int argc, char **argv)
 		if (file_fd >= 0) {
 			dvr_fd = dvb_dev_open(dvb, args.dvr_dev, O_RDWR);
 			if (!dvr_fd) {
-				PERROR(_("failed opening '%s'"), args.dvr_dev);
+				ERROR("failed opening '%s'", args.dvr_dev);
 				goto err;
 			}
 			if (!timeout_flag)
