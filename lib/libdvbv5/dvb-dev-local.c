@@ -57,7 +57,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 		p = udev_device_get_sysname(dev);
 		if (!p) {
 			dvb_logerr(_("udev_device_get_sysname failed"));
-			return -1;
+			return -ENODEV;
 		}
 
 		for (i = 0; i < dvb->d.num_devices; i++) {
@@ -71,7 +71,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 					    sizeof(*dvb->d.devices) * dvb->d.num_devices);
 				if (!p) {
 					dvb_logerr(_("Can't remove a device from the list of DVB devices"));
-					return -2;
+					return -ENODEV;
 				}
 				break;
 			}
@@ -201,7 +201,7 @@ added:
 
 err:
 	free_dvb_dev(dvb_dev);
-	return -1;
+	return -ENODEV;
 }
 
 static int dvb_local_find(struct dvb_device_priv *dvb, int enable_monitor)
@@ -220,7 +220,7 @@ static int dvb_local_find(struct dvb_device_priv *dvb, int enable_monitor)
 	dvb->udev = udev_new();
 	if (!dvb->udev) {
 		dvb_logerr(_("Can't create an udev object\n"));
-		return -1;
+		return -ENOMEM;
 	}
 
 	dvb->monitor = enable_monitor;
@@ -416,7 +416,7 @@ static int dvb_local_close(struct dvb_open_descriptor *open_dev)
 	/* Should never happen */
 	dvb_logerr(_("Couldn't free device\n"));
 
-	return -1;
+	return -ENODEV;
 }
 
 #define MAX_TIME		10	/* 1.0 seconds */
@@ -450,11 +450,13 @@ static int dvb_local_dmx_stop(struct dvb_open_descriptor *open_dev)
 	int ret, fd = open_dev->fd;
 
 	if (dev->dvb_type != DVB_DEVICE_DEMUX)
-		return -1;
+		return -EINVAL;
 
 	ret = xioctl(fd, DMX_STOP);
-	if (ret == -1)
+	if (ret == -1) {
 		dvb_perror(_("DMX_STOP failed"));
+		return -errno;
+	}
 
 	return 0;
 }
@@ -468,11 +470,11 @@ static int dvb_local_set_bufsize(struct dvb_open_descriptor *open_dev,
 	int fd = open_dev->fd;
 
 	if (dev->dvb_type != DVB_DEVICE_DEMUX && dev->dvb_type != DVB_DEVICE_DVR)
-		return -1;
+		return -EINVAL;
 
 	if (xioctl(fd, DMX_SET_BUFFER_SIZE, buffersize) == -1) {
 		dvb_perror(_("DMX_SET_BUFFER_SIZE failed"));
-		return -1;
+		return -errno;
 	}
 
 	return 0;
@@ -488,11 +490,13 @@ static ssize_t dvb_local_read(struct dvb_open_descriptor *open_dev,
 	ssize_t ret;
 
 	if (dev->dvb_type != DVB_DEVICE_DEMUX && dev->dvb_type != DVB_DEVICE_DVR)
-		return -1;
+		return -EINVAL;
 
 	ret = read(fd, buf, count);
-	if (ret == -1)
+	if (ret == -1) {
 		dvb_perror("read()");
+		return -errno;
+	}
 
 	return ret;
 }
@@ -508,7 +512,7 @@ static int dvb_local_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
 	int fd = open_dev->fd;
 
 	if (dev->dvb_type != DVB_DEVICE_DEMUX)
-		return -1;
+		return -EINVAL;
 
 	/* Failing here is not fatal, so no need to handle error condition */
 	if (bufsize)
@@ -525,7 +529,7 @@ static int dvb_local_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
 	if (xioctl(fd, DMX_SET_PES_FILTER, &pesfilter) == -1) {
 		dvb_logerr(_("DMX_SET_PES_FILTER failed (PID = 0x%04x): %d %m"),
 			   pid, errno);
-		return -1;
+		return -errno;
 	}
 
 	return 0;
@@ -545,7 +549,7 @@ static int dvb_local_dmx_set_section_filter(struct dvb_open_descriptor *open_dev
 	int fd = open_dev->fd;
 
 	if (dev->dvb_type != DVB_DEVICE_DEMUX)
-		return -1;
+		return -EINVAL;
 
 	if (filtsize > DMX_FILTER_SIZE)
 		filtsize = DMX_FILTER_SIZE;
@@ -566,7 +570,7 @@ static int dvb_local_dmx_set_section_filter(struct dvb_open_descriptor *open_dev
 	if (xioctl(fd, DMX_SET_FILTER, &sctfilter) == -1) {
 		dvb_logerr(_("DMX_SET_FILTER failed (PID = 0x%04x): %d %m"),
 			pid, errno);
-		return -1;
+		return -errno;
 	}
 
 	return 0;
@@ -587,7 +591,7 @@ static int dvb_local_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int s
 	int section_length;
 
 	if (dev->dvb_type != DVB_DEVICE_DEMUX)
-		return -1;
+		return -EINVAL;
 
 	memset(&f, 0, sizeof(f));
 	f.pid = 0;
@@ -598,7 +602,7 @@ static int dvb_local_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int s
 
 	if (xioctl(fd, DMX_SET_FILTER, &f) == -1) {
 		dvb_perror("ioctl DMX_SET_FILTER failed");
-		return -1;
+		return -errno;
 	}
 
 	while (!patread){
@@ -606,7 +610,7 @@ static int dvb_local_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int s
 		count = read(fd, buf, sizeof(buft));
 		if (count < 0) {
 		dvb_perror("read_sections: read error");
-		return -1;
+		return -errno;
 		}
 
 		section_length = ((buf[1] & 0x0f) << 8) | buf[2];

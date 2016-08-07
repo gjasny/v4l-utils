@@ -193,7 +193,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 	if (fd == -1) {
 		dvb_logerr(_("%s while opening %s"), strerror(errno), fname);
 		free(fname);
-		return errno;
+		return -errno;
 	}
 
 	if (xioctl(fd, FE_GET_INFO, &parms->p.info) == -1) {
@@ -201,7 +201,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 		dvb_v5_free(parms);
 		close(fd);
 		free(fname);
-		return errno;
+		return -errno;
 	}
 
 	if (parms->p.verbose) {
@@ -284,7 +284,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 			dvb_logerr(_("delivery system not detected"));
 			dvb_v5_free(parms);
 			close(fd);
-			return EINVAL;
+			return -EINVAL;
 		}
 	} else {
 		parms->dvb_prop[0].cmd = DTV_ENUM_DELSYS;
@@ -295,7 +295,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 			dvb_perror("FE_GET_PROPERTY");
 			dvb_v5_free(parms);
 			close(fd);
-			return errno;
+			return -errno;
 		}
 		parms->p.num_systems = parms->dvb_prop[0].u.buffer.len;
 		for (i = 0; i < parms->p.num_systems; i++)
@@ -305,7 +305,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 			dvb_logerr(_("driver returned 0 supported delivery systems!"));
 			dvb_v5_free(parms);
 			close(fd);
-			return EINVAL;
+			return -EINVAL;
 		}
 	}
 
@@ -422,7 +422,7 @@ int dvb_add_parms_for_sys(struct dvb_v5_fe_parms *p,
 
 	sys_props = dvb_v5_delivery_system[sys];
 	if (!sys_props)
-		return EINVAL;
+		return -EINVAL;
 
 	n = 0;
 	while (sys_props[n] && n < max_size - 1) {
@@ -452,7 +452,7 @@ int __dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 
 		/* Can't change standard with the legacy FE support */
 		if (parms->p.legacy_fe)
-			return EINVAL;
+			return -EINVAL;
 
 		dvb_prop[0].cmd = DTV_DELIVERY_SYSTEM;
 		dvb_prop[0].u.data = sys;
@@ -461,13 +461,13 @@ int __dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 
 		if (xioctl(parms->fd, FE_SET_PROPERTY, &prop) == -1) {
 			dvb_perror(_("Set delivery system"));
-			return errno;
+			return -errno;
 		}
 	}
 
 	rc = dvb_add_parms_for_sys(&parms->p, sys);
 	if (rc < 0)
-		return EINVAL;
+		return -EINVAL;
 
 	parms->p.current_sys = sys;
 	parms->n_props = rc;
@@ -544,7 +544,7 @@ int dvb_set_compat_delivery_system(struct dvb_v5_fe_parms *p,
 	}
 
 	if (delsys == SYS_UNDEFINED)
-		return EINVAL;
+		return -EINVAL;
 
 	dvb_log(_("Using a DVBv3 compat file for %s"), delivery_system_name[delsys]);
 
@@ -638,7 +638,7 @@ int dvb_fe_retrieve_parm(const struct dvb_v5_fe_parms *p,
 	dvb_logerr(_("command %s (%d) not found during retrieve"),
 		dvb_cmd_name(cmd), cmd);
 
-	return EINVAL;
+	return -EINVAL;
 }
 
 int dvb_fe_store_parm(struct dvb_v5_fe_parms *p,
@@ -655,7 +655,7 @@ int dvb_fe_store_parm(struct dvb_v5_fe_parms *p,
 	dvb_logerr(_("command %s (%d) not found during store"),
 		dvb_cmd_name(cmd), cmd);
 
-	return EINVAL;
+	return -EINVAL;
 }
 
 static int dvb_copy_fe_props(const struct dtv_property *from, int n, struct dtv_property *to)
@@ -678,7 +678,7 @@ int __dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 
 	sys_props = dvb_v5_delivery_system[parms->p.current_sys];
 	if (!sys_props)
-		return EINVAL;
+		return -EINVAL;
 
 	while (sys_props[n]) {
 		parms->dvb_prop[n].cmd = sys_props[n];
@@ -700,7 +700,7 @@ int __dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 	if (!parms->p.legacy_fe) {
 		if (xioctl(parms->fd, FE_GET_PROPERTY, &prop) == -1) {
 			dvb_perror("FE_GET_PROPERTY");
-			return errno;
+			return -errno;
 		}
 
 		/* copy back params from temporary fe_prop */
@@ -721,7 +721,7 @@ int __dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 	/* DVBv3 call */
 	if (xioctl(parms->fd, FE_GET_FRONTEND, &v3_parms) == -1) {
 		dvb_perror("FE_GET_FRONTEND");
-		return EINVAL;
+		return -EINVAL;
 	}
 
 	dvb_fe_store_parm(&parms->p, DTV_FREQUENCY, v3_parms.frequency);
@@ -754,7 +754,7 @@ int __dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 		dvb_fe_store_parm(&parms->p, DTV_HIERARCHY, v3_parms.u.ofdm.hierarchy_information);
 		break;
 	default:
-		return EINVAL;
+		return -EINVAL;
 	}
 
 	return 0;
@@ -869,7 +869,7 @@ int __dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 			dvb_perror("FE_SET_PROPERTY");
 			if (parms->p.verbose)
 				dvb_fe_prt_parms(&parms->p);
-			return -1;
+			return -errno;
 		}
 		return 0;
 	}
@@ -905,13 +905,13 @@ int __dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 		dvb_fe_retrieve_parm(&tmp_parms.p, DTV_HIERARCHY, &v3_parms.u.ofdm.hierarchy_information);
 		break;
 	default:
-		return -1;
+		return -EINVAL;
 	}
 	if (xioctl(tmp_parms.fd, FE_SET_FRONTEND, &v3_parms) == -1) {
 		dvb_perror("FE_SET_FRONTEND");
 		if (tmp_parms.p.verbose)
 			dvb_fe_prt_parms(&tmp_parms.p);
-		return -1;
+		return -errno;
 	}
 
 	return 0;
@@ -944,11 +944,11 @@ static float calculate_postBER(struct dvb_v5_fe_parms_priv *parms, unsigned laye
 	uint64_t n, d;
 
 	if (!parms->stats.has_post_ber[layer])
-		return -1;
+		return -EINVAL;
 
 	d = parms->stats.cur[layer].post_bit_count - parms->stats.prev[layer].post_bit_count;
 	if (!d)
-		return -1;
+		return -EINVAL;
 
 	n = parms->stats.cur[layer].post_bit_error - parms->stats.prev[layer].post_bit_error;
 
@@ -960,11 +960,11 @@ static float calculate_preBER(struct dvb_v5_fe_parms_priv *parms, unsigned layer
 	uint64_t n, d;
 
 	if (!parms->stats.has_pre_ber[layer])
-		return -1;
+		return -EINVAL;
 
 	d = parms->stats.cur[layer].pre_bit_count - parms->stats.prev[layer].pre_bit_count;
 	if (!d)
-		return -1;
+		return -EINVAL;
 
 	n = parms->stats.cur[layer].pre_bit_error - parms->stats.prev[layer].pre_bit_error;
 
@@ -1022,14 +1022,14 @@ int dvb_fe_retrieve_stats(struct dvb_v5_fe_parms *p,
 	if (!stat) {
 		if (parms->p.verbose)
 			dvb_logdbg(_("%s not found on retrieve"), dvb_cmd_name(cmd));
-		return EINVAL;
+		return -EINVAL;
 	}
 
 	scale = stat->scale;
 	if (scale == FE_SCALE_NOT_AVAILABLE) {
 		if (parms->p.verbose)
 			dvb_logdbg(_("%s not available"), dvb_cmd_name(cmd));
-		return EINVAL;
+		return -EINVAL;
 	}
 
 	*value = stat->uvalue;
@@ -1058,7 +1058,7 @@ float dvb_fe_retrieve_ber(struct dvb_v5_fe_parms *p, unsigned layer,
 
 	if (layer) {
 		*scale = FE_SCALE_NOT_AVAILABLE;
-		return -1;
+		return -EINVAL;
 	}
 
 	if (dvb_fe_retrieve_stats(&parms->p, DTV_BER, &ber32))
@@ -1075,12 +1075,12 @@ float dvb_fe_retrieve_per(struct dvb_v5_fe_parms *p, unsigned layer)
 	uint64_t n, d;
 
 	if (!parms->stats.has_per[layer]) {
-		return -1;
+		return -EINVAL;
 	}
 
 	d = parms->stats.cur[layer].block_count - parms->stats.prev[layer].block_count;
 	if (!d) {
-		return -1;
+		return -EINVAL;
 	}
 
 	n = parms->stats.cur[layer].block_error - parms->stats.prev[layer].block_error;
@@ -1486,7 +1486,7 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *p)
 
 	if (xioctl(parms->fd, FE_GET_EVENT, &event) == -1) {
 		dvb_perror("FE_GET_EVENT");
-		return errno;
+		return -errno;
 	}
 	status = event.status;
 	if (parms->p.verbose > 1) {
@@ -1525,7 +1525,7 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *p)
 		dvb_fe_retrieve_parm(&parms->p, DTV_HIERARCHY, &event.parameters.u.ofdm.hierarchy_information);
 		break;
 	default:
-		return EINVAL;
+		return -EINVAL;
 	}
 
 	return dvb_fe_get_stats(&parms->p);
@@ -1618,7 +1618,7 @@ int dvb_fe_snprintf_stat(struct dvb_v5_fe_parms *p, uint32_t cmd,
 
 		if (dvb_fe_retrieve_stats(&parms->p, DTV_STATUS, &status)) {
 			dvb_logerr (_("Error: no adapter status"));
-			return -1;
+			return -EINVAL;
 		}
 		if (display_name) {
 			size = snprintf(*buf, *len, " %s=", display_name);
@@ -1763,8 +1763,10 @@ int dvb_fe_sec_voltage(struct dvb_v5_fe_parms *p, int on, int v18)
 			dvb_log(_("SEC: set voltage to %sV"), v18 ? "18" : "13");
 	}
 	rc = xioctl(parms->fd, FE_SET_VOLTAGE, v);
-	if (rc == -1)
+	if (rc == -1) {
 		dvb_perror("FE_SET_VOLTAGE");
+		return -errno;
+	}
 	return rc;
 }
 
@@ -1775,8 +1777,10 @@ int dvb_fe_sec_tone(struct dvb_v5_fe_parms *p, fe_sec_tone_mode_t tone)
 	if (parms->p.verbose)
 		dvb_log( _("DiSEqC TONE: %s"), fe_tone_name[tone] );
 	rc = xioctl(parms->fd, FE_SET_TONE, tone);
-	if (rc == -1)
+	if (rc == -1) {
 		dvb_perror("FE_SET_TONE");
+		return -errno;
+	}
 	return rc;
 }
 
@@ -1789,8 +1793,10 @@ int dvb_fe_lnb_high_voltage(struct dvb_v5_fe_parms *p, int on)
 	if (parms->p.verbose)
 		dvb_log( _("DiSEqC HIGH LNB VOLTAGE: %s"), on ? _("ON") : _("OFF") );
 	rc = xioctl(parms->fd, FE_ENABLE_HIGH_LNB_VOLTAGE, on);
-	if (rc == -1)
+	if (rc == -1) {
 		dvb_perror("FE_ENABLE_HIGH_LNB_VOLTAGE");
+		return -errno;
+	}
 	return rc;
 }
 
@@ -1805,8 +1811,10 @@ int dvb_fe_diseqc_burst(struct dvb_v5_fe_parms *p, int mini_b)
 	if (parms->p.verbose)
 		dvb_log( _("DiSEqC BURST: %s"), mini_b ? "SEC_MINI_B" : "SEC_MINI_A" );
 	rc = xioctl(parms->fd, FE_DISEQC_SEND_BURST, mini);
-	if (rc == -1)
+	if (rc == -1) {
 		dvb_perror("FE_DISEQC_SEND_BURST");
+		return -errno;
+	}
 	return rc;
 }
 
@@ -1834,8 +1842,10 @@ int dvb_fe_diseqc_cmd(struct dvb_v5_fe_parms *p, const unsigned len,
 	}
 
 	rc = xioctl(parms->fd, FE_DISEQC_SEND_MASTER_CMD, &msg);
-	if (rc == -1)
+	if (rc == -1) {
 		dvb_perror("FE_DISEQC_SEND_MASTER_CMD");
+		return -errno;
+	}
 	return rc;
 }
 
@@ -1858,7 +1868,7 @@ int dvb_fe_diseqc_reply(struct dvb_v5_fe_parms *p, unsigned *len, char *buf,
 	rc = xioctl(parms->fd, FE_DISEQC_RECV_SLAVE_REPLY, reply);
 	if (rc == -1) {
 		dvb_perror("FE_DISEQC_RECV_SLAVE_REPLY");
-		return rc;
+		return -errno;
 	}
 
 	*len = reply.msg_len;
