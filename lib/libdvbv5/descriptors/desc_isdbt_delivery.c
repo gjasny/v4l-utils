@@ -36,7 +36,12 @@ int isdbt_desc_delivery_init(struct dvb_v5_fe_parms *parms,
 
 	bswap16(d->bitfield);
 
-	d->num_freqs = (d->length - len)/ sizeof(uint16_t);
+	if (d->length < len) {
+		dvb_perror("Truncated isdbt_desc_terrestrial_delivery_system_descriptor");
+		d->num_freqs = 0;
+	} else {
+		d->num_freqs = (d->length - len)/ sizeof(uint16_t);
+	}
 	if (!d->num_freqs)
 		return 0;
 	d->frequency = malloc(d->num_freqs * sizeof(*d->frequency));
