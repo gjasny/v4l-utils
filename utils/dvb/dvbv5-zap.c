@@ -513,8 +513,11 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 		rc += r;
 	}
 	if (silent < 2) {
-		fprintf(stderr, _("copied %lld bytes (%lld Kbytes/sec)\n"), rc,
-			rc / (1024 * timeout));
+		if (timeout)
+			fprintf(stderr, _("received %lld bytes (%lld Kbytes/sec)\n"), rc,
+				rc / (1024 * timeout));
+		else
+			fprintf(stderr, _("received %lld bytes\n"), rc);
 	}
 }
 
