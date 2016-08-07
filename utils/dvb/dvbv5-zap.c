@@ -1071,7 +1071,7 @@ int main(int argc, char **argv)
 			get_show_stats(&args, parms, 0);
 
 		if (file_fd >= 0) {
-			dvr_fd = dvb_dev_open(dvb, args.dvr_dev, O_RDWR);
+			dvr_fd = dvb_dev_open(dvb, args.dvr_dev, O_RDONLY);
 			if (!dvr_fd) {
 				ERROR("failed opening '%s'", args.dvr_dev);
 				goto err;
