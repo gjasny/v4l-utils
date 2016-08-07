@@ -703,14 +703,15 @@ static int dev_read(uint32_t seq, char *cmd, int fd,
 	char buf[REMOTE_BUF_SIZE], *p = buf;
 	size_t size = sizeof(buf);
 	size_t count;
+	size_t msg_size = 12 + strlen(cmd);
 
 	ret = scan_data(inbuf, insize, "%i%i",  &uid, &i);
 	if (ret < 0)
 		goto error;
 	count = i;
 
-	if (count > sizeof(databuf))
-		count = sizeof(databuf);
+	if (count > sizeof(databuf) - msg_size)
+		count = sizeof(databuf) - msg_size;
 
 	open_dev = get_open_dev(uid);
 	if (!open_dev) {
