@@ -204,7 +204,8 @@ err:
 	return -ENODEV;
 }
 
-static int dvb_local_find(struct dvb_device_priv *dvb, int enable_monitor)
+static int dvb_local_find(struct dvb_device_priv *dvb,
+			  dvb_dev_change_t handler)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct udev_enumerate *enumerate;
@@ -223,7 +224,7 @@ static int dvb_local_find(struct dvb_device_priv *dvb, int enable_monitor)
 		return -ENOMEM;
 	}
 
-	dvb->monitor = enable_monitor;
+	dvb->monitor = handler;
 	if (dvb->monitor) {
 		/* Set up a monitor to monitor dvb devices */
 		dvb->mon = udev_monitor_new_from_netlink(dvb->udev, "udev");

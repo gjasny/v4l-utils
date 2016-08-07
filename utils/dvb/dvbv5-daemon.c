@@ -515,6 +515,14 @@ void dvb_remote_log(int level, const char *fmt, ...)
 	free(buf);
 }
 
+int dev_device_handler(struct dvb_dev_list *dev,
+		       enum dvb_dev_change_type type)
+{
+	/* FIXME: implement it! */
+	return 0;
+}
+
+
 /*
  * command handler methods
  */
@@ -529,12 +537,16 @@ static int daemon_get_version(uint32_t seq, char *cmd, int fd,
 static int dev_find(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 {
 	int enable_monitor = 0, ret;
+	dvb_dev_change_t handler = NULL;
 
 	ret = scan_data(buf, size, "%i", &enable_monitor);
 	if (ret < 0)
 		goto error;
 
-	ret = dvb_dev_find(dvb, enable_monitor);
+	if (enable_monitor)
+		handler = dev_device_handler;
+
+	ret = dvb_dev_find(dvb, handler);
 
 error:
 	return send_data(fd, "%i%s%i", seq, cmd, ret);

@@ -95,6 +95,29 @@ struct dvb_dev_list {
 };
 
 /**
+ * @enum dvb_dev_change_type
+ *	@brief Describes the type of change to be notifier_delay
+ *
+ * @param DVB_DEV_ADD		New device detected
+ * @param DVB_DEV_CHANGE	Device has changed something
+ * @param DVB_DEV_REMOVE	A hot-pluggable device was removed
+ */
+enum dvb_dev_change_type {
+	DVB_DEV_ADD,
+	DVB_DEV_CHANGE,
+	DVB_DEV_REMOVE,
+};
+
+/**
+ * @brief Describes a callbakc for dvb_dev_find()
+ *
+ * @dev:	pointer to struct dvb_dev_list with the changed device
+ * @type:	type of change, as defined by enum dvb_dev_change_type
+ */
+typedef int (*dvb_dev_change_t)(struct dvb_dev_list *dev,
+				enum dvb_dev_change_type type);
+
+/**
  * @struct dvb_open_descriptor
  *
  * Opaque struct with a DVB open file descriptor
@@ -162,7 +185,7 @@ void dvb_dev_free(struct dvb_device *dvb);
  *
  * @return returns 0 on success, a negative value otherwise.
  */
-int dvb_dev_find(struct dvb_device *dvb, int enable_monitor);
+int dvb_dev_find(struct dvb_device *dvb, dvb_dev_change_t handler);
 
 /**
  * @brief Find a device that matches the search criteria given by this

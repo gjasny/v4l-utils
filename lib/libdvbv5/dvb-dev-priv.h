@@ -32,7 +32,7 @@ struct dvb_open_descriptor {
 };
 
 struct dvb_dev_ops {
-	int (*find)(struct dvb_device_priv *dvb, int enable_monitor);
+	int (*find)(struct dvb_device_priv *dvb, dvb_dev_change_t handler);
 	struct dvb_dev_list * (*seek_by_sysname)(struct dvb_device_priv *dvb,
 						 unsigned int adapter,
 						 unsigned int num,
@@ -75,7 +75,7 @@ struct dvb_device_priv {
 	struct dvb_device d;
 	struct dvb_dev_ops ops;
 
-	volatile int monitor;
+	volatile dvb_dev_change_t monitor;
 
 	/* udev control fields */
 	struct udev *udev;

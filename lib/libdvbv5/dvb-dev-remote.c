@@ -591,15 +591,21 @@ error:
 	return ret;
 }
 
-static int dvb_remote_find(struct dvb_device_priv *dvb, int enable_monitor)
+static int dvb_remote_find(struct dvb_device_priv *dvb,
+			   dvb_dev_change_t handler)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct queued_msg *msg;
-	int ret;
+	int ret, enable_monitor;
 
 	if (priv->disconnected)
 		return -ENODEV;
+
+	if (handler)
+		enable_monitor = 1;
+	else
+		enable_monitor = 0;
 
 	msg = send_fmt(dvb, priv->fd, "dev_find", "%i", enable_monitor);
 	if (!msg)

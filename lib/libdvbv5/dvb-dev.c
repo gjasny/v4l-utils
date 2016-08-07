@@ -180,7 +180,7 @@ void dvb_dev_set_log(struct dvb_device *dvb, unsigned verbose,
 			parms->p.logfunc = logfunc;
 }
 
-int dvb_dev_find(struct dvb_device *d, int enable_monitor)
+int dvb_dev_find(struct dvb_device *d, dvb_dev_change_t handler)
 {
 	struct dvb_device_priv *dvb = (void *)d;
 	struct dvb_dev_ops *ops = &dvb->ops;
@@ -188,7 +188,7 @@ int dvb_dev_find(struct dvb_device *d, int enable_monitor)
 	if (!ops->find)
 		return -1;
 
-	return ops->find(dvb, enable_monitor);
+	return ops->find(dvb, handler);
 }
 
 void dvb_dev_stop_monitor(struct dvb_device *d)
