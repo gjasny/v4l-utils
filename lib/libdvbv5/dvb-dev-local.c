@@ -96,7 +96,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	dvb_dev->syspath = strdup(syspath);
 
 	p = udev_device_get_devnode(dev);
-	if (!p) {
+	if (!p || !*p) {
 		dvb_logwarn(_("Can't get device node filename"));
 		goto err;
 	}
@@ -239,12 +239,12 @@ static int dvb_local_find(struct dvb_device_priv *dvb, int enable_monitor)
 	devices = udev_enumerate_get_list_entry(enumerate);
 
 	udev_list_entry_foreach(dev_list_entry, devices) {
-		const char *path;
+		const char *syspath;
 
-		path = udev_list_entry_get_name(dev_list_entry);
-		dev = udev_device_new_from_syspath(dvb->udev, path);
+		syspath = udev_list_entry_get_name(dev_list_entry);
 
-		handle_device_change(dvb, dev, path, "add");
+		dev = udev_device_new_from_syspath(dvb->udev, syspath);
+		handle_device_change(dvb, dev, syspath, "add");
 		udev_device_unref(dev);
 	}
 

@@ -46,13 +46,15 @@ dev_type_names_size = sizeof(dev_type_names)/sizeof(*dev_type_names);
 void free_dvb_dev(struct dvb_dev_list *dvb_dev)
 {
 	if (dvb_dev->path)
-		free (dvb_dev->path);
+		free(dvb_dev->path);
 	if (dvb_dev->syspath)
-		free (dvb_dev->syspath);
+		free(dvb_dev->syspath);
 	if (dvb_dev->sysname)
 		free(dvb_dev->sysname);
 	if (dvb_dev->bus_addr)
 		free(dvb_dev->bus_addr);
+	if (dvb_dev->bus_id)
+		free(dvb_dev->bus_id);
 	if (dvb_dev->manufacturer)
 		free(dvb_dev->manufacturer);
 	if (dvb_dev->product)
@@ -100,7 +102,6 @@ void dvb_dev_free(struct dvb_device *d)
 {
 	struct dvb_device_priv *dvb = (void *)d;
 	struct dvb_open_descriptor *cur, *next;
-	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_ops *ops = &dvb->ops;
 
 	/* Close all devices */
@@ -115,6 +116,8 @@ void dvb_dev_free(struct dvb_device *d)
 	if (ops->free)
 		ops->free(dvb);
 
+	dvb_fe_close(dvb->d.fe_parms);
+
 	dvb_dev_free_devices(dvb);
 
 	/* Wait for dvb_dev_find() to stop */
@@ -122,7 +125,7 @@ void dvb_dev_free(struct dvb_device *d)
 		dvb->monitor = 0;
 		usleep(1000);
 	}
-	__dvb_fe_close(parms);
+
 	free(dvb);
 }
 
