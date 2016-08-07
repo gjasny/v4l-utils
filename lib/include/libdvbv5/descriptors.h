@@ -125,11 +125,13 @@ struct dvb_desc {
 #ifndef _DOXYGEN
 
 #define dvb_desc_foreach( _desc, _tbl ) \
-	for( struct dvb_desc *_desc = _tbl->descriptor; _desc; _desc = _desc->next ) \
+	if (_tbl && _tbl->descriptor) \
+		for( struct dvb_desc *_desc = _tbl->descriptor; _desc; _desc = _desc->next ) \
 
 #define dvb_desc_find(_struct, _desc, _tbl, _type) \
-	for( _struct *_desc = (_struct *) _tbl->descriptor; _desc; _desc = (_struct *) _desc->next ) \
-		if(_desc->type == _type) \
+	if (_tbl && _tbl->descriptor) \
+		for( _struct *_desc = (_struct *) _tbl->descriptor; _desc; _desc = (_struct *) _desc->next ) \
+			if(_desc->type == _type) \
 
 #endif /* _DOXYGEN */
 

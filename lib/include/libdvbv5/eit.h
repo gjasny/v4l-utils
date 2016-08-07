@@ -160,7 +160,8 @@ struct dvb_table_eit {
  * @param _eit		pointer to struct dvb_table_eit_event
  */
 #define dvb_eit_event_foreach(_event, _eit) \
-	for( struct dvb_table_eit_event *_event = _eit->event; _event; _event = _event->next ) \
+	if (_eit && _eit->event) \
+		for( struct dvb_table_eit_event *_event = _eit->event; _event; _event = _event->next ) \
 
 struct dvb_v5_fe_parms;
 

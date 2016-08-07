@@ -200,7 +200,8 @@ union atsc_table_vct_descriptor_length {
  * @param _vct		pointer to struct atsc_table_vct_channel
  */
  #define atsc_vct_channel_foreach(_channel, _vct) \
-	for (struct atsc_table_vct_channel *_channel = _vct->channel; _channel; _channel = _channel->next) \
+	if (_vct && _vct->channel) \
+		for (struct atsc_table_vct_channel *_channel = _vct->channel; _channel; _channel = _channel->next) \
 
 struct dvb_v5_fe_parms;
 

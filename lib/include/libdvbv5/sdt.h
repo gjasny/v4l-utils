@@ -135,7 +135,8 @@ struct dvb_table_sdt {
  * @param _sdt		pointer to struct dvb_table_sdt_service
  */
 #define dvb_sdt_service_foreach(_service, _sdt) \
-	for (struct dvb_table_sdt_service *_service = _sdt->service; _service; _service = _service->next ) \
+	if (_sdt && _sdt->service) \
+		for (struct dvb_table_sdt_service *_service = _sdt->service; _service; _service = _service->next ) \
 
 struct dvb_v5_fe_parms;
 

@@ -134,7 +134,8 @@ struct atsc_table_mgt {
  * @param _mgt		pointer to struct atsc_table_mgt_table
  */
 #define atsc_mgt_table_foreach( _table, _mgt ) \
-  for( struct atsc_table_mgt_table *_table = _mgt->table; _table; _table = _table->next ) \
+	if (_mgt && _mgt->_table) \
+		for( struct atsc_table_mgt_table *_table = _mgt->table; _table; _table = _table->next ) \
 
 struct dvb_v5_fe_parms;
 

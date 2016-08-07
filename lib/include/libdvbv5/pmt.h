@@ -236,7 +236,8 @@ struct dvb_table_pmt {
  * @param _pmt		pointer to struct dvb_table_pmt_stream
  */
 #define dvb_pmt_stream_foreach(_stream, _pmt) \
-  for (struct dvb_table_pmt_stream *_stream = _pmt->stream; _stream; _stream = _stream->next) \
+	if (_pmt && _pmt->stream) \
+		for (struct dvb_table_pmt_stream *_stream = _pmt->stream; _stream; _stream = _stream->next) \
 
 struct dvb_v5_fe_parms;
 

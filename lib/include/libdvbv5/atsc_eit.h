@@ -158,7 +158,8 @@ struct atsc_table_eit {
  * @param _eit				pointer to struct atsc_table_eit_event
  */
 #define atsc_eit_event_foreach(_event, _eit) \
-	for( struct atsc_table_eit_event *_event = _eit->event; _event; _event = _event->next ) \
+	if (_eit && _eit->event) \
+		for( struct atsc_table_eit_event *_event = _eit->event; _event; _event = _event->next ) \
 
 struct dvb_v5_fe_parms;
 

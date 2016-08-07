@@ -119,7 +119,8 @@ struct dvb_table_pat {
  * @param _pat		pointer to struct dvb_table_pat_program
  */
 #define dvb_pat_program_foreach(_pgm, _pat) \
-	for (struct dvb_table_pat_program *_pgm = _pat->program; _pgm; _pgm = _pgm->next) \
+	if (_pat && _pat->program) \
+		for (struct dvb_table_pat_program *_pgm = _pat->program; _pgm; _pgm = _pgm->next) \
 
 struct dvb_v5_fe_parms;
 

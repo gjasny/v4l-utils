@@ -187,7 +187,8 @@ typedef void nit_tran_handler_callback_t(struct dvb_table_nit *nit,
  * @param _nit		pointer to struct dvb_table_nit_transport
  */
 #define dvb_nit_transport_foreach( _tran, _nit ) \
-  for (struct dvb_table_nit_transport *_tran = _nit->transport; _tran; _tran = _tran->next) \
+	if (_nit && _nit->transport) \
+		for (struct dvb_table_nit_transport *_tran = _nit->transport; _tran; _tran = _tran->next) \
 
 struct dvb_v5_fe_parms;
 
