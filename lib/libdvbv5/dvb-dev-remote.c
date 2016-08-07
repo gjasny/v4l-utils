@@ -66,6 +66,7 @@ struct dvb_descriptors {
 struct queued_msg {
 	int seq;
 	char cmd[80];
+	int retval;
 
 	pthread_mutex_t lock;
 	pthread_cond_t cond;
@@ -439,7 +440,7 @@ static void *receive_data(void *privdata)
 	struct queued_msg *msg;
 	char buf[REMOTE_BUF_SIZE + 8], cmd[REMOTE_BUF_SIZE], *args;
 	ssize_t size, args_size;
-	int ret, level, seq, handled;
+	int ret, retval, seq, handled;
 
 	do {
 		size = recv(priv->fd, buf, sizeof(buf), 0);
@@ -451,7 +452,8 @@ static void *receive_data(void *privdata)
 		args = buf;
 		args_size = size;
 		while (args_size > 0) {
-			ret = scan_data(parms, args, args_size, "%i%s", &seq, cmd);
+			ret = scan_data(parms, args, args_size, "%i%s%i",
+					&seq, cmd, &retval);
 			if (ret < 0) {
 				dvb_logerr("invalid protocol message: '%s' (size %zd)", args, args_size);
 				break;
@@ -465,9 +467,9 @@ static void *receive_data(void *privdata)
 
 			if (!strcmp(cmd, "log")) {
 				ret = scan_data(parms, args, args_size,
-						"%i%s", &level, cmd);
+						"%s", cmd);
 				if (ret > 0) {
-					dvb_loglevel(level, cmd);
+					dvb_loglevel(retval, cmd);
 					args += ret;
 					args_size -= ret;
 				}
@@ -498,6 +500,7 @@ static void *receive_data(void *privdata)
 			}
 			memcpy(msg->args, args, args_size);
 			msg->args_size = args_size;
+			msg->retval = retval;
 			pthread_mutex_unlock(&priv->lock_io);
 			pthread_mutex_lock(&msg->lock);
 			ret = pthread_cond_signal(&msg->cond);
@@ -536,6 +539,9 @@ static int dvb_remote_get_version(struct dvb_device_priv *dvb)
 		goto error;
 	}
 
+	if (msg->retval < 0)
+		goto error;
+
 	ret = scan_data(parms, msg->args, msg->args_size, "%s", version);
 	if (ret < 0) {
 		dvb_logerr("Can't get sever's version");
@@ -565,7 +571,7 @@ static int dvb_remote_find(struct dvb_device_priv *dvb, int enable_monitor)
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct queued_msg *msg;
-	int ret, retval;
+	int ret;
 
 	msg = send_fmt(dvb, priv->fd, "dev_find", "%i", enable_monitor);
 	if (!msg)
@@ -576,13 +582,7 @@ static int dvb_remote_find(struct dvb_device_priv *dvb, int enable_monitor)
 		dvb_logerr("error waiting for %s response", msg->cmd);
 		goto error;
 	}
-
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
-		goto error;
-	}
-	ret = retval;
+	ret = msg->retval;
 
 error:
 	msg->seq = 0; /* Avoids any risk of a recursive call */
@@ -597,7 +597,7 @@ static int dvb_remote_stop_monitor(struct dvb_device_priv *dvb)
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct queued_msg *msg;
-	int ret, retval;
+	int ret;
 
 	msg = send_fmt(dvb, priv->fd, "dev_stop_monitor", "-");
 	if (!msg)
@@ -609,12 +609,7 @@ static int dvb_remote_stop_monitor(struct dvb_device_priv *dvb)
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
-		goto error;
-	}
-	ret = retval;
+	ret = msg->retval;
 
 error:
 	msg->seq = 0; /* Avoids any risk of a recursive call */
@@ -645,6 +640,8 @@ struct dvb_dev_list *dvb_remote_seek_by_sysname(struct dvb_device_priv *dvb,
 		dvb_logerr("error waiting for %s response", msg->cmd);
 		goto error;
 	}
+	if (msg->retval < 0)
+		goto error;
 
 	/*
 	 * FIXME: dev should be freed. The best would actually to implement
@@ -698,7 +695,7 @@ static struct dvb_open_descriptor *dvb_remote_open(struct dvb_device_priv *dvb,
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct dvb_open_descriptor *open_dev, *cur;
 	struct queued_msg *msg;
-	int ret, retval;
+	int ret;
 
 	open_dev = calloc(1, sizeof(*open_dev));
 	if (!open_dev) {
@@ -716,14 +713,11 @@ static struct dvb_open_descriptor *dvb_remote_open(struct dvb_device_priv *dvb,
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
+	if (msg->retval < 0)
 		goto error;
-	}
 
 	/* Add the fd to the open descriptor's list */
-	open_dev->fd = retval;
+	open_dev->fd = msg->retval;
 	open_dev->dev = NULL;
 	open_dev->dvb = dvb;
 
@@ -753,7 +747,7 @@ static int dvb_remote_close(struct dvb_open_descriptor *open_dev)
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_open_descriptor *cur;
 	struct queued_msg *msg;
-	int ret = -1, retval;
+	int ret = -1;
 
 	msg = send_fmt(dvb, priv->fd, "dev_close", "%i", open_dev->fd);
 	/* Even with errors, we need to close our end */
@@ -766,12 +760,7 @@ static int dvb_remote_close(struct dvb_open_descriptor *open_dev)
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
-		goto error;
-	}
-	ret = retval;
+	ret = msg->retval;
 
 error:
 	/*
@@ -805,7 +794,7 @@ static int dvb_remote_dmx_stop(struct dvb_open_descriptor *open_dev)
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
-	int ret, retval;
+	int ret;
 
 	msg = send_fmt(dvb, priv->fd, "dev_dmx_stop", "%i", open_dev->fd);
 	if (!msg)
@@ -817,12 +806,7 @@ static int dvb_remote_dmx_stop(struct dvb_open_descriptor *open_dev)
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
-		goto error;
-	}
-	ret = retval;
+	ret = msg->retval;
 
 error:
 	msg->seq = 0; /* Avoids any risk of a recursive call */
@@ -839,7 +823,7 @@ static int dvb_remote_set_bufsize(struct dvb_open_descriptor *open_dev,
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
-	int ret, retval;
+	int ret;
 
 	msg = send_fmt(dvb, priv->fd, "dev_set_bufsize", "%i%i",
 		       open_dev->fd, bufsize);
@@ -852,12 +836,7 @@ static int dvb_remote_set_bufsize(struct dvb_open_descriptor *open_dev,
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
-		goto error;
-	}
-	ret = retval;
+	ret = msg->retval;
 
 error:
 	msg->seq = 0; /* Avoids any risk of a recursive call */
@@ -875,7 +854,6 @@ static ssize_t dvb_remote_read(struct dvb_open_descriptor *open_dev,
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
 	int ret, size;
-	char *p;
 
 	size = count;
 	msg = send_fmt(dvb, priv->fd, "dev_read", "%i%i",
@@ -889,25 +867,18 @@ static ssize_t dvb_remote_read(struct dvb_open_descriptor *open_dev,
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &size);
-	if (ret < 0)
+	ret = msg->retval;
+
+	if (msg->retval < 0)
 		goto error;
 
-	msg->args_size -= ret;
-	p = msg->args + ret;
-
-	ret = size;
-	if (ret < 0)
-		goto error;
-
-
-	if (msg->args_size < size) {
-		dvb_logdbg("too few binary data: received %zd bytes instead of %d bytes", msg->args_size, size);
+	if (msg->args_size != msg->retval) {
+		dvb_logdbg("truncated data: received %zd bytes instead of %d bytes", msg->args_size, size);
 		ret = -1;
 		goto error;
 	}
 
-	memcpy(buf, p, size);
+	memcpy(buf, msg->args, size);
 
 error:
 	msg->seq = 0; /* Avoids any risk of a recursive call */
@@ -915,6 +886,10 @@ error:
 
 	free_msg(dvb, msg);
 
+	/*
+	 * HACK: we should actually change the code to use the return value,
+	 * instead of errno
+	 */
 	if (ret < 0)
 		errno = -ret;
 
@@ -929,7 +904,7 @@ static int dvb_remote_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
-	int ret, retval;
+	int ret;
 
 	msg = send_fmt(dvb, priv->fd, "dev_dmx_set_pesfilter", "%i%i%i%i%i",
 		       open_dev->fd, pid, type, output, bufsize);
@@ -942,12 +917,7 @@ static int dvb_remote_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
-		goto error;
-	}
-	ret = retval;
+	ret = msg->retval;
 
 error:
 	msg->seq = 0; /* Avoids any risk of a recursive call */
@@ -968,7 +938,7 @@ static int dvb_remote_dmx_set_section_filter(struct dvb_open_descriptor *open_de
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
-	int ret, retval;
+	int ret;
 
 	msg = send_fmt(dvb, priv->fd, "dmx_set_section_filter",
 		       "%i%i%i%s%s%s%i", open_dev->fd, pid, filtsize,
@@ -982,12 +952,7 @@ static int dvb_remote_dmx_set_section_filter(struct dvb_open_descriptor *open_de
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
-		goto error;
-	}
-	ret = retval;
+	ret = msg->retval;
 
 error:
 	msg->seq = 0; /* Avoids any risk of a recursive call */
@@ -1003,7 +968,7 @@ static int dvb_remote_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int 
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
-	int ret, retval;
+	int ret;
 
 	msg = send_fmt(dvb, priv->fd, "dev_set_bufsize", "%i%i",
 		       open_dev->fd, sid);
@@ -1016,12 +981,7 @@ static int dvb_remote_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int 
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
-		goto error;
-	}
-	ret = retval;
+	ret = msg->retval;
 
 error:
 	msg->seq = 0; /* Avoids any risk of a recursive call */
@@ -1037,7 +997,7 @@ int dvb_remote_fe_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 	struct dvb_device_priv *dvb = parms->dvb;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct queued_msg *msg;
-	int ret, retval;
+	int ret;
 
 	msg = send_fmt(dvb, priv->fd, "dev_set_sys", "%i", sys);
 	if (!msg)
@@ -1049,12 +1009,7 @@ int dvb_remote_fe_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 		goto error;
 	}
 
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
-		goto error;
-	}
-	ret = retval;
+	ret = msg->retval;
 
 error:
 	msg->seq = 0; /* Avoids any risk of a recursive call */
@@ -1082,6 +1037,11 @@ int dvb_remote_fe_get_parms(struct dvb_v5_fe_parms *par)
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	if (msg->retval < 0) {
+		ret = msg->retval;
 		goto error;
 	}
 
@@ -1180,7 +1140,7 @@ int dvb_remote_fe_set_parms(struct dvb_v5_fe_parms *par)
 	struct dvb_device_priv *dvb = parms->dvb;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct queued_msg *msg = NULL;
-	int ret, retval, i;
+	int ret, i;
 	char buf[REMOTE_BUF_SIZE], lnb_name[80] = "", *p = buf;
 	size_t size = sizeof(buf);
 
@@ -1228,15 +1188,7 @@ int dvb_remote_fe_set_parms(struct dvb_v5_fe_parms *par)
 		goto error;
 	}
 
-	p = msg->args;
-	size = msg->args_size;
-
-	ret = scan_data(parms, msg->args, msg->args_size, "%i", &retval);
-	if (ret < 0) {
-		dvb_logerr("Can't get return value");
-		goto error;
-	}
-	ret = retval;
+	ret = msg->retval;
 
 error:
 	if (msg) {
@@ -1266,6 +1218,11 @@ int dvb_remote_fe_get_stats(struct dvb_v5_fe_parms *par)
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+
+	if (msg->retval) {
+		ret = msg->retval;
 		goto error;
 	}
 

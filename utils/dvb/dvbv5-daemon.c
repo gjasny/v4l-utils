@@ -518,7 +518,9 @@ void dvb_remote_log(int level, const char *fmt, ...)
 static int daemon_get_version(uint32_t seq, char *cmd, int fd,
 			      char *buf, ssize_t size)
 {
-	return send_data(fd, "%i%s%s", seq, cmd, argp_program_version);
+	int ret = 0;
+
+	return send_data(fd, "%i%s%i%s", seq, cmd, ret, argp_program_version);
 }
 
 static int dev_find(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
@@ -557,13 +559,12 @@ static int dev_seek_by_sysname(uint32_t seq, char *cmd, int fd,
 	if (!dev)
 		goto error;
 
-	return send_data(fd, "%i%s%s%s%s%i%s%s%s%s%s", seq, cmd,
+	return send_data(fd, "%i%s%i%s%s%s%i%s%s%s%s%s", seq, cmd, ret,
 			 dev->syspath, dev->path, dev->sysname, dev->dvb_type,
 			 dev->bus_addr, dev->bus_id, dev->manufacturer,
 			 dev->product, dev->serial);
 error:
-	return send_data(fd, "%i%s%s%s%s%i%s%s%s%s%s", seq, cmd,
-			 "", "", "", 0, "", "", "", "", "");
+	return send_data(fd, "%i%s%i", seq, cmd, ret);
 }
 
 static int dev_open(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
@@ -571,17 +572,18 @@ static int dev_open(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 	struct dvb_open_descriptor *open_dev;
 	struct dvb_descriptors *desc, **p;
 	int uid = 0;
-	int err, flags;
+	int ret, flags;
 	char sysname[REMOTE_BUF_SIZE];
 
 	desc = calloc(1, sizeof(*desc));
 	if (!desc) {
 		local_perror("calloc");
+		ret = -ENOMEM;
 		goto error;
 	}
 
-	err = scan_data(buf, size, "%s%i",  sysname, &flags);
-	if (err < 0)
+	ret = scan_data(buf, size, "%s%i",  sysname, &flags);
+	if (ret < 0)
 		goto error;
 
 	open_dev = dvb_dev_open(dvb, sysname, flags);
@@ -606,8 +608,9 @@ static int dev_open(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 		err("uid %d was already opened!");
 	}
 
+	ret = uid;
 error:
-	return send_data(fd, "%i%s%i", seq, cmd, uid);
+	return send_data(fd, "%i%s%i", seq, cmd, ret);
 }
 
 static int dev_close(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
@@ -882,7 +885,7 @@ static int dev_get_parms(uint32_t seq, char *cmd, int fd,
 
 	/* Send first the public params */
 
-	ret = prepare_data(p, size, "%i%s%s%i%i%i%i%i%i%i", seq, cmd,
+	ret = prepare_data(p, size, "%i%s%i%s%i%i%i%i%i%i%i", seq, cmd, ret,
 			   info->name, info->frequency_min,
 			   info->frequency_max, info->frequency_stepsize,
 			   info->frequency_tolerance, info->symbol_rate_min,
@@ -947,7 +950,7 @@ static int dev_get_parms(uint32_t seq, char *cmd, int fd,
 
 	return send_buf(fd, buf, p - buf);
 error:
-	return ret;
+	return send_data(fd, "%i%s%i", seq, cmd, ret);
 }
 
 static int dev_set_parms(uint32_t seq, char *cmd, int fd,
@@ -1041,7 +1044,7 @@ static int dev_get_stats(uint32_t seq, char *cmd, int fd,
 	if (ret < 0)
 		goto error;
 
-	ret = prepare_data(p, size, "%i%s%i", seq, cmd, st->prev_status);
+	ret = prepare_data(p, size, "%i%s%i%i", seq, cmd, ret, st->prev_status);
 	if (ret < 0)
 		goto error;
 
@@ -1094,9 +1097,9 @@ static int dev_get_stats(uint32_t seq, char *cmd, int fd,
 		size -= ret;
 	}
 
-	send_buf(fd, buf, p - buf);
+	return send_buf(fd, buf, p - buf);
 error:
-	return ret;
+	return send_data(fd, "%i%s%i", seq, cmd, ret);
 }
 
 /*
