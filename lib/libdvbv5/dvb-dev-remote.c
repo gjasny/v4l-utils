@@ -81,7 +81,7 @@ struct dvb_dev_remote_priv {
 	int fd;
 	struct sockaddr_in addr;
 
-	int seq;
+	int seq, disconnected;
 
 	pthread_t recv_id;
 	pthread_mutex_t lock_io;
@@ -432,6 +432,24 @@ static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
 	return p - buf;
 }
 
+static void dvb_dev_remote_disconnect(struct dvb_dev_remote_priv *priv)
+{
+	struct queued_msg *msg;
+
+	priv->disconnected = 1;
+
+	for (msg = &priv->msgs; msg; msg = msg->next) {
+		msg->retval = -ENODEV;
+		pthread_cond_signal(&msg->cond);
+	}
+	/* Close the socket */
+	if (priv->fd > 0) {
+		close(priv->fd);
+		priv->fd = 0;
+	}
+}
+
+
 static void *receive_data(void *privdata)
 {
 	struct dvb_device_priv *dvb = privdata;
@@ -445,7 +463,11 @@ static void *receive_data(void *privdata)
 	do {
 		size = recv(priv->fd, buf, sizeof(buf), 0);
 		if (size <= 0) {
-			dvb_perror("recv");
+			if (size < 0)
+				dvb_perror("recv");
+			else
+				dvb_logerr("remote end disconnected");
+			dvb_dev_remote_disconnect(priv);
 			return NULL;
 		}
 
@@ -529,6 +551,9 @@ static int dvb_remote_get_version(struct dvb_device_priv *dvb)
 	char version[REMOTE_BUF_SIZE];
 	int ret;
 
+	if (priv->disconnected)
+		return -ENODEV;
+
 	msg = send_fmt(dvb, priv->fd, "daemon_get_version", "-");
 	if (!msg)
 		return -1;
@@ -573,6 +598,9 @@ static int dvb_remote_find(struct dvb_device_priv *dvb, int enable_monitor)
 	struct queued_msg *msg;
 	int ret;
 
+	if (priv->disconnected)
+		return -ENODEV;
+
 	msg = send_fmt(dvb, priv->fd, "dev_find", "%i", enable_monitor);
 	if (!msg)
 		return -1;
@@ -598,6 +626,9 @@ static int dvb_remote_stop_monitor(struct dvb_device_priv *dvb)
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct queued_msg *msg;
 	int ret;
+
+	if (priv->disconnected)
+		return -ENODEV;
 
 	msg = send_fmt(dvb, priv->fd, "dev_stop_monitor", "-");
 	if (!msg)
@@ -629,6 +660,9 @@ struct dvb_dev_list *dvb_remote_seek_by_sysname(struct dvb_device_priv *dvb,
 	struct dvb_dev_list *dev = NULL;
 	struct queued_msg *msg;
 	int ret, int_type;
+
+	if (priv->disconnected)
+		return NULL;
 
 	msg = send_fmt(dvb, priv->fd, "dev_seek_by_sysname", "%i%i%i",
 				adapter, num, type);
@@ -697,6 +731,9 @@ static struct dvb_open_descriptor *dvb_remote_open(struct dvb_device_priv *dvb,
 	struct queued_msg *msg;
 	int ret;
 
+	if (priv->disconnected)
+		return NULL;
+
 	open_dev = calloc(1, sizeof(*open_dev));
 	if (!open_dev) {
 		dvb_perror("Can't create file descriptor");
@@ -749,6 +786,9 @@ static int dvb_remote_close(struct dvb_open_descriptor *open_dev)
 	struct queued_msg *msg;
 	int ret = -1;
 
+	if (priv->disconnected)
+		return -ENODEV;
+
 	msg = send_fmt(dvb, priv->fd, "dev_close", "%i", open_dev->fd);
 	/* Even with errors, we need to close our end */
 	if (!msg)
@@ -796,6 +836,9 @@ static int dvb_remote_dmx_stop(struct dvb_open_descriptor *open_dev)
 	struct queued_msg *msg;
 	int ret;
 
+	if (priv->disconnected)
+		return -ENODEV;
+
 	msg = send_fmt(dvb, priv->fd, "dev_dmx_stop", "%i", open_dev->fd);
 	if (!msg)
 		return -1;
@@ -824,6 +867,9 @@ static int dvb_remote_set_bufsize(struct dvb_open_descriptor *open_dev,
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
 	int ret;
+
+	if (priv->disconnected)
+		return -ENODEV;
 
 	msg = send_fmt(dvb, priv->fd, "dev_set_bufsize", "%i%i",
 		       open_dev->fd, bufsize);
@@ -854,6 +900,9 @@ static ssize_t dvb_remote_read(struct dvb_open_descriptor *open_dev,
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
 	int ret, size;
+
+	if (priv->disconnected)
+		return -ENODEV;
 
 	size = count;
 	msg = send_fmt(dvb, priv->fd, "dev_read", "%i%i",
@@ -905,6 +954,9 @@ static int dvb_remote_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
 	int ret;
+
+	if (priv->disconnected)
+		return -ENODEV;
 
 	msg = send_fmt(dvb, priv->fd, "dev_dmx_set_pesfilter", "%i%i%i%i%i",
 		       open_dev->fd, pid, type, output, bufsize);
@@ -970,6 +1022,9 @@ static int dvb_remote_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int 
 	struct queued_msg *msg;
 	int ret;
 
+	if (priv->disconnected)
+		return -ENODEV;
+
 	msg = send_fmt(dvb, priv->fd, "dev_set_bufsize", "%i%i",
 		       open_dev->fd, sid);
 	if (!msg)
@@ -998,6 +1053,9 @@ int dvb_remote_fe_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct queued_msg *msg;
 	int ret;
+
+	if (priv->disconnected)
+		return -ENODEV;
 
 	msg = send_fmt(dvb, priv->fd, "dev_set_sys", "%i", sys);
 	if (!msg)
@@ -1029,6 +1087,9 @@ int dvb_remote_fe_get_parms(struct dvb_v5_fe_parms *par)
 	int i, ret, delsys, country;
 	char *p, lnb_name[256];
 	size_t size;
+
+	if (priv->disconnected)
+		return -ENODEV;
 
 	msg = send_fmt(dvb, priv->fd, "fe_get_parms", "-");
 	if (!msg)
@@ -1144,6 +1205,9 @@ int dvb_remote_fe_set_parms(struct dvb_v5_fe_parms *par)
 	char buf[REMOTE_BUF_SIZE], lnb_name[80] = "", *p = buf;
 	size_t size = sizeof(buf);
 
+	if (priv->disconnected)
+		return -ENODEV;
+
 	if (par->lnb)
 		strcpy(lnb_name, par->lnb->name);
 
@@ -1210,6 +1274,9 @@ int dvb_remote_fe_get_stats(struct dvb_v5_fe_parms *par)
 	int ret, status, i;
 	char *p;
 	size_t size;
+
+	if (priv->disconnected)
+		return -ENODEV;
 
 	msg = send_fmt(dvb, priv->fd, "fe_get_stats", "-");
 	if (!msg)
@@ -1306,6 +1373,7 @@ static void dvb_dev_remote_free(struct dvb_device_priv *dvb)
 {
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct queued_msg *msg, *next;
+	int timer = 0;
 
 	/*
 	 * If the application was well-written, the last message would be
@@ -1314,6 +1382,15 @@ static void dvb_dev_remote_free(struct dvb_device_priv *dvb)
 	 */
 
 	pthread_cancel(priv->recv_id);
+
+	/* Cancel any pending messages */
+	dvb_dev_remote_disconnect(priv);
+
+	/* Give some time any pending message to be handled */
+	do {
+		usleep(1000);
+		timer++;
+	} while (timer < 1000 && priv->msgs.next);
 
 	/* Free any pending message */
 	msg = priv->msgs.next;
@@ -1324,6 +1401,12 @@ static void dvb_dev_remote_free(struct dvb_device_priv *dvb)
 	}
 
 	pthread_mutex_destroy(&priv->lock_io);
+
+	/* Close the socket */
+	if (priv->fd > 0) {
+		close(priv->fd);
+		priv->fd = 0;
+	}
 
 	free(priv);
 }
