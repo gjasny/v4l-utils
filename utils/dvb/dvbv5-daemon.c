@@ -217,6 +217,9 @@ static struct dvb_open_descriptor *get_open_dev(int uid)
 {
 	struct dvb_descriptors desc, **p;
 
+	if (!desc_root)
+		return NULL;
+
 	desc.uid = uid;
 	p = tfind(&desc, &desc_root, dvb_desc_compare);
 
@@ -587,6 +590,10 @@ static int dev_open(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 		goto error;
 
 	open_dev = dvb_dev_open(dvb, sysname, flags);
+	if (!open_dev) {
+		ret = -errno;
+		goto error;
+	}
 
 	if (verbose)
 		dbg("open dev handler: %p", open_dev);
