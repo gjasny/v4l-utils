@@ -1425,7 +1425,13 @@ int dvb_dev_remote_init(struct dvb_device *d, char *server, int port)
 	struct dvb_dev_ops *ops = &dvb->ops;
 	int fd, ret;
 
+	/* Call an implementation-specific free method, if defined */
+	if (ops->free)
+		ops->free(dvb);
+
 	dvb->priv = priv = calloc(1, sizeof(*priv));
+	if (!priv)
+		return -ENOMEM;
 
 	strcpy(priv->output_charset, "utf-8");
 	strcpy(priv->default_charset, "iso-8859-1");

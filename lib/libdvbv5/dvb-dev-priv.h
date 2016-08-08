@@ -75,12 +75,6 @@ struct dvb_device_priv {
 	struct dvb_device d;
 	struct dvb_dev_ops ops;
 
-	volatile dvb_dev_change_t monitor;
-
-	/* udev control fields */
-	struct udev *udev;
-	struct udev_monitor *mon;
-
 	struct dvb_open_descriptor open_list;
 
 	/* private data to be used by implementation, if needed */

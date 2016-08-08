@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
+#include <pthread.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -40,20 +41,35 @@
 # define _(string) string
 #endif
 
+struct dvb_dev_local_priv {
+	dvb_dev_change_t notify_dev_change;
+
+	pthread_t dev_change_id;
+
+	/* udev control fields */
+	int udev_fd;
+	struct udev *udev;
+	struct udev_monitor *mon;
+};
+
 static int handle_device_change(struct dvb_device_priv *dvb,
 				struct udev_device *dev,
 				const char *syspath,
 				const char *action)
 {
+	struct dvb_dev_local_priv *priv = dvb->priv;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct udev_device *parent = NULL;
 	struct dvb_dev_list dev_list, *dvb_dev;
+	enum dvb_dev_change_type type;
 	const char *bus_type, *p;
 	char *buf;
 	int i, ret;
 
 	/* remove, change, move should all remove the device first */
-	if (strcmp(action,"add")) {
+	if (!strcmp(action,"add")) {
+		type = DVB_DEV_ADD;
+	} else {
 		p = udev_device_get_sysname(dev);
 		if (!p) {
 			dvb_logerr(_("udev_device_get_sysname failed"));
@@ -78,8 +94,13 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 		}
 
 		/* Return, if the device was removed */
-		if (!strcmp(action,"remove"))
+		if (!strcmp(action,"remove")) {
+			if (priv->notify_dev_change)
+				priv->notify_dev_change(syspath,
+							DVB_DEV_REMOVE);
 			return 0;
+		}
+		type = DVB_DEV_CHANGE;
 	}
 
 	/* Fill mandatory fields: path, sysname, dvb_type, bus_type */
@@ -195,6 +216,8 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 			dvb_dev->serial = strdup(p);
 	}
 added:
+	if (priv->notify_dev_change)
+		priv->notify_dev_change(syspath, type);
 	dvb_dev_dump_device(_("Found dvb %s device: %s"), parms, dvb_dev);
 
 	return 0;
@@ -204,37 +227,74 @@ err:
 	return -ENODEV;
 }
 
+#ifdef HAVE_PTHREAD
+static void *monitor_device_changes(void *privdata)
+{
+	struct dvb_device_priv *dvb = privdata;
+	struct dvb_dev_local_priv *priv = dvb->priv;
+	struct udev_device *dev;
+
+	while (1) {
+		fd_set fds;
+		struct timeval tv;
+		int ret;
+
+		FD_ZERO(&fds);
+		FD_SET(priv->udev_fd, &fds);
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+
+		ret = select(priv->udev_fd + 1, &fds, NULL, NULL, &tv);
+
+		/* Check if our file descriptor has received data. */
+		if (ret > 0 && FD_ISSET(priv->udev_fd, &fds)) {
+			dev = udev_monitor_receive_device(priv->mon);
+			if (dev) {
+				const char *action = udev_device_get_action(dev);
+				handle_device_change(dvb, dev, NULL, action);
+			}
+		}
+	}
+	return NULL;
+}
+#endif
+
 static int dvb_local_find(struct dvb_device_priv *dvb,
 			  dvb_dev_change_t handler)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_local_priv *priv = dvb->priv;
 	struct udev_enumerate *enumerate;
 	struct udev_list_entry *devices, *dev_list_entry;
 	struct udev_device *dev;
-	int fd = -1;
+	int ret;
 
 	/* Free a previous list of devices */
 	if (dvb->d.num_devices)
 		dvb_dev_free_devices(dvb);
 
 	/* Create the udev object */
-	dvb->udev = udev_new();
-	if (!dvb->udev) {
+	priv->udev = udev_new();
+	if (!priv->udev) {
 		dvb_logerr(_("Can't create an udev object\n"));
 		return -ENOMEM;
 	}
 
-	dvb->monitor = handler;
-	if (dvb->monitor) {
+	priv->notify_dev_change = handler;
+	if (priv->notify_dev_change) {
+#ifndef HAVE_PTHREAD
+		dvb_logerr("Need to be compiled with pthreads for monitor");
+		return -EINVAL;
+#endif
 		/* Set up a monitor to monitor dvb devices */
-		dvb->mon = udev_monitor_new_from_netlink(dvb->udev, "udev");
-		udev_monitor_filter_add_match_subsystem_devtype(dvb->mon, "dvb", NULL);
-		udev_monitor_enable_receiving(dvb->mon);
-		fd = udev_monitor_get_fd(dvb->mon);
+		priv->mon = udev_monitor_new_from_netlink(priv->udev, "udev");
+		udev_monitor_filter_add_match_subsystem_devtype(priv->mon, "dvb", NULL);
+		udev_monitor_enable_receiving(priv->mon);
+		priv->udev_fd = udev_monitor_get_fd(priv->mon);
 	}
 
 	/* Create a list of the devices in the 'dvb' subsystem. */
-	enumerate = udev_enumerate_new(dvb->udev);
+	enumerate = udev_enumerate_new(priv->udev);
 	udev_enumerate_add_match_subsystem(enumerate, "dvb");
 	udev_enumerate_scan_devices(enumerate);
 	devices = udev_enumerate_get_list_entry(enumerate);
@@ -244,7 +304,7 @@ static int dvb_local_find(struct dvb_device_priv *dvb,
 
 		syspath = udev_list_entry_get_name(dev_list_entry);
 
-		dev = udev_device_new_from_syspath(dvb->udev, syspath);
+		dev = udev_device_new_from_syspath(priv->udev, syspath);
 		handle_device_change(dvb, dev, syspath, "add");
 		udev_device_unref(dev);
 	}
@@ -253,36 +313,34 @@ static int dvb_local_find(struct dvb_device_priv *dvb,
 	udev_enumerate_unref(enumerate);
 
 	/* Begin monitoring udev events */
-	while (dvb->monitor) {
-		fd_set fds;
-		struct timeval tv;
-		int ret;
-
-		FD_ZERO(&fds);
-		FD_SET(fd, &fds);
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-
-		ret = select(fd + 1, &fds, NULL, NULL, &tv);
-
-		/* Check if our file descriptor has received data. */
-		if (ret > 0 && FD_ISSET(fd, &fds)) {
-			dev = udev_monitor_receive_device(dvb->mon);
-			if (dev) {
-				const char *action = udev_device_get_action(dev);
-				handle_device_change(dvb, dev, NULL, action);
-			}
+#ifdef HAVE_PTHREAD
+	if (priv->notify_dev_change) {
+		ret = pthread_create(&priv->dev_change_id, NULL,
+				     monitor_device_changes, dvb);
+		if (ret < 0) {
+			dvb_perror("pthread_create");
+			return -1;
 		}
 	}
-	udev_unref(dvb->udev);
-	dvb->udev = NULL;
+#endif
+	if (!priv->notify_dev_change) {
+		udev_unref(priv->udev);
+		priv->udev = NULL;
+	}
 
 	return 0;
 }
 
 static int dvb_local_stop_monitor(struct dvb_device_priv *dvb)
 {
-	dvb->monitor = 0;
+	struct dvb_dev_local_priv *priv = dvb->priv;
+
+#ifdef HAVE_PTHREAD
+	if (priv->notify_dev_change) {
+		pthread_cancel(priv->dev_change_id);
+		udev_unref(priv->udev);
+	}
+#endif
 
 	return 0;
 }
@@ -682,10 +740,22 @@ int dvb_local_fe_get_stats(struct dvb_v5_fe_parms *p)
 	return __dvb_fe_get_stats(p);
 }
 
+
+static void dvb_dev_local_free(struct dvb_device_priv *dvb)
+{
+	struct dvb_dev_local_priv *priv = dvb->priv;
+
+	dvb_local_stop_monitor(dvb);
+
+	free(priv);
+}
+
 /* Initialize for local usage */
 void dvb_dev_local_init(struct dvb_device_priv *dvb)
 {
 	struct dvb_dev_ops *ops = &dvb->ops;
+
+	dvb->priv = calloc(1, sizeof(struct dvb_dev_local_priv));
 
 	ops->find = dvb_local_find;
 	ops->seek_by_sysname = dvb_local_seek_by_sysname;
@@ -706,4 +776,6 @@ void dvb_dev_local_init(struct dvb_device_priv *dvb)
 	ops->fe_get_parms = dvb_local_fe_get_parms;
 	ops->fe_set_parms = dvb_local_fe_set_parms;
 	ops->fe_get_stats = dvb_local_fe_get_stats;
+
+	ops->free = dvb_dev_local_free;
 }

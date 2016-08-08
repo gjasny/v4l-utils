@@ -120,12 +120,6 @@ void dvb_dev_free(struct dvb_device *d)
 
 	dvb_dev_free_devices(dvb);
 
-	/* Wait for dvb_dev_find() to stop */
-	while (dvb->udev) {
-		dvb->monitor = 0;
-		usleep(1000);
-	}
-
 	free(dvb);
 }
 

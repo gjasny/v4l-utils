@@ -265,7 +265,9 @@ AC_SUBST([JPEG_LIBS])
 
 # Check for pthread
 
-AX_PTHREAD([have_pthread=yes], [have_pthread=no])
+AX_PTHREAD([have_pthread=yes
+	    AC_DEFINE([HAVE_PTHREAD],[1],[Define if you have POSIX threads libraries and header files.])],
+	   [have_pthread=no])
 
 # The dlopen() function is in the C library for *BSD and in
 # libdl on GLIBC-based systems
@@ -451,24 +453,24 @@ compile time options summary
 ============================
 
     Host OS             : $host_os
-    X11			: $x11_pkgconfig
-    GL			: $gl_pkgconfig
-    glu			: $glu_pkgconfig
-    libjpeg		: $have_jpeg
-    libudev		: $have_libudev
-    pthread		: $have_pthread
-    QT version		: $QT_VERSION
-    ALSA support	: $USE_ALSA
+    X11                 : $x11_pkgconfig
+    GL                  : $gl_pkgconfig
+    glu                 : $glu_pkgconfig
+    libjpeg             : $have_jpeg
+    libudev             : $have_libudev
+    pthread             : $have_pthread
+    QT version          : $QT_VERSION
+    ALSA support        : $USE_ALSA
 
-    gconv		: $USE_GCONV
+    gconv               : $USE_GCONV
 
-    libv4l		: $USE_LIBV4L
-    v4l_plugins		: $USE_V4L_PLUGINS
-    v4l_wrappers	: $USE_V4L_WRAPPERS
-    libdvbv5		: $USE_LIBDVBV5
-    dvbv5-daemon	: $USE_DVBV5_REMOTE
-    v4lutils		: $USE_V4LUTILS
-    qv4l2		: $USE_QV4L2
-    v4l2-ctrl		: $USE_V4L2_CTL
-    v4l2-compliance	: $USE_V4L2_COMPLIANCE
+    libv4l              : $USE_LIBV4L
+    v4l_plugins         : $USE_V4L_PLUGINS
+    v4l_wrappers        : $USE_V4L_WRAPPERS
+    libdvbv5            : $USE_LIBDVBV5
+    dvbv5-daemon        : $USE_DVBV5_REMOTE
+    v4lutils            : $USE_V4LUTILS
+    qv4l2               : $USE_QV4L2
+    v4l2-ctrl           : $USE_V4L2_CTL
+    v4l2-compliance     : $USE_V4L2_COMPLIANCE
 EOF

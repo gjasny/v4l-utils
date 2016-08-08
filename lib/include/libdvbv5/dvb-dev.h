@@ -109,12 +109,13 @@ enum dvb_dev_change_type {
 };
 
 /**
- * @brief Describes a callbakc for dvb_dev_find()
+ * @brief Describes a callback for dvb_dev_find()
  *
- * @dev:	pointer to struct dvb_dev_list with the changed device
+ * syspath:	Kernel's system name for the device (dvb?.frontend?,
+ *			for example)
  * @type:	type of change, as defined by enum dvb_dev_change_type
  */
-typedef int (*dvb_dev_change_t)(struct dvb_dev_list *dev,
+typedef int (*dvb_dev_change_t)(const char *syspath,
 				enum dvb_dev_change_type type);
 
 /**
