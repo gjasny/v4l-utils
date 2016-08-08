@@ -83,6 +83,8 @@ struct dvb_dev_remote_priv {
 
 	int seq, disconnected;
 
+	dvb_dev_change_t notify_dev_change;
+
 	pthread_t recv_id;
 	pthread_mutex_t lock_io;
 
@@ -495,6 +497,22 @@ static void *receive_data(void *privdata)
 					args += ret;
 					args_size -= ret;
 				}
+			} else if (!strcmp(cmd, "dev_change")) {
+				ret = scan_data(parms, args, args_size,
+						"%s", cmd);
+				/*
+				 * FIXME: we should change the logic here to
+				 * implement a function and always monitor
+				 * changes on remote devices. This way, we
+				 * can avoid leaking memory with the current
+				 * implementation of dvb_remote_seek_by_sysname
+				 */
+				if (ret > 0) {
+					if (priv->notify_dev_change)
+						priv->notify_dev_change(strdup(cmd), retval);
+					args += ret;
+					args_size -= ret;
+				}
 			} else {
 				dvb_logerr("unexpected message type: %s", cmd);
 				ret = -1;
@@ -607,13 +625,18 @@ static int dvb_remote_find(struct dvb_device_priv *dvb,
 	else
 		enable_monitor = 0;
 
+	priv->notify_dev_change = handler;
+
 	msg = send_fmt(dvb, priv->fd, "dev_find", "%i", enable_monitor);
-	if (!msg)
+	if (!msg) {
+		priv->notify_dev_change = NULL;
 		return -1;
+	}
 
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
 		dvb_logerr("error waiting for %s response", msg->cmd);
+		priv->notify_dev_change = NULL;
 		goto error;
 	}
 	ret = msg->retval;
