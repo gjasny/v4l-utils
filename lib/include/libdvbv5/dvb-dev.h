@@ -111,11 +111,13 @@ enum dvb_dev_change_type {
 /**
  * @brief Describes a callback for dvb_dev_find()
  *
- * syspath:	Kernel's system name for the device (dvb?.frontend?,
+ * sysname:	Kernel's system name for the device (dvb?.frontend?,
  *			for example)
  * @type:	type of change, as defined by enum dvb_dev_change_type
+ *
+ * @note: the returned string should be freed with free().
  */
-typedef int (*dvb_dev_change_t)(const char *syspath,
+typedef int (*dvb_dev_change_t)(char *sysname,
 				enum dvb_dev_change_type type);
 
 /**

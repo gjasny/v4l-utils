@@ -65,6 +65,7 @@ static const struct argp_option options[] = {
 	{"get",		'g',	0,		0,	N_("get frontend"), 0},
 	{"server",	'H',	N_("SERVER"),	0, 	N_("dvbv5-daemon host IP address"), 0},
 	{"tcp-port",	'T',	N_("PORT"),	0, 	N_("dvbv5-daemon host tcp port"), 0},
+	{"device-mon",	'D',	0,		0,	N_("monitors device insert/removal"), 0},
 	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
 	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
 	{"version",	'V',	0,		0,	N_("Print program version"), -1},
@@ -82,6 +83,7 @@ static int delsys = 0;
 static int femon = 0;
 static int acoustical = 0;
 static int timeout_flag = 0;
+static int device_mon = 0;
 
 static void do_timeout(int x)
 {
@@ -133,6 +135,9 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 #endif
 	case 'g':
 		get++;
+		break;
+	case 'D':
+		device_mon++;
 		break;
 	case 'H':
 		server = arg;
@@ -280,6 +285,24 @@ static void get_show_stats(struct dvb_v5_fe_parms *parms)
 	} while (!timeout_flag);
 }
 
+static const char const *event_type[] = {
+	[DVB_DEV_ADD] = "added",
+	[DVB_DEV_CHANGE] = "changed",
+	[DVB_DEV_REMOVE] = "removed",
+};
+
+static int dev_change_monitor(char *sysname,
+			       enum dvb_dev_change_type type)
+{
+	if (type > ARRAY_SIZE(event_type))
+		printf("unknown event on device %s\n", sysname);
+	else
+		printf("device %s was %s\n", sysname, event_type[type]);
+	free(sysname);
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	struct dvb_device *dvb;
@@ -320,6 +343,12 @@ int main(int argc, char *argv[])
 	}
 
 	dvb_dev_set_log(dvb, verbose, NULL);
+	if (device_mon) {
+		dvb_dev_find(dvb, &dev_change_monitor);
+		while (1) {
+			usleep(1000000);
+		}
+	}
 	dvb_dev_find(dvb, NULL);
 	parms = dvb->fe_parms;
 

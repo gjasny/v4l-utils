@@ -515,8 +515,8 @@ void dvb_remote_log(int level, const char *fmt, ...)
 	free(buf);
 }
 
-int dev_device_handler(struct dvb_dev_list *dev,
-		       enum dvb_dev_change_type type)
+static int dev_change_monitor(char *sysname,
+			      enum dvb_dev_change_type type)
 {
 	/* FIXME: implement it! */
 	return 0;
@@ -544,7 +544,7 @@ static int dev_find(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 		goto error;
 
 	if (enable_monitor)
-		handler = dev_device_handler;
+		handler = &dev_change_monitor;
 
 	ret = dvb_dev_find(dvb, handler);
 

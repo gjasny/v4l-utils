@@ -62,7 +62,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	struct udev_device *parent = NULL;
 	struct dvb_dev_list dev_list, *dvb_dev;
 	enum dvb_dev_change_type type;
-	const char *bus_type, *p;
+	const char *bus_type, *p, *sysname;
 	char *buf;
 	int i, ret;
 
@@ -70,24 +70,29 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	if (!strcmp(action,"add")) {
 		type = DVB_DEV_ADD;
 	} else {
-		p = udev_device_get_sysname(dev);
-		if (!p) {
+		sysname = udev_device_get_sysname(dev);
+		if (!sysname) {
 			dvb_logerr(_("udev_device_get_sysname failed"));
 			return -ENODEV;
 		}
 
 		for (i = 0; i < dvb->d.num_devices; i++) {
-			if (!strcmp(p, dvb->d.devices[i].sysname)) {
+			if (!strcmp(sysname, dvb->d.devices[i].sysname)) {
 				memmove(&dvb->d.devices[i],
 					&dvb->d.devices[i + 1],
 					sizeof(*dvb->d.devices) * (dvb->d.num_devices - i));
 				dvb->d.num_devices--;
 
-				p = realloc(dvb->d.devices,
-					    sizeof(*dvb->d.devices) * dvb->d.num_devices);
-				if (!p) {
-					dvb_logerr(_("Can't remove a device from the list of DVB devices"));
-					return -ENODEV;
+				if (!dvb->d.num_devices) {
+					free(dvb->d.devices);
+					dvb->d.devices = NULL;
+				} else {
+					p = realloc(dvb->d.devices,
+						sizeof(*dvb->d.devices) * dvb->d.num_devices);
+					if (!p) {
+						dvb_logerr(_("Can't remove a device from the list of DVB devices"));
+						return -ENODEV;
+					}
 				}
 				break;
 			}
@@ -96,7 +101,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 		/* Return, if the device was removed */
 		if (!strcmp(action,"remove")) {
 			if (priv->notify_dev_change)
-				priv->notify_dev_change(syspath,
+				priv->notify_dev_change(strdup(sysname),
 							DVB_DEV_REMOVE);
 			return 0;
 		}
@@ -217,7 +222,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	}
 added:
 	if (priv->notify_dev_change)
-		priv->notify_dev_change(syspath, type);
+		priv->notify_dev_change(strdup(dvb_dev->sysname), type);
 	dvb_dev_dump_device(_("Found dvb %s device: %s"), parms, dvb_dev);
 
 	return 0;
