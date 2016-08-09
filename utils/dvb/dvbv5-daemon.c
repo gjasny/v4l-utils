@@ -421,9 +421,13 @@ static ssize_t prepare_data(char *buf, const size_t size,
 static int send_buf(int fd, const char *buf, size_t size)
 {
 	int ret;
+	int32_t i32;
 
 	pthread_mutex_lock(&msg_mutex);
-	ret = write(fd, buf, size);
+	i32 = htobe32(size);
+	ret = write(fd, (void *)&i32, 4);
+	if (ret >= 0)
+		ret = write(fd, buf, size);
 	pthread_mutex_unlock(&msg_mutex);
 	if (ret < 0)
 		local_perror("write");
@@ -1211,7 +1215,11 @@ static void *start_server(void *fd_pointer)
 
 	/* Command dispatcher */
 	do {
-		size = recv(fd, buf, sizeof(buf), 0);
+		size = recv(fd, buf, 4, MSG_WAITALL);
+		if (size <= 0)
+			break;
+		size = be32toh(*(int32_t *)buf);
+		size = recv(fd, buf, size, MSG_WAITALL);
 		if (size <= 0)
 			break;
 

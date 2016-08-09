@@ -214,7 +214,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct queued_msg *msg, *msgs;
 	char buf[REMOTE_BUF_SIZE], *p = buf, *endp = &buf[sizeof(buf)];
-	int ret, len;
+	int ret, len, err;
 	int32_t i32;
 	va_list ap;
 
@@ -272,8 +272,15 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 	p += ret;
 
 	pthread_mutex_lock(&msg->lock);
-	ret = send(fd, buf, p - buf, MSG_CONFIRM);
-	if (ret < 0 || (ret < p - buf)) {
+	i32 = htobe32(p - buf);
+	ret = write(fd, (void *)&i32, 4);
+	if (ret != 4) {
+		err = 1;
+	} else {
+		err = 0;
+		ret = write(fd, buf, p - buf);
+	}
+	if (ret < 0 || (ret < p - buf) || err) {
 		pthread_mutex_destroy(&msg->lock);
 		pthread_cond_destroy(&msg->cond);
 		free(msg);
@@ -301,7 +308,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct queued_msg *msg, *msgs;
 	char buf[REMOTE_BUF_SIZE], *p = buf, *endp = &buf[sizeof(buf)];
-	int ret, len;
+	int ret, len, err;
 	int32_t i32;
 
 	msg = calloc(1, sizeof(*msg));
@@ -355,8 +362,15 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 	memcpy(p, in_buf, in_size);
 	p += in_size;
 
-	ret = write(fd, buf, p - buf);
-	if (ret < 0 || (ret < p - buf)) {
+	i32 = htobe32(p - buf);
+	ret = write(fd, (void *)&i32, 4);
+	if (ret != 4) {
+		err = 1;
+	} else {
+		err = 0;
+		ret = write(fd, buf, p - buf);
+	}
+	if (ret < 0 || (ret < p - buf) || err) {
 		pthread_mutex_destroy(&msg->lock);
 		pthread_cond_destroy(&msg->cond);
 		free(msg);
@@ -505,7 +519,17 @@ static void *receive_data(void *privdata)
 	int ret, retval, seq, handled;
 
 	do {
-		size = recv(priv->fd, buf, sizeof(buf), 0);
+		size = recv(priv->fd, buf, 4, MSG_WAITALL);
+		if (size <= 0) {
+			if (size < 0)
+				dvb_perror("recv");
+			else
+				dvb_logerr("remote end disconnected");
+			dvb_dev_remote_disconnect(priv);
+			return NULL;
+		}
+		size = be32toh(*(int32_t *)buf);
+		size = recv(priv->fd, buf, size, MSG_WAITALL);
 		if (size <= 0) {
 			if (size < 0)
 				dvb_perror("recv");
