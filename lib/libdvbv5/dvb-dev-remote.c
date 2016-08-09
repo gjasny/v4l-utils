@@ -20,6 +20,7 @@
 #define _LARGEFILE_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
 
+#include <inttypes.h>
 #include <libudev.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -493,7 +494,7 @@ static void *receive_data(void *privdata)
 				ret = scan_data(parms, args, args_size,
 						"%s", cmd);
 				if (ret > 0) {
-					dvb_loglevel(retval, cmd);
+					dvb_loglevel(retval, "%s", cmd);
 					args += ret;
 					args_size -= ret;
 				}
@@ -1359,7 +1360,9 @@ int dvb_remote_fe_get_stats(struct dvb_v5_fe_parms *par)
 		size -= ret;
 
 		ret = scan_data(parms, p, size,
-				"%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu",
+				"%" SCNu64 "%" SCNu64 "%" SCNu64 "%" SCNu64
+				"%" SCNu64 "%" SCNu64 "%" SCNu64 "%" SCNu64
+				"%" SCNu64 "%" SCNu64 "%" SCNu64 "%" SCNu64,
 				&prev->pre_bit_count,
 				&prev->pre_bit_error,
 				&prev->post_bit_count,
