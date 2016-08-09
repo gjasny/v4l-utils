@@ -430,7 +430,7 @@ struct dvb_v5_descriptors *dvb_dev_scan(struct dvb_open_descriptor *open_dev,
 #ifdef HAVE_DVBV5_REMOTE
 
 /* Better to be at least 4096 + encoding size */
-#define REMOTE_BUF_SIZE 8192
+#define REMOTE_BUF_SIZE (1<<16)
 
 /**
  * @brief initialize the dvb-dev to use a remote device running the

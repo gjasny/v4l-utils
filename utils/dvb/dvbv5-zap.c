@@ -500,7 +500,7 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 	while (timeout_flag == 0) {
 		r = dvb_dev_read(in_fd, buf, BUFLEN);
 		if (r < 0) {
-			if (r == EOVERFLOW) {
+			if (r == -EOVERFLOW) {
 				fprintf(stderr, _("buffer overrun\n"));
 				continue;
 			}
@@ -692,7 +692,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 			break;
 
 		if ((r = dvb_dev_read(dvr_fd, buffer, BSIZE)) <= 0) {
-			if (r == EOVERFLOW) {
+			if (r == -EOVERFLOW) {
 				struct timeval now;
 				int diff;
 				gettimeofday(&now, 0);
@@ -702,6 +702,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 				fprintf(stderr, _("%.2fs: buffer overrun\n"), diff / 1000.);
 				continue;
 			}
+			fprintf(stderr, _("dvbtraffic: read() returned error %zd\n"), r);
 			break;
 		}
 		if (r != BSIZE) {

@@ -425,7 +425,7 @@ static int send_buf(int fd, const char *buf, size_t size)
 
 	pthread_mutex_lock(&msg_mutex);
 	i32 = htobe32(size);
-	ret = write(fd, (void *)&i32, 4);
+	ret = send(fd, (void *)&i32, 4, MSG_MORE);
 	if (ret >= 0)
 		ret = write(fd, buf, size);
 	pthread_mutex_unlock(&msg_mutex);
@@ -1209,9 +1209,15 @@ static void *start_server(void *fd_pointer)
 	char buf[REMOTE_BUF_SIZE + 8], cmd[80], *p;
 	ssize_t size;
 	uint32_t seq;
+	int bufsize;
 
 	if (verbose)
 		dbg("Opening socket %d", fd);
+
+	/* Set a large buffer for read() to work better */
+	bufsize = REMOTE_BUF_SIZE;
+	setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
+		   (void *)&bufsize, (int)sizeof(bufsize));
 
 	/* Command dispatcher */
 	do {

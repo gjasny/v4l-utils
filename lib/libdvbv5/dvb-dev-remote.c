@@ -273,7 +273,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 
 	pthread_mutex_lock(&msg->lock);
 	i32 = htobe32(p - buf);
-	ret = write(fd, (void *)&i32, 4);
+	ret = send(fd, (void *)&i32, 4, MSG_MORE);
 	if (ret != 4) {
 		err = 1;
 	} else {
@@ -363,7 +363,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 	p += in_size;
 
 	i32 = htobe32(p - buf);
-	ret = write(fd, (void *)&i32, 4);
+	ret = send(fd, (void *)&i32, 4, MSG_MORE);
 	if (ret != 4) {
 		err = 1;
 	} else {
@@ -1514,7 +1514,7 @@ int dvb_dev_remote_init(struct dvb_device *d, char *server, int port)
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_remote_priv *priv;
 	struct dvb_dev_ops *ops = &dvb->ops;
-	int fd, ret;
+	int fd, ret, bufsize;
 
 	/* Call an implementation-specific free method, if defined */
 	if (ops->free)
@@ -1551,6 +1551,11 @@ int dvb_dev_remote_init(struct dvb_device *d, char *server, int port)
 		dvb_perror("connect");
 		return -1;
 	}
+
+	/* Set large buffer for read() to work better */
+	bufsize = REMOTE_BUF_SIZE;
+	setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
+		   (void *)&bufsize, (int)sizeof(bufsize));
 
 	/* Start receiving messsages from the server */
 	pthread_mutex_init(&priv->lock_io, NULL);
