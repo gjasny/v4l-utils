@@ -406,6 +406,11 @@ AC_ARG_ENABLE(gconv,
    esac]
 )
 
+# Check if backtrace functions are defined
+AC_SEARCH_LIBS([backtrace], [execinfo], [
+  AC_DEFINE(HAVE_BACKTRACE, [1], [glibc has functions to provide stack backtrace])
+])
+
 AM_CONDITIONAL([WITH_LIBDVBV5],     [test x$enable_libdvbv5  != xno -a x$have_libudev = xyes])
 AM_CONDITIONAL([WITH_DVBV5_REMOTE], [test x$enable_libdvbv5  != xno -a x$have_libudev = xyes -a x$have_pthread = xyes])
 

@@ -25,6 +25,12 @@
 #define _LARGEFILE_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
 
+#include <config.h>
+
+#ifdef HAVE_BACKTRACE
+#include <execinfo.h>
+#endif
+
 #include <argp.h>
 #include <config.h>
 #include <endian.h>
@@ -201,6 +207,26 @@ static int dvb_fd = -1;
 static char output_charset[256] = "utf-8";
 static char default_charset[256] = "iso-8859-1";
 
+void stack_dump()
+{
+#ifdef HAVE_BACKTRACE
+	int i, nptrs = 0;
+	void *buffer[10];
+	char **strings = NULL;
+
+	nptrs = backtrace(buffer, sizeof(buffer));
+
+	if (nptrs) {
+		strings = backtrace_symbols(buffer, nptrs);
+		dbg("Stack:");
+	}
+
+	for (i = 0; i < nptrs; i++)
+		dbg("   %s", strings[i]);
+
+	free(strings);
+#endif
+}
 
 /*
  * Open dev descriptor handling
@@ -315,6 +341,7 @@ static ssize_t __prepare_data(char *buf, const size_t size,
 			len = strlen(s);
 			if (p + len + 4 > endp) {
 				dbg("buffer to short for string");
+				stack_dump();
 				return -1;
 			}
 			i32 = htobe32(len);
@@ -328,6 +355,7 @@ static ssize_t __prepare_data(char *buf, const size_t size,
 			len = va_arg(ap, ssize_t);
 			if (p + len + 4 > endp) {
 				dbg("buffer to short for string");
+				stack_dump();
 				return -1;
 			}
 			i32 = htobe32(len);
@@ -339,6 +367,7 @@ static ssize_t __prepare_data(char *buf, const size_t size,
 		case 'i':              /* 32-bit int */
 			if (p + 4 > endp) {
 				dbg("buffer to short for int32_t");
+				stack_dump();
 				return -1;
 			}
 
@@ -349,10 +378,12 @@ static ssize_t __prepare_data(char *buf, const size_t size,
 		case 'l':              /* 64-bit unsigned int */
 			if (*fmt++ != 'u') {
 				dbg("invalid long format character: '%c'", *fmt);
+				stack_dump();
 				break;
 			}
 			if (p + 8 > endp) {
 				dbg("buffer to short for uint64_t");
+				stack_dump();
 				return -1;
 			}
 			u64 = htobe64(va_arg(ap, uint64_t));
@@ -361,6 +392,7 @@ static ssize_t __prepare_data(char *buf, const size_t size,
 			break;
 		default:
 			dbg("invalid format character: '%c'", *fmt);
+			stack_dump();
 		}
 		while (*fmt && *fmt != '%') fmt++;
 		if (*fmt == '%') fmt++;
@@ -440,12 +472,14 @@ static ssize_t scan_data(char *buf, int buf_size, const char *fmt, ...)
 			s = va_arg(ap, char *);
 			if (p + 4 > endp) {
 				dbg("buffer to short for string length");
+				stack_dump();
 				return -1;
 			}
 			len = be32toh(*(int32_t *)p);
 			p += 4;
 			if (p + len > endp) {
 				dbg("buffer to short for string");
+				stack_dump();
 				return -1;
 			}
 
@@ -456,6 +490,7 @@ static ssize_t scan_data(char *buf, int buf_size, const char *fmt, ...)
 		case 'i':              /* 32-bit int */
 			if (p + 4 > endp) {
 				dbg("buffer to short for int32_t");
+				stack_dump();
 				return -1;
 			}
 			i32 = va_arg(ap, int32_t *);
@@ -466,10 +501,12 @@ static ssize_t scan_data(char *buf, int buf_size, const char *fmt, ...)
 		case 'l':              /* 64-bit unsigned int */
 			if (*fmt++ != 'u') {
 				dbg("invalid long format character: '%c'", *fmt);
+				stack_dump();
 				break;
 			}
 			if (p + 8 > endp) {
 				dbg("buffer to short for uint64_t");
+				stack_dump();
 				return -1;
 			}
 			u64 = va_arg(ap, uint64_t *);
@@ -479,6 +516,7 @@ static ssize_t scan_data(char *buf, int buf_size, const char *fmt, ...)
 			break;
 		default:
 			dbg("invalid format character: '%c'", *fmt);
+			stack_dump();
 		}
 		while (*fmt && *fmt != '%') fmt++;
 		if (*fmt == '%') fmt++;

@@ -20,6 +20,13 @@
 #define _LARGEFILE_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
 
+#include <config.h>
+
+
+#ifdef HAVE_BACKTRACE
+#include <execinfo.h>
+#endif
+
 #include <inttypes.h>
 #include <libudev.h>
 #include <stdio.h>
@@ -30,8 +37,6 @@
 #include <resolv.h>
 #include <string.h>
 #include <sys/socket.h>
-
-#include <config.h>
 
 #include "dvb-fe-priv.h"
 #include "dvb-dev-priv.h"
@@ -94,6 +99,27 @@ struct dvb_dev_remote_priv {
 
 	struct queued_msg msgs;
 };
+
+void stack_dump(struct dvb_v5_fe_parms_priv *parms)
+{
+#ifdef HAVE_BACKTRACE
+	int i, nptrs = 0;
+	void *buffer[10];
+	char **strings = NULL;
+
+	nptrs = backtrace(buffer, sizeof(buffer));
+
+	if (nptrs) {
+		strings = backtrace_symbols(buffer, nptrs);
+		dvb_logdbg("Stack:");
+	}
+
+	for (i = 0; i < nptrs; i++)
+		dvb_logdbg("   %s", strings[i]);
+
+	free(strings);
+#endif
+}
 
 /*
  * Functions to send/receive messages to the server
@@ -195,6 +221,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 	msg = calloc(1, sizeof(*msg));
 	if (!msg) {
 		dvb_logerr("calloc queued_msg");
+		stack_dump(parms);
 		return NULL;
 	}
 
@@ -209,6 +236,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 	i32 = htobe32(msg->seq);
 	if (p + 4 > endp) {
 		dvb_logdbg("buffer to short for int32_t");
+		stack_dump(parms);
 		pthread_mutex_unlock(&priv->lock_io);
 		return NULL;
 	}
@@ -220,6 +248,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 	if (p + len + 4 > endp) {
 		dvb_logdbg("buffer too short for command: pos: %zd, len:%d, buffer size:%zd",
 				p - buf, len, sizeof(buf));
+		stack_dump(parms);
 		pthread_mutex_unlock(&priv->lock_io);
 		return NULL;
 	}
@@ -253,6 +282,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 			dvb_perror("write");
 		else
 			dvb_logerr("incomplete send");
+		stack_dump(parms);
 	} else {
 		/* Add it to the message queue */
 		for (msgs = &priv->msgs; msgs->next; msgs = msgs->next);
@@ -277,6 +307,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 	msg = calloc(1, sizeof(*msg));
 	if (!msg) {
 		dvb_logerr("calloc queued_msg");
+		stack_dump(parms);
 		return NULL;
 	}
 
@@ -291,6 +322,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 	i32 = htobe32(msg->seq);
 	if (p + 4 > endp) {
 		dvb_logdbg("buffer to short for int32_t");
+		stack_dump(parms);
 		pthread_mutex_unlock(&priv->lock_io);
 		return NULL;
 	}
@@ -302,6 +334,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 	if (p + len + 4 > endp) {
 		dvb_logdbg("buffer too short for command: pos: %zd, len:%d, buffer size:%zd",
 				p - buf, len, sizeof(buf));
+		stack_dump(parms);
 		pthread_mutex_unlock(&priv->lock_io);
 		return NULL;
 	}
@@ -314,6 +347,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 	/* Copy buffer contents */
 	if (in_size >= p - buf + REMOTE_BUF_SIZE) {
 		dvb_logdbg("buffer to big!");
+		stack_dump(parms);
 		pthread_mutex_unlock(&priv->lock_io);
 		return NULL;
 	}
@@ -331,6 +365,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 			dvb_perror("write");
 		else
 			dvb_logerr("incomplete send");
+		stack_dump(parms);
 	} else {
 		/* Add it to the message queue */
 		for (msgs = &priv->msgs; msgs->next; msgs = msgs->next);
@@ -385,7 +420,8 @@ static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
 			s = va_arg(ap, char *);
 			if (p + 4 > endp) {
 				dvb_logdbg("buffer to short for string length: pos: %zd, len:%d, buffer size:%d",
-					   p - buf, 4, buf_size);;
+					   p - buf, 4, buf_size);
+				stack_dump(parms);
 				return -1;
 			}
 			len = be32toh(*(int32_t *)p);
@@ -393,6 +429,7 @@ static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
 			if (p + len > endp) {
 				dvb_logdbg("buffer too short for string: pos: %zd, len:%d, buffer size:%d",
 					   p - buf, len, buf_size);
+				stack_dump(parms);
 				return -1;
 			}
 
@@ -403,6 +440,7 @@ static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
 		case 'i':              /* 32-bit int */
 			if (p + 4 > endp) {
 				dvb_logdbg("buffer to short for int32_t");
+				stack_dump(parms);
 				return -1;
 			}
 			i32 = va_arg(ap, int32_t *);
@@ -413,10 +451,12 @@ static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
 		case 'l':              /* 64-bit unsigned int */
 			if (*fmt++ != 'u') {
 				dvb_logdbg("invalid long format character: '%c'", *fmt);
+				stack_dump(parms);
 				break;
 			}
 			if (p + 8 > endp) {
 				dvb_logdbg("buffer to short for uint64_t");
+				stack_dump(parms);
 				return -1;
 			}
 			u64 = va_arg(ap, uint64_t *);
@@ -426,6 +466,7 @@ static ssize_t scan_data(struct dvb_v5_fe_parms_priv *parms, char *buf,
 			break;
 		default:
 			dvb_logdbg("invalid format character: '%c'", *fmt);
+			stack_dump(parms);
 		}
 		while (*fmt && *fmt != '%') fmt++;
 		if (*fmt == '%') fmt++;
