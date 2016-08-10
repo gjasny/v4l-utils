@@ -22,7 +22,8 @@ each distro.
 
 On Debian and derivated distributions, you need to install the following
 packages with apt-get or aptitude:
-	debhelper dh-autoreconf autotools-dev doxygen graphviz libasound2-dev
+	debhelper dh-autoreconf autotools-dev autoconf-archive
+        doxygen graphviz libasound2-dev
 	libtool libjpeg-dev libqt4-dev libqt4-opengl-dev libudev-dev libx11-dev
 	pkg-config udev make gcc git
 
@@ -46,6 +47,11 @@ After downloading and installing the needed packages, you should run:
 	./bootstrap.sh
 	./configure
 	make
+
+If ./configure exit with some errors try:
+
+	autoreconf -i --force
+	./configure
 
 And, to install on your system:
 	sudo make install
