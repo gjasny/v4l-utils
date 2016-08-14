@@ -19,7 +19,6 @@
  */
 
 #define _XOPEN_SOURCE 600
-#define WIN32_LEAN_AND_MEAN  /* required by xmlrpc-c/server_abyss.h */
 
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE_SOURCE 1
@@ -35,8 +34,10 @@
 #include <config.h>
 #include <endian.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <pthread.h>
 #include <search.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -50,6 +51,7 @@
 #include <netinet/tcp.h>
 
 #include "../../lib/libdvbv5/dvb-fe-priv.h"
+#include "../../lib/libdvbv5/dvb-dev-priv.h"
 #include "libdvbv5/dvb-file.h"
 #include "libdvbv5/dvb-dev.h"
 
@@ -64,6 +66,9 @@
 #endif
 
 # define N_(string) string
+
+/* Max number of open files */
+#define NUM_FOPEN	1024
 
 /*
  * Argument processing data and logic
@@ -183,7 +188,7 @@ void local_log(int level, const char *fmt, ...)
 } while (0)
 
 #define local_perror(msg) do {\
-	local_log(LOG_ERR, "%s: %s: %m",  __FUNCTION__, msg); \
+	local_log(LOG_ERR, "%s: %s: %m (%d)",  __FUNCTION__, msg, errno); \
 } while (0)
 
 /*
@@ -191,10 +196,8 @@ void local_log(int level, const char *fmt, ...)
  */
 
 static pthread_mutex_t msg_mutex;
-static pthread_mutex_t uid_mutex;
-
-/* uid == 0 is reserved to return errors */
-static int next_uid = 1;
+static pthread_mutex_t dvb_read_mutex;
+static pthread_t read_id = 0;
 
 struct dvb_descriptors {
 	int uid;
@@ -204,6 +207,9 @@ struct dvb_descriptors {
 static struct dvb_device *dvb = NULL;
 static void *desc_root = NULL;
 static int dvb_fd = -1;
+
+static struct pollfd fds[NUM_FOPEN];
+static nfds_t numfds = 0;
 
 static char output_charset[256] = "utf-8";
 static char default_charset[256] = "iso-8859-1";
@@ -281,6 +287,8 @@ static void free_opendevs(void *node)
 
 static void close_all_devs(void)
 {
+	dvb_fd = -1;
+	numfds = 0;
 	tdestroy(desc_root, free_opendevs);
 
 	desc_root = NULL;
@@ -296,12 +304,11 @@ static void sigterm_handler(int const sig_class)
 
 	pthread_exit(NULL);
 
-	dvb_fd = -1;
 	close_all_devs();
 	dvb_dev_free(dvb);
 }
 
-static void setup_sigterm_handler(void)
+static void start_signal_handler(void)
 {
 	struct sigaction action;
 
@@ -311,7 +318,7 @@ static void setup_sigterm_handler(void)
 	sigaction(SIGTERM, &action, NULL);
 }
 
-static void restore_sigterm_handler(void)
+static void stop_signal_handler(void)
 {
 	struct sigaction action;
 
@@ -428,14 +435,22 @@ static int send_buf(int fd, const char *buf, size_t size)
 	int ret;
 	int32_t i32;
 
+	if (fd < 0)
+		return ECONNRESET;
+
 	pthread_mutex_lock(&msg_mutex);
 	i32 = htobe32(size);
 	ret = send(fd, (void *)&i32, 4, MSG_MORE);
 	if (ret >= 0)
-		ret = write(fd, buf, size);
+		ret = send(fd, buf, size, 0);
 	pthread_mutex_unlock(&msg_mutex);
-	if (ret < 0)
+	if (ret < 0) {
 		local_perror("write");
+		if (ret == ECONNRESET)
+			close_all_devs();
+
+		return errno;
+	}
 
 	return ret;
 }
@@ -630,12 +645,117 @@ error:
 	return send_data(fd, "%i%s%i", seq, cmd, ret);
 }
 
+static void *read_data(void *privdata)
+{
+	struct dvb_open_descriptor *open_dev;
+	int timeout;
+	int ret, read_ret = -1, fd, i;
+	char databuf[REMOTE_BUF_SIZE];
+	char buf[REMOTE_BUF_SIZE + 32], *p;
+	size_t size;
+	size_t count;
+	struct pollfd __fds[NUM_FOPEN];
+	nfds_t __numfds;
+
+	timeout = 10; /* ms */
+	while (1) {
+		pthread_mutex_lock(&dvb_read_mutex);
+		if (!numfds) {
+			pthread_mutex_unlock(&dvb_read_mutex);
+			break;
+		}
+		__numfds = numfds;
+		memcpy(__fds, fds, sizeof(fds));
+		pthread_mutex_unlock(&dvb_read_mutex);
+
+		ret = poll(__fds, __numfds, timeout);
+		if (!ret)
+			continue;
+		if (ret < 0) {
+			err("poll");
+			continue;
+		}
+
+		for (i = 0; i < __numfds; i++) {
+			if (__fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
+				continue;
+			if (__fds[i].revents)
+				break;
+		}
+
+		/*
+		 * it means that one error condition happened.
+		 * Likely the file was closed.
+		 */
+		if (i == __numfds)
+			continue;
+
+		fd = __fds[i].fd;
+
+		if (!desc_root)
+			break;
+
+		open_dev = get_open_dev(fd);
+		if (!open_dev) {
+			err("Couldn't find opened file %d", fd);
+			continue;
+		}
+
+		count = REMOTE_BUF_SIZE;
+		read_ret = dvb_dev_read(open_dev, databuf, count);
+		if (verbose) {
+			if (read_ret < 0)
+				dbg("#%d: read error: %d on %p", fd, read_ret, open_dev);
+			else
+				dbg("#%d: read %d bytes (count %d)", fd, read_ret, count);
+		}
+
+		/* Initialize to the start of the buffer */
+		p = buf;
+		size = sizeof(buf);
+
+		ret = prepare_data(p, size, "%i%s%i%i", 0, "data_read",
+				   read_ret, fd);
+		if (ret < 0) {
+			err("Failed to prepare answer to dvb_read()");
+			break;
+		}
+
+		p += ret;
+		size -= ret;
+
+		if (read_ret > 0) {
+			if (read_ret > size) {
+				dbg("buffer to short to store read data!");
+				read_ret = -EOVERFLOW;
+			} else {
+				memcpy(p, databuf, read_ret);
+				p += read_ret;
+			}
+		}
+
+		ret = send_buf(dvb_fd, buf, p - buf);
+		if (ret < 0) {
+			err("Error %d sending buffer\n", ret);
+			if (ret == ECONNRESET) {
+				close_all_devs();
+				break;
+			}
+			continue;
+		}
+	}
+
+	dbg("Finishing kthread");
+	read_id = 0;
+	return NULL;
+}
+
 static int dev_open(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 {
 	struct dvb_open_descriptor *open_dev;
+	struct dvb_dev_list *dev;
 	struct dvb_descriptors *desc, **p;
-	int uid = 0;
-	int ret, flags;
+	int ret, flags, uid;
 	char sysname[REMOTE_BUF_SIZE];
 
 	desc = calloc(1, sizeof(*desc));
@@ -646,21 +766,50 @@ static int dev_open(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 	}
 
 	ret = scan_data(buf, size, "%s%i",  sysname, &flags);
-	if (ret < 0)
+	if (ret < 0) {
+		free(desc);
 		goto error;
+	}
+
+	/*
+	 * Discard requests for O_NONBLOCK, as the daemon will use threads
+	 * to handle unblocked reads.
+	 */
+	flags &= ~O_NONBLOCK;
 
 	open_dev = dvb_dev_open(dvb, sysname, flags);
 	if (!open_dev) {
 		ret = -errno;
+		free(desc);
 		goto error;
 	}
 
-	if (verbose)
-		dbg("open dev handler: %p", open_dev);
 
-	pthread_mutex_lock(&msg_mutex);
-	uid = next_uid++;
+	if (verbose)
+		dbg("open dev handler for %s: %p with uid#%d", sysname, open_dev, open_dev->fd);
+
+	dev = open_dev->dev;
+	if (dev->dvb_type == DVB_DEVICE_DEMUX ||
+	    dev->dvb_type == DVB_DEVICE_DVR) {
+		pthread_mutex_lock(&dvb_read_mutex);
+		fds[numfds].fd = open_dev->fd;
+		fds[numfds].events = POLLIN | POLLPRI;
+		numfds++;
+		pthread_mutex_unlock(&dvb_read_mutex);
+	}
+
+	if (!read_id) {
+		ret = pthread_create(&read_id, NULL, read_data, NULL);
+		if (ret < 0) {
+			local_perror("pthread_create");
+			pthread_mutex_unlock(&msg_mutex);
+			free(desc);
+			return -1;
+		}
+	}
+
 	pthread_mutex_unlock(&msg_mutex);
+	uid = open_dev->fd;
 
 	desc->uid = uid;
 	desc->open_dev = open_dev;
@@ -675,6 +824,8 @@ static int dev_open(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 		err("uid %d was already opened!");
 	}
 
+	pthread_mutex_unlock(&msg_mutex);
+
 	ret = uid;
 error:
 	return send_data(fd, "%i%s%i", seq, cmd, ret);
@@ -683,7 +834,7 @@ error:
 static int dev_close(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 {
 	struct dvb_open_descriptor *open_dev;
-	int uid, ret;
+	int uid, ret, i;
 
 	ret = scan_data(buf, size, "%i",  &uid);
 	if (ret < 0)
@@ -694,6 +845,23 @@ static int dev_close(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 		err("Can't find uid to close");
 		ret = -1;
 		goto error;
+	}
+
+	/* Delete fd from the opened array */
+	pthread_mutex_lock(&dvb_read_mutex);
+	for (i = 0; i < numfds; i++) {
+		if (fds[i].fd != open_dev->fd)
+		    continue;
+		if (i < numfds - 1)
+			memmove(&fds[i], &fds[i + 1],
+				sizeof(*fds)*(numfds - i - 1));
+		numfds--;
+		break;
+	}
+	pthread_mutex_unlock(&dvb_read_mutex);
+	if (read_id && !numfds) {
+		pthread_cancel(read_id);
+		read_id = 0;
 	}
 
 	dvb_dev_close(open_dev);
@@ -747,69 +915,6 @@ static int dev_set_bufsize(uint32_t seq, char *cmd, int fd,
 
 error:
 	return send_data(fd, "%i%s%i", seq, cmd, ret);
-}
-
-
-/*
- * FIXME: reimplement it to be async and use poll()
- */
-
-static int dev_read(uint32_t seq, char *cmd, int fd,
-		    char *inbuf, ssize_t insize)
-{
-	struct dvb_open_descriptor *open_dev;
-	int uid, ret, read_ret = -1, i;
-	char databuf[REMOTE_BUF_SIZE];
-	char buf[REMOTE_BUF_SIZE], *p = buf;
-	size_t size = sizeof(buf);
-	size_t count;
-	size_t msg_size = 12 + strlen(cmd);
-
-	ret = scan_data(inbuf, insize, "%i%i",  &uid, &i);
-	if (ret < 0)
-		goto error;
-	count = i;
-
-	if (count > sizeof(databuf) - msg_size)
-		count = sizeof(databuf) - msg_size;
-
-	open_dev = get_open_dev(uid);
-	if (!open_dev) {
-		ret = -1;
-		err("Can't find uid to read");
-		goto error;
-	}
-
-	read_ret = dvb_dev_read(open_dev, databuf, count);
-	if (read_ret < 0) {
-		read_ret = -errno;
-		if (verbose)
-			dbg("%d: read error: %d", seq, read_ret);
-	} else {
-		if (verbose)
-			dbg("%d: read %d bytes", seq, read_ret);
-	}
-
-error:
-	ret = prepare_data(p, size, "%i%s%i", seq, cmd, read_ret);
-	if (ret < 0) {
-		err("Failed to prepare answer to dvb_read()");
-		return ret;
-	}
-
-	p += ret;
-	size -= ret;
-
-	if (read_ret > 0) {
-		if (size < read_ret) {
-			dbg("buffer to short to store read data");
-			return -1;
-		}
-		memcpy(p, databuf, read_ret);
-		p += read_ret;
-	}
-
-	return send_buf(fd, buf, p - buf);
 }
 
 static int dev_dmx_set_pesfilter(uint32_t seq, char *cmd, int fd,
@@ -1192,7 +1297,6 @@ static const struct method_types const methods[] = {
 	{"dev_close", &dev_close, 0},
 	{"dev_dmx_stop", &dev_dmx_stop, 0},
 	{"dev_set_bufsize", &dev_set_bufsize, 0},
-	{"dev_read", &dev_read, 0},
 	{"dev_dmx_set_pesfilter", &dev_dmx_set_pesfilter, 0},
 	{"dev_dmx_set_section_filter", &dev_dmx_set_section_filter, 0},
 	{"dev_dmx_get_pmt_pid", &dev_dmx_get_pmt_pid, 0},
@@ -1290,10 +1394,13 @@ static void *start_server(void *fd_pointer)
 		dbg("Closing socket %d", fd);
 
 	close(fd);
-	if (dvb_fd > 0) {
-		dvb_fd = -1;
-		close_all_devs();
+	if (read_id) {
+		pthread_cancel(read_id);
+		read_id = 0;
 	}
+	if (dvb_fd > 0)
+		close_all_devs();
+
 	return NULL;
 }
 
@@ -1360,9 +1467,9 @@ int main(int argc, char *argv[])
 	listen(sockfd, 5);
 	addrlen = sizeof(cli_addr);
 
-	setup_sigterm_handler();
+	start_signal_handler();
 	pthread_mutex_init(&msg_mutex, NULL);
-	pthread_mutex_init(&uid_mutex, NULL);
+	pthread_mutex_init(&dvb_read_mutex, NULL);
 
 	/* Accept actual connection from the client */
 
@@ -1398,15 +1505,15 @@ int main(int argc, char *argv[])
 	}
 
 	/* Just in case we add some way for the remote part to stop the daemon */
-	restore_sigterm_handler();
+	stop_signal_handler();
 
 error:
 	info(PROGRAM_NAME" stopped.");
 
+	pthread_exit(NULL);
+
 	if (dvb)
 		dvb_dev_free(dvb);
-
-	pthread_exit(NULL);
 
 	return -1;
 }

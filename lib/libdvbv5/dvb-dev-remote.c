@@ -27,6 +27,7 @@
 #include <execinfo.h>
 #endif
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <libudev.h>
 #include <stdio.h>
@@ -64,9 +65,17 @@ const char *daemon_version = "dvbv5-daemon version " V4L_UTILS_VERSION;
  * Internal data structures
  */
 
-struct dvb_descriptors {
-	int uid;
-	struct dvb_open_descriptor *open_dev;
+#define RINGBUF_SIZE (REMOTE_BUF_SIZE * 32)
+
+struct ringbuffer {
+	/* Should be the first member of struct */
+	struct dvb_open_descriptor open_dev;
+
+	/* ringbuffer handling */
+	int rc;
+	ssize_t read, write;
+	char buf[RINGBUF_SIZE];
+	pthread_mutex_t lock;
 };
 
 struct queued_msg {
@@ -507,6 +516,99 @@ static void dvb_dev_remote_disconnect(struct dvb_dev_remote_priv *priv)
 	}
 }
 
+static void write_ringbuffer(struct dvb_open_descriptor *open_dev,
+			    ssize_t size, char *buf)
+{
+	struct ringbuffer *ringbuf = (struct ringbuffer *)open_dev;
+	ssize_t len = size, split;
+
+	pthread_mutex_lock(&ringbuf->lock);
+
+	split = (ringbuf->write + size > RINGBUF_SIZE) ?
+		 RINGBUF_SIZE - ringbuf->write : 0;
+
+	if (split > 0) {
+		memcpy(&ringbuf->buf[ringbuf->write], buf, split);
+		buf += split;
+		len -= split;
+		ringbuf->write = 0;
+	}
+
+	memcpy(&ringbuf->buf[ringbuf->write], buf, len);
+	ringbuf->write = (ringbuf->write + len) % RINGBUF_SIZE;
+
+	/* Detect buffer overflows */
+	if ((unsigned)((ringbuf->write - ringbuf->read) % RINGBUF_SIZE) < size)
+		ringbuf->rc = -EOVERFLOW;
+
+	pthread_mutex_unlock(&ringbuf->lock);
+}
+
+static void read_ringbuffer(struct dvb_open_descriptor *open_dev,
+			    size_t *len, char *buf)
+{
+	struct ringbuffer *ringbuf = (struct ringbuffer *)open_dev;
+	ssize_t size, split;
+
+	/* Sets the read size */
+	if (*len > REMOTE_BUF_SIZE)
+		*len = REMOTE_BUF_SIZE;
+
+	/* Wait for data to arrive */
+	pthread_mutex_lock(&ringbuf->lock);
+	while ((unsigned)((ringbuf->write - ringbuf->read) % RINGBUF_SIZE) < *len) {
+		pthread_mutex_unlock(&ringbuf->lock);
+		usleep(1);
+		pthread_mutex_lock(&ringbuf->lock);
+	}
+
+	size = *len;
+
+	*len = 0;
+	split = (ringbuf->read + size > RINGBUF_SIZE) ? RINGBUF_SIZE - ringbuf->read : 0;
+	if (split > 0) {
+
+		memcpy(buf, &ringbuf->buf[ringbuf->read], split);
+		buf += split;
+		size -= split;
+		*len += split;
+		ringbuf->read = 0;
+	}
+	memcpy(buf, &ringbuf->buf[ringbuf->read], size);
+	*len += size;
+
+	ringbuf->read = (ringbuf->read + size) % RINGBUF_SIZE;
+
+	pthread_mutex_unlock(&ringbuf->lock);
+}
+
+static void log_hexdump(struct dvb_v5_fe_parms_priv *parms, int len,
+			unsigned char *buf)
+{
+       char str[80], octet[10];
+       int ofs, i, l;
+
+	for (ofs = 0; ofs < len; ofs += 16) {
+		sprintf(str, "%03d: ", ofs);
+
+		for (i = 0; i < 16; i++) {
+			if ((i + ofs) < len)
+				sprintf(octet, "%02x ", (unsigned)buf[ofs + i]);
+			else
+				strcpy(octet, "   ");
+
+			strcat(str, octet);
+		}
+		strcat( str,"  ");
+		l = strlen(str);
+
+		for (i = 0; (i < 16) && ((i + ofs) < len); i++)
+			str[l++] = isprint( buf[ofs + i] ) ? buf[ofs + i] : '.';
+
+		str[l] = '\0';
+		dvb_logerr("%s", str);
+	}
+}
 
 static void *receive_data(void *privdata)
 {
@@ -514,9 +616,10 @@ static void *receive_data(void *privdata)
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct queued_msg *msg;
+	struct dvb_open_descriptor *cur;
 	char buf[REMOTE_BUF_SIZE + 8], cmd[REMOTE_BUF_SIZE], *args;
 	ssize_t size, args_size;
-	int ret, retval, seq, handled;
+	int ret, retval, seq, handled, uid, found;
 
 	do {
 		size = recv(priv->fd, buf, 4, MSG_WAITALL);
@@ -545,7 +648,8 @@ static void *receive_data(void *privdata)
 			ret = scan_data(parms, args, args_size, "%i%s%i",
 					&seq, cmd, &retval);
 			if (ret < 0) {
-				dvb_logerr("invalid protocol message: '%s' (size %zd)", args, args_size);
+				dvb_logerr("invalid protocol message with size %zd", args_size);
+				log_hexdump(parms, args_size, (unsigned char *)args);
 				break;
 			}
 			args += ret;
@@ -579,6 +683,33 @@ static void *receive_data(void *privdata)
 					args += ret;
 					args_size -= ret;
 				}
+			} else if (!strcmp(cmd, "data_read")) {
+				ret = scan_data(parms, args, args_size,
+						"%i", &uid);
+				if (ret <= 0)
+					continue;
+
+				args += ret;
+				args_size -= ret;
+
+				found = 0;
+				for (cur = dvb->open_list.next; cur; cur = cur->next) {
+					if (cur->fd == uid) {
+						struct ringbuffer *ringbuf = (struct ringbuffer *)cur;
+
+						found = 1;
+						if (retval < 0) {
+							ringbuf->rc = retval;
+							continue;
+						}
+						write_ringbuffer(cur, args_size, args);
+					}
+				}
+				/* FIXME: should we abort here? */
+				if (!found)
+					dvb_logerr("received data for unknown ID %d", uid);
+				args += args_size;
+				args_size = 0;
 			} else {
 				dvb_logerr("unexpected message type: %s", cmd);
 				ret = -1;
@@ -823,17 +954,19 @@ static struct dvb_open_descriptor *dvb_remote_open(struct dvb_device_priv *dvb,
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct dvb_open_descriptor *open_dev, *cur;
+	struct ringbuffer *ringbuf;
 	struct queued_msg *msg;
 	int ret;
 
 	if (priv->disconnected)
 		return NULL;
 
-	open_dev = calloc(1, sizeof(*open_dev));
-	if (!open_dev) {
+	ringbuf = calloc(1, sizeof(*ringbuf));
+	if (!ringbuf) {
 		dvb_perror("Can't create file descriptor");
 		return NULL;
 	}
+	open_dev = &ringbuf->open_dev;
 
 	msg = send_fmt(dvb, priv->fd, "dev_open", "%s%i", sysname, flags);
 	if (!msg)
@@ -852,6 +985,9 @@ static struct dvb_open_descriptor *dvb_remote_open(struct dvb_device_priv *dvb,
 	open_dev->fd = msg->retval;
 	open_dev->dev = NULL;
 	open_dev->dvb = dvb;
+
+	/* Initialize ringbuffer data*/
+	pthread_mutex_init(&ringbuf->lock, NULL);
 
 	cur = &dvb->open_list;
 	while (cur->next)
@@ -874,6 +1010,7 @@ error:
 
 static int dvb_remote_close(struct dvb_open_descriptor *open_dev)
 {
+	struct ringbuffer *ringbuffer = (struct ringbuffer *)open_dev;
 	struct dvb_device_priv *dvb = open_dev->dvb;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
@@ -906,7 +1043,8 @@ error:
 	for (cur = &dvb->open_list; cur->next; cur = cur->next) {
 		if (cur->next == open_dev) {
 			cur->next = open_dev->next;
-			free(open_dev);
+			pthread_mutex_destroy(&ringbuffer->lock);
+			free(ringbuffer);
 			goto ret;
 		}
 	}
@@ -990,54 +1128,23 @@ error:
 static ssize_t dvb_remote_read(struct dvb_open_descriptor *open_dev,
 		     void *buf, size_t count)
 {
+	struct ringbuffer *ringbuf = (struct ringbuffer *)open_dev;
 	struct dvb_device_priv *dvb = open_dev->dvb;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
-	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
-	struct queued_msg *msg;
-	int ret, size;
+	int ret;
 
 	if (priv->disconnected)
 		return -ENODEV;
 
-	size = count;
-	msg = send_fmt(dvb, priv->fd, "dev_read", "%i%i",
-		       open_dev->fd, size);
-	if (!msg)
-		return -1;
-
-	ret = pthread_cond_wait(&msg->cond, &msg->lock);
-	if (ret < 0) {
-		dvb_logerr("error waiting for %s response", msg->cmd);
-		goto error;
+	if (ringbuf->rc) {
+		ret = ringbuf->rc;
+		ringbuf->rc = 0;
+		return ret;
 	}
 
-	ret = msg->retval;
+	read_ringbuffer(open_dev, &count, buf);
 
-	if (msg->retval < 0)
-		goto error;
-
-	if (msg->args_size != msg->retval) {
-		dvb_logdbg("truncated data: received %zd bytes instead of %d bytes", msg->args_size, size);
-		ret = -1;
-		goto error;
-	}
-
-	memcpy(buf, msg->args, size);
-
-error:
-	msg->seq = 0; /* Avoids any risk of a recursive call */
-	pthread_mutex_unlock(&msg->lock);
-
-	free_msg(dvb, msg);
-
-	/*
-	 * HACK: we should actually change the code to use the return value,
-	 * instead of errno
-	 */
-	if (ret < 0)
-		errno = -ret;
-
-	return ret;
+	return count;
 }
 
 static int dvb_remote_dmx_set_pesfilter(struct dvb_open_descriptor *open_dev,

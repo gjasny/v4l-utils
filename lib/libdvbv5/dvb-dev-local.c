@@ -553,8 +553,10 @@ static ssize_t dvb_local_read(struct dvb_open_descriptor *open_dev,
 	int fd = open_dev->fd;
 	ssize_t ret;
 
-	if (dev->dvb_type != DVB_DEVICE_DEMUX && dev->dvb_type != DVB_DEVICE_DVR)
+	if (dev->dvb_type != DVB_DEVICE_DEMUX && dev->dvb_type != DVB_DEVICE_DVR) {
+		dvb_logerr("Trying to read from an invalid device type on fd #%d", fd);
 		return -EINVAL;
+	}
 
 	ret = read(fd, buf, count);
 	if (ret == -1) {
