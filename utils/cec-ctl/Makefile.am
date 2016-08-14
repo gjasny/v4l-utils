@@ -1,4 +1,5 @@
 bin_PROGRAMS = cec-ctl
+man_MANS = cec-ctl.1
 
 cec_ctl_SOURCES = cec-ctl.cpp
 
@@ -9,3 +10,5 @@ cec-ctl-gen.h: msg2ctl.pl ../../include/linux/cec.h ../../include/linux/cec-func
 
 clean-local:
 	-rm -vf cec-ctl-gen.h
+
+EXTRA_DIST = cec-ctl.1

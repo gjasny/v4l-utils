@@ -1,0 +1,209 @@
+.TH "CEC-CTL" "1" "August 2016" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.SH NAME
+cec-ctl - An application to control cec devices
+.SH SYNOPSIS
+.B cec-ctl
+[\fI-h\fR] [\fI-d <dev>\fR] [many other options]
+.SH DESCRIPTION
+The cec-ctl tool is used to control cec devices. It is able to control almost
+any aspect of such devices covering the full CEC API.
+
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
+Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is used.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Turn on verbose reporting.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Prints the help message.
+.TP
+\fB\-p\fR, \fB\-\-phys\-addr\fR=\fI<addr>\fR
+Use this physical address. The address can be a number (e.g. 0 or 0x11b1)
+or formatted as a.b.c.d where each component is a hex value from 0-f
+(e.g. 0.0.0.0 or 1.1.b.1).
+.TP
+\fB\-o\fR, \fB\-\-osd\-name\fR=\fI<name>\fR
+Use this OSD name. The maximum length is 14 characters.
+.TP
+\fB\-V\fR, \fB\-\-vendor\-id\fR=\fI<id>\fR
+Use this vendor ID. The vendor ID is a number from 0x0 to 0xffffff.
+.TP
+\fB\-C\fR, \fB\-\-clear\fR
+Clear all logical addresses, leaving the CEC device unconfigured.
+.TP
+\fB\-m\fR, \fB\-\-monitor\fR
+Start monitoring CEC traffic. This will monitor broadcast messages,
+messages directed to this CEC adapter and messages transmitted by this
+CEC adapter. Directed messages between other CEC devices are not
+monitored. This option requires root.
+.TP
+\fB\-M\fR, \fB\-\-monitor\-all\fR
+Start monitoring all CEC traffic. This will monitor all CEC messages,
+including directed messages between other CEC devices. This option requires root.
+Not all CEC devices support this monitoring mode. It will fallback to regular
+monitoring mode if it is not supported.
+.TP
+\fB\-n\fR, \fB\-\-no\-reply\fR
+By default when sending a CEC message that expects a reply this utility will
+wait for that reply. With this option it will just send it without waiting
+for the reply.
+.TP
+\fB\-t\fR, \fB\-\-to\fR=\fI<la>\fR
+Send the message to the given logical address (0-15).
+.TP
+\fB\-f\fR, \fB\-\-from\fR=\fI<la>\fR
+Send message from the given logical address. It is only necessary to use this
+option if multiple logical addresses are claimed. By default the first assigned
+logical address will be used.
+.TP
+\fB\-S\fR, \fB\-\-show\-topology\fR
+Show the CEC topology, detecting which other CEC devices are on the CEC bus.
+.TP
+\fB\-T\fR, \fB\-\-trace\fR
+Trace all called ioctls. Useful for debugging.
+.TP
+\fB\-\-cec\-version\-1.4\fR
+Use CEC Version 1.4 instead of 2.0 (the default).
+.TP
+\fB\-\-list\-ui\-commands\fR
+List all UI commands that can be used with option --user-control-pressed.
+.TP
+\fB\-\-tv\fR
+Configure the CEC adapter as a TV.
+.TP
+\fB\-\-record\fR
+Configure the CEC adapter as a recording and playback device.
+.TP
+\fB\-\-tuner\fR
+Configure the CEC adapter as a tuner device.
+.TP
+\fB\-\-playback\fR
+Configure the CEC adapter as a playback device.
+.TP
+\fB\-\-audio\fR
+Configure the CEC adapter as an audio system device.
+.TP
+\fB\-\-processor\fR
+Configure the CEC adapter as a processor device.
+.TP
+\fB\-\-switch\fR
+Configure the CEC adapter as a pure CEC switch.
+.TP
+\fB\-\-cdc-only\fR
+Configure the CEC adapter as a CDC-only device.
+.TP
+\fB\-\-unregistered\fR
+Configure the CEC adapter as an unregistered device.
+\fB\-\-feat\-record\-tv\-screen\fR
+Signal the Record TV Screen feature.
+.TP
+\fB\-\-feat\-set\-osd\-string\fR
+Signal the Set OSD String feature.
+.TP
+\fB\-\-feat\-deck\-control\fR
+Signal the Deck Control feature.
+.TP
+\fB\-\-feat\-set\-audio\-rate\fR
+Signal the Set Audio Rate feature.
+.TP
+\fB\-\-feat\-sink\-has\-arc\-tx\fR
+Signal the sink ARC Tx feature.
+.TP
+\fB\-\-feat\-source\-has\-arc\-rx\fR
+Signal the source ARC Rx feature.
+.TP
+\fB\-\-rc\-tv\-profile\-1\fR
+Signal RC TV Profile 1.
+.TP
+\fB\-\-rc\-tv\-profile\-2\fR
+Signal RC TV Profile 2.
+.TP
+\fB\-\-rc\-tv\-profile\-3\fR
+Signal RC TV Profile 3.
+.TP
+\fB\-\-rc\-tv\-profile\-4\fR
+Signal RC TV Profile 4.
+.TP
+\fB\-\-rc\-src\-dev\-root\fR
+Signal that the RC source has a Dev Root Menu.
+.TP
+\fB\-\-rc\-src\-dev\-setup\fR
+Signal that the RC source has a Dev Setup Menu.
+.TP
+\fB\-\-rc\-src\-contents\fR
+Signal that the RC source has a Contents Menu.
+.TP
+\fB\-\-rc\-src\-media\-top\fR
+Signal that the RC source has a Media Top Menu.
+.TP
+\fB\-\-rc\-src\-media\-context\fR
+Signal that the RC source has a Media Context Menu.
+.TP
+\fB\-\-help\-all\fR
+Prints the help message for all options.
+.TP
+\fB\-\-help\-audio\-rate\-control\fR
+Show help for the Audio Rate Control feature.
+.TP
+\fB\-\-help\-audio\-return\-channel\-control\fR
+Show help for the Audio Return Channel Control feature.
+.TP
+\fB\-\-help\-capability\-discovery\-and\-control\fR
+Show help for the Capability Discovery and Control feature.
+.TP
+\fB\-\-help\-deck\-control\fR
+Show help for the Deck Control feature.
+.TP
+\fB\-\-help\-device\-menu\-control\fR
+Show help for the Device Menu Control feature.
+.TP
+\fB\-\-help\-device\-osd\-transfer\fR
+Show help for the Device OSD Transfer feature.
+.TP
+\fB\-\-help\-dynamic\-audio\-lipsync\fR
+Show help for the Dynamic Audio Lipsync feature.
+.TP
+\fB\-\-help\-osd\-display\fR
+Show help for the OSD Display feature.
+.TP
+\fB\-\-help\-one\-touch\-play\fR
+Show help for the One Touch Play feature.
+.TP
+\fB\-\-help\-one\-touch\-record\fR
+Show help for the One Touch Record feature.
+.TP
+\fB\-\-help\-power\-status\fR
+Show help for the Power Status feature.
+.TP
+\fB\-\-help\-remote\-control\-passthrough\fR
+Show help for the Remote Control Passthrough feature.
+.TP
+\fB\-\-help\-routing\-control\fR
+Show help for the Routing Control feature.
+.TP
+\fB\-\-help\-standby\fR
+Show help for the Standby feature.
+.TP
+\fB\-\-help\-system\-audio\-control\fR
+Show help for the System Audio Control feature.
+.TP
+\fB\-\-help\-system\-information\fR
+Show help for the System Information feature.
+.TP
+\fB\-\-help\-timer\-programming\fR
+Show help for the Timer Programming feature.
+.TP
+\fB\-\-help\-tuner\-control\fR
+Show help for the Tuner Control feature.
+.TP
+\fB\-\-help\-vendor\-specific\-commands\fR
+Show help for the Vendor Specific Commands feature.
+.SH EXIT STATUS
+On success, it returns 0. Otherwise, it will return the error code.
+.SH BUGS
+This manual page is a work in progress.
+
+Bug reports or questions about this utility should be sent to the linux-media@vger.kernel.org
+mailinglist.

@@ -36,6 +36,7 @@ AC_CONFIG_FILES([Makefile
 	utils/xc3028-firmware/Makefile
 	utils/qv4l2/Makefile
 	utils/cec-ctl/Makefile
+	utils/cec-ctl/cec-ctl.1
 	utils/rds-ctl/Makefile
 
 	contrib/Makefile
