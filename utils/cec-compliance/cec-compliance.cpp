@@ -31,6 +31,9 @@
 #include <sstream>
 
 #include "cec-compliance.h"
+#ifndef ANDROID
+#include "version.h"
+#endif
 
 #include "cec-table.h"
 
@@ -1148,7 +1151,14 @@ int main(int argc, char **argv)
 	if (options[OptInteractive])
 		test_tags |= TAG_INTERACTIVE;
 
-	printf("Driver Info:\n");
+#ifdef SHA
+#define STR(x) #x
+#define STRING(x) STR(x)
+	printf("cec-compliance SHA                 : %s\n", STRING(SHA));
+#else
+	printf("cec-compliance SHA                 : not available\n");
+#endif
+	printf("\nDriver Info:\n");
 	printf("\tDriver Name                : %s\n", caps.driver);
 	printf("\tAdapter Name               : %s\n", caps.name);
 	printf("\tCapabilities               : 0x%08x\n", caps.capabilities);
