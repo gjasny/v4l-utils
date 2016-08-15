@@ -31,6 +31,7 @@
 #include <cerrno>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <linux/cec-funcs.h>
 
 #ifdef __ANDROID__
@@ -811,6 +812,22 @@ static std::string caps2s(unsigned caps)
 	return s;
 }
 
+static const char *power_status2s(__u8 power_status)
+{
+	switch (power_status) {
+	case CEC_OP_POWER_STATUS_ON:
+		return "On";
+	case CEC_OP_POWER_STATUS_STANDBY:
+		return "Standby";
+	case CEC_OP_POWER_STATUS_TO_ON:
+		return "In transition Standby to On";
+	case CEC_OP_POWER_STATUS_TO_STANDBY:
+		return "In transition On to Standby";
+	default:
+		return "Unknown";
+	}
+}
+
 static const char *version2s(unsigned version)
 {
 	switch (version) {
@@ -1061,6 +1078,8 @@ static void log_event(struct cec_event &ev)
 		       (ev.ts % 1000000000) / 1000000);
 }
 
+static __u16 phys_addrs[16];
+
 static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 {
 	struct cec_msg msg;
@@ -1089,6 +1108,7 @@ static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 		       (phys_addr >> 4) & 0xf, phys_addr & 0xf);
 		printf("\t\tPrimary Device Type        : %s\n",
 		       prim_type2s(msg.msg[4]));
+		phys_addrs[i] = phys_addr;
 	}
 
 	cec_msg_init(&msg, la, i);
@@ -1107,6 +1127,41 @@ static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 	cec_ops_set_osd_name(&msg, osd_name);
 	printf("\t\tOSD Name                   : %s\n",
 	       (!cec_msg_status_is_ok(&msg)) ? status2s(msg).c_str() : osd_name);
+
+	cec_msg_init(&msg, la, i);
+	cec_msg_get_menu_language(&msg, true);
+	doioctl(node, CEC_TRANSMIT, &msg);
+	if (cec_msg_status_is_ok(&msg)) {
+		char language[4];
+
+		cec_ops_set_menu_language(&msg, language);
+		language[3] = 0;
+		printf("\t\tMenu Language              : %s\n", language);
+	}
+
+	cec_msg_init(&msg, la, i);
+	cec_msg_give_device_power_status(&msg, true);
+	doioctl(node, CEC_TRANSMIT, &msg);
+	if (cec_msg_status_is_ok(&msg)) {
+		__u8 pwr;
+
+		cec_ops_report_power_status(&msg, &pwr);
+		printf("\t\tPower Status               : %s\n",
+		       power_status2s(pwr));
+	}
+	return 0;
+}
+
+static __u16 calc_mask(__u16 pa)
+{
+	if (pa & 0xf)
+		return 0xffff;
+	if (pa & 0xff)
+		return 0xfff0;
+	if (pa & 0xfff)
+		return 0xff00;
+	if (pa & 0xffff)
+		return 0xf000;
 	return 0;
 }
 
@@ -1134,6 +1189,48 @@ static int showTopology(struct node *node)
 		else if (show_info && !(msg.tx_status & CEC_TX_STATUS_MAX_RETRIES))
 			printf("\t\t%s for addr %d\n", status2s(msg).c_str(), i);
 	}
+
+	__u16 pas[16];
+
+	memcpy(pas, phys_addrs, sizeof(pas));
+	std::sort(pas, pas + 16);
+	unsigned level = 0;
+	unsigned last_pa_mask = 0;
+
+	if (pas[0] == 0xffff)
+		return 0;
+
+	printf("\n\tTopology:\n\n");
+	for (unsigned i = 0; i < 16; i++) {
+		__u16 pa = pas[i];
+		unsigned la_for_pa = 0;
+
+		if (pa == 0xffff)
+			break;
+
+		__u16 pa_mask = calc_mask(pa);
+	
+		while (last_pa_mask < pa_mask) {
+			last_pa_mask = (last_pa_mask >> 4) | 0xf000;
+			level++;
+		}
+		while (last_pa_mask > pa_mask) {
+			last_pa_mask <<= 4;
+			level--;
+		}
+		printf("\t");
+		for (unsigned j = 0; j < level; j++)
+			printf("    ");
+		for (unsigned j = 0; j < 16; j++)
+			if (pa == phys_addrs[j]) {
+				la_for_pa = j;
+				break;
+			}
+		printf("%x.%x.%x.%x: %s\n",
+		       pa >> 12, (pa >> 8) & 0xf,
+		       (pa >> 4) & 0xf, pa & 0xf,
+		       la2s(la_for_pa));
+	}
 	return 0;
 }
 
@@ -1157,6 +1254,8 @@ int main(int argc, char **argv)
 	int i;
 
 	init_messages();
+
+	memset(phys_addrs, 0xff, sizeof(phys_addrs));
 
 	for (i = 0; long_options[i].name; i++) {
 		if (!isalpha(long_options[i].val))
@@ -1513,11 +1612,13 @@ int main(int argc, char **argv)
 	printf("\tOSD Name                   : '%s'\n", laddrs.osd_name);
 	printf("\tLogical Addresses          : %u\n", laddrs.num_log_addrs);
 	for (unsigned i = 0; i < laddrs.num_log_addrs; i++) {
-		if (laddrs.log_addr[i] == CEC_LOG_ADDR_INVALID)
+		if (laddrs.log_addr[i] == CEC_LOG_ADDR_INVALID) {
 			printf("\n\t  Logical Address          : Not Allocated\n");
-		else
+		} else {
 			printf("\n\t  Logical Address          : %d (%s)\n",
 			       laddrs.log_addr[i], la2s(laddrs.log_addr[i]));
+			phys_addrs[laddrs.log_addr[i]] = phys_addr;
+		}
 		printf("\t    Primary Device Type    : %s\n",
 		       prim_type2s(laddrs.primary_device_type[i]));
 		printf("\t    Logical Address Type   : %s\n",
@@ -1533,7 +1634,7 @@ int main(int argc, char **argv)
 
 			if (!is_dev_feat) {
 				if (byte & 0x40) {
-					printf("\t    RC Source Profile      :\n%s\n",
+					printf("\t    RC Source Profile      :\n%s",
 					       rc_src_prof2s(byte).c_str());
 				} else {
 					const char *s = "Reserved";
