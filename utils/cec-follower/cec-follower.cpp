@@ -47,6 +47,9 @@
 #include <sstream>
 
 #include "cec-follower.h"
+#ifndef ANDROID
+#include "version.h"
+#endif
 
 #include "cec-table.h"
 
@@ -655,7 +658,14 @@ int main(int argc, char **argv)
 	node.available_log_addrs = caps.available_log_addrs;
 	state_init(node);
 
-	printf("Driver Info:\n");
+#ifdef SHA
+#define STR(x) #x
+#define STRING(x) STR(x)
+	printf("cec-follower SHA                   : %s\n", STRING(SHA));
+#else
+	printf("cec-follower SHA                   : not available\n");
+#endif
+	printf("\nDriver Info:\n");
 	printf("\tDriver Name                : %s\n", caps.driver);
 	printf("\tAdapter Name               : %s\n", caps.name);
 	printf("\tCapabilities               : 0x%08x\n", caps.capabilities);
