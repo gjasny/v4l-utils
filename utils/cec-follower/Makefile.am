@@ -1,4 +1,5 @@
 bin_PROGRAMS = cec-follower
+man_MANS = cec-follower.1
 
 cec_follower_SOURCES = cec-follower.cpp cec-processing.cpp cec-log.cpp
 
@@ -14,3 +15,5 @@ cec-table.h: ../cec-ctl/msg2ctl.pl ../../include/linux/cec.h ../../include/linux
 
 clean-local:
 	-rm -vf cec-log.h
+
+EXTRA_DIST = cec-follower.1

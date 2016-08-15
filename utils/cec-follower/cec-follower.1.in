@@ -1,0 +1,45 @@
+.TH "CEC-FOLLOWER" "1" "August 2016" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.SH NAME
+cec-follower - An application to emulate cec followers
+.SH SYNOPSIS
+.B cec-follower
+[\fI-h\fR] [\fI-d <dev>\fR] [other options]
+.SH DESCRIPTION
+The cec-follower tool is used to emulate cec followers. Based on the configured
+logical address(es) of the CEC device it will emulate the CEC behavior accordingly.
+
+It is basically a message loop, waiting for messages to arrive and taking the
+appropriate action for each message.
+
+This makes it possible to act as a specific CEC device. It is also a reference
+implementation on how a follower should behave.
+
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
+Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is used.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Turn on verbose reporting.
+.TP
+\fB\-T\fR, \fB\-\-trace\fR
+Trace all called ioctls. Useful for debugging.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Prints the help message.
+.TP
+\fB\-n\fR, \fB\-\-no\-warnings\fR
+Turn off warning messages.
+.TP
+\fB\-m\fR, \fB\-\-show\-msgs\fR
+Show received messages.
+.TP
+\fB\-s\fR, \fB\-\-show\-state\fR
+Show state changes from the emulated device.
+.SH EXIT STATUS
+On success, it returns 0. Otherwise, it will return the error code.
+.SH BUGS
+This manual page is a work in progress.
+
+Bug reports or questions about this utility should be sent to the linux-media@vger.kernel.org
+mailinglist.
