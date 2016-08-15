@@ -70,6 +70,11 @@ sub process_func
 			$logswitch .= "\tcase CEC_MSG_CDC_MESSAGE:\n";
 			$logswitch .= "\tswitch (msg->msg[4]) {\n";
 		}
+		if ($cdc_case) {
+			$cdcmsgtable .= "\t{ $cec_msg, \"$msg_name\" },\n";
+		} else {
+			$msgtable .= "\t{ $cec_msg, \"$msg_name\" },\n";
+		}
 		if (@args == 0) {
 			$logswitch .= "\tcase $cec_msg:\n";
 			$logswitch .= "\t\tprintf(\"$cec_msg (0x%02x)\\n\", $cec_msg);\n";
@@ -385,7 +390,25 @@ while (<>) {
 
 $options .= "\tOptHelpAll,\n";
 
-unless ($is_log) {
+if ($is_log == 2) {
+	printf "struct msgtable {\n";
+	printf "\t__u8 opcode;\n";
+	printf "\tconst char *name;\n";
+	printf "};\n\n";
+	printf "static const struct msgtable msgtable[] = {\n";
+	printf "%s", $msgtable;
+	printf "\t{ CEC_MSG_VENDOR_COMMAND, \"VENDOR_COMMAND\" },\n";
+	printf "\t{ CEC_MSG_VENDOR_COMMAND_WITH_ID, \"VENDOR_COMMAND_WITH_ID\" },\n";
+	printf "\t{ CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN, \"VENDOR_REMOTE_BUTTON_DOWN\" },\n";
+	printf "\t{ CEC_MSG_CDC_MESSAGE, \"CDC_MESSAGE\" },\n";
+	printf "};\n\n";
+	printf "static const struct msgtable cdcmsgtable[] = {\n";
+	printf "%s", $cdcmsgtable;
+	printf "};\n";
+	exit 0;
+}
+
+if ($is_log == 0) {
 	foreach (sort keys %feature_usage) {
 		$name = $_;
 		s/ /_/g;
@@ -420,7 +443,7 @@ printf "%s%s\n", $enums, $arg_structs;
 printf "static const struct message messages[] = {\n\t{\n";
 printf "%s\t}\n};\n\n", $messages;
 
-unless ($is_log) {
+if ($is_log == 0) {
 	printf "static void usage_options(int ch)\n{\n";
 	printf "%s}\n\n", $help;
 	printf "static void parse_msg_args(struct cec_msg &msg, bool reply, const message *opt, int ch)\n{\n";
