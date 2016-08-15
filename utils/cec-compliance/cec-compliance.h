@@ -333,7 +333,7 @@ static inline unsigned response_time_ms(const struct cec_msg *msg)
 static inline bool transmit_timeout(struct node *node, struct cec_msg *msg,
 				    unsigned timeout = 2000)
 {
-	bool broadcast = cec_msg_is_broadcast(msg);
+	struct cec_msg original_msg = *msg;
 
 	msg->timeout = timeout;
 	if (doioctl(node, CEC_TRANSMIT, msg) ||
@@ -347,7 +347,7 @@ static inline bool transmit_timeout(struct node *node, struct cec_msg *msg,
 	if (!cec_msg_status_is_abort(msg))
 		return true;
 
-	if (broadcast) {
+	if (cec_msg_is_broadcast(&original_msg)) {
 		fail("Received Feature Abort in reply to broadcast message\n");
 		return false;
 	}
@@ -375,7 +375,7 @@ static inline bool transmit_timeout(struct node *node, struct cec_msg *msg,
 		break;
 	}
 	info("Opcode %s was replied to with Feature Abort [%s]\n",
-	     opcode2s(msg).c_str(), reason);
+	     opcode2s(&original_msg).c_str(), reason);
 
 	return true;
 }

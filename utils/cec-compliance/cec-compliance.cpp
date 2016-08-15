@@ -736,7 +736,7 @@ const char *cdc_errcode2s(__u8 cdc_errcode)
 std::string opcode2s(const struct cec_msg *msg)
 {
 	std::stringstream oss;
-	__u8 opcode = msg->msg[2];
+	__u8 opcode = msg->msg[1];
 
 	if (opcode == CEC_MSG_CDC_MESSAGE) {
 		__u8 cdc_opcode = msg->msg[4];
@@ -745,7 +745,7 @@ std::string opcode2s(const struct cec_msg *msg)
 			if (cdcmsgtable[i].opcode == cdc_opcode)
 				return cdcmsgtable[i].name;
 		}
-		oss << "CDC: 0x" << std::hex << cdc_opcode;
+		oss << "CDC: 0x" << std::hex << (unsigned)cdc_opcode;
 		return oss.str();
 	}
 
@@ -753,7 +753,7 @@ std::string opcode2s(const struct cec_msg *msg)
 		if (msgtable[i].opcode == opcode)
 			return msgtable[i].name;
 	}
-	oss << "0x" << std::hex << opcode;
+	oss << "0x" << std::hex << (unsigned)opcode;
 	return oss.str();
 }
 
