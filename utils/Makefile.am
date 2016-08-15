@@ -12,6 +12,8 @@ SUBDIRS = \
 	v4l2-dbg \
 	v4l2-sysfs-path \
 	cec-ctl \
+	cec-compliance \
+	cec-follower \
 	rds-ctl
 
 if WITH_LIBDVBV5

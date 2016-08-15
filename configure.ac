@@ -37,6 +37,8 @@ AC_CONFIG_FILES([Makefile
 	utils/qv4l2/Makefile
 	utils/cec-ctl/Makefile
 	utils/cec-ctl/cec-ctl.1
+	utils/cec-compliance/Makefile
+	utils/cec-follower/Makefile
 	utils/rds-ctl/Makefile
 
 	contrib/Makefile
