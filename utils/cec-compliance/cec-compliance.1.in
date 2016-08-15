@@ -1,0 +1,108 @@
+.TH "CEC-COMPLIANCE" "1" "August 2016" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.SH NAME
+cec-compliance - An application to verify remote CEC devices
+.SH SYNOPSIS
+.B cec-compliance
+[\fI-h\fR] [\fI-d <dev>\fR] [other options]
+.SH DESCRIPTION
+The cec-compliance utility can be used to test how well remote CEC devices
+comply with the CEC specification. It can also be used to test the local
+CEC adapter (with the \fI-A\fR option).
+
+By default it will run through all tests, but if one or more of the feature
+test options is given, then only those tests will be performed.
+
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
+Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is used.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Turn on verbose reporting.
+.TP
+\fB\-T\fR, \fB\-\-trace\fR
+Trace all called ioctls. Useful for debugging.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Prints the help message.
+.TP
+\fB\-n\fR, \fB\-\-no\-warnings\fR
+Turn off warning messages.
+.TP
+\fB\-r\fR, \fB\-\-remote\fR=\fI<la>\fR
+As initiator test the remote logical address <la> or all LAs if no LA was given.
+.TP
+\fB\-i\fR, \fB\-\-interactive\fR
+Interactive mode when doing remote tests.
+.TP
+\fB\-A\fR, \fB\-\-test\-adapter\fR
+Test the CEC adapter API
+.TP
+\fB\-\-test\-core\fR
+Test the core functionality
+.TP
+\fB\-\-test\-audio\-rate\-control\fR
+Test the Audio Rate Control feature
+.TP
+\fB\-\-test\-audio\-return\-channel\-control\fR
+Test the Audio Return Channel Control feature
+.TP
+\fB\-\-test\-capability\-discovery\-and\-control\fR
+Test the Capability Discovery and Control feature
+.TP
+\fB\-\-test\-deck\-control\fR
+Test the Deck Control feature
+.TP
+\fB\-\-test\-device\-menu\-control\fR
+Test the Device Menu Control feature
+.TP
+\fB\-\-test\-device\-osd\-transfer\fR
+Test the Device OSD Transfer feature
+.TP
+\fB\-\-test\-dynamic\-audio\-lipsync\fR
+Test the Dynamic Audio Lipsync feature
+.TP
+\fB\-\-test\-osd\-display\fR
+Test the OSD Display feature
+.TP
+\fB\-\-test\-one\-touch\-play\fR
+Test the One Touch Play feature
+.TP
+\fB\-\-test\-one\-touch\-record\fR
+Test the One Touch Record feature
+.TP
+\fB\-\-test\-power\-status\fR
+Test the Power Status feature
+.TP
+\fB\-\-test\-remote\-control\-passthrough\fR
+Test the Remote Control Passthrough feature
+.TP
+\fB\-\-test\-routing\-control\fR
+Test the Routing Control feature
+.TP
+\fB\-\-test\-system\-audio\-control\fR
+Test the System Audio Control feature
+.TP
+\fB\-\-test\-system\-information\fR
+Test the System Information feature
+.TP
+\fB\-\-test\-timer\-programming\fR
+Test the Timer Programming feature
+.TP
+\fB\-\-test\-tuner\-control\fR
+Test the Tuner Control feature
+.TP
+\fB\-\-test\-vendor\-specific\-commands\fR
+Test the Vendor Specific Commands feature
+.TP
+\fB\-\-test\-standby\-resume\fR
+Test standby and resume functionality. This will activate
+testing of Standby, Give Device Power Status and One Touch Play.
+
+.SH EXIT STATUS
+On success, it returns 0. Otherwise, it will return the error code.
+.SH BUGS
+This manual page is a work in progress.
+
+Bug reports or questions about this utility should be sent to the linux-media@vger.kernel.org
+mailinglist.

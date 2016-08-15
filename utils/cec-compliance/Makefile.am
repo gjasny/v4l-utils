@@ -1,4 +1,5 @@
 bin_PROGRAMS = cec-compliance
+man_MANS = cec-compliance.1
 
 cec_compliance_SOURCES = cec-compliance.cpp cec-test.cpp cec-test-adapter.cpp cec-test-audio.cpp cec-test-power.cpp
 
@@ -9,3 +10,5 @@ cec-table.h: ../cec-ctl/msg2ctl.pl ../../include/linux/cec.h ../../include/linux
 
 clean-local:
 	-rm -vf cec-table.h
+
+EXTRA_DIST = cec-compliance.1
