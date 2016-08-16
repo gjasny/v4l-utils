@@ -983,7 +983,7 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 		/* RC Profile and Device Features are assumed to be 1 byte. As of CEC 2.0 only
 		   1 byte is used, but this might be extended in future versions. */
 		__u8 cec_version, all_device_types;
-		const __u8 *rc_profile, *dev_features;
+		const __u8 *rc_profile = NULL, *dev_features = NULL;
 
 		cec_ops_report_features(&msg, &cec_version, &all_device_types,
 					&rc_profile, &dev_features);
