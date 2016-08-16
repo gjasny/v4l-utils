@@ -18,10 +18,21 @@ enum format {
 	CARRAY
 };
 
+static struct v4l2_edid sedid;
+static char *file_in;
+
+static struct v4l2_edid gedid;
+static struct v4l2_edid gedid_pa;
+static char *file_out;
+static enum format gformat;
+static enum format sformat;
+static unsigned clear_pad;
+static unsigned short phys_addr = 0xffff;
+
 void edid_usage(void)
 {
 	printf("\nEDID options:\n"
-	       "  --set-edid=pad=<pad>[,type=<type>|file=<file>][,pa=<pa>]\n"
+	       "  --set-edid=pad=<pad>[,type=<type>|file=<file>a][,format=<fmt>][,pa=<pa>]\n"
 	       "                     <pad> is the input or output index for which to set the EDID.\n"
 	       "                     <type> can be 'hdmi', 'hdmi-4k-170mhz', 'hdmi-4k-300mhz', 'hdmi-4k-600mhz',\n"
 	       "                     'dvid' or 'vga'. A predefined EDID suitable for that connector type will be\n"
@@ -32,6 +43,9 @@ void edid_usage(void)
 	       "                     read from the given file. The file format must be in hex as in get-edid.\n"
 	       "                     The 'type' or 'file' arguments are mutually exclusive. One of the two\n"
 	       "                     must be specified.\n"
+	       "                     <fmt> is one of:\n"
+	       "                     hex:    hex numbers in ascii text (default)\n"
+	       "                     raw:    raw binary EDID content\n"
 	       "                     <pa> is the physical address. If set, then the physical address in the\n"
 	       "                     EDID is overridden by this physical address.\n"
 	       "  --clear-edid=<pad>\n"
@@ -42,7 +56,7 @@ void edid_usage(void)
 	       "                     <blocks> is the number of blocks you want to read. Default is\n"
 	       "                     all blocks.\n"
 	       "                     <fmt> is one of:\n"
-	       "                     hex:    hex numbers in ascii text\n"
+	       "                     hex:    hex numbers in ascii text (default)\n"
 	       "                     raw:    can be piped directly into the edid-decode tool\n"
 	       "                     carray: c-program struct\n"
 	       "                     If <file> is '-' or not the 'file' argument is not supplied, then the data\n"
@@ -54,38 +68,51 @@ void edid_usage(void)
 	       );
 }
 
+static void edid_add_block(struct v4l2_edid *e)
+{
+	e->blocks++;
+	if (e->blocks > 256) {
+		fprintf(stderr, "edid file error: too long\n");
+		free(e->edid);
+		e->edid = NULL;
+		exit(1);
+	}
+	e->edid = (unsigned char *)realloc(e->edid, e->blocks * 128);
+}
+
 static void read_edid_file(FILE *f, struct v4l2_edid *e)
 {
 	char value[3] = { 0 };
-	unsigned blocks = 1;
 	unsigned i = 0;
 	int c;
 
 	fseek(f, SEEK_SET, 0);
-	e->edid = (unsigned char *)malloc(blocks * 128);
+	e->edid = NULL;
+	e->blocks = 0;
 
 	while ((c = fgetc(f)) != EOF) {
+		if (sformat == RAW) {
+			if (i % 256 == 0)
+				edid_add_block(e);
+			e->edid[i / 2] = c;
+			i += 2;
+			continue;
+		}
+		/* Handle '0x' prefix */
+		if ((i & 1) && value[0] == '0' && (c == 'x' || c == 'X'))
+			i--;
 		if (!isxdigit(c))
 			continue;
 		if (i & 0x01) {
 			value[1] = c;
-			if (i / 2 > blocks * 128) {
-				blocks++;
-				if (blocks > 256) {
-					fprintf(stderr, "edid file error: too long\n");
-					free(e->edid);
-					e->edid = NULL;
-					exit(1);
-				}
-				e->edid = (unsigned char *)realloc(e->edid, blocks * 128);
-			}
+			if (i % 256 == 1)
+				edid_add_block(e);
 			e->edid[i / 2] = strtoul(value, 0, 16);
 		} else {
 			value[0] = c;
 		}
 		i++;
 	}
-	e->blocks = i / 256;
 }
 
 static unsigned char crc_calc(const unsigned char *b)
@@ -459,17 +486,6 @@ static uint8_t hdmi_edid_4k_600[256] = {
 
 /******************************************************/
 
-
-static struct v4l2_edid sedid;
-static char *file_in;
-
-static struct v4l2_edid gedid;
-static struct v4l2_edid gedid_pa;
-static char *file_out;
-static enum format gformat;
-static unsigned clear_pad;
-static unsigned short phys_addr = 0xffff;
-
 void edid_cmd(int ch, char *optarg)
 {
 	char *value, *subs;
@@ -487,6 +503,7 @@ void edid_cmd(int ch, char *optarg)
 				"type",
 				"edid",
 				"file",
+				"format",
 				"pa",
 				NULL
 			};
@@ -534,6 +551,16 @@ void edid_cmd(int ch, char *optarg)
 				}
 				break;
 			case 4:
+				if (!strcmp(value, "hex")) {
+					sformat = HEX;
+				} else if (!strcmp(value, "raw")) {
+					sformat = RAW;
+				} else {
+					edid_usage();
+					exit(1);
+				}
+				break;
+			case 5:
 				if (value)
 					phys_addr = parse_phys_addr(value);
 				break;
