@@ -32,7 +32,7 @@ static unsigned short phys_addr = 0xffff;
 void edid_usage(void)
 {
 	printf("\nEDID options:\n"
-	       "  --set-edid=pad=<pad>[,type=<type>|file=<file>a][,format=<fmt>][,pa=<pa>]\n"
+	       "  --set-edid=pad=<pad>[,type=<type>|file=<file>][,format=<fmt>][,pa=<pa>]\n"
 	       "                     <pad> is the input or output index for which to set the EDID.\n"
 	       "                     <type> can be 'hdmi', 'hdmi-4k-170mhz', 'hdmi-4k-300mhz', 'hdmi-4k-600mhz',\n"
 	       "                     'dvid' or 'vga'. A predefined EDID suitable for that connector type will be\n"
