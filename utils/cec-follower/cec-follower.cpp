@@ -305,7 +305,9 @@ std::string all_dev_types2s(unsigned types)
 		s += "Audio System, ";
 	if (types & CEC_OP_ALL_DEVTYPE_SWITCH)
 		s += "Switch, ";
-	return s.erase(s.length() - 2, 2);
+	if (s.length())
+		return s.erase(s.length() - 2, 2);
+	return s;
 }
 
 std::string rc_src_prof2s(unsigned prof)
