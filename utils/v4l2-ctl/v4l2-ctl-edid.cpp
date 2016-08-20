@@ -12,6 +12,24 @@
 
 #include <linux/v4l2-subdev.h>
 
+/*
+ * The 24-bit IEEE Registration Identifier for the HDMI-LLC Vendor
+ * Specific Data Block.
+ */
+#define HDMI_VSDB_EXT_TAG	0x000c03
+/*
+ * The 24-bit IEEE Registration Identifier for the HDMI-Forum Vendor
+ * Specific Data Block.
+ */
+#define HF_VSDB_EXT_TAG		0xc45dd8
+
+#define VID_CAP_EXT_TAG		0
+#define COLORIMETRY_EXT_TAG	5
+#define HDR_MD_EXT_TAG		6
+
+#define VSDB_TAG		3
+#define EXTENDED_TAG		7
+
 enum format {
 	HEX,
 	RAW,
@@ -22,17 +40,57 @@ static struct v4l2_edid sedid;
 static char *file_in;
 
 static struct v4l2_edid gedid;
-static struct v4l2_edid gedid_pa;
+static struct v4l2_edid info_edid;
 static char *file_out;
 static enum format gformat;
 static enum format sformat;
 static unsigned clear_pad;
 static unsigned short phys_addr = 0xffff;
 
+static __u8 toggle_hdmi_vsdb_flags;
+#define HDMI_VSDB_GRAPHICS	(1 << 0)
+#define HDMI_VSDB_PHOTO		(1 << 1)
+#define HDMI_VSDB_CINEMA	(1 << 2)
+#define HDMI_VSDB_GAME		(1 << 3)
+#define HDMI_VSDB_30_BIT	(1 << 4)
+#define HDMI_VSDB_36_BIT	(1 << 5)
+#define HDMI_VSDB_48_BIT	(1 << 6)
+
+static __u8 toggle_hf_vsdb_flags;
+#define HF_VSDB_SCSD_PRESENT	(1 << 7)
+
+static __u8 toggle_cea861_hdr_flags;
+#define CEA861_HDR_UNDERSCAN	(1 << 6)
+#define CEA861_HDR_AUDIO	(1 << 6)
+#define CEA861_HDR_YCBCR444	(1 << 5)
+#define CEA861_HDR_YCBCR422	(1 << 4)
+
+static int mod_s_pt = -1;
+static int mod_s_it = -1;
+static int mod_s_ce = -1;
+static __u8 toggle_vid_cap_flags;
+#define VID_CAP_QS		(1 << 6)
+#define VID_CAP_QY		(1 << 7)
+
+static __u8 toggle_colorimetry_flags;
+#define COLORIMETRY_XVYCC601		(1 << 0)
+#define COLORIMETRY_XVYCC709		(1 << 1)
+#define COLORIMETRY_SYCC		(1 << 2)
+#define COLORIMETRY_ADOBEYCC		(1 << 3)
+#define COLORIMETRY_ADOBERGB		(1 << 4)
+#define COLORIMETRY_BT2020CYCC		(1 << 5)
+#define COLORIMETRY_BT2020YCC		(1 << 6)
+#define COLORIMETRY_BT2020RGB		(1 << 7)
+
+static __u8 toggle_hdr_md_flags;
+#define HDR_MD_SDR		(1 << 0)
+#define HDR_MD_HDR		(1 << 1)
+#define HDR_MD_SMPTE_2084	(1 << 2)
+
 void edid_usage(void)
 {
 	printf("\nEDID options:\n"
-	       "  --set-edid=pad=<pad>[,type=<type>|file=<file>][,format=<fmt>][,pa=<pa>]\n"
+	       "  --set-edid=pad=<pad>[,type=<type>|file=<file>][,format=<fmt>][modifiers]\n"
 	       "                     <pad> is the input or output index for which to set the EDID.\n"
 	       "                     <type> can be 'hdmi', 'hdmi-4k-170mhz', 'hdmi-4k-300mhz', 'hdmi-4k-600mhz',\n"
 	       "                     'dvid' or 'vga'. A predefined EDID suitable for that connector type will be\n"
@@ -46,10 +104,53 @@ void edid_usage(void)
 	       "                     <fmt> is one of:\n"
 	       "                     hex:    hex numbers in ascii text (default)\n"
 	       "                     raw:    raw binary EDID content\n"
-	       "                     <pa> is the physical address. If set, then the physical address in the\n"
-	       "                     EDID is overridden by this physical address.\n"
+	       "\n"
+	       "                     [modifiers] is a comma-separate list of EDID modifiers:\n"
+	       "\n"
+	       "                     HDMI Vendor-Specific Data Block modifiers:\n"
+	       "                     pa=<pa>: change the physical address.\n"
+	       "                     30-bit: toggle the 30 bits/pixel bit.\n"
+	       "                     36-bit: toggle the 36 bits/pixel bit.\n"
+	       "                     48-bit: toggle the 48 bits/pixel bit.\n"
+	       "                     graphics: toggle the Graphics Content Type bit.\n"
+	       "                     photo: toggle the Photo Content Type bit.\n"
+	       "                     cinema: toggle the Cinema Content Type bit.\n"
+	       "                     game: toggle the Game Content Type bit.\n"
+	       "\n"
+	       "                     HDMI Forum Vendor-Specific Data Block modifiers:\n"
+	       "                     scdc: toggle the SCDC Present bit.\n"
+	       "\n"
+	       "                     CEA-861 Header modifiers:\n"
+	       "                     underscan: toggle the underscan bit.\n"
+	       "                     audio: toggle the audio bit.\n"
+	       "                     ycbcr444: toggle the YCbCr 4:4:4 bit.\n"
+	       "                     ycbcr422: toggle the YCbCr 4:2:2 bit.\n"
+	       "\n"
+	       "                     CEA-861 Video Capability Descriptor modifiers:\n"
+	       "                     qy: toggle the QY YCC Quantization Range bit.\n"
+	       "                     qs: toggle the QS RGB Quantization Range bit.\n"
+	       "                     s-pt=<0-3>: set the PT Preferred Format Over/underscan bits.\n"
+	       "                     s-it=<0-3>: set the IT Over/underscan bits.\n"
+	       "                     s-ce=<0-3>: set the CE Over/underscan bits.\n"
+	       "\n"
+	       "                     CEA-861 Colorimetry Data Block modifiers:\n"
+	       "                     xvycc-601: toggle the xvYCC 601 bit.\n"
+	       "                     xvycc-709: toggle the xvYCC 709 bit.\n"
+	       "                     sycc: toggle the sYCC 601 bit.\n"
+	       "                     adobe-ycc: toggle the Adobe YCC 601 bit.\n"
+	       "                     adobe-rgb: toggle the Adobe RGB bit.\n"
+	       "                     bt2020-rgb: toggle the BT2020 RGB bit.\n"
+	       "                     bt2020-ycc: toggle the BT2020 YCC bit.\n"
+	       "                     bt2020-cycc: toggle the BT2020 cYCC bit.\n"
+	       "\n"
+	       "                     CEA-861 HDR Static Metadata Data Block modifiers:\n"
+	       "                     sdr: toggle the Traditional gamma SDR bit.\n"
+	       "                     hdr: toggle the Traditional gamma HDR bit.\n"
+	       "                     smpte2084: toggle the SMPTE ST 2084 bit.\n"
 	       "  --clear-edid=<pad>\n"
 	       "                     <pad> is the input or output index for which to clear the EDID.\n"
+	       "  --info-edid=<pad>  print the current EDID's modifiers\n"
+	       "                     <pad> is the input or output index for which to get the EDID.\n"
 	       "  --get-edid=pad=<pad>,startblock=<startblock>,blocks=<blocks>,format=<fmt>,file=<file>\n"
 	       "                     <pad> is the input or output index for which to get the EDID.\n"
 	       "                     <startblock> is the first block number you want to read. Default 0.\n"
@@ -61,8 +162,6 @@ void edid_usage(void)
 	       "                     carray: c-program struct\n"
 	       "                     If <file> is '-' or not the 'file' argument is not supplied, then the data\n"
 	       "                     is written to stdout.\n"
-	       "  --get-phys-addr=pad=<pad>\n"
-	       "                     Report the physical address encoded in the EDID.\n"
 	       "  --fix-edid-checksums\n"
 	       "                     If specified then any checksum errors will be fixed silently.\n"
 	       );
@@ -227,7 +326,8 @@ static void printedid(FILE *f, struct v4l2_edid *e, enum format gf)
 	}
 }
 
-static int get_edid_spa_location(const unsigned char *edid, unsigned size)
+static int get_edid_tag_location(const unsigned char *edid, unsigned size,
+				 unsigned char want_tag, __u32 ext_tag)
 {
 	unsigned char d;
 
@@ -237,22 +337,113 @@ static int get_edid_spa_location(const unsigned char *edid, unsigned size)
 	if (edid[0x7e] != 1 || edid[0x80] != 0x02 || edid[0x81] != 0x03)
 		return -1;
 
-	/* search Vendor Specific Data Block (tag 3) */
+	/* search tag */
 	d = edid[0x82] & 0x7f;
-	if (d > 4) {
-		int i = 0x84;
-		int end = 0x80 + d;
+	if (d <= 4)
+		return -1;
 
-		do {
-			unsigned char tag = edid[i] >> 5;
-			unsigned char len = edid[i] & 0x1f;
+	int i = 0x84;
+	int end = 0x80 + d;
 
-			if (tag == 3 && len >= 5)
-				return i + 4;
+	do {
+		unsigned char tag = edid[i] >> 5;
+		unsigned char len = edid[i] & 0x1f;
+
+		if (tag != want_tag || i + len > end) {
 			i += len + 1;
-		} while (i < end);
-	}
+			continue;
+		}
+
+		/*
+		 * Tag 3 (Vendor-Specific Data Block) has
+		 * a 24 bit IEEE identifier.
+		 */
+		if (tag == VSDB_TAG && len >= 3 &&
+		    edid[i + 1] == (ext_tag & 0xff) &&
+		    edid[i + 2] == ((ext_tag >> 8) & 0xff) &&
+		    edid[i + 3] == ((ext_tag >> 16) & 0xff))
+			return i;
+		/*
+		 * Tag 7 has an extended tag, others (0-2, 4-6)
+		 * have no identifiers.
+		 */
+		if ((tag < EXTENDED_TAG && tag != VSDB_TAG) ||
+		    (tag == EXTENDED_TAG && len >= 1 && edid[i + 1] == ext_tag))
+			return i;
+		i += len + 1;
+	} while (i < end);
 	return -1;
+}
+
+static int get_edid_spa_location(const unsigned char *edid, unsigned size)
+{
+	int loc = get_edid_tag_location(edid, size, VSDB_TAG, HDMI_VSDB_EXT_TAG);
+
+	if (loc < 0)
+		return loc;
+
+	return (edid[loc] & 0x1f) >= 8 ? loc + 4 : -1;
+}
+
+static int get_edid_hdmi_vsdb_location(const unsigned char *edid, unsigned size)
+{
+	int loc = get_edid_tag_location(edid, size, VSDB_TAG, HDMI_VSDB_EXT_TAG);
+
+	if (loc < 0)
+		return loc;
+
+	return (edid[loc] & 0x1f) >= 9 ? loc + 8 : -1;
+}
+
+static int get_edid_vid_cap_location(const unsigned char *edid, unsigned size)
+{
+	int loc = get_edid_tag_location(edid, size, EXTENDED_TAG, VID_CAP_EXT_TAG);
+
+	if (loc < 0)
+		return loc;
+
+	return (edid[loc] & 0x1f) >= 3 ? loc + 2 : -1;
+}
+
+static int get_edid_colorimetry_location(const unsigned char *edid, unsigned size)
+{
+	int loc = get_edid_tag_location(edid, size, EXTENDED_TAG, COLORIMETRY_EXT_TAG);
+
+	if (loc < 0)
+		return loc;
+
+	return (edid[loc] & 0x1f) >= 3 ? loc + 2 : -1;
+}
+
+static int get_edid_hdr_md_location(const unsigned char *edid, unsigned size)
+{
+	int loc = get_edid_tag_location(edid, size, EXTENDED_TAG, HDR_MD_EXT_TAG);
+
+	if (loc < 0)
+		return loc;
+
+	return (edid[loc] & 0x1f) >= 3 ? loc + 2 : -1;
+}
+
+static int get_edid_hf_vsdb_location(const unsigned char *edid, unsigned size)
+{
+	int loc = get_edid_tag_location(edid, size, VSDB_TAG, HF_VSDB_EXT_TAG);
+
+	if (loc < 0)
+		return loc;
+
+	return (edid[loc] & 0x1f) >= 7 ? loc + 4 : -1;
+}
+
+static int get_edid_cea861_hdr_location(const unsigned char *edid, unsigned size)
+{
+	if (size < 256)
+		return -1;
+
+	if (edid[0x7e] != 1 || edid[0x80] != 0x02 || edid[0x81] != 0x03)
+		return -1;
+
+	return 0x83;
 }
 
 static void set_edid_phys_addr(unsigned char *edid, unsigned size, unsigned short phys_addr)
@@ -281,12 +472,95 @@ static unsigned short get_edid_phys_addr(const unsigned char *edid, unsigned siz
 	return (edid[loc] << 8) | edid[loc + 1];
 }
 
-static void print_phys_addr(const struct v4l2_edid *e)
+static void print_edid_mods(const struct v4l2_edid *e)
 {
 	unsigned short pa = get_edid_phys_addr(e->edid, e->blocks * 128);
+	int loc;
 
-	printf("Physical Address: %x.%x.%x.%x\n",
-	       pa >> 12, (pa >> 8) & 0xf, (pa >> 4) & 0xf, pa & 0xf);
+	loc = get_edid_hdmi_vsdb_location(e->edid, e->blocks * 128);
+	if (loc >= 0) {
+		__u8 v = e->edid[loc];
+
+		printf("\nHDMI Vendor-Specific Data Block\n");
+		printf("  Physical Address:        %x.%x.%x.%x\n",
+		       pa >> 12, (pa >> 8) & 0xf, (pa >> 4) & 0xf, pa & 0xf);
+		printf("  30-bit:                  %s\n", (v & HDMI_VSDB_30_BIT) ? "yes" : "no");
+		printf("  36-bit:                  %s\n", (v & HDMI_VSDB_36_BIT) ? "yes" : "no");
+		printf("  48-bit:                  %s\n", (v & HDMI_VSDB_48_BIT) ? "yes" : "no");
+		printf("  Graphics:                %s\n", (v & HDMI_VSDB_GRAPHICS) ? "yes" : "no");
+		printf("  Photo:                   %s\n", (v & HDMI_VSDB_PHOTO) ? "yes" : "no");
+		printf("  Cinema:                  %s\n", (v & HDMI_VSDB_CINEMA) ? "yes" : "no");
+		printf("  Game:                    %s\n", (v & HDMI_VSDB_GAME) ? "yes" : "no");
+	}
+	loc = get_edid_hf_vsdb_location(e->edid, e->blocks * 128);
+	if (loc >= 0) {
+		__u8 v = e->edid[loc];
+
+		printf("\nHDMI Forum Vendor-Specific Data Block\n");
+		printf("  SCDC Present:            %s\n", (v & HF_VSDB_SCSD_PRESENT) ? "yes" : "no");
+	}
+	loc = get_edid_cea861_hdr_location(e->edid, e->blocks * 128);
+	if (loc >= 0) {
+		__u8 v = e->edid[loc];
+
+		printf("\nCEA-861 Header\n");
+		printf("  IT Formats Underscanned: %s\n", (v & CEA861_HDR_UNDERSCAN) ? "yes" : "no");
+		printf("  Audio:                   %s\n", (v & CEA861_HDR_AUDIO) ? "yes" : "no");
+		printf("  YCbCr 4:4:4:             %s\n", (v & CEA861_HDR_YCBCR444) ? "yes" : "no");
+		printf("  YCbCr 4:2:2:             %s\n", (v & CEA861_HDR_YCBCR422) ? "yes" : "no");
+	}
+	loc = get_edid_vid_cap_location(e->edid, e->blocks * 128);
+	if (loc >= 0) {
+		static const char *pt_scan[] = {
+			"No Data",
+			"Always Overscanned",
+			"Always Underscanned",
+			"Supports both over- and underscan"
+		};
+		static const char *it_scan[] = {
+			"IT Formats not supported",
+			"Always Overscanned",
+			"Always Underscanned",
+			"Supports both over- and underscan"
+		};
+		static const char *ce_scan[] = {
+			"CE Formats not supported",
+			"Always Overscanned",
+			"Always Underscanned",
+			"Supports both over- and underscan"
+		};
+		__u8 v = e->edid[loc];
+
+		printf("\nCEA-861 Video Capability Descriptor\n");
+		printf("  RGB Quantization Range:  %s\n", (v & VID_CAP_QS) ? "yes" : "no");
+		printf("  YCC Quantization Range:  %s\n", (v & VID_CAP_QY) ? "yes" : "no");
+		printf("  PT:                      %s\n", pt_scan[(v >> 4) & 3]);
+		printf("  IT:                      %s\n", it_scan[(v >> 2) & 3]);
+		printf("  CE:                      %s\n", ce_scan[(v >> 0) & 3]);
+	}
+	loc = get_edid_colorimetry_location(e->edid, e->blocks * 128);
+	if (loc >= 0) {
+		__u8 v = e->edid[loc];
+
+		printf("\nCEA-861 Colorimetry Data Block\n");
+		printf("  xvYCC 601:               %s\n", (v & COLORIMETRY_XVYCC601) ? "yes" : "no");
+		printf("  xvYCC 709:               %s\n", (v & COLORIMETRY_XVYCC709) ? "yes" : "no");
+		printf("  sYCC:                    %s\n", (v & COLORIMETRY_SYCC) ? "yes" : "no");
+		printf("  AdobeRGB:                %s\n", (v & COLORIMETRY_ADOBERGB) ? "yes" : "no");
+		printf("  AdobeYCC:                %s\n", (v & COLORIMETRY_ADOBEYCC) ? "yes" : "no");
+		printf("  BT.2020 RGB:             %s\n", (v & COLORIMETRY_BT2020RGB) ? "yes" : "no");
+		printf("  BT.2020 YCC:             %s\n", (v & COLORIMETRY_BT2020YCC) ? "yes" : "no");
+		printf("  BT.2020 cYCC:            %s\n", (v & COLORIMETRY_BT2020CYCC) ? "yes" : "no");
+	}
+	loc = get_edid_hdr_md_location(e->edid, e->blocks * 128);
+	if (loc >= 0) {
+		__u8 v = e->edid[loc];
+
+		printf("\nCEA-861 HDR Static Metadata Data Block\n");
+		printf("  SDR (Traditional Gamma): %s\n", (v & HDR_MD_SDR) ? "yes" : "no");
+		printf("  HDR (Traditional Gamma): %s\n", (v & HDR_MD_HDR) ? "yes" : "no");
+		printf("  SMPTE 2084:              %s\n", (v & HDR_MD_SMPTE_2084) ? "yes" : "no");
+	}
 }
 
 static unsigned short parse_phys_addr(const char *value)
@@ -505,10 +779,51 @@ void edid_cmd(int ch, char *optarg)
 				"file",
 				"format",
 				"pa",
+				"s-pt",
+				"s-it",
+				"s-ce",
+				"30-bit",
+				"36-bit",
+				"48-bit",
+				"graphics",
+				"photo",
+				"cinema",
+				"game",
+				"scdc",
+				"underscan",
+				"audio",
+				"ycbcr444",
+				"ycbcr422",
+				"qy",
+				"qs",
+				"xvycc-601",
+				"xvycc-709",
+				"sycc",
+				"adobe-ycc",
+				"adobe-rgb",
+				"bt2020-rgb",
+				"bt2020-ycc",
+				"bt2020-cycc",
+				"sdr",
+				"hdr",
+				"smpte2084",
 				NULL
 			};
 
-			switch (parse_subopt(&subs, subopts, &value)) {
+			int opt = getsubopt(&subs, (char* const*)subopts, &value);
+
+			if (opt == -1) {
+				fprintf(stderr, "Invalid suboptions specified\n");
+				edid_usage();
+				exit(1);
+			}
+			if (value == NULL && opt <= 8) {
+				fprintf(stderr, "No value given to suboption <%s>\n",
+					subopts[opt]);
+				edid_usage();
+				exit(1);
+			}
+			switch (opt) {
 			case 0:
 				sedid.pad = strtoul(value, 0, 0);
 				break;
@@ -564,6 +879,40 @@ void edid_cmd(int ch, char *optarg)
 				if (value)
 					phys_addr = parse_phys_addr(value);
 				break;
+			case 6:
+				mod_s_pt = strtoul(value, 0, 0) & 3;
+				break;
+			case 7:
+				mod_s_it = strtoul(value, 0, 0) & 3;
+				break;
+			case 8:
+				mod_s_ce = strtoul(value, 0, 0) & 3;
+				break;
+			case 9: toggle_hdmi_vsdb_flags |= HDMI_VSDB_30_BIT; break;
+			case 10: toggle_hdmi_vsdb_flags |= HDMI_VSDB_36_BIT; break;
+			case 11: toggle_hdmi_vsdb_flags |= HDMI_VSDB_48_BIT; break;
+			case 12: toggle_hdmi_vsdb_flags |= HDMI_VSDB_GRAPHICS; break;
+			case 13: toggle_hdmi_vsdb_flags |= HDMI_VSDB_PHOTO; break;
+			case 14: toggle_hdmi_vsdb_flags |= HDMI_VSDB_CINEMA; break;
+			case 15: toggle_hdmi_vsdb_flags |= HDMI_VSDB_GAME; break;
+			case 16: toggle_hf_vsdb_flags |= HF_VSDB_SCSD_PRESENT; break;
+			case 17: toggle_cea861_hdr_flags |= CEA861_HDR_UNDERSCAN; break;
+			case 18: toggle_cea861_hdr_flags |= CEA861_HDR_AUDIO; break;
+			case 19: toggle_cea861_hdr_flags |= CEA861_HDR_YCBCR444; break;
+			case 20: toggle_cea861_hdr_flags |= CEA861_HDR_YCBCR422; break;
+			case 21: toggle_vid_cap_flags |= VID_CAP_QY; break;
+			case 22: toggle_vid_cap_flags |= VID_CAP_QS; break;
+			case 23: toggle_colorimetry_flags |= COLORIMETRY_XVYCC601; break;
+			case 24: toggle_colorimetry_flags |= COLORIMETRY_XVYCC709; break;
+			case 25: toggle_colorimetry_flags |= COLORIMETRY_SYCC; break;
+			case 26: toggle_colorimetry_flags |= COLORIMETRY_ADOBEYCC; break;
+			case 27: toggle_colorimetry_flags |= COLORIMETRY_ADOBERGB; break;
+			case 28: toggle_colorimetry_flags |= COLORIMETRY_BT2020RGB; break;
+			case 29: toggle_colorimetry_flags |= COLORIMETRY_BT2020YCC; break;
+			case 30: toggle_colorimetry_flags |= COLORIMETRY_BT2020CYCC; break;
+			case 31: toggle_hdr_md_flags |= HDR_MD_SDR; break;
+			case 32: toggle_hdr_md_flags |= HDR_MD_HDR; break;
+			case 33: toggle_hdr_md_flags |= HDR_MD_SMPTE_2084; break;
 			default:
 				edid_usage();
 				exit(1);
@@ -633,32 +982,18 @@ void edid_cmd(int ch, char *optarg)
 			gedid.blocks = 256 - gedid.start_block;
 		break;
 
-	case OptGetPhysAddr:
-		memset(&gedid_pa, 0, sizeof(gedid_pa));
-		if (!optarg)
-			break;
-		subs = optarg;
-		while (*subs != '\0') {
-			static const char *const subopts[] = {
-				"pad",
-				NULL
-			};
-
-			switch (parse_subopt(&subs, subopts, &value)) {
-			case 0:
-				gedid_pa.pad = strtoul(value, 0, 0);
-				break;
-			default:
-				edid_usage();
-				exit(1);
-			}
-		}
+	case OptInfoEdid:
+		memset(&info_edid, 0, sizeof(info_edid));
+		if (optarg)
+			info_edid.pad = strtoul(optarg, 0, 0);
 		break;
 	}
 }
 
 void edid_set(int fd)
 {
+	int loc;
+
 	if (options[OptClearEdid]) {
 		struct v4l2_edid edid;
 
@@ -669,6 +1004,7 @@ void edid_set(int fd)
 
 	if (options[OptSetEdid]) {
 		FILE *fin = NULL;
+		bool must_fix_edid = options[OptFixEdidChecksums];
 
 		if (file_in) {
 			if (!strcmp(file_in, "-"))
@@ -691,8 +1027,64 @@ void edid_set(int fd)
 		}
 		if (phys_addr != 0xffff)
 			set_edid_phys_addr(sedid.edid, sedid.blocks * 128, phys_addr);
-		if (options[OptFixEdidChecksums])
+		if (toggle_hdmi_vsdb_flags) {
+			loc = get_edid_hdmi_vsdb_location(sedid.edid, sedid.blocks * 128);
+			if (loc >= 0) {
+				sedid.edid[loc] ^= toggle_hdmi_vsdb_flags;
+				must_fix_edid = true;
+			}
+		}
+		if (toggle_hf_vsdb_flags) {
+			loc = get_edid_hf_vsdb_location(sedid.edid, sedid.blocks * 128);
+			if (loc >= 0) {
+				sedid.edid[loc] ^= toggle_hf_vsdb_flags;
+				must_fix_edid = true;
+			}
+		}
+		if (toggle_vid_cap_flags || mod_s_pt >= 0 ||
+		    mod_s_ce >= 0 || mod_s_it >= 0) {
+			loc = get_edid_vid_cap_location(sedid.edid, sedid.blocks * 128);
+			if (loc >= 0) {
+				sedid.edid[loc] ^= toggle_vid_cap_flags;
+				if (mod_s_ce >= 0) {
+					sedid.edid[loc] &= 0xfc;
+					sedid.edid[loc] |= mod_s_ce << 0;
+				}
+				if (mod_s_it >= 0) {
+					sedid.edid[loc] &= 0xf3;
+					sedid.edid[loc] |= mod_s_it << 2;
+				}
+				if (mod_s_pt >= 0) {
+					sedid.edid[loc] &= 0xcf;
+					sedid.edid[loc] |= mod_s_pt << 4;
+				}
+				must_fix_edid = true;
+			}
+		}
+		if (toggle_colorimetry_flags) {
+			loc = get_edid_colorimetry_location(sedid.edid, sedid.blocks * 128);
+			if (loc >= 0) {
+				sedid.edid[loc] ^= toggle_colorimetry_flags;
+				must_fix_edid = true;
+			}
+		}
+		if (toggle_hdr_md_flags) {
+			loc = get_edid_hdr_md_location(sedid.edid, sedid.blocks * 128);
+			if (loc >= 0) {
+				sedid.edid[loc] ^= toggle_hdr_md_flags;
+				must_fix_edid = true;
+			}
+		}
+		if (toggle_cea861_hdr_flags) {
+			loc = get_edid_cea861_hdr_location(sedid.edid, sedid.blocks * 128);
+			if (loc >= 0) {
+				sedid.edid[loc] ^= toggle_cea861_hdr_flags;
+				must_fix_edid = true;
+			}
+		}
+		if (must_fix_edid)
 			fix_edid(&sedid);
+		print_edid_mods(&sedid);
 		if (verify_edid(&sedid))
 			doioctl(fd, VIDIOC_S_EDID, &sedid);
 		else
@@ -734,11 +1126,11 @@ void edid_get(int fd)
 			fclose(fout);
 		free(gedid.edid);
 	}
-	if (options[OptGetPhysAddr]) {
-		gedid_pa.blocks = 2;
-		gedid_pa.edid = (unsigned char *)malloc(gedid_pa.blocks * 128);
-		if (doioctl(fd, VIDIOC_G_EDID, &gedid_pa) == 0)
-			print_phys_addr(&gedid_pa);
-		free(gedid_pa.edid);
+	if (options[OptInfoEdid]) {
+		info_edid.blocks = 2;
+		info_edid.edid = (unsigned char *)malloc(info_edid.blocks * 128);
+		if (doioctl(fd, VIDIOC_G_EDID, &info_edid) == 0)
+			print_edid_mods(&info_edid);
+		free(info_edid.edid);
 	}
 }
