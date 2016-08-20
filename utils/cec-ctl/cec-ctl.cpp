@@ -34,6 +34,77 @@
 #include <algorithm>
 #include <linux/cec-funcs.h>
 
+/*
+ * Remove these static inlines once these are added to cec-funcs.h.
+ */
+static inline void cec_msg_vendor_command(struct cec_msg *msg,
+					  __u8 size, const __u8 *vendor_cmd)
+{
+	if (size > 14)
+		size = 14;
+	msg->len = 2 + size;
+	msg->msg[1] = CEC_MSG_VENDOR_COMMAND;
+	memcpy(msg->msg + 2, vendor_cmd, size);
+}
+
+static inline void cec_ops_vendor_command(const struct cec_msg *msg,
+					  __u8 *size,
+					  const __u8 **vendor_cmd)
+{
+	*size = msg->len - 2;
+
+	if (*size > 14)
+		*size = 14;
+	*vendor_cmd = msg->msg + 2;
+}
+
+static inline void cec_msg_vendor_command_with_id(struct cec_msg *msg,
+						  __u32 vendor_id, __u8 size,
+						  const __u8 *vendor_cmd)
+{
+	if (size > 11)
+		size = 11;
+	msg->len = 5 + size;
+	msg->msg[1] = CEC_MSG_VENDOR_COMMAND_WITH_ID;
+	msg->msg[2] = vendor_id >> 16;
+	msg->msg[3] = (vendor_id >> 8) & 0xff;
+	msg->msg[4] = vendor_id & 0xff;
+	memcpy(msg->msg + 5, vendor_cmd, size);
+}
+
+static inline void cec_ops_vendor_command_with_id(const struct cec_msg *msg,
+						  __u32 *vendor_id,  __u8 *size,
+						  const __u8 **vendor_cmd)
+{
+	*size = msg->len - 5;
+
+	if (*size > 11)
+		*size = 11;
+	*vendor_id = (msg->msg[2] << 16) | (msg->msg[3] << 8) | msg->msg[4];
+	*vendor_cmd = msg->msg + 5;
+}
+
+static inline void cec_msg_vendor_remote_button_down(struct cec_msg *msg,
+						     __u8 size,
+						     const __u8 *rc_code)
+{
+	if (size > 14)
+		size = 14;
+	msg->len = 2 + size;
+	msg->msg[1] = CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN;
+	memcpy(msg->msg + 2, rc_code, size);
+}
+
+static inline void cec_ops_vendor_remote_button_down(const struct cec_msg *msg,
+						     __u8 *size,
+						     const __u8 **rc_code)
+{
+	*size = msg->len - 2;
+
+	if (*size > 14)
+		*size = 14;
+	*rc_code = msg->msg + 2;
+}
 #ifdef __ANDROID__
 #include <android-config.h>
 #else
@@ -493,6 +564,14 @@ static void log_descriptors(const char *arg_name, unsigned num, const __u32 *des
 static void log_u8_array(const char *arg_name, unsigned num, const __u8 *vals);
 static void log_unknown_msg(const struct cec_msg *msg);
 
+#define VENDOR_EXTRA \
+	"  --vendor-command=cmd=<byte>[:<byte>]*\n" \
+	"                                  Send VENDOR_COMMAND message (" xstr(CEC_MSG_VENDOR_COMMAND) ")\n" \
+	"  --vendor-command-with-id=vendor-id=<val>,cmd=<byte>[:<byte>]*\n" \
+	"                                  Send VENDOR_COMMAND_WITH_ID message (" xstr(CEC_MSG_VENDOR_COMMAND_WITH_ID) ")\n" \
+	"  --vendor-remote-button-down=rc-code=<byte>[:<byte>]*\n" \
+	"                                  Send VENDOR_REMOTE_BUTTON_DOWN message (" xstr(CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN) ")\n"
+
 #include "cec-ctl-gen.h"
 
 static void log_digital(const char *arg_name, const struct cec_op_digital_service_id *digital)
@@ -664,6 +743,9 @@ enum Option {
 	OptFeatSetAudioRate,
 	OptFeatSinkHasARCTx,
 	OptFeatSourceHasARCRx,
+	OptVendorCommand = 509,
+	OptVendorCommandWithID = 510,
+	OptVendorRemoteButtonDown = 511,
 };
 
 struct node {
@@ -734,6 +816,9 @@ static struct option long_options[] = {
 	{ "help-all", no_argument, 0, OptHelpAll },
 
 	CEC_LONG_OPTS
+	{ "vendor-remote-button-down", required_argument, 0, OptVendorRemoteButtonDown }, \
+	{ "vendor-command-with-id", required_argument, 0, OptVendorCommandWithID }, \
+	{ "vendor-command", required_argument, 0, OptVendorCommand }, \
 
 	{ 0, 0, 0, 0 }
 };
@@ -1006,30 +1091,34 @@ static void log_unknown_msg(const struct cec_msg *msg)
 {
 	__u32 vendor_id;
 	__u16 phys_addr;
+	const __u8 *bytes;
+	__u8 size;
 	unsigned i;
 
 	switch (msg->msg[1]) {
 	case CEC_MSG_VENDOR_COMMAND:
 		printf("CEC_MSG_VENDOR_COMMAND:\n");
+		cec_ops_vendor_command(msg, &size, &bytes);
 		printf("\tvendor-specific-data:");
-		for (i = 2; i < msg->len; i++)
-			printf(" 0x%02x", msg->msg[i]);
+		for (i = 0; i < size; i++)
+			printf(" 0x%02x", bytes[i]);
 		printf("\n");
 		break;
 	case CEC_MSG_VENDOR_COMMAND_WITH_ID:
 		printf("CEC_MSG_VENDOR_COMMAND_WITH_ID:\n");
-		cec_ops_device_vendor_id(msg, &vendor_id);
+		cec_ops_vendor_command_with_id(msg, &vendor_id, &size, &bytes);
 		log_arg(&arg_vendor_id, "vendor-id", vendor_id);
 		printf("\tvendor-specific-data:");
-		for (i = 5; i < msg->len; i++)
-			printf(" 0x%02x", msg->msg[i]);
+		for (i = 0; i < size; i++)
+			printf(" 0x%02x", bytes[i]);
 		printf("\n");
 		break;
 	case CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN:
 		printf("CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN:\n");
+		cec_ops_vendor_remote_button_down(msg, &size, &bytes);
 		printf("\tvendor-specific-rc-code:");
-		for (i = 2; i < msg->len; i++)
-			printf(" 0x%02x", msg->msg[i]);
+		for (i = 0; i < size; i++)
+			printf(" 0x%02x", bytes[i]);
 		printf("\n");
 		break;
 	case CEC_MSG_CDC_MESSAGE:
@@ -1391,6 +1480,113 @@ int main(int argc, char **argv)
 				fprintf(stderr, "Unknown argument '%s'\n\n", argv[optind]);
 			usage();
 			return 1;
+		case OptVendorCommand: {
+			static const char *arg_names[] = {
+				"cmd",
+				NULL
+			};
+			char *value, *endptr, *subs = optarg;
+			__u8 size = 0;
+			__u8 bytes[14];
+
+			while (*subs != '\0') {
+				switch (parse_subopt(&subs, arg_names, &value)) {
+				case 0:
+					while (size < sizeof(bytes)) {
+						bytes[size++] = strtol(value, &endptr, 0L);
+						if (endptr == value) {
+							size--;
+							break;
+						}
+						value = strchr(value, ':');
+						if (value == NULL)
+							break;
+						value++;
+					}
+					break;
+				default:
+					exit(1);
+				}
+			}
+			if (size) {
+				cec_msg_vendor_command(&msg, size, bytes);
+				msgs.push_back(msg);
+			}
+			break;
+		}
+		case OptVendorCommandWithID: {
+			static const char *arg_names[] = {
+				"vendor-id",
+				"cmd",
+				NULL
+			};
+			char *value, *endptr, *subs = optarg;
+			__u32 vendor_id = 0;
+			__u8 size = 0;
+			__u8 bytes[11];
+
+			while (*subs != '\0') {
+				switch (parse_subopt(&subs, arg_names, &value)) {
+				case 0:
+					vendor_id = strtol(value, 0L, 0);
+					break;
+				case 1:
+					while (size < sizeof(bytes)) {
+						bytes[size++] = strtol(value, &endptr, 0L);
+						if (endptr == value) {
+							size--;
+							break;
+						}
+						value = strchr(value, ':');
+						if (value == NULL)
+							break;
+						value++;
+					}
+					break;
+				default:
+					exit(1);
+				}
+			}
+			if (size) {
+				cec_msg_vendor_command_with_id(&msg, vendor_id, size, bytes);
+				msgs.push_back(msg);
+			}
+			break;
+		}
+		case OptVendorRemoteButtonDown: {
+			static const char *arg_names[] = {
+				"rc-code",
+				NULL
+			};
+			char *value, *endptr, *subs = optarg;
+			__u8 size = 0;
+			__u8 bytes[14];
+
+			while (*subs != '\0') {
+				switch (parse_subopt(&subs, arg_names, &value)) {
+				case 0:
+					while (size < sizeof(bytes)) {
+						bytes[size++] = strtol(value, &endptr, 0L);
+						if (endptr == value) {
+							size--;
+							break;
+						}
+						value = strchr(value, ':');
+						if (value == NULL)
+							break;
+						value++;
+					}
+					break;
+				default:
+					exit(1);
+				}
+			}
+			if (size) {
+				cec_msg_vendor_remote_button_down(&msg, size, bytes);
+				msgs.push_back(msg);
+			}
+			break;
+		}
 		default:
 			if (ch >= OptHelpAll) {
 				usage_options(ch);

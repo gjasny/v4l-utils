@@ -420,6 +420,7 @@ if ($is_log == 0) {
 			$usage .= $usage_msg{$_};
 		}
 		chop $usage;
+		$usage =~ s/"  --vendor-remote-button-up/VENDOR_EXTRA\n\t"  --vendor-remote-button-up/;
 		printf "%s;\n\n", $usage;
 		s/_/-/g;
 		$help_features .= sprintf("\t\"  --help-%-28s Show help for the $name feature\\n\" \\\n", $_);
