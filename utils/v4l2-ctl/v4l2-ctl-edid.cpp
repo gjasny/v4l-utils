@@ -28,6 +28,7 @@
 #define HDR_MD_EXT_TAG		6
 
 #define VSDB_TAG		3
+#define SPEAKER_TAG		4
 #define EXTENDED_TAG		7
 
 enum format {
@@ -45,7 +46,28 @@ static char *file_out;
 static enum format gformat;
 static enum format sformat;
 static unsigned clear_pad;
-static unsigned short phys_addr = 0xffff;
+static long phys_addr = -1;
+
+static __u8 toggle_cea861_hdr_flags;
+#define CEA861_HDR_UNDERSCAN	(1 << 6)
+#define CEA861_HDR_AUDIO	(1 << 6)
+#define CEA861_HDR_YCBCR444	(1 << 5)
+#define CEA861_HDR_YCBCR422	(1 << 4)
+
+static __u8 toggle_speaker1_flags;
+#define SPEAKER1_FLFR		(1 << 0)
+#define SPEAKER1_LFE		(1 << 1)
+#define SPEAKER1_FC		(1 << 2)
+#define SPEAKER1_RLRR		(1 << 3)
+#define SPEAKER1_RC		(1 << 4)
+#define SPEAKER1_FLCFRC		(1 << 5)
+#define SPEAKER1_RLCRRC		(1 << 6)
+#define SPEAKER1_FLWFRW		(1 << 7)
+
+static __u8 toggle_speaker2_flags;
+#define SPEAKER2_FLHFRH		(1 << 0)
+#define SPEAKER2_TC		(1 << 1)
+#define SPEAKER2_FCH		(1 << 2)
 
 static __u8 toggle_hdmi_vsdb_flags;
 #define HDMI_VSDB_GRAPHICS	(1 << 0)
@@ -58,12 +80,6 @@ static __u8 toggle_hdmi_vsdb_flags;
 
 static __u8 toggle_hf_vsdb_flags;
 #define HF_VSDB_SCSD_PRESENT	(1 << 7)
-
-static __u8 toggle_cea861_hdr_flags;
-#define CEA861_HDR_UNDERSCAN	(1 << 6)
-#define CEA861_HDR_AUDIO	(1 << 6)
-#define CEA861_HDR_YCBCR444	(1 << 5)
-#define CEA861_HDR_YCBCR422	(1 << 4)
 
 static int mod_s_pt = -1;
 static int mod_s_it = -1;
@@ -107,6 +123,25 @@ void edid_usage(void)
 	       "\n"
 	       "                     [modifiers] is a comma-separate list of EDID modifiers:\n"
 	       "\n"
+	       "                     CEA-861 Header modifiers:\n"
+	       "                     underscan: toggle the underscan bit.\n"
+	       "                     audio: toggle the audio bit.\n"
+	       "                     ycbcr444: toggle the YCbCr 4:4:4 bit.\n"
+	       "                     ycbcr422: toggle the YCbCr 4:2:2 bit.\n"
+	       "\n"
+	       "                     Speaker Allocation Data Block modifiers:\n"
+	       "                     fl-fr: Front Left and Front Right.\n"
+	       "                     lfe: Low Frequence Effects.\n"
+	       "                     fc: Front Center.\n"
+	       "                     rl-rr: Rear Left and Rear Right.\n"
+	       "                     rc: Rear Center.\n"
+	       "                     flc-frc: Front Left Center and Front Right Center.\n"
+	       "                     rlc-rrc: Rear Left Center and Rear Right Center.\n"
+	       "                     flw-frw: Front Left Wide and Front Right Wide.\n"
+	       "                     flh-frh: Front Left High and Front Right High.\n"
+	       "                     tc: Top Center.\n"
+	       "                     fch: Front Center High.\n"
+	       "\n"
 	       "                     HDMI Vendor-Specific Data Block modifiers:\n"
 	       "                     pa=<pa>: change the physical address.\n"
 	       "                     30-bit: toggle the 30 bits/pixel bit.\n"
@@ -119,12 +154,6 @@ void edid_usage(void)
 	       "\n"
 	       "                     HDMI Forum Vendor-Specific Data Block modifiers:\n"
 	       "                     scdc: toggle the SCDC Present bit.\n"
-	       "\n"
-	       "                     CEA-861 Header modifiers:\n"
-	       "                     underscan: toggle the underscan bit.\n"
-	       "                     audio: toggle the audio bit.\n"
-	       "                     ycbcr444: toggle the YCbCr 4:4:4 bit.\n"
-	       "                     ycbcr422: toggle the YCbCr 4:2:2 bit.\n"
 	       "\n"
 	       "                     CEA-861 Video Capability Descriptor modifiers:\n"
 	       "                     qy: toggle the QY YCC Quantization Range bit.\n"
@@ -375,6 +404,17 @@ static int get_edid_tag_location(const unsigned char *edid, unsigned size,
 	return -1;
 }
 
+static int get_edid_cea861_hdr_location(const unsigned char *edid, unsigned size)
+{
+	if (size < 256)
+		return -1;
+
+	if (edid[0x7e] != 1 || edid[0x80] != 0x02 || edid[0x81] != 0x03)
+		return -1;
+
+	return 0x83;
+}
+
 static int get_edid_spa_location(const unsigned char *edid, unsigned size)
 {
 	int loc = get_edid_tag_location(edid, size, VSDB_TAG, HDMI_VSDB_EXT_TAG);
@@ -382,7 +422,7 @@ static int get_edid_spa_location(const unsigned char *edid, unsigned size)
 	if (loc < 0)
 		return loc;
 
-	return (edid[loc] & 0x1f) >= 8 ? loc + 4 : -1;
+	return (edid[loc] & 0x1f) >= 5 ? loc + 4 : -1;
 }
 
 static int get_edid_hdmi_vsdb_location(const unsigned char *edid, unsigned size)
@@ -392,7 +432,27 @@ static int get_edid_hdmi_vsdb_location(const unsigned char *edid, unsigned size)
 	if (loc < 0)
 		return loc;
 
-	return (edid[loc] & 0x1f) >= 9 ? loc + 8 : -1;
+	return (edid[loc] & 0x1f) >= 6 ? loc + 6 : -1;
+}
+
+static int get_edid_hf_vsdb_location(const unsigned char *edid, unsigned size)
+{
+	int loc = get_edid_tag_location(edid, size, VSDB_TAG, HF_VSDB_EXT_TAG);
+
+	if (loc < 0)
+		return loc;
+
+	return (edid[loc] & 0x1f) >= 6 ? loc + 5 : -1;
+}
+
+static int get_edid_speaker_location(const unsigned char *edid, unsigned size)
+{
+	int loc = get_edid_tag_location(edid, size, SPEAKER_TAG, 0);
+
+	if (loc < 0)
+		return loc;
+
+	return (edid[loc] & 0x1f) >= 3 ? loc + 1 : -1;
 }
 
 static int get_edid_vid_cap_location(const unsigned char *edid, unsigned size)
@@ -402,7 +462,7 @@ static int get_edid_vid_cap_location(const unsigned char *edid, unsigned size)
 	if (loc < 0)
 		return loc;
 
-	return (edid[loc] & 0x1f) >= 3 ? loc + 2 : -1;
+	return (edid[loc] & 0x1f) >= 2 ? loc + 2 : -1;
 }
 
 static int get_edid_colorimetry_location(const unsigned char *edid, unsigned size)
@@ -423,27 +483,6 @@ static int get_edid_hdr_md_location(const unsigned char *edid, unsigned size)
 		return loc;
 
 	return (edid[loc] & 0x1f) >= 3 ? loc + 2 : -1;
-}
-
-static int get_edid_hf_vsdb_location(const unsigned char *edid, unsigned size)
-{
-	int loc = get_edid_tag_location(edid, size, VSDB_TAG, HF_VSDB_EXT_TAG);
-
-	if (loc < 0)
-		return loc;
-
-	return (edid[loc] & 0x1f) >= 7 ? loc + 4 : -1;
-}
-
-static int get_edid_cea861_hdr_location(const unsigned char *edid, unsigned size)
-{
-	if (size < 256)
-		return -1;
-
-	if (edid[0x7e] != 1 || edid[0x80] != 0x02 || edid[0x81] != 0x03)
-		return -1;
-
-	return 0x83;
 }
 
 static void set_edid_phys_addr(unsigned char *edid, unsigned size, unsigned short phys_addr)
@@ -477,13 +516,45 @@ static void print_edid_mods(const struct v4l2_edid *e)
 	unsigned short pa = get_edid_phys_addr(e->edid, e->blocks * 128);
 	int loc;
 
-	loc = get_edid_hdmi_vsdb_location(e->edid, e->blocks * 128);
+	loc = get_edid_cea861_hdr_location(e->edid, e->blocks * 128);
 	if (loc >= 0) {
 		__u8 v = e->edid[loc];
 
+		printf("\nCEA-861 Header\n");
+		printf("  IT Formats Underscanned: %s\n", (v & CEA861_HDR_UNDERSCAN) ? "yes" : "no");
+		printf("  Audio:                   %s\n", (v & CEA861_HDR_AUDIO) ? "yes" : "no");
+		printf("  YCbCr 4:4:4:             %s\n", (v & CEA861_HDR_YCBCR444) ? "yes" : "no");
+		printf("  YCbCr 4:2:2:             %s\n", (v & CEA861_HDR_YCBCR422) ? "yes" : "no");
+	}
+	loc = get_edid_speaker_location(e->edid, e->blocks * 128);
+	if (loc >= 0) {
+		__u8 v = e->edid[loc];
+
+		printf("\nSpeaker Allocation Data Block\n");
+		printf("  FL/FR:                   %s\n", (v & SPEAKER1_FLFR) ? "yes" : "no");
+		printf("  LFE:                     %s\n", (v & SPEAKER1_LFE) ? "yes" : "no");
+		printf("  FC:                      %s\n", (v & SPEAKER1_FC) ? "yes" : "no");
+		printf("  RL/RR:                   %s\n", (v & SPEAKER1_RLRR) ? "yes" : "no");
+		printf("  RC:                      %s\n", (v & SPEAKER1_RC) ? "yes" : "no");
+		printf("  FLC/FRC:                 %s\n", (v & SPEAKER1_FLCFRC) ? "yes" : "no");
+		printf("  RLC/RRC:                 %s\n", (v & SPEAKER1_RLCRRC) ? "yes" : "no");
+		printf("  FLW/FRW:                 %s\n", (v & SPEAKER1_FLWFRW) ? "yes" : "no");
+
+		v = e->edid[loc + 1];
+		printf("  FLH/FRH:                 %s\n", (v & SPEAKER2_FLHFRH) ? "yes" : "no");
+		printf("  TC:                      %s\n", (v & SPEAKER2_TC) ? "yes" : "no");
+		printf("  FCH:                     %s\n", (v & SPEAKER2_FCH) ? "yes" : "no");
+	}
+	loc = get_edid_hdmi_vsdb_location(e->edid, e->blocks * 128);
+	if (loc >= 0) {
+		__u8 v = e->edid[loc + 1];
+
 		printf("\nHDMI Vendor-Specific Data Block\n");
+		if (v)
+			printf("  Max TMDS Clock:          %u MHz\n", v * 5); 
 		printf("  Physical Address:        %x.%x.%x.%x\n",
 		       pa >> 12, (pa >> 8) & 0xf, (pa >> 4) & 0xf, pa & 0xf);
+		v = e->edid[loc];
 		printf("  30-bit:                  %s\n", (v & HDMI_VSDB_30_BIT) ? "yes" : "no");
 		printf("  36-bit:                  %s\n", (v & HDMI_VSDB_36_BIT) ? "yes" : "no");
 		printf("  48-bit:                  %s\n", (v & HDMI_VSDB_48_BIT) ? "yes" : "no");
@@ -497,17 +568,10 @@ static void print_edid_mods(const struct v4l2_edid *e)
 		__u8 v = e->edid[loc];
 
 		printf("\nHDMI Forum Vendor-Specific Data Block\n");
+		if (v)
+			printf("  Max TMDS Character Rate: %u MHz\n", v * 5); 
+		v = e->edid[loc + 1];
 		printf("  SCDC Present:            %s\n", (v & HF_VSDB_SCSD_PRESENT) ? "yes" : "no");
-	}
-	loc = get_edid_cea861_hdr_location(e->edid, e->blocks * 128);
-	if (loc >= 0) {
-		__u8 v = e->edid[loc];
-
-		printf("\nCEA-861 Header\n");
-		printf("  IT Formats Underscanned: %s\n", (v & CEA861_HDR_UNDERSCAN) ? "yes" : "no");
-		printf("  Audio:                   %s\n", (v & CEA861_HDR_AUDIO) ? "yes" : "no");
-		printf("  YCbCr 4:4:4:             %s\n", (v & CEA861_HDR_YCBCR444) ? "yes" : "no");
-		printf("  YCbCr 4:2:2:             %s\n", (v & CEA861_HDR_YCBCR422) ? "yes" : "no");
 	}
 	loc = get_edid_vid_cap_location(e->edid, e->blocks * 128);
 	if (loc >= 0) {
@@ -599,6 +663,7 @@ static uint8_t dvid_edid[128] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xec
 };
+
 static uint8_t vga_edid[128] = {
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x63, 0x3a, 0xaa, 0x55, 0x00, 0x00, 0x00, 0x00,
@@ -617,6 +682,7 @@ static uint8_t vga_edid[128] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc5
 };
+
 static uint8_t hdmi_edid[256] = {
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x63, 0x3a, 0xaa, 0x55, 0x00, 0x00, 0x00, 0x00,
@@ -635,23 +701,24 @@ static uint8_t hdmi_edid[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xf0,
 
-	0x02, 0x03, 0x28, 0xf0, 0x4b, 0x90, 0x1f, 0x04,
-	0x13, 0x22, 0x21, 0x05, 0x14, 0x02, 0x11, 0x01,
-	0x23, 0x09, 0x07, 0x07, 0x83, 0x01, 0x00, 0x00,
-	0x68, 0x03, 0x0c, 0x00, 0x10, 0x00, 0x00, 0x22,
-	0x0f, 0xe2, 0x00, 0xea, 0xe3, 0x05, 0x00, 0x00,
-	0x1a, 0x36, 0x80, 0xa0, 0x70, 0x38, 0x1f, 0x40,
-	0x30, 0x20, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x1a, 0x1a, 0x1d, 0x00, 0x80, 0x51, 0xd0,
-	0x1c, 0x20, 0x40, 0x80, 0x35, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x1c, 0x00, 0x00, 0x00, 0x00,
+	0x02, 0x03, 0x28, 0xf0, 0x48, 0xa2, 0x10, 0x04,
+	0x02, 0x01, 0x21, 0x14, 0x13, 0x23, 0x09, 0x07,
+	0x07, 0x83, 0x01, 0x00, 0x00, 0x67, 0x03, 0x0c,
+	0x00, 0x10, 0x00, 0x00, 0x22, 0xe2, 0x00, 0xea,
+	0xe3, 0x05, 0x00, 0x00, 0xe3, 0x06, 0x01, 0x00,
+	0x01, 0x1d, 0x00, 0x80, 0x51, 0xd0, 0x1c, 0x20,
+	0x40, 0x80, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x1e, 0x8c, 0x0a, 0xd0, 0x8a, 0x20, 0xe0,
+	0x2d, 0x10, 0x10, 0x3e, 0x96, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfd,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5f,
 };
+
 static uint8_t hdmi_edid_4k_170[256] = {
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x63, 0x3a, 0xaa, 0x55, 0x00, 0x00, 0x00, 0x00,
@@ -670,23 +737,24 @@ static uint8_t hdmi_edid_4k_170[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xf0,
 
-	0x02, 0x03, 0x2e, 0xf0, 0x48, 0x10, 0x22, 0x04,
+	0x02, 0x03, 0x2d, 0xf0, 0x48, 0x10, 0x22, 0x04,
 	0x02, 0x01, 0x21, 0x14, 0x13, 0x23, 0x09, 0x07,
-	0x07, 0x83, 0x01, 0x00, 0x00, 0x68, 0x03, 0x0c,
-	0x00, 0x10, 0x00, 0x00, 0x22, 0x0f, 0xe4, 0x0e,
-	0x5f, 0x5e, 0x5d, 0xe2, 0x00, 0xea, 0xe3, 0x05,
-	0x00, 0x00, 0xe3, 0x06, 0x01, 0x00, 0x1a, 0x36,
-	0x80, 0xa0, 0x70, 0x38, 0x1f, 0x40, 0x30, 0x20,
-	0x35, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1a,
-	0x1a, 0x1d, 0x00, 0x80, 0x51, 0xd0, 0x1c, 0x20,
-	0x40, 0x80, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x1c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x07, 0x83, 0x01, 0x00, 0x00, 0x67, 0x03, 0x0c,
+	0x00, 0x10, 0x00, 0x00, 0x22, 0xe2, 0x00, 0xea,
+	0xe4, 0x0e, 0x5f, 0x5e, 0x5d, 0xe3, 0x05, 0x00,
+	0x00, 0xe3, 0x06, 0x01, 0x00, 0x1a, 0x36, 0x80,
+	0xa0, 0x70, 0x38, 0x1f, 0x40, 0x30, 0x20, 0x35,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1a, 0x1a,
+	0x1d, 0x00, 0x80, 0x51, 0xd0, 0x1c, 0x20, 0x40,
+	0x80, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x1c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb9,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xca,
 };
+
 static uint8_t hdmi_edid_4k_300[256] = {
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x63, 0x3a, 0xaa, 0x55, 0x00, 0x00, 0x00, 0x00,
@@ -709,7 +777,7 @@ static uint8_t hdmi_edid_4k_300[256] = {
 	0x10, 0x1f, 0x04, 0x13, 0x22, 0x21, 0x05, 0x14,
 	0x02, 0x11, 0x01, 0x23, 0x09, 0x07, 0x07, 0x83,
 	0x01, 0x00, 0x00, 0x6d, 0x03, 0x0c, 0x00, 0x10,
-	0x00, 0x00, 0x3c, 0x2f, 0x00, 0x60, 0x01, 0x02,
+	0x00, 0x00, 0x3c, 0x20, 0x00, 0x60, 0x01, 0x02,
 	0x03, 0x67, 0xd8, 0x5d, 0xc4, 0x01, 0x00, 0x00,
 	0x00, 0xe2, 0x00, 0xea, 0xe3, 0x05, 0x00, 0x00,
 	0xe3, 0x06, 0x01, 0x00, 0x1a, 0x36, 0x80, 0xa0,
@@ -720,8 +788,9 @@ static uint8_t hdmi_edid_4k_300[256] = {
 	0xa3, 0x66, 0x00, 0xa0, 0xf0, 0x70, 0x1f, 0x80,
 	0x30, 0x20, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x11,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
 };
+
 static uint8_t hdmi_edid_4k_600[256] = {
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x63, 0x3a, 0xaa, 0x55, 0x00, 0x00, 0x00, 0x00,
@@ -744,7 +813,7 @@ static uint8_t hdmi_edid_4k_600[256] = {
 	0x5e, 0x5d, 0x10, 0x22, 0x04, 0x02, 0x01, 0x21,
 	0x14, 0x0a, 0x23, 0x09, 0x07, 0x07, 0x83, 0x01,
 	0x00, 0x00, 0x6d, 0x03, 0x0c, 0x00, 0x10, 0x00,
-	0x00, 0x78, 0x2f, 0x00, 0x60, 0x01, 0x02, 0x03,
+	0x00, 0x78, 0x20, 0x00, 0x60, 0x01, 0x02, 0x03,
 	0x67, 0xd8, 0x5d, 0xc4, 0x01, 0x78, 0x00, 0x00,
 	0xe2, 0x00, 0xea, 0xe3, 0x05, 0x00, 0x00, 0xe3,
 	0x06, 0x01, 0x00, 0x4d, 0xd0, 0x00, 0xa0, 0xf0,
@@ -755,7 +824,7 @@ static uint8_t hdmi_edid_4k_600[256] = {
 	0x1d, 0x00, 0x80, 0x51, 0xd0, 0x1c, 0x20, 0x40,
 	0x80, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x1c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xa9,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb8,
 };
 
 /******************************************************/
@@ -807,6 +876,17 @@ void edid_cmd(int ch, char *optarg)
 				"sdr",
 				"hdr",
 				"smpte2084",
+				"fl-fr",
+				"lfe",
+				"fc",
+				"rl-rr",
+				"rc",
+				"flc-frc",
+				"rlc-rrc",
+				"flw-frw",
+				"flh-frh",
+				"tc",
+				"fch",
 				NULL
 			};
 
@@ -913,6 +993,17 @@ void edid_cmd(int ch, char *optarg)
 			case 31: toggle_hdr_md_flags |= HDR_MD_SDR; break;
 			case 32: toggle_hdr_md_flags |= HDR_MD_HDR; break;
 			case 33: toggle_hdr_md_flags |= HDR_MD_SMPTE_2084; break;
+			case 34: toggle_speaker1_flags |= SPEAKER1_FLFR; break;
+			case 35: toggle_speaker1_flags |= SPEAKER1_LFE; break;
+			case 36: toggle_speaker1_flags |= SPEAKER1_FC; break;
+			case 37: toggle_speaker1_flags |= SPEAKER1_RLRR; break;
+			case 38: toggle_speaker1_flags |= SPEAKER1_RC; break;
+			case 39: toggle_speaker1_flags |= SPEAKER1_FLCFRC; break;
+			case 40: toggle_speaker1_flags |= SPEAKER1_RLCRRC; break;
+			case 41: toggle_speaker1_flags |= SPEAKER1_FLWFRW; break;
+			case 42: toggle_speaker2_flags |= SPEAKER2_FLHFRH; break;
+			case 43: toggle_speaker2_flags |= SPEAKER2_TC; break;
+			case 44: toggle_speaker2_flags |= SPEAKER2_FCH; break;
 			default:
 				edid_usage();
 				exit(1);
@@ -1025,8 +1116,23 @@ void edid_set(int fd)
 				exit(1);
 			}
 		}
-		if (phys_addr != 0xffff)
-			set_edid_phys_addr(sedid.edid, sedid.blocks * 128, phys_addr);
+		if (toggle_cea861_hdr_flags || phys_addr >= 0) {
+			loc = get_edid_cea861_hdr_location(sedid.edid, sedid.blocks * 128);
+			if (loc >= 0) {
+				sedid.edid[loc] ^= toggle_cea861_hdr_flags;
+				if (phys_addr >= 0)
+					set_edid_phys_addr(sedid.edid, sedid.blocks * 128, phys_addr);
+				must_fix_edid = true;
+			}
+		}
+		if (toggle_speaker1_flags || toggle_speaker2_flags) {
+			loc = get_edid_speaker_location(sedid.edid, sedid.blocks * 128);
+			if (loc >= 0) {
+				sedid.edid[loc] ^= toggle_speaker1_flags;
+				sedid.edid[loc + 1] ^= toggle_speaker2_flags;
+				must_fix_edid = true;
+			}
+		}
 		if (toggle_hdmi_vsdb_flags) {
 			loc = get_edid_hdmi_vsdb_location(sedid.edid, sedid.blocks * 128);
 			if (loc >= 0) {
@@ -1037,7 +1143,7 @@ void edid_set(int fd)
 		if (toggle_hf_vsdb_flags) {
 			loc = get_edid_hf_vsdb_location(sedid.edid, sedid.blocks * 128);
 			if (loc >= 0) {
-				sedid.edid[loc] ^= toggle_hf_vsdb_flags;
+				sedid.edid[loc + 1] ^= toggle_hf_vsdb_flags;
 				must_fix_edid = true;
 			}
 		}
@@ -1072,13 +1178,6 @@ void edid_set(int fd)
 			loc = get_edid_hdr_md_location(sedid.edid, sedid.blocks * 128);
 			if (loc >= 0) {
 				sedid.edid[loc] ^= toggle_hdr_md_flags;
-				must_fix_edid = true;
-			}
-		}
-		if (toggle_cea861_hdr_flags) {
-			loc = get_edid_cea861_hdr_location(sedid.edid, sedid.blocks * 128);
-			if (loc >= 0) {
-				sedid.edid[loc] ^= toggle_cea861_hdr_flags;
 				must_fix_edid = true;
 			}
 		}
