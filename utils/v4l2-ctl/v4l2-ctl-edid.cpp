@@ -69,14 +69,16 @@ static __u8 toggle_speaker2_flags;
 #define SPEAKER2_TC		(1 << 1)
 #define SPEAKER2_FCH		(1 << 2)
 
-static __u8 toggle_hdmi_vsdb_flags;
+static __u8 toggle_hdmi_vsdb_dc_flags;
+#define HDMI_VSDB_Y444_BIT	(1 << 3)
+#define HDMI_VSDB_30_BIT	(1 << 4)
+#define HDMI_VSDB_36_BIT	(1 << 5)
+#define HDMI_VSDB_48_BIT	(1 << 6)
+static __u8 toggle_hdmi_vsdb_cnc_flags;
 #define HDMI_VSDB_GRAPHICS	(1 << 0)
 #define HDMI_VSDB_PHOTO		(1 << 1)
 #define HDMI_VSDB_CINEMA	(1 << 2)
 #define HDMI_VSDB_GAME		(1 << 3)
-#define HDMI_VSDB_30_BIT	(1 << 4)
-#define HDMI_VSDB_36_BIT	(1 << 5)
-#define HDMI_VSDB_48_BIT	(1 << 6)
 
 static __u8 toggle_hf_vsdb_flags;
 #define HF_VSDB_SCSD_PRESENT	(1 << 7)
@@ -144,6 +146,7 @@ void edid_usage(void)
 	       "\n"
 	       "                     HDMI Vendor-Specific Data Block modifiers:\n"
 	       "                     pa=<pa>: change the physical address.\n"
+	       "                     y444: toggle the YCbCr 4:4:4 Deep Color bit.\n"
 	       "                     30-bit: toggle the 30 bits/pixel bit.\n"
 	       "                     36-bit: toggle the 36 bits/pixel bit.\n"
 	       "                     48-bit: toggle the 48 bits/pixel bit.\n"
@@ -432,7 +435,7 @@ static int get_edid_hdmi_vsdb_location(const unsigned char *edid, unsigned size)
 	if (loc < 0)
 		return loc;
 
-	return (edid[loc] & 0x1f) >= 6 ? loc + 6 : -1;
+	return (edid[loc] & 0x1f) >= 5 ? loc : -1;
 }
 
 static int get_edid_hf_vsdb_location(const unsigned char *edid, unsigned size)
@@ -547,21 +550,28 @@ static void print_edid_mods(const struct v4l2_edid *e)
 	}
 	loc = get_edid_hdmi_vsdb_location(e->edid, e->blocks * 128);
 	if (loc >= 0) {
-		__u8 v = e->edid[loc + 1];
+		__u8 len = e->edid[loc] & 0x1f;
+		__u8 v = len >= 7 ? e->edid[loc + 7] : 0;
 
 		printf("\nHDMI Vendor-Specific Data Block\n");
 		if (v)
 			printf("  Max TMDS Clock:          %u MHz\n", v * 5); 
 		printf("  Physical Address:        %x.%x.%x.%x\n",
 		       pa >> 12, (pa >> 8) & 0xf, (pa >> 4) & 0xf, pa & 0xf);
-		v = e->edid[loc];
-		printf("  30-bit:                  %s\n", (v & HDMI_VSDB_30_BIT) ? "yes" : "no");
-		printf("  36-bit:                  %s\n", (v & HDMI_VSDB_36_BIT) ? "yes" : "no");
-		printf("  48-bit:                  %s\n", (v & HDMI_VSDB_48_BIT) ? "yes" : "no");
-		printf("  Graphics:                %s\n", (v & HDMI_VSDB_GRAPHICS) ? "yes" : "no");
-		printf("  Photo:                   %s\n", (v & HDMI_VSDB_PHOTO) ? "yes" : "no");
-		printf("  Cinema:                  %s\n", (v & HDMI_VSDB_CINEMA) ? "yes" : "no");
-		printf("  Game:                    %s\n", (v & HDMI_VSDB_GAME) ? "yes" : "no");
+		if (len >= 6) {
+			v = e->edid[loc + 6];
+			printf("  YCbCr 4:4:4 Deep Color:  %s\n", (v & HDMI_VSDB_Y444_BIT) ? "yes" : "no");
+			printf("  30-bit:                  %s\n", (v & HDMI_VSDB_30_BIT) ? "yes" : "no");
+			printf("  36-bit:                  %s\n", (v & HDMI_VSDB_36_BIT) ? "yes" : "no");
+			printf("  48-bit:                  %s\n", (v & HDMI_VSDB_48_BIT) ? "yes" : "no");
+		}
+		if (len >= 8) {
+			v = e->edid[loc + 8];
+			printf("  Graphics:                %s\n", (v & HDMI_VSDB_GRAPHICS) ? "yes" : "no");
+			printf("  Photo:                   %s\n", (v & HDMI_VSDB_PHOTO) ? "yes" : "no");
+			printf("  Cinema:                  %s\n", (v & HDMI_VSDB_CINEMA) ? "yes" : "no");
+			printf("  Game:                    %s\n", (v & HDMI_VSDB_GAME) ? "yes" : "no");
+		}
 	}
 	loc = get_edid_hf_vsdb_location(e->edid, e->blocks * 128);
 	if (loc >= 0) {
@@ -701,22 +711,22 @@ static uint8_t hdmi_edid[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xf0,
 
-	0x02, 0x03, 0x28, 0xf0, 0x48, 0xa2, 0x10, 0x04,
+	0x02, 0x03, 0x29, 0xf0, 0x48, 0xa2, 0x10, 0x04,
 	0x02, 0x01, 0x21, 0x14, 0x13, 0x23, 0x09, 0x07,
-	0x07, 0x83, 0x01, 0x00, 0x00, 0x67, 0x03, 0x0c,
-	0x00, 0x10, 0x00, 0x00, 0x22, 0xe2, 0x00, 0xea,
-	0xe3, 0x05, 0x00, 0x00, 0xe3, 0x06, 0x01, 0x00,
-	0x01, 0x1d, 0x00, 0x80, 0x51, 0xd0, 0x1c, 0x20,
-	0x40, 0x80, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x1e, 0x8c, 0x0a, 0xd0, 0x8a, 0x20, 0xe0,
-	0x2d, 0x10, 0x10, 0x3e, 0x96, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00,
+	0x07, 0x83, 0x01, 0x00, 0x00, 0x68, 0x03, 0x0c,
+	0x00, 0x10, 0x00, 0x00, 0x22, 0x01, 0xe2, 0x00,
+	0xea, 0xe3, 0x05, 0x00, 0x00, 0xe3, 0x06, 0x01,
+	0x00, 0x01, 0x1d, 0x00, 0x80, 0x51, 0xd0, 0x1c,
+	0x20, 0x40, 0x80, 0x35, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x1e, 0x8c, 0x0a, 0xd0, 0x8a, 0x20,
+	0xe0, 0x2d, 0x10, 0x10, 0x3e, 0x96, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5f,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5c,
 };
 
 static uint8_t hdmi_edid_4k_170[256] = {
@@ -737,22 +747,22 @@ static uint8_t hdmi_edid_4k_170[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xf0,
 
-	0x02, 0x03, 0x2d, 0xf0, 0x48, 0x10, 0x22, 0x04,
+	0x02, 0x03, 0x2e, 0xf0, 0x48, 0x10, 0x22, 0x04,
 	0x02, 0x01, 0x21, 0x14, 0x13, 0x23, 0x09, 0x07,
-	0x07, 0x83, 0x01, 0x00, 0x00, 0x67, 0x03, 0x0c,
-	0x00, 0x10, 0x00, 0x00, 0x22, 0xe2, 0x00, 0xea,
-	0xe4, 0x0e, 0x5f, 0x5e, 0x5d, 0xe3, 0x05, 0x00,
-	0x00, 0xe3, 0x06, 0x01, 0x00, 0x1a, 0x36, 0x80,
-	0xa0, 0x70, 0x38, 0x1f, 0x40, 0x30, 0x20, 0x35,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1a, 0x1a,
-	0x1d, 0x00, 0x80, 0x51, 0xd0, 0x1c, 0x20, 0x40,
-	0x80, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x1c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x07, 0x83, 0x01, 0x00, 0x00, 0x68, 0x03, 0x0c,
+	0x00, 0x10, 0x00, 0x00, 0x22, 0x01, 0xe2, 0x00,
+	0xea, 0xe4, 0x0e, 0x5f, 0x5e, 0x5d, 0xe3, 0x05,
+	0x00, 0x00, 0xe3, 0x06, 0x01, 0x00, 0x1a, 0x36,
+	0x80, 0xa0, 0x70, 0x38, 0x1f, 0x40, 0x30, 0x20,
+	0x35, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1a,
+	0x1a, 0x1d, 0x00, 0x80, 0x51, 0xd0, 0x1c, 0x20,
+	0x40, 0x80, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x1c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xca,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc7,
 };
 
 static uint8_t hdmi_edid_4k_300[256] = {
@@ -777,7 +787,7 @@ static uint8_t hdmi_edid_4k_300[256] = {
 	0x10, 0x1f, 0x04, 0x13, 0x22, 0x21, 0x05, 0x14,
 	0x02, 0x11, 0x01, 0x23, 0x09, 0x07, 0x07, 0x83,
 	0x01, 0x00, 0x00, 0x6d, 0x03, 0x0c, 0x00, 0x10,
-	0x00, 0x00, 0x3c, 0x20, 0x00, 0x60, 0x01, 0x02,
+	0x00, 0x00, 0x3c, 0x21, 0x00, 0x60, 0x01, 0x02,
 	0x03, 0x67, 0xd8, 0x5d, 0xc4, 0x01, 0x00, 0x00,
 	0x00, 0xe2, 0x00, 0xea, 0xe3, 0x05, 0x00, 0x00,
 	0xe3, 0x06, 0x01, 0x00, 0x1a, 0x36, 0x80, 0xa0,
@@ -788,7 +798,7 @@ static uint8_t hdmi_edid_4k_300[256] = {
 	0xa3, 0x66, 0x00, 0xa0, 0xf0, 0x70, 0x1f, 0x80,
 	0x30, 0x20, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1f,
 };
 
 static uint8_t hdmi_edid_4k_600[256] = {
@@ -813,7 +823,7 @@ static uint8_t hdmi_edid_4k_600[256] = {
 	0x5e, 0x5d, 0x10, 0x22, 0x04, 0x02, 0x01, 0x21,
 	0x14, 0x0a, 0x23, 0x09, 0x07, 0x07, 0x83, 0x01,
 	0x00, 0x00, 0x6d, 0x03, 0x0c, 0x00, 0x10, 0x00,
-	0x00, 0x78, 0x20, 0x00, 0x60, 0x01, 0x02, 0x03,
+	0x00, 0x78, 0x21, 0x00, 0x60, 0x01, 0x02, 0x03,
 	0x67, 0xd8, 0x5d, 0xc4, 0x01, 0x78, 0x00, 0x00,
 	0xe2, 0x00, 0xea, 0xe3, 0x05, 0x00, 0x00, 0xe3,
 	0x06, 0x01, 0x00, 0x4d, 0xd0, 0x00, 0xa0, 0xf0,
@@ -824,7 +834,7 @@ static uint8_t hdmi_edid_4k_600[256] = {
 	0x1d, 0x00, 0x80, 0x51, 0xd0, 0x1c, 0x20, 0x40,
 	0x80, 0x35, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x1c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb8,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb7,
 };
 
 /******************************************************/
@@ -851,6 +861,7 @@ void edid_cmd(int ch, char *optarg)
 				"s-pt",
 				"s-it",
 				"s-ce",
+				"y444",
 				"30-bit",
 				"36-bit",
 				"48-bit",
@@ -968,42 +979,43 @@ void edid_cmd(int ch, char *optarg)
 			case 8:
 				mod_s_ce = strtoul(value, 0, 0) & 3;
 				break;
-			case 9: toggle_hdmi_vsdb_flags |= HDMI_VSDB_30_BIT; break;
-			case 10: toggle_hdmi_vsdb_flags |= HDMI_VSDB_36_BIT; break;
-			case 11: toggle_hdmi_vsdb_flags |= HDMI_VSDB_48_BIT; break;
-			case 12: toggle_hdmi_vsdb_flags |= HDMI_VSDB_GRAPHICS; break;
-			case 13: toggle_hdmi_vsdb_flags |= HDMI_VSDB_PHOTO; break;
-			case 14: toggle_hdmi_vsdb_flags |= HDMI_VSDB_CINEMA; break;
-			case 15: toggle_hdmi_vsdb_flags |= HDMI_VSDB_GAME; break;
-			case 16: toggle_hf_vsdb_flags |= HF_VSDB_SCSD_PRESENT; break;
-			case 17: toggle_cea861_hdr_flags |= CEA861_HDR_UNDERSCAN; break;
-			case 18: toggle_cea861_hdr_flags |= CEA861_HDR_AUDIO; break;
-			case 19: toggle_cea861_hdr_flags |= CEA861_HDR_YCBCR444; break;
-			case 20: toggle_cea861_hdr_flags |= CEA861_HDR_YCBCR422; break;
-			case 21: toggle_vid_cap_flags |= VID_CAP_QY; break;
-			case 22: toggle_vid_cap_flags |= VID_CAP_QS; break;
-			case 23: toggle_colorimetry_flags |= COLORIMETRY_XVYCC601; break;
-			case 24: toggle_colorimetry_flags |= COLORIMETRY_XVYCC709; break;
-			case 25: toggle_colorimetry_flags |= COLORIMETRY_SYCC; break;
-			case 26: toggle_colorimetry_flags |= COLORIMETRY_ADOBEYCC; break;
-			case 27: toggle_colorimetry_flags |= COLORIMETRY_ADOBERGB; break;
-			case 28: toggle_colorimetry_flags |= COLORIMETRY_BT2020RGB; break;
-			case 29: toggle_colorimetry_flags |= COLORIMETRY_BT2020YCC; break;
-			case 30: toggle_colorimetry_flags |= COLORIMETRY_BT2020CYCC; break;
-			case 31: toggle_hdr_md_flags |= HDR_MD_SDR; break;
-			case 32: toggle_hdr_md_flags |= HDR_MD_HDR; break;
-			case 33: toggle_hdr_md_flags |= HDR_MD_SMPTE_2084; break;
-			case 34: toggle_speaker1_flags |= SPEAKER1_FLFR; break;
-			case 35: toggle_speaker1_flags |= SPEAKER1_LFE; break;
-			case 36: toggle_speaker1_flags |= SPEAKER1_FC; break;
-			case 37: toggle_speaker1_flags |= SPEAKER1_RLRR; break;
-			case 38: toggle_speaker1_flags |= SPEAKER1_RC; break;
-			case 39: toggle_speaker1_flags |= SPEAKER1_FLCFRC; break;
-			case 40: toggle_speaker1_flags |= SPEAKER1_RLCRRC; break;
-			case 41: toggle_speaker1_flags |= SPEAKER1_FLWFRW; break;
-			case 42: toggle_speaker2_flags |= SPEAKER2_FLHFRH; break;
-			case 43: toggle_speaker2_flags |= SPEAKER2_TC; break;
-			case 44: toggle_speaker2_flags |= SPEAKER2_FCH; break;
+			case 9: toggle_hdmi_vsdb_dc_flags |= HDMI_VSDB_Y444_BIT; break;
+			case 10: toggle_hdmi_vsdb_dc_flags |= HDMI_VSDB_30_BIT; break;
+			case 11: toggle_hdmi_vsdb_dc_flags |= HDMI_VSDB_36_BIT; break;
+			case 12: toggle_hdmi_vsdb_dc_flags |= HDMI_VSDB_48_BIT; break;
+			case 13: toggle_hdmi_vsdb_cnc_flags |= HDMI_VSDB_GRAPHICS; break;
+			case 14: toggle_hdmi_vsdb_cnc_flags |= HDMI_VSDB_PHOTO; break;
+			case 15: toggle_hdmi_vsdb_cnc_flags |= HDMI_VSDB_CINEMA; break;
+			case 16: toggle_hdmi_vsdb_cnc_flags |= HDMI_VSDB_GAME; break;
+			case 17: toggle_hf_vsdb_flags |= HF_VSDB_SCSD_PRESENT; break;
+			case 18: toggle_cea861_hdr_flags |= CEA861_HDR_UNDERSCAN; break;
+			case 19: toggle_cea861_hdr_flags |= CEA861_HDR_AUDIO; break;
+			case 20: toggle_cea861_hdr_flags |= CEA861_HDR_YCBCR444; break;
+			case 21: toggle_cea861_hdr_flags |= CEA861_HDR_YCBCR422; break;
+			case 22: toggle_vid_cap_flags |= VID_CAP_QY; break;
+			case 23: toggle_vid_cap_flags |= VID_CAP_QS; break;
+			case 24: toggle_colorimetry_flags |= COLORIMETRY_XVYCC601; break;
+			case 25: toggle_colorimetry_flags |= COLORIMETRY_XVYCC709; break;
+			case 26: toggle_colorimetry_flags |= COLORIMETRY_SYCC; break;
+			case 27: toggle_colorimetry_flags |= COLORIMETRY_ADOBEYCC; break;
+			case 28: toggle_colorimetry_flags |= COLORIMETRY_ADOBERGB; break;
+			case 29: toggle_colorimetry_flags |= COLORIMETRY_BT2020RGB; break;
+			case 30: toggle_colorimetry_flags |= COLORIMETRY_BT2020YCC; break;
+			case 31: toggle_colorimetry_flags |= COLORIMETRY_BT2020CYCC; break;
+			case 32: toggle_hdr_md_flags |= HDR_MD_SDR; break;
+			case 33: toggle_hdr_md_flags |= HDR_MD_HDR; break;
+			case 34: toggle_hdr_md_flags |= HDR_MD_SMPTE_2084; break;
+			case 35: toggle_speaker1_flags |= SPEAKER1_FLFR; break;
+			case 36: toggle_speaker1_flags |= SPEAKER1_LFE; break;
+			case 37: toggle_speaker1_flags |= SPEAKER1_FC; break;
+			case 38: toggle_speaker1_flags |= SPEAKER1_RLRR; break;
+			case 39: toggle_speaker1_flags |= SPEAKER1_RC; break;
+			case 40: toggle_speaker1_flags |= SPEAKER1_FLCFRC; break;
+			case 41: toggle_speaker1_flags |= SPEAKER1_RLCRRC; break;
+			case 42: toggle_speaker1_flags |= SPEAKER1_FLWFRW; break;
+			case 43: toggle_speaker2_flags |= SPEAKER2_FLHFRH; break;
+			case 44: toggle_speaker2_flags |= SPEAKER2_TC; break;
+			case 45: toggle_speaker2_flags |= SPEAKER2_FCH; break;
 			default:
 				edid_usage();
 				exit(1);
@@ -1133,11 +1145,20 @@ void edid_set(int fd)
 				must_fix_edid = true;
 			}
 		}
-		if (toggle_hdmi_vsdb_flags) {
+		if (toggle_hdmi_vsdb_dc_flags || toggle_hdmi_vsdb_cnc_flags) {
 			loc = get_edid_hdmi_vsdb_location(sedid.edid, sedid.blocks * 128);
+
 			if (loc >= 0) {
-				sedid.edid[loc] ^= toggle_hdmi_vsdb_flags;
-				must_fix_edid = true;
+				__u8 len = sedid.edid[loc] & 0x1f;
+
+				if (len >= 6) {
+					sedid.edid[loc + 6] ^= toggle_hdmi_vsdb_dc_flags;
+					must_fix_edid = true;
+				}
+				if (len >= 8) {
+					sedid.edid[loc + 8] ^= toggle_hdmi_vsdb_cnc_flags;
+					must_fix_edid = true;
+				}
 			}
 		}
 		if (toggle_hf_vsdb_flags) {
