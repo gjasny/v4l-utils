@@ -79,6 +79,8 @@ static __u8 toggle_hdmi_vsdb_cnc_flags;
 #define HDMI_VSDB_PHOTO		(1 << 1)
 #define HDMI_VSDB_CINEMA	(1 << 2)
 #define HDMI_VSDB_GAME		(1 << 3)
+#define HDMI_VSDB_I_LATENCY	(1 << 6)
+#define HDMI_VSDB_LATENCY	(1 << 7)
 
 static __u8 toggle_hf_vsdb_flags;
 #define HF_VSDB_SCSD_PRESENT	(1 << 7)
@@ -571,6 +573,34 @@ static void print_edid_mods(const struct v4l2_edid *e)
 			printf("  Photo:                   %s\n", (v & HDMI_VSDB_PHOTO) ? "yes" : "no");
 			printf("  Cinema:                  %s\n", (v & HDMI_VSDB_CINEMA) ? "yes" : "no");
 			printf("  Game:                    %s\n", (v & HDMI_VSDB_GAME) ? "yes" : "no");
+			if ((v & HDMI_VSDB_LATENCY) && len >= 10) {
+				__u8 lat = e->edid[loc + 9];
+				if (lat == 255)
+					printf("  Video Latency:           unsupported\n");
+				else if (lat > 0)
+					printf("  Video Latency:           %u.%ums\n",
+					       (lat - 1) / 2, ((lat - 1) & 1) ? 0 : 5);
+				lat = e->edid[loc + 10];
+				if (lat == 255)
+					printf("  Audio Latency:           unsupported\n");
+				else if (lat > 0)
+					printf("  Audio Latency:           %u.%ums\n",
+					       (lat - 1) / 2, ((lat - 1) & 1) ? 0 : 5);
+			}
+			if ((v & HDMI_VSDB_I_LATENCY) && len >= 12) {
+				__u8 lat = e->edid[loc + 11];
+				if (lat == 255)
+					printf("  IL Video Latency:        unsupported\n");
+				else if (lat > 0)
+					printf("  IL Video Latency:        %u.%ums\n",
+					       (lat - 1) / 2, ((lat - 1) & 1) ? 0 : 5);
+				lat = e->edid[loc + 12];
+				if (lat == 255)
+					printf("  IL Audio Latency:        unsupported\n");
+				else if (lat > 0)
+					printf("  IL Audio Latency:        %u.%ums\n",
+					       (lat - 1) / 2, ((lat - 1) & 1) ? 0 : 5);
+			}
 		}
 	}
 	loc = get_edid_hf_vsdb_location(e->edid, e->blocks * 128);
