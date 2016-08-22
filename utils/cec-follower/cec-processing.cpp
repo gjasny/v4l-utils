@@ -408,6 +408,12 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		dev_info("Stream Path is directed to this device\n");
 		return;
 	}
+	case CEC_MSG_ROUTING_INFORMATION: {
+		__u8 la = cec_msg_initiator(&msg);
+
+		if (cec_has_tv(1 << la) && la_info[la].phys_addr == 0)
+			warn("TV (0) at 0.0.0.0 sent Routing Information.");
+	}
 
 
 		/* System Information */
