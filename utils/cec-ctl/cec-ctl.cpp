@@ -1874,7 +1874,12 @@ skip_la:
 				struct cec_msg msg = { };
 				__u8 from, to;
 
-				if (doioctl(&node, CEC_RECEIVE, &msg))
+				res = doioctl(&node, CEC_RECEIVE, &msg);
+				if (res == ENODEV) {
+					printf("Device was disconnected.\n");
+					break;
+				}
+				if (res)
 					continue;
 
 				from = cec_msg_initiator(&msg);

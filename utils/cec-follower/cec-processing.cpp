@@ -1078,7 +1078,12 @@ void testProcessing(struct node *node)
 		if (FD_ISSET(fd, &ex_fds)) {
 			struct cec_event ev;
 
-			if (doioctl(node, CEC_DQEVENT, &ev))
+			res = doioctl(node, CEC_DQEVENT, &ev);
+			if (res == ENODEV) {
+				printf("Device was disconnected.\n");
+				break;
+			}
+			if (res)
 				continue;
 			log_event(ev);
 			if (ev.event == CEC_EVENT_STATE_CHANGE) {
@@ -1094,7 +1099,12 @@ void testProcessing(struct node *node)
 		if (FD_ISSET(fd, &rd_fds)) {
 			struct cec_msg msg = { };
 
-			if (doioctl(node, CEC_RECEIVE, &msg))
+			res = doioctl(node, CEC_RECEIVE, &msg);
+			if (res == ENODEV) {
+				printf("Device was disconnected.\n");
+				break;
+			}
+			if (res)
 				continue;
 
 			__u8 from = cec_msg_initiator(&msg);

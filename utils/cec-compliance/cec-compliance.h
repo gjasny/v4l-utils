@@ -334,10 +334,15 @@ static inline bool transmit_timeout(struct node *node, struct cec_msg *msg,
 				    unsigned timeout = 2000)
 {
 	struct cec_msg original_msg = *msg;
+	int res;
 
 	msg->timeout = timeout;
-	if (doioctl(node, CEC_TRANSMIT, msg) ||
-	    !(msg->tx_status & CEC_TX_STATUS_OK))
+	res = doioctl(node, CEC_TRANSMIT, msg);
+	if (res == ENODEV) {
+		printf("Device was disconnected.\n");
+		exit(1);
+	}
+	if (res || !(msg->tx_status & CEC_TX_STATUS_OK))
 		return false;
 
 	if (((msg->rx_status & CEC_RX_STATUS_OK) || (msg->rx_status & CEC_RX_STATUS_FEATURE_ABORT))
