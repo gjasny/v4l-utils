@@ -1888,7 +1888,7 @@ int main(int argc, char **argv)
 		}
 		printf("\nTransmit from %s to %s (%d to %d):\n", la2s(from),
 		       (cec_msg_is_broadcast(&msg) || to == 0xf) ? "all" : la2s(to),
-		       from, to);
+		       from, cec_msg_is_broadcast(&msg) ? 0xf : to);
 		msg.msg[0] |= (from << 4) | (cec_msg_is_broadcast(&msg) ? 0xf : to);
 		log_msg(&msg);
 		if (doioctl(&node, CEC_TRANSMIT, &msg))
