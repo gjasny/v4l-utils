@@ -354,16 +354,13 @@ static struct remote_subtest device_osd_transfer_subtests[] = {
 
 static int osd_string_set_default(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	if (!node->remote[la].has_osd)
-		return NOTAPPLICABLE;
-
 	struct cec_msg msg = { };
 	char osd[14];
 	bool unsuitable = false;
 
 	sprintf(osd, "Rept %x from %x", la, me);
 
-	interactive_info(true, "You should see \"%s\" appear on the screen for approximately one second.", osd);
+	interactive_info(true, "You should see \"%s\" appear on the screen", osd);
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_osd_string(&msg, CEC_OP_DISP_CTL_DEFAULT, osd);
 	fail_on_test(!transmit_timeout(node, &msg));
@@ -380,18 +377,17 @@ static int osd_string_set_default(struct node *node, unsigned me, unsigned la, b
 		warn("The device is in an unsuitable state or cannot display the complete message.\n");
 		unsuitable = true;
 	}
-
-	cec_msg_init(&msg, me, la);
-	cec_msg_set_osd_string(&msg, CEC_OP_DISP_CTL_CLEAR, "");
-	fail_on_test(!transmit_timeout(node, &msg, 250));
-	fail_on_test(cec_msg_status_is_abort(&msg));
-	fail_on_test(!unsuitable && interactive && !question("Did the string appear?"));
-
 	node->remote[la].has_osd = true;
-	if (interactive)
-		return 0;
-	else
+	if (!interactive)
 		return PRESUMED_OK;
+
+	/* The CEC 1.4b CTS specifies that one should wait at least 20 seconds for the
+	   string to be cleared on the remote device */
+	interactive_info(true, "Waiting 20s for OSD string to be cleared on the remote device");
+	sleep(20);
+	fail_on_test(!unsuitable && interactive && !question("Did the string appear and then disappear?"));
+
+	return 0;
 }
 
 static int osd_string_set_until_clear(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -411,7 +407,7 @@ static int osd_string_set_until_clear(struct node *node, unsigned me, unsigned l
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_osd_string(&msg, CEC_OP_DISP_CTL_UNTIL_CLEARED, osd);
 	fail_on_test(!transmit(node, &msg));
-	if (cec_msg_status_is_abort(&msg) && abort_reason(&msg) != CEC_OP_ABORT_UNRECOGNIZED_OP) {
+	if (cec_msg_status_is_abort(&msg) && !unrecognized_op(&msg)) {
 		warn("The device is in an unsuitable state or cannot display the complete message.\n");
 		unsuitable = true;
 	}
