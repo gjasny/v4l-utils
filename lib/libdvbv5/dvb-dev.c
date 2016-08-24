@@ -313,7 +313,7 @@ int dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	struct dvb_device_priv *dvb = parms->dvb;
 
-	if (!parms->dvb && !dvb->ops.fe_set_sys)
+	if (!dvb || !dvb->ops.fe_set_sys)
 		return __dvb_set_sys(p, sys);
 
 	return dvb->ops.fe_set_sys(p, sys);
@@ -324,7 +324,7 @@ int dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	struct dvb_device_priv *dvb = parms->dvb;
 
-	if (!parms->dvb && !dvb->ops.fe_get_parms)
+	if (!dvb || !dvb->ops.fe_get_parms)
 		return __dvb_fe_get_parms(p);
 
 	return dvb->ops.fe_get_parms(p);
@@ -335,7 +335,7 @@ int dvb_fe_set_parms(struct dvb_v5_fe_parms *p)
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	struct dvb_device_priv *dvb = parms->dvb;
 
-	if (!parms->dvb && !dvb->ops.fe_set_parms)
+	if (!dvb || !dvb->ops.fe_set_parms)
 		return __dvb_fe_set_parms(p);
 
 	return dvb->ops.fe_set_parms(p);
@@ -346,7 +346,7 @@ int dvb_fe_get_stats(struct dvb_v5_fe_parms *p)
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	struct dvb_device_priv *dvb = parms->dvb;
 
-	if (!parms->dvb && !dvb->ops.fe_get_stats)
+	if (!dvb || !dvb->ops.fe_get_stats)
 		return __dvb_fe_get_stats(p);
 
 	return dvb->ops.fe_get_stats(p);
