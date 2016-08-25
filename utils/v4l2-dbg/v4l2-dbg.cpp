@@ -224,6 +224,8 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tRDS Output\n";
 	if (cap & V4L2_CAP_SDR_CAPTURE)
 		s += "\t\tSDR Capture\n";
+	if (cap & V4L2_CAP_TOUCH)
+		s += "\t\tTouch Device\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
 	if (cap & V4L2_CAP_HW_FREQ_SEEK)

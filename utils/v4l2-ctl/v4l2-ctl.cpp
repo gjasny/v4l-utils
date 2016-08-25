@@ -687,6 +687,8 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tSDR Output\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
+	if (cap & V4L2_CAP_TOUCH)
+		s += "\t\tTouch Device\n";
 	if (cap & V4L2_CAP_HW_FREQ_SEEK)
 		s += "\t\tHW Frequency Seek\n";
 	if (cap & V4L2_CAP_MODULATOR)

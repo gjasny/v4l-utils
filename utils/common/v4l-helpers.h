@@ -389,6 +389,11 @@ static inline bool v4l_has_sdr_out(const struct v4l_fd *f)
 	return v4l_g_caps(f) & V4L2_CAP_SDR_OUTPUT;
 }
 
+static inline bool v4l_has_touch(const struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_TOUCH;
+}
+
 static inline bool v4l_has_hwseek(const struct v4l_fd *f)
 {
 	return v4l_g_caps(f) & V4L2_CAP_HW_FREQ_SEEK;
