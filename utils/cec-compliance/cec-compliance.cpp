@@ -842,9 +842,14 @@ const char *ok(int res)
 	if (res == NOTSUPPORTED) {
 		strcpy(buf, "OK (Not Supported)");
 		res = 0;
-	} else {
+	} else if (res == PRESUMED_OK) {
+		strcpy(buf, "OK (Presumed)");
+		res = 0;
+	} else if (res == REFUSED) {
+		strcpy(buf, "OK (Refused)");
+		res = 0;
+	} else
 		strcpy(buf, "OK");
-	}
 	tests_total++;
 	if (res) {
 		app_result = res;

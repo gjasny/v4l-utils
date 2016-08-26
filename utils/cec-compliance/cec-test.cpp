@@ -1475,10 +1475,6 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 				printf("\t    %s: OK (Unexpected)\n",
 				       tests[i].subtests[j].name);
 			}
-			else if (ret == PRESUMED_OK)
-				printf("\t    %s: OK (Presumed)\n", tests[i].subtests[j].name);
-			else if (ret == REFUSED)
-				printf("\t    %s: OK (Refused)\n", tests[i].subtests[j].name);
 			else if (ret != NOTAPPLICABLE)
 				printf("\t    %s: %s\n", tests[i].subtests[j].name, ok(ret));
 			if (ret == FAIL_CRITICAL)
