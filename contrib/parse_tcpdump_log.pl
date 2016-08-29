@@ -44,7 +44,7 @@ my $help = 0;
 my $pcap = 0;
 my $list_devices = 0;
 my $device;
-my $usbdev = -1;
+my @usbdev = ();
 my $frame_processor;
 
 GetOptions('debug=i' => \$debug,
@@ -52,12 +52,14 @@ GetOptions('debug=i' => \$debug,
 	   'pcap' => \$pcap,
 	   'device=s' => \$device,
 	    man => \$man,
-	   'usbdev=i' => \$usbdev,
+	   'usbdev=i' => \@usbdev,
 	   'list-devices' => \$list_devices,
 	   'frame_processor=s' => \$frame_processor,
 	  ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+my %devs = map { $_ => 1 } @usbdev;
 
 my $filename = shift;
 
@@ -343,7 +345,7 @@ sub print_frame($$)
 		($resp{"Time"} - $req{"Time"}) * 1000000 + 0.5;
 	$last_time = $req{"Time"};
 
-	printf " EP=%02x)", $resp{"Endpoint"};
+	printf " EP=%02x, Dev=%02x)", $resp{'Endpoint'}, $resp{'Device'};
 
 	my ($app_data, $type);
 
@@ -426,11 +428,11 @@ sub process_frame($) {
 		return;
 	}
 	for (my $i = 0; $i < scalar(@pending); $i++) {
-		if ($related eq $pending[$i]{"ID"}) {
+		if ($related eq $pending[$i]{"ID"} && $frame{'Device'} eq $pending[$i]{'Device'}) {
 			my %req = %{$pending[$i]};
 
 # skip unwanted URBs
-			if ($usbdev == -1 or $usbdev == $frame{'Device'}) {
+			if (scalar @usbdev == 0 or exists($devs{$frame{'Device'}})) {
 				if ($frame_processor) {
 					require $frame_processor;
 					frame_processor(\%req, \%frame);
