@@ -551,28 +551,32 @@ sub sigint_handler {
 		exit(0);
 	}
 }
-
 #
-# Ancillary routines to list what's connected to each USB port
+# Ancillary routine to list what's connected to each USB port
 #
-sub parse_devices {
-	my $file = $File::Find::name;
-
-	return if (!($file =~ m/product/));
-	return if (!($file =~ m/[0-9]+\-[0-9]+/));
-	return if (($file =~ m/subsystem/));
-
-	my $name = qx(cat $file);
-	$name =~ s/\n//g;
-
-	my ($bus, $port);
-	($bus, $port) = ($1, $2) if ($file =~ m/([0-9]+)\-([0-9]+)/);
-
-	printf("usbmon%s ==> %s (level %s)\n",$bus, $name, $port);
-}
 
 if ($list_devices) {
-	find({follow => 1, follow_skip => 2, wanted => \&parse_devices, no_chdir => 1}, "/sys/bus/usb/devices/");
+	my ($bus, $dev, $name, $usb, $lastname);
+
+	open IN, "/sys/kernel/debug/usb/devices";
+	while (<IN>) {
+		if (m/T:\s+Bus=(\d+).*Dev\#\=\s*(\d+)/) {
+			$bus = $1 + 0;
+			$dev = $2 + 0;
+		}
+		if (m/S:\s+Product=(.*)/) {
+			$name = $1;
+		}
+		if (m/P:\s+Vendor=(\S+)\s+ProdID=(\S+)\s+Rev=(\S+)/) {
+			$usb = "($1:$2 rev $3)";
+		}
+		if ($name && m/^$/) {
+			printf("For %-36s%-22s ==> $0 --device usbmon%s --usbdev %s\n", $name, $usb, $bus, $dev);
+			$lastname = $name;
+		}
+	}
+	printf("For %-36s%-22s ==> $0 --device usbmon%s --usbdev %s\n", $name, $usb, $bus, $dev) if ($lastname ne $name);
+
 	exit;
 }
 
