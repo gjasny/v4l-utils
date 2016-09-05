@@ -45,8 +45,9 @@ failing:
                         when a TV replies to messages in the Deck Control
                         feature.
 
-    OK (Not Supported)  The test did not pass and is not mandatory for the
-                        device to pass.
+    OK (Not Supported)  The feature that was tested is not supported by the
+                        device under test, and that feature was not mandatory for
+                        the device to pass.
 
     OK (Presumed)       Nothing went wrong during the test, but the test cannot
                         positively verify that the required effects of the test
@@ -169,6 +170,9 @@ the CEC adapter is connected to the first input of the TV, the physical address
 1.0.0.0 should generally be used.
 
     cec-ctl -d1 --playback --phys-addr 1.0.0.0
+
+Most CEC adapters will automatically detect the physical address, and for those
+adapters the \fI--phys-addr\fR option is not needed.
 
 Next, \fBcec-follower\fR also has to be started on the same device:
 
