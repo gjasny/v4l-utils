@@ -112,19 +112,21 @@ sub parse_gpio($$$$$$)
 
 	my $type;
 	if ($req == 8) {
-		$type .= "GET gpio";
-	} elsif ($req == 9) {
 		$type .= "SET gpio";
+	} elsif ($req == 9) {
+		$type .= "GET gpio";
 	} elsif ($req == 0xa) {
 		$type .= "SET gpie";
 	} elsif ($req == 0xb) {
-		$type .= "SET gpie";
+		$type .= "GET gpie";
 	}
 
-	my $gpio_bit = $wvalue << 16 & $windex;
+	my $gpio_bit = ($wvalue << 16) | $windex;
 
-	printf("$type: Reqtype %3d Req %3d 0x%04x len %d val = %s\n",
-		$reqtype, $req, $gpio_bit, $wlen, $payload);
+	$payload =~ s/([a-f\d].)\s([a-f\d].)\s([a-f\d].)\s([a-f\d].)/0x$4$3$2$1/;
+
+	printf("$type: Reqtype %3d Req %3d len %d wvalue 0x%04x windex 0x%02x => direction=0x%04x val = %s\n",
+		$reqtype, $req, $wlen, $wvalue, $windex, $gpio_bit, $payload);
 }
 
 while (<>) {
