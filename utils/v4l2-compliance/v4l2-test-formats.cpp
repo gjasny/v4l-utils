@@ -1190,6 +1190,8 @@ static int testParmType(struct node *node, unsigned type)
 	if (ret)
 		return fail("got error %d when setting parms for buftype %d\n", ret, type);
 	fail_on_test(parm.type != type);
+	if (!(parm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME))
+		warn("S_PARM is supported but doesn't report V4L2_CAP_TIMEPERFRAME\n");
 	return testParmStruct(node, parm);
 }
 
@@ -1241,7 +1243,7 @@ static int testBasicSelection(struct node *node, unsigned type, unsigned target)
 
 	memset(sel.reserved, 0xff, sizeof(sel.reserved));
 	ret = doioctl(node, VIDIOC_G_SELECTION, &sel);
-	if (ret == ENOTTY || ret == EINVAL) {
+	if (ret == ENOTTY || ret == EINVAL || ret == ENODATA) {
 		fail_on_test(!doioctl(node, VIDIOC_S_SELECTION, &sel));
 		return ENOTTY;
 	}
