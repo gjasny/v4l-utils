@@ -1324,6 +1324,11 @@ static int testBasicCrop(struct node *node, unsigned type)
 	sel_crop.type = type;
 	sel_crop.target = 0xffff;
 	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
+	// Check handling of read-only targets.
+	sel_crop.target = V4L2_SEL_TGT_CROP_DEFAULT;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
+	sel_crop.target = V4L2_SEL_TGT_CROP_BOUNDS;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
 	return 0;
 }
 
@@ -1456,6 +1461,13 @@ static int testBasicCompose(struct node *node, unsigned type)
 	// Check handling of invalid target.
 	sel_compose.type = type;
 	sel_compose.target = 0xffff;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	// Check handling of read-only targets.
+	sel_compose.target = V4L2_SEL_TGT_COMPOSE_DEFAULT;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	sel_compose.target = V4L2_SEL_TGT_COMPOSE_BOUNDS;
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	sel_compose.target = V4L2_SEL_TGT_COMPOSE_PADDED;
 	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
 	return 0;
 }
