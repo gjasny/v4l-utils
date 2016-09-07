@@ -449,8 +449,11 @@ int dvb_dev_remote_init(struct dvb_device *d, char *server, int port);
 
 #else
 
-int dvb_dev_remote_init(struct dvb_device *d, char *server, int port)
-{ return -1; };
+static inline int dvb_dev_remote_init(struct dvb_device *d, char *server,
+				      int port)
+{
+	return -1;
+};
 
 #endif
 
