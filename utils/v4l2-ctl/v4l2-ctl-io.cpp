@@ -53,7 +53,7 @@ static const flag_def in_status_def[] = {
 	{ V4L2_IN_ST_NO_COLOR,    "no color" },
 	{ V4L2_IN_ST_HFLIP,       "hflip" },
 	{ V4L2_IN_ST_VFLIP,       "vflip" },
-	{ V4L2_IN_ST_NO_H_LOCK,   "no hsync lock." },
+	{ V4L2_IN_ST_NO_H_LOCK,   "no hsync lock" },
 	{ V4L2_IN_ST_COLOR_KILL,  "color kill" },
 	{ V4L2_IN_ST_NO_SYNC,     "no sync lock" },
 	{ V4L2_IN_ST_NO_EQU,      "no equalizer lock" },
