@@ -338,7 +338,10 @@ static ssize_t __prepare_data(char *buf, const size_t size,
 		switch (*fmt++) {
 		case 's':              /* string */
 			s = va_arg(ap, char *);
-			len = strlen(s);
+			if (s)
+				len = strlen(s);
+			else
+				len = 0;
 			if (p + len + 4 > endp) {
 				dbg("buffer to short for string");
 				stack_dump();
@@ -347,7 +350,8 @@ static ssize_t __prepare_data(char *buf, const size_t size,
 			i32 = htobe32(len);
 			memcpy(p, &i32, 4);
 			p += 4;
-			memcpy(p, s, len);
+			if (s)
+				memcpy(p, s, len);
 			p += len;
 			break;
 		case 'p':              /* binary data with specified length */
