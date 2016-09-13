@@ -47,6 +47,7 @@
 
 #include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 
 #include "../../lib/libdvbv5/dvb-fe-priv.h"
 #include "libdvbv5/dvb-file.h"
@@ -1209,7 +1210,7 @@ static const struct method_types const methods[] = {
 static void *start_server(void *fd_pointer)
 {
 	const struct method_types *method;
-	int fd = *(int *)fd_pointer, ret;
+	int fd = *(int *)fd_pointer, ret, flag = 1;
 	char buf[REMOTE_BUF_SIZE + 8], cmd[80], *p;
 	ssize_t size;
 	uint32_t seq;
@@ -1222,6 +1223,9 @@ static void *start_server(void *fd_pointer)
 	bufsize = REMOTE_BUF_SIZE;
 	setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
 		   (void *)&bufsize, (int)sizeof(bufsize));
+
+	/* Disable Naggle algorithm, as we want errors to be sent ASAP */
+	setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 
 	/* Command dispatcher */
 	do {
