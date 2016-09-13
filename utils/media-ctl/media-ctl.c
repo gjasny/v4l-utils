@@ -504,19 +504,11 @@ static void media_print_topology_text(struct media_device *media)
 			media, media_get_entity(media, i));
 }
 
-void media_print_topology(struct media_device *media, int dot)
-{
-	if (dot)
-		media_print_topology_dot(media);
-	else
-		media_print_topology_text(media);
-}
-
 int main(int argc, char **argv)
 {
 	struct media_device *media;
+	struct media_entity *entity = NULL;
 	int ret = -1;
-	const char *devname;
 
 	if (parse_cmdline(argc, argv))
 		return EXIT_FAILURE;
@@ -562,17 +554,11 @@ int main(int argc, char **argv)
 	}
 
 	if (media_opts.entity) {
-		struct media_entity *entity;
-
 		entity = media_get_entity_by_name(media, media_opts.entity);
 		if (entity == NULL) {
 			printf("Entity '%s' not found\n", media_opts.entity);
 			goto out;
 		}
-
-		devname = media_entity_get_devname(entity);
-		if (devname)
-			printf("%s\n", devname);
 	}
 
 	if (media_opts.fmt_pad) {
@@ -611,9 +597,19 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (media_opts.print || media_opts.print_dot) {
-		media_print_topology(media, media_opts.print_dot);
-		printf("\n");
+	if (media_opts.print_dot) {
+		media_print_topology_dot(media);
+	} else if (media_opts.print) {
+		if (entity)
+			media_print_topology_text_entity(media, entity);
+		else
+			media_print_topology_text(media);
+	} else if (entity) {
+		const char *devname;
+
+		devname = media_entity_get_devname(entity);
+		if (devname)
+			printf("%s\n", devname);
 	}
 
 	if (media_opts.reset) {

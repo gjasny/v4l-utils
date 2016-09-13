@@ -51,7 +51,9 @@ static void usage(const char *argv0)
 	printf("-i, --interactive	Modify links interactively\n");
 	printf("-l, --links links	Comma-separated list of link descriptors to setup\n");
 	printf("    --known-mbus-fmts	List known media bus formats and their numeric values\n");
-	printf("-p, --print-topology	Print the device topology\n");
+	printf("-p, --print-topology	Print the device topology. If an entity\n");
+	printf("			is specified through the -e option, print\n");
+	printf("			information for that entity only.\n);
 	printf("    --print-dot		Print the device topology as a dot graph\n");
 	printf("-r, --reset		Reset all links to inactive\n");
 	printf("-v, --verbose		Be verbose\n");
