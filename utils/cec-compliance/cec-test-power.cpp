@@ -459,7 +459,7 @@ static int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bo
 	fail_on_test(interactive && !question("Is the device in On state?"));
 
 	if (unresponsive_time > 0)
-		return fail("The device went correctly out of standby, but became unresponsive for %d s during the transition.",
+		return fail("The device went correctly out of standby, but became unresponsive for %d s during the transition.\n",
 			    unresponsive_time);
 
 	return 0;
