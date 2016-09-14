@@ -827,7 +827,7 @@ int testModes(struct node *node, struct node *node2)
 	else
 		fail_on_test(res != EINVAL);
 
-	if (is_root) {
+	if (is_root && (node2->caps & CEC_CAP_MONITOR_ALL)) {
 		fail_on_test(doioctl(node2, CEC_G_MODE, &m));
 		fail_on_test(m != mode);
 		fail_on_test(flush_pending_msgs(node2));
