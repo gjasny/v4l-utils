@@ -623,7 +623,7 @@ static void *receive_data(void *privdata)
 
 	do {
 		size = recv(priv->fd, buf, 4, MSG_WAITALL);
-		if (size <= 0) {
+		if (size < 4) {
 			if (size < 0)
 				dvb_perror("recv");
 			else
@@ -632,8 +632,8 @@ static void *receive_data(void *privdata)
 			return NULL;
 		}
 		size = be32toh(*(int32_t *)buf);
-		size = recv(priv->fd, buf, size, MSG_WAITALL);
-		if (size <= 0) {
+		ret = recv(priv->fd, buf, size, MSG_WAITALL);
+		if (ret != size) {
 			if (size < 0)
 				dvb_perror("recv");
 			else
