@@ -516,7 +516,9 @@ static int lirc_options(struct arguments *args, int fd, unsigned features)
 	if (args->emitters) {
 		if (features & LIRC_CAN_SET_TRANSMITTER_MASK) {
 			rc = ioctl(fd, LIRC_SET_TRANSMITTER_MASK, &args->emitters);
-			if (rc)
+			if (rc > 0)
+				fprintf(stderr, _("warning: %s: failed to set send transmitters: only %d available\n"), dev, rc);
+			else if (rc < 0)
 				fprintf(stderr, _("warning: %s: failed to set send transmitters: %m\n"), dev);
 		} else
 			fprintf(stderr, _("warning: %s: does not support setting send transmitters\n"), dev);
