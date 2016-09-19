@@ -211,7 +211,7 @@ static struct file *read_file(const char *fname)
 					fprintf(stderr, _("warning: %s:%d: leading space ignored\n"),
 						fname, lineno);
 				} else {
-					f->buf[len] += arg;
+					f->buf[len-1] += arg;
 				}
 			} else {
 				f->buf[len++] = arg;
@@ -220,7 +220,7 @@ static struct file *read_file(const char *fname)
 			expect_pulse = true;
 		} else if (strcmp(keyword, "pulse") == 0) {
 			if (!expect_pulse)
-				f->buf[len] += arg;
+				f->buf[len-1] += arg;
 			else
 				f->buf[len++] = arg;
 			expect_pulse = false;
