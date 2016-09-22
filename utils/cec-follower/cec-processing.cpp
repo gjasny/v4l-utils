@@ -309,10 +309,48 @@ static void rc_press_hold_stop(const struct state *state)
 	}
 }
 
+static __u16 pa_common_mask(__u16 pa1, __u16 pa2)
+{
+	__u16 mask = 0xf000;
+
+	for (int i = 0; i < 3; i++) {
+		if ((pa1 & mask) != (pa2 & mask))
+			break;
+		mask = (mask >> 4) | 0xf000;
+	}
+	return mask << 4;
+}
+static bool pa_are_adjacent(__u16 pa1, __u16 pa2)
+{
+	const __u16 mask = pa_common_mask(pa1, pa2);
+	const __u16 trail_mask = ((~mask) & 0xffff) >> 4;
+
+	if (pa1 == CEC_PHYS_ADDR_INVALID || pa2 == CEC_PHYS_ADDR_INVALID || pa1 == pa2)
+		return false;
+	if ((pa1 & trail_mask) || (pa2 & trail_mask))
+		return false;
+	if (!((pa1 & ~mask) && (pa2 & ~mask)))
+		return true;
+	return false;
+}
+
+static bool pa_is_upstream_from(__u16 pa1, __u16 pa2)
+{
+	const __u16 mask = pa_common_mask(pa1, pa2);
+
+	if (pa1 == CEC_PHYS_ADDR_INVALID || pa2 == CEC_PHYS_ADDR_INVALID)
+		return false;
+	if (!(pa1 & ~mask) && (pa2 & ~mask))
+		return true;
+	return false;
+}
+
 static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 {
 	__u8 to = cec_msg_destination(&msg);
+	__u8 from = cec_msg_initiator(&msg);
 	bool is_bcast = cec_msg_is_broadcast(&msg);
+	__u16 remote_pa = (from < 15) ? node->remote_phys_addr[from] : CEC_PHYS_ADDR_INVALID;
 	const time_t time_to_transient = 2;
 	const time_t time_to_stable = 4;
 
@@ -427,6 +465,15 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		return;
 	case CEC_MSG_CEC_VERSION:
 		return;
+	case CEC_MSG_REPORT_PHYSICAL_ADDR: {
+		__u16 phys_addr;
+		__u8 prim_dev_type;
+
+		cec_ops_report_physical_addr(&msg, &phys_addr, &prim_dev_type);
+		if (from < 15)
+			node->remote_phys_addr[from] = phys_addr;
+		return;
+	}
 
 
 		/* Remote Control Passthrough
@@ -719,6 +766,12 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 
 	case CEC_MSG_INITIATE_ARC:
 		if (node->has_arc_tx) {
+			if (!pa_is_upstream_from(node->phys_addr, remote_pa) ||
+			    !pa_are_adjacent(node->phys_addr, remote_pa)) {
+				cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_REFUSED);
+				transmit(node, &msg);
+				return;
+			}
 			cec_msg_set_reply_to(&msg, &msg);
 			cec_msg_report_arc_initiated(&msg);
 			transmit(node, &msg);
@@ -729,6 +782,12 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		break;
 	case CEC_MSG_TERMINATE_ARC:
 		if (node->has_arc_tx) {
+			if (!pa_is_upstream_from(node->phys_addr, remote_pa) ||
+			    !pa_are_adjacent(node->phys_addr, remote_pa)) {
+				cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_REFUSED);
+				transmit(node, &msg);
+				return;
+			}
 			cec_msg_set_reply_to(&msg, &msg);
 			cec_msg_report_arc_terminated(&msg);
 			transmit(node, &msg);
@@ -739,6 +798,12 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		break;
 	case CEC_MSG_REQUEST_ARC_INITIATION:
 		if (node->has_arc_rx) {
+			if (pa_is_upstream_from(node->phys_addr, remote_pa) ||
+			    !pa_are_adjacent(node->phys_addr, remote_pa)) {
+				cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_REFUSED);
+				transmit(node, &msg);
+				return;
+			}
 			cec_msg_set_reply_to(&msg, &msg);
 			cec_msg_initiate_arc(&msg, false);
 			transmit(node, &msg);
@@ -748,6 +813,12 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		break;
 	case CEC_MSG_REQUEST_ARC_TERMINATION:
 		if (node->has_arc_rx) {
+			if (pa_is_upstream_from(node->phys_addr, remote_pa) ||
+			    !pa_are_adjacent(node->phys_addr, remote_pa)) {
+				cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_REFUSED);
+				transmit(node, &msg);
+				return;
+			}
 			cec_msg_set_reply_to(&msg, &msg);
 			cec_msg_terminate_arc(&msg, false);
 			transmit(node, &msg);
@@ -950,6 +1021,32 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 	reply_feature_abort(node, &msg);
 }
 
+static void poll_remote_devs(struct node *node, unsigned me)
+{
+	node->remote_la_mask = 0;
+	for (unsigned i = 0; i < 15; i++)
+		node->remote_phys_addr[i] = CEC_PHYS_ADDR_INVALID;
+
+	if (!(node->caps & CEC_CAP_TRANSMIT))
+		return;
+
+	for (unsigned i = 0; i < 15; i++) {
+		struct cec_msg msg;
+
+		cec_msg_init(&msg, 0xf, i);
+
+		doioctl(node, CEC_TRANSMIT, &msg);
+		if (msg.tx_status & CEC_TX_STATUS_OK) {
+			node->remote_la_mask |= 1 << i;
+			cec_msg_init(&msg, me, i);
+			cec_msg_give_physical_addr(&msg, true);
+			doioctl(node, CEC_TRANSMIT, &msg);
+			if (cec_msg_status_is_ok(&msg))
+				node->remote_phys_addr[i] = (msg.msg[2] << 8) | msg.msg[3];
+		}
+	}
+}
+
 void testProcessing(struct node *node)
 {
 	struct cec_log_addrs laddrs;
@@ -963,6 +1060,8 @@ void testProcessing(struct node *node)
 	doioctl(node, CEC_S_MODE, &mode);
 	doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	me = laddrs.log_addr[0];
+
+	poll_remote_devs(node, me);
 
 	while (1) {
 		int res;
@@ -1036,6 +1135,8 @@ void testProcessing(struct node *node)
 			if (msg.tx_status & CEC_TX_STATUS_NACK) {
 				dev_info("Logical address %d stopped responding to polling message.\n", poll_la);
 				memset(&la_info[poll_la], 0, sizeof(la_info[poll_la]));
+				node->remote_la_mask &= ~(1 << poll_la);
+				node->remote_phys_addr[poll_la] = CEC_PHYS_ADDR_INVALID;
 			}
 		}
 		last_poll_la = poll_la;
