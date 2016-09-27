@@ -270,9 +270,11 @@ AC_SUBST([JPEG_LIBS])
 
 # Check for pthread
 
-AX_PTHREAD([have_pthread=yes
-	    AC_DEFINE([HAVE_PTHREAD],[1],[Define if you have POSIX threads libraries and header files.])],
-	   [have_pthread=no])
+AS_IF([test x$enable_shared != xno],
+	[AX_PTHREAD([have_pthread=yes
+		    AC_DEFINE([HAVE_PTHREAD],[1],[Define if you have POSIX threads libraries and header files.])],
+		   [have_pthread=no])],
+	[have_pthread=no])
 
 # The dlopen() function is in the C library for *BSD and in
 # libdl on GLIBC-based systems
