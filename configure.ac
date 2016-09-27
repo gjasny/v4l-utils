@@ -353,7 +353,7 @@ AC_DEFINE_DIR([IR_KEYTABLE_USER_DIR], [keytableuserdir], [ir-keytable user defin
 # options
 
 AC_ARG_ENABLE(libdvbv5,
-  AS_HELP_STRING([--disable-libdvbv5], [disable experimental dynamic libdvbv5 compilation]),
+  AS_HELP_STRING([--disable-libdvbv5], [disable libdvbv5 compilation]),
   [case "${enableval}" in
      yes | no ) ;;
      *) AC_MSG_ERROR(bad value ${enableval} for --disable-libdvbv5) ;;
