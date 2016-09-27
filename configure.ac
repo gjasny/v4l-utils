@@ -474,6 +474,9 @@ compile time options summary
     QT version          : $QT_VERSION
     ALSA support        : $USE_ALSA
 
+    build dynamic libs  : $enable_shared
+    build static libs   : $enable_static
+
     gconv               : $USE_GCONV
 
     libv4l              : $USE_LIBV4L
