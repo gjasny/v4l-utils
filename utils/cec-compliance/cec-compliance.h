@@ -24,6 +24,7 @@
 #include <cerrno>
 #include <string>
 #include <linux/cec-funcs.h>
+#include "cec-htng-funcs.h"
 
 #ifdef ANDROID
 #include <android-config.h>

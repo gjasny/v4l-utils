@@ -9,11 +9,17 @@ cec-ctl.cpp: cec-ctl-gen.h
 
 cec-pin.cpp: cec-pin-gen.h
 
-cec-ctl-gen.h: msg2ctl.pl ../../include/linux/cec.h ../../include/linux/cec-funcs.h
-	$(top_srcdir)/utils/cec-ctl/msg2ctl.pl 0 $(top_srcdir)/include/linux/cec.h $(top_srcdir)/include/linux/cec-funcs.h >$@
+cec-ctl-gen.h: msg2ctl.pl $(top_srcdir)/include/linux/cec.h $(top_srcdir)/include/linux/cec-funcs.h \
+		$(top_srcdir)/utils/common/cec-htng.h $(top_srcdir)/utils/common/cec-htng-funcs.h
+	$(top_srcdir)/utils/cec-ctl/msg2ctl.pl 0 $(top_srcdir)/include/linux/cec.h \
+		$(top_srcdir)/utils/common/cec-htng.h $(top_srcdir)/include/linux/cec-funcs.h \
+		$(top_srcdir)/utils/common/cec-htng-funcs.h >$@
 
-cec-pin-gen.h: msg2ctl.pl ../../include/linux/cec.h ../../include/linux/cec-funcs.h
-	$(top_srcdir)/utils/cec-ctl/msg2ctl.pl 2 $(top_srcdir)/include/linux/cec.h $(top_srcdir)/include/linux/cec-funcs.h >$@
+cec-pin-gen.h: msg2ctl.pl $(top_srcdir)/include/linux/cec.h $(top_srcdir)/include/linux/cec-funcs.h \
+		$(top_srcdir)/utils/common/cec-htng.h $(top_srcdir)/utils/common/cec-htng-funcs.h
+	$(top_srcdir)/utils/cec-ctl/msg2ctl.pl 2 $(top_srcdir)/include/linux/cec.h \
+		$(top_srcdir)/utils/common/cec-htng.h $(top_srcdir)/include/linux/cec-funcs.h \
+		$(top_srcdir)/utils/common/cec-htng-funcs.h >$@
 
 clean-local:
 	-rm -vf cec-ctl-gen.h cec-pin-gen.h

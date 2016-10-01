@@ -34,6 +34,7 @@
 #include <vector>
 #include <algorithm>
 #include <linux/cec.h>
+#include "cec-htng.h"
 
 #ifdef __ANDROID__
 #include <android-config.h>

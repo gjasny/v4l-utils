@@ -39,6 +39,7 @@
 #include <stdarg.h>
 #include <string>
 #include <linux/cec-funcs.h>
+#include "cec-htng-funcs.h"
 
 #define CEC_MAX_ARGS 16
 
@@ -317,6 +318,7 @@ static void log_ui_command(const char *arg_name, const struct cec_op_ui_command 
 static void log_descriptors(const char *arg_name, unsigned num, const __u32 *descriptors);
 static void log_u8_array(const char *arg_name, unsigned num, const __u8 *vals);
 static void log_unknown_msg(const struct cec_msg *msg);
+static void log_htng_unknown_msg(const struct cec_msg *msg);
 
 #include "cec-log.h"
 
@@ -440,34 +442,61 @@ static void log_u8_array(const char *arg_name, unsigned num, const __u8 *vals)
 		log_arg(&arg_u8, arg_name, vals[i]);
 }
 
+static void log_htng_unknown_msg(const struct cec_msg *msg)
+{
+	__u32 vendor_id;
+	const __u8 *bytes;
+	__u8 size;
+	unsigned i;
+
+	cec_ops_vendor_command_with_id(msg, &vendor_id, &size, &bytes);
+	printf("CEC_MSG_VENDOR_COMMAND_WITH_ID:\n");
+	log_arg(&arg_vendor_id, "vendor-id", vendor_id);
+	printf("\tvendor-specific-data:");
+	for (i = 0; i < size; i++)
+		printf(" 0x%02x", bytes[i]);
+	printf("\n");
+}
+
 static void log_unknown_msg(const struct cec_msg *msg)
 {
 	__u32 vendor_id;
 	__u16 phys_addr;
+	const __u8 *bytes;
+	__u8 size;
 	unsigned i;
 
 	switch (msg->msg[1]) {
 	case CEC_MSG_VENDOR_COMMAND:
 		printf("CEC_MSG_VENDOR_COMMAND:\n");
+		cec_ops_vendor_command(msg, &size, &bytes);
 		printf("\tvendor-specific-data:");
-		for (i = 2; i < msg->len; i++)
-			printf(" 0x%02x", msg->msg[i]);
+		for (i = 0; i < size; i++)
+			printf(" 0x%02x", bytes[i]);
 		printf("\n");
 		break;
 	case CEC_MSG_VENDOR_COMMAND_WITH_ID:
-		printf("CEC_MSG_VENDOR_COMMAND_WITH_ID:\n");
-		cec_ops_device_vendor_id(msg, &vendor_id);
-		log_arg(&arg_vendor_id, "vendor-id", vendor_id);
-		printf("\tvendor-specific-data:");
-		for (i = 5; i < msg->len; i++)
-			printf(" 0x%02x", msg->msg[i]);
-		printf("\n");
+		cec_ops_vendor_command_with_id(msg, &vendor_id, &size, &bytes);
+		switch (vendor_id) {
+		case VENDOR_ID_HTNG:
+			log_htng_msg(msg);
+			break;
+		default:
+			printf("CEC_MSG_VENDOR_COMMAND_WITH_ID:\n");
+			log_arg(&arg_vendor_id, "vendor-id", vendor_id);
+			printf("\tvendor-specific-data:");
+			for (i = 0; i < size; i++)
+				printf(" 0x%02x", bytes[i]);
+			printf("\n");
+			break;
+		}
 		break;
 	case CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN:
 		printf("CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN:\n");
+		cec_ops_vendor_remote_button_down(msg, &size, &bytes);
 		printf("\tvendor-specific-rc-code:");
-		for (i = 2; i < msg->len; i++)
-			printf(" 0x%02x", msg->msg[i]);
+		for (i = 0; i < size; i++)
+			printf(" 0x%02x", bytes[i]);
 		printf("\n");
 		break;
 	case CEC_MSG_CDC_MESSAGE:

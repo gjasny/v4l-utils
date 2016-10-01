@@ -70,6 +70,12 @@ sub process_func
 			$logswitch .= "\tcase CEC_MSG_CDC_MESSAGE:\n";
 			$logswitch .= "\tswitch (msg->msg[4]) {\n";
 		}
+		if ($cec_msg =~ /_HTNG_/ && !$htng_case) {
+			$htng_case = 1;
+			$cdc_case = 0;
+			$std_logswitch = $logswitch;
+			$logswitch = "";
+		}
 		if ($cdc_case) {
 			$cdcmsgtable .= "\t{ $cec_msg, \"$msg_name\" },\n";
 		} else {
@@ -372,6 +378,7 @@ while (<>) {
 	}
 	next if /^\s*$/;
 	next if /cec_msg_reply_feature_abort/;
+	next if /cec_msg_htng_init/;
 	if (/^static inline void cec_msg.*\(.*\)/) {
 		s/static\sinline\svoid\s//;
 		s/struct cec_msg \*msg, //;
@@ -475,7 +482,7 @@ void log_msg(const struct cec_msg *msg)
 
 	switch (msg->msg[1]) {
 EOF
-printf "%s", $logswitch;
+printf "%s", $std_logswitch;
 print <<'EOF';
 	default:
 		log_unknown_msg(msg);
@@ -492,5 +499,25 @@ status:
 	if ((msg->tx_status && !(msg->tx_status & CEC_TX_STATUS_OK)) ||
 	    (msg->rx_status && !(msg->rx_status & (CEC_RX_STATUS_OK | CEC_RX_STATUS_FEATURE_ABORT))))
 		printf("\t%s\n", status2s(*msg).c_str());
+}
+EOF
+print <<'EOF';
+void log_htng_msg(const struct cec_msg *msg)
+{
+	if ((msg->tx_status && !(msg->tx_status & CEC_TX_STATUS_OK)) ||
+	    (msg->rx_status && !(msg->rx_status & (CEC_RX_STATUS_OK | CEC_RX_STATUS_FEATURE_ABORT))))
+		printf("\t%s\n", status2s(*msg).c_str());
+
+	if (msg->len < 6)
+		return;
+
+	switch (msg->msg[5]) {
+EOF
+printf "%s", $logswitch;
+print <<'EOF';
+	default:
+		log_htng_unknown_msg(msg);
+		break;
+	}
 }
 EOF

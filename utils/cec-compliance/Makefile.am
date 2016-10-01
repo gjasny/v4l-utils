@@ -8,8 +8,11 @@ cec_compliance_LDFLAGS = -lrt
 cec-compliance.cpp: cec-table.h
 
 cec-table.h: $(top_srcdir)/utils/cec-ctl/msg2ctl.pl $(top_srcdir)/include/linux/cec.h \
-	     $(top_srcdir)/include/linux/cec-funcs.h
-	$(top_srcdir)/utils/cec-ctl/msg2ctl.pl 2 $(top_srcdir)/include/linux/cec.h $(top_srcdir)/include/linux/cec-funcs.h >$@
+		$(top_srcdir)/utils/common/cec-htng.h $(top_srcdir)/include/linux/cec-funcs.h \
+		$(top_srcdir)/utils/common/cec-htng-funcs.h
+	$(top_srcdir)/utils/cec-ctl/msg2ctl.pl 2 $(top_srcdir)/include/linux/cec.h \
+		$(top_srcdir)/utils/common/cec-htng.h $(top_srcdir)/include/linux/cec-funcs.h \
+		$(top_srcdir)/utils/common/cec-htng-funcs.h >$@
 
 cec-compliance.cpp: version.h
 
