@@ -61,6 +61,8 @@ AC_CONFIG_FILES([Makefile
 	utils/media-ctl/libmediactl.pc
 	utils/media-ctl/libv4l2subdev.pc
 
+	lib/include/libdvbv5/libdvb-version.h
+
 	utils/qv4l2/qv4l2.1
 	utils/v4l2-compliance/v4l2-compliance.1
 	utils/v4l2-ctl/v4l2-ctl.1
@@ -349,6 +351,15 @@ AC_DEFINE_DIR([LIBV4L2_PLUGIN_DIR], [libv4l2plugindir], [libv4l2 plugin director
 AC_DEFINE_DIR([LIBV4LCONVERT_PRIV_DIR], [libv4lconvertprivdir], [libv4lconvert private lib directory])
 AC_DEFINE_DIR([IR_KEYTABLE_SYSTEM_DIR], [keytablesystemdir], [ir-keytable preinstalled tables directory])
 AC_DEFINE_DIR([IR_KEYTABLE_USER_DIR], [keytableuserdir], [ir-keytable user defined tables directory])
+
+MAJOR=`echo "$PACKAGE_VERSION" | perl -ne 'print $1 if (m/^(\d+)\.(\d+)\.(\d+)/)'`
+MINOR=`echo "$PACKAGE_VERSION" | perl -ne 'print $2 if (m/^(\d+)\.(\d+)\.(\d+)/)'`
+PATCH=`echo "$PACKAGE_VERSION" | perl -ne 'print $3 if (m/^(\d+)\.(\d+)\.(\d+)/)'`
+
+AC_SUBST(MAJOR)
+AC_SUBST(MINOR)
+AC_SUBST(PATCH)
+AC_SUBST(V4L_UTILS_VERSION)
 
 # options
 
