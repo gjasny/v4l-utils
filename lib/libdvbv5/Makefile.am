@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libdvbv5.la
 
 otherincludedir = $(includedir)/libdvbv5
 otherinclude_HEADERS = \
+	../include/libdvbv5/libdvb-version.h \
 	../include/libdvbv5/dvb-demux.h \
 	../include/libdvbv5/dvb-v5-std.h \
 	../include/libdvbv5/dvb-file.h \
