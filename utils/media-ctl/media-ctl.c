@@ -150,6 +150,7 @@ static const struct flag_name bt_standards[] = {
 	{ V4L2_DV_BT_STD_DMT, "DMT" },
 	{ V4L2_DV_BT_STD_CVT, "CVT" },
 	{ V4L2_DV_BT_STD_GTF, "GTF" },
+	{ V4L2_DV_BT_STD_SDI, "SDI" },
 };
 
 static const struct flag_name bt_capabilities[] = {
@@ -165,6 +166,7 @@ static const struct flag_name bt_flags[] = {
 	{ V4L2_DV_FL_REDUCED_FPS, "reduced-fps" },
 	{ V4L2_DV_FL_HALF_LINE, "half-line" },
 	{ V4L2_DV_FL_IS_CE_VIDEO, "CE-video" },
+	{ V4L2_DV_FL_FIRST_FIELD_EXTRA_LINE, "first-field-extra-line" },
 };
 
 static void v4l2_subdev_print_dv_timings(const struct v4l2_dv_timings *timings,
