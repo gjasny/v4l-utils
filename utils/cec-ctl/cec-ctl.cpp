@@ -656,6 +656,7 @@ enum Option {
 	OptCDCOnly,
 	OptUnregistered,
 	OptCECVersion1_4,
+	OptAllowUnregFallback,
 	OptListUICommands,
 	OptRcTVProfile1,
 	OptRcTVProfile2,
@@ -709,6 +710,7 @@ static struct option long_options[] = {
 	{ "phys-addr", required_argument, 0, OptPhysAddr },
 	{ "vendor-id", required_argument, 0, OptVendorID },
 	{ "cec-version-1.4", no_argument, 0, OptCECVersion1_4 },
+	{ "allow-unreg-fallback", no_argument, 0, OptAllowUnregFallback },
 	{ "clear", no_argument, 0, OptClear },
 	{ "monitor", no_argument, 0, OptMonitor },
 	{ "monitor-all", no_argument, 0, OptMonitorAll },
@@ -773,6 +775,7 @@ static void usage(void)
 	       "  -T, --trace              Trace all called ioctls\n"
 	       "  -v, --verbose            Turn on verbose reporting\n"
 	       "  --cec-version-1.4        Use CEC Version 1.4 instead of 2.0\n"
+	       "  --allow-unreg-fallback   Allow fallback to Unregistered\n"
 	       "  --list-ui-commands       List all UI commands that can be used with --user-control-pressed\n"
 	       "\n"
 	       "  --tv                     This is a TV\n"
@@ -1684,6 +1687,8 @@ int main(int argc, char **argv)
 		strncpy(laddrs.osd_name, osd_name, sizeof(laddrs.osd_name));
 		laddrs.osd_name[sizeof(laddrs.osd_name) - 1] = 0;
 		laddrs.vendor_id = vendor_id;
+		if (options[OptAllowUnregFallback])
+			laddrs.flags |= CEC_LOG_ADDRS_FL_ALLOW_UNREG_FALLBACK;
 
 		for (unsigned i = 0; i < 8; i++) {
 			unsigned la_type;
