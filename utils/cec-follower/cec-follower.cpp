@@ -310,6 +310,21 @@ std::string all_dev_types2s(unsigned types)
 	return s;
 }
 
+static std::string laflags2s(unsigned flags)
+{
+	std::string s;
+
+	if (!flags)
+		return s;
+
+	s = "(";
+	if (flags & CEC_LOG_ADDRS_FL_ALLOW_UNREG_FALLBACK)
+		s += "Allow Fallback to Unregistered, ";
+	if (s.length())
+		s.erase(s.length() - 2, 2);
+	return s + ")";
+}
+
 std::string rc_src_prof2s(unsigned prof)
 {
 	std::string s;
@@ -692,7 +707,8 @@ int main(int argc, char **argv)
 	printf("\tCEC Version                : %s\n", version2s(laddrs.cec_version));
 	if (laddrs.vendor_id != CEC_VENDOR_ID_NONE)
 		printf("\tVendor ID                  : 0x%06x\n", laddrs.vendor_id);
-	printf("\tLogical Addresses          : %u\n", laddrs.num_log_addrs);
+	printf("\tLogical Addresses          : %u %s\n",
+	       laddrs.num_log_addrs, laflags2s(laddrs.flags).c_str());
 	for (unsigned i = 0; i < laddrs.num_log_addrs; i++) {
 		if (laddrs.log_addr[i] == CEC_LOG_ADDR_INVALID)
 			printf("\n\t  Logical Address          : Not Allocated\n");
