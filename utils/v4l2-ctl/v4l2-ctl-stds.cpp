@@ -362,6 +362,7 @@ static const flag_def dv_standards_def[] = {
 	{ V4L2_DV_BT_STD_DMT, "DMT" },
 	{ V4L2_DV_BT_STD_CVT, "CVT" },
 	{ V4L2_DV_BT_STD_GTF, "GTF" },
+	{ V4L2_DV_BT_STD_SDI, "SDI" },
 	{ 0, NULL }
 };
 
@@ -381,6 +382,8 @@ static std::string dvflags2s(unsigned vsync, int val)
 		s += "half-line, ";
 	if (val & V4L2_DV_FL_IS_CE_VIDEO)
 		s += "CE-video, ";
+	if (val & V4L2_DV_FL_FIRST_FIELD_EXTRA_LINE)
+		s += "first field has extra line, ";
 	if (s.length())
 		return s.erase(s.length() - 2, 2);
 	return s;
