@@ -46,40 +46,6 @@
 
 #include "cec-follower.h"
 
-/*
- * cec-funcs.h doesn't have the reply argument for this CEC message.
- * A fix is pending but not yet merged. Once it is merged this workaround
- * can be removed.
- */
-static inline void cec_msg_record_on_reply(struct cec_msg *msg,
-					 bool reply,
-					 const struct cec_op_record_src *rec_src)
-{
-	switch (rec_src->type) {
-	case CEC_OP_RECORD_SRC_OWN:
-		cec_msg_record_on_own(msg);
-		break;
-	case CEC_OP_RECORD_SRC_DIGITAL:
-		cec_msg_record_on_digital(msg, &rec_src->digital);
-		break;
-	case CEC_OP_RECORD_SRC_ANALOG:
-		cec_msg_record_on_analog(msg,
-					 rec_src->analog.ana_bcast_type,
-					 rec_src->analog.ana_freq,
-					 rec_src->analog.bcast_system);
-		break;
-	case CEC_OP_RECORD_SRC_EXT_PLUG:
-		cec_msg_record_on_plug(msg, rec_src->ext_plug.plug);
-		break;
-	case CEC_OP_RECORD_SRC_EXT_PHYS_ADDR:
-		cec_msg_record_on_phys_addr(msg,
-					    rec_src->ext_phys_addr.phys_addr);
-		break;
-	}
-	msg->reply = reply ? CEC_MSG_RECORD_STATUS : 0;
-}
-#define cec_msg_record_on cec_msg_record_on_reply
-
 #define VOLUME_MAX 0x64
 #define VOLUME_MIN 0
 
