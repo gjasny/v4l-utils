@@ -31,48 +31,6 @@
 
 #include "cec-compliance.h"
 
-/*
- * cec-funcs.h doesn't have the reply argument for these CEC messages.
- * A fix is pending but not yet merged. Once it is merged this workaround
- * can be removed.
- */
-static inline void cec_msg_record_on_reply(struct cec_msg *msg,
-					 bool reply,
-					 const struct cec_op_record_src *rec_src)
-{
-	switch (rec_src->type) {
-	case CEC_OP_RECORD_SRC_OWN:
-		cec_msg_record_on_own(msg);
-		break;
-	case CEC_OP_RECORD_SRC_DIGITAL:
-		cec_msg_record_on_digital(msg, &rec_src->digital);
-		break;
-	case CEC_OP_RECORD_SRC_ANALOG:
-		cec_msg_record_on_analog(msg,
-					 rec_src->analog.ana_bcast_type,
-					 rec_src->analog.ana_freq,
-					 rec_src->analog.bcast_system);
-		break;
-	case CEC_OP_RECORD_SRC_EXT_PLUG:
-		cec_msg_record_on_plug(msg, rec_src->ext_plug.plug);
-		break;
-	case CEC_OP_RECORD_SRC_EXT_PHYS_ADDR:
-		cec_msg_record_on_phys_addr(msg,
-					    rec_src->ext_phys_addr.phys_addr);
-		break;
-	}
-	msg->reply = reply ? CEC_MSG_RECORD_STATUS : 0;
-}
-#define cec_msg_record_on cec_msg_record_on_reply
-
-static inline void cec_msg_record_off_reply(struct cec_msg *msg, bool reply)
-{
-	msg->len = 2;
-	msg->msg[1] = CEC_MSG_RECORD_OFF;
-	msg->reply = reply ? CEC_MSG_RECORD_STATUS : 0;
-}
-#define cec_msg_record_off cec_msg_record_off_reply
-
 #define test_case(name, tags, subtests) {name, tags, subtests, ARRAY_SIZE(subtests)}
 #define test_case_ext(name, tags, subtests) {name, tags, subtests, subtests##_size}
 
@@ -1412,7 +1370,7 @@ static struct remote_test tests[] = {
 	test_case("One Touch Record feature",
 		  TAG_ONE_TOUCH_RECORD,
 		  one_touch_rec_subtests),
-	test_case("Timer Progrmaming feature",
+	test_case("Timer Programming feature",
 		  TAG_TIMER_PROGRAMMING,
 		  timer_prog_subtests),
 	test_case("Capability Discovery and Control feature",
