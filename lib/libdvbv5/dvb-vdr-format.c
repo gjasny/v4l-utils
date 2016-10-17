@@ -198,26 +198,26 @@ static const struct dvb_parse_table sys_dvbs2_table[] = {
 };
 
 static const struct dvb_parse_table sys_dvbt_table[] = {
-	{ DTV_DELIVERY_SYSTEM, PTABLE(vdr_parse_delivery_system) },
 	{ DTV_BANDWIDTH_HZ, PTABLE(vdr_parse_bandwidth) },
 	{ DTV_CODE_RATE_HP, PTABLE(vdr_parse_code_rate_hp) },
 	{ DTV_CODE_RATE_LP, PTABLE(vdr_parse_code_rate_lp) },
+	{ DTV_GUARD_INTERVAL, PTABLE(vdr_parse_guard_interval) },
 	{ DTV_INVERSION, PTABLE(vdr_parse_inversion) },
 	{ DTV_MODULATION, PTABLE(vdr_parse_modulation) },
+	{ DTV_DELIVERY_SYSTEM, PTABLE(vdr_parse_delivery_system) },
 	{ DTV_TRANSMISSION_MODE, PTABLE(vdr_parse_trans_mode) },
-	{ DTV_GUARD_INTERVAL, PTABLE(vdr_parse_guard_interval) },
 	{ DTV_HIERARCHY, PTABLE(vdr_parse_hierarchy) },
 };
 
 static const struct dvb_parse_table sys_dvbt2_table[] = {
-	{ DTV_DELIVERY_SYSTEM, PTABLE(vdr_parse_delivery_system) },
 	{ DTV_BANDWIDTH_HZ, PTABLE(vdr_parse_bandwidth) },
 	{ DTV_CODE_RATE_HP, PTABLE(vdr_parse_code_rate_hp) },
 	{ DTV_CODE_RATE_LP, PTABLE(vdr_parse_code_rate_lp) },
+	{ DTV_GUARD_INTERVAL, PTABLE(vdr_parse_guard_interval) },
 	{ DTV_INVERSION, PTABLE(vdr_parse_inversion) },
 	{ DTV_MODULATION, PTABLE(vdr_parse_modulation) },
+	{ DTV_DELIVERY_SYSTEM, PTABLE(vdr_parse_delivery_system) },
 	{ DTV_TRANSMISSION_MODE, PTABLE(vdr_parse_trans_mode) },
-	{ DTV_GUARD_INTERVAL, PTABLE(vdr_parse_guard_interval) },
 	{ DTV_HIERARCHY, PTABLE(vdr_parse_hierarchy) },
 	/* DVB-T2 specifics */
 	{ DTV_STREAM_ID, NULL, },
@@ -378,6 +378,9 @@ int dvb_write_format_vdr(const char *fname,
 		/* Output symbol rate */
 		srate = 27500000;
 		switch(delsys) {
+		case SYS_DVBT:
+			srate = 0;
+			break;
 		case SYS_DVBS:
 		case SYS_DVBS2:
 		case SYS_DVBC_ANNEX_A:
