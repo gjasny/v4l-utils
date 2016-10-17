@@ -309,13 +309,14 @@ int dvb_write_format_vdr(const char *fname,
 		fprintf(fp, "%s", entry->channel);
 		if (entry->vchannel)
 			fprintf(fp, ",%s", entry->vchannel);
+		fprintf(fp, ":");
 
 		/*
 		 * Output frequency:
 		 *	in kHz for terrestrial/cable
 		 *	in MHz for satellite
 		 */
-		fprintf(fp, ":%i:", freq / 1000);
+		fprintf(fp, "%i:", freq / 1000);
 
 		/* Output modulation parameters */
 		fmt = &formats[i];
@@ -349,20 +350,30 @@ int dvb_write_format_vdr(const char *fname,
 
 			fprintf(fp, "%s", table->table[data]);
 		}
-
-		/* Output format type */
-		fprintf(fp, ":%s:", id);
+		fprintf(fp, ":");
 
 		/*
-		 * Output satellite location
-		 * FIXME: probably require some adjustments to match the
-		 *	  format expected by VDR.
+		 * Output sources configuration for VDR
+		 *
+		 *   S (satellite) xy.z (orbital position in degrees) E or W (east or west)
+		 *
+		 *   FIXME: in case of ATSC we use "A", this is what w_scan does
 		 */
-		switch(delsys) {
-		case SYS_DVBS:
-		case SYS_DVBS2:
-			fprintf(fp, "%s:", entry->location);
+
+		if (entry->location) {
+			switch(delsys) {
+			case SYS_DVBS:
+			case SYS_DVBS2:
+				fprintf(fp, "%s", entry->location);
+				break;
+			default:
+				fprintf(fp, "%s", id);
+				break;
+			}
+		} else {
+			fprintf(fp, "%s", id);
 		}
+		fprintf(fp, ":");
 
 		/* Output symbol rate */
 		srate = 27500000;
@@ -407,10 +418,16 @@ int dvb_write_format_vdr(const char *fname,
 		/* Output Service ID */
 		fprintf(fp, "%d:", entry->service_id);
 
-		/* Output SID, NID, TID and RID */
-		fprintf(fp, "0:0:0:");
+		/* Output Network ID */
+		fprintf(fp, "0:");
 
-		fprintf(fp, "\n");
+		/* Output Transport Stream ID */
+		fprintf(fp, "0:");
+
+		/* Output Radio ID
+		 * this is the last entry, tagged bei a new line (not a colon!)
+		 */
+		fprintf(fp, "0\n");
 		line++;
 	};
 	fclose (fp);
