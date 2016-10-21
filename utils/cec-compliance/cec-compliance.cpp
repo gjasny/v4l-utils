@@ -1359,7 +1359,8 @@ int main(int argc, char **argv)
 			if (!(node.adap_la_mask & (1 << from)))
 				continue;
 			for (unsigned to = 0; to <= 15; to++)
-				if ((remote_la_mask & (1 << to)) &&
+				if (!(node.adap_la_mask & (1 << to)) &&
+				    (remote_la_mask & (1 << to)) &&
 				    node.remote[to].phys_addr != CEC_PHYS_ADDR_INVALID)
 					testRemote(&node, from, to, test_tags, options[OptInteractive]);
 		}
