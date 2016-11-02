@@ -320,6 +320,10 @@ static std::string laflags2s(unsigned flags)
 	s = "(";
 	if (flags & CEC_LOG_ADDRS_FL_ALLOW_UNREG_FALLBACK)
 		s += "Allow Fallback to Unregistered, ";
+	if (flags & CEC_LOG_ADDRS_FL_ALLOW_RC_PASSTHRU)
+		s += "Allow RC Passthrough, ";
+	if (flags & CEC_LOG_ADDRS_FL_CDC_ONLY)
+		s += "CDC-Only, ";
 	if (s.length())
 		s.erase(s.length() - 2, 2);
 	return s + ")";
