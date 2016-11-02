@@ -22,8 +22,8 @@ sub process_func
 	my $opt = $func;
 	$opt =~ s/_([a-z])/\U\1/g;
 	$func_args =~ s/.*\((.*)\).*/\1/;
-	my $has_reply = $func_args =~ /^bool reply/;
-	$func_args =~ s/^bool reply,? ?//;
+	my $has_reply = $func_args =~ /^int reply/;
+	$func_args =~ s/^int reply,? ?//;
 	my $arg_names;
 	my $arg_ptrs;
 	my $name, $type, $size;
@@ -447,7 +447,7 @@ printf "%s\t}\n};\n\n", $messages;
 if ($is_log == 0) {
 	printf "static void usage_options(int ch)\n{\n";
 	printf "%s}\n\n", $help;
-	printf "static void parse_msg_args(struct cec_msg &msg, bool reply, const message *opt, int ch)\n{\n";
+	printf "static void parse_msg_args(struct cec_msg &msg, int reply, const message *opt, int ch)\n{\n";
 	printf "\tchar *value, *subs = optarg;\n\n";
 	printf "\tswitch (ch) {\n";
 	$switch =~ s/(service_id_method, dig_bcast_system, transport_id, service_id, orig_network_id, program_number, channel_number_fmt, major, minor)/args2digital_service_id(\1)/g;
