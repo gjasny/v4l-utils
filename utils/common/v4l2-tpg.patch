@@ -1,6 +1,6 @@
 --- utils/common/v4l2-tpg.h.bak	2016-04-22 09:22:11.168936563 +0200
 +++ utils/common/v4l2-tpg.h	2016-04-22 09:23:07.337262639 +0200
-@@ -20,13 +20,49 @@
+@@ -20,13 +20,56 @@
  #ifndef _V4L2_TPG_H_
  #define _V4L2_TPG_H_
  
@@ -27,6 +27,13 @@
 +#define __packed __attribute__((packed))
 +#define pr_info printf
 +#define noinline
++
++#ifndef min
++#define min(a,b)	((a) < (b) ? (a) : (b))
++#define max(a,b)	((a) > (b) ? (a) : (b))
++#endif /* !min */
++#define min3(x, y, z) min((typeof(x))min(x, y), z)
++#define max3(x, y, z) max((typeof(x))max(x, y), z)
 +
 +static inline void vfree(void *p)
 +{

@@ -19,6 +19,9 @@
 
 #include "capture-win.h"
 
+#undef min
+#undef max
+
 #include <QCloseEvent>
 #include <QLabel>
 #include <QImage>
