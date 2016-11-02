@@ -163,32 +163,20 @@ static int arc_initiate_tx(struct node *node, unsigned me, unsigned la, bool int
 		return NOTAPPLICABLE;
 
 	struct cec_msg msg = {};
-	bool got_response = false;
 
-	/* TODO: CEC framework should perhaps support more than one possible
-	   reply opcode for a message.
-
-	   An ARC Tx device can reply to the Initiate ARC message with either
-	   Report ARC Initiated or Report ARC Terminated, in addition to Feature
-	   Abort. The CEC framework currently doesn't handle several possible
-	   reply messages, so when setting it to expect a reply, only Report ARC
-	   Initiated will be recognized as a reply, and it will time out when
-	   receiving Report ARC Terminated.
-
-	   For now, this is handled manually by looping over the received messages
-	   after sending Initiate ARC. */
-	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
-
-	doioctl(node, CEC_S_MODE, &mode);
+	/*
+	 * Note that this is a special case: INITIATE_ARC can reply with two possible
+	 * messages: CEC_MSG_REPORT_ARC_INITIATED or CEC_MSG_REPORT_ARC_TERMINATED.
+	 * It's the only message that behaves like this.
+	 */
 	cec_msg_init(&msg, me, la);
-	cec_msg_initiate_arc(&msg, false);
+	cec_msg_initiate_arc(&msg, true);
 	fail_on_test(!transmit_timeout(node, &msg));
-	got_response = util_receive(node, la, &msg, CEC_MSG_INITIATE_ARC,
-				    CEC_MSG_REPORT_ARC_INITIATED, CEC_MSG_REPORT_ARC_TERMINATED);
-	mode = CEC_MODE_INITIATOR;
-	doioctl(node, CEC_S_MODE, &mode);
-
-	if (!got_response || (got_response && unrecognized_op(&msg))) {
+	if (timed_out(&msg)) {
+		warn("Timed out waiting for Report ARC Initiated/Terminated.\n");
+		return PRESUMED_OK;
+	}
+	if (unrecognized_op(&msg)) {
 		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].has_arc_tx);
 		return NOTSUPPORTED;
 	}

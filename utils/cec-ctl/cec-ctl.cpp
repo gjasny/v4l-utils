@@ -657,6 +657,8 @@ enum Option {
 	OptUnregistered,
 	OptCECVersion1_4,
 	OptAllowUnregFallback,
+	OptNoRC,
+	OptReplyToFollowers,
 	OptListUICommands,
 	OptRcTVProfile1,
 	OptRcTVProfile2,
@@ -711,6 +713,8 @@ static struct option long_options[] = {
 	{ "vendor-id", required_argument, 0, OptVendorID },
 	{ "cec-version-1.4", no_argument, 0, OptCECVersion1_4 },
 	{ "allow-unreg-fallback", no_argument, 0, OptAllowUnregFallback },
+	{ "no-rc-passthrough", no_argument, 0, OptNoRC },
+	{ "reply-to-followers", no_argument, 0, OptReplyToFollowers },
 	{ "clear", no_argument, 0, OptClear },
 	{ "monitor", no_argument, 0, OptMonitor },
 	{ "monitor-all", no_argument, 0, OptMonitorAll },
@@ -776,6 +780,8 @@ static void usage(void)
 	       "  -v, --verbose            Turn on verbose reporting\n"
 	       "  --cec-version-1.4        Use CEC Version 1.4 instead of 2.0\n"
 	       "  --allow-unreg-fallback   Allow fallback to Unregistered\n"
+	       "  --no-rc-passthrough      Disable the RC passthrough\n"
+	       "  --reply-to-followers     The reply will be sent to followers as well\n"
 	       "  --list-ui-commands       List all UI commands that can be used with --user-control-pressed\n"
 	       "\n"
 	       "  --tv                     This is a TV\n"
@@ -1689,6 +1695,10 @@ int main(int argc, char **argv)
 		laddrs.vendor_id = vendor_id;
 		if (options[OptAllowUnregFallback])
 			laddrs.flags |= CEC_LOG_ADDRS_FL_ALLOW_UNREG_FALLBACK;
+		if (!options[OptNoRC] && flags != (1 << CEC_OP_PRIM_DEVTYPE_SWITCH))
+			laddrs.flags |= CEC_LOG_ADDRS_FL_ALLOW_RC_PASSTHRU;
+		if (options[OptCDCOnly])
+			laddrs.flags |= CEC_LOG_ADDRS_FL_CDC_ONLY;
 
 		for (unsigned i = 0; i < 8; i++) {
 			unsigned la_type;
@@ -1840,6 +1850,7 @@ int main(int argc, char **argv)
 		       (cec_msg_is_broadcast(&msg) || to == 0xf) ? "all" : la2s(to),
 		       from, cec_msg_is_broadcast(&msg) ? 0xf : to);
 		msg.msg[0] |= (from << 4) | (cec_msg_is_broadcast(&msg) ? 0xf : to);
+		msg.flags = options[OptReplyToFollowers] ? CEC_MSG_FL_REPLY_TO_FOLLOWERS : 0;
 		log_msg(&msg);
 		if (doioctl(&node, CEC_TRANSMIT, &msg))
 			continue;
