@@ -273,6 +273,7 @@ int testTransmit(struct node *node)
 		msg.len = 1;
 		msg.timeout = 0;
 		msg.reply = 0;
+		msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
 
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 
@@ -307,6 +308,7 @@ int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 1001;
+			msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
 			cec_msg_give_physical_addr(&msg, true);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(msg.len != 5);
@@ -329,6 +331,7 @@ int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 0;
+			msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
 			cec_msg_give_physical_addr(&msg, false);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(msg.timeout);
@@ -351,6 +354,7 @@ int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 1002;
+			msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
 			cec_msg_give_physical_addr(&msg, true);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(msg.timeout != 1002);
@@ -371,6 +375,7 @@ int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 0;
+			msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
 			cec_msg_give_physical_addr(&msg, false);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(msg.timeout);
@@ -523,6 +528,7 @@ int testNonBlocking(struct node *node)
 		memset(&msg, 0xff, sizeof(msg));
 		msg.msg[0] = (la << 4) | invalid_remote;
 		msg.timeout = 0;
+		msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
 		cec_msg_give_physical_addr(&msg, true);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		fail_on_test(msg.len != 2);
@@ -616,6 +622,7 @@ int testNonBlocking(struct node *node)
 		memset(&msg, 0xff, sizeof(msg));
 		msg.msg[0] = (la << 4) | remote_la;
 		msg.timeout = 0;
+		msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
 		cec_msg_give_physical_addr(&msg, true);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		fail_on_test(msg.len != 2);
