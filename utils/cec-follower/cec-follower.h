@@ -93,6 +93,7 @@ struct node {
 	bool has_aud_rate;
 	bool has_deck_ctl;
 	bool has_rec_tv;
+	bool has_osd_string;
 };
 
 struct la_info {

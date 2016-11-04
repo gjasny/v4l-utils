@@ -330,6 +330,9 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 
 		if (to != 0 && to != 14)
 			break;
+		if (!node->has_osd_string)
+			break;
+
 		cec_ops_set_osd_string(&msg, &disp_ctl, osd);
 		switch (disp_ctl) {
 		case CEC_OP_DISP_CTL_DEFAULT:
