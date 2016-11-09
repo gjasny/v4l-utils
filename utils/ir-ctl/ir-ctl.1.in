@@ -99,6 +99,9 @@ Prints the help message
 \fB\-\-usage\fR
 Give a short usage message
 .TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Verbose output; this prints the IR before sending.
+.TP
 \fB\-V\fR, \fB\-\-version\fR
 print the v4l2\-utils version
 .PP
