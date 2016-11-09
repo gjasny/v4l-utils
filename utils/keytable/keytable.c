@@ -123,6 +123,7 @@ const struct protocol_map_entry protocol_map[] = {
 	{ "rc5",	NULL,		SYSFS_RC5	},
 	{ "rc-5x",	NULL,		SYSFS_INVALID	},
 	{ "rc5x",	NULL,		SYSFS_INVALID	},
+	{ "rc-5-sz",	NULL,		SYSFS_RC5_SZ	},
 	{ "jvc",	"/jvc_decoder",	SYSFS_JVC	},
 	{ "sony",	"/sony_decoder",SYSFS_SONY	},
 	{ "sony12",	NULL,		SYSFS_INVALID	},
