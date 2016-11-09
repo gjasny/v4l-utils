@@ -26,6 +26,8 @@
 
 #include <config.h>
 
+#include "ir-encode.h"
+
 #include <linux/lirc.h>
 
 #ifdef ENABLE_NLS
@@ -82,6 +84,7 @@ static const struct argp_option options[] = {
 	{ "features",	'f',	0,		0,	N_("list lirc device features") },
 	{ "record",	'r',	N_("FILE"),	OPTION_ARG_OPTIONAL,	N_("record IR to stdout or file") },
 	{ "send",	's',	N_("FILE"),	0,	N_("send IR pulse and space file") },
+	{ "scancode", 'S',	N_("SCANCODE"),	0,	N_("send IR scancode in protocol specified") },
 		{ .doc = N_("Recording options:") },
 	{ "one-shot",	'1',	0,		0,	N_("end recording after first message") },
 	{ "wideband",	'w',	0,		0,	N_("use wideband receiver aka learning mode") },
@@ -103,6 +106,7 @@ static const char args_doc[] = N_(
 	"--features\n"
 	"--record [save to file]\n"
 	"--send [file to send]\n"
+	"--scancode [scancode to send]\n"
 	"[to set lirc option]");
 
 static const char doc[] = N_(
@@ -115,7 +119,8 @@ static const char doc[] = N_(
 	"  DUTY     - the duty cycle to use for sending\n"
 	"  EMITTERS - comma separated list of emitters to use for sending, e.g. 1,2\n"
 	"  RANGE    - set range of accepted carrier frequencies, e.g. 20000-40000\n"
-	"  TIMEOUT  - set length of space before recording stops in microseonds\n\n"
+	"  TIMEOUT  - set length of space before recording stops in microseconds\n"
+	"  SCANCODE - protocol:scancode, e.g. nec:0xa814\n\n"
 	"Note that most lirc setting have global state, i.e. the device will remain\n"
 	"in this state until set otherwise.");
 
@@ -130,6 +135,20 @@ static int strtoint(const char *p, const char *unit)
 		return 0;
 
 	return arg;
+}
+
+static bool strtoscancode(const char *p, unsigned *ret)
+{
+	char *end;
+	long arg = strtol(p, &end, 0);
+	if (end == NULL || end[0] != 0)
+		return false;
+
+	if (arg <= 0 || arg >= 0xffffffff)
+		return false;
+
+	*ret = arg;
+	return true;
 }
 
 static unsigned parse_emitters(char *p)
@@ -193,6 +212,54 @@ static struct file *read_file(const char *fname)
 			continue;
 		}
 
+		if (strcmp(keyword, "scancode") == 0) {
+			enum rc_proto proto;
+			unsigned scancode, carrier;
+			char *scancodestr;
+
+			if (!expect_pulse) {
+				fprintf(stderr, _("error: %s:%d: space must precede scancode\n"), fname, lineno);
+				return NULL;
+			}
+
+			scancodestr = strchr(p, ':');
+			if (!scancodestr) {
+				fprintf(stderr, _("error: %s:%d: scancode argument '%s' should in protocol:scancode format\n"), fname, lineno, p);
+				return NULL;
+			}
+
+			*scancodestr++ = 0;
+
+			if (!protocol_match(p, &proto)) {
+				fprintf(stderr, _("error: %s:%d: protocol '%s' not found\n"), fname, lineno, p);
+				return NULL;
+			}
+
+			if (!strtoscancode(scancodestr, &scancode)) {
+				fprintf(stderr, _("error: %s:%d: invalid scancode '%s'\n"), fname, lineno, scancodestr);
+				return NULL;
+			}
+
+			if (scancode & ~protocol_scancode_mask(proto)) {
+				fprintf(stderr, _("error: %s:%d: invalid scancode '%s' for protocol '%s'\n"), fname, lineno, scancodestr, protocol_name(proto));
+				return NULL;
+			}
+
+			if (len + protocol_max_size(proto) >= LIRCBUF_SIZE) {
+				fprintf(stderr, _("error: %s:%d: too much IR for one transmit\n"), fname, lineno);
+				return NULL;
+			}
+
+			carrier = protocol_carrier(proto);
+			if (f->carrier && f->carrier != carrier)
+				fprintf(stderr, _("error: %s:%d: carrier already specified\n"), fname, lineno);
+			else
+				f->carrier = carrier;
+
+			len += protocol_encode(proto, scancode, f->buf);
+			continue;
+		}
+
 		int arg = strtoint(p, "");
 		if (arg == 0) {
 			fprintf(stderr, _("warning: %s:%d: invalid argument '%s'\n"), fname, lineno, p);
@@ -225,7 +292,7 @@ static struct file *read_file(const char *fname)
 				f->buf[len++] = arg;
 			expect_pulse = false;
 		} else if (strcmp(keyword, "carrier") == 0) {
-			if (f->carrier) {
+			if (f->carrier && f->carrier != arg) {
 				fprintf(stderr, _("warning: %s:%d: carrier already specified\n"), fname, lineno);
 			} else {
 				f->carrier = arg;
@@ -260,6 +327,48 @@ static struct file *read_file(const char *fname)
 	return f;
 }
 
+static struct file *read_scancode(const char *name)
+{
+	enum rc_proto proto;
+	struct file *f;
+	unsigned scancode;
+	char *pstr;
+	char *p = strchr(name, ':');
+
+	if (!p) {
+		fprintf(stderr, _("error: scancode '%s' most be in protocol:scancode format\n"), name);
+		return NULL;
+	}
+
+	pstr = strndupa(name, p - name);
+
+	if (!protocol_match(pstr, &proto)) {
+		fprintf(stderr, _("error: protocol '%s' not found\n"), pstr);
+		return NULL;
+	}
+
+	if (!strtoscancode(p + 1, &scancode)) {
+		fprintf(stderr, _("error: invalid scancode '%s'\n"), p + 1);
+		return NULL;
+	}
+
+	if (scancode & ~protocol_scancode_mask(proto)) {
+		fprintf(stderr, _("error: invalid scancode '%s' for protocol '%s'\n"), p + 1, protocol_name(proto));
+		return NULL;
+	}
+
+	f = malloc(sizeof(*f));
+	if (f == NULL) {
+		fprintf(stderr, _("Failed to allocate memory\n"));
+		return NULL;
+	}
+
+	f->carrier = protocol_carrier(proto);
+	f->fname = name;
+	f->len = protocol_encode(proto, scancode, f->buf);
+
+	return f;
+}
 
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
@@ -380,6 +489,23 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			p->next = s;
 		}
 		break;
+	case 'S':
+		if (arguments->record || arguments->features)
+			argp_error(state, _("send can not be combined with record or features option"));
+		s = read_scancode(arg);
+		if (s == NULL)
+			exit(EX_DATAERR);
+
+		s->next = NULL;
+		if (arguments->send == NULL)
+			arguments->send = s;
+		else {
+			struct file *p = arguments->send;
+			while (p->next) p = p->next;
+			p->next = s;
+		}
+		break;
+
 	case ARGP_KEY_END:
 		if (!arguments->work_to_do)
 			argp_usage(state);

@@ -12,10 +12,13 @@ ir\-ctl \- a swiss\-knife tool to handle raw IR and to set lirc options
 [\fIOPTION\fR]... \fI\-\-send\fR [\fIpulse and space file to send\fR]
 .br
 .B ir\-ctl
+[\fIOPTION\fR]... \fI\-\-scancode\fR [\fIprotocol and scancode to send\fR]
+.br
+.B ir\-ctl
 [\fIOPTION\fR]... \fI\-\-record\fR [\fIsave to file\fR]
 .SH DESCRIPTION
 ir\-ctl is a tool that allows one to list the features of a lirc device,
-set its options, record raw IR and send raw IR.
+set its options, record raw IR, send raw IR or send complete IR scancodes.
 .PP
 Note: You need to have read or write permissions on the /dev/lirc device
 for options to work.
@@ -35,6 +38,10 @@ save to the filename.
 Send IR in text file. It must be in the format described below. If this
 option is specified multiple times, send all files in order with 125ms delay
 between them.
+.TP
+\fB-S\fR, \fB\-\-scancode\fR=\fIPROTOCOL:SCANCODE\fR
+Send the IR scancode in the protocol specified. The protocol must one of
+the protocols listed below, followed by a semicolon and the scancode number.
 .TP
 \fB\-1\fR, \fB\-\-oneshot\fR
 When recording, stop recording after the first message, i.e. after a space or
@@ -106,43 +113,74 @@ by length in microseconds. The following is a rc-5 encoded message:
 .PP
 	carrier 36000
 .br
-	pulse 920
+	pulse 940
 .br
-	space 110
+	space 860
 .br
-	pulse 270
+	pulse 1790
 .br
-	space 380
+	space 1750
 .br
-	pulse 1800
+	pulse 880
 .br
-	space 1560
+	space 880
 .br
-	pulse 1730
+	pulse 900
 .br
-	space 1630
+	space 890
 .br
-	pulse 1730
+	pulse 870
 .br
-	space 1640
+	space 900
 .br
-	pulse 850
+	pulse 1750
 .br
-	space 830
+	space 900
 .br
-	pulse 1690
+	pulse 890
 .br
-	space 820
+	space 910
 .br
-	pulse 860
+	pulse 840
 .br
-	space 1660
+	space 920
 .br
-	pulse 1690
+	pulse 870
 .br
-	space 830
+	space 920
 .br
-	pulse 850
+	pulse 840
+.br
+	space 920
+.br
+	pulse 870
+.br
+	space 1810
+.br
+	pulse 840
+.PP
+Rather than specifying the raw IR, you can also specify the scancode and
+protocol you want to send. This will also automatically set the correct
+carrier. The above can be written as:
+.PP
+	scancode rc5:0x1e01
+.PP
+Do not specify scancodes with different protocols in one file, as the
+carrier might differ and the transmitter cannot send this. Multiple
+scancodes can be specified in one file but ensure that the rules for the
+protocol are met by inserting an appropriate space between them. Also,
+there are limits to what lirc devices can send in one go.
+.PP
+.SS Supported Protocols
+A scancode with protocol can be specified on the command line or in the
+pulse and space file. The following protocols are supported:
+\fBrc5\fR, \fBrc5x\fR, \fBrc5_sz\fR, \fBjvc\fR, \fBsony12\fR, \fBsony\fB15\fR,
+\fBsony20\fR, \fBnec\fR, \fBnecx\fR, \fBnec32\fR, \fBsanyo\fR, \fBrc6_0\fR,
+\fBrc6_6a_20\fR, \fBrc6_6a_24\fR, \fBrc6_6a_32\fR, \fBrc6_mce\fR, \fBsharp\fR.
+If the scancode starts with 0x it will be interpreted as a
+hexidecimal number, and if it starts with 0 it will be interpreted as an
+octal number.
+.PP
 .SS Wideband and narrowband receiver
 Most IR receivers have a narrowband and wideband receiver. The narrowband
 receiver can receive over longer distances (usually around 10 metres without
@@ -177,6 +215,10 @@ To restore the normal (longer distance) receiver:
 To send the pulse and space file \fBplay\fR on emitter 3:
 .br
 	\fBir\-ctl \-e 3 \-\-send=play\fR
+.PP
+To send the rc-5 hauppuage '1' scancode:
+.br
+	\fBir\-ctl \-S rc5:0x1e01
 .PP
 To restore the IR receiver on /dev/lirc2 to the default state:
 .br
