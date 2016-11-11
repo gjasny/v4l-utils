@@ -1843,7 +1843,7 @@ int main(int argc, char **argv)
 		log_msg(&msg);
 		if (doioctl(&node, CEC_TRANSMIT, &msg))
 			continue;
-		if (msg.reply) {
+		if ((msg.tx_status & CEC_TX_STATUS_OK) && msg.timeout) {
 			printf("    Received from %s (%d):\n    ", la2s(cec_msg_initiator(&msg)),
 			       cec_msg_initiator(&msg));
 			log_msg(&msg);
