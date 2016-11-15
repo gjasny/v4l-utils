@@ -177,7 +177,7 @@ void ApplicationWindow::addTpgTab(int m_winWidth)
 	addWidget(grid, m_tpgXferFunc);
 	connect(m_tpgXferFunc, SIGNAL(activated(int)), SLOT(tpgXferFuncChanged()));
 
-	addLabel(grid, "Y'CbCr Encoding");
+	addLabel(grid, "Y'CbCr/HSV Encoding");
 	m_tpgYCbCrEnc = new QComboBox(w);
 	m_tpgYCbCrEnc->addItem("Use Format", QVariant(V4L2_YCBCR_ENC_DEFAULT));
 	m_tpgYCbCrEnc->addItem("ITU-R 601", QVariant(V4L2_YCBCR_ENC_601));
@@ -187,6 +187,8 @@ void ApplicationWindow::addTpgTab(int m_winWidth)
 	m_tpgYCbCrEnc->addItem("BT.2020", QVariant(V4L2_YCBCR_ENC_BT2020));
 	m_tpgYCbCrEnc->addItem("BT.2020 Constant Luminance", QVariant(V4L2_YCBCR_ENC_BT2020_CONST_LUM));
 	m_tpgYCbCrEnc->addItem("SMPTE 240M", QVariant(V4L2_YCBCR_ENC_SMPTE240M));
+	m_tpgYCbCrEnc->addItem("HSV with Hue 0-179", QVariant(V4L2_HSV_ENC_180));
+	m_tpgYCbCrEnc->addItem("HSV with Hue 0-255", QVariant(V4L2_HSV_ENC_256));
 	addWidget(grid, m_tpgYCbCrEnc);
 	connect(m_tpgYCbCrEnc, SIGNAL(activated(int)), SLOT(tpgColorspaceChanged()));
 
