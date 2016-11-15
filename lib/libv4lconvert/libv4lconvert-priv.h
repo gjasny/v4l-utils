@@ -271,6 +271,9 @@ void v4lconvert_hm12_to_bgr24(const unsigned char *src,
 void v4lconvert_hm12_to_yuv420(const unsigned char *src,
 		unsigned char *dst, int width, int height, int yvu);
 
+void v4lconvert_hsv_to_rgb24(const unsigned char *src, unsigned char *dest,
+		int width, int height, int bgr, int Xin, unsigned char hsv_enc);
+
 void v4lconvert_rotate90(unsigned char *src, unsigned char *dest,
 		struct v4l2_format *fmt);
 
