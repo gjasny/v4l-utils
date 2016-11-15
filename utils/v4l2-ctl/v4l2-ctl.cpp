@@ -451,6 +451,10 @@ static std::string ycbcr_enc2s(int val)
 		return "BT.2020 Constant Luminance";
 	case V4L2_YCBCR_ENC_SMPTE240M:
 		return "SMPTE 240M";
+	case V4L2_HSV_ENC_180:
+		return "HSV with Hue 0-179";
+	case V4L2_HSV_ENC_256:
+		return "HSV with Hue 0-255";
 	default:
 		return "Unknown (" + num2s(val) + ")";
 	}
@@ -532,7 +536,7 @@ void printfmt(const struct v4l2_format &vfmt)
 		printf("\tSize Image        : %u\n", vfmt.fmt.pix.sizeimage);
 		printf("\tColorspace        : %s\n", colorspace2s(vfmt.fmt.pix.colorspace).c_str());
 		printf("\tTransfer Function : %s\n", xfer_func2s(vfmt.fmt.pix.xfer_func).c_str());
-		printf("\tYCbCr Encoding    : %s\n", ycbcr_enc2s(vfmt.fmt.pix.ycbcr_enc).c_str());
+		printf("\tYCbCr/HSV Encoding: %s\n", ycbcr_enc2s(vfmt.fmt.pix.ycbcr_enc).c_str());
 		printf("\tQuantization      : %s\n", quantization2s(vfmt.fmt.pix.quantization).c_str());
 		if (vfmt.fmt.pix.priv == V4L2_PIX_FMT_PRIV_MAGIC)
 			printf("\tFlags             : %s\n", pixflags2s(vfmt.fmt.pix.flags).c_str());
