@@ -307,6 +307,10 @@ while (<>) {
 		($feature) = /^\/\* (.*) Feature/;
 		$feature_usage{$feature} = "";
 	}
+	elsif (/^\/\*.*General Protocol Messages \*\/$/) {
+		$feature = "Abort";
+		$feature_usage{$feature} = "";
+	}
 	if ($operand_name ne "" && !/^#define/) {
 		@{$types{$operand_name}} = @ops;
 		undef @ops;
@@ -352,6 +356,9 @@ while (<>) {
 	chomp;
 	if (/^\/\*.*Feature \*\/$/) {
 		($feature) = /^\/\* (.*) Feature/;
+	}
+	elsif (/^\/\*.*General Protocol Messages \*\/$/) {
+		$feature = "Abort";
 	}
 	s/\/\*.*\*\///;
 	if ($comment) {
