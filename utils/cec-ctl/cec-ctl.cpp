@@ -494,12 +494,14 @@ static void log_u8_array(const char *arg_name, unsigned num, const __u8 *vals);
 static void log_unknown_msg(const struct cec_msg *msg);
 
 #define VENDOR_EXTRA \
-	"  --vendor-command=cmd=<byte>[:<byte>]*\n" \
+	"  --vendor-command=payload=<byte>[:<byte>]*\n" \
 	"                                  Send VENDOR_COMMAND message (" xstr(CEC_MSG_VENDOR_COMMAND) ")\n" \
 	"  --vendor-command-with-id=vendor-id=<val>,cmd=<byte>[:<byte>]*\n" \
 	"                                  Send VENDOR_COMMAND_WITH_ID message (" xstr(CEC_MSG_VENDOR_COMMAND_WITH_ID) ")\n" \
 	"  --vendor-remote-button-down=rc-code=<byte>[:<byte>]*\n" \
-	"                                  Send VENDOR_REMOTE_BUTTON_DOWN message (" xstr(CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN) ")\n"
+	"                                  Send VENDOR_REMOTE_BUTTON_DOWN message (" xstr(CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN) ")\n" \
+	"  --custom-command=cmd=<byte>,payload=<byte>[:<byte>]*\n" \
+	"                                  Send custom message\n"
 
 #include "cec-ctl-gen.h"
 
@@ -675,9 +677,10 @@ enum Option {
 	OptFeatSetAudioRate,
 	OptFeatSinkHasARCTx,
 	OptFeatSourceHasARCRx,
-	OptVendorCommand = 509,
-	OptVendorCommandWithID = 510,
-	OptVendorRemoteButtonDown = 511,
+	OptVendorCommand = 508,
+	OptVendorCommandWithID,
+	OptVendorRemoteButtonDown,
+	OptCustomCommand,
 };
 
 struct node {
@@ -754,6 +757,7 @@ static struct option long_options[] = {
 	{ "vendor-remote-button-down", required_argument, 0, OptVendorRemoteButtonDown }, \
 	{ "vendor-command-with-id", required_argument, 0, OptVendorCommandWithID }, \
 	{ "vendor-command", required_argument, 0, OptVendorCommand }, \
+	{ "custom-command", required_argument, 0, OptCustomCommand }, \
 
 	{ 0, 0, 0, 0 }
 };
@@ -1439,7 +1443,7 @@ int main(int argc, char **argv)
 			return 1;
 		case OptVendorCommand: {
 			static const char *arg_names[] = {
-				"cmd",
+				"payload",
 				NULL
 			};
 			char *value, *endptr, *subs = optarg;
@@ -1467,6 +1471,49 @@ int main(int argc, char **argv)
 			}
 			if (size) {
 				cec_msg_vendor_command(&msg, size, bytes);
+				msgs.push_back(msg);
+			}
+			break;
+		}
+		case OptCustomCommand: {
+			static const char *arg_names[] = {
+				"cmd",
+				"payload",
+				NULL
+			};
+			char *value, *endptr, *subs = optarg;
+			bool have_cmd = false;
+			__u8 cmd;
+			__u8 size = 0;
+			__u8 bytes[14];
+
+			while (*subs != '\0') {
+				switch (parse_subopt(&subs, arg_names, &value)) {
+				case 0:
+					cmd = strtol(value, &endptr, 0L);
+					have_cmd = true;
+					break;
+				case 1:
+					while (size < sizeof(bytes)) {
+						bytes[size++] = strtol(value, &endptr, 0L);
+						if (endptr == value) {
+							size--;
+							break;
+						}
+						value = strchr(value, ':');
+						if (value == NULL)
+							break;
+						value++;
+					}
+					break;
+				default:
+					exit(1);
+				}
+			}
+			if (have_cmd) {
+				msg.len = 2 + size;
+				msg.msg[1] = cmd;
+				memcpy(msg.msg + 2, bytes, size);
 				msgs.push_back(msg);
 			}
 			break;
