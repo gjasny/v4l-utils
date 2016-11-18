@@ -1925,7 +1925,12 @@ skip_la:
 				       transmitted ? "Transmitted by" : "Received from",
 				       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
 				log_msg(&msg);
-				if (show_info)
+				if (show_info && transmitted)
+					printf("\tSequence: %u Tx Timestamp: %llu.%03llus\n",
+					       msg.sequence,
+					       msg.tx_ts / 1000000000,
+					       (msg.tx_ts % 1000000000) / 1000000);
+				else if (show_info && !transmitted)
 					printf("\tSequence: %u Rx Timestamp: %llu.%03llus\n",
 					       msg.sequence,
 					       msg.rx_ts / 1000000000,
