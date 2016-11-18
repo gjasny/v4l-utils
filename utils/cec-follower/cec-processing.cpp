@@ -935,8 +935,6 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		/* Device OSD Transfer */
 
 	case CEC_MSG_SET_OSD_NAME:
-		if (!cec_has_tv(1 << me))
-			break;
 		return;
 
 
