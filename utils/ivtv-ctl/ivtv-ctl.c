@@ -35,8 +35,6 @@
 #include <math.h>
 
 #include <linux/videodev2.h>
-#include <linux/dvb/video.h>
-#include <linux/dvb/audio.h>
 
 /* copied from ivtv-driver.h */
 #define IVTV_DBGFLG_WARN    (1 << 0)
@@ -71,13 +69,9 @@ enum Option {
 	OptSetGPIO = 'i',
 	OptListGPIO = 'I',
 	OptPassThrough = 'K',
-	OptFrameSync = 'k',
 	OptReset = 128,
 	OptSetYuvMode,
 	OptGetYuvMode,
-	OptSetAudioMute,
-	OptSetStereoMode,
-	OptSetBilingualMode,
 	OptLast = 256
 };
 
@@ -95,13 +89,9 @@ static struct option long_options[] = {
 	{"set-gpio", required_argument, 0, OptSetGPIO},
 	{"list-gpio", no_argument, 0, OptListGPIO},
 	{"passthrough", required_argument, 0, OptPassThrough},
-	{"sync", no_argument, 0, OptFrameSync},
 	{"reset", required_argument, 0, OptReset},
 	{"get-yuv-mode", no_argument, 0, OptGetYuvMode},
 	{"set-yuv-mode", required_argument, 0, OptSetYuvMode},
-	{"set-audio-mute", required_argument, 0, OptSetAudioMute},
-	{"set-stereo-mode", required_argument, 0, OptSetStereoMode},
-	{"set-bilingual-mode", required_argument, 0, OptSetBilingualMode},
 	{0, 0, 0, 0}
 };
 
@@ -111,7 +101,7 @@ static void usage(void)
 	printf("  -d, --device <dev> use device <dev> instead of /dev/video0\n");
 	printf("  -h, --help         display this help message\n");
 	printf("  -K, --passthrough <mode>\n");
-	printf("                     set passthrough mode: 1 = on, 0 = off [IVTV_IOC_PASSTHROUGH]\n");
+	printf("                     set passthrough mode: 1 = on, 0 = off [IVTV_IOC_PASSTHROUGH_MODE]\n");
 	printf("  --get-yuv-mode     display the current yuv mode\n");
 	printf("  --set-yuv-mode mode=<mode>\n");
 	printf("                     set the current yuv mode:\n");
@@ -119,21 +109,6 @@ static void usage(void)
 	printf("       		     mode 1: interlaced (bottom transmitted first)\n");
 	printf("       		     mode 2: progressive\n");
 	printf("       		     mode 3: auto\n");
-	printf("  --set-audio-mute <mute>\n");
-	printf("       		     0=enable audio during 1.5x and 0.5x playback\n");
-	printf("       		     1=mute audio during 1.5x and 0.5x playback\n");
-	printf("  --set-stereo-mode <mode>\n");
-	printf("       		     mode 0: playback stereo as stereo\n");
-	printf("       		     mode 1: playback left stereo channel as mono\n");
-	printf("       		     mode 2: playback right stereo channel as mono\n");
-	printf("       		     mode 3: playback stereo as mono\n");
-	printf("       		     mode 4: playback stereo as swapped stereo\n");
-	printf("  --set-bilingual-mode <mode>\n");
-	printf("       		     mode 0: playback bilingual as stereo\n");
-	printf("       		     mode 1: playback left bilingual channel as mono\n");
-	printf("       		     mode 2: playback right bilingual channel as mono\n");
-	printf("       		     mode 3: playback bilingual as mono\n");
-	printf("       		     mode 4: playback bilingual as swapped stereo\n");
 	printf("  --reset <mask>     reset the infrared receiver (1) or digitizer (2) [VIDIOC_INT_RESET]\n");
 	printf("\n");
 	printf("Expert options:\n");
@@ -155,30 +130,7 @@ static void usage(void)
 	printf("                     show GPIO input/direction/output bits\n");
 	printf("  -i, --set-gpio [dir=<dir>,]val=<val>\n");
 	printf("                     set GPIO direction bits to <dir> and set output to <val>\n");
-	printf("  -k, --sync         test vsync's capabilities [VIDEO_GET_EVENT]\n");
 	exit(0);
-}
-
-static char *pts_to_string(unsigned long pts, float fps)
-{
-	static char buf[256];
-	int hours, minutes, seconds, fracsec;
-	int frame;
-
-	static const int MPEG_CLOCK_FREQ = 90000;
-	seconds = pts / MPEG_CLOCK_FREQ;
-	fracsec = pts % MPEG_CLOCK_FREQ;
-
-	minutes = seconds / 60;
-	seconds = seconds % 60;
-
-	hours = minutes / 60;
-	minutes = minutes % 60;
-
-	frame = (int)ceilf(((float)fracsec / (float)MPEG_CLOCK_FREQ) * fps);
-
-	snprintf(buf, sizeof(buf), "%d:%02d:%02d:%d", hours, minutes, seconds, frame);
-	return buf;
 }
 
 static void print_debug_mask(int mask)
@@ -332,14 +284,9 @@ int main(int argc, char **argv)
 	unsigned short gpio_dir = 0x0;	/* GPIO direction bits */
 	int gpio_set_dir = 0;
 	int passthrough = 0;
-	long audio_mute = 0;
-	long stereo_mode = 0;
-	long bilingual_mode = 0;
 	int debug_level = 0;
 	__u32 reset = 0;
 	int new_debug_level, gdebug_level;
-	double timestamp;
-	char *ptsstr;
 	char short_options[26 * 2 * 2 + 1];
 
 	if (argc == 1) {
@@ -410,15 +357,6 @@ int main(int argc, char **argv)
 		case OptPassThrough:
 			passthrough = strtol(optarg, 0L, 0);
 			break;
-		case OptSetAudioMute:
-			audio_mute = strtol(optarg, 0L, 0);
-			break;
-		case OptSetStereoMode:
-			stereo_mode = strtol(optarg, 0L, 0);
-			break;
-		case OptSetBilingualMode:
-			bilingual_mode = strtol(optarg, 0L, 0);
-			break;
 		case OptSetGPIO:
 			subs = optarg;
 			while (*subs != '\0') {
@@ -481,40 +419,6 @@ int main(int argc, char **argv)
 
 	/* Setting Opts */
 
-	if (options[OptFrameSync]) {
-		printf("ioctl: VIDEO_GET_EVENT\n");
-
-		for (;;) {
-			struct video_event ev;
-			int fps = 30;
-			v4l2_std_id std;
-
-			if (ioctl(fd, VIDIOC_G_STD, &std) == 0)
-				fps = (std & V4L2_STD_525_60) ? 30 : 25;
-			if (ioctl(fd, VIDEO_GET_EVENT, &ev) < 0) {
-				fprintf(stderr, "ioctl: VIDEO_GET_EVENT failed\n");
-				break;
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-			} else if (ev.timestamp.tv_sec == 0 && ev.timestamp.tv_nsec == 0) {
-#else
-			} else if (ev.timestamp == 0) {
-#endif
-				unsigned long long pts = 0, frame = 0;
-				struct timeval tv;
-				gettimeofday(&tv, NULL);
-				timestamp =
-				    (double)tv.tv_sec +
-				    ((double)tv.tv_usec / 1000000.0);
-
-				ioctl(fd, VIDEO_GET_PTS, &pts);
-				ioctl(fd, VIDEO_GET_FRAME_COUNT, &frame);
-				ptsstr = pts_to_string(pts, fps);
-				printf("%10.6f: pts %-20s, %lld frames\n",
-				     timestamp, ptsstr, frame);
-			}
-		}
-	}
-
 	if (options[OptSetGPIO]) {
 		struct v4l2_dbg_register reg;
 
@@ -572,26 +476,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (options[OptPassThrough]) {
-		long source = passthrough ? VIDEO_SOURCE_DEMUX : VIDEO_SOURCE_MEMORY;
-
-		doioctl(fd, VIDEO_SELECT_SOURCE, (void *)source,
-				"IVTV_IOC_PASSTHROUGH");
-	}
-
-	if (options[OptSetAudioMute]) {
-		doioctl(fd, AUDIO_SET_MUTE, (void *)audio_mute, "AUDIO_SET_MUTE");
-	}
-
-	if (options[OptSetStereoMode]) {
-		doioctl(fd, AUDIO_CHANNEL_SELECT,
-			(void *)stereo_mode, "AUDIO_CHANNEL_SELECT");
-	}
-
-	if (options[OptSetBilingualMode]) {
-		doioctl(fd, AUDIO_BILINGUAL_CHANNEL_SELECT,
-			(void *)bilingual_mode, "AUDIO_BILINGUAL_CHANNEL_SELECT");
-	}
+	if (options[OptPassThrough])
+		doioctl(fd, IVTV_IOC_PASSTHROUGH_MODE, &passthrough,
+				"IVTV_IOC_PASSTHROUGH_MODE");
 
 	if (options[OptReset])
 		doioctl(fd, VIDIOC_INT_RESET, &reset, "VIDIOC_INT_RESET");
