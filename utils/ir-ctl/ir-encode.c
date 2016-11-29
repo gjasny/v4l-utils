@@ -416,6 +416,24 @@ unsigned protocol_scancode_mask(enum rc_proto proto)
 	return encoders[proto].scancode_mask;
 }
 
+bool protocol_scancode_valid(enum rc_proto p, unsigned s)
+{
+	if (s & ~encoders[p].scancode_mask)
+		return false;
+
+	if (p == RC_PROTO_NECX) {
+		return (((s >> 16) ^ ~(s >> 8)) & 0xff) != 0;
+	} else if (p == RC_PROTO_NEC32) {
+		return (((s >> 24) ^ ~(s >> 16)) & 0xff) != 0;
+	} else if (p == RC_PROTO_RC6_MCE) {
+		return (s & 0xffff0000) == 0x800f0000;
+	} else if (p == RC_PROTO_RC6_6A_32) {
+		return (s & 0xffff0000) != 0x800f0000;
+	}
+
+	return true;
+}
+
 unsigned protocol_encode(enum rc_proto proto, unsigned scancode, unsigned *buf)
 {
 	return encoders[proto].encode(proto, scancode, buf);

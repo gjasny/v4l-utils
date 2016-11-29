@@ -242,7 +242,7 @@ static struct file *read_file(const char *fname)
 				return NULL;
 			}
 
-			if (scancode & ~protocol_scancode_mask(proto)) {
+			if (!protocol_scancode_valid(proto, scancode)) {
 				fprintf(stderr, _("error: %s:%d: invalid scancode '%s' for protocol '%s'\n"), fname, lineno, scancodestr, protocol_name(proto));
 				return NULL;
 			}
@@ -354,7 +354,7 @@ static struct file *read_scancode(const char *name)
 		return NULL;
 	}
 
-	if (scancode & ~protocol_scancode_mask(proto)) {
+	if (!protocol_scancode_valid(proto, scancode)) {
 		fprintf(stderr, _("error: invalid scancode '%s' for protocol '%s'\n"), p + 1, protocol_name(proto));
 		return NULL;
 	}
