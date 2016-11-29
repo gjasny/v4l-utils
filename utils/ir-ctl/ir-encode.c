@@ -311,6 +311,7 @@ static int rc6_encode(enum rc_proto proto, unsigned scancode, unsigned *buf)
 
 	buf[n++] = NS_TO_US(rc6_unit * 6);
 	buf[n++] = NS_TO_US(rc6_unit * 2);
+	buf[n] = 0;
 
 	switch (proto) {
 	default:
