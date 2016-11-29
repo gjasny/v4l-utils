@@ -261,7 +261,7 @@ static int rc5_encode(enum rc_proto proto, unsigned scancode, unsigned *buf)
 		add_bits(scancode, 6);
 		break;
 	case RC_PROTO_RC5X:
-		add_bits(!!(scancode & 0x4000), 1);
+		add_bits(!(scancode & 0x4000), 1);
 		add_bits(0, 1);
 		add_bits(scancode >> 16, 5);
 		advance_space(NS_TO_US(rc5_unit * 4));
@@ -349,7 +349,7 @@ static const struct {
 	int (*encode)(enum rc_proto proto, unsigned scancode, unsigned *buf);
 } encoders[RC_PROTO_COUNT] = {
 	[RC_PROTO_RC5] = { "rc5", 0x1f3f, 24, 36000, rc5_encode },
-	[RC_PROTO_RC5X] = { "rc5x", 0x1f3f3f, 40, 36000, rc5_encode },
+	[RC_PROTO_RC5X] = { "rc5x", 0x1f7f3f, 40, 36000, rc5_encode },
 	[RC_PROTO_RC5_SZ] = { "rc5_sz", 0x2fff, 26, 36000, rc5_encode },
 	[RC_PROTO_SONY12] = { "sony12", 0x1f007f, 25, 40000, sony_encode },
 	[RC_PROTO_SONY15] = { "sony15", 0xff007f, 31, 40000, sony_encode },
