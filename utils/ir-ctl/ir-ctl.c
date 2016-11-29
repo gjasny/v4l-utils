@@ -146,7 +146,7 @@ static bool strtoscancode(const char *p, unsigned *ret)
 	if (end == NULL || end[0] != 0)
 		return false;
 
-	if (arg <= 0 || arg >= 0xffffffff)
+	if (arg < 0 || arg > 0xffffffff)
 		return false;
 
 	*ret = arg;
