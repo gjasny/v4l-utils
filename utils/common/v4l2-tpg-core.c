@@ -113,6 +113,7 @@ void tpg_init(struct tpg_data *tpg, unsigned w, unsigned h)
 	tpg_s_fourcc(tpg, V4L2_PIX_FMT_RGB24);
 	tpg->colorspace = V4L2_COLORSPACE_SRGB;
 	tpg->perc_fill = 100;
+	tpg->hsv_enc = V4L2_HSV_ENC_180;
 }
 
 int tpg_alloc(struct tpg_data *tpg, unsigned max_w)
