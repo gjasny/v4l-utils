@@ -1307,6 +1307,11 @@ int main(int argc, char **argv)
 		printf("\tCEC_ADAP_G/S_PHYS_ADDR: %s\n", ok(testAdapPhysAddr(&node)));
 		if (node.caps & CEC_CAP_PHYS_ADDR)
 			doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &node.phys_addr);
+		if (node.phys_addr == CEC_PHYS_ADDR_INVALID) {
+			fprintf(stderr, "FAIL: without a valid physical address this test cannot proceed.\n");
+			fprintf(stderr, "Make sure that this CEC adapter is connected to another HDMI sink or source.\n");
+			exit(1);
+		}
 		printf("\tCEC_ADAP_G/S_LOG_ADDRS: %s\n", ok(testAdapLogAddrs(&node)));
 		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
 		if (node.caps & CEC_CAP_LOG_ADDRS) {
