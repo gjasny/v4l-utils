@@ -1289,6 +1289,8 @@ static int testBasicCrop(struct node *node, unsigned type)
 	};
 	struct v4l2_selection sel_def;
 	struct v4l2_selection sel_bounds;
+	int s_sel_ret = EINVAL;
+	int ret;
 
 	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel_crop));
 	fail_on_test(!sel_crop.r.width || !sel_crop.r.height);
@@ -1316,19 +1318,22 @@ static int testBasicCrop(struct node *node, unsigned type)
 		sel_crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 	else
 		sel_crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
+	ret = doioctl(node, VIDIOC_S_SELECTION, &sel_crop);
+	if (ret == ENOTTY)
+		s_sel_ret = ret;
+	fail_on_test(ret != s_sel_ret);
 	// Check handling of invalid type.
 	sel_crop.type = 0xff;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != s_sel_ret);
 	// Check handling of invalid target.
 	sel_crop.type = type;
 	sel_crop.target = 0xffff;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != s_sel_ret);
 	// Check handling of read-only targets.
 	sel_crop.target = V4L2_SEL_TGT_CROP_DEFAULT;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != s_sel_ret);
 	sel_crop.target = V4L2_SEL_TGT_CROP_BOUNDS;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != EINVAL);
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != s_sel_ret);
 	return 0;
 }
 
@@ -1418,6 +1423,7 @@ static int testBasicCompose(struct node *node, unsigned type)
 	struct v4l2_selection sel_def;
 	struct v4l2_selection sel_bounds;
 	struct v4l2_selection sel_padded;
+	int s_sel_ret = EINVAL;
 	int ret;
 
 	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel_compose));
@@ -1454,21 +1460,24 @@ static int testBasicCompose(struct node *node, unsigned type)
 		sel_compose.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 	else
 		sel_compose.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	ret = doioctl(node, VIDIOC_S_SELECTION, &sel_compose);
+	if (ret == ENOTTY)
+		s_sel_ret = ret;
+	fail_on_test(ret != s_sel_ret);
 	// Check handling of invalid type.
 	sel_compose.type = 0xff;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != s_sel_ret);
 	// Check handling of invalid target.
 	sel_compose.type = type;
 	sel_compose.target = 0xffff;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != s_sel_ret);
 	// Check handling of read-only targets.
 	sel_compose.target = V4L2_SEL_TGT_COMPOSE_DEFAULT;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != s_sel_ret);
 	sel_compose.target = V4L2_SEL_TGT_COMPOSE_BOUNDS;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != s_sel_ret);
 	sel_compose.target = V4L2_SEL_TGT_COMPOSE_PADDED;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != EINVAL);
+	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != s_sel_ret);
 	return 0;
 }
 
