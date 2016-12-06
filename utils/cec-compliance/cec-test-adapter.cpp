@@ -860,6 +860,7 @@ int testLostMsgs(struct node *node)
 	struct cec_event ev;
 	__u8 me = node->log_addr[0];
 	__u8 remote = CEC_LOG_ADDR_INVALID;
+	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
 
 	for (unsigned i = 0; i < 15; i++) {
 		if (node->remote_la_mask & (1 << i)) {
@@ -870,6 +871,12 @@ int testLostMsgs(struct node *node)
 
 	fail_on_test(flush_pending_msgs(node));
 	fcntl(node->fd, F_SETFL, fcntl(node->fd, F_GETFL) | O_NONBLOCK);
+
+	// Become follower for this test, otherwise all the replies to
+	// the GET_CEC_VERSION message would have been 'Feature Abort'ed,
+	// unless some other follower was running. By becoming a follower
+	// all the CEC_VERSION replies are just ignored.
+	fail_on_test(doioctl(node, CEC_S_MODE, &mode));
 	cec_msg_init(&msg, me, remote);
 	cec_msg_get_cec_version(&msg, true);
 
@@ -919,6 +926,9 @@ int testLostMsgs(struct node *node)
 
 	/* Should be at least the size of the internal message queue */
 	fail_on_test(pending_msgs < 18 * 3);
+
+	mode = CEC_MODE_INITIATOR;
+	fail_on_test(doioctl(node, CEC_S_MODE, &mode));
 
 	return 0;
 }
