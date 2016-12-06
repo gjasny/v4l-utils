@@ -661,6 +661,7 @@ enum Option {
 	OptAllowUnregFallback,
 	OptNoRC,
 	OptReplyToFollowers,
+	OptTimeout,
 	OptListUICommands,
 	OptRcTVProfile1,
 	OptRcTVProfile2,
@@ -718,6 +719,7 @@ static struct option long_options[] = {
 	{ "allow-unreg-fallback", no_argument, 0, OptAllowUnregFallback },
 	{ "no-rc-passthrough", no_argument, 0, OptNoRC },
 	{ "reply-to-followers", no_argument, 0, OptReplyToFollowers },
+	{ "timeout", required_argument, 0, OptTimeout },
 	{ "clear", no_argument, 0, OptClear },
 	{ "monitor", no_argument, 0, OptMonitor },
 	{ "monitor-all", no_argument, 0, OptMonitorAll },
@@ -786,6 +788,7 @@ static void usage(void)
 	       "  --allow-unreg-fallback   Allow fallback to Unregistered\n"
 	       "  --no-rc-passthrough      Disable the RC passthrough\n"
 	       "  --reply-to-followers     The reply will be sent to followers as well\n"
+	       "  --timeout=<ms>           Set the reply timeout in milliseconds (default is 1000 ms)\n"
 	       "  --list-ui-commands       List all UI commands that can be used with --user-control-pressed\n"
 	       "\n"
 	       "  --tv                     This is a TV\n"
@@ -1290,6 +1293,7 @@ int main(int argc, char **argv)
 	const message *opt;
 	msg_vec msgs;
 	char short_options[26 * 2 * 2 + 1];
+	__u32 timeout = 1000;
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	__u16 phys_addr;
 	__u8 from = 0, to = 0;
@@ -1349,6 +1353,9 @@ int main(int argc, char **argv)
 			break;
 		case OptTo:
 			to = strtoul(optarg, NULL, 0) & 0xf;
+			break;
+		case OptTimeout:
+			timeout = strtoul(optarg, NULL, 0) & 0xf;
 			break;
 		case OptNoReply:
 			reply = false;
@@ -1902,6 +1909,7 @@ int main(int argc, char **argv)
 		       from, cec_msg_is_broadcast(&msg) ? 0xf : to);
 		msg.msg[0] |= (from << 4) | (cec_msg_is_broadcast(&msg) ? 0xf : to);
 		msg.flags = options[OptReplyToFollowers] ? CEC_MSG_FL_REPLY_TO_FOLLOWERS : 0;
+		msg.timeout = msg.reply ? timeout : 0;
 		log_msg(&msg);
 		if (doioctl(&node, CEC_TRANSMIT, &msg))
 			continue;
