@@ -995,45 +995,45 @@ static std::string all_dev_types2s(unsigned types)
 	return s;
 }
 
-static std::string rc_src_prof2s(unsigned prof)
+static std::string rc_src_prof2s(unsigned prof, const std::string &prefix)
 {
 	std::string s;
 
 	prof &= 0x1f;
 	if (prof == 0)
-		return "\t\tNone\n";
+		return prefix + "\t\tNone\n";
 	if (prof & CEC_OP_FEAT_RC_SRC_HAS_DEV_ROOT_MENU)
-		s += "\t\tSource Has Device Root Menu\n";
+		s += prefix + "\t\tSource Has Device Root Menu\n";
 	if (prof & CEC_OP_FEAT_RC_SRC_HAS_DEV_SETUP_MENU)
-		s += "\t\tSource Has Device Setup Menu\n";
+		s += prefix + "\t\tSource Has Device Setup Menu\n";
 	if (prof & CEC_OP_FEAT_RC_SRC_HAS_MEDIA_CONTEXT_MENU)
-		s += "\t\tSource Has Contents Menu\n";
+		s += prefix + "\t\tSource Has Contents Menu\n";
 	if (prof & CEC_OP_FEAT_RC_SRC_HAS_MEDIA_TOP_MENU)
-		s += "\t\tSource Has Media Top Menu\n";
+		s += prefix + "\t\tSource Has Media Top Menu\n";
 	if (prof & CEC_OP_FEAT_RC_SRC_HAS_MEDIA_CONTEXT_MENU)
-		s += "\t\tSource Has Media Context-Sensitive Menu\n";
+		s += prefix + "\t\tSource Has Media Context-Sensitive Menu\n";
 	return s;
 }
 
-static std::string dev_feat2s(unsigned feat)
+static std::string dev_feat2s(unsigned feat, const std::string &prefix)
 {
 	std::string s;
 
 	feat &= 0x7e;
 	if (feat == 0)
-		return "\t\tNone\n";
+		return prefix + "\t\tNone\n";
 	if (feat & CEC_OP_FEAT_DEV_HAS_RECORD_TV_SCREEN)
-		s += "\t\tTV Supports <Record TV Screen>\n";
+		s += prefix + "\t\tTV Supports <Record TV Screen>\n";
 	if (feat & CEC_OP_FEAT_DEV_HAS_SET_OSD_STRING)
-		s += "\t\tTV Supports <Set OSD String>\n";
+		s += prefix + "\t\tTV Supports <Set OSD String>\n";
 	if (feat & CEC_OP_FEAT_DEV_HAS_DECK_CONTROL)
-		s += "\t\tSupports Deck Control\n";
+		s += prefix + "\t\tSupports Deck Control\n";
 	if (feat & CEC_OP_FEAT_DEV_HAS_SET_AUDIO_RATE)
-		s += "\t\tSource Supports <Set Audio Rate>\n";
+		s += prefix + "\t\tSource Supports <Set Audio Rate>\n";
 	if (feat & CEC_OP_FEAT_DEV_SINK_HAS_ARC_TX)
-		s += "\t\tSink Supports ARC Tx\n";
+		s += prefix + "\t\tSink Supports ARC Tx\n";
 	if (feat & CEC_OP_FEAT_DEV_SOURCE_HAS_ARC_RX)
-		s += "\t\tSource Supports ARC Rx\n";
+		s += prefix + "\t\tSource Supports ARC Rx\n";
 	return s;
 }
 
@@ -1201,6 +1201,57 @@ static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 		cec_ops_report_power_status(&msg, &pwr);
 		printf("\t\tPower Status               : %s\n",
 		       power_status2s(pwr));
+	}
+
+	cec_msg_init(&msg, la, i);
+	cec_msg_give_features(&msg, true);
+	doioctl(node, CEC_TRANSMIT, &msg);
+	if (cec_msg_status_is_ok(&msg)) {
+		__u8 vers, all_dev_types;
+		const __u8 *rc, *feat;
+
+		cec_ops_report_features(&msg, &vers, &all_dev_types, &rc, &feat);
+
+		printf("\t\tFeatures                   :\n");
+		printf("\t\t    CEC Version            : %s\n", version2s(vers));
+		printf("\t\t    All Device Types       : %s\n",
+		       all_dev_types2s(all_dev_types).c_str());
+		while (rc) {
+			if (*rc & 0x40) {
+				printf("\t\t    RC Source Profile      :\n%s",
+				       rc_src_prof2s(*rc, "\t").c_str());
+			} else {
+				const char *s = "Reserved";
+
+				switch (*rc & 0xf) {
+				case 0:
+					s = "None";
+					break;
+				case 2:
+					s = "RC Profile 1";
+					break;
+				case 6:
+					s = "RC Profile 2";
+					break;
+				case 10:
+					s = "RC Profile 3";
+					break;
+				case 14:
+					s = "RC Profile 4";
+					break;
+				}
+				printf("\t\t    RC TV Profile          : %s\n", s);
+			}
+			if (!(*rc++ & CEC_OP_FEAT_EXT))
+				break;
+		}
+
+		while (feat) {
+			printf("\t\t    Device Features        :\n%s",
+				       dev_feat2s(*feat, "\t").c_str());
+			if (!(*feat++ & CEC_OP_FEAT_EXT))
+				break;
+		}
 	}
 	return 0;
 }
@@ -1849,7 +1900,7 @@ int main(int argc, char **argv)
 			if (!is_dev_feat) {
 				if (byte & 0x40) {
 					printf("\t    RC Source Profile      :\n%s",
-					       rc_src_prof2s(byte).c_str());
+					       rc_src_prof2s(byte, "").c_str());
 				} else {
 					const char *s = "Reserved";
 
@@ -1874,7 +1925,7 @@ int main(int argc, char **argv)
 				}
 			} else {
 				printf("\t    Device Features        :\n%s",
-				       dev_feat2s(byte).c_str());
+				       dev_feat2s(byte, "").c_str());
 			}
 			if (byte & CEC_OP_FEAT_EXT)
 				continue;
