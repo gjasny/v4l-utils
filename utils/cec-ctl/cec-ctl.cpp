@@ -1913,7 +1913,7 @@ int main(int argc, char **argv)
 		log_msg(&msg);
 		if (doioctl(&node, CEC_TRANSMIT, &msg))
 			continue;
-		if ((msg.tx_status & CEC_TX_STATUS_OK) && msg.timeout) {
+		if (msg.rx_status & (CEC_RX_STATUS_OK | CEC_RX_STATUS_FEATURE_ABORT)) {
 			printf("    Received from %s (%d):\n    ", la2s(cec_msg_initiator(&msg)),
 			       cec_msg_initiator(&msg));
 			log_msg(&msg);
