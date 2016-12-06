@@ -136,7 +136,7 @@ static void usage(void)
 	       "  --test-deck-control                 Test the Deck Control feature\n"
 	       "  --test-device-menu-control          Test the Device Menu Control feature\n"
 	       "  --test-device-osd-transfer          Test the Device OSD Transfer feature\n"
-	       "  --test-dynamic-audio-lipsync        Test the Dynamic Audio Lipsync feature\n"
+	       "  --test-dynamic-auto-lipsync         Test the Dynamic Auto Lipsync feature\n"
 	       "  --test-osd-display                  Test the OSD Display feature\n"
 	       "  --test-one-touch-play               Test the One Touch Play feature\n"
 	       "  --test-one-touch-record             Test the One Touch Record feature\n"
