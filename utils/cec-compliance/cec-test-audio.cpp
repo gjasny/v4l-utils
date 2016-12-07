@@ -215,7 +215,7 @@ static int arc_terminate_tx(struct node *node, unsigned me, unsigned la, bool in
 	}
 	fail_on_test(unrecognized_op(&msg));
 	if (cec_msg_status_is_abort(&msg)) {
-		warn("Received Feature Abort for Terminate ARC (but the message was recognized).");
+		warn("Received Feature Abort for Terminate ARC (but the message was recognized).\n");
 		if (refused(&msg))
 			return REFUSED;
 		return PRESUMED_OK;
@@ -290,7 +290,7 @@ static int arc_terminate_rx(struct node *node, unsigned me, unsigned la, bool in
 	}
 	fail_on_test(unrecognized_op(&msg));
 	if (cec_msg_status_is_abort(&msg)) {
-		warn("Received Feature Abort for Request ARC Termination (but the message was recognized).");
+		warn("Received Feature Abort for Request ARC Termination (but the message was recognized).\n");
 		if (refused(&msg))
 			return REFUSED;
 		return PRESUMED_OK;

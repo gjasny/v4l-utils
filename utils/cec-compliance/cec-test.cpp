@@ -170,12 +170,12 @@ static int system_info_give_features(struct node *node, unsigned me, unsigned la
 
 	if (!(cec_has_playback(1 << la) || cec_has_record(1 << la) || cec_has_tuner(1 << la)) &&
 		node->remote[la].has_aud_rate) {
-		return fail("Only Playback, Recording or Tuner devices shall set the Set Audio Rate bit");
+		return fail("Only Playback, Recording or Tuner devices shall set the Set Audio Rate bit\n");
 	}
 	if (!(cec_has_playback(1 << la) || cec_has_record(1 << la)) && node->remote[la].has_deck_ctl)
-		return fail("Only Playback and Recording devices shall set the Supports Deck Control bit");
+		return fail("Only Playback and Recording devices shall set the Supports Deck Control bit\n");
 	if (!cec_has_tv(1 << la) && node->remote[la].has_rec_tv)
-		return fail("Only TVs shall set the Record TV Screen bit");
+		return fail("Only TVs shall set the Record TV Screen bit\n");
 
 	return 0;
 }
@@ -572,7 +572,7 @@ static int dev_menu_ctl_request(struct node *node, unsigned me, unsigned la, boo
 	if (cec_msg_status_is_abort(&msg))
 		return PRESUMED_OK;
 	if (node->remote[la].cec_version >= CEC_OP_CEC_VERSION_2_0)
-		warn("The Device Menu Control feature is deprecated in CEC 2.0");
+		warn("The Device Menu Control feature is deprecated in CEC 2.0\n");
 
 	return 0;
 }
@@ -591,7 +591,7 @@ static int dev_menu_ctl_status(struct node *node, unsigned me, unsigned la, bool
 	if (cec_msg_status_is_abort(&msg))
 		return PRESUMED_OK;
 	if (node->remote[la].cec_version >= CEC_OP_CEC_VERSION_2_0)
-		warn("The Device Menu Control feature is deprecated in CEC 2.0");
+		warn("The Device Menu Control feature is deprecated in CEC 2.0\n");
 
 	return 0;
 }
