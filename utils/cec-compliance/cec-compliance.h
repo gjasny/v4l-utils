@@ -287,6 +287,11 @@ static inline bool is_tv(unsigned la, unsigned prim_type)
 		(cec_has_specific(1 << la) && prim_type == CEC_OP_PRIM_DEVTYPE_TV);
 }
 
+static inline bool is_playback_or_rec(unsigned la)
+{
+	return cec_has_playback(1 << la) || cec_has_record(1 << la);
+}
+
 static inline bool cec_msg_status_is_abort(const struct cec_msg *msg)
 {
 	return msg->rx_status & CEC_RX_STATUS_FEATURE_ABORT;

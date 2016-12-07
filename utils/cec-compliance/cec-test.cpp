@@ -617,10 +617,12 @@ static int deck_ctl_give_status(struct node *node, unsigned me, unsigned la, boo
 	cec_msg_give_deck_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
 	fail_on_test(!transmit_timeout(node, &msg));
 	fail_on_test(timed_out(&msg));
-	fail_on_test_v2(node->remote[la].cec_version,
-			node->remote[la].has_deck_ctl && cec_msg_status_is_abort(&msg));
-	fail_on_test_v2(node->remote[la].cec_version,
-			!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
+	if (is_playback_or_rec(la)) {
+		fail_on_test_v2(node->remote[la].cec_version,
+				node->remote[la].has_deck_ctl && cec_msg_status_is_abort(&msg));
+		fail_on_test_v2(node->remote[la].cec_version,
+				!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
+	}
 	if (unrecognized_op(&msg))
 		return NOTSUPPORTED;
 	if (refused(&msg))
@@ -655,10 +657,12 @@ static int deck_ctl_deck_ctl(struct node *node, unsigned me, unsigned la, bool i
 	cec_msg_init(&msg, me, la);
 	cec_msg_deck_control(&msg, CEC_OP_DECK_CTL_MODE_STOP);
 	fail_on_test(!transmit_timeout(node, &msg));
-	fail_on_test_v2(node->remote[la].cec_version,
-			node->remote[la].has_deck_ctl && unrecognized_op(&msg));
-	fail_on_test_v2(node->remote[la].cec_version,
-			!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
+	if (is_playback_or_rec(la)) {
+		fail_on_test_v2(node->remote[la].cec_version,
+				node->remote[la].has_deck_ctl && unrecognized_op(&msg));
+		fail_on_test_v2(node->remote[la].cec_version,
+				!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
+	}
 	if (unrecognized_op(&msg))
 		return NOTSUPPORTED;
 	if (refused(&msg))
@@ -676,10 +680,12 @@ static int deck_ctl_play(struct node *node, unsigned me, unsigned la, bool inter
 	cec_msg_init(&msg, me, la);
 	cec_msg_play(&msg, CEC_OP_PLAY_MODE_PLAY_STILL);
 	fail_on_test(!transmit_timeout(node, &msg));
-	fail_on_test_v2(node->remote[la].cec_version,
-			node->remote[la].has_deck_ctl && unrecognized_op(&msg));
-	fail_on_test_v2(node->remote[la].cec_version,
-			!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
+	if (is_playback_or_rec(la)) {
+		fail_on_test_v2(node->remote[la].cec_version,
+				node->remote[la].has_deck_ctl && unrecognized_op(&msg));
+		fail_on_test_v2(node->remote[la].cec_version,
+				!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
+	}
 	if (unrecognized_op(&msg))
 		return NOTSUPPORTED;
 	if (refused(&msg))
