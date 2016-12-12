@@ -37,6 +37,7 @@
 # include <langinfo.h>
 # include <iconv.h>
 #else
+# include <string.h>
 # define _(string) string
 #endif
 
