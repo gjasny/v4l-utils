@@ -36,32 +36,12 @@
  */
 
 /**
- * @struct dvbsat_freqrange
- * @brief Defines a frequency range used by Satellite
- * @ingroup satellite
- *
- * @param low	low frequency, in kHz
- * @param high	high frequency, in kHz
- */
-struct dvbsat_freqrange {
-	unsigned low, high;
-};
-
-/**
  * @struct dvb_sat_lnb
  * @brief Stores the information of a LNBf
  * @ingroup satellite
  *
  * @param name		long name of the LNBf type
  * @param alias		short name for the LNBf type
- * @param lowfreq	Low frequency Intermediate Frequency of the LNBf, in kHz
- * @param highfreq	High frequency Intermediate frequency of the LNBf,
- *			in kHz
- * @param rangeswitch	For LNBf that has multiple frequency ranges controlled
- *			by a voltage change, specify the start frequency where
- *			the second range will be applied.
- * @param freqrange	Contains the range(s) of frequencies supported by a
- *			given LNBf.
  *
  * The LNBf (low-noise block downconverter) is a type of amplifier that is
  * installed inside the parabolic dishes. It converts the antenna signal to
@@ -73,11 +53,6 @@ struct dvbsat_freqrange {
 struct dvb_sat_lnb {
 	const char *name;
 	const char *alias;
-	unsigned lowfreq, highfreq;
-
-	unsigned rangeswitch;
-
-	struct dvbsat_freqrange freqrange[2];
 };
 
 struct dvb_v5_fe_parms;
