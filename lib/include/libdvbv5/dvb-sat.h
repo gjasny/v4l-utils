@@ -132,6 +132,20 @@ const char *dvb_sat_get_lnb_name(int index);
  */
 int dvb_sat_set_parms(struct dvb_v5_fe_parms *parms);
 
+/**
+ * @brief return the real satellite frequency
+ * @ingroup satellite
+ *
+ * @param parms	struct dvb_v5_fe_parms pointer.
+ *
+ * This function is called internally by the library to get the satellite
+ * frequency, considering the LO frequency.
+ *
+ * @return frequency.
+ */
+int dvb_sat_real_freq(struct dvb_v5_fe_parms *p, int freq);
+
+
 #ifdef __cplusplus
 }
 #endif

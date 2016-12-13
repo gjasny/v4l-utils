@@ -705,9 +705,8 @@ int __dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 
 		/* copy back params from temporary fe_prop */
 		for (i = 0; i < n; i++) {
-			if (dvb_fe_is_satellite(p->current_sys)
-			    && fe_prop[i].cmd == DTV_FREQUENCY)
-				fe_prop[i].u.data += parms->freq_offset;
+			if (fe_prop[i].cmd == DTV_FREQUENCY)
+				fe_prop[i].u.data = dvb_sat_real_freq(p, fe_prop[i].u.data);
 			dvb_fe_store_parm(&parms->p, fe_prop[i].cmd, fe_prop[i].u.data);
 		}
 
