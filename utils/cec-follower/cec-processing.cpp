@@ -317,8 +317,8 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 	__u8 from = cec_msg_initiator(&msg);
 	bool is_bcast = cec_msg_is_broadcast(&msg);
 	__u16 remote_pa = (from < 15) ? node->remote_phys_addr[from] : CEC_PHYS_ADDR_INVALID;
-	const time_t time_to_transient = 2;
-	const time_t time_to_stable = 4;
+	const time_t time_to_transient = 4;
+	const time_t time_to_stable = 8;
 
 	switch (msg.msg[1]) {
 
