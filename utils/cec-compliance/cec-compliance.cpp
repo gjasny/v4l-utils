@@ -803,44 +803,34 @@ int cec_named_ioctl(struct node *node, const char *name,
 		app_result = -1;
 
 	if (!retval) {
-		/* TODO: The logic here might need to be re-evaluated.
+		__u8 la = cec_msg_initiator(msg);
 
-		   Currently a message is registered as recognized if
-		       - We receive a reply that is not Feature Abort with
-		         [Unrecognized Opcode] or [Undetermined]
-		       - We did not receive a reply, but also did not
-		         expect one (other than Feature Abort)
-		       - We manually receive (CEC_RECEIVE) and get a Feature Abort
-		         with reason different than [Unrecognized Opcode] or
-			 [Undetermined] */
+		/*
+		 * TODO: The logic here might need to be re-evaluated.
+		 *
+		 * Currently a message is registered as recognized if
+		 *     - We receive a reply that is not Feature Abort with
+		 *       [Unrecognized Opcode] or [Undetermined]
+		 *     - We manually receive (CEC_RECEIVE) and get a Feature Abort
+		 *       with reason different than [Unrecognized Opcode] or
+		 *       [Undetermined]
+		 */
 		if (request == CEC_TRANSMIT && msg->timeout > 0 &&
 		    cec_msg_initiator(msg) != CEC_LOG_ADDR_UNREGISTERED &&
 		    cec_msg_destination(msg) != CEC_LOG_ADDR_BROADCAST &&
-		    (msg->tx_status & CEC_TX_STATUS_OK)) {
-			if (msg->rx_status & CEC_RX_STATUS_OK) {
-				__u8 la = cec_msg_initiator(msg);
-
-				if (cec_msg_status_is_abort(msg) &&
-				    (abort_reason(msg) == CEC_OP_ABORT_UNRECOGNIZED_OP ||
-				     abort_reason(msg) == CEC_OP_ABORT_UNDETERMINED))
-					node->remote[la].unrecognized_op[opcode] = true;
-				else
-					node->remote[la].recognized_op[opcode] = true;
-			}
-			else {
-				__u8 la = cec_msg_destination(msg);
-
-				if (msg->reply > 0)
-					node->remote[la].unrecognized_op[opcode] = true;
-				else
-					node->remote[la].recognized_op[opcode] = true;
-			}
+		    (msg->tx_status & CEC_TX_STATUS_OK) &&
+		    (msg->rx_status & CEC_RX_STATUS_OK)) {
+			if (cec_msg_status_is_abort(msg) &&
+			    (abort_reason(msg) == CEC_OP_ABORT_UNRECOGNIZED_OP ||
+			     abort_reason(msg) == CEC_OP_ABORT_UNDETERMINED))
+				node->remote[la].unrecognized_op[opcode] = true;
+			else
+				node->remote[la].recognized_op[opcode] = true;
 		}
 
 		if (request == CEC_RECEIVE &&
 		    cec_msg_initiator(msg) != CEC_LOG_ADDR_UNREGISTERED &&
-		    cec_msg_status_is_abort(msg)) {
-			__u8 la = cec_msg_initiator(msg);
+		    cec_msg_opcode(msg) == CEC_MSG_FEATURE_ABORT) {
 			__u8 abort_msg = msg->msg[2];
 
 			if (abort_reason(msg) == CEC_OP_ABORT_UNRECOGNIZED_OP ||
