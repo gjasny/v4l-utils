@@ -577,27 +577,8 @@ static int dev_menu_ctl_request(struct node *node, unsigned me, unsigned la, boo
 	return 0;
 }
 
-static int dev_menu_ctl_status(struct node *node, unsigned me, unsigned la, bool interactive)
-{
-	struct cec_msg msg = {};
-
-	cec_msg_init(&msg, me, la);
-	cec_msg_menu_status(&msg, CEC_OP_MENU_STATE_ACTIVATED);
-	fail_on_test(!transmit_timeout(node, &msg));
-	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
-	if (refused(&msg))
-		return REFUSED;
-	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
-	if (node->remote[la].cec_version >= CEC_OP_CEC_VERSION_2_0)
-		warn("The Device Menu Control feature is deprecated in CEC 2.0\n");
-
-	return 0;
-}
 static struct remote_subtest dev_menu_ctl_subtests[] = {
 	{ "Menu Request", (__u16)~CEC_LOG_ADDR_MASK_TV, dev_menu_ctl_request },
-	{ "Menu Status", CEC_LOG_ADDR_MASK_TV, dev_menu_ctl_status },
 	{ "User Control Pressed", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_pressed },
 	{ "User Control Released", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_released },
 };
