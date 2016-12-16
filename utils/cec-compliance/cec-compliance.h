@@ -339,6 +339,7 @@ static inline bool transmit_timeout(struct node *node, struct cec_msg *msg,
 				    unsigned timeout = 2000)
 {
 	struct cec_msg original_msg = *msg;
+	__u8 opcode = cec_msg_opcode(msg);
 	int res;
 
 	msg->timeout = timeout;
@@ -352,7 +353,7 @@ static inline bool transmit_timeout(struct node *node, struct cec_msg *msg,
 
 	if (((msg->rx_status & CEC_RX_STATUS_OK) || (msg->rx_status & CEC_RX_STATUS_FEATURE_ABORT))
 	    && response_time_ms(msg) > 1000)
-		warn("Waited %4ums for reply.\n", response_time_ms(msg));
+		warn("Waited %4ums for reply to msg 0x%02x.\n", response_time_ms(msg), opcode);
 
 	if (!cec_msg_status_is_abort(msg))
 		return true;
