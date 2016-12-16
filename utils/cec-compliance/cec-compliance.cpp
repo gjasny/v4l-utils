@@ -50,6 +50,7 @@ enum Option {
 	OptHelp = 'h',
 	OptNoWarnings = 'n',
 	OptRemote = 'r',
+	OptReplyThreshold = 'R',
 	OptTrace = 'T',
 	OptVerbose = 'v',
 	OptInteractive = 'i',
@@ -86,6 +87,7 @@ static int tests_total, tests_ok;
 bool show_info;
 bool show_warnings = true;
 unsigned warnings;
+unsigned reply_threshold = 1000;
 
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
@@ -95,6 +97,7 @@ static struct option long_options[] = {
 	{"trace", no_argument, 0, OptTrace},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"interactive", no_argument, 0, OptInteractive},
+	{"reply-threshold", required_argument, 0, OptReplyThreshold},
 
 	{"test-adapter", no_argument, 0, OptTestAdapter},
 	{"test-core", no_argument, 0, OptTestCore},
@@ -126,6 +129,8 @@ static void usage(void)
 	       "  -d, --device=<dev>   Use device <dev> instead of /dev/cec0\n"
 	       "                       If <dev> starts with a digit, then /dev/cec<dev> is used.\n"
 	       "  -r, --remote[=<la>]  As initiator test the remote logical address or all LAs if no LA was given\n"
+	       "  -R, --reply-threshold=<timeout>\n"
+	       "                       Warn if replies take longer than this threshold (default 1000ms)\n"
 	       "  -i, --interactive    Interactive mode when doing remote tests\n"
 	       "\n"
 	       "  -A, --test-adapter                  Test the CEC adapter API\n"
@@ -1065,6 +1070,9 @@ int main(int argc, char **argv)
 				sprintf(newdev, "/dev/cec%s", device);
 				device = newdev;
 			}
+			break;
+		case OptReplyThreshold:
+			reply_threshold = strtoul(optarg, NULL, 0);
 			break;
 		case OptNoWarnings:
 			show_warnings = false;

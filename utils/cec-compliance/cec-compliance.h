@@ -121,6 +121,7 @@ struct short_audio_desc {
 extern bool show_info;
 extern bool show_warnings;
 extern unsigned warnings;
+extern unsigned reply_threshold;
 
 struct remote {
 	bool recognized_op[256];
@@ -332,7 +333,13 @@ static inline bool timed_out_or_abort(const struct cec_msg *msg)
 
 static inline unsigned response_time_ms(const struct cec_msg *msg)
 {
-	return (msg->rx_ts - msg->tx_ts) / 1000000;
+	unsigned ms = (msg->rx_ts - msg->tx_ts) / 1000000;
+
+	// Compensate for the time it took (approx.) to receive the
+	// message.
+	if (ms >= msg->len * 25)
+		return ms - msg->len * 25;
+	return 0;
 }
 
 static inline bool transmit_timeout(struct node *node, struct cec_msg *msg,
@@ -352,7 +359,7 @@ static inline bool transmit_timeout(struct node *node, struct cec_msg *msg,
 		return false;
 
 	if (((msg->rx_status & CEC_RX_STATUS_OK) || (msg->rx_status & CEC_RX_STATUS_FEATURE_ABORT))
-	    && response_time_ms(msg) > 1000)
+	    && response_time_ms(msg) > reply_threshold)
 		warn("Waited %4ums for reply to msg 0x%02x.\n", response_time_ms(msg), opcode);
 
 	if (!cec_msg_status_is_abort(msg))
