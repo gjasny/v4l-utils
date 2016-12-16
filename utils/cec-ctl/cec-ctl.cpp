@@ -1406,7 +1406,7 @@ int main(int argc, char **argv)
 			to = strtoul(optarg, NULL, 0) & 0xf;
 			break;
 		case OptTimeout:
-			timeout = strtoul(optarg, NULL, 0) & 0xf;
+			timeout = strtoul(optarg, NULL, 0);
 			break;
 		case OptNoReply:
 			reply = false;
