@@ -173,6 +173,7 @@ static int arc_initiate_tx(struct node *node, unsigned me, unsigned la, bool int
 	cec_msg_initiate_arc(&msg, true);
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (timed_out(&msg)) {
+		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].has_arc_tx);
 		warn("Timed out waiting for Report ARC Initiated/Terminated.\n");
 		return PRESUMED_OK;
 	}
