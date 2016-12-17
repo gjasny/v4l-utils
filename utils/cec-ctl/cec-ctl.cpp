@@ -1338,6 +1338,17 @@ static int showTopology(struct node *node)
 	return 0;
 }
 
+static inline unsigned response_time_ms(const struct cec_msg &msg)
+{
+	unsigned ms = (msg.rx_ts - msg.tx_ts) / 1000000;
+
+	// Compensate for the time it took (approx.) to receive the
+	// message.
+	if (ms >= msg.len * 25)
+		return ms - msg.len * 25;
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	const char *device = "/dev/cec0";	/* -d device */
@@ -1974,9 +1985,10 @@ int main(int argc, char **argv)
 			msg.tx_ts / 1000000000,
 			(msg.tx_ts % 1000000000) / 1000000);
 		if (msg.rx_ts)
-			printf(" Rx Timestamp: %llu.%03llus",
+			printf(" Rx Timestamp: %llu.%03llus\n\tApproximate response time: %u ms",
 				msg.rx_ts / 1000000000,
-				(msg.rx_ts % 1000000000) / 1000000);
+				(msg.rx_ts % 1000000000) / 1000000,
+				response_time_ms(msg));
 		printf("\n");
 		if (!cec_msg_status_is_ok(&msg))
 			printf("\t%s\n", status2s(msg).c_str());
