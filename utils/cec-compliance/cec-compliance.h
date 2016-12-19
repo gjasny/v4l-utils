@@ -337,8 +337,8 @@ static inline unsigned response_time_ms(const struct cec_msg *msg)
 
 	// Compensate for the time it took (approx.) to receive the
 	// message.
-	if (ms >= msg->len * 25)
-		return ms - msg->len * 25;
+	if (ms >= msg->len * 24)
+		return ms - msg->len * 24;
 	return 0;
 }
 
