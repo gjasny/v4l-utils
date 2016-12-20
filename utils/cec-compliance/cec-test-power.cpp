@@ -330,8 +330,8 @@ static int standby_resume_standby(struct node *node, unsigned me, unsigned la, b
 	node->remote[la].in_standby = true;
 
 	if (unresponsive_time > 0)
-		return fail("The device went correctly into standby, but became unresponsive for %d s during the transition.\n",
-			    unresponsive_time);
+		warn("The device went correctly into standby, but became unresponsive for %d s during the transition.\n",
+		     unresponsive_time);
 
 	return 0;
 }
@@ -358,8 +358,8 @@ static int standby_resume_standby_toggle(struct node *node, unsigned me, unsigne
 	fail_on_test(interactive && !question("Is the device still in standby?"));
 	node->remote[la].in_standby = true;
 	if (unresponsive_time > 0)
-		return fail("The device went correctly into standby, but became unresponsive for %d s during the transition.\n",
-			    unresponsive_time);
+		warn("The device went correctly into standby, but became unresponsive for %d s during the transition.\n",
+		     unresponsive_time);
 
 	return 0;
 }
@@ -385,8 +385,8 @@ static int standby_resume_active_source_nowake(struct node *node, unsigned me, u
 	fail_on_test_v2_warn(node->remote[la].cec_version, new_status != CEC_OP_POWER_STATUS_STANDBY);
 	node->remote[la].in_standby = true;
 	if (unresponsive_time > 0)
-		return fail("The device stayed correctly in standby, but became unresponsive for %d s.\n",
-			    unresponsive_time);
+		warn("The device stayed correctly in standby, but became unresponsive for %d s.\n",
+		     unresponsive_time);
 
 	return 0;
 }
@@ -459,8 +459,8 @@ static int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bo
 	fail_on_test(interactive && !question("Is the device in On state?"));
 
 	if (unresponsive_time > 0)
-		return fail("The device went correctly out of standby, but became unresponsive for %d s during the transition.\n",
-			    unresponsive_time);
+		warn("The device went correctly out of standby, but became unresponsive for %d s during the transition.\n",
+		     unresponsive_time);
 
 	return 0;
 }
