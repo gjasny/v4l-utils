@@ -212,9 +212,9 @@ static void reply_feature_abort(struct node *node, struct cec_msg *msg, __u8 rea
 			/* If the Abort Reason was "Unrecognized opcode", the Initiator should not send
 			   the same message to the same Follower again at that time to avoid saturating
 			   the bus. */
-			warn("Received message %s from LA %d (%s) shortly after replying\n",
+			warn("Received message %s from LA %d (%s) shortly after\n",
 			     opcode2s(msg).c_str(), la, la2s(la));
-			warn("Feature Abort [Unrecognized Opcode] to the same message.\n");
+			warn("replying Feature Abort [Unrecognized Opcode] to the same message.\n");
 		}
 	}
 	else if (la_info[la].feature_aborted[opcode].count) {
@@ -1081,9 +1081,9 @@ void testProcessing(struct node *node)
 			if (from != CEC_LOG_ADDR_UNREGISTERED &&
 			    la_info[from].feature_aborted[opcode].ts &&
 			    ts_to_ms(get_ts() - la_info[from].feature_aborted[opcode].ts) < 200) {
-				warn("Received message %s from LA %d (%s) less than 200 ms after replying\n",
+				warn("Received message %s from LA %d (%s) less than 200 ms after\n",
 				     opcode2s(&msg).c_str(), from, la2s(from));
-				warn("Feature Abort (not [Unrecognized Opcode]) to the same message.\n");
+				warn("replying Feature Abort (not [Unrecognized Opcode]) to the same message.\n");
 			}
 			if (from != CEC_LOG_ADDR_UNREGISTERED && !la_info[from].ts)
 				dev_info("Logical address %d (%s) discovered.\n", from, la2s(from));
