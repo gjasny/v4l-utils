@@ -488,6 +488,10 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
 	int mini_b = 0;
 	struct diseqc_cmd cmd;
 
+	/* Negative numbers means to not use a DiSEqC switch */
+	if (parms->p.sat_number < 0)
+		return 0;
+
 	if (!lnb->freqrange[0].rangeswitch) {
 		/*
 		 * Bandstacking switches don't use 2 bands nor use
@@ -511,31 +515,29 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
 	if (rc)
 		return rc;
 
-	if (parms->p.sat_number > 0) {
-		rc = dvb_fe_sec_tone(&parms->p, SEC_TONE_OFF);
-		if (rc)
-			return rc;
+	rc = dvb_fe_sec_tone(&parms->p, SEC_TONE_OFF);
+	if (rc)
+		return rc;
 
-		usleep(15 * 1000);
+	usleep(15 * 1000);
 
-		if (!t)
-			rc = dvbsat_diseqc_write_to_port_group(parms, &cmd, high_band,
-							       pol_v, sat_number);
-		else
-			rc = dvbsat_scr_odu_channel_change(parms, &cmd, high_band,
-							   pol_v, sat_number, t);
+	if (!t)
+		rc = dvbsat_diseqc_write_to_port_group(parms, &cmd, high_band,
+							pol_v, sat_number);
+	else
+		rc = dvbsat_scr_odu_channel_change(parms, &cmd, high_band,
+							pol_v, sat_number, t);
 
-		if (rc) {
-			dvb_logerr(_("sending diseq failed"));
-			return rc;
-		}
-		usleep((15 + parms->p.diseqc_wait) * 1000);
-
-		rc = dvb_fe_diseqc_burst(&parms->p, mini_b);
-		if (rc)
-			return rc;
-		usleep(15 * 1000);
+	if (rc) {
+		dvb_logerr(_("sending diseq failed"));
+		return rc;
 	}
+	usleep((15 + parms->p.diseqc_wait) * 1000);
+
+	rc = dvb_fe_diseqc_burst(&parms->p, mini_b);
+	if (rc)
+		return rc;
+	usleep(15 * 1000);
 
 	rc = dvb_fe_sec_tone(&parms->p, tone_on ? SEC_TONE_ON : SEC_TONE_OFF);
 
