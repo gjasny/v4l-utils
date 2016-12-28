@@ -38,7 +38,7 @@
 
 # define N_(string) string
 
-struct dvbsat_freqrange {
+struct dvbsat_freqrange_priv {
 	unsigned low, high, int_freq, rangeswitch;
 	enum dvb_sat_polarization pol;
 };
@@ -47,7 +47,7 @@ struct dvb_sat_lnb_priv {
 	struct dvb_sat_lnb desc;
 
 	/* Private members used internally */
-	struct dvbsat_freqrange freqrange[4];
+	struct dvbsat_freqrange_priv freqrange[4];
 };
 
 static const struct dvb_sat_lnb_priv lnb[] = {
@@ -55,6 +55,14 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("Universal, Europe"),
 			.alias = "UNIVERSAL",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 9750,
+			.highfreq = 10600,
+			.rangeswitch = 11700,
+			.freqrange = {
+				{ 10800, 11800 },
+				{ 11600, 12700 },
+			},
 		},
 		.freqrange = {
 			{ 10800, 11800, 9750, 11700 },
@@ -64,6 +72,11 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("Expressvu, North America"),
 			.alias = "DBS",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 11250,
+			.freqrange = {
+				{ 12200, 12700 }
+			},
 		},
 		.freqrange = {
 			{ 12200, 12700, 11250 }
@@ -72,6 +85,14 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("Astra 1E, European Universal Ku (extended)"),
 			.alias = "EXTENDED",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 9750,
+			.highfreq = 10600,
+			.rangeswitch = 11700,
+			.freqrange = {
+				{ 10700, 11700 },
+				{ 11700, 12750 },
+			},
 		},
 		.freqrange = {
 			{ 10700, 11700, 9750, 11700},
@@ -81,6 +102,11 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("Standard"),
 			.alias = "STANDARD",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 10000,
+			.freqrange = {
+				{ 10945, 11450 }
+			},
 		},
 		.freqrange = {
 			{ 10945, 11450, 10000, 0 }
@@ -89,6 +115,11 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("L10700"),
 			.alias = "L10700",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 10700,
+			.freqrange = {
+				{ 11750, 12750 }
+			},
 		},
 		.freqrange = {
 		       { 11750, 12750, 10700, 0 }
@@ -97,6 +128,11 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("L11300"),
 			.alias = "L11300",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 11300,
+			.freqrange = {
+				{ 12250, 12750 }
+			},
 		},
 		.freqrange = {
 			{ 12250, 12750, 11300, 0 }
@@ -105,6 +141,11 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("Astra"),
 			.alias = "ENHANCED",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 9750,
+			.freqrange = {
+				{ 10700, 11700 }
+			},
 		},
 		.freqrange = {
 			{ 10700, 11700, 9750, 0 }
@@ -113,6 +154,11 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("Big Dish - Monopoint LNBf"),
 			.alias = "C-BAND",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 5150,
+			.freqrange = {
+				{ 3700, 4200 }
+			},
 		},
 		.freqrange = {
 			{ 3700, 4200, 5150, 0 }
@@ -121,6 +167,12 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("Big Dish - Multipoint LNBf"),
 			.alias = "C-MULT",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 5150,
+			.highfreq = 5750,
+			.freqrange = {
+				{ 3700, 4200 }
+			},
 		},
 		.freqrange = {
 			{ 3700, 4200, 5150, 0, POLARIZATION_R },
@@ -130,6 +182,12 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("DishPro LNBf"),
 			.alias = "DISHPRO",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 11250,
+			.highfreq = 14350,
+			.freqrange = {
+				{ 12200, 12700 }
+			},
 		},
 		.freqrange = {
 			{ 12200, 12700, 11250, 0, POLARIZATION_V },
@@ -139,6 +197,11 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("Japan 110BS/CS LNBf"),
 			.alias = "110BS",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 10678,
+			.freqrange = {
+				{ 11710, 12751 }
+			},
 		},
 		.freqrange = {
 			{ 11710, 12751, 10678, 0 }
@@ -147,6 +210,12 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("BrasilSat Stacked"),
 			.alias = "STACKED-BRASILSAT",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 9710,
+			.highfreq = 9750,
+			.freqrange = {
+				{ 10700, 11700 },
+			},
 		},
 		.freqrange = {
 			{ 10700, 11700, 9710, 0, POLARIZATION_H },
@@ -156,6 +225,14 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("BrasilSat Oi"),
 			.alias = "OI-BRASILSAT",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 10000,
+			.highfreq = 10445,
+			.rangeswitch = 11700,
+			.freqrange = {
+				{ 10950, 11200 },
+				{ 11800, 12200 },
+			},
 		},
 		.freqrange = {
 			{ 10950, 11200, 10000, 11700 },
@@ -165,6 +242,7 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("BrasilSat Amazonas 1/2 - 3 Oscilators"),
 			.alias = "AMAZONAS",
+			// No legacy fields - as old API doesn't allow 3 LO
 		},
 		.freqrange = {
 			{ 11037, 11450, 9670, 0, POLARIZATION_V },
@@ -175,6 +253,7 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("BrasilSat Amazonas 1/2 - 2 Oscilators"),
 			.alias = "AMAZONAS",
+			// No legacy fields - as old API doesn't allow 3 ranges
 		},
 		.freqrange = {
 			{ 11037, 11360, 9670, 0, POLARIZATION_V },
@@ -185,6 +264,7 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		.desc = {
 			.name = N_("BrasilSat custom GVT"),
 			.alias = "GVT-BRASILSAT",
+			// No legacy fields - as old API doesn't allow 4 LO
 		},
 		.freqrange = {
 			{ 11010.5, 11067.5, 12860, 0, POLARIZATION_V },

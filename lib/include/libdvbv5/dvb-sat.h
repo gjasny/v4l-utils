@@ -53,6 +53,16 @@
 struct dvb_sat_lnb {
 	const char *name;
 	const char *alias;
+
+	/*
+	 * Legacy fields, kept just to avoid ABI breakages
+	 * Should not be used by new applications
+	 */
+	unsigned lowfreq, highfreq;
+	unsigned rangeswitch;
+	struct dvbsat_freqrange {
+		unsigned low, high;
+	} freqrange[2];
 };
 
 struct dvb_v5_fe_parms;
