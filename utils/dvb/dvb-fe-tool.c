@@ -66,6 +66,7 @@ static const struct argp_option options[] = {
 	{"server",	'H',	N_("SERVER"),	0, 	N_("dvbv5-daemon host IP address"), 0},
 	{"tcp-port",	'T',	N_("PORT"),	0, 	N_("dvbv5-daemon host tcp port"), 0},
 	{"device-mon",	'D',	0,		0,	N_("monitors device insert/removal"), 0},
+	{"count",	'c',	N_("COUNT"),	0,	N_("samples to take (default 0 = infinite)"), 0},
 	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
 	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
 	{"version",	'V',	0,		0,	N_("Print program version"), -1},
@@ -84,6 +85,7 @@ static int femon = 0;
 static int acoustical = 0;
 static int timeout_flag = 0;
 static int device_mon = 0;
+static int count = 0;
 
 static void do_timeout(int x)
 {
@@ -147,6 +149,9 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		break;
 	case 'v':
 		verbose	++;
+		break;
+	case 'c':
+		count = atoi(arg);
 		break;
 	case '?':
 		argp_state_help(state, state->out_stream,
@@ -280,6 +285,8 @@ static void get_show_stats(struct dvb_v5_fe_parms *parms)
 		rc = dvb_fe_get_stats(parms);
 		if (!rc)
 			print_frontend_stats(stderr, parms);
+		if (count > 0 && !--count)
+			break;
 		if (!timeout_flag)
 			usleep(1000000);
 	} while (!timeout_flag);
