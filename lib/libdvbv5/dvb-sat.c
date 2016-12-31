@@ -437,7 +437,7 @@ static int dvbsat_diseqc_write_to_port_group(struct dvb_v5_fe_parms_priv *parms,
 	cmd->data0 |= high_band;
 	cmd->data0 |= pol_v ? 0 : 2;
 	/* Instead of using position/option, use a number from 0 to 3 */
-	cmd->data0 |= (sat_number % 0x3) << 2;
+	cmd->data0 |= (sat_number & 0x3) << 2;
 
 	return dvb_fe_diseqc_cmd(&parms->p, cmd->len, cmd->msg);
 }
@@ -463,7 +463,7 @@ static int dvbsat_scr_odu_channel_change(struct dvb_v5_fe_parms_priv *parms,
 	cmd->data1 = t & 0xff;
 
 	/* Fill the satelite number - highest bit is for pos A/pos B */
-	cmd->data0 |= (sat_number % 0x7) << 5;
+	cmd->data0 |= (sat_number & 0x7) << 5;
 	pos_b =  (sat_number & 0x8) ? 1 : 0;
 
 	/* Fill the LNB number */

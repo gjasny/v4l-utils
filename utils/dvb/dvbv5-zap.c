@@ -931,7 +931,7 @@ int main(int argc, char **argv)
 	if (lnb >= 0)
 		parms->lnb = dvb_sat_get_lnb(lnb);
 	if (args.sat_number > 0)
-		parms->sat_number = args.sat_number % 3;
+		parms->sat_number = args.sat_number;
 	parms->diseqc_wait = args.diseqc_wait;
 	parms->freq_bpf = args.freq_bpf;
 	parms->lna = args.lna;
