@@ -66,9 +66,18 @@ const char *argp_program_bug_address = "Sean Young <sean@mess.org>";
 struct file {
 	struct file *next;
 	const char *fname;
-	unsigned carrier;
-	unsigned len;
-	unsigned buf[LIRCBUF_SIZE];
+	bool is_scancode;
+	union {
+		struct {
+			unsigned carrier;
+			unsigned len;
+			unsigned buf[LIRCBUF_SIZE];
+		};
+		struct {
+			unsigned scancode;
+			unsigned protocol;
+		};
+	};
 };
 
 struct arguments {
@@ -206,6 +215,7 @@ static struct file *read_file(struct arguments *args, const char *fname)
 		fprintf(stderr, _("Failed to allocate memory\n"));
 		return NULL;
 	}
+	f->is_scancode = false;
 	f->carrier = 0;
 	f->fname = fname;
 
@@ -378,9 +388,9 @@ static struct file *read_scancode(const char *name)
 		return NULL;
 	}
 
-	f->carrier = protocol_carrier(proto);
-	f->fname = name;
-	f->len = protocol_encode(proto, scancode, f->buf);
+	f->is_scancode = true;
+	f->scancode = scancode;
+	f->protocol = proto;
 
 	return f;
 }
@@ -760,16 +770,41 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 static int lirc_send(struct arguments *args, int fd, unsigned features, struct file *f)
 {
 	const char *dev = args->device;
-	int mode = LIRC_MODE_PULSE;
+	int rc, mode;
+	ssize_t ret;
+
+	if (f->is_scancode && (features & LIRC_CAN_SEND_SCANCODE)) {
+		mode = LIRC_MODE_SCANCODE;
+		rc = ioctl(fd, LIRC_SET_SEND_MODE, &mode);
+		if (rc == 0) {
+			struct lirc_scancode sc = {
+				.scancode = f->scancode,
+				.rc_proto = f->protocol,
+				.flags = 0
+			};
+			ret = TEMP_FAILURE_RETRY(write(fd, &sc, sizeof sc));
+			if (ret > 0)
+				return 0;
+		}
+	}
 
 	if (!(features & LIRC_CAN_SEND_PULSE)) {
 		fprintf(stderr, _("%s: device cannot send raw ir\n"), dev);
 		return EX_UNAVAILABLE;
 	}
 
-	if (ioctl(fd, LIRC_SET_SEND_MODE, &mode)) {
-		fprintf(stderr, _("%s: failed to set send mode: %m\n"), dev);
-		return EX_IOERR;
+	mode = LIRC_MODE_PULSE;
+	rc = ioctl(fd, LIRC_SET_SEND_MODE, &mode);
+	if (rc) {
+		fprintf(stderr, _("%s: cannot set send mode\n"), dev);
+		return EX_UNAVAILABLE;
+	}
+
+	if (f->is_scancode) {
+		// encode scancode
+		enum rc_proto proto = f->protocol;
+		f->len = protocol_encode(f->protocol, f->scancode, f->buf);
+		f->carrier = protocol_carrier(proto);
 	}
 
 	if (args->carrier && f->carrier)
@@ -784,7 +819,7 @@ static int lirc_send(struct arguments *args, int fd, unsigned features, struct f
 		for (i=0; i<f->len; i++)
 			printf("%s %u\n", i & 1 ? "space" : "pulse", f->buf[i]);
 	}
-	ssize_t ret = TEMP_FAILURE_RETRY(write(fd, f->buf, size));
+	ret = TEMP_FAILURE_RETRY(write(fd, f->buf, size));
 	if (ret < 0) {
 		fprintf(stderr, _("%s: failed to send: %m\n"), dev);
 		return EX_IOERR;
