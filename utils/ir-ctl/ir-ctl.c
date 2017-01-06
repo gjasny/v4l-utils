@@ -679,7 +679,12 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 			fprintf(stderr, _("warning: %s: unexpected error while retrieving resolution: %m\n"), dev);
 	}
 
+	bool can_receive = false;
 	printf(_("Receive features %s:\n"), dev);
+	if (features & LIRC_CAN_REC_SCANCODE) {
+		printf(_(" - Device can receive scancodes\n"));
+		can_receive = true;
+	}
 	if (features & LIRC_CAN_REC_MODE2) {
 		printf(_(" - Device can receive raw IR\n"));
 		if (resolution)
@@ -709,13 +714,22 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 			if (min_timeout || max_timeout)
 				printf(_(" - Can set receiving timeout min:%u microseconds max:%u microseconds\n"), min_timeout, max_timeout);
 		}
-	} else if (features & LIRC_CAN_REC_LIRCCODE) {
+		can_receive = true;
+	}
+	if (features & LIRC_CAN_REC_LIRCCODE) {
 		printf(_(" - Device can receive using device dependent LIRCCODE mode (not supported)\n"));
-	} else {
-		printf(_(" - Device cannot receive\n"));
+		can_receive = true;
 	}
 
+	if (!can_receive)
+		printf(_(" - Device cannot receive\n"));
+
+	bool can_send = false;
 	printf(_("Send features %s:\n"), dev);
+	if (features & LIRC_CAN_SEND_SCANCODE) {
+		printf(_(" - Device can send scancodes\n"));
+		can_send = true;
+	}
 	if (features & LIRC_CAN_SEND_PULSE) {
 		printf(_(" - Device can send raw IR\n"));
 		if (features & LIRC_CAN_SET_SEND_CARRIER)
@@ -732,11 +746,15 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 			else
 				printf(_(" - Set transmitter (%d available)\n"), rc);
 		}
-	} else if (features & LIRC_CAN_SEND_LIRCCODE) {
-		printf(_(" - Device can send using device dependent LIRCCODE mode (not supported)\n"));
-	} else {
-		printf(_(" - Device cannot send\n"));
+		can_send = true;
 	}
+	if (features & LIRC_CAN_SEND_LIRCCODE) {
+		printf(_(" - Device can send using device dependent LIRCCODE mode (not supported)\n"));
+		can_send = true;
+	}
+
+	if (!can_send)
+		printf(_(" - Device cannot send\n"));
 }
 
 static int lirc_send(struct arguments *args, int fd, unsigned features, struct file *f)
