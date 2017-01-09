@@ -1851,12 +1851,6 @@ int main(int argc, char **argv)
 	printf("\tAvailable Logical Addresses: %u\n",
 	       caps.available_log_addrs);
 
-	if ((node.caps & CEC_CAP_LOG_ADDRS) && options[OptClear]) {
-		struct cec_log_addrs laddrs = { };
-
-		doioctl(&node, CEC_ADAP_S_LOG_ADDRS, &laddrs);
-	}
-
 	if ((node.caps & CEC_CAP_PHYS_ADDR) && options[OptPhysAddr])
 		doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &phys_addr);
@@ -1866,6 +1860,12 @@ int main(int argc, char **argv)
 	if (!options[OptPhysAddr] && phys_addr == 0xffff &&
 	    (node.caps & CEC_CAP_PHYS_ADDR))
 		printf("Perhaps you should use option --phys-addr?\n");
+
+	if ((node.caps & CEC_CAP_LOG_ADDRS) && options[OptClear]) {
+		struct cec_log_addrs laddrs = { };
+
+		doioctl(&node, CEC_ADAP_S_LOG_ADDRS, &laddrs);
+	}
 
 	if ((node.caps & CEC_CAP_LOG_ADDRS) && flags) {
 		struct cec_log_addrs laddrs = {};
