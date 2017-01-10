@@ -1851,8 +1851,20 @@ int main(int argc, char **argv)
 	printf("\tAvailable Logical Addresses: %u\n",
 	       caps.available_log_addrs);
 
-	if ((node.caps & CEC_CAP_PHYS_ADDR) && options[OptPhysAddr])
+	bool set_log_addrs = (node.caps & CEC_CAP_LOG_ADDRS) && flags;
+	bool set_phys_addr = (node.caps & CEC_CAP_PHYS_ADDR) && options[OptPhysAddr];
+	bool clear_log_addrs = (node.caps & CEC_CAP_LOG_ADDRS) && options[OptClear];
+
+	// When setting both PA and LA it is best to clear the LAs first.
+	if (clear_log_addrs || (set_phys_addr && set_log_addrs)) {
+		struct cec_log_addrs laddrs = { };
+
+		doioctl(&node, CEC_ADAP_S_LOG_ADDRS, &laddrs);
+	}
+
+	if (set_phys_addr)
 		doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
+
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &phys_addr);
 	printf("\tPhysical Address           : %x.%x.%x.%x\n",
 	       phys_addr >> 12, (phys_addr >> 8) & 0xf,
@@ -1861,13 +1873,7 @@ int main(int argc, char **argv)
 	    (node.caps & CEC_CAP_PHYS_ADDR))
 		printf("Perhaps you should use option --phys-addr?\n");
 
-	if ((node.caps & CEC_CAP_LOG_ADDRS) && options[OptClear]) {
-		struct cec_log_addrs laddrs = { };
-
-		doioctl(&node, CEC_ADAP_S_LOG_ADDRS, &laddrs);
-	}
-
-	if ((node.caps & CEC_CAP_LOG_ADDRS) && flags) {
+	if (set_log_addrs) {
 		struct cec_log_addrs laddrs = {};
 		__u8 all_dev_types = 0;
 		__u8 prim_type = 0xff;
