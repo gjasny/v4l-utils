@@ -15,4 +15,4 @@ else
 DEFS += -DNO_LIBV4L2
 endif
 
-EXTRA_DIST = Android.mk v4l2-tpg.h.patch v4l2-ctl.1
+EXTRA_DIST = Android.mk v4l2-ctl.1
