@@ -1,4 +1,5 @@
 *~
+*.1
 *.o
 *.lo
 *.la
@@ -28,6 +29,7 @@ libtool
 stamp-h1
 ABOUT-NLS
 lib/include/dvb-frontend.h
+lib/include/libdvbv5/libdvb-version.h
 doxygen-doc/
 patches/
 gettextize
