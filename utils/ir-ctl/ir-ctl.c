@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <argp.h>
 #include <sysexits.h>
@@ -733,10 +734,16 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 static int lirc_send(struct arguments *args, int fd, unsigned features, struct file *f)
 {
 	const char *dev = args->device;
+	int mode = LIRC_MODE_PULSE;
 
 	if (!(features & LIRC_CAN_SEND_PULSE)) {
-		fprintf(stderr, _("%s: device cannot send\n"), dev);
+		fprintf(stderr, _("%s: device cannot send raw ir\n"), dev);
 		return EX_UNAVAILABLE;
+	}
+
+	if (ioctl(fd, LIRC_SET_SEND_MODE, &mode)) {
+		fprintf(stderr, _("%s: failed to set send mode: %m\n"), dev);
+		return EX_IOERR;
 	}
 
 	if (args->carrier && f->carrier)
@@ -775,6 +782,18 @@ int lirc_record(struct arguments *args, int fd, unsigned features)
 	char *dev = args->device;
 	FILE *out = stdout;
 	int rc = EX_IOERR;
+	int mode = LIRC_MODE_MODE2;
+
+	if (!(features & LIRC_CAN_REC_MODE2)) {
+		fprintf(stderr, _("%s: device cannot record raw ir\n"), dev);
+		return EX_UNAVAILABLE;
+	}
+
+	// kernel v4.8 and v4.9 return ENOTTY
+	if (ioctl(fd, LIRC_SET_REC_MODE, &mode) && errno != ENOTTY) {
+		fprintf(stderr, _("%s: failed to set record mode: %m\n"), dev);
+		return EX_IOERR;
+	}
 
 	if (args->savetofile) {
 		out = fopen(args->savetofile, "w");
