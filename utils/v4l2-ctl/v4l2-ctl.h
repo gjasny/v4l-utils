@@ -170,6 +170,7 @@ enum Option {
 	OptStreamCount,
 	OptStreamSkip,
 	OptStreamLoop,
+	OptStreamSleep,
 	OptStreamPoll,
 	OptStreamTo,
 	OptStreamToHost,

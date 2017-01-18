@@ -28,6 +28,7 @@ extern "C" {
 
 static unsigned stream_count;
 static unsigned stream_skip;
+static int stream_sleep = -1;
 static unsigned stream_pat;
 static bool stream_loop;
 static bool stream_out_square;
@@ -82,6 +83,10 @@ void streaming_usage(void)
 	       "                     skipped buffers as is passed by --stream-skip.\n"
 	       "  --stream-skip=<count>\n"
 	       "                     skip the first <count> buffers. The default is 0.\n"
+	       "  --stream-sleep=<count>\n"
+	       "                     sleep for 1 second every <count> buffers. If <count> is 0,\n"
+	       "                     then sleep forever right after streaming starts. The default\n"
+	       "                     is -1 (never sleep).\n"
 	       "  --stream-to=<file> stream to this file. The default is to discard the\n"
 	       "                     data. If <file> is '-', then the data is written to stdout\n"
 	       "                     and the --silent option is turned on automatically.\n"
@@ -316,6 +321,9 @@ void streaming_cmd(int ch, char *optarg)
 		break;
 	case OptStreamSkip:
 		stream_skip = strtoul(optarg, 0L, 0);
+		break;
+	case OptStreamSleep:
+		stream_sleep = strtol(optarg, 0L, 0);
 		break;
 	case OptStreamLoop:
 		stream_loop = true;
@@ -1055,6 +1063,8 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 		stream_skip--;
 		return 0;
 	}
+	if (stream_sleep > 0 && count % stream_sleep == 0)
+		sleep(1);
 	if (stream_count == 0)
 		return 0;
 	if (--stream_count == 0)
@@ -1175,6 +1185,8 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 		}
 	}
 	count++;
+	if (stream_sleep > 0 && count % stream_sleep == 0)
+		sleep(1);
 	if (stream_count == 0)
 		return 0;
 	if (--stream_count == 0)
@@ -1332,6 +1344,9 @@ static void streaming_set_cap(int fd)
 
 	if (doioctl(fd, VIDIOC_STREAMON, &b.type))
 		goto done;
+
+	while (stream_sleep == 0)
+		sleep(100);
 
 	if (use_poll)
 		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
@@ -1538,6 +1553,9 @@ static void streaming_set_out(int fd)
 	if (doioctl(fd, VIDIOC_STREAMON, &b.type))
 		goto done;
 
+	while (stream_sleep == 0)
+		sleep(100);
+
 	if (use_poll)
 		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
 
@@ -1657,6 +1675,9 @@ static void streaming_set_m2m(int fd)
 	if (doioctl(fd, VIDIOC_STREAMON, &in.type) ||
 	    doioctl(fd, VIDIOC_STREAMON, &out.type))
 		goto done;
+
+	while (stream_sleep == 0)
+		sleep(100);
 
 	if (use_poll)
 		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
@@ -1836,6 +1857,9 @@ static void streaming_set_cap2out(int fd, int out_fd)
 	if (doioctl(fd, VIDIOC_STREAMON, &in.type) ||
 	    doioctl(out_fd, VIDIOC_STREAMON, &out.type))
 		goto done;
+
+	while (stream_sleep == 0)
+		sleep(100);
 
 	if (use_poll)
 		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
