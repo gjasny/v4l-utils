@@ -35,3 +35,4 @@ if WITH_QV4L2
 SUBDIRS += qv4l2
 endif
 
+EXTRA_DIST = common
