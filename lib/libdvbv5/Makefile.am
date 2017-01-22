@@ -70,6 +70,7 @@ libdvbv5_la_SOURCES = \
 	dvb-demux.c	 \
 	dvb-dev.c	 \
 	dvb-dev-local.c	 \
+	dvb-dev-priv.h   \
 	dvb-fe.c	 \
 	dvb-fe-priv.h    \
 	dvb-log.c	 \

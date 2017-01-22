@@ -11,4 +11,4 @@ cec-ctl-gen.h: msg2ctl.pl ../../include/linux/cec.h ../../include/linux/cec-func
 clean-local:
 	-rm -vf cec-ctl-gen.h
 
-EXTRA_DIST = cec-ctl.1
+EXTRA_DIST = cec-ctl.1 msg2ctl.pl
