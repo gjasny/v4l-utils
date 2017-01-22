@@ -1,3 +1,10 @@
+v4l-utils-1.12.1
+----------------
+
+Gregor Jasny (1):
+      buildsystem: Add all files to dist target
+
+
 v4l-utils-1.12.0
 ----------------
 
