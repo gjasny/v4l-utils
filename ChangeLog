@@ -1,3 +1,422 @@
+v4l-utils-1.12.0
+----------------
+
+Andrey Utkin (1):
+      v4l2-ctl: Fix unneeded dot in "no hsync lock"
+
+Chris Mayo (2):
+      man: Fix typos in dvbv5-scan dvbv5-zap pages
+      libdvbv5: Improve vdr format output for DVB-T(2)
+
+Dietmar Spingler (1):
+      dvb-fe-tool: add an option to set maximum number of stat samples
+
+Edward Sheldrake (1):
+      libdvbv5: Fix dvb-format-convert segfault
+
+Greg Whiteley (1):
+      ir-ctl: `strndupa' undefined with --disable-nls
+
+Gregor Jasny (8):
+      Start v4l-utils 1.11.0 development cycle
+      V4L: Fix typos reported by lintian
+      libdvbv5: Fix decsriptors typo
+      libv4lconvert: Exclude memsrc implementation for libjpeg-turbo
+      Embed copy of ax_pthread.m4
+      libdvbv5: Fix format string errors
+      v4l2-ctl: Remove vanished v4l2-tpg.h.patch
+      Update gitignore
+
+Hans Verkuil (142):
+      sync-with-kernel
+      v4l2-ctl: improve handling of physical address in edid.
+      v4l2-compliance: improve pixelformat reporting
+      v4l-utils: sync with kernel
+      v4l2-compliance: support new multiplanar YUV formats.
+      qv4l2: support new multiplanar YUV formats.
+      qv4l2: signal that we don't want GLES
+      v4l2-compliance: fix broken test for V4L2_SEL_TGT_COMPOSE_PADDED
+      v4l2-ctl: only toggle field for FIELD_ALTERNATE
+      qv4l2: fix power-of-negative-number
+      v4l2-ctl: fix broken --list-devices
+      v4l2-ctl: fix overflow in fps calculation
+      v4l2-dbg: autodetect stride
+      v4l2-ctl/compliance: pad field wasn't zeroed for dv_timings ioctls
+      v4l2-compliance: include android-config.h
+      v4l2-compliance: add new checks for DV_TIMINGS controls & events
+      v4l2-ctl: fix broken --clear-edid
+      v4l2-ctl: use physical address 0.0.0.0 in the HDMI EDID
+      Revert "v4l2-ctl: use physical address 0.0.0.0 in the HDMI EDID"
+      v4l2-compliance: improve selection tests
+      v4l2-compliance: add type checks for VIDIOC_CROPCAP
+      v4l-utils: sync-with-kernel
+      v4l-utils: move commonly used headers and sources to 'common'
+      v4l-utils: sync-with-kernel
+      v4l2-ctl: fix fps reporting for video output
+      cv4l-helpers.h: fix constructor
+      v4l2-ctl: add streaming support
+      v4l2-ctl: fix syntax problem with older gcc
+      v4l2-ctl: add support for EDIDs for 4k displays
+      v4l2-ctl: utils/common: add missing copyright and license statements
+      v4l2-compliance: explain the vivid no_error_inj=1 module option
+      v4l2-compliance: fix broken video output test
+      cv4l-helpers: zero reserved field
+      v4l2-compliance: improve dv_timings checks
+      v4l2-compliance: if ENUM_FRAMEINTERVALS is supported, so should S_PARM
+      v4l2-compliance: improve S_PARM/ENUM_FRAMEINTERVALS interaction checks
+      v4l2-compliance: show SHA from which it was built.
+      v4l2-compliance: fix a check for the DONE flag
+      v4l2-compliance: add version.h to .gitignore
+      v4l-utils: sync-with-kernel
+      cec-ctl: add CEC control utility
+      cec-ctl: add missing OptMonitorAll check
+      cec-ctl: sync to master, update timestamp code
+      v4l2-ctl: fix --set-dv-bt-timings=index=12,reduced-fps=1
+      cec-ctl: drop trailing : if there are no arguments
+      cec-ctl: only print seq and ts when --verbose
+      cec-ctl: add option to set the OSD Name
+      cec-ctl: improve usage message
+      cec-ctl: be smarter about all_dev_types and prim_type
+      v4l2-compliance: only print the "cannot handle an invalid pixelformat" once
+      v4l-helpers.h: add v4l_type_invert, fix has_vid_cap/out for m2m
+      v4l2-compliance: improve colorspace checks for m2m devices
+      v4l2-compliance: check for unlimited (well, 100) opens
+      cec-ctl: add missing feature bits to dev_feat2s()
+      cec-ctl: implement features
+      cec-ctl: add check for --feat- and --rc- options
+      qv4l2/v4l2-ctl: remove obsolete SYCC encoding
+      v4l2-ctl.1.in: fix typo
+      cec-ctl: add manpage
+      cec-ctl: generate opcode name tables
+      cec-ctl: show topology and menu/powerstatus
+      cec: add common cec-log source
+      cec-compliance: add man page
+      cec-follower: add man page
+      cec-compliance: show SHA
+      cec-follower: show SHA
+      cec-follower/cec-compliance: fix ubuntu build error
+      cec-compliance: fix bogus compiler warning
+      v4l2-ctl: add format support to --set-edid
+      v4l2-ctl: rework CEA-861 block of the 4k sample EDIDs
+      v4l2-ctl: remove spurious character in usage text
+      v4l2-ctl: more EDID corrections
+      cec-ctl: add support for vendor commands
+      v4l2-ctl: support limited EDID modifications
+      v4l2-ctl: support Speaker Allocation DB, more EDID improvements
+      v4l2-ctl: Add YCbCr 4:4:4 Deep Color, fix HDMI VSDB
+      v4l2-ctl: report EDID audio and video latencies
+      v4l2-ctl: fix monitor names in EDIDs
+      v4l2-ctl: update EDIDs to 1.4, fix sRGB chromaticities
+      v4l2-ctl: make EDID video blocks consistent
+      v4l2-ctl: fix sRGB chromaticities for hdmi/hdmi-170
+      v4l2-ctl: EDIDs: fill in display sizes, enable CVT support
+      v4l2-ctl: HDMI only supports EDID 1.3
+      v4l-utils: sync-with-kernel
+      v4l-utils: improve touch support
+      v4l2-ctl: drop GTF from HDMI EDIDs
+      v4l2-compliance: add S_PARM warning, fix SELECTION test
+      v4l2-compliance: verify that you can't set read-only selection targets.
+      v4l2-ctl: fix Feature Support EDID bits.
+      cec-compliance: only test MONITOR_ALL if cap is set
+      cec-compliance: add missing \n
+      cec-compliance: improve man page
+      cec-follower: improve ARC: check for upstream/adjacency
+      v4l-utils: sync-with-kernel 4.8
+      cec utils: print the cec_log_addrs flags field
+      cec-ctl: allow setting the new CEC_LOG_ADDRS_FL_ALLOW_UNREG_FALLBACK
+      v4l2-ctl: support new standard and flags
+      media-ctl: support the new standard and flag
+      cec-compliance: remove obsolete cec_msg_record_on/off workaround + fix typo
+      cec-follower: remove obsolete cec_msg_record_on workaround.
+      cec-compliance: don't test yourself
+      v4l-utils: sync-with-kernel
+      cec-follower: check CEC_OP_FEAT_DEV_HAS_SET_OSD_STRING
+      cec-compliance: don't combine RECORD and PLAYBACK
+      cec-ctl: don't show received CEC message if CEC_TX_STATUS_OK is 0
+      v4l2-ctl: fix HDMI VSDB block in the EDID
+      v4l-utils: sync-with-kernel
+      cec: support new features
+      cec: log the new cec_log_addrs flags
+      cec-compliance: fix tests that affect msg.flags
+      cec-ctl: support 'General Protocol Messages' feature
+      cec-ctl: show the correct timestamps for transmitted msgs
+      cec-follower: always allow SET_OSD_NAME
+      cec-ctl: add support for a --custom-command option
+      ivtv-ctl: drop dvb/audio.h and dvb/video.h
+      Drop audio.h/video.h: they are no longer needed.
+      v4l-utils: sync with latest kernel
+      v4l2-compliance: allow S_SELECTION to return ENOTTY
+      cec-compliance: --test-adapter needs a valid PA
+      cec-ctl: add --timeout option to override the default timeout.
+      cec-ctl: only show the reply if there was a reply
+      cec-compliance: become temporarily a follower in the lost-msgs test
+      cec-compliance: fix typo in usage message
+      cec-ctl: show the CEC 2.0 features
+      cec-compliance: add missing newlines
+      cec-compliance: only test for has_deck_ctl for playback and record devices
+      cec-ctl: fix copy-and-paste error for --timeout
+      cec-follower: double the time_to_transient/stable values
+      cec-compliance: remove bogus Menu Status test
+      cec-compliance: fix recognized/unrecognized_op logic
+      cec-compliance: fail if initiate-arc times out, but is supported
+      cec-compliance: report which message took too long
+      cec-compliance: add option to set reply time threshold
+      cec-ctl: report approximate response time
+      cec-ctl/cec-compliance: the transmit time for a byte is 24 ms, not 25
+      cec-ctl: print vendor string if known
+      cec-compliance: warn instead of fail when unresponsive
+      cec-follower: improve two confusing warnings
+      cec-ctl: the PA should be set before configuring the LAs
+      cec-ctl: when setting both the PA and LAs, clear the LAs first
+      v4l2-ctl: fix wrong Vsync in HDMI EDID detailed timings
+      v4l2-ctl: add --stream-sleep option
+
+Hans de Goede (1):
+      v4lconvert: Add "PEGATRON CORPORATION" to asus_board_vendor
+
+Helen Fornazier (1):
+      v4l2-compliance: Improve test readability when fail
+
+Ingo Feinerer (1):
+      libv4l on OpenBSD
+
+Jemma Denson (4):
+      dvbv5-zap.c: fix setting signal handlers
+      dvbv5-zap.c: allow timeout with -x
+      dvbv5-zap.c: fix wrong signal
+      dvbv5-zap.c: Move common signals code into function
+
+Johan Fjeldtvedt (12):
+      cec-compliance: add CEC compliance utility
+      cec-follower: add cec-follower utility
+      cec-compliance/follower: fix opcode printing
+      cec-follower/cec-compliance: fix bug in string conversion
+      cec-follower: check for Routing Information from TV
+      cec-compliance: improve One Touch Play tests wrt. CTS 1.4b
+      cec-compliance: fix Device OSD Transfer tests
+      cec-ctl: print correct destination address for broadcast msgs
+      cec-compliance: recognize PRESUMED_OK and REFUSED as ok
+      cec-compliance: extend man page
+      cec-follower: extend man page
+      cec tools: exit if device is disconnected
+
+Laurent Pinchart (2):
+      media-ctl: Initialize ioctl arguments to 0
+      libdvb5: Fix multiple definition of dvb_dev_remote_init linking error
+
+Markus Heiser (2):
+      v4l-utils: add comments to the build instructions
+      v4l-utils: fixed dvbv5 vdr format
+
+Mauro Carvalho Chehab (150):
+      README: update instructions to sync with Kernel
+      Sync with Kernel (4.5-rc1)
+      contrib: Add a tool to allow test the G_TOPOLOGY MC ioctl
+      mc_nextgen_test: allow to configure what'll be displayed
+      mc_nextgen_test: better work with ansi colors
+      mc_nextgen_test: add number of sink/source pads
+      mc_nextgen_test: Handle the link flags
+      mc_nextgen_test: Some cleanups and printk adjustments
+      mc_nextgen_test: Fix object fill logic
+      mc_nextgen_test: move find_gobj() function
+      mc_nextgen_test: add an option to print a graphviz graph
+      mc_nextgen_test: avoid accessing NULL pointers
+      mc_nextgen_test: fix pad sink/source logic
+      mc_nextgen_test: improve entities display on graph
+      mc_nextgen_test: Make it work with the current API
+      mc_nextgen_test: Update to print the entity functions
+      mc_nextgen_test: add devnode translation via udev/sysfs
+      configure.ac: Use libudev by default at MC utils
+      mc_nextgen_test: use devname instead of major,minor at dot
+      mc_nextgen_test: Better describe unknown interfaces/entities
+      mc_nextgen_test: port it to use the new G_TOPOLOGY ioctl
+      mc_nextgen_test: limit by default the graph size for DTV
+      mc_nextgen_test: Add parser for max_tsout parameter
+      mc_nextgen_test: add support for IF decoders
+      dvb-sat: Fix identation
+      mc_nextgen_test: get and print MC info
+      README: add needed dependencies to build under Fedora
+      mc_nextgen_test: improve .dot output adding driver and bus
+      README: add a missing qt5 dependency on Fedora
+      media.h: synchronize the devices with their new values
+      Fix Debian/Ubuntu list of packages
+      configure.ac: Add a summary of the compile options
+      configure.ac: Improve output about Qt optional features
+      Sync with latest Kernel version
+      mc_nextgen_test: Rearrange the order of entity function translation table
+      mc_nextgen_test: enable ALSA interfaces and add new alsa types
+      libmediactl: don't show devnodes if NULL
+      libmediactl: Don't try to parse empty major,minor
+      Sync with upstream
+      mc_nextgen_test: comment out the connectors entity
+      README: instruct about the need of glibc devel libraries for 32 bits
+      libdvbv5: Change license to LGPL v2.1
+      dvb-sat: add a function to get translated LNBf names
+      libdvbv5-po: update pt_BR translation
+      dvb-sat: remove an unused var
+      descriptors: add initializers for other NIT/other SDT tables
+      dvb-file: add entries for "hidden" channels too
+      dvb: better describe the Table ID extension
+      dvb-scan: Fix the multi-section check logic
+      dvb-scan: suppress frequency shift warning
+      dvb-fe: improve SEC voltage message
+      dvb-sat: add a debug message to show L-Band frequency
+      dvb-sat: be more verbose when setting for Satellite
+      dvb-scan: add space for separate other NIT/SDT tables
+      descriptors: fix parsing for other IDs for the EIT table
+      dvbv5-zap: add an option for "non-human" stat prints
+      dvbv5-zap: relax the rule of requiring a channel file
+      dvbv5-zap: wait until timeout if not recording
+      dvbv5-tools: exit if parsing arguments failed
+      Makefile.am: sync lirc hearder with make sync
+      ir-ctl: move lirc include to include/linux/lirc.h
+      Sync with the Kernel
+      ir-ctl: add locale support for ir-ctl.c
+      ir-ctl.c: Don't use non-ascii chars at strings
+      Update translations with ir-ctl additions
+      ir-ctl: one string is missing gettext
+      ir-ctl: Add Brazilian Portuguese translation
+      configure.ac: show what apps/libraries will be built
+      configure.ac: report alsa via yes/no
+      sn9c20x: remove an unused table
+      libdvbv5: add functions to detect DVB devices
+      dvb: use the new udev-based logic to get device names
+      dvb-dev: standardize the namespace
+      libdvbv5: embeed dvb_v5_fe_parms at struct dvb_device
+      dvb-dev: better handle DVB device type
+      dvb-dev: better handle error conditions
+      dvb-fe: create an internal DVB FE open function
+      dvb-dev: also store the sysfs path
+      dvb-dev: add debug messages for device found/select
+      dvb-fe: fix the error condition return logic
+      dvb-dev: implement a way to open the frontend via sysname
+      dvb-fe-tool: don't crash with invalid arguments
+      dvbv5 utils: use the new dvb_device API
+      dvb-sat.h: Fix two documentation warnings
+      libdvbv5: create a new API for dvb-demux
+      dvbv5-scan: fix a regression introduced by da56d6f1578a
+      libdvbv5: add a dvb_device variant for the scan routine
+      libdvbv5: rename dvb-dev.c to dvb-dev-local.c
+      libdvbv5: abstract the dvb_dev functions
+      configure.ac: Show "no" if GL or GLU is not found
+      configure.ac: make libjpeg optional
+      configure.ac: libdvbv5 now require libudev
+      README: update dependencies list
+      dvb-demux: fix a warning
+      configure.ac: Check for pthread
+      libdvbv5: add a macro to output logs+loglevel
+      libdvbv5: prepare to add remote support for dvb_dev* functions
+      libdvbv5: add support for using a remote DVB device
+      libdvbv5: allow overriding the main FE functions
+      dvbv5-daemon: split buffer filling from buffer sending
+      libdvbv5: add support for 64 bits integer for the remote protocol
+      dvbv5-daemon: add support for FE get/set stuff
+      dvb-dev-remote: add support for FE get/set/set_delsys/stats
+      libdvbv5: fix dev_read protocol handling
+      dvb-fe-tool: add support for calling a remote dvb device
+      dvbv5-zap: add support to access a remote device
+      libdvbv5: Fix remote read()
+      dvbv5-daemon: add a note that the remote support is still experimental
+      libdvbv5: don't crash if the ISDB-T delsys descriptor is corrupted
+      libdvbv5: prevent craches at the *foreach macro helpers
+      libdvbv5: Fix some allocation issues
+      COPYING.libdvbv5: added missing file
+      Add some generated files to .gitignore
+      libdvbv5: better handle errors at the remote protocol
+      libdvbv5: better handle local errors
+      dvbv5-tools: avoid relying on errno
+      dvbv5-daemon: handle failures on dvb_dev_open()
+      dvbv5-zap: fix a regression when opening the DVR device
+      dvb-dev-remote: handle server disconnects
+      dvbv5-zap: don't generate fp exception if aborted too early
+      dvbv5-daemon: Don't let a read() use more space than the buf
+      dvbv5-zap: add support to create a local pipe for DVR
+      libdvbv5: while not too late, change dvb_dev_find() api
+      libdvbv5: add local logic for device detection notifier
+      libdvbv5: fix device changes notification
+      libdvbv5: add support for remote device change events
+      libdvbv5: fix an inverted logic check
+      dvb-dev-remote: do a call stack dump on msg format errors
+      libdvbv5: Ensure that it will read all package
+      libdvbv5: better handle overflow errors
+      parse_tcpdump_log.pl: fix logic that lists available devices
+      parse_tcpdump_log.pl: add support to capture from multiple devs
+      add a parser for tda18271/mb86a20s with cx231xx
+      parse_cx231xx.pl: improve and fix GPIO handling
+      dvbv5-daemon.c: don't hang on NULL strings
+      dvbv5-daemon: use TCP_NODELAY
+      dvbv5: use asynchronous read for dvbv5-daemon
+      media-ctl: Fix a compilation bug introduced by changeset 7a21d66983f7
+      dvb-dev-remote: improve the data receive logic
+      configure.ac: don't enable pthread with static libraries
+      configure.ac: report what kind of libraries will be built
+      configure.ac: libdvbv5 is not experimental
+      libdvbv5: add a header with the library version
+      libdvbv5: install libdvb-version.h header
+      dvb-sat: embeed most stuff internally at struct LNBf
+      dvb-sat: change the LNBf logic to make it more generic
+      dvb-sat: add support for several BrasilSat LNBf models
+      dvb-sat: reinsert legacy fields to avoid API breakages
+      dvb-sat: fix logic that sets the satellite number
+      libdvbv5: fix handling of satellite number
+
+Mike Frysinger (1):
+      include sys/sysmacros.h for major() & minor()
+
+Nick Dyer (1):
+      v4l2-compliance: Changes to support touch sensors
+
+Niklas Söderlund (1):
+      libv4lconvert: Add support for V4L2_PIX_FMT_{NV16, NV61}
+
+Ricardo Ribalda (5):
+      v4l2-compliance: Check V4L2_BUF_FLAG_DONE
+      libv4lconvert: Add support for V4L2_PIX_FMT_{HSV24, HSV32}
+      qv4l: support for HSV formats via OpenGL.
+      qv4l2: Support for HSV encodings
+      v4l2-ctl: Show HSV encodings names
+
+Sakari Ailus (14):
+      [v4l-utils, 1/2] v4l: libv4l1, libv4l2: Use $(mkdir_p) instead of deprecated $(MKDIR_P)
+      [v4l-utils,2/2] Fix configure script errors
+      v4l: libv4l2subdev: Precisely convert media bus string to code
+      v4l: libv4lsubdev: Make mbus_formats array const
+      libv4l2subdev: Use generated format definitions in libv4l2subdev
+      libv4l2subdev: Add a function to list library supported pixel codes
+      media-ctl: List supported media bus formats
+      v4l: libv4l2subdev: Drop length argument from string conversion functions
+      libv4l2subdev: Allow extra spaces between format strings
+      libmediactl: Drop length argument from media_get_entity_by_name()
+      mediactl: Separate entity and pad parsing
+      media-ctl: Split off printing information related to a single entity
+      media-ctl: Print information related to a single entity
+      Fix static linking of v4l2-compliance and v4l2-ctl
+
+Sean Young (14):
+      ir-ctl: add new tool for sending & receiving raw IR
+      ir-ctl: deal with consecutive pulses or spaces correctly
+      ir-ctl: give proper error message if transmitter does not exist
+      ir-ctl: add ability to send scancodes in most protocols
+      ir-ctl: add verbose option
+      ir-keytable: make it possible to select the rc5 streamzap variant
+      ir-ctl: fix rc5x encoding
+      ir-ctl: 0 is valid scancode
+      ir-ctl: improve scancode validation
+      ir-keytable: "-p all" or "-p mce-kdb" does not work
+      ir-ctl: rename rc5x to rc5x_20
+      ir-ctl: rc5 command 6th bit missing
+      ir-ctl: uninitialised memory used
+      ir-ctl: ensure that device can record and that correct mode is set
+
+Shuah Khan (3):
+      mc_nextgen_test: fix -d option parsing
+      mc_nextgen_test: fix compile warnings
+      mc_nextgen_test: add names for ALSA capture, playback, and mixer entities
+
+Steven Ellis (1):
+      dvb-sat: add support for LNBs with LO of 11300 and 10700
+
+
 v4l-utils-1.10.0
 ----------------
 
