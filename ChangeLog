@@ -1,3 +1,10 @@
+v4l-utils-1.12.2
+----------------
+
+Gregor Jasny (1):
+      libdvbv5: Link against libudev
+
+
 v4l-utils-1.12.1
 ----------------
 
