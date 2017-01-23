@@ -152,7 +152,7 @@ case "$host_os" in
   linux*)
     linux_os="yes"
     ;;
-  freebsd*)
+  *freebsd*)
     freebsd_os="yes"
     ;;
 esac
