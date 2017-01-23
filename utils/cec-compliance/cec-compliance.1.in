@@ -51,7 +51,7 @@ failing:
 
     OK (Presumed)       Nothing went wrong during the test, but the test cannot
                         positively verify that the required effects of the test
-                        occured. The test runner should verify that the test
+                        occurred. The test runner should verify that the test
                         passed by manually observing the device under test. This
                         is typically the test result for tests that send
                         messages that are not replied to, but which induce some

@@ -49,7 +49,7 @@ static const char doc[] = N_(
 	"\nOn the options below, the arguments are:\n"
 	"  ADAPTER      - the dvb adapter to control\n"
 	"  FRONTEND     - the dvb frontend to control\n"
-	"  SERVER       - server address whith is running the dvb5-daemon\n"
+	"  SERVER       - server address which is running the dvb5-daemon\n"
 	"  PORT         - server port used by the dvb5-daemon\n");
 
 static const struct argp_option options[] = {

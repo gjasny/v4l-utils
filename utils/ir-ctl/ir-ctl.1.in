@@ -182,7 +182,7 @@ pulse and space file. The following protocols are supported:
 \fBsanyo\fR, \fBrc6_0\fR, \fBrc6_6a_20\fR, \fBrc6_6a_24\fR, \fBrc6_6a_32\fR,
 \fBrc6_mce\fR, \fBsharp\fR.
 If the scancode starts with 0x it will be interpreted as a
-hexidecimal number, and if it starts with 0 it will be interpreted as an
+hexadecimal number, and if it starts with 0 it will be interpreted as an
 octal number.
 .PP
 .SS Wideband and narrowband receiver
