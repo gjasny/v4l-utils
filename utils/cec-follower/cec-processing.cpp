@@ -1034,6 +1034,7 @@ void testProcessing(struct node *node)
 		int res;
 		struct timeval timeval = {};
 
+		fflush(stdout);
 		timeval.tv_sec = 1;
 		FD_ZERO(&rd_fds);
 		FD_ZERO(&ex_fds);

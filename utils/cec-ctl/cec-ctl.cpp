@@ -2036,6 +2036,7 @@ int main(int argc, char **argv)
 	for (msg_vec::iterator iter = msgs.begin(); iter != msgs.end(); ++iter) {
 		struct cec_msg msg = *iter;
 
+		fflush(stdout);
 		if (!cec_msg_is_broadcast(&msg) && !options[OptTo]) {
 			fprintf(stderr, "attempting to send message without --to\n");
 			exit(1);
@@ -2067,6 +2068,7 @@ int main(int argc, char **argv)
 		if (!cec_msg_status_is_ok(&msg))
 			printf("\t%s\n", status2s(msg).c_str());
 	}
+	fflush(stdout);
 
 skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll]) {
@@ -2091,6 +2093,7 @@ skip_la:
 		while (1) {
 			int res;
 
+			fflush(stdout);
 			FD_ZERO(&rd_fds);
 			FD_ZERO(&ex_fds);
 			FD_SET(fd, &rd_fds);
@@ -2137,6 +2140,7 @@ skip_la:
 			}
 		}
 	}
+	fflush(stdout);
 
 skip_mon:
 	close(fd);
