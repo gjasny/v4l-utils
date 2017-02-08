@@ -29,6 +29,7 @@ extern "C" {
 static unsigned stream_count;
 static unsigned stream_skip;
 static int stream_sleep = -1;
+static bool stream_no_query;
 static unsigned stream_pat;
 static bool stream_loop;
 static bool stream_out_square;
@@ -103,6 +104,7 @@ void streaming_usage(void)
 	       "  --stream-from=<file> stream from this file. The default is to generate a pattern.\n"
 	       "                     If <file> is '-', then the data is read from stdin.\n"
 	       "  --stream-from-host=<hostname[:port]> stream from this host. The default port is %d.\n"
+	       "  --stream-no-query  Do not query and set the DV timings or standard before streaming.\n"
 	       "  --stream-loop      loop when the end of the file we are streaming from is reached.\n"
 	       "                     The default is to stop.\n"
 	       "  --stream-out-pattern=<count>\n"
@@ -324,6 +326,9 @@ void streaming_cmd(int ch, char *optarg)
 		break;
 	case OptStreamSleep:
 		stream_sleep = strtol(optarg, 0L, 0);
+		break;
+	case OptStreamNoQuery:
+		stream_no_query = true;
 		break;
 	case OptStreamLoop:
 		stream_loop = true;
@@ -1956,6 +1961,16 @@ void streaming_set(int fd, int out_fd)
 	if (do_out > 1) {
 		fprintf(stderr, "only one of --stream-out-mmap/user/dmabuf is allowed\n");
 		return;
+	}
+
+	if (do_cap && !stream_no_query) {
+		struct v4l2_dv_timings new_dv_timings = {};
+		v4l2_std_id std;
+
+		if (doioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings))
+			doioctl(fd, VIDIOC_S_DV_TIMINGS, &new_dv_timings);
+		else if (doioctl(fd, VIDIOC_QUERYSTD, &std) && std != V4L2_STD_UNKNOWN)
+			doioctl(fd, VIDIOC_S_STD, &std);
 	}
 
 	if (do_cap && do_out && fd == out_fd)

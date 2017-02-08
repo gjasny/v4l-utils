@@ -172,6 +172,7 @@ enum Option {
 	OptStreamLoop,
 	OptStreamSleep,
 	OptStreamPoll,
+	OptStreamNoQuery,
 	OptStreamTo,
 	OptStreamToHost,
 	OptStreamMmap,

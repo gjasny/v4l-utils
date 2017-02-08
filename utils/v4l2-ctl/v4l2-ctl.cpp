@@ -218,6 +218,7 @@ static struct option long_options[] = {
 	{"stream-loop", no_argument, 0, OptStreamLoop},
 	{"stream-sleep", required_argument, 0, OptStreamSleep},
 	{"stream-poll", no_argument, 0, OptStreamPoll},
+	{"stream-no-query", no_argument, 0, OptStreamNoQuery},
 	{"stream-to", required_argument, 0, OptStreamTo},
 	{"stream-to-host", required_argument, 0, OptStreamToHost},
 	{"stream-mmap", optional_argument, 0, OptStreamMmap},
