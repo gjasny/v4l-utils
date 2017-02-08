@@ -75,6 +75,26 @@ enum Option {
 	OptTestTunerControl,
 	OptTestVendorSpecificCommands,
 	OptTestStandbyResume,
+
+	OptSkipTestAudioRateControl,
+	OptSkipTestARCControl,
+	OptSkipTestCapDiscoveryControl,
+	OptSkipTestDeckControl,
+	OptSkipTestDeviceMenuControl,
+	OptSkipTestDeviceOSDTransfer,
+	OptSkipTestDynamicAutoLipsync,
+	OptSkipTestOSDDisplay,
+	OptSkipTestOneTouchPlay,
+	OptSkipTestOneTouchRecord,
+	OptSkipTestPowerStatus,
+	OptSkipTestRemoteControlPassthrough,
+	OptSkipTestRoutingControl,
+	OptSkipTestSystemAudioControl,
+	OptSkipTestSystemInformation,
+	OptSkipTestTimerProgramming,
+	OptSkipTestTunerControl,
+	OptSkipTestVendorSpecificCommands,
+	OptSkipTestStandbyResume,
 	OptLast = 256
 };
 
@@ -120,6 +140,26 @@ static struct option long_options[] = {
 	{"test-tuner-control", no_argument, 0, OptTestTunerControl},
 	{"test-vendor-specific-commands", no_argument, 0, OptTestVendorSpecificCommands},
 	{"test-standby-resume", no_argument, 0, OptTestStandbyResume},
+
+	{"skip-test-audio-rate-control", no_argument, 0, OptSkipTestAudioRateControl},
+	{"skip-test-audio-return-channel-control", no_argument, 0, OptSkipTestARCControl},
+	{"skip-test-capability-discovery-and-control", no_argument, 0, OptSkipTestCapDiscoveryControl},
+	{"skip-test-deck-control", no_argument, 0, OptSkipTestDeckControl},
+	{"skip-test-device-menu-control", no_argument, 0, OptSkipTestDeviceMenuControl},
+	{"skip-test-device-osd-transfer", no_argument, 0, OptSkipTestDeviceOSDTransfer},
+	{"skip-test-dynamic-auto-lipsync", no_argument, 0, OptSkipTestDynamicAutoLipsync},
+	{"skip-test-osd-display", no_argument, 0, OptSkipTestOSDDisplay},
+	{"skip-test-one-touch-play", no_argument, 0, OptSkipTestOneTouchPlay},
+	{"skip-test-one-touch-record", no_argument, 0, OptSkipTestOneTouchRecord},
+	{"skip-test-power-status", no_argument, 0, OptSkipTestPowerStatus},
+	{"skip-test-remote-control-passthrough", no_argument, 0, OptSkipTestRemoteControlPassthrough},
+	{"skip-test-routing-control", no_argument, 0, OptSkipTestRoutingControl},
+	{"skip-test-system-audio-control", no_argument, 0, OptSkipTestSystemAudioControl},
+	{"skip-test-system-information", no_argument, 0, OptSkipTestSystemInformation},
+	{"skip-test-timer-programming", no_argument, 0, OptSkipTestTimerProgramming},
+	{"skip-test-tuner-control", no_argument, 0, OptSkipTestTunerControl},
+	{"skip-test-vendor-specific-commands", no_argument, 0, OptSkipTestVendorSpecificCommands},
+	{"skip-test-standby-resume", no_argument, 0, OptSkipTestStandbyResume},
 	{0, 0, 0, 0}
 };
 
@@ -135,6 +175,10 @@ static void usage(void)
 	       "\n"
 	       "  -A, --test-adapter                  Test the CEC adapter API\n"
 	       "  --test-core                         Test the core functionality\n"
+	       "\n"
+	       "By changing --test to --skip-test in the following options you can skip tests\n"
+	       "instead of enabling them.\n"
+	       "\n"
 	       "  --test-audio-rate-control           Test the Audio Rate Control feature\n"
 	       "  --test-audio-return-channel-control Test the Audio Return Channel Control feature\n"
 	       "  --test-capability-discovery-and-control Test the Capability Discovery and Control feature\n"
@@ -1163,14 +1207,52 @@ int main(int argc, char **argv)
 		test_tags |= TAG_TUNER_CONTROL;
 	if (options[OptTestVendorSpecificCommands])
 		test_tags |= TAG_VENDOR_SPECIFIC_COMMANDS;
+
+	if (!test_tags && !options[OptTestCore])
+		test_tags = TAG_ALL;
+
+	if (options[OptSkipTestAudioRateControl])
+		test_tags &= ~TAG_AUDIO_RATE_CONTROL;
+	if (options[OptSkipTestARCControl])
+		test_tags &= ~TAG_ARC_CONTROL;
+	if (options[OptSkipTestCapDiscoveryControl])
+		test_tags &= ~TAG_CAP_DISCOVERY_CONTROL;
+	if (options[OptSkipTestDeckControl])
+		test_tags &= ~TAG_DECK_CONTROL;
+	if (options[OptSkipTestDeviceMenuControl])
+		test_tags &= ~TAG_DEVICE_MENU_CONTROL;
+	if (options[OptSkipTestDeviceOSDTransfer])
+		test_tags &= ~TAG_DEVICE_OSD_TRANSFER;
+	if (options[OptSkipTestDynamicAutoLipsync])
+		test_tags &= ~TAG_DYNAMIC_AUTO_LIPSYNC;
+	if (options[OptSkipTestOSDDisplay])
+		test_tags &= ~TAG_OSD_DISPLAY;
+	if (options[OptSkipTestOneTouchPlay])
+		test_tags &= ~TAG_ONE_TOUCH_PLAY;
+	if (options[OptSkipTestOneTouchRecord])
+		test_tags &= ~TAG_ONE_TOUCH_RECORD;
+	if (options[OptSkipTestPowerStatus])
+		test_tags &= ~TAG_POWER_STATUS;
+	if (options[OptSkipTestRemoteControlPassthrough])
+		test_tags &= ~TAG_REMOTE_CONTROL_PASSTHROUGH;
+	if (options[OptSkipTestRoutingControl])
+		test_tags &= ~TAG_ROUTING_CONTROL;
+	if (options[OptSkipTestSystemAudioControl])
+		test_tags &= ~TAG_SYSTEM_AUDIO_CONTROL;
+	if (options[OptSkipTestSystemInformation])
+		test_tags &= ~TAG_SYSTEM_INFORMATION;
+	if (options[OptSkipTestTimerProgramming])
+		test_tags &= ~TAG_TIMER_PROGRAMMING;
+	if (options[OptSkipTestTunerControl])
+		test_tags &= ~TAG_TUNER_CONTROL;
+	if (options[OptSkipTestVendorSpecificCommands])
+		test_tags &= ~TAG_VENDOR_SPECIFIC_COMMANDS;
+
 	/* When code is added to the Standby/Resume test for waking up
 	   other devices than TVs, the necessary tags should be added
 	   here (probably Routing Control and/or RC Passthrough) */
 	if (options[OptTestStandbyResume])
 		test_tags |= TAG_POWER_STATUS | TAG_STANDBY_RESUME;
-
-	if (!test_tags && !options[OptTestCore])
-		test_tags = TAG_ALL;
 
 	if (options[OptInteractive])
 		test_tags |= TAG_INTERACTIVE;
