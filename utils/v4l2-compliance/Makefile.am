@@ -19,9 +19,9 @@ EXTRA_DIST = Android.mk fixme.txt v4l2-compliance.1
 v4l2-compliance.cpp: version.h
 
 version.h:
-	@if git show-ref -s HEAD >/dev/null 2>&1; then \
+	@if git rev-parse HEAD >/dev/null 2>&1; then \
 		echo -n "#define SHA " >$@ ; \
-		git show-ref -s HEAD >>$@ ; \
+		git rev-parse HEAD >>$@ ; \
 	else \
 		touch $@ ; \
 	fi

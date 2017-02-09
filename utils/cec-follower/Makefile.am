@@ -15,9 +15,9 @@ cec-table.h: ../cec-ctl/msg2ctl.pl ../../include/linux/cec.h ../../include/linux
 	../cec-ctl/msg2ctl.pl 2 ../../include/linux/cec.h ../../include/linux/cec-funcs.h >$@
 
 version.h:
-	@if git show-ref -s HEAD >/dev/null 2>&1; then \
+	@if git rev-parse HEAD >/dev/null 2>&1; then \
 		echo -n "#define SHA " >$@ ; \
-		git show-ref -s HEAD >>$@ ; \
+		git rev-parse HEAD >>$@ ; \
 	else \
 		touch $@ ; \
 	fi
