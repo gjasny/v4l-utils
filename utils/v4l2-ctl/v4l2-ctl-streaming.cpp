@@ -1965,12 +1965,18 @@ void streaming_set(int fd, int out_fd)
 
 	if (do_cap && !stream_no_query) {
 		struct v4l2_dv_timings new_dv_timings = {};
-		v4l2_std_id std;
+		v4l2_std_id new_std;
+		struct v4l2_input in = { };
 
-		if (doioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings))
-			doioctl(fd, VIDIOC_S_DV_TIMINGS, &new_dv_timings);
-		else if (doioctl(fd, VIDIOC_QUERYSTD, &std) && std != V4L2_STD_UNKNOWN)
-			doioctl(fd, VIDIOC_S_STD, &std);
+		if (!test_ioctl(fd, VIDIOC_G_INPUT, &in.index) &&
+		    !test_ioctl(fd, VIDIOC_ENUMINPUT, &in)) {
+			if ((in.capabilities & V4L2_IN_CAP_DV_TIMINGS) &&
+			    !test_ioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings))
+				test_ioctl(fd, VIDIOC_S_DV_TIMINGS, &new_dv_timings);
+			else if ((in.capabilities & V4L2_IN_CAP_STD) &&
+				 !test_ioctl(fd, VIDIOC_QUERYSTD, &new_std))
+				test_ioctl(fd, VIDIOC_S_STD, &new_std);
+		}
 	}
 
 	if (do_cap && do_out && fd == out_fd)
