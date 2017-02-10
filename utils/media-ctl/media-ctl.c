@@ -167,6 +167,9 @@ static const struct flag_name bt_flags[] = {
 	{ V4L2_DV_FL_HALF_LINE, "half-line" },
 	{ V4L2_DV_FL_IS_CE_VIDEO, "CE-video" },
 	{ V4L2_DV_FL_FIRST_FIELD_EXTRA_LINE, "first-field-extra-line" },
+	{ V4L2_DV_FL_HAS_PICTURE_ASPECT, "has-picture-aspect" },
+	{ V4L2_DV_FL_HAS_CEA861_VIC, "has-cea861-vic" },
+	{ V4L2_DV_FL_HAS_HDMI_VIC, "has-hdmi-vic" },
 };
 
 static void v4l2_subdev_print_dv_timings(const struct v4l2_dv_timings *timings,

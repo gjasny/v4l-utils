@@ -384,6 +384,12 @@ static std::string dvflags2s(unsigned vsync, int val)
 		s += "CE-video, ";
 	if (val & V4L2_DV_FL_FIRST_FIELD_EXTRA_LINE)
 		s += "first field has extra line, ";
+	if (val & V4L2_DV_FL_HAS_PICTURE_ASPECT)
+		s += "has picture aspect, ";
+	if (val & V4L2_DV_FL_HAS_CEA861_VIC)
+		s += "has CEA-861 VIC, ";
+	if (val & V4L2_DV_FL_HAS_HDMI_VIC)
+		s += "has HDMI VIC, ";
 	if (s.length())
 		return s.erase(s.length() - 2, 2);
 	return s;
@@ -448,6 +454,14 @@ static void print_dv_timings(const struct v4l2_dv_timings *t)
 			printf("\tVertical backporch: %d\n", bt->il_vbackporch);
 		}
 		printf("\tStandards: %s\n", flags2s(bt->standards, dv_standards_def).c_str());
+		if (bt->flags & V4L2_DV_FL_HAS_PICTURE_ASPECT)
+			printf("\tPicture aspect: %u:%u\n",
+			       bt->picture_aspect.numerator,
+			       bt->picture_aspect.denominator);
+		if (bt->flags & V4L2_DV_FL_HAS_CEA861_VIC)
+			printf("\tCEA-861 VIC: %u\n", bt->cea861_vic);
+		if (bt->flags & V4L2_DV_FL_HAS_HDMI_VIC)
+			printf("\tHDMI VIC: %u\n", bt->hdmi_vic);
 		printf("\tFlags: %s\n", dvflags2s(bt->vsync, bt->flags).c_str());
 		break;
 	default:
