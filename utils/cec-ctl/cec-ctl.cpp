@@ -2028,7 +2028,7 @@ int main(int argc, char **argv)
 	printf("\n");
 
 	if (!options[OptFrom])
-		from = laddrs.log_addr[0];
+		from = laddrs.log_addr[0] & 0xf;
 
 	if (options[OptShowTopology])
 		showTopology(&node);
