@@ -519,6 +519,63 @@ std::string service2s(unsigned service)
 	return flags2s(service, service_def);
 }
 
+/*
+ * Any pixelformat that is not a YUV format is assumed to be
+ * RGB or HSV.
+ */
+static bool is_rgb_or_hsv(__u32 pixelformat)
+{
+	switch (pixelformat) {
+	case V4L2_PIX_FMT_UV8:
+	case V4L2_PIX_FMT_YVU410:
+	case V4L2_PIX_FMT_YVU420:
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_YYUV:
+	case V4L2_PIX_FMT_YVYU:
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_VYUY:
+	case V4L2_PIX_FMT_YUV422P:
+	case V4L2_PIX_FMT_YUV411P:
+	case V4L2_PIX_FMT_Y41P:
+	case V4L2_PIX_FMT_YUV444:
+	case V4L2_PIX_FMT_YUV555:
+	case V4L2_PIX_FMT_YUV565:
+	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_YUV410:
+	case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_HI240:
+	case V4L2_PIX_FMT_HM12:
+	case V4L2_PIX_FMT_M420:
+	case V4L2_PIX_FMT_NV12:
+	case V4L2_PIX_FMT_NV21:
+	case V4L2_PIX_FMT_NV16:
+	case V4L2_PIX_FMT_NV61:
+	case V4L2_PIX_FMT_NV24:
+	case V4L2_PIX_FMT_NV42:
+	case V4L2_PIX_FMT_NV12M:
+	case V4L2_PIX_FMT_NV21M:
+	case V4L2_PIX_FMT_NV16M:
+	case V4L2_PIX_FMT_NV61M:
+	case V4L2_PIX_FMT_NV12MT:
+	case V4L2_PIX_FMT_NV12MT_16X16:
+	case V4L2_PIX_FMT_YUV420M:
+	case V4L2_PIX_FMT_YVU420M:
+	case V4L2_PIX_FMT_YUV422M:
+	case V4L2_PIX_FMT_YVU422M:
+	case V4L2_PIX_FMT_YUV444M:
+	case V4L2_PIX_FMT_YVU444M:
+	case V4L2_PIX_FMT_SN9C20X_I420:
+	case V4L2_PIX_FMT_SPCA501:
+	case V4L2_PIX_FMT_SPCA505:
+	case V4L2_PIX_FMT_SPCA508:
+	case V4L2_PIX_FMT_CIT_YYVYUY:
+	case V4L2_PIX_FMT_KONICA420:
+		return false;
+	default:
+		return true;
+	}
+}
+
 void printfmt(const struct v4l2_format &vfmt)
 {
 	const flag_def vbi_def[] = {
@@ -526,6 +583,9 @@ void printfmt(const struct v4l2_format &vfmt)
 		{ V4L2_VBI_INTERLACED, "interlaced" },
 		{ 0, NULL }
 	};
+	__u32 colsp = vfmt.fmt.pix.colorspace;
+	__u32 ycbcr_enc = vfmt.fmt.pix.ycbcr_enc;
+
 	printf("Format %s:\n", buftype2s(vfmt.type).c_str());
 
 	switch (vfmt.type) {
@@ -536,10 +596,24 @@ void printfmt(const struct v4l2_format &vfmt)
 		printf("\tField             : %s\n", field2s(vfmt.fmt.pix.field).c_str());
 		printf("\tBytes per Line    : %u\n", vfmt.fmt.pix.bytesperline);
 		printf("\tSize Image        : %u\n", vfmt.fmt.pix.sizeimage);
-		printf("\tColorspace        : %s\n", colorspace2s(vfmt.fmt.pix.colorspace).c_str());
-		printf("\tTransfer Function : %s\n", xfer_func2s(vfmt.fmt.pix.xfer_func).c_str());
-		printf("\tYCbCr/HSV Encoding: %s\n", ycbcr_enc2s(vfmt.fmt.pix.ycbcr_enc).c_str());
-		printf("\tQuantization      : %s\n", quantization2s(vfmt.fmt.pix.quantization).c_str());
+		printf("\tColorspace        : %s\n", colorspace2s(colsp).c_str());
+		printf("\tTransfer Function : %s", xfer_func2s(vfmt.fmt.pix.xfer_func).c_str());
+		if (vfmt.fmt.pix.xfer_func == V4L2_XFER_FUNC_DEFAULT)
+			printf(" (maps to %s)",
+			       xfer_func2s(V4L2_MAP_XFER_FUNC_DEFAULT(colsp)).c_str());
+		printf("\n");
+		printf("\tYCbCr/HSV Encoding: %s", ycbcr_enc2s(ycbcr_enc).c_str());
+		if (ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT) {
+			ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(colsp);
+			printf(" (maps to %s)", ycbcr_enc2s(ycbcr_enc).c_str());
+		}
+		printf("\n");
+		printf("\tQuantization      : %s", quantization2s(vfmt.fmt.pix.quantization).c_str());
+		if (vfmt.fmt.pix.quantization == V4L2_QUANTIZATION_DEFAULT)
+			printf(" (maps to %s)",
+			       quantization2s(V4L2_MAP_QUANTIZATION_DEFAULT(is_rgb_or_hsv(vfmt.fmt.pix.pixelformat),
+									    colsp, ycbcr_enc)).c_str());
+		printf("\n");
 		if (vfmt.fmt.pix.priv == V4L2_PIX_FMT_PRIV_MAGIC)
 			printf("\tFlags             : %s\n", pixflags2s(vfmt.fmt.pix.flags).c_str());
 		break;
