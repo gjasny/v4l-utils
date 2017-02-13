@@ -611,8 +611,10 @@ static int dvb_sat_get_freq(struct dvb_v5_fe_parms *p, uint16_t *t)
 		for (j = 0; j < ARRAY_SIZE(lnb->freqrange) && lnb->freqrange[j].low; j++) {
 			if (freq < lnb->freqrange[j].low * 1000 || freq > lnb->freqrange[j].high * 1000)
 				continue;
-			if (freq > lnb->freqrange[j].rangeswitch * 1000)
-				j++;
+			if (lnb->freqrange[j].rangeswitch && freq > lnb->freqrange[j].rangeswitch * 1000) {
+				if (j + 1 < ARRAY_SIZE(lnb->freqrange) && lnb->freqrange[j + 1].low)
+					j++;
+			}
 
 			/* Sets DiSEqC to high_band if not low band */
 			if (j)
