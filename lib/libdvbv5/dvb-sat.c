@@ -588,12 +588,18 @@ static int dvb_sat_get_freq(struct dvb_v5_fe_parms *p, uint16_t *t)
 	dvb_fe_retrieve_parm(&parms->p, DTV_FREQUENCY, &freq);
 
 	if (!lnb->freqrange[1].low) {
+		if (parms->p.verbose)
+			dvb_log("LNBf with a single LO at %.2f MHz", parms->freq_offset/1000.);
+
 		/* Trivial case: LNBf with a single local oscilator(LO) */
 		parms->freq_offset = lnb->freqrange[0].int_freq * 1000;
 		return freq;
 	}
 
 	if (lnb->freqrange[0].pol) {
+		if (parms->p.verbose > 1)
+			dvb_log("LNBf polarity driven");
+
 		/* polarization-controlled multi-LO multipoint LNBf (bandstacking) */
 		dvb_fe_retrieve_parm(&parms->p, DTV_POLARIZATION, &pol);
 
@@ -607,8 +613,14 @@ static int dvb_sat_get_freq(struct dvb_v5_fe_parms *p, uint16_t *t)
 			return freq;
 		}
 	} else {
+		if (parms->p.verbose > 1)
+			dvb_log("Seeking for LO for %.2f MHz frequency", freq / 1000000.);
 		/* Multi-LO (dual-band) LNBf using DiSEqC */
 		for (j = 0; j < ARRAY_SIZE(lnb->freqrange) && lnb->freqrange[j].low; j++) {
+			if (parms->p.verbose > 1)
+				dvb_log("LO setting %i: %.2f MHz to %.2f MHz", j,
+					lnb->freqrange[j].low / 1000., lnb->freqrange[j].high / 1000.);
+
 			if (freq < lnb->freqrange[j].low * 1000 || freq > lnb->freqrange[j].high * 1000)
 				continue;
 			if (lnb->freqrange[j].rangeswitch && freq > lnb->freqrange[j].rangeswitch * 1000) {
@@ -628,6 +640,8 @@ static int dvb_sat_get_freq(struct dvb_v5_fe_parms *p, uint16_t *t)
 					dvb_log("BPF: %d KHz", parms->p.freq_bpf);
 			} else {
 				parms->freq_offset = lnb->freqrange[j].int_freq * 1000;
+				if (parms->p.verbose > 1)
+					dvb_log("Multi-LO LNBf. using LO setting %i at %.2f MHz", j, parms->freq_offset / 1000.);
 			}
 			return freq;
 		}
