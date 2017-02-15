@@ -642,6 +642,7 @@ enum Option {
 	OptNoReply = 'n',
 	OptOsdName = 'o',
 	OptPhysAddr = 'p',
+	OptShowRaw = 'r',
 	OptShowTopology = 'S',
 	OptTo = 't',
 	OptTrace = 'T',
@@ -726,6 +727,7 @@ static struct option long_options[] = {
 	{ "no-reply", no_argument, 0, OptNoReply },
 	{ "to", required_argument, 0, OptTo },
 	{ "from", required_argument, 0, OptFrom },
+	{ "show-raw", no_argument, 0, OptShowRaw },
 	{ "show-topology", no_argument, 0, OptShowTopology },
 	{ "list-ui-commands", no_argument, 0, OptListUICommands },
 	{ "rc-tv-profile-1", no_argument, 0, OptRcTVProfile1 },
@@ -779,6 +781,7 @@ static void usage(void)
 	       "  -t, --to=<la>            Send message to the given logical address\n"
 	       "  -f, --from=<la>          Send message from the given logical address\n"
 	       "                           By default use the first assigned logical address\n"
+	       "  -r, --show-raw           Show the raw CEC message (hex values)\n"
 	       "  -S, --show-topology      Show the CEC topology\n"
 	       "  -h, --help               Display this help message\n"
 	       "  --help-all               Show all help messages\n"
@@ -1115,6 +1118,14 @@ int cec_named_ioctl(int fd, const char *name,
 			name, retval, strerror(e));
 
 	return retval == -1 ? e : (retval ? -1 : 0);
+}
+
+static void log_raw_msg(const struct cec_msg *msg)
+{
+	printf("\tRaw: ");
+	for (unsigned i = 0; i < msg->len; i++)
+		printf("%02x ", msg->msg[i]);
+	printf("\n");
 }
 
 static void log_unknown_msg(const struct cec_msg *msg)
@@ -2054,6 +2065,8 @@ int main(int argc, char **argv)
 			printf("    Received from %s (%d):\n    ", la2s(cec_msg_initiator(&msg)),
 			       cec_msg_initiator(&msg));
 			log_msg(&msg);
+			if (options[OptShowRaw])
+				log_raw_msg(&msg);
 		}
 		printf("\tSequence: %u Tx Timestamp: %llu.%03llus",
 			msg.sequence,
@@ -2120,6 +2133,8 @@ skip_la:
 				       transmitted ? "Transmitted by" : "Received from",
 				       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
 				log_msg(&msg);
+				if (options[OptShowRaw])
+					log_raw_msg(&msg);
 				if (show_info && transmitted)
 					printf("\tSequence: %u Tx Timestamp: %llu.%03llus\n",
 					       msg.sequence,
