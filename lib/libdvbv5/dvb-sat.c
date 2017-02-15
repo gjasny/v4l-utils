@@ -310,11 +310,11 @@ int dvb_sat_search_lnb(const char *name)
 }
 
 static char *pol_name[] = {
-	[POLARIZATION_OFF] = "",
-	[POLARIZATION_H] = N_("Horizontal: "),
-	[POLARIZATION_V] = N_("Vertical  : "),
-	[POLARIZATION_L] = N_("Left      : "),
-	[POLARIZATION_R] = N_("Right     : "),
+	[POLARIZATION_OFF] = N_("Freqs     : "),
+	[POLARIZATION_H]   = N_("Horizontal: "),
+	[POLARIZATION_V]   = N_("Vertical  : "),
+	[POLARIZATION_L]   = N_("Left      : "),
+	[POLARIZATION_R]   = N_("Right     : "),
 };
 
 int dvb_print_lnb(int i)
