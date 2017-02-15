@@ -195,6 +195,7 @@ static struct remote_subtest system_info_subtests[] = {
 static int core_unknown(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = { };
+	const __u8 unknown_opcode = 0xfe;
 
 	/* Unknown opcodes should be responded to with Feature Abort, with abort
 	   reason Unknown Opcode.
@@ -203,7 +204,7 @@ static int core_unknown(struct node *node, unsigned me, unsigned la, bool intera
 	   needs to be updated for future CEC versions. */
 	cec_msg_init(&msg, me, la);
 	msg.len = 2;
-	msg.msg[1] = 0xfe;
+	msg.msg[1] = unknown_opcode;
 	fail_on_test(!transmit_timeout(node, &msg));
 	fail_on_test(timed_out(&msg));
 	fail_on_test(!cec_msg_status_is_abort(&msg));
@@ -213,6 +214,14 @@ static int core_unknown(struct node *node, unsigned me, unsigned la, bool intera
 	cec_ops_feature_abort(&msg, &abort_msg, &reason);
 	fail_on_test(reason != CEC_OP_ABORT_UNRECOGNIZED_OP);
 	fail_on_test(abort_msg != 0xfe);
+
+	/* Unknown opcodes that are broadcast should be ignored */
+	cec_msg_init(&msg, me, CEC_LOG_ADDR_BROADCAST);
+	msg.len = 2;
+	msg.msg[1] = unknown_opcode;
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(!timed_out(&msg));
+
 	return 0;
 }
 
