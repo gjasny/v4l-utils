@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libdvbv5 1.7.0\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
-"POT-Creation-Date: 2017-01-22 17:33+0100\n"
-"PO-Revision-Date: 2016-06-16 21:05-0300\n"
+"POT-Creation-Date: 2017-02-15 11:37-0200\n"
+"PO-Revision-Date: 2017-02-15 11:50-0200\n"
 "Last-Translator: Mauro Carvalho Chehab <mchehab@osg.samsung.com>\n"
 "Language-Team: Brazilian Portuguese\n"
 "Language: pt_BR\n"
@@ -17,16 +17,156 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 1.8.11\n"
 "X-Poedit-KeywordsList: _;N_\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-SearchPath-0: lib/libdvbv5\n"
 
+#: lib/libdvbv5/dvb-dev-local.c:75
+msgid "udev_device_get_sysname failed"
+msgstr "udev_device_get_sysname falhou"
+
+#: lib/libdvbv5/dvb-dev-local.c:93
+msgid "Can't remove a device from the list of DVB devices"
+msgstr "Não foi possivel remover dispositivo da lista de dispositivos DVB"
+
+#: lib/libdvbv5/dvb-dev-local.c:118 lib/libdvbv5/dvb-dev-local.c:126
+msgid "Can't get device node filename"
+msgstr "Não foi possível obter nome de arquivo do nó do dispositivo"
+
+#: lib/libdvbv5/dvb-dev-local.c:141
+#, c-format
+msgid "Ignoring device %s"
+msgstr "Ignorando dispositivo %s"
+
+#: lib/libdvbv5/dvb-dev-local.c:147
+#, c-format
+msgid "Can't get sysname for device %s"
+msgstr "Não foi possível obter nome no sysfs para o dispositivo %s"
+
+#: lib/libdvbv5/dvb-dev-local.c:158
+#, c-format
+msgid "Can't get bus type for device %s"
+msgstr "Não foi possível obter tipo de barramento para o dispositivo %s"
+
+#: lib/libdvbv5/dvb-dev-local.c:164
+#, c-format
+msgid "error %d when storing bus address"
+msgstr "erro %d quando armazenando endereço do barramento"
+
+#: lib/libdvbv5/dvb-dev-local.c:174
+msgid "Not enough memory to store the list of DVB devices"
+msgstr ""
+"Sem memória suficiente para armazenar lista de dispositivos de TV digital"
+
+#: lib/libdvbv5/dvb-dev-local.c:226
+#, c-format
+msgid "Found dvb %s device: %s"
+msgstr "Encontrado dispositivo %s de TV digital: %s"
+
+#: lib/libdvbv5/dvb-dev-local.c:284
+msgid "Can't create an udev object\n"
+msgstr "Não foi possível criar objeto udev\n"
+
+#: lib/libdvbv5/dvb-dev-local.c:363
+msgid "Unexpected device type found!"
+msgstr "Encontrado tipo inesperado de dispositivo!"
+
+#: lib/libdvbv5/dvb-dev-local.c:369
+#, c-format
+msgid "error %d when seeking for device's filename"
+msgstr "erro %d quando procurando por nome de arquivo associado ao dispositivo"
+
+#: lib/libdvbv5/dvb-dev-local.c:376
+#, c-format
+msgid "Selected dvb %s device: %s"
+msgstr "Selecionado dispositivo %s de TV digital: %s"
+
+#: lib/libdvbv5/dvb-dev-local.c:382
+#, c-format
+msgid "device %s not found"
+msgstr "dispositivo %s não encontrado"
+
+#: lib/libdvbv5/dvb-dev-local.c:402
+msgid "Device not specified"
+msgstr "Dispositivo não especificado"
+
+#: lib/libdvbv5/dvb-dev-local.c:414
+#, c-format
+msgid "Can't find device %s"
+msgstr "Não encontrado dispositivo %s"
+
+#: lib/libdvbv5/dvb-dev-local.c:436
+#, c-format
+msgid "Can't open %s with flags %d: %d %m"
+msgstr "Não foi possível abrir %s com os flags %d: %d %m"
+
+#: lib/libdvbv5/dvb-dev-local.c:481
+msgid "Couldn't free device\n"
+msgstr "Não foi possível liberar memória usada pelo dispositivo\n"
+
+#: lib/libdvbv5/dvb-dev-local.c:521
+msgid "DMX_STOP failed"
+msgstr "DMX_STOP falhou"
+
+#: lib/libdvbv5/dvb-dev-local.c:540
+msgid "DMX_SET_BUFFER_SIZE failed"
+msgstr "DMX_SET_BUFFER_SIZE falhou"
+
+#: lib/libdvbv5/dvb-dev-local.c:597
+#, c-format
+msgid "DMX_SET_PES_FILTER failed (PID = 0x%04x): %d %m"
+msgstr "DMX_SET_PES_FILTER falhou (PID = 0x%04x): %d %m"
+
+#: lib/libdvbv5/dvb-dev-local.c:638
+#, c-format
+msgid "DMX_SET_FILTER failed (PID = 0x%04x): %d %m"
+msgstr "DMX_SET_FILTER falhou (PID = 0x%04x): %d %m"
+
+#: lib/libdvbv5/dvb-dev-local.c:719
+msgid "dvb_dev_scan: expecting a demux descriptor"
+msgstr "dvb_dev_scan: descritor do demux esperado"
+
+#: lib/libdvbv5/dvb-dev.c:136
+#, c-format
+msgid "  path: %s"
+msgstr "caminho: %s"
+
+#: lib/libdvbv5/dvb-dev.c:138
+#, c-format
+msgid "  sysfs path: %s"
+msgstr "caminho no sysfs: %s:"
+
+#: lib/libdvbv5/dvb-dev.c:140
+#, c-format
+msgid "  bus addr: %s"
+msgstr "endereço no barramento: %s"
+
+#: lib/libdvbv5/dvb-dev.c:142
+#, c-format
+msgid "  bus ID: %s"
+msgstr "ID barramento: %s"
+
+#: lib/libdvbv5/dvb-dev.c:144
+#, c-format
+msgid "  manufacturer: %s"
+msgstr "fabricante: %s"
+
+#: lib/libdvbv5/dvb-dev.c:146
+#, c-format
+msgid "  product: %s"
+msgstr "  produto: %s"
+
+#: lib/libdvbv5/dvb-dev.c:148
+#, c-format
+msgid "  serial: %s"
+msgstr "  serial: %s"
+
 #: lib/libdvbv5/dvb-fe.c:148
 #, c-format
 msgid "adapter %d, frontend %d not found"
-msgstr ""
+msgstr "adaptador %d, frontend %d não encontrado"
 
 #: lib/libdvbv5/dvb-fe.c:156
 #, c-format
@@ -209,12 +349,12 @@ msgstr " Camada %c:"
 
 #: lib/libdvbv5/dvb-fe.c:1758
 msgid "SEC: set voltage to OFF"
-msgstr ""
+msgstr "SEC: desliga voltagem"
 
 #: lib/libdvbv5/dvb-fe.c:1762
 #, c-format
 msgid "SEC: set voltage to %sV"
-msgstr ""
+msgstr "SEC: ajusta voltagem para %sV"
 
 #: lib/libdvbv5/dvb-fe.c:1777
 #, c-format
@@ -436,7 +576,7 @@ msgstr "AVISO: nenhuma tabela SDT - armazenando canal(s), sem os seus nomes"
 
 #: lib/libdvbv5/dvb-file.c:1342
 msgid "WARNING: Some Service IDs are not at the SDT table"
-msgstr ""
+msgstr "AVISO: Alguns identificadores de serviço não estão na tabela SDT"
 
 #: lib/libdvbv5/dvb-file.c:1370
 #, c-format
@@ -512,71 +652,79 @@ msgid "Astra"
 msgstr "Astra"
 
 #: lib/libdvbv5/dvb-sat.c:155
+msgid "Invacom QPH-031"
+msgstr "Invacom QPH-031"
+
+#: lib/libdvbv5/dvb-sat.c:178
 msgid "Big Dish - Monopoint LNBf"
 msgstr "Prato grande - LNBf monoponto"
 
-#: lib/libdvbv5/dvb-sat.c:168
+#: lib/libdvbv5/dvb-sat.c:191
 msgid "Big Dish - Multipoint LNBf"
 msgstr "Prato grande - LNBf multiponto"
 
-#: lib/libdvbv5/dvb-sat.c:183
+#: lib/libdvbv5/dvb-sat.c:206
 msgid "DishPro LNBf"
 msgstr "LNBf DishPro"
 
-#: lib/libdvbv5/dvb-sat.c:198
+#: lib/libdvbv5/dvb-sat.c:221
 msgid "Japan 110BS/CS LNBf"
 msgstr "LNBf Japonês, 110BS/CS"
 
-#: lib/libdvbv5/dvb-sat.c:211
+#: lib/libdvbv5/dvb-sat.c:234
 msgid "BrasilSat Stacked"
-msgstr ""
+msgstr "BrasilSat Multiponto"
 
-#: lib/libdvbv5/dvb-sat.c:226
+#: lib/libdvbv5/dvb-sat.c:249
 msgid "BrasilSat Oi"
-msgstr ""
+msgstr "BrasilSat Oi"
 
-#: lib/libdvbv5/dvb-sat.c:243
+#: lib/libdvbv5/dvb-sat.c:266
 msgid "BrasilSat Amazonas 1/2 - 3 Oscilators"
-msgstr ""
+msgstr "BrasilSat Amazonas 1/2 - 3 Osciladores"
 
-#: lib/libdvbv5/dvb-sat.c:254
+#: lib/libdvbv5/dvb-sat.c:277
 msgid "BrasilSat Amazonas 1/2 - 2 Oscilators"
-msgstr ""
+msgstr "BrasilSat Amazonas 1/2 - 2 Osciladores"
 
-#: lib/libdvbv5/dvb-sat.c:265
+#: lib/libdvbv5/dvb-sat.c:288
 msgid "BrasilSat custom GVT"
-msgstr ""
+msgstr "BrasilSat customizado GVT"
 
-#: lib/libdvbv5/dvb-sat.c:291
+#: lib/libdvbv5/dvb-sat.c:313
+msgid "Freqs     : "
+msgstr "Frequências: "
+
+#: lib/libdvbv5/dvb-sat.c:314
 msgid "Horizontal: "
-msgstr ""
+msgstr "Horizontal : "
 
-#: lib/libdvbv5/dvb-sat.c:292
+#: lib/libdvbv5/dvb-sat.c:315
 msgid "Vertical  : "
-msgstr ""
+msgstr "Vertical   : "
 
-#: lib/libdvbv5/dvb-sat.c:293
+#: lib/libdvbv5/dvb-sat.c:316
 msgid "Left      : "
-msgstr ""
+msgstr "Direita    :"
 
-#: lib/libdvbv5/dvb-sat.c:294
+#: lib/libdvbv5/dvb-sat.c:317
 msgid "Right     : "
-msgstr ""
+msgstr "Esquerda   :"
 
-#: lib/libdvbv5/dvb-sat.c:305
+#: lib/libdvbv5/dvb-sat.c:328
 msgid " (bandstacking)"
-msgstr ""
+msgstr " (multiponto)"
 
-#: lib/libdvbv5/dvb-sat.c:308
-#, fuzzy, c-format
+#: lib/libdvbv5/dvb-sat.c:331
+#, c-format
 msgid "\t%s%d to %d MHz, LO: %d MHz\n"
-msgstr "\t%d de %d MHz"
+msgstr "\t%sde %d a %d MHz, LO: %d MHz\n"
 
-#: lib/libdvbv5/dvb-sat.c:532
+#: lib/libdvbv5/dvb-sat.c:555
 msgid "sending diseq failed"
 msgstr "envio de mensagem DiSEqC falhou"
 
-#: lib/libdvbv5/dvb-sat.c:581
+#: lib/libdvbv5/dvb-sat.c:604
 msgid "Need a LNBf to work"
 msgstr "Necessário um LNBf para funcionar"
 
@@ -592,9 +740,9 @@ msgid "%s: out of memory"
 msgstr "%s: memória insuficiente"
 
 #: lib/libdvbv5/dvb-scan.c:199
-#, fuzzy, c-format
+#, c-format
 msgid "%s: received table 0x%02x, extension ID 0x%04x, section %d/%d"
-msgstr "%s: recebeu tabela 0x%02x, TS ID 0x%04x, seção%d/%d"
+msgstr "%s: recebeu tabela 0x%02x, ID de extensão 0x%04x, seção %d/%d"
 
 #: lib/libdvbv5/dvb-scan.c:203
 #, c-format
@@ -602,9 +750,9 @@ msgid "%s: couldn't match ID %d at the active section filters"
 msgstr "%s: não foi possível coincidir com ID %d nos filtros seção ativos"
 
 #: lib/libdvbv5/dvb-scan.c:261
-#, fuzzy, c-format
+#, c-format
 msgid "%s: section repeated on table 0x%02x, extension ID 0x%04x: done"
-msgstr "%s: recebeu tabela 0x%02x, TS ID 0x%04x, seção%d/%d"
+msgstr "%s: recebeu tabela 0x%02x repetida, ID de extensão 0x%04x: concluído"
 
 #: lib/libdvbv5/dvb-scan.c:279
 #, c-format
@@ -612,9 +760,9 @@ msgid "%s: no initializer for table %d"
 msgstr "%s: no inicializador para a tabela %d"
 
 #: lib/libdvbv5/dvb-scan.c:285
-#, fuzzy, c-format
+#, c-format
 msgid "%s: table 0x%02x, extension ID 0x%04x: done"
-msgstr "%s: recebeu tabela 0x%02x, TS ID 0x%04x, seção%d/%d"
+msgstr "%s: tabela 0x%02x, ID de extensão 0x%04x: concluído"
 
 #: lib/libdvbv5/dvb-scan.c:324
 #, c-format
