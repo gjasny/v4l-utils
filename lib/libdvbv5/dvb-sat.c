@@ -152,6 +152,29 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		},
 	}, {
 		.desc = {
+			.name = N_("Invacom QPH-031"),
+			.alias = "QPH031",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 10750,
+			.highfreq = 11250,
+			.rangeswitch = 12200,
+			.freqrange = {
+				{ 11700, 12200 },
+				{ 12200, 12700 },
+			},
+		},
+		// Note: This LNBf can accept both V/H and L/R polarization
+		// on ports 1 and 3, V is 12V and H is 19V
+		// on ports 2 and 4, R is 12V and L is 19V
+		// This is the same as what's done for Universal LNBf, so,
+		// we don't need any special logic here to handle this special
+		// case.
+		.freqrange = {
+			{ 11700, 12200, 10750, 12200  },
+			{ 12200, 12700, 11250, 0  },
+		},
+	}, {
+		.desc = {
 			.name = N_("Big Dish - Monopoint LNBf"),
 			.alias = "C-BAND",
 			// Legacy fields - kept just to avoid API/ABI breakages
