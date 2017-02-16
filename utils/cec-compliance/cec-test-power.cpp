@@ -223,6 +223,10 @@ static int one_touch_play_req_active_source(struct node *node, unsigned me, unsi
 {
 	struct cec_msg msg = {};
 
+	cec_msg_init(&msg, me, la);
+	cec_msg_active_source(&msg, node->phys_addr);
+	fail_on_test(!transmit_timeout(node, &msg));
+
 	/* We have now said that we are active source, so receiving a reply to
 	   Request Active Source should fail the test. */
 	cec_msg_init(&msg, me, la);
@@ -240,7 +244,7 @@ struct remote_subtest one_touch_play_subtests[] = {
 	{ "Wakeup Text View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_text_view_on_wakeup },
 	{ "Input change on Image View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_image_view_on_change },
 	{ "Input change on Text View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_text_view_on_change },
-	{ "Request Active Source", (__u16)~CEC_LOG_ADDR_MASK_TV, one_touch_play_req_active_source },
+	{ "Request Active Source", CEC_LOG_ADDR_MASK_ALL, one_touch_play_req_active_source },
 };
 
 const unsigned one_touch_play_subtests_size = ARRAY_SIZE(one_touch_play_subtests);
