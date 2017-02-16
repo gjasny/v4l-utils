@@ -1219,7 +1219,7 @@ static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 	char osd_name[15];
 
 	printf("\tSystem Information for device %d (%s) from device %d (%s):\n",
-	       i, la2s(i), la, la2s(la));
+	       i, la2s(i), la & 0xf, la2s(la));
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_get_cec_version(&msg, true);
@@ -1886,9 +1886,6 @@ int main(int argc, char **argv)
 	printf("\tPhysical Address           : %x.%x.%x.%x\n",
 	       phys_addr >> 12, (phys_addr >> 8) & 0xf,
 	       (phys_addr >> 4) & 0xf, phys_addr & 0xf);
-	if (!options[OptPhysAddr] && phys_addr == 0xffff &&
-	    (node.caps & CEC_CAP_PHYS_ADDR))
-		printf("Perhaps you should use option --phys-addr?\n");
 
 	if (set_log_addrs) {
 		struct cec_log_addrs laddrs = {};
