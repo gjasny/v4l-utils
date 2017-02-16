@@ -1363,7 +1363,7 @@ static int showTopology(struct node *node)
 	for (unsigned i = 0; i < 15; i++) {
 		int ret;
 
-		cec_msg_init(&msg, 0xf, i);
+		cec_msg_init(&msg, laddrs.log_addr[0], i);
 		ret = doioctl(node, CEC_TRANSMIT, &msg);
 
 		if (ret)

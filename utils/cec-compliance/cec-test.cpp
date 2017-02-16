@@ -48,7 +48,7 @@ static int system_info_polling(struct node *node, unsigned me, unsigned la, bool
 {
 	struct cec_msg msg = { };
 
-	cec_msg_init(&msg, 0xf, la);
+	cec_msg_init(&msg, me, la);
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 	if (node->remote_la_mask & (1 << la)) {
 		if (!cec_msg_status_is_ok(&msg))

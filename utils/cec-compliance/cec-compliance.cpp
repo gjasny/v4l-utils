@@ -941,7 +941,7 @@ static int poll_remote_devs(struct node *node)
 	for (unsigned i = 0; i < 15; i++) {
 		struct cec_msg msg;
 
-		cec_msg_init(&msg, 0xf, i);
+		cec_msg_init(&msg, node->log_addr[0], i);
 
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		if (msg.tx_status & CEC_TX_STATUS_OK)

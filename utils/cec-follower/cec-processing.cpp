@@ -1000,7 +1000,7 @@ static void poll_remote_devs(struct node *node, unsigned me)
 	for (unsigned i = 0; i < 15; i++) {
 		struct cec_msg msg;
 
-		cec_msg_init(&msg, 0xf, i);
+		cec_msg_init(&msg, me, i);
 
 		doioctl(node, CEC_TRANSMIT, &msg);
 		if (msg.tx_status & CEC_TX_STATUS_OK) {
@@ -1108,7 +1108,7 @@ void testProcessing(struct node *node)
 		    ts_to_ms(ts_now - la_info[poll_la].ts) > POLL_PERIOD) {
 			struct cec_msg msg = {};
 
-			cec_msg_init(&msg, 0xf, poll_la);
+			cec_msg_init(&msg, me, poll_la);
 			transmit(node, &msg);
 			if (msg.tx_status & CEC_TX_STATUS_NACK) {
 				dev_info("Logical address %d stopped responding to polling message.\n", poll_la);

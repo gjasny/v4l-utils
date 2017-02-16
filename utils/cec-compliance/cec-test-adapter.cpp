@@ -239,28 +239,28 @@ int testTransmit(struct node *node)
 	bool tested_invalid_la = false;
 
 	if (!(node->caps & CEC_CAP_TRANSMIT)) {
-		cec_msg_init(&msg, 0xf, 0);
+		cec_msg_init(&msg, la, 0);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg) != ENOTTY);
 		return NOTSUPPORTED;
 	}
 
 	/* Check invalid messages */
-	cec_msg_init(&msg, 0xf, 0xf);
+	cec_msg_init(&msg, la, 0xf);
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg) != EINVAL);
 
-	cec_msg_init(&msg, 0xf, 0);
+	cec_msg_init(&msg, la, 0);
 	msg.timeout = 1000;
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg) != EINVAL);
 
-	cec_msg_init(&msg, 0xf, 0);
+	cec_msg_init(&msg, la, 0);
 	msg.len = 0;
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg) != EINVAL);
 
-	cec_msg_init(&msg, 0xf, 0);
+	cec_msg_init(&msg, la, 0);
 	msg.len = CEC_MAX_MSG_SIZE + 1;
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg) != EINVAL);
 
-	cec_msg_init(&msg, 0xf, 0);
+	cec_msg_init(&msg, la, 0);
 	msg.reply = CEC_MSG_CEC_VERSION;
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg) != EINVAL);
 
@@ -474,7 +474,7 @@ int testNonBlocking(struct node *node)
 
 	fail_on_test(doioctl(node, CEC_RECEIVE, &msg) != EAGAIN);
 
-	cec_msg_init(&msg, 0xf, la);
+	cec_msg_init(&msg, la, la);
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 	fail_on_test(msg.tx_status != (CEC_TX_STATUS_NACK | CEC_TX_STATUS_MAX_RETRIES));
 
@@ -686,7 +686,7 @@ int testModes(struct node *node, struct node *node2)
 		}
 	}
 
-	cec_msg_init(&msg, 0xf, 0);
+	cec_msg_init(&msg, me, 0);
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 	fail_on_test(doioctl(node2, CEC_TRANSMIT, &msg));
 
