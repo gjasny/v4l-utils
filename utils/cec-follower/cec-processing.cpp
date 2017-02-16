@@ -719,7 +719,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 
 		cec_ops_request_current_latency(&msg, &phys_addr);
 		if (phys_addr == node->phys_addr) {
-			cec_msg_set_reply_to(&msg, &msg);
+			cec_msg_init(&msg, me, from);
 			cec_msg_report_current_latency(&msg, phys_addr,
 						       node->state.video_latency,
 						       node->state.low_latency_mode,
@@ -960,7 +960,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		case CEC_MSG_CDC_HEC_DISCOVER:
 			__u16 phys_addr;
 
-			cec_msg_set_reply_to(&msg, &msg);
+			cec_msg_init(&msg, me, CEC_LOG_ADDR_BROADCAST);
 			cec_ops_cdc_hec_discover(&msg, &phys_addr);
 			cec_msg_cdc_hec_report_state(&msg, phys_addr,
 						     CEC_OP_HEC_FUNC_STATE_NOT_SUPPORTED,
