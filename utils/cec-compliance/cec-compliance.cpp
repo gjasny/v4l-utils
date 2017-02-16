@@ -1207,6 +1207,11 @@ int main(int argc, char **argv)
 		test_tags |= TAG_TUNER_CONTROL;
 	if (options[OptTestVendorSpecificCommands])
 		test_tags |= TAG_VENDOR_SPECIFIC_COMMANDS;
+	/* When code is added to the Standby/Resume test for waking up
+	   other devices than TVs, the necessary tags should be added
+	   here (probably Routing Control and/or RC Passthrough) */
+	if (options[OptTestStandbyResume])
+		test_tags |= TAG_POWER_STATUS | TAG_STANDBY_RESUME;
 
 	if (!test_tags && !options[OptTestCore])
 		test_tags = TAG_ALL;
@@ -1247,12 +1252,8 @@ int main(int argc, char **argv)
 		test_tags &= ~TAG_TUNER_CONTROL;
 	if (options[OptSkipTestVendorSpecificCommands])
 		test_tags &= ~TAG_VENDOR_SPECIFIC_COMMANDS;
-
-	/* When code is added to the Standby/Resume test for waking up
-	   other devices than TVs, the necessary tags should be added
-	   here (probably Routing Control and/or RC Passthrough) */
-	if (options[OptTestStandbyResume])
-		test_tags |= TAG_POWER_STATUS | TAG_STANDBY_RESUME;
+	if (options[OptSkipTestStandbyResume])
+		test_tags &= ~(TAG_POWER_STATUS | TAG_STANDBY_RESUME);
 
 	if (options[OptInteractive])
 		test_tags |= TAG_INTERACTIVE;
