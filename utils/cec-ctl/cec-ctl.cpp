@@ -642,6 +642,7 @@ enum Option {
 	OptNoReply = 'n',
 	OptOsdName = 'o',
 	OptPhysAddr = 'p',
+	OptPoll = 'P',
 	OptShowRaw = 'r',
 	OptShowTopology = 'S',
 	OptTo = 't',
@@ -729,6 +730,7 @@ static struct option long_options[] = {
 	{ "from", required_argument, 0, OptFrom },
 	{ "show-raw", no_argument, 0, OptShowRaw },
 	{ "show-topology", no_argument, 0, OptShowTopology },
+	{ "poll", no_argument, 0, OptPoll },
 	{ "list-ui-commands", no_argument, 0, OptListUICommands },
 	{ "rc-tv-profile-1", no_argument, 0, OptRcTVProfile1 },
 	{ "rc-tv-profile-2", no_argument, 0, OptRcTVProfile2 },
@@ -783,6 +785,7 @@ static void usage(void)
 	       "                           By default use the first assigned logical address\n"
 	       "  -r, --show-raw           Show the raw CEC message (hex values)\n"
 	       "  -S, --show-topology      Show the CEC topology\n"
+	       "  -P, --poll               Send poll message\n"
 	       "  -h, --help               Display this help message\n"
 	       "  --help-all               Show all help messages\n"
 	       "  -T, --trace              Trace all called ioctls\n"
@@ -1468,7 +1471,7 @@ int main(int argc, char **argv)
 		if (ch == -1)
 			break;
 
-		if (ch > OptMessages)
+		if (ch > OptMessages || ch == OptPoll)
 			cec_msg_init(&msg, 0, 0);
 		options[(int)ch] = 1;
 
@@ -1738,6 +1741,9 @@ int main(int argc, char **argv)
 			}
 			break;
 		}
+		case OptPoll:
+			msgs.push_back(msg);
+			break;
 		default:
 			if (ch >= OptHelpAll) {
 				usage_options(ch);
