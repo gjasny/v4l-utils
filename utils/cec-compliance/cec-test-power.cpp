@@ -256,10 +256,10 @@ static bool wait_changing_power_status(struct node *node, unsigned me, unsigned 
 {
 	__u8 old_status;
 
-	announce("Checking for power status change. This may take up to 60 s.");
+	announce("Checking for power status change. This may take up to %u s.", long_timeout);
 	if (!get_power_status(node, me, la, old_status))
 		return false;
-	for (unsigned i = 0; i < 60 / SLEEP_POLL_POWER_STATUS; i++) {
+	for (unsigned i = 0; i < long_timeout / SLEEP_POLL_POWER_STATUS; i++) {
 		__u8 power_status;
 
 		if (!get_power_status(node, me, la, power_status)) {
@@ -285,8 +285,8 @@ static bool poll_stable_power_status(struct node *node, unsigned me, unsigned la
 
 	/* Some devices can use several seconds to transition from one power
 	   state to another, so the power state must be repeatedly polled */
-	announce("Waiting for new stable power status. This may take up to 60 s.");
-	for (unsigned tries = 0; tries < 60 / SLEEP_POLL_POWER_STATUS; tries++) {
+	announce("Waiting for new stable power status. This may take up to %u s.", long_timeout);
+	for (unsigned tries = 0; tries < long_timeout / SLEEP_POLL_POWER_STATUS; tries++) {
 		__u8 power_status;
 
 		if (!get_power_status(node, me, la, power_status)) {

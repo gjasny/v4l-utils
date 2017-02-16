@@ -122,6 +122,7 @@ extern bool show_info;
 extern bool show_warnings;
 extern unsigned warnings;
 extern unsigned reply_threshold;
+extern unsigned long_timeout;
 
 struct remote {
 	bool recognized_op[256];

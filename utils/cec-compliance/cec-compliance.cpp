@@ -51,6 +51,7 @@ enum Option {
 	OptNoWarnings = 'n',
 	OptRemote = 'r',
 	OptReplyThreshold = 'R',
+	OptTimeout = 't',
 	OptTrace = 'T',
 	OptVerbose = 'v',
 	OptInteractive = 'i',
@@ -108,12 +109,14 @@ bool show_info;
 bool show_warnings = true;
 unsigned warnings;
 unsigned reply_threshold = 1000;
+unsigned long_timeout = 60;
 
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
 	{"help", no_argument, 0, OptHelp},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
 	{"remote", optional_argument, 0, OptRemote},
+	{"timeout", required_argument, 0, OptTimeout},
 	{"trace", no_argument, 0, OptTrace},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"interactive", no_argument, 0, OptInteractive},
@@ -172,6 +175,7 @@ static void usage(void)
 	       "  -R, --reply-threshold=<timeout>\n"
 	       "                       Warn if replies take longer than this threshold (default 1000ms)\n"
 	       "  -i, --interactive    Interactive mode when doing remote tests\n"
+	       "  -t, --timeout=<secs> Set the standby/resume timeout to <secs>. Default is 60s.\n"
 	       "\n"
 	       "  -A, --test-adapter                  Test the CEC adapter API\n"
 	       "  --test-core                         Test the core functionality\n"
@@ -1117,6 +1121,9 @@ int main(int argc, char **argv)
 			break;
 		case OptReplyThreshold:
 			reply_threshold = strtoul(optarg, NULL, 0);
+			break;
+		case OptTimeout:
+			long_timeout = strtoul(optarg, NULL, 0);
 			break;
 		case OptNoWarnings:
 			show_warnings = false;

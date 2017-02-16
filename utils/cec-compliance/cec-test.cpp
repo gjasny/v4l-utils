@@ -477,17 +477,17 @@ static int routing_control_set_stream_path(struct node *node, unsigned me, unsig
 	__u16 phys_addr;
 
 	/* Send Set Stream Path with the remote physical address. We expect the
-	   source to eventually send Active Source. The timeout of 60 seconds is
-	   necessary because the device might have to wake up from standby.
+	   source to eventually send Active Source. The timeout of long_timeout
+	   seconds is necessary because the device might have to wake up from standby.
 
 	   In CEC 2.0 it is mandatory for sources to send Active Source. */
 	if (is_tv(la, node->remote[la].prim_type))
 		interactive_info(true, "Please ensure that the device is in standby.");
-	announce("Sending Set Stream Path and waiting for reply. This may take up to 60 s.");
+	announce("Sending Set Stream Path and waiting for reply. This may take up to %u s.", long_timeout);
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_stream_path(&msg, node->remote[la].phys_addr);
 	msg.reply = CEC_MSG_ACTIVE_SOURCE;
-	fail_on_test(!transmit_timeout(node, &msg, 60000));
+	fail_on_test(!transmit_timeout(node, &msg, long_timeout * 1000));
 	if (timed_out(&msg) && is_tv(la, node->remote[la].prim_type))
 		return NOTSUPPORTED;
 	if (timed_out(&msg) && node->remote[la].cec_version < CEC_OP_CEC_VERSION_2_0) {
