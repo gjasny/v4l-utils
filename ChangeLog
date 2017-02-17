@@ -1,3 +1,17 @@
+v4l-utils-1.12.3
+----------------
+
+Gregor Jasny (1):
+      Apply FreeBSD header search paths also to kFreeBSD
+
+Mauro Carvalho Chehab (5):
+      dvb-sat: fix rangeswitch logic
+      dvb-sat: add verbose options for LNBf settings
+      dvb-sat: add support for Invacom QPH-031 LNBf
+      pt_BR: update translation file to reflect latest changes
+      dvb-sat: fix translation issues at LNBf settings
+
+
 v4l-utils-1.12.2
 ----------------
 
