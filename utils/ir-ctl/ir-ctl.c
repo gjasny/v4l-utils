@@ -344,12 +344,14 @@ static struct file *read_scancode(const char *name)
 		return NULL;
 	}
 
-	pstr = strndupa(name, p - name);
+	pstr = strndup(name, p - name);
 
 	if (!protocol_match(pstr, &proto)) {
 		fprintf(stderr, _("error: protocol '%s' not found\n"), pstr);
+		free(pstr);
 		return NULL;
 	}
+	free(pstr);
 
 	if (!strtoscancode(p + 1, &scancode)) {
 		fprintf(stderr, _("error: invalid scancode '%s'\n"), p + 1);
