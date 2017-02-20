@@ -44,6 +44,14 @@
 
 # define N_(string) string
 
+/* taken from glibc unistd.h */
+#ifndef TEMP_FAILURE_RETRY
+#define TEMP_FAILURE_RETRY(expression) \
+    ({ long int __result;                                                     \
+       do __result = (long int) (expression);                                 \
+       while (__result == -1L && errno == EINTR);                             \
+       __result; })
+#endif
 
 /* See drivers/media/rc/ir-lirc-codec.c line 23 */
 #define LIRCBUF_SIZE	512
