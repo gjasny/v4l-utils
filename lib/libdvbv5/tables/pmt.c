@@ -172,7 +172,9 @@ void dvb_table_pmt_print(struct dvb_v5_fe_parms *parms, const struct dvb_table_p
 }
 
 const char *pmt_stream_name[] = {
-	[stream_reserved0]         = "Reserved",
+	[0x00 ... 0x7f] = "Reserved",
+	[0x80 ... 0xff] = "User Private",
+
 	[stream_video]             = "Video ISO/IEC 11172",
 	[stream_video_h262]        = "Video ISO/IEC 13818-2",
 	[stream_audio]             = "Audio ISO/IEC 11172",
@@ -193,7 +195,20 @@ const char *pmt_stream_name[] = {
 	[stream_14496_1_pes]       = "ISO/IEC 14496-1 PES",
 	[stream_14496_1_iso]       = "ISO/IEC 14496-1 ISO",
 	[stream_download]          = "ISO/IEC 13818-6 Synchronized Download Protocol",
-	[stream_reserved ... 0x7f] = "ISO/IEC 13818-1 Reserved",
-	[stream_private  ... 0xff] = "User Private"
+
+	[stream_video_h264]        = "H264",
+	[stream_audio_14496_3]     = "ISO/IEC 14496-3 Audio",
+	[stream_video_hevc]        = "HEVC",
+	[stream_video_cavs]        = "CAVS (Chinese AVS)",
+	[stream_video_moto]        = "MPEG-2 MOTO video",
+	[stream_audio_a52]         = "A52",
+	[stream_scte_27]           = "SCTE-27 (sub)",
+	[stream_audio_sdds]        = "SDDS",
+	[stream_audio_dts_hdmv]    = "DTS",
+	[stream_audio_e_ac3]       = "E-AC3, ATSC",
+	[stream_audio_dts]         = "DTS",
+	[stream_audio_a52_vls]     = "A52 vls",
+	[stream_spu_vls]           = "DVD_SPU vls",
+	[stream_audio_sdds2]       = "SDDS",
 };
 
