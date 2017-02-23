@@ -104,7 +104,6 @@
  *	@brief	User Private (from 0x80 to 0xff)
  */
 enum dvb_streams {
-	stream_reserved0	= 0x00,
 	stream_video		= 0x01,
 	stream_video_h262	= 0x02,
 	stream_audio		= 0x03,
@@ -125,8 +124,20 @@ enum dvb_streams {
 	stream_14496_1_pes	= 0x12,
 	stream_14496_1_iso	= 0x13,
 	stream_download		= 0x14,
-	stream_reserved		= 0x15,
-	stream_private		= 0x80
+	stream_video_h264	= 0x1b,
+	stream_audio_14496_3	= 0x1c,
+	stream_video_hevc	= 0x24,
+	stream_video_cavs	= 0x42,
+	stream_video_moto	= 0x80,
+	stream_audio_a52	= 0x81,
+	stream_scte_27		= 0x82,
+	stream_audio_sdds	= 0x84,
+	stream_audio_dts_hdmv	= 0x85,
+	stream_audio_e_ac3	= 0x87,
+	stream_audio_dts	= 0x8a,
+	stream_audio_a52_vls	= 0x91,
+	stream_spu_vls		= 0x92,
+	stream_audio_sdds2	= 0x94,
 };
 
 /**

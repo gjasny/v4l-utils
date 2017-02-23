@@ -1024,6 +1024,9 @@ static void get_pmt_descriptors(struct dvb_entry *entry,
 		case 0x01: /* ISO/IEC 11172-2 Video */
 		case 0x02: /* H.262, ISO/IEC 13818-2 or ISO/IEC 11172-2 video */
 		case 0x1b: /* H.264 AVC */
+		case 0x24: /* HEVC */
+		case 0x42: /* CAVS */
+		case 0x80: /* MPEG-2 MOTO video */
 			entry->video_pid = realloc(entry->video_pid,
 						   sizeof(*entry->video_pid) *
 						   (video_len + 1));
@@ -1032,9 +1035,17 @@ static void get_pmt_descriptors(struct dvb_entry *entry,
 			break;
 		case 0x03: /* ISO/IEC 11172-3 Audio */
 		case 0x04: /* ISO/IEC 13818-3 Audio */
+		case 0x07: /* DTS and DTS-HD Audio */
 		case 0x0f: /* ISO/IEC 13818-7 Audio with ADTS (AAC) */
 		case 0x11: /* ISO/IEC 14496-3 Audio with the LATM */
-		case 0x81: /* user private - in general ATSC Dolby - AC-3 */
+		case 0x1c: /* ISO/IEC 14496-3 Audio, without additional transport syntax */
+		case 0x81: /* A52 */
+		case 0x84: /* SDDS */
+		case 0x85: /* DTS on HDMV */
+		case 0x87: /* E-AC3 */
+		case 0x8a: /* DTS */
+		case 0x91: /* A52 VLS */
+		case 0x94: /* SDDS */
 			entry->audio_pid = realloc(entry->audio_pid,
 						   sizeof(*entry->audio_pid) *
 						   (audio_len + 1));
