@@ -204,7 +204,7 @@ static void reply_feature_abort(struct node *node, struct cec_msg *msg, __u8 rea
 	__u8 opcode = cec_msg_opcode(msg);
 	__u64 ts_now = get_ts();
 
-	if (cec_msg_is_broadcast(msg))
+	if (cec_msg_is_broadcast(msg) || cec_msg_initiator(msg) == CEC_LOG_ADDR_UNREGISTERED)
 		return;
 	if (reason == CEC_OP_ABORT_UNRECOGNIZED_OP) {
 		la_info[la].feature_aborted[opcode].count++;
