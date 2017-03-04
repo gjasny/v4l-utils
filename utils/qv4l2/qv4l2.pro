@@ -13,6 +13,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QT += opengl
 
 INCLUDEPATH += $$PWD/../..
+INCLUDEPATH += $$PWD/../common
 INCLUDEPATH += $$PWD/../v4l2-ctl/
 INCLUDEPATH += $$PWD/../v4l2-compliance
 
@@ -25,8 +26,8 @@ HEADERS += general-tab.h
 HEADERS += qv4l2.h
 HEADERS += raw2sliced.h
 HEADERS += vbi-tab.h
-HEADERS += ../v4l2-ctl/v4l2-tpg.h
-HEADERS += ../v4l2-ctl/v4l2-tpg-colors.h
+HEADERS += ../common/v4l2-tpg.h
+HEADERS += ../common/v4l2-tpg-colors.h
 HEADERS += ../../config.h
 
 SOURCES += capture-win.cpp
