@@ -126,6 +126,19 @@ static const struct dvb_sat_lnb_priv lnb[] = {
 		},
 	}, {
 		.desc = {
+			.name = N_("L10750"),
+			.alias = "L10750",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 10750,
+			.freqrange = {
+				{ 11700, 12200 }
+			},
+		},
+		.freqrange = {
+		       { 11700, 12200, 10750, 0 }
+		},
+	}, {
+		.desc = {
 			.name = N_("L11300"),
 			.alias = "L11300",
 			// Legacy fields - kept just to avoid API/ABI breakages
