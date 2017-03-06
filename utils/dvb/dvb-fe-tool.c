@@ -351,12 +351,12 @@ int main(int argc, char *argv[])
 
 	dvb_dev_set_log(dvb, verbose, NULL);
 	if (device_mon) {
-		dvb_dev_find(dvb, &dev_change_monitor);
+		dvb_dev_find(dvb, &dev_change_monitor, NULL);
 		while (1) {
 			usleep(1000000);
 		}
 	}
-	dvb_dev_find(dvb, NULL);
+	dvb_dev_find(dvb, NULL, NULL);
 	parms = dvb->fe_parms;
 
 	dvb_dev = dvb_dev_seek_by_sysname(dvb, adapter, frontend,

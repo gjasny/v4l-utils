@@ -609,7 +609,7 @@ static int dev_find(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 	if (enable_monitor)
 		handler = &dev_change_monitor;
 
-	ret = dvb_dev_find(dvb, handler);
+	ret = dvb_dev_find(dvb, handler, NULL);
 
 error:
 	return send_data(fd, "%i%s%i", seq, cmd, ret);
@@ -1438,7 +1438,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	dvb_dev_find(dvb, 0);
+	dvb_dev_find(dvb, 0, NULL);
 
 	/* Create a socket */
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);

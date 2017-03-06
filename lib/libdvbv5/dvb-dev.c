@@ -174,7 +174,7 @@ void dvb_dev_set_log(struct dvb_device *dvb, unsigned verbose,
 			parms->p.logfunc = logfunc;
 }
 
-int dvb_dev_find(struct dvb_device *d, dvb_dev_change_t handler)
+int dvb_dev_find(struct dvb_device *d, dvb_dev_change_t handler, void *user_priv)
 {
 	struct dvb_device_priv *dvb = (void *)d;
 	struct dvb_dev_ops *ops = &dvb->ops;
@@ -182,7 +182,7 @@ int dvb_dev_find(struct dvb_device *d, dvb_dev_change_t handler)
 	if (!ops->find)
 		return -1;
 
-	return ops->find(dvb, handler);
+	return ops->find(dvb, handler, user_priv);
 }
 
 void dvb_dev_stop_monitor(struct dvb_device *d)

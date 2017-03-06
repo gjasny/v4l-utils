@@ -521,7 +521,7 @@ int main(int argc, char **argv)
 	if (!dvb)
 		return -1;
 	dvb_dev_set_log(dvb, verbose, NULL);
-	dvb_dev_find(dvb, NULL);
+	dvb_dev_find(dvb, NULL, NULL);
 	parms = dvb->fe_parms;
 
 	dvb_dev = dvb_dev_seek_by_sysname(dvb, args.adapter_dmx, args.demux, DVB_DEVICE_DEMUX);

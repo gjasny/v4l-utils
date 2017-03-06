@@ -50,6 +50,9 @@ struct dvb_dev_local_priv {
 	int udev_fd;
 	struct udev *udev;
 	struct udev_monitor *mon;
+
+	/* private user data, used by event notifier*/
+	void *user_priv;
 };
 
 static int handle_device_change(struct dvb_device_priv *dvb,
@@ -102,7 +105,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 		if (!strcmp(action,"remove")) {
 			if (priv->notify_dev_change)
 				priv->notify_dev_change(strdup(sysname),
-							DVB_DEV_REMOVE);
+							DVB_DEV_REMOVE, priv->user_priv);
 			return 0;
 		}
 		type = DVB_DEV_CHANGE;
@@ -222,7 +225,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	}
 added:
 	if (priv->notify_dev_change)
-		priv->notify_dev_change(strdup(dvb_dev->sysname), type);
+		priv->notify_dev_change(strdup(dvb_dev->sysname), type, priv->user_priv);
 	dvb_dev_dump_device(_("Found dvb %s device: %s"), parms, dvb_dev);
 
 	return 0;
@@ -265,7 +268,7 @@ static void *monitor_device_changes(void *privdata)
 #endif
 
 static int dvb_local_find(struct dvb_device_priv *dvb,
-			  dvb_dev_change_t handler)
+			  dvb_dev_change_t handler, void *user_priv)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_local_priv *priv = dvb->priv;
@@ -285,6 +288,7 @@ static int dvb_local_find(struct dvb_device_priv *dvb,
 		return -ENOMEM;
 	}
 
+	priv->user_priv = user_priv;
 	priv->notify_dev_change = handler;
 	if (priv->notify_dev_change) {
 #ifndef HAVE_PTHREAD

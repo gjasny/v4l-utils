@@ -117,7 +117,7 @@ enum dvb_dev_change_type {
  * @note: the returned string should be freed with free().
  */
 typedef int (*dvb_dev_change_t)(char *sysname,
-				enum dvb_dev_change_type type);
+				enum dvb_dev_change_type type, void *priv);
 
 /**
  * @struct dvb_open_descriptor
@@ -171,6 +171,7 @@ void dvb_dev_free(struct dvb_device *dvb);
  * @param dvb			pointer to struct dvb_device to be filled
  * @param enable_monitor	if different than zero put the routine into
  *				monitor mode
+ * @param user_priv		pointer to user private data
  *
  * This routine can be called on two modes: normal or monitor mode
  *
@@ -187,7 +188,8 @@ void dvb_dev_free(struct dvb_device *dvb);
  *
  * @return returns 0 on success, a negative value otherwise.
  */
-int dvb_dev_find(struct dvb_device *dvb, dvb_dev_change_t handler);
+int dvb_dev_find(struct dvb_device *dvb, dvb_dev_change_t handler,
+		 void *user_priv);
 
 /**
  * @brief Find a device that matches the search criteria given by this

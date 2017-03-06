@@ -107,6 +107,9 @@ struct dvb_dev_remote_priv {
 	char default_charset[256];
 
 	struct queued_msg msgs;
+
+	/* private user data, used by event notifier*/
+	void *user_priv;
 };
 
 void stack_dump(struct dvb_v5_fe_parms_priv *parms)
@@ -679,7 +682,7 @@ static void *receive_data(void *privdata)
 				 */
 				if (ret > 0) {
 					if (priv->notify_dev_change)
-						priv->notify_dev_change(strdup(cmd), retval);
+						priv->notify_dev_change(strdup(cmd), retval, priv->user_priv);
 					args += ret;
 					args_size -= ret;
 				}
@@ -807,7 +810,7 @@ error:
 }
 
 static int dvb_remote_find(struct dvb_device_priv *dvb,
-			   dvb_dev_change_t handler)
+			   dvb_dev_change_t handler, void *user_priv)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
@@ -822,6 +825,7 @@ static int dvb_remote_find(struct dvb_device_priv *dvb,
 	else
 		enable_monitor = 0;
 
+	priv->user_priv = user_priv;
 	priv->notify_dev_change = handler;
 
 	msg = send_fmt(dvb, priv->fd, "dev_find", "%i", enable_monitor);
