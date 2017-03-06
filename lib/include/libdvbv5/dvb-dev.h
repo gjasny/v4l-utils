@@ -21,7 +21,6 @@
 
 #include "dvb-fe.h"
 #include "dvb-scan.h"
-#include <config.h>
 
 #include <linux/dvb/dmx.h>
 
