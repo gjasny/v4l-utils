@@ -204,7 +204,7 @@ int dvb_dev_find(struct dvb_device *dvb, dvb_dev_change_t handler,
  * @return returns a pointer to a struct dvb_dev_list object or NULL if the
  *	desired device was not found.
  */
-struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *dvb,
+struct dvb_dev_list *dvb_dev_seek_by_adapter(struct dvb_device *dvb,
 					     unsigned int adapter,
 					     unsigned int num,
 					     enum dvb_dev_type type);
@@ -247,7 +247,7 @@ void dvb_dev_set_log(struct dvb_device *dvb,
  *
  * @param dvb		pointer to struct dvb_device to be used
  * @param sysname	Kernel's name of the device to be opened, as obtained
- *			via dvb_dev_seek_by_sysname().
+ *			via dvb_dev_seek_by_adapter() or via dvb_dev_find().
  * @param flags		Flags to be passed to open: O_RDONLY, O_RDWR and/or
  *			O_NONBLOCK
  *

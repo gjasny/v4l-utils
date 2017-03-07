@@ -623,7 +623,7 @@ static int dev_stop_monitor(uint32_t seq, char *cmd, int fd,
 	return send_data(fd, "%i%s%i", seq, cmd, 0);
 }
 
-static int dev_seek_by_sysname(uint32_t seq, char *cmd, int fd,
+static int dev_seek_by_adapter(uint32_t seq, char *cmd, int fd,
 			       char *buf, ssize_t size)
 {
 	struct dvb_dev_list *dev;
@@ -633,7 +633,7 @@ static int dev_seek_by_sysname(uint32_t seq, char *cmd, int fd,
 	if (ret < 0)
 		goto error;
 
-	dev = dvb_dev_seek_by_sysname(dvb, adapter, num, type);
+	dev = dvb_dev_seek_by_adapter(dvb, adapter, num, type);
 	if (!dev)
 		goto error;
 
@@ -1292,7 +1292,7 @@ static const struct method_types const methods[] = {
 	{"daemon_get_version", &daemon_get_version, 1},
 	{"dev_find", &dev_find, 0},
 	{"dev_stop_monitor", &dev_stop_monitor, 0},
-	{"dev_seek_by_sysname", &dev_seek_by_sysname, 0},
+	{"dev_seek_by_adapter", &dev_seek_by_adapter, 0},
 	{"dev_open", &dev_open, 0},
 	{"dev_close", &dev_close, 0},
 	{"dev_dmx_stop", &dev_dmx_stop, 0},

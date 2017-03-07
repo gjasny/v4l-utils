@@ -148,7 +148,7 @@ void dvb_dev_dump_device(char *msg,
 		dvb_log(_("  serial: %s"), dev->serial);
 }
 
-struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
+struct dvb_dev_list *dvb_dev_seek_by_adapter(struct dvb_device *d,
 					     unsigned int adapter,
 					     unsigned int num,
 					     enum dvb_dev_type type)
@@ -156,10 +156,10 @@ struct dvb_dev_list *dvb_dev_seek_by_sysname(struct dvb_device *d,
 	struct dvb_device_priv *dvb = (void *)d;
 	struct dvb_dev_ops *ops = &dvb->ops;
 
-	if (!ops->seek_by_sysname)
+	if (!ops->seek_by_adapter)
 		return NULL;
 
-	return ops->seek_by_sysname(dvb, adapter, num, type);
+	return ops->seek_by_adapter(dvb, adapter, num, type);
 }
 
 void dvb_dev_set_log(struct dvb_device *dvb, unsigned verbose,

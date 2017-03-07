@@ -678,7 +678,7 @@ static void *receive_data(void *privdata)
 				 * implement a function and always monitor
 				 * changes on remote devices. This way, we
 				 * can avoid leaking memory with the current
-				 * implementation of dvb_remote_seek_by_sysname
+				 * implementation of dvb_remote_seek_by_adapter
 				 */
 				if (ret > 0) {
 					if (priv->notify_dev_change)
@@ -880,7 +880,7 @@ error:
 	return ret;
 }
 
-struct dvb_dev_list *dvb_remote_seek_by_sysname(struct dvb_device_priv *dvb,
+struct dvb_dev_list *dvb_remote_seek_by_adapter(struct dvb_device_priv *dvb,
 						unsigned int adapter,
 						unsigned int num,
 						enum dvb_dev_type type)
@@ -894,7 +894,7 @@ struct dvb_dev_list *dvb_remote_seek_by_sysname(struct dvb_device_priv *dvb,
 	if (priv->disconnected)
 		return NULL;
 
-	msg = send_fmt(dvb, priv->fd, "dev_seek_by_sysname", "%i%i%i",
+	msg = send_fmt(dvb, priv->fd, "dev_seek_by_adapter", "%i%i%i",
 				adapter, num, type);
 	if (!msg)
 		return NULL;
@@ -1686,7 +1686,7 @@ int dvb_dev_remote_init(struct dvb_device *d, char *server, int port)
 
 	/* Everything is OK, initialize data structs */
 	ops->find = dvb_remote_find;
-	ops->seek_by_sysname = dvb_remote_seek_by_sysname;
+	ops->seek_by_adapter = dvb_remote_seek_by_adapter;
 	ops->stop_monitor = dvb_remote_stop_monitor;
 	ops->open = dvb_remote_open;
 	ops->close = dvb_remote_close;

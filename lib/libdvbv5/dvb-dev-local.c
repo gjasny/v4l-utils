@@ -354,7 +354,7 @@ static int dvb_local_stop_monitor(struct dvb_device_priv *dvb)
 	return 0;
 }
 
-struct dvb_dev_list *dvb_local_seek_by_sysname(struct dvb_device_priv *dvb,
+struct dvb_dev_list *dvb_local_seek_by_adapter(struct dvb_device_priv *dvb,
 					       unsigned int adapter,
 					       unsigned int num,
 					       enum dvb_dev_type type)
@@ -770,7 +770,7 @@ void dvb_dev_local_init(struct dvb_device_priv *dvb)
 	dvb->priv = calloc(1, sizeof(struct dvb_dev_local_priv));
 
 	ops->find = dvb_local_find;
-	ops->seek_by_sysname = dvb_local_seek_by_sysname;
+	ops->seek_by_adapter = dvb_local_seek_by_adapter;
 	ops->stop_monitor = dvb_local_stop_monitor;
 	ops->open = dvb_local_open;
 	ops->close = dvb_local_close;

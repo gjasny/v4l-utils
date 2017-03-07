@@ -524,7 +524,7 @@ int main(int argc, char **argv)
 	dvb_dev_find(dvb, NULL, NULL);
 	parms = dvb->fe_parms;
 
-	dvb_dev = dvb_dev_seek_by_sysname(dvb, args.adapter_dmx, args.demux, DVB_DEVICE_DEMUX);
+	dvb_dev = dvb_dev_seek_by_adapter(dvb, args.adapter_dmx, args.demux, DVB_DEVICE_DEMUX);
 	if (!dvb_dev) {
 		fprintf(stderr, _("Couldn't find demux device node\n"));
 		dvb_dev_free(dvb);
@@ -535,7 +535,7 @@ int main(int argc, char **argv)
 	if (verbose)
 		fprintf(stderr, _("using demux '%s'\n"), args.demux_dev);
 
-	dvb_dev = dvb_dev_seek_by_sysname(dvb, args.adapter_fe, args.frontend,
+	dvb_dev = dvb_dev_seek_by_adapter(dvb, args.adapter_fe, args.frontend,
 					  DVB_DEVICE_FRONTEND);
 	if (!dvb_dev)
 		return -1;

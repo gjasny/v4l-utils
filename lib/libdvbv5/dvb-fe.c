@@ -142,7 +142,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 
 	dvb = dvb_dev_alloc();
 	dvb_dev_find(dvb, NULL, NULL);
-	dvb_dev = dvb_dev_seek_by_sysname(dvb, adapter, frontend,
+	dvb_dev = dvb_dev_seek_by_adapter(dvb, adapter, frontend,
 				     DVB_DEVICE_FRONTEND);
 	if (!dvb_dev) {
 		logfunc(LOG_ERR, _("adapter %d, frontend %d not found"),

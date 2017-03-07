@@ -72,7 +72,7 @@ int dvb_dmx_open(int adapter, int demux)
 
 	dvb = dvb_dev_alloc();
 	dvb_dev_find(dvb, NULL, NULL);
-	dvb_dev = dvb_dev_seek_by_sysname(dvb, adapter, demux, DVB_DEVICE_DEMUX);
+	dvb_dev = dvb_dev_seek_by_adapter(dvb, adapter, demux, DVB_DEVICE_DEMUX);
 	if (!dvb_dev) {
 		dvb_dev_free(dvb);
 		return -1;

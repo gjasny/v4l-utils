@@ -888,7 +888,7 @@ int main(int argc, char **argv)
 	dvb_dev_find(dvb, NULL, NULL);
 	parms = dvb->fe_parms;
 
-	dvb_dev = dvb_dev_seek_by_sysname(dvb, args.adapter, args.demux, DVB_DEVICE_DEMUX);
+	dvb_dev = dvb_dev_seek_by_adapter(dvb, args.adapter, args.demux, DVB_DEVICE_DEMUX);
 	if (!dvb_dev) {
 		fprintf(stderr, _("Couldn't find demux device node\n"));
 		dvb_dev_free(dvb);
@@ -896,7 +896,7 @@ int main(int argc, char **argv)
 	}
 	args.demux_dev = dvb_dev->sysname;
 
-	dvb_dev = dvb_dev_seek_by_sysname(dvb, args.adapter, args.demux, DVB_DEVICE_DVR);
+	dvb_dev = dvb_dev_seek_by_adapter(dvb, args.adapter, args.demux, DVB_DEVICE_DVR);
 	if (!dvb_dev) {
 		fprintf(stderr, _("Couldn't find dvr device node\n"));
 		dvb_dev_free(dvb);
@@ -921,7 +921,7 @@ int main(int argc, char **argv)
 	}
 	fprintf(stderr, _("reading channels from file '%s'\n"), args.confname);
 
-	dvb_dev = dvb_dev_seek_by_sysname(dvb, args.adapter, args.frontend,
+	dvb_dev = dvb_dev_seek_by_adapter(dvb, args.adapter, args.frontend,
 					  DVB_DEVICE_FRONTEND);
 	if (!dvb_dev)
 		return -1;

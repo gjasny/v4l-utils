@@ -359,7 +359,7 @@ int main(int argc, char *argv[])
 	dvb_dev_find(dvb, NULL, NULL);
 	parms = dvb->fe_parms;
 
-	dvb_dev = dvb_dev_seek_by_sysname(dvb, adapter, frontend,
+	dvb_dev = dvb_dev_seek_by_adapter(dvb, adapter, frontend,
 					  DVB_DEVICE_FRONTEND);
 	if (!dvb_dev)
 		return -1;
