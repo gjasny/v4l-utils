@@ -299,7 +299,7 @@ static const char const *event_type[] = {
 };
 
 static int dev_change_monitor(char *sysname,
-			       enum dvb_dev_change_type type)
+			       enum dvb_dev_change_type type, void *user_priv)
 {
 	if (type > ARRAY_SIZE(event_type))
 		printf("unknown event on device %s\n", sysname);

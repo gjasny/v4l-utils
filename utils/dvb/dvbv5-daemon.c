@@ -578,7 +578,7 @@ void dvb_remote_log(int level, const char *fmt, ...)
 }
 
 static int dev_change_monitor(char *sysname,
-			      enum dvb_dev_change_type type)
+			      enum dvb_dev_change_type type, void *user_priv)
 {
 	send_data(dvb_fd, "%i%s%i%s", 0, "dev_change", type, sysname);
 
