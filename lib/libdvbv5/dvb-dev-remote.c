@@ -949,6 +949,72 @@ error:
 	return dev;
 }
 
+struct dvb_dev_list *dvb_remote_get_dev_info(struct dvb_device_priv *dvb,
+					     char *sysname)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_remote_priv *priv = dvb->priv;
+	struct dvb_dev_list *dev = NULL;
+	struct queued_msg *msg;
+	int ret, int_type;
+
+	if (priv->disconnected)
+		return NULL;
+
+	msg = send_fmt(dvb, priv->fd, "dev_get_dev_info", "%s", sysname);
+	if (!msg)
+		return NULL;
+
+	ret = pthread_cond_wait(&msg->cond, &msg->lock);
+	if (ret < 0) {
+		dvb_logerr("error waiting for %s response", msg->cmd);
+		goto error;
+	}
+	if (msg->retval < 0)
+		goto error;
+
+	/*
+	 * FIXME: dev should be freed. The best would actually to implement
+	 * this locally, but that would require device insert/removal
+	 * notifications. So, let's postpone it.
+	 */
+	dev = calloc(1, sizeof(*dev));
+	if (!dev)
+		goto error;
+	dev->syspath = malloc(msg->args_size);
+	dev->path = malloc(msg->args_size);
+	dev->sysname = malloc(msg->args_size);
+	dev->bus_addr = malloc(msg->args_size);
+	dev->bus_id = malloc(msg->args_size);
+	dev->manufacturer = malloc(msg->args_size);
+	dev->product = malloc(msg->args_size);
+	dev->serial = malloc(msg->args_size);
+
+	ret = scan_data(parms, msg->args, msg->args_size, "%s%s%s%i%s%s%s%s%s",
+			dev->syspath, dev->path, dev->sysname,
+			&int_type, dev->bus_addr, dev->bus_id,
+			dev->manufacturer, dev->product, dev->serial);
+
+	if (ret < 0) {
+		dvb_logerr("Can't get return value");
+		goto error;
+	}
+	if (!*dev->syspath) {
+		free(dev);
+		dev = NULL;
+		goto error;
+	}
+
+	dev->dvb_type = int_type;
+
+error:
+	msg->seq = 0; /* Avoids any risk of a recursive call */
+	pthread_mutex_unlock(&msg->lock);
+
+	free_msg(dvb, msg);
+	return dev;
+}
+
 int dvb_remote_fe_get_parms(struct dvb_v5_fe_parms *par);
 
 static struct dvb_open_descriptor *dvb_remote_open(struct dvb_device_priv *dvb,
@@ -1687,6 +1753,7 @@ int dvb_dev_remote_init(struct dvb_device *d, char *server, int port)
 	/* Everything is OK, initialize data structs */
 	ops->find = dvb_remote_find;
 	ops->seek_by_adapter = dvb_remote_seek_by_adapter;
+	ops->get_dev_info = dvb_remote_get_dev_info;
 	ops->stop_monitor = dvb_remote_stop_monitor;
 	ops->open = dvb_remote_open;
 	ops->close = dvb_remote_close;

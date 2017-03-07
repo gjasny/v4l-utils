@@ -210,6 +210,19 @@ struct dvb_dev_list *dvb_dev_seek_by_adapter(struct dvb_device *dvb,
 					     enum dvb_dev_type type);
 
 /**
+ * @brief Return data about a device from its sysname
+ *
+ * @param dvb		pointer to struct dvb_device to be used
+ * @param sysname	Kernel's name of the device to be opened, as obtained
+ *			via dvb_dev_seek_by_adapter() or via dvb_dev_find().
+ *
+ * @return returns a pointer to a struct dvb_dev_list object or NULL if the
+ *	desired device was not found.
+ */
+struct dvb_dev_list *dvb_get_dev_info(struct dvb_device *dvb,
+				      const char *sysname);
+
+/**
  * @brief Stop the dvb_dev_find loop
  * @ingroup dvb_device
  *

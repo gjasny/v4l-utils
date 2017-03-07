@@ -194,6 +194,18 @@ void dvb_dev_stop_monitor(struct dvb_device *d)
 		ops->stop_monitor(dvb);
 }
 
+struct dvb_dev_list *dvb_get_dev_info(struct dvb_device *d,
+				      const char *sysname)
+{
+	struct dvb_device_priv *dvb = (void *)d;
+	struct dvb_dev_ops *ops = &dvb->ops;
+
+	if (!ops->get_dev_info)
+		return NULL;
+
+	return ops->get_dev_info(dvb, sysname);
+}
+
 struct dvb_open_descriptor *dvb_dev_open(struct dvb_device *d,
 					 const char *sysname, int flags)
 {

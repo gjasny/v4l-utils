@@ -38,6 +38,8 @@ struct dvb_dev_ops {
 						 unsigned int adapter,
 						 unsigned int num,
 						 enum dvb_dev_type type);
+	struct dvb_dev_list * (*get_dev_info)(struct dvb_device_priv *dvb,
+					      const char *sysname);
 	int (*stop_monitor)(struct dvb_device_priv *dvb);
 	struct dvb_open_descriptor *(*open)(struct dvb_device_priv *dvb,
 					    const char *sysname, int flags);

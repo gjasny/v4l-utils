@@ -645,6 +645,29 @@ error:
 	return send_data(fd, "%i%s%i", seq, cmd, ret);
 }
 
+static int dev_get_dev_info(uint32_t seq, char *cmd, int fd,
+			       char *buf, ssize_t size)
+{
+	struct dvb_dev_list *dev;
+	char sysname[REMOTE_BUF_SIZE];
+	int ret;
+
+	ret = scan_data(buf, size, "%s", sysname);
+	if (ret < 0)
+		goto error;
+
+	dev = dvb_get_dev_info(dvb, sysname);
+	if (!dev)
+		goto error;
+
+	return send_data(fd, "%i%s%i%s%s%s%i%s%s%s%s%s", seq, cmd, ret,
+			 dev->syspath, dev->path, dev->sysname, dev->dvb_type,
+			 dev->bus_addr, dev->bus_id, dev->manufacturer,
+			 dev->product, dev->serial);
+error:
+	return send_data(fd, "%i%s%i", seq, cmd, ret);
+}
+
 static void *read_data(void *privdata)
 {
 	struct dvb_open_descriptor *open_dev;
@@ -765,7 +788,7 @@ static int dev_open(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 		goto error;
 	}
 
-	ret = scan_data(buf, size, "%s%i",  sysname, &flags);
+	ret = scan_data(buf, size, "%s%i", sysname, &flags);
 	if (ret < 0) {
 		free(desc);
 		goto error;
@@ -1293,6 +1316,7 @@ static const struct method_types const methods[] = {
 	{"dev_find", &dev_find, 0},
 	{"dev_stop_monitor", &dev_stop_monitor, 0},
 	{"dev_seek_by_adapter", &dev_seek_by_adapter, 0},
+	{"dev_get_dev_info", &dev_get_dev_info, 0},
 	{"dev_open", &dev_open, 0},
 	{"dev_close", &dev_close, 0},
 	{"dev_dmx_stop", &dev_dmx_stop, 0},

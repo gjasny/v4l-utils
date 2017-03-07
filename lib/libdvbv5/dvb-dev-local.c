@@ -387,36 +387,43 @@ struct dvb_dev_list *dvb_local_seek_by_adapter(struct dvb_device_priv *dvb,
 	return NULL;
 }
 
-static struct dvb_open_descriptor
-*dvb_local_open(struct dvb_device_priv *dvb,
-		const char *sysname, int flags)
+struct dvb_dev_list *dvb_local_get_dev_info(struct dvb_device_priv *dvb,
+					    const char *sysname)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
-	struct dvb_dev_list *dev = NULL;
-	struct dvb_open_descriptor *open_dev, *cur;
-	int ret, i;
-
-	open_dev = calloc(1, sizeof(*open_dev));
-	if (!open_dev) {
-		dvb_perror("Can't create file descriptor");
-		return NULL;
-	}
+	int i;
 
 	if (!sysname) {
 		dvb_logerr(_("Device not specified"));
-		free(open_dev);
 		return NULL;
 	}
 
 	for (i = 0; i < dvb->d.num_devices; i++) {
 		if (!strcmp(sysname, dvb->d.devices[i].sysname)) {
-			dev = &dvb->d.devices[i];
-			break;
+			return &dvb->d.devices[i];
 		}
 	}
-	if (!dev) {
-		dvb_logerr(_("Can't find device %s"), sysname);
-		free(open_dev);
+
+	dvb_logerr(_("Can't find device %s"), sysname);
+	return NULL;
+}
+
+static struct dvb_open_descriptor
+*dvb_local_open(struct dvb_device_priv *dvb,
+		const char *sysname, int flags)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
+	struct dvb_dev_list *dev;
+	struct dvb_open_descriptor *open_dev, *cur;
+	int ret;
+
+	dev = dvb_local_get_dev_info(dvb, sysname);
+	if (!dev)
+		return NULL;
+
+	open_dev = calloc(1, sizeof(*open_dev));
+	if (!open_dev) {
+		dvb_perror("Can't create file descriptor");
 		return NULL;
 	}
 
@@ -771,6 +778,7 @@ void dvb_dev_local_init(struct dvb_device_priv *dvb)
 
 	ops->find = dvb_local_find;
 	ops->seek_by_adapter = dvb_local_seek_by_adapter;
+	ops->get_dev_info = dvb_local_get_dev_info;
 	ops->stop_monitor = dvb_local_stop_monitor;
 	ops->open = dvb_local_open;
 	ops->close = dvb_local_close;
