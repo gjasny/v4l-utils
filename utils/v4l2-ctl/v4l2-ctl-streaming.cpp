@@ -1245,9 +1245,10 @@ static void streaming_set_cap(int fd)
 	int fd_flags = fcntl(fd, F_GETFL);
 	buffers b(false);
 	bool use_poll = options[OptStreamPoll];
-	unsigned count = 0;
+	unsigned count;
 	struct timespec ts_last;
-	bool eos = false;
+	bool eos;
+	bool source_change;
 	FILE *fout = NULL;
 
 	if (!(capabilities & (V4L2_CAP_VIDEO_CAPTURE |
@@ -1265,6 +1266,15 @@ static void streaming_set_cap(int fd)
 	memset(&sub, 0, sizeof(sub));
 	sub.type = V4L2_EVENT_EOS;
 	ioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
+	if (use_poll) {
+		sub.type = V4L2_EVENT_SOURCE_CHANGE;
+		ioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
+	}
+
+recover:
+	eos = false;
+	source_change = false;
+	count = 0;
 
 	if (file_cap) {
 		if (!strcmp(file_cap, "-"))
@@ -1339,7 +1349,25 @@ static void streaming_set_cap(int fd)
 			b.bpl[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
 		}
 		fflush(fout);
+	} else if (!stream_no_query) {
+		struct v4l2_dv_timings new_dv_timings = {};
+		v4l2_std_id new_std;
+		struct v4l2_input in = { };
+
+		if (!test_ioctl(fd, VIDIOC_G_INPUT, &in.index) &&
+		    !test_ioctl(fd, VIDIOC_ENUMINPUT, &in)) {
+			if (in.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
+				while (test_ioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings))
+					sleep(1);
+				test_ioctl(fd, VIDIOC_S_DV_TIMINGS, &new_dv_timings);
+				fprintf(stderr, "New timings found\n");
+			} else if (in.capabilities & V4L2_IN_CAP_STD) {
+				if (!test_ioctl(fd, VIDIOC_QUERYSTD, &new_std))
+					test_ioctl(fd, VIDIOC_S_STD, &new_std);
+			}
+		}
 	}
+
 
 	if (b.reqbufs(fd, reqbufs_count_cap))
 		goto done;
@@ -1356,7 +1384,7 @@ static void streaming_set_cap(int fd)
 	if (use_poll)
 		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
 
-	while (!eos) {
+	while (!eos && !source_change) {
 		fd_set read_fds;
 		fd_set exception_fds;
 		struct timeval tv = { use_poll ? 2 : 0, 0 };
@@ -1384,10 +1412,15 @@ static void streaming_set_cap(int fd)
 			struct v4l2_event ev;
 
 			while (!ioctl(fd, VIDIOC_DQEVENT, &ev)) {
-				if (ev.type != V4L2_EVENT_EOS)
-					continue;
-				eos = true;
-				break;
+				switch (ev.type) {
+				case V4L2_EVENT_SOURCE_CHANGE:
+					source_change = true;
+					fprintf(stderr, "\nSource changed");
+					break;
+				case V4L2_EVENT_EOS:
+					eos = true;
+					break;
+				}
 			}
 		}
 
@@ -1404,6 +1437,8 @@ static void streaming_set_cap(int fd)
 	fprintf(stderr, "\n");
 
 	do_release_buffers(b);
+	if (source_change && !stream_no_query)
+		goto recover;
 
 done:
 	if (fout && fout != stdout) {
@@ -1961,22 +1996,6 @@ void streaming_set(int fd, int out_fd)
 	if (do_out > 1) {
 		fprintf(stderr, "only one of --stream-out-mmap/user/dmabuf is allowed\n");
 		return;
-	}
-
-	if (do_cap && !stream_no_query) {
-		struct v4l2_dv_timings new_dv_timings = {};
-		v4l2_std_id new_std;
-		struct v4l2_input in = { };
-
-		if (!test_ioctl(fd, VIDIOC_G_INPUT, &in.index) &&
-		    !test_ioctl(fd, VIDIOC_ENUMINPUT, &in)) {
-			if ((in.capabilities & V4L2_IN_CAP_DV_TIMINGS) &&
-			    !test_ioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings))
-				test_ioctl(fd, VIDIOC_S_DV_TIMINGS, &new_dv_timings);
-			else if ((in.capabilities & V4L2_IN_CAP_STD) &&
-				 !test_ioctl(fd, VIDIOC_QUERYSTD, &new_std))
-				test_ioctl(fd, VIDIOC_S_STD, &new_std);
-		}
 	}
 
 	if (do_cap && do_out && fd == out_fd)
