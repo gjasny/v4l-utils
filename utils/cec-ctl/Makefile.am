@@ -2,6 +2,7 @@ bin_PROGRAMS = cec-ctl
 man_MANS = cec-ctl.1
 
 cec_ctl_SOURCES = cec-ctl.cpp
+cec_ctl_LDFLAGS = -lrt
 
 cec-ctl.cpp: cec-ctl-gen.h
 
