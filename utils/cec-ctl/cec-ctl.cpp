@@ -23,6 +23,7 @@
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
@@ -649,6 +650,7 @@ enum Option {
 	OptTrace = 'T',
 	OptVerbose = 'v',
 	OptVendorID = 'V',
+	OptWallClock = 'w',
 
 	OptTV = 128,
 	OptRecord,
@@ -714,6 +716,7 @@ static struct option long_options[] = {
 	{ "help", no_argument, 0, OptHelp },
 	{ "trace", no_argument, 0, OptTrace },
 	{ "verbose", no_argument, 0, OptVerbose },
+	{ "wall-clock", no_argument, 0, OptWallClock },
 	{ "osd-name", required_argument, 0, OptOsdName },
 	{ "phys-addr", required_argument, 0, OptPhysAddr },
 	{ "vendor-id", required_argument, 0, OptVendorID },
@@ -790,6 +793,7 @@ static void usage(void)
 	       "  --help-all               Show all help messages\n"
 	       "  -T, --trace              Trace all called ioctls\n"
 	       "  -v, --verbose            Turn on verbose reporting\n"
+	       "  -w, --wall-clock         Show timestamps as wall-clock time\n"
 	       "  --cec-version-1.4        Use CEC Version 1.4 instead of 2.0\n"
 	       "  --allow-unreg-fallback   Allow fallback to Unregistered\n"
 	       "  --no-rc-passthrough      Disable the RC passthrough\n"
@@ -1109,6 +1113,34 @@ static const char *vendor2s(unsigned vendor)
 	}
 }
 
+static std::string ts2s(__u64 ts)
+{
+	std::string s;
+	struct timespec now;
+	struct timeval tv;
+	struct timeval sub;
+	struct timeval res;
+	__u64 diff;
+	char buf[64];
+	time_t t;
+
+	if (!options[OptWallClock]) {
+		sprintf(buf, "%llu.%03llus", ts / 1000000000, (ts % 1000000000) / 1000000);
+		return buf;
+	}
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	gettimeofday(&tv, NULL);
+	diff = now.tv_sec * 1000000000ULL + now.tv_nsec - ts;
+	sub.tv_sec = diff / 1000000000ULL;
+	sub.tv_usec = (diff % 1000000000ULL) / 1000;
+	timersub(&tv, &sub, &res);
+	t = res.tv_sec;
+	s = ctime(&t);
+	s = s.substr(0, s.length() - 6);
+	sprintf(buf, "%03lu", res.tv_usec / 1000);
+	return s + "." + buf;
+}
+
 int cec_named_ioctl(int fd, const char *name,
 		    unsigned long int request, void *parm)
 {
@@ -1207,8 +1239,7 @@ static void log_event(struct cec_event &ev)
 		break;
 	}
 	if (show_info)
-		printf("\tTimestamp: %llu.%03llus\n", ev.ts / 1000000000,
-		       (ev.ts % 1000000000) / 1000000);
+		printf("\tTimestamp: %s\n", ts2s(ev.ts).c_str());
 }
 
 static __u16 phys_addrs[16];
@@ -2071,14 +2102,11 @@ int main(int argc, char **argv)
 			if (options[OptShowRaw])
 				log_raw_msg(&msg);
 		}
-		printf("\tSequence: %u Tx Timestamp: %llu.%03llus",
-			msg.sequence,
-			msg.tx_ts / 1000000000,
-			(msg.tx_ts % 1000000000) / 1000000);
+		printf("\tSequence: %u Tx Timestamp: %s",
+			msg.sequence, ts2s(msg.tx_ts).c_str());
 		if (msg.rx_ts)
-			printf(" Rx Timestamp: %llu.%03llus\n\tApproximate response time: %u ms",
-				msg.rx_ts / 1000000000,
-				(msg.rx_ts % 1000000000) / 1000000,
+			printf(" Rx Timestamp: %s\n\tApproximate response time: %u ms",
+				ts2s(msg.rx_ts).c_str(),
 				response_time_ms(msg));
 		printf("\n");
 		if (!cec_msg_status_is_ok(&msg))
@@ -2139,15 +2167,11 @@ skip_la:
 				if (options[OptShowRaw])
 					log_raw_msg(&msg);
 				if (show_info && transmitted)
-					printf("\tSequence: %u Tx Timestamp: %llu.%03llus\n",
-					       msg.sequence,
-					       msg.tx_ts / 1000000000,
-					       (msg.tx_ts % 1000000000) / 1000000);
+					printf("\tSequence: %u Tx Timestamp: %s\n",
+					       msg.sequence, ts2s(msg.tx_ts).c_str());
 				else if (show_info && !transmitted)
-					printf("\tSequence: %u Rx Timestamp: %llu.%03llus\n",
-					       msg.sequence,
-					       msg.rx_ts / 1000000000,
-					       (msg.rx_ts % 1000000000) / 1000000);
+					printf("\tSequence: %u Rx Timestamp: %s\n",
+					       msg.sequence, ts2s(msg.rx_ts).c_str());
 			}
 			if (FD_ISSET(fd, &ex_fds)) {
 				struct cec_event ev;
