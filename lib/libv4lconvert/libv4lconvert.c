@@ -74,8 +74,15 @@ const struct libv4l_dev_ops *v4lconvert_get_default_dev_ops()
 static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
 		unsigned int pixelformat, int index);
 
-/* Note for proper functioning of v4lconvert_enum_fmt the first entries in
-   supported_src_pixfmts must match with the entries in supported_dst_pixfmts */
+/*
+ * Notes:
+ * 1) for proper functioning of v4lconvert_enum_fmt the first entries in
+ *    supported_src_pixfmts must match with the entries in
+ *    supported_dst_pixfmts.
+ * 2) The field needs_conversion should be zero, *except* for device-specific
+ *    formats, where it doesn't make sense for applications to have their
+ *    own decoders.
+ */
 #define SUPPORTED_DST_PIXFMTS \
 	/* fourcc			bpp	rgb	yuv	needs      */ \
 	/*					rank	rank	conversion */ \
@@ -175,9 +182,13 @@ struct v4lconvert_data *v4lconvert_create_with_dev_ops(int fd, void *dev_ops_pri
 	int i, j;
 	struct v4lconvert_data *data = calloc(1, sizeof(struct v4lconvert_data));
 	struct v4l2_capability cap;
-	/* This keeps tracks of devices which have only formats for which apps
-	   most likely will need conversion and we can thus safely add software
-	   processing controls without a performance impact. */
+	/*
+	 * This keeps tracks of device-specific formats for which apps most
+	 * likely don't know. If all a driver can offer are proprietary
+	 * formats, a conversion is needed anyway. We can thus safely
+	 * add software processing controls without much concern about a
+	 * performance impact.
+	 */
 	int always_needs_conversion = 1;
 
 	if (!data) {
