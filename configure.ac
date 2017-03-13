@@ -146,6 +146,7 @@ if test "x$gl_cv_func_ioctl_posix_signature" = xyes; then
 fi
 
 AC_CHECK_FUNCS([__secure_getenv secure_getenv])
+AC_HEADER_MAJOR
 
 # Check host os
 case "$host_os" in
