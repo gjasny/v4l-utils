@@ -1276,6 +1276,25 @@ recover:
 	source_change = false;
 	count = 0;
 
+	if (!stream_no_query) {
+		struct v4l2_dv_timings new_dv_timings = {};
+		v4l2_std_id new_std;
+		struct v4l2_input in = { };
+
+		if (!test_ioctl(fd, VIDIOC_G_INPUT, &in.index) &&
+		    !test_ioctl(fd, VIDIOC_ENUMINPUT, &in)) {
+			if (in.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
+				while (test_ioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings))
+					sleep(1);
+				test_ioctl(fd, VIDIOC_S_DV_TIMINGS, &new_dv_timings);
+				fprintf(stderr, "New timings found\n");
+			} else if (in.capabilities & V4L2_IN_CAP_STD) {
+				if (!test_ioctl(fd, VIDIOC_QUERYSTD, &new_std))
+					test_ioctl(fd, VIDIOC_S_STD, &new_std);
+			}
+		}
+	}
+
 	if (file_cap) {
 		if (!strcmp(file_cap, "-"))
 			fout = stdout;
@@ -1349,25 +1368,7 @@ recover:
 			b.bpl[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
 		}
 		fflush(fout);
-	} else if (!stream_no_query) {
-		struct v4l2_dv_timings new_dv_timings = {};
-		v4l2_std_id new_std;
-		struct v4l2_input in = { };
-
-		if (!test_ioctl(fd, VIDIOC_G_INPUT, &in.index) &&
-		    !test_ioctl(fd, VIDIOC_ENUMINPUT, &in)) {
-			if (in.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
-				while (test_ioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings))
-					sleep(1);
-				test_ioctl(fd, VIDIOC_S_DV_TIMINGS, &new_dv_timings);
-				fprintf(stderr, "New timings found\n");
-			} else if (in.capabilities & V4L2_IN_CAP_STD) {
-				if (!test_ioctl(fd, VIDIOC_QUERYSTD, &new_std))
-					test_ioctl(fd, VIDIOC_S_STD, &new_std);
-			}
-		}
 	}
-
 
 	if (b.reqbufs(fd, reqbufs_count_cap))
 		goto done;
