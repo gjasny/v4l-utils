@@ -120,9 +120,7 @@ const struct protocol_map_entry protocol_map[] = {
 	{ "other",	NULL,		SYSFS_OTHER	},
 	{ "lirc",	NULL,		SYSFS_LIRC	},
 	{ "rc-5",	"/rc5_decoder",	SYSFS_RC5	},
-	{ "rc5",	NULL,		SYSFS_RC5	},
 	{ "rc-5x",	NULL,		SYSFS_INVALID	},
-	{ "rc5x",	NULL,		SYSFS_INVALID	},
 	{ "rc-5-sz",	NULL,		SYSFS_RC5_SZ	},
 	{ "jvc",	"/jvc_decoder",	SYSFS_JVC	},
 	{ "sony",	"/sony_decoder",SYSFS_SONY	},
@@ -132,9 +130,7 @@ const struct protocol_map_entry protocol_map[] = {
 	{ "nec",	"/nec_decoder",	SYSFS_NEC	},
 	{ "sanyo",	NULL,		SYSFS_SANYO	},
 	{ "mce_kbd",	NULL,		SYSFS_MCE_KBD	},
-	{ "mce-kbd",	NULL,		SYSFS_MCE_KBD	},
 	{ "rc-6",	"/rc6_decoder",	SYSFS_RC6	},
-	{ "rc6",	NULL,		SYSFS_RC6	},
 	{ "rc-6-0",	NULL,		SYSFS_INVALID	},
 	{ "rc-6-6a-20",	NULL,		SYSFS_INVALID	},
 	{ "rc-6-6a-24",	NULL,		SYSFS_INVALID	},
@@ -144,6 +140,21 @@ const struct protocol_map_entry protocol_map[] = {
 	{ "xmp",	"/xmp_decoder",	SYSFS_XMP	},
 	{ NULL,		NULL,		SYSFS_INVALID	},
 };
+
+static bool protocol_like(const char *a, const char *b)
+{
+	while (*a && *b) {
+		if (*a == '-' || *a == '_')
+			a++;
+		if (*b == '-' || *b == '_')
+			b++;
+		if (tolower(*a) != tolower(*b))
+			return false;
+		a++; b++;
+	}
+
+	return !*a && !*b;
+}
 
 static enum sysfs_protocols parse_sysfs_protocol(const char *name, bool all_allowed)
 {
@@ -156,7 +167,7 @@ static enum sysfs_protocols parse_sysfs_protocol(const char *name, bool all_allo
 		return ~0;
 
 	for (pme = protocol_map; pme->name; pme++) {
-		if (!strcasecmp(name, pme->name))
+		if (protocol_like(name, pme->name))
 			return pme->sysfs_protocol;
 	}
 
