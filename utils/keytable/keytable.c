@@ -1294,13 +1294,13 @@ static void test_event(int fd)
 			case EV_REL:
 				printf(_(": %s (0x%04x) value=%d\n"),
 					get_event_name(rel_events, ev[i].code),
-					ev[i].type,
+					ev[i].code,
 					ev[i].value);
 				break;
 			case EV_ABS:
 				printf(_(": %s (0x%04x) value=%d\n"),
 					get_event_name(abs_events, ev[i].code),
-					ev[i].type,
+					ev[i].code,
 					ev[i].value);
 				break;
 			case EV_MSC:
