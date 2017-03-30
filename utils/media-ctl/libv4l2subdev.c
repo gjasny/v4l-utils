@@ -511,6 +511,118 @@ static struct media_pad *v4l2_subdev_parse_pad_format(
 			continue;
 		}
 
+		if (strhazit("colorspace:", &p)) {
+			enum v4l2_colorspace colorspace;
+			char *strfield;
+
+			for (end = (char *)p; isalnum(*end) || *end == '-';
+			     ++end);
+
+			strfield = strndup(p, end - p);
+			if (!strfield) {
+				*endp = (char *)p;
+				return NULL;
+			}
+
+			colorspace = v4l2_subdev_string_to_colorspace(strfield);
+			free(strfield);
+			if (colorspace == (enum v4l2_colorspace)-1) {
+				media_dbg(media, "Invalid colorspace value '%*s'\n",
+					  end - p, p);
+				*endp = (char *)p;
+				return NULL;
+			}
+
+			format->colorspace = colorspace;
+
+			p = end;
+			continue;
+		}
+
+		if (strhazit("xfer:", &p)) {
+			enum v4l2_xfer_func xfer_func;
+			char *strfield;
+
+			for (end = (char *)p; isalnum(*end) || *end == '-';
+			     ++end);
+
+			strfield = strndup(p, end - p);
+			if (!strfield) {
+				*endp = (char *)p;
+				return NULL;
+			}
+
+			xfer_func = v4l2_subdev_string_to_xfer_func(strfield);
+			free(strfield);
+			if (xfer_func == (enum v4l2_xfer_func)-1) {
+				media_dbg(media, "Invalid transfer function value '%*s'\n",
+					  end - p, p);
+				*endp = (char *)p;
+				return NULL;
+			}
+
+			format->xfer_func = xfer_func;
+
+			p = end;
+			continue;
+		}
+
+		if (strhazit("ycbcr:", &p)) {
+			enum v4l2_ycbcr_encoding ycbcr_enc;
+			char *strfield;
+
+			for (end = (char *)p; isalnum(*end) || *end == '-';
+			     ++end);
+
+			strfield = strndup(p, end - p);
+			if (!strfield) {
+				*endp = (char *)p;
+				return NULL;
+			}
+
+			ycbcr_enc = v4l2_subdev_string_to_ycbcr_encoding(strfield);
+			free(strfield);
+			if (ycbcr_enc == (enum v4l2_ycbcr_encoding)-1) {
+				media_dbg(media, "Invalid YCbCr encoding value '%*s'\n",
+					  end - p, p);
+				*endp = (char *)p;
+				return NULL;
+			}
+
+			format->ycbcr_enc = ycbcr_enc;
+
+			p = end;
+			continue;
+		}
+
+		if (strhazit("quantization:", &p)) {
+			enum v4l2_quantization quantization;
+			char *strfield;
+
+			for (end = (char *)p; isalnum(*end) || *end == '-';
+			     ++end);
+
+			strfield = strndup(p, end - p);
+			if (!strfield) {
+				*endp = (char *)p;
+				return NULL;
+			}
+
+			quantization = v4l2_subdev_string_to_quantization(strfield);
+			free(strfield);
+			if (quantization == (enum v4l2_quantization)-1) {
+				media_dbg(media, "Invalid quantization value '%*s'\n",
+					  end - p, p);
+				*endp = (char *)p;
+				return NULL;
+			}
+
+			format->quantization = quantization;
+
+			p = end;
+			continue;
+		}
+
 		/*
 		 * Backward compatibility: crop rectangles can be specified
 		 * implicitly without the 'crop:' property name.
@@ -837,6 +949,156 @@ enum v4l2_field v4l2_subdev_string_to_field(const char *string)
 	}
 
 	return (enum v4l2_field)-1;
+}
+
+static struct {
+	const char *name;
+	enum v4l2_colorspace colorspace;
+} colorspaces[] = {
+	{ "default", V4L2_COLORSPACE_DEFAULT },
+	{ "smpte170m", V4L2_COLORSPACE_SMPTE170M },
+	{ "smpte240m", V4L2_COLORSPACE_SMPTE240M },
+	{ "rec709", V4L2_COLORSPACE_REC709 },
+	{ "470m", V4L2_COLORSPACE_470_SYSTEM_M },
+	{ "470bg", V4L2_COLORSPACE_470_SYSTEM_BG },
+	{ "jpeg", V4L2_COLORSPACE_JPEG },
+	{ "srgb", V4L2_COLORSPACE_SRGB },
+	{ "adobergb", V4L2_COLORSPACE_ADOBERGB },
+	{ "bt2020", V4L2_COLORSPACE_BT2020 },
+	{ "dcip3", V4L2_COLORSPACE_DCI_P3 },
+};
+
+const char *v4l2_subdev_colorspace_to_string(enum v4l2_colorspace colorspace)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(colorspaces); ++i) {
+		if (colorspaces[i].colorspace == colorspace)
+			return colorspaces[i].name;
+	}
+
+	return "unknown";
+}
+
+enum v4l2_colorspace v4l2_subdev_string_to_colorspace(const char *string)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(colorspaces); ++i) {
+		if (strcasecmp(colorspaces[i].name, string) == 0)
+			return colorspaces[i].colorspace;
+	}
+
+	return (enum v4l2_colorspace)-1;
+}
+
+static struct {
+	const char *name;
+	enum v4l2_xfer_func xfer_func;
+} xfer_funcs[] = {
+	{ "default", V4L2_XFER_FUNC_DEFAULT },
+	{ "709", V4L2_XFER_FUNC_709 },
+	{ "srgb", V4L2_XFER_FUNC_SRGB },
+	{ "adobergb", V4L2_XFER_FUNC_ADOBERGB },
+	{ "smpte240m", V4L2_XFER_FUNC_SMPTE240M },
+	{ "smpte2084", V4L2_XFER_FUNC_SMPTE2084 },
+	{ "dcip3", V4L2_XFER_FUNC_DCI_P3 },
+	{ "none", V4L2_XFER_FUNC_NONE },
+};
+
+const char *v4l2_subdev_xfer_func_to_string(enum v4l2_xfer_func xfer_func)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(xfer_funcs); ++i) {
+		if (xfer_funcs[i].xfer_func == xfer_func)
+			return xfer_funcs[i].name;
+	}
+
+	return "unknown";
+}
+
+enum v4l2_xfer_func v4l2_subdev_string_to_xfer_func(const char *string)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(xfer_funcs); ++i) {
+		if (strcasecmp(xfer_funcs[i].name, string) == 0)
+			return xfer_funcs[i].xfer_func;
+	}
+
+	return (enum v4l2_xfer_func)-1;
+}
+
+static struct {
+	const char *name;
+	enum v4l2_ycbcr_encoding ycbcr_enc;
+} ycbcr_encs[] = {
+	{ "default", V4L2_YCBCR_ENC_DEFAULT },
+	{ "601", V4L2_YCBCR_ENC_601 },
+	{ "709", V4L2_YCBCR_ENC_709 },
+	{ "xv601", V4L2_YCBCR_ENC_XV601 },
+	{ "xv709", V4L2_YCBCR_ENC_XV709 },
+	{ "bt2020", V4L2_YCBCR_ENC_BT2020 },
+	{ "bt2020c", V4L2_YCBCR_ENC_BT2020_CONST_LUM },
+	{ "smpte240m", V4L2_YCBCR_ENC_SMPTE240M },
+};
+
+const char *v4l2_subdev_ycbcr_encoding_to_string(enum v4l2_ycbcr_encoding ycbcr_enc)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(ycbcr_encs); ++i) {
+		if (ycbcr_encs[i].ycbcr_enc == ycbcr_enc)
+			return ycbcr_encs[i].name;
+	}
+
+	return "unknown";
+}
+
+enum v4l2_ycbcr_encoding v4l2_subdev_string_to_ycbcr_encoding(const char *string)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(ycbcr_encs); ++i) {
+		if (strcasecmp(ycbcr_encs[i].name, string) == 0)
+			return ycbcr_encs[i].ycbcr_enc;
+	}
+
+	return (enum v4l2_ycbcr_encoding)-1;
+}
+
+static struct {
+	const char *name;
+	enum v4l2_quantization quantization;
+} quantizations[] = {
+	{ "default", V4L2_QUANTIZATION_DEFAULT },
+	{ "full-range", V4L2_QUANTIZATION_FULL_RANGE },
+	{ "lim-range", V4L2_QUANTIZATION_LIM_RANGE },
+};
+
+const char *v4l2_subdev_quantization_to_string(enum v4l2_quantization quantization)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(quantizations); ++i) {
+		if (quantizations[i].quantization == quantization)
+			return quantizations[i].name;
+	}
+
+	return "unknown";
+}
+
+enum v4l2_quantization v4l2_subdev_string_to_quantization(const char *string)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(quantizations); ++i) {
+		if (strcasecmp(quantizations[i].name, string) == 0)
+			return quantizations[i].quantization;
+	}
+
+	return (enum v4l2_quantization)-1;
 }
 
 static const enum v4l2_mbus_pixelcode mbus_codes[] = {

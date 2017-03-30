@@ -68,7 +68,9 @@ static void usage(const char *argv0)
 	printf("\tv4l2-properties = v4l2-property { ',' v4l2-property } ;\n");
 	printf("\tv4l2-property   = v4l2-mbusfmt | v4l2-crop | v4l2-interval\n");
 	printf("\t                | v4l2-compose | v4l2-interval ;\n");
-	printf("\tv4l2-mbusfmt    = 'fmt:' fcc '/' size ; { 'field:' v4l2-field ; }\n");
+	printf("\tv4l2-mbusfmt    = 'fmt:' fcc '/' size ; { 'field:' v4l2-field ; } { 'colorspace:' v4l2-colorspace ; }\n");
+	printf("\t                   { 'xfer:' v4l2-xfer-func ; } { 'ycbcr-enc:' v4l2-ycbcr-enc-func ; }\n");
+	printf("\t                   { 'quantization:' v4l2-quant ; }\n");
 	printf("\tv4l2-crop       = 'crop:' rectangle ;\n");
 	printf("\tv4l2-compose    = 'compose:' rectangle ;\n");
 	printf("\tv4l2-interval   = '@' numerator '/' denominator ;\n");
@@ -91,6 +93,24 @@ static void usage(const char *argv0)
 	for (i = V4L2_FIELD_ANY; i <= V4L2_FIELD_INTERLACED_BT; i++)
 		printf("\t                %s\n",
 		       v4l2_subdev_field_to_string(i));
+
+	printf("\tv4l2-colorspace One of the following:\n");
+
+	for (i = V4L2_COLORSPACE_DEFAULT; i <= V4L2_COLORSPACE_DCI_P3; i++)
+		printf("\t                %s\n",
+		       v4l2_subdev_colorspace_to_string(i));
+
+	printf("\tv4l2-xfer-func  One of the following:\n");
+
+	for (i = V4L2_XFER_FUNC_DEFAULT; i <= V4L2_XFER_FUNC_SMPTE2084; i++)
+		printf("\t                %s\n",
+		       v4l2_subdev_xfer_func_to_string(i));
+
+	printf("\tv4l2-quant      One of the following:\n");
+
+	for (i = V4L2_QUANTIZATION_DEFAULT; i <= V4L2_QUANTIZATION_LIM_RANGE; i++)
+		printf("\t                %s\n",
+		       v4l2_subdev_quantization_to_string(i));
 }
 
 #define OPT_PRINT_DOT			256

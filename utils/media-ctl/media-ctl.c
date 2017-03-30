@@ -101,6 +101,23 @@ static void v4l2_subdev_print_format(struct media_entity *entity,
 	if (format.field)
 		printf(" field:%s", v4l2_subdev_field_to_string(format.field));
 
+	if (format.colorspace) {
+		printf(" colorspace:%s",
+		       v4l2_subdev_colorspace_to_string(format.colorspace));
+
+		if (format.xfer_func)
+			printf(" xfer:%s",
+			       v4l2_subdev_xfer_func_to_string(format.xfer_func));
+
+		if (format.ycbcr_enc)
+			printf(" ycbcr:%s",
+			       v4l2_subdev_ycbcr_encoding_to_string(format.ycbcr_enc));
+
+		if (format.quantization)
+			printf(" quantization:%s",
+			       v4l2_subdev_quantization_to_string(format.quantization));
+	}
+
 	ret = v4l2_subdev_get_selection(entity, &rect, pad,
 					V4L2_SEL_TGT_CROP_BOUNDS,
 					which);

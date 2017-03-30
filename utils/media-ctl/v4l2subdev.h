@@ -276,6 +276,86 @@ const char *v4l2_subdev_field_to_string(enum v4l2_field field);
 enum v4l2_field v4l2_subdev_string_to_field(const char *string);
 
 /**
+ * @brief Convert a colorspace to string.
+ * @param colorspace - colorspace
+ *
+ * Convert colorspace @a colorspace to a human-readable string.
+ *
+ * @return A pointer to a string on success, NULL on failure.
+ */
+const char *v4l2_subdev_colorspace_to_string(enum v4l2_colorspace colorspace);
+
+/**
+ * @brief Parse string to colorspace.
+ * @param string - nul terminated string, textual colorspace
+ *
+ * Parse human readable string @a string to colorspace.
+ *
+ * @return colorspace on success, -1 on failure.
+ */
+enum v4l2_colorspace v4l2_subdev_string_to_colorspace(const char *string);
+
+/**
+ * @brief Convert a transfer function to string.
+ * @param xfer_func - transfer function
+ *
+ * Convert transfer function @a xfer_func to a human-readable string.
+ *
+ * @return A pointer to a string on success, NULL on failure.
+ */
+const char *v4l2_subdev_xfer_func_to_string(enum v4l2_xfer_func xfer_func);
+
+/**
+ * @brief Parse string to transfer function.
+ * @param string - nul terminated string, textual transfer function
+ *
+ * Parse human readable string @a string to xfer_func.
+ *
+ * @return xfer_func on success, -1 on failure.
+ */
+enum v4l2_xfer_func v4l2_subdev_string_to_xfer_func(const char *string);
+
+/**
+ * @brief Convert a YCbCr encoding to string.
+ * @param ycbcr_enc - YCbCr encoding
+ *
+ * Convert YCbCr encoding @a ycbcr_enc to a human-readable string.
+ *
+ * @return A pointer to a string on success, NULL on failure.
+ */
+const char *v4l2_subdev_ycbcr_encoding_to_string(enum v4l2_ycbcr_encoding ycbcr_enc);
+
+/**
+ * @brief Parse string to YCbCr encoding.
+ * @param string - nul terminated string, textual YCbCr encoding
+ *
+ * Parse human readable string @a string to YCbCr encoding.
+ *
+ * @return ycbcr_enc on success, -1 on failure.
+ */
+enum v4l2_ycbcr_encoding v4l2_subdev_string_to_ycbcr_encoding(const char *string);
+
+/**
+ * @brief Convert a quantization to string.
+ * @param quantization - quantization
+ *
+ * Convert quantization @a quantization to a human-readable string.
+ *
+ * @return A pointer to a string on success, NULL on failure.
+ */
+const char *v4l2_subdev_quantization_to_string(enum v4l2_quantization quantization);
+
+/**
+ * @brief Parse string to quantization.
+ * @param string - nul terminated string, textual quantization
+ *
+ * Parse human readable string @a string to quantization.
+ *
+ * @return quantization on success, -1 on failure.
+ */
+enum v4l2_quantization v4l2_subdev_string_to_quantization(const char *string);
+
+/**
  * @brief Enumerate library supported media bus pixel codes.
  * @param length - the number of the supported pixel codes
  *
