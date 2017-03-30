@@ -79,6 +79,7 @@ static void v4l2_subdev_print_format(struct media_entity *entity,
 	unsigned int pad, enum v4l2_subdev_format_whence which)
 {
 	struct v4l2_mbus_framefmt format;
+	struct v4l2_fract interval = { 0, 0 };
 	struct v4l2_rect rect;
 	int ret;
 
@@ -86,9 +87,16 @@ static void v4l2_subdev_print_format(struct media_entity *entity,
 	if (ret != 0)
 		return;
 
+	ret = v4l2_subdev_get_frame_interval(entity, &interval, pad);
+	if (ret != 0 && ret != -ENOTTY && ret != -EINVAL)
+		return;
+
 	printf("\t\t[fmt:%s/%ux%u",
 	       v4l2_subdev_pixelcode_to_string(format.code),
 	       format.width, format.height);
+
+	if (interval.numerator || interval.denominator)
+		printf("@%u/%u", interval.numerator, interval.denominator);
 
 	if (format.field)
 		printf(" field:%s", v4l2_subdev_field_to_string(format.field));
