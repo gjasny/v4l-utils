@@ -262,7 +262,8 @@ int v4l2_subdev_set_dv_timings(struct media_entity *entity,
 }
 
 int v4l2_subdev_get_frame_interval(struct media_entity *entity,
-				   struct v4l2_fract *interval)
+				   struct v4l2_fract *interval,
+				   unsigned int pad)
 {
 	struct v4l2_subdev_frame_interval ival;
 	int ret;
@@ -272,6 +273,7 @@ int v4l2_subdev_get_frame_interval(struct media_entity *entity,
 		return ret;
 
 	memset(&ival, 0, sizeof(ival));
+	ival.pad = pad;
 
 	ret = ioctl(entity->fd, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &ival);
 	if (ret < 0)
@@ -282,7 +284,8 @@ int v4l2_subdev_get_frame_interval(struct media_entity *entity,
 }
 
 int v4l2_subdev_set_frame_interval(struct media_entity *entity,
-				   struct v4l2_fract *interval)
+				   struct v4l2_fract *interval,
+				   unsigned int pad)
 {
 	struct v4l2_subdev_frame_interval ival;
 	int ret;
@@ -292,6 +295,7 @@ int v4l2_subdev_set_frame_interval(struct media_entity *entity,
 		return ret;
 
 	memset(&ival, 0, sizeof(ival));
+	ival.pad = pad;
 	ival.interval = *interval;
 
 	ret = ioctl(entity->fd, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &ival);
@@ -617,7 +621,7 @@ static int set_selection(struct media_pad *pad, unsigned int target,
 	return 0;
 }
 
-static int set_frame_interval(struct media_entity *entity,
+static int set_frame_interval(struct media_pad *pad,
 			      struct v4l2_fract *interval)
 {
 	int ret;
@@ -625,20 +629,20 @@ static int set_frame_interval(struct media_entity *entity,
 	if (interval->numerator == 0)
 		return 0;
 
-	media_dbg(entity->media,
-		  "Setting up frame interval %u/%u on entity %s\n",
+	media_dbg(pad->entity->media,
+		  "Setting up frame interval %u/%u on pad %s/%u\n",
 		  interval->numerator, interval->denominator,
-		  entity->info.name);
+		  pad->entity->info.name, pad->index);
 
-	ret = v4l2_subdev_set_frame_interval(entity, interval);
+	ret = v4l2_subdev_set_frame_interval(pad->entity, interval, pad->index);
 	if (ret < 0) {
-		media_dbg(entity->media,
+		media_dbg(pad->entity->media,
 			  "Unable to set frame interval: %s (%d)",
 			  strerror(-ret), ret);
 		return ret;
 	}
 
-	media_dbg(entity->media, "Frame interval set: %u/%u\n",
+	media_dbg(pad->entity->media, "Frame interval set: %u/%u\n",
 		  interval->numerator, interval->denominator);
 
 	return 0;
@@ -685,7 +689,7 @@ static int v4l2_subdev_parse_setup_format(struct media_device *media,
 			return ret;
 	}
 
-	ret = set_frame_interval(pad->entity, &interval);
+	ret = set_frame_interval(pad, &interval);
 	if (ret < 0)
 		return ret;
 

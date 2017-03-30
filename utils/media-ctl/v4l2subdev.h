@@ -200,7 +200,7 @@ int v4l2_subdev_set_dv_timings(struct media_entity *entity,
  */
 
 int v4l2_subdev_get_frame_interval(struct media_entity *entity,
-	struct v4l2_fract *interval);
+	struct v4l2_fract *interval, unsigned int pad);
 
 /**
  * @brief Set the frame interval on a sub-device.
@@ -217,7 +217,7 @@ int v4l2_subdev_get_frame_interval(struct media_entity *entity,
  * @return 0 on success, or a negative error code on failure.
  */
 int v4l2_subdev_set_frame_interval(struct media_entity *entity,
-	struct v4l2_fract *interval);
+	struct v4l2_fract *interval, unsigned int pad);
 
 /**
  * @brief Parse a string and apply format, crop and frame interval settings.
