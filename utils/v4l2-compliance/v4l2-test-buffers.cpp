@@ -568,7 +568,11 @@ int testExpBuf(struct node *node)
 	if (!(node->valid_memorytype & (1 << V4L2_MEMORY_MMAP))) {
 		cv4l_queue q;
 
-		fail_on_test(q.has_expbuf(node));
+		if (q.has_expbuf(node)) {
+			if (node->valid_buftypes)
+				fail("VIDIOC_EXPBUF is supported, but the V4L2_MEMORY_MMAP support is missing or malfunctioning.\n");
+			fail("VIDIOC_EXPBUF is supported, but the V4L2_MEMORY_MMAP support is missing, probably due to earlier failing format tests.\n");
+		}
 		return ENOTTY;
 	}
 
