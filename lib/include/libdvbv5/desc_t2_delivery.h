@@ -86,7 +86,7 @@ struct dvb_desc_t2_delivery {
 			uint16_t transmission_mode:3;
 			uint16_t guard_interval:3;
 			uint16_t reserved:2;
-			uint16_t bandwidth:3;
+			uint16_t bandwidth:4;
 			uint16_t SISO_MISO:2;
 		} __attribute__((packed));
 	} __attribute__((packed));
