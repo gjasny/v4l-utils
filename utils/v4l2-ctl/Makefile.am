@@ -7,7 +7,7 @@ v4l2_ctl_SOURCES = v4l2-ctl.cpp v4l2-ctl.h v4l2-ctl-common.cpp v4l2-ctl-tuner.cp
 	v4l2-ctl-overlay.cpp v4l2-ctl-vbi.cpp v4l2-ctl-selection.cpp v4l2-ctl-misc.cpp \
 	v4l2-ctl-streaming.cpp v4l2-ctl-sdr.cpp v4l2-ctl-edid.cpp v4l2-ctl-modes.cpp \
 	v4l2-tpg-colors.c v4l2-tpg-core.c v4l-stream.c
-v4l2_ctl_CPPFLAGS = -I../common
+v4l2_ctl_CPPFLAGS = -I$(top_srcdir)/utils/common
 
 if WITH_V4L2_CTL_LIBV4L
 v4l2_ctl_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la -lrt -lpthread
