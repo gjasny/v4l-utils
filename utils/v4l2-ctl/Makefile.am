@@ -15,4 +15,8 @@ else
 DEFS += -DNO_LIBV4L2
 endif
 
+if !WITH_V4L2_CTL_STREAM_TO
+DEFS += -DNO_STREAM_TO
+endif
+
 EXTRA_DIST = Android.mk v4l2-ctl.1

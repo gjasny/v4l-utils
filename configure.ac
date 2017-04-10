@@ -404,6 +404,14 @@ AC_ARG_ENABLE(v4l2-ctl-libv4l,
    esac]
 )
 
+AC_ARG_ENABLE(v4l2-ctl-stream-to,
+  AS_HELP_STRING([--disable-v4l2-ctl-stream-to], [disable use of --stream-to in v4l2-ctl]),
+  [case "${enableval}" in
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-v4l2-ctl-stream-to) ;;
+   esac]
+)
+
 AC_ARG_ENABLE(qv4l2,
   AS_HELP_STRING([--disable-qv4l2], [disable qv4l2 compilation]),
   [case "${enableval}" in
@@ -436,6 +444,7 @@ AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$enable_libv4l != xno -a x$enable_sha
 AM_CONDITIONAL([WITH_QTGL],	    [test x${qt_pkgconfig_gl} = xtrue])
 AM_CONDITIONAL([WITH_GCONV],        [test x${enable_gconv} = xyes])
 AM_CONDITIONAL([WITH_V4L2_CTL_LIBV4L], [test x${enable_v4l2_ctl_libv4l} != xno])
+AM_CONDITIONAL([WITH_V4L2_CTL_STREAM_TO], [test x${enable_v4l2_ctl_stream_to} != xno])
 AM_CONDITIONAL([WITH_V4L2_COMPLIANCE_LIBV4L], [test x${enable_v4l2_compliance_libv4l} != xno])
 
 # append -static to libtool compile and link command to enforce static libs
@@ -463,6 +472,7 @@ AM_COND_IF([WITH_V4L_PLUGINS], [USE_V4L_PLUGINS="yes"], [USE_V4L_PLUGINS="no"])
 AM_COND_IF([WITH_V4L_WRAPPERS], [USE_V4L_WRAPPERS="yes"], [USE_V4L_WRAPPERS="no"])
 AM_COND_IF([WITH_GCONV], [USE_GCONV="yes"], [USE_GCONV="no"])
 AM_COND_IF([WITH_V4L2_CTL_LIBV4L], [USE_V4L2_CTL="yes"], [USE_V4L2_CTL="no"])
+AM_COND_IF([WITH_V4L2_CTL_STREAM_TO], [USE_V4L2_CTL="yes"], [USE_V4L2_CTL="no"])
 AM_COND_IF([WITH_V4L2_COMPLIANCE_LIBV4L], [USE_V4L2_COMPLIANCE="yes"], [USE_V4L2_COMPLIANCE="no"])
 AS_IF([test "x$alsa_pkgconfig" = "xtrue"], [USE_ALSA="yes"], [USE_ALSA="no"])
 

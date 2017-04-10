@@ -88,10 +88,12 @@ void streaming_usage(void)
 	       "                     sleep for 1 second every <count> buffers. If <count> is 0,\n"
 	       "                     then sleep forever right after streaming starts. The default\n"
 	       "                     is -1 (never sleep).\n"
+#ifndef NO_STREAM_TO
 	       "  --stream-to=<file> stream to this file. The default is to discard the\n"
 	       "                     data. If <file> is '-', then the data is written to stdout\n"
 	       "                     and the --silent option is turned on automatically.\n"
 	       "  --stream-to-host=<hostname[:port]> stream to this host. The default port is %d.\n"
+#endif
 	       "  --stream-poll      use non-blocking mode and select() to stream.\n"
 	       "  --stream-mmap=<count>\n"
 	       "                     capture video using mmap() [VIDIOC_(D)QBUF]\n"
@@ -159,7 +161,10 @@ void streaming_usage(void)
 	       "                     list all SDR RX buffers [VIDIOC_QUERYBUF]\n"
 	       "  --list-buffers-sdr-out\n"
 	       "                     list all SDR TX buffers [VIDIOC_QUERYBUF]\n",
-		V4L_STREAM_PORT, V4L_STREAM_PORT);
+#ifndef NO_STREAM_TO
+		V4L_STREAM_PORT,
+#endif
+	       	V4L_STREAM_PORT);
 }
 
 static void setTimeStamp(struct v4l2_buffer &buf)
