@@ -684,8 +684,7 @@ QString CaptureWinGLEngine::codeYUVNormalize()
 		    m_ycbcr_enc != V4L2_YCBCR_ENC_XV709)
 			return "";
 		/*
-		 * xv709 and xv601 have full range quantization, but they still
-		 * need to be normalized as if they were limited range. But the
+		 * xv709 and xv601 always have limited range quantization. But the
 		 * result are values outside the normal 0-1 range, which is the
 		 * point of these extended gamut encodings.
 		 */
