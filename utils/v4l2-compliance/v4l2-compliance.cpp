@@ -214,6 +214,8 @@ std::string cap2s(unsigned cap)
 		s += "\t\tSDR Capture\n";
 	if (cap & V4L2_CAP_SDR_OUTPUT)
 		s += "\t\tSDR Output\n";
+	if (cap & V4L2_CAP_META_CAPTURE)
+		s += "\t\tMetadata Capture\n";
 	if (cap & V4L2_CAP_TOUCH)
 		s += "\t\tTouch Device\n";
 	if (cap & V4L2_CAP_TUNER)
@@ -279,6 +281,8 @@ std::string buftype2s(int type)
 		return "SDR Capture";
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		return "SDR Output";
+	case V4L2_BUF_TYPE_META_CAPTURE:
+		return "Metadata Capture";
 	case V4L2_BUF_TYPE_PRIVATE:
 		return "Private";
 	default:
@@ -517,7 +521,7 @@ static int testCap(struct node *node)
 	const __u32 input_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OVERLAY |
 			V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
 			V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_HW_FREQ_SEEK |
-			V4L2_CAP_TUNER | V4L2_CAP_SDR_CAPTURE;
+			V4L2_CAP_TUNER | V4L2_CAP_SDR_CAPTURE | V4L2_CAP_META_CAPTURE;
 	const __u32 output_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 			V4L2_CAP_VIDEO_OUTPUT_OVERLAY | V4L2_CAP_VBI_OUTPUT |
 			V4L2_CAP_SDR_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT |
@@ -995,7 +999,8 @@ int main(int argc, char **argv)
 	if (node.g_caps() & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
 			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE |
 			 V4L2_CAP_VIDEO_M2M | V4L2_CAP_SLICED_VBI_CAPTURE |
-			 V4L2_CAP_RDS_CAPTURE | V4L2_CAP_SDR_CAPTURE))
+			 V4L2_CAP_RDS_CAPTURE | V4L2_CAP_SDR_CAPTURE |
+			 V4L2_CAP_META_CAPTURE))
 		node.can_capture = true;
 	if (node.g_caps() & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VBI_OUTPUT |
 			 V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE |
@@ -1005,6 +1010,10 @@ int main(int argc, char **argv)
 	if (node.g_caps() & (V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 			 V4L2_CAP_VIDEO_M2M_MPLANE))
 		node.is_planar = true;
+	if (node.g_caps() & V4L2_CAP_META_CAPTURE) {
+		node.is_video = false;
+		node.is_meta = true;
+	}
 
 	/* Information Opts */
 

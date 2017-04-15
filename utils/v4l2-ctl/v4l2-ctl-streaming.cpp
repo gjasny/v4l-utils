@@ -160,7 +160,9 @@ void streaming_usage(void)
 	       "  --list-buffers-sdr\n"
 	       "                     list all SDR RX buffers [VIDIOC_QUERYBUF]\n"
 	       "  --list-buffers-sdr-out\n"
-	       "                     list all SDR TX buffers [VIDIOC_QUERYBUF]\n",
+	       "                     list all SDR TX buffers [VIDIOC_QUERYBUF]\n"
+	       "  --list-buffers-meta\n"
+	       "                     list all Meta RX buffers [VIDIOC_QUERYBUF]\n",
 #ifndef NO_STREAM_TO
 		V4L_STREAM_PORT,
 #endif
@@ -447,6 +449,8 @@ public:
 			type = V4L2_BUF_TYPE_SDR_CAPTURE;
 		else if (capabilities & V4L2_CAP_SDR_OUTPUT)
 			type = V4L2_BUF_TYPE_SDR_OUTPUT;
+		else if (capabilities & V4L2_CAP_META_CAPTURE)
+			type = V4L2_BUF_TYPE_META_CAPTURE;
 		else
 			type = is_output ? vidout_buftype : vidcap_buftype;
 		if (is_output) {
@@ -2051,6 +2055,10 @@ void streaming_list(int fd, int out_fd)
 
 	if (options[OptListBuffersSdrOut]) {
 		list_buffers(fd, V4L2_BUF_TYPE_SDR_OUTPUT);
+	}
+
+	if (options[OptListBuffersMeta]) {
+		list_buffers(fd, V4L2_BUF_TYPE_META_CAPTURE);
 	}
 
 	if (options[OptListPatterns]) {

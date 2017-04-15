@@ -296,6 +296,7 @@ static std::string ctrlflags2s(__u32 flags)
 		{ V4L2_CTRL_FLAG_VOLATILE,   "volatile" },
 		{ V4L2_CTRL_FLAG_HAS_PAYLOAD,"has-payload" },
 		{ V4L2_CTRL_FLAG_EXECUTE_ON_WRITE, "execute-on-write" },
+		{ V4L2_CTRL_FLAG_MODIFY_LAYOUT, "modify-layout" },
 		{ 0, NULL }
 	};
 	return flags2s(flags, def);

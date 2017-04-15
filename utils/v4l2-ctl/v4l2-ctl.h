@@ -66,6 +66,7 @@ enum Option {
 	OptGetSdrFormat,
 	OptGetSdrOutFormat,
 	OptGetVideoOutFormat,
+	OptGetMetaFormat,
 	OptSetSlicedVbiOutFormat,
 	OptSetOverlayFormat,
 	OptSetVbiFormat,
@@ -73,6 +74,7 @@ enum Option {
 	OptSetSdrFormat,
 	OptSetSdrOutFormat,
 	OptSetVideoOutFormat,
+	OptSetMetaFormat,
 	OptTryVideoOutFormat,
 	OptTrySlicedVbiOutFormat,
 	OptTrySlicedVbiFormat,
@@ -82,6 +84,7 @@ enum Option {
 	OptTryVbiOutFormat,
 	OptTrySdrFormat,
 	OptTrySdrOutFormat,
+	OptTryMetaFormat,
 	OptAll,
 	OptListStandards,
 	OptListFormats,
@@ -93,6 +96,7 @@ enum Option {
 	OptListSdrFormats,
 	OptListSdrOutFormats,
 	OptListOutFormats,
+	OptListMetaFormats,
 	OptListOutFields,
 	OptClearClips,
 	OptClearBitmap,
@@ -167,6 +171,7 @@ enum Option {
 	OptListBuffersSlicedVbiOut,
 	OptListBuffersSdr,
 	OptListBuffersSdrOut,
+	OptListBuffersMeta,
 	OptStreamCount,
 	OptStreamSkip,
 	OptStreamLoop,
@@ -205,6 +210,7 @@ enum Option {
 	OptHelpOverlay,
 	OptHelpVbi,
 	OptHelpSdr,
+	OptHelpMeta,
 	OptHelpSelection,
 	OptHelpMisc,
 	OptHelpStreaming,
@@ -331,6 +337,13 @@ void sdr_cmd(int ch, char *optarg);
 void sdr_set(int fd);
 void sdr_get(int fd);
 void sdr_list(int fd);
+
+// v4l2-ctl-meta.cpp
+void meta_usage(void);
+void meta_cmd(int ch, char *optarg);
+void meta_set(int fd);
+void meta_get(int fd);
+void meta_list(int fd);
 
 // v4l2-ctl-selection.cpp
 void selection_usage(void);

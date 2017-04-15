@@ -46,6 +46,7 @@ static const __u32 buftype2cap[] = {
 	V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE,
 	V4L2_CAP_SDR_CAPTURE,
 	V4L2_CAP_SDR_OUTPUT,
+	V4L2_CAP_META_CAPTURE,
 };
 
 static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
@@ -296,6 +297,7 @@ int testEnumFormats(struct node *node)
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		case V4L2_BUF_TYPE_SDR_CAPTURE:
 		case V4L2_BUF_TYPE_SDR_OUTPUT:
+		case V4L2_BUF_TYPE_META_CAPTURE:
 			if (ret && (node->g_caps() & buftype2cap[type]))
 				return fail("%s cap set, but no %s formats defined\n",
 						buftype2s(type).c_str(), buftype2s(type).c_str());
@@ -407,6 +409,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 	struct v4l2_vbi_format &vbi = fmt.fmt.vbi;
 	struct v4l2_sliced_vbi_format &sliced = fmt.fmt.sliced;
 	struct v4l2_sdr_format &sdr = fmt.fmt.sdr;
+	struct v4l2_meta_format &meta = fmt.fmt.meta;
 	unsigned min_data_samples;
 	unsigned min_sampling_rate;
 	v4l2_std_id std;
@@ -538,9 +541,15 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		if (map.find(sdr.pixelformat) == map.end())
 			return fail("pixelformat %08x (%s) for buftype %d not reported by ENUM_FMT\n",
-					pix.pixelformat, fcc2s(pix.pixelformat).c_str(), type);
+					sdr.pixelformat, fcc2s(sdr.pixelformat).c_str(), type);
 		fail_on_test(sdr.buffersize == 0);
 		fail_on_test(check_0(sdr.reserved, sizeof(sdr.reserved)));
+		break;
+	case V4L2_BUF_TYPE_META_CAPTURE:
+		if (map.find(meta.dataformat) == map.end())
+			return fail("dataformat %08x (%s) for buftype %d not reported by ENUM_FMT\n",
+					meta.dataformat, fcc2s(meta.dataformat).c_str(), type);
+		fail_on_test(meta.buffersize == 0);
 		break;
 	case V4L2_BUF_TYPE_PRIVATE:
 		break;
@@ -575,6 +584,7 @@ int testGetFormats(struct node *node)
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		case V4L2_BUF_TYPE_SDR_CAPTURE:
 		case V4L2_BUF_TYPE_SDR_OUTPUT:
+		case V4L2_BUF_TYPE_META_CAPTURE:
 			if (ret && (node->g_caps() & buftype2cap[type]))
 				return fail("%s cap set, but no %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
@@ -630,6 +640,8 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		return !memcmp(&f1.fmt.sdr, &f2.fmt.sdr, sizeof(f1.fmt.sdr));
+	case V4L2_BUF_TYPE_META_CAPTURE:
+		return !memcmp(&f1.fmt.meta, &f2.fmt.meta, sizeof(f1.fmt.meta));
 
 	}
 	return false;
@@ -705,6 +717,9 @@ int testTryFormats(struct node *node)
 			case V4L2_BUF_TYPE_SDR_OUTPUT:
 				pixelformat = fmt.fmt.sdr.pixelformat;
 				break;
+			case V4L2_BUF_TYPE_META_CAPTURE:
+				pixelformat = fmt.fmt.meta.dataformat;
+				break;
 			case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 			case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 				pixelformat = fmt.fmt.pix_mp.pixelformat;
@@ -722,6 +737,8 @@ int testTryFormats(struct node *node)
 			createInvalidFmt(fmt, clip, type);
 			if (node->is_sdr)
 				fmt.fmt.sdr.pixelformat = pixelformat;
+			else if (node->is_meta)
+				fmt.fmt.meta.dataformat = pixelformat;
 			else if (is_mplane)
 				fmt.fmt.pix_mp.pixelformat = pixelformat;
 			else
@@ -952,6 +969,9 @@ int testSetFormats(struct node *node)
 			doioctl(node, VIDIOC_G_FMT, &fmt_set);
 
 			switch (type) {
+			case V4L2_BUF_TYPE_META_CAPTURE:
+				pixelformat = fmt_set.fmt.meta.dataformat;
+				break;
 			case V4L2_BUF_TYPE_SDR_CAPTURE:
 			case V4L2_BUF_TYPE_SDR_OUTPUT:
 				pixelformat = fmt_set.fmt.sdr.pixelformat;
@@ -982,6 +1002,8 @@ int testSetFormats(struct node *node)
 			createInvalidFmt(fmt_set, clip_set, type);
 			if (node->is_sdr)
 				fmt_set.fmt.sdr.pixelformat = pixelformat;
+			else if (node->is_meta)
+				fmt_set.fmt.meta.dataformat = pixelformat;
 			else if (is_mplane)
 				fmt_set.fmt.pix_mp.pixelformat = pixelformat;
 			else

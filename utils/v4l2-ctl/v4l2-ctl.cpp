@@ -81,6 +81,7 @@ static struct option long_options[] = {
 	{"help-overlay", no_argument, 0, OptHelpOverlay},
 	{"help-vbi", no_argument, 0, OptHelpVbi},
 	{"help-sdr", no_argument, 0, OptHelpSdr},
+	{"help-meta", no_argument, 0, OptHelpMeta},
 	{"help-selection", no_argument, 0, OptHelpSelection},
 	{"help-misc", no_argument, 0, OptHelpMisc},
 	{"help-streaming", no_argument, 0, OptHelpStreaming},
@@ -112,6 +113,7 @@ static struct option long_options[] = {
 	{"list-formats-sdr", no_argument, 0, OptListSdrFormats},
 	{"list-formats-sdr-out", no_argument, 0, OptListSdrOutFormats},
 	{"list-formats-out", no_argument, 0, OptListOutFormats},
+	{"list-formats-meta", no_argument, 0, OptListMetaFormats},
 	{"list-fields-out", no_argument, 0, OptListOutFields},
 	{"clear-clips", no_argument, 0, OptClearClips},
 	{"clear-bitmap", no_argument, 0, OptClearBitmap},
@@ -158,6 +160,9 @@ static struct option long_options[] = {
 	{"get-fmt-sdr-out", no_argument, 0, OptGetSdrOutFormat},
 	{"set-fmt-sdr-out", required_argument, 0, OptSetSdrOutFormat},
 	{"try-fmt-sdr-out", required_argument, 0, OptTrySdrOutFormat},
+	{"get-fmt-meta", no_argument, 0, OptGetMetaFormat},
+	{"set-fmt-meta", required_argument, 0, OptSetMetaFormat},
+	{"try-fmt-meta", required_argument, 0, OptTryMetaFormat},
 	{"get-sliced-vbi-cap", no_argument, 0, OptGetSlicedVbiCap},
 	{"get-sliced-vbi-out-cap", no_argument, 0, OptGetSlicedVbiOutCap},
 	{"get-fbuf", no_argument, 0, OptGetFBuf},
@@ -213,6 +218,7 @@ static struct option long_options[] = {
 	{"list-buffers-sliced-vbi-out", no_argument, 0, OptListBuffersSlicedVbiOut},
 	{"list-buffers-sdr", no_argument, 0, OptListBuffersSdr},
 	{"list-buffers-sdr-out", no_argument, 0, OptListBuffersSdrOut},
+	{"list-buffers-meta", no_argument, 0, OptListBuffersMeta},
 	{"stream-count", required_argument, 0, OptStreamCount},
 	{"stream-skip", required_argument, 0, OptStreamSkip},
 	{"stream-loop", no_argument, 0, OptStreamLoop},
@@ -259,6 +265,7 @@ static void usage_all(void)
        overlay_usage();
        vbi_usage();
        sdr_usage();
+       meta_usage();
        selection_usage();
        misc_usage();
        streaming_usage();
@@ -332,6 +339,8 @@ std::string buftype2s(int type)
 		return "SDR Capture";
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		return "SDR Output";
+	case V4L2_BUF_TYPE_META_CAPTURE:
+		return "Metadata Capture";
 	default:
 		return "Unknown (" + num2s(type) + ")";
 	}
@@ -698,6 +707,10 @@ void printfmt(const struct v4l2_format &vfmt)
 		printf("\tSample Format   : %s\n", fcc2s(vfmt.fmt.sdr.pixelformat).c_str());
 		printf("\tBuffer Size     : %u\n", vfmt.fmt.sdr.buffersize);
 		break;
+	case V4L2_BUF_TYPE_META_CAPTURE:
+		printf("\tSample Format   : %s\n", fcc2s(vfmt.fmt.meta.dataformat).c_str());
+		printf("\tBuffer Size     : %u\n", vfmt.fmt.meta.buffersize);
+		break;
 	}
 }
 
@@ -767,6 +780,8 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tSDR Capture\n";
 	if (cap & V4L2_CAP_SDR_OUTPUT)
 		s += "\t\tSDR Output\n";
+	if (cap & V4L2_CAP_META_CAPTURE)
+		s += "\t\tMetadata Capture\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
 	if (cap & V4L2_CAP_TOUCH)
@@ -1202,6 +1217,9 @@ int main(int argc, char **argv)
 		case OptHelpSdr:
 			sdr_usage();
 			return 0;
+		case OptHelpMeta:
+			meta_usage();
+			return 0;
 		case OptHelpSelection:
 			selection_usage();
 			return 0;
@@ -1268,6 +1286,7 @@ int main(int argc, char **argv)
 			overlay_cmd(ch, optarg);
 			vbi_cmd(ch, optarg);
 			sdr_cmd(ch, optarg);
+			meta_cmd(ch, optarg);
 			selection_cmd(ch, optarg);
 			misc_cmd(ch, optarg);
 			streaming_cmd(ch, optarg);
@@ -1406,6 +1425,7 @@ int main(int argc, char **argv)
 	overlay_set(fd);
 	vbi_set(fd);
 	sdr_set(fd);
+	meta_set(fd);
 	selection_set(fd);
 	streaming_set(fd, out_fd);
 	misc_set(fd);
@@ -1422,6 +1442,7 @@ int main(int argc, char **argv)
 	overlay_get(fd);
 	vbi_get(fd);
 	sdr_get(fd);
+	meta_get(fd);
 	selection_get(fd);
 	misc_get(fd);
 	edid_get(fd);
@@ -1436,6 +1457,7 @@ int main(int argc, char **argv)
 	overlay_list(fd);
 	vbi_list(fd);
 	sdr_list(fd);
+	meta_list(fd);
 	streaming_list(fd, out_fd);
 
 	if (options[OptWaitForEvent]) {
