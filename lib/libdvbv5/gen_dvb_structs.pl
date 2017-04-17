@@ -57,7 +57,7 @@ sub gen_fe($)
     #
     # Mode FE_CAPS
     #
-    if (m/enum fe_caps\ {/) {
+    if (m/enum fe_caps\ \{/) {
       $mode = FE_CAPS;
       next;
     }
@@ -76,7 +76,7 @@ sub gen_fe($)
     #
     # Mode FE_STATUS
     #
-    if (m/enum fe_status\ {/) {
+    if (m/enum fe_status\ \{/) {
       $mode = FE_STATUS;
       next;
     }
