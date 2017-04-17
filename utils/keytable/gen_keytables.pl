@@ -77,7 +77,10 @@ sub parse_file($$)
 	my $filename = shift;
 	my $legacy = shift;
 
+	my $num_tables = 0;
 	$warn = 0;
+
+	next if ($filename =~ m/\.mod.c/);
 
 	printf "processing file $filename\n" if ($debug);
 	open IN, "<$filename" or die "couldn't find $filename";
@@ -89,6 +92,7 @@ sub parse_file($$)
 			$keyname =~ s/^rc_map_//;
 			$keyname =~ s/_table$//;
 			$read = 1;
+			$num_tables++;
 			next;
 		}
 		if (m/struct\s+rc_map_list.*=\s+{/) {
@@ -135,6 +139,7 @@ sub parse_file($$)
 	flush($filename, $legacy);
 
 	printf STDERR "WARNING: keyboard name not found on %d tables at file $filename\n", $warn if ($warn);
+	print STDERR "WARNING: no tables found at $filename\n" if (!$num_tables);
 
 	$warn_all += $warn;
 }
