@@ -39,9 +39,10 @@ my %rc_map_names;
 
 my $kernel_dir = shift or die "Need a file name to proceed.";
 
-sub flush($)
+sub flush($$)
 {
 	my $filename = shift;
+	my $legacy = shift;
 	my $defined;
 
 	return if (!$keyname || !$out);
@@ -51,7 +52,7 @@ sub flush($)
 	print OUT $out;
 	close OUT;
 
-	if (!$name) {
+	if (!$name && !$legacy) {
 		$warn++;
 	} else {
 		$defined = 1 if ($rc_map_names{$name});
@@ -71,9 +72,10 @@ sub flush($)
 	$name = "";
 }
 
-sub parse_file($)
+sub parse_file($$)
 {
 	my $filename = shift;
+	my $legacy = shift;
 
 	$warn = 0;
 
@@ -81,7 +83,7 @@ sub parse_file($)
 	open IN, "<$filename" or die "couldn't find $filename";
 	while (<IN>) {
 		if (m/struct\s+rc_map_table\s+(\w[\w\d_]+)/) {
-			flush($filename);
+			flush($filename, $legacy);
 
 			$keyname = $1;
 			$keyname =~ s/^rc_map_//;
@@ -130,7 +132,7 @@ sub parse_file($)
 	}
 	close IN;
 
-	flush($filename);
+	flush($filename, $legacy);
 
 	printf STDERR "WARNING: keyboard name not found on %d tables at file $filename\n", $warn if ($warn);
 
@@ -145,7 +147,7 @@ sub parse_dir()
 
 	return if (! ($file =~ m/\.c$/));
 
-	parse_file $file;
+	parse_file $file, 0;
 }
 
 sub sort_dir()
@@ -212,7 +214,7 @@ EOF
 find({wanted => \&parse_dir, preprocess => \&sort_dir, no_chdir => 1}, "$kernel_dir/drivers/media/rc/keymaps");
 
 foreach my $file (@ir_files) {
-	parse_file "$kernel_dir/$file";
+	parse_file "$kernel_dir/$file", 1;
 }
 
 printf STDERR "WARNING: there are %d tables not defined at rc_maps.h\n", $warn_all if ($warn_all);
