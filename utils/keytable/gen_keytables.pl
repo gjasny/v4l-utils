@@ -111,6 +111,9 @@ sub parse_file($)
 
 				# Proper name the RC6 protocol
 				$type =~ s/^RC6_MCE$/RC6/;
+
+				# Proper name the RC-5-SZ protocol
+				$type =~ s/^RC5_SZ$/RC-5-SZ/;
 			}
 			next;
 		}
