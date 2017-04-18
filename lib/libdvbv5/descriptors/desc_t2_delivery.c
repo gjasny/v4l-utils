@@ -40,7 +40,7 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 		return -1;
 	}
 	if (desc_len < len2) {
-		memcpy(p, buf, len);
+		memcpy(d, buf, len);
 		bswap16(d->system_id);
 
 		if (desc_len != len)
@@ -48,19 +48,23 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 
 		return -2;
 	}
-	memcpy(p, buf, len2);
+	memcpy(d, buf, len2);
+	bswap16(d->system_id);
+	bswap16(d->bitfield);
 	p += len2;
 
-	len = desc_len - (p - buf);
-	memcpy(&d->centre_frequency, p, len);
-	p += len;
+	if (desc_len - (p - buf) < sizeof(uint16_t)) {
+		dvb_logwarn("T2 delivery descriptor is truncated");
+		return -2;
+	}
+	p += sizeof(uint16_t);
 
-	if (d->tfs_flag)
-		d->frequency_loop_length = 1;
-	else {
+	if (d->tfs_flag) {
 		d->frequency_loop_length = *p;
 		p++;
 	}
+	else
+		d->frequency_loop_length = 1;
 
 	d->centre_frequency = calloc(d->frequency_loop_length,
 				     sizeof(*d->centre_frequency));
