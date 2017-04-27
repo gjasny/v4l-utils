@@ -12,9 +12,9 @@ cec-table.h: ../cec-ctl/msg2ctl.pl ../../include/linux/cec.h ../../include/linux
 cec-compliance.cpp: version.h
 
 version.h:
-	@if git rev-parse HEAD >/dev/null 2>&1; then \
+	@if git -C $(srcdir) rev-parse HEAD >/dev/null 2>&1; then \
 		echo -n "#define SHA " >$@ ; \
-		git rev-parse HEAD >>$@ ; \
+		git -C $(srcdir) rev-parse HEAD >>$@ ; \
 	else \
 		touch $@ ; \
 	fi
