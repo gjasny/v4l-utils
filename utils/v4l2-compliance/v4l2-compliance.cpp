@@ -1152,6 +1152,7 @@ int main(int argc, char **argv)
 
 	for (unsigned io = 0; io < (max_io ? max_io : 1); io++) {
 		node.std_controls = node.priv_controls = 0;
+		node.std_compound_controls = node.priv_compound_controls = 0;
 		node.controls.clear();
 		node.frmsizes.clear();
 		node.frmsizes_count.clear();

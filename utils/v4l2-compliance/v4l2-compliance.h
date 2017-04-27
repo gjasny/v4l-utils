@@ -87,7 +87,9 @@ struct base_node {
 	unsigned audio_outputs;
 	unsigned cur_io_caps;
 	unsigned std_controls;
+	unsigned std_compound_controls;
 	unsigned priv_controls;
+	unsigned priv_compound_controls;
 	__u32 fbuf_caps;
 	pixfmt_map buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
 	frmsizes_set frmsizes;
