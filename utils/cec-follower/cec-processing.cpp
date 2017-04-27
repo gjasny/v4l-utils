@@ -1021,7 +1021,7 @@ void testProcessing(struct node *node)
 	fd_set ex_fds;
 	int fd = node->fd;
 	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
-	int me;
+	unsigned me;
 	unsigned last_poll_la = 15;
 
 	doioctl(node, CEC_S_MODE, &mode);
@@ -1104,7 +1104,8 @@ void testProcessing(struct node *node)
 		__u64 ts_now = get_ts();
 		unsigned poll_la = ts_to_s(ts_now) % 16;
 
-		if (poll_la != last_poll_la && poll_la < 15 && la_info[poll_la].ts &&
+		if (poll_la != me && 
+		    poll_la != last_poll_la && poll_la < 15 && la_info[poll_la].ts &&
 		    ts_to_ms(ts_now - la_info[poll_la].ts) > POLL_PERIOD) {
 			struct cec_msg msg = {};
 
