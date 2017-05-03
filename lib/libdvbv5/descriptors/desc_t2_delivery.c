@@ -43,9 +43,11 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 		memcpy(d, buf, len);
 		bswap16(d->system_id);
 
-		if (desc_len != len)
-			dvb_logwarn("T2 delivery descriptor is truncated");
+		/* It is valid to have length == 4 */
+		if (desc_len == len)
+			return 0;
 
+		dvb_logwarn("T2 delivery descriptor is truncated");
 		return -2;
 	}
 	memcpy(d, buf, len2);
