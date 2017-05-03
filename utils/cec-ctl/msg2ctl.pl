@@ -468,14 +468,10 @@ if ($is_log == 0) {
 print <<'EOF';
 void log_msg(const struct cec_msg *msg)
 {
-	if (msg->len == 1)
+	if (msg->len == 1) {
 		printf("CEC_MSG_POLL\n");
-	if ((msg->tx_status && !(msg->tx_status & CEC_TX_STATUS_OK)) ||
-	    (msg->rx_status && !(msg->rx_status & (CEC_RX_STATUS_OK | CEC_RX_STATUS_FEATURE_ABORT))))
-		printf("\t%s\n", status2s(*msg).c_str());
-
-	if (msg->len == 1)
-		return;
+		goto status;
+	}
 
 	switch (msg->msg[1]) {
 EOF
@@ -491,5 +487,10 @@ print <<'EOF';
 		log_unknown_msg(msg);
 		break;
 	}
+
+status:
+	if ((msg->tx_status && !(msg->tx_status & CEC_TX_STATUS_OK)) ||
+	    (msg->rx_status && !(msg->rx_status & (CEC_RX_STATUS_OK | CEC_RX_STATUS_FEATURE_ABORT))))
+		printf("\t%s\n", status2s(*msg).c_str());
 }
 EOF
