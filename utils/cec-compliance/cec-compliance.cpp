@@ -23,6 +23,7 @@
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
@@ -48,13 +49,14 @@ enum Option {
 	OptTestAdapter = 'A',
 	OptSetDevice = 'd',
 	OptHelp = 'h',
+	OptInteractive = 'i',
 	OptNoWarnings = 'n',
 	OptRemote = 'r',
 	OptReplyThreshold = 'R',
 	OptTimeout = 't',
 	OptTrace = 'T',
 	OptVerbose = 'v',
-	OptInteractive = 'i',
+	OptWallClock = 'w',
 
 	OptTestCore = 128,
 	OptTestAudioRateControl,
@@ -119,6 +121,7 @@ static struct option long_options[] = {
 	{"timeout", required_argument, 0, OptTimeout},
 	{"trace", no_argument, 0, OptTrace},
 	{"verbose", no_argument, 0, OptVerbose},
+	{ "wall-clock", no_argument, 0, OptWallClock },
 	{"interactive", no_argument, 0, OptInteractive},
 	{"reply-threshold", required_argument, 0, OptReplyThreshold},
 
@@ -208,7 +211,36 @@ static void usage(void)
 	       "  -n, --no-warnings  Turn off warning messages\n"
 	       "  -T, --trace        Trace all called ioctls\n"
 	       "  -v, --verbose      Turn on verbose reporting\n"
+	       "  -w, --wall-clock   Show timestamps as wall-clock time\n"
 	       );
+}
+
+static std::string ts2s(__u64 ts)
+{
+	std::string s;
+	struct timespec now;
+	struct timeval tv;
+	struct timeval sub;
+	struct timeval res;
+	__u64 diff;
+	char buf[64];
+	time_t t;
+
+	if (!options[OptWallClock]) {
+		sprintf(buf, "%llu.%03llus", ts / 1000000000, (ts % 1000000000) / 1000000);
+		return buf;
+	}
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	gettimeofday(&tv, NULL);
+	diff = now.tv_sec * 1000000000ULL + now.tv_nsec - ts;
+	sub.tv_sec = diff / 1000000000ULL;
+	sub.tv_usec = (diff % 1000000000ULL) / 1000;
+	timersub(&tv, &sub, &res);
+	t = res.tv_sec;
+	s = ctime(&t);
+	s = s.substr(0, s.length() - 6);
+	sprintf(buf, "%03lu", res.tv_usec / 1000);
+	return s + "." + buf;
 }
 
 static std::string caps2s(unsigned caps)
@@ -815,6 +847,9 @@ std::string opcode2s(const struct cec_msg *msg)
 	std::stringstream oss;
 	__u8 opcode = msg->msg[1];
 
+	if (msg->len == 1)
+		return "MSG_POLL";
+
 	if (opcode == CEC_MSG_CDC_MESSAGE) {
 		__u8 cdc_opcode = msg->msg[4];
 
@@ -841,9 +876,12 @@ int cec_named_ioctl(struct node *node, const char *name,
 	int e;
 	struct cec_msg *msg = (struct cec_msg *)parm;
 	__u8 opcode = 0;
+	std::string opname;
 
-	if (request == CEC_TRANSMIT)
+	if (request == CEC_TRANSMIT) {
 		opcode = cec_msg_opcode(msg);
+		opname = opcode2s(msg);
+	}
 
 	retval = ioctl(node->fd, request, parm);
 
@@ -851,6 +889,16 @@ int cec_named_ioctl(struct node *node, const char *name,
 	if (options[OptTrace])
 		printf("\t\t%s returned %d (%s)\n",
 			name, retval, strerror(e));
+
+	if (request == CEC_TRANSMIT && show_info) {
+		printf("\t\t%s: Sequence: %u Tx Timestamp: %s",
+		       opname.c_str(), msg->sequence, ts2s(msg->tx_ts).c_str());
+		if (msg->rx_ts)
+			printf("\n\t\t\tRx Timestamp: %s Approximate response time: %u ms",
+			       ts2s(msg->rx_ts).c_str(),
+			       response_time_ms(msg));
+		printf("\n");
+	}
 
 	if (retval < 0)
 		app_result = -1;
@@ -953,14 +1001,16 @@ static int poll_remote_devs(struct node *node)
 static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 {
 	struct cec_msg msg = { };
+	bool ok;
 
 	printf("\tSystem Information for device %d (%s) from device %d (%s):\n",
 	       i, la2s(i), la, la2s(la));
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_get_cec_version(&msg, true);
+	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tCEC Version                : ");
-	if (!transmit_timeout(node, &msg) || timed_out_or_abort(&msg)) {
+	if (ok) {
 		printf("%s\n", status2s(msg).c_str());
 		node->remote[i].cec_version = CEC_OP_CEC_VERSION_1_4;
 	}
@@ -981,8 +1031,9 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_give_physical_addr(&msg, true);
+	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tPhysical Address           : ");
-	if (!transmit_timeout(node, &msg) || timed_out_or_abort(&msg)) {
+	if (ok) {
 		printf("%s\n", status2s(msg).c_str());
 		node->remote[i].phys_addr = CEC_PHYS_ADDR_INVALID;
 	}
@@ -997,8 +1048,9 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_give_device_vendor_id(&msg, true);
+	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tVendor ID                  : ");
-	if (!transmit_timeout(node, &msg) || timed_out_or_abort(&msg))
+	if (ok)
 		printf("%s\n", status2s(msg).c_str());
 	else
 		printf("0x%02x%02x%02x\n",
@@ -1006,10 +1058,11 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_give_osd_name(&msg, true);
+	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tOSD Name                   : ");
-	if (!transmit_timeout(node, &msg) || timed_out_or_abort(&msg))
+	if (ok) {
 		printf("%s\n", status2s(msg).c_str());
-	else {
+	} else {
 		char osd_name[15];
 
 		cec_ops_set_osd_name(&msg, osd_name);
@@ -1028,10 +1081,11 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_give_device_power_status(&msg, true);
+	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tPower Status               : ");
-	if (!transmit_timeout(node, &msg) || timed_out_or_abort(&msg))
+	if (ok) {
 		printf("%s\n", status2s(msg).c_str());
-	else {
+	} else {
 		__u8 pwr;
 
 		cec_ops_report_power_status(&msg, &pwr);
