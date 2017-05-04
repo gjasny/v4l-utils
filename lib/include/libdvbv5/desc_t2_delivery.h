@@ -39,20 +39,56 @@
 #include <libdvbv5/descriptors.h>
 
 /**
- * @struct dvb_desc_t2_delivery_subcell
+ * @struct dvb_desc_t2_delivery_subcell_old
  * @ingroup descriptors
  * @brief Structure to describe transponder subcell extension and frequencies
  *
  * @param cell_id_extension	cell id extension
  * @param transposer_frequency	transposer frequency
  *
- * NOTE: This struct is deprecated and will never be filled. All
- * subcell transposer frequencies will be added to
+ * NOTE: This struct is deprecated and will never be filled.
+ *       It is kept here just to avoid breaking ABI.
+ *
+ * All subcell transposer frequencies will be added to
  * dvb_desc_t2_delivery::centre_frequency array.
+ */
+struct dvb_desc_t2_delivery_subcell_old {
+	uint8_t cell_id_extension;
+	uint16_t transposer_frequency;		// Should be 32 bits, instead
+} __attribute__((packed));
+
+
+/**
+ * @struct dvb_desc_t2_delivery_subcell
+ * @ingroup descriptors
+ * @brief Structure to describe transponder subcell extension and frequencies
+ *
+ * @param cell_id_extension	cell id extension
+ * @param transposer_frequency	pointer to transposer frequency
  */
 struct dvb_desc_t2_delivery_subcell {
 	uint8_t cell_id_extension;
-	uint16_t transposer_frequency;		// Should be 32 bits, instead
+	uint32_t transposer_frequency;
+} __attribute__((packed));
+
+
+/**
+ * @struct dvb_desc_t2_delivery_cell
+ * @ingroup descriptors
+ * @brief Structure to describe transponder cells
+ *
+ * @param cell_id		cell id extension
+ * @param num_freqs		number of cell frequencies
+ * @param centre_frequency	pointer to centre frequencies
+ * @param subcel_length		number of subcells. May be zero
+ * @param subcell		pointer to subcell array. May be NULL
+ */
+struct dvb_desc_t2_delivery_cell {
+	uint16_t cell_id;
+	int num_freqs;
+	uint32_t *centre_frequency;
+	uint8_t subcel_length;
+	struct dvb_desc_t2_delivery_subcell *subcel;
 } __attribute__((packed));
 
 /**
@@ -69,14 +105,16 @@ struct dvb_desc_t2_delivery_subcell {
  * @param other_frequency_flag	other frequency flag
  * @param tfs_flag		tfs flag
  *
- * @param centre_frequency	centre frequency vector, for all cell and
- * 				subcel ID's
+ * @param centre_frequency	centre frequency vector. It contains the full
+ *				frequencies for all cells and subcells.
  * @param frequency_loop_length	size of the dvb_desc_t2_delivery::centre_frequency
  *				vector
  *
- * @param subcel_info_loop_length size of the dvb_desc_t2_delivery::subcell
- *				  vector
- * @param subcell		pointer to struct dvb_desc_t2_delivery_subcell
+ * @param subcel_info_loop_length unused. Always 0
+ * @param subcell		unused. Always NULL
+ * @param num_cell		number of cells
+ * @param cell			cell array. Contains per-cell and per-subcell
+ *				pointers to the frequencies parsed.
  */
 struct dvb_desc_t2_delivery {
 	/* extended descriptor */
@@ -99,9 +137,14 @@ struct dvb_desc_t2_delivery {
 	uint32_t *centre_frequency;
 	uint8_t frequency_loop_length;
 
-	/* Unused, as the definitions here are incomplete */
+	/* Unused, as the definitions here are incomplete. */
 	uint8_t subcel_info_loop_length;
-	struct dvb_desc_t2_delivery_subcell *subcell;
+	struct dvb_desc_t2_delivery_subcell_old *subcell;
+
+	/* Since version 1.13 */
+	unsigned int num_cell;
+	struct dvb_desc_t2_delivery_cell *cell;
+
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;

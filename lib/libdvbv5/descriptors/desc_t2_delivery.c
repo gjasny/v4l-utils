@@ -30,7 +30,7 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 	struct dvb_desc_t2_delivery *d = desc;
 	unsigned char *p = (unsigned char *) buf;
 	size_t desc_len = ext->length - 1, len, len2;
-	int i, n, pos = 0, subcel_length;
+	int i, pos = 0;
 
 	len = offsetof(struct dvb_desc_t2_delivery, bitfield);
 	len2 = offsetof(struct dvb_desc_t2_delivery, centre_frequency);
@@ -61,18 +61,24 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 			return -2;
 		}
 
+		d->cell = realloc(d->cell, (d->num_cell + 1) * sizeof(*d->cell));
+		if (!d->cell) {
+			dvb_logerr("%s: out of memory", __func__);
+			return -3;
+		}
 
-		/* Discard cell ID */
+		d->cell[d->num_cell].cell_id = *(uint16_t *)p;
+		bswap16(d->cell[d->num_cell].cell_id);
 		p += sizeof(uint16_t);
 
 		if (d->tfs_flag) {
-			n = *p;
+			d->cell[d->num_cell].num_freqs = *p;
 			p++;
 		}
 		else
-			n = 1;
+			d->cell[d->num_cell].num_freqs = 1;
 
-		d->frequency_loop_length += n;
+		d->frequency_loop_length += d->cell[d->num_cell].num_freqs;
 		d->centre_frequency = realloc(d->centre_frequency,
 					      d->frequency_loop_length * sizeof(*d->centre_frequency));
 		if (!d->centre_frequency) {
@@ -80,23 +86,39 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 			return -3;
 		}
 
-		memcpy(&d->centre_frequency[pos], p, sizeof(*d->centre_frequency) * n);
-		p += sizeof(*d->centre_frequency) * n;
+		d->cell[d->num_cell].centre_frequency = &d->centre_frequency[pos];
 
-		for (i = 0; i < n; i++) {
+		memcpy(&d->centre_frequency[pos], p, sizeof(*d->centre_frequency) * d->cell[d->num_cell].num_freqs);
+		p += sizeof(*d->centre_frequency) * d->cell[d->num_cell].num_freqs;
+
+		for (i = 0; i < d->cell[d->num_cell].num_freqs; i++) {
 			bswap32(d->centre_frequency[pos]);
 			pos++;
 		}
 
 		/* Handle subcel frequency table */
-		subcel_length = *p;
+		d->cell[d->num_cell].subcel_length = *p;
+		d->cell[d->num_cell].subcel = NULL;
+
 		p++;
-		for (i = 0; i < subcel_length; i++) {
+
+		if (d->cell[d->num_cell].subcel_length) {
+			d->cell[d->num_cell].subcel = calloc(d->cell[d->num_cell].subcel_length,
+							     sizeof (*d->cell[d->num_cell].subcel));
+
+			if (!d->cell[d->num_cell].subcel) {
+				dvb_logerr("%s: out of memory", __func__);
+				return -3;
+			}
+		}
+
+		for (i = 0; i < d->cell[d->num_cell].subcel_length; i++) {
 			if (desc_len - (p - buf) < sizeof(uint8_t) + sizeof(uint32_t)) {
 				dvb_logwarn("T2 delivery descriptor is truncated");
 				return -2;
 			}
-			p++;	// Ignore subcell ID
+			d->cell[d->num_cell].subcel[i].cell_id_extension = *p;
+			p++;
 
 			// Add transposer_frequency at centre_frequency table
 			d->frequency_loop_length++;
@@ -104,10 +126,12 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 						      d->frequency_loop_length * sizeof(*d->centre_frequency));
 			memcpy(&d->centre_frequency[pos], p, sizeof(*d->centre_frequency));
 			bswap32(d->centre_frequency[pos]);
+			d->cell[d->num_cell].subcel[i].transposer_frequency = d->centre_frequency[pos];
 			pos++;
 
 			p += sizeof(*d->centre_frequency);
 		}
+		d->num_cell++;
 	}
 
 	return 0;
@@ -118,7 +142,7 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 				const void *desc)
 {
 	const struct dvb_desc_t2_delivery *d = desc;
-	int i;
+	int i, j, k;
 
 	dvb_loginfo("|           plp_id                    %d", d->plp_id);
 	dvb_loginfo("|           system_id                 %d", d->system_id);
@@ -136,19 +160,42 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 	dvb_loginfo("|           bandwidth                 %d", dvbt2_bw[d->bandwidth]);
 	dvb_loginfo("|           SISO MISO                 %s", siso_miso[d->SISO_MISO]);
 
+	for (i = 0; i < d->num_cell; i++) {
+		struct dvb_desc_t2_delivery_cell *cell = &d->cell[i];
+		dvb_loginfo("|           Cell ID                   0x%04x", cell->cell_id);
+		for (j = 0; j < cell->num_freqs; j++) {
+			dvb_loginfo("|              centre frequency[%d]    %d", j, cell->centre_frequency[j]);
+
+			for (k = 0; k < cell->subcel_length; k++) {
+				struct dvb_desc_t2_delivery_subcell *subcel = &cell->subcel[k];
+				dvb_loginfo("|           |- subcell        %d", subcel->cell_id_extension);
+				dvb_loginfo("|              |- transposer  %d", subcel->transposer_frequency);
+			}
+		}
+	}
+
+	/* FIXME: this is actually duplicated. Should it be removed? */
 	for (i = 0; i < d->frequency_loop_length; i++)
-		dvb_loginfo("|           centre frequency[%d]   %d", i, d->centre_frequency[i]);
+		dvb_loginfo("|           frequency[%d]              %d", i, d->centre_frequency[i]);
+
 }
 
 void dvb_desc_t2_delivery_free(const void *desc)
 {
 	const struct dvb_desc_t2_delivery *d = desc;
+	int i;
 
 	if (d->centre_frequency)
 		free(d->centre_frequency);
 
-	if (d->subcell)
-		free(d->subcell);
+	if (d->cell) {
+		for (i = 0; i < d->num_cell; i++)
+			if (d->cell[i].subcel)
+				free(d->cell[i].subcel);
+		free (d->cell);
+	}
+
+	// No need to free d->subcell, as it is always NULL
 }
 
 const unsigned dvbt2_bw[] = {
