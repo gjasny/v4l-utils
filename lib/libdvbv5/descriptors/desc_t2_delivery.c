@@ -157,7 +157,8 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 	dvb_loginfo("|           guard_interval            %s (%d)",
 		    fe_guard_interval_name[dvbt2_interval[d->guard_interval]], d->guard_interval );
 	dvb_loginfo("|           reserved                  %d", d->reserved);
-	dvb_loginfo("|           bandwidth                 %d", dvbt2_bw[d->bandwidth]);
+	dvb_loginfo("|           bandwidth                 %.2f MHz (%d)",
+		    dvbt2_bw[d->bandwidth]/ 1000000., d->bandwidth);
 	dvb_loginfo("|           SISO MISO                 %s", siso_miso[d->SISO_MISO]);
 
 	for (i = 0; i < d->num_cell; i++) {
