@@ -164,19 +164,19 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 		struct dvb_desc_t2_delivery_cell *cell = &d->cell[i];
 		dvb_loginfo("|           Cell ID                   0x%04x", cell->cell_id);
 		for (j = 0; j < cell->num_freqs; j++) {
-			dvb_loginfo("|              centre frequency[%d]    %d", j, cell->centre_frequency[j]);
+			dvb_loginfo("|              centre frequency[%d]    %.5f MHz", j, cell->centre_frequency[j] / 100000.);
 
 			for (k = 0; k < cell->subcel_length; k++) {
 				struct dvb_desc_t2_delivery_subcell *subcel = &cell->subcel[k];
 				dvb_loginfo("|           |- subcell        %d", subcel->cell_id_extension);
-				dvb_loginfo("|              |- transposer  %d", subcel->transposer_frequency);
+				dvb_loginfo("|              |- transposer  %.5f MHz", subcel->transposer_frequency / 100000.);
 			}
 		}
 	}
 
 	/* FIXME: this is actually duplicated. Should it be removed? */
 	for (i = 0; i < d->frequency_loop_length; i++)
-		dvb_loginfo("|           frequency[%d]              %d", i, d->centre_frequency[i]);
+		dvb_loginfo("|           frequency[%d]              %.5f MHz", i, d->centre_frequency[i] / 100000.);
 
 }
 
