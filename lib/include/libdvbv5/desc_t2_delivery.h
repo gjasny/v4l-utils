@@ -168,6 +168,12 @@ extern const uint32_t dvbt2_interval[];
  */
 extern const unsigned dvbt2_transmission_mode[];
 
+/**
+ * @brief converts from internal representation to string the SISO_MISO
+ *	  field of dvb_desc_t2_delivery:SISO_MISO field.
+ */
+const char *siso_miso[4];
+
 #ifdef __cplusplus
 }
 #endif

@@ -125,11 +125,13 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 
 	dvb_loginfo("|           tfs_flag                  %d", d->tfs_flag);
 	dvb_loginfo("|           other_frequency_flag      %d", d->other_frequency_flag);
-	dvb_loginfo("|           transmission_mode         %d", d->transmission_mode);
-	dvb_loginfo("|           guard_interval            %d", d->guard_interval);
+	dvb_loginfo("|           transmission_mode         %s (%d)",
+		    fe_transmission_mode_name[dvbt2_transmission_mode[d->transmission_mode]], d->transmission_mode);
+	dvb_loginfo("|           guard_interval            %s (%d)",
+		    fe_guard_interval_name[dvbt2_interval[d->guard_interval]], d->guard_interval );
 	dvb_loginfo("|           reserved                  %d", d->reserved);
-	dvb_loginfo("|           bandwidth                 %d", d->bandwidth);
-	dvb_loginfo("|           SISO MISO                 %d", d->SISO_MISO);
+	dvb_loginfo("|           bandwidth                 %d", dvbt2_bw[d->bandwidth]);
+	dvb_loginfo("|           SISO MISO                 %s", siso_miso[d->SISO_MISO]);
 
 	for (i = 0; i < d->frequency_loop_length; i++)
 		dvb_loginfo("|           centre frequency[%d]   %d", i, d->centre_frequency[i]);
@@ -173,4 +175,9 @@ const unsigned dvbt2_transmission_mode[] = {
 	[4] = TRANSMISSION_MODE_16K,
 	[5] = TRANSMISSION_MODE_32K,
 	[6 ...7] = TRANSMISSION_MODE_AUTO,	/* Reserved */
+};
+const char *siso_miso[4] = {
+	[0] = "SISO",
+	[1] = "MISO",
+	[2 ...3] = "reserved",
 };
