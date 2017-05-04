@@ -490,6 +490,13 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.free  = dvb_desc_network_name_free,
 		.size  = sizeof(struct dvb_desc_network_name),
 	},
+	[service_list_descriptor] = {
+		.name  = "service_list_descriptor",
+		.init  = NULL,
+		.print = NULL,
+		.free  = NULL,
+		.size  = 0,
+	},
 	[stuffing_descriptor] = {
 		.name  = "stuffing_descriptor",
 		.init  = NULL,
