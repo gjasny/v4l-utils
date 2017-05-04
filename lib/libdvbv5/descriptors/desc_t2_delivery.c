@@ -99,6 +99,9 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 			p++;	// Ignore subcell ID
 
 			// Add transposer_frequency at centre_frequency table
+			d->frequency_loop_length++;
+			d->centre_frequency = realloc(d->centre_frequency,
+						      d->frequency_loop_length * sizeof(*d->centre_frequency));
 			memcpy(&d->centre_frequency[pos], p, sizeof(*d->centre_frequency));
 			bswap32(d->centre_frequency[pos]);
 			pos++;
