@@ -144,8 +144,8 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 	const struct dvb_desc_t2_delivery *d = desc;
 	int i, j, k;
 
-	dvb_loginfo("|           plp_id                    %d", d->plp_id);
-	dvb_loginfo("|           system_id                 %d", d->system_id);
+	dvb_loginfo("|           plp_id                    0x%04x", d->plp_id);
+	dvb_loginfo("|           system_id                 0x%04x", d->system_id);
 
 	if (ext->length - 1 <= 4)
 		return;
@@ -159,7 +159,16 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 	dvb_loginfo("|           reserved                  %d", d->reserved);
 	dvb_loginfo("|           bandwidth                 %.2f MHz (%d)",
 		    dvbt2_bw[d->bandwidth]/ 1000000., d->bandwidth);
-	dvb_loginfo("|           SISO MISO                 %s", siso_miso[d->SISO_MISO]);
+	dvb_loginfo("|           SISO/MISO mode            %s", siso_miso[d->SISO_MISO]);
+
+	/*
+	 * All frequencies are also at the per-cell data. Yet, as the flat
+	 * frequency table is what's used to add new transponders for DVB-T2
+	 * scan, let's display the flat table too
+	 */
+	for (i = 0; i < d->frequency_loop_length; i++)
+		dvb_loginfo("|           frequency[%d]              %.5f MHz", i, d->centre_frequency[i] / 100000.);
+
 
 	for (i = 0; i < d->num_cell; i++) {
 		struct dvb_desc_t2_delivery_cell *cell = &d->cell[i];
@@ -174,11 +183,6 @@ void dvb_desc_t2_delivery_print(struct dvb_v5_fe_parms *parms,
 			}
 		}
 	}
-
-	/* FIXME: this is actually duplicated. Should it be removed? */
-	for (i = 0; i < d->frequency_loop_length; i++)
-		dvb_loginfo("|           frequency[%d]              %.5f MHz", i, d->centre_frequency[i] / 100000.);
-
 }
 
 void dvb_desc_t2_delivery_free(const void *desc)
@@ -228,7 +232,7 @@ const unsigned dvbt2_transmission_mode[] = {
 	[6 ...7] = TRANSMISSION_MODE_AUTO,	/* Reserved */
 };
 const char *siso_miso[4] = {
-	[0] = "SISO",
-	[1] = "MISO",
+	[0] = "Single Input, Single Output (SISO)",
+	[1] = "Multiple Input, Single Output (MISO)",
 	[2 ...3] = "reserved",
 };
