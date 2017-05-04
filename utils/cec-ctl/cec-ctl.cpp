@@ -645,6 +645,7 @@ enum Option {
 	OptPhysAddr = 'p',
 	OptPoll = 'P',
 	OptShowRaw = 'r',
+	OptSkipInfo = 's',
 	OptShowTopology = 'S',
 	OptTo = 't',
 	OptTrace = 'T',
@@ -731,6 +732,7 @@ static struct option long_options[] = {
 	{ "no-reply", no_argument, 0, OptNoReply },
 	{ "to", required_argument, 0, OptTo },
 	{ "from", required_argument, 0, OptFrom },
+	{ "skip-info", no_argument, 0, OptSkipInfo },
 	{ "show-raw", no_argument, 0, OptShowRaw },
 	{ "show-topology", no_argument, 0, OptShowTopology },
 	{ "poll", no_argument, 0, OptPoll },
@@ -787,6 +789,7 @@ static void usage(void)
 	       "  -f, --from=<la>          Send message from the given logical address\n"
 	       "                           By default use the first assigned logical address\n"
 	       "  -r, --show-raw           Show the raw CEC message (hex values)\n"
+	       "  -s, --skip-info          Skip Driver Info output\n"
 	       "  -S, --show-topology      Show the CEC topology\n"
 	       "  -P, --poll               Send poll message\n"
 	       "  -h, --help               Display this help message\n"
@@ -1887,17 +1890,19 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	printf("Driver Info:\n");
-	printf("\tDriver Name                : %s\n", caps.driver);
-	printf("\tAdapter Name               : %s\n", caps.name);
-	printf("\tCapabilities               : 0x%08x\n", caps.capabilities);
-	printf("%s", caps2s(caps.capabilities).c_str());
-	printf("\tDriver version             : %d.%d.%d\n",
-			caps.version >> 16,
-			(caps.version >> 8) & 0xff,
-			caps.version & 0xff);
-	printf("\tAvailable Logical Addresses: %u\n",
-	       caps.available_log_addrs);
+	if (!options[OptSkipInfo]) {
+		printf("Driver Info:\n");
+		printf("\tDriver Name                : %s\n", caps.driver);
+		printf("\tAdapter Name               : %s\n", caps.name);
+		printf("\tCapabilities               : 0x%08x\n", caps.capabilities);
+		printf("%s", caps2s(caps.capabilities).c_str());
+		printf("\tDriver version             : %d.%d.%d\n",
+				caps.version >> 16,
+				(caps.version >> 8) & 0xff,
+				caps.version & 0xff);
+		printf("\tAvailable Logical Addresses: %u\n",
+		       caps.available_log_addrs);
+	}
 
 	bool set_log_addrs = (node.caps & CEC_CAP_LOG_ADDRS) && flags;
 	bool set_phys_addr = (node.caps & CEC_CAP_PHYS_ADDR) && options[OptPhysAddr];
@@ -1914,9 +1919,11 @@ int main(int argc, char **argv)
 		doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
 
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &phys_addr);
-	printf("\tPhysical Address           : %x.%x.%x.%x\n",
-	       phys_addr >> 12, (phys_addr >> 8) & 0xf,
-	       (phys_addr >> 4) & 0xf, phys_addr & 0xf);
+	if (!options[OptSkipInfo]) {
+		printf("\tPhysical Address           : %x.%x.%x.%x\n",
+		       phys_addr >> 12, (phys_addr >> 8) & 0xf,
+		       (phys_addr >> 4) & 0xf, phys_addr & 0xf);
+	}
 
 	if (set_log_addrs) {
 		struct cec_log_addrs laddrs = {};
@@ -1998,15 +2005,17 @@ int main(int argc, char **argv)
 	struct cec_log_addrs laddrs = { };
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	node.num_log_addrs = laddrs.num_log_addrs;
-	printf("\tLogical Address Mask       : 0x%04x\n", laddrs.log_addr_mask);
-	printf("\tCEC Version                : %s\n", version2s(laddrs.cec_version));
-	if (laddrs.vendor_id != CEC_VENDOR_ID_NONE)
-		printf("\tVendor ID                  : 0x%06x%s\n",
-		       laddrs.vendor_id, vendor2s(laddrs.vendor_id));
-	printf("\tOSD Name                   : '%s'\n", laddrs.osd_name);
-	printf("\tLogical Addresses          : %u %s\n",
-	       laddrs.num_log_addrs, laflags2s(laddrs.flags).c_str());
-	for (unsigned i = 0; i < laddrs.num_log_addrs; i++) {
+	if (!options[OptSkipInfo]) {
+		printf("\tLogical Address Mask       : 0x%04x\n", laddrs.log_addr_mask);
+		printf("\tCEC Version                : %s\n", version2s(laddrs.cec_version));
+		if (laddrs.vendor_id != CEC_VENDOR_ID_NONE)
+			printf("\tVendor ID                  : 0x%06x%s\n",
+			       laddrs.vendor_id, vendor2s(laddrs.vendor_id));
+		printf("\tOSD Name                   : '%s'\n", laddrs.osd_name);
+		printf("\tLogical Addresses          : %u %s\n",
+		       laddrs.num_log_addrs, laflags2s(laddrs.flags).c_str());
+	}
+	for (unsigned i = 0; !options[OptSkipInfo] && i < laddrs.num_log_addrs; i++) {
 		if (laddrs.log_addr[i] == CEC_LOG_ADDR_INVALID) {
 			printf("\n\t  Logical Address          : Not Allocated\n");
 		} else {
@@ -2070,7 +2079,8 @@ int main(int argc, char **argv)
 			goto skip_la;
 		return 0;
 	}
-	printf("\n");
+	if (!options[OptSkipInfo])
+		printf("\n");
 
 	if (!options[OptFrom])
 		from = laddrs.log_addr[0] & 0xf;
