@@ -9,14 +9,14 @@ msgstr ""
 "Project-Id-Version: v4l-utils 1.7.0\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
 "POT-Creation-Date: 2017-05-06 20:53+0200\n"
-"PO-Revision-Date: 2016-07-13 20:44-0300\n"
+"PO-Revision-Date: 2017-05-06 20:38-0300\n"
 "Last-Translator: Mauro Carvalho Chehab <mchehab@osg.samsung.com>\n"
 "Language-Team: Brazilian Portuguese\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.8\n"
+"X-Generator: Poedit 1.8.12\n"
 "X-Poedit-KeywordsList: _;N_\n"
 "X-Poedit-Basepath: .\n"
 "X-Poedit-SourceCharset: UTF-8\n"
@@ -146,7 +146,7 @@ msgstr "Configura o período de repetição para digitação repetitiva"
 
 #: utils/keytable/keytable.c:231
 msgid "CFGFILE"
-msgstr "CFGFILE"
+msgstr "ARQ_CFG"
 
 #: utils/keytable/keytable.c:231
 msgid ""
@@ -334,9 +334,11 @@ msgid "%s protocol %s (%s)\n"
 msgstr "%s protocolo %s (%s)\n"
 
 #: utils/keytable/keytable.c:1030
-#, fuzzy, c-format
+#, c-format
 msgid "Found more than one input interface. This is currently unsupported\n"
-msgstr "Encontrada mais de uma interface. Isto não é suportado atualmente\n"
+msgstr ""
+"Encontrada mais de uma interface de entrada. Isto não é suportado "
+"atualmente\n"
 
 #: utils/keytable/keytable.c:1034
 #, c-format
@@ -575,17 +577,16 @@ msgid "send IR pulse and space file"
 msgstr "envia arquivo com pulsos/espaços de IR"
 
 #: utils/ir-ctl/ir-ctl.c:98
-#, fuzzy
 msgid "SCANCODE"
-msgstr "SCANKEY"
+msgstr "CODIGO_DE_SCAN"
 
 #: utils/ir-ctl/ir-ctl.c:98
 msgid "send IR scancode in protocol specified"
-msgstr ""
+msgstr "Envia código de scan de IR no protocolo especificado"
 
 #: utils/ir-ctl/ir-ctl.c:99
 msgid "verbose output"
-msgstr ""
+msgstr "mostra resultado mais descritivo"
 
 #: utils/ir-ctl/ir-ctl.c:100
 msgid "Recording options:"
@@ -629,7 +630,7 @@ msgstr "desabilita relato quando passar tempo máximo"
 
 #: utils/ir-ctl/ir-ctl.c:109
 msgid "TIMEOUT"
-msgstr "TEMPO MÁXIMO"
+msgstr "TEMPO_MÁXIMO"
 
 #: utils/ir-ctl/ir-ctl.c:109
 msgid "set recording timeout"
@@ -657,14 +658,13 @@ msgstr "configura ciclo de trabalho"
 
 #: utils/ir-ctl/ir-ctl.c:113
 msgid "EMITTERS"
-msgstr "EMISSOR"
+msgstr "EMISSORES"
 
 #: utils/ir-ctl/ir-ctl.c:113
 msgid "set send emitters"
 msgstr "configura emissores de envio"
 
 #: utils/ir-ctl/ir-ctl.c:118
-#, fuzzy
 msgid ""
 "--features\n"
 "--record [save to file]\n"
@@ -675,10 +675,10 @@ msgstr ""
 "--features\n"
 "--record [arquivo para gravação]\n"
 "--send [arquivo para envio]\n"
+"--scancode [codigo de scan a enviar]\n"
 "[para configurar opção do lirc]"
 
 #: utils/ir-ctl/ir-ctl.c:125
-#, fuzzy
 msgid ""
 "\n"
 "Record IR, send IR and list features of lirc device\n"
@@ -698,21 +698,21 @@ msgid ""
 "in this state until set otherwise."
 msgstr ""
 "\n"
-"Grava/envia códigos de controle remoto e lista funções de dispositivos "
-"lirc.\n"
+"Grava IR, envia IR e lista funcionalidades do dispositivo LIRC\n"
 "Requer permissões no dispositivo /dev/lirc para o programa funcionar\n"
 "\n"
 "Nas opções abaixo, os argumentos são:\n"
 "  DISPOSITIVO  - o dispositivo /dev/lirc* para uso\n"
-"  ARQUIVO      - um arquivo texto contendo pulsos e espaços\n"
-"  PORTADORA    - a frequência da portadora a ser usada para envio\n"
-"  CICLO        - o ciclo de carga usado para envio\n"
-"  EMISSORES    - lista separada por vírgulas dos emissores a serem usados\n"
-"                 no envio. Por exemplo: 1,2\n"
-"  FAIXA        - configura faixa de frequencias de portadoras aceitas. \n"
-"                 Por exemplo: 20000-40000\n"
-"  TEMPO MÁXIMO - configure tamaho do espaço antes do fim da gravação,\n"
-"                 em µs (microssegundos)\n"
+"  ARQUIVO        - um arquivo texto contendo pulsos e espaços\n"
+"  PORTADORA      - a frequência da portadora a ser usada para envio\n"
+"  CICLO          - o ciclo de carga usado para envio\n"
+"  EMISSORES      - lista separada por vírgulas dos emissores a serem usados\n"
+"                   no envio. Por exemplo: 1,2\n"
+"  FAIXA          - configura faixa de frequências de portadoras aceitas. \n"
+"                   Por exemplo: 20000-40000\n"
+"  TEMPO_MÁXIMO   - configure tamaho do espaço antes do fim da gravação,\n"
+"                   em µs (microssegundos)\n"
+"  CÓDIGO_DE_SCAN - protocolo:código de scan, por exemplo: nec:0xa814\n"
 "\n"
 "Note que a maior parte das configurações possuem estado global. Ou seja,\n"
 "irão permanecer no mesmo estado até novas alterações."
@@ -735,38 +735,40 @@ msgstr "aviso: %s:%d: argumento faltando\n"
 #: utils/ir-ctl/ir-ctl.c:233
 #, c-format
 msgid "error: %s:%d: space must precede scancode\n"
-msgstr ""
+msgstr "erro: %s:%d: um espaço precisa preceder um código de scan\n"
 
 #: utils/ir-ctl/ir-ctl.c:239
 #, c-format
 msgid ""
 "error: %s:%d: scancode argument '%s' should in protocol:scancode format\n"
 msgstr ""
+"erro: %s:%d: argumento com o código de scan '%s' deve estar no formato "
+"protocolo:código_de_scan\n"
 
 #: utils/ir-ctl/ir-ctl.c:246
 #, c-format
 msgid "error: %s:%d: protocol '%s' not found\n"
-msgstr ""
+msgstr "erro: %s:%d: protocolo '%s' não encontrado\n"
 
 #: utils/ir-ctl/ir-ctl.c:251
-#, fuzzy, c-format
+#, c-format
 msgid "error: %s:%d: invalid scancode '%s'\n"
-msgstr "aviso: %s:%d: argumento inválido '%s'\n"
+msgstr "erro: %s:%d: código de scan '%s' inválido\n"
 
 #: utils/ir-ctl/ir-ctl.c:256
 #, c-format
 msgid "error: %s:%d: invalid scancode '%s' for protocol '%s'\n"
-msgstr ""
+msgstr "erro: %s:%d: código de scan '%s' inválido para protocolo '%s'\n"
 
 #: utils/ir-ctl/ir-ctl.c:261
 #, c-format
 msgid "error: %s:%d: too much IR for one transmit\n"
-msgstr ""
+msgstr "erro: %s:%d: código de IR muito extenso para uma transmissão\n"
 
 #: utils/ir-ctl/ir-ctl.c:267
-#, fuzzy, c-format
+#, c-format
 msgid "error: %s:%d: carrier already specified\n"
-msgstr "aviso: %s:%d: portadora já especificada\n"
+msgstr "erro: %s:%d: portadora já especificada\n"
 
 #: utils/ir-ctl/ir-ctl.c:277
 #, c-format
@@ -812,21 +814,23 @@ msgstr "aviso: %s:%d: espaço final ignorado\n"
 #, c-format
 msgid "error: scancode '%s' must be in protocol:scancode format\n"
 msgstr ""
+"erro: código de scan '%s' necessita estar no formato protocolo:"
+"código_de_scan\n"
 
 #: utils/ir-ctl/ir-ctl.c:358
 #, c-format
 msgid "error: protocol '%s' not found\n"
-msgstr ""
+msgstr "erro: protocolo '%s' não encontrado\n"
 
 #: utils/ir-ctl/ir-ctl.c:365
-#, fuzzy, c-format
+#, c-format
 msgid "error: invalid scancode '%s'\n"
-msgstr "%s tem conteúdo inválido: '%s'\n"
+msgstr "erro: código de scan '%s' inválido\n"
 
 #: utils/ir-ctl/ir-ctl.c:370
 #, c-format
 msgid "error: invalid scancode '%s' for protocol '%s'\n"
-msgstr ""
+msgstr "erro: código de scan '%s' inválido para protocolo '%s'\n"
 
 #: utils/ir-ctl/ir-ctl.c:395
 msgid "features can not be combined with record or send option"
@@ -991,9 +995,9 @@ msgid "warning: %s: does not support setting send duty cycle\n"
 msgstr "aviso: %s: não suporta configurar ciclo de carga\n"
 
 #: utils/ir-ctl/ir-ctl.c:663
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %s: failed to set send transmitters: only %d available\n"
-msgstr "aviso: %s: falha ao configurar transmissores: %m\n"
+msgstr "aviso: %s: falha ao configurar transmissores: somente %d disponíveis\n"
 
 #: utils/ir-ctl/ir-ctl.c:665
 #, c-format
@@ -1136,14 +1140,14 @@ msgid " - Device cannot send\n"
 msgstr " - Dispositivo não pode enviar\n"
 
 #: utils/ir-ctl/ir-ctl.c:750
-#, fuzzy, c-format
+#, c-format
 msgid "%s: device cannot send raw ir\n"
-msgstr "%s: dispositivo não consegue enviar\n"
+msgstr "%s: dispositivo não consegue enviar em modo bruto\n"
 
 #: utils/ir-ctl/ir-ctl.c:755
-#, fuzzy, c-format
+#, c-format
 msgid "%s: failed to set send mode: %m\n"
-msgstr "%s: falha ao enviar: %m\n"
+msgstr "%s: falha ao configurar modo de envio: %m\n"
 
 #: utils/ir-ctl/ir-ctl.c:760
 #, c-format
@@ -1162,14 +1166,14 @@ msgid "warning: %s: sent %zd out %zd edges\n"
 msgstr "aviso: %s: enviados %zd, das %zd transições\n"
 
 #: utils/ir-ctl/ir-ctl.c:798
-#, fuzzy, c-format
+#, c-format
 msgid "%s: device cannot record raw ir\n"
-msgstr "%s: dispositivo não pode medir portadora\n"
+msgstr "%s: dispositivo não pode gravar sequências brutas de IR\n"
 
 #: utils/ir-ctl/ir-ctl.c:804
-#, fuzzy, c-format
+#, c-format
 msgid "%s: failed to set record mode: %m\n"
-msgstr "%s: falha ao configurar tempo máximo em gravação\n"
+msgstr "%s: falha ao configurar modo de gravação: %m\n"
 
 #: utils/ir-ctl/ir-ctl.c:811
 #, c-format
@@ -1187,7 +1191,6 @@ msgid "%s: read returned %zd bytes\n"
 msgstr "%s: leitura retornou %zd bytes\n"
 
 #: utils/dvb/dvb-fe-tool.c:48
-#, fuzzy
 msgid ""
 "\n"
 "A DVB frontend tool using API version 5\n"
@@ -1203,7 +1206,9 @@ msgstr ""
 "\n"
 "Nas opções abaixo, os argumentos são:\n"
 "  ADAPTADOR - O número do adaptador de TV digital a ser controlado\n"
-"  FRONTEND   - O número do frontend de TV digital a ser controlado"
+"  FRONTEND   - O número do frontend de TV digital a ser controlado\n"
+"  SERVIDOR   - Endereço do servidor que estará rodando o dvbv5-daemon\n"
+"  PORTA      - Porta do servicor usado pelo dvbv5-daemon\n"
 
 #: utils/dvb/dvb-fe-tool.c:57
 msgid "ADAPTER"
@@ -1234,14 +1239,13 @@ msgid "monitors frontend stats on an streaming frontend"
 msgstr "monitora estatísticas de tráfego no transport stream (TS)"
 
 #: utils/dvb/dvb-fe-tool.c:61
-#, fuzzy
 msgid ""
 "beeps if signal quality is good. Also enables femon mode. Please notice that "
 "console beep should be enabled on your wm."
 msgstr ""
 "gera um bip se a qualidade do sinal estiver boa. Também habilita modo "
 "'femon'. Note que o bip da console deve estar habilitado no gerenciador de "
-"janelas."
+"janelas (wm)."
 
 #: utils/dvb/dvb-fe-tool.c:63
 msgid "set frontend"
@@ -1253,32 +1257,31 @@ msgstr "lê frontend"
 
 #: utils/dvb/dvb-fe-tool.c:66 utils/dvb/dvbv5-zap.c:108
 msgid "SERVER"
-msgstr ""
+msgstr "SERVIDOR"
 
 #: utils/dvb/dvb-fe-tool.c:66 utils/dvb/dvbv5-zap.c:108
 msgid "dvbv5-daemon host IP address"
-msgstr ""
+msgstr "endereço IP do servidor dvbv5-daemon"
 
 #: utils/dvb/dvb-fe-tool.c:67 utils/dvb/dvbv5-zap.c:109
 msgid "PORT"
-msgstr ""
+msgstr "PORTA"
 
 #: utils/dvb/dvb-fe-tool.c:67 utils/dvb/dvbv5-zap.c:109
 msgid "dvbv5-daemon host tcp port"
-msgstr ""
+msgstr "porta TCP do servidor dvbv5-daemon"
 
 #: utils/dvb/dvb-fe-tool.c:68
-#, fuzzy
 msgid "monitors device insert/removal"
-msgstr "dispositivo de controle remoto para controlar"
+msgstr "monitora inserção/remoção de dispositivo"
 
 #: utils/dvb/dvb-fe-tool.c:69
 msgid "COUNT"
-msgstr ""
+msgstr "CONTAGEM"
 
 #: utils/dvb/dvb-fe-tool.c:69
 msgid "samples to take (default 0 = infinite)"
-msgstr ""
+msgstr "amostras a obter (padrão: 0 = infinito)"
 
 #: utils/dvb/dvb-fe-tool.c:106 utils/dvb/dvbv5-scan.c:104
 #: utils/dvb/dvbv5-scan.c:111 utils/dvb/dvbv5-zap.c:121
@@ -1329,7 +1332,7 @@ msgstr "PER"
 #: utils/dvb/dvb-fe-tool.c:346 utils/dvb/dvbv5-zap.c:881
 #, c-format
 msgid "Connecting to %s:%d\n"
-msgstr ""
+msgstr "Conectando a %s:%d\n"
 
 #: utils/dvb/dvb-fe-tool.c:371
 #, c-format
@@ -1439,7 +1442,7 @@ msgstr "tipo_LNBf"
 
 #: utils/dvb/dvbv5-scan.c:78 utils/dvb/dvbv5-zap.c:90
 msgid "type of LNBf to use. 'help' lists the available ones"
-msgstr "Definir tipo de LNBF. 'help' lista os tipos disponíveis"
+msgstr "Definir tipo de LNBf. 'help' lista os tipos disponíveis"
 
 #: utils/dvb/dvbv5-scan.c:79 utils/dvb/dvbv5-zap.c:89
 msgid "LNA (0, 1, -1)"
@@ -1528,9 +1531,8 @@ msgstr ""
 "Configura o país padrão a ser utilizado (em código de 2 letras ISO 3166-1)"
 
 #: utils/dvb/dvbv5-scan.c:256
-#, fuzzy
 msgid "opening demux failed"
-msgstr "falha na abertura da tabela PAT"
+msgstr "falha na abertura do demux"
 
 #: utils/dvb/dvbv5-scan.c:283
 #, c-format
@@ -1557,9 +1559,9 @@ msgid "ERROR: Please specify a valid format\n"
 msgstr "ERRO: Por favor especifique um formato válido\n"
 
 #: utils/dvb/dvbv5-scan.c:529 utils/dvb/dvbv5-zap.c:893
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find demux device node\n"
-msgstr "Não foi encontrado nó em %s%s*.\n"
+msgstr "Não foi encontrado nó de dispositivo demux\n"
 
 #: utils/dvb/dvbv5-scan.c:536 utils/dvb/dvbv5-zap.c:909
 #, c-format
@@ -1596,7 +1598,6 @@ msgid "search/look for a string inside the traffic"
 msgstr "procurar por string dentro do tráfego"
 
 #: utils/dvb/dvbv5-zap.c:92
-#, fuzzy
 msgid "monitors the DVB traffic"
 msgstr "monitora o tráfego de TV digital"
 
@@ -1657,13 +1658,15 @@ msgstr "Estatísticas em formato não humano (útil para scripts)"
 
 #: utils/dvb/dvbv5-zap.c:110
 msgid "PIPE"
-msgstr ""
+msgstr "PIPE"
 
 #: utils/dvb/dvbv5-zap.c:110
 msgid ""
 "Named pipe for DVR output, when using remote access (by default: /tmp/dvr-"
 "pipe)"
 msgstr ""
+"Pipe nomeada para saída DVR, quando usando acesso remoto (por padrão: /tmp/"
+"dvr-pipe)"
 
 #: utils/dvb/dvbv5-zap.c:249
 #, c-format
@@ -1685,14 +1688,14 @@ msgid "Write failed"
 msgstr "Erro na escrita"
 
 #: utils/dvb/dvbv5-zap.c:518
-#, fuzzy, c-format
+#, c-format
 msgid "received %lld bytes (%lld Kbytes/sec)\n"
-msgstr "copiados %lld bytes (%lld Kbytes/seg)\n"
+msgstr "recebidos %lld bytes (%lld Kbytes/seg)\n"
 
 #: utils/dvb/dvbv5-zap.c:521
-#, fuzzy, c-format
+#, c-format
 msgid "received %lld bytes\n"
-msgstr "%s: leitura retornou %zd bytes\n"
+msgstr "recebidos %lld bytes\n"
 
 #: utils/dvb/dvbv5-zap.c:674
 #, c-format
@@ -1705,9 +1708,9 @@ msgid "%.2fs: buffer overrun\n"
 msgstr "%.2fs: buffer esgotado\n"
 
 #: utils/dvb/dvbv5-zap.c:705
-#, fuzzy, c-format
+#, c-format
 msgid "dvbtraffic: read() returned error %zd\n"
-msgstr "%s: leitura retornou %zd bytes\n"
+msgstr "dvbtraffic: leitura retornou erro %zd\n"
 
 #: utils/dvb/dvbv5-zap.c:709
 #, c-format
@@ -1728,9 +1731,9 @@ msgid "<channel name> [or <frequency> if in monitor mode]"
 msgstr "<nome do channel> [ou <frequência> se em modo de monitoria]"
 
 #: utils/dvb/dvbv5-zap.c:901
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find dvr device node\n"
-msgstr "Não foi encontrado nó em %s%s*.\n"
+msgstr "Não foi encontrado nó de dispositivo dvr\n"
 
 #: utils/dvb/dvbv5-zap.c:922
 #, c-format
@@ -1783,9 +1786,9 @@ msgid "Record to file '%s' started\n"
 msgstr "Gravação iniciada para o arquivo '%s'\n"
 
 #: utils/dvb/dvbv5-zap.c:1108
-#, fuzzy, c-format
+#, c-format
 msgid "DVR pipe interface '%s' will be opened\n"
-msgstr "Interface DVR '%s' pode ser aberta agora\n"
+msgstr "Interface DVR '%s' será aberta\n"
 
 #: utils/dvb/dvbv5-zap.c:1132
 #, c-format
