@@ -1,0 +1,1815 @@
+# German debconf translation of v4l-utils.
+# Copyright (C) 2008 Mauro Carvalho Chehab
+# This file is distributed under the same license as the v4l-utils package.
+# Copyright of this file © 2017 Chris Leick <c.leick@vollbio.de>.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: v4l-utils 1.12.3\n"
+"Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
+"POT-Creation-Date: 2017-02-17 20:09+0100\n"
+"PO-Revision-Date: 2017-04-14 09:40+0200\n"
+"Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
+"Language-Team: German <debian-l10n-german@lists.debian.org>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: utils/keytable/keytable.c:194
+msgid ""
+"\n"
+"Allows get/set IR keycode/scancode tables\n"
+"You need to have read permissions on /dev/input for the program to work\n"
+"\n"
+"On the options below, the arguments are:\n"
+"  DEV      - the /dev/input/event* device to control\n"
+"  SYSDEV   - the ir class as found at /sys/class/rc\n"
+"  TABLE    - a file with a set of scancode=keycode value pairs\n"
+"  SCANKEY  - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
+"  PROTOCOL - protocol name (nec, rc-5, rc-6, jvc, sony, sanyo, rc-5-sz, "
+"lirc,\n"
+"                            sharp, mce_kbd, xmp, other, all) to be enabled\n"
+"  DELAY    - Delay before repeating a keystroke\n"
+"  PERIOD   - Period to repeat a keystroke\n"
+"  CFGFILE  - configuration file that associates a driver/table name with a "
+"keymap file\n"
+"\n"
+"Options can be combined together."
+msgstr ""
+"\n"
+"Ermöglicht das Abfragen/Setzen von\n"
+"Fernbedienungsschlüsselcode-/-Scancodetabellen\n"
+"Sie müssen Leserechte für /dev/input haben, damit das Programm funktioniert.\n"
+"\n"
+"Die Argumente für die Optionen unten sind:\n"
+"  DEV      - das /dev/input/event*-Gerät, das gesteuert werden soll\n"
+"  SYSDEV   - die Fernbedienungsklasse, wie sie unter /sys/class/rc zu finden\n"
+"             ist\n"
+"  TABLE    - eine Datei mit einem Satz Wertepaaren Scancode=Schlüsselcode\n"
+"  SCANKEY  - ein Satz von Wertepaaren\n"
+"             Scancode1=Schlüsselcode1,Scancode2=Schlüsselcode2 …\n"
+"  PROTOCOL - Protokollname (nec, rc-5, rc-6, jvc, sony, sanyo, rc-5-sz, "
+"lirc,\n"
+"             sharp, mce_kbd, xmp, andere, alle), der aktiviert werden soll\n"
+"  DELAY    - Verzögerung vor dem Wiederholen eines Tastendrucks\n"
+"  PERIOD   - Zeitspanne, um einen Tastendruck zu wiederholen\n"
+"  CFGFILE  - Konfigurationsdatei, die einen Treiber-/Tabellennamen mit einer\n"
+"             Tastenbelegungsdatei verbindet\n"
+"\n"
+"Optionen können miteinander kombiniert werden."
+
+#: utils/keytable/keytable.c:209 utils/dvb/dvb-fe-tool.c:56
+msgid "enables debug messages"
+msgstr "aktiviert Meldungen zur Fehlersuche."
+
+#: utils/keytable/keytable.c:210
+msgid "clears the old table"
+msgstr "löscht die alte Tabelle."
+
+#: utils/keytable/keytable.c:211
+msgid "SYSDEV"
+msgstr "SYSDEV"
+
+#: utils/keytable/keytable.c:211
+msgid "ir class device to control"
+msgstr "Gerät der Fernbedienungsklasse, das gesteuert werden soll"
+
+#: utils/keytable/keytable.c:212
+msgid "test if IR is generating events"
+msgstr "prüft, ob Fernbedienung Ereignisse erzeugt."
+
+#: utils/keytable/keytable.c:213 utils/ir-ctl/ir-ctl.c:86
+msgid "DEV"
+msgstr "DEV"
+
+#: utils/keytable/keytable.c:213
+msgid "ir device to control"
+msgstr "Fernbedienungsgerät, das gesteuert werden soll"
+
+#: utils/keytable/keytable.c:214
+msgid "reads the current scancode/keycode table"
+msgstr "liest die aktuelle Scancode-/Schlüsselcodetabelle."
+
+#: utils/keytable/keytable.c:215
+msgid "TABLE"
+msgstr "TABLE"
+
+#: utils/keytable/keytable.c:215
+msgid ""
+"write (adds) the scancodes to the device scancode/keycode table from an "
+"specified file"
+msgstr ""
+"schreibt die Scancodes von einer angegebenen Datei in die "
+"Scancode-/Schlüsselcodetabelle des Geräts oder fügt sie hinzu."
+
+#: utils/keytable/keytable.c:216
+msgid "SCANKEY"
+msgstr "SCANKEY"
+
+#: utils/keytable/keytable.c:216
+msgid "Change scan/key pairs"
+msgstr "ändert Scan-/Schlüsselpaare."
+
+#: utils/keytable/keytable.c:217
+msgid "PROTOCOL"
+msgstr "PROTOCOL"
+
+#: utils/keytable/keytable.c:217
+msgid ""
+"Protocol to enable (the other ones will be disabled). To enable more than "
+"one, use the option more than one time"
+msgstr ""
+"Protokoll, das aktiviert werden soll (die anderen werden deaktiviert). Um "
+"mehr als eins zu aktivieren, benutzen Sie die Option mehrfach."
+
+#: utils/keytable/keytable.c:218
+msgid "DELAY"
+msgstr "DELAY"
+
+#: utils/keytable/keytable.c:218
+msgid "Sets the delay before repeating a keystroke"
+msgstr "setzt die Verzögerung, bevor ein Tastendruck wiederholt wird."
+
+#: utils/keytable/keytable.c:219
+msgid "PERIOD"
+msgstr "PERIOD"
+
+#: utils/keytable/keytable.c:219
+msgid "Sets the period to repeat a keystroke"
+msgstr "setzt eine Zeitspanne zum Wiederholen eines Tastendrucks."
+
+#: utils/keytable/keytable.c:220
+msgid "CFGFILE"
+msgstr "CFGFILE"
+
+#: utils/keytable/keytable.c:220
+msgid ""
+"Auto-load a table, based on a configuration file. Only works with sysdev."
+msgstr ""
+"lädt eine Tabelle basierend auf einer Konfigurationsdatei automatisch. "
+"Dies funktioniert nur mit Sysdev."
+
+#: utils/keytable/keytable.c:221 utils/dvb/dvb-fe-tool.c:70
+#: utils/dvb/dvb-format-convert.c:62 utils/dvb/dvbv5-scan.c:93
+#: utils/dvb/dvbv5-zap.c:111
+msgid "Give this help list"
+msgstr "gibt diese Hilfeliste aus."
+
+#: utils/keytable/keytable.c:222 utils/dvb/dvb-fe-tool.c:71
+#: utils/dvb/dvb-format-convert.c:63 utils/dvb/dvbv5-scan.c:94
+#: utils/dvb/dvbv5-zap.c:112
+msgid "Give a short usage message"
+msgstr "gibt eine kurze Benutzungsnachricht aus."
+
+#: utils/keytable/keytable.c:223 utils/dvb/dvb-fe-tool.c:72
+#: utils/dvb/dvb-format-convert.c:64 utils/dvb/dvbv5-scan.c:95
+#: utils/dvb/dvbv5-zap.c:113
+msgid "Print program version"
+msgstr "gibt die Programmversion aus."
+
+#: utils/keytable/keytable.c:228
+msgid ""
+"--device [/dev/input/event* device]\n"
+"--sysdev [ir class (f. ex. rc0)]\n"
+"[for using the rc0 sysdev]"
+msgstr ""
+"--device [/dev/input/event*-Gerät]\n"
+"--sysdev [Infrarotklasse (z.B. rc0)]\n"
+"[um das Systemgerät rc0 zu benutzen]"
+
+#: utils/keytable/keytable.c:278
+#, c-format
+msgid "Parsing %s keycode file\n"
+msgstr "Schlüsselcodedatei %s wird ausgewertet\n"
+
+#: utils/keytable/keytable.c:313
+#, c-format
+msgid "Protocol %s invalid\n"
+msgstr "Protokoll %s ungültig\n"
+
+#: utils/keytable/keytable.c:344
+#, c-format
+msgid "parsing %s=%s:"
+msgstr "%s=%s wird ausgewertet:"
+
+#: utils/keytable/keytable.c:347
+#, c-format
+msgid "\tvalue=%d\n"
+msgstr "\tWert=%d\n"
+
+#: utils/keytable/keytable.c:352
+msgid "value"
+msgstr "Wert"
+
+#: utils/keytable/keytable.c:371 utils/keytable/keytable.c:442
+#, c-format
+msgid "Invalid parameter on line %d of %s\n"
+msgstr "ungültiger Parameter in Zeile %d von %s\n"
+
+#: utils/keytable/keytable.c:387
+#, c-format
+msgid "Parsing %s config file\n"
+msgstr "Konfigurationsdatei %s wird ausgewertet\n"
+
+#: utils/keytable/keytable.c:391
+msgid "opening keycode file"
+msgstr "Schlüsselcodedatei wird geöffnet"
+
+#: utils/keytable/keytable.c:418
+#, c-format
+msgid "Driver %s, Table %s => file %s\n"
+msgstr "Treiber %s, Tabelle %s => Datei %s\n"
+
+#: utils/keytable/keytable.c:486
+#, c-format
+msgid "Read %s table\n"
+msgstr "Lesen von Tabelle %s\n"
+
+#: utils/keytable/keytable.c:505
+msgid "No memory!\n"
+msgstr "Kein Speicher!\n"
+
+#: utils/keytable/keytable.c:533
+#, c-format
+msgid "scancode 0x%04x=%u\n"
+msgstr "Scancode 0x%04x=%u\n"
+
+#: utils/keytable/keytable.c:557 utils/dvb/dvb-fe-tool.c:160
+#: utils/dvb/dvb-format-convert.c:88 utils/dvb/dvbv5-scan.c:421
+#: utils/dvb/dvbv5-zap.c:632
+#, c-format
+msgid ""
+"\n"
+"Report bugs to %s.\n"
+msgstr ""
+"\n"
+"Melden Sie Fehler an %s.\n"
+
+#: utils/keytable/keytable.c:571
+#, c-format
+msgid "Invalid parameter(s)\n"
+msgstr "ungültige(r) Parameter\n"
+
+#: utils/keytable/keytable.c:589
+#, c-format
+msgid "scancode 0x%04x = %s (0x%02x)\n"
+msgstr "Scancode 0x%04x = %s (0x%02x)\n"
+
+#: utils/keytable/keytable.c:595
+#, c-format
+msgid "scancode 0x%04x = '%c' (0x%02x)\n"
+msgstr "Scancode 0x%04x = »%c« (0x%02x)\n"
+
+#: utils/keytable/keytable.c:597
+#, c-format
+msgid "scancode 0x%04x = 0x%02x\n"
+msgstr "Scancode 0x%04x = 0x%02x\n"
+
+#: utils/keytable/keytable.c:647
+#, c-format
+msgid "Couldn't find any node at %s%s*.\n"
+msgstr "Bei %s%s* konnte kein Knoten gefunden werden.\n"
+
+#: utils/keytable/keytable.c:655
+msgid "Seek dir"
+msgstr "Suchverzeichnis"
+
+#: utils/keytable/keytable.c:687
+#, c-format
+msgid "Parsing uevent %s\n"
+msgstr "Uevent %s wird ausgewertet.\n"
+
+#: utils/keytable/keytable.c:711
+#, c-format
+msgid "Error on uevent information\n"
+msgstr "Fehler bei Uevent-Information\n"
+
+#: utils/keytable/keytable.c:727
+#, c-format
+msgid "%s uevent %s=%s\n"
+msgstr "%s Uevent %s=%s\n"
+
+#: utils/keytable/keytable.c:760
+#, c-format
+msgid "Found device %s\n"
+msgstr "Gerät %s gefunden\n"
+
+#: utils/keytable/keytable.c:784
+#, c-format
+msgid "Not found device %s\n"
+msgstr "Gerät %s nicht gefunden\n"
+
+#: utils/keytable/keytable.c:819
+#, c-format
+msgid "%s protocol %s\n"
+msgstr "%s-Protokoll %s\n"
+
+#: utils/keytable/keytable.c:884
+#, c-format
+msgid "%s has invalid content: '%s'\n"
+msgstr "%s hat ungültigen Inhalt: »%s«\n"
+
+#: utils/keytable/keytable.c:891
+#, c-format
+msgid "protocol %s is %s\n"
+msgstr "Protokoll %s ist %s\n"
+
+#: utils/keytable/keytable.c:892 utils/keytable/keytable.c:959
+msgid "enabled"
+msgstr "aktiviert"
+
+#: utils/keytable/keytable.c:892 utils/keytable/keytable.c:959
+msgid "disabled"
+msgstr "deaktiviert"
+
+#: utils/keytable/keytable.c:958
+#, c-format
+msgid "%s protocol %s (%s)\n"
+msgstr "%s-Protokoll %s (%s)\n"
+
+#: utils/keytable/keytable.c:1019
+#, c-format
+# FIXME s/interface.This/interface. This/
+msgid "Found more than one input interface.This is currently unsupported\n"
+msgstr ""
+"Es wurde mehr als eine Eingabeschnittstelle gefunden. Dies wird derzeit nicht "
+"unterstützt.\n"
+
+#: utils/keytable/keytable.c:1023
+#, c-format
+msgid "Input sysfs node is %s\n"
+msgstr "Eingabe-Sysfs-Knoten ist %s\n"
+
+#: utils/keytable/keytable.c:1033
+#, c-format
+msgid "Found more than one event interface. This is currently unsupported\n"
+msgstr ""
+"Es wurde mehr als eine Ereignisschnittstelle gefunden. Dies wird derzeit "
+"nicht unterstützt.\n"
+
+#: utils/keytable/keytable.c:1037
+#, c-format
+msgid "Event sysfs node is %s\n"
+msgstr "Ereignis-Sysfs-Knoten ist %s\n"
+
+#: utils/keytable/keytable.c:1056
+#, c-format
+msgid "Input device name not found.\n"
+msgstr "Eingabegerätename nicht gefunden\n"
+
+#: utils/keytable/keytable.c:1077
+#, c-format
+msgid "input device is %s\n"
+msgstr "Eingabegerät ist %s\n"
+
+#: utils/keytable/keytable.c:1125
+#, c-format
+msgid "Invalid protocols selected\n"
+msgstr "ungültige Protokolle ausgewählt\n"
+
+#: utils/keytable/keytable.c:1159
+#, c-format
+msgid "Unable to query evdev protocol version: %s\n"
+msgstr "Edev-Protokollversion kann nicht abgefragt werden: %s\n"
+
+#: utils/keytable/keytable.c:1164
+#, c-format
+msgid "Input Protocol version: 0x%08x\n"
+msgstr "Eingabeprotokollversion: 0x%08x\n"
+
+#: utils/keytable/keytable.c:1195
+#, c-format
+msgid "Deleting entry %d\n"
+msgstr "Eintrag %d wird gelöscht.\n"
+
+#: utils/keytable/keytable.c:1217
+#, c-format
+msgid "Setting scancode 0x%04x with 0x%04x via "
+msgstr "Scancode 0x%04x mit 0x%04x wird gesetzt über "
+
+#: utils/keytable/keytable.c:1235
+#, c-format
+msgid "Current protocols: "
+msgstr "Aktuelle Protokolle: "
+
+#: utils/keytable/keytable.c:1237
+#, c-format
+msgid "Enabled protocols: "
+msgstr "Aktivierte Protokolle: "
+
+#: utils/keytable/keytable.c:1259
+#, c-format
+msgid "Testing events. Please, press CTRL-C to abort.\n"
+msgstr "Ereignisse werden getestet. Bitte drücken Sie STRG-C, um abzubrechen.\n"
+
+#: utils/keytable/keytable.c:1264
+msgid "Error reading event"
+msgstr "Fehler beim Lesen des Ereignisses"
+
+#: utils/keytable/keytable.c:1269
+#, c-format
+msgid "%ld.%06ld: event type %s(0x%02x)"
+msgstr "%ld.%06ld: Ereignistyp %s(0x%02x)"
+
+#: utils/keytable/keytable.c:1278
+#, c-format
+msgid " key_%s: %s(0x%04x)\n"
+msgstr " key_%s: %s(0x%04x)\n"
+
+#: utils/keytable/keytable.c:1279
+msgid "up"
+msgstr "hoch"
+
+#: utils/keytable/keytable.c:1279
+msgid "down"
+msgstr "runter"
+
+#: utils/keytable/keytable.c:1284 utils/keytable/keytable.c:1290
+#, c-format
+msgid ": %s (0x%04x) value=%d\n"
+msgstr ": %s (0x%04x) Wert=%d\n"
+
+#: utils/keytable/keytable.c:1297
+#, c-format
+msgid ": scancode = 0x%02x\n"
+msgstr ": Scancode = 0x%02x\n"
+
+#: utils/keytable/keytable.c:1299
+#, c-format
+msgid ": code = %s(0x%02x), value = %d\n"
+msgstr ": Code = %s(0x%02x), Wert = %d\n"
+
+#: utils/keytable/keytable.c:1304
+#, c-format
+msgid ": value = %d\n"
+msgstr ": Wert = %d\n"
+
+#: utils/keytable/keytable.c:1313
+#, c-format
+msgid ": code = 0x%02x, value = %d\n"
+msgstr ": Code = 0x%02x, Wert = %d\n"
+
+#: utils/keytable/keytable.c:1382
+#, c-format
+msgid "Changed Repeat delay to %d ms and repeat period to %d ms\n"
+msgstr ""
+"Wiederholungsverzögerung auf %d ms und Wiederholungsdauer auf %d ms "
+"geändert\n"
+
+#: utils/keytable/keytable.c:1396
+#, c-format
+msgid "Repeat delay = %d ms, repeat period = %d ms\n"
+msgstr "Wiederholungsverzögerung = %d ms, Wiederholungsperiode = %d ms\n"
+
+#: utils/keytable/keytable.c:1416
+#, c-format
+msgid "%sName: %.*s\n"
+msgstr "%sName: %.*s\n"
+
+#: utils/keytable/keytable.c:1423
+#, c-format
+msgid "%sbus: %d, vendor/product: %04x:%04x, version: 0x%04x\n"
+msgstr "%sbus: %d, Anbieter/Produkt: %04x:%04x, Version: 0x%04x\n"
+
+#: utils/keytable/keytable.c:1441
+#, c-format
+msgid "Found %s (%s) with:\n"
+msgstr "%s gefunden (%s) mit:\n"
+
+#: utils/keytable/keytable.c:1444
+#, c-format
+msgid "\tDriver %s, table %s\n"
+msgstr "\tTreiber %s, Tabelle %s\n"
+
+#: utils/keytable/keytable.c:1447
+#, c-format
+msgid "\tSupported protocols: "
+msgstr "\tunterstützte Protokolle: "
+
+#: utils/keytable/keytable.c:1457
+#, c-format
+msgid "\tExtra capabilities: <access denied>\n"
+msgstr "\tzusätzliche Fähigkeiten: <Zugriff verweigert>\n"
+
+#: utils/keytable/keytable.c:1484
+msgid "Can't open device"
+msgstr "Gerät kann nicht geöffnet werden"
+
+#: utils/keytable/keytable.c:1498
+#, c-format
+msgid "Auto-mode can be used only with --read, --debug and --sysdev options\n"
+msgstr ""
+"Automatischer Modus kann nur mit den Optionen --read, --debug und --sysdev "
+"benutzt werden.\n"
+
+#: utils/keytable/keytable.c:1532
+#, c-format
+msgid "Table for %s, %s not found. Keep as-is\n"
+msgstr "Tabelle für %s, %s nicht gefunden. Istzustand beibehalten\n"
+
+#: utils/keytable/keytable.c:1537
+#, c-format
+# Treibername, Schlüsseltabellenname, Dateiname
+msgid "Table for %s, %s is on %s file.\n"
+msgstr "Tabelle für %s, %s ist in der Datei %s.\n"
+
+#: utils/keytable/keytable.c:1544
+#, c-format
+msgid "Can't load %s table\n"
+msgstr "Tabelle %s kann nicht geladen werden.\n"
+
+#: utils/keytable/keytable.c:1561
+#, c-format
+msgid "Can't load %s table from %s or %s\n"
+msgstr "Tabelle %s kann nicht von %s oder %s geladen werden.\n"
+
+#: utils/keytable/keytable.c:1566
+#, c-format
+msgid "Empty table %s\n"
+msgstr "leere Tabelle %s\n"
+
+#: utils/keytable/keytable.c:1573
+#, c-format
+msgid "Opening %s\n"
+msgstr "%s wird geöffnet.\n"
+
+#: utils/keytable/keytable.c:1589
+#, c-format
+msgid "Old keytable cleared\n"
+msgstr "alte Schlüsseltabelle geleert\n"
+
+#: utils/keytable/keytable.c:1597
+#, c-format
+msgid "Wrote %d keycode(s) to driver\n"
+msgstr "%d Schlüsselcode(s) wurden in den Treiber geschrieben.\n"
+
+#: utils/keytable/keytable.c:1605
+#, c-format
+msgid "Couldn't change the IR protocols\n"
+msgstr "Die Fernbedienungsprotokolle konnten nicht geändert werden\n"
+
+#: utils/keytable/keytable.c:1607
+#, c-format
+msgid "Protocols changed to "
+msgstr "Protokolle geändert in "
+
+#: utils/ir-ctl/ir-ctl.c:86
+# LIRC = Linux Infrared Remote Control
+msgid "lirc device to use"
+msgstr "zu verwendende Linux-Infrarotfernbedienung"
+
+#: utils/ir-ctl/ir-ctl.c:87
+msgid "list lirc device features"
+msgstr "Liste der Linux-Infrarotfernbedienungsfunktionalitäten"
+
+#: utils/ir-ctl/ir-ctl.c:88 utils/ir-ctl/ir-ctl.c:89
+msgid "FILE"
+msgstr "FILE"
+
+#: utils/ir-ctl/ir-ctl.c:88
+msgid "record IR to stdout or file"
+msgstr "zeichnet Fernbedienung auf Standardausgabe oder Datei auf"
+
+#: utils/ir-ctl/ir-ctl.c:89
+msgid "send IR pulse and space file"
+msgstr "sendet Fernbedienungsimpuls und Datei mit Leerzeichen"
+
+#: utils/ir-ctl/ir-ctl.c:90
+msgid "SCANCODE"
+msgstr "SCANCODE"
+
+#: utils/ir-ctl/ir-ctl.c:90
+msgid "send IR scancode in protocol specified"
+msgstr "sendet Fernbedienungs-Scancode im angegebenen Protokoll"
+
+#: utils/ir-ctl/ir-ctl.c:91
+msgid "verbose output"
+msgstr "detaillierte Ausgabe"
+
+#: utils/ir-ctl/ir-ctl.c:92
+msgid "Recording options:"
+msgstr "Aufzeichnungsoptionen:"
+
+#: utils/ir-ctl/ir-ctl.c:93
+msgid "end recording after first message"
+msgstr "Aufzeichnung nach erster Nachricht beenden"
+
+#: utils/ir-ctl/ir-ctl.c:94
+msgid "use wideband receiver aka learning mode"
+msgstr "Breitbandempfänger alias Lernmodus verwenden"
+
+#: utils/ir-ctl/ir-ctl.c:95
+msgid "use normal narrowband receiver, disable learning mode"
+msgstr "normalen Schmalbandempfänger verwenden, Lernmodus deaktivieren"
+
+#: utils/ir-ctl/ir-ctl.c:96
+msgid "RANGE"
+msgstr "RANGE"
+
+#: utils/ir-ctl/ir-ctl.c:96
+msgid "set receiver carrier range"
+msgstr "setzt Trägerbereich des Empfängers"
+
+#: utils/ir-ctl/ir-ctl.c:97
+msgid "report carrier frequency"
+msgstr "berichtet die Trägerfrequenz"
+
+#: utils/ir-ctl/ir-ctl.c:98
+msgid "disable reporting carrier frequency"
+msgstr "deaktiviert das Berichten der Trägerfrequenz"
+
+#: utils/ir-ctl/ir-ctl.c:99
+msgid "report when a timeout occurs"
+msgstr "berichtet, wenn eine Zeitüberschreitung auftritt"
+
+#: utils/ir-ctl/ir-ctl.c:100
+msgid "disable reporting when a timeout occurs"
+msgstr "deaktiviert das Berichten, ob eine Zeitüberschreitung auftritt"
+
+#: utils/ir-ctl/ir-ctl.c:101
+msgid "TIMEOUT"
+msgstr "TIMEOUT"
+
+#: utils/ir-ctl/ir-ctl.c:101
+msgid "set recording timeout"
+msgstr "setzt die Aufzeichnungszeitüberschreitung"
+
+#: utils/ir-ctl/ir-ctl.c:102
+msgid "Sending options:"
+msgstr "Sendeoptionen:"
+
+#: utils/ir-ctl/ir-ctl.c:103
+msgid "CARRIER"
+msgstr "CARRIER"
+
+#: utils/ir-ctl/ir-ctl.c:103
+msgid "set send carrier"
+msgstr "setzt den Sendeträger"
+
+#: utils/ir-ctl/ir-ctl.c:104
+msgid "DUTY"
+msgstr "DUTY"
+
+#: utils/ir-ctl/ir-ctl.c:104
+msgid "set duty cycle"
+msgstr "setzt die Einschaltdauer"
+
+#: utils/ir-ctl/ir-ctl.c:105
+msgid "EMITTERS"
+msgstr "EMITTERS"
+
+#: utils/ir-ctl/ir-ctl.c:105
+msgid "set send emitters"
+msgstr "setzt die Sendeimpulsgeber"
+
+#: utils/ir-ctl/ir-ctl.c:110
+msgid ""
+"--features\n"
+"--record [save to file]\n"
+"--send [file to send]\n"
+"--scancode [scancode to send]\n"
+"[to set lirc option]"
+msgstr ""
+"--features\n"
+"--record [in Datei speichern]\n"
+"--send [zu versendende Datei]\n"
+"--scancode [Scancode, der gesendet werden soll]\n"
+"[zum Setzen der Linux-Infrarotfernbedienungsoption]"
+
+#: utils/ir-ctl/ir-ctl.c:117
+msgid ""
+"\n"
+"Record IR, send IR and list features of lirc device\n"
+"You will need permission on /dev/lirc for the program to work\n"
+"\n"
+"On the options below, the arguments are:\n"
+"  DEV\t    - the /dev/lirc* device to use\n"
+"  FILE     - a text file containing pulses and spaces\n"
+"  CARRIER  - the carrier frequency to use for sending\n"
+"  DUTY     - the duty cycle to use for sending\n"
+"  EMITTERS - comma separated list of emitters to use for sending, e.g. 1,2\n"
+"  RANGE    - set range of accepted carrier frequencies, e.g. 20000-40000\n"
+"  TIMEOUT  - set length of space before recording stops in microseconds\n"
+"  SCANCODE - protocol:scancode, e.g. nec:0xa814\n"
+"\n"
+"Note that most lirc setting have global state, i.e. the device will remain\n"
+"in this state until set otherwise."
+msgstr ""
+"\n"
+"zeichnet Infrarot auf, sendet Infrarot und führt Funktionalitäten der\n"
+"Linux-Infrarotfernbedienung auf.\n"
+"Damit das Programm funktioniert, benötigen Sie Rechte für /dev/lirc\n"
+"\n"
+"Die Argumente für die Optionen unten sind:\n"
+"  DEV\t    - das zu benutzende /dev/lirc*-Gerät\n"
+"  FILE     - eine Textdatei, die Infrarotimpulse und Leerraumzeichen enthält\n"
+"  CARRIER  - die zum Senden zu verwendende Trägerfrequenz\n"
+"  DUTY     - die zum Senden zu verwendende Einschaltdauer\n"
+"  EMITTERS - durch Kommas getrennte Liste von Impulsgebern, die zum Senden\n"
+"             benutzt werden sollen, z.B. 1,2\n"
+"  RANGE    - setzt den Bereich akzeptierter Trägerfrequenzen, z.B. "
+"20000-40000\n"
+"  TIMEOUT  - setzt die Länge von Leerräumen, bevor Stopps in Millisekunden\n"
+"             aufgezeichnet werden\n"
+"  SCANCODE - Protokoll:Scancode, z.B. nec:0xa814\n"
+"\n"
+"Beachten Sie, dass die meisten Linux-Infrarotfernbedienungen einen globalen\n"
+"Einstellungsstatus haben, d.h. das Gerät wird in diesem Zustand bleiben, bis\n"
+"er anderweitig gesetzt wird."
+
+#: utils/ir-ctl/ir-ctl.c:192
+#, c-format
+msgid "%s: could not open: %m\n"
+msgstr "%s: konnte nicht öffnen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:198 utils/ir-ctl/ir-ctl.c:366
+#, c-format
+msgid "Failed to allocate memory\n"
+msgstr "Reservieren von Speicher fehlgeschlagen\n"
+
+#: utils/ir-ctl/ir-ctl.c:215
+#, c-format
+msgid "warning: %s:%d: missing argument\n"
+msgstr "Warnung: %s:%d: fehlendes Argument\n"
+
+#: utils/ir-ctl/ir-ctl.c:225
+#, c-format
+msgid "error: %s:%d: space must precede scancode\n"
+msgstr "Fehler: %s:%d: Dem Scancode muss ein Leerraumzeichen vorausgehen.\n"
+
+#: utils/ir-ctl/ir-ctl.c:231
+#, c-format
+msgid ""
+"error: %s:%d: scancode argument '%s' should in protocol:scancode format\n"
+msgstr ""
+"Fehler: %s:%d: Scancode-Argument »%s« sollte das Format Protokoll:Scancode\n"
+"haben.\n"
+
+#: utils/ir-ctl/ir-ctl.c:238
+#, c-format
+msgid "error: %s:%d: protocol '%s' not found\n"
+msgstr "Fehler: %s:%d: Protokoll »%s« nicht gefunden\n"
+
+#: utils/ir-ctl/ir-ctl.c:243
+#, c-format
+msgid "error: %s:%d: invalid scancode '%s'\n"
+msgstr "Fehler: %s:%d: ungültiger Scancode »%s«\n"
+
+#: utils/ir-ctl/ir-ctl.c:248
+#, c-format
+msgid "error: %s:%d: invalid scancode '%s' for protocol '%s'\n"
+msgstr "Fehler: %s:%d: ungültiger Scancode »%s« für Protokoll »%s«\n"
+
+#: utils/ir-ctl/ir-ctl.c:253
+#, c-format
+msgid "error: %s:%d: too much IR for one transmit\n"
+msgstr "Fehler: %s:%d: zu viel Infrarot für einen Versendevorgang\n"
+
+#: utils/ir-ctl/ir-ctl.c:259
+#, c-format
+msgid "error: %s:%d: carrier already specified\n"
+msgstr "Fehler: %s:%d: Träger bereits angegeben\n"
+
+#: utils/ir-ctl/ir-ctl.c:269
+#, c-format
+msgid "warning: %s:%d: invalid argument '%s'\n"
+msgstr "Warnung: %s:%d: ungültiges Argument »%s«\n"
+
+#: utils/ir-ctl/ir-ctl.c:275
+#, c-format
+msgid "warning: %s:%d: '%s' unexpected\n"
+msgstr "Warnung: %s:%d: »%s« nicht erwartet\n"
+
+#: utils/ir-ctl/ir-ctl.c:282
+#, c-format
+msgid "warning: %s:%d: leading space ignored\n"
+msgstr "Warnung: %s:%d: führendes Leerzeichen ignoriert\n"
+
+#: utils/ir-ctl/ir-ctl.c:300
+#, c-format
+msgid "warning: %s:%d: carrier already specified\n"
+msgstr "Warnung: %s:%d: Träger bereits angegeben\n"
+
+#: utils/ir-ctl/ir-ctl.c:305
+#, c-format
+msgid "warning: %s:%d: unknown keyword '%s' ignored\n"
+msgstr "Warnung: %s:%d: unbekanntes Schlüsselwort »%s« ignoriert\n"
+
+#: utils/ir-ctl/ir-ctl.c:310
+#, c-format
+msgid "warning: %s:%d: IR cannot exceed %u edges\n"
+msgstr "Warnung: %s:%d: Infrarot kann %u Ränder nicht übersteigen\n"
+
+#: utils/ir-ctl/ir-ctl.c:318
+#, c-format
+msgid "%s: no pulses or spaces found\n"
+msgstr "%s: keine Impulse oder Leerzeichen gefunden\n"
+
+#: utils/ir-ctl/ir-ctl.c:324
+#, c-format
+msgid "warning: %s:%d: trailing space ignored\n"
+msgstr "Warnung: %s:%d: führenden Leerzeichen ignoriert\n"
+
+#: utils/ir-ctl/ir-ctl.c:343
+#, c-format
+# FIXME s/most/must/
+msgid "error: scancode '%s' most be in protocol:scancode format\n"
+msgstr "Fehler: Scancode »%s« muss das Format Protokoll:Scancode haben\n"
+
+#: utils/ir-ctl/ir-ctl.c:350
+#, c-format
+msgid "error: protocol '%s' not found\n"
+msgstr "Fehler: Protokoll »%s« nicht gefunden\n"
+
+#: utils/ir-ctl/ir-ctl.c:355
+#, c-format
+msgid "error: invalid scancode '%s'\n"
+msgstr "Fehler: ungültiger Scancode »%s«\n"
+
+#: utils/ir-ctl/ir-ctl.c:360
+#, c-format
+msgid "error: invalid scancode '%s' for protocol '%s'\n"
+msgstr "Fehler: ungültiger Scancode »%s« für Protokoll »%s«\n"
+
+#: utils/ir-ctl/ir-ctl.c:385
+msgid "features can not be combined with record or send option"
+msgstr ""
+"Funktionalitäten können nicht mit Aufzeichnungs- oder Sendeoptionen "
+"kombiniert werden."
+
+#: utils/ir-ctl/ir-ctl.c:391
+msgid "record can not be combined with features or send option"
+msgstr ""
+"Aufzeichnung kann nicht mit Funktionalitäten oder Sendeoptionen kombiniert "
+"werden."
+
+#: utils/ir-ctl/ir-ctl.c:396
+msgid "record filename already set"
+msgstr "Aufzeichnungsdateiname bereits gesetzt"
+
+#: utils/ir-ctl/ir-ctl.c:409 utils/ir-ctl/ir-ctl.c:415
+msgid "cannot enable and disable carrier reports"
+msgstr "Trägerberichte können nicht aktiviert oder deaktiviert werden."
+
+#: utils/ir-ctl/ir-ctl.c:421 utils/ir-ctl/ir-ctl.c:427
+msgid "cannot enable and disable timeout reports"
+msgstr ""
+"Zeitüberschreitungsberichte können nicht aktiviert oder deaktiviert werden."
+
+#: utils/ir-ctl/ir-ctl.c:433 utils/ir-ctl/ir-ctl.c:439
+msgid "cannot use narrowband and wideband receiver at once"
+msgstr ""
+"Schmal- und Breitbandempfänger können nicht gleichzeitig benutzt werden."
+
+#: utils/ir-ctl/ir-ctl.c:449 utils/ir-ctl/ir-ctl.c:452
+#, c-format
+msgid "cannot parse carrier range `%s'"
+msgstr "Trägerbereich »%s« kann nicht ausgewertet werden."
+
+#: utils/ir-ctl/ir-ctl.c:461
+#, c-format
+msgid "cannot parse timeout `%s'"
+msgstr "Zeitüberschreitung »%s« kann nicht ausgewertet werden."
+
+#: utils/ir-ctl/ir-ctl.c:471
+#, c-format
+msgid "cannot parse carrier `%s'"
+msgstr "Träger »%s« kann nicht ausgewertet werden."
+
+#: utils/ir-ctl/ir-ctl.c:476
+#, c-format
+msgid "cannot parse emitters `%s'"
+msgstr "Versender »%s« kann nicht ausgewertet werden."
+
+#: utils/ir-ctl/ir-ctl.c:481
+#, c-format
+msgid "invalid duty cycle `%s'"
+msgstr "ungültige Einschaltdauer »%s«"
+
+#: utils/ir-ctl/ir-ctl.c:485 utils/ir-ctl/ir-ctl.c:501
+msgid "send can not be combined with record or features option"
+msgstr ""
+"Senden kann nicht mit Aufzeichnungs- oder Funktionalitätenoption kombiniert "
+"werden."
+
+#: utils/ir-ctl/ir-ctl.c:544
+#, c-format
+msgid "%s: cannot open: %m\n"
+msgstr "%s: Öffnen nicht möglich: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:551
+#, c-format
+msgid "%s: cannot stat: %m\n"
+msgstr "%s: Stat nicht möglich: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:557
+#, c-format
+msgid "%s: not character device\n"
+msgstr "%s: kein zeichenorientiertes Gerät\n"
+
+#: utils/ir-ctl/ir-ctl.c:564
+#, c-format
+msgid "%s: failed to get lirc features: %m\n"
+msgstr ""
+"%s: Holen von Linux-Infrarotfernbedienungsfunktionalitäten fehlgeschlagen: "
+"%m\n"
+
+#: utils/ir-ctl/ir-ctl.c:577
+#, c-format
+msgid "warning: %s: failed to set carrier: %m\n"
+msgstr "Warnung: %s: Setzen des Trägers fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:579
+#, c-format
+msgid "warning: %s: set send carrier returned %d, should return 0\n"
+msgstr ""
+"Warnung: %s: Setzen des Sendeträgers gab %d zurück, sollte jedoch 0 "
+"zurückgeben.\n"
+
+#: utils/ir-ctl/ir-ctl.c:581
+#, c-format
+msgid "warning: %s: does not support setting send carrier\n"
+msgstr "Warnung: %s: Einstellung des Sendeträgers wird nicht unterstützt.\n"
+
+#: utils/ir-ctl/ir-ctl.c:593
+#, c-format
+msgid "%s: failed to set recording timeout\n"
+msgstr "%s: Setzen der Aufzeichnungszeitüberschreitung fehlgeschlagen\n"
+
+#: utils/ir-ctl/ir-ctl.c:595
+#, c-format
+msgid "%s: device does not support setting timeout\n"
+msgstr "%s: Gerät unterstützt die Einstellung der Zeitüberschreitung nicht.\n"
+
+#: utils/ir-ctl/ir-ctl.c:603
+#, c-format
+msgid "%s: failed to set wideband receiver %s\n"
+msgstr "%s: Setzen des Breitbandempfängers %s fehlgeschlagen\n"
+
+#: utils/ir-ctl/ir-ctl.c:603 utils/ir-ctl/ir-ctl.c:613
+#: utils/ir-ctl/ir-ctl.c:622
+msgid "on"
+msgstr "an"
+
+#: utils/ir-ctl/ir-ctl.c:603 utils/ir-ctl/ir-ctl.c:613
+#: utils/ir-ctl/ir-ctl.c:622
+msgid "off"
+msgstr "aus"
+
+#: utils/ir-ctl/ir-ctl.c:605
+#, c-format
+msgid "%s: device does not have wideband receiver\n"
+msgstr "%s: Gerät hat keinen Breitbandempfänger.\n"
+
+#: utils/ir-ctl/ir-ctl.c:613
+#, c-format
+# %s = Gerät, %s = on/off
+msgid "%s: failed to set carrier reports %s\n"
+msgstr "%s: Setzen von Trägerberichten auf %s fehlgeschlagen\n"
+
+#: utils/ir-ctl/ir-ctl.c:615
+#, c-format
+msgid "%s: device cannot measure carrier\n"
+msgstr "%s: Gerät kann Träger nicht messen.\n"
+
+#: utils/ir-ctl/ir-ctl.c:622
+#, c-format
+# %s = Gerät, %s = on/off
+msgid "%s: failed to set timeout reports %s: %m\n"
+msgstr "%s: Setzen von Zeitüberschreitungsberichten auf %s fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:629
+#, c-format
+msgid "%s: failed to set low carrier range: %m\n"
+msgstr "%s: Setzen des niedrigen Trägerbereichs fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:632
+#, c-format
+msgid "%s: failed to set high carrier range: %m\n"
+msgstr "%s: Setzen des höheren Trägerbereichs fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:634
+#, c-format
+msgid "%s: device does not support setting receiver carrier range\n"
+msgstr ""
+"%s: Gerät unterstützt die Einstellung des Empfangsträgerbereichs nicht.\n"
+
+#: utils/ir-ctl/ir-ctl.c:644
+#, c-format
+msgid "warning: %s: failed to set duty cycle: %m\n"
+msgstr "Warnung: %s: Setzen der Einschaltdauer fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:646
+#, c-format
+msgid "warning: %s: does not support setting send duty cycle\n"
+msgstr "Warnung: %s: Einstellung der Einschaltdauer wird nicht unterstützt.\n"
+
+#: utils/ir-ctl/ir-ctl.c:653
+#, c-format
+msgid "warning: %s: failed to set send transmitters: only %d available\n"
+msgstr ""
+"Warnung: %s: Setzen des Senders fehlgeschlagen: nur %d verfügbar\n"
+
+#: utils/ir-ctl/ir-ctl.c:655
+#, c-format
+msgid "warning: %s: failed to set send transmitters: %m\n"
+msgstr "Warnung: %s: Setzen des Senders fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:657
+#, c-format
+msgid "warning: %s: does not support setting send transmitters\n"
+msgstr "Warnung: %s: Einstellung des Senders wird nicht unterstützt.\n"
+
+#: utils/ir-ctl/ir-ctl.c:673
+#, c-format
+msgid "warning: %s: device returned resolution of 0\n"
+msgstr "Warnung: %s: Gerät lieferte Auflösung von 0 zurück\n"
+
+#: utils/ir-ctl/ir-ctl.c:675
+#, c-format
+msgid "warning: %s: unexpected error while retrieving resolution: %m\n"
+msgstr "Warnung: %s: unerwarteter Fehler beim Abfragen der Auflösung: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:678
+#, c-format
+msgid "Receive features %s:\n"
+msgstr "Empfangsfunktionalitäten %s:\n"
+
+#: utils/ir-ctl/ir-ctl.c:680
+#, c-format
+msgid " - Device can receive raw IR\n"
+msgstr " - Gerät kann unverarbeitetes Infrarot empfangen.\n"
+
+#: utils/ir-ctl/ir-ctl.c:682
+#, c-format
+msgid " - Resolution %u nanoseconds\n"
+msgstr " - Auflösung %u Nanosekunden\n"
+
+#: utils/ir-ctl/ir-ctl.c:684
+#, c-format
+msgid " - Set receive carrier\n"
+msgstr " - Empfangsträger setzen\n"
+
+#: utils/ir-ctl/ir-ctl.c:686
+#, c-format
+msgid " - Use wideband receiver\n"
+msgstr " - Breitbandempfänger verwenden\n"
+
+#: utils/ir-ctl/ir-ctl.c:688
+#, c-format
+msgid " - Can measure carrier\n"
+msgstr " - Träger kann gemessen werden.\n"
+
+#: utils/ir-ctl/ir-ctl.c:693
+#, c-format
+msgid ""
+"warning: %s: device supports setting recording timeout but "
+"LIRC_GET_MIN_TIMEOUT returns: %m\n"
+msgstr ""
+"Warnung: %s: Gerät unterstützt die Einstellung zum Aufzeichnen der "
+"Zeitüberschreitungen, LIRC_GET_MIN_TIMEOUT gibt jedoch folgendes zurück: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:696
+#, c-format
+msgid ""
+"warning: %s: device supports setting recording timeout but min timeout is 0\n"
+msgstr ""
+"Warnung: %s: Gerät unterstützt die Einstellung zum Aufzeichnen der "
+"Zeitüberschreitungen, die minimale Zeitüberschreitung ist jedoch 0\n"
+
+#: utils/ir-ctl/ir-ctl.c:699
+#, c-format
+msgid ""
+"warning: %s: device supports setting recording timeout but "
+"LIRC_GET_MAX_TIMEOUT returns: %m\n"
+msgstr ""
+"Warnung: %s: Gerät unterstützt die Einstellung zum Aufzeichnen der "
+"Zeitüberschreitungen, LIRC_GET_MAX_TIMEOUT gibt jedoch folgendes zurück: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:702
+#, c-format
+msgid ""
+"warning: %s: device supports setting recording timeout but max timeout is 0\n"
+msgstr ""
+"Warnung: %s: Gerät unterstützt die Einstellung zum Aufzeichnen der "
+"Zeitüberschreitungen, die maximale Zeitüberschreitung ist jedoch 0\n"
+
+#: utils/ir-ctl/ir-ctl.c:706
+#, c-format
+msgid " - Can set recording timeout min:%u microseconds max:%u microseconds\n"
+msgstr ""
+" - Aufzeichnungszeitüberschreitung kann gesetzt werden. Minimum: %u "
+"Mikrosekunden, Maximum: %u Mikrosekunden\n"
+
+#: utils/ir-ctl/ir-ctl.c:709
+#, c-format
+msgid " - Device cannot receive\n"
+msgstr " - Gerät nicht empfangsbereit\n"
+
+#: utils/ir-ctl/ir-ctl.c:712
+#, c-format
+msgid "Send features %s:\n"
+msgstr "Sendefunktionalitäten %s:\n"
+
+#: utils/ir-ctl/ir-ctl.c:714
+#, c-format
+msgid " - Device can send raw IR\n"
+msgstr " - Gerät kann unverarbeitetes Infrarot senden\n"
+
+#: utils/ir-ctl/ir-ctl.c:716
+#, c-format
+msgid " - Set carrier\n"
+msgstr " - Träger setzen\n"
+
+#: utils/ir-ctl/ir-ctl.c:718
+#, c-format
+msgid " - Set duty cycle\n"
+msgstr " - Einschaltdauer setzen\n"
+
+#: utils/ir-ctl/ir-ctl.c:723
+#, c-format
+msgid ""
+"warning: %s: device supports setting transmitter mask but returns 0 as "
+"number of transmitters\n"
+msgstr ""
+"Warnung: %s: Gerät unterstützt die Einstellung der Sendermaske, gibt jedoch "
+"als Anzahl der Sender 0 zurück\n"
+
+#: utils/ir-ctl/ir-ctl.c:725
+#, c-format
+msgid "warning: %s: device supports setting transmitter mask but returns: %m\n"
+msgstr ""
+"Warnung: %s: Gerät unterstützt die Einstellung der Sendermaske, gibt jedoch "
+"folgendes zurück: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:727
+#, c-format
+msgid " - Set transmitter (%d available)\n"
+msgstr " - Sender setzen (%d verfügbar)\n"
+
+#: utils/ir-ctl/ir-ctl.c:730
+#, c-format
+msgid " - Device cannot send\n"
+msgstr " - Gerät kann nicht senden.\n"
+
+#: utils/ir-ctl/ir-ctl.c:740
+#, c-format
+msgid "%s: device cannot send raw ir\n"
+msgstr "%s: Gerät kann kein unbearbeitetes Infrarot senden.\n"
+
+#: utils/ir-ctl/ir-ctl.c:745
+#, c-format
+msgid "%s: failed to set send mode: %m\n"
+msgstr "%s: Setzen des Sendemodus fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:750
+#, c-format
+msgid "warning: %s: carrier specified but overwritten on command line\n"
+msgstr ""
+"Warnung: %s: Träger angegeben, jedoch auf der Befehlszeile überschrieben\n"
+
+#: utils/ir-ctl/ir-ctl.c:763
+#, c-format
+msgid "%s: failed to send: %m\n"
+msgstr "%s: Senden fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:768
+#, c-format
+msgid "warning: %s: sent %zd out %zd edges\n"
+msgstr "Warnung: %s: %zd von %zd Rändern gesendet\n"
+
+#: utils/ir-ctl/ir-ctl.c:788
+#, c-format
+msgid "%s: device cannot record raw ir\n"
+msgstr "%s Gerät kann kein unbearbeitetes Infrarot aufzeichnen.\n"
+
+#: utils/ir-ctl/ir-ctl.c:794
+#, c-format
+msgid "%s: failed to set record mode: %m\n"
+msgstr "%s: Setzen des Aufzeichnungsmodus fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:801
+#, c-format
+msgid "%s: failed to open for writing: %m\n"
+msgstr "%s: Öffnen zum Schreiben fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:813
+#, c-format
+msgid "%s: failed read: %m\n"
+msgstr "%s: Lesen fehlgeschlagen: %m\n"
+
+#: utils/ir-ctl/ir-ctl.c:818
+#, c-format
+msgid "%s: read returned %zd bytes\n"
+msgstr "%s: Lesen gab %zd Byte zurück\n"
+
+#: utils/dvb/dvb-fe-tool.c:48
+# FIXME s/whith/whitch/
+# DVB = Digital Video Broadcasting („Digitales Fernsehen“)
+msgid ""
+"\n"
+"A DVB frontend tool using API version 5\n"
+"\n"
+"On the options below, the arguments are:\n"
+"  ADAPTER      - the dvb adapter to control\n"
+"  FRONTEND     - the dvb frontend to control\n"
+"  SERVER       - server address whith is running the dvb5-daemon\n"
+"  PORT         - server port used by the dvb5-daemon\n"
+msgstr ""
+"\n"
+"Ein DVB-Oberflächenwerkzeug, das die API-Version 5 benutzt\n"
+"\n"
+"Die Argumente für die Optionen unten sind:\n"
+"  ADAPTER      - der zu steuernde DVB-Adapter\n"
+"  FRONTEND     - die zu steuernde DVB-Oberfläche\n"
+"  SERVER       - Serveradresse, auf der der DVB5-Daemon läuft\n"
+"  PORT         - vom DVB5-Daemon benutzter Server-Port\n"
+
+#: utils/dvb/dvb-fe-tool.c:57
+msgid "ADAPTER"
+msgstr "ADAPTER"
+
+#: utils/dvb/dvb-fe-tool.c:57
+msgid "dvb adapter"
+msgstr "DVB-Adapter"
+
+#: utils/dvb/dvb-fe-tool.c:58
+msgid "FRONTEND"
+msgstr "FRONTEND"
+
+#: utils/dvb/dvb-fe-tool.c:58
+msgid "dvb frontend"
+msgstr "DVB-Oberfläche"
+
+#: utils/dvb/dvb-fe-tool.c:59 utils/dvb/dvb-fe-tool.c:63
+msgid "PARAMS"
+msgstr "PARAMETER"
+
+#: utils/dvb/dvb-fe-tool.c:59
+msgid "set delivery system"
+msgstr "setzt das Auslieferungssystem"
+
+#: utils/dvb/dvb-fe-tool.c:60
+msgid "monitors frontend stats on an streaming frontend"
+msgstr "überwacht Oberflächenstatistiken auf einer Streaming-Oberfläche"
+
+#: utils/dvb/dvb-fe-tool.c:61
+# FIXME s/bip/beep/ (2x)
+msgid ""
+"bips if signal quality is good. Also enables femon mode. Please notice that "
+"console bip should be enabled on your wm."
+msgstr ""
+"piept, falls die Signalqualität gut ist, Außerdem wird der Femon-Modus "
+"aktiviert. Bitte beachten Sie, dass das Piepen der Konsole in Ihrem "
+"Fenster-Manager aktiviert sein sollte."
+
+#: utils/dvb/dvb-fe-tool.c:63
+msgid "set frontend"
+msgstr "setzt die Oberfläche"
+
+#: utils/dvb/dvb-fe-tool.c:65
+msgid "get frontend"
+msgstr "fragt die Oberfläche ab"
+
+#: utils/dvb/dvb-fe-tool.c:66 utils/dvb/dvbv5-zap.c:108
+msgid "SERVER"
+msgstr "SERVER"
+
+#: utils/dvb/dvb-fe-tool.c:66 utils/dvb/dvbv5-zap.c:108
+msgid "dvbv5-daemon host IP address"
+msgstr "Rechner-IP-Adresse des DVBv5-Daemons"
+
+#: utils/dvb/dvb-fe-tool.c:67 utils/dvb/dvbv5-zap.c:109
+msgid "PORT"
+msgstr "PORT"
+
+#: utils/dvb/dvb-fe-tool.c:67 utils/dvb/dvbv5-zap.c:109
+msgid "dvbv5-daemon host tcp port"
+msgstr "Rechner-TCP-Port des DVBv5-Daemons"
+
+#: utils/dvb/dvb-fe-tool.c:68
+msgid "monitors device insert/removal"
+msgstr "überwacht Einfügen/Entfernen von Geräten"
+
+#: utils/dvb/dvb-fe-tool.c:69
+msgid "COUNT"
+msgstr "ANZAHL"
+
+#: utils/dvb/dvb-fe-tool.c:69
+msgid "samples to take (default 0 = infinite)"
+msgstr "zu nehmende Samples (Voreinstellung 0 = unendlich)"
+
+#: utils/dvb/dvb-fe-tool.c:106 utils/dvb/dvbv5-scan.c:104
+#: utils/dvb/dvbv5-scan.c:111 utils/dvb/dvbv5-zap.c:121
+#: utils/dvb/dvbv5-zap.c:128
+#, c-format
+msgid "ERROR: "
+msgstr "FEHLER: "
+
+#: utils/dvb/dvb-fe-tool.c:188 utils/dvb/dvbv5-scan.c:198
+msgid "dvb_fe_get_stats failed"
+msgstr "»dvb_fe_get_stats« fehlgeschlagen"
+
+#: utils/dvb/dvb-fe-tool.c:199 utils/dvb/dvbv5-scan.c:146
+#: utils/dvb/dvbv5-zap.c:406
+msgid "Quality"
+msgstr "Qualität"
+
+#: utils/dvb/dvb-fe-tool.c:202 utils/dvb/dvbv5-scan.c:149
+#: utils/dvb/dvbv5-zap.c:409
+msgid "Signal"
+msgstr "Signal"
+
+#: utils/dvb/dvb-fe-tool.c:205 utils/dvb/dvbv5-scan.c:152
+#: utils/dvb/dvbv5-zap.c:412
+# Carrier/Noise (Signal-/Rausch-Verhältnis)
+msgid "C/N"
+msgstr "S/R"
+
+#: utils/dvb/dvb-fe-tool.c:208 utils/dvb/dvbv5-scan.c:155
+#: utils/dvb/dvbv5-zap.c:415
+msgid "UCB"
+msgstr "UCB (Anzahl unkorrigierter Fehler)"
+
+#: utils/dvb/dvb-fe-tool.c:211 utils/dvb/dvbv5-scan.c:158
+#: utils/dvb/dvbv5-zap.c:418
+# BER = Bit-Fehlerrate
+msgid "postBER"
+msgstr "postBER"
+
+#: utils/dvb/dvb-fe-tool.c:214 utils/dvb/dvbv5-scan.c:161
+#: utils/dvb/dvbv5-zap.c:421
+msgid "preBER"
+msgstr "preBER"
+
+#: utils/dvb/dvb-fe-tool.c:217 utils/dvb/dvbv5-scan.c:164
+#: utils/dvb/dvbv5-zap.c:424
+msgid "PER"
+msgstr "PER"
+
+#: utils/dvb/dvb-fe-tool.c:346 utils/dvb/dvbv5-zap.c:881
+#, c-format
+msgid "Connecting to %s:%d\n"
+msgstr "Verbinden mit %s:%d\n"
+
+#: utils/dvb/dvb-fe-tool.c:371
+#, c-format
+msgid "Changing delivery system to: %s\n"
+msgstr "Auslieferungssystem wird geändert auf: %s\n"
+
+#: utils/dvb/dvb-format-convert.c:59 utils/dvb/dvb-format-convert.c:60
+#: utils/dvb/dvbv5-scan.c:90 utils/dvb/dvbv5-scan.c:91 utils/dvb/dvbv5-zap.c:88
+msgid "format"
+msgstr "Format"
+
+#: utils/dvb/dvb-format-convert.c:59
+msgid "Valid input formats: ZAP, CHANNEL, DVBV5"
+msgstr "gültige Eingangsformate: ZAP, CHANNEL, DVBV5"
+
+#: utils/dvb/dvb-format-convert.c:60
+msgid "Valid output formats: VDR, ZAP, CHANNEL, DVBV5"
+msgstr "gültige Ausgabeformate: VDR, ZAP, CHANNEL, DVBV5"
+
+#: utils/dvb/dvb-format-convert.c:61
+msgid "system"
+msgstr "System"
+
+#: utils/dvb/dvb-format-convert.c:61
+msgid "Delivery system type. Needed if input or output format is ZAP"
+msgstr "Aussendesystemtyp. Nötig, falls Ein- oder Ausgabeformat ZAP ist"
+
+#: utils/dvb/dvb-format-convert.c:107
+#, c-format
+msgid "Reading file %s\n"
+msgstr "Datei %s wird gelesen.\n"
+
+#: utils/dvb/dvb-format-convert.c:112
+#, c-format
+msgid "Error reading file %s\n"
+msgstr "Fehler beim Lesen der Datei %s\n"
+
+#: utils/dvb/dvb-format-convert.c:116
+#, c-format
+msgid "Writing file %s\n"
+msgstr "Datei %s wird geschrieben.\n"
+
+#: utils/dvb/dvb-format-convert.c:131 utils/dvb/dvbv5-scan.c:461
+msgid "scan DVB services using the channel file"
+msgstr "scannt DVB-Dienste mittels der Kanaldatei"
+
+#: utils/dvb/dvb-format-convert.c:132
+msgid "<input file> <output file>"
+msgstr "<Eingabedatei> <Ausgabedatei>"
+
+#: utils/dvb/dvb-format-convert.c:150
+#, c-format
+msgid "ERROR: Please specify a valid input format\n"
+msgstr "FEHLER: Bitte geben Sie ein gültiges Eingabeformat an.\n"
+
+#: utils/dvb/dvb-format-convert.c:153
+#, c-format
+msgid "ERROR: Please specify a valid input file\n"
+msgstr "FEHLER: Bitte geben Sie eine gültige Eingabedatei an.\n"
+
+#: utils/dvb/dvb-format-convert.c:156
+#, c-format
+msgid "ERROR: Please specify a valid output format\n"
+msgstr "FEHLER: Bitte geben Sie ein gültiges Ausgabeformat an.\n"
+
+#: utils/dvb/dvb-format-convert.c:159
+#, c-format
+msgid "ERROR: Please specify a valid output file\n"
+msgstr "FEHLER: Bitte geben Sie eine gültige Ausgabedatei an.\n"
+
+#: utils/dvb/dvb-format-convert.c:164
+#, c-format
+msgid "ERROR: Please specify a valid delivery system for ZAP format\n"
+msgstr ""
+"FEHLER: Bitte geben Sie ein gültiges Auslieferungssystem für das ZAP-Format an.\n"
+
+#: utils/dvb/dvbv5-scan.c:75 utils/dvb/dvbv5-zap.c:83
+msgid "adapter#"
+msgstr "adapter#"
+
+#: utils/dvb/dvbv5-scan.c:75 utils/dvb/dvbv5-zap.c:83
+msgid "use given adapter (default 0)"
+msgstr "verwendet angegebenen Adapter (Voreinstellung 0)"
+
+#: utils/dvb/dvbv5-scan.c:76 utils/dvb/dvbv5-zap.c:87
+msgid "frontend#"
+msgstr "frontend#"
+
+#: utils/dvb/dvbv5-scan.c:76 utils/dvb/dvbv5-zap.c:87
+msgid "use given frontend (default 0)"
+msgstr "verwendet angegebene Oberfläche (Voreinstellung 0)"
+
+#: utils/dvb/dvbv5-scan.c:77 utils/dvb/dvbv5-zap.c:86
+msgid "demux#"
+msgstr "demux#"
+
+#: utils/dvb/dvbv5-scan.c:77 utils/dvb/dvbv5-zap.c:86
+msgid "use given demux (default 0)"
+msgstr "verwendet angegebenen Demultiplexer (Voreinstellung 0)"
+
+#: utils/dvb/dvbv5-scan.c:78 utils/dvb/dvbv5-zap.c:90
+# LNBf = rauscharmer Signalumsetzer
+msgid "LNBf_type"
+msgstr "LNBf_type"
+
+#: utils/dvb/dvbv5-scan.c:78 utils/dvb/dvbv5-zap.c:90
+msgid "type of LNBf to use. 'help' lists the available ones"
+msgstr "Typ des zu benutzenden LNBfs. »help« listet die verfügbaren auf."
+
+#: utils/dvb/dvbv5-scan.c:79 utils/dvb/dvbv5-zap.c:89
+msgid "LNA (0, 1, -1)"
+msgstr "LNA (0, 1, -1)"
+
+#: utils/dvb/dvbv5-scan.c:79 utils/dvb/dvbv5-zap.c:89
+msgid "enable/disable/auto LNA power"
+msgstr "LNA-Leistung aktiviert/deaktiviert/automatisch"
+
+#: utils/dvb/dvbv5-scan.c:80 utils/dvb/dvbv5-zap.c:98
+msgid "satellite_number"
+msgstr "satellite_number"
+
+#: utils/dvb/dvbv5-scan.c:80 utils/dvb/dvbv5-zap.c:98
+msgid "satellite number. If not specified, disable DISEqC"
+msgstr "Satellitennummer. Falls nicht angegeben, wird DISEqC deaktiviert"
+
+#: utils/dvb/dvbv5-scan.c:81 utils/dvb/dvbv5-zap.c:100
+msgid "frequency"
+msgstr "Frequenz"
+
+#: utils/dvb/dvbv5-scan.c:81 utils/dvb/dvbv5-zap.c:100
+# SCR = Satellite channel router
+msgid "SCR/Unicable band-pass filter frequency to use, in kHz"
+msgstr "zu verwendende SCR-/Unicable-Bandbreitenfilterfrequenz in kHz"
+
+#: utils/dvb/dvbv5-scan.c:82 utils/dvb/dvbv5-zap.c:103
+msgid "time"
+msgstr "Zeit"
+
+#: utils/dvb/dvbv5-scan.c:82 utils/dvb/dvbv5-zap.c:103
+msgid "adds additional wait time for DISEqC command completion"
+msgstr ""
+"fügt zusätzliche Wartezeit für die Abarbeitung des DISEqC-Befehls hinzu"
+
+#: utils/dvb/dvbv5-scan.c:83
+msgid "use data from NIT table on the output file"
+msgstr "verwendet Daten aus der NIT-Tabelle für die Ausgabedatei"
+
+#: utils/dvb/dvbv5-scan.c:84
+msgid "use data from get_frontend on the output file"
+msgstr "verwendet Daten aus »get_frontend« für die Ausgabedatei"
+
+#: utils/dvb/dvbv5-scan.c:85
+msgid "be (very) verbose"
+msgstr "(sehr) detaillierte Ausgabe"
+
+#: utils/dvb/dvbv5-scan.c:86 utils/dvb/dvbv5-zap.c:85 utils/dvb/dvbv5-zap.c:93
+msgid "file"
+msgstr "Datei"
+
+#: utils/dvb/dvbv5-scan.c:86
+msgid "output filename (default: "
+msgstr "Ausgabedateiname (Voreinstellung: "
+
+#: utils/dvb/dvbv5-scan.c:87
+msgid "don't use the other frequencies discovered during scan"
+msgstr "nicht die anderen beim Scan entdeckten Frequenzen verwenden"
+
+#: utils/dvb/dvbv5-scan.c:88
+msgid "factor"
+msgstr "Faktor"
+
+#: utils/dvb/dvbv5-scan.c:88
+msgid "Multiply scan timeouts by this factor"
+msgstr "multipliziert Scan-Zeitüberschreitungen mit diesen Faktor"
+
+#: utils/dvb/dvbv5-scan.c:89
+msgid "Parse the other NIT/SDT tables"
+msgstr "wertet die anderen NIT-/SDT-Tabellen aus"
+
+#: utils/dvb/dvbv5-scan.c:90
+msgid "Input format: CHANNEL, DVBV5 (default: DVBV5)"
+msgstr "Eingabeformat: CHANNEL, DVBV5 (Voreinstellung: DVBV5)"
+
+#: utils/dvb/dvbv5-scan.c:91
+msgid "Output format: VDR, CHANNEL, ZAP, DVBV5 (default: DVBV5)"
+msgstr "Ausgabeformat: VDR, CHANNEL, ZAP, DVBV5 (Voreinstellung: DVBV5)"
+
+#: utils/dvb/dvbv5-scan.c:92 utils/dvb/dvbv5-zap.c:106
+msgid "country_code"
+msgstr "Länderkennzeichen"
+
+#: utils/dvb/dvbv5-scan.c:92 utils/dvb/dvbv5-zap.c:106
+msgid "Set the default country to be used (in ISO 3166-1 two letter code)"
+msgstr ""
+"setzt das zu benutzende Standardland (Code aus zwei Buchstaben aus ISO 3166-1)"
+
+#: utils/dvb/dvbv5-scan.c:256
+msgid "opening demux failed"
+msgstr "Öffnen des Demultiplexers fehlgeschlagen"
+
+#: utils/dvb/dvbv5-scan.c:283
+#, c-format
+msgid "Scanning frequency #%d %d"
+msgstr "Scan-Frequenz #%d %d"
+
+#: utils/dvb/dvbv5-scan.c:462
+msgid "<initial file>"
+msgstr "<Anfangsdatei>"
+
+#: utils/dvb/dvbv5-scan.c:496 utils/dvb/dvbv5-zap.c:867
+#, c-format
+msgid "Please select one of the LNBf's below:\n"
+msgstr "Bitte wählen Sie einen der nachfolgenden LNBfs aus:\n"
+
+#: utils/dvb/dvbv5-scan.c:500 utils/dvb/dvbv5-zap.c:871
+#, c-format
+msgid "Using LNBf "
+msgstr "Verwendet wird LNBf "
+
+#: utils/dvb/dvbv5-scan.c:515
+#, c-format
+msgid "ERROR: Please specify a valid format\n"
+msgstr "FEHLER: Bitte geben Sie ein gültiges Format an.\n"
+
+#: utils/dvb/dvbv5-scan.c:529 utils/dvb/dvbv5-zap.c:893
+#, c-format
+msgid "Couldn't find demux device node\n"
+msgstr "Es wurde kein Demultiplexer-Geräteknoten gefunden.\n"
+
+#: utils/dvb/dvbv5-scan.c:536 utils/dvb/dvbv5-zap.c:909
+#, c-format
+msgid "using demux '%s'\n"
+msgstr "Demultiplexer »%s« wird verwendet.\n"
+
+#: utils/dvb/dvbv5-scan.c:556 utils/dvb/dvbv5-zap.c:941
+#, c-format
+msgid "Failed to set the country code:%s\n"
+msgstr "Setzen des Länderkennzeichens fehlgeschlagen:%s\n"
+
+#: utils/dvb/dvbv5-zap.c:84
+msgid "audio_pid#"
+msgstr "audio_pid#"
+
+#: utils/dvb/dvbv5-zap.c:84
+# PID = Packet identifier
+msgid "audio pid program to use (default 0)"
+msgstr "Audio-PID-Programm, das verwendet werden soll (Voreinstellung 0)"
+
+#: utils/dvb/dvbv5-zap.c:85
+msgid "read channels list from 'file'"
+msgstr "liest Kanalliste aus »Datei«"
+
+#: utils/dvb/dvbv5-zap.c:88
+msgid "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)"
+msgstr "Eingabeformat: ZAP, CHANNEL, DVBV5 (Voreinstellung: DVBV5)"
+
+#: utils/dvb/dvbv5-zap.c:91
+msgid "string"
+msgstr "Zeichenkette"
+
+#: utils/dvb/dvbv5-zap.c:91
+msgid "search/look for a string inside the traffic"
+msgstr "sucht nach einer Zeichenkette innerhalb des Datenstroms"
+
+#: utils/dvb/dvbv5-zap.c:92
+# FIXME s/de/the/
+msgid "monitors de DVB traffic"
+msgstr "überwacht den DVB-Datenstrom"
+
+#: utils/dvb/dvbv5-zap.c:93
+msgid "output filename (use -o - for stdout)"
+msgstr "Ausgabedateiname (benutzen Sie -o, um die Standardausgabe zu verwenden)"
+
+#: utils/dvb/dvbv5-zap.c:94
+# PMT = Program map table PAT = Program association table TS = transport stream
+msgid "add pat and pmt to TS recording (implies -r)"
+msgstr "fügt PAT und PMT zur TS-Aufzeichnung hinzu (impliziert -r)"
+
+#: utils/dvb/dvbv5-zap.c:95
+msgid "don't filter any pids. Instead, outputs all of them"
+msgstr "filtert keine PIDs, gibt sie stattdessen alle aus"
+
+#: utils/dvb/dvbv5-zap.c:96
+msgid "set up /dev/dvb/adapterX/dvr0 for TS recording"
+msgstr "richtet /dev/dvb/adapterX/dvr0 für die TS-Aufzeichnung ein"
+
+#: utils/dvb/dvbv5-zap.c:97
+msgid "increases silence (can be used more than once)"
+msgstr "unterdrückt Meldungen (kann mehrfach verwendet werden)"
+
+#: utils/dvb/dvbv5-zap.c:99
+msgid "seconds"
+msgstr "Sekunden"
+
+#: utils/dvb/dvbv5-zap.c:99
+msgid "timeout for zapping and for recording"
+msgstr "Zeitüberschreitungen für Umschalten und für Aufzeichnung"
+
+#: utils/dvb/dvbv5-zap.c:101
+msgid "verbose debug messages (can be used more than once)"
+msgstr "detaillierte Fehlersuchnachrichten (kann mehrfach verwendet werden)"
+
+#: utils/dvb/dvbv5-zap.c:102
+msgid "video_pid#"
+msgstr "video_pid#"
+
+#: utils/dvb/dvbv5-zap.c:102
+msgid "video pid program to use (default 0)"
+msgstr "Video-PID-Programm, das verwendet werden soll (Voreinstellung 0)"
+
+#: utils/dvb/dvbv5-zap.c:104
+msgid "exit after tuning"
+msgstr "endet nach dem Einstellen"
+
+#: utils/dvb/dvbv5-zap.c:105
+msgid "also shows DVB traffic with less then 1 packet per second"
+msgstr "zeigt außerdem DVB-Datenströme mit weniger als einem Paket pro Sekunde"
+
+#: utils/dvb/dvbv5-zap.c:107
+msgid "Non-human formatted stats (useful for scripts)"
+msgstr "nicht für Menschen formatierte Statistiken (nützlich für Skripte)"
+
+#: utils/dvb/dvbv5-zap.c:110
+msgid "PIPE"
+msgstr "PIPE"
+
+#: utils/dvb/dvbv5-zap.c:110
+# https://de.wikipedia.org/wiki/Pipe_(Informatik)#Pipe-Varianten
+msgid ""
+"Named pipe for DVR output, when using remote access (by default: /tmp/dvr-"
+"pipe)"
+msgstr "benannte Pipe für DVR-Ausgabe bei Fernzugriff (standardmäßig: "
+"/tmp/dvr-pipe)"
+
+#: utils/dvb/dvbv5-zap.c:249
+#, c-format
+msgid "service has pid type %02x: "
+msgstr "Dienst hat PID-Typ %02x: "
+
+#: utils/dvb/dvbv5-zap.c:316
+#, c-format
+msgid "tuning to %i Hz\n"
+msgstr "Einstellen auf %i Hz\n"
+
+#: utils/dvb/dvbv5-zap.c:504
+#, c-format
+msgid "buffer overrun\n"
+msgstr "Pufferüberlauf\n"
+
+#: utils/dvb/dvbv5-zap.c:511
+msgid "Write failed"
+msgstr "Schreiben fehlgeschlagen"
+
+#: utils/dvb/dvbv5-zap.c:518
+#, c-format
+msgid "received %lld bytes (%lld Kbytes/sec)\n"
+msgstr "%lld Byte empfangen (%lld Kilobyte/Sek)\n"
+
+#: utils/dvb/dvbv5-zap.c:521
+#, c-format
+msgid "received %lld bytes\n"
+msgstr "%lld Byte empfangen\n"
+
+#: utils/dvb/dvbv5-zap.c:674
+#, c-format
+msgid "  dvb_set_pesfilter to 0x2000\n"
+msgstr "  dvb_set_pesfilter auf 0x2000\n"
+
+#: utils/dvb/dvbv5-zap.c:702
+#, c-format
+msgid "%.2fs: buffer overrun\n"
+msgstr "%.2fs: Pufferüberlauf\n"
+
+#: utils/dvb/dvbv5-zap.c:705
+#, c-format
+msgid "dvbtraffic: read() returned error %zd\n"
+msgstr "dvbtraffic: read() gab den Fehler %zd zurück\n"
+
+#: utils/dvb/dvbv5-zap.c:709
+#, c-format
+msgid "dvbtraffic: only read %zd bytes\n"
+msgstr "dvbtraffic: nur %zd Byte gelesen\n"
+
+#: utils/dvb/dvbv5-zap.c:761
+#, c-format
+msgid " PID          FREQ         SPEED       TOTAL\n"
+msgstr " PID          FREQ         TEMPO       GESAMT\n"
+
+#: utils/dvb/dvbv5-zap.c:823
+msgid "DVB zap utility"
+msgstr "DVB-Umschaltwerkzeug"
+
+#: utils/dvb/dvbv5-zap.c:824
+msgid "<channel name> [or <frequency> if in monitor mode]"
+msgstr "<Kanalname> [oder <Frequenz>, falls im Überwachungsmodus]"
+
+#: utils/dvb/dvbv5-zap.c:901
+#, c-format
+msgid "Couldn't find dvr device node\n"
+msgstr "Es wurde kein DVR-Geräteknoten gefunden\n"
+
+#: utils/dvb/dvbv5-zap.c:922
+#, c-format
+msgid "reading channels from file '%s'\n"
+msgstr "Kanäle werden aus Datei »%s« gelesen.\n"
+
+#: utils/dvb/dvbv5-zap.c:964
+#, c-format
+msgid "Service id 0x%04x was not specified at the file\n"
+msgstr "Dienstkennung 0x%04x wurde nicht in der Datei angegeben.\n"
+
+#: utils/dvb/dvbv5-zap.c:977
+#, c-format
+msgid "couldn't find pmt-pid for sid %04x\n"
+msgstr "PMT-PID für SID %04x konnte nicht gefunden werden.\n"
+
+#: utils/dvb/dvbv5-zap.c:1011
+#, c-format
+msgid "pass all PID's to TS\n"
+msgstr "reicht alle PIDs an TS weiter.\n"
+
+#: utils/dvb/dvbv5-zap.c:1013
+#, c-format
+msgid "video pid %d\n"
+msgstr "Video-PID %d\n"
+
+#: utils/dvb/dvbv5-zap.c:1022 utils/dvb/dvbv5-zap.c:1045
+#, c-format
+msgid "  dvb_set_pesfilter %d\n"
+msgstr "  dvb_set_pesfilter %d\n"
+
+#: utils/dvb/dvbv5-zap.c:1038
+#, c-format
+msgid "audio pid %d\n"
+msgstr "Audio-PID %d\n"
+
+#: utils/dvb/dvbv5-zap.c:1056
+#, c-format
+msgid "frontend doesn't lock\n"
+msgstr "Oberfläche sperrt nicht\n"
+
+#: utils/dvb/dvbv5-zap.c:1072 utils/dvb/dvbv5-zap.c:1124
+#, c-format
+msgid "open of '%s' failed"
+msgstr "Öffnen von »%s« fehlgeschlagen"
+
+#: utils/dvb/dvbv5-zap.c:1089
+#, c-format
+msgid "Record to file '%s' started\n"
+msgstr "Aufzeichnung in Datei »%s« gestartet\n"
+
+#: utils/dvb/dvbv5-zap.c:1108
+#, c-format
+msgid "DVR pipe interface '%s' will be opened\n"
+msgstr "DVR-Pipe-Schnittstelle »%s« wird geöffnet.\n"
+
+#: utils/dvb/dvbv5-zap.c:1132
+#, c-format
+msgid "DVR interface '%s' can now be opened\n"
+msgstr "DVR-Schnittstelle »%s« kann nun geöffnet werden.\n"
