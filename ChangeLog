@@ -1,4 +1,21 @@
-v4l-utils-1.12.3
+v4l-utils-1.12.4
+----------------
+
+Clemens Ladisch (1):
+      libdvbv5: T2 delivery descriptor: fix wrong size of bandwidth field
+
+Mauro Carvalho Chehab (5):
+      desc_t2_delivery: consider valid to have a short T2 descriptor
+      desc_t2_delivery: properly handle cell and subcell tables
+      desc_t2_delivery: improve print dumps of T2 delivery
+      desc_t2_delivery: resize frequency array for subcel freqs
+      libdvbv5: add support for more PMT descriptors
+
+Reinhard Speyerer (1):
+      libdvbv5: fix T2 delivery descriptor parsing in dvb_desc_t2_delivery_init()
+
+
+V4L-utils-1.12.3
 ----------------
 
 Gregor Jasny (1):
