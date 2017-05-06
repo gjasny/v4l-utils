@@ -35,11 +35,13 @@
 # include "gettext.h"
 # include <libintl.h>
 # define _(string) dgettext(LIBDVBV5_DOMAIN, string)
+# define P_(singular, plural, n) dngettext(LIBDVBV5_DOMAIN, singular, plural, n)
 
 static int libdvbv5_initialized = 0;
 
 #else
 # define _(string) string
+# define P_(singular, plural, n) ((n) == 1 ? (singular) : (plural))
 #endif
 
 # define N_(string) string
@@ -310,8 +312,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 	}
 
 	if (parms->p.verbose) {
-		dvb_log(_("Supported delivery system%s: "),
-		       (parms->p.num_systems > 1) ? "s" : "");
+		dvb_log(P_("Supported delivery system: ", "Supported delivery systems: ", parms->p.num_systems));
 		for (i = 0; i < parms->p.num_systems; i++) {
 			if (parms->p.systems[i] == parms->p.current_sys)
 				dvb_log ("    [%s]",

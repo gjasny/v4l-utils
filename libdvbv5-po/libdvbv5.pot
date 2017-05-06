@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: v4l-utils 1.13.0\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
-"POT-Creation-Date: 2017-05-06 20:53+0200\n"
+"POT-Creation-Date: 2017-05-06 23:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,224 +16,226 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: lib/libdvbv5/dvb-fe.c:148
+#: lib/libdvbv5/dvb-fe.c:150
 #, c-format
 msgid "adapter %d, frontend %d not found"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:156
+#: lib/libdvbv5/dvb-fe.c:158
 #, c-format
 msgid "fname calloc: %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:161
+#: lib/libdvbv5/dvb-fe.c:163
 #, c-format
 msgid "parms calloc: %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:194
+#: lib/libdvbv5/dvb-fe.c:196
 #, c-format
 msgid "%s while opening %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:210
+#: lib/libdvbv5/dvb-fe.c:212
 #, c-format
 msgid "Device %s (%s) capabilities:"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:236
+#: lib/libdvbv5/dvb-fe.c:238
 #, c-format
 msgid "DVB API Version %d.%d%s, Current v5 delivery system: %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:239
+#: lib/libdvbv5/dvb-fe.c:241
 msgid " (forcing DVBv3 calls)"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:284
+#: lib/libdvbv5/dvb-fe.c:286
 msgid "delivery system not detected"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:305
+#: lib/libdvbv5/dvb-fe.c:307
 msgid "driver returned 0 supported delivery systems!"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:313
-#, c-format
-msgid "Supported delivery system%s: "
-msgstr ""
+#: lib/libdvbv5/dvb-fe.c:315
+msgid "Supported delivery system: "
+msgid_plural "Supported delivery systems: "
+msgstr[0] ""
+msgstr[1] ""
 
-#: lib/libdvbv5/dvb-fe.c:324
+#: lib/libdvbv5/dvb-fe.c:325
 msgid ""
 "Warning: new delivery systems like ISDB-T, ISDB-S, DMB-TH, DSS, ATSC-MH will "
 "be miss-detected by a DVBv5.4 or earlier API call"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:463
+#: lib/libdvbv5/dvb-fe.c:464
 msgid "Set delivery system"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:549
+#: lib/libdvbv5/dvb-fe.c:550
 #, c-format
 msgid "Using a DVBv3 compat file for %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:638
+#: lib/libdvbv5/dvb-fe.c:639
 #, c-format
 msgid "command %s (%d) not found during retrieve"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:655
+#: lib/libdvbv5/dvb-fe.c:656
 #, c-format
 msgid "command %s (%d) not found during store"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:714
+#: lib/libdvbv5/dvb-fe.c:715
 #, c-format
 msgid "Got parameters for %s:"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:833
+#: lib/libdvbv5/dvb-fe.c:834
 msgid "Setting LNA"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:836
+#: lib/libdvbv5/dvb-fe.c:837
 #, c-format
 msgid "LNA is %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:836 lib/libdvbv5/dvb-fe.c:1793
+#: lib/libdvbv5/dvb-fe.c:837 lib/libdvbv5/dvb-fe.c:1794
 msgid "ON"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:836 lib/libdvbv5/dvb-fe.c:1793
+#: lib/libdvbv5/dvb-fe.c:837 lib/libdvbv5/dvb-fe.c:1794
 msgid "OFF"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:936
+#: lib/libdvbv5/dvb-fe.c:937
 #, c-format
 msgid "%s not found on store"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1008 lib/libdvbv5/dvb-fe.c:1023
+#: lib/libdvbv5/dvb-fe.c:1009 lib/libdvbv5/dvb-fe.c:1024
 #, c-format
 msgid "%s not found on retrieve"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1030
+#: lib/libdvbv5/dvb-fe.c:1031
 #, c-format
 msgid "%s not available"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1037
+#: lib/libdvbv5/dvb-fe.c:1038
 #, c-format
 msgid "Stats for %s = %d"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1462 lib/libdvbv5/dvb-fe.c:1492
+#: lib/libdvbv5/dvb-fe.c:1463 lib/libdvbv5/dvb-fe.c:1493
 msgid "Status: "
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1467
+#: lib/libdvbv5/dvb-fe.c:1468
 #, c-format
 msgid "BER: %d, Strength: %d, SNR: %d, UCB: %d"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1584
+#: lib/libdvbv5/dvb-fe.c:1585
 msgid "RF"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1585
+#: lib/libdvbv5/dvb-fe.c:1586
 msgid "Carrier"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1586
+#: lib/libdvbv5/dvb-fe.c:1587
 msgid "Viterbi"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1587
+#: lib/libdvbv5/dvb-fe.c:1588
 msgid "Sync"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1588
+#: lib/libdvbv5/dvb-fe.c:1589
 msgid "Lock"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1589
+#: lib/libdvbv5/dvb-fe.c:1590
 msgid "Timeout"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1590
+#: lib/libdvbv5/dvb-fe.c:1591
 msgid "Reinit"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1594
+#: lib/libdvbv5/dvb-fe.c:1595
 msgid "Poor"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1595
+#: lib/libdvbv5/dvb-fe.c:1596
 msgid "Ok"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1596
+#: lib/libdvbv5/dvb-fe.c:1597
 msgid "Good"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1619
+#: lib/libdvbv5/dvb-fe.c:1620
 msgid "Error: no adapter status"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1631
+#: lib/libdvbv5/dvb-fe.c:1632
 #, c-format
 msgid "%-7s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1638
+#: lib/libdvbv5/dvb-fe.c:1639
 #, c-format
 msgid "%7s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1683
+#: lib/libdvbv5/dvb-fe.c:1684
 #, c-format
 msgid "  Layer %c:"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1758
+#: lib/libdvbv5/dvb-fe.c:1759
 msgid "SEC: set voltage to OFF"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1762
+#: lib/libdvbv5/dvb-fe.c:1763
 #, c-format
 msgid "SEC: set voltage to %sV"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1777
+#: lib/libdvbv5/dvb-fe.c:1778
 #, c-format
 msgid "DiSEqC TONE: %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1793
+#: lib/libdvbv5/dvb-fe.c:1794
 #, c-format
 msgid "DiSEqC HIGH LNB VOLTAGE: %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1811
+#: lib/libdvbv5/dvb-fe.c:1812
 #, c-format
 msgid "DiSEqC BURST: %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1837
+#: lib/libdvbv5/dvb-fe.c:1838
 #, c-format
 msgid "DiSEqC command: "
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1887
+#: lib/libdvbv5/dvb-fe.c:1888
 #, c-format
 msgid "Assuming you're in %s.\n"
 msgstr ""
 
-#: lib/libdvbv5/dvb-fe.c:1890
+#: lib/libdvbv5/dvb-fe.c:1891
 msgid "Failed to guess country from the current locale setting.\n"
 msgstr ""
 
