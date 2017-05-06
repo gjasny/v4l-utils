@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: v4l-utils 1.12.0\n"
+"Project-Id-Version: v4l-utils 1.13.0\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
-"POT-Creation-Date: 2017-01-22 17:33+0100\n"
+"POT-Creation-Date: 2017-05-06 20:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -243,7 +243,7 @@ msgid "Can't add property %s\n"
 msgstr ""
 
 #: lib/libdvbv5/dvb-file.c:240 lib/libdvbv5/dvb-file.c:746
-#: lib/libdvbv5/dvb-file.c:1239
+#: lib/libdvbv5/dvb-file.c:1250
 msgid "Allocating memory for dvb_file"
 msgstr ""
 
@@ -332,119 +332,119 @@ msgstr ""
 msgid "value %s is invalid for %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1120
+#: lib/libdvbv5/dvb-file.c:1131
 #, c-format
 msgid "Channel %s (service ID %d) not found on PMT. Skipping it."
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1138
+#: lib/libdvbv5/dvb-file.c:1149
 msgid "Not enough memory"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1167
+#: lib/libdvbv5/dvb-file.c:1178
 msgid "Couldn't get frontend props"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1196
+#: lib/libdvbv5/dvb-file.c:1207
 #, c-format
 msgid "Storing Service ID %d: '%s'"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1211
+#: lib/libdvbv5/dvb-file.c:1222
 msgid "reserved"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1212
+#: lib/libdvbv5/dvb-file.c:1223
 msgid "digital television"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1213
+#: lib/libdvbv5/dvb-file.c:1224
 msgid "digital radio"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1214
+#: lib/libdvbv5/dvb-file.c:1225
 msgid "Teletext"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1215
+#: lib/libdvbv5/dvb-file.c:1226
 msgid "NVOD reference"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1216
+#: lib/libdvbv5/dvb-file.c:1227
 msgid "NVOD time-shifted"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1217
+#: lib/libdvbv5/dvb-file.c:1228
 msgid "mosaic"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1218
+#: lib/libdvbv5/dvb-file.c:1229
 msgid "PAL coded signal"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1219
+#: lib/libdvbv5/dvb-file.c:1230
 msgid "SECAM coded signal"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1220
+#: lib/libdvbv5/dvb-file.c:1231
 msgid "D/D2-MAC"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1221
+#: lib/libdvbv5/dvb-file.c:1232
 msgid "FM Radio"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1222
+#: lib/libdvbv5/dvb-file.c:1233
 msgid "NTSC coded signal"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1223
+#: lib/libdvbv5/dvb-file.c:1234
 msgid "data broadcast"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1224
+#: lib/libdvbv5/dvb-file.c:1235
 msgid "user defined"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1263
+#: lib/libdvbv5/dvb-file.c:1274
 #, c-format
 msgid "Virtual channel %s, name = %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1291
+#: lib/libdvbv5/dvb-file.c:1302
 #, c-format
 msgid "Service %s, provider %s: %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1304
+#: lib/libdvbv5/dvb-file.c:1315
 #, c-format
 msgid "Storing as channel %s"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1340
+#: lib/libdvbv5/dvb-file.c:1351
 msgid "WARNING: no SDT table - storing channel(s) without their names"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1342
+#: lib/libdvbv5/dvb-file.c:1353
 msgid "WARNING: Some Service IDs are not at the SDT table"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1370
+#: lib/libdvbv5/dvb-file.c:1381
 #, c-format
 msgid "File format %s is unknown\n"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1415
+#: lib/libdvbv5/dvb-file.c:1426
 #, c-format
 msgid "ERROR: Delivery system %s is not known. Valid values are:\n"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1459
+#: lib/libdvbv5/dvb-file.c:1470
 #, c-format
 msgid "Currently, VDR format is supported only for output\n"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1462
+#: lib/libdvbv5/dvb-file.c:1473
 #, c-format
 msgid "Format is not supported\n"
 msgstr ""
@@ -494,79 +494,91 @@ msgid "L10700"
 msgstr ""
 
 #: lib/libdvbv5/dvb-sat.c:129
-msgid "L11300"
+msgid "L10750"
 msgstr ""
 
 #: lib/libdvbv5/dvb-sat.c:142
-msgid "Astra"
+msgid "L11300"
 msgstr ""
 
 #: lib/libdvbv5/dvb-sat.c:155
-msgid "Big Dish - Monopoint LNBf"
+msgid "Astra"
 msgstr ""
 
 #: lib/libdvbv5/dvb-sat.c:168
+msgid "Invacom QPH-031"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:191
+msgid "Big Dish - Monopoint LNBf"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:204
 msgid "Big Dish - Multipoint LNBf"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:183
+#: lib/libdvbv5/dvb-sat.c:219
 msgid "DishPro LNBf"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:198
+#: lib/libdvbv5/dvb-sat.c:234
 msgid "Japan 110BS/CS LNBf"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:211
+#: lib/libdvbv5/dvb-sat.c:247
 msgid "BrasilSat Stacked"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:226
+#: lib/libdvbv5/dvb-sat.c:262
 msgid "BrasilSat Oi"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:243
+#: lib/libdvbv5/dvb-sat.c:279
 msgid "BrasilSat Amazonas 1/2 - 3 Oscilators"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:254
+#: lib/libdvbv5/dvb-sat.c:290
 msgid "BrasilSat Amazonas 1/2 - 2 Oscilators"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:265
+#: lib/libdvbv5/dvb-sat.c:301
 msgid "BrasilSat custom GVT"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:291
+#: lib/libdvbv5/dvb-sat.c:326
+msgid "Freqs     : "
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:327
 msgid "Horizontal: "
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:292
+#: lib/libdvbv5/dvb-sat.c:328
 msgid "Vertical  : "
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:293
+#: lib/libdvbv5/dvb-sat.c:329
 msgid "Left      : "
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:294
+#: lib/libdvbv5/dvb-sat.c:330
 msgid "Right     : "
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:305
+#: lib/libdvbv5/dvb-sat.c:341
 msgid " (bandstacking)"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:308
+#: lib/libdvbv5/dvb-sat.c:344
 #, c-format
 msgid "\t%s%d to %d MHz, LO: %d MHz\n"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:532
+#: lib/libdvbv5/dvb-sat.c:568
 msgid "sending diseq failed"
 msgstr ""
 
-#: lib/libdvbv5/dvb-sat.c:581
+#: lib/libdvbv5/dvb-sat.c:617
 msgid "Need a LNBf to work"
 msgstr ""
 

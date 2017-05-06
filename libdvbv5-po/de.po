@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: v4l-utils 1.12.3\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
-"POT-Creation-Date: 2017-02-17 08:39+0100\n"
+"POT-Creation-Date: 2017-05-06 20:53+0200\n"
 "PO-Revision-Date: 2017-05-06 22:58+0200\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
@@ -59,9 +59,9 @@ msgstr "Übertragungssystem nicht entdeckt"
 msgid "driver returned 0 supported delivery systems!"
 msgstr "Treiber gab 0 unterstützte Übertragungssysteme zurück!"
 
+# FIXME German plural form not »s«
 #: lib/libdvbv5/dvb-fe.c:313
 #, c-format
-# FIXME German plural form not »s«
 msgid "Supported delivery system%s: "
 msgstr "unterstütztes Übertragungssystem%s: "
 
@@ -70,8 +70,8 @@ msgid ""
 "Warning: new delivery systems like ISDB-T, ISDB-S, DMB-TH, DSS, ATSC-MH will "
 "be miss-detected by a DVBv5.4 or earlier API call"
 msgstr ""
-"Warnung: Neue Übertragungssysteme wie ISDB-T, ISDB-S, DMB-TH, DSS oder "
-"ATSC-MH werden falsch durch einen Aufruf von DVBv5.4 oder älter erkannt."
+"Warnung: Neue Übertragungssysteme wie ISDB-T, ISDB-S, DMB-TH, DSS oder ATSC-"
+"MH werden falsch durch einen Aufruf von DVBv5.4 oder älter erkannt."
 
 #: lib/libdvbv5/dvb-fe.c:463
 msgid "Set delivery system"
@@ -221,9 +221,9 @@ msgstr "DiSEqC-KLANG: %s"
 msgid "DiSEqC HIGH LNB VOLTAGE: %s"
 msgstr "HOHE DiSEqC-LNB-SPANNUNG: %s"
 
+# https://de.wikipedia.org/wiki/Phase_Alternating_Line
 #: lib/libdvbv5/dvb-fe.c:1811
 #, c-format
-# https://de.wikipedia.org/wiki/Phase_Alternating_Line
 msgid "DiSEqC BURST: %s"
 msgstr "DiSEqC-BURST: %s"
 
@@ -247,7 +247,7 @@ msgid "Can't add property %s\n"
 msgstr "Eigenschaft %s kann nicht hinzugefügt werden.\n"
 
 #: lib/libdvbv5/dvb-file.c:240 lib/libdvbv5/dvb-file.c:746
-#: lib/libdvbv5/dvb-file.c:1239
+#: lib/libdvbv5/dvb-file.c:1250
 msgid "Allocating memory for dvb_file"
 msgstr "Speicher für dvb_file wird reserviert"
 
@@ -304,7 +304,8 @@ msgstr "WARNUNG: fehlende Audio-PID beim Auswerten von Eintrag %d von %s\n"
 #: lib/libdvbv5/dvb-file.c:544
 #, c-format
 msgid "property %s not supported while parsing entry %d of %s\n"
-msgstr "Eigenschaft %s beim Auswerten von Eintrag %d von %s nicht unterstützt\n"
+msgstr ""
+"Eigenschaft %s beim Auswerten von Eintrag %d von %s nicht unterstützt\n"
 
 #: lib/libdvbv5/dvb-file.c:565 lib/libdvbv5/dvb-vdr-format.c:440
 #, c-format
@@ -336,121 +337,121 @@ msgstr "fehlender Wert"
 msgid "value %s is invalid for %s"
 msgstr "Wert %s ist für %s ungültig."
 
-#: lib/libdvbv5/dvb-file.c:1120
-#, c-format
 # PMT = program map table
+#: lib/libdvbv5/dvb-file.c:1131
+#, c-format
 msgid "Channel %s (service ID %d) not found on PMT. Skipping it."
 msgstr "Kanal %s (Dienstkennung %d) nicht in PMT gefunden; wird übersprungen"
 
-#: lib/libdvbv5/dvb-file.c:1138
+#: lib/libdvbv5/dvb-file.c:1149
 msgid "Not enough memory"
 msgstr "Speicherplatz reicht nicht aus"
 
-#: lib/libdvbv5/dvb-file.c:1167
+#: lib/libdvbv5/dvb-file.c:1178
 msgid "Couldn't get frontend props"
 msgstr "Oberflächeneigenschaften konnten nicht geholt werden."
 
-#: lib/libdvbv5/dvb-file.c:1196
+#: lib/libdvbv5/dvb-file.c:1207
 #, c-format
 msgid "Storing Service ID %d: '%s'"
 msgstr "Dienstkennung %d wird gespeichert: »%s«"
 
-#: lib/libdvbv5/dvb-file.c:1211
+#: lib/libdvbv5/dvb-file.c:1222
 msgid "reserved"
 msgstr "reserviert"
 
-#: lib/libdvbv5/dvb-file.c:1212
+#: lib/libdvbv5/dvb-file.c:1223
 msgid "digital television"
 msgstr "Digitalfernsehen"
 
-#: lib/libdvbv5/dvb-file.c:1213
+#: lib/libdvbv5/dvb-file.c:1224
 msgid "digital radio"
 msgstr "Digitalradio"
 
-#: lib/libdvbv5/dvb-file.c:1214
+#: lib/libdvbv5/dvb-file.c:1225
 msgid "Teletext"
 msgstr "Teletext"
 
-#: lib/libdvbv5/dvb-file.c:1215
 # NVoD = Near video on demand
+#: lib/libdvbv5/dvb-file.c:1226
 msgid "NVOD reference"
 msgstr "NVoD-Referenz"
 
-#: lib/libdvbv5/dvb-file.c:1216
+#: lib/libdvbv5/dvb-file.c:1227
 msgid "NVOD time-shifted"
 msgstr "NVoD zeitversetzt"
 
-#: lib/libdvbv5/dvb-file.c:1217
+#: lib/libdvbv5/dvb-file.c:1228
 msgid "mosaic"
 msgstr "Mosaik"
 
-#: lib/libdvbv5/dvb-file.c:1218
+#: lib/libdvbv5/dvb-file.c:1229
 msgid "PAL coded signal"
 msgstr "PAL-kodiertes Signal"
 
-#: lib/libdvbv5/dvb-file.c:1219
+#: lib/libdvbv5/dvb-file.c:1230
 msgid "SECAM coded signal"
 msgstr "SECAM-kodiertes Signal"
 
-#: lib/libdvbv5/dvb-file.c:1220
+#: lib/libdvbv5/dvb-file.c:1231
 msgid "D/D2-MAC"
 msgstr "D/D2-MAC"
 
-#: lib/libdvbv5/dvb-file.c:1221
+#: lib/libdvbv5/dvb-file.c:1232
 msgid "FM Radio"
 msgstr "UKW-Radio"
 
-#: lib/libdvbv5/dvb-file.c:1222
+#: lib/libdvbv5/dvb-file.c:1233
 msgid "NTSC coded signal"
 msgstr "NTSC-kodiertes Signal"
 
-#: lib/libdvbv5/dvb-file.c:1223
+#: lib/libdvbv5/dvb-file.c:1234
 msgid "data broadcast"
 msgstr "Datenausstrahlung"
 
-#: lib/libdvbv5/dvb-file.c:1224
+#: lib/libdvbv5/dvb-file.c:1235
 msgid "user defined"
 msgstr "benutzerdefiniert"
 
-#: lib/libdvbv5/dvb-file.c:1263
+#: lib/libdvbv5/dvb-file.c:1274
 #, c-format
 msgid "Virtual channel %s, name = %s"
 msgstr "virtueller Kanal %s, Name = %s"
 
-#: lib/libdvbv5/dvb-file.c:1291
+#: lib/libdvbv5/dvb-file.c:1302
 #, c-format
 msgid "Service %s, provider %s: %s"
 msgstr "Dienst %s, Anbieter %s: %s"
 
-#: lib/libdvbv5/dvb-file.c:1304
+#: lib/libdvbv5/dvb-file.c:1315
 #, c-format
 msgid "Storing as channel %s"
 msgstr "wird als Kanal %s gespeichert"
 
-#: lib/libdvbv5/dvb-file.c:1340
+#: lib/libdvbv5/dvb-file.c:1351
 msgid "WARNING: no SDT table - storing channel(s) without their names"
 msgstr "WARNUNG: keine SDT-Tabelle - Kanalspeicherung ohne Namen"
 
-#: lib/libdvbv5/dvb-file.c:1342
+#: lib/libdvbv5/dvb-file.c:1353
 msgid "WARNING: Some Service IDs are not at the SDT table"
 msgstr "WARNUNG: Einige Dienstkennungen stehen nicht in der SDT-Tabelle."
 
-#: lib/libdvbv5/dvb-file.c:1370
+#: lib/libdvbv5/dvb-file.c:1381
 #, c-format
 msgid "File format %s is unknown\n"
 msgstr "Dateiformat %s ist unbekannt\n"
 
-#: lib/libdvbv5/dvb-file.c:1415
+#: lib/libdvbv5/dvb-file.c:1426
 #, c-format
 msgid "ERROR: Delivery system %s is not known. Valid values are:\n"
 msgstr "FEHLER: Übertragungssystem %s ist unbekannt. Gültige Werte sind:\n"
 
-#: lib/libdvbv5/dvb-file.c:1459
+#: lib/libdvbv5/dvb-file.c:1470
 #, c-format
 msgid "Currently, VDR format is supported only for output\n"
 msgstr "VDR-Format wird derzeit nur für die Ausgabe unterstützt.\n"
 
-#: lib/libdvbv5/dvb-file.c:1462
+#: lib/libdvbv5/dvb-file.c:1473
 #, c-format
 msgid "Format is not supported\n"
 msgstr "Format wird nicht unterstützt.\n"
@@ -500,87 +501,91 @@ msgid "L10700"
 msgstr "L10700"
 
 #: lib/libdvbv5/dvb-sat.c:129
+msgid "L10750"
+msgstr "L10750"
+
+#: lib/libdvbv5/dvb-sat.c:142
 msgid "L11300"
 msgstr "L11300"
 
-#: lib/libdvbv5/dvb-sat.c:142
+#: lib/libdvbv5/dvb-sat.c:155
 msgid "Astra"
 msgstr "Astra"
 
-#: lib/libdvbv5/dvb-sat.c:155
+#: lib/libdvbv5/dvb-sat.c:168
 msgid "Invacom QPH-031"
 msgstr "Invacom QPH-031"
 
-#: lib/libdvbv5/dvb-sat.c:178
+#: lib/libdvbv5/dvb-sat.c:191
 msgid "Big Dish - Monopoint LNBf"
 msgstr "große Schüssel - Einzelpunkt-LNBf"
 
-#: lib/libdvbv5/dvb-sat.c:191
+#: lib/libdvbv5/dvb-sat.c:204
 msgid "Big Dish - Multipoint LNBf"
 msgstr "große Schüssel - Mehrpunkt-LNBf"
 
-#: lib/libdvbv5/dvb-sat.c:206
+#: lib/libdvbv5/dvb-sat.c:219
 msgid "DishPro LNBf"
 msgstr "DishPro LNBf"
 
-#: lib/libdvbv5/dvb-sat.c:221
+#: lib/libdvbv5/dvb-sat.c:234
 msgid "Japan 110BS/CS LNBf"
 msgstr "Japan 110BS/CS LNBf"
 
-#: lib/libdvbv5/dvb-sat.c:234
+#: lib/libdvbv5/dvb-sat.c:247
 msgid "BrasilSat Stacked"
 msgstr "BrasilSat gestapelt"
 
-#: lib/libdvbv5/dvb-sat.c:249
+#: lib/libdvbv5/dvb-sat.c:262
 msgid "BrasilSat Oi"
 msgstr "BrasilSat Oi"
 
-#: lib/libdvbv5/dvb-sat.c:266
+#: lib/libdvbv5/dvb-sat.c:279
 msgid "BrasilSat Amazonas 1/2 - 3 Oscilators"
 msgstr "BrasilSat Amazonas 1/2 - 3 Oszillatoren"
 
-#: lib/libdvbv5/dvb-sat.c:277
+#: lib/libdvbv5/dvb-sat.c:290
 msgid "BrasilSat Amazonas 1/2 - 2 Oscilators"
 msgstr "BrasilSat Amazonas 1/2 - 2 Oszillatoren"
 
-#: lib/libdvbv5/dvb-sat.c:288
+#: lib/libdvbv5/dvb-sat.c:301
 msgid "BrasilSat custom GVT"
 msgstr "BrasilSat benutzerdefinierter GVT"
 
-#: lib/libdvbv5/dvb-sat.c:313
+#: lib/libdvbv5/dvb-sat.c:326
 msgid "Freqs     : "
 msgstr "Frequenzen: "
 
-#: lib/libdvbv5/dvb-sat.c:314
+#: lib/libdvbv5/dvb-sat.c:327
 msgid "Horizontal: "
 msgstr "Horizontal: "
 
-#: lib/libdvbv5/dvb-sat.c:315
+#: lib/libdvbv5/dvb-sat.c:328
 msgid "Vertical  : "
 msgstr "Vertikal  : "
 
-#: lib/libdvbv5/dvb-sat.c:316
+#: lib/libdvbv5/dvb-sat.c:329
 msgid "Left      : "
 msgstr "Links     : "
 
-#: lib/libdvbv5/dvb-sat.c:317
+#: lib/libdvbv5/dvb-sat.c:330
 msgid "Right     : "
 msgstr "Rechts    : "
 
-#: lib/libdvbv5/dvb-sat.c:328
+#: lib/libdvbv5/dvb-sat.c:341
 msgid " (bandstacking)"
 msgstr " (bandstapeln)"
 
-#: lib/libdvbv5/dvb-sat.c:331
+#: lib/libdvbv5/dvb-sat.c:344
 #, c-format
 msgid "\t%s%d to %d MHz, LO: %d MHz\n"
 msgstr "\t%s%d bis %d MHz, LO: %d MHz\n"
 
-#: lib/libdvbv5/dvb-sat.c:555
+#: lib/libdvbv5/dvb-sat.c:568
 msgid "sending diseq failed"
 msgstr "Senden von Diseq fehlgeschlagen"
 
-#: lib/libdvbv5/dvb-sat.c:604
+#: lib/libdvbv5/dvb-sat.c:617
 msgid "Need a LNBf to work"
 msgstr "Damit es funktioniert, wird ein LNBf benötigt."
 
@@ -628,7 +633,8 @@ msgstr "%s: Tabelle 0x%02x, Erweiterungskennung 0x%04x: erledigt"
 #: lib/libdvbv5/dvb-scan.c:324
 #, c-format
 msgid "%s: waiting for table ID 0x%02x, program ID 0x%02x"
-msgstr "%s: es wird auf Tabellenkennung 0x%02x, Programmkennung 0x%02x gewartet"
+msgstr ""
+"%s: es wird auf Tabellenkennung 0x%02x, Programmkennung 0x%02x gewartet"
 
 #: lib/libdvbv5/dvb-scan.c:350
 #, c-format
@@ -644,9 +650,9 @@ msgstr "%s: »buf« gab leeren Puffer zurück"
 msgid "dvb_read_section: read error"
 msgstr "DVB-Leseabschnitt: Lesefehler"
 
+# cyclic redundancy check
 #: lib/libdvbv5/dvb-scan.c:369
 #, c-format
-# cyclic redundancy check
 msgid "%s: crc error"
 msgstr "%s: CRC-Fehler"
 

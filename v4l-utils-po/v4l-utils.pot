@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: v4l-utils 1.12.0\n"
+"Project-Id-Version: v4l-utils 1.13.0\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
-"POT-Creation-Date: 2017-01-22 17:33+0100\n"
+"POT-Creation-Date: 2017-05-06 20:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: utils/keytable/keytable.c:194
+#: utils/keytable/keytable.c:205
 msgid ""
 "\n"
 "Allows get/set IR keycode/scancode tables\n"
@@ -39,174 +39,174 @@ msgid ""
 "Options can be combined together."
 msgstr ""
 
-#: utils/keytable/keytable.c:209 utils/dvb/dvb-fe-tool.c:56
+#: utils/keytable/keytable.c:220 utils/dvb/dvb-fe-tool.c:56
 msgid "enables debug messages"
 msgstr ""
 
-#: utils/keytable/keytable.c:210
+#: utils/keytable/keytable.c:221
 msgid "clears the old table"
 msgstr ""
 
-#: utils/keytable/keytable.c:211
+#: utils/keytable/keytable.c:222
 msgid "SYSDEV"
 msgstr ""
 
-#: utils/keytable/keytable.c:211
+#: utils/keytable/keytable.c:222
 msgid "ir class device to control"
 msgstr ""
 
-#: utils/keytable/keytable.c:212
+#: utils/keytable/keytable.c:223
 msgid "test if IR is generating events"
 msgstr ""
 
-#: utils/keytable/keytable.c:213 utils/ir-ctl/ir-ctl.c:86
+#: utils/keytable/keytable.c:224 utils/ir-ctl/ir-ctl.c:94
 msgid "DEV"
 msgstr ""
 
-#: utils/keytable/keytable.c:213
+#: utils/keytable/keytable.c:224
 msgid "ir device to control"
 msgstr ""
 
-#: utils/keytable/keytable.c:214
+#: utils/keytable/keytable.c:225
 msgid "reads the current scancode/keycode table"
 msgstr ""
 
-#: utils/keytable/keytable.c:215
+#: utils/keytable/keytable.c:226
 msgid "TABLE"
 msgstr ""
 
-#: utils/keytable/keytable.c:215
+#: utils/keytable/keytable.c:226
 msgid ""
 "write (adds) the scancodes to the device scancode/keycode table from an "
 "specified file"
 msgstr ""
 
-#: utils/keytable/keytable.c:216
+#: utils/keytable/keytable.c:227
 msgid "SCANKEY"
 msgstr ""
 
-#: utils/keytable/keytable.c:216
+#: utils/keytable/keytable.c:227
 msgid "Change scan/key pairs"
 msgstr ""
 
-#: utils/keytable/keytable.c:217
+#: utils/keytable/keytable.c:228
 msgid "PROTOCOL"
 msgstr ""
 
-#: utils/keytable/keytable.c:217
+#: utils/keytable/keytable.c:228
 msgid ""
 "Protocol to enable (the other ones will be disabled). To enable more than "
 "one, use the option more than one time"
 msgstr ""
 
-#: utils/keytable/keytable.c:218
+#: utils/keytable/keytable.c:229
 msgid "DELAY"
 msgstr ""
 
-#: utils/keytable/keytable.c:218
+#: utils/keytable/keytable.c:229
 msgid "Sets the delay before repeating a keystroke"
 msgstr ""
 
-#: utils/keytable/keytable.c:219
+#: utils/keytable/keytable.c:230
 msgid "PERIOD"
 msgstr ""
 
-#: utils/keytable/keytable.c:219
+#: utils/keytable/keytable.c:230
 msgid "Sets the period to repeat a keystroke"
 msgstr ""
 
-#: utils/keytable/keytable.c:220
+#: utils/keytable/keytable.c:231
 msgid "CFGFILE"
 msgstr ""
 
-#: utils/keytable/keytable.c:220
+#: utils/keytable/keytable.c:231
 msgid ""
 "Auto-load a table, based on a configuration file. Only works with sysdev."
 msgstr ""
 
-#: utils/keytable/keytable.c:221 utils/dvb/dvb-fe-tool.c:70
+#: utils/keytable/keytable.c:232 utils/dvb/dvb-fe-tool.c:70
 #: utils/dvb/dvb-format-convert.c:62 utils/dvb/dvbv5-scan.c:93
 #: utils/dvb/dvbv5-zap.c:111
 msgid "Give this help list"
 msgstr ""
 
-#: utils/keytable/keytable.c:222 utils/dvb/dvb-fe-tool.c:71
+#: utils/keytable/keytable.c:233 utils/dvb/dvb-fe-tool.c:71
 #: utils/dvb/dvb-format-convert.c:63 utils/dvb/dvbv5-scan.c:94
 #: utils/dvb/dvbv5-zap.c:112
 msgid "Give a short usage message"
 msgstr ""
 
-#: utils/keytable/keytable.c:223 utils/dvb/dvb-fe-tool.c:72
+#: utils/keytable/keytable.c:234 utils/dvb/dvb-fe-tool.c:72
 #: utils/dvb/dvb-format-convert.c:64 utils/dvb/dvbv5-scan.c:95
 #: utils/dvb/dvbv5-zap.c:113
 msgid "Print program version"
 msgstr ""
 
-#: utils/keytable/keytable.c:228
+#: utils/keytable/keytable.c:239
 msgid ""
 "--device [/dev/input/event* device]\n"
 "--sysdev [ir class (f. ex. rc0)]\n"
 "[for using the rc0 sysdev]"
 msgstr ""
 
-#: utils/keytable/keytable.c:278
+#: utils/keytable/keytable.c:289
 #, c-format
 msgid "Parsing %s keycode file\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:313
+#: utils/keytable/keytable.c:324
 #, c-format
 msgid "Protocol %s invalid\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:344
+#: utils/keytable/keytable.c:355
 #, c-format
 msgid "parsing %s=%s:"
 msgstr ""
 
-#: utils/keytable/keytable.c:347
+#: utils/keytable/keytable.c:358
 #, c-format
 msgid "\tvalue=%d\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:352
+#: utils/keytable/keytable.c:363
 msgid "value"
 msgstr ""
 
-#: utils/keytable/keytable.c:371 utils/keytable/keytable.c:442
+#: utils/keytable/keytable.c:382 utils/keytable/keytable.c:453
 #, c-format
 msgid "Invalid parameter on line %d of %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:387
+#: utils/keytable/keytable.c:398
 #, c-format
 msgid "Parsing %s config file\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:391
+#: utils/keytable/keytable.c:402
 msgid "opening keycode file"
 msgstr ""
 
-#: utils/keytable/keytable.c:418
+#: utils/keytable/keytable.c:429
 #, c-format
 msgid "Driver %s, Table %s => file %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:486
+#: utils/keytable/keytable.c:497
 #, c-format
 msgid "Read %s table\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:505
+#: utils/keytable/keytable.c:516
 msgid "No memory!\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:533
+#: utils/keytable/keytable.c:544
 #, c-format
 msgid "scancode 0x%04x=%u\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:557 utils/dvb/dvb-fe-tool.c:160
+#: utils/keytable/keytable.c:568 utils/dvb/dvb-fe-tool.c:160
 #: utils/dvb/dvb-format-convert.c:88 utils/dvb/dvbv5-scan.c:421
 #: utils/dvb/dvbv5-zap.c:632
 #, c-format
@@ -215,413 +215,413 @@ msgid ""
 "Report bugs to %s.\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:571
+#: utils/keytable/keytable.c:582
 #, c-format
 msgid "Invalid parameter(s)\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:589
+#: utils/keytable/keytable.c:600
 #, c-format
 msgid "scancode 0x%04x = %s (0x%02x)\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:595
+#: utils/keytable/keytable.c:606
 #, c-format
 msgid "scancode 0x%04x = '%c' (0x%02x)\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:597
+#: utils/keytable/keytable.c:608
 #, c-format
 msgid "scancode 0x%04x = 0x%02x\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:647
+#: utils/keytable/keytable.c:658
 #, c-format
 msgid "Couldn't find any node at %s%s*.\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:655
+#: utils/keytable/keytable.c:666
 msgid "Seek dir"
 msgstr ""
 
-#: utils/keytable/keytable.c:687
+#: utils/keytable/keytable.c:698
 #, c-format
 msgid "Parsing uevent %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:711
+#: utils/keytable/keytable.c:722
 #, c-format
 msgid "Error on uevent information\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:727
+#: utils/keytable/keytable.c:738
 #, c-format
 msgid "%s uevent %s=%s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:760
+#: utils/keytable/keytable.c:771
 #, c-format
 msgid "Found device %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:784
+#: utils/keytable/keytable.c:795
 #, c-format
 msgid "Not found device %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:819
+#: utils/keytable/keytable.c:830
 #, c-format
 msgid "%s protocol %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:884
+#: utils/keytable/keytable.c:895
 #, c-format
 msgid "%s has invalid content: '%s'\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:891
+#: utils/keytable/keytable.c:902
 #, c-format
 msgid "protocol %s is %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:892 utils/keytable/keytable.c:959
+#: utils/keytable/keytable.c:903 utils/keytable/keytable.c:970
 msgid "enabled"
 msgstr ""
 
-#: utils/keytable/keytable.c:892 utils/keytable/keytable.c:959
+#: utils/keytable/keytable.c:903 utils/keytable/keytable.c:970
 msgid "disabled"
 msgstr ""
 
-#: utils/keytable/keytable.c:958
+#: utils/keytable/keytable.c:969
 #, c-format
 msgid "%s protocol %s (%s)\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1019
+#: utils/keytable/keytable.c:1030
 #, c-format
-msgid "Found more than one input interface.This is currently unsupported\n"
+msgid "Found more than one input interface. This is currently unsupported\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1023
+#: utils/keytable/keytable.c:1034
 #, c-format
 msgid "Input sysfs node is %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1033
+#: utils/keytable/keytable.c:1044
 #, c-format
 msgid "Found more than one event interface. This is currently unsupported\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1037
+#: utils/keytable/keytable.c:1048
 #, c-format
 msgid "Event sysfs node is %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1056
+#: utils/keytable/keytable.c:1067
 #, c-format
 msgid "Input device name not found.\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1077
+#: utils/keytable/keytable.c:1088
 #, c-format
 msgid "input device is %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1125
+#: utils/keytable/keytable.c:1136
 #, c-format
 msgid "Invalid protocols selected\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1159
+#: utils/keytable/keytable.c:1170
 #, c-format
 msgid "Unable to query evdev protocol version: %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1164
+#: utils/keytable/keytable.c:1175
 #, c-format
 msgid "Input Protocol version: 0x%08x\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1195
+#: utils/keytable/keytable.c:1206
 #, c-format
 msgid "Deleting entry %d\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1217
+#: utils/keytable/keytable.c:1228
 #, c-format
 msgid "Setting scancode 0x%04x with 0x%04x via "
 msgstr ""
 
-#: utils/keytable/keytable.c:1235
+#: utils/keytable/keytable.c:1246
 #, c-format
 msgid "Current protocols: "
 msgstr ""
 
-#: utils/keytable/keytable.c:1237
+#: utils/keytable/keytable.c:1248
 #, c-format
 msgid "Enabled protocols: "
 msgstr ""
 
-#: utils/keytable/keytable.c:1259
+#: utils/keytable/keytable.c:1270
 #, c-format
 msgid "Testing events. Please, press CTRL-C to abort.\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1264
+#: utils/keytable/keytable.c:1275
 msgid "Error reading event"
 msgstr ""
 
-#: utils/keytable/keytable.c:1269
+#: utils/keytable/keytable.c:1280
 #, c-format
 msgid "%ld.%06ld: event type %s(0x%02x)"
 msgstr ""
 
-#: utils/keytable/keytable.c:1278
+#: utils/keytable/keytable.c:1289
 #, c-format
 msgid " key_%s: %s(0x%04x)\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1279
+#: utils/keytable/keytable.c:1290
 msgid "up"
 msgstr ""
 
-#: utils/keytable/keytable.c:1279
+#: utils/keytable/keytable.c:1290
 msgid "down"
 msgstr ""
 
-#: utils/keytable/keytable.c:1284 utils/keytable/keytable.c:1290
+#: utils/keytable/keytable.c:1295 utils/keytable/keytable.c:1301
 #, c-format
 msgid ": %s (0x%04x) value=%d\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1297
+#: utils/keytable/keytable.c:1308
 #, c-format
 msgid ": scancode = 0x%02x\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1299
+#: utils/keytable/keytable.c:1310
 #, c-format
 msgid ": code = %s(0x%02x), value = %d\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1304
+#: utils/keytable/keytable.c:1315
 #, c-format
 msgid ": value = %d\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1313
+#: utils/keytable/keytable.c:1324
 #, c-format
 msgid ": code = 0x%02x, value = %d\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1382
+#: utils/keytable/keytable.c:1393
 #, c-format
 msgid "Changed Repeat delay to %d ms and repeat period to %d ms\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1396
+#: utils/keytable/keytable.c:1407
 #, c-format
 msgid "Repeat delay = %d ms, repeat period = %d ms\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1416
+#: utils/keytable/keytable.c:1427
 #, c-format
 msgid "%sName: %.*s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1423
+#: utils/keytable/keytable.c:1434
 #, c-format
 msgid "%sbus: %d, vendor/product: %04x:%04x, version: 0x%04x\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1441
+#: utils/keytable/keytable.c:1452
 #, c-format
 msgid "Found %s (%s) with:\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1444
+#: utils/keytable/keytable.c:1455
 #, c-format
 msgid "\tDriver %s, table %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1447
+#: utils/keytable/keytable.c:1458
 #, c-format
 msgid "\tSupported protocols: "
 msgstr ""
 
-#: utils/keytable/keytable.c:1457
+#: utils/keytable/keytable.c:1468
 #, c-format
 msgid "\tExtra capabilities: <access denied>\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1484
+#: utils/keytable/keytable.c:1495
 msgid "Can't open device"
 msgstr ""
 
-#: utils/keytable/keytable.c:1498
+#: utils/keytable/keytable.c:1509
 #, c-format
 msgid "Auto-mode can be used only with --read, --debug and --sysdev options\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1532
+#: utils/keytable/keytable.c:1543
 #, c-format
 msgid "Table for %s, %s not found. Keep as-is\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1537
+#: utils/keytable/keytable.c:1548
 #, c-format
 msgid "Table for %s, %s is on %s file.\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1544
+#: utils/keytable/keytable.c:1555
 #, c-format
 msgid "Can't load %s table\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1561
+#: utils/keytable/keytable.c:1572
 #, c-format
 msgid "Can't load %s table from %s or %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1566
+#: utils/keytable/keytable.c:1577
 #, c-format
 msgid "Empty table %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1573
+#: utils/keytable/keytable.c:1584
 #, c-format
 msgid "Opening %s\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1589
+#: utils/keytable/keytable.c:1600
 #, c-format
 msgid "Old keytable cleared\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1597
+#: utils/keytable/keytable.c:1608
 #, c-format
 msgid "Wrote %d keycode(s) to driver\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1605
+#: utils/keytable/keytable.c:1616
 #, c-format
 msgid "Couldn't change the IR protocols\n"
 msgstr ""
 
-#: utils/keytable/keytable.c:1607
+#: utils/keytable/keytable.c:1618
 #, c-format
 msgid "Protocols changed to "
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:86
+#: utils/ir-ctl/ir-ctl.c:94
 msgid "lirc device to use"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:87
+#: utils/ir-ctl/ir-ctl.c:95
 msgid "list lirc device features"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:88 utils/ir-ctl/ir-ctl.c:89
+#: utils/ir-ctl/ir-ctl.c:96 utils/ir-ctl/ir-ctl.c:97
 msgid "FILE"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:88
+#: utils/ir-ctl/ir-ctl.c:96
 msgid "record IR to stdout or file"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:89
+#: utils/ir-ctl/ir-ctl.c:97
 msgid "send IR pulse and space file"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:90
+#: utils/ir-ctl/ir-ctl.c:98
 msgid "SCANCODE"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:90
+#: utils/ir-ctl/ir-ctl.c:98
 msgid "send IR scancode in protocol specified"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:91
+#: utils/ir-ctl/ir-ctl.c:99
 msgid "verbose output"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:92
+#: utils/ir-ctl/ir-ctl.c:100
 msgid "Recording options:"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:93
+#: utils/ir-ctl/ir-ctl.c:101
 msgid "end recording after first message"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:94
+#: utils/ir-ctl/ir-ctl.c:102
 msgid "use wideband receiver aka learning mode"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:95
+#: utils/ir-ctl/ir-ctl.c:103
 msgid "use normal narrowband receiver, disable learning mode"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:96
+#: utils/ir-ctl/ir-ctl.c:104
 msgid "RANGE"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:96
+#: utils/ir-ctl/ir-ctl.c:104
 msgid "set receiver carrier range"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:97
+#: utils/ir-ctl/ir-ctl.c:105
 msgid "report carrier frequency"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:98
+#: utils/ir-ctl/ir-ctl.c:106
 msgid "disable reporting carrier frequency"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:99
+#: utils/ir-ctl/ir-ctl.c:107
 msgid "report when a timeout occurs"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:100
+#: utils/ir-ctl/ir-ctl.c:108
 msgid "disable reporting when a timeout occurs"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:101
+#: utils/ir-ctl/ir-ctl.c:109
 msgid "TIMEOUT"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:101
+#: utils/ir-ctl/ir-ctl.c:109
 msgid "set recording timeout"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:102
+#: utils/ir-ctl/ir-ctl.c:110
 msgid "Sending options:"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:103
+#: utils/ir-ctl/ir-ctl.c:111
 msgid "CARRIER"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:103
+#: utils/ir-ctl/ir-ctl.c:111
 msgid "set send carrier"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:104
+#: utils/ir-ctl/ir-ctl.c:112
 msgid "DUTY"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:104
+#: utils/ir-ctl/ir-ctl.c:112
 msgid "set duty cycle"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:105
+#: utils/ir-ctl/ir-ctl.c:113
 msgid "EMITTERS"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:105
+#: utils/ir-ctl/ir-ctl.c:113
 msgid "set send emitters"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:110
+#: utils/ir-ctl/ir-ctl.c:118
 msgid ""
 "--features\n"
 "--record [save to file]\n"
@@ -630,7 +630,7 @@ msgid ""
 "[to set lirc option]"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:117
+#: utils/ir-ctl/ir-ctl.c:125
 msgid ""
 "\n"
 "Record IR, send IR and list features of lirc device\n"
@@ -650,454 +650,454 @@ msgid ""
 "in this state until set otherwise."
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:192
+#: utils/ir-ctl/ir-ctl.c:200
 #, c-format
 msgid "%s: could not open: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:198 utils/ir-ctl/ir-ctl.c:366
+#: utils/ir-ctl/ir-ctl.c:206 utils/ir-ctl/ir-ctl.c:376
 #, c-format
 msgid "Failed to allocate memory\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:215
+#: utils/ir-ctl/ir-ctl.c:223
 #, c-format
 msgid "warning: %s:%d: missing argument\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:225
+#: utils/ir-ctl/ir-ctl.c:233
 #, c-format
 msgid "error: %s:%d: space must precede scancode\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:231
+#: utils/ir-ctl/ir-ctl.c:239
 #, c-format
 msgid ""
 "error: %s:%d: scancode argument '%s' should in protocol:scancode format\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:238
+#: utils/ir-ctl/ir-ctl.c:246
 #, c-format
 msgid "error: %s:%d: protocol '%s' not found\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:243
+#: utils/ir-ctl/ir-ctl.c:251
 #, c-format
 msgid "error: %s:%d: invalid scancode '%s'\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:248
+#: utils/ir-ctl/ir-ctl.c:256
 #, c-format
 msgid "error: %s:%d: invalid scancode '%s' for protocol '%s'\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:253
+#: utils/ir-ctl/ir-ctl.c:261
 #, c-format
 msgid "error: %s:%d: too much IR for one transmit\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:259
+#: utils/ir-ctl/ir-ctl.c:267
 #, c-format
 msgid "error: %s:%d: carrier already specified\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:269
+#: utils/ir-ctl/ir-ctl.c:277
 #, c-format
 msgid "warning: %s:%d: invalid argument '%s'\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:275
+#: utils/ir-ctl/ir-ctl.c:283
 #, c-format
 msgid "warning: %s:%d: '%s' unexpected\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:282
+#: utils/ir-ctl/ir-ctl.c:290
 #, c-format
 msgid "warning: %s:%d: leading space ignored\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:300
+#: utils/ir-ctl/ir-ctl.c:308
 #, c-format
 msgid "warning: %s:%d: carrier already specified\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:305
+#: utils/ir-ctl/ir-ctl.c:313
 #, c-format
 msgid "warning: %s:%d: unknown keyword '%s' ignored\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:310
+#: utils/ir-ctl/ir-ctl.c:318
 #, c-format
 msgid "warning: %s:%d: IR cannot exceed %u edges\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:318
+#: utils/ir-ctl/ir-ctl.c:326
 #, c-format
 msgid "%s: no pulses or spaces found\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:324
+#: utils/ir-ctl/ir-ctl.c:332
 #, c-format
 msgid "warning: %s:%d: trailing space ignored\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:343
+#: utils/ir-ctl/ir-ctl.c:351
 #, c-format
-msgid "error: scancode '%s' most be in protocol:scancode format\n"
+msgid "error: scancode '%s' must be in protocol:scancode format\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:350
+#: utils/ir-ctl/ir-ctl.c:358
 #, c-format
 msgid "error: protocol '%s' not found\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:355
+#: utils/ir-ctl/ir-ctl.c:365
 #, c-format
 msgid "error: invalid scancode '%s'\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:360
+#: utils/ir-ctl/ir-ctl.c:370
 #, c-format
 msgid "error: invalid scancode '%s' for protocol '%s'\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:385
+#: utils/ir-ctl/ir-ctl.c:395
 msgid "features can not be combined with record or send option"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:391
+#: utils/ir-ctl/ir-ctl.c:401
 msgid "record can not be combined with features or send option"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:396
+#: utils/ir-ctl/ir-ctl.c:406
 msgid "record filename already set"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:409 utils/ir-ctl/ir-ctl.c:415
+#: utils/ir-ctl/ir-ctl.c:419 utils/ir-ctl/ir-ctl.c:425
 msgid "cannot enable and disable carrier reports"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:421 utils/ir-ctl/ir-ctl.c:427
+#: utils/ir-ctl/ir-ctl.c:431 utils/ir-ctl/ir-ctl.c:437
 msgid "cannot enable and disable timeout reports"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:433 utils/ir-ctl/ir-ctl.c:439
+#: utils/ir-ctl/ir-ctl.c:443 utils/ir-ctl/ir-ctl.c:449
 msgid "cannot use narrowband and wideband receiver at once"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:449 utils/ir-ctl/ir-ctl.c:452
+#: utils/ir-ctl/ir-ctl.c:459 utils/ir-ctl/ir-ctl.c:462
 #, c-format
 msgid "cannot parse carrier range `%s'"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:461
+#: utils/ir-ctl/ir-ctl.c:471
 #, c-format
 msgid "cannot parse timeout `%s'"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:471
+#: utils/ir-ctl/ir-ctl.c:481
 #, c-format
 msgid "cannot parse carrier `%s'"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:476
+#: utils/ir-ctl/ir-ctl.c:486
 #, c-format
 msgid "cannot parse emitters `%s'"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:481
+#: utils/ir-ctl/ir-ctl.c:491
 #, c-format
 msgid "invalid duty cycle `%s'"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:485 utils/ir-ctl/ir-ctl.c:501
+#: utils/ir-ctl/ir-ctl.c:495 utils/ir-ctl/ir-ctl.c:511
 msgid "send can not be combined with record or features option"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:544
+#: utils/ir-ctl/ir-ctl.c:554
 #, c-format
 msgid "%s: cannot open: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:551
+#: utils/ir-ctl/ir-ctl.c:561
 #, c-format
 msgid "%s: cannot stat: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:557
+#: utils/ir-ctl/ir-ctl.c:567
 #, c-format
 msgid "%s: not character device\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:564
+#: utils/ir-ctl/ir-ctl.c:574
 #, c-format
 msgid "%s: failed to get lirc features: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:577
+#: utils/ir-ctl/ir-ctl.c:587
 #, c-format
 msgid "warning: %s: failed to set carrier: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:579
+#: utils/ir-ctl/ir-ctl.c:589
 #, c-format
 msgid "warning: %s: set send carrier returned %d, should return 0\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:581
+#: utils/ir-ctl/ir-ctl.c:591
 #, c-format
 msgid "warning: %s: does not support setting send carrier\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:593
+#: utils/ir-ctl/ir-ctl.c:603
 #, c-format
 msgid "%s: failed to set recording timeout\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:595
+#: utils/ir-ctl/ir-ctl.c:605
 #, c-format
 msgid "%s: device does not support setting timeout\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:603
+#: utils/ir-ctl/ir-ctl.c:613
 #, c-format
 msgid "%s: failed to set wideband receiver %s\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:603 utils/ir-ctl/ir-ctl.c:613
-#: utils/ir-ctl/ir-ctl.c:622
+#: utils/ir-ctl/ir-ctl.c:613 utils/ir-ctl/ir-ctl.c:623
+#: utils/ir-ctl/ir-ctl.c:632
 msgid "on"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:603 utils/ir-ctl/ir-ctl.c:613
-#: utils/ir-ctl/ir-ctl.c:622
+#: utils/ir-ctl/ir-ctl.c:613 utils/ir-ctl/ir-ctl.c:623
+#: utils/ir-ctl/ir-ctl.c:632
 msgid "off"
-msgstr ""
-
-#: utils/ir-ctl/ir-ctl.c:605
-#, c-format
-msgid "%s: device does not have wideband receiver\n"
-msgstr ""
-
-#: utils/ir-ctl/ir-ctl.c:613
-#, c-format
-msgid "%s: failed to set carrier reports %s\n"
 msgstr ""
 
 #: utils/ir-ctl/ir-ctl.c:615
 #, c-format
+msgid "%s: device does not have wideband receiver\n"
+msgstr ""
+
+#: utils/ir-ctl/ir-ctl.c:623
+#, c-format
+msgid "%s: failed to set carrier reports %s\n"
+msgstr ""
+
+#: utils/ir-ctl/ir-ctl.c:625
+#, c-format
 msgid "%s: device cannot measure carrier\n"
-msgstr ""
-
-#: utils/ir-ctl/ir-ctl.c:622
-#, c-format
-msgid "%s: failed to set timeout reports %s: %m\n"
-msgstr ""
-
-#: utils/ir-ctl/ir-ctl.c:629
-#, c-format
-msgid "%s: failed to set low carrier range: %m\n"
 msgstr ""
 
 #: utils/ir-ctl/ir-ctl.c:632
 #, c-format
-msgid "%s: failed to set high carrier range: %m\n"
+msgid "%s: failed to set timeout reports %s: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:634
+#: utils/ir-ctl/ir-ctl.c:639
 #, c-format
-msgid "%s: device does not support setting receiver carrier range\n"
+msgid "%s: failed to set low carrier range: %m\n"
+msgstr ""
+
+#: utils/ir-ctl/ir-ctl.c:642
+#, c-format
+msgid "%s: failed to set high carrier range: %m\n"
 msgstr ""
 
 #: utils/ir-ctl/ir-ctl.c:644
 #, c-format
+msgid "%s: device does not support setting receiver carrier range\n"
+msgstr ""
+
+#: utils/ir-ctl/ir-ctl.c:654
+#, c-format
 msgid "warning: %s: failed to set duty cycle: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:646
+#: utils/ir-ctl/ir-ctl.c:656
 #, c-format
 msgid "warning: %s: does not support setting send duty cycle\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:653
+#: utils/ir-ctl/ir-ctl.c:663
 #, c-format
 msgid "warning: %s: failed to set send transmitters: only %d available\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:655
+#: utils/ir-ctl/ir-ctl.c:665
 #, c-format
 msgid "warning: %s: failed to set send transmitters: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:657
+#: utils/ir-ctl/ir-ctl.c:667
 #, c-format
 msgid "warning: %s: does not support setting send transmitters\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:673
+#: utils/ir-ctl/ir-ctl.c:683
 #, c-format
 msgid "warning: %s: device returned resolution of 0\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:675
+#: utils/ir-ctl/ir-ctl.c:685
 #, c-format
 msgid "warning: %s: unexpected error while retrieving resolution: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:678
+#: utils/ir-ctl/ir-ctl.c:688
 #, c-format
 msgid "Receive features %s:\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:680
+#: utils/ir-ctl/ir-ctl.c:690
 #, c-format
 msgid " - Device can receive raw IR\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:682
+#: utils/ir-ctl/ir-ctl.c:692
 #, c-format
 msgid " - Resolution %u nanoseconds\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:684
+#: utils/ir-ctl/ir-ctl.c:694
 #, c-format
 msgid " - Set receive carrier\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:686
+#: utils/ir-ctl/ir-ctl.c:696
 #, c-format
 msgid " - Use wideband receiver\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:688
+#: utils/ir-ctl/ir-ctl.c:698
 #, c-format
 msgid " - Can measure carrier\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:693
+#: utils/ir-ctl/ir-ctl.c:703
 #, c-format
 msgid ""
 "warning: %s: device supports setting recording timeout but "
 "LIRC_GET_MIN_TIMEOUT returns: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:696
+#: utils/ir-ctl/ir-ctl.c:706
 #, c-format
 msgid ""
 "warning: %s: device supports setting recording timeout but min timeout is 0\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:699
+#: utils/ir-ctl/ir-ctl.c:709
 #, c-format
 msgid ""
 "warning: %s: device supports setting recording timeout but "
 "LIRC_GET_MAX_TIMEOUT returns: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:702
+#: utils/ir-ctl/ir-ctl.c:712
 #, c-format
 msgid ""
 "warning: %s: device supports setting recording timeout but max timeout is 0\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:706
+#: utils/ir-ctl/ir-ctl.c:716
 #, c-format
 msgid " - Can set recording timeout min:%u microseconds max:%u microseconds\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:709
+#: utils/ir-ctl/ir-ctl.c:719
 #, c-format
 msgid " - Device cannot receive\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:712
+#: utils/ir-ctl/ir-ctl.c:722
 #, c-format
 msgid "Send features %s:\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:714
+#: utils/ir-ctl/ir-ctl.c:724
 #, c-format
 msgid " - Device can send raw IR\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:716
+#: utils/ir-ctl/ir-ctl.c:726
 #, c-format
 msgid " - Set carrier\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:718
+#: utils/ir-ctl/ir-ctl.c:728
 #, c-format
 msgid " - Set duty cycle\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:723
+#: utils/ir-ctl/ir-ctl.c:733
 #, c-format
 msgid ""
 "warning: %s: device supports setting transmitter mask but returns 0 as "
 "number of transmitters\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:725
+#: utils/ir-ctl/ir-ctl.c:735
 #, c-format
 msgid "warning: %s: device supports setting transmitter mask but returns: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:727
+#: utils/ir-ctl/ir-ctl.c:737
 #, c-format
 msgid " - Set transmitter (%d available)\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:730
+#: utils/ir-ctl/ir-ctl.c:740
 #, c-format
 msgid " - Device cannot send\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:740
+#: utils/ir-ctl/ir-ctl.c:750
 #, c-format
 msgid "%s: device cannot send raw ir\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:745
+#: utils/ir-ctl/ir-ctl.c:755
 #, c-format
 msgid "%s: failed to set send mode: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:750
+#: utils/ir-ctl/ir-ctl.c:760
 #, c-format
 msgid "warning: %s: carrier specified but overwritten on command line\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:763
+#: utils/ir-ctl/ir-ctl.c:773
 #, c-format
 msgid "%s: failed to send: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:768
+#: utils/ir-ctl/ir-ctl.c:778
 #, c-format
 msgid "warning: %s: sent %zd out %zd edges\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:788
+#: utils/ir-ctl/ir-ctl.c:798
 #, c-format
 msgid "%s: device cannot record raw ir\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:794
+#: utils/ir-ctl/ir-ctl.c:804
 #, c-format
 msgid "%s: failed to set record mode: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:801
+#: utils/ir-ctl/ir-ctl.c:811
 #, c-format
 msgid "%s: failed to open for writing: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:813
+#: utils/ir-ctl/ir-ctl.c:823
 #, c-format
 msgid "%s: failed read: %m\n"
 msgstr ""
 
-#: utils/ir-ctl/ir-ctl.c:818
+#: utils/ir-ctl/ir-ctl.c:828
 #, c-format
 msgid "%s: read returned %zd bytes\n"
 msgstr ""
@@ -1110,7 +1110,7 @@ msgid ""
 "On the options below, the arguments are:\n"
 "  ADAPTER      - the dvb adapter to control\n"
 "  FRONTEND     - the dvb frontend to control\n"
-"  SERVER       - server address whith is running the dvb5-daemon\n"
+"  SERVER       - server address which is running the dvb5-daemon\n"
 "  PORT         - server port used by the dvb5-daemon\n"
 msgstr ""
 
@@ -1144,8 +1144,8 @@ msgstr ""
 
 #: utils/dvb/dvb-fe-tool.c:61
 msgid ""
-"bips if signal quality is good. Also enables femon mode. Please notice that "
-"console bip should be enabled on your wm."
+"beeps if signal quality is good. Also enables femon mode. Please notice that "
+"console beep should be enabled on your wm."
 msgstr ""
 
 #: utils/dvb/dvb-fe-tool.c:63
@@ -1493,7 +1493,7 @@ msgid "search/look for a string inside the traffic"
 msgstr ""
 
 #: utils/dvb/dvbv5-zap.c:92
-msgid "monitors de DVB traffic"
+msgid "monitors the DVB traffic"
 msgstr ""
 
 #: utils/dvb/dvbv5-zap.c:93
