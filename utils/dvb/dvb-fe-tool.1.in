@@ -23,8 +23,8 @@ Use DVBv3 only
 Digital TV adapter to use. Default: 0.
 .TP
 \fB\-A\fR, \fB\-\-acoustical\fR
-bips if signal quality is good. Also enables femon mode. Please notice that
-console bip should be enabled on your wm.
+beeps if signal quality is good. Also enables femon mode. Please notice that
+console beep should be enabled on your wm.
 .TP
 \fB\-d\fR, \fB\-\-set\-delsys\fR=\fIPARAMS\fR
 Sets delivery system to the one specified at \fIPARAMS\fR. use \fIhelp\fR to

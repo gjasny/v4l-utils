@@ -1027,7 +1027,7 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 	if (!input_names)
 		return EINVAL;
 	if (input_names->next->next) {
-		fprintf(stderr, _("Found more than one input interface.This is currently unsupported\n"));
+		fprintf(stderr, _("Found more than one input interface. This is currently unsupported\n"));
 		return EINVAL;
 	}
 	if (debug)

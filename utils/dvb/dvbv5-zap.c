@@ -89,7 +89,7 @@ static const struct argp_option options[] = {
 	{"lna",		'w', N_("LNA (0, 1, -1)"),	0, N_("enable/disable/auto LNA power"), 0},
 	{"lnbf",	'l', N_("LNBf_type"),		0, N_("type of LNBf to use. 'help' lists the available ones"), 0},
 	{"search",	'L', N_("string"),		0, N_("search/look for a string inside the traffic"), 0},
-	{"monitor",	'm', NULL,			0, N_("monitors de DVB traffic"), 0},
+	{"monitor",	'm', NULL,			0, N_("monitors the DVB traffic"), 0},
 	{"output",	'o', N_("file"),		0, N_("output filename (use -o - for stdout)"), 0},
 	{"pat",		'p', NULL,			0, N_("add pat and pmt to TS recording (implies -r)"), 0},
 	{"all-pids",	'P', NULL,			0, N_("don't filter any pids. Instead, outputs all of them"), 0 },

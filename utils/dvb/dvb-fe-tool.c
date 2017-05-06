@@ -58,7 +58,7 @@ static const struct argp_option options[] = {
 	{"frontend",	'f',	N_("FRONTEND"),	0,	N_("dvb frontend"), 0},
 	{"set-delsys",	'd',	N_("PARAMS"),	0,	N_("set delivery system"), 0},
 	{"femon",	'm',	0,		0,	N_("monitors frontend stats on an streaming frontend"), 0},
-	{"acoustical",	'A',	0,		0,	N_("bips if signal quality is good. Also enables femon mode. Please notice that console bip should be enabled on your wm."), 0},
+	{"acoustical",	'A',	0,		0,	N_("beeps if signal quality is good. Also enables femon mode. Please notice that console beep should be enabled on your wm."), 0},
 #if 0 /* Currently not implemented */
 	{"set",		's',	N_("PARAMS"),	0,	N_("set frontend"), 0},
 #endif

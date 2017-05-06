@@ -348,7 +348,7 @@ static struct file *read_scancode(const char *name)
 	char *p = strchr(name, ':');
 
 	if (!p) {
-		fprintf(stderr, _("error: scancode '%s' most be in protocol:scancode format\n"), name);
+		fprintf(stderr, _("error: scancode '%s' must be in protocol:scancode format\n"), name);
 		return NULL;
 	}
 
