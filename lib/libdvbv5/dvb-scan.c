@@ -239,12 +239,6 @@ static int dvb_parse_section(struct dvb_v5_fe_parms_priv *parms,
 				return -1;
 			}
 			ext += i;
-
-			memset(ext, 0, sizeof(*ext));
-			ext->ext_id = h.id;
-			ext->first_section = h.section_id;
-			ext->last_section = h.last_section;
-			new = 1;
 		}
 	}
 
