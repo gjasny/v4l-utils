@@ -789,7 +789,7 @@ no_capture:
 
 	/* Note we always tell v4lconvert to optimize src fmt selection for
 	   our default fps, the only exception is the app explicitly selecting
-	   a fram erate using the S_PARM ioctl after a S_FMT */
+	   a frame rate using the S_PARM ioctl after a S_FMT */
 	if (devices[index].convert)
 		v4lconvert_set_fps(devices[index].convert, V4L2_DEFAULT_FPS);
 	v4l2_update_fps(index, &parm);

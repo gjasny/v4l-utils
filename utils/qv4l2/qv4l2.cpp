@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifdef ENABLE_ASLA
+#ifdef ENABLE_ALSA
 extern "C" {
 #include "alsa_stream.h"
 }
