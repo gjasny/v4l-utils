@@ -1746,7 +1746,7 @@ int v4l2_set_control(int fd, int cid, int value)
 		if (qctrl.type == V4L2_CTRL_TYPE_BOOLEAN)
 			ctrl.value = value ? 1 : 0;
 		else
-			ctrl.value = (value * (qctrl.maximum - qctrl.minimum) + 32767) / 65535 +
+			ctrl.value = ((long long) value * (qctrl.maximum - qctrl.minimum) + 32767) / 65535 +
 				qctrl.minimum;
 
 		result = v4lconvert_vidioc_s_ctrl(devices[index].convert, &ctrl);
@@ -1778,7 +1778,7 @@ int v4l2_get_control(int fd, int cid)
 	if (v4lconvert_vidioc_g_ctrl(devices[index].convert, &ctrl))
 		return -1;
 
-	return ((ctrl.value - qctrl.minimum) * 65535 +
+	return (((long long) ctrl.value - qctrl.minimum) * 65535 +
 			(qctrl.maximum - qctrl.minimum) / 2) /
 		(qctrl.maximum - qctrl.minimum);
 }
