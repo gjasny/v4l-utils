@@ -341,6 +341,7 @@ static int checkEdid(struct node *node, unsigned pad, bool is_input)
 	struct v4l2_edid edid;
 	__u8 data[256 * 128] = { 0 };
 	unsigned blocks;
+	bool has_edid;
 	int ret;
 
 	memset(edid.reserved, 0xff, sizeof(edid.reserved));
@@ -355,29 +356,39 @@ static int checkEdid(struct node *node, unsigned pad, bool is_input)
 		fail_on_test(doioctl(node, VIDIOC_S_EDID, &edid) != ENOTTY);
 		return 0;
 	}
-	fail_on_test(ret);
-	fail_on_test(check_0(edid.reserved, sizeof(edid.reserved)));
+	has_edid = ret == 0;
+	fail_on_test(ret && ret != EINVAL);
+	fail_on_test(!ret && check_0(edid.reserved, sizeof(edid.reserved)));
 	fail_on_test(edid.start_block);
 	fail_on_test(edid.blocks > 256);
+	fail_on_test(!has_edid && edid.blocks);
 	blocks = edid.blocks;
 	edid.edid = data;
-	fail_on_test(doioctl(node, VIDIOC_G_EDID, &edid));
+	ret = doioctl(node, VIDIOC_G_EDID, &edid);
+	if (!has_edid)
+		fail_on_test(ret != EINVAL);
+	else
+		fail_on_test(ret != 0 && ret != ENODATA);
 	fail_on_test(edid.blocks != blocks);
-	edid.start_block = edid.blocks ? edid.blocks : 1;
-	ret = doioctl(node, VIDIOC_G_EDID, &edid);
-	fail_on_test(ret != EINVAL && ret != ENODATA);
-	if (blocks > 1) {
-		edid.start_block = 1;
-		edid.blocks = blocks;
-		fail_on_test(doioctl(node, VIDIOC_G_EDID, &edid));
-		fail_on_test(edid.blocks != blocks - 1);
+
+	if (has_edid) {
+		edid.start_block = edid.blocks ? edid.blocks : 1;
+		ret = doioctl(node, VIDIOC_G_EDID, &edid);
+		fail_on_test(ret != EINVAL && ret != ENODATA);
+		if (blocks > 1) {
+			edid.start_block = 1;
+			edid.blocks = blocks;
+			fail_on_test(doioctl(node, VIDIOC_G_EDID, &edid));
+			fail_on_test(edid.blocks != blocks - 1);
+		}
+
+		edid.start_block = 0;
+		edid.blocks = 256;
+		ret = doioctl(node, VIDIOC_G_EDID, &edid);
+		fail_on_test(ret && ret != ENODATA);
+		if (!ret)
+			fail_on_test(edid.blocks != blocks);
 	}
-	edid.start_block = 0;
-	edid.blocks = 256;
-	ret = doioctl(node, VIDIOC_G_EDID, &edid);
-	fail_on_test(ret && ret != ENODATA);
-	if (!ret)
-		fail_on_test(edid.blocks != blocks);
 
 	memset(edid.reserved, 0xff, sizeof(edid.reserved));
 	edid.blocks = blocks;
@@ -385,6 +396,10 @@ static int checkEdid(struct node *node, unsigned pad, bool is_input)
 	if (ret == ENOTTY)
 		return 0;
 	fail_on_test(!is_input);
+	if (!has_edid) {
+		fail_on_test(ret != EINVAL);
+		return 0;
+	}
 	fail_on_test(ret);
 	fail_on_test(check_0(edid.reserved, sizeof(edid.reserved)));
 	if (blocks == 256)
@@ -412,11 +427,10 @@ int testEdid(struct node *node)
 		ret = doioctl(node, VIDIOC_S_INPUT, &input.index);
 		if (ret)
 			return fail("could not select input %d.\n", i);
-		if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
-			if (checkEdid(node, i, true))
-				return fail("EDID check failed for input %d.\n", i);
+		if (checkEdid(node, i, true))
+			return fail("EDID check failed for input %d.\n", i);
+		if (input.capabilities & V4L2_IN_CAP_DV_TIMINGS)
 			has_edid = true;
-		}
 	}
 
 	for (o = 0; o < node->outputs; o++) {
@@ -429,11 +443,10 @@ int testEdid(struct node *node)
 		ret = doioctl(node, VIDIOC_S_OUTPUT, &output.index);
 		if (ret)
 			return fail("could not select output %d.\n", o);
-		if (output.capabilities & V4L2_OUT_CAP_DV_TIMINGS) {
-			if (checkEdid(node, o, false))
-				return fail("EDID check failed for output %d.\n", o);
+		if (checkEdid(node, o, false))
+			return fail("EDID check failed for output %d.\n", o);
+		if (output.capabilities & V4L2_OUT_CAP_DV_TIMINGS)
 			has_edid = true;
-		}
 	}
 	return has_edid ? 0 : ENOTTY;
 }
