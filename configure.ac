@@ -486,28 +486,28 @@ cat <<EOF
 compile time options summary
 ============================
 
-    Host OS             : $host_os
-    X11                 : $x11_pkgconfig
-    GL                  : $gl_pkgconfig
-    glu                 : $glu_pkgconfig
-    libjpeg             : $have_jpeg
-    libudev             : $have_libudev
-    pthread             : $have_pthread
-    QT version          : $QT_VERSION
-    ALSA support        : $USE_ALSA
+    Host OS                    : $host_os
+    X11                        : $x11_pkgconfig
+    GL                         : $gl_pkgconfig
+    glu                        : $glu_pkgconfig
+    libjpeg                    : $have_jpeg
+    libudev                    : $have_libudev
+    pthread                    : $have_pthread
+    QT version                 : $QT_VERSION
+    ALSA support               : $USE_ALSA
 
-    build dynamic libs  : $enable_shared
-    build static libs   : $enable_static
+    build dynamic libs         : $enable_shared
+    build static libs          : $enable_static
 
-    gconv               : $USE_GCONV
+    gconv                      : $USE_GCONV
 
-    libv4l              : $USE_LIBV4L
-    v4l_plugins         : $USE_V4L_PLUGINS
-    v4l_wrappers        : $USE_V4L_WRAPPERS
-    libdvbv5            : $USE_LIBDVBV5
-    dvbv5-daemon        : $USE_DVBV5_REMOTE
-    v4lutils            : $USE_V4LUTILS
-    qv4l2               : $USE_QV4L2
-    v4l2-ctrl           : $USE_V4L2_CTL
-    v4l2-compliance     : $USE_V4L2_COMPLIANCE
+    dynamic libv4l             : $USE_LIBV4L
+    v4l_plugins                : $USE_V4L_PLUGINS
+    v4l_wrappers               : $USE_V4L_WRAPPERS
+    libdvbv5                   : $USE_LIBDVBV5
+    dvbv5-daemon               : $USE_DVBV5_REMOTE
+    v4lutils                   : $USE_V4LUTILS
+    qv4l2                      : $USE_QV4L2
+    v4l2-ctl uses libv4l       : $USE_V4L2_CTL
+    v4l2-compliance uses libv4l: $USE_V4L2_COMPLIANCE
 EOF
