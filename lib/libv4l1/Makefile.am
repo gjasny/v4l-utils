@@ -1,4 +1,4 @@
-if WITH_LIBV4L
+if WITH_DYN_LIBV4L
 lib_LTLIBRARIES = libv4l1.la
 include_HEADERS = ../include/libv4l1.h ../include/libv4l1-videodev.h
 pkgconfig_DATA = libv4l1.pc

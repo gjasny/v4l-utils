@@ -1,4 +1,4 @@
-if WITH_LIBV4L
+if WITH_DYN_LIBV4L
 lib_LTLIBRARIES = libv4lconvert.la
 libv4lconvertpriv_PROGRAMS = ov511-decomp ov518-decomp
 include_HEADERS = ../include/libv4lconvert.h

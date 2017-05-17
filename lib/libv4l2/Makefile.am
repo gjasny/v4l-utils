@@ -1,4 +1,4 @@
-if WITH_LIBV4L
+if WITH_DYN_LIBV4L
 lib_LTLIBRARIES = libv4l2.la
 include_HEADERS = ../include/libv4l2.h ../include/libv4l-plugin.h
 pkgconfig_DATA = libv4l2.pc
