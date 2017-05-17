@@ -150,7 +150,7 @@ AC_HEADER_MAJOR
 
 # Check host os
 case "$host_os" in
-  linux*)
+  *linux*)
     linux_os="yes"
     ;;
   *freebsd*)
