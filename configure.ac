@@ -471,8 +471,8 @@ AM_COND_IF([WITH_QV4L2], [USE_QV4L2="yes"], [USE_QV4L2="no"])
 AM_COND_IF([WITH_V4L_PLUGINS], [USE_V4L_PLUGINS="yes"], [USE_V4L_PLUGINS="no"])
 AM_COND_IF([WITH_V4L_WRAPPERS], [USE_V4L_WRAPPERS="yes"], [USE_V4L_WRAPPERS="no"])
 AM_COND_IF([WITH_GCONV], [USE_GCONV="yes"], [USE_GCONV="no"])
-AM_COND_IF([WITH_V4L2_CTL_LIBV4L], [USE_V4L2_CTL="yes"], [USE_V4L2_CTL="no"])
-AM_COND_IF([WITH_V4L2_COMPLIANCE_LIBV4L], [USE_V4L2_COMPLIANCE="yes"], [USE_V4L2_COMPLIANCE="no"])
+AM_COND_IF([WITH_V4L2_CTL_LIBV4L], [USE_V4L2_CTL_LIBV4L="yes"], [USE_V4L2_CTL_LIBV4L="no"])
+AM_COND_IF([WITH_V4L2_COMPLIANCE_LIBV4L], [USE_V4L2_COMPLIANCE_LIBV4L="yes"], [USE_V4L2_COMPLIANCE_LIBV4L="no"])
 AS_IF([test "x$alsa_pkgconfig" = "xtrue"], [USE_ALSA="yes"], [USE_ALSA="no"])
 
 AC_OUTPUT
@@ -507,6 +507,6 @@ compile time options summary
     dvbv5-daemon               : $USE_DVBV5_REMOTE
     v4lutils                   : $USE_V4LUTILS
     qv4l2                      : $USE_QV4L2
-    v4l2-ctl uses libv4l       : $USE_V4L2_CTL
-    v4l2-compliance uses libv4l: $USE_V4L2_COMPLIANCE
+    v4l2-ctl uses libv4l       : $USE_V4L2_CTL_LIBV4L
+    v4l2-compliance uses libv4l: $USE_V4L2_COMPLIANCE_LIBV4L
 EOF
