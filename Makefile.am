@@ -1,10 +1,17 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = v4l-utils-po libdvbv5-po lib
+SUBDIRS = v4l-utils-po libdvbv5-po
+
+if WITH_LIBV4L
+SUBDIRS += lib
+endif
 
 if WITH_V4LUTILS
-SUBDIRS += utils contrib
+SUBDIRS += utils
+if WITH_LIBV4L
+SUBDIRS += contrib
+endif
 endif
 
 EXTRA_DIST = android-config.h bootstrap.sh doxygen_libdvbv5.cfg include COPYING.libv4l \
