@@ -41,6 +41,8 @@
 #include <config.h>
 #endif
 
+#include "cec-ctl.h"
+
 #define CEC_MAX_ARGS 16
 
 #define xstr(s) str(s)
@@ -668,6 +670,7 @@ enum Option {
 	OptReplyToFollowers,
 	OptTimeout,
 	OptMonitorTime,
+	OptMonitorPin,
 	OptListUICommands,
 	OptRcTVProfile1,
 	OptRcTVProfile2,
@@ -730,6 +733,7 @@ static struct option long_options[] = {
 	{ "clear", no_argument, 0, OptClear },
 	{ "monitor", no_argument, 0, OptMonitor },
 	{ "monitor-all", no_argument, 0, OptMonitorAll },
+	{ "monitor-pin", no_argument, 0, OptMonitorPin },
 	{ "monitor-time", required_argument, 0, OptMonitorTime },
 	{ "no-reply", no_argument, 0, OptNoReply },
 	{ "to", required_argument, 0, OptTo },
@@ -786,6 +790,7 @@ static void usage(void)
 	       "  -C, --clear              Clear all logical addresses\n"
 	       "  -m, --monitor            Monitor CEC traffic\n"
 	       "  -M, --monitor-all        Monitor all CEC traffic\n"
+	       "  --monitor-pin            Monitor low-level CEC pin\n"
 	       "  --monitor-time=<secs>    Monitor for <secs> seconds (default is forever)\n"
 	       "  -n, --no-reply           Don't wait for a reply\n"
 	       "  -t, --to=<la>            Send message to the given logical address\n"
@@ -936,7 +941,7 @@ static const char *la_type2s(unsigned type)
 	}
 }
 
-static const char *la2s(unsigned la)
+const char *la2s(unsigned la)
 {
 	switch (la & 0xf) {
 	case 0:
@@ -1123,7 +1128,7 @@ static const char *vendor2s(unsigned vendor)
 	}
 }
 
-static std::string ts2s(__u64 ts)
+std::string ts2s(__u64 ts)
 {
 	std::string s;
 	struct timespec now;
@@ -1228,9 +1233,11 @@ static void log_unknown_msg(const struct cec_msg *msg)
 
 static void log_event(struct cec_event &ev)
 {
+	bool is_high = ev.event == CEC_EVENT_PIN_HIGH;
 	__u16 pa;
 
-	printf("\n");
+	if (ev.event != CEC_EVENT_PIN_LOW && ev.event != CEC_EVENT_PIN_HIGH)
+		printf("\n");
 	if (ev.flags & CEC_EVENT_FL_DROPPED_EVENTS)
 		printf("(Note: events were lost)\n");
 	if (ev.flags & CEC_EVENT_FL_INITIAL_STATE)
@@ -1246,6 +1253,13 @@ static void log_event(struct cec_event &ev)
 	case CEC_EVENT_LOST_MSGS:
 		printf("Event: Lost Messages\n");
 		break;
+	case CEC_EVENT_PIN_LOW:
+	case CEC_EVENT_PIN_HIGH:
+		if (ev.flags & CEC_EVENT_FL_INITIAL_STATE)
+			printf("Event: CEC Pin %s\n", is_high ? "High" : "Low");
+
+		log_event_pin(is_high, ev.ts);
+		return;
 	default:
 		printf("Event: Unknown (0x%x)\n", ev.event);
 		break;
@@ -2091,7 +2105,7 @@ int main(int argc, char **argv)
 		}
 	}
 	if (node.num_log_addrs == 0) {
-		if (options[OptMonitor] || options[OptMonitorAll])
+		if (options[OptMonitor] || options[OptMonitorAll] || options[OptMonitorPin])
 			goto skip_la;
 		return 0;
 	}
@@ -2141,9 +2155,10 @@ int main(int argc, char **argv)
 	fflush(stdout);
 
 skip_la:
-	if (options[OptMonitor] || options[OptMonitorAll]) {
+	if (options[OptMonitor] || options[OptMonitorAll] || options[OptMonitorPin]) {
 		__u32 monitor = options[OptMonitorAll] ?
-			CEC_MODE_MONITOR_ALL : CEC_MODE_MONITOR;
+			CEC_MODE_MONITOR_ALL : (options[OptMonitorPin] ? CEC_MODE_MONITOR_PIN :
+						CEC_MODE_MONITOR);
 		fd_set rd_fds;
 		fd_set ex_fds;
 		int fd = node.fd;
@@ -2155,6 +2170,11 @@ skip_la:
 			printf("Monitor All mode is not supported, falling back to regular monitoring\n");
 			monitor = CEC_MODE_MONITOR;
 		}
+		if (!(node.caps & CEC_CAP_MONITOR_PIN) &&
+		    monitor == CEC_MODE_MONITOR_PIN) {
+			printf("Monitor Pin mode is not supported, falling back to regular monitoring\n");
+			monitor = CEC_MODE_MONITOR;
+		}
 		if (doioctl(&node, CEC_S_MODE, &monitor)) {
 			printf("Selecting monitor mode failed, you may have to run this as root.\n");
 			goto skip_mon;
@@ -2162,8 +2182,9 @@ skip_la:
 
 		fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 		t = time(NULL) + monitor_time;
-		while (1) {
-			struct timeval tv = { t - time(NULL), 0 };
+		while (!monitor_time || time(NULL) < t) {
+			struct timeval tv = { 1, 0 };
+			bool pin_event = false;
 			int res;
 
 			fflush(stdout);
@@ -2171,8 +2192,8 @@ skip_la:
 			FD_ZERO(&ex_fds);
 			FD_SET(fd, &rd_fds);
 			FD_SET(fd, &ex_fds);
-			res = select(fd + 1, &rd_fds, NULL, &ex_fds, monitor_time ? &tv : NULL);
-			if (res <= 0)
+			res = select(fd + 1, &rd_fds, NULL, &ex_fds, &tv);
+			if (res < 0)
 				break;
 			if (FD_ISSET(fd, &rd_fds)) {
 				struct cec_msg msg = { };
@@ -2207,7 +2228,24 @@ skip_la:
 
 				if (doioctl(&node, CEC_DQEVENT, &ev))
 					continue;
+				if (ev.event == CEC_EVENT_PIN_LOW ||
+				    ev.event == CEC_EVENT_PIN_HIGH)
+					pin_event = true;
 				log_event(ev);
+			}
+			if (!pin_event && eob_ts) {
+				struct timespec ts;
+				__u64 ts64;
+
+				clock_gettime(CLOCK_MONOTONIC, &ts);
+				ts64 = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+				if (ts64 >= eob_ts_max) {
+					struct cec_event ev = {
+						.ts = eob_ts,
+						.event = CEC_EVENT_PIN_HIGH,
+					};
+					log_event(ev);
+				}
 			}
 		}
 	}
