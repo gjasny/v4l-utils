@@ -510,6 +510,7 @@ compile time options summary
 
     gconv                      : $USE_GCONV
 
+    libv4l                     : $USE_LIBV4L
     dynamic libv4l             : $USE_DYN_LIBV4L
     v4l_plugins                : $USE_V4L_PLUGINS
     v4l_wrappers               : $USE_V4L_WRAPPERS
