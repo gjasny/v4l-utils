@@ -897,6 +897,10 @@ int cec_named_ioctl(struct node *node, const char *name,
 			printf("\n\t\t\tRx Timestamp: %s Approximate response time: %u ms",
 			       ts2s(msg->rx_ts).c_str(),
 			       response_time_ms(msg));
+		if ((msg->tx_status & CEC_TX_STATUS_OK) &&
+		    (msg->tx_status & (CEC_TX_STATUS_ARB_LOST | CEC_TX_STATUS_NACK |
+				       CEC_TX_STATUS_LOW_DRIVE | CEC_TX_STATUS_ERROR)))
+			printf("\n\t\t\tStatus: %s", status2s(*msg).c_str());
 		printf("\n");
 	}
 
