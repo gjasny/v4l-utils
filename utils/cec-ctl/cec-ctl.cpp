@@ -2119,7 +2119,7 @@ int main(int argc, char **argv)
 				ts2s(msg.rx_ts).c_str(),
 				response_time_ms(msg));
 		printf("\n");
-		if (!cec_msg_status_is_ok(&msg))
+		if (!cec_msg_status_is_ok(&msg) || show_info)
 			printf("\t%s\n", status2s(msg).c_str());
 	}
 	fflush(stdout);
