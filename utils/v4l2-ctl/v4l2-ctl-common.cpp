@@ -313,67 +313,68 @@ static void print_qctrl(int fd, struct v4l2_query_ext_ctrl *queryctrl,
 	qmenu.id = queryctrl->id;
 	switch (queryctrl->type) {
 	case V4L2_CTRL_TYPE_INTEGER:
-		printf("%31s (int)    : min=%lld max=%lld step=%lld default=%lld",
-				s.c_str(),
+		printf("%31s %#8.8x (int)    : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(), queryctrl->id,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->step, queryctrl->default_value);
 		break;
 	case V4L2_CTRL_TYPE_INTEGER64:
-		printf("%31s (int64)  : min=%lld max=%lld step=%lld default=%lld",
-				s.c_str(),
+		printf("%31s %#8.8x (int64)  : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(), queryctrl->id,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->step, queryctrl->default_value);
 		break;
 	case V4L2_CTRL_TYPE_STRING:
-		printf("%31s (str)    : min=%lld max=%lld step=%lld",
-				s.c_str(),
+		printf("%31s %#8.8x (str)    : min=%lld max=%lld step=%lld",
+				s.c_str(), queryctrl->id,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->step);
 		break;
 	case V4L2_CTRL_TYPE_BOOLEAN:
-		printf("%31s (bool)   : default=%lld",
-				s.c_str(), queryctrl->default_value);
+		printf("%31s %#8.8x (bool)   : default=%lld",
+				s.c_str(), queryctrl->id, queryctrl->default_value);
 		break;
 	case V4L2_CTRL_TYPE_MENU:
-		printf("%31s (menu)   : min=%lld max=%lld default=%lld",
-				s.c_str(),
+		printf("%31s %#8.8x (menu)   : min=%lld max=%lld default=%lld",
+				s.c_str(), queryctrl->id,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->default_value);
 		break;
 	case V4L2_CTRL_TYPE_INTEGER_MENU:
-		printf("%31s (intmenu): min=%lld max=%lld default=%lld",
-				s.c_str(),
+		printf("%31s %#8.8x (intmenu): min=%lld max=%lld default=%lld",
+				s.c_str(), queryctrl->id,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->default_value);
 		break;
 	case V4L2_CTRL_TYPE_BUTTON:
-		printf("%31s (button) :", s.c_str());
+		printf("%31s %#8.8x (button) :", s.c_str(), queryctrl->id);
 		break;
 	case V4L2_CTRL_TYPE_BITMASK:
-		printf("%31s (bitmask): max=0x%08llx default=0x%08llx",
-				s.c_str(), queryctrl->maximum,
+		printf("%31s %#8.8x (bitmask): max=0x%08llx default=0x%08llx",
+				s.c_str(), queryctrl->id, queryctrl->maximum,
 				queryctrl->default_value);
 		break;
 	case V4L2_CTRL_TYPE_U8:
-		printf("%31s (u8)     : min=%lld max=%lld step=%lld default=%lld",
-				s.c_str(),
+		printf("%31s %#8.8x (u8)     : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(), queryctrl->id,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->step, queryctrl->default_value);
 		break;
 	case V4L2_CTRL_TYPE_U16:
-		printf("%31s (u16)    : min=%lld max=%lld step=%lld default=%lld",
-				s.c_str(),
+		printf("%31s %#8.8x (u16)    : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(), queryctrl->id,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->step, queryctrl->default_value);
 		break;
 	case V4L2_CTRL_TYPE_U32:
-		printf("%31s (u32)    : min=%lld max=%lld step=%lld default=%lld",
-				s.c_str(),
+		printf("%31s %#8.8x (u32)    : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(), queryctrl->id,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->step, queryctrl->default_value);
 		break;
 	default:
-		printf("%31s (unknown): type=%x", s.c_str(), queryctrl->type);
+		printf("%31s %#8.8x (unknown): type=%x",
+				s.c_str(), queryctrl->id, queryctrl->type);
 		break;
 	}
 	if (queryctrl->nr_of_dims == 0) {
