@@ -667,6 +667,7 @@ enum Option {
 	OptNoRC,
 	OptReplyToFollowers,
 	OptTimeout,
+	OptMonitorTime,
 	OptListUICommands,
 	OptRcTVProfile1,
 	OptRcTVProfile2,
@@ -729,6 +730,7 @@ static struct option long_options[] = {
 	{ "clear", no_argument, 0, OptClear },
 	{ "monitor", no_argument, 0, OptMonitor },
 	{ "monitor-all", no_argument, 0, OptMonitorAll },
+	{ "monitor-time", required_argument, 0, OptMonitorTime },
 	{ "no-reply", no_argument, 0, OptNoReply },
 	{ "to", required_argument, 0, OptTo },
 	{ "from", required_argument, 0, OptFrom },
@@ -784,6 +786,7 @@ static void usage(void)
 	       "  -C, --clear              Clear all logical addresses\n"
 	       "  -m, --monitor            Monitor CEC traffic\n"
 	       "  -M, --monitor-all        Monitor all CEC traffic\n"
+	       "  --monitor-time=<secs>    Monitor for <secs> seconds (default is forever)\n"
 	       "  -n, --no-reply           Don't wait for a reply\n"
 	       "  -t, --to=<la>            Send message to the given logical address\n"
 	       "  -f, --from=<la>          Send message from the given logical address\n"
@@ -1473,6 +1476,7 @@ int main(int argc, char **argv)
 	msg_vec msgs;
 	char short_options[26 * 2 * 2 + 1];
 	__u32 timeout = 1000;
+	__u32 monitor_time = 0;
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	__u16 phys_addr;
 	__u8 from = 0, to = 0;
@@ -1535,6 +1539,9 @@ int main(int argc, char **argv)
 			break;
 		case OptTimeout:
 			timeout = strtoul(optarg, NULL, 0);
+			break;
+		case OptMonitorTime:
+			monitor_time = strtoul(optarg, NULL, 0);
 			break;
 		case OptNoReply:
 			reply = false;
@@ -2133,6 +2140,7 @@ skip_la:
 		fd_set rd_fds;
 		fd_set ex_fds;
 		int fd = node.fd;
+		time_t t;
 
 		printf("\n");
 		if (!(node.caps & CEC_CAP_MONITOR_ALL) &&
@@ -2146,7 +2154,9 @@ skip_la:
 		}
 
 		fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+		t = time(NULL) + monitor_time;
 		while (1) {
+			struct timeval tv = { t - time(NULL), 0 };
 			int res;
 
 			fflush(stdout);
@@ -2154,7 +2164,7 @@ skip_la:
 			FD_ZERO(&ex_fds);
 			FD_SET(fd, &rd_fds);
 			FD_SET(fd, &ex_fds);
-			res = select(fd + 1, &rd_fds, NULL, &ex_fds, NULL);
+			res = select(fd + 1, &rd_fds, NULL, &ex_fds, monitor_time ? &tv : NULL);
 			if (res <= 0)
 				break;
 			if (FD_ISSET(fd, &rd_fds)) {
