@@ -536,6 +536,7 @@ struct parse_event key_events[] = {
 	{"KEY_FASTREVERSE", 0x275},
 	{"KEY_SLOWREVERSE", 0x276},
 	{"KEY_DATA", 0x277},
+	{"KEY_ONSCREEN_KEYBOARD", 0x278},
 	{"BTN_TRIGGER_HAPPY", 0x2c0},
 	{"BTN_TRIGGER_HAPPY1", 0x2c0},
 	{"BTN_TRIGGER_HAPPY2", 0x2c1},
