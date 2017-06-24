@@ -852,6 +852,8 @@ static std::string caps2s(unsigned caps)
 		s += "\t\tRemote Control Support\n";
 	if (caps & CEC_CAP_MONITOR_ALL)
 		s += "\t\tMonitor All\n";
+	if (caps & CEC_CAP_NEEDS_HPD)
+		s += "\t\tNeeds HPD\n";
 	return s;
 }
 
