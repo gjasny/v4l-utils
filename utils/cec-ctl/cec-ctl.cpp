@@ -1857,6 +1857,9 @@ int main(int argc, char **argv)
 	node.caps = caps.capabilities;
 	node.available_log_addrs = caps.available_log_addrs;
 
+	if (options[OptPhysAddr] && !(node.caps & CEC_CAP_PHYS_ADDR))
+		fprintf(stderr, "The CEC adapter doesn't allow setting the physical address manually, ignore this option.\n\n");
+
 	unsigned flags = 0;
 
 	if (options[OptOsdName])
