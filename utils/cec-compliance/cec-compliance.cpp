@@ -921,9 +921,6 @@ int cec_named_ioctl(struct node *node, const char *name,
 		printf("\t\t%s: Sequence: %u Rx Timestamp: %s Length: %u\n",
 		       opname.c_str(), msg->sequence, ts2s(msg->rx_ts).c_str(), msg->len);
 
-	if (retval < 0)
-		app_result = -1;
-
 	if (!retval) {
 		__u8 la = cec_msg_initiator(msg);
 
