@@ -887,14 +887,25 @@ int cec_named_ioctl(struct node *node, const char *name,
 
 	retval = ioctl(node->fd, request, parm);
 
-	e = retval == 0 ? 0 : errno;
-	if (options[OptTrace])
-		printf("\t\t%s returned %d (%s)\n",
-			name, retval, strerror(e));
+	if (request == CEC_RECEIVE) {
+		opcode = cec_msg_opcode(msg);
+		opname = opcode2s(msg);
+	}
 
-	if (request == CEC_TRANSMIT && show_info) {
-		printf("\t\t%s: Sequence: %u Tx Timestamp: %s",
-		       opname.c_str(), msg->sequence, ts2s(msg->tx_ts).c_str());
+	e = retval == 0 ? 0 : errno;
+	if (options[OptTrace] && (e || !show_info ||
+			(request != CEC_TRANSMIT && request != CEC_RECEIVE))) {
+		if (request == CEC_TRANSMIT)
+			printf("\t\t%s: %s returned %d (%s)\n",
+				opname.c_str(), name, retval, strerror(e));
+		else
+			printf("\t\t%s returned %d (%s)\n",
+				name, retval, strerror(e));
+	}
+
+	if (!retval && request == CEC_TRANSMIT && show_info) {
+		printf("\t\t%s: Sequence: %u Tx Timestamp: %s Length: %u",
+		       opname.c_str(), msg->sequence, ts2s(msg->tx_ts).c_str(), msg->len);
 		if (msg->rx_ts)
 			printf("\n\t\t\tRx Timestamp: %s Approximate response time: %u ms",
 			       ts2s(msg->rx_ts).c_str(),
@@ -905,6 +916,10 @@ int cec_named_ioctl(struct node *node, const char *name,
 			printf("\n\t\t\tStatus: %s", status2s(*msg).c_str());
 		printf("\n");
 	}
+
+	if (!retval && request == CEC_RECEIVE && show_info)
+		printf("\t\t%s: Sequence: %u Rx Timestamp: %s Length: %u\n",
+		       opname.c_str(), msg->sequence, ts2s(msg->rx_ts).c_str(), msg->len);
 
 	if (retval < 0)
 		app_result = -1;
