@@ -1287,12 +1287,6 @@ static int testBasicSelection(struct node *node, unsigned type, unsigned target)
 	if (node->frmsizes_count.find(pixfmt) != node->frmsizes_count.end())
 		fail_on_test(node->frmsizes_count[pixfmt] > 1);
 
-	// _MPLANE types are not allowed
-	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-	else
-		sel.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel) != EINVAL);
 	// Check handling of invalid type.
 	sel.type = 0xff;
 	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel) != EINVAL);
@@ -1312,7 +1306,6 @@ static int testBasicCrop(struct node *node, unsigned type)
 	struct v4l2_selection sel_def;
 	struct v4l2_selection sel_bounds;
 	int s_sel_ret = EINVAL;
-	int ret;
 
 	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel_crop));
 	fail_on_test(!sel_crop.r.width || !sel_crop.r.height);
@@ -1335,15 +1328,6 @@ static int testBasicCrop(struct node *node, unsigned type)
 	sel_crop.target = V4L2_SEL_TGT_CROP;
 	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel_crop));
 
-	// _MPLANE types are not allowed
-	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		sel_crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-	else
-		sel_crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-	ret = doioctl(node, VIDIOC_S_SELECTION, &sel_crop);
-	if (ret == ENOTTY)
-		s_sel_ret = ret;
-	fail_on_test(ret != s_sel_ret);
 	// Check handling of invalid type.
 	sel_crop.type = 0xff;
 	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != s_sel_ret);
@@ -1477,15 +1461,6 @@ static int testBasicCompose(struct node *node, unsigned type)
 	sel_compose.target = V4L2_SEL_TGT_COMPOSE;
 	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel_compose));
 
-	// _MPLANE types are not allowed
-	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		sel_compose.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-	else
-		sel_compose.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-	ret = doioctl(node, VIDIOC_S_SELECTION, &sel_compose);
-	if (ret == ENOTTY)
-		s_sel_ret = ret;
-	fail_on_test(ret != s_sel_ret);
 	// Check handling of invalid type.
 	sel_compose.type = 0xff;
 	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != s_sel_ret);

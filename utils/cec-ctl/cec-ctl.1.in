@@ -45,6 +45,10 @@ including directed messages between other CEC devices. This option requires root
 Not all CEC devices support this monitoring mode. It will fallback to regular
 monitoring mode if it is not supported.
 .TP
+\fB\--monitor-time\fR=\fI<secs>\fR
+Monitor for the given number of seconds, then exit. The default (0) is to monitor
+forever.
+.TP
 \fB\-n\fR, \fB\-\-no\-reply\fR
 By default when sending a CEC message that expects a reply this utility will
 wait for that reply. With this option it will just send it without waiting
@@ -58,14 +62,43 @@ Send message from the given logical address. It is only necessary to use this
 option if multiple logical addresses are claimed. By default the first assigned
 logical address will be used.
 .TP
+\fB\-r\fR, \fB\-\-show\-raw\fR
+Show the raw CEC message in hex.
+.TP
+\fB\-s\fR, \fB\-\-skip\-info\fR
+Skip the Driver Info output section.
+.TP
 \fB\-S\fR, \fB\-\-show\-topology\fR
 Show the CEC topology, detecting which other CEC devices are on the CEC bus.
+.TP
+\fB\-P\fR, \fB\-\-poll\fR
+Send a poll message.
 .TP
 \fB\-T\fR, \fB\-\-trace\fR
 Trace all called ioctls. Useful for debugging.
 .TP
+\fB\-w\fR, \fB\-\-wall\-clock\fR
+Show timestamps as wall-clock time.
+.TP
 \fB\-\-cec\-version\-1.4\fR
 Use CEC Version 1.4 instead of 2.0 (the default).
+.TP
+\fB\-\-allow\-unreg\-fallback\fR
+Allow fallback to Unregistered if all logical addresses are claimed.
+By default the adapter will remain unconfigured.
+.TP
+\fB\-\-no\-rc\-passthrough\fR
+Disable the RC passthrough. By default remote control CEC messages are
+passed on as input keystrokes, but this can be block by using this option.
+.TP
+\fB\-\-reply\-to\-followers\fR
+The reply will be sent to followers as well. By default the reply will only
+go to the follower that initiated the CEC message. But if you have other
+followers running as well, then by giving this option they will also receive
+the reply.
+.TP
+\fB\-\-timeout\fR=\fI<ms>\fR
+Set the reply timeout in milliseconds (default is 1000 ms).
 .TP
 \fB\-\-list\-ui\-commands\fR
 List all UI commands that can be used with option --user-control-pressed.
