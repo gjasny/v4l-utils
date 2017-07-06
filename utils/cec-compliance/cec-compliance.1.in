@@ -83,6 +83,9 @@ Trace all called ioctls. Useful for debugging.
 \fB\-h\fR, \fB\-\-help\fR
 Prints the help message.
 .TP
+\fB\-w\fR, \fB\-\-wall\-clock\fR
+Show timestamps as wall-clock time.
+.TP
 \fB\-n\fR, \fB\-\-no\-warnings\fR
 Turn off warning messages.
 .TP
@@ -91,6 +94,12 @@ As initiator test the remote logical address <la> or all LAs if no LA was given.
 .TP
 \fB\-i\fR, \fB\-\-interactive\fR
 Interactive mode when doing remote tests.
+.TP
+\fB\-R\fR, \fB\-\-reply\-threshold\fR=\fI<timeout>\fR
+Warn if replies take longer than this threshold (default 1000ms).
+.TP
+\fB\-t\fR, \fB\-\-timeout\fR=\fI<secs>\fR
+Set the standby/resume timeout to the given number of seconds. Default is 60s.
 .TP
 \fB\-A\fR, \fB\-\-test\-adapter\fR
 Test the CEC adapter API
