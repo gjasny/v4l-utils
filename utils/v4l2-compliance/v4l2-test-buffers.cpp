@@ -303,7 +303,7 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 				if (seq.field_nr) {
 					if ((int)g_sequence() != seq.last_seq)
 						warn("got sequence number %u, expected %u\n",
-							g_sequence(), seq.last_seq + 1);
+							g_sequence(), seq.last_seq);
 				} else {
 					fail_on_test((int)g_sequence() == seq.last_seq + 1);
 					if ((int)g_sequence() != seq.last_seq + 1)
