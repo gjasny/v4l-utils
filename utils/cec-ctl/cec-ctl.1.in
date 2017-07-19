@@ -45,6 +45,12 @@ including directed messages between other CEC devices. This option requires root
 Not all CEC devices support this monitoring mode. It will fallback to regular
 monitoring mode if it is not supported.
 .TP
+\fB\-\-monitor\-pin\fR
+Start monitoring and analyzing the low-level CEC pin transitions. This is only
+possible if the device has the CEC_CAP_MONITOR_PIN capability. This option requires root.
+When in pin monitoring mode all 0->1 and 1->0 CEC pin transitions are monitored and
+analysed. This is effectively a cheap CEC bus analyzer.
+.TP
 \fB\--monitor-time\fR=\fI<secs>\fR
 Monitor for the given number of seconds, then exit. The default (0) is to monitor
 forever.
