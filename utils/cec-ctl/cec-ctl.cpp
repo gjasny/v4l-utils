@@ -857,6 +857,8 @@ static std::string caps2s(unsigned caps)
 		s += "\t\tMonitor All\n";
 	if (caps & CEC_CAP_NEEDS_HPD)
 		s += "\t\tNeeds HPD\n";
+	if (caps & CEC_CAP_MONITOR_PIN)
+		s += "\t\tMonitor Pin\n";
 	return s;
 }
 
@@ -1229,6 +1231,8 @@ static void log_event(struct cec_event &ev)
 	__u16 pa;
 
 	printf("\n");
+	if (ev.flags & CEC_EVENT_FL_DROPPED_EVENTS)
+		printf("(Note: events were lost)\n");
 	if (ev.flags & CEC_EVENT_FL_INITIAL_STATE)
 		printf("Initial ");
 	switch (ev.event) {

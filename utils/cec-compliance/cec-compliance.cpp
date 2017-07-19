@@ -261,6 +261,8 @@ static std::string caps2s(unsigned caps)
 		s += "\t\tMonitor All\n";
 	if (caps & CEC_CAP_NEEDS_HPD)
 		s += "\t\tNeeds HPD\n";
+	if (caps & CEC_CAP_MONITOR_PIN)
+		s += "\t\tMonitor Pin\n";
 	return s;
 }
 

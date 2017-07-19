@@ -176,6 +176,8 @@ static void log_event(struct cec_event &ev)
 {
 	__u16 pa;
 
+	if (ev.flags & CEC_EVENT_FL_DROPPED_EVENTS)
+		printf("(Note: events were lost)\n");
 	if (ev.flags & CEC_EVENT_FL_INITIAL_STATE)
 		printf("Initial ");
 	switch (ev.event) {
