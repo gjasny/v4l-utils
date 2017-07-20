@@ -1522,5 +1522,9 @@ int main(int argc, char **argv)
 	test_close(fd);
 	if (out_device)
 		test_close(out_fd);
-	exit(app_result);
+
+	// --all sets --silent to avoid ioctl errors to be shown when an ioctl
+	// is not implemented by the driver. Which is fine, but we shouldn't
+	// return an application error in that specific case.
+	exit(options[OptAll] ? 0 : app_result);
 }
