@@ -2241,9 +2241,10 @@ skip_la:
 				ts64 = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
 				if (ts64 >= eob_ts_max) {
 					struct cec_event ev = {
-						.ts = eob_ts,
-						.event = CEC_EVENT_PIN_HIGH,
+						eob_ts,
+						CEC_EVENT_PIN_HIGH
 					};
+
 					log_event(ev);
 				}
 			}
