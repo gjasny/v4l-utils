@@ -794,9 +794,11 @@ QString CaptureWinGLEngine::codeTransformToLinear()
 			       "   r = pow(max(r, 0.0), m2);"
 			       "   g = pow(max(g, 0.0), m2);"
 			       "   b = pow(max(b, 0.0), m2);"
-			       "   r = pow(max(r - c1, 0.0) / (c2 - c3 * r), m1);"
-			       "   g = pow(max(g - c1, 0.0) / (c2 - c3 * g), m1);"
-			       "   b = pow(max(b - c1, 0.0) / (c2 - c3 * b), m1);");
+			       // The factor 100 is because SMPTE-2084 maps to 0-10000 cd/m^2
+			       // whereas other transfer functions map to 0-100 cd/m^2.
+			       "   r = pow(max(r - c1, 0.0) / (c2 - c3 * r), m1) * 100.0;"
+			       "   g = pow(max(g - c1, 0.0) / (c2 - c3 * g), m1) * 100.0;"
+			       "   b = pow(max(b - c1, 0.0) / (c2 - c3 * b), m1) * 100.0;");
 	case V4L2_XFER_FUNC_NONE:
 		return "";
 	case V4L2_XFER_FUNC_709:
