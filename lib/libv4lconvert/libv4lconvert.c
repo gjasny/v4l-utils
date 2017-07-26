@@ -122,8 +122,10 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_JPEG,		 0,	 7,	 7,	0 },
 	{ V4L2_PIX_FMT_PJPG,		 0,	 7,	 7,	1 },
 	{ V4L2_PIX_FMT_JPGL,		 0,	 7,	 7,	1 },
+#ifdef HAVE_LIBV4LCONVERT_HELPERS
 	{ V4L2_PIX_FMT_OV511,		 0,	 7,	 7,	1 },
 	{ V4L2_PIX_FMT_OV518,		 0,	 7,	 7,	1 },
+#endif
 	/* uncompressed bayer */
 	{ V4L2_PIX_FMT_SBGGR8,		 8,	 8,	 8,	0 },
 	{ V4L2_PIX_FMT_SGBRG8,		 8,	 8,	 8,	0 },
@@ -278,7 +280,9 @@ void v4lconvert_destroy(struct v4lconvert_data *data)
 	if (data->cinfo_initialized)
 		jpeg_destroy_decompress(&data->cinfo);
 #endif // HAVE_JPEG
+#ifdef HAVE_LIBV4LCONVERT_HELPERS
 	v4lconvert_helper_cleanup(data);
+#endif
 	free(data->convert1_buf);
 	free(data->convert2_buf);
 	free(data->rotate90_buf);
@@ -833,6 +837,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 				return -1;
 			}
 			break;
+#ifdef HAVE_LIBV4LCONVERT_HELPERS
 		case V4L2_PIX_FMT_OV511:
 			if (v4lconvert_helper_decompress(data, LIBV4LCONVERT_PRIV_DIR "/ov511-decomp",
 						src, src_size, d, d_size, width, height, yvu)) {
@@ -849,6 +854,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 				return -1;
 			}
 			break;
+#endif
 		}
 
 		switch (dest_pix_fmt) {
