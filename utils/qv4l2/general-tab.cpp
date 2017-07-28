@@ -2186,6 +2186,11 @@ void GeneralTab::updateFrameSize()
 	m_discreteSizes = false;
 	if (m_frameSize)
 		m_frameSize->setEnabled(false);
+	if (!m_frameWidth) {
+		updateFrameInterval();
+		return;
+	}
+
 	m_frameWidth->setEnabled(!m_haveBuffers);
 	m_frameWidth->blockSignals(true);
 	m_frameWidth->setMinimum(frmsize.stepwise.min_width);
