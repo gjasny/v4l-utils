@@ -1487,6 +1487,104 @@ static inline unsigned response_time_ms(const struct cec_msg &msg)
 	return 0;
 }
 
+static void monitor(struct node &node, __u32 monitor_time)
+{
+	__u32 monitor = options[OptMonitorAll] ?
+		CEC_MODE_MONITOR_ALL : (options[OptMonitorPin] ? CEC_MODE_MONITOR_PIN :
+					CEC_MODE_MONITOR);
+	fd_set rd_fds;
+	fd_set ex_fds;
+	int fd = node.fd;
+	time_t t;
+
+	printf("\n");
+	if (!(node.caps & CEC_CAP_MONITOR_ALL) &&
+	    monitor == CEC_MODE_MONITOR_ALL) {
+		printf("Monitor All mode is not supported, falling back to regular monitoring\n");
+		monitor = CEC_MODE_MONITOR;
+	}
+	if (!(node.caps & CEC_CAP_MONITOR_PIN) &&
+	    monitor == CEC_MODE_MONITOR_PIN) {
+		printf("Monitor Pin mode is not supported, falling back to regular monitoring\n");
+		monitor = CEC_MODE_MONITOR;
+	}
+	if (doioctl(&node, CEC_S_MODE, &monitor)) {
+		printf("Selecting monitor mode failed, you may have to run this as root.\n");
+		return;
+	}
+
+	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+	t = time(NULL) + monitor_time;
+
+	while (!monitor_time || time(NULL) < t) {
+		struct timeval tv = { 1, 0 };
+		bool pin_event = false;
+		int res;
+
+		fflush(stdout);
+		FD_ZERO(&rd_fds);
+		FD_ZERO(&ex_fds);
+		FD_SET(fd, &rd_fds);
+		FD_SET(fd, &ex_fds);
+		res = select(fd + 1, &rd_fds, NULL, &ex_fds, &tv);
+		if (res < 0)
+			break;
+		if (FD_ISSET(fd, &rd_fds)) {
+			struct cec_msg msg = { };
+			__u8 from, to;
+
+			res = doioctl(&node, CEC_RECEIVE, &msg);
+			if (res == ENODEV) {
+				printf("Device was disconnected.\n");
+				break;
+			}
+			if (res)
+				continue;
+
+			from = cec_msg_initiator(&msg);
+			to = cec_msg_destination(&msg);
+			bool transmitted = msg.tx_status != 0;
+			printf("%s %s to %s (%d to %d): ",
+			       transmitted ? "Transmitted by" : "Received from",
+			       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
+			log_msg(&msg);
+			if (options[OptShowRaw])
+				log_raw_msg(&msg);
+			if (show_info && transmitted)
+				printf("\tSequence: %u Tx Timestamp: %s\n",
+				       msg.sequence, ts2s(msg.tx_ts).c_str());
+			else if (show_info && !transmitted)
+				printf("\tSequence: %u Rx Timestamp: %s\n",
+				       msg.sequence, ts2s(msg.rx_ts).c_str());
+		}
+		if (FD_ISSET(fd, &ex_fds)) {
+			struct cec_event ev;
+
+			if (doioctl(&node, CEC_DQEVENT, &ev))
+				continue;
+			if (ev.event == CEC_EVENT_PIN_LOW ||
+			    ev.event == CEC_EVENT_PIN_HIGH)
+				pin_event = true;
+			log_event(ev);
+		}
+		if (!pin_event && eob_ts) {
+			struct timespec ts;
+			__u64 ts64;
+
+			clock_gettime(CLOCK_MONOTONIC, &ts);
+			ts64 = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+			if (ts64 >= eob_ts_max) {
+				struct cec_event ev = {
+					eob_ts,
+					CEC_EVENT_PIN_HIGH
+				};
+
+				log_event(ev);
+			}
+		}
+	}
+}
+
 int main(int argc, char **argv)
 {
 	const char *device = "/dev/cec0";	/* -d device */
@@ -2155,104 +2253,9 @@ int main(int argc, char **argv)
 	fflush(stdout);
 
 skip_la:
-	if (options[OptMonitor] || options[OptMonitorAll] || options[OptMonitorPin]) {
-		__u32 monitor = options[OptMonitorAll] ?
-			CEC_MODE_MONITOR_ALL : (options[OptMonitorPin] ? CEC_MODE_MONITOR_PIN :
-						CEC_MODE_MONITOR);
-		fd_set rd_fds;
-		fd_set ex_fds;
-		int fd = node.fd;
-		time_t t;
-
-		printf("\n");
-		if (!(node.caps & CEC_CAP_MONITOR_ALL) &&
-		    monitor == CEC_MODE_MONITOR_ALL) {
-			printf("Monitor All mode is not supported, falling back to regular monitoring\n");
-			monitor = CEC_MODE_MONITOR;
-		}
-		if (!(node.caps & CEC_CAP_MONITOR_PIN) &&
-		    monitor == CEC_MODE_MONITOR_PIN) {
-			printf("Monitor Pin mode is not supported, falling back to regular monitoring\n");
-			monitor = CEC_MODE_MONITOR;
-		}
-		if (doioctl(&node, CEC_S_MODE, &monitor)) {
-			printf("Selecting monitor mode failed, you may have to run this as root.\n");
-			goto skip_mon;
-		}
-
-		fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-		t = time(NULL) + monitor_time;
-		while (!monitor_time || time(NULL) < t) {
-			struct timeval tv = { 1, 0 };
-			bool pin_event = false;
-			int res;
-
-			fflush(stdout);
-			FD_ZERO(&rd_fds);
-			FD_ZERO(&ex_fds);
-			FD_SET(fd, &rd_fds);
-			FD_SET(fd, &ex_fds);
-			res = select(fd + 1, &rd_fds, NULL, &ex_fds, &tv);
-			if (res < 0)
-				break;
-			if (FD_ISSET(fd, &rd_fds)) {
-				struct cec_msg msg = { };
-				__u8 from, to;
-
-				res = doioctl(&node, CEC_RECEIVE, &msg);
-				if (res == ENODEV) {
-					printf("Device was disconnected.\n");
-					break;
-				}
-				if (res)
-					continue;
-
-				from = cec_msg_initiator(&msg);
-				to = cec_msg_destination(&msg);
-				bool transmitted = msg.tx_status != 0;
-				printf("%s %s to %s (%d to %d): ",
-				       transmitted ? "Transmitted by" : "Received from",
-				       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
-				log_msg(&msg);
-				if (options[OptShowRaw])
-					log_raw_msg(&msg);
-				if (show_info && transmitted)
-					printf("\tSequence: %u Tx Timestamp: %s\n",
-					       msg.sequence, ts2s(msg.tx_ts).c_str());
-				else if (show_info && !transmitted)
-					printf("\tSequence: %u Rx Timestamp: %s\n",
-					       msg.sequence, ts2s(msg.rx_ts).c_str());
-			}
-			if (FD_ISSET(fd, &ex_fds)) {
-				struct cec_event ev;
-
-				if (doioctl(&node, CEC_DQEVENT, &ev))
-					continue;
-				if (ev.event == CEC_EVENT_PIN_LOW ||
-				    ev.event == CEC_EVENT_PIN_HIGH)
-					pin_event = true;
-				log_event(ev);
-			}
-			if (!pin_event && eob_ts) {
-				struct timespec ts;
-				__u64 ts64;
-
-				clock_gettime(CLOCK_MONOTONIC, &ts);
-				ts64 = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
-				if (ts64 >= eob_ts_max) {
-					struct cec_event ev = {
-						eob_ts,
-						CEC_EVENT_PIN_HIGH
-					};
-
-					log_event(ev);
-				}
-			}
-		}
-	}
+	if (options[OptMonitor] || options[OptMonitorAll] || options[OptMonitorPin])
+		monitor(node, monitor_time);
 	fflush(stdout);
-
-skip_mon:
 	close(fd);
 	return 0;
 }
