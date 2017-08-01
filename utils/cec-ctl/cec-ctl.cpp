@@ -674,6 +674,8 @@ enum Option {
 	OptTimeout,
 	OptMonitorTime,
 	OptMonitorPin,
+	OptRecordPin,
+	OptPlaybackPin,
 	OptListUICommands,
 	OptRcTVProfile1,
 	OptRcTVProfile2,
@@ -702,6 +704,8 @@ struct node {
 	unsigned caps;
 	unsigned available_log_addrs;
 	unsigned num_log_addrs;
+	__u16 log_addr_mask;
+	__u16 phys_addr;
 	__u8 log_addr[CEC_MAX_LOG_ADDRS];
 };
 
@@ -738,6 +742,8 @@ static struct option long_options[] = {
 	{ "monitor-all", no_argument, 0, OptMonitorAll },
 	{ "monitor-pin", no_argument, 0, OptMonitorPin },
 	{ "monitor-time", required_argument, 0, OptMonitorTime },
+	{ "record-pin", required_argument, 0, OptRecordPin },
+	{ "playback-pin", required_argument, 0, OptPlaybackPin },
 	{ "no-reply", no_argument, 0, OptNoReply },
 	{ "to", required_argument, 0, OptTo },
 	{ "from", required_argument, 0, OptFrom },
@@ -795,6 +801,8 @@ static void usage(void)
 	       "  -M, --monitor-all        Monitor all CEC traffic\n"
 	       "  --monitor-pin            Monitor low-level CEC pin\n"
 	       "  --monitor-time=<secs>    Monitor for <secs> seconds (default is forever)\n"
+	       "  --record-pin=<to>        Record low-level CEC pin changes to the file <to>\n"
+	       "  --playback-pin=<from>    Playback low-level CEC pin changes from the file <from>\n"
 	       "  -n, --no-reply           Don't wait for a reply\n"
 	       "  -t, --to=<la>            Send message to the given logical address\n"
 	       "  -f, --from=<la>          Send message from the given logical address\n"
@@ -1486,30 +1494,53 @@ static inline unsigned response_time_ms(const struct cec_msg &msg)
 	return 0;
 }
 
-static void monitor(struct node &node, __u32 monitor_time)
+static void monitor(struct node &node, __u32 monitor_time, const char *record_pin)
 {
-	__u32 monitor = options[OptMonitorAll] ?
-		CEC_MODE_MONITOR_ALL : (options[OptMonitorPin] ? CEC_MODE_MONITOR_PIN :
-					CEC_MODE_MONITOR);
+	__u32 monitor = CEC_MODE_MONITOR;
 	fd_set rd_fds;
 	fd_set ex_fds;
 	int fd = node.fd;
+	FILE *frecord = NULL;
 	time_t t;
+	
+	if (options[OptMonitorAll])
+		monitor = CEC_MODE_MONITOR_ALL;
+	else if (options[OptMonitorPin] || options[OptRecordPin])
+		monitor = CEC_MODE_MONITOR_PIN;
 
 	printf("\n");
-	if (!(node.caps & CEC_CAP_MONITOR_ALL) &&
-	    monitor == CEC_MODE_MONITOR_ALL) {
+	if (!(node.caps & CEC_CAP_MONITOR_ALL) && monitor == CEC_MODE_MONITOR_ALL) {
 		printf("Monitor All mode is not supported, falling back to regular monitoring\n");
 		monitor = CEC_MODE_MONITOR;
 	}
-	if (!(node.caps & CEC_CAP_MONITOR_PIN) &&
-	    monitor == CEC_MODE_MONITOR_PIN) {
-		printf("Monitor Pin mode is not supported, falling back to regular monitoring\n");
-		monitor = CEC_MODE_MONITOR;
+	if (!(node.caps & CEC_CAP_MONITOR_PIN) && monitor == CEC_MODE_MONITOR_PIN) {
+		fprintf(stderr, "Monitor Pin mode is not supported\n");
+		usage();
+		exit(1);
 	}
+
 	if (doioctl(&node, CEC_S_MODE, &monitor)) {
 		printf("Selecting monitor mode failed, you may have to run this as root.\n");
 		return;
+	}
+
+	if (record_pin) {
+		frecord = fopen(record_pin, "w+");
+		if (frecord == NULL) {
+			fprintf(stderr, "Failed to open %s: %s\n", record_pin,
+				strerror(errno));
+			exit(1);
+		}
+		fprintf(frecord, "# cec-ctl --record-pin\n");
+		fprintf(frecord, "# version 1\n");
+		fprintf(frecord, "# start_monotonic %llu\n",
+			start_monotonic.tv_sec * 1000000000ULL + start_monotonic.tv_nsec);
+		fprintf(frecord, "# start_timeofday %llu\n",
+			start_timeofday.tv_sec * 1000000ULL + start_timeofday.tv_usec);
+		fprintf(frecord, "# log_addr_mask 0x%04x\n", node.log_addr_mask);
+		fprintf(frecord, "# phys_addr %x.%x.%x.%x\n",
+		       node.phys_addr >> 12, (node.phys_addr >> 8) & 0xf,
+		       (node.phys_addr >> 4) & 0xf, node.phys_addr & 0xf);
 	}
 
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
@@ -1564,7 +1595,13 @@ static void monitor(struct node &node, __u32 monitor_time)
 			if (ev.event == CEC_EVENT_PIN_LOW ||
 			    ev.event == CEC_EVENT_PIN_HIGH)
 				pin_event = true;
-			log_event(ev);
+			if (pin_event && frecord) {
+				fprintf(frecord, "%llu %d\n",
+					ev.ts, ev.event == CEC_EVENT_PIN_HIGH);
+				fflush(frecord);
+			}
+			if (!pin_event || options[OptMonitorPin])
+				log_event(ev);
 		}
 		if (!pin_event && eob_ts) {
 			struct timespec ts;
@@ -1578,10 +1615,87 @@ static void monitor(struct node &node, __u32 monitor_time)
 					CEC_EVENT_PIN_HIGH
 				};
 
-				log_event(ev);
+				if (frecord) {
+					fprintf(frecord, "%llu %d\n",
+						ev.ts, ev.event == CEC_EVENT_PIN_HIGH);
+					fflush(frecord);
+				}
+				if (options[OptMonitorPin])
+					log_event(ev);
 			}
 		}
 	}
+	if (frecord)
+		fclose(frecord);
+}
+
+static void playback(const char *playback_pin)
+{
+	FILE *fplayback = fopen(playback_pin, "r");
+	unsigned long long tv;
+	unsigned version;
+	unsigned log_addr_mask;
+	unsigned pa1, pa2, pa3, pa4;
+	unsigned line = 1;
+	char s[100];
+
+	if (fplayback == NULL) {
+		fprintf(stderr, "Failed to open %s: %s\n", playback_pin,
+			strerror(errno));
+		exit(1);
+	}
+	if (!fgets(s, sizeof(s), fplayback) ||
+	    strcmp(s, "# cec-ctl --record-pin\n"))
+		goto err;
+	line++;
+	if (!fgets(s, sizeof(s), fplayback) ||
+	    sscanf(s, "# version %u\n", &version) != 1 ||
+	    version != 1)
+		goto err;
+	line++;
+	if (!fgets(s, sizeof(s), fplayback) ||
+	    sscanf(s, "# start_monotonic %llu\n", &tv) != 1)
+		goto err;
+	start_monotonic.tv_sec = tv / 1000000000ULL;
+	start_monotonic.tv_nsec = tv % 1000000000ULL;
+	line++;
+	if (!fgets(s, sizeof(s), fplayback) ||
+	    sscanf(s, "# start_timeofday %llu\n", &tv) != 1)
+		goto err;
+	start_timeofday.tv_sec = tv / 1000000ULL;
+	start_timeofday.tv_usec = tv % 1000000ULL;
+	line++;
+	if (!fgets(s, sizeof(s), fplayback) ||
+	    sscanf(s, "# log_addr_mask 0x%04x\n", &log_addr_mask) != 1)
+		goto err;
+	line++;
+	if (!fgets(s, sizeof(s), fplayback) ||
+	    sscanf(s, "# phys_addr %x.%x.%x.%x\n", &pa1, &pa2, &pa3, &pa4) != 4)
+		goto err;
+	line++;
+
+	fprintf(stderr, "Physical Address:     %x.%x.%x.%x\n", pa1, pa2, pa3, pa4);
+	fprintf(stderr, "Logical Address Mask: 0x%04x\n\n", log_addr_mask);
+
+	while (fgets(s, sizeof(s), fplayback)) {
+		struct cec_event ev = { };
+		unsigned high;
+
+		if (sscanf(s, "%llu %d\n", &ev.ts, &high) != 2 || high > 1) {
+			fprintf(stderr, "malformed data at line %d\n", line);
+			break;
+		}
+		ev.event = high ? CEC_EVENT_PIN_HIGH : CEC_EVENT_PIN_LOW;
+		log_event(ev);
+		line++;
+	}
+
+	fclose(fplayback);
+	return;
+
+err:
+	fprintf(stderr, "Not a pin recording file: malformed data at line %d\n", line);
+	exit(1);
 }
 
 int main(int argc, char **argv)
@@ -1599,6 +1713,8 @@ int main(int argc, char **argv)
 	__u8 rc_tv = 0;
 	__u8 rc_src = 0;
 	const char *osd_name = "";
+	const char *record_pin = NULL;
+	const char *playback_pin = NULL;
 	bool reply = true;
 	int idx = 0;
 	int fd = -1;
@@ -1657,6 +1773,12 @@ int main(int argc, char **argv)
 			break;
 		case OptMonitorTime:
 			monitor_time = strtoul(optarg, NULL, 0);
+			break;
+		case OptRecordPin:
+			record_pin = optarg;
+			break;
+		case OptPlaybackPin:
+			playback_pin = optarg;
 			break;
 		case OptNoReply:
 			reply = false;
@@ -1924,6 +2046,23 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	if (record_pin && playback_pin) {
+		fprintf(stderr, "--record-pin and --playback-pin options cannot be combined.\n\n");
+		usage();
+		return 1;
+	}
+
+	if (playback_pin && options[OptSetDevice]) {
+		fprintf(stderr, "--device and --playback-pin options cannot be combined.\n\n");
+		usage();
+		return 1;
+	}
+
+	if (playback_pin) {
+		playback(playback_pin);
+		return 0;
+	}
+
 	if (rc_tv && rc_src) {
 		fprintf(stderr, "--rc-tv- and --rc-src- options cannot be combined.\n\n");
 		usage();
@@ -2135,6 +2274,8 @@ int main(int argc, char **argv)
 	struct cec_log_addrs laddrs = { };
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	node.num_log_addrs = laddrs.num_log_addrs;
+	node.log_addr_mask = laddrs.log_addr_mask;
+	node.phys_addr = phys_addr;
 	if (!options[OptSkipInfo]) {
 		printf("\tLogical Address Mask       : 0x%04x\n", laddrs.log_addr_mask);
 		printf("\tCEC Version                : %s\n", version2s(laddrs.cec_version));
@@ -2205,7 +2346,8 @@ int main(int argc, char **argv)
 		}
 	}
 	if (node.num_log_addrs == 0) {
-		if (options[OptMonitor] || options[OptMonitorAll] || options[OptMonitorPin])
+		if (options[OptMonitor] || options[OptMonitorAll] ||
+		    options[OptMonitorPin] || options[OptRecordPin])
 			goto skip_la;
 		return 0;
 	}
@@ -2255,8 +2397,9 @@ int main(int argc, char **argv)
 	fflush(stdout);
 
 skip_la:
-	if (options[OptMonitor] || options[OptMonitorAll] || options[OptMonitorPin])
-		monitor(node, monitor_time);
+	if (options[OptMonitor] || options[OptMonitorAll] ||
+	    options[OptMonitorPin] || options[OptRecordPin])
+		monitor(node, monitor_time, record_pin);
 	fflush(stdout);
 	close(fd);
 	return 0;

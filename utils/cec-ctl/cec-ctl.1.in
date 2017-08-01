@@ -3,7 +3,7 @@
 cec-ctl - An application to control cec devices
 .SH SYNOPSIS
 .B cec-ctl
-[\fI-h\fR] [\fI-d <dev>\fR] [many other options]
+[\fI\-h\fR] [\fI\-d <dev>\fR] [many other options]
 .SH DESCRIPTION
 The cec-ctl tool is used to control cec devices. It is able to control almost
 any aspect of such devices covering the full CEC API.
@@ -51,9 +51,16 @@ possible if the device has the CEC_CAP_MONITOR_PIN capability. This option requi
 When in pin monitoring mode all 0->1 and 1->0 CEC pin transitions are monitored and
 analysed. This is effectively a cheap CEC bus analyzer.
 .TP
-\fB\--monitor-time\fR=\fI<secs>\fR
+\fB\-\-monitor\-time\fR=\fI<secs>\fR
 Monitor for the given number of seconds, then exit. The default (0) is to monitor
 forever.
+.TP
+\fB\-\-record\-pin\fR=\fI<to>\fR
+Record the CEC pin events to the given file. This can be played back for analysis later
+via the \fB\-\-playback\-pin\fR option.
+.TP
+\fB\-\-playback\-pin\fR=\fI<from>\fR
+Read and playback the CEC pin events from the given file.
 .TP
 \fB\-n\fR, \fB\-\-no\-reply\fR
 By default when sending a CEC message that expects a reply this utility will
@@ -107,7 +114,7 @@ the reply.
 Set the reply timeout in milliseconds (default is 1000 ms).
 .TP
 \fB\-\-list\-ui\-commands\fR
-List all UI commands that can be used with option --user-control-pressed.
+List all UI commands that can be used with option \fB\-\-control\-pressed\fR.
 .TP
 \fB\-\-tv\fR
 Configure the CEC adapter as a TV.
@@ -130,7 +137,7 @@ Configure the CEC adapter as a processor device.
 \fB\-\-switch\fR
 Configure the CEC adapter as a pure CEC switch.
 .TP
-\fB\-\-cdc-only\fR
+\fB\-\-cdc\-only\fR
 Configure the CEC adapter as a CDC-only device.
 .TP
 \fB\-\-unregistered\fR
