@@ -48,6 +48,9 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
+static struct timespec start_monotonic;
+static struct timeval start_timeofday;
+
 struct cec_enum_values {
 	const char *type_name;
 	__u8 value;
@@ -1131,8 +1134,6 @@ static const char *vendor2s(unsigned vendor)
 std::string ts2s(__u64 ts)
 {
 	std::string s;
-	struct timespec now;
-	struct timeval tv;
 	struct timeval sub;
 	struct timeval res;
 	__u64 diff;
@@ -1143,12 +1144,10 @@ std::string ts2s(__u64 ts)
 		sprintf(buf, "%llu.%03llus", ts / 1000000000, (ts % 1000000000) / 1000000);
 		return buf;
 	}
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	gettimeofday(&tv, NULL);
-	diff = now.tv_sec * 1000000000ULL + now.tv_nsec - ts;
+	diff = ts - start_monotonic.tv_sec * 1000000000ULL - start_monotonic.tv_nsec;
 	sub.tv_sec = diff / 1000000000ULL;
 	sub.tv_usec = (diff % 1000000000ULL) / 1000;
-	timersub(&tv, &sub, &res);
+	timeradd(&start_timeofday, &sub, &res);
 	t = res.tv_sec;
 	s = ctime(&t);
 	s = s.substr(0, s.length() - 6);
@@ -1957,6 +1956,9 @@ int main(int argc, char **argv)
 		usage();
 		return 1;
 	}
+
+	clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
+	gettimeofday(&start_timeofday, NULL);
 
 	if ((fd = open(device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device,
