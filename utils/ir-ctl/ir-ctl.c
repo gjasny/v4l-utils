@@ -689,7 +689,7 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 	if (features & LIRC_CAN_REC_MODE2) {
 		printf(_(" - Device can receive raw IR\n"));
 		if (resolution)
-			printf(_(" - Resolution %u nanoseconds\n"), resolution);
+			printf(_(" - Resolution %u microseconds\n"), resolution);
 		if (features & LIRC_CAN_SET_REC_CARRIER)
 			printf(_(" - Set receive carrier\n"));
 		if (features & LIRC_CAN_USE_WIDEBAND_RECEIVER)
