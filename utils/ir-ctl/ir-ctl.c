@@ -152,7 +152,7 @@ static int strtoint(const char *p, const char *unit)
 static bool strtoscancode(const char *p, unsigned *ret)
 {
 	char *end;
-	long arg = strtol(p, &end, 0);
+	long long arg = strtoll(p, &end, 0);
 	if (end == NULL || end[0] != 0)
 		return false;
 
