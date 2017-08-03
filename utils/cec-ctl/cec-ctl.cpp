@@ -1634,6 +1634,7 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 static void analyze(const char *analyze_pin)
 {
 	FILE *fanalyze = fopen(analyze_pin, "r");
+	struct cec_event ev = { };
 	unsigned long tv_sec, tv_nsec, tv_usec;
 	unsigned version;
 	unsigned log_addr_mask;
@@ -1682,7 +1683,6 @@ static void analyze(const char *analyze_pin)
 	printf("Logical Address Mask: 0x%04x\n\n", log_addr_mask);
 
 	while (fgets(s, sizeof(s), fanalyze)) {
-		struct cec_event ev = { };
 		unsigned high;
 
 		if (sscanf(s, "%lu.%09lu %d\n", &tv_sec, &tv_nsec, &high) != 3 || high > 1) {
@@ -1694,6 +1694,10 @@ static void analyze(const char *analyze_pin)
 		log_event(ev);
 		line++;
 	}
+
+	tv_sec++;
+	ev.ts = tv_sec * 1000000000ULL + tv_nsec;
+	log_event(ev);
 
 	fclose(fanalyze);
 	return;

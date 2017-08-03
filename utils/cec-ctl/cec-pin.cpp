@@ -193,7 +193,7 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts, __u64 usecs,
 			s = find_cdc_opcode_name(byte);
 		}
 		printf("%10.06f: rx 0x%02x%s%s%s (%s) %s\n",
-		       (ev_ts / 1000 - usecs) / 1000000.0, byte,
+		       (ev_ts / 1000 - usecs - low_usecs + CEC_TIM_DATA_BIT_TOTAL) / 1000000.0, byte,
 		       eom ? " EOM" : "", (bcast ^ bit) ? " NACK" : " ACK",
 		       bcast ? " (broadcast)" : "",
 		       ts2s(ev_ts - usecs * 1000).c_str(),
@@ -210,7 +210,7 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts, __u64 usecs,
 		if ((!eom && ack) && low_usecs + usecs_min > CEC_TIM_DATA_BIT_TOTAL_MAX)
 			printf("%10.06f: data bit %d total time too long (%.2f ms)\n",
 				ts, rx_bit - 1, (low_usecs + usecs_min) / 1000.0);
-		if (eom || is_high)
+		if (eom || is_high || low_usecs + usecs_min > CEC_TIM_DATA_BIT_TOTAL_MAX)
 			state = is_high ? CEC_ST_IDLE : CEC_ST_RECEIVE_START_BIT;
 		if (state == CEC_ST_IDLE)
 			printf("\n");
@@ -322,6 +322,7 @@ void log_event_pin(bool is_high, __u64 ev_ts)
 		if (is_high)
 			return;
 	}
+	cec_pin_debug(ev_ts, (ev_ts - last_ts) / 1000, was_high, is_high);
 	if (show_info) {
 		printf("%10.06f: ", ts);
 		if (last_change_ts && is_high && was_high)
@@ -342,7 +343,6 @@ void log_event_pin(bool is_high, __u64 ev_ts)
 		if (!is_high)
 			last_1_to_0_ts = ev_ts;
 	}
-	cec_pin_debug(ev_ts, (ev_ts - last_ts) / 1000, was_high, is_high);
 	if (!is_high) {
 		float usecs = (ev_ts - last_ts) / 1000;
 		unsigned periods = usecs / CEC_TIM_DATA_BIT_TOTAL;
