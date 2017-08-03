@@ -1533,10 +1533,10 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 		}
 		fprintf(fstore, "# cec-ctl --store-pin\n");
 		fprintf(fstore, "# version 1\n");
-		fprintf(fstore, "# start_monotonic %llu\n",
-			start_monotonic.tv_sec * 1000000000ULL + start_monotonic.tv_nsec);
-		fprintf(fstore, "# start_timeofday %llu\n",
-			start_timeofday.tv_sec * 1000000ULL + start_timeofday.tv_usec);
+		fprintf(fstore, "# start_monotonic %lu.%09lu\n",
+			start_monotonic.tv_sec, start_monotonic.tv_nsec);
+		fprintf(fstore, "# start_timeofday %lu.%06lu\n",
+			start_timeofday.tv_sec, start_timeofday.tv_usec);
 		fprintf(fstore, "# log_addr_mask 0x%04x\n", node.log_addr_mask);
 		fprintf(fstore, "# phys_addr %x.%x.%x.%x\n",
 		       node.phys_addr >> 12, (node.phys_addr >> 8) & 0xf,
@@ -1596,8 +1596,9 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 			    ev.event == CEC_EVENT_PIN_HIGH)
 				pin_event = true;
 			if (pin_event && fstore) {
-				fprintf(fstore, "%llu %d\n",
-					ev.ts, ev.event == CEC_EVENT_PIN_HIGH);
+				fprintf(fstore, "%llu.%09llu %d\n",
+					ev.ts / 1000000000, ev.ts % 1000000000,
+					ev.event == CEC_EVENT_PIN_HIGH);
 				fflush(fstore);
 			}
 			if (!pin_event || options[OptMonitorPin])
@@ -1616,8 +1617,9 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 				};
 
 				if (fstore) {
-					fprintf(fstore, "%llu %d\n",
-						ev.ts, ev.event == CEC_EVENT_PIN_HIGH);
+					fprintf(fstore, "%llu.%09llu %d\n",
+						ev.ts / 1000000000, ev.ts % 1000000000,
+						ev.event == CEC_EVENT_PIN_HIGH);
 					fflush(fstore);
 				}
 				if (options[OptMonitorPin])
@@ -1632,7 +1634,7 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 static void analyze(const char *analyze_pin)
 {
 	FILE *fanalyze = fopen(analyze_pin, "r");
-	unsigned long long tv;
+	unsigned long tv_sec, tv_nsec, tv_usec;
 	unsigned version;
 	unsigned log_addr_mask;
 	unsigned pa1, pa2, pa3, pa4;
@@ -1654,16 +1656,18 @@ static void analyze(const char *analyze_pin)
 		goto err;
 	line++;
 	if (!fgets(s, sizeof(s), fanalyze) ||
-	    sscanf(s, "# start_monotonic %llu\n", &tv) != 1)
+	    sscanf(s, "# start_monotonic %lu.%09lu\n", &tv_sec, &tv_nsec) != 2 ||
+	    tv_nsec >= 1000000000)
 		goto err;
-	start_monotonic.tv_sec = tv / 1000000000ULL;
-	start_monotonic.tv_nsec = tv % 1000000000ULL;
+	start_monotonic.tv_sec = tv_sec;
+	start_monotonic.tv_nsec = tv_nsec;
 	line++;
 	if (!fgets(s, sizeof(s), fanalyze) ||
-	    sscanf(s, "# start_timeofday %llu\n", &tv) != 1)
+	    sscanf(s, "# start_timeofday %lu.%06lu\n", &tv_sec, &tv_usec) != 2 ||
+	    tv_usec >= 1000000)
 		goto err;
-	start_timeofday.tv_sec = tv / 1000000ULL;
-	start_timeofday.tv_usec = tv % 1000000ULL;
+	start_timeofday.tv_sec = tv_sec;
+	start_timeofday.tv_usec = tv_usec;
 	line++;
 	if (!fgets(s, sizeof(s), fanalyze) ||
 	    sscanf(s, "# log_addr_mask 0x%04x\n", &log_addr_mask) != 1)
@@ -1674,17 +1678,18 @@ static void analyze(const char *analyze_pin)
 		goto err;
 	line++;
 
-	fprintf(stderr, "Physical Address:     %x.%x.%x.%x\n", pa1, pa2, pa3, pa4);
-	fprintf(stderr, "Logical Address Mask: 0x%04x\n\n", log_addr_mask);
+	printf("Physical Address:     %x.%x.%x.%x\n", pa1, pa2, pa3, pa4);
+	printf("Logical Address Mask: 0x%04x\n\n", log_addr_mask);
 
 	while (fgets(s, sizeof(s), fanalyze)) {
 		struct cec_event ev = { };
 		unsigned high;
 
-		if (sscanf(s, "%llu %d\n", &ev.ts, &high) != 2 || high > 1) {
+		if (sscanf(s, "%lu.%09lu %d\n", &tv_sec, &tv_nsec, &high) != 3 || high > 1) {
 			fprintf(stderr, "malformed data at line %d\n", line);
 			break;
 		}
+		ev.ts = tv_sec * 1000000000ULL + tv_nsec;
 		ev.event = high ? CEC_EVENT_PIN_HIGH : CEC_EVENT_PIN_LOW;
 		log_event(ev);
 		line++;
