@@ -715,6 +715,8 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 			if (min_timeout || max_timeout)
 				printf(_(" - Can set recording timeout min:%u microseconds max:%u microseconds\n"), min_timeout, max_timeout);
 		}
+	} else if (features & LIRC_CAN_REC_LIRCCODE) {
+		printf(_(" - Device can receive using device dependent LIRCCODE mode (not supported)\n"));
 	} else {
 		printf(_(" - Device cannot receive\n"));
 	}
@@ -736,6 +738,8 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 			else
 				printf(_(" - Set transmitter (%d available)\n"), rc);
 		}
+	} else if (features & LIRC_CAN_SEND_LIRCCODE) {
+		printf(_(" - Device can send using device dependent LIRCCODE mode (not supported)\n"));
 	} else {
 		printf(_(" - Device cannot send\n"));
 	}
