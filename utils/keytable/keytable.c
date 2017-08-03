@@ -1450,7 +1450,7 @@ static int show_sysfs_attribs(struct rc_device *rc_dev)
 	for (cur = names; cur->next; cur = cur->next) {
 		if (cur->name) {
 			if (get_attribs(rc_dev, cur->name))
-				return -1;
+				continue;
 			fprintf(stderr, _("Found %s (%s) with:\n"),
 				rc_dev->sysfs_name,
 				rc_dev->input_name);
