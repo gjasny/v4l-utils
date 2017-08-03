@@ -55,12 +55,12 @@ analysed. This is effectively a cheap CEC bus analyzer.
 Monitor for the given number of seconds, then exit. The default (0) is to monitor
 forever.
 .TP
-\fB\-\-record\-pin\fR=\fI<to>\fR
-Record the CEC pin events to the given file. This can be played back for analysis later
-via the \fB\-\-playback\-pin\fR option.
+\fB\-\-store\-pin\fR=\fI<to>\fR
+Store the CEC pin events to the given file. This can be read and analyzed later
+via the \fB\-\-analyze\-pin\fR option.
 .TP
-\fB\-\-playback\-pin\fR=\fI<from>\fR
-Read and playback the CEC pin events from the given file.
+\fB\-\-analyze\-pin\fR=\fI<from>\fR
+Read and analyze the CEC pin events from the given file.
 .TP
 \fB\-n\fR, \fB\-\-no\-reply\fR
 By default when sending a CEC message that expects a reply this utility will
