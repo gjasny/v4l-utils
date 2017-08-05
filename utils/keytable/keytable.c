@@ -1037,10 +1037,8 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 
 	event_names = seek_sysfs_dir(input_names->name, event);
 	free_names(input_names);
-	if (!event_names) {
-		free_names(event_names);
+	if (!event_names)
 		return EINVAL;
-	}
 	if (event_names->next->next) {
 		free_names(event_names);
 		fprintf(stderr, _("Found more than one event interface. This is currently unsupported\n"));
