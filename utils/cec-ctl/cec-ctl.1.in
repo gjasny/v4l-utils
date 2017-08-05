@@ -102,7 +102,9 @@ By default the adapter will remain unconfigured.
 .TP
 \fB\-\-no\-rc\-passthrough\fR
 Disable the RC passthrough. By default remote control CEC messages are
-passed on as input keystrokes, but this can be block by using this option.
+passed on as input keystrokes (the \fBCEC_LOG_ADDRS_FL_ALLOW_RC_PASSTHRU\fR
+flag is set when calling the \fBCEC_ADAP_S_LOG_ADDRS\fR ioctl), but this
+can be blocked by using this option.
 .TP
 \fB\-\-reply\-to\-followers\fR
 The reply will be sent to followers as well. By default the reply will only
