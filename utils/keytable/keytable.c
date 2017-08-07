@@ -106,6 +106,7 @@ enum sysfs_protocols {
 	SYSFS_RC6		= (1 << 10),
 	SYSFS_SHARP		= (1 << 11),
 	SYSFS_XMP		= (1 << 12),
+	SYSFS_CEC		= (1 << 13),
 	SYSFS_INVALID		= 0,
 };
 
@@ -138,6 +139,7 @@ const struct protocol_map_entry protocol_map[] = {
 	{ "rc-6-mce",	NULL,		SYSFS_INVALID	},
 	{ "sharp",	NULL,		SYSFS_SHARP	},
 	{ "xmp",	"/xmp_decoder",	SYSFS_XMP	},
+	{ "cec",	NULL,		SYSFS_CEC	},
 	{ NULL,		NULL,		SYSFS_INVALID	},
 };
 
