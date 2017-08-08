@@ -932,3 +932,58 @@ int testLostMsgs(struct node *node)
 
 	return 0;
 }
+
+void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
+		 const char *device)
+{
+	/* Required ioctls */
+
+	printf("\nCEC API:\n");
+	printf("\tCEC_ADAP_G_CAPS: %s\n", ok(testCap(&node)));
+	printf("\tCEC_DQEVENT: %s\n", ok(testDQEvent(&node)));
+	printf("\tCEC_ADAP_G/S_PHYS_ADDR: %s\n", ok(testAdapPhysAddr(&node)));
+	if (node.caps & CEC_CAP_PHYS_ADDR)
+		doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &node.phys_addr);
+	if (node.phys_addr == CEC_PHYS_ADDR_INVALID) {
+		fprintf(stderr, "FAIL: without a valid physical address this test cannot proceed.\n");
+		fprintf(stderr, "Make sure that this CEC adapter is connected to another HDMI sink or source.\n");
+		exit(1);
+	}
+	printf("\tCEC_ADAP_G/S_LOG_ADDRS: %s\n", ok(testAdapLogAddrs(&node)));
+	fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
+	if (node.caps & CEC_CAP_LOG_ADDRS) {
+		struct cec_log_addrs clear = { };
+
+		doioctl(&node, CEC_ADAP_S_LOG_ADDRS, &clear);
+		doioctl(&node, CEC_ADAP_S_LOG_ADDRS, &laddrs);
+	}
+	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+	if (laddrs.log_addr_mask != node.adap_la_mask)
+		printf("\tNew Logical Address Mask   : 0x%04x\n", laddrs.log_addr_mask);
+	// The LAs may have changed after these tests, so update these node fields
+	node.num_log_addrs = laddrs.num_log_addrs;
+	memcpy(node.log_addr, laddrs.log_addr, laddrs.num_log_addrs);
+	node.adap_la_mask = laddrs.log_addr_mask;
+
+	printf("\tCEC_TRANSMIT: %s\n", ok(testTransmit(&node)));
+	printf("\tCEC_RECEIVE: %s\n", ok(testReceive(&node)));
+	__u32 mode = CEC_MODE_INITIATOR;
+	doioctl(&node, CEC_S_MODE, &mode);
+	printf("\tCEC_TRANSMIT/RECEIVE (non-blocking): %s\n", ok(testNonBlocking(&node)));
+	fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
+	doioctl(&node, CEC_S_MODE, &mode);
+
+	struct node node2 = node;
+
+	if ((node2.fd = open(device, O_RDWR)) < 0) {
+		fprintf(stderr, "Failed to open %s: %s\n", device,
+			strerror(errno));
+		exit(1);
+	}
+
+	printf("\tCEC_G/S_MODE: %s\n", ok(testModes(&node, &node2)));
+	close(node2.fd);
+	doioctl(&node, CEC_S_MODE, &mode);
+	printf("\tCEC_EVENT_LOST_MSGS: %s\n", ok(testLostMsgs(&node)));
+	fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
+}

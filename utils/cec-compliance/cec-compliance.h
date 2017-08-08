@@ -389,6 +389,8 @@ int testReceive(struct node *node);
 int testNonBlocking(struct node *node);
 int testModes(struct node *node, struct node *node2);
 int testLostMsgs(struct node *node);
+void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
+		 const char *device);
 
 // CEC core tests
 int testCore(struct node *node);
