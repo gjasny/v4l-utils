@@ -1490,12 +1490,40 @@ int main(int argc, char **argv)
 	node.phys_addr = CEC_PHYS_ADDR_INVALID;
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &node.phys_addr);
 
-	printf("\tPhysical Address           : %x.%x.%x.%x\n",
-	       cec_phys_addr_exp(node.phys_addr));
-
 	struct cec_log_addrs laddrs = { };
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 
+	if (node.phys_addr == CEC_PHYS_ADDR_INVALID &&
+	    !(node.caps & (CEC_CAP_PHYS_ADDR | CEC_CAP_NEEDS_HPD)) &&
+	    laddrs.num_log_addrs) {
+		struct cec_msg msg;
+
+		/*
+		 * Special corner case: if PA is invalid, then you can still try
+		 * to poll a TV. If found, try to wake it up.
+		 */
+		cec_msg_init(&msg, CEC_LOG_ADDR_UNREGISTERED, CEC_LOG_ADDR_TV);
+
+		fail_on_test(doioctl(&node, CEC_TRANSMIT, &msg));
+		if (msg.tx_status & CEC_TX_STATUS_OK) {
+			unsigned cnt = 0;
+
+			cec_msg_image_view_on(&msg);
+			fail_on_test(doioctl(&node, CEC_TRANSMIT, &msg));
+			while ((msg.tx_status & CEC_TX_STATUS_OK) && cnt++ <= long_timeout) {
+				fail_on_test(doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &node.phys_addr));
+				if (node.phys_addr != CEC_PHYS_ADDR_INVALID) {
+					doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+					break;
+				}
+				sleep(1);
+			}
+		}
+
+	}
+
+	printf("\tPhysical Address           : %x.%x.%x.%x\n",
+	       cec_phys_addr_exp(node.phys_addr));
 	printf("\tLogical Address Mask       : 0x%04x\n", laddrs.log_addr_mask);
 	printf("\tCEC Version                : %s\n", version2s(laddrs.cec_version));
 	if (laddrs.vendor_id != CEC_VENDOR_ID_NONE)
