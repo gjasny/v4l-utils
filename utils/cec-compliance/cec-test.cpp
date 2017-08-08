@@ -165,8 +165,8 @@ static int system_info_give_features(struct node *node, unsigned me, unsigned la
 	fail_on_test(cec_version != node->remote[la].cec_version);
 	fail_on_test(rc_profile == NULL || dev_features == NULL);
 	info("All Device Types: \t\t%s\n", all_dev_types2s(all_device_types).c_str());
-	info("RC Profile: \t%s", rc_src_prof2s(*rc_profile).c_str());
-	info("Device Features: \t%s", dev_feat2s(*dev_features).c_str());
+	info("RC Profile: \t%s", rc_src_prof2s(*rc_profile, "").c_str());
+	info("Device Features: \t%s", dev_feat2s(*dev_features, "").c_str());
 
 	if (!(cec_has_playback(1 << la) || cec_has_record(1 << la) || cec_has_tuner(1 << la)) &&
 		node->remote[la].has_aud_rate) {

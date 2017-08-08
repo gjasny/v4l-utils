@@ -31,6 +31,8 @@
 #include <config.h>
 #endif
 
+#include <cec-common.h>
+
 #define TAG_AUDIO_RATE_CONTROL		1
 #define TAG_ARC_CONTROL 		(1 << 1)
 #define TAG_CAP_DISCOVERY_CONTROL 	(1 << 2)
@@ -278,9 +280,6 @@ int cec_named_ioctl(struct node *node, const char *name,
 
 #define doioctl(n, r, p) cec_named_ioctl(n, #r, r, p)
 
-#define cec_phys_addr_exp(pa) \
-        ((pa) >> 12), ((pa) >> 8) & 0xf, ((pa) >> 4) & 0xf, (pa) & 0xf
-
 std::string opcode2s(const struct cec_msg *msg);
 
 static inline bool is_tv(unsigned la, unsigned prim_type)
@@ -360,14 +359,6 @@ static inline unsigned get_ts_ms()
 }
 
 const char *ok(int res);
-const char *la2s(unsigned la);
-const char *la_type2s(unsigned type);
-const char *prim_type2s(unsigned type);
-const char *version2s(unsigned version);
-std::string status2s(const struct cec_msg &msg);
-std::string all_dev_types2s(unsigned types);
-std::string rc_src_prof2s(unsigned prof);
-std::string dev_feat2s(unsigned feat);
 const char *power_status2s(__u8 power_status);
 std::string short_audio_desc2s(const struct short_audio_desc &sad);
 void sad_decode(struct short_audio_desc *sad, __u32 descriptor);
