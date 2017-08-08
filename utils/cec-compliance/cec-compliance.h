@@ -343,61 +343,8 @@ static inline unsigned response_time_ms(const struct cec_msg *msg)
 	return 0;
 }
 
-static inline bool transmit_timeout(struct node *node, struct cec_msg *msg,
-				    unsigned timeout = 2000)
-{
-	struct cec_msg original_msg = *msg;
-	__u8 opcode = cec_msg_opcode(msg);
-	int res;
-
-	msg->timeout = timeout;
-	res = doioctl(node, CEC_TRANSMIT, msg);
-	if (res == ENODEV) {
-		printf("Device was disconnected.\n");
-		exit(1);
-	}
-	if (res || !(msg->tx_status & CEC_TX_STATUS_OK))
-		return false;
-
-	if (((msg->rx_status & CEC_RX_STATUS_OK) || (msg->rx_status & CEC_RX_STATUS_FEATURE_ABORT))
-	    && response_time_ms(msg) > reply_threshold)
-		warn("Waited %4ums for reply to msg 0x%02x.\n", response_time_ms(msg), opcode);
-
-	if (!cec_msg_status_is_abort(msg))
-		return true;
-
-	if (cec_msg_is_broadcast(&original_msg)) {
-		fail("Received Feature Abort in reply to broadcast message\n");
-		return false;
-	}
-
-	const char *reason;
-
-	switch (abort_reason(msg)) {
-	case CEC_OP_ABORT_UNRECOGNIZED_OP:
-	case CEC_OP_ABORT_UNDETERMINED:
-		return true;
-	case CEC_OP_ABORT_INVALID_OP:
-		reason = "Invalid operand";
-		break;
-	case CEC_OP_ABORT_NO_SOURCE:
-		reason = "Cannot provide source";
-		break;
-	case CEC_OP_ABORT_REFUSED:
-		reason = "Refused";
-		break;
-	case CEC_OP_ABORT_INCORRECT_MODE:
-		reason = "Incorrect mode";
-		break;
-	default:
-		reason = "Unknown";
-		break;
-	}
-	info("Opcode %s was replied to with Feature Abort [%s]\n",
-	     opcode2s(&original_msg).c_str(), reason);
-
-	return true;
-}
+bool transmit_timeout(struct node *node, struct cec_msg *msg,
+		      unsigned timeout = 2000);
 
 static inline bool transmit(struct node *node, struct cec_msg *msg)
 {

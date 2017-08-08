@@ -1000,6 +1000,135 @@ int check_0(const void *p, int len)
 	return 0;
 }
 
+#define TX_WAIT_FOR_HPD 3
+
+static bool wait_for_hpd(struct node *node, bool send_image_view_on)
+{
+	int fd = node->fd;
+	int flags = fcntl(node->fd, F_GETFL);
+	time_t t = time(NULL);
+
+	fcntl(node->fd, F_SETFL, flags | O_NONBLOCK);
+	for (;;) {
+		struct timeval tv = { 1, 0 };
+		fd_set ex_fds;
+		int res;
+
+		FD_ZERO(&ex_fds);
+		FD_SET(fd, &ex_fds);
+		res = select(fd + 1, NULL, NULL, &ex_fds, &tv);
+		if (res < 0) {
+			fail("select failed with error %d\n", errno);
+			return false;
+		}
+		if (FD_ISSET(fd, &ex_fds)) {
+			struct cec_event ev;
+
+			res = doioctl(node, CEC_DQEVENT, &ev);
+			if (!res && ev.event == CEC_EVENT_STATE_CHANGE &&
+			    ev.state_change.log_addr_mask)
+				break;
+		}
+
+		/*
+		 * If the HPD doesn't return after TX_WAIT_FOR_HPD seconds,
+		 * then send a IMAGE_VIEW_ON message (if possible).
+		 */
+		if (send_image_view_on && time(NULL) - t > TX_WAIT_FOR_HPD) {
+			struct cec_msg image_view_on_msg;
+
+			cec_msg_init(&image_view_on_msg, CEC_LOG_ADDR_UNREGISTERED,
+				     CEC_LOG_ADDR_TV);
+			cec_msg_image_view_on(&image_view_on_msg);
+			// So the HPD is gone (possibly due to a standby), but
+			// some TVs still have a working CEC bus, so send Image
+			// View On to attempt to wake it up again.
+			doioctl(node, CEC_TRANSMIT, &image_view_on_msg);
+			send_image_view_on = false;
+		}
+
+		if (time(NULL) - t > TX_WAIT_FOR_HPD + long_timeout) {
+			fail("timed out after %d s waiting for HPD to return\n",
+			     long_timeout);
+			return false;
+		}
+	}
+	fcntl(node->fd, F_SETFL, flags);
+	return true;
+}
+
+bool transmit_timeout(struct node *node, struct cec_msg *msg, unsigned timeout)
+{
+	struct cec_msg original_msg = *msg;
+	__u8 opcode = cec_msg_opcode(msg);
+	bool retried = false;
+	int res;
+
+	msg->timeout = timeout;
+retry:
+	res = doioctl(node, CEC_TRANSMIT, msg);
+	if (res == ENODEV) {
+		printf("Device was disconnected.\n");
+		exit(1);
+	}
+	if (res == ENONET) {
+		if (retried) {
+			fail("HPD was lost twice, that can't be right\n");
+			return false;
+		}
+		warn("HPD was lost, wait for it to come up again.\n");
+
+		if (!wait_for_hpd(node, (node->caps & CEC_CAP_NEEDS_HPD) &&
+				  cec_msg_destination(msg) == CEC_LOG_ADDR_TV))
+			return false;
+
+		retried = true;
+		goto retry;
+	}
+
+	if (res || !(msg->tx_status & CEC_TX_STATUS_OK))
+		return false;
+
+	if (((msg->rx_status & CEC_RX_STATUS_OK) || (msg->rx_status & CEC_RX_STATUS_FEATURE_ABORT))
+	    && response_time_ms(msg) > reply_threshold)
+		warn("Waited %4ums for reply to msg 0x%02x.\n", response_time_ms(msg), opcode);
+
+	if (!cec_msg_status_is_abort(msg))
+		return true;
+
+	if (cec_msg_is_broadcast(&original_msg)) {
+		fail("Received Feature Abort in reply to broadcast message\n");
+		return false;
+	}
+
+	const char *reason;
+
+	switch (abort_reason(msg)) {
+	case CEC_OP_ABORT_UNRECOGNIZED_OP:
+	case CEC_OP_ABORT_UNDETERMINED:
+		return true;
+	case CEC_OP_ABORT_INVALID_OP:
+		reason = "Invalid operand";
+		break;
+	case CEC_OP_ABORT_NO_SOURCE:
+		reason = "Cannot provide source";
+		break;
+	case CEC_OP_ABORT_REFUSED:
+		reason = "Refused";
+		break;
+	case CEC_OP_ABORT_INCORRECT_MODE:
+		reason = "Incorrect mode";
+		break;
+	default:
+		reason = "Unknown";
+		break;
+	}
+	info("Opcode %s was replied to with Feature Abort [%s]\n",
+	     opcode2s(&original_msg).c_str(), reason);
+
+	return true;
+}
+
 static int poll_remote_devs(struct node *node)
 {
 	node->remote_la_mask = 0;
