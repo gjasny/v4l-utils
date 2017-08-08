@@ -1,7 +1,8 @@
 bin_PROGRAMS = cec-ctl
 man_MANS = cec-ctl.1
 
-cec_ctl_SOURCES = cec-ctl.cpp cec-pin.cpp cec-ctl.h
+cec_ctl_SOURCES = cec-ctl.cpp cec-pin.cpp cec-ctl.h cec-common.cpp
+cec_ctl_CPPFLAGS = -I$(top_srcdir)/utils/common
 cec_ctl_LDFLAGS = -lrt
 
 cec-ctl.cpp: cec-ctl-gen.h
