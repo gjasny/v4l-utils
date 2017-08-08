@@ -421,7 +421,7 @@ static int sac_sad_req_multiple(struct node *node, unsigned me, unsigned la, boo
 	   with a single format, we also get a response when the same audio format
 	   occurs in a request together with other formats. */
 	struct cec_msg msg = {};
-	__u8 audio_format_id[4];
+	__u8 audio_format_id[4] = { };
 	__u8 audio_format_code[4];
 
 	for (int i = 0; i < 4; i++) {
