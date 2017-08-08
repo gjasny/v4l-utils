@@ -1059,10 +1059,14 @@ void testProcessing(struct node *node)
 			if (ev.event == CEC_EVENT_STATE_CHANGE) {
 				dev_info("CEC adapter state change.\n");
 				node->phys_addr = ev.state_change.phys_addr;
-				doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-				node->adap_la_mask = laddrs.log_addr_mask;
-				node->state.active_source_pa = CEC_PHYS_ADDR_INVALID;
-				me = laddrs.log_addr[0];
+				node->adap_la_mask = ev.state_change.log_addr_mask;
+				if (node->adap_la_mask) {
+					doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+					me = laddrs.log_addr[0];
+				} else {
+					node->state.active_source_pa = CEC_PHYS_ADDR_INVALID;
+					me = CEC_LOG_ADDR_INVALID;
+				}
 				memset(la_info, 0, sizeof(la_info));
 			}
 		}
