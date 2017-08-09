@@ -17,6 +17,7 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
 #include <string>
 #include <cec-common.h>
 
