@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
@@ -32,6 +33,7 @@
 #include <cerrno>
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <linux/cec-funcs.h>
 
@@ -671,6 +673,7 @@ enum Option {
 	OptAllowUnregFallback,
 	OptNoRC,
 	OptReplyToFollowers,
+	OptListDevices,
 	OptTimeout,
 	OptMonitorTime,
 	OptMonitorPin,
@@ -750,6 +753,7 @@ static struct option long_options[] = {
 	{ "skip-info", no_argument, 0, OptSkipInfo },
 	{ "show-raw", no_argument, 0, OptShowRaw },
 	{ "show-topology", no_argument, 0, OptShowTopology },
+	{ "list-devices", no_argument, 0, OptListDevices },
 	{ "poll", no_argument, 0, OptPoll },
 	{ "list-ui-commands", no_argument, 0, OptListUICommands },
 	{ "rc-tv-profile-1", no_argument, 0, OptRcTVProfile1 },
@@ -822,6 +826,7 @@ static void usage(void)
 	       "  --reply-to-followers     The reply will be sent to followers as well\n"
 	       "  --timeout=<ms>           Set the reply timeout in milliseconds (default is 1000 ms)\n"
 	       "  --list-ui-commands       List all UI commands that can be used with --user-control-pressed\n"
+	       "  --list-devices           List all cec devices\n"
 	       "\n"
 	       "  --tv                     This is a TV\n"
 	       "  --record                 This is a recording and playback device\n"
@@ -1505,6 +1510,103 @@ err:
 	exit(1);
 }
 
+static int calc_node_val(const char *s)
+{
+	s = strrchr(s, '/') + 1;
+
+	if (!memcmp(s, "cec", 3))
+		return atol(s + 3);
+	return 0;
+}
+
+static bool sort_on_device_name(const std::string &s1, const std::string &s2)
+{
+	int n1 = calc_node_val(s1.c_str());
+	int n2 = calc_node_val(s2.c_str());
+
+	return n1 < n2;
+}
+
+typedef std::vector<std::string> dev_vec;
+typedef std::map<std::string, std::string> dev_map;
+
+static void list_devices()
+{
+	DIR *dp;
+	struct dirent *ep;
+	dev_vec files;
+	dev_map links;
+	dev_map cards;
+	struct cec_caps caps;
+
+	dp = opendir("/dev");
+	if (dp == NULL) {
+		perror ("Couldn't open the directory");
+		return;
+	}
+	while ((ep = readdir(dp)))
+		if (!memcmp(ep->d_name, "cec", 3) && isdigit(ep->d_name[3]))
+			files.push_back(std::string("/dev/") + ep->d_name);
+	closedir(dp);
+
+	/* Find device nodes which are links to other device nodes */
+	for (dev_vec::iterator iter = files.begin();
+			iter != files.end(); ) {
+		char link[64+1];
+		int link_len;
+		std::string target;
+
+		link_len = readlink(iter->c_str(), link, 64);
+		if (link_len < 0) {	/* Not a link or error */
+			iter++;
+			continue;
+		}
+		link[link_len] = '\0';
+
+		/* Only remove from files list if target itself is in list */
+		if (link[0] != '/')	/* Relative link */
+			target = std::string("/dev/");
+		target += link;
+		if (find(files.begin(), files.end(), target) == files.end()) {
+			iter++;
+			continue;
+		}
+
+		/* Move the device node from files to links */
+		if (links[target].empty())
+			links[target] = *iter;
+		else
+			links[target] += ", " + *iter;
+		files.erase(iter);
+	}
+
+	std::sort(files.begin(), files.end(), sort_on_device_name);
+
+	for (dev_vec::iterator iter = files.begin();
+			iter != files.end(); ++iter) {
+		int fd = open(iter->c_str(), O_RDWR);
+		std::string cec_info;
+
+		if (fd < 0)
+			continue;
+		int err = ioctl(fd, CEC_ADAP_G_CAPS, &caps);
+		close(fd);
+		if (err)
+			continue;
+		cec_info = std::string(caps.driver) + " (" + caps.name + ")";
+		if (cards[cec_info].empty())
+			cards[cec_info] += cec_info + ":\n";
+		cards[cec_info] += "\t" + (*iter);
+		if (!(links[*iter].empty()))
+			cards[cec_info] += " <- " + links[*iter];
+		cards[cec_info] += "\n";
+	}
+	for (dev_map::iterator iter = cards.begin();
+			iter != cards.end(); ++iter) {
+		printf("%s\n", iter->second.c_str());
+	}
+}
+
 int main(int argc, char **argv)
 {
 	const char *device = "/dev/cec0";	/* -d device */
@@ -1831,6 +1933,11 @@ int main(int argc, char **argv)
 		case OptPoll:
 			msgs.push_back(msg);
 			break;
+
+		case OptListDevices:
+			list_devices();
+			break;
+
 		default:
 			if (ch >= OptHelpAll) {
 				usage_options(ch);
