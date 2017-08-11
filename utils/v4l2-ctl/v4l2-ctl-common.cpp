@@ -844,11 +844,13 @@ void common_set(int fd)
 				if (fill_subset(qc, subset))
 					return;
 
-				divide[qc.nr_of_dims - 1] = 1;
-				for (d = 0; d < qc.nr_of_dims - 1; d++) {
-					divide[d] = qc.dims[d + 1];
-					for (i = 0; i < d; i++)
-						divide[i] *= divide[d];
+				if (qc.nr_of_dims) {
+					divide[qc.nr_of_dims - 1] = 1;
+					for (d = 0; d < qc.nr_of_dims - 1; d++) {
+						divide[d] = qc.dims[d + 1];
+						for (i = 0; i < d; i++)
+							divide[i] *= divide[d];
+					}
 				}
 
 
