@@ -243,7 +243,7 @@ static const char args_doc[] = N_(
 	"[for using the rc0 sysdev]");
 
 /* Static vars to store the parameters */
-static char *devclass = "rc0";
+static char *devclass = NULL;
 static char *devicename = NULL;
 static int readtable = 0;
 static int clear = 0;
@@ -1437,15 +1437,15 @@ static void device_info(int fd, char *prepend)
 		perror ("EVIOCGID");
 }
 
-static int show_sysfs_attribs(struct rc_device *rc_dev)
+static int show_sysfs_attribs(struct rc_device *rc_dev, char *name)
 {
 	static struct sysfs_names *names, *cur;
 	int fd;
 
-	names = find_device(NULL);
+	names = find_device(name);
 	if (!names)
 		return -1;
-	for (cur = names; cur->next; cur = cur->next) {
+	for (cur = names; cur; cur = cur->next) {
 		if (cur->name) {
 			if (get_attribs(rc_dev, cur->name))
 				continue;
@@ -1499,11 +1499,14 @@ int main(int argc, char *argv[])
 			close(fd);
 			return 0;
 		}
-		if (show_sysfs_attribs(&rc_dev))
+		if (show_sysfs_attribs(&rc_dev, devclass))
 			return -1;
 
 		return 0;
 	}
+
+	if (!devclass)
+		devclass = "rc0";
 
 	if (cfg.next && (clear || keytable || ch_proto || devicename)) {
 		fprintf (stderr, _("Auto-mode can be used only with --read, --debug and --sysdev options\n"));
