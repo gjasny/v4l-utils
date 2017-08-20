@@ -805,8 +805,10 @@ static void usage(void)
 	       "  -M, --monitor-all        Monitor all CEC traffic\n"
 	       "  --monitor-pin            Monitor low-level CEC pin\n"
 	       "  --monitor-time=<secs>    Monitor for <secs> seconds (default is forever)\n"
-	       "  --store-pin=<to>         Store the low-level CEC pin changes to the file <to>\n"
-	       "  --analyze-pin=<from>     Analyze the low-level CEC pin changes from the file <from>\n"
+	       "  --store-pin=<to>         Store the low-level CEC pin changes to the file <to>.\n"
+	       "                           Use - for stdout.\n"
+	       "  --analyze-pin=<from>     Analyze the low-level CEC pin changes from the file <from>.\n"
+	       "                           Use - for stdin.\n"
 	       "  -n, --no-reply           Don't wait for a reply\n"
 	       "  -t, --to=<la>            Send message to the given logical address\n"
 	       "  -f, --from=<la>          Send message from the given logical address\n"
@@ -1311,9 +1313,8 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 	else if (options[OptMonitorPin] || options[OptStorePin])
 		monitor = CEC_MODE_MONITOR_PIN;
 
-	printf("\n");
 	if (!(node.caps & CEC_CAP_MONITOR_ALL) && monitor == CEC_MODE_MONITOR_ALL) {
-		printf("Monitor All mode is not supported, falling back to regular monitoring\n");
+		fprintf(stderr, "Monitor All mode is not supported, falling back to regular monitoring\n");
 		monitor = CEC_MODE_MONITOR;
 	}
 	if (!(node.caps & CEC_CAP_MONITOR_PIN) && monitor == CEC_MODE_MONITOR_PIN) {
@@ -1323,12 +1324,15 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 	}
 
 	if (doioctl(&node, CEC_S_MODE, &monitor)) {
-		printf("Selecting monitor mode failed, you may have to run this as root.\n");
+		fprintf(stderr, "Selecting monitor mode failed, you may have to run this as root.\n");
 		return;
 	}
 
 	if (store_pin) {
-		fstore = fopen(store_pin, "w+");
+		if (!strcmp(store_pin, "-"))
+			fstore = stdout;
+		else
+			fstore = fopen(store_pin, "w+");
 		if (fstore == NULL) {
 			fprintf(stderr, "Failed to open %s: %s\n", store_pin,
 				strerror(errno));
@@ -1345,6 +1349,9 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 		       node.phys_addr >> 12, (node.phys_addr >> 8) & 0xf,
 		       (node.phys_addr >> 4) & 0xf, node.phys_addr & 0xf);
 	}
+
+	if (fstore != stdout)
+		printf("\n");
 
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 	t = time(NULL) + monitor_time;
@@ -1368,10 +1375,10 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 
 			res = doioctl(&node, CEC_RECEIVE, &msg);
 			if (res == ENODEV) {
-				printf("Device was disconnected.\n");
+				fprintf(stderr, "Device was disconnected.\n");
 				break;
 			}
-			if (res)
+			if (res || fstore == stdout)
 				continue;
 
 			from = cec_msg_initiator(&msg);
@@ -1404,10 +1411,11 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 					ev.event == CEC_EVENT_PIN_HIGH);
 				fflush(fstore);
 			}
-			if (!pin_event || options[OptMonitorPin])
+			if ((!pin_event || options[OptMonitorPin]) &&
+			    fstore != stdout)
 				log_event(ev);
 		}
-		if (!pin_event && eob_ts) {
+		if (!pin_event && eob_ts && fstore != stdout) {
 			struct timespec ts;
 			__u64 ts64;
 
@@ -1430,13 +1438,13 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 			}
 		}
 	}
-	if (fstore)
+	if (fstore && fstore != stdout)
 		fclose(fstore);
 }
 
 static void analyze(const char *analyze_pin)
 {
-	FILE *fanalyze = fopen(analyze_pin, "r");
+	FILE *fanalyze;
 	struct cec_event ev = { };
 	unsigned long tv_sec, tv_nsec, tv_usec;
 	unsigned version;
@@ -1445,6 +1453,10 @@ static void analyze(const char *analyze_pin)
 	unsigned line = 1;
 	char s[100];
 
+	if (!strcmp(analyze_pin, "-"))
+		fanalyze = stdin;
+	else
+		fanalyze = fopen(analyze_pin, "r");
 	if (fanalyze == NULL) {
 		fprintf(stderr, "Failed to open %s: %s\n", analyze_pin,
 			strerror(errno));
@@ -1502,7 +1514,8 @@ static void analyze(const char *analyze_pin)
 	ev.ts = tv_sec * 1000000000ULL + tv_nsec;
 	log_event(ev);
 
-	fclose(fanalyze);
+	if (fanalyze != stdin)
+		fclose(fanalyze);
 	return;
 
 err:
@@ -1952,10 +1965,10 @@ int main(int argc, char **argv)
 		}
 	}
 	if (optind < argc) {
-		printf("unknown arguments: ");
+		fprintf(stderr, "unknown arguments: ");
 		while (optind < argc)
-			printf("%s ", argv[optind++]);
-		printf("\n");
+			fprintf(stderr, "%s ", argv[optind++]);
+		fprintf(stderr, "\n");
 		usage();
 		return 1;
 	}
@@ -1976,6 +1989,9 @@ int main(int argc, char **argv)
 		analyze(analyze_pin);
 		return 0;
 	}
+
+	if (!strcmp(store_pin, "-"))
+		options[OptSkipInfo] = 1;
 
 	if (rc_tv && rc_src) {
 		fprintf(stderr, "--rc-tv- and --rc-src- options cannot be combined.\n\n");
