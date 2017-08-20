@@ -1045,10 +1045,10 @@ static void log_unknown_msg(const struct cec_msg *msg)
 
 static void log_event(struct cec_event &ev)
 {
-	bool is_high = ev.event == CEC_EVENT_PIN_HIGH;
+	bool is_high = ev.event == CEC_EVENT_PIN_CEC_HIGH;
 	__u16 pa;
 
-	if (ev.event != CEC_EVENT_PIN_LOW && ev.event != CEC_EVENT_PIN_HIGH)
+	if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH)
 		printf("\n");
 	if (ev.flags & CEC_EVENT_FL_DROPPED_EVENTS)
 		printf("(Note: events were lost)\n");
@@ -1065,8 +1065,8 @@ static void log_event(struct cec_event &ev)
 	case CEC_EVENT_LOST_MSGS:
 		printf("Event: Lost Messages\n");
 		break;
-	case CEC_EVENT_PIN_LOW:
-	case CEC_EVENT_PIN_HIGH:
+	case CEC_EVENT_PIN_CEC_LOW:
+	case CEC_EVENT_PIN_CEC_HIGH:
 		if (ev.flags & CEC_EVENT_FL_INITIAL_STATE)
 			printf("Event: CEC Pin %s\n", is_high ? "High" : "Low");
 
@@ -1402,13 +1402,13 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 
 			if (doioctl(&node, CEC_DQEVENT, &ev))
 				continue;
-			if (ev.event == CEC_EVENT_PIN_LOW ||
-			    ev.event == CEC_EVENT_PIN_HIGH)
+			if (ev.event == CEC_EVENT_PIN_CEC_LOW ||
+			    ev.event == CEC_EVENT_PIN_CEC_HIGH)
 				pin_event = true;
 			if (pin_event && fstore) {
 				fprintf(fstore, "%llu.%09llu %d\n",
 					ev.ts / 1000000000, ev.ts % 1000000000,
-					ev.event == CEC_EVENT_PIN_HIGH);
+					ev.event == CEC_EVENT_PIN_CEC_HIGH);
 				fflush(fstore);
 			}
 			if ((!pin_event || options[OptMonitorPin]) &&
@@ -1424,13 +1424,13 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 			if (ts64 >= eob_ts_max) {
 				struct cec_event ev = {
 					eob_ts,
-					CEC_EVENT_PIN_HIGH
+					CEC_EVENT_PIN_CEC_HIGH
 				};
 
 				if (fstore) {
 					fprintf(fstore, "%llu.%09llu %d\n",
 						ev.ts / 1000000000, ev.ts % 1000000000,
-						ev.event == CEC_EVENT_PIN_HIGH);
+						ev.event == CEC_EVENT_PIN_CEC_HIGH);
 					fflush(fstore);
 				}
 				if (options[OptMonitorPin])
@@ -1505,7 +1505,7 @@ static void analyze(const char *analyze_pin)
 			break;
 		}
 		ev.ts = tv_sec * 1000000000ULL + tv_nsec;
-		ev.event = high ? CEC_EVENT_PIN_HIGH : CEC_EVENT_PIN_LOW;
+		ev.event = high ? CEC_EVENT_PIN_CEC_HIGH : CEC_EVENT_PIN_CEC_LOW;
 		log_event(ev);
 		line++;
 	}
