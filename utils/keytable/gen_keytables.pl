@@ -105,7 +105,7 @@ sub parse_file($$)
 				$check_type = 0;
 				next;
 			}
-			if (m/RC_TYPE_([\w\d_]+)/) {
+			if (m/RC_PROTO_([\w\d_]+)/) {
 				$type = $1;
 
 				# Proper name the RC6 protocol
