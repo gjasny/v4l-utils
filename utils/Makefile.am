@@ -12,12 +12,8 @@ SUBDIRS = \
 	v4l2-sysfs-path \
 	cec-ctl \
 	cec-compliance \
-	cec-follower
-
-if WITH_LIBV4L
-SUBDIRS += \
+	cec-follower \
 	rds-ctl
-endif
 
 if WITH_LIBDVBV5
 SUBDIRS += \

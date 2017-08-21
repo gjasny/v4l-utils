@@ -7,14 +7,10 @@ v4l2_compliance_SOURCES = v4l2-compliance.cpp v4l2-test-debug.cpp v4l2-test-inpu
 	v4l2-test-codecs.cpp v4l2-test-colors.cpp v4l2-compliance.h
 v4l2_compliance_CPPFLAGS = -I$(top_srcdir)/utils/common
 
-if WITH_LIBV4L
 if WITH_V4L2_COMPLIANCE_LIBV4L
 v4l2_compliance_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la -lrt -lpthread
 else
 v4l2_compliance_LDADD = -lrt -lpthread
-DEFS += -DNO_LIBV4L2
-endif
-else
 DEFS += -DNO_LIBV4L2
 endif
 

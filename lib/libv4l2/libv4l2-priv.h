@@ -107,10 +107,24 @@ struct v4l2_dev_info {
 };
 
 /* From v4l2-plugin.c */
+#if defined(HAVE_V4L_PLUGINS)
 void v4l2_plugin_init(int fd, void **plugin_lib_ret, void **plugin_priv_ret,
 		      const struct libv4l_dev_ops **dev_ops_ret);
 void v4l2_plugin_cleanup(void *plugin_lib, void *plugin_priv,
 			 const struct libv4l_dev_ops *dev_ops);
+#else
+static inline void v4l2_plugin_init(int fd, void **plugin_lib_ret, void **plugin_priv_ret,
+				    const struct libv4l_dev_ops **dev_ops_ret)
+{
+	*dev_ops_ret = v4lconvert_get_default_dev_ops();
+	*plugin_lib_ret = NULL;
+	*plugin_priv_ret = NULL;
+}
+static inline void v4l2_plugin_cleanup(void *plugin_lib, void *plugin_priv,
+				       const struct libv4l_dev_ops *dev_ops)
+{
+}
+#endif /* WITH_V4L_PLUGINS */
 
 /* From log.c */
 extern const char *v4l2_ioctls[];

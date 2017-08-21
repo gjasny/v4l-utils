@@ -15,7 +15,11 @@ else
 noinst_LTLIBRARIES = libv4l2.la
 endif
 
-libv4l2_la_SOURCES = libv4l2.c v4l2-plugin.c log.c libv4l2-priv.h
+libv4l2_la_SOURCES = libv4l2.c log.c libv4l2-priv.h
+if WITH_V4L_PLUGINS
+libv4l2_la_SOURCES += v4l2-plugin.c
+endif
+
 libv4l2_la_CPPFLAGS = $(CFLAG_VISIBILITY) $(ENFORCE_LIBV4L_STATIC)
 libv4l2_la_LDFLAGS = $(LIBV4L2_VERSION) -lpthread $(DLOPEN_LIBS) $(ENFORCE_LIBV4L_STATIC)
 libv4l2_la_LIBADD = ../libv4lconvert/libv4lconvert.la

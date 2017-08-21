@@ -375,14 +375,6 @@ AC_ARG_ENABLE(libdvbv5,
    esac]
 )
 
-AC_ARG_ENABLE(libv4l,
-  AS_HELP_STRING([--disable-libv4l], [disable libv4l compilation]),
-  [case "${enableval}" in
-     yes | no ) ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --disable-libv4l) ;;
-   esac]
-)
-
 AC_ARG_ENABLE(dyn-libv4l,
   AS_HELP_STRING([--disable-dyn-libv4l], [disable dynamic libv4l support]),
   [case "${enableval}" in
@@ -451,7 +443,6 @@ AM_CONDITIONAL([WITH_LIBDVBV5],     [test x$enable_libdvbv5  != xno -a x$have_li
 AM_CONDITIONAL([WITH_DVBV5_REMOTE], [test x$enable_libdvbv5  != xno -a x$have_libudev = xyes -a x$have_pthread = xyes])
 
 AM_CONDITIONAL([WITH_DYN_LIBV4L],   [test x$enable_dyn_libv4l != xno])
-AM_CONDITIONAL([WITH_LIBV4L],       [test x$enable_libv4l    != xno -a x$enable_shared != xno])
 AM_CONDITIONAL([WITH_V4LUTILS],	    [test x$enable_v4l_utils != xno -a x$linux_os = xyes])
 AM_CONDITIONAL([WITH_QV4L2],	    [test x${qt_pkgconfig} = xtrue -a x$enable_qv4l2 != xno])
 AM_CONDITIONAL([WITH_V4L_PLUGINS],  [test x$enable_dyn_libv4l != xno -a x$enable_shared != xno])
@@ -480,11 +471,12 @@ AM_COND_IF([WITH_LIBDVBV5], [USE_LIBDVBV5="yes"], [USE_LIBDVBV5="no"])
 AM_COND_IF([WITH_DVBV5_REMOTE], [USE_DVBV5_REMOTE="yes"
 				 AC_DEFINE([HAVE_DVBV5_REMOTE], [1], [Usage of DVBv5 remote enabled])],
 			        [USE_DVBV5_REMOTE="no"])
-AM_COND_IF([WITH_LIBV4L], [USE_LIBV4L="yes"], [USE_LIBV4L="no"])
 AM_COND_IF([WITH_DYN_LIBV4L], [USE_DYN_LIBV4L="yes"], [USE_DYN_LIBV4L="no"])
 AM_COND_IF([WITH_V4LUTILS], [USE_V4LUTILS="yes"], [USE_V4LUTILS="no"])
 AM_COND_IF([WITH_QV4L2], [USE_QV4L2="yes"], [USE_QV4L2="no"])
-AM_COND_IF([WITH_V4L_PLUGINS], [USE_V4L_PLUGINS="yes"], [USE_V4L_PLUGINS="no"])
+AM_COND_IF([WITH_V4L_PLUGINS], [USE_V4L_PLUGINS="yes"
+				AC_DEFINE([HAVE_V4L_PLUGINS], [1], [V4L plugin support enabled])],
+				[USE_V4L_PLUGINS="no"])
 AM_COND_IF([WITH_V4L_WRAPPERS], [USE_V4L_WRAPPERS="yes"], [USE_V4L_WRAPPERS="no"])
 AM_COND_IF([WITH_GCONV], [USE_GCONV="yes"], [USE_GCONV="no"])
 AM_COND_IF([WITH_V4L2_CTL_LIBV4L], [USE_V4L2_CTL_LIBV4L="yes"], [USE_V4L2_CTL_LIBV4L="no"])
@@ -517,7 +509,6 @@ compile time options summary
 
     gconv                      : $USE_GCONV
 
-    libv4l                     : $USE_LIBV4L
     dynamic libv4l             : $USE_DYN_LIBV4L
     v4l_plugins                : $USE_V4L_PLUGINS
     v4l_wrappers               : $USE_V4L_WRAPPERS
