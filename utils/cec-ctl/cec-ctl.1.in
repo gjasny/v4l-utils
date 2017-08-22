@@ -214,6 +214,12 @@ Show help for the Device OSD Transfer feature.
 \fB\-\-help\-dynamic\-audio\-lipsync\fR
 Show help for the Dynamic Audio Lipsync feature.
 .TP
+\fB\-\-help\-htng\fR
+Show help for the Hospitality Profile Next Generation feature.
+This is an optional CEC extension for Hotel displays and is not
+generally available for regular displays. See http://www.htng.org
+for more information.
+.TP
 \fB\-\-help\-osd\-display\fR
 Show help for the OSD Display feature.
 .TP
