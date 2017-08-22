@@ -1990,7 +1990,7 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	if (!strcmp(store_pin, "-"))
+	if (store_pin && !strcmp(store_pin, "-"))
 		options[OptSkipInfo] = 1;
 
 	if (rc_tv && rc_src) {
