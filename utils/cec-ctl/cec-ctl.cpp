@@ -1105,7 +1105,11 @@ static void log_event(struct cec_event &ev)
 		printf("\tTimestamp: %s\n", ts2s(ev.ts).c_str());
 }
 
-static __u16 phys_addrs[16];
+/*
+ * Bits 23-8 contain the physical address, bits 0-3 the logical address
+ * (equal to the index).
+ */
+static __u32 phys_addrs[16];
 
 static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 {
@@ -1135,7 +1139,7 @@ static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 		       (phys_addr >> 4) & 0xf, phys_addr & 0xf);
 		printf("\t\tPrimary Device Type        : %s\n",
 		       prim_type2s(msg.msg[4]));
-		phys_addrs[i] = phys_addr;
+		phys_addrs[i] = (phys_addr << 8) | i;
 	}
 
 	cec_msg_init(&msg, la, i);
@@ -1269,20 +1273,20 @@ static int showTopology(struct node *node)
 			printf("\t\t%s for addr %d\n", status2s(msg).c_str(), i);
 	}
 
-	__u16 pas[16];
+	__u32 pas[16];
 
 	memcpy(pas, phys_addrs, sizeof(pas));
 	std::sort(pas, pas + 16);
 	unsigned level = 0;
 	unsigned last_pa_mask = 0;
 
-	if (pas[0] == 0xffff)
+	if ((pas[0] >> 8) == 0xffff)
 		return 0;
 
 	printf("\n\tTopology:\n\n");
 	for (unsigned i = 0; i < 16; i++) {
-		__u16 pa = pas[i];
-		unsigned la_for_pa = 0;
+		__u16 pa = pas[i] >> 8;
+		__u8 la = pas[i] & 0xf;
 
 		if (pa == 0xffff)
 			break;
@@ -1300,15 +1304,10 @@ static int showTopology(struct node *node)
 		printf("\t");
 		for (unsigned j = 0; j < level; j++)
 			printf("    ");
-		for (unsigned j = 0; j < 16; j++)
-			if (pa == phys_addrs[j]) {
-				la_for_pa = j;
-				break;
-			}
 		printf("%x.%x.%x.%x: %s\n",
 		       pa >> 12, (pa >> 8) & 0xf,
 		       (pa >> 4) & 0xf, pa & 0xf,
-		       la2s(la_for_pa));
+		       la2s(la));
 	}
 	return 0;
 }
@@ -2212,6 +2211,13 @@ int main(int argc, char **argv)
 	node.num_log_addrs = laddrs.num_log_addrs;
 	node.log_addr_mask = laddrs.log_addr_mask;
 	node.phys_addr = phys_addr;
+
+	for (i = 0; i < laddrs.num_log_addrs; i++) {
+		__u8 la = laddrs.log_addr[i];
+
+		if (la != CEC_LOG_ADDR_INVALID)
+			phys_addrs[la] = (phys_addr << 8) | la;
+	}
 
 	if (!options[OptSkipInfo])
 		cec_driver_info(caps, laddrs, phys_addr);
