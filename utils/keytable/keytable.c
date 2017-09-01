@@ -23,6 +23,7 @@
 #include <linux/input.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <argp.h>
 #include <stdbool.h>
@@ -991,9 +992,15 @@ static int v2_set_protocols(struct rc_device *rc_dev)
 {
 	FILE *fp;
 	char name[4096];
+	struct stat st;
 
 	strcpy(name, rc_dev->sysfs_name);
 	strcat(name, "/protocols");
+
+	if (!stat(name, &st) && !(st.st_mode & 0222)) {
+		fprintf(stderr, _("Protocols for device can not be changed\n"));
+		return 0;
+	}
 
 	fp = fopen(name, "w");
 	if (!fp) {
