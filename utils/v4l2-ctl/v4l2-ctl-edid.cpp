@@ -55,19 +55,30 @@ static __u8 toggle_cea861_hdr_flags;
 #define CEA861_HDR_YCBCR422	(1 << 4)
 
 static __u8 toggle_speaker1_flags;
-#define SPEAKER1_FLFR		(1 << 0)
+#define SPEAKER1_FL_FR		(1 << 0)
 #define SPEAKER1_LFE		(1 << 1)
 #define SPEAKER1_FC		(1 << 2)
-#define SPEAKER1_RLRR		(1 << 3)
-#define SPEAKER1_RC		(1 << 4)
-#define SPEAKER1_FLCFRC		(1 << 5)
-#define SPEAKER1_RLCRRC		(1 << 6)
-#define SPEAKER1_FLWFRW		(1 << 7)
+#define SPEAKER1_BL_BR		(1 << 3)
+#define SPEAKER1_BC		(1 << 4)
+#define SPEAKER1_FLC_FRC	(1 << 5)
+#define SPEAKER1_RLC_RRC	(1 << 6)
+#define SPEAKER1_FLW_FRW	(1 << 7)
 
 static __u8 toggle_speaker2_flags;
-#define SPEAKER2_FLHFRH		(1 << 0)
-#define SPEAKER2_TC		(1 << 1)
-#define SPEAKER2_FCH		(1 << 2)
+#define SPEAKER2_TPFL_TPFR	(1 << 0)
+#define SPEAKER2_TPC		(1 << 1)
+#define SPEAKER2_TPFC		(1 << 2)
+#define SPEAKER2_LS_RS		(1 << 3)
+#define SPEAKER2_LFE2		(1 << 4)
+#define SPEAKER2_TPBC		(1 << 5)
+#define SPEAKER2_SIL_SIR	(1 << 6)
+#define SPEAKER2_TPSIL_TPSIR	(1 << 7)
+
+static __u8 toggle_speaker3_flags;
+#define SPEAKER3_TPBL_TPBR	(1 << 0)
+#define SPEAKER3_BTFC		(1 << 1)
+#define SPEAKER3_BTFL_BTFR	(1 << 2)
+#define SPEAKER3_TPLS_TPRS	(1 << 3)
 
 static __u8 toggle_hdmi_vsdb_dc_flags;
 #define HDMI_VSDB_Y444_BIT	(1 << 3)
@@ -92,7 +103,7 @@ static __u8 toggle_vid_cap_flags;
 #define VID_CAP_QS		(1 << 6)
 #define VID_CAP_QY		(1 << 7)
 
-static __u8 toggle_colorimetry_flags;
+static __u8 toggle_colorimetry_flags1;
 #define COLORIMETRY_XVYCC601		(1 << 0)
 #define COLORIMETRY_XVYCC709		(1 << 1)
 #define COLORIMETRY_SYCC		(1 << 2)
@@ -102,10 +113,14 @@ static __u8 toggle_colorimetry_flags;
 #define COLORIMETRY_BT2020YCC		(1 << 6)
 #define COLORIMETRY_BT2020RGB		(1 << 7)
 
+static __u8 toggle_colorimetry_flags2;
+#define COLORIMETRY_DCIP3		(1 << 0)
+
 static __u8 toggle_hdr_md_flags;
 #define HDR_MD_SDR		(1 << 0)
 #define HDR_MD_HDR		(1 << 1)
 #define HDR_MD_SMPTE_2084	(1 << 2)
+#define HDR_MD_HLG		(1 << 3)
 
 void edid_usage(void)
 {
@@ -134,17 +149,26 @@ void edid_usage(void)
 	       "                     ycbcr422: toggle the YCbCr 4:2:2 bit.\n"
 	       "\n"
 	       "                     Speaker Allocation Data Block modifiers:\n"
-	       "                     fl-fr: Front Left and Front Right.\n"
-	       "                     lfe: Low Frequence Effects.\n"
-	       "                     fc: Front Center.\n"
-	       "                     rl-rr: Rear Left and Rear Right.\n"
-	       "                     rc: Rear Center.\n"
-	       "                     flc-frc: Front Left Center and Front Right Center.\n"
-	       "                     rlc-rrc: Rear Left Center and Rear Right Center.\n"
-	       "                     flw-frw: Front Left Wide and Front Right Wide.\n"
-	       "                     flh-frh: Front Left High and Front Right High.\n"
-	       "                     tc: Top Center.\n"
-	       "                     fch: Front Center High.\n"
+	       "                     fl-fr: Front Left/Right.\n"
+       	       "                     lfe: Low Frequency Effects.\n"
+       	       "                     fc: Front Center.\n"
+       	       "                     bl-br: Back Left/Right.\n"
+       	       "                     bc: Back Center.\n"
+       	       "                     rlc-frc: Front Left/Right of Center.\n"
+       	       "                     rlc-rrc: Rear Left/Right of Center.\n"
+       	       "                     flw-frw: Front Left/Right Wide.\n"
+       	       "                     tpfl-tpfr: Top Front Left/Right.\n"
+       	       "                     tpc: Top Center.\n"
+       	       "                     tpfc: Top Front Center.\n"
+       	       "                     ls-rs: Left/Right Surround.\n"
+       	       "                     lfe2: Low Frequency Effects 2.\n"
+       	       "                     tpbc: Top Back Center.\n"
+       	       "                     sil-sir: Side Left/Right\n"
+       	       "                     tpsil-tpsir: Top Side Left/Right.\n"
+       	       "                     tpbl-tpbr: Top Back Left/Right.\n"
+       	       "                     btfc: Bottom Front Center.\n"
+       	       "                     btfl-btbr: Bottom Front Left/Right.\n"
+       	       "                     tpls-tprs: Top Left/Right Surround.\n"
 	       "\n"
 	       "                     HDMI Vendor-Specific Data Block modifiers:\n"
 	       "                     pa=<pa>: change the physical address.\n"
@@ -176,11 +200,13 @@ void edid_usage(void)
 	       "                     bt2020-rgb: toggle the BT2020 RGB bit.\n"
 	       "                     bt2020-ycc: toggle the BT2020 YCC bit.\n"
 	       "                     bt2020-cycc: toggle the BT2020 cYCC bit.\n"
+	       "                     dci-p3: toggle the DCI-P3 bit.\n"
 	       "\n"
 	       "                     CEA-861 HDR Static Metadata Data Block modifiers:\n"
 	       "                     sdr: toggle the Traditional gamma SDR bit.\n"
 	       "                     hdr: toggle the Traditional gamma HDR bit.\n"
 	       "                     smpte2084: toggle the SMPTE ST 2084 bit.\n"
+	       "                     hlg: toggle the Hybrid Log-Gamma bit.\n"
 	       "  --clear-edid=<pad>\n"
 	       "                     <pad> is the input or output index for which to clear the EDID.\n"
 	       "  --info-edid=<pad>  print the current EDID's modifiers\n"
@@ -536,19 +562,30 @@ static void print_edid_mods(const struct v4l2_edid *e)
 		__u8 v = e->edid[loc];
 
 		printf("\nSpeaker Allocation Data Block\n");
-		printf("  FL/FR:                   %s\n", (v & SPEAKER1_FLFR) ? "yes" : "no");
+		printf("  FL/FR:                   %s\n", (v & SPEAKER1_FL_FR) ? "yes" : "no");
 		printf("  LFE:                     %s\n", (v & SPEAKER1_LFE) ? "yes" : "no");
 		printf("  FC:                      %s\n", (v & SPEAKER1_FC) ? "yes" : "no");
-		printf("  RL/RR:                   %s\n", (v & SPEAKER1_RLRR) ? "yes" : "no");
-		printf("  RC:                      %s\n", (v & SPEAKER1_RC) ? "yes" : "no");
-		printf("  FLC/FRC:                 %s\n", (v & SPEAKER1_FLCFRC) ? "yes" : "no");
-		printf("  RLC/RRC:                 %s\n", (v & SPEAKER1_RLCRRC) ? "yes" : "no");
-		printf("  FLW/FRW:                 %s\n", (v & SPEAKER1_FLWFRW) ? "yes" : "no");
+		printf("  BL/BR:                   %s\n", (v & SPEAKER1_BL_BR) ? "yes" : "no");
+		printf("  BC:                      %s\n", (v & SPEAKER1_BC) ? "yes" : "no");
+		printf("  FLC/FRC:                 %s\n", (v & SPEAKER1_FLC_FRC) ? "yes" : "no");
+		printf("  RLC/RRC:                 %s\n", (v & SPEAKER1_RLC_RRC) ? "yes" : "no");
+		printf("  FLW/FRW:                 %s\n", (v & SPEAKER1_FLW_FRW) ? "yes" : "no");
 
 		v = e->edid[loc + 1];
-		printf("  FLH/FRH:                 %s\n", (v & SPEAKER2_FLHFRH) ? "yes" : "no");
-		printf("  TC:                      %s\n", (v & SPEAKER2_TC) ? "yes" : "no");
-		printf("  FCH:                     %s\n", (v & SPEAKER2_FCH) ? "yes" : "no");
+		printf("  TpFL/TpFR:               %s\n", (v & SPEAKER2_TPFL_TPFR) ? "yes" : "no");
+		printf("  TpC:                     %s\n", (v & SPEAKER2_TPC) ? "yes" : "no");
+		printf("  TpFC:                    %s\n", (v & SPEAKER2_TPFC) ? "yes" : "no");
+		printf("  LS/RS:                   %s\n", (v & SPEAKER2_LS_RS) ? "yes" : "no");
+		printf("  LFE2:                    %s\n", (v & SPEAKER2_LFE2) ? "yes" : "no");
+		printf("  TpBC:                    %s\n", (v & SPEAKER2_TPBC) ? "yes" : "no");
+		printf("  SiL/SiR:                 %s\n", (v & SPEAKER2_SIL_SIR) ? "yes" : "no");
+		printf("  TpSiL/TpSiR:             %s\n", (v & SPEAKER2_TPSIL_TPSIR) ? "yes" : "no");
+
+		v = e->edid[loc + 2];
+		printf("  TpBL/TpBR:               %s\n", (v & SPEAKER3_TPBL_TPBR) ? "yes" : "no");
+		printf("  BtFC:                    %s\n", (v & SPEAKER3_BTFC) ? "yes" : "no");
+		printf("  BtLS/BtRS:               %s\n", (v & SPEAKER3_BTFL_BTFR) ? "yes" : "no");
+		printf("  TpLS/TpRS:               %s\n", (v & SPEAKER3_TPLS_TPRS) ? "yes" : "no");
 	}
 	loc = get_edid_hdmi_vsdb_location(e->edid, e->blocks * 128);
 	if (loc >= 0) {
@@ -644,17 +681,19 @@ static void print_edid_mods(const struct v4l2_edid *e)
 	}
 	loc = get_edid_colorimetry_location(e->edid, e->blocks * 128);
 	if (loc >= 0) {
-		__u8 v = e->edid[loc];
+		__u8 v1 = e->edid[loc];
+		__u8 v2 = e->edid[loc + 1];
 
 		printf("\nCEA-861 Colorimetry Data Block\n");
-		printf("  xvYCC 601:               %s\n", (v & COLORIMETRY_XVYCC601) ? "yes" : "no");
-		printf("  xvYCC 709:               %s\n", (v & COLORIMETRY_XVYCC709) ? "yes" : "no");
-		printf("  sYCC:                    %s\n", (v & COLORIMETRY_SYCC) ? "yes" : "no");
-		printf("  AdobeRGB:                %s\n", (v & COLORIMETRY_ADOBERGB) ? "yes" : "no");
-		printf("  AdobeYCC:                %s\n", (v & COLORIMETRY_ADOBEYCC) ? "yes" : "no");
-		printf("  BT.2020 RGB:             %s\n", (v & COLORIMETRY_BT2020RGB) ? "yes" : "no");
-		printf("  BT.2020 YCC:             %s\n", (v & COLORIMETRY_BT2020YCC) ? "yes" : "no");
-		printf("  BT.2020 cYCC:            %s\n", (v & COLORIMETRY_BT2020CYCC) ? "yes" : "no");
+		printf("  xvYCC 601:               %s\n", (v1 & COLORIMETRY_XVYCC601) ? "yes" : "no");
+		printf("  xvYCC 709:               %s\n", (v1 & COLORIMETRY_XVYCC709) ? "yes" : "no");
+		printf("  sYCC:                    %s\n", (v1 & COLORIMETRY_SYCC) ? "yes" : "no");
+		printf("  AdobeRGB:                %s\n", (v1 & COLORIMETRY_ADOBERGB) ? "yes" : "no");
+		printf("  AdobeYCC:                %s\n", (v1 & COLORIMETRY_ADOBEYCC) ? "yes" : "no");
+		printf("  BT.2020 RGB:             %s\n", (v1 & COLORIMETRY_BT2020RGB) ? "yes" : "no");
+		printf("  BT.2020 YCC:             %s\n", (v1 & COLORIMETRY_BT2020YCC) ? "yes" : "no");
+		printf("  BT.2020 cYCC:            %s\n", (v1 & COLORIMETRY_BT2020CYCC) ? "yes" : "no");
+		printf("  DCI-P3:                  %s\n", (v2 & COLORIMETRY_DCIP3) ? "yes" : "no");
 	}
 	loc = get_edid_hdr_md_location(e->edid, e->blocks * 128);
 	if (loc >= 0) {
@@ -664,6 +703,7 @@ static void print_edid_mods(const struct v4l2_edid *e)
 		printf("  SDR (Traditional Gamma): %s\n", (v & HDR_MD_SDR) ? "yes" : "no");
 		printf("  HDR (Traditional Gamma): %s\n", (v & HDR_MD_HDR) ? "yes" : "no");
 		printf("  SMPTE 2084:              %s\n", (v & HDR_MD_SMPTE_2084) ? "yes" : "no");
+		printf("  Hybrid Log-Gamma:        %s\n", (v & HDR_MD_HLG) ? "yes" : "no");
 	}
 }
 
@@ -914,20 +954,31 @@ void edid_cmd(int ch, char *optarg)
 				"bt2020-rgb",
 				"bt2020-ycc",
 				"bt2020-cycc",
+				"dci-p3",
 				"sdr",
 				"hdr",
 				"smpte2084",
+				"hlg",
 				"fl-fr",
 				"lfe",
 				"fc",
-				"rl-rr",
-				"rc",
+				"bl-br",
+				"bc",
 				"flc-frc",
 				"rlc-rrc",
 				"flw-frw",
-				"flh-frh",
-				"tc",
-				"fch",
+				"tpfl-tpfr",
+				"tpc",
+				"tpfc",
+				"ls-rs",
+				"lfe2",
+				"tpbc",
+				"sil-sir",
+				"tpsil-tpsir",
+				"tpbl-tpbr",
+				"btfc",
+				"btfl-btbr",
+				"tpls-tprs",
 				NULL
 			};
 
@@ -1024,28 +1075,39 @@ void edid_cmd(int ch, char *optarg)
 			case 21: toggle_cea861_hdr_flags |= CEA861_HDR_YCBCR422; break;
 			case 22: toggle_vid_cap_flags |= VID_CAP_QY; break;
 			case 23: toggle_vid_cap_flags |= VID_CAP_QS; break;
-			case 24: toggle_colorimetry_flags |= COLORIMETRY_XVYCC601; break;
-			case 25: toggle_colorimetry_flags |= COLORIMETRY_XVYCC709; break;
-			case 26: toggle_colorimetry_flags |= COLORIMETRY_SYCC; break;
-			case 27: toggle_colorimetry_flags |= COLORIMETRY_ADOBEYCC; break;
-			case 28: toggle_colorimetry_flags |= COLORIMETRY_ADOBERGB; break;
-			case 29: toggle_colorimetry_flags |= COLORIMETRY_BT2020RGB; break;
-			case 30: toggle_colorimetry_flags |= COLORIMETRY_BT2020YCC; break;
-			case 31: toggle_colorimetry_flags |= COLORIMETRY_BT2020CYCC; break;
-			case 32: toggle_hdr_md_flags |= HDR_MD_SDR; break;
-			case 33: toggle_hdr_md_flags |= HDR_MD_HDR; break;
-			case 34: toggle_hdr_md_flags |= HDR_MD_SMPTE_2084; break;
-			case 35: toggle_speaker1_flags |= SPEAKER1_FLFR; break;
-			case 36: toggle_speaker1_flags |= SPEAKER1_LFE; break;
-			case 37: toggle_speaker1_flags |= SPEAKER1_FC; break;
-			case 38: toggle_speaker1_flags |= SPEAKER1_RLRR; break;
-			case 39: toggle_speaker1_flags |= SPEAKER1_RC; break;
-			case 40: toggle_speaker1_flags |= SPEAKER1_FLCFRC; break;
-			case 41: toggle_speaker1_flags |= SPEAKER1_RLCRRC; break;
-			case 42: toggle_speaker1_flags |= SPEAKER1_FLWFRW; break;
-			case 43: toggle_speaker2_flags |= SPEAKER2_FLHFRH; break;
-			case 44: toggle_speaker2_flags |= SPEAKER2_TC; break;
-			case 45: toggle_speaker2_flags |= SPEAKER2_FCH; break;
+			case 24: toggle_colorimetry_flags1 |= COLORIMETRY_XVYCC601; break;
+			case 25: toggle_colorimetry_flags1 |= COLORIMETRY_XVYCC709; break;
+			case 26: toggle_colorimetry_flags1 |= COLORIMETRY_SYCC; break;
+			case 27: toggle_colorimetry_flags1 |= COLORIMETRY_ADOBEYCC; break;
+			case 28: toggle_colorimetry_flags1 |= COLORIMETRY_ADOBERGB; break;
+			case 29: toggle_colorimetry_flags1 |= COLORIMETRY_BT2020RGB; break;
+			case 30: toggle_colorimetry_flags1 |= COLORIMETRY_BT2020YCC; break;
+			case 31: toggle_colorimetry_flags1 |= COLORIMETRY_BT2020CYCC; break;
+			case 32: toggle_colorimetry_flags2 |= COLORIMETRY_DCIP3; break;
+			case 33: toggle_hdr_md_flags |= HDR_MD_SDR; break;
+			case 34: toggle_hdr_md_flags |= HDR_MD_HDR; break;
+			case 35: toggle_hdr_md_flags |= HDR_MD_SMPTE_2084; break;
+			case 36: toggle_hdr_md_flags |= HDR_MD_HLG; break;
+			case 37: toggle_speaker1_flags |= SPEAKER1_FL_FR; break;
+			case 38: toggle_speaker1_flags |= SPEAKER1_LFE; break;
+			case 39: toggle_speaker1_flags |= SPEAKER1_FC; break;
+			case 40: toggle_speaker1_flags |= SPEAKER1_BL_BR; break;
+			case 41: toggle_speaker1_flags |= SPEAKER1_BC; break;
+			case 42: toggle_speaker1_flags |= SPEAKER1_FLC_FRC; break;
+			case 43: toggle_speaker1_flags |= SPEAKER1_RLC_RRC; break;
+			case 44: toggle_speaker1_flags |= SPEAKER1_FLW_FRW; break;
+			case 45: toggle_speaker2_flags |= SPEAKER2_TPFL_TPFR; break;
+			case 46: toggle_speaker2_flags |= SPEAKER2_TPC; break;
+			case 47: toggle_speaker2_flags |= SPEAKER2_TPFC; break;
+			case 48: toggle_speaker2_flags |= SPEAKER2_LS_RS; break;
+			case 49: toggle_speaker2_flags |= SPEAKER2_LFE2; break;
+			case 50: toggle_speaker2_flags |= SPEAKER2_TPBC; break;
+			case 51: toggle_speaker2_flags |= SPEAKER2_SIL_SIR; break;
+			case 52: toggle_speaker2_flags |= SPEAKER2_TPSIL_TPSIR; break;
+			case 53: toggle_speaker3_flags |= SPEAKER3_TPBL_TPBR; break;
+			case 54: toggle_speaker3_flags |= SPEAKER3_BTFC; break;
+			case 55: toggle_speaker3_flags |= SPEAKER3_BTFL_BTFR; break;
+			case 56: toggle_speaker3_flags |= SPEAKER3_TPLS_TPRS; break;
 			default:
 				edid_usage();
 				exit(1);
@@ -1167,11 +1229,12 @@ void edid_set(int fd)
 				must_fix_edid = true;
 			}
 		}
-		if (toggle_speaker1_flags || toggle_speaker2_flags) {
+		if (toggle_speaker1_flags || toggle_speaker2_flags || toggle_speaker3_flags) {
 			loc = get_edid_speaker_location(sedid.edid, sedid.blocks * 128);
 			if (loc >= 0) {
 				sedid.edid[loc] ^= toggle_speaker1_flags;
 				sedid.edid[loc + 1] ^= toggle_speaker2_flags;
+				sedid.edid[loc + 2] ^= toggle_speaker3_flags;
 				must_fix_edid = true;
 			}
 		}
@@ -1218,10 +1281,11 @@ void edid_set(int fd)
 				must_fix_edid = true;
 			}
 		}
-		if (toggle_colorimetry_flags) {
+		if (toggle_colorimetry_flags1 || toggle_colorimetry_flags2) {
 			loc = get_edid_colorimetry_location(sedid.edid, sedid.blocks * 128);
 			if (loc >= 0) {
-				sedid.edid[loc] ^= toggle_colorimetry_flags;
+				sedid.edid[loc] ^= toggle_colorimetry_flags1;
+				sedid.edid[loc + 1] ^= toggle_colorimetry_flags2;
 				must_fix_edid = true;
 			}
 		}
