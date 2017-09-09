@@ -358,7 +358,7 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 }
 
 static const flag_def dv_standards_def[] = {
-	{ V4L2_DV_BT_STD_CEA861, "CEA-861" },
+	{ V4L2_DV_BT_STD_CEA861, "CTA-861" },
 	{ V4L2_DV_BT_STD_DMT, "DMT" },
 	{ V4L2_DV_BT_STD_CVT, "CVT" },
 	{ V4L2_DV_BT_STD_GTF, "GTF" },
@@ -387,7 +387,7 @@ static std::string dvflags2s(unsigned vsync, int val)
 	if (val & V4L2_DV_FL_HAS_PICTURE_ASPECT)
 		s += "has picture aspect, ";
 	if (val & V4L2_DV_FL_HAS_CEA861_VIC)
-		s += "has CEA-861 VIC, ";
+		s += "has CTA-861 VIC, ";
 	if (val & V4L2_DV_FL_HAS_HDMI_VIC)
 		s += "has HDMI VIC, ";
 	if (s.length())
@@ -459,7 +459,7 @@ static void print_dv_timings(const struct v4l2_dv_timings *t)
 			       bt->picture_aspect.numerator,
 			       bt->picture_aspect.denominator);
 		if (bt->flags & V4L2_DV_FL_HAS_CEA861_VIC)
-			printf("\tCEA-861 VIC: %u\n", bt->cea861_vic);
+			printf("\tCTA-861 VIC: %u\n", bt->cea861_vic);
 		if (bt->flags & V4L2_DV_FL_HAS_HDMI_VIC)
 			printf("\tHDMI VIC: %u\n", bt->hdmi_vic);
 		printf("\tFlags: %s\n", dvflags2s(bt->vsync, bt->flags).c_str());

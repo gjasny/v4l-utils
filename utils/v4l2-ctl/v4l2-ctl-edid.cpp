@@ -48,11 +48,11 @@ static enum format sformat;
 static unsigned clear_pad;
 static long phys_addr = -1;
 
-static __u8 toggle_cea861_hdr_flags;
-#define CEA861_HDR_UNDERSCAN	(1 << 6)
-#define CEA861_HDR_AUDIO	(1 << 6)
-#define CEA861_HDR_YCBCR444	(1 << 5)
-#define CEA861_HDR_YCBCR422	(1 << 4)
+static __u8 toggle_cta861_hdr_flags;
+#define CTA861_HDR_UNDERSCAN	(1 << 6)
+#define CTA861_HDR_AUDIO	(1 << 6)
+#define CTA861_HDR_YCBCR444	(1 << 5)
+#define CTA861_HDR_YCBCR422	(1 << 4)
 
 static __u8 toggle_speaker1_flags;
 #define SPEAKER1_FL_FR		(1 << 0)
@@ -142,7 +142,7 @@ void edid_usage(void)
 	       "\n"
 	       "                     [modifiers] is a comma-separate list of EDID modifiers:\n"
 	       "\n"
-	       "                     CEA-861 Header modifiers:\n"
+	       "                     CTA-861 Header modifiers:\n"
 	       "                     underscan: toggle the underscan bit.\n"
 	       "                     audio: toggle the audio bit.\n"
 	       "                     ycbcr444: toggle the YCbCr 4:4:4 bit.\n"
@@ -184,14 +184,14 @@ void edid_usage(void)
 	       "                     HDMI Forum Vendor-Specific Data Block modifiers:\n"
 	       "                     scdc: toggle the SCDC Present bit.\n"
 	       "\n"
-	       "                     CEA-861 Video Capability Descriptor modifiers:\n"
+	       "                     CTA-861 Video Capability Descriptor modifiers:\n"
 	       "                     qy: toggle the QY YCC Quantization Range bit.\n"
 	       "                     qs: toggle the QS RGB Quantization Range bit.\n"
 	       "                     s-pt=<0-3>: set the PT Preferred Format Over/underscan bits.\n"
 	       "                     s-it=<0-3>: set the IT Over/underscan bits.\n"
 	       "                     s-ce=<0-3>: set the CE Over/underscan bits.\n"
 	       "\n"
-	       "                     CEA-861 Colorimetry Data Block modifiers:\n"
+	       "                     CTA-861 Colorimetry Data Block modifiers:\n"
 	       "                     xvycc-601: toggle the xvYCC 601 bit.\n"
 	       "                     xvycc-709: toggle the xvYCC 709 bit.\n"
 	       "                     sycc: toggle the sYCC 601 bit.\n"
@@ -202,7 +202,7 @@ void edid_usage(void)
 	       "                     bt2020-cycc: toggle the BT2020 cYCC bit.\n"
 	       "                     dci-p3: toggle the DCI-P3 bit.\n"
 	       "\n"
-	       "                     CEA-861 HDR Static Metadata Data Block modifiers:\n"
+	       "                     CTA-861 HDR Static Metadata Data Block modifiers:\n"
 	       "                     sdr: toggle the Traditional gamma SDR bit.\n"
 	       "                     hdr: toggle the Traditional gamma HDR bit.\n"
 	       "                     smpte2084: toggle the SMPTE ST 2084 bit.\n"
@@ -435,7 +435,7 @@ static int get_edid_tag_location(const unsigned char *edid, unsigned size,
 	return -1;
 }
 
-static int get_edid_cea861_hdr_location(const unsigned char *edid, unsigned size)
+static int get_edid_cta861_hdr_location(const unsigned char *edid, unsigned size)
 {
 	if (size < 256)
 		return -1;
@@ -547,15 +547,15 @@ static void print_edid_mods(const struct v4l2_edid *e)
 	unsigned short pa = get_edid_phys_addr(e->edid, e->blocks * 128);
 	int loc;
 
-	loc = get_edid_cea861_hdr_location(e->edid, e->blocks * 128);
+	loc = get_edid_cta861_hdr_location(e->edid, e->blocks * 128);
 	if (loc >= 0) {
 		__u8 v = e->edid[loc];
 
-		printf("\nCEA-861 Header\n");
-		printf("  IT Formats Underscanned: %s\n", (v & CEA861_HDR_UNDERSCAN) ? "yes" : "no");
-		printf("  Audio:                   %s\n", (v & CEA861_HDR_AUDIO) ? "yes" : "no");
-		printf("  YCbCr 4:4:4:             %s\n", (v & CEA861_HDR_YCBCR444) ? "yes" : "no");
-		printf("  YCbCr 4:2:2:             %s\n", (v & CEA861_HDR_YCBCR422) ? "yes" : "no");
+		printf("\nCTA-861 Header\n");
+		printf("  IT Formats Underscanned: %s\n", (v & CTA861_HDR_UNDERSCAN) ? "yes" : "no");
+		printf("  Audio:                   %s\n", (v & CTA861_HDR_AUDIO) ? "yes" : "no");
+		printf("  YCbCr 4:4:4:             %s\n", (v & CTA861_HDR_YCBCR444) ? "yes" : "no");
+		printf("  YCbCr 4:2:2:             %s\n", (v & CTA861_HDR_YCBCR422) ? "yes" : "no");
 	}
 	loc = get_edid_speaker_location(e->edid, e->blocks * 128);
 	if (loc >= 0) {
@@ -672,7 +672,7 @@ static void print_edid_mods(const struct v4l2_edid *e)
 		};
 		__u8 v = e->edid[loc];
 
-		printf("\nCEA-861 Video Capability Descriptor\n");
+		printf("\nCTA-861 Video Capability Descriptor\n");
 		printf("  RGB Quantization Range:  %s\n", (v & VID_CAP_QS) ? "yes" : "no");
 		printf("  YCC Quantization Range:  %s\n", (v & VID_CAP_QY) ? "yes" : "no");
 		printf("  PT:                      %s\n", pt_scan[(v >> 4) & 3]);
@@ -684,7 +684,7 @@ static void print_edid_mods(const struct v4l2_edid *e)
 		__u8 v1 = e->edid[loc];
 		__u8 v2 = e->edid[loc + 1];
 
-		printf("\nCEA-861 Colorimetry Data Block\n");
+		printf("\nCTA-861 Colorimetry Data Block\n");
 		printf("  xvYCC 601:               %s\n", (v1 & COLORIMETRY_XVYCC601) ? "yes" : "no");
 		printf("  xvYCC 709:               %s\n", (v1 & COLORIMETRY_XVYCC709) ? "yes" : "no");
 		printf("  sYCC:                    %s\n", (v1 & COLORIMETRY_SYCC) ? "yes" : "no");
@@ -699,7 +699,7 @@ static void print_edid_mods(const struct v4l2_edid *e)
 	if (loc >= 0) {
 		__u8 v = e->edid[loc];
 
-		printf("\nCEA-861 HDR Static Metadata Data Block\n");
+		printf("\nCTA-861 HDR Static Metadata Data Block\n");
 		printf("  SDR (Traditional Gamma): %s\n", (v & HDR_MD_SDR) ? "yes" : "no");
 		printf("  HDR (Traditional Gamma): %s\n", (v & HDR_MD_HDR) ? "yes" : "no");
 		printf("  SMPTE 2084:              %s\n", (v & HDR_MD_SMPTE_2084) ? "yes" : "no");
@@ -1069,10 +1069,10 @@ void edid_cmd(int ch, char *optarg)
 			case 15: toggle_hdmi_vsdb_cnc_flags |= HDMI_VSDB_CINEMA; break;
 			case 16: toggle_hdmi_vsdb_cnc_flags |= HDMI_VSDB_GAME; break;
 			case 17: toggle_hf_vsdb_flags |= HF_VSDB_SCSD_PRESENT; break;
-			case 18: toggle_cea861_hdr_flags |= CEA861_HDR_UNDERSCAN; break;
-			case 19: toggle_cea861_hdr_flags |= CEA861_HDR_AUDIO; break;
-			case 20: toggle_cea861_hdr_flags |= CEA861_HDR_YCBCR444; break;
-			case 21: toggle_cea861_hdr_flags |= CEA861_HDR_YCBCR422; break;
+			case 18: toggle_cta861_hdr_flags |= CTA861_HDR_UNDERSCAN; break;
+			case 19: toggle_cta861_hdr_flags |= CTA861_HDR_AUDIO; break;
+			case 20: toggle_cta861_hdr_flags |= CTA861_HDR_YCBCR444; break;
+			case 21: toggle_cta861_hdr_flags |= CTA861_HDR_YCBCR422; break;
 			case 22: toggle_vid_cap_flags |= VID_CAP_QY; break;
 			case 23: toggle_vid_cap_flags |= VID_CAP_QS; break;
 			case 24: toggle_colorimetry_flags1 |= COLORIMETRY_XVYCC601; break;
@@ -1220,10 +1220,10 @@ void edid_set(int fd)
 				exit(1);
 			}
 		}
-		if (toggle_cea861_hdr_flags || phys_addr >= 0) {
-			loc = get_edid_cea861_hdr_location(sedid.edid, sedid.blocks * 128);
+		if (toggle_cta861_hdr_flags || phys_addr >= 0) {
+			loc = get_edid_cta861_hdr_location(sedid.edid, sedid.blocks * 128);
 			if (loc >= 0) {
-				sedid.edid[loc] ^= toggle_cea861_hdr_flags;
+				sedid.edid[loc] ^= toggle_cta861_hdr_flags;
 				if (phys_addr >= 0)
 					set_edid_phys_addr(sedid.edid, sedid.blocks * 128, phys_addr);
 				must_fix_edid = true;
