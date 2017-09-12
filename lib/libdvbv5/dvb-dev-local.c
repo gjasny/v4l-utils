@@ -24,11 +24,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
-#include <pthread.h>
 #include <unistd.h>
 #include <string.h>
 
 #include <config.h>
+
+#ifdef HAVE_PTHREAD
+#  include <pthread.h>
+#endif
 
 #include "dvb-fe-priv.h"
 #include "dvb-dev-priv.h"
@@ -44,7 +47,9 @@
 struct dvb_dev_local_priv {
 	dvb_dev_change_t notify_dev_change;
 
+#ifdef HAVE_PTHREAD
 	pthread_t dev_change_id;
+#endif
 
 	/* udev control fields */
 	int udev_fd;
@@ -294,12 +299,13 @@ static int dvb_local_find(struct dvb_device_priv *dvb,
 #ifndef HAVE_PTHREAD
 		dvb_logerr("Need to be compiled with pthreads for monitor");
 		return -EINVAL;
-#endif
+#else
 		/* Set up a monitor to monitor dvb devices */
 		priv->mon = udev_monitor_new_from_netlink(priv->udev, "udev");
 		udev_monitor_filter_add_match_subsystem_devtype(priv->mon, "dvb", NULL);
 		udev_monitor_enable_receiving(priv->mon);
 		priv->udev_fd = udev_monitor_get_fd(priv->mon);
+#endif
 	}
 
 	/* Create a list of the devices in the 'dvb' subsystem. */
