@@ -396,6 +396,7 @@ bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
 		V4L2_PIX_FMT_YUV565,
 		V4L2_PIX_FMT_YUV32,
 		V4L2_PIX_FMT_GREY,
+		V4L2_PIX_FMT_Z16,
 		V4L2_PIX_FMT_Y16,
 		V4L2_PIX_FMT_Y16_BE,
 		V4L2_PIX_FMT_HSV24,
@@ -507,6 +508,7 @@ void CaptureWinGLEngine::changeShader()
 	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_ABGR32:
 	case V4L2_PIX_FMT_GREY:
+	case V4L2_PIX_FMT_Z16:
 	case V4L2_PIX_FMT_Y16:
 	case V4L2_PIX_FMT_Y16_BE:
 	case V4L2_PIX_FMT_HSV24:
@@ -630,6 +632,7 @@ void CaptureWinGLEngine::paintGL()
 		break;
 
 	case V4L2_PIX_FMT_GREY:
+	case V4L2_PIX_FMT_Z16:
 	case V4L2_PIX_FMT_Y16:
 	case V4L2_PIX_FMT_Y16_BE:
 	case V4L2_PIX_FMT_RGB332:
@@ -1545,6 +1548,7 @@ void CaptureWinGLEngine::shader_RGB(__u32 format)
                           m_xfer_func != V4L2_XFER_FUNC_SRGB ||
 			  format == V4L2_PIX_FMT_BGR666 ||
 			  format == V4L2_PIX_FMT_GREY ||
+			  format == V4L2_PIX_FMT_Z16 ||
 			  format == V4L2_PIX_FMT_Y16 ||
 			  format == V4L2_PIX_FMT_Y16_BE ||
 			  format == V4L2_PIX_FMT_HSV24 ||
@@ -1615,6 +1619,7 @@ void CaptureWinGLEngine::shader_RGB(__u32 format)
 		glTexImage2D(GL_TEXTURE_2D, 0, m_glRed, m_frameWidth, m_frameHeight, 0,
 			     m_glRed, GL_UNSIGNED_BYTE, NULL);
 		break;
+	case V4L2_PIX_FMT_Z16:
 	case V4L2_PIX_FMT_Y16:
 	case V4L2_PIX_FMT_Y16_BE:
 		glTexImage2D(GL_TEXTURE_2D, 0, m_glRed, m_frameWidth, m_frameHeight, 0,
@@ -1664,6 +1669,7 @@ void CaptureWinGLEngine::shader_RGB(__u32 format)
 			    "   float b = color.r;";
 		break;
 	case V4L2_PIX_FMT_GREY:
+	case V4L2_PIX_FMT_Z16:
 	case V4L2_PIX_FMT_Y16:
 	case V4L2_PIX_FMT_Y16_BE:
 		codeHead += "   float r = color.r;"
@@ -1748,6 +1754,7 @@ void CaptureWinGLEngine::render_RGB(__u32 format)
 		break;
 
 	case V4L2_PIX_FMT_Y16:
+	case V4L2_PIX_FMT_Z16:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
 				m_glRed, GL_UNSIGNED_SHORT, m_frameData);
 		break;
