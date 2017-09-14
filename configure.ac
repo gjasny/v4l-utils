@@ -21,7 +21,6 @@ AC_CONFIG_FILES([Makefile
 	utils/Makefile
 	utils/libv4l2util/Makefile
 	utils/libmedia_dev/Makefile
-	utils/decode_tm6000/Makefile
 	utils/dvb/Makefile
 	utils/keytable/Makefile
 	utils/ir-ctl/Makefile
@@ -33,7 +32,6 @@ AC_CONFIG_FILES([Makefile
 	utils/v4l2-ctl/Makefile
 	utils/v4l2-dbg/Makefile
 	utils/v4l2-sysfs-path/Makefile
-	utils/xc3028-firmware/Makefile
 	utils/qv4l2/Makefile
 	utils/cec-ctl/Makefile
 	utils/cec-ctl/cec-ctl.1
@@ -48,6 +46,8 @@ AC_CONFIG_FILES([Makefile
 	contrib/test/Makefile
 	contrib/gconv/Makefile
 	contrib/cobalt-ctl/Makefile
+	contrib/decode_tm6000/Makefile
+	contrib/xc3028-firmware/Makefile
 
 	v4l-utils-po/Makefile.in
 	libdvbv5-po/Makefile.in

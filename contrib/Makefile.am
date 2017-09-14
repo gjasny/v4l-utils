@@ -1,5 +1,5 @@
 if LINUX_OS
-SUBDIRS = test
+SUBDIRS = test xc3028-firmware
 else
 SUBDIRS = freebsd
 endif
@@ -11,6 +11,8 @@ endif
 if WITH_GCONV
 SUBDIRS += gconv
 endif
+
+SUBDIRS += decode_tm6000
 
 EXTRA_DIST = \
 	parse-sniffusb2.pl \
