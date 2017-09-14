@@ -11,6 +11,13 @@ Those utilities follow the latest Linux Kernel media API, as documented
 at:
 	http://linuxtv.org/downloads/v4l-dvb-apis/
 
+Any questions/remarks/patches can be sent to the linux-media mailinglist.
+See https://linuxtv.org/lists.php for more information about the mailinglist.
+
+There is also a wiki page for the v4l-utils:
+
+	https://linuxtv.org/wiki/index.php/V4l-utils
+
 
 --------
 Building
