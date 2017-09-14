@@ -27,7 +27,6 @@ AC_CONFIG_FILES([Makefile
 	utils/cx18-ctl/Makefile
 	utils/ivtv-ctl/Makefile
 	utils/media-ctl/Makefile
-	utils/rds/Makefile
 	utils/v4l2-compliance/Makefile
 	utils/v4l2-ctl/Makefile
 	utils/v4l2-dbg/Makefile
@@ -48,6 +47,7 @@ AC_CONFIG_FILES([Makefile
 	contrib/cobalt-ctl/Makefile
 	contrib/decode_tm6000/Makefile
 	contrib/xc3028-firmware/Makefile
+	contrib/rds-saa6588/Makefile
 
 	v4l-utils-po/Makefile.in
 	libdvbv5-po/Makefile.in

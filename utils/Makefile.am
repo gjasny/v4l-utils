@@ -24,14 +24,6 @@ SUBDIRS += \
 	dvb
 endif
 
-if LINUX_OS
-
-if HAVE_LINUX_I2C_DEV
-SUBDIRS += \
-	rds
-endif
-endif
-
 if WITH_QV4L2
 SUBDIRS += qv4l2
 endif

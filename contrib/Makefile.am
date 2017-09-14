@@ -1,5 +1,11 @@
 if LINUX_OS
 SUBDIRS = test xc3028-firmware
+
+if HAVE_LINUX_I2C_DEV
+SUBDIRS += \
+	rds-saa6588
+endif
+
 else
 SUBDIRS = freebsd
 endif
