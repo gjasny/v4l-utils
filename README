@@ -193,12 +193,15 @@ decode_tm6000:
 Decodes tm6000 proprietary format streams.
 Installed by make install under <prefix>/bin.
 
-v4l-keytable:
+ir-keytable:
 Dump, Load or Modify ir receiver input tables.
 The ir tables for remotes which are known by the kernel
 (and loaded by default depending on dvb card type) can be found
 under utils/keytable/keycodes.
 v4l-keytable does not get installed by make install.
+
+ir-ctl:
+A swiss-knife tool to handle raw IR and to set lirc options
 
 qv4l2:
 QT v4l2 control panel application.
