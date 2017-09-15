@@ -950,7 +950,7 @@ error:
 }
 
 struct dvb_dev_list *dvb_remote_get_dev_info(struct dvb_device_priv *dvb,
-					     char *sysname)
+					     const char *sysname)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
