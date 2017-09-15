@@ -1522,6 +1522,9 @@ void ApplicationWindow::capStart(bool start)
 	case V4L2_PIX_FMT_YUV32:
 		dstFmt = QImage::Format_ARGB32;
 		break;
+	case V4L2_PIX_FMT_INZI:
+		height *= 2;
+		break;
 	}
 	m_capImage = new QImage(width, height, dstFmt);
 	m_capImage->fill(0);
