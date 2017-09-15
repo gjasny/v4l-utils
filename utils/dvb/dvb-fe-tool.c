@@ -292,7 +292,7 @@ static void get_show_stats(struct dvb_v5_fe_parms *parms)
 	} while (!timeout_flag);
 }
 
-static const char const *event_type[] = {
+static const char * const event_type[] = {
 	[DVB_DEV_ADD] = "added",
 	[DVB_DEV_CHANGE] = "changed",
 	[DVB_DEV_REMOVE] = "removed",

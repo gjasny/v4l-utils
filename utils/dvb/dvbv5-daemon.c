@@ -1311,7 +1311,7 @@ struct method_types {
 	int locks_dvb;
 };
 
-static const struct method_types const methods[] = {
+static const struct method_types methods[] = {
 	{"daemon_get_version", &daemon_get_version, 1},
 	{"dev_find", &dev_find, 0},
 	{"dev_stop_monitor", &dev_stop_monitor, 0},
