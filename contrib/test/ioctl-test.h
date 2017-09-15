@@ -86,14 +86,12 @@ static const struct {
 } ioctls[] = {
 	/* ioctl structs */
 	ioc(demux, DMX_ADD_PID),							/*  __u16 */
-	ioc(demux, DMX_GET_CAPS),							/*  dmx_caps_t */
 	ioc(demux, DMX_GET_PES_PIDS),							/*  __u16[5] */
 	ioc(demux, DMX_GET_STC),							/*  struct dmx_stc */
 	ioc(demux, DMX_REMOVE_PID),							/*  __u16 */
 	ioc(demux, DMX_SET_BUFFER_SIZE),						/*  void */
 	ioc(demux, DMX_SET_FILTER),							/*  struct dmx_sct_filter_params */
 	ioc(demux, DMX_SET_PES_FILTER),							/*  struct dmx_pes_filter_params */
-	ioc(demux, DMX_SET_SOURCE),							/*  dmx_source_t */
 	ioc(demux, DMX_START),								/*  void */
 	ioc(demux, DMX_STOP),								/*  void */
 	ioc(frontend, FE_DISEQC_RECV_SLAVE_REPLY),					/*  struct dvb_diseqc_slave_reply */

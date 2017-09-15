@@ -13,7 +13,7 @@ struct fe_status_name {
 	unsigned  idx;
 	char *name;
 };
-extern struct fe_status_name fe_status_name[7];
+extern struct fe_status_name fe_status_name[8];
 const char *fe_code_rate_name[14];
 const char *fe_modulation_name[15];
 const char *fe_transmission_mode_name[10];
