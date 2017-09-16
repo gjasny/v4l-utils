@@ -634,7 +634,8 @@ static void *receive_data(void *privdata)
 			dvb_dev_remote_disconnect(priv);
 			return NULL;
 		}
-		size = be32toh(*(int32_t *)buf);
+		size = (uint32_t)buf[0] << 24 | (uint32_t)buf[1] << 16 |
+		       (uint32_t)buf[2] << 8 | (uint32_t)buf[3];
 		ret = recv(priv->fd, buf, size, MSG_WAITALL);
 		if (ret != size) {
 			if (size < 0)

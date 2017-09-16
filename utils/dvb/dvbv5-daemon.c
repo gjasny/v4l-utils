@@ -1360,7 +1360,8 @@ static void *start_server(void *fd_pointer)
 		size = recv(fd, buf, 4, MSG_WAITALL);
 		if (size <= 0)
 			break;
-		size = be32toh(*(int32_t *)buf);
+		size = (uint32_t)buf[0] << 24 | (uint32_t)buf[1] << 16 |
+		       (uint32_t)buf[2] << 8 | (uint32_t)buf[3];
 		size = recv(fd, buf, size, MSG_WAITALL);
 		if (size <= 0)
 			break;
