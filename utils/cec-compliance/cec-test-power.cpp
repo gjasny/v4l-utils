@@ -37,7 +37,13 @@ static bool get_power_status(struct node *node, unsigned me, unsigned la, __u8 &
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_device_power_status(&msg, true);
-	if (!transmit_timeout(node, &msg) || timed_out_or_abort(&msg))
+	msg.timeout = 2000;
+	int res = doioctl(node, CEC_TRANSMIT, &msg);
+	if (res == ENONET) {
+		power_status = CEC_OP_POWER_STATUS_STANDBY;
+		return true;
+	}
+	if (res || timed_out_or_abort(&msg))
 		return false;
 	cec_ops_report_power_status(&msg, &power_status);
 	return true;
@@ -259,18 +265,19 @@ static bool wait_changing_power_status(struct node *node, unsigned me, unsigned 
 				       unsigned &unresponsive_time)
 {
 	__u8 old_status;
+	time_t t = time(NULL);
 
 	announce("Checking for power status change. This may take up to %u s.", long_timeout);
 	if (!get_power_status(node, me, la, old_status))
 		return false;
-	for (unsigned i = 0; i < long_timeout / SLEEP_POLL_POWER_STATUS; i++) {
+	while (time(NULL) - t < long_timeout) {
 		__u8 power_status;
 
 		if (!get_power_status(node, me, la, power_status)) {
 			/* Some TVs become completely unresponsive when transitioning
 			   between power modes. Register that this happens, but continue
 			   the test. */
-			unresponsive_time = i * SLEEP_POLL_POWER_STATUS;
+			unresponsive_time = time(NULL) - t;
 		} else if (old_status != power_status) {
 			new_status = power_status;
 			return true;
@@ -286,27 +293,28 @@ static bool poll_stable_power_status(struct node *node, unsigned me, unsigned la
 {
 	bool transient = false;
 	unsigned time_to_transient = 0;
+	time_t t = time(NULL);
 
 	/* Some devices can use several seconds to transition from one power
 	   state to another, so the power state must be repeatedly polled */
 	announce("Waiting for new stable power status. This may take up to %u s.", long_timeout);
-	for (unsigned tries = 0; tries < long_timeout / SLEEP_POLL_POWER_STATUS; tries++) {
+	while (time(NULL) - t < long_timeout) {
 		__u8 power_status;
 
 		if (!get_power_status(node, me, la, power_status)) {
 			/* Some TVs become completely unresponsive when transitioning
 			   between power modes. Register that this happens, but continue
 			   the test. */
-			unresponsive_time = tries * SLEEP_POLL_POWER_STATUS;
+			unresponsive_time = time(NULL) - t;
 		}
 		if (!transient && (power_status == CEC_OP_POWER_STATUS_TO_ON ||
 				   power_status == CEC_OP_POWER_STATUS_TO_STANDBY)) {
-			time_to_transient = tries * SLEEP_POLL_POWER_STATUS;
+			time_to_transient = time(NULL) - t;
 			transient = true;
 		}
 		if (power_status == expected_status) {
 			announce("Transient state after %d s, stable state %s after %d s",
-			     time_to_transient, power_status2s(power_status), tries * SLEEP_POLL_POWER_STATUS);
+			     time_to_transient, power_status2s(power_status), (int)(time(NULL) - t));
 			return true;
 		}
 		sleep(SLEEP_POLL_POWER_STATUS);
@@ -355,7 +363,8 @@ static int standby_resume_standby_toggle(struct node *node, unsigned me, unsigne
 	announce("Sending Standby message.");
 	cec_msg_init(&msg, me, la);
 	cec_msg_standby(&msg);
-	fail_on_test(!transmit_timeout(node, &msg));
+	int res = doioctl(node, CEC_TRANSMIT, &msg);
+	fail_on_test(res && res != ENONET);
 	fail_on_test(cec_msg_status_is_abort(&msg));
 	fail_on_test(wait_changing_power_status(node, me, la, new_status, unresponsive_time));
 	fail_on_test(new_status != CEC_OP_POWER_STATUS_STANDBY);
@@ -384,7 +393,8 @@ static int standby_resume_active_source_nowake(struct node *node, unsigned me, u
 	announce("Sending Active Source message.");
 	cec_msg_init(&msg, me, la);
 	cec_msg_active_source(&msg, node->phys_addr);
-	fail_on_test(!transmit_timeout(node, &msg));
+	int res = doioctl(node, CEC_TRANSMIT, &msg);
+	fail_on_test(res && res != ENONET);
 	fail_on_test(wait_changing_power_status(node, me, la, new_status, unresponsive_time));
 	fail_on_test_v2_warn(node->remote[la].cec_version, new_status != CEC_OP_POWER_STATUS_STANDBY);
 	node->remote[la].in_standby = true;
@@ -450,7 +460,7 @@ static int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bo
 	int ret;
 
 	if (is_tv(la, node->remote[la].prim_type))
-		ret = wakeup_tv(node, me, la);
+		ret = wakeup_tv(node, CEC_LOG_ADDR_UNREGISTERED, la);
 	else
 		ret = wakeup_source(node, me, la);
 	if (ret)

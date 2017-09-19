@@ -798,7 +798,8 @@ int check_0(const void *p, int len)
 	return 0;
 }
 
-#define TX_WAIT_FOR_HPD 3
+#define TX_WAIT_FOR_HPD		10
+#define TX_WAIT_FOR_HPD_RETURN	30
 
 static bool wait_for_hpd(struct node *node, bool send_image_view_on)
 {
@@ -845,9 +846,9 @@ static bool wait_for_hpd(struct node *node, bool send_image_view_on)
 			send_image_view_on = false;
 		}
 
-		if (time(NULL) - t > TX_WAIT_FOR_HPD + long_timeout) {
+		if (time(NULL) - t > TX_WAIT_FOR_HPD + TX_WAIT_FOR_HPD_RETURN) {
 			fail("timed out after %d s waiting for HPD to return\n",
-			     long_timeout);
+			     TX_WAIT_FOR_HPD + TX_WAIT_FOR_HPD_RETURN);
 			return false;
 		}
 	}
@@ -876,7 +877,7 @@ retry:
 		}
 		warn("HPD was lost, wait for it to come up again.\n");
 
-		if (!wait_for_hpd(node, (node->caps & CEC_CAP_NEEDS_HPD) &&
+		if (!wait_for_hpd(node, !(node->caps & CEC_CAP_NEEDS_HPD) &&
 				  cec_msg_destination(msg) == CEC_LOG_ADDR_TV))
 			return false;
 
