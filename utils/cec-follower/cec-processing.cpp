@@ -191,6 +191,18 @@ static void log_event(struct cec_event &ev)
 	case CEC_EVENT_LOST_MSGS:
 		printf("Event: Lost Messages\n");
 		break;
+	case CEC_EVENT_PIN_HPD_LOW:
+	case CEC_EVENT_PIN_HPD_HIGH:
+		printf("Event: HPD Pin %s\n",
+		       ev.event == CEC_EVENT_PIN_HPD_HIGH ? "High" : "Low");
+		warn("Unexpected HPD pin event!\n");
+		break;
+	case CEC_EVENT_PIN_CEC_LOW:
+	case CEC_EVENT_PIN_CEC_HIGH:
+		printf("Event: CEC Pin %s\n",
+		       ev.event == CEC_EVENT_PIN_CEC_HIGH ? "High" : "Low");
+		warn("Unexpected CEC pin event!\n");
+		break;
 	default:
 		printf("Event: Unknown (0x%x)\n", ev.event);
 		break;

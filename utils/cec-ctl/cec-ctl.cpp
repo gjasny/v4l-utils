@@ -1097,6 +1097,11 @@ static void log_event(struct cec_event &ev)
 
 		log_event_pin(is_high, ev.ts);
 		return;
+	case CEC_EVENT_PIN_HPD_LOW:
+	case CEC_EVENT_PIN_HPD_HIGH:
+		printf("Event: HPD Pin %s\n",
+		       ev.event == CEC_EVENT_PIN_HPD_HIGH ? "High" : "Low");
+		break;
 	default:
 		printf("Event: Unknown (0x%x)\n", ev.event);
 		break;
