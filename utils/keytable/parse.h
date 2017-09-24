@@ -332,6 +332,7 @@ struct parse_event key_events[] = {
 	{"BTN_TOOL_MOUSE", 0x146},
 	{"BTN_TOOL_LENS", 0x147},
 	{"BTN_TOOL_QUINTTAP", 0x148},
+	{"BTN_STYLUS3", 0x149},
 	{"BTN_TOUCH", 0x14a},
 	{"BTN_STYLUS", 0x14b},
 	{"BTN_STYLUS2", 0x14c},

@@ -21,6 +21,8 @@
 #include <stdint.h>
 #include <ctype.h>
 
+#include <linux/lirc.h>
+
 #include "ir-encode.h"
 
 #define NS_TO_US(x) (((x)+500)/1000)
@@ -349,7 +351,7 @@ static const struct {
 	unsigned max_edges;
 	unsigned carrier;
 	int (*encode)(enum rc_proto proto, unsigned scancode, unsigned *buf);
-} encoders[RC_PROTO_COUNT] = {
+} encoders[] = {
 	[RC_PROTO_RC5] = { "rc5", 0x1f7f, 24, 36000, rc5_encode },
 	[RC_PROTO_RC5X_20] = { "rc5x_20", 0x1f7f3f, 40, 36000, rc5_encode },
 	[RC_PROTO_RC5_SZ] = { "rc5_sz", 0x2fff, 26, 36000, rc5_encode },
@@ -393,7 +395,7 @@ bool protocol_match(const char *name, enum rc_proto *proto)
 {
 	enum rc_proto p;
 
-	for (p=0; p<RC_PROTO_COUNT; p++) {
+	for (p=0; p<ARRAY_SIZE(encoders); p++) {
 		if (str_like(encoders[p].name, name)) {
 			*proto = p;
 			return true;

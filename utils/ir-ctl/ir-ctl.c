@@ -27,9 +27,9 @@
 
 #include <config.h>
 
-#include "ir-encode.h"
-
 #include <linux/lirc.h>
+
+#include "ir-encode.h"
 
 #ifdef ENABLE_NLS
 # define _(string) gettext(string)
