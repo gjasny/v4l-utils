@@ -1073,7 +1073,8 @@ static void log_event(struct cec_event &ev)
 	bool is_high = ev.event == CEC_EVENT_PIN_CEC_HIGH;
 	__u16 pa;
 
-	if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH)
+	if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH &&
+	    ev.event != CEC_EVENT_PIN_HPD_LOW && ev.event != CEC_EVENT_PIN_HPD_HIGH)
 		printf("\n");
 	if (ev.flags & CEC_EVENT_FL_DROPPED_EVENTS)
 		printf("(Note: events were lost)\n");
@@ -1432,12 +1433,14 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 			if (doioctl(&node, CEC_DQEVENT, &ev))
 				continue;
 			if (ev.event == CEC_EVENT_PIN_CEC_LOW ||
-			    ev.event == CEC_EVENT_PIN_CEC_HIGH)
+			    ev.event == CEC_EVENT_PIN_CEC_HIGH ||
+			    ev.event == CEC_EVENT_PIN_HPD_LOW ||
+			    ev.event == CEC_EVENT_PIN_HPD_HIGH)
 				pin_event = true;
 			if (pin_event && fstore) {
 				fprintf(fstore, "%llu.%09llu %d\n",
 					ev.ts / 1000000000, ev.ts % 1000000000,
-					ev.event == CEC_EVENT_PIN_CEC_HIGH);
+					ev.event - CEC_EVENT_PIN_CEC_LOW);
 				fflush(fstore);
 			}
 			if ((!pin_event || options[OptMonitorPin]) &&
@@ -1459,7 +1462,7 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 				if (fstore) {
 					fprintf(fstore, "%llu.%09llu %d\n",
 						ev.ts / 1000000000, ev.ts % 1000000000,
-						ev.event == CEC_EVENT_PIN_CEC_HIGH);
+						ev.event - CEC_EVENT_PIN_CEC_LOW);
 					fflush(fstore);
 				}
 				if (options[OptMonitorPin])
@@ -1527,14 +1530,14 @@ static void analyze(const char *analyze_pin)
 	printf("Logical Address Mask: 0x%04x\n\n", log_addr_mask);
 
 	while (fgets(s, sizeof(s), fanalyze)) {
-		unsigned high;
+		unsigned event;
 
-		if (sscanf(s, "%lu.%09lu %d\n", &tv_sec, &tv_nsec, &high) != 3 || high > 1) {
+		if (sscanf(s, "%lu.%09lu %d\n", &tv_sec, &tv_nsec, &event) != 3 || event > 3) {
 			fprintf(stderr, "malformed data at line %d\n", line);
 			break;
 		}
 		ev.ts = tv_sec * 1000000000ULL + tv_nsec;
-		ev.event = high ? CEC_EVENT_PIN_CEC_HIGH : CEC_EVENT_PIN_CEC_LOW;
+		ev.event = event + CEC_EVENT_PIN_CEC_LOW;
 		log_event(ev);
 		line++;
 	}
