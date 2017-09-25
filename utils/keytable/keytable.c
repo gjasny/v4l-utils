@@ -18,16 +18,20 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <poll.h>
 #include <stdlib.h>
 #include <string.h>
 #include <linux/input.h>
+#include <linux/lirc.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <argp.h>
+#include <time.h>
 #include <stdbool.h>
 
+#include "ir-encode.h"
 #include "parse.h"
 
 #ifdef ENABLE_NLS
@@ -271,6 +275,7 @@ static int sysfs = 0;
 struct rc_device {
 	char *sysfs_name;	/* Device sysfs node name */
 	char *input_name;	/* Input device file name */
+	char *lirc_name;	/* Lirc device file name */
 	char *drv_name;		/* Kernel driver that implements it */
 	char *dev_name;		/* Kernel device name */
 	char *keytable_name;	/* Keycode table name */
@@ -1031,14 +1036,32 @@ static int v2_set_protocols(struct rc_device *rc_dev)
 static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 {
 	struct uevents  *uevent;
-	char		*input = "input", *event = "event";
+	char		*input = "input", *event = "event", *lirc = "lirc";
 	char		*DEV = "/dev/";
-	static struct sysfs_names *input_names, *event_names, *attribs, *cur;
+	static struct sysfs_names *input_names, *event_names, *attribs, *cur, *lirc_names;
 
 	/* Clean the attributes */
 	memset(rc_dev, 0, sizeof(*rc_dev));
 
 	rc_dev->sysfs_name = sysfs_name;
+
+	lirc_names = seek_sysfs_dir(rc_dev->sysfs_name, lirc);
+	if (lirc_names) {
+		uevent = read_sysfs_uevents(lirc_names->name);
+		free_names(lirc_names);
+		if (uevent) {
+			while (uevent->next) {
+				if (!strcmp(uevent->key, "DEVNAME")) {
+					rc_dev->lirc_name = malloc(strlen(uevent->value) + strlen(DEV) + 1);
+					strcpy(rc_dev->lirc_name, DEV);
+					strcat(rc_dev->lirc_name, uevent->value);
+					break;
+				}
+				uevent = uevent->next;
+			}
+			free_uevent(uevent);
+		}
+	}
 
 	input_names = seek_sysfs_dir(rc_dev->sysfs_name, input);
 	if (!input_names)
@@ -1281,16 +1304,100 @@ static char *get_event_name(struct parse_event *event, u_int16_t code)
 	return "";
 }
 
-static void test_event(int fd)
+static void print_scancodes(const struct lirc_scancode *scancodes, unsigned count)
+{
+	unsigned i;
+
+	for (i=0; i< count; i++)  {
+		const char *p = protocol_name(scancodes[i].rc_proto);
+
+		printf(_("%llu.%06llu: "),
+			scancodes[i].timestamp / 1000000000ull,
+			(scancodes[i].timestamp % 1000000000ull) / 1000ull);
+
+		if (p)
+			printf(_("lirc protocol(%s): scancode = 0x%llx"),
+				p, scancodes[i].scancode);
+		else
+			printf(_("lirc protocol(%d): scancode = 0x%llx"),
+				scancodes[i].rc_proto, scancodes[i].scancode);
+
+		if (scancodes[i].flags & LIRC_SCANCODE_FLAG_REPEAT)
+			printf(_(" repeat"));
+		if (scancodes[i].flags & LIRC_SCANCODE_FLAG_TOGGLE)
+			printf(_(" toggle=1"));
+
+		printf("\n");
+	}
+}
+
+static void test_event(struct rc_device *rc_dev, int fd)
 {
 	struct input_event ev[64];
-	int rd, i;
+	struct lirc_scancode sc[64];
+	int rd, i, lircfd = -1;
+	unsigned mode;
+
+	/* LIRC reports time in monotonic, set event to same */
+	mode = CLOCK_MONOTONIC;
+	ioctl(fd, EVIOCSCLOCKID, &mode);
+
+	if (rc_dev->lirc_name) {
+		lircfd = open(rc_dev->lirc_name, O_RDONLY | O_NONBLOCK);
+		if (lircfd == -1) {
+			perror(_("Can't open lirc device"));
+			return;
+		}
+		unsigned features;
+		if (ioctl(lircfd, LIRC_GET_FEATURES, &features)) {
+			perror(_("Can't get lirc features"));
+			return;
+		}
+
+		if (!(features & LIRC_CAN_REC_SCANCODE)) {
+			close(lircfd);
+			lircfd = -1;
+		}
+		else {
+			unsigned mode = LIRC_MODE_SCANCODE;
+			if (ioctl(lircfd, LIRC_SET_REC_MODE, &mode)) {
+				perror(_("Can't set lirc scancode mode"));
+				return;
+			}
+		}
+	}
 
 	printf (_("Testing events. Please, press CTRL-C to abort.\n"));
 	while (1) {
+		struct pollfd pollstruct[2] = {
+			{ .fd = fd, .events = POLLIN },
+			{ .fd = lircfd, .events = POLLIN },
+		};
+
+		if (poll(pollstruct, 2, -1) < 0) {
+			if (errno == EINTR)
+				continue;
+
+			perror(_("poll returned error"));
+		}
+
+		if (lircfd != -1) {
+			rd = read(lircfd, sc, sizeof(sc));
+
+			if (rd != -1) {
+				print_scancodes(sc, rd / sizeof(struct lirc_scancode));
+			} else if (errno != EAGAIN) {
+				perror(_("Error reading lirc scancode"));
+				return;
+			}
+		}
+
 		rd = read(fd, ev, sizeof(ev));
 
 		if (rd < (int) sizeof(struct input_event)) {
+			if (errno == EAGAIN)
+				continue;
+
 			perror(_("Error reading event"));
 			return;
 		}
@@ -1482,6 +1589,9 @@ static int show_sysfs_attribs(struct rc_device *rc_dev, char *name)
 			fprintf(stderr, _("\tDriver: %s, table: %s\n"),
 				rc_dev->drv_name,
 				rc_dev->keytable_name);
+			if (rc_dev->lirc_name)
+				fprintf(stderr, _("\tlirc device: %s\n"),
+					rc_dev->lirc_name);
 			fprintf(stderr, _("\tSupported protocols: "));
 			write_sysfs_protocols(rc_dev->supported, stderr, "%s ");
 			fprintf(stderr, "\n\t");
@@ -1615,7 +1725,7 @@ int main(int argc, char *argv[])
 
 	if (debug)
 		fprintf(stderr, _("Opening %s\n"), devicename);
-	fd = open(devicename, O_RDONLY);
+	fd = open(devicename, O_RDONLY | O_NONBLOCK);
 	if (fd < 0) {
 		perror(devicename);
 		return -1;
@@ -1674,7 +1784,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (test)
-		test_event(fd);
+		test_event(&rc_dev, fd);
 
 	return 0;
 }

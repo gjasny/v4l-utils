@@ -4,7 +4,7 @@ sysconf_DATA = rc_maps.cfg
 keytablesystem_DATA = $(srcdir)/rc_keymaps/*
 udevrules_DATA = 70-infrared.rules
 
-ir_keytable_SOURCES = keytable.c parse.h
+ir_keytable_SOURCES = keytable.c parse.h ir-encode.c
 ir_keytable_LDADD = @LIBINTL@
 ir_keytable_LDFLAGS = $(ARGP_LIBS)
 
