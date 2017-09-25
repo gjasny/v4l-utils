@@ -585,8 +585,6 @@ int testExtendedControls(struct node *node)
 		return ret;
 	if (ret)
 		return fail("g_ext_ctrls does not support count == 0\n");
-	if (node->controls.empty())
-		return fail("g_ext_ctrls worked even when no controls are present\n");
 	if (ctrls.which)
 		return fail("field which changed\n");
 	if (ctrls.count)
@@ -600,8 +598,6 @@ int testExtendedControls(struct node *node)
 		return ret;
 	if (ret)
 		return fail("try_ext_ctrls does not support count == 0\n");
-	if (node->controls.empty())
-		return fail("try_ext_ctrls worked even when no controls are present\n");
 	if (ctrls.which)
 		return fail("field which changed\n");
 	if (ctrls.count)
@@ -687,6 +683,8 @@ int testExtendedControls(struct node *node)
 	}
 
 	ctrls.which = 0;
+	ctrls.count = 1;
+	ctrls.controls = &ctrl;
 	ctrl.id = 0;
 	ctrl.size = 0;
 	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
@@ -744,6 +742,9 @@ int testExtendedControls(struct node *node)
 	}
 	if (ret)
 		return fail("could not set all controls\n");
+
+	if (!which)
+		return 0;
 
 	ctrls.which = which;
 	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
