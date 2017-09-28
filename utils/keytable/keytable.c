@@ -671,8 +671,10 @@ static struct sysfs_names *seek_sysfs_dir(char *dname, char *node_name)
 	closedir(dir);
 
 	if (names == cur_name) {
-		fprintf(stderr, _("Couldn't find any node at %s%s*.\n"),
-			dname, node_name);
+		if (debug)
+			fprintf(stderr, _("Couldn't find any node at %s%s*.\n"),
+				dname, node_name);
+
 		free (names);
 		names = NULL;
 	}
@@ -779,8 +781,10 @@ static struct sysfs_names *find_device(char *name)
 	snprintf(dname, sizeof(dname), "/sys/class/rc/");
 
 	names = seek_sysfs_dir(dname, input);
-	if (!names)
+	if (!names) {
+		fprintf(stderr, _("No devices found\n"));
 		return NULL;
+	}
 
 	if (debug) {
 		for (cur = names; cur->next; cur = cur->next) {
@@ -1074,9 +1078,13 @@ static int get_attribs(struct rc_device *rc_dev, char *sysfs_name)
 		fprintf(stderr, _("Input sysfs node is %s\n"), input_names->name);
 
 	event_names = seek_sysfs_dir(input_names->name, event);
-	free_names(input_names);
-	if (!event_names)
+	if (!event_names) {
+		fprintf(stderr, _("Couldn't find any node at %s%s*.\n"),
+			input_names->name, event);
+		free_names(input_names);
 		return EINVAL;
+	}
+	free_names(input_names);
 	if (event_names->next->next) {
 		free_names(event_names);
 		fprintf(stderr, _("Found more than one event interface. This is currently unsupported\n"));
