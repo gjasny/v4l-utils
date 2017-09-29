@@ -426,7 +426,13 @@ static int wakeup_tv(struct node *node, unsigned me, unsigned la)
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_image_view_on(&msg);
-	fail_on_test(!transmit_timeout(node, &msg));
+	msg.timeout = 2000;
+	int res = doioctl(node, CEC_TRANSMIT, &msg);
+	if (res == ENONET && la == CEC_LOG_ADDR_TV) {
+		msg.msg[0] = (CEC_LOG_ADDR_UNREGISTERED << 4) | la;
+		res = doioctl(node, CEC_TRANSMIT, &msg);
+	}
+	fail_on_test(res || !(msg.tx_status & CEC_TX_STATUS_OK));
 	if (!cec_msg_status_is_abort(&msg))
 		return 0;
 
@@ -460,7 +466,7 @@ static int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bo
 	int ret;
 
 	if (is_tv(la, node->remote[la].prim_type))
-		ret = wakeup_tv(node, CEC_LOG_ADDR_UNREGISTERED, la);
+		ret = wakeup_tv(node, me, la);
 	else
 		ret = wakeup_source(node, me, la);
 	if (ret)
