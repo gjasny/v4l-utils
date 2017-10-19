@@ -3,7 +3,6 @@ use strict;
 use File::Find;
 
 my @ir_files = (
-	"drivers/media/usb/dvb-usb/a800.c",
 	"drivers/media/usb/dvb-usb/af9005-remote.c",
 	"drivers/media/usb/dvb-usb/az6027.c",
 	"drivers/media/usb/dvb-usb/cinergyT2-core.c",
@@ -13,7 +12,6 @@ my @ir_files = (
 	"drivers/media/usb/dvb-usb/nova-t-usb2.c",
 	"drivers/media/usb/dvb-usb/opera1.c",
 	"drivers/media/usb/dvb-usb/vp702x.c",
-	"drivers/media/usb/dvb-usb/vp7045.c",
 );
 
 my $debug = 1;
@@ -113,6 +111,9 @@ sub parse_file($$)
 
 				# Proper name the RC-5-SZ protocol
 				$type =~ s/^RC5_SZ$/RC-5-SZ/;
+
+				# NECX protocol variant uses nec decoder
+				$type =~ s/^NECX$/NEC/;
 			}
 			next;
 		}

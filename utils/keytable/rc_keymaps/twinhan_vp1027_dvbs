@@ -1,4 +1,4 @@
-# table twinhan_vp1027_dvbs, type: UNKNOWN
+# table twinhan_vp1027_dvbs, type: NEC
 0x16 KEY_POWER2
 0x17 KEY_FAVORITES
 0x0f KEY_TEXT
