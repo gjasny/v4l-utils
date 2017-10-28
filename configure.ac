@@ -439,6 +439,9 @@ AC_ARG_ENABLE(gconv,
    esac]
 )
 
+PKG_CHECK_MODULES([SDL2], [sdl2 SDL2_image], [sdl_pc=yes], [sdl_pc=no])
+AM_CONDITIONAL([HAVE_SDL], [test x$sdl_pc = xyes])
+
 # Check if backtrace functions are defined
 AC_SEARCH_LIBS([backtrace], [execinfo], [
   AC_DEFINE(HAVE_BACKTRACE, [1], [glibc has functions to provide stack backtrace])
@@ -507,6 +510,7 @@ compile time options summary
     pthread                    : $have_pthread
     QT version                 : $QT_VERSION
     ALSA support               : $USE_ALSA
+    SDL support		       : $sdl_pc
 
     build dynamic libs         : $enable_shared
     build static libs          : $enable_static

@@ -16,6 +16,10 @@ if HAVE_GLU
 noinst_PROGRAMS += v4l2gl
 endif
 
+if HAVE_SDL
+noinst_PROGRAMS += sdlcam
+endif
+
 driver_test_SOURCES = driver-test.c
 driver_test_LDADD = ../../utils/libv4l2util/libv4l2util.la
 
@@ -30,6 +34,10 @@ v4l2grab_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconv
 v4l2gl_SOURCES = v4l2gl.c
 v4l2gl_LDFLAGS = $(X11_LIBS) $(GL_LIBS) $(GLU_LIBS) $(ARGP_LIBS)
 v4l2gl_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la
+
+sdlcam_LDFLAGS = $(JPEG_LIBS) $(SDL2_LIBS) -lm -ldl -lrt
+sdlcam_CFLAGS = -I../.. $(SDL2_CFLAGS)
+sdlcam_LDADD = ../../lib/libv4l2/.libs/libv4l2.a  ../../lib/libv4lconvert/.libs/libv4lconvert.a
 
 mc_nextgen_test_CFLAGS = $(LIBUDEV_CFLAGS)
 mc_nextgen_test_LDFLAGS = $(LIBUDEV_LIBS)
