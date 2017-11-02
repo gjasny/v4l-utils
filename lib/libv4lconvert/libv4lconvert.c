@@ -418,7 +418,8 @@ static int v4lconvert_do_try_format_uvc(struct v4lconvert_data *data,
 
 	for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
 		/* is this format supported? */
-		if (!(data->framesizes[best_framesize].pixel_format & (1 << i)))
+		if (!(data->framesize_supported_src_formats[best_framesize] &
+		      (1ULL << i)))
 			continue;
 
 		/* Note the hardcoded use of discrete is based on this function
@@ -1613,9 +1614,7 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
 				return;
 			}
 			data->framesizes[data->no_framesizes].type = frmsize.type;
-			/* We use the pixel_format member to store a bitmask of all
-			   supported src_formats which can do this size */
-			data->framesizes[data->no_framesizes].pixel_format = 1 << index;
+			data->framesize_supported_src_formats[data->no_framesizes] = 1ULL << index;
 
 			switch (frmsize.type) {
 			case V4L2_FRMSIZE_TYPE_DISCRETE:
@@ -1628,7 +1627,7 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
 			}
 			data->no_framesizes++;
 		} else {
-			data->framesizes[j].pixel_format |= 1 << index;
+			data->framesize_supported_src_formats[j] |= 1ULL << index;
 		}
 	}
 }
