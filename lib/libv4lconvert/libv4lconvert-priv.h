@@ -66,6 +66,8 @@ struct v4lconvert_data {
 	int cinfo_initialized;
 #endif // HAVE_JPEG
 	struct v4l2_frmsizeenum framesizes[V4LCONVERT_MAX_FRAMESIZES];
+	/* Bitmask of all supported src_formats which can do for a size */
+	int64_t framesize_supported_src_formats[V4LCONVERT_MAX_FRAMESIZES];
 	unsigned int no_framesizes;
 	int bandwidth;
 	int fps;
