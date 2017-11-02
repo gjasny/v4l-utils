@@ -57,7 +57,6 @@ sync-with-kernel:
 	cp -a $(KERNEL_DIR)/include/uapi/linux/cec-funcs.h $(top_srcdir)/include/linux
 
 	$(MAKE) -C utils/keytable $@
-	$(MAKE) -C utils/xc3028-firmware $@
 	$(MAKE) -C lib/libdvbv5 $@
 	$(MAKE) -C contrib/freebsd $@
 	$(MAKE) -C contrib/test $@
