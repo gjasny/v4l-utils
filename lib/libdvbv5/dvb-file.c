@@ -842,6 +842,7 @@ int dvb_write_file(const char *fname, struct dvb_file *dvb_file)
 	FILE *fp;
 	int i;
 	struct dvb_entry *entry = dvb_file->first_entry;
+	static const char *off = "OFF";
 
 	fp = fopen(fname, "w");
 	if (!fp) {
@@ -926,12 +927,17 @@ int dvb_write_file(const char *fname, struct dvb_file *dvb_file)
 				attr_name = &buf;
 			}
 
-			/* Handle parameters with optional values */
 			switch (entry->props[i].cmd) {
+			/* Handle parameters with optional values */
 			case DTV_PLS_CODE:
 			case DTV_PLS_MODE:
-				if (entry->props[i].u.data == -1)
-				continue;
+				if (entry->props[i].u.data == (unsigned)-1)
+					continue;
+				break;
+			case DTV_PILOT:
+				if (entry->props[i].u.data == (unsigned)-1)
+					attr_name = &off;
+				break;
 			}
 
 			if (!attr_name || !*attr_name)
