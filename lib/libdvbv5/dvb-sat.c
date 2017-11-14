@@ -589,14 +589,17 @@ int dvb_sat_real_freq(struct dvb_v5_fe_parms *p, int freq)
 		return freq;
 
 	new_freq = freq + parms->freq_offset;
-	for (i = 0; i < ARRAY_SIZE(lnb->freqrange) && lnb->freqrange[i].low; i++) {
-		if (freq < lnb->freqrange[i].low * 1000 || freq > lnb->freqrange[i].high * 1000)
-			continue;
+	if (new_freq < 0)
+		new_freq = -new_freq;
 
+	for (i = 0; i < ARRAY_SIZE(lnb->freqrange) && lnb->freqrange[i].low; i++) {
+		if (new_freq / 1000 < lnb->freqrange[i].low  || new_freq / 1000 > lnb->freqrange[i].high)
+			continue;
 		return new_freq;
 	}
 
-	return parms->freq_offset - freq;
+	/* Frequency is out of LNBf range - just return it untouched */
+	return freq;
 }
 
 
