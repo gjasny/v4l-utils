@@ -569,7 +569,7 @@ void dvb_remote_log(int level, const char *fmt, ...)
 
 	va_end(ap);
 
-	if (dvb_fd > 0)
+	if (dvb_fd >= 0)
 		send_data(dvb_fd, "%i%s%i%s", 0, "log", level, buf);
 	else
 		local_log(level, buf);
