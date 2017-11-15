@@ -290,6 +290,18 @@ struct dvb_open_descriptor *dvb_dev_open(struct dvb_device *dvb,
 void dvb_dev_close(struct dvb_open_descriptor *open_dev);
 
 /**
+ * @brief returns fd from a local device
+ * This will not work for remote devices.
+ * @ingroup dvb_device
+ *
+ * @param open_dev	Points to the struct dvb_open_descriptor
+ *
+ * @return On success, returns the fd.
+ * Returns -1 on error.
+ */
+int dvb_dev_get_fd(struct dvb_open_descriptor *open_dev);
+
+/**
  * @brief read from a dvb demux or dvr file
  * @ingroup dvb_device
  *

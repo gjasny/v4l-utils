@@ -218,6 +218,17 @@ struct dvb_open_descriptor *dvb_dev_open(struct dvb_device *d,
 	return ops->open(dvb, sysname, flags);
 }
 
+int dvb_dev_get_fd(struct dvb_open_descriptor *open_dev)
+{
+	struct dvb_device_priv *dvb = open_dev->dvb;
+	struct dvb_dev_ops *ops = &dvb->ops;
+
+	if (!ops->get_fd)
+		return -1;
+
+	return ops->get_fd(open_dev);
+}
+
 void dvb_dev_close(struct dvb_open_descriptor *open_dev)
 {
 	struct dvb_device_priv *dvb = open_dev->dvb;

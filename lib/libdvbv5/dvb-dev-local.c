@@ -775,6 +775,11 @@ static void dvb_dev_local_free(struct dvb_device_priv *dvb)
 	free(priv);
 }
 
+static int dvb_local_get_fd(struct dvb_open_descriptor *open_dev)
+{
+    return open_dev->fd;
+}
+
 /* Initialize for local usage */
 void dvb_dev_local_init(struct dvb_device_priv *dvb)
 {
@@ -788,6 +793,7 @@ void dvb_dev_local_init(struct dvb_device_priv *dvb)
 	ops->stop_monitor = dvb_local_stop_monitor;
 	ops->open = dvb_local_open;
 	ops->close = dvb_local_close;
+	ops->get_fd = dvb_local_get_fd;
 
 	ops->dmx_stop = dvb_local_dmx_stop;
 	ops->set_bufsize = dvb_local_set_bufsize;

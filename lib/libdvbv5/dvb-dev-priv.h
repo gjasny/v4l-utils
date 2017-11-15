@@ -72,6 +72,7 @@ struct dvb_dev_ops {
 	int (*fe_get_stats)(struct dvb_v5_fe_parms *p);
 
 	void (*free)(struct dvb_device_priv *dvb);
+	int (*get_fd)(struct dvb_open_descriptor *dvb);
 };
 
 struct dvb_device_priv {
