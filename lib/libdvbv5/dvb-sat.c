@@ -50,7 +50,7 @@ struct dvb_sat_lnb_priv {
 	struct dvbsat_freqrange_priv freqrange[4];
 };
 
-static const struct dvb_sat_lnb_priv lnb[] = {
+static const struct dvb_sat_lnb_priv lnb_array[] = {
 	{
 		.desc = {
 			.name = N_("Universal, Europe"),
@@ -315,8 +315,8 @@ int dvb_sat_search_lnb(const char *name)
 {
 	int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(lnb); i++) {
-		if (!strcasecmp(name, lnb[i].desc.alias))
+	for (i = 0; i < ARRAY_SIZE(lnb_array); i++) {
+		if (!strcasecmp(name, lnb_array[i].desc.alias))
 			return i;
 	}
 	return -1;
@@ -334,18 +334,18 @@ int dvb_print_lnb(int i)
 {
 	int j;
 
-	if (i < 0 || i >= ARRAY_SIZE(lnb))
+	if (i < 0 || i >= ARRAY_SIZE(lnb_array))
 		return -1;
 
-	printf("%s\n\t%s%s\n", lnb[i].desc.alias, dvb_sat_get_lnb_name(i),
-	       lnb[i].freqrange[0].pol ? _(" (bandstacking)") : "");
+	printf("%s\n\t%s%s\n", lnb_array[i].desc.alias, dvb_sat_get_lnb_name(i),
+	       lnb_array[i].freqrange[0].pol ? _(" (bandstacking)") : "");
 
-	for (j = 0; j < ARRAY_SIZE(lnb[i].freqrange) && lnb[i].freqrange[j].low; j++) {
+	for (j = 0; j < ARRAY_SIZE(lnb_array[i].freqrange) && lnb_array[i].freqrange[j].low; j++) {
 		printf(_("\t%s%d to %d MHz, LO: %d MHz\n"),
-			_(pol_name[lnb[i].freqrange[j].pol]),
-			lnb[i].freqrange[j].low,
-			lnb[i].freqrange[j].high,
-			lnb[i].freqrange[j].int_freq);
+			_(pol_name[lnb_array[i].freqrange[j].pol]),
+			lnb_array[i].freqrange[j].low,
+			lnb_array[i].freqrange[j].high,
+			lnb_array[i].freqrange[j].int_freq);
 	}
 
 	return 0;
@@ -355,7 +355,7 @@ void dvb_print_all_lnb(void)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(lnb); i++) {
+	for (i = 0; i < ARRAY_SIZE(lnb_array); i++) {
 		dvb_print_lnb(i);
 		printf("\n");
 	}
@@ -363,18 +363,18 @@ void dvb_print_all_lnb(void)
 
 const struct dvb_sat_lnb *dvb_sat_get_lnb(int i)
 {
-	if (i < 0 || i >= ARRAY_SIZE(lnb))
+	if (i < 0 || i >= ARRAY_SIZE(lnb_array))
 		return NULL;
 
-	return (void *)&lnb[i];
+	return (void *)&lnb_array[i];
 }
 
 const char *dvb_sat_get_lnb_name(int i)
 {
-	if (i < 0 || i >= ARRAY_SIZE(lnb))
+	if (i < 0 || i >= ARRAY_SIZE(lnb_array))
 		return NULL;
 
-	return _(lnb[i].desc.name);
+	return _(lnb_array[i].desc.name);
 }
 
 
@@ -515,18 +515,21 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
 {
 	int rc;
 	enum dvb_sat_polarization pol;
-	dvb_fe_retrieve_parm(&parms->p, DTV_POLARIZATION, &pol);
-	int pol_v = (pol == POLARIZATION_V) || (pol == POLARIZATION_R);
+	int pol_v;
 	int high_band = parms->high_band;
 	int sat_number = parms->p.sat_number;
 	int vol_high = 0;
 	int tone_on = 0;
 	int mini_b = 0;
 	struct diseqc_cmd cmd;
+	const struct dvb_sat_lnb_priv *lnb = (void *)parms->p.lnb;
 
 	/* Negative numbers means to not use a DiSEqC switch */
 	if (parms->p.sat_number < 0)
 		return 0;
+
+	dvb_fe_retrieve_parm(&parms->p, DTV_POLARIZATION, &pol);
+	pol_v = (pol == POLARIZATION_V) || (pol == POLARIZATION_R);
 
 	if (!lnb->freqrange[0].rangeswitch) {
 		/*
@@ -583,9 +586,10 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
 int dvb_sat_real_freq(struct dvb_v5_fe_parms *p, int freq)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
+	const struct dvb_sat_lnb_priv *lnb = (void *)p->lnb;
 	int new_freq, i;
 
-	if (!dvb_fe_is_satellite(p->current_sys))
+	if (!lnb || !dvb_fe_is_satellite(p->current_sys))
 		return freq;
 
 	new_freq = freq + parms->freq_offset;
