@@ -593,8 +593,6 @@ int dvb_sat_real_freq(struct dvb_v5_fe_parms *p, int freq)
 		return freq;
 
 	new_freq = freq + parms->freq_offset;
-	if (new_freq < 0)
-		new_freq = -new_freq;
 
 	for (i = 0; i < ARRAY_SIZE(lnb->freqrange) && lnb->freqrange[i].low; i++) {
 		if (new_freq / 1000 < lnb->freqrange[i].low  || new_freq / 1000 > lnb->freqrange[i].high)
@@ -602,8 +600,10 @@ int dvb_sat_real_freq(struct dvb_v5_fe_parms *p, int freq)
 		return new_freq;
 	}
 
-	/* Frequency is out of LNBf range - just return it untouched */
-	return freq;
+	/* Weird: frequency is out of LNBf range */
+	dvb_logerr(_("frequency %.2fMHz (tune freq %.2fMHz) is out of LNBf %s range"),
+		   new_freq/ 1000., freq / 1000., lnb->desc.name);
+	return 0;
 }
 
 
