@@ -28,6 +28,7 @@
 #include <stddef.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include <config.h>
 
@@ -1904,4 +1905,11 @@ int dvb_fe_set_default_country(struct dvb_v5_fe_parms *p, const char *cc)
 
 	parms->country = dvb_country_a2_to_id(cc);
 	return (parms->country == COUNTRY_UNKNOWN) ? -EINVAL : 0;
+}
+
+dvb_logfunc_priv dvb_get_log_priv(struct dvb_v5_fe_parms *p, void **priv)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)p;
+	*priv = parms->logpriv;
+	return parms->logfunc_priv;
 }

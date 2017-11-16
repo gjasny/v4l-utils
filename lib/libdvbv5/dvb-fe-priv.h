@@ -75,6 +75,9 @@ struct dvb_v5_fe_parms_priv {
 	/* Satellite specific stuff */
 	int				high_band;
 	unsigned			freq_offset;
+
+	dvb_logfunc_priv		logfunc_priv;
+	void				*logpriv;
 };
 
 /* Functions used internally by dvb-dev.c. Aren't part of the API */

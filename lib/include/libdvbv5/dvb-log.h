@@ -43,60 +43,57 @@
 
 typedef void (*dvb_logfunc)(int level, const char *fmt, ...) __attribute__ (( format( printf, 2, 3 )));
 
+/**
+ * @typedef void (*dvb_logfunc)(void *logpriv, int level, const char *fmt, ...)
+ * @brief typedef used by dvb_fe_open2 for the log function with private context
+ * @ingroup ancillary
+ */
+
+typedef void (*dvb_logfunc_priv)(void *logpriv, int level, const char *fmt, ...);
+
 /*
  * Macros used internally inside libdvbv5 frontend part, to output logs
  */
 
 #ifndef _DOXYGEN
 
+struct dvb_v5_fe_parms;
+/**
+ * @brief retrieve the logging function with private data from the private fe params.
+ */
+dvb_logfunc_priv dvb_get_log_priv(struct dvb_v5_fe_parms *, void **);
+
 #ifndef __DVB_FE_PRIV_H
 
-#define dvb_log(fmt, arg...) do {\
-	parms->logfunc(LOG_INFO, fmt, ##arg); \
-} while (0)
-#define dvb_logerr(fmt, arg...) do {\
-	parms->logfunc(LOG_ERR, fmt, ##arg); \
-} while (0)
-#define dvb_logdbg(fmt, arg...) do {\
-	parms->logfunc(LOG_DEBUG, fmt, ##arg); \
-} while (0)
-#define dvb_logwarn(fmt, arg...) do {\
-	parms->logfunc(LOG_WARNING, fmt, ##arg); \
-} while (0)
-#define dvb_loginfo(fmt, arg...) do {\
-	parms->logfunc(LOG_NOTICE, fmt, ##arg); \
-} while (0)
-
-#define dvb_perror(msg) do {\
-	parms->logfunc(LOG_ERR, "%s: %s", msg, strerror(errno)); \
+#define dvb_loglevel(level, fmt, arg...) do {\
+    void *priv;\
+    dvb_logfunc_priv f = dvb_get_log_priv(parms, &priv);\
+    if (f) {\
+        f(priv, level, fmt, ##arg);\
+    } else {\
+        parms->logfunc(level, fmt, ##arg); \
+    }\
 } while (0)
 
 #else
 
-#define dvb_log(fmt, arg...) do {\
-	parms->p.logfunc(LOG_INFO, fmt, ##arg); \
-} while (0)
-#define dvb_logerr(fmt, arg...) do {\
-	parms->p.logfunc(LOG_ERR, fmt, ##arg); \
-} while (0)
-#define dvb_logdbg(fmt, arg...) do {\
-	parms->p.logfunc(LOG_DEBUG, fmt, ##arg); \
-} while (0)
-#define dvb_logwarn(fmt, arg...) do {\
-	parms->p.logfunc(LOG_WARNING, fmt, ##arg); \
-} while (0)
-#define dvb_loginfo(fmt, arg...) do {\
-	parms->p.logfunc(LOG_NOTICE, fmt, ##arg); \
-} while (0)
 #define dvb_loglevel(level, fmt, arg...) do {\
-	parms->p.logfunc(level, fmt, ##arg); \
-} while (0)
-
-#define dvb_perror(msg) do {\
-	parms->p.logfunc(LOG_ERR, "%s: %s", msg, strerror(errno)); \
+    if (parms->logfunc_priv) {\
+        parms->logfunc_priv(parms->logpriv, level, fmt, ##arg);\
+    } else {\
+        parms->p.logfunc(level, fmt, ##arg); \
+    }\
 } while (0)
 
 #endif
+
+#define dvb_log(fmt, arg...) dvb_loglevel(LOG_INFO, fmt, ##arg)
+#define dvb_logerr(fmt, arg...) dvb_loglevel(LOG_ERR, fmt, ##arg)
+#define dvb_logdbg(fmt, arg...) dvb_loglevel(LOG_DEBUG, fmt, ##arg)
+#define dvb_logwarn(fmt, arg...) dvb_loglevel(LOG_WARNING, fmt, ##arg)
+#define dvb_loginfo(fmt, arg...) dvb_loglevel(LOG_NOTICE, fmt, ##arg)
+
+#define dvb_perror(msg) dvb_logerr("%s: %s", msg, strerror(errno))
 
 #endif /* _DOXYGEN */
 

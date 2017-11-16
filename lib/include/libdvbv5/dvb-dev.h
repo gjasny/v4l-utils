@@ -235,6 +235,27 @@ struct dvb_dev_list *dvb_get_dev_info(struct dvb_device *dvb,
 void dvb_dev_stop_monitor(struct dvb_device *dvb);
 
 /**
+ * @brief Sets the DVB verbosity and log function with context private data
+ * @ingroup dvb_device
+ *
+ * @param dvb		pointer to struct dvb_device to be used
+ * @param verbose	Verbosity level of the messages that will be printed
+ * @param logfunc	Callback function to be called when a log event
+ *			happens. Can either store the event into a file or
+ *			to print it at the TUI/GUI. Can be null.
+ * @param logpriv   Private data for log function
+ *
+ * @details Sets the function to report log errors and to set the verbosity
+ *	level of debug report messages. If not called, or if logfunc is
+ *	NULL, the libdvbv5 will report error and debug messages via stderr,
+ *	and will use colors for the debug messages.
+ *
+ */
+void dvb_dev_set_logpriv(struct dvb_device *dvb,
+		     unsigned verbose,
+		     dvb_logfunc_priv logfunc, void *logpriv);
+
+/**
  * @brief Sets the DVB verbosity and log function
  * @ingroup dvb_device
  *

@@ -553,12 +553,13 @@ static ssize_t scan_data(char *buf, int buf_size, const char *fmt, ...)
 /*
  * Remote log
  */
-void dvb_remote_log(int level, const char *fmt, ...)
+void dvb_remote_log(void *priv, int level, const char *fmt, ...)
 {
 	int ret;
 	char *buf;
 
 	va_list ap;
+	int fd = *(int*)priv;
 
 	va_start(ap, fmt);
 	ret = vasprintf(&buf, fmt, ap);
@@ -569,8 +570,8 @@ void dvb_remote_log(int level, const char *fmt, ...)
 
 	va_end(ap);
 
-	if (dvb_fd >= 0)
-		send_data(dvb_fd, "%i%s%i%s", 0, "log", level, buf);
+	if (fd >= 0)
+		send_data(fd, "%i%s%i%s", 0, "log", level, buf);
 	else
 		local_log(level, buf);
 
@@ -1486,7 +1487,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* FIXME: should allow the caller to set the verbosity */
-	dvb_dev_set_log(dvb, 1, dvb_remote_log);
+	dvb_dev_set_logpriv(dvb, 1, dvb_remote_log, &dvb_fd);
 
 	/* Listen up to 5 connections */
 	listen(sockfd, 5);

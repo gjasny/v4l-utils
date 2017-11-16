@@ -162,6 +162,19 @@ struct dvb_dev_list *dvb_dev_seek_by_adapter(struct dvb_device *d,
 	return ops->seek_by_adapter(dvb, adapter, num, type);
 }
 
+void dvb_dev_set_logpriv(struct dvb_device *dvb, unsigned verbose,
+		     dvb_logfunc_priv logfunc_priv, void *logpriv)
+{
+	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->fe_parms;
+
+	/* FIXME: how to get remote logs and set verbosity? */
+	parms->p.verbose = verbose;
+	parms->logpriv = logpriv;
+
+	if (logfunc_priv != NULL)
+			parms->logfunc_priv = logfunc_priv;
+}
+
 void dvb_dev_set_log(struct dvb_device *dvb, unsigned verbose,
 		     dvb_logfunc logfunc)
 {
