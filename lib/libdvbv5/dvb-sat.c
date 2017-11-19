@@ -520,7 +520,6 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
 	int sat_number = parms->p.sat_number;
 	int vol_high = 0;
 	int tone_on = 0;
-	int mini_b = 0;
 	struct diseqc_cmd cmd;
 	const struct dvb_sat_lnb_priv *lnb = (void *)parms->p.lnb;
 
@@ -546,7 +545,6 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
 		if (parms->p.sat_number < 2) {
 			vol_high = pol_v ? 0 : 1;
 			tone_on = high_band;
-			mini_b = parms->p.sat_number & 1;
 		}
 	}
 
@@ -573,9 +571,12 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
 	}
 	usleep((15 + parms->p.diseqc_wait) * 1000);
 
-	rc = dvb_fe_diseqc_burst(&parms->p, mini_b);
-	if (rc)
-		return rc;
+	/* miniDiSEqC/Toneburst commands are defined only for up to 2 sattelites */
+	if (parms->p.sat_number < 2) {
+		rc = dvb_fe_diseqc_burst(&parms->p, parms->p.sat_number);
+		if (rc)
+			return rc;
+	}
 	usleep(15 * 1000);
 
 	rc = dvb_fe_sec_tone(&parms->p, tone_on ? SEC_TONE_ON : SEC_TONE_OFF);
