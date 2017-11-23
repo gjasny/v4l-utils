@@ -611,7 +611,7 @@ static ssize_t dvb_local_read(struct dvb_open_descriptor *open_dev,
 
 	ret = read(fd, buf, count);
 	if (ret == -1) {
-		if (errno != EOVERFLOW)
+		if (errno != EOVERFLOW && errno != EAGAIN)
 			dvb_perror("read()");
 		return -errno;
 	}
