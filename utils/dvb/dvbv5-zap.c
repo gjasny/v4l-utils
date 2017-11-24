@@ -227,6 +227,9 @@ static int parse(struct arguments *args,
 		parms->lnb = dvb_sat_get_lnb(lnb);
 	}
 
+	if (parms->sat_number < 0 && entry->sat_number >= 0)
+		parms->sat_number = entry->sat_number;
+
 	if (entry->video_pid) {
 		if (args->n_vpid < entry->video_pid_len)
 			*vpid = entry->video_pid[args->n_vpid];
