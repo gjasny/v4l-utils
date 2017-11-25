@@ -422,10 +422,10 @@ int dvb_write_format_vdr(const char *fname,
 		fprintf(fp, "%d:", entry->service_id);
 
 		/* Output Network ID */
-		fprintf(fp, "0:");
+		fprintf(fp, "%d:", entry->network_id);
 
 		/* Output Transport Stream ID */
-		fprintf(fp, "0:");
+		fprintf(fp, "%d:", entry->transport_id);
 
 		/* Output Radio ID
 		 * this is the last entry, tagged bei a new line (not a colon!)

@@ -118,6 +118,10 @@ struct dvb_entry {
 	unsigned freq_bpf;
 	unsigned diseqc_wait;
 	char *lnb;
+
+	uint16_t network_id;
+	uint16_t transport_id;
+
 };
 
 /**
