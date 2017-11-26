@@ -153,6 +153,13 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 		return NULL;
 	}
 	fname = strdup(dvb_dev->path);
+
+	if (!strcmp(dvb_dev->bus_addr, "platform:dvbloopback")) {
+		logfunc(LOG_WARNING, _("Detected dvbloopback. Disabling DVBv5 API"));
+		use_legacy_call = 1;
+		flags |= O_NONBLOCK;
+	}
+
 	dvb_dev_free(dvb);
 	if (!fname) {
 		logfunc(LOG_ERR, _("fname calloc: %s"), strerror(errno));
@@ -227,7 +234,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 	dtv_prop.props = parms->dvb_prop;
 
 	/* Detect a DVBv3 device */
-	if (xioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1) {
+	if (parms->p.legacy_fe || xioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1) {
 		parms->dvb_prop[0].u.data = 0x300;
 		parms->dvb_prop[1].u.data = SYS_UNDEFINED;
 	}

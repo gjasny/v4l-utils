@@ -175,6 +175,13 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 
 	dvb_dev->bus_addr = buf;
 
+	/* Detect dvbloopback and ignore its control interface */
+	if (!strcmp(dvb_dev->bus_addr, "platform:dvbloopback")) {
+		char c = dvb_dev->path[strlen(dvb_dev->path) - 1] - '0';
+		if (c)
+			goto err;
+	}
+
 	/* Add new element */
 	dvb->d.num_devices++;
 	dvb_dev = realloc(dvb->d.devices, sizeof(*dvb->d.devices) * dvb->d.num_devices);
@@ -437,8 +444,19 @@ static struct dvb_open_descriptor
 		/*
 		 * The frontend API was designed for sync frontend access.
 		 * It is not ready to handle async frontend access.
+		 * However, dvbloopback is a different beast: it only works
+		 * if opened with O_NONBLOCK.
+		 * Also, support for FE_SET_PROPERTY/FE_GET_PROPERTY
+		 * is broken with dvbloopback and recent Kernels, as it
+		 * doesn't copy from/to usermemory properly.
 		 */
-		flags &= ~O_NONBLOCK;
+		if (!strcmp(dev->bus_addr, "platform:dvbloopback")) {
+			dvb_logwarn(_("Detected dvbloopback. Disabling DVBv5 API"));
+			parms->p.legacy_fe = 1;
+			flags |= O_NONBLOCK;
+		} else {
+			flags &= ~O_NONBLOCK;
+		}
 
 		ret = dvb_fe_open_fname(parms, strdup(dev->path), flags);
 		if (ret) {
@@ -573,6 +591,23 @@ static ssize_t dvb_local_read(struct dvb_open_descriptor *open_dev,
 	if (dev->dvb_type != DVB_DEVICE_DEMUX && dev->dvb_type != DVB_DEVICE_DVR) {
 		dvb_logerr("Trying to read from an invalid device type on fd #%d", fd);
 		return -EINVAL;
+	}
+
+	/*
+	 * As we opened dvbloopback on non-blocking mode, we need to
+	 * check if read is ready, in order to emulate blocking mode
+	 */
+	if (!strcmp(dev->bus_addr, "platform:dvbloopback")) {
+		fd_set set;
+		FD_ZERO(&set);
+		FD_SET(fd, &set);
+		ret = TEMP_FAILURE_RETRY(select(FD_SETSIZE,
+						&set, NULL, &set, NULL));
+		if (ret == -1) {
+			if (errno != EOVERFLOW)
+				dvb_perror("read()");
+			return -errno;
+		}
 	}
 
 	ret = read(fd, buf, count);
