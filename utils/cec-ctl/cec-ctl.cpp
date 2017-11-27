@@ -1622,7 +1622,7 @@ static void list_devices()
 			links[target] = *iter;
 		else
 			links[target] += ", " + *iter;
-		files.erase(iter);
+		iter = files.erase(iter);
 	}
 
 	std::sort(files.begin(), files.end(), sort_on_device_name);

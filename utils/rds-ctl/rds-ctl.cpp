@@ -378,20 +378,23 @@ static dev_vec list_devices(void)
 	/* Iterate through all devices, and remove all non-accessible devices
 	 * and all devices that don't offer the RDS_BLOCK_IO capability */
 	for (dev_vec::iterator iter = files.begin();
-			iter != files.end(); ++iter) {
+			iter != files.end();) {
 		int fd = open(iter->c_str(), O_RDONLY | O_NONBLOCK);
 		std::string bus_info;
 
-		if (fd < 0)
+		if (fd < 0) {
+			iter++;
 			continue;
+		}
 		memset(&vt, 0, sizeof(vt));
 		if (ioctl(fd, VIDIOC_G_TUNER, &vt) != 0) {
 			close(fd);
+			iter++;
 			continue;
 		}
 		/* remove device if it doesn't support rds block I/O */
 		if (vt.capability & V4L2_TUNER_CAP_RDS_BLOCK_IO)
-			valid_devices.push_back(*iter);
+			valid_devices.push_back(*iter++);
 		else
 			iter = files.erase(iter);
 		close(fd);
