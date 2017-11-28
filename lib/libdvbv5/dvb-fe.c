@@ -155,8 +155,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	fname = strdup(dvb_dev->path);
 
 	if (!strcmp(dvb_dev->bus_addr, "platform:dvbloopback")) {
-		logfunc(LOG_WARNING, _("Detected dvbloopback. Disabling DVBv5 API"));
-		use_legacy_call = 1;
+		logfunc(LOG_WARNING, _("Detected dvbloopback"));
 		flags |= O_NONBLOCK;
 	}
 

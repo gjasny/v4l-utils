@@ -451,8 +451,7 @@ static struct dvb_open_descriptor
 		 * doesn't copy from/to usermemory properly.
 		 */
 		if (!strcmp(dev->bus_addr, "platform:dvbloopback")) {
-			dvb_logwarn(_("Detected dvbloopback. Disabling DVBv5 API"));
-			parms->p.legacy_fe = 1;
+			dvb_logwarn(_("Detected dvbloopback"));
 			flags |= O_NONBLOCK;
 		} else {
 			flags &= ~O_NONBLOCK;
