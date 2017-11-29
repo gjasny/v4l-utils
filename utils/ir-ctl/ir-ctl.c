@@ -230,8 +230,8 @@ static struct file *read_file(const char *fname)
 			char *scancodestr;
 
 			if (!expect_pulse) {
-				fprintf(stderr, _("error: %s:%d: space must precede scancode\n"), fname, lineno);
-				return NULL;
+				f->buf[len++] = IR_DEFAULT_TIMEOUT;
+				expect_pulse = true;
 			}
 
 			scancodestr = strchr(p, ':');
@@ -268,7 +268,8 @@ static struct file *read_file(const char *fname)
 			else
 				f->carrier = carrier;
 
-			len += protocol_encode(proto, scancode, f->buf);
+			len += protocol_encode(proto, scancode, f->buf + len);
+			expect_pulse = false;
 			continue;
 		}
 
