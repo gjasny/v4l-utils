@@ -496,7 +496,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 
 		rc = parse_keyfile(arg, &name);
 		if (rc)
-			goto err_inval;
+			argp_error(state, _("Failed to read table file %s"), arg);
 		if (name)
 			fprintf(stderr, _("Read %s table\n"), name);
 		break;
@@ -504,7 +504,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	case 'a': {
 		rc = parse_cfgfile(arg);
 		if (rc)
-			goto err_inval;
+			argp_error(state, _("Failed to read config file %s"), arg);
 		break;
 	}
 	case 'k':
@@ -512,8 +512,10 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		do {
 			struct keytable_entry *ke;
 
-			if (!p)
-				goto err_inval;
+			if (!p) {
+				argp_error(state, _("Missing scancode: %s"), arg);
+				break;
+			}
 
 			ke = calloc(1, sizeof(*ke));
 			if (!ke) {
@@ -524,13 +526,15 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			ke->scancode = strtoul(p, NULL, 0);
 			if (errno) {
 				free(ke);
-				goto err_inval;
+				argp_error(state, _("Invalid scancode: %s"), p);
+				break;
 			}
 
 			p = strtok(NULL, ",;");
 			if (!p) {
 				free(ke);
-				goto err_inval;
+				argp_error(state, _("Missing keycode"));
+				break;
 			}
 
 			key = parse_code(p);
@@ -538,7 +542,8 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 				key = strtol(p, NULL, 0);
 				if (errno) {
 					free(ke);
-					goto err_inval;
+					argp_error(state, _("Unknown keycode: %s"), p);
+					break;
 				}
 			}
 
@@ -559,8 +564,10 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			enum sysfs_protocols protocol;
 
 			protocol = parse_sysfs_protocol(p, true);
-			if (protocol == SYSFS_INVALID)
-				goto err_inval;
+			if (protocol == SYSFS_INVALID) {
+				argp_error(state, _("Unknown protocol: %s"), p);
+				break;
+			}
 
 			ch_proto |= protocol;
 		}
@@ -580,12 +587,8 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	default:
 		return ARGP_ERR_UNKNOWN;
 	}
+
 	return 0;
-
-err_inval:
-	fprintf(stderr, _("Invalid parameter(s)\n"));
-	return ARGP_ERR_UNKNOWN;
-
 }
 
 static struct argp argp = {
@@ -1507,7 +1510,7 @@ int main(int argc, char *argv[])
 	textdomain (PACKAGE);
 #endif
 
-	argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, 0, 0);
+	argp_parse(&argp, argc, argv, ARGP_NO_HELP, 0, 0);
 
 	/* Just list all devices */
 	if (!clear && !readtable && !keytable && !ch_proto && !cfg.next && !test && !delay && !period) {
