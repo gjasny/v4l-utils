@@ -93,6 +93,10 @@ Comma separated list of emitters to use for sending. The first emitter is
 number 1. Some devices only support enabling one emitter (the winbond-cir
 driver).
 .TP
+\fB\-g\fR, \fB\-\-gap\fR=\fIGAP\fR
+Set the gap between scancodes or the gap between files when multiple files
+are specified on the command line. The default is 125000 microseconds.
+.TP
 \fB\-?\fR, \fB\-\-help\fR
 Prints the help message
 .TP
@@ -220,7 +224,7 @@ To send the pulse and space file \fBplay\fR on emitter 3:
 .br
 	\fBir\-ctl \-e 3 \-\-send=play\fR
 .PP
-To send the rc-5 hauppuage '1' scancode:
+To send the rc-5 hauppauge '1' scancode:
 .br
 	\fBir\-ctl \-S rc5:0x1e01
 .PP

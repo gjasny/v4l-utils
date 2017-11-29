@@ -82,6 +82,7 @@ struct arguments {
 	int wideband;
 	unsigned carrier_low, carrier_high;
 	unsigned timeout;
+	unsigned gap;
 	int carrier_reports;
 	int timeout_reports;
 	unsigned carrier;
@@ -111,6 +112,7 @@ static const struct argp_option options[] = {
 	{ "carrier",	'c',	N_("CARRIER"),	0,	N_("set send carrier") },
 	{ "duty-cycle",	'D',	N_("DUTY"),	0,	N_("set duty cycle") },
 	{ "emitters",	'e',	N_("EMITTERS"),	0,	N_("set send emitters") },
+	{ "gap",	'g',	N_("GAP"),	0,	N_("set gap between files or scancodes") },
 	{ }
 };
 
@@ -130,6 +132,7 @@ static const char doc[] = N_(
 	"  CARRIER  - the carrier frequency to use for sending\n"
 	"  DUTY     - the duty cycle to use for sending\n"
 	"  EMITTERS - comma separated list of emitters to use for sending, e.g. 1,2\n"
+	"  GAP      - gap between pulse and files or scancodes in microseconds\n"
 	"  RANGE    - set range of accepted carrier frequencies, e.g. 20000-40000\n"
 	"  TIMEOUT  - set length of space before recording stops in microseconds\n"
 	"  SCANCODE - protocol:scancode, e.g. nec:0xa814\n\n"
@@ -185,7 +188,7 @@ static unsigned parse_emitters(char *p)
 	return emit;
 }
 
-static struct file *read_file(const char *fname)
+static struct file *read_file(struct arguments *args, const char *fname)
 {
 	bool expect_pulse = true;
 	int lineno = 0, lastspace = 0;
@@ -230,7 +233,7 @@ static struct file *read_file(const char *fname)
 			char *scancodestr;
 
 			if (!expect_pulse) {
-				f->buf[len++] = IR_DEFAULT_TIMEOUT;
+				f->buf[len++] = args->gap;
 				expect_pulse = true;
 			}
 
@@ -486,6 +489,11 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		if (arguments->emitters == 0)
 			argp_error(state, _("cannot parse emitters `%s'"), arg);
 		break;
+	case 'g':
+		arguments->gap = strtoint(arg, "");
+		if (arguments->gap == 0)
+			argp_error(state, _("cannot parse gap `%s'"), arg);
+		break;
 	case 'D':
 		arguments->duty = strtoint(arg, "%");
 		if (arguments->duty == 0 || arguments->duty >= 100)
@@ -494,7 +502,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	case 's':
 		if (arguments->record || arguments->features)
 			argp_error(state, _("send can not be combined with record or features option"));
-		s = read_file(arg);
+		s = read_file(arguments, arg);
 		if (s == NULL)
 			exit(EX_DATAERR);
 
@@ -884,7 +892,7 @@ err:
 
 int main(int argc, char *argv[])
 {
-	struct arguments args = {};
+	struct arguments args = { .gap = IR_DEFAULT_TIMEOUT };
 
 #ifdef ENABLE_NLS
         setlocale (LC_ALL, "");
@@ -912,7 +920,7 @@ int main(int argc, char *argv[])
 	while (s) {
 		struct file *next = s->next;
 		if (s != args.send)
-			usleep(IR_DEFAULT_TIMEOUT);
+			usleep(args.gap);
 
 		rc = lirc_send(&args, fd, features, s);
 		if (rc) {
