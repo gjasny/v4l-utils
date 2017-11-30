@@ -15,10 +15,10 @@ ir\-ctl \- a swiss\-knife tool to handle raw IR and to set lirc options
 [\fIOPTION\fR]... \fI\-\-scancode\fR [\fIprotocol and scancode to send\fR]
 .br
 .B ir\-ctl
-[\fIOPTION\fR]... \fI\-\-record\fR [\fIsave to file\fR]
+[\fIOPTION\fR]... \fI\-\-receive\fR [\fIsave to file\fR]
 .SH DESCRIPTION
 ir\-ctl is a tool that allows one to list the features of a lirc device,
-set its options, record raw IR, send raw IR or send complete IR scancodes.
+set its options, receive raw IR, send raw IR or send complete IR scancodes.
 .PP
 Note: You need to have read or write permissions on the /dev/lirc device
 for options to work.
@@ -30,8 +30,8 @@ lirc device to control, /dev/lirc0 by default
 \fB\-f\fR, \fB\-\-features\fR
 List the features of the lirc device.
 .TP
-\fB\-r\fR, \fB\-\-record\fR=[\fIFILE\fR]
-Record IR and print to standard output if no file is specified, else
+\fB\-r\fR, \fB\-\-receive\fR=[\fIFILE\fR]
+Receive IR and print to standard output if no file is specified, else
 save to the filename.
 .TP
 \fB\-s\fR, \fB\-\-send\fR=\fIFILE\fR
@@ -44,7 +44,7 @@ Send the IR scancode in the protocol specified. The protocol must one of
 the protocols listed below, followed by a semicolon and the scancode number.
 .TP
 \fB\-1\fR, \fB\-\-oneshot\fR
-When recording, stop recording after the first message, i.e. after a space or
+When receiving, stop receiving after the first message, i.e. after a space or
 timeout of more than 19ms is received.
 .TP
 \fB\-w\fR, \fB\-\-wideband\fR
@@ -62,7 +62,7 @@ specified in the form \fI30000-50000\fR.
 .TP
 \fB\-m\fR, \fB\-\-measure\-carrier\fR
 If the hardware supports it, report what the carrier frequency is on
-recording. You will get the keyword \fIcarrier\fR followed by the frequency.
+receiving. You will get the keyword \fIcarrier\fR followed by the frequency.
 This might use the wideband receiver although this is hardware specific.
 .TP
 \fB\-M\fR, \fB\-\-no\-measure\-carrier\fR
@@ -71,7 +71,7 @@ to use the narrowband receiver. This is the default.
 .TP
 \fB\-p\fR, \fB\-\-timeout\-reports\fR
 When the IR receiver times out due to inactivity, a timeout message is
-reported. When recording you will get the keyword \fItimeout\fR followed by
+reported. When receiving you will get the keyword \fItimeout\fR followed by
 the length of time that no IR was detected for.
 .TP
 \fB\-P\fR, \fB\-\-no\-timeout\-reports\fR
@@ -79,7 +79,7 @@ When the IR receiver times out due to inactivity, do not report this.
 This is the default.
 .TP
 \fB\-t\fR, \fB\-\-timeout\fR=\fITIMEOUT\fR
-Set the length of a space at which the recorder goes idle, specified in
+Set the length of a space at which the receiver goes idle, specified in
 microseconds.
 .TP
 \fB\-c\fR, \fB\-\-carrier\fR=\fICARRIER\fR
@@ -214,7 +214,7 @@ To show the IR of the first button press on a remote in learning mode:
 .br
 	\fBir\-ctl \-r \-m \-w\fR
 .PP
-Note that \fBir\-ctl \-rmw\fR would record to a file called \fBmw\fR.
+Note that \fBir\-ctl \-rmw\fR would receive to a file called \fBmw\fR.
 .PP
 To restore the normal (longer distance) receiver:
 .br
