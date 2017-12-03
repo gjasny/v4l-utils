@@ -1329,6 +1329,26 @@ static inline unsigned response_time_ms(const struct cec_msg &msg)
 	return 0;
 }
 
+static void generate_eob_event(__u64 ts, FILE *fstore)
+{
+	if (!eob_ts || eob_ts_max >= ts)
+		return;
+
+	struct cec_event ev_eob = {
+		eob_ts,
+		CEC_EVENT_PIN_CEC_HIGH
+	};
+
+	if (fstore) {
+		fprintf(fstore, "%llu.%09llu %d\n",
+			ev_eob.ts / 1000000000, ev_eob.ts % 1000000000,
+			ev_eob.event - CEC_EVENT_PIN_CEC_LOW);
+		fflush(fstore);
+	}
+	if (fstore != stdout)
+		log_event(ev_eob);
+}
+
 static void monitor(struct node &node, __u32 monitor_time, const char *store_pin)
 {
 	__u32 monitor = CEC_MODE_MONITOR;
@@ -1437,37 +1457,23 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 			    ev.event == CEC_EVENT_PIN_HPD_LOW ||
 			    ev.event == CEC_EVENT_PIN_HPD_HIGH)
 				pin_event = true;
+			generate_eob_event(ev.ts, fstore);
 			if (pin_event && fstore) {
 				fprintf(fstore, "%llu.%09llu %d\n",
 					ev.ts / 1000000000, ev.ts % 1000000000,
 					ev.event - CEC_EVENT_PIN_CEC_LOW);
 				fflush(fstore);
 			}
-			if ((!pin_event || options[OptMonitorPin]) &&
-			    fstore != stdout)
+			if ((!pin_event || options[OptMonitorPin]) && fstore != stdout)
 				log_event(ev);
 		}
-		if (!pin_event && eob_ts && fstore != stdout) {
+		if (eob_ts) {
 			struct timespec ts;
 			__u64 ts64;
 
 			clock_gettime(CLOCK_MONOTONIC, &ts);
 			ts64 = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
-			if (ts64 >= eob_ts_max) {
-				struct cec_event ev = {
-					eob_ts,
-					CEC_EVENT_PIN_CEC_HIGH
-				};
-
-				if (fstore) {
-					fprintf(fstore, "%llu.%09llu %d\n",
-						ev.ts / 1000000000, ev.ts % 1000000000,
-						ev.event - CEC_EVENT_PIN_CEC_LOW);
-					fflush(fstore);
-				}
-				if (options[OptMonitorPin])
-					log_event(ev);
-			}
+			generate_eob_event(ts64, fstore);
 		}
 	}
 	if (fstore && fstore != stdout)
