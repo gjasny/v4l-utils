@@ -33,36 +33,6 @@ Use this vendor ID. The vendor ID is a number from 0x0 to 0xffffff.
 \fB\-C\fR, \fB\-\-clear\fR
 Clear all logical addresses, leaving the CEC device unconfigured.
 .TP
-\fB\-m\fR, \fB\-\-monitor\fR
-Start monitoring CEC traffic. This will monitor broadcast messages,
-messages directed to this CEC adapter and messages transmitted by this
-CEC adapter. Directed messages between other CEC devices are not
-monitored. This option requires root.
-.TP
-\fB\-M\fR, \fB\-\-monitor\-all\fR
-Start monitoring all CEC traffic. This will monitor all CEC messages,
-including directed messages between other CEC devices. This option requires root.
-Not all CEC devices support this monitoring mode. It will fallback to regular
-monitoring mode if it is not supported.
-.TP
-\fB\-\-monitor\-pin\fR
-Start monitoring and analyzing the low-level CEC pin transitions. This is only
-possible if the device has the CEC_CAP_MONITOR_PIN capability. This option requires root.
-When in pin monitoring mode all 0->1 and 1->0 CEC pin transitions are monitored and
-analysed. This is effectively a cheap CEC bus analyzer.
-.TP
-\fB\-\-monitor\-time\fR=\fI<secs>\fR
-Monitor for the given number of seconds, then exit. The default (0) is to monitor
-forever.
-.TP
-\fB\-\-store\-pin\fR=\fI<to>\fR
-Store the CEC pin events to the given file. This can be read and analyzed later
-via the \fB\-\-analyze\-pin\fR option. Use \- to write to stdout instead of to a file.
-.TP
-\fB\-\-analyze\-pin\fR=\fI<from>\fR
-Read and analyze the CEC pin events from the given file. Use \- to read from stdin
-instead of from a file.
-.TP
 \fB\-n\fR, \fB\-\-no\-reply\fR
 By default when sending a CEC message that expects a reply this utility will
 wait for that reply. With this option it will just send it without waiting
@@ -189,6 +159,41 @@ Signal that the RC source has a Media Top Menu.
 .TP
 \fB\-\-rc\-src\-media\-context\fR
 Signal that the RC source has a Media Context Menu.
+.TP
+\fB\-m\fR, \fB\-\-monitor\fR
+Start monitoring CEC traffic. This will monitor broadcast messages,
+messages directed to this CEC adapter and messages transmitted by this
+CEC adapter. Directed messages between other CEC devices are not
+monitored. This option requires root.
+.TP
+\fB\-M\fR, \fB\-\-monitor\-all\fR
+Start monitoring all CEC traffic. This will monitor all CEC messages,
+including directed messages between other CEC devices. This option requires root.
+Not all CEC devices support this monitoring mode. It will fallback to regular
+monitoring mode if it is not supported.
+.TP
+\fB\-\-monitor\-pin\fR
+Start monitoring and analyzing the low-level CEC pin transitions. This is only
+possible if the device has the CEC_CAP_MONITOR_PIN capability. This option requires root.
+When in pin monitoring mode all 0->1 and 1->0 CEC pin transitions are monitored and
+analysed. This is effectively a cheap CEC bus analyzer.
+.TP
+\fB\-\-monitor\-time\fR=\fI<secs>\fR
+Monitor for the given number of seconds, then exit. The default (0) is to monitor
+forever.
+.TP
+\fB\-\-ignore\fR=\fI<la>\fR,\fI<opcode>\fR
+Ignore messages from logical address <la> and opcode <opcode> when monitoring.
+"all" can be used for <la> or <opcode> to match all logical addresses or opcodes.
+To ignore poll messages use "poll" as <opcode>.
+.TP
+\fB\-\-store\-pin\fR=\fI<to>\fR
+Store the CEC pin events to the given file. This can be read and analyzed later
+via the \fB\-\-analyze\-pin\fR option. Use \- to write to stdout instead of to a file.
+.TP
+\fB\-\-analyze\-pin\fR=\fI<from>\fR
+Read and analyze the CEC pin events from the given file. Use \- to read from stdin
+instead of from a file.
 .TP
 \fB\-\-help\-all\fR
 Prints the help message for all options.

@@ -53,6 +53,10 @@
 
 static struct timespec start_monotonic;
 static struct timeval start_timeofday;
+static bool ignore_la[16];
+
+#define POLL_FAKE_OPCODE 256
+static unsigned short ignore_opcode[257];
 
 struct cec_enum_values {
 	const char *type_name;
@@ -679,6 +683,7 @@ enum Option {
 	OptTimeout,
 	OptMonitorTime,
 	OptMonitorPin,
+	OptIgnore,
 	OptStorePin,
 	OptAnalyzePin,
 	OptListUICommands,
@@ -747,6 +752,7 @@ static struct option long_options[] = {
 	{ "monitor-all", no_argument, 0, OptMonitorAll },
 	{ "monitor-pin", no_argument, 0, OptMonitorPin },
 	{ "monitor-time", required_argument, 0, OptMonitorTime },
+	{ "ignore", required_argument, 0, OptIgnore },
 	{ "store-pin", required_argument, 0, OptStorePin },
 	{ "analyze-pin", required_argument, 0, OptAnalyzePin },
 	{ "no-reply", no_argument, 0, OptNoReply },
@@ -803,14 +809,6 @@ static void usage(void)
 	       "  -o, --osd-name=<name>    Use this OSD name\n"
 	       "  -V, --vendor-id=<id>     Use this vendor ID\n"
 	       "  -C, --clear              Clear all logical addresses\n"
-	       "  -m, --monitor            Monitor CEC traffic\n"
-	       "  -M, --monitor-all        Monitor all CEC traffic\n"
-	       "  --monitor-pin            Monitor low-level CEC pin\n"
-	       "  --monitor-time=<secs>    Monitor for <secs> seconds (default is forever)\n"
-	       "  --store-pin=<to>         Store the low-level CEC pin changes to the file <to>.\n"
-	       "                           Use - for stdout.\n"
-	       "  --analyze-pin=<from>     Analyze the low-level CEC pin changes from the file <from>.\n"
-	       "                           Use - for stdin.\n"
 	       "  -n, --no-reply           Don't wait for a reply\n"
 	       "  -t, --to=<la>            Send message to the given logical address\n"
 	       "  -f, --from=<la>          Send message from the given logical address\n"
@@ -859,6 +857,19 @@ static void usage(void)
 	       "  --rc-src-contents        Signal that the RC source has a Contents Menu\n"
 	       "  --rc-src-media-top       Signal that the RC source has a Media Top Menu\n"
 	       "  --rc-src-media-context   Signal that the RC source has a Media Context Menu\n"
+	       "\n"
+	       "  -m, --monitor            Monitor CEC traffic\n"
+	       "  -M, --monitor-all        Monitor all CEC traffic\n"
+	       "  --monitor-pin            Monitor low-level CEC pin\n"
+	       "  --monitor-time=<secs>    Monitor for <secs> seconds (default is forever)\n"
+	       "  --ignore=<la>,<opcode>   Ignore messages from logical address <la> and opcode\n"
+	       "                           <opcode> when monitoring. 'all' can be used for <la>\n"
+	       "                           or <opcode> to match all logical addresses or opcodes.\n"
+	       "                           To ignore poll messages use 'poll' as <opcode>.\n"
+	       "  --store-pin=<to>         Store the low-level CEC pin changes to the file <to>.\n"
+	       "                           Use - for stdout.\n"
+	       "  --analyze-pin=<from>     Analyze the low-level CEC pin changes from the file <from>.\n"
+	       "                           Use - for stdin.\n"
 	       "\n"
 	       CEC_USAGE
 	       );
@@ -1430,9 +1441,14 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 			}
 			if (res || fstore == stdout)
 				continue;
-
 			from = cec_msg_initiator(&msg);
 			to = cec_msg_destination(&msg);
+			if (ignore_la[from])
+				continue;
+			if ((msg.len == 1 && (ignore_opcode[POLL_FAKE_OPCODE] & (1 << from))) ||
+			    (msg.len > 1 && (ignore_opcode[msg.msg[1]] & (1 << from))))
+				continue;
+
 			bool transmitted = msg.tx_status != 0;
 			printf("%s %s to %s (%d to %d): ",
 			       transmitted ? "Transmitted by" : "Received from",
@@ -1734,6 +1750,46 @@ int main(int argc, char **argv)
 		case OptMonitorTime:
 			monitor_time = strtoul(optarg, NULL, 0);
 			break;
+		case OptIgnore: {
+			bool all_la = !strncmp(optarg, "all", 3);
+			bool all_opcodes = true;
+			const char *sep = strchr(optarg, ',');
+			unsigned la_mask = 0xffff, opcode, la = 0;
+
+			if (sep)
+				all_opcodes = !strncmp(sep + 1, "all", 3);
+			if (!all_la) {
+				la = strtoul(optarg, NULL, 0);
+
+				if (la > 15) {
+					fprintf(stderr, "invalid logical address (> 15)\n");
+					usage();
+					return 1;
+				}
+				la_mask = 1 << la;
+			}
+			if (!all_opcodes) {
+				if (!strncmp(sep + 1, "poll", 4)) {
+					opcode = POLL_FAKE_OPCODE;
+				} else {
+					opcode = strtoul(sep + 1, NULL, 0);
+					if (opcode > 255) {
+						fprintf(stderr, "invalid opcode (> 255)\n");
+						usage();
+						return 1;
+					}
+				}
+				ignore_opcode[opcode] |= la_mask;
+				break;
+			}
+			if (all_la && all_opcodes) {
+				fprintf(stderr, "all,all is invalid\n");
+				usage();
+				return 1;
+			}
+			ignore_la[la] = true;
+			break;
+		}
 		case OptStorePin:
 			store_pin = optarg;
 			break;
