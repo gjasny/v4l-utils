@@ -84,7 +84,6 @@ struct arguments {
 	unsigned timeout;
 	unsigned gap;
 	int carrier_reports;
-	int timeout_reports;
 	unsigned carrier;
 	unsigned duty;
 	unsigned emitters;
@@ -105,8 +104,6 @@ static const struct argp_option options[] = {
 	{ "carrier-range", 'R', N_("RANGE"),	0,	N_("set receiver carrier range") },
 	{ "measure-carrier", 'm', 0,		0,	N_("report carrier frequency") },
 	{ "no-measure-carrier", 'M', 0,		0,	N_("disable reporting carrier frequency") },
-	{ "timeout-reports", 'p', 0,		0,	N_("report when a timeout occurs") },
-	{ "no-timeout-reports", 'P', 0,		0,	N_("disable reporting when a timeout occurs") },
 	{ "timeout",	't',	N_("TIMEOUT"),	0,	N_("set receiving timeout") },
 		{ .doc = N_("Sending options:") },
 	{ "carrier",	'c',	N_("CARRIER"),	0,	N_("set send carrier") },
@@ -430,18 +427,6 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 
 		arguments->carrier_reports = 2;
 		break;
-	case 'p':
-		if (arguments->timeout_reports == 2)
-			argp_error(state, _("cannot enable and disable timeout reports"));
-
-		arguments->timeout_reports = 1;
-		break;
-	case 'P':
-		if (arguments->timeout_reports == 1)
-			argp_error(state, _("cannot enable and disable timeout reports"));
-
-		arguments->timeout_reports = 2;
-		break;
 	case 'n':
 		if (arguments->wideband)
 			argp_error(state, _("cannot use narrowband and wideband receiver at once"));
@@ -634,11 +619,11 @@ static int lirc_options(struct arguments *args, int fd, unsigned features)
 			fprintf(stderr, _("%s: device cannot measure carrier\n"), dev);
 	}
 
-	if (args->timeout_reports) {
-		unsigned on = args->timeout_reports == 1;
+	if (features & LIRC_CAN_REC_MODE2) {
+		unsigned on = 1;
 		rc = ioctl(fd, LIRC_SET_REC_TIMEOUT_REPORTS, &on);
 		if (rc)
-			fprintf(stderr, _("%s: failed to set timeout reports %s: %m\n"), dev, on ? _("on") : _("off"));
+			fprintf(stderr, _("%s: failed to enable timeout reports: %m\n"), dev);
 	}
 
 	if (args->carrier_low) {

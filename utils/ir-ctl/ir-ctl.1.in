@@ -69,15 +69,6 @@ This might use the wideband receiver although this is hardware specific.
 Disable reporting of the carrier frequency. This should make it possible
 to use the narrowband receiver. This is the default.
 .TP
-\fB\-p\fR, \fB\-\-timeout\-reports\fR
-When the IR receiver times out due to inactivity, a timeout message is
-reported. When receiving you will get the keyword \fItimeout\fR followed by
-the length of time that no IR was detected for.
-.TP
-\fB\-P\fR, \fB\-\-no\-timeout\-reports\fR
-When the IR receiver times out due to inactivity, do not report this.
-This is the default.
-.TP
 \fB\-t\fR, \fB\-\-timeout\fR=\fITIMEOUT\fR
 Set the length of a space at which the receiver goes idle, specified in
 microseconds.
@@ -230,7 +221,7 @@ To send the rc-5 hauppauge '1' scancode:
 .PP
 To restore the IR receiver on /dev/lirc2 to the default state:
 .br
-	\fBir\-ctl \-PMn \-\-timeout 125000 \-\-device=/dev/lirc2\fR
+	\fBir\-ctl \-Mn \-\-timeout 125000 \-\-device=/dev/lirc2\fR
 .SH BUGS
 Report bugs to \fBLinux Media Mailing List <linux-media@vger.kernel.org>\fR
 .SH COPYRIGHT
