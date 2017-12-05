@@ -1079,7 +1079,7 @@ static void log_unknown_msg(const struct cec_msg *msg)
 	}
 }
 
-static void log_event(struct cec_event &ev)
+static void log_event(struct cec_event &ev, bool show)
 {
 	bool is_high = ev.event == CEC_EVENT_PIN_CEC_HIGH;
 	__u16 pa;
@@ -1087,38 +1087,42 @@ static void log_event(struct cec_event &ev)
 	if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH &&
 	    ev.event != CEC_EVENT_PIN_HPD_LOW && ev.event != CEC_EVENT_PIN_HPD_HIGH)
 		printf("\n");
-	if (ev.flags & CEC_EVENT_FL_DROPPED_EVENTS)
+	if ((ev.flags & CEC_EVENT_FL_DROPPED_EVENTS) && show)
 		printf("(Note: events were lost)\n");
-	if (ev.flags & CEC_EVENT_FL_INITIAL_STATE)
+	if ((ev.flags & CEC_EVENT_FL_INITIAL_STATE) && show)
 		printf("Initial ");
 	switch (ev.event) {
 	case CEC_EVENT_STATE_CHANGE:
 		pa = ev.state_change.phys_addr;
-		printf("Event: State Change: PA: %x.%x.%x.%x, LA mask: 0x%04x\n",
-		       pa >> 12, (pa >> 8) & 0xf,
-		       (pa >> 4) & 0xf, pa & 0xf,
-		       ev.state_change.log_addr_mask);
+		if (show)
+			printf("Event: State Change: PA: %x.%x.%x.%x, LA mask: 0x%04x\n",
+			       pa >> 12, (pa >> 8) & 0xf,
+			       (pa >> 4) & 0xf, pa & 0xf,
+			       ev.state_change.log_addr_mask);
 		break;
 	case CEC_EVENT_LOST_MSGS:
-		printf("Event: Lost Messages\n");
+		if (show)
+			printf("Event: Lost Messages\n");
 		break;
 	case CEC_EVENT_PIN_CEC_LOW:
 	case CEC_EVENT_PIN_CEC_HIGH:
-		if (ev.flags & CEC_EVENT_FL_INITIAL_STATE)
+		if ((ev.flags & CEC_EVENT_FL_INITIAL_STATE) && show)
 			printf("Event: CEC Pin %s\n", is_high ? "High" : "Low");
 
-		log_event_pin(is_high, ev.ts);
+		log_event_pin(is_high, ev.ts, show);
 		return;
 	case CEC_EVENT_PIN_HPD_LOW:
 	case CEC_EVENT_PIN_HPD_HIGH:
-		printf("Event: HPD Pin %s\n",
-		       ev.event == CEC_EVENT_PIN_HPD_HIGH ? "High" : "Low");
+		if (show)
+			printf("Event: HPD Pin %s\n",
+			       ev.event == CEC_EVENT_PIN_HPD_HIGH ? "High" : "Low");
 		break;
 	default:
-		printf("Event: Unknown (0x%x)\n", ev.event);
+		if (show)
+			printf("Event: Unknown (0x%x)\n", ev.event);
 		break;
 	}
-	if (show_info)
+	if (show_info && show)
 		printf("\tTimestamp: %s\n", ts2s(ev.ts).c_str());
 }
 
@@ -1356,8 +1360,7 @@ static void generate_eob_event(__u64 ts, FILE *fstore)
 			ev_eob.event - CEC_EVENT_PIN_CEC_LOW);
 		fflush(fstore);
 	}
-	if (fstore != stdout)
-		log_event(ev_eob);
+	log_event(ev_eob, fstore != stdout);
 }
 
 static void monitor(struct node &node, __u32 monitor_time, const char *store_pin)
@@ -1480,8 +1483,8 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 					ev.event - CEC_EVENT_PIN_CEC_LOW);
 				fflush(fstore);
 			}
-			if ((!pin_event || options[OptMonitorPin]) && fstore != stdout)
-				log_event(ev);
+			if (!pin_event || options[OptMonitorPin])
+				log_event(ev, fstore != stdout);
 		}
 		if (eob_ts) {
 			struct timespec ts;
@@ -1554,19 +1557,23 @@ static void analyze(const char *analyze_pin)
 	while (fgets(s, sizeof(s), fanalyze)) {
 		unsigned event;
 
+		if (s[0] == '#' || s[0] == '\n') {
+			line++;
+			continue;
+		}
 		if (sscanf(s, "%lu.%09lu %d\n", &tv_sec, &tv_nsec, &event) != 3 || event > 3) {
 			fprintf(stderr, "malformed data at line %d\n", line);
 			break;
 		}
 		ev.ts = tv_sec * 1000000000ULL + tv_nsec;
 		ev.event = event + CEC_EVENT_PIN_CEC_LOW;
-		log_event(ev);
+		log_event(ev, true);
 		line++;
 	}
 
 	tv_sec++;
 	ev.ts = tv_sec * 1000000000ULL + tv_nsec;
-	log_event(ev);
+	log_event(ev, true);
 
 	if (fanalyze != stdin)
 		fclose(fanalyze);

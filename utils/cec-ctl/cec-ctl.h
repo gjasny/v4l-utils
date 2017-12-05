@@ -28,6 +28,6 @@ std::string ts2s(__u64 ts);
 // cec-pin.cpp
 extern __u64 eob_ts;
 extern __u64 eob_ts_max;
-void log_event_pin(bool is_high, __u64 ts);
+void log_event_pin(bool is_high, __u64 ts, bool show);
 
 #endif
