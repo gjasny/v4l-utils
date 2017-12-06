@@ -250,8 +250,8 @@ void cec_driver_info(const struct cec_caps &caps,
 		if (laddrs.log_addr[i] == CEC_LOG_ADDR_INVALID)
 			printf("\n\t  Logical Address          : Not Allocated\n");
 		else
-			printf("\n\t  Logical Address          : %d\n",
-			       laddrs.log_addr[i]);
+			printf("\n\t  Logical Address          : %d (%s)\n",
+			       laddrs.log_addr[i], la2s(laddrs.log_addr[i]));
 		printf("\t    Primary Device Type    : %s\n",
 		       prim_type2s(laddrs.primary_device_type[i]));
 		printf("\t    Logical Address Type   : %s\n",
