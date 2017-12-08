@@ -1,3 +1,10 @@
+v4l-utils-1.12.6
+----------------
+
+Hans de Goede (1):
+      libv4lconvert: We support more then 32 bit src fmts now, so use 64 bit bitmasks
+
+
 v4l-utils-1.12.5
 ----------------
 
