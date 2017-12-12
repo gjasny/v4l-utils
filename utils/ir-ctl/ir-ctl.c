@@ -262,6 +262,11 @@ static struct file *read_file(struct arguments *args, const char *fname)
 				return NULL;
 			}
 
+			if (!protocol_encoder_available(proto)) {
+				fprintf(stderr, _("error: %s:%d: no encoder available for `%s'\n"), fname, lineno, protocol_name(proto));
+				return NULL;
+			}
+
 			if (!protocol_scancode_valid(proto, scancode)) {
 				fprintf(stderr, _("error: %s:%d: invalid scancode '%s' for protocol '%s'\n"), fname, lineno, scancodestr, protocol_name(proto));
 				return NULL;
@@ -803,6 +808,11 @@ static int lirc_send(struct arguments *args, int fd, unsigned features, struct f
 	if (f->is_scancode) {
 		// encode scancode
 		enum rc_proto proto = f->protocol;
+		if (!protocol_encoder_available(proto)) {
+			fprintf(stderr, _("%s: no encoder available for `%s'\n"),
+				dev, protocol_name(proto));
+			return EX_UNAVAILABLE;
+		}
 		f->len = protocol_encode(f->protocol, f->scancode, f->buf);
 		f->carrier = protocol_carrier(proto);
 	}

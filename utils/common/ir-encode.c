@@ -352,7 +352,7 @@ static const struct {
 	unsigned max_edges;
 	unsigned carrier;
 	int (*encode)(enum rc_proto proto, unsigned scancode, unsigned *buf);
-} encoders[] = {
+} protocols[] = {
 	[RC_PROTO_RC5] = { "rc5", 0x1f7f, 24, 36000, rc5_encode },
 	[RC_PROTO_RC5X_20] = { "rc5x_20", 0x1f7f3f, 40, 36000, rc5_encode },
 	[RC_PROTO_RC5_SZ] = { "rc5_sz", 0x2fff, 26, 36000, rc5_encode },
@@ -370,6 +370,10 @@ static const struct {
 	[RC_PROTO_RC6_6A_32] = { "rc6_6a_32", 0xffffffff, 76, 36000, rc6_encode },
 	[RC_PROTO_RC6_MCE] = { "rc6_mce", 0xffff7fff, 76, 36000, rc6_encode },
 	[RC_PROTO_SHARP] = { "sharp", 0x1fff, 63, 38000, sharp_encode },
+	[RC_PROTO_MCIR2_KBD] = { "mcir2-kbd" },
+	[RC_PROTO_MCIR2_MSE] = { "mcir2-mse" },
+	[RC_PROTO_XMP] = { "xmp" },
+	[RC_PROTO_CEC] = { "cec" },
 };
 
 static bool str_like(const char *a, const char *b)
@@ -396,8 +400,8 @@ bool protocol_match(const char *name, enum rc_proto *proto)
 {
 	enum rc_proto p;
 
-	for (p=0; p<ARRAY_SIZE(encoders); p++) {
-		if (str_like(encoders[p].name, name)) {
+	for (p=0; p<ARRAY_SIZE(protocols); p++) {
+		if (str_like(protocols[p].name, name)) {
 			*proto = p;
 			return true;
 		}
@@ -408,22 +412,22 @@ bool protocol_match(const char *name, enum rc_proto *proto)
 
 unsigned protocol_carrier(enum rc_proto proto)
 {
-	return encoders[proto].carrier;
+	return protocols[proto].carrier;
 }
 
 unsigned protocol_max_size(enum rc_proto proto)
 {
-	return encoders[proto].max_edges;
+	return protocols[proto].max_edges;
 }
 
 unsigned protocol_scancode_mask(enum rc_proto proto)
 {
-	return encoders[proto].scancode_mask;
+	return protocols[proto].scancode_mask;
 }
 
 bool protocol_scancode_valid(enum rc_proto p, unsigned s)
 {
-	if (s & ~encoders[p].scancode_mask)
+	if (s & ~protocols[p].scancode_mask)
 		return false;
 
 	if (p == RC_PROTO_NECX) {
@@ -439,15 +443,23 @@ bool protocol_scancode_valid(enum rc_proto p, unsigned s)
 	return true;
 }
 
+bool protocol_encoder_available(enum rc_proto proto)
+{
+	return protocols[proto].encode != NULL;
+}
+
 unsigned protocol_encode(enum rc_proto proto, unsigned scancode, unsigned *buf)
 {
-	return encoders[proto].encode(proto, scancode, buf);
+	if (!protocols[proto].encode)
+		return 0;
+
+	return protocols[proto].encode(proto, scancode, buf);
 }
 
 const char* protocol_name(enum rc_proto proto)
 {
-	if (proto >= ARRAY_SIZE(encoders))
+	if (proto >= ARRAY_SIZE(protocols) || !protocols[proto].name[0])
 		return NULL;
 
-	return encoders[proto].name;
+	return protocols[proto].name;
 }
