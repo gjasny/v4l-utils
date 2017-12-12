@@ -524,8 +524,12 @@ static int dvbsat_diseqc_set_input(struct dvb_v5_fe_parms_priv *parms,
 	const struct dvb_sat_lnb_priv *lnb = (void *)parms->p.lnb;
 
 	/* Negative numbers means to not use a DiSEqC switch */
-	if (parms->p.sat_number < 0)
+	if (parms->p.sat_number < 0) {
+		/* If not bandstack, warn if DiSEqC is disabled */
+		if (!lnb->freqrange[0].pol)
+			dvb_logwarn(_("DiSEqC disabled. Probably won't tune."));
 		return 0;
+	}
 
 	dvb_fe_retrieve_parm(&parms->p, DTV_POLARIZATION, &pol);
 	pol_v = (pol == POLARIZATION_V) || (pol == POLARIZATION_R);
