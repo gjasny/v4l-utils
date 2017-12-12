@@ -36,12 +36,14 @@ save to the filename.
 .TP
 \fB\-s\fR, \fB\-\-send\fR=\fIFILE\fR
 Send IR in text file. It must be in the format described below. If this
-option is specified multiple times, send all files in order with 125ms delay
-between them.
+option is specified multiple times, send all files in\-order with a 125ms gap
+between them. The gap length can be modified with \fB\-\-gap\fR.
 .TP
 \fB-S\fR, \fB\-\-scancode\fR=\fIPROTOCOL:SCANCODE\fR
-Send the IR scancode in the protocol specified. The protocol must one of
-the protocols listed below, followed by a semicolon and the scancode number.
+Send the IR scancode in the protocol specified. The protocol must one of the
+protocols listed below, followed by a colon and the scancode number. If this
+option is specified multiple times, send all scancodes in\-order with a 125ms
+gap between them. The gap length can be modified with \fB\-\-gap\fR.
 .TP
 \fB\-1\fR, \fB\-\-oneshot\fR
 When receiving, stop receiving after the first message, i.e. after a space or
@@ -163,11 +165,15 @@ carrier. The above can be written as:
 .PP
 	scancode rc5:0x1e01
 .PP
-Do not specify scancodes with different protocols in one file, as the
-carrier might differ and the transmitter cannot send this. Multiple
-scancodes can be specified in one file but ensure that the rules for the
-protocol are met by inserting an appropriate space between them. Also,
-there are limits to what lirc devices can send in one go.
+If multiple scancodes are specified in a file, a gap is inserted between
+scancodes if there is no space between then (see \fB\-\-gap\fR). One file
+can only have one carrier frequency, so this might cause problems
+if different protocols are specified in one file if they use different
+carrier frequencies.
+.PP
+Note that there are device-specific limits of how much IR can be sent
+at a time. This can be both the length of the IR and the number of
+different lengths of space and pulse.
 .PP
 .SS Supported Protocols
 A scancode with protocol can be specified on the command line or in the
