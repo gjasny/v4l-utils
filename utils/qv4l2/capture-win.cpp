@@ -353,8 +353,10 @@ void CaptureWin::customMenuRequested(QPoint pos)
 	}
 	
 	menu->addAction(m_appWin->m_resetScalingAct);
-	menu->addAction(m_appWin->m_useBlendingAct);
-	menu->addAction(m_appWin->m_useLinearAct);
+	if (m_appWin->m_useBlendingAct)
+		menu->addAction(m_appWin->m_useBlendingAct);
+	if (m_appWin->m_useLinearAct)
+		menu->addAction(m_appWin->m_useLinearAct);
 	menu->addAction(m_appWin->m_snapshotAct);
 	menu->addAction(m_appWin->m_showFramesAct);
 	menu->addMenu(m_appWin->m_overrideColorspaceMenu);

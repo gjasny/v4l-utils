@@ -274,6 +274,7 @@ ApplicationWindow::ApplicationWindow() :
 
 	} else {
 		m_renderMethod = QV4L2_RENDER_QT;
+		m_useGLAct = m_useBlendingAct = m_useLinearAct = NULL;
 	}
 	m_capMenu->addAction(m_resetScalingAct);
 	
