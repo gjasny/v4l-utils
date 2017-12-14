@@ -1011,7 +1011,8 @@ static void log_htng_unknown_msg(const struct cec_msg *msg)
 	unsigned i;
 
 	cec_ops_vendor_command_with_id(msg, &vendor_id, &size, &bytes);
-	printf("CEC_MSG_VENDOR_COMMAND_WITH_ID:\n");
+	printf("CEC_MSG_VENDOR_COMMAND_WITH_ID (0x%02x):\n",
+	       CEC_MSG_VENDOR_COMMAND_WITH_ID);
 	log_arg(&arg_vendor_id, "vendor-id", vendor_id);
 	printf("\tvendor-specific-data:");
 	for (i = 0; i < size; i++)
@@ -1029,7 +1030,8 @@ static void log_unknown_msg(const struct cec_msg *msg)
 
 	switch (msg->msg[1]) {
 	case CEC_MSG_VENDOR_COMMAND:
-		printf("CEC_MSG_VENDOR_COMMAND:\n");
+		printf("CEC_MSG_VENDOR_COMMAND (0x%02x):\n",
+		       CEC_MSG_VENDOR_COMMAND);
 		cec_ops_vendor_command(msg, &size, &bytes);
 		printf("\tvendor-specific-data:");
 		for (i = 0; i < size; i++)
@@ -1043,7 +1045,8 @@ static void log_unknown_msg(const struct cec_msg *msg)
 			log_htng_msg(msg);
 			break;
 		default:
-			printf("CEC_MSG_VENDOR_COMMAND_WITH_ID:\n");
+			printf("CEC_MSG_VENDOR_COMMAND_WITH_ID (0x%02x):\n",
+			       CEC_MSG_VENDOR_COMMAND_WITH_ID);
 			log_arg(&arg_vendor_id, "vendor-id", vendor_id);
 			printf("\tvendor-specific-data:");
 			for (i = 0; i < size; i++)
@@ -1053,7 +1056,8 @@ static void log_unknown_msg(const struct cec_msg *msg)
 		}
 		break;
 	case CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN:
-		printf("CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN:\n");
+		printf("CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN (0x%02x):\n",
+		       CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN);
 		cec_ops_vendor_remote_button_down(msg, &size, &bytes);
 		printf("\tvendor-specific-rc-code:");
 		for (i = 0; i < size; i++)
@@ -1063,7 +1067,8 @@ static void log_unknown_msg(const struct cec_msg *msg)
 	case CEC_MSG_CDC_MESSAGE:
 		phys_addr = (msg->msg[2] << 8) | msg->msg[3];
 
-		printf("CEC_MSG_CDC 0x%02x:\n", msg->msg[4]);
+		printf("CEC_MSG_CDC_MESSAGE (0x%02x): 0x%02x:\n",
+		       CEC_MSG_CDC_MESSAGE, msg->msg[4]);
 		log_arg(&arg_u16, "phys-addr", phys_addr);
 		printf("\tpayload:");
 		for (i = 5; i < msg->len; i++)
