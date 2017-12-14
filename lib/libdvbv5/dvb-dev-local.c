@@ -609,7 +609,7 @@ static ssize_t dvb_local_read(struct dvb_open_descriptor *open_dev,
 		}
 	}
 
-	ret = read(fd, buf, count);
+	ret = TEMP_FAILURE_RETRY(read(fd, buf, count));
 	if (ret == -1) {
 		if (errno != EOVERFLOW && errno != EAGAIN)
 			dvb_perror("read()");
@@ -724,8 +724,9 @@ static int dvb_local_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int s
 	}
 
 	while (!patread){
-		if (((count = read(fd, buf, sizeof(buft))) < 0) && errno == EOVERFLOW)
-		count = read(fd, buf, sizeof(buft));
+		count = TEMP_FAILURE_RETRY(read(fd, buf, sizeof(buft)));
+		if (count < 0 && errno == EOVERFLOW)
+			count = TEMP_FAILURE_RETRY(read(fd, buf, sizeof(buft)));
 		if (count < 0) {
 		dvb_perror("read_sections: read error");
 		return -errno;
