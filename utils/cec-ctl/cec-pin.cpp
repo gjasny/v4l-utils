@@ -113,6 +113,7 @@ static __u64 low_usecs;
 static unsigned int rx_bit;
 static __u8 byte;
 static bool eom;
+static bool eom_reached;
 static __u8 byte_cnt;
 static bool bcast;
 static bool cdc;
@@ -143,6 +144,7 @@ static void cec_pin_rx_start_bit_was_high(__u64 usecs, __u64 usecs_min, bool sho
 	rx_bit = 0;
 	byte = 0;
 	eom = false;
+	eom_reached = false;
 	byte_cnt = 0;
 	bcast = false;
 	cdc = false;
@@ -188,6 +190,9 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 		printf("%10.06f: data bit %d: total period too short (%.2f ms)\n",
 			ts, rx_bit, (low_usecs + usecs) / 1000.0);
 
+	if (usecs > CEC_TIM_DATA_BIT_TOTAL_MAX)
+		eom_reached = true;
+
 	bit = low_usecs < CEC_TIM_DATA_BIT_1_LOW_MAX + CEC_TIM_MARGIN;
 	if (rx_bit <= 7) {
 		byte |= bit << (7 - rx_bit);
@@ -206,9 +211,10 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 			s = find_cdc_opcode_name(byte);
 		}
 		if (show)
-			printf("%10.06f: rx 0x%02x%s%s%s%s\n", ts, byte,
+			printf("%10.06f: rx 0x%02x%s%s%s%s%s\n", ts, byte,
 			       eom ? " EOM" : "", (bcast ^ bit) ? " NACK" : " ACK",
 			       bcast ? " (broadcast)" : "",
+			       eom_reached ? " (spurious byte)" : "",
 			       s.c_str());
 		if (show_info && show)
 			printf("\n");
@@ -216,16 +222,25 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 		if (byte_cnt == 1 && byte == CEC_MSG_CDC_MESSAGE)
 			cdc = true;
 		byte_cnt++;
+		if (byte_cnt >= CEC_MAX_MSG_SIZE)
+			eom_reached = true;
 	}
 	rx_bit++;
+	if (usecs > CEC_TIM_DATA_BIT_TOTAL_MAX) {
+		if (show)
+			printf("\n");
+		eom_reached = false;
+		state = is_high ? CEC_ST_IDLE : CEC_ST_RECEIVE_START_BIT;
+		return;
+	}
 	if (rx_bit == 10) {
 		if ((!eom && ack) && low_usecs + usecs_min > CEC_TIM_DATA_BIT_TOTAL_MAX && show)
 			printf("%10.06f: data bit %d: total period too long (%.2f ms)\n",
 				ts, rx_bit - 1, (low_usecs + usecs_min) / 1000.0);
-		if (eom || is_high || low_usecs + usecs_min > CEC_TIM_DATA_BIT_TOTAL_MAX)
+		if (eom)
+			eom_reached = true;
+		if (is_high || low_usecs + usecs_min > CEC_TIM_DATA_BIT_TOTAL_MAX)
 			state = is_high ? CEC_ST_IDLE : CEC_ST_RECEIVE_START_BIT;
-		if (state == CEC_ST_IDLE && show)
-			printf("\n");
 		rx_bit = 0;
 		byte = 0;
 		eom = false;
@@ -292,6 +307,7 @@ static void cec_pin_debug(__u64 ev_ts, __u64 usecs, bool was_high, bool is_high,
 
 	switch (state) {
 	case CEC_ST_RECEIVE_START_BIT:
+		eom_reached = false;
 		if (was_high)
 			cec_pin_rx_start_bit_was_high(usecs, usecs_min, show);
 		else
@@ -306,13 +322,11 @@ static void cec_pin_debug(__u64 ev_ts, __u64 usecs, bool was_high, bool is_high,
 		break;
 
 	case CEC_ST_IDLE:
+		eom_reached = false;
 		if (!is_high)
 			state = CEC_ST_RECEIVE_START_BIT;
 		break;
 	}
-
-	if (was_high && is_high)
-		state = CEC_ST_IDLE;
 }
 
 void log_event_pin(bool is_high, __u64 ev_ts, bool show)
