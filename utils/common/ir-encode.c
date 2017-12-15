@@ -353,6 +353,8 @@ static const struct {
 	unsigned carrier;
 	int (*encode)(enum rc_proto proto, unsigned scancode, unsigned *buf);
 } protocols[] = {
+	[RC_PROTO_UNKNOWN] = { "unknown" },
+	[RC_PROTO_OTHER] = { "other" },
 	[RC_PROTO_RC5] = { "rc5", 0x1f7f, 24, 36000, rc5_encode },
 	[RC_PROTO_RC5X_20] = { "rc5x_20", 0x1f7f3f, 40, 36000, rc5_encode },
 	[RC_PROTO_RC5_SZ] = { "rc5_sz", 0x2fff, 26, 36000, rc5_encode },
