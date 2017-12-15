@@ -1491,7 +1491,7 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 			if (!pin_event || options[OptMonitorPin])
 				log_event(ev, fstore != stdout);
 		}
-		if (eob_ts) {
+		if (!res && eob_ts) {
 			struct timespec ts;
 			__u64 ts64;
 
@@ -1576,9 +1576,11 @@ static void analyze(const char *analyze_pin)
 		line++;
 	}
 
-	tv_sec++;
-	ev.ts = tv_sec * 1000000000ULL + tv_nsec;
-	log_event(ev, true);
+	if (eob_ts) {
+		ev.event = CEC_EVENT_PIN_CEC_HIGH;
+		ev.ts = eob_ts;
+		log_event(ev, true);
+	}
 
 	if (fanalyze != stdin)
 		fclose(fanalyze);
