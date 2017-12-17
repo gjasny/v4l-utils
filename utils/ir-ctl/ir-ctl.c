@@ -106,7 +106,7 @@ static const struct argp_option options[] = {
 	{ "send",	's',	N_("FILE"),	0,	N_("send IR pulse and space file") },
 	{ "scancode", 'S',	N_("SCANCODE"),	0,	N_("send IR scancode in protocol specified") },
 	{ "verbose",	'v',	0,		0,	N_("verbose output") },
-		{ .doc = N_("Recording options:") },
+		{ .doc = N_("Receiving options:") },
 	{ "one-shot",	'1',	0,		0,	N_("end receiving after first message") },
 	{ "wideband",	'w',	0,		0,	N_("use wideband receiver aka learning mode") },
 	{ "no-wideband",'n',	0,		0,	N_("use normal narrowband receiver, disable learning mode") },
@@ -130,7 +130,7 @@ static const char args_doc[] = N_(
 	"[to set lirc option]");
 
 static const char doc[] = N_(
-	"\nRecord IR, send IR and list features of lirc device\n"
+	"\nReceive IR, send IR and list features of lirc device\n"
 	"You will need permission on /dev/lirc for the program to work\n"
 	"\nOn the options below, the arguments are:\n"
 	"  DEV	    - the /dev/lirc* device to use\n"
