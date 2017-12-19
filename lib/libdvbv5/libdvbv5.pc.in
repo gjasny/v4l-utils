@@ -6,5 +6,6 @@ libdir=@libdir@
 Name: libdvbv5
 Description: DVBv5 utility library
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -ldvbv5 -ludev
+Requires.private: libudev
+Libs: -L${libdir} -ldvbv5
 Cflags: -I${includedir}
