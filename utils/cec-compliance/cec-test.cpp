@@ -1290,7 +1290,7 @@ static int cdc_hec_discover(struct node *node, unsigned me, unsigned la, bool pr
 				}
 				oss << "\b\b ";
 			}
-			info("HEC Suppport Field    : %s\n", oss.str().c_str());
+			info("HEC Support Field    : %s\n", oss.str().c_str());
 		}
 	}
 
