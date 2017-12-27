@@ -1,3 +1,10 @@
+v4l-utils-1.14.1
+----------------
+
+Gregor Jasny (1):
+      libdvbv5: re-add dvb_dev_seek_by_sysname symbol for SONAME compatibility
+
+
 v4l-utils-1.14.0
 ----------------
 
