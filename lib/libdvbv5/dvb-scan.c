@@ -72,6 +72,28 @@
 
 # define N_(string) string
 
+#define PERROR(x...)                                                    \
+	do {                                                            \
+		fprintf(stderr, "ERROR: ");                             \
+		fprintf(stderr, x);                                     \
+		fprintf(stderr, " (%s)\n", strerror(errno));		\
+	} while (0)
+
+
+/**Videobuf2 streaming
+ * Comment VB2 macro to disable the streaming code
+ */
+#define VB2
+
+#ifdef VB2
+#include <sys/mman.h>
+#include <libdvbv5/dvb-vb2.h>
+#define STREAM_BUF_CNT (4)
+#define STREAM_BUF_SIZ (DVB_MAX_PAYLOAD_PACKET_SIZE)
+
+struct stream_ctx sc = {0,};
+#endif
+
 static int dvb_poll(struct dvb_v5_fe_parms_priv *parms, int fd, unsigned int seconds)
 {
 	fd_set set;
@@ -331,7 +353,8 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 	if (parms->p.verbose)
 		dvb_log(_("%s: waiting for table ID 0x%02x, program ID 0x%02x"),
 			__func__, sect->tid, sect->pid);
-
+#ifdef VB2
+#else
 	buf = calloc(DVB_MAX_PAYLOAD_PACKET_SIZE, 1);
 	if (!buf) {
 		dvb_logerr(_("%s: out of memory"), __func__);
@@ -339,7 +362,7 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 		dvb_table_filter_free(sect);
 		return -1;
 	}
-
+#endif
 
 	do {
 		int available;
@@ -359,7 +382,23 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 			ret = -1;
 			break;
 		}
+#ifdef VB2
+		struct dmx_buffer b;
+		memset(&b, 0, sizeof(b));
+
+		ret = stream_dqbuf(&sc, &b);
+		if (ret < 0) {
+			sc.error = 1;
+			break;
+		}
+		else {
+			sc.buf_flag[b.index] = 0;
+			buf = sc.buf[b.index];
+			buf_length = b.bytesused;
+		}
+#else
 		buf_length = read(dmx_fd, buf, DVB_MAX_PAYLOAD_PACKET_SIZE);
+#endif
 
 		if (!buf_length) {
 			dvb_logerr(_("%s: buf returned an empty buffer"), __func__);
@@ -380,8 +419,24 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 		}
 
 		ret = dvb_parse_section(parms, sect, buf, buf_length);
+#ifdef VB2
+		/**enqueue the buffer again*/
+		if (!ret) {
+			if (stream_qbuf(&sc, b.index) < 0) {
+				sc.error = 1;
+				break;
+			}
+			else
+				sc.buf_flag[b.index] = 1;
+		}
+
+#endif
 	} while (!ret);
+
+#ifdef VB2
+#else
 	free(buf);
+#endif
 	dvb_dmx_stop(dmx_fd);
 	dvb_table_filter_free(sect);
 
@@ -459,9 +514,22 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 
 	struct dvb_v5_descriptors *dvb_scan_handler;
 
+#ifdef VB2
+	rc = stream_init(&sc, dmx_fd, STREAM_BUF_SIZ, STREAM_BUF_CNT);
+	if (rc < 0) {
+		PERROR("stream_init failed: error %d, %s\n",
+				errno, strerror(errno));
+		/** We dont know what failed during stream_init
+		 * reqbufs, mmap or  qbuf. We will call stream_deinit
+		 * to delete the mapping which might have been created
+		 */
+		goto ret_null;
+	}
+#endif
+
 	dvb_scan_handler = dvb_scan_alloc_handler_table(delivery_system);
 	if (!dvb_scan_handler)
-		return NULL;
+		goto ret_null;
 
 	if (!timeout_multiply)
 		timeout_multiply = 1;
@@ -515,11 +583,11 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 			      (void **)&dvb_scan_handler->pat,
 			      pat_pmt_time * timeout_multiply);
 	if (parms->p.abort)
-		return dvb_scan_handler;
+		goto ret_handler;
 	if (rc < 0) {
 		dvb_logerr(_("error while waiting for PAT table"));
 		dvb_scan_free_handler_table(dvb_scan_handler);
-		return NULL;
+		goto ret_null;
 	}
 	if (parms->p.verbose)
 		dvb_table_pat_print(&parms->p, dvb_scan_handler->pat);
@@ -531,7 +599,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 				      (void **)&dvb_scan_handler->vct,
 				      vct_time * timeout_multiply);
 		if (parms->p.abort)
-			return dvb_scan_handler;
+			goto ret_handler;
 		if (rc < 0)
 			dvb_logerr(_("error while waiting for VCT table"));
 		else if (parms->p.verbose)
@@ -561,7 +629,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 				      pat_pmt_time * timeout_multiply);
 		if (parms->p.abort) {
 			dvb_scan_handler->num_program = num_pmt + 1;
-			return dvb_scan_handler;
+			goto ret_handler;
 		}
 		if (rc < 0) {
 			dvb_logerr(_("error while reading the PMT table for service 0x%04x"),
@@ -582,7 +650,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 			      (void **)&dvb_scan_handler->nit,
 			      nit_time * timeout_multiply);
 	if (parms->p.abort)
-		return dvb_scan_handler;
+		goto ret_handler;
 	if (rc < 0)
 		dvb_logerr(_("error while reading the NIT table"));
 	else if (parms->p.verbose)
@@ -595,7 +663,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 				(void **)&dvb_scan_handler->sdt,
 				sdt_time * timeout_multiply);
 		if (parms->p.abort)
-			return dvb_scan_handler;
+			goto ret_handler;
 		if (rc < 0)
 			dvb_logerr(_("error while reading the SDT table"));
 		else if (parms->p.verbose)
@@ -611,7 +679,7 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 				      (void **)&dvb_scan_handler->nit,
 				      nit_time * timeout_multiply);
 		if (parms->p.abort)
-			return dvb_scan_handler;
+			goto ret_handler;
 		if (rc < 0)
 			dvb_logerr(_("error while reading the NIT table"));
 		else if (parms->p.verbose)
@@ -622,13 +690,23 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 				(void **)&dvb_scan_handler->sdt,
 				sdt_time * timeout_multiply);
 		if (parms->p.abort)
-			return dvb_scan_handler;
+			goto ret_handler;
 		if (rc < 0)
 			dvb_logerr(_("error while reading the SDT table"));
 		else if (parms->p.verbose)
 			dvb_table_sdt_print(&parms->p, dvb_scan_handler->sdt);
 	}
 
+ret_null:
+#ifdef VB2
+	stream_deinit(&sc);
+#endif
+	return NULL;
+
+ret_handler:
+#ifdef VB2
+	stream_deinit(&sc);
+#endif
 	return dvb_scan_handler;
 }
 

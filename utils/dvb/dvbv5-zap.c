@@ -47,6 +47,7 @@
 #include <signal.h>
 #include <argp.h>
 #include <sys/time.h>
+#include <sys/mman.h>
 #include <time.h>
 
 #ifdef ENABLE_NLS
@@ -68,6 +69,7 @@
 #include "libdvbv5/dvb-scan.h"
 #include "libdvbv5/header.h"
 #include "libdvbv5/countries.h"
+#include "libdvbv5/dvb-vb2.h"
 
 #define CHANNEL_FILE	"channels.conf"
 #define PROGRAM_NAME	"dvbv5-zap"
@@ -93,6 +95,7 @@ struct arguments {
 	unsigned n_apid, n_vpid, extra_pids, all_pids;
 	enum dvb_file_formats input_format, output_format;
 	unsigned traffic_monitor, low_traffic, non_human, port;
+	unsigned int streaming;
 	char *search, *server;
 	const char *cc;
 
@@ -116,6 +119,7 @@ static const struct argp_option options[] = {
 	{"pat",		'p', NULL,			0, N_("add pat and pmt to TS recording (implies -r)"), 0},
 	{"all-pids",	'P', NULL,			0, N_("don't filter any pids. Instead, outputs all of them"), 0 },
 	{"record",	'r', NULL,			0, N_("set up /dev/dvb/adapterX/dvr0 for TS recording"), 0},
+	{"streaming",	'R', NULL,			0, N_("uses streaming I/O for TS recording"), 0},
 	{"silence",	's', NULL,			0, N_("increases silence (can be used more than once)"), 0},
 	{"sat_number",	'S', N_("satellite_number"),	0, N_("satellite number. If not specified, disable DISEqC"), 0},
 	{"timeout",	't', N_("seconds"),		0, N_("timeout for zapping and for recording"), 0},
@@ -635,6 +639,10 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		/* fall through */
 	case 'r':
 		args->dvr = 1;
+		break;
+	case 'R':
+		args->dvr = 1;
+		args->streaming = 1;
 		break;
 	case 'p':
 		args->rec_psi = 1;
@@ -1382,14 +1390,32 @@ int main(int argc, char **argv)
 			get_show_stats(stderr, &args, parms, 0);
 
 		if (file_fd >= 0) {
-			dvr_fd = dvb_dev_open(dvb, args.dvr_dev, O_RDONLY);
+			int flag, fd;
+
+			if (args.streaming)
+				flag = O_RDWR;
+			else
+				flag = O_RDONLY;
+
+			dvr_fd = dvb_dev_open(dvb, args.dvr_dev, flag);
 			if (!dvr_fd) {
 				ERROR("failed opening '%s'", args.dvr_dev);
 				goto err;
 			}
 			if (!timeout_flag)
 				fprintf(stderr, _("Record to file '%s' started\n"), args.filename);
-			copy_to_file(dvr_fd, file_fd, args.timeout, args.silent);
+			if (args.streaming) {
+				fd = dvb_dev_get_fd(dvr_fd);
+				if (fd < 0) {
+					ERROR("Invalid fd for '%s'",
+						args.dvr_dev);
+					goto err;
+				}
+				stream_to_file(fd, file_fd, args.timeout,
+						args.silent, &timeout_flag);
+			} else
+				copy_to_file(dvr_fd, file_fd, args.timeout,
+						args.silent);
 		} else if (args.server && args.port) {
 			struct stat st;
 			if (stat(args.dvr_pipe, &st) == -1) {

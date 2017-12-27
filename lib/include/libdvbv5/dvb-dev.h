@@ -308,6 +308,14 @@ struct dvb_open_descriptor *dvb_dev_open(struct dvb_device *dvb,
  * closed.
  */
 void dvb_dev_close(struct dvb_open_descriptor *open_dev);
+/**
+ * @brief Gets open file descriptor of a dvb device
+ * @ingroup dvb_device
+ *
+ * @param open_dev	Points to the struct dvb_open_descriptor
+ * @return Retuns fd on success, -1 otherwise.
+ */
+int dvb_dev_get_fd(struct dvb_open_descriptor *open_dev);
 
 /**
  * @brief returns fd from a local device
