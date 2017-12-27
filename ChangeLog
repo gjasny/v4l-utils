@@ -1,3 +1,294 @@
+v4l-utils-1.14.0
+----------------
+
+Chris Leick (1):
+      Add German translation by Chris Leick
+
+Clemens Ladisch (1):
+      libdvbv5: T2 delivery descriptor: fix wrong size of bandwidth field
+
+Gregor Jasny (9):
+      buildsystem: Start v4l-utils 1.13.0 development cycle
+      buildsystem: Add all files to dist target
+      qv4l2: Fix typo detected by lintian
+      libdvbv5: Link against libudev
+      Apply FreeBSD header search paths also to kFreeBSD
+      Fix some more typos
+      Fix typos detected by Chris Leick
+      i18n: Update translations
+      i18n: Use correct plural localization
+      ir-keytable: Distribute ir-encode.h file
+
+Hans Verkuil (114):
+      cec-ctl/cec-follower: call fflush after processing a message
+      cec-ctl: add support to skip tests
+      v4l2-ctl: query input timings before streaming
+      v4l2/cec-compliance, cec-follower: use git rev-parse HEAD
+      v4l2-ctl: don't use doioctl to query timings, use test_ioctl
+      media-ctl/v4l2-ctl: show the new pixelaspect and VIC fields/flags
+      v4l2-ctl: show what the default colorspace values map to
+      cec-ctl: map invalid log_addr to 0xf
+      cec-ctl: add --show-raw option
+      cec-compliance: add test broadcast unknown message
+      cec-follower: fix incorrect initiator for two messages
+      cec-ctl: add --poll option to send a poll message
+      cec-ctl: drop the phys_addr check
+      cec-compliance: fix broken --test-standby-resume
+      cec-compliance: add --timeout option
+      cec-compliance: fix Request Active Source test
+      v4l-utils: sync with 4.10 kernel headers
+      cec: fix wrong initiator of poll messages
+      cec-follower: don't Feature Abort msgs from Unregistered
+      v4l2-ctl: handle V4L2_EVENT_SOURCE_CHANGED
+      v4l2-ctl: update Android.mk
+      v4l2-ctl: drop $(LOCAL_PATH)/../common prefix
+      cec-ctl: add support for wall-clock timestamps
+      cec-ctl: add missing -lrt ld flag
+      v4l2-ctl: waiting for a valid timings only depends on no-query option
+      v4l2-compliance: return better fail message in testExpBuf()
+      v4l-utils: sync with kernel
+      qv4l2: update comment regarding XV601/709 quantization handling
+      v4l2-ctl: add --disable-v4l2-ctl-stream-to configure option
+      v4l-utils: sync-with-kernel
+      v4l-utils: sync-with-kernel
+      v4l2-compliance/v4l2-ctl: support V4L2_CTRL_FLAG_MODIFY_LAYOUT and metadata
+      v4l2-compliance: fix control tests for compound controls
+      cec-follower: make sure we never poll ourselves
+      cec-ctl: fix logging: status should come last
+      cec-compliance: add -w option, improve logging
+      cec-ctl: add -s option to skip the Driver Info output
+      v4l2-compliance: improve EDID ioctl tests
+      configure.ac: clarify configure summary
+      configure.ac: add USE_LIBV4L to summary
+      cec-ctl: always show the CEC status results with --verbose
+      cec-compliance: show status if retransmits were detected
+      v4l-utils: sync with latest kernel
+      cec-*: add support for CEC_CAP_NEEDS_HPD
+      cec-ctl: add --monitor-time option
+      cec-ctl: warn is -p is given but CEC_CAP_PHYS_ADDR isn't set
+      cec-ctl.1.in: update the manual page
+      cec-compliance.1.in: update the manual page
+      cec-compliance: improve --verbose
+      cec-compliance: don't set app_result to -1 if the ioctl fails
+      v4l-utils: sync with latest kernel
+      cec utils: support CEC_CAP_MONITOR_PIN and CEC_EVENT_FL_DROPPED_EVENTS
+      cec-ctl: add support for CEC pin monitoring
+      cec-ctl.1.in: document the new --monitor-pin option
+      cec-ctl: fix Makefile.am typo
+      v4l2-ctl: don't return an error with --all
+      cec-ctl: change structure init to cope with g++ 4.6
+      qv4l2: fix SMPTE-2084 processing
+      qv4l2: support vimc
+      cec-ctl: refactor: split the monitor code off into its own function
+      cec-ctl: get the monotonic start time and wallclock time only once
+      cec-ctl: add --record-pin and --playback-pin options
+      cec-ctl: rename --record-pin and --playback-pin
+      cec-ctl: make pin recording easier to read
+      cec-ctl: improve pin timestamps
+      cec-ctl: fix pin analysis bug
+      cec-ctl.1.in: clarify --no-rc-passthrough
+      utils/cec-ctl/.gitignore: add cec-pin-gen.h
+      keytable.c: add support for the CEC protocol
+      cec-follower: use ev.state_change.log_addr_mask
+      cec-compliance: try to reconnect if the HPD is gone
+      cec-compliance: send IMAGE_VIEW_ON when no HPD
+      cec-compliance: move top-level adapter tests to cec-test-adapter.cpp
+      cec-common: move common cec code to cec-common.cpp
+      cec-ctl: use cec-common
+      cec-follower: use cec-common
+      cec-compliance: use cec-common
+      cec-compliance: fix uninitialized format ID array
+      cec-ctl: add --list-devices
+      cec-common.cpp: add missing stdio.h
+      v4l-utils: sync-with-kernel
+      v4l2-ctl: qc.nr_of_dims is 0 for strings, check this
+      cec-ctl: allow stdout/in for --store/analyze-pin
+      v4l-utils: sync with kernel
+      v4l-utils: sync-with-kernel
+      cec-ctl: fix crash when store_pin is NULL
+      cec: add support for the Hospitality Profile
+      cec-ctl.1.in: add --help-htng option description
+      cec-ctl: fix topology tree view
+      v4l2-ctl: support new EDID toggles
+      v4l2-ctl: rename CEA/cea to CTA/cta
+      qv4l2: add Z16 depth support.
+      v4l-utils: improve README
+      v4l-utils: sync-with-kernel
+      libdvbv5: fix compiler warning
+      utils/dvb: fix compiler warnings
+      qv4l2: support Y10 and Y12
+      qv4l2: add support for V4L2_PIX_FMT_INZI
+      v4l-utils: fix two compiler warnings
+      cec-compliance: various improvements for no-HPD-in-standby
+      v4l-utils: sync-with-kernel
+      cec-ctl/cec-follower: support new HPD pin events
+      cec-ctl: store HPD events in pin log
+      v4l2-compliance: allow control ioctls without any controls
+      cec-compliance: use correct initiator in Image View On
+      cec/rds/v4l2-ctl: fix --list-devices option
+      cec-ctl: improve cec pin analyzer code
+      cec-ctl: add --ignore option
+      cec-ctl: improve pin analyzer code
+      cec: show human readable name of a logical address in driver info
+      qv4l2: fix crash when two QAction pointers are uninitialized
+      cec-utils: show hex value of vendor message
+      cec-ctl: improve cec pin analyzer
+      cec-ctl: fix bad end-of-bit handling
+
+Hans de Goede (1):
+      libv4lconvert: We support more then 32 bit src fmts now, so use 64 bit bitmasks
+
+Harald Dankworth (1):
+      v4l-utils: do not query capabilities of sub-devices.
+
+Hugues Fruchet (6):
+      v4l2/cec-compliance, cec-follower: use git -C $(srcdir) rev-parse HEAD
+      configure.ac: fix wrong summary if --disable-v4l2-ctl-stream-to
+      configure.ac: revisit v4l2-ctl/compliance using libv4l variable naming
+      configure.ac: revisit --disable-libv4l to --disable-dyn-libv4l
+      configure.ac: add --disable-libv4l option
+      configure.ac: fix build of v4l-utils on uclinux
+
+Ingo Feinerer (1):
+      Conditional sys/sysmacros.h inclusion
+
+Ismo Puustinen (1):
+      buildsystem: do not assume building in source tree.
+
+Kieran Kunhya (1):
+      libdvbv5: Add libudev to pkg-config file
+
+Maksym Veremeyenko (1):
+      dvbv5-zap: improve sat_number handling
+
+Mauro Carvalho Chehab (53):
+      dvb-sat: fix rangeswitch logic
+      dvb-sat: add verbose options for LNBf settings
+      dvb-sat: add support for Invacom QPH-031 LNBf
+      pt_BR: update translation file to reflect latest changes
+      dvb-sat: fix translation issues at LNBf settings
+      libdvbv5: add support for more PMT descriptors
+      dvb-dev: get rid of config.h from the header file
+      dvb-dev: allow passing an optional void pointer parameter to dvb_dev_find()
+      dvb-utils: add missing parameter
+      dvb-dev: rename the function that gets the sysname of a device
+      dvb-dev: add a method to get device info from sysname
+      libv4lconvert: make it clear about the criteria for needs_conversion
+      libv4lconvert: expose bayer formats
+      keytable: fix print of event code number
+      gen_keytables.pl: fix RC-5-SZ name
+      gen_keytables.pl: don't warn about missing name on legacy RC
+      Add a logic to detect when a file doesn't have any tables
+      Update the list of drivers that still has a RC map inside
+      gen_dvb_structs.pl: fix two warnings
+      desc_t2_delivery: consider valid to have a short T2 descriptor
+      desc_t2_delivery: properly handle cell and subcell tables
+      desc_t2_delivery: improve print dumps of T2 delivery
+      desc_t2_delivery: resize frequency array for subcel freqs
+      desc_t2_delivery: store cell/subcell IDs and tables
+      desc_t2_delivery: display frequencies in MHz
+      desc_t2_delivery: display bandwidth also in MHz
+      desc_t2_delivery: improve printed output
+      descriptors: add service_list_descriptor to descriptor's table
+      Update pt_BR translation
+      pt_BR: fix plural translation
+      dvb-scan: fix the logic for multi-section handling
+      dvb-dev-local: fix pthread checks
+      libdvbv5: be sure to add pthread libary if need
+      contrib: move parsers to a separate directory
+      dvb: add pthread dependencies where needed
+      README: update IR utils
+      Move decode_tm6000 and xc3028-firmware to contrib
+      contrib: better adjust directory contents
+      utils: move rds out of it, placing at contrib
+      decode_tm6000: fix build
+      Makefile: re-add xc3028-firmware sync_with_kernel target
+      dvb-sat: fix bugs at Satellite frequency retrieve logic
+      dvb-file: don't write (unsigned)-1 for DTV_PILOT
+      dvb-sat: Use the right values for LNB setting
+      dvb-sat: better handle out-of-range Satellite frequencies
+      dvb-sat: fix settings to support DiSEqC with more than 2 satellites
+      dvb: better cope with dvbloopback
+      dvbv5-scan: add Network and TS ID for VDR channel output
+      libdvbv5: accept DVBv5 calls from dvbloopback again
+      dvb-sat: warn if DiSEqC is not enabled when it should be
+      dvbv5-zap: don't ignore -S parameter
+      dvb-sat: do the best to tune if DiSEqC is disabled
+      libdvbv5: be sure that interruped reads will be handled
+
+Niklas Söderlund (1):
+      v4l2-compliance: fix warning in buffer::check
+
+Pavel Machek (4):
+      libv4l2: Fix integer overflow
+      libv4l2: Fix typos
+      libv4l: Add support for GRBG10 format conversion
+      libv4l2: SDL test application
+
+Peter Seiderer (3):
+      qv4l2: fix qv4l2.pro qmake project file
+      ir-ctl: use strndup instead of strndupa (fixes musl compile)
+      ir-ctl: add optional copy of TEMP_FAILURE_RETRY macro (fix musl compile)
+
+Philipp Zabel (4):
+      media-ctl: add pad support to set/get_frame_interval
+      media-ctl: print the configured frame interval
+      media-ctl: propagate frame interval
+      media-ctl: add colorimetry support
+
+Rafaël Carré (8):
+      dvb_local_open(): strdup fname before calling dvb_fe_open_fname()
+      dvbv5-daemon: 0 is a valid fd
+      dvb_dev_get_fd(): return fd of local devices
+      dvb_logfunc: add a user private parameter
+      dvb_local_read: ignore EAGAIN
+      sdlcam: fix linking
+      sdlcam: ignore binary
+      Statically linking libdvbv5 must include -ludev
+
+Reinhard Speyerer (1):
+      libdvbv5: fix T2 delivery descriptor parsing in dvb_desc_t2_delivery_init()
+
+Sean Young (27):
+      ir-keytable: be more permissive on protocol name
+      ir-keytable: do not fail at the first transmit-only device
+      ir-ctl: "ir-ctl -S rc6_mce:0x800f0410" does not work on 32-bit
+      ir-ctl: lirc resolution is in microseconds
+      ir-ctl: report LIRCCODE drivers even if we don't supported them
+      ir-keytable: null deref if kernel compiled without CONFIG_INPUT_EVDEV
+      ir-keytable: ensure udev rule fires on rc input device
+      ir-keytable: "ir-keytable -s rc1" should only describe rc1, not all
+      keytable: use DEV_NAME if available
+      keytable: if the protocols cannot be changed, don't try
+      Update the list of drivers that still has a RC map inside and sync-with-kernel
+      sync with kernel git media_tree/master.
+      keytable: fail more gracefully when commandline cannot be parsed
+      keytable: allow a period or delay of 0 to be set
+      ir-ctl: fix multiple scancodes in one file
+      ir-ctl: set the gap between scancodes or files
+      ir-ctl: rename record to receive
+      ir-ctl: always enable timeout reports
+      sync-with-kernel and fixup RC_PROTO_*
+      ir-keytable: show lirc device and make test show lirc scancodes
+      ir-keytable: improve error reporting
+      ir-ctl: show scancode lirc features
+      ir-ctl: use lirc scancode sending
+      keytable: add missing protocols
+      ir-ctl: improve man page
+      keytable: add missing protocol names
+      ir-ctl: rename remaining instances of "record" to "receive"
+
+Soren Brinkmann (1):
+      v4l2-ctl: Print numerical control ID
+
+Thomas Petazzoni (2):
+      Build libv4lconvert helper support only when fork() is available
+      configure.ac: drop --disable-libv4l, disable plugin support instead
+
+bill murphy (1):
+      dvb-sat: add support for North American Standard Ku LNB
+
+
 v4l-utils-1.12.0
 ----------------
 
