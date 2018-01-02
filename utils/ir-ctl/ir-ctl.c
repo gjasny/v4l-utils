@@ -683,7 +683,7 @@ static int lirc_options(struct arguments *args, int fd, unsigned features)
 static void lirc_features(struct arguments *args, int fd, unsigned features)
 {
 	const char *dev = args->device;
-	unsigned resolution = 0;
+	unsigned resolution = 0, mode = LIRC_MODE_SCANCODE;
 	int rc;
 
 	if (features & LIRC_CAN_GET_REC_RESOLUTION) {
@@ -694,14 +694,13 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 			fprintf(stderr, _("warning: %s: unexpected error while retrieving resolution: %m\n"), dev);
 	}
 
-	bool can_receive = false;
 	printf(_("Receive features %s:\n"), dev);
 	if (features & LIRC_CAN_REC_SCANCODE) {
 		printf(_(" - Device can receive scancodes\n"));
-		can_receive = true;
-	}
-	if (features & LIRC_CAN_REC_MODE2) {
+	} else if (features & LIRC_CAN_REC_MODE2) {
 		printf(_(" - Device can receive raw IR\n"));
+		if (ioctl(fd, LIRC_SET_REC_MODE, &mode) == 0)
+			printf(_(" - Can report decoded scancodes and protocol\n"));
 		if (resolution)
 			printf(_(" - Resolution %u microseconds\n"), resolution);
 		if (features & LIRC_CAN_SET_REC_CARRIER)
@@ -729,24 +728,17 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 			if (min_timeout || max_timeout)
 				printf(_(" - Can set receiving timeout min:%u microseconds max:%u microseconds\n"), min_timeout, max_timeout);
 		}
-		can_receive = true;
-	}
-	if (features & LIRC_CAN_REC_LIRCCODE) {
+	} else if (features & LIRC_CAN_REC_LIRCCODE) {
 		printf(_(" - Device can receive using device dependent LIRCCODE mode (not supported)\n"));
-		can_receive = true;
-	}
-
-	if (!can_receive)
+	} else {
 		printf(_(" - Device cannot receive\n"));
-
-	bool can_send = false;
-	printf(_("Send features %s:\n"), dev);
-	if (features & LIRC_CAN_SEND_SCANCODE) {
-		printf(_(" - Device can send scancodes\n"));
-		can_send = true;
 	}
+
+	printf(_("Send features %s:\n"), dev);
 	if (features & LIRC_CAN_SEND_PULSE) {
 		printf(_(" - Device can send raw IR\n"));
+		if (ioctl(fd, LIRC_SET_SEND_MODE, &mode) == 0)
+			printf(_(" - IR scancode encoder\n"));
 		if (features & LIRC_CAN_SET_SEND_CARRIER)
 			printf(_(" - Set carrier\n"));
 		if (features & LIRC_CAN_SET_SEND_DUTY_CYCLE)
@@ -761,15 +753,11 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 			else
 				printf(_(" - Set transmitter (%d available)\n"), rc);
 		}
-		can_send = true;
-	}
-	if (features & LIRC_CAN_SEND_LIRCCODE) {
+	} else if (features & LIRC_CAN_SEND_LIRCCODE) {
 		printf(_(" - Device can send using device dependent LIRCCODE mode (not supported)\n"));
-		can_send = true;
-	}
-
-	if (!can_send)
+	} else {
 		printf(_(" - Device cannot send\n"));
+	}
 }
 
 static int lirc_send(struct arguments *args, int fd, unsigned features, struct file *f)
@@ -778,7 +766,12 @@ static int lirc_send(struct arguments *args, int fd, unsigned features, struct f
 	int rc, mode;
 	ssize_t ret;
 
-	if (f->is_scancode && (features & LIRC_CAN_SEND_SCANCODE)) {
+	if (!(features & LIRC_CAN_SEND_PULSE)) {
+		fprintf(stderr, _("%s: device cannot send\n"), dev);
+		return EX_UNAVAILABLE;
+	}
+
+	if (f->is_scancode) {
 		mode = LIRC_MODE_SCANCODE;
 		rc = ioctl(fd, LIRC_SET_SEND_MODE, &mode);
 		if (rc == 0) {
@@ -791,11 +784,6 @@ static int lirc_send(struct arguments *args, int fd, unsigned features, struct f
 			if (ret > 0)
 				return 0;
 		}
-	}
-
-	if (!(features & LIRC_CAN_SEND_PULSE)) {
-		fprintf(stderr, _("%s: device cannot send raw ir\n"), dev);
-		return EX_UNAVAILABLE;
 	}
 
 	mode = LIRC_MODE_PULSE;
