@@ -1351,27 +1351,16 @@ static void test_event(struct rc_device *rc_dev, int fd)
 	ioctl(fd, EVIOCSCLOCKID, &mode);
 
 	if (rc_dev->lirc_name) {
+		unsigned mode = LIRC_MODE_SCANCODE;
 		lircfd = open(rc_dev->lirc_name, O_RDONLY | O_NONBLOCK);
 		if (lircfd == -1) {
 			perror(_("Can't open lirc device"));
 			return;
 		}
-		unsigned features;
-		if (ioctl(lircfd, LIRC_GET_FEATURES, &features)) {
-			perror(_("Can't get lirc features"));
-			return;
-		}
-
-		if (!(features & LIRC_CAN_REC_SCANCODE)) {
+		if (ioctl(lircfd, LIRC_SET_REC_MODE, &mode)) {
+			/* If we can't set scancode mode, kernel is too old */
 			close(lircfd);
 			lircfd = -1;
-		}
-		else {
-			unsigned mode = LIRC_MODE_SCANCODE;
-			if (ioctl(lircfd, LIRC_SET_REC_MODE, &mode)) {
-				perror(_("Can't set lirc scancode mode"));
-				return;
-			}
 		}
 	}
 
