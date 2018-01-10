@@ -24,6 +24,12 @@
 #define _LARGEFILE_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
 
+/*
+ * Use a buffer big enough for 1 second of data.
+ * When all pids are recorded, assume a bit rate of 58 million bits/s
+ */
+#define DVB_BUF_SIZE	7500000
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -516,17 +522,16 @@ static struct timespec *elapsed_time(struct timespec *start)
 	return &elapsed;
 }
 
-#define BUFLEN (188 * 256)
 static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 			 int timeout, int silent)
 {
-	char buf[BUFLEN];
+	char buf[DVB_BUF_SIZE];
 	int r, first = 1;
 	long long int rc = 0LL;
 	struct timespec start, *elapsed;
 
 	while (timeout_flag == 0) {
-		r = dvb_dev_read(in_fd, buf, BUFLEN);
+		r = dvb_dev_read(in_fd, buf, sizeof(buf));
 		if (r < 0) {
 			if (r == -EOVERFLOW) {
 				elapsed = elapsed_time(&start);
@@ -712,7 +717,8 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 	if (!dvr_fd)
 		return -1;
 
-	dvb_dev_set_bufsize(dvr_fd, 1024 * 1024);
+	fprintf(stderr, _("dvb_dev_set_bufsize: buffer set to %d\n"), DVB_BUF_SIZE);
+	dvb_dev_set_bufsize(dvr_fd, DVB_BUF_SIZE);
 
 	fd = dvb_dev_open(dvb, args->demux_dev, O_RDWR);
 	if (!fd) {
@@ -1070,8 +1076,11 @@ int main(int argc, char **argv)
 
 		if (args.silent < 2)
 			fprintf(stderr, _("  dvb_set_pesfilter %d\n"), vpid);
+
+		fprintf(stderr, _("dvb_dev_set_bufsize: buffer set to %d\n"), DVB_BUF_SIZE);
+		dvb_dev_set_bufsize(video_fd, DVB_BUF_SIZE);
+
 		if (vpid == 0x2000) {
-			dvb_dev_set_bufsize(video_fd, 1024 * 1024);
 			if (dvb_dev_dmx_set_pesfilter(video_fd, vpid, DMX_PES_OTHER,
 					      DMX_OUT_TS_TAP, 0) < 0)
 				goto err;
