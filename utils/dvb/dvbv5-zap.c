@@ -498,7 +498,7 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 			 int timeout, int silent)
 {
 	char buf[BUFLEN];
-	int r;
+	int r, first = 1;
 	long long int rc = 0LL;
 	while (timeout_flag == 0) {
 		r = dvb_dev_read(in_fd, buf, BUFLEN);
