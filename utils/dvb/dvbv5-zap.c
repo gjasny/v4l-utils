@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <argp.h>
 #include <sys/time.h>
+#include <time.h>
 
 #include <config.h>
 
@@ -493,6 +494,28 @@ static void get_show_stats(struct arguments *args,
 	} while (!timeout_flag && loop);
 }
 
+const int NANO_SECONDS_IN_SEC = 1000000000;
+
+static struct timespec *elapsed_time(struct timespec *start)
+{
+	static struct timespec elapsed;
+	struct timespec end;
+
+	if (!start->tv_sec && !start->tv_nsec)
+		return NULL;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &end))
+		return NULL;
+
+	elapsed.tv_sec = end.tv_sec - start->tv_sec;
+	elapsed.tv_nsec = end.tv_nsec - start->tv_nsec;
+	if (elapsed.tv_nsec < 0) {
+		elapsed.tv_sec--;
+		elapsed.tv_nsec += NANO_SECONDS_IN_SEC;
+	}
+	return &elapsed;
+}
+
 #define BUFLEN (188 * 256)
 static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 			 int timeout, int silent)
@@ -500,11 +523,19 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 	char buf[BUFLEN];
 	int r, first = 1;
 	long long int rc = 0LL;
+	struct timespec start, *elapsed;
+
 	while (timeout_flag == 0) {
 		r = dvb_dev_read(in_fd, buf, BUFLEN);
 		if (r < 0) {
 			if (r == -EOVERFLOW) {
-				fprintf(stderr, _("buffer overrun\n"));
+				elapsed = elapsed_time(&start);
+				if (!elapsed)
+					fprintf(stderr, _("buffer overrun at %lld\n"), rc);
+				else
+					fprintf(stderr, _("buffer overrun after %lld.%02ld seconds\n"),
+						(long long)elapsed->tv_sec,
+						elapsed->tv_nsec / 10000000);
 				continue;
 			}
 			ERROR("Read failed");
@@ -521,6 +552,8 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 		if (first) {
 			if (timeout > 0)
 				alarm(timeout);
+
+			clock_gettime(CLOCK_MONOTONIC, &start);
 			first = 0;
 		}
 
