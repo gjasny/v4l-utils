@@ -941,7 +941,7 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 	struct v4l2_plane planes[VIDEO_MAX_PLANES];
 	struct v4l2_buffer buf;
 	bool ignore_count_skip = false;
-	static unsigned last_sec;
+	static time_t last_sec;
 
 	memset(&buf, 0, sizeof(buf));
 	memset(planes, 0, sizeof(planes));
@@ -1090,7 +1090,7 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 			 unsigned &count, struct timespec &ts_last)
 {
-	static unsigned last_sec;
+	static time_t last_sec;
 	struct v4l2_plane planes[VIDEO_MAX_PLANES];
 	struct v4l2_buffer buf;
 	int ret;

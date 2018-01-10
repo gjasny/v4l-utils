@@ -674,7 +674,7 @@ error:
 
 void ApplicationWindow::calculateFps()
 {
-	static unsigned last_sec;
+	static time_t last_sec;
 
 	if (m_frame == 0) {
 		clock_gettime(CLOCK_MONOTONIC, &m_startTimestamp);
