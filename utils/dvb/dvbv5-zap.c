@@ -510,6 +510,20 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 			ERROR("Read failed");
 			break;
 		}
+
+		/*
+		 * It takes a while for a DVB device to start streaming, as the
+		 * hardware may be waiting for some locks. The safest way to
+		 * ensure that a program record will have the start amount of
+		 * time specified by the user is to restart the timeout alarm
+		 * here, after the first succeded read.
+		 */
+		if (first) {
+			if (timeout > 0)
+				alarm(timeout);
+			first = 0;
+		}
+
 		if (write(out_fd, buf, r) < 0) {
 			PERROR(_("Write failed"));
 			break;
