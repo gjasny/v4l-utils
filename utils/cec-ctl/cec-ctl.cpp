@@ -1107,7 +1107,8 @@ static void log_event(struct cec_event &ev, bool show)
 		break;
 	case CEC_EVENT_LOST_MSGS:
 		if (show)
-			printf("Event: Lost Messages\n");
+			printf("Event: Lost %d messages\n",
+			       ev.lost_msgs.lost_msgs);
 		break;
 	case CEC_EVENT_PIN_CEC_LOW:
 	case CEC_EVENT_PIN_CEC_HIGH:
