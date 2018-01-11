@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <cerrno>
 #include <string>
+#include <time.h>
 #include <linux/cec-funcs.h>
 #include "cec-htng-funcs.h"
 
@@ -125,7 +126,7 @@ extern bool show_info;
 extern bool show_warnings;
 extern unsigned warnings;
 extern unsigned reply_threshold;
-extern unsigned long_timeout;
+extern time_t long_timeout;
 
 struct remote {
 	bool recognized_op[256];

@@ -267,7 +267,7 @@ static bool wait_changing_power_status(struct node *node, unsigned me, unsigned 
 	__u8 old_status;
 	time_t t = time(NULL);
 
-	announce("Checking for power status change. This may take up to %u s.", long_timeout);
+	announce("Checking for power status change. This may take up to %llu s.", (long long)long_timeout);
 	if (!get_power_status(node, me, la, old_status))
 		return false;
 	while (time(NULL) - t < long_timeout) {
@@ -297,7 +297,7 @@ static bool poll_stable_power_status(struct node *node, unsigned me, unsigned la
 
 	/* Some devices can use several seconds to transition from one power
 	   state to another, so the power state must be repeatedly polled */
-	announce("Waiting for new stable power status. This may take up to %u s.", long_timeout);
+	announce("Waiting for new stable power status. This may take up to %llu s.", (long long)long_timeout);
 	while (time(NULL) - t < long_timeout) {
 		__u8 power_status;
 

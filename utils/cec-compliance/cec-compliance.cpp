@@ -111,7 +111,7 @@ bool show_info;
 bool show_warnings = true;
 unsigned warnings;
 unsigned reply_threshold = 1000;
-unsigned long_timeout = 60;
+time_t long_timeout = 60;
 
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
@@ -1294,7 +1294,7 @@ int main(int argc, char **argv)
 
 		fail_on_test(doioctl(&node, CEC_TRANSMIT, &msg));
 		if (msg.tx_status & CEC_TX_STATUS_OK) {
-			unsigned cnt = 0;
+			time_t cnt = 0;
 
 			cec_msg_image_view_on(&msg);
 			fail_on_test(doioctl(&node, CEC_TRANSMIT, &msg));

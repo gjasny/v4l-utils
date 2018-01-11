@@ -483,7 +483,7 @@ static int routing_control_set_stream_path(struct node *node, unsigned me, unsig
 	   In CEC 2.0 it is mandatory for sources to send Active Source. */
 	if (is_tv(la, node->remote[la].prim_type))
 		interactive_info(true, "Please ensure that the device is in standby.");
-	announce("Sending Set Stream Path and waiting for reply. This may take up to %u s.", long_timeout);
+	announce("Sending Set Stream Path and waiting for reply. This may take up to %llu s.", (long long)long_timeout);
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_stream_path(&msg, node->remote[la].phys_addr);
 	msg.reply = CEC_MSG_ACTIVE_SOURCE;
