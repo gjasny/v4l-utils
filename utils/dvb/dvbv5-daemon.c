@@ -1272,6 +1272,7 @@ static int dev_get_stats(uint32_t seq, char *cmd, int fd,
 		p += ret;
 		size -= ret;
 
+#pragma GCC diagnostic ignored "-Wformat"
 		ret = prepare_data(p, size,
 				   "%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu",
 				   prev->pre_bit_count,
@@ -1286,7 +1287,7 @@ static int dev_get_stats(uint32_t seq, char *cmd, int fd,
 				   cur->post_bit_error,
 				   cur->block_count,
 				   cur->block_error);
-
+#pragma GCC diagnostic pop
 		if (ret < 0)
 			goto error;
 
