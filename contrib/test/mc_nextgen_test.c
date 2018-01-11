@@ -744,22 +744,22 @@ static int media_get_topology(struct media_controller *mc)
 	}
 
 	do {
-		topo->ptr_entities = (__u64)calloc(topo->num_entities,
+		topo->ptr_entities = (uintptr_t)calloc(topo->num_entities,
 					sizeof(struct media_v2_entity));
 		if (topo->num_entities && !topo->ptr_entities)
 			goto error;
 
-		topo->ptr_interfaces = (__u64)calloc(topo->num_interfaces,
+		topo->ptr_interfaces = (uintptr_t)calloc(topo->num_interfaces,
 					  sizeof(struct media_v2_interface));
 		if (topo->num_interfaces && !topo->ptr_interfaces)
 			goto error;
 
-		topo->ptr_pads = (__u64)calloc(topo->num_pads,
+		topo->ptr_pads = (uintptr_t)calloc(topo->num_pads,
 				   sizeof(struct media_v2_pad));
 		if (topo->num_pads && !topo->ptr_pads)
 			goto error;
 
-		topo->ptr_links = (__u64)calloc(topo->num_links,
+		topo->ptr_links = (uintptr_t)calloc(topo->num_links,
 				     sizeof(struct media_v2_link));
 		if (topo->num_links && !topo->ptr_links)
 			goto error;
@@ -775,10 +775,10 @@ static int media_get_topology(struct media_controller *mc)
 				 * topology changes should be rare, this
 				 * should do the work
 				 */
-				free((void *)topo->ptr_entities);
-				free((void *)topo->ptr_interfaces);
-				free((void *)topo->ptr_pads);
-				free((void *)topo->ptr_links);
+				free(media_get_uptr(topo->ptr_entities));
+				free(media_get_uptr(topo->ptr_interfaces));
+				free(media_get_uptr(topo->ptr_pads));
+				free(media_get_uptr(topo->ptr_links));
 				topology_version = topo->topology_version;
 				continue;
 			}
@@ -793,13 +793,13 @@ static int media_get_topology(struct media_controller *mc)
 
 error:
 	if (topo->ptr_entities)
-		free((void *)topo->ptr_entities);
+		free(media_get_uptr(topo->ptr_entities));
 	if (topo->ptr_interfaces)
-		free((void *)topo->ptr_interfaces);
+		free(media_get_uptr(topo->ptr_interfaces));
 	if (topo->ptr_pads)
-		free((void *)topo->ptr_pads);
+		free(media_get_uptr(topo->ptr_pads));
 	if (topo->ptr_links)
-		free((void *)topo->ptr_links);
+		free(media_get_uptr(topo->ptr_links));
 
 	topo->ptr_entities = 0;
 	topo->ptr_interfaces = 0;
@@ -833,13 +833,13 @@ static int mc_close(struct media_controller *mc)
 	if (mc->gobj)
 		free(mc->gobj);
 	if (mc->topo.ptr_entities)
-		free((void *)mc->topo.ptr_entities);
+		free(media_get_uptr(mc->topo.ptr_entities));
 	if (mc->topo.ptr_interfaces)
-		free((void *)mc->topo.ptr_interfaces);
+		free(media_get_uptr(mc->topo.ptr_interfaces));
 	if (mc->topo.ptr_pads)
-		free((void *)mc->topo.ptr_pads);
+		free(media_get_uptr(mc->topo.ptr_pads));
 	if (mc->topo.ptr_links)
-		free((void *)mc->topo.ptr_links);
+		free(media_get_uptr(mc->topo.ptr_links));
 	free(mc);
 
 	return ret;
