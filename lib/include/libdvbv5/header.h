@@ -71,6 +71,17 @@ struct dvb_ts_packet_header {
 
 	/* Only if adaptation_field_control > 1 */
 	uint8_t adaptation_field_length;
+	/* Only if adaptation_field_length >= 1 */
+	struct {
+		uint8_t extension:1;
+		uint8_t private_data:1;
+		uint8_t splicing_point:1;
+		uint8_t OPCR:1;
+		uint8_t PCR:1;
+		uint8_t priority:1;
+		uint8_t random_access:1;
+		uint8_t discontinued:1;
+	} __attribute__((packed));
 } __attribute__((packed));
 
 /**

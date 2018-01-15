@@ -703,7 +703,8 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 {
 	struct dvb_open_descriptor *fd, *dvr_fd;
-	long long unsigned pidt[0x2001], wait;
+	long long unsigned pidt[0x2001], wait, cont_err = 0;
+	signed char pid_cont[0x2001] = { -1 };
 	int packets = 0;
 	struct timeval startt;
 	struct dvb_v5_fe_parms *parms = dvb->fe_parms;
@@ -767,6 +768,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 		}
 
 		if (h->sync_byte != 0x47) {
+			fprintf(stderr, _("dvbtraffic: invalid sync byte. Discarding %zd bytes\n"), r);
 			continue;
 		}
 
@@ -783,6 +785,22 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 #endif
 		ok = 1;
 		pid = h->pid;
+
+		pid_cont[pid] = -1;
+		if (h->adaptation_field_control) {
+			if (h->adaptation_field_length >= 1) {
+				if (!h->discontinued && pid_cont[pid] >= 0) {
+					unsigned int next = (pid_cont[pid] + 1) % 16;
+					if (next != h->continuity_counter) {
+						fprintf(stderr,
+							_("dvbtraffic: pid %d, expecting %d received %d\n"),
+							pid, next, h->continuity_counter);
+						cont_err++;
+					}
+				}
+				pid_cont[pid] = h->continuity_counter;
+			}
+		}
 
 		if (args->search) {
 			int i, sl = strlen(args->search);
@@ -838,6 +856,8 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 				printf("\n\n");
 				get_show_stats(args, parms, 0);
 				wait += 1000;
+				if (cont_err)
+					printf("CONTINUITY errors: %llu\n", cont_err);
 			}
 		}
 	}
