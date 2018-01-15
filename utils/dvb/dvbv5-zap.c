@@ -786,7 +786,6 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 		ok = 1;
 		pid = h->pid;
 
-		pid_cont[pid] = -1;
 		if (h->adaptation_field_control) {
 			if (h->adaptation_field_length >= 1) {
 				if (!h->discontinued && pid_cont[pid] >= 0) {
@@ -795,11 +794,17 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 						fprintf(stderr,
 							_("dvbtraffic: pid %d, expecting %d received %d\n"),
 							pid, next, h->continuity_counter);
+						pid_cont[pid] = -1;
 						cont_err++;
+					} else {
+						pid_cont[pid] = h->continuity_counter;
 					}
 				}
-				pid_cont[pid] = h->continuity_counter;
+			} else {
+				pid_cont[pid] = -1;
 			}
+		} else {
+			pid_cont[pid] = -1;
 		}
 
 		if (args->search) {
