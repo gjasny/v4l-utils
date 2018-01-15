@@ -109,7 +109,7 @@ static const struct argp_option options[] = {
 	{"video_pid",	'V', N_("video_pid#"),		0, N_("video pid program to use (default 0)"), 0},
 	{"wait",	'W', N_("time"),		0, N_("adds additional wait time for DISEqC command completion"), 0},
 	{"exit",	'x', NULL,			0, N_("exit after tuning"), 0},
-	{"low_traffic",	'X', NULL,			0, N_("also shows DVB traffic with less then 1 packet per second"), 0},
+	{"low_traffic",	'X', N_("packets_per_sec"),	0, N_("sets DVB low traffic traffic threshold. PIDs with less than this amount of packets per second will be ignored. Default: 1 packet per second"), 0},
 	{"cc",		'C', N_("country_code"),	0, N_("Set the default country to be used (in ISO 3166-1 two letter code)"), 0},
 	{"non-numan",	'N', NULL,			0, N_("Non-human formatted stats (useful for scripts)"), 0},
 	{"server",	'H', N_("SERVER"),		0, N_("dvbv5-daemon host IP address"), 0},
@@ -663,7 +663,7 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 		args->non_human = 1;
 		break;
 	case 'X':
-		args->low_traffic = 1;
+		args->low_traffic = atoi(optarg);
 		break;
 	case 'L':
 		args->search = strdup(optarg);
@@ -836,7 +836,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 				int _pid = 0;
 				for (_pid = 0; _pid < 0x2000; _pid++) {
 					if (pidt[_pid]) {
-						if (!args->low_traffic && (pidt[_pid] * 1000. / diff) < 1)
+						if (args->low_traffic && (pidt[_pid] * 1000. / diff) < args->low_traffic)
 							continue;
 						printf("%04x %9.2f p/s %8.1f Kbps ",
 						     _pid,
@@ -911,6 +911,7 @@ int main(int argc, char **argv)
 	args.lna = LNA_AUTO;
 	args.input_format = FILE_DVBV5;
 	args.dvr_pipe = "/tmp/dvr-pipe";
+	args.low_traffic = 1;
 
 	if (argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, &idx, &args)) {
 		argp_help(&argp, stderr, ARGP_HELP_SHORT_USAGE, PROGRAM_NAME);
