@@ -797,8 +797,11 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 #if 0
 		/*
 		 * ITU-T Rec. H.222.0 decoders shall discard Transport Stream
-		 * packets with theadaptation_field_control field set to
-		 * a value of '00'.
+		 * packets with the adaptation_field_control field set to
+		 * a value of '00' (invalid). Packets with a value of '01'
+		 * are NULL packets. Yet, as those are actually part of the
+		 * stream, we won't be discarding, as we want to take them into
+		 * account for traffic estimation purposes.
 		 */
 		if (h->adaptation_field_control == 0)
 			continue;
