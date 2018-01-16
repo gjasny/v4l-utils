@@ -884,13 +884,13 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 			                printf("\x1b[1H\x1b[2J");
 
 				args->n_status_lines = 0;
-				printf(_(" PID          FREQ         SPEED       TOTAL\n"));
+				printf(_(" PID           FREQ         SPEED       TOTAL\n"));
 				int _pid = 0;
 				for (_pid = 0; _pid < 0x2000; _pid++) {
 					if (pidt[_pid]) {
 						if (args->low_traffic && (pidt[_pid] * 1000. / diff) < args->low_traffic)
 							continue;
-						printf("%04x %9.2f p/s %8.1f Kbps ",
+						printf("%5d %9.2f p/s %8.1f Kbps ",
 						     _pid,
 						     pidt[_pid] * 1000. / diff,
 						     pidt[_pid] * 1000. / diff * 8 * 188 / 1024);
@@ -901,7 +901,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 					}
 				}
 				/* 0x2000 is the total traffic */
-				printf("TOT %10.2f p/s %8.1f Kbps %8llu KB\n",
+				printf("TOT %11.2f p/s %8.1f Kbps %8llu KB\n",
 				     pidt[_pid] * 1000. / diff,
 				     pidt[_pid] * 1000. / diff * 8 * 188 / 1024,
 				     pidt[_pid] * 188 / 1024);
