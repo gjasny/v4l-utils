@@ -812,7 +812,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 
 		if (pid > 0x1fff) {
 			fprintf(stderr, _("dvbtraffic: invalid pid: 0x%04x\n"), pid);
-			pid = 0x2000;
+			pid = 0x1fff;
 		}
 
 		/*
@@ -880,6 +880,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		if (!(packets & 0xFF)) {
 			struct timeval now;
 			int diff;
+			unsigned long long other_pidt = 0, other_err_cnt = 0;
 			gettimeofday(&now, 0);
 			diff =
 			    (now.tv_sec - startt.tv_sec) * 1000 +
@@ -893,8 +894,11 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 				int _pid = 0;
 				for (_pid = 0; _pid < 0x2000; _pid++) {
 					if (pidt[_pid]) {
-						if (args->low_traffic && (pidt[_pid] * 1000. / diff) < args->low_traffic)
+						if (args->low_traffic && (pidt[_pid] * 1000. / diff) < args->low_traffic) {
+							other_pidt += pidt[_pid];
+							other_err_cnt += err_cnt[_pid];
 							continue;
+						}
 						printf("%5d %9.2f p/s %8.1f Kbps ",
 						     _pid,
 						     pidt[_pid] * 1000. / diff,
@@ -909,6 +913,20 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 						printf("\n");
 					}
 				}
+				if (other_pidt) {
+					printf(_("OTHER"));
+					printf(" %9.2f p/s %8.1f Kbps ",
+					     other_pidt * 1000. / diff,
+					     other_pidt * 1000. / diff * 8 * 188 / 1024);
+					if (other_pidt * 188 / 1024)
+						printf("%8llu KB", other_pidt * 188 / 1024);
+					else
+						printf(" %8llu B", other_pidt * 188);
+					if (other_err_cnt > 0)
+						printf(" %8llu continuity errors", other_err_cnt);
+					printf("\n");
+				}
+
 				/* 0x2000 is the total traffic */
 				printf("TOT %11.2f p/s %8.1f Kbps %8llu KB\n",
 				     pidt[_pid] * 1000. / diff,
