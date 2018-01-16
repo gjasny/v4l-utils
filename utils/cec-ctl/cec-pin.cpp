@@ -135,9 +135,9 @@ static void cec_pin_rx_start_bit_was_high(bool is_high, __u64 usecs, __u64 usecs
 	bool period_too_long = low_usecs + usecs > CEC_TIM_START_BIT_TOTAL_LONG;
 
 	if (is_high && show)
-		printf("%10.06f: start bit: total period too long\n", ts);
+		printf("%10.06f: warn: start bit: total period too long\n", ts);
 	else if (low_usecs + usecs > CEC_TIM_START_BIT_TOTAL_MAX && show)
-		printf("%10.06f: start bit: total period too long (%.2f > %.2f ms)\n",
+		printf("%10.06f: warn: start bit: total period too long (%.2f > %.2f ms)\n",
 		       ts, (low_usecs + usecs) / 1000.0,
 		       CEC_TIM_START_BIT_TOTAL_MAX / 1000.0);
 	if (is_high || period_too_long) {
@@ -147,7 +147,7 @@ static void cec_pin_rx_start_bit_was_high(bool is_high, __u64 usecs, __u64 usecs
 		return;
 	}
 	if (low_usecs + usecs < CEC_TIM_START_BIT_TOTAL_MIN - CEC_TIM_MARGIN && show)
-		printf("%10.06f: start bit: total period too short (%.2f < %.2f ms)\n",
+		printf("%10.06f: warn: start bit: total period too short (%.2f < %.2f ms)\n",
 		       ts, (low_usecs + usecs) / 1000.0,
 		       CEC_TIM_START_BIT_TOTAL_MIN / 1000.0);
 	state = CEC_ST_RECEIVING_DATA;
@@ -163,7 +163,7 @@ static void cec_pin_rx_start_bit_was_high(bool is_high, __u64 usecs, __u64 usecs
 static void cec_pin_rx_start_bit_was_low(__u64 ev_ts, __u64 usecs, __u64 usecs_min, bool show)
 {
 	if (usecs_min > CEC_TIM_START_BIT_LOW_MAX && show)
-		printf("%10.06f: start bit: low time too long (%.2f > %.2f ms)\n",
+		printf("%10.06f: warn: start bit: low time too long (%.2f > %.2f ms)\n",
 			ts, usecs / 1000.0,
 			CEC_TIM_START_BIT_LOW_MAX / 1000.0);
 	if (usecs_min > CEC_TIM_START_BIT_LOW_MAX + CEC_TIM_MARGIN * 5) {
@@ -173,7 +173,7 @@ static void cec_pin_rx_start_bit_was_low(__u64 ev_ts, __u64 usecs, __u64 usecs_m
 		return;
 	}
 	if (usecs < CEC_TIM_START_BIT_LOW_MIN - CEC_TIM_MARGIN && show)
-		printf("%10.06f: start bit: low time too short (%.2f < %.2f ms)\n",
+		printf("%10.06f: warn: start bit: low time too short (%.2f < %.2f ms)\n",
 			ts, usecs / 1000.0,
 			CEC_TIM_START_BIT_LOW_MIN / 1000.0);
 	if (usecs_min < CEC_TIM_START_BIT_LOW_MIN - CEC_TIM_MARGIN * 6) {
@@ -194,13 +194,13 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 	bool bit;
 
 	if (is_high && rx_bit < 9 && show)
-		printf("%10.06f: data bit %d: total period too long\n", ts, rx_bit);
+		printf("%10.06f: warn: data bit %d: total period too long\n", ts, rx_bit);
 	else if (rx_bit < 9 && show &&
 		 low_usecs + usecs > CEC_TIM_DATA_BIT_TOTAL_MAX + CEC_TIM_MARGIN)
-		printf("%10.06f: data bit %d: total period too long (%.2f ms)\n",
+		printf("%10.06f: warn: data bit %d: total period too long (%.2f ms)\n",
 			ts, rx_bit, (low_usecs + usecs) / 1000.0);
 	if (low_usecs + usecs < CEC_TIM_DATA_BIT_TOTAL_MIN - CEC_TIM_MARGIN && show)
-		printf("%10.06f: data bit %d: total period too short (%.2f ms)\n",
+		printf("%10.06f: warn: data bit %d: total period too short (%.2f ms)\n",
 			ts, rx_bit, (low_usecs + usecs) / 1000.0);
 
 	bit = low_usecs < CEC_TIM_DATA_BIT_1_LOW_MAX + CEC_TIM_MARGIN;
@@ -225,10 +225,10 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 			printf("%10.06f: rx 0x%02x%s%s%s%s%s\n", ts, byte,
 			       eom ? " EOM" : "", ack ? " ACK" : " NACK",
 			       bcast ? " (broadcast)" : "",
-			       eom_reached ? " (spurious byte)" : "",
+			       eom_reached ? " (warn: spurious byte)" : "",
 			       s.c_str());
 		if (!eom_reached && is_high && !eom && ack && show)
-			printf("%10.06f: missing EOM\n", ts);
+			printf("%10.06f: warn: missing EOM\n", ts);
 		else if (!is_high && !period_too_long && show_info && show)
 			printf("\n");
 		if (byte_cnt == 1 && byte == CEC_MSG_CDC_MESSAGE)
@@ -263,19 +263,13 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 static void cec_pin_rx_data_bit_was_low(__u64 ev_ts, __u64 usecs, __u64 usecs_min, bool show)
 {
 	low_usecs = usecs;
-	if (usecs >= CEC_TIM_LOW_DRIVE_ERROR_MIN - CEC_TIM_MARGIN &&
-	    usecs <= CEC_TIM_LOW_DRIVE_ERROR_MAX + CEC_TIM_MARGIN) {
-		if (show)
-			printf("%10.06f: low drive (%.2f ms) detected\n\n",
-			       ts, usecs / 1000.0);
-		state = CEC_ST_IDLE;
-		return;
-	}
-	if (usecs_min >= CEC_TIM_LOW_DRIVE_ERROR_MAX) {
-		if (show)
-			printf("%10.06f: low drive too long (%.2f > %.2f ms)\n\n",
+	if (usecs >= CEC_TIM_LOW_DRIVE_ERROR_MIN - CEC_TIM_MARGIN) {
+		if (usecs_min >= CEC_TIM_LOW_DRIVE_ERROR_MAX && show)
+			printf("%10.06f: warn: low drive too long (%.2f > %.2f ms)\n\n",
 			       ts, usecs / 1000.0,
 			       CEC_TIM_LOW_DRIVE_ERROR_MAX / 1000.0);
+		if (show)
+			printf("\n");
 		state = CEC_ST_IDLE;
 		return;
 	}
@@ -283,7 +277,7 @@ static void cec_pin_rx_data_bit_was_low(__u64 ev_ts, __u64 usecs, __u64 usecs_mi
 	if (rx_bit == 0 && byte_cnt &&
 	    usecs >= CEC_TIM_START_BIT_LOW_MIN - CEC_TIM_MARGIN) {
 		if (show)
-			printf("%10.06f: unexpected start bit\n", ts);
+			printf("%10.06f: warn: unexpected start bit\n", ts);
 		cec_pin_rx_start_bit_was_low(ev_ts, usecs, usecs_min, show);
 		state = CEC_ST_RECEIVE_START_BIT;
 		return;
@@ -291,7 +285,7 @@ static void cec_pin_rx_data_bit_was_low(__u64 ev_ts, __u64 usecs, __u64 usecs_mi
 
 	if (usecs_min > CEC_TIM_DATA_BIT_0_LOW_MAX) {
 		if (show)
-			printf("%10.06f: data bit %d: low time too long (%.2f ms)\n",
+			printf("%10.06f: warn: data bit %d: low time too long (%.2f ms)\n",
 				ts, rx_bit, usecs / 1000.0);
 		if (usecs_min > CEC_TIM_DATA_BIT_TOTAL_MAX) {
 			if (show)
@@ -302,11 +296,11 @@ static void cec_pin_rx_data_bit_was_low(__u64 ev_ts, __u64 usecs, __u64 usecs_mi
 	}
 	if (usecs_min > CEC_TIM_DATA_BIT_1_LOW_MAX &&
 	    usecs < CEC_TIM_DATA_BIT_0_LOW_MIN - CEC_TIM_MARGIN && show) {
-		printf("%10.06f: data bit %d: invalid 0->1 transition (%.2f ms)\n",
+		printf("%10.06f: warn: data bit %d: invalid 0->1 transition (%.2f ms)\n",
 			ts, rx_bit, usecs / 1000.0);
 	}
 	if (usecs < CEC_TIM_DATA_BIT_1_LOW_MIN - CEC_TIM_MARGIN && show) {
-		printf("%10.06f: data bit %d: low time too short (%.2f ms)\n",
+		printf("%10.06f: warn: data bit %d: low time too short (%.2f ms)\n",
 			ts, rx_bit, usecs / 1000.0);
 	}
 
@@ -386,6 +380,11 @@ void log_event_pin(bool is_high, __u64 ev_ts, bool show)
 			       (ev_ts - last_change_ts) / 1000000.0);
 		else if (last_change_ts && state == CEC_ST_RECEIVE_START_BIT)
 			printf("0 -> 1 (was 0 for %.2f ms)\n",
+			       (ev_ts - last_change_ts) / 1000000.0);
+		else if (last_change_ts &&
+			 (ev_ts - last_change_ts) / 1000 >=
+			  CEC_TIM_LOW_DRIVE_ERROR_MIN - CEC_TIM_MARGIN)
+			printf("0 -> 1 (was 0 for %.2f ms, warn: indicates low drive)\n",
 			       (ev_ts - last_change_ts) / 1000000.0);
 		else if (last_change_ts)
 			printf("0 -> 1 (was 0 for %.2f ms, indicates %d bit)\n",
