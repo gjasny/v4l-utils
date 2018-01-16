@@ -700,12 +700,13 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 
 #define BSIZE 188
 
-int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
+int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
+		       int out_fd, int timeout)
 {
 	struct dvb_open_descriptor *fd, *dvr_fd;
 	long long unsigned pidt[0x2001], wait, cont_err = 0;
 	signed char pid_cont[0x2001] = { -1 };
-	int packets = 0;
+	int packets = 0, first = 1;
 	struct timeval startt;
 	struct dvb_v5_fe_parms *parms = dvb->fe_parms;
 
@@ -761,6 +762,25 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb)
 			}
 			fprintf(stderr, _("dvbtraffic: read() returned error %zd\n"), r);
 			break;
+		}
+
+		/*
+		 * It takes a while for a DVB device to start streaming, as the
+		 * hardware may be waiting for some locks. The safest way to
+		 * ensure that a program record will have the start amount of
+		 * time specified by the user is to restart the timeout alarm
+		 * here, after the first succeded read.
+		 */
+		if (first) {
+			if (timeout > 0)
+				alarm(timeout);
+			first = 0;
+		}
+		if (out_fd >= 0) {
+			if (write(out_fd, buffer, r) < 0) {
+				PERROR(_("Write failed"));
+				break;
+			}
 		}
 		if (r != BSIZE) {
 			fprintf(stderr, _("dvbtraffic: only read %zd bytes\n"), r);
@@ -1040,8 +1060,20 @@ int main(int argc, char **argv)
 	}
 
 	if (args.traffic_monitor) {
+		if (args.filename) {
+			file_fd = open(args.filename,
+#ifdef O_LARGEFILE
+					 O_LARGEFILE |
+#endif
+					 O_WRONLY | O_CREAT,
+					 0644);
+			if (file_fd < 0) {
+				PERROR(_("open of '%s' failed"), args.filename);
+				return -1;
+			}
+		}
 		set_signals(&args);
-		err = do_traffic_monitor(&args, dvb);
+		err = do_traffic_monitor(&args, dvb, file_fd, args.timeout);
 		goto err;
 	}
 
