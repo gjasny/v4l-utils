@@ -826,7 +826,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		 * Also, don't check continuity errors on the first second, as the
 		 * frontend is still starting streaming
 		 */
-		if (pid < 0x1fff && h->adaptation_field_control & 1 && wait > 1000) {
+		if (pid < 0x1fff && h->adaptation_field_control & 1) {
 			int discontinued = 0;
 
 			if (err_cnt[pid] < 0)
@@ -841,6 +841,9 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 						pid);
 				}
 			}
+
+			if (wait < 2000)
+				discontinued = 1;
 
 			if (!discontinued && pid_cont[pid] >= 0) {
 				unsigned int next = (pid_cont[pid] + 1) % 16;
