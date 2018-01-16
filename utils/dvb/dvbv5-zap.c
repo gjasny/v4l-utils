@@ -137,6 +137,18 @@ static int timeout_flag = 0;
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
+#define monitor_log(msg, start, args...)					\
+	do {									\
+		struct timeval __now;						\
+		long long __diff;						\
+										\
+		gettimeofday(&__now, 0);					\
+		__diff = (__now.tv_sec - start.tv_sec) * 1000. +		\
+			 (__now.tv_usec - start.tv_usec) / 1000;		\
+		fprintf(stderr, msg, __diff / 1000., ##args);			\
+	} while (0)
+
+
 static int parse(struct arguments *args,
 		 struct dvb_v5_fe_parms *parms,
 		 char *channel,
@@ -752,16 +764,10 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 
 		if ((r = dvb_dev_read(dvr_fd, buffer, BSIZE)) <= 0) {
 			if (r == -EOVERFLOW) {
-				struct timeval now;
-				int diff;
-				gettimeofday(&now, 0);
-				diff =
-				    (now.tv_sec - startt.tv_sec) * 1000 +
-				    (now.tv_usec - startt.tv_usec) / 1000;
-				fprintf(stderr, _("%.2fs: buffer overrun\n"), diff / 1000.);
+				monitor_log(_("%.2fs: buffer overrun\n"), startt);
 				continue;
 			}
-			fprintf(stderr, _("dvbtraffic: read() returned error %zd\n"), r);
+			monitor_log(_("%.2fs: read() returned error %zd\n"), startt, r);
 			break;
 		}
 
@@ -784,12 +790,12 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 			}
 		}
 		if (r != BSIZE) {
-			fprintf(stderr, _("dvbtraffic: only read %zd bytes\n"), r);
+			monitor_log(_("%.2fs: only read %zd bytes\n"), startt, r);
 			break;
 		}
 
 		if (h->sync_byte != 0x47) {
-			fprintf(stderr, _("dvbtraffic: invalid sync byte. Discarding %zd bytes\n"), r);
+			monitor_log(_("%.2fs: invalid sync byte. Discarding %zd bytes\n"), startt, r);
 			continue;
 		}
 
@@ -811,7 +817,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		pid = h->pid;
 
 		if (pid > 0x1fff) {
-			fprintf(stderr, _("dvbtraffic: invalid pid: 0x%04x\n"), pid);
+			monitor_log(_("%.2fs: invalid pid: 0x%04x\n"), startt, pid);
 			pid = 0x1fff;
 		}
 
@@ -836,9 +842,8 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 				if (h->adaptation_field_length >= 1) {
 					discontinued = h->discontinued;
 				} else {
-					fprintf(stderr,
-						_("dvbtraffic: pid %d has adaption layer, but size is too small!\n"),
-						pid);
+					monitor_log(_("%.2fs: pid %d has adaption layer, but size is too small!\n"),
+						    startt, pid);
 				}
 			}
 
@@ -848,9 +853,8 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 			if (!discontinued && pid_cont[pid] >= 0) {
 				unsigned int next = (pid_cont[pid] + 1) % 16;
 				if (next != h->continuity_counter) {
-					fprintf(stderr,
-						_("dvbtraffic: pid %d, expecting %d received %d\n"),
-						pid, next, h->continuity_counter);
+					monitor_log(_("%.2fs: pid %d, expecting %d received %d\n"),
+						    startt, pid, next, h->continuity_counter);
 					discontinued = 1;
 					cont_err++;
 					err_cnt[pid]++;
