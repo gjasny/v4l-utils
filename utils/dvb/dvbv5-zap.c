@@ -904,7 +904,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 						     pidt[_pid] * 1000. / diff,
 						     pidt[_pid] * 1000. / diff * 8 * 188 / 1024);
 						if (pidt[_pid] * 188 / 1024)
-							printf("%8llu KB", pidt[_pid] * 188 / 1024);
+							printf("%8llu KB", (pidt[_pid] * 188 + 512) / 1024);
 						else
 							printf(" %8llu B", pidt[_pid] * 188);
 						if (err_cnt[_pid] > 0)
@@ -919,7 +919,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 					     other_pidt * 1000. / diff,
 					     other_pidt * 1000. / diff * 8 * 188 / 1024);
 					if (other_pidt * 188 / 1024)
-						printf("%8llu KB", other_pidt * 188 / 1024);
+						printf("%8llu KB", (other_pidt * 188 + 512) / 1024);
 					else
 						printf(" %8llu B", other_pidt * 188);
 					if (other_err_cnt > 0)
@@ -931,7 +931,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 				printf("TOT %11.2f p/s %8.1f Kbps %8llu KB\n",
 				     pidt[_pid] * 1000. / diff,
 				     pidt[_pid] * 1000. / diff * 8 * 188 / 1024,
-				     pidt[_pid] * 188 / 1024);
+				     (pidt[_pid] * 188 + 512) / 1024);
 				printf("\n");
 				get_show_stats(stdout, args, parms, 0);
 				wait += 1000;
