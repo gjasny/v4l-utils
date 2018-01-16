@@ -809,6 +809,10 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		ok = 1;
 		pid = h->pid;
 
+		if (pid > 0x1fff) {
+			fprintf(stderr, _("dvbtraffic: invalid pid: 0x%04x\n"), pid);
+			pid = 0x2000;
+		}
 		/*
 		 * Don't check continuity errors on the first second, as
 		 * the frontend is still starting streaming
