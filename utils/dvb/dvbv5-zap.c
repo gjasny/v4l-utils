@@ -484,7 +484,7 @@ static int check_frontend(struct arguments *args,
 	return status & FE_HAS_LOCK;
 }
 
-static void get_show_stats(struct arguments *args,
+static void get_show_stats(FILE *fp, struct arguments *args,
 			   struct dvb_v5_fe_parms *parms,
 			   int loop)
 {
@@ -494,7 +494,7 @@ static void get_show_stats(struct arguments *args,
 	do {
 		rc = dvb_fe_get_stats(parms);
 		if (!rc)
-			print_frontend_stats(stderr, args, parms);
+			print_frontend_stats(fp, args, parms);
 		if (!timeout_flag && loop)
 			usleep(1000000);
 	} while (!timeout_flag && loop);
@@ -905,8 +905,8 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 				     pidt[_pid] * 1000. / diff,
 				     pidt[_pid] * 1000. / diff * 8 * 188 / 1024,
 				     pidt[_pid] * 188 / 1024);
-				printf("\n\n");
-				get_show_stats(args, parms, 0);
+				printf("\n");
+				get_show_stats(stdout, args, parms, 0);
 				wait += 1000;
 				if (cont_err)
 					printf("CONTINUITY errors: %llu\n", cont_err);
@@ -1221,7 +1221,7 @@ int main(int argc, char **argv)
 		}
 
 		if (args.silent < 2)
-			get_show_stats(&args, parms, 0);
+			get_show_stats(stderr, &args, parms, 0);
 
 		if (file_fd >= 0) {
 			dvr_fd = dvb_dev_open(dvb, args.dvr_dev, O_RDONLY);
@@ -1275,14 +1275,14 @@ int main(int argc, char **argv)
 			if (!timeout_flag)
 				fprintf(stderr, _("DVR interface '%s' can now be opened\n"), args.dvr_fname);
 
-			get_show_stats(&args, parms, 1);
+			get_show_stats(stderr, &args, parms, 1);
 		}
 		if (args.silent < 2)
-			get_show_stats(&args, parms, 0);
+			get_show_stats(stderr, &args, parms, 0);
 	} else {
 		/* Wait until timeout or being killed */
 		while (1) {
-			get_show_stats(&args, parms, 1);
+			get_show_stats(stderr, &args, parms, 1);
 			usleep(1000000);
 		}
 	}
