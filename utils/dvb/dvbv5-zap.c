@@ -813,29 +813,45 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 			fprintf(stderr, _("dvbtraffic: invalid pid: 0x%04x\n"), pid);
 			pid = 0x2000;
 		}
+
 		/*
-		 * Don't check continuity errors on the first second, as
-		 * the frontend is still starting streaming
+		 * After 1 second of processing, check if are there any issues with
+		 * regards to frame continuity for non-NULL packets.
+		 *
+		 * According to ITU-T H.222.0 | ISO/IEC 13818-1, the continuity counter
+		 * isn't incremented if the packet is 00 or 10. It is only incremented
+		 * on odd values.
+		 *
+		 * Also, don't check continuity errors on the first second, as the
+		 * frontend is still starting streaming
 		 */
-		if (h->adaptation_field_control && wait > 1000) {
-			if (h->adaptation_field_length >= 1) {
-				if (!h->discontinued && pid_cont[pid] >= 0) {
-					unsigned int next = (pid_cont[pid] + 1) % 16;
-					if (next != h->continuity_counter) {
-						fprintf(stderr,
-							_("dvbtraffic: pid %d, expecting %d received %d\n"),
-							pid, next, h->continuity_counter);
-						pid_cont[pid] = -1;
-						cont_err++;
-					} else {
-						pid_cont[pid] = h->continuity_counter;
-					}
+		if (pid < 0x1fff && h->adaptation_field_control & 1 && wait > 1000) {
+			int discontinued = 0;
+
+			if (h->adaptation_field_control & 2) {
+				if (h->adaptation_field_length >= 1) {
+					discontinued = h->discontinued;
+				} else {
+					fprintf(stderr,
+						_("dvbtraffic: pid %d has adaption layer, but size is too small!\n"),
+						pid);
 				}
-			} else {
-				pid_cont[pid] = -1;
 			}
-		} else {
-			pid_cont[pid] = -1;
+
+			if (!discontinued && pid_cont[pid] >= 0) {
+				unsigned int next = (pid_cont[pid] + 1) % 16;
+				if (next != h->continuity_counter) {
+					fprintf(stderr,
+						_("dvbtraffic: pid %d, expecting %d received %d\n"),
+						pid, next, h->continuity_counter);
+					discontinued = 1;
+					cont_err++;
+				}
+			}
+			if (discontinued)
+				pid_cont[pid] = -1;
+			else
+				pid_cont[pid] = h->continuity_counter;
 		}
 
 		if (args->search) {
