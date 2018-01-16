@@ -716,14 +716,16 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		       int out_fd, int timeout)
 {
 	struct dvb_open_descriptor *fd, *dvr_fd;
-	long long unsigned pidt[0x2001], wait, cont_err = 0;
-	long long unsigned err_cnt[0x2001] = { 0 };
-	signed char pid_cont[0x2001] = { -1 };
-	int packets = 0, first = 1;
 	struct timeval startt;
 	struct dvb_v5_fe_parms *parms = dvb->fe_parms;
+	long long unsigned pidt[0x2001], wait, cont_err = 0;
+	long long unsigned err_cnt[0x2000];
+	signed char pid_cont[0x2000];
+	int packets = 0, first = 1;
 
 	memset(pidt, 0, sizeof(pidt));
+	memset(err_cnt, 0, sizeof(err_cnt));
+	memset(pid_cont, 0, sizeof(pid_cont));
 
 	args->exit_after_tuning = 1;
 	check_frontend(args, parms);
@@ -884,7 +886,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 
 		packets++;
 
-		if (!(packets & 0xFF)) {
+		if (!(packets % 512)) {
 			struct timeval now;
 			int diff;
 			unsigned long long other_pidt = 0, other_err_cnt = 0;
