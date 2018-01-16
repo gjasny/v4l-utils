@@ -705,6 +705,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 {
 	struct dvb_open_descriptor *fd, *dvr_fd;
 	long long unsigned pidt[0x2001], wait, cont_err = 0;
+	long long unsigned err_cnt[0x2001] = { 0 };
 	signed char pid_cont[0x2001] = { -1 };
 	int packets = 0, first = 1;
 	struct timeval startt;
@@ -828,6 +829,9 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		if (pid < 0x1fff && h->adaptation_field_control & 1 && wait > 1000) {
 			int discontinued = 0;
 
+			if (err_cnt[pid] < 0)
+				err_cnt[pid] = 0;
+
 			if (h->adaptation_field_control & 2) {
 				if (h->adaptation_field_length >= 1) {
 					discontinued = h->discontinued;
@@ -846,6 +850,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 						pid, next, h->continuity_counter);
 					discontinued = 1;
 					cont_err++;
+					err_cnt[pid]++;
 				}
 			}
 			if (discontinued)
@@ -895,9 +900,13 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 						     pidt[_pid] * 1000. / diff,
 						     pidt[_pid] * 1000. / diff * 8 * 188 / 1024);
 						if (pidt[_pid] * 188 / 1024)
-							printf("%8llu KB\n", pidt[_pid] * 188 / 1024);
+							printf("%8llu KB", pidt[_pid] * 188 / 1024);
 						else
-							printf(" %8llu B\n", pidt[_pid] * 188);
+							printf(" %8llu B", pidt[_pid] * 188);
+						if (err_cnt[_pid] > 0)
+							printf(" %8llu continuity errors", err_cnt[_pid]);
+
+						printf("\n");
 					}
 				}
 				/* 0x2000 is the total traffic */
