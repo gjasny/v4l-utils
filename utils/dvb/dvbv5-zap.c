@@ -25,10 +25,18 @@
 #define _LARGEFILE64_SOURCE 1
 
 /*
- * Use a buffer big enough for 1 second of data.
- * When all pids are recorded, assume a bit rate of 58 million bits/s
+ * Use a buffer big enough at least 1 second of data. It is interesting
+ * To have it multiple of a page. So, define it as a multiply of
+ * 4096.
  */
-#define DVB_BUF_SIZE	7500000
+#define DVB_BUF_SIZE	(4096 * 8 * 188)
+
+/*
+ * Size of the buffer on read operations. The better is if it is
+ * smaller than DVB_BUF_SIZE, as we want to give more time for
+ * write() syscalls to be able to flush data.
+ */
+#define BUFLEN (188 * 512)
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -543,7 +551,7 @@ static struct timespec *elapsed_time(struct timespec *start)
 static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 			 int timeout, int silent)
 {
-	char buf[DVB_BUF_SIZE];
+	char buf[BUFLEN];
 	int r, first = 1;
 	long long int rc = 0LL;
 	struct timespec start, *elapsed;
@@ -717,8 +725,6 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	return 0;
 }
 
-#define BSIZE 188 * 128 /* should be 188 multiplied by a divisor of 512 */
-
 int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		       int out_fd, int timeout)
 {
@@ -769,14 +775,14 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 	monitor_log(_("%.2fs: Starting capture\n"));
 	while (1) {
 		struct timespec *elapsed;
-		unsigned char buffer[BSIZE];
+		unsigned char buffer[BUFLEN];
 		int pid, ok, diff;
 		ssize_t r;
 
 		if (timeout_flag)
 			break;
 
-		if ((r = dvb_dev_read(dvr_fd, buffer, BSIZE)) <= 0) {
+		if ((r = dvb_dev_read(dvr_fd, buffer, BUFLEN)) <= 0) {
 			if (r == -EOVERFLOW) {
 				monitor_log(_("%.2fs: buffer overrun\n"));
 				continue;
@@ -803,12 +809,12 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 				break;
 			}
 		}
-		if (r != BSIZE) {
+		if (r != BUFLEN) {
 			monitor_log(_("%.2fs: only read %zd bytes\n"), r);
 			break;
 		}
 
-		for (i = 0; i < BSIZE; i += 188) {
+		for (i = 0; i < BUFLEN; i += 188) {
 			struct dvb_ts_packet_header *h = (void *)&buffer[i];
 			if (h->sync_byte != 0x47) {
 				monitor_log(_("%.2fs: invalid sync byte. Discarding %zd bytes\n"), r);
