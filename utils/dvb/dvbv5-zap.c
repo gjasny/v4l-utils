@@ -66,6 +66,12 @@
 #define CHANNEL_FILE	"channels.conf"
 #define PROGRAM_NAME	"dvbv5-zap"
 
+
+#ifndef O_LARGEFILE
+#  define O_LARGEFILE 0
+#endif
+
+
 const int NANO_SECONDS_IN_SEC = 1000000000;
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
@@ -578,6 +584,7 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 			PERROR(_("Write failed"));
 			break;
 		}
+
 		rc += r;
 	}
 	if (silent < 2) {
@@ -710,7 +717,7 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	return 0;
 }
 
-#define BSIZE 188
+#define BSIZE 188 * 128 /* should be 188 multiplied by a divisor of 512 */
 
 int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		       int out_fd, int timeout)
@@ -718,10 +725,10 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 	struct dvb_open_descriptor *fd, *dvr_fd;
 	struct timespec startt;
 	struct dvb_v5_fe_parms *parms = dvb->fe_parms;
-	long long unsigned pidt[0x2001], wait, cont_err = 0;
-	long long unsigned err_cnt[0x2000];
+	unsigned long long pidt[0x2001], wait, cont_err = 0;
+	unsigned long long err_cnt[0x2000];
 	signed char pid_cont[0x2000];
-	int packets = 0, first = 1;
+	int i, first = 1;
 
 	memset(pidt, 0, sizeof(pidt));
 	memset(err_cnt, 0, sizeof(err_cnt));
@@ -761,9 +768,9 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 
 	monitor_log(_("%.2fs: Starting capture\n"));
 	while (1) {
+		struct timespec *elapsed;
 		unsigned char buffer[BSIZE];
-		struct dvb_ts_packet_header *h = (void *)buffer;
-		int pid, ok;
+		int pid, ok, diff;
 		ssize_t r;
 
 		if (timeout_flag)
@@ -801,163 +808,167 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 			break;
 		}
 
-		if (h->sync_byte != 0x47) {
-			monitor_log(_("%.2fs: invalid sync byte. Discarding %zd bytes\n"), r);
-			continue;
-		}
+		for (i = 0; i < BSIZE; i += 188) {
+			struct dvb_ts_packet_header *h = (void *)&buffer[i];
+			if (h->sync_byte != 0x47) {
+				monitor_log(_("%.2fs: invalid sync byte. Discarding %zd bytes\n"), r);
+				continue;
+			}
 
-		bswap16(h->bitfield);
+			bswap16(h->bitfield);
 
 #if 0
-		/*
-		 * ITU-T Rec. H.222.0 decoders shall discard Transport Stream
-		 * packets with the adaptation_field_control field set to
-		 * a value of '00' (invalid). Packets with a value of '01'
-		 * are NULL packets. Yet, as those are actually part of the
-		 * stream, we won't be discarding, as we want to take them into
-		 * account for traffic estimation purposes.
-		 */
-		if (h->adaptation_field_control == 0)
-			continue;
+			/*
+			 * ITU-T Rec. H.222.0 decoders shall discard Transport
+			 * Stream packets with the adaptation_field_control
+			 * field set to a value of '00' (invalid). Packets with
+			 * a value of '01' are NULL packets. Yet, as those are
+			 * actually part of the stream, we won't be discarding,
+			 * as we want to take them into account for traffic
+			 * estimation purposes.
+			 */
+			if (h->adaptation_field_control == 0)
+				continue;
 #endif
-		ok = 1;
-		pid = h->pid;
+			ok = 1;
+			pid = h->pid;
 
-		if (pid > 0x1fff) {
-			monitor_log(_("%.2fs: invalid pid: 0x%04x\n"), pid);
-			pid = 0x1fff;
-		}
-
-		/*
-		 * After 1 second of processing, check if are there any issues with
-		 * regards to frame continuity for non-NULL packets.
-		 *
-		 * According to ITU-T H.222.0 | ISO/IEC 13818-1, the continuity counter
-		 * isn't incremented if the packet is 00 or 10. It is only incremented
-		 * on odd values.
-		 *
-		 * Also, don't check continuity errors on the first second, as the
-		 * frontend is still starting streaming
-		 */
-		if (pid < 0x1fff && h->adaptation_field_control & 1) {
-			int discontinued = 0;
-
-			if (err_cnt[pid] < 0)
-				err_cnt[pid] = 0;
-
-			if (h->adaptation_field_control & 2) {
-				if (h->adaptation_field_length >= 1) {
-					discontinued = h->discontinued;
-				} else {
-					monitor_log(_("%.2fs: pid %d has adaption layer, but size is too small!\n"),
-						    pid);
-				}
+			if (pid > 0x1fff) {
+				monitor_log(_("%.2fs: invalid pid: 0x%04x\n"),
+					    pid);
+				pid = 0x1fff;
 			}
 
-			if (wait < 2000)
-				discontinued = 1;
+			/*
+			 * After 1 second of processing, check if are there
+			 * any issues with regards to frame continuity for
+			 * non-NULL packets.
+			 *
+			 * According to ITU-T H.222.0 | ISO/IEC 13818-1, the
+			 * continuity counter isn't incremented if the packet
+			 * is 00 or 10. It is only incremented on odd values.
+			 *
+			 * Also, don't check continuity errors on the first
+			 * second, as the frontend is still starting streaming
+			 */
+			if (pid < 0x1fff && h->adaptation_field_control & 1) {
+				int discontinued = 0;
 
-			if (!discontinued && pid_cont[pid] >= 0) {
-				unsigned int next = (pid_cont[pid] + 1) % 16;
-				if (next != h->continuity_counter) {
-					monitor_log(_("%.2fs: pid %d, expecting %d received %d\n"),
-						    pid, next, h->continuity_counter);
-					discontinued = 1;
-					cont_err++;
-					err_cnt[pid]++;
-				}
-			}
-			if (discontinued)
-				pid_cont[pid] = -1;
-			else
-				pid_cont[pid] = h->continuity_counter;
-		}
+				if (err_cnt[pid] < 0)
+					err_cnt[pid] = 0;
 
-		if (args->search) {
-			int i, sl = strlen(args->search);
-			ok = 0;
-			if (pid != 0x1fff) {
-				for (i = 0; i < (188 - sl); ++i) {
-					if (!memcmp(buffer + i, args->search, sl))
-						ok = 1;
-				}
-			}
-		}
-
-		if (ok) {
-			pidt[pid]++;
-			pidt[0x2000]++;
-		}
-
-		packets++;
-
-		if (!(packets % 512)) {
-			struct timespec *elapsed;
-			int diff;
-			unsigned long long other_pidt = 0, other_err_cnt = 0;
-
-			elapsed = elapsed_time(&startt);
-			if (!elapsed)
-				diff = wait;
-			else
-				diff = (unsigned long long)elapsed->tv_sec * 1000
-					+ elapsed->tv_nsec * 1000 / NANO_SECONDS_IN_SEC;
-
-			if (diff > wait) {
-				if (isatty(STDOUT_FILENO))
-			                printf("\x1b[1H\x1b[2J");
-
-				args->n_status_lines = 0;
-				printf(_(" PID           FREQ         SPEED       TOTAL\n"));
-				int _pid = 0;
-				for (_pid = 0; _pid < 0x2000; _pid++) {
-					if (pidt[_pid]) {
-						if (args->low_traffic && (pidt[_pid] * 1000. / diff) < args->low_traffic) {
-							other_pidt += pidt[_pid];
-							other_err_cnt += err_cnt[_pid];
-							continue;
-						}
-						printf("%5d %9.2f p/s %8.1f Kbps ",
-						     _pid,
-						     pidt[_pid] * 1000. / diff,
-						     pidt[_pid] * 1000. / diff * 8 * 188 / 1024);
-						if (pidt[_pid] * 188 / 1024)
-							printf("%8llu KB", (pidt[_pid] * 188 + 512) / 1024);
-						else
-							printf(" %8llu B", pidt[_pid] * 188);
-						if (err_cnt[_pid] > 0)
-							printf(" %8llu continuity errors", err_cnt[_pid]);
-
-						printf("\n");
+				if (h->adaptation_field_control & 2) {
+					if (h->adaptation_field_length >= 1) {
+						discontinued = h->discontinued;
+					} else {
+						monitor_log(_("%.2fs: pid %d has adaption layer, but size is too small!\n"),
+							    pid);
 					}
 				}
-				if (other_pidt) {
-					printf(_("OTHER"));
-					printf(" %9.2f p/s %8.1f Kbps ",
-					     other_pidt * 1000. / diff,
-					     other_pidt * 1000. / diff * 8 * 188 / 1024);
-					if (other_pidt * 188 / 1024)
-						printf("%8llu KB", (other_pidt * 188 + 512) / 1024);
-					else
-						printf(" %8llu B", other_pidt * 188);
-					if (other_err_cnt > 0)
-						printf(" %8llu continuity errors", other_err_cnt);
-					printf("\n");
-				}
 
-				/* 0x2000 is the total traffic */
-				printf("TOT %11.2f p/s %8.1f Kbps %8llu KB\n",
-				     pidt[_pid] * 1000. / diff,
-				     pidt[_pid] * 1000. / diff * 8 * 188 / 1024,
-				     (pidt[_pid] * 188 + 512) / 1024);
-				printf("\n");
-				get_show_stats(stdout, args, parms, 0);
-				wait += 1000;
-				if (cont_err)
-					printf("CONTINUITY errors: %llu\n", cont_err);
+				if (wait < 2000)
+					discontinued = 1;
+
+				if (!discontinued && pid_cont[pid] >= 0) {
+					unsigned int next = (pid_cont[pid] + 1) % 16;
+					if (next != h->continuity_counter) {
+						monitor_log(_("%.2fs: pid %d, expecting %d received %d\n"),
+							    pid, next,
+							    h->continuity_counter);
+						discontinued = 1;
+						cont_err++;
+						err_cnt[pid]++;
+					}
+				}
+				if (discontinued)
+					pid_cont[pid] = -1;
+				else
+					pid_cont[pid] = h->continuity_counter;
+			}
+
+			if (args->search) {
+				int i, sl = strlen(args->search);
+				ok = 0;
+				if (pid != 0x1fff) {
+					for (i = 0; i < (188 - sl); ++i) {
+						if (!memcmp((char *)h + i, args->search, sl))
+							ok = 1;
+					}
+				}
+			}
+
+			if (ok) {
+				pidt[pid]++;
+				pidt[0x2000]++;
 			}
 		}
+
+		elapsed = elapsed_time(&startt);
+		if (!elapsed)
+			diff = wait;
+		else
+			diff = (unsigned long long)elapsed->tv_sec * 1000
+				+ elapsed->tv_nsec * 1000 / NANO_SECONDS_IN_SEC;
+
+		if (diff > wait) {
+			unsigned long long other_pidt = 0, other_err_cnt = 0;
+
+			if (isatty(STDOUT_FILENO))
+				printf("\x1b[1H\x1b[2J");
+
+			args->n_status_lines = 0;
+			printf(_(" PID           FREQ         SPEED       TOTAL\n"));
+			int _pid = 0;
+			for (_pid = 0; _pid < 0x2000; _pid++) {
+				if (pidt[_pid]) {
+					if (args->low_traffic && (pidt[_pid] * 1000. / diff) < args->low_traffic) {
+						other_pidt += pidt[_pid];
+						other_err_cnt += err_cnt[_pid];
+						continue;
+					}
+					printf("%5d %9.2f p/s %8.1f Kbps ",
+						_pid,
+						pidt[_pid] * 1000. / diff,
+						pidt[_pid] * 1000. / diff * 8 * 188 / 1024);
+					if (pidt[_pid] * 188 / 1024)
+						printf("%8llu KB", (pidt[_pid] * 188 + 512) / 1024);
+					else
+						printf(" %8llu B", pidt[_pid] * 188);
+					if (err_cnt[_pid] > 0)
+						printf(" %8llu continuity errors",
+						       err_cnt[_pid]);
+
+					printf("\n");
+				}
+			}
+			if (other_pidt) {
+				printf(_("OTHER"));
+				printf(" %9.2f p/s %8.1f Kbps ",
+					other_pidt * 1000. / diff,
+					other_pidt * 1000. / diff * 8 * 188 / 1024);
+				if (other_pidt * 188 / 1024)
+					printf("%8llu KB", (other_pidt * 188 + 512) / 1024);
+				else
+					printf(" %8llu B", other_pidt * 188);
+				if (other_err_cnt > 0)
+					printf(" %8llu continuity errors",
+					       other_err_cnt);
+				printf("\n");
+			}
+
+			/* 0x2000 is the total traffic */
+			printf("TOT %11.2f p/s %8.1f Kbps %8llu KB\n",
+				pidt[_pid] * 1000. / diff,
+				pidt[_pid] * 1000. / diff * 8 * 188 / 1024,
+				(pidt[_pid] * 188 + 512) / 1024);
+			printf("\n");
+			get_show_stats(stdout, args, parms, 0);
+			wait += 1000;
+			if (cont_err)
+				printf("CONTINUITY errors: %llu\n", cont_err);
+		}
 	}
+	monitor_log(_("%.2fs: Stopping capture\n"));
 	dvb_dev_close(dvr_fd);
 	dvb_dev_close(fd);
 	return 0;
@@ -1130,10 +1141,8 @@ int main(int argc, char **argv)
 	if (args.traffic_monitor) {
 		if (args.filename) {
 			file_fd = open(args.filename,
-#ifdef O_LARGEFILE
 					 O_LARGEFILE |
-#endif
-					 O_WRONLY | O_CREAT,
+					 O_WRONLY | O_CREAT | O_TRUNC,
 					 0644);
 			if (file_fd < 0) {
 				PERROR(_("open of '%s' failed"), args.filename);
@@ -1252,10 +1261,8 @@ int main(int argc, char **argv)
 
 			if (strcmp(args.filename, "-") != 0) {
 				file_fd = open(args.filename,
-#ifdef O_LARGEFILE
 					 O_LARGEFILE |
-#endif
-					 O_WRONLY | O_CREAT,
+					 O_WRONLY | O_CREAT | O_TRUNC,
 					 0644);
 				if (file_fd < 0) {
 					PERROR(_("open of '%s' failed"),
