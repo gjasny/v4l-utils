@@ -146,7 +146,7 @@ static int timeout_flag = 0;
 										\
 		clock_gettime(CLOCK_MONOTONIC, &__now);				\
 		__diff = __now.tv_sec * 1.					\
-			 + __now.tv_nsec / NANO_SECONDS_IN_SEC;			\
+			 + __now.tv_nsec *1. / NANO_SECONDS_IN_SEC;		\
 		fprintf(stderr, msg, __diff, ##args);				\
 	} while (0)
 
