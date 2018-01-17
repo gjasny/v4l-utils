@@ -66,6 +66,8 @@
 #define CHANNEL_FILE	"channels.conf"
 #define PROGRAM_NAME	"dvbv5-zap"
 
+const int NANO_SECONDS_IN_SEC = 1000000000;
+
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
 
@@ -137,15 +139,15 @@ static int timeout_flag = 0;
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
-#define monitor_log(msg, start, args...)					\
+#define monitor_log(msg, args...)						\
 	do {									\
-		struct timeval __now;						\
-		long long __diff;						\
+		struct timespec __now = { 0 };					\
+		float __diff;							\
 										\
-		gettimeofday(&__now, 0);					\
-		__diff = (__now.tv_sec - start.tv_sec) * 1000. +		\
-			 (__now.tv_usec - start.tv_usec) / 1000;		\
-		fprintf(stderr, msg, __diff / 1000., ##args);			\
+		clock_gettime(CLOCK_MONOTONIC, &__now);				\
+		__diff = __now.tv_sec * 1.					\
+			 + __now.tv_nsec / NANO_SECONDS_IN_SEC;			\
+		fprintf(stderr, msg, __diff, ##args);				\
 	} while (0)
 
 
@@ -512,8 +514,6 @@ static void get_show_stats(FILE *fp, struct arguments *args,
 	} while (!timeout_flag && loop);
 }
 
-const int NANO_SECONDS_IN_SEC = 1000000000;
-
 static struct timespec *elapsed_time(struct timespec *start)
 {
 	static struct timespec elapsed;
@@ -716,7 +716,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		       int out_fd, int timeout)
 {
 	struct dvb_open_descriptor *fd, *dvr_fd;
-	struct timeval startt;
+	struct timespec startt;
 	struct dvb_v5_fe_parms *parms = dvb->fe_parms;
 	long long unsigned pidt[0x2001], wait, cont_err = 0;
 	long long unsigned err_cnt[0x2000];
@@ -752,9 +752,14 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		return -1;
 	}
 
-	gettimeofday(&startt, 0);
+	if (clock_gettime(CLOCK_MONOTONIC, &startt)) {
+		fprintf(stderr, _("Can't get timespec\n"));
+                return -1;
+	}
+
 	wait = 1000;
 
+	monitor_log(_("%.2fs: Starting capture\n"));
 	while (1) {
 		unsigned char buffer[BSIZE];
 		struct dvb_ts_packet_header *h = (void *)buffer;
@@ -766,10 +771,10 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 
 		if ((r = dvb_dev_read(dvr_fd, buffer, BSIZE)) <= 0) {
 			if (r == -EOVERFLOW) {
-				monitor_log(_("%.2fs: buffer overrun\n"), startt);
+				monitor_log(_("%.2fs: buffer overrun\n"));
 				continue;
 			}
-			monitor_log(_("%.2fs: read() returned error %zd\n"), startt, r);
+			monitor_log(_("%.2fs: read() returned error %zd\n"), r);
 			break;
 		}
 
@@ -792,12 +797,12 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 			}
 		}
 		if (r != BSIZE) {
-			monitor_log(_("%.2fs: only read %zd bytes\n"), startt, r);
+			monitor_log(_("%.2fs: only read %zd bytes\n"), r);
 			break;
 		}
 
 		if (h->sync_byte != 0x47) {
-			monitor_log(_("%.2fs: invalid sync byte. Discarding %zd bytes\n"), startt, r);
+			monitor_log(_("%.2fs: invalid sync byte. Discarding %zd bytes\n"), r);
 			continue;
 		}
 
@@ -819,7 +824,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		pid = h->pid;
 
 		if (pid > 0x1fff) {
-			monitor_log(_("%.2fs: invalid pid: 0x%04x\n"), startt, pid);
+			monitor_log(_("%.2fs: invalid pid: 0x%04x\n"), pid);
 			pid = 0x1fff;
 		}
 
@@ -845,7 +850,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 					discontinued = h->discontinued;
 				} else {
 					monitor_log(_("%.2fs: pid %d has adaption layer, but size is too small!\n"),
-						    startt, pid);
+						    pid);
 				}
 			}
 
@@ -856,7 +861,7 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 				unsigned int next = (pid_cont[pid] + 1) % 16;
 				if (next != h->continuity_counter) {
 					monitor_log(_("%.2fs: pid %d, expecting %d received %d\n"),
-						    startt, pid, next, h->continuity_counter);
+						    pid, next, h->continuity_counter);
 					discontinued = 1;
 					cont_err++;
 					err_cnt[pid]++;
@@ -887,13 +892,17 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		packets++;
 
 		if (!(packets % 512)) {
-			struct timeval now;
+			struct timespec *elapsed;
 			int diff;
 			unsigned long long other_pidt = 0, other_err_cnt = 0;
-			gettimeofday(&now, 0);
-			diff =
-			    (now.tv_sec - startt.tv_sec) * 1000 +
-			    (now.tv_usec - startt.tv_usec) / 1000;
+
+			elapsed = elapsed_time(&startt);
+			if (!elapsed)
+				diff = wait;
+			else
+				diff = (unsigned long long)elapsed->tv_sec * 1000
+					+ elapsed->tv_nsec * 1000 / NANO_SECONDS_IN_SEC;
+
 			if (diff > wait) {
 				if (isatty(STDOUT_FILENO))
 			                printf("\x1b[1H\x1b[2J");
