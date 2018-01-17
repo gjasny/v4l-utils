@@ -30,6 +30,14 @@ Use this OSD name. The maximum length is 14 characters.
 \fB\-V\fR, \fB\-\-vendor\-id\fR=\fI<id>\fR
 Use this vendor ID. The vendor ID is a number from 0x0 to 0xffffff.
 .TP
+\fB\-l\fR, \fB\-\-logical\-address\fR
+Show first configured logical address or nothing if the device is unconfigured.
+Useful for scripts, e.g.: la=`cec-ctl -s -l`
+.TP
+\fB\-L\fR, \fB\-\-logical\-addresses\fR
+Show all configured logical addresses or nothing if the device is unconfigured.
+Useful for scripts, e.g.: las=`cec-ctl -s -L`
+.TP
 \fB\-C\fR, \fB\-\-clear\fR
 Clear all logical addresses, leaving the CEC device unconfigured.
 .TP

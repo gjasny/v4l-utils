@@ -651,6 +651,8 @@ enum Option {
 	OptSetDevice = 'd',
 	OptFrom = 'f',
 	OptHelp = 'h',
+	OptLogicalAddress = 'l',
+	OptLogicalAddresses = 'L',
 	OptMonitor = 'm',
 	OptMonitorAll = 'M',
 	OptNoReply = 'n',
@@ -756,6 +758,8 @@ static struct option long_options[] = {
 	{ "store-pin", required_argument, 0, OptStorePin },
 	{ "analyze-pin", required_argument, 0, OptAnalyzePin },
 	{ "no-reply", no_argument, 0, OptNoReply },
+	{ "logical-address", no_argument, 0, OptLogicalAddress },
+	{ "logical-addresses", no_argument, 0, OptLogicalAddresses },
 	{ "to", required_argument, 0, OptTo },
 	{ "from", required_argument, 0, OptFrom },
 	{ "skip-info", no_argument, 0, OptSkipInfo },
@@ -808,6 +812,8 @@ static void usage(void)
 	       "  -p, --phys-addr=<addr>   Use this physical address\n"
 	       "  -o, --osd-name=<name>    Use this OSD name\n"
 	       "  -V, --vendor-id=<id>     Use this vendor ID\n"
+	       "  -l, --logical-address    Show first configured logical address\n"
+	       "  -L, --logical-addresses  Show all configured logical addresses\n"
 	       "  -C, --clear              Clear all logical addresses\n"
 	       "  -n, --no-reply           Don't wait for a reply\n"
 	       "  -t, --to=<la>            Send message to the given logical address\n"
@@ -2321,6 +2327,14 @@ int main(int argc, char **argv)
 
 	if (options[OptShowTopology])
 		showTopology(&node);
+
+	if (options[OptLogicalAddress])
+		printf("%d\n", laddrs.log_addr[0] & 0xf);
+	if (options[OptLogicalAddresses]) {
+		for (i = 0; i < laddrs.num_log_addrs; i++)
+			printf("%d ", laddrs.log_addr[i] & 0xf);
+		printf("\n");
+	}
 
 	for (msg_vec::iterator iter = msgs.begin(); iter != msgs.end(); ++iter) {
 		struct cec_msg msg = *iter;
