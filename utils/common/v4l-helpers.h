@@ -1697,6 +1697,7 @@ static inline int v4l_query_ext_ctrl(v4l_fd *f, struct v4l2_query_ext_ctrl *qec,
 		break;
 	case V4L2_CTRL_TYPE_STRING:
 		qec->elem_size = qc.maximum + 1;
+		qec->flags |= V4L2_CTRL_FLAG_HAS_PAYLOAD;
 		break;
 	default:
 		qec->elem_size = sizeof(__s32);

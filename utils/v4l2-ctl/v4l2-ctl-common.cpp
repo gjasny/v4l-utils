@@ -512,6 +512,7 @@ static int query_ext_ctrl_ioctl(int fd, struct v4l2_query_ext_ctrl &qctrl)
 			break;
 		case V4L2_CTRL_TYPE_STRING:
 			qctrl.elem_size = qc.maximum + 1;
+			qctrl.flags |= V4L2_CTRL_FLAG_HAS_PAYLOAD;
 			break;
 		default:
 			qctrl.elem_size = sizeof(__s32);
