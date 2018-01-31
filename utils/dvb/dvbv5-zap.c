@@ -725,6 +725,32 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	return 0;
 }
 
+static char *print_bytes(float val)
+{
+	static char buf[20];
+	char *prefix = "";
+
+	if (val >= 500 * 1024 * 1024) {
+		prefix = "G";
+		val /= 1024 * 1024 * 1024.;
+	} else if (val >= 500 * 1024) {
+		prefix = "M";
+		val /= 1024 * 1024.;
+	} else if (val >= 500) {
+		prefix = "K";
+		val /= 1024.;
+	}
+	if (*prefix) {
+		if (snprintf(buf, sizeof(buf), "%8.3f %s", val, prefix) <= 0)
+			return "      NaN ";
+	} else {
+		if (snprintf(buf, sizeof(buf), "%9.3f ", val) <= 0)
+			return "      NaN ";
+	}
+
+	return buf;
+}
+
 int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 		       int out_fd, int timeout)
 {
@@ -932,10 +958,10 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 						other_err_cnt += err_cnt[_pid];
 						continue;
 					}
-					printf("%5d %9.2f p/s %8.1f Kbps ",
+					printf("%5d %9.2f p/s %sbps ",
 						_pid,
 						pidt[_pid] * 1000. / diff,
-						pidt[_pid] * 1000. / diff * 8 * 188 / 1024);
+						print_bytes(pidt[_pid] * 1000. * 8 * 188/ diff));
 					if (pidt[_pid] * 188 / 1024)
 						printf("%8llu KB", (pidt[_pid] * 188 + 512) / 1024);
 					else
@@ -949,9 +975,9 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 			}
 			if (other_pidt) {
 				printf(_("OTHER"));
-				printf(" %9.2f p/s %8.1f Kbps ",
+				printf(" %9.2f p/s %sbps ",
 					other_pidt * 1000. / diff,
-					other_pidt * 1000. / diff * 8 * 188 / 1024);
+					print_bytes(other_pidt * 1000. * 8 * 188/ diff));
 				if (other_pidt * 188 / 1024)
 					printf("%8llu KB", (other_pidt * 188 + 512) / 1024);
 				else
@@ -963,9 +989,9 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 			}
 
 			/* 0x2000 is the total traffic */
-			printf("TOT %11.2f p/s %8.1f Kbps %8llu KB\n",
+			printf("TOT %11.2f p/s %sbps %8llu KB\n",
 				pidt[_pid] * 1000. / diff,
-				pidt[_pid] * 1000. / diff * 8 * 188 / 1024,
+				print_bytes(pidt[_pid] * 1000. * 8 * 188/ diff),
 				(pidt[_pid] * 188 + 512) / 1024);
 			printf("\n");
 			get_show_stats(stdout, args, parms, 0);
