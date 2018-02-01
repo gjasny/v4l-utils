@@ -163,14 +163,6 @@ static void do_selection(int fd, unsigned int set_selection, struct v4l2_selecti
 	}
 }
 
-static int parse_selection_flags(const char *s)
-{
-	if (!strcmp(s, "le")) return V4L2_SEL_FLAG_LE;
-	if (!strcmp(s, "ge")) return V4L2_SEL_FLAG_GE;
-	if (!strcmp(s, "keep-config")) return V4L2_SEL_FLAG_KEEP_CONFIG;
-	return 0;
-}
-
 static int parse_selection(char *optarg, unsigned int &set_sel, v4l2_selection &vsel)
 {
 	char *value;
@@ -208,11 +200,11 @@ static int parse_selection(char *optarg, unsigned int &set_sel, v4l2_selection &
 			set_sel |= SelectionTop;
 			break;
 		case 4:
-			vsel.r.width = strtol(value, 0L, 0);
+			vsel.r.width = strtoul(value, 0L, 0);
 			set_sel |= SelectionWidth;
 			break;
 		case 5:
-			vsel.r.height = strtol(value, 0L, 0);
+			vsel.r.height = strtoul(value, 0L, 0);
 			set_sel |= SelectionHeight;
 			break;
 		default:

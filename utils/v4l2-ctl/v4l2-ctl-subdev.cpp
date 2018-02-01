@@ -27,10 +27,22 @@ static struct mbus_name mbus_names[] = {
 	{ NULL, 0 }
 };
 
+/* selection specified */
+#define SelectionWidth		(1L<<0)
+#define SelectionHeight		(1L<<1)
+#define SelectionLeft		(1L<<2)
+#define SelectionTop 		(1L<<3)
+#define SelectionFlags 		(1L<<4)
+
 static __u32 list_mbus_codes_pad;
 static __u32 get_fmt_pad;
 static __u32 get_sel_pad;
 static int get_sel_target = -1;
+static unsigned int set_selection;
+static struct v4l2_subdev_selection vsel;
+static unsigned int set_fmt;
+static __u32 set_fmt_pad;
+static struct v4l2_mbus_framefmt ffmt;
 static struct v4l2_subdev_frame_size_enum frmsize;
 static struct v4l2_subdev_frame_interval_enum frmival;
 
@@ -52,8 +64,29 @@ void subdev_usage(void)
 	       "     		     query the frame format for the given pad [VIDIOC_SUBDEV_G_FMT]\n"
 	       "  --get-subdev-selection=pad=<pad>,target=<target>\n"
 	       "                     query the frame selection rectangle [VIDIOC_SUBDEV_G_SELECTION]\n"
+	       "                     See --set-subdev-selection command for the valid <target> values.\n"
+	       "  --set-subdev-fmt=pad=<pad>,width=<w>,height=<h>,code=<code>,field=<f>,colorspace=<c>,\n"
+	       "                   xfer=<xf>,ycbcr=<y>,quantization=<q>\n"
+	       "                     set the frame format [VIDIOC_SUBDEV_S_FMT]\n"
+	       "                     <code> is the value of the mediabus code\n"
+	       "                     <f> can be one of the following field layouts:\n"
+	       "                       any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
+	       "                       alternate, interlaced_tb, interlaced_bt\n"
+	       "                     <c> can be one of the following colorspaces:\n"
+	       "                       smpte170m, smpte240m, rec709, 470m, 470bg, jpeg, srgb,\n"
+	       "                       adobergb, bt2020, dcip3\n"
+	       "                     <xf> can be one of the following transfer functions:\n"
+	       "                       default, 709, srgb, adobergb, smpte240m, smpte2084, dcip3, none\n"
+	       "                     <y> can be one of the following Y'CbCr encodings:\n"
+	       "                       default, 601, 709, xv601, xv709, bt2020, bt2020c, smpte240m\n"
+	       "                     <q> can be one of the following quantization methods:\n"
+	       "                       default, full-range, lim-range\n"
+	       "  --set-subdev-selection=pad=<pad>,target=<target>,flags=<flags>,\n"
+	       "                         top=<x>,left=<y>,width=<w>,height=<h>\n"
+	       "                     set the video capture selection rectangle [VIDIOC_SUBDEV_S_SELECTION]\n"
 	       "                     target=crop|crop_bounds|crop_default|compose|compose_bounds|\n"
 	       "                            compose_default|compose_padded|native_size\n"
+	       "                     flags=le|ge|keep-config\n"
 	       );
 }
 
@@ -150,18 +183,125 @@ void subdev_cmd(int ch, char *optarg)
 			}
 		}
 		break;
+	case OptSetSubDevFormat:
+		ffmt.field = V4L2_FIELD_ANY;
+		subs = optarg;
+		while (*subs != '\0') {
+			static const char *const subopts[] = {
+				"width",
+				"height",
+				"code",
+				"field",
+				"colorspace",
+				"ycbcr",
+				"quantization",
+				"xfer",
+				"pad",
+				NULL
+			};
+
+			switch (parse_subopt(&subs, subopts, &value)) {
+			case 0:
+				ffmt.width = strtoul(value, 0L, 0);
+				set_fmt |= FmtWidth;
+				break;
+			case 1:
+				ffmt.height = strtoul(value, 0L, 0);
+				set_fmt |= FmtHeight;
+				break;
+			case 2:
+				ffmt.code = strtoul(value, 0L, 0);
+				set_fmt |= FmtPixelFormat;
+				break;
+			case 3:
+				ffmt.field = parse_field(value);
+				set_fmt |= FmtField;
+				break;
+			case 4:
+				ffmt.colorspace = parse_colorspace(value);
+				if (ffmt.colorspace)
+					set_fmt |= FmtColorspace;
+				else
+					fprintf(stderr, "unknown colorspace %s\n", value);
+				break;
+			case 5:
+				ffmt.ycbcr_enc = parse_ycbcr(value);
+				set_fmt |= FmtYCbCr;
+				break;
+			case 6:
+				ffmt.quantization = parse_quantization(value);
+				set_fmt |= FmtQuantization;
+				break;
+			case 7:
+				ffmt.xfer_func = parse_xfer_func(value);
+				set_fmt |= FmtXferFunc;
+				break;
+			case 8:
+				set_fmt_pad = strtoul(value, 0L, 0);
+				break;
+			default:
+				fprintf(stderr, "Unknown option\n");
+				subdev_usage();
+				exit(1);
+			}
+		}
+		break;
+	case OptSetSubDevSelection:
+		subs = optarg;
+
+		while (*subs != '\0') {
+			static const char *const subopts[] = {
+				"target",
+				"flags",
+				"left",
+				"top",
+				"width",
+				"height",
+				"pad",
+				NULL
+			};
+
+			switch (parse_subopt(&subs, subopts, &value)) {
+			case 0:
+				if (parse_selection_target(value, vsel.target)) {
+					fprintf(stderr, "Unknown selection target\n");
+					subdev_usage();
+					exit(1);
+				}
+				break;
+			case 1:
+				vsel.flags = parse_selection_flags(value);
+				set_selection |= SelectionFlags;
+				break;
+			case 2:
+				vsel.r.left = strtol(value, 0L, 0);
+				set_selection |= SelectionLeft;
+				break;
+			case 3:
+				vsel.r.top = strtol(value, 0L, 0);
+				set_selection |= SelectionTop;
+				break;
+			case 4:
+				vsel.r.width = strtoul(value, 0L, 0);
+				set_selection |= SelectionWidth;
+				break;
+			case 5:
+				vsel.r.height = strtoul(value, 0L, 0);
+				set_selection |= SelectionHeight;
+				break;
+			case 6:
+				vsel.pad = strtoul(value, 0L, 0);
+				break;
+			default:
+				fprintf(stderr, "Unknown option\n");
+				subdev_usage();
+				exit(1);
+			}
+		}
+		break;
 	default:
 		break;
 	}
-}
-
-static const char *which2s(__u32 which)
-{
-	return which ? "V4L2_SUBDEV_FORMAT_ACTIVE" : "V4L2_SUBDEV_FORMAT_TRY";
-}
-
-void subdev_set(int fd, __u32 which)
-{
 }
 
 static bool is_rgb_or_hsv_code(__u32 code)
@@ -207,6 +347,64 @@ static void print_framefmt(const struct v4l2_mbus_framefmt &fmt)
 	printf("\n");
 }
 
+void subdev_set(int fd)
+{
+	if (options[OptSetSubDevFormat]) {
+		struct v4l2_subdev_format fmt;
+
+		memset(&fmt, 0, sizeof(fmt));
+		fmt.pad = set_fmt_pad;
+		fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+
+		if (doioctl(fd, VIDIOC_SUBDEV_G_FMT, &fmt) == 0) {
+			int ret;
+
+			if (set_fmt & FmtWidth)
+				fmt.format.width = ffmt.width;
+			if (set_fmt & FmtHeight)
+				fmt.format.height = ffmt.height;
+			if (set_fmt & FmtPixelFormat)
+				fmt.format.code = ffmt.code;
+			if (set_fmt & FmtField)
+				fmt.format.field = ffmt.field;
+			if (set_fmt & FmtColorspace)
+				fmt.format.colorspace = ffmt.colorspace;
+			if (set_fmt & FmtXferFunc)
+				fmt.format.xfer_func = ffmt.xfer_func;
+			if (set_fmt & FmtYCbCr)
+				fmt.format.ycbcr_enc = ffmt.ycbcr_enc;
+			if (set_fmt & FmtQuantization)
+				fmt.format.quantization = ffmt.quantization;
+
+			ret = doioctl(fd, VIDIOC_SUBDEV_S_FMT, &fmt);
+			if (ret == 0 && verbose)
+				print_framefmt(fmt.format);
+		}
+	}
+	if (options[OptSetSubDevSelection]) {
+		struct v4l2_subdev_selection sel;
+
+		memset(&sel, 0, sizeof(sel));
+		sel.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+		sel.pad = vsel.pad;
+		sel.target = vsel.target;
+
+		if (doioctl(fd, VIDIOC_SUBDEV_G_SELECTION, &sel) == 0) {
+			if (set_selection & SelectionWidth)
+				sel.r.width = vsel.r.width;
+			if (set_selection & SelectionHeight)
+				sel.r.height = vsel.r.height;
+			if (set_selection & SelectionLeft)
+				sel.r.left = vsel.r.left;
+			if (set_selection & SelectionTop)
+				sel.r.top = vsel.r.top;
+			sel.flags = (set_selection & SelectionFlags) ? vsel.flags : 0;
+			printf("ioctl: VIDIOC_SUBDEV_S_SELECTION (pad=%u)\n", sel.pad);
+			doioctl(fd, VIDIOC_SUBDEV_S_SELECTION, &sel);
+		}
+	}
+}
+
 static void print_subdev_selection(const struct v4l2_subdev_selection &sel)
 {
 	printf("Selection: %s, Left %d, Top %d, Width %d, Height %d, Flags: %s\n",
@@ -215,17 +413,16 @@ static void print_subdev_selection(const struct v4l2_subdev_selection &sel)
 			selflags2s(sel.flags).c_str());
 }
 
-void subdev_get(int fd, __u32 which)
+void subdev_get(int fd)
 {
 	if (options[OptGetSubDevFormat]) {
 		struct v4l2_subdev_format fmt;
 
 		memset(&fmt, 0, sizeof(fmt));
-		fmt.which = which;
+		fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 		fmt.pad = get_fmt_pad;
 
-		printf("ioctl: VIDIOC_SUBDEV_G_FMT (%s, pad=%u)\n",
-		       which2s(which), fmt.pad);
+		printf("ioctl: VIDIOC_SUBDEV_G_FMT (pad=%u)\n", fmt.pad);
 		if (doioctl(fd, VIDIOC_SUBDEV_G_FMT, &fmt) == 0)
 			print_framefmt(fmt.format);
 	}
@@ -235,11 +432,10 @@ void subdev_get(int fd, __u32 which)
 		int t = 0;
 
 		memset(&sel, 0, sizeof(sel));
-		sel.which = which;
+		sel.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 		sel.pad = get_sel_pad;
 
-		printf("ioctl: VIDIOC_SUBDEV_G_SELECTION (%s, pad=%u)\n",
-		       which2s(which), sel.pad);
+		printf("ioctl: VIDIOC_SUBDEV_G_SELECTION (pad=%u)\n", sel.pad);
 		if (options[OptAll] || get_sel_target == -1) {
 			while (selection_targets_def[t].str != NULL) {
 				sel.target = selection_targets_def[t].flag;
@@ -269,13 +465,13 @@ static void print_mbus_code(__u32 code)
 		printf("\t0x%04x\n", code);
 }
 
-static void print_mbus_codes(int fd, __u32 pad, __u32 which)
+static void print_mbus_codes(int fd, __u32 pad)
 {
 	struct v4l2_subdev_mbus_code_enum mbus_code;
 
 	memset(&mbus_code, 0, sizeof(mbus_code));
 	mbus_code.pad = pad;
-	mbus_code.which = which;
+	mbus_code.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 
 	for (;;) {
 		int ret = test_ioctl(fd, VIDIOC_SUBDEV_ENUM_MBUS_CODE, &mbus_code);
@@ -316,28 +512,28 @@ static void print_frmival(const struct v4l2_subdev_frame_interval_enum &frmival)
 	       fract2fps(frmival.interval).c_str());
 }
 
-void subdev_list(int fd, __u32 which)
+void subdev_list(int fd)
 {
 	if (options[OptListSubDevMBusCodes]) {
-		printf("ioctl: VIDIOC_SUBDEV_ENUM_MBUS_CODE (%s, pad=%u)\n",
-		       which2s(which), list_mbus_codes_pad);
-		print_mbus_codes(fd, list_mbus_codes_pad, which);
+		printf("ioctl: VIDIOC_SUBDEV_ENUM_MBUS_CODE (pad=%u)\n",
+		       list_mbus_codes_pad);
+		print_mbus_codes(fd, list_mbus_codes_pad);
 	}
 	if (options[OptListSubDevFrameSizes]) {
-		printf("ioctl: VIDIOC_SUBDEV_ENUM_FRAME_SIZE (%s, pad=%u)\n",
-		       which2s(which), frmsize.pad);
+		printf("ioctl: VIDIOC_SUBDEV_ENUM_FRAME_SIZE (pad=%u)\n",
+		       frmsize.pad);
 		frmsize.index = 0;
-		frmsize.which = which;
+		frmsize.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 		while (test_ioctl(fd, VIDIOC_SUBDEV_ENUM_FRAME_SIZE, &frmsize) >= 0) {
 			print_frmsize(frmsize);
 			frmsize.index++;
 		}
 	}
 	if (options[OptListSubDevFrameIntervals]) {
-		printf("ioctl: VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL (%s, pad=%u)\n",
-		       which2s(which), frmival.pad);
+		printf("ioctl: VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL (pad=%u)\n",
+		       frmival.pad);
 		frmival.index = 0;
-		frmival.which = which;
+		frmival.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 		while (test_ioctl(fd, VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL, &frmival) >= 0) {
 			print_frmival(frmival);
 			frmival.index++;

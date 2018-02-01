@@ -92,7 +92,6 @@ static struct option long_options[] = {
 #ifndef NO_LIBV4L2
 	{"wrapper", no_argument, 0, OptUseWrapper},
 #endif
-	{"which-is-active", no_argument, 0, OptWhichIsActive},
 	{"concise", no_argument, 0, OptConcise},
 	{"get-output", no_argument, 0, OptGetOutput},
 	{"set-output", required_argument, 0, OptSetOutput},
@@ -169,6 +168,7 @@ static struct option long_options[] = {
 	{"get-fmt-meta", no_argument, 0, OptGetMetaFormat},
 	{"set-fmt-meta", required_argument, 0, OptSetMetaFormat},
 	{"try-fmt-meta", required_argument, 0, OptTryMetaFormat},
+	{"set-subdev-fmt", required_argument, 0, OptSetSubDevFormat},
 	{"get-subdev-fmt", optional_argument, 0, OptGetSubDevFormat},
 	{"get-sliced-vbi-cap", no_argument, 0, OptGetSlicedVbiCap},
 	{"get-sliced-vbi-out-cap", no_argument, 0, OptGetSlicedVbiOutCap},
@@ -191,6 +191,7 @@ static struct option long_options[] = {
 	{"get-selection-output", required_argument, 0, OptGetOutputSelection},
 	{"set-selection-output", required_argument, 0, OptSetOutputSelection},
 	{"get-subdev-selection", required_argument, 0, OptGetSubDevSelection},
+	{"set-subdev-selection", required_argument, 0, OptSetSubDevSelection},
 	{"get-jpeg-comp", no_argument, 0, OptGetJpegComp},
 	{"set-jpeg-comp", required_argument, 0, OptSetJpegComp},
 	{"get-modulator", no_argument, 0, OptGetModulator},
@@ -920,7 +921,7 @@ __u32 parse_field(const char *s)
 	return V4L2_FIELD_ANY;
 }
 
-static __u32 parse_colorspace(const char *s)
+__u32 parse_colorspace(const char *s)
 {
 	if (!strcmp(s, "smpte170m")) return V4L2_COLORSPACE_SMPTE170M;
 	if (!strcmp(s, "smpte240m")) return V4L2_COLORSPACE_SMPTE240M;
@@ -935,7 +936,7 @@ static __u32 parse_colorspace(const char *s)
 	return 0;
 }
 
-static __u32 parse_xfer_func(const char *s)
+__u32 parse_xfer_func(const char *s)
 {
 	if (!strcmp(s, "default")) return V4L2_XFER_FUNC_DEFAULT;
 	if (!strcmp(s, "smpte240m")) return V4L2_XFER_FUNC_SMPTE240M;
@@ -948,7 +949,7 @@ static __u32 parse_xfer_func(const char *s)
 	return 0;
 }
 
-static __u32 parse_ycbcr(const char *s)
+__u32 parse_ycbcr(const char *s)
 {
 	if (!strcmp(s, "default")) return V4L2_YCBCR_ENC_DEFAULT;
 	if (!strcmp(s, "601")) return V4L2_YCBCR_ENC_601;
@@ -961,7 +962,7 @@ static __u32 parse_ycbcr(const char *s)
 	return V4L2_YCBCR_ENC_DEFAULT;
 }
 
-static __u32 parse_quantization(const char *s)
+__u32 parse_quantization(const char *s)
 {
 	if (!strcmp(s, "default")) return V4L2_QUANTIZATION_DEFAULT;
 	if (!strcmp(s, "full-range")) return V4L2_QUANTIZATION_FULL_RANGE;
@@ -1097,6 +1098,14 @@ const flag_def selection_flags_def[] = {
 std::string selflags2s(__u32 flags)
 {
 	return flags2s(flags, selection_flags_def);
+}
+
+int parse_selection_flags(const char *s)
+{
+	if (!strcmp(s, "le")) return V4L2_SEL_FLAG_LE;
+	if (!strcmp(s, "ge")) return V4L2_SEL_FLAG_GE;
+	if (!strcmp(s, "keep-config")) return V4L2_SEL_FLAG_KEEP_CONFIG;
+	return 0;
 }
 
 void print_selection(const struct v4l2_selection &sel)
@@ -1278,7 +1287,6 @@ int main(int argc, char **argv)
 	const char *wait_event_id = NULL;
 	__u32 poll_for_event = 0;	/* poll for this event */
 	const char *poll_event_id = NULL;
-	__u32 which = V4L2_SUBDEV_FORMAT_TRY;
 	unsigned secs = 0;
 	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
@@ -1386,9 +1394,6 @@ int main(int argc, char **argv)
 			poll_for_event = parse_event(optarg, &poll_event_id);
 			if (poll_for_event == 0)
 				return 1;
-			break;
-		case OptWhichIsActive:
-			which = V4L2_SUBDEV_FORMAT_ACTIVE;
 			break;
 		case OptSleep:
 			secs = strtoul(optarg, 0L, 0);
@@ -1554,7 +1559,7 @@ int main(int argc, char **argv)
 	vbi_set(fd);
 	sdr_set(fd);
 	meta_set(fd);
-	subdev_set(fd, which);
+	subdev_set(fd);
 	selection_set(fd);
 	streaming_set(fd, out_fd);
 	misc_set(fd);
@@ -1572,7 +1577,7 @@ int main(int argc, char **argv)
 	vbi_get(fd);
 	sdr_get(fd);
 	meta_get(fd);
-	subdev_get(fd, which);
+	subdev_get(fd);
 	selection_get(fd);
 	misc_get(fd);
 	edid_get(fd);
@@ -1588,7 +1593,7 @@ int main(int argc, char **argv)
 	vbi_list(fd);
 	sdr_list(fd);
 	meta_list(fd);
-	subdev_list(fd, which);
+	subdev_list(fd);
 	streaming_list(fd, out_fd);
 
 	if (options[OptWaitForEvent]) {
