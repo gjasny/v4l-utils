@@ -65,7 +65,8 @@ void subdev_usage(void)
 	       "  --get-subdev-selection=pad=<pad>,target=<target>\n"
 	       "                     query the frame selection rectangle [VIDIOC_SUBDEV_G_SELECTION]\n"
 	       "                     See --set-subdev-selection command for the valid <target> values.\n"
-	       "  --set-subdev-fmt=pad=<pad>,width=<w>,height=<h>,code=<code>,field=<f>,colorspace=<c>,\n"
+	       "  --set-subdev-fmt   (for testing only, otherwise use media-ctl)\n"
+	       "  --try-subdev-fmt=pad=<pad>,width=<w>,height=<h>,code=<code>,field=<f>,colorspace=<c>,\n"
 	       "                   xfer=<xf>,ycbcr=<y>,quantization=<q>\n"
 	       "                     set the frame format [VIDIOC_SUBDEV_S_FMT]\n"
 	       "                     <code> is the value of the mediabus code\n"
@@ -81,7 +82,8 @@ void subdev_usage(void)
 	       "                       default, 601, 709, xv601, xv709, bt2020, bt2020c, smpte240m\n"
 	       "                     <q> can be one of the following quantization methods:\n"
 	       "                       default, full-range, lim-range\n"
-	       "  --set-subdev-selection=pad=<pad>,target=<target>,flags=<flags>,\n"
+	       "  --set-subdev-selection (for testing only, otherwise use media-ctl)\n"
+	       "  --try-subdev-selection=pad=<pad>,target=<target>,flags=<flags>,\n"
 	       "                         top=<x>,left=<y>,width=<w>,height=<h>\n"
 	       "                     set the video capture selection rectangle [VIDIOC_SUBDEV_S_SELECTION]\n"
 	       "                     target=crop|crop_bounds|crop_default|compose|compose_bounds|\n"
@@ -184,6 +186,7 @@ void subdev_cmd(int ch, char *optarg)
 		}
 		break;
 	case OptSetSubDevFormat:
+	case OptTrySubDevFormat:
 		ffmt.field = V4L2_FIELD_ANY;
 		subs = optarg;
 		while (*subs != '\0') {
@@ -247,6 +250,7 @@ void subdev_cmd(int ch, char *optarg)
 		}
 		break;
 	case OptSetSubDevSelection:
+	case OptTrySubDevSelection:
 		subs = optarg;
 
 		while (*subs != '\0') {
@@ -347,9 +351,17 @@ static void print_framefmt(const struct v4l2_mbus_framefmt &fmt)
 	printf("\n");
 }
 
+static void print_subdev_selection(const struct v4l2_subdev_selection &sel)
+{
+	printf("Selection: %s, Left %d, Top %d, Width %d, Height %d, Flags: %s\n",
+			seltarget2s(sel.target).c_str(),
+			sel.r.left, sel.r.top, sel.r.width, sel.r.height,
+			selflags2s(sel.flags).c_str());
+}
+
 void subdev_set(int fd)
 {
-	if (options[OptSetSubDevFormat]) {
+	if (options[OptSetSubDevFormat] || options[OptTrySubDevFormat]) {
 		struct v4l2_subdev_format fmt;
 
 		memset(&fmt, 0, sizeof(fmt));
@@ -376,17 +388,24 @@ void subdev_set(int fd)
 			if (set_fmt & FmtQuantization)
 				fmt.format.quantization = ffmt.quantization;
 
+			if (options[OptSetSubDevFormat])
+				printf("Note: --set-subdev-fmt is only for testing.\n"
+				       "Normally media-ctl is used to configure the video pipeline.\n");
+			else
+				fmt.which = V4L2_SUBDEV_FORMAT_TRY;
+
+			printf("ioctl: VIDIOC_SUBDEV_S_FMT (pad=%u)\n", fmt.pad);
 			ret = doioctl(fd, VIDIOC_SUBDEV_S_FMT, &fmt);
-			if (ret == 0 && verbose)
+			if (ret == 0 && (verbose || !options[OptSetSubDevFormat]))
 				print_framefmt(fmt.format);
 		}
 	}
-	if (options[OptSetSubDevSelection]) {
+	if (options[OptSetSubDevSelection] || options[OptTrySubDevSelection]) {
 		struct v4l2_subdev_selection sel;
 
 		memset(&sel, 0, sizeof(sel));
-		sel.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 		sel.pad = vsel.pad;
+		sel.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 		sel.target = vsel.target;
 
 		if (doioctl(fd, VIDIOC_SUBDEV_G_SELECTION, &sel) == 0) {
@@ -399,18 +418,19 @@ void subdev_set(int fd)
 			if (set_selection & SelectionTop)
 				sel.r.top = vsel.r.top;
 			sel.flags = (set_selection & SelectionFlags) ? vsel.flags : 0;
+
+			if (options[OptSetSubDevSelection])
+				printf("Note: --set-subdev-selection is only for testing.\n"
+				       "Normally media-ctl is used to configure the video pipeline.\n");
+			else
+				sel.which = V4L2_SUBDEV_FORMAT_TRY;
+
 			printf("ioctl: VIDIOC_SUBDEV_S_SELECTION (pad=%u)\n", sel.pad);
-			doioctl(fd, VIDIOC_SUBDEV_S_SELECTION, &sel);
+			int ret = doioctl(fd, VIDIOC_SUBDEV_S_SELECTION, &sel);
+			if (ret == 0 && (verbose || !options[OptSetSubDevSelection]))
+				print_subdev_selection(sel);
 		}
 	}
-}
-
-static void print_subdev_selection(const struct v4l2_subdev_selection &sel)
-{
-	printf("Selection: %s, Left %d, Top %d, Width %d, Height %d, Flags: %s\n",
-			seltarget2s(sel.target).c_str(),
-			sel.r.left, sel.r.top, sel.r.width, sel.r.height,
-			selflags2s(sel.flags).c_str());
 }
 
 void subdev_get(int fd)
@@ -471,7 +491,7 @@ static void print_mbus_codes(int fd, __u32 pad)
 
 	memset(&mbus_code, 0, sizeof(mbus_code));
 	mbus_code.pad = pad;
-	mbus_code.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+	mbus_code.which = V4L2_SUBDEV_FORMAT_TRY;
 
 	for (;;) {
 		int ret = test_ioctl(fd, VIDIOC_SUBDEV_ENUM_MBUS_CODE, &mbus_code);
@@ -523,7 +543,7 @@ void subdev_list(int fd)
 		printf("ioctl: VIDIOC_SUBDEV_ENUM_FRAME_SIZE (pad=%u)\n",
 		       frmsize.pad);
 		frmsize.index = 0;
-		frmsize.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+		frmsize.which = V4L2_SUBDEV_FORMAT_TRY;
 		while (test_ioctl(fd, VIDIOC_SUBDEV_ENUM_FRAME_SIZE, &frmsize) >= 0) {
 			print_frmsize(frmsize);
 			frmsize.index++;
@@ -533,7 +553,7 @@ void subdev_list(int fd)
 		printf("ioctl: VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL (pad=%u)\n",
 		       frmival.pad);
 		frmival.index = 0;
-		frmival.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+		frmival.which = V4L2_SUBDEV_FORMAT_TRY;
 		while (test_ioctl(fd, VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL, &frmival) >= 0) {
 			print_frmival(frmival);
 			frmival.index++;
