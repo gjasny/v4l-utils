@@ -194,6 +194,8 @@ static struct option long_options[] = {
 	{"get-subdev-selection", required_argument, 0, OptGetSubDevSelection},
 	{"set-subdev-selection", required_argument, 0, OptSetSubDevSelection},
 	{"try-subdev-selection", required_argument, 0, OptTrySubDevSelection},
+	{"get-subdev-fps", optional_argument, 0, OptGetSubDevFPS},
+	{"set-subdev-fps", required_argument, 0, OptSetSubDevFPS},
 	{"get-jpeg-comp", no_argument, 0, OptGetJpegComp},
 	{"set-jpeg-comp", required_argument, 0, OptSetJpegComp},
 	{"get-modulator", no_argument, 0, OptGetModulator},

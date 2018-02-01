@@ -37,6 +37,7 @@ static struct mbus_name mbus_names[] = {
 static __u32 list_mbus_codes_pad;
 static __u32 get_fmt_pad;
 static __u32 get_sel_pad;
+static __u32 get_fps_pad;
 static int get_sel_target = -1;
 static unsigned int set_selection;
 static struct v4l2_subdev_selection vsel;
@@ -45,6 +46,8 @@ static __u32 set_fmt_pad;
 static struct v4l2_mbus_framefmt ffmt;
 static struct v4l2_subdev_frame_size_enum frmsize;
 static struct v4l2_subdev_frame_interval_enum frmival;
+static __u32 set_fps_pad;
+static double set_fps;
 
 void subdev_usage(void)
 {
@@ -65,6 +68,8 @@ void subdev_usage(void)
 	       "  --get-subdev-selection=pad=<pad>,target=<target>\n"
 	       "                     query the frame selection rectangle [VIDIOC_SUBDEV_G_SELECTION]\n"
 	       "                     See --set-subdev-selection command for the valid <target> values.\n"
+	       "  --get-subdev-fps[=<pad>]\n"
+	       "                     query the frame rate [VIDIOC_SUBDEV_G_FRAME_INTERVAL]\n"
 	       "  --set-subdev-fmt   (for testing only, otherwise use media-ctl)\n"
 	       "  --try-subdev-fmt=pad=<pad>,width=<w>,height=<h>,code=<code>,field=<f>,colorspace=<c>,\n"
 	       "                   xfer=<xf>,ycbcr=<y>,quantization=<q>\n"
@@ -89,6 +94,8 @@ void subdev_usage(void)
 	       "                     target=crop|crop_bounds|crop_default|compose|compose_bounds|\n"
 	       "                            compose_default|compose_padded|native_size\n"
 	       "                     flags=le|ge|keep-config\n"
+	       "  --set-subdev-fps=pad=<pad>,fps=<fps>\n"
+	       "                     set the frame rate [VIDIOC_SUBDEV_S_FRAME_INTERVAL]\n"
 	       );
 }
 
@@ -184,6 +191,10 @@ void subdev_cmd(int ch, char *optarg)
 				exit(1);
 			}
 		}
+		break;
+	case OptGetSubDevFPS:
+		if (optarg)
+			get_fps_pad = strtoul(optarg, 0L, 0);
 		break;
 	case OptSetSubDevFormat:
 	case OptTrySubDevFormat:
@@ -295,6 +306,30 @@ void subdev_cmd(int ch, char *optarg)
 				break;
 			case 6:
 				vsel.pad = strtoul(value, 0L, 0);
+				break;
+			default:
+				fprintf(stderr, "Unknown option\n");
+				subdev_usage();
+				exit(1);
+			}
+		}
+		break;
+	case OptSetSubDevFPS:
+		subs = optarg;
+
+		while (*subs != '\0') {
+			static const char *const subopts[] = {
+				"pad",
+				"fps",
+				NULL
+			};
+
+			switch (parse_subopt(&subs, subopts, &value)) {
+			case 0:
+				set_fps_pad = strtoul(value, 0L, 0);
+				break;
+			case 1:
+				set_fps = strtod(value, NULL);
 				break;
 			default:
 				fprintf(stderr, "Unknown option\n");
@@ -431,6 +466,30 @@ void subdev_set(int fd)
 				print_subdev_selection(sel);
 		}
 	}
+	if (options[OptSetSubDevFPS]) {
+		struct v4l2_subdev_frame_interval fival;
+
+		memset(&fival, 0, sizeof(fival));
+		fival.pad = set_fps_pad;
+
+		if (set_fps <= 0) {
+			fprintf(stderr, "invalid fps %f\n", set_fps);
+			subdev_usage();
+			exit(1);
+		}
+		fival.interval.numerator = 1000;
+		fival.interval.denominator = set_fps * fival.interval.numerator;
+		printf("ioctl: VIDIOC_SUBDEV_S_FRAME_INTERVAL (pad=%u)\n", fival.pad);
+		if (doioctl(fd, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival) == 0) {
+			if (!fival.interval.denominator || !fival.interval.numerator)
+				printf("\tFrames per second: invalid (%d/%d)\n",
+					fival.interval.denominator, fival.interval.numerator);
+			else
+				printf("\tFrames per second: %.3f (%d/%d)\n",
+					(1.0 * fival.interval.denominator) / fival.interval.numerator,
+					fival.interval.denominator, fival.interval.numerator);
+		}
+	}
 }
 
 void subdev_get(int fd)
@@ -467,6 +526,23 @@ void subdev_get(int fd)
 			sel.target = get_sel_target;
 			if (doioctl(fd, VIDIOC_SUBDEV_G_SELECTION, &sel) == 0)
 				print_subdev_selection(sel);
+		}
+	}
+	if (options[OptGetSubDevFPS]) {
+		struct v4l2_subdev_frame_interval fival;
+
+		memset(&fival, 0, sizeof(fival));
+		fival.pad = get_fps_pad;
+
+		printf("ioctl: VIDIOC_SUBDEV_G_FRAME_INTERVAL (pad=%u)\n", fival.pad);
+		if (doioctl(fd, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &fival) == 0) {
+			if (!fival.interval.denominator || !fival.interval.numerator)
+				printf("\tFrames per second: invalid (%d/%d)\n",
+					fival.interval.denominator, fival.interval.numerator);
+			else
+				printf("\tFrames per second: %.3f (%d/%d)\n",
+					(1.0 * fival.interval.denominator) / fival.interval.numerator,
+					fival.interval.denominator, fival.interval.numerator);
 		}
 	}
 }
