@@ -10,6 +10,7 @@
 #include <string>
 
 #include <linux/videodev2.h>
+#include <linux/v4l2-subdev.h>
 
 #ifndef NO_LIBV4L2
 #include <libv4l2.h>
@@ -29,6 +30,7 @@
    In general the lower case is used to set something and the upper
    case is used to retrieve a setting. */
 enum Option {
+	OptWhichIsActive = 'a',
 	OptGetSlicedVbiFormat = 'B',
 	OptSetSlicedVbiFormat = 'b',
 	OptGetCtrl = 'C',
@@ -67,6 +69,7 @@ enum Option {
 	OptGetSdrOutFormat,
 	OptGetVideoOutFormat,
 	OptGetMetaFormat,
+	OptGetSubDevFormat,
 	OptSetSlicedVbiOutFormat,
 	OptSetOverlayFormat,
 	OptSetVbiFormat,
@@ -97,6 +100,9 @@ enum Option {
 	OptListSdrOutFormats,
 	OptListOutFormats,
 	OptListMetaFormats,
+	OptListSubDevMBusCodes,
+	OptListSubDevFrameSizes,
+	OptListSubDevFrameIntervals,
 	OptListOutFields,
 	OptClearClips,
 	OptClearBitmap,
@@ -122,6 +128,7 @@ enum Option {
 	OptSetSelection,
 	OptGetOutputSelection,
 	OptSetOutputSelection,
+	OptGetSubDevSelection,
 	OptGetAudioInput,
 	OptSetAudioInput,
 	OptGetAudioOutput,
@@ -211,6 +218,7 @@ enum Option {
 	OptHelpVbi,
 	OptHelpSdr,
 	OptHelpMeta,
+	OptHelpSubDev,
 	OptHelpSelection,
 	OptHelpMisc,
 	OptHelpStreaming,
@@ -260,6 +268,9 @@ std::string buftype2s(int type);
 std::string fcc2s(unsigned int val);
 std::string fmtdesc2s(unsigned flags);
 std::string colorspace2s(int val);
+std::string xfer_func2s(int val);
+std::string ycbcr_enc2s(int val);
+std::string quantization2s(int val);
 std::string service2s(unsigned service);
 std::string field2s(int val);
 void print_v4lstd(v4l2_std_id std);
@@ -267,6 +278,11 @@ __u32 parse_field(const char *s);
 int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 	      __u32 &field, __u32 &colorspace, __u32 &xfer, __u32 &ycbcr,
 	      __u32 &quantization, __u32 &flags, __u32 *bytesperline);
+int parse_selection_target(const char *s, unsigned int &target);
+extern const flag_def selection_targets_def[];
+std::string seltarget2s(__u32 target);
+std::string selflags2s(__u32 flags);
+void print_selection(const struct v4l2_selection &sel);
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane);
 void printfmt(const struct v4l2_format &vfmt);
 void print_video_formats(int fd, __u32 type);
@@ -344,6 +360,13 @@ void meta_cmd(int ch, char *optarg);
 void meta_set(int fd);
 void meta_get(int fd);
 void meta_list(int fd);
+
+// v4l2-ctl-subdev.cpp
+void subdev_usage(void);
+void subdev_cmd(int ch, char *optarg);
+void subdev_set(int fd, __u32 which);
+void subdev_get(int fd, __u32 which);
+void subdev_list(int fd, __u32 which);
 
 // v4l2-ctl-selection.cpp
 void selection_usage(void);

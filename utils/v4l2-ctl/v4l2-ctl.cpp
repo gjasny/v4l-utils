@@ -83,6 +83,7 @@ static struct option long_options[] = {
 	{"help-vbi", no_argument, 0, OptHelpVbi},
 	{"help-sdr", no_argument, 0, OptHelpSdr},
 	{"help-meta", no_argument, 0, OptHelpMeta},
+	{"help-subdev", no_argument, 0, OptHelpSubDev},
 	{"help-selection", no_argument, 0, OptHelpSelection},
 	{"help-misc", no_argument, 0, OptHelpMisc},
 	{"help-streaming", no_argument, 0, OptHelpStreaming},
@@ -91,6 +92,7 @@ static struct option long_options[] = {
 #ifndef NO_LIBV4L2
 	{"wrapper", no_argument, 0, OptUseWrapper},
 #endif
+	{"which-is-active", no_argument, 0, OptWhichIsActive},
 	{"concise", no_argument, 0, OptConcise},
 	{"get-output", no_argument, 0, OptGetOutput},
 	{"set-output", required_argument, 0, OptSetOutput},
@@ -115,6 +117,9 @@ static struct option long_options[] = {
 	{"list-formats-sdr-out", no_argument, 0, OptListSdrOutFormats},
 	{"list-formats-out", no_argument, 0, OptListOutFormats},
 	{"list-formats-meta", no_argument, 0, OptListMetaFormats},
+	{"list-subdev-mbus-codes", optional_argument, 0, OptListSubDevMBusCodes},
+	{"list-subdev-framesizes", required_argument, 0, OptListSubDevFrameSizes},
+	{"list-subdev-frameintervals", required_argument, 0, OptListSubDevFrameIntervals},
 	{"list-fields-out", no_argument, 0, OptListOutFields},
 	{"clear-clips", no_argument, 0, OptClearClips},
 	{"clear-bitmap", no_argument, 0, OptClearBitmap},
@@ -164,6 +169,7 @@ static struct option long_options[] = {
 	{"get-fmt-meta", no_argument, 0, OptGetMetaFormat},
 	{"set-fmt-meta", required_argument, 0, OptSetMetaFormat},
 	{"try-fmt-meta", required_argument, 0, OptTryMetaFormat},
+	{"get-subdev-fmt", optional_argument, 0, OptGetSubDevFormat},
 	{"get-sliced-vbi-cap", no_argument, 0, OptGetSlicedVbiCap},
 	{"get-sliced-vbi-out-cap", no_argument, 0, OptGetSlicedVbiOutCap},
 	{"get-fbuf", no_argument, 0, OptGetFBuf},
@@ -184,6 +190,7 @@ static struct option long_options[] = {
 	{"set-selection", required_argument, 0, OptSetSelection},
 	{"get-selection-output", required_argument, 0, OptGetOutputSelection},
 	{"set-selection-output", required_argument, 0, OptSetOutputSelection},
+	{"get-subdev-selection", required_argument, 0, OptGetSubDevSelection},
 	{"get-jpeg-comp", no_argument, 0, OptGetJpegComp},
 	{"set-jpeg-comp", required_argument, 0, OptSetJpegComp},
 	{"get-modulator", no_argument, 0, OptGetModulator},
@@ -195,11 +202,11 @@ static struct option long_options[] = {
 	{"overlay", required_argument, 0, OptOverlay},
 	{"sleep", required_argument, 0, OptSleep},
 	{"list-devices", no_argument, 0, OptListDevices},
-	{"list-dv-timings", no_argument, 0, OptListDvTimings},
+	{"list-dv-timings", optional_argument, 0, OptListDvTimings},
 	{"query-dv-timings", no_argument, 0, OptQueryDvTimings},
 	{"get-dv-timings", no_argument, 0, OptGetDvTimings},
 	{"set-dv-bt-timings", required_argument, 0, OptSetDvBtTimings},
-	{"get-dv-timings-cap", no_argument, 0, OptGetDvTimingsCap},
+	{"get-dv-timings-cap", optional_argument, 0, OptGetDvTimingsCap},
 	{"freq-seek", required_argument, 0, OptFreqSeek},
 	{"encoder-cmd", required_argument, 0, OptEncoderCmd},
 	{"try-encoder-cmd", required_argument, 0, OptTryEncoderCmd},
@@ -422,7 +429,7 @@ std::string colorspace2s(int val)
 	}
 }
 
-static std::string xfer_func2s(int val)
+std::string xfer_func2s(int val)
 {
 	switch (val) {
 	case V4L2_XFER_FUNC_DEFAULT:
@@ -446,7 +453,7 @@ static std::string xfer_func2s(int val)
 	}
 }
 
-static std::string ycbcr_enc2s(int val)
+std::string ycbcr_enc2s(int val)
 {
 	switch (val) {
 	case V4L2_YCBCR_ENC_DEFAULT:
@@ -474,7 +481,7 @@ static std::string ycbcr_enc2s(int val)
 	}
 }
 
-static std::string quantization2s(int val)
+std::string quantization2s(int val)
 {
 	switch (val) {
 	case V4L2_QUANTIZATION_DEFAULT:
@@ -1056,6 +1063,65 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 	return fmts;
 }
 
+const flag_def selection_targets_def[] = {
+	{ V4L2_SEL_TGT_CROP_ACTIVE, "crop" },
+	{ V4L2_SEL_TGT_CROP_DEFAULT, "crop_default" },
+	{ V4L2_SEL_TGT_CROP_BOUNDS, "crop_bounds" },
+	{ V4L2_SEL_TGT_COMPOSE_ACTIVE, "compose" },
+	{ V4L2_SEL_TGT_COMPOSE_DEFAULT, "compose_default" },
+	{ V4L2_SEL_TGT_COMPOSE_BOUNDS, "compose_bounds" },
+	{ V4L2_SEL_TGT_COMPOSE_PADDED, "compose_padded" },
+	{ V4L2_SEL_TGT_NATIVE_SIZE, "native_size" },
+	{ 0, NULL }
+};
+
+std::string seltarget2s(__u32 target)
+{
+	int i = 0;
+
+	while (selection_targets_def[i].str != NULL) {
+		if (selection_targets_def[i].flag == target)
+			return selection_targets_def[i].str;
+		i++;
+	}
+	return "Unknown";
+}
+
+const flag_def selection_flags_def[] = {
+	{ V4L2_SEL_FLAG_GE, "ge" },
+	{ V4L2_SEL_FLAG_LE, "le" },
+	{ V4L2_SEL_FLAG_KEEP_CONFIG, "keep-config" },
+	{ 0, NULL }
+};
+
+std::string selflags2s(__u32 flags)
+{
+	return flags2s(flags, selection_flags_def);
+}
+
+void print_selection(const struct v4l2_selection &sel)
+{
+	printf("Selection: %s, Left %d, Top %d, Width %d, Height %d, Flags: %s\n",
+			seltarget2s(sel.target).c_str(),
+			sel.r.left, sel.r.top, sel.r.width, sel.r.height,
+			selflags2s(sel.flags).c_str());
+}
+
+int parse_selection_target(const char *s, unsigned int &target)
+{
+	if (!strcmp(s, "crop")) target = V4L2_SEL_TGT_CROP_ACTIVE;
+	else if (!strcmp(s, "crop_default")) target = V4L2_SEL_TGT_CROP_DEFAULT;
+	else if (!strcmp(s, "crop_bounds")) target = V4L2_SEL_TGT_CROP_BOUNDS;
+	else if (!strcmp(s, "compose")) target = V4L2_SEL_TGT_COMPOSE_ACTIVE;
+	else if (!strcmp(s, "compose_default")) target = V4L2_SEL_TGT_COMPOSE_DEFAULT;
+	else if (!strcmp(s, "compose_bounds")) target = V4L2_SEL_TGT_COMPOSE_BOUNDS;
+	else if (!strcmp(s, "compose_padded")) target = V4L2_SEL_TGT_COMPOSE_PADDED;
+	else if (!strcmp(s, "native_size")) target = V4L2_SEL_TGT_NATIVE_SIZE;
+	else return -EINVAL;
+
+	return 0;
+}
+
 
 static void print_event(const struct v4l2_event *ev)
 {
@@ -1212,6 +1278,7 @@ int main(int argc, char **argv)
 	const char *wait_event_id = NULL;
 	__u32 poll_for_event = 0;	/* poll for this event */
 	const char *poll_event_id = NULL;
+	__u32 which = V4L2_SUBDEV_FORMAT_TRY;
 	unsigned secs = 0;
 	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
@@ -1274,6 +1341,9 @@ int main(int argc, char **argv)
 		case OptHelpMeta:
 			meta_usage();
 			return 0;
+		case OptHelpSubDev:
+			subdev_usage();
+			return 0;
 		case OptHelpSelection:
 			selection_usage();
 			return 0;
@@ -1317,6 +1387,9 @@ int main(int argc, char **argv)
 			if (poll_for_event == 0)
 				return 1;
 			break;
+		case OptWhichIsActive:
+			which = V4L2_SUBDEV_FORMAT_ACTIVE;
+			break;
 		case OptSleep:
 			secs = strtoul(optarg, 0L, 0);
 			break;
@@ -1341,6 +1414,7 @@ int main(int argc, char **argv)
 			vbi_cmd(ch, optarg);
 			sdr_cmd(ch, optarg);
 			meta_cmd(ch, optarg);
+			subdev_cmd(ch, optarg);
 			selection_cmd(ch, optarg);
 			misc_cmd(ch, optarg);
 			streaming_cmd(ch, optarg);
@@ -1480,6 +1554,7 @@ int main(int argc, char **argv)
 	vbi_set(fd);
 	sdr_set(fd);
 	meta_set(fd);
+	subdev_set(fd, which);
 	selection_set(fd);
 	streaming_set(fd, out_fd);
 	misc_set(fd);
@@ -1497,6 +1572,7 @@ int main(int argc, char **argv)
 	vbi_get(fd);
 	sdr_get(fd);
 	meta_get(fd);
+	subdev_get(fd, which);
 	selection_get(fd);
 	misc_get(fd);
 	edid_get(fd);
@@ -1512,6 +1588,7 @@ int main(int argc, char **argv)
 	vbi_list(fd);
 	sdr_list(fd);
 	meta_list(fd);
+	subdev_list(fd, which);
 	streaming_list(fd, out_fd);
 
 	if (options[OptWaitForEvent]) {

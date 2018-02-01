@@ -1,4 +1,3 @@
 v4l2-ctl
 v4l2-ctl.1
-cx18-ctl
-ivtv-ctl
+media-bus-format-names.h

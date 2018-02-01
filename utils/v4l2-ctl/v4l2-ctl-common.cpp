@@ -57,6 +57,9 @@ void common_usage(void)
 {
 	printf("\nGeneral/Common options:\n"
 	       "  --all              display all information available\n"
+	       "  -a, --which-is-active\n"
+	       "                     set the 'which' argument to V4L2_SUBDEV_FORMAT_ACTIVE instead of\n"
+	       "                     V4L2_SUBDEV_FORMAT_TRY (the default)\n"
 	       "  -C, --get-ctrl=<ctrl>[,<ctrl>...]\n"
 	       "                     get the value of the controls [VIDIOC_G_EXT_CTRLS]\n"
 	       "  -c, --set-ctrl=<ctrl>=<val>[,<ctrl>=<val>...]\n"

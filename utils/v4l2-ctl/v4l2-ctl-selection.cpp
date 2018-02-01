@@ -75,7 +75,7 @@ void selection_usage(void)
 	       "                     set the video capture selection rectangle [VIDIOC_S_SELECTION]\n"
 	       "                     target=crop|crop_bounds|crop_default|compose|compose_bounds|\n"
 	       "                            compose_default|compose_padded|native_size\n"
-	       "                     flags=le|ge\n"
+	       "                     flags=le|ge|keep-config\n"
 	       "  --get-selection-output=target=<target>\n"
 	       "                     query the video output selection rectangle [VIDIOC_G_SELECTION]\n"
 	       "                     See --set-selection command for the valid <target> values.\n"
@@ -163,25 +163,11 @@ static void do_selection(int fd, unsigned int set_selection, struct v4l2_selecti
 	}
 }
 
-static int parse_selection_target(const char *s, unsigned int &target)
-{
-	if (!strcmp(s, "crop")) target = V4L2_SEL_TGT_CROP_ACTIVE;
-	else if (!strcmp(s, "crop_default")) target = V4L2_SEL_TGT_CROP_DEFAULT;
-	else if (!strcmp(s, "crop_bounds")) target = V4L2_SEL_TGT_CROP_BOUNDS;
-	else if (!strcmp(s, "compose")) target = V4L2_SEL_TGT_COMPOSE_ACTIVE;
-	else if (!strcmp(s, "compose_default")) target = V4L2_SEL_TGT_COMPOSE_DEFAULT;
-	else if (!strcmp(s, "compose_bounds")) target = V4L2_SEL_TGT_COMPOSE_BOUNDS;
-	else if (!strcmp(s, "compose_padded")) target = V4L2_SEL_TGT_COMPOSE_PADDED;
-	else if (!strcmp(s, "native_size")) target = V4L2_SEL_TGT_NATIVE_SIZE;
-	else return -EINVAL;
-
-	return 0;
-}
-
 static int parse_selection_flags(const char *s)
 {
 	if (!strcmp(s, "le")) return V4L2_SEL_FLAG_LE;
 	if (!strcmp(s, "ge")) return V4L2_SEL_FLAG_GE;
+	if (!strcmp(s, "keep-config")) return V4L2_SEL_FLAG_KEEP_CONFIG;
 	return 0;
 }
 
@@ -253,37 +239,6 @@ static void printcropcap(const struct v4l2_cropcap &cropcap)
 	printf("\tDefault     : Left %d, Top %d, Width %d, Height %d\n",
 			cropcap.defrect.left, cropcap.defrect.top, cropcap.defrect.width, cropcap.defrect.height);
 	printf("\tPixel Aspect: %u/%u\n", cropcap.pixelaspect.numerator, cropcap.pixelaspect.denominator);
-}
-
-static const flag_def selection_targets_def[] = {
-	{ V4L2_SEL_TGT_CROP_ACTIVE, "crop" },
-	{ V4L2_SEL_TGT_CROP_DEFAULT, "crop_default" },
-	{ V4L2_SEL_TGT_CROP_BOUNDS, "crop_bounds" },
-	{ V4L2_SEL_TGT_COMPOSE_ACTIVE, "compose" },
-	{ V4L2_SEL_TGT_COMPOSE_DEFAULT, "compose_default" },
-	{ V4L2_SEL_TGT_COMPOSE_BOUNDS, "compose_bounds" },
-	{ V4L2_SEL_TGT_COMPOSE_PADDED, "compose_padded" },
-	{ V4L2_SEL_TGT_NATIVE_SIZE, "native_size" },
-	{ 0, NULL }
-};
-
-static std::string seltarget2s(__u32 target)
-{
-	int i = 0;
-
-	while (selection_targets_def[i].str != NULL) {
-		if (selection_targets_def[i].flag == target)
-			return selection_targets_def[i].str;
-		i++;
-	}
-	return "Unknown";
-}
-
-static void print_selection(const struct v4l2_selection &sel)
-{
-	printf("Selection: %s, Left %d, Top %d, Width %d, Height %d\n",
-			seltarget2s(sel.target).c_str(),
-			sel.r.left, sel.r.top, sel.r.width, sel.r.height);
 }
 
 void selection_cmd(int ch, char *optarg)

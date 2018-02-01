@@ -22,6 +22,8 @@ static bool query_and_set_dv_timings = false;
 static bool cleared_dv_timings = false;
 static int enum_and_set_dv_timings = -1;
 static unsigned set_dv_timing_opts;
+static __u32 list_dv_timings_pad;
+static __u32 dv_timings_cap_pad;
 
 void stds_usage(void)
 {
@@ -37,7 +39,9 @@ void stds_usage(void)
 	       "                     secam or secam-X (X = B/G/H/D/K/L/Lc) (V4L2_STD_SECAM)\n"
 	       "  --get-detected-standard\n"
 	       "                     display detected input video standard [VIDIOC_QUERYSTD]\n"
-	       "  --list-dv-timings  list supp. standard dv timings [VIDIOC_ENUM_DV_TIMINGS]\n"
+	       "  --list-dv-timings[=<pad>]\n"
+	       "                     list supp. standard dv timings [VIDIOC_ENUM_DV_TIMINGS]\n"
+	       "                     for subdevs the pad can be specified (default is 0)\n"
 	       "  --set-dv-bt-timings\n"
 	       "                     query: use the output of VIDIOC_QUERY_DV_TIMINGS\n"
 	       "                     index=<index>: use the index as provided by --list-dv-timings\n"
@@ -66,8 +70,9 @@ void stds_usage(void)
 	       "                     standard [VIDIOC_S_DV_TIMINGS]\n"
 	       "  --get-dv-timings   get the digital video timings in use [VIDIOC_G_DV_TIMINGS]\n"
 	       "  --query-dv-timings query the detected dv timings [VIDIOC_QUERY_DV_TIMINGS]\n"
-	       "  --get-dv-timings-cap\n"
+	       "  --get-dv-timings-cap[=<pad>]\n"
 	       "                     get the dv timings capabilities [VIDIOC_DV_TIMINGS_CAP]\n"
+	       "                     for subdevs the pad can be specified (default is 0)\n"
 	       );
 }
 
@@ -503,6 +508,14 @@ void stds_cmd(int ch, char *optarg)
 	case OptSetDvBtTimings:
 		parse_dv_bt_timings(optarg, &dv_timings);
 		break;
+	case OptListDvTimings:
+		if (optarg)
+			list_dv_timings_pad = strtoul(optarg, 0L, 0);
+		break;
+	case OptGetDvTimingsCap:
+		if (optarg)
+			dv_timings_cap_pad = strtoul(optarg, 0L, 0);
+		break;
 	}
 }
 
@@ -621,6 +634,7 @@ void stds_get(int fd)
 	if (options[OptGetDvTimingsCap]) {
 		struct v4l2_dv_timings_cap dv_timings_cap = {};
 
+		dv_timings_cap.pad = dv_timings_cap_pad;
 		if (doioctl(fd, VIDIOC_DV_TIMINGS_CAP, &dv_timings_cap) >= 0) {
 			static const flag_def dv_caps_def[] = {
 				{ V4L2_DV_BT_CAP_INTERLACED, "Interlaced" },
@@ -692,6 +706,7 @@ void stds_list(int fd)
 		struct v4l2_enum_dv_timings dv_enum_timings = {};
 
 		printf("ioctl: VIDIOC_ENUM_DV_TIMINGS\n");
+		dv_enum_timings.pad = list_dv_timings_pad;
 		while (test_ioctl(fd, VIDIOC_ENUM_DV_TIMINGS, &dv_enum_timings) >= 0) {
 			if (options[OptConcise]) {
 				printf("\t%d:", dv_enum_timings.index);
