@@ -497,6 +497,12 @@ static void restoreState()
 		node->set_interval(state.interval);
 
 	node->s_ext_ctrls(state.controls);
+	// We need to reopen again so QUERYCAP is called again.
+	// The vivid driver has controls (RDS related) that change
+	// the capabilities, and if we don't do this, then the
+	// internal caps stored in v4l_fd is out-of-sync with the
+	// actual caps.
+	node->reopen();
 }
 
 static void signal_handler_interrupt(int signum)
