@@ -94,7 +94,7 @@ void subdev_usage(void)
 	       "                     target=crop|crop_bounds|crop_default|compose|compose_bounds|\n"
 	       "                            compose_default|compose_padded|native_size\n"
 	       "                     flags=le|ge|keep-config\n"
-	       "  --set-subdev-fps=pad=<pad>,fps=<fps>\n"
+	       "  --set-subdev-fps=pad=<pad>,fps=<fps> (for testing only, otherwise use media-ctl)\n"
 	       "                     set the frame rate [VIDIOC_SUBDEV_S_FRAME_INTERVAL]\n"
 	       );
 }
@@ -479,6 +479,8 @@ void subdev_set(int fd)
 		}
 		fival.interval.numerator = 1000;
 		fival.interval.denominator = set_fps * fival.interval.numerator;
+		printf("Note: --set-subdev-fps is only for testing.\n"
+		       "Normally media-ctl is used to configure the video pipeline.\n");
 		printf("ioctl: VIDIOC_SUBDEV_S_FRAME_INTERVAL (pad=%u)\n", fival.pad);
 		if (doioctl(fd, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival) == 0) {
 			if (!fival.interval.denominator || !fival.interval.numerator)
