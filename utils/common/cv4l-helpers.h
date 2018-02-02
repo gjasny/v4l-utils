@@ -53,6 +53,7 @@ public:
 		*this = *fd;
 	}
 
+	bool is_subdev() const { return v4l_fd_is_subdev(this); }
 	__u32 g_type() const { return type; }
 	void s_type(__u32 type) { v4l_s_type(this, type); }
 	__u32 g_selection_type() const { return v4l_g_selection_type(this); }
@@ -65,6 +66,7 @@ public:
 	void s_trace(bool trace) { v4l_fd_s_trace(this, trace); }
 
 	int open(const char *devname, bool non_blocking = false) { return v4l_open(this, devname, non_blocking); }
+	int subdev_open(const char *devname, bool non_blocking = false) { return v4l_subdev_open(this, devname, non_blocking); }
 	int close() { return v4l_close(this); }
 	int reopen(bool non_blocking = false) { return v4l_reopen(this, non_blocking); }
 	ssize_t read(void *buffer, size_t n) { return v4l_read(this, buffer, n); }
