@@ -66,6 +66,7 @@ struct v4l_fd {
 	bool have_next_ctrl;
 	bool have_selection;
 	bool is_subdev;
+	bool is_media;
 
 	int (*open)(struct v4l_fd *f, const char *file, int oflag, ...);
 	int (*close)(struct v4l_fd *f);
@@ -192,6 +193,7 @@ static inline void v4l_fd_init(struct v4l_fd *f)
 	memset(f, 0, sizeof(*f));
 	f->fd = -1;
 	f->is_subdev = false;
+	f->is_media = false;
 	f->open = v4l_wrap_open;
 	f->close = v4l_wrap_close;
 	f->ioctl = v4l_wrap_ioctl;
@@ -204,6 +206,16 @@ static inline void v4l_fd_init(struct v4l_fd *f)
 static inline bool v4l_fd_is_subdev(const struct v4l_fd *f)
 {
 	return f->is_subdev;
+}
+
+static inline bool v4l_fd_is_media(const struct v4l_fd *f)
+{
+	return f->is_media;
+}
+
+static inline bool v4l_fd_is_v4l2(const struct v4l_fd *f)
+{
+	return !f->is_subdev && !f->is_media;
 }
 
 static inline bool v4l_fd_g_trace(const struct v4l_fd *f)
@@ -480,6 +492,7 @@ static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_block
 		return -1;
 	}
 	f->is_subdev = false;
+	f->is_media = false;
 	f->caps = v4l_capability_g_caps(&f->cap);
 	f->type = v4l_determine_type(f);
 
@@ -506,6 +519,29 @@ static inline int v4l_subdev_open(struct v4l_fd *f, const char *devname, bool no
 	}
 	memset(&f->cap, 0, sizeof(f->cap));
 	f->is_subdev = true;
+	f->is_media = false;
+	f->type = 0;
+	f->have_query_ext_ctrl = false;
+	f->have_ext_ctrls = false;
+	f->have_next_ctrl = false;
+	f->have_selection = false;
+
+	return f->fd;
+}
+
+static inline int v4l_media_open(struct v4l_fd *f, const char *devname, bool non_blocking)
+{
+	f->fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
+
+	if (f->fd < 0)
+		return f->fd;
+	if (f->devname != devname) {
+		strncpy(f->devname, devname, sizeof(f->devname));
+		f->devname[sizeof(f->devname) - 1] = '\0';
+	}
+	memset(&f->cap, 0, sizeof(f->cap));
+	f->is_subdev = false;
+	f->is_media = true;
 	f->type = 0;
 	f->have_query_ext_ctrl = false;
 	f->have_ext_ctrls = false;
@@ -520,6 +556,8 @@ static inline int v4l_reopen(struct v4l_fd *f, bool non_blocking)
 	f->close(f);
 	if (f->is_subdev)
 		return v4l_subdev_open(f, f->devname, non_blocking);
+	if (f->is_media)
+		return v4l_media_open(f, f->devname, non_blocking);
 	return v4l_open(f, f->devname, non_blocking);
 }
 
