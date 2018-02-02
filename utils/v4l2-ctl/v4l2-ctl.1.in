@@ -51,6 +51,9 @@ Video timings.
 \fB\-\-help\-streaming\fR
 Prints the help message for all options that deal with streaming.
 .TP
+\fB\-\-help\-subdev\fR
+Prints the help message for all options that deal with v4l-subdevX devices.
+.TP
 \fB\-\-help\-tuner\fR
 Prints the help message for all options that deal with tuners and modulators.
 .TP
