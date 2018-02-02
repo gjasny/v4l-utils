@@ -226,6 +226,9 @@ int testEncoder(struct node *node);
 int testEncIndex(struct node *node);
 int testDecoder(struct node *node);
 
+// SubDev ioctl tests
+int testSubDevEnum(struct node *node, unsigned pad);
+
 // Buffer ioctl tests
 int testReqBufs(struct node *node);
 int testReadWrite(struct node *node);
