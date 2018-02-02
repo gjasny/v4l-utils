@@ -229,6 +229,9 @@ int testDecoder(struct node *node);
 // SubDev ioctl tests
 int testSubDevEnum(struct node *node, unsigned pad);
 
+// Media Controller ioctl tests
+int testMediaDeviceInfo(struct node *node);
+
 // Buffer ioctl tests
 int testReqBufs(struct node *node);
 int testReadWrite(struct node *node);

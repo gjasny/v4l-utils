@@ -71,6 +71,9 @@ Use device <dev> as the touch device. If <dev> is a number, then /dev/v4l-touch<
 \fB\-u\fR, \fB\-\-subdev-device\fR=\fI<dev>\fR
 Use device <dev> as the v4l-subdevX device. If <dev> is a number, then /dev/v4l-subdev<dev> is used.
 .TP
+\fB\-m\fR, \fB\-\-media-device\fR=\fI<dev>\fR
+Use device <dev> as the media controller device. If <dev> is a number, then /dev/media<dev> is used.
+.TP
 \fB\-e\fR, \fB\-\-exp-buf-device\fR=\fI<dev>\fR
 Use device <dev> as the video device used to export DMABUFfers for doing DMABUF
 streaming tests. If <dev> is a number, then /dev/video<dev> is used. If this option

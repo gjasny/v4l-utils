@@ -59,6 +59,7 @@ enum Option {
 	OptSetExpBufDevice = 'e',
 	OptStreamAllFormats = 'f',
 	OptHelp = 'h',
+	OptSetMediaDevice = 'm',
 	OptNoWarnings = 'n',
 	OptSetRadioDevice = 'r',
 	OptStreaming = 's',
@@ -118,6 +119,7 @@ static struct option long_options[] = {
 	{"subdev-device", required_argument, 0, OptSetSubDevDevice},
 	{"expbuf-device", required_argument, 0, OptSetExpBufDevice},
 	{"touch-device", required_argument, 0, OptSetTouchDevice},
+	{"media-device", required_argument, 0, OptSetMediaDevice},
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
@@ -153,6 +155,9 @@ static void usage(void)
 	printf("  -u, --subdev-device=<dev>\n");
 	printf("                     Use device <dev> as the v4l-subdev device.\n");
 	printf("                     If <dev> starts with a digit, then /dev/v4l-subdev<dev> is used.\n");
+	printf("  -m, --media-device=<dev>\n");
+	printf("                     Use device <dev> as the media controller device.\n");
+	printf("                     If <dev> starts with a digit, then /dev/media<dev> is used.\n");
 	printf("  -e, --expbuf-device=<dev>\n");
 	printf("                     Use device <dev> to obtain DMABUF handles.\n");
 	printf("                     If <dev> starts with a digit, then /dev/video<dev> is used.\n");
@@ -742,10 +747,8 @@ static int get_media_fd(int fd)
 	DIR *dp;
 	struct dirent *ep;
 	dp = opendir(media_path);
-	if (dp == NULL) {
-		perror("Couldn't open the directory");
-		exit(1);
-	}
+	if (dp == NULL)
+		return -1;
 	media_path[0] = 0;
 	while ((ep = readdir(dp))) {
 		if (!memcmp(ep->d_name, "media", 5) && isdigit(ep->d_name[5])) {
@@ -879,7 +882,7 @@ static void mdev_info(int fd, int media_fd)
 	struct media_device_info mdinfo;
 	struct stat sb;
 
-	if (fstat(fd, &sb) == -1) {
+	if (fd >= 0 && fstat(fd, &sb) == -1) {
 		fprintf(stderr, "failed to stat file\n");
 		exit(1);
 	}
@@ -905,6 +908,9 @@ static void mdev_info(int fd, int media_fd)
 	       mdinfo.driver_version >> 16,
 	       (mdinfo.driver_version >> 8) & 0xff,
 	       mdinfo.driver_version & 0xff);
+
+	if (fd < 0)
+		return;
 
 	memset(&ent, 0, sizeof(ent));
 	ent.id = MEDIA_ENT_ID_FLAG_NEXT;
@@ -967,6 +973,8 @@ int main(int argc, char **argv)
 	struct node touch_node2;
 	struct node subdev_node;
 	struct node subdev_node2;
+	struct node media_node;
+	struct node media_node2;
 	struct node expbuf_node;
 
 	/* command args */
@@ -978,6 +986,7 @@ int main(int argc, char **argv)
 	const char *sdr_device = NULL;		/* -S device */
 	const char *touch_device = NULL;	/* -t device */
 	const char *subdev_device = NULL;	/* -u device */
+	const char *media_device = NULL;	/* -m device */
 	const char *expbuf_device = NULL;	/* --expbuf-device device */
 	struct v4l2_capability vcap;		/* list_cap */
 	unsigned frame_count = 60;
@@ -1062,6 +1071,15 @@ int main(int argc, char **argv)
 
 				sprintf(newdev, "/dev/v4l-subdev%s", subdev_device);
 				subdev_device = newdev;
+			}
+			break;
+		case OptSetMediaDevice:
+			media_device = optarg;
+			if (media_device[0] >= '0' && media_device[0] <= '9' && strlen(media_device) <= 3) {
+				static char newdev[20];
+
+				sprintf(newdev, "/dev/media%s", media_device);
+				media_device = newdev;
 			}
 			break;
 		case OptSetExpBufDevice:
@@ -1154,7 +1172,7 @@ int main(int argc, char **argv)
 		kernel_version = v3;
 
 	if (!video_device && !vbi_device && !radio_device &&
-	    !sdr_device && !touch_device && !subdev_device)
+	    !sdr_device && !touch_device && !subdev_device && !media_device)
 		video_device = "/dev/video0";
 
 	if (video_device) {
@@ -1223,6 +1241,17 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (media_device) {
+		media_node.s_trace(options[OptTrace]);
+		media_node.s_direct(true);
+		fd = media_node.media_open(media_device, false);
+		if (fd < 0) {
+			fprintf(stderr, "Failed to open %s: %s\n", media_device,
+				strerror(errno));
+			exit(1);
+		}
+	}
+
 	if (expbuf_device) {
 		expbuf_node.s_trace(options[OptTrace]);
 		expbuf_node.s_direct(true);
@@ -1257,13 +1286,16 @@ int main(int argc, char **argv)
 	} else if (subdev_node.g_fd() >= 0) {
 		node = subdev_node;
 		device = subdev_device;
+	} else if (media_node.g_fd() >= 0) {
+		node = media_node;
+		device = media_device;
 	}
 	node.device = device;
 
-	if (node.is_subdev())
-		memset(&vcap, 0, sizeof(vcap));
-	else
+	if (node.is_v4l2())
 		doioctl(&node, VIDIOC_QUERYCAP, &vcap);
+	else
+		memset(&vcap, 0, sizeof(vcap));
 	if (node.g_caps() & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
 			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_SLICED_VBI_CAPTURE))
 		node.has_inputs = true;
@@ -1301,9 +1333,10 @@ int main(int argc, char **argv)
 	if (kernel_version)
 		printf("Running on 2.6.%d\n", kernel_version);
 
-	media_fd = get_media_fd(node.g_fd());
+	if (!node.is_media())
+		media_fd = get_media_fd(node.g_fd());
 
-	if (!node.is_subdev()) {
+	if (node.is_v4l2()) {
 		printf("\nDriver Info:\n");
 		printf("\tDriver name   : %s\n", vcap.driver);
 		printf("\tCard type     : %s\n", vcap.card);
@@ -1319,7 +1352,9 @@ int main(int argc, char **argv)
 			printf("%s", cap2s(vcap.device_caps).c_str());
 		}
 	}
-	if (media_fd >= 0)
+	if (node.is_media())
+		mdev_info(-1, node.g_fd());
+	else if (media_fd >= 0)
 		mdev_info(node.g_fd(), media_fd);
 
 	printf("\nCompliance test for device %s%s:\n\n",
@@ -1327,9 +1362,16 @@ int main(int argc, char **argv)
 
 	/* Required ioctls */
 
-	if (!node.is_subdev()) {
+	if (node.is_v4l2()) {
 		printf("Required ioctls:\n");
 		printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&node)));
+		printf("\n");
+	}
+
+	if (node.is_media()) {
+		printf("Required ioctls:\n");
+		printf("\ttest MEDIA_IOC_DEVICE_INFO: %s\n",
+		       ok(testMediaDeviceInfo(&node)));
 		printf("\n");
 	}
 
@@ -1398,6 +1440,15 @@ int main(int argc, char **argv)
 		if (subdev_node2.g_fd() >= 0)
 			node.node2 = &subdev_node2;
 	}
+	if (media_device) {
+		media_node2 = node;
+		printf("\ttest second media open: %s\n",
+				ok(media_node2.media_open(media_device, false) >= 0 ? 0 : errno));
+		if (media_node2.g_fd() >= 0) {
+			printf("\ttest MEDIA_IOC_DEVICE_INFO: %s\n", ok(testMediaDeviceInfo(&media_node2)));
+			node.node2 = &media_node2;
+		}
+	}
 	printf("\ttest for unlimited opens: %s\n",
 		ok(testUnlimitedOpens(&node)));
 	printf("\n");
@@ -1407,10 +1458,22 @@ int main(int argc, char **argv)
 	/* register signal handler for interrupt signal, to exit gracefully */
 	signal(SIGINT, signal_handler_interrupt);
 
+	unsigned cur_io = 0;
+	unsigned min_io = 0;
+	unsigned max_io = 0;
+
+	/* Media ioctls */
+
+	if (node.is_media()) {
+		printf("Media Controller ioctls:\n");
+		printf("\n");
+		goto done;
+	}
+
 	/* Debug ioctls */
 
 	printf("Debug ioctls:\n");
-	if (!node.is_subdev())
+	if (node.is_v4l2())
 		printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(&node)));
 	printf("\ttest VIDIOC_LOG_STATUS: %s\n", ok(testLogStatus(&node)));
 	printf("\n");
@@ -1458,7 +1521,7 @@ int main(int argc, char **argv)
 		printf("\n");
 	}
 
-	unsigned max_io = node.inputs > node.outputs ? node.inputs : node.outputs;
+	max_io = node.inputs > node.outputs ? node.inputs : node.outputs;
 
 	for (unsigned io = 0; io < (max_io ? max_io : 1); io++) {
 		const char *prefix = "";
@@ -1537,8 +1600,8 @@ int main(int argc, char **argv)
 		printf("\n");
 	}
 
-	unsigned cur_io = node.has_inputs ? state.input.index : state.output.index;
-	unsigned min_io = 0;
+	cur_io = node.has_inputs ? state.input.index : state.output.index;
+	min_io = 0;
 
 	if (!options[OptStreamAllIO]) {
 		min_io = cur_io;
@@ -1548,7 +1611,7 @@ int main(int argc, char **argv)
 	for (unsigned io = min_io; io < (max_io ? max_io : 1); io++) {
 		restoreState();
 
-		if (node.is_subdev())
+		if (!node.is_v4l2())
 			break;
 
 		if (options[OptStreaming] || (node.is_video && options[OptStreamAllFormats]) ||
@@ -1612,6 +1675,7 @@ int main(int argc, char **argv)
 	 * 	 S_SELECTION flags tests
 	 */
 
+done:
 	restoreState();
 
 	/* Final test report */
