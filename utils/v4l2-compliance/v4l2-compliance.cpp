@@ -26,14 +26,19 @@
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/sysmacros.h>
+#include <dirent.h>
 #include <math.h>
 #include <sys/utsname.h>
 #include <signal.h>
 #include <vector>
+
+#include <linux/media.h>
 
 #include "v4l2-compliance.h"
 #ifndef ANDROID
@@ -60,6 +65,7 @@ enum Option {
 	OptSetSWRadioDevice = 'S',
 	OptSetTouchDevice = 't',
 	OptTrace = 'T',
+	OptSetSubDevDevice = 'u',
 	OptVerbose = 'v',
 	OptSetVbiDevice = 'V',
 	OptUseWrapper = 'w',
@@ -75,6 +81,7 @@ static int tests_total, tests_ok;
 bool show_info;
 bool show_warnings = true;
 int kernel_version;
+int media_fd = -1;
 unsigned warnings;
 
 static unsigned color_component;
@@ -108,6 +115,7 @@ static struct option long_options[] = {
 	{"radio-device", required_argument, 0, OptSetRadioDevice},
 	{"vbi-device", required_argument, 0, OptSetVbiDevice},
 	{"sdr-device", required_argument, 0, OptSetSWRadioDevice},
+	{"subdev-device", required_argument, 0, OptSetSubDevDevice},
 	{"expbuf-device", required_argument, 0, OptSetExpBufDevice},
 	{"touch-device", required_argument, 0, OptSetTouchDevice},
 	{"help", no_argument, 0, OptHelp},
@@ -142,6 +150,9 @@ static void usage(void)
 	printf("  -t, --touch-device=<dev>\n");
 	printf("                     Use device <dev> as the touch device.\n");
 	printf("                     If <dev> starts with a digit, then /dev/v4l-touch<dev> is used.\n");
+	printf("  -u, --subdev-device=<dev>\n");
+	printf("                     Use device <dev> as the v4l-subdev device.\n");
+	printf("                     If <dev> starts with a digit, then /dev/v4l-subdev<dev> is used.\n");
 	printf("  -e, --expbuf-device=<dev>\n");
 	printf("                     Use device <dev> to obtain DMABUF handles.\n");
 	printf("                     If <dev> starts with a digit, then /dev/video<dev> is used.\n");
@@ -712,6 +723,234 @@ static int parse_subopt(char **subs, const char * const *subopts, char **value)
 	return opt;
 }
 
+static int get_media_fd(int fd)
+{
+	struct stat sb;
+	int media_fd = -1;
+
+	if (fstat(fd, &sb) == -1) {
+		fprintf(stderr, "failed to stat file\n");
+		exit(1);
+	}
+
+	char media_path[100];
+	if (snprintf(media_path, sizeof(media_path), "/sys/dev/char/%d:%d/device",
+		     major(sb.st_rdev), minor(sb.st_rdev)) == -1) {
+		fprintf(stderr, "failed to create media file path\n");
+		exit(1);
+	}
+	DIR *dp;
+	struct dirent *ep;
+	dp = opendir(media_path);
+	if (dp == NULL) {
+		perror("Couldn't open the directory");
+		exit(1);
+	}
+	media_path[0] = 0;
+	while ((ep = readdir(dp))) {
+		if (!memcmp(ep->d_name, "media", 5) && isdigit(ep->d_name[5])) {
+			if (snprintf(media_path, sizeof(media_path),
+				     "/dev/%s", ep->d_name) >= 0)
+				media_fd = open(media_path, O_RDWR);
+			break;
+		}
+	}
+	closedir(dp);
+	return media_fd;
+}
+
+typedef struct {
+	unsigned flag;
+	const char *str;
+} flag_def;
+
+static std::string num2s(unsigned num)
+{
+	char buf[10];
+
+	sprintf(buf, "%08x", num);
+	return buf;
+}
+
+static std::string flags2s(unsigned val, const flag_def *def)
+{
+	std::string s;
+
+	while (def->flag) {
+		if (val & def->flag) {
+			if (s.length()) s += ", ";
+			s += def->str;
+			val &= ~def->flag;
+		}
+		def++;
+	}
+	if (val) {
+		if (s.length()) s += ", ";
+		s += num2s(val);
+	}
+	return s;
+}
+
+static const flag_def entity_flags_def[] = {
+	{ MEDIA_ENT_FL_DEFAULT, "default" },
+	{ MEDIA_ENT_FL_CONNECTOR, "connector" },
+	{ 0, NULL }
+};
+
+static std::string entflags2s(__u32 flags)
+{
+	return flags2s(flags, entity_flags_def);
+}
+
+static const flag_def entity_types_def[] = {
+	{ MEDIA_ENT_F_UNKNOWN, "Unknown" },
+	{ MEDIA_ENT_F_DTV_DEMOD, "Digital TV Demodulator" },
+	{ MEDIA_ENT_F_TS_DEMUX, "Transport Stream Demuxer" },
+	{ MEDIA_ENT_F_DTV_CA, "Digital TV Conditional Access" },
+	{ MEDIA_ENT_F_DTV_NET_DECAP, "Digital TV Network ULE/MLE Desencapsulation" },
+	{ MEDIA_ENT_F_IO_DTV, "Digital TV I/O" },
+	{ MEDIA_ENT_F_IO_VBI, "VBI I/O" },
+	{ MEDIA_ENT_F_IO_SWRADIO, "Software Radio I/O" },
+	{ MEDIA_ENT_F_IF_VID_DECODER, "IF-PLL Video Decoder" },
+	{ MEDIA_ENT_F_IF_AUD_DECODER, "IF-PLL Audio Decoder" },
+	{ MEDIA_ENT_F_AUDIO_CAPTURE, "Audio Capture" },
+	{ MEDIA_ENT_F_AUDIO_PLAYBACK, "Audio Playback" },
+	{ MEDIA_ENT_F_AUDIO_MIXER, "Audio Mixer" },
+	{ MEDIA_ENT_F_PROC_VIDEO_COMPOSER, "Video Composer" },
+	{ MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER, "Video Pixel Formatter" },
+	{ MEDIA_ENT_F_PROC_VIDEO_PIXEL_ENC_CONV, "Video Pixel Encoding Converter" },
+	{ MEDIA_ENT_F_PROC_VIDEO_LUT, "Video Look-Up Table" },
+	{ MEDIA_ENT_F_PROC_VIDEO_SCALER, "Video Scaler" },
+	{ MEDIA_ENT_F_PROC_VIDEO_STATISTICS, "Video Statistics" },
+	{ MEDIA_ENT_F_VID_MUX, "Video Muxer" },
+	{ MEDIA_ENT_F_VID_IF_BRIDGE, "Video Interface Bridge" },
+
+	{ MEDIA_ENT_F_IO_V4L, "V4L2 I/O" },
+	{ MEDIA_ENT_F_CAM_SENSOR, "Camera Sensor" },
+	{ MEDIA_ENT_F_FLASH, "Flash Controller" },
+	{ MEDIA_ENT_F_LENS, "Lens Controller" },
+	{ MEDIA_ENT_F_ATV_DECODER, "Analog Video Decoder" },
+	{ MEDIA_ENT_F_TUNER, "Tuner" },
+	{ MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN, "Unknown" },
+	{ 0, NULL }
+};
+
+static std::string enttype2s(__u32 type)
+{
+	for (unsigned i = 0; entity_types_def[i].str; i++)
+		if (type == entity_types_def[i].flag)
+			return entity_types_def[i].str;
+	return "Unknown (" + num2s(type) + ")";
+}
+
+static const flag_def pad_flags_def[] = {
+	{ MEDIA_PAD_FL_SINK, "Sink" },
+	{ MEDIA_PAD_FL_SOURCE, "Source" },
+	{ MEDIA_PAD_FL_MUST_CONNECT, "Must Connect" },
+	{ 0, NULL }
+};
+
+static std::string padflags2s(__u32 flags)
+{
+	return flags2s(flags, pad_flags_def);
+}
+
+static const flag_def link_flags_def[] = {
+	{ MEDIA_LNK_FL_ENABLED, "Enabled" },
+	{ MEDIA_LNK_FL_IMMUTABLE, "Immutable" },
+	{ MEDIA_LNK_FL_DYNAMIC, "Dynamic" },
+	{ 0, NULL }
+};
+
+static std::string linkflags2s(__u32 flags)
+{
+	switch (flags & MEDIA_LNK_FL_LINK_TYPE) {
+	case MEDIA_LNK_FL_DATA_LINK:
+		return "Data " + flags2s(flags, link_flags_def);
+	case MEDIA_LNK_FL_INTERFACE_LINK:
+		return "Interface " + flags2s(flags, link_flags_def);
+	default:
+		return "Unknown " + flags2s(flags, link_flags_def);
+	}
+}
+
+static void mdev_info(int fd, int media_fd)
+{
+	struct media_device_info mdinfo;
+	struct stat sb;
+
+	if (fstat(fd, &sb) == -1) {
+		fprintf(stderr, "failed to stat file\n");
+		exit(1);
+	}
+
+	if (ioctl(media_fd, MEDIA_IOC_DEVICE_INFO, &mdinfo))
+		return;
+
+	struct media_entity_desc ent;
+	bool found = false;
+
+	printf("Media Driver Info:\n");
+	printf("\tDriver name      : %s\n", mdinfo.driver);
+	printf("\tModel            : %s\n", mdinfo.model);
+	printf("\tSerial           : %s\n", mdinfo.serial);
+	printf("\tBus info         : %s\n", mdinfo.bus_info);
+	printf("\tMedia version    : %d.%d.%d\n",
+	       mdinfo.media_version >> 16,
+	       (mdinfo.media_version >> 8) & 0xff,
+	       mdinfo.media_version & 0xff);
+	printf("\tHardware revision: 0x%08x, %d\n",
+	       mdinfo.hw_revision, mdinfo.hw_revision);
+	printf("\tDriver version   : %d.%d.%d\n",
+	       mdinfo.driver_version >> 16,
+	       (mdinfo.driver_version >> 8) & 0xff,
+	       mdinfo.driver_version & 0xff);
+
+	memset(&ent, 0, sizeof(ent));
+	ent.id = MEDIA_ENT_ID_FLAG_NEXT;
+	while (!ioctl(media_fd, MEDIA_IOC_ENUM_ENTITIES, &ent)) {
+		if (ent.dev.major == major(sb.st_rdev) &&
+		    ent.dev.minor == minor(sb.st_rdev)) {
+			found = true;
+			break;
+		}
+		ent.id |= MEDIA_ENT_ID_FLAG_NEXT;
+	}
+	if (!found)
+		return;
+
+	printf("Entity Info:\n");
+	printf("\tID   : %u\n", ent.id);
+	printf("\tName : %s\n", ent.name);
+	printf("\tType : %s\n", enttype2s(ent.type).c_str());
+	printf("\tFlags: %s\n", entflags2s(ent.flags).c_str());
+	if (ent.flags & MEDIA_ENT_FL_DEFAULT) {
+		printf("\tMajor: %u\n", ent.dev.major);
+		printf("\tMinor: %u\n", ent.dev.minor);
+	}
+
+	struct media_links_enum links_enum;
+	struct media_pad_desc pads[ent.pads];
+	struct media_link_desc links[ent.links];
+
+	memset(&links_enum, 0, sizeof(links_enum));
+	links_enum.entity = ent.id;
+	links_enum.pads = pads;
+	links_enum.links = links;
+	if (ioctl(media_fd, MEDIA_IOC_ENUM_LINKS, &links_enum))
+		return;
+
+	for (unsigned i = 0; i < ent.pads; i++)
+		printf("\tPad %u: %s\n", pads[i].index,
+		       padflags2s(pads[i].flags).c_str());
+	for (unsigned i = 0; i < ent.links; i++)
+		printf("\tLinks %u->%u: %s\n",
+		       links[i].source.entity,
+		       links[i].sink.entity,
+		       linkflags2s(links[i].flags).c_str());
+}
+
+
 int main(int argc, char **argv)
 {
 	int i;
@@ -726,6 +965,8 @@ int main(int argc, char **argv)
 	struct node sdr_node2;
 	struct node touch_node;
 	struct node touch_node2;
+	struct node subdev_node;
+	struct node subdev_node2;
 	struct node expbuf_node;
 
 	/* command args */
@@ -736,6 +977,7 @@ int main(int argc, char **argv)
 	const char *radio_device = NULL;	/* -r device */
 	const char *sdr_device = NULL;		/* -S device */
 	const char *touch_device = NULL;	/* -t device */
+	const char *subdev_device = NULL;	/* -u device */
 	const char *expbuf_device = NULL;	/* --expbuf-device device */
 	struct v4l2_capability vcap;		/* list_cap */
 	unsigned frame_count = 60;
@@ -811,6 +1053,15 @@ int main(int argc, char **argv)
 
 				sprintf(newdev, "/dev/v4l-touch%s", touch_device);
 				touch_device = newdev;
+			}
+			break;
+		case OptSetSubDevDevice:
+			subdev_device = optarg;
+			if (subdev_device[0] >= '0' && subdev_device[0] <= '9' && strlen(subdev_device) <= 3) {
+				static char newdev[20];
+
+				sprintf(newdev, "/dev/v4l-subdev%s", subdev_device);
+				subdev_device = newdev;
 			}
 			break;
 		case OptSetExpBufDevice:
@@ -903,7 +1154,7 @@ int main(int argc, char **argv)
 		kernel_version = v3;
 
 	if (!video_device && !vbi_device && !radio_device &&
-	    !sdr_device && !touch_device)
+	    !sdr_device && !touch_device && !subdev_device)
 		video_device = "/dev/video0";
 
 	if (video_device) {
@@ -961,6 +1212,17 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (subdev_device) {
+		subdev_node.s_trace(options[OptTrace]);
+		subdev_node.s_direct(true);
+		fd = subdev_node.subdev_open(subdev_device, false);
+		if (fd < 0) {
+			fprintf(stderr, "Failed to open %s: %s\n", subdev_device,
+				strerror(errno));
+			exit(1);
+		}
+	}
+
 	if (expbuf_device) {
 		expbuf_node.s_trace(options[OptTrace]);
 		expbuf_node.s_direct(true);
@@ -992,10 +1254,16 @@ int main(int argc, char **argv)
 		node = touch_node;
 		device = touch_device;
 		node.is_touch = true;
+	} else if (subdev_node.g_fd() >= 0) {
+		node = subdev_node;
+		device = subdev_device;
 	}
 	node.device = device;
 
-	doioctl(&node, VIDIOC_QUERYCAP, &vcap);
+	if (node.is_subdev())
+		memset(&vcap, 0, sizeof(vcap));
+	else
+		doioctl(&node, VIDIOC_QUERYCAP, &vcap);
 	if (node.g_caps() & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
 			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_SLICED_VBI_CAPTURE))
 		node.has_inputs = true;
@@ -1033,29 +1301,37 @@ int main(int argc, char **argv)
 	if (kernel_version)
 		printf("Running on 2.6.%d\n", kernel_version);
 
-	printf("\nDriver Info:\n");
-	printf("\tDriver name   : %s\n", vcap.driver);
-	printf("\tCard type     : %s\n", vcap.card);
-	printf("\tBus info      : %s\n", vcap.bus_info);
-	printf("\tDriver version: %d.%d.%d\n",
-			vcap.version >> 16,
-			(vcap.version >> 8) & 0xff,
-			vcap.version & 0xff);
-	printf("\tCapabilities  : 0x%08X\n", vcap.capabilities);
-	printf("%s", cap2s(vcap.capabilities).c_str());
-	if (vcap.capabilities & V4L2_CAP_DEVICE_CAPS) {
-		printf("\tDevice Caps   : 0x%08X\n", vcap.device_caps);
-		printf("%s", cap2s(vcap.device_caps).c_str());
+	media_fd = get_media_fd(node.g_fd());
+
+	if (!node.is_subdev()) {
+		printf("\nDriver Info:\n");
+		printf("\tDriver name   : %s\n", vcap.driver);
+		printf("\tCard type     : %s\n", vcap.card);
+		printf("\tBus info      : %s\n", vcap.bus_info);
+		printf("\tDriver version: %d.%d.%d\n",
+		       vcap.version >> 16,
+		       (vcap.version >> 8) & 0xff,
+		       vcap.version & 0xff);
+		printf("\tCapabilities  : 0x%08X\n", vcap.capabilities);
+		printf("%s", cap2s(vcap.capabilities).c_str());
+		if (vcap.capabilities & V4L2_CAP_DEVICE_CAPS) {
+			printf("\tDevice Caps   : 0x%08X\n", vcap.device_caps);
+			printf("%s", cap2s(vcap.device_caps).c_str());
+		}
 	}
+	if (media_fd >= 0)
+		mdev_info(node.g_fd(), media_fd);
 
 	printf("\nCompliance test for device %s%s:\n\n",
 			device, direct ? "" : " (using libv4l2)");
 
 	/* Required ioctls */
 
-	printf("Required ioctls:\n");
-	printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&node)));
-	printf("\n");
+	if (!node.is_subdev()) {
+		printf("Required ioctls:\n");
+		printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&node)));
+		printf("\n");
+	}
 
 	/* Multiple opens */
 
@@ -1104,6 +1380,24 @@ int main(int argc, char **argv)
 			node.node2 = &sdr_node2;
 		}
 	}
+	if (touch_device) {
+		touch_node2 = node;
+		printf("\ttest second touch open: %s\n",
+				ok(touch_node2.open(touch_device, false) >= 0 ? 0 : errno));
+		if (touch_node2.g_fd() >= 0) {
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&touch_node2)));
+			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
+					ok(testPrio(&node, &touch_node2)));
+			node.node2 = &touch_node2;
+		}
+	}
+	if (subdev_device) {
+		subdev_node2 = node;
+		printf("\ttest second subdev open: %s\n",
+				ok(subdev_node2.subdev_open(subdev_device, false) >= 0 ? 0 : errno));
+		if (subdev_node2.g_fd() >= 0)
+			node.node2 = &subdev_node2;
+	}
 	printf("\ttest for unlimited opens: %s\n",
 		ok(testUnlimitedOpens(&node)));
 	printf("\n");
@@ -1116,7 +1410,8 @@ int main(int argc, char **argv)
 	/* Debug ioctls */
 
 	printf("Debug ioctls:\n");
-	printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(&node)));
+	if (!node.is_subdev())
+		printf("\ttest VIDIOC_DBG_G/S_REGISTER: %s\n", ok(testRegister(&node)));
 	printf("\ttest VIDIOC_LOG_STATUS: %s\n", ok(testLogStatus(&node)));
 	printf("\n");
 
@@ -1320,6 +1615,8 @@ int main(int argc, char **argv)
 		node.node2->close();
 	if (expbuf_device)
 		expbuf_node.close();
+	if (media_fd >= 0)
+		close(media_fd);
 	printf("Total: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 			tests_total, tests_ok, tests_total - tests_ok, warnings);
 	if (!strcmp((const char *)vcap.driver, "vivid") && tests_total - tests_ok > 19) {

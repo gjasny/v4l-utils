@@ -48,6 +48,7 @@
 extern bool show_info;
 extern bool show_warnings;
 extern int kernel_version;
+extern int media_fd;
 extern unsigned warnings;
 
 struct test_query_ext_ctrl: v4l2_query_ext_ctrl {
