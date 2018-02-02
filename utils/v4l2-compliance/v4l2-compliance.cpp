@@ -1048,8 +1048,8 @@ int main(int argc, char **argv)
 		printf("%s", cap2s(vcap.device_caps).c_str());
 	}
 
-	printf("\nCompliance test for device %s (%susing libv4l2):\n\n",
-			device, direct ? "not " : "");
+	printf("\nCompliance test for device %s%s:\n\n",
+			device, direct ? "" : " (using libv4l2)");
 
 	/* Required ioctls */
 
