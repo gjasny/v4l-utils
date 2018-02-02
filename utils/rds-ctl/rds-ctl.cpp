@@ -38,7 +38,6 @@
 #include <signal.h>
 
 #include <linux/videodev2.h>
-#include <libv4l2.h>
 #include <libv4l2rds.h>
 
 #include <list>
@@ -68,7 +67,6 @@ enum Option {
 	OptHelp = 'h',
 	OptReadRds = 'R',
 	OptGetTuner = 'T',
-	OptUseWrapper = 'w',
 	OptAll = 128,
 	OptFreqSeek,
 	OptListDevices,
@@ -117,7 +115,6 @@ static struct option long_options[] = {
 	{"silent", no_argument, 0, OptSilent},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"wait-limit", required_argument, 0, OptWaitLimit},
-	{"wrapper", no_argument, 0, OptUseWrapper},
 	{0, 0, 0, 0}
 };
 
@@ -136,7 +133,6 @@ static void usage_common(void)
 	       "                     default: checks for RDS-capable devices,\n"
 	       "                     uses device with lowest ID\n"
 	       "  -h, --help         display this help message\n"
-	       "  -w, --wrapper      use the libv4l2 wrapper library.\n"
 	       "  --list-devices     list all v4l radio devices with RDS capabilities\n"
 	       );
 }
@@ -192,24 +188,9 @@ static void signal_handler_interrupt(int signum)
 	params.terminate_decoding = true;
 }
 
-static int test_open(const char *file, int oflag)
-{
- 	return params.options[OptUseWrapper] ? v4l2_open(file, oflag) : open(file, oflag);
-}
-
-static int test_close(int fd)
-{
-	return params.options[OptUseWrapper] ? v4l2_close(fd) : close(fd);
-}
-
-static int test_ioctl(int fd, int cmd, void *arg)
-{
-	return params.options[OptUseWrapper] ? v4l2_ioctl(fd, cmd, arg) : ioctl(fd, cmd, arg);
-}
-
 static int doioctl_name(int fd, unsigned long int request, void *parm, const char *name)
 {
-	int retval = test_ioctl(fd, request, parm);
+	int retval = ioctl(fd, request, parm);
 
 	if (retval < 0) {
 		app_result = -1;
@@ -868,8 +849,7 @@ static int parse_cl(int argc, char **argv)
 static void print_driver_info(const struct v4l2_capability *vcap)
 {
 
-	printf("Driver Info (%susing libv4l2):\n",
-			params.options[OptUseWrapper] ? "" : "not ");
+	printf("Driver Info:\n");
 	printf("\tDriver name   : %s\n", vcap->driver);
 	printf("\tCard type     : %s\n", vcap->card);
 	printf("\tBus info      : %s\n", vcap->bus_info);
@@ -962,7 +942,7 @@ static void get_options(const int fd, const int capabilities, struct v4l2_freque
 		band.type = V4L2_TUNER_RADIO;
 		band.index = 0;
 		printf("ioctl: VIDIOC_ENUM_FREQ_BANDS\n");
-		while (test_ioctl(fd, VIDIOC_ENUM_FREQ_BANDS, &band) >= 0) {
+		while (ioctl(fd, VIDIOC_ENUM_FREQ_BANDS, &band) >= 0) {
 			if (band.index)
 				printf("\n");
 			printf("\tIndex          : %d\n", band.index);
@@ -1015,7 +995,7 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 		read_rds_from_fd(fd);
-		test_close(fd);
+		close(fd);
 		exit(0);
 	}
 
@@ -1031,7 +1011,7 @@ int main(int argc, char **argv)
 		params.fd_name[sizeof(params.fd_name) - 1] = '\0';
 		printf("Using device: %s\n", params.fd_name);
 	}
-	if ((fd = test_open(params.fd_name, O_RDONLY | O_NONBLOCK)) < 0) {
+	if ((fd = open(params.fd_name, O_RDONLY | O_NONBLOCK)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", params.fd_name,
 			strerror(errno));
 		exit(1);
@@ -1049,6 +1029,6 @@ int main(int argc, char **argv)
 	if (params.options[OptReadRds])
 		read_rds_from_fd(fd);
 
-	test_close(fd);
+	close(fd);
 	exit(app_result);
 }
