@@ -26,10 +26,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <ctype.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <assert.h>
+#include <set>
 
 #include "v4l2-compliance.h"
 
@@ -46,5 +48,59 @@ int testMediaDeviceInfo(struct node *node)
 	fail_on_test(mdinfo.bus_info[0] && check_string(mdinfo.bus_info, sizeof(mdinfo.bus_info)));
 	fail_on_test(mdinfo.media_version == 0);
 	fail_on_test(mdinfo.driver_version != mdinfo.media_version);
+	return 0;
+}
+
+int testMediaEnum(struct node *node)
+{
+	std::set<__u32> has_default_set;
+	struct media_entity_desc ent;
+	unsigned num_entities = 0;
+	__u32 last_id = 0;
+	int ret;
+
+	memset(&ent, 0, sizeof(ent));
+	// Entity ID 0 can never occur
+	ent.id = 0;
+	fail_on_test(doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent) != EINVAL);
+	for (;;) {
+		memset(&ent, 0xff, sizeof(ent));
+		ent.id = last_id | MEDIA_ENT_ID_FLAG_NEXT;
+		ret = doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent);
+		if (ret == EINVAL)
+			break;
+		num_entities++;
+		fail_on_test(ent.id & MEDIA_ENT_ID_FLAG_NEXT);
+		fail_on_test(!ent.id);
+		fail_on_test(ent.id <= last_id);
+		last_id = ent.id;
+		fail_on_test(check_string(ent.name, sizeof(ent.name)));
+		fail_on_test(ent.revision);
+		fail_on_test(ent.group_id);
+		fail_on_test(!ent.type);
+		fail_on_test(ent.type == ~0U);
+		fail_on_test(ent.flags == ~0U);
+		fail_on_test(ent.pads == 0xffff);
+		fail_on_test(ent.links == 0xffff);
+
+		if (ent.flags & MEDIA_ENT_FL_DEFAULT) {
+			fail_on_test(has_default_set.find(ent.type) != has_default_set.end());
+			has_default_set.insert(ent.type);
+		}
+		if (!(ent.flags & MEDIA_ENT_FL_CONNECTOR)) {
+			fail_on_test(ent.dev.major == ~0U);
+			fail_on_test(ent.dev.minor == ~0U);
+			char dev_path[100];
+			fail_on_test(snprintf(dev_path, sizeof(dev_path), "/sys/dev/char/%d:%d",
+				     ent.dev.major, ent.dev.minor) == -1);
+			DIR *dp = opendir(dev_path);
+			if (dp == NULL)	
+				return fail("couldn't find %s for entity %u\n",
+					    dev_path, ent.id);
+			closedir(dp);
+		}
+		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent));
+	}
+
 	return 0;
 }

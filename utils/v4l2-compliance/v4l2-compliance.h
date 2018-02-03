@@ -189,6 +189,10 @@ int check_0(const void *p, int len);
 int restoreFormat(struct node *node);
 std::string pixfmt2s(unsigned id);
 
+// Media Controller ioctl tests
+int testMediaDeviceInfo(struct node *node);
+int testMediaEnum(struct node *node);
+
 // Debug ioctl tests
 int testRegister(struct node *node);
 int testLogStatus(struct node *node);
@@ -244,9 +248,6 @@ int testSubDevEnum(struct node *node, unsigned which, unsigned pad);
 int testSubDevFormat(struct node *node, unsigned which, unsigned pad);
 int testSubDevSelection(struct node *node, unsigned which, unsigned pad);
 int testSubDevFrameInterval(struct node *node, unsigned pad);
-
-// Media Controller ioctl tests
-int testMediaDeviceInfo(struct node *node);
 
 // Buffer ioctl tests
 int testReqBufs(struct node *node);
