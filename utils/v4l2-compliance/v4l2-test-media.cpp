@@ -75,6 +75,8 @@ static media_v2_pad *v2_pads;
 static id_set v2_pads_set;
 static media_v2_link *v2_links;
 static id_set v2_links_set;
+static std::map<__u32, __u32> entity_num_pads;
+static unsigned num_data_links;
 
 int testMediaTopology(struct node *node)
 {
@@ -158,6 +160,7 @@ int testMediaTopology(struct node *node)
 		fail_on_test(v2_pads_set.find(pad.id) != v2_pads_set.end());
 		v2_pads_set.insert(pad.id);
 		fail_on_test(v2_entities_set.find(pad.entity_id) == v2_entities_set.end());
+		entity_num_pads[pad.entity_id]++;
 	}
 	for (unsigned i = 0; i < topology.num_links; i++) {
 		media_v2_link &link = v2_links[i];
@@ -176,6 +179,7 @@ int testMediaTopology(struct node *node)
 			fail_on_test(v2_pads_set.find(link.source_id) == v2_pads_set.end());
 			fail_on_test(v2_pads_set.find(link.sink_id) == v2_pads_set.end());
 			fail_on_test(link.source_id == link.sink_id);
+			num_data_links++;
 		}
 	}
 	node->topology = &topology;
@@ -193,6 +197,7 @@ int testMediaEnum(struct node *node)
 	id_set has_default_set;
 	struct media_entity_desc ent;
 	struct media_links_enum links;
+	unsigned num_links = 0;
 	__u32 last_id = 0;
 	int ret;
 
@@ -231,9 +236,13 @@ int testMediaEnum(struct node *node)
 						 false, ent.id));
 		}
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent));
+		fail_on_test(entity_num_pads[ent.id] != ent.pads);
+		num_links += ent.links;
 
+		fail_on_test(v2_entities_set.find(ent.id) == v2_entities_set.end());
 		ent_map[ent.id] = ent;
 	}
+	fail_on_test(num_data_links != num_links);
 
 	for (entity_map::iterator iter = ent_map.begin();
 	     iter != ent_map.end(); ++iter) {
@@ -321,6 +330,8 @@ int testMediaEnum(struct node *node)
 	memset(&links, 0, sizeof(links));
 	fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EINVAL);
 
+	for (unsigned i = 0; i < topology.num_entities; i++)
+		fail_on_test(ent_map.find(v2_ents[i].id) == ent_map.end());
 	return 0;
 }
 
