@@ -102,7 +102,6 @@ struct base_node {
 	__u8 has_subdev_enum_fival;
 	__u8 has_subdev_fmt;
 	__u8 has_subdev_selection;
-	__u8 has_subdev_crop;
 	int frame_interval_pad;
 	int enum_frame_interval_pad;
 	__u32 fbuf_caps;

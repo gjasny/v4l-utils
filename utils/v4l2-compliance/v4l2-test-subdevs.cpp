@@ -387,21 +387,31 @@ int testSubDevSelection(struct node *node, unsigned which, unsigned pad)
 {
 	struct v4l2_subdev_selection sel;
 	struct v4l2_subdev_selection s_sel;
+	struct v4l2_subdev_crop crop;
 	bool is_sink = node->pads[pad].flags & MEDIA_PAD_FL_SINK;
 	bool have_sel;
 	int ret;
 
 	targets[V4L2_SEL_TGT_NATIVE_SIZE].readonly = is_sink;
+	memset(&crop, 0, sizeof(crop));
+	crop.pad = pad;
+	crop.which = which;
 	memset(&sel, 0, sizeof(sel));
 	sel.which = which;
 	sel.pad = pad;
 	sel.target = V4L2_SEL_TGT_CROP;
 	ret = doioctl(node, VIDIOC_SUBDEV_G_SELECTION, &sel);
 	node->has_subdev_selection |= (ret != ENOTTY) << which;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_CROP, &crop) != ret);
 	if (ret == ENOTTY) {
 		fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_SELECTION, &sel) != ENOTTY);
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_CROP, &crop) != ENOTTY);
 		return ret;
 	}
+	fail_on_test(check_0(crop.reserved, sizeof(crop.reserved)));
+	fail_on_test(crop.which != which);
+	fail_on_test(crop.pad != pad);
+	fail_on_test(memcmp(&crop.rect, &sel.r, sizeof(sel.r)));
 
 	for (unsigned tgt = 0; targets[tgt].target != ~0U; tgt++) {
 		targets[tgt].found = false;
@@ -435,6 +445,17 @@ int testSubDevSelection(struct node *node, unsigned which, unsigned pad)
 		s_sel = sel;
 		memset(s_sel.reserved, 0xff, sizeof(s_sel.reserved));
 		ret = doioctl(node, VIDIOC_SUBDEV_S_SELECTION, &s_sel);
+		if (tgt == V4L2_SEL_TGT_CROP) {
+			crop.rect = sel.r;
+			memset(crop.reserved, 0xff, sizeof(crop.reserved));
+			fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_CROP, &crop) != ret);
+			if (!ret) {
+				fail_on_test(check_0(crop.reserved, sizeof(crop.reserved)));
+				fail_on_test(crop.which != which);
+				fail_on_test(crop.pad != pad);
+				fail_on_test(memcmp(&crop.rect, &sel.r, sizeof(sel.r)));
+			}
+		}
 		fail_on_test(!ret && targets[tgt].readonly);
 		fail_on_test(s_sel.which != which);
 		fail_on_test(s_sel.pad != pad);

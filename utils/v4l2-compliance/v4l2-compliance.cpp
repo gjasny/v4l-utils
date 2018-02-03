@@ -1535,7 +1535,7 @@ int main(int argc, char **argv)
 				printf("\ttest %s VIDIOC_SUBDEV_G/S_FMT: %s\n",
 				       which ? "Active" : "Try",
 				       ok(testSubDevFormat(&node, which, pad)));
-				printf("\ttest %s VIDIOC_SUBDEV_G/S_SELECTION: %s\n",
+				printf("\ttest %s VIDIOC_SUBDEV_G/S_SELECTION/CROP: %s\n",
 				       which ? "Active" : "Try",
 				       ok(testSubDevSelection(&node, which, pad)));
 				if (which)
@@ -1552,8 +1552,6 @@ int main(int argc, char **argv)
 				fail("VIDIOC_SUBDEV_G/S_FMT: try/active mismatch\n");
 			if (node.has_subdev_selection && node.has_subdev_selection < 3)
 				fail("VIDIOC_SUBDEV_G/S_SELECTION: try/active mismatch\n");
-			if (node.has_subdev_selection != node.has_subdev_crop)
-				fail("VIDIOC_SUBDEV_G/S_SELECTION: crop/selection mismatch\n");
 			if (node.has_subdev_selection &&
 			    node.has_subdev_selection != node.has_subdev_fmt)
 				fail("VIDIOC_SUBDEV_G/S_SELECTION: fmt/selection mismatch\n");
