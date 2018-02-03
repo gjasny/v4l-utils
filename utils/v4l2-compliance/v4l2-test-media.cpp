@@ -302,12 +302,16 @@ int testMediaSetupLink(struct node *node)
 		memset(link.reserved, 0xff, sizeof(link.reserved));
 		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link));
 		//fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
+		link.flags |= MEDIA_LNK_FL_INTERFACE_LINK;
+		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link) != EINVAL);
 	}
 	if (link_enabled.source.entity) {
 		link = link_enabled;
 		memset(link.reserved, 0xff, sizeof(link.reserved));
 		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link));
 		//fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
+		link.flags |= MEDIA_LNK_FL_INTERFACE_LINK;
+		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link) != EINVAL);
 	}
 	return 0;
 }
