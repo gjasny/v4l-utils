@@ -47,7 +47,7 @@ int testSubDevEnum(struct node *node, unsigned pad)
 	mbus_core_enum.which = V4L2_SUBDEV_FORMAT_TRY;
 	mbus_core_enum.index = ~0;
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_ENUM_MBUS_CODE, &mbus_core_enum) != EINVAL);
-	mbus_core_enum.pad = ~0;
+	mbus_core_enum.pad = node->entity.pads;
 	mbus_core_enum.index = 0;
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_ENUM_MBUS_CODE, &mbus_core_enum) != EINVAL);
 	memset(&mbus_core_enum, 0xff, sizeof(mbus_core_enum));

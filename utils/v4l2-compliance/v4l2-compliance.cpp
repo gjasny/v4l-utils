@@ -1518,16 +1518,20 @@ int main(int argc, char **argv)
 	/* Sub-device ioctls */
 
 	if (node.is_subdev()) {
-		printf("Sub-Device ioctls:\n");
-		printf("\ttest VIDIOC_ENUM_MBUS_CODE: %s\n",
-		       ok(testSubDevEnum(&node, 0)));
-		printf("\n");
+		for (unsigned pad = 0; pad < node.entity.pads; pad++) {
+			printf("Sub-Device ioctls (%s Pad %u):\n",
+			       (node.pads[pad].flags & MEDIA_PAD_FL_SINK) ?
+                                "Sink" : "Source", pad);
+			printf("\ttest VIDIOC_ENUM_MBUS_CODE: %s\n",
+			       ok(testSubDevEnum(&node, pad)));
+			printf("\n");
+		}
 	}
 
 	max_io = node.inputs > node.outputs ? node.inputs : node.outputs;
 
 	for (unsigned io = 0; io < (max_io ? max_io : 1); io++) {
-		const char *prefix = "";
+		char suffix[100] = "";
 
 		node.std_controls = node.priv_controls = 0;
 		node.std_compound_controls = node.priv_compound_controls = 0;
@@ -1539,9 +1543,8 @@ int main(int argc, char **argv)
 			node.buftype_pixfmts[idx].clear();
 
 		if (max_io) {
-			printf("Test %s %d:\n\n",
-				node.can_capture ? "input" : "output", io);
-			prefix = "\t";
+			sprintf(suffix, " (%s %u)",
+				node.can_capture ? "Input" : "Output", io);
 			if (node.can_capture) {
 				struct v4l2_input descr;
 
@@ -1561,45 +1564,45 @@ int main(int argc, char **argv)
 
 		/* Control ioctls */
 
-		printf("%sControl ioctls:\n", prefix);
-		printf("%s\ttest VIDIOC_QUERY_EXT_CTRL/QUERYMENU: %s\n", prefix, ok(testQueryExtControls(&node)));
-		printf("%s\ttest VIDIOC_QUERYCTRL: %s\n", prefix, ok(testQueryControls(&node)));
-		printf("%s\ttest VIDIOC_G/S_CTRL: %s\n", prefix, ok(testSimpleControls(&node)));
-		printf("%s\ttest VIDIOC_G/S/TRY_EXT_CTRLS: %s\n", prefix, ok(testExtendedControls(&node)));
-		printf("%s\ttest VIDIOC_(UN)SUBSCRIBE_EVENT/DQEVENT: %s\n", prefix, ok(testEvents(&node)));
-		printf("%s\ttest VIDIOC_G/S_JPEGCOMP: %s\n", prefix, ok(testJpegComp(&node)));
-		printf("%s\tStandard Controls: %d Private Controls: %d\n", prefix,
+		printf("Control ioctls%s:\n", suffix);
+		printf("\ttest VIDIOC_QUERY_EXT_CTRL/QUERYMENU: %s\n", ok(testQueryExtControls(&node)));
+		printf("\ttest VIDIOC_QUERYCTRL: %s\n", ok(testQueryControls(&node)));
+		printf("\ttest VIDIOC_G/S_CTRL: %s\n", ok(testSimpleControls(&node)));
+		printf("\ttest VIDIOC_G/S/TRY_EXT_CTRLS: %s\n", ok(testExtendedControls(&node)));
+		printf("\ttest VIDIOC_(UN)SUBSCRIBE_EVENT/DQEVENT: %s\n", ok(testEvents(&node)));
+		printf("\ttest VIDIOC_G/S_JPEGCOMP: %s\n", ok(testJpegComp(&node)));
+		printf("\tStandard Controls: %d Private Controls: %d\n",
 				node.std_controls, node.priv_controls);
 		printf("\n");
 
 		/* Format ioctls */
 
-		printf("%sFormat ioctls:\n", prefix);
-		printf("%s\ttest VIDIOC_ENUM_FMT/FRAMESIZES/FRAMEINTERVALS: %s\n", prefix, ok(testEnumFormats(&node)));
-		printf("%s\ttest VIDIOC_G/S_PARM: %s\n", prefix, ok(testParm(&node)));
-		printf("%s\ttest VIDIOC_G_FBUF: %s\n", prefix, ok(testFBuf(&node)));
-		printf("%s\ttest VIDIOC_G_FMT: %s\n", prefix, ok(testGetFormats(&node)));
-		printf("%s\ttest VIDIOC_TRY_FMT: %s\n", prefix, ok(testTryFormats(&node)));
-		printf("%s\ttest VIDIOC_S_FMT: %s\n", prefix, ok(testSetFormats(&node)));
-		printf("%s\ttest VIDIOC_G_SLICED_VBI_CAP: %s\n", prefix, ok(testSlicedVBICap(&node)));
-		printf("%s\ttest Cropping: %s\n", prefix, ok(testCropping(&node)));
-		printf("%s\ttest Composing: %s\n", prefix, ok(testComposing(&node)));
-		printf("%s\ttest Scaling: %s\n", prefix, ok(testScaling(&node)));
+		printf("Format ioctls%s:\n", suffix);
+		printf("\ttest VIDIOC_ENUM_FMT/FRAMESIZES/FRAMEINTERVALS: %s\n", ok(testEnumFormats(&node)));
+		printf("\ttest VIDIOC_G/S_PARM: %s\n", ok(testParm(&node)));
+		printf("\ttest VIDIOC_G_FBUF: %s\n", ok(testFBuf(&node)));
+		printf("\ttest VIDIOC_G_FMT: %s\n", ok(testGetFormats(&node)));
+		printf("\ttest VIDIOC_TRY_FMT: %s\n", ok(testTryFormats(&node)));
+		printf("\ttest VIDIOC_S_FMT: %s\n", ok(testSetFormats(&node)));
+		printf("\ttest VIDIOC_G_SLICED_VBI_CAP: %s\n", ok(testSlicedVBICap(&node)));
+		printf("\ttest Cropping: %s\n", ok(testCropping(&node)));
+		printf("\ttest Composing: %s\n", ok(testComposing(&node)));
+		printf("\ttest Scaling: %s\n", ok(testScaling(&node)));
 		printf("\n");
 
 		/* Codec ioctls */
 
-		printf("%sCodec ioctls:\n", prefix);
-		printf("%s\ttest VIDIOC_(TRY_)ENCODER_CMD: %s\n", prefix, ok(testEncoder(&node)));
-		printf("%s\ttest VIDIOC_G_ENC_INDEX: %s\n", prefix, ok(testEncIndex(&node)));
-		printf("%s\ttest VIDIOC_(TRY_)DECODER_CMD: %s\n", prefix, ok(testDecoder(&node)));
+		printf("Codec ioctls%s:\n", suffix);
+		printf("\ttest VIDIOC_(TRY_)ENCODER_CMD: %s\n", ok(testEncoder(&node)));
+		printf("\ttest VIDIOC_G_ENC_INDEX: %s\n", ok(testEncIndex(&node)));
+		printf("\ttest VIDIOC_(TRY_)DECODER_CMD: %s\n", ok(testDecoder(&node)));
 		printf("\n");
 
 		/* Buffer ioctls */
 
-		printf("%sBuffer ioctls:\n", prefix);
-		printf("%s\ttest VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: %s\n", prefix, ok(testReqBufs(&node)));
-		printf("%s\ttest VIDIOC_EXPBUF: %s\n", prefix, ok(testExpBuf(&node)));
+		printf("Buffer ioctls%s:\n", suffix);
+		printf("\ttest VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: %s\n", ok(testReqBufs(&node)));
+		printf("\ttest VIDIOC_EXPBUF: %s\n", ok(testExpBuf(&node)));
 		printf("\n");
 	}
 
