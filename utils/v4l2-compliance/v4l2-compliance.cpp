@@ -1518,6 +1518,8 @@ int main(int argc, char **argv)
 	/* Sub-device ioctls */
 
 	if (node.is_subdev()) {
+		node.frame_interval_pad = -1;
+		node.enum_frame_interval_pad = -1;
 		for (unsigned pad = 0; pad < node.entity.pads; pad++) {
 			printf("Sub-Device ioctls (%s Pad %u):\n",
 			       (node.pads[pad].flags & MEDIA_PAD_FL_SINK) ?
@@ -1530,6 +1532,9 @@ int main(int argc, char **argv)
 				printf("\ttest %s VIDIOC_SUBDEV_ENUM_MBUS_CODE/FRAME_SIZE/FRAME_INTERVAL: %s\n",
 				       which ? "Active" : "Try",
 				       ok(testSubDevEnum(&node, which, pad)));
+				if (which)
+					printf("\ttest VIDIOC_SUBDEV_G/S_FRAME_INTERVAL: %s\n",
+					       ok(testSubDevFrameInterval(&node, pad)));
 			}
 			if (node.has_subdev_enum_code && node.has_subdev_enum_code < 3)
 				fail("VIDIOC_SUBDEV_ENUM_MBUS_CODE: try/active mismatch\n");

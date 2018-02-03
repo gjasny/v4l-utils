@@ -100,6 +100,8 @@ struct base_node {
 	__u8 has_subdev_enum_code;
 	__u8 has_subdev_enum_fsize;
 	__u8 has_subdev_enum_fival;
+	int frame_interval_pad;
+	int enum_frame_interval_pad;
 	__u32 fbuf_caps;
 	pixfmt_map buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
 	frmsizes_set frmsizes;
@@ -237,6 +239,7 @@ int testDecoder(struct node *node);
 
 // SubDev ioctl tests
 int testSubDevEnum(struct node *node, unsigned which, unsigned pad);
+int testSubDevFrameInterval(struct node *node, unsigned pad);
 
 // Media Controller ioctl tests
 int testMediaDeviceInfo(struct node *node);

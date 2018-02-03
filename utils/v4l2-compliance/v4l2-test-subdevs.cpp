@@ -51,6 +51,11 @@ static int testSubDevEnumFrameInterval(struct node *node, unsigned which,
 	node->has_subdev_enum_fival |= (ret != ENOTTY) << which;
 	if (ret == ENOTTY)
 		return ret;
+	if (which)
+		fail_on_test(node->enum_frame_interval_pad != (int)pad);
+	else
+		fail_on_test(node->enum_frame_interval_pad >= 0);
+	node->enum_frame_interval_pad = pad;
 	fie.which = ~0;
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL, &fie) != EINVAL);
 	fie.which = which;
@@ -80,6 +85,7 @@ static int testSubDevEnumFrameInterval(struct node *node, unsigned which,
 	fail_on_test(fie.width != width);
 	fail_on_test(fie.height != height);
 	fail_on_test(fie.index);
+	fail_on_test(fie.interval.numerator == ~0U || fie.interval.denominator == ~0U);
 	do {
 		fie.index++;
 		ret = doioctl(node, VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL, &fie);
@@ -241,5 +247,50 @@ int testSubDevEnum(struct node *node, unsigned which, unsigned pad)
 		ret = testSubDevEnumFrameSize(node, which, pad, mbus_core_enum.code);
 		fail_on_test(ret && ret != ENOTTY);
 	}
+	return 0;
+}
+
+int testSubDevFrameInterval(struct node *node, unsigned pad)
+{
+	struct v4l2_subdev_frame_interval fival;
+	struct v4l2_fract ival;
+	int ret;
+
+	memset(&fival, 0xff, sizeof(fival));
+	fival.pad = pad;
+	ret = doioctl(node, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &fival);
+	if (ret == ENOTTY) {
+		fail_on_test(node->enum_frame_interval_pad >= 0);
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival) != ENOTTY);
+		return ret;
+	}
+	fail_on_test(node->frame_interval_pad >= 0);
+	fail_on_test(node->enum_frame_interval_pad != (int)pad);
+	node->frame_interval_pad = pad;
+	fail_on_test(check_0(fival.reserved, sizeof(fival.reserved)));
+	fail_on_test(fival.pad != pad);
+	fail_on_test(!fival.interval.numerator);
+	fail_on_test(!fival.interval.denominator);
+	fail_on_test(fival.interval.numerator == ~0U || fival.interval.denominator == ~0U);
+	ival = fival.interval;
+	memset(fival.reserved, 0xff, sizeof(fival.reserved));
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival));
+	fail_on_test(check_0(fival.reserved, sizeof(fival.reserved)));
+	fival.pad = node->entity.pads;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &fival) != EINVAL);
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival) != EINVAL);
+	fival.pad = pad;
+	fival.interval = ival;
+	fival.interval.numerator = 0;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival));
+	fail_on_test(!fival.interval.numerator);
+	fail_on_test(!fival.interval.denominator);
+	fival.interval = ival;
+	fival.interval.denominator = 0;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival));
+	fail_on_test(!fival.interval.numerator);
+	fail_on_test(!fival.interval.denominator);
+	fival.interval = ival;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival));
 	return 0;
 }
