@@ -1521,9 +1521,13 @@ int main(int argc, char **argv)
 		for (unsigned pad = 0; pad < node.entity.pads; pad++) {
 			printf("Sub-Device ioctls (%s Pad %u):\n",
 			       (node.pads[pad].flags & MEDIA_PAD_FL_SINK) ?
-                                "Sink" : "Source", pad);
-			printf("\ttest VIDIOC_ENUM_MBUS_CODE: %s\n",
-			       ok(testSubDevEnum(&node, pad)));
+			       "Sink" : "Source", pad);
+			for (unsigned which = V4L2_SUBDEV_FORMAT_TRY;
+			     which <= V4L2_SUBDEV_FORMAT_ACTIVE; which++) {
+				printf("\ttest %s VIDIOC_ENUM_MBUS_CODE/FRAME_SIZE/FRAME_INTERVAL: %s\n",
+				       which ? "Active" : "Try",
+				       ok(testSubDevEnum(&node, which, pad)));
+			}
 			printf("\n");
 		}
 	}

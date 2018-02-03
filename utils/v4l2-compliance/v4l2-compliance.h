@@ -28,6 +28,7 @@
 #include <set>
 #include <map>
 #include <linux/videodev2.h>
+#include <linux/v4l2-subdev.h>
 #include <linux/media.h>
 
 #ifdef ANDROID
@@ -231,7 +232,7 @@ int testEncIndex(struct node *node);
 int testDecoder(struct node *node);
 
 // SubDev ioctl tests
-int testSubDevEnum(struct node *node, unsigned pad);
+int testSubDevEnum(struct node *node, unsigned which, unsigned pad);
 
 // Media Controller ioctl tests
 int testMediaDeviceInfo(struct node *node);
