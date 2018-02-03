@@ -28,6 +28,7 @@
 #include <set>
 #include <map>
 #include <linux/videodev2.h>
+#include <linux/media.h>
 
 #ifdef ANDROID
 #include <android-config.h>
@@ -91,6 +92,9 @@ struct base_node {
 	unsigned std_compound_controls;
 	unsigned priv_controls;
 	unsigned priv_compound_controls;
+	struct media_entity_desc entity;
+	struct media_pad_desc *pads;
+	struct media_link_desc *links;
 	__u32 fbuf_caps;
 	pixfmt_map buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
 	frmsizes_set frmsizes;

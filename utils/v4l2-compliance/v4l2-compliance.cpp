@@ -38,8 +38,6 @@
 #include <signal.h>
 #include <vector>
 
-#include <linux/media.h>
-
 #include "v4l2-compliance.h"
 #ifndef ANDROID
 #include "version.h"
@@ -877,12 +875,15 @@ static std::string linkflags2s(__u32 flags)
 	}
 }
 
-static void mdev_info(int fd, int media_fd)
+static void mdev_info(node *node, int media_fd)
 {
 	struct media_device_info mdinfo;
 	struct stat sb;
+	int fd = node->g_fd();
 
-	if (fd >= 0 && fstat(fd, &sb) == -1) {
+	if (media_fd < 0)
+		media_fd = fd;
+	else if (fd >= 0 && fstat(fd, &sb) == -1) {
 		fprintf(stderr, "failed to stat file\n");
 		exit(1);
 	}
@@ -890,7 +891,7 @@ static void mdev_info(int fd, int media_fd)
 	if (ioctl(media_fd, MEDIA_IOC_DEVICE_INFO, &mdinfo))
 		return;
 
-	struct media_entity_desc ent;
+	struct media_entity_desc &ent = node->entity;
 	bool found = false;
 
 	printf("Media Driver Info:\n");
@@ -909,7 +910,7 @@ static void mdev_info(int fd, int media_fd)
 	       (mdinfo.driver_version >> 8) & 0xff,
 	       mdinfo.driver_version & 0xff);
 
-	if (fd < 0)
+	if (node->is_media())
 		return;
 
 	memset(&ent, 0, sizeof(ent));
@@ -922,8 +923,10 @@ static void mdev_info(int fd, int media_fd)
 		}
 		ent.id |= MEDIA_ENT_ID_FLAG_NEXT;
 	}
-	if (!found)
+	if (!found) {
+		ent.id = 0;
 		return;
+	}
 
 	printf("Entity Info:\n");
 	printf("\tID   : %u\n", ent.id);
@@ -936,24 +939,24 @@ static void mdev_info(int fd, int media_fd)
 	}
 
 	struct media_links_enum links_enum;
-	struct media_pad_desc pads[ent.pads];
-	struct media_link_desc links[ent.links];
+	node->pads = new media_pad_desc[ent.pads];
+	node->links = new media_link_desc[ent.links];
 
 	memset(&links_enum, 0, sizeof(links_enum));
 	links_enum.entity = ent.id;
-	links_enum.pads = pads;
-	links_enum.links = links;
+	links_enum.pads = node->pads;
+	links_enum.links = node->links;
 	if (ioctl(media_fd, MEDIA_IOC_ENUM_LINKS, &links_enum))
 		return;
 
 	for (unsigned i = 0; i < ent.pads; i++)
-		printf("\tPad %u: %s\n", pads[i].index,
-		       padflags2s(pads[i].flags).c_str());
+		printf("\tPad %u: %s\n", node->pads[i].index,
+		       padflags2s(node->pads[i].flags).c_str());
 	for (unsigned i = 0; i < ent.links; i++)
 		printf("\tLinks %u->%u: %s\n",
-		       links[i].source.entity,
-		       links[i].sink.entity,
-		       linkflags2s(links[i].flags).c_str());
+		       node->links[i].source.entity,
+		       node->links[i].sink.entity,
+		       linkflags2s(node->links[i].flags).c_str());
 }
 
 
@@ -1353,9 +1356,9 @@ int main(int argc, char **argv)
 		}
 	}
 	if (node.is_media())
-		mdev_info(-1, node.g_fd());
+		mdev_info(&node, -1);
 	else if (media_fd >= 0)
-		mdev_info(node.g_fd(), media_fd);
+		mdev_info(&node, media_fd);
 
 	printf("\nCompliance test for device %s%s:\n\n",
 			device, direct ? "" : " (using libv4l2)");

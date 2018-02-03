@@ -30,7 +30,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <assert.h>
-#include <linux/media.h>
+
 #include "v4l2-compliance.h"
 
 int testMediaDeviceInfo(struct node *node)
