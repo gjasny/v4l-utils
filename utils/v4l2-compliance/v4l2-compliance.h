@@ -194,6 +194,7 @@ std::string pixfmt2s(unsigned id);
 int testMediaDeviceInfo(struct node *node);
 int testMediaTopology(struct node *node);
 int testMediaEnum(struct node *node);
+int testMediaSetupLink(struct node *node);
 
 // Debug ioctl tests
 int testRegister(struct node *node);

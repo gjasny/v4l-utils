@@ -1477,6 +1477,7 @@ int main(int argc, char **argv)
 			       node.topology->num_interfaces,
 			       node.topology->num_pads,
 			       node.topology->num_links);
+		printf("\ttest MEDIA_IOC_SETUP_LINK: %s\n", ok(testMediaSetupLink(&node)));
 		printf("\n");
 		goto done;
 	}

@@ -132,6 +132,10 @@ int testMediaTopology(struct node *node)
 	return 0;
 }
 
+static media_link_desc link_immutable;
+static media_link_desc link_enabled;
+static media_link_desc link_disabled;
+
 int testMediaEnum(struct node *node)
 {
 	typedef std::map<__u32, media_entity_desc> entity_map;
@@ -237,6 +241,8 @@ int testMediaEnum(struct node *node)
 			if (fl & MEDIA_LNK_FL_IMMUTABLE) {
 				fail_on_test(!(fl & MEDIA_LNK_FL_ENABLED));
 				fail_on_test(fl & MEDIA_LNK_FL_DYNAMIC);
+				if (!link_immutable.source.entity)
+					link_immutable = links.links[i];
 			}
 			if (fl & MEDIA_LNK_FL_DYNAMIC)
 				fail_on_test(!(fl & MEDIA_LNK_FL_IMMUTABLE));
@@ -245,6 +251,12 @@ int testMediaEnum(struct node *node)
 				fail_on_test(found_enabled);
 				found_enabled = true;
 			}
+			if ((fl & MEDIA_LNK_FL_ENABLED) && !link_enabled.source.entity)
+				link_enabled = links.links[i];
+			if (!(fl & (MEDIA_LNK_FL_IMMUTABLE | MEDIA_LNK_FL_ENABLED)) &&
+			    !link_disabled.source.entity)
+				link_disabled = links.links[i];
+
 			// This ioctl only returns data links
 			fail_on_test(fl & MEDIA_LNK_FL_LINK_TYPE);
 			fail_on_test(links.links[i].sink.entity == links.links[i].source.entity);
@@ -266,5 +278,36 @@ int testMediaEnum(struct node *node)
 	memset(&links, 0, sizeof(links));
 	fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EINVAL);
 
+	return 0;
+}
+
+int testMediaSetupLink(struct node *node)
+{
+	struct media_link_desc link;
+	int ret;
+
+	memset(&link, 0, sizeof(link));
+	ret = doioctl(node, MEDIA_IOC_SETUP_LINK, &link);
+	if (ret == ENOTTY)
+		return ret;
+	fail_on_test(ret != EINVAL);
+	if (link_immutable.source.entity) {
+		link = link_immutable;
+		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link));
+		link.flags = MEDIA_LNK_FL_ENABLED;
+		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link) != EINVAL);
+	}
+	if (link_disabled.source.entity) {
+		link = link_disabled;
+		memset(link.reserved, 0xff, sizeof(link.reserved));
+		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link));
+		//fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
+	}
+	if (link_enabled.source.entity) {
+		link = link_enabled;
+		memset(link.reserved, 0xff, sizeof(link.reserved));
+		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link));
+		//fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
+	}
 	return 0;
 }
