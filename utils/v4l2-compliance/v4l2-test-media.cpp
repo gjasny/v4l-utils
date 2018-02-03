@@ -53,10 +53,10 @@ int testMediaDeviceInfo(struct node *node)
 
 int testMediaEnum(struct node *node)
 {
+	typedef std::map<__u32, media_entity_desc> entity_map;
+	entity_map ent_map;
 	typedef std::set<__u32> id_set;
 	id_set has_default_set;
-	id_set entity_set;
-	id_set remote_ent_set;
 	struct media_entity_desc ent;
 	struct media_links_enum links;
 	__u32 last_id = 0;
@@ -103,7 +103,13 @@ int testMediaEnum(struct node *node)
 		}
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent));
 
-		entity_set.insert(ent.id);
+		ent_map[ent.id] = ent;
+	}
+
+	for (entity_map::iterator iter = ent_map.begin();
+	     iter != ent_map.end(); ++iter) {
+		media_entity_desc &ent = iter->second;
+
 		memset(&links, 0, sizeof(links));
 		links.entity = ent.id;
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links));
@@ -138,6 +144,7 @@ int testMediaEnum(struct node *node)
 			bool is_sink = links.links[i].sink.entity == ent.id;
 			__u32 fl = links.links[i].flags;
 			__u32 remote_ent;
+			__u16 remote_pad;
 
 			fail_on_test(links.links[i].source.entity != ent.id &&
 				     links.links[i].sink.entity != ent.id);
@@ -154,20 +161,24 @@ int testMediaEnum(struct node *node)
 			}
 			// This ioctl only returns data links
 			fail_on_test(fl & MEDIA_LNK_FL_LINK_TYPE);
-			if (is_sink)
+			fail_on_test(links.links[i].sink.entity == links.links[i].source.entity);
+			if (is_sink) {
+				fail_on_test(links.links[i].sink.index >= ent.pads);
 				remote_ent = links.links[i].source.entity;
-			else
+				remote_pad = links.links[i].source.index;
+			} else {
+				fail_on_test(links.links[i].source.index >= ent.pads);
 				remote_ent = links.links[i].sink.entity;
-			remote_ent_set.insert(remote_ent);
+				remote_pad = links.links[i].sink.index;
+			}
+			fail_on_test(ent_map.find(remote_ent) == ent_map.end());
+			media_entity_desc &remote = ent_map[remote_ent];
+			fail_on_test(remote_pad >= remote.pads);
 		}
 	}
 
 	memset(&links, 0, sizeof(links));
 	fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EINVAL);
-
-	for (id_set::const_iterator iter = remote_ent_set.begin();
-	     iter != remote_ent_set.end(); ++iter)
-		fail_on_test(entity_set.find(*iter) == entity_set.end());
 
 	return 0;
 }
