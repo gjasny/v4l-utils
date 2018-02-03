@@ -231,11 +231,81 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 	return 0;
 }
 
+static int checkSubDevEnumTimings(struct node *node, __u32 pad)
+{
+	struct v4l2_enum_dv_timings enumtimings;
+	struct v4l2_dv_timings timings;
+	bool has_timings;
+	int ret;
+
+	memset(&timings, 0xff, sizeof(timings));
+	ret = doioctl(node, VIDIOC_G_DV_TIMINGS, &timings);
+	has_timings = ret != ENOTTY;
+	fail_on_test(has_timings && ret);
+	if (has_timings) {
+		fail_on_test(check_0(timings.bt.reserved, sizeof(timings.bt.reserved)));
+		memset(timings.bt.reserved, 0xff, sizeof(timings.bt.reserved));
+		fail_on_test(doioctl(node, VIDIOC_S_DV_TIMINGS, &timings));
+		fail_on_test(check_0(timings.bt.reserved, sizeof(timings.bt.reserved)));
+	} else {
+		fail_on_test(doioctl(node, VIDIOC_S_DV_TIMINGS, &timings) != ENOTTY);
+		fail_on_test(doioctl(node, VIDIOC_QUERY_DV_TIMINGS, &timings) != ENOTTY);
+	}
+
+	for (unsigned i = 0; ; i++) {
+		memset(&enumtimings, 0xff, sizeof(enumtimings));
+
+		enumtimings.index = i;
+		enumtimings.pad = pad;
+		ret = doioctl(node, VIDIOC_ENUM_DV_TIMINGS, &enumtimings);
+		fail_on_test(ret != ENOTTY && !has_timings);
+		fail_on_test(ret == ENOTTY && has_timings);
+		if (ret == ENOTTY)
+			return ret;
+		fail_on_test(ret && ret != EINVAL);
+		fail_on_test(ret && !i);
+		if (ret)
+			break;
+		fail_on_test(check_0(enumtimings.reserved, sizeof(enumtimings.reserved)));
+		fail_on_test(check_0(enumtimings.timings.bt.reserved,
+				     sizeof(enumtimings.timings.bt.reserved)));
+		fail_on_test(enumtimings.index != i);
+		fail_on_test(enumtimings.pad != pad);
+		memset(enumtimings.timings.bt.reserved, 0xff,
+		       sizeof(enumtimings.timings.bt.reserved));
+		fail_on_test(doioctl(node, VIDIOC_S_DV_TIMINGS, &enumtimings.timings));
+		fail_on_test(check_0(enumtimings.timings.bt.reserved,
+				     sizeof(enumtimings.timings.bt.reserved)));
+	}
+	enumtimings.pad = node->entity.pads;
+	enumtimings.index = 0;
+	fail_on_test(doioctl(node, VIDIOC_ENUM_DV_TIMINGS, &enumtimings) != EINVAL);
+
+	fail_on_test(doioctl(node, VIDIOC_S_DV_TIMINGS, &timings));
+	memset(&timings, 0xff, sizeof(timings));
+	ret = doioctl(node, VIDIOC_QUERY_DV_TIMINGS, &timings);
+	fail_on_test(ret == ENOTTY);
+	fail_on_test(ret == ENODATA);
+	if (!ret || ret == ERANGE)
+		fail_on_test(check_0(timings.bt.reserved, sizeof(timings.bt.reserved)));
+	return 0;
+}
+
 int testTimings(struct node *node)
 {
 	int ret;
 	unsigned i, o;
 	bool has_timings = false;
+
+	if (node->is_subdev()) {
+		for (unsigned pad = 0; pad < node->entity.pads; pad++) {
+			ret = checkSubDevEnumTimings(node, pad);
+			if (!ret)
+				has_timings = true;
+			fail_on_test(ret && ret != ENOTTY);
+		}
+		return has_timings ? 0 : ENOTTY;
+	}
 
 	for (i = 0; i < node->inputs; i++) {
 		struct v4l2_input input;
