@@ -68,10 +68,14 @@ int testMediaTopology(struct node *node)
 	fail_on_test(!topology.num_entities);
 	fail_on_test(!topology.num_pads);
 	fail_on_test(topology.topology_version == ~0ULL);
-	fail_on_test(topology.num_entities == ~0ULL);
-	fail_on_test(topology.num_interfaces == ~0ULL);
-	fail_on_test(topology.num_pads == ~0ULL);
-	fail_on_test(topology.num_links == ~0ULL);
+	fail_on_test(topology.num_entities == ~0U);
+	fail_on_test(topology.num_interfaces == ~0U);
+	fail_on_test(topology.num_pads == ~0U);
+	fail_on_test(topology.num_links == ~0U);
+	//fail_on_test(topology.reserved1);
+	//fail_on_test(topology.reserved2);
+	//fail_on_test(topology.reserved3);
+	//fail_on_test(topology.reserved4);
 	topology.ptr_entities = 4;
 	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
 	topology.ptr_entities = 0;
@@ -149,6 +153,7 @@ int testMediaEnum(struct node *node)
 		ret = doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent);
 		if (ret == EINVAL)
 			break;
+		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(ent.id & MEDIA_ENT_ID_FLAG_NEXT);
 		fail_on_test(!ent.id);
 		fail_on_test(ent.id <= last_id);
@@ -200,13 +205,16 @@ int testMediaEnum(struct node *node)
 		fail_on_test(ent.links && doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EFAULT);
 		links.links = NULL;
 		links.pads = new media_pad_desc[ent.pads];
+		memset(links.pads, 0xff, ent.pads * sizeof(*links.pads));
 		links.links = new media_link_desc[ent.links];
+		memset(links.links, 0xff, ent.links * sizeof(*links.links));
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links));
 
 		bool found_source = false;
 		for (unsigned i = 0; i < ent.pads; i++) {
 			fail_on_test(links.pads[i].entity != ent.id);
 			fail_on_test(links.pads[i].index != i);
+			fail_on_test(check_0(links.pads[i].reserved, sizeof(links.pads[i].reserved)));
 			__u32 fl = links.pads[i].flags;
 			fail_on_test(!(fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)));
 			fail_on_test((fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)) ==
@@ -225,6 +233,7 @@ int testMediaEnum(struct node *node)
 
 			fail_on_test(links.links[i].source.entity != ent.id &&
 				     links.links[i].sink.entity != ent.id);
+			fail_on_test(check_0(links.links[i].reserved, sizeof(links.links[i].reserved)));
 			if (fl & MEDIA_LNK_FL_IMMUTABLE) {
 				fail_on_test(!(fl & MEDIA_LNK_FL_ENABLED));
 				fail_on_test(fl & MEDIA_LNK_FL_DYNAMIC);
