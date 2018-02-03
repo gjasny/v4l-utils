@@ -363,3 +363,93 @@ int testSubDevFormat(struct node *node, unsigned which, unsigned pad)
 	fail_on_test(s_fmt.format.xfer_func != fmt.format.xfer_func);
 	return 0;
 }
+
+struct target_info {
+	__u32 target;
+	bool allowed;
+	bool readonly;
+	bool found;
+};
+
+static target_info targets[] = {
+	{ V4L2_SEL_TGT_CROP, true },
+	{ V4L2_SEL_TGT_CROP_DEFAULT, false, true },
+	{ V4L2_SEL_TGT_CROP_BOUNDS, true, true },
+	{ V4L2_SEL_TGT_NATIVE_SIZE, true },
+	{ V4L2_SEL_TGT_COMPOSE, true },
+	{ V4L2_SEL_TGT_COMPOSE_DEFAULT, false, true },
+	{ V4L2_SEL_TGT_COMPOSE_BOUNDS, true, true },
+	{ V4L2_SEL_TGT_COMPOSE_PADDED, false, true },
+	{ ~0U },
+};
+
+int testSubDevSelection(struct node *node, unsigned which, unsigned pad)
+{
+	struct v4l2_subdev_selection sel;
+	struct v4l2_subdev_selection s_sel;
+	bool is_sink = node->pads[pad].flags & MEDIA_PAD_FL_SINK;
+	bool have_sel;
+	int ret;
+
+	targets[V4L2_SEL_TGT_NATIVE_SIZE].readonly = is_sink;
+	memset(&sel, 0, sizeof(sel));
+	sel.which = which;
+	sel.pad = pad;
+	sel.target = V4L2_SEL_TGT_CROP;
+	ret = doioctl(node, VIDIOC_SUBDEV_G_SELECTION, &sel);
+	node->has_subdev_selection |= (ret != ENOTTY) << which;
+	if (ret == ENOTTY) {
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_SELECTION, &sel) != ENOTTY);
+		return ret;
+	}
+
+	for (unsigned tgt = 0; targets[tgt].target != ~0U; tgt++) {
+		targets[tgt].found = false;
+		memset(&sel, 0xff, sizeof(sel));
+		sel.which = which;
+		sel.pad = pad;
+		sel.target = tgt;
+		ret = doioctl(node, VIDIOC_SUBDEV_G_SELECTION, &sel);
+		targets[tgt].found = !ret;
+		fail_on_test(ret && ret != EINVAL);
+		if (ret)
+			continue;
+		have_sel = true;
+		fail_on_test(!targets[tgt].allowed);
+		fail_on_test(check_0(sel.reserved, sizeof(sel.reserved)));
+		fail_on_test(sel.which != which);
+		fail_on_test(sel.pad != pad);
+		fail_on_test(sel.target != tgt);
+		fail_on_test(!sel.r.width);
+		fail_on_test(sel.r.width == ~0U);
+		fail_on_test(!sel.r.height);
+		fail_on_test(sel.r.height == ~0U);
+		fail_on_test(sel.r.top == ~0);
+		fail_on_test(sel.r.left == ~0);
+		sel.which = ~0;
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_SELECTION, &sel) != EINVAL);
+		sel.which = 0;
+		sel.pad = node->entity.pads;
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_SELECTION, &sel) != EINVAL);
+		sel.pad = pad;
+		s_sel = sel;
+		memset(s_sel.reserved, 0xff, sizeof(s_sel.reserved));
+		ret = doioctl(node, VIDIOC_SUBDEV_S_SELECTION, &s_sel);
+		fail_on_test(!ret && targets[tgt].readonly);
+		fail_on_test(s_sel.which != which);
+		fail_on_test(s_sel.pad != pad);
+		if (ret && !targets[tgt].readonly && tgt != V4L2_SEL_TGT_NATIVE_SIZE)
+			warn("VIDIOC_SUBDEV_G_SELECTION is supported for target %u but not VIDIOC_SUBDEV_S_SELECTION\n", tgt);
+		if (ret)
+			continue;
+		fail_on_test(check_0(s_sel.reserved, sizeof(s_sel.reserved)));
+		fail_on_test(s_sel.flags == sel.flags);
+		fail_on_test(s_sel.r.top == sel.r.top);
+		fail_on_test(s_sel.r.left == sel.r.left);
+		fail_on_test(s_sel.r.width == sel.r.width);
+		fail_on_test(s_sel.r.height == sel.r.height);
+	}
+
+	fail_on_test(!have_sel);
+	return 0;
+}
