@@ -51,11 +51,30 @@ int testMediaDeviceInfo(struct node *node)
 	return 0;
 }
 
+static int checkDevice(__u32 major, __u32 minor, bool iface, __u32 id)
+{
+	char dev_path[100];
+	fail_on_test(snprintf(dev_path, sizeof(dev_path), "/sys/dev/char/%d:%d",
+			      major, minor) == -1);
+	DIR *dp = opendir(dev_path);
+	if (dp == NULL)	
+		return fail("couldn't find %s for %s %u\n",
+			    dev_path, iface ? "interface" : "entity", id);
+	closedir(dp);
+	return 0;
+}
+
+typedef std::set<__u32> id_set;
+
 static media_v2_topology topology;
 static media_v2_entity *v2_ents;
+static id_set v2_entities_set;
 static media_v2_interface *v2_ifaces;
+static id_set v2_interfaces_set;
 static media_v2_pad *v2_pads;
+static id_set v2_pads_set;
 static media_v2_link *v2_links;
+static id_set v2_links_set;
 
 int testMediaTopology(struct node *node)
 {
@@ -112,21 +131,52 @@ int testMediaTopology(struct node *node)
 		media_v2_entity &ent = v2_ents[i];
 
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
+		fail_on_test(check_string(ent.name, sizeof(ent.name)));
+		fail_on_test(!ent.id);
+		fail_on_test(!ent.function);
+		fail_on_test(v2_entities_set.find(ent.id) != v2_entities_set.end());
+		v2_entities_set.insert(ent.id);
 	}
 	for (unsigned i = 0; i < topology.num_interfaces; i++) {
 		media_v2_interface &iface = v2_ifaces[i];
 
 		fail_on_test(check_0(iface.reserved, sizeof(iface.reserved)));
+		fail_on_test(checkDevice(iface.devnode.major, iface.devnode.minor,
+					 true, iface.id));
+		fail_on_test(!iface.id);
+		fail_on_test(!iface.intf_type);
+		fail_on_test(iface.flags);
+		fail_on_test(v2_interfaces_set.find(iface.id) != v2_interfaces_set.end());
+		v2_interfaces_set.insert(iface.id);
 	}
 	for (unsigned i = 0; i < topology.num_pads; i++) {
 		media_v2_pad &pad = v2_pads[i];
 
 		fail_on_test(check_0(pad.reserved, sizeof(pad.reserved)));
+		fail_on_test(!pad.id);
+		fail_on_test(!pad.entity_id);
+		fail_on_test(v2_pads_set.find(pad.id) != v2_pads_set.end());
+		v2_pads_set.insert(pad.id);
+		fail_on_test(v2_entities_set.find(pad.entity_id) == v2_entities_set.end());
 	}
 	for (unsigned i = 0; i < topology.num_links; i++) {
 		media_v2_link &link = v2_links[i];
+		bool is_iface = link.flags & MEDIA_LNK_FL_LINK_TYPE;
 
 		fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
+		fail_on_test(!link.id);
+		fail_on_test(!link.source_id);
+		fail_on_test(!link.sink_id);
+		fail_on_test(v2_links_set.find(link.id) != v2_links_set.end());
+		v2_links_set.insert(link.id);
+		if (is_iface) {
+			fail_on_test(v2_interfaces_set.find(link.source_id) == v2_interfaces_set.end());
+			fail_on_test(v2_entities_set.find(link.sink_id) == v2_entities_set.end());
+		} else {
+			fail_on_test(v2_pads_set.find(link.source_id) == v2_pads_set.end());
+			fail_on_test(v2_pads_set.find(link.sink_id) == v2_pads_set.end());
+			fail_on_test(link.source_id == link.sink_id);
+		}
 	}
 	node->topology = &topology;
 	return 0;
@@ -140,7 +190,6 @@ int testMediaEnum(struct node *node)
 {
 	typedef std::map<__u32, media_entity_desc> entity_map;
 	entity_map ent_map;
-	typedef std::set<__u32> id_set;
 	id_set has_default_set;
 	struct media_entity_desc ent;
 	struct media_links_enum links;
@@ -178,14 +227,8 @@ int testMediaEnum(struct node *node)
 		if (!(ent.flags & MEDIA_ENT_FL_CONNECTOR)) {
 			fail_on_test(ent.dev.major == ~0U);
 			fail_on_test(ent.dev.minor == ~0U);
-			char dev_path[100];
-			fail_on_test(snprintf(dev_path, sizeof(dev_path), "/sys/dev/char/%d:%d",
-				     ent.dev.major, ent.dev.minor) == -1);
-			DIR *dp = opendir(dev_path);
-			if (dp == NULL)	
-				return fail("couldn't find %s for entity %u\n",
-					    dev_path, ent.id);
-			closedir(dp);
+			fail_on_test(checkDevice(ent.dev.major, ent.dev.minor,
+						 false, ent.id));
 		}
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent));
 
