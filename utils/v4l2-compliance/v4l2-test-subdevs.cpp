@@ -294,3 +294,72 @@ int testSubDevFrameInterval(struct node *node, unsigned pad)
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival));
 	return 0;
 }
+
+static int checkMBusFrameFmt(struct node *node, struct v4l2_mbus_framefmt &fmt)
+{
+	fail_on_test(check_0(fmt.reserved, sizeof(fmt.reserved)));
+	fail_on_test(fmt.width == 0 || fmt.width == ~0U);
+	fail_on_test(fmt.height == 0 || fmt.height == ~0U);
+	fail_on_test(fmt.code == 0 || fmt.code == ~0U);
+	fail_on_test(fmt.field == ~0U);
+	fail_on_test(fmt.colorspace == ~0U);
+	//TBD fail_on_test(!fmt.colorspace);
+	fail_on_test(fmt.ycbcr_enc == 0xffff);
+	fail_on_test(fmt.quantization == 0xffff);
+	fail_on_test(fmt.xfer_func == 0xffff);
+	fail_on_test(!fmt.colorspace &&
+		     (fmt.ycbcr_enc || fmt.quantization || fmt.xfer_func));
+	return 0;
+}
+
+int testSubDevFormat(struct node *node, unsigned which, unsigned pad)
+{
+	struct v4l2_subdev_format fmt;
+	struct v4l2_subdev_format s_fmt;
+	int ret;
+
+	memset(&fmt, 0, sizeof(fmt));
+	fmt.which = which;
+	fmt.pad = pad;
+	ret = doioctl(node, VIDIOC_SUBDEV_G_FMT, &fmt);
+	node->has_subdev_fmt |= (ret != ENOTTY) << which;
+	if (ret == ENOTTY) {
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FMT, &fmt) != ENOTTY);
+		return ret;
+	}
+	fmt.which = ~0;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_FMT, &fmt) != EINVAL);
+	fmt.which = 0;
+	fmt.pad = node->entity.pads;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_FMT, &fmt) != EINVAL);
+	memset(&fmt, 0xff, sizeof(fmt));
+	fmt.which = which;
+	fmt.pad = pad;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_FMT, &fmt));
+	fail_on_test(check_0(fmt.reserved, sizeof(fmt.reserved)));
+	fail_on_test(fmt.which != which);
+	fail_on_test(fmt.pad != pad);
+	fail_on_test(checkMBusFrameFmt(node, fmt.format));
+	s_fmt = fmt;
+	memset(s_fmt.reserved, 0xff, sizeof(s_fmt.reserved));
+	memset(s_fmt.format.reserved, 0xff, sizeof(s_fmt.format.reserved));
+	ret = doioctl(node, VIDIOC_SUBDEV_S_FMT, &s_fmt);
+	fail_on_test(ret && ret != ENOTTY);
+	fail_on_test(s_fmt.which != which);
+	fail_on_test(s_fmt.pad != pad);
+	if (ret) {
+		warn("VIDIOC_SUBDEV_G_FMT is supported but not VIDIOC_SUBDEV_S_FMT\n");
+		return 0;
+	}
+	fail_on_test(check_0(s_fmt.reserved, sizeof(s_fmt.reserved)));
+	fail_on_test(checkMBusFrameFmt(node, s_fmt.format));
+	fail_on_test(s_fmt.format.width != fmt.format.width);
+	fail_on_test(s_fmt.format.height != fmt.format.height);
+	fail_on_test(s_fmt.format.code != fmt.format.code);
+	fail_on_test(s_fmt.format.field != fmt.format.field);
+	fail_on_test(s_fmt.format.colorspace != fmt.format.colorspace);
+	fail_on_test(s_fmt.format.ycbcr_enc != fmt.format.ycbcr_enc);
+	fail_on_test(s_fmt.format.quantization != fmt.format.quantization);
+	fail_on_test(s_fmt.format.xfer_func != fmt.format.xfer_func);
+	return 0;
+}

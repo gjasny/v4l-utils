@@ -1532,6 +1532,9 @@ int main(int argc, char **argv)
 				printf("\ttest %s VIDIOC_SUBDEV_ENUM_MBUS_CODE/FRAME_SIZE/FRAME_INTERVAL: %s\n",
 				       which ? "Active" : "Try",
 				       ok(testSubDevEnum(&node, which, pad)));
+				printf("\ttest %s VIDIOC_SUBDEV_G/S_FMT: %s\n",
+				       which ? "Active" : "Try",
+				       ok(testSubDevFormat(&node, which, pad)));
 				if (which)
 					printf("\ttest VIDIOC_SUBDEV_G/S_FRAME_INTERVAL: %s\n",
 					       ok(testSubDevFrameInterval(&node, pad)));
@@ -1542,6 +1545,8 @@ int main(int argc, char **argv)
 				fail("VIDIOC_SUBDEV_ENUM_FRAME_SIZE: try/active mismatch\n");
 			if (node.has_subdev_enum_fival && node.has_subdev_enum_fival < 3)
 				fail("VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL: try/active mismatch\n");
+			if (node.has_subdev_fmt && node.has_subdev_fmt < 3)
+				fail("VIDIOC_SUBDEV_G/S_FMT: try/active mismatch\n");
 			printf("\n");
 		}
 	}
