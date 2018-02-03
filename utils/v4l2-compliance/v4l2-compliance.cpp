@@ -1522,12 +1522,21 @@ int main(int argc, char **argv)
 			printf("Sub-Device ioctls (%s Pad %u):\n",
 			       (node.pads[pad].flags & MEDIA_PAD_FL_SINK) ?
 			       "Sink" : "Source", pad);
+			node.has_subdev_enum_code = 0;
+			node.has_subdev_enum_fsize = 0;
+			node.has_subdev_enum_fival = 0;
 			for (unsigned which = V4L2_SUBDEV_FORMAT_TRY;
 			     which <= V4L2_SUBDEV_FORMAT_ACTIVE; which++) {
-				printf("\ttest %s VIDIOC_ENUM_MBUS_CODE/FRAME_SIZE/FRAME_INTERVAL: %s\n",
+				printf("\ttest %s VIDIOC_SUBDEV_ENUM_MBUS_CODE/FRAME_SIZE/FRAME_INTERVAL: %s\n",
 				       which ? "Active" : "Try",
 				       ok(testSubDevEnum(&node, which, pad)));
 			}
+			if (node.has_subdev_enum_code && node.has_subdev_enum_code < 3)
+				fail("VIDIOC_SUBDEV_ENUM_MBUS_CODE: try/active mismatch\n");
+			if (node.has_subdev_enum_fsize && node.has_subdev_enum_fsize < 3)
+				fail("VIDIOC_SUBDEV_ENUM_FRAME_SIZE: try/active mismatch\n");
+			if (node.has_subdev_enum_fival && node.has_subdev_enum_fival < 3)
+				fail("VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL: try/active mismatch\n");
 			printf("\n");
 		}
 	}

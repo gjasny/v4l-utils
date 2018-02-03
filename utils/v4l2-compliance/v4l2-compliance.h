@@ -96,6 +96,10 @@ struct base_node {
 	struct media_entity_desc entity;
 	struct media_pad_desc *pads;
 	struct media_link_desc *links;
+	struct v4l2_subdev_frame_interval_enum subdev_ival;
+	__u8 has_subdev_enum_code;
+	__u8 has_subdev_enum_fsize;
+	__u8 has_subdev_enum_fival;
 	__u32 fbuf_caps;
 	pixfmt_map buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
 	frmsizes_set frmsizes;
