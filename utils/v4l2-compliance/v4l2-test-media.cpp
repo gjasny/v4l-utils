@@ -51,6 +51,83 @@ int testMediaDeviceInfo(struct node *node)
 	return 0;
 }
 
+static media_v2_topology topology;
+static media_v2_entity *v2_ents;
+static media_v2_interface *v2_ifaces;
+static media_v2_pad *v2_pads;
+static media_v2_link *v2_links;
+
+int testMediaTopology(struct node *node)
+{
+	memset(&topology, 0xff, sizeof(topology));
+	topology.ptr_entities = 0;
+	topology.ptr_interfaces = 0;
+	topology.ptr_pads = 0;
+	topology.ptr_links = 0;
+	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology));
+	fail_on_test(!topology.num_entities);
+	fail_on_test(!topology.num_pads);
+	fail_on_test(topology.topology_version == ~0ULL);
+	fail_on_test(topology.num_entities == ~0ULL);
+	fail_on_test(topology.num_interfaces == ~0ULL);
+	fail_on_test(topology.num_pads == ~0ULL);
+	fail_on_test(topology.num_links == ~0ULL);
+	topology.ptr_entities = 4;
+	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
+	topology.ptr_entities = 0;
+	topology.ptr_interfaces = 4;
+	fail_on_test(topology.num_interfaces &&
+		     doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
+	topology.ptr_interfaces = 0;
+	topology.ptr_pads = 4;
+	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
+	topology.ptr_pads = 0;
+	topology.ptr_links = 4;
+	fail_on_test(topology.num_links &&
+		     doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
+	topology.ptr_links = 0;
+	v2_ents = new media_v2_entity[topology.num_entities];
+	memset(v2_ents, 0xff, topology.num_entities * sizeof(*v2_ents));
+	topology.ptr_entities = (__u64)v2_ents;
+	v2_ifaces = new media_v2_interface[topology.num_interfaces];
+	memset(v2_ifaces, 0xff, topology.num_interfaces * sizeof(*v2_ifaces));
+	topology.ptr_interfaces = (__u64)v2_ifaces;
+	v2_pads = new media_v2_pad[topology.num_pads];
+	memset(v2_pads, 0xff, topology.num_pads * sizeof(*v2_pads));
+	topology.ptr_pads = (__u64)v2_pads;
+	v2_links = new media_v2_link[topology.num_links];
+	memset(v2_links, 0xff, topology.num_links * sizeof(*v2_links));
+	topology.ptr_links = (__u64)v2_links;
+	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology));
+	v2_ents = (media_v2_entity *)topology.ptr_entities;
+	v2_ifaces = (media_v2_interface *)topology.ptr_interfaces;
+	v2_pads = (media_v2_pad *)topology.ptr_pads;
+	v2_links = (media_v2_link *)topology.ptr_links;
+
+	for (unsigned i = 0; i < topology.num_entities; i++) {
+		media_v2_entity &ent = v2_ents[i];
+
+		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
+	}
+	for (unsigned i = 0; i < topology.num_interfaces; i++) {
+		media_v2_interface &iface = v2_ifaces[i];
+
+		fail_on_test(check_0(iface.reserved, sizeof(iface.reserved)));
+	}
+	for (unsigned i = 0; i < topology.num_pads; i++) {
+		media_v2_pad &pad = v2_pads[i];
+
+		fail_on_test(check_0(pad.reserved, sizeof(pad.reserved)));
+	}
+	for (unsigned i = 0; i < topology.num_links; i++) {
+		media_v2_link &link = v2_links[i];
+
+		fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
+	}
+	node->topology = &topology;
+	return 0;
+}
+
 int testMediaEnum(struct node *node)
 {
 	typedef std::map<__u32, media_entity_desc> entity_map;

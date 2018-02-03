@@ -93,10 +93,11 @@ struct base_node {
 	unsigned std_compound_controls;
 	unsigned priv_controls;
 	unsigned priv_compound_controls;
-	struct media_entity_desc entity;
-	struct media_pad_desc *pads;
-	struct media_link_desc *links;
-	struct v4l2_subdev_frame_interval_enum subdev_ival;
+	media_entity_desc entity;
+	media_pad_desc *pads;
+	media_link_desc *links;
+	media_v2_topology *topology;
+	v4l2_subdev_frame_interval_enum subdev_ival;
 	__u8 has_subdev_enum_code;
 	__u8 has_subdev_enum_fsize;
 	__u8 has_subdev_enum_fival;
@@ -191,6 +192,7 @@ std::string pixfmt2s(unsigned id);
 
 // Media Controller ioctl tests
 int testMediaDeviceInfo(struct node *node);
+int testMediaTopology(struct node *node);
 int testMediaEnum(struct node *node);
 
 // Debug ioctl tests

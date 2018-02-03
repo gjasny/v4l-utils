@@ -1469,7 +1469,14 @@ int main(int argc, char **argv)
 
 	if (node.is_media()) {
 		printf("Media Controller ioctls:\n");
+		printf("\ttest MEDIA_IOC_G_TOPOLOGY: %s\n", ok(testMediaTopology(&node)));
 		printf("\ttest MEDIA_IOC_ENUM_ENTITIES/LINKS: %s\n", ok(testMediaEnum(&node)));
+		if (node.topology)
+			printf("\tEntities: %u Interfaces: %u Pads: %u Links: %u\n",
+			       node.topology->num_entities,
+			       node.topology->num_interfaces,
+			       node.topology->num_pads,
+			       node.topology->num_links);
 		printf("\n");
 		goto done;
 	}
