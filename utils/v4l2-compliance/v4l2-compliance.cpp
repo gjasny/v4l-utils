@@ -1469,7 +1469,7 @@ int main(int argc, char **argv)
 
 	if (node.is_media()) {
 		printf("Media Controller ioctls:\n");
-		printf("\ttest MEDIA_IOC_ENUM_ENTITIES: %s\n", ok(testMediaEnum(&node)));
+		printf("\ttest MEDIA_IOC_ENUM_ENTITIES/LINKS: %s\n", ok(testMediaEnum(&node)));
 		printf("\n");
 		goto done;
 	}

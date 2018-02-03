@@ -53,9 +53,12 @@ int testMediaDeviceInfo(struct node *node)
 
 int testMediaEnum(struct node *node)
 {
-	std::set<__u32> has_default_set;
+	typedef std::set<__u32> id_set;
+	id_set has_default_set;
+	id_set entity_set;
+	id_set remote_ent_set;
 	struct media_entity_desc ent;
-	unsigned num_entities = 0;
+	struct media_links_enum links;
 	__u32 last_id = 0;
 	int ret;
 
@@ -69,7 +72,6 @@ int testMediaEnum(struct node *node)
 		ret = doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent);
 		if (ret == EINVAL)
 			break;
-		num_entities++;
 		fail_on_test(ent.id & MEDIA_ENT_ID_FLAG_NEXT);
 		fail_on_test(!ent.id);
 		fail_on_test(ent.id <= last_id);
@@ -100,7 +102,72 @@ int testMediaEnum(struct node *node)
 			closedir(dp);
 		}
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent));
+
+		entity_set.insert(ent.id);
+		memset(&links, 0, sizeof(links));
+		links.entity = ent.id;
+		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links));
+		fail_on_test(links.entity != ent.id);
+		fail_on_test(links.pads);
+		fail_on_test(links.links);
+		links.pads = (struct media_pad_desc *)4;
+		fail_on_test(ent.pads && doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EFAULT);
+		links.pads = NULL;
+		links.links = (struct media_link_desc *)4;
+		fail_on_test(ent.links && doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EFAULT);
+		links.links = NULL;
+		links.pads = new media_pad_desc[ent.pads];
+		links.links = new media_link_desc[ent.links];
+		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links));
+
+		bool found_source = false;
+		for (unsigned i = 0; i < ent.pads; i++) {
+			fail_on_test(links.pads[i].entity != ent.id);
+			fail_on_test(links.pads[i].index != i);
+			__u32 fl = links.pads[i].flags;
+			fail_on_test(!(fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)));
+			fail_on_test((fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)) ==
+				     (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE));
+			if (fl & MEDIA_PAD_FL_SOURCE)
+				found_source = true;
+			else
+				fail_on_test(found_source);
+		}
+		bool found_enabled = false;
+		for (unsigned i = 0; i < ent.links; i++) {
+			bool is_sink = links.links[i].sink.entity == ent.id;
+			__u32 fl = links.links[i].flags;
+			__u32 remote_ent;
+
+			fail_on_test(links.links[i].source.entity != ent.id &&
+				     links.links[i].sink.entity != ent.id);
+			if (fl & MEDIA_LNK_FL_IMMUTABLE) {
+				fail_on_test(!(fl & MEDIA_LNK_FL_ENABLED));
+				fail_on_test(fl & MEDIA_LNK_FL_DYNAMIC);
+			}
+			if (fl & MEDIA_LNK_FL_DYNAMIC)
+				fail_on_test(!(fl & MEDIA_LNK_FL_IMMUTABLE));
+			if (is_sink && (fl & MEDIA_LNK_FL_ENABLED)) {
+				// only one incoming link can be enabled
+				fail_on_test(found_enabled);
+				found_enabled = true;
+			}
+			// This ioctl only returns data links
+			fail_on_test(fl & MEDIA_LNK_FL_LINK_TYPE);
+			if (is_sink)
+				remote_ent = links.links[i].source.entity;
+			else
+				remote_ent = links.links[i].sink.entity;
+			remote_ent_set.insert(remote_ent);
+		}
 	}
+
+	memset(&links, 0, sizeof(links));
+	fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EINVAL);
+
+	for (id_set::const_iterator iter = remote_ent_set.begin();
+	     iter != remote_ent_set.end(); ++iter)
+		fail_on_test(entity_set.find(*iter) == entity_set.end());
 
 	return 0;
 }
