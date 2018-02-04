@@ -626,212 +626,28 @@ static const char *make_devname(const char *device, const char *devname)
 	return device;
 }
 
-int main(int argc, char **argv)
+enum node_type {
+	TYPE_UNKNOWN,
+	TYPE_VIDEO,
+	TYPE_VBI,
+	TYPE_RADIO,
+	TYPE_SDR,
+	TYPE_TOUCH,
+	TYPE_SUBDEV,
+	TYPE_MEDIA,
+};
+
+static void test(struct node &node, struct node &expbuf_node, node_type type,
+		 unsigned frame_count)
 {
-	int i;
-	struct node node, node2;
-	enum node_type {
-		TYPE_UNKNOWN,
-		TYPE_VIDEO,
-		TYPE_VBI,
-		TYPE_RADIO,
-		TYPE_SDR,
-		TYPE_TOUCH,
-		TYPE_SUBDEV,
-		TYPE_MEDIA,
-	} type = TYPE_UNKNOWN;
-	struct node expbuf_node;
-
-	/* command args */
-	int ch;
-	const char *device = "/dev/video0";
-	const char *expbuf_device = NULL;	/* --expbuf-device device */
+	struct node node2;
 	struct v4l2_capability vcap;		/* list_cap */
-	unsigned frame_count = 60;
-	char short_options[26 * 2 * 3 + 1];
-	char *value, *subs;
-	int idx = 0;
-
-	for (i = 0; long_options[i].name; i++) {
-		if (!isalpha(long_options[i].val))
-			continue;
-		short_options[idx++] = long_options[i].val;
-		if (long_options[i].has_arg == required_argument) {
-			short_options[idx++] = ':';
-		} else if (long_options[i].has_arg == optional_argument) {
-			short_options[idx++] = ':';
-			short_options[idx++] = ':';
-		}
-	}
-	while (1) {
-		int option_index = 0;
-
-		short_options[idx] = 0;
-		ch = getopt_long(argc, argv, short_options,
-				 long_options, &option_index);
-		if (ch == -1)
-			break;
-
-		options[(int)ch] = 1;
-		switch (ch) {
-		case OptHelp:
-			usage();
-			return 0;
-		case OptSetDevice:
-			device = make_devname(optarg, "video");
-			type = TYPE_VIDEO;
-			break;
-		case OptSetVbiDevice:
-			device = make_devname(optarg, "vbi");
-			type = TYPE_VBI;
-			break;
-		case OptSetRadioDevice:
-			device = make_devname(optarg, "radio");
-			type = TYPE_RADIO;
-			break;
-		case OptSetSWRadioDevice:
-			device = make_devname(optarg, "swradio");
-			type = TYPE_SDR;
-			break;
-		case OptSetTouchDevice:
-			device = make_devname(optarg, "v4l-touch");
-			type = TYPE_TOUCH;
-			break;
-		case OptSetSubDevDevice:
-			device = make_devname(optarg, "v4l-subdev");
-			type = TYPE_SUBDEV;
-			break;
-		case OptSetMediaDevice:
-			device = make_devname(optarg, "media");
-			type = TYPE_MEDIA;
-			break;
-		case OptSetExpBufDevice:
-			expbuf_device = optarg;
-			if (expbuf_device[0] >= '0' && expbuf_device[0] <= '9' && strlen(expbuf_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/video%s", expbuf_device);
-				expbuf_device = newdev;
-			}
-			break;
-		case OptStreaming:
-			if (optarg)
-				frame_count = strtoul(optarg, NULL, 0);
-			break;
-		case OptStreamAllColorTest:
-			subs = optarg;
-			while (*subs != '\0') {
-				static const char *const subopts[] = {
-					"color",
-					"skip",
-					"perc",
-					NULL
-				};
-
-				switch (parse_subopt(&subs, subopts, &value)) {
-				case 0:
-					if (!strcmp(value, "red"))
-						color_component = 0;
-					else if (!strcmp(value, "green"))
-						color_component = 1;
-					else if (!strcmp(value, "blue"))
-						color_component = 2;
-					else {
-						usage();
-						exit(1);
-					}
-					break;
-				case 1:
-					color_skip = strtoul(value, 0L, 0);
-					break;
-				case 2:
-					color_perc = strtoul(value, 0L, 0);
-					if (color_perc == 0)
-						color_perc = 90;
-					if (color_perc > 100)
-						color_perc = 100;
-					break;
-				default:
-					usage();
-					exit(1);
-				}
-			}
-			break;
-		case OptNoWarnings:
-			show_warnings = false;
-			break;
-		case OptVerbose:
-			show_info = true;
-			break;
-		case ':':
-			fprintf(stderr, "Option `%s' requires a value\n",
-				argv[optind]);
-			usage();
-			return 1;
-		case '?':
-			fprintf(stderr, "Unknown argument `%s'\n",
-				argv[optind]);
-			usage();
-			return 1;
-		}
-	}
-	if (optind < argc) {
-		printf("unknown arguments: ");
-		while (optind < argc)
-			printf("%s ", argv[optind++]);
-		printf("\n");
-		usage();
-		return 1;
-	}
-	bool direct = !options[OptUseWrapper];
-
-	struct utsname uts;
-	int v1, v2, v3;
-	int fd;
-
-	uname(&uts);
-	sscanf(uts.release, "%d.%d.%d", &v1, &v2, &v3);
-	if (v1 == 2 && v2 == 6)
-		kernel_version = v3;
-
-	node.s_trace(options[OptTrace]);
-	switch (type) {
-	case TYPE_MEDIA:
-		node.s_direct(true);
-		fd = node.media_open(device, false);
-		break;
-	case TYPE_SUBDEV:
-		node.s_direct(true);
-		fd = node.subdev_open(device, false);
-		break;
-	default:
-		node.s_direct(direct);
-		fd = node.open(device, false);
-		break;
-	}
-	if (fd < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", device,
-			strerror(errno));
-		exit(1);
-	}
-
-	if (expbuf_device) {
-		expbuf_node.s_trace(options[OptTrace]);
-		expbuf_node.s_direct(true);
-		fd = expbuf_node.open(expbuf_device, false);
-		if (fd < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n", expbuf_device,
-				strerror(errno));
-			exit(1);
-		}
-	}
 
 	node.is_video = type == TYPE_VIDEO;
 	node.is_vbi = type == TYPE_VBI;
 	node.is_radio = type == TYPE_RADIO;
 	node.is_sdr = type == TYPE_SDR;
 	node.is_touch = type == TYPE_TOUCH;
-	node.device = device;
 
 	if (node.is_v4l2())
 		doioctl(&node, VIDIOC_QUERYCAP, &vcap);
@@ -864,22 +680,29 @@ int main(int argc, char **argv)
 
 	/* Information Opts */
 
-#ifdef SHA
-#define STR(x) #x
-#define STRING(x) STR(x)
-	printf("v4l2-compliance SHA   : %s\n", STRING(SHA));
-#else
-	printf("v4l2-compliance SHA   : not available\n");
-#endif
-	if (kernel_version)
-		printf("Running on 2.6.%d\n", kernel_version);
-
 	if (!node.is_media())
 		media_fd = mi_get_media_fd(node.g_fd());
 
 	if (node.is_v4l2()) {
 		printf("\nDriver Info:\n");
 		v4l2_info_capability(vcap);
+
+		if (!strcmp((const char *)vcap.driver, "vivid")) {
+#define VIVID_CID_VIVID_BASE		(0x00f00000 | 0xf000)
+#define VIVID_CID_DISCONNECT		(VIVID_CID_VIVID_BASE + 65)
+
+			struct v4l2_queryctrl qc;
+
+			// This control is present for all devices if error
+			// injection is enabled in the vivid driver.
+			qc.id = VIVID_CID_DISCONNECT;
+			if (!doioctl(&node, VIDIOC_QUERYCTRL, &qc)) {
+				printf("\nThe vivid driver has error injection enabled which will cause\n");
+				printf("the compliance test to fail. Load the vivid module with the\n");
+				printf("no_error_inj=1 module option to disable error injection.\n");
+				exit(1);
+			}
+		}
 	}
 	if (node.is_media())
 		mi_media_info_for_fd(node.g_fd(), -1);
@@ -887,7 +710,7 @@ int main(int argc, char **argv)
 		mi_media_info_for_fd(media_fd, node.g_fd());
 
 	printf("\nCompliance test for device %s%s:\n\n",
-			device, direct ? "" : " (using libv4l2)");
+			node.device, node.g_direct() ? "" : " (using libv4l2)");
 
 	/* Required ioctls */
 
@@ -907,22 +730,21 @@ int main(int argc, char **argv)
 	/* Multiple opens */
 
 	printf("Allow for multiple opens:\n");
-	//if (video_device) {
 	node2 = node;
 	switch (type) {
 	case TYPE_SUBDEV:
-		printf("\ttest second %s open: %s\n", device,
-		       ok(node2.subdev_open(device, false) >= 0 ? 0 : errno));
+		printf("\ttest second %s open: %s\n", node.device,
+		       ok(node2.subdev_open(node.device, false) >= 0 ? 0 : errno));
 		break;
 	case TYPE_MEDIA:
-		printf("\ttest second %s open: %s\n", device,
-		       ok(node2.media_open(device, false) >= 0 ? 0 : errno));
+		printf("\ttest second %s open: %s\n", node.device,
+		       ok(node2.media_open(node.device, false) >= 0 ? 0 : errno));
 		if (node2.g_fd() >= 0)
 			printf("\ttest MEDIA_IOC_DEVICE_INFO: %s\n", ok(testMediaDeviceInfo(&node2)));
 		break;
 	default:
-		printf("\ttest second %s open: %s\n", device,
-		       ok(node2.open(device, false) >= 0 ? 0 : errno));
+		printf("\ttest second %s open: %s\n", node.device,
+		       ok(node2.open(node.device, false) >= 0 ? 0 : errno));
 		if (node2.g_fd() >= 0) {
 			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
@@ -1210,17 +1032,217 @@ done:
 	node.close();
 	if (node.node2)
 		node.node2->close();
+}
+
+int main(int argc, char **argv)
+{
+	int i;
+	struct node node;
+	enum node_type type = TYPE_UNKNOWN;
+	struct node expbuf_node;
+
+	/* command args */
+	int ch;
+	const char *device = "/dev/video0";
+	const char *expbuf_device = NULL;	/* --expbuf-device device */
+	unsigned frame_count = 60;
+	char short_options[26 * 2 * 3 + 1];
+	char *value, *subs;
+	int idx = 0;
+
+	for (i = 0; long_options[i].name; i++) {
+		if (!isalpha(long_options[i].val))
+			continue;
+		short_options[idx++] = long_options[i].val;
+		if (long_options[i].has_arg == required_argument) {
+			short_options[idx++] = ':';
+		} else if (long_options[i].has_arg == optional_argument) {
+			short_options[idx++] = ':';
+			short_options[idx++] = ':';
+		}
+	}
+	while (1) {
+		int option_index = 0;
+
+		short_options[idx] = 0;
+		ch = getopt_long(argc, argv, short_options,
+				 long_options, &option_index);
+		if (ch == -1)
+			break;
+
+		options[(int)ch] = 1;
+		switch (ch) {
+		case OptHelp:
+			usage();
+			return 0;
+		case OptSetDevice:
+			device = make_devname(optarg, "video");
+			type = TYPE_VIDEO;
+			break;
+		case OptSetVbiDevice:
+			device = make_devname(optarg, "vbi");
+			type = TYPE_VBI;
+			break;
+		case OptSetRadioDevice:
+			device = make_devname(optarg, "radio");
+			type = TYPE_RADIO;
+			break;
+		case OptSetSWRadioDevice:
+			device = make_devname(optarg, "swradio");
+			type = TYPE_SDR;
+			break;
+		case OptSetTouchDevice:
+			device = make_devname(optarg, "v4l-touch");
+			type = TYPE_TOUCH;
+			break;
+		case OptSetSubDevDevice:
+			device = make_devname(optarg, "v4l-subdev");
+			type = TYPE_SUBDEV;
+			break;
+		case OptSetMediaDevice:
+			device = make_devname(optarg, "media");
+			type = TYPE_MEDIA;
+			break;
+		case OptSetExpBufDevice:
+			expbuf_device = optarg;
+			if (expbuf_device[0] >= '0' && expbuf_device[0] <= '9' && strlen(expbuf_device) <= 3) {
+				static char newdev[20];
+
+				sprintf(newdev, "/dev/video%s", expbuf_device);
+				expbuf_device = newdev;
+			}
+			break;
+		case OptStreaming:
+			if (optarg)
+				frame_count = strtoul(optarg, NULL, 0);
+			break;
+		case OptStreamAllColorTest:
+			subs = optarg;
+			while (*subs != '\0') {
+				static const char *const subopts[] = {
+					"color",
+					"skip",
+					"perc",
+					NULL
+				};
+
+				switch (parse_subopt(&subs, subopts, &value)) {
+				case 0:
+					if (!strcmp(value, "red"))
+						color_component = 0;
+					else if (!strcmp(value, "green"))
+						color_component = 1;
+					else if (!strcmp(value, "blue"))
+						color_component = 2;
+					else {
+						usage();
+						exit(1);
+					}
+					break;
+				case 1:
+					color_skip = strtoul(value, 0L, 0);
+					break;
+				case 2:
+					color_perc = strtoul(value, 0L, 0);
+					if (color_perc == 0)
+						color_perc = 90;
+					if (color_perc > 100)
+						color_perc = 100;
+					break;
+				default:
+					usage();
+					exit(1);
+				}
+			}
+			break;
+		case OptNoWarnings:
+			show_warnings = false;
+			break;
+		case OptVerbose:
+			show_info = true;
+			break;
+		case ':':
+			fprintf(stderr, "Option `%s' requires a value\n",
+				argv[optind]);
+			usage();
+			return 1;
+		case '?':
+			fprintf(stderr, "Unknown argument `%s'\n",
+				argv[optind]);
+			usage();
+			return 1;
+		}
+	}
+	if (optind < argc) {
+		printf("unknown arguments: ");
+		while (optind < argc)
+			printf("%s ", argv[optind++]);
+		printf("\n");
+		usage();
+		return 1;
+	}
+	bool direct = !options[OptUseWrapper];
+	int fd;
+
+	node.device = device;
+	node.s_trace(options[OptTrace]);
+	switch (type) {
+	case TYPE_MEDIA:
+		node.s_direct(true);
+		fd = node.media_open(device, false);
+		break;
+	case TYPE_SUBDEV:
+		node.s_direct(true);
+		fd = node.subdev_open(device, false);
+		break;
+	default:
+		node.s_direct(direct);
+		fd = node.open(device, false);
+		break;
+	}
+	if (fd < 0) {
+		fprintf(stderr, "Failed to open %s: %s\n", device,
+			strerror(errno));
+		exit(1);
+	}
+
+	if (expbuf_device) {
+		expbuf_node.s_trace(options[OptTrace]);
+		expbuf_node.s_direct(true);
+		fd = expbuf_node.open(expbuf_device, false);
+		if (fd < 0) {
+			fprintf(stderr, "Failed to open %s: %s\n", expbuf_device,
+				strerror(errno));
+			exit(1);
+		}
+	}
+
+#ifdef SHA
+#define STR(x) #x
+#define STRING(x) STR(x)
+	printf("v4l2-compliance SHA   : %s\n", STRING(SHA));
+#else
+	printf("v4l2-compliance SHA   : not available\n");
+#endif
+
+	struct utsname uts;
+	int v1, v2, v3;
+
+	uname(&uts);
+	sscanf(uts.release, "%d.%d.%d", &v1, &v2, &v3);
+	if (v1 == 2 && v2 == 6)
+		kernel_version = v3;
+
+	if (kernel_version)
+		printf("Running on 2.6.%d\n", kernel_version);
+
+	test(node, expbuf_node, type, frame_count);
+
 	if (expbuf_device)
 		expbuf_node.close();
 	if (media_fd >= 0)
 		close(media_fd);
 	printf("Total: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 			tests_total, tests_ok, tests_total - tests_ok, warnings);
-	if (!strcmp((const char *)vcap.driver, "vivid") && tests_total - tests_ok > 19) {
-		printf("\nThis vivid driver has error injection controls that cause the compliance\n");
-	        printf("tests to fail unless you load the vivid module with the no_error_inj=1\n");
-		printf("module option to disable those error injection controls. It looks from\n");
-		printf("the number of failures that that wasn't done.\n");
-	}
 	exit(app_result);
 }
