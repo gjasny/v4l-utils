@@ -21,19 +21,79 @@
 #include <string.h>
 #include <inttypes.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <ctype.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/sysmacros.h>
+#include <dirent.h>
 
 #include <linux/videodev2.h>
 
-#include <string>
+#include <fstream>
 
-static std::string num2s(unsigned num)
+static std::string num2s(unsigned num, bool is_hex = true)
 {
-	char buf[10];
+	char buf[16];
 
-	sprintf(buf, "%08x", num);
+	if (is_hex)
+		sprintf(buf, "%08x", num);
+	else
+		sprintf(buf, "%u", num);
 	return buf;
+}
+
+bool v4l2_is_subdevice(int fd)
+{
+	struct stat sb;
+	if (fstat(fd, &sb) == -1) {
+		fprintf(stderr, "failed to stat file\n");
+		exit(1);
+	}
+
+	std::string uevent_path("/sys/dev/char/");
+
+	uevent_path += num2s(major(sb.st_rdev), false) + ":" +
+		num2s(minor(sb.st_rdev), false) + "/uevent";
+
+	std::ifstream uevent_file(uevent_path);
+	if (uevent_file.fail()) {
+		fprintf(stderr, "failed to open %s\n", uevent_path.c_str());
+		exit(1);
+	}
+
+	std::string line;
+
+	while (std::getline(uevent_file, line)) {
+		if (line.compare(0, 8, "DEVNAME="))
+			continue;
+
+		static const char *devnames[] = {
+			"v4l-subdev",
+			"video",
+			"vbi",
+			"radio",
+			"swradio",
+			"v4l-touch",
+			NULL
+		};
+
+		for (size_t i = 0; devnames[i]; i++) {
+			size_t len = strlen(devnames[i]);
+
+			if (!line.compare(8, len, devnames[i]) && isdigit(line[8+len])) {
+				uevent_file.close();
+				return i == 0;
+			}
+		}
+	}
+
+	uevent_file.close();
+
+	fprintf(stderr, "unknown device name\n");
+	exit(1);
 }
 
 typedef struct {

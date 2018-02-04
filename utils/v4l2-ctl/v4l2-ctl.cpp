@@ -982,7 +982,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	verbose = options[OptVerbose];
-	is_subdev = mi_is_subdevice(fd);
+	is_subdev = v4l2_is_subdevice(fd);
 	if (is_subdev)
 		options[OptUseWrapper] = 0;
 

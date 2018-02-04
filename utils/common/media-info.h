@@ -25,9 +25,9 @@
 int mi_get_media_fd(int fd);
 
 /*
- * Test if the given fd corresponds to a sub-device.
+ * Show media controller information media_fd and (if >= 0) the
+ * corresponsing entity/interface information for the fd.
  */
-bool mi_is_subdevice(int fd);
 void mi_media_info_for_fd(int media_fd, int fd);
 
 #endif

@@ -18,6 +18,11 @@
 #ifndef _V4L2_INFO_H
 #define _V4L2_INFO_H
 
+/*
+ * Test if the given fd corresponds to a sub-device.
+ */
+bool v4l2_is_subdevice(int fd);
+
 /* Print capability information */
 void v4l2_info_capability(const v4l2_capability &cap);
 

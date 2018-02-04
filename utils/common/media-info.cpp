@@ -34,11 +34,14 @@
 
 #include <fstream>
 
-static std::string num2s(unsigned num)
+static std::string num2s(unsigned num, bool is_hex = true)
 {
-	char buf[10];
+	char buf[16];
 
-	sprintf(buf, "%08x", num);
+	if (is_hex)
+		sprintf(buf, "%08x", num);
+	else
+		sprintf(buf, "%u", num);
 	return buf;
 }
 
@@ -76,15 +79,14 @@ int mi_get_media_fd(int fd)
 		return -1;
 	}
 
-	char media_path[100];
-	if (snprintf(media_path, sizeof(media_path), "/sys/dev/char/%d:%d/device",
-		     major(sb.st_rdev), minor(sb.st_rdev)) == -1) {
-		fprintf(stderr, "failed to create media file path\n");
-		return -1;
-	}
+	std::string media_path("/sys/dev/char/");
+
+	media_path += num2s(major(sb.st_rdev), false) + ":" +
+		num2s(minor(sb.st_rdev), false) + "/device";
+
 	DIR *dp;
 	struct dirent *ep;
-	dp = opendir(media_path);
+	dp = opendir(media_path.c_str());
 	if (dp == NULL)
 		return -1;
 	media_path[0] = 0;
@@ -99,59 +101,6 @@ int mi_get_media_fd(int fd)
 	}
 	closedir(dp);
 	return media_fd;
-}
-
-bool mi_is_subdevice(int fd)
-{
-	struct stat sb;
-	if (fstat(fd, &sb) == -1) {
-		fprintf(stderr, "failed to stat file\n");
-		exit(1);
-	}
-
-	char uevent_path[100];
-	if (snprintf(uevent_path, sizeof(uevent_path), "/sys/dev/char/%d:%d/uevent",
-		     major(sb.st_rdev), minor(sb.st_rdev)) == -1) {
-		fprintf(stderr, "failed to create uevent file path\n");
-		exit(1);
-	}
-
-	std::ifstream uevent_file(uevent_path);
-	if (uevent_file.fail()) {
-		fprintf(stderr, "failed to open %s\n", uevent_path);
-		exit(1);
-	}
-
-	std::string line;
-
-	while (std::getline(uevent_file, line)) {
-		if (line.compare(0, 8, "DEVNAME="))
-			continue;
-
-		static const char * devnames[] = {
-			"v4l-subdev",
-			"video",
-			"vbi",
-			"radio",
-			"swradio",
-			"v4l-touch",
-			NULL
-		};
-
-		for (size_t i = 0; devnames[i]; i++) {
-			size_t len = strlen(devnames[i]);
-
-			if (!line.compare(8, len, devnames[i]) && isdigit(line[8+len])) {
-				uevent_file.close();
-				return i == 0;
-			}
-		}
-	}
-
-	uevent_file.close();
-
-	fprintf(stderr, "unknown device name\n");
-	exit(1);
 }
 
 static const flag_def entity_flags_def[] = {
