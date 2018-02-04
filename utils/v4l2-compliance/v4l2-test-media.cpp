@@ -32,6 +32,7 @@
 #include <sys/ioctl.h>
 #include <assert.h>
 #include <set>
+#include <fstream>
 
 #include "v4l2-compliance.h"
 
@@ -232,8 +233,9 @@ int testMediaEnum(struct node *node)
 		if (!(ent.flags & MEDIA_ENT_FL_CONNECTOR)) {
 			fail_on_test(ent.dev.major == ~0U);
 			fail_on_test(ent.dev.minor == ~0U);
-			fail_on_test(checkDevice(ent.dev.major, ent.dev.minor,
-						 false, ent.id));
+			if (ent.dev.major || ent.dev.minor)
+				fail_on_test(checkDevice(ent.dev.major, ent.dev.minor,
+							 false, ent.id));
 		}
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent));
 		fail_on_test(entity_num_pads[ent.id] != ent.pads);
@@ -272,12 +274,11 @@ int testMediaEnum(struct node *node)
 			fail_on_test(links.pads[i].index != i);
 			fail_on_test(check_0(links.pads[i].reserved, sizeof(links.pads[i].reserved)));
 			__u32 fl = links.pads[i].flags;
-			fail_on_test(!(fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)));
 			fail_on_test((fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)) ==
 				     (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE));
 			if (fl & MEDIA_PAD_FL_SOURCE)
 				found_source = true;
-			else
+			else if (fl & MEDIA_PAD_FL_SINK)
 				fail_on_test(found_source);
 		}
 		bool found_enabled = false;
@@ -368,4 +369,72 @@ int testMediaSetupLink(struct node *node)
 		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link) != EINVAL);
 	}
 	return 0;
+}
+
+void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_count)
+{
+	if (!node.topology)
+		return;
+
+	for (unsigned i = 0; i < node.topology->num_interfaces; i++) {
+		media_v2_interface &iface = v2_ifaces[i];
+		std::string dev = media_get_device(iface.devnode.major,
+						   iface.devnode.minor);
+		if (dev.empty())
+			continue;
+		media_type type = media_detect_type(dev.c_str());
+		if (type == MEDIA_TYPE_CANT_STAT) {
+			fprintf(stderr, "Cannot open device %s, skipping.\n\n",
+				dev.c_str());
+			continue;
+		}
+
+		switch (type) {
+		// For now we can only handle V4L2 devices
+		case MEDIA_TYPE_VIDEO:
+		case MEDIA_TYPE_VBI:
+		case MEDIA_TYPE_RADIO:
+		case MEDIA_TYPE_SDR:
+		case MEDIA_TYPE_TOUCH:
+		case MEDIA_TYPE_SUBDEV:
+			break;
+		default:
+			type = MEDIA_TYPE_UNKNOWN;
+			break;
+		}
+
+		if (type == MEDIA_TYPE_UNKNOWN) {
+			fprintf(stderr, "Unable to detect what device %s is, skipping.\n\n",
+				dev.c_str());
+			continue;
+		}
+
+		struct node test_node;
+		int fd = -1;
+
+		test_node.device = dev.c_str();
+		test_node.s_trace(node.g_trace());
+		switch (type) {
+		case MEDIA_TYPE_MEDIA:
+			test_node.s_direct(true);
+			fd = test_node.media_open(dev.c_str(), false);
+			break;
+		case MEDIA_TYPE_SUBDEV:
+			test_node.s_direct(true);
+			fd = test_node.subdev_open(dev.c_str(), false);
+			break;
+		default:
+			test_node.s_direct(node.g_direct());
+			fd = test_node.open(dev.c_str(), false);
+			break;
+		}
+		if (fd < 0) {
+			fprintf(stderr, "Failed to open device %s, skipping\n\n",
+				dev.c_str());
+			continue;
+		}
+
+		testNode(test_node, expbuf_node, type, frame_count);
+		test_node.close();
+	}
 }

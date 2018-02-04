@@ -45,56 +45,6 @@ static std::string num2s(unsigned num, bool is_hex = true)
 	return buf;
 }
 
-v4l2_type v4l2_detect_type(const char *device)
-{
-	struct stat sb;
-
-	if (stat(device, &sb) == -1)
-		return V4L2_TYPE_CANT_STAT;
-
-	std::string uevent_path("/sys/dev/char/");
-
-	uevent_path += num2s(major(sb.st_rdev), false) + ":" +
-		num2s(minor(sb.st_rdev), false) + "/uevent";
-
-	std::ifstream uevent_file(uevent_path);
-	if (uevent_file.fail())
-		return V4L2_TYPE_UNKNOWN;
-
-	std::string line;
-
-	while (std::getline(uevent_file, line)) {
-		if (line.compare(0, 8, "DEVNAME="))
-			continue;
-
-		static struct {
-			const char *devname;
-			enum v4l2_type type;
-		} devtypes[] = {
-			{ "video", V4L2_TYPE_VIDEO },
-			{ "vbi", V4L2_TYPE_VBI },
-			{ "radio", V4L2_TYPE_RADIO },
-			{ "swradio", V4L2_TYPE_SDR },
-			{ "v4l-subdev", V4L2_TYPE_SUBDEV },
-			{ "v4l-touch", V4L2_TYPE_TOUCH },
-			{ NULL, V4L2_TYPE_UNKNOWN }
-		};
-
-		for (size_t i = 0; devtypes[i].devname; i++) {
-			const char *devname = devtypes[i].devname;
-			size_t len = strlen(devname);
-
-			if (!line.compare(8, len, devname) && isdigit(line[8+len])) {
-				uevent_file.close();
-				return devtypes[i].type;
-			}
-		}
-	}
-
-	uevent_file.close();
-	return V4L2_TYPE_UNKNOWN;
-}
-
 typedef struct {
 	unsigned flag;
 	const char *str;

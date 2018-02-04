@@ -33,6 +33,7 @@
 #include <linux/media.h>
 
 #include <fstream>
+#include <media-info.h>
 
 static std::string num2s(unsigned num, bool is_hex = true)
 {
@@ -43,6 +44,94 @@ static std::string num2s(unsigned num, bool is_hex = true)
 	else
 		sprintf(buf, "%u", num);
 	return buf;
+}
+
+static struct {
+	const char *devname;
+	enum media_type type;
+} media_types[] = {
+	{ "video", MEDIA_TYPE_VIDEO },
+	{ "vbi", MEDIA_TYPE_VBI },
+	{ "radio", MEDIA_TYPE_RADIO },
+	{ "swradio", MEDIA_TYPE_SDR },
+	{ "v4l-subdev", MEDIA_TYPE_SUBDEV },
+	{ "v4l-touch", MEDIA_TYPE_TOUCH },
+	{ "media", MEDIA_TYPE_MEDIA },
+	{ "frontend", MEDIA_TYPE_DVB_FRONTEND },
+	{ "demux", MEDIA_TYPE_DVB_DEMUX },
+	{ "dvr", MEDIA_TYPE_DVB_DVR },
+	{ "net", MEDIA_TYPE_DVB_NET },
+	{ NULL, MEDIA_TYPE_UNKNOWN }
+};
+
+media_type media_detect_type(const char *device)
+{
+	struct stat sb;
+
+	if (stat(device, &sb) == -1)
+		return MEDIA_TYPE_CANT_STAT;
+
+	std::string uevent_path("/sys/dev/char/");
+
+	uevent_path += num2s(major(sb.st_rdev), false) + ":" +
+		num2s(minor(sb.st_rdev), false) + "/uevent";
+
+	std::ifstream uevent_file(uevent_path);
+	if (uevent_file.fail())
+		return MEDIA_TYPE_UNKNOWN;
+
+	std::string line;
+
+	while (std::getline(uevent_file, line)) {
+		if (line.compare(0, 8, "DEVNAME="))
+			continue;
+
+		line.erase(0, 8);
+		if (!line.compare(0, 11, "dvb/adapter")) {
+			line.erase(0, 11);
+			unsigned len = 0;
+			while (line[len] && line[len] != '/')
+				len++;
+			line.erase(0, len + 1);
+		}
+		for (size_t i = 0; media_types[i].devname; i++) {
+			const char *devname = media_types[i].devname;
+			size_t len = strlen(devname);
+
+			if (!line.compare(0, len, devname) && isdigit(line[0+len])) {
+				uevent_file.close();
+				return media_types[i].type;
+			}
+		}
+	}
+
+	uevent_file.close();
+	return MEDIA_TYPE_UNKNOWN;
+}
+
+std::string media_get_device(__u32 major, __u32 minor)
+{
+	char fmt[32];
+	std::string uevent_path("/sys/dev/char/");
+
+	sprintf(fmt, "%d:%d", major, minor);
+	uevent_path += std::string(fmt) + "/uevent";
+
+	std::ifstream uevent_file(uevent_path);
+	if (uevent_file.fail())
+		return "";
+
+	std::string line;
+
+	while (std::getline(uevent_file, line)) {
+		if (line.compare(0, 8, "DEVNAME="))
+			continue;
+		uevent_file.close();
+		return std::string("/dev/") + &line[8];
+	}
+
+	uevent_file.close();
+	return "";
 }
 
 typedef struct {

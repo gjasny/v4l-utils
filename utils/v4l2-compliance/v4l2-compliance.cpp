@@ -59,6 +59,7 @@ enum Option {
 	OptStreamAllFormats = 'f',
 	OptHelp = 'h',
 	OptSetMediaDevice = 'm',
+	OptMediaTestInterfaces = 'M',
 	OptNoWarnings = 'n',
 	OptSetRadioDevice = 'r',
 	OptStreaming = 's',
@@ -119,6 +120,7 @@ static struct option long_options[] = {
 	{"expbuf-device", required_argument, 0, OptSetExpBufDevice},
 	{"touch-device", required_argument, 0, OptSetTouchDevice},
 	{"media-device", required_argument, 0, OptSetMediaDevice},
+	{"media-test-interfaces", no_argument, 0, OptMediaTestInterfaces},
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
@@ -157,6 +159,8 @@ static void usage(void)
 	printf("  -m, --media-device=<dev>\n");
 	printf("                     Use device <dev> as the media controller device.\n");
 	printf("                     If <dev> starts with a digit, then /dev/media<dev> is used.\n");
+	printf("  -M, --media-test-interfaces\n");
+	printf("                     Test all interfaces in the media controller topology.\n");
 	printf("  -e, --expbuf-device=<dev>\n");
 	printf("                     Use device <dev> to obtain DMABUF handles.\n");
 	printf("                     If <dev> starts with a digit, then /dev/video<dev> is used.\n");
@@ -626,17 +630,17 @@ static const char *make_devname(const char *device, const char *devname)
 	return device;
 }
 
-static void test(struct node &node, struct node &expbuf_node, v4l2_type type,
-		 unsigned frame_count)
+void testNode(struct node &node, struct node &expbuf_node, media_type type,
+	      unsigned frame_count)
 {
 	struct node node2;
 	struct v4l2_capability vcap;		/* list_cap */
 
-	node.is_video = type == V4L2_TYPE_VIDEO;
-	node.is_vbi = type == V4L2_TYPE_VBI;
-	node.is_radio = type == V4L2_TYPE_RADIO;
-	node.is_sdr = type == V4L2_TYPE_SDR;
-	node.is_touch = type == V4L2_TYPE_TOUCH;
+	node.is_video = type == MEDIA_TYPE_VIDEO;
+	node.is_vbi = type == MEDIA_TYPE_VBI;
+	node.is_radio = type == MEDIA_TYPE_RADIO;
+	node.is_sdr = type == MEDIA_TYPE_SDR;
+	node.is_touch = type == MEDIA_TYPE_TOUCH;
 
 	if (node.is_v4l2())
 		doioctl(&node, VIDIOC_QUERYCAP, &vcap);
@@ -743,11 +747,11 @@ static void test(struct node &node, struct node &expbuf_node, v4l2_type type,
 	printf("Allow for multiple opens:\n");
 	node2 = node;
 	switch (type) {
-	case V4L2_TYPE_SUBDEV:
+	case MEDIA_TYPE_SUBDEV:
 		printf("\ttest second %s open: %s\n", node.device,
 		       ok(node2.subdev_open(node.device, false) >= 0 ? 0 : errno));
 		break;
-	case V4L2_TYPE_MEDIA:
+	case MEDIA_TYPE_MEDIA:
 		printf("\ttest second %s open: %s\n", node.device,
 		       ok(node2.media_open(node.device, false) >= 0 ? 0 : errno));
 		if (node2.g_fd() >= 0)
@@ -793,6 +797,8 @@ static void test(struct node &node, struct node &expbuf_node, v4l2_type type,
 			       node.topology->num_links);
 		printf("\ttest MEDIA_IOC_SETUP_LINK: %s\n", ok(testMediaSetupLink(&node)));
 		printf("\n");
+		if (options[OptMediaTestInterfaces])
+			walkTopology(node, expbuf_node, frame_count);
 		goto done;
 	}
 
@@ -1035,11 +1041,9 @@ static void test(struct node &node, struct node &expbuf_node, v4l2_type type,
 	 * 	 S_SELECTION flags tests
 	 */
 
-done:
 	restoreState();
 
-	/* Final test report */
-
+done:
 	node.close();
 	if (node.node2)
 		node.node2->close();
@@ -1049,7 +1053,7 @@ int main(int argc, char **argv)
 {
 	int i;
 	struct node node;
-	v4l2_type type = V4L2_TYPE_UNKNOWN;
+	media_type type = MEDIA_TYPE_UNKNOWN;
 	struct node expbuf_node;
 
 	/* command args */
@@ -1106,7 +1110,7 @@ int main(int argc, char **argv)
 			break;
 		case OptSetMediaDevice:
 			device = make_devname(optarg, "media");
-			type = V4L2_TYPE_MEDIA;
+			type = MEDIA_TYPE_MEDIA;
 			break;
 		case OptSetExpBufDevice:
 			expbuf_device = optarg;
@@ -1189,14 +1193,14 @@ int main(int argc, char **argv)
 	bool direct = !options[OptUseWrapper];
 	int fd;
 
-	if (type == V4L2_TYPE_UNKNOWN)
-		type = v4l2_detect_type(device);
-	if (type == V4L2_TYPE_CANT_STAT) {
+	if (type == MEDIA_TYPE_UNKNOWN)
+		type = media_detect_type(device);
+	if (type == MEDIA_TYPE_CANT_STAT) {
 		fprintf(stderr, "Cannot open device %s, exiting.\n",
 			device);
 		exit(1);
 	}
-	if (type == V4L2_TYPE_UNKNOWN) {
+	if (type == MEDIA_TYPE_UNKNOWN) {
 		fprintf(stderr, "Unable to detect what device %s is, exiting.\n",
 			device);
 		exit(1);
@@ -1205,11 +1209,11 @@ int main(int argc, char **argv)
 	node.device = device;
 	node.s_trace(options[OptTrace]);
 	switch (type) {
-	case V4L2_TYPE_MEDIA:
+	case MEDIA_TYPE_MEDIA:
 		node.s_direct(true);
 		fd = node.media_open(device, false);
 		break;
-	case V4L2_TYPE_SUBDEV:
+	case MEDIA_TYPE_SUBDEV:
 		node.s_direct(true);
 		fd = node.subdev_open(device, false);
 		break;
@@ -1254,12 +1258,14 @@ int main(int argc, char **argv)
 	if (kernel_version)
 		printf("Running on 2.6.%d\n", kernel_version);
 
-	test(node, expbuf_node, type, frame_count);
+	testNode(node, expbuf_node, type, frame_count);
 
 	if (expbuf_device)
 		expbuf_node.close();
 	if (media_fd >= 0)
 		close(media_fd);
+
+	/* Final test report */
 	printf("Total: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 			tests_total, tests_ok, tests_total - tests_ok, warnings);
 	exit(app_result);

@@ -43,6 +43,7 @@
 
 #include <cv4l-helpers.h>
 #include <v4l2-info.h>
+#include <media-info.h>
 
 #if !defined(ENODATA) && (defined(__FreeBSD__) || defined(__FreeBSD_kernel__))
 #define ENODATA ENOTSUP
@@ -180,12 +181,15 @@ int check_string(const char *s, size_t len);
 int check_ustring(const __u8 *s, int len);
 int check_0(const void *p, int len);
 int restoreFormat(struct node *node);
+void testNode(struct node &node, struct node &expbuf_node, media_type type,
+	      unsigned frame_count);
 
 // Media Controller ioctl tests
 int testMediaDeviceInfo(struct node *node);
 int testMediaTopology(struct node *node);
 int testMediaEnum(struct node *node);
 int testMediaSetupLink(struct node *node);
+void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_count);
 
 // Debug ioctl tests
 int testRegister(struct node *node);

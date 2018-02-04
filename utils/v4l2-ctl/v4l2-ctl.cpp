@@ -976,18 +976,33 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	v4l2_type type = v4l2_detect_type(device);
-	if (type == V4L2_TYPE_CANT_STAT) {
+	media_type type = media_detect_type(device);
+	if (type == MEDIA_TYPE_CANT_STAT) {
 		fprintf(stderr, "Cannot open device %s, exiting.\n",
 			device);
 		exit(1);
 	}
-	if (type == V4L2_TYPE_UNKNOWN) {
+
+	switch (type) {
+		// For now we can only handle V4L2 devices
+	case MEDIA_TYPE_VIDEO:
+	case MEDIA_TYPE_VBI:
+	case MEDIA_TYPE_RADIO:
+	case MEDIA_TYPE_SDR:
+	case MEDIA_TYPE_TOUCH:
+	case MEDIA_TYPE_SUBDEV:
+		break;
+	default:
+		type = MEDIA_TYPE_UNKNOWN;
+		break;
+	}
+
+	if (type == MEDIA_TYPE_UNKNOWN) {
 		fprintf(stderr, "Unable to detect what device %s is, exiting.\n",
 			device);
 		exit(1);
 	}
-	is_subdev = type == V4L2_TYPE_SUBDEV;
+	is_subdev = type == MEDIA_TYPE_SUBDEV;
 
 	if ((fd = open(device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device,

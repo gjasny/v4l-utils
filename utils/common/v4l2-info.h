@@ -21,23 +21,6 @@
 #include <string>
 #include <linux/videodev2.h>
 
-enum v4l2_type {
-	V4L2_TYPE_CANT_STAT,
-	V4L2_TYPE_UNKNOWN,
-	V4L2_TYPE_VIDEO,
-	V4L2_TYPE_VBI,
-	V4L2_TYPE_RADIO,
-	V4L2_TYPE_SDR,
-	V4L2_TYPE_TOUCH,
-	V4L2_TYPE_SUBDEV,
-	V4L2_TYPE_MEDIA,
-};
-
-/*
- * Detect what type the device is.
- */
-v4l2_type v4l2_detect_type(const char *device);
-
 /* Print capability information */
 void v4l2_info_capability(const v4l2_capability &cap);
 
