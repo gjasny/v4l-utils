@@ -223,14 +223,14 @@ static std::string linkflags2s(__u32 flags)
 	}
 }
 
-static bool read_topology(int media_fd, __u32 major, __u32 minor)
+static __u32 read_topology(int media_fd, __u32 major, __u32 minor)
 {
 	media_v2_topology topology;
 	unsigned i, j;
 
 	memset(&topology, 0, sizeof(topology));
 	if (ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology))
-		return false;
+		return 0;
 
 	media_v2_entity v2_ents[topology.num_entities];
 	media_v2_interface v2_ifaces[topology.num_interfaces];
@@ -242,7 +242,7 @@ static bool read_topology(int media_fd, __u32 major, __u32 minor)
 	topology.ptr_pads = (__u64)v2_pads;
 	topology.ptr_links = (__u64)v2_links;
 	if (ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology))
-		return false;
+		return 0;
 	for (i = 0; i < topology.num_interfaces; i++)
 		if (v2_ifaces[i].devnode.major == major &&
 		    v2_ifaces[i].devnode.minor == minor)
@@ -250,7 +250,7 @@ static bool read_topology(int media_fd, __u32 major, __u32 minor)
 	if (i == topology.num_interfaces) {
 		fprintf(stderr, "could not find %d:%d device in topology\n",
 			major, minor);
-		return false;
+		return 0;
 	}
 	media_v2_interface &iface = v2_ifaces[i];
 	for (i = 0; i < topology.num_links; i++) {
@@ -264,7 +264,7 @@ static bool read_topology(int media_fd, __u32 major, __u32 minor)
 	if (i == topology.num_links) {
 		fprintf(stderr, "could not find link for interface %u in topology\n",
 			iface.id);
-		return false;
+		return 0;
 	}
 	__u32 ent_id = v2_links[i].sink_id;
 	for (i = 0; i < topology.num_entities; i++) {
@@ -274,7 +274,7 @@ static bool read_topology(int media_fd, __u32 major, __u32 minor)
 	if (i == topology.num_entities) {
 		fprintf(stderr, "could not find entity %u in topology\n",
 			ent_id);
-		return false;
+		return 0;
 	}
 	media_v2_entity &ent = v2_ents[i];
 
@@ -317,7 +317,7 @@ static bool read_topology(int media_fd, __u32 major, __u32 minor)
 			if (!remote_ent_id) {
 				fprintf(stderr, "could not find remote pad 0x%08x in topology\n",
 					remote_pad);
-				return true;
+				return ent.id;
 			}
 			for (unsigned k = 0; k < topology.num_entities; k++)
 				if (v2_ents[k].id == remote_ent_id) {
@@ -327,23 +327,24 @@ static bool read_topology(int media_fd, __u32 major, __u32 minor)
 			if (!remote_ent) {
 				fprintf(stderr, "could not find remote entity 0x%08x in topology\n",
 					remote_ent_id);
-				return true;
+				return ent.id;
 			}
 			printf("\t  Link 0x%08x: %s remote pad 0x%x of entity '%s': %s\n",
 			       link.id, is_sink ? "from" : "to", remote_pad,
 			       remote_ent->name, linkflags2s(link.flags).c_str());
 		}
 	}
-	return true;
+	return ent.id;
 }
 
-void mi_media_info_for_fd(int media_fd, int fd)
+__u32 mi_media_info_for_fd(int media_fd, int fd)
 {
 	struct media_device_info mdinfo;
 	struct stat sb;
+	__u32 ent_id = 0;
 
 	if (ioctl(media_fd, MEDIA_IOC_DEVICE_INFO, &mdinfo))
-		return;
+		return 0;
 
 	struct media_entity_desc ent;
 	bool found = false;
@@ -365,15 +366,16 @@ void mi_media_info_for_fd(int media_fd, int fd)
 	       mdinfo.driver_version & 0xff);
 
 	if (fd < 0)
-		return;
+		return 0;
 
 	if (fstat(fd, &sb) == -1) {
 		fprintf(stderr, "failed to stat file\n");
 		exit(1);
 	}
 
-	if (read_topology(media_fd, major(sb.st_rdev), minor(sb.st_rdev)))
-		return;
+	ent_id = read_topology(media_fd, major(sb.st_rdev), minor(sb.st_rdev));
+	if (ent_id)
+		return ent_id;
 
 	memset(&ent, 0, sizeof(ent));
 	ent.id = MEDIA_ENT_ID_FLAG_NEXT;
@@ -386,7 +388,7 @@ void mi_media_info_for_fd(int media_fd, int fd)
 		ent.id |= MEDIA_ENT_ID_FLAG_NEXT;
 	}
 	if (!found)
-		return;
+		return 0;
 
 	printf("Entity Info:\n");
 	printf("\tID               : %u\n", ent.id);
@@ -408,7 +410,7 @@ void mi_media_info_for_fd(int media_fd, int fd)
 	links_enum.pads = pads;
 	links_enum.links = links;
 	if (ioctl(media_fd, MEDIA_IOC_ENUM_LINKS, &links_enum))
-		return;
+		return ent.id;
 
 	for (unsigned i = 0; i < ent.pads; i++)
 		printf("\tPad              : %u: %s\n", pads[i].index,
@@ -418,4 +420,5 @@ void mi_media_info_for_fd(int media_fd, int fd)
 		       links[i].source.entity,
 		       links[i].sink.entity,
 		       linkflags2s(links[i].flags).c_str());
+	return ent.id;
 }

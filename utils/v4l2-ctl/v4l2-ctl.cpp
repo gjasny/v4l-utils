@@ -976,13 +976,26 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	v4l2_type type = v4l2_detect_type(device);
+	if (type == V4L2_TYPE_CANT_STAT) {
+		fprintf(stderr, "Cannot open device %s, exiting.\n",
+			device);
+		exit(1);
+	}
+	if (type == V4L2_TYPE_UNKNOWN) {
+		fprintf(stderr, "Unable to detect what device %s is, exiting.\n",
+			device);
+		exit(1);
+	}
+	is_subdev = type == V4L2_TYPE_SUBDEV;
+
 	if ((fd = open(device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device,
 			strerror(errno));
 		exit(1);
 	}
 	verbose = options[OptVerbose];
-	is_subdev = v4l2_is_subdevice(fd);
+
 	if (is_subdev)
 		options[OptUseWrapper] = 0;
 

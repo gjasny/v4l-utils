@@ -30,7 +30,7 @@
 #include <sys/sysmacros.h>
 #include <dirent.h>
 
-#include <linux/videodev2.h>
+#include <v4l2-info.h>
 
 #include <fstream>
 
@@ -45,13 +45,12 @@ static std::string num2s(unsigned num, bool is_hex = true)
 	return buf;
 }
 
-bool v4l2_is_subdevice(int fd)
+v4l2_type v4l2_detect_type(const char *device)
 {
 	struct stat sb;
-	if (fstat(fd, &sb) == -1) {
-		fprintf(stderr, "failed to stat file\n");
-		exit(1);
-	}
+
+	if (stat(device, &sb) == -1)
+		return V4L2_TYPE_CANT_STAT;
 
 	std::string uevent_path("/sys/dev/char/");
 
@@ -59,10 +58,8 @@ bool v4l2_is_subdevice(int fd)
 		num2s(minor(sb.st_rdev), false) + "/uevent";
 
 	std::ifstream uevent_file(uevent_path);
-	if (uevent_file.fail()) {
-		fprintf(stderr, "failed to open %s\n", uevent_path.c_str());
-		exit(1);
-	}
+	if (uevent_file.fail())
+		return V4L2_TYPE_UNKNOWN;
 
 	std::string line;
 
@@ -70,30 +67,32 @@ bool v4l2_is_subdevice(int fd)
 		if (line.compare(0, 8, "DEVNAME="))
 			continue;
 
-		static const char *devnames[] = {
-			"v4l-subdev",
-			"video",
-			"vbi",
-			"radio",
-			"swradio",
-			"v4l-touch",
-			NULL
+		static struct {
+			const char *devname;
+			enum v4l2_type type;
+		} devtypes[] = {
+			{ "video", V4L2_TYPE_VIDEO },
+			{ "vbi", V4L2_TYPE_VBI },
+			{ "radio", V4L2_TYPE_RADIO },
+			{ "swradio", V4L2_TYPE_SDR },
+			{ "v4l-subdev", V4L2_TYPE_SUBDEV },
+			{ "v4l-touch", V4L2_TYPE_TOUCH },
+			{ NULL, V4L2_TYPE_UNKNOWN }
 		};
 
-		for (size_t i = 0; devnames[i]; i++) {
-			size_t len = strlen(devnames[i]);
+		for (size_t i = 0; devtypes[i].devname; i++) {
+			const char *devname = devtypes[i].devname;
+			size_t len = strlen(devname);
 
-			if (!line.compare(8, len, devnames[i]) && isdigit(line[8+len])) {
+			if (!line.compare(8, len, devname) && isdigit(line[8+len])) {
 				uevent_file.close();
-				return i == 0;
+				return devtypes[i].type;
 			}
 		}
 	}
 
 	uevent_file.close();
-
-	fprintf(stderr, "unknown device name\n");
-	exit(1);
+	return V4L2_TYPE_UNKNOWN;
 }
 
 typedef struct {

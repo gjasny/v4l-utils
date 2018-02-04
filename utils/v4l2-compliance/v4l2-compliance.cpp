@@ -626,28 +626,17 @@ static const char *make_devname(const char *device, const char *devname)
 	return device;
 }
 
-enum node_type {
-	TYPE_UNKNOWN,
-	TYPE_VIDEO,
-	TYPE_VBI,
-	TYPE_RADIO,
-	TYPE_SDR,
-	TYPE_TOUCH,
-	TYPE_SUBDEV,
-	TYPE_MEDIA,
-};
-
-static void test(struct node &node, struct node &expbuf_node, node_type type,
+static void test(struct node &node, struct node &expbuf_node, v4l2_type type,
 		 unsigned frame_count)
 {
 	struct node node2;
 	struct v4l2_capability vcap;		/* list_cap */
 
-	node.is_video = type == TYPE_VIDEO;
-	node.is_vbi = type == TYPE_VBI;
-	node.is_radio = type == TYPE_RADIO;
-	node.is_sdr = type == TYPE_SDR;
-	node.is_touch = type == TYPE_TOUCH;
+	node.is_video = type == V4L2_TYPE_VIDEO;
+	node.is_vbi = type == V4L2_TYPE_VBI;
+	node.is_radio = type == V4L2_TYPE_RADIO;
+	node.is_sdr = type == V4L2_TYPE_SDR;
+	node.is_touch = type == V4L2_TYPE_TOUCH;
 
 	if (node.is_v4l2())
 		doioctl(&node, VIDIOC_QUERYCAP, &vcap);
@@ -704,10 +693,32 @@ static void test(struct node &node, struct node &expbuf_node, node_type type,
 			}
 		}
 	}
+
+	__u32 ent_id = 0;
+
 	if (node.is_media())
-		mi_media_info_for_fd(node.g_fd(), -1);
+		ent_id = mi_media_info_for_fd(node.g_fd(), -1);
 	else if (media_fd >= 0)
-		mi_media_info_for_fd(media_fd, node.g_fd());
+		ent_id = mi_media_info_for_fd(media_fd, node.g_fd());
+
+	if (ent_id) {
+		memset(&node.entity, 0, sizeof(node.entity));
+		node.entity.id = ent_id;
+		if (!ioctl(media_fd, MEDIA_IOC_ENUM_ENTITIES, &node.entity)) {
+			struct media_links_enum links_enum;
+
+			node.pads = new media_pad_desc[node.entity.pads];
+			node.links = new media_link_desc[node.entity.links];	
+			memset(&links_enum, 0, sizeof(links_enum));
+			links_enum.entity = ent_id;
+			links_enum.pads = node.pads;
+			links_enum.links = node.links;
+			if (ioctl(media_fd, MEDIA_IOC_ENUM_LINKS, &links_enum))
+				node.entity.id = 0;
+		} else {
+			node.entity.id = 0;
+		}
+	}
 
 	printf("\nCompliance test for device %s%s:\n\n",
 			node.device, node.g_direct() ? "" : " (using libv4l2)");
@@ -732,11 +743,11 @@ static void test(struct node &node, struct node &expbuf_node, node_type type,
 	printf("Allow for multiple opens:\n");
 	node2 = node;
 	switch (type) {
-	case TYPE_SUBDEV:
+	case V4L2_TYPE_SUBDEV:
 		printf("\ttest second %s open: %s\n", node.device,
 		       ok(node2.subdev_open(node.device, false) >= 0 ? 0 : errno));
 		break;
-	case TYPE_MEDIA:
+	case V4L2_TYPE_MEDIA:
 		printf("\ttest second %s open: %s\n", node.device,
 		       ok(node2.media_open(node.device, false) >= 0 ? 0 : errno));
 		if (node2.g_fd() >= 0)
@@ -1038,7 +1049,7 @@ int main(int argc, char **argv)
 {
 	int i;
 	struct node node;
-	enum node_type type = TYPE_UNKNOWN;
+	v4l2_type type = V4L2_TYPE_UNKNOWN;
 	struct node expbuf_node;
 
 	/* command args */
@@ -1077,31 +1088,25 @@ int main(int argc, char **argv)
 			return 0;
 		case OptSetDevice:
 			device = make_devname(optarg, "video");
-			type = TYPE_VIDEO;
 			break;
 		case OptSetVbiDevice:
 			device = make_devname(optarg, "vbi");
-			type = TYPE_VBI;
 			break;
 		case OptSetRadioDevice:
 			device = make_devname(optarg, "radio");
-			type = TYPE_RADIO;
 			break;
 		case OptSetSWRadioDevice:
 			device = make_devname(optarg, "swradio");
-			type = TYPE_SDR;
 			break;
 		case OptSetTouchDevice:
 			device = make_devname(optarg, "v4l-touch");
-			type = TYPE_TOUCH;
 			break;
 		case OptSetSubDevDevice:
 			device = make_devname(optarg, "v4l-subdev");
-			type = TYPE_SUBDEV;
 			break;
 		case OptSetMediaDevice:
 			device = make_devname(optarg, "media");
-			type = TYPE_MEDIA;
+			type = V4L2_TYPE_MEDIA;
 			break;
 		case OptSetExpBufDevice:
 			expbuf_device = optarg;
@@ -1174,24 +1179,37 @@ int main(int argc, char **argv)
 		}
 	}
 	if (optind < argc) {
-		printf("unknown arguments: ");
+		fprintf(stderr, "unknown arguments: ");
 		while (optind < argc)
-			printf("%s ", argv[optind++]);
-		printf("\n");
+			fprintf(stderr, "%s ", argv[optind++]);
+		fprintf(stderr, "\n");
 		usage();
 		return 1;
 	}
 	bool direct = !options[OptUseWrapper];
 	int fd;
 
+	if (type == V4L2_TYPE_UNKNOWN)
+		type = v4l2_detect_type(device);
+	if (type == V4L2_TYPE_CANT_STAT) {
+		fprintf(stderr, "Cannot open device %s, exiting.\n",
+			device);
+		exit(1);
+	}
+	if (type == V4L2_TYPE_UNKNOWN) {
+		fprintf(stderr, "Unable to detect what device %s is, exiting.\n",
+			device);
+		exit(1);
+	}
+
 	node.device = device;
 	node.s_trace(options[OptTrace]);
 	switch (type) {
-	case TYPE_MEDIA:
+	case V4L2_TYPE_MEDIA:
 		node.s_direct(true);
 		fd = node.media_open(device, false);
 		break;
-	case TYPE_SUBDEV:
+	case V4L2_TYPE_SUBDEV:
 		node.s_direct(true);
 		fd = node.subdev_open(device, false);
 		break;

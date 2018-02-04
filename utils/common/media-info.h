@@ -27,7 +27,8 @@ int mi_get_media_fd(int fd);
 /*
  * Show media controller information media_fd and (if >= 0) the
  * corresponsing entity/interface information for the fd.
+ * Return the entity ID of fd.
  */
-void mi_media_info_for_fd(int media_fd, int fd);
+__u32 mi_media_info_for_fd(int media_fd, int fd);
 
 #endif
