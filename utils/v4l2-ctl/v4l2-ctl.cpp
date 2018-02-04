@@ -39,6 +39,8 @@
 
 #include <linux/media.h>
 
+#include <media-info.h>
+
 #include "v4l2-ctl.h"
 
 #ifdef HAVE_SYS_KLOG_H
@@ -1225,254 +1227,6 @@ __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane)
 	return fmt.pixelformat;
 }
 
-static int get_media_fd(int fd)
-{
-	struct stat sb;
-	int media_fd = -1;
-
-	if (fstat(fd, &sb) == -1) {
-		fprintf(stderr, "failed to stat file\n");
-		exit(1);
-	}
-
-	char media_path[100];
-	if (snprintf(media_path, sizeof(media_path), "/sys/dev/char/%d:%d/device",
-		     major(sb.st_rdev), minor(sb.st_rdev)) == -1) {
-		fprintf(stderr, "failed to create media file path\n");
-		exit(1);
-	}
-	DIR *dp;
-	struct dirent *ep;
-	dp = opendir(media_path);
-	if (dp == NULL) {
-		perror("Couldn't open the directory");
-		exit(1);
-	}
-	media_path[0] = 0;
-	while ((ep = readdir(dp))) {
-		if (!memcmp(ep->d_name, "media", 5) && isdigit(ep->d_name[5])) {
-			if (snprintf(media_path, sizeof(media_path),
-				     "/dev/%s", ep->d_name) >= 0)
-				media_fd = open(media_path, O_RDWR);
-			break;
-		}
-	}
-	closedir(dp);
-	return media_fd;
-}
-
-static bool is_subdevice(int fd)
-{
-	struct stat sb;
-	if (fstat(fd, &sb) == -1) {
-		fprintf(stderr, "failed to stat file\n");
-		exit(1);
-	}
-
-	char uevent_path[100];
-	if (snprintf(uevent_path, sizeof(uevent_path), "/sys/dev/char/%d:%d/uevent",
-		     major(sb.st_rdev), minor(sb.st_rdev)) == -1) {
-		fprintf(stderr, "failed to create uevent file path\n");
-		exit(1);
-	}
-
-	std::ifstream uevent_file(uevent_path);
-	if (uevent_file.fail()) {
-		fprintf(stderr, "failed to open %s\n", uevent_path);
-		exit(1);
-	}
-
-	std::string line;
-
-	while (std::getline(uevent_file, line)) {
-		if (line.compare(0, 8, "DEVNAME="))
-			continue;
-
-		static const char * devnames[] = {
-			"v4l-subdev",
-			"video",
-			"vbi",
-			"radio",
-			"swradio",
-			"v4l-touch",
-			NULL
-		};
-
-		for (size_t i = 0; devnames[i]; i++) {
-			size_t len = strlen(devnames[i]);
-
-			if (!line.compare(8, len, devnames[i]) && isdigit(line[8+len])) {
-				uevent_file.close();
-				return i == 0;
-			}
-		}
-	}
-
-	uevent_file.close();
-
-	fprintf(stderr, "unknown device name\n");
-	exit(1);
-}
-
-static const flag_def entity_flags_def[] = {
-	{ MEDIA_ENT_FL_DEFAULT, "default" },
-	{ MEDIA_ENT_FL_CONNECTOR, "connector" },
-	{ 0, NULL }
-};
-
-static std::string entflags2s(__u32 flags)
-{
-	return flags2s(flags, entity_flags_def);
-}
-
-static const flag_def entity_types_def[] = {
-	{ MEDIA_ENT_F_UNKNOWN, "Unknown" },
-	{ MEDIA_ENT_F_DTV_DEMOD, "Digital TV Demodulator" },
-	{ MEDIA_ENT_F_TS_DEMUX, "Transport Stream Demuxer" },
-	{ MEDIA_ENT_F_DTV_CA, "Digital TV Conditional Access" },
-	{ MEDIA_ENT_F_DTV_NET_DECAP, "Digital TV Network ULE/MLE Desencapsulation" },
-	{ MEDIA_ENT_F_IO_DTV, "Digital TV I/O" },
-	{ MEDIA_ENT_F_IO_VBI, "VBI I/O" },
-	{ MEDIA_ENT_F_IO_SWRADIO, "Software Radio I/O" },
-	{ MEDIA_ENT_F_IF_VID_DECODER, "IF-PLL Video Decoder" },
-	{ MEDIA_ENT_F_IF_AUD_DECODER, "IF-PLL Audio Decoder" },
-	{ MEDIA_ENT_F_AUDIO_CAPTURE, "Audio Capture" },
-	{ MEDIA_ENT_F_AUDIO_PLAYBACK, "Audio Playback" },
-	{ MEDIA_ENT_F_AUDIO_MIXER, "Audio Mixer" },
-	{ MEDIA_ENT_F_PROC_VIDEO_COMPOSER, "Video Composer" },
-	{ MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER, "Video Pixel Formatter" },
-	{ MEDIA_ENT_F_PROC_VIDEO_PIXEL_ENC_CONV, "Video Pixel Encoding Converter" },
-	{ MEDIA_ENT_F_PROC_VIDEO_LUT, "Video Look-Up Table" },
-	{ MEDIA_ENT_F_PROC_VIDEO_SCALER, "Video Scaler" },
-	{ MEDIA_ENT_F_PROC_VIDEO_STATISTICS, "Video Statistics" },
-	{ MEDIA_ENT_F_VID_MUX, "Video Muxer" },
-	{ MEDIA_ENT_F_VID_IF_BRIDGE, "Video Interface Bridge" },
-
-	{ MEDIA_ENT_F_IO_V4L, "V4L2 I/O" },
-	{ MEDIA_ENT_F_CAM_SENSOR, "Camera Sensor" },
-	{ MEDIA_ENT_F_FLASH, "Flash Controller" },
-	{ MEDIA_ENT_F_LENS, "Lens Controller" },
-	{ MEDIA_ENT_F_ATV_DECODER, "Analog Video Decoder" },
-	{ MEDIA_ENT_F_TUNER, "Tuner" },
-	{ MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN, "Unknown" },
-	{ 0, NULL }
-};
-
-static std::string enttype2s(__u32 type)
-{
-	for (unsigned i = 0; entity_types_def[i].str; i++)
-		if (type == entity_types_def[i].flag)
-			return entity_types_def[i].str;
-	return "Unknown (" + num2s(type) + ")";
-}
-
-static const flag_def pad_flags_def[] = {
-	{ MEDIA_PAD_FL_SINK, "Sink" },
-	{ MEDIA_PAD_FL_SOURCE, "Source" },
-	{ MEDIA_PAD_FL_MUST_CONNECT, "Must Connect" },
-	{ 0, NULL }
-};
-
-static std::string padflags2s(__u32 flags)
-{
-	return flags2s(flags, pad_flags_def);
-}
-
-static const flag_def link_flags_def[] = {
-	{ MEDIA_LNK_FL_ENABLED, "Enabled" },
-	{ MEDIA_LNK_FL_IMMUTABLE, "Immutable" },
-	{ MEDIA_LNK_FL_DYNAMIC, "Dynamic" },
-	{ 0, NULL }
-};
-
-static std::string linkflags2s(__u32 flags)
-{
-	switch (flags & MEDIA_LNK_FL_LINK_TYPE) {
-	case MEDIA_LNK_FL_DATA_LINK:
-		return "Data " + flags2s(flags, link_flags_def);
-	case MEDIA_LNK_FL_INTERFACE_LINK:
-		return "Interface " + flags2s(flags, link_flags_def);
-	default:
-		return "Unknown " + flags2s(flags, link_flags_def);
-	}
-}
-
-static void mdev_info(int fd, int media_fd)
-{
-	struct media_device_info mdinfo;
-	struct stat sb;
-
-	if (fstat(fd, &sb) == -1) {
-		fprintf(stderr, "failed to stat file\n");
-		exit(1);
-	}
-
-	if (ioctl(media_fd, MEDIA_IOC_DEVICE_INFO, &mdinfo))
-		return;
-
-	struct media_entity_desc ent;
-	bool found = false;
-
-	printf("Media Driver Info:\n");
-	printf("\tDriver name      : %s\n", mdinfo.driver);
-	printf("\tModel            : %s\n", mdinfo.model);
-	printf("\tSerial           : %s\n", mdinfo.serial);
-	printf("\tBus info         : %s\n", mdinfo.bus_info);
-	printf("\tMedia version    : %d.%d.%d\n",
-	       mdinfo.media_version >> 16,
-	       (mdinfo.media_version >> 8) & 0xff,
-	       mdinfo.media_version & 0xff);
-	printf("\tHardware revision: 0x%08x, %d\n",
-	       mdinfo.hw_revision, mdinfo.hw_revision);
-	printf("\tDriver version   : %d.%d.%d\n",
-	       mdinfo.driver_version >> 16,
-	       (mdinfo.driver_version >> 8) & 0xff,
-	       mdinfo.driver_version & 0xff);
-
-	memset(&ent, 0, sizeof(ent));
-	ent.id = MEDIA_ENT_ID_FLAG_NEXT;
-	while (!ioctl(media_fd, MEDIA_IOC_ENUM_ENTITIES, &ent)) {
-		if (ent.dev.major == major(sb.st_rdev) &&
-		    ent.dev.minor == minor(sb.st_rdev)) {
-			found = true;
-			break;
-		}
-		ent.id |= MEDIA_ENT_ID_FLAG_NEXT;
-	}
-	if (!found)
-		return;
-
-	printf("Entity Info:\n");
-	printf("\tID   : %u\n", ent.id);
-	printf("\tName : %s\n", ent.name);
-	printf("\tType : %s\n", enttype2s(ent.type).c_str());
-	printf("\tFlags: %s\n", entflags2s(ent.flags).c_str());
-	if (ent.flags & MEDIA_ENT_FL_DEFAULT) {
-		printf("\tMajor: %u\n", ent.dev.major);
-		printf("\tMinor: %u\n", ent.dev.minor);
-	}
-
-	struct media_links_enum links_enum;
-	struct media_pad_desc pads[ent.pads];
-	struct media_link_desc links[ent.links];
-
-	memset(&links_enum, 0, sizeof(links_enum));
-	links_enum.entity = ent.id;
-	links_enum.pads = pads;
-	links_enum.links = links;
-	if (ioctl(media_fd, MEDIA_IOC_ENUM_LINKS, &links_enum))
-		return;
-
-	for (unsigned i = 0; i < ent.pads; i++)
-		printf("\tPad %u: %s\n", pads[i].index,
-		       padflags2s(pads[i].flags).c_str());
-	for (unsigned i = 0; i < ent.links; i++)
-		printf("\tLinks %u->%u: %s\n",
-		       links[i].source.entity,
-		       links[i].sink.entity,
-		       linkflags2s(links[i].flags).c_str());
-}
-
 int main(int argc, char **argv)
 {
 	int i;
@@ -1645,7 +1399,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	verbose = options[OptVerbose];
-	is_subdev = is_subdevice(fd);
+	is_subdev = mi_is_subdevice(fd);
 	if (is_subdev)
 		options[OptUseWrapper] = 0;
 
@@ -1666,7 +1420,7 @@ int main(int argc, char **argv)
 	if (capabilities & V4L2_CAP_DEVICE_CAPS)
 		capabilities = vcap.device_caps;
 
-	media_fd = get_media_fd(fd);
+	media_fd = mi_get_media_fd(fd);
 
 	priv_magic = (capabilities & V4L2_CAP_EXT_PIX_FORMAT) ?
 			V4L2_PIX_FMT_PRIV_MAGIC : 0;
@@ -1764,7 +1518,7 @@ int main(int argc, char **argv)
 		}
 	}
 	if (options[OptGetDriverInfo] && media_fd >= 0)
-		mdev_info(fd, media_fd);
+		mi_media_info_for_fd(media_fd, fd);
 
 	/* Set options */
 

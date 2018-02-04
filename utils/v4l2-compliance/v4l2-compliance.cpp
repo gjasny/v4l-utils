@@ -39,6 +39,7 @@
 #include <vector>
 
 #include "v4l2-compliance.h"
+#include <media-info.h>
 #ifndef ANDROID
 #include "version.h"
 #endif
@@ -760,206 +761,6 @@ static int get_media_fd(int fd)
 	return media_fd;
 }
 
-typedef struct {
-	unsigned flag;
-	const char *str;
-} flag_def;
-
-static std::string num2s(unsigned num)
-{
-	char buf[10];
-
-	sprintf(buf, "%08x", num);
-	return buf;
-}
-
-static std::string flags2s(unsigned val, const flag_def *def)
-{
-	std::string s;
-
-	while (def->flag) {
-		if (val & def->flag) {
-			if (s.length()) s += ", ";
-			s += def->str;
-			val &= ~def->flag;
-		}
-		def++;
-	}
-	if (val) {
-		if (s.length()) s += ", ";
-		s += num2s(val);
-	}
-	return s;
-}
-
-static const flag_def entity_flags_def[] = {
-	{ MEDIA_ENT_FL_DEFAULT, "default" },
-	{ MEDIA_ENT_FL_CONNECTOR, "connector" },
-	{ 0, NULL }
-};
-
-static std::string entflags2s(__u32 flags)
-{
-	return flags2s(flags, entity_flags_def);
-}
-
-static const flag_def entity_types_def[] = {
-	{ MEDIA_ENT_F_UNKNOWN, "Unknown" },
-	{ MEDIA_ENT_F_DTV_DEMOD, "Digital TV Demodulator" },
-	{ MEDIA_ENT_F_TS_DEMUX, "Transport Stream Demuxer" },
-	{ MEDIA_ENT_F_DTV_CA, "Digital TV Conditional Access" },
-	{ MEDIA_ENT_F_DTV_NET_DECAP, "Digital TV Network ULE/MLE Desencapsulation" },
-	{ MEDIA_ENT_F_IO_DTV, "Digital TV I/O" },
-	{ MEDIA_ENT_F_IO_VBI, "VBI I/O" },
-	{ MEDIA_ENT_F_IO_SWRADIO, "Software Radio I/O" },
-	{ MEDIA_ENT_F_IF_VID_DECODER, "IF-PLL Video Decoder" },
-	{ MEDIA_ENT_F_IF_AUD_DECODER, "IF-PLL Audio Decoder" },
-	{ MEDIA_ENT_F_AUDIO_CAPTURE, "Audio Capture" },
-	{ MEDIA_ENT_F_AUDIO_PLAYBACK, "Audio Playback" },
-	{ MEDIA_ENT_F_AUDIO_MIXER, "Audio Mixer" },
-	{ MEDIA_ENT_F_PROC_VIDEO_COMPOSER, "Video Composer" },
-	{ MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER, "Video Pixel Formatter" },
-	{ MEDIA_ENT_F_PROC_VIDEO_PIXEL_ENC_CONV, "Video Pixel Encoding Converter" },
-	{ MEDIA_ENT_F_PROC_VIDEO_LUT, "Video Look-Up Table" },
-	{ MEDIA_ENT_F_PROC_VIDEO_SCALER, "Video Scaler" },
-	{ MEDIA_ENT_F_PROC_VIDEO_STATISTICS, "Video Statistics" },
-	{ MEDIA_ENT_F_VID_MUX, "Video Muxer" },
-	{ MEDIA_ENT_F_VID_IF_BRIDGE, "Video Interface Bridge" },
-
-	{ MEDIA_ENT_F_IO_V4L, "V4L2 I/O" },
-	{ MEDIA_ENT_F_CAM_SENSOR, "Camera Sensor" },
-	{ MEDIA_ENT_F_FLASH, "Flash Controller" },
-	{ MEDIA_ENT_F_LENS, "Lens Controller" },
-	{ MEDIA_ENT_F_ATV_DECODER, "Analog Video Decoder" },
-	{ MEDIA_ENT_F_TUNER, "Tuner" },
-	{ MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN, "Unknown" },
-	{ 0, NULL }
-};
-
-static std::string enttype2s(__u32 type)
-{
-	for (unsigned i = 0; entity_types_def[i].str; i++)
-		if (type == entity_types_def[i].flag)
-			return entity_types_def[i].str;
-	return "Unknown (" + num2s(type) + ")";
-}
-
-static const flag_def pad_flags_def[] = {
-	{ MEDIA_PAD_FL_SINK, "Sink" },
-	{ MEDIA_PAD_FL_SOURCE, "Source" },
-	{ MEDIA_PAD_FL_MUST_CONNECT, "Must Connect" },
-	{ 0, NULL }
-};
-
-static std::string padflags2s(__u32 flags)
-{
-	return flags2s(flags, pad_flags_def);
-}
-
-static const flag_def link_flags_def[] = {
-	{ MEDIA_LNK_FL_ENABLED, "Enabled" },
-	{ MEDIA_LNK_FL_IMMUTABLE, "Immutable" },
-	{ MEDIA_LNK_FL_DYNAMIC, "Dynamic" },
-	{ 0, NULL }
-};
-
-static std::string linkflags2s(__u32 flags)
-{
-	switch (flags & MEDIA_LNK_FL_LINK_TYPE) {
-	case MEDIA_LNK_FL_DATA_LINK:
-		return "Data " + flags2s(flags, link_flags_def);
-	case MEDIA_LNK_FL_INTERFACE_LINK:
-		return "Interface " + flags2s(flags, link_flags_def);
-	default:
-		return "Unknown " + flags2s(flags, link_flags_def);
-	}
-}
-
-static void mdev_info(node *node, int media_fd)
-{
-	struct media_device_info mdinfo;
-	struct stat sb;
-	int fd = node->g_fd();
-
-	if (media_fd < 0)
-		media_fd = fd;
-	else if (fd >= 0 && fstat(fd, &sb) == -1) {
-		fprintf(stderr, "failed to stat file\n");
-		exit(1);
-	}
-
-	if (ioctl(media_fd, MEDIA_IOC_DEVICE_INFO, &mdinfo))
-		return;
-
-	struct media_entity_desc &ent = node->entity;
-	bool found = false;
-
-	printf("Media Driver Info:\n");
-	printf("\tDriver name      : %s\n", mdinfo.driver);
-	printf("\tModel            : %s\n", mdinfo.model);
-	printf("\tSerial           : %s\n", mdinfo.serial);
-	printf("\tBus info         : %s\n", mdinfo.bus_info);
-	printf("\tMedia version    : %d.%d.%d\n",
-	       mdinfo.media_version >> 16,
-	       (mdinfo.media_version >> 8) & 0xff,
-	       mdinfo.media_version & 0xff);
-	printf("\tHardware revision: 0x%08x, %d\n",
-	       mdinfo.hw_revision, mdinfo.hw_revision);
-	printf("\tDriver version   : %d.%d.%d\n",
-	       mdinfo.driver_version >> 16,
-	       (mdinfo.driver_version >> 8) & 0xff,
-	       mdinfo.driver_version & 0xff);
-
-	if (node->is_media())
-		return;
-
-	memset(&ent, 0, sizeof(ent));
-	ent.id = MEDIA_ENT_ID_FLAG_NEXT;
-	while (!ioctl(media_fd, MEDIA_IOC_ENUM_ENTITIES, &ent)) {
-		if (ent.dev.major == major(sb.st_rdev) &&
-		    ent.dev.minor == minor(sb.st_rdev)) {
-			found = true;
-			break;
-		}
-		ent.id |= MEDIA_ENT_ID_FLAG_NEXT;
-	}
-	if (!found) {
-		ent.id = 0;
-		return;
-	}
-
-	printf("Entity Info:\n");
-	printf("\tID   : %u\n", ent.id);
-	printf("\tName : %s\n", ent.name);
-	printf("\tType : %s\n", enttype2s(ent.type).c_str());
-	printf("\tFlags: %s\n", entflags2s(ent.flags).c_str());
-	if (ent.flags & MEDIA_ENT_FL_DEFAULT) {
-		printf("\tMajor: %u\n", ent.dev.major);
-		printf("\tMinor: %u\n", ent.dev.minor);
-	}
-
-	struct media_links_enum links_enum;
-	node->pads = new media_pad_desc[ent.pads];
-	node->links = new media_link_desc[ent.links];
-
-	memset(&links_enum, 0, sizeof(links_enum));
-	links_enum.entity = ent.id;
-	links_enum.pads = node->pads;
-	links_enum.links = node->links;
-	if (ioctl(media_fd, MEDIA_IOC_ENUM_LINKS, &links_enum))
-		return;
-
-	for (unsigned i = 0; i < ent.pads; i++)
-		printf("\tPad %u: %s\n", node->pads[i].index,
-		       padflags2s(node->pads[i].flags).c_str());
-	for (unsigned i = 0; i < ent.links; i++)
-		printf("\tLinks %u->%u: %s\n",
-		       node->links[i].source.entity,
-		       node->links[i].sink.entity,
-		       linkflags2s(node->links[i].flags).c_str());
-}
-
-
 int main(int argc, char **argv)
 {
 	int i;
@@ -1356,9 +1157,9 @@ int main(int argc, char **argv)
 		}
 	}
 	if (node.is_media())
-		mdev_info(&node, -1);
+		mi_media_info_for_fd(node.g_fd(), -1);
 	else if (media_fd >= 0)
-		mdev_info(&node, media_fd);
+		mi_media_info_for_fd(media_fd, node.g_fd());
 
 	printf("\nCompliance test for device %s%s:\n\n",
 			device, direct ? "" : " (using libv4l2)");

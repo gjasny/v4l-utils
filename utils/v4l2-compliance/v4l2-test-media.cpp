@@ -124,10 +124,10 @@ int testMediaTopology(struct node *node)
 	memset(v2_links, 0xff, topology.num_links * sizeof(*v2_links));
 	topology.ptr_links = (__u64)v2_links;
 	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology));
-	v2_ents = (media_v2_entity *)topology.ptr_entities;
-	v2_ifaces = (media_v2_interface *)topology.ptr_interfaces;
-	v2_pads = (media_v2_pad *)topology.ptr_pads;
-	v2_links = (media_v2_link *)topology.ptr_links;
+	fail_on_test(v2_ents != (media_v2_entity *)topology.ptr_entities);
+	fail_on_test(v2_ifaces != (media_v2_interface *)topology.ptr_interfaces);
+	fail_on_test(v2_pads != (media_v2_pad *)topology.ptr_pads);
+	fail_on_test(v2_links != (media_v2_link *)topology.ptr_links);
 
 	for (unsigned i = 0; i < topology.num_entities; i++) {
 		media_v2_entity &ent = v2_ents[i];
