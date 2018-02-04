@@ -12,6 +12,8 @@
 #include <linux/videodev2.h>
 #include <linux/v4l2-subdev.h>
 
+#include <v4l2-info.h>
+
 #ifndef NO_LIBV4L2
 #include <libv4l2.h>
 #else
@@ -266,19 +268,7 @@ typedef struct {
 // v4l2-ctl.cpp
 int doioctl_name(int fd, unsigned long int request, void *parm, const char *name);
 int test_ioctl(int fd, int cmd, void *arg);
-std::string flags2s(unsigned val, const flag_def *def);
 int parse_subopt(char **subs, const char * const *subopts, char **value);
-std::string std2s(v4l2_std_id std);
-std::string buftype2s(int type);
-std::string fcc2s(unsigned int val);
-std::string fmtdesc2s(unsigned flags);
-std::string colorspace2s(int val);
-std::string xfer_func2s(int val);
-std::string ycbcr_enc2s(int val);
-std::string quantization2s(int val);
-std::string service2s(unsigned service);
-std::string field2s(int val);
-void print_v4lstd(v4l2_std_id std);
 __u32 parse_field(const char *s);
 __u32 parse_colorspace(const char *s);
 __u32 parse_xfer_func(const char *s);
@@ -288,9 +278,6 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 	      __u32 &field, __u32 &colorspace, __u32 &xfer, __u32 &ycbcr,
 	      __u32 &quantization, __u32 &flags, __u32 *bytesperline);
 int parse_selection_target(const char *s, unsigned int &target);
-extern const flag_def selection_targets_def[];
-std::string seltarget2s(__u32 target);
-std::string selflags2s(__u32 flags);
 int parse_selection_flags(const char *s);
 void print_selection(const struct v4l2_selection &sel);
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane);

@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "v4l2-compliance.h"
-#include <v4l2-info.h>
 #include <media-info.h>
 #ifndef ANDROID
 #include "version.h"
@@ -192,55 +191,6 @@ static void usage(void)
 	printf("  -w, --wrapper      Use the libv4l2 wrapper library.\n");
 #endif
 	exit(0);
-}
-
-std::string fcc2s(unsigned int val)
-{
-	std::string s;
-
-	s += val & 0x7f;
-	s += (val >> 8) & 0x7f;
-	s += (val >> 16) & 0x7f;
-	s += (val >> 24) & 0x7f;
-	if (val & (1 << 31))
-		s += "-BE";
-	return s;
-}
-
-std::string buftype2s(int type)
-{
-	switch (type) {
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-		return "Video Capture";
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
-		return "Video Capture Multiplanar";
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-		return "Video Output";
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
-		return "Video Output Multiplanar";
-	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
-		return "Video Overlay";
-	case V4L2_BUF_TYPE_VBI_CAPTURE:
-		return "VBI Capture";
-	case V4L2_BUF_TYPE_VBI_OUTPUT:
-		return "VBI Output";
-	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
-		return "Sliced VBI Capture";
-	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
-		return "Sliced VBI Output";
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
-		return "Video Output Overlay";
-	case V4L2_BUF_TYPE_SDR_CAPTURE:
-		return "SDR Capture";
-	case V4L2_BUF_TYPE_SDR_OUTPUT:
-		return "SDR Output";
-	case V4L2_BUF_TYPE_META_CAPTURE:
-		return "Metadata Capture";
-	case V4L2_BUF_TYPE_PRIVATE:
-		return "Private";
-	default:
-		return std::string("Unknown");
-	}
 }
 
 const char *ok(int res)

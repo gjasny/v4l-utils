@@ -284,25 +284,6 @@ static std::string safename(const char *name)
 	return safename((const unsigned char *)name);
 }
 
-static std::string ctrlflags2s(__u32 flags)
-{
-	static const flag_def def[] = {
-		{ V4L2_CTRL_FLAG_GRABBED,    "grabbed" },
-		{ V4L2_CTRL_FLAG_DISABLED,   "disabled" },
-		{ V4L2_CTRL_FLAG_READ_ONLY,  "read-only" },
-		{ V4L2_CTRL_FLAG_UPDATE,     "update" },
-		{ V4L2_CTRL_FLAG_INACTIVE,   "inactive" },
-		{ V4L2_CTRL_FLAG_SLIDER,     "slider" },
-		{ V4L2_CTRL_FLAG_WRITE_ONLY, "write-only" },
-		{ V4L2_CTRL_FLAG_VOLATILE,   "volatile" },
-		{ V4L2_CTRL_FLAG_HAS_PAYLOAD,"has-payload" },
-		{ V4L2_CTRL_FLAG_EXECUTE_ON_WRITE, "execute-on-write" },
-		{ V4L2_CTRL_FLAG_MODIFY_LAYOUT, "modify-layout" },
-		{ 0, NULL }
-	};
-	return flags2s(flags, def);
-}
-
 static void print_qctrl(int fd, struct v4l2_query_ext_ctrl *queryctrl,
 		struct v4l2_ext_control *ctrl, int show_menus)
 {

@@ -63,52 +63,6 @@ void overlay_usage(void)
 	       );
 }
 
-static std::string fbufcap2s(unsigned cap)
-{
-	std::string s;
-
-	if (cap & V4L2_FBUF_CAP_EXTERNOVERLAY)
-		s += "\t\t\tExtern Overlay\n";
-	if (cap & V4L2_FBUF_CAP_CHROMAKEY)
-		s += "\t\t\tChromakey\n";
-	if (cap & V4L2_FBUF_CAP_SRC_CHROMAKEY)
-		s += "\t\t\tSource Chromakey\n";
-	if (cap & V4L2_FBUF_CAP_GLOBAL_ALPHA)
-		s += "\t\t\tGlobal Alpha\n";
-	if (cap & V4L2_FBUF_CAP_LOCAL_ALPHA)
-		s += "\t\t\tLocal Alpha\n";
-	if (cap & V4L2_FBUF_CAP_LOCAL_INV_ALPHA)
-		s += "\t\t\tLocal Inverted Alpha\n";
-	if (cap & V4L2_FBUF_CAP_LIST_CLIPPING)
-		s += "\t\t\tClipping List\n";
-	if (cap & V4L2_FBUF_CAP_BITMAP_CLIPPING)
-		s += "\t\t\tClipping Bitmap\n";
-	if (s.empty()) s += "\t\t\t\n";
-	return s;
-}
-
-static std::string fbufflags2s(unsigned fl)
-{
-	std::string s;
-
-	if (fl & V4L2_FBUF_FLAG_PRIMARY)
-		s += "\t\t\tPrimary Graphics Surface\n";
-	if (fl & V4L2_FBUF_FLAG_OVERLAY)
-		s += "\t\t\tOverlay Matches Capture/Output Size\n";
-	if (fl & V4L2_FBUF_FLAG_CHROMAKEY)
-		s += "\t\t\tChromakey\n";
-	if (fl & V4L2_FBUF_FLAG_SRC_CHROMAKEY)
-		s += "\t\t\tSource Chromakey\n";
-	if (fl & V4L2_FBUF_FLAG_GLOBAL_ALPHA)
-		s += "\t\t\tGlobal Alpha\n";
-	if (fl & V4L2_FBUF_FLAG_LOCAL_ALPHA)
-		s += "\t\t\tLocal Alpha\n";
-	if (fl & V4L2_FBUF_FLAG_LOCAL_INV_ALPHA)
-		s += "\t\t\tLocal Inverted Alpha\n";
-	if (s.empty()) s += "\t\t\t\n";
-	return s;
-}
-
 static void printfbuf(const struct v4l2_framebuffer &fb)
 {
 	int is_ext = fb.capability & V4L2_FBUF_CAP_EXTERNOVERLAY;

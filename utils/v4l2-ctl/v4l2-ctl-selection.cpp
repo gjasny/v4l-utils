@@ -365,17 +365,17 @@ void selection_get(int fd)
 
 	if (options[OptGetSelection]) {
 		struct v4l2_selection sel;
-		int t = 0;
+		unsigned idx = 0;
 
 		memset(&sel, 0, sizeof(sel));
 		sel.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
 		if (options[OptAll] || get_sel_target == -1) {
-			while (selection_targets_def[t].str != NULL) {
-				sel.target = selection_targets_def[t].flag;
+			while (valid_seltarget_at_idx(idx)) {
+				sel.target = seltarget_at_idx(idx);
 				if (doioctl(fd, VIDIOC_G_SELECTION, &sel) == 0)
 					print_selection(sel);
-				t++;
+				idx++;
 			}
 		} else {
 			sel.target = get_sel_target;
@@ -386,17 +386,17 @@ void selection_get(int fd)
 
 	if (options[OptGetOutputSelection]) {
 		struct v4l2_selection sel;
-		int t = 0;
+		unsigned idx = 0;
 
 		memset(&sel, 0, sizeof(sel));
 		sel.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 
 		if (options[OptAll] || get_sel_target == -1) {
-			while (selection_targets_def[t].str != NULL) {
-				sel.target = selection_targets_def[t].flag;
+			while (valid_seltarget_at_idx(idx)) {
+				sel.target = seltarget_at_idx(idx);
 				if (doioctl(fd, VIDIOC_G_SELECTION, &sel) == 0)
 					print_selection(sel);
-				t++;
+				idx++;
 			}
 		} else {
 			sel.target = get_sel_target;

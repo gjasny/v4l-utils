@@ -41,7 +41,6 @@
 
 #include "v4l2-ctl.h"
 
-#include <v4l2-info.h>
 #include <media-info.h>
 
 #ifdef HAVE_SYS_KLOG_H
@@ -321,234 +320,6 @@ int doioctl_name(int fd, unsigned long int request, void *parm, const char *name
 	return retval;
 }
 
-static std::string num2s(unsigned num)
-{
-	char buf[10];
-
-	sprintf(buf, "%08x", num);
-	return buf;
-}
-
-std::string buftype2s(int type)
-{
-	switch (type) {
-	case 0:
-		return "Invalid";
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-		return "Video Capture";
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
-		return "Video Capture Multiplanar";
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-		return "Video Output";
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
-		return "Video Output Multiplanar";
-	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
-		return "Video Overlay";
-	case V4L2_BUF_TYPE_VBI_CAPTURE:
-		return "VBI Capture";
-	case V4L2_BUF_TYPE_VBI_OUTPUT:
-		return "VBI Output";
-	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
-		return "Sliced VBI Capture";
-	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
-		return "Sliced VBI Output";
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
-		return "Video Output Overlay";
-	case V4L2_BUF_TYPE_SDR_CAPTURE:
-		return "SDR Capture";
-	case V4L2_BUF_TYPE_SDR_OUTPUT:
-		return "SDR Output";
-	case V4L2_BUF_TYPE_META_CAPTURE:
-		return "Metadata Capture";
-	default:
-		return "Unknown (" + num2s(type) + ")";
-	}
-}
-
-std::string fcc2s(unsigned int val)
-{
-	std::string s;
-
-	s += val & 0x7f;
-	s += (val >> 8) & 0x7f;
-	s += (val >> 16) & 0x7f;
-	s += (val >> 24) & 0x7f;
-	if (val & (1 << 31))
-		s += "-BE";
-	return s;
-}
-
-std::string field2s(int val)
-{
-	switch (val) {
-	case V4L2_FIELD_ANY:
-		return "Any";
-	case V4L2_FIELD_NONE:
-		return "None";
-	case V4L2_FIELD_TOP:
-		return "Top";
-	case V4L2_FIELD_BOTTOM:
-		return "Bottom";
-	case V4L2_FIELD_INTERLACED:
-		return "Interlaced";
-	case V4L2_FIELD_SEQ_TB:
-		return "Sequential Top-Bottom";
-	case V4L2_FIELD_SEQ_BT:
-		return "Sequential Bottom-Top";
-	case V4L2_FIELD_ALTERNATE:
-		return "Alternating";
-	case V4L2_FIELD_INTERLACED_TB:
-		return "Interlaced Top-Bottom";
-	case V4L2_FIELD_INTERLACED_BT:
-		return "Interlaced Bottom-Top";
-	default:
-		return "Unknown (" + num2s(val) + ")";
-	}
-}
-
-std::string colorspace2s(int val)
-{
-	switch (val) {
-	case V4L2_COLORSPACE_DEFAULT:
-		return "Default";
-	case V4L2_COLORSPACE_SMPTE170M:
-		return "SMPTE 170M";
-	case V4L2_COLORSPACE_SMPTE240M:
-		return "SMPTE 240M";
-	case V4L2_COLORSPACE_REC709:
-		return "Rec. 709";
-	case V4L2_COLORSPACE_BT878:
-		return "Broken Bt878";
-	case V4L2_COLORSPACE_470_SYSTEM_M:
-		return "470 System M";
-	case V4L2_COLORSPACE_470_SYSTEM_BG:
-		return "470 System BG";
-	case V4L2_COLORSPACE_JPEG:
-		return "JPEG";
-	case V4L2_COLORSPACE_SRGB:
-		return "sRGB";
-	case V4L2_COLORSPACE_ADOBERGB:
-		return "AdobeRGB";
-	case V4L2_COLORSPACE_DCI_P3:
-		return "DCI-P3";
-	case V4L2_COLORSPACE_BT2020:
-		return "BT.2020";
-	case V4L2_COLORSPACE_RAW:
-		return "Raw";
-	default:
-		return "Unknown (" + num2s(val) + ")";
-	}
-}
-
-std::string xfer_func2s(int val)
-{
-	switch (val) {
-	case V4L2_XFER_FUNC_DEFAULT:
-		return "Default";
-	case V4L2_XFER_FUNC_709:
-		return "Rec. 709";
-	case V4L2_XFER_FUNC_SRGB:
-		return "sRGB";
-	case V4L2_XFER_FUNC_ADOBERGB:
-		return "AdobeRGB";
-	case V4L2_XFER_FUNC_DCI_P3:
-		return "DCI-P3";
-	case V4L2_XFER_FUNC_SMPTE2084:
-		return "SMPTE 2084";
-	case V4L2_XFER_FUNC_SMPTE240M:
-		return "SMPTE 240M";
-	case V4L2_XFER_FUNC_NONE:
-		return "None";
-	default:
-		return "Unknown (" + num2s(val) + ")";
-	}
-}
-
-std::string ycbcr_enc2s(int val)
-{
-	switch (val) {
-	case V4L2_YCBCR_ENC_DEFAULT:
-		return "Default";
-	case V4L2_YCBCR_ENC_601:
-		return "ITU-R 601";
-	case V4L2_YCBCR_ENC_709:
-		return "Rec. 709";
-	case V4L2_YCBCR_ENC_XV601:
-		return "xvYCC 601";
-	case V4L2_YCBCR_ENC_XV709:
-		return "xvYCC 709";
-	case V4L2_YCBCR_ENC_BT2020:
-		return "BT.2020";
-	case V4L2_YCBCR_ENC_BT2020_CONST_LUM:
-		return "BT.2020 Constant Luminance";
-	case V4L2_YCBCR_ENC_SMPTE240M:
-		return "SMPTE 240M";
-	case V4L2_HSV_ENC_180:
-		return "HSV with Hue 0-179";
-	case V4L2_HSV_ENC_256:
-		return "HSV with Hue 0-255";
-	default:
-		return "Unknown (" + num2s(val) + ")";
-	}
-}
-
-std::string quantization2s(int val)
-{
-	switch (val) {
-	case V4L2_QUANTIZATION_DEFAULT:
-		return "Default";
-	case V4L2_QUANTIZATION_FULL_RANGE:
-		return "Full Range";
-	case V4L2_QUANTIZATION_LIM_RANGE:
-		return "Limited Range";
-	default:
-		return "Unknown (" + num2s(val) + ")";
-	}
-}
-
-std::string flags2s(unsigned val, const flag_def *def)
-{
-	std::string s;
-
-	while (def->flag) {
-		if (val & def->flag) {
-			if (s.length()) s += ", ";
-			s += def->str;
-			val &= ~def->flag;
-		}
-		def++;
-	}
-	if (val) {
-		if (s.length()) s += ", ";
-		s += num2s(val);
-	}
-	return s;
-}
-
-
-static const flag_def pixflags_def[] = {
-	{ V4L2_PIX_FMT_FLAG_PREMUL_ALPHA,  "premultiplied-alpha" },
-	{ 0, NULL }
-};
-
-std::string pixflags2s(unsigned flags)
-{
-	return flags2s(flags, pixflags_def);
-}
-
-static const flag_def service_def[] = {
-	{ V4L2_SLICED_TELETEXT_B,  "teletext" },
-	{ V4L2_SLICED_VPS,         "vps" },
-	{ V4L2_SLICED_CAPTION_525, "cc" },
-	{ V4L2_SLICED_WSS_625,     "wss" },
-	{ 0, NULL }
-};
-
-std::string service2s(unsigned service)
-{
-	return flags2s(service, service_def);
-}
-
 /*
  * Any pixelformat that is not a YUV format is assumed to be
  * RGB or HSV.
@@ -608,11 +379,6 @@ static bool is_rgb_or_hsv(__u32 pixelformat)
 
 void printfmt(const struct v4l2_format &vfmt)
 {
-	const flag_def vbi_def[] = {
-		{ V4L2_VBI_UNSYNC,     "unsynchronized" },
-		{ V4L2_VBI_INTERLACED, "interlaced" },
-		{ 0, NULL }
-	};
 	__u32 colsp = vfmt.fmt.pix.colorspace;
 	__u32 ycbcr_enc = vfmt.fmt.pix.ycbcr_enc;
 
@@ -708,7 +474,7 @@ void printfmt(const struct v4l2_format &vfmt)
 		printf("\tStart 2nd Field : %u\n", vfmt.fmt.vbi.start[1]);
 		printf("\tCount 2nd Field : %u\n", vfmt.fmt.vbi.count[1]);
 		if (vfmt.fmt.vbi.flags)
-			printf("\tFlags           : %s\n", flags2s(vfmt.fmt.vbi.flags, vbi_def).c_str());
+			printf("\tFlags           : %s\n", vbiflags2s(vfmt.fmt.vbi.flags).c_str());
 		break;
 	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
@@ -731,17 +497,6 @@ void printfmt(const struct v4l2_format &vfmt)
 		printf("\tBuffer Size     : %u\n", vfmt.fmt.meta.buffersize);
 		break;
 	}
-}
-
-static const flag_def fmtdesc_def[] = {
-	{ V4L2_FMT_FLAG_COMPRESSED, "compressed" },
-	{ V4L2_FMT_FLAG_EMULATED, "emulated" },
-	{ 0, NULL }
-};
-
-std::string fmtdesc2s(unsigned flags)
-{
-	return flags2s(flags, fmtdesc_def);
 }
 
 void print_video_formats(int fd, __u32 type)
@@ -777,80 +532,6 @@ int parse_subopt(char **subs, const char * const *subopts, char **value)
 		return -1;
 	}
 	return opt;
-}
-
-static std::string partstd2s(const char *prefix, const char *stds[], unsigned long long std)
-{
-	std::string s = std::string(prefix) + "-";
-	int first = 1;
-
-	while (*stds) {
-		if (std & 1) {
-			if (!first)
-				s += "/";
-			first = 0;
-			s += *stds;
-		}
-		stds++;
-		std >>= 1;
-	}
-	return s;
-}
-
-static const char *std_pal[] = {
-	"B", "B1", "G", "H", "I", "D", "D1", "K",
-	"M", "N", "Nc", "60",
-	NULL
-};
-static const char *std_ntsc[] = {
-	"M", "M-JP", "443", "M-KR",
-	NULL
-};
-static const char *std_secam[] = {
-	"B", "D", "G", "H", "K", "K1", "L", "Lc",
-	NULL
-};
-static const char *std_atsc[] = {
-	"8-VSB", "16-VSB",
-	NULL
-};
-
-std::string std2s(v4l2_std_id std)
-{
-	std::string s;
-
-	if (std & 0xfff) {
-		s += partstd2s("PAL", std_pal, std);
-	}
-	if (std & 0xf000) {
-		if (s.length()) s += " ";
-		s += partstd2s("NTSC", std_ntsc, std >> 12);
-	}
-	if (std & 0xff0000) {
-		if (s.length()) s += " ";
-		s += partstd2s("SECAM", std_secam, std >> 16);
-	}
-	if (std & 0xf000000) {
-		if (s.length()) s += " ";
-		s += partstd2s("ATSC", std_atsc, std >> 24);
-	}
-	return s;
-}
-
-void print_v4lstd(v4l2_std_id std)
-{
-	if (std & 0xfff) {
-		printf("\t%s\n", partstd2s("PAL", std_pal, std).c_str());
-	}
-	if (std & 0xf000) {
-		printf("\t%s\n", partstd2s("NTSC", std_ntsc, std >> 12).c_str());
-	}
-	if (std & 0xff0000) {
-		printf("\t%s\n", partstd2s("SECAM", std_secam, std >> 16).c_str());
-	}
-	if (std & 0xf000000) {
-		printf("\t%s\n", partstd2s("ATSC", std_atsc, std >> 24).c_str());
-	}
 }
 
 __u32 parse_field(const char *s)
@@ -1009,42 +690,6 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 		}
 	}
 	return fmts;
-}
-
-const flag_def selection_targets_def[] = {
-	{ V4L2_SEL_TGT_CROP_ACTIVE, "crop" },
-	{ V4L2_SEL_TGT_CROP_DEFAULT, "crop_default" },
-	{ V4L2_SEL_TGT_CROP_BOUNDS, "crop_bounds" },
-	{ V4L2_SEL_TGT_COMPOSE_ACTIVE, "compose" },
-	{ V4L2_SEL_TGT_COMPOSE_DEFAULT, "compose_default" },
-	{ V4L2_SEL_TGT_COMPOSE_BOUNDS, "compose_bounds" },
-	{ V4L2_SEL_TGT_COMPOSE_PADDED, "compose_padded" },
-	{ V4L2_SEL_TGT_NATIVE_SIZE, "native_size" },
-	{ 0, NULL }
-};
-
-std::string seltarget2s(__u32 target)
-{
-	int i = 0;
-
-	while (selection_targets_def[i].str != NULL) {
-		if (selection_targets_def[i].flag == target)
-			return selection_targets_def[i].str;
-		i++;
-	}
-	return "Unknown";
-}
-
-const flag_def selection_flags_def[] = {
-	{ V4L2_SEL_FLAG_GE, "ge" },
-	{ V4L2_SEL_FLAG_LE, "le" },
-	{ V4L2_SEL_FLAG_KEEP_CONFIG, "keep-config" },
-	{ 0, NULL }
-};
-
-std::string selflags2s(__u32 flags)
-{
-	return flags2s(flags, selection_flags_def);
 }
 
 int parse_selection_flags(const char *s)

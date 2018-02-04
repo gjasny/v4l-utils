@@ -362,44 +362,6 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 	}
 }
 
-static const flag_def dv_standards_def[] = {
-	{ V4L2_DV_BT_STD_CEA861, "CTA-861" },
-	{ V4L2_DV_BT_STD_DMT, "DMT" },
-	{ V4L2_DV_BT_STD_CVT, "CVT" },
-	{ V4L2_DV_BT_STD_GTF, "GTF" },
-	{ V4L2_DV_BT_STD_SDI, "SDI" },
-	{ 0, NULL }
-};
-
-static std::string dvflags2s(unsigned vsync, int val)
-{
-	std::string s;
-
-	if (val & V4L2_DV_FL_REDUCED_BLANKING)
-		s += vsync == 8 ?
-			"reduced blanking v2, " :
-			"reduced blanking, ";
-	if (val & V4L2_DV_FL_CAN_REDUCE_FPS)
-		s += "framerate can be reduced by 1/1.001, ";
-	if (val & V4L2_DV_FL_REDUCED_FPS)
-		s += "framerate is reduced by 1/1.001, ";
-	if (val & V4L2_DV_FL_HALF_LINE)
-		s += "half-line, ";
-	if (val & V4L2_DV_FL_IS_CE_VIDEO)
-		s += "CE-video, ";
-	if (val & V4L2_DV_FL_FIRST_FIELD_EXTRA_LINE)
-		s += "first field has extra line, ";
-	if (val & V4L2_DV_FL_HAS_PICTURE_ASPECT)
-		s += "has picture aspect, ";
-	if (val & V4L2_DV_FL_HAS_CEA861_VIC)
-		s += "has CTA-861 VIC, ";
-	if (val & V4L2_DV_FL_HAS_HDMI_VIC)
-		s += "has HDMI VIC, ";
-	if (s.length())
-		return s.erase(s.length() - 2, 2);
-	return s;
-}
-
 static void print_dv_timings(const struct v4l2_dv_timings *t)
 {
 	const struct v4l2_bt_timings *bt;
@@ -458,7 +420,7 @@ static void print_dv_timings(const struct v4l2_dv_timings *t)
 			printf("\tVertical sync: %d\n", bt->il_vsync);
 			printf("\tVertical backporch: %d\n", bt->il_vbackporch);
 		}
-		printf("\tStandards: %s\n", flags2s(bt->standards, dv_standards_def).c_str());
+		printf("\tStandards: %s\n", dv_standards2s(bt->standards).c_str());
 		if (bt->flags & V4L2_DV_FL_HAS_PICTURE_ASPECT)
 			printf("\tPicture aspect: %u:%u\n",
 			       bt->picture_aspect.numerator,
@@ -620,7 +582,7 @@ void stds_get(int fd)
 	if (options[OptGetStandard]) {
 		if (doioctl(fd, VIDIOC_G_STD, &standard) == 0) {
 			printf("Video Standard = 0x%08llx\n", (unsigned long long)standard);
-			print_v4lstd((unsigned long long)standard);
+			printf("\t%s\n", std2s(standard, "\n\t").c_str());
 		}
 	}
 
@@ -636,13 +598,6 @@ void stds_get(int fd)
 
 		dv_timings_cap.pad = dv_timings_cap_pad;
 		if (doioctl(fd, VIDIOC_DV_TIMINGS_CAP, &dv_timings_cap) >= 0) {
-			static const flag_def dv_caps_def[] = {
-				{ V4L2_DV_BT_CAP_INTERLACED, "Interlaced" },
-				{ V4L2_DV_BT_CAP_PROGRESSIVE, "Progressive" },
-				{ V4L2_DV_BT_CAP_REDUCED_BLANKING, "Reduced Blanking" },
-				{ V4L2_DV_BT_CAP_CUSTOM, "Custom Formats" },
-				{ 0, NULL }
-			};
 			struct v4l2_bt_timings_cap *bt = &dv_timings_cap.bt;
 
 			printf("DV timings capabilities:\n");
@@ -656,9 +611,9 @@ void stds_get(int fd)
 				printf("\tMinimum PClock: %llu\n", bt->min_pixelclock);
 				printf("\tMaximum PClock: %llu\n", bt->max_pixelclock);
 				printf("\tStandards: %s\n",
-					flags2s(bt->standards, dv_standards_def).c_str());
+					dv_standards2s(bt->standards).c_str());
 				printf("\tCapabilities: %s\n",
-					flags2s(bt->capabilities, dv_caps_def).c_str());
+					dv_caps2s(bt->capabilities).c_str());
 			}
 		}
 	}
@@ -666,7 +621,7 @@ void stds_get(int fd)
         if (options[OptQueryStandard]) {
 		if (doioctl(fd, VIDIOC_QUERYSTD, &standard) == 0) {
 			printf("Video Standard = 0x%08llx\n", (unsigned long long)standard);
-			print_v4lstd((unsigned long long)standard);
+			printf("\t%s\n", std2s(standard, "\n\t").c_str());
 		}
 	}
 

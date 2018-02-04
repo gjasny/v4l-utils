@@ -510,7 +510,7 @@ void subdev_get(int fd)
 
 	if (options[OptGetSubDevSelection]) {
 		struct v4l2_subdev_selection sel;
-		int t = 0;
+		unsigned idx = 0;
 
 		memset(&sel, 0, sizeof(sel));
 		sel.which = V4L2_SUBDEV_FORMAT_ACTIVE;
@@ -518,11 +518,11 @@ void subdev_get(int fd)
 
 		printf("ioctl: VIDIOC_SUBDEV_G_SELECTION (pad=%u)\n", sel.pad);
 		if (options[OptAll] || get_sel_target == -1) {
-			while (selection_targets_def[t].str != NULL) {
-				sel.target = selection_targets_def[t].flag;
+			while (valid_seltarget_at_idx(idx)) {
+				sel.target = seltarget_at_idx(idx);
 				if (test_ioctl(fd, VIDIOC_SUBDEV_G_SELECTION, &sel) == 0)
 					print_subdev_selection(sel);
-				t++;
+				idx++;
 			}
 		} else {
 			sel.target = get_sel_target;

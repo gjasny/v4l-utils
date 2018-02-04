@@ -544,7 +544,7 @@ int testColorsAllFormats(struct node *node, unsigned component,
 		node->s_fmt(fmt);
 		printf("\ttest %u%% %s for format %s: %s\n",
 				perc, colors[component],
-				pixfmt2s(fmt.g_pixelformat()).c_str(),
+				fcc2s(fmt.g_pixelformat()).c_str(),
 				ok(testColorsFmt(node, component, skip, perc)));
 	} while (!node->enum_fmt(fmtdesc));
 	printf("\n");

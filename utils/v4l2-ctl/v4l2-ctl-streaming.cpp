@@ -194,22 +194,6 @@ static void write_u32(FILE *f, __u32 v)
 	fwrite(&v, 1, sizeof(v), f);
 }
 
-static const flag_def flags_def[] = {
-	{ V4L2_BUF_FLAG_MAPPED, "mapped" },
-	{ V4L2_BUF_FLAG_QUEUED, "queued" },
-	{ V4L2_BUF_FLAG_DONE, "done" },
-	{ V4L2_BUF_FLAG_KEYFRAME, "keyframe" },
-	{ V4L2_BUF_FLAG_PFRAME, "P-frame" },
-	{ V4L2_BUF_FLAG_BFRAME, "B-frame" },
-	{ V4L2_BUF_FLAG_ERROR, "error" },
-	{ V4L2_BUF_FLAG_TIMECODE, "timecode" },
-	{ V4L2_BUF_FLAG_PREPARED, "prepared" },
-	{ V4L2_BUF_FLAG_NO_CACHE_INVALIDATE, "no-cache-invalidate" },
-	{ V4L2_BUF_FLAG_NO_CACHE_CLEAN, "no-cache-clean" },
-	{ V4L2_BUF_FLAG_LAST, "last" },
-	{ 0, NULL }
-};
-
 static std::string timestamp_type2s(__u32 flags)
 {
 	char buf[20];
@@ -242,22 +226,13 @@ static std::string timestamp_src2s(__u32 flags)
 	}
 }
 
-static const flag_def tc_flags_def[] = {
-	{ V4L2_TC_FLAG_DROPFRAME, "dropframe" },
-	{ V4L2_TC_FLAG_COLORFRAME, "colorframe" },
-	{ V4L2_TC_USERBITS_field, "userbits-field" },
-	{ V4L2_TC_USERBITS_USERDEFINED, "userbits-userdefined" },
-	{ V4L2_TC_USERBITS_8BITCHARS, "userbits-8bitchars" },
-	{ 0, NULL }
-};
-
 static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 {
 	const unsigned ts_flags = V4L2_BUF_FLAG_TIMESTAMP_MASK | V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 
 	fprintf(f, "\tIndex    : %d\n", buf.index);
 	fprintf(f, "\tType     : %s\n", buftype2s(buf.type).c_str());
-	fprintf(f, "\tFlags    : %s\n", flags2s(buf.flags & ~ts_flags, flags_def).c_str());
+	fprintf(f, "\tFlags    : %s\n", bufferflags2s(buf.flags & ~ts_flags).c_str());
 	fprintf(f, "\tField    : %s\n", field2s(buf.field).c_str());
 	fprintf(f, "\tSequence : %u\n", buf.sequence);
 	fprintf(f, "\tLength   : %u\n", buf.length);
@@ -272,7 +247,7 @@ static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 			fps = 0;
 		fprintf(f, "\tTimecode : %dfps %s %dh %dm %ds %df (0x%02x 0x%02x 0x%02x 0x%02x)\n",
 			fps_types[fps],
-			flags2s(buf.timecode.flags, tc_flags_def).c_str(),
+			tc_flags2s(buf.timecode.flags).c_str(),
 			buf.timecode.hours, buf.timecode.minutes,
 			buf.timecode.seconds, buf.timecode.frames,
 			buf.timecode.userbits[0], buf.timecode.userbits[1],

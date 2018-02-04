@@ -67,55 +67,6 @@ enum QueryBufMode {
 typedef std::map<struct timeval, struct v4l2_buffer> buf_info_map;
 static buf_info_map buffer_info;
 
-std::string pixfmt2s(unsigned id)
-{
-	std::string pixfmt;
-
-	pixfmt += (char)(id & 0x7f);
-	pixfmt += (char)((id >> 8) & 0x7f);
-	pixfmt += (char)((id >> 16) & 0x7f);
-	pixfmt += (char)((id >> 24) & 0x7f);
-	if (id & (1 << 31))
-		pixfmt += "-BE";
-	return pixfmt;
-}
-
-static std::string num2s(unsigned num)
-{
-	char buf[10];
-
-	sprintf(buf, "%08x", num);
-	return buf;
-}
-
-static std::string field2s(unsigned val)
-{
-	switch (val) {
-	case V4L2_FIELD_ANY:
-		return "Any";
-	case V4L2_FIELD_NONE:
-		return "None";
-	case V4L2_FIELD_TOP:
-		return "Top";
-	case V4L2_FIELD_BOTTOM:
-		return "Bottom";
-	case V4L2_FIELD_INTERLACED:
-		return "Interlaced";
-	case V4L2_FIELD_SEQ_TB:
-		return "Sequential Top-Bottom";
-	case V4L2_FIELD_SEQ_BT:
-		return "Sequential Bottom-Top";
-	case V4L2_FIELD_ALTERNATE:
-		return "Alternating";
-	case V4L2_FIELD_INTERLACED_TB:
-		return "Interlaced Top-Bottom";
-	case V4L2_FIELD_INTERLACED_BT:
-		return "Interlaced Bottom-Top";
-	default:
-		return "Unknown (" + num2s(val) + ")";
-	}
-}
-
 class buffer : public cv4l_buffer {
 public:
 	buffer(unsigned type = 0, unsigned memory = 0, unsigned index = 0) :
@@ -1488,7 +1439,7 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 	}
 
 	printf("\ttest %s for Format %s, Frame Size %ux%u%s:\n", op,
-				pixfmt2s(pixelformat).c_str(),
+				fcc2s(pixelformat).c_str(),
 				fmt.g_width(), fmt.g_frame_height(), hz);
 
 	if (has_crop)

@@ -42,6 +42,7 @@
 #endif
 
 #include <cv4l-helpers.h>
+#include <v4l2-info.h>
 
 #if !defined(ENODATA) && (defined(__FreeBSD__) || defined(__FreeBSD_kernel__))
 #define ENODATA ENOTSUP
@@ -174,20 +175,11 @@ static inline double fract2f(const struct v4l2_fract *f)
 
 #define doioctl(n, r, p) v4l_named_ioctl((n)->g_v4l_fd(), #r, r, p)
 
-std::string buftype2s(int type);
-std::string fcc2s(unsigned int val);
-
-static inline std::string buftype2s(enum v4l2_buf_type type)
-{
-       return buftype2s((int)type);
-}
-
 const char *ok(int res);
 int check_string(const char *s, size_t len);
 int check_ustring(const __u8 *s, int len);
 int check_0(const void *p, int len);
 int restoreFormat(struct node *node);
-std::string pixfmt2s(unsigned id);
 
 // Media Controller ioctl tests
 int testMediaDeviceInfo(struct node *node);
