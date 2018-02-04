@@ -18,12 +18,11 @@
 #ifndef _CEC_CTL_H_
 #define _CEC_CTL_H_
 
-#include <cec-common.h>
+#include <cec-info.h>
 
 // cec-ctl.cpp
 extern bool show_info;
 std::string ts2s(__u64 ts);
-//const char *la2s(unsigned la);
 
 // cec-pin.cpp
 extern __u64 eob_ts;

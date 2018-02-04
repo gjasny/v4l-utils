@@ -17,8 +17,8 @@
  * SOFTWARE.
  */
 
-#ifndef _CEC_COMMON_H_
-#define _CEC_COMMON_H_
+#ifndef _CEC_INFO_H_
+#define _CEC_INFO_H_
 
 #include <linux/cec.h>
 

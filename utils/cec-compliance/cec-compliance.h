@@ -33,7 +33,7 @@
 #include <config.h>
 #endif
 
-#include <cec-common.h>
+#include <cec-info.h>
 
 #define TAG_AUDIO_RATE_CONTROL		1
 #define TAG_ARC_CONTROL 		(1 << 1)

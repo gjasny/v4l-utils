@@ -1,7 +1,7 @@
 bin_PROGRAMS = cec-compliance
 man_MANS = cec-compliance.1
 
-cec_compliance_SOURCES = cec-compliance.cpp cec-compliance.h cec-test.cpp cec-test-adapter.cpp cec-test-audio.cpp cec-test-power.cpp cec-common.cpp
+cec_compliance_SOURCES = cec-compliance.cpp cec-compliance.h cec-test.cpp cec-test-adapter.cpp cec-test-audio.cpp cec-test-power.cpp cec-info.cpp
 cec_compliance_CPPFLAGS = -I$(top_srcdir)/utils/common
 cec_compliance_LDFLAGS = -lrt
 

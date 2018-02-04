@@ -1,7 +1,7 @@
 bin_PROGRAMS = cec-follower
 man_MANS = cec-follower.1
 
-cec_follower_SOURCES = cec-follower.cpp cec-follower.h cec-processing.cpp cec-log.cpp cec-common.cpp
+cec_follower_SOURCES = cec-follower.cpp cec-follower.h cec-processing.cpp cec-log.cpp cec-info.cpp
 cec_follower_CPPFLAGS = -I$(top_srcdir)/utils/common
 cec_follower_LDFLAGS = -lrt
 

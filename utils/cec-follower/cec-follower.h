@@ -48,7 +48,7 @@
 #include <config.h>
 #endif
 
-#include <cec-common.h>
+#include <cec-info.h>
 
 #define ARRAY_SIZE(a) \
 	(sizeof(a) / sizeof(*a))

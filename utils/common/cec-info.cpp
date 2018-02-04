@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 #include <string>
-#include <cec-common.h>
+#include <cec-info.h>
 
 static std::string caps2s(unsigned caps)
 {
