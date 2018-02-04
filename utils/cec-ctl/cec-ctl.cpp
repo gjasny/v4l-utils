@@ -667,6 +667,7 @@ enum Option {
 	OptVerbose = 'v',
 	OptVendorID = 'V',
 	OptWallClock = 'w',
+	OptWaitForMsgs = 'W',
 
 	OptTV = 128,
 	OptRecord,
@@ -750,6 +751,7 @@ static struct option long_options[] = {
 	{ "reply-to-followers", no_argument, 0, OptReplyToFollowers },
 	{ "timeout", required_argument, 0, OptTimeout },
 	{ "clear", no_argument, 0, OptClear },
+	{ "wait-for-msgs", no_argument, 0, OptWaitForMsgs },
 	{ "monitor", no_argument, 0, OptMonitor },
 	{ "monitor-all", no_argument, 0, OptMonitorAll },
 	{ "monitor-pin", no_argument, 0, OptMonitorPin },
@@ -828,6 +830,7 @@ static void usage(void)
 	       "  -T, --trace              Trace all called ioctls\n"
 	       "  -v, --verbose            Turn on verbose reporting\n"
 	       "  -w, --wall-clock         Show timestamps as wall-clock time\n"
+	       "  -W, --wait-for-msgs      Wait for messages and events for up to --monitor-time secs.\n"
 	       "  --cec-version-1.4        Use CEC Version 1.4 instead of 2.0\n"
 	       "  --allow-unreg-fallback   Allow fallback to Unregistered\n"
 	       "  --no-rc-passthrough      Disable the RC passthrough\n"
@@ -1375,6 +1378,81 @@ static void generate_eob_event(__u64 ts, FILE *fstore)
 	log_event(ev_eob, fstore != stdout);
 }
 
+static void show_msg(const cec_msg &msg)
+{
+	__u8 from = cec_msg_initiator(&msg);
+	__u8 to = cec_msg_destination(&msg);
+
+	if (ignore_la[from])
+		return;
+	if ((msg.len == 1 && (ignore_opcode[POLL_FAKE_OPCODE] & (1 << from))) ||
+	    (msg.len > 1 && (ignore_opcode[msg.msg[1]] & (1 << from))))
+		return;
+
+	bool transmitted = msg.tx_status != 0;
+	printf("%s %s to %s (%d to %d): ",
+	       transmitted ? "Transmitted by" : "Received from",
+	       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
+	log_msg(&msg);
+	if (options[OptShowRaw])
+		log_raw_msg(&msg);
+	if (show_info && transmitted)
+		printf("\tSequence: %u Tx Timestamp: %s\n",
+		       msg.sequence, ts2s(msg.tx_ts).c_str());
+	else if (show_info && !transmitted)
+		printf("\tSequence: %u Rx Timestamp: %s\n",
+		       msg.sequence, ts2s(msg.rx_ts).c_str());
+}
+
+static void wait_for_msgs(struct node &node, __u32 monitor_time)
+{
+	__u32 monitor = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
+	fd_set rd_fds;
+	fd_set ex_fds;
+	int fd = node.fd;
+	time_t t;
+	
+	if (doioctl(&node, CEC_S_MODE, &monitor)) {
+		fprintf(stderr, "Selecting follower mode failed.\n");
+		return;
+	}
+
+	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+	t = time(NULL) + monitor_time;
+
+	while (!monitor_time || time(NULL) < t) {
+		struct timeval tv = { 1, 0 };
+		int res;
+
+		fflush(stdout);
+		FD_ZERO(&rd_fds);
+		FD_ZERO(&ex_fds);
+		FD_SET(fd, &rd_fds);
+		FD_SET(fd, &ex_fds);
+		res = select(fd + 1, &rd_fds, NULL, &ex_fds, &tv);
+		if (res < 0)
+			break;
+		if (FD_ISSET(fd, &rd_fds)) {
+			struct cec_msg msg = { };
+
+			res = doioctl(&node, CEC_RECEIVE, &msg);
+			if (res == ENODEV) {
+				fprintf(stderr, "Device was disconnected.\n");
+				break;
+			}
+			if (!res)
+				show_msg(msg);
+		}
+		if (FD_ISSET(fd, &ex_fds)) {
+			struct cec_event ev;
+
+			if (doioctl(&node, CEC_DQEVENT, &ev))
+				continue;
+			log_event(ev, true);
+		}
+	}
+}
+
 static void monitor(struct node &node, __u32 monitor_time, const char *store_pin)
 {
 	__u32 monitor = CEC_MODE_MONITOR;
@@ -1447,36 +1525,14 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 			break;
 		if (FD_ISSET(fd, &rd_fds)) {
 			struct cec_msg msg = { };
-			__u8 from, to;
 
 			res = doioctl(&node, CEC_RECEIVE, &msg);
 			if (res == ENODEV) {
 				fprintf(stderr, "Device was disconnected.\n");
 				break;
 			}
-			if (res || fstore == stdout)
-				continue;
-			from = cec_msg_initiator(&msg);
-			to = cec_msg_destination(&msg);
-			if (ignore_la[from])
-				continue;
-			if ((msg.len == 1 && (ignore_opcode[POLL_FAKE_OPCODE] & (1 << from))) ||
-			    (msg.len > 1 && (ignore_opcode[msg.msg[1]] & (1 << from))))
-				continue;
-
-			bool transmitted = msg.tx_status != 0;
-			printf("%s %s to %s (%d to %d): ",
-			       transmitted ? "Transmitted by" : "Received from",
-			       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
-			log_msg(&msg);
-			if (options[OptShowRaw])
-				log_raw_msg(&msg);
-			if (show_info && transmitted)
-				printf("\tSequence: %u Tx Timestamp: %s\n",
-				       msg.sequence, ts2s(msg.tx_ts).c_str());
-			else if (show_info && !transmitted)
-				printf("\tSequence: %u Rx Timestamp: %s\n",
-				       msg.sequence, ts2s(msg.rx_ts).c_str());
+			if (!res && fstore != stdout)
+				show_msg(msg);
 		}
 		if (FD_ISSET(fd, &ex_fds)) {
 			struct cec_event ev;
@@ -2376,6 +2432,8 @@ skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll] ||
 	    options[OptMonitorPin] || options[OptStorePin])
 		monitor(node, monitor_time, store_pin);
+	else if (options[OptWaitForMsgs])
+		wait_for_msgs(node, monitor_time);
 	fflush(stdout);
 	close(fd);
 	return 0;
