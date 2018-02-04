@@ -174,7 +174,6 @@ static inline double fract2f(const struct v4l2_fract *f)
 
 #define doioctl(n, r, p) v4l_named_ioctl((n)->g_v4l_fd(), #r, r, p)
 
-std::string cap2s(unsigned cap);
 std::string buftype2s(int type);
 std::string fcc2s(unsigned int val);
 
