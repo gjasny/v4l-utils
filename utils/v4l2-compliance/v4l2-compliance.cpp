@@ -615,70 +615,36 @@ static int parse_subopt(char **subs, const char * const *subopts, char **value)
 	return opt;
 }
 
-static int get_media_fd(int fd)
+static const char *make_devname(const char *device, const char *devname)
 {
-	struct stat sb;
-	int media_fd = -1;
+	if (device[0] >= '0' && device[0] <= '9' && strlen(device) <= 3) {
+		static char newdev[32];
 
-	if (fstat(fd, &sb) == -1) {
-		fprintf(stderr, "failed to stat file\n");
-		exit(1);
+		sprintf(newdev, "/dev/%s%s", devname, device);
+		return newdev;
 	}
-
-	char media_path[100];
-	if (snprintf(media_path, sizeof(media_path), "/sys/dev/char/%d:%d/device",
-		     major(sb.st_rdev), minor(sb.st_rdev)) == -1) {
-		fprintf(stderr, "failed to create media file path\n");
-		exit(1);
-	}
-	DIR *dp;
-	struct dirent *ep;
-	dp = opendir(media_path);
-	if (dp == NULL)
-		return -1;
-	media_path[0] = 0;
-	while ((ep = readdir(dp))) {
-		if (!memcmp(ep->d_name, "media", 5) && isdigit(ep->d_name[5])) {
-			if (snprintf(media_path, sizeof(media_path),
-				     "/dev/%s", ep->d_name) >= 0)
-				media_fd = open(media_path, O_RDWR);
-			break;
-		}
-	}
-	closedir(dp);
-	return media_fd;
+	return device;
 }
 
 int main(int argc, char **argv)
 {
 	int i;
-	struct node node;
-	struct node video_node;
-	struct node video_node2;
-	struct node vbi_node;
-	struct node vbi_node2;
-	struct node radio_node;
-	struct node radio_node2;
-	struct node sdr_node;
-	struct node sdr_node2;
-	struct node touch_node;
-	struct node touch_node2;
-	struct node subdev_node;
-	struct node subdev_node2;
-	struct node media_node;
-	struct node media_node2;
+	struct node node, node2;
+	enum node_type {
+		TYPE_UNKNOWN,
+		TYPE_VIDEO,
+		TYPE_VBI,
+		TYPE_RADIO,
+		TYPE_SDR,
+		TYPE_TOUCH,
+		TYPE_SUBDEV,
+		TYPE_MEDIA,
+	} type = TYPE_UNKNOWN;
 	struct node expbuf_node;
 
 	/* command args */
 	int ch;
-	const char *device = NULL;
-	const char *video_device = NULL;	/* -d device */
-	const char *vbi_device = NULL;		/* -V device */
-	const char *radio_device = NULL;	/* -r device */
-	const char *sdr_device = NULL;		/* -S device */
-	const char *touch_device = NULL;	/* -t device */
-	const char *subdev_device = NULL;	/* -u device */
-	const char *media_device = NULL;	/* -m device */
+	const char *device = "/dev/video0";
 	const char *expbuf_device = NULL;	/* --expbuf-device device */
 	struct v4l2_capability vcap;		/* list_cap */
 	unsigned frame_count = 60;
@@ -712,67 +678,32 @@ int main(int argc, char **argv)
 			usage();
 			return 0;
 		case OptSetDevice:
-			video_device = optarg;
-			if (video_device[0] >= '0' && video_device[0] <= '9' && strlen(video_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/video%s", video_device);
-				video_device = newdev;
-			}
+			device = make_devname(optarg, "video");
+			type = TYPE_VIDEO;
 			break;
 		case OptSetVbiDevice:
-			vbi_device = optarg;
-			if (vbi_device[0] >= '0' && vbi_device[0] <= '9' && strlen(vbi_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/vbi%s", vbi_device);
-				vbi_device = newdev;
-			}
+			device = make_devname(optarg, "vbi");
+			type = TYPE_VBI;
 			break;
 		case OptSetRadioDevice:
-			radio_device = optarg;
-			if (radio_device[0] >= '0' && radio_device[0] <= '9' && strlen(radio_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/radio%s", radio_device);
-				radio_device = newdev;
-			}
+			device = make_devname(optarg, "radio");
+			type = TYPE_RADIO;
 			break;
 		case OptSetSWRadioDevice:
-			sdr_device = optarg;
-			if (sdr_device[0] >= '0' && sdr_device[0] <= '9' && strlen(sdr_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/swradio%s", sdr_device);
-				sdr_device = newdev;
-			}
+			device = make_devname(optarg, "swradio");
+			type = TYPE_SDR;
 			break;
 		case OptSetTouchDevice:
-			touch_device = optarg;
-			if (touch_device[0] >= '0' && touch_device[0] <= '9' && strlen(touch_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/v4l-touch%s", touch_device);
-				touch_device = newdev;
-			}
+			device = make_devname(optarg, "v4l-touch");
+			type = TYPE_TOUCH;
 			break;
 		case OptSetSubDevDevice:
-			subdev_device = optarg;
-			if (subdev_device[0] >= '0' && subdev_device[0] <= '9' && strlen(subdev_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/v4l-subdev%s", subdev_device);
-				subdev_device = newdev;
-			}
+			device = make_devname(optarg, "v4l-subdev");
+			type = TYPE_SUBDEV;
 			break;
 		case OptSetMediaDevice:
-			media_device = optarg;
-			if (media_device[0] >= '0' && media_device[0] <= '9' && strlen(media_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/media%s", media_device);
-				media_device = newdev;
-			}
+			device = make_devname(optarg, "media");
+			type = TYPE_MEDIA;
 			break;
 		case OptSetExpBufDevice:
 			expbuf_device = optarg;
@@ -863,85 +794,25 @@ int main(int argc, char **argv)
 	if (v1 == 2 && v2 == 6)
 		kernel_version = v3;
 
-	if (!video_device && !vbi_device && !radio_device &&
-	    !sdr_device && !touch_device && !subdev_device && !media_device)
-		video_device = "/dev/video0";
-
-	if (video_device) {
-		video_node.s_trace(options[OptTrace]);
-		video_node.s_direct(direct);
-		fd = video_node.open(video_device, false);
-		if (fd < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n", video_device,
-				strerror(errno));
-			exit(1);
-		}
+	node.s_trace(options[OptTrace]);
+	switch (type) {
+	case TYPE_MEDIA:
+		node.s_direct(true);
+		fd = node.media_open(device, false);
+		break;
+	case TYPE_SUBDEV:
+		node.s_direct(true);
+		fd = node.subdev_open(device, false);
+		break;
+	default:
+		node.s_direct(direct);
+		fd = node.open(device, false);
+		break;
 	}
-
-	if (vbi_device) {
-		vbi_node.s_trace(options[OptTrace]);
-		vbi_node.s_direct(direct);
-		fd = vbi_node.open(vbi_device, false);
-		if (fd < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n", vbi_device,
-				strerror(errno));
-			exit(1);
-		}
-	}
-
-	if (radio_device) {
-		radio_node.s_trace(options[OptTrace]);
-		radio_node.s_direct(direct);
-		fd = radio_node.open(radio_device, false);
-		if (fd < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n", radio_device,
-					strerror(errno));
-			exit(1);
-		}
-	}
-
-	if (sdr_device) {
-		sdr_node.s_trace(options[OptTrace]);
-		sdr_node.s_direct(direct);
-		fd = sdr_node.open(sdr_device, false);
-		if (fd < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n", sdr_device,
-				strerror(errno));
-			exit(1);
-		}
-	}
-
-	if (touch_device) {
-		touch_node.s_trace(options[OptTrace]);
-		touch_node.s_direct(direct);
-		fd = touch_node.open(touch_device, false);
-		if (fd < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n", touch_device,
-				strerror(errno));
-			exit(1);
-		}
-	}
-
-	if (subdev_device) {
-		subdev_node.s_trace(options[OptTrace]);
-		subdev_node.s_direct(true);
-		fd = subdev_node.subdev_open(subdev_device, false);
-		if (fd < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n", subdev_device,
-				strerror(errno));
-			exit(1);
-		}
-	}
-
-	if (media_device) {
-		media_node.s_trace(options[OptTrace]);
-		media_node.s_direct(true);
-		fd = media_node.media_open(media_device, false);
-		if (fd < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n", media_device,
-				strerror(errno));
-			exit(1);
-		}
+	if (fd < 0) {
+		fprintf(stderr, "Failed to open %s: %s\n", device,
+			strerror(errno));
+		exit(1);
 	}
 
 	if (expbuf_device) {
@@ -955,33 +826,11 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (video_node.g_fd() >= 0) {
-		node = video_node;
-		device = video_device;
-		node.is_video = true;
-	} else if (vbi_node.g_fd() >= 0) {
-		node = vbi_node;
-		device = vbi_device;
-		node.is_vbi = true;
-	} else if (radio_node.g_fd() >= 0) {
-		node = radio_node;
-		device = radio_device;
-		node.is_radio = true;
-	} else if (sdr_node.g_fd() >= 0) {
-		node = sdr_node;
-		device = sdr_device;
-		node.is_sdr = true;
-	} else if (touch_node.g_fd() >= 0) {
-		node = touch_node;
-		device = touch_device;
-		node.is_touch = true;
-	} else if (subdev_node.g_fd() >= 0) {
-		node = subdev_node;
-		device = subdev_device;
-	} else if (media_node.g_fd() >= 0) {
-		node = media_node;
-		device = media_device;
-	}
+	node.is_video = type == TYPE_VIDEO;
+	node.is_vbi = type == TYPE_VBI;
+	node.is_radio = type == TYPE_RADIO;
+	node.is_sdr = type == TYPE_SDR;
+	node.is_touch = type == TYPE_TOUCH;
 	node.device = device;
 
 	if (node.is_v4l2())
@@ -1026,7 +875,7 @@ int main(int argc, char **argv)
 		printf("Running on 2.6.%d\n", kernel_version);
 
 	if (!node.is_media())
-		media_fd = get_media_fd(node.g_fd());
+		media_fd = mi_get_media_fd(node.g_fd());
 
 	if (node.is_v4l2()) {
 		printf("\nDriver Info:\n");
@@ -1058,77 +907,32 @@ int main(int argc, char **argv)
 	/* Multiple opens */
 
 	printf("Allow for multiple opens:\n");
-	if (video_device) {
-		video_node2 = node;
-		printf("\ttest second video open: %s\n",
-				ok(video_node2.open(video_device, false) >= 0 ? 0 : errno));
-		if (video_node2.g_fd() >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&video_node2)));
+	//if (video_device) {
+	node2 = node;
+	switch (type) {
+	case TYPE_SUBDEV:
+		printf("\ttest second %s open: %s\n", device,
+		       ok(node2.subdev_open(device, false) >= 0 ? 0 : errno));
+		break;
+	case TYPE_MEDIA:
+		printf("\ttest second %s open: %s\n", device,
+		       ok(node2.media_open(device, false) >= 0 ? 0 : errno));
+		if (node2.g_fd() >= 0)
+			printf("\ttest MEDIA_IOC_DEVICE_INFO: %s\n", ok(testMediaDeviceInfo(&node2)));
+		break;
+	default:
+		printf("\ttest second %s open: %s\n", device,
+		       ok(node2.open(device, false) >= 0 ? 0 : errno));
+		if (node2.g_fd() >= 0) {
+			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&node2)));
 			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
-					ok(testPrio(&node, &video_node2)));
-			node.node2 = &video_node2;
+			       ok(testPrio(&node, &node2)));
 		}
+		break;
 	}
-	if (vbi_device) {
-		vbi_node2 = node;
-		printf("\ttest second vbi open: %s\n",
-				ok(vbi_node2.open(vbi_device, false) >= 0 ? 0 : errno));
-		if (vbi_node2.g_fd() >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&vbi_node2)));
-			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
-					ok(testPrio(&node, &vbi_node2)));
-			node.node2 = &vbi_node2;
-		}
-	}
-	if (radio_device) {
-		radio_node2 = node;
-		printf("\ttest second radio open: %s\n",
-				ok(radio_node2.open(radio_device, false) >= 0 ? 0 : errno));
-		if (radio_node2.g_fd() >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&radio_node2)));
-			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
-					ok(testPrio(&node, &radio_node2)));
-			node.node2 = &radio_node2;
-		}
-	}
-	if (sdr_device) {
-		sdr_node2 = node;
-		printf("\ttest second sdr open: %s\n",
-				ok(sdr_node2.open(sdr_device, false) >= 0 ? 0 : errno));
-		if (sdr_node2.g_fd() >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&sdr_node2)));
-			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
-					ok(testPrio(&node, &sdr_node2)));
-			node.node2 = &sdr_node2;
-		}
-	}
-	if (touch_device) {
-		touch_node2 = node;
-		printf("\ttest second touch open: %s\n",
-				ok(touch_node2.open(touch_device, false) >= 0 ? 0 : errno));
-		if (touch_node2.g_fd() >= 0) {
-			printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&touch_node2)));
-			printf("\ttest VIDIOC_G/S_PRIORITY: %s\n",
-					ok(testPrio(&node, &touch_node2)));
-			node.node2 = &touch_node2;
-		}
-	}
-	if (subdev_device) {
-		subdev_node2 = node;
-		printf("\ttest second subdev open: %s\n",
-				ok(subdev_node2.subdev_open(subdev_device, false) >= 0 ? 0 : errno));
-		if (subdev_node2.g_fd() >= 0)
-			node.node2 = &subdev_node2;
-	}
-	if (media_device) {
-		media_node2 = node;
-		printf("\ttest second media open: %s\n",
-				ok(media_node2.media_open(media_device, false) >= 0 ? 0 : errno));
-		if (media_node2.g_fd() >= 0) {
-			printf("\ttest MEDIA_IOC_DEVICE_INFO: %s\n", ok(testMediaDeviceInfo(&media_node2)));
-			node.node2 = &media_node2;
-		}
-	}
+	if (node2.g_fd() >= 0)
+		node.node2 = &node2;
+
 	printf("\ttest for unlimited opens: %s\n",
 		ok(testUnlimitedOpens(&node)));
 	printf("\n");
