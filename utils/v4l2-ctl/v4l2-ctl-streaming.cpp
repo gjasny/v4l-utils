@@ -62,6 +62,155 @@ static struct tpg_data tpg;
 static unsigned output_field = V4L2_FIELD_NONE;
 static bool output_field_alt;
 
+#define TS_WINDOW 241
+
+class fps_timestamps {
+private:
+	unsigned idx;
+	bool full;
+	double first;
+	double sum;
+	double ts[TS_WINDOW];
+	unsigned seq[TS_WINDOW];
+	unsigned dropped_buffers;
+	bool alternate_fields;
+	unsigned field_cnt;
+	unsigned last_field;
+
+public:
+	fps_timestamps()
+	{
+		idx = 0;
+		full = false;
+		first = sum = 0;
+		dropped_buffers = 0;
+		last_field = 0;
+		field_cnt = 0;
+		alternate_fields = false;
+	}
+
+	void determine_field(int fd, unsigned type);
+	bool add_ts(double ts_secs, unsigned sequence, unsigned field);
+	bool has_fps();
+	double fps();
+	unsigned dropped();
+};
+
+void fps_timestamps::determine_field(int fd, unsigned type)
+{
+	struct v4l2_format fmt = { };
+
+	fmt.type = type;
+	ioctl(fd, VIDIOC_G_FMT, &fmt);
+	cv4l_fmt cfmt(fmt);
+	alternate_fields = cfmt.g_field() == V4L2_FIELD_ALTERNATE;
+}
+
+bool fps_timestamps::add_ts(double ts_secs, unsigned sequence, unsigned field)
+{
+	if (ts_secs == 0) {
+		struct timespec ts_cur;
+
+		clock_gettime(CLOCK_MONOTONIC, &ts_cur);
+		ts_secs = ts_cur.tv_sec + ts_cur.tv_nsec / 1000000000.0;
+	}
+
+	if (alternate_fields &&
+	    field != V4L2_FIELD_TOP && field != V4L2_FIELD_BOTTOM)
+		return false;
+
+	if (!full && idx == 0) {
+		ts[idx] = ts_secs;
+		seq[TS_WINDOW - 1] = sequence;
+		seq[idx++] = sequence;
+		first = ts_secs;
+		last_field = field;
+		field_cnt++;
+		return true;
+	}
+
+	unsigned prev_idx = (idx + TS_WINDOW - 1) % TS_WINDOW;
+	unsigned next_idx = (idx + 1) % TS_WINDOW;
+
+	if (seq[prev_idx] == sequence) {
+		if (alternate_fields) {
+			if (last_field == field)
+				return false;
+			if (field_cnt != 1)
+				return false;
+			field_cnt++;
+			last_field = field;
+		}
+	} else {
+		if (alternate_fields) {
+			if (field_cnt == 1) {
+				dropped_buffers++;
+				last_field = last_field == V4L2_FIELD_TOP ?
+					V4L2_FIELD_BOTTOM : V4L2_FIELD_TOP;
+			}
+			field_cnt = 1;
+			if (field == last_field) {
+				dropped_buffers++;
+				field_cnt++;
+			}
+			last_field = field;
+		}
+		if (seq[prev_idx] - sequence > 1) {
+			unsigned dropped = sequence - seq[prev_idx] - 1;
+
+			if (alternate_fields)
+				dropped *= 2;
+			dropped_buffers += dropped;
+		}
+	}
+
+	if (!full) {
+		sum += ts_secs - ts[idx - 1];
+		ts[idx] = ts_secs;
+		seq[idx++] = sequence;
+		if (idx == TS_WINDOW) {
+			full = true;
+			idx = 0;
+		}
+		return true;
+	}
+
+	sum -= ts[next_idx] - ts[idx];
+	ts[idx] = ts_secs;
+	seq[idx] = sequence;
+	idx = next_idx;
+	sum += ts_secs - ts[prev_idx];
+	return true;
+}
+
+bool fps_timestamps::has_fps()
+{
+	unsigned prev_idx = (idx + TS_WINDOW - 1) % TS_WINDOW;
+
+	if (ts[prev_idx] - first < 1.0)
+		return false;
+	return full || idx > 4;
+}
+
+unsigned fps_timestamps::dropped()
+{
+	unsigned res = dropped_buffers;
+
+	dropped_buffers = 0;
+	return res;
+}
+
+double fps_timestamps::fps()
+{
+	unsigned prev_idx = (idx + TS_WINDOW - 1) % TS_WINDOW;
+	double cnt = seq[prev_idx] - seq[full ? idx : 0];
+	double period = sum / cnt;
+	double fps = 1.0 / period;
+
+	first += (unsigned)(ts[prev_idx] - first);
+	return fps;
+};
+
 static void *test_mmap(void *start, size_t length, int prot, int flags,
 		int fd, int64_t offset)
 {
@@ -909,14 +1058,13 @@ static void do_release_buffers(buffers &b)
 }
 
 static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
-			 unsigned &count, struct timespec &ts_last)
+			 unsigned &count, fps_timestamps &fps_ts)
 {
 	char ch = '<';
 	int ret;
 	struct v4l2_plane planes[VIDEO_MAX_PLANES];
 	struct v4l2_buffer buf;
 	bool ignore_count_skip = false;
-	static time_t last_sec;
 
 	memset(&buf, 0, sizeof(buf));
 	memset(planes, 0, sizeof(planes));
@@ -950,6 +1098,10 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 			print_buffer(stderr, buf);
 		test_ioctl(fd, VIDIOC_QBUF, &buf);
 	}
+	
+	double ts_secs = buf.timestamp.tv_sec + buf.timestamp.tv_usec / 1000000.0;
+	fps_ts.add_ts(ts_secs, buf.sequence, buf.field);
+
 	if (fout && (!stream_skip || ignore_count_skip) && !(buf.flags & V4L2_BUF_FLAG_ERROR)) {
 		unsigned rle_size[VIDEO_MAX_PLANES];
 
@@ -1018,30 +1170,16 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 		fflush(stderr);
 	}
 
-	if (count == 0) {
-		clock_gettime(CLOCK_MONOTONIC, &ts_last);
-		last_sec = 0;
-	} else {
-		struct timespec ts_cur, res;
+	if (fps_ts.has_fps()) {
+		unsigned dropped = fps_ts.dropped();
 
-		clock_gettime(CLOCK_MONOTONIC, &ts_cur);
-		res.tv_sec = ts_cur.tv_sec - ts_last.tv_sec;
-		res.tv_nsec = ts_cur.tv_nsec - ts_last.tv_nsec;
-		if (res.tv_nsec < 0) {
-			res.tv_sec--;
-			res.tv_nsec += 1000000000;
-		}
-		if (res.tv_sec > last_sec) {
-			__u64 fps = 10000ULL * count;
-
-			fps /= (__u64)res.tv_sec * 100ULL + (__u64)res.tv_nsec / 10000000ULL;
-			last_sec = res.tv_sec;
-			fprintf(stderr, " %llu.%02llu fps", fps / 100ULL, fps % 100ULL);
-			if (host_fd_cap >= 0)
-				fprintf(stderr, " %d%% compression", 100 - rle_perc / rle_perc_count);
-			rle_perc_count = rle_perc = 0;
-			fprintf(stderr, "\n");
-		}
+		fprintf(stderr, " %.02f fps", fps_ts.fps());
+		if (dropped)
+			fprintf(stderr, ", dropped buffers: %u", dropped);
+		if (host_fd_cap >= 0)
+			fprintf(stderr, " %d%% compression", 100 - rle_perc / rle_perc_count);
+		rle_perc_count = rle_perc = 0;
+		fprintf(stderr, "\n");
 	}
 	count++;
 
@@ -1063,9 +1201,8 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 }
 
 static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
-			 unsigned &count, struct timespec &ts_last)
+			 unsigned &count, fps_timestamps &fps_ts)
 {
-	static time_t last_sec;
 	struct v4l2_plane planes[VIDEO_MAX_PLANES];
 	struct v4l2_buffer buf;
 	int ret;
@@ -1115,6 +1252,9 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 		} else {
 			buf.bytesused = buf.length;
 		}
+
+		double ts_secs = buf.timestamp.tv_sec + buf.timestamp.tv_usec / 1000000.0;
+		fps_ts.add_ts(ts_secs, buf.sequence, buf.field);
 	}
 	if (ret < 0) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
@@ -1152,26 +1292,13 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 	fprintf(stderr, ">");
 	fflush(stderr);
 
-	if (count == 0) {
-		clock_gettime(CLOCK_MONOTONIC, &ts_last);
-		last_sec = 0;
-	} else {
-		struct timespec ts_cur, res;
+	if (fps_ts.has_fps()) {
+		unsigned dropped = fps_ts.dropped();
 
-		clock_gettime(CLOCK_MONOTONIC, &ts_cur);
-		res.tv_sec = ts_cur.tv_sec - ts_last.tv_sec;
-		res.tv_nsec = ts_cur.tv_nsec - ts_last.tv_nsec;
-		if (res.tv_nsec < 0) {
-			res.tv_sec--;
-			res.tv_nsec += 1000000000;
-		}
-		if (res.tv_sec > last_sec) {
-			__u64 fps = 10000ULL * count;
-
-			fps /= (__u64)res.tv_sec * 100ULL + (__u64)res.tv_nsec / 10000000ULL;
-			last_sec = res.tv_sec;
-			fprintf(stderr, " %llu.%02llu fps\n", fps / 100ULL, fps % 100ULL);
-		}
+		fprintf(stderr, " %.02f fps", fps_ts.fps());
+		if (dropped)
+			fprintf(stderr, ", dropped buffers: %u", dropped);
+		fprintf(stderr, "\n");
 	}
 	count++;
 	if (stream_sleep > 0 && count % stream_sleep == 0)
@@ -1228,9 +1355,9 @@ static void streaming_set_cap(int fd)
 	struct v4l2_event_subscription sub;
 	int fd_flags = fcntl(fd, F_GETFL);
 	buffers b(false);
+	fps_timestamps fps_ts;
 	bool use_poll = options[OptStreamPoll];
 	unsigned count;
-	struct timespec ts_last;
 	bool eos;
 	bool source_change;
 	FILE *fout = NULL;
@@ -1294,7 +1421,6 @@ recover:
 		fmt.type = b.type;
 		cropcap.type = b.type;
 		ioctl(fd, VIDIOC_G_FMT, &fmt);
-
 		cv4l_fmt cfmt(fmt);
 
 		if (ioctl(fd, VIDIOC_CROPCAP, &cropcap) ||
@@ -1360,6 +1486,8 @@ recover:
 	if (do_setup_cap_buffers(fd, b))
 		goto done;
 
+	fps_ts.determine_field(fd, b.type);
+
 	if (doioctl(fd, VIDIOC_STREAMON, &b.type))
 		goto done;
 
@@ -1411,7 +1539,7 @@ recover:
 
 		if (FD_ISSET(fd, &read_fds)) {
 			r  = do_handle_cap(fd, b, fout, NULL,
-					   count, ts_last);
+					   count, fps_ts);
 			if (r == -1)
 				break;
 		}
@@ -1438,8 +1566,8 @@ static void streaming_set_out(int fd)
 	buffers b(true);
 	int fd_flags = fcntl(fd, F_GETFL);
 	bool use_poll = options[OptStreamPoll];
+	fps_timestamps fps_ts;
 	unsigned count = 0;
-	struct timespec ts_last;
 	FILE *fin = NULL;
 
 	if (!(capabilities & (V4L2_CAP_VIDEO_OUTPUT |
@@ -1575,6 +1703,8 @@ static void streaming_set_out(int fd)
 	if (do_setup_out_buffers(fd, b, fin, true))
 		goto done;
 
+	fps_ts.determine_field(fd, b.type);
+
 	if (doioctl(fd, VIDIOC_STREAMON, &b.type))
 		goto done;
 
@@ -1614,7 +1744,7 @@ static void streaming_set_out(int fd)
 			}
 		}
 		r = do_handle_out(fd, b, fin, NULL,
-				   count, ts_last);
+				   count, fps_ts);
 		if (r == -1)
 			break;
 
@@ -1646,8 +1776,8 @@ static void streaming_set_m2m(int fd)
 	bool use_poll = options[OptStreamPoll];
 	buffers in(false);
 	buffers out(true);
+	fps_timestamps fps_ts[2];
 	unsigned count[2] = { 0, 0 };
-	struct timespec ts_last[2];
 	FILE *file[2] = {NULL, NULL};
 	fd_set fds[3];
 	fd_set *rd_fds = &fds[0]; /* for capture */
@@ -1697,6 +1827,9 @@ static void streaming_set_m2m(int fd)
 	    do_setup_out_buffers(fd, out, file[OUT], true))
 		goto done;
 
+	fps_ts[CAP].determine_field(fd, in.type);
+	fps_ts[OUT].determine_field(fd, out.type);
+
 	if (doioctl(fd, VIDIOC_STREAMON, &in.type) ||
 	    doioctl(fd, VIDIOC_STREAMON, &out.type))
 		goto done;
@@ -1744,7 +1877,7 @@ static void streaming_set_m2m(int fd)
 
 		if (rd_fds && FD_ISSET(fd, rd_fds)) {
 			r  = do_handle_cap(fd, in, file[CAP], NULL,
-					   count[CAP], ts_last[CAP]);
+					   count[CAP], fps_ts[CAP]);
 			if (r < 0) {
 				rd_fds = NULL;
 				ex_fds = NULL;
@@ -1754,7 +1887,7 @@ static void streaming_set_m2m(int fd)
 
 		if (wr_fds && FD_ISSET(fd, wr_fds)) {
 			r  = do_handle_out(fd, out, file[OUT], NULL,
-					   count[OUT], ts_last[OUT]);
+					   count[OUT], fps_ts[OUT]);
 			if (r < 0)  {
 				wr_fds = NULL;
 
@@ -1804,8 +1937,8 @@ static void streaming_set_cap2out(int fd, int out_fd)
 	bool use_userptr = options[OptStreamUser] && options[OptStreamOutUser];
 	buffers in(false);
 	buffers out(true);
+	fps_timestamps fps_ts[2];
 	unsigned count[2] = { 0, 0 };
-	struct timespec ts_last[2];
 	FILE *file[2] = {NULL, NULL};
 	fd_set fds;
 	unsigned cnt = 0;
@@ -1879,6 +2012,9 @@ static void streaming_set_cap2out(int fd, int out_fd)
 	    do_setup_out_buffers(out_fd, out, file[OUT], false))
 		goto done;
 
+	fps_ts[CAP].determine_field(fd, in.type);
+	fps_ts[OUT].determine_field(fd, out.type);
+
 	if (doioctl(fd, VIDIOC_STREAMON, &in.type) ||
 	    doioctl(out_fd, VIDIOC_STREAMON, &out.type))
 		goto done;
@@ -1915,7 +2051,7 @@ static void streaming_set_cap2out(int fd, int out_fd)
 			int index = -1;
 
 			r = do_handle_cap(fd, in, file[CAP], &index,
-					   count[CAP], ts_last[CAP]);
+					   count[CAP], fps_ts[CAP]);
 			if (r)
 				fprintf(stderr, "handle cap %d\n", r);
 			if (!r) {
@@ -1933,7 +2069,7 @@ static void streaming_set_cap2out(int fd, int out_fd)
 				if (test_ioctl(fd, VIDIOC_QUERYBUF, &buf))
 					break;
 				r = do_handle_out(out_fd, out, file[OUT], &buf,
-					   count[OUT], ts_last[OUT]);
+					   count[OUT], fps_ts[OUT]);
 			}
 			if (r)
 				fprintf(stderr, "handle out %d\n", r);
