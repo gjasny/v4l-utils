@@ -76,7 +76,7 @@ media_type media_detect_type(const char *device)
 	uevent_path += num2s(major(sb.st_rdev), false) + ":" +
 		num2s(minor(sb.st_rdev), false) + "/uevent";
 
-	std::ifstream uevent_file(uevent_path);
+	std::ifstream uevent_file(uevent_path.c_str());
 	if (uevent_file.fail())
 		return MEDIA_TYPE_UNKNOWN;
 
@@ -117,7 +117,7 @@ std::string media_get_device(__u32 major, __u32 minor)
 	sprintf(fmt, "%d:%d", major, minor);
 	uevent_path += std::string(fmt) + "/uevent";
 
-	std::ifstream uevent_file(uevent_path);
+	std::ifstream uevent_file(uevent_path.c_str());
 	if (uevent_file.fail())
 		return "";
 
