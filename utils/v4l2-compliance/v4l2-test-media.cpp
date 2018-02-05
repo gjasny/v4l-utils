@@ -77,6 +77,7 @@ static id_set v2_pads_set;
 static media_v2_link *v2_links;
 static id_set v2_links_set;
 static std::map<__u32, __u32> entity_num_pads;
+static std::map<__u32, media_v2_entity *> v2_entity_map;
 static unsigned num_data_links;
 
 int testMediaTopology(struct node *node)
@@ -136,9 +137,12 @@ int testMediaTopology(struct node *node)
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(check_string(ent.name, sizeof(ent.name)));
 		fail_on_test(!ent.id);
-		fail_on_test(!ent.function);
+		fail_on_test(ent.function == MEDIA_ENT_F_UNKNOWN);
+		fail_on_test(ent.function == MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN);
+		fail_on_test(ent.function == MEDIA_ENT_T_DEVNODE_UNKNOWN);
 		fail_on_test(v2_entities_set.find(ent.id) != v2_entities_set.end());
 		v2_entities_set.insert(ent.id);
+		v2_entity_map[ent.id] = &ent;
 	}
 	for (unsigned i = 0; i < topology.num_interfaces; i++) {
 		media_v2_interface &iface = v2_ifaces[i];
@@ -148,6 +152,8 @@ int testMediaTopology(struct node *node)
 					 true, iface.id));
 		fail_on_test(!iface.id);
 		fail_on_test(!iface.intf_type);
+		fail_on_test(iface.intf_type < MEDIA_INTF_T_DVB_BASE);
+		fail_on_test(iface.intf_type > MEDIA_INTF_T_V4L_BASE + 0xff);
 		fail_on_test(iface.flags);
 		fail_on_test(v2_interfaces_set.find(iface.id) != v2_interfaces_set.end());
 		v2_interfaces_set.insert(iface.id);
@@ -224,8 +230,11 @@ int testMediaEnum(struct node *node)
 		fail_on_test(check_string(ent.name, sizeof(ent.name)));
 		fail_on_test(ent.revision);
 		fail_on_test(ent.group_id);
-		fail_on_test(!ent.type);
 		fail_on_test(ent.type == ~0U);
+		fail_on_test(ent.type == MEDIA_ENT_F_UNKNOWN);
+		// Commented out due to horrible workaround in media-device.c
+		//fail_on_test(ent.type == MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN);
+		//fail_on_test(ent.type == MEDIA_ENT_T_DEVNODE_UNKNOWN);
 		fail_on_test(ent.flags == ~0U);
 		fail_on_test(ent.pads == 0xffff);
 		fail_on_test(ent.links == 0xffff);
@@ -242,10 +251,14 @@ int testMediaEnum(struct node *node)
 							 false, ent.id));
 		}
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent));
-		fail_on_test(entity_num_pads[ent.id] != ent.pads);
 		num_links += ent.links;
 
 		fail_on_test(v2_entities_set.find(ent.id) == v2_entities_set.end());
+		if (node->topology) {
+			fail_on_test(entity_num_pads[ent.id] != ent.pads);
+			// Commented out due to horrible workaround in media-device.c
+			//fail_on_test(v2_entity_map[ent.id]->function != ent.type);
+		}
 		ent_map[ent.id] = ent;
 	}
 	fail_on_test(num_data_links != num_links);
