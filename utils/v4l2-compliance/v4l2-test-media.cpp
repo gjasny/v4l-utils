@@ -154,6 +154,7 @@ int testMediaTopology(struct node *node)
 	}
 	for (unsigned i = 0; i < topology.num_pads; i++) {
 		media_v2_pad &pad = v2_pads[i];
+		__u32 fl = pad.flags;
 
 		fail_on_test(check_0(pad.reserved, sizeof(pad.reserved)));
 		fail_on_test(!pad.id);
@@ -161,6 +162,9 @@ int testMediaTopology(struct node *node)
 		fail_on_test(v2_pads_set.find(pad.id) != v2_pads_set.end());
 		v2_pads_set.insert(pad.id);
 		fail_on_test(v2_entities_set.find(pad.entity_id) == v2_entities_set.end());
+		fail_on_test(!(fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)));
+		fail_on_test((fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)) ==
+			     (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE));
 		entity_num_pads[pad.entity_id]++;
 	}
 	for (unsigned i = 0; i < topology.num_links; i++) {
@@ -274,6 +278,7 @@ int testMediaEnum(struct node *node)
 			fail_on_test(links.pads[i].index != i);
 			fail_on_test(check_0(links.pads[i].reserved, sizeof(links.pads[i].reserved)));
 			__u32 fl = links.pads[i].flags;
+			fail_on_test(!(fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)));
 			fail_on_test((fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)) ==
 				     (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE));
 			if (fl & MEDIA_PAD_FL_SOURCE)
