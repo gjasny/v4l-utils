@@ -525,12 +525,12 @@ int testEdid(struct node *node)
 
 	if (node->is_subdev()) {
 		for (unsigned pad = 0; pad < node->entity.pads; pad++) {
-			bool is_input = node->pads[pad].flags & MEDIA_PAD_FL_SINK;
+			bool is_input = node->pads[pad].flags & MEDIA_PAD_FL_SOURCE;
 
 			ret = checkEdid(node, pad, is_input);
 			if (ret && ret != ENOTTY)
 				return fail("EDID check failed for %s pad %u.\n",
-					    is_input ? "sink" : "source", pad);
+					    is_input ? "source" : "sink", pad);
 			if (!ret)
 				has_edid = true;
 		}
