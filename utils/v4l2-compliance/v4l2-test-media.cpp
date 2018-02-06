@@ -253,8 +253,8 @@ int testMediaEnum(struct node *node)
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent));
 		num_links += ent.links;
 
-		fail_on_test(v2_entities_set.find(ent.id) == v2_entities_set.end());
 		if (node->topology) {
+			fail_on_test(v2_entities_set.find(ent.id) == v2_entities_set.end());
 			fail_on_test(entity_num_pads[ent.id] != ent.pads);
 			// Commented out due to horrible workaround in media-device.c
 			//fail_on_test(v2_entity_map[ent.id]->function != ent.type);
