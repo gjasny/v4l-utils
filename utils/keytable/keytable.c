@@ -55,6 +55,10 @@ struct input_keymap_entry_v2 {
 	u_int8_t  scancode[32];
 };
 
+#ifndef EVIOCSCLOCKID
+#define EVIOCSCLOCKID		_IOW('E', 0xa0, int)
+#endif
+
 #ifndef EVIOCGKEYCODE_V2
 #define EVIOCGKEYCODE_V2	_IOR('E', 0x04, struct input_keymap_entry_v2)
 #define EVIOCSKEYCODE_V2	_IOW('E', 0x04, struct input_keymap_entry_v2)
