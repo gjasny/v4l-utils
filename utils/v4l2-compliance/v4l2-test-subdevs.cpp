@@ -361,6 +361,14 @@ int testSubDevFormat(struct node *node, unsigned which, unsigned pad)
 	fail_on_test(s_fmt.format.ycbcr_enc != fmt.format.ycbcr_enc);
 	fail_on_test(s_fmt.format.quantization != fmt.format.quantization);
 	fail_on_test(s_fmt.format.xfer_func != fmt.format.xfer_func);
+
+	s_fmt.format.code = ~0U;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FMT, &s_fmt));
+	fail_on_test(s_fmt.format.code == ~0U);
+	fail_on_test(!s_fmt.format.code);
+
+	// Restore fmt
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FMT, &fmt));
 	return 0;
 }
 
