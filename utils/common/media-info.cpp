@@ -198,7 +198,7 @@ static const flag_def entity_flags_def[] = {
 	{ 0, NULL }
 };
 
-static std::string entflags2s(__u32 flags)
+std::string entflags2s(__u32 flags)
 {
 	return flags2s(flags, entity_flags_def);
 }
@@ -228,23 +228,33 @@ static const flag_def interface_types_def[] = {
 	{ 0, NULL }
 };
 
-static std::string ifacetype2s(__u32 type)
+std::string ifacetype2s(__u32 type)
 {
 	for (unsigned i = 0; interface_types_def[i].str; i++)
 		if (type == interface_types_def[i].flag)
 			return interface_types_def[i].str;
-	return "Unknown (" + num2s(type) + ")";
+	return "FAIL: Unknown (" + num2s(type) + ")";
 }
 
-static const flag_def entity_types_def[] = {
-	{ MEDIA_ENT_F_UNKNOWN, "Unknown" },
+static const flag_def entity_functions_def[] = {
+	{ MEDIA_ENT_F_UNKNOWN, "FAIL: Uninitialized Function" },
+	{ MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN, "FAIL: Unknown V4L2 Sub-Device" },
+	{ MEDIA_ENT_T_DEVNODE_UNKNOWN, "FAIL: Unknown Device Node Type" },
+
 	{ MEDIA_ENT_F_DTV_DEMOD, "Digital TV Demodulator" },
 	{ MEDIA_ENT_F_TS_DEMUX, "Transport Stream Demuxer" },
 	{ MEDIA_ENT_F_DTV_CA, "Digital TV Conditional Access" },
 	{ MEDIA_ENT_F_DTV_NET_DECAP, "Digital TV Network ULE/MLE Desencapsulation" },
 	{ MEDIA_ENT_F_IO_DTV, "Digital TV I/O" },
+	{ MEDIA_ENT_F_IO_V4L, "V4L2 I/O" },
 	{ MEDIA_ENT_F_IO_VBI, "VBI I/O" },
 	{ MEDIA_ENT_F_IO_SWRADIO, "Software Radio I/O" },
+
+	{ MEDIA_ENT_F_CAM_SENSOR, "Camera Sensor" },
+	{ MEDIA_ENT_F_FLASH, "Flash Controller" },
+	{ MEDIA_ENT_F_LENS, "Lens Controller" },
+	{ MEDIA_ENT_F_ATV_DECODER, "Analog Video Decoder" },
+	{ MEDIA_ENT_F_TUNER, "Tuner" },
 	{ MEDIA_ENT_F_IF_VID_DECODER, "IF-PLL Video Decoder" },
 	{ MEDIA_ENT_F_IF_AUD_DECODER, "IF-PLL Audio Decoder" },
 	{ MEDIA_ENT_F_AUDIO_CAPTURE, "Audio Capture" },
@@ -258,23 +268,20 @@ static const flag_def entity_types_def[] = {
 	{ MEDIA_ENT_F_PROC_VIDEO_STATISTICS, "Video Statistics" },
 	{ MEDIA_ENT_F_VID_MUX, "Video Muxer" },
 	{ MEDIA_ENT_F_VID_IF_BRIDGE, "Video Interface Bridge" },
-
-	{ MEDIA_ENT_F_IO_V4L, "V4L2 I/O" },
-	{ MEDIA_ENT_F_CAM_SENSOR, "Camera Sensor" },
-	{ MEDIA_ENT_F_FLASH, "Flash Controller" },
-	{ MEDIA_ENT_F_LENS, "Lens Controller" },
-	{ MEDIA_ENT_F_ATV_DECODER, "Analog Video Decoder" },
-	{ MEDIA_ENT_F_TUNER, "Tuner" },
-	{ MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN, "Unknown" },
 	{ 0, NULL }
 };
 
-static std::string enttype2s(__u32 type)
+std::string entfunction2s(__u32 function, bool *is_invalid)
 {
-	for (unsigned i = 0; entity_types_def[i].str; i++)
-		if (type == entity_types_def[i].flag)
-			return entity_types_def[i].str;
-	return "Unknown (" + num2s(type) + ")";
+	for (unsigned i = 0; entity_functions_def[i].str; i++)
+		if (function == entity_functions_def[i].flag) {
+			if (is_invalid)
+				*is_invalid = !memcmp(entity_functions_def[i].str, "FAIL:", 5);
+			return entity_functions_def[i].str;
+		}
+	if (is_invalid)
+		*is_invalid = true;
+	return "FAIL: Unknown Function (" + num2s(function) + ")";
 }
 
 static const flag_def pad_flags_def[] = {
@@ -284,7 +291,7 @@ static const flag_def pad_flags_def[] = {
 	{ 0, NULL }
 };
 
-static std::string padflags2s(__u32 flags)
+std::string padflags2s(__u32 flags)
 {
 	return flags2s(flags, pad_flags_def);
 }
@@ -296,7 +303,7 @@ static const flag_def link_flags_def[] = {
 	{ 0, NULL }
 };
 
-static std::string linkflags2s(__u32 flags)
+std::string linkflags2s(__u32 flags)
 {
 	std::string s = flags2s(flags, link_flags_def);
 
@@ -308,11 +315,11 @@ static std::string linkflags2s(__u32 flags)
 	case MEDIA_LNK_FL_INTERFACE_LINK:
 		return "Interface" + s;
 	default:
-		return "Unknown" + s;
+		return "Unknown (" + num2s(flags) + ")" + s;
 	}
 }
 
-static __u32 read_topology(int media_fd, __u32 major, __u32 minor)
+static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_invalid)
 {
 	media_v2_topology topology;
 	unsigned i, j;
@@ -373,7 +380,7 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor)
 	printf("Entity Info:\n");
 	printf("\tID               : 0x%08x (%u)\n", ent.id, ent.id);
 	printf("\tName             : %s\n", ent.name);
-	printf("\tFunction         : %s\n", enttype2s(ent.function).c_str());
+	printf("\tFunction         : %s\n", entfunction2s(ent.function, is_invalid).c_str());
 
 	// Yes, I know, lots of nested for-loops. If we get really complex
 	// devices with such large topologies that this becomes too inefficient
@@ -426,11 +433,14 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor)
 	return ent.id;
 }
 
-__u32 mi_media_info_for_fd(int media_fd, int fd)
+__u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid)
 {
 	struct media_device_info mdinfo;
 	struct stat sb;
 	__u32 ent_id = 0;
+
+	if (is_invalid)
+		*is_invalid = false;
 
 	if (ioctl(media_fd, MEDIA_IOC_DEVICE_INFO, &mdinfo))
 		return 0;
@@ -462,7 +472,7 @@ __u32 mi_media_info_for_fd(int media_fd, int fd)
 		exit(1);
 	}
 
-	ent_id = read_topology(media_fd, major(sb.st_rdev), minor(sb.st_rdev));
+	ent_id = read_topology(media_fd, major(sb.st_rdev), minor(sb.st_rdev), is_invalid);
 	if (ent_id)
 		return ent_id;
 
@@ -482,7 +492,7 @@ __u32 mi_media_info_for_fd(int media_fd, int fd)
 	printf("Entity Info:\n");
 	printf("\tID               : %u\n", ent.id);
 	printf("\tName             : %s\n", ent.name);
-	printf("\tType             : %s\n", enttype2s(ent.type).c_str());
+	printf("\tType             : %s\n", entfunction2s(ent.type).c_str());
 	if (ent.flags)
 		printf("\tFlags            : %s\n", entflags2s(ent.flags).c_str());
 	if (ent.flags & MEDIA_ENT_FL_DEFAULT) {

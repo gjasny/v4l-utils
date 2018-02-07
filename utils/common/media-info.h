@@ -50,11 +50,30 @@ std::string media_get_device(__u32 major, __u32 minor);
  */
 int mi_get_media_fd(int fd);
 
+/* Return entity flags description */
+std::string entflags2s(__u32 flags);
+
+/* Return interface flags description */
+std::string ifacetype2s(__u32 type);
+
+/* Return function description */
+std::string entfunction2s(__u32 function, bool *is_invalid = NULL);
+
+/* Return pad flags description */
+std::string padflags2s(__u32 flags);
+
+/* Return link flags description */
+std::string linkflags2s(__u32 flags);
+
 /*
  * Show media controller information media_fd and (if >= 0) the
  * corresponsing entity/interface information for the fd.
+ *
+ * If is_invalid != NULL, then set it to true if errors are detected
+ * in the media information.
+ *
  * Return the entity ID of fd.
  */
-__u32 mi_media_info_for_fd(int media_fd, int fd);
+__u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid = NULL);
 
 #endif

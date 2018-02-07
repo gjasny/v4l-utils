@@ -699,11 +699,12 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	}
 
 	__u32 ent_id = 0;
+	bool is_invalid = false;
 
 	if (node.is_media())
-		ent_id = mi_media_info_for_fd(node.g_fd(), -1);
+		ent_id = mi_media_info_for_fd(node.g_fd(), -1, &is_invalid);
 	else if (media_fd >= 0)
-		ent_id = mi_media_info_for_fd(media_fd, node.g_fd());
+		ent_id = mi_media_info_for_fd(media_fd, node.g_fd(), &is_invalid);
 
 	if (ent_id) {
 		memset(&node.entity, 0, sizeof(node.entity));
@@ -729,18 +730,20 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 
 	/* Required ioctls */
 
-	if (node.is_v4l2()) {
-		printf("Required ioctls:\n");
+	printf("Required ioctls:\n");
+
+	if (!node.is_media())
+		printf("\ttest MC information: %s\n", ok(is_invalid ? -1 : 0));
+
+	if (node.is_v4l2())
 		printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&node)));
-		printf("\n");
-	}
 
 	if (node.is_media()) {
 		printf("Required ioctls:\n");
 		printf("\ttest MEDIA_IOC_DEVICE_INFO: %s\n",
 		       ok(testMediaDeviceInfo(&node)));
-		printf("\n");
 	}
+	printf("\n");
 
 	/* Multiple opens */
 
