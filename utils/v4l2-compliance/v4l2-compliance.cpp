@@ -739,7 +739,6 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&node)));
 
 	if (node.is_media()) {
-		printf("Required ioctls:\n");
 		printf("\ttest MEDIA_IOC_DEVICE_INFO: %s\n",
 		       ok(testMediaDeviceInfo(&node)));
 	}

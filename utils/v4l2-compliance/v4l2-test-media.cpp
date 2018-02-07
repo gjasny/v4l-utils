@@ -81,6 +81,21 @@ static std::map<__u32, __u32> entity_num_pads;
 static std::map<__u32, media_v2_entity *> v2_entity_map;
 static unsigned num_data_links;
 
+static int checkFunction(__u32 function, bool v2_api)
+{
+	fail_on_test(function == MEDIA_ENT_F_UNKNOWN);
+	fail_on_test((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_BASE &&
+		     function > MEDIA_ENT_T_DEVNODE_DVB);
+	fail_on_test((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_SUBDEV_BASE &&
+		     function > MEDIA_ENT_F_TUNER);
+	if (!v2_api)
+		return 0;
+	// Don't check this due to horrible workaround in media-device.c
+	fail_on_test(function == MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN);
+	fail_on_test(function == MEDIA_ENT_T_DEVNODE_UNKNOWN);
+	return 0;
+}
+
 int testMediaTopology(struct node *node)
 {
 	memset(&topology, 0xff, sizeof(topology));
@@ -138,9 +153,7 @@ int testMediaTopology(struct node *node)
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(check_string(ent.name, sizeof(ent.name)));
 		fail_on_test(!ent.id);
-		fail_on_test(ent.function == MEDIA_ENT_F_UNKNOWN);
-		fail_on_test(ent.function == MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN);
-		fail_on_test(ent.function == MEDIA_ENT_T_DEVNODE_UNKNOWN);
+		fail_on_test(checkFunction(ent.function, true));
 		fail_on_test(v2_entities_set.find(ent.id) != v2_entities_set.end());
 		v2_entities_set.insert(ent.id);
 		v2_entity_map[ent.id] = &ent;
@@ -232,10 +245,7 @@ int testMediaEnum(struct node *node)
 		fail_on_test(ent.revision);
 		fail_on_test(ent.group_id);
 		fail_on_test(ent.type == ~0U);
-		fail_on_test(ent.type == MEDIA_ENT_F_UNKNOWN);
-		// Commented out due to horrible workaround in media-device.c
-		//fail_on_test(ent.type == MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN);
-		//fail_on_test(ent.type == MEDIA_ENT_T_DEVNODE_UNKNOWN);
+		fail_on_test(checkFunction(ent.type, false));
 		fail_on_test(ent.flags == ~0U);
 		fail_on_test(ent.pads == 0xffff);
 		fail_on_test(ent.links == 0xffff);

@@ -261,6 +261,19 @@ static const flag_def entity_functions_def[] = {
 
 std::string entfunction2s(__u32 function, bool *is_invalid)
 {
+	if ((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_BASE &&
+	    function > MEDIA_ENT_T_DEVNODE_DVB) {
+		if (is_invalid)
+			*is_invalid = true;
+		return "FAIL: Unknown legacy device node type (" + num2s(function) + ")";
+	}
+	if ((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_SUBDEV_BASE &&
+	    function > MEDIA_ENT_F_TUNER) {
+		if (is_invalid)
+			*is_invalid = true;
+		return "FAIL: Unknown legacy sub-device type (" + num2s(function) + ")";
+	}
+
 	for (unsigned i = 0; entity_functions_def[i].str; i++)
 		if (function == entity_functions_def[i].flag) {
 			if (is_invalid)
