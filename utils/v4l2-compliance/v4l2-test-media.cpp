@@ -48,7 +48,8 @@ int testMediaDeviceInfo(struct node *node)
 	fail_on_test(mdinfo.serial[0] && check_string(mdinfo.serial, sizeof(mdinfo.serial)));
 	fail_on_test(mdinfo.bus_info[0] && check_string(mdinfo.bus_info, sizeof(mdinfo.bus_info)));
 	fail_on_test(mdinfo.media_version == 0);
-	fail_on_test(mdinfo.driver_version != mdinfo.media_version);
+	if (mdinfo.media_version != MEDIA_API_VERSION)
+		fail_on_test(mdinfo.driver_version != mdinfo.media_version);
 	return 0;
 }
 
