@@ -150,6 +150,8 @@ int testMediaTopology(struct node *node)
 	for (unsigned i = 0; i < topology.num_entities; i++) {
 		media_v2_entity &ent = v2_ents[i];
 
+		if (show_info)
+			printf("\t\tEntity: %s (0x%08x)\n", ent.name, ent.id);
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(check_string(ent.name, sizeof(ent.name)));
 		fail_on_test(!ent.id);
@@ -161,6 +163,8 @@ int testMediaTopology(struct node *node)
 	for (unsigned i = 0; i < topology.num_interfaces; i++) {
 		media_v2_interface &iface = v2_ifaces[i];
 
+		if (show_info)
+			printf("\t\tInterface: 0x%08x\n", iface.id);
 		fail_on_test(check_0(iface.reserved, sizeof(iface.reserved)));
 		fail_on_test(checkDevice(iface.devnode.major, iface.devnode.minor,
 					 true, iface.id));
@@ -176,6 +180,8 @@ int testMediaTopology(struct node *node)
 		media_v2_pad &pad = v2_pads[i];
 		__u32 fl = pad.flags;
 
+		if (show_info)
+			printf("\t\tPad: 0x%08x\n", pad.id);
 		fail_on_test(check_0(pad.reserved, sizeof(pad.reserved)));
 		fail_on_test(!pad.id);
 		fail_on_test(!pad.entity_id);
@@ -191,6 +197,8 @@ int testMediaTopology(struct node *node)
 		media_v2_link &link = v2_links[i];
 		bool is_iface = link.flags & MEDIA_LNK_FL_LINK_TYPE;
 
+		if (show_info)
+			printf("\t\tLink: 0x%08x\n", link.id);
 		fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
 		fail_on_test(!link.id);
 		fail_on_test(!link.source_id);
@@ -236,6 +244,8 @@ int testMediaEnum(struct node *node)
 		ret = doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent);
 		if (ret == EINVAL)
 			break;
+		if (show_info)
+			printf("\t\tEntity: %s (0x%08x)\n", ent.name, ent.id);
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(ent.id & MEDIA_ENT_ID_FLAG_NEXT);
 		fail_on_test(!ent.id);
@@ -278,6 +288,8 @@ int testMediaEnum(struct node *node)
 	     iter != ent_map.end(); ++iter) {
 		media_entity_desc &ent = iter->second;
 
+		if (show_info)
+			printf("\t\tEntity Links: %s (0x%08x)\n", ent.name, ent.id);
 		memset(&links, 0, sizeof(links));
 		links.entity = ent.id;
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links));
