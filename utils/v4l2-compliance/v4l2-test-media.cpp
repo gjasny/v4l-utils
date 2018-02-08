@@ -247,7 +247,8 @@ int testMediaEnum(struct node *node)
 		if (ret == EINVAL)
 			break;
 		if (show_info)
-			printf("\t\tEntity: %s (0x%08x)\n", ent.name, ent.id);
+			printf("\t\tEntity: 0x%08x (Name: '%s', Type: 0x%08x\n",
+			       ent.id, ent.name, ent.type);
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(ent.id & MEDIA_ENT_ID_FLAG_NEXT);
 		fail_on_test(!ent.id);
@@ -291,7 +292,8 @@ int testMediaEnum(struct node *node)
 		media_entity_desc &ent = iter->second;
 
 		if (show_info)
-			printf("\t\tEntity Links: %s (0x%08x)\n", ent.name, ent.id);
+			printf("\t\tEntity Links: 0x%08x (Name: '%s')\n",
+			       ent.id, ent.name);
 		memset(&links, 0, sizeof(links));
 		links.entity = ent.id;
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links));
