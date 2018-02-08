@@ -280,9 +280,7 @@ std::string entfunction2s(__u32 function, bool *is_invalid)
 				*is_invalid = !memcmp(entity_functions_def[i].str, "FAIL:", 5);
 			return entity_functions_def[i].str;
 		}
-	if (is_invalid)
-		*is_invalid = true;
-	return "FAIL: Unknown Function (" + num2s(function) + ")";
+	return "WARNING: Unknown Function (" + num2s(function) + "), is v4l2-compliance out-of-date?";
 }
 
 static const flag_def pad_flags_def[] = {
@@ -345,9 +343,11 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_inva
 		    v2_ifaces[i].devnode.minor == minor)
 			break;
 	if (i == topology.num_interfaces) {
-		fprintf(stderr, "could not find %d:%d device in topology\n",
+		fprintf(stderr, "FAIL: could not find %d:%d device in topology\n",
 			major, minor);
-		return 0;
+		if (is_invalid)
+			*is_invalid = true;
+		return MEDIA_ENT_F_UNKNOWN;
 	}
 	media_v2_interface &iface = v2_ifaces[i];
 	for (i = 0; i < topology.num_links; i++) {
@@ -359,9 +359,11 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_inva
 			break;
 	}
 	if (i == topology.num_links) {
-		fprintf(stderr, "could not find link for interface %u in topology\n",
+		if (is_invalid)
+			*is_invalid = true;
+		fprintf(stderr, "FAIL: could not find link for interface %u in topology\n",
 			iface.id);
-		return 0;
+		return MEDIA_ENT_F_UNKNOWN;
 	}
 	__u32 ent_id = v2_links[i].sink_id;
 	for (i = 0; i < topology.num_entities; i++) {
@@ -369,9 +371,11 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_inva
 			break;
 	}
 	if (i == topology.num_entities) {
-		fprintf(stderr, "could not find entity %u in topology\n",
+		if (is_invalid)
+			*is_invalid = true;
+		fprintf(stderr, "FAIL: could not find entity %u in topology\n",
 			ent_id);
-		return 0;
+		return MEDIA_ENT_F_UNKNOWN;
 	}
 	media_v2_entity &ent = v2_ents[i];
 
@@ -412,7 +416,9 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_inva
 					break;
 				}
 			if (!remote_ent_id) {
-				fprintf(stderr, "could not find remote pad 0x%08x in topology\n",
+				if (is_invalid)
+					*is_invalid = true;
+				fprintf(stderr, "FAIL: could not find remote pad 0x%08x in topology\n",
 					remote_pad);
 				return ent.id;
 			}
@@ -422,7 +428,9 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_inva
 					break;
 				}
 			if (!remote_ent) {
-				fprintf(stderr, "could not find remote entity 0x%08x in topology\n",
+				if (is_invalid)
+					*is_invalid = true;
+				fprintf(stderr, "FAIL: could not find remote entity 0x%08x in topology\n",
 					remote_ent_id);
 				return ent.id;
 			}

@@ -702,11 +702,11 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	bool is_invalid = false;
 
 	if (node.is_media())
-		ent_id = mi_media_info_for_fd(node.g_fd(), -1, &is_invalid);
+		mi_media_info_for_fd(node.g_fd(), -1, &is_invalid);
 	else if (media_fd >= 0)
 		ent_id = mi_media_info_for_fd(media_fd, node.g_fd(), &is_invalid);
 
-	if (ent_id) {
+	if (ent_id && ent_id != MEDIA_ENT_F_UNKNOWN) {
 		memset(&node.entity, 0, sizeof(node.entity));
 		node.entity.id = ent_id;
 		if (!ioctl(media_fd, MEDIA_IOC_ENUM_ENTITIES, &node.entity)) {
@@ -732,8 +732,8 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 
 	printf("Required ioctls:\n");
 
-	if (!node.is_media())
-		printf("\ttest MC information: %s\n", ok(is_invalid ? -1 : 0));
+	if (ent_id)
+		printf("\ttest MC information (see 'Media Driver Info' above): %s\n", ok(is_invalid ? -1 : 0));
 
 	if (node.is_v4l2())
 		printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&node)));

@@ -60,7 +60,9 @@ std::string linkflags2s(__u32 flags);
  * If is_invalid != NULL, then set it to true if errors are detected
  * in the media information.
  *
- * Return the entity ID of fd.
+ * Return 0 if the driver doesn't support MEDIA_IOC_G_TOPOLOGY.
+ * Return MEDIA_ENT_F_UNKNOWN if it does support this but there were
+ * errors reading the topology. Otherwise return the entity ID of fd.
  */
 __u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid = NULL);
 
