@@ -84,14 +84,15 @@ static unsigned num_data_links;
 static int checkFunction(__u32 function, bool v2_api)
 {
 	fail_on_test(function == MEDIA_ENT_F_UNKNOWN);
-	fail_on_test((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_BASE &&
-		     (function == MEDIA_ENT_T_DEVNODE ||
-		      (function > MEDIA_ENT_T_DEVNODE_DVB && function < MEDIA_ENT_T_DEVNODE_UNKNOWN)));
+	fail_on_test((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_T_DEVNODE &&
+		     function != MEDIA_ENT_T_DEVNODE_V4L &&
+		     function != MEDIA_ENT_T_DEVNODE_UNKNOWN);
 	fail_on_test((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_SUBDEV_BASE &&
 		     function > MEDIA_ENT_F_TUNER);
 	if (!v2_api)
 		return 0;
-	// Don't check this due to horrible workaround in media-device.c
+	// The old API can return these due to a horrible workaround in
+	// media-device.c. But for the v2 API these should never be returned.
 	fail_on_test(function == MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN);
 	fail_on_test(function == MEDIA_ENT_T_DEVNODE_UNKNOWN);
 	return 0;
