@@ -216,6 +216,16 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 			fail_on_test(field == V4L2_FIELD_NONE);
 		else
 			fail_on_test(field != V4L2_FIELD_NONE);
+
+		unsigned factor = V4L2_FIELD_HAS_T_OR_B(field) ? 2 : 1;
+
+		if (is_mplane) {
+			fail_on_test(fmt.fmt.pix_mp.width < enumtimings.timings.bt.width);
+			fail_on_test(fmt.fmt.pix_mp.height * factor < enumtimings.timings.bt.height);
+		} else {
+			fail_on_test(fmt.fmt.pix.width < enumtimings.timings.bt.width);
+			fail_on_test(fmt.fmt.pix.height * factor < enumtimings.timings.bt.height);
+		}
 	}
 	if (i == 0 && has_timings)
 		return fail("TIMINGS cap set, but no timings can be enumerated\n");
@@ -241,6 +251,7 @@ static int checkSubDevEnumTimings(struct node *node, __u32 pad)
 {
 	struct v4l2_enum_dv_timings enumtimings;
 	struct v4l2_dv_timings timings;
+	bool found_fmt_mismatch = false;
 	bool has_timings;
 	int ret;
 
@@ -288,6 +299,29 @@ static int checkSubDevEnumTimings(struct node *node, __u32 pad)
 		fail_on_test(doioctl(node, VIDIOC_G_DV_TIMINGS, &g_timings));
 		fail_on_test(g_timings.bt.width != enumtimings.timings.bt.width);
 		fail_on_test(g_timings.bt.height != enumtimings.timings.bt.height);
+
+		if (found_fmt_mismatch)
+			continue;
+
+		struct v4l2_subdev_format fmt;
+
+		memset(&fmt, 0, sizeof(fmt));
+		fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+
+		if (!doioctl(node, VIDIOC_SUBDEV_G_FMT, &fmt)) {
+			if (V4L2_FIELD_HAS_T_OR_B(fmt.format.field))
+				fmt.format.height *= 2;
+			if (fmt.format.width < enumtimings.timings.bt.width) {
+				warn("Active width for pad 0 is %u, which is less than the timings width of %u\n",
+				     fmt.format.width, enumtimings.timings.bt.width);
+				found_fmt_mismatch = true;
+			}
+			if (fmt.format.height < enumtimings.timings.bt.height) {
+				warn("Active height for pad 0 is %u, which is less than the timings height of %u\n",
+				     fmt.format.height, enumtimings.timings.bt.height);
+				found_fmt_mismatch = true;
+			}
+		}
 	}
 	enumtimings.pad = node->entity.pads;
 	enumtimings.index = 0;
