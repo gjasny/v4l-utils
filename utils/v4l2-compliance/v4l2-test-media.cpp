@@ -151,8 +151,8 @@ int testMediaTopology(struct node *node)
 		media_v2_entity &ent = v2_ents[i];
 
 		if (show_info)
-			printf("\t\tEntity: %s (ID: 0x%08x Function: 0x%08x)\n",
-			       ent.name, ent.id, ent.function);
+			printf("\t\tEntity: 0x%08x (Name: '%s', Function: 0x%08x)\n",
+			       ent.id, ent.name, ent.function);
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(check_string(ent.name, sizeof(ent.name)));
 		fail_on_test(!ent.id);
