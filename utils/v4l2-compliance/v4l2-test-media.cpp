@@ -85,7 +85,8 @@ static int checkFunction(__u32 function, bool v2_api)
 {
 	fail_on_test(function == MEDIA_ENT_F_UNKNOWN);
 	fail_on_test((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_BASE &&
-		     function > MEDIA_ENT_T_DEVNODE_DVB);
+		     (function == MEDIA_ENT_T_DEVNODE ||
+		      (function > MEDIA_ENT_T_DEVNODE_DVB && function < MEDIA_ENT_T_DEVNODE_UNKNOWN)));
 	fail_on_test((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_SUBDEV_BASE &&
 		     function > MEDIA_ENT_F_TUNER);
 	if (!v2_api)
