@@ -414,10 +414,19 @@ int testMediaSetupLink(struct node *node)
 
 void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_count)
 {
-	if (!node.topology)
+	media_v2_topology topology;
+
+	memset(&topology, 0, sizeof(topology));
+	if (ioctl(node.g_fd(), MEDIA_IOC_G_TOPOLOGY, &topology))
 		return;
 
-	for (unsigned i = 0; i < node.topology->num_interfaces; i++) {
+	media_v2_interface v2_ifaces[topology.num_interfaces];
+
+	topology.ptr_interfaces = (__u64)v2_ifaces;
+	if (ioctl(node.g_fd(), MEDIA_IOC_G_TOPOLOGY, &topology))
+		return;
+
+	for (unsigned i = 0; i < topology.num_interfaces; i++) {
 		media_v2_interface &iface = v2_ifaces[i];
 		std::string dev = media_get_device(iface.devnode.major,
 						   iface.devnode.minor);
