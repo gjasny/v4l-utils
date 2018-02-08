@@ -636,6 +636,9 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	struct node node2;
 	struct v4l2_capability vcap;		/* list_cap */
 
+	printf("\nCompliance test for device %s%s:\n\n",
+			node.device, node.g_direct() ? "" : " (using libv4l2)");
+
 	node.is_video = type == MEDIA_TYPE_VIDEO;
 	node.is_vbi = type == MEDIA_TYPE_VBI;
 	node.is_radio = type == MEDIA_TYPE_RADIO;
@@ -677,7 +680,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		media_fd = mi_get_media_fd(node.g_fd());
 
 	if (node.is_v4l2()) {
-		printf("\nDriver Info:\n");
+		printf("Driver Info:\n");
 		v4l2_info_capability(vcap);
 
 		if (!strcmp((const char *)vcap.driver, "vivid")) {
@@ -725,12 +728,9 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		}
 	}
 
-	printf("\nCompliance test for device %s%s:\n\n",
-			node.device, node.g_direct() ? "" : " (using libv4l2)");
-
 	/* Required ioctls */
 
-	printf("Required ioctls:\n");
+	printf("\nRequired ioctls:\n");
 
 	if (ent_id)
 		printf("\ttest MC information (see 'Media Driver Info' above): %s\n", ok(is_invalid ? -1 : 0));

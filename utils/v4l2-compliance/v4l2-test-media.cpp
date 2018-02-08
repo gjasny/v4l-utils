@@ -423,6 +423,9 @@ void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_co
 						   iface.devnode.minor);
 		if (dev.empty())
 			continue;
+
+		printf("--------------------------------------------------------------------------------\n");
+
 		media_type type = media_detect_type(dev.c_str());
 		if (type == MEDIA_TYPE_CANT_STAT) {
 			fprintf(stderr, "Cannot open device %s, skipping.\n\n",
