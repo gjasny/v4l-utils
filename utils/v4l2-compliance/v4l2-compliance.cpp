@@ -790,13 +790,13 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	if (node.is_media()) {
 		printf("Media Controller ioctls:\n");
 		printf("\ttest MEDIA_IOC_G_TOPOLOGY: %s\n", ok(testMediaTopology(&node)));
-		printf("\ttest MEDIA_IOC_ENUM_ENTITIES/LINKS: %s\n", ok(testMediaEnum(&node)));
 		if (node.topology)
 			printf("\tEntities: %u Interfaces: %u Pads: %u Links: %u\n",
 			       node.topology->num_entities,
 			       node.topology->num_interfaces,
 			       node.topology->num_pads,
 			       node.topology->num_links);
+		printf("\ttest MEDIA_IOC_ENUM_ENTITIES/LINKS: %s\n", ok(testMediaEnum(&node)));
 		printf("\ttest MEDIA_IOC_SETUP_LINK: %s\n", ok(testMediaSetupLink(&node)));
 		printf("\n");
 		if (options[OptMediaTestInterfaces])
