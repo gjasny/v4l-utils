@@ -151,7 +151,8 @@ int testMediaTopology(struct node *node)
 		media_v2_entity &ent = v2_ents[i];
 
 		if (show_info)
-			printf("\t\tEntity: %s (0x%08x)\n", ent.name, ent.id);
+			printf("\t\tEntity: %s (ID: 0x%08x Function: 0x%08x)\n",
+			       ent.name, ent.id, ent.function);
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(check_string(ent.name, sizeof(ent.name)));
 		fail_on_test(!ent.id);
@@ -164,7 +165,8 @@ int testMediaTopology(struct node *node)
 		media_v2_interface &iface = v2_ifaces[i];
 
 		if (show_info)
-			printf("\t\tInterface: 0x%08x\n", iface.id);
+			printf("\t\tInterface: 0x%08x (Type: 0x%08x)\n",
+			       iface.id, iface.intf_type);
 		fail_on_test(check_0(iface.reserved, sizeof(iface.reserved)));
 		fail_on_test(checkDevice(iface.devnode.major, iface.devnode.minor,
 					 true, iface.id));
