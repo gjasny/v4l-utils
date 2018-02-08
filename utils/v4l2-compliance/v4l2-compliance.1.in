@@ -56,25 +56,30 @@ very good shape!
 \fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
 Use device <dev> as the video device. If <dev> is a number, then /dev/video<dev> is used.
 .TP
-\fB\-V\fR, \fB\-\-vbi-device\fR=\fI<dev>\fR
+\fB\-V\fR, \fB\-\-vbi\-device\fR=\fI<dev>\fR
 Use device <dev> as the vbi device. If <dev> is a number, then /dev/vbi<dev> is used.
 .TP
-\fB\-r\fR, \fB\-\-radio-device\fR=\fI<dev>\fR
+\fB\-r\fR, \fB\-\-radio\-device\fR=\fI<dev>\fR
 Use device <dev> as the radio device. If <dev> is a number, then /dev/radio<dev> is used.
 .TP
-\fB\-S\fR, \fB\-\-sdr-device\fR=\fI<dev>\fR
+\fB\-S\fR, \fB\-\-sdr\-device\fR=\fI<dev>\fR
 Use device <dev> as the SDR device. If <dev> is a number, then /dev/swradio<dev> is used.
 .TP
-\fB\-t\fR, \fB\-\-touch-device\fR=\fI<dev>\fR
+\fB\-t\fR, \fB\-\-touch\-device\fR=\fI<dev>\fR
 Use device <dev> as the touch device. If <dev> is a number, then /dev/v4l-touch<dev> is used.
 .TP
-\fB\-u\fR, \fB\-\-subdev-device\fR=\fI<dev>\fR
+\fB\-u\fR, \fB\-\-subdev\-device\fR=\fI<dev>\fR
 Use device <dev> as the v4l-subdevX device. If <dev> is a number, then /dev/v4l-subdev<dev> is used.
 .TP
-\fB\-m\fR, \fB\-\-media-device\fR=\fI<dev>\fR
-Use device <dev> as the media controller device. If <dev> is a number, then /dev/media<dev> is used.
+\fB\-m\fR, \fB\-\-media\-device\fR=\fI<dev>\fR
+Use device <dev> as the media controller device. Besides this device it also tests
+all interfaces it finds.  If <dev> starts with a digit, then /dev/media<dev> is used.
 .TP
-\fB\-e\fR, \fB\-\-exp-buf-device\fR=\fI<dev>\fR
+\fB\-M\fR, \fB\-\-media\-device\-only\fR=\fI<dev>\fR
+Use device <dev> as the media controller device. Only test this device, don't walk
+over all the interfaces.  If <dev> starts with a digit, then /dev/media<dev> is used.
+.TP
+\fB\-e\fR, \fB\-\-exp\-buf\-device\fR=\fI<dev>\fR
 Use device <dev> as the video device used to export DMABUFfers for doing DMABUF
 streaming tests. If <dev> is a number, then /dev/video<dev> is used. If this option
 is not specified, then the DMABUF streaming tests will be skipped.
@@ -88,7 +93,7 @@ a valid input (or output) and frequency (when the device has a tuner). For DMABU
 The configuration of the driver at the time v4l2-compliance was called
 will be used for the streaming tests.
 .TP
-\fB\-f\fR, \fB\-\-stream-all-formats\fR
+\fB\-f\fR, \fB\-\-stream\-all\-formats\fR
 Test whether all available formats can be streamed. This attempts to stream using
 MMAP mode or read/write (if V4L2_MEMORY_MMAP is not available) for one second for all
 formats, at all sizes, at all intervals and with all field values. In addition, if the
@@ -99,7 +104,7 @@ a long time.
 The configuration of the driver at the time v4l2-compliance was called
 will be used for the streaming tests.
 .TP
-\fB\-c\fR, \fB\-\-stream-all-color\fR=\fBcolor\fR=\fIred|green|blue\fR,\fBskip\fR=\fI<skip>\fR,\fBperc\fR=\fI<perc>\fR
+\fB\-c\fR, \fB\-\-stream\-all\-color\fR=\fBcolor\fR=\fIred|green|blue\fR,\fBskip\fR=\fI<skip>\fR,\fBperc\fR=\fI<perc>\fR
 For all supported, non-compressed formats stream <skip + 1> frames. For the
 last frame go over all pixels and calculate which of the R, G and B color components
 of a pixel has the highest value and count that as a red, green or blue pixel.
@@ -118,12 +123,12 @@ green and blue colors correctly and that no color components are swapped.
 The configuration of the driver at the time v4l2-compliance was called
 will be used for the streaming tests.
 .TP
-\fB\-a\fR, \fB\-\-stream-all-io\fR
+\fB\-a\fR, \fB\-\-stream\-all\-io\fR
 Do the \fB\-s\fR, \fB\-c\fR and \fB\-f\fR streaming tests for all inputs or outputs
 instead of just the current input or output. This requires that a valid video
 signal is present on all inputs or that all outputs are hooked up.
 .TP
-\fB\-n\fR, \fB\-\-no-warnings\fR
+\fB\-n\fR, \fB\-\-no\-warnings\fR
 Turn off warning messages. They are still counted in the summary, but you won't see them.
 .TP
 \fB\-T\fR, \fB\-\-trace\fR

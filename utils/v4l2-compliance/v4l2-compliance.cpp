@@ -59,7 +59,7 @@ enum Option {
 	OptStreamAllFormats = 'f',
 	OptHelp = 'h',
 	OptSetMediaDevice = 'm',
-	OptMediaTestInterfaces = 'M',
+	OptSetMediaDeviceOnly = 'M',
 	OptNoWarnings = 'n',
 	OptSetRadioDevice = 'r',
 	OptStreaming = 's',
@@ -120,7 +120,7 @@ static struct option long_options[] = {
 	{"expbuf-device", required_argument, 0, OptSetExpBufDevice},
 	{"touch-device", required_argument, 0, OptSetTouchDevice},
 	{"media-device", required_argument, 0, OptSetMediaDevice},
-	{"media-test-interfaces", no_argument, 0, OptMediaTestInterfaces},
+	{"media-device-only", required_argument, 0, OptSetMediaDeviceOnly},
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
@@ -157,10 +157,13 @@ static void usage(void)
 	printf("                     Use device <dev> as the v4l-subdev device.\n");
 	printf("                     If <dev> starts with a digit, then /dev/v4l-subdev<dev> is used.\n");
 	printf("  -m, --media-device=<dev>\n");
-	printf("                     Use device <dev> as the media controller device.\n");
+	printf("                     Use device <dev> as the media controller device. Besides this\n");
+	printf("                     device it also tests all interfaces it finds.\n");
 	printf("                     If <dev> starts with a digit, then /dev/media<dev> is used.\n");
-	printf("  -M, --media-test-interfaces\n");
-	printf("                     Test all interfaces in the media controller topology.\n");
+	printf("  -M, --media-device-only=<dev>\n");
+	printf("                     Use device <dev> as the media controller device. Only test this\n");
+	printf("                     device, don't walk over all the interfaces.\n");
+	printf("                     If <dev> starts with a digit, then /dev/media<dev> is used.\n");
 	printf("  -e, --expbuf-device=<dev>\n");
 	printf("                     Use device <dev> to obtain DMABUF handles.\n");
 	printf("                     If <dev> starts with a digit, then /dev/video<dev> is used.\n");
@@ -799,7 +802,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		printf("\ttest MEDIA_IOC_ENUM_ENTITIES/LINKS: %s\n", ok(testMediaEnum(&node)));
 		printf("\ttest MEDIA_IOC_SETUP_LINK: %s\n", ok(testMediaSetupLink(&node)));
 		printf("\n");
-		if (options[OptMediaTestInterfaces])
+		if (options[OptSetMediaDevice])
 			walkTopology(node, expbuf_node, frame_count);
 		goto done;
 	}
@@ -1111,6 +1114,7 @@ int main(int argc, char **argv)
 			device = make_devname(optarg, "v4l-subdev");
 			break;
 		case OptSetMediaDevice:
+		case OptSetMediaDeviceOnly:
 			device = make_devname(optarg, "media");
 			type = MEDIA_TYPE_MEDIA;
 			break;
