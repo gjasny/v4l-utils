@@ -442,7 +442,7 @@ void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_co
 
 		media_type type = media_detect_type(dev.c_str());
 		if (type == MEDIA_TYPE_CANT_STAT) {
-			fprintf(stderr, "Cannot open device %s, skipping.\n\n",
+			fprintf(stderr, "\nCannot open device %s, skipping.\n\n",
 				dev.c_str());
 			continue;
 		}
@@ -462,7 +462,7 @@ void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_co
 		}
 
 		if (type == MEDIA_TYPE_UNKNOWN) {
-			fprintf(stderr, "Unable to detect what device %s is, skipping.\n\n",
+			fprintf(stderr, "\nUnable to detect what device %s is, skipping.\n\n",
 				dev.c_str());
 			continue;
 		}
@@ -487,7 +487,7 @@ void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_co
 			break;
 		}
 		if (fd < 0) {
-			fprintf(stderr, "Failed to open device %s, skipping\n\n",
+			fprintf(stderr, "\nFailed to open device %s, skipping\n\n",
 				dev.c_str());
 			continue;
 		}
