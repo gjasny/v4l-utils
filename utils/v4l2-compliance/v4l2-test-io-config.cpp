@@ -219,12 +219,20 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 
 		unsigned factor = V4L2_FIELD_HAS_T_OR_B(field) ? 2 : 1;
 
+		// Test if the new format after setting new timings is either too small
+		// or more than 1.5 times the width/height. This allows for some
+		// adjustments to be made to the format, but still detect if the
+		// format isn't updated by the driver.
 		if (is_mplane) {
 			fail_on_test(fmt.fmt.pix_mp.width < enumtimings.timings.bt.width);
+			fail_on_test(fmt.fmt.pix_mp.width >= enumtimings.timings.bt.width * 1.5);
 			fail_on_test(fmt.fmt.pix_mp.height * factor < enumtimings.timings.bt.height);
+			fail_on_test(fmt.fmt.pix_mp.height * factor >= enumtimings.timings.bt.height * 1.5);
 		} else {
 			fail_on_test(fmt.fmt.pix.width < enumtimings.timings.bt.width);
+			fail_on_test(fmt.fmt.pix.width >= enumtimings.timings.bt.width * 1.5);
 			fail_on_test(fmt.fmt.pix.height * factor < enumtimings.timings.bt.height);
+			fail_on_test(fmt.fmt.pix.height * factor >= enumtimings.timings.bt.height * 1.5);
 		}
 	}
 	if (i == 0 && has_timings)
@@ -308,16 +316,31 @@ static int checkSubDevEnumTimings(struct node *node, __u32 pad)
 		memset(&fmt, 0, sizeof(fmt));
 		fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 
+		// Test if the new format after setting new timings is either too small
+		// or more than 1.5 times the width/height. This allows for some
+		// adjustments to be made to the format, but still detect if the
+		// format isn't updated by the driver.
 		if (!doioctl(node, VIDIOC_SUBDEV_G_FMT, &fmt)) {
 			if (V4L2_FIELD_HAS_T_OR_B(fmt.format.field))
 				fmt.format.height *= 2;
+
 			if (fmt.format.width < enumtimings.timings.bt.width) {
 				warn("Active width for pad 0 is %u, which is less than the timings width of %u\n",
 				     fmt.format.width, enumtimings.timings.bt.width);
 				found_fmt_mismatch = true;
 			}
+			if (fmt.format.width >= enumtimings.timings.bt.width * 1.5) {
+				warn("Active width for pad 0 is %u, which is more than 1.5 * the timings width of %u\n",
+				     fmt.format.width, enumtimings.timings.bt.width);
+				found_fmt_mismatch = true;
+			}
 			if (fmt.format.height < enumtimings.timings.bt.height) {
 				warn("Active height for pad 0 is %u, which is less than the timings height of %u\n",
+				     fmt.format.height, enumtimings.timings.bt.height);
+				found_fmt_mismatch = true;
+			}
+			if (fmt.format.height >= enumtimings.timings.bt.height * 1.5) {
+				warn("Active height for pad 0 is %u, which is more than 1.5 * the timings height of %u\n",
 				     fmt.format.height, enumtimings.timings.bt.height);
 				found_fmt_mismatch = true;
 			}
