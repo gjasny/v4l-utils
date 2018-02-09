@@ -1,6 +1,6 @@
 --- utils/common/v4l2-tpg.h.bak	2016-04-22 09:22:11.168936563 +0200
 +++ utils/common/v4l2-tpg.h	2016-04-22 09:23:07.337262639 +0200
-@@ -20,12 +20,56 @@
+@@ -20,12 +20,54 @@
  #ifndef _V4L2_TPG_H_
  #define _V4L2_TPG_H_
  
@@ -57,23 +57,21 @@
 +{
 +	return rand() % ep_ro;
 +}
-+
-+#include "v4l2-tpg-colors.h"
  
  enum tpg_pattern {
  	TPG_PAT_75_COLORBAR,
 --- ../media-git/drivers/media/common/v4l2-tpg/v4l2-tpg-core.c	2016-04-21 08:15:35.439610205 +0200
 +++ utils/common/v4l2-tpg-core.c	2016-04-22 09:29:50.955939090 +0200
-@@ -20,7 +20,7 @@
+@@ -20,7 +18,6 @@
   */
  
- #include <linux/module.h>
+-#include <linux/module.h>
 -#include <media/tpg/v4l2-tpg.h>
-+#include "v4l2-tpg.h"
++#include "v4l2-tpg-colors.h"
  
  /* Must remain in sync with enum tpg_pattern */
  const char * const tpg_pattern_strings[] = {
-@@ -49,7 +48,6 @@
+@@ -49,7 +45,6 @@
  	"Noise",
  	NULL
  };
@@ -81,7 +79,7 @@
  
  /* Must remain in sync with enum tpg_aspect */
  const char * const tpg_aspect_strings[] = {
-@@ -60,7 +58,6 @@
+@@ -60,7 +55,6 @@
  	"16x9 Anamorphic",
  	NULL
  };
@@ -89,7 +87,7 @@
  
  /*
   * Sine table: sin[0] = 127 * sin(-180 degrees)
-@@ -96,7 +93,6 @@
+@@ -96,7 +90,6 @@
  {
  	font8x16 = f;
  }
@@ -97,7 +95,7 @@
  
  void tpg_init(struct tpg_data *tpg, unsigned w, unsigned h)
  {
-@@ -118,7 +114,6 @@
+@@ -118,7 +111,6 @@
  	tpg->colorspace = V4L2_COLORSPACE_SRGB;
  	tpg->perc_fill = 100;
  }
@@ -105,7 +103,7 @@
  
  int tpg_alloc(struct tpg_data *tpg, unsigned max_w)
  {
-@@ -155,7 +150,6 @@
+@@ -155,7 +147,6 @@
  	}
  	return 0;
  }
@@ -113,7 +111,7 @@
  
  void tpg_free(struct tpg_data *tpg)
  {
-@@ -180,7 +174,6 @@
+@@ -180,7 +171,6 @@
  		tpg->random_line[plane] = NULL;
  	}
  }
@@ -121,7 +119,7 @@
  
  bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
  {
-@@ -410,7 +403,6 @@
+@@ -410,7 +400,6 @@
  	}
  	return true;
  }
@@ -129,7 +127,7 @@
  
  void tpg_s_crop_compose(struct tpg_data *tpg, const struct v4l2_rect *crop,
  		const struct v4l2_rect *compose)
-@@ -426,7 +418,6 @@
+@@ -426,7 +415,6 @@
  		tpg->scaled_width = 2;
  	tpg->recalc_lines = true;
  }
@@ -137,7 +135,7 @@
  
  void tpg_reset_source(struct tpg_data *tpg, unsigned width, unsigned height,
  		       u32 field)
-@@ -451,7 +442,6 @@
+@@ -451,7 +439,6 @@
  				       (2 * tpg->hdownsampling[p]);
  	tpg->recalc_square_border = true;
  }
@@ -145,7 +143,7 @@
  
  static enum tpg_color tpg_get_textbg_color(struct tpg_data *tpg)
  {
-@@ -1260,7 +1250,6 @@
+@@ -1260,7 +1247,6 @@
  		return 0;
  	}
  }
@@ -153,7 +151,7 @@
  
  /* Return how many pattern lines are used by the current pattern. */
  static unsigned tpg_get_pat_lines(const struct tpg_data *tpg)
-@@ -1736,7 +1725,6 @@
+@@ -1736,7 +1722,6 @@
  		}
  	}
  }
@@ -161,7 +159,7 @@
  
  void tpg_update_mv_step(struct tpg_data *tpg)
  {
-@@ -1785,7 +1773,6 @@
+@@ -1785,7 +1770,6 @@
  	if (factor < 0)
  		tpg->mv_vert_step = tpg->src_height - tpg->mv_vert_step;
  }
@@ -169,7 +167,7 @@
  
  /* Map the line number relative to the crop rectangle to a frame line number */
  static unsigned tpg_calc_frameline(const struct tpg_data *tpg, unsigned src_y,
-@@ -1875,7 +1862,6 @@
+@@ -1875,7 +1859,6 @@
  	if (p == 0 && tpg->interleaved)
  		tpg_calc_text_basep(tpg, basep, 1, vbuf);
  }
@@ -177,7 +175,7 @@
  
  static int tpg_pattern_avg(const struct tpg_data *tpg,
  			   unsigned pat1, unsigned pat2)
-@@ -1905,7 +1891,6 @@
+@@ -1905,7 +1888,6 @@
  	pr_info("tpg quantization: %d/%d\n", tpg->quantization, tpg->real_quantization);
  	pr_info("tpg RGB range: %d/%d\n", tpg->rgb_range, tpg->real_rgb_range);
  }
@@ -185,7 +183,7 @@
  
  /*
   * This struct contains common parameters used by both the drawing of the
-@@ -2311,7 +2296,6 @@
+@@ -2311,7 +2293,6 @@
  				vbuf + buf_line * params.stride);
  	}
  }
@@ -193,7 +191,7 @@
  
  void tpg_fillbuffer(struct tpg_data *tpg, v4l2_std_id std, unsigned p, u8 *vbuf)
  {
-@@ -2328,8 +2312,3 @@
+@@ -2328,8 +2309,3 @@
  		offset += tpg_calc_plane_size(tpg, i);
  	}
  }
@@ -204,7 +202,7 @@
 -MODULE_LICENSE("GPL");
 --- ../media-git/drivers/media/common/v4l2-tpg/v4l2-tpg-colors.c	2016-04-21 08:15:35.439610205 +0200
 +++ utils/common/v4l2-tpg-colors.c	2016-04-22 09:26:24.638509385 +0200
-@@ -36,7 +36,7 @@
+@@ -36,7 +34,7 @@
   */
  
  #include <linux/videodev2.h>
