@@ -261,26 +261,39 @@ static const flag_def entity_functions_def[] = {
 
 std::string entfunction2s(__u32 function, bool *is_invalid)
 {
+	std::string s;
+
 	if ((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_BASE &&
 	    function > MEDIA_ENT_T_DEVNODE_DVB) {
-		if (is_invalid)
-			*is_invalid = true;
-		return "FAIL: Unknown legacy device node type (" + num2s(function) + ")";
+		s = "Unknown legacy device node type (" + num2s(function) + ")";
+		if (!is_invalid)
+			return s;
+		*is_invalid = true;
+		return "FAIL: " + s;
 	}
 	if ((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_SUBDEV_BASE &&
 	    function > MEDIA_ENT_F_TUNER) {
-		if (is_invalid)
-			*is_invalid = true;
-		return "FAIL: Unknown legacy sub-device type (" + num2s(function) + ")";
+		s = "Unknown legacy sub-device type (" + num2s(function) + ")";
+		if (!is_invalid)
+			return s;
+		*is_invalid = true;
+		return "FAIL: " + s;
 	}
 
-	for (unsigned i = 0; entity_functions_def[i].str; i++)
+	for (unsigned i = 0; entity_functions_def[i].str; i++) {
 		if (function == entity_functions_def[i].flag) {
-			if (is_invalid)
-				*is_invalid = !memcmp(entity_functions_def[i].str, "FAIL:", 5);
-			return entity_functions_def[i].str;
+			bool fail = !memcmp(entity_functions_def[i].str, "FAIL: ", 6);
+
+			if (is_invalid) {
+				*is_invalid = fail;
+				return entity_functions_def[i].str;
+			}
+			return fail ? entity_functions_def[i].str + 6 : entity_functions_def[i].str;
 		}
-	return "WARNING: Unknown Function (" + num2s(function) + "), is v4l2-compliance out-of-date?";
+	}
+	if (is_invalid)
+		return "WARNING: Unknown Function (" + num2s(function) + "), is v4l2-compliance out-of-date?";
+	return "Unknown Function (" + num2s(function) + ")";
 }
 
 static const flag_def pad_flags_def[] = {
