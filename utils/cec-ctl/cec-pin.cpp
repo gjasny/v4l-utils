@@ -250,9 +250,16 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 
 static void cec_pin_rx_data_bit_was_low(__u64 ev_ts, __u64 usecs, __u64 usecs_min, bool show)
 {
+	/*
+	 * If the low drive starts at the end of a 0 bit, then the actual
+	 * maximum time that the bus can be low is the two summed.
+	 */
+	const unsigned max_low_drive = CEC_TIM_LOW_DRIVE_ERROR_MAX +
+		CEC_TIM_DATA_BIT_0_LOW_MAX + CEC_TIM_MARGIN;
+
 	low_usecs = usecs;
 	if (usecs >= CEC_TIM_LOW_DRIVE_ERROR_MIN - CEC_TIM_MARGIN) {
-		if (usecs_min >= CEC_TIM_LOW_DRIVE_ERROR_MAX && show)
+		if (usecs >= max_low_drive && show)
 			printf("%10.06f: warn: low drive too long (%.2f > %.2f ms)\n\n",
 			       ts, usecs / 1000.0,
 			       CEC_TIM_LOW_DRIVE_ERROR_MAX / 1000.0);
