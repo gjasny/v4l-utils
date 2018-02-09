@@ -297,8 +297,10 @@ int testMediaEnum(struct node *node)
 			printf("\t\tEntity Links: 0x%08x (Name: '%s')\n",
 			       ent.id, ent.name);
 		memset(&links, 0, sizeof(links));
+		memset(&links.reserved, 0xff, sizeof(links.reserved));
 		links.entity = ent.id;
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links));
+		fail_on_test(check_0(links.reserved, sizeof(links.reserved)));
 		fail_on_test(links.entity != ent.id);
 		fail_on_test(links.pads);
 		fail_on_test(links.links);
@@ -312,7 +314,9 @@ int testMediaEnum(struct node *node)
 		memset(links.pads, 0xff, ent.pads * sizeof(*links.pads));
 		links.links = new media_link_desc[ent.links];
 		memset(links.links, 0xff, ent.links * sizeof(*links.links));
+		memset(&links.reserved, 0xff, sizeof(links.reserved));
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links));
+		fail_on_test(check_0(links.reserved, sizeof(links.reserved)));
 
 		bool found_source = false;
 		for (unsigned i = 0; i < ent.pads; i++) {
