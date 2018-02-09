@@ -168,7 +168,7 @@ const char *fe_rolloff_name[5] = {
 	[4] = NULL,
 };
 
-const char *dvb_v5_name[71] = {
+const char *dvb_v5_name[72] = {
 	[DTV_API_VERSION] =                    "API_VERSION",
 	[DTV_ATSCMH_FIC_VER] =                 "ATSCMH_FIC_VER",
 	[DTV_ATSCMH_NOG] =                     "ATSCMH_NOG",
@@ -224,6 +224,7 @@ const char *dvb_v5_name[71] = {
 	[DTV_MODULATION] =                     "MODULATION",
 	[DTV_PILOT] =                          "PILOT",
 	[DTV_ROLLOFF] =                        "ROLLOFF",
+	[DTV_SCRAMBLING_SEQUENCE_INDEX] =      "SCRAMBLING_SEQUENCE_INDEX",
 	[DTV_STAT_CNR] =                       "STAT_CNR",
 	[DTV_STAT_ERROR_BLOCK_COUNT] =         "STAT_ERROR_BLOCK_COUNT",
 	[DTV_STAT_POST_ERROR_BIT_COUNT] =      "STAT_POST_ERROR_BIT_COUNT",
@@ -239,7 +240,7 @@ const char *dvb_v5_name[71] = {
 	[DTV_TUNE] =                           "TUNE",
 	[DTV_UNDEFINED] =                      "UNDEFINED",
 	[DTV_VOLTAGE] =                        "VOLTAGE",
-	[70] = NULL,
+	[71] = NULL,
 };
 
 const char *delivery_system_name[20] = {

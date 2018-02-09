@@ -25,6 +25,6 @@ const char *fe_tone_name[3];
 const char *fe_inversion_name[4];
 const char *fe_pilot_name[4];
 const char *fe_rolloff_name[5];
-const char *dvb_v5_name[71];
+const char *dvb_v5_name[72];
 const char *delivery_system_name[20];
 #endif

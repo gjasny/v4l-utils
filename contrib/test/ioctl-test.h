@@ -15,7 +15,10 @@ union v4l_parms {
 	enum v4l2_priority prio;
 
 	/* ioctl structs */
+	struct dmx_buffer			p_dmx_buffer;
+	struct dmx_exportbuffer			p_dmx_exportbuffer;
 	struct dmx_pes_filter_params		p_dmx_pes_filter_params;
+	struct dmx_requestbuffers		p_dmx_requestbuffers;
 	struct dmx_sct_filter_params		p_dmx_sct_filter_params;
 	struct dmx_stc				p_dmx_stc;
 	struct dtv_properties			p_dtv_properties;
@@ -86,9 +89,14 @@ static const struct {
 } ioctls[] = {
 	/* ioctl structs */
 	ioc(demux, DMX_ADD_PID),							/*  __u16 */
+	ioc(demux, DMX_DQBUF),								/*  struct dmx_buffer */
+	ioc(demux, DMX_EXPBUF),								/*  struct dmx_exportbuffer */
 	ioc(demux, DMX_GET_PES_PIDS),							/*  __u16[5] */
 	ioc(demux, DMX_GET_STC),							/*  struct dmx_stc */
+	ioc(demux, DMX_QBUF),								/*  struct dmx_buffer */
+	ioc(demux, DMX_QUERYBUF),							/*  struct dmx_buffer */
 	ioc(demux, DMX_REMOVE_PID),							/*  __u16 */
+	ioc(demux, DMX_REQBUFS),							/*  struct dmx_requestbuffers */
 	ioc(demux, DMX_SET_BUFFER_SIZE),						/*  void */
 	ioc(demux, DMX_SET_FILTER),							/*  struct dmx_sct_filter_params */
 	ioc(demux, DMX_SET_PES_FILTER),							/*  struct dmx_pes_filter_params */
