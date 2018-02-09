@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include "v4l2-tpg.h"
+#include "v4l2-tpg-colors.h"
 
 /* Must remain in sync with enum tpg_pattern */
 const char * const tpg_pattern_strings[] = {
