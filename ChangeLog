@@ -1,3 +1,11 @@
+v4l-utils-1.14.2
+----------------
+
+Sean Young (2):
+      keytable: abi no longer set LIRC_CAN_REC_SCANCODE for raw devices
+      ir-ctl: abi no longer set LIRC_CAN_SEND_SCANCODE for raw devices
+
+
 v4l-utils-1.14.1
 ----------------
 
