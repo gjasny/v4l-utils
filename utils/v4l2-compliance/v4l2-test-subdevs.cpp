@@ -302,13 +302,17 @@ static int checkMBusFrameFmt(struct node *node, struct v4l2_mbus_framefmt &fmt)
 	fail_on_test(fmt.height == 0 || fmt.height == ~0U);
 	fail_on_test(fmt.code == 0 || fmt.code == ~0U);
 	fail_on_test(fmt.field == ~0U);
-	fail_on_test(fmt.colorspace == ~0U);
-	//TBD fail_on_test(!fmt.colorspace);
-	fail_on_test(fmt.ycbcr_enc == 0xffff);
-	fail_on_test(fmt.quantization == 0xffff);
-	fail_on_test(fmt.xfer_func == 0xffff);
-	fail_on_test(!fmt.colorspace &&
-		     (fmt.ycbcr_enc || fmt.quantization || fmt.xfer_func));
+	if (!node->is_passthrough_subdev) {
+		// Passthrough subdevs just copy this info, they don't validate
+		// it. TODO: this does not take colorspace converters into account!
+		fail_on_test(fmt.colorspace == ~0U);
+		//TBD fail_on_test(!fmt.colorspace);
+		fail_on_test(fmt.ycbcr_enc == 0xffff);
+		fail_on_test(fmt.quantization == 0xffff);
+		fail_on_test(fmt.xfer_func == 0xffff);
+		fail_on_test(!fmt.colorspace &&
+			     (fmt.ycbcr_enc || fmt.quantization || fmt.xfer_func));
+	}
 	return 0;
 }
 

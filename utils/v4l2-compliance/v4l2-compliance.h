@@ -100,6 +100,7 @@ struct base_node {
 	media_link_desc *links;
 	media_v2_topology *topology;
 	v4l2_subdev_frame_interval_enum subdev_ival;
+	bool is_passthrough_subdev;
 	__u8 has_subdev_enum_code;
 	__u8 has_subdev_enum_fsize;
 	__u8 has_subdev_enum_fival;

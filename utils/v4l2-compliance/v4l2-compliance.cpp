@@ -852,8 +852,19 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	/* Sub-device ioctls */
 
 	if (node.is_subdev()) {
+		bool has_source = false;
+		bool has_sink = false;
+
 		node.frame_interval_pad = -1;
 		node.enum_frame_interval_pad = -1;
+		for (unsigned pad = 0; pad < node.entity.pads; pad++) {
+			if (node.pads[pad].flags & MEDIA_PAD_FL_SINK)
+				has_sink = true;
+			if (node.pads[pad].flags & MEDIA_PAD_FL_SOURCE)
+				has_source = true;
+		}
+		node.is_passthrough_subdev = has_source && has_sink;
+
 		for (unsigned pad = 0; pad < node.entity.pads; pad++) {
 			printf("Sub-Device ioctls (%s Pad %u):\n",
 			       (node.pads[pad].flags & MEDIA_PAD_FL_SINK) ?
