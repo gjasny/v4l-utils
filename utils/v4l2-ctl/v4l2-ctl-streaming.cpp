@@ -91,7 +91,7 @@ public:
 
 	void determine_field(int fd, unsigned type);
 	bool add_ts(double ts_secs, unsigned sequence, unsigned field);
-	bool has_fps();
+	bool has_fps(bool continuous);
 	double fps();
 	unsigned dropped();
 };
@@ -183,11 +183,11 @@ bool fps_timestamps::add_ts(double ts_secs, unsigned sequence, unsigned field)
 	return true;
 }
 
-bool fps_timestamps::has_fps()
+bool fps_timestamps::has_fps(bool continuous = false)
 {
 	unsigned prev_idx = (idx + TS_WINDOW - 1) % TS_WINDOW;
 
-	if (ts[prev_idx] - first < 1.0)
+	if (!continuous && ts[prev_idx] - first < 1.0)
 		return false;
 	return full || idx > 4;
 }
@@ -414,6 +414,63 @@ static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 		}
 	}
 			
+	fprintf(f, "\n");
+}
+
+static void print_concise_buffer(FILE *f, struct v4l2_buffer &buf,
+				 fps_timestamps &fps_ts, int rle_perc)
+{
+	static double last_ts;
+
+	fprintf(f, "idx: %*u seq: %6u bytesused: ",
+		reqbufs_count_cap > 10 ? 2 : 1, buf.index, buf.sequence);
+	if (buf.type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
+	    buf.type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		bool have_data_offset = false;
+
+		for (unsigned i = 0; i < buf.length; i++) {
+			struct v4l2_plane *p = buf.m.planes + i;
+
+			fprintf(f, "%s%u", i ? "/" : "", p->bytesused);
+			if (p->data_offset)
+				have_data_offset = true;
+		}
+		if (have_data_offset) {
+			fprintf(f, " offset: ");
+			for (unsigned i = 0; i < buf.length; i++) {
+				struct v4l2_plane *p = buf.m.planes + i;
+
+				fprintf(f, "%s%u", i ? "/" : "", p->data_offset);
+			}
+		}
+	} else {
+		fprintf(f, "%u", buf.bytesused);
+	}
+	if (rle_perc >= 0)
+		fprintf(f, " compression: %d%%", rle_perc);
+
+	double ts = buf.timestamp.tv_sec + buf.timestamp.tv_usec / 1000000.0;
+	fprintf(f, " ts: %.06f", ts);
+	if (last_ts)
+		fprintf(f, " delta: %.03f ms", (ts - last_ts) * 1000.0);
+	last_ts = ts;
+
+	if (fps_ts.has_fps(true))
+		fprintf(stderr, " fps: %.02f", fps_ts.fps());
+
+	unsigned dropped = fps_ts.dropped();
+
+	if (dropped)
+		fprintf(stderr, "dropped: %u", dropped);
+
+	__u32 fl = buf.flags & (V4L2_BUF_FLAG_ERROR |
+				V4L2_BUF_FLAG_KEYFRAME |
+				V4L2_BUF_FLAG_PFRAME |
+				V4L2_BUF_FLAG_BFRAME |
+				V4L2_BUF_FLAG_LAST |
+				V4L2_BUF_FLAG_TIMECODE);
+	if (fl)
+		fprintf(f, " (%s)", bufferflags2s(fl).c_str());
 	fprintf(f, "\n");
 }
 
@@ -1095,7 +1152,7 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 		if (!(buf.flags & V4L2_BUF_FLAG_ERROR))
 			break;
 		if (verbose)
-			print_buffer(stderr, buf);
+			print_concise_buffer(stderr, buf, fps_ts, -1);
 		test_ioctl(fd, VIDIOC_QBUF, &buf);
 	}
 	
@@ -1158,8 +1215,11 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 		ch = 'P';
 	else if (buf.flags & V4L2_BUF_FLAG_BFRAME)
 		ch = 'B';
-	if (verbose)
-		print_buffer(stderr, buf);
+	if (verbose) {
+		print_concise_buffer(stderr, buf, fps_ts,
+				     host_fd_cap >= 0 ? 100 - rle_perc / rle_perc_count : -1);
+		rle_perc_count = rle_perc = 0;
+	}
 	if (index == NULL && test_ioctl(fd, VIDIOC_QBUF, &buf))
 		return -1;
 	if (index)
@@ -1168,18 +1228,18 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 	if (!verbose) {
 		fprintf(stderr, "%c", ch);
 		fflush(stderr);
-	}
 
-	if (fps_ts.has_fps()) {
-		unsigned dropped = fps_ts.dropped();
+		if (fps_ts.has_fps()) {
+			unsigned dropped = fps_ts.dropped();
 
-		fprintf(stderr, " %.02f fps", fps_ts.fps());
-		if (dropped)
-			fprintf(stderr, ", dropped buffers: %u", dropped);
-		if (host_fd_cap >= 0)
-			fprintf(stderr, " %d%% compression", 100 - rle_perc / rle_perc_count);
-		rle_perc_count = rle_perc = 0;
-		fprintf(stderr, "\n");
+			fprintf(stderr, " %.02f fps", fps_ts.fps());
+			if (dropped)
+				fprintf(stderr, ", dropped buffers: %u", dropped);
+			if (host_fd_cap >= 0)
+				fprintf(stderr, " %d%% compression", 100 - rle_perc / rle_perc_count);
+			rle_perc_count = rle_perc = 0;
+			fprintf(stderr, "\n");
+		}
 	}
 	count++;
 
