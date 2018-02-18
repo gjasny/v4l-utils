@@ -504,6 +504,7 @@ struct parse_event key_events[] = {
 	{"BTN_DPAD_LEFT", 0x222},
 	{"BTN_DPAD_RIGHT", 0x223},
 	{"KEY_ALS_TOGGLE", 0x230},
+	{"KEY_ROTATE_LOCK_TOGGLE", 0x231},
 	{"KEY_BUTTONCONFIG", 0x240},
 	{"KEY_TASKMANAGER", 0x241},
 	{"KEY_JOURNAL", 0x242},
