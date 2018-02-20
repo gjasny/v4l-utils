@@ -275,7 +275,17 @@ int testSubDevFrameInterval(struct node *node, unsigned pad)
 	ival = fival.interval;
 	memset(fival.reserved, 0xff, sizeof(fival.reserved));
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival));
+	fail_on_test(fival.pad != pad);
+	fail_on_test(ival.numerator != fival.interval.numerator);
+	fail_on_test(ival.denominator != fival.interval.denominator);
 	fail_on_test(check_0(fival.reserved, sizeof(fival.reserved)));
+	memset(&fival, 0, sizeof(fival));
+	fival.pad = pad;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &fival));
+	fail_on_test(fival.pad != pad);
+	fail_on_test(ival.numerator != fival.interval.numerator);
+	fail_on_test(ival.denominator != fival.interval.denominator);
+
 	fival.pad = node->entity.pads;
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &fival) != EINVAL);
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival) != EINVAL);
@@ -476,11 +486,11 @@ int testSubDevSelection(struct node *node, unsigned which, unsigned pad)
 		if (ret)
 			continue;
 		fail_on_test(check_0(s_sel.reserved, sizeof(s_sel.reserved)));
-		fail_on_test(s_sel.flags == sel.flags);
-		fail_on_test(s_sel.r.top == sel.r.top);
-		fail_on_test(s_sel.r.left == sel.r.left);
-		fail_on_test(s_sel.r.width == sel.r.width);
-		fail_on_test(s_sel.r.height == sel.r.height);
+		fail_on_test(s_sel.flags != sel.flags);
+		fail_on_test(s_sel.r.top != sel.r.top);
+		fail_on_test(s_sel.r.left != sel.r.left);
+		fail_on_test(s_sel.r.width != sel.r.width);
+		fail_on_test(s_sel.r.height != sel.r.height);
 	}
 
 	fail_on_test(!have_sel);
