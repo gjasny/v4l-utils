@@ -1230,14 +1230,10 @@ int testParm(struct node *node)
 			return ret;
 		if (!ret) {
 			supported = true;
-			if (type != V4L2_BUF_TYPE_VIDEO_CAPTURE &&
-			    type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
-			    type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
-			    type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-				return fail("G/S_PARM is only allowed for video capture/output\n");
-			if (!(node->g_caps() & buftype2cap[type]))
-				return fail("%s cap not set, but G/S_PARM worked\n",
-						buftype2s(type).c_str());
+			if (V4L2_TYPE_IS_OUTPUT(type) && !node->has_vid_out())
+				return fail("video output caps not set, but G/S_PARM worked\n");
+			else if (!node->has_vid_cap())
+				return fail("video capture caps not set, but G/S_PARM worked\n");
 		}
 	}
 
