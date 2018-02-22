@@ -53,6 +53,22 @@ export PKG_CONFIG_LIBDIR=/path/to/cross/root/lib
 ./configure --host=arm-linux-gnueabihf --without-jpeg
 make
 
+Building static binaries:
+-------------------------
+
+Fully static binares can be built by setting LDFLAGS for the configure and
+using an option for disabling shared libraries:
+
+	$ LDFLAGS="--static -static" ./configure --disable-shared
+
+Note that this requires static variants of all the libraries needed for
+linking which may not be available in all systems.
+
+In order to build binaries that are not dependent on libraries contained
+in v4l-utils, simply use the --disable-shared option:
+
+	$ ./configure --disable-shared
+
 Android Cross Compiling and Installing:
 ----------------
 
