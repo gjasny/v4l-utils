@@ -575,14 +575,22 @@ static int checkEdid(struct node *node, unsigned pad, bool is_input)
 	edid.pad = ~0;
 	ret = doioctl(node, VIDIOC_S_EDID, &edid);
 	fail_on_test(ret != EINVAL);
-	if (blocks == 256)
-		return 0;
-	edid.blocks = 256;
+	if (blocks < 256) {
+		edid.blocks = 256;
+		edid.pad = pad;
+		ret = doioctl(node, VIDIOC_S_EDID, &edid);
+		fail_on_test(ret != E2BIG);
+		fail_on_test(edid.blocks == 0 || edid.blocks >= 256);
+		fail_on_test(edid.pad != pad);
+	}
+	edid.blocks = blocks;
 	edid.pad = pad;
+	edid.edid = NULL;
 	ret = doioctl(node, VIDIOC_S_EDID, &edid);
-	fail_on_test(ret != E2BIG);
-	fail_on_test(edid.blocks == 0 || edid.blocks >= 256);
-	fail_on_test(edid.pad != pad);
+	fail_on_test(ret != EFAULT);
+	edid.edid = (__u8 *)0xdeadbeef;
+	ret = doioctl(node, VIDIOC_S_EDID, &edid);
+	fail_on_test(ret != EFAULT);
 	return 0;
 }
 
