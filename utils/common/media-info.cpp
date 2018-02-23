@@ -242,6 +242,7 @@ static const flag_def entity_functions_def[] = {
 	{ MEDIA_ENT_F_FLASH, "Flash Controller" },
 	{ MEDIA_ENT_F_LENS, "Lens Controller" },
 	{ MEDIA_ENT_F_ATV_DECODER, "Analog Video Decoder" },
+	{ MEDIA_ENT_F_DTV_DECODER, "Digital Video Decoder" },
 	{ MEDIA_ENT_F_TUNER, "Tuner" },
 	{ MEDIA_ENT_F_IF_VID_DECODER, "IF-PLL Video Decoder" },
 	{ MEDIA_ENT_F_IF_AUD_DECODER, "IF-PLL Audio Decoder" },
