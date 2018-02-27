@@ -198,7 +198,6 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 		eom = bit;
 	} else {
 		std::string s;
-		bool ack = !(bcast ^ bit);
 
 		if (byte_cnt == 0) {
 			bcast = (byte & 0xf) == 0xf;
@@ -209,6 +208,9 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 		} else if (cdc && byte_cnt == 4) {
 			s = find_cdc_opcode_name(byte);
 		}
+
+		bool ack = !(bcast ^ bit);
+
 		if (show)
 			printf("%s: rx 0x%02x%s%s%s%s%s\n", ts2s(ts).c_str(), byte,
 			       eom ? " EOM" : "", ack ? " ACK" : " NACK",
