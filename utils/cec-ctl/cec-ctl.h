@@ -11,6 +11,7 @@
 // cec-ctl.cpp
 extern bool show_info;
 std::string ts2s(__u64 ts);
+std::string ts2s(double ts);
 
 // cec-pin.cpp
 extern __u64 eob_ts;

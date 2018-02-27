@@ -978,6 +978,17 @@ std::string ts2s(__u64 ts)
 	return s + "." + buf;
 }
 
+std::string ts2s(double ts)
+{
+	if (!options[OptWallClock]) {
+		char buf[64];
+
+		sprintf(buf, "%10.06f", ts);
+		return buf;
+	}
+	return ts2s((__u64)(ts * 1000000000.0));
+}
+
 int cec_named_ioctl(int fd, const char *name,
 		    unsigned long int request, void *parm)
 {
