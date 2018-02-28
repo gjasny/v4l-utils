@@ -45,7 +45,7 @@ should be restarted if it is running, to initialize the emulated device with a
 clean and known initial state.
 .SH OPTIONS
 .TP
-\fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
+\fB\-d\fR, \fB\-\-device\fR \fI<dev>\fR
 Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is used.
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR

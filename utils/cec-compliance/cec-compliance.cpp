@@ -160,13 +160,13 @@ static struct option long_options[] = {
 static void usage(void)
 {
 	printf("Usage:\n"
-	       "  -d, --device=<dev>   Use device <dev> instead of /dev/cec0\n"
+	       "  -d, --device <dev>   Use device <dev> instead of /dev/cec0\n"
 	       "                       If <dev> starts with a digit, then /dev/cec<dev> is used.\n"
-	       "  -r, --remote[=<la>]  As initiator test the remote logical address or all LAs if no LA was given\n"
-	       "  -R, --reply-threshold=<timeout>\n"
+	       "  -r, --remote [<la>]  As initiator test the remote logical address or all LAs if no LA was given\n"
+	       "  -R, --reply-threshold <timeout>\n"
 	       "                       Warn if replies take longer than this threshold (default 1000ms)\n"
 	       "  -i, --interactive    Interactive mode when doing remote tests\n"
-	       "  -t, --timeout=<secs> Set the standby/resume timeout to <secs>. Default is 60s.\n"
+	       "  -t, --timeout <secs> Set the standby/resume timeout to <secs>. Default is 60s.\n"
 	       "\n"
 	       "  -A, --test-adapter                  Test the CEC adapter API\n"
 	       "  --test-core                         Test the core functionality\n"

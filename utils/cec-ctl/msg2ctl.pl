@@ -174,7 +174,7 @@ sub process_func
 		$long_opts .= "\t{ \"$msg_dash_name\", required_argument, 0, Opt$opt }, \\\n";
 		$usage .= "\t\"  --$msg_dash_name";
 		my $prefix = "\t\"    " . sprintf("%-30s", " ");
-		my $sep = "=";
+		my $sep = " ";
 		foreach (@args) {
 			($type, $name) = /(.*?) ?([a-zA-Z_]\w+)$/;
 			$name =~ s/_/-/g;

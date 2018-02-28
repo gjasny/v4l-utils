@@ -10,7 +10,7 @@ any aspect of such devices covering the full CEC API.
 
 .SH OPTIONS
 .TP
-\fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
+\fB\-d\fR, \fB\-\-device\fR \fI<dev>\fR
 Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is used.
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR
@@ -19,15 +19,15 @@ Turn on verbose reporting.
 \fB\-h\fR, \fB\-\-help\fR
 Prints the help message.
 .TP
-\fB\-p\fR, \fB\-\-phys\-addr\fR=\fI<addr>\fR
+\fB\-p\fR, \fB\-\-phys\-addr\fR \fI<addr>\fR
 Use this physical address. The address can be a number (e.g. 0 or 0x11b1)
 or formatted as a.b.c.d where each component is a hex value from 0-f
 (e.g. 0.0.0.0 or 1.1.b.1).
 .TP
-\fB\-o\fR, \fB\-\-osd\-name\fR=\fI<name>\fR
+\fB\-o\fR, \fB\-\-osd\-name\fR \fI<name>\fR
 Use this OSD name. The maximum length is 14 characters.
 .TP
-\fB\-V\fR, \fB\-\-vendor\-id\fR=\fI<id>\fR
+\fB\-V\fR, \fB\-\-vendor\-id\fR \fI<id>\fR
 Use this vendor ID. The vendor ID is a number from 0x0 to 0xffffff.
 .TP
 \fB\-l\fR, \fB\-\-logical\-address\fR
@@ -46,10 +46,10 @@ By default when sending a CEC message that expects a reply this utility will
 wait for that reply. With this option it will just send it without waiting
 for the reply.
 .TP
-\fB\-t\fR, \fB\-\-to\fR=\fI<la>\fR
+\fB\-t\fR, \fB\-\-to\fR \fI<la>\fR
 Send the message to the given logical address (0-15).
 .TP
-\fB\-f\fR, \fB\-\-from\fR=\fI<la>\fR
+\fB\-f\fR, \fB\-\-from\fR \fI<la>\fR
 Send message from the given logical address. It is only necessary to use this
 option if multiple logical addresses are claimed. By default the first assigned
 logical address will be used.
@@ -91,7 +91,7 @@ go to the follower that initiated the CEC message. But if you have other
 followers running as well, then by giving this option they will also receive
 the reply.
 .TP
-\fB\-\-timeout\fR=\fI<ms>\fR
+\fB\-\-timeout\fR \fI<ms>\fR
 Set the reply timeout in milliseconds (default is 1000 ms).
 .TP
 \fB\-\-list\-ui\-commands\fR
@@ -186,20 +186,20 @@ possible if the device has the CEC_CAP_MONITOR_PIN capability. This option requi
 When in pin monitoring mode all 0->1 and 1->0 CEC pin transitions are monitored and
 analysed. This is effectively a cheap CEC bus analyzer.
 .TP
-\fB\-\-monitor\-time\fR=\fI<secs>\fR
+\fB\-\-monitor\-time\fR \fI<secs>\fR
 Monitor for the given number of seconds, then exit. The default (0) is to monitor
 forever.
 .TP
-\fB\-\-ignore\fR=\fI<la>\fR,\fI<opcode>\fR
+\fB\-\-ignore\fR \fI<la>\fR,\fI<opcode>\fR
 Ignore messages from logical address <la> and opcode <opcode> when monitoring.
 "all" can be used for <la> or <opcode> to match all logical addresses or opcodes.
 To ignore poll messages use "poll" as <opcode>.
 .TP
-\fB\-\-store\-pin\fR=\fI<to>\fR
+\fB\-\-store\-pin\fR \fI<to>\fR
 Store the CEC pin events to the given file. This can be read and analyzed later
 via the \fB\-\-analyze\-pin\fR option. Use \- to write to stdout instead of to a file.
 .TP
-\fB\-\-analyze\-pin\fR=\fI<from>\fR
+\fB\-\-analyze\-pin\fR \fI<from>\fR
 Read and analyze the CEC pin events from the given file. Use \- to read from stdin
 instead of from a file.
 .TP

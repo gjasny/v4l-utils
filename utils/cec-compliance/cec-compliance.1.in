@@ -71,7 +71,7 @@ Some tests depend on other tests being successful. These are not run if the
 tests they depend on failed, and they will not be shown in the test listing.
 .SH OPTIONS
 .TP
-\fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
+\fB\-d\fR, \fB\-\-device\fR \fI<dev>\fR
 Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is used.
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR
@@ -89,16 +89,16 @@ Show timestamps as wall-clock time.
 \fB\-n\fR, \fB\-\-no\-warnings\fR
 Turn off warning messages.
 .TP
-\fB\-r\fR, \fB\-\-remote\fR=\fI<la>\fR
+\fB\-r\fR, \fB\-\-remote\fR \fI<la>\fR
 As initiator test the remote logical address <la> or all LAs if no LA was given.
 .TP
 \fB\-i\fR, \fB\-\-interactive\fR
 Interactive mode when doing remote tests.
 .TP
-\fB\-R\fR, \fB\-\-reply\-threshold\fR=\fI<timeout>\fR
+\fB\-R\fR, \fB\-\-reply\-threshold\fR \fI<timeout>\fR
 Warn if replies take longer than this threshold (default 1000ms).
 .TP
-\fB\-t\fR, \fB\-\-timeout\fR=\fI<secs>\fR
+\fB\-t\fR, \fB\-\-timeout\fR \fI<secs>\fR
 Set the standby/resume timeout to the given number of seconds. Default is 60s.
 .TP
 \fB\-A\fR, \fB\-\-test\-adapter\fR

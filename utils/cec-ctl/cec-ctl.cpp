@@ -496,13 +496,13 @@ static void log_htng_unknown_msg(const struct cec_msg *msg);
 static void log_unknown_msg(const struct cec_msg *msg);
 
 #define VENDOR_EXTRA \
-	"  --vendor-command=payload=<byte>[:<byte>]*\n" \
+	"  --vendor-command payload=<byte>[:<byte>]*\n" \
 	"                                  Send VENDOR_COMMAND message (" xstr(CEC_MSG_VENDOR_COMMAND) ")\n" \
-	"  --vendor-command-with-id=vendor-id=<val>,cmd=<byte>[:<byte>]*\n" \
+	"  --vendor-command-with-id vendor-id=<val>,cmd=<byte>[:<byte>]*\n" \
 	"                                  Send VENDOR_COMMAND_WITH_ID message (" xstr(CEC_MSG_VENDOR_COMMAND_WITH_ID) ")\n" \
-	"  --vendor-remote-button-down=rc-code=<byte>[:<byte>]*\n" \
+	"  --vendor-remote-button-down rc-code=<byte>[:<byte>]*\n" \
 	"                                  Send VENDOR_REMOTE_BUTTON_DOWN message (" xstr(CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN) ")\n" \
-	"  --custom-command=cmd=<byte>,payload=<byte>[:<byte>]*\n" \
+	"  --custom-command cmd=<byte>,payload=<byte>[:<byte>]*\n" \
 	"                                  Send custom message\n"
 
 #include "cec-ctl-gen.h"
@@ -797,17 +797,17 @@ static struct option long_options[] = {
 static void usage(void)
 {
 	printf("Usage:\n"
-	       "  -d, --device=<dev>       Use device <dev> instead of /dev/cec0\n"
+	       "  -d, --device <dev>       Use device <dev> instead of /dev/cec0\n"
 	       "                           If <dev> starts with a digit, then /dev/cec<dev> is used.\n"
-	       "  -p, --phys-addr=<addr>   Use this physical address\n"
-	       "  -o, --osd-name=<name>    Use this OSD name\n"
-	       "  -V, --vendor-id=<id>     Use this vendor ID\n"
+	       "  -p, --phys-addr <addr>   Use this physical address\n"
+	       "  -o, --osd-name <name>    Use this OSD name\n"
+	       "  -V, --vendor-id <id>     Use this vendor ID\n"
 	       "  -l, --logical-address    Show first configured logical address\n"
 	       "  -L, --logical-addresses  Show all configured logical addresses\n"
 	       "  -C, --clear              Clear all logical addresses\n"
 	       "  -n, --no-reply           Don't wait for a reply\n"
-	       "  -t, --to=<la>            Send message to the given logical address\n"
-	       "  -f, --from=<la>          Send message from the given logical address\n"
+	       "  -t, --to <la>            Send message to the given logical address\n"
+	       "  -f, --from <la>          Send message from the given logical address\n"
 	       "                           By default use the first assigned logical address\n"
 	       "  -r, --show-raw           Show the raw CEC message (hex values)\n"
 	       "  -s, --skip-info          Skip Driver Info output\n"
@@ -823,7 +823,7 @@ static void usage(void)
 	       "  --allow-unreg-fallback   Allow fallback to Unregistered\n"
 	       "  --no-rc-passthrough      Disable the RC passthrough\n"
 	       "  --reply-to-followers     The reply will be sent to followers as well\n"
-	       "  --timeout=<ms>           Set the reply timeout in milliseconds (default is 1000 ms)\n"
+	       "  --timeout <ms>           Set the reply timeout in milliseconds (default is 1000 ms)\n"
 	       "  --list-ui-commands       List all UI commands that can be used with --user-control-pressed\n"
 	       "  --list-devices           List all cec devices\n"
 	       "\n"
@@ -858,14 +858,14 @@ static void usage(void)
 	       "  -m, --monitor            Monitor CEC traffic\n"
 	       "  -M, --monitor-all        Monitor all CEC traffic\n"
 	       "  --monitor-pin            Monitor low-level CEC pin\n"
-	       "  --monitor-time=<secs>    Monitor for <secs> seconds (default is forever)\n"
-	       "  --ignore=<la>,<opcode>   Ignore messages from logical address <la> and opcode\n"
+	       "  --monitor-time <secs>    Monitor for <secs> seconds (default is forever)\n"
+	       "  --ignore <la>,<opcode>   Ignore messages from logical address <la> and opcode\n"
 	       "                           <opcode> when monitoring. 'all' can be used for <la>\n"
 	       "                           or <opcode> to match all logical addresses or opcodes.\n"
 	       "                           To ignore poll messages use 'poll' as <opcode>.\n"
-	       "  --store-pin=<to>         Store the low-level CEC pin changes to the file <to>.\n"
+	       "  --store-pin <to>         Store the low-level CEC pin changes to the file <to>.\n"
 	       "                           Use - for stdout.\n"
-	       "  --analyze-pin=<from>     Analyze the low-level CEC pin changes from the file <from>.\n"
+	       "  --analyze-pin <from>     Analyze the low-level CEC pin changes from the file <from>.\n"
 	       "                           Use - for stdin.\n"
 	       "\n"
 	       CEC_USAGE

@@ -68,7 +68,7 @@ static struct option long_options[] = {
 static void usage(void)
 {
 	printf("Usage:\n"
-	       "  -d, --device=<dev>  Use device <dev> instead of /dev/cec0\n"
+	       "  -d, --device <dev>  Use device <dev> instead of /dev/cec0\n"
 	       "                      If <dev> starts with a digit, then /dev/cec<dev> is used.\n"
 	       "  -h, --help          Display this help message\n"
 	       "  -n, --no-warnings   Turn off warning messages\n"
