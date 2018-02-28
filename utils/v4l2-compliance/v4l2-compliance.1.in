@@ -53,38 +53,38 @@ If your driver passes all tests, then your can be confident that your driver is 
 very good shape!
 .SH OPTIONS
 .TP
-\fB\-d\fR, \fB\-\-device\fR=\fI<dev>\fR
+\fB\-d\fR, \fB\-\-device\fR \fI<dev>\fR
 Use device <dev> as the video device. If <dev> is a number, then /dev/video<dev> is used.
 .TP
-\fB\-V\fR, \fB\-\-vbi\-device\fR=\fI<dev>\fR
+\fB\-V\fR, \fB\-\-vbi\-device\fR \fI<dev>\fR
 Use device <dev> as the vbi device. If <dev> is a number, then /dev/vbi<dev> is used.
 .TP
-\fB\-r\fR, \fB\-\-radio\-device\fR=\fI<dev>\fR
+\fB\-r\fR, \fB\-\-radio\-device\fR \fI<dev>\fR
 Use device <dev> as the radio device. If <dev> is a number, then /dev/radio<dev> is used.
 .TP
-\fB\-S\fR, \fB\-\-sdr\-device\fR=\fI<dev>\fR
+\fB\-S\fR, \fB\-\-sdr\-device\fR \fI<dev>\fR
 Use device <dev> as the SDR device. If <dev> is a number, then /dev/swradio<dev> is used.
 .TP
-\fB\-t\fR, \fB\-\-touch\-device\fR=\fI<dev>\fR
+\fB\-t\fR, \fB\-\-touch\-device\fR \fI<dev>\fR
 Use device <dev> as the touch device. If <dev> is a number, then /dev/v4l-touch<dev> is used.
 .TP
-\fB\-u\fR, \fB\-\-subdev\-device\fR=\fI<dev>\fR
+\fB\-u\fR, \fB\-\-subdev\-device\fR \fI<dev>\fR
 Use device <dev> as the v4l-subdevX device. If <dev> is a number, then /dev/v4l-subdev<dev> is used.
 .TP
-\fB\-m\fR, \fB\-\-media\-device\fR=\fI<dev>\fR
+\fB\-m\fR, \fB\-\-media\-device\fR \fI<dev>\fR
 Use device <dev> as the media controller device. Besides this device it also tests
 all interfaces it finds.  If <dev> starts with a digit, then /dev/media<dev> is used.
 .TP
-\fB\-M\fR, \fB\-\-media\-device\-only\fR=\fI<dev>\fR
+\fB\-M\fR, \fB\-\-media\-device\-only\fR \fI<dev>\fR
 Use device <dev> as the media controller device. Only test this device, don't walk
 over all the interfaces.  If <dev> starts with a digit, then /dev/media<dev> is used.
 .TP
-\fB\-e\fR, \fB\-\-exp\-buf\-device\fR=\fI<dev>\fR
+\fB\-e\fR, \fB\-\-exp\-buf\-device\fR \fI<dev>\fR
 Use device <dev> as the video device used to export DMABUFfers for doing DMABUF
 streaming tests. If <dev> is a number, then /dev/video<dev> is used. If this option
 is not specified, then the DMABUF streaming tests will be skipped.
 .TP
-\fB\-s\fR, \fB\-\-streaming\fR=\fI<count>\fR
+\fB\-s\fR, \fB\-\-streaming\fR \fI<count>\fR
 Enable the streaming tests. Set <count> to the number of frames to stream (default 60).
 This requires that before v4l2-compliance is called the device has been configured with
 a valid input (or output) and frequency (when the device has a tuner). For DMABUF testing
@@ -104,7 +104,7 @@ a long time.
 The configuration of the driver at the time v4l2-compliance was called
 will be used for the streaming tests.
 .TP
-\fB\-c\fR, \fB\-\-stream\-all\-color\fR=\fBcolor\fR=\fIred|green|blue\fR,\fBskip\fR=\fI<skip>\fR,\fBperc\fR=\fI<perc>\fR
+\fB\-c\fR, \fB\-\-stream\-all\-color\fR \fBcolor\fR=\fIred|green|blue\fR,\fBskip\fR=\fI<skip>\fR,\fBperc\fR=\fI<perc>\fR
 For all supported, non-compressed formats stream <skip + 1> frames. For the
 last frame go over all pixels and calculate which of the R, G and B color components
 of a pixel has the highest value and count that as a red, green or blue pixel.

@@ -125,7 +125,7 @@ static __u8 toggle_hdr_md_flags;
 void edid_usage(void)
 {
 	printf("\nEDID options:\n"
-	       "  --set-edid=pad=<pad>[,type=<type>|file=<file>][,format=<fmt>][modifiers]\n"
+	       "  --set-edid pad=<pad>[,type=<type>|file=<file>][,format=<fmt>][modifiers]\n"
 	       "                     <pad> is the input or output index for which to set the EDID.\n"
 	       "                     <type> can be 'hdmi', 'hdmi-4k-170mhz', 'hdmi-4k-300mhz', 'hdmi-4k-600mhz',\n"
 	       "                     'dvid' or 'vga'. A predefined EDID suitable for that connector type will be\n"
@@ -207,11 +207,10 @@ void edid_usage(void)
 	       "                     hdr: toggle the Traditional gamma HDR bit.\n"
 	       "                     smpte2084: toggle the SMPTE ST 2084 bit.\n"
 	       "                     hlg: toggle the Hybrid Log-Gamma bit.\n"
-	       "  --clear-edid=<pad>\n"
-	       "                     <pad> is the input or output index for which to clear the EDID.\n"
-	       "  --info-edid=<pad>  print the current EDID's modifiers\n"
+	       "  --clear-edid <pad> clear the EDID for the input or output index <pad>.\n"
+	       "  --info-edid <pad>  print the current EDID's modifiers\n"
 	       "                     <pad> is the input or output index for which to get the EDID.\n"
-	       "  --get-edid=pad=<pad>,startblock=<startblock>,blocks=<blocks>,format=<fmt>,file=<file>\n"
+	       "  --get-edid pad=<pad>,startblock=<startblock>,blocks=<blocks>,format=<fmt>,file=<file>\n"
 	       "                     <pad> is the input or output index for which to get the EDID.\n"
 	       "                     <startblock> is the first block number you want to read. Default 0.\n"
 	       "                     <blocks> is the number of blocks you want to read. Default is\n"
