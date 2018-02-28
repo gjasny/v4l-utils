@@ -219,7 +219,7 @@ std::string opcode2s(const struct cec_msg *msg);
 void sad_encode(const struct short_audio_desc *sad, __u32 *descriptor);
 
 // CEC processing
-void testProcessing(struct node *node);
+void testProcessing(struct node *node, bool wallclock);
 
 // cec-log.c
 void log_msg(const struct cec_msg *msg);

@@ -40,6 +40,7 @@ enum Option {
 	OptVerbose = 'v',
 	OptShowMsgs = 'm',
 	OptShowState = 's',
+	OptWallClock = 'w',
 	OptLast = 128
 };
 
@@ -59,6 +60,7 @@ static struct option long_options[] = {
 	{"verbose", no_argument, 0, OptVerbose},
 	{"show-msgs", no_argument, 0, OptShowMsgs},
 	{"show-state", no_argument, 0, OptShowState},
+	{"wall-clock", no_argument, 0, OptWallClock},
 
 	{0, 0, 0, 0}
 };
@@ -74,6 +76,7 @@ static void usage(void)
 	       "  -v, --verbose       Turn on verbose reporting\n"
 	       "  -m, --show-msgs     Show received messages\n"
 	       "  -s, --show-state    Show state changes from the emulated device\n"
+	       "  -w, --wall-clock    Show timestamps as wall-clock time\n"
 	       );
 }
 
@@ -507,5 +510,5 @@ int main(int argc, char **argv)
 	if (missing_la || missing_pa)
 		exit(-1);
 
-	testProcessing(&node);
+	testProcessing(&node, options[OptWallClock]);
 }

@@ -10,6 +10,7 @@
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
@@ -43,6 +44,9 @@ struct cec_enum_values {
 };
 
 struct la_info la_info[15];
+
+static struct timespec start_monotonic;
+static struct timeval start_timeofday;
 
 static const struct cec_enum_values type_ui_cmd[] = {
 	{ "Select", 0x00 },
@@ -144,7 +148,31 @@ static const char *get_ui_cmd_string(__u8 ui_cmd)
 	return "Unknown";
 }
 
-static void log_event(struct cec_event &ev)
+static std::string ts2s(__u64 ts, bool wallclock)
+{
+	std::string s;
+	struct timeval sub;
+	struct timeval res;
+	__u64 diff;
+	char buf[64];
+	time_t t;
+
+	if (!wallclock) {
+		sprintf(buf, "%llu.%03llus", ts / 1000000000, (ts % 1000000000) / 1000000);
+		return buf;
+	}
+	diff = ts - start_monotonic.tv_sec * 1000000000ULL - start_monotonic.tv_nsec;
+	sub.tv_sec = diff / 1000000000ULL;
+	sub.tv_usec = (diff % 1000000000ULL) / 1000;
+	timeradd(&start_timeofday, &sub, &res);
+	t = res.tv_sec;
+	s = ctime(&t);
+	s = s.substr(0, s.length() - 6);
+	sprintf(buf, "%03lu", res.tv_usec / 1000);
+	return s + "." + buf;
+}
+
+static void log_event(struct cec_event &ev, bool wallclock)
 {
 	__u16 pa;
 
@@ -180,8 +208,7 @@ static void log_event(struct cec_event &ev)
 		break;
 	}
 	if (show_info)
-		printf("\tTimestamp: %llu.%03llus\n", ev.ts / 1000000000,
-		       (ev.ts % 1000000000) / 1000000);
+		printf("\tTimestamp: %s\n", ts2s(ev.ts, wallclock).c_str());
 }
 
 static void reply_feature_abort(struct node *node, struct cec_msg *msg, __u8 reason = CEC_OP_ABORT_UNRECOGNIZED_OP)
@@ -1000,7 +1027,7 @@ static void poll_remote_devs(struct node *node, unsigned me)
 	}
 }
 
-void testProcessing(struct node *node)
+void testProcessing(struct node *node, bool wallclock)
 {
 	struct cec_log_addrs laddrs;
 	fd_set rd_fds;
@@ -1009,6 +1036,9 @@ void testProcessing(struct node *node)
 	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
 	unsigned me;
 	unsigned last_poll_la = 15;
+
+	clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
+	gettimeofday(&start_timeofday, NULL);
 
 	doioctl(node, CEC_S_MODE, &mode);
 	doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
@@ -1039,7 +1069,7 @@ void testProcessing(struct node *node)
 			}
 			if (res)
 				continue;
-			log_event(ev);
+			log_event(ev, wallclock);
 			if (ev.event == CEC_EVENT_STATE_CHANGE) {
 				dev_info("CEC adapter state change.\n");
 				node->phys_addr = ev.state_change.phys_addr;
@@ -1083,9 +1113,8 @@ void testProcessing(struct node *node)
 				       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
 				log_msg(&msg);
 				if (show_info)
-					printf("\tSequence: %u Rx Timestamp: %llu.%03llus\n",
-					       msg.sequence, msg.rx_ts / 1000000000,
-					       (msg.rx_ts % 1000000000) / 1000000);
+					printf("\tSequence: %u Rx Timestamp: %s\n",
+					       msg.sequence, ts2s(msg.rx_ts, wallclock).c_str());
 			}
 			if (node->adap_la_mask)
 				processMsg(node, msg, me);

@@ -65,6 +65,9 @@ Show received messages.
 .TP
 \fB\-s\fR, \fB\-\-show\-state\fR
 Show state changes from the emulated device.
+.TP
+\fB\-w\fR, \fB\-\-wall\-clock\fR
+Show timestamps as wall-clock time.
 .SH EXIT STATUS
 On success, it returns 0. Otherwise, it will return the error code.
 .SH BUGS
