@@ -166,24 +166,24 @@ static void usage(void)
 {
 	printf("Usage: v4l2-dbg [options] [values]\n"
 	       "  -D, --info         Show driver info [VIDIOC_QUERYCAP]\n"
-	       "  -d, --device=<dev> Use device <dev> instead of /dev/video0\n"
+	       "  -d, --device <dev> Use device <dev> instead of /dev/video0\n"
 	       "                     If <dev> starts with a digit, then /dev/video<dev> is used\n"
 	       "  -h, --help         Display this help message\n"
 	       "  --verbose          Turn on verbose ioctl error reporting\n"
-	       "  -c, --chip=<chip>  The chip identifier to use with other commands\n"
+	       "  -c, --chip <chip>  The chip identifier to use with other commands\n"
 	       "                     It can be one of:\n"
 	       "                         bridge<num>: bridge chip number <num>\n"
 	       "                         bridge (default): same as bridge0\n"
 	       "                         subdev<num>: sub-device number <num>\n"
 	       "  -l, --list-registers[=min=<addr>[,max=<addr>]]\n"
 	       "		     Dump registers from <min> to <max> [VIDIOC_DBG_G_REGISTER]\n"
-	       "  -g, --get-register=<addr>\n"
+	       "  -g, --get-register <addr>\n"
 	       "		     Get the specified register [VIDIOC_DBG_G_REGISTER]\n"
-	       "  -s, --set-register=<addr>\n"
+	       "  -s, --set-register <addr>\n"
 	       "		     Set the register with the commandline arguments\n"
 	       "                     The register will autoincrement [VIDIOC_DBG_S_REGISTER]\n"
 	       "  -n, --scan-chips   Scan the available bridge and subdev chips [VIDIOC_DBG_G_CHIP_INFO]\n"
-	       "  -w, --wide=<reg length>\n"
+	       "  -w, --wide <reg length>\n"
 	       "		     Sets step between two registers\n"
 	       "  --list-symbols     List the symbolic register names you can use, if any\n"
 	       "  --log-status       Log the board status in the kernel log [VIDIOC_LOG_STATUS]\n");
@@ -453,6 +453,18 @@ int main(int argc, char **argv)
 			break;
 
 		options[(int)ch] = 1;
+		if (!option_index) {
+			for (i = 0; long_options[i].val; i++) {
+				if (long_options[i].val == ch) {
+					option_index = i;
+					break;
+				}
+			}
+		}
+		if (long_options[option_index].has_arg == optional_argument &&
+		    !optarg && argv[optind] && argv[optind][0] != '-')
+			optarg = argv[optind++];
+
 		switch (ch) {
 		case OptHelp:
 			usage();
