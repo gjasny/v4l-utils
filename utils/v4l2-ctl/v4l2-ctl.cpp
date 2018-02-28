@@ -858,6 +858,18 @@ int main(int argc, char **argv)
 			break;
 
 		options[(int)ch] = 1;
+		if (!option_index) {
+			for (i = 0; long_options[i].val; i++) {
+				if (long_options[i].val == ch) {
+					option_index = i;
+					break;
+				}
+			}
+		}
+		if (long_options[option_index].has_arg == optional_argument &&
+		    !optarg && argv[optind] && argv[optind][0] != '-')
+			optarg = argv[optind++];
+
 		switch (ch) {
 		case OptHelp:
 			common_usage();
