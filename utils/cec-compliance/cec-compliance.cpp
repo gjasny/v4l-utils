@@ -1288,17 +1288,16 @@ int main(int argc, char **argv)
 
 		/*
 		 * Special corner case: if PA is invalid, then you can still try
-		 * to poll a TV. If found, try to wake it up.
+		 * to wake up a TV.
 		 */
 		cec_msg_init(&msg, CEC_LOG_ADDR_UNREGISTERED, CEC_LOG_ADDR_TV);
 
+		cec_msg_image_view_on(&msg);
 		fail_on_test(doioctl(&node, CEC_TRANSMIT, &msg));
 		if (msg.tx_status & CEC_TX_STATUS_OK) {
 			time_t cnt = 0;
 
-			cec_msg_image_view_on(&msg);
-			fail_on_test(doioctl(&node, CEC_TRANSMIT, &msg));
-			while ((msg.tx_status & CEC_TX_STATUS_OK) && cnt++ <= long_timeout) {
+			while (cnt++ <= long_timeout) {
 				fail_on_test(doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &node.phys_addr));
 				if (node.phys_addr != CEC_PHYS_ADDR_INVALID) {
 					doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
