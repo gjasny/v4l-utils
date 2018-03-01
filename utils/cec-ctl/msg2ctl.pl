@@ -10,6 +10,8 @@ sub maxprefix {
 	return $p;
 }
 
+my $cur_msg;
+
 sub process_func
 {
 	my $feature = shift;
@@ -63,6 +65,7 @@ sub process_func
 	$msg_dash_name =~ s/_/-/g;
 	$msg_lc_name = $msg;
 	$msg_lc_name =~ s/([A-Z])/\l\1/g;
+	$cur_msg = $msg;
 
 	if ($cec_msg eq $msg) {
 		if ($cec_msg =~ /_CDC_/ && !$cdc_case) {
@@ -292,7 +295,7 @@ sub process_func
 	}
 	$messages .= "\t\t\"$msg_name\"\n";
 	$messages .= "\t}, {\n";
-	$feature_usage{$feature} .= $usage;
+	push @{$feature_usage{$feature}}, $msg;
 }
 
 $is_log = shift;
@@ -311,11 +314,9 @@ while (<>) {
 	last if /_CEC_UAPI_FUNCS_H/;
 	if (/^\/\*.*Feature \*\/$/) {
 		($feature) = /^\/\* (.*) Feature/;
-		$feature_usage{$feature} = "";
 	}
 	elsif (/^\/\*.*General Protocol Messages \*\/$/) {
 		$feature = "Abort";
-		$feature_usage{$feature} = "";
 	}
 	if ($operand_name ne "" && !/^#define/) {
 		@{$types{$operand_name}} = @ops;
@@ -365,6 +366,9 @@ while (<>) {
 	}
 	elsif (/^\/\*.*General Protocol Messages \*\/$/) {
 		$feature = "Abort";
+	}
+	if (/\/\* broadcast \*\//) {
+		$usage_msg{$cur_msg} =~ s/"\)\\n"$/", bcast)\\n"/;
 	}
 	s/\/\*.*\*\///;
 	if ($comment) {
@@ -429,7 +433,10 @@ if ($is_log == 0) {
 		s/([A-Z])/\l\1/g;
 		$usage_var = $_ . "_usage";
 		printf "static const char *$usage_var =\n";
-		$usage = $feature_usage{$name};
+		$usage = "";
+		foreach (@{$feature_usage{$name}}) {
+			$usage .= $usage_msg{$_};
+		}
 		foreach (@{$feature_also{$name}}) {
 			$usage .= $usage_msg{$_};
 		}
