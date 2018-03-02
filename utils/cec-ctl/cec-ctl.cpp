@@ -712,7 +712,7 @@ struct node {
 
 #define doioctl(n, r, p) cec_named_ioctl((n)->fd, #r, r, p)
 
-bool show_info;
+bool verbose;
 
 typedef std::vector<cec_msg> msg_vec;
 
@@ -1136,7 +1136,7 @@ static void log_event(struct cec_event &ev, bool show)
 			printf("Event: Unknown (0x%x)\n", ev.event);
 		break;
 	}
-	if (show_info && show)
+	if (verbose && show)
 		printf("\tTimestamp: %s\n", ts2s(ev.ts).c_str());
 }
 
@@ -1304,7 +1304,7 @@ static int showTopology(struct node *node)
 
 		if (msg.tx_status & CEC_TX_STATUS_OK)
 			showTopologyDevice(node, i, laddrs.log_addr[0]);
-		else if (show_info && !(msg.tx_status & CEC_TX_STATUS_MAX_RETRIES))
+		else if (verbose && !(msg.tx_status & CEC_TX_STATUS_MAX_RETRIES))
 			printf("\t\t%s for addr %d\n", status2s(msg).c_str(), i);
 	}
 
@@ -1395,10 +1395,10 @@ static void show_msg(const cec_msg &msg)
 	log_msg(&msg);
 	if (options[OptShowRaw])
 		log_raw_msg(&msg);
-	if (show_info && transmitted)
+	if (verbose && transmitted)
 		printf("\tSequence: %u Tx Timestamp: %s\n",
 		       msg.sequence, ts2s(msg.tx_ts).c_str());
-	else if (show_info && !transmitted)
+	else if (verbose && !transmitted)
 		printf("\tSequence: %u Rx Timestamp: %s\n",
 		       msg.sequence, ts2s(msg.rx_ts).c_str());
 }
@@ -1812,7 +1812,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case OptVerbose:
-			show_info = true;
+			verbose = true;
 			break;
 		case OptFrom:
 			from = strtoul(optarg, NULL, 0) & 0xf;
@@ -2422,7 +2422,7 @@ int main(int argc, char **argv)
 				ts2s(msg.rx_ts).c_str(),
 				response_time_ms(msg));
 		printf("\n");
-		if (!cec_msg_status_is_ok(&msg) || show_info)
+		if (!cec_msg_status_is_ok(&msg) || verbose)
 			printf("\t%s\n", status2s(msg).c_str());
 	}
 	fflush(stdout);

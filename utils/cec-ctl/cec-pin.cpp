@@ -117,6 +117,7 @@ static bool eom_reached;
 static __u8 byte_cnt;
 static bool bcast;
 static bool cdc;
+static struct cec_msg msg;
 
 static void cec_pin_rx_start_bit_was_high(bool is_high, __u64 usecs, __u64 usecs_min, bool show)
 {
@@ -146,6 +147,7 @@ static void cec_pin_rx_start_bit_was_high(bool is_high, __u64 usecs, __u64 usecs
 	byte_cnt = 0;
 	bcast = false;
 	cdc = false;
+	msg.len = 0;
 }
 
 static void cec_pin_rx_start_bit_was_low(__u64 ev_ts, __u64 usecs, __u64 usecs_min, bool show)
@@ -211,6 +213,8 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 
 		bool ack = !(bcast ^ bit);
 
+		if (msg.len < CEC_MAX_MSG_SIZE)
+			msg.msg[msg.len++] = byte;
 		if (show)
 			printf("%s: rx 0x%02x%s%s%s%s%s\n", ts2s(ts).c_str(), byte,
 			       eom ? " EOM" : "", ack ? " ACK" : " NACK",
@@ -219,13 +223,22 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 			       s.c_str());
 		if (!eom_reached && is_high && !eom && ack && show)
 			printf("%s: warn: missing EOM\n", ts2s(ts).c_str());
-		else if (!is_high && !period_too_long && show_info && show)
+		else if (!is_high && !period_too_long && verbose && show)
 			printf("\n");
 		if (byte_cnt == 1 && byte == CEC_MSG_CDC_MESSAGE)
 			cdc = true;
 		byte_cnt++;
 		if (byte_cnt >= CEC_MAX_MSG_SIZE)
 			eom_reached = true;
+		if (show && eom && msg.len > 2) {
+			msg.rx_status = CEC_RX_STATUS_OK;
+			msg.rx_ts = ev_ts;
+			printf("\nTransmit from %s to %s (%d to %d):\n",
+			       la2s(cec_msg_initiator(&msg)),
+			       cec_msg_is_broadcast(&msg) ? "all" : la2s(cec_msg_destination(&msg)),
+			       cec_msg_initiator(&msg), cec_msg_destination(&msg));
+			log_msg(&msg);
+		}
 	}
 	rx_bit++;
 	if ((is_high || period_too_long) && !eom) {
@@ -349,7 +362,7 @@ void log_event_pin(bool is_high, __u64 ev_ts, bool show)
 		if (is_high)
 			return;
 	}
-	if (show_info && show) {
+	if (verbose && show) {
 		printf("%s: ", ts2s(ts).c_str());
 		if (last_change_ts && is_high && was_high &&
 		    (ev_ts - last_1_to_0_ts) / 1000000 <= 10)

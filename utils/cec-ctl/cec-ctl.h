@@ -9,9 +9,10 @@
 #include <cec-info.h>
 
 // cec-ctl.cpp
-extern bool show_info;
+extern bool verbose;
 std::string ts2s(__u64 ts);
 std::string ts2s(double ts);
+void log_msg(const struct cec_msg *msg);
 
 // cec-pin.cpp
 extern __u64 eob_ts;
