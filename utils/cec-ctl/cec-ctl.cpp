@@ -1092,6 +1092,26 @@ static void log_unknown_msg(const struct cec_msg *msg)
 	}
 }
 
+static const char *event2s(__u32 event)
+{
+	switch (event) {
+	case CEC_EVENT_STATE_CHANGE:
+		return "State Change";
+	case CEC_EVENT_LOST_MSGS:
+		return "Lost Messages";
+	case CEC_EVENT_PIN_CEC_LOW:
+		return "CEC Pin Low";
+	case CEC_EVENT_PIN_CEC_HIGH:
+		return "CEC Pin High";
+	case CEC_EVENT_PIN_HPD_LOW:
+		return "HPD Pin Low";
+	case CEC_EVENT_PIN_HPD_HIGH:
+		return "HPD Pin High";
+	default:
+		return "Unknown";
+	}
+}
+
 static void log_event(struct cec_event &ev, bool show)
 {
 	bool is_high = ev.event == CEC_EVENT_PIN_CEC_HIGH;
@@ -1101,7 +1121,7 @@ static void log_event(struct cec_event &ev, bool show)
 	    ev.event != CEC_EVENT_PIN_HPD_LOW && ev.event != CEC_EVENT_PIN_HPD_HIGH)
 		printf("\n");
 	if ((ev.flags & CEC_EVENT_FL_DROPPED_EVENTS) && show)
-		printf("(Note: events were lost)\n");
+		printf("(warn: %s events were lost)\n", event2s(ev.event));
 	if ((ev.flags & CEC_EVENT_FL_INITIAL_STATE) && show)
 		printf("Initial ");
 	switch (ev.event) {
@@ -1452,6 +1472,8 @@ static void wait_for_msgs(struct node &node, __u32 monitor_time)
 	}
 }
 
+#define MONITOR_FL_DROPPED_EVENTS     (1 << 16)
+
 static void monitor(struct node &node, __u32 monitor_time, const char *store_pin)
 {
 	__u32 monitor = CEC_MODE_MONITOR;
@@ -1545,9 +1567,12 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 				pin_event = true;
 			generate_eob_event(ev.ts, fstore);
 			if (pin_event && fstore) {
+				unsigned int v = ev.event - CEC_EVENT_PIN_CEC_LOW;
+
+				if (ev.flags & CEC_EVENT_FL_DROPPED_EVENTS)
+					v |= MONITOR_FL_DROPPED_EVENTS;
 				fprintf(fstore, "%llu.%09llu %d\n",
-					ev.ts / 1000000000, ev.ts % 1000000000,
-					ev.event - CEC_EVENT_PIN_CEC_LOW);
+					ev.ts / 1000000000, ev.ts % 1000000000, v);
 				fflush(fstore);
 			}
 			if (!pin_event || options[OptMonitorPin])
@@ -1628,11 +1653,17 @@ static void analyze(const char *analyze_pin)
 			line++;
 			continue;
 		}
-		if (sscanf(s, "%lu.%09lu %d\n", &tv_sec, &tv_nsec, &event) != 3 || event > 3) {
+		if (sscanf(s, "%lu.%09lu %d\n", &tv_sec, &tv_nsec, &event) != 3 ||
+		    (event & ~MONITOR_FL_DROPPED_EVENTS) > 3) {
 			fprintf(stderr, "malformed data at line %d\n", line);
 			break;
 		}
 		ev.ts = tv_sec * 1000000000ULL + tv_nsec;
+		ev.flags = 0;
+		if (event & MONITOR_FL_DROPPED_EVENTS) {
+			event &= ~MONITOR_FL_DROPPED_EVENTS;
+			ev.flags = CEC_EVENT_FL_DROPPED_EVENTS;
+		}
 		ev.event = event + CEC_EVENT_PIN_CEC_LOW;
 		log_event(ev, true);
 		line++;
