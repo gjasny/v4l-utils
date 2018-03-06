@@ -163,7 +163,7 @@ static void cec_pin_rx_start_bit_was_low(__u64 ev_ts, __u64 usecs, __u64 usecs_m
 		return;
 	}
 	if (usecs < CEC_TIM_START_BIT_LOW_MIN - CEC_TIM_MARGIN && show)
-		printf("%s: warn: start bit: low time too short (%.2f < %.2f ms)\n",
+		printf("%s: info: start bit: low time too short (%.2f < %.2f ms)\n",
 			ts2s(ts).c_str(), usecs / 1000.0,
 			CEC_TIM_START_BIT_LOW_MIN / 1000.0);
 	if (usecs_min < CEC_TIM_START_BIT_LOW_MIN - CEC_TIM_MARGIN * 6) {
