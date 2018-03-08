@@ -817,19 +817,15 @@ static bool wait_for_hpd(struct node *node, bool send_image_view_on)
 				break;
 		}
 
-		/*
-		 * If the HPD doesn't return after TX_WAIT_FOR_HPD seconds,
-		 * then send a IMAGE_VIEW_ON message (if possible).
-		 */
 		if (send_image_view_on && time(NULL) - t > TX_WAIT_FOR_HPD) {
 			struct cec_msg image_view_on_msg;
 
-			cec_msg_init(&image_view_on_msg, CEC_LOG_ADDR_UNREGISTERED,
-				     CEC_LOG_ADDR_TV);
-			cec_msg_image_view_on(&image_view_on_msg);
 			// So the HPD is gone (possibly due to a standby), but
 			// some TVs still have a working CEC bus, so send Image
 			// View On to attempt to wake it up again.
+			cec_msg_init(&image_view_on_msg, CEC_LOG_ADDR_UNREGISTERED,
+				     CEC_LOG_ADDR_TV);
+			cec_msg_image_view_on(&image_view_on_msg);
 			doioctl(node, CEC_TRANSMIT, &image_view_on_msg);
 			send_image_view_on = false;
 		}
