@@ -296,7 +296,6 @@ static int dvb_local_find(struct dvb_device_priv *dvb,
 	struct udev_enumerate *enumerate;
 	struct udev_list_entry *devices, *dev_list_entry;
 	struct udev_device *dev;
-	int ret;
 
 	/* Free a previous list of devices */
 	if (dvb->d.num_devices)
@@ -346,6 +345,8 @@ static int dvb_local_find(struct dvb_device_priv *dvb,
 	/* Begin monitoring udev events */
 #ifdef HAVE_PTHREAD
 	if (priv->notify_dev_change) {
+		int ret;
+
 		ret = pthread_create(&priv->dev_change_id, NULL,
 				     monitor_device_changes, dvb);
 		if (ret < 0) {
@@ -364,9 +365,9 @@ static int dvb_local_find(struct dvb_device_priv *dvb,
 
 static int dvb_local_stop_monitor(struct dvb_device_priv *dvb)
 {
+#ifdef HAVE_PTHREAD
 	struct dvb_dev_local_priv *priv = dvb->priv;
 
-#ifdef HAVE_PTHREAD
 	if (priv->notify_dev_change) {
 		pthread_cancel(priv->dev_change_id);
 		udev_unref(priv->udev);
