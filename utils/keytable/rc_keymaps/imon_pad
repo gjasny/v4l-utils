@@ -1,4 +1,4 @@
-# table imon_pad, type: OTHER
+# table imon_pad, type: IMON
 0x2a8195b7 KEY_REWIND
 0x298315b7 KEY_REWIND
 0x2b8115b7 KEY_FASTFORWARD
