@@ -376,6 +376,7 @@ static const struct {
 	[RC_PROTO_MCIR2_MSE] = { "mcir2-mse" },
 	[RC_PROTO_XMP] = { "xmp" },
 	[RC_PROTO_CEC] = { "cec" },
+	[RC_PROTO_IMON] = { "imon", 0x7fffffff },
 };
 
 static bool str_like(const char *a, const char *b)
