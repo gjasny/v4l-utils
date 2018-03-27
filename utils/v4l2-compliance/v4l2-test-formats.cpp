@@ -1252,10 +1252,12 @@ int testParm(struct node *node)
 			return ret;
 		if (!ret) {
 			supported = true;
-			if (V4L2_TYPE_IS_OUTPUT(type) && !node->has_vid_out())
-				return fail("video output caps not set, but G/S_PARM worked\n");
-			else if (!node->has_vid_cap())
+			if (V4L2_TYPE_IS_OUTPUT(type)) {
+				if (!node->has_vid_out())
+					return fail("video output caps not set, but G/S_PARM worked\n");
+			} else if (!node->has_vid_cap()) {
 				return fail("video capture caps not set, but G/S_PARM worked\n");
+			}
 		}
 	}
 
