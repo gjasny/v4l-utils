@@ -131,7 +131,7 @@ const char *la2s(unsigned la)
 	case 8:
 		return "Playback Device 2";
 	case 9:
-		return "Playback Device 3";
+		return "Recording Device 3";
 	case 10:
 		return "Tuner 4";
 	case 11:
