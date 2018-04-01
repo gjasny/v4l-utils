@@ -20,9 +20,7 @@
  */
 
 #include <sys/types.h>
-#if defined(MAJOR_IN_SYSMACROS)
 #include <sys/sysmacros.h>
-#endif
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <sys/stat.h>
