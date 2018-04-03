@@ -1507,8 +1507,8 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 		struct cec_log_addrs laddrs = { };
 
 		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-		if (laddrs.log_addr_mask) {
-			fprintf(stderr, "warn: this CEC adapter is configured. This may cause inaccurate event\n");
+		if (laddrs.log_addr_mask && !options[OptSkipInfo]) {
+			fprintf(stderr, "note: this CEC adapter is configured. This may cause inaccurate event\n");
 			fprintf(stderr, "      timestamps. It is recommended to unconfigure the adapter (cec-ctl -C)\n");
 		}
 	}
