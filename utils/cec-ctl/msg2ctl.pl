@@ -383,14 +383,14 @@ while (<>) {
 	next if /^\s*$/;
 	next if /cec_msg_reply_feature_abort/;
 	next if /cec_msg_htng_init/;
-	if (/^static inline void cec_msg.*\(.*\)/) {
-		s/static\sinline\svoid\s//;
+	if (/^static (__)?inline(__)? void cec_msg.*\(.*\)/) {
+		s/static\s(__)?inline(__)?\svoid\s//;
 		s/struct cec_msg \*msg, //;
 		s/struct cec_msg \*msg//;
 		process_func($feature, $_);
 		next;
 	}
-	if (/^static inline void cec_msg/) {
+	if (/^static (__)?inline(__)? void cec_msg/) {
 		$func = $_;
 		next;
 	}
@@ -398,7 +398,7 @@ while (<>) {
 		$func .= $_;
 		next unless /\)$/;
 		$func =~ s/\s+/ /g;
-		$func =~ s/static\sinline\svoid\s//;
+		$func =~ s/static\s(__)?inline(__)?\svoid\s//;
 		$func =~ s/struct cec_msg \*msg, //;
 		$func =~ s/struct cec_msg \*msg//;
 		process_func($feature, $func);
