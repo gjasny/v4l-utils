@@ -1271,9 +1271,9 @@ int main(int argc, char **argv)
 #ifdef SHA
 #define STR(x) #x
 #define STRING(x) STR(x)
-	printf("v4l2-compliance SHA   : %s\n", STRING(SHA));
+	printf("v4l2-compliance SHA   : %s, %zd bits\n", STRING(SHA), sizeof(void *) * 8);
 #else
-	printf("v4l2-compliance SHA   : not available\n");
+	printf("v4l2-compliance SHA   : not available, %zd bits\n", sizeof(void *) * 8);
 #endif
 
 	struct utsname uts;
