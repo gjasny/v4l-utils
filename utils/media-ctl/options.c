@@ -46,6 +46,7 @@ static void usage(const char *argv0)
 	printf("-e, --entity name	Print the device name associated with the given entity\n");
 	printf("-V, --set-v4l2 v4l2	Comma-separated list of formats to setup\n");
 	printf("    --get-v4l2 pad	Print the active format on a given pad\n");
+	printf("    --get-dv pad        Print detected and current DV timings on a given pad\n");
 	printf("    --set-dv pad	Configure DV timings on a given pad\n");
 	printf("-h, --help		Show verbose help and exit\n");
 	printf("-i, --interactive	Modify links interactively\n");
@@ -117,6 +118,7 @@ static void usage(const char *argv0)
 #define OPT_GET_FORMAT			257
 #define OPT_SET_DV			258
 #define OPT_LIST_KNOWN_MBUS_FMTS	259
+#define OPT_GET_DV			260
 
 static struct option opts[] = {
 	{"device", 1, 0, 'd'},
@@ -125,6 +127,7 @@ static struct option opts[] = {
 	{"set-v4l2", 1, 0, 'V'},
 	{"get-format", 1, 0, OPT_GET_FORMAT},
 	{"get-v4l2", 1, 0, OPT_GET_FORMAT},
+	{"get-dv", 1, 0, OPT_GET_DV},
 	{"set-dv", 1, 0, OPT_SET_DV},
 	{"help", 0, 0, 'h'},
 	{"interactive", 0, 0, 'i'},
@@ -220,6 +223,10 @@ int parse_cmdline(int argc, char **argv)
 
 		case OPT_GET_FORMAT:
 			media_opts.fmt_pad = optarg;
+			break;
+
+		case OPT_GET_DV:
+			media_opts.get_dv_pad = optarg;
 			break;
 
 		case OPT_SET_DV:
