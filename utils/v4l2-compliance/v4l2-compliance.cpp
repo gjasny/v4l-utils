@@ -639,7 +639,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	struct node node2;
 	struct v4l2_capability vcap;		/* list_cap */
 
-	printf("\nCompliance test for device %s%s:\n\n",
+	printf("Compliance test for device %s%s:\n\n",
 			node.device, node.g_direct() ? "" : " (using libv4l2)");
 
 	node.is_video = type == MEDIA_TYPE_VIDEO;
@@ -1076,10 +1076,28 @@ int main(int argc, char **argv)
 	int ch;
 	const char *device = "/dev/video0";
 	const char *expbuf_device = NULL;	/* --expbuf-device device */
+	struct utsname uts;
+	int v1, v2, v3;
 	unsigned frame_count = 60;
 	char short_options[26 * 2 * 3 + 1];
 	char *value, *subs;
 	int idx = 0;
+
+#ifdef SHA
+#define STR(x) #x
+#define STRING(x) STR(x)
+	printf("v4l2-compliance SHA: %s, %zd bits\n", STRING(SHA), sizeof(void *) * 8);
+#else
+	printf("v4l2-compliance SHA: not available, %zd bits\n", sizeof(void *) * 8);
+#endif
+
+	uname(&uts);
+	sscanf(uts.release, "%d.%d.%d", &v1, &v2, &v3);
+	if (v1 == 2 && v2 == 6)
+		kernel_version = v3;
+	if (kernel_version)
+		printf("Running on 2.6.%d\n", kernel_version);
+	printf("\n");
 
 	for (i = 0; long_options[i].name; i++) {
 		if (!isalpha(long_options[i].val))
@@ -1205,8 +1223,9 @@ int main(int argc, char **argv)
 			usage();
 			return 1;
 		case '?':
-			fprintf(stderr, "Unknown argument `%s'\n",
-				argv[optind]);
+			if (argv[optind])
+				fprintf(stderr, "Unknown argument `%s'\n",
+					argv[optind]);
 			usage();
 			return 1;
 		}
@@ -1267,25 +1286,6 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 	}
-
-#ifdef SHA
-#define STR(x) #x
-#define STRING(x) STR(x)
-	printf("v4l2-compliance SHA   : %s, %zd bits\n", STRING(SHA), sizeof(void *) * 8);
-#else
-	printf("v4l2-compliance SHA   : not available, %zd bits\n", sizeof(void *) * 8);
-#endif
-
-	struct utsname uts;
-	int v1, v2, v3;
-
-	uname(&uts);
-	sscanf(uts.release, "%d.%d.%d", &v1, &v2, &v3);
-	if (v1 == 2 && v2 == 6)
-		kernel_version = v3;
-
-	if (kernel_version)
-		printf("Running on 2.6.%d\n", kernel_version);
 
 	testNode(node, expbuf_node, type, frame_count);
 
