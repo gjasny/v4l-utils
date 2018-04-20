@@ -766,23 +766,30 @@ static __u32 parse_event(const char *e, const char **name)
 {
 	__u32 event = 0;
 
-	*name = NULL;
-	if (isdigit(e[0]))
+	*name = "0";
+	if (isdigit(e[0])) {
 		event = strtoul(e, 0L, 0);
-	else if (!strcmp(e, "eos"))
+		if (event == V4L2_EVENT_CTRL) {
+			fprintf(stderr, "Missing control name for ctrl event, use ctrl=<name>\n");
+			misc_usage();
+			exit(1);
+		}
+	} else if (!strcmp(e, "eos")) {
 		event = V4L2_EVENT_EOS;
-	else if (!strcmp(e, "vsync"))
+	} else if (!strcmp(e, "vsync")) {
 		event = V4L2_EVENT_VSYNC;
-	else if (!strcmp(e, "frame_sync"))
+	} else if (!strcmp(e, "frame_sync")) {
 		event = V4L2_EVENT_FRAME_SYNC;
-	else if (!strcmp(e, "motion_det"))
+	} else if (!strcmp(e, "motion_det")) {
 		event = V4L2_EVENT_MOTION_DET;
-	else if (!strncmp(e, "ctrl=", 5)) {
+	} else if (!strncmp(e, "ctrl=", 5)) {
 		event = V4L2_EVENT_CTRL;
 		*name = e + 5;
 	} else if (!strncmp(e, "source_change=", 14)) {
 		event = V4L2_EVENT_SOURCE_CHANGE;
 		*name = e + 14;
+	} else if (!strcmp(e, "source_change")) {
+		event = V4L2_EVENT_SOURCE_CHANGE;
 	}
 
 	if (event == 0) {
