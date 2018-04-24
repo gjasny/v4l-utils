@@ -501,9 +501,7 @@ static void log_unknown_msg(const struct cec_msg *msg);
 	"  --vendor-command-with-id vendor-id=<val>,cmd=<byte>[:<byte>]*\n" \
 	"                                  Send VENDOR_COMMAND_WITH_ID message (" xstr(CEC_MSG_VENDOR_COMMAND_WITH_ID) ")\n" \
 	"  --vendor-remote-button-down rc-code=<byte>[:<byte>]*\n" \
-	"                                  Send VENDOR_REMOTE_BUTTON_DOWN message (" xstr(CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN) ")\n" \
-	"  --custom-command cmd=<byte>,payload=<byte>[:<byte>]*\n" \
-	"                                  Send custom message\n"
+	"                                  Send VENDOR_REMOTE_BUTTON_DOWN message (" xstr(CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN) ")\n"
 
 #include "cec-ctl-gen.h"
 
@@ -869,6 +867,9 @@ static void usage(void)
 	       "                           Use - for stdin.\n"
 	       "\n"
 	       CEC_USAGE
+	       "\n"
+	       "  --custom-command cmd=<byte>[,payload=<byte>[:<byte>]*]\n"
+	       "                                      Send custom message\n"
 	       );
 }
 
