@@ -1014,6 +1014,8 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 			// Reopen after each streaming test to reset the streaming state
 			// in case of any errors in the preceeding test.
 			node.reopen();
+			printf("\ttest blocking wait: %s\n", ok(testBlockingWait(&node)));
+			node.reopen();
 			printf("\ttest MMAP: %s\n", ok(testMmap(&node, frame_count)));
 			node.reopen();
 			printf("\ttest USERPTR: %s\n", ok(testUserPtr(&node, frame_count)));

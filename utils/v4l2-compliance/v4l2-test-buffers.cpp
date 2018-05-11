@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
@@ -1163,6 +1164,97 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 		fail_on_test(captureBufs(node, q, m2m_q, frame_count, true));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
+	}
+	return 0;
+}
+
+static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
+{
+	int pid_dqbuf;
+	int pid_streamoff;
+	int pid;
+
+	fail_on_test(q.reqbufs(node, 2));
+	fail_on_test(node->streamon(q.g_type()));
+
+	/*
+	 * This test checks if a blocking wait in VIDIOC_DQBUF doesn't block
+	 * other ioctls.
+	 */
+	pid_dqbuf = fork();
+	fail_on_test(pid_dqbuf == -1);
+
+	if (pid_dqbuf == 0) { // Child
+		/*
+		 * In the child process we call VIDIOC_DQBUF and wait
+		 * indefinitely since no buffers are queued.
+		 */
+		cv4l_buffer buf(q.g_type(), V4L2_MEMORY_MMAP);
+
+		node->dqbuf(buf);
+		exit(0);
+	}
+
+	/* Wait for the child process to start and block */
+	usleep(100000);
+	pid = waitpid(pid_dqbuf, NULL, WNOHANG);
+	/* Check that it is really blocking */
+	fail_on_test(pid);
+
+	pid_streamoff = fork();
+	fail_on_test(pid_streamoff == -1);
+
+	if (pid_streamoff == 0) { // Child
+		/*
+		 * In the second child call STREAMOFF: this shouldn't
+		 * be blocked by the DQBUF!
+		 */
+		node->streamoff(q.g_type());
+		exit(0);
+	}
+
+	int wstatus_streamoff = 0;
+
+	/* Wait for the second child to start and exit */
+	usleep(250000);
+	pid = waitpid(pid_streamoff, &wstatus_streamoff, WNOHANG);
+	kill(pid_dqbuf, SIGKILL);
+	fail_on_test(pid != pid_streamoff);
+	/* Test that the second child exited properly */
+	if (!pid || !WIFEXITED(wstatus_streamoff)) {
+		kill(pid_streamoff, SIGKILL);
+		fail_on_test(!pid || !WIFEXITED(wstatus_streamoff));
+	}
+
+	fail_on_test(node->streamoff(q.g_type()));
+	fail_on_test(q.reqbufs(node, 0));
+	return 0;
+}
+
+int testBlockingWait(struct node *node)
+{
+	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
+	int type;
+
+	if (!can_stream || !node->valid_buftypes)
+		return ENOTTY;
+
+	buffer_info.clear();
+	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
+		if (!(node->valid_buftypes & (1 << type)))
+			continue;
+		if (v4l_type_is_overlay(type))
+			continue;
+
+		cv4l_queue q(type, V4L2_MEMORY_MMAP);
+		cv4l_queue m2m_q(v4l_type_invert(type), V4L2_MEMORY_MMAP);
+	
+		if (testSetupVbi(node, type))
+			continue;
+
+		fail_on_test(testBlockingDQBuf(node, q));
+		if (node->is_m2m)
+			fail_on_test(testBlockingDQBuf(node, m2m_q));
 	}
 	return 0;
 }

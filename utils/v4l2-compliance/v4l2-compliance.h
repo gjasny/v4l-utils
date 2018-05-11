@@ -252,6 +252,7 @@ int testSubDevFrameInterval(struct node *node, unsigned pad);
 int testReqBufs(struct node *node);
 int testReadWrite(struct node *node);
 int testExpBuf(struct node *node);
+int testBlockingWait(struct node *node);
 int testMmap(struct node *node, unsigned frame_count);
 int testUserPtr(struct node *node, unsigned frame_count);
 int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count);
