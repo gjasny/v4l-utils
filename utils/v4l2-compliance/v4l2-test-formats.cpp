@@ -1174,6 +1174,13 @@ static int testParmType(struct node *node, unsigned type)
 
 	memset(&parm, 0, sizeof(parm));
 	parm.type = type;
+	if (V4L2_TYPE_IS_OUTPUT(type))
+		memset(parm.parm.output.reserved, 0xff,
+		       sizeof(parm.parm.output.reserved));
+	else
+		memset(parm.parm.capture.reserved, 0xff,
+		       sizeof(parm.parm.capture.reserved));
+
 	ret = doioctl(node, VIDIOC_G_PARM, &parm);
 	switch (type) {
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
@@ -1182,6 +1189,8 @@ static int testParmType(struct node *node, unsigned type)
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		if (type && (node->g_caps() & buftype2cap[type]))
 			fail_on_test(ret && node->has_frmintervals);
+		if (ret)
+			break;
 		break;
 	default:
 		fail_on_test(ret == 0);
@@ -1203,6 +1212,12 @@ static int testParmType(struct node *node, unsigned type)
 
 	memset(&parm, 0, sizeof(parm));
 	parm.type = type;
+	if (V4L2_TYPE_IS_OUTPUT(type))
+		memset(parm.parm.output.reserved, 0xff,
+		       sizeof(parm.parm.output.reserved));
+	else
+		memset(parm.parm.capture.reserved, 0xff,
+		       sizeof(parm.parm.capture.reserved));
 	ret = doioctl(node, VIDIOC_S_PARM, &parm);
 
 	__u32 cap;
