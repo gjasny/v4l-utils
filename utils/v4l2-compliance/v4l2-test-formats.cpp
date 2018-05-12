@@ -1204,9 +1204,16 @@ static int testParmType(struct node *node, unsigned type)
 	memset(&parm, 0, sizeof(parm));
 	parm.type = type;
 	ret = doioctl(node, VIDIOC_S_PARM, &parm);
+
+	__u32 cap;
+
+	if (V4L2_TYPE_IS_OUTPUT(type))
+		cap = parm.parm.output.capability;
+	else
+		cap = parm.parm.capture.capability;
 	fail_on_test(ret && node->has_frmintervals);
-	if (!ret && !node->has_frmintervals)
-		warn("S_PARM is supported for buftype %d, but not ENUM_FRAMEINTERVALS\n", type);
+	if (!ret && (cap & V4L2_CAP_TIMEPERFRAME) && !node->has_frmintervals)
+		warn("S_PARM is supported for buftype %d, but not for ENUM_FRAMEINTERVALS\n", type);
 	if (ret == ENOTTY)
 		return 0;
 	if (ret)
