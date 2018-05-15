@@ -41,6 +41,7 @@ enum Option {
 	OptNoWarnings = 'n',
 	OptRemote = 'r',
 	OptReplyThreshold = 'R',
+	OptSkipInfo = 's',
 	OptTimeout = 't',
 	OptTrace = 'T',
 	OptVerbose = 'v',
@@ -109,7 +110,8 @@ static struct option long_options[] = {
 	{"timeout", required_argument, 0, OptTimeout},
 	{"trace", no_argument, 0, OptTrace},
 	{"verbose", no_argument, 0, OptVerbose},
-	{ "wall-clock", no_argument, 0, OptWallClock },
+	{"skip-info", no_argument, 0, OptSkipInfo},
+	{"wall-clock", no_argument, 0, OptWallClock},
 	{"interactive", no_argument, 0, OptInteractive},
 	{"reply-threshold", required_argument, 0, OptReplyThreshold},
 
@@ -197,6 +199,7 @@ static void usage(void)
 	       "\n"
 	       "  -h, --help         Display this help message\n"
 	       "  -n, --no-warnings  Turn off warning messages\n"
+	       "  -s, --skip-info    Skip Driver Info output\n"
 	       "  -T, --trace        Trace all called ioctls\n"
 	       "  -v, --verbose      Turn on verbose reporting\n"
 	       "  -w, --wall-clock   Show timestamps as wall-clock time\n"
@@ -1305,7 +1308,10 @@ int main(int argc, char **argv)
 
 	}
 
-	cec_driver_info(caps, laddrs, node.phys_addr);
+	if (options[OptSkipInfo])
+		printf("\n");
+	else
+		cec_driver_info(caps, laddrs, node.phys_addr);
 
 	bool missing_pa = node.phys_addr == CEC_PHYS_ADDR_INVALID && (node.caps & CEC_CAP_PHYS_ADDR);
 	bool missing_la = laddrs.num_log_addrs == 0 && (node.caps & CEC_CAP_LOG_ADDRS);
@@ -1319,14 +1325,16 @@ int main(int argc, char **argv)
 	if (missing_la || missing_pa)
 		exit(-1);
 
-	printf("\nCompliance test for device %s:\n\n", device);
-	printf("    The test results mean the following:\n"
-	       "        OK                  Supported correctly by the device.\n"
-	       "        OK (Not Supported)  Not supported and not mandatory for the device.\n"
-	       "        OK (Presumed)       Presumably supported.  Manually check to confirm.\n"
-	       "        OK (Unexpected)     Supported correctly but is not expected to be supported for this device.\n"
-	       "        OK (Refused)        Supported by the device, but was refused.\n"
-	       "        FAIL                Failed and was expected to be supported by this device.\n\n");
+	if (!options[OptSkipInfo]) {
+		printf("\nCompliance test for device %s:\n\n", device);
+		printf("    The test results mean the following:\n"
+		       "        OK                  Supported correctly by the device.\n"
+		       "        OK (Not Supported)  Not supported and not mandatory for the device.\n"
+		       "        OK (Presumed)       Presumably supported.  Manually check to confirm.\n"
+		       "        OK (Unexpected)     Supported correctly but is not expected to be supported for this device.\n"
+		       "        OK (Refused)        Supported by the device, but was refused.\n"
+		       "        FAIL                Failed and was expected to be supported by this device.\n\n");
+	}
 
 	node.has_cec20 = laddrs.cec_version >= CEC_OP_CEC_VERSION_2_0;
 	node.num_log_addrs = laddrs.num_log_addrs;
