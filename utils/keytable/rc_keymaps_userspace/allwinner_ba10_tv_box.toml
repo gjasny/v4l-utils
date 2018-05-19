@@ -1,0 +1,18 @@
+[[protocols]]
+name = "allwinner_ba10_tv_box"
+protocol = "nec"
+[protocols.scancodes]
+0x206 = "KEY_UP"
+0x216 = "KEY_VOLUMEDOWN"
+0x217 = "KEY_NEXTSONG"
+0x21a = "KEY_POWER"
+0x21b = "KEY_BACK"
+0x21e = "KEY_OK"
+0x21f = "KEY_DOWN"
+0x244 = "KEY_VOLUMEUP"
+0x254 = "KEY_PREVIOUSSONG"
+0x255 = "KEY_PLAYPAUSE"
+0x258 = "KEY_MENU"
+0x259 = "KEY_HOMEPAGE"
+0x25c = "KEY_RIGHT"
+0x25d = "KEY_LEFT"

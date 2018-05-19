@@ -1,0 +1,12 @@
+[[protocols]]
+name = "wobo_i5"
+protocol = "nec"
+[protocols.scancodes]
+0x01 = "KEY_POWER"
+0x05 = "KEY_UP"
+0x06 = "KEY_LEFT"
+0x08 = "KEY_RIGHT"
+0x09 = "KEY_PLAYPAUSE"
+0x0a = "KEY_DOWN"
+0x0c = "KEY_MENU"
+0x0e = "KEY_BACK"

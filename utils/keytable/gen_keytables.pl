@@ -16,12 +16,13 @@ my @ir_files = (
 
 my $debug = 1;
 my $dir="rc_keymaps";
-my $deftype = "UNKNOWN";
+my $deftype = "unknown";
 
 my $keyname="";
 my $out;
 my $read=0;
 my $type = $deftype;
+my $variant = $deftype;
 my $check_type = 0;
 my $name;
 my $warn;
@@ -37,9 +38,15 @@ sub flush($$)
 	my $defined;
 
 	return if (!$keyname || !$out);
-	print "Creating $dir/$keyname\n";
-	open OUT, ">$dir/$keyname";
-	print OUT "# table $keyname, type: $type\n";
+	print "Creating $dir/$keyname.toml\n";
+	open OUT, ">$dir/$keyname.toml";
+	print OUT "[[protocols]]\n";
+	print OUT "name = \"$keyname\"\n";
+	print OUT "protocol = \"$type\"\n";
+	if ($type eq "nec" || $type eq "rc5" || $type eq "rc6" || $type eq "sony") {
+		print OUT "variant = \"$variant\"\n";
+	}
+	print OUT "[protocols.scancodes]\n";
 	print OUT $out;
 	close OUT;
 
@@ -50,11 +57,11 @@ sub flush($$)
 	}
 
 	if ($defined) {
-		printf OUT_MAP "*\t%-24s %s\n", $rc_map_names{$name} , $keyname;
+		printf OUT_MAP "*\t%-24s %s.toml\n", $rc_map_names{$name} , $keyname;
 	} else {
 		my $fname = $filename;
 		$fname =~ s,.*/,,;
-		printf OUT_MAP "# *\t*\t\t\t %-20s # found in %s\n", $keyname, $fname;
+		printf OUT_MAP "# *\t*\t\t\t %-20s # found in %s\n", "$keyname.toml", $fname;
 	}
 
 	$keyname = "";
@@ -104,6 +111,7 @@ sub parse_file($$)
 				next;
 			}
 			if (m/RC_PROTO_([\w\d_]+)/) {
+				$variant = lc $1;
 				$type = $1;
 
 				# Proper name the RC6 protocol
@@ -114,13 +122,14 @@ sub parse_file($$)
 
 				# NECX protocol variant uses nec decoder
 				$type =~ s/^NECX$/NEC/;
+				$type = lc $type;
 			}
 			next;
 		}
 
 		if ($read) {
 			if (m/(0x[\dA-Fa-f]+)[\s\,]+(KEY|BTN)(\_[^\s\,\}]+)/) {
-				$out .= "$1 $2$3\n";
+				$out .= "$1 = \"$2$3\"\n";
 				next;
 			}
 			if (m/\}/) {
@@ -198,11 +207,11 @@ print OUT_MAP << "EOF";
 #		/etc/rc_keymaps.
 # For example:
 # driver	table				file
-# cx8800	*				./keycodes/rc5_hauppauge_new
-# *		rc-avermedia-m135a-rm-jx	./keycodes/kworld_315u
-# saa7134	rc-avermedia-m135a-rm-jx	./keycodes/keycodes/nec_terratec_cinergy_xs
-# em28xx	*				./keycodes/kworld_315u
-# *		*				./keycodes/rc5_hauppauge_new
+# cx8800	*				./keycodes/rc5_hauppauge_new.toml
+# *		rc-avermedia-m135a-rm-jx	./keycodes/kworld_315u.toml
+# saa7134	rc-avermedia-m135a-rm-jx	./keycodes/keycodes/nec_terratec_cinergy_xs.toml
+# em28xx	*				./keycodes/kworld_315u.toml
+# *		*				./keycodes/rc5_hauppauge_new.toml
 
 # Table to automatically load the rc maps for the bundled IR's provided with the
 # devices supported by the linux kernel

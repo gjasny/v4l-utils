@@ -98,11 +98,11 @@ To list all connected Remote Controller devices:
 .PP
 To clean the keycode table and use a newer one:
 .br
-	\fBir\-keytable \-c \-w /etc/rc_keymaps/nec_terratec_cinergy_xs\fR
+	\fBir\-keytable \-c \-w /etc/rc_keymaps/nec_terratec_cinergy_xs.toml\fR
 .PP
 To append more codes to the existing table:
 .br
-	\fBir\-keytable \-w /etc/rc_keymaps/nec_terratec_cinergy_xs\fR
+	\fBir\-keytable \-w /etc/rc_keymaps/nec_terratec_cinergy_xs.toml\fR
 .PP
 To read the current keytable, on the second remote controller:
 	\fBir\-keytable \-s rc1 \-r\fR
