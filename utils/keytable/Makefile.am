@@ -4,7 +4,7 @@ sysconf_DATA = rc_maps.cfg
 keytablesystem_DATA = $(srcdir)/rc_keymaps/*
 udevrules_DATA = 70-infrared.rules
 
-ir_keytable_SOURCES = keytable.c parse.h ir-encode.c ir-encode.h
+ir_keytable_SOURCES = keytable.c parse.h ir-encode.c ir-encode.h toml.c toml.h
 
 if HAVE_LIBELF
 ir_keytable_SOURCES += bpf.c bpf_load.c bpf.h bpf_load.h

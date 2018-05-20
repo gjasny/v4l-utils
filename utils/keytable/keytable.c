@@ -33,6 +33,7 @@
 
 #include "ir-encode.h"
 #include "parse.h"
+#include "toml.h"
 #include "bpf.h"
 #include "bpf_load.h"
 
@@ -206,7 +207,7 @@ static void write_sysfs_protocols(enum sysfs_protocols protocols, FILE *fp, cons
 	}
 }
 
-static int parse_code(char *string)
+static int parse_code(const char *string)
 {
 	struct parse_event *p;
 
@@ -276,6 +277,7 @@ static enum sysfs_protocols ch_proto = 0;
 
 struct bpf_protocol {
 	struct bpf_protocol *next;
+	struct toml_table_t *toml;
 	char *name;
 };
 
@@ -315,7 +317,57 @@ struct rc_device {
 	enum sysfs_protocols supported, current; /* Current and supported IR protocols */
 };
 
-static error_t parse_keyfile(char *fname, char **table)
+static bool compare_parameters(struct toml_table_t *a, struct toml_table_t *b)
+{
+	int i = 0;
+	int64_t avalue, bvalue;
+	const char *name, *raw;
+
+	while ((name = toml_key_in(a, i++)) != NULL) {
+		raw = toml_raw_in(a, name);
+		if (!raw)
+			continue;
+
+		if (toml_rtoi(raw, &avalue))
+			continue;
+
+		raw = toml_raw_in(b, name);
+		if (!raw)
+			return false;
+
+		if (toml_rtoi(raw, &bvalue))
+			return false;
+
+		if (avalue != bvalue)
+			return false;
+	}
+
+	return true;
+}
+
+/*
+ * Sometimes, a toml will list the same remote protocol several times with
+ * different scancodes. This will because they are different remotes but
+ * use the same protocol. Do not load one BPF per remote.
+ */
+static void add_bpf_protocol(struct bpf_protocol *new)
+{
+	struct bpf_protocol *a;
+
+	for (a = bpf_protocol; a; a = a->next) {
+		if (strcmp(a->name, new->name))
+			continue;
+
+		if (compare_parameters(a->toml, new->toml) &&
+		    compare_parameters(new->toml, a->toml))
+			return;
+	}
+
+	new->next = bpf_protocol;
+	bpf_protocol = new;
+}
+
+static error_t parse_plain_keyfile(char *fname, char **table)
 {
 	FILE *fin;
 	int value, line = 0;
@@ -325,7 +377,7 @@ static error_t parse_keyfile(char *fname, char **table)
 	*table = NULL;
 
 	if (debug)
-		fprintf(stderr, _("Parsing %s keycode file\n"), fname);
+		fprintf(stderr, _("Parsing %s keycode file as plain text\n"), fname);
 
 	fin = fopen(fname, "r");
 	if (!fin) {
@@ -421,6 +473,162 @@ err_einval:
 	fprintf(stderr, _("Invalid parameter on line %d of %s\n"),
 		line, fname);
 	return EINVAL;
+}
+
+static error_t parse_toml_protocol(struct toml_table_t *proot)
+{
+	struct toml_table_t *scancodes;
+	enum sysfs_protocols protocol;
+	const char *raw;
+	char *p;
+	int i = 0;
+
+	raw = toml_raw_in(proot, "protocol");
+	if (!raw) {
+		fprintf(stderr, _("protocol missing\n"));
+		return EINVAL;
+	}
+
+	if (toml_rtos(raw, &p)) {
+		fprintf(stderr, _("Bad value `%s' for protocol\n"), raw);
+		return EINVAL;
+	}
+
+	protocol = parse_sysfs_protocol(p, false);
+	if (protocol == SYSFS_INVALID) {
+		struct bpf_protocol *b;
+
+		b = malloc(sizeof(*b));
+		b->name = p;
+		b->toml = proot;
+		add_bpf_protocol(b);
+	}
+	else {
+		ch_proto |= protocol;
+		free(p);
+	}
+
+	scancodes = toml_table_in(proot, "scancodes");
+	if (!scancodes) {
+		if (debug)
+			fprintf(stderr, _("No [protocols.scancodes] section\n"));
+		return 0;
+	}
+
+	for (;;) {
+		struct keytable_entry *ke;
+		const char *scancode;
+		char *keycode;
+		int value;
+
+		scancode = toml_key_in(scancodes, i++);
+		if (!scancode)
+			break;
+
+		raw = toml_raw_in(scancodes, scancode);
+		if (!raw) {
+			fprintf(stderr, _("Invalid value `%s'\n"), scancode);
+			return EINVAL;
+		}
+
+		if (toml_rtos(raw, &keycode)) {
+			fprintf(stderr, _("Bad value `%s' for keycode\n"),
+				keycode);
+			return EINVAL;
+		}
+
+		if (debug)
+			fprintf(stderr, _("parsing %s=%s:"), scancode, keycode);
+
+		value = parse_code(keycode);
+		if (debug)
+			fprintf(stderr, _("\tvalue=%d\n"), value);
+
+		if (value == -1) {
+			value = strtol(keycode, &p, 0);
+			if (errno || *p)
+				fprintf(stderr, _("keycode `%s' not recognised, no mapping for scancode %s\n"), keycode, scancode);
+		}
+		free(keycode);
+
+		ke = calloc(1, sizeof(*ke));
+		if (!ke) {
+			perror("parse_keyfile");
+			return ENOMEM;
+		}
+
+		ke->scancode	= strtoul(scancode, NULL, 0);
+		ke->keycode	= value;
+		ke->next	= keytable;
+		keytable	= ke;
+	}
+
+	return 0;
+}
+
+static error_t parse_toml_keyfile(char *fname, char **table)
+{
+	struct toml_table_t *root, *proot;
+	struct toml_array_t *arr;
+	int ret, i = 0;
+	char buf[200];
+	FILE *fin;
+
+	*table = NULL;
+
+	if (debug)
+		fprintf(stderr, _("Parsing %s keycode file as toml\n"), fname);
+
+	fin = fopen(fname, "r");
+	if (!fin)
+		return errno;
+
+	root = toml_parse_file(fin, buf, sizeof(buf));
+	fclose(fin);
+	if (!root) {
+		fprintf(stderr, _("Failed to parse toml: %s\n"), buf);
+		return EINVAL;
+	}
+
+	arr = toml_array_in(root, "protocols");
+	if (!arr) {
+		fprintf(stderr, _("Missing [protocols] section\n"));
+		return EINVAL;
+	}
+
+	for (;;) {
+		proot = toml_table_at(arr, i);
+		if (!proot)
+			break;
+
+		ret = parse_toml_protocol(proot);
+		if (ret)
+			goto out;
+
+		i++;
+	}
+
+	if (i == 0) {
+		fprintf(stderr, _("No protocols found\n"));
+		goto out;
+	}
+
+	// Don't free toml, this is used during bpf loading */
+	//toml_free(root);
+	return 0;
+out:
+	toml_free(root);
+	return EINVAL;
+}
+
+static error_t parse_keyfile(char *fname, char **table)
+{
+	size_t len = strlen(fname);
+
+	if (len >= 5 && strcasecmp(fname + len - 5, ".toml") == 0)
+		return parse_toml_keyfile(fname, table);
+	else
+		return parse_plain_keyfile(fname, table);
 }
 
 struct cfgfile *nextcfg = &cfg;
@@ -607,6 +815,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 
 				b = malloc(sizeof(*b));
 				b->name = strdup(p);
+				b->toml = NULL;
 				b->next = bpf_protocol;
 				bpf_protocol = b;
 			}
@@ -1640,7 +1849,7 @@ static void device_info(int fd, char *prepend)
 
 #ifdef HAVE_LIBELF
 #define MAX_PROGS 64
-static void attach_bpf(const char *lirc_name, const char *bpf_prog)
+static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct toml_table_t *toml)
 {
 	unsigned int features;
 	int fd;
@@ -1663,7 +1872,7 @@ static void attach_bpf(const char *lirc_name, const char *bpf_prog)
 		return;
 	}
 
-	load_bpf_file(bpf_prog, fd);
+	load_bpf_file(bpf_prog, fd, toml);
 	close(fd);
 }
 
@@ -2029,7 +2238,8 @@ int main(int argc, char *argv[])
 			char *fname = find_bpf_file(b->name);
 
 			if (fname) {
-				attach_bpf(rc_dev.lirc_name, fname);
+				attach_bpf(rc_dev.lirc_name, fname, b->toml);
+				fprintf(stderr, _("Loaded BPF protocol %s\n"), b->name);
 				free(fname);
 			}
 		}
