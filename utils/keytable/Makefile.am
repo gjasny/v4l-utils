@@ -5,8 +5,13 @@ keytablesystem_DATA = $(srcdir)/rc_keymaps/*
 udevrules_DATA = 70-infrared.rules
 
 ir_keytable_SOURCES = keytable.c parse.h ir-encode.c ir-encode.h
+
+if HAVE_LIBELF
+ir_keytable_SOURCES += bpf.c bpf_load.c bpf.h bpf_load.h
+endif
+
 ir_keytable_LDADD = @LIBINTL@
-ir_keytable_LDFLAGS = $(ARGP_LIBS)
+ir_keytable_LDFLAGS = $(ARGP_LIBS) $(LIBELF_LIBS)
 
 EXTRA_DIST = 70-infrared.rules rc_keymaps rc_keymaps_userspace gen_keytables.pl ir-keytable.1 rc_maps.cfg
 

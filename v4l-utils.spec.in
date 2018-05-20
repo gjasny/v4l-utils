@@ -10,7 +10,7 @@ Source0:        http://linuxtv.org/downloads/v4l-utils/v4l-utils-%{version}.tar.
 Source1:        qv4l2.desktop
 Source2:        qv4l2.svg
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  qt4-devel libsysfs-devel kernel-headers desktop-file-utils
+BuildRequires:  qt4-devel libsysfs-devel kernel-headers desktop-file-utils elfutils-libelf-devel
 # For /etc/udev/rules.d ownership
 Requires:       udev
 Requires:       libv4l = %{version}-%{release}

@@ -35,8 +35,10 @@ Sets the delay before repeating a keystroke
 Change scan/key pairs
 .TP 
 \fB\-p\fR, \fB\-\-protocol\fR=\fIPROTOCOL\fR
-Protocol to enable (the other ones will be disabled). To enable more than one, 
-use the option more than one time
+Comma seperated list of protocols to enabled (the other ones will be disabled). Alternatively, this is the path to a BPF protocol to be loaded.
+.TP
+\fB\-e\fR, \fB\-\-parameter\fR=\fIPARAMETER\fR
+Commma seperated list of parameters for the BPF protocol
 .TP
 \fB\-P\fR, \fB\-\-period\fR\=\fiPERIOD\fR
 Sets the period to repeat a keystroke
@@ -78,7 +80,9 @@ a file wit a set of scancode=keycode value pairs
 .IP \fISCANKEY\fR
 a set of scancode1=keycode1,scancode2=keycode2.. value pairs
 .IP \fIPROTOCOL\fR
-protocol name to be enabled (case insensitive). Supported protocols are: NEC, RC-5, RC-6, JVC, SONY, SANYO, LIRC, RC-5-SZ, SHARP, MCE-KBD, XMP, other, all.
+Comma separated list of protocols to be enabled (case insensitive). Supported kernel protocols are: NEC, RC-5, RC-6, JVC, SONY, SANYO, LIRC, RC-5-SZ, SHARP, MCE-KBD, XMP, IMON, other, all. There are also BPF protocols: manchester, rc_mm, pulse_distance, grundig. Alternatively, this can be the path to a BPF protocol file to be loaded.
+.IP \fIPARAMETERS\fR
+Comma seperated list of parameters for the BPF protocol being loaded. They have the format of name=value, where value is an number.
 .IP \fIDELAY\fR
 Delay before repeating a keystroke
 .IP \fIPERIOD\fR
@@ -102,6 +106,10 @@ To append more codes to the existing table:
 .PP
 To read the current keytable, on the second remote controller:
 	\fBir\-keytable \-s rc1 \-r\fR
+.PP
+To enable NEC protocol and load a BPF protocol, with a parameter for the BPF protocol:
+.br
+	\fBir\-keytable \-p nec,pulse_distance \-e pulse_header=9000
 .SH BUGS
 Report bugs to \fBLinux Media Mailing List <linux-media@vger.kernel.org>\fR
 .SH COPYRIGHT

@@ -167,6 +167,16 @@ AC_SUBST([X11_CFLAGS])
 AC_SUBST([X11_LIBS])
 AM_CONDITIONAL([HAVE_X11], [test x$x11_pkgconfig = xyes])
 
+PKG_CHECK_MODULES([LIBELF], [libelf], [libelf_pkgconfig=yes], [libelf_pkgconfig=no])
+AC_SUBST([LIBELF_CFLAGS])
+AC_SUBST([LIBELF_LIBS])
+AM_CONDITIONAL([HAVE_LIBELF], [test x$libelf_pkgconfig = xyes])
+if test "x$libelf_pkgconfig" = "xyes"; then
+  AC_DEFINE([HAVE_LIBELF], [1], [libelf library is present])
+else
+  AC_MSG_WARN(libelf library not available)
+fi
+
 AS_IF([test "x$x11_pkgconfig" = xyes],
       [PKG_CHECK_MODULES(GL, [gl], [gl_pkgconfig=yes], [gl_pkgconfig=no])], [gl_pkgconfig=no])
 AC_SUBST([GL_CFLAGS])
@@ -497,6 +507,7 @@ compile time options summary
     X11                        : $x11_pkgconfig
     GL                         : $gl_pkgconfig
     glu                        : $glu_pkgconfig
+    libelf		       : $libelf_pkgconfig
     libjpeg                    : $have_jpeg
     libudev                    : $have_libudev
     pthread                    : $have_pthread

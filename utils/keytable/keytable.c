@@ -33,6 +33,8 @@
 
 #include "ir-encode.h"
 #include "parse.h"
+#include "bpf.h"
+#include "bpf_load.h"
 
 #ifdef ENABLE_NLS
 # define _(string) gettext(string)
@@ -54,6 +56,10 @@ struct input_keymap_entry_v2 {
 	u_int32_t keycode;
 	u_int8_t  scancode[32];
 };
+
+
+#define IR_PROTOCOLS_USER_DIR IR_KEYTABLE_USER_DIR "/protocols"
+#define IR_PROTOCOLS_SYSTEM_DIR IR_KEYTABLE_SYSTEM_DIR "/protocols"
 
 #ifndef EVIOCSCLOCKID
 #define EVIOCSCLOCKID		_IOW('E', 0xa0, int)
@@ -218,15 +224,18 @@ static const char doc[] = N_(
 	"\nAllows get/set IR keycode/scancode tables\n"
 	"You need to have read permissions on /dev/input for the program to work\n"
 	"\nOn the options below, the arguments are:\n"
-	"  DEV      - the /dev/input/event* device to control\n"
-	"  SYSDEV   - the ir class as found at /sys/class/rc\n"
-	"  TABLE    - a file with a set of scancode=keycode value pairs\n"
-	"  SCANKEY  - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
-	"  PROTOCOL - protocol name (nec, rc-5, rc-6, jvc, sony, sanyo, rc-5-sz, lirc,\n"
-	"                            sharp, mce_kbd, xmp, other, all) to be enabled\n"
-	"  DELAY    - Delay before repeating a keystroke\n"
-	"  PERIOD   - Period to repeat a keystroke\n"
-	"  CFGFILE  - configuration file that associates a driver/table name with a keymap file\n"
+	"  DEV       - the /dev/input/event* device to control\n"
+	"  SYSDEV    - the ir class as found at /sys/class/rc\n"
+	"  TABLE     - a file with a set of scancode=keycode value pairs\n"
+	"  SCANKEY   - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
+	"  PROTOCOL  - protocol name (nec, rc-5, rc-6, jvc, sony, sanyo, rc-5-sz, lirc,\n"
+	"              sharp, mce_kbd, xmp, imon, other, all) to be enabled,\n"
+	"              or a bpf protocol name or file\n"
+	"  DELAY     - Delay before repeating a keystroke\n"
+	"  PERIOD    - Period to repeat a keystroke\n"
+	"  PARAMETER - a set of name1=number1[,name2=number2]... for the BPF prototcol\n"
+	"  CFGFILE   - configuration file that associates a driver/table name with\n"
+	"              a keymap file\n"
 	"\nOptions can be combined together.");
 
 static const struct argp_option options[] = {
@@ -239,6 +248,7 @@ static const struct argp_option options[] = {
 	{"write",	'w',	N_("TABLE"),	0,	N_("write (adds) the scancodes to the device scancode/keycode table from an specified file"), 0},
 	{"set-key",	'k',	N_("SCANKEY"),	0,	N_("Change scan/key pairs"), 0},
 	{"protocol",	'p',	N_("PROTOCOL"),	0,	N_("Protocol to enable (the other ones will be disabled). To enable more than one, use the option more than one time"), 0},
+	{"parameter",	'e',	N_("PARAMETER"), 0,	N_("Set a parameter for the protocol decoder")},
 	{"delay",	'D',	N_("DELAY"),	0,	N_("Sets the delay before repeating a keystroke"), 0},
 	{"period",	'P',	N_("PERIOD"),	0,	N_("Sets the period to repeat a keystroke"), 0},
 	{"auto-load",	'a',	N_("CFGFILE"),	0,	N_("Auto-load a table, based on a configuration file. Only works with sysdev."), 0},
@@ -258,11 +268,25 @@ static char *devclass = NULL;
 static char *devicename = NULL;
 static int readtable = 0;
 static int clear = 0;
-static int debug = 0;
+int debug = 0;
 static int test = 0;
 static int delay = -1;
 static int period = -1;
 static enum sysfs_protocols ch_proto = 0;
+
+struct bpf_protocol {
+	struct bpf_protocol *next;
+	char *name;
+};
+
+struct bpf_parameter {
+	struct bpf_parameter *next;
+	int value;
+	char name[0];
+};
+
+static struct bpf_protocol *bpf_protocol;
+static struct bpf_parameter *bpf_parameter;
 
 struct cfgfile cfg = {
 	NULL, NULL, NULL, NULL
@@ -397,7 +421,6 @@ err_einval:
 	fprintf(stderr, _("Invalid parameter on line %d of %s\n"),
 		line, fname);
 	return EINVAL;
-
 }
 
 struct cfgfile *nextcfg = &cfg;
@@ -580,13 +603,61 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 
 			protocol = parse_sysfs_protocol(p, true);
 			if (protocol == SYSFS_INVALID) {
-				argp_error(state, _("Unknown protocol: %s"), p);
+				struct bpf_protocol *b;
+
+				b = malloc(sizeof(*b));
+				b->name = strdup(p);
+				b->next = bpf_protocol;
+				bpf_protocol = b;
+			}
+			else {
+				ch_proto |= protocol;
+			}
+		}
+		break;
+	case 'e':
+		p = strtok(arg, ":=");
+		do {
+			struct bpf_parameter *param;
+
+			if (!param) {
+				argp_error(state, _("Missing parameter name: %s"), arg);
 				break;
 			}
 
-			ch_proto |= protocol;
-		}
+			param = calloc(1, sizeof(*param) + strlen(p) + 1);
+			if (!p) {
+				perror(_("No memory!\n"));
+				return ENOMEM;
+			}
+
+			strcpy(param->name, p);
+
+			p = strtok(NULL, ",;");
+			if (!p) {
+				free(param);
+				argp_error(state, _("Missing value"));
+				break;
+			}
+
+			param->value = strtol(p, NULL, 0);
+			if (errno) {
+				free(param);
+				argp_error(state, _("Unknown keycode: %s"), p);
+				break;
+			}
+
+			if (debug)
+				fprintf(stderr, _("parameter %s=%d\n"),
+					param->name, param->value);
+
+			param->next = bpf_parameter;
+			bpf_parameter = param;
+
+			p = strtok(NULL, ":=");
+		} while (p);
 		break;
+
 	case '?':
 		argp_state_help(state, state->out_stream,
 				ARGP_HELP_SHORT_USAGE | ARGP_HELP_LONG
@@ -1188,10 +1259,6 @@ static int set_proto(struct rc_device *rc_dev)
 	int rc = 0;
 
 	rc_dev->current &= rc_dev->supported;
-	if (!rc_dev->current) {
-		fprintf(stderr, _("Invalid protocols selected\n"));
-		return EINVAL;
-	}
 
 	if (rc_dev->version == VERSION_2) {
 		rc = v2_set_protocols(rc_dev);
@@ -1299,9 +1366,9 @@ static int add_keys(int fd)
 static void display_proto(struct rc_device *rc_dev)
 {
 	if (rc_dev->type == HARDWARE_DECODER)
-		fprintf(stderr, _("Current protocols: "));
+		fprintf(stderr, _("Current kernel protocols: "));
 	else
-		fprintf(stderr, _("Enabled protocols: "));
+		fprintf(stderr, _("Enabled kernel protocols: "));
 	write_sysfs_protocols(rc_dev->current, stderr, "%s ");
 	fprintf(stderr, "\n");
 }
@@ -1571,6 +1638,147 @@ static void device_info(int fd, char *prepend)
 		perror ("EVIOCGID");
 }
 
+#ifdef HAVE_LIBELF
+#define MAX_PROGS 64
+static void attach_bpf(const char *lirc_name, const char *bpf_prog)
+{
+	unsigned int features;
+	int fd;
+
+	fd = open(lirc_name, O_RDONLY);
+	if (fd == -1) {
+		perror(lirc_name);
+		return;
+	}
+
+	if (ioctl(fd, LIRC_GET_FEATURES, &features)) {
+		perror(lirc_name);
+		close(fd);
+		return;
+	}
+
+	if (!(features & LIRC_CAN_REC_MODE2)) {
+		fprintf(stderr, _("%s: not a raw IR receiver\n"), lirc_name);
+		close(fd);
+		return;
+	}
+
+	load_bpf_file(bpf_prog, fd);
+	close(fd);
+}
+
+static void show_bpf(const char *lirc_name)
+{
+	unsigned int prog_ids[MAX_PROGS], count = MAX_PROGS;
+	unsigned int features, i;
+	int ret, fd, prog_fd;
+
+	fd = open(lirc_name, O_RDONLY);
+	if (fd == -1)
+		goto error;
+
+	if (ioctl(fd, LIRC_GET_FEATURES, &features)) {
+		close(fd);
+		goto error;
+	}
+
+	if (!(features & LIRC_CAN_REC_MODE2)) {
+		// only support for mode2 type raw ir devices
+		close(fd);
+		return;
+	}
+
+	ret = bpf_prog_query(fd, BPF_LIRC_MODE2, 0, NULL, prog_ids, &count);
+	close(fd);
+	if (ret) {
+		if (errno == EINVAL)
+			errno = ENOTSUP;
+		goto error;
+	}
+
+	printf(_("\tAttached BPF protocols: "));
+	for (i=0; i<count; i++) {
+		if (i)
+			printf(" ");
+		prog_fd = bpf_prog_get_fd_by_id(prog_ids[i]);
+		if (prog_fd != -1) {
+			struct bpf_prog_info info = {};
+			__u32 info_len = sizeof(info);
+
+			ret = bpf_obj_get_info_by_fd(prog_fd, &info, &info_len);
+			close(prog_fd);
+			if (!ret && info.name[0]) {
+				printf("%s", info.name);
+				continue;
+			}
+		}
+		printf("%d", prog_ids[i]);
+	}
+	printf(_("\n"));
+	return;
+error:
+	printf(_("\tAttached BPF protocols: %m\n"));
+}
+
+static void clear_bpf(const char *lirc_name)
+{
+	unsigned int prog_ids[MAX_PROGS], count = MAX_PROGS;
+	unsigned int features, i;
+	int ret, prog_fd, fd;
+
+	fd = open(lirc_name, O_RDONLY);
+	if (fd == -1) {
+		perror(lirc_name);
+		return;
+	}
+
+	if (ioctl(fd, LIRC_GET_FEATURES, &features)) {
+		perror(lirc_name);
+		close(fd);
+		return;
+	}
+
+	if (!(features & LIRC_CAN_REC_MODE2)) {
+		// only support for mode2 type raw ir devices
+		close(fd);
+		return;
+	}
+
+	ret = bpf_prog_query(fd, BPF_LIRC_MODE2, 0, NULL, prog_ids, &count);
+	if (ret) {
+		close(fd);
+		return;
+	}
+
+	for (i = 0; i < count; i++) {
+		if (debug)
+			fprintf(stderr, _("BPF protocol prog_id %d\n"),
+				prog_ids[i]);
+		prog_fd = bpf_prog_get_fd_by_id(prog_ids[i]);
+		if (prog_fd == -1) {
+			printf(_("Failed to get BPF prog id %u: %m\n"),
+			       prog_ids[i]);
+			continue;
+		}
+		ret = bpf_prog_detach2(prog_fd, fd, BPF_LIRC_MODE2);
+		if (ret)
+			printf(("Failed to detach BPF prog id %u: %m\n"),
+			       prog_ids[i]);
+		close(prog_fd);
+	}
+	close(fd);
+	if (debug)
+		fprintf(stderr, _("BPF protocols removed\n"));
+}
+#else
+static void attach_bpf(const char *lirc_name, const char *bpf_prog)
+{
+	fprintf(stderr, _("error: ir-keytable was compiled without BPF support\n"));
+}
+static void show_bpf(const char *lirc_name) {}
+static void clear_bpf(const char *lirc_name) {}
+#endif
+
 static int show_sysfs_attribs(struct rc_device *rc_dev, char *name)
 {
 	static struct sysfs_names *names, *cur;
@@ -1592,10 +1800,12 @@ static int show_sysfs_attribs(struct rc_device *rc_dev, char *name)
 			fprintf(stderr, _("\tDriver: %s, table: %s\n"),
 				rc_dev->drv_name,
 				rc_dev->keytable_name);
-			if (rc_dev->lirc_name)
-				fprintf(stderr, _("\tlirc device: %s\n"),
+			if (rc_dev->lirc_name) {
+				fprintf(stderr, _("\tLIRC device: %s\n"),
 					rc_dev->lirc_name);
-			fprintf(stderr, _("\tSupported protocols: "));
+				show_bpf(rc_dev->lirc_name);
+			}
+			fprintf(stderr, _("\tSupported kernel protocols: "));
 			write_sysfs_protocols(rc_dev->supported, stderr, "%s ");
 			fprintf(stderr, "\n\t");
 			display_proto(rc_dev);
@@ -1614,6 +1824,44 @@ static int show_sysfs_attribs(struct rc_device *rc_dev, char *name)
 	return 0;
 }
 
+static char *find_bpf_file(const char *name)
+{
+	struct stat st;
+	char *fname;
+
+	if (!stat(name, &st))
+		return strdup(name);
+
+	asprintf(&fname, IR_PROTOCOLS_USER_DIR "/%s.o", name);
+	if (stat(fname, &st)) {
+		free(fname);
+		asprintf(&fname, IR_PROTOCOLS_SYSTEM_DIR "/%s.o", name);
+
+		if (stat(fname, &st)) {
+			fprintf(stderr, _("Can't find %s bpf protocol in %s or %s\n"), name, IR_KEYTABLE_USER_DIR "/protocols", IR_KEYTABLE_SYSTEM_DIR "/protocols");
+			free(fname);
+			return NULL;
+		}
+	}
+
+	return fname;
+}
+
+int bpf_param(const char *name, int *val)
+{
+	struct bpf_parameter *param = bpf_parameter;
+
+	while (param) {
+		if (strcmp(name, param->name) == 0) {
+			*val = param->value;
+			return 0;
+		}
+		param = param->next;
+	}
+
+	return -ENOENT;
+}
+
 int main(int argc, char *argv[])
 {
 	int dev_from_class = 0, write_cnt;
@@ -1630,7 +1878,7 @@ int main(int argc, char *argv[])
 	argp_parse(&argp, argc, argv, ARGP_NO_HELP, 0, 0);
 
 	/* Just list all devices */
-	if (!clear && !readtable && !keytable && !ch_proto && !cfg.next && !test && delay < 0 && period < 0) {
+	if (!clear && !readtable && !keytable && !ch_proto && !cfg.next && !test && delay < 0 && period < 0 && !bpf_protocol) {
 		if (devicename) {
 			fd = open(devicename, O_RDONLY);
 			if (fd < 0) {
@@ -1756,7 +2004,10 @@ int main(int argc, char *argv[])
 	/*
 	 * Third step: change protocol
 	 */
-	if (ch_proto) {
+	if (ch_proto || bpf_protocol) {
+		if (rc_dev.lirc_name)
+			clear_bpf(rc_dev.lirc_name);
+
 		rc_dev.current = ch_proto;
 		if (set_proto(&rc_dev))
 			fprintf(stderr, _("Couldn't change the IR protocols\n"));
@@ -1764,6 +2015,23 @@ int main(int argc, char *argv[])
 			fprintf(stderr, _("Protocols changed to "));
 			write_sysfs_protocols(rc_dev.current, stderr, "%s ");
 			fprintf(stderr, "\n");
+		}
+	}
+
+	if (bpf_protocol) {
+		struct bpf_protocol *b;
+
+		if (!rc_dev.lirc_name) {
+			fprintf(stderr, _("Error: unable to attach bpf program, lirc device name was not found\n"));
+		}
+
+		for (b = bpf_protocol; b && rc_dev.lirc_name; b = b->next) {
+			char *fname = find_bpf_file(b->name);
+
+			if (fname) {
+				attach_bpf(rc_dev.lirc_name, fname);
+				free(fname);
+			}
 		}
 	}
 
