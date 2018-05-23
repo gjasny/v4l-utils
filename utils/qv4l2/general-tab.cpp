@@ -1084,7 +1084,10 @@ bool GeneralTab::createAudioDeviceList()
 
 		void **hint;
 
-		snd_device_name_hint(deviceNum, "pcm", &hint);
+		if (snd_device_name_hint(deviceNum, "pcm", &hint)) {
+			audioDevices--;
+			continue;
+		}
 		for (int i = 0; hint[i] != NULL; i++) {
 			int addAs = addAudioDevice(hint[i], deviceNum);
 			if (addAs == AUDIO_ADD_READ || addAs == AUDIO_ADD_READWRITE)
