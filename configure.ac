@@ -23,6 +23,7 @@ AC_CONFIG_FILES([Makefile
 	utils/libmedia_dev/Makefile
 	utils/dvb/Makefile
 	utils/keytable/Makefile
+	utils/keytable/bpf_protocols/Makefile
 	utils/ir-ctl/Makefile
 	utils/cx18-ctl/Makefile
 	utils/ivtv-ctl/Makefile
@@ -172,10 +173,13 @@ AC_SUBST([LIBELF_CFLAGS])
 AC_SUBST([LIBELF_LIBS])
 AM_CONDITIONAL([HAVE_LIBELF], [test x$libelf_pkgconfig = xyes])
 if test "x$libelf_pkgconfig" = "xyes"; then
+  AC_CHECK_PROG([CLANG], clang, clang)
   AC_DEFINE([HAVE_LIBELF], [1], [libelf library is present])
 else
   AC_MSG_WARN(libelf library not available)
 fi
+
+AM_CONDITIONAL([BPF_PROTOCOLS], [test x$CLANG = xclang])
 
 AS_IF([test "x$x11_pkgconfig" = xyes],
       [PKG_CHECK_MODULES(GL, [gl], [gl_pkgconfig=yes], [gl_pkgconfig=no])], [gl_pkgconfig=no])

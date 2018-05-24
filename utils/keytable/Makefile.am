@@ -13,6 +13,10 @@ endif
 ir_keytable_LDADD = @LIBINTL@
 ir_keytable_LDFLAGS = $(ARGP_LIBS) $(LIBELF_LIBS)
 
+if BPF_PROTOCOLS
+SUBDIRS = bpf_protocols
+endif
+
 EXTRA_DIST = 70-infrared.rules rc_keymaps rc_keymaps_userspace gen_keytables.pl ir-keytable.1 rc_maps.cfg
 
 # custom target
