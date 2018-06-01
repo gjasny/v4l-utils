@@ -112,6 +112,8 @@ struct short_audio_desc {
 
 extern bool show_info;
 extern bool show_warnings;
+extern bool exit_on_fail;
+extern bool exit_on_warn;
 extern unsigned warnings;
 extern unsigned reply_threshold;
 extern time_t long_timeout;
@@ -211,6 +213,8 @@ struct remote_subtest {
 		warnings++;					\
 		if (show_warnings)				\
 			printf("\t\twarn: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+		if (exit_on_warn)				\
+			exit(1);				\
 	} while (0)
 
 #define warn_once(fmt, args...)						\
@@ -223,12 +227,16 @@ struct remote_subtest {
 			if (show_warnings)				\
 				printf("\t\twarn: %s(%d): " fmt,	\
 					__FILE__, __LINE__, ##args); 	\
+			if (exit_on_warn)				\
+				exit(1);				\
 		}							\
 	} while (0)
 
 #define fail(fmt, args...) 						\
 ({ 									\
 	printf("\t\tfail: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+	if (exit_on_fail)						\
+		exit(1);						\
 	FAIL;								\
 })
 

@@ -36,6 +36,7 @@
 enum Option {
 	OptTestAdapter = 'A',
 	OptSetDevice = 'd',
+	OptExitOnFail = 'E',
 	OptHelp = 'h',
 	OptInteractive = 'i',
 	OptNoWarnings = 'n',
@@ -46,6 +47,7 @@ enum Option {
 	OptTrace = 'T',
 	OptVerbose = 'v',
 	OptWallClock = 'w',
+	OptExitOnWarn = 'W',
 
 	OptTestCore = 128,
 	OptTestAudioRateControl,
@@ -98,6 +100,8 @@ static int tests_total, tests_ok;
 
 bool show_info;
 bool show_warnings = true;
+bool exit_on_fail;
+bool exit_on_warn;
 unsigned warnings;
 unsigned reply_threshold = 1000;
 time_t long_timeout = 60;
@@ -106,6 +110,8 @@ static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
 	{"help", no_argument, 0, OptHelp},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
+	{"exit-on-fail", no_argument, 0, OptExitOnFail},
+	{"exit-on-warn", no_argument, 0, OptExitOnWarn},
 	{"remote", optional_argument, 0, OptRemote},
 	{"timeout", required_argument, 0, OptTimeout},
 	{"trace", no_argument, 0, OptTrace},
@@ -197,12 +203,14 @@ static void usage(void)
 	       "  --test-standby-resume               Test standby and resume functionality. This will activate\n"
 	       "                                      testing of Standby, Give Device Power Status and One Touch Play.\n"
 	       "\n"
+	       "  -E, --exit-on-fail Exit on the first fail.\n"
 	       "  -h, --help         Display this help message\n"
 	       "  -n, --no-warnings  Turn off warning messages\n"
 	       "  -s, --skip-info    Skip Driver Info output\n"
 	       "  -T, --trace        Trace all called ioctls\n"
 	       "  -v, --verbose      Turn on verbose reporting\n"
 	       "  -w, --wall-clock   Show timestamps as wall-clock time\n"
+	       "  -W, --exit-on-warn Exit on the first warning.\n"
 	       );
 }
 
@@ -1128,6 +1136,12 @@ int main(int argc, char **argv)
 			break;
 		case OptNoWarnings:
 			show_warnings = false;
+			break;
+		case OptExitOnFail:
+			exit_on_fail = true;
+			break;
+		case OptExitOnWarn:
+			exit_on_warn = true;
 			break;
 		case OptRemote:
 			if (optarg) {

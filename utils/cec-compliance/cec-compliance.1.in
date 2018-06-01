@@ -74,6 +74,10 @@ tests they depend on failed, and they will not be shown in the test listing.
 \fB\-d\fR, \fB\-\-device\fR \fI<dev>\fR
 Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is used.
 .TP
+\fB\-E\fR, \fB\-\-exit\-on\-fail\fR
+Exit this application when the first failure occurs instead of continuing
+with a possible inconsistent state.
+.TP
 \fB\-v\fR, \fB\-\-verbose\fR
 Turn on verbose reporting.
 .TP
@@ -85,6 +89,9 @@ Prints the help message.
 .TP
 \fB\-w\fR, \fB\-\-wall\-clock\fR
 Show timestamps as wall-clock time.
+.TP
+\fB\-W\fR, \fB\-\-exit\-on\-warn\fR
+Exit this application when the first warning occurs instead of continuing.
 .TP
 \fB\-n\fR, \fB\-\-no\-warnings\fR
 Turn off warning messages.
