@@ -51,6 +51,8 @@
 
 extern bool show_info;
 extern bool show_warnings;
+extern bool exit_on_fail;
+extern bool exit_on_warn;
 extern int kernel_version;
 extern int media_fd;
 extern unsigned warnings;
@@ -136,6 +138,8 @@ struct node : public base_node, public cv4l_fd {
 		warnings++;					\
 		if (show_warnings)				\
  			printf("\t\twarn: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+		if (exit_on_warn)				\
+			exit(1);				\
 	} while (0)
 
 #define warn_once(fmt, args...)						\
@@ -148,12 +152,16 @@ struct node : public base_node, public cv4l_fd {
 			if (show_warnings)				\
 				printf("\t\twarn: %s(%d): " fmt,	\
 					__FILE__, __LINE__, ##args); 	\
+			if (exit_on_warn)				\
+				exit(1);				\
 		}							\
 	} while (0)
 
 #define fail(fmt, args...) 						\
 ({ 									\
  	printf("\t\tfail: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+	if (exit_on_fail)						\
+		exit(1);						\
 	1;								\
 })
 

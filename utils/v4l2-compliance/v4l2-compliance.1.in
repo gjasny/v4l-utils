@@ -128,6 +128,10 @@ Do the \fB\-s\fR, \fB\-c\fR and \fB\-f\fR streaming tests for all inputs or outp
 instead of just the current input or output. This requires that a valid video
 signal is present on all inputs or that all outputs are hooked up.
 .TP
+\fB\-E\fR, \fB\-\-exit\-on\-fail\fR
+Exit this application when the first failure occurs instead of continuing
+with a possible inconsistent state.
+.TP
 \fB\-n\fR, \fB\-\-no\-warnings\fR
 Turn off warning messages. They are still counted in the summary, but you won't see them.
 .TP
@@ -141,6 +145,9 @@ Turn on verbose reporting.
 Use the libv4l2 wrapper library for all V4L2 device accesses. Note that doing this will
 cause some tests to fail because the libv4l2 library isn't fully V4L2 compliant. By
 default v4l2-compliance will bypass libv4l2 and access the V4L2 devices directly.
+.TP
+\fB\-W\fR, \fB\-\-exit\-on\-warn\fR
+Exit this application when the first warning occurs instead of continuing.
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Prints the help message.

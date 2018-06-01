@@ -56,6 +56,7 @@ enum Option {
 	OptStreamAllColorTest = 'c',
 	OptSetDevice = 'd',
 	OptSetExpBufDevice = 'e',
+	OptExitOnFail = 'E',
 	OptStreamAllFormats = 'f',
 	OptHelp = 'h',
 	OptSetMediaDevice = 'm',
@@ -70,6 +71,7 @@ enum Option {
 	OptVerbose = 'v',
 	OptSetVbiDevice = 'V',
 	OptUseWrapper = 'w',
+	OptExitOnWarn = 'W',
 	OptLast = 256
 };
 
@@ -81,6 +83,8 @@ static int tests_total, tests_ok;
 // Globals
 bool show_info;
 bool show_warnings = true;
+bool exit_on_fail;
+bool exit_on_warn;
 int kernel_version;
 int media_fd = -1;
 unsigned warnings;
@@ -124,6 +128,8 @@ static struct option long_options[] = {
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
+	{"exit-on-fail", no_argument, 0, OptExitOnFail},
+	{"exit-on-warn", no_argument, 0, OptExitOnWarn},
 	{"trace", no_argument, 0, OptTrace},
 #ifndef NO_LIBV4L2
 	{"wrapper", no_argument, 0, OptUseWrapper},
@@ -190,6 +196,7 @@ static void usage(void)
 	printf("                     signal is present on the input(s). If <skip> is not specified,\n");
 	printf("                     then just capture the first frame. If <perc> is not specified,\n");
 	printf("                     then this defaults to 90%%.\n");
+	printf("  -E, --exit-on-fail Exit on the first fail.\n");
 	printf("  -h, --help         Display this help message.\n");
 	printf("  -n, --no-warnings  Turn off warning messages.\n");
 	printf("  -T, --trace        Trace all called ioctls.\n");
@@ -197,6 +204,7 @@ static void usage(void)
 #ifndef NO_LIBV4L2
 	printf("  -w, --wrapper      Use the libv4l2 wrapper library.\n");
 #endif
+	printf("  -W, --exit-on-warn Exit on the first warning.\n");
 	exit(0);
 }
 
@@ -1215,6 +1223,12 @@ int main(int argc, char **argv)
 			break;
 		case OptNoWarnings:
 			show_warnings = false;
+			break;
+		case OptExitOnWarn:
+			exit_on_warn = true;
+			break;
+		case OptExitOnFail:
+			exit_on_fail = true;
 			break;
 		case OptVerbose:
 			show_info = true;
