@@ -93,6 +93,9 @@ Show timestamps as wall-clock time.
 \fB\-W\fR, \fB\-\-exit\-on\-warn\fR
 Exit this application when the first warning occurs instead of continuing.
 .TP
+\fB\-s\fR, \fB\-\-skip\-info\fR
+Skip the Driver Info output section.
+.TP
 \fB\-n\fR, \fB\-\-no\-warnings\fR
 Turn off warning messages.
 .TP
