@@ -1248,6 +1248,9 @@ static int showTopology(struct node *node)
 
 	doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 
+	if (!laddrs.num_log_addrs)
+		return 0;
+
 	for (unsigned i = 0; i < 15; i++) {
 		int ret;
 
