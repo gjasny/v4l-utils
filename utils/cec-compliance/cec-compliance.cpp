@@ -702,6 +702,10 @@ int cec_named_ioctl(struct node *node, const char *name,
 				name, retval, strerror(e));
 	}
 
+	if (!retval && request == CEC_TRANSMIT &&
+	    (msg->tx_status & CEC_TX_STATUS_OK) && ((msg->tx_status & CEC_TX_STATUS_MAX_RETRIES)))
+		warn("Both OK and MAX_RETRIES were set in tx_status!\n");
+
 	if (!retval && request == CEC_TRANSMIT && show_info) {
 		printf("\t\t%s: Sequence: %u Tx Timestamp: %s Length: %u",
 		       opname.c_str(), msg->sequence, ts2s(msg->tx_ts).c_str(), msg->len);
@@ -709,9 +713,8 @@ int cec_named_ioctl(struct node *node, const char *name,
 			printf("\n\t\t\tRx Timestamp: %s Approximate response time: %u ms",
 			       ts2s(msg->rx_ts).c_str(),
 			       response_time_ms(msg));
-		if ((msg->tx_status & CEC_TX_STATUS_OK) &&
-		    (msg->tx_status & (CEC_TX_STATUS_ARB_LOST | CEC_TX_STATUS_NACK |
-				       CEC_TX_STATUS_LOW_DRIVE | CEC_TX_STATUS_ERROR)))
+		if (msg->tx_status & (CEC_TX_STATUS_ARB_LOST | CEC_TX_STATUS_NACK |
+				      CEC_TX_STATUS_LOW_DRIVE | CEC_TX_STATUS_ERROR))
 			printf("\n\t\t\tStatus: %s", status2s(*msg).c_str());
 		printf("\n");
 	}
