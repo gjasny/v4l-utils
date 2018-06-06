@@ -31,7 +31,7 @@ static bool get_power_status(struct node *node, unsigned me, unsigned la, __u8 &
 		power_status = CEC_OP_POWER_STATUS_STANDBY;
 		return true;
 	}
-	if (res || timed_out_or_abort(&msg))
+	if (res || !(msg.tx_status & CEC_TX_STATUS_OK) || timed_out_or_abort(&msg))
 		return false;
 	cec_ops_report_power_status(&msg, &power_status);
 	return true;
@@ -121,7 +121,15 @@ static int one_touch_play_view_on(struct node *node, unsigned me, unsigned la, b
 		cec_msg_image_view_on(&msg);
 	else if (opcode == CEC_MSG_TEXT_VIEW_ON)
 		cec_msg_text_view_on(&msg);
-	fail_on_test(!transmit_timeout(node, &msg));
+
+	int res = doioctl(node, CEC_TRANSMIT, &msg);
+
+	if (res == ENONET && la == CEC_LOG_ADDR_TV) {
+		msg.msg[0] = (CEC_LOG_ADDR_UNREGISTERED << 4) | la;
+		res = doioctl(node, CEC_TRANSMIT, &msg);
+	}
+	fail_on_test(res || !(msg.tx_status & CEC_TX_STATUS_OK));
+
 	fail_on_test(is_tv(la, node->remote[la].prim_type) && unrecognized_op(&msg));
 	if (refused(&msg))
 		return REFUSED;
@@ -294,6 +302,8 @@ static bool poll_stable_power_status(struct node *node, unsigned me, unsigned la
 			   between power modes. Register that this happens, but continue
 			   the test. */
 			unresponsive_time = time(NULL) - t;
+			sleep(SLEEP_POLL_POWER_STATUS);
+			continue;
 		}
 		if (!transient && (power_status == CEC_OP_POWER_STATUS_TO_ON ||
 				   power_status == CEC_OP_POWER_STATUS_TO_STANDBY)) {
@@ -476,11 +486,56 @@ static int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bo
 	return 0;
 }
 
+static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigned la, bool interactive, __u8 opcode)
+{
+	if (!is_tv(la, node->remote[la].prim_type))
+		return NOTAPPLICABLE;
+
+	unsigned unresponsive_time = 0;
+
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+
+	int ret = standby_resume_standby(node, me, la, interactive);
+
+	if (ret)
+		return ret;
+
+	sleep(6);
+
+	ret = one_touch_play_view_on(node, me, la, interactive, opcode);
+
+	if (ret)
+		return ret;
+
+	announce("Device is woken up");
+	unresponsive_time = 0;
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+	fail_on_test(interactive && !question("Is the device in On state?"));
+
+	if (unresponsive_time > 0)
+		warn("The device went correctly out of standby, but became unresponsive for %d s during the transition.\n",
+		     unresponsive_time);
+
+	return 0;
+}
+
+static int standby_resume_wakeup_image_view_on(struct node *node, unsigned me, unsigned la, bool interactive)
+{
+	return standby_resume_wakeup_view_on(node, me, la, interactive, CEC_MSG_IMAGE_VIEW_ON);
+}
+
+static int standby_resume_wakeup_text_view_on(struct node *node, unsigned me, unsigned la, bool interactive)
+{
+	return standby_resume_wakeup_view_on(node, me, la, interactive, CEC_MSG_TEXT_VIEW_ON);
+}
+
 struct remote_subtest standby_resume_subtests[] = {
 	{ "Standby", CEC_LOG_ADDR_MASK_ALL, standby_resume_standby },
 	{ "Repeated Standby message does not wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_standby_toggle },
 	{ "No wakeup on Active Source", CEC_LOG_ADDR_MASK_ALL, standby_resume_active_source_nowake },
-	{ "Wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_wakeup },
+	{ "Wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_wakeup},
+	{ "Wake up TV on Image View On", CEC_LOG_ADDR_MASK_TV, standby_resume_wakeup_image_view_on },
+	{ "Wake up TV on Text View On", CEC_LOG_ADDR_MASK_TV, standby_resume_wakeup_text_view_on },
 };
 
 const unsigned standby_resume_subtests_size = ARRAY_SIZE(standby_resume_subtests);
