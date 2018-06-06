@@ -65,6 +65,72 @@ const char *version2s(unsigned version)
 	}
 }
 
+/*
+ * Most of these vendor IDs come from include/cectypes.h from libcec.
+ */
+const char *vendor2s(unsigned vendor)
+{
+	switch (vendor) {
+	case 0x000039:
+	case 0x000ce7:
+		return "(Toshiba)";
+	case 0x0000f0:
+		return "(Samsung)";
+	case 0x0005cd:
+		return "(Denon)";
+	case 0x000678:
+		return "(Marantz)";
+	case 0x000982:
+		return "(Loewe)";
+	case 0x0009b0:
+		return "(Onkyo)";
+	case 0x000c03:
+		return "(HDMI)";
+	case 0x001582:
+		return "(Pulse-Eight)";
+	case 0x001950:
+	case 0x9c645e:
+		return "(Harman Kardon)";
+	case 0x001a11:
+		return "(Google)";
+	case 0x0020c7:
+		return "(Akai)";
+	case 0x002467:
+		return "(AOC)";
+	case 0x005060:
+		return "(Cisco)";
+	case 0x008045:
+		return "(Panasonic)";
+	case 0x00903e:
+		return "(Philips)";
+	case 0x009053:
+		return "(Daewoo)";
+	case 0x00a0de:
+		return "(Yamaha)";
+	case 0x00d0d5:
+		return "(Grundig)";
+	case 0x00d38d:
+		return "(Hospitality Profile)";
+	case 0x00e036:
+		return "(Pioneer)";
+	case 0x00e091:
+		return "(LG)";
+	case 0x08001f:
+	case 0x534850:
+		return "(Sharp)";
+	case 0x080046:
+		return "(Sony)";
+	case 0x18c086:
+		return "(Broadcom)";
+	case 0x6b746d:
+		return "(Vizio)";
+	case 0x8065e9:
+		return "(Benq)";
+	default:
+		return "";
+	}
+}
+
 const char *prim_type2s(unsigned type)
 {
 	switch (type) {
@@ -231,7 +297,8 @@ void cec_driver_info(const struct cec_caps &caps,
 	printf("\tLogical Address Mask       : 0x%04x\n", laddrs.log_addr_mask);
 	printf("\tCEC Version                : %s\n", version2s(laddrs.cec_version));
 	if (laddrs.vendor_id != CEC_VENDOR_ID_NONE)
-		printf("\tVendor ID                  : 0x%06x\n", laddrs.vendor_id);
+		printf("\tVendor ID                  : 0x%06x %s\n",
+		       laddrs.vendor_id, vendor2s(laddrs.vendor_id));
 	printf("\tOSD Name                   : %s\n", laddrs.osd_name);
 	printf("\tLogical Addresses          : %u %s\n",
 	       laddrs.num_log_addrs, laflags2s(laddrs.flags).c_str());

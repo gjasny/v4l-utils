@@ -17,6 +17,7 @@ const char *la2s(unsigned la);
 const char *la_type2s(unsigned type);
 const char *prim_type2s(unsigned type);
 const char *version2s(unsigned version);
+const char *vendor2s(unsigned vendor);
 std::string all_dev_types2s(unsigned types);
 std::string rc_src_prof2s(unsigned prof, const std::string &prefix);
 std::string dev_feat2s(unsigned feat, const std::string &prefix);
