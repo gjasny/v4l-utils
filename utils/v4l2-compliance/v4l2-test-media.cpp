@@ -107,7 +107,6 @@ int testMediaTopology(struct node *node)
 	topology.ptr_links = 0;
 	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology));
 	fail_on_test(!topology.num_entities);
-	fail_on_test(!topology.num_pads);
 	fail_on_test(topology.topology_version == ~0ULL);
 	fail_on_test(topology.num_entities == ~0U);
 	fail_on_test(topology.num_interfaces == ~0U);
@@ -125,7 +124,8 @@ int testMediaTopology(struct node *node)
 		     doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
 	topology.ptr_interfaces = 0;
 	topology.ptr_pads = 4;
-	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
+	fail_on_test(topology.num_pads &&
+		     doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
 	topology.ptr_pads = 0;
 	topology.ptr_links = 4;
 	fail_on_test(topology.num_links &&
