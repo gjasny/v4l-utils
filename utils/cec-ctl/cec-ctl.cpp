@@ -938,11 +938,19 @@ int cec_named_ioctl(int fd, const char *name,
 	return retval == -1 ? e : (retval ? -1 : 0);
 }
 
+static void print_bytes(const __u8 *bytes, unsigned len)
+{
+	for (unsigned i = 0; i < len; i++) {
+		printf(" 0x%02x", bytes[i]);
+		if (bytes[i] >= 32 && bytes[i] <= 127)
+		    printf("/%c", bytes[i]);
+	}
+}
+
 static void log_raw_msg(const struct cec_msg *msg)
 {
-	printf("\tRaw: ");
-	for (unsigned i = 0; i < msg->len; i++)
-		printf("%02x ", msg->msg[i]);
+	printf("\tRaw:");
+	print_bytes(msg->msg, msg->len);
 	printf("\n");
 }
 
@@ -951,15 +959,13 @@ static void log_htng_unknown_msg(const struct cec_msg *msg)
 	__u32 vendor_id;
 	const __u8 *bytes;
 	__u8 size;
-	unsigned i;
 
 	cec_ops_vendor_command_with_id(msg, &vendor_id, &size, &bytes);
 	printf("CEC_MSG_VENDOR_COMMAND_WITH_ID (0x%02x):\n",
 	       CEC_MSG_VENDOR_COMMAND_WITH_ID);
 	log_arg(&arg_vendor_id, "vendor-id", vendor_id);
 	printf("\tvendor-specific-data:");
-	for (i = 0; i < size; i++)
-		printf(" 0x%02x", bytes[i]);
+	print_bytes(bytes, size);
 	printf("\n");
 }
 
@@ -977,8 +983,7 @@ static void log_unknown_msg(const struct cec_msg *msg)
 		       CEC_MSG_VENDOR_COMMAND);
 		cec_ops_vendor_command(msg, &size, &bytes);
 		printf("\tvendor-specific-data:");
-		for (i = 0; i < size; i++)
-			printf(" 0x%02x", bytes[i]);
+		print_bytes(bytes, size);
 		printf("\n");
 		break;
 	case CEC_MSG_VENDOR_COMMAND_WITH_ID:
@@ -992,8 +997,7 @@ static void log_unknown_msg(const struct cec_msg *msg)
 			       CEC_MSG_VENDOR_COMMAND_WITH_ID);
 			log_arg(&arg_vendor_id, "vendor-id", vendor_id);
 			printf("\tvendor-specific-data:");
-			for (i = 0; i < size; i++)
-				printf(" 0x%02x", bytes[i]);
+			print_bytes(bytes, size);
 			printf("\n");
 			break;
 		}
@@ -1020,8 +1024,8 @@ static void log_unknown_msg(const struct cec_msg *msg)
 		break;
 	default:
 		printf("CEC_MSG (0x%02x)%s", msg->msg[1], msg->len > 2 ? ":\n\tpayload:" : "");
-		for (i = 2; i < msg->len; i++)
-			printf(" 0x%02x", msg->msg[i]);
+		if (msg->len > 2)
+			print_bytes(msg->msg + 2, msg->len - 2);
 		printf("\n");
 		break;
 	}
