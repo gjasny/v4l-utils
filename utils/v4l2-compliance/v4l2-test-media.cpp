@@ -79,6 +79,8 @@ static media_v2_link *v2_links;
 static id_set v2_links_set;
 static std::map<__u32, __u32> entity_num_pads;
 static std::map<__u32, media_v2_entity *> v2_entity_map;
+static std::map<__u32, media_v2_interface *> v2_iface_map;
+static std::map<__u32, media_v2_pad *> v2_pad_map;
 static unsigned num_data_links;
 
 static int checkFunction(__u32 function, bool v2_api)
@@ -153,8 +155,8 @@ int testMediaTopology(struct node *node)
 		media_v2_entity &ent = v2_ents[i];
 
 		if (show_info)
-			printf("\t\tEntity: 0x%08x (Name: '%s', Function: 0x%08x)\n",
-			       ent.id, ent.name, ent.function);
+			printf("\t\tEntity: 0x%08x (Name: '%s', Function: %s)\n",
+			       ent.id, ent.name, entfunction2s(ent.function).c_str());
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(check_string(ent.name, sizeof(ent.name)));
 		fail_on_test(!ent.id);
@@ -167,8 +169,8 @@ int testMediaTopology(struct node *node)
 		media_v2_interface &iface = v2_ifaces[i];
 
 		if (show_info)
-			printf("\t\tInterface: 0x%08x (Type: 0x%08x)\n",
-			       iface.id, iface.intf_type);
+			printf("\t\tInterface: 0x%08x (Type: %s)\n",
+			       iface.id, ifacetype2s(iface.intf_type).c_str());
 		fail_on_test(check_0(iface.reserved, sizeof(iface.reserved)));
 		fail_on_test(checkDevice(iface.devnode.major, iface.devnode.minor,
 					 true, iface.id));
@@ -179,13 +181,16 @@ int testMediaTopology(struct node *node)
 		fail_on_test(iface.flags);
 		fail_on_test(v2_interfaces_set.find(iface.id) != v2_interfaces_set.end());
 		v2_interfaces_set.insert(iface.id);
+		v2_iface_map[iface.id] = &iface;
 	}
 	for (unsigned i = 0; i < topology.num_pads; i++) {
 		media_v2_pad &pad = v2_pads[i];
 		__u32 fl = pad.flags;
 
 		if (show_info)
-			printf("\t\tPad: 0x%08x\n", pad.id);
+			printf("\t\tPad: 0x%08x (%s, %s)\n", pad.id,
+			       v2_entity_map[pad.entity_id]->name,
+			       padflags2s(pad.flags).c_str());
 		fail_on_test(check_0(pad.reserved, sizeof(pad.reserved)));
 		fail_on_test(!pad.id);
 		fail_on_test(!pad.entity_id);
@@ -196,13 +201,12 @@ int testMediaTopology(struct node *node)
 		fail_on_test((fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)) ==
 			     (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE));
 		entity_num_pads[pad.entity_id]++;
+		v2_pad_map[pad.id] = &pad;
 	}
 	for (unsigned i = 0; i < topology.num_links; i++) {
 		media_v2_link &link = v2_links[i];
 		bool is_iface = link.flags & MEDIA_LNK_FL_LINK_TYPE;
 
-		if (show_info)
-			printf("\t\tLink: 0x%08x\n", link.id);
 		fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
 		fail_on_test(!link.id);
 		fail_on_test(!link.source_id);
@@ -212,11 +216,20 @@ int testMediaTopology(struct node *node)
 		if (is_iface) {
 			fail_on_test(v2_interfaces_set.find(link.source_id) == v2_interfaces_set.end());
 			fail_on_test(v2_entities_set.find(link.sink_id) == v2_entities_set.end());
+			if (show_info)
+				printf("\t\tLink: 0x%08x (%s to %s interface 0x%08x)\n", link.id,
+				       v2_entity_map[link.sink_id]->name,
+				       ifacetype2s(v2_iface_map[link.source_id]->intf_type).c_str(),
+				       link.source_id);
 		} else {
 			fail_on_test(v2_pads_set.find(link.source_id) == v2_pads_set.end());
 			fail_on_test(v2_pads_set.find(link.sink_id) == v2_pads_set.end());
 			fail_on_test(link.source_id == link.sink_id);
 			num_data_links++;
+			if (show_info)
+				printf("\t\tLink: 0x%08x %s -> %s)\n", link.id,
+				       v2_entity_map[v2_pad_map[link.source_id]->entity_id]->name,
+				       v2_entity_map[v2_pad_map[link.sink_id]->entity_id]->name);
 		}
 	}
 	node->topology = &topology;
@@ -249,8 +262,8 @@ int testMediaEnum(struct node *node)
 		if (ret == EINVAL)
 			break;
 		if (show_info)
-			printf("\t\tEntity: 0x%08x (Name: '%s', Type: 0x%08x\n",
-			       ent.id, ent.name, ent.type);
+			printf("\t\tEntity: 0x%08x (Name: '%s', Type: %s)\n",
+			       ent.id, ent.name, entfunction2s(ent.type).c_str());
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(ent.id & MEDIA_ENT_ID_FLAG_NEXT);
 		fail_on_test(!ent.id);
