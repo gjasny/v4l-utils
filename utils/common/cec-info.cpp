@@ -124,6 +124,8 @@ const char *vendor2s(unsigned vendor)
 		return "(Broadcom)";
 	case 0x6b746d:
 		return "(Vizio)";
+	case 0x743a65:
+		return "(NEC)";
 	case 0x8065e9:
 		return "(Benq)";
 	default:
