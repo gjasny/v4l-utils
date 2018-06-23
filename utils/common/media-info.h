@@ -33,6 +33,20 @@ media_type media_detect_type(const char *device);
 std::string media_get_device(__u32 major, __u32 minor);
 
 /*
+ * For a given device fd retrieve the dev_t (major/minor) value.
+ * Returns 0 if successful (and fills in *dev) and -1 on failure.
+ */
+int mi_get_dev_t_from_fd(int fd, dev_t *dev);
+
+/*
+ * For a given dev_t value (major/minor), find the corresponding
+ * device name.
+ * Returns the /dev/... path if successful, or an empty string on
+ * failure.
+ */
+std::string mi_get_devpath_from_dev_t(dev_t dev);
+
+/*
  * For a given device fd return the corresponding media device
  * or -1 if there is none.
  */

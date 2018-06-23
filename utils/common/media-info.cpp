@@ -146,20 +146,70 @@ static std::string flags2s(unsigned val, const flag_def *def)
 	return s;
 }
 
-int mi_get_media_fd(int fd)
+int mi_get_dev_t_from_fd(int fd, dev_t *dev)
 {
 	struct stat sb;
-	int media_fd = -1;
 
 	if (fstat(fd, &sb) == -1) {
 		fprintf(stderr, "failed to stat file\n");
 		return -1;
 	}
+	*dev = sb.st_rdev;
+	return 0;
+}
+
+std::string mi_get_devpath_from_dev_t(dev_t dev)
+{
+	if (!dev)
+		return "";
+
+	std::string media_uevent_path("/sys/dev/char/");
+
+	media_uevent_path += num2s(major(dev), false) + ":" +
+		num2s(minor(dev), false) + "/uevent";
+
+	FILE *uevent_fd = fopen(media_uevent_path.c_str(), "r");
+
+	if (uevent_fd == NULL) {
+		fprintf(stderr, "failed to open %s\n", media_uevent_path.c_str());
+		return "";
+	}
+
+	char *line = NULL;
+	size_t size = 0;
+	std::string devpath;
+
+	for (;;) {
+		ssize_t bytes = getline(&line, &size, uevent_fd);
+
+		if (bytes <= 0)
+			break;
+		line[bytes - 1] = 0;
+		if (memcmp(line, "DEVNAME=", 8) || !line[8])
+			continue;
+		devpath = "/dev/";
+		devpath += line + 8;
+		break;
+	}
+	free(line);
+
+	if (devpath.empty())
+		fprintf(stderr, "failed to find DEVNAME in %s\n", media_uevent_path.c_str());
+	return devpath;
+}
+
+int mi_get_media_fd(int fd)
+{
+	int media_fd = -1;
+	dev_t dev;
+
+	if (mi_get_dev_t_from_fd(fd, &dev) < 0)
+		return -1;
 
 	std::string media_path("/sys/dev/char/");
 
-	media_path += num2s(major(sb.st_rdev), false) + ":" +
-		num2s(minor(sb.st_rdev), false) + "/device";
+	media_path += num2s(major(dev), false) + ":" +
+		num2s(minor(dev), false) + "/device";
 
 	DIR *dp;
 	struct dirent *ep;
