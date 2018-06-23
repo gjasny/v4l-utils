@@ -227,7 +227,7 @@ int testMediaTopology(struct node *node)
 			fail_on_test(link.source_id == link.sink_id);
 			num_data_links++;
 			if (show_info)
-				printf("\t\tLink: 0x%08x %s -> %s)\n", link.id,
+				printf("\t\tLink: 0x%08x (%s -> %s)\n", link.id,
 				       v2_entity_map[v2_pad_map[link.source_id]->entity_id]->name,
 				       v2_entity_map[v2_pad_map[link.sink_id]->entity_id]->name);
 		}
