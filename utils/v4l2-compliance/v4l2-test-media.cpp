@@ -25,6 +25,7 @@
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <ctype.h>
@@ -167,10 +168,14 @@ int testMediaTopology(struct node *node)
 	}
 	for (unsigned i = 0; i < topology.num_interfaces; i++) {
 		media_v2_interface &iface = v2_ifaces[i];
+		dev_t dev = makedev(iface.devnode.major, iface.devnode.minor);
+		std::string devpath = mi_get_devpath_from_dev_t(dev);
 
 		if (show_info)
-			printf("\t\tInterface: 0x%08x (Type: %s)\n",
-			       iface.id, ifacetype2s(iface.intf_type).c_str());
+			printf("\t\tInterface: 0x%08x (Type: %s, DevPath: %s)\n",
+			       iface.id, ifacetype2s(iface.intf_type).c_str(),
+			       devpath.c_str());
+		fail_on_test(devpath.empty());
 		fail_on_test(check_0(iface.reserved, sizeof(iface.reserved)));
 		fail_on_test(checkDevice(iface.devnode.major, iface.devnode.minor,
 					 true, iface.id));
@@ -216,11 +221,15 @@ int testMediaTopology(struct node *node)
 		if (is_iface) {
 			fail_on_test(v2_interfaces_set.find(link.source_id) == v2_interfaces_set.end());
 			fail_on_test(v2_entities_set.find(link.sink_id) == v2_entities_set.end());
+
+			media_v2_interface &iface = *v2_iface_map[link.source_id];
+			dev_t dev = makedev(iface.devnode.major, iface.devnode.minor);
+			std::string devpath = mi_get_devpath_from_dev_t(dev);
+
 			if (show_info)
-				printf("\t\tLink: 0x%08x (%s to %s interface 0x%08x)\n", link.id,
+				printf("\t\tLink: 0x%08x (%s to interface %s)\n", link.id,
 				       v2_entity_map[link.sink_id]->name,
-				       ifacetype2s(v2_iface_map[link.source_id]->intf_type).c_str(),
-				       link.source_id);
+				       devpath.c_str());
 		} else {
 			fail_on_test(v2_pads_set.find(link.source_id) == v2_pads_set.end());
 			fail_on_test(v2_pads_set.find(link.sink_id) == v2_pads_set.end());
@@ -261,9 +270,17 @@ int testMediaEnum(struct node *node)
 		ret = doioctl(node, MEDIA_IOC_ENUM_ENTITIES, &ent);
 		if (ret == EINVAL)
 			break;
-		if (show_info)
-			printf("\t\tEntity: 0x%08x (Name: '%s', Type: %s)\n",
+		dev_t dev = makedev(ent.dev.major, ent.dev.minor);
+		std::string devpath = mi_get_devpath_from_dev_t(dev);
+
+		if (show_info) {
+			printf("\t\tEntity: 0x%08x (Name: '%s', Type: %s",
 			       ent.id, ent.name, entfunction2s(ent.type).c_str());
+			if (!devpath.empty())
+				printf(" DevPath: %s", devpath.c_str());
+			printf(")\n");
+		}
+		fail_on_test(dev && devpath.empty());
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(ent.id & MEDIA_ENT_ID_FLAG_NEXT);
 		fail_on_test(!ent.id);
