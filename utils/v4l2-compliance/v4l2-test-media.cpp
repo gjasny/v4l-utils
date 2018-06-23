@@ -115,10 +115,10 @@ int testMediaTopology(struct node *node)
 	fail_on_test(topology.num_interfaces == ~0U);
 	fail_on_test(topology.num_pads == ~0U);
 	fail_on_test(topology.num_links == ~0U);
-	//fail_on_test(topology.reserved1);
-	//fail_on_test(topology.reserved2);
-	//fail_on_test(topology.reserved3);
-	//fail_on_test(topology.reserved4);
+	fail_on_test(topology.reserved1);
+	fail_on_test(topology.reserved2);
+	fail_on_test(topology.reserved3);
+	fail_on_test(topology.reserved4);
 	topology.ptr_entities = 4;
 	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
 	topology.ptr_entities = 0;
@@ -437,7 +437,7 @@ int testMediaSetupLink(struct node *node)
 		link = link_disabled;
 		memset(link.reserved, 0xff, sizeof(link.reserved));
 		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link));
-		//fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
+		fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
 		link.flags |= MEDIA_LNK_FL_INTERFACE_LINK;
 		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link) != EINVAL);
 	}
@@ -445,7 +445,7 @@ int testMediaSetupLink(struct node *node)
 		link = link_enabled;
 		memset(link.reserved, 0xff, sizeof(link.reserved));
 		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link));
-		//fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
+		fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
 		link.flags |= MEDIA_LNK_FL_INTERFACE_LINK;
 		fail_on_test(doioctl(node, MEDIA_IOC_SETUP_LINK, &link) != EINVAL);
 	}
