@@ -245,12 +245,14 @@ static struct option long_options[] = {
 	{"stream-no-query", no_argument, 0, OptStreamNoQuery},
 #ifndef NO_STREAM_TO
 	{"stream-to", required_argument, 0, OptStreamTo},
+	{"stream-to-hdr", required_argument, 0, OptStreamToHdr},
 	{"stream-to-host", required_argument, 0, OptStreamToHost},
 #endif
 	{"stream-mmap", optional_argument, 0, OptStreamMmap},
 	{"stream-user", optional_argument, 0, OptStreamUser},
 	{"stream-dmabuf", no_argument, 0, OptStreamDmaBuf},
 	{"stream-from", required_argument, 0, OptStreamFrom},
+	{"stream-from-hdr", required_argument, 0, OptStreamFromHdr},
 	{"stream-from-host", required_argument, 0, OptStreamFromHost},
 	{"stream-out-pattern", required_argument, 0, OptStreamOutPattern},
 	{"stream-out-square", no_argument, 0, OptStreamOutSquare},

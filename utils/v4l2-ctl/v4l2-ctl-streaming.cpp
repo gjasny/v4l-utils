@@ -48,21 +48,24 @@ static tpg_move_mode stream_out_hor_mode = TPG_MOVE_NONE;
 static tpg_move_mode stream_out_vert_mode = TPG_MOVE_NONE;
 static unsigned reqbufs_count_cap = 4;
 static unsigned reqbufs_count_out = 4;
-static char *file_cap;
-static char *host_cap;
-static unsigned host_port_cap = V4L_STREAM_PORT;
-static int host_fd_cap = -1;
+static char *file_to;
+static bool to_with_hdr;
+static char *host_to;
+static unsigned host_port_to = V4L_STREAM_PORT;
+static int host_fd_to = -1;
 static unsigned rle_perc;
 static unsigned rle_perc_count;
-static char *file_out;
-static char *host_out;
-static unsigned host_port_out = V4L_STREAM_PORT;
-static int host_fd_out = -1;
+static char *file_from;
+static bool from_with_hdr;
+static char *host_from;
+static unsigned host_port_from = V4L_STREAM_PORT;
+static int host_fd_from = -1;
 static struct tpg_data tpg;
 static unsigned output_field = V4L2_FIELD_NONE;
 static bool output_field_alt;
 
 #define TS_WINDOW 241
+#define FILE_HDR_ID			v4l2_fourcc('V', 'h', 'd', 'r')
 
 class fps_timestamps {
 private:
@@ -241,6 +244,8 @@ void streaming_usage(void)
 	       "  --stream-to <file> stream to this file. The default is to discard the\n"
 	       "                     data. If <file> is '-', then the data is written to stdout\n"
 	       "                     and the --silent option is turned on automatically.\n"
+	       "  --stream-to-hdr <file> stream to this file. Same as --stream-to, but each\n"
+	       "                     frame is prefixed by a header. Use for compressed data.\n"
 	       "  --stream-to-host <hostname[:port]>\n"
                "                     stream to this host. The default port is %d.\n"
 #endif
@@ -256,6 +261,8 @@ void streaming_usage(void)
 	       "  --stream-from <file>\n"
 	       "                     stream from this file. The default is to generate a pattern.\n"
 	       "                     If <file> is '-', then the data is read from stdin.\n"
+	       "  --stream-from-hdr <file> stream from this file. Same as --stream-from, but each\n"
+	       "                     frame is prefixed by a header. Use for compressed data.\n"
 	       "  --stream-from-host <hostname[:port]>\n"
 	       "                     stream from this host. The default port is %d.\n"
 	       "  --stream-no-query  Do not query and set the DV timings or standard before streaming.\n"
@@ -593,18 +600,30 @@ void streaming_cmd(int ch, char *optarg)
 			stream_out_perc_fill = 1;
 		break;
 	case OptStreamTo:
-		file_cap = optarg;
-		if (!strcmp(file_cap, "-"))
+		file_to = optarg;
+		to_with_hdr = false;
+		if (!strcmp(file_to, "-"))
+			options[OptSilent] = true;
+		break;
+	case OptStreamToHdr:
+		file_to = optarg;
+		to_with_hdr = true;
+		if (!strcmp(file_to, "-"))
 			options[OptSilent] = true;
 		break;
 	case OptStreamToHost:
-		host_cap = optarg;
+		host_to = optarg;
 		break;
 	case OptStreamFrom:
-		file_out = optarg;
+		file_from = optarg;
+		from_with_hdr = false;
+		break;
+	case OptStreamFromHdr:
+		file_from = optarg;
+		from_with_hdr = true;
 		break;
 	case OptStreamFromHost:
-		host_out = optarg;
+		host_from = optarg;
 		break;
 	case OptStreamMmap:
 	case OptStreamUser:
@@ -736,7 +755,7 @@ public:
 
 static bool fill_buffer_from_file(buffers &b, unsigned idx, FILE *fin)
 {
-	if (host_fd_out >= 0) {
+	if (host_fd_from >= 0) {
 		for (;;) {
 			unsigned packet = read_u32(fin);
 
@@ -806,19 +825,31 @@ static bool fill_buffer_from_file(buffers &b, unsigned idx, FILE *fin)
 		}
 		return true;
 	}
+
+restart:
+	if (from_with_hdr && read_u32(fin) != FILE_HDR_ID) {
+		fprintf(stderr, "Unknown header ID\n");
+		return false;
+	}
+
 	for (unsigned j = 0; j < b.num_planes; j++) {
 		void *buf = b.bufs[idx][j];
 		struct v4l2_plane &p = b.planes[idx][j];
-		unsigned sz = fread(buf, 1, p.length, fin);
+		unsigned len = p.length;
+		unsigned sz;
 
+		if (from_with_hdr)
+			len = read_u32(fin);
+		sz = fread(buf, 1, len, fin);
 		if (j == 0 && sz == 0 && stream_loop) {
 			fseek(fin, 0, SEEK_SET);
-			sz = fread(buf, 1, p.length, fin);
+			goto restart;
 		}
-		if (sz == p.length)
+		p.bytesused = len;
+		if (sz == len)
 			continue;
 		if (sz)
-			fprintf(stderr, "%u != %u\n", sz, p.length);
+			fprintf(stderr, "%u != %u\n", sz, len);
 		// Bail out if we get weird buffer sizes.
 		return false;
 	}
@@ -1029,8 +1060,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 			for (unsigned j = 0; j < b.num_planes; j++) {
 				struct v4l2_plane &p = b.planes[i][j];
 
-				p.length = planes[j].length;
-				buf.m.planes[j].bytesused = planes[j].length;
+				p.bytesused = p.length = planes[j].length;
 				if (b.memory == V4L2_MEMORY_MMAP) {
 					b.bufs[i][j] = mmap(NULL, p.length,
 							  PROT_READ | PROT_WRITE, MAP_SHARED,
@@ -1059,10 +1089,13 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 			}
 			if (fin)
 				fill_buffer_from_file(b, buf.index, fin);
+
+			for (unsigned j = 0; j < b.num_planes; j++)
+				buf.m.planes[j].bytesused = b.planes[i][j].bytesused;
 		}
 		else {
 			b.planes[i][0].length = buf.length;
-			buf.bytesused = buf.length;
+			b.planes[i][0].bytesused = buf.length;
 			if (b.memory == V4L2_MEMORY_MMAP) {
 				b.bufs[i][0] = test_mmap(NULL, buf.length,
 						  PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
@@ -1088,6 +1121,7 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 			if (!fin || !fill_buffer_from_file(b, buf.index, fin))
 				if (can_fill)
 					tpg_fillbuffer(&tpg, stream_out_std, 0, (u8 *)b.bufs[i][0]);
+			buf.bytesused = b.planes[i][0].bytesused;
 		}
 		if (qbuf) {
 			if (V4L2_TYPE_IS_OUTPUT(buf.type))
@@ -1165,7 +1199,7 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 	if (fout && (!stream_skip || ignore_count_skip) && !(buf.flags & V4L2_BUF_FLAG_ERROR)) {
 		unsigned rle_size[VIDEO_MAX_PLANES];
 
-		if (host_fd_cap >= 0) {
+		if (host_fd_to >= 0) {
 			unsigned tot_rle_size = 0;
 			unsigned tot_used = 0;
 
@@ -1186,6 +1220,8 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 			rle_perc += (tot_rle_size * 100 / tot_used);
 			rle_perc_count++;
 		}
+		if (to_with_hdr)
+			write_u32(fout, FILE_HDR_ID);
 		for (unsigned j = 0; j < b.num_planes; j++) {
 			__u32 used = b.is_mplane ? planes[j].bytesused : buf.bytesused;
 			unsigned offset = b.is_mplane ? planes[j].data_offset : 0;
@@ -1198,18 +1234,20 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 				offset = 0;
 			}
 			used -= offset;
-			if (host_fd_cap >= 0) {
+			if (host_fd_to >= 0) {
 				write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_PLANE_HDR);
 				write_u32(fout, used);
 				write_u32(fout, rle_size[j]);
 				used = rle_size[j];
+			} else if (to_with_hdr) {
+				write_u32(fout, used);
 			}
 			sz = fwrite((char *)b.bufs[buf.index][j] + offset, 1, used, fout);
 
 			if (sz != used)
 				fprintf(stderr, "%u != %u\n", sz, used);
 		}
-		if (host_fd_cap >= 0)
+		if (host_fd_to >= 0)
 			fflush(fout);
 	}
 	if (buf.flags & V4L2_BUF_FLAG_KEYFRAME)
@@ -1220,7 +1258,7 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 		ch = 'B';
 	if (verbose) {
 		print_concise_buffer(stderr, buf, fps_ts,
-				     host_fd_cap >= 0 ? 100 - rle_perc / rle_perc_count : -1);
+				     host_fd_to >= 0 ? 100 - rle_perc / rle_perc_count : -1);
 		rle_perc_count = rle_perc = 0;
 	}
 	if (index == NULL && test_ioctl(fd, VIDIOC_QBUF, &buf))
@@ -1238,7 +1276,7 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 			fprintf(stderr, " %.02f fps", fps_ts.fps());
 			if (dropped)
 				fprintf(stderr, ", dropped buffers: %u", dropped);
-			if (host_fd_cap >= 0)
+			if (host_fd_to >= 0)
 				fprintf(stderr, " %d%% compression", 100 - rle_perc / rle_perc_count);
 			rle_perc_count = rle_perc = 0;
 			fprintf(stderr, "\n");
@@ -1334,6 +1372,13 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 
 	if (fin && !fill_buffer_from_file(b, buf.index, fin))
 		return -1;
+	if (fin && b.is_mplane) {
+		for (unsigned j = 0; j < b.num_planes; j++)
+			planes[j].bytesused = b.planes[buf.index][j].bytesused;
+	} else if (fin) {
+		buf.bytesused = b.planes[buf.index][0].bytesused;
+	}
+
 	if (!fin && stream_out_refresh) {
 		if (b.is_mplane) {
 			for (unsigned j = 0; j < b.num_planes; j++)
@@ -1469,13 +1514,13 @@ recover:
 		}
 	}
 
-	if (file_cap) {
-		if (!strcmp(file_cap, "-"))
+	if (file_to) {
+		if (!strcmp(file_to, "-"))
 			fout = stdout;
 		else
-			fout = fopen(file_cap, "w+");
-	} else if (host_cap) {
-		char *p = strchr(host_cap, ':');
+			fout = fopen(file_to, "w+");
+	} else if (host_to) {
+		char *p = strchr(host_to, ':');
 		struct sockaddr_in serv_addr;
 		struct hostent *server;
 		struct v4l2_format fmt = { };
@@ -1493,17 +1538,17 @@ recover:
 			cropcap.pixelaspect.denominator = 1;
 		}
 		if (p) {
-			host_port_cap = strtoul(p + 1, 0L, 0);
+			host_port_to = strtoul(p + 1, 0L, 0);
 			*p = '\0';
 		}
-		host_fd_cap = socket(AF_INET, SOCK_STREAM, 0);
-		if (host_fd_cap < 0) {
+		host_fd_to = socket(AF_INET, SOCK_STREAM, 0);
+		if (host_fd_to < 0) {
 			fprintf(stderr, "cannot open socket");
 			exit(0);
 		}
-		server = gethostbyname(host_cap);
+		server = gethostbyname(host_to);
 		if (server == NULL) {
-			fprintf(stderr, "no such host %s\n", host_cap);
+			fprintf(stderr, "no such host %s\n", host_to);
 			exit(0);
 		}
 		memset((char *)&serv_addr, 0, sizeof(serv_addr));
@@ -1511,12 +1556,12 @@ recover:
 		memcpy((char *)&serv_addr.sin_addr.s_addr,
 		       (char *)server->h_addr,
 		       server->h_length);
-		serv_addr.sin_port = htons(host_port_cap);
-		if (connect(host_fd_cap, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+		serv_addr.sin_port = htons(host_port_to);
+		if (connect(host_fd_to, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
 			fprintf(stderr, "could not connect\n");
 			exit(0);
 		}
-		fout = fdopen(host_fd_cap, "a");
+		fout = fdopen(host_fd_to, "a");
 		write_u32(fout, V4L_STREAM_ID);
 		write_u32(fout, V4L_STREAM_VERSION);
 		write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO);
@@ -1618,7 +1663,7 @@ recover:
 
 done:
 	if (fout && fout != stdout) {
-		if (host_fd_cap >= 0)
+		if (host_fd_to >= 0)
 			write_u32(fout, V4L_STREAM_PACKET_END);
 		fclose(fout);
 	}
@@ -1646,19 +1691,19 @@ static void streaming_set_out(int fd)
 		return;
 	}
 
-	if (file_out) {
-		if (!strcmp(file_out, "-"))
+	if (file_from) {
+		if (!strcmp(file_from, "-"))
 			fin = stdin;
 		else
-			fin = fopen(file_out, "r");
-	} else if (host_out) {
-		char *p = strchr(host_out, ':');
+			fin = fopen(file_from, "r");
+	} else if (host_from) {
+		char *p = strchr(host_from, ':');
 		int listen_fd;
 		socklen_t clilen;
 		struct sockaddr_in serv_addr = {}, cli_addr;
 
 		if (p) {
-			host_port_out = strtoul(p + 1, 0L, 0);
+			host_port_from = strtoul(p + 1, 0L, 0);
 			*p = '\0';
 		}
 		listen_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -1668,19 +1713,19 @@ static void streaming_set_out(int fd)
 		}
 		serv_addr.sin_family = AF_INET;
 		serv_addr.sin_addr.s_addr = INADDR_ANY;
-		serv_addr.sin_port = htons(host_port_out);
+		serv_addr.sin_port = htons(host_port_from);
 		if (bind(listen_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
 			fprintf(stderr, "could not bind\n");
 			exit(1);
 		}
 		listen(listen_fd, 1);
 		clilen = sizeof(cli_addr);
-		host_fd_out = accept(listen_fd, (struct sockaddr *)&cli_addr, &clilen);
-		if (host_fd_out < 0) {
+		host_fd_from = accept(listen_fd, (struct sockaddr *)&cli_addr, &clilen);
+		if (host_fd_from < 0) {
 			fprintf(stderr, "could not accept\n");
 			exit(1);
 		}
-		fin = fdopen(host_fd_out, "r");
+		fin = fdopen(host_fd_from, "r");
 		if (read_u32(fin) != V4L_STREAM_ID) {
 			fprintf(stderr, "unknown protocol ID\n");
 			goto done;
@@ -1868,18 +1913,18 @@ static void streaming_set_m2m(int fd)
 	sub.type = V4L2_EVENT_EOS;
 	ioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
 
-	if (file_cap) {
-		if (!strcmp(file_cap, "-"))
+	if (file_to) {
+		if (!strcmp(file_to, "-"))
 			file[CAP] = stdout;
 		else
-			file[CAP] = fopen(file_cap, "w+");
+			file[CAP] = fopen(file_to, "w+");
 	}
 
-	if (file_out) {
-		if (!strcmp(file_out, "-"))
+	if (file_from) {
+		if (!strcmp(file_from, "-"))
 			file[OUT] = stdin;
 		else
-			file[OUT] = fopen(file_out, "r");
+			file[OUT] = fopen(file_from, "r");
 	}
 
 	if (in.reqbufs(fd, reqbufs_count_cap) ||
@@ -2039,18 +2084,18 @@ static void streaming_set_cap2out(int fd, int out_fd)
 		return;
 	}
 
-	if (file_cap) {
-		if (!strcmp(file_cap, "-"))
+	if (file_to) {
+		if (!strcmp(file_to, "-"))
 			file[CAP] = stdout;
 		else
-			file[CAP] = fopen(file_cap, "w+");
+			file[CAP] = fopen(file_to, "w+");
 	}
 
-	if (file_out) {
-		if (!strcmp(file_out, "-"))
+	if (file_from) {
+		if (!strcmp(file_from, "-"))
 			file[OUT] = stdin;
 		else
-			file[OUT] = fopen(file_out, "r");
+			file[OUT] = fopen(file_from, "r");
 	}
 
 	if (in.reqbufs(fd, reqbufs_count_cap) ||
