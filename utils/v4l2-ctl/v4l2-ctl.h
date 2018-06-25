@@ -386,8 +386,8 @@ void misc_get(int fd);
 // v4l2-ctl-streaming.cpp
 void streaming_usage(void);
 void streaming_cmd(int ch, char *optarg);
-void streaming_set(int fd, int out_fd);
-void streaming_list(int fd, int out_fd);
+void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd);
+void streaming_list(cv4l_fd &fd, cv4l_fd &out_fd);
 
 // v4l2-ctl-edid.cpp
 void edid_usage(void);

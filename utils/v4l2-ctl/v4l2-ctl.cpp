@@ -1146,7 +1146,6 @@ int main(int argc, char **argv)
 	meta_set(fd);
 	subdev_set(fd);
 	selection_set(fd);
-	streaming_set(fd, out_fd);
 	misc_set(fd);
 	edid_set(fd);
 
@@ -1179,7 +1178,11 @@ int main(int argc, char **argv)
 	sdr_list(fd);
 	meta_list(fd);
 	subdev_list(fd);
-	streaming_list(fd, out_fd);
+	streaming_list(c_fd, c_out_fd);
+
+	/* Special case: handled last */
+
+	streaming_set(c_fd, c_out_fd);
 
 	if (options[OptWaitForEvent]) {
 		struct v4l2_event_subscription sub;

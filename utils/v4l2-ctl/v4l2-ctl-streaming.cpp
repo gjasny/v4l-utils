@@ -483,30 +483,23 @@ static void print_concise_buffer(FILE *f, struct v4l2_buffer &buf,
 	fprintf(f, "\n");
 }
 
-static void list_buffers(int fd, unsigned buftype)
+static void list_buffers(cv4l_fd &fd, unsigned buftype)
 {
+	unsigned int trace = fd.g_trace();
 	int i;
 
-	for (i = 0; i < VIDEO_MAX_FRAME; i++) {
-		struct v4l2_plane planes[VIDEO_MAX_PLANES];
-		struct v4l2_buffer buf;
+	fd.s_trace(trace == 2 ? trace : 0);
 
-		memset(&buf, 0, sizeof(buf));
-		buf.type = buftype;
-		buf.index = i;
-		buf.reserved = 0;
-		if (buftype == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
-		    buftype == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
-			buf.m.planes = planes;
-			buf.length = VIDEO_MAX_PLANES;
-			memset(planes, 0, sizeof(planes));
-		}
-		if (test_ioctl(fd, VIDIOC_QUERYBUF, &buf))
+	for (i = 0; i < VIDEO_MAX_FRAME; i++) {
+		cv4l_buffer buf(buftype);
+
+		if (fd.querybuf(buf, i))
 			break;
 		if (i == 0)
 			printf("VIDIOC_QUERYBUF:\n");
-		print_buffer(stdout, buf);
+		print_buffer(stdout, buf.buf);
 	}
+	fd.s_trace(trace);
 }
 
 void streaming_cmd(int ch, char *optarg)
@@ -2206,10 +2199,12 @@ done:
 		fclose(file[OUT]);
 }
 
-void streaming_set(int fd, int out_fd)
+void streaming_set(cv4l_fd &c_fd, cv4l_fd &c_out_fd)
 {
 	int do_cap = options[OptStreamMmap] + options[OptStreamUser] + options[OptStreamDmaBuf];
 	int do_out = options[OptStreamOutMmap] + options[OptStreamOutUser] + options[OptStreamOutDmaBuf];
+	int fd = c_fd.g_fd();
+	int out_fd = c_out_fd.g_fd();
 
 	if (out_fd < 0) {
 		out_fd = fd;
@@ -2236,48 +2231,40 @@ void streaming_set(int fd, int out_fd)
 		streaming_set_out(fd);
 }
 
-void streaming_list(int fd, int out_fd)
+void streaming_list(cv4l_fd &fd, cv4l_fd &out_fd)
 {
-	if (out_fd < 0) {
-		out_fd = fd;
+	cv4l_fd *p_out_fd = out_fd.g_fd() < 0 ? &fd : &out_fd;
+
+	if (out_fd.g_fd() < 0)
 		out_capabilities = capabilities;
-	}
 
-	if (options[OptListBuffers]) {
-		list_buffers(fd, vidcap_buftype);
-	}
+	if (options[OptListBuffers])
+		list_buffers(fd, fd.g_type());
 
-	if (options[OptListBuffersOut]) {
-		list_buffers(out_fd, vidout_buftype);
-	}
+	if (options[OptListBuffersOut])
+		list_buffers(*p_out_fd, p_out_fd->has_vid_m2m() ?
+			     v4l_type_invert(p_out_fd->g_type()) : p_out_fd->g_type());
 
-	if (options[OptListBuffersVbi]) {
+	if (options[OptListBuffersVbi])
 		list_buffers(fd, V4L2_BUF_TYPE_VBI_CAPTURE);
-	}
 
-	if (options[OptListBuffersSlicedVbi]) {
+	if (options[OptListBuffersSlicedVbi])
 		list_buffers(fd, V4L2_BUF_TYPE_SLICED_VBI_CAPTURE);
-	}
 
-	if (options[OptListBuffersVbiOut]) {
-		list_buffers(out_fd, V4L2_BUF_TYPE_VBI_OUTPUT);
-	}
+	if (options[OptListBuffersVbiOut])
+		list_buffers(*p_out_fd, V4L2_BUF_TYPE_VBI_OUTPUT);
 
-	if (options[OptListBuffersSlicedVbiOut]) {
-		list_buffers(out_fd, V4L2_BUF_TYPE_SLICED_VBI_OUTPUT);
-	}
+	if (options[OptListBuffersSlicedVbiOut])
+		list_buffers(*p_out_fd, V4L2_BUF_TYPE_SLICED_VBI_OUTPUT);
 
-	if (options[OptListBuffersSdr]) {
+	if (options[OptListBuffersSdr])
 		list_buffers(fd, V4L2_BUF_TYPE_SDR_CAPTURE);
-	}
 
-	if (options[OptListBuffersSdrOut]) {
+	if (options[OptListBuffersSdrOut])
 		list_buffers(fd, V4L2_BUF_TYPE_SDR_OUTPUT);
-	}
 
-	if (options[OptListBuffersMeta]) {
+	if (options[OptListBuffersMeta])
 		list_buffers(fd, V4L2_BUF_TYPE_META_CAPTURE);
-	}
 
 	if (options[OptListPatterns]) {
 		printf("List of available patterns:\n");
