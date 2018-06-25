@@ -1635,13 +1635,14 @@ static inline bool v4l_queue_has_expbuf(struct v4l_fd *f)
 	return v4l_ioctl(f, VIDIOC_EXPBUF, &expbuf) != ENOTTY;
 }
 
-static inline int v4l_queue_export_bufs(struct v4l_fd *f, struct v4l_queue *q)
+static inline int v4l_queue_export_bufs(struct v4l_fd *f, struct v4l_queue *q,
+					unsigned exp_type)
 {
 	struct v4l2_exportbuffer expbuf;
 	unsigned b, p;
 	int ret = 0;
 
-	expbuf.type = q->type;
+	expbuf.type = exp_type ? : f->type;
 	expbuf.flags = O_RDWR;
 	memset(expbuf.reserved, 0, sizeof(expbuf.reserved));
 	for (b = 0; b < v4l_queue_g_buffers(q); b++) {
