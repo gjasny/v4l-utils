@@ -412,6 +412,12 @@ public:
 		return cv4l_ioctl(VIDIOC_STREAMOFF, &type);
 	}
 
+	int querybuf(v4l_buffer &buf)
+	{
+		return v4l_buffer_querybuf(this, &buf,
+					   v4l_buffer_g_index(&buf));
+	}
+
 	int querybuf(v4l_buffer &buf, unsigned index)
 	{
 		return v4l_buffer_querybuf(this, &buf, index);
