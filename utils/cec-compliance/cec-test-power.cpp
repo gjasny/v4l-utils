@@ -497,6 +497,12 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 
 	int ret = standby_resume_standby(node, me, la, interactive);
 
+	if (ret && opcode == CEC_MSG_TEXT_VIEW_ON) {
+		ret = standby_resume_standby(node, me, la, interactive);
+		if (!ret)
+			warn("A STANDBY was sent right after the display reports it was powered on, but it was ignored.\n");
+	}
+
 	if (ret)
 		return ret;
 
