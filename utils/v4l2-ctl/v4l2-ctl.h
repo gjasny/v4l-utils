@@ -24,6 +24,8 @@
 #define v4l2_munmap(_start, length) (-1)
 #endif
 
+#include "cv4l-helpers.h"
+
 /* Available options.
 
    Please keep the first part (options < 128) in alphabetical order.

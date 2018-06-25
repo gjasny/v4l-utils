@@ -24,7 +24,6 @@
 extern "C" {
 #include "v4l2-tpg.h"
 }
-#include "cv4l-helpers.h"
 
 static unsigned stream_count;
 static unsigned stream_skip;

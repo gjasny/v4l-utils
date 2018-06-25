@@ -292,16 +292,6 @@ static void usage_all(void)
        edid_usage();
 }
 
-static int test_open(const char *file, int oflag)
-{
- 	return options[OptUseWrapper] ? v4l2_open(file, oflag) : open(file, oflag);
-}
-
-static int test_close(int fd)
-{
-	return options[OptUseWrapper] ? v4l2_close(fd) : close(fd);
-}
-
 int test_ioctl(int fd, int cmd, void *arg)
 {
 	return options[OptUseWrapper] ? v4l2_ioctl(fd, cmd, arg) : ioctl(fd, cmd, arg);
@@ -822,6 +812,8 @@ __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane)
 int main(int argc, char **argv)
 {
 	int i;
+	cv4l_fd c_fd;
+	cv4l_fd c_out_fd;
 	int fd = -1;
 	int out_fd = -1;
 	int media_fd = -1;
@@ -1024,25 +1016,24 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	is_subdev = type == MEDIA_TYPE_SUBDEV;
+	if (is_subdev)
+		options[OptUseWrapper] = 0;
+	c_fd.s_direct(!options[OptUseWrapper]);
+	c_out_fd.s_direct(!options[OptUseWrapper]);
 
-	if ((fd = open(device, O_RDWR)) < 0) {
+	if (is_subdev)
+		fd = c_fd.subdev_open(device);
+	else
+		fd = c_fd.open(device);
+
+	if (fd < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device,
 			strerror(errno));
 		exit(1);
 	}
 	verbose = options[OptVerbose];
-
-	if (is_subdev)
-		options[OptUseWrapper] = 0;
-
-	if (options[OptUseWrapper]) {
-		close(fd);
-		if ((fd = test_open(device, O_RDWR)) < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n", device,
-				strerror(errno));
-			exit(1);
-		}
-	}
+	c_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
+	c_out_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 
 	if (!is_subdev && doioctl(fd, VIDIOC_QUERYCAP, &vcap)) {
 		fprintf(stderr, "%s: not a v4l2 node\n", device);
@@ -1066,7 +1057,8 @@ int main(int argc, char **argv)
 					  V4L2_BUF_TYPE_VIDEO_OUTPUT;
 
 	if (out_device) {
-		if ((out_fd = test_open(out_device, O_RDWR)) < 0) {
+		out_fd = c_out_fd.open(out_device);
+		if (out_fd < 0) {
 			fprintf(stderr, "Failed to open %s: %s\n", out_device,
 					strerror(errno));
 			exit(1);
@@ -1242,15 +1234,15 @@ int main(int argc, char **argv)
 	if (options[OptSleep]) {
 		sleep(secs);
 		printf("Test VIDIOC_QUERYCAP:\n");
-		if (test_ioctl(fd, VIDIOC_QUERYCAP, &vcap) == 0)
+		if (c_fd.querycap(vcap, true) == 0)
 			printf("\tDriver name   : %s\n", vcap.driver);
 		else
 			perror("VIDIOC_QUERYCAP");
 	}
 
-	test_close(fd);
+	c_fd.close();
 	if (out_device)
-		test_close(out_fd);
+		c_out_fd.close();
 	if (media_fd >= 0)
 		close(media_fd);
 
