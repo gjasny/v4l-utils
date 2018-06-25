@@ -26,6 +26,22 @@
 
 #include "cv4l-helpers.h"
 
+class cv4l_disable_trace {
+public:
+	cv4l_disable_trace(cv4l_fd &fd) : _fd(fd)
+	{
+		old_trace = _fd.g_trace();
+		_fd.s_trace(0);
+	}
+	~cv4l_disable_trace()
+	{
+		_fd.s_trace(old_trace);
+	}
+private:
+	cv4l_fd &_fd;
+	unsigned int old_trace;
+};
+
 /* Available options.
 
    Please keep the first part (options < 128) in alphabetical order.
