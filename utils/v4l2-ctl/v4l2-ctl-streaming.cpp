@@ -27,6 +27,8 @@ extern "C" {
 
 static unsigned stream_count;
 static unsigned stream_skip;
+static __u32 memory = V4L2_MEMORY_MMAP;
+static __u32 out_memory = V4L2_MEMORY_MMAP;
 static int stream_sleep = -1;
 static bool stream_no_query;
 static unsigned stream_pat;
@@ -62,6 +64,8 @@ static int host_fd_from = -1;
 static struct tpg_data tpg;
 static unsigned output_field = V4L2_FIELD_NONE;
 static bool output_field_alt;
+static unsigned bpl_cap[VIDEO_MAX_PLANES];
+static unsigned bpl_out[VIDEO_MAX_PLANES];
 
 #define TS_WINDOW 241
 #define FILE_HDR_ID			v4l2_fourcc('V', 'h', 'd', 'r')
@@ -213,19 +217,6 @@ double fps_timestamps::fps()
 	return fps;
 };
 
-static void *test_mmap(void *start, size_t length, int prot, int flags,
-		int fd, int64_t offset)
-{
- 	return options[OptUseWrapper] ? v4l2_mmap(start, length, prot, flags, fd, offset) :
-		mmap(start, length, prot, flags, fd, offset);
-}
-
-static int test_munmap(void *start, size_t length)
-{
- 	return options[OptUseWrapper] ? v4l2_munmap(start, length) :
-		munmap(start, length);
-}
-
 void streaming_usage(void)
 {
 	printf("\nVideo Streaming options:\n"
@@ -327,15 +318,11 @@ void streaming_usage(void)
 	       	V4L_STREAM_PORT);
 }
 
-static void setTimeStamp(struct v4l2_buffer &buf)
+static void set_time_stamp(cv4l_buffer &buf)
 {
-	struct timespec ts;
-
-	if ((buf.flags & V4L2_BUF_FLAG_TIMESTAMP_MASK) != V4L2_BUF_FLAG_TIMESTAMP_COPY)
+	if ((buf.g_flags() & V4L2_BUF_FLAG_TIMESTAMP_MASK) != V4L2_BUF_FLAG_TIMESTAMP_COPY)
 		return;
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	buf.timestamp.tv_sec = ts.tv_sec;
-	buf.timestamp.tv_usec = ts.tv_nsec / 1000;
+	buf.s_timestamp_clock();
 }
 
 static __u32 read_u32(FILE *f)
@@ -426,39 +413,29 @@ static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 	fprintf(f, "\n");
 }
 
-static void print_concise_buffer(FILE *f, struct v4l2_buffer &buf,
+static void print_concise_buffer(FILE *f, cv4l_buffer &buf,
 				 fps_timestamps &fps_ts, int rle_perc)
 {
 	static double last_ts;
 
 	fprintf(f, "idx: %*u seq: %6u bytesused: ",
-		reqbufs_count_cap > 10 ? 2 : 1, buf.index, buf.sequence);
-	if (buf.type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
-	    buf.type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
-		bool have_data_offset = false;
+		reqbufs_count_cap > 10 ? 2 : 1, buf.g_index(), buf.g_sequence());
+	bool have_data_offset = false;
 
-		for (unsigned i = 0; i < buf.length; i++) {
-			struct v4l2_plane *p = buf.m.planes + i;
-
-			fprintf(f, "%s%u", i ? "/" : "", p->bytesused);
-			if (p->data_offset)
-				have_data_offset = true;
-		}
-		if (have_data_offset) {
-			fprintf(f, " offset: ");
-			for (unsigned i = 0; i < buf.length; i++) {
-				struct v4l2_plane *p = buf.m.planes + i;
-
-				fprintf(f, "%s%u", i ? "/" : "", p->data_offset);
-			}
-		}
-	} else {
-		fprintf(f, "%u", buf.bytesused);
+	for (unsigned i = 0; i < buf.g_num_planes(); i++) {
+		fprintf(f, "%s%u", i ? "/" : "", buf.g_bytesused(i));
+		if (buf.g_data_offset(i))
+			have_data_offset = true;
+	}
+	if (have_data_offset) {
+		fprintf(f, " offset: ");
+		for (unsigned i = 0; i < buf.g_num_planes(); i++)
+			fprintf(f, "%s%u", i ? "/" : "", buf.g_data_offset());
 	}
 	if (rle_perc >= 0)
 		fprintf(f, " compression: %d%%", rle_perc);
 
-	double ts = buf.timestamp.tv_sec + buf.timestamp.tv_usec / 1000000.0;
+	double ts = buf.g_timestamp().tv_sec + buf.g_timestamp().tv_usec / 1000000.0;
 	fprintf(f, " ts: %.06f", ts);
 	if (last_ts)
 		fprintf(f, " delta: %.03f ms", (ts - last_ts) * 1000.0);
@@ -472,12 +449,12 @@ static void print_concise_buffer(FILE *f, struct v4l2_buffer &buf,
 	if (dropped)
 		fprintf(stderr, "dropped: %u", dropped);
 
-	__u32 fl = buf.flags & (V4L2_BUF_FLAG_ERROR |
-				V4L2_BUF_FLAG_KEYFRAME |
-				V4L2_BUF_FLAG_PFRAME |
-				V4L2_BUF_FLAG_BFRAME |
-				V4L2_BUF_FLAG_LAST |
-				V4L2_BUF_FLAG_TIMECODE);
+	__u32 fl = buf.g_flags() & (V4L2_BUF_FLAG_ERROR |
+				    V4L2_BUF_FLAG_KEYFRAME |
+				    V4L2_BUF_FLAG_PFRAME |
+				    V4L2_BUF_FLAG_BFRAME |
+				    V4L2_BUF_FLAG_LAST |
+				    V4L2_BUF_FLAG_TIMECODE);
 	if (fl)
 		fprintf(f, " (%s)", bufferflags2s(fl).c_str());
 	fprintf(f, "\n");
@@ -485,10 +462,8 @@ static void print_concise_buffer(FILE *f, struct v4l2_buffer &buf,
 
 static void list_buffers(cv4l_fd &fd, unsigned buftype)
 {
-	unsigned int trace = fd.g_trace();
+	cv4l_disable_trace dt(fd);
 	int i;
-
-	fd.s_trace(trace == 2 ? trace : 0);
 
 	for (i = 0; i < VIDEO_MAX_FRAME; i++) {
 		cv4l_buffer buf(buftype);
@@ -499,7 +474,6 @@ static void list_buffers(cv4l_fd &fd, unsigned buftype)
 			printf("VIDIOC_QUERYBUF:\n");
 		print_buffer(stdout, buf.buf);
 	}
-	fd.s_trace(trace);
 }
 
 void streaming_cmd(int ch, char *optarg)
@@ -617,136 +591,39 @@ void streaming_cmd(int ch, char *optarg)
 	case OptStreamFromHost:
 		host_from = optarg;
 		break;
-	case OptStreamMmap:
 	case OptStreamUser:
+		memory = V4L2_MEMORY_USERPTR;
+		/* fall through */
+	case OptStreamMmap:
 		if (optarg) {
 			reqbufs_count_cap = strtoul(optarg, 0L, 0);
 			if (reqbufs_count_cap == 0)
 				reqbufs_count_cap = 3;
 		}
 		break;
-	case OptStreamOutMmap:
+	case OptStreamDmaBuf:
+		memory = V4L2_MEMORY_DMABUF;
+		break;
 	case OptStreamOutUser:
+		out_memory = V4L2_MEMORY_USERPTR;
+		/* fall through */
+	case OptStreamOutMmap:
 		if (optarg) {
 			reqbufs_count_out = strtoul(optarg, 0L, 0);
 			if (reqbufs_count_out == 0)
 				reqbufs_count_out = 3;
 		}
 		break;
+	case OptStreamOutDmaBuf:
+		out_memory = V4L2_MEMORY_DMABUF;
+		break;
 	}
 }
 
-class buffers {
-public:
-	buffers(bool is_output)
-	{
-		if (capabilities & V4L2_CAP_SDR_CAPTURE)
-			type = V4L2_BUF_TYPE_SDR_CAPTURE;
-		else if (capabilities & V4L2_CAP_SDR_OUTPUT)
-			type = V4L2_BUF_TYPE_SDR_OUTPUT;
-		else if (capabilities & V4L2_CAP_META_CAPTURE)
-			type = V4L2_BUF_TYPE_META_CAPTURE;
-		else
-			type = is_output ? vidout_buftype : vidcap_buftype;
-		if (is_output) {
-			if (options[OptStreamOutMmap])
-				memory = V4L2_MEMORY_MMAP;
-			else if (options[OptStreamOutUser])
-				memory = V4L2_MEMORY_USERPTR;
-			else if (options[OptStreamOutDmaBuf])
-				memory = V4L2_MEMORY_DMABUF;
-			is_mplane = out_capabilities & (V4L2_CAP_VIDEO_M2M_MPLANE |
-							V4L2_CAP_VIDEO_OUTPUT_MPLANE);
-		} else {
-			if (options[OptStreamMmap])
-				memory = V4L2_MEMORY_MMAP;
-			else if (options[OptStreamUser])
-				memory = V4L2_MEMORY_USERPTR;
-			else if (options[OptStreamDmaBuf])
-				memory = V4L2_MEMORY_DMABUF;
-			is_mplane = capabilities & (V4L2_CAP_VIDEO_M2M_MPLANE |
-						    V4L2_CAP_VIDEO_CAPTURE_MPLANE);
-		}
-		for (int i = 0; i < VIDEO_MAX_FRAME; i++)
-			for (int p = 0; p < VIDEO_MAX_PLANES; p++)
-				fds[i][p] = -1;
-		num_planes = is_mplane ? 0 : 1;
-	}
-	~buffers()
-	{
-		for (int i = 0; i < VIDEO_MAX_FRAME; i++)
-			for (int p = 0; p < VIDEO_MAX_PLANES; p++)
-				if (fds[i][p] != -1)
-					close(fds[i][p]);
-	}
-
-public:
-	unsigned type;
-	unsigned memory;
-	bool is_mplane;
-	unsigned bcount;
-	unsigned num_planes;
-	struct v4l2_plane planes[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
-	void *bufs[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
-	int fds[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
-	unsigned bpl[VIDEO_MAX_PLANES];
-
-	int reqbufs(int fd, unsigned buf_count)
-	{
-		struct v4l2_requestbuffers reqbufs;
-		int err;
-
-		memset(&reqbufs, 0, sizeof(reqbufs));
-		reqbufs.count = buf_count;
-		reqbufs.type = type;
-		reqbufs.memory = memory;
-		err = doioctl(fd, VIDIOC_REQBUFS, &reqbufs);
-		if (err >= 0)
-			bcount = reqbufs.count;
-		if (is_mplane) {
-			struct v4l2_plane planes[VIDEO_MAX_PLANES];
-			struct v4l2_buffer buf;
-
-			memset(&buf, 0, sizeof(buf));
-			memset(planes, 0, sizeof(planes));
-			buf.type = type;
-			buf.memory = memory;
-			buf.m.planes = planes;
-			buf.length = VIDEO_MAX_PLANES;
-			err = doioctl(fd, VIDIOC_QUERYBUF, &buf);
-			if (err)
-				return err;
-			num_planes = buf.length;
-		}
-		return err;
-	}
-
-	int expbufs(int fd, unsigned type)
-	{
-		struct v4l2_exportbuffer expbuf;
-		unsigned i, p;
-		int err;
-
-		memset(&expbuf, 0, sizeof(expbuf));
-		for (i = 0; i < bcount; i++) {
-			for (p = 0; p < num_planes; p++) {
-				expbuf.type = type;
-				expbuf.index = i;
-				expbuf.plane = p;
-				expbuf.flags = O_RDWR;
-				err = doioctl(fd, VIDIOC_EXPBUF, &expbuf);
-				if (err < 0)
-					return err;
-				if (err >= 0)
-					fds[i][p] = expbuf.fd;
-			}
-		}
-		return 0;
-	}
-};
-
-static bool fill_buffer_from_file(buffers &b, unsigned idx, FILE *fin)
+static bool fill_buffer_from_file(cv4l_queue &q, cv4l_buffer &b, FILE *fin)
 {
+	static bool first = true;
+
 	if (host_fd_from >= 0) {
 		for (;;) {
 			unsigned packet = read_u32(fin);
@@ -783,9 +660,8 @@ static bool fill_buffer_from_file(buffers &b, unsigned idx, FILE *fin)
 		}
 		read_u32(fin);  // ignore field
 		read_u32(fin);  // ignore flags
-		for (unsigned j = 0; j < b.num_planes; j++) {
-			__u8 *buf = (__u8 *)b.bufs[idx][j];
-			struct v4l2_plane &p = b.planes[idx][j];
+		for (unsigned j = 0; j < q.g_num_planes(); j++) {
+			__u8 *buf = (__u8 *)q.g_dataptr(b.g_index(), j);
 
 			sz = read_u32(fin);
 			if (sz != V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_PLANE_HDR) {
@@ -797,9 +673,9 @@ static bool fill_buffer_from_file(buffers &b, unsigned idx, FILE *fin)
 			__u32 offset = size - rle_size;
 			unsigned sz = rle_size;
 
-			if (size > p.length) {
+			if (size > q.g_length(j)) {
 				fprintf(stderr, "plane size is too large (%u > %u)\n",
-					size, p.length);
+					size, q.g_length(j));
 				return false;
 			}
 			while (sz) {
@@ -813,140 +689,78 @@ static bool fill_buffer_from_file(buffers &b, unsigned idx, FILE *fin)
 				offset += n;
 				sz -= n;
 			}
-			rle_decompress(buf, size, rle_size, b.bpl[j]);
+			rle_decompress(buf, size, rle_size, bpl_out[j]);
 		}
 		return true;
 	}
 
 restart:
-	if (from_with_hdr && read_u32(fin) != FILE_HDR_ID) {
-		fprintf(stderr, "Unknown header ID\n");
-		return false;
+	if (from_with_hdr) {
+		__u32 v;
+
+		if (!fread(&v, sizeof(v), 1, fin)) {
+			if (first) {
+				fprintf(stderr, "Insufficient data\n");
+				return false;
+			}
+			if (stream_loop) {
+				fseek(fin, 0, SEEK_SET);
+				first = true;
+				goto restart;
+			}
+			return false;
+		}
+		if (ntohl(v) != FILE_HDR_ID) {
+			fprintf(stderr, "Unknown header ID\n");
+			return false;
+		}
 	}
 
-	for (unsigned j = 0; j < b.num_planes; j++) {
-		void *buf = b.bufs[idx][j];
-		struct v4l2_plane &p = b.planes[idx][j];
-		unsigned len = p.length;
+	for (unsigned j = 0; j < q.g_num_planes(); j++) {
+		void *buf = q.g_dataptr(b.g_index(), j);
+		unsigned len = q.g_length(j);
 		unsigned sz;
 
 		if (from_with_hdr)
 			len = read_u32(fin);
 		sz = fread(buf, 1, len, fin);
+		if (first && sz != len) {
+			fprintf(stderr, "Insufficient data\n");
+			return false;
+		}
 		if (j == 0 && sz == 0 && stream_loop) {
 			fseek(fin, 0, SEEK_SET);
+			first = true;
 			goto restart;
 		}
-		p.bytesused = len;
+		b.s_bytesused(len, j);
 		if (sz == len)
 			continue;
 		if (sz)
 			fprintf(stderr, "%u != %u\n", sz, len);
-		// Bail out if we get weird buffer sizes.
 		return false;
 	}
+	first = false;
 	return true;
 }
 
-static int do_setup_cap_buffers(int fd, buffers &b)
-{
-	for (unsigned i = 0; i < b.bcount; i++) {
-		struct v4l2_plane planes[VIDEO_MAX_PLANES];
-		struct v4l2_buffer buf;
-
-		memset(&buf, 0, sizeof(buf));
-		memset(planes, 0, sizeof(planes));
-		buf.type = b.type;
-		buf.memory = b.memory;
-		buf.index = i;
-		if (b.is_mplane) {
-			buf.m.planes = planes;
-			buf.length = VIDEO_MAX_PLANES;
-		}
-		if (doioctl(fd, VIDIOC_QUERYBUF, &buf))
-			return -1;
-
-		if (b.is_mplane) {
-			for (unsigned j = 0; j < b.num_planes; j++) {
-				struct v4l2_plane &p = b.planes[i][j];
-
-				p.length = planes[j].length;
-				if (b.memory == V4L2_MEMORY_MMAP) {
-					b.bufs[i][j] = test_mmap(NULL, p.length,
-							  PROT_READ | PROT_WRITE, MAP_SHARED,
-							  fd, planes[j].m.mem_offset);
-
-					if (b.bufs[i][j] == MAP_FAILED) {
-						fprintf(stderr, "mmap plane %u failed\n", j);
-						return -1;
-					}
-				} else if (b.memory == V4L2_MEMORY_DMABUF) {
-					b.bufs[i][j] = mmap(NULL, p.length,
-							  PROT_READ | PROT_WRITE, MAP_SHARED,
-							  b.fds[i][j], 0);
-
-					if (b.bufs[i][j] == MAP_FAILED) {
-						fprintf(stderr, "dmabuf mmap plane %u failed\n", j);
-						return -1;
-					}
-					planes[j].m.fd = b.fds[i][j];
-				} else {
-					b.bufs[i][j] = calloc(1, p.length);
-					planes[j].m.userptr = (unsigned long)b.bufs[i][j];
-				}
-			}
-		}
-		else {
-			struct v4l2_plane &p = b.planes[i][0];
-
-			p.length = buf.length;
-			if (b.memory == V4L2_MEMORY_MMAP) {
-				b.bufs[i][0] = test_mmap(NULL, p.length,
-						  PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
-
-				if (b.bufs[i][0] == MAP_FAILED) {
-					fprintf(stderr, "mmap failed\n");
-					return -1;
-				}
-			} else if (b.memory == V4L2_MEMORY_DMABUF) {
-				b.bufs[i][0] = mmap(NULL, p.length,
-						PROT_READ | PROT_WRITE, MAP_SHARED,
-						b.fds[i][0], 0);
-
-				if (b.bufs[i][0] == MAP_FAILED) {
-					fprintf(stderr, "dmabuf mmap failed\n");
-					return -1;
-				}
-				buf.m.fd = b.fds[i][0];
-			} else {
-				b.bufs[i][0] = calloc(1, p.length);
-				buf.m.userptr = (unsigned long)b.bufs[i][0];
-			}
-		}
-		if (doioctl(fd, VIDIOC_QBUF, &buf))
-			return -1;
-	}
-	return 0;
-}
-
-static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
+static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf)
 {
 	tpg_pixel_aspect aspect = TPG_PIXEL_ASPECT_SQUARE;
-	struct v4l2_format fmt;
+	cv4l_fmt fmt(q.g_type());
 	u32 field;
-	unsigned factor = 1;
 	unsigned p;
 	bool can_fill;
 
-	memset(&fmt, 0, sizeof(fmt));
-	fmt.fmt.pix.priv = out_priv_magic;
-	fmt.type = b.type;
-	doioctl(fd, VIDIOC_G_FMT, &fmt);
-	if (test_ioctl(fd, VIDIOC_G_STD, &stream_out_std)) {
+	if (q.obtain_bufs(&fd))
+		return -1;
+
+	fd.g_fmt(fmt);
+	if (fd.g_std(stream_out_std)) {
 		struct v4l2_dv_timings timings;
 
 		stream_out_std = 0;
-		if (test_ioctl(fd, VIDIOC_G_DV_TIMINGS, &timings))
+		if (fd.g_dv_timings(timings))
 			memset(&timings, 0, sizeof(timings));
 		else if (timings.bt.width == 720 && timings.bt.height == 480)
 			aspect = TPG_PIXEL_ASPECT_NTSC;
@@ -958,45 +772,25 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 		aspect = TPG_PIXEL_ASPECT_PAL;
 	}
 
-
-	if (b.is_mplane)
-		field = fmt.fmt.pix_mp.field;
-	else
-		field = fmt.fmt.pix.field;
+	field = fmt.g_field();
 
 	output_field = field;
 	output_field_alt = field == V4L2_FIELD_ALTERNATE;
-	if (V4L2_FIELD_HAS_T_OR_B(field)) {
-		factor = 2;
+	if (V4L2_FIELD_HAS_T_OR_B(field))
 		output_field = (stream_out_std & V4L2_STD_525_60) ?
 			V4L2_FIELD_BOTTOM : V4L2_FIELD_TOP;
-	}
 
 	tpg_init(&tpg, 640, 360);
-	if (b.is_mplane) {
-		tpg_alloc(&tpg, fmt.fmt.pix_mp.width);
-		can_fill = tpg_s_fourcc(&tpg, fmt.fmt.pix_mp.pixelformat);
-		tpg_reset_source(&tpg, fmt.fmt.pix_mp.width,
-				 fmt.fmt.pix_mp.height * factor, field);
-		tpg_s_colorspace(&tpg, fmt.fmt.pix_mp.colorspace);
-		tpg_s_xfer_func(&tpg, fmt.fmt.pix_mp.xfer_func);
-		tpg_s_ycbcr_enc(&tpg, fmt.fmt.pix_mp.ycbcr_enc);
-		tpg_s_quantization(&tpg, fmt.fmt.pix_mp.quantization);
-		if (can_fill)
-			for (p = 0; p < fmt.fmt.pix_mp.num_planes; p++)
-				tpg_s_bytesperline(&tpg, p,
-						fmt.fmt.pix_mp.plane_fmt[p].bytesperline);
-	} else {
-		tpg_alloc(&tpg, fmt.fmt.pix.width);
-		can_fill = tpg_s_fourcc(&tpg, fmt.fmt.pix.pixelformat);
-		tpg_reset_source(&tpg, fmt.fmt.pix.width,
-				 fmt.fmt.pix.height * factor, field);
-		tpg_s_colorspace(&tpg, fmt.fmt.pix.colorspace);
-		tpg_s_xfer_func(&tpg, fmt.fmt.pix.xfer_func);
-		tpg_s_ycbcr_enc(&tpg, fmt.fmt.pix.ycbcr_enc);
-		tpg_s_quantization(&tpg, fmt.fmt.pix.quantization);
-		tpg_s_bytesperline(&tpg, 0, fmt.fmt.pix.bytesperline);
-	}
+	tpg_alloc(&tpg, fmt.g_width());
+	can_fill = tpg_s_fourcc(&tpg, fmt.g_pixelformat());
+	tpg_reset_source(&tpg, fmt.g_width(), fmt.g_frame_height(), field);
+	tpg_s_colorspace(&tpg, fmt.g_colorspace());
+	tpg_s_xfer_func(&tpg, fmt.g_xfer_func());
+	tpg_s_ycbcr_enc(&tpg, fmt.g_ycbcr_enc());
+	tpg_s_quantization(&tpg, fmt.g_quantization());
+	for (p = 0; p < fmt.g_num_planes(); p++)
+		tpg_s_bytesperline(&tpg, p,
+				fmt.g_bytesperline(p));
 	tpg_s_pattern(&tpg, (tpg_pattern)stream_pat);
 	tpg_s_mv_hor_mode(&tpg, stream_out_hor_mode);
 	tpg_s_mv_vert_mode(&tpg, stream_out_vert_mode);
@@ -1023,23 +817,13 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 			 !tpg_pattern_is_static(&tpg)))
 		stream_out_refresh = true;
 
-	for (unsigned i = 0; i < b.bcount; i++) {
-		struct v4l2_plane planes[VIDEO_MAX_PLANES];
-		struct v4l2_buffer buf;
+	for (unsigned i = 0; i < q.g_buffers(); i++) {
+		cv4l_buffer buf(q);
 
-		memset(&buf, 0, sizeof(buf));
-		memset(planes, 0, sizeof(planes));
-		buf.type = b.type;
-		buf.memory = b.memory;
-		buf.index = i;
-		if (b.is_mplane) {
-			buf.m.planes = planes;
-			buf.length = VIDEO_MAX_PLANES;
-		}
-		if (doioctl(fd, VIDIOC_QUERYBUF, &buf))
+		if (fd.querybuf(buf, i))
 			return -1;
 
-		buf.field = field;
+		buf.s_field(field);
 		tpg_s_field(&tpg, field, output_field_alt);
 		if (output_field_alt) {
 			if (field == V4L2_FIELD_TOP)
@@ -1048,77 +832,16 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 				field = V4L2_FIELD_TOP;
 		}
 
-		if (b.is_mplane) {
-			for (unsigned j = 0; j < b.num_planes; j++) {
-				struct v4l2_plane &p = b.planes[i][j];
-
-				p.bytesused = p.length = planes[j].length;
-				if (b.memory == V4L2_MEMORY_MMAP) {
-					b.bufs[i][j] = mmap(NULL, p.length,
-							  PROT_READ | PROT_WRITE, MAP_SHARED,
-							  fd, planes[j].m.mem_offset);
-
-					if (b.bufs[i][j] == MAP_FAILED) {
-						fprintf(stderr, "mmap output plane %u failed\n", j);
-						return -1;
-					}
-				} else if (b.memory == V4L2_MEMORY_DMABUF) {
-					b.bufs[i][j] = mmap(NULL, p.length,
-							  PROT_READ | PROT_WRITE, MAP_SHARED,
-							  b.fds[i][j], 0);
-
-					if (b.bufs[i][j] == MAP_FAILED) {
-						fprintf(stderr, "dmabuf mmap output plane %u failed\n", j);
-						return -1;
-					}
-					planes[j].m.fd = b.fds[i][j];
-				} else {
-					b.bufs[i][j] = calloc(1, p.length);
-					planes[j].m.userptr = (unsigned long)b.bufs[i][j];
-				}
-				if (can_fill)
-					tpg_fillbuffer(&tpg, stream_out_std, j, (u8 *)b.bufs[i][j]);
-			}
-			if (fin)
-				fill_buffer_from_file(b, buf.index, fin);
-
-			for (unsigned j = 0; j < b.num_planes; j++)
-				buf.m.planes[j].bytesused = b.planes[i][j].bytesused;
+		if (can_fill) {
+			for (unsigned j = 0; j < q.g_num_planes(); j++)
+				tpg_fillbuffer(&tpg, stream_out_std, j, (u8 *)q.g_dataptr(i, j));
 		}
-		else {
-			b.planes[i][0].length = buf.length;
-			b.planes[i][0].bytesused = buf.length;
-			if (b.memory == V4L2_MEMORY_MMAP) {
-				b.bufs[i][0] = test_mmap(NULL, buf.length,
-						  PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
+		if (fin && !fill_buffer_from_file(q, buf, fin))
+			return -1;
 
-				if (b.bufs[i][0] == MAP_FAILED) {
-					fprintf(stderr, "mmap output failed\n");
-					return -1;
-				}
-			} else if (b.memory == V4L2_MEMORY_DMABUF) {
-				b.bufs[i][0] = mmap(NULL, buf.length,
-						PROT_READ | PROT_WRITE, MAP_SHARED,
-						b.fds[i][0], 0);
-
-				if (b.bufs[i][0] == MAP_FAILED) {
-					fprintf(stderr, "dmabuf mmap output failed\n");
-					return -1;
-				}
-				buf.m.fd = b.fds[i][0];
-			} else {
-				b.bufs[i][0] = calloc(1, buf.length);
-				buf.m.userptr = (unsigned long)b.bufs[i][0];
-			}
-			if (!fin || !fill_buffer_from_file(b, buf.index, fin))
-				if (can_fill)
-					tpg_fillbuffer(&tpg, stream_out_std, 0, (u8 *)b.bufs[i][0]);
-			buf.bytesused = b.planes[i][0].bytesused;
-		}
 		if (qbuf) {
-			if (V4L2_TYPE_IS_OUTPUT(buf.type))
-				setTimeStamp(buf);
-			if (doioctl(fd, VIDIOC_QBUF, &buf))
+			set_time_stamp(buf);
+			if (fd.qbuf(buf))
 				return -1;
 			tpg_update_mv_count(&tpg, V4L2_FIELD_HAS_T_OR_B(field));
 		}
@@ -1128,95 +851,68 @@ static int do_setup_out_buffers(int fd, buffers &b, FILE *fin, bool qbuf)
 	return 0;
 }
 
-static void do_release_buffers(buffers &b)
-{
-	for (unsigned i = 0; i < b.bcount; i++) {
-		for (unsigned j = 0; j < b.num_planes; j++) {
-			if (b.memory == V4L2_MEMORY_USERPTR)
-				free(b.bufs[i][j]);
-			else if (b.memory == V4L2_MEMORY_DMABUF)
-				munmap(b.bufs[i][j], b.planes[i][j].length);
-			else
-				test_munmap(b.bufs[i][j], b.planes[i][j].length);
-		}
-	}
-	tpg_free(&tpg);
-}
-
-static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
+static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 			 unsigned &count, fps_timestamps &fps_ts)
 {
 	char ch = '<';
 	int ret;
-	struct v4l2_plane planes[VIDEO_MAX_PLANES];
-	struct v4l2_buffer buf;
-	bool ignore_count_skip = false;
-
-	memset(&buf, 0, sizeof(buf));
-	memset(planes, 0, sizeof(planes));
+	cv4l_buffer buf(q);
 
 	/*
 	 * The stream_count and stream_skip does not apply to capture path of
 	 * M2M devices.
 	 */
-	if ((capabilities & V4L2_CAP_VIDEO_M2M) ||
-	    (capabilities & V4L2_CAP_VIDEO_M2M_MPLANE))
-		ignore_count_skip = true;
-
-	buf.type = b.type;
-	buf.memory = b.memory;
-	if (b.is_mplane) {
-		buf.m.planes = planes;
-		buf.length = VIDEO_MAX_PLANES;
-	}
+	bool ignore_count_skip = fd.has_vid_m2m();
 
 	for (;;) {
-		ret = test_ioctl(fd, VIDIOC_DQBUF, &buf);
-		if (ret < 0 && errno == EAGAIN)
+		ret = fd.dqbuf(buf);
+		if (ret == EAGAIN)
 			return 0;
 		if (ret < 0) {
 			fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
 			return -1;
 		}
-		if (!(buf.flags & V4L2_BUF_FLAG_ERROR))
+		if (!(buf.g_flags() & V4L2_BUF_FLAG_ERROR))
 			break;
 		if (verbose)
 			print_concise_buffer(stderr, buf, fps_ts, -1);
-		test_ioctl(fd, VIDIOC_QBUF, &buf);
+		if (fd.qbuf(buf))
+			return -1;
 	}
 	
-	double ts_secs = buf.timestamp.tv_sec + buf.timestamp.tv_usec / 1000000.0;
-	fps_ts.add_ts(ts_secs, buf.sequence, buf.field);
+	double ts_secs = buf.g_timestamp().tv_sec + buf.g_timestamp().tv_usec / 1000000.0;
+	fps_ts.add_ts(ts_secs, buf.g_sequence(), buf.g_field());
 
-	if (fout && (!stream_skip || ignore_count_skip) && !(buf.flags & V4L2_BUF_FLAG_ERROR)) {
+	if (fout && (!stream_skip || ignore_count_skip) &&
+	    !(buf.g_flags() & V4L2_BUF_FLAG_ERROR)) {
 		unsigned rle_size[VIDEO_MAX_PLANES];
 
 		if (host_fd_to >= 0) {
 			unsigned tot_rle_size = 0;
 			unsigned tot_used = 0;
 
-			for (unsigned j = 0; j < b.num_planes; j++) {
-				__u32 used = b.is_mplane ? planes[j].bytesused : buf.bytesused;
-				unsigned offset = b.is_mplane ? planes[j].data_offset : 0;
+			for (unsigned j = 0; j < buf.g_num_planes(); j++) {
+				__u32 used = buf.g_bytesused();
+				unsigned offset = buf.g_data_offset();
 
-				rle_size[j] = rle_compress((__u8 *)b.bufs[buf.index][j] + offset,
-							   used - offset, b.bpl[j]);
+				rle_size[j] = rle_compress((u8 *)q.g_dataptr(buf.g_index(), j) + offset,
+							   used - offset, bpl_cap[j]);
 				tot_rle_size += rle_size[j];
 				tot_used += used - offset;
 			}
 			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO);
-			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE(b.num_planes) + tot_rle_size);
+			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE(buf.g_num_planes()) + tot_rle_size);
 			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_HDR);
-			write_u32(fout, buf.field);
-			write_u32(fout, buf.flags);
+			write_u32(fout, buf.g_field());
+			write_u32(fout, buf.g_flags());
 			rle_perc += (tot_rle_size * 100 / tot_used);
 			rle_perc_count++;
 		}
 		if (to_with_hdr)
 			write_u32(fout, FILE_HDR_ID);
-		for (unsigned j = 0; j < b.num_planes; j++) {
-			__u32 used = b.is_mplane ? planes[j].bytesused : buf.bytesused;
-			unsigned offset = b.is_mplane ? planes[j].data_offset : 0;
+		for (unsigned j = 0; j < buf.g_num_planes(); j++) {
+			__u32 used = buf.g_bytesused();
+			unsigned offset = buf.g_data_offset();
 			unsigned sz;
 
 			if (offset > used) {
@@ -1234,7 +930,7 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 			} else if (to_with_hdr) {
 				write_u32(fout, used);
 			}
-			sz = fwrite((char *)b.bufs[buf.index][j] + offset, 1, used, fout);
+			sz = fwrite((u8 *)q.g_dataptr(buf.g_index(), j) + offset, 1, used, fout);
 
 			if (sz != used)
 				fprintf(stderr, "%u != %u\n", sz, used);
@@ -1242,21 +938,21 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 		if (host_fd_to >= 0)
 			fflush(fout);
 	}
-	if (buf.flags & V4L2_BUF_FLAG_KEYFRAME)
+	if (buf.g_flags() & V4L2_BUF_FLAG_KEYFRAME)
 		ch = 'K';
-	else if (buf.flags & V4L2_BUF_FLAG_PFRAME)
+	else if (buf.g_flags() & V4L2_BUF_FLAG_PFRAME)
 		ch = 'P';
-	else if (buf.flags & V4L2_BUF_FLAG_BFRAME)
+	else if (buf.g_flags() & V4L2_BUF_FLAG_BFRAME)
 		ch = 'B';
 	if (verbose) {
 		print_concise_buffer(stderr, buf, fps_ts,
 				     host_fd_to >= 0 ? 100 - rle_perc / rle_perc_count : -1);
 		rle_perc_count = rle_perc = 0;
 	}
-	if (index == NULL && test_ioctl(fd, VIDIOC_QBUF, &buf))
+	if (index == NULL && fd.qbuf(buf))
 		return -1;
 	if (index)
-		*index = buf.index;
+		*index = buf.g_index();
 
 	if (!verbose) {
 		fprintf(stderr, "%c", ch);
@@ -1293,67 +989,42 @@ static int do_handle_cap(int fd, buffers &b, FILE *fout, int *index,
 	return 0;
 }
 
-static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
+static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap,
 			 unsigned &count, fps_timestamps &fps_ts)
 {
-	struct v4l2_plane planes[VIDEO_MAX_PLANES];
-	struct v4l2_buffer buf;
-	int ret;
-
-	memset(&buf, 0, sizeof(buf));
-	memset(planes, 0, sizeof(planes));
-	buf.type = b.type;
-	buf.memory = b.memory;
-	if (b.is_mplane) {
-		buf.m.planes = planes;
-		buf.length = VIDEO_MAX_PLANES;
-	}
+	cv4l_buffer buf(q);
+	int ret = 0;
 
 	if (cap) {
-		buf.index = cap->index;
-		ret = test_ioctl(fd, VIDIOC_QUERYBUF, &buf);
-		if (b.is_mplane) {
-			for (unsigned j = 0; j < b.num_planes; j++) {
-				unsigned bytesused = cap->m.planes[j].bytesused;
-				unsigned data_offset = cap->m.planes[j].data_offset;
+		buf.s_index(cap->g_index());
 
-				if (b.memory == V4L2_MEMORY_USERPTR) {
-					planes[j].m.userptr = (unsigned long)cap->m.planes[j].m.userptr + data_offset;
-					planes[j].bytesused = cap->m.planes[j].bytesused - data_offset;
-					planes[j].data_offset = 0;
-				} else if (b.memory == V4L2_MEMORY_DMABUF) {
-					planes[j].m.fd = b.fds[cap->index][j];
-					planes[j].bytesused = bytesused;
-					planes[j].data_offset = data_offset;
-				}
+		for (unsigned j = 0; j < buf.g_num_planes(); j++) {
+			unsigned data_offset = cap->g_data_offset(j);
+
+			if (q.g_memory() == V4L2_MEMORY_USERPTR) {
+				buf.s_userptr((u8 *)cap->g_userptr(j) + data_offset, j);
+				buf.s_bytesused(cap->g_bytesused(j) - data_offset, j);
+				buf.s_data_offset(0, j);
+			} else if (q.g_memory() == V4L2_MEMORY_DMABUF) {
+				buf.s_bytesused(cap->g_bytesused(j), j);
+				buf.s_data_offset(data_offset, j);
 			}
 		}
-		else {
-			buf.bytesused = cap->bytesused;
-			if (b.memory == V4L2_MEMORY_USERPTR)
-				buf.m.userptr = (unsigned long)cap->m.userptr;
-			else if (b.memory == V4L2_MEMORY_DMABUF)
-				buf.m.fd = b.fds[cap->index][0];
-		}
 	} else {
-		ret = test_ioctl(fd, VIDIOC_DQBUF, &buf);
-		if (ret < 0 && errno == EAGAIN)
+		ret = fd.dqbuf(buf);
+		if (ret == EAGAIN)
 			return 0;
-		if (b.is_mplane) {
-			for (unsigned j = 0; j < buf.length; j++)
-				buf.m.planes[j].bytesused = buf.m.planes[j].length;
-		} else {
-			buf.bytesused = buf.length;
-		}
+		for (unsigned j = 0; j < buf.g_num_planes(); j++)
+			buf.s_bytesused(buf.g_length(j), j);
 
-		double ts_secs = buf.timestamp.tv_sec + buf.timestamp.tv_usec / 1000000.0;
-		fps_ts.add_ts(ts_secs, buf.sequence, buf.field);
+		double ts_secs = buf.g_timestamp().tv_sec + buf.g_timestamp().tv_usec / 1000000.0;
+		fps_ts.add_ts(ts_secs, buf.g_sequence(), buf.g_field());
 	}
-	if (ret < 0) {
-		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
+	if (ret) {
+		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(ret));
 		return -1;
 	}
-	buf.field = output_field;
+	buf.s_field(output_field);
 	tpg_s_field(&tpg, output_field, output_field_alt);
 	if (output_field_alt) {
 		if (output_field == V4L2_FIELD_TOP)
@@ -1362,28 +1033,18 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 			output_field = V4L2_FIELD_TOP;
 	}
 
-	if (fin && !fill_buffer_from_file(b, buf.index, fin))
+	if (fin && !fill_buffer_from_file(q, buf, fin))
 		return -1;
-	if (fin && b.is_mplane) {
-		for (unsigned j = 0; j < b.num_planes; j++)
-			planes[j].bytesused = b.planes[buf.index][j].bytesused;
-	} else if (fin) {
-		buf.bytesused = b.planes[buf.index][0].bytesused;
-	}
 
 	if (!fin && stream_out_refresh) {
-		if (b.is_mplane) {
-			for (unsigned j = 0; j < b.num_planes; j++)
-				tpg_fillbuffer(&tpg, stream_out_std, j, (u8 *)b.bufs[buf.index][j]);
-		} else {
-			tpg_fillbuffer(&tpg, stream_out_std, 0, (u8 *)b.bufs[buf.index][0]);
-		}
+		for (unsigned j = 0; j < buf.g_num_planes(); j++)
+			tpg_fillbuffer(&tpg, stream_out_std, j,
+				       (u8 *)q.g_dataptr(buf.g_index(), j));
 	}
 
-	if (V4L2_TYPE_IS_OUTPUT(buf.type))
-		setTimeStamp(buf);
+	set_time_stamp(buf);
 
-	if (test_ioctl(fd, VIDIOC_QBUF, &buf)) {
+	if (fd.qbuf(buf)) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_QBUF", strerror(errno));
 		return -1;
 	}
@@ -1411,50 +1072,34 @@ static int do_handle_out(int fd, buffers &b, FILE *fin, struct v4l2_buffer *cap,
 	return 0;
 }
 
-static int do_handle_out_to_in(int out_fd, int fd, buffers &out, buffers &in)
+static int do_handle_out_to_in(cv4l_fd &out_fd, cv4l_fd &fd, cv4l_queue &out, cv4l_queue &in)
 {
-	struct v4l2_plane planes[VIDEO_MAX_PLANES];
-	struct v4l2_buffer buf;
+	cv4l_buffer buf(out);
 	int ret;
 
-	memset(&buf, 0, sizeof(buf));
-	memset(planes, 0, sizeof(planes));
-	buf.type = out.type;
-	buf.memory = out.memory;
-	if (out.is_mplane) {
-		buf.m.planes = planes;
-		buf.length = VIDEO_MAX_PLANES;
-	}
-
 	do {
-		ret = test_ioctl(out_fd, VIDIOC_DQBUF, &buf);
-	} while (ret < 0 && errno == EAGAIN);
-	if (ret < 0) {
+		ret = out_fd.dqbuf(buf);
+	} while (ret == EAGAIN);
+	if (ret) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
 		return -1;
 	}
-	memset(planes, 0, sizeof(planes));
-	buf.type = in.type;
-	buf.memory = in.memory;
-	if (in.is_mplane) {
-		buf.m.planes = planes;
-		buf.length = VIDEO_MAX_PLANES;
-	}
-	ret = test_ioctl(fd, VIDIOC_QUERYBUF, &buf);
+	buf.init(in, buf.g_index());
+	ret = fd.querybuf(buf);
 	if (ret == 0)
-		ret = test_ioctl(fd, VIDIOC_QBUF, &buf);
-	if (ret < 0) {
+		ret = fd.qbuf(buf);
+	if (ret) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_QBUF", strerror(errno));
 		return -1;
 	}
 	return 0;
 }
 
-static void streaming_set_cap(int fd)
+static void streaming_set_cap(cv4l_fd &fd)
 {
 	struct v4l2_event_subscription sub;
-	int fd_flags = fcntl(fd, F_GETFL);
-	buffers b(false);
+	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
+	cv4l_queue q(fd.g_type(), memory);
 	fps_timestamps fps_ts;
 	bool use_poll = options[OptStreamPoll];
 	unsigned count;
@@ -1476,10 +1121,10 @@ static void streaming_set_cap(int fd)
 
 	memset(&sub, 0, sizeof(sub));
 	sub.type = V4L2_EVENT_EOS;
-	ioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
+	fd.subscribe_event(sub);
 	if (use_poll) {
 		sub.type = V4L2_EVENT_SOURCE_CHANGE;
-		ioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
+		fd.subscribe_event(sub);
 	}
 
 recover:
@@ -1492,16 +1137,15 @@ recover:
 		v4l2_std_id new_std;
 		struct v4l2_input in = { };
 
-		if (!test_ioctl(fd, VIDIOC_G_INPUT, &in.index) &&
-		    !test_ioctl(fd, VIDIOC_ENUMINPUT, &in)) {
+		if (!fd.g_input(in.index) && !fd.enum_input(in, true, in.index)) {
 			if (in.capabilities & V4L2_IN_CAP_DV_TIMINGS) {
-				while (test_ioctl(fd, VIDIOC_QUERY_DV_TIMINGS, &new_dv_timings))
+				while (fd.query_dv_timings(new_dv_timings))
 					sleep(1);
-				test_ioctl(fd, VIDIOC_S_DV_TIMINGS, &new_dv_timings);
+				fd.s_dv_timings(new_dv_timings);
 				fprintf(stderr, "New timings found\n");
 			} else if (in.capabilities & V4L2_IN_CAP_STD) {
-				if (!test_ioctl(fd, VIDIOC_QUERYSTD, &new_std))
-					test_ioctl(fd, VIDIOC_S_STD, &new_std);
+				if (!fd.query_std(new_std))
+					fd.s_std(new_std);
 			}
 		}
 	}
@@ -1515,20 +1159,13 @@ recover:
 		char *p = strchr(host_to, ':');
 		struct sockaddr_in serv_addr;
 		struct hostent *server;
-		struct v4l2_format fmt = { };
-		struct v4l2_cropcap cropcap = { };
+		struct v4l2_fract aspect;
+		unsigned width, height;
+		cv4l_fmt cfmt;
 
-		fmt.type = b.type;
-		cropcap.type = b.type;
-		ioctl(fd, VIDIOC_G_FMT, &fmt);
-		cv4l_fmt cfmt(fmt);
+		fd.g_fmt(cfmt);
 
-		if (ioctl(fd, VIDIOC_CROPCAP, &cropcap) ||
-		    !cropcap.pixelaspect.numerator ||
-		    !cropcap.pixelaspect.denominator) {
-			cropcap.pixelaspect.numerator = 1;
-			cropcap.pixelaspect.denominator = 1;
-		}
+		aspect = fd.g_pixel_aspect(width, height);
 		if (p) {
 			host_port_to = strtoul(p + 1, 0L, 0);
 			*p = '\0';
@@ -1569,33 +1206,36 @@ recover:
 		write_u32(fout, cfmt.g_quantization());
 		write_u32(fout, cfmt.g_xfer_func());
 		write_u32(fout, cfmt.g_flags());
-		write_u32(fout, cropcap.pixelaspect.numerator);
-		write_u32(fout, cropcap.pixelaspect.denominator);
+		write_u32(fout, aspect.numerator);
+		write_u32(fout, aspect.denominator);
 		for (unsigned i = 0; i < cfmt.g_num_planes(); i++) {
 			write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT_PLANE);
 			write_u32(fout, cfmt.g_sizeimage(i));
 			write_u32(fout, cfmt.g_bytesperline(i));
-			b.bpl[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
+			bpl_cap[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
 		}
 		fflush(fout);
 	}
 
-	if (b.reqbufs(fd, reqbufs_count_cap))
+	if (q.reqbufs(&fd, reqbufs_count_cap))
 		goto done;
 
-	if (do_setup_cap_buffers(fd, b))
+	if (q.obtain_bufs(&fd))
 		goto done;
 
-	fps_ts.determine_field(fd, b.type);
+	if (q.queue_all(&fd))
+		goto done;
 
-	if (doioctl(fd, VIDIOC_STREAMON, &b.type))
+	fps_ts.determine_field(fd.g_fd(), q.g_type());
+
+	if (fd.streamon())
 		goto done;
 
 	while (stream_sleep == 0)
 		sleep(100);
 
 	if (use_poll)
-		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
+		fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
 
 	while (!eos && !source_change) {
 		fd_set read_fds;
@@ -1604,10 +1244,10 @@ recover:
 		int r;
 
 		FD_ZERO(&exception_fds);
-		FD_SET(fd, &exception_fds);
+		FD_SET(fd.g_fd(), &exception_fds);
 		FD_ZERO(&read_fds);
-		FD_SET(fd, &read_fds);
-		r = select(fd + 1, use_poll ? &read_fds : NULL, NULL, &exception_fds, &tv);
+		FD_SET(fd.g_fd(), &read_fds);
+		r = select(fd.g_fd() + 1, use_poll ? &read_fds : NULL, NULL, &exception_fds, &tv);
 
 		if (r == -1) {
 			if (EINTR == errno)
@@ -1621,10 +1261,10 @@ recover:
 			goto done;
 		}
 
-		if (FD_ISSET(fd, &exception_fds)) {
+		if (FD_ISSET(fd.g_fd(), &exception_fds)) {
 			struct v4l2_event ev;
 
-			while (!ioctl(fd, VIDIOC_DQEVENT, &ev)) {
+			while (!fd.dqevent(ev)) {
 				switch (ev.type) {
 				case V4L2_EVENT_SOURCE_CHANGE:
 					source_change = true;
@@ -1637,19 +1277,20 @@ recover:
 			}
 		}
 
-		if (FD_ISSET(fd, &read_fds)) {
-			r  = do_handle_cap(fd, b, fout, NULL,
+		if (FD_ISSET(fd.g_fd(), &read_fds)) {
+			r = do_handle_cap(fd, q, fout, NULL,
 					   count, fps_ts);
 			if (r == -1)
 				break;
 		}
 
 	}
-	doioctl(fd, VIDIOC_STREAMOFF, &b.type);
-	fcntl(fd, F_SETFL, fd_flags);
+	fd.streamoff();
+	fcntl(fd.g_fd(), F_SETFL, fd_flags);
 	fprintf(stderr, "\n");
 
-	do_release_buffers(b);
+	q.free(&fd);
+	tpg_free(&tpg);
 	if (source_change && !stream_no_query)
 		goto recover;
 
@@ -1661,10 +1302,11 @@ done:
 	}
 }
 
-static void streaming_set_out(int fd)
+static void streaming_set_out(cv4l_fd &fd)
 {
-	buffers b(true);
-	int fd_flags = fcntl(fd, F_GETFL);
+	__u32 type = fd.has_vid_m2m() ? v4l_type_invert(fd.g_type()) : fd.g_type();
+	cv4l_queue q(type, out_memory);
+	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
 	bool use_poll = options[OptStreamPoll];
 	fps_timestamps fps_ts;
 	unsigned count = 0;
@@ -1753,12 +1395,7 @@ static void streaming_set_out(int fd)
 		}
 		read_u32(fin);
 
-		cv4l_fmt cfmt;
-
-		if (capabilities & (V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE))
-			cfmt.s_type(V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
-		else
-			cfmt.s_type(V4L2_BUF_TYPE_VIDEO_OUTPUT);
+		cv4l_fmt cfmt(type);
 
 		unsigned sz = read_u32(fin);
 
@@ -1789,30 +1426,33 @@ static void streaming_set_out(int fd)
 			}
 			cfmt.s_sizeimage(read_u32(fin), i);
 			cfmt.s_bytesperline(read_u32(fin), i);
-			b.bpl[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
+			bpl_out[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
 		}
-		if (doioctl(fd, VIDIOC_S_FMT, &cfmt)) {
+		if (fd.s_fmt(cfmt)) {
 			fprintf(stderr, "failed to set new format\n");
 			goto done;
 		}
 	}
 
-	if (b.reqbufs(fd, reqbufs_count_out))
+	if (q.reqbufs(&fd, reqbufs_count_out))
 		goto done;
 
-	if (do_setup_out_buffers(fd, b, fin, true))
+	if (q.obtain_bufs(&fd))
 		goto done;
 
-	fps_ts.determine_field(fd, b.type);
+	if (do_setup_out_buffers(fd, q, fin, true))
+		goto done;
 
-	if (doioctl(fd, VIDIOC_STREAMON, &b.type))
+	fps_ts.determine_field(fd.g_fd(), type);
+
+	if (fd.streamon())
 		goto done;
 
 	while (stream_sleep == 0)
 		sleep(100);
 
 	if (use_poll)
-		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
+		fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
 
 	for (;;) {
 		int r;
@@ -1822,13 +1462,13 @@ static void streaming_set_out(int fd)
 			struct timeval tv;
 
 			FD_ZERO(&fds);
-			FD_SET(fd, &fds);
+			FD_SET(fd.g_fd(), &fds);
 
 			/* Timeout. */
 			tv.tv_sec = 2;
 			tv.tv_usec = 0;
 
-			r = select(fd + 1, NULL, &fds, NULL, &tv);
+			r = select(fd.g_fd() + 1, NULL, &fds, NULL, &tv);
 
 			if (r == -1) {
 				if (EINTR == errno)
@@ -1843,7 +1483,7 @@ static void streaming_set_out(int fd)
 				goto done;
 			}
 		}
-		r = do_handle_out(fd, b, fin, NULL,
+		r = do_handle_out(fd, q, fin, NULL,
 				   count, fps_ts);
 		if (r == -1)
 			break;
@@ -1851,14 +1491,15 @@ static void streaming_set_out(int fd)
 	}
 
 	if (options[OptDecoderCmd]) {
-		doioctl(fd, VIDIOC_DECODER_CMD, &dec_cmd);
+		fd.decoder_cmd(dec_cmd);
 		options[OptDecoderCmd] = false;
 	}
-	doioctl(fd, VIDIOC_STREAMOFF, &b.type);
-	fcntl(fd, F_SETFL, fd_flags);
+	fd.streamoff();
+	fcntl(fd.g_fd(), F_SETFL, fd_flags);
 	fprintf(stderr, "\n");
 
-	do_release_buffers(b);
+	q.free(&fd);
+	tpg_free(&tpg);
 
 done:
 	if (fin && fin != stdin)
@@ -1870,12 +1511,12 @@ enum stream_type {
 	OUT,
 };
 
-static void streaming_set_m2m(int fd)
+static void streaming_set_m2m(cv4l_fd &fd)
 {
-	int fd_flags = fcntl(fd, F_GETFL);
+	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
 	bool use_poll = options[OptStreamPoll];
-	buffers in(false);
-	buffers out(true);
+	cv4l_queue in(fd.g_type(), memory);
+	cv4l_queue out(v4l_type_invert(fd.g_type()), out_memory);
 	fps_timestamps fps_ts[2];
 	unsigned count[2] = { 0, 0 };
 	FILE *file[2] = {NULL, NULL};
@@ -1884,8 +1525,7 @@ static void streaming_set_m2m(int fd)
 	fd_set *ex_fds = &fds[1]; /* for capture */
 	fd_set *wr_fds = &fds[2]; /* for output */
 
-	if (!(capabilities & (V4L2_CAP_VIDEO_M2M |
-			      V4L2_CAP_VIDEO_M2M_MPLANE))) {
+	if (!fd.has_vid_m2m()) {
 		fprintf(stderr, "unsupported m2m stream type\n");
 		return;
 	}
@@ -1903,7 +1543,7 @@ static void streaming_set_m2m(int fd)
 
 	memset(&sub, 0, sizeof(sub));
 	sub.type = V4L2_EVENT_EOS;
-	ioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
+	fd.subscribe_event(sub);
 
 	if (file_to) {
 		if (!strcmp(file_to, "-"))
@@ -1919,26 +1559,26 @@ static void streaming_set_m2m(int fd)
 			file[OUT] = fopen(file_from, "r");
 	}
 
-	if (in.reqbufs(fd, reqbufs_count_cap) ||
-	    out.reqbufs(fd, reqbufs_count_out))
+	if (in.reqbufs(&fd, reqbufs_count_cap) ||
+	    out.reqbufs(&fd, reqbufs_count_out))
 		goto done;
 
-	if (do_setup_cap_buffers(fd, in) ||
+	if (in.obtain_bufs(&fd) ||
+	    in.queue_all(&fd) ||
 	    do_setup_out_buffers(fd, out, file[OUT], true))
 		goto done;
 
-	fps_ts[CAP].determine_field(fd, in.type);
-	fps_ts[OUT].determine_field(fd, out.type);
+	fps_ts[CAP].determine_field(fd.g_fd(), in.g_type());
+	fps_ts[OUT].determine_field(fd.g_fd(), out.g_type());
 
-	if (doioctl(fd, VIDIOC_STREAMON, &in.type) ||
-	    doioctl(fd, VIDIOC_STREAMON, &out.type))
+	if (fd.streamon(in.g_type()) || fd.streamon(out.g_type()))
 		goto done;
 
 	while (stream_sleep == 0)
 		sleep(100);
 
 	if (use_poll)
-		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
+		fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
 
 	while (rd_fds || wr_fds || ex_fds) {
 		struct timeval tv = { use_poll ? 2 : 0, 0 };
@@ -1946,21 +1586,21 @@ static void streaming_set_m2m(int fd)
 
 		if (rd_fds) {
 			FD_ZERO(rd_fds);
-			FD_SET(fd, rd_fds);
+			FD_SET(fd.g_fd(), rd_fds);
 		}
 
 		if (ex_fds) {
 			FD_ZERO(ex_fds);
-			FD_SET(fd, ex_fds);
+			FD_SET(fd.g_fd(), ex_fds);
 		}
 
 		if (wr_fds) {
 			FD_ZERO(wr_fds);
-			FD_SET(fd, wr_fds);
+			FD_SET(fd.g_fd(), wr_fds);
 		}
 
 		if (use_poll || ex_fds)
-			r = select(fd + 1, use_poll ? rd_fds : NULL,
+			r = select(fd.g_fd() + 1, use_poll ? rd_fds : NULL,
 					   use_poll ? wr_fds : NULL, ex_fds, &tv);
 
 		if (r == -1) {
@@ -1975,51 +1615,55 @@ static void streaming_set_m2m(int fd)
 			goto done;
 		}
 
-		if (rd_fds && FD_ISSET(fd, rd_fds)) {
-			r  = do_handle_cap(fd, in, file[CAP], NULL,
-					   count[CAP], fps_ts[CAP]);
+		if (rd_fds && FD_ISSET(fd.g_fd(), rd_fds)) {
+			r = do_handle_cap(fd, in, file[CAP], NULL,
+					  count[CAP], fps_ts[CAP]);
 			if (r < 0) {
 				rd_fds = NULL;
 				ex_fds = NULL;
-				doioctl(fd, VIDIOC_STREAMOFF, &in.type);
+				fd.streamoff(in.g_type());
 			}
 		}
 
-		if (wr_fds && FD_ISSET(fd, wr_fds)) {
-			r  = do_handle_out(fd, out, file[OUT], NULL,
-					   count[OUT], fps_ts[OUT]);
+		if (wr_fds && FD_ISSET(fd.g_fd(), wr_fds)) {
+			r = do_handle_out(fd, out, file[OUT], NULL,
+					  count[OUT], fps_ts[OUT]);
 			if (r < 0)  {
 				wr_fds = NULL;
 
 				if (options[OptDecoderCmd]) {
-					doioctl(fd, VIDIOC_DECODER_CMD, &dec_cmd);
+					fd.decoder_cmd(dec_cmd);
 					options[OptDecoderCmd] = false;
 				}
 
-				doioctl(fd, VIDIOC_STREAMOFF, &out.type);
+				fd.streamoff(out.g_type());
+				break;
 			}
 		}
 
-		if (ex_fds && FD_ISSET(fd, ex_fds)) {
+		if (ex_fds && FD_ISSET(fd.g_fd(), ex_fds)) {
 			struct v4l2_event ev;
 
-			while (!ioctl(fd, VIDIOC_DQEVENT, &ev)) {
+			while (!fd.dqevent(ev)) {
 				if (ev.type != V4L2_EVENT_EOS)
 					continue;
 
 				rd_fds = NULL;
 				ex_fds = NULL;
-				doioctl(fd, VIDIOC_STREAMOFF, &in.type);
+				fd.streamoff(in.g_type());
 				break;
 			}
 		}
 	}
 
-	fcntl(fd, F_SETFL, fd_flags);
+	fcntl(fd.g_fd(), F_SETFL, fd_flags);
 	fprintf(stderr, "\n");
 
-	do_release_buffers(in);
-	do_release_buffers(out);
+	fd.streamoff(in.g_type());
+	fd.streamoff(out.g_type());
+	in.free(&fd);
+	out.free(&fd);
+	tpg_free(&tpg);
 
 done:
 	if (file[CAP] && file[CAP] != stdout)
@@ -2029,14 +1673,15 @@ done:
 		fclose(file[OUT]);
 }
 
-static void streaming_set_cap2out(int fd, int out_fd)
+static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 {
-	int fd_flags = fcntl(fd, F_GETFL);
+	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
 	bool use_poll = options[OptStreamPoll];
 	bool use_dmabuf = options[OptStreamDmaBuf] || options[OptStreamOutDmaBuf];
 	bool use_userptr = options[OptStreamUser] && options[OptStreamOutUser];
-	buffers in(false);
-	buffers out(true);
+	__u32 out_type = out_fd.has_vid_m2m() ? v4l_type_invert(out_fd.g_type()) : out_fd.g_type();
+	cv4l_queue in(fd.g_type(), memory);
+	cv4l_queue out(out_type, out_memory);
 	fps_timestamps fps_ts[2];
 	unsigned count[2] = { 0, 0 };
 	FILE *file[2] = {NULL, NULL};
@@ -2090,50 +1735,49 @@ static void streaming_set_cap2out(int fd, int out_fd)
 			file[OUT] = fopen(file_from, "r");
 	}
 
-	if (in.reqbufs(fd, reqbufs_count_cap) ||
-	    out.reqbufs(out_fd, reqbufs_count_out))
+	if (in.reqbufs(&fd, reqbufs_count_cap) ||
+	    out.reqbufs(&out_fd, reqbufs_count_out))
 		goto done;
 
 	if (options[OptStreamDmaBuf]) {
-		if (in.expbufs(out_fd, out.type))
+		if (in.export_bufs(&out_fd, out.g_type()))
 			goto done;
 	} else if (options[OptStreamOutDmaBuf]) {
-		if (out.expbufs(fd, in.type))
+		if (out.export_bufs(&fd, in.g_type()))
 			goto done;
 	}
 
-	if (in.num_planes != out.num_planes ||
-	    in.is_mplane != out.is_mplane) {
+	if (in.g_num_planes() != out.g_num_planes()) {
 		fprintf(stderr, "mismatch between number of planes\n");
 		goto done;
 	}
 
-	if (do_setup_cap_buffers(fd, in) ||
+	if (in.obtain_bufs(&fd) ||
+	    in.queue_all(&fd) ||
 	    do_setup_out_buffers(out_fd, out, file[OUT], false))
 		goto done;
 
-	fps_ts[CAP].determine_field(fd, in.type);
-	fps_ts[OUT].determine_field(fd, out.type);
+	fps_ts[CAP].determine_field(fd.g_fd(), in.g_type());
+	fps_ts[OUT].determine_field(fd.g_fd(), out.g_type());
 
-	if (doioctl(fd, VIDIOC_STREAMON, &in.type) ||
-	    doioctl(out_fd, VIDIOC_STREAMON, &out.type))
+	if (fd.streamon() || out_fd.streamon())
 		goto done;
 
 	while (stream_sleep == 0)
 		sleep(100);
 
 	if (use_poll)
-		fcntl(fd, F_SETFL, fd_flags | O_NONBLOCK);
+		fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
 
 	while (1) {
 		struct timeval tv = { use_poll ? 2 : 0, 0 };
 		int r = 0;
 
 		FD_ZERO(&fds);
-		FD_SET(fd, &fds);
+		FD_SET(fd.g_fd(), &fds);
 
 		if (use_poll)
-			r = select(fd + 1, &fds, NULL, NULL, &tv);
+			r = select(fd.g_fd() + 1, &fds, NULL, NULL, &tv);
 
 		if (r == -1) {
 			if (EINTR == errno)
@@ -2147,7 +1791,7 @@ static void streaming_set_cap2out(int fd, int out_fd)
 			goto done;
 		}
 
-		if (FD_ISSET(fd, &fds)) {
+		if (FD_ISSET(fd.g_fd(), &fds)) {
 			int index = -1;
 
 			r = do_handle_cap(fd, in, file[CAP], &index,
@@ -2155,18 +1799,9 @@ static void streaming_set_cap2out(int fd, int out_fd)
 			if (r)
 				fprintf(stderr, "handle cap %d\n", r);
 			if (!r) {
-				struct v4l2_plane planes[VIDEO_MAX_PLANES];
-				struct v4l2_buffer buf;
+				cv4l_buffer buf(in, index);
 
-				memset(&buf, 0, sizeof(buf));
-				buf.type = in.type;
-				buf.index = index;
-				if (in.is_mplane) {
-					buf.m.planes = planes;
-					buf.length = VIDEO_MAX_PLANES;
-					memset(planes, 0, sizeof(planes));
-				}
-				if (test_ioctl(fd, VIDIOC_QUERYBUF, &buf))
+				if (fd.querybuf(buf))
 					break;
 				r = do_handle_out(out_fd, out, file[OUT], &buf,
 					   count[OUT], fps_ts[OUT]);
@@ -2178,20 +1813,26 @@ static void streaming_set_cap2out(int fd, int out_fd)
 			if (r)
 				fprintf(stderr, "handle out2in %d\n", r);
 			if (r < 0) {
-				doioctl(fd, VIDIOC_STREAMOFF, &in.type);
-				doioctl(out_fd, VIDIOC_STREAMOFF, &out.type);
+				fd.streamoff();
+				out_fd.streamoff();
 				break;
 			}
 		}
 	}
 
-	fcntl(fd, F_SETFL, fd_flags);
+done:
+	fcntl(fd.g_fd(), F_SETFL, fd_flags);
 	fprintf(stderr, "\n");
 
-	do_release_buffers(in);
-	do_release_buffers(out);
+	if (options[OptStreamDmaBuf])
+		out.close_exported_fds();
+	if (options[OptStreamOutDmaBuf])
+		in.close_exported_fds();
 
-done:
+	in.free(&fd);
+	out.free(&out_fd);
+	tpg_free(&tpg);
+
 	if (file[CAP] && file[CAP] != stdout)
 		fclose(file[CAP]);
 
@@ -2199,15 +1840,14 @@ done:
 		fclose(file[OUT]);
 }
 
-void streaming_set(cv4l_fd &c_fd, cv4l_fd &c_out_fd)
+void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd)
 {
+	cv4l_disable_trace dt(fd);
+	cv4l_disable_trace dt_out(out_fd);
 	int do_cap = options[OptStreamMmap] + options[OptStreamUser] + options[OptStreamDmaBuf];
 	int do_out = options[OptStreamOutMmap] + options[OptStreamOutUser] + options[OptStreamOutDmaBuf];
-	int fd = c_fd.g_fd();
-	int out_fd = c_out_fd.g_fd();
 
-	if (out_fd < 0) {
-		out_fd = fd;
+	if (out_fd.g_fd() < 0) {
 		out_capabilities = capabilities;
 		out_priv_magic = priv_magic;
 	}
@@ -2221,7 +1861,7 @@ void streaming_set(cv4l_fd &c_fd, cv4l_fd &c_out_fd)
 		return;
 	}
 
-	if (do_cap && do_out && fd == out_fd)
+	if (do_cap && do_out && out_fd.g_fd() < 0)
 		streaming_set_m2m(fd);
 	else if (do_cap && do_out)
 		streaming_set_cap2out(fd, out_fd);
