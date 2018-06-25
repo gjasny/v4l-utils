@@ -348,7 +348,6 @@ int testMediaEnum(struct node *node)
 		fail_on_test(doioctl(node, MEDIA_IOC_ENUM_LINKS, &links));
 		fail_on_test(check_0(links.reserved, sizeof(links.reserved)));
 
-		bool found_source = false;
 		for (unsigned i = 0; i < ent.pads; i++) {
 			fail_on_test(links.pads[i].entity != ent.id);
 			fail_on_test(links.pads[i].index != i);
@@ -357,10 +356,6 @@ int testMediaEnum(struct node *node)
 			fail_on_test(!(fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)));
 			fail_on_test((fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)) ==
 				     (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE));
-			if (fl & MEDIA_PAD_FL_SOURCE)
-				found_source = true;
-			else if (fl & MEDIA_PAD_FL_SINK)
-				fail_on_test(found_source);
 		}
 		bool found_enabled = false;
 		for (unsigned i = 0; i < ent.links; i++) {
