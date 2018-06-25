@@ -36,12 +36,15 @@ public:
 	v4l_fd *g_v4l_fd() { return this; }
 	bool g_direct() const { return v4l_fd_g_direct(this); }
 	void s_direct(bool direct) { v4l_fd_s_direct(this, direct); }
-	bool g_trace() const { return v4l_fd_g_trace(this); }
-	void s_trace(bool trace) { v4l_fd_s_trace(this, trace); }
+	unsigned int g_trace() const { return v4l_fd_g_trace(this); }
+	void s_trace(unsigned int trace) { v4l_fd_s_trace(this, trace); }
 
 	int open(const char *devname, bool non_blocking = false) { return v4l_open(this, devname, non_blocking); }
+	int s_fd(int fd, const char *devname, bool direct) { return v4l_s_fd(this, fd, devname, direct); }
 	int subdev_open(const char *devname, bool non_blocking = false) { return v4l_subdev_open(this, devname, non_blocking); }
+	int subdev_s_fd(int fd, const char *devname) { return v4l_subdev_s_fd(this, fd, devname); }
 	int media_open(const char *devname, bool non_blocking = false) { return v4l_media_open(this, devname, non_blocking); }
+	int media_s_fd(int fd, const char *devname) { return v4l_media_s_fd(this, fd, devname); }
 	int close() { return v4l_close(this); }
 	int reopen(bool non_blocking = false) { return v4l_reopen(this, non_blocking); }
 	ssize_t read(void *buffer, size_t n) { return v4l_read(this, buffer, n); }
@@ -73,9 +76,12 @@ public:
 	bool has_streaming() const { return v4l_has_streaming(this); }
 	bool has_ext_pix_format() const { return v4l_has_ext_pix_format(this); }
 
-	void querycap(v4l2_capability &cap)
+	int querycap(v4l2_capability &cap, bool force = false)
 	{
+		if (force)
+			return cv4l_ioctl(VIDIOC_QUERYCAP, &cap);
 		cap = this->cap;
+		return 0;
 	}
 
 	int queryctrl(v4l2_queryctrl &qc)

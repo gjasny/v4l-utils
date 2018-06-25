@@ -226,7 +226,7 @@ private:
 
 	bool g_direct() const { return m_fd->g_direct(); }
 	void s_direct(bool direct) { m_fd->s_direct(direct); }
-	void querycap(v4l2_capability &cap) { return m_fd->querycap(cap); }
+	int querycap(v4l2_capability &cap) { return m_fd->querycap(cap); }
 	int queryctrl(v4l2_queryctrl &qc) { return m_fd->queryctrl(qc); }
 	int querymenu(v4l2_querymenu &qm) { return m_fd->querymenu(qm); }
 	int g_fmt(v4l2_format &fmt, unsigned type = 0) { return m_fd->g_fmt(fmt); }

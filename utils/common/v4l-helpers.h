@@ -31,7 +31,7 @@ struct v4l_fd {
 	char devname[128];
 	__u32 type;
 	__u32 caps;
-	bool trace;
+	unsigned int trace;
 	bool direct;
 	bool have_query_ext_ctrl;
 	bool have_ext_ctrls;
@@ -102,7 +102,8 @@ static inline bool v4l_fd_g_direct(const struct v4l_fd *f)
 
 static inline void v4l_fd_s_direct(struct v4l_fd *f, bool direct)
 {
-	f->direct = direct;
+	if (!f->is_subdev && !f->is_media)
+		f->direct = direct;
 }
 
 #else
@@ -190,12 +191,12 @@ static inline bool v4l_fd_is_v4l2(const struct v4l_fd *f)
 	return !f->is_subdev && !f->is_media;
 }
 
-static inline bool v4l_fd_g_trace(const struct v4l_fd *f)
+static inline unsigned int v4l_fd_g_trace(const struct v4l_fd *f)
 {
 	return f->trace;
 }
 
-static inline void v4l_fd_s_trace(struct v4l_fd *f, bool trace)
+static inline void v4l_fd_s_trace(struct v4l_fd *f, unsigned int trace)
 {
 	f->trace = trace;
 }
@@ -208,7 +209,7 @@ static inline int v4l_named_ioctl(struct v4l_fd *f,
 
 	retval = f->ioctl(f, cmd, arg);
 	e = retval == 0 ? 0 : errno;
-	if (f->trace)
+	if (f->trace >= (e ? 1 : 2))
 		fprintf(stderr, "\t\t%s returned %d (%s)\n",
 				cmd_name, retval, strerror(e));
 	return retval == -1 ? e : (retval ? -1 : 0);
@@ -436,12 +437,20 @@ static inline __u32 v4l_determine_type(const struct v4l_fd *f)
 	return 0;
 }
 
-static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_blocking)
+static inline int v4l_s_fd(struct v4l_fd *f, int fd, const char *devname, bool direct)
 {
 	struct v4l2_query_ext_ctrl qec;
 	struct v4l2_ext_controls ec;
 	struct v4l2_queryctrl qc;
 	struct v4l2_selection sel;
+
+	if (f->fd >= 0)
+		f->close(f);
+
+	f->fd = fd;
+	f->direct = direct;
+	if (fd < 0)
+		return fd;
 
 	memset(&qec, 0, sizeof(qec));
 	qec.id = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
@@ -450,14 +459,9 @@ static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_block
 	qc.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	memset(&sel, 0, sizeof(sel));
 
-	f->fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
+	strncpy(f->devname, devname, sizeof(f->devname));
+	f->devname[sizeof(f->devname) - 1] = '\0';
 
-	if (f->fd < 0)
-		return f->fd;
-	if (f->devname != devname) {
-		strncpy(f->devname, devname, sizeof(f->devname));
-		f->devname[sizeof(f->devname) - 1] = '\0';
-	}
 	memset(&f->cap, 0, sizeof(f->cap));
 	if (v4l_querycap(f, &f->cap)) {
 		v4l_close(f);
@@ -479,19 +483,62 @@ static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_block
 	return f->fd;
 }
 
-static inline int v4l_subdev_open(struct v4l_fd *f, const char *devname, bool non_blocking)
+static inline int v4l_open(struct v4l_fd *f, const char *devname, bool non_blocking)
 {
-	f->fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
+	int fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
 
-	if (f->fd < 0)
-		return f->fd;
-	if (f->devname != devname) {
-		strncpy(f->devname, devname, sizeof(f->devname));
-		f->devname[sizeof(f->devname) - 1] = '\0';
-	}
+	return v4l_s_fd(f, fd, devname, f->direct);
+}
+
+static inline int v4l_subdev_s_fd(struct v4l_fd *f, int fd, const char *devname)
+{
+	if (f->fd >= 0)
+		f->close(f);
+
+	f->fd = fd;
+	f->direct = false;
+	if (fd < 0)
+		return fd;
+
+	strncpy(f->devname, devname, sizeof(f->devname));
+	f->devname[sizeof(f->devname) - 1] = '\0';
+
 	memset(&f->cap, 0, sizeof(f->cap));
 	f->is_subdev = true;
 	f->is_media = false;
+	f->direct = false;
+	f->type = 0;
+	f->have_query_ext_ctrl = false;
+	f->have_ext_ctrls = false;
+	f->have_next_ctrl = false;
+	f->have_selection = false;
+
+	return f->fd;
+}
+
+static inline int v4l_subdev_open(struct v4l_fd *f, const char *devname, bool non_blocking)
+{
+	int fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
+
+	return v4l_subdev_s_fd(f, fd, devname);
+}
+
+static inline int v4l_media_s_fd(struct v4l_fd *f, int fd, const char *devname)
+{
+	if (f->fd >= 0)
+		f->close(f);
+
+	f->fd = fd;
+	f->direct = false;
+	if (fd < 0)
+		return fd;
+
+	strncpy(f->devname, devname, sizeof(f->devname));
+	f->devname[sizeof(f->devname) - 1] = '\0';
+
+	memset(&f->cap, 0, sizeof(f->cap));
+	f->is_subdev = false;
+	f->is_media = true;
 	f->type = 0;
 	f->have_query_ext_ctrl = false;
 	f->have_ext_ctrls = false;
@@ -503,24 +550,9 @@ static inline int v4l_subdev_open(struct v4l_fd *f, const char *devname, bool no
 
 static inline int v4l_media_open(struct v4l_fd *f, const char *devname, bool non_blocking)
 {
-	f->fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
+	int fd = f->open(f, devname, O_RDWR | (non_blocking ? O_NONBLOCK : 0));
 
-	if (f->fd < 0)
-		return f->fd;
-	if (f->devname != devname) {
-		strncpy(f->devname, devname, sizeof(f->devname));
-		f->devname[sizeof(f->devname) - 1] = '\0';
-	}
-	memset(&f->cap, 0, sizeof(f->cap));
-	f->is_subdev = false;
-	f->is_media = true;
-	f->type = 0;
-	f->have_query_ext_ctrl = false;
-	f->have_ext_ctrls = false;
-	f->have_next_ctrl = false;
-	f->have_selection = false;
-
-	return f->fd;
+	return v4l_media_s_fd(f, fd, devname);
 }
 
 static inline int v4l_reopen(struct v4l_fd *f, bool non_blocking)
