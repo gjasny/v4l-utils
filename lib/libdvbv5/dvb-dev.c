@@ -37,7 +37,7 @@
 #endif
 
 const char * const dev_type_names[] = {
-        "frontend", "demux", "dvr", "net", "ca", "sec"
+        "frontend", "demux", "dvr", "net", "ca", "sec", "video", "audio"
 };
 
 const unsigned int

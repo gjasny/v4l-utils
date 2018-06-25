@@ -62,6 +62,8 @@ enum dvb_dev_type {
 	DVB_DEVICE_NET,
 	DVB_DEVICE_CA,
 	DVB_DEVICE_CA_SEC,
+	DVB_DEVICE_VIDEO,
+	DVB_DEVICE_AUDIO,
 };
 
 /**
