@@ -518,6 +518,12 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
 	fail_on_test(interactive && !question("Is the device in On state?"));
 
+	struct cec_msg msg = {};
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_active_source(&msg, node->phys_addr);
+	fail_on_test(!transmit_timeout(node, &msg));
+
 	if (unresponsive_time > 0)
 		warn("The device went correctly out of standby, but became unresponsive for %d s during the transition.\n",
 		     unresponsive_time);
