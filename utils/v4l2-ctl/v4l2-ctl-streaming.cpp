@@ -756,7 +756,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 	if (q.obtain_bufs(&fd))
 		return -1;
 
-	fd.g_fmt(fmt);
+	fd.g_fmt(fmt, q.g_type());
 	if (fd.g_std(stream_out_std)) {
 		struct v4l2_dv_timings timings;
 
