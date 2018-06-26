@@ -722,8 +722,14 @@ restart:
 		unsigned len = q.g_length(j);
 		unsigned sz;
 
-		if (from_with_hdr)
+		if (from_with_hdr) {
 			len = read_u32(fin);
+			if (len > q.g_length(j)) {
+				fprintf(stderr, "plane size is too large (%u > %u)\n",
+					len, q.g_length(j));
+				return false;
+			}
+		}
 		sz = fread(buf, 1, len, fin);
 		if (first && sz != len) {
 			fprintf(stderr, "Insufficient data\n");
