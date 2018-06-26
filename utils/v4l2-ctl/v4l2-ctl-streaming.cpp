@@ -66,6 +66,7 @@ static unsigned output_field = V4L2_FIELD_NONE;
 static bool output_field_alt;
 static unsigned bpl_cap[VIDEO_MAX_PLANES];
 static unsigned bpl_out[VIDEO_MAX_PLANES];
+static bool last_buffer = false;
 
 #define TS_WINDOW 241
 #define FILE_HDR_ID			v4l2_fourcc('V', 'h', 'd', 'r')
@@ -839,13 +840,15 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 				tpg_fillbuffer(&tpg, stream_out_std, j, (u8 *)q.g_dataptr(i, j));
 		}
 		if (fin && !fill_buffer_from_file(q, buf, fin))
-			return -1;
+			return -2;
 
 		if (qbuf) {
 			set_time_stamp(buf);
 			if (fd.qbuf(buf))
 				return -1;
 			tpg_update_mv_count(&tpg, V4L2_FIELD_HAS_T_OR_B(field));
+			fprintf(stderr, ">");
+			fflush(stderr);
 		}
 	}
 	if (qbuf)
@@ -870,9 +873,15 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 		ret = fd.dqbuf(buf);
 		if (ret == EAGAIN)
 			return 0;
-		if (ret < 0) {
+		if (ret == EPIPE)
+			return -2;
+		if (ret) {
 			fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
 			return -1;
+		}
+		if (buf.g_flags() & V4L2_BUF_FLAG_LAST) {
+			last_buffer = true;
+			break;
 		}
 		if (!(buf.g_flags() & V4L2_BUF_FLAG_ERROR))
 			break;
@@ -886,7 +895,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 	fps_ts.add_ts(ts_secs, buf.g_sequence(), buf.g_field());
 
 	if (fout && (!stream_skip || ignore_count_skip) &&
-	    !(buf.g_flags() & V4L2_BUF_FLAG_ERROR)) {
+	    buf.g_bytesused(0) && !(buf.g_flags() & V4L2_BUF_FLAG_ERROR)) {
 		unsigned rle_size[VIDEO_MAX_PLANES];
 
 		if (host_fd_to >= 0) {
@@ -951,7 +960,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 				     host_fd_to >= 0 ? 100 - rle_perc / rle_perc_count : -1);
 		rle_perc_count = rle_perc = 0;
 	}
-	if (index == NULL && fd.qbuf(buf))
+	if (!last_buffer && index == NULL && fd.qbuf(buf))
 		return -1;
 	if (index)
 		*index = buf.g_index();
@@ -1036,7 +1045,7 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	}
 
 	if (fin && !fill_buffer_from_file(q, buf, fin))
-		return -1;
+		return -2;
 
 	if (!fin && stream_out_refresh) {
 		for (unsigned j = 0; j < buf.g_num_planes(); j++)
@@ -1069,7 +1078,7 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	if (stream_count == 0)
 		return 0;
 	if (--stream_count == 0)
-		return -1;
+		return -2;
 
 	return 0;
 }
@@ -1545,7 +1554,16 @@ static void streaming_set_m2m(cv4l_fd &fd)
 
 	memset(&sub, 0, sizeof(sub));
 	sub.type = V4L2_EVENT_EOS;
-	fd.subscribe_event(sub);
+
+	bool have_eos = !fd.subscribe_event(sub);
+	bool is_encoder = false;
+
+	if (have_eos) {
+		cv4l_fmt fmt(in.g_type());
+
+		fd.g_fmt(fmt);
+		is_encoder = !fmt.g_bytesperline();
+	}
 
 	if (file_to) {
 		if (!strcmp(file_to, "-"))
@@ -1622,9 +1640,13 @@ static void streaming_set_m2m(cv4l_fd &fd)
 					  count[CAP], fps_ts[CAP]);
 			if (r < 0) {
 				rd_fds = NULL;
-				ex_fds = NULL;
-				fd.streamoff(in.g_type());
+				if (!have_eos) {
+					ex_fds = NULL;
+					break;
+				}
 			}
+			if (last_buffer)
+				break;
 		}
 
 		if (wr_fds && FD_ISSET(fd.g_fd(), wr_fds)) {
@@ -1633,13 +1655,21 @@ static void streaming_set_m2m(cv4l_fd &fd)
 			if (r < 0)  {
 				wr_fds = NULL;
 
-				if (options[OptDecoderCmd]) {
-					fd.decoder_cmd(dec_cmd);
-					options[OptDecoderCmd] = false;
-				}
+				if (have_eos) {
+					static struct v4l2_encoder_cmd enc_stop = {
+						.cmd = V4L2_ENC_CMD_STOP,
+					};
+					static struct v4l2_decoder_cmd dec_stop = {
+						.cmd = V4L2_DEC_CMD_STOP,
+					};
 
-				fd.streamoff(out.g_type());
-				break;
+					if (is_encoder)
+						fd.encoder_cmd(enc_stop);
+					else
+						fd.decoder_cmd(dec_stop);
+				} else {
+					break;
+				}
 			}
 		}
 
@@ -1649,10 +1679,7 @@ static void streaming_set_m2m(cv4l_fd &fd)
 			while (!fd.dqevent(ev)) {
 				if (ev.type != V4L2_EVENT_EOS)
 					continue;
-
-				rd_fds = NULL;
-				ex_fds = NULL;
-				fd.streamoff(in.g_type());
+				wr_fds = NULL;
 				break;
 			}
 		}
