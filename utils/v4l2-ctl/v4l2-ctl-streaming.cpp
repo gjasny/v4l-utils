@@ -823,6 +823,8 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 		if (fd.querybuf(buf, i))
 			return -1;
 
+		for (unsigned j = 0; j < q.g_num_planes(); j++)
+			buf.s_bytesused(buf.g_length(j), j);
 		buf.s_field(field);
 		tpg_s_field(&tpg, field, output_field_alt);
 		if (output_field_alt) {
