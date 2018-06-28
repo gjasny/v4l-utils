@@ -467,7 +467,7 @@ static int query_ext_ctrl_ioctl(int fd, struct v4l2_query_ext_ctrl &qctrl)
 
 	if (have_query_ext_ctrl) {
 		rc = test_ioctl(fd, VIDIOC_QUERY_EXT_CTRL, &qctrl);
-		if (errno != ENOTTY)
+		if (rc != ENOTTY)
 			return rc;
 	}
 	qc.id = qctrl.id;
