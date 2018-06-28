@@ -25,4 +25,5 @@ EXTRA_DIST = \
 	cobalt-ctl \
 	parsers \
 	pci_traffic \
-	v4l_rec.pl
+	v4l_rec.pl \
+	lircd2toml.py
