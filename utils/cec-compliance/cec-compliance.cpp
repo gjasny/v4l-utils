@@ -209,7 +209,7 @@ static void usage(void)
 	       "  -s, --skip-info    Skip Driver Info output\n"
 	       "  -T, --trace        Trace all called ioctls\n"
 	       "  -v, --verbose      Turn on verbose reporting\n"
-	       "  -w, --wall-clock   Show timestamps as wall-clock time\n"
+	       "  -w, --wall-clock   Show timestamps as wall-clock time (implies -v)\n"
 	       "  -W, --exit-on-warn Exit on the first warning.\n"
 	       );
 }
@@ -1157,6 +1157,7 @@ int main(int argc, char **argv)
 			}
 			test_remote = true;
 			break;
+		case OptWallClock:
 		case OptVerbose:
 			show_info = true;
 			break;

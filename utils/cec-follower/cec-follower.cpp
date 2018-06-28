@@ -74,9 +74,9 @@ static void usage(void)
 	       "  -n, --no-warnings   Turn off warning messages\n"
 	       "  -T, --trace         Trace all called ioctls\n"
 	       "  -v, --verbose       Turn on verbose reporting\n"
+	       "  -w, --wall-clock    Show timestamps as wall-clock time (implies -v)\n"
 	       "  -m, --show-msgs     Show received messages\n"
 	       "  -s, --show-state    Show state changes from the emulated device\n"
-	       "  -w, --wall-clock    Show timestamps as wall-clock time\n"
 	       );
 }
 
@@ -426,6 +426,7 @@ int main(int argc, char **argv)
 		case OptShowState:
 			show_state = true;
 			break;
+		case OptWallClock:
 		case OptVerbose:
 			show_info = true;
 			show_msgs = true;

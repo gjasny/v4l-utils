@@ -16,6 +16,9 @@ Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is 
 \fB\-v\fR, \fB\-\-verbose\fR
 Turn on verbose reporting.
 .TP
+\fB\-w\fR, \fB\-\-wall\-clock\fR
+Show timestamps as wall-clock time. This also turns on verbose reporting. 
+.TP
 \fB\-h\fR, \fB\-\-help\fR
 Prints the help message.
 .TP
@@ -68,9 +71,6 @@ Send a poll message.
 .TP
 \fB\-T\fR, \fB\-\-trace\fR
 Trace all called ioctls. Useful for debugging.
-.TP
-\fB\-w\fR, \fB\-\-wall\-clock\fR
-Show timestamps as wall-clock time.
 .TP
 \fB\-\-cec\-version\-1.4\fR
 Use CEC Version 1.4 instead of 2.0 (the default).

@@ -815,7 +815,7 @@ static void usage(void)
 	       "  --help-all               Show all help messages\n"
 	       "  -T, --trace              Trace all called ioctls\n"
 	       "  -v, --verbose            Turn on verbose reporting\n"
-	       "  -w, --wall-clock         Show timestamps as wall-clock time\n"
+	       "  -w, --wall-clock         Show timestamps as wall-clock time (implies -v)\n"
 	       "  -W, --wait-for-msgs      Wait for messages and events for up to --monitor-time secs.\n"
 	       "  --cec-version-1.4        Use CEC Version 1.4 instead of 2.0\n"
 	       "  --allow-unreg-fallback   Allow fallback to Unregistered\n"
@@ -1794,6 +1794,7 @@ int main(int argc, char **argv)
 				device = newdev;
 			}
 			break;
+		case OptWallClock:
 		case OptVerbose:
 			verbose = true;
 			break;

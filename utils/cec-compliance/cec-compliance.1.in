@@ -81,14 +81,14 @@ with a possible inconsistent state.
 \fB\-v\fR, \fB\-\-verbose\fR
 Turn on verbose reporting.
 .TP
+\fB\-w\fR, \fB\-\-wall\-clock\fR
+Show timestamps as wall-clock time. This also turns on verbose reporting. 
+.TP
 \fB\-T\fR, \fB\-\-trace\fR
 Trace all called ioctls. Useful for debugging.
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Prints the help message.
-.TP
-\fB\-w\fR, \fB\-\-wall\-clock\fR
-Show timestamps as wall-clock time.
 .TP
 \fB\-W\fR, \fB\-\-exit\-on\-warn\fR
 Exit this application when the first warning occurs instead of continuing.

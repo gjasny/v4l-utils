@@ -51,6 +51,9 @@ Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is 
 \fB\-v\fR, \fB\-\-verbose\fR
 Turn on verbose reporting.
 .TP
+\fB\-w\fR, \fB\-\-wall\-clock\fR
+Show timestamps as wall-clock time. This also turns on verbose reporting. 
+.TP
 \fB\-T\fR, \fB\-\-trace\fR
 Trace all called ioctls. Useful for debugging.
 .TP
@@ -65,9 +68,6 @@ Show received messages.
 .TP
 \fB\-s\fR, \fB\-\-show\-state\fR
 Show state changes from the emulated device.
-.TP
-\fB\-w\fR, \fB\-\-wall\-clock\fR
-Show timestamps as wall-clock time.
 .SH EXIT STATUS
 On success, it returns 0. Otherwise, it will return the error code.
 .SH BUGS
