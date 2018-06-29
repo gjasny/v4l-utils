@@ -808,7 +808,8 @@ void common_set(int fd)
 
 			memset(&ctrl, 0, sizeof(ctrl));
 			ctrl.id = qc.id;
-			if (qc.type == V4L2_CTRL_TYPE_INTEGER64)
+			if (qc.type == V4L2_CTRL_TYPE_INTEGER64 ||
+			    qc.flags & V4L2_CTRL_FLAG_UPDATE)
 				use_ext_ctrls = true;
 			if (qc.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {
 				struct v4l2_ext_controls ctrls = { 0, 1 };
@@ -988,7 +989,8 @@ void common_get(int fd)
 
 			memset(&ctrl, 0, sizeof(ctrl));
 			ctrl.id = qc.id;
-			if (qc.type == V4L2_CTRL_TYPE_INTEGER64)
+			if (qc.type == V4L2_CTRL_TYPE_INTEGER64 ||
+			    qc.flags & V4L2_CTRL_FLAG_UPDATE)
 				use_ext_ctrls = true;
 			if (qc.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {
 				use_ext_ctrls = true;
