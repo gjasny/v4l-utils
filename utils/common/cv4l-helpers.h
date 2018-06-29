@@ -24,6 +24,13 @@ public:
 	{
 		*this = *fd;
 	}
+	cv4l_fd &operator= (const cv4l_fd &_fd)
+	{
+		memcpy(this, &_fd, sizeof(_fd));
+		if (_fd.fd >= 0)
+			fd = dup(_fd.fd);
+		return *this;
+	}
 
 	bool is_subdev() const { return v4l_fd_is_subdev(this); }
 	bool is_media() const { return v4l_fd_is_media(this); }
