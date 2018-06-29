@@ -80,6 +80,7 @@ static media_v2_link *v2_links;
 static id_set v2_links_set;
 static std::map<__u32, __u32> entity_num_pads;
 static std::map<__u32, media_v2_entity *> v2_entity_map;
+static std::set<std::string> v2_entity_names_set;
 static std::map<__u32, media_v2_interface *> v2_iface_map;
 static std::map<__u32, media_v2_pad *> v2_pad_map;
 static unsigned num_data_links;
@@ -163,7 +164,9 @@ int testMediaTopology(struct node *node)
 		fail_on_test(!ent.id);
 		fail_on_test(checkFunction(ent.function, true));
 		fail_on_test(v2_entities_set.find(ent.id) != v2_entities_set.end());
+		fail_on_test(v2_entity_names_set.find(ent.name) != v2_entity_names_set.end());
 		v2_entities_set.insert(ent.id);
+		v2_entity_names_set.insert(ent.name);
 		v2_entity_map[ent.id] = &ent;
 	}
 	for (unsigned i = 0; i < topology.num_interfaces; i++) {
@@ -311,6 +314,7 @@ int testMediaEnum(struct node *node)
 
 		if (node->topology) {
 			fail_on_test(v2_entities_set.find(ent.id) == v2_entities_set.end());
+			fail_on_test(v2_entity_names_set.find(ent.name) == v2_entity_names_set.end());
 			fail_on_test(entity_num_pads[ent.id] != ent.pads);
 			// Commented out due to horrible workaround in media-device.c
 			//fail_on_test(v2_entity_map[ent.id]->function != ent.type);
