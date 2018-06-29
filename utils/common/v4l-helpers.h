@@ -59,7 +59,10 @@ static inline int v4l_wrap_open(struct v4l_fd *f, const char *file, int oflag, .
 
 static inline int v4l_wrap_close(struct v4l_fd *f)
 {
-	return f->direct ? close(f->fd) : v4l2_close(f->fd);
+	int ret = f->direct ? close(f->fd) : v4l2_close(f->fd);
+
+	f->fd = -1;
+	return ret;
 }
 
 static inline ssize_t v4l_wrap_read(struct v4l_fd *f, void *buffer, size_t n)
