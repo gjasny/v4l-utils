@@ -496,7 +496,7 @@ static inline int v4l_subdev_s_fd(struct v4l_fd *f, int fd, const char *devname)
 		f->close(f);
 
 	f->fd = fd;
-	f->direct = false;
+	f->direct = true;
 	if (fd < 0)
 		return fd;
 
@@ -529,7 +529,7 @@ static inline int v4l_media_s_fd(struct v4l_fd *f, int fd, const char *devname)
 		f->close(f);
 
 	f->fd = fd;
-	f->direct = false;
+	f->direct = true;
 	if (fd < 0)
 		return fd;
 
