@@ -940,11 +940,15 @@ int cec_named_ioctl(int fd, const char *name,
 
 static void print_bytes(const __u8 *bytes, unsigned len)
 {
-	for (unsigned i = 0; i < len; i++) {
+	for (unsigned i = 0; i < len; i++)
 		printf(" 0x%02x", bytes[i]);
+	printf(" (");
+	for (unsigned i = 0; i < len; i++)
 		if (bytes[i] >= 32 && bytes[i] <= 127)
-		    printf("/%c", bytes[i]);
-	}
+		    printf("%c", bytes[i]);
+		else
+		    printf(" ");
+	printf(")");
 }
 
 static void log_raw_msg(const struct cec_msg *msg)
