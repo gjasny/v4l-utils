@@ -791,7 +791,7 @@ public:
 	{
 		return v4l_queue_has_expbuf(fd->g_v4l_fd());
 	}
-	int export_bufs(cv4l_fd *fd, unsigned exp_type = 0)
+	int export_bufs(cv4l_fd *fd, unsigned exp_type)
 	{
 		return v4l_queue_export_bufs(fd->g_v4l_fd(), this, exp_type);
 	}

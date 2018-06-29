@@ -541,10 +541,10 @@ int testExpBuf(struct node *node)
 
 		fail_on_test(q.reqbufs(node, 2));
 		if (q.has_expbuf(node)) {
-			fail_on_test(q.export_bufs(node));
+			fail_on_test(q.export_bufs(node, q.g_type()));
 			have_expbuf = true;
 		} else {
-			fail_on_test(!q.export_bufs(node));
+			fail_on_test(!q.export_bufs(node, q.g_type()));
 		}
 		q.close_exported_fds();
 		fail_on_test(q.reqbufs(node));
@@ -1064,7 +1064,7 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 {
 	fail_on_test(exp_q.reqbufs(expbuf_node, q.g_buffers()));
 	fail_on_test(exp_q.g_buffers() < q.g_buffers());
-	fail_on_test(exp_q.export_bufs(expbuf_node));
+	fail_on_test(exp_q.export_bufs(expbuf_node, exp_q.g_type()));
 
 	for (unsigned i = 0; i < q.g_buffers(); i++) {
 		buffer buf(q);
