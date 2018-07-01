@@ -277,7 +277,7 @@ std::string ifacetype2s(__u32 type)
 static const flag_def entity_functions_def[] = {
 	{ MEDIA_ENT_F_UNKNOWN, "FAIL: Uninitialized Function" },
 	{ MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN, "FAIL: Unknown V4L2 Sub-Device" },
-	{ MEDIA_ENT_T_DEVNODE_UNKNOWN, "FAIL: Unknown Device Node Type" },
+	{ MEDIA_ENT_T_DEVNODE_UNKNOWN, "FAIL: Unknown Device Node" },
 
 	{ MEDIA_ENT_F_DTV_DEMOD, "Digital TV Demodulator" },
 	{ MEDIA_ENT_F_TS_DEMUX, "Transport Stream Demuxer" },
@@ -314,17 +314,19 @@ std::string entfunction2s(__u32 function, bool *is_invalid)
 {
 	std::string s;
 
-	if ((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_BASE &&
+	if (function != MEDIA_ENT_T_DEVNODE_UNKNOWN &&
+	    (function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_BASE &&
 	    function > MEDIA_ENT_T_DEVNODE_DVB) {
-		s = "Unknown legacy device node type (" + num2s(function) + ")";
+		s = "Unknown device node (" + num2s(function) + ")";
 		if (!is_invalid)
 			return s;
 		*is_invalid = true;
 		return "FAIL: " + s;
 	}
-	if ((function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_SUBDEV_BASE &&
+	if (function != MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN &&
+	    (function & MEDIA_ENT_TYPE_MASK) == MEDIA_ENT_F_OLD_SUBDEV_BASE &&
 	    function > MEDIA_ENT_F_TUNER) {
-		s = "Unknown legacy sub-device type (" + num2s(function) + ")";
+		s = "Unknown sub-device (" + num2s(function) + ")";
 		if (!is_invalid)
 			return s;
 		*is_invalid = true;

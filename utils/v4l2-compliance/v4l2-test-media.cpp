@@ -280,7 +280,7 @@ int testMediaEnum(struct node *node)
 			printf("\t\tEntity: 0x%08x (Name: '%s', Type: %s",
 			       ent.id, ent.name, entfunction2s(ent.type).c_str());
 			if (!devpath.empty())
-				printf(" DevPath: %s", devpath.c_str());
+				printf(", DevPath: %s", devpath.c_str());
 			printf(")\n");
 		}
 		fail_on_test(dev && devpath.empty());
