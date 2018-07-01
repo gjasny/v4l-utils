@@ -370,7 +370,7 @@ static const flag_def link_flags_def[] = {
 
 std::string linkflags2s(__u32 flags)
 {
-	std::string s = flags2s(flags, link_flags_def);
+	std::string s = flags2s(flags & ~MEDIA_LNK_FL_LINK_TYPE, link_flags_def);
 
 	if (!s.empty())
 		s = ", " + s;
