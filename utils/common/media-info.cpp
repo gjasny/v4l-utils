@@ -49,10 +49,11 @@ static struct {
 	{ "demux", MEDIA_TYPE_DVB_DEMUX },
 	{ "dvr", MEDIA_TYPE_DVB_DVR },
 	{ "net", MEDIA_TYPE_DVB_NET },
+	{ "ca", MEDIA_TYPE_DTV_CA },
 	{ NULL, MEDIA_TYPE_UNKNOWN }
 };
 
-media_type media_detect_type(const char *device)
+media_type mi_media_detect_type(const char *device)
 {
 	struct stat sb;
 
@@ -97,7 +98,7 @@ media_type media_detect_type(const char *device)
 	return MEDIA_TYPE_UNKNOWN;
 }
 
-std::string media_get_device(__u32 major, __u32 minor)
+std::string mi_media_get_device(__u32 major, __u32 minor)
 {
 	char fmt[32];
 	std::string uevent_path("/sys/dev/char/");
@@ -236,7 +237,7 @@ static const flag_def entity_flags_def[] = {
 	{ 0, NULL }
 };
 
-std::string entflags2s(__u32 flags)
+std::string mi_entflags2s(__u32 flags)
 {
 	return flags2s(flags, entity_flags_def);
 }
@@ -266,7 +267,7 @@ static const flag_def interface_types_def[] = {
 	{ 0, NULL }
 };
 
-std::string ifacetype2s(__u32 type)
+std::string mi_ifacetype2s(__u32 type)
 {
 	for (unsigned i = 0; interface_types_def[i].str; i++)
 		if (type == interface_types_def[i].flag)
@@ -310,7 +311,7 @@ static const flag_def entity_functions_def[] = {
 	{ 0, NULL }
 };
 
-std::string entfunction2s(__u32 function, bool *is_invalid)
+std::string mi_entfunction2s(__u32 function, bool *is_invalid)
 {
 	std::string s;
 
@@ -349,6 +350,22 @@ std::string entfunction2s(__u32 function, bool *is_invalid)
 	return "Unknown Function (" + num2s(function) + ")";
 }
 
+bool mi_func_requires_intf(__u32 function)
+{
+	switch (function) {
+	case MEDIA_ENT_F_DTV_DEMOD:
+	case MEDIA_ENT_F_TS_DEMUX:
+	case MEDIA_ENT_F_DTV_CA:
+	case MEDIA_ENT_F_IO_DTV:
+	case MEDIA_ENT_F_IO_V4L:
+	case MEDIA_ENT_F_IO_VBI:
+	case MEDIA_ENT_F_IO_SWRADIO:
+		return true;
+	default:
+		return false;
+	}
+}
+
 static const flag_def pad_flags_def[] = {
 	{ MEDIA_PAD_FL_SINK, "Sink" },
 	{ MEDIA_PAD_FL_SOURCE, "Source" },
@@ -356,7 +373,7 @@ static const flag_def pad_flags_def[] = {
 	{ 0, NULL }
 };
 
-std::string padflags2s(__u32 flags)
+std::string mi_padflags2s(__u32 flags)
 {
 	return flags2s(flags, pad_flags_def);
 }
@@ -368,7 +385,7 @@ static const flag_def link_flags_def[] = {
 	{ 0, NULL }
 };
 
-std::string linkflags2s(__u32 flags)
+std::string mi_linkflags2s(__u32 flags)
 {
 	std::string s = flags2s(flags & ~MEDIA_LNK_FL_LINK_TYPE, link_flags_def);
 
@@ -447,11 +464,11 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_inva
 
 	printf("Interface Info:\n");
 	printf("\tID               : 0x%08x\n", iface.id);
-	printf("\tType             : %s\n", ifacetype2s(iface.intf_type).c_str());
+	printf("\tType             : %s\n", mi_ifacetype2s(iface.intf_type).c_str());
 	printf("Entity Info:\n");
 	printf("\tID               : 0x%08x (%u)\n", ent.id, ent.id);
 	printf("\tName             : %s\n", ent.name);
-	printf("\tFunction         : %s\n", entfunction2s(ent.function, is_invalid).c_str());
+	printf("\tFunction         : %s\n", mi_entfunction2s(ent.function, is_invalid).c_str());
 
 	// Yes, I know, lots of nested for-loops. If we get really complex
 	// devices with such large topologies that this becomes too inefficient
@@ -463,7 +480,7 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_inva
 		if (pad.entity_id != ent.id)
 			continue;
 		printf("\tPad 0x%08x   : %s\n",
-		       pad.id, padflags2s(pad.flags).c_str());
+		       pad.id, mi_padflags2s(pad.flags).c_str());
 		for (j = 0; j < topology.num_links; j++) {
 			const media_v2_link &link = v2_links[j];
 			__u32 type = link.flags & MEDIA_LNK_FL_LINK_TYPE;
@@ -502,7 +519,7 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_inva
 			}
 			printf("\t  Link 0x%08x: %s remote pad 0x%x of entity '%s': %s\n",
 			       link.id, is_sink ? "from" : "to", remote_pad,
-			       remote_ent->name, linkflags2s(link.flags).c_str());
+			       remote_ent->name, mi_linkflags2s(link.flags).c_str());
 		}
 	}
 	return ent.id;
@@ -567,9 +584,9 @@ __u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid)
 	printf("Entity Info:\n");
 	printf("\tID               : %u\n", ent.id);
 	printf("\tName             : %s\n", ent.name);
-	printf("\tType             : %s\n", entfunction2s(ent.type).c_str());
+	printf("\tType             : %s\n", mi_entfunction2s(ent.type).c_str());
 	if (ent.flags)
-		printf("\tFlags            : %s\n", entflags2s(ent.flags).c_str());
+		printf("\tFlags            : %s\n", mi_entflags2s(ent.flags).c_str());
 	if (ent.flags & MEDIA_ENT_FL_DEFAULT) {
 		printf("\tMajor            : %u\n", ent.dev.major);
 		printf("\tMinor            : %u\n", ent.dev.minor);
@@ -588,11 +605,11 @@ __u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid)
 
 	for (unsigned i = 0; i < ent.pads; i++)
 		printf("\tPad              : %u: %s\n", pads[i].index,
-		       padflags2s(pads[i].flags).c_str());
+		       mi_padflags2s(pads[i].flags).c_str());
 	for (unsigned i = 0; i < ent.links; i++)
 		printf("\tLink             : %u->%u: %s\n",
 		       links[i].source.entity,
 		       links[i].sink.entity,
-		       linkflags2s(links[i].flags).c_str());
+		       mi_linkflags2s(links[i].flags).c_str());
 	return ent.id;
 }

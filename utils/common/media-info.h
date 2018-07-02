@@ -19,18 +19,19 @@ enum media_type {
 	MEDIA_TYPE_DVB_DEMUX,
 	MEDIA_TYPE_DVB_DVR,
 	MEDIA_TYPE_DVB_NET,
+	MEDIA_TYPE_DTV_CA,
 	MEDIA_TYPE_MEDIA,
 };
 
 /*
  * Detect what type the device is.
  */
-media_type media_detect_type(const char *device);
+media_type mi_media_detect_type(const char *device);
 
 /*
  * Return the device name given the major and minor numbers.
  */
-std::string media_get_device(__u32 major, __u32 minor);
+std::string mi_media_get_device(__u32 major, __u32 minor);
 
 /*
  * For a given device fd retrieve the dev_t (major/minor) value.
@@ -53,19 +54,22 @@ std::string mi_get_devpath_from_dev_t(dev_t dev);
 int mi_get_media_fd(int fd);
 
 /* Return entity flags description */
-std::string entflags2s(__u32 flags);
+std::string mi_entflags2s(__u32 flags);
 
 /* Return interface flags description */
-std::string ifacetype2s(__u32 type);
+std::string mi_ifacetype2s(__u32 type);
+
+/* Return true if this function requires an interface */
+bool mi_func_requires_intf(__u32 function);
 
 /* Return function description */
-std::string entfunction2s(__u32 function, bool *is_invalid = NULL);
+std::string mi_entfunction2s(__u32 function, bool *is_invalid = NULL);
 
 /* Return pad flags description */
-std::string padflags2s(__u32 flags);
+std::string mi_padflags2s(__u32 flags);
 
 /* Return link flags description */
-std::string linkflags2s(__u32 flags);
+std::string mi_linkflags2s(__u32 flags);
 
 /*
  * Show media controller information media_fd and (if >= 0) the

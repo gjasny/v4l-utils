@@ -989,7 +989,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	media_type type = media_detect_type(device);
+	media_type type = mi_media_detect_type(device);
 	if (type == MEDIA_TYPE_CANT_STAT) {
 		fprintf(stderr, "Cannot open device %s, exiting.\n",
 			device);

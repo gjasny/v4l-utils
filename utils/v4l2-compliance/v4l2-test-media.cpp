@@ -158,7 +158,7 @@ int testMediaTopology(struct node *node)
 
 		if (show_info)
 			printf("\t\tEntity: 0x%08x (Name: '%s', Function: %s)\n",
-			       ent.id, ent.name, entfunction2s(ent.function).c_str());
+			       ent.id, ent.name, mi_entfunction2s(ent.function).c_str());
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(check_string(ent.name, sizeof(ent.name)));
 		fail_on_test(!ent.id);
@@ -176,7 +176,7 @@ int testMediaTopology(struct node *node)
 
 		if (show_info)
 			printf("\t\tInterface: 0x%08x (Type: %s, DevPath: %s)\n",
-			       iface.id, ifacetype2s(iface.intf_type).c_str(),
+			       iface.id, mi_ifacetype2s(iface.intf_type).c_str(),
 			       devpath.c_str());
 		fail_on_test(devpath.empty());
 		fail_on_test(check_0(iface.reserved, sizeof(iface.reserved)));
@@ -198,7 +198,7 @@ int testMediaTopology(struct node *node)
 		if (show_info)
 			printf("\t\tPad: 0x%08x (%s, %s)\n", pad.id,
 			       v2_entity_map[pad.entity_id]->name,
-			       padflags2s(pad.flags).c_str());
+			       mi_padflags2s(pad.flags).c_str());
 		fail_on_test(check_0(pad.reserved, sizeof(pad.reserved)));
 		fail_on_test(!pad.id);
 		fail_on_test(!pad.entity_id);
@@ -211,6 +211,9 @@ int testMediaTopology(struct node *node)
 		entity_num_pads[pad.entity_id]++;
 		v2_pad_map[pad.id] = &pad;
 	}
+
+	std::set<__u32> ents_with_intf;
+
 	for (unsigned i = 0; i < topology.num_links; i++) {
 		media_v2_link &link = v2_links[i];
 		bool is_iface = link.flags & MEDIA_LNK_FL_LINK_TYPE;
@@ -228,11 +231,12 @@ int testMediaTopology(struct node *node)
 			media_v2_interface &iface = *v2_iface_map[link.source_id];
 			dev_t dev = makedev(iface.devnode.major, iface.devnode.minor);
 			std::string devpath = mi_get_devpath_from_dev_t(dev);
+			media_v2_entity &ent = *v2_entity_map[link.sink_id];
 
 			if (show_info)
 				printf("\t\tLink: 0x%08x (%s to interface %s)\n", link.id,
-				       v2_entity_map[link.sink_id]->name,
-				       devpath.c_str());
+				       ent.name, devpath.c_str());
+			ents_with_intf.insert(ent.id);
 		} else {
 			fail_on_test(v2_pads_set.find(link.source_id) == v2_pads_set.end());
 			fail_on_test(v2_pads_set.find(link.sink_id) == v2_pads_set.end());
@@ -242,8 +246,15 @@ int testMediaTopology(struct node *node)
 				printf("\t\tLink: 0x%08x (%s -> %s, %s)\n", link.id,
 				       v2_entity_map[v2_pad_map[link.source_id]->entity_id]->name,
 				       v2_entity_map[v2_pad_map[link.sink_id]->entity_id]->name,
-				       linkflags2s(link.flags).c_str());
+				       mi_linkflags2s(link.flags).c_str());
 		}
+	}
+
+	for (unsigned i = 0; i < topology.num_entities; i++) {
+		media_v2_entity &ent = v2_ents[i];
+
+		fail_on_test(mi_func_requires_intf(ent.function) &&
+			     ents_with_intf.find(ent.id) == ents_with_intf.end());
 	}
 	node->topology = &topology;
 	return 0;
@@ -279,7 +290,7 @@ int testMediaEnum(struct node *node)
 
 		if (show_info) {
 			printf("\t\tEntity: 0x%08x (Name: '%s', Type: %s",
-			       ent.id, ent.name, entfunction2s(ent.type).c_str());
+			       ent.id, ent.name, mi_entfunction2s(ent.type).c_str());
 			if (!devpath.empty())
 				printf(", DevPath: %s", devpath.c_str());
 			printf(")\n");
@@ -465,14 +476,14 @@ void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_co
 
 	for (unsigned i = 0; i < topology.num_interfaces; i++) {
 		media_v2_interface &iface = v2_ifaces[i];
-		std::string dev = media_get_device(iface.devnode.major,
-						   iface.devnode.minor);
+		std::string dev = mi_media_get_device(iface.devnode.major,
+						      iface.devnode.minor);
 		if (dev.empty())
 			continue;
 
 		printf("--------------------------------------------------------------------------------\n");
 
-		media_type type = media_detect_type(dev.c_str());
+		media_type type = mi_media_detect_type(dev.c_str());
 		if (type == MEDIA_TYPE_CANT_STAT) {
 			fprintf(stderr, "\nCannot open device %s, skipping.\n\n",
 				dev.c_str());
