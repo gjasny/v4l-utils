@@ -369,7 +369,20 @@ static bool is_rgb_or_hsv(__u32 pixelformat)
 	}
 }
 
-void printfmt(const struct v4l2_format &vfmt)
+static std::string printfmtname(int fd, __u32 type, __u32 pixfmt)
+{
+	struct v4l2_fmtdesc fmt;
+	std::string s(" (");
+
+	fmt.index = 0;
+	fmt.type = type;
+	while (test_ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0)
+		if (fmt.pixelformat == pixfmt)
+			return s + (const char *)fmt.description + ")";
+	return "";
+}
+
+void printfmt(int fd, const struct v4l2_format &vfmt)
 {
 	__u32 colsp = vfmt.fmt.pix.colorspace;
 	__u32 ycbcr_enc = vfmt.fmt.pix.ycbcr_enc;
@@ -380,7 +393,8 @@ void printfmt(const struct v4l2_format &vfmt)
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		printf("\tWidth/Height      : %u/%u\n", vfmt.fmt.pix.width, vfmt.fmt.pix.height);
-		printf("\tPixel Format      : '%s'\n", fcc2s(vfmt.fmt.pix.pixelformat).c_str());
+		printf("\tPixel Format      : '%s'%s\n", fcc2s(vfmt.fmt.pix.pixelformat).c_str(),
+		       printfmtname(fd, vfmt.type, vfmt.fmt.pix.pixelformat).c_str());
 		printf("\tField             : %s\n", field2s(vfmt.fmt.pix.field).c_str());
 		printf("\tBytes per Line    : %u\n", vfmt.fmt.pix.bytesperline);
 		printf("\tSize Image        : %u\n", vfmt.fmt.pix.sizeimage);
@@ -408,7 +422,8 @@ void printfmt(const struct v4l2_format &vfmt)
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		printf("\tWidth/Height      : %u/%u\n", vfmt.fmt.pix_mp.width, vfmt.fmt.pix_mp.height);
-		printf("\tPixel Format      : '%s'\n", fcc2s(vfmt.fmt.pix_mp.pixelformat).c_str());
+		printf("\tPixel Format      : '%s'%s\n", fcc2s(vfmt.fmt.pix_mp.pixelformat).c_str(),
+		       printfmtname(fd, vfmt.type, vfmt.fmt.pix_mp.pixelformat).c_str());
 		printf("\tField             : %s\n", field2s(vfmt.fmt.pix_mp.field).c_str());
 		printf("\tNumber of planes  : %u\n", vfmt.fmt.pix_mp.num_planes);
 		printf("\tFlags             : %s\n", pixflags2s(vfmt.fmt.pix_mp.flags).c_str());
@@ -460,7 +475,7 @@ void printfmt(const struct v4l2_format &vfmt)
 				vfmt.fmt.vbi.offset,
 				(double)vfmt.fmt.vbi.offset / (double)vfmt.fmt.vbi.sampling_rate);
 		printf("\tSamples per Line: %u\n", vfmt.fmt.vbi.samples_per_line);
-		printf("\tSample Format   : %s\n", fcc2s(vfmt.fmt.vbi.sample_format).c_str());
+		printf("\tSample Format   : '%s'\n", fcc2s(vfmt.fmt.vbi.sample_format).c_str());
 		printf("\tStart 1st Field : %u\n", vfmt.fmt.vbi.start[0]);
 		printf("\tCount 1st Field : %u\n", vfmt.fmt.vbi.count[0]);
 		printf("\tStart 2nd Field : %u\n", vfmt.fmt.vbi.start[1]);
@@ -481,11 +496,13 @@ void printfmt(const struct v4l2_format &vfmt)
 		break;
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
-		printf("\tSample Format   : %s\n", fcc2s(vfmt.fmt.sdr.pixelformat).c_str());
+		printf("\tSample Format   : '%s'%s\n", fcc2s(vfmt.fmt.sdr.pixelformat).c_str(),
+		       printfmtname(fd, vfmt.type, vfmt.fmt.sdr.pixelformat).c_str());
 		printf("\tBuffer Size     : %u\n", vfmt.fmt.sdr.buffersize);
 		break;
 	case V4L2_BUF_TYPE_META_CAPTURE:
-		printf("\tSample Format   : %s\n", fcc2s(vfmt.fmt.meta.dataformat).c_str());
+		printf("\tSample Format   : '%s'%s\n", fcc2s(vfmt.fmt.meta.dataformat).c_str(),
+		       printfmtname(fd, vfmt.type, vfmt.fmt.meta.dataformat).c_str());
 		printf("\tBuffer Size     : %u\n", vfmt.fmt.meta.buffersize);
 		break;
 	}

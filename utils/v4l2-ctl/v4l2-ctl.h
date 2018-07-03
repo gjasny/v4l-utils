@@ -301,7 +301,7 @@ int parse_selection_target(const char *s, unsigned int &target);
 int parse_selection_flags(const char *s);
 void print_selection(const struct v4l2_selection &sel);
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane);
-void printfmt(const struct v4l2_format &vfmt);
+void printfmt(int fd, const struct v4l2_format &vfmt);
 void print_video_formats(int fd, __u32 type);
 
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)

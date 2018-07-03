@@ -207,7 +207,7 @@ void vbi_set(int fd)
 		else
 			ret = doioctl(fd, VIDIOC_TRY_FMT, &vbi_fmt);
 		if (ret == 0 && (verbose || options[OptTrySlicedVbiFormat]))
-			printfmt(vbi_fmt);
+			printfmt(fd, vbi_fmt);
 	}
 
 	if (options[OptSetSlicedVbiOutFormat] || options[OptTrySlicedVbiOutFormat]) {
@@ -217,7 +217,7 @@ void vbi_set(int fd)
 		else
 			ret = doioctl(fd, VIDIOC_TRY_FMT, &vbi_fmt_out);
 		if (ret == 0 && (verbose || options[OptTrySlicedVbiOutFormat]))
-			printfmt(vbi_fmt_out);
+			printfmt(fd, vbi_fmt_out);
 	}
 
 	if (options[OptSetVbiFormat] || options[OptTryVbiFormat]) {
@@ -231,7 +231,7 @@ void vbi_set(int fd)
 		else
 			ret = doioctl(fd, VIDIOC_TRY_FMT, &raw_fmt);
 		if (ret == 0 && (verbose || options[OptTryVbiFormat]))
-			printfmt(vbi_fmt);
+			printfmt(fd, vbi_fmt);
 	}
 
 	if (options[OptSetVbiOutFormat] || options[OptTryVbiOutFormat]) {
@@ -245,7 +245,7 @@ void vbi_set(int fd)
 		else
 			ret = doioctl(fd, VIDIOC_TRY_FMT, &raw_fmt);
 		if (ret == 0 && (verbose || options[OptTryVbiOutFormat]))
-			printfmt(vbi_fmt);
+			printfmt(fd, vbi_fmt);
 	}
 }
 
@@ -254,25 +254,25 @@ void vbi_get(int fd)
 	if (options[OptGetSlicedVbiFormat]) {
 		vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
 		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt) == 0)
-			printfmt(vbi_fmt);
+			printfmt(fd, vbi_fmt);
 	}
 
 	if (options[OptGetSlicedVbiOutFormat]) {
 		vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
 		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out) == 0)
-			printfmt(vbi_fmt_out);
+			printfmt(fd, vbi_fmt_out);
 	}
 
 	if (options[OptGetVbiFormat]) {
 		raw_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
 		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt) == 0)
-			printfmt(raw_fmt);
+			printfmt(fd, raw_fmt);
 	}
 
 	if (options[OptGetVbiOutFormat]) {
 		raw_fmt_out.type = V4L2_BUF_TYPE_VBI_OUTPUT;
 		if (doioctl(fd, VIDIOC_G_FMT, &raw_fmt_out) == 0)
-			printfmt(raw_fmt_out);
+			printfmt(fd, raw_fmt_out);
 	}
 }
 

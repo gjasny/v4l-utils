@@ -183,7 +183,7 @@ void vidout_set(int fd)
 			else
 				ret = doioctl(fd, VIDIOC_TRY_FMT, &vfmt);
 			if (ret == 0 && (verbose || options[OptTryVideoOutFormat]))
-				printfmt(vfmt);
+				printfmt(fd, vfmt);
 		}
 	}
 }
@@ -197,7 +197,7 @@ void vidout_get(int fd)
 		vfmt.fmt.pix.priv = priv_magic;
 		vfmt.type = vidout_buftype;
 		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(vfmt);
+			printfmt(fd, vfmt);
 	}
 }
 

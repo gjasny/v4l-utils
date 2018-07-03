@@ -456,7 +456,7 @@ static void do_try_set_overlay(struct v4l2_format &fmt, int fd)
 	else
 		ret = doioctl(fd, VIDIOC_TRY_FMT, &fmt);
 	if (ret == 0 && (verbose || options[OptTryOverlayFormat]))
-		printfmt(fmt);
+		printfmt(fd, fmt);
 
 free:
 	if (bitmap)
@@ -518,7 +518,7 @@ void overlay_get(int fd)
 			bitmap = (unsigned char *)calloc(1, stride * fmt.fmt.win.w.height);
 			fmt.fmt.win.bitmap = bitmap;
 			doioctl(fd, VIDIOC_G_FMT, &fmt);
-			printfmt(fmt);
+			printfmt(fd, fmt);
 			if (fmt.fmt.win.clips)
 				free(fmt.fmt.win.clips);
 			if (bitmap)

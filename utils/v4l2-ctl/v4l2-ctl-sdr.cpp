@@ -90,7 +90,7 @@ void sdr_set(int fd)
 		else
 			ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt);
 		if (ret == 0 && (verbose || options[OptTrySdrFormat]))
-			printfmt(in_vfmt);
+			printfmt(fd, in_vfmt);
 	}
 	if (options[OptSetSdrOutFormat] || options[OptTrySdrOutFormat]) {
 		struct v4l2_format in_vfmt;
@@ -115,7 +115,7 @@ void sdr_set(int fd)
 		else
 			ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt);
 		if (ret == 0 && (verbose || options[OptTrySdrOutFormat]))
-			printfmt(in_vfmt);
+			printfmt(fd, in_vfmt);
 	}
 }
 
@@ -124,12 +124,12 @@ void sdr_get(int fd)
 	if (options[OptGetSdrFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_SDR_CAPTURE;
 		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(vfmt);
+			printfmt(fd, vfmt);
 	}
 	if (options[OptGetSdrOutFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_SDR_OUTPUT;
 		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(vfmt);
+			printfmt(fd, vfmt);
 	}
 }
 

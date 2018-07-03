@@ -88,7 +88,7 @@ void meta_set(int fd)
 		else
 			ret = doioctl(fd, VIDIOC_TRY_FMT, &in_vfmt);
 		if (ret == 0 && (verbose || options[OptTryMetaFormat]))
-			printfmt(in_vfmt);
+			printfmt(fd, in_vfmt);
 	}
 }
 
@@ -97,7 +97,7 @@ void meta_get(int fd)
 	if (options[OptGetMetaFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_META_CAPTURE;
 		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(vfmt);
+			printfmt(fd, vfmt);
 	}
 }
 
