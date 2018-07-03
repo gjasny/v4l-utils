@@ -376,9 +376,11 @@ static std::string printfmtname(int fd, __u32 type, __u32 pixfmt)
 
 	fmt.index = 0;
 	fmt.type = type;
-	while (test_ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0)
+	while (test_ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
 		if (fmt.pixelformat == pixfmt)
 			return s + (const char *)fmt.description + ")";
+		fmt.index++;
+	}
 	return "";
 }
 
