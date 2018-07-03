@@ -1289,6 +1289,8 @@ recover:
 					break;
 				case V4L2_EVENT_EOS:
 					eos = true;
+					fprintf(stderr, "EOS");
+					fflush(stderr);
 					break;
 				}
 			}
@@ -1686,6 +1688,8 @@ static void streaming_set_m2m(cv4l_fd &fd)
 				if (ev.type != V4L2_EVENT_EOS)
 					continue;
 				wr_fds = NULL;
+				fprintf(stderr, "EOS");
+				fflush(stderr);
 				break;
 			}
 		}
