@@ -139,14 +139,13 @@ static void print_video_formats_ext(int fd, __u32 type)
 
 	fmt.index = 0;
 	fmt.type = type;
+	printf("\tType: %s\n\n", buftype2s(type).c_str());
 	while (test_ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
-		printf("\tIndex       : %d\n", fmt.index);
-		printf("\tType        : %s\n", buftype2s(type).c_str());
-		printf("\tPixel Format: '%s'", fcc2s(fmt.pixelformat).c_str());
+		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
+		       fmt.description);
 		if (fmt.flags)
-			printf(" (%s)", fmtdesc2s(fmt.flags).c_str());
-		printf("\n");
-		printf("\tName        : %s\n", fmt.description);
+			printf(", %s", fmtdesc2s(fmt.flags).c_str());
+		printf(")\n");
 		frmsize.pixel_format = fmt.pixelformat;
 		frmsize.index = 0;
 		while (test_ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
@@ -163,7 +162,6 @@ static void print_video_formats_ext(int fd, __u32 type)
 			}
 			frmsize.index++;
 		}
-		printf("\n");
 		fmt.index++;
 	}
 }

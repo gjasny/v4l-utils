@@ -514,15 +514,13 @@ void print_video_formats(int fd, __u32 type)
 
 	memset(&fmt, 0, sizeof(fmt));
 	fmt.type = type;
+	printf("\tType: %s\n\n", buftype2s(type).c_str());
 	while (test_ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
-		printf("\tIndex       : %d\n", fmt.index);
-		printf("\tType        : %s\n", buftype2s(type).c_str());
-		printf("\tPixel Format: '%s'", fcc2s(fmt.pixelformat).c_str());
+		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
+		       fmt.description);
 		if (fmt.flags)
-			printf(" (%s)", fmtdesc2s(fmt.flags).c_str());
-		printf("\n");
-		printf("\tName        : %s\n", fmt.description);
-		printf("\n");
+			printf(", %s", fmtdesc2s(fmt.flags).c_str());
+		printf(")\n");
 		fmt.index++;
 	}
 }
