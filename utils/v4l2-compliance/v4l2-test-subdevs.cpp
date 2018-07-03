@@ -463,6 +463,7 @@ int testSubDevSelection(struct node *node, unsigned which, unsigned pad)
 		sel.which = 0;
 		sel.pad = node->entity.pads;
 		fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_SELECTION, &sel) != EINVAL);
+		sel.which = which;
 		sel.pad = pad;
 		s_sel = sel;
 		memset(s_sel.reserved, 0xff, sizeof(s_sel.reserved));
