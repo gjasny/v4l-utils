@@ -512,7 +512,6 @@ static inline int v4l_subdev_s_fd(struct v4l_fd *f, int fd, const char *devname)
 	memset(&f->cap, 0, sizeof(f->cap));
 	f->is_subdev = true;
 	f->is_media = false;
-	f->direct = false;
 	f->type = 0;
 	f->have_query_ext_ctrl = false;
 	f->have_ext_ctrls = false;
