@@ -192,6 +192,8 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	return &parms->p;
 }
 
+static int __dvb_fe_snprintf_eng(char *buf, int len, float val, int metric);
+
 int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 		      int flags)
 {
@@ -362,17 +364,17 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 
 		dvb_log(_("Frequency range for the current standard: "));
 
-		dvb_fe_snprintf_eng(buf, sizeof(buf), frq_min);
-		dvb_log(_("From:       %11s Hz"), buf);
-		dvb_fe_snprintf_eng(buf, sizeof(buf), frq_max);
-		dvb_log(_("To:         %11s Hz"), buf);
+		__dvb_fe_snprintf_eng(buf, sizeof(buf), frq_min, 1);
+		dvb_log(_("From:       %11sHz"), buf);
+		__dvb_fe_snprintf_eng(buf, sizeof(buf), frq_max, 1);
+		dvb_log(_("To:         %11sHz"), buf);
 		if (frq_stp) {
-			dvb_fe_snprintf_eng(buf, sizeof(buf), frq_stp);
-			dvb_log(_("Step:       %11s Hz"), buf);
+			__dvb_fe_snprintf_eng(buf, sizeof(buf), frq_stp, 1);
+			dvb_log(_("Step:       %11sHz"), buf);
 		}
 		if (frq_tol) {
-			dvb_fe_snprintf_eng(buf, sizeof(buf), frq_tol);
-			dvb_log(_("Tolerance:  %11s Hz"), buf);
+			__dvb_fe_snprintf_eng(buf, sizeof(buf), frq_tol, 1);
+			dvb_log(_("Tolerance:  %11sHz"), buf);
 		}
 		/* Maybe we should also print symbol_min, symbol_max, symbol_tolerance */
 	}
@@ -1586,10 +1588,34 @@ int dvb_fe_get_event(struct dvb_v5_fe_parms *p)
 	return dvb_fe_get_stats(&parms->p);
 }
 
-int dvb_fe_snprintf_eng(char *buf, int len, float val)
+struct metric_prefixes {
+	int multiply_factor;
+	char *symbol;
+};
+
+static struct metric_prefixes prefixes[] = {
+	{  24, "Y" },
+	{  21, "Z" },
+	{  18, "E" },
+	{  15, "P" },
+	{  12, "T" },
+	{   9, "G" },
+	{   6, "M" },
+	{   3, "k" },
+	{  -3, "m" },
+	{  -6, "μ" },
+	{  -9, "n" },
+	{ -12, "p" },
+	{ -15, "f" },
+	{ -18, "a" },
+	{ -21, "z" },
+	{ -24, "y" },
+};
+
+static int __dvb_fe_snprintf_eng(char *buf, int len, float val, int metric)
 {
 	int digits = 3;
-	int exp, signal = 1;
+	int exp, signal = 1, i;
 
 	/* If value is zero, nothing to do */
 	if (val == 0.)
@@ -1622,6 +1648,14 @@ int dvb_fe_snprintf_eng(char *buf, int len, float val)
 		digits -= 1;
 
 	if (exp) {
+		if (metric) {
+			for (i = 0; i < ARRAY_SIZE(prefixes); i++) {
+				if (exp == prefixes[i].multiply_factor)
+					return snprintf(buf, len, " %.*f %s", digits - 1,
+		                                        val, prefixes[i].symbol);
+			}
+			/* Fall back to normal handling */
+		}
 		if (signal > 0)
 			return snprintf(buf, len, " %.*fx10^%d", digits - 1,
 					val, exp);
@@ -1634,6 +1668,11 @@ int dvb_fe_snprintf_eng(char *buf, int len, float val)
 		else
 			return snprintf(buf, len, " -%.*f", digits - 1, val);
 	}
+}
+
+int dvb_fe_snprintf_eng(char *buf, int len, float val)
+{
+	return __dvb_fe_snprintf_eng(buf, len, val, 0);
 }
 
 static char *sig_bits[7] = {
