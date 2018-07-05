@@ -344,6 +344,39 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 	if ((flags & O_ACCMODE) == O_RDWR)
 		dvb_set_sys(&parms->p, parms->p.current_sys);
 
+	if (parms->p.verbose) {
+		char buf[256];
+		uint32_t frq_min, frq_max, frq_stp, frq_tol;
+
+		frq_min = parms->p.info.frequency_min;
+		frq_max = parms->p.info.frequency_max;
+		frq_stp = parms->p.info.frequency_stepsize;
+		frq_tol = parms->p.info.frequency_tolerance;
+		if (parms->p.info.type == FE_QPSK) {
+			/* For Satellite, frequencies are in kHz */
+			frq_min *= 1000;
+			frq_max *= 1000;
+			frq_stp *= 1000;
+			frq_tol *= 1000;
+		}
+
+		dvb_log(_("Frequency range for the current standard: "));
+
+		dvb_fe_snprintf_eng(buf, sizeof(buf), frq_min);
+		dvb_log(_("From:       %11s Hz"), buf);
+		dvb_fe_snprintf_eng(buf, sizeof(buf), frq_max);
+		dvb_log(_("To:         %11s Hz"), buf);
+		if (frq_stp) {
+			dvb_fe_snprintf_eng(buf, sizeof(buf), frq_stp);
+			dvb_log(_("Step:       %11s Hz"), buf);
+		}
+		if (frq_tol) {
+			dvb_fe_snprintf_eng(buf, sizeof(buf), frq_tol);
+			dvb_log(_("Tolerance:  %11s Hz"), buf);
+		}
+		/* Maybe we should also print symbol_min, symbol_max, symbol_tolerance */
+	}
+
 	/*
 	 * Prepare the status struct - DVBv5.10 parameters should
 	 * come first, as they'll be read together.
@@ -450,6 +483,7 @@ int __dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 	struct dvb_v5_fe_parms_priv *parms = (void *)p;
 	struct dtv_property dvb_prop[1];
 	struct dtv_properties prop;
+	struct dvb_frontend_info new_info;
 	int rc;
 
 	if (sys != parms->p.current_sys) {
@@ -472,6 +506,17 @@ int __dvb_set_sys(struct dvb_v5_fe_parms *p, fe_delivery_system_t sys)
 			return -errno;
 		}
 	}
+
+	/*
+	 * This should not happen frequently, as this ioctl is pretty
+	 * straight forward. However, if it happens, it is better
+	 * to print an error message and ignore the error, as it
+	 * may still work.
+	 */
+	if (xioctl(parms->fd, FE_GET_INFO, &new_info) == -1)
+		dvb_perror(_("Can't retrieve DVB information for the new delivery system."));
+	else
+		parms->p.info = new_info;
 
 	rc = dvb_add_parms_for_sys(&parms->p, sys);
 	if (rc < 0)
