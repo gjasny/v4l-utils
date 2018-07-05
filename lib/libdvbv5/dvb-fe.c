@@ -376,7 +376,18 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 			__dvb_fe_snprintf_eng(buf, sizeof(buf), frq_tol, 1);
 			dvb_log(_("Tolerance:  %11sHz"), buf);
 		}
-		/* Maybe we should also print symbol_min, symbol_max, symbol_tolerance */
+
+		if (parms->p.info.type == FE_QPSK || parms->p.info.type == FE_QAM) {
+			dvb_log(_("Symbol rate ranges for the current standard: "));
+			__dvb_fe_snprintf_eng(buf, sizeof(buf), parms->p.info.symbol_rate_min, 1);
+			dvb_log(_("From:       %11sBauds"), buf);
+			__dvb_fe_snprintf_eng(buf, sizeof(buf), parms->p.info.symbol_rate_max, 1);
+			dvb_log(_("To:         %11sBauds"), buf);
+			if (parms->p.info.symbol_rate_tolerance) {
+				__dvb_fe_snprintf_eng(buf, sizeof(buf), parms->p.info.symbol_rate_tolerance, 1);
+				dvb_log(_("Tolerance:  %11sBauds"), buf);
+			}
+		}
 	}
 
 	/*
