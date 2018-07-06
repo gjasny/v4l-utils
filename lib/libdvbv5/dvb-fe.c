@@ -1869,7 +1869,11 @@ int dvb_fe_sec_voltage(struct dvb_v5_fe_parms *p, int on, int v18)
 	}
 	rc = xioctl(parms->fd, FE_SET_VOLTAGE, v);
 	if (rc == -1) {
-		dvb_perror("FE_SET_VOLTAGE");
+		if (errno == ENOTSUP) {
+			dvb_logerr("FE_SET_VOLTAGE: driver doesn't support it!");
+		} else {
+			dvb_perror("FE_SET_VOLTAGE");
+		}
 		return -errno;
 	}
 	return rc;
