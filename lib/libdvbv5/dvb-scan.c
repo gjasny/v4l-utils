@@ -218,6 +218,7 @@ static int dvb_parse_section(struct dvb_v5_fe_parms_priv *parms,
 		ext->first_section = h.section_id;
 		ext->last_section = h.last_section;
 		priv->extensions = ext;
+		priv->num_extensions = 1;
 		new = 1;
 	} else {
 		/* search for an specific TS ID */
@@ -239,10 +240,21 @@ static int dvb_parse_section(struct dvb_v5_fe_parms_priv *parms,
 				return -1;
 			}
 			ext += i;
+			memset(ext, 0, sizeof(struct dvb_table_filter_ext_priv));
+			ext->ext_id = h.id;
+			ext->first_section = h.section_id;
+			ext->last_section = h.last_section;
+			new = 1;
 		}
 	}
 
 	if (!new) { /* Check if the table was already parsed, but not on first pass */
+		if(ext->done) {
+			if (parms->p.verbose)
+				dvb_log(_("%s: extension already done, ignoring: 0x%04x"), __func__, ext->ext_id);
+			return 0;
+		}
+
 		if (!sect->allow_section_gaps && sect->ts_id == -1) {
 			if (test_bit(h.section_id, ext->is_read_bits))
 				return 0;
@@ -252,8 +264,8 @@ static int dvb_parse_section(struct dvb_v5_fe_parms_priv *parms,
 			 * table is reached.
 			 */
 			if (parms->p.verbose)
-				dvb_log(_("%s: section repeated on table 0x%02x, extension ID 0x%04x: done"),
-					__func__, h.table_id, h.id);
+				dvb_log(_("%s: section repeated on table 0x%02x, extension ID 0x%04x, section %d/%d: done"),
+					__func__, h.table_id, ext->ext_id, h.section_id, h.last_section);
 
 			ext->done = 1;
 
@@ -287,8 +299,12 @@ static int dvb_parse_section(struct dvb_v5_fe_parms_priv *parms,
 ret:
 	/* Check if all extensions are done */
 	for (ext = priv->extensions, i = 0; i < priv->num_extensions; i++, ext++) {
-		if (!ext->done)
+		if (!ext->done) {
+			if (parms->p.verbose)
+				dvb_log(_("%s: extension not completed yet: 0x%04x"),
+						__func__, ext->ext_id);
 			return 0;
+		}
 	}
 
 	/* Section was fully parsed */
