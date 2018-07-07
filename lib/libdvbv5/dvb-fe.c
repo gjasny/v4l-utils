@@ -185,7 +185,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 
 	ret = dvb_fe_open_fname(parms, fname, flags);
 	if (ret < 0) {
-		free(parms);
+		dvb_v5_free(parms);
 		return NULL;
 	}
 
@@ -209,9 +209,7 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 
 	if (xioctl(fd, FE_GET_INFO, &parms->p.info) == -1) {
 		dvb_perror("FE_GET_INFO");
-		dvb_v5_free(parms);
 		close(fd);
-		free(fname);
 		return -errno;
 	}
 
@@ -293,7 +291,6 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 		}
 		if (!parms->p.num_systems) {
 			dvb_logerr(_("delivery system not detected"));
-			dvb_v5_free(parms);
 			close(fd);
 			return -EINVAL;
 		}
@@ -304,7 +301,6 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 		dtv_prop.props = parms->dvb_prop;
 		if (xioctl(fd, FE_GET_PROPERTY, &dtv_prop) == -1) {
 			dvb_perror("FE_GET_PROPERTY");
-			dvb_v5_free(parms);
 			close(fd);
 			return -errno;
 		}
@@ -314,7 +310,6 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 
 		if (parms->p.num_systems == 0) {
 			dvb_logerr(_("driver returned 0 supported delivery systems!"));
-			dvb_v5_free(parms);
 			close(fd);
 			return -EINVAL;
 		}
