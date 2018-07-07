@@ -68,6 +68,6 @@ void dvb_desc_event_short_print(struct dvb_v5_fe_parms *parms, const struct dvb_
 	const struct dvb_desc_event_short *event = (const struct dvb_desc_event_short *) desc;
 	dvb_loginfo("|           name          '%s'", event->name);
 	dvb_loginfo("|           language      '%s'", event->language);
-	dvb_loginfo("|           sescription   '%s'", event->text);
+	dvb_loginfo("|           description   '%s'", event->text);
 }
 

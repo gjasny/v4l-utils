@@ -39,6 +39,12 @@
 
 #include <libdvbv5/descriptors.h>
 
+struct dvb_desc_event_extended_item {
+	char *description;
+	char *description_emph;
+	char *item;
+	char *item_emph;
+};
 
 /**
  * @struct dvb_desc_event_extended
@@ -58,6 +64,7 @@
  * The emphasis text is the one that uses asterisks. For example, in the text:
  *	"the quick *fox* jumps over the lazy table" the emphasis would be "fox".
  */
+
 struct dvb_desc_event_extended {
 	uint8_t type;
 	uint8_t length;
@@ -74,6 +81,8 @@ struct dvb_desc_event_extended {
 	unsigned char language[4];
 	char *text;
 	char *text_emph;
+	struct dvb_desc_event_extended_item *items;
+	int num_items;
 } __attribute__((packed));
 
 struct dvb_v5_fe_parms;

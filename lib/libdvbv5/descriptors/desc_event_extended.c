@@ -22,57 +22,102 @@
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>
 
+#ifdef ENABLE_NLS
+# include "gettext.h"
+# include <libintl.h>
+# define _(string) dgettext(LIBDVBV5_DOMAIN, string)
+#else
+# define _(string) string
+#endif
+
 int dvb_desc_event_extended_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_event_extended *event = (struct dvb_desc_event_extended *) desc;
-	uint8_t len;  /* the length of the string in the input data */
-	uint8_t len1; /* the lenght of the output strings */
-
-	/*dvb_hexdump(parms, "event extended desc: ", buf - 2, desc->length + 2);*/
+	uint8_t len, size_items;
+	const uint8_t *buf_start;
+	int first = 1;
+	struct dvb_desc_event_extended_item *item;
 
 	event->ids = buf[0];
+
 	event->language[0] = buf[1];
 	event->language[1] = buf[2];
 	event->language[2] = buf[3];
 	event->language[3] = '\0';
 
-	uint8_t items = buf[4];
+	size_items = buf[4];
 	buf += 5;
 
-	int i;
-	for (i = 0; i < items; i++) {
-		dvb_logwarn("dvb_desc_event_extended: items not implemented");
-		uint8_t desc_len = *buf;
+	event->items = NULL;
+	event->num_items = 0;
+	buf_start = buf;
+	while (buf - buf_start < size_items) {
+		if (first) {
+			first = 0;
+			event->num_items = 1;
+			event->items = calloc(sizeof(struct dvb_desc_event_extended_item), event->num_items);
+			if (!event->items) {
+				dvb_logerr(_("%s: out of memory"), __func__);
+				return -1;
+			}
+			item = event->items;
+		} else {
+			event->num_items++;
+			event->items = realloc(event->items, sizeof(struct dvb_desc_event_extended_item) * (event->num_items));
+			item = event->items + (event->num_items - 1);
+		}
+		len = *buf;
 		buf++;
+		item->description = NULL;
+		item->description_emph = NULL;
+		dvb_parse_string(parms, &item->description, &item->description_emph, buf, len);
+		buf += len;
 
-		buf += desc_len;
-
-		uint8_t item_len = *buf;
+		len = *buf;
 		buf++;
-
-		buf += item_len;
+		item->item = NULL;
+		item->item_emph = NULL;
+		dvb_parse_string(parms, &item->item, &item->item_emph, buf, len);
+		buf += len;
 	}
 
-	event->text = NULL;
-	event->text_emph = NULL;
+
 	len = *buf;
-	len1 = len;
 	buf++;
-	dvb_parse_string(parms, &event->text, &event->text_emph, buf, len1);
-	buf += len;
+
+	if (len) {
+		event->text = NULL;
+		event->text_emph = NULL;
+		dvb_parse_string(parms, &event->text, &event->text_emph, buf, len);
+		buf += len;
+	}
+
 	return 0;
 }
 
 void dvb_desc_event_extended_free(struct dvb_desc *desc)
 {
 	struct dvb_desc_event_extended *event = (struct dvb_desc_event_extended *) desc;
+	int i;
 	free(event->text);
 	free(event->text_emph);
+	for (i = 0; i < event->num_items; i++) {
+		free(event->items[i].description);
+		free(event->items[i].description_emph);
+		free(event->items[i].item);
+		free(event->items[i].item_emph);
+	}
+	free(event->items);
 }
 
 void dvb_desc_event_extended_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct dvb_desc_event_extended *event = (const struct dvb_desc_event_extended *) desc;
+	int i;
 	dvb_loginfo("|           '%s'", event->text);
+	for (i = 0; i < event->num_items; i++) {
+		dvb_loginfo("|              description   '%s'", event->items[i].description);
+		dvb_loginfo("|              item          '%s'", event->items[i].item);
+	}
 }
 
