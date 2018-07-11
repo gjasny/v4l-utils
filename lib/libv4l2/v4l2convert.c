@@ -23,6 +23,9 @@
 /* prevent GCC 4.7 inlining error */
 #undef _FORTIFY_SOURCE
 
+/* ensure we see *64 variants and they aren't transparently used */
+#undef _LARGEFILE_SOURCE
+#undef _FILE_OFFSET_BITS
 #define _LARGEFILE64_SOURCE 1
 
 #ifdef ANDROID
