@@ -1172,6 +1172,10 @@ recover:
 			fout = stdout;
 		else
 			fout = fopen(file_to, "w+");
+		if (!fout) {
+			fprintf(stderr, "could not open %s for writing\n", file_to);
+			return;
+		}
 	} else if (host_to) {
 		char *p = strchr(host_to, ':');
 		struct sockaddr_in serv_addr;
@@ -1349,6 +1353,10 @@ static void streaming_set_out(cv4l_fd &fd)
 			fin = stdin;
 		else
 			fin = fopen(file_from, "r");
+		if (!fin) {
+			fprintf(stderr, "could not open %s for reading\n", file_from);
+			return;
+		}
 	} else if (host_from) {
 		char *p = strchr(host_from, ':');
 		int listen_fd;
@@ -1578,6 +1586,10 @@ static void streaming_set_m2m(cv4l_fd &fd)
 			file[CAP] = stdout;
 		else
 			file[CAP] = fopen(file_to, "w+");
+		if (!file[CAP]) {
+			fprintf(stderr, "could not open %s for writing\n", file_to);
+			return;
+		}
 	}
 
 	if (file_from) {
@@ -1585,6 +1597,10 @@ static void streaming_set_m2m(cv4l_fd &fd)
 			file[OUT] = stdin;
 		else
 			file[OUT] = fopen(file_from, "r");
+		if (!file[OUT]) {
+			fprintf(stderr, "could not open %s for reading\n", file_from);
+			return;
+		}
 	}
 
 	if (in.reqbufs(&fd, reqbufs_count_cap) ||
@@ -1765,6 +1781,10 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 			file[CAP] = stdout;
 		else
 			file[CAP] = fopen(file_to, "w+");
+		if (!file[CAP]) {
+			fprintf(stderr, "could not open %s for writing\n", file_to);
+			return;
+		}
 	}
 
 	if (file_from) {
@@ -1772,6 +1792,10 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 			file[OUT] = stdin;
 		else
 			file[OUT] = fopen(file_from, "r");
+		if (!file[OUT]) {
+			fprintf(stderr, "could not open %s for reading\n", file_from);
+			return;
+		}
 	}
 
 	if (in.reqbufs(&fd, reqbufs_count_cap) ||
