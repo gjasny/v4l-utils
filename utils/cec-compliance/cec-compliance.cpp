@@ -703,8 +703,10 @@ int cec_named_ioctl(struct node *node, const char *name,
 	}
 
 	if (!retval && request == CEC_TRANSMIT &&
-	    (msg->tx_status & CEC_TX_STATUS_OK) && ((msg->tx_status & CEC_TX_STATUS_MAX_RETRIES)))
+	    (msg->tx_status & CEC_TX_STATUS_OK) && ((msg->tx_status & CEC_TX_STATUS_MAX_RETRIES))) {
 		warn("Both OK and MAX_RETRIES were set in tx_status!\n");
+		msg->tx_status &= ~CEC_TX_STATUS_OK;
+	}
 
 	if (!retval && request == CEC_TRANSMIT && show_info) {
 		printf("\t\t%s: Sequence: %u Tx Timestamp: %s Length: %u",
