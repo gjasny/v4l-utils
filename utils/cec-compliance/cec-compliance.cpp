@@ -704,7 +704,6 @@ int cec_named_ioctl(struct node *node, const char *name,
 
 	if (!retval && request == CEC_TRANSMIT &&
 	    (msg->tx_status & CEC_TX_STATUS_OK) && ((msg->tx_status & CEC_TX_STATUS_MAX_RETRIES))) {
-		warn("Both OK and MAX_RETRIES were set in tx_status!\n");
 		/*
 		 * Workaround this bug in the CEC framework. This bug was solved
 		 * in kernel 4.18 but older versions still can produce this incorrect
@@ -717,6 +716,7 @@ int cec_named_ioctl(struct node *node, const char *name,
 			msg->tx_error_cnt--;
 		msg->rx_status = CEC_RX_STATUS_TIMEOUT;
 		msg->rx_ts = msg->tx_ts;
+		warn("Both OK and MAX_RETRIES were set in tx_status! Applied workaround.\n");
 	}
 
 	if (!retval && request == CEC_TRANSMIT && show_info) {
