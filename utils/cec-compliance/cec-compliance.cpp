@@ -705,7 +705,18 @@ int cec_named_ioctl(struct node *node, const char *name,
 	if (!retval && request == CEC_TRANSMIT &&
 	    (msg->tx_status & CEC_TX_STATUS_OK) && ((msg->tx_status & CEC_TX_STATUS_MAX_RETRIES))) {
 		warn("Both OK and MAX_RETRIES were set in tx_status!\n");
-		msg->tx_status &= ~CEC_TX_STATUS_OK;
+		/*
+		 * Workaround this bug in the CEC framework. This bug was solved
+		 * in kernel 4.18 but older versions still can produce this incorrect
+		 * combination of TX flags. If this occurs, then this really means
+		 * that the transmit went OK, but the wait for the reply was
+		 * cancelled (e.g. due to the HPD doing down).
+		 */
+		msg->tx_status &= ~(CEC_TX_STATUS_MAX_RETRIES | CEC_TX_STATUS_ERROR);
+		if (msg->tx_error_cnt)
+			msg->tx_error_cnt--;
+		msg->rx_status = CEC_RX_STATUS_TIMEOUT;
+		msg->rx_ts = msg->tx_ts;
 	}
 
 	if (!retval && request == CEC_TRANSMIT && show_info) {
