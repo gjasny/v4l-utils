@@ -1050,6 +1050,10 @@ static const char *event2s(__u32 event)
 		return "HPD Pin Low";
 	case CEC_EVENT_PIN_HPD_HIGH:
 		return "HPD Pin High";
+	case CEC_EVENT_PIN_5V_LOW:
+		return "5V Pin Low";
+	case CEC_EVENT_PIN_5V_HIGH:
+		return "5V Pin High";
 	default:
 		return "Unknown";
 	}
@@ -1061,7 +1065,8 @@ static void log_event(struct cec_event &ev, bool show)
 	__u16 pa;
 
 	if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH &&
-	    ev.event != CEC_EVENT_PIN_HPD_LOW && ev.event != CEC_EVENT_PIN_HPD_HIGH)
+	    ev.event != CEC_EVENT_PIN_HPD_LOW && ev.event != CEC_EVENT_PIN_HPD_HIGH &&
+	    ev.event != CEC_EVENT_PIN_5V_LOW && ev.event != CEC_EVENT_PIN_5V_HIGH)
 		printf("\n");
 	if ((ev.flags & CEC_EVENT_FL_DROPPED_EVENTS) && show)
 		printf("(warn: %s events were lost)\n", event2s(ev.event));
@@ -1093,6 +1098,12 @@ static void log_event(struct cec_event &ev, bool show)
 		if (show)
 			printf("Event: HPD Pin %s\n",
 			       ev.event == CEC_EVENT_PIN_HPD_HIGH ? "High" : "Low");
+		break;
+	case CEC_EVENT_PIN_5V_LOW:
+	case CEC_EVENT_PIN_5V_HIGH:
+		if (show)
+			printf("Event: 5V Pin %s\n",
+			       ev.event == CEC_EVENT_PIN_5V_HIGH ? "High" : "Low");
 		break;
 	default:
 		if (show)
@@ -1519,7 +1530,9 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 			if (ev.event == CEC_EVENT_PIN_CEC_LOW ||
 			    ev.event == CEC_EVENT_PIN_CEC_HIGH ||
 			    ev.event == CEC_EVENT_PIN_HPD_LOW ||
-			    ev.event == CEC_EVENT_PIN_HPD_HIGH)
+			    ev.event == CEC_EVENT_PIN_HPD_HIGH ||
+			    ev.event == CEC_EVENT_PIN_5V_LOW ||
+			    ev.event == CEC_EVENT_PIN_5V_HIGH)
 				pin_event = true;
 			generate_eob_event(ev.ts, fstore);
 			if (pin_event && fstore) {
@@ -1610,7 +1623,7 @@ static void analyze(const char *analyze_pin)
 			continue;
 		}
 		if (sscanf(s, "%lu.%09lu %d\n", &tv_sec, &tv_nsec, &event) != 3 ||
-		    (event & ~MONITOR_FL_DROPPED_EVENTS) > 3) {
+		    (event & ~MONITOR_FL_DROPPED_EVENTS) > 5) {
 			fprintf(stderr, "malformed data at line %d\n", line);
 			break;
 		}
