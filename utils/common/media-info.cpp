@@ -404,7 +404,8 @@ std::string mi_linkflags2s(__u32 flags)
 	}
 }
 
-static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_invalid)
+static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
+			   __u32 media_version, bool *is_invalid)
 {
 	media_v2_topology topology;
 	unsigned i, j;
@@ -472,6 +473,8 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_inva
 	printf("\tID               : 0x%08x (%u)\n", ent.id, ent.id);
 	printf("\tName             : %s\n", ent.name);
 	printf("\tFunction         : %s\n", mi_entfunction2s(ent.function, is_invalid).c_str());
+	if (MEDIA_V2_ENTITY_HAS_FLAGS(media_version) && ent.flags)
+		printf("\tFlags         : %s\n", mi_entflags2s(ent.flags).c_str());
 
 	// Yes, I know, lots of nested for-loops. If we get really complex
 	// devices with such large topologies that this becomes too inefficient
@@ -482,8 +485,10 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor, bool *is_inva
 
 		if (pad.entity_id != ent.id)
 			continue;
-		printf("\tPad 0x%08x   : %s\n",
-		       pad.id, mi_padflags2s(pad.flags).c_str());
+		printf("\tPad 0x%08x   : ", pad.id);
+		if (MEDIA_V2_PAD_HAS_INDEX(media_version))
+			printf("%u: ", pad.index);
+		printf("%s\n", mi_padflags2s(pad.flags).c_str());
 		for (j = 0; j < topology.num_links; j++) {
 			const media_v2_link &link = v2_links[j];
 			__u32 type = link.flags & MEDIA_LNK_FL_LINK_TYPE;
@@ -567,7 +572,8 @@ __u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid)
 		exit(1);
 	}
 
-	ent_id = read_topology(media_fd, major(sb.st_rdev), minor(sb.st_rdev), is_invalid);
+	ent_id = read_topology(media_fd, major(sb.st_rdev), minor(sb.st_rdev),
+			       mdinfo.media_version, is_invalid);
 	if (ent_id)
 		return ent_id;
 
