@@ -293,7 +293,8 @@ static const flag_def entity_functions_def[] = {
 	{ MEDIA_ENT_F_FLASH, "Flash Controller" },
 	{ MEDIA_ENT_F_LENS, "Lens Controller" },
 	{ MEDIA_ENT_F_ATV_DECODER, "Analog Video Decoder" },
-	{ MEDIA_ENT_F_DTV_DECODER, "Digital Video Decoder" },
+	{ MEDIA_ENT_F_DV_DECODER, "Digital Video Decoder" },
+	{ MEDIA_ENT_F_DV_ENCODER, "Digital Video Encoder" },
 	{ MEDIA_ENT_F_TUNER, "Tuner" },
 	{ MEDIA_ENT_F_IF_VID_DECODER, "IF-PLL Video Decoder" },
 	{ MEDIA_ENT_F_IF_AUD_DECODER, "IF-PLL Audio Decoder" },
@@ -306,6 +307,8 @@ static const flag_def entity_functions_def[] = {
 	{ MEDIA_ENT_F_PROC_VIDEO_LUT, "Video Look-Up Table" },
 	{ MEDIA_ENT_F_PROC_VIDEO_SCALER, "Video Scaler" },
 	{ MEDIA_ENT_F_PROC_VIDEO_STATISTICS, "Video Statistics" },
+	{ MEDIA_ENT_F_PROC_VIDEO_DECODER, "Video Decoder" },
+	{ MEDIA_ENT_F_PROC_VIDEO_ENCODER, "Video Encoder" },
 	{ MEDIA_ENT_F_VID_MUX, "Video Muxer" },
 	{ MEDIA_ENT_F_VID_IF_BRIDGE, "Video Interface Bridge" },
 	{ 0, NULL }
