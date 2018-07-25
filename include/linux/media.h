@@ -88,12 +88,6 @@ struct media_device_info {
 #define MEDIA_ENT_F_LENS			(MEDIA_ENT_F_OLD_SUBDEV_BASE + 3)
 
 /*
- * Video decoder functions
- */
-#define MEDIA_ENT_F_ATV_DECODER			(MEDIA_ENT_F_OLD_SUBDEV_BASE + 4)
-#define MEDIA_ENT_F_DTV_DECODER			(MEDIA_ENT_F_BASE + 0x6001)
-
-/*
  * Digital TV, analog TV, radio and/or software defined radio tuner functions.
  *
  * It is a responsibility of the master/bridge drivers to add connectors
@@ -130,12 +124,21 @@ struct media_device_info {
 #define MEDIA_ENT_F_PROC_VIDEO_LUT		(MEDIA_ENT_F_BASE + 0x4004)
 #define MEDIA_ENT_F_PROC_VIDEO_SCALER		(MEDIA_ENT_F_BASE + 0x4005)
 #define MEDIA_ENT_F_PROC_VIDEO_STATISTICS	(MEDIA_ENT_F_BASE + 0x4006)
+#define MEDIA_ENT_F_PROC_VIDEO_ENCODER		(MEDIA_ENT_F_BASE + 0x4007)
+#define MEDIA_ENT_F_PROC_VIDEO_DECODER		(MEDIA_ENT_F_BASE + 0x4008)
 
 /*
  * Switch and bridge entity functions
  */
 #define MEDIA_ENT_F_VID_MUX			(MEDIA_ENT_F_BASE + 0x5001)
 #define MEDIA_ENT_F_VID_IF_BRIDGE		(MEDIA_ENT_F_BASE + 0x5002)
+
+/*
+ * Video decoder/encoder functions
+ */
+#define MEDIA_ENT_F_ATV_DECODER			(MEDIA_ENT_F_OLD_SUBDEV_BASE + 4)
+#define MEDIA_ENT_F_DV_DECODER			(MEDIA_ENT_F_BASE + 0x6001)
+#define MEDIA_ENT_F_DV_ENCODER			(MEDIA_ENT_F_BASE + 0x6002)
 
 /* Entity flags */
 #define MEDIA_ENT_FL_DEFAULT			(1 << 0)
@@ -261,11 +264,21 @@ struct media_links_enum {
  * MC next gen API definitions
  */
 
+/*
+ * Appeared in 4.19.0.
+ *
+ * The media_version argument comes from the media_version field in
+ * struct media_device_info.
+ */
+#define MEDIA_V2_ENTITY_HAS_FLAGS(media_version) \
+	((media_version) >= ((4 << 16) | (19 << 8) | 0))
+
 struct media_v2_entity {
 	__u32 id;
 	char name[64];
 	__u32 function;		/* Main function of the entity */
-	__u32 reserved[6];
+	__u32 flags;
+	__u32 reserved[5];
 } __attribute__ ((packed));
 
 /* Should match the specific fields at media_intf_devnode */
@@ -286,11 +299,21 @@ struct media_v2_interface {
 	};
 } __attribute__ ((packed));
 
+/*
+ * Appeared in 4.19.0.
+ *
+ * The media_version argument comes from the media_version field in
+ * struct media_device_info.
+ */
+#define MEDIA_V2_PAD_HAS_INDEX(media_version) \
+	((media_version) >= ((4 << 16) | (19 << 8) | 0))
+
 struct media_v2_pad {
 	__u32 id;
 	__u32 entity_id;
 	__u32 flags;
-	__u32 reserved[5];
+	__u32 index;
+	__u32 reserved[4];
 } __attribute__ ((packed));
 
 struct media_v2_link {
@@ -359,6 +382,8 @@ struct media_v2_topology {
 #define MEDIA_ENT_T_V4L2_SUBDEV_LENS		MEDIA_ENT_F_LENS
 #define MEDIA_ENT_T_V4L2_SUBDEV_DECODER		MEDIA_ENT_F_ATV_DECODER
 #define MEDIA_ENT_T_V4L2_SUBDEV_TUNER		MEDIA_ENT_F_TUNER
+
+#define MEDIA_ENT_F_DTV_DECODER			MEDIA_ENT_F_DV_DECODER
 
 /*
  * There is still no ALSA support in the media controller. These

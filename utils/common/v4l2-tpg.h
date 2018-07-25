@@ -32,6 +32,8 @@ typedef __s8 s8;
 #endif /* !min */
 #define min3(x, y, z) min((typeof(x))min(x, y), z)
 #define max3(x, y, z) max((typeof(x))max(x, y), z)
+#define array_size(a, b) ((a) * (b))
+#define array3_size(a, b, c) ((a) * (b) * (c))
 
 static inline void vfree(void *p)
 {
