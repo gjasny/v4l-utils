@@ -97,6 +97,7 @@ struct base_node {
 	unsigned std_compound_controls;
 	unsigned priv_controls;
 	unsigned priv_compound_controls;
+	__u32 media_version;
 	media_entity_desc entity;
 	media_pad_desc *pads;
 	media_link_desc *links;

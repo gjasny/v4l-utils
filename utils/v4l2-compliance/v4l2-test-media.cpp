@@ -51,6 +51,7 @@ int testMediaDeviceInfo(struct node *node)
 	fail_on_test(mdinfo.media_version == 0);
 	if (mdinfo.media_version != MEDIA_API_VERSION)
 		fail_on_test(mdinfo.driver_version != mdinfo.media_version);
+	node->media_version = mdinfo.media_version;
 	return 0;
 }
 
@@ -156,9 +157,13 @@ int testMediaTopology(struct node *node)
 	for (unsigned i = 0; i < topology.num_entities; i++) {
 		media_v2_entity &ent = v2_ents[i];
 
-		if (show_info)
-			printf("\t\tEntity: 0x%08x (Name: '%s', Function: %s)\n",
+		if (show_info) {
+			printf("\t\tEntity: 0x%08x (Name: '%s', Function: %s",
 			       ent.id, ent.name, mi_entfunction2s(ent.function).c_str());
+			if (MEDIA_V2_ENTITY_HAS_FLAGS(node->media_version) && ent.flags)
+				printf(", Flags: %s", mi_entflags2s(ent.flags).c_str());
+			printf(")\n");
+		}
 		fail_on_test(check_0(ent.reserved, sizeof(ent.reserved)));
 		fail_on_test(check_string(ent.name, sizeof(ent.name)));
 		fail_on_test(!ent.id);
@@ -195,10 +200,14 @@ int testMediaTopology(struct node *node)
 		media_v2_pad &pad = v2_pads[i];
 		__u32 fl = pad.flags;
 
-		if (show_info)
-			printf("\t\tPad: 0x%08x (%s, %s)\n", pad.id,
+		if (show_info) {
+			printf("\t\tPad: 0x%08x (", pad.id);
+			if (MEDIA_V2_PAD_HAS_INDEX(node->media_version))
+				printf("%u, ", pad.index);
+			printf("%s, %s)\n",
 			       v2_entity_map[pad.entity_id]->name,
 			       mi_padflags2s(pad.flags).c_str());
+		}
 		fail_on_test(check_0(pad.reserved, sizeof(pad.reserved)));
 		fail_on_test(!pad.id);
 		fail_on_test(!pad.entity_id);
@@ -291,6 +300,8 @@ int testMediaEnum(struct node *node)
 		if (show_info) {
 			printf("\t\tEntity: 0x%08x (Name: '%s', Type: %s",
 			       ent.id, ent.name, mi_entfunction2s(ent.type).c_str());
+			if (ent.flags)
+				printf(", Flags: %s", mi_entflags2s(ent.flags).c_str());
 			if (!devpath.empty())
 				printf(", DevPath: %s", devpath.c_str());
 			printf(")\n");
