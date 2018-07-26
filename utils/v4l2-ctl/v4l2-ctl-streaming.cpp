@@ -740,12 +740,14 @@ restart:
 			first = true;
 			goto restart;
 		}
-		b.s_bytesused(len, j);
+		b.s_bytesused(sz, j);
 		if (sz == len)
 			continue;
+		if (sz == 0)
+			return false;
 		if (sz)
 			fprintf(stderr, "%u != %u\n", sz, len);
-		return false;
+		continue;
 	}
 	first = false;
 	return true;
@@ -1541,7 +1543,6 @@ enum stream_type {
 static void streaming_set_m2m(cv4l_fd &fd)
 {
 	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
-	bool use_poll = options[OptStreamPoll];
 	cv4l_queue in(fd.g_type(), memory);
 	cv4l_queue out(v4l_type_invert(fd.g_type()), out_memory);
 	fps_timestamps fps_ts[2];
@@ -1621,11 +1622,10 @@ static void streaming_set_m2m(cv4l_fd &fd)
 	while (stream_sleep == 0)
 		sleep(100);
 
-	if (use_poll)
-		fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
+	fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
 
 	while (rd_fds || wr_fds || ex_fds) {
-		struct timeval tv = { use_poll ? 2 : 0, 0 };
+		struct timeval tv = { 2, 0 };
 		int r = 0;
 
 		if (rd_fds) {
@@ -1643,9 +1643,7 @@ static void streaming_set_m2m(cv4l_fd &fd)
 			FD_SET(fd.g_fd(), wr_fds);
 		}
 
-		if (use_poll || ex_fds)
-			r = select(fd.g_fd() + 1, use_poll ? rd_fds : NULL,
-					   use_poll ? wr_fds : NULL, ex_fds, &tv);
+		r = select(fd.g_fd() + 1, rd_fds, wr_fds, ex_fds, &tv);
 
 		if (r == -1) {
 			if (EINTR == errno)
@@ -1654,7 +1652,7 @@ static void streaming_set_m2m(cv4l_fd &fd)
 					strerror(errno));
 			goto done;
 		}
-		if (use_poll && r == 0) {
+		if (r == 0) {
 			fprintf(stderr, "select timeout\n");
 			goto done;
 		}
