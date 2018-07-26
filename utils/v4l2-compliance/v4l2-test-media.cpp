@@ -84,6 +84,7 @@ static std::map<__u32, media_v2_entity *> v2_entity_map;
 static std::set<std::string> v2_entity_names_set;
 static std::map<__u32, media_v2_interface *> v2_iface_map;
 static std::map<__u32, media_v2_pad *> v2_pad_map;
+static std::set<__u64> v2_entity_pad_idx_set;
 static unsigned num_data_links;
 
 static int checkFunction(__u32 function, bool v2_api)
@@ -170,6 +171,8 @@ int testMediaTopology(struct node *node)
 		fail_on_test(checkFunction(ent.function, true));
 		fail_on_test(v2_entities_set.find(ent.id) != v2_entities_set.end());
 		fail_on_test(v2_entity_names_set.find(ent.name) != v2_entity_names_set.end());
+		if (!MEDIA_V2_ENTITY_HAS_FLAGS(node->media_version))
+			fail_on_test(ent.flags);
 		v2_entities_set.insert(ent.id);
 		v2_entity_names_set.insert(ent.name);
 		v2_entity_map[ent.id] = &ent;
@@ -217,6 +220,14 @@ int testMediaTopology(struct node *node)
 		fail_on_test(!(fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)));
 		fail_on_test((fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)) ==
 			     (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE));
+		if (MEDIA_V2_PAD_HAS_INDEX(node->media_version)) {
+			fail_on_test(pad.index == ~0U);
+			fail_on_test(v2_entity_pad_idx_set.find((__u64)pad.entity_id << 32 | pad.index) !=
+				     v2_entity_pad_idx_set.end());
+			v2_entity_pad_idx_set.insert((__u64)pad.entity_id << 32 | pad.index);
+		} else {
+			fail_on_test(pad.index);
+		}
 		entity_num_pads[pad.entity_id]++;
 		v2_pad_map[pad.id] = &pad;
 	}
@@ -374,12 +385,20 @@ int testMediaEnum(struct node *node)
 
 		for (unsigned i = 0; i < ent.pads; i++) {
 			fail_on_test(links.pads[i].entity != ent.id);
-			fail_on_test(links.pads[i].index != i);
+			fail_on_test(links.pads[i].index == 0xffff);
 			fail_on_test(check_0(links.pads[i].reserved, sizeof(links.pads[i].reserved)));
 			__u32 fl = links.pads[i].flags;
 			fail_on_test(!(fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)));
 			fail_on_test((fl & (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE)) ==
 				     (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE));
+			if (node->topology &&
+			    MEDIA_V2_PAD_HAS_INDEX(node->media_version)) {
+				__u64 key = (__u64)ent.id << 32 | links.pads[i].index;
+
+				fail_on_test(v2_entity_pad_idx_set.find(key) ==
+					     v2_entity_pad_idx_set.end());
+				v2_entity_pad_idx_set.erase(key);
+			}
 		}
 		bool found_enabled = false;
 		for (unsigned i = 0; i < ent.links; i++) {
@@ -433,6 +452,10 @@ int testMediaEnum(struct node *node)
 
 	for (unsigned i = 0; i < topology.num_entities; i++)
 		fail_on_test(ent_map.find(v2_ents[i].id) == ent_map.end());
+
+	if (node->topology &&
+	    MEDIA_V2_PAD_HAS_INDEX(node->media_version))
+		fail_on_test(!v2_entity_pad_idx_set.empty());
 	return 0;
 }
 
