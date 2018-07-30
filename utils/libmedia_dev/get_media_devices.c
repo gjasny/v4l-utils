@@ -68,10 +68,10 @@ typedef int (*fill_data_t)(struct media_device_entry *md);
 static void get_uevent_info(struct media_device_entry *md_ptr, char *dname)
 {
 	FILE *fd;
-	char file[PATH_MAX], *name, *p;
+	char file[PATH_MAX + 8], *name, *p;
 	char s[1024];
 
-	snprintf(file, PATH_MAX, "%s/%s/uevent", dname, md_ptr->node);
+	snprintf(file, sizeof(file), "%s/%s/uevent", dname, md_ptr->node);
 	fd = fopen(file, "r");
 	if (!fd)
 		return;
@@ -94,14 +94,14 @@ static void get_uevent_info(struct media_device_entry *md_ptr, char *dname)
 
 static enum bus_type get_bus(char *device)
 {
-	char file[PATH_MAX];
+	char file[PATH_MAX + 9];
 	char s[1024];
 	FILE *f;
 
 	if (!strcmp(device, "/sys/devices/virtual"))
 		return MEDIA_BUS_VIRTUAL;
 
-	snprintf(file, PATH_MAX, "%s/modalias", device);
+	snprintf(file, sizeof(file), "%s/modalias", device);
 	f = fopen(file, "r");
 	if (!f)
 		return MEDIA_BUS_UNKNOWN;
@@ -125,7 +125,7 @@ static int get_class(char *class,
 	DIR		*dir;
 	struct dirent	*entry;
 	char		dname[PATH_MAX];
-	char		fname[PATH_MAX];
+	char		fname[PATH_MAX + sizeof(entry->d_name)];
 	char		link[PATH_MAX];
 	char		virt_dev[60];
 	int		err = -2;
@@ -144,7 +144,7 @@ static int get_class(char *class,
 		if (entry->d_name[0] == '.')
 			continue;
 		/* Canonicalize the device name */
-		snprintf(fname, PATH_MAX, "%s/%s", dname, entry->d_name);
+		snprintf(fname, sizeof(fname), "%s/%s", dname, entry->d_name);
 		if (realpath(fname, link)) {
 			device = link;
 

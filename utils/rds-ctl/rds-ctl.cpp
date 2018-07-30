@@ -765,7 +765,7 @@ static int parse_cl(int argc, char **argv)
 		params.options[(int)opt] = 1;
 		switch (opt) {
 		case OptSetDevice:
-			strncpy(params.fd_name, optarg, sizeof(params.fd_name));
+			strncpy(params.fd_name, optarg, sizeof(params.fd_name) - 1);
 			if (optarg[0] >= '0' && optarg[0] <= '9' && strlen(optarg) <= 3) {
 				snprintf(params.fd_name, sizeof(params.fd_name), "/dev/radio%s", optarg);
 			}

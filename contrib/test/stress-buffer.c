@@ -48,7 +48,7 @@
 int main(int argc, char **argv)
 {
 	char buffer[1000];
-	char fname[30];
+	char fname[100];
 	int fd, ret, magic_buffer_size, cnt = 0;
 	time_t t1, t2;
 	double dif;
