@@ -174,7 +174,7 @@ static void decode_cc(struct v4l2_sliced_vbi_data *s)
 
 		if (cc_idx >= CC_SIZE) {
 			cc_idx = CC_SIZE - 2;
-			memcpy(cc, cc + 2, cc_idx);
+			memmove(cc, cc + 2, cc_idx);
 		}
 		cc[cc_idx++] = c;
 
