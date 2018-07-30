@@ -465,7 +465,8 @@ static inline int v4l_s_fd(struct v4l_fd *f, int fd, const char *devname, bool d
 	qc.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	memset(&sel, 0, sizeof(sel));
 
-	strncpy(f->devname, devname, sizeof(f->devname));
+	if (f->devname != devname)
+		strncpy(f->devname, devname, sizeof(f->devname));
 	f->devname[sizeof(f->devname) - 1] = '\0';
 
 	memset(&f->cap, 0, sizeof(f->cap));
@@ -506,7 +507,8 @@ static inline int v4l_subdev_s_fd(struct v4l_fd *f, int fd, const char *devname)
 	if (fd < 0)
 		return fd;
 
-	strncpy(f->devname, devname, sizeof(f->devname));
+	if (f->devname != devname)
+		strncpy(f->devname, devname, sizeof(f->devname));
 	f->devname[sizeof(f->devname) - 1] = '\0';
 
 	memset(&f->cap, 0, sizeof(f->cap));
@@ -538,7 +540,8 @@ static inline int v4l_media_s_fd(struct v4l_fd *f, int fd, const char *devname)
 	if (fd < 0)
 		return fd;
 
-	strncpy(f->devname, devname, sizeof(f->devname));
+	if (f->devname != devname)
+		strncpy(f->devname, devname, sizeof(f->devname));
 	f->devname[sizeof(f->devname) - 1] = '\0';
 
 	memset(&f->cap, 0, sizeof(f->cap));
