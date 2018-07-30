@@ -93,8 +93,10 @@ void io_cmd(int ch, char *optarg)
 	}
 }
 
-void io_set(int fd)
+void io_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptSetInput]) {
 		if (doioctl(fd, VIDIOC_S_INPUT, &input) == 0) {
 			struct v4l2_input vin;
@@ -125,8 +127,10 @@ void io_set(int fd)
 	}
 }
 
-void io_get(int fd)
+void io_get(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptGetInput]) {
 		if (doioctl(fd, VIDIOC_G_INPUT, &input) == 0) {
 			struct v4l2_input vin;
@@ -163,8 +167,10 @@ void io_get(int fd)
 	}
 }
 
-void io_list(int fd)
+void io_list(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptListInputs]) {
 		struct v4l2_input vin;
 

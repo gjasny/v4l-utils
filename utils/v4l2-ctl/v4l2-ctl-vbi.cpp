@@ -196,8 +196,9 @@ static void fill_raw_vbi(v4l2_vbi_format &dst, const v4l2_vbi_format &src)
 		dst.count[1] = src.count[1];
 }
 
-void vbi_set(int fd)
+void vbi_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
 	int ret;
 
 	if (options[OptSetSlicedVbiFormat] || options[OptTrySlicedVbiFormat]) {
@@ -249,8 +250,10 @@ void vbi_set(int fd)
 	}
 }
 
-void vbi_get(int fd)
+void vbi_get(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptGetSlicedVbiFormat]) {
 		vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
 		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt) == 0)
@@ -276,13 +279,13 @@ void vbi_get(int fd)
 	}
 }
 
-void vbi_list(int fd)
+void vbi_list(cv4l_fd &fd)
 {
 	if (options[OptGetSlicedVbiCap]) {
 		struct v4l2_sliced_vbi_cap cap;
 
 		cap.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_SLICED_VBI_CAP, &cap) == 0) {
+		if (doioctl(fd.g_fd(), VIDIOC_G_SLICED_VBI_CAP, &cap) == 0) {
 			print_sliced_vbi_cap(cap);
 		}
 	}
@@ -291,7 +294,7 @@ void vbi_list(int fd)
 		struct v4l2_sliced_vbi_cap cap;
 
 		cap.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
-		if (doioctl(fd, VIDIOC_G_SLICED_VBI_CAP, &cap) == 0) {
+		if (doioctl(fd.g_fd(), VIDIOC_G_SLICED_VBI_CAP, &cap) == 0) {
 			print_sliced_vbi_cap(cap);
 		}
 	}

@@ -465,8 +465,10 @@ free:
 		free(cliplist);
 }
 
-void overlay_set(int fd)
+void overlay_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if ((options[OptSetOverlayFormat] || options[OptTryOverlayFormat]) &&
 			(set_overlay_fmt || options[OptClearClips] || options[OptClearBitmap] ||
 			 bitmap_rects.size() || clips.size())) {
@@ -498,8 +500,10 @@ void overlay_set(int fd)
 	}
 }
 
-void overlay_get(int fd)
+void overlay_get(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptGetOverlayFormat]) {
 		struct v4l2_format fmt;
 		unsigned char *bitmap = NULL;
@@ -533,12 +537,12 @@ void overlay_get(int fd)
 	}
 }
 
-void overlay_list(int fd)
+void overlay_list(cv4l_fd &fd)
 {
 	if (options[OptListOverlayFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
 		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OVERLAY);
 	}
 	if (options[OptFindFb])
-		find_fb(fd);
+		find_fb(fd.g_fd());
 }

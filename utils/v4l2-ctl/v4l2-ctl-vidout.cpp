@@ -24,6 +24,9 @@ void vidout_usage(void)
 {
 	printf("\nVideo Output Formats options:\n"
 	       "  --list-formats-out display supported video output formats [VIDIOC_ENUM_FMT]\n"
+	       "  --list-formats-out-ext\n"
+	       "                     display supported video output formats including frame sizes\n"
+	       "                     and intervals\n"
 	       "  --list-fields-out  list supported fields for the current output format\n"
 	       "  -X, --get-fmt-video-out\n"
 	       "     		     query the video output format [VIDIOC_G_FMT]\n"
@@ -96,8 +99,9 @@ void vidout_cmd(int ch, char *optarg)
 	}
 }
 
-void vidout_set(int fd)
+void vidout_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
 	int ret;
 
 	if (options[OptSetVideoOutFormat] || options[OptTryVideoOutFormat]) {
@@ -188,7 +192,7 @@ void vidout_set(int fd)
 	}
 }
 
-void vidout_get(int fd)
+void vidout_get(cv4l_fd &fd)
 {
 	if (options[OptGetVideoOutFormat]) {
 		struct v4l2_format vfmt;
@@ -196,19 +200,24 @@ void vidout_get(int fd)
 		memset(&vfmt, 0, sizeof(vfmt));
 		vfmt.fmt.pix.priv = priv_magic;
 		vfmt.type = vidout_buftype;
-		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(fd, vfmt);
+		if (doioctl(fd.g_fd(), VIDIOC_G_FMT, &vfmt) == 0)
+			printfmt(fd.g_fd(), vfmt);
 	}
 }
 
-void vidout_list(int fd)
+void vidout_list(cv4l_fd &fd)
 {
 	if (options[OptListOutFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
 		print_video_formats(fd, vidout_buftype);
 	}
 
+	if (options[OptListOutFormatsExt]) {
+		printf("ioctl: VIDIOC_ENUM_FMT\n");
+		print_video_formats_ext(fd, vidout_buftype);
+	}
+
 	if (options[OptListOutFields]) {
-		print_video_out_fields(fd);
+		print_video_out_fields(fd.g_fd());
 	}
 }

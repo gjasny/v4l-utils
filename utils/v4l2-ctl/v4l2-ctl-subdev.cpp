@@ -394,8 +394,10 @@ static void print_subdev_selection(const struct v4l2_subdev_selection &sel)
 			selflags2s(sel.flags).c_str());
 }
 
-void subdev_set(int fd)
+void subdev_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptSetSubDevFormat] || options[OptTrySubDevFormat]) {
 		struct v4l2_subdev_format fmt;
 
@@ -494,8 +496,10 @@ void subdev_set(int fd)
 	}
 }
 
-void subdev_get(int fd)
+void subdev_get(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptGetSubDevFormat]) {
 		struct v4l2_subdev_format fmt;
 
@@ -610,8 +614,10 @@ static void print_frmival(const struct v4l2_subdev_frame_interval_enum &frmival)
 	       fract2fps(frmival.interval).c_str());
 }
 
-void subdev_list(int fd)
+void subdev_list(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptListSubDevMBusCodes]) {
 		printf("ioctl: VIDIOC_SUBDEV_ENUM_MBUS_CODE (pad=%u)\n",
 		       list_mbus_codes_pad);

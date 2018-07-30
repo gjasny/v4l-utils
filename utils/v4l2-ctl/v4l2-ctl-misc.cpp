@@ -308,8 +308,10 @@ void misc_cmd(int ch, char *optarg)
 	}
 }
 
-void misc_set(int fd)
+void misc_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptSetParm]) {
 		memset(&parm, 0, sizeof(parm));
 		parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -362,8 +364,10 @@ void misc_set(int fd)
 			print_deccmd(dec_cmd);
 }
 
-void misc_get(int fd)
+void misc_get(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptGetJpegComp]) {
 		struct v4l2_jpegcompression jc;
 		if (doioctl(fd, VIDIOC_G_JPEGCOMP, &jc) == 0)

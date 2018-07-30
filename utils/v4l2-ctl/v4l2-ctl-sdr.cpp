@@ -63,8 +63,9 @@ void sdr_cmd(int ch, char *optarg)
 	}
 }
 
-void sdr_set(int fd)
+void sdr_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
 	int ret;
 
 	if (options[OptSetSdrFormat] || options[OptTrySdrFormat]) {
@@ -119,21 +120,21 @@ void sdr_set(int fd)
 	}
 }
 
-void sdr_get(int fd)
+void sdr_get(cv4l_fd &fd)
 {
 	if (options[OptGetSdrFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_SDR_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(fd, vfmt);
+		if (doioctl(fd.g_fd(), VIDIOC_G_FMT, &vfmt) == 0)
+			printfmt(fd.g_fd(), vfmt);
 	}
 	if (options[OptGetSdrOutFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_SDR_OUTPUT;
-		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(fd, vfmt);
+		if (doioctl(fd.g_fd(), VIDIOC_G_FMT, &vfmt) == 0)
+			printfmt(fd.g_fd(), vfmt);
 	}
 }
 
-void sdr_list(int fd)
+void sdr_list(cv4l_fd &fd)
 {
 	if (options[OptListSdrFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");

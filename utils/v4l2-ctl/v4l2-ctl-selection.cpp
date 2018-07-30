@@ -270,8 +270,10 @@ void selection_cmd(int ch, char *optarg)
 	}
 }
 
-void selection_set(int fd)
+void selection_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptSetCrop]) {
 		do_crop(fd, set_crop, vcrop, V4L2_BUF_TYPE_VIDEO_CAPTURE);
 	}
@@ -297,8 +299,10 @@ void selection_set(int fd)
 	}
 }
 
-void selection_get(int fd)
+void selection_get(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptGetCropCap]) {
 		struct v4l2_cropcap cropcap;
 

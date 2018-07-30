@@ -120,6 +120,7 @@ static struct option long_options[] = {
 	{"list-formats-sdr", no_argument, 0, OptListSdrFormats},
 	{"list-formats-sdr-out", no_argument, 0, OptListSdrOutFormats},
 	{"list-formats-out", no_argument, 0, OptListOutFormats},
+	{"list-formats-out-ext", no_argument, 0, OptListOutFormatsExt},
 	{"list-formats-meta", no_argument, 0, OptListMetaFormats},
 	{"list-subdev-mbus-codes", optional_argument, 0, OptListSubDevMBusCodes},
 	{"list-subdev-framesizes", required_argument, 0, OptListSubDevFrameSizes},
@@ -510,21 +511,124 @@ void printfmt(int fd, const struct v4l2_format &vfmt)
 	}
 }
 
-void print_video_formats(int fd, __u32 type)
+static std::string frmtype2s(unsigned type)
 {
+	static const char *types[] = {
+		"Unknown",
+		"Discrete",
+		"Continuous",
+		"Stepwise"
+	};
+
+	if (type > 3)
+		type = 0;
+	return types[type];
+}
+
+static std::string fract2sec(const struct v4l2_fract &f)
+{
+	char buf[100];
+
+	sprintf(buf, "%.3f", (1.0 * f.numerator) / f.denominator);
+	return buf;
+}
+
+static std::string fract2fps(const struct v4l2_fract &f)
+{
+	char buf[100];
+
+	sprintf(buf, "%.3f", (1.0 * f.denominator) / f.numerator);
+	return buf;
+}
+
+void print_frmsize(const struct v4l2_frmsizeenum &frmsize, const char *prefix)
+{
+	printf("%s\tSize: %s ", prefix, frmtype2s(frmsize.type).c_str());
+	if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
+		printf("%dx%d", frmsize.discrete.width, frmsize.discrete.height);
+	} else if (frmsize.type == V4L2_FRMSIZE_TYPE_STEPWISE) {
+		printf("%dx%d - %dx%d with step %d/%d",
+				frmsize.stepwise.min_width,
+				frmsize.stepwise.min_height,
+				frmsize.stepwise.max_width,
+				frmsize.stepwise.max_height,
+				frmsize.stepwise.step_width,
+				frmsize.stepwise.step_height);
+	}
+	printf("\n");
+}
+
+void print_frmival(const struct v4l2_frmivalenum &frmival, const char *prefix)
+{
+	printf("%s\tInterval: %s ", prefix, frmtype2s(frmival.type).c_str());
+	if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
+		printf("%ss (%s fps)\n", fract2sec(frmival.discrete).c_str(),
+				fract2fps(frmival.discrete).c_str());
+	} else if (frmival.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) {
+		printf("%ss - %ss (%s-%s fps)\n",
+				fract2sec(frmival.stepwise.min).c_str(),
+				fract2sec(frmival.stepwise.max).c_str(),
+				fract2fps(frmival.stepwise.max).c_str(),
+				fract2fps(frmival.stepwise.min).c_str());
+	} else if (frmival.type == V4L2_FRMIVAL_TYPE_STEPWISE) {
+		printf("%ss - %ss with step %ss (%s-%s fps)\n",
+				fract2sec(frmival.stepwise.min).c_str(),
+				fract2sec(frmival.stepwise.max).c_str(),
+				fract2sec(frmival.stepwise.step).c_str(),
+				fract2fps(frmival.stepwise.max).c_str(),
+				fract2fps(frmival.stepwise.min).c_str());
+	}
+}
+
+void print_video_formats(cv4l_fd &fd, __u32 type)
+{
+	cv4l_disable_trace dt(fd);
 	struct v4l2_fmtdesc fmt;
 
-	memset(&fmt, 0, sizeof(fmt));
-	fmt.type = type;
 	printf("\tType: %s\n\n", buftype2s(type).c_str());
-	while (test_ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
+	if (fd.enum_fmt(fmt, true, 0, type))
+		return;
+	do {
 		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
 		       fmt.description);
 		if (fmt.flags)
 			printf(", %s", fmtdesc2s(fmt.flags).c_str());
 		printf(")\n");
-		fmt.index++;
-	}
+	} while (!fd.enum_fmt(fmt));
+}
+
+void print_video_formats_ext(cv4l_fd &fd, __u32 type)
+{
+	cv4l_disable_trace dt(fd);
+	struct v4l2_fmtdesc fmt;
+	struct v4l2_frmsizeenum frmsize;
+	struct v4l2_frmivalenum frmival;
+
+	printf("\tType: %s\n\n", buftype2s(type).c_str());
+	if (fd.enum_fmt(fmt, true, 0, type))
+		return;
+	do {
+		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
+		       fmt.description);
+		if (fmt.flags)
+			printf(", %s", fmtdesc2s(fmt.flags).c_str());
+		printf(")\n");
+		if (fd.enum_framesizes(frmsize, fmt.pixelformat))
+			continue;
+		do {
+			print_frmsize(frmsize, "\t");
+			if (frmsize.type != V4L2_FRMSIZE_TYPE_DISCRETE)
+				continue;
+
+			if (fd.enum_frameintervals(frmival, fmt.pixelformat,
+						   frmsize.discrete.width,
+						   frmsize.discrete.height))
+				continue;
+			do {
+				print_frmival(frmival, "\t\t");
+			} while (!fd.enum_frameintervals(frmival));
+		} while (!fd.enum_framesizes(frmsize));
+	} while (!fd.enum_fmt(fmt));
 }
 
 int parse_subopt(char **subs, const char * const *subopts, char **value)
@@ -1091,7 +1195,7 @@ int main(int argc, char **argv)
 				V4L2_PIX_FMT_PRIV_MAGIC : 0;
 	}
 
-	common_process_controls(fd);
+	common_process_controls(c_fd);
 
 	if (wait_for_event == V4L2_EVENT_CTRL && wait_event_id)
 		if (!common_find_ctrl_id(wait_event_id)) {
@@ -1151,50 +1255,50 @@ int main(int argc, char **argv)
 
 	/* Set options */
 
-	common_set(fd);
-	tuner_set(fd);
-	io_set(fd);
-	stds_set(fd);
-	vidcap_set(fd);
-	vidout_set(fd);
-	overlay_set(fd);
-	vbi_set(fd);
-	sdr_set(fd);
-	meta_set(fd);
-	subdev_set(fd);
-	selection_set(fd);
-	misc_set(fd);
-	edid_set(fd);
+	common_set(c_fd);
+	tuner_set(c_fd);
+	io_set(c_fd);
+	stds_set(c_fd);
+	vidcap_set(c_fd);
+	vidout_set(c_fd);
+	overlay_set(c_fd);
+	vbi_set(c_fd);
+	sdr_set(c_fd);
+	meta_set(c_fd);
+	subdev_set(c_fd);
+	selection_set(c_fd);
+	misc_set(c_fd);
+	edid_set(c_fd);
 
 	/* Get options */
 
-	common_get(fd);
-	tuner_get(fd);
-	io_get(fd);
-	stds_get(fd);
-	vidcap_get(fd);
-	vidout_get(fd);
-	overlay_get(fd);
-	vbi_get(fd);
-	sdr_get(fd);
-	meta_get(fd);
-	subdev_get(fd);
-	selection_get(fd);
-	misc_get(fd);
-	edid_get(fd);
+	common_get(c_fd);
+	tuner_get(c_fd);
+	io_get(c_fd);
+	stds_get(c_fd);
+	vidcap_get(c_fd);
+	vidout_get(c_fd);
+	overlay_get(c_fd);
+	vbi_get(c_fd);
+	sdr_get(c_fd);
+	meta_get(c_fd);
+	subdev_get(c_fd);
+	selection_get(c_fd);
+	misc_get(c_fd);
+	edid_get(c_fd);
 
 	/* List options */
 
-	common_list(fd);
-	io_list(fd);
-	stds_list(fd);
-	vidcap_list(fd);
-	vidout_list(fd);
-	overlay_list(fd);
-	vbi_list(fd);
-	sdr_list(fd);
-	meta_list(fd);
-	subdev_list(fd);
+	common_list(c_fd);
+	io_list(c_fd);
+	stds_list(c_fd);
+	vidcap_list(c_fd);
+	vidout_list(c_fd);
+	overlay_list(c_fd);
+	vbi_list(c_fd);
+	sdr_list(c_fd);
+	meta_list(c_fd);
+	subdev_list(c_fd);
 	streaming_list(c_fd, c_out_fd);
 
 	/* Special case: handled last */

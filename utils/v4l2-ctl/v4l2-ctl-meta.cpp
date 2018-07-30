@@ -61,8 +61,9 @@ void meta_cmd(int ch, char *optarg)
 	}
 }
 
-void meta_set(int fd)
+void meta_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
 	int ret;
 
 	if (options[OptSetMetaFormat] || options[OptTryMetaFormat]) {
@@ -92,16 +93,16 @@ void meta_set(int fd)
 	}
 }
 
-void meta_get(int fd)
+void meta_get(cv4l_fd &fd)
 {
 	if (options[OptGetMetaFormat]) {
 		vfmt.type = V4L2_BUF_TYPE_META_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(fd, vfmt);
+		if (doioctl(fd.g_fd(), VIDIOC_G_FMT, &vfmt) == 0)
+			printfmt(fd.g_fd(), vfmt);
 	}
 }
 
-void meta_list(int fd)
+void meta_list(cv4l_fd &fd)
 {
 	if (options[OptListMetaFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");

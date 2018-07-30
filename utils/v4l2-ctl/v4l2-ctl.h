@@ -120,6 +120,7 @@ enum Option {
 	OptListSdrFormats,
 	OptListSdrOutFormats,
 	OptListOutFormats,
+	OptListOutFormatsExt,
 	OptListMetaFormats,
 	OptListSubDevMBusCodes,
 	OptListSubDevFrameSizes,
@@ -301,103 +302,106 @@ int parse_selection_target(const char *s, unsigned int &target);
 int parse_selection_flags(const char *s);
 void print_selection(const struct v4l2_selection &sel);
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane);
+void print_frmsize(const struct v4l2_frmsizeenum &frmsize, const char *prefix);
+void print_frmival(const struct v4l2_frmivalenum &frmival, const char *prefix);
 void printfmt(int fd, const struct v4l2_format &vfmt);
-void print_video_formats(int fd, __u32 type);
+void print_video_formats(cv4l_fd &fd, __u32 type);
+void print_video_formats_ext(cv4l_fd &fd, __u32 type);
 
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 
 // v4l2-ctl-common.cpp
 void common_usage(void);
 void common_cmd(int ch, char *optarg);
-void common_set(int fd);
-void common_get(int fd);
-void common_list(int fd);
-void common_process_controls(int fd);
+void common_set(cv4l_fd &fd);
+void common_get(cv4l_fd &fd);
+void common_list(cv4l_fd &fd);
+void common_process_controls(cv4l_fd &fd);
 void common_control_event(const struct v4l2_event *ev);
 int common_find_ctrl_id(const char *name);
 
 // v4l2-ctl-tuner.cpp
 void tuner_usage(void);
 void tuner_cmd(int ch, char *optarg);
-void tuner_set(int fd);
-void tuner_get(int fd);
+void tuner_set(cv4l_fd &fd);
+void tuner_get(cv4l_fd &fd);
 
 // v4l2-ctl-io.cpp
 void io_usage(void);
 void io_cmd(int ch, char *optarg);
-void io_set(int fd);
-void io_get(int fd);
-void io_list(int fd);
+void io_set(cv4l_fd &fd);
+void io_get(cv4l_fd &fd);
+void io_list(cv4l_fd &fd);
 
 // v4l2-ctl-stds.cpp
 void stds_usage(void);
 void stds_cmd(int ch, char *optarg);
-void stds_set(int fd);
-void stds_get(int fd);
-void stds_list(int fd);
+void stds_set(cv4l_fd &fd);
+void stds_get(cv4l_fd &fd);
+void stds_list(cv4l_fd &fd);
 
 // v4l2-ctl-vidcap.cpp
 void vidcap_usage(void);
 void vidcap_cmd(int ch, char *optarg);
-void vidcap_set(int fd);
-void vidcap_get(int fd);
-void vidcap_list(int fd);
+void vidcap_set(cv4l_fd &fd);
+void vidcap_get(cv4l_fd &fd);
+void vidcap_list(cv4l_fd &fd);
 
 // v4l2-ctl-vidout.cpp
 void vidout_usage(void);
 void vidout_cmd(int ch, char *optarg);
-void vidout_set(int fd);
-void vidout_get(int fd);
-void vidout_list(int fd);
+void vidout_set(cv4l_fd &fd);
+void vidout_get(cv4l_fd &fd);
+void vidout_list(cv4l_fd &fd);
 
 // v4l2-ctl-overlay.cpp
 void overlay_usage(void);
 void overlay_cmd(int ch, char *optarg);
-void overlay_set(int fd);
-void overlay_get(int fd);
-void overlay_list(int fd);
+void overlay_set(cv4l_fd &fd);
+void overlay_get(cv4l_fd &fd);
+void overlay_list(cv4l_fd &fd);
 
 // v4l2-ctl-vbi.cpp
 void vbi_usage(void);
 void vbi_cmd(int ch, char *optarg);
-void vbi_set(int fd);
-void vbi_get(int fd);
-void vbi_list(int fd);
+void vbi_set(cv4l_fd &fd);
+void vbi_get(cv4l_fd &fd);
+void vbi_list(cv4l_fd &fd);
 
 // v4l2-ctl-sdr.cpp
 void sdr_usage(void);
 void sdr_cmd(int ch, char *optarg);
-void sdr_set(int fd);
-void sdr_get(int fd);
-void sdr_list(int fd);
+void sdr_set(cv4l_fd &fd);
+void sdr_get(cv4l_fd &fd);
+void sdr_list(cv4l_fd &fd);
 
 // v4l2-ctl-meta.cpp
 void meta_usage(void);
 void meta_cmd(int ch, char *optarg);
-void meta_set(int fd);
-void meta_get(int fd);
-void meta_list(int fd);
+void meta_set(cv4l_fd &fd);
+void meta_get(cv4l_fd &fd);
+void meta_list(cv4l_fd &fd);
 
 // v4l2-ctl-subdev.cpp
 void subdev_usage(void);
 void subdev_cmd(int ch, char *optarg);
-void subdev_set(int fd);
-void subdev_get(int fd);
-void subdev_list(int fd);
+void subdev_set(cv4l_fd &fd);
+void subdev_get(cv4l_fd &fd);
+void subdev_list(cv4l_fd &fd);
 
 // v4l2-ctl-selection.cpp
 void selection_usage(void);
 void selection_cmd(int ch, char *optarg);
-void selection_set(int fd);
-void selection_get(int fd);
+void selection_set(cv4l_fd &fd);
+void selection_get(cv4l_fd &fd);
 
 // v4l2-ctl-misc.cpp
 // This one is also used by the streaming code.
 extern struct v4l2_decoder_cmd dec_cmd;
 void misc_usage(void);
 void misc_cmd(int ch, char *optarg);
-void misc_set(int fd);
-void misc_get(int fd);
+void misc_set(cv4l_fd &fd);
+void misc_get(cv4l_fd &fd);
 
 // v4l2-ctl-streaming.cpp
 void streaming_usage(void);
@@ -408,8 +412,8 @@ void streaming_list(cv4l_fd &fd, cv4l_fd &out_fd);
 // v4l2-ctl-edid.cpp
 void edid_usage(void);
 void edid_cmd(int ch, char *optarg);
-void edid_set(int fd);
-void edid_get(int fd);
+void edid_set(cv4l_fd &fd);
+void edid_get(cv4l_fd &fd);
 
 /* v4l2-ctl-modes.cpp */
 bool calc_cvt_modeline(int image_width, int image_height,

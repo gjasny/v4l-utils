@@ -1184,8 +1184,9 @@ void edid_cmd(int ch, char *optarg)
 	}
 }
 
-void edid_set(int fd)
+void edid_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
 	int loc;
 
 	if (options[OptClearEdid]) {
@@ -1313,8 +1314,10 @@ void edid_set(int fd)
 	}
 }
 
-void edid_get(int fd)
+void edid_get(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptGetEdid]) {
 		FILE *fout = stdout;
 

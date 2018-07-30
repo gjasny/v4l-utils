@@ -531,10 +531,11 @@ static void list_controls(int fd, int show_menus)
 	}
 }
 
-static void find_controls(int fd)
+static void find_controls(cv4l_fd &_fd)
 {
 	const unsigned next_fl = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
 	struct v4l2_query_ext_ctrl qctrl;
+	int fd = _fd.g_fd();
 	int id;
 
 	memset(&qctrl, 0, sizeof(qctrl));
@@ -573,14 +574,14 @@ int common_find_ctrl_id(const char *name)
 	return ctrl_str2q[name].id;
 }
 
-void common_process_controls(int fd)
+void common_process_controls(cv4l_fd &fd)
 {
 	struct v4l2_query_ext_ctrl qc = {
 		V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND
 	};
 	int rc;
 
-	rc = test_ioctl(fd, VIDIOC_QUERY_EXT_CTRL, &qc);
+	rc = test_ioctl(fd.g_fd(), VIDIOC_QUERY_EXT_CTRL, &qc);
 	have_query_ext_ctrl = rc == 0;
 
 	find_controls(fd);
@@ -787,8 +788,10 @@ static bool idx_in_subset(const struct v4l2_query_ext_ctrl &qc, const ctrl_subse
 	return true;
 }
 
-void common_set(int fd)
+void common_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptSetPriority]) {
 		if (doioctl(fd, VIDIOC_S_PRIORITY, &prio) >= 0) {
 			printf("Priority set: %d\n", prio);
@@ -974,8 +977,10 @@ static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 	}
 }
 
-void common_get(int fd)
+void common_get(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptGetCtrl] && !get_ctrls.empty()) {
 		struct v4l2_ext_controls ctrls;
 		class2ctrls_map class2ctrls;
@@ -1083,13 +1088,13 @@ void common_get(int fd)
 	}
 }
 
-void common_list(int fd)
+void common_list(cv4l_fd &fd)
 {
 	if (options[OptListCtrlsMenus]) {
-		list_controls(fd, 1);
+		list_controls(fd.g_fd(), 1);
 	}
 
 	if (options[OptListCtrls]) {
-		list_controls(fd, 0);
+		list_controls(fd.g_fd(), 0);
 	}
 }

@@ -257,8 +257,9 @@ void tuner_cmd(int ch, char *optarg)
 	}
 }
 
-void tuner_set(int fd)
+void tuner_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
 	__u32 type = (capabilities & V4L2_CAP_RADIO) ?
 		V4L2_TUNER_RADIO : V4L2_TUNER_ANALOG_TV;
 	double fac = 16;
@@ -361,8 +362,10 @@ void tuner_set(int fd)
 	}
 }
 
-void tuner_get(int fd)
+void tuner_get(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptGetFreq]) {
 		double fac = 16;
 

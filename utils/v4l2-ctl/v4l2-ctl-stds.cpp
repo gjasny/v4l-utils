@@ -481,8 +481,10 @@ void stds_cmd(int ch, char *optarg)
 	}
 }
 
-void stds_set(int fd)
+void stds_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptSetStandard]) {
 		if (standard & (1ULL << 63)) {
 			struct v4l2_standard vs;
@@ -577,8 +579,10 @@ void stds_set(int fd)
 	}
 }
 
-void stds_get(int fd)
+void stds_get(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptGetStandard]) {
 		if (doioctl(fd, VIDIOC_G_STD, &standard) == 0) {
 			printf("Video Standard = 0x%08llx\n", (unsigned long long)standard);
@@ -631,8 +635,10 @@ void stds_get(int fd)
         }
 }
 
-void stds_list(int fd)
+void stds_list(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
+
 	if (options[OptListStandards]) {
 		struct v4l2_standard vs;
 

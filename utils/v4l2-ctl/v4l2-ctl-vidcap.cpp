@@ -62,110 +62,6 @@ void vidcap_usage(void)
 	       );
 }
 
-static std::string frmtype2s(unsigned type)
-{
-	static const char *types[] = {
-		"Unknown",
-		"Discrete",
-		"Continuous",
-		"Stepwise"
-	};
-
-	if (type > 3)
-		type = 0;
-	return types[type];
-}
-
-static std::string fract2sec(const struct v4l2_fract &f)
-{
-	char buf[100];
-
-	sprintf(buf, "%.3f", (1.0 * f.numerator) / f.denominator);
-	return buf;
-}
-
-static std::string fract2fps(const struct v4l2_fract &f)
-{
-	char buf[100];
-
-	sprintf(buf, "%.3f", (1.0 * f.denominator) / f.numerator);
-	return buf;
-}
-
-static void print_frmsize(const struct v4l2_frmsizeenum &frmsize, const char *prefix)
-{
-	printf("%s\tSize: %s ", prefix, frmtype2s(frmsize.type).c_str());
-	if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
-		printf("%dx%d", frmsize.discrete.width, frmsize.discrete.height);
-	} else if (frmsize.type == V4L2_FRMSIZE_TYPE_STEPWISE) {
-		printf("%dx%d - %dx%d with step %d/%d",
-				frmsize.stepwise.min_width,
-				frmsize.stepwise.min_height,
-				frmsize.stepwise.max_width,
-				frmsize.stepwise.max_height,
-				frmsize.stepwise.step_width,
-				frmsize.stepwise.step_height);
-	}
-	printf("\n");
-}
-
-static void print_frmival(const struct v4l2_frmivalenum &frmival, const char *prefix)
-{
-	printf("%s\tInterval: %s ", prefix, frmtype2s(frmival.type).c_str());
-	if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
-		printf("%ss (%s fps)\n", fract2sec(frmival.discrete).c_str(),
-				fract2fps(frmival.discrete).c_str());
-	} else if (frmival.type == V4L2_FRMIVAL_TYPE_CONTINUOUS) {
-		printf("%ss - %ss (%s-%s fps)\n",
-				fract2sec(frmival.stepwise.min).c_str(),
-				fract2sec(frmival.stepwise.max).c_str(),
-				fract2fps(frmival.stepwise.max).c_str(),
-				fract2fps(frmival.stepwise.min).c_str());
-	} else if (frmival.type == V4L2_FRMIVAL_TYPE_STEPWISE) {
-		printf("%ss - %ss with step %ss (%s-%s fps)\n",
-				fract2sec(frmival.stepwise.min).c_str(),
-				fract2sec(frmival.stepwise.max).c_str(),
-				fract2sec(frmival.stepwise.step).c_str(),
-				fract2fps(frmival.stepwise.max).c_str(),
-				fract2fps(frmival.stepwise.min).c_str());
-	}
-}
-
-static void print_video_formats_ext(int fd, __u32 type)
-{
-	struct v4l2_fmtdesc fmt;
-	struct v4l2_frmsizeenum frmsize;
-	struct v4l2_frmivalenum frmival;
-
-	fmt.index = 0;
-	fmt.type = type;
-	printf("\tType: %s\n\n", buftype2s(type).c_str());
-	while (test_ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
-		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
-		       fmt.description);
-		if (fmt.flags)
-			printf(", %s", fmtdesc2s(fmt.flags).c_str());
-		printf(")\n");
-		frmsize.pixel_format = fmt.pixelformat;
-		frmsize.index = 0;
-		while (test_ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
-			print_frmsize(frmsize, "\t");
-			if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
-				frmival.index = 0;
-				frmival.pixel_format = fmt.pixelformat;
-				frmival.width = frmsize.discrete.width;
-				frmival.height = frmsize.discrete.height;
-				while (test_ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) >= 0) {
-					print_frmival(frmival, "\t\t");
-					frmival.index++;
-				}
-			}
-			frmsize.index++;
-		}
-		fmt.index++;
-	}
-}
-
 static void print_video_fields(int fd)
 {
 	struct v4l2_format fmt;
@@ -254,8 +150,9 @@ void vidcap_cmd(int ch, char *optarg)
 	}
 }
 
-void vidcap_set(int fd)
+void vidcap_set(cv4l_fd &_fd)
 {
+	int fd = _fd.g_fd();
 	int ret;
 
 	if (options[OptSetVideoFormat] || options[OptTryVideoFormat]) {
@@ -331,7 +228,7 @@ void vidcap_set(int fd)
 	}
 }
 
-void vidcap_get(int fd)
+void vidcap_get(cv4l_fd &fd)
 {
 	if (options[OptGetVideoFormat]) {
 		struct v4l2_format vfmt;
@@ -339,12 +236,12 @@ void vidcap_get(int fd)
 		memset(&vfmt, 0, sizeof(vfmt));
 		vfmt.fmt.pix.priv = priv_magic;
 		vfmt.type = vidcap_buftype;
-		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0)
-			printfmt(fd, vfmt);
+		if (doioctl(fd.g_fd(), VIDIOC_G_FMT, &vfmt) == 0)
+			printfmt(fd.g_fd(), vfmt);
 	}
 }
 
-void vidcap_list(int fd)
+void vidcap_list(cv4l_fd &fd)
 {
 	if (options[OptListFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
@@ -357,13 +254,13 @@ void vidcap_list(int fd)
 	}
 
 	if (options[OptListFields]) {
-		print_video_fields(fd);
+		print_video_fields(fd.g_fd());
 	}
 
 	if (options[OptListFrameSizes]) {
 		printf("ioctl: VIDIOC_ENUM_FRAMESIZES\n");
 		frmsize.index = 0;
-		while (test_ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
+		while (test_ioctl(fd.g_fd(), VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
 			print_frmsize(frmsize, "");
 			frmsize.index++;
 		}
@@ -372,7 +269,7 @@ void vidcap_list(int fd)
 	if (options[OptListFrameIntervals]) {
 		printf("ioctl: VIDIOC_ENUM_FRAMEINTERVALS\n");
 		frmival.index = 0;
-		while (test_ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) >= 0) {
+		while (test_ioctl(fd.g_fd(), VIDIOC_ENUM_FRAMEINTERVALS, &frmival) >= 0) {
 			print_frmival(frmival, "");
 			frmival.index++;
 		}
