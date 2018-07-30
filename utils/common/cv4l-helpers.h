@@ -487,11 +487,11 @@ public:
 	{
 		if (init) {
 			memset(&fmt, 0, sizeof(fmt));
+			fmt.type = type ? type : g_type();
 			fmt.index = index;
 		} else {
 			fmt.index++;
 		}
-		fmt.type = type ? type : g_type();
 		return cv4l_ioctl(VIDIOC_ENUM_FMT, &fmt);
 	}
 
