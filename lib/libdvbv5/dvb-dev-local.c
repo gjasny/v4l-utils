@@ -607,11 +607,15 @@ static ssize_t dvb_local_read(struct dvb_open_descriptor *open_dev,
 	 * check if read is ready, in order to emulate blocking mode
 	 */
 	if (!strcmp(dev->bus_addr, "platform:dvbloopback")) {
-		fd_set set;
-		FD_ZERO(&set);
-		FD_SET(fd, &set);
+		fd_set rset;
+		fd_set eset;
+
+		FD_ZERO(&rset);
+		FD_SET(fd, &rset);
+		FD_ZERO(&eset);
+		FD_SET(fd, &eset);
 		ret = TEMP_FAILURE_RETRY(select(FD_SETSIZE,
-						&set, NULL, &set, NULL));
+						&rset, NULL, &eset, NULL));
 		if (ret == -1) {
 			if (errno != EOVERFLOW)
 				dvb_perror("read()");

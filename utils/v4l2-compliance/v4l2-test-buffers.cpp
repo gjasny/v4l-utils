@@ -634,19 +634,22 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 
 		if (use_poll) {
 			struct timeval tv = { 2, 0 };
-			fd_set fds;
+			fd_set rfds, wfds;
 
-			FD_ZERO(&fds);
-			FD_SET(node->g_fd(), &fds);
+			FD_ZERO(&rfds);
+			FD_SET(node->g_fd(), &rfds);
+			FD_ZERO(&wfds);
+			FD_SET(node->g_fd(), &wfds);
 			if (node->is_m2m)
-				ret = select(node->g_fd() + 1, &fds, &fds, NULL, &tv);
+				ret = select(node->g_fd() + 1, &rfds, &wfds, NULL, &tv);
 			else if (v4l_type_is_output(q.g_type()))
-				ret = select(node->g_fd() + 1, NULL, &fds, NULL, &tv);
+				ret = select(node->g_fd() + 1, NULL, &wfds, NULL, &tv);
 			else
-				ret = select(node->g_fd() + 1, &fds, NULL, NULL, &tv);
+				ret = select(node->g_fd() + 1, &rfds, NULL, NULL, &tv);
 			fail_on_test(ret == 0);
 			fail_on_test(ret < 0);
-			fail_on_test(!FD_ISSET(node->g_fd(), &fds));
+			fail_on_test(!FD_ISSET(node->g_fd(), &rfds) &&
+				     !FD_ISSET(node->g_fd(), &wfds));
 		}
 
 		ret = buf.dqbuf(node);
