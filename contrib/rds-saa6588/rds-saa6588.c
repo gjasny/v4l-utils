@@ -116,10 +116,10 @@ main(int argc, char *argv[])
 	    fprintf(stderr,"no signal\r");
 	    continue;
 	}
-	if (1 == (b[0] & 0x08)) {
+	if (b[0] & 0x08) {
 	    fprintf(stderr,"overflow detected\n");
 	}
-	if (1 == (b[0] & 0x04)) {
+	if (b[0] & 0x04) {
 	    fprintf(stderr,"reset detected\n");
 	}
 	if (debug)
