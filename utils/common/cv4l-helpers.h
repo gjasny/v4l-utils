@@ -836,7 +836,7 @@ public:
 	}
 	void init(const cv4l_buffer &b)
 	{
-		memcpy(this, &b, sizeof(b));
+		memcpy((v4l2_buffer *)this, (v4l2_buffer *)&b, sizeof(b));
 		if (v4l_type_is_planar(g_type()))
 			buf.m.planes = planes;
 	}
