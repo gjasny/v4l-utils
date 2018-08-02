@@ -43,7 +43,6 @@ FILE *v4l2_log_file = NULL;
 const char *v4l2_ioctls[] = {
 	/* start v4l2 ioctls */
 	[_IOC_NR(VIDIOC_QUERYCAP)]         = "VIDIOC_QUERYCAP",
-	[_IOC_NR(VIDIOC_RESERVED)]         = "VIDIOC_RESERVED",
 	[_IOC_NR(VIDIOC_ENUM_FMT)]         = "VIDIOC_ENUM_FMT",
 	[_IOC_NR(VIDIOC_G_FMT)]            = "VIDIOC_G_FMT",
 	[_IOC_NR(VIDIOC_S_FMT)]            = "VIDIOC_S_FMT",

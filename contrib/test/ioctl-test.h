@@ -176,7 +176,6 @@ static const struct {
 	ioc(video, VIDIOC_QUERY_DV_TIMINGS),						/*  struct v4l2_dv_timings */
 	ioc(video, VIDIOC_QUERY_EXT_CTRL),						/*  struct v4l2_query_ext_ctrl */
 	ioc(video, VIDIOC_REQBUFS),							/*  struct v4l2_requestbuffers */
-	ioc(video, VIDIOC_RESERVED),							/*  void */
 	ioc(video, VIDIOC_STREAMOFF),							/*  int */
 	ioc(video, VIDIOC_STREAMON),							/*  int */
 	ioc(subdev, VIDIOC_SUBDEV_DV_TIMINGS_CAP),					/*  struct v4l2_dv_timings_cap */
