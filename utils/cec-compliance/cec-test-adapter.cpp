@@ -222,6 +222,7 @@ int testTransmit(struct node *node)
 {
 	struct cec_msg msg = { };
 	unsigned i, la = node->log_addr[0];
+	unsigned valid_la = 15, invalid_la = 15;
 	bool tested_self = false;
 	bool tested_valid_la = false;
 	bool tested_invalid_la = false;
@@ -292,6 +293,7 @@ int testTransmit(struct node *node)
 			if (tested_valid_la)
 				continue;
 			tested_valid_la = true;
+			valid_la = i;
 			// Send message to a remote LA
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
@@ -338,6 +340,7 @@ int testTransmit(struct node *node)
 			if (tested_invalid_la)
 				continue;
 			tested_invalid_la = true;
+			invalid_la = i;
 			// Send message to a remote non-existent LA
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
@@ -380,6 +383,54 @@ int testTransmit(struct node *node)
 			fail_on_test(msg.tx_low_drive_cnt == 0xff);
 			fail_on_test(msg.tx_error_cnt == 0xff);
 		}
+	}
+
+	if (tested_valid_la) {
+		time_t cur_t = time(NULL), t;
+		time_t last_t = cur_t + 7;
+		unsigned max_cnt = 0;
+		unsigned cnt = 0;
+	
+		do {
+			t = time(NULL);
+			if (t != cur_t) {
+				if (cnt > max_cnt)
+					max_cnt = cnt;
+				cnt = 0;
+				cur_t = t;
+			}
+			cec_msg_init(&msg, la, valid_la);
+			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+			cnt++;
+		} while (t < last_t);
+		// A ping can take 10 * 2.4 + 4.5 + 7 * 2.4 = 45.3 ms (SFT)
+		if (max_cnt < 21)
+			warn("Could only do %u pings per second to a valid LA, expected at least 21\n",
+			     max_cnt);
+	}
+
+	if (tested_invalid_la) {
+		time_t cur_t = time(NULL), t;
+		time_t last_t = cur_t + 7;
+		unsigned max_cnt = 0;
+		unsigned cnt = 0;
+	
+		do {
+			t = time(NULL);
+			if (t != cur_t) {
+				if (cnt > max_cnt)
+					max_cnt = cnt;
+				cnt = 0;
+				cur_t = t;
+			}
+			cec_msg_init(&msg, la, invalid_la);
+			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+			cnt++;
+		} while (t < last_t);
+		// A ping to an invalid LA can take 2 * (10 * 2.4 + 4.5) + (3 + 7) * 2.4 = 81 ms (SFT)
+		if (max_cnt < 12)
+			warn("Could only do %u pings per second to an invalid LA, expected at least 12\n",
+			     max_cnt);
 	}
 
 	return 0;
