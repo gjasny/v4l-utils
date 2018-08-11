@@ -43,12 +43,12 @@ sync-with-kernel:
 	cp $(top_srcdir)/include/linux/dvb/frontend.h $(top_srcdir)/lib/include/libdvbv5/dvb-frontend.h
 	cp -a $(KERNEL_DIR)/usr/include/linux/dvb/dmx.h $(top_srcdir)/include/linux/dvb
 	cp -a $(KERNEL_DIR)/usr/include/linux/lirc.h $(top_srcdir)/include/linux
+	cp -a $(KERNEL_DIR)/usr/include/linux/cec.h $(top_srcdir)/include/linux
+	cp -a $(KERNEL_DIR)/usr/include/linux/cec-funcs.h $(top_srcdir)/include/linux
 	cp -a $(KERNEL_DIR)/drivers/media/common/v4l2-tpg/v4l2-tpg-core.c $(top_srcdir)/utils/common
 	cp -a $(KERNEL_DIR)/drivers/media/common/v4l2-tpg/v4l2-tpg-colors.c $(top_srcdir)/utils/common
 	cp -a $(KERNEL_DIR)/include/media/tpg/v4l2-tpg* $(top_srcdir)/utils/common
 	patch -p0 <$(top_srcdir)/utils/common/v4l2-tpg.patch
-	cp -a $(KERNEL_DIR)/include/uapi/linux/cec.h $(top_srcdir)/include/linux
-	cp -a $(KERNEL_DIR)/include/uapi/linux/cec-funcs.h $(top_srcdir)/include/linux
 
 	$(MAKE) -C utils/keytable $@
 	$(MAKE) -C lib/libdvbv5 $@
