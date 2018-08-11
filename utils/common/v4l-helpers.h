@@ -862,6 +862,14 @@ v4l_format_g_ycbcr_enc(const struct v4l2_format *fmt)
 	}
 }
 
+static inline unsigned
+v4l_format_g_hsv_enc(const struct v4l2_format *fmt)
+{
+	unsigned hsv_enc = v4l_format_g_ycbcr_enc(fmt);
+
+	return hsv_enc < V4L2_HSV_ENC_180 ? V4L2_HSV_ENC_180 : hsv_enc;
+}
+
 static inline void v4l_format_s_quantization(struct v4l2_format *fmt,
 					       unsigned quantization)
 {
