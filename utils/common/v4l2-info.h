@@ -15,6 +15,9 @@ void v4l2_info_capability(const v4l2_capability &cap);
 /* Return fourcc pixelformat string */
 std::string fcc2s(__u32 val);
 
+/* Return the description of the pixel format */
+std::string pixfmt2s(__u32 format);
+
 /* Return buffer type description */
 std::string buftype2s(int type);
 

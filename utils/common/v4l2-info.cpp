@@ -150,6 +150,15 @@ std::string fcc2s(__u32 val)
 	return s;
 }
 
+std::string pixfmt2s(__u32 format)
+{
+	switch (format) {
+#include "v4l2-pix-formats.h"
+	default:
+		return std::string("Unknown (") + num2s(format) + ")";
+	}
+}
+
 std::string buftype2s(int type)
 {
 	switch (type) {

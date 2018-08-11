@@ -49,6 +49,7 @@ sync-with-kernel:
 	cp -a $(KERNEL_DIR)/drivers/media/common/v4l2-tpg/v4l2-tpg-colors.c $(top_srcdir)/utils/common
 	cp -a $(KERNEL_DIR)/include/media/tpg/v4l2-tpg* $(top_srcdir)/utils/common
 	patch -p0 <$(top_srcdir)/utils/common/v4l2-tpg.patch
+	grep V4L2_PIX_FMT.*descr $(KERNEL_DIR)/drivers/media/v4l2-core/v4l2-ioctl.c | perl -pe 's/.*V4L2_PIX_FMT/\tcase V4L2_PIX_FMT/; s/:.*descr = /: return /; s/;.*/;/;' >$(top_srcdir)/utils/common/v4l2-pix-formats.h
 
 	$(MAKE) -C utils/keytable $@
 	$(MAKE) -C lib/libdvbv5 $@
