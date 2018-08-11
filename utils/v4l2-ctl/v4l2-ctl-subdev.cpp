@@ -72,7 +72,7 @@ void subdev_usage(void)
 	       "                     query the frame rate [VIDIOC_SUBDEV_G_FRAME_INTERVAL]\n"
 	       "  --set-subdev-fmt   (for testing only, otherwise use media-ctl)\n"
 	       "  --try-subdev-fmt pad=<pad>,width=<w>,height=<h>,code=<code>,field=<f>,colorspace=<c>,\n"
-	       "                   xfer=<xf>,ycbcr=<y>,quantization=<q>\n"
+	       "                   xfer=<xf>,ycbcr=<y>,hsv=<hsv>,quantization=<q>\n"
 	       "                     set the frame format [VIDIOC_SUBDEV_S_FMT]\n"
 	       "                     <code> is the value of the mediabus code\n"
 	       "                     <f> can be one of the following field layouts:\n"
@@ -85,6 +85,8 @@ void subdev_usage(void)
 	       "                       default, 709, srgb, adobergb, smpte240m, smpte2084, dcip3, none\n"
 	       "                     <y> can be one of the following Y'CbCr encodings:\n"
 	       "                       default, 601, 709, xv601, xv709, bt2020, bt2020c, smpte240m\n"
+	       "                     <hsv> can be one of the following HSV encodings:\n"
+	       "                       default, 180, 256\n"
 	       "                     <q> can be one of the following quantization methods:\n"
 	       "                       default, full-range, lim-range\n"
 	       "  --set-subdev-selection (for testing only, otherwise use media-ctl)\n"
@@ -208,6 +210,7 @@ void subdev_cmd(int ch, char *optarg)
 				"field",
 				"colorspace",
 				"ycbcr",
+				"hsv",
 				"quantization",
 				"xfer",
 				"pad",
@@ -243,14 +246,18 @@ void subdev_cmd(int ch, char *optarg)
 				set_fmt |= FmtYCbCr;
 				break;
 			case 6:
+				ffmt.ycbcr_enc = parse_hsv(value);
+				set_fmt |= FmtYCbCr;
+				break;
+			case 7:
 				ffmt.quantization = parse_quantization(value);
 				set_fmt |= FmtQuantization;
 				break;
-			case 7:
+			case 8:
 				ffmt.xfer_func = parse_xfer_func(value);
 				set_fmt |= FmtXferFunc;
 				break;
-			case 8:
+			case 9:
 				set_fmt_pad = strtoul(value, 0L, 0);
 				break;
 			default:

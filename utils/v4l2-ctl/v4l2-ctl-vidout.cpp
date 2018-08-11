@@ -32,7 +32,8 @@ void vidout_usage(void)
 	       "     		     query the video output format [VIDIOC_G_FMT]\n"
 	       "  -x, --set-fmt-video-out\n"
 	       "  --try-fmt-video-out width=<w>,height=<h>,pixelformat=<pf>,field=<f>,colorspace=<c>,\n"
-	       "                      xfer=<xf>,ycbcr=<y>,quantization=<q>,premul-alpha,bytesperline=<bpl>\n"
+	       "                      xfer=<xf>,ycbcr=<y>,hsv=<hsv>,quantization=<q>,\n"
+	       "                      premul-alpha,bytesperline=<bpl>\n"
 	       "                     set/try the video output format [VIDIOC_S/TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
 	       "                       --list-formats-out, or the fourcc value as a string.\n"
@@ -48,6 +49,8 @@ void vidout_usage(void)
 	       "                       default, 709, srgb, adobergb, smpte240m, smpte2084, dcip3, none\n"
 	       "                     <y> can be one of the following Y'CbCr encodings:\n"
 	       "                       default, 601, 709, xv601, xv709, bt2020, bt2020c, smpte240m\n"
+	       "                     <hsv> can be one of the following HSV encodings:\n"
+	       "                       default, 180, 256\n"
 	       "                     <q> can be one of the following quantization methods:\n"
 	       "                       default, full-range, lim-range\n"
 	       );

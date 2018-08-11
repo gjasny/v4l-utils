@@ -432,7 +432,7 @@ void printfmt(int fd, const struct v4l2_format &vfmt)
 		printf("\tFlags             : %s\n", pixflags2s(vfmt.fmt.pix_mp.flags).c_str());
 		printf("\tColorspace        : %s\n", colorspace2s(vfmt.fmt.pix_mp.colorspace).c_str());
 		printf("\tTransfer Function : %s\n", xfer_func2s(vfmt.fmt.pix_mp.xfer_func).c_str());
-		printf("\tYCbCr Encoding    : %s\n", ycbcr_enc2s(vfmt.fmt.pix_mp.ycbcr_enc).c_str());
+		printf("\tYCbCr/HSV Encoding: %s\n", ycbcr_enc2s(vfmt.fmt.pix_mp.ycbcr_enc).c_str());
 		printf("\tQuantization      : %s\n", quantization2s(vfmt.fmt.pix_mp.quantization).c_str());
 		for (int i = 0; i < vfmt.fmt.pix_mp.num_planes && i < VIDEO_MAX_PLANES; i++) {
 			printf("\tPlane %d           :\n", i);
@@ -703,6 +703,14 @@ __u32 parse_ycbcr(const char *s)
 	return V4L2_YCBCR_ENC_DEFAULT;
 }
 
+__u32 parse_hsv(const char *s)
+{
+	if (!strcmp(s, "default")) return V4L2_YCBCR_ENC_DEFAULT;
+	if (!strcmp(s, "180")) return V4L2_HSV_ENC_180;
+	if (!strcmp(s, "256")) return V4L2_HSV_ENC_256;
+	return V4L2_YCBCR_ENC_DEFAULT;
+}
+
 __u32 parse_quantization(const char *s)
 {
 	if (!strcmp(s, "default")) return V4L2_QUANTIZATION_DEFAULT;
@@ -731,6 +739,7 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			"field",
 			"colorspace",
 			"ycbcr",
+			"hsv",
 			"bytesperline",
 			"premul-alpha",
 			"quantization",
@@ -778,6 +787,10 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			fmts |= FmtYCbCr;
 			break;
 		case 6:
+			ycbcr = parse_hsv(value);
+			fmts |= FmtYCbCr;
+			break;
+		case 7:
 			bytesperline[bpl_index] = strtoul(value, 0L, 0);
 			if (bytesperline[bpl_index] > 0xffff) {
 				fprintf(stderr, "bytesperline can't be more than 65535\n");
@@ -786,15 +799,15 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			bpl_index++;
 			fmts |= FmtBytesPerLine;
 			break;
-		case 7:
+		case 8:
 			flags |= V4L2_PIX_FMT_FLAG_PREMUL_ALPHA;
 			fmts |= FmtFlags;
 			break;
-		case 8:
+		case 9:
 			quantization = parse_quantization(value);
 			fmts |= FmtQuantization;
 			break;
-		case 9:
+		case 10:
 			xfer_func = parse_xfer_func(value);
 			fmts |= FmtXferFunc;
 			break;
