@@ -224,10 +224,6 @@ To send the pulse and space file \fBplay\fR on emitter 3:
 To send the rc-5 hauppauge '1' scancode:
 .br
 	\fBir\-ctl \-S rc5:0x1e01
-.PP
-To restore the IR receiver on /dev/lirc2 to the default state:
-.br
-	\fBir\-ctl \-Mn \-\-timeout 125000 \-\-device=/dev/lirc2\fR
 .SH BUGS
 Report bugs to \fBLinux Media Mailing List <linux-media@vger.kernel.org>\fR
 .SH COPYRIGHT
