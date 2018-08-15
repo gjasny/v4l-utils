@@ -175,19 +175,17 @@ static bool strtoscancode(const char *p, unsigned *ret)
 static unsigned parse_emitters(char *p)
 {
 	unsigned emit = 0;
-	const char *sep = " ,;:";
+	static const char *sep = " ,;:";
 	char *saveptr, *q;
 
 	q = strtok_r(p, sep, &saveptr);
 	while (q) {
-		if (*q) {
-			char *endptr;
-			long e = strtol(q, &endptr, 10);
-			if ((endptr && *endptr) || e <= 0 || e > 32)
-				return 0;
+		char *endptr;
+		long e = strtol(q, &endptr, 10);
+		if ((endptr && *endptr) || e <= 0 || e > 32)
+			return 0;
 
-			emit |= 1 << (e - 1);
-		}
+		emit |= 1 << (e - 1);
 		q = strtok_r(NULL, sep, &saveptr);
 	}
 
@@ -200,7 +198,7 @@ static struct file *read_file(struct arguments *args, const char *fname)
 	int lineno = 0, lastspace = 0;
 	char line[1024];
 	int len = 0;
-	const char *whitespace = " \n\r\t";
+	static const char *whitespace = " \n\r\t";
 	struct file *f;
 
 	FILE *input = fopen(fname, "r");
