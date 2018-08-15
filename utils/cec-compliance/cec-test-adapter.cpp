@@ -103,9 +103,11 @@ int testAdapLogAddrs(struct node *node)
 		CEC_OP_PRIM_DEVTYPE_TUNER,
 		CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM
 	};
-	static const __u8 all_dev_types =
+	static const __u8 all_dev_types[2] = {
 		CEC_OP_ALL_DEVTYPE_TV | CEC_OP_ALL_DEVTYPE_RECORD |
-		CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM;
+		CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM,
+		CEC_OP_ALL_DEVTYPE_RECORD | CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM,
+	};
 	static const __u8 features[12] = {
 		0x90, 0x00, 0x8e, 0x00,
 		0xff, 0xff, 0xff, 0xff,
@@ -146,21 +148,26 @@ int testAdapLogAddrs(struct node *node)
 
 	fail_on_test(doioctl(node, CEC_ADAP_G_PHYS_ADDR, &pa));
 	fail_on_test(pa != node->phys_addr);
+	unsigned skip_tv = pa ? 1 : 0;
+	unsigned available_log_addrs = node->available_log_addrs;
 
+	if (skip_tv && available_log_addrs == CEC_MAX_LOG_ADDRS)
+		available_log_addrs--;
 	memset(&laddrs, 0, sizeof(laddrs));
 	strcpy(laddrs.osd_name, "Compliance");
-	laddrs.num_log_addrs = node->available_log_addrs;
+	laddrs.num_log_addrs = available_log_addrs;
 	laddrs.cec_version = laddrs.num_log_addrs > 2 ?
 		CEC_OP_CEC_VERSION_1_4: CEC_OP_CEC_VERSION_2_0;
-	for (unsigned i = 0; i < CEC_MAX_LOG_ADDRS; i++) {
-		laddrs.log_addr_type[i] = la_types[i];
-		laddrs.primary_device_type[i] = prim_dev_types[i];
-		laddrs.all_device_types[i] = all_dev_types;
+
+	for (unsigned i = 0; i < CEC_MAX_LOG_ADDRS - skip_tv; i++) {
+		laddrs.log_addr_type[i] = la_types[i + skip_tv];
+		laddrs.primary_device_type[i] = prim_dev_types[i + skip_tv];
+		laddrs.all_device_types[i] = all_dev_types[skip_tv];
 		memcpy(laddrs.features[i], features, sizeof(features));
 	}
 
 	fail_on_test(doioctl(node, CEC_ADAP_S_LOG_ADDRS, &laddrs));
-	fail_on_test(laddrs.num_log_addrs != node->available_log_addrs);
+	fail_on_test(laddrs.num_log_addrs != available_log_addrs);
 	fail_on_test(laddrs.log_addr_mask == 0);
 	for (unsigned i = 0; i < laddrs.num_log_addrs; i++) {
 		fail_on_test(laddrs.log_addr[i] == CEC_LOG_ADDR_INVALID);
@@ -990,6 +997,7 @@ void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
 	}
 	printf("\tCEC_ADAP_G/S_LOG_ADDRS: %s\n", ok(testAdapLogAddrs(&node)));
 	fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
+	sleep(1);
 	if (node.caps & CEC_CAP_LOG_ADDRS) {
 		struct cec_log_addrs clear = { };
 
