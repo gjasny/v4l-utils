@@ -202,8 +202,7 @@ static int parse_relo_and_apply(struct bpf_file *bpf_file, GElf_Shdr *shdr,
 
 				value = val64;
 			} else if (sym.st_shndx == bpf_file->dataidx) {
-				int32_t *p = (bpf_file->data->d_buf + sym.st_value);
-				value = *p;
+				value = *(int*)((unsigned char*)bpf_file->data->d_buf + sym.st_value);
 			}
 
 			if (debug)
@@ -302,8 +301,7 @@ static int load_elf_maps_section(struct bpf_file *bpf_file)
 
 	/* Memcpy relevant part of ELF maps data to loader maps */
 	for (i = 0; i < nr_maps; i++) {
-		struct bpf_load_map_def *def;
-		unsigned char *addr, *end;
+		unsigned char *addr, *end, *def;
 		const char *map_name;
 		struct bpf_map_data *maps = bpf_file->map_data;
 		size_t offset;
@@ -319,15 +317,15 @@ static int load_elf_maps_section(struct bpf_file *bpf_file)
 
 		/* Symbol value is offset into ELF maps section data area */
 		offset = sym[i].st_value;
-		def = (struct bpf_load_map_def *)(data_maps->d_buf + offset);
+		def = (unsigned char*)data_maps->d_buf + offset;
 		maps[i].elf_offset = offset;
 		memset(&maps[i].def, 0, sizeof(struct bpf_load_map_def));
 		memcpy(&maps[i].def, def, map_sz_copy);
 
 		/* Verify no newer features were requested */
 		if (validate_zero) {
-			addr = (unsigned char*) def + map_sz_copy;
-			end  = (unsigned char*) def + map_sz_elf;
+			addr = def + map_sz_copy;
+			end  = def + map_sz_elf;
 			for (; addr < end; addr++) {
 				if (*addr != 0) {
 					free(sym);
