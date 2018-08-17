@@ -1980,7 +1980,7 @@ static void clear_bpf(const char *lirc_name)
 		fprintf(stderr, _("BPF protocols removed\n"));
 }
 #else
-static void attach_bpf(const char *lirc_name, const char *bpf_prog)
+static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct toml_table_t *toml)
 {
 	fprintf(stderr, _("error: ir-keytable was compiled without BPF support\n"));
 }
@@ -2041,10 +2041,17 @@ static char *find_bpf_file(const char *name)
 	if (!stat(name, &st))
 		return strdup(name);
 
-	asprintf(&fname, IR_PROTOCOLS_USER_DIR "/%s.o", name);
+	if (asprintf(&fname, IR_PROTOCOLS_USER_DIR "/%s.o", name) < 0) {
+		fprintf(stderr, _("asprintf failed: %m\n"));
+		return NULL;
+	}
+
 	if (stat(fname, &st)) {
 		free(fname);
-		asprintf(&fname, IR_PROTOCOLS_SYSTEM_DIR "/%s.o", name);
+		if (asprintf(&fname, IR_PROTOCOLS_SYSTEM_DIR "/%s.o", name) < 0) {
+			fprintf(stderr, _("asprintf failed: %m\n"));
+			return NULL;
+		}
 
 		if (stat(fname, &st)) {
 			fprintf(stderr, _("Can't find %s bpf protocol in %s or %s\n"), name, IR_KEYTABLE_USER_DIR "/protocols", IR_KEYTABLE_SYSTEM_DIR "/protocols");
