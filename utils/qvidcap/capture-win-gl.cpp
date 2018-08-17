@@ -205,7 +205,7 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 	m_canOverrideResolution = false;
 	m_pixelaspect.numerator = 1;
 	m_pixelaspect.denominator = 1;
-	QMenu *menu = new QMenu("Override Pixel Format");
+	QMenu *menu = new QMenu("Override Pixel Format (P)");
 	m_fmtMenu = menu;
 	QActionGroup *grp = new QActionGroup(menu);
 	addSubMenuItem(grp, menu, "No Override", 0)->setChecked(true);
@@ -216,7 +216,7 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 	}
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(fmtChanged(QAction *)));
 
-	menu = new QMenu("Override Field");
+	menu = new QMenu("Override Field (I)");
 	m_fieldMenu = menu;
 	grp = new QActionGroup(menu);
 	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
@@ -225,7 +225,7 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 			       field2s(fields[i]).c_str(), fields[i]);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(fieldChanged(QAction *)));
 
-	menu = new QMenu("Override Colorspace");
+	menu = new QMenu("Override Colorspace (C)");
 	m_colorspaceMenu = menu;
 	grp = new QActionGroup(menu);
 	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
@@ -234,7 +234,7 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 			       colorspace2s(colorspaces[i]).c_str(), colorspaces[i]);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(colorspaceChanged(QAction *)));
 
-	menu = new QMenu("Override Transfer Function");
+	menu = new QMenu("Override Transfer Function (X)");
 	m_xferFuncMenu = menu;
 	grp = new QActionGroup(menu);
 	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
@@ -243,7 +243,7 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 			       xfer_func2s(xfer_funcs[i]).c_str(), xfer_funcs[i]);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(xferFuncChanged(QAction *)));
 
-	menu = new QMenu("Override Y'CbCr Encoding");
+	menu = new QMenu("Override Y'CbCr Encoding (Y)");
 	m_ycbcrEncMenu = menu;
 	grp = new QActionGroup(menu);
 	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
@@ -252,7 +252,7 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 			       ycbcr_enc2s(ycbcr_encs[i]).c_str(), ycbcr_encs[i]);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(ycbcrEncChanged(QAction *)));
 
-	menu = new QMenu("Override HSV Encoding");
+	menu = new QMenu("Override HSV Encoding (H)");
 	m_hsvEncMenu = menu;
 	grp = new QActionGroup(menu);
 	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
@@ -261,7 +261,7 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 			       ycbcr_enc2s(hsv_encs[i]).c_str(), hsv_encs[i]);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(hsvEncChanged(QAction *)));
 
-	menu = new QMenu("Override Quantization");
+	menu = new QMenu("Override Quantization (R)");
 	m_quantMenu = menu;
 	grp = new QActionGroup(menu);
 	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
@@ -282,11 +282,11 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 	connect(m_resolutionOverride, SIGNAL(triggered(bool)),
 		this, SLOT(resolutionOverrideChanged(bool)));
 
-	m_enterFullScreen = new QAction("Enter fullscreen");
+	m_enterFullScreen = new QAction("Enter fullscreen (F)");
 	connect(m_enterFullScreen, SIGNAL(triggered(bool)),
 		this, SLOT(toggleFullScreen(bool)));
 
-	m_exitFullScreen = new QAction("Exit fullscreen");
+	m_exitFullScreen = new QAction("Exit fullscreen (F or Esc)");
 	connect(m_exitFullScreen, SIGNAL(triggered(bool)),
 		this, SLOT(toggleFullScreen(bool)));
 }
