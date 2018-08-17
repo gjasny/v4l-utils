@@ -1062,7 +1062,9 @@ void CaptureGLWin::v4l2ExceptionEvent()
 		case V4L2_EVENT_SOURCE_CHANGE:
 			m_fd->g_fmt(fmt);
 			if (!setV4LFormat(fmt)) {
-				fprintf(stderr, "Unsupported format\n");
+				fprintf(stderr, "Unsupported format: '%s' %s\n",
+					fcc2s(fmt.g_pixelformat()).c_str(),
+					pixfmt2s(fmt.g_pixelformat()).c_str());
 				exit(1);
 			}
 			updateOrigValues();
@@ -1091,7 +1093,9 @@ void CaptureGLWin::listenForNewConnection()
 		sock_fd = initSocket(m_port, fmt, pixelaspect);
 		if (setV4LFormat(fmt))
 			break;
-		fprintf(stderr, "Unsupported format\n");
+		fprintf(stderr, "Unsupported format: '%s' %s\n",
+			fcc2s(fmt.g_pixelformat()).c_str(),
+			pixfmt2s(fmt.g_pixelformat()).c_str());
 		::close(sock_fd);
 	}
 	setPixelAspect(pixelaspect);

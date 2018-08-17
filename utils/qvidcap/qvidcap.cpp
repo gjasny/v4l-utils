@@ -746,7 +746,9 @@ int main(int argc, char **argv)
 	win.setOverrideXferFunc(overrideXferFunc);
 	win.setOverrideQuantization(overrideQuantization);
 	while (!win.setV4LFormat(fmt)) {
-		fprintf(stderr, "Unsupported format\n");
+		fprintf(stderr, "Unsupported format: '%s' %s\n",
+			fcc2s(fmt.g_pixelformat()).c_str(),
+			pixfmt2s(fmt.g_pixelformat()).c_str());
 		if (mode != AppModeSocket)
 			exit(1);
 		sock_fd = initSocket(port, fmt, pixelaspect);
