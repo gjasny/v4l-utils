@@ -45,7 +45,13 @@ Override Y'CbCr encoding. <y> can be one of the following Y'CbCr encodings: defa
 \fB\-Q\fR, \fB\-\-quant\fR=\fI<q>\fR
 Override quantization. <q> can be one of the following quantization methods: default, full-range, lim-range
 .TP
-\fB\-l\fR, \fB\-\-list-format\fRs
+\fB\-P\fR, \fB-\-pixelformat\fR=\fI<p>\fR
+For video devices: set the format to this pixel format.
+For reading from a file: interpret the data using this pixel format setting.
+Ignored for other modes.
+Use -l to see the list of supported pixel formats.
+.TP
+\fB\-l\fR, \fB\-\-list-formats\fR
 Display all supported formats
 .TP
 \fB\-h\fR, \fB\-\-help\fR
@@ -77,13 +83,10 @@ Set frame (not field!) height
 \fB--fps\fR=\fI<fps>\fR
 Set frames-per-second (default is 30)
 .TP
-The following options are only valid when reading from a file:
+The following option is only valid when reading from a file:
 .TP
 \fB\-F\fR, \fB-\-field\fR=\fI<f>\fR
 Override field setting. <f> can be one of the following field layouts: any, none, top, bottom, interlaced, seq_tb, seq_bt, alternate, interlaced_tb, interlaced_bt
-.TP
-\fB\-P\fR, \fB-\-pixelformat\fR=\fI<p>\fR
-Override pixel format setting. use -l to see the list of supported pixel formats
 .TP
 The following options are specific to the test pattern generator:
 .TP

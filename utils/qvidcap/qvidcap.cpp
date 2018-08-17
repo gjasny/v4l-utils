@@ -54,6 +54,11 @@ static void usage()
 	       "  -Q, --quant=<q>          override quantization\n"
 	       "                           <q> can be one of the following quantization methods:\n"
 	       "                               default, full-range, lim-range\n"
+	       "  -P, --pixelformat=<p>    For video devices: set the format to this pixel format.\n"
+	       "                           For reading from a file: interpret the data using this\n"
+	       "                           pixel format setting.\n"
+	       "                           Use -l to see the list of supported pixel formats.\n"
+	       "\n"
 	       "  -l, --list-formats       display all supported formats\n"
 	       "  -h, --help               display this help message\n"
 	       "  -t, --timings            report frame render timings\n"
@@ -69,15 +74,12 @@ static void usage()
 	       "  -H, --height=<height>    set frame (not field!) height\n"
 	       "  --fps=<fps>              set frames-per-second (default is 30)\n"
 	       "\n"
-	       "  The following options are only valid when reading from a file:\n"
+	       "  The following option is only valid when reading from a file:\n"
 	       "\n"
 	       "  -F, --field=<f>          override field setting\n"
 	       "                           <f> can be one of the following field layouts:\n"
 	       "                               any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
 	       "                               alternate, interlaced_tb, interlaced_bt\n"
-	       "  -P, --pixelformat=<p>    override pixel format setting\n"
-	       "                           use -l to see the list of supported pixel formats\n"
-	       "\n"
 	       "  The following options are specific to the test pattern generator:\n"
 	       "\n"
 	       "  --list-patterns          list available patterns for use with --pattern\n"
@@ -673,6 +675,20 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 		fd.g_fmt(fmt);
+
+		if (overridePixelFormat) {
+			fmt.s_pixelformat(overridePixelFormat);
+			fd.s_fmt(fmt);
+			fd.g_fmt(fmt);
+			if (fmt.g_pixelformat() != overridePixelFormat) {
+				fprintf(stderr, "Could not set format: '%s' %s\n",
+					fcc2s(overridePixelFormat).c_str(),
+					pixfmt2s(overridePixelFormat).c_str());
+				fprintf(stderr, "Fall back to format: '%s' %s\n",
+					fcc2s(fmt.g_pixelformat()).c_str(),
+					pixfmt2s(fmt.g_pixelformat()).c_str());
+			}
+		}
 
 		unsigned tmp_w, tmp_h;
 

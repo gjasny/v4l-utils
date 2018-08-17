@@ -333,8 +333,7 @@ void CaptureGLWin::showCurrentOverrides()
 	if (m_mode == AppModeTest)
 		return;
 
-	firstTime = false;
-	if (m_canOverrideResolution) {
+	if (m_canOverrideResolution || firstTime) {
 		printf("%sPixel Format: '%s' %s\n", prefix,
 		       fcc2s(m_origPixelFormat).c_str(),
 		       pixfmt2s(m_origPixelFormat).c_str());
@@ -347,6 +346,7 @@ void CaptureGLWin::showCurrentOverrides()
 	else if (!m_is_rgb)
 		printf("%sY'CbCr Encoding: %s\n", prefix, ycbcr_enc2s(m_origYCbCrEnc).c_str());
 	printf("%sQuantization Range: %s\n", prefix, quantization2s(m_origQuantization).c_str());
+	firstTime = false;
 }
 
 void CaptureGLWin::restoreAll(bool checked)
