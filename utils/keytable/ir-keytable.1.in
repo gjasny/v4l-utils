@@ -36,11 +36,11 @@ Sets the delay before repeating a keystroke.
 Set scancode to keycode mapping.
 .TP
 \fB\-p\fR, \fB\-\-protocol\fR=\fIPROTOCOL\fR
-Comma seperated list of kernel protocols or BPF protocol to enable. All
+Comma separated list of kernel protocols or BPF protocol to enable. All
 other protocols are disabled.
 .TP
 \fB\-e\fR, \fB\-\-parameter\fR=\fIPARAMETER\fR
-Commma seperated list of parameters for the BPF protocol.
+Comma separated list of parameters for the BPF protocol.
 .TP
 \fB\-P\fR, \fB\-\-period\fR\=\fiPERIOD\fR
 Sets the period to repeat a keystroke.
@@ -90,7 +90,7 @@ e.g. \fBmanchester\fR, \fBrc_mm\fR, \fBpulse_distance\fR, \fBpulse_length\fR.
 If it does not match any of these, it is taken to be the path of BPF decoder
 to be loaded.
 .IP \fIPARAMETERS\fR
-Comma seperated list of parameters for the BPF protocol being loaded. They have the format of name=value, where value is an number.
+Comma separated list of parameters for the BPF protocol being loaded. They have the format of name=value, where value is an number.
 .IP \fIDELAY\fR
 Delay before repeating a keystroke
 .IP \fIPERIOD\fR
