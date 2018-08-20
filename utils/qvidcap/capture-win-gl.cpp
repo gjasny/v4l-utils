@@ -496,8 +496,8 @@ void CaptureGLWin::contextMenuEvent(QContextMenuEvent *event)
 	if (m_canOverrideResolution) {
 		menu.addAction(m_resolutionOverride);
 		menu.addMenu(m_fmtMenu);
-		menu.addMenu(m_fieldMenu);
 	}
+	menu.addMenu(m_fieldMenu);
 	menu.addMenu(m_colorspaceMenu);
 	menu.addMenu(m_xferFuncMenu);
 	if (m_is_hsv)
@@ -599,8 +599,6 @@ void CaptureGLWin::keyPressEvent(QKeyEvent *event)
 		updateShader();
 		return;
 	case Qt::Key_I:
-		if (!m_canOverrideResolution)
-			return;
 		cycleMenu(m_overrideField, m_origField,
 			  fields, hasShift, hasCtrl);
 		printf("New Field: %s\n", field2s(m_overrideField).c_str());
