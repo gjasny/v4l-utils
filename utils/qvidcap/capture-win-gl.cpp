@@ -685,9 +685,10 @@ bool CaptureGLWin::supportedFmt(__u32 fmt)
 void CaptureGLWin::checkError(const char *msg)
 {
 	int err;
-	size_t errNo = 0;
+	unsigned errNo = 0;
+
 	while ((err = glGetError()) != GL_NO_ERROR)
-		fprintf(stderr, "OpenGL Error (no: %lu) code 0x%x: %s.\n", errNo++, err, msg);
+		fprintf(stderr, "OpenGL Error (no: %u) code 0x%x: %s.\n", errNo++, err, msg);
 
 	if (errNo)
 		exit(errNo);
