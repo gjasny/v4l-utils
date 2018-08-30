@@ -469,7 +469,7 @@ AC_ARG_ENABLE(qvidcap,
 AC_ARG_ENABLE(gconv,
   AS_HELP_STRING([--enable-gconv], [enable compilation of gconv modules]),
   [case "${enableval}" in
-    yes | no ) [test x$enable_shared == xno -o x$LIBICONV != x && enable_gconv = no] ;;
+    yes | no ) ;;
     *) AC_MSG_ERROR(bad value ${enableval} for --enable-gconv) ;;
    esac]
 )
@@ -492,7 +492,7 @@ AM_CONDITIONAL([WITH_QVIDCAP],	    [test x${qt_pkgconfig_gl} = xtrue -a x$enable
 AM_CONDITIONAL([WITH_V4L_PLUGINS],  [test x$enable_dyn_libv4l != xno -a x$enable_shared != xno])
 AM_CONDITIONAL([WITH_V4L_WRAPPERS], [test x$enable_dyn_libv4l != xno -a x$enable_shared != xno])
 AM_CONDITIONAL([WITH_QTGL],	    [test x${qt_pkgconfig_gl} = xtrue])
-AM_CONDITIONAL([WITH_GCONV],        [test x${enable_gconv} = xyes])
+AM_CONDITIONAL([WITH_GCONV],        [test x$enable_gconv = xyes -a x$enable_shared == xyes -a x$with_gconvdir != x])
 AM_CONDITIONAL([WITH_V4L2_CTL_LIBV4L], [test x${enable_v4l2_ctl_libv4l} != xno])
 AM_CONDITIONAL([WITH_V4L2_CTL_STREAM_TO], [test x${enable_v4l2_ctl_stream_to} != xno])
 AM_CONDITIONAL([WITH_V4L2_COMPLIANCE_LIBV4L], [test x${enable_v4l2_compliance_libv4l} != xno])
