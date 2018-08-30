@@ -919,7 +919,6 @@ static const struct state_to def_state_to = {
   if (st.g2 == 0)							      \
     st = def_state_to;							      \
 
-#define UPDATE_PARAMS		*statep = *((__mbstate_t * )&st)
 #define REINIT_PARAMS \
   do									      \
     {									      \
