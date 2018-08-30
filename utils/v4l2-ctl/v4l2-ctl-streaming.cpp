@@ -637,7 +637,7 @@ static bool fill_buffer_from_file(cv4l_queue &q, cv4l_buffer &b, FILE *fin)
 			char buf[1024];
 			unsigned sz = read_u32(fin);
 
-			if (packet == V4L_STREAM_PACKET_FRAME_VIDEO)
+			if (packet == V4L_STREAM_PACKET_FRAME_VIDEO_RLE)
 				break;
 
 			fprintf(stderr, "expected FRAME_VIDEO, got 0x%08x\n", packet);
@@ -919,7 +919,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 				tot_rle_size += rle_size[j];
 				tot_used += used - offset;
 			}
-			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO);
+			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_RLE);
 			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE(buf.g_num_planes()) + tot_rle_size);
 			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_HDR);
 			write_u32(fout, buf.g_field());

@@ -1148,7 +1148,7 @@ void CaptureGLWin::sockReadEvent()
 	if (read_u32(sz))
 		goto new_conn;
 
-	if (packet != V4L_STREAM_PACKET_FRAME_VIDEO) {
+	if (packet != V4L_STREAM_PACKET_FRAME_VIDEO_RLE) {
 		char buf[1024];
 
 		fprintf(stderr, "expected FRAME_VIDEO, got 0x%08x\n", packet);

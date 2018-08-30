@@ -24,6 +24,7 @@ HEADERS += ../../config.h
 SOURCES += capture-win-gl.cpp
 SOURCES += qvidcap.cpp
 SOURCES += ../common/v4l-stream.c
+SOURCES += ../common/codec-fwht.c
 SOURCES += ../common/v4l2-tpg-core.c
 SOURCES += ../common/v4l2-tpg-colors.c
 

@@ -10,6 +10,12 @@
 #include <netinet/in.h>
 
 #include "v4l-stream.h"
+#include "codec-fwht.h"
+
+#define MIN_WIDTH  64
+#define MAX_WIDTH  4096
+#define MIN_HEIGHT 64
+#define MAX_HEIGHT 2160
 
 /*
  * Since Bayer uses alternating lines of BG and GR color components
@@ -160,4 +166,67 @@ unsigned rle_compress(__u8 *b, unsigned size, unsigned bpl)
 		i += n * 4 - 4;
 	}
 	return (__u8 *)dst - b;
+}
+
+struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned w, unsigned h,
+			     unsigned field, unsigned colorspace, unsigned xfer_func,
+			     unsigned ycbcr_enc, unsigned quantization)
+{
+	struct codec_ctx *ctx;
+	const struct v4l2_fwht_pixfmt_info *info = v4l2_fwht_find_pixfmt(pixfmt);
+	unsigned int chroma_div;
+	unsigned int size = w * h;
+
+	if (!info)
+		return NULL;
+
+	ctx = malloc(sizeof(*ctx));
+	if (!ctx)
+		return NULL;
+	ctx->state.width = w;
+	ctx->state.height = h;
+	ctx->state.info = info;
+	ctx->field = field;
+	ctx->state.colorspace = colorspace;
+	ctx->state.xfer_func = xfer_func;
+	ctx->state.ycbcr_enc = ycbcr_enc;
+	ctx->state.quantization = quantization;
+	ctx->flags = 0;
+	chroma_div = info->width_div * info->height_div;
+	ctx->size = size + 2 * size / chroma_div;
+	ctx->state.ref_frame.luma = malloc(ctx->size);
+	ctx->comp_max_size = ctx->size + sizeof(struct fwht_cframe_hdr);
+	ctx->state.compressed_frame = malloc(ctx->comp_max_size);
+	if (!ctx->state.ref_frame.luma || !ctx->state.compressed_frame) {
+		free(ctx->state.ref_frame.luma);
+		free(ctx->state.compressed_frame);
+		free(ctx);
+		return NULL;
+	}
+	ctx->state.ref_frame.width = ctx->state.ref_frame.height = 0;
+	ctx->state.ref_frame.cb = ctx->state.ref_frame.luma + size;
+	ctx->state.ref_frame.cr = ctx->state.ref_frame.cb + size / chroma_div;
+	ctx->state.gop_size = 10;
+	ctx->state.gop_cnt = 0;
+	return ctx;
+}
+
+void fwht_free(struct codec_ctx *ctx)
+{
+	free(ctx->state.ref_frame.luma);
+	free(ctx->state.compressed_frame);
+	free(ctx);
+}
+
+__u8 *fwht_compress(struct codec_ctx *ctx, __u8 *buf, unsigned uncomp_size, unsigned *comp_size)
+{
+	ctx->state.i_frame_qp = ctx->state.p_frame_qp = 20;
+	*comp_size = v4l2_fwht_encode(&ctx->state, buf, ctx->state.compressed_frame);
+	return ctx->state.compressed_frame;
+}
+
+bool fwht_decompress(struct codec_ctx *ctx, __u8 *p_in, unsigned comp_size,
+		     __u8 *p_out, unsigned uncomp_size)
+{
+	return !v4l2_fwht_decode(&ctx->state, p_in, p_out);
 }
