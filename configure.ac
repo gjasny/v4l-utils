@@ -9,7 +9,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([lib/libv4l2/libv4l2.c])
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile m4/Makefile
+AC_CONFIG_FILES([Makefile
 	lib/Makefile
 	lib/libv4lconvert/Makefile
 	lib/libv4l2/Makefile
