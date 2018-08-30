@@ -14,10 +14,6 @@ if WITH_GCONV
 SUBDIRS += gconv
 endif
 
-if WITH_GCONV
-SUBDIRS += gconv
-endif
-
 SUBDIRS += decode_tm6000
 
 
