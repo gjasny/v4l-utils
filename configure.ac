@@ -358,10 +358,16 @@ AC_ARG_WITH(udevdir,
    	[],
 	[with_udevdir=`$PKG_CONFIG --variable=udevdir udev || echo /lib/udev`])
 
-def_gconv_dir=`for i in /lib64 /usr/lib64 /usr/local/lib64 /lib /usr/lib /usr/local/lib; do if @<:@ -d \$i/gconv @:>@; then echo \$i/gconv; break; fi; done || echo /usr/lib/gconv`
+# Generic check: works with most distributions
+def_gconv_dir=`for i in /lib64 /usr/lib64 /usr/local/lib64 /lib /usr/lib /usr/local/lib; do if @<:@ -d \$i/gconv @:>@; then echo \$i/gconv; break; fi; done`
+
+# Debian/Ubuntu-specific check: should be aligned with the debian package
+AS_IF([test "x${def_gconv_dir}" = "x" ],
+      def_gconv_dir=`for i in mips64el-linux-gnuabi64 mips64el-linux-gnuabin32 mips64-linux-gnuabi64 mips64-linux-gnuabin32 mipsisa64r6el-linux-gnuabi64 mipsisa64r6el-linux-gnuabin32 mipsisa64r6-linux-gnuabi64 mipsisa64r6-linux-gnuabin32 powerpc64-linux-gnu sparc64-linux-gnu x86_64-linux-gnu x86_64-linux-gnux32 alphaev67-linux-gnu arm-linux-gnueabi arm-linux-gnueabihf i686-kfreebsd-gnu i686-linux-gnu mipsel-linux-gnu mipsisa32r6el-linux-gnu mipsisa32r6-linux-gnu mips-linux-gnu powerpc-linux-gnu s390-linux-gnu sparcv9-linux-gnu; do if @<:@ -d /usr/lib/\$i/gconv @:>@; then echo /usr/lib/\$i/gconv; break; fi; done`)
+
 AC_ARG_WITH(gconvdir,
 	AS_HELP_STRING([--with-gconvdir=DIR],
-		       [set system's gconv directory (default=/usr/lib/gconv)]),
+		       [set system's gconv directory (default is to autodetect)]),
 	[],
 	[with_gconvdir=$def_gconv_dir])
 
