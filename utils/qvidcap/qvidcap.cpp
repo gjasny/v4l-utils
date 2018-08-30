@@ -358,8 +358,10 @@ int initSocket(int port, cv4l_fmt &fmt, v4l2_fract &pixelaspect)
 		fprintf(stderr, "unknown protocol ID\n");
 		exit(1);
 	}
-	if (read_u32(sock_fd) != V4L_STREAM_VERSION) {
-		fprintf(stderr, "unknown protocol version\n");
+	__u32 version = read_u32(sock_fd);
+
+	if (!version || version > V4L_STREAM_VERSION) {
+		fprintf(stderr, "unknown protocol version %u\n", version);
 		exit(1);
 	}
 	for (;;) {

@@ -22,6 +22,7 @@
 
 extern "C" {
 #include "v4l2-tpg.h"
+#include "v4l-stream.h"
 }
 
 extern const __u32 formats[];
@@ -186,6 +187,7 @@ private:
 	bool m_updateShader;
 	QSize m_viewSize;
 	bool m_canOverrideResolution;
+	codec_ctx *m_ctx;
 
 	__u32 m_overridePixelFormat;
 	__u32 m_overrideWidth;

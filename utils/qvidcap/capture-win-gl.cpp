@@ -23,7 +23,6 @@
 #include <QApplication>
 
 #include <netinet/in.h>
-#include "v4l-stream.h"
 #include "v4l2-info.h"
 
 const __u32 formats[] = {
@@ -190,6 +189,7 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 	m_sock(0),
 	m_v4l_queue(0),
 	m_frame(0),
+	m_ctx(0),
 	m_origPixelFormat(0),
 	m_fps(0),
 	m_singleStep(false),
@@ -742,6 +742,12 @@ void CaptureGLWin::setModeSocket(int socket, int port)
 	m_mode = AppModeSocket;
 	m_sock = socket;
 	m_port = port;
+	if (m_ctx)
+		free(m_ctx);
+	m_ctx = fwht_alloc(m_v4l_fmt.g_pixelformat(), m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
+			   m_v4l_fmt.g_field(), m_v4l_fmt.g_colorspace(), m_v4l_fmt.g_xfer_func(),
+			   m_v4l_fmt.g_ycbcr_enc(), m_v4l_fmt.g_quantization());
+
 	QSocketNotifier *readSock = new QSocketNotifier(m_sock,
 		QSocketNotifier::Read, this);
 
@@ -1097,6 +1103,11 @@ void CaptureGLWin::listenForNewConnection()
 			pixfmt2s(fmt.g_pixelformat()).c_str());
 		::close(sock_fd);
 	}
+	if (m_ctx)
+		free(m_ctx);
+	m_ctx = fwht_alloc(fmt.g_pixelformat(), fmt.g_width(), fmt.g_height(),
+			   fmt.g_field(), fmt.g_colorspace(), fmt.g_xfer_func(),
+			   fmt.g_ycbcr_enc(), fmt.g_quantization());
 	setPixelAspect(pixelaspect);
 	updateOrigValues();
 	setModeSocket(sock_fd, m_port);
@@ -1136,6 +1147,7 @@ void CaptureGLWin::sockReadEvent()
 	}
 
 	unsigned packet, sz;
+	bool is_fwht;
 
 	if (read_u32(packet))
 		goto new_conn;
@@ -1148,7 +1160,8 @@ void CaptureGLWin::sockReadEvent()
 	if (read_u32(sz))
 		goto new_conn;
 
-	if (packet != V4L_STREAM_PACKET_FRAME_VIDEO_RLE) {
+	if (packet != V4L_STREAM_PACKET_FRAME_VIDEO_RLE &&
+	    packet != V4L_STREAM_PACKET_FRAME_VIDEO_FWHT) {
 		char buf[1024];
 
 		fprintf(stderr, "expected FRAME_VIDEO, got 0x%08x\n", packet);
@@ -1165,6 +1178,8 @@ void CaptureGLWin::sockReadEvent()
 		return;
 	}
 
+	is_fwht = m_ctx && packet == V4L_STREAM_PACKET_FRAME_VIDEO_FWHT;
+
 	if (read_u32(sz))
 		goto new_conn;
 
@@ -1177,9 +1192,11 @@ void CaptureGLWin::sockReadEvent()
 		goto new_conn;
 
 	for (unsigned p = 0; p < m_v4l_fmt.g_num_planes(); p++) {
-		__u32 size;
-		__u32 rle_size;
+		__u32 max_size = is_fwht ? m_ctx->comp_max_size : m_curSize[p];
+		__u8 *dst = is_fwht ? m_ctx->state.compressed_frame : m_curData[p];
+		__u32 data_size;
 		__u32 offset;
+		__u32 size;
 
 		if (read_u32(sz))
 			goto new_conn;
@@ -1187,18 +1204,18 @@ void CaptureGLWin::sockReadEvent()
 			fprintf(stderr, "unsupported FRAME_VIDEO plane size\n");
 			goto new_conn;
 		}
-		if (read_u32(size) || read_u32(rle_size))
+		if (read_u32(size) || read_u32(data_size))
 			goto new_conn;
-		offset = size - rle_size;
-		sz = rle_size;
+		offset = is_fwht ? 0 : size - data_size;
+		sz = data_size;
 
-		if (size > m_curSize[p]) {
-			fprintf(stderr, "plane size is too large (%u > %u)\n",
-				size, m_curSize[p]);
+		if (data_size > max_size) {
+			fprintf(stderr, "data size is too large (%u > %u)\n",
+				data_size, max_size);
 			goto new_conn;
 		}
 		while (sz) {
-			n = read(m_sock, m_curData[p] + offset, sz);
+			n = read(m_sock, dst + offset, sz);
 			if (n < 0) {
 				fprintf(stderr, "error reading %d bytes\n", sz);
 				goto new_conn;
@@ -1208,8 +1225,11 @@ void CaptureGLWin::sockReadEvent()
 			offset += n;
 			sz -= n;
 		}
-		rle_decompress(m_curData[p], size, rle_size,
-			       rle_calc_bpl(m_v4l_fmt.g_bytesperline(p), m_v4l_fmt.g_pixelformat()));
+		if (is_fwht)
+			fwht_decompress(m_ctx, dst, data_size, m_curData[p], m_curSize[p]);
+		else
+			rle_decompress(dst, size, data_size,
+				       rle_calc_bpl(m_v4l_fmt.g_bytesperline(p), m_v4l_fmt.g_pixelformat()));
 	}
 	m_frame++;
 	update();
