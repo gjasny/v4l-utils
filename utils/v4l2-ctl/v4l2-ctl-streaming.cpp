@@ -20,6 +20,7 @@
 
 #include "v4l2-ctl.h"
 #include "v4l-stream.h"
+#include "codec-fwht.h"
 
 extern "C" {
 #include "v4l2-tpg.h"
@@ -53,9 +54,10 @@ static char *file_to;
 static bool to_with_hdr;
 static char *host_to;
 static unsigned host_port_to = V4L_STREAM_PORT;
+static bool host_lossless;
 static int host_fd_to = -1;
-static unsigned rle_perc;
-static unsigned rle_perc_count;
+static unsigned comp_perc;
+static unsigned comp_perc_count;
 static char *file_from;
 static bool from_with_hdr;
 static char *host_from;
@@ -67,6 +69,7 @@ static bool output_field_alt;
 static unsigned bpl_cap[VIDEO_MAX_PLANES];
 static unsigned bpl_out[VIDEO_MAX_PLANES];
 static bool last_buffer = false;
+static codec_ctx *ctx;
 
 #define TS_WINDOW 241
 #define FILE_HDR_ID			v4l2_fourcc('V', 'h', 'd', 'r')
@@ -239,6 +242,7 @@ void streaming_usage(void)
 	       "                     frame is prefixed by a header. Use for compressed data.\n"
 	       "  --stream-to-host <hostname[:port]>\n"
                "                     stream to this host. The default port is %d.\n"
+	       "  --stream-lossless  always use lossless video compression.\n"
 #endif
 	       "  --stream-poll      use non-blocking mode and select() to stream.\n"
 	       "  --stream-mmap <count>\n"
@@ -415,7 +419,7 @@ static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 }
 
 static void print_concise_buffer(FILE *f, cv4l_buffer &buf,
-				 fps_timestamps &fps_ts, int rle_perc)
+				 fps_timestamps &fps_ts, int comp_perc)
 {
 	static double last_ts;
 
@@ -433,8 +437,8 @@ static void print_concise_buffer(FILE *f, cv4l_buffer &buf,
 		for (unsigned i = 0; i < buf.g_num_planes(); i++)
 			fprintf(f, "%s%u", i ? "/" : "", buf.g_data_offset());
 	}
-	if (rle_perc >= 0)
-		fprintf(f, " compression: %d%%", rle_perc);
+	if (comp_perc >= 0)
+		fprintf(f, " compression: %d%%", comp_perc);
 
 	double ts = buf.g_timestamp().tv_sec + buf.g_timestamp().tv_usec / 1000000.0;
 	fprintf(f, " ts: %.06f", ts);
@@ -581,6 +585,9 @@ void streaming_cmd(int ch, char *optarg)
 	case OptStreamToHost:
 		host_to = optarg;
 		break;
+	case OptStreamLossless:
+		host_lossless = true;
+		break;
 	case OptStreamFrom:
 		file_from = optarg;
 		from_with_hdr = false;
@@ -624,6 +631,7 @@ void streaming_cmd(int ch, char *optarg)
 static bool fill_buffer_from_file(cv4l_queue &q, cv4l_buffer &b, FILE *fin)
 {
 	static bool first = true;
+	static bool is_fwht = false;
 
 	if (host_fd_from >= 0) {
 		for (;;) {
@@ -637,8 +645,15 @@ static bool fill_buffer_from_file(cv4l_queue &q, cv4l_buffer &b, FILE *fin)
 			char buf[1024];
 			unsigned sz = read_u32(fin);
 
-			if (packet == V4L_STREAM_PACKET_FRAME_VIDEO_RLE)
+			if (packet == V4L_STREAM_PACKET_FRAME_VIDEO_RLE ||
+			    packet == V4L_STREAM_PACKET_FRAME_VIDEO_FWHT) {
+				is_fwht = packet == V4L_STREAM_PACKET_FRAME_VIDEO_FWHT;
+				if (is_fwht && !ctx) {
+					fprintf(stderr, "cannot support FWHT encoding\n");
+					return false;
+				}
 				break;
+			}
 
 			fprintf(stderr, "expected FRAME_VIDEO, got 0x%08x\n", packet);
 			while (sz) {
@@ -670,9 +685,15 @@ static bool fill_buffer_from_file(cv4l_queue &q, cv4l_buffer &b, FILE *fin)
 				return false;
 			}
 			__u32 size = read_u32(fin);
-			__u32 rle_size = read_u32(fin);
-			__u32 offset = size - rle_size;
-			unsigned sz = rle_size;
+			__u32 comp_size = read_u32(fin);
+			__u32 offset = size - comp_size;
+			unsigned sz = comp_size;
+			__u8 *read_buf = buf;
+
+			if (is_fwht) {
+				read_buf = new __u8[comp_size];
+				offset = 0;
+			}
 
 			if (size > q.g_length(j)) {
 				fprintf(stderr, "plane size is too large (%u > %u)\n",
@@ -680,7 +701,7 @@ static bool fill_buffer_from_file(cv4l_queue &q, cv4l_buffer &b, FILE *fin)
 				return false;
 			}
 			while (sz) {
-				int n = fread(buf + offset, 1, sz, fin);
+				int n = fread(read_buf + offset, 1, sz, fin);
 				if (n < 0) {
 					fprintf(stderr, "error reading %d bytes\n", sz);
 					return false;
@@ -690,7 +711,12 @@ static bool fill_buffer_from_file(cv4l_queue &q, cv4l_buffer &b, FILE *fin)
 				offset += n;
 				sz -= n;
 			}
-			rle_decompress(buf, size, rle_size, bpl_out[j]);
+			if (is_fwht) {
+				fwht_decompress(ctx, read_buf, comp_size, buf, size);
+				delete [] read_buf;
+			} else {
+				rle_decompress(buf, size, comp_size, bpl_out[j]);
+			}
 		}
 		return true;
 	}
@@ -904,28 +930,37 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 
 	if (fout && (!stream_skip || ignore_count_skip) &&
 	    buf.g_bytesused(0) && !(buf.g_flags() & V4L2_BUF_FLAG_ERROR)) {
-		unsigned rle_size[VIDEO_MAX_PLANES];
+		unsigned comp_size[VIDEO_MAX_PLANES];
+		__u8 *comp_ptr[VIDEO_MAX_PLANES];
 
 		if (host_fd_to >= 0) {
-			unsigned tot_rle_size = 0;
+			unsigned tot_comp_size = 0;
 			unsigned tot_used = 0;
 
 			for (unsigned j = 0; j < buf.g_num_planes(); j++) {
 				__u32 used = buf.g_bytesused();
 				unsigned offset = buf.g_data_offset();
+				u8 *p = (u8 *)q.g_dataptr(buf.g_index(), j) + offset;
 
-				rle_size[j] = rle_compress((u8 *)q.g_dataptr(buf.g_index(), j) + offset,
-							   used - offset, bpl_cap[j]);
-				tot_rle_size += rle_size[j];
+				if (ctx) {
+					comp_ptr[j] = fwht_compress(ctx, p,
+								    used - offset, &comp_size[j]);
+				} else {
+					comp_ptr[j] = p;
+					comp_size[j] = rle_compress(p, used - offset,
+								    bpl_cap[j]);
+				}
+				tot_comp_size += comp_size[j];
 				tot_used += used - offset;
 			}
-			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_RLE);
-			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE(buf.g_num_planes()) + tot_rle_size);
+			write_u32(fout, ctx ? V4L_STREAM_PACKET_FRAME_VIDEO_FWHT :
+					      V4L_STREAM_PACKET_FRAME_VIDEO_RLE);
+			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE(buf.g_num_planes()) + tot_comp_size);
 			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_HDR);
 			write_u32(fout, buf.g_field());
 			write_u32(fout, buf.g_flags());
-			rle_perc += (tot_rle_size * 100 / tot_used);
-			rle_perc_count++;
+			comp_perc += (tot_comp_size * 100 / tot_used);
+			comp_perc_count++;
 		}
 		if (to_with_hdr)
 			write_u32(fout, FILE_HDR_ID);
@@ -944,12 +979,15 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 			if (host_fd_to >= 0) {
 				write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_PLANE_HDR);
 				write_u32(fout, used);
-				write_u32(fout, rle_size[j]);
-				used = rle_size[j];
+				write_u32(fout, comp_size[j]);
+				used = comp_size[j];
 			} else if (to_with_hdr) {
 				write_u32(fout, used);
 			}
-			sz = fwrite((u8 *)q.g_dataptr(buf.g_index(), j) + offset, 1, used, fout);
+			if (host_fd_to >= 0)
+				sz = fwrite(comp_ptr[j] + offset, 1, used, fout);
+			else
+				sz = fwrite((u8 *)q.g_dataptr(buf.g_index(), j) + offset, 1, used, fout);
 
 			if (sz != used)
 				fprintf(stderr, "%u != %u\n", sz, used);
@@ -965,8 +1003,8 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 		ch = 'B';
 	if (verbose) {
 		print_concise_buffer(stderr, buf, fps_ts,
-				     host_fd_to >= 0 ? 100 - rle_perc / rle_perc_count : -1);
-		rle_perc_count = rle_perc = 0;
+				     host_fd_to >= 0 ? 100 - comp_perc / comp_perc_count : -1);
+		comp_perc_count = comp_perc = 0;
 	}
 	if (!last_buffer && index == NULL && fd.qbuf(buf))
 		return -1;
@@ -984,8 +1022,8 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 			if (dropped)
 				fprintf(stderr, ", dropped buffers: %u", dropped);
 			if (host_fd_to >= 0)
-				fprintf(stderr, " %d%% compression", 100 - rle_perc / rle_perc_count);
-			rle_perc_count = rle_perc = 0;
+				fprintf(stderr, " %d%% compression", 100 - comp_perc / comp_perc_count);
+			comp_perc_count = comp_perc = 0;
 			fprintf(stderr, "\n");
 		}
 	}
@@ -1237,6 +1275,10 @@ recover:
 			write_u32(fout, cfmt.g_bytesperline(i));
 			bpl_cap[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
 		}
+		if (!host_lossless)
+			ctx = fwht_alloc(cfmt.g_pixelformat(), cfmt.g_width(), cfmt.g_height(),
+					 cfmt.g_field(), cfmt.g_colorspace(), cfmt.g_xfer_func(),
+					 cfmt.g_ycbcr_enc(), cfmt.g_quantization());
 		fflush(fout);
 	}
 
@@ -1442,6 +1484,9 @@ static void streaming_set_out(cv4l_fd &fd)
 		cfmt.s_quantization(read_u32(fin));
 		cfmt.s_xfer_func(read_u32(fin));
 		cfmt.s_flags(read_u32(fin));
+		ctx = fwht_alloc(cfmt.g_pixelformat(), cfmt.g_width(), cfmt.g_height(),
+				 cfmt.g_field(), cfmt.g_colorspace(), cfmt.g_xfer_func(),
+				 cfmt.g_ycbcr_enc(), cfmt.g_quantization());
 
 		read_u32(fin); // pixelaspect.numerator
 		read_u32(fin); // pixelaspect.denominator

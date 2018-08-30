@@ -214,6 +214,7 @@ enum Option {
 	OptStreamTo,
 	OptStreamToHdr,
 	OptStreamToHost,
+	OptStreamLossless,
 	OptStreamMmap,
 	OptStreamUser,
 	OptStreamDmaBuf,

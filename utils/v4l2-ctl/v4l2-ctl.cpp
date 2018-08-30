@@ -247,6 +247,7 @@ static struct option long_options[] = {
 #ifndef NO_STREAM_TO
 	{"stream-to", required_argument, 0, OptStreamTo},
 	{"stream-to-hdr", required_argument, 0, OptStreamToHdr},
+	{"stream-lossless", no_argument, 0, OptStreamLossless},
 	{"stream-to-host", required_argument, 0, OptStreamToHost},
 #endif
 	{"stream-mmap", optional_argument, 0, OptStreamMmap},
