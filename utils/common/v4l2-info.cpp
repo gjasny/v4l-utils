@@ -674,6 +674,8 @@ static const flag_def buffer_flags_def[] = {
 	{ V4L2_BUF_FLAG_NO_CACHE_INVALIDATE, "no-cache-invalidate" },
 	{ V4L2_BUF_FLAG_NO_CACHE_CLEAN, "no-cache-clean" },
 	{ V4L2_BUF_FLAG_LAST, "last" },
+	{ V4L2_BUF_FLAG_REQUEST_FD, "request-fd" },
+	{ V4L2_BUF_FLAG_IN_REQUEST, "in-request" },
 	{ 0, NULL }
 };
 

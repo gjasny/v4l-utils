@@ -1183,6 +1183,17 @@ static inline void v4l_buffer_s_index(struct v4l_buffer *buf, __u32 index)
 	buf->buf.index = index;
 }
 
+static inline __s32 v4l_buffer_g_request_fd(const struct v4l_buffer *buf)
+{
+	return buf->buf.request_fd;
+}
+
+static inline void v4l_buffer_s_request_fd(struct v4l_buffer *buf, __s32 request_fd)
+{
+	buf->buf.request_fd = request_fd;
+}
+
+
 static inline unsigned v4l_buffer_g_type(const struct v4l_buffer *buf)
 {
 	return buf->buf.type;

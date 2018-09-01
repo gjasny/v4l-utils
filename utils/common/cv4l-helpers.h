@@ -845,6 +845,8 @@ public:
 
 	__u32 g_index() const { return v4l_buffer_g_index(this); }
 	void s_index(unsigned index) { v4l_buffer_s_index(this, index); }
+	__s32 g_request_fd() const { return v4l_buffer_g_request_fd(this); }
+	void s_request_fd(__s32 request_fd) { v4l_buffer_s_request_fd(this, request_fd); }
 	unsigned g_type() const { return v4l_buffer_g_type(this); }
 	unsigned g_memory() const { return v4l_buffer_g_memory(this); }
 	__u32 g_flags() const { return v4l_buffer_g_flags(this); }
