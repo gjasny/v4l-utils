@@ -506,6 +506,26 @@ int testReqBufs(struct node *node)
 			fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs));
 			fail_on_test(check_0(crbufs.reserved, sizeof(crbufs.reserved)));
 			fail_on_test(crbufs.index != q.g_buffers());
+
+			if (node->is_video) {
+				cv4l_fmt fmt;
+
+				node->g_fmt(fmt, q.g_type());
+				if (V4L2_TYPE_IS_MULTIPLANAR(q.g_type())) {
+					fmt.s_num_planes(fmt.g_num_planes() + 1);
+					fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
+					node->g_fmt(fmt, q.g_type());
+				}
+				fmt.s_height(fmt.g_height() / 2);
+				for (unsigned p = 0; p < fmt.g_num_planes(); p++)
+					fmt.s_sizeimage(fmt.g_sizeimage(p) / 2, p);
+				fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
+				fail_on_test(testQueryBuf(node, fmt.type, q.g_buffers()));
+				node->g_fmt(fmt, q.g_type());
+				for (unsigned p = 0; p < fmt.g_num_planes(); p++)
+					fmt.s_sizeimage(fmt.g_sizeimage(p) * 2, p);
+				fail_on_test(q.create_bufs(node, 1, &fmt));
+			}
 		}
 		fail_on_test(q.reqbufs(node));
 	}
