@@ -1386,12 +1386,22 @@ static int testLegacyCrop(struct node *node)
 	if (!doioctl(node, VIDIOC_CROPCAP, &cap)) {
 		fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel));
 
-		// Checks for invalid types
-		if (cap.type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		// Checks for mplane types
+		switch (cap.type) {
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 			cap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-		else
+			break;
+		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+			cap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			break;
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 			cap.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-		fail_on_test(doioctl(node, VIDIOC_CROPCAP, &cap) != EINVAL);
+			break;
+		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+			cap.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+			break;
+		}
+		fail_on_test(doioctl(node, VIDIOC_CROPCAP, &cap));
 		cap.type = 0xff;
 		fail_on_test(doioctl(node, VIDIOC_CROPCAP, &cap) != EINVAL);
 	} else {
