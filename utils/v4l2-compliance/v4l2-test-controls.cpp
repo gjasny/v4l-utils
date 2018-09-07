@@ -787,6 +787,11 @@ int testExtendedControls(struct node *node)
 		return fail("should get EINVAL when setting mixed-class controls\n");
 	if (multiple_classes && ctrls.error_idx != ctrls.count)
 		warn("error_idx should be equal to count\n");
+
+	ctrls.which = V4L2_CTRL_WHICH_DEF_VAL;
+	fail_on_test(!doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+	fail_on_test(!doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls));
+	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
 	return 0;
 }
 
