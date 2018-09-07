@@ -29,17 +29,6 @@ void meta_usage(void)
 	       "  --try-fmt-meta <f>  try the metadata capture format [VIDIOC_TRY_FMT]\n"
 	       "                     parameter is either the format index as reported by\n"
 	       "                     --list-formats-meta-cap, or the fourcc value as a string\n"
-	       "  --list-formats-meta-out\n"
-	       "                     display supported metadata output formats [VIDIOC_ENUM_FMT]\n"
-	       "  --get-fmt-meta-out  query the metadata output format [VIDIOC_G_FMT]\n"
-	       "  --set-fmt-meta-out <f>\n"
-	       "                     set the metadata output format [VIDIOC_S_FMT]\n"
-	       "                     parameter is either the format index as reported by\n"
-	       "                     --list-formats-meta-out, or the fourcc value as a string\n"
-	       "  --try-fmt-meta-out <f>\n"
-	       "                     try the metadata output format [VIDIOC_TRY_FMT]\n"
-	       "                     parameter is either the format index as reported by\n"
-	       "                     --list-formats-meta-out, or the fourcc value as a string\n"
 	       );
 }
 

@@ -70,6 +70,7 @@ void common_usage(void)
 	       "  -h, --help         display this help message\n"
 	       "  --help-all         all options\n"
 	       "  --help-io          input/output options\n"
+	       "  --help-meta        metadata format options\n"
 	       "  --help-misc        miscellaneous options\n"
 	       "  --help-overlay     overlay format options\n"
 	       "  --help-sdr         SDR format options\n"
