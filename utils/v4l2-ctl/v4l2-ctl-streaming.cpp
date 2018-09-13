@@ -53,7 +53,10 @@ static unsigned reqbufs_count_out = 4;
 static char *file_to;
 static bool to_with_hdr;
 static char *host_to;
+#ifndef NO_STREAM_TO
 static unsigned host_port_to = V4L_STREAM_PORT;
+static unsigned bpl_cap[VIDEO_MAX_PLANES];
+#endif
 static bool host_lossless;
 static int host_fd_to = -1;
 static unsigned comp_perc;
@@ -66,7 +69,6 @@ static int host_fd_from = -1;
 static struct tpg_data tpg;
 static unsigned output_field = V4L2_FIELD_NONE;
 static bool output_field_alt;
-static unsigned bpl_cap[VIDEO_MAX_PLANES];
 static unsigned bpl_out[VIDEO_MAX_PLANES];
 static bool last_buffer = false;
 static codec_ctx *ctx;
@@ -928,6 +930,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 	double ts_secs = buf.g_timestamp().tv_sec + buf.g_timestamp().tv_usec / 1000000.0;
 	fps_ts.add_ts(ts_secs, buf.g_sequence(), buf.g_field());
 
+#ifndef NO_STREAM_TO
 	if (fout && (!stream_skip || ignore_count_skip) &&
 	    buf.g_bytesused(0) && !(buf.g_flags() & V4L2_BUF_FLAG_ERROR)) {
 		unsigned comp_size[VIDEO_MAX_PLANES];
@@ -995,6 +998,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 		if (host_fd_to >= 0)
 			fflush(fout);
 	}
+#endif
 	if (buf.g_flags() & V4L2_BUF_FLAG_KEYFRAME)
 		ch = 'K';
 	else if (buf.g_flags() & V4L2_BUF_FLAG_PFRAME)
@@ -1207,6 +1211,7 @@ recover:
 		}
 	}
 
+#ifndef NO_STREAM_TO
 	if (file_to) {
 		if (!strcmp(file_to, "-"))
 			fout = stdout;
@@ -1281,6 +1286,7 @@ recover:
 					 cfmt.g_ycbcr_enc(), cfmt.g_quantization());
 		fflush(fout);
 	}
+#endif
 
 	if (q.reqbufs(&fd, reqbufs_count_cap))
 		goto done;
