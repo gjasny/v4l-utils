@@ -517,7 +517,7 @@ static int checkInputAudioSet(struct node *node, __u32 audioset)
 
 	ret = doioctl(node, VIDIOC_G_AUDIO, &input);
 	if (audioset == 0 && ret != ENOTTY && ret != EINVAL)
-		return fail("No audio inputs, but G_AUDIO did not return ENOTTY or EINVAL\n");
+		return fail("No audioset, but G_AUDIO did not return ENOTTY or EINVAL\n");
 	if (audioset) {
 		if (ret)
 			return fail("Audio inputs, but G_AUDIO returned an error\n");
