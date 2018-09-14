@@ -308,6 +308,9 @@ int testTransmit(struct node *node)
 			msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
 			cec_msg_give_physical_addr(&msg, true);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+			fail_on_test(!(msg.tx_status & CEC_TX_STATUS_OK));
+			fail_on_test(msg.rx_status & CEC_RX_STATUS_TIMEOUT);
+			fail_on_test(!(msg.rx_status & CEC_RX_STATUS_OK));
 			fail_on_test(msg.len != 5);
 			fail_on_test(check_0(msg.msg + msg.len, sizeof(msg.msg) - msg.len));
 			fail_on_test(msg.timeout != 1001);
@@ -318,7 +321,6 @@ int testTransmit(struct node *node)
 			fail_on_test(msg.rx_status & ~0x07);
 			fail_on_test(msg.tx_ts == 0 || msg.tx_ts == ~0ULL);
 			fail_on_test(msg.rx_ts <= msg.tx_ts);
-			fail_on_test(!(msg.tx_status & CEC_TX_STATUS_OK));
 			fail_on_test((msg.tx_status & tx_ok_retry_mask) == tx_ok_retry_mask);
 			fail_on_test(msg.tx_nack_cnt == 0xff);
 			fail_on_test(msg.tx_arb_lost_cnt == 0xff);
