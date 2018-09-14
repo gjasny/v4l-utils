@@ -328,7 +328,7 @@ static int osd_string_set_default(struct node *node, unsigned me, unsigned la, b
 		return NOTSUPPORTED;
 	else if (refused(&msg))
 		return REFUSED;
-	else {
+	else if (cec_msg_status_is_abort(&msg)) {
 		warn("The device is in an unsuitable state or cannot display the complete message.\n");
 		unsuitable = true;
 	}
