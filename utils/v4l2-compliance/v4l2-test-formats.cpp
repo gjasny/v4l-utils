@@ -1236,6 +1236,28 @@ static int testParmType(struct node *node, unsigned type)
 	fail_on_test(parm.type != type);
 	if (!(parm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME))
 		warn("S_PARM is supported but doesn't report V4L2_CAP_TIMEPERFRAME\n");
+	ret = testParmStruct(node, parm);
+	if (ret)
+		return ret;
+	if (V4L2_TYPE_IS_OUTPUT(type)) {
+		parm.parm.output.timeperframe.numerator = 0;
+		parm.parm.output.timeperframe.denominator = 1;
+	} else {
+		parm.parm.capture.timeperframe.numerator = 0;
+		parm.parm.capture.timeperframe.denominator = 1;
+	}
+	fail_on_test(doioctl(node, VIDIOC_S_PARM, &parm));
+	ret = testParmStruct(node, parm);
+	if (ret)
+		return ret;
+	if (V4L2_TYPE_IS_OUTPUT(type)) {
+		parm.parm.output.timeperframe.numerator = 1;
+		parm.parm.output.timeperframe.denominator = 0;
+	} else {
+		parm.parm.capture.timeperframe.numerator = 1;
+		parm.parm.capture.timeperframe.denominator = 0;
+	}
+	fail_on_test(doioctl(node, VIDIOC_S_PARM, &parm));
 	return testParmStruct(node, parm);
 }
 
