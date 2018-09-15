@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-License-Identifier: LGPL-2.1-only
 /*
  * V4L2 run-length image encoder source
  *
