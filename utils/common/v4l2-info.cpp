@@ -602,6 +602,8 @@ std::string dvflags2s(unsigned vsync, int val)
 		s += "framerate can be reduced by 1/1.001, ";
 	if (val & V4L2_DV_FL_REDUCED_FPS)
 		s += "framerate is reduced by 1/1.001, ";
+	if (val & V4L2_DV_FL_CAN_DETECT_REDUCED_FPS)
+		s += "can detect reduced framerates, ";
 	if (val & V4L2_DV_FL_HALF_LINE)
 		s += "half-line, ";
 	if (val & V4L2_DV_FL_IS_CE_VIDEO)
