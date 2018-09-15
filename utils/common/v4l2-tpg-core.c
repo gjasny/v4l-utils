@@ -228,6 +228,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	case V4L2_PIX_FMT_Y12:
 	case V4L2_PIX_FMT_Y16:
 	case V4L2_PIX_FMT_Y16_BE:
+	case V4L2_PIX_FMT_Z16:
 		tpg->color_enc = TGP_COLOR_ENC_LUMA;
 		break;
 	case V4L2_PIX_FMT_YUV444:
@@ -344,6 +345,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	case V4L2_PIX_FMT_Y12:
 	case V4L2_PIX_FMT_Y16:
 	case V4L2_PIX_FMT_Y16_BE:
+	case V4L2_PIX_FMT_Z16:
 		tpg->twopixelsize[0] = 2 * 2;
 		break;
 	case V4L2_PIX_FMT_RGB24:
@@ -1052,6 +1054,7 @@ static void gen_twopix(struct tpg_data *tpg,
 		buf[0][offset+1] = r_y_h >> 4;
 		break;
 	case V4L2_PIX_FMT_Y16:
+	case V4L2_PIX_FMT_Z16:
 		/*
 		 * Ideally both bytes should be set to r_y_h, but then you won't
 		 * be able to detect endian problems. So keep it 0 except for
@@ -2024,8 +2027,12 @@ void tpg_log_status(struct tpg_data *tpg)
 			tpg->compose.left, tpg->compose.top);
 	pr_info("tpg colorspace: %d\n", tpg->colorspace);
 	pr_info("tpg transfer function: %d/%d\n", tpg->xfer_func, tpg->real_xfer_func);
-	pr_info("tpg Y'CbCr encoding: %d/%d\n", tpg->ycbcr_enc, tpg->real_ycbcr_enc);
-	pr_info("tpg HSV encoding: %d/%d\n", tpg->hsv_enc, tpg->real_hsv_enc);
+	if (tpg->color_enc == TGP_COLOR_ENC_HSV)
+		pr_info("tpg HSV encoding: %d/%d\n",
+			tpg->hsv_enc, tpg->real_hsv_enc);
+	else if (tpg->color_enc == TGP_COLOR_ENC_YCBCR)
+		pr_info("tpg Y'CbCr encoding: %d/%d\n",
+			tpg->ycbcr_enc, tpg->real_ycbcr_enc);
 	pr_info("tpg quantization: %d/%d\n", tpg->quantization, tpg->real_quantization);
 	pr_info("tpg RGB range: %d/%d\n", tpg->rgb_range, tpg->real_rgb_range);
 }

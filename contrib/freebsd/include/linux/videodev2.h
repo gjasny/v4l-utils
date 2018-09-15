@@ -733,6 +733,7 @@ struct v4l2_pix_format {
 #define V4L2_META_FMT_VSP1_HGO    v4l2_fourcc('V', 'S', 'P', 'H') /* R-Car VSP1 1-D Histogram */
 #define V4L2_META_FMT_VSP1_HGT    v4l2_fourcc('V', 'S', 'P', 'T') /* R-Car VSP1 2-D Histogram */
 #define V4L2_META_FMT_UVC         v4l2_fourcc('U', 'V', 'C', 'H') /* UVC Payload Header metadata */
+#define V4L2_META_FMT_D4XX        v4l2_fourcc('D', '4', 'X', 'X') /* D4XX Payload Header metadata */
 
 /* priv field value to indicates that subsequent fields are valid. */
 #define V4L2_PIX_FMT_PRIV_MAGIC		0xfeedcafe
@@ -1430,6 +1431,13 @@ struct v4l2_bt_timings {
  * InfoFrame).
  */
 #define V4L2_DV_FL_HAS_HDMI_VIC			(1 << 8)
+/*
+ * CEA-861 specific: only valid for video receivers.
+ * If set, then HW can detect the difference between regular FPS and
+ * 1000/1001 FPS. Note: This flag is only valid for HDMI VIC codes with
+ * the V4L2_DV_FL_CAN_REDUCE_FPS flag set.
+ */
+#define V4L2_DV_FL_CAN_DETECT_REDUCED_FPS	(1 << 9)
 
 /* A few useful defines to calculate the total blanking and frame sizes */
 #define V4L2_DV_BT_BLANKING_WIDTH(bt) \
