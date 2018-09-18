@@ -1331,7 +1331,11 @@ void CaptureGLWin::startTimer()
 
 	for (unsigned p = 0; p < m_v4l_fmt.g_num_planes(); p++) {
 		m_curSize[p] = m_v4l_fmt.g_sizeimage(p);
-		m_curData[p] = new __u8[m_curSize[p]];
+		delete [] m_curData[p];
+		if (m_canOverrideResolution)
+			m_curData[p] = new __u8[4096 * 2160 * (p ? 2 : 4)];
+		else
+			m_curData[p] = new __u8[m_curSize[p]];
 		if (m_file.isOpen())
 			m_file.read((char *)m_curData[p], m_curSize[p]);
 		else
