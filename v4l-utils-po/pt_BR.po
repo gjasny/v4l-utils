@@ -159,7 +159,7 @@ msgstr "Configura o período de repetição para digitação repetitiva"
 
 #: utils/keytable/keytable.c:255
 msgid "CFGFILE"
-msgstr "ARQ_CFG"
+msgstr "CFGFILE"
 
 #: utils/keytable/keytable.c:255
 msgid ""
