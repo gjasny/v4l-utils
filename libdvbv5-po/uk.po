@@ -1,0 +1,840 @@
+# Yuri Chornoivan <yurchor@ukr.net>, 2015.
+# Yuri Chornoivan <yurchor@ukr.net>, 2015. #zanata
+msgid ""
+msgstr ""
+"Project-Id-Version: v4l-utils 1.8.1\n"
+"Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
+"POT-Creation-Date: 2018-09-21 15:56-0300\n"
+"PO-Revision-Date: 2015-12-30 10:00+0000\n"
+"Last-Translator: Copied by Zanata <copied-by-zanata@zanata.org>\n"
+"Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Zanata 4.6.2\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+
+#: lib/libdvbv5/dvb-fe.c:151
+#, c-format
+msgid "adapter %d, frontend %d not found"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:159
+msgid "Detected dvbloopback"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:165
+#, c-format
+msgid "fname calloc: %s"
+msgstr "calloc для fname: %s"
+
+#: lib/libdvbv5/dvb-fe.c:170
+#, c-format
+msgid "parms calloc: %s"
+msgstr "calloc для parms: %s"
+
+#: lib/libdvbv5/dvb-fe.c:205
+#, c-format
+msgid "%s while opening %s"
+msgstr "%s під час спроби відкрити %s"
+
+#: lib/libdvbv5/dvb-fe.c:221
+#, c-format
+msgid "Device %s (%s) capabilities:"
+msgstr "Можливості пристрою %s (%s):"
+
+#: lib/libdvbv5/dvb-fe.c:247
+#, c-format
+msgid "DVB API Version %d.%d%s, Current v5 delivery system: %s"
+msgstr ""
+"Версія програмного інтерфейсу DVB %d.%d%s, поточна система надання даних v5: "
+"%s"
+
+#: lib/libdvbv5/dvb-fe.c:250
+msgid " (forcing DVBv3 calls)"
+msgstr " (примусово використовуємо виклики DVBv3)"
+
+#: lib/libdvbv5/dvb-fe.c:295
+msgid "delivery system not detected"
+msgstr "не виявлено системи надання даних"
+
+#: lib/libdvbv5/dvb-fe.c:316
+msgid "driver returned 0 supported delivery systems!"
+msgstr ""
+"драйвером повернуто дані щодо нульової кількості підтримуваних систем "
+"надання даних!"
+
+#: lib/libdvbv5/dvb-fe.c:324
+#, fuzzy
+msgid "Supported delivery system: "
+msgid_plural "Supported delivery systems: "
+msgstr[0] "Підтримувані системи надання даних%s: "
+msgstr[1] "Підтримувані системи надання даних%s: "
+msgstr[2] "Підтримувані системи надання даних%s: "
+
+#: lib/libdvbv5/dvb-fe.c:334
+msgid ""
+"Warning: new delivery systems like ISDB-T, ISDB-S, DMB-TH, DSS, ATSC-MH will "
+"be miss-detected by a DVBv5.4 or earlier API call"
+msgstr ""
+"Попередження: під час визначення за допомогою виклику до програмного "
+"інтерфейсу DVB 5.4 або раніших версій нових систем надання даних, зокрема "
+"ISDB-T, ISDB-S, DMB-TH, DSS, ATSC-MH, можливі помилки"
+
+#: lib/libdvbv5/dvb-fe.c:365
+msgid "Frequency range for the current standard: "
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:368
+#, c-format
+msgid "From:       %11sHz"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:370
+#, c-format
+msgid "To:         %11sHz"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:373
+#, c-format
+msgid "Step:       %11sHz"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:377
+#, c-format
+msgid "Tolerance:  %11sHz"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:381
+msgid "Symbol rate ranges for the current standard: "
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:383
+#, c-format
+msgid "From:       %11sBauds"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:385
+#, c-format
+msgid "To:         %11sBauds"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:388
+#, c-format
+msgid "Tolerance:  %11sBauds"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:518
+msgid "Set delivery system"
+msgstr "Встановити систему надання даних"
+
+#: lib/libdvbv5/dvb-fe.c:530
+msgid "Can't retrieve DVB information for the new delivery system."
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:615
+#, c-format
+msgid "Using a DVBv3 compat file for %s"
+msgstr "Використовуємо файл сумісності із DVBv3 для %s"
+
+#: lib/libdvbv5/dvb-fe.c:704
+#, c-format
+msgid "command %s (%d) not found during retrieve"
+msgstr "під час отримання не виявлено команди %s (%d)"
+
+#: lib/libdvbv5/dvb-fe.c:721
+#, c-format
+msgid "command %s (%d) not found during store"
+msgstr "під час зберігання не виявлено команди %s (%d)"
+
+#: lib/libdvbv5/dvb-fe.c:783
+#, c-format
+msgid "Got parameters for %s:"
+msgstr "Отримано параметри для %s:"
+
+#: lib/libdvbv5/dvb-fe.c:902
+msgid "Setting LNA"
+msgstr "Встановлюємо малошумний підсилювач"
+
+#: lib/libdvbv5/dvb-fe.c:905
+#, c-format
+msgid "LNA is %s"
+msgstr "Малошумним підсилювачем є %s"
+
+#: lib/libdvbv5/dvb-fe.c:905 lib/libdvbv5/dvb-fe.c:1903
+msgid "ON"
+msgstr "УВІМКН."
+
+#: lib/libdvbv5/dvb-fe.c:905 lib/libdvbv5/dvb-fe.c:1903
+msgid "OFF"
+msgstr "ВИМКН."
+
+#: lib/libdvbv5/dvb-fe.c:1005
+#, c-format
+msgid "%s not found on store"
+msgstr "%s не виявлено під час збереження"
+
+#: lib/libdvbv5/dvb-fe.c:1077 lib/libdvbv5/dvb-fe.c:1092
+#, c-format
+msgid "%s not found on retrieve"
+msgstr "%s не виявлено під час отримання"
+
+#: lib/libdvbv5/dvb-fe.c:1099
+#, c-format
+msgid "%s not available"
+msgstr "%s недоступний"
+
+#: lib/libdvbv5/dvb-fe.c:1106
+#, c-format
+msgid "Stats for %s = %d"
+msgstr "Статистика для %s = %d"
+
+#: lib/libdvbv5/dvb-fe.c:1531 lib/libdvbv5/dvb-fe.c:1561
+msgid "Status: "
+msgstr "Стан: "
+
+#: lib/libdvbv5/dvb-fe.c:1536
+#, c-format
+msgid "BER: %d, Strength: %d, SNR: %d, UCB: %d"
+msgstr "BER: %d, потужність: %d, ВСШ: %d, UCB: %d"
+
+#: lib/libdvbv5/dvb-fe.c:1690
+msgid "RF"
+msgstr "РЧ"
+
+#: lib/libdvbv5/dvb-fe.c:1691
+msgid "Carrier"
+msgstr "Носій сигналу"
+
+#: lib/libdvbv5/dvb-fe.c:1692
+msgid "Viterbi"
+msgstr "Вітербі"
+
+#: lib/libdvbv5/dvb-fe.c:1693
+msgid "Sync"
+msgstr "Синхронізувати"
+
+#: lib/libdvbv5/dvb-fe.c:1694
+msgid "Lock"
+msgstr "Заблокувати"
+
+#: lib/libdvbv5/dvb-fe.c:1695
+msgid "Timeout"
+msgstr "Час очікування"
+
+#: lib/libdvbv5/dvb-fe.c:1696
+msgid "Reinit"
+msgstr "Переініціалізація"
+
+#: lib/libdvbv5/dvb-fe.c:1700
+msgid "Poor"
+msgstr "Погана"
+
+#: lib/libdvbv5/dvb-fe.c:1701
+msgid "Ok"
+msgstr "Добра"
+
+#: lib/libdvbv5/dvb-fe.c:1702
+msgid "Good"
+msgstr "Чудова"
+
+#: lib/libdvbv5/dvb-fe.c:1725
+msgid "Error: no adapter status"
+msgstr "Помилка: немає даних щодо стану адаптера"
+
+#: lib/libdvbv5/dvb-fe.c:1737
+#, c-format
+msgid "%-7s"
+msgstr "%-7s"
+
+#: lib/libdvbv5/dvb-fe.c:1744
+#, c-format
+msgid "%7s"
+msgstr "%7s"
+
+#: lib/libdvbv5/dvb-fe.c:1789
+#, c-format
+msgid "  Layer %c:"
+msgstr "  Шар %c:"
+
+#: lib/libdvbv5/dvb-fe.c:1864
+msgid "SEC: set voltage to OFF"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:1868
+#, c-format
+msgid "SEC: set voltage to %sV"
+msgstr ""
+
+#: lib/libdvbv5/dvb-fe.c:1887
+#, c-format
+msgid "DiSEqC TONE: %s"
+msgstr "ТОН DiSEqC: %s"
+
+#: lib/libdvbv5/dvb-fe.c:1903
+#, c-format
+msgid "DiSEqC HIGH LNB VOLTAGE: %s"
+msgstr "ЖИВЛЕННЯ LNB DiSEqC (верхній поріг): %s"
+
+#: lib/libdvbv5/dvb-fe.c:1921
+#, c-format
+msgid "DiSEqC BURST: %s"
+msgstr "ВИКИД DiSEqC: %s"
+
+#: lib/libdvbv5/dvb-fe.c:1947
+#, c-format
+msgid "DiSEqC command: "
+msgstr "Команда DiSEqC: "
+
+#: lib/libdvbv5/dvb-fe.c:1997
+#, c-format
+msgid "Assuming you're in %s.\n"
+msgstr "Припускаємо, що ви у країні %s.\n"
+
+#: lib/libdvbv5/dvb-fe.c:2000
+msgid "Failed to guess country from the current locale setting.\n"
+msgstr "Не вдалося визначити країну за поточними параметрами локалі.\n"
+
+#: lib/libdvbv5/dvb-file.c:76
+#, c-format
+msgid "Can't add property %s\n"
+msgstr "Не вдалося додати властивість %s\n"
+
+#: lib/libdvbv5/dvb-file.c:240 lib/libdvbv5/dvb-file.c:756
+#: lib/libdvbv5/dvb-file.c:1276
+msgid "Allocating memory for dvb_file"
+msgstr "Отримуємо пам’ять під dvb_file"
+
+#: lib/libdvbv5/dvb-file.c:266
+#, c-format
+msgid "unknown delivery system type for %s"
+msgstr "невідомий тип системи надання даних для %s"
+
+#: lib/libdvbv5/dvb-file.c:277
+#, c-format
+msgid "Doesn't know how to handle delimiter '%s'"
+msgstr "Невідомий спосіб обробки роздільника «%s»"
+
+#: lib/libdvbv5/dvb-file.c:288
+#, c-format
+msgid "Doesn't know how to parse delivery system %d"
+msgstr "Невідомий спосіб обробки системи надання даних %d"
+
+#: lib/libdvbv5/dvb-file.c:316
+#, c-format
+msgid "parameter %i (%s) missing"
+msgstr "пропущено параметр %i (%s)"
+
+#: lib/libdvbv5/dvb-file.c:325
+#, c-format
+msgid "parameter %s invalid: %s"
+msgstr "некоректний параметр %s: %s"
+
+#: lib/libdvbv5/dvb-file.c:382 lib/libdvbv5/dvb-file.c:841
+#, c-format
+msgid "ERROR %s while parsing line %d of %s\n"
+msgstr "ПОМИЛКА %s під час обробки рядка %d з %s\n"
+
+#: lib/libdvbv5/dvb-file.c:463
+#, c-format
+msgid "delivery system %d not supported on this format"
+msgstr "для цього формату не передбачено підтримки системи надання даних %d"
+
+#: lib/libdvbv5/dvb-file.c:505 lib/libdvbv5/dvb-vdr-format.c:347
+#, c-format
+msgid "value not supported"
+msgstr "непідтримуване значення"
+
+#: lib/libdvbv5/dvb-file.c:515
+#, c-format
+msgid "WARNING: missing video PID while parsing entry %d of %s\n"
+msgstr ""
+"ПОПЕРЕДЖЕННЯ: не виявлено вказівок щодо PID відео під час обробки запису %d "
+"з %s\n"
+
+#: lib/libdvbv5/dvb-file.c:525
+#, c-format
+msgid "WARNING: missing audio PID while parsing entry %d of %s\n"
+msgstr ""
+"ПОПЕРЕДЖЕННЯ: не виявлено вказівок щодо PID звуку під час обробки запису %d "
+"з %s\n"
+
+#: lib/libdvbv5/dvb-file.c:544
+#, c-format
+msgid "property %s not supported while parsing entry %d of %s\n"
+msgstr "не передбачена властивість %s під час обробки запису %d з %s\n"
+
+#: lib/libdvbv5/dvb-file.c:565 lib/libdvbv5/dvb-vdr-format.c:440
+#, c-format
+msgid "ERROR: %s while parsing entry %d of %s\n"
+msgstr "ПОМИЛКА %s під час обробки запису %d з %s\n"
+
+#: lib/libdvbv5/dvb-file.c:792
+#, c-format
+msgid "Missing channel group"
+msgstr "Пропущено групу каналів"
+
+#: lib/libdvbv5/dvb-file.c:805
+#, c-format
+msgid "key/value without a channel group"
+msgstr "ключ/значення без групи каналів"
+
+#: lib/libdvbv5/dvb-file.c:810
+#, c-format
+msgid "missing key"
+msgstr "не вказано ключ"
+
+#: lib/libdvbv5/dvb-file.c:819
+#, c-format
+msgid "missing value"
+msgstr "не вистачає значення"
+
+#: lib/libdvbv5/dvb-file.c:827
+#, c-format
+msgid "value %s is invalid for %s"
+msgstr "значення %s є некоректним для %s"
+
+#: lib/libdvbv5/dvb-file.c:1155
+#, c-format
+msgid "Channel %s (service ID %d) not found on PMT. Skipping it."
+msgstr ""
+"Канал %s (ідентифікатор служби %d) у PMT не знайдено. Пропускаємо його."
+
+#: lib/libdvbv5/dvb-file.c:1173
+msgid "Not enough memory"
+msgstr "Не вистачає пам'яті"
+
+#: lib/libdvbv5/dvb-file.c:1204
+msgid "Couldn't get frontend props"
+msgstr "Не вдалося отримати властивості інтерфейсу виведення"
+
+#: lib/libdvbv5/dvb-file.c:1233
+#, c-format
+msgid "Storing Service ID %d: '%s'"
+msgstr "Зберігаємо ідентифікатор служби %d: «%s»"
+
+#: lib/libdvbv5/dvb-file.c:1248
+msgid "reserved"
+msgstr "зарезервовано"
+
+#: lib/libdvbv5/dvb-file.c:1249
+msgid "digital television"
+msgstr "цифрове телебачення"
+
+#: lib/libdvbv5/dvb-file.c:1250
+msgid "digital radio"
+msgstr "цифрове радіо"
+
+#: lib/libdvbv5/dvb-file.c:1251
+msgid "Teletext"
+msgstr "Телетекст"
+
+#: lib/libdvbv5/dvb-file.c:1252
+msgid "NVOD reference"
+msgstr "Еталонне NVOD"
+
+#: lib/libdvbv5/dvb-file.c:1253
+msgid "NVOD time-shifted"
+msgstr "NVOD із часовим зсувом"
+
+#: lib/libdvbv5/dvb-file.c:1254
+msgid "mosaic"
+msgstr "мозаїка"
+
+#: lib/libdvbv5/dvb-file.c:1255
+msgid "PAL coded signal"
+msgstr "Сигнал, закодований у PAL"
+
+#: lib/libdvbv5/dvb-file.c:1256
+msgid "SECAM coded signal"
+msgstr "Сигнал, закодований у SECAM"
+
+#: lib/libdvbv5/dvb-file.c:1257
+msgid "D/D2-MAC"
+msgstr "D/D2-MAC"
+
+#: lib/libdvbv5/dvb-file.c:1258
+msgid "FM Radio"
+msgstr "FM-радіо"
+
+#: lib/libdvbv5/dvb-file.c:1259
+msgid "NTSC coded signal"
+msgstr "Сигнал, закодований у NTSC"
+
+#: lib/libdvbv5/dvb-file.c:1260
+msgid "data broadcast"
+msgstr "трансляція даних"
+
+#: lib/libdvbv5/dvb-file.c:1261
+msgid "user defined"
+msgstr "визначений користувачем"
+
+#: lib/libdvbv5/dvb-file.c:1300
+#, c-format
+msgid "Virtual channel %s, name = %s"
+msgstr "Віртуальний канал %s, назва = %s"
+
+#: lib/libdvbv5/dvb-file.c:1329
+#, c-format
+msgid "Service %s, provider %s: %s"
+msgstr "Служба %s, постачальник даних %s: %s"
+
+#: lib/libdvbv5/dvb-file.c:1342
+#, c-format
+msgid "Storing as channel %s"
+msgstr "Зберігаємо як канал %s"
+
+#: lib/libdvbv5/dvb-file.c:1385
+msgid "WARNING: no SDT table - storing channel(s) without their names"
+msgstr "ПОПЕРЕДЖЕННЯ: немає таблиці SDT — зберігаємо записи каналів без назв"
+
+#: lib/libdvbv5/dvb-file.c:1387
+msgid "WARNING: Some Service IDs are not at the SDT table"
+msgstr ""
+
+#: lib/libdvbv5/dvb-file.c:1416
+#, c-format
+msgid "File format %s is unknown\n"
+msgstr "Невідомий формат файла %s\n"
+
+#: lib/libdvbv5/dvb-file.c:1461
+#, c-format
+msgid "ERROR: Delivery system %s is not known. Valid values are:\n"
+msgstr ""
+"ПОМИЛКА: невідома система надання даних %s. Коректними значеннями є такі:\n"
+
+#: lib/libdvbv5/dvb-file.c:1505
+#, c-format
+msgid "Currently, VDR format is supported only for output\n"
+msgstr ""
+"У поточній версії підтримку формату VDR передбачено лише для виведення "
+"даних\n"
+
+#: lib/libdvbv5/dvb-file.c:1508
+#, c-format
+msgid "Format is not supported\n"
+msgstr "Підтримки цього формату не передбачено\n"
+
+#: lib/libdvbv5/dvb-log.c:46
+msgid "EMERG    "
+msgstr "АВАРІЯ   "
+
+#: lib/libdvbv5/dvb-log.c:47
+msgid "ALERT    "
+msgstr "УВАГА    "
+
+#: lib/libdvbv5/dvb-log.c:48
+msgid "CRITICAL "
+msgstr "НЕБЕЗП.  "
+
+#: lib/libdvbv5/dvb-log.c:49
+msgid "ERROR    "
+msgstr "ПОМИЛКА  "
+
+#: lib/libdvbv5/dvb-log.c:50
+msgid "WARNING  "
+msgstr "ПОПЕРЕДЖ."
+
+#: lib/libdvbv5/dvb-log.c:53
+msgid "DEBUG    "
+msgstr "ДІАГН.   "
+
+#: lib/libdvbv5/dvb-sat.c:56
+msgid "Universal, Europe"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:73
+msgid "Expressvu, North America"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:86
+msgid "Astra 1E, European Universal Ku (extended)"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:103
+msgid "Standard"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:116
+msgid "L10700"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:129
+msgid "L10750"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:142
+msgid "L11300"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:155
+msgid "Astra"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:168
+msgid "Invacom QPH-031"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:191
+msgid "Big Dish - Monopoint LNBf"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:204
+msgid "Big Dish - Multipoint LNBf"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:219
+msgid "DishPro LNBf"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:234
+msgid "Japan 110BS/CS LNBf"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:247
+msgid "BrasilSat Stacked"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:262
+msgid "BrasilSat Oi"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:279
+msgid "BrasilSat Amazonas 1/2 - 3 Oscilators"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:290
+msgid "BrasilSat Amazonas 1/2 - 2 Oscilators"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:301
+msgid "BrasilSat custom GVT"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:326
+msgid "Freqs     : "
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:327
+msgid "Horizontal: "
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:328
+msgid "Vertical  : "
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:329
+msgid "Left      : "
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:330
+msgid "Right     : "
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:341
+msgid " (bandstacking)"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:344
+#, fuzzy, c-format
+msgid "\t%s%d to %d MHz, LO: %d MHz\n"
+msgstr "\tвід %d до %d МГц"
+
+#: lib/libdvbv5/dvb-sat.c:527
+msgid "DiSEqC disabled. Can't tune using SCR/Unicable."
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:572
+msgid "sending diseq failed"
+msgstr "помилка під час спроби надіслати diseq"
+
+#: lib/libdvbv5/dvb-sat.c:609
+#, c-format
+msgid "frequency %.2fMHz (tune freq %.2fMHz) is out of LNBf %s range"
+msgstr ""
+
+#: lib/libdvbv5/dvb-sat.c:629
+msgid "Need a LNBf to work"
+msgstr "Для роботи потрібна LNBf"
+
+#: lib/libdvbv5/dvb-scan.c:159
+#, c-format
+msgid "%s: table memory pointer not filled"
+msgstr "%s: вказівник у пам’яті таблиці не заповнено"
+
+#: lib/libdvbv5/dvb-scan.c:166 lib/libdvbv5/dvb-scan.c:214
+#: lib/libdvbv5/dvb-scan.c:238 lib/libdvbv5/dvb-scan.c:323
+#, c-format
+msgid "%s: out of memory"
+msgstr "%s: недостатньо пам’яті"
+
+#: lib/libdvbv5/dvb-scan.c:199
+#, fuzzy, c-format
+msgid "%s: received table 0x%02x, extension ID 0x%04x, section %d/%d"
+msgstr "%s: отримано таблицю 0x%02x, ід. TS 0x%04x, розділ %d/%d"
+
+#: lib/libdvbv5/dvb-scan.c:203
+#, c-format
+msgid "%s: couldn't match ID %d at the active section filters"
+msgstr ""
+"%s: не вдалося знайти відповідник ідентифікатора %d з активними фільтрами "
+"сеансу"
+
+#: lib/libdvbv5/dvb-scan.c:255
+#, fuzzy, c-format
+msgid "%s: section repeated on table 0x%02x, extension ID 0x%04x: done"
+msgstr "%s: отримано таблицю 0x%02x, ід. TS 0x%04x, розділ %d/%d"
+
+#: lib/libdvbv5/dvb-scan.c:273
+#, c-format
+msgid "%s: no initializer for table %d"
+msgstr "%s: немає ініціалізатора таблиці %d"
+
+#: lib/libdvbv5/dvb-scan.c:279
+#, fuzzy, c-format
+msgid "%s: table 0x%02x, extension ID 0x%04x: done"
+msgstr "%s: отримано таблицю 0x%02x, ід. TS 0x%04x, розділ %d/%d"
+
+#: lib/libdvbv5/dvb-scan.c:318
+#, c-format
+msgid "%s: waiting for table ID 0x%02x, program ID 0x%02x"
+msgstr ""
+"%s: очікуємо на ідентифікатор таблиці 0x%02x, ідентифікатор програми 0x%02x"
+
+#: lib/libdvbv5/dvb-scan.c:344
+#, c-format
+msgid "%s: no data read on section filter"
+msgstr "%s: з фільтром розділів не прочитано жодних даних"
+
+#: lib/libdvbv5/dvb-scan.c:351
+#, c-format
+msgid "%s: buf returned an empty buffer"
+msgstr "%s: buf повернуто порожній буфер"
+
+#: lib/libdvbv5/dvb-scan.c:356
+msgid "dvb_read_section: read error"
+msgstr "dvb_read_section: помилка читання"
+
+#: lib/libdvbv5/dvb-scan.c:363
+#, c-format
+msgid "%s: crc error"
+msgstr "%s: помилка під час перевірки контрольної суми"
+
+#: lib/libdvbv5/dvb-scan.c:506
+msgid "error while waiting for PAT table"
+msgstr "помилка під час очікування на таблицю PAT"
+
+#: lib/libdvbv5/dvb-scan.c:522
+msgid "error while waiting for VCT table"
+msgstr "помилка під час очікування на таблицю VCT"
+
+#: lib/libdvbv5/dvb-scan.c:536
+#, c-format
+msgid "Program #%d is network PID: 0x%04x"
+msgstr "Програма %d має мережевий PID: 0x%04x"
+
+#: lib/libdvbv5/dvb-scan.c:542
+#, c-format
+msgid "Program #%d ID 0x%04x, service ID 0x%04x"
+msgstr "Програма %d має ідентифікатор 0x%04x, ідентифікатор служби 0x%04x"
+
+#: lib/libdvbv5/dvb-scan.c:553
+#, c-format
+msgid "error while reading the PMT table for service 0x%04x"
+msgstr "помилка під час читання таблиці PMT для служби 0x%04x"
+
+#: lib/libdvbv5/dvb-scan.c:573 lib/libdvbv5/dvb-scan.c:602
+msgid "error while reading the NIT table"
+msgstr "помилка під час читання таблиці NIT"
+
+#: lib/libdvbv5/dvb-scan.c:586 lib/libdvbv5/dvb-scan.c:613
+msgid "error while reading the SDT table"
+msgstr "помилка під час читання таблиці SDT"
+
+#: lib/libdvbv5/dvb-scan.c:594
+msgid "Parsing other NIT/SDT"
+msgstr "Обробляємо інші NIT/SDT"
+
+#: lib/libdvbv5/dvb-scan.c:659
+msgid "dvb_fe_set_parms failed"
+msgstr "помилка dvb_fe_set_parms"
+
+#: lib/libdvbv5/dvb-scan.c:754
+msgid ""
+"Cannot calc frequency shift. Either bandwidth/symbol-rate is unavailable "
+"(yet)."
+msgstr ""
+"Не вдалося обчислити зсув частоти. Не доступні дані щодо частотного "
+"діапазону або частоти символів (ще не доступні)."
+
+#: lib/libdvbv5/dvb-scan.c:836
+msgid "not enough memory for a new scanning frequency/TS"
+msgstr "недостатньо пам’яті для нової частоти/TS сканування"
+
+#: lib/libdvbv5/dvb-scan.c:865
+#, c-format
+msgid "New transponder/channel found: #%d: %d"
+msgstr "Виявлено новий передавач або канал: %d: %d"
+
+#: lib/libdvbv5/dvb-scan.c:874
+#, c-format
+msgid "BUG: Couldn't add %d to the scan frequency list."
+msgstr "ВАДА: не вдалося додати %d до списку частот сканування."
+
+#: lib/libdvbv5/dvb-scan.c:1216
+msgid "Transponders detection not implemented for this standard yet."
+msgstr "Для цього стандарту виявлення передавачів ще не реалізовано."
+
+#: lib/libdvbv5/dvb-vdr-format.c:288
+#, c-format
+msgid ""
+"WARNING: entry %d: delivery system %d not supported on this format. skipping "
+"entry\n"
+msgstr ""
+"ПОПЕРЕДЖЕННЯ: запис %d: для цього формату не передбачено підтримки системи "
+"надання даних %d. Пропускаємо запис.\n"
+
+#: lib/libdvbv5/dvb-vdr-format.c:296
+#, c-format
+msgid "WARNING: entry %d: channel name not found. skipping entry\n"
+msgstr "ПОПЕРЕДЖЕННЯ: запис %d: не знайдено назви каналу. Пропускаємо запис.\n"
+
+#: lib/libdvbv5/dvb-vdr-format.c:303
+#, c-format
+msgid "WARNING: entry %d: frequency not found. skipping entry\n"
+msgstr ""
+"ПОПЕРЕДЖЕННЯ: запис %d: не знайдено даних щодо частоти. Пропускаємо запис.\n"
+
+#: lib/libdvbv5/dvb-vdr-format.c:389
+#, c-format
+msgid "symbol rate not found"
+msgstr "не виявлено частоти символів"
+
+#~ msgid "asprintf error"
+#~ msgstr "помилка asprintf"
+
+#~ msgid "DiSEqC VOLTAGE: OFF"
+#~ msgstr "ЖИВЛЕННЯ DiSEqC: ВИМКН."
+
+#~ msgid "DiSEqC VOLTAGE: %s"
+#~ msgstr "ЖИВЛЕННЯ DiSEqC: %s"
+
+#~ msgid " and %d to %d MHz"
+#~ msgstr " і від %d до %d МГц"
+
+#~ msgid "Dual"
+#~ msgstr "Подвійний"
+
+#~ msgid "Single"
+#~ msgstr "Одинарний"
+
+#~ msgid "Bandstacking, LO POL_R %d MHZ, LO POL_L %d MHz\n"
+#~ msgstr "Створюємо стос діапазонів, LO POL_R %d МГц, LO POL_L %d МГц\n"
+
+#~ msgid "IF = lowband %d MHz, highband %d MHz\n"
+#~ msgstr "IF = нижня частота %d МГц, верхня частота %d МГц\n"
+
+#~ msgid "%s: section repeated, reading done"
+#~ msgstr "%s: повторено розділ, виконано читання"
