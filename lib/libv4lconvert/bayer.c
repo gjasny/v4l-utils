@@ -631,3 +631,24 @@ void v4lconvert_bayer_to_yuv420(const unsigned char *bayer, unsigned char *yuv,
 	v4lconvert_border_bayer_line_to_y(bayer + stride, bayer, ydst, width,
 			!start_with_green, !blue_line);
 }
+
+void v4lconvert_bayer10p_to_bayer8(unsigned char *bayer10p,
+		unsigned char *bayer8, int width, int height)
+{
+	unsigned long i;
+	unsigned long len = width * height;
+
+	for (i = 0; i < len ; i += 4) {
+		/*
+		 * Do not use a second loop, hoping that
+		 * a clever compiler with understand the
+		 * pattern and will optimize it.
+		 */
+		bayer8[0] = bayer10p[0];
+		bayer8[1] = bayer10p[1];
+		bayer8[2] = bayer10p[2];
+		bayer8[3] = bayer10p[3];
+		bayer10p += 5;
+		bayer8 += 4;
+	}
+}

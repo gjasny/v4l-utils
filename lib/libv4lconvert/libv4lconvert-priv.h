@@ -264,6 +264,10 @@ void v4lconvert_bayer_to_bgr24(const unsigned char *bayer,
 void v4lconvert_bayer_to_yuv420(const unsigned char *bayer, unsigned char *yuv,
 		int width, int height, const unsigned int stride, unsigned int src_pixfmt, int yvu);
 
+
+void v4lconvert_bayer10p_to_bayer8(unsigned char *bayer10p,
+		unsigned char *bayer8, int width, int height);
+
 void v4lconvert_hm12_to_rgb24(const unsigned char *src,
 		unsigned char *dst, int width, int height);
 
