@@ -963,7 +963,7 @@ static struct {
 	{ "470bg", V4L2_COLORSPACE_470_SYSTEM_BG },
 	{ "jpeg", V4L2_COLORSPACE_JPEG },
 	{ "srgb", V4L2_COLORSPACE_SRGB },
-	{ "adobergb", V4L2_COLORSPACE_ADOBERGB },
+	{ "oprgb", V4L2_COLORSPACE_OPRGB },
 	{ "bt2020", V4L2_COLORSPACE_BT2020 },
 	{ "dcip3", V4L2_COLORSPACE_DCI_P3 },
 };
@@ -999,7 +999,7 @@ static struct {
 	{ "default", V4L2_XFER_FUNC_DEFAULT },
 	{ "709", V4L2_XFER_FUNC_709 },
 	{ "srgb", V4L2_XFER_FUNC_SRGB },
-	{ "adobergb", V4L2_XFER_FUNC_ADOBERGB },
+	{ "oprgb", V4L2_XFER_FUNC_OPRGB },
 	{ "smpte240m", V4L2_XFER_FUNC_SMPTE240M },
 	{ "smpte2084", V4L2_XFER_FUNC_SMPTE2084 },
 	{ "dcip3", V4L2_XFER_FUNC_DCI_P3 },

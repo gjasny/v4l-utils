@@ -71,7 +71,7 @@ const mat3 colconv = mat3(
 	 1.0440, 0,  0,
 	-0.0440, 1, -0.0119,
 	 0,      0,  1.0119
-#elif COLSP == V4L2_COLORSPACE_ADOBERGB
+#elif COLSP == V4L2_COLORSPACE_OPRGB
 	 1.3982832, 0,  0,
 	-0.3982831, 1, -0.0429383,
 	 0,         0,  1.0429383
@@ -334,7 +334,7 @@ void main()
 
 	rgb = vec3(XFER(rgb.r), XFER(rgb.g), XFER(rgb.b));
 
-#elif XFERFUNC == V4L2_XFER_FUNC_ADOBERGB
+#elif XFERFUNC == V4L2_XFER_FUNC_OPRGB
 
 	// Avoid powers of negative numbers
 	rgb = max(rgb, vec3(0.0));
@@ -374,7 +374,7 @@ void main()
 // specified as linear RGB.
 #if COLSP == V4L2_COLORSPACE_SMPTE170M || COLSP == V4L2_COLORSPACE_SMPTE240M || \
     COLSP == V4L2_COLORSPACE_470_SYSTEM_M || COLSP == V4L2_COLORSPACE_470_SYSTEM_BG || \
-    COLSP == V4L2_COLORSPACE_ADOBERGB || COLSP == V4L2_COLORSPACE_DCI_P3 || \
+    COLSP == V4L2_COLORSPACE_OPRGB || COLSP == V4L2_COLORSPACE_DCI_P3 || \
     COLSP == V4L2_COLORSPACE_BT2020
 	rgb = colconv * rgb;
 #endif

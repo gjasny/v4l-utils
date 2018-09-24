@@ -244,8 +244,8 @@ std::string colorspace2s(int val)
 		return "JPEG";
 	case V4L2_COLORSPACE_SRGB:
 		return "sRGB";
-	case V4L2_COLORSPACE_ADOBERGB:
-		return "AdobeRGB";
+	case V4L2_COLORSPACE_OPRGB:
+		return "opRGB";
 	case V4L2_COLORSPACE_DCI_P3:
 		return "DCI-P3";
 	case V4L2_COLORSPACE_BT2020:
@@ -266,8 +266,8 @@ std::string xfer_func2s(int val)
 		return "Rec. 709";
 	case V4L2_XFER_FUNC_SRGB:
 		return "sRGB";
-	case V4L2_XFER_FUNC_ADOBERGB:
-		return "AdobeRGB";
+	case V4L2_XFER_FUNC_OPRGB:
+		return "opRGB";
 	case V4L2_XFER_FUNC_DCI_P3:
 		return "DCI-P3";
 	case V4L2_XFER_FUNC_SMPTE2084:

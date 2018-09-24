@@ -107,8 +107,8 @@ static __u8 toggle_colorimetry_flags1;
 #define COLORIMETRY_XVYCC601		(1 << 0)
 #define COLORIMETRY_XVYCC709		(1 << 1)
 #define COLORIMETRY_SYCC		(1 << 2)
-#define COLORIMETRY_ADOBEYCC		(1 << 3)
-#define COLORIMETRY_ADOBERGB		(1 << 4)
+#define COLORIMETRY_OPYCC		(1 << 3)
+#define COLORIMETRY_OPRGB		(1 << 4)
 #define COLORIMETRY_BT2020CYCC		(1 << 5)
 #define COLORIMETRY_BT2020YCC		(1 << 6)
 #define COLORIMETRY_BT2020RGB		(1 << 7)
@@ -195,8 +195,8 @@ void edid_usage(void)
 	       "                     xvycc-601: toggle the xvYCC 601 bit.\n"
 	       "                     xvycc-709: toggle the xvYCC 709 bit.\n"
 	       "                     sycc: toggle the sYCC 601 bit.\n"
-	       "                     adobe-ycc: toggle the Adobe YCC 601 bit.\n"
-	       "                     adobe-rgb: toggle the Adobe RGB bit.\n"
+	       "                     opycc: toggle the opYCC 601 bit.\n"
+	       "                     oprgb: toggle the opRGB bit.\n"
 	       "                     bt2020-rgb: toggle the BT2020 RGB bit.\n"
 	       "                     bt2020-ycc: toggle the BT2020 YCC bit.\n"
 	       "                     bt2020-cycc: toggle the BT2020 cYCC bit.\n"
@@ -687,8 +687,8 @@ static void print_edid_mods(const struct v4l2_edid *e)
 		printf("  xvYCC 601:               %s\n", (v1 & COLORIMETRY_XVYCC601) ? "yes" : "no");
 		printf("  xvYCC 709:               %s\n", (v1 & COLORIMETRY_XVYCC709) ? "yes" : "no");
 		printf("  sYCC:                    %s\n", (v1 & COLORIMETRY_SYCC) ? "yes" : "no");
-		printf("  AdobeRGB:                %s\n", (v1 & COLORIMETRY_ADOBERGB) ? "yes" : "no");
-		printf("  AdobeYCC:                %s\n", (v1 & COLORIMETRY_ADOBEYCC) ? "yes" : "no");
+		printf("  opRGB:                   %s\n", (v1 & COLORIMETRY_OPRGB) ? "yes" : "no");
+		printf("  opYCC:                   %s\n", (v1 & COLORIMETRY_OPYCC) ? "yes" : "no");
 		printf("  BT.2020 RGB:             %s\n", (v1 & COLORIMETRY_BT2020RGB) ? "yes" : "no");
 		printf("  BT.2020 YCC:             %s\n", (v1 & COLORIMETRY_BT2020YCC) ? "yes" : "no");
 		printf("  BT.2020 cYCC:            %s\n", (v1 & COLORIMETRY_BT2020CYCC) ? "yes" : "no");
@@ -948,8 +948,8 @@ void edid_cmd(int ch, char *optarg)
 				"xvycc-601",
 				"xvycc-709",
 				"sycc",
-				"adobe-ycc",
-				"adobe-rgb",
+				"opycc",
+				"oprgb",
 				"bt2020-rgb",
 				"bt2020-ycc",
 				"bt2020-cycc",
@@ -1077,8 +1077,8 @@ void edid_cmd(int ch, char *optarg)
 			case 24: toggle_colorimetry_flags1 |= COLORIMETRY_XVYCC601; break;
 			case 25: toggle_colorimetry_flags1 |= COLORIMETRY_XVYCC709; break;
 			case 26: toggle_colorimetry_flags1 |= COLORIMETRY_SYCC; break;
-			case 27: toggle_colorimetry_flags1 |= COLORIMETRY_ADOBEYCC; break;
-			case 28: toggle_colorimetry_flags1 |= COLORIMETRY_ADOBERGB; break;
+			case 27: toggle_colorimetry_flags1 |= COLORIMETRY_OPYCC; break;
+			case 28: toggle_colorimetry_flags1 |= COLORIMETRY_OPRGB; break;
 			case 29: toggle_colorimetry_flags1 |= COLORIMETRY_BT2020RGB; break;
 			case 30: toggle_colorimetry_flags1 |= COLORIMETRY_BT2020YCC; break;
 			case 31: toggle_colorimetry_flags1 |= COLORIMETRY_BT2020CYCC; break;

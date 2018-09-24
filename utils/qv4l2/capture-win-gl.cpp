@@ -198,7 +198,7 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned xfer_func,
 	case V4L2_COLORSPACE_470_SYSTEM_M:
 	case V4L2_COLORSPACE_470_SYSTEM_BG:
 	case V4L2_COLORSPACE_SRGB:
-	case V4L2_COLORSPACE_ADOBERGB:
+	case V4L2_COLORSPACE_OPRGB:
 	case V4L2_COLORSPACE_BT2020:
 	case V4L2_COLORSPACE_DCI_P3:
 		break;
@@ -790,7 +790,7 @@ QString CaptureWinGLEngine::codeTransformToLinear()
 			       "   b = (b < -0.04045) ? -pow((-b + 0.055) / 1.055, 2.4) : "
 			       "        ((b <= 0.04045) ? b / 12.92 : pow((b + 0.055) / 1.055, 2.4));"
 			       );
-	case V4L2_XFER_FUNC_ADOBERGB:
+	case V4L2_XFER_FUNC_OPRGB:
 		return QString("   r = pow(max(r, 0.0), 2.19921875);"
 			       "   g = pow(max(g, 0.0), 2.19921875);"
 			       "   b = pow(max(b, 0.0), 2.19921875);");
@@ -857,7 +857,7 @@ QString CaptureWinGLEngine::codeColorspaceConversion()
 			       "   float bb = -0.0119 * g + 1.0119 * b;"
 			       "   r = rr; b = bb;"
 			       );
-	case V4L2_COLORSPACE_ADOBERGB:
+	case V4L2_COLORSPACE_OPRGB:
 		return QString("   float rr =  1.3982832 * r - 0.3982831 * g;"
 			       "   float bb = -0.0429383 * g + 1.0429383 * b;"
 			       "   r = rr; b = bb;"

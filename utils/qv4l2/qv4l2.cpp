@@ -190,7 +190,7 @@ ApplicationWindow::ApplicationWindow() :
 	addSubMenuItem(grp, menu, "SMPTE 170M", V4L2_COLORSPACE_SMPTE170M);
 	addSubMenuItem(grp, menu, "Rec. 709", V4L2_COLORSPACE_REC709);
 	addSubMenuItem(grp, menu, "sRGB", V4L2_COLORSPACE_SRGB);
-	addSubMenuItem(grp, menu, "Adobe RGB", V4L2_COLORSPACE_ADOBERGB);
+	addSubMenuItem(grp, menu, "opRGB", V4L2_COLORSPACE_OPRGB);
 	addSubMenuItem(grp, menu, "BT.2020", V4L2_COLORSPACE_BT2020);
 	addSubMenuItem(grp, menu, "DCI-P3", V4L2_COLORSPACE_DCI_P3);
 	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_COLORSPACE_SMPTE240M);
@@ -205,7 +205,7 @@ ApplicationWindow::ApplicationWindow() :
 	addSubMenuItem(grp, menu, "No Override", -1)->setChecked(true);
 	addSubMenuItem(grp, menu, "Rec. 709", V4L2_XFER_FUNC_709);
 	addSubMenuItem(grp, menu, "sRGB", V4L2_XFER_FUNC_SRGB);
-	addSubMenuItem(grp, menu, "Adobe RGB", V4L2_XFER_FUNC_ADOBERGB);
+	addSubMenuItem(grp, menu, "opRGB", V4L2_XFER_FUNC_OPRGB);
 	addSubMenuItem(grp, menu, "DCI-P3", V4L2_XFER_FUNC_DCI_P3);
 	addSubMenuItem(grp, menu, "SMPTE 2084", V4L2_XFER_FUNC_SMPTE2084);
 	addSubMenuItem(grp, menu, "SMPTE 240M", V4L2_XFER_FUNC_SMPTE240M);

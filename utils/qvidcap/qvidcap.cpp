@@ -41,10 +41,10 @@ static void usage()
 	       "  -C, --colorspace=<c>     override colorspace\n"
 	       "                           <c> can be one of the following colorspaces:\n"
 	       "                               smpte170m, smpte240m, rec709, 470m, 470bg, jpeg, srgb,\n"
-	       "                               adobergb, bt2020, dcip3\n"
+	       "                               oprgb, bt2020, dcip3\n"
 	       "  -X, --xfer-func=<x>      override transfer function\n"
 	       "                           <x> can be one of the following transfer functions:\n"
-	       "                               default, 709, srgb, adobergb, smpte240m, smpte2084, dcip3, none\n"
+	       "                               default, 709, srgb, oprgb, smpte240m, smpte2084, dcip3, none\n"
 	       "  -Y, --ycbcr-enc=<y>      override Y'CbCr encoding\n"
 	       "                           <y> can be one of the following Y'CbCr encodings:\n"
 	       "                               default, 601, 709, xv601, xv709, bt2020, bt2020c, smpte240m\n"
@@ -158,7 +158,7 @@ static __u32 parse_colorspace(const QString &s)
 	if (s == "470bg") return V4L2_COLORSPACE_470_SYSTEM_BG;
 	if (s == "jpeg") return V4L2_COLORSPACE_JPEG;
 	if (s == "srgb") return V4L2_COLORSPACE_SRGB;
-	if (s == "adobergb") return V4L2_COLORSPACE_ADOBERGB;
+	if (s == "oprgb") return V4L2_COLORSPACE_OPRGB;
 	if (s == "bt2020") return V4L2_COLORSPACE_BT2020;
 	if (s == "dcip3") return V4L2_COLORSPACE_DCI_P3;
 	return 0;
@@ -170,7 +170,7 @@ static __u32 parse_xfer_func(const QString &s)
 	if (s == "smpte240m") return V4L2_XFER_FUNC_SMPTE240M;
 	if (s == "rec709") return V4L2_XFER_FUNC_709;
 	if (s == "srgb") return V4L2_XFER_FUNC_SRGB;
-	if (s == "adobergb") return V4L2_XFER_FUNC_ADOBERGB;
+	if (s == "oprgb") return V4L2_XFER_FUNC_OPRGB;
 	if (s == "dcip3") return V4L2_XFER_FUNC_DCI_P3;
 	if (s == "smpte2084") return V4L2_XFER_FUNC_SMPTE2084;
 	if (s == "none") return V4L2_XFER_FUNC_NONE;
