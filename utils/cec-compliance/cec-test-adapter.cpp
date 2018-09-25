@@ -990,6 +990,7 @@ int testLostMsgs(struct node *node)
 
 	bool got_busy = false;
 	unsigned xfer_cnt = 0;
+	unsigned tx_queue_depth = 0;
 
 	do {
 		int res;
@@ -998,13 +999,16 @@ int testLostMsgs(struct node *node)
 			res = doioctl(node, CEC_TRANSMIT, &msg);
 
 			fail_on_test(res && res != EBUSY);
+			if (!res)
+				xfer_cnt++;
+
 			if (res == EBUSY) {
 				struct timeval tv = { 0, 10000 }; // 10 ms
 
 				select(0, NULL, NULL, NULL, &tv);
 				got_busy = true;
 			} else if (!got_busy) {
-				xfer_cnt++;
+				tx_queue_depth++;
 			}
 		} while (res == EBUSY);
 		// Alternate between wait for reply and just transmit
@@ -1016,21 +1020,22 @@ int testLostMsgs(struct node *node)
 
 	/*
 	 * No more than max 18 transmits can be queued, but one message
-	 * might be finished transmitting before the queue fills up, so
+	 * might finish transmitting before the queue fills up, so
 	 * check for 19 instead.
 	 */
-	fail_on_test(xfer_cnt == 0 || xfer_cnt > 19);
+	fail_on_test(tx_queue_depth == 0 || tx_queue_depth > 19);
 
 	unsigned pending_msgs = 0;
 
 	fcntl(node->fd, F_SETFL, fcntl(node->fd, F_GETFL) & ~O_NONBLOCK);
-	msg.timeout = 1000;
+	msg.timeout = 3000;
 
 	while (!doioctl(node, CEC_RECEIVE, &msg))
 		pending_msgs++;
 
 	/* Should be at least the size of the internal message queue */
 	fail_on_test(pending_msgs < 18 * 3);
+	fail_on_test(pending_msgs >= xfer_cnt || pending_msgs < xfer_cnt - 2);
 
 	mode = CEC_MODE_INITIATOR;
 	fail_on_test(doioctl(node, CEC_S_MODE, &mode));
@@ -1090,6 +1095,7 @@ void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
 	printf("\tCEC_G/S_MODE: %s\n", ok(testModes(&node, &node2)));
 	close(node2.fd);
 	doioctl(&node, CEC_S_MODE, &mode);
+
 	printf("\tCEC_EVENT_LOST_MSGS: %s\n", ok(testLostMsgs(&node)));
 	fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
 }
