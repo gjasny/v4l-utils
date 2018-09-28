@@ -329,9 +329,8 @@ static int testColorspace(__u32 pixelformat, __u32 colorspace, __u32 ycbcr_enc, 
 {
 	fail_on_test(!colorspace);
 	fail_on_test(colorspace == V4L2_COLORSPACE_BT878);
-	fail_on_test(pixelformat == V4L2_PIX_FMT_JPEG &&
-		     colorspace != V4L2_COLORSPACE_JPEG);
 	fail_on_test(pixelformat != V4L2_PIX_FMT_JPEG &&
+		     pixelformat != V4L2_PIX_FMT_MJPEG &&
 		     colorspace == V4L2_COLORSPACE_JPEG);
 	fail_on_test(colorspace >= 0xff);
 	fail_on_test(ycbcr_enc >= 0xff);
