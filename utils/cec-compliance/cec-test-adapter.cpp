@@ -1033,9 +1033,13 @@ int testLostMsgs(struct node *node)
 	while (!doioctl(node, CEC_RECEIVE, &msg))
 		pending_msgs++;
 
-	/* Should be at least the size of the internal message queue */
-	fail_on_test(pending_msgs < 18 * 3);
-	fail_on_test(pending_msgs >= xfer_cnt || pending_msgs < xfer_cnt - 2);
+	/*
+	 * Should be at least the size of the internal message queue and
+	 * close to the number of transmitted messages.
+	 */
+	if (pending_msgs < 18 * 3 || pending_msgs >= xfer_cnt || pending_msgs < xfer_cnt - 2)
+		return fail("There were %d pending messages for %d transmitted messages\n",
+			    pending_msgs, xfer_cnt);
 
 	mode = CEC_MODE_INITIATOR;
 	fail_on_test(doioctl(node, CEC_S_MODE, &mode));
