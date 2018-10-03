@@ -1037,7 +1037,7 @@ int testLostMsgs(struct node *node)
 	 * Should be at least the size of the internal message queue and
 	 * close to the number of transmitted messages.
 	 */
-	if (pending_msgs < 18 * 3 || pending_msgs >= xfer_cnt || pending_msgs < xfer_cnt - 2)
+	if (pending_msgs < 18 * 3 || pending_msgs > xfer_cnt || pending_msgs < xfer_cnt - 2)
 		return fail("There were %d pending messages for %d transmitted messages\n",
 			    pending_msgs, xfer_cnt);
 
