@@ -1760,7 +1760,7 @@ int main(int argc, char **argv)
 	__u32 monitor_time = 0;
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	__u16 phys_addr;
-	__u8 from = 0, to = 0;
+	__u8 from = 0, to = 0, first_to = 0xff;
 	__u8 dev_features = 0;
 	__u8 rc_tv = 0;
 	__u8 rc_src = 0;
@@ -1819,6 +1819,8 @@ int main(int argc, char **argv)
 			break;
 		case OptTo:
 			to = strtoul(optarg, NULL, 0) & 0xf;
+			if (first_to == 0xff)
+				first_to = to;
 			break;
 		case OptTimeout:
 			timeout = strtoul(optarg, NULL, 0);
@@ -2130,6 +2132,7 @@ int main(int argc, char **argv)
 				break;
 			opt = opt2message[ch - OptMessages];
 			parse_msg_args(msg, reply, opt, ch);
+			msg.msg[0] = cec_msg_is_broadcast(&msg) ? 0xf : (options[OptTo] ? to : 0xf0);
 			msgs.push_back(msg);
 			break;
 		}
@@ -2402,10 +2405,12 @@ int main(int argc, char **argv)
 			fprintf(stderr, "attempting to send message without --to\n");
 			exit(1);
 		}
-		printf("\nTransmit from %s to %s (%d to %d):\n", la2s(from),
-		       (cec_msg_is_broadcast(&msg) || to == 0xf) ? "all" : la2s(to),
-		       from, cec_msg_is_broadcast(&msg) ? 0xf : to);
-		msg.msg[0] |= (from << 4) | (cec_msg_is_broadcast(&msg) ? 0xf : to);
+		if (msg.msg[0] == 0xf0)
+			msg.msg[0] = first_to;
+		msg.msg[0] |= from << 4;
+		to = msg.msg[0] & 0xf;
+		printf("\nTransmit from %s to %s (%d to %d):\n",
+		       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
 		msg.flags = options[OptReplyToFollowers] ? CEC_MSG_FL_REPLY_TO_FOLLOWERS : 0;
 		msg.timeout = msg.reply ? timeout : 0;
 		log_msg(&msg);
