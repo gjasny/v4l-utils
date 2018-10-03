@@ -51,6 +51,9 @@ for the reply. This option applies to the messages following this option.
 It acts as a toggle, so after you specify it a second time then the following
 messages will wait for a reply again. 
 .TP
+\fB\-N\fR, \fB\-\-non\-blocking\fR
+Transmit messages in non-blocking mode.
+.TP
 \fB\-t\fR, \fB\-\-to\fR \fI<la>\fR
 Send the message to the given logical address (0-15).
 .TP

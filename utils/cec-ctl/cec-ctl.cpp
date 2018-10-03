@@ -642,6 +642,7 @@ enum Option {
 	OptMonitor = 'm',
 	OptMonitorAll = 'M',
 	OptToggleNoReply = 'n',
+	OptNonBlocking = 'N',
 	OptOsdName = 'o',
 	OptPhysAddr = 'p',
 	OptPoll = 'P',
@@ -746,6 +747,7 @@ static struct option long_options[] = {
 	{ "store-pin", required_argument, 0, OptStorePin },
 	{ "analyze-pin", required_argument, 0, OptAnalyzePin },
 	{ "no-reply", no_argument, 0, OptToggleNoReply },
+	{ "non-blocking", no_argument, 0, OptNonBlocking },
 	{ "logical-address", no_argument, 0, OptLogicalAddress },
 	{ "logical-addresses", no_argument, 0, OptLogicalAddresses },
 	{ "to", required_argument, 0, OptTo },
@@ -804,6 +806,7 @@ static void usage(void)
 	       "  -L, --logical-addresses  Show all configured logical addresses\n"
 	       "  -C, --clear              Clear all logical addresses\n"
 	       "  -n, --no-reply           Toggle 'don't wait for a reply'\n"
+	       "  -N, --non-blocking       Transmit messages in non-blocking mode\n"
 	       "  -t, --to <la>            Send message to the given logical address\n"
 	       "  -f, --from <la>          Send message from the given logical address\n"
 	       "                           By default use the first assigned logical address\n"
@@ -2397,6 +2400,9 @@ int main(int argc, char **argv)
 		printf("\n");
 	}
 
+	if (options[OptNonBlocking])
+		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) | O_NONBLOCK);
+
 	for (msg_vec::iterator iter = msgs.begin(); iter != msgs.end(); ++iter) {
 		struct cec_msg msg = *iter;
 
@@ -2434,6 +2440,9 @@ int main(int argc, char **argv)
 			printf("\t%s\n", status2s(msg).c_str());
 	}
 	fflush(stdout);
+
+	if (options[OptNonBlocking])
+		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
 
 skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll] ||
