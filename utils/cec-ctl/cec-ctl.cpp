@@ -641,7 +641,7 @@ enum Option {
 	OptLogicalAddresses = 'L',
 	OptMonitor = 'm',
 	OptMonitorAll = 'M',
-	OptNoReply = 'n',
+	OptToggleNoReply = 'n',
 	OptOsdName = 'o',
 	OptPhysAddr = 'p',
 	OptPoll = 'P',
@@ -745,7 +745,7 @@ static struct option long_options[] = {
 	{ "ignore", required_argument, 0, OptIgnore },
 	{ "store-pin", required_argument, 0, OptStorePin },
 	{ "analyze-pin", required_argument, 0, OptAnalyzePin },
-	{ "no-reply", no_argument, 0, OptNoReply },
+	{ "no-reply", no_argument, 0, OptToggleNoReply },
 	{ "logical-address", no_argument, 0, OptLogicalAddress },
 	{ "logical-addresses", no_argument, 0, OptLogicalAddresses },
 	{ "to", required_argument, 0, OptTo },
@@ -803,7 +803,7 @@ static void usage(void)
 	       "  -l, --logical-address    Show first configured logical address\n"
 	       "  -L, --logical-addresses  Show all configured logical addresses\n"
 	       "  -C, --clear              Clear all logical addresses\n"
-	       "  -n, --no-reply           Don't wait for a reply\n"
+	       "  -n, --no-reply           Toggle 'don't wait for a reply'\n"
 	       "  -t, --to <la>            Send message to the given logical address\n"
 	       "  -f, --from <la>          Send message from the given logical address\n"
 	       "                           By default use the first assigned logical address\n"
@@ -1872,8 +1872,8 @@ int main(int argc, char **argv)
 		case OptAnalyzePin:
 			analyze_pin = optarg;
 			break;
-		case OptNoReply:
-			reply = false;
+		case OptToggleNoReply:
+			reply = !reply;
 			break;
 		case OptPhysAddr:
 			phys_addr = parse_phys_addr(optarg);

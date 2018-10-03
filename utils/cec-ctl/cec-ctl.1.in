@@ -47,7 +47,9 @@ Clear all logical addresses, leaving the CEC device unconfigured.
 \fB\-n\fR, \fB\-\-no\-reply\fR
 By default when sending a CEC message that expects a reply this utility will
 wait for that reply. With this option it will just send it without waiting
-for the reply.
+for the reply. This option applies to the messages following this option.
+It acts as a toggle, so after you specify it a second time then the following
+messages will wait for a reply again. 
 .TP
 \fB\-t\fR, \fB\-\-to\fR \fI<la>\fR
 Send the message to the given logical address (0-15).
