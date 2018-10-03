@@ -1811,7 +1811,6 @@ int main(int argc, char **argv)
 				device = newdev;
 			}
 			break;
-		case OptWallClock:
 		case OptVerbose:
 			verbose = true;
 			break;
@@ -2160,6 +2159,9 @@ int main(int argc, char **argv)
 		analyze(analyze_pin);
 		return 0;
 	}
+
+	if (options[OptWallClock] && !options[OptMonitorPin])
+		verbose = true;
 
 	if (store_pin && !strcmp(store_pin, "-"))
 		options[OptSkipInfo] = 1;
