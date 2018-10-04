@@ -1797,8 +1797,8 @@ int main(int argc, char **argv)
 		if (ch == -1)
 			break;
 
-		if (ch > OptMessages || ch == OptPoll)
-			cec_msg_init(&msg, 0, 0);
+		cec_msg_init(&msg, 0, 0);
+		msg.msg[0] = cec_msg_is_broadcast(&msg) ? 0xf : (options[OptTo] ? to : 0xf0);
 		options[(int)ch] = 1;
 
 		switch (ch) {
@@ -2135,7 +2135,6 @@ int main(int argc, char **argv)
 				break;
 			opt = opt2message[ch - OptMessages];
 			parse_msg_args(msg, reply, opt, ch);
-			msg.msg[0] = cec_msg_is_broadcast(&msg) ? 0xf : (options[OptTo] ? to : 0xf0);
 			msgs.push_back(msg);
 			break;
 		}
