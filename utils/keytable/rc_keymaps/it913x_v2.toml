@@ -1,7 +1,7 @@
 [[protocols]]
 name = "it913x_v2"
 protocol = "nec"
-variant = "nec"
+variant = "necx"
 [protocols.scancodes]
 0x807f12 = "KEY_POWER2"
 0x807f1a = "KEY_VIDEO"

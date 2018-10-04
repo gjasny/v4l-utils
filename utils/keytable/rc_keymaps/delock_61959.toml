@@ -1,7 +1,7 @@
 [[protocols]]
 name = "delock_61959"
 protocol = "nec"
-variant = "nec"
+variant = "necx"
 [protocols.scancodes]
 0x866b16 = "KEY_POWER2"
 0x866b0c = "KEY_POWER"

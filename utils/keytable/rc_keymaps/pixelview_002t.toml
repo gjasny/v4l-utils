@@ -1,7 +1,7 @@
 [[protocols]]
 name = "pixelview_002t"
 protocol = "nec"
-variant = "nec"
+variant = "necx"
 [protocols.scancodes]
 0x866b13 = "KEY_MUTE"
 0x866b12 = "KEY_POWER2"

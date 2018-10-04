@@ -1,7 +1,7 @@
 [[protocols]]
 name = "pixelview_mk12"
 protocol = "nec"
-variant = "nec"
+variant = "necx"
 [protocols.scancodes]
 0x866b03 = "KEY_TUNER"
 0x866b1e = "KEY_POWER2"

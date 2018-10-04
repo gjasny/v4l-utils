@@ -1,7 +1,7 @@
 [[protocols]]
 name = "reddo"
 protocol = "nec"
-variant = "nec"
+variant = "necx"
 [protocols.scancodes]
 0x61d601 = "KEY_EPG"
 0x61d602 = "KEY_3"

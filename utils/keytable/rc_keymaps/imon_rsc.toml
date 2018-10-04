@@ -1,7 +1,7 @@
 [[protocols]]
 name = "imon_rsc"
 protocol = "nec"
-variant = "nec"
+variant = "necx"
 [protocols.scancodes]
 0x801010 = "KEY_EXIT"
 0x80102f = "KEY_POWER"

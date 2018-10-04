@@ -1,7 +1,7 @@
 [[protocols]]
 name = "tivo"
 protocol = "nec"
-variant = "nec"
+variant = "nec32"
 [protocols.scancodes]
 0x3085f009 = "KEY_MEDIA"
 0x3085e010 = "KEY_POWER2"
