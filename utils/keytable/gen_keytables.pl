@@ -122,6 +122,9 @@ sub parse_file($$)
 
 				# NECX protocol variant uses nec decoder
 				$type =~ s/^NECX$/NEC/;
+
+				# NEC32 protocol variant uses nec decoder
+				$type =~ s/^NEC32$/NEC/;
 				$type = lc $type;
 			}
 			next;
