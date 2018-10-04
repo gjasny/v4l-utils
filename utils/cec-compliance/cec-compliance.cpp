@@ -658,10 +658,11 @@ int cec_named_ioctl(struct node *node, const char *name,
 			printf("\n\t\t\tRx Timestamp: %s Approximate response time: %u ms",
 			       ts2s(msg->rx_ts).c_str(),
 			       response_time_ms(msg));
-		if (msg->tx_status & (CEC_TX_STATUS_ARB_LOST | CEC_TX_STATUS_NACK |
-				      CEC_TX_STATUS_LOW_DRIVE | CEC_TX_STATUS_ERROR))
+		if (msg->tx_status & ~CEC_TX_STATUS_OK)
 			printf("\n\t\t\tStatus: %s", status2s(*msg).c_str());
 		printf("\n");
+		if (msg->tx_status & CEC_TX_STATUS_TIMEOUT)
+			warn("CEC_TX_STATUS_TIMEOUT was set, should not happen.\n");
 	}
 
 	if (!retval && request == CEC_RECEIVE && show_info)
