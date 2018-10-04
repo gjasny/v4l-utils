@@ -21,6 +21,7 @@ const char *vendor2s(unsigned vendor);
 std::string all_dev_types2s(unsigned types);
 std::string rc_src_prof2s(unsigned prof, const std::string &prefix);
 std::string dev_feat2s(unsigned feat, const std::string &prefix);
+std::string status2s(const struct cec_msg &msg);
 
 void cec_driver_info(const struct cec_caps &caps,
 		     const struct cec_log_addrs &laddrs, __u16 phys_addr);

@@ -279,6 +279,74 @@ std::string dev_feat2s(unsigned feat, const std::string &prefix)
 	return s;
 }
 
+static std::string tx_status2s(const struct cec_msg &msg)
+{
+	std::string s;
+	char num[4];
+	unsigned stat = msg.tx_status;
+
+	if (stat)
+		s += "Tx";
+	if (stat & CEC_TX_STATUS_OK)
+		s += ", OK";
+	if (stat & CEC_TX_STATUS_ARB_LOST) {
+		sprintf(num, "%u", msg.tx_arb_lost_cnt);
+		s += ", Arbitration Lost";
+		if (msg.tx_arb_lost_cnt)
+			s += " (" + std::string(num) + ")";
+	}
+	if (stat & CEC_TX_STATUS_NACK) {
+		sprintf(num, "%u", msg.tx_nack_cnt);
+		s += ", Not Acknowledged";
+		if (msg.tx_nack_cnt)
+			s += " (" + std::string(num) + ")";
+	}
+	if (stat & CEC_TX_STATUS_LOW_DRIVE) {
+		sprintf(num, "%u", msg.tx_low_drive_cnt);
+		s += ", Low Drive";
+		if (msg.tx_low_drive_cnt)
+			s += " (" + std::string(num) + ")";
+	}
+	if (stat & CEC_TX_STATUS_ERROR) {
+		sprintf(num, "%u", msg.tx_error_cnt);
+		s += ", Error";
+		if (msg.tx_error_cnt)
+			s += " (" + std::string(num) + ")";
+	}
+	if (stat & CEC_TX_STATUS_MAX_RETRIES)
+		s += ", Max Retries";
+	return s;
+}
+
+static std::string rx_status2s(unsigned stat)
+{
+	std::string s;
+
+	if (stat)
+		s += "Rx";
+	if (stat & CEC_RX_STATUS_OK)
+		s += ", OK";
+	if (stat & CEC_RX_STATUS_TIMEOUT)
+		s += ", Timeout";
+	if (stat & CEC_RX_STATUS_FEATURE_ABORT)
+		s += ", Feature Abort";
+	return s;
+}
+
+std::string status2s(const struct cec_msg &msg)
+{
+	std::string s;
+
+	if (msg.tx_status)
+		s = tx_status2s(msg);
+	if (msg.rx_status) {
+		if (!s.empty())
+			s += ", ";
+		s += rx_status2s(msg.rx_status);
+	}
+	return s;
+}
+
 void cec_driver_info(const struct cec_caps &caps,
 		     const struct cec_log_addrs &laddrs, __u16 phys_addr)
 {
