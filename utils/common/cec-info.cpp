@@ -313,6 +313,10 @@ static std::string tx_status2s(const struct cec_msg &msg)
 		if (msg.tx_error_cnt)
 			s += " (" + std::string(num) + ")";
 	}
+	if (stat & CEC_TX_STATUS_ABORTED)
+		s += ", Aborted";
+	if (stat & CEC_TX_STATUS_TIMEOUT)
+		s += ", Timeout";
 	if (stat & CEC_TX_STATUS_MAX_RETRIES)
 		s += ", Max Retries";
 	return s;
@@ -330,6 +334,8 @@ static std::string rx_status2s(unsigned stat)
 		s += ", Timeout";
 	if (stat & CEC_RX_STATUS_FEATURE_ABORT)
 		s += ", Feature Abort";
+	if (stat & CEC_RX_STATUS_ABORTED)
+		s += ", Aborted";
 	return s;
 }
 
