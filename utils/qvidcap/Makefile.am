@@ -1,7 +1,7 @@
 bin_PROGRAMS = qvidcap
 man_MANS = qvidcap.1
 
-qvidcap_SOURCES = qvidcap.cpp capture-win-gl.cpp capture-win-gl.h \
+qvidcap_SOURCES = qvidcap.cpp qvidcap.h capture-win-gl.cpp capture-win-gl.h \
   v4l2-tpg-colors.c v4l2-tpg-core.c v4l-stream.c v4l2-info.cpp codec-fwht.c codec-v4l2-fwht.c
 nodist_qvidcap_SOURCES = qrc_qvidcap.cpp moc_capture-win-gl.cpp v4l2-convert.h
 qvidcap_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la ../libv4l2util/libv4l2util.la \
