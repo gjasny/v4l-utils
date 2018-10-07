@@ -277,16 +277,16 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 	addSubMenuItem(grp, menu, "Window Scrollbars", CAPTURE_GL_WIN_SCROLLBAR)->setChecked(false);
 	connect(grp, SIGNAL(triggered(QAction *)), this, SLOT(windowScalingChanged(QAction *)));
 
-	m_resolutionOverride = new QAction("Override resolution");
+	m_resolutionOverride = new QAction("Override resolution", this);
 	m_resolutionOverride->setCheckable(true);
 	connect(m_resolutionOverride, SIGNAL(triggered(bool)),
 		this, SLOT(resolutionOverrideChanged(bool)));
 
-	m_enterFullScreen = new QAction("Enter fullscreen (F)");
+	m_enterFullScreen = new QAction("Enter fullscreen (F)", this);
 	connect(m_enterFullScreen, SIGNAL(triggered(bool)),
 		this, SLOT(toggleFullScreen(bool)));
 
-	m_exitFullScreen = new QAction("Exit fullscreen (F or Esc)");
+	m_exitFullScreen = new QAction("Exit fullscreen (F or Esc)", this);
 	connect(m_exitFullScreen, SIGNAL(triggered(bool)),
 		this, SLOT(toggleFullScreen(bool)));
 }
