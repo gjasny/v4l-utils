@@ -1308,6 +1308,11 @@ int main(int argc, char **argv)
 	printf("Find remote devices:\n");
 	printf("\tPolling: %s\n", ok(poll_remote_devs(&node)));
 
+	if (!node.remote_la_mask) {
+		printf("\nFAIL: No remote devices found, exiting.\n");
+		exit(1);
+	}
+
 	if (options[OptTestAdapter])
 		testAdapter(node, laddrs, device);
 	printf("\n");
