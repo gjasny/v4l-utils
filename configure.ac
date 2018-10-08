@@ -518,6 +518,7 @@ AM_COND_IF([WITH_DVBV5_REMOTE], [USE_DVBV5_REMOTE="yes"
 AM_COND_IF([WITH_DYN_LIBV4L], [USE_DYN_LIBV4L="yes"], [USE_DYN_LIBV4L="no"])
 AM_COND_IF([WITH_V4LUTILS], [USE_V4LUTILS="yes"], [USE_V4LUTILS="no"])
 AM_COND_IF([WITH_QV4L2], [USE_QV4L2="yes"], [USE_QV4L2="no"])
+AM_COND_IF([WITH_QVIDCAP], [USE_QVIDCAP="yes"], [USE_QVIDCAP="no"])
 AM_COND_IF([WITH_V4L_PLUGINS], [USE_V4L_PLUGINS="yes"
 				AC_DEFINE([HAVE_V4L_PLUGINS], [1], [V4L plugin support enabled])],
 				[USE_V4L_PLUGINS="no"])
@@ -566,6 +567,7 @@ compile time options summary
     dvbv5-daemon               : $USE_DVBV5_REMOTE
     v4lutils                   : $USE_V4LUTILS
     qv4l2                      : $USE_QV4L2
+    qvidcap                    : $USE_QVIDCAP
     v4l2-ctl uses libv4l       : $USE_V4L2_CTL_LIBV4L
     v4l2-compliance uses libv4l: $USE_V4L2_COMPLIANCE_LIBV4L
 EOF
