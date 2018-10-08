@@ -874,6 +874,8 @@ retry:
 
 static int poll_remote_devs(struct node *node)
 {
+	unsigned retries = 0;
+
 	node->remote_la_mask = 0;
 	if (!(node->caps & CEC_CAP_TRANSMIT))
 		return 0;
@@ -882,10 +884,21 @@ static int poll_remote_devs(struct node *node)
 		struct cec_msg msg;
 
 		cec_msg_init(&msg, node->log_addr[0], i);
-
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
-		if (msg.tx_status & CEC_TX_STATUS_OK)
+
+		if (msg.tx_status & CEC_TX_STATUS_OK) {
 			node->remote_la_mask |= 1 << i;
+			retries = 0;
+		} else if (msg.tx_status & CEC_TX_STATUS_NACK) {
+			retries = 0;
+		} else {
+			if (!(msg.tx_status & CEC_TX_STATUS_ARB_LOST))
+				warn("retry poll due to unexpected status: %s\n",
+				     status2s(msg).c_str());
+			retries++;
+			fail_on_test(retries > 10);
+			i--;
+		}
 	}
 	return 0;
 }
