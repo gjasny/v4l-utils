@@ -369,6 +369,10 @@ bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
 		V4L2_PIX_FMT_SGBRG12,
 		V4L2_PIX_FMT_SGRBG12,
 		V4L2_PIX_FMT_SRGGB12,
+		V4L2_PIX_FMT_SBGGR16,
+		V4L2_PIX_FMT_SGBRG16,
+		V4L2_PIX_FMT_SGRBG16,
+		V4L2_PIX_FMT_SRGGB16,
 		V4L2_PIX_FMT_YUYV,
 		V4L2_PIX_FMT_YVYU,
 		V4L2_PIX_FMT_UYVY,
@@ -487,6 +491,10 @@ void CaptureWinGLEngine::changeShader()
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SRGGB12:
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 		shader_Bayer(m_frameFormat);
 		break;
 
@@ -635,6 +643,10 @@ void CaptureWinGLEngine::paintGL()
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SRGGB12:
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 		render_Bayer(m_frameFormat);
 		break;
 
@@ -1874,6 +1886,10 @@ void CaptureWinGLEngine::shader_Bayer(__u32 format)
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SRGGB12:
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 		glTexImage2D(GL_TEXTURE_2D, 0, m_glRed16, m_frameWidth, m_frameHeight, 0,
 			     m_glRed, GL_UNSIGNED_SHORT, NULL);
 		break;
@@ -1908,6 +1924,7 @@ void CaptureWinGLEngine::shader_Bayer(__u32 format)
 	case V4L2_PIX_FMT_SBGGR8:
 	case V4L2_PIX_FMT_SBGGR10:
 	case V4L2_PIX_FMT_SBGGR12:
+	case V4L2_PIX_FMT_SBGGR16:
 		codeHead +=	   "   r = texture2D(tex, vec2(cell.x + texl_w, cell.y + texl_h)).r;"
 				   "   g = texture2D(tex, vec2((cell.y == xy.y) ? cell.x + texl_w : cell.x, xy.y)).r;"
 				   "   b = texture2D(tex, cell).r;";
@@ -1915,6 +1932,7 @@ void CaptureWinGLEngine::shader_Bayer(__u32 format)
 	case V4L2_PIX_FMT_SGBRG8:
 	case V4L2_PIX_FMT_SGBRG10:
 	case V4L2_PIX_FMT_SGBRG12:
+	case V4L2_PIX_FMT_SGBRG16:
 		codeHead +=	   "   r = texture2D(tex, vec2(cell.x, cell.y + texl_h)).r;"
 				   "   g = texture2D(tex, vec2((cell.y == xy.y) ? cell.x : cell.x + texl_w, xy.y)).r;"
 				   "   b = texture2D(tex, vec2(cell.x + texl_w, cell.y)).r;";
@@ -1922,6 +1940,7 @@ void CaptureWinGLEngine::shader_Bayer(__u32 format)
 	case V4L2_PIX_FMT_SGRBG8:
 	case V4L2_PIX_FMT_SGRBG10:
 	case V4L2_PIX_FMT_SGRBG12:
+	case V4L2_PIX_FMT_SGRBG16:
 		codeHead +=	   "   r = texture2D(tex, vec2(cell.x + texl_w, cell.y)).r;"
 				   "   g = texture2D(tex, vec2((cell.y == xy.y) ? cell.x : cell.x + texl_w, xy.y)).r;"
 				   "   b = texture2D(tex, vec2(cell.x, cell.y + texl_h)).r;";
@@ -1929,6 +1948,7 @@ void CaptureWinGLEngine::shader_Bayer(__u32 format)
 	case V4L2_PIX_FMT_SRGGB8:
 	case V4L2_PIX_FMT_SRGGB10:
 	case V4L2_PIX_FMT_SRGGB12:
+	case V4L2_PIX_FMT_SRGGB16:
 		codeHead +=	   "   b = texture2D(tex, vec2(cell.x + texl_w, cell.y + texl_h)).r;"
 				   "   g = texture2D(tex, vec2((cell.y == xy.y) ? cell.x + texl_w : cell.x, xy.y)).r;"
 				   "   r = texture2D(tex, cell).r;";
@@ -2005,6 +2025,10 @@ void CaptureWinGLEngine::render_Bayer(__u32 format)
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SRGGB12:
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
 				m_glRed, GL_UNSIGNED_SHORT, m_frameData);
 		break;
