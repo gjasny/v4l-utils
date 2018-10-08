@@ -86,6 +86,10 @@ const __u32 formats[] = {
 	V4L2_PIX_FMT_SGBRG12,
 	V4L2_PIX_FMT_SGRBG12,
 	V4L2_PIX_FMT_SRGGB12,
+	V4L2_PIX_FMT_SBGGR16,
+	V4L2_PIX_FMT_SGBRG16,
+	V4L2_PIX_FMT_SGRBG16,
+	V4L2_PIX_FMT_SRGGB16,
 	V4L2_PIX_FMT_HSV24,
 	V4L2_PIX_FMT_HSV32,
 	V4L2_PIX_FMT_GREY,
@@ -842,6 +846,10 @@ bool CaptureGLWin::updateV4LFormat(const cv4l_fmt &fmt)
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SRGGB12:
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 		m_is_bayer = true;
 		/* fall through */
 	case V4L2_PIX_FMT_GREY:
@@ -1625,6 +1633,10 @@ void CaptureGLWin::paintGL()
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SRGGB12:
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 		render_Bayer(m_v4l_fmt.g_pixelformat());
 		break;
 
@@ -1815,6 +1827,10 @@ static const struct define defines[] = {
 	DEF(V4L2_PIX_FMT_SGBRG12),
 	DEF(V4L2_PIX_FMT_SGRBG12),
 	DEF(V4L2_PIX_FMT_SRGGB12),
+	DEF(V4L2_PIX_FMT_SBGGR16),
+	DEF(V4L2_PIX_FMT_SGBRG16),
+	DEF(V4L2_PIX_FMT_SGRBG16),
+	DEF(V4L2_PIX_FMT_SRGGB16),
 	DEF(V4L2_PIX_FMT_HSV24),
 	DEF(V4L2_PIX_FMT_HSV32),
 	DEF(V4L2_PIX_FMT_GREY),
@@ -2025,6 +2041,10 @@ void CaptureGLWin::changeShader()
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SRGGB12:
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 		shader_Bayer();
 		break;
 
@@ -2272,6 +2292,10 @@ void CaptureGLWin::shader_Bayer()
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SRGGB12:
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
 			     GL_RED_INTEGER, GL_UNSIGNED_SHORT, NULL);
 		break;
@@ -2611,6 +2635,10 @@ void CaptureGLWin::render_Bayer(__u32 format)
 	case V4L2_PIX_FMT_SGBRG12:
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SRGGB12:
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 				GL_RED_INTEGER, GL_UNSIGNED_SHORT, m_curData[0]);
 		break;

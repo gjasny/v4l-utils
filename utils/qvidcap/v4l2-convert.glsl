@@ -5,6 +5,8 @@
     PIXFMT == V4L2_PIX_FMT_SGRBG10 || PIXFMT == V4L2_PIX_FMT_SRGGB10 || \
     PIXFMT == V4L2_PIX_FMT_SBGGR12 || PIXFMT == V4L2_PIX_FMT_SGBRG12 || \
     PIXFMT == V4L2_PIX_FMT_SGRBG12 || PIXFMT == V4L2_PIX_FMT_SRGGB12 || \
+    PIXFMT == V4L2_PIX_FMT_SBGGR16 || PIXFMT == V4L2_PIX_FMT_SGBRG16 || \
+    PIXFMT == V4L2_PIX_FMT_SGRBG16 || PIXFMT == V4L2_PIX_FMT_SRGGB16 || \
     PIXFMT == V4L2_PIX_FMT_GREY || PIXFMT == V4L2_PIX_FMT_Y16 || \
     PIXFMT == V4L2_PIX_FMT_Y16_BE || PIXFMT == V4L2_PIX_FMT_Z16 || \
     PIXFMT == V4L2_PIX_FMT_Y10 || PIXFMT == V4L2_PIX_FMT_Y12
@@ -112,25 +114,25 @@ void main()
 #if IS_RGB
 
 // Bayer pixel formats
-#if PIXFMT == V4L2_PIX_FMT_SBGGR8 || PIXFMT == V4L2_PIX_FMT_SBGGR10 || PIXFMT == V4L2_PIX_FMT_SBGGR12
+#if PIXFMT == V4L2_PIX_FMT_SBGGR8 || PIXFMT == V4L2_PIX_FMT_SBGGR10 || PIXFMT == V4L2_PIX_FMT_SBGGR12 || PIXFMT == V4L2_PIX_FMT_SBGGR16
 	uvec4 urgb;
 	vec2 cell = vec2(xeven ? xy.x : xy.x - texl_w, yeven ? xy.y : xy.y - texl_h);
 	urgb.r = texture(tex, vec2(cell.x + texl_w, cell.y + texl_h)).r;
 	urgb.g = texture(tex, vec2((cell.y == xy.y) ? cell.x + texl_w : cell.x, xy.y)).r;
 	urgb.b = texture(tex, cell).r;
-#elif PIXFMT == V4L2_PIX_FMT_SGBRG8 || PIXFMT == V4L2_PIX_FMT_SGBRG10 || PIXFMT == V4L2_PIX_FMT_SGBRG12
+#elif PIXFMT == V4L2_PIX_FMT_SGBRG8 || PIXFMT == V4L2_PIX_FMT_SGBRG10 || PIXFMT == V4L2_PIX_FMT_SGBRG12 || PIXFMT == V4L2_PIX_FMT_SGBRG16
 	uvec4 urgb;
 	vec2 cell = vec2(xeven ? xy.x : xy.x - texl_w, yeven ? xy.y : xy.y - texl_h);
 	urgb.r = texture(tex, vec2(cell.x, cell.y + texl_h)).r;
 	urgb.g = texture(tex, vec2((cell.y == xy.y) ? cell.x : cell.x + texl_w, xy.y)).r;
 	urgb.b = texture(tex, vec2(cell.x + texl_w, cell.y)).r;
-#elif PIXFMT == V4L2_PIX_FMT_SGRBG8 || PIXFMT == V4L2_PIX_FMT_SGRBG10 || PIXFMT == V4L2_PIX_FMT_SGRBG12
+#elif PIXFMT == V4L2_PIX_FMT_SGRBG8 || PIXFMT == V4L2_PIX_FMT_SGRBG10 || PIXFMT == V4L2_PIX_FMT_SGRBG12 || PIXFMT == V4L2_PIX_FMT_SGRBG16
 	uvec4 urgb;
 	vec2 cell = vec2(xeven ? xy.x : xy.x - texl_w, yeven ? xy.y : xy.y - texl_h);
 	urgb.r = texture(tex, vec2(cell.x + texl_w, cell.y)).r;
 	urgb.g = texture(tex, vec2((cell.y == xy.y) ? cell.x : cell.x + texl_w, xy.y)).r;
 	urgb.b = texture(tex, vec2(cell.x, cell.y + texl_h)).r;
-#elif PIXFMT == V4L2_PIX_FMT_SRGGB8 || PIXFMT == V4L2_PIX_FMT_SRGGB10 || PIXFMT == V4L2_PIX_FMT_SRGGB12
+#elif PIXFMT == V4L2_PIX_FMT_SRGGB8 || PIXFMT == V4L2_PIX_FMT_SRGGB10 || PIXFMT == V4L2_PIX_FMT_SRGGB12 || PIXFMT == V4L2_PIX_FMT_SRGGB16
 	uvec4 urgb;
 	vec2 cell = vec2(xeven ? xy.x : xy.x - texl_w, yeven ? xy.y : xy.y - texl_h);
 	urgb.b = texture(tex, vec2(cell.x + texl_w, cell.y + texl_h)).r;
@@ -192,6 +194,9 @@ void main()
 #elif PIXFMT == V4L2_PIX_FMT_SBGGR12 || PIXFMT == V4L2_PIX_FMT_SGBRG12 || \
       PIXFMT == V4L2_PIX_FMT_SGRBG12 || PIXFMT == V4L2_PIX_FMT_SRGGB12
 	rgb = vec3(urgb) / 4095.0;
+#elif PIXFMT == V4L2_PIX_FMT_SBGGR16 || PIXFMT == V4L2_PIX_FMT_SGBRG16 || \
+      PIXFMT == V4L2_PIX_FMT_SGRBG16 || PIXFMT == V4L2_PIX_FMT_SRGGB16
+	rgb = vec3(urgb) / 65535.0;
 #endif
 
 #if QUANT == V4L2_QUANTIZATION_LIM_RANGE
