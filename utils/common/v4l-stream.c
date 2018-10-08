@@ -51,6 +51,9 @@ unsigned rle_calc_bpl(unsigned bpl, __u32 pixelformat)
 	case V4L2_PIX_FMT_SGRBG12:
 	case V4L2_PIX_FMT_SRGGB12:
 	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 		return 2 * bpl;
 	default:
 		return bpl;
