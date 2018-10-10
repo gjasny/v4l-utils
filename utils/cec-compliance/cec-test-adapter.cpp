@@ -1025,25 +1025,35 @@ int testLostMsgs(struct node *node)
 	 */
 	fail_on_test(tx_queue_depth == 0 || tx_queue_depth > 19);
 
-	unsigned pending_msgs = 0;
+	unsigned pending_tx_msgs = 0;
+	unsigned pending_tx_timed_out_msgs = 0;
+	unsigned pending_rx_msgs = 0;
 
 	fcntl(node->fd, F_SETFL, fcntl(node->fd, F_GETFL) & ~O_NONBLOCK);
 	msg.timeout = 3000;
 
-	while (!doioctl(node, CEC_RECEIVE, &msg))
-		pending_msgs++;
+	while (!doioctl(node, CEC_RECEIVE, &msg)) {
+		if (!msg.sequence)
+			pending_rx_msgs++;
+		else if (msg.tx_status & CEC_TX_STATUS_TIMEOUT)
+			pending_tx_timed_out_msgs++;
+		else
+			pending_tx_msgs++;
+	}
+
+	unsigned pending_msgs = pending_tx_msgs + pending_tx_timed_out_msgs +
+				pending_rx_msgs;
 
 	/*
 	 * Should be at least the size of the internal message queue and
-	 * close to the number of transmitted messages.
+	 * close to the number of transmitted messages. There should also be
+	 * no timed out transmits.
 	 */
-	if (pending_msgs < 18 * 3 || pending_msgs > xfer_cnt || pending_msgs < xfer_cnt - 2)
-		return fail("There were %d pending messages for %d transmitted messages\n",
-			    pending_msgs, xfer_cnt);
-
-	mode = CEC_MODE_INITIATOR;
-	fail_on_test(doioctl(node, CEC_S_MODE, &mode));
-
+	if (pending_tx_timed_out_msgs || pending_msgs < 18 * 3 ||
+	    pending_msgs > xfer_cnt || pending_msgs < xfer_cnt - 2)
+		return fail("There were %d (tx %d + tx timedout %d + rx %d) pending messages for %d transmitted messages\n",
+			    pending_msgs, pending_tx_msgs, pending_tx_timed_out_msgs,
+			    pending_rx_msgs, xfer_cnt);
 	return 0;
 }
 
@@ -1102,4 +1112,5 @@ void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
 
 	printf("\tCEC_EVENT_LOST_MSGS: %s\n", ok(testLostMsgs(&node)));
 	fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
+	doioctl(&node, CEC_S_MODE, &mode);
 }
