@@ -1307,12 +1307,18 @@ static void show_msg(const cec_msg &msg)
 	log_msg(&msg);
 	if (options[OptShowRaw])
 		log_raw_msg(&msg);
+	std::string status;
+	if ((msg.tx_status & ~CEC_TX_STATUS_OK) ||
+	    (msg.rx_status & ~CEC_RX_STATUS_OK))
+		status = status2s(msg);
 	if (verbose && transmitted)
-		printf("\tSequence: %u Tx Timestamp: %s\n",
-		       msg.sequence, ts2s(msg.tx_ts).c_str());
+		printf("\tSequence: %u Tx Timestamp: %s %s\n",
+		       msg.sequence, ts2s(msg.tx_ts).c_str(),
+		       status.c_str());
 	else if (verbose && !transmitted)
-		printf("\tSequence: %u Rx Timestamp: %s\n",
-		       msg.sequence, ts2s(msg.rx_ts).c_str());
+		printf("\tSequence: %u Rx Timestamp: %s %s\n",
+		       msg.sequence, ts2s(msg.rx_ts).c_str(),
+		       status.c_str());
 }
 
 static void wait_for_msgs(struct node &node, __u32 monitor_time)
