@@ -1025,35 +1025,60 @@ int testLostMsgs(struct node *node)
 	 */
 	fail_on_test(tx_queue_depth == 0 || tx_queue_depth > 19);
 
-	unsigned pending_tx_msgs = 0;
+	unsigned pending_msgs = 0;
+	unsigned pending_tx_ok_msgs = 0;
 	unsigned pending_tx_timed_out_msgs = 0;
+	unsigned pending_tx_arb_lost_msgs = 0;
+	unsigned pending_tx_nack_msgs = 0;
+	unsigned pending_tx_low_drive_msgs = 0;
+	unsigned pending_tx_error_msgs = 0;
 	unsigned pending_rx_msgs = 0;
 
 	fcntl(node->fd, F_SETFL, fcntl(node->fd, F_GETFL) & ~O_NONBLOCK);
 	msg.timeout = 3000;
 
 	while (!doioctl(node, CEC_RECEIVE, &msg)) {
+		pending_msgs++;
 		if (!msg.sequence)
 			pending_rx_msgs++;
 		else if (msg.tx_status & CEC_TX_STATUS_TIMEOUT)
 			pending_tx_timed_out_msgs++;
+		else if (msg.tx_status & CEC_TX_STATUS_OK)
+			pending_tx_ok_msgs++;
+		else if (msg.tx_status & CEC_TX_STATUS_NACK)
+			pending_tx_nack_msgs++;
+		else if (msg.tx_status & CEC_TX_STATUS_ARB_LOST)
+			pending_tx_arb_lost_msgs++;
+		else if (msg.tx_status & CEC_TX_STATUS_LOW_DRIVE)
+			pending_tx_low_drive_msgs++;
 		else
-			pending_tx_msgs++;
+			pending_tx_error_msgs++;
 	}
-
-	unsigned pending_msgs = pending_tx_msgs + pending_tx_timed_out_msgs +
-				pending_rx_msgs;
 
 	/*
 	 * Should be at least the size of the internal message queue and
 	 * close to the number of transmitted messages. There should also be
 	 * no timed out transmits.
 	 */
-	if (pending_tx_timed_out_msgs || pending_msgs < 18 * 3 ||
-	    pending_msgs > xfer_cnt || pending_msgs < xfer_cnt - 2)
-		return fail("There were %d (tx %d + tx timedout %d + rx %d) pending messages for %d transmitted messages\n",
-			    pending_msgs, pending_tx_msgs, pending_tx_timed_out_msgs,
-			    pending_rx_msgs, xfer_cnt);
+	if (pending_tx_error_msgs || pending_tx_timed_out_msgs || pending_msgs < 18 * 3 ||
+	    pending_msgs > xfer_cnt || pending_msgs < xfer_cnt - 2) {
+		if (pending_tx_ok_msgs)
+			printf("\t\tSuccessful transmits: %d\n", pending_tx_ok_msgs);
+		if (pending_tx_nack_msgs)
+			printf("\t\tNACKed transmits: %d\n", pending_tx_nack_msgs);
+		if (pending_tx_timed_out_msgs)
+			printf("\t\tTimed out transmits: %d\n", pending_tx_timed_out_msgs);
+		if (pending_tx_arb_lost_msgs)
+			printf("\t\tArbitration Lost transmits: %d\n", pending_tx_arb_lost_msgs);
+		if (pending_tx_low_drive_msgs)
+			printf("\t\tLow Drive transmits: %d\n", pending_tx_low_drive_msgs);
+		if (pending_tx_error_msgs)
+			printf("\t\tError transmits: %d\n", pending_tx_error_msgs);
+		if (pending_rx_msgs)
+			printf("\t\tReceived messages: %d\n", pending_rx_msgs);
+		return fail("There were %d messages in the receive queue for %d transmits\n",
+			    pending_msgs, xfer_cnt);
+	}
 	return 0;
 }
 
