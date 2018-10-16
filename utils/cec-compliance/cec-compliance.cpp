@@ -651,23 +651,27 @@ int cec_named_ioctl(struct node *node, const char *name,
 		warn("Both OK and MAX_RETRIES were set in tx_status! Applied workaround.\n");
 	}
 
-	if (!retval && request == CEC_TRANSMIT && show_info) {
-		printf("\t\t%s: Sequence: %u Tx Timestamp: %s Length: %u",
-		       opname.c_str(), msg->sequence, ts2s(msg->tx_ts).c_str(), msg->len);
-		if (msg->rx_ts)
-			printf("\n\t\t\tRx Timestamp: %s Approximate response time: %u ms",
-			       ts2s(msg->rx_ts).c_str(),
-			       response_time_ms(msg));
-		if (msg->tx_status & ~CEC_TX_STATUS_OK)
-			printf("\n\t\t\tStatus: %s", status2s(*msg).c_str());
-		printf("\n");
+	if (!retval && show_info &&
+	    (request == CEC_TRANSMIT || request == CEC_RECEIVE)) {
+		printf("\t\t%s: Sequence: %u Length: %u\n",
+		       opname.c_str(), msg->sequence, msg->len);
+		if (msg->tx_ts || msg->rx_ts) {
+			printf("\t\t\t");
+			if (msg->tx_ts)
+				printf("Tx Timestamp: %s ", ts2s(msg->tx_ts).c_str());
+			if (msg->rx_ts)
+				printf("Rx Timestamp: %s", ts2s(msg->rx_ts).c_str());
+			printf("\n");
+			if (msg->tx_ts && msg->rx_ts)
+				printf("\t\t\tApproximate response time: %u ms\n",
+				       response_time_ms(msg));
+		}
+		if ((msg->tx_status & ~CEC_TX_STATUS_OK) ||
+		    (msg->rx_status & ~CEC_RX_STATUS_OK))
+			printf("\t\t\tStatus: %s\n", status2s(*msg).c_str());
 		if (msg->tx_status & CEC_TX_STATUS_TIMEOUT)
 			warn("CEC_TX_STATUS_TIMEOUT was set, should not happen.\n");
 	}
-
-	if (!retval && request == CEC_RECEIVE && show_info)
-		printf("\t\t%s: Sequence: %u Rx Timestamp: %s Length: %u\n",
-		       opname.c_str(), msg->sequence, ts2s(msg->rx_ts).c_str(), msg->len);
 
 	if (!retval) {
 		__u8 la = cec_msg_initiator(msg);
