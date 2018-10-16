@@ -955,11 +955,15 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 	cec_msg_give_device_vendor_id(&msg, true);
 	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tVendor ID                  : ");
-	if (ok)
+	if (ok) {
 		printf("%s\n", status2s(msg).c_str());
-	else
+		node->remote[i].vendor_id = CEC_VENDOR_ID_NONE;
+	} else {
 		printf("0x%02x%02x%02x\n",
 		       msg.msg[2], msg.msg[3], msg.msg[4]);
+		node->remote[i].vendor_id = (msg.msg[2] << 16) |
+			(msg.msg[3] << 8) | msg.msg[4];
+	}
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_give_osd_name(&msg, true);
@@ -968,20 +972,16 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 	if (ok) {
 		printf("%s\n", status2s(msg).c_str());
 	} else {
-		char osd_name[15];
-
-		cec_ops_set_osd_name(&msg, osd_name);
-		printf("'%s'\n", osd_name);
+		cec_ops_set_osd_name(&msg, node->remote[i].osd_name);
+		printf("'%s'\n", node->remote[i].osd_name);
 	}
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_get_menu_language(&msg, true);
 	if (transmit_timeout(node, &msg) && !timed_out_or_abort(&msg)) {
-		char language[4];
-
-		cec_ops_set_menu_language(&msg, language);
-		language[3] = 0;
-		printf("\t\tMenu Language              : %s\n", language);
+		cec_ops_set_menu_language(&msg, node->remote[i].language);
+		printf("\t\tMenu Language              : %s\n",
+		       node->remote[i].language);
 	}
 
 	cec_msg_init(&msg, la, i);
@@ -1019,6 +1019,7 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 			return;
 		node->remote[i].rc_profile = *rc_profile;
 		node->remote[i].dev_features = *dev_features;
+		node->remote[i].all_device_types = all_device_types;
 		node->remote[i].has_arc_rx =
 			(*dev_features & CEC_OP_FEAT_DEV_SOURCE_HAS_ARC_RX) != 0;
 		node->remote[i].has_arc_tx =

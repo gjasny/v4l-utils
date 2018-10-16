@@ -123,9 +123,13 @@ struct remote {
 	bool unrecognized_op[256];
 	unsigned prim_type;
 	__u16 phys_addr;
+	char osd_name[15];
+	char language[4];
 	__u8 cec_version;
 	__u8 rc_profile;
 	__u8 dev_features;
+	__u8 all_device_types;
+	__u32 vendor_id;
 	bool has_osd;
 	bool has_power_status;
 	bool has_image_view_on;
@@ -169,6 +173,7 @@ struct remote_subtest {
 	const char *name;
 	const __u16 la_mask;
 	int (*const test_fn)(struct node *node, unsigned me, unsigned la, bool interactive);
+	bool needs_pa;
 };
 
 #define PRESUMED_OK 1
@@ -383,6 +388,15 @@ void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
 
 // CEC core tests
 int testCore(struct node *node);
+int core_unknown(struct node *node, unsigned me, unsigned la, bool interactive);
+int core_abort(struct node *node, unsigned me, unsigned la, bool interactive);
+int system_info_polling(struct node *node, unsigned me, unsigned la, bool interactive);
+int system_info_phys_addr(struct node *node, unsigned me, unsigned la, bool interactive);
+int system_info_version(struct node *node, unsigned me, unsigned la, bool interactive);
+int system_info_get_menu_lang(struct node *node, unsigned me, unsigned la, bool interactive);
+int system_info_give_features(struct node *node, unsigned me, unsigned la, bool interactive);
+int vendor_specific_commands_id(struct node *node, unsigned me, unsigned la, bool interactive);
+int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool interactive);
 
 // CEC processing
 int testProcessing(struct node *node, unsigned me);

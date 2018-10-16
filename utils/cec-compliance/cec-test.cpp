@@ -32,7 +32,7 @@ struct remote_test {
 
 /* System Information */
 
-static int system_info_polling(struct node *node, unsigned me, unsigned la, bool interactive)
+int system_info_polling(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = { };
 
@@ -50,7 +50,7 @@ static int system_info_polling(struct node *node, unsigned me, unsigned la, bool
 	return 0;
 }
 
-static int system_info_phys_addr(struct node *node, unsigned me, unsigned la, bool interactive)
+int system_info_phys_addr(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = { };
 
@@ -58,11 +58,12 @@ static int system_info_phys_addr(struct node *node, unsigned me, unsigned la, bo
 	cec_msg_give_physical_addr(&msg, true);
 	if (!transmit_timeout(node, &msg) || timed_out_or_abort(&msg))
 		return FAIL_CRITICAL;
-
+	fail_on_test(node->remote[la].phys_addr != ((msg.msg[2] << 8) | msg.msg[3]));
+	fail_on_test(node->remote[la].prim_type != msg.msg[4]);
 	return 0;
 }
 
-static int system_info_version(struct node *node, unsigned me, unsigned la, bool interactive)
+int system_info_version(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = {};
 
@@ -78,11 +79,12 @@ static int system_info_version(struct node *node, unsigned me, unsigned la, bool
 	/* This needs to be kept in sync with newer CEC versions */
 	fail_on_test(msg.msg[2] < CEC_OP_CEC_VERSION_1_3A ||
 		     msg.msg[2] > CEC_OP_CEC_VERSION_2_0);
+	fail_on_test(node->remote[la].cec_version != msg.msg[2]);
 
 	return 0;
 }
 
-static int system_info_get_menu_lang(struct node *node, unsigned me, unsigned la, bool interactive)
+int system_info_get_menu_lang(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = {};
 	char language[4];
@@ -106,7 +108,7 @@ static int system_info_get_menu_lang(struct node *node, unsigned me, unsigned la
 	if (cec_msg_status_is_abort(&msg))
 		return PRESUMED_OK;
 	cec_ops_set_menu_language(&msg, language);
-	language[3] = 0;
+	fail_on_test(strcmp(node->remote[la].language, language));
 
 	return 0;
 }
@@ -126,7 +128,7 @@ static int system_info_set_menu_lang(struct node *node, unsigned me, unsigned la
 	return PRESUMED_OK;
 }
 
-static int system_info_give_features(struct node *node, unsigned me, unsigned la, bool interactive)
+int system_info_give_features(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = { };
 
@@ -165,6 +167,9 @@ static int system_info_give_features(struct node *node, unsigned me, unsigned la
 	if (!cec_has_tv(1 << la) && node->remote[la].has_rec_tv)
 		return fail("Only TVs shall set the Record TV Screen bit\n");
 
+	fail_on_test(node->remote[la].rc_profile != *rc_profile);
+	fail_on_test(node->remote[la].dev_features != *dev_features);
+	fail_on_test(node->remote[la].all_device_types != all_device_types);
 	return 0;
 }
 
@@ -180,7 +185,7 @@ static struct remote_subtest system_info_subtests[] = {
 
 /* Core behavior */
 
-static int core_unknown(struct node *node, unsigned me, unsigned la, bool interactive)
+int core_unknown(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = { };
 	const __u8 unknown_opcode = 0xfe;
@@ -213,7 +218,7 @@ static int core_unknown(struct node *node, unsigned me, unsigned la, bool intera
 	return 0;
 }
 
-static int core_abort(struct node *node, unsigned me, unsigned la, bool interactive)
+int core_abort(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = {};
 
@@ -235,7 +240,7 @@ static struct remote_subtest core_subtests[] = {
 
 /* Vendor Specific Commands */
 
-static int vendor_specific_commands_id(struct node *node, unsigned me, unsigned la, bool interactive)
+int vendor_specific_commands_id(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = {};
 
@@ -248,6 +253,8 @@ static int vendor_specific_commands_id(struct node *node, unsigned me, unsigned 
 		return REFUSED;
 	if (cec_msg_status_is_abort(&msg))
 		return PRESUMED_OK;
+	fail_on_test(node->remote[la].vendor_id !=
+		     (__u32)((msg.msg[2] << 16) | (msg.msg[3] << 8) | msg.msg[4]));
 
 	return 0;
 }
@@ -278,7 +285,7 @@ static int device_osd_transfer_set(struct node *node, unsigned me, unsigned la, 
 	return PRESUMED_OK;
 }
 
-static int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool interactive)
+int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = { };
 
@@ -295,6 +302,9 @@ static int device_osd_transfer_give(struct node *node, unsigned me, unsigned la,
 		return REFUSED;
 	if (cec_msg_status_is_abort(&msg))
 		return PRESUMED_OK;
+	char osd_name[15];
+	cec_ops_set_osd_name(&msg, osd_name);
+	fail_on_test(strcmp(node->remote[la].osd_name, osd_name));
 
 	return 0;
 }
@@ -1410,8 +1420,16 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 	for (unsigned i = 0; i < num_tests; i++) {
 		if ((tests[i].tags & test_tags) != tests[i].tags)
 			continue;
+
 		printf("\t%s:\n", tests[i].name);
 		for (unsigned j = 0; j < tests[i].num_subtests; j++) {
+			if (tests[i].subtests[j].needs_pa) {
+				struct cec_log_addrs laddrs = { };
+				doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+
+				if (node->phys_addr == CEC_PHYS_ADDR_INVALID)
+					continue;
+			}
 			ret = tests[i].subtests[j].test_fn(node, me, la, interactive);
 			if (!(tests[i].subtests[j].la_mask & (1 << la)) && !ret) {
 				printf("\t    %s: OK (Unexpected)\n",
