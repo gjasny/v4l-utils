@@ -959,6 +959,23 @@ int testModes(struct node *node, struct node *node2)
 	return 0;
 }
 
+static void print_sfts(unsigned sft[12], const char *descr)
+{
+	std::string s;
+	char num[20];
+
+	for (unsigned i = 0; i < 12; i++) {
+		if (sft[i] == 0)
+			continue;
+		if (!s.empty())
+			s += ", ";
+		sprintf(num, "%u: %d", i, sft[i]);
+		s += num;
+	}
+	if (!s.empty())
+		printf("\t\t%s: %s\n", descr, s.c_str());
+}
+
 int testLostMsgs(struct node *node)
 {
 	struct cec_msg msg;
@@ -966,6 +983,10 @@ int testLostMsgs(struct node *node)
 	__u8 me = node->log_addr[0];
 	__u8 remote = CEC_LOG_ADDR_INVALID;
 	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
+#define MAX_SFT 11
+	unsigned sft[2][2][MAX_SFT + 1];
+
+	memset(sft, 0, sizeof(sft));
 
 	for (unsigned i = 0; i < 15; i++) {
 		if (node->remote_la_mask & (1 << i)) {
@@ -983,7 +1004,7 @@ int testLostMsgs(struct node *node)
 	// all the CEC_VERSION replies are just ignored.
 	fail_on_test(doioctl(node, CEC_S_MODE, &mode));
 	cec_msg_init(&msg, me, remote);
-	cec_msg_get_cec_version(&msg, true);
+	cec_msg_get_cec_version(&msg, false);
 
 	// flush pending events
 	while (doioctl(node, CEC_DQEVENT, &ev) == 0) { }
@@ -1011,9 +1032,6 @@ int testLostMsgs(struct node *node)
 				tx_queue_depth++;
 			}
 		} while (res == EBUSY);
-		// Alternate between wait for reply and just transmit
-		msg.timeout = msg.timeout ? 0 : 1000;
-		msg.reply = CEC_MSG_CEC_VERSION;
 	} while (doioctl(node, CEC_DQEVENT, &ev));
 	fail_on_test(ev.event != CEC_EVENT_LOST_MSGS);
 	fail_on_test(!got_busy);
@@ -1025,6 +1043,9 @@ int testLostMsgs(struct node *node)
 	 */
 	fail_on_test(tx_queue_depth == 0 || tx_queue_depth > 19);
 
+	if (show_info)
+		printf("\n\t\tFinished transmitting\n\n");
+
 	unsigned pending_msgs = 0;
 	unsigned pending_quick_msgs = 0;
 	unsigned pending_tx_ok_msgs = 0;
@@ -1033,23 +1054,71 @@ int testLostMsgs(struct node *node)
 	unsigned pending_tx_nack_msgs = 0;
 	unsigned pending_tx_low_drive_msgs = 0;
 	unsigned pending_tx_error_msgs = 0;
+	unsigned pending_tx_aborted_msgs = 0;
+	unsigned pending_tx_rx_no_reply_msgs = 0;
+	unsigned pending_tx_rx_ok_msgs = 0;
+	unsigned pending_tx_rx_timed_out_msgs = 0;
+	unsigned pending_tx_rx_feat_abort_msgs = 0;
+	unsigned pending_tx_rx_aborted_msgs = 0;
 	unsigned pending_rx_msgs = 0;
+	unsigned pending_rx_cec_version_msgs = 0;
 	time_t start = time(NULL);
+	__u8 last_init = 0xff;
+	__u64 last_ts = 0;
+	unsigned tx_repeats = 0;
 
 	for (unsigned i = 0; i < 2; i++) {
 		msg.timeout = 3000;
 
 		while (!doioctl(node, CEC_RECEIVE, &msg)) {
+			__u64 ts = msg.tx_ts ? : msg.rx_ts;
+			__u8 initiator = cec_msg_initiator(&msg);
+			__u64 delta = last_ts ? ts - last_ts : 0;
+
+			delta -= msg.len * 24000000ULL + 4500000ULL;
+			unsigned sft_real = (delta + 1200000ULL) / 2400000ULL;
+
+			if (last_ts && sft_real <= MAX_SFT)
+				sft[last_init == me][initiator == me][sft_real]++;
+
+			if (!i && last_ts) {
+				if (last_init == initiator && initiator == me) {
+					tx_repeats++;
+				} else {
+					if (tx_repeats > 2)
+						warn("Too many transmits (%d) without receives\n",
+						     tx_repeats);
+					tx_repeats = 0;
+				}
+			}
+			last_ts = ts;
+			last_init = initiator;
+
 			pending_msgs++;
 			if (i == 0)
 				pending_quick_msgs++;
-			if (!msg.sequence)
+			if (!msg.sequence) {
 				pending_rx_msgs++;
+				if (msg.len == 3 && msg.msg[1] == CEC_MSG_CEC_VERSION)
+					pending_rx_cec_version_msgs++;
+			}
 			else if (msg.tx_status & CEC_TX_STATUS_TIMEOUT)
 				pending_tx_timed_out_msgs++;
-			else if (msg.tx_status & CEC_TX_STATUS_OK)
+			else if (msg.tx_status & CEC_TX_STATUS_ABORTED)
+				pending_tx_aborted_msgs++;
+			else if (msg.tx_status & CEC_TX_STATUS_OK) {
 				pending_tx_ok_msgs++;
-			else if (msg.tx_status & CEC_TX_STATUS_NACK)
+				if (msg.rx_status & CEC_RX_STATUS_OK)
+					pending_tx_rx_ok_msgs++;
+				else if (msg.rx_status & CEC_RX_STATUS_FEATURE_ABORT)
+					pending_tx_rx_feat_abort_msgs++;
+				else if (msg.rx_status & CEC_RX_STATUS_TIMEOUT)
+					pending_tx_rx_timed_out_msgs++;
+				else if (msg.rx_status & CEC_RX_STATUS_ABORTED)
+					pending_tx_rx_aborted_msgs++;
+				else
+					pending_tx_rx_no_reply_msgs++;
+			} else if (msg.tx_status & CEC_TX_STATUS_NACK)
 				pending_tx_nack_msgs++;
 			else if (msg.tx_status & CEC_TX_STATUS_ARB_LOST)
 				pending_tx_arb_lost_msgs++;
@@ -1059,21 +1128,37 @@ int testLostMsgs(struct node *node)
 				pending_tx_error_msgs++;
 		}
 		fcntl(node->fd, F_SETFL, fcntl(node->fd, F_GETFL) & ~O_NONBLOCK);
+		if (!i && show_info)
+			printf("\n\t\tDrained receive queue\n\n");
 	}
 
 	/*
 	 * Should be at least the size of the internal message queue and
 	 * close to the number of transmitted messages. There should also be
-	 * no timed out transmits.
+	 * no timed out or aborted transmits.
 	 */
-	if (pending_tx_error_msgs || pending_tx_timed_out_msgs || pending_msgs < 18 * 3 ||
-	    pending_msgs > xfer_cnt || pending_msgs < xfer_cnt - 2) {
-		if (pending_tx_ok_msgs)
+
+	bool fail_msg = pending_tx_error_msgs || pending_tx_timed_out_msgs || pending_tx_aborted_msgs ||
+			pending_tx_rx_aborted_msgs || pending_quick_msgs < 18 * 3 ||
+			pending_rx_cec_version_msgs > xfer_cnt;
+	bool warn_msg = pending_rx_cec_version_msgs < xfer_cnt - 2;
+
+	if (fail_msg || warn_msg || show_info) {
+		if (show_info)
+			printf("\n");
+		if (pending_tx_ok_msgs) {
 			printf("\t\tSuccessful transmits: %d\n", pending_tx_ok_msgs);
+			printf("\t\t\tReply OK: %d No replies: %d Feature Aborted: %d Timed out: %d Aborted: %d\n",
+			       pending_tx_rx_ok_msgs,
+			       pending_tx_rx_no_reply_msgs, pending_tx_rx_feat_abort_msgs,
+			       pending_tx_rx_timed_out_msgs, pending_tx_rx_aborted_msgs);
+		}
 		if (pending_tx_nack_msgs)
 			printf("\t\tNACKed transmits: %d\n", pending_tx_nack_msgs);
 		if (pending_tx_timed_out_msgs)
 			printf("\t\tTimed out transmits: %d\n", pending_tx_timed_out_msgs);
+		if (pending_tx_aborted_msgs)
+			printf("\t\tAborted transmits: %d\n", pending_tx_aborted_msgs);
 		if (pending_tx_arb_lost_msgs)
 			printf("\t\tArbitration Lost transmits: %d\n", pending_tx_arb_lost_msgs);
 		if (pending_tx_low_drive_msgs)
@@ -1081,14 +1166,23 @@ int testLostMsgs(struct node *node)
 		if (pending_tx_error_msgs)
 			printf("\t\tError transmits: %d\n", pending_tx_error_msgs);
 		if (pending_rx_msgs)
-			printf("\t\tReceived messages: %d\n", pending_rx_msgs);
+			printf("\t\tReceived messages: %d of which %d were CEC_MSG_CEC_VERSION\n",
+			       pending_rx_msgs, pending_rx_cec_version_msgs);
+		print_sfts(sft[1][1], "SFTs for repeating messages (>= 7)");
+		print_sfts(sft[0][1], "SFTs for newly transmitted messages (>= 5)");
+		print_sfts(sft[0][0], "SFTs for repeating remote messages (>= 7)");
+		print_sfts(sft[1][0], "SFTs for newly transmitted remote messages (>= 5)");
 		if (pending_quick_msgs < pending_msgs)
 			printf("\t\tReceived %d messages immediately, and %d over %ld seconds\n",
 			       pending_quick_msgs, pending_msgs - pending_quick_msgs,
 			       time(NULL) - start);
+	}
+	if (fail_msg)
 		return fail("There were %d messages in the receive queue for %d transmits\n",
 			    pending_msgs, xfer_cnt);
-	}
+	if (warn_msg)
+		warn("There were %d CEC_GET_VERSION transmits but only %d CEC_VERSION receives\n",
+		     xfer_cnt, pending_rx_cec_version_msgs);
 	return 0;
 }
 
