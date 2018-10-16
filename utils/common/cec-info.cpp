@@ -122,6 +122,8 @@ const char *vendor2s(unsigned vendor)
 		return "(Sony)";
 	case 0x18c086:
 		return "(Broadcom)";
+	case 0x5cad76:
+		return "(TCL)";
 	case 0x6b746d:
 		return "(Vizio)";
 	case 0x743a65:
