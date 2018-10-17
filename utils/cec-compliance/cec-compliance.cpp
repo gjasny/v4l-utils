@@ -963,10 +963,10 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 		printf("%s\n", status2s(msg).c_str());
 		node->remote[i].vendor_id = CEC_VENDOR_ID_NONE;
 	} else {
-		printf("0x%02x%02x%02x\n",
-		       msg.msg[2], msg.msg[3], msg.msg[4]);
 		node->remote[i].vendor_id = (msg.msg[2] << 16) |
 			(msg.msg[3] << 8) | msg.msg[4];
+		printf("0x%06x %s\n", node->remote[i].vendor_id,
+		       vendor2s(node->remote[i].vendor_id));
 	}
 
 	cec_msg_init(&msg, la, i);
