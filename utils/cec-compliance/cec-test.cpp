@@ -39,11 +39,15 @@ int system_info_polling(struct node *node, unsigned me, unsigned la, bool intera
 	cec_msg_init(&msg, me, la);
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 	if (node->remote_la_mask & (1 << la)) {
-		if (!cec_msg_status_is_ok(&msg))
+		if (!cec_msg_status_is_ok(&msg)) {
+			fail("Polling a valid remote LA failed\n");
 			return FAIL_CRITICAL;
+		}
 	} else {
-		if (cec_msg_status_is_ok(&msg))
+		if (cec_msg_status_is_ok(&msg)) {
+			fail("Polling an invalid remote LA was successful\n");
 			return FAIL_CRITICAL;
+		}
 		return NOTSUPPORTED;
 	}
 
@@ -56,8 +60,10 @@ int system_info_phys_addr(struct node *node, unsigned me, unsigned la, bool inte
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_physical_addr(&msg, true);
-	if (!transmit_timeout(node, &msg) || timed_out_or_abort(&msg))
+	if (!transmit_timeout(node, &msg) || timed_out_or_abort(&msg)) {
+		fail("Could not get the remote physical address\n");
 		return FAIL_CRITICAL;
+	}
 	fail_on_test(node->remote[la].phys_addr != ((msg.msg[2] << 8) | msg.msg[3]));
 	fail_on_test(node->remote[la].prim_type != msg.msg[4]);
 	return 0;
@@ -1437,7 +1443,7 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			}
 			else if (ret != NOTAPPLICABLE)
 				printf("\t    %s: %s\n", tests[i].subtests[j].name, ok(ret));
-			if (ret == FAIL_CRITICAL)
+			if (ret == FAIL_CRITICAL && !tests[i].subtests[j].needs_pa)
 				return;
 		}
 		printf("\n");
