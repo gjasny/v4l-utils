@@ -1323,17 +1323,11 @@ static void show_msg(const cec_msg &msg)
 
 static void wait_for_msgs(struct node &node, __u32 monitor_time)
 {
-	__u32 monitor = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
 	fd_set rd_fds;
 	fd_set ex_fds;
 	int fd = node.fd;
 	time_t t;
 	
-	if (doioctl(&node, CEC_S_MODE, &monitor)) {
-		fprintf(stderr, "Selecting follower mode failed.\n");
-		return;
-	}
-
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 	t = time(NULL) + monitor_time;
 
@@ -1349,6 +1343,13 @@ static void wait_for_msgs(struct node &node, __u32 monitor_time)
 		res = select(fd + 1, &rd_fds, NULL, &ex_fds, &tv);
 		if (res < 0)
 			break;
+		if (FD_ISSET(fd, &ex_fds)) {
+			struct cec_event ev;
+
+			if (doioctl(&node, CEC_DQEVENT, &ev))
+				continue;
+			log_event(ev, true);
+		}
 		if (FD_ISSET(fd, &rd_fds)) {
 			struct cec_msg msg = { };
 
@@ -1359,13 +1360,6 @@ static void wait_for_msgs(struct node &node, __u32 monitor_time)
 			}
 			if (!res)
 				show_msg(msg);
-		}
-		if (FD_ISSET(fd, &ex_fds)) {
-			struct cec_event ev;
-
-			if (doioctl(&node, CEC_DQEVENT, &ev))
-				continue;
-			log_event(ev, true);
 		}
 	}
 }
@@ -2337,6 +2331,14 @@ int main(int argc, char **argv)
 		printf("\n");
 	}
 
+	if (options[OptWaitForMsgs]) {
+		__u32 monitor = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
+
+		if (doioctl(&node, CEC_S_MODE, &monitor)) {
+			fprintf(stderr, "Selecting follower mode failed.\n");
+			return 1;
+		}
+	}
 	if (options[OptNonBlocking])
 		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) | O_NONBLOCK);
 
