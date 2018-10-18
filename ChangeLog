@@ -1,3 +1,13 @@
+v4l-utils-1.16.1
+----------------
+
+Bård Eirik Winther (1):
+      utils: Add qvidcap to configure status report
+
+Hans Verkuil (1):
+      qvidcap: add parent when creating QAction objects.
+
+
 v4l-utils-1.16.0
 ----------------
 
