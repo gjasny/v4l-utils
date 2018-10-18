@@ -253,30 +253,9 @@ if test "x$qt_pkgconfig" = "xtrue"; then
         QT_VERSION="v5"
       fi
       AC_MSG_WARN(Qt5 OpenGL is not available)
-    fi
-else
-   PKG_CHECK_MODULES(QT, [QtCore >= 4.0 QtGui >= 4.0], [qt_pkgconfig=true], [qt_pkgconfig=false])
-   if test "x$qt_pkgconfig" = "xtrue"; then
-      MOC=`$PKG_CONFIG --variable=moc_location QtCore`
-      UIC=`$PKG_CONFIG --variable=uic_location QtCore`
-      RCC=`$PKG_CONFIG --variable=rcc_location QtCore`
-      if test -z "$RCC"; then
-         RCC="rcc"
-      fi
-      AC_SUBST(MOC)
-      AC_SUBST(UIC)
-      AC_SUBST(RCC)
-      PKG_CHECK_MODULES(QTGL, [QtOpenGL >= 4.8 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
-      if test "x$qt_pkgconfig_gl" = "xtrue"; then
-         AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
-         QT_VERSION="v4 with QtGL"
-      else
-         QT_VERSION="v4"
-         AC_MSG_WARN(Qt4 OpenGL is not available)
-      fi
-   else
-      AC_MSG_WARN(Qt4 or higher is not available)
    fi
+else
+   AC_MSG_WARN(Qt5 or higher is not available)
 fi
 
 

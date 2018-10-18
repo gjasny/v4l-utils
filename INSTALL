@@ -2,7 +2,7 @@ Requirements:
 -------------
 * make and a C and C++ compiler
 * optionally libjpeg v6 or later
-* optionally Qt4 for building qv4l2
+* optionally Qt5 for building qv4l2
 
 Building:
 ---------
