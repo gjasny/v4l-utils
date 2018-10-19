@@ -167,13 +167,14 @@ struct node {
 	unsigned remote_la_mask;
 	struct remote remote[16];
 	__u16 phys_addr;
+	bool in_standby;
 };
 
 struct remote_subtest {
 	const char *name;
 	const __u16 la_mask;
 	int (*const test_fn)(struct node *node, unsigned me, unsigned la, bool interactive);
-	bool needs_pa;
+	bool in_standby;
 };
 
 #define PRESUMED_OK 1
@@ -213,14 +214,15 @@ struct remote_subtest {
 		}							\
 	} while(0)
 
-#define warn(fmt, args...) 					\
-	do {							\
-		warnings++;					\
-		if (show_warnings)				\
-			printf("\t\twarn: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
-		if (exit_on_warn)				\
-			exit(1);				\
-	} while (0)
+#define warn(fmt, args...) 						\
+({									\
+	warnings++;							\
+	if (show_warnings)						\
+		printf("\t\twarn: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+	if (exit_on_warn)						\
+		exit(1);						\
+	0;								\
+})
 
 #define warn_once(fmt, args...)						\
 	do {								\
@@ -243,6 +245,15 @@ struct remote_subtest {
 	if (exit_on_fail)						\
 		exit(1);						\
 	FAIL;								\
+})
+
+#define fail_or_warn(node, fmt, args...)		\
+({							\
+ 	if ((node)->in_standby)				\
+		warn(fmt, ##args);			\
+	else						\
+		fail(fmt, ##args);			\
+	(node)->in_standby ? 0 : FAIL;			\
 })
 
 #define fail_on_test(test) 				\

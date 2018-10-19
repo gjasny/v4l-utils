@@ -61,8 +61,8 @@ int system_info_phys_addr(struct node *node, unsigned me, unsigned la, bool inte
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_physical_addr(&msg, true);
 	if (!transmit_timeout(node, &msg) || timed_out_or_abort(&msg)) {
-		fail("Could not get the remote physical address\n");
-		return FAIL_CRITICAL;
+		fail_or_warn(node, "Give Physical Addr timed out\n");
+		return node->in_standby ? 0 : FAIL_CRITICAL;
 	}
 	fail_on_test(node->remote[la].phys_addr != ((msg.msg[2] << 8) | msg.msg[3]));
 	fail_on_test(node->remote[la].prim_type != msg.msg[4]);
@@ -75,8 +75,8 @@ int system_info_version(struct node *node, unsigned me, unsigned la, bool intera
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_get_cec_version(&msg, true);
-	fail_on_test(!transmit_timeout(node, &msg));
-	fail_on_test(timed_out(&msg));
+	if (!transmit_timeout(node, &msg) || timed_out(&msg))
+		return fail_or_warn(node, "Could not get the CEC version\n");
 	if (unrecognized_op(&msg))
 		return NOTSUPPORTED;
 	if (refused(&msg))
@@ -97,8 +97,8 @@ int system_info_get_menu_lang(struct node *node, unsigned me, unsigned la, bool 
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_get_menu_language(&msg, true);
-	fail_on_test(!transmit_timeout(node, &msg));
-	fail_on_test(timed_out(&msg));
+	if (!transmit_timeout(node, &msg) || timed_out(&msg))
+		return fail_or_warn(node, "Get Menu Languages timed out\n");
 
 	/* Devices other than TVs shall send Feature Abort [Unregcognized Opcode]
 	   in reply to Get Menu Language. */
@@ -140,8 +140,8 @@ int system_info_give_features(struct node *node, unsigned me, unsigned la, bool 
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_features(&msg, true);
-	fail_on_test(!transmit_timeout(node, &msg));
-	fail_on_test(timed_out(&msg));
+	if (!transmit_timeout(node, &msg) || timed_out(&msg))
+		return fail_or_warn(node, "Give Features timed out\n");
 	if (unrecognized_op(&msg)) {
 		if (node->remote[la].cec_version < CEC_OP_CEC_VERSION_2_0)
 			return NOTSUPPORTED;
@@ -204,8 +204,8 @@ int core_unknown(struct node *node, unsigned me, unsigned la, bool interactive)
 	cec_msg_init(&msg, me, la);
 	msg.len = 2;
 	msg.msg[1] = unknown_opcode;
-	fail_on_test(!transmit_timeout(node, &msg));
-	fail_on_test(timed_out(&msg));
+	if (!transmit_timeout(node, &msg) || timed_out(&msg))
+		return fail_or_warn(node, "Unknown Opcode timed out\n");
 	fail_on_test(!cec_msg_status_is_abort(&msg));
 
 	__u8 abort_msg, reason;
@@ -232,8 +232,8 @@ int core_abort(struct node *node, unsigned me, unsigned la, bool interactive)
 	   (with any abort reason) */
 	cec_msg_init(&msg, me, la);
 	cec_msg_abort(&msg);
-	fail_on_test(!transmit_timeout(node, &msg));
-	fail_on_test(timed_out(&msg));
+	if (!transmit_timeout(node, &msg) || timed_out(&msg))
+		return fail_or_warn(node, "Abort timed out\n");
 	fail_on_test(!cec_msg_status_is_abort(&msg));
 	return 0;
 }
@@ -252,7 +252,8 @@ int vendor_specific_commands_id(struct node *node, unsigned me, unsigned la, boo
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_device_vendor_id(&msg, true);
-	fail_on_test(!transmit(node, &msg));
+	if (!transmit(node, &msg))
+		return fail_or_warn(node, "Give Device Vendor ID timed out\n");
 	if (unrecognized_op(&msg))
 		return NOTSUPPORTED;
 	if (refused(&msg))
@@ -299,8 +300,8 @@ int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool i
 	   the same for each logical address. */
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_osd_name(&msg, true);
-	fail_on_test(!transmit(node, &msg));
-	fail_on_test(timed_out(&msg));
+	if (!transmit_timeout(node, &msg) || timed_out(&msg))
+		return fail_or_warn(node, "Give OSD Name timed out\n");
 	fail_on_test(!is_tv(la, node->remote[la].prim_type) && unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
 		return NOTSUPPORTED;
@@ -1429,13 +1430,14 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 
 		printf("\t%s:\n", tests[i].name);
 		for (unsigned j = 0; j < tests[i].num_subtests; j++) {
-			if (tests[i].subtests[j].needs_pa) {
+			if (tests[i].subtests[j].in_standby) {
 				struct cec_log_addrs laddrs = { };
 				doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 
 				if (node->phys_addr == CEC_PHYS_ADDR_INVALID)
 					continue;
 			}
+			node->in_standby = tests[i].subtests[j].in_standby;
 			ret = tests[i].subtests[j].test_fn(node, me, la, interactive);
 			if (!(tests[i].subtests[j].la_mask & (1 << la)) && !ret) {
 				printf("\t    %s: OK (Unexpected)\n",
@@ -1443,7 +1445,7 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			}
 			else if (ret != NOTAPPLICABLE)
 				printf("\t    %s: %s\n", tests[i].subtests[j].name, ok(ret));
-			if (ret == FAIL_CRITICAL && !tests[i].subtests[j].needs_pa)
+			if (ret == FAIL_CRITICAL)
 				return;
 		}
 		printf("\n");
