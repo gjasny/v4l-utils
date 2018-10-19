@@ -76,7 +76,7 @@ int system_info_version(struct node *node, unsigned me, unsigned la, bool intera
 	cec_msg_init(&msg, me, la);
 	cec_msg_get_cec_version(&msg, true);
 	if (!transmit_timeout(node, &msg) || timed_out(&msg))
-		return fail_or_warn(node, "Could not get the CEC version\n");
+		return fail_or_warn(node, "Get CEC Version timed out\n");
 	if (unrecognized_op(&msg))
 		return NOTSUPPORTED;
 	if (refused(&msg))
