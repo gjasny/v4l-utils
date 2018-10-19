@@ -238,8 +238,8 @@ if test "x$qt_pkgconfig" = "xtrue"; then
    if test "x$qt_pkgconfig_gl" = "xtrue"; then
       QTGL_CFLAGS="$QT5GL_CFLAGS -fPIC"
       QTGL_LIBS="$QT5GL_LIBS"
-      AC_SUBST(QT_CFLAGS)
-      AC_SUBST(QT_LIBS)
+      AC_SUBST(QTGL_CFLAGS)
+      AC_SUBST(QTGL_LIBS)
       AC_DEFINE([HAVE_QTGL], [1], [qt has opengl support])
       if test "x$qt54_pkgconfig" = "xtrue"; then
         QT_VERSION="v5.4 with QtGL"
