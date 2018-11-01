@@ -1218,6 +1218,7 @@ static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
 	 * This test checks if a blocking wait in VIDIOC_DQBUF doesn't block
 	 * other ioctls.
 	 */
+	fflush(stdout);
 	pid_dqbuf = fork();
 	fail_on_test(pid_dqbuf == -1);
 
@@ -1238,6 +1239,7 @@ static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
 	/* Check that it is really blocking */
 	fail_on_test(pid);
 
+	fflush(stdout);
 	pid_streamoff = fork();
 	fail_on_test(pid_streamoff == -1);
 
