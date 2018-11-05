@@ -21,6 +21,9 @@ std::string pixfmt2s(__u32 format);
 /* Return buffer type description */
 std::string buftype2s(int type);
 
+/* Return buffer capability description */
+std::string bufcap2s(__u32 caps);
+
 static inline std::string buftype2s(enum v4l2_buf_type type)
 {
        return buftype2s((int)type);

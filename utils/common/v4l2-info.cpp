@@ -195,6 +195,19 @@ std::string buftype2s(int type)
 	}
 }
 
+static const flag_def bufcap_def[] = {
+	{ V4L2_BUF_CAP_SUPPORTS_MMAP, "mmap" },
+	{ V4L2_BUF_CAP_SUPPORTS_USERPTR, "userptr" },
+	{ V4L2_BUF_CAP_SUPPORTS_DMABUF, "dmabuf" },
+	{ V4L2_BUF_CAP_SUPPORTS_REQUESTS, "requests" },
+	{ 0, NULL }
+};
+
+std::string bufcap2s(__u32 caps)
+{
+	return flags2s(caps, bufcap_def);
+}
+
 std::string field2s(int val)
 {
 	switch (val) {
