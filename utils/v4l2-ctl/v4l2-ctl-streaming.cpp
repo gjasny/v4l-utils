@@ -247,7 +247,7 @@ void streaming_usage(void)
 	       "  --stream-lossless  always use lossless video compression.\n"
 #endif
 	       "  --stream-poll      use non-blocking mode and select() to stream.\n"
-	       "  --stream-caps      show capture streaming capabilities\n"
+	       "  --stream-buf-caps  show capture buffer capabilities\n"
 	       "  --stream-mmap <count>\n"
 	       "                     capture video using mmap() [VIDIOC_(D)QBUF]\n"
 	       "                     count: the number of buffers to allocate. The default is 3.\n"
@@ -295,7 +295,8 @@ void streaming_usage(void)
 	       "                     and the range is [-3...3].\n"
 	       "  --stream-out-perc-fill <percentage>\n"
 	       "                     percentage of the frame to actually fill. The default is 100%%.\n"
-	       "  --stream-out-caps  show output streaming capabilities\n"
+	       "  --stream-out-buf-caps\n"
+	       "                     show output buffer capabilities\n"
 	       "  --stream-out-mmap <count>\n"
 	       "                     output video using mmap() [VIDIOC_(D)QBUF]\n"
 	       "                     count: the number of buffers to allocate. The default is 4.\n"
@@ -467,6 +468,30 @@ static void print_concise_buffer(FILE *f, cv4l_buffer &buf,
 	if (fl)
 		fprintf(f, " (%s)", bufferflags2s(fl).c_str());
 	fprintf(f, "\n");
+}
+
+static void stream_buf_caps(cv4l_fd &fd, unsigned buftype)
+{
+	v4l2_create_buffers cbufs;
+
+	memset(&cbufs, 0, sizeof(cbufs));
+	cbufs.format.type = buftype;
+	cbufs.memory = V4L2_MEMORY_MMAP;
+	if (!v4l_ioctl(fd.g_v4l_fd(), VIDIOC_CREATE_BUFS, &cbufs)) {
+		printf("Streaming I/O Capabilities for %s: %s\n",
+		       buftype2s(buftype).c_str(),
+		       bufcap2s(cbufs.capabilities).c_str());
+		return;
+	}
+	v4l2_requestbuffers rbufs;
+	memset(&rbufs, 0, sizeof(rbufs));
+	rbufs.type = buftype;
+	rbufs.memory = V4L2_MEMORY_MMAP;
+	if (v4l_ioctl(fd.g_v4l_fd(), VIDIOC_REQBUFS, &rbufs))
+		return;
+	printf("Streaming I/O Capabilities for %s: %s\n",
+	       buftype2s(buftype).c_str(),
+	       bufcap2s(rbufs.capabilities).c_str());
 }
 
 static void list_buffers(cv4l_fd &fd, unsigned buftype)
@@ -1992,44 +2017,18 @@ void streaming_list(cv4l_fd &fd, cv4l_fd &out_fd)
 	if (out_fd.g_fd() < 0)
 		out_capabilities = capabilities;
 
-	if (options[OptStreamCaps] || options[OptStreamOutCaps]) {
-		cv4l_queue q(fd.g_type());
-		__u32 caps = 0;
-		int ret;
-
-		if (options[OptStreamOutCaps] && fd.has_vid_m2m())
-			q.init(v4l_type_invert(fd.g_type()), q.g_memory());
-		if (q.has_create_bufs(&fd)) {
-			struct v4l2_create_buffers createbufs;
-
-			memset(&createbufs, 0, sizeof(createbufs));
-			createbufs.format.type = q.g_type();
-			createbufs.memory = V4L2_MEMORY_MMAP;
-			ret = v4l_ioctl(fd.g_v4l_fd(), VIDIOC_CREATE_BUFS, &createbufs);
-			if (!ret)
-				caps = createbufs.capabilities;
-		} else {
-			struct v4l2_requestbuffers reqbufs;
-
-			memset(&reqbufs, 0, sizeof(reqbufs));
-			reqbufs.type = q.g_type();
-			reqbufs.memory = V4L2_MEMORY_MMAP;
-			ret = v4l_ioctl(fd.g_v4l_fd(), VIDIOC_REQBUFS, &reqbufs);
-			if (!ret)
-				caps = reqbufs.capabilities;
-		}
-		if (!ret)
-			printf("Streaming I/O Capabilities for %s: %s\n",
-			       buftype2s(q.g_type()).c_str(),
-			       bufcap2s(caps).c_str());
-	}
-
 	if (options[OptListBuffers])
 		list_buffers(fd, fd.g_type());
 
 	if (options[OptListBuffersOut])
 		list_buffers(*p_out_fd, p_out_fd->has_vid_m2m() ?
 			     v4l_type_invert(p_out_fd->g_type()) : p_out_fd->g_type());
+
+	if (options[OptStreamBufCaps])
+		stream_buf_caps(fd, fd.g_type());
+
+	if (options[OptStreamOutBufCaps])
+		stream_buf_caps(*p_out_fd, v4l_type_invert(p_out_fd->g_type()));
 
 	if (options[OptListBuffersVbi])
 		list_buffers(fd, V4L2_BUF_TYPE_VBI_CAPTURE);
