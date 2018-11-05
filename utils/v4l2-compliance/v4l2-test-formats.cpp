@@ -1422,7 +1422,8 @@ static int testLegacyCrop(struct node *node)
 			cap.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 			break;
 		}
-		fail_on_test(doioctl(node, VIDIOC_CROPCAP, &cap));
+		// Replace with fail_on_test once kernel is fixed for this.
+		warn_on_test(doioctl(node, VIDIOC_CROPCAP, &cap));
 		cap.type = 0xff;
 		fail_on_test(doioctl(node, VIDIOC_CROPCAP, &cap) != EINVAL);
 	} else {

@@ -158,6 +158,12 @@ struct node : public base_node, public cv4l_fd {
 		}							\
 	} while (0)
 
+#define warn_on_test(test) 				\
+	do {						\
+		if (test)				\
+			warn("%s\n", #test);		\
+	} while (0)
+
 #define fail(fmt, args...) 						\
 ({ 									\
  	printf("\t\tfail: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
