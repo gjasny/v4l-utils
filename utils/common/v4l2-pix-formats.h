@@ -131,6 +131,7 @@
 	case V4L2_PIX_FMT_H263: return "H.263";
 	case V4L2_PIX_FMT_MPEG1: return "MPEG-1 ES";
 	case V4L2_PIX_FMT_MPEG2: return "MPEG-2 ES";
+	case V4L2_PIX_FMT_MPEG2_SLICE: return "MPEG-2 Parsed Slice Data";
 	case V4L2_PIX_FMT_MPEG4: return "MPEG-4 part 2 ES";
 	case V4L2_PIX_FMT_XVID: return "Xvid";
 	case V4L2_PIX_FMT_VC1_ANNEX_G: return "VC-1 (SMPTE 412M Annex G)";
@@ -158,3 +159,4 @@
 	case V4L2_PIX_FMT_SE401: return "GSPCA SE401";
 	case V4L2_PIX_FMT_S5C_UYVY_JPG: return "S5C73MX interleaved UYVY/JPEG";
 	case V4L2_PIX_FMT_MT21C: return "Mediatek Compressed Format";
+	case V4L2_PIX_FMT_SUNXI_TILED_NV12: return "Sunxi Tiled NV12 Format";
