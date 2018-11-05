@@ -380,6 +380,7 @@ int testReqBufs(struct node *node)
 	fail_on_test(node->node2 == NULL);
 	for (i = 1; i <= V4L2_BUF_TYPE_LAST; i++) {
 		bool is_overlay = v4l_type_is_overlay(i);
+		__u32 caps = 0;
 
 		if (!(node->valid_buftypes & (1 << i)))
 			continue;
@@ -397,16 +398,29 @@ int testReqBufs(struct node *node)
 		ret = q.reqbufs(node, 0);
 		fail_on_test(ret && ret != EINVAL);
 		mmap_valid = !ret;
+		if (mmap_valid)
+			caps = q.g_capabilities();
+		if (caps)
+			fail_on_test(mmap_valid ^ !!(caps & V4L2_BUF_CAP_SUPPORTS_MMAP));
 
 		q.init(i, V4L2_MEMORY_USERPTR);
 		ret = q.reqbufs(node, 0);
 		fail_on_test(ret && ret != EINVAL);
 		userptr_valid = !ret;
+		fail_on_test(!mmap_valid && userptr_valid);
+		if (caps)
+			fail_on_test(userptr_valid ^ !!(caps & V4L2_BUF_CAP_SUPPORTS_USERPTR));
 
 		q.init(i, V4L2_MEMORY_DMABUF);
 		ret = q.reqbufs(node, 0);
 		fail_on_test(ret && ret != EINVAL);
 		dmabuf_valid = !ret;
+		fail_on_test(!mmap_valid && dmabuf_valid);
+		// Note: dmabuf is only supported with vb2, so we can assume a
+		// non-0 caps value if dmabuf is supported.
+		if (caps || dmabuf_valid)
+			fail_on_test(dmabuf_valid ^ !!(caps & V4L2_BUF_CAP_SUPPORTS_DMABUF));
+
 		fail_on_test((can_stream && !is_overlay) && !mmap_valid && !userptr_valid && !dmabuf_valid);
 		fail_on_test((!can_stream || is_overlay) && (mmap_valid || userptr_valid || dmabuf_valid));
 		if (!can_stream || is_overlay)
