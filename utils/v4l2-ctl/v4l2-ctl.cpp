@@ -250,6 +250,7 @@ static struct option long_options[] = {
 	{"stream-lossless", no_argument, 0, OptStreamLossless},
 	{"stream-to-host", required_argument, 0, OptStreamToHost},
 #endif
+	{"stream-caps", no_argument, 0, OptStreamCaps},
 	{"stream-mmap", optional_argument, 0, OptStreamMmap},
 	{"stream-user", optional_argument, 0, OptStreamUser},
 	{"stream-dmabuf", no_argument, 0, OptStreamDmaBuf},
@@ -269,6 +270,7 @@ static struct option long_options[] = {
 	{"stream-out-hor-speed", required_argument, 0, OptStreamOutHorSpeed},
 	{"stream-out-vert-speed", required_argument, 0, OptStreamOutVertSpeed},
 	{"stream-out-perc-fill", required_argument, 0, OptStreamOutPercFill},
+	{"stream-out-caps", no_argument, 0, OptStreamOutCaps},
 	{"stream-out-mmap", optional_argument, 0, OptStreamOutMmap},
 	{"stream-out-user", optional_argument, 0, OptStreamOutUser},
 	{"stream-out-dmabuf", no_argument, 0, OptStreamOutDmaBuf},

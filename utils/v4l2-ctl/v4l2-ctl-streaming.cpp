@@ -247,6 +247,7 @@ void streaming_usage(void)
 	       "  --stream-lossless  always use lossless video compression.\n"
 #endif
 	       "  --stream-poll      use non-blocking mode and select() to stream.\n"
+	       "  --stream-caps      show capture streaming capabilities\n"
 	       "  --stream-mmap <count>\n"
 	       "                     capture video using mmap() [VIDIOC_(D)QBUF]\n"
 	       "                     count: the number of buffers to allocate. The default is 3.\n"
@@ -294,6 +295,7 @@ void streaming_usage(void)
 	       "                     and the range is [-3...3].\n"
 	       "  --stream-out-perc-fill <percentage>\n"
 	       "                     percentage of the frame to actually fill. The default is 100%%.\n"
+	       "  --stream-out-caps  show output streaming capabilities\n"
 	       "  --stream-out-mmap <count>\n"
 	       "                     output video using mmap() [VIDIOC_(D)QBUF]\n"
 	       "                     count: the number of buffers to allocate. The default is 4.\n"
@@ -1989,6 +1991,38 @@ void streaming_list(cv4l_fd &fd, cv4l_fd &out_fd)
 
 	if (out_fd.g_fd() < 0)
 		out_capabilities = capabilities;
+
+	if (options[OptStreamCaps] || options[OptStreamOutCaps]) {
+		cv4l_queue q(fd.g_type());
+		__u32 caps = 0;
+		int ret;
+
+		if (options[OptStreamOutCaps] && fd.has_vid_m2m())
+			q.init(v4l_type_invert(fd.g_type()), q.g_memory());
+		if (q.has_create_bufs(&fd)) {
+			struct v4l2_create_buffers createbufs;
+
+			memset(&createbufs, 0, sizeof(createbufs));
+			createbufs.format.type = q.g_type();
+			createbufs.memory = V4L2_MEMORY_MMAP;
+			ret = v4l_ioctl(fd.g_v4l_fd(), VIDIOC_CREATE_BUFS, &createbufs);
+			if (!ret)
+				caps = createbufs.capabilities;
+		} else {
+			struct v4l2_requestbuffers reqbufs;
+
+			memset(&reqbufs, 0, sizeof(reqbufs));
+			reqbufs.type = q.g_type();
+			reqbufs.memory = V4L2_MEMORY_MMAP;
+			ret = v4l_ioctl(fd.g_v4l_fd(), VIDIOC_REQBUFS, &reqbufs);
+			if (!ret)
+				caps = reqbufs.capabilities;
+		}
+		if (!ret)
+			printf("Streaming I/O Capabilities for %s: %s\n",
+			       buftype2s(q.g_type()).c_str(),
+			       bufcap2s(caps).c_str());
+	}
 
 	if (options[OptListBuffers])
 		list_buffers(fd, fd.g_type());
