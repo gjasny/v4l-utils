@@ -396,13 +396,17 @@ static int standby_resume_active_source_nowake(struct node *node, unsigned me, u
 	cec_msg_active_source(&msg, node->phys_addr);
 	int res = doioctl(node, CEC_TRANSMIT, &msg);
 	fail_on_test(res && res != ENONET);
-	fail_on_test(wait_changing_power_status(node, me, la, new_status, unresponsive_time));
-	fail_on_test(new_status != CEC_OP_POWER_STATUS_STANDBY);
+	fail_on_test_v2_warn(node->remote[la].cec_version,
+			     wait_changing_power_status(node, me, la, new_status, unresponsive_time));
+	fail_on_test_v2_warn(node->remote[la].cec_version,
+			     new_status != CEC_OP_POWER_STATUS_STANDBY);
+	if (new_status != CEC_OP_POWER_STATUS_STANDBY)
+		return standby_resume_standby(node, me, la, interactive);
+
 	node->remote[la].in_standby = true;
 	if (unresponsive_time > 0)
 		warn("The device stayed correctly in standby, but became unresponsive for %d s.\n",
 		     unresponsive_time);
-
 	return 0;
 }
 
