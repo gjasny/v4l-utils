@@ -855,7 +855,8 @@ static const struct {
 	enum v4l2_mbus_pixelcode code;
 } mbus_formats[] = {
 #include "media-bus-format-names.h"
-	{ "Y8", MEDIA_BUS_FMT_Y8_1X8},
+	{ "FIXED", MEDIA_BUS_FMT_FIXED },
+	{ "Y8", MEDIA_BUS_FMT_Y8_1X8 },
 	{ "Y10", MEDIA_BUS_FMT_Y10_1X10 },
 	{ "Y12", MEDIA_BUS_FMT_Y12_1X12 },
 	{ "YUYV", MEDIA_BUS_FMT_YUYV8_1X16 },
@@ -965,6 +966,7 @@ static struct {
 	{ "srgb", V4L2_COLORSPACE_SRGB },
 	{ "oprgb", V4L2_COLORSPACE_OPRGB },
 	{ "bt2020", V4L2_COLORSPACE_BT2020 },
+	{ "raw", V4L2_COLORSPACE_RAW },
 	{ "dcip3", V4L2_COLORSPACE_DCI_P3 },
 };
 
