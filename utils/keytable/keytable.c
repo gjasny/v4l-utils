@@ -34,8 +34,11 @@
 #include "ir-encode.h"
 #include "parse.h"
 #include "toml.h"
+
+#ifdef HAVE_BPF
 #include "bpf.h"
 #include "bpf_load.h"
+#endif
 
 #ifdef ENABLE_NLS
 # define _(string) gettext(string)
@@ -1847,7 +1850,7 @@ static void device_info(int fd, char *prepend)
 		perror ("EVIOCGID");
 }
 
-#ifdef HAVE_LIBELF
+#ifdef HAVE_BPF
 #define MAX_PROGS 64
 static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct toml_table_t *toml)
 {

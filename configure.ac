@@ -173,15 +173,11 @@ AM_CONDITIONAL([HAVE_X11], [test x$x11_pkgconfig = xyes])
 PKG_CHECK_MODULES([LIBELF], [libelf], [libelf_pkgconfig=yes], [libelf_pkgconfig=no])
 AC_SUBST([LIBELF_CFLAGS])
 AC_SUBST([LIBELF_LIBS])
-AM_CONDITIONAL([HAVE_LIBELF], [test x$libelf_pkgconfig = xyes])
 if test "x$libelf_pkgconfig" = "xyes"; then
   AC_CHECK_PROG([CLANG], clang, clang)
-  AC_DEFINE([HAVE_LIBELF], [1], [libelf library is present])
 else
   AC_MSG_WARN(libelf library not available)
 fi
-
-AM_CONDITIONAL([BPF_PROTOCOLS], [test x$CLANG = xclang])
 
 AS_IF([test "x$x11_pkgconfig" = xyes],
       [PKG_CHECK_MODULES(GL, [gl], [gl_pkgconfig=yes], [gl_pkgconfig=no])], [gl_pkgconfig=no])
@@ -453,6 +449,14 @@ AC_ARG_ENABLE(gconv,
    esac]
 )
 
+AC_ARG_ENABLE(bpf,
+  AS_HELP_STRING([--disable-bpf], [disable IR BPF decoders]),
+  [case "${enableval}" in
+    yes | no ) ;;
+    *) AC_MSG_ERROR(bad value ${enableval} for --enable-bpf) ;;
+   esac]
+)
+
 PKG_CHECK_MODULES([SDL2], [sdl2 SDL2_image], [sdl_pc=yes], [sdl_pc=no])
 AM_CONDITIONAL([HAVE_SDL], [test x$sdl_pc = xyes])
 
@@ -475,6 +479,7 @@ AM_CONDITIONAL([WITH_GCONV],        [test x$enable_gconv = xyes -a x$enable_shar
 AM_CONDITIONAL([WITH_V4L2_CTL_LIBV4L], [test x${enable_v4l2_ctl_libv4l} != xno])
 AM_CONDITIONAL([WITH_V4L2_CTL_STREAM_TO], [test x${enable_v4l2_ctl_stream_to} != xno])
 AM_CONDITIONAL([WITH_V4L2_COMPLIANCE_LIBV4L], [test x${enable_v4l2_compliance_libv4l} != xno])
+AM_CONDITIONAL([WITH_BPF],          [test x$enable_bpf != xno -a x$libelf_pkgconfig = xyes -a x$CLANG = xclang])
 
 # append -static to libtool compile and link command to enforce static libs
 AS_IF([test x$enable_libdvbv5 = xno], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])
@@ -505,6 +510,9 @@ AM_COND_IF([WITH_V4L_WRAPPERS], [USE_V4L_WRAPPERS="yes"], [USE_V4L_WRAPPERS="no"
 AM_COND_IF([WITH_GCONV], [USE_GCONV="yes"], [USE_GCONV="no"])
 AM_COND_IF([WITH_V4L2_CTL_LIBV4L], [USE_V4L2_CTL_LIBV4L="yes"], [USE_V4L2_CTL_LIBV4L="no"])
 AM_COND_IF([WITH_V4L2_COMPLIANCE_LIBV4L], [USE_V4L2_COMPLIANCE_LIBV4L="yes"], [USE_V4L2_COMPLIANCE_LIBV4L="no"])
+AM_COND_IF([WITH_BPF],         [USE_BPF="yes"
+                                AC_DEFINE([HAVE_BPF], [1], [BPF IR decoder support enabled])],
+				[USE_BPF="no"])
 AS_IF([test "x$alsa_pkgconfig" = "xtrue"], [USE_ALSA="yes"], [USE_ALSA="no"])
 
 AC_OUTPUT
@@ -549,4 +557,5 @@ compile time options summary
     qvidcap                    : $USE_QVIDCAP
     v4l2-ctl uses libv4l       : $USE_V4L2_CTL_LIBV4L
     v4l2-compliance uses libv4l: $USE_V4L2_COMPLIANCE_LIBV4L
+    BPF IR Decoders:           : $USE_BPF
 EOF
