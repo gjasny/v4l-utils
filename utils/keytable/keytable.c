@@ -832,7 +832,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		do {
 			struct bpf_parameter *param;
 
-			if (!param) {
+			if (!p) {
 				argp_error(state, _("Missing parameter name: %s"), arg);
 				break;
 			}
