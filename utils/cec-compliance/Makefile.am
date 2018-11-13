@@ -17,9 +17,9 @@ cec-table.h: $(top_srcdir)/utils/cec-ctl/msg2ctl.pl $(top_srcdir)/include/linux/
 cec-compliance.cpp: version.h
 
 version.h:
-	@if git -C $(srcdir) rev-parse HEAD >/dev/null 2>&1; then \
+	@if [ -d $(top_srcdir)/.git ]; then \
 		echo -n "#define SHA " >$@ ; \
-		git -C $(srcdir) rev-parse HEAD >>$@ ; \
+		git -C $(top_srcdir) rev-parse HEAD >>$@ ; \
 	else \
 		touch $@ ; \
 	fi
