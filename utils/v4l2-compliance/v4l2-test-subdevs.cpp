@@ -308,8 +308,8 @@ int testSubDevFrameInterval(struct node *node, unsigned pad)
 static int checkMBusFrameFmt(struct node *node, struct v4l2_mbus_framefmt &fmt)
 {
 	fail_on_test(check_0(fmt.reserved, sizeof(fmt.reserved)));
-	fail_on_test(fmt.width == 0 || fmt.width == ~0U);
-	fail_on_test(fmt.height == 0 || fmt.height == ~0U);
+	fail_on_test(fmt.width == 0 || fmt.width > 65536);
+	fail_on_test(fmt.height == 0 || fmt.height > 65536);
 	fail_on_test(fmt.code == 0 || fmt.code == ~0U);
 	fail_on_test(fmt.field == ~0U);
 	if (!node->is_passthrough_subdev) {
