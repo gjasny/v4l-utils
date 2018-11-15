@@ -122,6 +122,7 @@ struct base_node {
 	__u32 valid_buftypes;
 	__u32 valid_buftype;
 	__u32 valid_memorytype;
+	bool supports_orphaned_bufs;
 };
 
 struct node : public base_node, public cv4l_fd {

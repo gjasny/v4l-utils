@@ -565,8 +565,11 @@ int testReqBufs(struct node *node)
 		mmap_valid = !ret;
 		if (mmap_valid)
 			node->buf_caps = caps = q.g_capabilities();
-		if (caps)
+		if (caps) {
 			fail_on_test(mmap_valid ^ !!(caps & V4L2_BUF_CAP_SUPPORTS_MMAP));
+			if (caps & V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS)
+				node->supports_orphaned_bufs = true;
+		}
 
 		q.init(i, V4L2_MEMORY_USERPTR);
 		ret = q.reqbufs(node, 0);
@@ -581,6 +584,7 @@ int testReqBufs(struct node *node)
 		fail_on_test(ret && ret != EINVAL);
 		dmabuf_valid = !ret;
 		fail_on_test(!mmap_valid && dmabuf_valid);
+		fail_on_test(dmabuf_valid && (caps != q.g_capabilities()));
 		if (caps)
 			fail_on_test(dmabuf_valid ^ !!(caps & V4L2_BUF_CAP_SUPPORTS_DMABUF));
 
@@ -948,10 +952,14 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 
 static int setupM2M(struct node *node, cv4l_queue &q)
 {
+	__u32 caps;
+
 	last_m2m_seq.init();
 
 	fail_on_test(q.reqbufs(node, 2));
 	fail_on_test(q.mmap_bufs(node));
+	caps = q.g_capabilities();
+	fail_on_test(node->supports_orphaned_bufs ^ !!(caps & V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS));
 	if (v4l_type_is_video(q.g_type())) {
 		cv4l_fmt fmt(q.g_type());
 
@@ -1177,12 +1185,34 @@ int testMmap(struct node *node, unsigned frame_count)
 					 true, capture_count));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
-		q.munmap_bufs(node);
-		fail_on_test(q.reqbufs(node, 0));
+
+		if (node->supports_orphaned_bufs) {
+			fail_on_test(q.reqbufs(node, 0));
+			q.munmap_bufs(node);
+		} else if (q.reqbufs(node, 0) != EBUSY) {
+			// It's either a bug or this driver should set
+			// V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS
+			warn("Can free buffers even if still mmap()ed\n");
+			q.munmap_bufs(node);
+		} else {
+			q.munmap_bufs(node);
+			fail_on_test(q.reqbufs(node, 0));
+		}
+
 		if (node->is_m2m) {
 			fail_on_test(node->streamoff(m2m_q.g_type()));
-			m2m_q.munmap_bufs(node);
-			fail_on_test(m2m_q.reqbufs(node, 0));
+			if (node->supports_orphaned_bufs) {
+				fail_on_test(m2m_q.reqbufs(node, 0));
+				m2m_q.munmap_bufs(node);
+			} else if (m2m_q.reqbufs(node, 0) != EBUSY) {
+				// It's either a bug or this driver should set
+				// V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS
+				warn("Can free buffers even if still mmap()ed\n");
+				q.munmap_bufs(node);
+			} else {
+				m2m_q.munmap_bufs(node);
+				fail_on_test(m2m_q.reqbufs(node, 0));
+			}
 			fail_on_test(!capture_count);
 		}
 		stream_close();
@@ -1458,8 +1488,34 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 					 true, capture_count));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
-		if (node->is_m2m)
+		if (node->supports_orphaned_bufs) {
+			fail_on_test(q.reqbufs(node, 0));
+			exp_q.close_exported_fds();
+		} else if (q.reqbufs(node, 0) != EBUSY) {
+			// It's either a bug or this driver should set
+			// V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS
+			warn("Can free buffers even if exported DMABUF fds still open\n");
+			q.munmap_bufs(node);
+		} else {
+			exp_q.close_exported_fds();
+			fail_on_test(q.reqbufs(node, 0));
+		}
+		if (node->is_m2m) {
+			fail_on_test(node->streamoff(m2m_q.g_type()));
+			if (node->supports_orphaned_bufs) {
+				fail_on_test(m2m_q.reqbufs(node, 0));
+				m2m_q.munmap_bufs(node);
+			} else if (m2m_q.reqbufs(node, 0) != EBUSY) {
+				// It's either a bug or this driver should set
+				// V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS
+				warn("Can free buffers even if still mmap()ed\n");
+				q.munmap_bufs(node);
+			} else {
+				m2m_q.munmap_bufs(node);
+				fail_on_test(m2m_q.reqbufs(node, 0));
+			}
 			fail_on_test(!capture_count);
+		}
 		stream_close();
 	}
 	return 0;
