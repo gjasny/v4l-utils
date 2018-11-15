@@ -416,9 +416,7 @@ int testReqBufs(struct node *node)
 		fail_on_test(ret && ret != EINVAL);
 		dmabuf_valid = !ret;
 		fail_on_test(!mmap_valid && dmabuf_valid);
-		// Note: dmabuf is only supported with vb2, so we can assume a
-		// non-0 caps value if dmabuf is supported.
-		if (caps || dmabuf_valid)
+		if (caps)
 			fail_on_test(dmabuf_valid ^ !!(caps & V4L2_BUF_CAP_SUPPORTS_DMABUF));
 
 		fail_on_test((can_stream && !is_overlay) && !mmap_valid && !userptr_valid && !dmabuf_valid);
