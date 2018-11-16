@@ -814,7 +814,9 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 	cv4l_fmt fmt(q.g_type());
 	u32 field;
 	unsigned p;
-	bool can_fill;
+	bool can_fill = false;
+	bool is_video = q.g_type() == V4L2_BUF_TYPE_VIDEO_OUTPUT ||
+			q.g_type() == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 
 	if (q.obtain_bufs(&fd))
 		return -1;
@@ -844,42 +846,44 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 		output_field = (stream_out_std & V4L2_STD_525_60) ?
 			V4L2_FIELD_BOTTOM : V4L2_FIELD_TOP;
 
-	tpg_init(&tpg, 640, 360);
-	tpg_alloc(&tpg, fmt.g_width());
-	can_fill = tpg_s_fourcc(&tpg, fmt.g_pixelformat());
-	tpg_reset_source(&tpg, fmt.g_width(), fmt.g_frame_height(), field);
-	tpg_s_colorspace(&tpg, fmt.g_colorspace());
-	tpg_s_xfer_func(&tpg, fmt.g_xfer_func());
-	tpg_s_ycbcr_enc(&tpg, fmt.g_ycbcr_enc());
-	tpg_s_quantization(&tpg, fmt.g_quantization());
-	for (p = 0; p < fmt.g_num_planes(); p++)
-		tpg_s_bytesperline(&tpg, p,
-				fmt.g_bytesperline(p));
-	tpg_s_pattern(&tpg, (tpg_pattern)stream_pat);
-	tpg_s_mv_hor_mode(&tpg, stream_out_hor_mode);
-	tpg_s_mv_vert_mode(&tpg, stream_out_vert_mode);
-	tpg_s_show_square(&tpg, stream_out_square);
-	tpg_s_show_border(&tpg, stream_out_border);
-	tpg_s_insert_sav(&tpg, stream_out_sav);
-	tpg_s_insert_eav(&tpg, stream_out_eav);
-	tpg_s_perc_fill(&tpg, stream_out_perc_fill);
-	if (stream_out_rgb_lim_range)
-		tpg_s_real_rgb_range(&tpg, V4L2_DV_RGB_RANGE_LIMITED);
-	tpg_s_alpha_component(&tpg, stream_out_alpha);
-	tpg_s_alpha_mode(&tpg, stream_out_alpha_red_only);
-	tpg_s_video_aspect(&tpg, stream_out_video_aspect);
-	switch (stream_out_pixel_aspect) {
-	case -1:
-		tpg_s_pixel_aspect(&tpg, aspect);
-		break;
-	default:
-		tpg_s_pixel_aspect(&tpg, (tpg_pixel_aspect)stream_out_pixel_aspect);
-		break;
+	if (is_video) {
+		tpg_init(&tpg, 640, 360);
+		tpg_alloc(&tpg, fmt.g_width());
+		can_fill = tpg_s_fourcc(&tpg, fmt.g_pixelformat());
+		tpg_reset_source(&tpg, fmt.g_width(), fmt.g_frame_height(), field);
+		tpg_s_colorspace(&tpg, fmt.g_colorspace());
+		tpg_s_xfer_func(&tpg, fmt.g_xfer_func());
+		tpg_s_ycbcr_enc(&tpg, fmt.g_ycbcr_enc());
+		tpg_s_quantization(&tpg, fmt.g_quantization());
+		for (p = 0; p < fmt.g_num_planes(); p++)
+			tpg_s_bytesperline(&tpg, p,
+					   fmt.g_bytesperline(p));
+		tpg_s_pattern(&tpg, (tpg_pattern)stream_pat);
+		tpg_s_mv_hor_mode(&tpg, stream_out_hor_mode);
+		tpg_s_mv_vert_mode(&tpg, stream_out_vert_mode);
+		tpg_s_show_square(&tpg, stream_out_square);
+		tpg_s_show_border(&tpg, stream_out_border);
+		tpg_s_insert_sav(&tpg, stream_out_sav);
+		tpg_s_insert_eav(&tpg, stream_out_eav);
+		tpg_s_perc_fill(&tpg, stream_out_perc_fill);
+		if (stream_out_rgb_lim_range)
+			tpg_s_real_rgb_range(&tpg, V4L2_DV_RGB_RANGE_LIMITED);
+		tpg_s_alpha_component(&tpg, stream_out_alpha);
+		tpg_s_alpha_mode(&tpg, stream_out_alpha_red_only);
+		tpg_s_video_aspect(&tpg, stream_out_video_aspect);
+		switch (stream_out_pixel_aspect) {
+		case -1:
+			tpg_s_pixel_aspect(&tpg, aspect);
+			break;
+		default:
+			tpg_s_pixel_aspect(&tpg, (tpg_pixel_aspect)stream_out_pixel_aspect);
+			break;
+		}
+		field = output_field;
+		if (can_fill && ((V4L2_FIELD_HAS_T_OR_B(field) && (stream_count & 1)) ||
+				 !tpg_pattern_is_static(&tpg)))
+			stream_out_refresh = true;
 	}
-	field = output_field;
-	if (can_fill && ((V4L2_FIELD_HAS_T_OR_B(field) && (stream_count & 1)) ||
-			 !tpg_pattern_is_static(&tpg)))
-		stream_out_refresh = true;
 
 	for (unsigned i = 0; i < q.g_buffers(); i++) {
 		cv4l_buffer buf(q);
@@ -889,18 +893,20 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 
 		for (unsigned j = 0; j < q.g_num_planes(); j++)
 			buf.s_bytesused(buf.g_length(j), j);
-		buf.s_field(field);
-		tpg_s_field(&tpg, field, output_field_alt);
-		if (output_field_alt) {
-			if (field == V4L2_FIELD_TOP)
-				field = V4L2_FIELD_BOTTOM;
-			else if (field == V4L2_FIELD_BOTTOM)
-				field = V4L2_FIELD_TOP;
-		}
+		if (is_video) {
+			buf.s_field(field);
+			tpg_s_field(&tpg, field, output_field_alt);
+			if (output_field_alt) {
+				if (field == V4L2_FIELD_TOP)
+					field = V4L2_FIELD_BOTTOM;
+				else if (field == V4L2_FIELD_BOTTOM)
+					field = V4L2_FIELD_TOP;
+			}
 
-		if (can_fill) {
-			for (unsigned j = 0; j < q.g_num_planes(); j++)
-				tpg_fillbuffer(&tpg, stream_out_std, j, (u8 *)q.g_dataptr(i, j));
+			if (can_fill) {
+				for (unsigned j = 0; j < q.g_num_planes(); j++)
+					tpg_fillbuffer(&tpg, stream_out_std, j, (u8 *)q.g_dataptr(i, j));
+			}
 		}
 		if (fin && !fill_buffer_from_file(q, buf, fin))
 			return -2;
@@ -910,7 +916,8 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 			if (fd.qbuf(buf))
 				return -1;
 			tpg_update_mv_count(&tpg, V4L2_FIELD_HAS_T_OR_B(field));
-			fprintf(stderr, ">");
+			if (!verbose)
+				fprintf(stderr, ">");
 			fflush(stderr);
 		}
 	}
@@ -1107,6 +1114,8 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 
 		double ts_secs = buf.g_timestamp().tv_sec + buf.g_timestamp().tv_usec / 1000000.0;
 		fps_ts.add_ts(ts_secs, buf.g_sequence(), buf.g_field());
+		if (verbose)
+			print_concise_buffer(stderr, buf, fps_ts, -1);
 	}
 	if (ret) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(ret));
@@ -1138,7 +1147,8 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	}
 	tpg_update_mv_count(&tpg, V4L2_FIELD_HAS_T_OR_B(output_field));
 
-	fprintf(stderr, ">");
+	if (!verbose)
+		fprintf(stderr, ">");
 	fflush(stderr);
 
 	if (fps_ts.has_fps()) {
@@ -1195,10 +1205,10 @@ static void streaming_set_cap(cv4l_fd &fd)
 	bool source_change;
 	FILE *fout = NULL;
 
-	if (!(capabilities & (V4L2_CAP_VIDEO_CAPTURE |
-			      V4L2_CAP_VIDEO_CAPTURE_MPLANE |
-			      V4L2_CAP_SDR_CAPTURE | V4L2_CAP_VIDEO_M2M |
-			      V4L2_CAP_VIDEO_M2M_MPLANE))) {
+	if (!(capabilities & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE |
+			      V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
+			      V4L2_CAP_META_CAPTURE | V4L2_CAP_SDR_CAPTURE |
+			      V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE))) {
 		fprintf(stderr, "unsupported stream type\n");
 		return;
 	}
@@ -1206,7 +1216,18 @@ static void streaming_set_cap(cv4l_fd &fd)
 		fprintf(stderr, "--stream-dmabuf can only work in combination with --stream-out-mmap\n");
 		return;
 	}
-
+	switch (q.g_type()) {
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
+		break;
+	default:
+		if (host_to) {
+			fprintf(stderr, "--stream-to-host is not supported for non-video streams\n");
+			return;
+		}
+		break;
+	}
+	
 	memset(&sub, 0, sizeof(sub));
 	sub.type = V4L2_EVENT_EOS;
 	fd.subscribe_event(sub);
@@ -1315,8 +1336,15 @@ recover:
 	}
 #endif
 
-	if (q.reqbufs(&fd, reqbufs_count_cap))
-		goto done;
+	if (q.reqbufs(&fd, reqbufs_count_cap)) {
+		if (q.g_type() != V4L2_BUF_TYPE_VBI_CAPTURE ||
+		    !fd.has_raw_vbi_cap() || !fd.has_sliced_vbi_cap())
+			goto done;
+		fd.s_type(V4L2_BUF_TYPE_SLICED_VBI_CAPTURE);
+		q.init(fd.g_type(), memory);
+		if (q.reqbufs(&fd, reqbufs_count_cap))
+			goto done;
+	}
 
 	if (q.obtain_bufs(&fd))
 		goto done;
@@ -1412,17 +1440,27 @@ static void streaming_set_out(cv4l_fd &fd)
 	unsigned count = 0;
 	FILE *fin = NULL;
 
-	if (!(capabilities & (V4L2_CAP_VIDEO_OUTPUT |
-			      V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+	if (!(capabilities & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+			      V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT |
 			      V4L2_CAP_SDR_OUTPUT |
-			      V4L2_CAP_VIDEO_M2M |
-			      V4L2_CAP_VIDEO_M2M_MPLANE))) {
+			      V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE))) {
 		fprintf(stderr, "unsupported stream type\n");
 		return;
 	}
 	if (options[OptStreamOutDmaBuf]) {
 		fprintf(stderr, "--stream-out-dmabuf can only work in combination with --stream-mmap\n");
 		return;
+	}
+	switch (q.g_type()) {
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
+		break;
+	default:
+		if (host_from) {
+			fprintf(stderr, "--stream-from-host is not supported for non-video streams\n");
+			return;
+		}
+		break;
 	}
 
 	if (file_from) {
@@ -1541,8 +1579,15 @@ static void streaming_set_out(cv4l_fd &fd)
 		}
 	}
 
-	if (q.reqbufs(&fd, reqbufs_count_out))
-		goto done;
+	if (q.reqbufs(&fd, reqbufs_count_out)) {
+		if (q.g_type() != V4L2_BUF_TYPE_VBI_OUTPUT ||
+		    !fd.has_raw_vbi_out() || !fd.has_sliced_vbi_out())
+			goto done;
+		fd.s_type(V4L2_BUF_TYPE_SLICED_VBI_OUTPUT);
+		q.init(fd.g_type(), memory);
+		if (q.reqbufs(&fd, reqbufs_count_out))
+			goto done;
+	}
 
 	if (q.obtain_bufs(&fd))
 		goto done;
