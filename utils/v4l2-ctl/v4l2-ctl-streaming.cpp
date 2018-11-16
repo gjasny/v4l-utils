@@ -457,7 +457,7 @@ static void print_concise_buffer(FILE *f, cv4l_buffer &buf,
 	unsigned dropped = fps_ts.dropped();
 
 	if (dropped)
-		fprintf(stderr, "dropped: %u", dropped);
+		fprintf(stderr, " dropped: %u", dropped);
 
 	__u32 fl = buf.g_flags() & (V4L2_BUF_FLAG_ERROR |
 				    V4L2_BUF_FLAG_KEYFRAME |
