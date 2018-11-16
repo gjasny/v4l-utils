@@ -634,14 +634,13 @@ static error_t parse_keyfile(char *fname, char **table)
 		return parse_plain_keyfile(fname, table);
 }
 
-struct cfgfile *nextcfg = &cfg;
-
 static error_t parse_cfgfile(char *fname)
 {
 	FILE *fin;
 	int line = 0;
 	char s[2048];
 	char *driver, *table, *filename;
+	struct cfgfile *nextcfg = &cfg;
 
 	if (debug)
 		fprintf(stderr, _("Parsing %s config file\n"), fname);
@@ -2119,7 +2118,7 @@ int main(int argc, char *argv[])
 		devclass = "rc0";
 
 	if (cfg.next && (clear || keytable || ch_proto || devicename)) {
-		fprintf (stderr, _("Auto-mode can be used only with --read, --debug and --sysdev options\n"));
+		fprintf (stderr, _("Auto-mode can be used only with --read, --verbose and --sysdev options\n"));
 		return -1;
 	}
 	if (!devicename) {
@@ -2142,55 +2141,58 @@ int main(int argc, char *argv[])
 		struct cfgfile *cur;
 		char *fname, *name;
 		int rc;
+		int matches = 0;
 
 		for (cur = &cfg; cur->next; cur = cur->next) {
 			if ((!rc_dev.drv_name || strcasecmp(cur->driver, rc_dev.drv_name)) && strcasecmp(cur->driver, "*"))
 				continue;
 			if ((!rc_dev.keytable_name || strcasecmp(cur->table, rc_dev.keytable_name)) && strcasecmp(cur->table, "*"))
 				continue;
-			break;
+
+			if (debug)
+				fprintf(stderr, _("Table for %s, %s is on %s file.\n"),
+					rc_dev.drv_name, rc_dev.keytable_name,
+					cur->fname);
+
+			if (cur->fname[0] == '/' || ((cur->fname[0] == '.') && strchr(cur->fname, '/'))) {
+				fname = cur->fname;
+				rc = parse_keyfile(fname, &name);
+				if (rc < 0) {
+					fprintf(stderr, _("Can't load %s table\n"), fname);
+					return -1;
+				}
+			} else {
+				fname = malloc(strlen(cur->fname) + strlen(IR_KEYTABLE_USER_DIR) + 2);
+				strcpy(fname, IR_KEYTABLE_USER_DIR);
+				strcat(fname, "/");
+				strcat(fname, cur->fname);
+				rc = parse_keyfile(fname, &name);
+				if (rc != 0) {
+					fname = malloc(strlen(cur->fname) + strlen(IR_KEYTABLE_SYSTEM_DIR) + 2);
+					strcpy(fname, IR_KEYTABLE_SYSTEM_DIR);
+					strcat(fname, "/");
+					strcat(fname, cur->fname);
+					rc = parse_keyfile(fname, &name);
+				}
+				if (rc != 0) {
+					fprintf(stderr, _("Can't load %s table from %s or %s\n"), cur->fname, IR_KEYTABLE_USER_DIR, IR_KEYTABLE_SYSTEM_DIR);
+					return -1;
+				}
+			}
+			if (!keytable) {
+				fprintf(stderr, _("Empty table %s\n"), fname);
+				return -1;
+			}
+			clear = 1;
+			matches++;
 		}
 
-		if (!cur->next) {
+		if (!matches) {
 			if (debug)
 				fprintf(stderr, _("Table for %s, %s not found. Keep as-is\n"),
 				       rc_dev.drv_name, rc_dev.keytable_name);
 			return 0;
 		}
-		if (debug)
-			fprintf(stderr, _("Table for %s, %s is on %s file.\n"),
-				rc_dev.drv_name, rc_dev.keytable_name,
-				cur->fname);
-		if (cur->fname[0] == '/' || ((cur->fname[0] == '.') && strchr(cur->fname, '/'))) {
-			fname = cur->fname;
-			rc = parse_keyfile(fname, &name);
-			if (rc < 0) {
-				fprintf(stderr, _("Can't load %s table\n"), fname);
-				return -1;
-			}
-		} else {
-			fname = malloc(strlen(cur->fname) + strlen(IR_KEYTABLE_USER_DIR) + 2);
-			strcpy(fname, IR_KEYTABLE_USER_DIR);
-			strcat(fname, "/");
-			strcat(fname, cur->fname);
-			rc = parse_keyfile(fname, &name);
-			if (rc != 0) {
-				fname = malloc(strlen(cur->fname) + strlen(IR_KEYTABLE_SYSTEM_DIR) + 2);
-				strcpy(fname, IR_KEYTABLE_SYSTEM_DIR);
-				strcat(fname, "/");
-				strcat(fname, cur->fname);
-				rc = parse_keyfile(fname, &name);
-			}
-			if (rc != 0) {
-				fprintf(stderr, _("Can't load %s table from %s or %s\n"), cur->fname, IR_KEYTABLE_USER_DIR, IR_KEYTABLE_SYSTEM_DIR);
-				return -1;
-			}
-		}
-		if (!keytable) {
-			fprintf(stderr, _("Empty table %s\n"), fname);
-			return -1;
-		}
-		clear = 1;
 	}
 
 	if (debug)
