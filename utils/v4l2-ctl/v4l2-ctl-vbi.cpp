@@ -16,10 +16,10 @@
 
 #include "v4l2-ctl.h"
 
-static struct v4l2_format vbi_fmt;	/* set_format/get_format for sliced VBI */
-static struct v4l2_format vbi_fmt_out;	/* set_format/get_format for sliced VBI output */
-static struct v4l2_format raw_fmt;	/* set_format/get_format for VBI */
-static struct v4l2_format raw_fmt_out;	/* set_format/get_format for VBI output */
+static struct v4l2_format sliced_fmt;	  /* set_format/get_format for sliced VBI */
+static struct v4l2_format sliced_fmt_out; /* set_format/get_format for sliced VBI output */
+static struct v4l2_format raw_fmt;	  /* set_format/get_format for VBI */
+static struct v4l2_format raw_fmt_out;	  /* set_format/get_format for VBI output */
 
 void vbi_usage(void)
 {
@@ -80,17 +80,17 @@ void vbi_cmd(int ch, char *optarg)
 {
 	char *value, *subs;
 	bool found_off = false;
-	v4l2_format *fmt = &vbi_fmt;
+	v4l2_format *sliced = &sliced_fmt;
 	v4l2_format *raw = &raw_fmt;
 
 	switch (ch) {
 	case OptSetSlicedVbiOutFormat:
 	case OptTrySlicedVbiOutFormat:
-		fmt = &vbi_fmt_out;
+		sliced = &sliced_fmt_out;
 		/* fall through */
 	case OptSetSlicedVbiFormat:
 	case OptTrySlicedVbiFormat:
-		fmt->fmt.sliced.service_set = 0;
+		sliced->fmt.sliced.service_set = 0;
 		if (optarg[0] == 0) {
 			fprintf(stderr, "empty string\n");
 			vbi_usage();
@@ -104,16 +104,16 @@ void vbi_cmd(int ch, char *optarg)
 			if (!strcmp(optarg, "off"))
 				found_off = true;
 			else if (!strcmp(optarg, "teletext"))
-				fmt->fmt.sliced.service_set |=
+				sliced->fmt.sliced.service_set |=
 					V4L2_SLICED_TELETEXT_B;
 			else if (!strcmp(optarg, "cc"))
-				fmt->fmt.sliced.service_set |=
+				sliced->fmt.sliced.service_set |=
 					V4L2_SLICED_CAPTION_525;
 			else if (!strcmp(optarg, "wss"))
-				fmt->fmt.sliced.service_set |=
+				sliced->fmt.sliced.service_set |=
 					V4L2_SLICED_WSS_625;
 			else if (!strcmp(optarg, "vps"))
-				fmt->fmt.sliced.service_set |=
+				sliced->fmt.sliced.service_set |=
 					V4L2_SLICED_VPS;
 			else
 				vbi_usage();
@@ -121,7 +121,7 @@ void vbi_cmd(int ch, char *optarg)
 				break;
 			optarg = subs + 1;
 		}
-		if (found_off && fmt->fmt.sliced.service_set) {
+		if (found_off && sliced->fmt.sliced.service_set) {
 			fprintf(stderr, "Sliced VBI mode 'off' cannot be combined with other modes\n");
 			vbi_usage();
 			exit(1);
@@ -202,51 +202,51 @@ void vbi_set(cv4l_fd &_fd)
 	int ret;
 
 	if (options[OptSetSlicedVbiFormat] || options[OptTrySlicedVbiFormat]) {
-		vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+		sliced_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
 		if (options[OptSetSlicedVbiFormat])
-			ret = doioctl(fd, VIDIOC_S_FMT, &vbi_fmt);
+			ret = doioctl(fd, VIDIOC_S_FMT, &sliced_fmt);
 		else
-			ret = doioctl(fd, VIDIOC_TRY_FMT, &vbi_fmt);
+			ret = doioctl(fd, VIDIOC_TRY_FMT, &sliced_fmt);
 		if (ret == 0 && (verbose || options[OptTrySlicedVbiFormat]))
-			printfmt(fd, vbi_fmt);
+			printfmt(fd, sliced_fmt);
 	}
 
 	if (options[OptSetSlicedVbiOutFormat] || options[OptTrySlicedVbiOutFormat]) {
-		vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
+		sliced_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
 		if (options[OptSetSlicedVbiOutFormat])
-			ret = doioctl(fd, VIDIOC_S_FMT, &vbi_fmt_out);
+			ret = doioctl(fd, VIDIOC_S_FMT, &sliced_fmt_out);
 		else
-			ret = doioctl(fd, VIDIOC_TRY_FMT, &vbi_fmt_out);
+			ret = doioctl(fd, VIDIOC_TRY_FMT, &sliced_fmt_out);
 		if (ret == 0 && (verbose || options[OptTrySlicedVbiOutFormat]))
-			printfmt(fd, vbi_fmt_out);
+			printfmt(fd, sliced_fmt_out);
 	}
 
 	if (options[OptSetVbiFormat] || options[OptTryVbiFormat]) {
 		v4l2_format fmt;
 
-		fmt.type = vbi_fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
+		fmt.type = V4L2_BUF_TYPE_VBI_CAPTURE;
 		doioctl(fd, VIDIOC_G_FMT, &fmt);
 		fill_raw_vbi(fmt.fmt.vbi, raw_fmt.fmt.vbi);
 		if (options[OptSetVbiFormat])
-			ret = doioctl(fd, VIDIOC_S_FMT, &raw_fmt);
+			ret = doioctl(fd, VIDIOC_S_FMT, &fmt);
 		else
-			ret = doioctl(fd, VIDIOC_TRY_FMT, &raw_fmt);
+			ret = doioctl(fd, VIDIOC_TRY_FMT, &fmt);
 		if (ret == 0 && (verbose || options[OptTryVbiFormat]))
-			printfmt(fd, vbi_fmt);
+			printfmt(fd, fmt);
 	}
 
 	if (options[OptSetVbiOutFormat] || options[OptTryVbiOutFormat]) {
 		v4l2_format fmt;
 
-		fmt.type = vbi_fmt.type = V4L2_BUF_TYPE_VBI_OUTPUT;
+		fmt.type = V4L2_BUF_TYPE_VBI_OUTPUT;
 		doioctl(fd, VIDIOC_G_FMT, &fmt);
 		fill_raw_vbi(fmt.fmt.vbi, raw_fmt.fmt.vbi);
 		if (options[OptSetVbiOutFormat])
-			ret = doioctl(fd, VIDIOC_S_FMT, &raw_fmt);
+			ret = doioctl(fd, VIDIOC_S_FMT, &fmt);
 		else
-			ret = doioctl(fd, VIDIOC_TRY_FMT, &raw_fmt);
+			ret = doioctl(fd, VIDIOC_TRY_FMT, &fmt);
 		if (ret == 0 && (verbose || options[OptTryVbiOutFormat]))
-			printfmt(fd, vbi_fmt);
+			printfmt(fd, fmt);
 	}
 }
 
@@ -255,15 +255,15 @@ void vbi_get(cv4l_fd &_fd)
 	int fd = _fd.g_fd();
 
 	if (options[OptGetSlicedVbiFormat]) {
-		vbi_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt) == 0)
-			printfmt(fd, vbi_fmt);
+		sliced_fmt.type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
+		if (doioctl(fd, VIDIOC_G_FMT, &sliced_fmt) == 0)
+			printfmt(fd, sliced_fmt);
 	}
 
 	if (options[OptGetSlicedVbiOutFormat]) {
-		vbi_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
-		if (doioctl(fd, VIDIOC_G_FMT, &vbi_fmt_out) == 0)
-			printfmt(fd, vbi_fmt_out);
+		sliced_fmt_out.type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
+		if (doioctl(fd, VIDIOC_G_FMT, &sliced_fmt_out) == 0)
+			printfmt(fd, sliced_fmt_out);
 	}
 
 	if (options[OptGetVbiFormat]) {
