@@ -84,6 +84,14 @@ Use device <dev> as the video device used to export DMABUFfers for doing DMABUF
 streaming tests. If <dev> is a number, then /dev/video<dev> is used. If this option
 is not specified, then the DMABUF streaming tests will be skipped.
 .TP
+\fB\-\-stream\-from\fR \fI[<pixelformat>=]<file>\fR, \fB\-\-stream\-from\-hdr\fR \fI[<pixelformat>=]<file>\fR
+Use the contents of the file to fill in output buffers.
+If the fourcc of the pixelformat is given, then use the file
+for output buffers using that pixelformat only.
+The --stream-from-hdr variant uses the format written by
+v4l2-ctl --stream-to-hdr where the payload sizes for each
+buffer are stored in a header. Useful for compressed formats.
+.TP
 \fB\-s\fR, \fB\-\-streaming\fR \fI<count>\fR
 Enable the streaming tests. Set <count> to the number of frames to stream (default 60).
 This requires that before v4l2-compliance is called the device has been configured with

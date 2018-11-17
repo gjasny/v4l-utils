@@ -72,6 +72,8 @@ enum Option {
 	OptSetVbiDevice = 'V',
 	OptUseWrapper = 'w',
 	OptExitOnWarn = 'W',
+	OptStreamFrom = 128,
+	OptStreamFromHdr,
 	OptLast = 256
 };
 
@@ -135,6 +137,8 @@ static struct option long_options[] = {
 	{"wrapper", no_argument, 0, OptUseWrapper},
 #endif
 	{"streaming", optional_argument, 0, OptStreaming},
+	{"stream-from", required_argument, 0, OptStreamFrom},
+	{"stream-from-hdr", required_argument, 0, OptStreamFromHdr},
 	{"stream-all-formats", no_argument, 0, OptStreamAllFormats},
 	{"stream-all-io", no_argument, 0, OptStreamAllIO},
 	{"stream-all-color", required_argument, 0, OptStreamAllColorTest},
@@ -179,6 +183,14 @@ static void usage(void)
 	printf("                     frames to stream (default 60). Requires a valid input/output\n");
 	printf("                     and frequency (when dealing with a tuner). For DMABUF testing\n");
 	printf("                     --expbuf-device needs to be set as well.\n");
+	printf("  --stream-from [<pixelformat>=]<file>\n");
+	printf("  --stream-from-hdr [<pixelformat>=]<file>\n");
+	printf("                     Use the contents of the file to fill in output buffers.\n");
+	printf("                     If the fourcc of the pixelformat is given, then use the file\n");
+	printf("                     for output buffers using that pixelformat only.\n");
+	printf("                     The --stream-from-hdr variant uses the format written by\n");
+	printf("                     v4l2-ctl --stream-to-hdr where the payload sizes for each\n");
+	printf("                     buffer are stored in a header. Useful for compressed formats.\n");
 	printf("  -f, --stream-all-formats\n");
 	printf("                     Test streaming all available formats.\n");
 	printf("                     This attempts to stream using MMAP mode or read/write\n");
@@ -252,6 +264,20 @@ int check_0(const void *p, int len)
 		if (*q++)
 			return 1;
 	return 0;
+}
+
+static std::map<std::string, std::string> stream_from_map;
+static std::map<std::string, bool> stream_hdr_map;
+
+std::string stream_from(std::string pixelformat, bool &use_hdr)
+{
+	if (stream_from_map.find(pixelformat) == stream_from_map.end()) {
+		if (pixelformat.empty())
+			return "";
+		return stream_from("", use_hdr);
+	}
+	use_hdr = stream_hdr_map[pixelformat];
+	return stream_from_map[pixelformat];
 }
 
 static void storeStateTimings(struct node *node, __u32 caps)
@@ -1182,6 +1208,23 @@ int main(int argc, char **argv)
 			if (optarg)
 				frame_count = strtoul(optarg, NULL, 0);
 			break;
+		case OptStreamFrom:
+		case OptStreamFromHdr: {
+			char *equal = strchr(optarg, '=');
+			bool has_hdr = ch == OptStreamFromHdr;
+
+			if (equal == optarg)
+				equal = NULL;
+			if (equal) {
+				*equal = '\0';
+				stream_from_map[optarg] = equal + 1;
+				stream_hdr_map[optarg] = has_hdr;
+			} else {
+				stream_from_map[""] = optarg;
+				stream_hdr_map[""] = has_hdr;
+			}
+			break;
+		}
 		case OptStreamAllColorTest:
 			subs = optarg;
 			while (*subs != '\0') {
