@@ -748,8 +748,7 @@ int testTryFormats(struct node *node)
 		}
 		ret = testFormatsType(node, ret, type, fmt, true);
 		if (ret)
-			return fail("%s is valid, but TRY_FMT failed to return a format\n",
-					buftype2s(type).c_str());
+			return ret;
 	}
 
 	memset(&fmt, 0, sizeof(fmt));
@@ -1013,8 +1012,7 @@ int testSetFormats(struct node *node)
 		}
 		ret = testFormatsType(node, ret, type, fmt_set, true);
 		if (ret)
-			return fail("%s is valid, but no S_FMT was implemented\n",
-					buftype2s(type).c_str());
+			return ret;
 
 		fmt_set = fmt;
 		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);
