@@ -180,7 +180,9 @@ struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned w, unsigned h,
 	unsigned int chroma_div;
 	unsigned int size = w * h;
 
-	if (!info)
+	// fwht expects macroblock alignment, check can be dropped once that
+	// restriction is lifted.
+	if (!info || w % 8 || h % 8)
 		return NULL;
 
 	ctx = malloc(sizeof(*ctx));
