@@ -1,5 +1,5 @@
 Makefile
-moc_capture-win-gl.cpp
+moc_capture.cpp
 qrc_qvidcap.cpp
 qvidcap
 qvidcap.1

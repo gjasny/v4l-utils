@@ -14,7 +14,7 @@
 #include <libv4l2.h>
 
 #include "cv4l-helpers.h"
-#include "capture-win-gl.h"
+#include "capture.h"
 
 __u32 read_u32(int fd);
 int initSocket(int port, cv4l_fmt &fmt, v4l2_fract &pixelaspect);

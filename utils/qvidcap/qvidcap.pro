@@ -17,11 +17,11 @@ INCLUDEPATH += $$PWD/../common
 INCLUDEPATH += $$PWD/../v4l2-compliance
 
 # Input
-HEADERS += capture-win-gl.h
+HEADERS += capture.h
 HEADERS += qvidcap.h
 HEADERS += ../../config.h
 
-SOURCES += capture-win-gl.cpp
+SOURCES += capture.cpp paint.cpp
 SOURCES += qvidcap.cpp
 SOURCES += ../common/v4l-stream.c
 SOURCES += ../common/codec-fwht.c

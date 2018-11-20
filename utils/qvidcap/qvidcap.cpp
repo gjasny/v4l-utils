@@ -14,7 +14,7 @@
 #include <QtMath>
 
 #include "qvidcap.h"
-#include "capture-win-gl.h"
+#include "capture.h"
 
 #include <libv4lconvert.h>
 #include "v4l-stream.h"
