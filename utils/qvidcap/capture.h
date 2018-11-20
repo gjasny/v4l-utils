@@ -64,12 +64,12 @@ struct TestState {
 // This must be equal to the max number of textures that any shader uses
 #define MAX_TEXTURES_NEEDED 3
 
-class CaptureGLWin : public QOpenGLWidget, protected QOpenGLFunctions
+class CaptureWin : public QOpenGLWidget, protected QOpenGLFunctions
 {
 	Q_OBJECT
 public:
-	explicit CaptureGLWin(QScrollArea *sa, QWidget *parent = 0);
-	~CaptureGLWin();
+	explicit CaptureWin(QScrollArea *sa, QWidget *parent = 0);
+	~CaptureWin();
 
 	void setModeV4L2(cv4l_fd *fd);
 	void setModeSocket(int sock, int port);

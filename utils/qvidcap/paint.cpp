@@ -24,7 +24,7 @@
 
 #include "v4l2-info.h"
 
-void CaptureGLWin::initializeGL()
+void CaptureWin::initializeGL()
 {
 	initializeOpenGLFunctions();
 	glDisable(GL_BLEND);
@@ -63,7 +63,7 @@ void CaptureGLWin::initializeGL()
 }
 
 
-void CaptureGLWin::paintGL()
+void CaptureWin::paintGL()
 {
 	if (m_v4l_fmt.g_width() < 16 || m_v4l_fmt.g_frame_height() < 16)
 		return;
@@ -426,7 +426,7 @@ static const struct define defines[] = {
 	{ NULL, 0 }
 };
 
-void CaptureGLWin::changeShader()
+void CaptureWin::changeShader()
 {
 	if (m_screenTextureCount)
 		glDeleteTextures(m_screenTextureCount, m_screenTexture);
@@ -620,7 +620,7 @@ void CaptureGLWin::changeShader()
 	}
 }
 
-void CaptureGLWin::shader_YUV()
+void CaptureWin::shader_YUV()
 {
 	unsigned vdiv = 2, hdiv = 2;
 
@@ -658,7 +658,7 @@ void CaptureGLWin::shader_YUV()
 	checkError("YUV shader texture 2");
 }
 
-void CaptureGLWin::shader_NV12()
+void CaptureWin::shader_NV12()
 {
 	m_screenTextureCount = 2;
 	glGenTextures(m_screenTextureCount, m_screenTexture);
@@ -676,7 +676,7 @@ void CaptureGLWin::shader_NV12()
 	checkError("NV12 shader texture 1");
 }
 
-void CaptureGLWin::shader_NV24()
+void CaptureWin::shader_NV24()
 {
 	m_screenTextureCount = 2;
 	glGenTextures(m_screenTextureCount, m_screenTexture);
@@ -694,7 +694,7 @@ void CaptureGLWin::shader_NV24()
 	checkError("NV24 shader texture 1");
 }
 
-void CaptureGLWin::shader_NV16()
+void CaptureWin::shader_NV16()
 {
 	m_screenTextureCount = 2;
 	glGenTextures(m_screenTextureCount, m_screenTexture);
@@ -712,7 +712,7 @@ void CaptureGLWin::shader_NV16()
 	checkError("NV16 shader texture 1");
 }
 
-void CaptureGLWin::shader_YUY2()
+void CaptureWin::shader_YUY2()
 {
 	m_screenTextureCount = 1;
 	glGenTextures(m_screenTextureCount, m_screenTexture);
@@ -723,7 +723,7 @@ void CaptureGLWin::shader_YUY2()
 	checkError("YUY2 shader");
 }
 
-void CaptureGLWin::shader_RGB()
+void CaptureWin::shader_RGB()
 {
 	m_screenTextureCount = 1;
 	glGenTextures(m_screenTextureCount, m_screenTexture);
@@ -806,7 +806,7 @@ void CaptureGLWin::shader_RGB()
 	checkError("RGB shader");
 }
 
-void CaptureGLWin::shader_Bayer()
+void CaptureWin::shader_Bayer()
 {
 	m_screenTextureCount = 1;
 	glGenTextures(m_screenTextureCount, m_screenTexture);
@@ -841,7 +841,7 @@ void CaptureGLWin::shader_Bayer()
 	checkError("Bayer shader");
 }
 
-void CaptureGLWin::shader_YUV_packed()
+void CaptureWin::shader_YUV_packed()
 {
 	m_screenTextureCount = 1;
 	glGenTextures(m_screenTextureCount, m_screenTexture);
@@ -872,7 +872,7 @@ void CaptureGLWin::shader_YUV_packed()
 	checkError("Packed YUV shader");
 }
 
-void CaptureGLWin::render_YUV(__u32 format)
+void CaptureWin::render_YUV(__u32 format)
 {
 	unsigned vdiv = 2, hdiv = 2;
 	int idxU = 0;
@@ -957,7 +957,7 @@ void CaptureGLWin::render_YUV(__u32 format)
 	checkError("YUV paint vtex");
 }
 
-void CaptureGLWin::render_NV12(__u32 format)
+void CaptureWin::render_NV12(__u32 format)
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
@@ -983,7 +983,7 @@ void CaptureGLWin::render_NV12(__u32 format)
 	checkError("NV12 paint uvtex");
 }
 
-void CaptureGLWin::render_NV24(__u32 format)
+void CaptureWin::render_NV24(__u32 format)
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
@@ -1001,7 +1001,7 @@ void CaptureGLWin::render_NV24(__u32 format)
 	checkError("NV24 paint uvtex");
 }
 
-void CaptureGLWin::render_NV16(__u32 format)
+void CaptureWin::render_NV16(__u32 format)
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
@@ -1029,7 +1029,7 @@ void CaptureGLWin::render_NV16(__u32 format)
 	checkError("NV16 paint uvtex");
 }
 
-void CaptureGLWin::render_YUY2(__u32 format)
+void CaptureWin::render_YUY2(__u32 format)
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
@@ -1040,7 +1040,7 @@ void CaptureGLWin::render_YUY2(__u32 format)
 	checkError("YUY2 paint");
 }
 
-void CaptureGLWin::render_RGB(__u32 format)
+void CaptureWin::render_RGB(__u32 format)
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
@@ -1151,7 +1151,7 @@ void CaptureGLWin::render_RGB(__u32 format)
 	checkError("RGB paint");
 }
 
-void CaptureGLWin::render_Bayer(__u32 format)
+void CaptureWin::render_Bayer(__u32 format)
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);
@@ -1183,7 +1183,7 @@ void CaptureGLWin::render_Bayer(__u32 format)
 	checkError("Bayer paint");
 }
 
-void CaptureGLWin::render_YUV_packed(__u32 format)
+void CaptureWin::render_YUV_packed(__u32 format)
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[0]);

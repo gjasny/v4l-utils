@@ -723,7 +723,7 @@ int main(int argc, char **argv)
 	format.setVersion(3, 3);
 
 	QSurfaceFormat::setDefaultFormat(format);
-	CaptureGLWin win(sa);
+	CaptureWin win(sa);
 	win.setVerbose(verbose);
 	if (mode == AppModeFile) {
 		win.setModeFile(filename);

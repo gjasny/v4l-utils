@@ -187,7 +187,7 @@ static QAction *addSubMenuItem(QActionGroup *grp, QMenu *menu, const QString &te
 	return a;
 }
 
-CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
+CaptureWin::CaptureWin(QScrollArea *sa, QWidget *parent) :
 	QOpenGLWidget(parent),
 	m_fd(0),
 	m_sock(0),
@@ -295,13 +295,13 @@ CaptureGLWin::CaptureGLWin(QScrollArea *sa, QWidget *parent) :
 		this, SLOT(toggleFullScreen(bool)));
 }
 
-CaptureGLWin::~CaptureGLWin()
+CaptureWin::~CaptureWin()
 {
 	makeCurrent();
 	delete m_program;
 }
 
-void CaptureGLWin::resizeEvent(QResizeEvent *event)
+void CaptureWin::resizeEvent(QResizeEvent *event)
 {
 	QSize origSize = correctAspect(QSize(m_origWidth, m_origHeight));
 	QSize window = size();
@@ -318,7 +318,7 @@ void CaptureGLWin::resizeEvent(QResizeEvent *event)
 	QOpenGLWidget::resizeEvent(event);
 }
 
-void CaptureGLWin::updateShader()
+void CaptureWin::updateShader()
 {
 	setV4LFormat(m_v4l_fmt);
 	if (m_mode == AppModeTest || m_mode == AppModeTPG || m_mode == AppModeFile) {
@@ -329,7 +329,7 @@ void CaptureGLWin::updateShader()
 	m_updateShader = true;
 }
 
-void CaptureGLWin::showCurrentOverrides()
+void CaptureWin::showCurrentOverrides()
 {
 	static bool firstTime = true;
 	const char *prefix = firstTime ? "" : "New ";
@@ -353,7 +353,7 @@ void CaptureGLWin::showCurrentOverrides()
 	firstTime = false;
 }
 
-void CaptureGLWin::restoreAll(bool checked)
+void CaptureWin::restoreAll(bool checked)
 {
 	m_overridePixelFormat = m_origPixelFormat;
 	m_overrideField = m_origField;
@@ -367,7 +367,7 @@ void CaptureGLWin::restoreAll(bool checked)
 	restoreSize();
 }
 
-void CaptureGLWin::fmtChanged(QAction *a)
+void CaptureWin::fmtChanged(QAction *a)
 {
 	m_overridePixelFormat = a->data().toInt();
 	if (m_overridePixelFormat == 0)
@@ -378,7 +378,7 @@ void CaptureGLWin::fmtChanged(QAction *a)
 	updateShader();
 }
 
-void CaptureGLWin::fieldChanged(QAction *a)
+void CaptureWin::fieldChanged(QAction *a)
 {
 	m_overrideField = a->data().toInt();
 	if (m_overrideField == 0xffffffff)
@@ -387,7 +387,7 @@ void CaptureGLWin::fieldChanged(QAction *a)
 	updateShader();
 }
 
-void CaptureGLWin::colorspaceChanged(QAction *a)
+void CaptureWin::colorspaceChanged(QAction *a)
 {
 	m_overrideColorspace = a->data().toInt();
 	if (m_overrideColorspace == 0xffffffff)
@@ -396,7 +396,7 @@ void CaptureGLWin::colorspaceChanged(QAction *a)
 	updateShader();
 }
 
-void CaptureGLWin::xferFuncChanged(QAction *a)
+void CaptureWin::xferFuncChanged(QAction *a)
 {
 	m_overrideXferFunc = a->data().toInt();
 	if (m_overrideXferFunc == 0xffffffff)
@@ -405,7 +405,7 @@ void CaptureGLWin::xferFuncChanged(QAction *a)
 	updateShader();
 }
 
-void CaptureGLWin::ycbcrEncChanged(QAction *a)
+void CaptureWin::ycbcrEncChanged(QAction *a)
 {
 	m_overrideYCbCrEnc = a->data().toInt();
 	if (m_overrideYCbCrEnc == 0xffffffff)
@@ -414,7 +414,7 @@ void CaptureGLWin::ycbcrEncChanged(QAction *a)
 	updateShader();
 }
 
-void CaptureGLWin::hsvEncChanged(QAction *a)
+void CaptureWin::hsvEncChanged(QAction *a)
 {
 	m_overrideHSVEnc = a->data().toInt();
 	if (m_overrideHSVEnc == 0xffffffff)
@@ -423,7 +423,7 @@ void CaptureGLWin::hsvEncChanged(QAction *a)
 	updateShader();
 }
 
-void CaptureGLWin::quantChanged(QAction *a)
+void CaptureWin::quantChanged(QAction *a)
 {
 	m_overrideQuantization = a->data().toInt();
 	if (m_overrideQuantization == 0xffffffff)
@@ -432,7 +432,7 @@ void CaptureGLWin::quantChanged(QAction *a)
 	updateShader();
 }
 
-void CaptureGLWin::restoreSize(bool)
+void CaptureWin::restoreSize(bool)
 {
 	QSize s = correctAspect(QSize(m_origWidth, m_origHeight));
 
@@ -441,7 +441,7 @@ void CaptureGLWin::restoreSize(bool)
 	updateShader();
 }
 
-QSize CaptureGLWin::correctAspect(const QSize &s) const
+QSize CaptureWin::correctAspect(const QSize &s) const
 {
 	qreal aspect
 		= (qreal)m_pixelaspect.denominator
@@ -457,14 +457,14 @@ QSize CaptureGLWin::correctAspect(const QSize &s) const
 	return QSize(qFloor(w), qFloor(h));
 }
 
-void CaptureGLWin::windowScalingChanged(QAction *a)
+void CaptureWin::windowScalingChanged(QAction *a)
 {
 	m_scrollArea->setWidgetResizable(a->data().toInt() == CAPTURE_GL_WIN_RESIZE);
 	resize(correctAspect(QSize(m_origWidth, m_origHeight)));
 	updateShader();
 }
 
-void CaptureGLWin::resolutionOverrideChanged(bool checked)
+void CaptureWin::resolutionOverrideChanged(bool checked)
 {
 	if (m_overrideWidth)
 		m_origWidth = m_overrideWidth;
@@ -474,7 +474,7 @@ void CaptureGLWin::resolutionOverrideChanged(bool checked)
 	restoreSize();
 }
 
-void CaptureGLWin::toggleFullScreen(bool)
+void CaptureWin::toggleFullScreen(bool)
 {
 	if (m_scrollArea->isFullScreen())
 		m_scrollArea->showNormal();
@@ -482,7 +482,7 @@ void CaptureGLWin::toggleFullScreen(bool)
 		m_scrollArea->showFullScreen();
 }
 
-void CaptureGLWin::contextMenuEvent(QContextMenuEvent *event)
+void CaptureWin::contextMenuEvent(QContextMenuEvent *event)
 {
 	QMenu menu(this);
 
@@ -514,7 +514,7 @@ void CaptureGLWin::contextMenuEvent(QContextMenuEvent *event)
 	menu.exec(event->globalPos());
 }
 
-void CaptureGLWin::mouseDoubleClickEvent(QMouseEvent * e)
+void CaptureWin::mouseDoubleClickEvent(QMouseEvent * e)
 {
 	if (e->button() != Qt::LeftButton)
 		return;
@@ -522,7 +522,7 @@ void CaptureGLWin::mouseDoubleClickEvent(QMouseEvent * e)
 	toggleFullScreen();
 }
 
-void CaptureGLWin::cycleMenu(__u32 &overrideVal, __u32 &origVal,
+void CaptureWin::cycleMenu(__u32 &overrideVal, __u32 &origVal,
 			     const __u32 values[], bool hasShift, bool hasCtrl)
 {
 	unsigned i;
@@ -547,7 +547,7 @@ void CaptureGLWin::cycleMenu(__u32 &overrideVal, __u32 &origVal,
 	}
 }
 
-void CaptureGLWin::keyPressEvent(QKeyEvent *event)
+void CaptureWin::keyPressEvent(QKeyEvent *event)
 {
 	unsigned w = m_v4l_fmt.g_width();
 	unsigned h = m_v4l_fmt.g_frame_height();
@@ -658,7 +658,7 @@ void CaptureGLWin::keyPressEvent(QKeyEvent *event)
 	}
 }
 
-bool CaptureGLWin::supportedFmt(__u32 fmt)
+bool CaptureWin::supportedFmt(__u32 fmt)
 {
 	switch (fmt) {
 	case V4L2_PIX_FMT_RGB565X:
@@ -684,7 +684,7 @@ bool CaptureGLWin::supportedFmt(__u32 fmt)
 	return true;
 }
 
-void CaptureGLWin::checkError(const char *msg)
+void CaptureWin::checkError(const char *msg)
 {
 	int err;
 	unsigned errNo = 0;
@@ -696,7 +696,7 @@ void CaptureGLWin::checkError(const char *msg)
 		exit(errNo);
 }
 
-void CaptureGLWin::configureTexture(size_t idx)
+void CaptureWin::configureTexture(size_t idx)
 {
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture[idx]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -705,7 +705,7 @@ void CaptureGLWin::configureTexture(size_t idx)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
-void CaptureGLWin::setOverrideWidth(__u32 w)
+void CaptureWin::setOverrideWidth(__u32 w)
 {
 	m_overrideWidth = w;
 
@@ -713,7 +713,7 @@ void CaptureGLWin::setOverrideWidth(__u32 w)
 		m_resolutionOverride->setChecked(true);
 }
 
-void CaptureGLWin::setOverrideHeight(__u32 h)
+void CaptureWin::setOverrideHeight(__u32 h)
 {
 	m_overrideHeight = h;
 
@@ -721,7 +721,7 @@ void CaptureGLWin::setOverrideHeight(__u32 h)
 		m_resolutionOverride->setChecked(true);
 }
 
-void CaptureGLWin::setModeV4L2(cv4l_fd *fd)
+void CaptureWin::setModeV4L2(cv4l_fd *fd)
 {
 	m_mode = AppModeV4L2;
 	m_fd = fd;
@@ -741,7 +741,7 @@ void CaptureGLWin::setModeV4L2(cv4l_fd *fd)
 		printf("using libv4l2\n");
 }
 
-void CaptureGLWin::setModeSocket(int socket, int port)
+void CaptureWin::setModeSocket(int socket, int port)
 {
 	m_mode = AppModeSocket;
 	m_sock = socket;
@@ -758,7 +758,7 @@ void CaptureGLWin::setModeSocket(int socket, int port)
 	connect(readSock, SIGNAL(activated(int)), this, SLOT(sockReadEvent()));
 }
 
-void CaptureGLWin::setModeFile(const QString &filename)
+void CaptureWin::setModeFile(const QString &filename)
 {
 	m_mode = AppModeFile;
 	m_file.setFileName(filename);
@@ -769,25 +769,25 @@ void CaptureGLWin::setModeFile(const QString &filename)
 	m_canOverrideResolution = true;
 }
 
-void CaptureGLWin::setModeTPG()
+void CaptureWin::setModeTPG()
 {
 	m_mode = AppModeTPG;
 }
 
-void CaptureGLWin::setModeTest(unsigned cnt)
+void CaptureWin::setModeTest(unsigned cnt)
 {
 	m_mode = AppModeTest;
 	m_test = cnt;
 }
 
-void CaptureGLWin::setQueue(cv4l_queue *q)
+void CaptureWin::setQueue(cv4l_queue *q)
 {
 	m_v4l_queue = q;
 	if (m_origPixelFormat == 0)
 		updateOrigValues();
 }
 
-bool CaptureGLWin::updateV4LFormat(const cv4l_fmt &fmt)
+bool CaptureWin::updateV4LFormat(const cv4l_fmt &fmt)
 {
 	m_is_rgb = true;
 	m_is_hsv = false;
@@ -890,7 +890,7 @@ bool CaptureGLWin::updateV4LFormat(const cv4l_fmt &fmt)
 	return true;
 }
 
-bool CaptureGLWin::setV4LFormat(cv4l_fmt &fmt)
+bool CaptureWin::setV4LFormat(cv4l_fmt &fmt)
 {
 	m_is_sdtv = false;
 
@@ -1031,12 +1031,12 @@ bool CaptureGLWin::setV4LFormat(cv4l_fmt &fmt)
 	return true;
 }
 
-void CaptureGLWin::setPixelAspect(v4l2_fract &pixelaspect)
+void CaptureWin::setPixelAspect(v4l2_fract &pixelaspect)
 {
 	m_pixelaspect = pixelaspect;
 }
 
-void CaptureGLWin::v4l2ReadEvent()
+void CaptureWin::v4l2ReadEvent()
 {
 	cv4l_buffer buf(m_fd->g_type());
 
@@ -1065,7 +1065,7 @@ void CaptureGLWin::v4l2ReadEvent()
 		exit(0);
 }
 
-void CaptureGLWin::v4l2ExceptionEvent()
+void CaptureWin::v4l2ExceptionEvent()
 {
 	v4l2_event ev;
 	cv4l_fmt fmt;
@@ -1087,7 +1087,7 @@ void CaptureGLWin::v4l2ExceptionEvent()
 	}
 }
 
-void CaptureGLWin::listenForNewConnection()
+void CaptureWin::listenForNewConnection()
 {
 	cv4l_fmt fmt;
 	v4l2_fract pixelaspect = { 1, 1 };
@@ -1122,7 +1122,7 @@ void CaptureGLWin::listenForNewConnection()
 	restoreSize();
 }
 
-int CaptureGLWin::read_u32(__u32 &v)
+int CaptureWin::read_u32(__u32 &v)
 {
 	int n;
 
@@ -1136,7 +1136,7 @@ int CaptureGLWin::read_u32(__u32 &v)
 	return 0;
 }
 
-void CaptureGLWin::sockReadEvent()
+void CaptureWin::sockReadEvent()
 {
 	int n;
 
@@ -1251,7 +1251,7 @@ new_conn:
 	listenForNewConnection();
 }
 
-void CaptureGLWin::resizeGL(int w, int h)
+void CaptureWin::resizeGL(int w, int h)
 {
 	if (!m_canOverrideResolution || !m_resolutionOverride->isChecked())
 		return;
@@ -1264,7 +1264,7 @@ void CaptureGLWin::resizeGL(int w, int h)
 	printf("New resolution: %ux%u\n", w, h);
 }
 
-void CaptureGLWin::updateOrigValues()
+void CaptureWin::updateOrigValues()
 {
 	m_origWidth = m_v4l_fmt.g_width();
 	m_origHeight = m_v4l_fmt.g_frame_height();
@@ -1284,7 +1284,7 @@ void CaptureGLWin::updateOrigValues()
 	m_viewSize = QSize(m_origWidth, m_origHeight);
 }
 
-void CaptureGLWin::initImageFormat()
+void CaptureWin::initImageFormat()
 {
 	updateV4LFormat(m_v4l_fmt);
 	tpg_s_fourcc(&m_tpg, m_v4l_fmt.g_pixelformat());
@@ -1316,7 +1316,7 @@ void CaptureGLWin::initImageFormat()
 		tpg_log_status(&m_tpg);
 }
 
-void CaptureGLWin::startTimer()
+void CaptureWin::startTimer()
 {
 	if (m_origPixelFormat == 0)
 		updateOrigValues();
@@ -1378,7 +1378,7 @@ void CaptureGLWin::startTimer()
 	}
 }
 
-void CaptureGLWin::tpgUpdateFrame()
+void CaptureWin::tpgUpdateFrame()
 {
 	bool is_alt = m_v4l_fmt.g_field() == V4L2_FIELD_ALTERNATE;
 
