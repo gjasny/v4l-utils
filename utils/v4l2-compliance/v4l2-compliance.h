@@ -53,6 +53,7 @@ extern bool show_info;
 extern bool show_warnings;
 extern bool exit_on_fail;
 extern bool exit_on_warn;
+extern bool is_vivid; // We're testing the vivid driver
 extern int kernel_version;
 extern int media_fd;
 extern unsigned warnings;
@@ -272,6 +273,7 @@ int testBlockingWait(struct node *node);
 int testMmap(struct node *node, unsigned frame_count);
 int testUserPtr(struct node *node, unsigned frame_count);
 int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count);
+int testRequests(struct node *node, bool test_streaming);
 void streamAllFormats(struct node *node);
 
 // Color tests

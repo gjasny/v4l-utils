@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
+#include <poll.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <map>
@@ -60,6 +61,22 @@ struct buf_seq {
 };
 
 static struct buf_seq last_seq, last_m2m_seq;
+
+static int buf_req_fds[VIDEO_MAX_FRAME * 2];
+
+static inline int named_ioctl_fd(int fd, bool trace, const char *cmd_name, unsigned long cmd, void *arg)
+{
+	int retval;
+	int e;
+
+	retval = ioctl(fd, cmd, arg);
+	e = retval == 0 ? 0 : errno;
+	if (trace)
+		fprintf(stderr, "\t\t%s returned %d (%s)\n",
+				cmd_name, retval, strerror(e));
+	return retval == -1 ? e : (retval ? -1 : 0);
+}
+#define doioctl_fd(fd, r, p) named_ioctl_fd((fd), node->g_trace(), #r, r, p)
 
 enum QueryBufMode {
 	Unqueued,
@@ -276,7 +293,7 @@ void buffer::fill_output_buf(bool fill_bytesused = true)
 		s_timestamp_ts(ts);
 		s_timestamp_src(V4L2_BUF_FLAG_TSTAMP_SRC_SOE);
 	}
-	s_flags(V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_KEYFRAME);
+	s_flags(g_flags() | V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_KEYFRAME);
 	tc.type = V4L2_TC_TYPE_30FPS;
 	tc.flags = V4L2_TC_USERBITS_8BITCHARS;
 	tc.frames = ts.tv_nsec * 30 / 1000000000;
@@ -324,7 +341,11 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 	fail_on_test(g_memory() != memory);
 	fail_on_test(g_index() >= VIDEO_MAX_FRAME);
 	fail_on_test(g_index() != index);
-	fail_on_test(buf.reserved2 || buf.reserved);
+	fail_on_test(buf.reserved2);
+	if (g_flags() & V4L2_BUF_FLAG_REQUEST_FD)
+		fail_on_test(g_request_fd() < 0);
+	else
+		fail_on_test(g_request_fd());
 	fail_on_test(timestamp != V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC &&
 		     timestamp != V4L2_BUF_FLAG_TIMESTAMP_COPY);
 	fail_on_test(timestamp_src != V4L2_BUF_FLAG_TSTAMP_SRC_SOE &&
@@ -346,6 +367,11 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 		buf_states++;
 	if (g_flags() & V4L2_BUF_FLAG_PREPARED)
 		buf_states++;
+	if (g_flags() & V4L2_BUF_FLAG_IN_REQUEST) {
+		fail_on_test(!(g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
+		if (!(g_flags() & V4L2_BUF_FLAG_PREPARED))
+			buf_states++;
+	}
 	fail_on_test(buf_states > 1);
 	fail_on_test(buf.length == 0);
 	if (v4l_type_is_planar(g_type())) {
@@ -358,7 +384,7 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 		}
 	}
 
-	if (v4l_type_is_capture(g_type()) && !ts_copy &&
+	if (v4l_type_is_capture(g_type()) && !ts_copy && !is_vivid &&
 	    (g_flags() & V4L2_BUF_FLAG_TIMECODE))
 		warn_once("V4L2_BUF_FLAG_TIMECODE was used!\n");
 
@@ -846,8 +872,19 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 								sizeof(orig_buf.timecode)));
 			}
 			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+			if (buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD) {
+				buf.querybuf(node, buf.g_index());
+				fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
+				fail_on_test(buf.g_request_fd());
+				fail_on_test(!buf.qbuf(node));
+				buf.s_flags(V4L2_BUF_FLAG_REQUEST_FD);
+				buf.s_request_fd(buf_req_fds[2 * frame_count - count]);
+			}
 			fail_on_test(buf.qbuf(node, q));
 			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+			if (buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD)
+				fail_on_test(doioctl_fd(buf_req_fds[2 * frame_count - count],
+							MEDIA_REQUEST_IOC_QUEUE, 0));
 			if (--count == 0)
 				break;
 		}
@@ -878,6 +915,7 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 							sizeof(orig_buf.timecode)));
 		}
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+		buf.s_flags(buf.g_flags() & ~V4L2_BUF_FLAG_REQUEST_FD);
 		fail_on_test(buf.qbuf(node, m2m_q));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 	}
@@ -911,6 +949,7 @@ static int setupM2M(struct node *node, cv4l_queue &q)
 		buffer buf(q);
 
 		fail_on_test(buf.querybuf(node, i));
+		buf.s_flags(buf.g_flags() & ~V4L2_BUF_FLAG_REQUEST_FD);
 		fail_on_test(buf.qbuf(node, q));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 	}
@@ -1061,6 +1100,8 @@ int testMmap(struct node *node, unsigned frame_count)
 			fail_on_test(buf.querybuf(node, i));
 			fail_on_test(buf.qbuf(node));
 			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
+			fail_on_test(buf.g_request_fd());
 		}
 		// calling STREAMOFF...
 		fail_on_test(node->streamoff(q.g_type()));
@@ -1384,6 +1425,276 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 			fail_on_test(!capture_count);
 		stream_close();
 	}
+	return 0;
+}
+
+int testRequests(struct node *node, bool test_streaming)
+{
+	int media_fd = mi_get_media_fd(node->g_fd());
+	int req_fd;
+	qctrl_map::iterator iter;
+	struct test_query_ext_ctrl valid_qctrl;
+	v4l2_ext_controls ctrls;
+	v4l2_ext_control ctrl;
+	bool have_controls;
+	int ret;
+
+	memset(&valid_qctrl, 0, sizeof(valid_qctrl));
+	memset(&ctrls, 0, sizeof(ctrls));
+	memset(&ctrl, 0, sizeof(ctrl));
+	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
+		test_query_ext_ctrl &qctrl = iter->second;
+
+		if (qctrl.type != V4L2_CTRL_TYPE_INTEGER &&
+		    qctrl.type != V4L2_CTRL_TYPE_BOOLEAN)
+			continue;
+		if (qctrl.minimum != qctrl.maximum) {
+			valid_qctrl = qctrl;
+			ctrl.id = qctrl.id;
+			break;
+		}
+	}
+
+	if (ctrl.id == 0) {
+		info("could not test the Request API, no suitable control found\n");
+		return 0;
+	}
+
+	ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
+	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
+	fail_on_test(ret != EINVAL && ret != EACCES && ret != ENOTTY);
+	have_controls = ret != ENOTTY;
+
+	if (media_fd < 0 || ret == EACCES)
+		return ENOTTY;
+	if (have_controls) {
+		ctrls.request_fd = 10;
+		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
+	}
+	fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd));
+	fail_on_test(req_fd < 0);
+	if (have_controls) {
+		ctrls.request_fd = req_fd;
+		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EACCES);
+	}
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, 0) != ENOENT);
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, 0));
+	close(media_fd);
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, 0) != ENOENT);
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, 0));
+	close(req_fd);
+	if (have_controls)
+		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, 0) != EBADF);
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, 0) != EBADF);
+
+	media_fd = mi_get_media_fd(node->g_fd());
+	fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd));
+	ctrls.count = 1;
+	ctrls.controls = &ctrl;
+	if (have_controls) {
+		ctrl.value = valid_qctrl.minimum;
+		ctrls.which = 0;
+		fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+		ctrl.value = valid_qctrl.maximum;
+		ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
+		ctrls.request_fd = req_fd;
+		fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+		ctrl.value = valid_qctrl.minimum;
+		ctrls.request_fd = req_fd;
+		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EACCES);
+		ctrls.which = 0;
+		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+		fail_on_test(ctrl.value != valid_qctrl.minimum);
+		ctrls.request_fd = req_fd;
+		ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
+		ctrl.id = 1;
+		fail_on_test(!doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EACCES);
+	}
+	ctrl.id = valid_qctrl.id;
+	close(req_fd);
+	close(media_fd);
+	node->reopen();
+
+	int type = node->is_planar ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+		   V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (node->can_output)
+		type = v4l_type_invert(type);
+	
+	if (!(node->valid_buftypes & (1 << type)))
+		return ENOTTY;
+
+	buffer_info.clear();
+
+	cv4l_queue q(type, V4L2_MEMORY_MMAP);
+	cv4l_queue m2m_q(v4l_type_invert(type));
+
+	q.init(type, V4L2_MEMORY_MMAP);
+	fail_on_test(q.reqbufs(node, 2));
+	unsigned num_bufs = q.g_buffers();
+	unsigned num_requests = 2 * num_bufs;
+	last_seq.init();
+
+	media_fd = mi_get_media_fd(node->g_fd());
+
+	for (unsigned i = 0; i < num_requests; i++) {
+		fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &buf_req_fds[i]));
+		fail_on_test(buf_req_fds[i] < 0);
+		fail_on_test(!doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0));
+	}
+	close(media_fd);
+
+	buffer buf(q);
+
+	fail_on_test(buf.querybuf(node, 0));
+	fail_on_test(buf.qbuf(node));
+	fail_on_test(buf.querybuf(node, 1));
+	buf.s_flags(V4L2_BUF_FLAG_REQUEST_FD);
+	buf.s_request_fd(buf_req_fds[1]);
+	fail_on_test(!buf.qbuf(node));
+
+	node->reopen();
+
+	q.init(type, V4L2_MEMORY_MMAP);
+	fail_on_test(q.reqbufs(node, 2));
+
+	fail_on_test(node->streamon(q.g_type()));
+	if (node->is_m2m) {
+		fail_on_test(m2m_q.reqbufs(node, 2));
+		fail_on_test(node->streamon(m2m_q.g_type()));
+
+		buffer buf(m2m_q);
+
+		fail_on_test(buf.querybuf(node, 0));
+		buf.s_flags(V4L2_BUF_FLAG_REQUEST_FD);
+		buf.s_request_fd(buf_req_fds[0]);
+		fail_on_test(!buf.qbuf(node));
+		fail_on_test(node->streamoff(m2m_q.g_type()));
+		fail_on_test(m2m_q.reqbufs(node, 0));
+
+		fail_on_test(setupM2M(node, m2m_q));
+	}
+
+	ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
+	// Test queuing buffers...
+	for (unsigned i = 0; i < num_bufs; i++) {
+		buffer buf(q);
+
+		fail_on_test(buf.querybuf(node, i));
+		fail_on_test(buf.g_request_fd());
+		buf.s_flags(V4L2_BUF_FLAG_REQUEST_FD);
+		if (i == 0) {
+			buf.s_request_fd(-1);
+			fail_on_test(!buf.qbuf(node));
+			buf.s_request_fd(0xdead);
+			fail_on_test(!buf.qbuf(node));
+		}
+		buf.s_request_fd(buf_req_fds[i]);
+		if (!(i & 1)) {
+			fail_on_test(buf.prepare_buf(node) != EINVAL);
+			buf.s_flags(0);
+			fail_on_test(buf.prepare_buf(node));
+			fail_on_test(buf.querybuf(node, i));
+			fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_PREPARED));
+			buf.s_flags(buf.g_flags() | V4L2_BUF_FLAG_REQUEST_FD);
+			buf.s_request_fd(buf_req_fds[i]);
+		}
+		fail_on_test(buf.qbuf(node));
+		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
+		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
+		fail_on_test(buf.g_request_fd() < 0);
+		fail_on_test(buf.querybuf(node, i));
+		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
+		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
+		fail_on_test(buf.g_request_fd() < 0);
+		if (i & 1)
+			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_PREPARED);
+		else
+			fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_PREPARED));
+		buf.s_request_fd(buf_req_fds[i]);
+		fail_on_test(!buf.qbuf(node));
+
+		ctrl.value = (i & 1) ? valid_qctrl.maximum : valid_qctrl.minimum;
+		ctrls.request_fd = buf_req_fds[i];
+		fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, 0));
+
+		fail_on_test(buf.querybuf(node, i));
+		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);
+		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
+
+		ctrls.request_fd = buf_req_fds[i];
+		fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+
+		if (i)
+			fail_on_test(!buf.qbuf(node));
+		buf.s_flags(buf.g_flags() | V4L2_BUF_FLAG_REQUEST_FD);
+		buf.s_request_fd(buf_req_fds[i]);
+		fail_on_test(buf.qbuf(node));
+		fail_on_test(buf.querybuf(node, i));
+		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
+		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0));
+		fail_on_test(buf.querybuf(node, i));
+		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);
+		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
+		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_QUEUED));
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, 0) != EBUSY);
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0) != EBUSY);
+	}
+
+	fail_on_test(node->g_fmt(cur_fmt, q.g_type()));
+
+	if (test_streaming) {
+		unsigned capture_count;
+
+		fail_on_test(captureBufs(node, q, m2m_q, num_bufs, true, capture_count));
+	}
+	fail_on_test(node->streamoff(q.g_type()));
+
+	for (unsigned i = 0; test_streaming && i < num_bufs; i++) {
+		buffer buf(q);
+
+		ctrls.request_fd = buf_req_fds[i];
+		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+		fail_on_test(ctrl.value != ((i & 1) ? valid_qctrl.maximum :
+			     valid_qctrl.minimum));
+		fail_on_test(buf.querybuf(node, i));
+		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
+		fail_on_test(buf.g_request_fd());
+		struct pollfd pfd = {
+			buf_req_fds[i],
+			POLLPRI, 0
+		};
+		fail_on_test(poll(&pfd, 1, 100) != 1);
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0) != EBUSY);
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, 0));
+		fail_on_test(buf.querybuf(node, i));
+		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
+		fail_on_test(buf.g_request_fd());
+		close(buf_req_fds[i]);
+		ctrls.request_fd = buf_req_fds[i];
+		fail_on_test(!doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+	}
+	for (unsigned i = 0; i < num_requests; i++)
+		close(buf_req_fds[i]);
+
+	ctrls.which = 0;
+	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+	if (test_streaming)
+		fail_on_test(ctrl.value != (((num_bufs - 1) & 1) ? valid_qctrl.maximum :
+					    valid_qctrl.minimum));
+
+	fail_on_test(q.reqbufs(node, 0));
+	if (node->is_m2m) {
+		fail_on_test(node->streamoff(m2m_q.g_type()));
+		m2m_q.munmap_bufs(node);
+		fail_on_test(m2m_q.reqbufs(node, 0));
+	}
+
 	return 0;
 }
 

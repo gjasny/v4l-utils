@@ -87,6 +87,7 @@ bool show_info;
 bool show_warnings = true;
 bool exit_on_fail;
 bool exit_on_warn;
+bool is_vivid;
 int kernel_version;
 int media_fd = -1;
 unsigned warnings;
@@ -735,6 +736,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 				printf("no_error_inj=1 module option to disable error injection.\n");
 				exit(1);
 			}
+			is_vivid = true;
 		}
 	}
 
@@ -1013,6 +1015,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		printf("Buffer ioctls%s:\n", suffix);
 		printf("\ttest VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: %s\n", ok(testReqBufs(&node)));
 		printf("\ttest VIDIOC_EXPBUF: %s\n", ok(testExpBuf(&node)));
+		printf("\ttest Requests: %s\n", ok(testRequests(&node, options[OptStreaming])));
 		printf("\n");
 	}
 
