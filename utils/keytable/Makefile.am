@@ -71,6 +71,6 @@ sync-with-kernel:
 
 	@-mkdir -p $(srcdir)/rc_keymaps
 	@-rm $(srcdir)/rc_keymaps/*
-	@-cp $(srcdir)/rc_keymaps_userspace/* $(srcdir)/rc_keymaps/
 	@echo storing existing keymaps at $(srcdir)/rc_keymaps/
 	@cd $(srcdir) && ./gen_keytables.pl $(KERNEL_DIR);
+	@-cp $(srcdir)/rc_keymaps_userspace/* $(srcdir)/rc_keymaps/
