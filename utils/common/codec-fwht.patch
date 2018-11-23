@@ -1,8 +1,6 @@
-diff --git a/utils/common/codec-fwht.h b/utils/common/codec-fwht.h
-index cdfad133..51fd147c 100644
---- a/utils/common/codec-fwht.h
-+++ b/utils/common/codec-fwht.h
-@@ -8,8 +8,20 @@
+--- a/utils/common/codec-fwht.h.old	2018-11-23 13:43:52.713731559 +0100
++++ b/utils/common/codec-fwht.h	2018-11-23 13:47:55.484198283 +0100
+@@ -8,8 +8,24 @@
  #define CODEC_FWHT_H
  
  #include <linux/types.h>
@@ -16,6 +14,10 @@ index cdfad133..51fd147c 100644
 +
 +#define BIT(x) (1 << (x))
 +#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
++#define GENMASK(h, l) \
++	(((~0UL) - (1UL << (l)) + 1) & (~0UL >> ((8 * sizeof(long)) - 1 - (h))))
++#define pr_err(arg...)
++
 +
 +typedef __u32 u32;
 +typedef __u16 u16;
