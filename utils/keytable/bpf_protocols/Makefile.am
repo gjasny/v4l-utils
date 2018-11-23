@@ -21,4 +21,4 @@ EXTRA_DIST = $(PROTOCOLS:%.o=%.c) bpf_helpers.h
 install-data-local:
 	$(install_sh) -d "$(DESTDIR)$(keytableuserdir)/protocols"
 	$(install_sh) -d "$(DESTDIR)$(keytablesystemdir)/protocols"
-	$(install_sh) $(PROTOCOLS) "$(DESTDIR)$(keytablesystemdir)/protocols"
+	$(install_sh) -m 0644 $(PROTOCOLS) "$(DESTDIR)$(keytablesystemdir)/protocols"
