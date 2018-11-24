@@ -17,7 +17,9 @@ noinst_PROGRAMS += v4l2gl
 endif
 
 if HAVE_SDL
+if HAVE_JPEG
 noinst_PROGRAMS += sdlcam
+endif
 endif
 
 driver_test_SOURCES = driver-test.c
