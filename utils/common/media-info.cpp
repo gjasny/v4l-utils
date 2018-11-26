@@ -438,7 +438,7 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 		    v2_ifaces[i].devnode.minor == minor)
 			break;
 	if (i == topology.num_interfaces) {
-		fprintf(stderr, "FAIL: could not find %d:%d device in topology\n",
+		fprintf(stderr, "FAIL: could not find device %d:%d in topology\n",
 			major, minor);
 		if (is_invalid)
 			*is_invalid = true;
@@ -453,10 +453,10 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 		if (v2_links[i].source_id == iface.id)
 			break;
 	}
-	if (i == topology.num_links) {
+	if (i == topology.num_links && iface.intf_type != MEDIA_INTF_T_V4L_RADIO) {
 		if (is_invalid)
 			*is_invalid = true;
-		fprintf(stderr, "FAIL: could not find link for interface %u in topology\n",
+		fprintf(stderr, "FAIL: could not find link for interface 0x%08x in topology\n",
 			iface.id);
 		return MEDIA_ENT_F_UNKNOWN;
 	}
@@ -468,7 +468,7 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 	if (i == topology.num_entities) {
 		if (is_invalid)
 			*is_invalid = true;
-		fprintf(stderr, "FAIL: could not find entity %u in topology\n",
+		fprintf(stderr, "FAIL: could not find entity 0x%08x in topology\n",
 			ent_id);
 		return MEDIA_ENT_F_UNKNOWN;
 	}
