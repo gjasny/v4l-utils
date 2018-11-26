@@ -714,9 +714,6 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 
 	/* Information Opts */
 
-	if (!node.is_media())
-		media_fd = mi_get_media_fd(node.g_fd());
-
 	if (node.is_v4l2()) {
 		printf("Driver Info:\n");
 		v4l2_info_capability(vcap);
@@ -739,6 +736,10 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 			is_vivid = true;
 		}
 	}
+
+	if (!node.is_media())
+		media_fd = mi_get_media_fd(node.g_fd(),
+			is_vivid ? (const char *)vcap.bus_info : NULL);
 
 	__u32 ent_id = 0;
 	bool is_invalid = false;
