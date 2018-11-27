@@ -888,7 +888,11 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 			if (buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD) {
 				fail_on_test(doioctl_fd(buf_req_fds[req_idx],
 							MEDIA_REQUEST_IOC_QUEUE, 0));
-				req_idx = (req_idx + 1) % (2 * q.g_buffers());
+				// testRequests will close some of these request fds,
+				// so we need to find the next valid fds.
+				do {
+					req_idx = (req_idx + 1) % (2 * q.g_buffers());
+				} while (buf_req_fds[req_idx] < 0);
 			}
 			if (--count == 0)
 				break;
@@ -1546,6 +1550,7 @@ int testRequests(struct node *node, bool test_streaming)
 
 	q.init(type, V4L2_MEMORY_MMAP);
 	fail_on_test(q.reqbufs(node, 2));
+	fail_on_test(q.reqbufs(node, q.g_buffers() + 2));
 	unsigned num_bufs = q.g_buffers();
 	unsigned num_requests = 2 * num_bufs;
 	last_seq.init();
@@ -1571,7 +1576,7 @@ int testRequests(struct node *node, bool test_streaming)
 	node->reopen();
 
 	q.init(type, V4L2_MEMORY_MMAP);
-	fail_on_test(q.reqbufs(node, 2));
+	fail_on_test(q.reqbufs(node, num_bufs));
 
 	if (node->is_m2m) {
 		fail_on_test(m2m_q.reqbufs(node, 2));
@@ -1657,6 +1662,10 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_QUEUED));
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, 0) != EBUSY);
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0) != EBUSY);
+		if (i >= num_bufs - 2) {
+			close(buf_req_fds[i]);
+			buf_req_fds[i] = -1;
+		}
 		if (i == num_bufs / 2) {
 			if (is_vivid) {
 				v4l2_control ctrl = {
@@ -1678,7 +1687,7 @@ int testRequests(struct node *node, bool test_streaming)
 	}
 	fail_on_test(node->streamoff(q.g_type()));
 
-	for (unsigned i = 0; test_streaming && i < num_bufs; i++) {
+	for (unsigned i = 0; test_streaming && i < num_bufs - 2; i++) {
 		buffer buf(q);
 
 		ctrls.request_fd = buf_req_fds[i];
@@ -1703,7 +1712,8 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(!doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
 	}
 	for (unsigned i = 0; i < num_requests; i++)
-		close(buf_req_fds[i]);
+		if (buf_req_fds[i] >= 0)
+			close(buf_req_fds[i]);
 
 	ctrls.which = 0;
 	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
