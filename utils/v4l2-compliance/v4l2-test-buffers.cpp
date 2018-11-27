@@ -788,12 +788,10 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 	cv4l_fmt fmt_q;
 	buffer buf(q);
 	unsigned count = frame_count;
+	unsigned req_idx = q.g_buffers();
 	int ret;
 
 	capture_count = 0;
-
-	if (v4l_type_is_output(q.g_type()))
-		count -= q.g_buffers();
 
 	if (show_info) {
 		printf("\t    %s%s:\n",
@@ -872,19 +870,22 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 								sizeof(orig_buf.timecode)));
 			}
 			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+
 			if (buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD) {
 				buf.querybuf(node, buf.g_index());
 				fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
 				fail_on_test(buf.g_request_fd());
 				fail_on_test(!buf.qbuf(node));
 				buf.s_flags(V4L2_BUF_FLAG_REQUEST_FD);
-				buf.s_request_fd(buf_req_fds[2 * frame_count - count]);
+				buf.s_request_fd(buf_req_fds[req_idx]);
 			}
 			fail_on_test(buf.qbuf(node, q));
 			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
-			if (buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD)
-				fail_on_test(doioctl_fd(buf_req_fds[2 * frame_count - count],
+			if (buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD) {
+				fail_on_test(doioctl_fd(buf_req_fds[req_idx],
 							MEDIA_REQUEST_IOC_QUEUE, 0));
+				req_idx = (req_idx + 1) % (2 * q.g_buffers());
+			}
 			if (--count == 0)
 				break;
 		}
