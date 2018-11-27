@@ -53,7 +53,24 @@ struct dvb_sat_lnb_priv {
 static const struct dvb_sat_lnb_priv lnb_array[] = {
 	{
 		.desc = {
-			.name = N_("Universal, Europe"),
+			.name = N_("Astra 19.2E, European Universal Ku (extended)"),
+			.alias = "EXTENDED",
+			// Legacy fields - kept just to avoid API/ABI breakages
+			.lowfreq = 9750,
+			.highfreq = 10600,
+			.rangeswitch = 11700,
+			.freqrange = {
+				{ 10700, 11700 },
+				{ 11700, 12750 },
+			},
+		},
+		.freqrange = {
+			{ 10700, 11700, 9750, 11700},
+			{ 11700, 12750, 10600, 0 },
+		}
+	}, {
+		.desc = {
+			.name = N_("Old European Universal. Nowadays mostly replaced by Astra 19.2E"),
 			.alias = "UNIVERSAL",
 			// Legacy fields - kept just to avoid API/ABI breakages
 			.lowfreq = 9750,
@@ -80,23 +97,6 @@ static const struct dvb_sat_lnb_priv lnb_array[] = {
 		},
 		.freqrange = {
 			{ 12200, 12700, 11250 }
-		}
-	}, {
-		.desc = {
-			.name = N_("Astra 1E, European Universal Ku (extended)"),
-			.alias = "EXTENDED",
-			// Legacy fields - kept just to avoid API/ABI breakages
-			.lowfreq = 9750,
-			.highfreq = 10600,
-			.rangeswitch = 11700,
-			.freqrange = {
-				{ 10700, 11700 },
-				{ 11700, 12750 },
-			},
-		},
-		.freqrange = {
-			{ 10700, 11700, 9750, 11700},
-			{ 11700, 12750, 10600, 0 },
 		}
 	}, {
 		.desc = {
