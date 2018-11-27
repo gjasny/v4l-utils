@@ -27,7 +27,7 @@ static std::string num2s(unsigned num, bool is_hex = true)
 	char buf[16];
 
 	if (is_hex)
-		sprintf(buf, "%08x", num);
+		sprintf(buf, "0x%08x", num);
 	else
 		sprintf(buf, "%u", num);
 	return buf;
@@ -681,7 +681,33 @@ static const flag_def buffer_flags_def[] = {
 
 std::string bufferflags2s(__u32 flags)
 {
-	return flags2s(flags, buffer_flags_def);
+	std::string s;
+
+	switch (flags & V4L2_BUF_FLAG_TIMESTAMP_MASK) {
+	case V4L2_BUF_FLAG_TIMESTAMP_UNKNOWN:
+		s = "ts-unknown, ";
+		flags &= ~V4L2_BUF_FLAG_TIMESTAMP_MASK;
+		break;
+	case V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC:
+		s = "ts-monotonic, ";
+		flags &= ~V4L2_BUF_FLAG_TIMESTAMP_MASK;
+		break;
+	case V4L2_BUF_FLAG_TIMESTAMP_COPY:
+		s = "ts-copy, ";
+		flags &= ~V4L2_BUF_FLAG_TIMESTAMP_MASK;
+		break;
+	}
+	switch (flags & V4L2_BUF_FLAG_TSTAMP_SRC_MASK) {
+	case V4L2_BUF_FLAG_TSTAMP_SRC_EOF:
+		s += "ts-src-eof, ";
+		flags &= ~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+		break;
+	case V4L2_BUF_FLAG_TSTAMP_SRC_SOE:
+		s += "ts-src-soe, ";
+		flags &= ~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+		break;
+	}
+	return s + flags2s(flags, buffer_flags_def);
 }
 
 static const flag_def vbi_def[] = {
