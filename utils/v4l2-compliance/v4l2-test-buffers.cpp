@@ -1151,6 +1151,13 @@ int testMmap(struct node *node, unsigned frame_count)
 
 		fail_on_test(setupMmap(node, q));
 
+		if (is_vivid) {
+			v4l2_control ctrl = {
+				.id = VIVID_CID_START_STR_ERROR,
+			};
+			if (!node->s_ctrl(ctrl))
+				fail_on_test(!node->streamon(q.g_type()));
+		}
 		fail_on_test(node->streamon(q.g_type()));
 		fail_on_test(node->streamon(q.g_type()));
 
@@ -1566,7 +1573,6 @@ int testRequests(struct node *node, bool test_streaming)
 	q.init(type, V4L2_MEMORY_MMAP);
 	fail_on_test(q.reqbufs(node, 2));
 
-	fail_on_test(node->streamon(q.g_type()));
 	if (node->is_m2m) {
 		fail_on_test(m2m_q.reqbufs(node, 2));
 		fail_on_test(node->streamon(m2m_q.g_type()));
@@ -1651,6 +1657,16 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_QUEUED));
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, 0) != EBUSY);
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0) != EBUSY);
+		if (i == num_bufs / 2) {
+			if (is_vivid) {
+				v4l2_control ctrl = {
+					.id = VIVID_CID_START_STR_ERROR,
+				};
+				if (!node->s_ctrl(ctrl))
+					fail_on_test(!node->streamon(q.g_type()));
+			}
+			fail_on_test(node->streamon(q.g_type()));
+		}
 	}
 
 	fail_on_test(node->g_fmt(cur_fmt, q.g_type()));
