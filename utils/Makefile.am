@@ -6,7 +6,6 @@ SUBDIRS = \
 	cx18-ctl \
 	keytable \
 	media-ctl \
-	v4l2-compliance \
 	v4l2-ctl \
 	v4l2-dbg \
 	v4l2-sysfs-path \
@@ -18,6 +17,11 @@ SUBDIRS = \
 if WITH_LIBDVBV5
 SUBDIRS += \
 	dvb
+endif
+
+if WITH_V4L2_COMPLIANCE
+SUBDIRS += \
+	v4l2-compliance
 endif
 
 if WITH_QV4L2
