@@ -718,23 +718,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		printf("Driver Info:\n");
 		v4l2_info_capability(vcap);
 
-		if (!strcmp((const char *)vcap.driver, "vivid")) {
-#define VIVID_CID_VIVID_BASE		(0x00f00000 | 0xf000)
-#define VIVID_CID_DISCONNECT		(VIVID_CID_VIVID_BASE + 65)
-
-			struct v4l2_queryctrl qc;
-
-			// This control is present for all devices if error
-			// injection is enabled in the vivid driver.
-			qc.id = VIVID_CID_DISCONNECT;
-			if (!doioctl(&node, VIDIOC_QUERYCTRL, &qc)) {
-				printf("\nThe vivid driver has error injection enabled which will cause\n");
-				printf("the compliance test to fail. Load the vivid module with the\n");
-				printf("no_error_inj=1 module option to disable error injection.\n");
-				exit(1);
-			}
-			is_vivid = true;
-		}
+		is_vivid = !strcmp((const char *)vcap.driver, "vivid");
 	}
 
 	if (!node.is_media())

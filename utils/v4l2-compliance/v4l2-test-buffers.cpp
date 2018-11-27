@@ -37,6 +37,10 @@
 #include <vector>
 #include "v4l2-compliance.h"
 
+#define V4L2_CTRL_CLASS_VIVID		0x00f00000
+#define VIVID_CID_VIVID_BASE            (V4L2_CTRL_CLASS_VIVID | 0xf000)
+#define VIVID_CID_START_STR_ERROR       (VIVID_CID_VIVID_BASE + 69)
+
 static struct cv4l_fmt cur_fmt;
 static int stream_from_fd = -1;
 static bool stream_use_hdr;
@@ -1448,6 +1452,8 @@ int testRequests(struct node *node, bool test_streaming)
 
 		if (qctrl.type != V4L2_CTRL_TYPE_INTEGER &&
 		    qctrl.type != V4L2_CTRL_TYPE_BOOLEAN)
+			continue;
+		if (is_vivid && V4L2_CTRL_ID2WHICH(qctrl.id) == V4L2_CTRL_CLASS_VIVID)
 			continue;
 		if (qctrl.minimum != qctrl.maximum) {
 			valid_qctrl = qctrl;

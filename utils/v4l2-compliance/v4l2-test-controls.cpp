@@ -32,6 +32,8 @@
 #include <vector>
 #include "v4l2-compliance.h"
 
+#define V4L2_CTRL_CLASS_VIVID 0x00f00000
+
 static int checkQCtrl(struct node *node, struct test_query_ext_ctrl &qctrl)
 {
 	struct v4l2_querymenu qmenu;
@@ -390,6 +392,9 @@ int testSimpleControls(struct node *node)
 
 		if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES)
 			continue;
+		if (is_vivid && V4L2_CTRL_ID2WHICH(qctrl.id) == V4L2_CTRL_CLASS_VIVID)
+			continue;
+
 		info("checking control '%s' (0x%08x)\n", qctrl.name, qctrl.id);
 		ctrl.id = qctrl.id;
 		if (qctrl.type == V4L2_CTRL_TYPE_INTEGER64 ||
@@ -610,6 +615,9 @@ int testExtendedControls(struct node *node)
 
 	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
 		test_query_ext_ctrl &qctrl = iter->second;
+
+		if (is_vivid && V4L2_CTRL_ID2WHICH(qctrl.id) == V4L2_CTRL_CLASS_VIVID)
+			continue;
 
 		info("checking extended control '%s' (0x%08x)\n", qctrl.name, qctrl.id);
 		ctrl.id = qctrl.id;
