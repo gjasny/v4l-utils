@@ -127,6 +127,15 @@ struct node : public base_node, public cv4l_fd {
 
 	qctrl_map controls;
 	pixfmt_map buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
+
+	bool inject_error(__u32 id)
+	{
+		v4l2_control ctrl = {
+			.id = id,
+		};
+
+		return is_vivid && !s_ctrl(ctrl);
+	}
 };
 
 #define info(fmt, args...) 					\
