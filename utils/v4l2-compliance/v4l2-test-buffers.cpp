@@ -1160,13 +1160,8 @@ int testMmap(struct node *node, unsigned frame_count)
 
 		fail_on_test(setupMmap(node, q));
 
-		if (is_vivid) {
-			v4l2_control ctrl = {
-				.id = VIVID_CID_START_STR_ERROR,
-			};
-			if (!node->s_ctrl(ctrl))
-				fail_on_test(!node->streamon(q.g_type()));
-		}
+		if (node->inject_error(VIVID_CID_START_STR_ERROR))
+			fail_on_test(!node->streamon(q.g_type()));
 		fail_on_test(node->streamon(q.g_type()));
 		fail_on_test(node->streamon(q.g_type()));
 
@@ -1617,6 +1612,8 @@ int testRequests(struct node *node, bool test_streaming)
 		if (!(i & 1)) {
 			fail_on_test(buf.prepare_buf(node) != EINVAL);
 			buf.s_flags(0);
+			if (node->inject_error(VIVID_CID_BUF_PREPARE_ERROR))
+				fail_on_test(buf.prepare_buf(node) != EINVAL);
 			fail_on_test(buf.prepare_buf(node));
 			fail_on_test(buf.querybuf(node, i));
 			fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_PREPARED));
@@ -1660,15 +1657,9 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
-		if (is_vivid && i > num_bufs - 2) {
-			v4l2_control ctrl = {
-				.id = VIVID_CID_BUF_PREPARE_ERROR,
-			};
-
-			if (!node->s_ctrl(ctrl))
-				fail_on_test(doioctl_fd(buf_req_fds[i],
-							MEDIA_REQUEST_IOC_QUEUE, 0) != EINVAL);
-		}
+		if ((i & 1) && node->inject_error(VIVID_CID_BUF_PREPARE_ERROR))
+			fail_on_test(doioctl_fd(buf_req_fds[i],
+						MEDIA_REQUEST_IOC_QUEUE, 0) != EINVAL);
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0));
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);
@@ -1681,13 +1672,8 @@ int testRequests(struct node *node, bool test_streaming)
 			buf_req_fds[i] = -1;
 		}
 		if (i == num_bufs / 2) {
-			if (is_vivid) {
-				v4l2_control ctrl = {
-					.id = VIVID_CID_START_STR_ERROR,
-				};
-				if (!node->s_ctrl(ctrl))
-					fail_on_test(!node->streamon(q.g_type()));
-			}
+			if (node->inject_error(VIVID_CID_START_STR_ERROR))
+				fail_on_test(!node->streamon(q.g_type()));
 			fail_on_test(node->streamon(q.g_type()));
 		}
 	}
