@@ -38,8 +38,13 @@
 #include "v4l2-compliance.h"
 
 #define V4L2_CTRL_CLASS_VIVID		0x00f00000
-#define VIVID_CID_VIVID_BASE            (V4L2_CTRL_CLASS_VIVID | 0xf000)
-#define VIVID_CID_START_STR_ERROR       (VIVID_CID_VIVID_BASE + 69)
+#define VIVID_CID_VIVID_BASE		(V4L2_CTRL_CLASS_VIVID | 0xf000)
+#define VIVID_CID_DISCONNECT		(VIVID_CID_VIVID_BASE + 65)
+#define VIVID_CID_DQBUF_ERROR		(VIVID_CID_VIVID_BASE + 66)
+#define VIVID_CID_QUEUE_SETUP_ERROR	(VIVID_CID_VIVID_BASE + 67)
+#define VIVID_CID_BUF_PREPARE_ERROR	(VIVID_CID_VIVID_BASE + 68)
+#define VIVID_CID_START_STR_ERROR	(VIVID_CID_VIVID_BASE + 69)
+#define VIVID_CID_QUEUE_ERROR		(VIVID_CID_VIVID_BASE + 70)
 
 static struct cv4l_fmt cur_fmt;
 static int stream_from_fd = -1;
@@ -1655,6 +1660,15 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
+		if (is_vivid && i > num_bufs - 2) {
+			v4l2_control ctrl = {
+				.id = VIVID_CID_BUF_PREPARE_ERROR,
+			};
+
+			if (!node->s_ctrl(ctrl))
+				fail_on_test(doioctl_fd(buf_req_fds[i],
+							MEDIA_REQUEST_IOC_QUEUE, 0) != EINVAL);
+		}
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0));
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);
