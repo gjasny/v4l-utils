@@ -1434,7 +1434,7 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 				struct cec_log_addrs laddrs = { };
 				doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 
-				if (node->phys_addr == CEC_PHYS_ADDR_INVALID)
+				if (!laddrs.num_log_addrs)
 					continue;
 			}
 			node->in_standby = tests[i].subtests[j].in_standby;
