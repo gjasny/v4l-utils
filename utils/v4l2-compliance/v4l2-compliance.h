@@ -113,6 +113,8 @@ struct base_node {
 	int frame_interval_pad;
 	int enum_frame_interval_pad;
 	__u32 fbuf_caps;
+	__u32 buf_caps;
+	const char *bus_info;
 	pixfmt_map buftype_pixfmts[V4L2_BUF_TYPE_LAST + 1];
 	frmsizes_set frmsizes;
 	frmsizes_count_map frmsizes_count;

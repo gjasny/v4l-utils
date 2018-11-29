@@ -561,7 +561,7 @@ int testReqBufs(struct node *node)
 		fail_on_test(ret && ret != EINVAL);
 		mmap_valid = !ret;
 		if (mmap_valid)
-			caps = q.g_capabilities();
+			node->buf_caps = caps = q.g_capabilities();
 		if (caps)
 			fail_on_test(mmap_valid ^ !!(caps & V4L2_BUF_CAP_SUPPORTS_MMAP));
 
@@ -711,17 +711,6 @@ int testExpBuf(struct node *node)
 	bool have_expbuf = false;
 	int type;
 
-	if (!(node->valid_memorytype & (1 << V4L2_MEMORY_MMAP))) {
-		cv4l_queue q;
-
-		if (q.has_expbuf(node)) {
-			if (node->valid_buftypes)
-				fail("VIDIOC_EXPBUF is supported, but the V4L2_MEMORY_MMAP support is missing or malfunctioning.\n");
-			fail("VIDIOC_EXPBUF is supported, but the V4L2_MEMORY_MMAP support is missing, probably due to earlier failing format tests.\n");
-		}
-		return ENOTTY;
-	}
-
 	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
@@ -732,6 +721,15 @@ int testExpBuf(struct node *node)
 			continue;
 
 		cv4l_queue q(type, V4L2_MEMORY_MMAP);
+
+		if (!(node->valid_memorytype & (1 << V4L2_MEMORY_MMAP))) {
+			if (q.has_expbuf(node)) {
+				if (node->valid_buftypes)
+					fail("VIDIOC_EXPBUF is supported, but the V4L2_MEMORY_MMAP support is missing or malfunctioning.\n");
+				fail("VIDIOC_EXPBUF is supported, but the V4L2_MEMORY_MMAP support is missing, probably due to earlier failing format tests.\n");
+			}
+			return ENOTTY;
+		}
 
 		fail_on_test(q.reqbufs(node, 2));
 		if (q.has_expbuf(node)) {
@@ -1446,7 +1444,7 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 
 int testRequests(struct node *node, bool test_streaming)
 {
-	int media_fd = mi_get_media_fd(node->g_fd());
+	int media_fd = mi_get_media_fd(node->g_fd(), node->bus_info);
 	int req_fd;
 	qctrl_map::iterator iter;
 	struct test_query_ext_ctrl valid_qctrl;
@@ -1454,6 +1452,9 @@ int testRequests(struct node *node, bool test_streaming)
 	v4l2_ext_control ctrl;
 	bool have_controls;
 	int ret;
+
+	if (node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS)
+		fail_on_test(media_fd < 0);
 
 	memset(&valid_qctrl, 0, sizeof(valid_qctrl));
 	memset(&ctrls, 0, sizeof(ctrls));
@@ -1475,7 +1476,8 @@ int testRequests(struct node *node, bool test_streaming)
 
 	if (ctrl.id == 0) {
 		info("could not test the Request API, no suitable control found\n");
-		return 0;
+		return (node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS) ?
+			0 : ENOTTY;
 	}
 
 	ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
@@ -1483,8 +1485,10 @@ int testRequests(struct node *node, bool test_streaming)
 	fail_on_test(ret != EINVAL && ret != EACCES && ret != ENOTTY);
 	have_controls = ret != ENOTTY;
 
-	if (media_fd < 0 || ret == EACCES)
+	if (media_fd < 0 || ret == EACCES) {
+		fail_on_test(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS);
 		return ENOTTY;
+	}
 	if (have_controls) {
 		ctrls.request_fd = 10;
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
@@ -1506,7 +1510,7 @@ int testRequests(struct node *node, bool test_streaming)
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, 0) != EBADF);
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, 0) != EBADF);
 
-	media_fd = mi_get_media_fd(node->g_fd());
+	media_fd = mi_get_media_fd(node->g_fd(), node->bus_info);
 	fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd));
 	ctrls.count = 1;
 	ctrls.controls = &ctrl;
@@ -1535,13 +1539,22 @@ int testRequests(struct node *node, bool test_streaming)
 	close(media_fd);
 	node->reopen();
 
-	int type = node->is_planar ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
-		   V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (node->can_output)
+	int type = node->g_type();
+	if (node->is_m2m)
 		type = v4l_type_invert(type);
+	if (v4l_type_is_vbi(type)) {
+		cv4l_fmt fmt;
+
+		node->g_fmt(fmt, type);
+		node->s_fmt(fmt, type);
+	}
 	
-	if (!(node->valid_buftypes & (1 << type)))
+	if (!(node->valid_buftypes & (1 << type))) {
+		fail_on_test(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS);
 		return ENOTTY;
+	}
+
+	fail_on_test(!(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS));
 
 	buffer_info.clear();
 
@@ -1550,12 +1563,14 @@ int testRequests(struct node *node, bool test_streaming)
 
 	q.init(type, V4L2_MEMORY_MMAP);
 	fail_on_test(q.reqbufs(node, 2));
-	fail_on_test(q.reqbufs(node, q.g_buffers() + 2));
+
+	unsigned min_bufs = q.g_buffers();
+	fail_on_test(q.reqbufs(node, min_bufs + 4));
 	unsigned num_bufs = q.g_buffers();
 	unsigned num_requests = 2 * num_bufs;
 	last_seq.init();
 
-	media_fd = mi_get_media_fd(node->g_fd());
+	media_fd = mi_get_media_fd(node->g_fd(), node->bus_info);
 
 	for (unsigned i = 0; i < num_requests; i++) {
 		fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &buf_req_fds[i]));
@@ -1667,11 +1682,11 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_QUEUED));
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, 0) != EBUSY);
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0) != EBUSY);
-		if (i >= num_bufs - 2) {
+		if (i >= min_bufs) {
 			close(buf_req_fds[i]);
 			buf_req_fds[i] = -1;
 		}
-		if (i == num_bufs / 2) {
+		if (i == min_bufs - 1) {
 			if (node->inject_error(VIVID_CID_START_STR_ERROR))
 				fail_on_test(!node->streamon(q.g_type()));
 			fail_on_test(node->streamon(q.g_type()));
@@ -1687,7 +1702,7 @@ int testRequests(struct node *node, bool test_streaming)
 	}
 	fail_on_test(node->streamoff(q.g_type()));
 
-	for (unsigned i = 0; test_streaming && i < num_bufs - 2; i++) {
+	for (unsigned i = 0; test_streaming && i < min_bufs; i++) {
 		buffer buf(q);
 
 		ctrls.request_fd = buf_req_fds[i];

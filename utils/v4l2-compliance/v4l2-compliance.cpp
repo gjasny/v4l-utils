@@ -719,11 +719,12 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		v4l2_info_capability(vcap);
 
 		is_vivid = !strcmp((const char *)vcap.driver, "vivid");
+		if (is_vivid)
+			node.bus_info = (const char *)vcap.bus_info;
 	}
 
 	if (!node.is_media())
-		media_fd = mi_get_media_fd(node.g_fd(),
-			is_vivid ? (const char *)vcap.bus_info : NULL);
+		media_fd = mi_get_media_fd(node.g_fd(), node.bus_info);
 
 	__u32 ent_id = 0;
 	bool is_invalid = false;
@@ -936,6 +937,9 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		node.frmsizes.clear();
 		node.frmsizes_count.clear();
 		node.has_frmintervals = false;
+		node.valid_buftypes = 0;
+		node.valid_memorytype = 0;
+		node.buf_caps = 0;
 		for (unsigned idx = 0; idx < V4L2_BUF_TYPE_LAST + 1; idx++)
 			node.buftype_pixfmts[idx].clear();
 
