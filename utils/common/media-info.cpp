@@ -453,30 +453,45 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 		if (v2_links[i].source_id == iface.id)
 			break;
 	}
-	if (i == topology.num_links && iface.intf_type != MEDIA_INTF_T_V4L_RADIO) {
+	bool is_radio = iface.intf_type == MEDIA_INTF_T_V4L_RADIO;
+
+	if (is_radio && i < topology.num_links) {
 		if (is_invalid)
 			*is_invalid = true;
-		fprintf(stderr, "FAIL: could not find link for interface 0x%08x in topology\n",
+		fprintf(stderr, "FAIL: unexpectedly found link for radio interface 0x%08x in topology\n",
 			iface.id);
 		return MEDIA_ENT_F_UNKNOWN;
 	}
-	__u32 ent_id = v2_links[i].sink_id;
-	for (i = 0; i < topology.num_entities; i++) {
-		if (v2_ents[i].id == ent_id)
-			break;
+	if (!is_radio) {
+		if (i == topology.num_links) {
+			if (is_invalid)
+				*is_invalid = true;
+			fprintf(stderr, "FAIL: could not find link for interface 0x%08x in topology\n",
+				iface.id);
+			return MEDIA_ENT_F_UNKNOWN;
+		}
+		__u32 ent_id = v2_links[i].sink_id;
+		for (i = 0; i < topology.num_entities; i++) {
+			if (v2_ents[i].id == ent_id)
+				break;
+		}
+		if (i == topology.num_entities) {
+			if (is_invalid)
+				*is_invalid = true;
+			fprintf(stderr, "FAIL: could not find entity 0x%08x in topology\n",
+				ent_id);
+			return MEDIA_ENT_F_UNKNOWN;
+		}
 	}
-	if (i == topology.num_entities) {
-		if (is_invalid)
-			*is_invalid = true;
-		fprintf(stderr, "FAIL: could not find entity 0x%08x in topology\n",
-			ent_id);
-		return MEDIA_ENT_F_UNKNOWN;
-	}
-	media_v2_entity &ent = v2_ents[i];
 
 	printf("Interface Info:\n");
 	printf("\tID               : 0x%08x\n", iface.id);
 	printf("\tType             : %s\n", mi_ifacetype2s(iface.intf_type).c_str());
+
+	if (is_radio)
+		return MEDIA_ENT_F_UNKNOWN;
+
+	media_v2_entity &ent = v2_ents[i];
 	printf("Entity Info:\n");
 	printf("\tID               : 0x%08x (%u)\n", ent.id, ent.id);
 	printf("\tName             : %s\n", ent.name);
