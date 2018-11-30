@@ -242,8 +242,11 @@ public:
 		if (v4l_type_is_output(g_type()))
 			fill_output_buf(fill_bytesused);
 		err = node->qbuf(*this);
-		if (err == 0 && v4l_type_is_output(g_type()))
+		if (err == 0 &&
+		    v4l_type_is_video(g_type()) && v4l_type_is_output(g_type())) {
+			fail_on_test(g_field() == V4L2_FIELD_ANY);
 			buffer_info[g_timestamp()] = buf;
+		}
 		return err;
 	}
 	int qbuf(node *node, const cv4l_queue &q)
@@ -1223,6 +1226,8 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 				fail_on_test(buf.querybuf(node, i));
 				fail_on_test(buf.check(q, Prepared, i));
 			}
+			for (unsigned p = 0; p < buf.g_num_planes(); p++)
+				buf.s_userptr(0UL, p);
 		}
 		if (ret == ENOTTY) {
 			for (unsigned p = 0; p < buf.g_num_planes(); p++)
@@ -1240,6 +1245,8 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 		}
 
 		fail_on_test(buf.qbuf(node, q));
+		for (unsigned p = 0; p < buf.g_num_planes(); p++)
+			fail_on_test(buf.g_userptr(p) != q.g_userptr(i, p));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Queued, i));
@@ -1356,9 +1363,13 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 			fail_on_test(ret);
 			fail_on_test(buf.querybuf(node, i));
 			fail_on_test(buf.check(q, Prepared, i));
+			for (unsigned p = 0; p < buf.g_num_planes(); p++)
+				buf.s_fd(-1, p);
 		}
 
 		fail_on_test(buf.qbuf(node, false));
+		for (unsigned p = 0; p < buf.g_num_planes(); p++)
+			fail_on_test(buf.g_fd(p) != q.g_fd(i, p));;
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Queued, i));
@@ -1624,6 +1635,8 @@ int testRequests(struct node *node, bool test_streaming)
 			fail_on_test(!buf.qbuf(node));
 		}
 		buf.s_request_fd(buf_req_fds[i]);
+		if (v4l_type_is_video(buf.g_type()))
+			buf.s_field(V4L2_FIELD_ANY);
 		if (!(i & 1)) {
 			fail_on_test(buf.prepare_buf(node) != EINVAL);
 			buf.s_flags(0);
@@ -1668,7 +1681,10 @@ int testRequests(struct node *node, bool test_streaming)
 			fail_on_test(!buf.qbuf(node));
 		buf.s_flags(buf.g_flags() | V4L2_BUF_FLAG_REQUEST_FD);
 		buf.s_request_fd(buf_req_fds[i]);
+		buf.s_field(V4L2_FIELD_ANY);
 		fail_on_test(buf.qbuf(node));
+		if (v4l_type_is_video(buf.g_type()) && v4l_type_is_output(buf.g_type()))
+			fail_on_test(buf.g_field() == V4L2_FIELD_ANY);
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
