@@ -1226,8 +1226,11 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 				fail_on_test(buf.querybuf(node, i));
 				fail_on_test(buf.check(q, Prepared, i));
 			}
-			for (unsigned p = 0; p < buf.g_num_planes(); p++)
+			for (unsigned p = 0; p < buf.g_num_planes(); p++) {
 				buf.s_userptr(0UL, p);
+				buf.s_bytesused(0, p);
+				buf.s_length(0, p);
+			}
 		}
 		if (ret == ENOTTY) {
 			for (unsigned p = 0; p < buf.g_num_planes(); p++)
@@ -1245,8 +1248,11 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 		}
 
 		fail_on_test(buf.qbuf(node, q));
-		for (unsigned p = 0; p < buf.g_num_planes(); p++)
+		for (unsigned p = 0; p < buf.g_num_planes(); p++) {
 			fail_on_test(buf.g_userptr(p) != q.g_userptr(i, p));
+			fail_on_test(buf.g_length(p) != q.g_length(p));
+			fail_on_test(!buf.g_bytesused(p));
+		}
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Queued, i));
@@ -1363,13 +1369,19 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 			fail_on_test(ret);
 			fail_on_test(buf.querybuf(node, i));
 			fail_on_test(buf.check(q, Prepared, i));
-			for (unsigned p = 0; p < buf.g_num_planes(); p++)
+			for (unsigned p = 0; p < buf.g_num_planes(); p++) {
 				buf.s_fd(-1, p);
+				buf.s_bytesused(0, p);
+				buf.s_length(0, p);
+			}
 		}
 
 		fail_on_test(buf.qbuf(node, false));
-		for (unsigned p = 0; p < buf.g_num_planes(); p++)
+		for (unsigned p = 0; p < buf.g_num_planes(); p++) {
 			fail_on_test(buf.g_fd(p) != q.g_fd(i, p));;
+			fail_on_test(buf.g_length(p) != q.g_length(p));
+			fail_on_test(!buf.g_bytesused(p));
+		}
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Queued, i));
