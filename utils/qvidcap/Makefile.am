@@ -6,7 +6,7 @@ qvidcap_SOURCES = qvidcap.cpp qvidcap.h capture-win-gl.cpp capture-win-gl.h \
 nodist_qvidcap_SOURCES = qrc_qvidcap.cpp moc_capture-win-gl.cpp v4l2-convert.h
 qvidcap_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la ../libv4l2util/libv4l2util.la \
   ../libmedia_dev/libmedia_dev.la
-qvidcap_CPPFLAGS = -I../common
+qvidcap_CPPFLAGS = -I\$(top_srcdir)/utils/common
 
 qvidcap_CPPFLAGS += $(QTGL_CFLAGS)
 qvidcap_LDFLAGS = $(QTGL_LIBS)
@@ -22,7 +22,7 @@ clean-local:
 	-rm -vf moc_*.cpp qrc_*.cpp qrc_*.o ui_*.h v4l2-convert.h formats.h
 
 v4l2-convert.h: v4l2-convert.glsl v4l2-convert.pl
-	perl v4l2-convert.pl v4l2-convert.glsl >$@
+	perl \$(top_srcdir)/utils/qvidcap/v4l2-convert.pl \$(top_srcdir)/utils/qvidcap/v4l2-convert.glsl >$@
 
 capture-win-gl.cpp: v4l2-convert.h
 
