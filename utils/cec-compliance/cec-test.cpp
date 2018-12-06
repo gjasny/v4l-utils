@@ -311,7 +311,9 @@ int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool i
 		return PRESUMED_OK;
 	char osd_name[15];
 	cec_ops_set_osd_name(&msg, osd_name);
+	fail_on_test(!osd_name[0]);
 	fail_on_test(strcmp(node->remote[la].osd_name, osd_name));
+	fail_on_test(msg.len != strlen(osd_name) + 2);
 
 	return 0;
 }
