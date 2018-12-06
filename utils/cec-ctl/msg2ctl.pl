@@ -333,6 +333,9 @@ while (<>) {
 			if (/CEC_MSG/) {
 				($also_msg) = /(CEC_MSG\S+)/;
 				push @{$feature_also{$feature}}, $also_msg;
+				if (!exists($feature_usage{$feature})) {
+					push @{$feature_usage{$feature}}, "";
+				}
 			}
 		} elsif (/^ \* Has also:$/) {
 			$has_also = 1;
@@ -448,7 +451,7 @@ if ($is_log == 0) {
 		$opt = "OptHelp" . $name;
 		$opt =~ s/ //g;
 		$help .= "\tif (options[OptHelpAll] || options\[$opt\]) {\n";
-		$help .= "\t\tprintf(\"$name Feature:\\n\");\n";
+		$help .= "\t\tprintf(\"$name Feature:\\n\\n\");\n";
 		$help .= "\t\tprintf(\"\%s\\n\", $usage_var);\n\t}\n";
 		$options .= "\t$opt,\n";
 		$long_opts .= "\t{ \"help-$_\", no_argument, 0, $opt }, \\\n";
