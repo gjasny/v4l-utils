@@ -392,6 +392,11 @@ static inline bool v4l_has_meta_cap(const struct v4l_fd *f)
 	return v4l_g_caps(f) & V4L2_CAP_META_CAPTURE;
 }
 
+static inline bool v4l_has_meta_out(const struct v4l_fd *f)
+{
+	return v4l_g_caps(f) & V4L2_CAP_META_OUTPUT;
+}
+
 static inline bool v4l_has_touch(const struct v4l_fd *f)
 {
 	return v4l_g_caps(f) & V4L2_CAP_TOUCH;
@@ -440,6 +445,9 @@ static inline __u32 v4l_determine_type(const struct v4l_fd *f)
 		return V4L2_BUF_TYPE_SDR_OUTPUT;
 	if (v4l_has_meta_cap(f))
 		return V4L2_BUF_TYPE_META_CAPTURE;
+	if (v4l_has_meta_out(f))
+		return V4L2_BUF_TYPE_META_OUTPUT;
+
 	return 0;
 }
 
@@ -672,6 +680,7 @@ static inline void v4l_format_s_pixelformat(struct v4l2_format *fmt, __u32 pixel
 		fmt->fmt.vbi.sample_format = pixelformat;
 		break;
 	case V4L2_BUF_TYPE_META_CAPTURE:
+	case V4L2_BUF_TYPE_META_OUTPUT:
 		fmt->fmt.meta.dataformat = pixelformat;
 		break;
 	}
@@ -693,6 +702,7 @@ static inline __u32 v4l_format_g_pixelformat(const struct v4l2_format *fmt)
 	case V4L2_BUF_TYPE_VBI_OUTPUT:
 		return fmt->fmt.vbi.sample_format;
 	case V4L2_BUF_TYPE_META_CAPTURE:
+	case V4L2_BUF_TYPE_META_OUTPUT:
 		return fmt->fmt.meta.dataformat;
 	default:
 		return 0;
@@ -1031,6 +1041,7 @@ v4l_format_g_sizeimage(const struct v4l2_format *fmt, unsigned plane)
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		return plane ? 0 : fmt->fmt.sdr.buffersize;
 	case V4L2_BUF_TYPE_META_CAPTURE:
+	case V4L2_BUF_TYPE_META_OUTPUT:
 		return plane ? 0 : fmt->fmt.meta.buffersize;
 	default:
 		return 0;
@@ -1152,7 +1163,8 @@ static inline bool v4l_type_is_sdr(unsigned type)
 
 static inline bool v4l_type_is_meta(unsigned type)
 {
-       return type == V4L2_BUF_TYPE_META_CAPTURE;
+	return type == V4L2_BUF_TYPE_META_CAPTURE ||
+	       type == V4L2_BUF_TYPE_META_OUTPUT;
 }
 
 static inline unsigned v4l_type_invert(unsigned type)

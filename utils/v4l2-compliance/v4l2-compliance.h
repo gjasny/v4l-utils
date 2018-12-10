@@ -69,7 +69,7 @@ typedef std::map<__u32, unsigned> frmsizes_count_map;
 
 struct base_node;
 
-#define V4L2_BUF_TYPE_LAST V4L2_BUF_TYPE_META_CAPTURE
+#define V4L2_BUF_TYPE_LAST V4L2_BUF_TYPE_META_OUTPUT
 
 struct base_node {
 	bool is_video;

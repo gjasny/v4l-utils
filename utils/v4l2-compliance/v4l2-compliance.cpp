@@ -476,7 +476,7 @@ static int testCap(struct node *node)
 	const __u32 output_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 			V4L2_CAP_VIDEO_OUTPUT_OVERLAY | V4L2_CAP_VBI_OUTPUT |
 			V4L2_CAP_SDR_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT |
-			V4L2_CAP_MODULATOR;
+			V4L2_CAP_MODULATOR | V4L2_CAP_META_OUTPUT;
 	const __u32 overlay_caps = V4L2_CAP_VIDEO_OVERLAY | V4L2_CAP_VIDEO_OUTPUT_OVERLAY;
 	const __u32 m2m_caps = V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE;
 	const __u32 io_caps = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
@@ -702,12 +702,13 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	if (node.g_caps() & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VBI_OUTPUT |
 			 V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE |
 			 V4L2_CAP_VIDEO_M2M | V4L2_CAP_SLICED_VBI_OUTPUT |
-			 V4L2_CAP_RDS_OUTPUT | V4L2_CAP_SDR_OUTPUT))
+			 V4L2_CAP_RDS_OUTPUT | V4L2_CAP_SDR_OUTPUT |
+			 V4L2_CAP_META_OUTPUT))
 		node.can_output = true;
 	if (node.g_caps() & (V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 			 V4L2_CAP_VIDEO_M2M_MPLANE))
 		node.is_planar = true;
-	if (node.g_caps() & V4L2_CAP_META_CAPTURE) {
+	if (node.g_caps() & (V4L2_CAP_META_CAPTURE | V4L2_CAP_META_OUTPUT)) {
 		node.is_video = false;
 		node.is_meta = true;
 	}

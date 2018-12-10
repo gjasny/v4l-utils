@@ -95,6 +95,8 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tSDR Output\n";
 	if (cap & V4L2_CAP_META_CAPTURE)
 		s += "\t\tMetadata Capture\n";
+	if (cap & V4L2_CAP_META_OUTPUT)
+		s += "\t\tMetadata Output\n";
 	if (cap & V4L2_CAP_TUNER)
 		s += "\t\tTuner\n";
 	if (cap & V4L2_CAP_TOUCH)
@@ -188,6 +190,8 @@ std::string buftype2s(int type)
 		return "SDR Output";
 	case V4L2_BUF_TYPE_META_CAPTURE:
 		return "Metadata Capture";
+	case V4L2_BUF_TYPE_META_OUTPUT:
+		return "Metadata Output";
 	case V4L2_BUF_TYPE_PRIVATE:
 		return "Private";
 	default:

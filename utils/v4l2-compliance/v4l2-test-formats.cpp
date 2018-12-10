@@ -47,6 +47,7 @@ static const __u32 buftype2cap[] = {
 	V4L2_CAP_SDR_CAPTURE,
 	V4L2_CAP_SDR_OUTPUT,
 	V4L2_CAP_META_CAPTURE,
+	V4L2_CAP_META_OUTPUT,
 };
 
 static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
@@ -298,6 +299,7 @@ int testEnumFormats(struct node *node)
 		case V4L2_BUF_TYPE_SDR_CAPTURE:
 		case V4L2_BUF_TYPE_SDR_OUTPUT:
 		case V4L2_BUF_TYPE_META_CAPTURE:
+		case V4L2_BUF_TYPE_META_OUTPUT:
 			if (ret && (node->g_caps() & buftype2cap[type]))
 				return fail("%s cap set, but no %s formats defined\n",
 						buftype2s(type).c_str(), buftype2s(type).c_str());
@@ -545,6 +547,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		fail_on_test(check_0(sdr.reserved, sizeof(sdr.reserved)));
 		break;
 	case V4L2_BUF_TYPE_META_CAPTURE:
+	case V4L2_BUF_TYPE_META_OUTPUT:
 		if (map.find(meta.dataformat) == map.end())
 			return fail("dataformat %08x (%s) for buftype %d not reported by ENUM_FMT\n",
 					meta.dataformat, fcc2s(meta.dataformat).c_str(), type);
@@ -584,6 +587,7 @@ int testGetFormats(struct node *node)
 		case V4L2_BUF_TYPE_SDR_CAPTURE:
 		case V4L2_BUF_TYPE_SDR_OUTPUT:
 		case V4L2_BUF_TYPE_META_CAPTURE:
+		case V4L2_BUF_TYPE_META_OUTPUT:
 			if (ret && (node->g_caps() & buftype2cap[type]))
 				return fail("%s cap set, but no %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
@@ -640,6 +644,7 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		return !memcmp(&f1.fmt.sdr, &f2.fmt.sdr, sizeof(f1.fmt.sdr));
 	case V4L2_BUF_TYPE_META_CAPTURE:
+	case V4L2_BUF_TYPE_META_OUTPUT:
 		return !memcmp(&f1.fmt.meta, &f2.fmt.meta, sizeof(f1.fmt.meta));
 
 	}
@@ -717,6 +722,7 @@ int testTryFormats(struct node *node)
 				pixelformat = fmt.fmt.sdr.pixelformat;
 				break;
 			case V4L2_BUF_TYPE_META_CAPTURE:
+			case V4L2_BUF_TYPE_META_OUTPUT:
 				pixelformat = fmt.fmt.meta.dataformat;
 				break;
 			case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
@@ -968,6 +974,7 @@ int testSetFormats(struct node *node)
 
 			switch (type) {
 			case V4L2_BUF_TYPE_META_CAPTURE:
+			case V4L2_BUF_TYPE_META_OUTPUT:
 				pixelformat = fmt_set.fmt.meta.dataformat;
 				break;
 			case V4L2_BUF_TYPE_SDR_CAPTURE:
