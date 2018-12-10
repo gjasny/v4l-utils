@@ -45,6 +45,7 @@
 #define VIVID_CID_BUF_PREPARE_ERROR	(VIVID_CID_VIVID_BASE + 68)
 #define VIVID_CID_START_STR_ERROR	(VIVID_CID_VIVID_BASE + 69)
 #define VIVID_CID_QUEUE_ERROR		(VIVID_CID_VIVID_BASE + 70)
+#define VIVID_CID_REQ_VALIDATE_ERROR	(VIVID_CID_VIVID_BASE + 72)
 
 static struct cv4l_fmt cur_fmt;
 static int stream_from_fd = -1;
@@ -1760,7 +1761,9 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
-		if ((i & 1) && node->inject_error(VIVID_CID_BUF_PREPARE_ERROR))
+		if ((i & 1) && node->inject_error(i > num_bufs / 2 ?
+						  VIVID_CID_BUF_PREPARE_ERROR :
+						  VIVID_CID_REQ_VALIDATE_ERROR))
 			fail_on_test(doioctl_fd(buf_req_fds[i],
 						MEDIA_REQUEST_IOC_QUEUE, 0) != EINVAL);
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0));
