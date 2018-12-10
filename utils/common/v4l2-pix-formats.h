@@ -32,6 +32,7 @@
 	case V4L2_PIX_FMT_Y12I: return "Interleaved 12-bit Greyscale";
 	case V4L2_PIX_FMT_Z16: return "16-bit Depth";
 	case V4L2_PIX_FMT_INZI: return "Planar 10:16 Greyscale Depth";
+	case V4L2_PIX_FMT_CNF4: return "4-bit Depth Confidence (Packed)";
 	case V4L2_PIX_FMT_PAL8: return "8-bit Palette";
 	case V4L2_PIX_FMT_UV8: return "8-bit Chrominance UV 4-4";
 	case V4L2_PIX_FMT_YVU410: return "Planar YVU 4:1:0";
