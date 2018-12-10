@@ -1467,7 +1467,8 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 
 int testRequests(struct node *node, bool test_streaming)
 {
-	int media_fd = mi_get_media_fd(node->g_fd(), node->bus_info);
+	filehandles fhs;
+	int media_fd = fhs.add(mi_get_media_fd(node->g_fd(), node->bus_info));
 	int req_fd;
 	qctrl_map::iterator iter;
 	struct test_query_ext_ctrl valid_qctrl;
@@ -1517,6 +1518,7 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
 	}
 	fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd));
+	fhs.add(req_fd);
 	fail_on_test(req_fd < 0);
 	if (have_controls) {
 		ctrls.request_fd = req_fd;
@@ -1524,17 +1526,18 @@ int testRequests(struct node *node, bool test_streaming)
 	}
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, 0) != ENOENT);
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, 0));
-	close(media_fd);
+	fhs.del(media_fd);
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, 0) != ENOENT);
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, 0));
-	close(req_fd);
+	fhs.del(req_fd);
 	if (have_controls)
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, 0) != EBADF);
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, 0) != EBADF);
 
-	media_fd = mi_get_media_fd(node->g_fd(), node->bus_info);
+	media_fd = fhs.add(mi_get_media_fd(node->g_fd(), node->bus_info));
 	fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd));
+	fhs.add(req_fd);
 	ctrls.count = 1;
 	ctrls.controls = &ctrl;
 	if (have_controls) {
@@ -1558,8 +1561,8 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EACCES);
 	}
 	ctrl.id = valid_qctrl.id;
-	close(req_fd);
-	close(media_fd);
+	fhs.del(req_fd);
+	fhs.del(media_fd);
 	node->reopen();
 
 	int type = node->g_type();
@@ -1593,14 +1596,15 @@ int testRequests(struct node *node, bool test_streaming)
 	unsigned num_requests = 2 * num_bufs;
 	last_seq.init();
 
-	media_fd = mi_get_media_fd(node->g_fd(), node->bus_info);
+	media_fd = fhs.add(mi_get_media_fd(node->g_fd(), node->bus_info));
 
 	for (unsigned i = 0; i < num_requests; i++) {
 		fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &buf_req_fds[i]));
+		fhs.add(buf_req_fds[i]);
 		fail_on_test(buf_req_fds[i] < 0);
 		fail_on_test(!doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0));
 	}
-	close(media_fd);
+	fhs.del(media_fd);
 
 	buffer buf(q);
 
@@ -1750,13 +1754,13 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
 		fail_on_test(buf.g_request_fd());
-		close(buf_req_fds[i]);
+		fhs.del(buf_req_fds[i]);
 		ctrls.request_fd = buf_req_fds[i];
 		fail_on_test(!doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
 	}
 	for (unsigned i = 0; i < num_requests; i++)
 		if (buf_req_fds[i] >= 0)
-			close(buf_req_fds[i]);
+			fhs.del(buf_req_fds[i]);
 
 	ctrls.which = 0;
 	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));

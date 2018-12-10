@@ -140,6 +140,34 @@ struct node : public base_node, public cv4l_fd {
 	}
 };
 
+class filehandles {
+public:
+	filehandles() {}
+	~filehandles()
+	{
+		for (auto iter = fhs.begin(); iter != fhs.end(); ++iter)
+			close(*iter);
+	}
+
+	int add(int fd)
+	{
+		if (fd >= 0)
+			fhs.insert(fd);
+		return fd;
+	}
+
+	void del(int fd)
+	{
+		if (fd >= 0) {
+			fhs.erase(fd);
+			close(fd);
+		}
+	}
+
+private:
+	std::set<int> fhs;
+};
+
 #define info(fmt, args...) 					\
 	do {							\
 		if (show_info)					\
