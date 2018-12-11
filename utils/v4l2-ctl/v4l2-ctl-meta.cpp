@@ -21,14 +21,14 @@ static struct v4l2_format vfmt;	/* set_format/get_format */
 void meta_usage(void)
 {
 	printf("\nMetadata Formats options:\n"
-	       "  --list-formats-meta display supported metadata capture formats [VIDIOC_ENUM_FMT]\n"
-	       "  --get-fmt-meta      query the metadata capture format [VIDIOC_G_FMT]\n"
-	       "  --set-fmt-meta <f>  set the metadata capture format [VIDIOC_S_FMT]\n"
+	       "  --list-formats-meta display supported metadata formats [VIDIOC_ENUM_FMT]\n"
+	       "  --get-fmt-meta      query the metadata format [VIDIOC_G_FMT]\n"
+	       "  --set-fmt-meta <f>  set the metadata format [VIDIOC_S_FMT]\n"
 	       "                     parameter is either the format index as reported by\n"
-	       "                     --list-formats-meta-cap, or the fourcc value as a string\n"
-	       "  --try-fmt-meta <f>  try the metadata capture format [VIDIOC_TRY_FMT]\n"
+	       "                     --list-formats-meta, or the fourcc value as a string\n"
+	       "  --try-fmt-meta <f>  try the metadata format [VIDIOC_TRY_FMT]\n"
 	       "                     parameter is either the format index as reported by\n"
-	       "                     --list-formats-meta-cap, or the fourcc value as a string\n"
+	       "                     --list-formats-meta, or the fourcc value as a string\n"
 	       );
 }
 
@@ -55,17 +55,18 @@ void meta_set(cv4l_fd &_fd)
 	int fd = _fd.g_fd();
 	int ret;
 
-	if (options[OptSetMetaFormat] || options[OptTryMetaFormat]) {
+	if ((options[OptSetMetaFormat] || options[OptTryMetaFormat]) &&
+	    v4l_type_is_meta(_fd.g_type())) {
 		struct v4l2_format in_vfmt;
 
-		in_vfmt.type = V4L2_BUF_TYPE_META_CAPTURE;
+		in_vfmt.type = _fd.g_type();
 		in_vfmt.fmt.meta.dataformat = vfmt.fmt.meta.dataformat;
 
 		if (in_vfmt.fmt.meta.dataformat < 256) {
 			struct v4l2_fmtdesc fmt;
 
 			fmt.index = in_vfmt.fmt.meta.dataformat;
-			fmt.type = V4L2_BUF_TYPE_META_CAPTURE;
+			fmt.type = in_vfmt.type;
 
 			if (doioctl(fd, VIDIOC_ENUM_FMT, &fmt))
 				fmt.pixelformat = 0;
@@ -84,8 +85,8 @@ void meta_set(cv4l_fd &_fd)
 
 void meta_get(cv4l_fd &fd)
 {
-	if (options[OptGetMetaFormat]) {
-		vfmt.type = V4L2_BUF_TYPE_META_CAPTURE;
+	if (options[OptGetMetaFormat] && v4l_type_is_meta(fd.g_type())) {
+		vfmt.type = fd.g_type();
 		if (doioctl(fd.g_fd(), VIDIOC_G_FMT, &vfmt) == 0)
 			printfmt(fd.g_fd(), vfmt);
 	}
@@ -93,8 +94,8 @@ void meta_get(cv4l_fd &fd)
 
 void meta_list(cv4l_fd &fd)
 {
-	if (options[OptListMetaFormats]) {
+	if (options[OptListMetaFormats] && v4l_type_is_meta(fd.g_type())) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_META_CAPTURE);
+		print_video_formats(fd, fd.g_type());
 	}
 }
