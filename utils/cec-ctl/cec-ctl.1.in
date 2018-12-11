@@ -8,6 +8,27 @@ cec-ctl - An application to control cec devices
 The cec-ctl tool is used to control cec devices. It is able to control almost
 any aspect of such devices covering the full CEC API.
 
+The easiest way to quickly test a CEC adapter of an HDMI output is:
+
+	cec-ctl -d/dev/cecX --playback -S
+
+And for an HDMI input:
+
+	cec-ctl -d/dev/cecX --tv -S
+
+Both commands configure the CEC adapter and show the CEC topology.
+
+To put a display to standby use:
+
+	cec-ctl -d/dev/cecX --to 0 --standby
+
+To wake up the display:
+
+	cec-ctl -d/dev/cecX --to 0 --image-view-on
+
+Instead of '-d/dev/cecX' you can also write this as '-dX'.
+And instead of '--to 0' you can also write this as '-t0'.
+
 .SH OPTIONS
 .TP
 \fB\-d\fR, \fB\-\-device\fR \fI<dev>\fR
