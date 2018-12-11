@@ -198,7 +198,7 @@ struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned w, unsigned h,
 	ctx->state.quantization = quantization;
 	ctx->flags = 0;
 	chroma_div = info->width_div * info->height_div;
-	ctx->size = size + 2 * size / chroma_div;
+	ctx->size = 2 * size + 2 * size / chroma_div;
 	ctx->state.ref_frame.luma = malloc(ctx->size);
 	ctx->comp_max_size = ctx->size + sizeof(struct fwht_cframe_hdr);
 	ctx->state.compressed_frame = malloc(ctx->comp_max_size);
@@ -211,6 +211,7 @@ struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned w, unsigned h,
 	ctx->state.ref_frame.width = ctx->state.ref_frame.height = 0;
 	ctx->state.ref_frame.cb = ctx->state.ref_frame.luma + size;
 	ctx->state.ref_frame.cr = ctx->state.ref_frame.cb + size / chroma_div;
+	ctx->state.ref_frame.alpha = ctx->state.ref_frame.cr + size / chroma_div;
 	ctx->state.gop_size = 10;
 	ctx->state.gop_cnt = 0;
 	return ctx;
