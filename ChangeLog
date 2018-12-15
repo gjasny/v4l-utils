@@ -1,3 +1,13 @@
+v4l-utils-1.16.3
+----------------
+
+Mauro Carvalho Chehab (1):
+      Makefile.am: don't use relative paths for include
+
+Sean Young (1):
+      keytable: do not install bpf protocols decoders with execute permission
+
+
 v4l-utils-1.16.2
 ----------------
 
