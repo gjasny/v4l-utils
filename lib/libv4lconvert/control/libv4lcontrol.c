@@ -20,7 +20,9 @@
  */
 
 #include <sys/types.h>
+#ifndef __OpenBSD__
 #include <sys/sysmacros.h>
+#endif
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <sys/stat.h>
