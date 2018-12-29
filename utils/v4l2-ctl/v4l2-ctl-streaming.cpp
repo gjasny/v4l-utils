@@ -926,6 +926,76 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 	return 0;
 }
 
+static void write_buffer_to_file(cv4l_queue &q, cv4l_buffer &buf, FILE *fout)
+{
+#ifndef NO_STREAM_TO
+	unsigned comp_size[VIDEO_MAX_PLANES];
+	__u8 *comp_ptr[VIDEO_MAX_PLANES];
+
+	if (host_fd_to >= 0) {
+		unsigned tot_comp_size = 0;
+		unsigned tot_used = 0;
+
+		for (unsigned j = 0; j < buf.g_num_planes(); j++) {
+			__u32 used = buf.g_bytesused();
+			unsigned offset = buf.g_data_offset();
+			u8 *p = (u8 *)q.g_dataptr(buf.g_index(), j) + offset;
+
+			if (ctx) {
+				comp_ptr[j] = fwht_compress(ctx, p,
+							    used - offset, &comp_size[j]);
+			} else {
+				comp_ptr[j] = p;
+				comp_size[j] = rle_compress(p, used - offset,
+							    bpl_cap[j]);
+			}
+			tot_comp_size += comp_size[j];
+			tot_used += used - offset;
+		}
+		write_u32(fout, ctx ? V4L_STREAM_PACKET_FRAME_VIDEO_FWHT :
+				V4L_STREAM_PACKET_FRAME_VIDEO_RLE);
+		write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE(buf.g_num_planes()) + tot_comp_size);
+		write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_HDR);
+		write_u32(fout, buf.g_field());
+		write_u32(fout, buf.g_flags());
+		comp_perc += (tot_comp_size * 100 / tot_used);
+		comp_perc_count++;
+	}
+	if (to_with_hdr)
+		write_u32(fout, FILE_HDR_ID);
+	for (unsigned j = 0; j < buf.g_num_planes(); j++) {
+		__u32 used = buf.g_bytesused();
+		unsigned offset = buf.g_data_offset();
+		unsigned sz;
+
+		if (offset > used) {
+			// Should never happen
+			fprintf(stderr, "offset %d > used %d!\n",
+				offset, used);
+			offset = 0;
+		}
+		used -= offset;
+		if (host_fd_to >= 0) {
+			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_PLANE_HDR);
+			write_u32(fout, used);
+			write_u32(fout, comp_size[j]);
+			used = comp_size[j];
+		} else if (to_with_hdr) {
+			write_u32(fout, used);
+		}
+		if (host_fd_to >= 0)
+			sz = fwrite(comp_ptr[j] + offset, 1, used, fout);
+		else
+			sz = fwrite((u8 *)q.g_dataptr(buf.g_index(), j) + offset, 1, used, fout);
+
+		if (sz != used)
+			fprintf(stderr, "%u != %u\n", sz, used);
+	}
+	if (host_fd_to >= 0)
+		fflush(fout);
+#endif
+}
+
 static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 			 unsigned &count, fps_timestamps &fps_ts)
 {
@@ -964,75 +1034,10 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 	double ts_secs = buf.g_timestamp().tv_sec + buf.g_timestamp().tv_usec / 1000000.0;
 	fps_ts.add_ts(ts_secs, buf.g_sequence(), buf.g_field());
 
-#ifndef NO_STREAM_TO
 	if (fout && (!stream_skip || ignore_count_skip) &&
-	    buf.g_bytesused(0) && !(buf.g_flags() & V4L2_BUF_FLAG_ERROR)) {
-		unsigned comp_size[VIDEO_MAX_PLANES];
-		__u8 *comp_ptr[VIDEO_MAX_PLANES];
+	    buf.g_bytesused(0) && !(buf.g_flags() & V4L2_BUF_FLAG_ERROR))
+		write_buffer_to_file(q, buf, fout);
 
-		if (host_fd_to >= 0) {
-			unsigned tot_comp_size = 0;
-			unsigned tot_used = 0;
-
-			for (unsigned j = 0; j < buf.g_num_planes(); j++) {
-				__u32 used = buf.g_bytesused();
-				unsigned offset = buf.g_data_offset();
-				u8 *p = (u8 *)q.g_dataptr(buf.g_index(), j) + offset;
-
-				if (ctx) {
-					comp_ptr[j] = fwht_compress(ctx, p,
-								    used - offset, &comp_size[j]);
-				} else {
-					comp_ptr[j] = p;
-					comp_size[j] = rle_compress(p, used - offset,
-								    bpl_cap[j]);
-				}
-				tot_comp_size += comp_size[j];
-				tot_used += used - offset;
-			}
-			write_u32(fout, ctx ? V4L_STREAM_PACKET_FRAME_VIDEO_FWHT :
-					      V4L_STREAM_PACKET_FRAME_VIDEO_RLE);
-			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE(buf.g_num_planes()) + tot_comp_size);
-			write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_HDR);
-			write_u32(fout, buf.g_field());
-			write_u32(fout, buf.g_flags());
-			comp_perc += (tot_comp_size * 100 / tot_used);
-			comp_perc_count++;
-		}
-		if (to_with_hdr)
-			write_u32(fout, FILE_HDR_ID);
-		for (unsigned j = 0; j < buf.g_num_planes(); j++) {
-			__u32 used = buf.g_bytesused();
-			unsigned offset = buf.g_data_offset();
-			unsigned sz;
-
-			if (offset > used) {
-				// Should never happen
-				fprintf(stderr, "offset %d > used %d!\n",
-					offset, used);
-				offset = 0;
-			}
-			used -= offset;
-			if (host_fd_to >= 0) {
-				write_u32(fout, V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_PLANE_HDR);
-				write_u32(fout, used);
-				write_u32(fout, comp_size[j]);
-				used = comp_size[j];
-			} else if (to_with_hdr) {
-				write_u32(fout, used);
-			}
-			if (host_fd_to >= 0)
-				sz = fwrite(comp_ptr[j] + offset, 1, used, fout);
-			else
-				sz = fwrite((u8 *)q.g_dataptr(buf.g_index(), j) + offset, 1, used, fout);
-
-			if (sz != used)
-				fprintf(stderr, "%u != %u\n", sz, used);
-		}
-		if (host_fd_to >= 0)
-			fflush(fout);
-	}
-#endif
 	if (buf.g_flags() & V4L2_BUF_FLAG_KEYFRAME)
 		ch = 'K';
 	else if (buf.g_flags() & V4L2_BUF_FLAG_PFRAME)
