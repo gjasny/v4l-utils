@@ -40,7 +40,7 @@ int dvb_desc_logical_channel_init(struct dvb_v5_fe_parms *parms,
 
 	memcpy(d->lcn, p, d->length);
 
-	len = d->length / sizeof(d->lcn);
+	len = d->length / 4;
 
 	for (i = 0; i < len; i++) {
 		bswap16(d->lcn[i].service_id);
@@ -55,7 +55,7 @@ void dvb_desc_logical_channel_print(struct dvb_v5_fe_parms *parms, const struct 
 	int i;
 	size_t len;
 
-	len = d->length / sizeof(d->lcn);
+	len = d->length / 4;
 
 	for (i = 0; i < len; i++) {
 		dvb_loginfo("|           service ID[%d]     %d", i, d->lcn[i].service_id);

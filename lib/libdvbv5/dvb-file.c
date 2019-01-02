@@ -987,7 +987,7 @@ static char *dvb_vchannel(struct dvb_v5_fe_parms_priv *parms,
 		size_t len;
 		int r;
 
-		len = d->length / sizeof(d->lcn);
+		len = d->length / 4;
 		for (i = 0; i < len; i++) {
 			if (service_id == d->lcn[i].service_id) {
 				r = asprintf(&buf, "%d.%d",
