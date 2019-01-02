@@ -461,11 +461,13 @@ void dvb_parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 				emphasis = 1;
 			else if (*s == 0x87 && emphasis)
 				emphasis = 0;
-			else  if (*s >= 0x20 && (*s < 0x80 || *s > 0x9f)) {
+			else if (*s >= 0x20 && (*s < 0x80 || *s > 0x9f)) {
 				*p++ = *s;
 				if (emphasis)
 					*p2++ = *s;
 			}
+			else if (*s == 0x8a)
+				*p++ = '\n';
 		}
 		*p = '\0';
 		*p2 = '\0';
@@ -495,6 +497,8 @@ void dvb_parse_string(struct dvb_v5_fe_parms *parms, char **dest, char **emph,
 				emphasis = 1;
 			else if (code == 0xe087 && emphasis)
 				emphasis = 0;
+			else if (code == 0xe08a)
+				/* newline, append code blow */ ;
 			else if (code >= 0xe080 && code <= 0xe09f)
 				continue;
 
