@@ -1091,11 +1091,7 @@ void common_get(cv4l_fd &_fd)
 
 void common_list(cv4l_fd &fd)
 {
-	if (options[OptListCtrlsMenus]) {
-		list_controls(fd.g_fd(), 1);
-	}
-
-	if (options[OptListCtrls]) {
-		list_controls(fd.g_fd(), 0);
+	if (options[OptListCtrls] || options[OptListCtrlsMenus]) {
+		list_controls(fd.g_fd(), options[OptListCtrlsMenus]);
 	}
 }
