@@ -1255,7 +1255,7 @@ int main(int argc, char **argv)
 		options[OptGetPriority] = 1;
 		options[OptGetSelection] = 1;
 		options[OptGetOutputSelection] = 1;
-		options[OptListCtrls] = 1;
+		options[OptListCtrlsMenus] = 1;
 		options[OptSilent] = 1;
 	}
 
