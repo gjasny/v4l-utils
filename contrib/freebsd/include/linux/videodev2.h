@@ -177,6 +177,7 @@ enum v4l2_buf_type {
 	V4L2_BUF_TYPE_SDR_CAPTURE          = 11,
 	V4L2_BUF_TYPE_SDR_OUTPUT           = 12,
 	V4L2_BUF_TYPE_META_CAPTURE         = 13,
+	V4L2_BUF_TYPE_META_OUTPUT	   = 14,
 	/* Deprecated, do not use */
 	V4L2_BUF_TYPE_PRIVATE              = 0x80,
 };
@@ -497,6 +498,7 @@ struct v4l2_capability {
 #define V4L2_CAP_READWRITE              0x01000000  /* read/write systemcalls */
 #define V4L2_CAP_ASYNCIO                0x02000000  /* async I/O */
 #define V4L2_CAP_STREAMING              0x04000000  /* streaming I/O ioctls */
+#define V4L2_CAP_META_OUTPUT		0x08000000  /* Is a metadata output device */
 
 #define V4L2_CAP_TOUCH                  0x10000000  /* Is a touch device */
 
@@ -998,6 +1000,18 @@ struct v4l2_buffer {
 		uint32_t		reserved;
 	};
 };
+
+/**
+ * v4l2_timeval_to_ns - Convert timeval to nanoseconds
+ * @ts:		pointer to the timeval variable to be converted
+ *
+ * Returns the scalar nanosecond representation of the timeval
+ * parameter.
+ */
+static __inline__ uint64_t v4l2_timeval_to_ns(const struct timeval *tv)
+{
+	return (uint64_t)tv->tv_sec * 1000000000ULL + tv->tv_usec * 1000;
+}
 
 /*  Flags for 'flags' field */
 /* Buffer is mapped (flag) */
@@ -1652,8 +1666,6 @@ struct v4l2_ext_control {
 		uint8_t *p_u8;
 		uint16_t *p_u16;
 		uint32_t *p_u32;
-		struct v4l2_ctrl_mpeg2_slice_params *p_mpeg2_slice_params;
-		struct v4l2_ctrl_mpeg2_quantization *p_mpeg2_quantization;
 		void *ptr;
 	};
 } __attribute__ ((packed));
@@ -1695,8 +1707,6 @@ enum v4l2_ctrl_type {
 	V4L2_CTRL_TYPE_U8	     = 0x0100,
 	V4L2_CTRL_TYPE_U16	     = 0x0101,
 	V4L2_CTRL_TYPE_U32	     = 0x0102,
-	V4L2_CTRL_TYPE_MPEG2_SLICE_PARAMS = 0x0103,
-	V4L2_CTRL_TYPE_MPEG2_QUANTIZATION = 0x0104,
 };
 
 /*  Used in the VIDIOC_QUERYCTRL ioctl for querying controls */

@@ -596,6 +596,8 @@ struct parse_event rel_events[] = {
 	{"REL_WHEEL", 0x08},
 	{"REL_MISC", 0x09},
 	{"REL_RESERVED", 0x0a},
+	{"REL_WHEEL_HI_RES", 0x0b},
+	{"REL_HWHEEL_HI_RES", 0x0c},
 	{"REL_MAX", 0x0f},
 	{ NULL, 0}
 };
@@ -626,6 +628,7 @@ struct parse_event abs_events[] = {
 	{"ABS_TOOL_WIDTH", 0x1c},
 	{"ABS_VOLUME", 0x20},
 	{"ABS_MISC", 0x28},
+	{"ABS_RESERVED", 0x2e},
 	{"ABS_MT_SLOT", 0x2f},
 	{"ABS_MT_TOUCH_MAJOR", 0x30},
 	{"ABS_MT_TOUCH_MINOR", 0x31},
