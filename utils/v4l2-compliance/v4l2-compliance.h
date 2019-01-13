@@ -146,7 +146,7 @@ public:
 	filehandles() {}
 	~filehandles()
 	{
-		for (auto iter = fhs.begin(); iter != fhs.end(); ++iter)
+		for (std::set<int>::const_iterator iter = fhs.begin(); iter != fhs.end(); ++iter)
 			close(*iter);
 	}
 
