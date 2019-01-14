@@ -673,9 +673,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 {
 	struct node node2;
 	struct v4l2_capability vcap;		/* list_cap */
-
-	printf("Compliance test for device %s%s:\n\n",
-			node.device, node.g_direct() ? "" : " (using libv4l2)");
+	std::string driver;
 
 	node.is_video = type == MEDIA_TYPE_VIDEO;
 	node.is_vbi = type == MEDIA_TYPE_VBI;
@@ -683,10 +681,36 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	node.is_sdr = type == MEDIA_TYPE_SDR;
 	node.is_touch = type == MEDIA_TYPE_TOUCH;
 
-	if (node.is_v4l2())
+	if (node.is_v4l2()) {
 		doioctl(&node, VIDIOC_QUERYCAP, &vcap);
-	else
+		driver = (const char *)vcap.driver;
+		is_vivid = driver == "vivid";
+		if (is_vivid)
+			node.bus_info = (const char *)vcap.bus_info;
+	} else {
 		memset(&vcap, 0, sizeof(vcap));
+	}
+
+	if (!node.is_media())
+		media_fd = mi_get_media_fd(node.g_fd(), node.bus_info);
+
+	if (!node.is_v4l2()) {
+		int fd = node.is_media() ? node.g_fd() : media_fd;
+		if (fd >= 0) {
+			struct media_device_info mdinfo;
+
+			if (!ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdinfo))
+				driver = mdinfo.driver;
+		}
+	}
+
+	if (driver.empty())
+		printf("Compliance test for device %s%s:\n\n",
+		       node.device, node.g_direct() ? "" : " (using libv4l2)");
+	else
+		printf("Compliance test for %s device %s%s:\n\n",
+		       driver.c_str(), node.device, node.g_direct() ? "" : " (using libv4l2)");
+
 	if (node.g_caps() & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
 			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_SLICED_VBI_CAPTURE))
 		node.has_inputs = true;
@@ -719,13 +743,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		printf("Driver Info:\n");
 		v4l2_info_capability(vcap);
 
-		is_vivid = !strcmp((const char *)vcap.driver, "vivid");
-		if (is_vivid)
-			node.bus_info = (const char *)vcap.bus_info;
 	}
-
-	if (!node.is_media())
-		media_fd = mi_get_media_fd(node.g_fd(), node.bus_info);
 
 	__u32 ent_id = 0;
 	bool is_invalid = false;
