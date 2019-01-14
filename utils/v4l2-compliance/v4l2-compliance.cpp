@@ -626,12 +626,14 @@ static int testPrio(struct node *node, struct node *node2)
 static void streamingSetup(struct node *node)
 {
 	if (node->can_capture) {
+		v4l2_fract min_period = { 1, 1000 };
 		struct v4l2_input input;
 
 		memset(&input, 0, sizeof(input));
 		doioctl(node, VIDIOC_G_INPUT, &input.index);
 		doioctl(node, VIDIOC_ENUMINPUT, &input);
 		node->cur_io_caps = input.capabilities;
+		node->set_interval(min_period);
 	} else if (node->can_output) {
 		struct v4l2_output output;
 
@@ -949,6 +951,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	max_io = node.inputs > node.outputs ? node.inputs : node.outputs;
 
 	for (unsigned io = 0; io < (max_io ? max_io : 1); io++) {
+		v4l2_fract min_period = { 1, 1000 };
 		char suffix[100] = "";
 
 		node.std_controls = node.priv_controls = 0;
@@ -1027,6 +1030,8 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		// in case of any errors in the preceeding test.
 		node.reopen();
 		printf("\ttest VIDIOC_EXPBUF: %s\n", ok(testExpBuf(&node)));
+		if (node.can_capture)
+			node.set_interval(min_period);
 		printf("\ttest Requests: %s\n", ok(testRequests(&node, options[OptStreaming])));
 		// Reopen after each streaming test to reset the streaming state
 		// in case of any errors in the preceeding test.
