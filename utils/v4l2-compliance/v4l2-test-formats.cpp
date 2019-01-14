@@ -327,9 +327,11 @@ int testEnumFormats(struct node *node)
 	return supported ? 0 : ENOTTY;
 }
 
-static int testColorspace(__u32 pixelformat, __u32 colorspace, __u32 ycbcr_enc, __u32 quantization)
+static int testColorspace(bool non_zero_colorspace,
+			  __u32 pixelformat, __u32 colorspace, __u32 ycbcr_enc, __u32 quantization)
 {
-	fail_on_test(!colorspace);
+	if (non_zero_colorspace)
+		fail_on_test(!colorspace);
 	fail_on_test(colorspace == V4L2_COLORSPACE_BT878);
 	fail_on_test(pixelformat != V4L2_PIX_FMT_JPEG &&
 		     pixelformat != V4L2_PIX_FMT_MJPEG &&
@@ -381,7 +383,7 @@ int testFBuf(struct node *node)
 	}*/
 	fail_on_test(fbuf.fmt.bytesperline && fbuf.fmt.bytesperline < fbuf.fmt.width);
 	fail_on_test(fbuf.fmt.sizeimage && fbuf.fmt.sizeimage < fbuf.fmt.bytesperline * fbuf.fmt.height);
-	fail_on_test(testColorspace(fbuf.fmt.pixelformat, fbuf.fmt.colorspace, 0, 0));
+	fail_on_test(testColorspace(true, fbuf.fmt.pixelformat, fbuf.fmt.colorspace, 0, 0));
 	return 0;
 }
 
@@ -436,8 +438,9 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		fail_on_test(pix.bytesperline && pix.bytesperline < pix.width);
 		fail_on_test(!pix.sizeimage);
 		if (!node->is_m2m)
-			fail_on_test(testColorspace(pix.pixelformat, pix.colorspace,
-					    pix.ycbcr_enc, pix.quantization));
+			fail_on_test(testColorspace(node->has_inputs || node->has_outputs,
+						    pix.pixelformat, pix.colorspace,
+						    pix.ycbcr_enc, pix.quantization));
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
 		if (pix.priv && pix.priv != V4L2_PIX_FMT_PRIV_MAGIC)
 			return fail("priv is non-zero and non-magic!\n");
@@ -451,8 +454,9 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 			return fail("pixelformat %08x (%s) for buftype %d not reported by ENUM_FMT\n",
 					pix_mp.pixelformat, fcc2s(pix_mp.pixelformat).c_str(), type);
 		if (!node->is_m2m)
-			fail_on_test(testColorspace(pix_mp.pixelformat, pix_mp.colorspace, 
-                                            pix_mp.ycbcr_enc, pix_mp.quantization));
+			fail_on_test(testColorspace(node->has_inputs || node->has_outputs,
+						    pix_mp.pixelformat, pix_mp.colorspace,
+						    pix_mp.ycbcr_enc, pix_mp.quantization));
 		fail_on_test(pix_mp.field == V4L2_FIELD_ANY);
 		ret = check_0(pix_mp.reserved, sizeof(pix_mp.reserved));
 		if (ret)
