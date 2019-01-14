@@ -62,12 +62,10 @@ using an option for disabling shared libraries:
 	$ LDFLAGS="--static -static" ./configure --disable-shared
 
 Note that this requires static variants of all the libraries needed for
-linking which may not be available in all systems.
+linking which may not be available in all systems. Then run the configure
+script as follows:
 
-In order to build binaries that are not dependent on libraries contained
-in v4l-utils, simply use the --disable-shared option:
-
-	$ ./configure --disable-shared
+	$ PKG_CONFIG="pkg-config --static" ./configure --disable-shared
 
 Android Cross Compiling and Installing:
 ----------------
