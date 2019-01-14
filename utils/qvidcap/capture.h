@@ -8,6 +8,8 @@
 
 #define GL_GLEXT_PROTOTYPES 1
 #define QT_NO_OPENGL_ES_2
+#include <qtguiglobal.h>
+#undef QT_OPENGL_ES_2
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>

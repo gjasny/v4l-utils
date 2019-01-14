@@ -11,6 +11,8 @@
 #ifdef HAVE_QTGL
 #define GL_GLEXT_PROTOTYPES
 #define QT_NO_OPENGL_ES_2
+#include <qtguiglobal.h>
+#undef QT_OPENGL_ES_2
 
 #include <QGLWidget>
 #include <QGLShader>
