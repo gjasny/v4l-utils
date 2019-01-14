@@ -81,6 +81,7 @@ static char options[OptLast];
 
 static int app_result;
 static int tests_total, tests_ok;
+static int grand_total, grand_ok, grand_warnings;
 
 // Globals
 bool show_info;
@@ -675,6 +676,8 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	struct v4l2_capability vcap;		/* list_cap */
 	std::string driver;
 
+	tests_total = tests_ok = warnings = 0;
+
 	node.is_video = type == MEDIA_TYPE_VIDEO;
 	node.is_vbi = type == MEDIA_TYPE_VBI;
 	node.is_radio = type == MEDIA_TYPE_RADIO;
@@ -843,9 +846,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		printf("\ttest MEDIA_IOC_ENUM_ENTITIES/LINKS: %s\n", ok(testMediaEnum(&node)));
 		printf("\ttest MEDIA_IOC_SETUP_LINK: %s\n", ok(testMediaSetupLink(&node)));
 		printf("\n");
-		if (options[OptSetMediaDevice])
-			walkTopology(node, expbuf_node, frame_count);
-		goto done;
+		goto show_total;
 	}
 
 	/* Debug ioctls */
@@ -1112,7 +1113,28 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 
 	restoreState();
 
-done:
+show_total:
+	/* Final test report */
+	if (driver.empty())
+		printf("Total for device %s%s: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
+		       node.device, node.g_direct() ? "" : " (using libv4l2)",
+		       tests_total, tests_ok, tests_total - tests_ok, warnings);
+	else
+		printf("Total for %s device %s%s: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
+		       driver.c_str(), node.device, node.g_direct() ? "" : " (using libv4l2)",
+		       tests_total, tests_ok, tests_total - tests_ok, warnings);
+	grand_total += tests_total;
+	grand_ok += tests_ok;
+	grand_warnings += warnings;
+
+	if (node.is_media() && options[OptSetMediaDevice]) {
+		walkTopology(node, expbuf_node, frame_count);
+		/* Final test report */
+		printf("\nGrand Total for %s device %s: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
+		       driver.c_str(), node.device,
+		       grand_total, grand_ok, grand_total - grand_ok, grand_warnings);
+	}
+
 	node.close();
 	if (node.node2)
 		node.node2->close();
@@ -1370,8 +1392,5 @@ int main(int argc, char **argv)
 	if (media_fd >= 0)
 		close(media_fd);
 
-	/* Final test report */
-	printf("Total: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
-			tests_total, tests_ok, tests_total - tests_ok, warnings);
 	exit(app_result);
 }
