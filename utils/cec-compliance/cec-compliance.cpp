@@ -1308,7 +1308,7 @@ int main(int argc, char **argv)
 		exit(-1);
 
 	if (!options[OptSkipInfo]) {
-		printf("\nCompliance test for device %s:\n\n", device);
+		printf("\nCompliance test for %s device %s:\n\n", caps.driver, device);
 		printf("    The test results mean the following:\n"
 		       "        OK                  Supported correctly by the device.\n"
 		       "        OK (Not Supported)  Not supported and not mandatory for the device.\n"
@@ -1362,7 +1362,8 @@ int main(int argc, char **argv)
 
 	close(fd);
 
-	printf("Total: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
+	printf("Total for %s device %s: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
+	       caps.driver, device,
 	       tests_total, tests_ok, tests_total - tests_ok, warnings);
 	exit(app_result);
 }
