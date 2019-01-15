@@ -58,6 +58,12 @@ extern int kernel_version;
 extern int media_fd;
 extern unsigned warnings;
 
+enum poll_mode {
+	POLL_MODE_NONE,
+	POLL_MODE_SELECT,
+	POLL_MODE_EPOLL,
+};
+
 struct test_query_ext_ctrl: v4l2_query_ext_ctrl {
 	__u64 menu_mask;
 };
@@ -310,9 +316,10 @@ int testReqBufs(struct node *node);
 int testReadWrite(struct node *node);
 int testExpBuf(struct node *node);
 int testBlockingWait(struct node *node);
-int testMmap(struct node *node, unsigned frame_count);
-int testUserPtr(struct node *node, unsigned frame_count);
-int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count);
+int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode);
+int testUserPtr(struct node *node, unsigned frame_count, enum poll_mode pollmode);
+int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count,
+	       enum poll_mode pollmode);
 int testRequests(struct node *node, bool test_streaming);
 void streamAllFormats(struct node *node);
 

@@ -1073,16 +1073,33 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 			node.reopen();
 			printf("\ttest blocking wait: %s\n", ok(testBlockingWait(&node)));
 			node.reopen();
-			printf("\ttest MMAP: %s\n", ok(testMmap(&node, frame_count)));
+			printf("\ttest MMAP (no poll): %s\n",
+			       ok(testMmap(&node, frame_count, POLL_MODE_NONE)));
 			node.reopen();
-			printf("\ttest USERPTR: %s\n", ok(testUserPtr(&node, frame_count)));
+			printf("\ttest MMAP (select): %s\n",
+			       ok(testMmap(&node, frame_count, POLL_MODE_SELECT)));
+			node.reopen();
+// vb2 epoll support is broken, so disable this test for now
+//			printf("\ttest MMAP (epoll): %s\n",
+//			       ok(testMmap(&node, frame_count, POLL_MODE_EPOLL)));
+//			node.reopen();
+			printf("\ttest USERPTR (no poll): %s\n",
+			       ok(testUserPtr(&node, frame_count, POLL_MODE_NONE)));
+			node.reopen();
+			printf("\ttest USERPTR (select): %s\n",
+			       ok(testUserPtr(&node, frame_count, POLL_MODE_SELECT)));
 			node.reopen();
 			if (options[OptSetExpBufDevice] ||
-					!(node.valid_memorytype & (1 << V4L2_MEMORY_DMABUF)))
-				printf("\ttest DMABUF: %s\n", ok(testDmaBuf(&expbuf_node, &node, frame_count)));
-			else if (!options[OptSetExpBufDevice])
+			    !(node.valid_memorytype & (1 << V4L2_MEMORY_DMABUF))) {
+				printf("\ttest DMABUF (no poll): %s\n",
+				       ok(testDmaBuf(&expbuf_node, &node, frame_count, POLL_MODE_NONE)));
+				node.reopen();
+				printf("\ttest DMABUF (select): %s\n",
+				       ok(testDmaBuf(&expbuf_node, &node, frame_count, POLL_MODE_SELECT)));
+				node.reopen();
+			} else if (!options[OptSetExpBufDevice]) {
 				printf("\ttest DMABUF: Cannot test, specify --expbuf-device\n");
-			node.reopen();
+			}
 
 			printf("\n");
 		}

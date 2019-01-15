@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
+#include <sys/epoll.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
@@ -793,9 +794,14 @@ int testReadWrite(struct node *node)
 }
 
 static int captureBufs(struct node *node, const cv4l_queue &q,
-		const cv4l_queue &m2m_q, unsigned frame_count, bool use_poll,
+		const cv4l_queue &m2m_q, unsigned frame_count, int pollmode,
 		unsigned &capture_count)
 {
+	static const char *pollmode_str[] = {
+		"",
+		" (select)",
+		" (epoll)",
+	};
 	unsigned valid_output_flags =
 		V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_TSTAMP_SRC_MASK |
 		V4L2_BUF_FLAG_KEYFRAME | V4L2_BUF_FLAG_PFRAME | V4L2_BUF_FLAG_BFRAME;
@@ -804,14 +810,15 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 	buffer buf(q);
 	unsigned count = frame_count;
 	unsigned req_idx = q.g_buffers();
+	struct epoll_event ev;
+	int epollfd = -1;
 	int ret;
 
 	capture_count = 0;
 
 	if (show_info) {
 		printf("\t    %s%s:\n",
-			buftype2s(q.g_type()).c_str(),
-			use_poll ? " (polling)" : "");
+			buftype2s(q.g_type()).c_str(), pollmode_str[pollmode]);
 	}
 
 	/*
@@ -831,12 +838,26 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 			valid_output_flags = V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 	}
 
-	if (use_poll)
+	if (pollmode == POLL_MODE_EPOLL) {
+		epollfd = epoll_create1(0);
+
+		fail_on_test(epollfd < 0);
+		if (node->is_m2m)
+			ev.events = EPOLLIN | EPOLLOUT;
+		else if (v4l_type_is_output(q.g_type()))
+			ev.events = EPOLLOUT;
+		else
+			ev.events = EPOLLIN;
+		ev.data.fd = node->g_fd();
+		fail_on_test(epoll_ctl(epollfd, EPOLL_CTL_ADD, node->g_fd(), &ev));
+	}
+
+	if (pollmode)
 		fcntl(node->g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
 	for (;;) {
 		buf.init(q);
 
-		if (use_poll) {
+		if (pollmode == POLL_MODE_SELECT) {
 			struct timeval tv = { 2, 0 };
 			fd_set rfds, wfds;
 
@@ -854,6 +875,10 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 			fail_on_test(ret < 0);
 			fail_on_test(!FD_ISSET(node->g_fd(), &rfds) &&
 				     !FD_ISSET(node->g_fd(), &wfds));
+		} else if (pollmode == POLL_MODE_EPOLL) {
+			ret = epoll_wait(epollfd, &ev, 1, 2000);
+			fail_on_test(ret == 0);
+			fail_on_test(ret < 0);
 		}
 
 		ret = buf.dqbuf(node);
@@ -868,8 +893,9 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 			fail_on_test(buf.check(q, last_seq));
 			if (!show_info) {
 				printf("\r\t%s: Frame #%03d%s",
-						buftype2s(q.g_type()).c_str(),
-						frame_count - count, use_poll ? " (polling)" : "");
+				       buftype2s(q.g_type()).c_str(),
+				       frame_count - count,
+				       pollmode_str[pollmode]);
 				if (node->g_trace())
 					printf("\n");
 				fflush(stdout);
@@ -939,8 +965,10 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 		fail_on_test(buf.qbuf(node, m2m_q));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 	}
-	if (use_poll)
+	if (pollmode)
 		fcntl(node->g_fd(), F_SETFL, fd_flags);
+	if (epollfd >= 0)
+		close(epollfd);
 	if (!show_info) {
 		printf("\r\t                                                  \r");
 		fflush(stdout);
@@ -1076,7 +1104,7 @@ static int setupMmap(struct node *node, cv4l_queue &q)
 	return 0;
 }
 
-int testMmap(struct node *node, unsigned frame_count)
+int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 {
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
 	bool have_createbufs = true;
@@ -1179,11 +1207,8 @@ int testMmap(struct node *node, unsigned frame_count)
 
 		if (node->is_m2m)
 			fail_on_test(setupM2M(node, m2m_q));
-		else
-			fail_on_test(captureBufs(node, q, m2m_q, frame_count,
-						 false, capture_count));
 		fail_on_test(captureBufs(node, q, m2m_q, frame_count,
-					 true, capture_count));
+					 pollmode, capture_count));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
 
@@ -1292,7 +1317,7 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 	return 0;
 }
 
-int testUserPtr(struct node *node, unsigned frame_count)
+int testUserPtr(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 {
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
 	int type;
@@ -1343,11 +1368,8 @@ int testUserPtr(struct node *node, unsigned frame_count)
 
 		if (node->is_m2m)
 			fail_on_test(setupM2M(node, m2m_q));
-		else
-			fail_on_test(captureBufs(node, q, m2m_q, frame_count,
-						 false, capture_count));
 		fail_on_test(captureBufs(node, q, m2m_q, frame_count,
-					 true, capture_count));
+					 pollmode, capture_count));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
 		if (node->is_m2m) {
@@ -1422,7 +1444,8 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 	return 0;
 }
 
-int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count)
+int testDmaBuf(struct node *expbuf_node, struct node *node,
+	       unsigned frame_count, enum poll_mode pollmode)
 {
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
 	int expbuf_type, type;
@@ -1484,11 +1507,8 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count
 
 		if (node->is_m2m)
 			fail_on_test(setupM2M(node, m2m_q));
-		else
-			fail_on_test(captureBufs(node, q, m2m_q, frame_count,
-						 false, capture_count));
 		fail_on_test(captureBufs(node, q, m2m_q, frame_count,
-					 true, capture_count));
+					 pollmode, capture_count));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
 		if (node->supports_orphaned_bufs) {
@@ -1791,7 +1811,8 @@ int testRequests(struct node *node, bool test_streaming)
 	if (test_streaming) {
 		unsigned capture_count;
 
-		fail_on_test(captureBufs(node, q, m2m_q, num_bufs, true, capture_count));
+		fail_on_test(captureBufs(node, q, m2m_q, num_bufs,
+					 POLL_MODE_SELECT, capture_count));
 	}
 	fail_on_test(node->streamoff(q.g_type()));
 
