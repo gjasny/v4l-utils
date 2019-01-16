@@ -54,7 +54,7 @@ Use the wideband receiver if available on the hardware. This is also
 known as learning mode. The measurements should be more precise and any
 carrier frequency should be accepted.
 .TP
-\fB\-n\fR, \fB\-\-no-wideband\fR
+\fB\-n\fR, \fB\-\-narrowband\fR
 Switches back to the normal, narrowband receiver if the wideband receiver
 was enabled.
 .TP

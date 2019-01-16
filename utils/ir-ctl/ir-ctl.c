@@ -109,7 +109,7 @@ static const struct argp_option options[] = {
 		{ .doc = N_("Receiving options:") },
 	{ "one-shot",	'1',	0,		0,	N_("end receiving after first message") },
 	{ "wideband",	'w',	0,		0,	N_("use wideband receiver aka learning mode") },
-	{ "no-wideband",'n',	0,		0,	N_("use normal narrowband receiver, disable learning mode") },
+	{ "narrowband",	'n',	0,		0,	N_("use narrowband receiver, disable learning mode") },
 	{ "carrier-range", 'R', N_("RANGE"),	0,	N_("set receiver carrier range") },
 	{ "measure-carrier", 'm', 0,		0,	N_("report carrier frequency") },
 	{ "no-measure-carrier", 'M', 0,		0,	N_("disable reporting carrier frequency") },
