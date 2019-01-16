@@ -225,7 +225,11 @@ public:
 	{
 		if (v4l_type_is_output(g_type()))
 			fill_output_buf(fill_bytesused);
-		return node->prepare_buf(*this);
+		int err = node->prepare_buf(*this);
+		if (err == 0 &&
+		    v4l_type_is_video(g_type()) && v4l_type_is_output(g_type()))
+			fail_on_test(g_field() == V4L2_FIELD_ANY);
+		return err;
 	}
 	int prepare_buf(node *node, const cv4l_queue &q)
 	{
