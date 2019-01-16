@@ -181,7 +181,7 @@ pulse and space file. The following protocols are supported:
 \fBrc5\fR, \fBrc5x_20\fR, \fBrc5_sz\fR, \fBjvc\fR, \fBsony12\fR,
 \fBsony\fB15\fR, \fBsony20\fR, \fBnec\fR, \fBnecx\fR, \fBnec32\fR,
 \fBsanyo\fR, \fBrc6_0\fR, \fBrc6_6a_20\fR, \fBrc6_6a_24\fR, \fBrc6_6a_32\fR,
-\fBrc6_mce\fR, \fBsharp\fR.
+\fBrc6_mce\fR, \fBsharp\fR, \fBimon\fR.
 If the scancode starts with 0x it will be interpreted as a
 hexadecimal number, and if it starts with 0 it will be interpreted as an
 octal number.
