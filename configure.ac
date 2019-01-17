@@ -232,6 +232,32 @@ if test "x$qt_pkgconfig" = "xtrue"; then
       PKG_CHECK_MODULES(QT5GL, [Qt5OpenGL >= 5.0 gl], [qt_pkgconfig_gl=true], [qt_pkgconfig_gl=false])
    fi
    if test "x$qt_pkgconfig_gl" = "xtrue"; then
+      SAVED_CXXFLAGS="${CXXFLAGS}"
+      CXXFLAGS="${CXXFLAGS} ${QT_CFLAGS} ${QT5GL_CFLAGS}"
+      AC_LANG_PUSH([C++])
+      AC_MSG_CHECKING([for Qt5 Desktop OpenGL])
+      AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[[
+#define GL_GLEXT_PROTOTYPES
+#define QT_NO_OPENGL_ES_2
+
+#include <QGLWidget>
+#include <QGLShader>
+#include <QGLShaderProgram>
+#include <QGLFunctions>
+
+#ifndef GL_UNSIGNED_INT_8_8_8_8
+#error Missing OpenGL Extensions
+#endif
+]])],
+         [qt_desktop_opengl=yes],
+         [qt_desktop_opengl=no])
+      AC_MSG_RESULT([$qt_desktop_opengl])
+      CXXFLAGS="${SAVED_CXXFLAGS}"
+      AC_LANG_POP
+   fi
+
+   if test "x$qt_desktop_opengl" = "xyes"; then
       QTGL_CFLAGS="$QT5GL_CFLAGS -fPIC"
       QTGL_LIBS="$QT5GL_LIBS"
       AC_SUBST(QTGL_CFLAGS)
@@ -248,7 +274,7 @@ if test "x$qt_pkgconfig" = "xtrue"; then
       else
         QT_VERSION="v5"
       fi
-      AC_MSG_WARN(Qt5 OpenGL is not available)
+      AC_MSG_WARN(Qt5 Desktop OpenGL is not available)
    fi
 else
    AC_MSG_WARN(Qt5 or higher is not available)
