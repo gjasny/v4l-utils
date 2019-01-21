@@ -82,6 +82,12 @@ static bool support_out_crop;
 #define TS_WINDOW 241
 #define FILE_HDR_ID			v4l2_fourcc('V', 'h', 'd', 'r')
 
+enum codec_type {
+	NOT_CODEC,
+	ENCODER,
+	DECODER
+};
+
 class fps_timestamps {
 private:
 	unsigned idx;
@@ -332,6 +338,85 @@ void streaming_usage(void)
 		V4L_STREAM_PORT,
 #endif
 	       	V4L_STREAM_PORT);
+}
+
+static enum codec_type get_codec_type(cv4l_fd &fd)
+{
+	struct v4l2_fmtdesc fmt_desc;
+	int num_cap_fmts = 0;
+	int num_compressed_cap_fmts = 0;
+	int num_out_fmts = 0;
+	int num_compressed_out_fmts = 0;
+
+	if (!fd.has_vid_m2m())
+		return NOT_CODEC;
+
+	if (fd.enum_fmt(fmt_desc, true, 0, V4L2_BUF_TYPE_VIDEO_CAPTURE))
+		return NOT_CODEC;
+
+	do {
+		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)
+			num_compressed_cap_fmts++;
+		num_cap_fmts++;
+	} while (!fd.enum_fmt(fmt_desc));
+
+
+	if (fd.enum_fmt(fmt_desc, true, 0, V4L2_BUF_TYPE_VIDEO_OUTPUT))
+		return NOT_CODEC;
+
+	do {
+		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)
+			num_compressed_out_fmts++;
+		num_out_fmts++;
+	} while (!fd.enum_fmt(fmt_desc));
+
+	if (num_compressed_out_fmts == 0 && num_compressed_cap_fmts == num_cap_fmts) {
+		return ENCODER;
+	}
+
+	if (num_compressed_cap_fmts == 0 && num_compressed_out_fmts == num_out_fmts) {
+		return DECODER;
+	}
+
+	return NOT_CODEC;
+}
+
+static int get_cap_compose_rect(cv4l_fd &fd)
+{
+	v4l2_selection sel;
+
+	memset(&sel, 0, sizeof(sel));
+	sel.type = vidcap_buftype;
+	sel.target = V4L2_SEL_TGT_COMPOSE;
+
+	if (fd.g_selection(sel) == 0) {
+		support_cap_compose = true;
+		composed_width = sel.r.width;
+		composed_height = sel.r.height;
+		return 0;
+	}
+
+	support_cap_compose = false;
+	return 0;
+}
+
+static int get_out_crop_rect(cv4l_fd &fd)
+{
+	v4l2_selection sel;
+
+	memset(&sel, 0, sizeof(sel));
+	sel.type = vidout_buftype;
+	sel.target = V4L2_SEL_TGT_CROP;
+
+	if (fd.g_selection(sel) == 0) {
+		support_out_crop = true;
+		cropped_width = sel.r.width;
+		cropped_height = sel.r.height;
+		return 0;
+	}
+
+	support_out_crop = false;
+	return 0;
 }
 
 static void set_time_stamp(cv4l_buffer &buf)
@@ -2107,44 +2192,6 @@ done:
 
 	if (file[OUT] && file[OUT] != stdin)
 		fclose(file[OUT]);
-}
-
-static int get_cap_compose_rect(cv4l_fd &fd)
-{
-	v4l2_selection sel;
-
-	memset(&sel, 0, sizeof(sel));
-	sel.type = vidcap_buftype;
-	sel.target = V4L2_SEL_TGT_COMPOSE;
-
-	if (fd.g_selection(sel) == 0) {
-		support_cap_compose = true;
-		composed_width = sel.r.width;
-		composed_height = sel.r.height;
-		return 0;
-	}
-
-	support_cap_compose = false;
-	return 0;
-}
-
-static int get_out_crop_rect(cv4l_fd &fd)
-{
-	v4l2_selection sel;
-
-	memset(&sel, 0, sizeof(sel));
-	sel.type = vidout_buftype;
-	sel.target = V4L2_SEL_TGT_CROP;
-
-	if (fd.g_selection(sel) == 0) {
-		support_out_crop = true;
-		cropped_width = sel.r.width;
-		cropped_height = sel.r.height;
-		return 0;
-	}
-
-	support_out_crop = false;
-	return 0;
 }
 
 void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd)
