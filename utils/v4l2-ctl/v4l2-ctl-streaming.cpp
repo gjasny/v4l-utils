@@ -1833,6 +1833,36 @@ enum stream_type {
 	OUT,
 };
 
+static int capture_setup(cv4l_fd &fd, cv4l_queue &in)
+{
+	if (fd.streamoff(in.g_type())) {
+		fprintf(stderr, "%s: fd.streamoff error\n", __func__);
+		return -1;
+	}
+	get_cap_compose_rect(fd);
+
+	/* release any buffer allocated */
+	if (in.reqbufs(&fd)) {
+		fprintf(stderr, "%s: in.reqbufs 0 error\n", __func__);
+		return -1;
+	}
+
+	if (in.reqbufs(&fd, reqbufs_count_cap)) {
+		fprintf(stderr, "%s: in.reqbufs %u error\n", __func__,
+			reqbufs_count_cap);
+		return -1;
+	}
+	if (in.obtain_bufs(&fd) || in.queue_all(&fd)) {
+		fprintf(stderr, "%s: in.obtain_bufs error\n", __func__);
+		return -1;
+	}
+	if (fd.streamon(in.g_type())) {
+		fprintf(stderr, "%s: fd.streamon error\n", __func__);
+		return -1;
+	}
+	return 0;
+}
+
 static void streaming_set_m2m(cv4l_fd &fd)
 {
 	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
@@ -1897,20 +1927,20 @@ static void streaming_set_m2m(cv4l_fd &fd)
 		}
 	}
 
-	if (in.reqbufs(&fd, reqbufs_count_cap) ||
-	    out.reqbufs(&fd, reqbufs_count_out))
+	if (out.reqbufs(&fd, reqbufs_count_out))
 		goto done;
 
-	if (in.obtain_bufs(&fd) ||
-	    in.queue_all(&fd) ||
-	    do_setup_out_buffers(fd, out, file[OUT], true))
+	if (do_setup_out_buffers(fd, out, file[OUT], true))
+		goto done;
+
+	if (fd.streamon(out.g_type()))
+		goto done;
+
+	if (capture_setup(fd, in))
 		goto done;
 
 	fps_ts[CAP].determine_field(fd.g_fd(), in.g_type());
 	fps_ts[OUT].determine_field(fd.g_fd(), out.g_type());
-
-	if (fd.streamon(in.g_type()) || fd.streamon(out.g_type()))
-		goto done;
 
 	while (stream_sleep == 0)
 		sleep(100);
