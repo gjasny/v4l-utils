@@ -20,6 +20,7 @@
 
 #include <linux/media.h>
 
+#include <iostream>
 #include <fstream>
 #include <media-info.h>
 

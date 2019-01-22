@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <stdarg.h>
+#include <ctime>
 #include <cerrno>
 #include <string>
 #include <vector>

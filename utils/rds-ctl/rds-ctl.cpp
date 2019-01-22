@@ -27,6 +27,8 @@
 #include <linux/videodev2.h>
 #include <libv4l2rds.h>
 
+#include <cctype>
+#include <ctime>
 #include <list>
 #include <vector>
 #include <map>

@@ -9,6 +9,7 @@
 #define _CEC_FOLLOWER_H_
 
 #include <stdarg.h>
+#include <ctime>
 #include <cerrno>
 #include <string>
 #include <linux/cec-funcs.h>
