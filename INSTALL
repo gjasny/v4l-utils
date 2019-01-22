@@ -56,16 +56,25 @@ make
 Building static binaries:
 -------------------------
 
-Fully static binares can be built by setting LDFLAGS for the configure and
-using an option for disabling shared libraries:
+There are two options in building static binaries: either fully static or
+dynamically linking to system shared libraries while statically linking
+libraries that are a part of v4l-utils.
 
-	$ LDFLAGS="--static -static" ./configure --disable-shared
-
-Note that this requires static variants of all the libraries needed for
-linking which may not be available in all systems. Then run the configure
-script as follows:
+In either case, building static binaries requires telling pkg-config the
+static libraries will be needed, and telling configure to disable building
+of shared libraries. This way system libraries will still be linked
+dynamically:
 
 	$ PKG_CONFIG="pkg-config --static" ./configure --disable-shared
+
+Fully static binares can be built by further setting LDFLAGS for the
+configure:
+
+	$ PKG_CONFIG="pkg-config --static" LDFLAGS="--static -static" \
+	  ./configure --disable-shared
+
+Note that this requires static variants of all the libraries needed for
+linking which may not be available in all systems.
 
 Android Cross Compiling and Installing:
 ----------------
