@@ -440,6 +440,9 @@ static int routing_control_inactive_source(struct node *node, unsigned me, unsig
 		return NOTSUPPORTED;
 	if (refused(&msg))
 		return REFUSED;
+	// It may take a bit of time for the Inactive Source message to take
+	// effect, so sleep a bit.
+	sleep(3);
 	fail_on_test(interactive && !question("Did the TV switch away from or stop showing this source?"));
 
 	if (interactive)
