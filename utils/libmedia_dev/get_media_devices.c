@@ -220,8 +220,12 @@ static int add_v4l_class(struct media_device_entry *md)
 		md->type = MEDIA_V4L_VIDEO;
 	else if (strstr(md->node, "vbi"))
 		md->type = MEDIA_V4L_VBI;
+	else if (strstr(md->node, "swradio"))
+		md->type = MEDIA_V4L_SWRADIO;
 	else if (strstr(md->node, "radio"))
 		md->type = MEDIA_V4L_RADIO;
+	else if (strstr(md->node, "v4l-touch"))
+		md->type = MEDIA_V4L_TOUCH;
 	else if (strstr(md->node, "v4l-subdev"))
 		md->type = MEDIA_V4L_SUBDEV;
 
@@ -370,6 +374,10 @@ const char *media_device_type(enum device_type type)
 		return  "vbi";
 	case MEDIA_V4L_RADIO:
 		return "radio";
+	case MEDIA_V4L_SWRADIO:
+		return "swradio";
+	case MEDIA_V4L_TOUCH:
+		return "v4l-touch";
 	case MEDIA_V4L_SUBDEV:
 		return "v4l subdevice";
 
