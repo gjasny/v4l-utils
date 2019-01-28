@@ -1,0 +1,134 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright 2013 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
+
+vivid=0
+vim2m=0
+vimc=0
+cec=0
+cecpwr=--skip-test-standby-resume
+
+if [ -z "$1" ]; then
+	echo "usage: test-media all|mc|vivid|vim2m|vimc|cec|cec-pwr"
+	echo
+	echo Run as root.
+	echo
+	echo "'all' equals 'vivid vim2m vimc cec cec-pwr'"
+	echo "'mc' equals 'vivid vim2m vimc'"
+	echo "'cec' adds the CEC compliance tests, 'cec-pwr' adds the CEC standby/wakeup tests."
+	exit 0
+fi
+
+if [ `id -u` -ne 0 ]; then
+	echo "$0 must be run as root"
+	exit -1
+fi
+
+while [ ! -z "$1" ]; do
+	case "$1" in
+	all)
+		vivid=1
+		vim2m=1
+		vimc=1
+		cec=1
+		cecpwr=
+		;;
+	mc)
+		vivid=1
+		vim2m=1
+		vimc=1
+		;;
+	vivid)
+		vivid=1
+		;;
+	vim2m)
+		vim2m=1
+		;;
+	vimc)
+		vimc=1
+		;;
+	cec)
+		cec=1
+		;;
+	cec-pwr)
+		cecpwr=
+		;;
+	esac
+	shift
+done
+
+test-media-unload.pl
+
+modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
+modprobe vim2m
+modprobe vimc
+sleep 1
+
+v4l2-ctl -d0 -i3 -v width=3840,height=2160,pixelformat=NV24
+v4l2-ctl -d1 -o1 -x width=3840,height=2160,pixelformat=NV24
+v4l2-ctl -d2 -i3 -v width=3840,height=2160,pixelformat=NM16
+v4l2-ctl -d3 -o1 -x width=3840,height=2160,pixelformat=NM16
+v4l2-ctl -d4 -i3 -v width=3840,height=2160,pixelformat=NV24
+v4l2-ctl -d5 -o1 -x width=3840,height=2160,pixelformat=NM16
+
+media-ctl -d /dev/media4 -V '1:0[fmt:SBGGR8_1X8/640x480]'
+media-ctl -d /dev/media4 -V '5:0[fmt:SBGGR8_1X8/640x480]'
+v4l2-ctl -d9 -v width=1920,height=1440
+v4l2-ctl -d9 -v width=1920,height=1440
+v4l2-ctl -d7 -v pixelformat=BA81
+echo
+
+tmp=`mktemp`
+
+if [ $vivid -eq 1 ]; then
+	stdbuf -oL v4l2-compliance -m0 -e4 -s10 -a 2>&1 | tee -a $tmp
+	echo
+	stdbuf -oL v4l2-compliance -m1 -e5 -s10 -a 2>&1 | tee -a $tmp
+	echo
+fi
+
+if [ $cec -eq 1 ]; then
+	cec-ctl -s -d0 --tv
+	cec-ctl -s -d1 --playback
+	trap 'kill $f0 $f1 2>/dev/null' INT
+	cec-follower -s -d0 2>&1 >/dev/null &
+	f0=$!
+	cec-follower -s -d1 2>&1 >/dev/null &
+	f1=$!
+	stdbuf -oL cec-compliance -d0 -A -r4 -t10 $cecpwr 2>&1 | tee -a $tmp
+	sleep 5
+	stdbuf -oL cec-compliance -d1 -A -r0 -t10 $cecpwr 2>&1 | tee -a $tmp
+	kill $f0
+	kill $f1
+	echo
+fi
+
+if [ $vim2m -eq 1 ]; then
+	stdbuf -oL v4l2-compliance -m3 -e4 -s10 -a 2>&1 | tee -a $tmp
+	echo
+fi
+
+if [ $vimc -eq 1 ]; then
+	stdbuf -oL v4l2-compliance -m4 -e4 -s10 -a 2>&1 | tee -a $tmp
+	echo
+fi
+
+echo Summary:
+echo
+
+grep 'Total' $tmp
+grep 'Grand Total' $tmp | perl -e '
+while (<>) {
+	($succeeded, $failed, $warnings) = /Succeeded: (\d+), Failed: (\d+), Warnings: (\d+)/;
+	$tot_succeeded += $succeeded;
+	$tot_failed += $failed;
+	$tot_warnings += $warnings;
+}
+
+printf("\nFinal Summary: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
+	$tot_succeeded + $tot_failed, $tot_succeeded, $tot_failed, $tot_warnings);
+'
+
+rm -f $tmp
