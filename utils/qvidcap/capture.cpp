@@ -749,6 +749,7 @@ void CaptureWin::setModeSocket(int socket, int port)
 	if (m_ctx)
 		free(m_ctx);
 	m_ctx = fwht_alloc(m_v4l_fmt.g_pixelformat(), m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
+			   m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 			   m_v4l_fmt.g_field(), m_v4l_fmt.g_colorspace(), m_v4l_fmt.g_xfer_func(),
 			   m_v4l_fmt.g_ycbcr_enc(), m_v4l_fmt.g_quantization());
 
@@ -1114,6 +1115,7 @@ void CaptureWin::listenForNewConnection()
 	if (m_ctx)
 		free(m_ctx);
 	m_ctx = fwht_alloc(fmt.g_pixelformat(), fmt.g_width(), fmt.g_height(),
+			   fmt.g_width(), fmt.g_height(),
 			   fmt.g_field(), fmt.g_colorspace(), fmt.g_xfer_func(),
 			   fmt.g_ycbcr_enc(), fmt.g_quantization());
 	setPixelAspect(pixelaspect);

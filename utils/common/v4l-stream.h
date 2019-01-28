@@ -9,11 +9,12 @@
 #define _V4L_STREAM_H_
 
 #include <linux/videodev2.h>
-#include <codec-v4l2-fwht.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
+
+#include <codec-v4l2-fwht.h>
 
 /* Default port */
 #define V4L_STREAM_PORT 8362
@@ -145,7 +146,8 @@ struct codec_ctx {
 
 unsigned rle_compress(__u8 *buf, unsigned size, unsigned bytesperline);
 void rle_decompress(__u8 *buf, unsigned size, unsigned rle_size, unsigned bytesperline);
-struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned w, unsigned h, unsigned field,
+struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned visible_width, unsigned visible_height,
+			     unsigned coded_width, unsigned coded_height, unsigned field,
 			     unsigned colorspace, unsigned xfer_func, unsigned ycbcr_enc,
 			     unsigned quantization);
 void fwht_free(struct codec_ctx *ctx);

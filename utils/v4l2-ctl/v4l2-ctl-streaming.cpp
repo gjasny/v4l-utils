@@ -20,7 +20,6 @@
 
 #include "v4l2-ctl.h"
 #include "v4l-stream.h"
-#include "codec-fwht.h"
 
 extern "C" {
 #include "v4l2-tpg.h"
@@ -1335,6 +1334,7 @@ recover:
 		}
 		if (!host_lossless)
 			ctx = fwht_alloc(cfmt.g_pixelformat(), cfmt.g_width(), cfmt.g_height(),
+					 cfmt.g_width(), cfmt.g_height(),
 					 cfmt.g_field(), cfmt.g_colorspace(), cfmt.g_xfer_func(),
 					 cfmt.g_ycbcr_enc(), cfmt.g_quantization());
 		fflush(fout);
@@ -1561,6 +1561,7 @@ static void streaming_set_out(cv4l_fd &fd)
 		cfmt.s_xfer_func(read_u32(fin));
 		cfmt.s_flags(read_u32(fin));
 		ctx = fwht_alloc(cfmt.g_pixelformat(), cfmt.g_width(), cfmt.g_height(),
+				 cfmt.g_width(), cfmt.g_height(),
 				 cfmt.g_field(), cfmt.g_colorspace(), cfmt.g_xfer_func(),
 				 cfmt.g_ycbcr_enc(), cfmt.g_quantization());
 

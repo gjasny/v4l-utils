@@ -171,25 +171,28 @@ unsigned rle_compress(__u8 *b, unsigned size, unsigned bpl)
 	return (__u8 *)dst - b;
 }
 
-struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned w, unsigned h,
+struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned visible_width, unsigned visible_height,
+			     unsigned coded_width, unsigned coded_height,
 			     unsigned field, unsigned colorspace, unsigned xfer_func,
 			     unsigned ycbcr_enc, unsigned quantization)
 {
 	struct codec_ctx *ctx;
 	const struct v4l2_fwht_pixfmt_info *info = v4l2_fwht_find_pixfmt(pixfmt);
 	unsigned int chroma_div;
-	unsigned int size = w * h;
+	unsigned int size = coded_width * coded_height;
 
 	// fwht expects macroblock alignment, check can be dropped once that
 	// restriction is lifted.
-	if (!info || w % 8 || h % 8)
+	if (!info || coded_width % 8 || coded_height % 8)
 		return NULL;
 
 	ctx = malloc(sizeof(*ctx));
 	if (!ctx)
 		return NULL;
-	ctx->state.width = w;
-	ctx->state.height = h;
+	ctx->state.coded_width = coded_width;
+	ctx->state.coded_height = coded_height;
+	ctx->state.visible_width = visible_width;
+	ctx->state.visible_height = visible_height;
 	ctx->state.info = info;
 	ctx->field = field;
 	ctx->state.colorspace = colorspace;
@@ -208,7 +211,6 @@ struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned w, unsigned h,
 		free(ctx);
 		return NULL;
 	}
-	ctx->state.ref_frame.width = ctx->state.ref_frame.height = 0;
 	ctx->state.ref_frame.cb = ctx->state.ref_frame.luma + size;
 	ctx->state.ref_frame.cr = ctx->state.ref_frame.cb + size / chroma_div;
 	ctx->state.ref_frame.alpha = ctx->state.ref_frame.cr + size / chroma_div;
