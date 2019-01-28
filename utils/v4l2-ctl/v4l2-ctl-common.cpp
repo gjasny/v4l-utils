@@ -111,6 +111,7 @@ static const char *prefixes[] = {
 	"vbi",
 	"swradio",
 	"v4l-subdev",
+	"v4l-touch",
 	NULL
 };
 
