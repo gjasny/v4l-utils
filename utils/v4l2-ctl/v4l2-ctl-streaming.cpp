@@ -1922,9 +1922,6 @@ static void streaming_set_m2m(cv4l_fd &fd)
 	bool is_encoder = false;
 	enum codec_type codec_type = get_codec_type(fd);
 
-	if (codec_type == NOT_CODEC)
-		goto done;
-
 	if (have_eos) {
 		cv4l_fmt fmt(in.g_type());
 
@@ -1934,7 +1931,7 @@ static void streaming_set_m2m(cv4l_fd &fd)
 
 	memset(&sub, 0, sizeof(sub));
 	sub.type = V4L2_EVENT_SOURCE_CHANGE;
-	if (fd.subscribe_event(sub))
+	if (fd.subscribe_event(sub) && codec_type != NOT_CODEC)
 		goto done;
 
 	if (file_to) {
@@ -1968,7 +1965,7 @@ static void streaming_set_m2m(cv4l_fd &fd)
 	if (fd.streamon(out.g_type()))
 		goto done;
 
-	if (codec_type == ENCODER)
+	if (codec_type != DECODER)
 		if (capture_setup(fd, in))
 			goto done;
 
