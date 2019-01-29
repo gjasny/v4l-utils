@@ -1600,7 +1600,12 @@ int testRequests(struct node *node, bool test_streaming)
 		ctrls.request_fd = 10;
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
 	}
-	fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd));
+	ret = doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd);
+	if (ret == ENOTTY) {
+		fail_on_test(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS);
+		return ENOTTY;
+	}
+	fail_on_test(ret);
 	fhs.add(req_fd);
 	fail_on_test(req_fd < 0);
 	if (have_controls) {
