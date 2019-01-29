@@ -1366,6 +1366,94 @@ static int do_handle_out_to_in(cv4l_fd &out_fd, cv4l_fd &fd, cv4l_queue &out, cv
 	return 0;
 }
 
+static FILE *open_output_file(cv4l_fd &fd)
+{
+	FILE *fout = NULL;
+
+#ifndef NO_STREAM_TO
+	if (file_to) {
+		if (!strcmp(file_to, "-"))
+			return stdout;
+		fout = fopen(file_to, "w+");
+		if (!fout)
+			fprintf(stderr, "could not open %s for writing\n", file_to);
+		return fout;
+	}
+	if (!host_to)
+		return NULL;
+
+	char *p = strchr(host_to, ':');
+	struct sockaddr_in serv_addr;
+	struct hostent *server;
+	struct v4l2_fract aspect;
+	unsigned width, height;
+	cv4l_fmt cfmt;
+
+	fd.g_fmt(cfmt);
+
+	aspect = fd.g_pixel_aspect(width, height);
+	if (p) {
+		host_port_to = strtoul(p + 1, 0L, 0);
+		*p = '\0';
+	}
+	host_fd_to = socket(AF_INET, SOCK_STREAM, 0);
+	if (host_fd_to < 0) {
+		fprintf(stderr, "cannot open socket");
+		exit(0);
+	}
+	server = gethostbyname(host_to);
+	if (server == NULL) {
+		fprintf(stderr, "no such host %s\n", host_to);
+		exit(0);
+	}
+	memset((char *)&serv_addr, 0, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	memcpy((char *)&serv_addr.sin_addr.s_addr,
+	       (char *)server->h_addr,
+	       server->h_length);
+	serv_addr.sin_port = htons(host_port_to);
+	if (connect(host_fd_to, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+		fprintf(stderr, "could not connect\n");
+		exit(0);
+	}
+	fout = fdopen(host_fd_to, "a");
+	write_u32(fout, V4L_STREAM_ID);
+	write_u32(fout, V4L_STREAM_VERSION);
+	write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO);
+	write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO_SIZE(cfmt.g_num_planes()));
+	write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT);
+	write_u32(fout, cfmt.g_num_planes());
+	write_u32(fout, cfmt.g_pixelformat());
+	write_u32(fout, cfmt.g_width());
+	write_u32(fout, cfmt.g_height());
+	write_u32(fout, cfmt.g_field());
+	write_u32(fout, cfmt.g_colorspace());
+	write_u32(fout, cfmt.g_ycbcr_enc());
+	write_u32(fout, cfmt.g_quantization());
+	write_u32(fout, cfmt.g_xfer_func());
+	write_u32(fout, cfmt.g_flags());
+	write_u32(fout, aspect.numerator);
+	write_u32(fout, aspect.denominator);
+	for (unsigned i = 0; i < cfmt.g_num_planes(); i++) {
+		write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT_PLANE);
+		write_u32(fout, cfmt.g_sizeimage(i));
+		write_u32(fout, cfmt.g_bytesperline(i));
+		bpl_cap[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
+	}
+	if (!host_lossless) {
+		unsigned visible_width = support_cap_compose ? composed_width : cfmt.g_width();
+		unsigned visible_height = support_cap_compose ? composed_height : cfmt.g_height();
+
+		ctx = fwht_alloc(cfmt.g_pixelformat(), visible_width, visible_height,
+				 cfmt.g_width(), cfmt.g_height(),
+				 cfmt.g_field(), cfmt.g_colorspace(), cfmt.g_xfer_func(),
+				 cfmt.g_ycbcr_enc(), cfmt.g_quantization());
+	}
+	fflush(fout);
+#endif
+	return fout;
+}
+
 static void streaming_set_cap(cv4l_fd &fd)
 {
 	struct v4l2_event_subscription sub;
@@ -1435,87 +1523,7 @@ recover:
 		}
 	}
 
-#ifndef NO_STREAM_TO
-	if (file_to) {
-		if (!strcmp(file_to, "-"))
-			fout = stdout;
-		else
-			fout = fopen(file_to, "w+");
-		if (!fout) {
-			fprintf(stderr, "could not open %s for writing\n", file_to);
-			return;
-		}
-	} else if (host_to) {
-		char *p = strchr(host_to, ':');
-		struct sockaddr_in serv_addr;
-		struct hostent *server;
-		struct v4l2_fract aspect;
-		unsigned width, height;
-		cv4l_fmt cfmt;
-
-		fd.g_fmt(cfmt);
-
-		aspect = fd.g_pixel_aspect(width, height);
-		if (p) {
-			host_port_to = strtoul(p + 1, 0L, 0);
-			*p = '\0';
-		}
-		host_fd_to = socket(AF_INET, SOCK_STREAM, 0);
-		if (host_fd_to < 0) {
-			fprintf(stderr, "cannot open socket");
-			exit(0);
-		}
-		server = gethostbyname(host_to);
-		if (server == NULL) {
-			fprintf(stderr, "no such host %s\n", host_to);
-			exit(0);
-		}
-		memset((char *)&serv_addr, 0, sizeof(serv_addr));
-		serv_addr.sin_family = AF_INET;
-		memcpy((char *)&serv_addr.sin_addr.s_addr,
-		       (char *)server->h_addr,
-		       server->h_length);
-		serv_addr.sin_port = htons(host_port_to);
-		if (connect(host_fd_to, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-			fprintf(stderr, "could not connect\n");
-			exit(0);
-		}
-		fout = fdopen(host_fd_to, "a");
-		write_u32(fout, V4L_STREAM_ID);
-		write_u32(fout, V4L_STREAM_VERSION);
-		write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO);
-		write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO_SIZE(cfmt.g_num_planes()));
-		write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT);
-		write_u32(fout, cfmt.g_num_planes());
-		write_u32(fout, cfmt.g_pixelformat());
-		write_u32(fout, cfmt.g_width());
-		write_u32(fout, cfmt.g_height());
-		write_u32(fout, cfmt.g_field());
-		write_u32(fout, cfmt.g_colorspace());
-		write_u32(fout, cfmt.g_ycbcr_enc());
-		write_u32(fout, cfmt.g_quantization());
-		write_u32(fout, cfmt.g_xfer_func());
-		write_u32(fout, cfmt.g_flags());
-		write_u32(fout, aspect.numerator);
-		write_u32(fout, aspect.denominator);
-		for (unsigned i = 0; i < cfmt.g_num_planes(); i++) {
-			write_u32(fout, V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT_PLANE);
-			write_u32(fout, cfmt.g_sizeimage(i));
-			write_u32(fout, cfmt.g_bytesperline(i));
-			bpl_cap[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
-		}
-		if (!host_lossless) {
-			unsigned visible_width = support_cap_compose ? composed_width : cfmt.g_width();
-			unsigned visible_height = support_cap_compose ? composed_height : cfmt.g_height();
-
-			ctx = fwht_alloc(cfmt.g_pixelformat(), visible_width, visible_height,
-					 cfmt.g_width(), cfmt.g_height(),
-					 cfmt.g_field(), cfmt.g_colorspace(), cfmt.g_xfer_func(),
-					 cfmt.g_ycbcr_enc(), cfmt.g_quantization());
-		}
-		fflush(fout);
-	}
-#endif
+	fout = open_output_file(fd);
 
 	if (q.reqbufs(&fd, reqbufs_count_cap)) {
 		if (q.g_type() != V4L2_BUF_TYPE_VBI_CAPTURE ||
@@ -1611,6 +1619,132 @@ done:
 	}
 }
 
+static FILE *open_input_file(cv4l_fd &fd, __u32 type)
+{
+	FILE *fin = NULL;
+
+	if (file_from) {
+		if (!strcmp(file_from, "-"))
+			return stdin;
+		fin = fopen(file_from, "r");
+		if (!fin)
+			fprintf(stderr, "could not open %s for reading\n", file_from);
+		return fin;
+	}
+	if (!host_from)
+		return NULL;
+
+	char *p = strchr(host_from, ':');
+	int listen_fd;
+	socklen_t clilen;
+	struct sockaddr_in serv_addr = {}, cli_addr;
+
+	if (p) {
+		host_port_from = strtoul(p + 1, 0L, 0);
+		*p = '\0';
+	}
+	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (listen_fd < 0) {
+		fprintf(stderr, "could not opening socket\n");
+		exit(1);
+	}
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(host_port_from);
+	if (bind(listen_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+		fprintf(stderr, "could not bind\n");
+		exit(1);
+	}
+	listen(listen_fd, 1);
+	clilen = sizeof(cli_addr);
+	host_fd_from = accept(listen_fd, (struct sockaddr *)&cli_addr, &clilen);
+	if (host_fd_from < 0) {
+		fprintf(stderr, "could not accept\n");
+		exit(1);
+	}
+	fin = fdopen(host_fd_from, "r");
+	if (read_u32(fin) != V4L_STREAM_ID) {
+		fprintf(stderr, "unknown protocol ID\n");
+		exit(1);
+	}
+	if (read_u32(fin) != V4L_STREAM_VERSION) {
+		fprintf(stderr, "unknown protocol version\n");
+		exit(1);
+	}
+	for (;;) {
+		__u32 packet = read_u32(fin);
+		char buf[1024];
+
+		if (packet == V4L_STREAM_PACKET_END) {
+			fprintf(stderr, "END packet read\n");
+			exit(1);
+		}
+
+		if (packet == V4L_STREAM_PACKET_FMT_VIDEO)
+			break;
+
+		unsigned sz = read_u32(fin);
+		while (sz) {
+			unsigned rdsize = sz > sizeof(buf) ? sizeof(buf) : sz;
+			int n;
+
+			n = fread(buf, 1, rdsize, fin);
+			if (n < 0) {
+				fprintf(stderr, "error reading %d bytes\n", sz);
+				exit(1);
+			}
+			sz -= n;
+		}
+	}
+	read_u32(fin);
+
+	cv4l_fmt cfmt(type);
+
+	unsigned sz = read_u32(fin);
+
+	if (sz != V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT) {
+		fprintf(stderr, "unsupported FMT_VIDEO size\n");
+		exit(1);
+	}
+	cfmt.s_num_planes(read_u32(fin));
+	cfmt.s_pixelformat(read_u32(fin));
+	cfmt.s_width(read_u32(fin));
+	cfmt.s_height(read_u32(fin));
+	cfmt.s_field(read_u32(fin));
+	cfmt.s_colorspace(read_u32(fin));
+	cfmt.s_ycbcr_enc(read_u32(fin));
+	cfmt.s_quantization(read_u32(fin));
+	cfmt.s_xfer_func(read_u32(fin));
+	cfmt.s_flags(read_u32(fin));
+	unsigned visible_width = support_out_crop ? cropped_width : cfmt.g_width();
+	unsigned visible_height = support_out_crop ? cropped_height : cfmt.g_height();
+
+	ctx = fwht_alloc(cfmt.g_pixelformat(), visible_width, visible_height,
+			 cfmt.g_width(), cfmt.g_height(),
+			 cfmt.g_field(), cfmt.g_colorspace(), cfmt.g_xfer_func(),
+			 cfmt.g_ycbcr_enc(), cfmt.g_quantization());
+
+	read_u32(fin); // pixelaspect.numerator
+	read_u32(fin); // pixelaspect.denominator
+
+	for (unsigned i = 0; i < cfmt.g_num_planes(); i++) {
+		unsigned sz = read_u32(fin);
+
+		if (sz != V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT_PLANE) {
+			fprintf(stderr, "unsupported FMT_VIDEO plane size\n");
+			exit(1);
+		}
+		cfmt.s_sizeimage(read_u32(fin), i);
+		cfmt.s_bytesperline(read_u32(fin), i);
+		bpl_out[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
+	}
+	if (fd.s_fmt(cfmt)) {
+		fprintf(stderr, "failed to set new format\n");
+		exit(1);
+	}
+	return fin;
+}
+
 static void streaming_set_out(cv4l_fd &fd)
 {
 	__u32 type = fd.has_vid_m2m() ? v4l_type_invert(fd.g_type()) : fd.g_type();
@@ -1647,125 +1781,7 @@ static void streaming_set_out(cv4l_fd &fd)
 		break;
 	}
 
-	if (file_from) {
-		if (!strcmp(file_from, "-"))
-			fin = stdin;
-		else
-			fin = fopen(file_from, "r");
-		if (!fin) {
-			fprintf(stderr, "could not open %s for reading\n", file_from);
-			return;
-		}
-	} else if (host_from) {
-		char *p = strchr(host_from, ':');
-		int listen_fd;
-		socklen_t clilen;
-		struct sockaddr_in serv_addr = {}, cli_addr;
-
-		if (p) {
-			host_port_from = strtoul(p + 1, 0L, 0);
-			*p = '\0';
-		}
-		listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-		if (listen_fd < 0) {
-			fprintf(stderr, "could not opening socket\n");
-			exit(1);
-		}
-		serv_addr.sin_family = AF_INET;
-		serv_addr.sin_addr.s_addr = INADDR_ANY;
-		serv_addr.sin_port = htons(host_port_from);
-		if (bind(listen_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-			fprintf(stderr, "could not bind\n");
-			exit(1);
-		}
-		listen(listen_fd, 1);
-		clilen = sizeof(cli_addr);
-		host_fd_from = accept(listen_fd, (struct sockaddr *)&cli_addr, &clilen);
-		if (host_fd_from < 0) {
-			fprintf(stderr, "could not accept\n");
-			exit(1);
-		}
-		fin = fdopen(host_fd_from, "r");
-		if (read_u32(fin) != V4L_STREAM_ID) {
-			fprintf(stderr, "unknown protocol ID\n");
-			goto done;
-		}
-		if (read_u32(fin) != V4L_STREAM_VERSION) {
-			fprintf(stderr, "unknown protocol version\n");
-			goto done;
-		}
-		for (;;) {
-			__u32 packet = read_u32(fin);
-			char buf[1024];
-
-			if (packet == V4L_STREAM_PACKET_END) {
-				fprintf(stderr, "END packet read\n");
-				goto done;
-			}
-
-			if (packet == V4L_STREAM_PACKET_FMT_VIDEO)
-				break;
-
-			unsigned sz = read_u32(fin);
-			while (sz) {
-				unsigned rdsize = sz > sizeof(buf) ? sizeof(buf) : sz;
-				int n;
-
-				n = fread(buf, 1, rdsize, fin);
-				if (n < 0) {
-					fprintf(stderr, "error reading %d bytes\n", sz);
-					goto done;
-				}
-				sz -= n;
-			}
-		}
-		read_u32(fin);
-
-		cv4l_fmt cfmt(type);
-
-		unsigned sz = read_u32(fin);
-
-		if (sz != V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT) {
-			fprintf(stderr, "unsupported FMT_VIDEO size\n");
-			goto done;
-		}
-		cfmt.s_num_planes(read_u32(fin));
-		cfmt.s_pixelformat(read_u32(fin));
-		cfmt.s_width(read_u32(fin));
-		cfmt.s_height(read_u32(fin));
-		cfmt.s_field(read_u32(fin));
-		cfmt.s_colorspace(read_u32(fin));
-		cfmt.s_ycbcr_enc(read_u32(fin));
-		cfmt.s_quantization(read_u32(fin));
-		cfmt.s_xfer_func(read_u32(fin));
-		cfmt.s_flags(read_u32(fin));
-		unsigned visible_width = support_out_crop ? cropped_width : cfmt.g_width();
-		unsigned visible_height = support_out_crop ? cropped_height : cfmt.g_height();
-
-		ctx = fwht_alloc(cfmt.g_pixelformat(), visible_width, visible_height,
-				 cfmt.g_width(), cfmt.g_height(),
-				 cfmt.g_field(), cfmt.g_colorspace(), cfmt.g_xfer_func(),
-				 cfmt.g_ycbcr_enc(), cfmt.g_quantization());
-
-		read_u32(fin); // pixelaspect.numerator
-		read_u32(fin); // pixelaspect.denominator
-
-		for (unsigned i = 0; i < cfmt.g_num_planes(); i++) {
-			unsigned sz = read_u32(fin);
-
-			if (sz != V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT_PLANE) {
-				fprintf(stderr, "unsupported FMT_VIDEO plane size\n");
-				goto done;
-			}
-			cfmt.s_sizeimage(read_u32(fin), i);
-			cfmt.s_bytesperline(read_u32(fin), i);
-			bpl_out[i] = rle_calc_bpl(cfmt.g_bytesperline(i), cfmt.g_pixelformat());
-		}
-		if (fd.s_fmt(cfmt)) {
-			fprintf(stderr, "failed to set new format\n");
-			goto done;
-		}
-	}
+	fin = open_input_file(fd, type);
 
 	if (q.reqbufs(&fd, reqbufs_count_out)) {
 		if (q.g_type() != V4L2_BUF_TYPE_VBI_OUTPUT ||
@@ -1907,11 +1923,6 @@ static void streaming_set_m2m(cv4l_fd &fd)
 		fprintf(stderr, "--stream-dmabuf or --stream-out-dmabuf not supported for m2m devices\n");
 		return;
 	}
-	if (options[OptStreamToHost] || options[OptStreamFromHost]) {
-		/* Too lazy to implement this */
-		fprintf(stderr, "--stream-to-host or --stream-from-host not supported for m2m devices\n");
-		return;
-	}
 
 	struct v4l2_event_subscription sub;
 
@@ -1934,27 +1945,8 @@ static void streaming_set_m2m(cv4l_fd &fd)
 	if (fd.subscribe_event(sub) && codec_type != NOT_CODEC)
 		goto done;
 
-	if (file_to) {
-		if (!strcmp(file_to, "-"))
-			file[CAP] = stdout;
-		else
-			file[CAP] = fopen(file_to, "w+");
-		if (!file[CAP]) {
-			fprintf(stderr, "could not open %s for writing\n", file_to);
-			return;
-		}
-	}
-
-	if (file_from) {
-		if (!strcmp(file_from, "-"))
-			file[OUT] = stdin;
-		else
-			file[OUT] = fopen(file_from, "r");
-		if (!file[OUT]) {
-			fprintf(stderr, "could not open %s for reading\n", file_from);
-			return;
-		}
-	}
+	file[CAP] = open_output_file(fd);
+	file[OUT] = open_input_file(fd, out.g_type());
 
 	if (out.reqbufs(&fd, reqbufs_count_out))
 		goto done;
