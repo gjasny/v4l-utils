@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <dirent.h>
 #include <math.h>
+#include <linux/media.h>
 
 #include "v4l2-ctl.h"
 
@@ -114,6 +115,7 @@ static const char *prefixes[] = {
 	"swradio",
 	"v4l-subdev",
 	"v4l-touch",
+	"media",
 	NULL
 };
 
@@ -212,16 +214,31 @@ static void list_devices()
 			iter != files.end(); ++iter) {
 		int fd = open(iter->c_str(), O_RDWR);
 		std::string bus_info;
+		std::string card;
 
 		if (fd < 0)
 			continue;
 		int err = ioctl(fd, VIDIOC_QUERYCAP, &vcap);
+		if (err) {
+			struct media_device_info mdi;
+
+			err = ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi);
+			if (!err) {
+				bus_info = mdi.bus_info;
+				if (mdi.model[0])
+					card = mdi.model;
+				else
+					card = mdi.driver;
+			}
+		} else {
+			bus_info = (const char *)vcap.bus_info;
+			card = (const char *)vcap.card;
+		}
 		close(fd);
 		if (err)
 			continue;
-		bus_info = (const char *)vcap.bus_info;
 		if (cards[bus_info].empty())
-			cards[bus_info] += std::string((char *)vcap.card) + " (" + bus_info + "):\n";
+			cards[bus_info] += card + " (" + bus_info + "):\n";
 		cards[bus_info] += "\t" + (*iter);
 		if (!(links[*iter].empty()))
 			cards[bus_info] += " <- " + links[*iter];
