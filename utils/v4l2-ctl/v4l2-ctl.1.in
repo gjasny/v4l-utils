@@ -89,6 +89,10 @@ Use device \fI<dev>\fR for output streams instead of the
 default device as set with --device. If \fI<dev>\fR starts
 with a digit, then /dev/video\fI<dev>\fR is used.
 .TP
+\fB-E\fR, \fB--export-device\fR \fI<dev>\fR
+Use device \fI<dev>\fR for exporting DMA buffers.
+If \fI<dev>\fR starts with a digit, then /dev/video\fI<dev>\fR is used.
+.TP
 \fB-k\fR, \fB--concise\fR
 Be more concise if possible.
 .TP

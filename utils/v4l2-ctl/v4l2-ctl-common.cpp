@@ -67,6 +67,8 @@ void common_usage(void)
 	       "  -e, --out-device <dev> use device <dev> for output streams instead of the\n"
 	       "                     default device as set with --device\n"
 	       "                     if <dev> starts with a digit, then /dev/video<dev> is used\n"
+	       "  -E, --export-device <dev> use device <dev> for exporting DMA buffers\n"
+	       "                     if <dev> starts with a digit, then /dev/video<dev> is used\n"
 	       "  -h, --help         display this help message\n"
 	       "  --help-all         all options\n"
 	       "  --help-io          input/output options\n"
