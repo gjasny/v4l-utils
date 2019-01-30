@@ -193,6 +193,7 @@ struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned visible_width, unsigned v
 	ctx->state.coded_height = coded_height;
 	ctx->state.visible_width = visible_width;
 	ctx->state.visible_height = visible_height;
+	ctx->state.stride = coded_width * info->bytesperline_mult;
 	ctx->state.info = info;
 	ctx->field = field;
 	ctx->state.colorspace = colorspace;
@@ -236,5 +237,7 @@ __u8 *fwht_compress(struct codec_ctx *ctx, __u8 *buf, unsigned uncomp_size, unsi
 bool fwht_decompress(struct codec_ctx *ctx, __u8 *p_in, unsigned comp_size,
 		     __u8 *p_out, unsigned uncomp_size)
 {
+	memcpy(&ctx->state.header, p_in, sizeof(ctx->state.header));
+	p_in += sizeof(ctx->state.header);
 	return !v4l2_fwht_decode(&ctx->state, p_in, p_out);
 }
