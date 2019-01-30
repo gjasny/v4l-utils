@@ -1971,8 +1971,7 @@ static void streaming_set_m2m(cv4l_fd &fd, cv4l_fd &exp_fd)
 
 	memset(&sub, 0, sizeof(sub));
 	sub.type = V4L2_EVENT_SOURCE_CHANGE;
-	if (fd.subscribe_event(sub) && codec_type != NOT_CODEC)
-		goto done;
+	bool have_source_change = !fd.subscribe_event(sub);
 
 	file[CAP] = open_output_file(fd);
 	file[OUT] = open_input_file(fd, out.g_type());
@@ -1999,7 +1998,7 @@ static void streaming_set_m2m(cv4l_fd &fd, cv4l_fd &exp_fd)
 	if (fd.streamon(out.g_type()))
 		goto done;
 
-	if (codec_type != DECODER)
+	if (codec_type != DECODER || !have_source_change)
 		if (capture_setup(fd, in, exp_fd_p))
 			goto done;
 
