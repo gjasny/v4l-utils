@@ -352,7 +352,7 @@ static enum codec_type get_codec_type(cv4l_fd &fd)
 	if (!fd.has_vid_m2m())
 		return NOT_CODEC;
 
-	if (fd.enum_fmt(fmt_desc, true, 0, V4L2_BUF_TYPE_VIDEO_CAPTURE))
+	if (fd.enum_fmt(fmt_desc, true, 0, fd.g_type()))
 		return NOT_CODEC;
 
 	do {
@@ -362,7 +362,7 @@ static enum codec_type get_codec_type(cv4l_fd &fd)
 	} while (!fd.enum_fmt(fmt_desc));
 
 
-	if (fd.enum_fmt(fmt_desc, true, 0, V4L2_BUF_TYPE_VIDEO_OUTPUT))
+	if (fd.enum_fmt(fmt_desc, true, 0, v4l_type_invert(fd.g_type())))
 		return NOT_CODEC;
 
 	do {
