@@ -122,6 +122,38 @@ Only set the result code, do not print any messages.
 Sleep \fI<secs>\fR, call QUERYCAP and close the file handle.
 .SH EXIT STATUS
 On success, it returns 0. Otherwise, it will return the error code.
+.SH EXAMPLES
+Query the device information of /dev/video1:
+
+	v4l2-ctl -d1 -D
+
+Stream video using MMAP stream I/O from /dev/video0:
+
+	v4l2-ctl -d0 --stream-mmap
+
+Stream one frame of video from /dev/video0 and store it in a file:
+
+	v4l2-ctl --stream-mmap --stream-count=1 --stream-to=file.raw
+
+Stream video from /dev/video0 and stream it over the network:
+
+	v4l2-ctl --stream-mmap --stream-to-host <hostname>
+
+Use 'qvidcap -p' on the host to view the video.
+
+Stream video from /dev/video0 using DMABUFs exported from /dev/video2:
+
+	v4l2-ctl --stream-dmabuf --export-device /dev/video2
+
+Stream video from a memory-to-memory device:
+
+	v4l2-ctl --stream-mmap --stream-out-mmap
+
+Stream video from a capture video device (/dev/video1) to an output video device
+(/dev/video2):
+
+	v4l2-ctl -d1 --stream-mmap --out-device /dev/video2 --stream-out-dmabuf
+
 .SH BUGS
 This manual page is a work in progress.
 
