@@ -1184,8 +1184,6 @@ int main(int argc, char **argv)
 	}
 	verbose = options[OptVerbose];
 	c_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
-	c_out_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
-	c_exp_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 
 	if (!is_subdev && doioctl(fd, VIDIOC_QUERYCAP, &vcap)) {
 		fprintf(stderr, "%s: not a v4l2 node\n", device);
@@ -1215,6 +1213,7 @@ int main(int argc, char **argv)
 					strerror(errno));
 			exit(1);
 		}
+		c_out_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 		if (doioctl(out_fd, VIDIOC_QUERYCAP, &vcap)) {
 			fprintf(stderr, "%s: not a v4l2 node\n", out_device);
 			exit(1);
@@ -1233,6 +1232,7 @@ int main(int argc, char **argv)
 					strerror(errno));
 			exit(1);
 		}
+		c_exp_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 		if (doioctl(exp_fd, VIDIOC_QUERYCAP, &vcap)) {
 			fprintf(stderr, "%s: not a v4l2 node\n", export_device);
 			exit(1);
