@@ -809,6 +809,10 @@ public:
 	{
 		v4l_queue_buffer_init(this, &buf, index);
 	}
+	void buffer_update(v4l_buffer &buf, unsigned index) const
+	{
+		v4l_queue_buffer_update(this, &buf, index);
+	}
 	int queue_all(cv4l_fd *fd);
 };
 
@@ -841,6 +845,10 @@ public:
 		memcpy((v4l2_buffer *)this, (v4l2_buffer *)&b, sizeof(b));
 		if (v4l_type_is_planar(g_type()))
 			buf.m.planes = planes;
+	}
+	void update(const cv4l_queue &q, unsigned index = 0)
+	{
+		q.buffer_update(*this, index);
 	}
 
 	__u32 g_index() const { return v4l_buffer_g_index(this); }

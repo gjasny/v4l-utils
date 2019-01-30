@@ -1728,11 +1728,11 @@ static inline void v4l_queue_free(struct v4l_fd *f, struct v4l_queue *q)
 	v4l_queue_reqbufs(f, q, 0);
 }
 
-static inline void v4l_queue_buffer_init(const struct v4l_queue *q, struct v4l_buffer *buf, unsigned index)
+static inline void v4l_queue_buffer_update(const struct v4l_queue *q,
+					   struct v4l_buffer *buf, unsigned index)
 {
 	unsigned p;
 		
-	v4l_buffer_init(buf, v4l_queue_g_type(q), v4l_queue_g_memory(q), index);
 	if (v4l_type_is_planar(q->type)) {
 		buf->buf.length = v4l_queue_g_num_planes(q);
 		buf->buf.m.planes = buf->planes;
@@ -1751,6 +1751,12 @@ static inline void v4l_queue_buffer_init(const struct v4l_queue *q, struct v4l_b
 	default:
 		break;
 	}
+}
+
+static inline void v4l_queue_buffer_init(const struct v4l_queue *q, struct v4l_buffer *buf, unsigned index)
+{
+	v4l_buffer_init(buf, v4l_queue_g_type(q), v4l_queue_g_memory(q), index);
+	v4l_queue_buffer_update(q, buf, index);
 }
 
 static inline int v4l_query_ext_ctrl(v4l_fd *f, struct v4l2_query_ext_ctrl *qec,
