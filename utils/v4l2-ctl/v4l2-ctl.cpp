@@ -72,6 +72,7 @@ static struct option long_options[] = {
 	{"all", no_argument, 0, OptAll},
 	{"device", required_argument, 0, OptSetDevice},
 	{"out-device", required_argument, 0, OptSetOutDevice},
+	{"export-device", required_argument, 0, OptSetExportDevice},
 	{"get-fmt-video", no_argument, 0, OptGetVideoFormat},
 	{"set-fmt-video", required_argument, 0, OptSetVideoFormat},
 	{"try-fmt-video", required_argument, 0, OptTryVideoFormat},
@@ -951,8 +952,10 @@ int main(int argc, char **argv)
 	int i;
 	cv4l_fd c_fd;
 	cv4l_fd c_out_fd;
+	cv4l_fd c_exp_fd;
 	int fd = -1;
 	int out_fd = -1;
+	int exp_fd = -1;
 	int media_fd = -1;
 	bool is_subdev = false;
 
@@ -960,6 +963,7 @@ int main(int argc, char **argv)
 	int ch;
 	const char *device = "/dev/video0";	/* -d device */
 	const char *out_device = NULL;
+	const char *export_device = NULL;
 	struct v4l2_capability vcap;	/* list_cap */
 	__u32 wait_for_event = 0;	/* wait for this event */
 	const char *wait_event_id = NULL;
@@ -1075,6 +1079,15 @@ int main(int argc, char **argv)
 				out_device = newdev;
 			}
 			break;
+		case OptSetExportDevice:
+			export_device = optarg;
+			if (export_device[0] >= '0' && export_device[0] <= '9' && strlen(export_device) <= 3) {
+				static char newdev[20];
+
+				sprintf(newdev, "/dev/video%s", export_device);
+				export_device = newdev;
+			}
+			break;
 		case OptWaitForEvent:
 			wait_for_event = parse_event(optarg, &wait_event_id);
 			if (wait_for_event == 0)
@@ -1157,6 +1170,7 @@ int main(int argc, char **argv)
 		options[OptUseWrapper] = 0;
 	c_fd.s_direct(!options[OptUseWrapper]);
 	c_out_fd.s_direct(!options[OptUseWrapper]);
+	c_exp_fd.s_direct(!options[OptUseWrapper]);
 
 	if (is_subdev)
 		fd = c_fd.subdev_open(device);
@@ -1171,6 +1185,7 @@ int main(int argc, char **argv)
 	verbose = options[OptVerbose];
 	c_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 	c_out_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
+	c_exp_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 
 	if (!is_subdev && doioctl(fd, VIDIOC_QUERYCAP, &vcap)) {
 		fprintf(stderr, "%s: not a v4l2 node\n", device);
@@ -1209,6 +1224,19 @@ int main(int argc, char **argv)
 			out_capabilities = vcap.device_caps;
 		out_priv_magic = (out_capabilities & V4L2_CAP_EXT_PIX_FORMAT) ?
 				V4L2_PIX_FMT_PRIV_MAGIC : 0;
+	}
+
+	if (export_device) {
+		exp_fd = c_exp_fd.open(export_device);
+		if (exp_fd < 0) {
+			fprintf(stderr, "Failed to open %s: %s\n", export_device,
+					strerror(errno));
+			exit(1);
+		}
+		if (doioctl(exp_fd, VIDIOC_QUERYCAP, &vcap)) {
+			fprintf(stderr, "%s: not a v4l2 node\n", export_device);
+			exit(1);
+		}
 	}
 
 	common_process_controls(c_fd);
@@ -1320,7 +1348,7 @@ int main(int argc, char **argv)
 
 	/* Special case: handled last */
 
-	streaming_set(c_fd, c_out_fd);
+	streaming_set(c_fd, c_out_fd, c_exp_fd);
 
 	if (options[OptWaitForEvent]) {
 		struct v4l2_event_subscription sub;
@@ -1384,6 +1412,8 @@ int main(int argc, char **argv)
 	c_fd.close();
 	if (out_device)
 		c_out_fd.close();
+	if (export_device)
+		c_exp_fd.close();
 	if (media_fd >= 0)
 		close(media_fd);
 

@@ -57,6 +57,7 @@ enum Option {
 	OptSetDevice = 'd',
 	OptGetDriverInfo = 'D',
 	OptSetOutDevice = 'e',
+	OptSetExportDevice = 'E',
 	OptGetFreq = 'F',
 	OptSetFreq = 'f',
 	OptHelp = 'h',
@@ -410,7 +411,7 @@ void misc_get(cv4l_fd &fd);
 // v4l2-ctl-streaming.cpp
 void streaming_usage(void);
 void streaming_cmd(int ch, char *optarg);
-void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd);
+void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd, cv4l_fd &exp_fd);
 void streaming_list(cv4l_fd &fd, cv4l_fd &out_fd);
 
 // v4l2-ctl-edid.cpp

@@ -1045,6 +1045,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 		if (fd.querybuf(buf, i))
 			return -1;
 
+		buf.update(q, i);
 		for (unsigned j = 0; j < q.g_num_planes(); j++)
 			buf.s_bytesused(buf.g_length(j), j);
 		if (is_video) {
@@ -1454,11 +1455,12 @@ static FILE *open_output_file(cv4l_fd &fd)
 	return fout;
 }
 
-static void streaming_set_cap(cv4l_fd &fd)
+static void streaming_set_cap(cv4l_fd &fd, cv4l_fd &exp_fd)
 {
 	struct v4l2_event_subscription sub;
 	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
 	cv4l_queue q(fd.g_type(), memory);
+	cv4l_queue exp_q(exp_fd.g_type(), V4L2_MEMORY_MMAP);
 	fps_timestamps fps_ts;
 	bool use_poll = options[OptStreamPoll];
 	unsigned count;
@@ -1476,8 +1478,8 @@ static void streaming_set_cap(cv4l_fd &fd)
 		fprintf(stderr, "unsupported stream type\n");
 		return;
 	}
-	if (options[OptStreamDmaBuf]) {
-		fprintf(stderr, "--stream-dmabuf can only work in combination with --stream-out-mmap\n");
+	if (options[OptStreamDmaBuf] && exp_fd.g_fd() < 0) {
+		fprintf(stderr, "--stream-dmabuf can only work in combination with --export-device\n");
 		return;
 	}
 	switch (q.g_type()) {
@@ -1532,6 +1534,13 @@ recover:
 		fd.s_type(V4L2_BUF_TYPE_SLICED_VBI_CAPTURE);
 		q.init(fd.g_type(), memory);
 		if (q.reqbufs(&fd, reqbufs_count_cap))
+			goto done;
+	}
+
+	if (options[OptStreamDmaBuf]) {
+		if (exp_q.reqbufs(&exp_fd, reqbufs_count_cap))
+			goto done;
+		if (q.export_bufs(&exp_fd, exp_fd.g_type()))
 			goto done;
 	}
 
@@ -1612,6 +1621,8 @@ recover:
 		goto recover;
 
 done:
+	if (options[OptStreamDmaBuf])
+		exp_q.close_exported_fds();
 	if (fout && fout != stdout) {
 		if (host_fd_to >= 0)
 			write_u32(fout, V4L_STREAM_PACKET_END);
@@ -1745,10 +1756,11 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 	return fin;
 }
 
-static void streaming_set_out(cv4l_fd &fd)
+static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 {
 	__u32 type = fd.has_vid_m2m() ? v4l_type_invert(fd.g_type()) : fd.g_type();
 	cv4l_queue q(type, out_memory);
+	cv4l_queue exp_q(exp_fd.g_type(), V4L2_MEMORY_MMAP);
 	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
 	bool use_poll = options[OptStreamPoll];
 	fps_timestamps fps_ts;
@@ -1765,8 +1777,8 @@ static void streaming_set_out(cv4l_fd &fd)
 		fprintf(stderr, "unsupported stream type\n");
 		return;
 	}
-	if (options[OptStreamOutDmaBuf]) {
-		fprintf(stderr, "--stream-out-dmabuf can only work in combination with --stream-mmap\n");
+	if (options[OptStreamOutDmaBuf] && exp_fd.g_fd() < 0) {
+		fprintf(stderr, "--stream-out-dmabuf can only work in combination with --export-device\n");
 		return;
 	}
 	switch (q.g_type()) {
@@ -1790,6 +1802,13 @@ static void streaming_set_out(cv4l_fd &fd)
 		fd.s_type(V4L2_BUF_TYPE_SLICED_VBI_OUTPUT);
 		q.init(fd.g_type(), memory);
 		if (q.reqbufs(&fd, reqbufs_count_out))
+			goto done;
+	}
+	
+	if (options[OptStreamOutDmaBuf]) {
+		if (exp_q.reqbufs(&exp_fd, reqbufs_count_out))
+			goto done;
+		if (q.export_bufs(&exp_fd, exp_fd.g_type()))
 			goto done;
 	}
 
@@ -1858,6 +1877,8 @@ static void streaming_set_out(cv4l_fd &fd)
 	tpg_free(&tpg);
 
 done:
+	if (options[OptStreamOutDmaBuf])
+		exp_q.close_exported_fds();
 	if (fin && fin != stdin)
 		fclose(fin);
 }
@@ -1867,7 +1888,7 @@ enum stream_type {
 	OUT,
 };
 
-static int capture_setup(cv4l_fd &fd, cv4l_queue &in)
+static int capture_setup(cv4l_fd &fd, cv4l_queue &in, cv4l_fd *exp_fd)
 {
 	if (fd.streamoff(in.g_type())) {
 		fprintf(stderr, "%s: fd.streamoff error\n", __func__);
@@ -1886,6 +1907,8 @@ static int capture_setup(cv4l_fd &fd, cv4l_queue &in)
 			reqbufs_count_cap);
 		return -1;
 	}
+	if (exp_fd && in.export_bufs(exp_fd, exp_fd->g_type()))
+		return -1;
 	if (in.obtain_bufs(&fd) || in.queue_all(&fd)) {
 		fprintf(stderr, "%s: in.obtain_bufs error\n", __func__);
 		return -1;
@@ -1897,11 +1920,13 @@ static int capture_setup(cv4l_fd &fd, cv4l_queue &in)
 	return 0;
 }
 
-static void streaming_set_m2m(cv4l_fd &fd)
+static void streaming_set_m2m(cv4l_fd &fd, cv4l_fd &exp_fd)
 {
 	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
 	cv4l_queue in(fd.g_type(), memory);
 	cv4l_queue out(v4l_type_invert(fd.g_type()), out_memory);
+	cv4l_queue exp_q(exp_fd.g_type(), V4L2_MEMORY_MMAP);
+	cv4l_fd *exp_fd_p = NULL;
 	fps_timestamps fps_ts[2];
 	unsigned count[2] = { 0, 0 };
 	FILE *file[2] = {NULL, NULL};
@@ -1919,8 +1944,12 @@ static void streaming_set_m2m(cv4l_fd &fd)
 		fprintf(stderr, "unsupported m2m stream type\n");
 		return;
 	}
-	if (options[OptStreamDmaBuf] || options[OptStreamOutDmaBuf]) {
-		fprintf(stderr, "--stream-dmabuf or --stream-out-dmabuf not supported for m2m devices\n");
+	if (options[OptStreamDmaBuf] && options[OptStreamOutDmaBuf]) {
+		fprintf(stderr, "--stream-dmabuf and --stream-out-dmabuf not supported for m2m devices\n");
+		return;
+	}
+	if ((options[OptStreamDmaBuf] || options[OptStreamOutDmaBuf]) && exp_fd.g_fd() < 0) {
+		fprintf(stderr, "--stream-dmabuf or --stream-out-dmabuf can only work in combination with --export-device\n");
 		return;
 	}
 
@@ -1951,6 +1980,19 @@ static void streaming_set_m2m(cv4l_fd &fd)
 	if (out.reqbufs(&fd, reqbufs_count_out))
 		goto done;
 
+	if (options[OptStreamDmaBuf]) {
+		if (exp_q.reqbufs(&exp_fd, reqbufs_count_cap))
+			goto done;
+		exp_fd_p = &exp_fd;
+	}
+
+	if (options[OptStreamOutDmaBuf]) {
+		if (exp_q.reqbufs(&exp_fd, reqbufs_count_out))
+			goto done;
+		if (out.export_bufs(&exp_fd, exp_fd.g_type()))
+			goto done;
+	}
+
 	if (do_setup_out_buffers(fd, out, file[OUT], true))
 		goto done;
 
@@ -1958,7 +2000,7 @@ static void streaming_set_m2m(cv4l_fd &fd)
 		goto done;
 
 	if (codec_type != DECODER)
-		if (capture_setup(fd, in))
+		if (capture_setup(fd, in, exp_fd_p))
 			goto done;
 
 	fps_ts[CAP].determine_field(fd.g_fd(), in.g_type());
@@ -2065,7 +2107,7 @@ static void streaming_set_m2m(cv4l_fd &fd)
 			if (in_source_change_event) {
 				in_source_change_event = false;
 				last_buffer = false;
-				if (capture_setup(fd, in))
+				if (capture_setup(fd, in, exp_fd_p))
 					goto done;
 				fd.g_fmt(fmt[OUT], out.g_type());
 				fd.g_fmt(fmt[CAP], in.g_type());
@@ -2086,6 +2128,9 @@ static void streaming_set_m2m(cv4l_fd &fd)
 	tpg_free(&tpg);
 
 done:
+	if (options[OptStreamDmaBuf] || options[OptStreamOutDmaBuf])
+		exp_q.close_exported_fds();
+
 	if (file[CAP] && file[CAP] != stdout)
 		fclose(file[CAP]);
 
@@ -2271,10 +2316,11 @@ done:
 		fclose(file[OUT]);
 }
 
-void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd)
+void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd, cv4l_fd &exp_fd)
 {
 	cv4l_disable_trace dt(fd);
 	cv4l_disable_trace dt_out(out_fd);
+	cv4l_disable_trace dt_exp(exp_fd);
 	int do_cap = options[OptStreamMmap] + options[OptStreamUser] + options[OptStreamDmaBuf];
 	int do_out = options[OptStreamOutMmap] + options[OptStreamOutUser] + options[OptStreamOutDmaBuf];
 
@@ -2296,13 +2342,13 @@ void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd)
 	}
 
 	if (do_cap && do_out && out_fd.g_fd() < 0)
-		streaming_set_m2m(fd);
+		streaming_set_m2m(fd, exp_fd);
 	else if (do_cap && do_out)
 		streaming_set_cap2out(fd, out_fd);
 	else if (do_cap)
-		streaming_set_cap(fd);
+		streaming_set_cap(fd, exp_fd);
 	else if (do_out)
-		streaming_set_out(fd);
+		streaming_set_out(fd, exp_fd);
 }
 
 void streaming_list(cv4l_fd &fd, cv4l_fd &out_fd)
