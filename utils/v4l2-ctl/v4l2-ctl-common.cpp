@@ -224,7 +224,10 @@ static void list_devices()
 
 			err = ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi);
 			if (!err) {
-				bus_info = mdi.bus_info;
+				if (mdi.bus_info[0])
+					bus_info = mdi.bus_info;
+				else
+					bus_info = std::string("platform:") + mdi.driver;
 				if (mdi.model[0])
 					card = mdi.model;
 				else
