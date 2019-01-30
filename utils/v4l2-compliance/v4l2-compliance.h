@@ -64,6 +64,12 @@ enum poll_mode {
 	POLL_MODE_EPOLL,
 };
 
+enum codec_type {
+	NOT_CODEC,
+	ENCODER,
+	DECODER
+};
+
 struct test_query_ext_ctrl: v4l2_query_ext_ctrl {
 	__u64 menu_mask;
 };
@@ -104,6 +110,7 @@ struct base_node {
 	unsigned std_compound_controls;
 	unsigned priv_controls;
 	unsigned priv_compound_controls;
+	enum codec_type codec_type;
 	__u32 media_version;
 	media_entity_desc entity;
 	media_pad_desc *pads;

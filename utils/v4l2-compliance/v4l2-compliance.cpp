@@ -458,6 +458,43 @@ static void signal_handler_interrupt(int signum)
 	exit(-1);
 }
 
+static void determine_codec_type(struct node &node)
+{
+	struct v4l2_fmtdesc fmt_desc;
+	int num_cap_fmts = 0;
+	int num_compressed_cap_fmts = 0;
+	int num_out_fmts = 0;
+	int num_compressed_out_fmts = 0;
+
+	node.codec_type = NOT_CODEC;
+	if (!node.has_vid_m2m())
+		return;
+
+	if (node.enum_fmt(fmt_desc, true, 0, node.g_type()))
+		return;
+
+	do {
+		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)
+			num_compressed_cap_fmts++;
+		num_cap_fmts++;
+	} while (!node.enum_fmt(fmt_desc));
+
+
+	if (node.enum_fmt(fmt_desc, true, 0, v4l_type_invert(node.g_type())))
+		return;
+
+	do {
+		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)
+			num_compressed_out_fmts++;
+		num_out_fmts++;
+	} while (!node.enum_fmt(fmt_desc));
+
+	if (num_compressed_out_fmts == 0 && num_compressed_cap_fmts == num_cap_fmts)
+		node.codec_type = ENCODER;
+	else if (num_compressed_cap_fmts == 0 && num_compressed_out_fmts == num_out_fmts)
+		node.codec_type = DECODER;
+}
+
 static int testCap(struct node *node)
 {
 	struct v4l2_capability vcap;
@@ -692,6 +729,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		is_vivid = driver == "vivid";
 		if (is_vivid)
 			node.bus_info = (const char *)vcap.bus_info;
+		determine_codec_type(node);
 	} else {
 		memset(&vcap, 0, sizeof(vcap));
 	}
