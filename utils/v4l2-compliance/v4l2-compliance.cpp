@@ -458,15 +458,16 @@ static void signal_handler_interrupt(int signum)
 	exit(-1);
 }
 
-static void determine_codec_type(struct node &node)
+static void determine_codec_mask(struct node &node)
 {
 	struct v4l2_fmtdesc fmt_desc;
 	int num_cap_fmts = 0;
 	int num_compressed_cap_fmts = 0;
 	int num_out_fmts = 0;
 	int num_compressed_out_fmts = 0;
+	unsigned mask = 0;
 
-	node.codec_type = NOT_CODEC;
+	node.codec_mask = 0;
 	if (!node.has_vid_m2m())
 		return;
 
@@ -474,8 +475,36 @@ static void determine_codec_type(struct node &node)
 		return;
 
 	do {
-		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)
+		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED) {
 			num_compressed_cap_fmts++;
+			switch (fmt_desc.pixelformat) {
+			case V4L2_PIX_FMT_JPEG:
+			case V4L2_PIX_FMT_MJPEG:
+				mask |= JPEG_ENCODER;
+				break;
+			case V4L2_PIX_FMT_H263:
+			case V4L2_PIX_FMT_H264:
+			case V4L2_PIX_FMT_H264_NO_SC:
+			case V4L2_PIX_FMT_H264_MVC:
+			case V4L2_PIX_FMT_MPEG1:
+			case V4L2_PIX_FMT_MPEG2:
+			case V4L2_PIX_FMT_MPEG4:
+			case V4L2_PIX_FMT_XVID:
+			case V4L2_PIX_FMT_VC1_ANNEX_G:
+			case V4L2_PIX_FMT_VC1_ANNEX_L:
+			case V4L2_PIX_FMT_VP8:
+			case V4L2_PIX_FMT_VP9:
+			case V4L2_PIX_FMT_HEVC:
+			case V4L2_PIX_FMT_FWHT:
+				mask |= STATEFUL_ENCODER;
+				break;
+			case V4L2_PIX_FMT_MPEG2_SLICE:
+				mask |= STATELESS_ENCODER;
+				break;
+			default:
+				return;
+			}
+		}
 		num_cap_fmts++;
 	} while (!node.enum_fmt(fmt_desc));
 
@@ -484,15 +513,43 @@ static void determine_codec_type(struct node &node)
 		return;
 
 	do {
-		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)
+		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED) {
 			num_compressed_out_fmts++;
+			switch (fmt_desc.pixelformat) {
+			case V4L2_PIX_FMT_JPEG:
+			case V4L2_PIX_FMT_MJPEG:
+				mask |= JPEG_DECODER;
+				break;
+			case V4L2_PIX_FMT_H263:
+			case V4L2_PIX_FMT_H264:
+			case V4L2_PIX_FMT_H264_NO_SC:
+			case V4L2_PIX_FMT_H264_MVC:
+			case V4L2_PIX_FMT_MPEG1:
+			case V4L2_PIX_FMT_MPEG2:
+			case V4L2_PIX_FMT_MPEG4:
+			case V4L2_PIX_FMT_XVID:
+			case V4L2_PIX_FMT_VC1_ANNEX_G:
+			case V4L2_PIX_FMT_VC1_ANNEX_L:
+			case V4L2_PIX_FMT_VP8:
+			case V4L2_PIX_FMT_VP9:
+			case V4L2_PIX_FMT_HEVC:
+			case V4L2_PIX_FMT_FWHT:
+				mask |= STATEFUL_DECODER;
+				break;
+			case V4L2_PIX_FMT_MPEG2_SLICE:
+				mask |= STATELESS_DECODER;
+				break;
+			default:
+				return;
+			}
+		}
 		num_out_fmts++;
 	} while (!node.enum_fmt(fmt_desc));
 
 	if (num_compressed_out_fmts == 0 && num_compressed_cap_fmts == num_cap_fmts)
-		node.codec_type = ENCODER;
+		node.codec_mask = mask;
 	else if (num_compressed_cap_fmts == 0 && num_compressed_out_fmts == num_out_fmts)
-		node.codec_type = DECODER;
+		node.codec_mask = mask;
 }
 
 static int testCap(struct node *node)
@@ -588,6 +645,17 @@ static int testCap(struct node *node)
 	}
 	// having both mplane and splane caps is not allowed (at least for now)
 	fail_on_test((dcaps & mplane_caps) && (dcaps & splane_caps));
+
+	if (node->codec_mask) {
+		bool found_bit = false;
+
+		// Only one bit may be set in the mask
+		for (unsigned i = 0; i < 32; i++)
+			if (node->codec_mask & (1U << i)) {
+				fail_on_test(found_bit);
+				found_bit = true;
+			}
+	}
 
 	return 0;
 }
@@ -729,7 +797,7 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 		is_vivid = driver == "vivid";
 		if (is_vivid)
 			node.bus_info = (const char *)vcap.bus_info;
-		determine_codec_type(node);
+		determine_codec_mask(node);
 	} else {
 		memset(&vcap, 0, sizeof(vcap));
 	}
@@ -785,7 +853,26 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	if (node.is_v4l2()) {
 		printf("Driver Info:\n");
 		v4l2_info_capability(vcap);
-
+		switch (node.codec_mask) {
+		case JPEG_ENCODER:
+			printf("\tDetected JPEG Encoder\n");
+			break;
+		case JPEG_DECODER:
+			printf("\tDetected JPEG Decoder\n");
+			break;
+		case STATEFUL_ENCODER:
+			printf("\tDetected Stateful Encoder\n");
+			break;
+		case STATEFUL_DECODER:
+			printf("\tDetected Stateful Decoder\n");
+			break;
+		case STATELESS_ENCODER:
+			printf("\tDetected Stateless Encoder\n");
+			break;
+		case STATELESS_DECODER:
+			printf("\tDetected Stateless Decoder\n");
+			break;
+		}
 	}
 
 	__u32 ent_id = 0;

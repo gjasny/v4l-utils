@@ -64,11 +64,12 @@ enum poll_mode {
 	POLL_MODE_EPOLL,
 };
 
-enum codec_type {
-	NOT_CODEC,
-	ENCODER,
-	DECODER
-};
+#define JPEG_ENCODER (1 << 0)
+#define JPEG_DECODER (1 << 1)
+#define STATEFUL_ENCODER (1 << 2)
+#define STATEFUL_DECODER (1 << 3)
+#define STATELESS_ENCODER (1 << 4)
+#define STATELESS_DECODER (1 << 5)
 
 struct test_query_ext_ctrl: v4l2_query_ext_ctrl {
 	__u64 menu_mask;
@@ -110,7 +111,7 @@ struct base_node {
 	unsigned std_compound_controls;
 	unsigned priv_controls;
 	unsigned priv_compound_controls;
-	enum codec_type codec_type;
+	unsigned codec_mask;
 	__u32 media_version;
 	media_entity_desc entity;
 	media_pad_desc *pads;
