@@ -348,6 +348,7 @@ void stds_list(cv4l_fd &fd);
 // v4l2-ctl-vidcap.cpp
 void vidcap_usage(void);
 void vidcap_cmd(int ch, char *optarg);
+int vidcap_get_and_update_fmt(cv4l_fd &_fd, struct v4l2_format &vfmt);
 void vidcap_set(cv4l_fd &fd);
 void vidcap_get(cv4l_fd &fd);
 void vidcap_list(cv4l_fd &fd);

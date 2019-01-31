@@ -1894,7 +1894,6 @@ static int capture_setup(cv4l_fd &fd, cv4l_queue &in, cv4l_fd *exp_fd)
 		fprintf(stderr, "%s: fd.streamoff error\n", __func__);
 		return -1;
 	}
-	get_cap_compose_rect(fd);
 
 	/* release any buffer allocated */
 	if (in.reqbufs(&fd)) {
@@ -1902,17 +1901,31 @@ static int capture_setup(cv4l_fd &fd, cv4l_queue &in, cv4l_fd *exp_fd)
 		return -1;
 	}
 
+	if (options[OptSetVideoFormat]) {
+		cv4l_fmt fmt;
+
+		if (vidcap_get_and_update_fmt(fd, fmt)) {
+			fprintf(stderr, "%s: vidcap_get_and_update_fmt error\n",
+				__func__);
+			return -1;
+		}
+		fd.s_fmt(fmt, in.g_type());
+	}
+	get_cap_compose_rect(fd);
+
 	if (in.reqbufs(&fd, reqbufs_count_cap)) {
 		fprintf(stderr, "%s: in.reqbufs %u error\n", __func__,
 			reqbufs_count_cap);
 		return -1;
 	}
+
 	if (exp_fd && in.export_bufs(exp_fd, exp_fd->g_type()))
 		return -1;
 	if (in.obtain_bufs(&fd) || in.queue_all(&fd)) {
 		fprintf(stderr, "%s: in.obtain_bufs error\n", __func__);
 		return -1;
 	}
+
 	if (fd.streamon(in.g_type())) {
 		fprintf(stderr, "%s: fd.streamon error\n", __func__);
 		return -1;

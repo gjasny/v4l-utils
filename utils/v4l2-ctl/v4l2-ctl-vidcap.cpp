@@ -153,74 +153,88 @@ void vidcap_cmd(int ch, char *optarg)
 	}
 }
 
-void vidcap_set(cv4l_fd &_fd)
+int vidcap_get_and_update_fmt(cv4l_fd &_fd, struct v4l2_format &vfmt)
 {
 	int fd = _fd.g_fd();
 	int ret;
 
+	memset(&vfmt, 0, sizeof(vfmt));
+	vfmt.fmt.pix.priv = priv_magic;
+	vfmt.type = vidcap_buftype;
+
+	ret = doioctl(fd, VIDIOC_G_FMT, &vfmt);
+	if (ret)
+		return ret;
+
+	if (is_multiplanar) {
+		if (set_fmts & FmtWidth)
+			vfmt.fmt.pix_mp.width = width;
+		if (set_fmts & FmtHeight)
+			vfmt.fmt.pix_mp.height = height;
+		if (set_fmts & FmtPixelFormat) {
+			vfmt.fmt.pix_mp.pixelformat = pixfmt;
+			if (vfmt.fmt.pix_mp.pixelformat < 256) {
+				vfmt.fmt.pix_mp.pixelformat =
+					find_pixel_format(fd, vfmt.fmt.pix_mp.pixelformat,
+							  false, true);
+			}
+		}
+		if (set_fmts & FmtField)
+			vfmt.fmt.pix_mp.field = field;
+		if (set_fmts & FmtFlags)
+			vfmt.fmt.pix_mp.flags = flags;
+		if (set_fmts & FmtBytesPerLine) {
+			for (unsigned i = 0; i < VIDEO_MAX_PLANES; i++)
+				vfmt.fmt.pix_mp.plane_fmt[i].bytesperline =
+					bytesperline[i];
+		} else {
+			/*
+			 * G_FMT might return bytesperline values > width,
+			 * reset them to 0 to force the driver to update them
+			 * to the closest value for the new width.
+			 */
+			for (unsigned i = 0; i < vfmt.fmt.pix_mp.num_planes; i++)
+				vfmt.fmt.pix_mp.plane_fmt[i].bytesperline = 0;
+		}
+	} else {
+		if (set_fmts & FmtWidth)
+			vfmt.fmt.pix.width = width;
+		if (set_fmts & FmtHeight)
+			vfmt.fmt.pix.height = height;
+		if (set_fmts & FmtPixelFormat) {
+			vfmt.fmt.pix.pixelformat = pixfmt;
+			if (vfmt.fmt.pix.pixelformat < 256) {
+				vfmt.fmt.pix.pixelformat =
+					find_pixel_format(fd, vfmt.fmt.pix.pixelformat,
+							  false, false);
+			}
+		}
+		if (set_fmts & FmtField)
+			vfmt.fmt.pix.field = field;
+		if (set_fmts & FmtFlags)
+			vfmt.fmt.pix.flags = flags;
+		if (set_fmts & FmtBytesPerLine) {
+			vfmt.fmt.pix.bytesperline = bytesperline[0];
+		} else {
+			/*
+			 * G_FMT might return a bytesperline value > width,
+			 * reset this to 0 to force the driver to update it
+			 * to the closest value for the new width.
+			 */
+			vfmt.fmt.pix.bytesperline = 0;
+		}
+	}
+	return 0;
+}
+
+void vidcap_set(cv4l_fd &_fd)
+{
 	if (options[OptSetVideoFormat] || options[OptTryVideoFormat]) {
+		int fd = _fd.g_fd();
+		int ret;
 		struct v4l2_format vfmt;
 
-		memset(&vfmt, 0, sizeof(vfmt));
-		vfmt.fmt.pix.priv = priv_magic;
-		vfmt.type = vidcap_buftype;
-
-		if (doioctl(fd, VIDIOC_G_FMT, &vfmt) == 0) {
-			if (is_multiplanar) {
-				if (set_fmts & FmtWidth)
-					vfmt.fmt.pix_mp.width = width;
-				if (set_fmts & FmtHeight)
-					vfmt.fmt.pix_mp.height = height;
-				if (set_fmts & FmtPixelFormat) {
-					vfmt.fmt.pix_mp.pixelformat = pixfmt;
-					if (vfmt.fmt.pix_mp.pixelformat < 256) {
-						vfmt.fmt.pix_mp.pixelformat =
-							find_pixel_format(fd, vfmt.fmt.pix_mp.pixelformat,
-									false, true);
-					}
-				}
-				if (set_fmts & FmtField)
-					vfmt.fmt.pix_mp.field = field;
-				if (set_fmts & FmtFlags)
-					vfmt.fmt.pix_mp.flags = flags;
-				if (set_fmts & FmtBytesPerLine) {
-					for (unsigned i = 0; i < VIDEO_MAX_PLANES; i++)
-						vfmt.fmt.pix_mp.plane_fmt[i].bytesperline =
-							bytesperline[i];
-				} else {
-					/* G_FMT might return bytesperline values > width,
-					 * reset them to 0 to force the driver to update them
-					 * to the closest value for the new width. */
-					for (unsigned i = 0; i < vfmt.fmt.pix_mp.num_planes; i++)
-						vfmt.fmt.pix_mp.plane_fmt[i].bytesperline = 0;
-				}
-			} else {
-				if (set_fmts & FmtWidth)
-					vfmt.fmt.pix.width = width;
-				if (set_fmts & FmtHeight)
-					vfmt.fmt.pix.height = height;
-				if (set_fmts & FmtPixelFormat) {
-					vfmt.fmt.pix.pixelformat = pixfmt;
-					if (vfmt.fmt.pix.pixelformat < 256) {
-						vfmt.fmt.pix.pixelformat =
-							find_pixel_format(fd, vfmt.fmt.pix.pixelformat,
-									false, false);
-					}
-				}
-				if (set_fmts & FmtField)
-					vfmt.fmt.pix.field = field;
-				if (set_fmts & FmtFlags)
-					vfmt.fmt.pix.flags = flags;
-				if (set_fmts & FmtBytesPerLine) {
-					vfmt.fmt.pix.bytesperline = bytesperline[0];
-				} else {
-					/* G_FMT might return a bytesperline value > width,
-					 * reset this to 0 to force the driver to update it
-					 * to the closest value for the new width. */
-					vfmt.fmt.pix.bytesperline = 0;
-				}
-			}
-
+		if (vidcap_get_and_update_fmt(_fd, vfmt) == 0) {
 			if (options[OptSetVideoFormat])
 				ret = doioctl(fd, VIDIOC_S_FMT, &vfmt);
 			else
