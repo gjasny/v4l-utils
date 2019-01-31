@@ -866,6 +866,34 @@ int testEvents(struct node *node)
 		}
 	}
 
+	struct v4l2_event_subscription sub = { 0 };
+
+	sub.type = V4L2_EVENT_EOS;
+	bool have_eos = !doioctl(node, VIDIOC_SUBSCRIBE_EVENT, &sub);
+	if (have_eos)
+		fail_on_test(doioctl(node, VIDIOC_UNSUBSCRIBE_EVENT, &sub));
+	sub.type = V4L2_EVENT_SOURCE_CHANGE;
+	bool have_source_change = !doioctl(node, VIDIOC_SUBSCRIBE_EVENT, &sub);
+	if (have_source_change)
+		fail_on_test(doioctl(node, VIDIOC_UNSUBSCRIBE_EVENT, &sub));
+
+	switch (node->codec_mask) {
+	case STATEFUL_ENCODER:
+		fail_on_test(have_source_change || !have_eos);
+		break;
+	case STATEFUL_DECODER:
+		fail_on_test(!have_source_change || !have_eos);
+		break;
+	case STATELESS_ENCODER:
+	case STATELESS_DECODER:
+		fail_on_test(have_source_change || have_eos);
+		break;
+	default:
+		break;
+	}
+	if (node->can_output && !node->is_m2m)
+		fail_on_test(have_source_change);
+
 	if (node->controls.empty())
 		return ENOTTY;
 	return 0;
