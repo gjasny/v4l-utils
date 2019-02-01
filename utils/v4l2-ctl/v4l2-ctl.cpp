@@ -73,6 +73,7 @@ static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
 	{"out-device", required_argument, 0, OptSetOutDevice},
 	{"export-device", required_argument, 0, OptSetExportDevice},
+	{"media-bus-info", required_argument, 0, OptMediaBusInfo},
 	{"get-fmt-video", no_argument, 0, OptGetVideoFormat},
 	{"set-fmt-video", required_argument, 0, OptSetVideoFormat},
 	{"try-fmt-video", required_argument, 0, OptTryVideoFormat},
@@ -947,6 +948,109 @@ __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane)
 	return fmt.pixelformat;
 }
 
+static int open_media_bus_info(const std::string &bus_info)
+{
+	DIR *dp;
+	struct dirent *ep;
+
+	dp = opendir("/dev");
+	if (dp == NULL)
+		return -1;
+
+	while ((ep = readdir(dp))) {
+		const char *name = ep->d_name;
+
+		if (!memcmp(name, "media", 5) && isdigit(name[5])) {
+			struct media_device_info mdi;
+			std::string devname = std::string("/dev/") + name;
+
+			int fd = open(devname.c_str(), O_RDWR);
+			if (fd < 0)
+				continue;
+			if (!ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi) &&
+			    bus_info == mdi.bus_info) {
+				closedir(dp);
+				return fd;
+			}
+			close(fd);
+		}
+	}
+	closedir(dp);
+	return -1;
+}
+
+static const char *make_devname(const char *device, const char *devname,
+				const std::string &media_bus_info)
+{
+	if (device[0] >= '0' && device[0] <= '9' && strlen(device) <= 3) {
+		static char newdev[32];
+
+		sprintf(newdev, "/dev/%s%s", devname, device);
+		return newdev;
+	}
+	if (media_bus_info.empty())
+		return device;
+	int media_fd = open_media_bus_info(media_bus_info);
+	if (media_fd < 0)
+		return device;
+
+	media_v2_topology topology;
+	memset(&topology, 0, sizeof(topology));
+	if (ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology)) {
+		close(media_fd);
+		return device;
+	}
+
+	media_v2_entity *ents = new media_v2_entity[topology.num_entities];
+	topology.ptr_entities = (__u64)ents;
+	media_v2_link *links = new media_v2_link[topology.num_links];
+	topology.ptr_links = (__u64)links;
+	media_v2_interface *ifaces = new media_v2_interface[topology.num_interfaces];
+	topology.ptr_interfaces = (__u64)ifaces;
+
+	unsigned i, ent_id, iface_id = 0;
+
+	if (ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology))
+		goto err;
+
+	if (device[0] == '0' && device[1] == 'x')
+		iface_id = strtoul(device, NULL, 16);
+
+	if (!iface_id) {
+		for (i = 0; i < topology.num_entities; i++)
+			if (!strcmp(ents[i].name, device))
+				break;
+		if (i >= topology.num_entities)
+			goto err;
+		ent_id = ents[i].id;
+		for (i = 0; i < topology.num_links; i++)
+			if (links[i].sink_id == ent_id &&
+			    (links[i].flags & MEDIA_LNK_FL_LINK_TYPE) ==
+			    MEDIA_LNK_FL_INTERFACE_LINK)
+				break;
+		if (i >= topology.num_links)
+			goto err;
+		iface_id = links[i].source_id;
+	}
+	for (i = 0; i < topology.num_interfaces; i++)
+		if (ifaces[i].id == iface_id)
+			break;
+	if (i >= topology.num_interfaces)
+		goto err;
+
+	static char newdev[32];
+	sprintf(newdev, "/dev/char/%d:%d",
+		ifaces[i].devnode.major, ifaces[i].devnode.minor);
+	device = newdev;
+	
+err:
+	delete [] ents;
+	delete [] links;
+	delete [] ifaces;
+	close(media_fd);
+	return device;
+}
+
 int main(int argc, char **argv)
 {
 	int i;
@@ -958,6 +1062,7 @@ int main(int argc, char **argv)
 	int exp_fd = -1;
 	int media_fd = -1;
 	bool is_subdev = false;
+	std::string media_bus_info;
 
 	/* command args */
 	int ch;
@@ -1062,31 +1167,16 @@ int main(int argc, char **argv)
 			usage_all();
 			return 0;
 		case OptSetDevice:
-			device = optarg;
-			if (device[0] >= '0' && device[0] <= '9' && strlen(device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/video%s", device);
-				device = newdev;
-			}
+			device = make_devname(optarg, "video", media_bus_info);
 			break;
 		case OptSetOutDevice:
-			out_device = optarg;
-			if (out_device[0] >= '0' && out_device[0] <= '9' && strlen(out_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/video%s", out_device);
-				out_device = newdev;
-			}
+			out_device = make_devname(optarg, "video", media_bus_info);
 			break;
 		case OptSetExportDevice:
-			export_device = optarg;
-			if (export_device[0] >= '0' && export_device[0] <= '9' && strlen(export_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/video%s", export_device);
-				export_device = newdev;
-			}
+			export_device = make_devname(optarg, "video", media_bus_info);
+			break;
+		case OptMediaBusInfo:
+			media_bus_info = optarg;
 			break;
 		case OptWaitForEvent:
 			wait_for_event = parse_event(optarg, &wait_event_id);

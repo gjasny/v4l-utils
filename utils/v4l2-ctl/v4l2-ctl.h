@@ -82,6 +82,7 @@ enum Option {
 	OptUseWrapper = 'w',
 	OptGetVideoOutFormat = 'X',
 	OptSetVideoOutFormat = 'x',
+	OptMediaBusInfo = 'z',
 
 	OptGetSlicedVbiOutFormat = 128,
 	OptGetOverlayFormat,

@@ -12,7 +12,11 @@ devices covering the full V4L2 API.
 .SH OPTIONS
 .TP
 \fB\-d\fR, \fB\-\-device\fR \fI<dev>\fR
-Use device <dev> as the V4L2 device. If <dev> is a number, then /dev/video<dev> is used.
+Use device \fI<dev>\fR as the V4L2 device.
+if \fI<dev>\fR starts with a digit, then /dev/video\fI<dev>\fR is used
+Otherwise if \fB-z\fR was specified earlier, then \fI<dev>\fR is the entity name
+or interface ID (if prefixed with 0x) as found in the topology of the media device
+with the bus info string as specified by the \fB-z\fR option.
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR
 Turn on verbose reporting.
@@ -86,12 +90,23 @@ Show driver info [VIDIOC_QUERYCAP].
 .TP
 \fB-e\fR, \fB--out-device\fR \fI<dev>\fR
 Use device \fI<dev>\fR for output streams instead of the
-default device as set with --device. If \fI<dev>\fR starts
+default device as set with \fB--device\fR. If \fI<dev>\fR starts
 with a digit, then /dev/video\fI<dev>\fR is used.
+Otherwise if \fB-z\fR was specified earlier, then \fI<dev>\fR is the entity name
+or interface ID (if prefixed with 0x) as found in the topology of the media device
+with the bus info string as specified by the \fB-z\fR option.
 .TP
 \fB-E\fR, \fB--export-device\fR \fI<dev>\fR
 Use device \fI<dev>\fR for exporting DMA buffers.
 If \fI<dev>\fR starts with a digit, then /dev/video\fI<dev>\fR is used.
+Otherwise if \fB-z\fR was specified earlier, then \fI<dev>\fR is the entity name
+or interface ID (if prefixed with 0x) as found in the topology of the media device
+with the bus info string as specified by the \fB-z\fR option.
+.TP
+\fB-z\fR, \fB--media-bus-info\fR \fI<bus-info>\fR
+Find the media device with the given \fI<bus-info>\fR string. If set, then
+\fB-d\fR, \fB-e\fR and \fB-E\fR options can use the entity name or interface ID
+to refer to the device nodes. Example: v4l2-ctl -z platform:vivid-000 -d vivid-000-vid-cap
 .TP
 \fB-k\fR, \fB--concise\fR
 Be more concise if possible.
