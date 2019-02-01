@@ -72,6 +72,7 @@ enum Option {
 	OptSetVbiDevice = 'V',
 	OptUseWrapper = 'w',
 	OptExitOnWarn = 'W',
+	OptMediaBusInfo = 'z',
 	OptStreamFrom = 128,
 	OptStreamFromHdr,
 	OptLast = 256
@@ -129,6 +130,7 @@ static struct option long_options[] = {
 	{"touch-device", required_argument, 0, OptSetTouchDevice},
 	{"media-device", required_argument, 0, OptSetMediaDevice},
 	{"media-device-only", required_argument, 0, OptSetMediaDeviceOnly},
+	{"media-bus-info", required_argument, 0, OptMediaBusInfo},
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
@@ -153,21 +155,37 @@ static void usage(void)
 	printf("Common options:\n");
 	printf("  -d, --device <dev> Use device <dev> as the video device.\n");
 	printf("                     If <dev> starts with a digit, then /dev/video<dev> is used.\n");
+	printf("                     Otherwise if -z was specified earlier, then <dev> is the entity name\n");
+	printf("                     or interface ID (if prefixed with 0x) as found in the topology of the\n");
+	printf("                     media device with the bus info string as specified by the -z option.\n");
 	printf("  -V, --vbi-device <dev>\n");
 	printf("                     Use device <dev> as the vbi device.\n");
 	printf("                     If <dev> starts with a digit, then /dev/vbi<dev> is used.\n");
+	printf("                     See the -d description of how <dev> is used in combination with -z.\n");
 	printf("  -r, --radio-device <dev>\n");
 	printf("                     Use device <dev> as the radio device.\n");
 	printf("                     If <dev> starts with a digit, then /dev/radio<dev> is used.\n");
+	printf("                     See the -d description of how <dev> is used in combination with -z.\n");
 	printf("  -S, --sdr-device <dev>\n");
 	printf("                     Use device <dev> as the SDR device.\n");
 	printf("                     If <dev> starts with a digit, then /dev/swradio<dev> is used.\n");
+	printf("                     See the -d description of how <dev> is used in combination with -z.\n");
 	printf("  -t, --touch-device <dev>\n");
 	printf("                     Use device <dev> as the touch device.\n");
 	printf("                     If <dev> starts with a digit, then /dev/v4l-touch<dev> is used.\n");
+	printf("                     See the -d description of how <dev> is used in combination with -z.\n");
 	printf("  -u, --subdev-device <dev>\n");
 	printf("                     Use device <dev> as the v4l-subdev device.\n");
 	printf("                     If <dev> starts with a digit, then /dev/v4l-subdev<dev> is used.\n");
+	printf("                     See the -d description of how <dev> is used in combination with -z.\n");
+	printf("  -e, --expbuf-device <dev>\n");
+	printf("                     Use video device <dev> to obtain DMABUF handles.\n");
+	printf("                     If <dev> starts with a digit, then /dev/video<dev> is used.\n");
+	printf("                     See the -d description of how <dev> is used in combination with -z.\n");
+	printf("  -z, --media-bus-info <bus-info>\n");
+	printf("                     Find the media device with the given bus info string. If set, then\n");
+	printf("                     the options above can use the entity name or interface ID to refer\n");
+	printf("                     to the device nodes.\n");
 	printf("  -m, --media-device <dev>\n");
 	printf("                     Use device <dev> as the media controller device. Besides this\n");
 	printf("                     device it also tests all interfaces it finds.\n");
@@ -176,10 +194,6 @@ static void usage(void)
 	printf("                     Use device <dev> as the media controller device. Only test this\n");
 	printf("                     device, don't walk over all the interfaces.\n");
 	printf("                     If <dev> starts with a digit, then /dev/media<dev> is used.\n");
-	printf("  -e, --expbuf-device <dev>\n");
-	printf("                     Use device <dev> to obtain DMABUF handles.\n");
-	printf("                     If <dev> starts with a digit, then /dev/video<dev> is used.\n");
-	printf("                     only /dev/videoX devices are supported.\n");
 	printf("  -s, --streaming <count>\n");
 	printf("                     Enable the streaming tests. Set <count> to the number of\n");
 	printf("                     frames to stream (default 60). Requires a valid input/output\n");
@@ -769,7 +783,39 @@ static int parse_subopt(char **subs, const char * const *subopts, char **value)
 	return opt;
 }
 
-static const char *make_devname(const char *device, const char *devname)
+static int open_media_bus_info(const std::string &bus_info)
+{
+	DIR *dp;
+	struct dirent *ep;
+
+	dp = opendir("/dev");
+	if (dp == NULL)
+		return -1;
+
+	while ((ep = readdir(dp))) {
+		const char *name = ep->d_name;
+
+		if (!memcmp(name, "media", 5) && isdigit(name[5])) {
+			struct media_device_info mdi;
+			std::string devname = std::string("/dev/") + name;
+
+			int fd = open(devname.c_str(), O_RDWR);
+			if (fd < 0)
+				continue;
+			if (!ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi) &&
+			    bus_info == mdi.bus_info) {
+				closedir(dp);
+				return fd;
+			}
+			close(fd);
+		}
+	}
+	closedir(dp);
+	return -1;
+}
+
+static const char *make_devname(const char *device, const char *devname,
+				const std::string &media_bus_info)
 {
 	if (device[0] >= '0' && device[0] <= '9' && strlen(device) <= 3) {
 		static char newdev[32];
@@ -777,6 +823,66 @@ static const char *make_devname(const char *device, const char *devname)
 		sprintf(newdev, "/dev/%s%s", devname, device);
 		return newdev;
 	}
+	if (media_bus_info.empty())
+		return device;
+	int media_fd = open_media_bus_info(media_bus_info);
+	if (media_fd < 0)
+		return device;
+
+	media_v2_topology topology;
+	memset(&topology, 0, sizeof(topology));
+	if (ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology)) {
+		close(media_fd);
+		return device;
+	}
+
+	media_v2_entity *ents = new media_v2_entity[topology.num_entities];
+	topology.ptr_entities = (__u64)ents;
+	media_v2_link *links = new media_v2_link[topology.num_links];
+	topology.ptr_links = (__u64)links;
+	media_v2_interface *ifaces = new media_v2_interface[topology.num_interfaces];
+	topology.ptr_interfaces = (__u64)ifaces;
+
+	unsigned i, ent_id, iface_id = 0;
+
+	if (ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology))
+		goto err;
+
+	if (device[0] == '0' && device[1] == 'x')
+		iface_id = strtoul(device, NULL, 16);
+
+	if (!iface_id) {
+		for (i = 0; i < topology.num_entities; i++)
+			if (!strcmp(ents[i].name, device))
+				break;
+		if (i >= topology.num_entities)
+			goto err;
+		ent_id = ents[i].id;
+		for (i = 0; i < topology.num_links; i++)
+			if (links[i].sink_id == ent_id &&
+			    (links[i].flags & MEDIA_LNK_FL_LINK_TYPE) ==
+			    MEDIA_LNK_FL_INTERFACE_LINK)
+				break;
+		if (i >= topology.num_links)
+			goto err;
+		iface_id = links[i].source_id;
+	}
+	for (i = 0; i < topology.num_interfaces; i++)
+		if (ifaces[i].id == iface_id)
+			break;
+	if (i >= topology.num_interfaces)
+		goto err;
+
+	static char newdev[32];
+	sprintf(newdev, "/dev/char/%d:%d",
+		ifaces[i].devnode.major, ifaces[i].devnode.minor);
+	device = newdev;
+	
+err:
+	delete [] ents;
+	delete [] links;
+	delete [] ifaces;
+	close(media_fd);
 	return device;
 }
 
@@ -1298,6 +1404,7 @@ int main(int argc, char **argv)
 	struct node node;
 	media_type type = MEDIA_TYPE_UNKNOWN;
 	struct node expbuf_node;
+	std::string media_bus_info;
 
 	/* command args */
 	int ch;
@@ -1364,27 +1471,30 @@ int main(int argc, char **argv)
 			usage();
 			return 0;
 		case OptSetDevice:
-			device = make_devname(optarg, "video");
+			device = make_devname(optarg, "video", media_bus_info);
 			break;
 		case OptSetVbiDevice:
-			device = make_devname(optarg, "vbi");
+			device = make_devname(optarg, "vbi", media_bus_info);
 			break;
 		case OptSetRadioDevice:
-			device = make_devname(optarg, "radio");
+			device = make_devname(optarg, "radio", media_bus_info);
 			break;
 		case OptSetSWRadioDevice:
-			device = make_devname(optarg, "swradio");
+			device = make_devname(optarg, "swradio", media_bus_info);
 			break;
 		case OptSetTouchDevice:
-			device = make_devname(optarg, "v4l-touch");
+			device = make_devname(optarg, "v4l-touch", media_bus_info);
 			break;
 		case OptSetSubDevDevice:
-			device = make_devname(optarg, "v4l-subdev");
+			device = make_devname(optarg, "v4l-subdev", media_bus_info);
 			break;
 		case OptSetMediaDevice:
 		case OptSetMediaDeviceOnly:
-			device = make_devname(optarg, "media");
+			device = make_devname(optarg, "media", media_bus_info);
 			type = MEDIA_TYPE_MEDIA;
+			break;
+		case OptMediaBusInfo:
+			media_bus_info = optarg;
 			break;
 		case OptSetExpBufDevice:
 			expbuf_device = optarg;

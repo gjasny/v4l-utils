@@ -3,9 +3,7 @@
 v4l2-compliance - An application to test video4linux drivers
 .SH SYNOPSIS
 .B v4l2-compliance
-[\fI-h\fR] [\fI-d <dev>\fR] [\fI-r <dev>\fR] [\fI-V <dev>\fR] [\fI-S <dev>\fR] [\fI-e <dev>\fR]
-[\fI-s <count>\fR] [\fI-f\fR] [\fI-a\fR] [\fI-c color=<color>,skip=<skip>,perc=<perc>\fR]
-[\fI-n\fR] [\fI-T\fR] [\fI-v\fR] [\fI-w\fR]
+[\fI-h\fR] [\fI-d <dev>\fR] [many other options]
 .SH DESCRIPTION
 The v4l2-compliance tool is used to test video4linux devices, either video, vbi, radio
 or swradio, both input and output. It attempts to test almost all aspects of a V4L2 device
@@ -54,35 +52,59 @@ very good shape!
 .SH OPTIONS
 .TP
 \fB\-d\fR, \fB\-\-device\fR \fI<dev>\fR
-Use device <dev> as the video device. If <dev> is a number, then /dev/video<dev> is used.
+Use device \fI<dev>\fR as the video device. If \fI<dev>\fR is a number, then /dev/video\fI<dev>\fR is used.
+Otherwise if \fB-z\fR was specified earlier, then \fI<dev>\fR is the entity name
+or interface ID (if prefixed with 0x) as found in the topology of the media device
+with the bus info string as specified by the \fB-z\fR option.
 .TP
 \fB\-V\fR, \fB\-\-vbi\-device\fR \fI<dev>\fR
-Use device <dev> as the vbi device. If <dev> is a number, then /dev/vbi<dev> is used.
+Use device \fI<dev>\fR as the vbi device. If \fI<dev>\fR is a number, then /dev/vbi\fI<dev>\fR is used.
+Otherwise if \fB-z\fR was specified earlier, then \fI<dev>\fR is the entity name
+or interface ID (if prefixed with 0x) as found in the topology of the media device
+with the bus info string as specified by the \fB-z\fR option.
 .TP
 \fB\-r\fR, \fB\-\-radio\-device\fR \fI<dev>\fR
-Use device <dev> as the radio device. If <dev> is a number, then /dev/radio<dev> is used.
+Use device \fI<dev>\fR as the radio device. If \fI<dev>\fR is a number, then /dev/radio\fI<dev>\fR is used.
+Otherwise if \fB-z\fR was specified earlier, then \fI<dev>\fR is the entity name
+or interface ID (if prefixed with 0x) as found in the topology of the media device
+with the bus info string as specified by the \fB-z\fR option.
 .TP
 \fB\-S\fR, \fB\-\-sdr\-device\fR \fI<dev>\fR
-Use device <dev> as the SDR device. If <dev> is a number, then /dev/swradio<dev> is used.
+Use device \fI<dev>\fR as the SDR device. If \fI<dev>\fR is a number, then /dev/swradio\fI<dev>\fR is used.
+Otherwise if \fB-z\fR was specified earlier, then \fI<dev>\fR is the entity name
+or interface ID (if prefixed with 0x) as found in the topology of the media device
+with the bus info string as specified by the \fB-z\fR option.
 .TP
 \fB\-t\fR, \fB\-\-touch\-device\fR \fI<dev>\fR
-Use device <dev> as the touch device. If <dev> is a number, then /dev/v4l-touch<dev> is used.
+Use device \fI<dev>\fR as the touch device. If \fI<dev>\fR is a number, then /dev/v4l-touch\fI<dev>\fR is used.
+Otherwise if \fB-z\fR was specified earlier, then \fI<dev>\fR is the entity name
+or interface ID (if prefixed with 0x) as found in the topology of the media device
+with the bus info string as specified by the \fB-z\fR option.
 .TP
 \fB\-u\fR, \fB\-\-subdev\-device\fR \fI<dev>\fR
-Use device <dev> as the v4l-subdevX device. If <dev> is a number, then /dev/v4l-subdev<dev> is used.
+Use device \fI<dev>\fR as the v4l-subdevX device. If \fI<dev>\fR is a number, then /dev/v4l-subdev\fI<dev>\fR is used.
+Otherwise if \fB-z\fR was specified earlier, then \fI<dev>\fR is the entity name
+\fB\-e\fR, \fB\-\-exp\-buf\-device\fR \fI<dev>\fR
+Use device \fI<dev>\fR as the video device used to export DMABUFfers for doing DMABUF
+streaming tests. If \fI<dev>\fR is a number, then /dev/video\fI<dev>\fR is used.
+Otherwise if \fB-z\fR was specified earlier, then \fI<dev>\fR is the entity name
+or interface ID (if prefixed with 0x) as found in the topology of the media device
+with the bus info string as specified by the \fB-z\fR option.
+If this option is not specified, then the DMABUF streaming tests will be skipped.
+.TP
+\fB-z\fR, \fB--media-bus-info\fR \fI<bus-info>\fR
+Find the media device with the given bus info string. If set, then
+the options above can use the entity name or interface ID to refer to the
+device nodes. Example: v4l2-compliance -z platform:vivid-000 -d vivid-000-vid-cap
 .TP
 \fB\-m\fR, \fB\-\-media\-device\fR \fI<dev>\fR
-Use device <dev> as the media controller device. Besides this device it also tests
-all interfaces it finds.  If <dev> starts with a digit, then /dev/media<dev> is used.
+Use device \fI<dev>\fR as the media controller device. Besides this device it also tests
+all interfaces it finds.  If \fI<dev>\fR starts with a digit, then /dev/media\fI<dev>\fR is used.
 .TP
 \fB\-M\fR, \fB\-\-media\-device\-only\fR \fI<dev>\fR
-Use device <dev> as the media controller device. Only test this device, don't walk
-over all the interfaces.  If <dev> starts with a digit, then /dev/media<dev> is used.
+Use device \fI<dev>\fR as the media controller device. Only test this device, don't walk
+over all the interfaces.  If \fI<dev>\fR starts with a digit, then /dev/media\fI<dev>\fR is used.
 .TP
-\fB\-e\fR, \fB\-\-exp\-buf\-device\fR \fI<dev>\fR
-Use device <dev> as the video device used to export DMABUFfers for doing DMABUF
-streaming tests. If <dev> is a number, then /dev/video<dev> is used. If this option
-is not specified, then the DMABUF streaming tests will be skipped.
 .TP
 \fB\-\-stream\-from\fR \fI[<pixelformat>=]<file>\fR, \fB\-\-stream\-from\-hdr\fR \fI[<pixelformat>=]<file>\fR
 Use the contents of the file to fill in output buffers.
