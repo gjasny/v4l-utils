@@ -47,7 +47,21 @@ int testMediaDeviceInfo(struct node *node)
 	fail_on_test(check_string(mdinfo.driver, sizeof(mdinfo.driver)));
 	fail_on_test(mdinfo.model[0] && check_string(mdinfo.model, sizeof(mdinfo.model)));
 	fail_on_test(mdinfo.serial[0] && check_string(mdinfo.serial, sizeof(mdinfo.serial)));
-	fail_on_test(mdinfo.bus_info[0] && check_string(mdinfo.bus_info, sizeof(mdinfo.bus_info)));
+	if (!mdinfo.bus_info[0]) {
+		warn("empty bus_info\n");
+	} else {
+		fail_on_test(check_string(mdinfo.bus_info, sizeof(mdinfo.bus_info)));
+		// Check for valid prefixes
+		if (memcmp(mdinfo.bus_info, "usb-", 4) &&
+		    memcmp(mdinfo.bus_info, "PCI:", 4) &&
+		    memcmp(mdinfo.bus_info, "PCIe:", 5) &&
+		    memcmp(mdinfo.bus_info, "ISA:", 4) &&
+		    memcmp(mdinfo.bus_info, "I2C:", 4) &&
+		    memcmp(mdinfo.bus_info, "parport", 7) &&
+		    memcmp(mdinfo.bus_info, "platform:", 9) &&
+		    memcmp(mdinfo.bus_info, "rmi4:", 5))
+			return fail("missing bus_info prefix ('%s')\n", mdinfo.bus_info);
+	}
 	fail_on_test(mdinfo.media_version == 0);
 	if (mdinfo.media_version != MEDIA_API_VERSION)
 		fail_on_test(mdinfo.driver_version != mdinfo.media_version);

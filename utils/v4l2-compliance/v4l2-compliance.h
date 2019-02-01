@@ -113,6 +113,7 @@ struct base_node {
 	unsigned priv_compound_controls;
 	unsigned codec_mask;
 	__u32 media_version;
+	std::string media_bus_info;
 	media_entity_desc entity;
 	media_pad_desc *pads;
 	media_link_desc *links;

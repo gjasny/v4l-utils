@@ -596,6 +596,10 @@ static int testCap(struct node *node)
 	    memcmp(vcap.bus_info, "platform:", 9) &&
 	    memcmp(vcap.bus_info, "rmi4:", 5))
 		return fail("missing bus_info prefix ('%s')\n", vcap.bus_info);
+	if (!node->media_bus_info.empty() &&
+	    node->media_bus_info != std::string((const char *)vcap.bus_info))
+		warn("media bus_info '%s' differs from V4L2 bus_info '%s'\n",
+		     node->media_bus_info.c_str(), vcap.bus_info);
 	fail_on_test((vcap.version >> 16) < 3);
 	fail_on_test(check_0(vcap.reserved, sizeof(vcap.reserved)));
 	caps = vcap.capabilities;
@@ -805,13 +809,14 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 	if (!node.is_media())
 		media_fd = mi_get_media_fd(node.g_fd(), node.bus_info);
 
-	if (!node.is_v4l2()) {
-		int fd = node.is_media() ? node.g_fd() : media_fd;
-		if (fd >= 0) {
-			struct media_device_info mdinfo;
+	int fd = node.is_media() ? node.g_fd() : media_fd;
+	if (fd >= 0) {
+		struct media_device_info mdinfo;
 
-			if (!ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdinfo))
+		if (!ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdinfo)) {
+			if (!node.is_v4l2())
 				driver = mdinfo.driver;
+			node.media_bus_info = mdinfo.bus_info;
 		}
 	}
 
