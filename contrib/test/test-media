@@ -119,7 +119,7 @@ echo Summary:
 echo
 
 grep 'Total' $tmp
-grep 'Grand Total' $tmp | perl -e '
+grep '^Total' $tmp | perl -e '
 while (<>) {
 	($succeeded, $failed, $warnings) = /Succeeded: (\d+), Failed: (\d+), Warnings: (\d+)/;
 	$tot_succeeded += $succeeded;
