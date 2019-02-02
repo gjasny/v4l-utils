@@ -124,6 +124,7 @@ static struct option long_options[] = {
 	{"list-formats-out", no_argument, 0, OptListOutFormats},
 	{"list-formats-out-ext", no_argument, 0, OptListOutFormatsExt},
 	{"list-formats-meta", no_argument, 0, OptListMetaFormats},
+	{"list-formats-meta-out", no_argument, 0, OptListMetaOutFormats},
 	{"list-subdev-mbus-codes", optional_argument, 0, OptListSubDevMBusCodes},
 	{"list-subdev-framesizes", required_argument, 0, OptListSubDevFrameSizes},
 	{"list-subdev-frameintervals", required_argument, 0, OptListSubDevFrameIntervals},
@@ -176,6 +177,9 @@ static struct option long_options[] = {
 	{"get-fmt-meta", no_argument, 0, OptGetMetaFormat},
 	{"set-fmt-meta", required_argument, 0, OptSetMetaFormat},
 	{"try-fmt-meta", required_argument, 0, OptTryMetaFormat},
+	{"get-fmt-meta-out", no_argument, 0, OptGetMetaOutFormat},
+	{"set-fmt-meta-out", required_argument, 0, OptSetMetaOutFormat},
+	{"try-fmt-meta-out", required_argument, 0, OptTryMetaOutFormat},
 	{"get-subdev-fmt", optional_argument, 0, OptGetSubDevFormat},
 	{"set-subdev-fmt", required_argument, 0, OptSetSubDevFormat},
 	{"try-subdev-fmt", required_argument, 0, OptTrySubDevFormat},
@@ -240,6 +244,7 @@ static struct option long_options[] = {
 	{"list-buffers-sdr", no_argument, 0, OptListBuffersSdr},
 	{"list-buffers-sdr-out", no_argument, 0, OptListBuffersSdrOut},
 	{"list-buffers-meta", no_argument, 0, OptListBuffersMeta},
+	{"list-buffers-meta-out", no_argument, 0, OptListBuffersMetaOut},
 	{"stream-count", required_argument, 0, OptStreamCount},
 	{"stream-skip", required_argument, 0, OptStreamSkip},
 	{"stream-loop", no_argument, 0, OptStreamLoop},
@@ -509,6 +514,7 @@ void printfmt(int fd, const struct v4l2_format &vfmt)
 		printf("\tBuffer Size     : %u\n", vfmt.fmt.sdr.buffersize);
 		break;
 	case V4L2_BUF_TYPE_META_CAPTURE:
+	case V4L2_BUF_TYPE_META_OUTPUT:
 		printf("\tSample Format   : '%s'%s\n", fcc2s(vfmt.fmt.meta.dataformat).c_str(),
 		       printfmtname(fd, vfmt.type, vfmt.fmt.meta.dataformat).c_str());
 		printf("\tBuffer Size     : %u\n", vfmt.fmt.meta.buffersize);
@@ -1365,6 +1371,7 @@ int main(int argc, char **argv)
 		options[OptGetSdrFormat] = 1;
 		options[OptGetSdrOutFormat] = 1;
 		options[OptGetMetaFormat] = 1;
+		options[OptGetMetaOutFormat] = 1;
 		options[OptGetFBuf] = 1;
 		options[OptGetCropCap] = 1;
 		options[OptGetOutputCropCap] = 1;
