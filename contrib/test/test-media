@@ -66,12 +66,12 @@ modprobe vim2m
 modprobe vimc
 sleep 1
 
-v4l2-ctl -d0 -i3 -v width=3840,height=2160,pixelformat=NV24
-v4l2-ctl -d1 -o1 -x width=3840,height=2160,pixelformat=NV24
-v4l2-ctl -d2 -i3 -v width=3840,height=2160,pixelformat=NM16
-v4l2-ctl -d3 -o1 -x width=3840,height=2160,pixelformat=NM16
-v4l2-ctl -d4 -i3 -v width=3840,height=2160,pixelformat=NV24
-v4l2-ctl -d5 -o1 -x width=3840,height=2160,pixelformat=NM16
+v4l2-ctl -z platform:vivid-000 -d vivid-000-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
+v4l2-ctl -z platform:vivid-000 -d vivid-000-vid-out -o1 -x width=3840,height=2160,pixelformat=NV24
+v4l2-ctl -z platform:vivid-001 -d vivid-001-vid-cap -i3 -v width=3840,height=2160,pixelformat=NM16
+v4l2-ctl -z platform:vivid-001 -d vivid-001-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
+v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
+v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
 
 media-ctl -d /dev/media4 -V '1:0[fmt:SBGGR8_1X8/640x480]'
 media-ctl -d /dev/media4 -V '5:0[fmt:SBGGR8_1X8/640x480]'
@@ -83,9 +83,9 @@ echo
 tmp=`mktemp`
 
 if [ $vivid -eq 1 ]; then
-	stdbuf -oL v4l2-compliance -m0 -e4 -s10 -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance -m platform:vivid-000 -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
-	stdbuf -oL v4l2-compliance -m1 -e5 -s10 -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance -m platform:vivid-001 -z platform:vivid-002 -e vivid-002-vid-out -s10 -a 2>&1 | tee -a $tmp
 	echo
 fi
 
