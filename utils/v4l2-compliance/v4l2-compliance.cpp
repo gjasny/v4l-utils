@@ -190,10 +190,14 @@ static void usage(void)
 	printf("                     Use device <dev> as the media controller device. Besides this\n");
 	printf("                     device it also tests all interfaces it finds.\n");
 	printf("                     If <dev> starts with a digit, then /dev/media<dev> is used.\n");
+	printf("                     If <dev> doesn't exist, then attempt to find a media device with a\n");
+	printf("                     bus info string equal to <dev>.\n");
 	printf("  -M, --media-device-only <dev>\n");
 	printf("                     Use device <dev> as the media controller device. Only test this\n");
 	printf("                     device, don't walk over all the interfaces.\n");
 	printf("                     If <dev> starts with a digit, then /dev/media<dev> is used.\n");
+	printf("                     If <dev> doesn't exist, then attempt to find a media device with a\n");
+	printf("                     bus info string equal to <dev>.\n");
 	printf("  -s, --streaming <count>\n");
 	printf("                     Enable the streaming tests. Set <count> to the number of\n");
 	printf("                     frames to stream (default 60). Requires a valid input/output\n");
@@ -783,7 +787,7 @@ static int parse_subopt(char **subs, const char * const *subopts, char **value)
 	return opt;
 }
 
-static int open_media_bus_info(const std::string &bus_info)
+static int open_media_bus_info(const std::string &bus_info, std::string &media_devname)
 {
 	DIR *dp;
 	struct dirent *ep;
@@ -797,11 +801,12 @@ static int open_media_bus_info(const std::string &bus_info)
 
 		if (!memcmp(name, "media", 5) && isdigit(name[5])) {
 			struct media_device_info mdi;
-			std::string devname = std::string("/dev/") + name;
+			media_devname = std::string("/dev/") + name;
 
-			int fd = open(devname.c_str(), O_RDWR);
+			int fd = open(media_devname.c_str(), O_RDWR);
 			if (fd < 0)
 				continue;
+			ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi);
 			if (!ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi) &&
 			    bus_info == mdi.bus_info) {
 				closedir(dp);
@@ -814,20 +819,26 @@ static int open_media_bus_info(const std::string &bus_info)
 	return -1;
 }
 
-static const char *make_devname(const char *device, const char *devname,
-				const std::string &media_bus_info)
+static std::string make_devname(const char *device, const char *devname,
+				const std::string &media_bus_info, bool is_media = false)
 {
 	if (device[0] >= '0' && device[0] <= '9' && strlen(device) <= 3) {
-		static char newdev[32];
+		char newdev[32];
 
 		sprintf(newdev, "/dev/%s%s", devname, device);
 		return newdev;
 	}
 	if (media_bus_info.empty())
 		return device;
-	int media_fd = open_media_bus_info(media_bus_info);
+
+	std::string media_devname;
+	int media_fd = open_media_bus_info(media_bus_info, media_devname);
 	if (media_fd < 0)
 		return device;
+	if (is_media) {
+		close(media_fd);
+		return media_devname.c_str();
+	}
 
 	media_v2_topology topology;
 	memset(&topology, 0, sizeof(topology));
@@ -1408,8 +1419,8 @@ int main(int argc, char **argv)
 
 	/* command args */
 	int ch;
-	const char *device = "/dev/video0";
-	const char *expbuf_device = NULL;	/* --expbuf-device device */
+	std::string device("/dev/video0");
+	std::string expbuf_device;	/* --expbuf-device device */
 	struct utsname uts;
 	int v1, v2, v3;
 	unsigned frame_count = 60;
@@ -1490,20 +1501,14 @@ int main(int argc, char **argv)
 			break;
 		case OptSetMediaDevice:
 		case OptSetMediaDeviceOnly:
-			device = make_devname(optarg, "media", media_bus_info);
+			device = make_devname(optarg, "media", optarg, true);
 			type = MEDIA_TYPE_MEDIA;
 			break;
 		case OptMediaBusInfo:
 			media_bus_info = optarg;
 			break;
 		case OptSetExpBufDevice:
-			expbuf_device = optarg;
-			if (expbuf_device[0] >= '0' && expbuf_device[0] <= '9' && strlen(expbuf_device) <= 3) {
-				static char newdev[20];
-
-				sprintf(newdev, "/dev/video%s", expbuf_device);
-				expbuf_device = newdev;
-			}
+			expbuf_device = make_devname(optarg, "video", media_bus_info);
 			break;
 		case OptStreaming:
 			if (optarg)
@@ -1602,46 +1607,46 @@ int main(int argc, char **argv)
 	int fd;
 
 	if (type == MEDIA_TYPE_UNKNOWN)
-		type = mi_media_detect_type(device);
+		type = mi_media_detect_type(device.c_str());
 	if (type == MEDIA_TYPE_CANT_STAT) {
 		fprintf(stderr, "Cannot open device %s, exiting.\n",
-			device);
+			device.c_str());
 		exit(1);
 	}
 	if (type == MEDIA_TYPE_UNKNOWN) {
 		fprintf(stderr, "Unable to detect what device %s is, exiting.\n",
-			device);
+			device.c_str());
 		exit(1);
 	}
 
-	node.device = device;
+	node.device = device.c_str();
 	node.s_trace(options[OptTrace]);
 	switch (type) {
 	case MEDIA_TYPE_MEDIA:
 		node.s_direct(true);
-		fd = node.media_open(device, false);
+		fd = node.media_open(device.c_str(), false);
 		break;
 	case MEDIA_TYPE_SUBDEV:
 		node.s_direct(true);
-		fd = node.subdev_open(device, false);
+		fd = node.subdev_open(device.c_str(), false);
 		break;
 	default:
 		node.s_direct(direct);
-		fd = node.open(device, false);
+		fd = node.open(device.c_str(), false);
 		break;
 	}
 	if (fd < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", device,
+		fprintf(stderr, "Failed to open %s: %s\n", device.c_str(),
 			strerror(errno));
 		exit(1);
 	}
 
-	if (expbuf_device) {
+	if (!expbuf_device.empty()) {
 		expbuf_node.s_trace(options[OptTrace]);
 		expbuf_node.s_direct(true);
-		fd = expbuf_node.open(expbuf_device, false);
+		fd = expbuf_node.open(expbuf_device.c_str(), false);
 		if (fd < 0) {
-			fprintf(stderr, "Failed to open %s: %s\n", expbuf_device,
+			fprintf(stderr, "Failed to open %s: %s\n", expbuf_device.c_str(),
 				strerror(errno));
 			exit(1);
 		}
@@ -1649,7 +1654,7 @@ int main(int argc, char **argv)
 
 	testNode(node, expbuf_node, type, frame_count);
 
-	if (expbuf_device)
+	if (!expbuf_device.empty())
 		expbuf_node.close();
 	if (media_fd >= 0)
 		close(media_fd);

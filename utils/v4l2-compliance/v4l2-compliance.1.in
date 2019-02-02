@@ -100,10 +100,14 @@ device nodes. Example: v4l2-compliance -z platform:vivid-000 -d vivid-000-vid-ca
 \fB\-m\fR, \fB\-\-media\-device\fR \fI<dev>\fR
 Use device \fI<dev>\fR as the media controller device. Besides this device it also tests
 all interfaces it finds.  If \fI<dev>\fR starts with a digit, then /dev/media\fI<dev>\fR is used.
+If \fI<dev>\fR doesn't exist, then attempt to find a media device with a
+bus info string equal to \fI<dev>\fR. Example: v4l2-compliance -m platform:vivid-000
 .TP
 \fB\-M\fR, \fB\-\-media\-device\-only\fR \fI<dev>\fR
 Use device \fI<dev>\fR as the media controller device. Only test this device, don't walk
 over all the interfaces.  If \fI<dev>\fR starts with a digit, then /dev/media\fI<dev>\fR is used.
+If \fI<dev>\fR doesn't exist, then attempt to find a media device with a
+bus info string equal to \fI<dev>\fR. Example: v4l2-compliance -M platform:vivid-000
 .TP
 .TP
 \fB\-\-stream\-from\fR \fI[<pixelformat>=]<file>\fR, \fB\-\-stream\-from\-hdr\fR \fI[<pixelformat>=]<file>\fR
