@@ -566,8 +566,10 @@ static void log_u8_array(const char *arg_name, unsigned num, const __u8 *vals)
    In general the lower case is used to set something and the upper
    case is used to retrieve a setting. */
 enum Option {
+	OptSetAdapter = 'a',
 	OptClear = 'C',
 	OptSetDevice = 'd',
+	OptSetDriver = 'D',
 	OptFrom = 'f',
 	OptHelp = 'h',
 	OptLogicalAddress = 'l',
@@ -658,6 +660,8 @@ static void init_messages()
 
 static struct option long_options[] = {
 	{ "device", required_argument, 0, OptSetDevice },
+	{ "adapter", required_argument, 0, OptSetAdapter },
+	{ "driver", required_argument, 0, OptSetDriver },
 	{ "help", no_argument, 0, OptHelp },
 	{ "trace", no_argument, 0, OptTrace },
 	{ "verbose", no_argument, 0, OptVerbose },
@@ -732,6 +736,8 @@ static void usage(void)
 	printf("Usage:\n"
 	       "  -d, --device <dev>       Use device <dev> instead of /dev/cec0\n"
 	       "                           If <dev> starts with a digit, then /dev/cec<dev> is used.\n"
+	       "  -D, --driver <driver>    Use a cec device with this driver name\n"
+	       "  -a, --adapter <adapter>  Use a cec device with this adapter name\n"
 	       "  -p, --phys-addr <addr>   Use this physical address\n"
 	       "  -o, --osd-name <name>    Use this OSD name\n"
 	       "  -V, --vendor-id <id>     Use this vendor ID\n"
@@ -1688,7 +1694,9 @@ static void list_devices()
 
 int main(int argc, char **argv)
 {
-	const char *device = "/dev/cec0";	/* -d device */
+	std::string device;
+	const char *driver = NULL;
+	const char *adapter = NULL;
 	const message *opt;
 	msg_vec msgs;
 	char short_options[26 * 2 * 2 + 1];
@@ -1740,12 +1748,18 @@ int main(int argc, char **argv)
 			return 0;
 		case OptSetDevice:
 			device = optarg;
-			if (device[0] >= '0' && device[0] <= '9' && strlen(device) <= 3) {
+			if (device[0] >= '0' && device[0] <= '9' && device.length() <= 3) {
 				static char newdev[20];
 
-				sprintf(newdev, "/dev/cec%s", device);
+				sprintf(newdev, "/dev/cec%s", optarg);
 				device = newdev;
 			}
+			break;
+		case OptSetDriver:
+			driver = optarg;
+			break;
+		case OptSetAdapter:
+			adapter = optarg;
 			break;
 		case OptVerbose:
 			verbose = true;
@@ -2137,11 +2151,22 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	if (device.empty() && (driver || adapter)) {
+		device = cec_device_find(driver, adapter);
+		if (device.empty()) {
+			fprintf(stderr,
+				"Could not find a CEC device for the given driver/adapter combination\n");
+			exit(1);
+		}
+	}
+	if (device.empty())
+		device = "/dev/cec0";
+
 	clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
 	gettimeofday(&start_timeofday, NULL);
 
-	if ((fd = open(device, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", device,
+	if ((fd = open(device.c_str(), O_RDWR)) < 0) {
+		fprintf(stderr, "Failed to open %s: %s\n", device.c_str(),
 			strerror(errno));
 		exit(1);
 	}
@@ -2150,7 +2175,7 @@ int main(int argc, char **argv)
 	struct cec_caps caps = { };
 
 	node.fd = fd;
-	node.device = device;
+	node.device = device.c_str();
 	doioctl(&node, CEC_ADAP_G_CAPS, &caps);
 	node.caps = caps.capabilities;
 	node.available_log_addrs = caps.available_log_addrs;
