@@ -33,7 +33,9 @@
    In general the lower case is used to set something and the upper
    case is used to retrieve a setting. */
 enum Option {
+	OptSetAdapter = 'a',
 	OptSetDevice = 'd',
+	OptSetDriver = 'D',
 	OptHelp = 'h',
 	OptNoWarnings = 'n',
 	OptTrace = 'T',
@@ -54,6 +56,8 @@ unsigned warnings;
 
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
+	{"adapter", required_argument, 0, OptSetAdapter},
+	{"driver", required_argument, 0, OptSetDriver},
 	{"help", no_argument, 0, OptHelp},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
 	{"trace", no_argument, 0, OptTrace},
@@ -70,6 +74,8 @@ static void usage(void)
 	printf("Usage:\n"
 	       "  -d, --device <dev>  Use device <dev> instead of /dev/cec0\n"
 	       "                      If <dev> starts with a digit, then /dev/cec<dev> is used.\n"
+	       "  -D, --driver <driver>    Use a cec device with this driver name\n"
+	       "  -a, --adapter <adapter>  Use a cec device with this adapter name\n"
 	       "  -h, --help          Display this help message\n"
 	       "  -n, --no-warnings   Turn off warning messages\n"
 	       "  -T, --trace         Trace all called ioctls\n"
@@ -296,7 +302,9 @@ void state_init(struct node &node)
 
 int main(int argc, char **argv)
 {
-	const char *device = "/dev/cec0";	/* -d device */
+	std::string device;
+	const char *driver = NULL;
+	const char *adapter = NULL;
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
 	int fd = -1;
@@ -342,12 +350,18 @@ int main(int argc, char **argv)
 			return 0;
 		case OptSetDevice:
 			device = optarg;
-			if (device[0] >= '0' && device[0] <= '9' && strlen(device) <= 3) {
+			if (device[0] >= '0' && device[0] <= '9' && device.length() <= 3) {
 				static char newdev[20];
 
-				sprintf(newdev, "/dev/cec%s", device);
+				sprintf(newdev, "/dev/cec%s", optarg);
 				device = newdev;
 			}
+			break;
+		case OptSetDriver:
+			driver = optarg;
+			break;
+		case OptSetAdapter:
+			adapter = optarg;
 			break;
 		case OptNoWarnings:
 			show_warnings = false;
@@ -385,8 +399,19 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if ((fd = open(device, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", device,
+	if (device.empty() && (driver || adapter)) {
+		device = cec_device_find(driver, adapter);
+		if (device.empty()) {
+			fprintf(stderr,
+				"Could not find a CEC device for the given driver/adapter combination\n");
+			exit(1);
+		}
+	}
+	if (device.empty())
+		device = "/dev/cec0";
+
+	if ((fd = open(device.c_str(), O_RDWR)) < 0) {
+		fprintf(stderr, "Failed to open %s: %s\n", device.c_str(),
 			strerror(errno));
 		exit(1);
 	}
@@ -395,7 +420,7 @@ int main(int argc, char **argv)
 	struct cec_caps caps = { };
 
 	node.fd = fd;
-	node.device = device;
+	node.device = device.c_str();
 	doioctl(&node, CEC_ADAP_G_CAPS, &caps);
 	node.caps = caps.capabilities;
 	node.available_log_addrs = caps.available_log_addrs;

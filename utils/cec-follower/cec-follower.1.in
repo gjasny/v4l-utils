@@ -48,6 +48,16 @@ clean and known initial state.
 \fB\-d\fR, \fB\-\-device\fR \fI<dev>\fR
 Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is used.
 .TP
+\fB\-D\fR, \fB\-\-driver\fR \fI<drv>\fR
+Use a cec device that has driver name \fI<drv>\fR, as returned by the CEC_ADAP_G_CAPS ioctl.
+This option can be combined with \fB\-a\fR to uniquely identify a CEC device without
+having to rely on the device node number.
+.TP
+\fB\-a\fR, \fB\-\-adapter\fR \fI<adap-name>\fR
+Use a cec device that has adapter name \fI<adap-name>\fR, as returned by the CEC_ADAP_G_CAPS ioctl.
+This option can be combined with \fB\-D\fR to uniquely identify a CEC device without
+having to rely on the device node number.
+.TP
 \fB\-v\fR, \fB\-\-verbose\fR
 Turn on verbose reporting.
 .TP
