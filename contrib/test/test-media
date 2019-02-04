@@ -90,16 +90,16 @@ if [ $vivid -eq 1 ]; then
 fi
 
 if [ $cec -eq 1 ]; then
-	cec-ctl -s -d0 --tv
-	cec-ctl -s -d1 --playback
+	cec-ctl -s -D vivid -a vivid-000-vid-cap0 --tv
+	cec-ctl -s -D vivid -a vivid-000-vid-out0 --playback
 	trap 'kill $f0 $f1 2>/dev/null' INT
-	cec-follower -s -d0 2>&1 >/dev/null &
+	cec-follower -s -D vivid -a vivid-000-vid-cap0 2>&1 >/dev/null &
 	f0=$!
-	cec-follower -s -d1 2>&1 >/dev/null &
+	cec-follower -s -D vivid -a vivid-000-vid-out0 2>&1 >/dev/null &
 	f1=$!
-	stdbuf -oL cec-compliance -d0 -A -r4 -t10 $cecpwr 2>&1 | tee -a $tmp
+	stdbuf -oL cec-compliance -D vivid -a vivid-000-vid-cap0 -A -r4 -t10 $cecpwr 2>&1 | tee -a $tmp
 	sleep 5
-	stdbuf -oL cec-compliance -d1 -A -r0 -t10 $cecpwr 2>&1 | tee -a $tmp
+	stdbuf -oL cec-compliance -D vivid -a vivid-000-vid-out0 -A -r0 -t10 $cecpwr 2>&1 | tee -a $tmp
 	kill $f0
 	kill $f1
 	echo
