@@ -34,8 +34,10 @@
    In general the lower case is used to set something and the upper
    case is used to retrieve a setting. */
 enum Option {
+	OptSetAdapter = 'a',
 	OptTestAdapter = 'A',
 	OptSetDevice = 'd',
+	OptSetDriver = 'D',
 	OptExitOnFail = 'E',
 	OptHelp = 'h',
 	OptInteractive = 'i',
@@ -108,6 +110,8 @@ time_t long_timeout = 60;
 
 static struct option long_options[] = {
 	{"device", required_argument, 0, OptSetDevice},
+	{"adapter", required_argument, 0, OptSetAdapter},
+	{"driver", required_argument, 0, OptSetDriver},
 	{"help", no_argument, 0, OptHelp},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
 	{"exit-on-fail", no_argument, 0, OptExitOnFail},
@@ -170,6 +174,8 @@ static void usage(void)
 	printf("Usage:\n"
 	       "  -d, --device <dev>   Use device <dev> instead of /dev/cec0\n"
 	       "                       If <dev> starts with a digit, then /dev/cec<dev> is used.\n"
+	       "  -D, --driver <driver>    Use a cec device with this driver name\n"
+	       "  -a, --adapter <adapter>  Use a cec device with this adapter name\n"
 	       "  -r, --remote [<la>]  As initiator test the remote logical address or all LAs if no LA was given\n"
 	       "  -R, --reply-threshold <timeout>\n"
 	       "                       Warn if replies take longer than this threshold (default 1000ms)\n"
@@ -1039,7 +1045,9 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 
 int main(int argc, char **argv)
 {
-	const char *device = "/dev/cec0";	/* -d device */
+	std::string device;
+	const char *driver = NULL;
+	const char *adapter = NULL;
 	char short_options[26 * 2 * 2 + 1];
 	int remote_la = -1;
 	bool test_remote = false;
@@ -1088,12 +1096,18 @@ int main(int argc, char **argv)
 			return 0;
 		case OptSetDevice:
 			device = optarg;
-			if (device[0] >= '0' && device[0] <= '9' && strlen(device) <= 3) {
+			if (device[0] >= '0' && device[0] <= '9' && device.length() <= 3) {
 				static char newdev[20];
 
-				sprintf(newdev, "/dev/cec%s", device);
+				sprintf(newdev, "/dev/cec%s", optarg);
 				device = newdev;
 			}
+			break;
+		case OptSetDriver:
+			driver = optarg;
+			break;
+		case OptSetAdapter:
+			adapter = optarg;
 			break;
 		case OptReplyThreshold:
 			reply_threshold = strtoul(optarg, NULL, 0);
@@ -1146,8 +1160,19 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if ((fd = open(device, O_RDWR)) < 0) {
-		fprintf(stderr, "Failed to open %s: %s\n", device,
+	if (device.empty() && (driver || adapter)) {
+		device = cec_device_find(driver, adapter);
+		if (device.empty()) {
+			fprintf(stderr,
+				"Could not find a CEC device for the given driver/adapter combination\n");
+			exit(1);
+		}
+	}
+	if (device.empty())
+		device = "/dev/cec0";
+
+	if ((fd = open(device.c_str(), O_RDWR)) < 0) {
+		fprintf(stderr, "Failed to open %s: %s\n", device.c_str(),
 			strerror(errno));
 		exit(1);
 	}
@@ -1156,7 +1181,7 @@ int main(int argc, char **argv)
 	struct cec_caps caps = { };
 
 	node.fd = fd;
-	node.device = device;
+	node.device = device.c_str();
 	doioctl(&node, CEC_ADAP_G_CAPS, &caps);
 	node.caps = caps.capabilities;
 	node.available_log_addrs = caps.available_log_addrs;
@@ -1308,7 +1333,8 @@ int main(int argc, char **argv)
 		exit(-1);
 
 	if (!options[OptSkipInfo]) {
-		printf("\nCompliance test for %s device %s:\n\n", caps.driver, device);
+		printf("\nCompliance test for %s device %s:\n\n",
+		       caps.driver, device.c_str());
 		printf("    The test results mean the following:\n"
 		       "        OK                  Supported correctly by the device.\n"
 		       "        OK (Not Supported)  Not supported and not mandatory for the device.\n"
@@ -1332,7 +1358,7 @@ int main(int argc, char **argv)
 	}
 
 	if (options[OptTestAdapter])
-		testAdapter(node, laddrs, device);
+		testAdapter(node, laddrs, device.c_str());
 	printf("\n");
 
 	printf("Network topology:\n");
@@ -1363,7 +1389,7 @@ int main(int argc, char **argv)
 	close(fd);
 
 	printf("Total for %s device %s: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
-	       caps.driver, device,
+	       caps.driver, device.c_str(),
 	       tests_total, tests_ok, tests_total - tests_ok, warnings);
 	exit(app_result);
 }
