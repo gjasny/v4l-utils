@@ -7,6 +7,10 @@
 
 #include <stdio.h>
 #include <string>
+#include <unistd.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <sys/ioctl.h>
 #include <cec-info.h>
 
 static std::string caps2s(unsigned caps)
@@ -437,4 +441,40 @@ void cec_driver_info(const struct cec_caps &caps,
 				break;
 		}
 	}
+}
+
+std::string cec_device_find(const char *driver, const char *adapter)
+{
+	DIR *dp;
+	struct dirent *ep;
+	std::string name;
+
+	dp = opendir("/dev");
+	if (dp == NULL) {
+		perror("Couldn't open the directory");
+		return name;
+	}
+	while ((ep = readdir(dp)))
+		if (!memcmp(ep->d_name, "cec", 3) && isdigit(ep->d_name[3])) {
+			std::string devname("/dev/");
+			struct cec_caps caps;
+			int fd;
+
+			devname += ep->d_name;
+			fd = open(devname.c_str(), O_RDWR);
+
+			if (fd < 0)
+				continue;
+			int err = ioctl(fd, CEC_ADAP_G_CAPS, &caps);
+			close(fd);
+			if (err)
+				continue;
+			if ((!driver || !strcmp(driver, caps.driver)) &&
+			    (!adapter || !strcmp(adapter, caps.name))) {
+				name = devname;
+				break;
+			}
+		}
+	closedir(dp);
+	return name;
 }
