@@ -118,16 +118,22 @@ fi
 echo Summary:
 echo
 
-grep 'Total' $tmp
-grep '^Total' $tmp | perl -e '
+grep 'Total' $tmp | perl -e '
 while (<>) {
+	if (/Total/) {
+		print;
+		$added_nl = /^Grand/ || /\/dev\/cec/;
+		printf("\n") if $added_nl;
+	}
+	next unless /^Total/;
 	($succeeded, $failed, $warnings) = /Succeeded: (\d+), Failed: (\d+), Warnings: (\d+)/;
 	$tot_succeeded += $succeeded;
 	$tot_failed += $failed;
 	$tot_warnings += $warnings;
 }
 
-printf("\nFinal Summary: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
+printf("\n") unless $added_nl;
+printf("Final Summary: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 	$tot_succeeded + $tot_failed, $tot_succeeded, $tot_failed, $tot_warnings);
 '
 
