@@ -990,12 +990,9 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_SBGGR10P:
 	case V4L2_PIX_FMT_SGBRG10P:
 	case V4L2_PIX_FMT_SGRBG10P:
-	case V4L2_PIX_FMT_SRGGB10P:
-		if (src_size < ((width * height * 10)/8)) {
-			V4LCONVERT_ERR("short raw bayer10 data frame\n");
-			errno = EPIPE;
-			result = -1;
-		}
+	case V4L2_PIX_FMT_SRGGB10P: {
+		int b10format = 1;
+
 		switch (src_pix_fmt) {
 		case V4L2_PIX_FMT_SBGGR10P:
 			src_pix_fmt = V4L2_PIX_FMT_SBGGR8;
@@ -1009,10 +1006,23 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 		case V4L2_PIX_FMT_SRGGB10P:
 			src_pix_fmt = V4L2_PIX_FMT_SRGGB8;
 			break;
+		default:
+			b10format = 0;
+			break;
 		}
-		v4lconvert_bayer10p_to_bayer8(src, src, width, height);
-		bytesperline = width;
 
+		if (b10format) {
+			if (src_size < ((width * height * 10)/8)) {
+				V4LCONVERT_ERR
+					("short raw bayer10 data frame\n");
+				errno = EPIPE;
+				result = -1;
+				break;
+			}
+			v4lconvert_bayer10p_to_bayer8(src, src, width, height);
+			bytesperline = width;
+		}
+	}
 	/* Fall-through*/
 	case V4L2_PIX_FMT_SBGGR8:
 	case V4L2_PIX_FMT_SGBRG8:
