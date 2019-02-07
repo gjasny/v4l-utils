@@ -183,6 +183,7 @@ enum Option {
 	OptSetOutputParm,
 	OptQueryStandard,
 	OptPollForEvent,
+	OptEPollForEvent,
 	OptWaitForEvent,
 	OptGetPriority,
 	OptSetPriority,

@@ -28,6 +28,7 @@
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/epoll.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
@@ -216,6 +217,7 @@ static struct option long_options[] = {
 	{"set-priority", required_argument, 0, OptSetPriority},
 	{"wait-for-event", required_argument, 0, OptWaitForEvent},
 	{"poll-for-event", required_argument, 0, OptPollForEvent},
+	{"epoll-for-event", required_argument, 0, OptEPollForEvent},
 	{"overlay", required_argument, 0, OptOverlay},
 	{"sleep", required_argument, 0, OptSleep},
 	{"list-devices", no_argument, 0, OptListDevices},
@@ -1080,6 +1082,8 @@ int main(int argc, char **argv)
 	const char *wait_event_id = NULL;
 	__u32 poll_for_event = 0;	/* poll for this event */
 	const char *poll_event_id = NULL;
+	__u32 epoll_for_event = 0;	/* epoll for this event */
+	const char *epoll_event_id = NULL;
 	unsigned secs = 0;
 	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
@@ -1192,6 +1196,11 @@ int main(int argc, char **argv)
 		case OptPollForEvent:
 			poll_for_event = parse_event(optarg, &poll_event_id);
 			if (poll_for_event == 0)
+				return 1;
+			break;
+		case OptEPollForEvent:
+			epoll_for_event = parse_event(optarg, &epoll_event_id);
+			if (epoll_for_event == 0)
 				return 1;
 			break;
 		case OptSleep:
@@ -1347,6 +1356,11 @@ int main(int argc, char **argv)
 			fprintf(stderr, "unknown control '%s'\n", poll_event_id);
 			exit(1);
 		}
+	if (epoll_for_event == V4L2_EVENT_CTRL && epoll_event_id)
+		if (!common_find_ctrl_id(epoll_event_id)) {
+			fprintf(stderr, "unknown control '%s'\n", epoll_event_id);
+			exit(1);
+		}
 
 	if (options[OptAll]) {
 		options[OptGetVideoFormat] = 1;
@@ -1495,6 +1509,46 @@ int main(int argc, char **argv)
 				}
 			}
 		}
+	}
+
+	if (options[OptEPollForEvent]) {
+		struct epoll_event epoll_ev;
+		int epollfd = -1;
+		struct v4l2_event_subscription sub;
+		struct v4l2_event ev;
+
+		epollfd = epoll_create1(0);
+		epoll_ev.events = EPOLLPRI;
+		epoll_ev.data.fd = fd;
+
+		memset(&sub, 0, sizeof(sub));
+		sub.flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
+		sub.type = epoll_for_event;
+		if (epoll_for_event == V4L2_EVENT_CTRL)
+			sub.id = common_find_ctrl_id(epoll_event_id);
+		else if (epoll_for_event == V4L2_EVENT_SOURCE_CHANGE)
+			sub.id = strtoul(epoll_event_id, 0L, 0);
+		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub)) {
+			__u32 seq = 0;
+
+			fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+			epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &epoll_ev);
+			while (1) {
+				int res;
+
+				res = epoll_wait(epollfd, &epoll_ev, 1, -1);
+				if (res <= 0)
+					break;
+				if (!doioctl(fd, VIDIOC_DQEVENT, &ev)) {
+					print_event(&ev);
+					if (ev.sequence > seq)
+						printf("\tMissed %d events\n",
+							ev.sequence - seq);
+					seq = ev.sequence + 1;
+				}
+			}
+		}
+		close(epollfd);
 	}
 
 	if (options[OptSleep]) {
