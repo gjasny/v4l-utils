@@ -75,9 +75,8 @@ v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=216
 
 media-ctl -d /dev/media4 -V '1:0[fmt:SBGGR8_1X8/640x480]'
 media-ctl -d /dev/media4 -V '5:0[fmt:SBGGR8_1X8/640x480]'
-v4l2-ctl -d9 -v width=1920,height=1440
-v4l2-ctl -d9 -v width=1920,height=1440
-v4l2-ctl -d7 -v pixelformat=BA81
+v4l2-ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
+v4l2-ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
 echo
 
 tmp=`mktemp`
@@ -106,12 +105,12 @@ if [ $cec -eq 1 ]; then
 fi
 
 if [ $vim2m -eq 1 ]; then
-	stdbuf -oL v4l2-compliance -m3 -e4 -s10 -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
 fi
 
 if [ $vimc -eq 1 ]; then
-	stdbuf -oL v4l2-compliance -m4 -e4 -s10 -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
 fi
 
