@@ -2577,6 +2577,8 @@ static int streamM2MOutFormat(struct node *node, __u32 pixelformat, __u32 w, __u
 
 		fail_on_test(node->g_fmt(fmt));
 		fmt.s_pixelformat(fmtdesc.pixelformat);
+		fmt.s_width(w);
+		fmt.s_height(h);
 		fail_on_test(node->s_fmt(fmt));
 		streamM2MRun(node, frame_count);
 	} while (!node->enum_fmt(fmtdesc));
@@ -2599,7 +2601,7 @@ void streamM2MAllFormats(struct node *node, unsigned frame_count)
 			cv4l_fmt min, max;
 
 			restoreFormat(node);
-			node->g_fmt(fmt);
+			node->g_fmt(fmt, out_type);
 			min = fmt;
 			min.s_width(0);
 			min.s_height(0);
@@ -2640,26 +2642,26 @@ void streamM2MAllFormats(struct node *node, unsigned frame_count)
 			} while (!node->enum_framesizes(frmsize));
 			break;
 		default:
-			restoreFormat(node);
-			streamM2MOutFormat(node, fmtdesc.pixelformat,
-					   ss.min_width, ss.min_height,
-					   frame_count);
-			restoreFormat(node);
-			if (ss.max_width != ss.min_width ||
-			    ss.max_height != ss.min_height) {
+			node->g_fmt(fmt, out_type);
+
+			if (fmt.g_width() != ss.min_width ||
+			    fmt.g_frame_height() != ss.min_height)  {
+				streamM2MOutFormat(node, fmtdesc.pixelformat,
+						   ss.min_width, ss.min_height,
+						   frame_count);
+				restoreFormat(node);
+			}
+			if (fmt.g_width() != ss.max_width ||
+			    fmt.g_frame_height() != ss.max_height)  {
 				streamM2MOutFormat(node, fmtdesc.pixelformat,
 						   ss.max_width, ss.max_height,
 						   frame_count);
 				restoreFormat(node);
 			}	
-			node->g_fmt(fmt);
-			if (fmt.g_width() != ss.min_width ||
-			    fmt.g_frame_height() != ss.min_height) {
-				streamM2MOutFormat(node, fmtdesc.pixelformat,
-						   fmt.g_width(), fmt.g_frame_height(),
-						   frame_count);
-				restoreFormat(node);
-			}
+			streamM2MOutFormat(node, fmtdesc.pixelformat,
+					   fmt.g_width(), fmt.g_frame_height(),
+					   frame_count);
+			restoreFormat(node);
 			break;
 		}
 	} while (!node->enum_fmt(fmtdesc));
