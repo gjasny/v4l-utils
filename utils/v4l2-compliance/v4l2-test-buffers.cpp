@@ -935,17 +935,19 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 					req_idx = (req_idx + 1) % (2 * q.g_buffers());
 				} while (buf_req_fds[req_idx] < 0);
 			}
-			if (--count == 0)
+			count--;
+			if (!node->is_m2m && !count)
 				break;
 		}
 		if (!node->is_m2m)
 			continue;
 
 		buf.init(m2m_q);
-		ret = buf.dqbuf(node);
-		if (ret == EAGAIN)
-			continue;
+		do {
+			ret = buf.dqbuf(node);
+		} while (ret == EAGAIN);
 		capture_count++;
+
 		if (show_info)
 			printf("\t\t%s Buffer: %d Sequence: %d Field: %s Size: %d Timestamp: %ld.%06lds\n",
 			       v4l_type_is_output(buf.g_type()) ? "Out" : "Cap",
@@ -966,6 +968,8 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 		}
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 		buf.s_flags(buf.g_flags() & ~V4L2_BUF_FLAG_REQUEST_FD);
+		if (!count)
+			break;
 		fail_on_test(buf.qbuf(node, m2m_q));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 	}
@@ -2094,7 +2098,7 @@ static int testStreaming(struct node *node, unsigned frame_count)
 				return 0;
 			fail_on_test(node->qbuf(buf));
 			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
-			if (frame_count-- == 0)
+			if (--frame_count == 0)
 				break;
 		}
 		q.free(node);
@@ -2211,11 +2215,11 @@ static void streamFmtRun(struct node *node, cv4l_fmt &fmt, unsigned frame_count,
 	node->reopen();
 }
 
-static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4l2_fract *f)
+static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h,
+		      v4l2_fract *f, unsigned frame_count)
 {
 	const char *op = (node->g_caps() & V4L2_CAP_STREAMING) ? "MMAP" :
 		(node->can_capture ? "read()" : "write()");
-	unsigned frame_count = f ? 1.0 / fract2f(f) : 10;
 	bool has_compose = node->cur_io_has_compose();
 	bool has_crop = node->cur_io_has_crop();
 	__u32 default_field;
@@ -2232,6 +2236,8 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 	cv4l_fmt fmt;
 	char hz[32] = "";
 
+	if (!frame_count)
+		frame_count = f ? 1.0 / fract2f(f) : 10;
 	node->g_fmt(fmt);
 	fmt.s_pixelformat(pixelformat);
 	fmt.s_width(w);
@@ -2432,26 +2438,28 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h, v4
 	restoreCropCompose(node, fmt.g_field(), crop, compose);
 }
 
-static void streamIntervals(struct node *node, __u32 pixelformat, __u32 w, __u32 h)
+static void streamIntervals(struct node *node, __u32 pixelformat, __u32 w, __u32 h,
+			    unsigned frame_count)
 {
 	v4l2_frmivalenum frmival = { 0 };
 
 	if (node->enum_frameintervals(frmival, pixelformat, w, h)) {
-		streamFmt(node, pixelformat, w, h, NULL);
+		streamFmt(node, pixelformat, w, h, NULL, frame_count);
 		return;
 	}
 
 	if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE) {
 		do {
-			streamFmt(node, pixelformat, w, h, &frmival.discrete);
+			streamFmt(node, pixelformat, w, h, &frmival.discrete,
+				  frame_count);
 		} while (!node->enum_frameintervals(frmival));
 		return;
 	}
-	streamFmt(node, pixelformat, w, h, &frmival.stepwise.min);
-	streamFmt(node, pixelformat, w, h, &frmival.stepwise.max);
+	streamFmt(node, pixelformat, w, h, &frmival.stepwise.min, frame_count);
+	streamFmt(node, pixelformat, w, h, &frmival.stepwise.max, frame_count);
 }
 
-void streamAllFormats(struct node *node)
+void streamAllFormats(struct node *node, unsigned frame_count)
 {
 	v4l2_fmtdesc fmtdesc;
 
@@ -2478,17 +2486,20 @@ void streamAllFormats(struct node *node)
 			if (min.g_width() != fmt.g_width() ||
 			    min.g_height() != fmt.g_height()) {
 				streamIntervals(node, fmtdesc.pixelformat,
-					min.g_width(), min.g_frame_height());
+					min.g_width(), min.g_frame_height(),
+					frame_count);
 				restoreFormat(node);
 			}
 			if (max.g_width() != fmt.g_width() ||
 			    max.g_height() != fmt.g_height()) {
 				streamIntervals(node, fmtdesc.pixelformat,
-					max.g_width(), max.g_frame_height());
+					max.g_width(), max.g_frame_height(),
+					frame_count);
 				restoreFormat(node);
 			}
 			streamIntervals(node, fmtdesc.pixelformat,
-					fmt.g_width(), fmt.g_frame_height());
+					fmt.g_width(), fmt.g_frame_height(),
+					frame_count);
 			continue;
 		}
 
@@ -2499,25 +2510,154 @@ void streamAllFormats(struct node *node)
 			do {
 				streamIntervals(node, fmtdesc.pixelformat,
 						frmsize.discrete.width,
-						frmsize.discrete.height);
+						frmsize.discrete.height,
+						frame_count);
 			} while (!node->enum_framesizes(frmsize));
 			break;
 		default:
 			restoreFormat(node);
 			streamIntervals(node, fmtdesc.pixelformat,
-					ss.min_width, ss.min_height);
+					ss.min_width, ss.min_height,
+					frame_count);
 			restoreFormat(node);
 			if (ss.max_width != ss.min_width ||
 			    ss.max_height != ss.min_height) {
 				streamIntervals(node, fmtdesc.pixelformat,
-						ss.max_width, ss.max_height);
+						ss.max_width, ss.max_height,
+						frame_count);
 				restoreFormat(node);
 			}	
 			node->g_fmt(fmt);
 			if (fmt.g_width() != ss.min_width ||
 			    fmt.g_frame_height() != ss.min_height) {
 				streamIntervals(node, fmtdesc.pixelformat,
-					fmt.g_width(), fmt.g_frame_height());
+					fmt.g_width(), fmt.g_frame_height(),
+					frame_count);
+				restoreFormat(node);
+			}
+			break;
+		}
+	} while (!node->enum_fmt(fmtdesc));
+}
+
+static void streamM2MRun(struct node *node, unsigned frame_count)
+{
+	cv4l_fmt cap_fmt, out_fmt;
+	unsigned out_type = v4l_type_invert(node->g_type());
+
+	node->g_fmt(cap_fmt);
+	node->g_fmt(out_fmt, out_type);
+	printf("\r\t\t%s (%s) %dx%d -> %s (%s) %dx%d: %s\n",
+	       fcc2s(out_fmt.g_pixelformat()).c_str(),
+	       pixfmt2s(out_fmt.g_pixelformat()).c_str(),
+	       out_fmt.g_width(), out_fmt.g_height(),
+	       fcc2s(cap_fmt.g_pixelformat()).c_str(),
+	       pixfmt2s(cap_fmt.g_pixelformat()).c_str(),
+	       cap_fmt.g_width(), cap_fmt.g_height(),
+	       ok(testMmap(node, frame_count, POLL_MODE_SELECT)));
+}
+
+static int streamM2MOutFormat(struct node *node, __u32 pixelformat, __u32 w, __u32 h,
+			      unsigned frame_count)
+{
+	unsigned cap_type = node->g_type();
+	v4l2_fmtdesc fmtdesc;
+	cv4l_fmt out_fmt;
+
+	node->g_fmt(out_fmt, v4l_type_invert(cap_type));
+	out_fmt.s_pixelformat(pixelformat);
+	out_fmt.s_width(w);
+	out_fmt.s_height(h);
+	fail_on_test(node->s_fmt(out_fmt));
+
+	if (node->enum_fmt(fmtdesc, true, 0))
+		return 0;
+	do {
+		cv4l_fmt fmt;
+
+		fail_on_test(node->g_fmt(fmt));
+		fmt.s_pixelformat(fmtdesc.pixelformat);
+		fail_on_test(node->s_fmt(fmt));
+		streamM2MRun(node, frame_count);
+	} while (!node->enum_fmt(fmtdesc));
+	return 0;
+}
+
+void streamM2MAllFormats(struct node *node, unsigned frame_count)
+{
+	v4l2_fmtdesc fmtdesc;
+	unsigned out_type = v4l_type_invert(node->g_type());
+
+	if (node->enum_fmt(fmtdesc, true, 0, out_type))
+		return;
+	selTests.clear();
+	do {
+		v4l2_frmsizeenum frmsize;
+		cv4l_fmt fmt;
+
+		if (node->enum_framesizes(frmsize, fmtdesc.pixelformat)) {
+			cv4l_fmt min, max;
+
+			restoreFormat(node);
+			node->g_fmt(fmt);
+			min = fmt;
+			min.s_width(0);
+			min.s_height(0);
+			node->try_fmt(min);
+			max = fmt;
+			max.s_width(~0);
+			max.s_height(~0);
+			node->try_fmt(max);
+			if (min.g_width() != fmt.g_width() ||
+			    min.g_height() != fmt.g_height()) {
+				streamM2MOutFormat(node, fmtdesc.pixelformat,
+						   min.g_width(), min.g_frame_height(),
+						   frame_count);
+				restoreFormat(node);
+			}
+			if (max.g_width() != fmt.g_width() ||
+			    max.g_height() != fmt.g_height()) {
+				streamM2MOutFormat(node, fmtdesc.pixelformat,
+						   max.g_width(), max.g_frame_height(),
+						   frame_count);
+				restoreFormat(node);
+			}
+			streamM2MOutFormat(node, fmtdesc.pixelformat,
+					   fmt.g_width(), fmt.g_frame_height(),
+					   frame_count);
+			continue;
+		}
+
+		v4l2_frmsize_stepwise &ss = frmsize.stepwise;
+
+		switch (frmsize.type) {
+		case V4L2_FRMSIZE_TYPE_DISCRETE:
+			do {
+				streamM2MOutFormat(node, fmtdesc.pixelformat,
+						   frmsize.discrete.width,
+						   frmsize.discrete.height,
+						   frame_count);
+			} while (!node->enum_framesizes(frmsize));
+			break;
+		default:
+			restoreFormat(node);
+			streamM2MOutFormat(node, fmtdesc.pixelformat,
+					   ss.min_width, ss.min_height,
+					   frame_count);
+			restoreFormat(node);
+			if (ss.max_width != ss.min_width ||
+			    ss.max_height != ss.min_height) {
+				streamM2MOutFormat(node, fmtdesc.pixelformat,
+						   ss.max_width, ss.max_height,
+						   frame_count);
+				restoreFormat(node);
+			}	
+			node->g_fmt(fmt);
+			if (fmt.g_width() != ss.min_width ||
+			    fmt.g_frame_height() != ss.min_height) {
+				streamM2MOutFormat(node, fmtdesc.pixelformat,
+						   fmt.g_width(), fmt.g_frame_height(),
+						   frame_count);
 				restoreFormat(node);
 			}
 			break;

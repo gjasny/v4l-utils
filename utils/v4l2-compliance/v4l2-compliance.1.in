@@ -127,13 +127,14 @@ a valid input (or output) and frequency (when the device has a tuner). For DMABU
 The configuration of the driver at the time v4l2-compliance was called
 will be used for the streaming tests.
 .TP
-\fB\-f\fR, \fB\-\-stream\-all\-formats\fR
+\fB\-f\fR, \fB\-\-stream\-all\-formats\fR \fI[<count>]\fR
 Test whether all available formats can be streamed. This attempts to stream using
 MMAP mode or read/write (if V4L2_MEMORY_MMAP is not available) for one second for all
 formats, at all sizes, at all intervals and with all field values. In addition, if the
 driver supports scaling, cropping or composing it will test that as well in various
 combinations. If the driver supports a lot of combinations then this test can take
-a long time.
+a long time. If \fI<count>\fR is given, then stream for that many frames instead of
+for one second.
 
 The configuration of the driver at the time v4l2-compliance was called
 will be used for the streaming tests.

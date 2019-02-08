@@ -143,7 +143,7 @@ static struct option long_options[] = {
 	{"streaming", optional_argument, 0, OptStreaming},
 	{"stream-from", required_argument, 0, OptStreamFrom},
 	{"stream-from-hdr", required_argument, 0, OptStreamFromHdr},
-	{"stream-all-formats", no_argument, 0, OptStreamAllFormats},
+	{"stream-all-formats", optional_argument, 0, OptStreamAllFormats},
 	{"stream-all-io", no_argument, 0, OptStreamAllIO},
 	{"stream-all-color", required_argument, 0, OptStreamAllColorTest},
 	{0, 0, 0, 0}
@@ -211,11 +211,12 @@ static void usage(void)
 	printf("                     The --stream-from-hdr variant uses the format written by\n");
 	printf("                     v4l2-ctl --stream-to-hdr where the payload sizes for each\n");
 	printf("                     buffer are stored in a header. Useful for compressed formats.\n");
-	printf("  -f, --stream-all-formats\n");
+	printf("  -f, --stream-all-formats [<count>]\n");
 	printf("                     Test streaming all available formats.\n");
 	printf("                     This attempts to stream using MMAP mode or read/write\n");
 	printf("                     for one second for all formats, at all sizes, at all intervals\n");
-	printf("                     and with all field values.\n");
+	printf("                     and with all field values. If <count> is given, then stream\n");
+	printf("                     for that many frames instead of one second.\n");
 	printf("  -a, --stream-all-io\n");
 	printf("                     Do streaming tests for all inputs or outputs instead of just\n");
 	printf("                     the current input or output. This requires that a valid video\n");
@@ -898,7 +899,7 @@ err:
 }
 
 void testNode(struct node &node, struct node &expbuf_node, media_type type,
-	      unsigned frame_count)
+	      unsigned frame_count, unsigned all_fmt_frame_count)
 {
 	struct node node2;
 	struct v4l2_capability vcap;		/* list_cap */
@@ -1355,10 +1356,15 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 			printf("Stream using all formats:\n");
 
 			if (node.is_m2m) {
-				printf("\tNot supported for M2M devices\n");
+				if (node.codec_mask &
+				    (JPEG_DECODER | STATEFUL_DECODER | STATELESS_DECODER)) {
+					printf("\tNot supported for decoder devices\n");
+				} else {
+					streamM2MAllFormats(&node, all_fmt_frame_count);
+				}
 			} else {
 				streamingSetup(&node);
-				streamAllFormats(&node);
+				streamAllFormats(&node, all_fmt_frame_count);
 			}
 		}
 
@@ -1397,7 +1403,8 @@ show_total:
 	grand_warnings += warnings;
 
 	if (node.is_media() && options[OptSetMediaDevice]) {
-		walkTopology(node, expbuf_node, frame_count);
+		walkTopology(node, expbuf_node,
+			     frame_count, all_fmt_frame_count);
 		/* Final test report */
 		printf("\nGrand Total for %s device %s: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 		       driver.c_str(), node.device,
@@ -1424,6 +1431,7 @@ int main(int argc, char **argv)
 	struct utsname uts;
 	int v1, v2, v3;
 	unsigned frame_count = 60;
+	unsigned all_fmt_frame_count = 0;
 	char short_options[26 * 2 * 3 + 1];
 	char *value, *subs;
 	int idx = 0;
@@ -1531,6 +1539,10 @@ int main(int argc, char **argv)
 			}
 			break;
 		}
+		case OptStreamAllFormats:
+			if (optarg)
+				all_fmt_frame_count = strtoul(optarg, NULL, 0);
+			break;
 		case OptStreamAllColorTest:
 			subs = optarg;
 			while (*subs != '\0') {
@@ -1652,7 +1664,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	testNode(node, expbuf_node, type, frame_count);
+	testNode(node, expbuf_node, type, frame_count, all_fmt_frame_count);
 
 	if (!expbuf_device.empty())
 		expbuf_node.close();

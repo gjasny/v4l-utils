@@ -254,7 +254,7 @@ int check_ustring(const __u8 *s, int len);
 int check_0(const void *p, int len);
 int restoreFormat(struct node *node);
 void testNode(struct node &node, struct node &expbuf_node, media_type type,
-	      unsigned frame_count);
+	      unsigned frame_count, unsigned all_fmt_frame_count);
 std::string stream_from(std::string pixelformat, bool &use_hdr);
 
 // Media Controller ioctl tests
@@ -262,7 +262,8 @@ int testMediaDeviceInfo(struct node *node);
 int testMediaTopology(struct node *node);
 int testMediaEnum(struct node *node);
 int testMediaSetupLink(struct node *node);
-void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_count);
+void walkTopology(struct node &node, struct node &expbuf_node,
+		  unsigned frame_count, unsigned all_fmt_frame_count);
 
 // Debug ioctl tests
 int testRegister(struct node *node);
@@ -330,7 +331,8 @@ int testUserPtr(struct node *node, unsigned frame_count, enum poll_mode pollmode
 int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count,
 	       enum poll_mode pollmode);
 int testRequests(struct node *node, bool test_streaming);
-void streamAllFormats(struct node *node);
+void streamAllFormats(struct node *node, unsigned frame_count);
+void streamM2MAllFormats(struct node *node, unsigned frame_count);
 
 // Color tests
 int testColorsAllFormats(struct node *node, unsigned component,

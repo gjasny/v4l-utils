@@ -508,7 +508,8 @@ int testMediaSetupLink(struct node *node)
 	return 0;
 }
 
-void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_count)
+void walkTopology(struct node &node, struct node &expbuf_node,
+		  unsigned frame_count, unsigned all_fmt_frame_count)
 {
 	media_v2_topology topology;
 
@@ -583,7 +584,8 @@ void walkTopology(struct node &node, struct node &expbuf_node, unsigned frame_co
 			continue;
 		}
 
-		testNode(test_node, expbuf_node, type, frame_count);
+		testNode(test_node, expbuf_node, type,
+			 frame_count, all_fmt_frame_count);
 		test_node.close();
 	}
 }
