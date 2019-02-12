@@ -118,6 +118,13 @@ To read the current keytable, on the second remote controller:
 To enable NEC protocol and load a BPF protocol, with a parameter for the BPF protocol:
 .br
 	\fBir\-keytable \-p nec,pulse_distance \-e pulse_header=9000
+.PP
+If you do not know what protocol a remote uses, it can be helpful to first
+try with all kernel decoders enabled. The decoded protocol and scancodes
+will be displayed in the output:
+.br
+	\fBir\-keytable \-c \-p all \-t\fR
+
 .SH BUGS
 Report bugs to \fBLinux Media Mailing List <linux-media@vger.kernel.org>\fR
 .SH COPYRIGHT
@@ -127,3 +134,5 @@ License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
 .br
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+To transmit IR or receive raw IR, see ir\-ctl(1).
