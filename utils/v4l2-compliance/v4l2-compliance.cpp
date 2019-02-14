@@ -807,7 +807,6 @@ static int open_media_bus_info(const std::string &bus_info, std::string &media_d
 			int fd = open(media_devname.c_str(), O_RDWR);
 			if (fd < 0)
 				continue;
-			ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi);
 			if (!ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi) &&
 			    bus_info == mdi.bus_info) {
 				closedir(dp);
