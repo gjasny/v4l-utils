@@ -62,8 +62,6 @@ done
 test-media-unload.pl
 
 modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
-modprobe vim2m
-modprobe vimc
 sleep 1
 
 v4l2-ctl -z platform:vivid-000 -d vivid-000-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
@@ -73,10 +71,6 @@ v4l2-ctl -z platform:vivid-001 -d vivid-001-vid-out -o1 -x width=3840,height=216
 v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
 v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
 
-media-ctl -d platform:vimc -V '1:0[fmt:SBGGR8_1X8/640x480]'
-media-ctl -d platform:vimc -V '5:0[fmt:SBGGR8_1X8/640x480]'
-v4l2-ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
-v4l2-ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
 echo
 
 tmp=`mktemp`
@@ -105,11 +99,19 @@ if [ $cec -eq 1 ]; then
 fi
 
 if [ $vim2m -eq 1 ]; then
+	modprobe vim2m
+	sleep 1
 	stdbuf -oL v4l2-compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
 fi
 
 if [ $vimc -eq 1 ]; then
+	modprobe vimc
+	sleep 1
+	media-ctl -d platform:vimc -V '1:0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d platform:vimc -V '5:0[fmt:SBGGR8_1X8/640x480]'
+	v4l2-ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
+	v4l2-ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
 	stdbuf -oL v4l2-compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
 fi
