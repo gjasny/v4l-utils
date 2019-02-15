@@ -73,8 +73,8 @@ v4l2-ctl -z platform:vivid-001 -d vivid-001-vid-out -o1 -x width=3840,height=216
 v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
 v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
 
-media-ctl -d /dev/media4 -V '1:0[fmt:SBGGR8_1X8/640x480]'
-media-ctl -d /dev/media4 -V '5:0[fmt:SBGGR8_1X8/640x480]'
+media-ctl -d platform:vimc -V '1:0[fmt:SBGGR8_1X8/640x480]'
+media-ctl -d platform:vimc -V '5:0[fmt:SBGGR8_1X8/640x480]'
 v4l2-ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
 v4l2-ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
 echo
