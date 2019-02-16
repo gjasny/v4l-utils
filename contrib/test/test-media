@@ -10,19 +10,28 @@ vimc=0
 cec=0
 cecpwr=--skip-test-standby-resume
 kmemleak=0
+dmesg=0
 unload=0
 
+dmesg -n notice
+
 if [ -z "$1" ]; then
-	echo "usage: test-media [-unload] [-kmemleak] all|mc|vivid|vim2m|vimc|cec|cec-pwr"
+	echo "usage: test-media [options] test-targets"
 	echo
 	echo Run as root.
 	echo
+	echo Options:
 	echo "-unload: unload any media modules before testing"
 	echo "-kmemleak: enable memory leak scan"
+	echo "-dmesg: run dmesg at the end"
 	echo
-	echo "'all' equals 'vivid vim2m vimc cec cec-pwr'"
-	echo "'mc' equals 'vivid vim2m vimc'"
-	echo "'cec' adds the CEC compliance tests, 'cec-pwr' adds the CEC standby/wakeup tests."
+	echo Test Targets:
+	echo "vivid: test the vivid driver"
+	echo "vim2m: test the vim2m driver"
+	echo "vimc: test the vimc driver"
+	echo "cec: adds the vivid CEC compliance tests, 'cec-pwr' adds the CEC standby/wakeup tests."
+	echo "all: equals 'vivid vim2m vimc cec cec-pwr'"
+	echo "mc: equals 'vivid vim2m vimc'"
 	exit 0
 fi
 
@@ -35,6 +44,9 @@ while [ ! -z "$1" ]; do
 	case "$1" in
 	-unload)
 		unload=1
+		;;
+	-dmesg)
+		dmesg=1
 		;;
 	-kmemleak)
 		if [ -f /sys/kernel/debug/kmemleak ]; then
@@ -143,9 +155,12 @@ rmmod vivid
 
 if [ $kmemleak -eq 1 ]; then
 	sleep 10
+	echo
 	echo kmemleak results:
+	echo
 	echo scan >/sys/kernel/debug/kmemleak
 	cat /sys/kernel/debug/kmemleak
+	echo
 fi
 
 echo Summary:
@@ -171,3 +186,10 @@ printf("Final Summary: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 '
 
 rm -f $tmp
+
+if [ $dmesg -eq 1 ]; then
+	echo
+	echo -----------------------------------------------------------
+	echo
+	dmesg
+fi
