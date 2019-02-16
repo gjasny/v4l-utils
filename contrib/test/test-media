@@ -112,14 +112,29 @@ tmp=`mktemp`
 
 if [ $vivid -eq 1 ]; then
 	dmesg -n notice
+	echo
+	echo vivid compliance tests, contiguous planes
+	echo
 	stdbuf -oL v4l2-compliance -m platform:vivid-000 -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
+	echo vivid compliance tests, non-contiguous planes
+	echo
 	stdbuf -oL v4l2-compliance -m platform:vivid-001 -z platform:vivid-002 -e vivid-002-vid-out -s10 -a 2>&1 | tee -a $tmp
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
 	echo
 fi
 
 if [ $cec -eq 1 ]; then
 	dmesg -n notice
+	echo
+	echo vivid cec compliance tests
+	echo
 	cec-ctl -s -D vivid -a vivid-000-vid-cap0 --tv
 	cec-ctl -s -D vivid -a vivid-000-vid-out0 --playback
 	trap 'kill $f0 $f1 2>/dev/null' INT
@@ -133,15 +148,82 @@ if [ $cec -eq 1 ]; then
 	kill $f0
 	kill $f1
 	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	vivid=1
+fi
+
+if [ $kmemleak -eq 1 -a $vivid -eq 1 ]; then
+	rmmod vivid
+	sleep 10
+	echo
+	echo kmemleak results for vivid:
+	echo
+	echo scan >/sys/kernel/debug/kmemleak
+	cat /sys/kernel/debug/kmemleak
+	echo
+	echo end of kmemleak results
+	echo
+
+	modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
+	sleep 1
+
+	v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
+	v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
+
+	echo clear >/sys/kernel/debug/kmemleak
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
 fi
 
 if [ $vim2m -eq 1 ]; then
 	modprobe vim2m
 	sleep 1
 	dmesg -n notice
+	echo
+	echo vim2m compliance tests
+	echo
 	stdbuf -oL v4l2-compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
 	rmmod vim2m
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	if [ $kmemleak -eq 1 ]; then
+		sleep 10
+		echo
+		echo kmemleak results for vim2m:
+		echo
+		echo scan >/sys/kernel/debug/kmemleak
+		cat /sys/kernel/debug/kmemleak
+		echo
+		echo end of kmemleak results
+		echo clear >/sys/kernel/debug/kmemleak
+		echo
+		echo
+		echo
+		echo
+		echo
+		echo
+		echo
+		echo
+	fi
 fi
 
 if [ $vimc -eq 1 ]; then
@@ -153,23 +235,44 @@ if [ $vimc -eq 1 ]; then
 	v4l2-ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
 	v4l2-ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
 	dmesg -n notice
+	echo
+	echo vimc compliance tests
+	echo
 	stdbuf -oL v4l2-compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
 	rmmod vimc
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	if [ $kmemleak -eq 1 ]; then
+		sleep 10
+		echo
+		echo kmemleak results for vimc:
+		echo
+		echo scan >/sys/kernel/debug/kmemleak
+		cat /sys/kernel/debug/kmemleak
+		echo
+		echo end of kmemleak results
+		echo clear >/sys/kernel/debug/kmemleak
+		echo
+		echo
+		echo
+		echo
+		echo
+		echo
+		echo
+		echo
+	fi
 fi
 
 rmmod vivid
 
-if [ $kmemleak -eq 1 ]; then
-	sleep 10
-	echo
-	echo kmemleak results:
-	echo
-	echo scan >/sys/kernel/debug/kmemleak
-	cat /sys/kernel/debug/kmemleak
-	echo
-fi
-
+echo
 echo Summary:
 echo
 
