@@ -13,6 +13,7 @@ kmemleak=0
 dmesg=0
 unload=0
 
+cur_lvl=`cut -c 1-2 /proc/sys/kernel/printk`
 dmesg -n notice
 
 if [ -z "$1" ]; then
@@ -88,6 +89,7 @@ done
 
 if [ $unload -eq 1 ]; then
 	test-media-unload.pl
+	dmesg -n notice
 fi
 
 if [ $kmemleak -eq 1 ]; then
@@ -109,6 +111,7 @@ echo
 tmp=`mktemp`
 
 if [ $vivid -eq 1 ]; then
+	dmesg -n notice
 	stdbuf -oL v4l2-compliance -m platform:vivid-000 -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
 	stdbuf -oL v4l2-compliance -m platform:vivid-001 -z platform:vivid-002 -e vivid-002-vid-out -s10 -a 2>&1 | tee -a $tmp
@@ -116,6 +119,7 @@ if [ $vivid -eq 1 ]; then
 fi
 
 if [ $cec -eq 1 ]; then
+	dmesg -n notice
 	cec-ctl -s -D vivid -a vivid-000-vid-cap0 --tv
 	cec-ctl -s -D vivid -a vivid-000-vid-out0 --playback
 	trap 'kill $f0 $f1 2>/dev/null' INT
@@ -134,6 +138,7 @@ fi
 if [ $vim2m -eq 1 ]; then
 	modprobe vim2m
 	sleep 1
+	dmesg -n notice
 	stdbuf -oL v4l2-compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
 	rmmod vim2m
@@ -142,10 +147,12 @@ fi
 if [ $vimc -eq 1 ]; then
 	modprobe vimc
 	sleep 1
+	dmesg -n notice
 	media-ctl -d platform:vimc -V '1:0[fmt:SBGGR8_1X8/640x480]'
 	media-ctl -d platform:vimc -V '5:0[fmt:SBGGR8_1X8/640x480]'
 	v4l2-ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
 	v4l2-ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
+	dmesg -n notice
 	stdbuf -oL v4l2-compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
 	echo
 	rmmod vimc
@@ -193,3 +200,5 @@ if [ $dmesg -eq 1 ]; then
 	echo
 	dmesg
 fi
+
+dmesg -n $cur_lvl
