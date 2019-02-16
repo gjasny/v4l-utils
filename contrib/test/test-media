@@ -9,11 +9,14 @@ vim2m=0
 vimc=0
 cec=0
 cecpwr=--skip-test-standby-resume
+unload=0
 
 if [ -z "$1" ]; then
-	echo "usage: test-media all|mc|vivid|vim2m|vimc|cec|cec-pwr"
+	echo "usage: test-media [-unload] all|mc|vivid|vim2m|vimc|cec|cec-pwr"
 	echo
 	echo Run as root.
+	echo
+	echo "-unload: unload any media modules before testing"
 	echo
 	echo "'all' equals 'vivid vim2m vimc cec cec-pwr'"
 	echo "'mc' equals 'vivid vim2m vimc'"
@@ -28,6 +31,9 @@ fi
 
 while [ ! -z "$1" ]; do
 	case "$1" in
+	-unload)
+		unload=1
+		;;
 	all)
 		vivid=1
 		vim2m=1
@@ -59,7 +65,9 @@ while [ ! -z "$1" ]; do
 	shift
 done
 
-test-media-unload.pl
+if [ $unload -eq 1 ]; then
+	test-media-unload.pl
+fi
 
 modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
 sleep 1
