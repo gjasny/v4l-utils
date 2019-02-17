@@ -115,11 +115,11 @@ if [ $vivid -eq 1 ]; then
 	echo
 	echo vivid compliance tests, contiguous planes
 	echo
-	stdbuf -oL v4l2-compliance -m platform:vivid-000 -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance -m platform:vivid-000 -z platform:vivid-002 -e vivid-002-vid-cap -P -s10 -a 2>&1 | tee -a $tmp
 	echo
 	echo vivid compliance tests, non-contiguous planes
 	echo
-	stdbuf -oL v4l2-compliance -m platform:vivid-001 -z platform:vivid-002 -e vivid-002-vid-out -s10 -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance -m platform:vivid-001 -z platform:vivid-002 -e vivid-002-vid-out -P -s10 -a 2>&1 | tee -a $tmp
 	echo
 	echo
 	echo
@@ -194,7 +194,7 @@ if [ $vim2m -eq 1 ]; then
 	echo
 	echo vim2m compliance tests
 	echo
-	stdbuf -oL v4l2-compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 	echo
 	rmmod vim2m
 	echo
@@ -238,7 +238,7 @@ if [ $vimc -eq 1 ]; then
 	echo
 	echo vimc compliance tests
 	echo
-	stdbuf -oL v4l2-compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 	echo
 	rmmod vimc
 	echo
