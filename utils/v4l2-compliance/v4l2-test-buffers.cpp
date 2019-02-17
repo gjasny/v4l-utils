@@ -895,7 +895,7 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 				       field2s(buf.g_field()).c_str(), buf.g_bytesused(),
 				       buf.g_timestamp().tv_sec, buf.g_timestamp().tv_usec);
 			fail_on_test(buf.check(q, last_seq));
-			if (!show_info) {
+			if (!show_info && !no_progress) {
 				printf("\r\t%s: Frame #%03d%s",
 				       buftype2s(q.g_type()).c_str(),
 				       frame_count - count,
@@ -977,7 +977,7 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 		fcntl(node->g_fd(), F_SETFL, fd_flags);
 	if (epollfd >= 0)
 		close(epollfd);
-	if (!show_info) {
+	if (!show_info && !no_progress) {
 		printf("\r\t                                                  \r");
 		fflush(stdout);
 	}
@@ -2085,9 +2085,10 @@ static int testStreaming(struct node *node, unsigned frame_count)
 		fail_on_test(node->streamon());
 
 		while (node->dqbuf(buf) == 0) {
-			printf("\r\t\t%s: Frame #%03d Field %s   ",
-					buftype2s(q.g_type()).c_str(),
-					buf.g_sequence(), field2s(buf.g_field()).c_str());
+			if (!no_progress)
+				printf("\r\t\t%s: Frame #%03d Field %s   ",
+				       buftype2s(q.g_type()).c_str(),
+				       buf.g_sequence(), field2s(buf.g_field()).c_str());
 			fflush(stdout);
 			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 			buf.s_field(field);
@@ -2104,7 +2105,8 @@ static int testStreaming(struct node *node, unsigned frame_count)
 		q.free(node);
 		if (is_output)
 			stream_close();
-		printf("\r\t\t                                                            ");
+		if (!no_progress)
+			printf("\r\t\t                                                            ");
 		return 0;
 	}
 	fail_on_test(!(node->g_caps() & V4L2_CAP_READWRITE));
@@ -2120,10 +2122,12 @@ static int testStreaming(struct node *node, unsigned frame_count)
 		else
 			ret = node->write(tmp, size);
 		fail_on_test(ret != size);
-		printf("\r\t\t%s: Frame #%03d", buftype2s(type).c_str(), i);
+		if (!no_progress)
+			printf("\r\t\t%s: Frame #%03d", buftype2s(type).c_str(), i);
 		fflush(stdout);
 	}
-	printf("\r\t\t                                                            ");
+	if (!no_progress)
+		printf("\r\t\t                                                            ");
 	return 0;
 }
 
@@ -2206,7 +2210,9 @@ static void streamFmtRun(struct node *node, cv4l_fmt &fmt, unsigned frame_count,
 				compose.r.width, compose.r.height,
 				compose.r.left, compose.r.top);
 	}
-	printf("\r\t\t%s%sStride %u, Field %s%s: %s   \n",
+	if (!no_progress)
+		printf("\r");
+	printf("\t\t%s%sStride %u, Field %s%s: %s   \n",
 			s_crop, s_compose,
 			fmt.g_bytesperline(),
 			field2s(fmt.g_field()).c_str(),
@@ -2547,7 +2553,9 @@ static void streamM2MRun(struct node *node, unsigned frame_count)
 
 	node->g_fmt(cap_fmt);
 	node->g_fmt(out_fmt, out_type);
-	printf("\r\t\t%s (%s) %dx%d -> %s (%s) %dx%d: %s\n",
+	if (!no_progress)
+		printf("\r");
+	printf("\t%s (%s) %dx%d -> %s (%s) %dx%d: %s\n",
 	       fcc2s(out_fmt.g_pixelformat()).c_str(),
 	       pixfmt2s(out_fmt.g_pixelformat()).c_str(),
 	       out_fmt.g_width(), out_fmt.g_height(),
@@ -2589,6 +2597,9 @@ void streamM2MAllFormats(struct node *node, unsigned frame_count)
 {
 	v4l2_fmtdesc fmtdesc;
 	unsigned out_type = v4l_type_invert(node->g_type());
+
+	if (!frame_count)
+		frame_count = 10;
 
 	if (node->enum_fmt(fmtdesc, true, 0, out_type))
 		return;

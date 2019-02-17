@@ -51,6 +51,7 @@
 
 extern bool show_info;
 extern bool show_warnings;
+extern bool no_progress;
 extern bool exit_on_fail;
 extern bool exit_on_warn;
 extern bool is_vivid; // We're testing the vivid driver

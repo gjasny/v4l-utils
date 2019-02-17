@@ -62,6 +62,7 @@ enum Option {
 	OptSetMediaDevice = 'm',
 	OptSetMediaDeviceOnly = 'M',
 	OptNoWarnings = 'n',
+	OptNoProgress = 'P',
 	OptSetRadioDevice = 'r',
 	OptStreaming = 's',
 	OptSetSWRadioDevice = 'S',
@@ -86,6 +87,7 @@ static int grand_total, grand_ok, grand_warnings;
 
 // Globals
 bool show_info;
+bool no_progress;
 bool show_warnings = true;
 bool exit_on_fail;
 bool exit_on_warn;
@@ -134,6 +136,7 @@ static struct option long_options[] = {
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
+	{"no-progress", no_argument, 0, OptNoProgress},
 	{"exit-on-fail", no_argument, 0, OptExitOnFail},
 	{"exit-on-warn", no_argument, 0, OptExitOnWarn},
 	{"trace", no_argument, 0, OptTrace},
@@ -232,6 +235,7 @@ static void usage(void)
 	printf("  -E, --exit-on-fail Exit on the first fail.\n");
 	printf("  -h, --help         Display this help message.\n");
 	printf("  -n, --no-warnings  Turn off warning messages.\n");
+	printf("  -P, --no-progress  Turn off progress messages.\n");
 	printf("  -T, --trace        Trace all called ioctls.\n");
 	printf("  -v, --verbose      Turn on verbose reporting.\n");
 #ifndef NO_LIBV4L2
@@ -1592,6 +1596,9 @@ int main(int argc, char **argv)
 			break;
 		case OptVerbose:
 			show_info = true;
+			break;
+		case OptNoProgress:
+			no_progress = true;
 			break;
 		case ':':
 			fprintf(stderr, "Option `%s' requires a value\n",

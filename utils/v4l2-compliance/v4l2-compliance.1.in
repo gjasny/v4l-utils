@@ -170,6 +170,9 @@ with a possible inconsistent state.
 \fB\-n\fR, \fB\-\-no\-warnings\fR
 Turn off warning messages. They are still counted in the summary, but you won't see them.
 .TP
+\fB\-P\fR, \fB\-\-no\-progress\fR
+Turn off progress messages. Useful when redirecting the output to a file.
+.TP
 \fB\-T\fR, \fB\-\-trace\fR
 Trace all called ioctls.
 .TP
