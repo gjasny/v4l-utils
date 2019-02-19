@@ -239,6 +239,10 @@ via the \fB\-\-analyze\-pin\fR option. Use \- to write to stdout instead of to a
 Read and analyze the CEC pin events from the given file. Use \- to read from stdin
 instead of from a file.
 .TP
+\fB\-\-stress\-test\-power\-cycle\fR \fI<count>\fR
+This option performs a stress test for a display: it powercycles the display \fI<count>\fR
+times using the CEC Standby and Image View On commands. If \fI<count>\fR is 0, then never stop.
+.TP
 \fB\-\-help\-all\fR
 Prints the help message for all options.
 .TP

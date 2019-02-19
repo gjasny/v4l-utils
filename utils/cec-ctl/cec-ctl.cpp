@@ -644,6 +644,7 @@ enum Option {
 	OptFeatSetAudioRate,
 	OptFeatSinkHasARCTx,
 	OptFeatSourceHasARCRx,
+	OptStressTestPowerCycle,
 	OptVendorCommand = 508,
 	OptVendorCommandWithID,
 	OptVendorRemoteButtonDown,
@@ -745,6 +746,8 @@ static struct option long_options[] = {
 	{ "vendor-command", required_argument, 0, OptVendorCommand }, \
 	{ "custom-command", required_argument, 0, OptCustomCommand }, \
 
+	{ "stress-test-power-cycle", required_argument, 0, OptStressTestPowerCycle }, \
+
 	{ 0, 0, 0, 0 }
 };
 
@@ -824,6 +827,8 @@ static void usage(void)
 	       "                           Use - for stdout.\n"
 	       "  --analyze-pin <from>     Analyze the low-level CEC pin changes from the file <from>.\n"
 	       "                           Use - for stdin.\n"
+	       "  --stress-test-power-cycle <count>\n"
+	       "                           Powercycle display <count> times. If 0, then never stop.\n"
 	       "\n"
 	       CEC_USAGE
 	       "\n"
@@ -1612,6 +1617,93 @@ err:
 	exit(1);
 }
 
+static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
+{
+	struct cec_msg msg;
+	__u8 pwr;
+	int ret;
+
+	cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+	cec_msg_give_device_power_status(&msg, true);
+	ret = doioctl(&node, CEC_TRANSMIT, &msg);
+	if (ret == ENONET)
+		return !on;
+	if (ret) {
+		fprintf(stderr, "Give Device Power Status Transmit failed: %s\n",
+			strerror(ret));
+		exit(1);
+	}
+	if (msg.rx_status & CEC_RX_STATUS_OK) {
+		cec_ops_report_power_status(&msg, &pwr);
+		return pwr == (on ? CEC_OP_POWER_STATUS_ON : CEC_OP_POWER_STATUS_STANDBY);
+	}
+	return !on;
+}
+
+static void stress_test_power_cycle(struct node &node, unsigned from, unsigned cnt)
+{
+	struct cec_msg msg;
+	unsigned tries = 0;
+	unsigned iter = 0;
+	int ret;
+
+	if (from == CEC_LOG_ADDR_UNREGISTERED)
+		from = CEC_LOG_ADDR_PLAYBACK_1;
+
+	while (!wait_for_pwr_state(node, from, true)) {
+		if (++tries > 10) {
+			fprintf(stderr, "Could not wake up display\n");
+			exit(1);
+		}
+		sleep(5);
+		cec_msg_init(&msg, CEC_LOG_ADDR_UNREGISTERED, CEC_LOG_ADDR_TV);
+		cec_msg_image_view_on(&msg);
+		doioctl(&node, CEC_TRANSMIT, &msg);
+	}
+
+	struct cec_log_addrs laddrs = { };
+	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+	from = laddrs.log_addr[0] & 0xf;
+
+	for (;;) {
+		iter++;
+
+		printf("Transmit Standby (iteration %u)\n", iter);
+		cec_msg_init(&msg, from, CEC_LOG_ADDR_BROADCAST);
+		cec_msg_standby(&msg);
+		ret = doioctl(&node, CEC_TRANSMIT, &msg);
+		if (ret) {
+			fprintf(stderr, "Standby Transmit failed: %s\n", strerror(ret));
+			exit(1);
+		}
+
+		tries = 0;
+		while (!wait_for_pwr_state(node, from, false)) {
+			sleep(5);
+			if (++tries > 10) {
+				fprintf(stderr, "Could not put display in standby\n");
+				exit(1);
+			}
+		}
+
+		printf("Transmit Image View On (iteration %u)\n", iter);
+		tries = 0;
+		while (!wait_for_pwr_state(node, from, true)) {
+			if (++tries > 10) {
+				fprintf(stderr, "Display is stuck in standby\n");
+				exit(1);
+			}
+			sleep(5);
+			cec_msg_init(&msg, CEC_LOG_ADDR_UNREGISTERED, CEC_LOG_ADDR_TV);
+			cec_msg_image_view_on(&msg);
+			doioctl(&node, CEC_TRANSMIT, &msg);
+		}
+
+		if (cnt && iter == cnt)
+			break;
+	}
+}
+
 static int calc_node_val(const char *s)
 {
 	s = strrchr(s, '/') + 1;
@@ -1720,6 +1812,7 @@ int main(int argc, char **argv)
 	__u32 timeout = 1000;
 	__u32 monitor_time = 0;
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
+	unsigned int pwr_cycle_cnt = 0;
 	__u16 phys_addr;
 	__u8 from = 0, to = 0, first_to = 0xff;
 	__u8 dev_features = 0;
@@ -2090,6 +2183,10 @@ int main(int argc, char **argv)
 			list_devices();
 			break;
 
+		case OptStressTestPowerCycle:
+			pwr_cycle_cnt = strtoul(optarg, NULL, 0);
+			break;
+
 		default:
 			if (ch >= OptHelpAll) {
 				usage_options(ch);
@@ -2427,6 +2524,8 @@ int main(int argc, char **argv)
 	if (options[OptNonBlocking])
 		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
 
+	if (options[OptStressTestPowerCycle])
+		stress_test_power_cycle(node, from, pwr_cycle_cnt);
 skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll] ||
 	    options[OptMonitorPin] || options[OptStorePin])
