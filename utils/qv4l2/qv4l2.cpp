@@ -1516,11 +1516,15 @@ void ApplicationWindow::capStart(bool start)
 	case V4L2_PIX_FMT_BGR32:
 	case V4L2_PIX_FMT_XRGB32:
 	case V4L2_PIX_FMT_XBGR32:
+	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_XYUV32:
+	case V4L2_PIX_FMT_VUYX32:
 		dstFmt = QImage::Format_RGB32;
 		break;
 	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_ABGR32:
-	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_AYUV32:
+	case V4L2_PIX_FMT_VUYA32:
 		dstFmt = QImage::Format_ARGB32;
 		break;
 	case V4L2_PIX_FMT_INZI:

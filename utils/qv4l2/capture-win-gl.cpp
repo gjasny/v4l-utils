@@ -185,6 +185,10 @@ void CaptureWinGLEngine::setColorspace(unsigned colorspace, unsigned xfer_func,
 	case V4L2_PIX_FMT_YUV555:
 	case V4L2_PIX_FMT_YUV565:
 	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_AYUV32:
+	case V4L2_PIX_FMT_XYUV32:
+	case V4L2_PIX_FMT_VUYA32:
+	case V4L2_PIX_FMT_VUYX32:
 	case V4L2_PIX_FMT_HSV24:
 	case V4L2_PIX_FMT_HSV32:
 		is_rgb = false;
@@ -400,6 +404,10 @@ bool CaptureWinGLEngine::hasNativeFormat(__u32 format)
 		V4L2_PIX_FMT_YUV555,
 		V4L2_PIX_FMT_YUV565,
 		V4L2_PIX_FMT_YUV32,
+		V4L2_PIX_FMT_AYUV32,
+		V4L2_PIX_FMT_XYUV32,
+		V4L2_PIX_FMT_VUYA32,
+		V4L2_PIX_FMT_VUYX32,
 		V4L2_PIX_FMT_GREY,
 		V4L2_PIX_FMT_Z16,
 		V4L2_PIX_FMT_INZI,
@@ -464,6 +472,10 @@ void CaptureWinGLEngine::changeShader()
 	case V4L2_PIX_FMT_YUV555:
 	case V4L2_PIX_FMT_YUV565:
 	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_AYUV32:
+	case V4L2_PIX_FMT_XYUV32:
+	case V4L2_PIX_FMT_VUYA32:
+	case V4L2_PIX_FMT_VUYX32:
 		shader_YUV_packed(m_frameFormat);
 		break;
 
@@ -628,6 +640,10 @@ void CaptureWinGLEngine::paintGL()
 	case V4L2_PIX_FMT_YUV555:
 	case V4L2_PIX_FMT_YUV565:
 	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_AYUV32:
+	case V4L2_PIX_FMT_XYUV32:
+	case V4L2_PIX_FMT_VUYA32:
+	case V4L2_PIX_FMT_VUYX32:
 		render_YUV_packed(m_frameFormat);
 		break;
 
@@ -2062,10 +2078,20 @@ void CaptureWinGLEngine::shader_YUV_packed(__u32 format)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_frameWidth, m_frameHeight, 0,
 			     GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
 		break;
-	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_AYUV32:
 		hasAlpha = true;
+		// fall-through
+	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_XYUV32:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_frameWidth, m_frameHeight, 0,
-				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+			     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, NULL);
+		break;
+	case V4L2_PIX_FMT_VUYA32:
+		hasAlpha = true;
+		// fall-through
+	case V4L2_PIX_FMT_VUYX32:
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_frameWidth, m_frameHeight, 0,
+			     GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, NULL);
 		break;
 	}
 
@@ -2133,8 +2159,15 @@ void CaptureWinGLEngine::render_YUV_packed(__u32 format)
 		break;
 
 	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_AYUV32:
+	case V4L2_PIX_FMT_XYUV32:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
 				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, m_frameData);
+		break;
+	case V4L2_PIX_FMT_VUYA32:
+	case V4L2_PIX_FMT_VUYX32:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_frameWidth, m_frameHeight,
+				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, m_frameData);
 		break;
 	}
 	checkError("Packed YUV paint");

@@ -155,6 +155,10 @@ void CaptureWin::paintGL()
 	case V4L2_PIX_FMT_YUV555:
 	case V4L2_PIX_FMT_YUV565:
 	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_AYUV32:
+	case V4L2_PIX_FMT_XYUV32:
+	case V4L2_PIX_FMT_VUYA32:
+	case V4L2_PIX_FMT_VUYX32:
 		render_YUV_packed(m_v4l_fmt.g_pixelformat());
 		break;
 
@@ -331,6 +335,10 @@ static const struct define defines[] = {
 	DEF(V4L2_PIX_FMT_YUV555),
 	DEF(V4L2_PIX_FMT_YUV565),
 	DEF(V4L2_PIX_FMT_YUV32),
+	DEF(V4L2_PIX_FMT_AYUV32),
+	DEF(V4L2_PIX_FMT_XYUV32),
+	DEF(V4L2_PIX_FMT_VUYA32),
+	DEF(V4L2_PIX_FMT_VUYX32),
 	DEF(V4L2_PIX_FMT_RGB32),
 	DEF(V4L2_PIX_FMT_XRGB32),
 	DEF(V4L2_PIX_FMT_ARGB32),
@@ -551,6 +559,10 @@ void CaptureWin::changeShader()
 	case V4L2_PIX_FMT_YUV555:
 	case V4L2_PIX_FMT_YUV565:
 	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_AYUV32:
+	case V4L2_PIX_FMT_XYUV32:
+	case V4L2_PIX_FMT_VUYA32:
+	case V4L2_PIX_FMT_VUYX32:
 		shader_YUV_packed();
 		break;
 
@@ -773,14 +785,11 @@ void CaptureWin::shader_RGB()
 	case V4L2_PIX_FMT_RGB32:
 	case V4L2_PIX_FMT_XRGB32:
 	case V4L2_PIX_FMT_HSV32:
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
-				GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		break;
 	case V4L2_PIX_FMT_ABGR32:
 	case V4L2_PIX_FMT_BGR32:
 	case V4L2_PIX_FMT_XBGR32:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
-				GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			     GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		break;
 	case V4L2_PIX_FMT_GREY:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
@@ -864,8 +873,12 @@ void CaptureWin::shader_YUV_packed()
 			     GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
 		break;
 	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_AYUV32:
+	case V4L2_PIX_FMT_XYUV32:
+	case V4L2_PIX_FMT_VUYA32:
+	case V4L2_PIX_FMT_VUYX32:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
-				GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			     GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		break;
 	}
 
@@ -1121,6 +1134,9 @@ void CaptureWin::render_RGB(__u32 format)
 	case V4L2_PIX_FMT_XRGB32:
 	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_HSV32:
+	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_XBGR32:
+	case V4L2_PIX_FMT_ABGR32:
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, m_v4l_fmt.g_bytesperline() / 4);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 				GL_RGBA, GL_UNSIGNED_BYTE, m_curData[0]);
@@ -1131,13 +1147,6 @@ void CaptureWin::render_RGB(__u32 format)
 				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, m_curData[0]);
 		break;
 
-	case V4L2_PIX_FMT_BGR32:
-	case V4L2_PIX_FMT_XBGR32:
-	case V4L2_PIX_FMT_ABGR32:
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, m_v4l_fmt.g_bytesperline() / 4);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
-				GL_RGBA, GL_UNSIGNED_BYTE, m_curData[0]);
-		break;
 	case V4L2_PIX_FMT_RGB24:
 	case V4L2_PIX_FMT_BGR24:
 	case V4L2_PIX_FMT_HSV24:
@@ -1205,6 +1214,10 @@ void CaptureWin::render_YUV_packed(__u32 format)
 		break;
 
 	case V4L2_PIX_FMT_YUV32:
+	case V4L2_PIX_FMT_AYUV32:
+	case V4L2_PIX_FMT_XYUV32:
+	case V4L2_PIX_FMT_VUYA32:
+	case V4L2_PIX_FMT_VUYX32:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 				GL_RGBA, GL_UNSIGNED_BYTE, m_curData[0]);
 		break;
