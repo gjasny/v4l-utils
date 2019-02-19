@@ -1756,7 +1756,7 @@ int main(int argc, char **argv)
 			break;
 
 		cec_msg_init(&msg, 0, 0);
-		msg.msg[0] = cec_msg_is_broadcast(&msg) ? 0xf : (options[OptTo] ? to : 0xf0);
+		msg.msg[0] = options[OptTo] ? to : 0xf0;
 		options[(int)ch] = 1;
 
 		switch (ch) {
@@ -2395,6 +2395,7 @@ int main(int argc, char **argv)
 		}
 		if (msg.msg[0] == 0xf0)
 			msg.msg[0] = first_to;
+		msg.msg[0] &= 0x0f;
 		msg.msg[0] |= from << 4;
 		to = msg.msg[0] & 0xf;
 		printf("\nTransmit from %s to %s (%d to %d):\n",
