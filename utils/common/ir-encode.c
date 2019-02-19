@@ -372,6 +372,9 @@ static const struct {
 	[RC_PROTO_XMP] = { "xmp" },
 	[RC_PROTO_CEC] = { "cec" },
 	[RC_PROTO_IMON] = { "imon", 0x7fffffff },
+	[RC_PROTO_RCMM12] = { "rc-mm-12", 0x0fff },
+	[RC_PROTO_RCMM24] = { "rc-mm-24", 0xffffff },
+	[RC_PROTO_RCMM32] = { "rc-mm-32", 0xffffffff },
 };
 
 static bool str_like(const char *a, const char *b)

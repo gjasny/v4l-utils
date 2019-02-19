@@ -85,8 +85,8 @@ a set of scancode1=keycode1,scancode2=keycode2.. value pairs
 Comma separated list of kernel protocols to be enabled (case insensitive).
 Supported kernel protocols are: \fBnec\fR, \fBrc\-5\fR, \fBrc\-6\fR, \fBjvc\fR,
 \fBsony\fR, \fBsanyo\fR, \fBrc\-5\-sz\fR, \fBsharp\fR, \fBmce\-kbd\fR,
-\fBxmp\fR, \fBimon\fR, \fBother\fR, \fBall\fR. It can also be a BPF protocol,
-e.g. \fBmanchester\fR, \fBrc_mm\fR, \fBpulse_distance\fR, \fBpulse_length\fR.
+\fBxmp\fR, \fBimon\fR, \fBrc\-mm\fR, \fBother\fR, \fBall\fR. It can also be a BPF protocol,
+e.g. \fBmanchester\fR, \fBpulse_distance\fR, \fBpulse_length\fR.
 If it does not match any of these, it is taken to be the path of BPF decoder
 to be loaded.
 .IP \fIPARAMETERS\fR

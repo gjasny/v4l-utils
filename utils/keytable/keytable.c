@@ -127,6 +127,7 @@ enum sysfs_protocols {
 	SYSFS_XMP		= (1 << 12),
 	SYSFS_CEC		= (1 << 13),
 	SYSFS_IMON		= (1 << 14),
+	SYSFS_RCMM		= (1 << 15),
 	SYSFS_INVALID		= 0,
 };
 
@@ -161,6 +162,7 @@ const struct protocol_map_entry protocol_map[] = {
 	{ "xmp",	"/xmp_decoder",	SYSFS_XMP	},
 	{ "cec",	NULL,		SYSFS_CEC	},
 	{ "imon",	NULL,		SYSFS_IMON	},
+	{ "rc-mm",	NULL,		SYSFS_RCMM	},
 	{ NULL,		NULL,		SYSFS_INVALID	},
 };
 
