@@ -222,6 +222,8 @@ sub process_func
 				$switch .= "\t\t\t\t$name = value;\n";
 			} elsif (scalar(@enum) || $name eq "ui_cmd") {
 				$switch .= "\t\t\t\t$name = parse_enum(value, opt->args\[$cnt\]);\n";
+			} elsif ($name =~ /audio_out_delay/ || $name =~ /video_latency/) {
+				$switch .= "\t\t\t\t$name = parse_latency(value);\n";
 			} elsif ($name =~ /phys_addr/) {
 				$switch .= "\t\t\t\t$name = parse_phys_addr(value);\n";
 			} else {

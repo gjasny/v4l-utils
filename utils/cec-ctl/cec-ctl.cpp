@@ -358,6 +358,20 @@ static unsigned parse_phys_addr(const char *value)
 	return (p1 << 12) | (p2 << 8) | (p3 << 4) | p4;
 }
 
+static unsigned parse_latency(const char *value)
+{
+	char *end;
+	unsigned delay = strtoul(value, &end, 0);
+
+	if (!memcmp(end, "ms", 2))
+		delay = (delay / 2) + 1;
+	if (delay < 1)
+		delay = 1;
+	else if (delay > 251)
+		delay = 251;
+	return delay;
+}
+
 static char options[512];
 
 static void log_arg(const struct arg *arg, const char *arg_name, __u32 val)
@@ -375,7 +389,10 @@ static void log_arg(const struct arg *arg, const char *arg_name, __u32 val)
 		}
 		/* fall through */
 	case CEC_TYPE_U8:
-		printf("\t%s: %u (0x%02x)\n", arg_name, val, val);
+		if (strstr(arg_name, "audio-out-delay") || strstr(arg_name, "video-latency"))
+			printf("\t%s: %u (0x%02x, %ums)\n", arg_name, val, val, (val - 1) * 2);
+		else
+			printf("\t%s: %u (0x%02x)\n", arg_name, val, val);
 		return;
 	case CEC_TYPE_U16:
 		if (strstr(arg_name, "phys-addr"))
