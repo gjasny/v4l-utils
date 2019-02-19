@@ -49,6 +49,10 @@
 	case V4L2_PIX_FMT_YUV555: return "16-bit A/XYUV 1-5-5-5";
 	case V4L2_PIX_FMT_YUV565: return "16-bit YUV 5-6-5";
 	case V4L2_PIX_FMT_YUV32: return "32-bit A/XYUV 8-8-8-8";
+	case V4L2_PIX_FMT_AYUV32: return "32-bit AYUV 8-8-8-8";
+	case V4L2_PIX_FMT_XYUV32: return "32-bit XYUV 8-8-8-8";
+	case V4L2_PIX_FMT_VUYA32: return "32-bit VUYA 8-8-8-8";
+	case V4L2_PIX_FMT_VUYX32: return "32-bit VUYX 8-8-8-8";
 	case V4L2_PIX_FMT_YUV410: return "Planar YUV 4:1:0";
 	case V4L2_PIX_FMT_YUV420: return "Planar YUV 4:2:0";
 	case V4L2_PIX_FMT_HI240: return "8-bit Dithered RGB (BTTV)";
