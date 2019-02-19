@@ -48,10 +48,12 @@ static int dal_request_current_latency(struct node *node, unsigned me, unsigned 
 	cec_ops_report_current_latency(&msg, &phys_addr, &video_latency, &low_latency_mode,
 				       &audio_out_compensated, &audio_out_delay);
 	fail_on_test(phys_addr != node->remote[la].phys_addr);
-	info("Video latency: %d\n", video_latency);
+	info("Video latency: %d (%dms)\n", video_latency, (video_latency - 1) * 2);
 	info("Low latency mode: %d\n", low_latency_mode);
 	info("Audio output compensation: %d\n", audio_out_compensated);
-	info("Audio out delay: %d\n", audio_out_delay);
+	info("Audio out delay: %d (%dms)\n", audio_out_delay, (audio_out_delay - 1) * 2);
+	fail_on_test(audio_out_delay == 0 || audio_out_delay > 251);
+	fail_on_test(video_latency == 0 || video_latency > 251);
 
 	return 0;
 }
