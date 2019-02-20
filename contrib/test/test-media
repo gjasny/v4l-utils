@@ -144,8 +144,8 @@ if [ $cec -eq 1 ]; then
 	echo
 	echo vivid cec compliance tests
 	echo
-	cec-ctl -s -D vivid -a vivid-000-vid-cap0 --tv
-	cec-ctl -s -D vivid -a vivid-000-vid-out0 --playback
+	cec-ctl -D vivid -a vivid-000-vid-cap0 --tv
+	cec-ctl -D vivid -a vivid-000-vid-out0 --playback
 	trap 'kill $f0 $f1 2>/dev/null' INT
 	cec-follower -s -D vivid -a vivid-000-vid-cap0 2>&1 >/dev/null &
 	f0=$!
