@@ -14,12 +14,22 @@ dmesg=0
 unload=0
 unbind_time=1
 rmmod_time=1
+kobj_rel=0
 
 if [ -f /proc/config.gz ]; then
 	if cat /proc/config.gz | gunzip |grep -q CONFIG_DEBUG_KOBJECT_RELEASE=y ; then
-		unbind_time=10
-		rmmod_time=5
+		kobj_rel=1
 	fi
+elif [ -f .config ]; then
+	if grep -q CONFIG_DEBUG_KOBJECT_RELEASE=y .config ; then
+		kobj_rel=1
+	fi
+fi
+
+if [ $kobj_rel -eq 1 ]; then
+	echo Detected CONFIG_DEBUG_KOBJECT_RELEASE=y
+	unbind_time=10
+	rmmod_time=5
 fi
 
 cur_lvl=`cut -c 1-2 /proc/sys/kernel/printk`
@@ -169,43 +179,57 @@ if [ $cec -eq 1 ]; then
 	vivid=1
 fi
 
-echo
-echo unbind vivid
-echo
-echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
-sleep $unbind_time
-echo
-echo rmmod vivid
-echo
-rmmod vivid
-sleep $rmmod_time
+if [ $vivid -eq 1 ]; then
+	echo
+	echo unbind vivid
+	echo
+	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
+	sleep $unbind_time
+	echo
+	echo rebind vivid
+	echo
+	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/bind
+	sleep 1
+	echo
+	echo second unbind vivid
+	echo
+	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
+	sleep $unbind_time
+	echo
+	echo rmmod vivid
+	echo
+	rmmod vivid
+	sleep $rmmod_time
 
-if [ $kmemleak -eq 1 -a $vivid -eq 1 ]; then
+	if [ $kmemleak -eq 1 ]; then
+		echo
+		echo kmemleak results for vivid:
+		echo
+		echo scan >/sys/kernel/debug/kmemleak
+		cat /sys/kernel/debug/kmemleak
+		echo
+		echo end of kmemleak results
+		echo
+	fi
+
+	modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
+	sleep 1
+
+	v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
+	v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
+
+	if [ $kmemleak -eq 1 ]; then
+		echo clear >/sys/kernel/debug/kmemleak
+	fi
 	echo
-	echo kmemleak results for vivid:
 	echo
-	echo scan >/sys/kernel/debug/kmemleak
-	cat /sys/kernel/debug/kmemleak
 	echo
-	echo end of kmemleak results
+	echo
+	echo
+	echo
+	echo
 	echo
 fi
-
-modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
-sleep 1
-
-v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
-v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
-
-echo clear >/sys/kernel/debug/kmemleak
-echo
-echo
-echo
-echo
-echo
-echo
-echo
-echo
 
 if [ $vim2m -eq 1 ]; then
 	modprobe vim2m
@@ -229,6 +253,16 @@ if [ $vim2m -eq 1 ]; then
 	echo -n vim2m.0 >/sys/bus/platform/drivers/vim2m/unbind
 	sleep $unbind_time
 	echo
+	echo rebind vim2m
+	echo
+	echo -n vim2m.0 >/sys/bus/platform/drivers/vim2m/bind
+	sleep 1
+	echo
+	echo second unbind vim2m
+	echo
+	echo -n vim2m.0 >/sys/bus/platform/drivers/vim2m/unbind
+	sleep $unbind_time
+	echo
 	echo rmmod vim2m
 	echo
 	rmmod vim2m
@@ -242,15 +276,15 @@ if [ $vim2m -eq 1 ]; then
 		echo
 		echo end of kmemleak results
 		echo clear >/sys/kernel/debug/kmemleak
-		echo
-		echo
-		echo
-		echo
-		echo
-		echo
-		echo
-		echo
 	fi
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
 fi
 
 if [ $vimc -eq 1 ]; then
@@ -277,6 +311,16 @@ if [ $vimc -eq 1 ]; then
 	echo
 	echo
 	echo unbind vimc
+	echo
+	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/unbind
+	sleep $unbind_time
+	echo
+	echo rebind vimc
+	echo
+	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/bind
+	sleep 1
+	echo
+	echo second unbind vimc
 	echo
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/unbind
 	sleep $unbind_time
