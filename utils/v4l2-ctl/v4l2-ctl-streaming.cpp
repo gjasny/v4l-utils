@@ -753,7 +753,7 @@ static void read_write_padded_frame(cv4l_fmt &fmt, unsigned char *buf,
 				    FILE *fpointer, unsigned &sz,
 				    unsigned &len, bool is_read)
 {
-	const struct v4l2_fwht_pixfmt_info *vic_fmt =
+	const struct v4l2_fwht_pixfmt_info *info =
 			v4l2_fwht_find_pixfmt(fmt.g_pixelformat());
 	unsigned coded_height = fmt.g_height();
 	unsigned real_width;
@@ -770,14 +770,14 @@ static void read_write_padded_frame(cv4l_fmt &fmt, unsigned char *buf,
 	}
 
 	sz = 0;
-	len = real_width * real_height * vic_fmt->sizeimage_mult / vic_fmt->sizeimage_div;
+	len = real_width * real_height * info->sizeimage_mult / info->sizeimage_div;
 
-	for (unsigned plane_idx = 0; plane_idx < vic_fmt->planes_num; plane_idx++) {
+	for (unsigned plane_idx = 0; plane_idx < info->planes_num; plane_idx++) {
 		bool is_chroma_plane = plane_idx == 1 || plane_idx == 2;
-		unsigned h_div = is_chroma_plane ? vic_fmt->height_div : 1;
-		unsigned w_div = is_chroma_plane ? vic_fmt->width_div : 1;
-		unsigned step = is_chroma_plane ? vic_fmt->chroma_step : vic_fmt->luma_alpha_step;
-		unsigned stride_div = (vic_fmt->planes_num == 3 && plane_idx > 0) ? 2 : 1;
+		unsigned h_div = is_chroma_plane ? info->height_div : 1;
+		unsigned w_div = is_chroma_plane ? info->width_div : 1;
+		unsigned step = is_chroma_plane ? info->chroma_step : info->luma_alpha_step;
+		unsigned stride_div = (info->planes_num == 3 && plane_idx > 0) ? 2 : 1;
 
 		row_p = plane_p;
 		for (unsigned i = 0; i < real_height / h_div; i++) {
