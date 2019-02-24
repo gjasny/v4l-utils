@@ -1823,7 +1823,7 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 	if (q.obtain_bufs(&fd))
 		goto done;
 
-	if (do_setup_out_buffers(fd, q, fin, true))
+	if (do_setup_out_buffers(fd, q, fin, true) == -1)
 		goto done;
 
 	fps_ts.determine_field(fd.g_fd(), type);
@@ -2013,7 +2013,7 @@ static void streaming_set_m2m(cv4l_fd &fd, cv4l_fd &exp_fd)
 			goto done;
 	}
 
-	if (do_setup_out_buffers(fd, out, file[OUT], true))
+	if (do_setup_out_buffers(fd, out, file[OUT], true) == -1)
 		goto done;
 
 	if (fd.streamon(out.g_type()))
@@ -2250,7 +2250,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 
 	if (in.obtain_bufs(&fd) ||
 	    in.queue_all(&fd) ||
-	    do_setup_out_buffers(out_fd, out, file[OUT], false))
+	    do_setup_out_buffers(out_fd, out, file[OUT], false) == -1)
 		goto done;
 
 	fps_ts[CAP].determine_field(fd.g_fd(), in.g_type());
