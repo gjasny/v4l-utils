@@ -760,6 +760,7 @@ static void read_write_padded_frame(cv4l_fmt &fmt, unsigned char *buf,
 	unsigned real_height;
 	unsigned char *plane_p = buf;
 	unsigned char *row_p;
+	unsigned stride = fmt.g_bytesperline();
 
 	if (is_read) {
 		real_width  = cropped_width;
@@ -776,13 +777,20 @@ static void read_write_padded_frame(cv4l_fmt &fmt, unsigned char *buf,
 		bool is_chroma_plane = plane_idx == 1 || plane_idx == 2;
 		unsigned h_div = is_chroma_plane ? info->height_div : 1;
 		unsigned w_div = is_chroma_plane ? info->width_div : 1;
-		unsigned step = is_chroma_plane ? info->chroma_step : info->luma_alpha_step;
-		unsigned stride_div = (info->planes_num == 3 && plane_idx > 0) ? 2 : 1;
+		unsigned step = is_chroma_plane ? info->chroma_step :
+			info->luma_alpha_step;
+		unsigned int consume_sz = step * real_width / w_div;
+
+		if (info->planes_num == 3 && plane_idx == 1)
+			stride /= 2;
+
+		if (plane_idx == 1 &&
+		    (info->id == V4L2_PIX_FMT_NV24 || info->id == V4L2_PIX_FMT_NV42))
+			stride *= 2;
 
 		row_p = plane_p;
 		for (unsigned i = 0; i < real_height / h_div; i++) {
 			unsigned int wsz = 0;
-			unsigned int consume_sz = step * real_width / w_div;
 
 			if (is_read)
 				wsz = fread(row_p, 1, consume_sz, fpointer);
@@ -795,9 +803,9 @@ static void read_write_padded_frame(cv4l_fmt &fmt, unsigned char *buf,
 				return;
 			}
 			sz += wsz;
-			row_p += fmt.g_bytesperline() / stride_div;
+			row_p += stride;
 		}
-		plane_p += (fmt.g_bytesperline() / stride_div) * (coded_height / h_div);
+		plane_p += stride * (coded_height / h_div);
 		if (sz == 0)
 			break;
 	}
