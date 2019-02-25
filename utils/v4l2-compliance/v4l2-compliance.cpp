@@ -1330,10 +1330,9 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 			printf("\ttest MMAP (select): %s\n",
 			       ok(testMmap(&node, frame_count, POLL_MODE_SELECT)));
 			node.reopen();
-// vb2 epoll support is broken, so disable this test for now
-//			printf("\ttest MMAP (epoll): %s\n",
-//			       ok(testMmap(&node, frame_count, POLL_MODE_EPOLL)));
-//			node.reopen();
+			printf("\ttest MMAP (epoll): %s\n",
+			       ok(testMmap(&node, frame_count, POLL_MODE_EPOLL)));
+			node.reopen();
 			printf("\ttest USERPTR (no poll): %s\n",
 			       ok(testUserPtr(&node, frame_count, POLL_MODE_NONE)));
 			node.reopen();
