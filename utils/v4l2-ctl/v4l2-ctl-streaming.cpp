@@ -2152,7 +2152,7 @@ static void streaming_set_m2m(cv4l_fd &fd, cv4l_fd &exp_fd)
 			return;
 	}
 	stateful_m2m(fd, in, out, file[CAP], file[OUT], exp_fd_p);
-done:
+
 	if (options[OptStreamDmaBuf] || options[OptStreamOutDmaBuf])
 		exp_q.close_exported_fds();
 
