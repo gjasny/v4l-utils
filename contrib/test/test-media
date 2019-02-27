@@ -134,10 +134,12 @@ if [ $vivid -eq 1 ]; then
 	echo
 	echo vivid compliance tests, contiguous planes
 	echo
+	date
 	stdbuf -oL v4l2-compliance -m platform:vivid-000 -z platform:vivid-002 -e vivid-002-vid-cap -P -s10 -a 2>&1 | tee -a $tmp
 	echo
 	echo vivid compliance tests, non-contiguous planes
 	echo
+	date
 	stdbuf -oL v4l2-compliance -m platform:vivid-001 -z platform:vivid-002 -e vivid-002-vid-out -P -s10 -a 2>&1 | tee -a $tmp
 	echo
 	echo
@@ -163,8 +165,10 @@ if [ $cec -eq 1 ]; then
 	f0=$!
 	cec-follower -s -D vivid -a vivid-000-vid-out0 2>&1 >/dev/null &
 	f1=$!
+	date
 	stdbuf -oL cec-compliance -D vivid -a vivid-000-vid-cap0 -A -r4 -t10 $cecpwr 2>&1 | tee -a $tmp
 	sleep 5
+	date
 	stdbuf -oL cec-compliance -D vivid -a vivid-000-vid-out0 -A -r0 -t10 $cecpwr 2>&1 | tee -a $tmp
 	kill $f0
 	kill $f1
@@ -238,6 +242,7 @@ if [ $vim2m -eq 1 ]; then
 	echo
 	echo vim2m compliance tests
 	echo
+	date
 	stdbuf -oL v4l2-compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 	echo
 	echo
@@ -299,6 +304,7 @@ if [ $vimc -eq 1 ]; then
 	echo
 	echo vimc compliance tests
 	echo
+	date
 	stdbuf -oL v4l2-compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 	echo
 	echo
@@ -349,6 +355,7 @@ if [ $vimc -eq 1 ]; then
 	fi
 fi
 
+date
 echo
 echo unbind vivid
 echo
@@ -360,6 +367,7 @@ echo
 rmmod vivid
 sleep $rmmod_time
 
+date
 echo
 echo Summary:
 echo
@@ -383,6 +391,7 @@ printf("Final Summary: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 	$tot_succeeded + $tot_failed, $tot_succeeded, $tot_failed, $tot_warnings);
 '
 
+date
 rm -f $tmp
 
 if [ $dmesg -eq 1 ]; then
