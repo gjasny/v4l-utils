@@ -662,3 +662,12 @@ void v4lconvert_bayer10p_to_bayer8(unsigned char *bayer10p,
 		bayer8 += 4;
 	}
 }
+
+void v4lconvert_bayer16_to_bayer8(unsigned char *bayer16,
+		unsigned char *bayer8, int width, int height)
+{
+	int i;
+
+	for (i = 0; i < width * height; i++)
+		bayer8[i] = bayer16[2*i+1];
+}

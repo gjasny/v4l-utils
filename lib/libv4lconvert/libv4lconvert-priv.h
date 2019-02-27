@@ -270,6 +270,9 @@ void v4lconvert_bayer10_to_bayer8(void *bayer10,
 void v4lconvert_bayer10p_to_bayer8(unsigned char *bayer10p,
 		unsigned char *bayer8, int width, int height);
 
+void v4lconvert_bayer16_to_bayer8(unsigned char *bayer16,
+		unsigned char *bayer8, int width, int height);
+
 void v4lconvert_hm12_to_rgb24(const unsigned char *src,
 		unsigned char *dst, int width, int height);
 

@@ -140,6 +140,10 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_SGBRG10,		16,	 8,	 8,	1 },
 	{ V4L2_PIX_FMT_SGRBG10,		16,	 8,	 8,	1 },
 	{ V4L2_PIX_FMT_SRGGB10,		16,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SBGGR16,		16,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SGBRG16,		16,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SGRBG16,		16,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SRGGB16,		16,	 8,	 8,	1 },
 	/* compressed bayer */
 	{ V4L2_PIX_FMT_SPCA561,		 0,	 9,	 9,	1 },
 	{ V4L2_PIX_FMT_SN9C10X,		 0,	 9,	 9,	1 },
@@ -702,6 +706,10 @@ static int v4lconvert_processing_needs_double_conversion(
 	case V4L2_PIX_FMT_SGBRG10:
 	case V4L2_PIX_FMT_SGRBG10:
 	case V4L2_PIX_FMT_SRGGB10:
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16:
 	case V4L2_PIX_FMT_STV0680:
 		return 0;
 	}
@@ -1048,6 +1056,43 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 				break;
 			}
 			v4lconvert_bayer10_to_bayer8(src, src, width, height);
+			bytesperline = width;
+		}
+	}
+
+	case V4L2_PIX_FMT_SBGGR16:
+	case V4L2_PIX_FMT_SGBRG16:
+	case V4L2_PIX_FMT_SGRBG16:
+	case V4L2_PIX_FMT_SRGGB16: {
+		int b16format = 1;
+
+		switch (src_pix_fmt) {
+		case V4L2_PIX_FMT_SBGGR16:
+			src_pix_fmt = V4L2_PIX_FMT_SBGGR8;
+			break;
+		case V4L2_PIX_FMT_SGBRG16:
+			src_pix_fmt = V4L2_PIX_FMT_SGBRG8;
+			break;
+		case V4L2_PIX_FMT_SGRBG16:
+			src_pix_fmt = V4L2_PIX_FMT_SGRBG8;
+			break;
+		case V4L2_PIX_FMT_SRGGB16:
+			src_pix_fmt = V4L2_PIX_FMT_SRGGB8;
+			break;
+		default:
+			b16format = 0;
+			break;
+		}
+
+		if (b16format) {
+			if (src_size < ((width * height * 2))) {
+				V4LCONVERT_ERR
+					("short raw bayer16 data frame\n");
+				errno = EPIPE;
+				result = -1;
+				break;
+			}
+			v4lconvert_bayer16_to_bayer8(src, src, width, height);
 			bytesperline = width;
 		}
 	}
