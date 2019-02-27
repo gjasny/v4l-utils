@@ -632,6 +632,16 @@ void v4lconvert_bayer_to_yuv420(const unsigned char *bayer, unsigned char *yuv,
 			!start_with_green, !blue_line);
 }
 
+void v4lconvert_bayer10_to_bayer8(void *bayer10,
+		unsigned char *bayer8, int width, int height)
+{
+	int i;
+	uint16_t *src = bayer10;
+
+	for (i = 0; i < width * height; i++)
+		bayer8[i] = src[i] >> 2;
+}
+
 void v4lconvert_bayer10p_to_bayer8(unsigned char *bayer10p,
 		unsigned char *bayer8, int width, int height)
 {

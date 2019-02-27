@@ -132,11 +132,14 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_SGRBG8,		 8,	 8,	 8,	0 },
 	{ V4L2_PIX_FMT_SRGGB8,		 8,	 8,	 8,	0 },
 	{ V4L2_PIX_FMT_STV0680,		 8,	 8,	 8,	1 },
-	{ V4L2_PIX_FMT_SGRBG10,		16,	 8,	 8,	1 },
 	{ V4L2_PIX_FMT_SBGGR10P,	10,	 8,	 8,	1 },
 	{ V4L2_PIX_FMT_SGBRG10P,	10,	 8,	 8,	1 },
 	{ V4L2_PIX_FMT_SGRBG10P,	10,	 8,	 8,	1 },
 	{ V4L2_PIX_FMT_SRGGB10P,	10,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SBGGR10,		16,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SGBRG10,		16,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SGRBG10,		16,	 8,	 8,	1 },
+	{ V4L2_PIX_FMT_SRGGB10,		16,	 8,	 8,	1 },
 	/* compressed bayer */
 	{ V4L2_PIX_FMT_SPCA561,		 0,	 9,	 9,	1 },
 	{ V4L2_PIX_FMT_SN9C10X,		 0,	 9,	 9,	1 },
@@ -695,6 +698,10 @@ static int v4lconvert_processing_needs_double_conversion(
 	case V4L2_PIX_FMT_SGBRG10P:
 	case V4L2_PIX_FMT_SGRBG10P:
 	case V4L2_PIX_FMT_SRGGB10P:
+	case V4L2_PIX_FMT_SBGGR10:
+	case V4L2_PIX_FMT_SGBRG10:
+	case V4L2_PIX_FMT_SGRBG10:
+	case V4L2_PIX_FMT_SRGGB10:
 	case V4L2_PIX_FMT_STV0680:
 		return 0;
 	}
@@ -720,16 +727,6 @@ unsigned char *v4lconvert_alloc_buffer(int needed,
 		*buf_size = needed;
 	}
 	return *buf;
-}
-
-static void v4lconvert_10to8(void *_src, unsigned char *dst, int width, int height)
-{
-	int i;
-	uint16_t *src = _src;
-	
-	for (i = 0; i < width * height; i++) {
-		dst[i] = src[i] >> 2;
-	}
 }
 
 int v4lconvert_oom_error(struct v4lconvert_data *data)
@@ -907,8 +904,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 #endif
 	case V4L2_PIX_FMT_SN9C2028:
 	case V4L2_PIX_FMT_SQ905C:
-	case V4L2_PIX_FMT_STV0680:
-	case V4L2_PIX_FMT_SGRBG10: { /* Not compressed but needs some shuffling */
+	case V4L2_PIX_FMT_STV0680: { /* Not compressed but needs some shuffling */
 		unsigned char *tmpbuf;
 		struct v4l2_format tmpfmt = *fmt;
 
@@ -918,11 +914,6 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			return v4lconvert_oom_error(data);
 
 		switch (src_pix_fmt) {
-		case V4L2_PIX_FMT_SGRBG10:
-			v4lconvert_10to8(src, tmpbuf, width, height);
-			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SGRBG8;
-			bytesperline = width;
-			break;
 		case V4L2_PIX_FMT_SPCA561:
 			v4lconvert_decode_spca561(src, tmpbuf, width, height);
 			tmpfmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SGBRG8;
@@ -1023,6 +1014,44 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			bytesperline = width;
 		}
 	}
+
+	case V4L2_PIX_FMT_SBGGR10:
+	case V4L2_PIX_FMT_SGBRG10:
+	case V4L2_PIX_FMT_SGRBG10:
+	case V4L2_PIX_FMT_SRGGB10: {
+		int b10format = 1;
+
+		switch (src_pix_fmt) {
+		case V4L2_PIX_FMT_SBGGR10:
+			src_pix_fmt = V4L2_PIX_FMT_SBGGR8;
+			break;
+		case V4L2_PIX_FMT_SGBRG10:
+			src_pix_fmt = V4L2_PIX_FMT_SGBRG8;
+			break;
+		case V4L2_PIX_FMT_SGRBG10:
+			src_pix_fmt = V4L2_PIX_FMT_SGRBG8;
+			break;
+		case V4L2_PIX_FMT_SRGGB10:
+			src_pix_fmt = V4L2_PIX_FMT_SRGGB8;
+			break;
+		default:
+			b10format = 0;
+			break;
+		}
+
+		if (b10format) {
+			if (src_size < (width * height * 2)) {
+				V4LCONVERT_ERR
+					("short raw bayer10 data frame\n");
+				errno = EPIPE;
+				result = -1;
+				break;
+			}
+			v4lconvert_bayer10_to_bayer8(src, src, width, height);
+			bytesperline = width;
+		}
+	}
+
 	/* Fall-through*/
 	case V4L2_PIX_FMT_SBGGR8:
 	case V4L2_PIX_FMT_SGBRG8:
