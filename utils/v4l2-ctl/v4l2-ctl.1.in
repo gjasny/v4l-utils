@@ -122,7 +122,9 @@ The subset of the N-dimensional array to get/set for control \fI<ctrl>\fR,
 for every dimension an (\fI<offset>\fR, \fI<size>\fR) tuple is given.
 .TP
 \fB--list-devices\fR
-List all v4l devices.
+List all v4l devices. If \fB-z\fR was given, then list just the
+devices of the media device with the bus info string as
+specified by the \fB-z\fR option.
 .TP
 \fB--log-status\fR
 Log the board status in the kernel log [VIDIOC_LOG_STATUS].

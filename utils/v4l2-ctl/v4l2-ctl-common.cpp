@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <sys/sysmacros.h>
 #include <sys/time.h>
 #include <dirent.h>
 #include <math.h>
@@ -109,7 +110,9 @@ void common_usage(void)
 #ifndef NO_LIBV4L2
 	       "  -w, --wrapper      use the libv4l2 wrapper library.\n"
 #endif
-	       "  --list-devices     list all v4l devices\n"
+	       "  --list-devices     list all v4l devices. If -z was given, then list just the\n"
+	       "                     devices of the media device with the bus info string as\n"
+	       "                     specified by the -z option.\n"
 	       "  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n"
 	       "  --get-priority     query the current access priority [VIDIOC_G_PRIORITY]\n"
 	       "  --set-priority <prio>\n"
@@ -169,6 +172,68 @@ static bool sort_on_device_name(const std::string &s1, const std::string &s2)
 	int n2 = calc_node_val(s2.c_str());
 
 	return n1 < n2;
+}
+
+static void list_media_devices(const std::string &media_bus_info)
+{
+	DIR *dp;
+	struct dirent *ep;
+	int media_fd = -1;
+	std::map<dev_t, std::string> devices;
+
+	dp = opendir("/dev");
+	if (dp == NULL) {
+		perror ("Couldn't open the directory");
+		return;
+	}
+	while ((ep = readdir(dp))) {
+		std::string s("/dev/");
+
+		s += ep->d_name;
+		if (memcmp(ep->d_name, "media", 5)) {
+			if (!is_v4l_dev(ep->d_name))
+				continue;
+			struct stat st;
+			if (stat(s.c_str(), &st))
+				continue;
+			devices[st.st_rdev] = s;
+			continue;
+		}
+		int fd = open(s.c_str(), O_RDWR);
+
+		if (fd < 0)
+			continue;
+		struct media_device_info mdi;
+
+		if (!ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi) &&
+		    media_bus_info == mdi.bus_info)
+			media_fd = fd;
+		else
+			close(fd);
+	}
+	closedir(dp);
+	if (media_fd < 0)
+		return;
+
+	media_v2_topology topology;
+	memset(&topology, 0, sizeof(topology));
+	if (ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology)) {
+		close(media_fd);
+		return;
+	}
+
+	media_v2_interface *ifaces = new media_v2_interface[topology.num_interfaces];
+	topology.ptr_interfaces = (__u64)ifaces;
+
+	if (!ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology))
+		for (unsigned i = 0; i < topology.num_interfaces; i++) {
+			dev_t dev = makedev(ifaces[i].devnode.major,
+					    ifaces[i].devnode.minor);
+
+			if (devices.find(dev) != devices.end())
+				printf("%s\n", devices[dev].c_str());
+		}
+	close(media_fd);
 }
 
 static void list_devices()
@@ -727,7 +792,7 @@ static bool parse_next_subopt(char **subs, char **value)
 	return true;
 }
 
-void common_cmd(int ch, char *optarg)
+void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
 {
 	char *value, *subs;
 
@@ -774,7 +839,10 @@ void common_cmd(int ch, char *optarg)
 		prio = (enum v4l2_priority)strtoul(optarg, 0L, 0);
 		break;
 	case OptListDevices:
-		list_devices();
+		if (media_bus_info.empty())
+			list_devices();
+		else
+			list_media_devices(media_bus_info);
 		break;
 	}
 }

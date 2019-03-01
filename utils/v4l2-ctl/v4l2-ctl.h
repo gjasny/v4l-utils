@@ -324,7 +324,7 @@ void print_video_formats_ext(cv4l_fd &fd, __u32 type);
 
 // v4l2-ctl-common.cpp
 void common_usage(void);
-void common_cmd(int ch, char *optarg);
+void common_cmd(const std::string &media_bus_info, int ch, char *optarg);
 void common_set(cv4l_fd &fd);
 void common_get(cv4l_fd &fd);
 void common_list(cv4l_fd &fd);

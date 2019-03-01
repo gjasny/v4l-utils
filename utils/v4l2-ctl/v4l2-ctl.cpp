@@ -1221,7 +1221,7 @@ int main(int argc, char **argv)
 			common_usage();
 			return 1;
 		default:
-			common_cmd(ch, optarg);
+			common_cmd(media_bus_info, ch, optarg);
 			tuner_cmd(ch, optarg);
 			io_cmd(ch, optarg);
 			stds_cmd(ch, optarg);
