@@ -13,6 +13,7 @@ kmemleak=0
 dmesg=0
 unload=0
 unbind_time=1
+reunbind_time=5
 rmmod_time=1
 kobj_rel=0
 
@@ -29,6 +30,7 @@ fi
 if [ $kobj_rel -eq 1 ]; then
 	echo Detected CONFIG_DEBUG_KOBJECT_RELEASE=y
 	unbind_time=10
+	reunbind_time=10
 	rmmod_time=5
 fi
 
@@ -197,8 +199,13 @@ if [ $vivid -eq 1 ]; then
 	echo
 	echo second unbind vivid
 	echo
+	for i in `v4l2-ctl -z platform:vivid-000 --list-devices`; do
+		v4l2-ctl -d $i --sleep 4 &
+	done
+	sleep 1
+	echo
 	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
-	sleep $unbind_time
+	sleep $reunbind_time
 	echo
 	echo rmmod vivid
 	echo
@@ -265,8 +272,13 @@ if [ $vim2m -eq 1 ]; then
 	echo
 	echo second unbind vim2m
 	echo
+	for i in `v4l2-ctl -z platform:vim2m --list-devices`; do
+		v4l2-ctl -d $i --sleep 4 &
+	done
+	sleep 1
+	echo
 	echo -n vim2m.0 >/sys/bus/platform/drivers/vim2m/unbind
-	sleep $unbind_time
+	sleep $reunbind_time
 	echo
 	echo rmmod vim2m
 	echo
@@ -328,8 +340,13 @@ if [ $vimc -eq 1 ]; then
 	echo
 	echo second unbind vimc
 	echo
+	for i in `v4l2-ctl -z platform:vimc --list-devices`; do
+		v4l2-ctl -d $i --sleep 4 &
+	done
+	sleep 1
+	echo
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/unbind
-	sleep $unbind_time
+	sleep $reunbind_time
 	echo
 	echo rmmod vimc
 	echo
