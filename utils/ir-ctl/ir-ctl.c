@@ -133,7 +133,7 @@ static const char doc[] = N_(
 	"\nReceive IR, send IR and list features of lirc device\n"
 	"You will need permission on /dev/lirc for the program to work\n"
 	"\nOn the options below, the arguments are:\n"
-	"  DEV	    - the /dev/lirc* device to use\n"
+	"  DEV      - the /dev/lirc* device to use\n"
 	"  FILE     - a text file containing pulses and spaces\n"
 	"  CARRIER  - the carrier frequency to use for sending\n"
 	"  DUTY     - the duty cycle to use for sending\n"

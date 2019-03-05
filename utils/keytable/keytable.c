@@ -235,7 +235,7 @@ static const char doc[] = N_(
 	"  TABLE     - a file with a set of scancode=keycode value pairs\n"
 	"  SCANKEY   - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
 	"  PROTOCOL  - protocol name (nec, rc-5, rc-6, jvc, sony, sanyo, rc-5-sz, lirc,\n"
-	"              sharp, mce_kbd, xmp, imon, other, all) to be enabled,\n"
+	"              sharp, mce_kbd, xmp, imon, rc_mm, other, all) to be enabled,\n"
 	"              or a bpf protocol name or file\n"
 	"  DELAY     - Delay before repeating a keystroke\n"
 	"  PERIOD    - Period to repeat a keystroke\n"

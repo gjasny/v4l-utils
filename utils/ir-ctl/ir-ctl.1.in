@@ -30,7 +30,7 @@ lirc device to control, /dev/lirc0 by default
 \fB\-f\fR, \fB\-\-features\fR
 List the features of the lirc device.
 .TP
-\fB\-r\fR, \fB\-\-receive\fR=[\fIFILE\fR]
+\fB\-r\fR, \fB\-\-receive\fR[=\fIFILE\fR]
 Receive IR and print to standard output if no file is specified, else
 save to the filename.
 .TP
@@ -166,7 +166,7 @@ carrier. The above can be written as:
 	scancode rc5:0x1e01
 .PP
 If multiple scancodes are specified in a file, a gap is inserted between
-scancodes if there is no space between then (see \fB\-\-gap\fR). One file
+scancodes if there is no space between them (see \fB\-\-gap\fR). One file
 can only have one carrier frequency, so this might cause problems
 if different protocols are specified in one file if they use different
 carrier frequencies.
