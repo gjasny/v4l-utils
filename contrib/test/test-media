@@ -356,7 +356,7 @@ if [ $vimc -eq 1 ]; then
 	echo
 	echo rmmod vimc
 	echo
-	rmmod vimc
+	rmmod vimc vimc_scaler vimc_debayer vimc_capture vimc_sensor vimc_streamer vimc_common
 	sleep $rmmod_time
 	if [ $kmemleak -eq 1 ]; then
 		echo
