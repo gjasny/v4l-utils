@@ -13,7 +13,7 @@ kmemleak=0
 dmesg=0
 unload=0
 unbind_time=1
-reunbind_time=5
+reunbind_time=9
 rmmod_time=1
 kobj_rel=0
 
@@ -30,7 +30,7 @@ fi
 if [ $kobj_rel -eq 1 ]; then
 	echo Detected CONFIG_DEBUG_KOBJECT_RELEASE=y
 	unbind_time=10
-	reunbind_time=10
+	reunbind_time=14
 	rmmod_time=5
 fi
 
@@ -200,7 +200,9 @@ if [ $vivid -eq 1 ]; then
 	echo second unbind vivid
 	echo
 	for i in `v4l2-ctl -z platform:vivid-000 --list-devices`; do
-		sleep 4 <$i &
+		let "t = 1 + $RANDOM / 4096"
+		echo $i: sleep ${t}s
+		sleep $t <$i &
 	done
 	sleep 1
 	echo
@@ -273,7 +275,9 @@ if [ $vim2m -eq 1 ]; then
 	echo second unbind vim2m
 	echo
 	for i in `v4l2-ctl -z platform:vim2m --list-devices`; do
-		sleep 4 <$i &
+		let "t = 1 + $RANDOM / 4096"
+		echo $i: sleep ${t}s
+		sleep $t <$i &
 	done
 	sleep 1
 	echo
@@ -341,7 +345,9 @@ if [ $vimc -eq 1 ]; then
 	echo second unbind vimc
 	echo
 	for i in `v4l2-ctl -z platform:vimc --list-devices`; do
-		sleep 4 <$i &
+		let "t = 1 + $RANDOM / 4096"
+		echo $i: sleep ${t}s
+		sleep $t <$i &
 	done
 	sleep 1
 	echo
