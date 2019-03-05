@@ -206,10 +206,12 @@ static void list_media_devices(const std::string &media_bus_info)
 		struct media_device_info mdi;
 
 		if (!ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi) &&
-		    media_bus_info == mdi.bus_info)
+		    media_bus_info == mdi.bus_info) {
 			media_fd = fd;
-		else
+			printf("%s\n", s.c_str());
+		} else {
 			close(fd);
+		}
 	}
 	closedir(dp);
 	if (media_fd < 0)
