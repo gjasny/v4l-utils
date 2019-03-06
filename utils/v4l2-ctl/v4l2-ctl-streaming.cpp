@@ -1952,7 +1952,8 @@ static int capture_setup(cv4l_fd &fd, cv4l_queue &in, cv4l_fd *exp_fd)
 }
 
 static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
-			 FILE *fin, FILE *fout, cv4l_fd *exp_fd_p)
+			 FILE *fin, FILE *fout, cv4l_fmt &fmt_in,
+			 cv4l_fmt &fmt_out, cv4l_fd *exp_fd_p)
 {
 	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
 	fps_timestamps fps_ts[2];
@@ -1962,10 +1963,6 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 	fd_set *ex_fds = &fds[1]; /* for capture */
 	fd_set *wr_fds = &fds[2]; /* for output */
 	bool cap_streaming = false;
-	cv4l_fmt fmt[2];
-
-	fd.g_fmt(fmt[OUT], out.g_type());
-	fd.g_fmt(fmt[CAP], in.g_type());
 
 	struct v4l2_event_subscription sub;
 
@@ -2043,7 +2040,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 		if (rd_fds && FD_ISSET(fd.g_fd(), rd_fds)) {
 			r = do_handle_cap(fd, in, fin, NULL,
-					  count[CAP], fps_ts[CAP], fmt[CAP]);
+					  count[CAP], fps_ts[CAP], fmt_in);
 			if (r < 0) {
 				rd_fds = NULL;
 				if (!have_eos) {
@@ -2055,7 +2052,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 		if (wr_fds && FD_ISSET(fd.g_fd(), wr_fds)) {
 			r = do_handle_out(fd, out, fout, NULL,
-					  count[OUT], fps_ts[OUT], fmt[OUT]);
+					  count[OUT], fps_ts[OUT], fmt_out);
 			if (r < 0)  {
 				wr_fds = NULL;
 
@@ -2107,8 +2104,8 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 				last_buffer = false;
 				if (capture_setup(fd, in, exp_fd_p))
 					return;
-				fd.g_fmt(fmt[OUT], out.g_type());
-				fd.g_fmt(fmt[CAP], in.g_type());
+				fd.g_fmt(fmt_out, out.g_type());
+				fd.g_fmt(fmt_in, in.g_type());
 				cap_streaming = true;
 			} else {
 				break;
@@ -2133,6 +2130,10 @@ static void streaming_set_m2m(cv4l_fd &fd, cv4l_fd &exp_fd)
 	cv4l_queue exp_q(exp_fd.g_type(), V4L2_MEMORY_MMAP);
 	cv4l_fd *exp_fd_p = NULL;
 	FILE *file[2] = {NULL, NULL};
+	cv4l_fmt fmt[2];
+
+	fd.g_fmt(fmt[OUT], out.g_type());
+	fd.g_fmt(fmt[CAP], in.g_type());
 
 	if (!fd.has_vid_m2m()) {
 		fprintf(stderr, "unsupported m2m stream type\n");
@@ -2162,7 +2163,7 @@ static void streaming_set_m2m(cv4l_fd &fd, cv4l_fd &exp_fd)
 		if (out.export_bufs(&exp_fd, exp_fd.g_type()))
 			goto done;
 	}
-	stateful_m2m(fd, in, out, file[CAP], file[OUT], exp_fd_p);
+	stateful_m2m(fd, in, out, file[CAP], file[OUT], fmt[CAP], fmt[OUT], exp_fd_p);
 
 done:
 	if (options[OptStreamDmaBuf] || options[OptStreamOutDmaBuf])
