@@ -2145,18 +2145,19 @@ static void streaming_set_m2m(cv4l_fd &fd, cv4l_fd &exp_fd)
 
 	if (options[OptStreamDmaBuf]) {
 		if (exp_q.reqbufs(&exp_fd, reqbufs_count_cap))
-			return;
+			goto done;
 		exp_fd_p = &exp_fd;
 	}
 
 	if (options[OptStreamOutDmaBuf]) {
 		if (exp_q.reqbufs(&exp_fd, reqbufs_count_out))
-			return;
+			goto done;
 		if (out.export_bufs(&exp_fd, exp_fd.g_type()))
-			return;
+			goto done;
 	}
 	stateful_m2m(fd, in, out, file[CAP], file[OUT], exp_fd_p);
 
+done:
 	if (options[OptStreamDmaBuf] || options[OptStreamOutDmaBuf])
 		exp_q.close_exported_fds();
 
