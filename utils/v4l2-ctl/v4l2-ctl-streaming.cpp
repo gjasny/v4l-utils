@@ -752,9 +752,10 @@ void streaming_cmd(int ch, char *optarg)
 	}
 }
 
-static void read_write_padded_frame(cv4l_fmt &fmt, unsigned char *buf,
+static bool read_write_padded_frame(cv4l_fmt &fmt, unsigned char *buf,
 				    FILE *fpointer, unsigned &sz,
-				    unsigned &len, bool is_read)
+				    unsigned &expected_len, unsigned buf_len,
+				    bool is_read)
 {
 	const struct v4l2_fwht_pixfmt_info *info =
 			v4l2_fwht_find_pixfmt(fmt.g_pixelformat());
@@ -774,8 +775,9 @@ static void read_write_padded_frame(cv4l_fmt &fmt, unsigned char *buf,
 	}
 
 	sz = 0;
-	len = real_width * real_height * info->sizeimage_mult / info->sizeimage_div;
-
+	expected_len = real_width * real_height * info->sizeimage_mult / info->sizeimage_div;
+	if (expected_len > buf_len)
+		return false;
 	for (unsigned plane_idx = 0; plane_idx < info->planes_num; plane_idx++) {
 		bool is_chroma_plane = plane_idx == 1 || plane_idx == 2;
 		unsigned h_div = is_chroma_plane ? info->height_div : 1;
@@ -803,7 +805,7 @@ static void read_write_padded_frame(cv4l_fmt &fmt, unsigned char *buf,
 				break;
 			if (wsz != consume_sz) {
 				fprintf(stderr, "padding: needed %u bytes, got %u\n", consume_sz, wsz);
-				return;
+				return true;
 			}
 			sz += wsz;
 			row_p += stride;
@@ -812,6 +814,7 @@ static void read_write_padded_frame(cv4l_fmt &fmt, unsigned char *buf,
 		if (sz == 0)
 			break;
 	}
+	return true;
 }
 
 static bool fill_buffer_from_file(cv4l_fd &fd, cv4l_queue &q, cv4l_buffer &b,
@@ -932,26 +935,30 @@ restart:
 
 	for (unsigned j = 0; j < q.g_num_planes(); j++) {
 		void *buf = q.g_dataptr(b.g_index(), j);
-		unsigned len = q.g_length(j);
+		unsigned buf_len = q.g_length(j);
+		unsigned expected_len = q.g_length(j);
 		unsigned sz;
 		cv4l_fmt fmt;
 
 		fd.g_fmt(fmt, q.g_type());
 		if (from_with_hdr) {
-			len = read_u32(fin);
-			if (len > q.g_length(j)) {
+			expected_len = read_u32(fin);
+			if (expected_len > q.g_length(j)) {
 				fprintf(stderr, "plane size is too large (%u > %u)\n",
-					len, q.g_length(j));
+					expected_len, q.g_length(j));
 				return false;
 			}
 		}
 
-		if (support_out_crop && v4l2_fwht_find_pixfmt(fmt.g_pixelformat()))
-			read_write_padded_frame(fmt, (unsigned char *)buf, fin, sz, len, true);
-		else
-			sz = fread(buf, 1, len, fin);
+		if (support_out_crop && v4l2_fwht_find_pixfmt(fmt.g_pixelformat())) {
+			if (!read_write_padded_frame(fmt, (unsigned char *)buf,
+			    fin, sz, expected_len, buf_len, true))
+				return false;
+		} else {
+			sz = fread(buf, 1, expected_len, fin);
+		}
 
-		if (first && sz != len) {
+		if (first && sz != expected_len) {
 			fprintf(stderr, "Insufficient data\n");
 			return false;
 		}
@@ -961,12 +968,12 @@ restart:
 			goto restart;
 		}
 		b.s_bytesused(sz, j);
-		if (sz == len)
+		if (sz == expected_len)
 			continue;
 		if (sz == 0)
 			return false;
 		if (sz)
-			fprintf(stderr, "%u != %u\n", sz, len);
+			fprintf(stderr, "%u != %u\n", sz, expected_len);
 		continue;
 	}
 	first = false;
@@ -1154,7 +1161,7 @@ static void write_buffer_to_file(cv4l_fd &fd, cv4l_queue &q, cv4l_buffer &buf,
 			sz = fwrite(comp_ptr[j] + offset, 1, used, fout);
 		else if (support_cap_compose && v4l2_fwht_find_pixfmt(fmt.g_pixelformat()))
 			read_write_padded_frame(fmt, (u8 *)q.g_dataptr(buf.g_index(), j) + offset,
-						fout, sz, used, false);
+						fout, sz, used, used, false);
 		else
 			sz = fwrite((u8 *)q.g_dataptr(buf.g_index(), j) + offset, 1, used, fout);
 
