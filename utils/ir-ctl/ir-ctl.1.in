@@ -104,7 +104,7 @@ print the v4l2\-utils version
 .PP
 .SS Format of pulse and space file
 When sending IR, the format of the file should be as follows. A comment
-start with #. The carrier frequency can be specified as:
+starts with #. The carrier frequency can be specified as:
 .PP
 	carrier 38000
 .PP

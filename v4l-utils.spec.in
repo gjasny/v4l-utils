@@ -160,6 +160,7 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 %{_bindir}/v4l2-ctl
 %{_bindir}/v4l2-sysfs-path
 %{_mandir}/man1/ir-keytable.1*
+%{_mandir}/man5/rc_keymap.5*
 %{_mandir}/man1/ir-ctl.1*
 
 %files devel-tools

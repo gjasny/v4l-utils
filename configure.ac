@@ -70,6 +70,7 @@ AC_CONFIG_FILES([Makefile
 	utils/v4l2-compliance/v4l2-compliance.1
 	utils/v4l2-ctl/v4l2-ctl.1
 	utils/keytable/ir-keytable.1
+	utils/keytable/rc_keymap.5
 	utils/ir-ctl/ir-ctl.1
 	utils/dvb/dvb-fe-tool.1
 	utils/dvb/dvbv5-scan.1
