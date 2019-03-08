@@ -312,10 +312,13 @@ if [ $vimc -eq 1 ]; then
 	modprobe vimc
 	sleep 1
 	dmesg -n notice
-	media-ctl -d platform:vimc -V '1:0[fmt:SBGGR8_1X8/640x480]'
-	media-ctl -d platform:vimc -V '5:0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d platform:vimc -V '"Sensor A":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d platform:vimc -V '"Debayer A":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d platform:vimc -V '"Sensor B":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d platform:vimc -V '"Debayer B":0[fmt:SBGGR8_1X8/640x480]'
 	v4l2-ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
 	v4l2-ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
+	v4l2-ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
 	dmesg -n notice
 	echo
 	echo vimc compliance tests
@@ -341,15 +344,33 @@ if [ $vimc -eq 1 ]; then
 	echo
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/bind
 	sleep 1
+	media-ctl -d platform:vimc -V '"Sensor A":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d platform:vimc -V '"Debayer A":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d platform:vimc -V '"Sensor B":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d platform:vimc -V '"Debayer B":0[fmt:SBGGR8_1X8/640x480]'
+	v4l2-ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
+	v4l2-ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
+	v4l2-ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
 	echo
 	echo second unbind vimc
 	echo
 	for i in `v4l2-ctl -z platform:vimc --list-devices`; do
-		let "t = 1 + $RANDOM / 4096"
+		let "t = 6 + $RANDOM / 4096"
 		echo $i: sleep ${t}s
 		sleep $t <$i &
 	done
+	# There are media controller lifetime issues that will cause a crash if this
+	# is enabled. Fixing that is quite a major undertaking so for now disable this
+	# test.
+	#v4l2-ctl -z platform:vimc -d "Raw Capture 0" --stream-mmap --sleep 5 &
 	sleep 1
+	for i in /sys/bus/platform/drivers/vimc-*; do
+		for j in $i/vimc-*; do
+			echo unbind ${j##*/} of $i
+			echo -n ${j##*/} >$i/unbind
+		 done
+	done
+	sleep 5
 	echo
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/unbind
 	sleep $reunbind_time
