@@ -171,6 +171,23 @@ int testMediaTopology(struct node *node)
 
 	for (unsigned i = 0; i < topology.num_entities; i++) {
 		media_v2_entity &ent = v2_ents[i];
+		std::string key = ent.name;
+
+		/*
+		 * The v2_entity_names_set set is used to check if a specific
+		 * entity name is reused, and to check if the topology matches
+		 * what ENUM_ENTITIES returns.
+		 *
+		 * However, the size of the entity name array of media_v2_entity
+		 * is 64 characters, while it is 32 for media_entity_desc.
+		 *
+		 * So cut off the last 32 characters before storing the key.
+		 * This means that the first 31 characters of the entity name
+		 * must be unique, otherwise ENUM_ENTITIES would return
+		 * duplicate entity names.
+		 */
+		if (key.length() >= 32)
+			key.erase(31, key.length() - 1);
 
 		if (show_info) {
 			printf("\t\tEntity: 0x%08x (Name: '%s', Function: %s",
@@ -184,11 +201,11 @@ int testMediaTopology(struct node *node)
 		fail_on_test(!ent.id);
 		fail_on_test(checkFunction(ent.function, true));
 		fail_on_test(v2_entities_set.find(ent.id) != v2_entities_set.end());
-		fail_on_test(v2_entity_names_set.find(ent.name) != v2_entity_names_set.end());
+		fail_on_test(v2_entity_names_set.find(key) != v2_entity_names_set.end());
 		if (!MEDIA_V2_ENTITY_HAS_FLAGS(node->media_version))
 			fail_on_test(ent.flags);
 		v2_entities_set.insert(ent.id);
-		v2_entity_names_set.insert(ent.name);
+		v2_entity_names_set.insert(key);
 		v2_entity_map[ent.id] = &ent;
 	}
 	for (unsigned i = 0; i < topology.num_interfaces; i++) {
@@ -207,7 +224,7 @@ int testMediaTopology(struct node *node)
 		fail_on_test(!iface.id);
 		fail_on_test(!iface.intf_type);
 		fail_on_test(iface.intf_type < MEDIA_INTF_T_DVB_BASE);
-		fail_on_test(iface.intf_type > MEDIA_INTF_T_V4L_BASE + 0xff);
+		fail_on_test(iface.intf_type > MEDIA_INTF_T_ALSA_BASE + 0xff);
 		fail_on_test(iface.flags);
 		fail_on_test(v2_interfaces_set.find(iface.id) != v2_interfaces_set.end());
 		v2_interfaces_set.insert(iface.id);
