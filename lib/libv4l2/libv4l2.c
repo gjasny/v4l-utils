@@ -743,7 +743,7 @@ no_capture:
 	pthread_mutex_unlock(&v4l2_open_mutex);
 
 	if (index == V4L2_MAX_DEVICES) {
-		V4L2_LOG_ERR("attempting to open more then %d video devices\n",
+		V4L2_LOG_ERR("attempting to open more than %d video devices\n",
 				V4L2_MAX_DEVICES);
 		v4l2_plugin_cleanup(plugin_library, dev_ops_priv, dev_ops);
 		errno = EBUSY;
@@ -1035,7 +1035,7 @@ static int v4l2_s_fmt(int index, struct v4l2_format *dest_fmt)
 	if (src_fmt.fmt.pix.width != req_pix_fmt.width ||
 	    src_fmt.fmt.pix.height != req_pix_fmt.height ||
 	    src_fmt.fmt.pix.pixelformat != req_pix_fmt.pixelformat) {
-		V4L2_LOG_ERR("set_fmt gave us a different result then try_fmt!\n");
+		V4L2_LOG_ERR("set_fmt gave us a different result than try_fmt!\n");
 		/* Not what we expected / wanted, disable conversion */
 		*dest_fmt = src_fmt;
 	}
@@ -1315,7 +1315,7 @@ no_capture_request:
 		if (result)
 			break;
 
-		/* No more buffers then we can manage please */
+		/* No more buffers than we can manage please */
 		if (req->count > V4L2_MAX_NO_FRAMES)
 			req->count = V4L2_MAX_NO_FRAMES;
 

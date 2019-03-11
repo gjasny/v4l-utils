@@ -385,7 +385,7 @@ static int setparams(snd_pcm_t *phandle, snd_pcm_t *chandle,
 
     /* Note we use twice as much periods for the playback buffer, since we
        will get a period size near the requested time and we don't want it to
-       end up smaller then the capture buffer as then we could end up blocking
+       end up smaller than the capture buffer as then we could end up blocking
        on writing to it. Note we will configure the playback dev to start
        playing as soon as it has 2 capture periods worth of data, so this
        won't influence latency */

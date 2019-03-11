@@ -39,7 +39,7 @@ void v4lprocessing_destroy(struct v4lprocessing_data *data);
 int v4lprocessing_pre_processing(struct v4lprocessing_data *data);
 
 /* Do the actual processing, this is a nop if v4lprocessing_pre_processing()
-   returned 0, or if called more then 1 time after a single
+   returned 0, or if called more than 1 time after a single
    v4lprocessing_pre_processing() call. */
 void v4lprocessing_processing(struct v4lprocessing_data *data,
   unsigned char *buf, const struct v4l2_format *fmt);

@@ -43,8 +43,8 @@
    parameters unmodified.
 
    If a plugin is relevant for the specified device node, it can indicate so
-   by returning a value other then -1 (the actual file descriptor).
-   As soon as a plugin returns another value then -1 plugin loading stops and
+   by returning a value other than -1 (the actual file descriptor).
+   As soon as a plugin returns another value than -1 plugin loading stops and
    information about it (fd and corresponding library handle) is stored. For
    each function v4l2_[ioctl,read,close,etc] is called corresponding
    v4l2_plugin_* function which looks if there is loaded plugin for that file

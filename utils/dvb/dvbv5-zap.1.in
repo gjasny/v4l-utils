@@ -133,7 +133,7 @@ Adds additional wait time for DISEqC command completion.
 Exit after tuning.
 .TP
 \fB\-X\fR, \fB\-\-low_traffic\fR
-Also shows DVB traffic with less then 1 packet per second.
+Also shows DVB traffic with less than 1 packet per second.
 Used only in monitor mode.
 .TP
 \fB\-?\fR, \fB\-\-help\fR

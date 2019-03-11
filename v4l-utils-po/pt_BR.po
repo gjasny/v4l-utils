@@ -2132,7 +2132,7 @@ msgstr "Interface DVR '%s' pode ser aberta agora\n"
 #~ msgid "cannot enable and disable timeout reports"
 #~ msgstr "Não é possível habilitar/desabilitar relatos de tempo máximo"
 
-#~ msgid "also shows DVB traffic with less then 1 packet per second"
+#~ msgid "also shows DVB traffic with less than 1 packet per second"
 #~ msgstr ""
 #~ "também mostra tráfego de TV digital com menos de 1 pacote/seg nas "
 #~ "estatísticas"

@@ -366,7 +366,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
    thus disqualifying a src format which causes the bandwidth to be exceeded,
    except when all of them cause this.
    
-   Note grey scale formats start at 20 rather then 1-10, because we want to
+   Note grey scale formats start at 20 rather than 1-10, because we want to
    never autoselect them, unless they are the only choice */
 static int v4lconvert_get_rank(struct v4lconvert_data *data,
 	int src_index, int src_width, int src_height,
@@ -1689,7 +1689,7 @@ static void v4lconvert_get_framesizes(struct v4lconvert_data *data,
 		/* Add this framesize if it is not already in our list */
 		if (!match) {
 			if (data->no_framesizes == V4LCONVERT_MAX_FRAMESIZES) {
-				fprintf(stderr, "libv4lconvert: warning more framesizes then I can handle!\n");
+				fprintf(stderr, "libv4lconvert: warning more framesizes than I can handle!\n");
 				return;
 			}
 			data->framesizes[data->no_framesizes].type = frmsize.type;

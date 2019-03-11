@@ -370,7 +370,7 @@ int v4l1_open(const char *file, int oflag, ...)
 	pthread_mutex_unlock(&v4l1_open_mutex);
 
 	if (index == V4L1_MAX_DEVICES) {
-		V4L1_LOG_ERR("attempting to open more then %d video devices\n",
+		V4L1_LOG_ERR("attempting to open more than %d video devices\n",
 				V4L1_MAX_DEVICES);
 		v4l2_close(fd);
 		errno = EBUSY;
@@ -802,7 +802,7 @@ int v4l1_ioctl(int fd, unsigned long int request, ...)
 		   So the application could be calling VIDIOC_S_FMT, in this case update
 		   our own bookkeeping of the cam's format. Note that this really only is
 		   relevant if an application is mixing and matching v4l1 and v4l2 calls,
-		   which is crazy, but better safe then sorry. */
+		   which is crazy, but better safe than sorry. */
 	case VIDIOC_S_FMT: {
 		struct v4l2_format *fmt2 = arg;
 

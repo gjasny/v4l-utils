@@ -406,7 +406,7 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component)
 
 	if (j > 64) {
 		snprintf(priv->error_string, sizeof(priv->error_string),
-				"error: more then 63 AC components (%d) in huffman unit\n", (int)j);
+				"error: more than 63 AC components (%d) in huffman unit\n", (int)j);
 		longjmp(priv->jump_state, -EIO);
 	}
 
@@ -1772,7 +1772,7 @@ static int parse_SOS(struct jdec_private *priv, const unsigned char *stream)
 		priv->flags |= TINYJPEG_FLAGS_PLANAR_JPEG;
 #if SANITY_CHECK
 	else if (priv->flags & TINYJPEG_FLAGS_PLANAR_JPEG)
-		error("SOS with more then 1 component while decoding planar JPEG\n");
+		error("SOS with more than 1 component while decoding planar JPEG\n");
 #endif
 
 	stream += 3;

@@ -52,7 +52,7 @@ static void autogain_adjust(struct v4l2_queryctrl *ctrl, int *value,
 	   fine grained controls here, as avg_lum has a range of 0 - 255. */
 	if (accel && abs(steps) >= 3 && ctrl_range > 256)
 		*value += steps * ctrl->step * (ctrl_range / 256);
-        /* If we are of by less then 3, but have a very finegrained control
+        /* If we are of by less than 3, but have a very finegrained control
            still speed things up a bit */
 	else if (accel && ctrl_range > 1024)
 		*value += steps * ctrl->step * (ctrl_range / 1024);
