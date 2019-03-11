@@ -491,7 +491,7 @@ int v4lconvert_decode_jpgl(const unsigned char *inp, int src_size,
 			/* Decode blocks
 			 * Block order : Y Y Y Y V U ( Why V before U ?
 			 * that just depends what you call U&V ... I took the
-			 * 'by-the-book' names and that make V and then U,
+			 * 'by-the-book' names and that makes V and then U,
 			 * ... just ask the DivIO folks ;) )
 			 */
 			if ( decodeBlock(&br, block_y, &dc_y) && (!col) )
