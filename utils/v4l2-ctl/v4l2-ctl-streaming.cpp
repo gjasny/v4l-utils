@@ -520,7 +520,8 @@ static void print_concise_buffer(FILE *f, cv4l_buffer &buf,
 {
 	static double last_ts;
 
-	fprintf(f, "idx: %*u seq: %6u bytesused: ",
+	fprintf(f, "%s idx: %*u seq: %6u bytesused: ",
+		v4l_type_is_output(buf.g_type()) ? "out" : "cap",
 		reqbufs_count_cap > 10 ? 2 : 1, buf.g_index(), buf.g_sequence());
 	bool have_data_offset = false;
 
