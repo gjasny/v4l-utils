@@ -404,17 +404,17 @@ class Converter:
 
         bits = int(self.remote['bits'][0])
 
-        toggle_bit = 0
-        if 'toggle_bit_mask' in self.remote:
-            toggle_bit = ffs(int(self.remote['toggle_bit_mask'][0]))
-        if 'toggle_bit' in self.remote:
-            toggle_bit = bits - int(self.remote['toggle_bit'][0])
-
         pre_data = 0
         if 'pre_data_bits' in self.remote:
             pre_data_bits = int(self.remote['pre_data_bits'][0])
             pre_data = int(self.remote['pre_data'][0]) << bits
             bits += pre_data_bits
+
+        toggle_bit = 0
+        if 'toggle_bit_mask' in self.remote:
+            toggle_bit = ffs(int(self.remote['toggle_bit_mask'][0]))
+        if 'toggle_bit' in self.remote:
+            toggle_bit = bits - int(self.remote['toggle_bit'][0])
 
         if 'plead' in self.remote:
             plead = self.remote['plead'][0]
