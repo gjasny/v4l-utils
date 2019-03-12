@@ -845,8 +845,8 @@ int parse_selection_flags(const char *s)
 
 void print_selection(const struct v4l2_selection &sel)
 {
-	printf("Selection: %s, Left %d, Top %d, Width %d, Height %d, Flags: %s\n",
-			seltarget2s(sel.target).c_str(),
+	printf("Selection %s: %s, Left %d, Top %d, Width %d, Height %d, Flags: %s\n",
+			buftype2s(sel.type).c_str(), seltarget2s(sel.target).c_str(),
 			sel.r.left, sel.r.top, sel.r.width, sel.r.height,
 			selflags2s(sel.flags).c_str());
 }
@@ -1368,7 +1368,6 @@ int main(int argc, char **argv)
 
 	if (options[OptAll]) {
 		options[OptGetVideoFormat] = 1;
-		options[OptGetCrop] = 1;
 		options[OptGetVideoOutFormat] = 1;
 		options[OptGetDriverInfo] = 1;
 		options[OptGetInput] = 1;
