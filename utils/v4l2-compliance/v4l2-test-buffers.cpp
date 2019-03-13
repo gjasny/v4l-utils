@@ -1727,8 +1727,7 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS);
 		return ENOTTY;
 	}
-
-	fail_on_test(!(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS));
+	bool supports_requests = node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS;
 
 	buffer_info.clear();
 
@@ -1812,7 +1811,25 @@ int testRequests(struct node *node, bool test_streaming)
 			buf.s_flags(buf.g_flags() | V4L2_BUF_FLAG_REQUEST_FD);
 			buf.s_request_fd(buf_req_fds[i]);
 		}
-		fail_on_test(buf.qbuf(node));
+		int err = buf.qbuf(node);
+		if (!err) {
+			fail_on_test(!supports_requests);
+			fail_on_test(buf.qbuf(node));
+		} else {
+			fail_on_test(supports_requests);
+			fail_on_test(err != EBADR);
+		}
+		if (err) {
+			fail_on_test(node->streamoff(q.g_type()));
+			fail_on_test(q.reqbufs(node, 0));
+			if (node->is_m2m) {
+				fail_on_test(node->streamoff(m2m_q.g_type()));
+				m2m_q.munmap_bufs(node);
+				fail_on_test(m2m_q.reqbufs(node, 0));
+			}
+			node->reopen();
+			return ENOTTY;
+		}
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
