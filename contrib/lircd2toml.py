@@ -340,6 +340,42 @@ class Converter:
 
             if variant:
                 res['params']['variant'] = "'" + variant + "'"
+        elif ('header_pulse' in res['params'] and
+            'header_space' in res['params'] and
+            'reverse' not in res['params'] and
+            'trailer_pulse' in res['params'] and
+            'header_optional' not in res['params'] and
+            'pulse_distance' == res['protocol'] and
+            eq_margin(res['params']['header_pulse'], 9000, 1000) and
+            eq_margin(res['params']['header_space'], 4500, 1000) and
+            eq_margin(res['params']['bit_pulse'], 560, 300) and
+            eq_margin(res['params']['bit_1_space'], 560, 300) and
+            eq_margin(res['params']['bit_0_space'], 1680, 300) and
+            eq_margin(res['params']['trailer_pulse'], 560, 300) and
+            res['params']['bits'] == 32 and
+            ('repeat_pulse' not in res['params'] or
+             (eq_margin(res['params']['repeat_pulse'], 9000, 1000) and
+              eq_margin(res['params']['repeat_space'], 2250, 1000)))):
+            self.warning('remote looks exactly like NEC, converting')
+            res['protocol'] = 'nec'
+            res['params'] = {}
+            # bit_0_space and bit_1_space have been swapped, scancode
+            # will need to be inverted
+
+            variant = None
+
+            for s in self.remote['codes']:
+                p = (s<<post_data_bits)|pre_data
+                v, n = decode_nec_scancode(~p)
+                if variant == None:
+                    variant = v
+                elif v != variant:
+                    variant = ""
+
+                res['map'][n] = self.remote['codes'][s]
+
+            if variant:
+                res['params']['variant'] = "'" + variant + "'"
         else:
             for s in self.remote['codes']:
                 p = (s<<post_data_bits)|pre_data
