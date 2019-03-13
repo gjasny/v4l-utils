@@ -7,6 +7,7 @@
 vivid=0
 vim2m=0
 vimc=0
+vicodec=0
 cec=0
 cecpwr=--skip-test-standby-resume
 kmemleak=0
@@ -51,9 +52,10 @@ if [ -z "$1" ]; then
 	echo "vivid: test the vivid driver"
 	echo "vim2m: test the vim2m driver"
 	echo "vimc: test the vimc driver"
+	echo "vicodec: test the vicodec driver"
 	echo "cec: adds the vivid CEC compliance tests, 'cec-pwr' adds the CEC standby/wakeup tests."
-	echo "all: equals 'vivid vim2m vimc cec cec-pwr'"
-	echo "mc: equals 'vivid vim2m vimc'"
+	echo "all: equals 'vivid vim2m vimc vicodec cec cec-pwr'"
+	echo "mc: equals 'vivid vim2m vimc vicodec'"
 	exit 0
 fi
 
@@ -81,6 +83,7 @@ while [ ! -z "$1" ]; do
 		vivid=1
 		vim2m=1
 		vimc=1
+		vicodec=1
 		cec=1
 		cecpwr=
 		;;
@@ -88,6 +91,7 @@ while [ ! -z "$1" ]; do
 		vivid=1
 		vim2m=1
 		vimc=1
+		vicodec=1
 		;;
 	vivid)
 		vivid=1
@@ -97,6 +101,9 @@ while [ ! -z "$1" ]; do
 		;;
 	vimc)
 		vimc=1
+		;;
+	vicodec)
+		vicodec=1
 		;;
 	cec)
 		cec=1
@@ -120,6 +127,8 @@ fi
 modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
 sleep 1
 
+tmp=`mktemp`
+
 v4l2-ctl -z platform:vivid-000 -d vivid-000-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
 v4l2-ctl -z platform:vivid-000 -d vivid-000-vid-out -o1 -x width=3840,height=2160,pixelformat=NV24
 v4l2-ctl -z platform:vivid-001 -d vivid-001-vid-cap -i3 -v width=3840,height=2160,pixelformat=NM16
@@ -128,8 +137,6 @@ v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=216
 v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
 
 echo
-
-tmp=`mktemp`
 
 if [ $vivid -eq 1 ]; then
 	dmesg -n notice
@@ -399,6 +406,149 @@ if [ $vimc -eq 1 ]; then
 		echo
 		echo
 	fi
+fi
+
+if [ $vicodec -eq 1 ]; then
+	tmpdir=`mktemp -d`
+
+	modprobe vicodec
+	sleep 2
+	dmesg -n notice
+	echo
+	echo vicodec media controller compliance tests
+	echo
+	date
+	stdbuf -oL v4l2-compliance -M platform:vicodec 2>&1 | tee -a $tmp
+
+	echo
+	echo vicodec encoder compliance tests
+	echo
+	stdbuf -oL v4l2-compliance -z platform:vicodec -d stateful-encoder-source -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
+
+	echo
+	echo vicodec create test files
+	echo
+
+	encful_opts='-z platform:vicodec -d stateful-encoder-source --stream-mmap --stream-out-mmap --stream-out-hor-speed=1'
+	v4l2-ctl $encful_opts --stream-count=24 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1280.24
+	v4l2-ctl $encful_opts --stream-count=24 --stream-to=$tmpdir/comp.yu12.1280.24
+	v4l2-ctl $encful_opts --stream-count=1 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1280.1
+	v4l2-ctl $encful_opts --stream-count=1 --stream-to=$tmpdir/comp.yu12.1280.1
+	v4l2-ctl $encful_opts --stream-count=2 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1280.2
+	v4l2-ctl $encful_opts --stream-count=2 --stream-to=$tmpdir/comp.yu12.1280.2
+	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=24 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1920.24
+	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=24 --stream-to=$tmpdir/comp.yu12.1920.24
+	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=1 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1920.1
+	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=1 --stream-to=$tmpdir/comp.yu12.1920.1
+	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=2 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1920.2
+	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=2 --stream-to=$tmpdir/comp.yu12.1920.2
+
+	cat $tmpdir/comp.hdr.yu12.1280.1 $tmpdir/comp.hdr.yu12.1920.1 >$tmpdir/comp.hdr.yu12.mix.2
+	cat $tmpdir/comp.yu12.1280.1 $tmpdir/comp.yu12.1920.1 >$tmpdir/comp.yu12.mix.2
+	cat $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 $tmpdir/comp.hdr.yu12.mix.2 >$tmpdir/comp.hdr.yu12.mix.2.12
+	cat $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 $tmpdir/comp.yu12.mix.2 >$tmpdir/comp.yu12.mix.2.12
+	cat $tmpdir/comp.hdr.yu12.1280.2 $tmpdir/comp.hdr.yu12.1920.2 >$tmpdir/comp.hdr.yu12.mix.4
+	cat $tmpdir/comp.yu12.1280.2 $tmpdir/comp.yu12.1920.2 >$tmpdir/comp.yu12.mix.4
+	cat $tmpdir/comp.hdr.yu12.mix.4 $tmpdir/comp.hdr.yu12.mix.4 $tmpdir/comp.hdr.yu12.mix.4 $tmpdir/comp.hdr.yu12.mix.4 $tmpdir/comp.hdr.yu12.mix.4 $tmpdir/comp.hdr.yu12.mix.4 >$tmpdir/comp.hdr.yu12.mix.4.6
+	cat $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 >$tmpdir/comp.yu12.mix.4.6
+
+	echo
+	echo vicodec decoder compliance tests
+	echo
+	decful_opts='-z platform:vicodec -d stateful-decoder-source -z platform:vivid-002 -e vivid-002-vid-cap'
+	stdbuf -oL v4l2-compliance $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance $decful_opts --stream-from $tmpdir/comp.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance $decful_opts --stream-from-hdr $tmpdir/comp.hdr.yu12.mix.4.6 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance $decful_opts --stream-from $tmpdir/comp.yu12.mix.4.6 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance $decful_opts --stream-from-hdr $tmpdir/comp.hdr.yu12.mix.2.12 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL v4l2-compliance $decful_opts --stream-from $tmpdir/comp.yu12.mix.2.12 -s24 -P -a 2>&1 | tee -a $tmp
+
+	decful_opts='-z platform:vicodec -d stateful-decoder-source --stream-mmap --stream-out-mmap'
+	decless_opts='-z platform:vicodec -d stateless-decoder-source --stream-mmap --stream-out-mmap'
+	echo
+	echo stateful decode
+	echo
+	v4l2-ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24
+	echo
+	echo stateless decode
+	echo
+	cp $tmpdir/comp.yu12.1280.24 /home/hans
+	v4l2-ctl $decless_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24.stateless
+	cmp $tmpdir/raw.yu12.1280.24 $tmpdir/raw.yu12.1280.24.stateless
+
+	echo
+	echo stateful decode with dynamic resolution changes for every frame
+	echo
+	v4l2-ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12
+	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
+	v4l2-ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12.stateless
+	cmp $tmpdir/raw.yu12.mix.2.12 $tmpdir/raw.yu12.mix.2.12.stateless
+
+	echo
+	echo stateful decode with dynamic resolution changes for every other frame
+	echo
+	v4l2-ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6
+	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
+	v4l2-ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6.stateless
+	cmp $tmpdir/raw.yu12.mix.4.6 $tmpdir/raw.yu12.mix.4.6.stateless
+
+	ls -l $tmpdir
+	cp $tmpdir/* /home/hans/tmp
+
+	rm -rf $tmpdir
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo unbind vicodec
+	echo
+	echo -n vicodec.0 >/sys/bus/platform/drivers/vicodec/unbind
+	sleep $unbind_time
+	echo
+	echo rebind vicodec
+	echo
+	echo -n vicodec.0 >/sys/bus/platform/drivers/vicodec/bind
+	sleep 1
+	echo
+	echo second unbind vicodec
+	echo
+	for i in `v4l2-ctl -z platform:vicodec --list-devices`; do
+		let "t = 1 + $RANDOM / 4096"
+		echo $i: sleep ${t}s
+		sleep $t <$i &
+	done
+	sleep 1
+	echo
+	echo -n vicodec.0 >/sys/bus/platform/drivers/vicodec/unbind
+	sleep $reunbind_time
+	echo
+	echo rmmod vicodec
+	echo
+	rmmod vicodec
+	sleep $rmmod_time
+	if [ $kmemleak -eq 1 ]; then
+		echo
+		echo kmemleak results for vicodec:
+		echo
+		echo scan >/sys/kernel/debug/kmemleak
+		cat /sys/kernel/debug/kmemleak
+		echo
+		echo end of kmemleak results
+		echo clear >/sys/kernel/debug/kmemleak
+	fi
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
 fi
 
 date
