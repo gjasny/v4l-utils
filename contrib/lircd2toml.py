@@ -349,7 +349,7 @@ class Converter:
 
     def convert_rcmm(self):
         res  = {
-            'protocol': 'rc_mm',
+            'protocol': 'rc-mm',
             'params': {},
             'map': {}
         }
@@ -368,16 +368,24 @@ class Converter:
         if 'toggle_bit' in self.remote:
             toggle_bit = bits - int(self.remote['toggle_bit'][0])
 
-        if toggle_bit > 0 and toggle_bit < bits:
-            res['params']['toggle_bit'] = toggle_bit
-
-        res['params']['bits'] = bits
-
         if 'codes' not in self.remote or len(self.remote['codes']) == 0:
             self.error("missing codes section")
             return None
 
-        res['map'] = self.remote['codes']
+        if 'pre_data_bits' in self.remote:
+            pre_data_bits = int(self.remote['pre_data_bits'][0])
+            pre_data = int(self.remote['pre_data'][0]) << bits
+            bits += pre_data_bits
+            for s in self.remote['codes']:
+                res['map'][s|pre_data] = self.remote['codes'][s]
+        else:
+            res['map'] = self.remote['codes']
+
+        res['params']['bits'] = bits
+        res['params']['variant'] = "'rc-mm-" + str(bits) + "'"
+
+        if toggle_bit > 0 and toggle_bit < bits:
+            res['params']['toggle_bit'] = toggle_bit
 
         return res
 
