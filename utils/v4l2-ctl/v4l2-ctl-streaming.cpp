@@ -557,6 +557,8 @@ static void print_concise_buffer(FILE *f, cv4l_buffer &buf,
 				    V4L2_BUF_FLAG_PFRAME |
 				    V4L2_BUF_FLAG_BFRAME |
 				    V4L2_BUF_FLAG_LAST |
+				    V4L2_BUF_FLAG_TIMESTAMP_MASK |
+				    V4L2_BUF_FLAG_TSTAMP_SRC_MASK |
 				    V4L2_BUF_FLAG_TIMECODE);
 	if (fl)
 		fprintf(f, " (%s)", bufferflags2s(fl).c_str());
