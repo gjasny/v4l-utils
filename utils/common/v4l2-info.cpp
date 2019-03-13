@@ -686,33 +686,38 @@ static const flag_def buffer_flags_def[] = {
 
 std::string bufferflags2s(__u32 flags)
 {
-	std::string s;
+	const unsigned ts_mask = V4L2_BUF_FLAG_TIMESTAMP_MASK | V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+	std::string s = flags2s(flags & ~ts_mask, buffer_flags_def);
+
+	if (s.length())
+		s += ", ";
 
 	switch (flags & V4L2_BUF_FLAG_TIMESTAMP_MASK) {
 	case V4L2_BUF_FLAG_TIMESTAMP_UNKNOWN:
-		s = "ts-unknown, ";
-		flags &= ~V4L2_BUF_FLAG_TIMESTAMP_MASK;
+		s += "ts-unknown";
 		break;
 	case V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC:
-		s = "ts-monotonic, ";
-		flags &= ~V4L2_BUF_FLAG_TIMESTAMP_MASK;
+		s += "ts-monotonic";
 		break;
 	case V4L2_BUF_FLAG_TIMESTAMP_COPY:
-		s = "ts-copy, ";
-		flags &= ~V4L2_BUF_FLAG_TIMESTAMP_MASK;
+		s += "ts-copy";
+		break;
+	default:
+		s += "ts-invalid";
 		break;
 	}
 	switch (flags & V4L2_BUF_FLAG_TSTAMP_SRC_MASK) {
 	case V4L2_BUF_FLAG_TSTAMP_SRC_EOF:
-		s += "ts-src-eof, ";
-		flags &= ~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+		s += ", ts-src-eof";
 		break;
 	case V4L2_BUF_FLAG_TSTAMP_SRC_SOE:
-		s += "ts-src-soe, ";
-		flags &= ~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+		s += ", ts-src-soe";
+		break;
+	default:
+		s += ", ts-src-invalid";
 		break;
 	}
-	return s + flags2s(flags, buffer_flags_def);
+	return s;
 }
 
 static const flag_def vbi_def[] = {
