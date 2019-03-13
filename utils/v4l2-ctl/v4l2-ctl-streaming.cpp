@@ -1607,7 +1607,7 @@ recover:
 					break;
 				case V4L2_EVENT_EOS:
 					eos = true;
-					fprintf(stderr, "EOS");
+					fprintf(stderr, "\nEOS");
 					fflush(stderr);
 					break;
 				}
@@ -2060,6 +2060,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 						.cmd = V4L2_DEC_CMD_STOP,
 					};
 
+					fprintf(stderr, "STOP %sCODER\n", is_encoder ? "EN" : "DE");
 					if (is_encoder)
 						fd.encoder_cmd(enc_stop);
 					else
@@ -2076,10 +2077,10 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 			while (!fd.dqevent(ev)) {
 				if (ev.type == V4L2_EVENT_EOS) {
 					wr_fds = NULL;
-					fprintf(stderr, "EOS");
+					fprintf(stderr, "EOS EVENT\n");
 					fflush(stderr);
 				} else if (ev.type == V4L2_EVENT_SOURCE_CHANGE) {
-					fprintf(stderr, "SOURCE CHANGE\n");
+					fprintf(stderr, "SOURCE CHANGE EVENT\n");
 					in_source_change_event = true;
 
 					/*
