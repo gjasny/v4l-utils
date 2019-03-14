@@ -123,7 +123,7 @@ static int convert_file(struct arguments *args)
 
 int main(int argc, char **argv)
 {
-	struct arguments args;
+	struct arguments args = {};
 	int idx = -1, missing = 0;
 	const struct argp argp = {
 		.options = options,
