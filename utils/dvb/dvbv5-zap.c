@@ -802,7 +802,7 @@ static void set_signals(struct arguments *args)
 
 int main(int argc, char **argv)
 {
-	struct arguments args;
+	struct arguments args = {};
 	char *homedir = getenv("HOME");
 	char *channel = NULL;
 	int lnb = -1, idx = -1;

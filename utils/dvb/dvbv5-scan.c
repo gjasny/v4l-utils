@@ -450,7 +450,7 @@ static void do_timeout(int x)
 
 int main(int argc, char **argv)
 {
-	struct arguments args;
+	struct arguments args = {};
 	int err, lnb = -1,idx = -1;
 	struct dvb_device *dvb;
 	struct dvb_dev_list *dvb_dev;
