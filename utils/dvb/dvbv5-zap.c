@@ -338,6 +338,7 @@ static void do_timeout(int x)
 		signal(SIGALRM, do_timeout);
 	} else {
 		/* something has gone wrong ... exit */
+		fprintf(stderr, "Forcing program stop due to timeout or terminate signal\n");
 		exit(1);
 	}
 }
@@ -803,6 +804,8 @@ static void set_signals(struct arguments *args)
 	}
 }
 
+static char *default_dvr_pipe = "/tmp/dvr-pipe";
+
 int main(int argc, char **argv)
 {
 	struct arguments args = {};
@@ -833,7 +836,6 @@ int main(int argc, char **argv)
 	textdomain (PACKAGE);
 #endif
 
-	memset(&args, 0, sizeof(args));
 	args.sat_number = -1;
 	args.lna = LNA_AUTO;
 	args.input_format = FILE_DVBV5;
@@ -1140,7 +1142,7 @@ int main(int argc, char **argv)
 			get_show_stats(&args, parms, 0);
 	} else {
 		/* Wait until timeout or being killed */
-		while (1) {
+		while (!timeout_flag) {
 			get_show_stats(&args, parms, 1);
 			usleep(1000000);
 		}
@@ -1148,9 +1150,25 @@ int main(int argc, char **argv)
 	err = 0;
 
 err:
+	dvb_dev_free(dvb);
+
+	/*
+	 * Just to make Valgrind happier. It should be noticed
+	 * That, if an error happens or if the program exits via
+	 * timeout code at forced mode, it may not free those.
+	 */
 	if (args.confname)
 		free(args.confname);
-	dvb_dev_free(dvb);
+	if (args.filename)
+		free(args.filename);
+	if (args.lnb_name)
+		free(args.lnb_name);
+	if (args.search)
+		free(args.search);
+	if (args.server)
+		free(args.search);
+	if (args.dvr_pipe != default_dvr_pipe)
+		free(args.dvr_pipe);
 
 	return err;
 }
