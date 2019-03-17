@@ -218,6 +218,8 @@ class Converter:
 
         if 'rc5' in flags or 'shift_enc' in flags:
             return self.convert_rc5()
+        elif 'rc6' in flags:
+            return self.convert_rc6()
         elif 'rcmm' in flags:
             return self.convert_rcmm()
         elif 'space_enc' in flags:
@@ -425,6 +427,65 @@ class Converter:
 
         return res
 
+    def convert_rc6(self):
+        res = {
+            'protocol': 'rc-6',
+            'params': { },
+            'map': { }
+        }
+
+        res['name'] = self.remote['name']
+
+        if 'codes' not in self.remote or len(self.remote['codes']) == 0:
+            self.error("missing codes section")
+            return None
+
+        bits = int(self.remote['bits'][0])
+
+        pre_data = 0
+        if 'pre_data_bits' in self.remote:
+            pre_data_bits = int(self.remote['pre_data_bits'][0])
+            pre_data = int(self.remote['pre_data'][0]) << bits
+            bits += pre_data_bits
+
+        toggle_bit = 0
+        if 'toggle_bit_mask' in self.remote:
+            toggle_bit = ffs(int(self.remote['toggle_bit_mask'][0]))
+        if 'toggle_bit' in self.remote:
+            toggle_bit = bits - int(self.remote['toggle_bit'][0])
+
+        mask = (1<<(bits-5))-1
+        if toggle_bit >= 0 and toggle_bit < bits:
+            res['params']['toggle_bit'] = toggle_bit
+            mask &= ~(1<<toggle_bit)
+
+        # lircd explicitly encoded the five leading bits (start, 3 mode
+        # bits, toggle). rc-core does not, so we need to strip the first
+        # five bits.
+        bits -= 5
+        vendor = 0
+        res['params']['bits'] = bits
+        for s in self.remote['codes']:
+            # lircd inverts all the bits (not sure why), rc-core encoding
+            # matches https://www.sbprojects.net/knowledge/ir/rc6.php
+            d = ~(s|pre_data)&mask
+            if bits == 32:
+                vendor = d >> 16
+            res['map'][d] = self.remote['codes'][s]
+
+        if bits == 16:
+            res['params']['variant'] = "'rc-6-0'"
+        elif bits == 20:
+            res['params']['variant'] = "'rc-6-6a-20'"
+        elif bits == 24:
+            res['params']['variant'] = "'rc-6-6a-24'"
+        elif bits == 32 and vendor != 0x800f:
+            res['params']['variant'] = "'rc-6-6a-32'"
+        elif bits == 32 and vendor == 0x800f:
+            res['params']['variant'] = "'rc-6-mce'"
+
+        return res
+
     def convert_rc5(self):
         if 'one' not in self.remote or 'zero' not in self.remote:
             self.error("broken, missing parameter for 'zero' and 'one'")
@@ -533,7 +594,7 @@ parser = argparse.ArgumentParser(description="""Convert lircd.conf to rc-core to
 This program atempts to convert a lircd.conf remote definition to a
 ir-keytable toml format. This process is not perfect, and the result
 might need some tweaks for it to work. Please report any issues to
-linux-media@vger,kernel,org. If you have successfully generated and
+linux-media@vger.kernel.org. If you have successfully generated and
 tested a toml keymap, please send it to the same mailinglist so it
 can be include with the package.""")
 
