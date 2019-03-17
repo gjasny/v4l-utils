@@ -133,7 +133,6 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 					  int flags)
 {
 	int ret;
-	char *fname;
 	struct dvb_device *dvb;
 	struct dvb_dev_list *dvb_dev;
 	struct dvb_v5_fe_parms_priv *parms = NULL;
@@ -153,7 +152,6 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 		dvb_dev_free(dvb);
 		return NULL;
 	}
-	fname = strdup(dvb_dev->path);
 
 	if (!strcmp(dvb_dev->bus_addr, "platform:dvbloopback")) {
 		logfunc(LOG_WARNING, _("Detected dvbloopback"));
@@ -161,14 +159,10 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	}
 
 	dvb_dev_free(dvb);
-	if (!fname) {
-		logfunc(LOG_ERR, _("fname calloc: %s"), strerror(errno));
-		return NULL;
-	}
+
 	parms = calloc(sizeof(*parms), 1);
 	if (!parms) {
 		logfunc(LOG_ERR, _("parms calloc: %s"), strerror(errno));
-		free(fname);
 		return NULL;
 	}
 	parms->p.verbose = verbose;
@@ -183,7 +177,7 @@ struct dvb_v5_fe_parms *dvb_fe_open_flags(int adapter, int frontend,
 	if (use_legacy_call)
 		parms->p.legacy_fe = 1;
 
-	ret = dvb_fe_open_fname(parms, fname, flags);
+	ret = dvb_fe_open_fname(parms, dvb_dev->path, flags);
 	if (ret < 0) {
 		free(parms);
 		return NULL;
@@ -203,7 +197,6 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 	fd = open(fname, flags, 0);
 	if (fd == -1) {
 		dvb_logerr(_("%s while opening %s"), strerror(errno), fname);
-		free(fname);
 		return -errno;
 	}
 
@@ -226,7 +219,12 @@ int dvb_fe_open_fname(struct dvb_v5_fe_parms_priv *parms, char *fname,
 		}
 	}
 
-	parms->fname = fname;
+	parms->fname = strdup(fname);
+	if (!parms->fname) {
+		dvb_logerr(_("fname calloc: %s"), strerror(errno));
+		return -errno;
+	}
+
 	parms->fd = fd;
 	parms->fe_flags = flags;
 	parms->dvb_prop[0].cmd = DTV_API_VERSION;
