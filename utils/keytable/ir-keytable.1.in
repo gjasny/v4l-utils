@@ -57,8 +57,8 @@ test if the rc device is generating events
 \fB\-v\fR, \fB\-\-verbose\fR
 Enables debug messages.
 .TP
-\fB\-w\fR, \fB\-\-write\fR=\fITABLE\fR
-Reads the protocols and scancode to keycode mapping from the \fITABLE\fR file,
+\fB\-w\fR, \fB\-\-write\fR=\fIKEYMAP\fR
+Reads the protocols and scancode to keycode mapping from the \fIKEYMAP\fR file,
 and enables those on the rc device.
 .TP
 \fB\-?\fR, \fB\-\-help\fR
@@ -77,8 +77,9 @@ for any corresponding short options. Options can be combined together.
 the /dev/input/event* device to control
 .IP \fISYSDEV\fR
 the rc class as found at /sys/class/rc
-.IP \fITABLE\fR
-a toml file with a list of protocols and scancode to keycode mappings.
+.IP \fIKEYMAP\fR
+a toml keymap file with a list of protocols and scancodes to keycode mappings.
+The format is described in rc_keymap(5).
 .IP \fISCANKEY\fR
 a set of scancode1=keycode1,scancode2=keycode2.. value pairs
 .IP \fIPROTOCOL\fR
@@ -112,7 +113,8 @@ To append more codes to the existing table:
 .br
 	\fBir\-keytable \-w /etc/rc_keymaps/nec_terratec_cinergy_xs.toml\fR
 .PP
-To read the current keytable, on the second remote controller:
+To read the current scancode to keycode mapping on the second remote controller:
+.br
 	\fBir\-keytable \-s rc1 \-r\fR
 .PP
 To enable NEC protocol and load a BPF protocol, with a parameter for the BPF protocol:
@@ -135,5 +137,6 @@ License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 .SH SEE ALSO
-rc_keymap(5).
+The keymap format is described in rc_keymap(5).
+
 To transmit IR or receive raw IR, see ir\-ctl(1).

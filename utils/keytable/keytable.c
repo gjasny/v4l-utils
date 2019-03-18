@@ -232,10 +232,10 @@ static const char doc[] = N_(
 	"\nOn the options below, the arguments are:\n"
 	"  DEV       - the /dev/input/event* device to control\n"
 	"  SYSDEV    - the ir class as found at /sys/class/rc\n"
-	"  TABLE     - a file with a set of scancode=keycode value pairs\n"
+	"  KEYMAP    - a keymap file with protocols and scancode to keycode mappings\n"
 	"  SCANKEY   - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
 	"  PROTOCOL  - protocol name (nec, rc-5, rc-6, jvc, sony, sanyo, rc-5-sz, lirc,\n"
-	"              sharp, mce_kbd, xmp, imon, rc_mm, other, all) to be enabled,\n"
+	"              sharp, mce_kbd, xmp, imon, rc-mm, other, all) to be enabled,\n"
 	"              or a bpf protocol name or file\n"
 	"  DELAY     - Delay before repeating a keystroke\n"
 	"  PERIOD    - Period to repeat a keystroke\n"
@@ -251,7 +251,7 @@ static const struct argp_option options[] = {
 	{"test",	't',	0,		0,	N_("test if IR is generating events"), 0},
 	{"device",	'd',	N_("DEV"),	0,	N_("ir device to control"), 0},
 	{"read",	'r',	0,		0,	N_("reads the current scancode/keycode table"), 0},
-	{"write",	'w',	N_("TABLE"),	0,	N_("write (adds) the scancodes to the device scancode/keycode table from an specified file"), 0},
+	{"write",	'w',	N_("KEYMAP"),	0,	N_("write (adds) the keymap from the specified file"), 0},
 	{"set-key",	'k',	N_("SCANKEY"),	0,	N_("Change scan/key pairs"), 0},
 	{"protocol",	'p',	N_("PROTOCOL"),	0,	N_("Protocol to enable (the other ones will be disabled). To enable more than one, use the option more than one time"), 0},
 	{"parameter",	'e',	N_("PARAMETER"), 0,	N_("Set a parameter for the protocol decoder")},
