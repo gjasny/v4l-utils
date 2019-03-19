@@ -3,9 +3,6 @@
 ir\-keytable \- a swiss\-knife tool to handle Remote Controllers.
 .SH SYNOPSIS
 .B ir\-keytable
-[\fIOPTION\fR]... \fI\-\-device\fR [\fI/dev/input/event* device\fR]
-.br
-.B ir\-keytable
 [\fIOPTION\fR]... \fI\-\-sysdev\fR [\fIrc class (f. ex. rc0)\fR]
 .br
 .B ir\-keytable
@@ -25,9 +22,6 @@ Auto\-load a table, based on a configuration file. Only works with
 .TP
 \fB\-c\fR, \fB\-\-clear\fR
 Clears the scancode to keycode mappings.
-.TP
-\fB\-d\fR, \fB\-\-device\fR=\fIDEV\fR
-Use specified input device.
 .TP
 \fB\-D\fR, \fB\-\-delay\fR=\fIDELAY\fR
 Sets the delay before repeating a keystroke.
@@ -73,8 +67,6 @@ print the v4l2\-utils version
 Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options. Options can be combined together.
 .SS The options arguments are:
-.IP \fIDEV\fR
-the /dev/input/event* device to control
 .IP \fISYSDEV\fR
 the rc class as found at /sys/class/rc
 .IP \fIKEYMAP\fR

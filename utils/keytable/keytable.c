@@ -230,8 +230,7 @@ static const char doc[] = N_(
 	"\nAllows get/set IR keycode/scancode tables\n"
 	"You need to have read permissions on /dev/input for the program to work\n"
 	"\nOn the options below, the arguments are:\n"
-	"  DEV       - the /dev/input/event* device to control\n"
-	"  SYSDEV    - the ir class as found at /sys/class/rc\n"
+	"  SYSDEV    - the rc class as found at /sys/class/rc\n"
 	"  KEYMAP    - a keymap file with protocols and scancode to keycode mappings\n"
 	"  SCANKEY   - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
 	"  PROTOCOL  - protocol name (nec, rc-5, rc-6, jvc, sony, sanyo, rc-5-sz, lirc,\n"
@@ -247,9 +246,8 @@ static const char doc[] = N_(
 static const struct argp_option options[] = {
 	{"verbose",	'v',	0,		0,	N_("enables debug messages"), 0},
 	{"clear",	'c',	0,		0,	N_("clears the old table"), 0},
-	{"sysdev",	's',	N_("SYSDEV"),	0,	N_("ir class device to control"), 0},
+	{"sysdev",	's',	N_("SYSDEV"),	0,	N_("rc class device to control"), 0},
 	{"test",	't',	0,		0,	N_("test if IR is generating events"), 0},
-	{"device",	'd',	N_("DEV"),	0,	N_("ir device to control"), 0},
 	{"read",	'r',	0,		0,	N_("reads the current scancode/keycode table"), 0},
 	{"write",	'w',	N_("KEYMAP"),	0,	N_("write (adds) the keymap from the specified file"), 0},
 	{"set-key",	'k',	N_("SCANKEY"),	0,	N_("Change scan/key pairs"), 0},
@@ -265,13 +263,11 @@ static const struct argp_option options[] = {
 };
 
 static const char args_doc[] = N_(
-	"--device [/dev/input/event* device]\n"
-	"--sysdev [ir class (f. ex. rc0)]\n"
+	"--sysdev [rc class (f. ex. rc0)]\n"
 	"[for using the rc0 sysdev]");
 
 /* Static vars to store the parameters */
 static char *devclass = NULL;
-static char *devicename = NULL;
 static int readtable = 0;
 static int clear = 0;
 int debug = 0;
@@ -731,9 +727,6 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		period = strtol(arg, &p, 10);
 		if (!p || *p || period < 0)
 			argp_error(state, _("Invalid period: %s"), arg);
-		break;
-	case 'd':
-		devicename = arg;
 		break;
 	case 's':
 		devclass = arg;
@@ -2004,15 +1997,17 @@ static int show_sysfs_attribs(struct rc_device *rc_dev, char *name)
 		if (cur->name) {
 			if (get_attribs(rc_dev, cur->name))
 				continue;
-			fprintf(stderr, _("Found %s (%s) with:\n"),
-				rc_dev->sysfs_name,
-				rc_dev->input_name);
+			fprintf(stderr, _("Found %s with:\n"),
+				rc_dev->sysfs_name);
 			if (rc_dev->dev_name)
 				fprintf(stderr, _("\tName: %s\n"),
 					rc_dev->dev_name);
-			fprintf(stderr, _("\tDriver: %s, table: %s\n"),
-				rc_dev->drv_name,
+			fprintf(stderr, _("\tDriver: %s\n"),
+				rc_dev->drv_name);
+			fprintf(stderr, _("\tDefault keymap: %s\n"),
 				rc_dev->keytable_name);
+			fprintf(stderr, _("\tInput device: %s\n"),
+				rc_dev->input_name);
 			if (rc_dev->lirc_name) {
 				fprintf(stderr, _("\tLIRC device: %s\n"),
 					rc_dev->lirc_name);
@@ -2099,17 +2094,6 @@ int main(int argc, char *argv[])
 
 	/* Just list all devices */
 	if (!clear && !readtable && !keytable && !ch_proto && !cfg.next && !test && delay < 0 && period < 0 && !bpf_protocol) {
-		if (devicename) {
-			fd = open(devicename, O_RDONLY);
-			if (fd < 0) {
-				perror(_("Can't open device"));
-				return -1;
-			}
-			device_name(fd, "");
-			device_info(fd, "");
-			close(fd);
-			return 0;
-		}
 		if (show_sysfs_attribs(&rc_dev, devclass))
 			return -1;
 
@@ -2119,25 +2103,23 @@ int main(int argc, char *argv[])
 	if (!devclass)
 		devclass = "rc0";
 
-	if (cfg.next && (clear || keytable || ch_proto || devicename)) {
+	if (cfg.next && (clear || keytable || ch_proto)) {
 		fprintf (stderr, _("Auto-mode can be used only with --read, --verbose and --sysdev options\n"));
 		return -1;
 	}
-	if (!devicename) {
-		names = find_device(devclass);
-		if (!names)
-			return -1;
-		rc_dev.sysfs_name = names->name;
-		if (get_attribs(&rc_dev, names->name)) {
-			free_names(names);
-			return -1;
-		}
-		names->name = NULL;
-		free_names(names);
 
-		devicename = rc_dev.input_name;
-		dev_from_class++;
+	names = find_device(devclass);
+	if (!names)
+		return -1;
+	rc_dev.sysfs_name = names->name;
+	if (get_attribs(&rc_dev, names->name)) {
+		free_names(names);
+		return -1;
 	}
+	names->name = NULL;
+	free_names(names);
+
+	dev_from_class++;
 
 	if (cfg.next) {
 		struct cfgfile *cur;
@@ -2198,14 +2180,14 @@ int main(int argc, char *argv[])
 	}
 
 	if (debug)
-		fprintf(stderr, _("Opening %s\n"), devicename);
-	fd = open(devicename, O_RDONLY | O_NONBLOCK);
+		fprintf(stderr, _("Opening %s\n"), rc_dev.input_name);
+	fd = open(rc_dev.input_name, O_RDONLY | O_NONBLOCK);
 	if (fd < 0) {
-		perror(devicename);
+		perror(rc_dev.input_name);
 		return -1;
 	}
 	if (dev_from_class)
-		free(devicename);
+		free(rc_dev.input_name);
 	if (get_input_protocol_version(fd))
 		return -1;
 
