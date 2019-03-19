@@ -262,6 +262,8 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 		if (fmtdesc.flags & ~(V4L2_FMT_FLAG_COMPRESSED | V4L2_FMT_FLAG_EMULATED))
 			return fail("unknown flag %08x returned\n", fmtdesc.flags);
 		ret = testEnumFrameSizes(node, fmtdesc.pixelformat);
+		if (ret)
+			fail_on_test(node->codec_mask & STATEFUL_ENCODER);
 		if (ret && ret != ENOTTY)
 			return ret;
 		f++;
