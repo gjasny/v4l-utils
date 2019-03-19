@@ -1656,9 +1656,13 @@ static void stress_test_power_cycle(struct node &node, unsigned from, unsigned c
 			exit(1);
 		}
 		sleep(5);
-		cec_msg_init(&msg, CEC_LOG_ADDR_UNREGISTERED, CEC_LOG_ADDR_TV);
+		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_image_view_on(&msg);
-		doioctl(&node, CEC_TRANSMIT, &msg);
+		ret = doioctl(&node, CEC_TRANSMIT, &msg);
+		if (ret == ENONET) {
+			msg.msg[0] = (CEC_LOG_ADDR_UNREGISTERED << 4) | CEC_LOG_ADDR_TV;
+			doioctl(&node, CEC_TRANSMIT, &msg);
+		}
 	}
 
 	struct cec_log_addrs laddrs = { };
@@ -1694,9 +1698,13 @@ static void stress_test_power_cycle(struct node &node, unsigned from, unsigned c
 				exit(1);
 			}
 			sleep(5);
-			cec_msg_init(&msg, CEC_LOG_ADDR_UNREGISTERED, CEC_LOG_ADDR_TV);
+			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 			cec_msg_image_view_on(&msg);
-			doioctl(&node, CEC_TRANSMIT, &msg);
+			ret = doioctl(&node, CEC_TRANSMIT, &msg);
+			if (ret == ENONET) {
+				msg.msg[0] = (CEC_LOG_ADDR_UNREGISTERED << 4) | CEC_LOG_ADDR_TV;
+				doioctl(&node, CEC_TRANSMIT, &msg);
+			}
 		}
 
 		if (cnt && iter == cnt)
