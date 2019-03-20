@@ -875,6 +875,8 @@ int testEvents(struct node *node)
 	bool have_eos = !doioctl(node, VIDIOC_SUBSCRIBE_EVENT, &sub);
 	if (have_eos)
 		fail_on_test(doioctl(node, VIDIOC_UNSUBSCRIBE_EVENT, &sub));
+	else
+		fail_on_test(node->codec_mask & STATEFUL_ENCODER);
 	sub.type = V4L2_EVENT_SOURCE_CHANGE;
 	bool have_source_change = !doioctl(node, VIDIOC_SUBSCRIBE_EVENT, &sub);
 	if (have_source_change)
