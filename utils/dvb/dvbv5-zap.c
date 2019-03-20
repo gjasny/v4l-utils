@@ -1017,7 +1017,7 @@ static void set_signals(struct arguments *args)
 	}
 }
 
-const static char *default_dvr_pipe = "/tmp/dvr-pipe";
+static char *default_dvr_pipe = "/tmp/dvr-pipe";
 
 int main(int argc, char **argv)
 {
