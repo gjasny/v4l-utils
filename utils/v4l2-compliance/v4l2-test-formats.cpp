@@ -776,6 +776,7 @@ int testTryFormats(struct node *node)
 static int testM2MFormats(struct node *node)
 {
 	cv4l_fmt fmt_out;
+	cv4l_fmt fmt;
 	cv4l_fmt fmt_cap;
 	__u32 cap_type = node->g_type();
 	__u32 out_type = v4l_type_invert(cap_type);
@@ -809,6 +810,67 @@ static int testM2MFormats(struct node *node)
 	fail_on_test(fmt_cap.g_xfer_func() != xfer_func);
 	fail_on_test(fmt_cap.g_ycbcr_enc() != ycbcr_enc);
 	fail_on_test(fmt_cap.g_quantization() != quant);
+
+	if (!(node->codec_mask & STATEFUL_ENCODER))
+		return 0;
+
+	fmt = fmt_out;
+	unsigned w = (fmt.g_width() & ~7) - 4;
+	unsigned h = (fmt.g_height() & ~7) - 4;
+	fmt.s_width(w);
+	fmt.s_height(h);
+	node->s_fmt(fmt);
+	fail_on_test(fmt.g_width() < w || fmt.g_width() > fmt_out.g_width());
+	fail_on_test(fmt.g_height() < h || fmt.g_height() > fmt_out.g_height());
+	node->g_fmt(fmt_cap);
+	fail_on_test(fmt_cap.g_width() < fmt.g_width());
+	fail_on_test(fmt_cap.g_height() < fmt.g_height());
+
+	v4l2_selection sel = {
+		.type = fmt.g_type(),
+		.target = V4L2_SEL_TGT_CROP,
+	};
+	if (node->g_selection(sel) == ENOTTY) {
+		fail_on_test(fmt_cap.g_width() != fmt.g_width());
+		fail_on_test(fmt_cap.g_height() != fmt.g_height());
+		return 0;
+	}
+	fail_on_test(sel.r.top || sel.r.left);
+	fail_on_test(sel.r.width != fmt.g_width());
+	fail_on_test(sel.r.height != fmt.g_height());
+	sel.r.width = w;
+	sel.r.height = h;
+	node->s_selection(sel);
+	node->g_selection(sel);
+	fail_on_test(sel.r.top || sel.r.left);
+	fail_on_test(sel.r.width != w);
+	fail_on_test(sel.r.height != h);
+	sel.target = V4L2_SEL_TGT_CROP_BOUNDS;
+	node->g_selection(sel);
+	fail_on_test(sel.r.top || sel.r.left);
+	fail_on_test(sel.r.width != fmt.g_width());
+	fail_on_test(sel.r.height != fmt.g_height());
+	sel.target = V4L2_SEL_TGT_CROP_DEFAULT;
+	node->g_selection(sel);
+	fail_on_test(sel.r.top || sel.r.left);
+	fail_on_test(sel.r.width != fmt.g_width());
+	fail_on_test(sel.r.height != fmt.g_height());
+
+	// It is unlikely that an encoder supports composition,
+	// so warn if this is detected. Should we get encoders
+	// that can actually do this, then this test needs to
+	// be refined.
+	sel.target = V4L2_SEL_TGT_COMPOSE;
+	if (!node->g_selection(sel))
+		warn("The stateful encoder unexpectedly supports composition\n");
+
+	sel.type = fmt_cap.g_type();
+	fail_on_test(!node->g_selection(sel));
+	sel.target = V4L2_SEL_TGT_CROP;
+	fail_on_test(!node->g_selection(sel));
+
+	node->s_fmt(fmt_out);
+
 	return 0;
 }
 
