@@ -866,6 +866,9 @@ int testEvents(struct node *node)
 		}
 	}
 
+	if (node->codec_mask & STATEFUL_ENCODER)
+		fail_on_test(node->controls.find(V4L2_CID_MIN_BUFFERS_FOR_OUTPUT) == node->controls.end());
+
 	struct v4l2_event_subscription sub = { 0 };
 
 	sub.type = V4L2_EVENT_EOS;
