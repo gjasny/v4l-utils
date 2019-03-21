@@ -1,3 +1,20 @@
+v4l-utils-1.14.3
+----------------
+
+Hans Verkuil (1):
+      libv4lconvert: fix compiler warning
+
+Mauro Carvalho Chehab (2):
+      dvbv5-tools: be sure to zero struct arguments
+      dvbv5-zap: improve program exit code
+
+Mike Frysinger (1):
+      include sys/sysmacros.h for major() & minor()
+
+Sean Young (1):
+      libdvbv5: leaks and double free in dvb_fe_open_fname()
+
+
 v4l-utils-1.14.2
 ----------------
 
