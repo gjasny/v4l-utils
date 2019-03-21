@@ -814,6 +814,8 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 	buffer buf(q);
 	unsigned count = frame_count;
 	unsigned req_idx = q.g_buffers();
+	bool stopped = false;
+	bool got_eos = false;
 	struct epoll_event ev;
 	int epollfd = -1;
 	int ret;
@@ -847,6 +849,12 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 		if (node->buftype_pixfmts[m2m_q.g_type()][fmt_q.g_pixelformat()] &
 			V4L2_FMT_FLAG_COMPRESSED)
 			valid_output_flags = V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+
+		struct v4l2_event_subscription sub = { 0 };
+
+		sub.type = V4L2_EVENT_EOS;
+		if (node->codec_mask & STATEFUL_ENCODER)
+			doioctl(node, VIDIOC_SUBSCRIBE_EVENT, &sub);
 	}
 
 	if (pollmode == POLL_MODE_EPOLL) {
@@ -854,7 +862,7 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 
 		fail_on_test(epollfd < 0);
 		if (node->is_m2m)
-			ev.events = EPOLLIN | EPOLLOUT;
+			ev.events = EPOLLIN | EPOLLOUT | EPOLLPRI;
 		else if (v4l_type_is_output(q.g_type()))
 			ev.events = EPOLLOUT;
 		else
@@ -868,16 +876,21 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 	for (;;) {
 		buf.init(q);
 
+		bool can_read = true;
+		bool have_event = false;
+
 		if (pollmode == POLL_MODE_SELECT) {
 			struct timeval tv = { 2, 0 };
-			fd_set rfds, wfds;
+			fd_set rfds, wfds, efds;
 
 			FD_ZERO(&rfds);
 			FD_SET(node->g_fd(), &rfds);
 			FD_ZERO(&wfds);
 			FD_SET(node->g_fd(), &wfds);
+			FD_ZERO(&efds);
+			FD_SET(node->g_fd(), &efds);
 			if (node->is_m2m)
-				ret = select(node->g_fd() + 1, &rfds, &wfds, NULL, &tv);
+				ret = select(node->g_fd() + 1, &rfds, &wfds, &efds, &tv);
 			else if (v4l_type_is_output(q.g_type()))
 				ret = select(node->g_fd() + 1, NULL, &wfds, NULL, &tv);
 			else
@@ -886,13 +899,31 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 			fail_on_test(ret < 0);
 			fail_on_test(!FD_ISSET(node->g_fd(), &rfds) &&
 				     !FD_ISSET(node->g_fd(), &wfds));
+			can_read = FD_ISSET(node->g_fd(), &rfds);
+			have_event = FD_ISSET(node->g_fd(), &efds);
 		} else if (pollmode == POLL_MODE_EPOLL) {
 			ret = epoll_wait(epollfd, &ev, 1, 2000);
 			fail_on_test(ret == 0);
 			fail_on_test(ret < 0);
+			can_read = ev.events & EPOLLIN;
+			have_event = ev.events & EPOLLPRI;
 		}
 
-		ret = buf.dqbuf(node);
+		if (have_event) {
+			struct v4l2_event ev;
+
+			while (!doioctl(node, VIDIOC_DQEVENT, &ev)) {
+				if (ev.type == V4L2_EVENT_EOS) {
+					fail_on_test(got_eos);
+					got_eos = true;
+					fail_on_test(!stopped);
+				}
+			}
+		}
+
+		ret = EAGAIN;
+		if (!node->is_m2m || !stopped)
+			ret = buf.dqbuf(node);
 		if (ret != EAGAIN) {
 			fail_on_test(ret);
 			if (show_info)
@@ -945,8 +976,16 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 			count--;
 			if (!node->is_m2m && !count)
 				break;
+			if (!count && (node->codec_mask & STATEFUL_ENCODER)) {
+				struct v4l2_encoder_cmd cmd;
+
+				memset(&cmd, 0, sizeof(cmd));
+				cmd.cmd = V4L2_ENC_CMD_STOP;
+				fail_on_test(doioctl(node, VIDIOC_ENCODER_CMD, &cmd));
+				stopped = true;
+			}
 		}
-		if (!node->is_m2m)
+		if (!node->is_m2m || !can_read)
 			continue;
 
 		buf.init(m2m_q);
@@ -974,9 +1013,16 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 							sizeof(orig_buf.timecode)));
 		}
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+		if (!count) {
+			if (!(node->codec_mask & STATEFUL_ENCODER))
+				break;
+			if (buf.g_flags() & V4L2_BUF_FLAG_LAST) {
+				fail_on_test(buf.dqbuf(node) != EPIPE);
+				fail_on_test(!got_eos);
+				break;
+			}
+		}
 		buf.s_flags(buf.g_flags() & ~V4L2_BUF_FLAG_REQUEST_FD);
-		if (!count)
-			break;
 		fail_on_test(buf.qbuf(node, m2m_q));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 	}

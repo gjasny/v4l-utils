@@ -1324,26 +1324,33 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 			node.reopen();
 			printf("\ttest blocking wait: %s\n", ok(testBlockingWait(&node)));
 			node.reopen();
-			printf("\ttest MMAP (no poll): %s\n",
-			       ok(testMmap(&node, frame_count, POLL_MODE_NONE)));
-			node.reopen();
+			if (!(node.codec_mask & STATEFUL_ENCODER)) {
+				printf("\ttest MMAP (no poll): %s\n",
+				       ok(testMmap(&node, frame_count, POLL_MODE_NONE)));
+				node.reopen();
+			}
 			printf("\ttest MMAP (select): %s\n",
 			       ok(testMmap(&node, frame_count, POLL_MODE_SELECT)));
 			node.reopen();
 			printf("\ttest MMAP (epoll): %s\n",
 			       ok(testMmap(&node, frame_count, POLL_MODE_EPOLL)));
 			node.reopen();
-			printf("\ttest USERPTR (no poll): %s\n",
-			       ok(testUserPtr(&node, frame_count, POLL_MODE_NONE)));
-			node.reopen();
+			if (!(node.codec_mask & STATEFUL_ENCODER)) {
+				printf("\ttest USERPTR (no poll): %s\n",
+				       ok(testUserPtr(&node, frame_count, POLL_MODE_NONE)));
+				node.reopen();
+			}
 			printf("\ttest USERPTR (select): %s\n",
 			       ok(testUserPtr(&node, frame_count, POLL_MODE_SELECT)));
 			node.reopen();
 			if (options[OptSetExpBufDevice] ||
 			    !(node.valid_memorytype & (1 << V4L2_MEMORY_DMABUF))) {
-				printf("\ttest DMABUF (no poll): %s\n",
-				       ok(testDmaBuf(&expbuf_node, &node, frame_count, POLL_MODE_NONE)));
-				node.reopen();
+				if (!(node.codec_mask & STATEFUL_ENCODER)) {
+					printf("\ttest DMABUF (no poll): %s\n",
+					       ok(testDmaBuf(&expbuf_node, &node, frame_count,
+							     POLL_MODE_NONE)));
+					node.reopen();
+				}
 				printf("\ttest DMABUF (select): %s\n",
 				       ok(testDmaBuf(&expbuf_node, &node, frame_count, POLL_MODE_SELECT)));
 				node.reopen();
