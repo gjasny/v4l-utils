@@ -1,3 +1,21 @@
+v4l-utils-1.16.4
+----------------
+
+Gregor Jasny (2):
+      Qt5: test for Desktop OpenGL presence
+      Qt5: fixup Qt OpenGL automake conditionals
+
+Hans Verkuil (1):
+      dvbv5-zap.c: fix compile warning
+
+Mauro Carvalho Chehab (2):
+      dvbv5-tools: be sure to zero struct arguments
+      dvbv5-zap: improve program exit code
+
+Sean Young (1):
+      libdvbv5: leaks and double free in dvb_fe_open_fname()
+
+
 v4l-utils-1.16.3
 ----------------
 
