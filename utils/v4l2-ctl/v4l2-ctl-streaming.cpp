@@ -1280,7 +1280,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 	if (stream_count == 0)
 		return 0;
 	if (--stream_count == 0)
-		return -1;
+		return -2;
 
 	return 0;
 }
@@ -1641,7 +1641,7 @@ recover:
 		if (FD_ISSET(fd.g_fd(), &read_fds)) {
 			r = do_handle_cap(fd, q, fout, NULL,
 					   count, fps_ts, fmt);
-			if (r == -1)
+			if (r < 0)
 				break;
 		}
 
