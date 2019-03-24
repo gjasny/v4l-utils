@@ -1,7 +1,7 @@
 /*
  * Media controller Next Generation test app
  *
- * Copyright (C) 2015 Mauro Carvalho Chehab <mchehab@osg.samsung.com>
+ * Copyright (C) 2015 Mauro Carvalho Chehab <mchehab@kernel.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@
 #define PROGRAM_NAME	"mc_nextgen_test"
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
-const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.org>";
 
 static const char doc[] = "\nA testing tool for the MC next geneneration API\n";
 
