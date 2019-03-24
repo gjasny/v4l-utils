@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-#   Copyright (C) 2014 Mauro Carvalho Chehab <m.chehab@samsung.com>
+#   Copyright (C) 2014 Mauro Carvalho Chehab <mchehab@kernel.org>
 #   Copyright (c) 2014 Samsung Electronics Co., Ltd.
 #
 #   This program is free software; you can redistribute it and/or modify

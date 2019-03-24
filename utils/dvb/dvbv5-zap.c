@@ -83,7 +83,7 @@
 const int NANO_SECONDS_IN_SEC = 1000000000;
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
-const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.org>";
 
 struct arguments {
 	char *confname, *lnb_name, *output, *demux_dev, *dvr_dev, *dvr_fname;
