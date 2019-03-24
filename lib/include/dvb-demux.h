@@ -23,7 +23,7 @@
  *	Originally licensed as GPLv2 or upper
  *
  * All subsequent changes are under GPLv2 only and are:
- *	Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@redhat.com>
+ *	Copyright (c) 2011-2012 - Mauro Carvalho Chehab <mchehab@kernel.org>
  *
  */
 #ifndef _DVB_DEMUX_H

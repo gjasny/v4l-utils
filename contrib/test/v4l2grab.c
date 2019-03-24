@@ -1,5 +1,5 @@
 /* V4L2 video picture grabber
-   Copyright (C) 2009 Mauro Carvalho Chehab <mchehab@infradead.org>
+   Copyright (C) 2009 Mauro Carvalho Chehab <mchehab@kernel.org>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -169,7 +169,7 @@ static int capture(char *dev_name, int x_res, int y_res, int n_frames,
  */
 
 const char *argp_program_version = "V4L2 grabber version " V4L_UTILS_VERSION;
-const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@redhat.com>";
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.org>";
 
 static const char doc[] = "\nCapture images using libv4l, storing them as ppm files\n";
 
