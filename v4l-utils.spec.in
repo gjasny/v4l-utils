@@ -165,5 +165,5 @@ gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
 %changelog
-* Thr Oct 06 2011 Mauro Carvalho Chehab <mchehab@redhat.com> 0.9.0-test
+* Thr Oct 06 2011 Mauro Carvalho Chehab <mchehab@kernel.org> 0.9.0-test
 - Initial v4l-utils.spec file
