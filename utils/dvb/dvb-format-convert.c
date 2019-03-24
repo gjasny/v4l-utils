@@ -51,7 +51,7 @@ static const struct argp_option options[] = {
 };
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
-const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.org>";
 
 static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 {

@@ -30,7 +30,7 @@
 #include <argp.h>
 
 const char *argp_program_version = "v4l2-sysfs-path version " V4L_UTILS_VERSION;
-const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.org>";
 
 static const struct argp_option options[] = {
 	{"device", 'd', 0, 0, "use alternative device show mode", 0},
