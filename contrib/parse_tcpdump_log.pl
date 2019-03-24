@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-#   Copyright (C) 2011 Mauro Carvalho Chehab <mchehab@redhat.com>
+#   Copyright (C) 2011 Mauro Carvalho Chehab <mchehab@kernel.org>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -660,11 +660,11 @@ The provided info are:
 
 =head1 BUGS
 
-Report bugs to Mauro Carvalho Chehab <mchehab@redhat.com>
+Report bugs to Mauro Carvalho Chehab <mchehab@kernel.org>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2011 by Mauro Carvalho Chehab <mchehab@redhat.com>.
+Copyright (c) 2011 by Mauro Carvalho Chehab <mchehab@kernel.org>.
 
 License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
 

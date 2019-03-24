@@ -3,7 +3,7 @@
 
    Copyright (C) 2007 Michel Ludwig <michel.ludwig@gmail.com>
 
-   Copyright (C) 2007, 2008 Mauro Carvalho Chehab <mchehab@infradead.org>
+   Copyright (C) 2007, 2008 Mauro Carvalho Chehab <mchehab@kernel.org>
 	- Improve --list command
 	- Add --seek command
 

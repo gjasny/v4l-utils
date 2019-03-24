@@ -3,7 +3,7 @@
    It is meant to check ioctl debug messages generated and to check
 	if a function is implemented by that device.
 
-   Copyright (C) 2005 Mauro Carvalho Chehab <mchehab@infradead.org>
+   Copyright (C) 2005 Mauro Carvalho Chehab <mchehab@kernel.org>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

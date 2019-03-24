@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2006 Mauro Carvalho Chehab <mchehab@infradead.org>
+   Copyright (C) 2006 Mauro Carvalho Chehab <mchehab@kernel.org>
 
    The libv4l2util Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
