@@ -1,7 +1,7 @@
 /*
    decode_tm6000.c - decode multiplexed format from TM5600/TM6000 USB
 
-   Copyright (C) 2007 Mauro Carvalho Chehab <mchehab@infradead.org>
+   Copyright (C) 2007 Mauro Carvalho Chehab <mchehab@kernel.org>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 #include <errno.h>
 
 const char *argp_program_version="decode_tm6000 version 0.0.1";
-const char *argp_program_bug_address="Mauro Carvalho Chehab <mchehab@infradead.org>";
+const char *argp_program_bug_address="Mauro Carvalho Chehab <mchehab@kernel.org>";
 const char doc[]="Decodes tm6000 proprietary format streams";
 const struct argp_option options[] = {
 	{"verbose",	'v',	0,	0,	"enables debug messages", 0},

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright (c) 2006-2010 by Mauro Carvalho Chehab <mchehab@redhat.com>
+# Copyright (c) 2006-2010 by Mauro Carvalho Chehab <mchehab@kernel.org>
 #
 # Licensed under the terms of the GNU GPL License version 2
 
