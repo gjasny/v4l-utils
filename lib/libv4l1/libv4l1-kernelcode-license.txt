@@ -326,7 +326,7 @@ Received: from [10.11.10.12] (vpn-10-12.rdu.redhat.com [10.11.10.12])
 	Wed, 19 May 2010 10:25:00 -0400
 Message-ID: <4BF3F4B9.3060803@redhat.com>
 Date: Wed, 19 May 2010 11:24:57 -0300
-From: Mauro Carvalho Chehab <mchehab@redhat.com>
+From: Mauro Carvalho Chehab <mchehab@kernel.org>
 User-Agent: Thunderbird 2.0.0.22 (X11/20090609)
 MIME-Version: 1.0
 To: Hans de Goede <hdegoede@redhat.com>

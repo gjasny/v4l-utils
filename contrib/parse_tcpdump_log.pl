@@ -744,7 +744,7 @@ The provided info are:
 
 =head1 BUGS
 
-Report bugs to Mauro Carvalho Chehab <m.chehab@samsung.com>
+Report bugs to Mauro Carvalho Chehab <mchehab@kernel.org>
 
 =head1 COPYRIGHT
 
