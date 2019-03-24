@@ -104,7 +104,7 @@ static int parse_code(char *string)
 }
 
 const char *argp_program_version = "IR keytable control version "V4L_UTILS_VERSION;
-const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.org>";
 
 static const char doc[] = "\nAllows get/set IR keycode/scancode tables\n"
 	"You need to have read permissions on /dev/input for the program to work\n"

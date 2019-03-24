@@ -29,7 +29,7 @@
 #define PROGRAM_NAME	"dvb-fe-tool"
 
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
-const char *argp_program_bug_address = "Mauro Carvalho Chehab <m.chehab@samsung.com>";
+const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.org>";
 
 static const char doc[] = "\nA DVB frontend tool using API version 5\n"
 	"\nOn the options bellow, the arguments are:\n"
