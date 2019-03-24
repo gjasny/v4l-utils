@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 - Mauro Carvalho Chehab <m.chehab@samsung.com>
+ * Copyright (c) 2013 - Mauro Carvalho Chehab <mchehab@kernel.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
