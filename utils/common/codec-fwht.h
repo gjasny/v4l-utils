@@ -24,6 +24,7 @@
 #define noinline_for_stack
 
 
+typedef __u64 u64;
 typedef __u32 u32;
 typedef __u16 u16;
 typedef __s16 s16;
@@ -143,6 +144,7 @@ struct fwht_raw_frame {
 	unsigned int luma_alpha_step;
 	unsigned int chroma_step;
 	unsigned int components_num;
+	u8 *buf;
 	u8 *luma, *cb, *cr, *alpha;
 };
 
@@ -159,9 +161,10 @@ u32 fwht_encode_frame(struct fwht_raw_frame *frm,
 		      bool is_intra, bool next_is_intra,
 		      unsigned int width, unsigned int height,
 		      unsigned int stride, unsigned int chroma_stride);
-bool fwht_decode_frame(struct fwht_cframe *cf, struct fwht_raw_frame *ref,
-		       u32 hdr_flags, unsigned int components_num,
-		       unsigned int width, unsigned int height,
-		       unsigned int coded_width);
-
+bool fwht_decode_frame(struct fwht_cframe *cf, u32 hdr_flags,
+		unsigned int components_num, unsigned int width,
+		unsigned int height, const struct fwht_raw_frame *ref,
+		unsigned int ref_stride, unsigned int ref_chroma_stride,
+		struct fwht_raw_frame *dst, unsigned int dst_stride,
+		unsigned int dst_chroma_stride);
 #endif

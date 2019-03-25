@@ -145,6 +145,7 @@
 	case V4L2_PIX_FMT_VP9: return "VP9";
 	case V4L2_PIX_FMT_HEVC: return "HEVC";
 	case V4L2_PIX_FMT_FWHT: return "FWHT";
+	case V4L2_PIX_FMT_FWHT_STATELESS: return "FWHT Stateless";
 	case V4L2_PIX_FMT_CPIA1: return "GSPCA CPiA YUV";
 	case V4L2_PIX_FMT_WNVA: return "WNVA";
 	case V4L2_PIX_FMT_SN9C10X: return "GSPCA SN9C10X";

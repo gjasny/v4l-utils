@@ -1,6 +1,6 @@
---- a/utils/common/codec-fwht.h.old	2018-12-29 11:23:58.128328613 -0800
-+++ b/utils/common/codec-fwht.h	2018-12-29 11:24:16.099127560 -0800
-@@ -8,8 +8,27 @@
+--- a/utils/common/codec-fwht.h.old	2019-02-23 09:38:59.454065366 -0800
++++ b/utils/common/codec-fwht.h	2019-02-23 09:40:44.007803414 -0800
+@@ -8,8 +8,28 @@
  #define CODEC_FWHT_H
  
  #include <linux/types.h>
@@ -22,6 +22,7 @@
 +#define noinline_for_stack
 +
 +
++typedef __u64 u64;
 +typedef __u32 u32;
 +typedef __u16 u16;
 +typedef __s16 s16;
