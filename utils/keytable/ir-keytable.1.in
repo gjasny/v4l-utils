@@ -3,10 +3,7 @@
 ir\-keytable \- a swiss\-knife tool to handle Remote Controllers.
 .SH SYNOPSIS
 .B ir\-keytable
-[\fIOPTION\fR]... \fI\-\-sysdev\fR [\fIrc class (f. ex. rc0)\fR]
-.br
-.B ir\-keytable
-[\fIOPTION\fR]... [\fIfor using the rc0 sysdev\fR]
+[\fIOPTION\fR]...
 .SH DESCRIPTION
 ir\-keytable is a tool that lists the Remote Controller devices, allows one to
 get/set rc keycode/scancode tables, set protocol decoder, test events
@@ -17,7 +14,7 @@ options to work.
 .SH OPTIONS
 .TP
 \fB\-a\fR, \fB\-\-auto\-load\fR=\fICFGFILE\fR
-Auto\-load a table, based on a configuration file. Only works with
+Auto\-load keymaps, based on a configuration file. Only works with
 \fB\-\-sysdev\fR.
 .TP
 \fB\-c\fR, \fB\-\-clear\fR
@@ -43,7 +40,7 @@ Sets the period to repeat a keystroke.
 Read and show the current scancode to keycode mapping.
 .TP
 \fB\-s\fR, \fB\-\-sysdev\fR=\fISYSDEV\fR
-rc device to control
+rc device to control, defaults to \fIrc0\fR if not specified.
 .TP
 \fB\-t\fR, \fB\-\-test\fR
 test if the rc device is generating events
@@ -68,7 +65,7 @@ Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options. Options can be combined together.
 .SS The options arguments are:
 .IP \fISYSDEV\fR
-the rc class as found at /sys/class/rc
+the rc device as found at /sys/class/rc
 .IP \fIKEYMAP\fR
 a toml keymap file with a list of protocols and scancodes to keycode mappings.
 The format is described in rc_keymap(5).
@@ -89,7 +86,7 @@ Delay before repeating a keystroke
 .IP \fIPERIOD\fR
 Period to repeat a keystroke
 .IP \fICFGFILE\fR
-configuration file that associates a driver/table name with a keymap file
+configuration file that associates a driver/keymap name with a keymap file
 .SH EXIT STATUS
 On success, it returns 0. Otherwise, it will return the error code.
 .SH EXAMPLES
@@ -97,7 +94,7 @@ To list all connected Remote Controller devices:
 .br
 	\fBir\-keytable\fR
 .PP
-To clean the keycode table and use a newer one:
+To clean the keycode mapping and use a newer one:
 .br
 	\fBir\-keytable \-c \-w /etc/rc_keymaps/nec_terratec_cinergy_xs.toml\fR
 .PP
