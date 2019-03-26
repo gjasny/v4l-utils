@@ -1604,7 +1604,7 @@ int testRequests(struct node *node, bool test_streaming)
 	}
 	if (have_controls) {
 		ctrls.request_fd = 10;
-		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EBADR);
+		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
 	}
 	ret = doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd);
 	if (ret == ENOTTY) {
