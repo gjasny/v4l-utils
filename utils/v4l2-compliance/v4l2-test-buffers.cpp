@@ -1576,6 +1576,8 @@ int testRequests(struct node *node, bool test_streaming)
 		if (qctrl.type != V4L2_CTRL_TYPE_INTEGER &&
 		    qctrl.type != V4L2_CTRL_TYPE_BOOLEAN)
 			continue;
+		if (qctrl.flags & V4L2_CTRL_FLAG_WRITE_ONLY)
+			continue;
 		if (is_vivid && V4L2_CTRL_ID2WHICH(qctrl.id) == V4L2_CTRL_CLASS_VIVID)
 			continue;
 		if (qctrl.minimum != qctrl.maximum) {
@@ -1593,16 +1595,16 @@ int testRequests(struct node *node, bool test_streaming)
 
 	ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
 	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
-	fail_on_test(ret != EINVAL && ret != EACCES && ret != ENOTTY);
+	fail_on_test(ret != EINVAL && ret != EBADR && ret != ENOTTY);
 	have_controls = ret != ENOTTY;
 
-	if (media_fd < 0 || ret == EACCES) {
+	if (media_fd < 0 || ret == EBADR) {
 		fail_on_test(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS);
 		return ENOTTY;
 	}
 	if (have_controls) {
 		ctrls.request_fd = 10;
-		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
+		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EBADR);
 	}
 	ret = doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd);
 	if (ret == ENOTTY) {
