@@ -448,7 +448,7 @@ int testMediaEnum(struct node *node)
 					link_immutable = links.links[i];
 			}
 			if (fl & MEDIA_LNK_FL_DYNAMIC)
-				fail_on_test(!(fl & MEDIA_LNK_FL_IMMUTABLE));
+				fail_on_test(fl & MEDIA_LNK_FL_IMMUTABLE);
 			if (is_sink && (fl & MEDIA_LNK_FL_ENABLED)) {
 				// only one incoming link can be enabled
 				fail_on_test(found_enabled);
