@@ -67,13 +67,13 @@ while [ "$1" != "" ]; do
 		OUTWIDTH="$1"
 		;;
 	--capheight)
-                shift
-                CAPHEIGHT="$1"
-                ;;
-        --outheight)
-                shift
-                OUTHEIGHT="$1"
-                ;;
+		shift
+		CAPHEIGHT="$1"
+		;;
+	--outheight)
+		shift
+		OUTHEIGHT="$1"
+		;;
 
 	*)
 		echo "Unknown argument '$1'"
@@ -111,7 +111,7 @@ M2M="v4l2${VDEV}convert"
 # passthrough mode. Unfortunately, this is possible only after Gst 1.12
 
 if [ $GST_SUBVER -gt 12 ]; then
-        M2M= "$M2M disable-passthrough=1"
+	M2M= "$M2M disable-passthrough=1"
 fi
 
 # Default is to output Using YUY2. As inputs are RGB, that warrants
@@ -153,20 +153,20 @@ echo "  $ while :; do gst-launch-1.0 tcpserversrc port=${PORT} host=0.0.0.0 ! de
 BAYERFMTS="bggr gbrg grbg rggb"
 for FMT in $CAPFMT; do
 	echo
-        echo "Format $FMT";
+	echo "Format $FMT";
 
-        VIDEOFMT="video/x-raw,format=${FMT},width=${CAPWIDTH},height=${CAPHEIGHT} "
-        for i in $BAYERFMTS; do
-              if [ "$FMT" == "$i" ]; then
-                VIDEOFMT="video/x-bayer,format=${FMT},width=${CAPWIDTH},height=${CAPHEIGHT} ! bayer2rgb "
-              fi
-        done
-        gst-launch-1.0 \
-          videotestsrc num-buffers=${COUNT} ! \
-          video/x-raw,format=${OUTFMT},width=${OUTWIDTH},height=${OUTHEIGHT} ! \
-          ${M2M} extra-controls="s,horizontal_flip=1,vertical_flip=1" ! \
-          ${VIDEOFMT} ! videoconvert ! \
-          jpegenc ! tcpclientsink host=${HOST} port=${PORT}
+	VIDEOFMT="video/x-raw,format=${FMT},width=${CAPWIDTH},height=${CAPHEIGHT} "
+	for i in $BAYERFMTS; do
+	      if [ "$FMT" == "$i" ]; then
+		VIDEOFMT="video/x-bayer,format=${FMT},width=${CAPWIDTH},height=${CAPHEIGHT} ! bayer2rgb "
+	      fi
+	done
+	gst-launch-1.0 \
+	  videotestsrc num-buffers=${COUNT} ! \
+	  video/x-raw,format=${OUTFMT},width=${OUTWIDTH},height=${OUTHEIGHT} ! \
+	  ${M2M} extra-controls="s,horizontal_flip=1,vertical_flip=1" ! \
+	  ${VIDEOFMT} ! videoconvert ! \
+	  jpegenc ! tcpclientsink host=${HOST} port=${PORT}
 
-        sleep 3
+	sleep 3
 done
