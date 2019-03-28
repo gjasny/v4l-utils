@@ -7,8 +7,21 @@
 #
 
 #
-# Script to test vim2m driver and Gstreamer v4l2 plugin
-# NOTE: This script assumes that vim2m driver is loaded
+# Script to test vim2m driver and GStreamer v4l2 plugin
+# NOTE:
+#
+# 1. This script assumes that vim2m driver is loaded
+# 2. GStreamer (up to version 1.14.4) silently ignores M2M convert devices
+#    that supports Bayer. That includes newer versions of vim2m driver.
+#    To use GStreamer with older versions, this patch requires backporting:
+#	https://gitlab.freedesktop.org/gstreamer/gst-plugins-good/commit/dc7bd483260d6a5299f78a312740a74c7b3d7994
+# 3. GStreamer also usually just passes data through if capture format is
+#	identical to output format. Since version 1.14, this can be disabled.
+#	This script disables it, on such versions.
+# 4. Right now, GStreamer's v4l2 convert plugin is not capable of negotiating
+#	Bayer formats. So, by default, it tests only YUY2 format. If you want
+#	to test bayer as well, there's an experimental patch available at:
+#	https://gitlab.freedesktop.org/mchehab_kernel/gst-plugins-good/commit/9dd48f551c4b8c8c841b32f61658b1f88ef08995
 #
 
 #
