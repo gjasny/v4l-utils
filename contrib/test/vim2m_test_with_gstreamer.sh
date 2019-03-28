@@ -7,7 +7,8 @@
 #
 
 #
-# Script to test vim2m driver and GStreamer v4l2 plugin
+# Script to test M2M transform drivers like vim2m and GStreamer v4l2 plugin
+#
 # NOTE:
 #
 # 1. This script assumes that vim2m driver is loaded
@@ -22,7 +23,6 @@
 #	Bayer formats. So, by default, it tests only YUY2 format. If you want
 #	to test bayer as well, there's an experimental patch available at:
 #	https://gitlab.freedesktop.org/mchehab_kernel/gst-plugins-good/commit/9dd48f551c4b8c8c841b32f61658b1f88ef08995
-#
 
 #
 # Default values
@@ -112,50 +112,33 @@ fi
 GST_VER=$(gst-launch-1.0 --version|grep "gst-launch-1.0 version"|cut -d' ' -f 3)
 GST_SUBVER=$(echo $GST_VER|cut -d'.' -f2)
 if [ $GST_SUBVER -lt 15 ]; then
-echo "OLD GST"
 	if [ "$VDEV" == "" ]; then
 		VDEV="video0"
 	fi
 fi
 
 M2M="v4l2${VDEV}convert"
-
-# If input and output formats are identical, we need to explicitly disable
-# passthrough mode. Unfortunately, this is possible only after Gst 1.12
-
-if [ $GST_SUBVER -gt 12 ]; then
-	M2M= "$M2M disable-passthrough=1"
+if [ "$(gst-inspect-1.0 $M2M 2>/dev/null)" == "" ]; then
+	echo "GStreamer doesn't recognized $M2M."
+	echo "Don't forget to load vim2m."
+	exit 1
 fi
-
-# Default is to output Using YUY2. As inputs are RGB, that warrants
-# that passthrough mode will be disabled.
-
-if [ "$CAPFMT" == "" ]; then
-	CAPFMT="YUY2"
-fi
-
-# TODO: use those to check if passed parameters are valid
 
 SUP_CAPFMTS=$(gst-inspect-1.0 $M2M 2>/dev/null|perl -e 'while (<>) { $T="$1" if (m/(SRC|SINK)\s+template/);  $T="" if (m/^\S/); $f{$T}.= $1 if ($T ne "" && m/format:\s+(.*)/); }; $f{SRC}=~s/[\{\}\,]//g; $f{SRC}=~s/\(string\)//g; print $f{SRC}')
+
+# TODO: validate the output format qas well
 SUP_OUTFMTS=$(gst-inspect-1.0 $M2M 2>/dev/null|perl -e 'while (<>) { $T="$1" if (m/(SRC|SINK)\s+template/); $T="" if (m/^\S/); $f{$T}.= $1 if ($T ne "" && m/format:\s+(.*)/); }; $f{SINK}=~s/[\{\}\,]//g; $f{SINK}=~s/\(string\)//g; print $f{SINK}')
 
-#
-# Displays all used command line parameters and default values
-#
-echo "Using ${M2M}, source $OUTFMT ${OUTWIDTH}x${OUTHEIGHT}, sink $CAPFMT ${CAPWIDTH}x${CAPHEIGHT}".
-if [ "$SUP_CAPFMTS" != "" ]; then
-	echo "Supported capture formats: $SUP_CAPFMTS"
+
+# If input and output formats are identical, we need to explicitly disable
+# passthrough mode.
+# Unfortunately, such feature may not be available
+
+HAS_DISABLE_PASSTHROUGH=""
+if [ "$(gst-inspect-1.0 $M2M|grep disable-passthrough)" != "" ]; then
+	M2M="$M2M disable-passthrough=1"
+	HAS_DISABLE_PASSTHROUGH="1"
 fi
-if [ "$SUP_OUTFMTS" != "" ]; then
-	echo "Supported output formats: $SUP_OUTFMTS"
-fi
-echo "Sending stream to ${HOST}:${PORT}"
-echo "Don't forget to load vim2m."
-echo
-echo "Be sure that port ${PORT} is enabled at the ${HOST} host."
-echo "At ${HOST} host, you should run:"
-echo
-echo "  $ while :; do gst-launch-1.0 tcpserversrc port=${PORT} host=0.0.0.0 ! decodebin ! videoconvert ! autovideosink; done"
 
 #
 # For each selected capture format, call Gst
@@ -164,17 +147,93 @@ echo "  $ while :; do gst-launch-1.0 tcpserversrc port=${PORT} host=0.0.0.0 ! de
 # horizontal and vertical flip
 #
 BAYERFMTS="bggr gbrg grbg rggb"
+
+# Check it bayer is supported
+HAS_BAYER=""
+if [ "$(gst-inspect-1.0 bayer2rgb 2>/dev/null)" != "" ]; then
+	HAS_BAYER=1
+fi
+
+# Select a default that would test more formats, as possible by GStreamer
+# version and compilation
+
+if [ "$CAPFMT" == "" ]; then
+	if [ "$HAS_BAYER" == "" ]; then
+		DISABLE_FMTS="$BAYERFMTS $DISABLE_FMTS"
+	fi
+	if [ "$HAS_DISABLE_PASSTHROUGH" == "" ]; then
+		DISABLE_FMTS="$BAYERFMTS $OUTFMT"
+	fi
+
+	CAPFMT=" $SUP_CAPFMTS "
+	for i in $DISABLE_FMTS; do
+		CAPFMT=${CAPFMT/ $i / }
+	done
+else
+	if [ "$HAS_DISABLE_PASSTHROUGH" == "" ]; then
+		DISABLE_FMTS="$OUTFMT"
+		echo "Can't use capture format $OUTFMT"
+	fi
+
+	CAPFMT=" $SUP_CAPFMTS "
+	for i in $DISABLE_FMTS; do
+		CAPFMT=${CAPFMT/ $i / }
+	done
+fi
+
+#
+# Displays all used command line parameters and default values
+#
+CAPFMT=${CAPFMT//  / }
+SUP_CAPFMTS=${SUP_CAPFMTS//  / }
+SUP_OUTFMTS=${SUP_OUTFMTS//  / }
+
+echo "Using ${M2M}, source ${OUTWIDTH}x${OUTHEIGHT}, sink ${CAPWIDTH}x${CAPHEIGHT}".
+echo "Supported output formats :$SUP_OUTFMTS (using $OUTFMT)"
+echo "Supported capture formats:$SUP_CAPFMTS"
+echo "Testing those cap formats:$CAPFMT"
+echo "Sending stream to ${HOST}:${PORT}"
+echo
+echo "Be sure that port ${PORT} is enabled at the ${HOST} host."
+echo "At ${HOST} host, you should run:"
+echo
+echo "  $ while :; do gst-launch-1.0 tcpserversrc port=${PORT} host=0.0.0.0 ! decodebin ! videoconvert ! autovideosink; done"
+
 for FMT in $CAPFMT; do
 	echo
-	echo "Format $FMT";
 
 	VIDEOFMT="video/x-raw,format=${FMT},width=${CAPWIDTH},height=${CAPHEIGHT} "
+	NOT_SUPPORTED=""
 	for i in $BAYERFMTS; do
-	      if [ "$FMT" == "$i" ]; then
-		VIDEOFMT="video/x-bayer,format=${FMT},width=${CAPWIDTH},height=${CAPHEIGHT} ! bayer2rgb "
-	      fi
+		if [ "$FMT" == "$i" ]; then
+			if [ "$HAS_BAYER" == "" ]; then
+				NOT_SUPPORTED=1
+			fi
+
+			VIDEOFMT="video/x-bayer,format=${FMT},width=${CAPWIDTH},height=${CAPHEIGHT} ! bayer2rgb "
+			break
+		fi
 	done
-	gst-launch-1.0 \
+	if [ "$NOT_SUPPORTED" != "" ]; then
+		echo "Bayer formats like $FMT aren't supported by GStreamer"
+		continue
+	fi
+
+	NOT_SUPPORTED="1"
+	for i in $SUP_CAPFMTS; do
+		if [ "$FMT" == "$i" ]; then
+			NOT_SUPPORTED=""
+			break
+		fi
+	done
+	if [ "$NOT_SUPPORTED" != "" ]; then
+		echo "Format $FMT not supported by GStreamer"
+		continue
+	fi
+
+	echo "Format $FMT";
+
+	gst-launch-1.0 -q \
 	  videotestsrc num-buffers=${COUNT} ! \
 	  video/x-raw,format=${OUTFMT},width=${OUTWIDTH},height=${OUTHEIGHT} ! \
 	  ${M2M} extra-controls="s,horizontal_flip=1,vertical_flip=1" ! \
