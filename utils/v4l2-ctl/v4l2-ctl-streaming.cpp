@@ -535,7 +535,7 @@ static void print_concise_buffer(FILE *f, cv4l_buffer &buf,
 	if (have_data_offset) {
 		fprintf(f, " offset: ");
 		for (unsigned i = 0; i < buf.g_num_planes(); i++)
-			fprintf(f, "%s%u", i ? "/" : "", buf.g_data_offset());
+			fprintf(f, "%s%u", i ? "/" : "", buf.g_data_offset(i));
 	}
 	if (comp_perc >= 0)
 		fprintf(f, " compression: %d%%", comp_perc);
@@ -1120,8 +1120,8 @@ static void write_buffer_to_file(cv4l_fd &fd, cv4l_queue &q, cv4l_buffer &buf,
 		unsigned tot_used = 0;
 
 		for (unsigned j = 0; j < buf.g_num_planes(); j++) {
-			__u32 used = buf.g_bytesused();
-			unsigned offset = buf.g_data_offset();
+			__u32 used = buf.g_bytesused(j);
+			unsigned offset = buf.g_data_offset(j);
 			u8 *p = (u8 *)q.g_dataptr(buf.g_index(), j) + offset;
 
 			if (ctx) {
@@ -1147,8 +1147,8 @@ static void write_buffer_to_file(cv4l_fd &fd, cv4l_queue &q, cv4l_buffer &buf,
 	if (to_with_hdr)
 		write_u32(fout, FILE_HDR_ID);
 	for (unsigned j = 0; j < buf.g_num_planes(); j++) {
-		__u32 used = buf.g_bytesused();
-		unsigned offset = buf.g_data_offset();
+		__u32 used = buf.g_bytesused(j);
+		unsigned offset = buf.g_data_offset(j);
 		unsigned sz;
 
 		if (offset > used) {
