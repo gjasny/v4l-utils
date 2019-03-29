@@ -818,6 +818,13 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 	int epollfd = -1;
 	int ret;
 
+	if (node->is_m2m) {
+		if (count <= q.g_buffers())
+			count = 1;
+		else
+			count -= q.g_buffers();
+	}
+
 	capture_count = 0;
 
 	if (show_info) {
