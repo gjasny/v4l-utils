@@ -19,8 +19,11 @@ unset CAPFMT
 VDEV=video0
 HOST=127.0.0.1
 PORT=8632
+OUTFMT=RGB
 CAPWIDTH=340
+OUTWIDTH=320
 CAPHEIGHT=240
+OUTHEIGHT=200
 unset HELP
 
 #
@@ -47,6 +50,10 @@ while [ "$1" != "" ]; do
 		shift
 		CAPFMT="${CAPFMT} $1"
 		;;
+	--outfmt)
+		shift
+		OUTFMT="$1"
+		;;
 	--count)
 		shift
 		COUNT="$1"
@@ -55,9 +62,17 @@ while [ "$1" != "" ]; do
 		shift
 		CAPWIDTH="$1"
 		;;
+	--outwidth)
+		shift
+		OUTWIDTH="$1"
+		;;
 	--capheight)
 		shift
 		CAPHEIGHT="$1"
+		;;
+	--outheight)
+		shift
+		OUTHEIGHT="$1"
 		;;
 	*)
 		echo "Unknown argument '$1'"
@@ -105,8 +120,10 @@ for FMT in $CAPFMT; do
 	echo "Format $FMT";
 	v4l2-ctl --stream-mmap --stream-out-mmap \
 		--stream-to-host ${HOST}:${PORT} \
-		--stream-out-hor-speed 1 -x pixelformat=${FMT} \
-		--set-fmt-video width=${CAPWIDTH},height=${CAPHEIGHT} \
+		--stream-lossless \
+		--stream-out-hor-speed 1 \
+		--set-fmt-video-out pixelformat=${OUTFMT},width=${OUTWIDTH},height=${OUTHEIGHT} \
+		--set-fmt-video pixelformat=${FMT},width=${CAPWIDTH},height=${CAPHEIGHT} \
 		-d /dev/${VDEV} --stream-count=${COUNT}
 	echo
 	sleep 3
