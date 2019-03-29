@@ -314,6 +314,7 @@ int parse_selection_target(const char *s, unsigned int &target);
 int parse_selection_flags(const char *s);
 void print_selection(const struct v4l2_selection &sel);
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane);
+bool valid_pixel_format(int fd, __u32 pixelformat, bool output, bool mplane);
 void print_frmsize(const struct v4l2_frmsizeenum &frmsize, const char *prefix);
 void print_frmival(const struct v4l2_frmivalenum &frmival, const char *prefix);
 void printfmt(int fd, const struct v4l2_format &vfmt);

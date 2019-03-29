@@ -775,16 +775,17 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			break;
 		case 2:
 			be_pixfmt = strlen(value) == 7 && !memcmp(value + 4, "-BE", 3);
-			if (be_pixfmt)
-				value[4] = 0;
-			if (strlen(value) == 4) {
+			if (be_pixfmt || strlen(value) == 4) {
 				pixelformat =
 					v4l2_fourcc(value[0], value[1],
-							value[2], value[3]);
+						    value[2], value[3]);
 				if (be_pixfmt)
 					pixelformat |= 1 << 31;
-			} else {
+			} else if (isdigit(value[0])) {
 				pixelformat = strtol(value, 0L, 0);
+			} else {
+				fprintf(stderr, "The pixelformat '%s' is invalid\n", value);
+				exit(1);
 			}
 			fmts |= FmtPixelFormat;
 			break;
@@ -943,19 +944,39 @@ static __u32 parse_event(const char *e, const char **name)
 	return event;
 }
 
+bool valid_pixel_format(int fd, __u32 pixelformat, bool output, bool mplane)
+{
+	struct v4l2_fmtdesc fmt;
+
+	fmt.index = 0;
+	if (output)
+		fmt.type = mplane ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
+			V4L2_BUF_TYPE_VIDEO_OUTPUT;
+	else
+		fmt.type = mplane ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+			V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+	while (!ioctl(fd, VIDIOC_ENUM_FMT, &fmt)) {
+		if (fmt.pixelformat == pixelformat)
+			return true;
+		fmt.index++;
+	}
+	return false;
+}
+
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane)
 {
 	struct v4l2_fmtdesc fmt;
 
 	fmt.index = index;
 	if (output)
-		fmt.type = mplane ?  V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
+		fmt.type = mplane ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
 			V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	else
-		fmt.type = mplane ?  V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
+		fmt.type = mplane ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
 			V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-	if (doioctl(fd, VIDIOC_ENUM_FMT, &fmt))
+	if (ioctl(fd, VIDIOC_ENUM_FMT, &fmt))
 		return 0;
 	return fmt.pixelformat;
 }

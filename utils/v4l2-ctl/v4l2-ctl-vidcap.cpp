@@ -115,15 +115,16 @@ void vidcap_cmd(int ch, char *optarg)
 		break;
 	case OptListFrameSizes:
 		be_pixfmt = strlen(optarg) == 7 && !memcmp(optarg + 4, "-BE", 3);
-		if (be_pixfmt)
-			optarg[4] = 0;
-		if (strlen(optarg) == 4) {
+		if (be_pixfmt || strlen(optarg) == 4) {
 			frmsize.pixel_format = v4l2_fourcc(optarg[0], optarg[1],
-					optarg[2], optarg[3]);
+							   optarg[2], optarg[3]);
 			if (be_pixfmt)
 				frmsize.pixel_format |= 1 << 31;
-		} else {
+		} else if (isdigit(optarg[0])) {
 			frmsize.pixel_format = strtol(optarg, 0L, 0);
+		} else {
+			fprintf(stderr, "The pixelformat '%s' is invalid\n", optarg);
+			exit(1);
 		}
 		break;
 	case OptListFrameIntervals:
@@ -145,16 +146,17 @@ void vidcap_cmd(int ch, char *optarg)
 				break;
 			case 2:
 				be_pixfmt = strlen(value) == 7 && !memcmp(value + 4, "-BE", 3);
-				if (be_pixfmt)
-					value[4] = 0;
-				if (strlen(value) == 4) {
+				if (be_pixfmt || strlen(value) == 4) {
 					frmival.pixel_format =
 						v4l2_fourcc(value[0], value[1],
-								value[2], value[3]);
+							    value[2], value[3]);
 					if (be_pixfmt)
 						frmival.pixel_format |= 1 << 31;
-				} else {
+				} else if (isdigit(optarg[0])) {
 					frmival.pixel_format = strtol(value, 0L, 0);
+				} else {
+					fprintf(stderr, "The pixelformat '%s' is invalid\n", optarg);
+					exit(1);
 				}
 				break;
 			default:
@@ -187,7 +189,7 @@ int vidcap_get_and_update_fmt(cv4l_fd &_fd, struct v4l2_format &vfmt)
 		if (set_fmts & FmtPixelFormat) {
 			vfmt.fmt.pix_mp.pixelformat = pixfmt;
 			if (vfmt.fmt.pix_mp.pixelformat < 256) {
-				vfmt.fmt.pix_mp.pixelformat =
+				vfmt.fmt.pix_mp.pixelformat = pixfmt =
 					find_pixel_format(fd, vfmt.fmt.pix_mp.pixelformat,
 							  false, true);
 			}
@@ -217,7 +219,7 @@ int vidcap_get_and_update_fmt(cv4l_fd &_fd, struct v4l2_format &vfmt)
 		if (set_fmts & FmtPixelFormat) {
 			vfmt.fmt.pix.pixelformat = pixfmt;
 			if (vfmt.fmt.pix.pixelformat < 256) {
-				vfmt.fmt.pix.pixelformat =
+				vfmt.fmt.pix.pixelformat = pixfmt =
 					find_pixel_format(fd, vfmt.fmt.pix.pixelformat,
 							  false, false);
 			}
@@ -236,6 +238,16 @@ int vidcap_get_and_update_fmt(cv4l_fd &_fd, struct v4l2_format &vfmt)
 			 */
 			vfmt.fmt.pix.bytesperline = 0;
 		}
+	}
+
+	if ((set_fmts & FmtPixelFormat) &&
+	    !valid_pixel_format(fd, pixfmt, false, is_multiplanar)) {
+		if (pixfmt)
+			fprintf(stderr, "The pixelformat '%s' is invalid\n",
+				fcc2s(pixfmt).c_str());
+		else
+			fprintf(stderr, "The pixelformat index was invalid\n");
+		return -EINVAL;
 	}
 	return 0;
 }
@@ -288,8 +300,24 @@ void vidcap_list(cv4l_fd &fd)
 	}
 
 	if (options[OptListFrameSizes]) {
-		printf("ioctl: VIDIOC_ENUM_FRAMESIZES\n");
 		frmsize.index = 0;
+		if (frmsize.pixel_format < 256) {
+			frmsize.pixel_format =
+				find_pixel_format(fd.g_fd(), frmsize.pixel_format,
+						  false, is_multiplanar);
+			if (!frmsize.pixel_format) {
+				fprintf(stderr, "The pixelformat index was invalid\n");
+				exit(1);
+			}
+		}
+		if (!valid_pixel_format(fd.g_fd(), frmsize.pixel_format, false, is_multiplanar) &&
+		    !valid_pixel_format(fd.g_fd(), frmsize.pixel_format, true, is_multiplanar)) {
+			fprintf(stderr, "The pixelformat '%s' is invalid\n",
+				fcc2s(frmsize.pixel_format).c_str());
+			exit(1);
+		}
+
+		printf("ioctl: VIDIOC_ENUM_FRAMESIZES\n");
 		while (test_ioctl(fd.g_fd(), VIDIOC_ENUM_FRAMESIZES, &frmsize) >= 0) {
 			print_frmsize(frmsize, "");
 			frmsize.index++;
@@ -297,8 +325,23 @@ void vidcap_list(cv4l_fd &fd)
 	}
 
 	if (options[OptListFrameIntervals]) {
-		printf("ioctl: VIDIOC_ENUM_FRAMEINTERVALS\n");
 		frmival.index = 0;
+		if (frmival.pixel_format < 256) {
+			frmival.pixel_format =
+				find_pixel_format(fd.g_fd(), frmival.pixel_format,
+						  false, is_multiplanar);
+			if (!frmival.pixel_format) {
+				fprintf(stderr, "The pixelformat index was invalid\n");
+				exit(1);
+			}
+		}
+		if (!valid_pixel_format(fd.g_fd(), frmival.pixel_format, false, is_multiplanar)) {
+			fprintf(stderr, "The pixelformat '%s' is invalid\n",
+				fcc2s(frmival.pixel_format).c_str());
+			exit(1);
+		}
+
+		printf("ioctl: VIDIOC_ENUM_FRAMEINTERVALS\n");
 		while (test_ioctl(fd.g_fd(), VIDIOC_ENUM_FRAMEINTERVALS, &frmival) >= 0) {
 			print_frmival(frmival, "");
 			frmival.index++;

@@ -122,7 +122,7 @@ void vidout_set(cv4l_fd &_fd)
 				if (set_fmts_out & FmtPixelFormat) {
 					vfmt.fmt.pix_mp.pixelformat = pixfmt;
 					if (vfmt.fmt.pix_mp.pixelformat < 256) {
-						vfmt.fmt.pix_mp.pixelformat =
+						vfmt.fmt.pix_mp.pixelformat = pixfmt =
 							find_pixel_format(fd, vfmt.fmt.pix_mp.pixelformat,
 									true, true);
 					}
@@ -158,7 +158,7 @@ void vidout_set(cv4l_fd &_fd)
 				if (set_fmts_out & FmtPixelFormat) {
 					vfmt.fmt.pix.pixelformat = pixfmt;
 					if (vfmt.fmt.pix.pixelformat < 256) {
-						vfmt.fmt.pix.pixelformat =
+						vfmt.fmt.pix.pixelformat = pixfmt =
 							find_pixel_format(fd, vfmt.fmt.pix.pixelformat,
 									true, false);
 					}
@@ -183,6 +183,16 @@ void vidout_set(cv4l_fd &_fd)
 					 * to the closest value for the new width. */
 					vfmt.fmt.pix.bytesperline = 0;
 				}
+			}
+
+			if ((set_fmts_out & FmtPixelFormat) &&
+			    !valid_pixel_format(fd, pixfmt, true, is_multiplanar)) {
+				if (pixfmt)
+					fprintf(stderr, "The pixelformat '%s' is invalid\n",
+						fcc2s(pixfmt).c_str());
+				else
+					fprintf(stderr, "The pixelformat index was invalid\n");
+				exit(1);
 			}
 
 			if (options[OptSetVideoOutFormat])
