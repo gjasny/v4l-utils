@@ -431,7 +431,8 @@ static __u32 read_u32(FILE *f)
 {
 	__u32 v;
 
-	fread(&v, 1, sizeof(v), f);
+	if (fread(&v, 1, sizeof(v), f) != sizeof(v))
+		return 0;
 	return ntohl(v);
 }
 
