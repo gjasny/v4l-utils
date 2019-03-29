@@ -2501,6 +2501,15 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		}
 		index = (index + 1) % out.g_buffers();
 	}
+
+	fcntl(fd.g_fd(), F_SETFL, fd_flags);
+	fprintf(stderr, "\n");
+
+	fd.streamoff(in.g_type());
+	fd.streamoff(out.g_type());
+	in.free(&fd);
+	out.free(&fd);
+	tpg_free(&tpg);
 }
 
 static void streaming_set_m2m(cv4l_fd &fd, cv4l_fd &exp_fd)
