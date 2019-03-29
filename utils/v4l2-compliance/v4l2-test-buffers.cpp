@@ -1088,6 +1088,7 @@ static int setupMmap(struct node *node, cv4l_queue &q)
 		}
 		fail_on_test(!buf.dqbuf(node));
 		if (v4l_type_is_output(buf.g_type()) && i == 0) {
+			fill_output_buffer(q, buf);
 			fail_on_test(bufferOutputErrorTest(node, buf));
 			fail_on_test(buf.querybuf(node, i));
 			fail_on_test(buf.check(q, Queued, i));
