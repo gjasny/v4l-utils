@@ -1273,6 +1273,44 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 					 pollmode, capture_count));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
+		if (node->is_m2m)
+			fail_on_test(node->streamoff(m2m_q.g_type()));
+
+		if (node->codec_mask & STATEFUL_ENCODER) {
+			struct v4l2_encoder_cmd cmd;
+			buffer buf_cap(m2m_q);
+
+			memset(&cmd, 0, sizeof(cmd));
+			cmd.cmd = V4L2_ENC_CMD_STOP;
+
+			/* No buffers are queued, call STREAMON, then STOP */
+			fail_on_test(node->streamon(q.g_type()));
+			fail_on_test(node->streamon(m2m_q.g_type()));
+			fail_on_test(doioctl(node, VIDIOC_ENCODER_CMD, &cmd));
+
+			fail_on_test(buf_cap.querybuf(node, 0));
+			fail_on_test(buf_cap.qbuf(node));
+			fail_on_test(buf_cap.dqbuf(node));
+			fail_on_test(!(buf_cap.g_flags() & V4L2_BUF_FLAG_LAST));
+			for (unsigned p = 0; p < buf_cap.g_num_planes(); p++)
+				fail_on_test(buf_cap.g_bytesused(p));
+			fail_on_test(node->streamoff(q.g_type()));
+			fail_on_test(node->streamoff(m2m_q.g_type()));
+
+			/* Call STREAMON, queue one CAPTURE buffer, then STOP */
+			fail_on_test(node->streamon(q.g_type()));
+			fail_on_test(node->streamon(m2m_q.g_type()));
+			fail_on_test(buf_cap.querybuf(node, 0));
+			fail_on_test(buf_cap.qbuf(node));
+			fail_on_test(doioctl(node, VIDIOC_ENCODER_CMD, &cmd));
+
+			fail_on_test(buf_cap.dqbuf(node));
+			fail_on_test(!(buf_cap.g_flags() & V4L2_BUF_FLAG_LAST));
+			for (unsigned p = 0; p < buf_cap.g_num_planes(); p++)
+				fail_on_test(buf_cap.g_bytesused(p));
+			fail_on_test(node->streamoff(q.g_type()));
+			fail_on_test(node->streamoff(m2m_q.g_type()));
+		}
 
 		if (node->supports_orphaned_bufs) {
 			fail_on_test(q.reqbufs(node, 0));
@@ -1288,7 +1326,6 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 		}
 
 		if (node->is_m2m) {
-			fail_on_test(node->streamoff(m2m_q.g_type()));
 			if (node->supports_orphaned_bufs) {
 				fail_on_test(m2m_q.reqbufs(node, 0));
 				m2m_q.munmap_bufs(node);
