@@ -882,6 +882,7 @@ public:
 	void s_timestamp_src(__u32 src) { v4l_buffer_s_timestamp_src(this, src); }
 	bool ts_is_copy() const { return v4l_buffer_is_copy(this); }
 	const timeval &g_timestamp() const { return *v4l_buffer_g_timestamp(this); }
+	__u64 g_timestamp_ns() const { return v4l2_timeval_to_ns(v4l_buffer_g_timestamp(this)); }
 	void s_timestamp(const timeval &tv) { v4l_buffer_s_timestamp(this, &tv); }
 	void s_timestamp_ts(const timespec &ts) { v4l_buffer_s_timestamp_ts(this, &ts); }
 	void s_timestamp_clock() { v4l_buffer_s_timestamp_clock(this); }
