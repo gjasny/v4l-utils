@@ -1391,11 +1391,14 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 			return -1;
 	}
 	
+	bool is_empty_frame = !buf.g_bytesused(0);
+	bool is_error_frame = buf.g_flags() & V4L2_BUF_FLAG_ERROR;
+
 	double ts_secs = buf.g_timestamp().tv_sec + buf.g_timestamp().tv_usec / 1000000.0;
 	fps_ts.add_ts(ts_secs, buf.g_sequence(), buf.g_field());
 
 	if (fout && (!stream_skip || ignore_count_skip) &&
-	    buf.g_bytesused(0) && !(buf.g_flags() & V4L2_BUF_FLAG_ERROR))
+	    !is_empty_frame && !is_error_frame)
 		write_buffer_to_file(fd, q, buf, fmt, fout);
 
 	if (buf.g_flags() & V4L2_BUF_FLAG_KEYFRAME)
@@ -1443,6 +1446,9 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 	count++;
 
 	if (ignore_count_skip)
+		return 0;
+
+	if (is_empty_frame || is_error_frame)
 		return 0;
 
 	if (stream_skip) {
