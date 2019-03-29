@@ -1067,11 +1067,6 @@ int testLostMsgs(struct node *node)
 	__u64 last_ts = 0;
 	unsigned tx_repeats = 0;
 
-	/*
-	 * Note that vivid's CEC emulation isn't perfect (it doesn't handle
-	 * Arbitration Lost situations properly). So disable some warnings
-	 * when the vivid emulation is detected.
-	 */
 	for (unsigned i = 0; i < 2; i++) {
 		msg.timeout = 3000;
 
@@ -1090,7 +1085,7 @@ int testLostMsgs(struct node *node)
 				if (last_init == initiator && initiator == me) {
 					tx_repeats++;
 				} else {
-					if (tx_repeats > 2 && !node->is_vivid_driver)
+					if (tx_repeats > 2)
 						warn("Too many transmits (%d) without receives\n",
 						     tx_repeats);
 					tx_repeats = 0;
@@ -1185,7 +1180,7 @@ int testLostMsgs(struct node *node)
 	if (fail_msg)
 		return fail("There were %d messages in the receive queue for %d transmits\n",
 			    pending_msgs, xfer_cnt);
-	if (warn_msg && !node->is_vivid_driver)
+	if (warn_msg)
 		warn("There were %d CEC_GET_VERSION transmits but only %d CEC_VERSION receives\n",
 		     xfer_cnt, pending_rx_cec_version_msgs);
 	return 0;

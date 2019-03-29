@@ -1185,7 +1185,6 @@ int main(int argc, char **argv)
 	doioctl(&node, CEC_ADAP_G_CAPS, &caps);
 	node.caps = caps.capabilities;
 	node.available_log_addrs = caps.available_log_addrs;
-	node.is_vivid_driver = !strcmp(caps.driver, "vivid");
 
 	if (options[OptTestAudioRateControl])
 		test_tags |= TAG_AUDIO_RATE_CONTROL;
