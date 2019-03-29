@@ -1357,17 +1357,12 @@ static void write_buffer_to_file(cv4l_fd &fd, cv4l_queue &q, cv4l_buffer &buf,
 }
 
 static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
-			 unsigned &count, fps_timestamps &fps_ts, cv4l_fmt &fmt)
+			 unsigned &count, fps_timestamps &fps_ts, cv4l_fmt &fmt,
+			 bool ignore_count_skip)
 {
 	char ch = '<';
 	int ret;
 	cv4l_buffer buf(q);
-
-	/*
-	 * The stream_count and stream_skip does not apply to capture path of
-	 * M2M devices.
-	 */
-	bool ignore_count_skip = fd.has_vid_m2m();
 
 	for (;;) {
 		ret = fd.dqbuf(buf);
@@ -1852,7 +1847,7 @@ recover:
 
 		if (FD_ISSET(fd.g_fd(), &read_fds)) {
 			r = do_handle_cap(fd, q, fout, NULL,
-					   count, fps_ts, fmt);
+					  count, fps_ts, fmt, false);
 			if (r < 0)
 				break;
 		}
@@ -2302,7 +2297,10 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 		if (rd_fds && FD_ISSET(fd.g_fd(), rd_fds)) {
 			r = do_handle_cap(fd, in, fin, NULL,
-					  count[CAP], fps_ts[CAP], fmt_in);
+					  count[CAP], fps_ts[CAP], fmt_in,
+					  codec_type == ENCODER);
+			if (codec_type != ENCODER && r == -2)
+				break;
 			if (r < 0) {
 				rd_fds = NULL;
 				if (!have_eos) {
@@ -2392,6 +2390,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 	fps_timestamps fps_ts[2];
 	unsigned count[2] = { 0, 0 };
 	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
+	bool stopped = false;
 
 	if (out.reqbufs(&fd, reqbufs_count_out)) {
 		fprintf(stderr, "%s: out.reqbufs failed\n", __func__);
@@ -2441,6 +2440,9 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		int req_fd = fwht_reqs[index].fd;
 		struct timeval tv = { 2, 0 };
 
+		if (req_fd < 0)
+			break;
+
 		FD_ZERO(&except_fds);
 		FD_SET(req_fd, &except_fds);
 
@@ -2471,8 +2473,8 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		   * written to the file in current function
 		   */
 		rc = do_handle_cap(fd, in, NULL, &buf_idx, count[CAP],
-				   fps_ts[CAP], fmt_in);
-		if (rc) {
+				   fps_ts[CAP], fmt_in, false);
+		if (rc && rc != -2) {
 			fprintf(stderr, "%s: do_handle_cap err\n", __func__);
 			return;
 		}
@@ -2506,11 +2508,19 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 						     fmt_in, fin);
 			}
 		}
-		rc = do_handle_out(fd, out, fout, NULL, count[OUT],
-				   fps_ts[OUT], fmt_out, true);
-		if (rc) {
-			fprintf(stderr, "%s: output stream ended\n", __func__);
-			close(req_fd);
+		if (rc == -2)
+			return;
+
+		if (!stopped) {
+			rc = do_handle_out(fd, out, fout, NULL, count[OUT],
+					   fps_ts[OUT], fmt_out, true);
+			if (rc) {
+				stopped = true;
+				if (rc != -2)
+					fprintf(stderr, "%s: output stream ended\n", __func__);
+				close(req_fd);
+				fwht_reqs[index].fd = -1;
+			}
 		}
 		index = (index + 1) % out.g_buffers();
 	}
@@ -2714,7 +2724,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 			int index = -1;
 
 			r = do_handle_cap(fd, in, file[CAP], &index,
-					  count[CAP], fps_ts[CAP], fmt[CAP]);
+					  count[CAP], fps_ts[CAP], fmt[CAP], true);
 			if (r)
 				fprintf(stderr, "handle cap %d\n", r);
 			if (!r) {
