@@ -103,6 +103,9 @@ enum codec_type {
 	DECODER
 };
 
+#define QUEUE_ERROR -1
+#define QUEUE_STOPPED -2
+
 class fps_timestamps {
 private:
 	unsigned idx;
@@ -1139,7 +1142,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 			q.g_type() == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 
 	if (q.obtain_bufs(&fd))
-		return -1;
+		return QUEUE_ERROR;
 
 	fd.g_fmt(fmt, q.g_type());
 	if (fd.g_std(stream_out_std)) {
@@ -1209,7 +1212,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 		cv4l_buffer buf(q);
 
 		if (fd.querybuf(buf, i))
-			return -1;
+			return QUEUE_ERROR;
 
 		buf.update(q, i);
 		for (unsigned j = 0; j < q.g_num_planes(); j++)
@@ -1230,7 +1233,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 			}
 		}
 		if (fin && !fill_buffer_from_file(fd, q, buf, fmt, fin))
-			return -2;
+			return QUEUE_STOPPED;
 
 		if (fmt.g_pixelformat() == V4L2_PIX_FMT_FWHT_STATELESS) {
 			int media_fd = mi_get_media_fd(fd.g_fd());
@@ -1241,7 +1244,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 			}
 
 			if (alloc_fwht_req(media_fd, i))
-				return -1;
+				return QUEUE_ERROR;
 			buf.s_request_fd(fwht_reqs[i].fd);
 			buf.or_flags(V4L2_BUF_FLAG_REQUEST_FD);
 
@@ -1249,7 +1252,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 					      buf.g_request_fd())) {
 				fprintf(stderr, "%s: set_fwht_ext_ctrls failed on %dth buf: %s\n",
 					__func__, i, strerror(errno));
-				return -1;
+				return QUEUE_ERROR;
 			}
 		}
 		if (qbuf) {
@@ -1257,14 +1260,14 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 
 			set_time_stamp(buf);
 			if (fd.qbuf(buf))
-				return -1;
+				return QUEUE_ERROR;
 			tpg_update_mv_count(&tpg, V4L2_FIELD_HAS_T_OR_B(field));
 			if (!verbose)
 				fprintf(stderr, ">");
 			fflush(stderr);
 			if (stream_count)
 				if (!--stream_count)
-					return -2;
+					return QUEUE_STOPPED;
 		}
 		if (fmt.g_pixelformat() == V4L2_PIX_FMT_FWHT_STATELESS) {
 			set_fwht_req_by_idx(i, &last_fwht_hdr,
@@ -1273,7 +1276,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 			if (ioctl(buf.g_request_fd(), MEDIA_REQUEST_IOC_QUEUE) < 0) {
 				fprintf(stderr, "Unable to queue media request: %s\n",
 					strerror(errno));
-				return -1;
+				return QUEUE_ERROR;
 			}
 		}
 	}
@@ -1369,10 +1372,10 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 		if (ret == EAGAIN)
 			return 0;
 		if (ret == EPIPE)
-			return -2;
+			return QUEUE_STOPPED;
 		if (ret) {
 			fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
-			return -1;
+			return QUEUE_ERROR;
 		}
 		if (buf.g_flags() & V4L2_BUF_FLAG_LAST) {
 			last_buffer = true;
@@ -1383,7 +1386,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 		if (verbose)
 			print_concise_buffer(stderr, buf, fps_ts, -1);
 		if (fd.qbuf(buf))
-			return -1;
+			return QUEUE_ERROR;
 	}
 	
 	bool is_empty_frame = !buf.g_bytesused(0);
@@ -1416,7 +1419,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 		 */
 		if (fd.qbuf(buf) && errno != EINVAL) {
 			fprintf(stderr, "%s: qbuf error\n", __func__);
-			return -1;
+			return QUEUE_ERROR;
 		}
 	}
 	if (index)
@@ -1455,7 +1458,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 	if (stream_count == 0)
 		return 0;
 	if (--stream_count == 0)
-		return -2;
+		return QUEUE_STOPPED;
 
 	return 0;
 }
@@ -1497,7 +1500,7 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	}
 	if (ret) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(ret));
-		return -1;
+		return QUEUE_ERROR;
 	}
 	if (fps_ts.has_fps()) {
 		unsigned dropped = fps_ts.dropped();
@@ -1520,7 +1523,7 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	}
 
 	if (fin && !fill_buffer_from_file(fd, q, buf, fmt, fin))
-		return -2;
+		return QUEUE_STOPPED;
 
 	if (!fin && stream_out_refresh) {
 		for (unsigned j = 0; j < buf.g_num_planes(); j++)
@@ -1532,14 +1535,14 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 		if (ioctl(buf.g_request_fd(), MEDIA_REQUEST_IOC_REINIT, NULL)) {
 			fprintf(stderr, "Unable to reinit media request: %s\n",
 				strerror(errno));
-			return -1;
+			return QUEUE_ERROR;
 		}
 
 		if (set_fwht_ext_ctrl(fd, &last_fwht_hdr, last_fwht_bf_ts,
 				      buf.g_request_fd())) {
 			fprintf(stderr, "%s: set_fwht_ext_ctrls failed: %s\n",
 				__func__, strerror(errno));
-			return -1;
+			return QUEUE_ERROR;
 		}
 	}
 
@@ -1547,21 +1550,21 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 
 	if (fd.qbuf(buf)) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_QBUF", strerror(errno));
-		return -1;
+		return QUEUE_ERROR;
 	}
 	if (fmt.g_pixelformat() == V4L2_PIX_FMT_FWHT_STATELESS) {
 		if (!set_fwht_req_by_fd(&last_fwht_hdr, buf.g_request_fd(), last_fwht_bf_ts,
 					buf.g_timestamp_ns())) {
 			fprintf(stderr, "%s: request for fd %d does not exist\n",
 				__func__, buf.g_request_fd());
-			return -1;
+			return QUEUE_ERROR;
 		}
 
 		last_fwht_bf_ts = buf.g_timestamp_ns();
 		if (ioctl(buf.g_request_fd(), MEDIA_REQUEST_IOC_QUEUE) < 0) {
 			fprintf(stderr, "Unable to queue media request: %s\n",
 				strerror(errno));
-			return -1;
+			return QUEUE_ERROR;
 		}
 	}
 
@@ -1577,7 +1580,7 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	if (stream_count == 0)
 		return 0;
 	if (--stream_count == 0)
-		return -2;
+		return QUEUE_STOPPED;
 
 	return 0;
 }
@@ -1592,7 +1595,7 @@ static int do_handle_out_to_in(cv4l_fd &out_fd, cv4l_fd &fd, cv4l_queue &out, cv
 	} while (ret == EAGAIN);
 	if (ret) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(errno));
-		return -1;
+		return QUEUE_ERROR;
 	}
 	buf.init(in, buf.g_index());
 	ret = fd.querybuf(buf);
@@ -1600,7 +1603,7 @@ static int do_handle_out_to_in(cv4l_fd &out_fd, cv4l_fd &fd, cv4l_queue &out, cv
 		ret = fd.qbuf(buf);
 	if (ret) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_QBUF", strerror(errno));
-		return -1;
+		return QUEUE_ERROR;
 	}
 	return 0;
 }
@@ -2106,7 +2109,7 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 		}
 		r = do_handle_out(fd, q, fin, NULL,
 				  count, fps_ts, fmt, stopped);
-		if (r == -2)
+		if (r == QUEUE_STOPPED)
 			stopped = true;
 		if (r < 0)
 			break;
@@ -2227,7 +2230,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 	switch (do_setup_out_buffers(fd, out, fout, true)) {
 	case 0:
 		break;
-	case -2:
+	case QUEUE_STOPPED:
 		stopped = true;
 		break;
 	default:
@@ -2299,7 +2302,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 			r = do_handle_cap(fd, in, fin, NULL,
 					  count[CAP], fps_ts[CAP], fmt_in,
 					  codec_type == ENCODER);
-			if (codec_type != ENCODER && r == -2)
+			if (codec_type != ENCODER && r == QUEUE_STOPPED)
 				break;
 			if (r < 0) {
 				rd_fds = NULL;
@@ -2313,7 +2316,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		if (wr_fds && FD_ISSET(fd.g_fd(), wr_fds)) {
 			r = do_handle_out(fd, out, fout, NULL,
 					  count[OUT], fps_ts[OUT], fmt_out, stopped);
-			if (r == -2) {
+			if (r == QUEUE_STOPPED) {
 				stopped = true;
 				if (have_eos) {
 					if (!verbose)
@@ -2410,7 +2413,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		return;
 	}
 
-	if (do_setup_out_buffers(fd, out, fout, true) == -1) {
+	if (do_setup_out_buffers(fd, out, fout, true) == QUEUE_ERROR) {
 		fprintf(stderr, "%s: do_setup_out_buffers failed\n", __func__);
 		return;
 	}
@@ -2474,7 +2477,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		   */
 		rc = do_handle_cap(fd, in, NULL, &buf_idx, count[CAP],
 				   fps_ts[CAP], fmt_in, false);
-		if (rc && rc != -2) {
+		if (rc && rc != QUEUE_STOPPED) {
 			fprintf(stderr, "%s: do_handle_cap err\n", __func__);
 			return;
 		}
@@ -2508,7 +2511,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 						     fmt_in, fin);
 			}
 		}
-		if (rc == -2)
+		if (rc == QUEUE_STOPPED)
 			return;
 
 		if (!stopped) {
@@ -2516,7 +2519,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 					   fps_ts[OUT], fmt_out, true);
 			if (rc) {
 				stopped = true;
-				if (rc != -2)
+				if (rc != QUEUE_STOPPED)
 					fprintf(stderr, "%s: output stream ended\n", __func__);
 				close(req_fd);
 				fwht_reqs[index].fd = -1;
@@ -2683,7 +2686,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 
 	if (in.obtain_bufs(&fd) ||
 	    in.queue_all(&fd) ||
-	    do_setup_out_buffers(out_fd, out, file[OUT], false) == -1)
+	    do_setup_out_buffers(out_fd, out, file[OUT], false) == QUEUE_ERROR)
 		goto done;
 
 	fps_ts[CAP].determine_field(fd.g_fd(), in.g_type());
