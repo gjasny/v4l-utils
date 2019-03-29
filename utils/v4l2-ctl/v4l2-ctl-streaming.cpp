@@ -1481,13 +1481,14 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 		ret = fd.dqbuf(buf);
 		if (ret == EAGAIN)
 			return 0;
-		for (unsigned j = 0; j < buf.g_num_planes(); j++)
-			buf.s_bytesused(buf.g_length(j), j);
 
 		double ts_secs = buf.g_timestamp().tv_sec + buf.g_timestamp().tv_usec / 1000000.0;
 		fps_ts.add_ts(ts_secs, buf.g_sequence(), buf.g_field());
 		if (verbose)
 			print_concise_buffer(stderr, buf, fps_ts, -1);
+
+		for (unsigned j = 0; j < buf.g_num_planes(); j++)
+			buf.s_bytesused(buf.g_length(j), j);
 	}
 	if (ret) {
 		fprintf(stderr, "%s: failed: %s\n", "VIDIOC_DQBUF", strerror(ret));
