@@ -100,6 +100,7 @@ void vidcap_cmd(int ch, char *optarg)
 {
 	__u32 colorspace, xfer_func, ycbcr, quantization;
 	char *value, *subs;
+	bool be_pixfmt;
 
 	switch (ch) {
 	case OptSetVideoFormat:
@@ -113,11 +114,17 @@ void vidcap_cmd(int ch, char *optarg)
 		}
 		break;
 	case OptListFrameSizes:
-		if (strlen(optarg) == 4)
+		be_pixfmt = strlen(optarg) == 7 && !memcmp(optarg + 4, "-BE", 3);
+		if (be_pixfmt)
+			optarg[4] = 0;
+		if (strlen(optarg) == 4) {
 			frmsize.pixel_format = v4l2_fourcc(optarg[0], optarg[1],
 					optarg[2], optarg[3]);
-		else
+			if (be_pixfmt)
+				frmsize.pixel_format |= 1 << 31;
+		} else {
 			frmsize.pixel_format = strtol(optarg, 0L, 0);
+		}
 		break;
 	case OptListFrameIntervals:
 		subs = optarg;
@@ -137,12 +144,18 @@ void vidcap_cmd(int ch, char *optarg)
 				frmival.height = strtol(value, 0L, 0);
 				break;
 			case 2:
-				if (strlen(value) == 4)
+				be_pixfmt = strlen(value) == 7 && !memcmp(value + 4, "-BE", 3);
+				if (be_pixfmt)
+					value[4] = 0;
+				if (strlen(value) == 4) {
 					frmival.pixel_format =
 						v4l2_fourcc(value[0], value[1],
 								value[2], value[3]);
-				else
+					if (be_pixfmt)
+						frmival.pixel_format |= 1 << 31;
+				} else {
 					frmival.pixel_format = strtol(value, 0L, 0);
+				}
 				break;
 			default:
 				vidcap_usage();
