@@ -168,6 +168,7 @@ struct node {
 	struct remote remote[16];
 	__u16 phys_addr;
 	bool in_standby;
+	bool is_vivid_driver;
 };
 
 struct remote_subtest {
