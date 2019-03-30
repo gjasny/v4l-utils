@@ -1249,7 +1249,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 
 			if (set_fwht_ext_ctrl(fd, &last_fwht_hdr, last_fwht_bf_ts,
 					      buf.g_request_fd())) {
-				fprintf(stderr, "%s: set_fwht_ext_ctrls failed on %dth buf: %s\n",
+				fprintf(stderr, "%s: set_fwht_ext_ctrl failed on %dth buf: %s\n",
 					__func__, i, strerror(errno));
 				return QUEUE_ERROR;
 			}
@@ -1539,7 +1539,7 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 
 		if (set_fwht_ext_ctrl(fd, &last_fwht_hdr, last_fwht_bf_ts,
 				      buf.g_request_fd())) {
-			fprintf(stderr, "%s: set_fwht_ext_ctrls failed: %s\n",
+			fprintf(stderr, "%s: set_fwht_ext_ctrl failed: %s\n",
 				__func__, strerror(errno));
 			return QUEUE_ERROR;
 		}
