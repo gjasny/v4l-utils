@@ -2363,12 +2363,11 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 			if (in_source_change_event) {
 				in_source_change_event = false;
 				last_buffer = false;
+				fd.g_fmt(fmt_in, in.g_type());
 				if (capture_setup(fd, in, exp_fd_p))
 					return;
 				fps_ts[CAP].reset();
 				fps_ts[OUT].reset();
-				fd.g_fmt(fmt_out, out.g_type());
-				fd.g_fmt(fmt_in, in.g_type());
 				cap_streaming = true;
 			} else {
 				break;
