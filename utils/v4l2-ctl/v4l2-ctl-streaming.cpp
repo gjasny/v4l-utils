@@ -2471,10 +2471,10 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 			}
 		}
 		int buf_idx = -1;
-		  /*
-		   * fin is not sent to do_handle_cap since the capture buf is
-		   * written to the file in current function
-		   */
+		/*
+		 * fin is not sent to do_handle_cap since the capture buf is
+		 * written to the file in current function
+		 */
 		rc = do_handle_cap(fd, in, NULL, &buf_idx, count[CAP],
 				   fps_ts[CAP], fmt_in, false);
 		if (rc && rc != QUEUE_STOPPED) {
@@ -2516,7 +2516,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 		if (!stopped) {
 			rc = do_handle_out(fd, out, fout, NULL, count[OUT],
-					   fps_ts[OUT], fmt_out, true);
+					   fps_ts[OUT], fmt_out, false);
 			if (rc) {
 				stopped = true;
 				if (rc != QUEUE_STOPPED)
