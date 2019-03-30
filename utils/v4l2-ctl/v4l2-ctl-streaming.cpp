@@ -1108,7 +1108,7 @@ restart:
 			fprintf(stderr, "amount intended to be read/written is larger than the buffer size\n");
 			return false;
 		}
-		if (first && sz != expected_len) {
+		if (first && sz != expected_len && fmt.g_bytesperline(j)) {
 			fprintf(stderr, "%s: size read (%u) is different than needed (%u) in the first frame\n",
 				__func__, sz, expected_len);
 			return false;
@@ -1123,9 +1123,8 @@ restart:
 			continue;
 		if (sz == 0)
 			return false;
-		if (sz)
+		if (sz && fmt.g_bytesperline(j))
 			fprintf(stderr, "%u != %u\n", sz, expected_len);
-		continue;
 	}
 	first = false;
 	return true;
