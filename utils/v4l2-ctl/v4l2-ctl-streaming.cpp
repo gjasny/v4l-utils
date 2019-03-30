@@ -837,7 +837,7 @@ static int alloc_fwht_req(int media_fd, unsigned index)
 	return 0;
 }
 
-static void set_fwht_req_by_idx(unsigned idx, struct fwht_cframe_hdr *hdr,
+static void set_fwht_req_by_idx(unsigned idx, const struct fwht_cframe_hdr *hdr,
 				__u64 last_bf_ts, __u64 ts)
 {
 	struct v4l2_ctrl_fwht_params fwht_params;
@@ -857,7 +857,7 @@ static int get_fwht_req_by_ts(__u64 ts)
 	return -1;
 }
 
-static bool set_fwht_req_by_fd(struct fwht_cframe_hdr *hdr,
+static bool set_fwht_req_by_fd(const struct fwht_cframe_hdr *hdr,
 			       int req_fd, __u64 last_bf_ts, __u64 ts)
 {
 	struct v4l2_ctrl_fwht_params fwht_params;
@@ -874,7 +874,7 @@ static bool set_fwht_req_by_fd(struct fwht_cframe_hdr *hdr,
 	return false;
 }
 
-static int set_fwht_ext_ctrl(cv4l_fd &fd, struct fwht_cframe_hdr *hdr,
+static int set_fwht_ext_ctrl(cv4l_fd &fd, const struct fwht_cframe_hdr *hdr,
 			     __u64 last_bf_ts, int req_fd)
 {
 	v4l2_ext_controls controls;
