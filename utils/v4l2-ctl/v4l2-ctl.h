@@ -321,6 +321,17 @@ void printfmt(int fd, const struct v4l2_format &vfmt);
 void print_video_formats(cv4l_fd &fd, __u32 type);
 void print_video_formats_ext(cv4l_fd &fd, __u32 type);
 
+static inline bool subscribe_event(cv4l_fd &fd, __u32 type)
+{
+	struct v4l2_event_subscription sub;
+
+	memset(&sub, 0, sizeof(sub));
+	sub.type = type;
+
+	cv4l_disable_trace dt(fd);
+	return !fd.subscribe_event(sub);
+}
+
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 
 // v4l2-ctl-common.cpp

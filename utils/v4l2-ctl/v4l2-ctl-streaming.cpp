@@ -405,6 +405,7 @@ static enum codec_type get_codec_type(cv4l_fd &fd)
 
 static int get_cap_compose_rect(cv4l_fd &fd)
 {
+	cv4l_disable_trace dt(fd);
 	v4l2_selection sel;
 
 	memset(&sel, 0, sizeof(sel));
@@ -424,6 +425,7 @@ static int get_cap_compose_rect(cv4l_fd &fd)
 
 static int get_out_crop_rect(cv4l_fd &fd)
 {
+	cv4l_disable_trace dt(fd);
 	v4l2_selection sel;
 
 	memset(&sel, 0, sizeof(sel));
@@ -1697,7 +1699,6 @@ static FILE *open_output_file(cv4l_fd &fd)
 
 static void streaming_set_cap(cv4l_fd &fd, cv4l_fd &exp_fd)
 {
-	struct v4l2_event_subscription sub;
 	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
 	cv4l_queue q(fd.g_type(), memory);
 	cv4l_queue exp_q(exp_fd.g_type(), V4L2_MEMORY_MMAP);
@@ -1708,8 +1709,6 @@ static void streaming_set_cap(cv4l_fd &fd, cv4l_fd &exp_fd)
 	bool source_change;
 	FILE *fout = NULL;
 	cv4l_fmt fmt;
-
-	fd.g_fmt(fmt);
 
 	if (!(capabilities & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE |
 			      V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
@@ -1734,13 +1733,9 @@ static void streaming_set_cap(cv4l_fd &fd, cv4l_fd &exp_fd)
 		break;
 	}
 	
-	memset(&sub, 0, sizeof(sub));
-	sub.type = V4L2_EVENT_EOS;
-	fd.subscribe_event(sub);
-	if (use_poll) {
-		sub.type = V4L2_EVENT_SOURCE_CHANGE;
-		fd.subscribe_event(sub);
-	}
+	subscribe_event(fd, V4L2_EVENT_EOS);
+	if (use_poll)
+		subscribe_event(fd, V4L2_EVENT_SOURCE_CHANGE);
 
 recover:
 	eos = false;
@@ -1748,6 +1743,7 @@ recover:
 	count = 0;
 
 	if (!stream_no_query) {
+		cv4l_disable_trace dt(fd);
 		struct v4l2_dv_timings new_dv_timings = {};
 		v4l2_std_id new_std;
 		struct v4l2_input in = { };
@@ -1794,6 +1790,11 @@ recover:
 
 	if (fd.streamon())
 		goto done;
+
+	fd.s_trace(0);
+	exp_fd.s_trace(0);
+
+	fd.g_fmt(fmt);
 
 	while (stream_sleep == 0)
 		sleep(100);
@@ -2071,6 +2072,9 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 	if (fd.streamon())
 		goto done;
 
+	fd.s_trace(0);
+	exp_fd.s_trace(0);
+
 	while (stream_sleep == 0)
 		sleep(100);
 
@@ -2202,12 +2206,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		.cmd = V4L2_DEC_CMD_STOP,
 	};
 
-	struct v4l2_event_subscription sub;
-
-	memset(&sub, 0, sizeof(sub));
-	sub.type = V4L2_EVENT_EOS;
-
-	bool have_eos = !fd.subscribe_event(sub);
+	bool have_eos = subscribe_event(fd, V4L2_EVENT_EOS);
 	bool is_encoder = false;
 	enum codec_type codec_type = get_codec_type(fd);
 
@@ -2218,9 +2217,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		is_encoder = !fmt.g_bytesperline();
 	}
 
-	memset(&sub, 0, sizeof(sub));
-	sub.type = V4L2_EVENT_SOURCE_CHANGE;
-	bool have_source_change = !fd.subscribe_event(sub);
+	bool have_source_change = subscribe_event(fd, V4L2_EVENT_SOURCE_CHANGE);
 	bool stopped = false;
 
 	if (out.reqbufs(&fd, reqbufs_count_out))
@@ -2238,6 +2235,10 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 	if (fd.streamon(out.g_type()))
 		return;
+
+	fd.s_trace(0);
+	if (exp_fd_p)
+		exp_fd_p->s_trace(0);
 
 	if (codec_type != DECODER || !have_source_change)
 		if (capture_setup(fd, in, exp_fd_p))
@@ -2693,6 +2694,9 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 	if (fd.streamon() || out_fd.streamon())
 		goto done;
 
+	fd.s_trace(0);
+	out_fd.s_trace(0);
+
 	while (stream_sleep == 0)
 		sleep(100);
 
@@ -2772,14 +2776,8 @@ done:
 
 void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd, cv4l_fd &exp_fd)
 {
-	cv4l_disable_trace dt(fd);
-	cv4l_disable_trace dt_out(out_fd);
-	cv4l_disable_trace dt_exp(exp_fd);
 	int do_cap = options[OptStreamMmap] + options[OptStreamUser] + options[OptStreamDmaBuf];
 	int do_out = options[OptStreamOutMmap] + options[OptStreamOutUser] + options[OptStreamOutDmaBuf];
-
-	get_cap_compose_rect(fd);
-	get_out_crop_rect(fd);
 
 	if (out_fd.g_fd() < 0) {
 		out_capabilities = capabilities;
@@ -2795,6 +2793,13 @@ void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd, cv4l_fd &exp_fd)
 		return;
 	}
 
+	unsigned int old_trace_fd = fd.g_trace();
+	unsigned int old_trace_out_fd = out_fd.g_trace();
+	unsigned int old_trace_exp_fd = exp_fd.g_trace();
+
+	get_cap_compose_rect(fd);
+	get_out_crop_rect(fd);
+
 	if (do_cap && do_out && out_fd.g_fd() < 0)
 		streaming_set_m2m(fd, exp_fd);
 	else if (do_cap && do_out)
@@ -2803,6 +2808,10 @@ void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd, cv4l_fd &exp_fd)
 		streaming_set_cap(fd, exp_fd);
 	else if (do_out)
 		streaming_set_out(fd, exp_fd);
+
+	fd.s_trace(old_trace_fd);
+	out_fd.s_trace(old_trace_out_fd);
+	exp_fd.s_trace(old_trace_exp_fd);
 }
 
 void streaming_list(cv4l_fd &fd, cv4l_fd &out_fd)
