@@ -95,7 +95,7 @@ struct cfgfile {
 	struct cfgfile	*next;
 };
 
-struct sysfs_names  {
+struct sysfs_names {
 	char			*name;
 	struct sysfs_names	*next;
 };
@@ -227,7 +227,11 @@ const char *argp_program_version = "IR keytable control version " V4L_UTILS_VERS
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.org>";
 
 static const char doc[] = N_(
-	"\nAllows get/set IR keycode/scancode tables\n"
+	"\nLists Remote Controller devices, loads rc keymaps, tests events, and adjusts\n"
+	"other Remote Controller options. Rather than loading a rc keymap, it is also\n"
+	"possible to set protocol decoders and set rc scancode to keycode mappings\n"
+	"directly.\n"
+
 	"You need to have read permissions on /dev/input for the program to work\n"
 	"\nOn the options below, the arguments are:\n"
 	"  SYSDEV    - the rc device as found at /sys/class/rc\n"
@@ -1593,7 +1597,7 @@ static void print_scancodes(const struct lirc_scancode *scancodes, unsigned coun
 {
 	unsigned i;
 
-	for (i=0; i< count; i++)  {
+	for (i=0; i< count; i++) {
 		const char *p = protocol_name(scancodes[i].rc_proto);
 
 		printf(_("%llu.%06llu: "),
