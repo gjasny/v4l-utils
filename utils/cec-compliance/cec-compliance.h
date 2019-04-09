@@ -111,6 +111,7 @@ struct short_audio_desc {
 #define SAD_EXT_TYPE_LPCM_3D_AUDIO		13
 
 extern bool show_info;
+extern bool show_colors;
 extern bool show_warnings;
 extern bool exit_on_fail;
 extern bool exit_on_warn;
@@ -192,6 +193,10 @@ struct remote_subtest {
 #define cec_phys_addr_exp(pa) \
 	((pa) >> 12), ((pa) >> 8) & 0xf, ((pa) >> 4) & 0xf, (pa) & 0xf
 
+#define COLOR_GREEN(s) "\033[32m" s "\033[0m"
+#define COLOR_RED(s) "\033[1;31m" s "\033[0m"
+#define COLOR_BOLD(s) "\033[1m" s "\033[0m"
+
 #define info(fmt, args...) 					\
 	do {							\
 		if (show_info)					\
@@ -218,7 +223,9 @@ struct remote_subtest {
 ({									\
 	warnings++;							\
 	if (show_warnings)						\
-		printf("\t\twarn: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+		printf("\t\%s: %s(%d): " fmt,				\
+		       show_colors ? COLOR_BOLD("warn") : "warn",	\
+		       __FILE__, __LINE__, ##args);			\
 	if (exit_on_warn)						\
 		exit(1);						\
 	0;								\
@@ -236,7 +243,8 @@ struct remote_subtest {
 
 #define fail(fmt, args...) 						\
 ({ 									\
-	printf("\t\tfail: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+	printf("\t\t%s: %s(%d): " fmt, show_colors ?			\
+	       COLOR_RED("fail") : "fail", __FILE__, __LINE__, ##args);	\
 	if (exit_on_fail)						\
 		exit(1);						\
 	FAIL;								\

@@ -36,6 +36,7 @@
 enum Option {
 	OptSetAdapter = 'a',
 	OptTestAdapter = 'A',
+	OptColor = 'C',
 	OptSetDevice = 'd',
 	OptSetDriver = 'D',
 	OptExitOnFail = 'E',
@@ -101,6 +102,7 @@ static int app_result;
 static int tests_total, tests_ok;
 
 bool show_info;
+bool show_colors;
 bool show_warnings = true;
 bool exit_on_fail;
 bool exit_on_warn;
@@ -120,6 +122,7 @@ static struct option long_options[] = {
 	{"timeout", required_argument, 0, OptTimeout},
 	{"trace", no_argument, 0, OptTrace},
 	{"verbose", no_argument, 0, OptVerbose},
+	{"color", required_argument, 0, OptColor},
 	{"skip-info", no_argument, 0, OptSkipInfo},
 	{"wall-clock", no_argument, 0, OptWallClock},
 	{"interactive", no_argument, 0, OptInteractive},
@@ -211,6 +214,8 @@ static void usage(void)
 	       "\n"
 	       "  -E, --exit-on-fail Exit on the first fail.\n"
 	       "  -h, --help         Display this help message\n"
+	       "  -C, --color <when> Highlight OK/warn/fail/FAIL strings with colors\n"
+	       "                     <when> can be set to always, never, or auto (the default)\n"
 	       "  -n, --no-warnings  Turn off warning messages\n"
 	       "  -s, --skip-info    Skip Driver Info output\n"
 	       "  -T, --trace        Trace all called ioctls\n"
@@ -726,20 +731,23 @@ const char *ok(int res)
 	static char buf[100];
 
 	if (res == NOTSUPPORTED) {
-		strcpy(buf, "OK (Not Supported)");
+		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Not Supported)" :
+		       "OK (Not Supported)");
 		res = 0;
 	} else if (res == PRESUMED_OK) {
-		strcpy(buf, "OK (Presumed)");
+		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Presumed)" :
+		       "OK (Presumed)");
 		res = 0;
 	} else if (res == REFUSED) {
-		strcpy(buf, "OK (Refused)");
+		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Refused)" :
+		       "OK (Refused)");
 		res = 0;
 	} else
-		strcpy(buf, "OK");
+		strcpy(buf, show_colors ? COLOR_GREEN("OK") : "OK");
 	tests_total++;
 	if (res) {
 		app_result = res;
-		sprintf(buf, "FAIL");
+		sprintf(buf, show_colors ? COLOR_RED("FAIL") : "FAIL");
 	} else {
 		tests_ok++;
 	}
@@ -1056,6 +1064,18 @@ int main(int argc, char **argv)
 	int fd = -1;
 	int ch;
 	int i;
+	const char *env_media_apps_color = getenv("MEDIA_APPS_COLOR");
+
+	if (!env_media_apps_color || !strcmp(env_media_apps_color, "auto"))
+		show_colors = isatty(STDOUT_FILENO);
+	else if (!strcmp(env_media_apps_color, "always"))
+		show_colors = true;
+	else if (!strcmp(env_media_apps_color, "never"))
+		show_colors = false;
+	else {
+		fprintf(stderr,
+			"cec-compliance: invalid value for MEDIA_APPS_COLOR environment variable\n");
+	}
 
 	for (i = 0; long_options[i].name; i++) {
 		if (!isalpha(long_options[i].val))
@@ -1114,6 +1134,18 @@ int main(int argc, char **argv)
 			break;
 		case OptTimeout:
 			long_timeout = strtoul(optarg, NULL, 0);
+			break;
+		case OptColor:
+			if (!strcmp(optarg, "always"))
+				show_colors = true;
+			else if (!strcmp(optarg, "never"))
+				show_colors = false;
+			else if (!strcmp(optarg, "auto"))
+				show_colors = isatty(STDOUT_FILENO);
+			else {
+				usage();
+				exit(1);
+			}
 			break;
 		case OptNoWarnings:
 			show_warnings = false;
