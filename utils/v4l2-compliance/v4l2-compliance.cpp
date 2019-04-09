@@ -54,6 +54,7 @@
 enum Option {
 	OptStreamAllIO = 'a',
 	OptStreamAllColorTest = 'c',
+	OptColor = 'C',
 	OptSetDevice = 'd',
 	OptSetExpBufDevice = 'e',
 	OptExitOnFail = 'E',
@@ -89,6 +90,7 @@ static int grand_total, grand_ok, grand_warnings;
 bool show_info;
 bool no_progress;
 bool show_warnings = true;
+bool show_colors;
 bool exit_on_fail;
 bool exit_on_warn;
 bool is_vivid;
@@ -135,6 +137,7 @@ static struct option long_options[] = {
 	{"media-bus-info", required_argument, 0, OptMediaBusInfo},
 	{"help", no_argument, 0, OptHelp},
 	{"verbose", no_argument, 0, OptVerbose},
+	{"color", required_argument, 0, OptColor},
 	{"no-warnings", no_argument, 0, OptNoWarnings},
 	{"no-progress", no_argument, 0, OptNoProgress},
 	{"exit-on-fail", no_argument, 0, OptExitOnFail},
@@ -234,6 +237,8 @@ static void usage(void)
 	printf("                     then this defaults to 90%%.\n");
 	printf("  -E, --exit-on-fail Exit on the first fail.\n");
 	printf("  -h, --help         Display this help message.\n");
+	printf("  -C, --color <when> Highlight OK/warn/fail/FAIL strings with colors\n");
+	printf("                     <when> can be set to always, never, or auto (the default)\n");
 	printf("  -n, --no-warnings  Turn off warning messages.\n");
 	printf("  -P, --no-progress  Turn off progress messages.\n");
 	printf("  -T, --trace        Trace all called ioctls.\n");
@@ -250,15 +255,17 @@ const char *ok(int res)
 	static char buf[100];
 
 	if (res == ENOTTY) {
-		strcpy(buf, "OK (Not Supported)");
+		strcpy(buf, show_colors ?
+		       COLOR_GREEN("OK") " (Not Supported)" :
+		       "OK (Not Supported)");
 		res = 0;
 	} else {
-		strcpy(buf, "OK");
+		strcpy(buf, show_colors ? COLOR_GREEN("OK") : "OK");
 	}
 	tests_total++;
 	if (res) {
 		app_result = res;
-		sprintf(buf, "FAIL");
+		sprintf(buf, show_colors ? COLOR_RED("FAIL") : "FAIL");
 	} else {
 		tests_ok++;
 	}
@@ -1432,6 +1439,7 @@ int main(int argc, char **argv)
 	media_type type = MEDIA_TYPE_UNKNOWN;
 	struct node expbuf_node;
 	std::string media_bus_info;
+	const char *env_media_apps_color = getenv("MEDIA_APPS_COLOR");
 
 	/* command args */
 	int ch;
@@ -1460,6 +1468,17 @@ int main(int argc, char **argv)
 	if (kernel_version)
 		printf("Running on 2.6.%d\n", kernel_version);
 	printf("\n");
+
+	if (!env_media_apps_color || !strcmp(env_media_apps_color, "auto"))
+		show_colors = isatty(STDOUT_FILENO);
+	else if (!strcmp(env_media_apps_color, "always"))
+		show_colors = true;
+	else if (!strcmp(env_media_apps_color, "never"))
+		show_colors = false;
+	else {
+		fprintf(stderr,
+			"v4l2-compliance: invalid value for MEDIA_APPS_COLOR environment variable\n");
+	}
 
 	for (i = 0; long_options[i].name; i++) {
 		if (!isalpha(long_options[i].val))
@@ -1589,6 +1608,18 @@ int main(int argc, char **argv)
 					usage();
 					exit(1);
 				}
+			}
+			break;
+		case OptColor:
+			if (!strcmp(optarg, "always"))
+				show_colors = true;
+			else if (!strcmp(optarg, "never"))
+				show_colors = false;
+			else if (!strcmp(optarg, "auto"))
+				show_colors = isatty(STDOUT_FILENO);
+			else {
+				usage();
+				exit(1);
 			}
 			break;
 		case OptNoWarnings:

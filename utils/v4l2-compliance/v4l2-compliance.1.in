@@ -167,6 +167,11 @@ signal is present on all inputs or that all outputs are hooked up.
 Exit this application when the first failure occurs instead of continuing
 with a possible inconsistent state.
 .TP
+\fB\-C\fR, \fB\-\-color\fR \fI<when>\fR
+Highlight OK/warn/fail/FAIL strings with colors. OK is marked green, warn is
+marked bold, and fail/FAIL are marked bright red if enabled. \fI<when>\fR can
+be \fIalways\fR, \fInever\fR, or \fIauto\fR (the default).
+.TP
 \fB\-n\fR, \fB\-\-no\-warnings\fR
 Turn off warning messages. They are still counted in the summary, but you won't see them.
 .TP

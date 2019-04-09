@@ -50,6 +50,7 @@
 #endif
 
 extern bool show_info;
+extern bool show_colors;
 extern bool show_warnings;
 extern bool no_progress;
 extern bool exit_on_fail;
@@ -185,17 +186,24 @@ private:
 	std::set<int> fhs;
 };
 
+#define COLOR_GREEN(s) "\033[32m" s "\033[0m"
+#define COLOR_RED(s) "\033[1;31m" s "\033[0m"
+#define COLOR_BOLD(s) "\033[1m" s "\033[0m"
+
 #define info(fmt, args...) 					\
 	do {							\
 		if (show_info)					\
- 			printf("\t\tinfo: " fmt, ##args);	\
+			printf("\t\tinfo: " fmt, ##args);	\
 	} while (0)
 
 #define warn(fmt, args...) 					\
 	do {							\
 		warnings++;					\
 		if (show_warnings)				\
- 			printf("\t\twarn: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+			printf("\t\t%s: %s(%d): " fmt,		\
+			       show_colors ?			\
+			       COLOR_BOLD("warn") : "warn",	\
+			       __FILE__, __LINE__, ##args);	\
 		if (exit_on_warn)				\
 			exit(1);				\
 	} while (0)
@@ -218,7 +226,8 @@ private:
 
 #define fail(fmt, args...) 						\
 ({ 									\
- 	printf("\t\tfail: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+	printf("\t\t%s: %s(%d): " fmt, show_colors ?			\
+	       COLOR_RED("fail") : "fail", __FILE__, __LINE__, ##args);	\
 	if (exit_on_fail)						\
 		exit(1);						\
 	1;								\
