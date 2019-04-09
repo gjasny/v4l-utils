@@ -230,12 +230,7 @@ struct remote_subtest {
 									\
 		if (!show) {						\
 			show = true;					\
-			warnings++;					\
-			if (show_warnings)				\
-				printf("\t\twarn: %s(%d): " fmt,	\
-					__FILE__, __LINE__, ##args); 	\
-			if (exit_on_warn)				\
-				exit(1);				\
+			warn(fmt, ##args);				\
 		}							\
 	} while (0)
 
