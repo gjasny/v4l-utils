@@ -139,6 +139,7 @@ static const struct v4lconvert_pixfmt supported_src_pixfmts[] = {
 	{ V4L2_PIX_FMT_SN9C20X_I420,	12,	 6,	 3,	1 },
 	{ V4L2_PIX_FMT_M420,		12,	 6,	 3,	1 },
 	{ V4L2_PIX_FMT_HM12,		12,	 6,	 3,	1 },
+	{ V4L2_PIX_FMT_NV12,		12,	 6,	 3,	1 },
 	{ V4L2_PIX_FMT_CPIA1,		 0,	 6,	 3,	1 },
 	/* JPEG and variants */
 	{ V4L2_PIX_FMT_MJPEG,		 0,	 7,	 7,	0 },
@@ -928,6 +929,24 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			break;
 		case V4L2_PIX_FMT_YVU420:
 			v4lconvert_hm12_to_yuv420(src, dest, width, height, 1);
+			break;
+		}
+		break;
+
+		/* NV12 formats */
+	case V4L2_PIX_FMT_NV12:
+		switch (dest_pix_fmt) {
+		case V4L2_PIX_FMT_RGB24:
+			v4lconvert_nv12_to_rgb24(src, dest, width, height, 0);
+			break;
+		case V4L2_PIX_FMT_BGR24:
+			v4lconvert_nv12_to_rgb24(src, dest, width, height, 1);
+			break;
+		case V4L2_PIX_FMT_YUV420:
+			v4lconvert_nv12_to_yuv420(src, dest, width, height, 0);
+			break;
+		case V4L2_PIX_FMT_YVU420:
+			v4lconvert_nv12_to_yuv420(src, dest, width, height, 1);
 			break;
 		}
 		break;
