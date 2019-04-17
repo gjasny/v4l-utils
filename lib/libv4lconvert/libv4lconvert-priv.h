@@ -38,6 +38,7 @@
 #include "tinyjpeg.h"
 
 #define ARRAY_SIZE(x) ((int)sizeof(x)/(int)sizeof((x)[0]))
+#define BITS_PER_LONG (8 * sizeof(long))
 
 #define V4LCONVERT_ERROR_MSG_SIZE 256
 #define V4LCONVERT_MAX_FRAMESIZES 256
@@ -55,7 +56,7 @@ struct v4lconvert_data {
 	int flags; /* bitfield */
 	int control_flags; /* bitfield */
 	unsigned int no_formats;
-	int64_t supported_src_formats; /* bitfield */
+	unsigned long supported_src_formats[128 / BITS_PER_LONG];
 	char error_msg[V4LCONVERT_ERROR_MSG_SIZE];
 	struct jdec_private *tinyjpeg;
 #ifdef HAVE_JPEG

@@ -32,6 +32,29 @@
 #include "libv4lsyscall-priv.h"
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define BIT_MASK(nr) (1UL << ((nr) % BITS_PER_LONG))
+#define BIT_WORD(nr) ((nr) / BITS_PER_LONG)
+
+static inline void set_bit(int nr, volatile unsigned long *addr)
+{
+	unsigned long mask = BIT_MASK(nr);
+	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
+
+	*p  |= mask;
+}
+
+static inline void clear_bit(int nr, volatile unsigned long *addr)
+{
+	unsigned long mask = BIT_MASK(nr);
+	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
+
+	*p &= ~mask;
+}
+
+static inline int test_bit(int nr, const volatile unsigned long *addr)
+{
+	return 1UL & (addr[BIT_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
+}
 
 static void *dev_init(int fd)
 {
@@ -231,7 +254,7 @@ struct v4lconvert_data *v4lconvert_create_with_dev_ops(int fd, void *dev_ops_pri
 				break;
 
 		if (j < ARRAY_SIZE(supported_src_pixfmts)) {
-			data->supported_src_formats |= 1ULL << j;
+			set_bit(j, data->supported_src_formats);
 			v4lconvert_get_framesizes(data, fmt.pixelformat, j);
 			if (!supported_src_pixfmts[j].needs_conversion)
 				always_needs_conversion = 0;
@@ -316,8 +339,15 @@ int v4lconvert_supported_dst_format(unsigned int pixelformat)
 
 int v4lconvert_supported_dst_fmt_only(struct v4lconvert_data *data)
 {
-	return v4lcontrol_needs_conversion(data->control) &&
-		data->supported_src_formats;
+	int i;
+
+	for (i = 0 ; i < ARRAY_SIZE(data->supported_src_formats); i++)
+		if (data->supported_src_formats[i])
+			break;
+	if (i == ARRAY_SIZE(data->supported_src_formats))
+		return 0;
+
+	return v4lcontrol_needs_conversion(data->control);
 }
 
 /* See libv4lconvert.h for description of in / out parameters */
@@ -334,7 +364,7 @@ int v4lconvert_enum_fmt(struct v4lconvert_data *data, struct v4l2_fmtdesc *fmt)
 
 	for (i = 0; i < ARRAY_SIZE(supported_dst_pixfmts); i++)
 		if (v4lconvert_supported_dst_fmt_only(data) ||
-				!(data->supported_src_formats & (1ULL << i))) {
+		    !test_bit(i, data->supported_src_formats)) {
 			faked_fmts[no_faked_fmts] = supported_dst_pixfmts[i].fmt;
 			no_faked_fmts++;
 		}
@@ -490,7 +520,7 @@ static int v4lconvert_do_try_format(struct v4lconvert_data *data,
 
 	for (i = 0; i < ARRAY_SIZE(supported_src_pixfmts); i++) {
 		/* is this format supported? */
-		if (!(data->supported_src_formats & (1ULL << i)))
+		if (!test_bit(i, data->supported_src_formats))
 			continue;
 
 		try_fmt = *dest_fmt;
