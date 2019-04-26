@@ -467,7 +467,7 @@ static struct dvb_open_descriptor
 			flags &= ~O_NONBLOCK;
 		}
 
-		ret = dvb_fe_open_fname(parms, dev->path, flags);
+		ret = dvb_fe_open_fname(parms, strdup(dev->path), flags);
 		if (ret) {
 			free(open_dev);
 			return NULL;
