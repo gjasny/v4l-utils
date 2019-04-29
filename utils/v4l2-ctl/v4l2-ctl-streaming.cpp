@@ -364,6 +364,7 @@ void streaming_usage(void)
 
 static enum codec_type get_codec_type(cv4l_fd &fd)
 {
+	cv4l_disable_trace dt(fd);
 	struct v4l2_fmtdesc fmt_desc;
 	int num_cap_fmts = 0;
 	int num_compressed_cap_fmts = 0;
@@ -1146,20 +1147,23 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 		return QUEUE_ERROR;
 
 	fd.g_fmt(fmt, q.g_type());
-	if (fd.g_std(stream_out_std)) {
-		struct v4l2_dv_timings timings;
+	{
+		cv4l_disable_trace dt(fd);
+		if (fd.g_std(stream_out_std)) {
+			struct v4l2_dv_timings timings;
 
-		stream_out_std = 0;
-		if (fd.g_dv_timings(timings))
-			memset(&timings, 0, sizeof(timings));
-		else if (timings.bt.width == 720 && timings.bt.height == 480)
+			stream_out_std = 0;
+			if (fd.g_dv_timings(timings))
+				memset(&timings, 0, sizeof(timings));
+			else if (timings.bt.width == 720 && timings.bt.height == 480)
+				aspect = TPG_PIXEL_ASPECT_NTSC;
+			else if (timings.bt.width == 720 && timings.bt.height == 576)
+				aspect = TPG_PIXEL_ASPECT_PAL;
+		} else if (stream_out_std & V4L2_STD_525_60) {
 			aspect = TPG_PIXEL_ASPECT_NTSC;
-		else if (timings.bt.width == 720 && timings.bt.height == 576)
+		} else if (stream_out_std & V4L2_STD_625_50) {
 			aspect = TPG_PIXEL_ASPECT_PAL;
-	} else if (stream_out_std & V4L2_STD_525_60) {
-		aspect = TPG_PIXEL_ASPECT_NTSC;
-	} else if (stream_out_std & V4L2_STD_625_50) {
-		aspect = TPG_PIXEL_ASPECT_PAL;
+		}
 	}
 
 	field = fmt.g_field();
