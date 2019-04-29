@@ -1814,9 +1814,7 @@ int testRequests(struct node *node, bool test_streaming)
 		int err = buf.qbuf(node);
 		if (!err) {
 			fail_on_test(!supports_requests);
-			// After this call querybuf won't set
-			// V4L2_BUF_FLAG_REQUEST_FD. Disable this test for now.
-			// fail_on_test(!buf.qbuf(node));
+			fail_on_test(!buf.qbuf(node));
 		} else {
 			fail_on_test(supports_requests);
 			fail_on_test(err != EBADR);
