@@ -21,6 +21,8 @@
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/dvb-fe.h>
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 int dvb_mpeg_es_seq_start_init(const uint8_t *buf, ssize_t buflen, struct dvb_mpeg_es_seq_start *seq_start)
 {
 	if(buflen < sizeof(struct dvb_mpeg_es_seq_start))

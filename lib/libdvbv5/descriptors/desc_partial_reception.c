@@ -21,6 +21,8 @@
 #include <libdvbv5/desc_partial_reception.h>
 #include <libdvbv5/dvb-fe.h>
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 int isdb_desc_partial_reception_init(struct dvb_v5_fe_parms *parms,
 			      const uint8_t *buf, struct dvb_desc *desc)
 {

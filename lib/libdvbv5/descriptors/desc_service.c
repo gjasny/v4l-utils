@@ -22,6 +22,8 @@
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 int dvb_desc_service_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_service *service = (struct dvb_desc_service *) desc;

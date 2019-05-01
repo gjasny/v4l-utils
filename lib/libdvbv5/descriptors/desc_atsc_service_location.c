@@ -20,6 +20,8 @@
 #include <libdvbv5/desc_atsc_service_location.h>
 #include <libdvbv5/dvb-fe.h>
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 int atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
 				     const uint8_t *buf, struct dvb_desc *desc)
 {

@@ -22,6 +22,8 @@
 #include <libdvbv5/desc_t2_delivery.h>
 #include <libdvbv5/dvb-fe.h>
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 			       const uint8_t *buf,
 			       struct dvb_extension_descriptor *ext,

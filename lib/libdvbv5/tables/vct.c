@@ -23,6 +23,8 @@
 #include <libdvbv5/dvb-fe.h>
 #include <parse_string.h>
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 			ssize_t buflen, struct atsc_table_vct **table)
 {

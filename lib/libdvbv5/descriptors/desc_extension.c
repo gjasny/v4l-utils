@@ -21,6 +21,8 @@
 #include <libdvbv5/desc_t2_delivery.h>
 #include <libdvbv5/dvb-fe.h>
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 const struct dvb_ext_descriptor dvb_ext_descriptors[] = {
 	[0 ...255 ] = {
 		.name  = "Unknown descriptor",

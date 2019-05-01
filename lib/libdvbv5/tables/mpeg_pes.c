@@ -22,6 +22,8 @@
 #include <libdvbv5/dvb-fe.h>
 #include <inttypes.h>
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 ssize_t dvb_mpeg_pes_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssize_t buflen, uint8_t *table)
 {
 	struct dvb_mpeg_pes *pes = (struct dvb_mpeg_pes *) table;

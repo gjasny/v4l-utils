@@ -30,6 +30,8 @@
 # define _(string) string
 #endif
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 int dvb_desc_event_extended_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_event_extended *event = (struct dvb_desc_event_extended *) desc;
