@@ -1,3 +1,14 @@
+v4l-utils-1.14.4
+----------------
+
+André Roth (1):
+      libdvbv5: fix double free in dvb_fe_open_fname
+
+Mauro Carvalho Chehab (2):
+      Update my e-mail on all places
+      Revert "libdvbv5: leaks and double free in dvb_fe_open_fname()"
+
+
 v4l-utils-1.14.3
 ----------------
 
