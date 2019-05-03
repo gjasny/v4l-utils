@@ -42,7 +42,7 @@ ssize_t atsc_table_vct_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	}
 
 	if (buf[0] != ATSC_TABLE_TVCT && buf[0] != ATSC_TABLE_CVCT) {
-		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x or 0x%02x",
+		dvb_logerr("%s: invalid marker 0x%02x, should be 0x%02x or 0x%02x",
 				__func__, buf[0], ATSC_TABLE_TVCT, ATSC_TABLE_CVCT);
 		return -2;
 	}

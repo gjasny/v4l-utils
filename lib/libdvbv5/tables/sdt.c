@@ -40,7 +40,7 @@ ssize_t dvb_table_sdt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	}
 
 	if (buf[0] != DVB_TABLE_SDT && buf[0] != DVB_TABLE_SDT2) {
-		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x or 0x%02x",
+		dvb_logerr("%s: invalid marker 0x%02x, should be 0x%02x or 0x%02x",
 				__func__, buf[0], DVB_TABLE_SDT, DVB_TABLE_SDT2);
 		return -2;
 	}

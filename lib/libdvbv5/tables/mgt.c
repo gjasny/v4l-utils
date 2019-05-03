@@ -41,7 +41,7 @@ ssize_t atsc_table_mgt_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 	}
 
 	if (buf[0] != ATSC_TABLE_MGT) {
-		dvb_logerr("%s: invalid marker 0x%02x, sould be 0x%02x",
+		dvb_logerr("%s: invalid marker 0x%02x, should be 0x%02x",
 				__func__, buf[0], ATSC_TABLE_MGT);
 		return -2;
 	}

@@ -29,7 +29,7 @@ ssize_t dvb_mpeg_ts_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, ssiz
 	const uint8_t *p = buf;
 
 	if (buf[0] != DVB_MPEG_TS) {
-		dvb_logerr("mpeg ts invalid marker 0x%02x, sould be 0x%02x", buf[0], DVB_MPEG_TS);
+		dvb_logerr("mpeg ts invalid marker 0x%02x, should be 0x%02x", buf[0], DVB_MPEG_TS);
 		*table_length = 0;
 		return -1;
 	}
