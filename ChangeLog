@@ -1,3 +1,11 @@
+v4l-utils-1.12.8
+----------------
+
+Mauro Carvalho Chehab (2):
+      Update my e-mail on all places
+      Revert "libdvbv5: leaks and double free in dvb_fe_open_fname()"
+
+
 v4l-utils-1.12.7
 ----------------
 
