@@ -1705,7 +1705,7 @@ void ApplicationWindow::error(const QString &error)
 {
 	statusBar()->showMessage(error, 20000);
 	if (!error.isEmpty())
-		fprintf(stderr, "%s\n", error.toLatin1().data());
+		fprintf(stderr, "%s\n", error.toUtf8().data());
 }
 
 void ApplicationWindow::error(int err)
@@ -1780,7 +1780,7 @@ static bool processShortOption(const QStringList &args, int &i, QString &dev)
 		return false;
 	if (args[i].length() == 2) {
 		if (i + 1 >= args.size()) {
-			usageError(args[i].toLatin1());
+			usageError(args[i].toUtf8());
 			return false;
 		}
 		dev = args[++i];
@@ -1803,7 +1803,7 @@ static bool processLongOption(const QStringList &args, int &i, QString &dev)
 		return true;
 	}
 	if (i + 1 >= args.size()) {
-		usageError(args[i].toLatin1());
+		usageError(args[i].toUtf8());
 		return false;
 	}
 	dev = args[++i];
@@ -1857,7 +1857,7 @@ int main(int argc, char **argv)
 		} else if (args[i] == "-R" || args[i] == "--raw") {
 			raw = true;
 		} else {
-			printf("Invalid argument %s\n", args[i].toLatin1().data());
+			printf("Invalid argument %s\n", args[i].toUtf8().data());
 			return 0;
 		}
 	}
