@@ -433,7 +433,7 @@ static snd_pcm_sframes_t readbuf(snd_pcm_t *handle, char *buf, long len)
     snd_pcm_uframes_t frames;
     snd_pcm_htimestamp(handle, &frames, &timestamp);
     r = snd_pcm_readi(handle, buf, len);
-    if (r < 0 && r != -EAGAIN) {
+    if (r < 0 && !(r == -EAGAIN || r == -ENODEV)) {
 	r = snd_pcm_recover(handle, r, 0);
 	if (r < 0)
 	    fprintf(error_fp, "alsa: overrun recover error: %s\n", snd_strerror(r));

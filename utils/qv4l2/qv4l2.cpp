@@ -495,8 +495,9 @@ void ApplicationWindow::setAudioBufferSize()
 void ApplicationWindow::ctrlEvent()
 {
 	v4l2_event ev;
+	int event_ret = 0;
 
-	while (dqevent(ev) == 0) {
+	while ((event_ret = dqevent(ev)) == 0) {
 		if (ev.type == V4L2_EVENT_SOURCE_CHANGE) {
 			m_genTab->sourceChange(ev);
 			continue;
@@ -551,6 +552,15 @@ void ApplicationWindow::ctrlEvent()
 			setString(ev.id, c.string);
 		free(c.string);
 	}
+
+	if (event_ret && errno == ENODEV) {
+		closeDevice();
+		if (m_capture) {
+			m_capture->stop();
+			delete m_capture;
+			m_capture = NULL;
+		}
+	}
 }
 
 void ApplicationWindow::newCaptureWin()
@@ -558,6 +568,7 @@ void ApplicationWindow::newCaptureWin()
 	if (m_capture != NULL) {
 		m_capture->stop();
 		delete m_capture;
+		m_capture = NULL;
 	}
 
 	switch (m_renderMethod) {
@@ -1135,7 +1146,7 @@ void ApplicationWindow::stopStreaming()
 	if (!m_genTab->isSDR() && m_genTab->isRadio())
 		return;
 
-	if (v4l_type_is_capture(g_type()))
+	if (v4l_type_is_capture(g_type()) && m_capture)
 		m_capture->stop();
 
 	m_snapshotAct->setDisabled(true);
@@ -1561,8 +1572,10 @@ void ApplicationWindow::makeFullScreen(bool checked)
 void ApplicationWindow::closeDevice()
 {
 	stopAudio();
-	delete m_sigMapper;
-	m_sigMapper = NULL;
+	if (m_sigMapper) {
+		m_sigMapper->deleteLater();
+		m_sigMapper = NULL;
+	}
 	m_capStartAct->setEnabled(false);
 	m_capStartAct->setChecked(false);
 	m_capStepAct->setEnabled(false);
@@ -1579,7 +1592,7 @@ void ApplicationWindow::closeDevice()
 			m_outNotifier = NULL;
 		}
 		if (m_ctrlNotifier) {
-			delete m_ctrlNotifier;
+			m_ctrlNotifier->deleteLater();
 			m_ctrlNotifier = NULL;
 		}
 		delete [] m_frameData;
@@ -1740,6 +1753,7 @@ void ApplicationWindow::closeEvent(QCloseEvent *event)
 {
 	closeDevice();
 	delete m_capture;
+	m_capture = NULL;
 	event->accept();
 }
 
