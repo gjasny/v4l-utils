@@ -576,14 +576,16 @@ int testGetFormats(struct node *node)
 	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
 		createInvalidFmt(fmt, clip, type);
 		ret = doioctl(node, VIDIOC_G_FMT, &fmt);
+		if (!ret)
+			node->valid_buftypes |= 1 << type;
+
 		ret = testFormatsType(node, ret, type, fmt);
 
 		if (ret && ret != ENOTTY)
 			return ret;
-		if (!ret) {
+		if (!ret)
 			supported = true;
-			node->valid_buftypes |= 1 << type;
-		}
+
 		switch (type) {
 		case V4L2_BUF_TYPE_VIDEO_CAPTURE:
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT:
