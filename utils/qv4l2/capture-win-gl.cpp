@@ -44,6 +44,13 @@ void CaptureWinGL::stop()
 #endif
 }
 
+void CaptureWinGL::closeEvent(QCloseEvent *event)
+{
+	this->hide();
+	event->ignore();
+	emit close();
+}
+
 void CaptureWinGL::resizeEvent(QResizeEvent *event)
 {
 #ifdef HAVE_QTGL

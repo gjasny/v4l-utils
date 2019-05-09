@@ -139,6 +139,7 @@ public:
 protected:
 	void resizeEvent(QResizeEvent *event);
 	void setRenderFrame();
+	void closeEvent(QCloseEvent *event);
 
 private:
 #ifdef HAVE_QTGL
