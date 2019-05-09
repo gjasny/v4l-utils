@@ -768,7 +768,7 @@ void CaptureWin::setModeFile(const QString &filename)
 	m_mode = AppModeFile;
 	m_file.setFileName(filename);
 	if (!m_file.open(QIODevice::ReadOnly)) {
-		fprintf(stderr, "could not open %s\n", filename.toLatin1().data());
+		fprintf(stderr, "could not open %s\n", filename.toUtf8().data());
 		exit(1);
 	}
 	m_canOverrideResolution = true;

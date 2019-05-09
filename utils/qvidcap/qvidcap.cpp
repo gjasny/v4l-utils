@@ -248,13 +248,13 @@ static bool processOption(const QStringList &args, int &i, QString &s)
 	if (index >= 0) {
 		s = args[i].mid(index + 1);
 		if (s.length() == 0) {
-			usageError(args[i].toLatin1());
+			usageError(args[i].toUtf8());
 			return false;
 		}
 		return true;
 	}
 	if (i + 1 >= args.size()) {
-		usageError(args[i].toLatin1());
+		usageError(args[i].toUtf8());
 		return false;
 	}
 	s = args[++i];
@@ -270,7 +270,7 @@ static bool processOption(const QStringList &args, int &i, unsigned &u)
 		return ok;
 	u = s.toUInt(&ok, 0);
 	if (!ok)
-		usageInvParm(s.toLatin1());
+		usageInvParm(s.toUtf8());
 	return ok;
 }
 
@@ -283,7 +283,7 @@ static bool processOption(const QStringList &args, int &i, int &v)
 		return ok;
 	v = s.toInt(&ok, 0);
 	if (!ok)
-		usageInvParm(s.toLatin1());
+		usageInvParm(s.toUtf8());
 	return ok;
 }
 
@@ -296,7 +296,7 @@ static bool processOption(const QStringList &args, int &i, double &v)
 		return ok;
 	v = s.toDouble(&ok);
 	if (!ok)
-		usageInvParm(s.toLatin1());
+		usageInvParm(s.toUtf8());
 	return ok;
 }
 
@@ -658,7 +658,7 @@ int main(int argc, char **argv)
 				return 0;
 			single_step = true;
 		} else {
-			printf("Invalid argument %s\n", args[i].toLatin1().data());
+			printf("Invalid argument %s\n", args[i].toUtf8().data());
 			return 0;
 		}
 	}
@@ -668,12 +668,12 @@ int main(int argc, char **argv)
 	if (mode == AppModeV4L2) {
 		fps = 0;
 		video_device = getDeviceName("/dev/video", video_device);
-		if (fd.open(video_device.toLatin1().data(), true) < 0) {
-			perror((QString("could not open ") + video_device).toLatin1().data());
+		if (fd.open(video_device.toUtf8().data(), true) < 0) {
+			perror((QString("could not open ") + video_device).toUtf8().data());
 			exit(1);
 		}
 		if (!fd.has_vid_cap()) {
-			fprintf(stderr, "%s is not a video capture device\n", video_device.toLatin1().data());
+			fprintf(stderr, "%s is not a video capture device\n", video_device.toUtf8().data());
 			exit(1);
 		}
 		fd.g_fmt(fmt);
