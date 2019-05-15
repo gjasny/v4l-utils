@@ -30,7 +30,9 @@
 # define _(string) string
 #endif
 
+#if __GNUC__ >= 9
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
 
 int dvb_desc_event_extended_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {

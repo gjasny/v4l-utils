@@ -21,7 +21,9 @@
 #include <libdvbv5/dvb-fe.h>
 #include <inttypes.h>
 
+#if __GNUC__ >= 9
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
 
 int isdbt_desc_delivery_init(struct dvb_v5_fe_parms *parms,
 			      const uint8_t *buf, struct dvb_desc *desc)

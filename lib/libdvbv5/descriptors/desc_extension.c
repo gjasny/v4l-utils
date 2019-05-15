@@ -21,7 +21,9 @@
 #include <libdvbv5/desc_t2_delivery.h>
 #include <libdvbv5/dvb-fe.h>
 
+#if __GNUC__ >= 9
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
 
 const struct dvb_ext_descriptor dvb_ext_descriptors[] = {
 	[0 ...255 ] = {
