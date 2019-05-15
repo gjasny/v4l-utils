@@ -621,6 +621,7 @@ enum Option {
 	OptAllowUnregFallback,
 	OptNoRC,
 	OptReplyToFollowers,
+	OptRawMsg,
 	OptListDevices,
 	OptTimeout,
 	OptMonitorTime,
@@ -691,6 +692,7 @@ static struct option long_options[] = {
 	{ "allow-unreg-fallback", no_argument, 0, OptAllowUnregFallback },
 	{ "no-rc-passthrough", no_argument, 0, OptNoRC },
 	{ "reply-to-followers", no_argument, 0, OptReplyToFollowers },
+	{ "raw-msg", no_argument, 0, OptRawMsg },
 	{ "timeout", required_argument, 0, OptTimeout },
 	{ "clear", no_argument, 0, OptClear },
 	{ "wait-for-msgs", no_argument, 0, OptWaitForMsgs },
@@ -783,6 +785,7 @@ static void usage(void)
 	       "  --allow-unreg-fallback   Allow fallback to Unregistered\n"
 	       "  --no-rc-passthrough      Disable the RC passthrough\n"
 	       "  --reply-to-followers     The reply will be sent to followers as well\n"
+	       "  --raw-msg                Transmit the message without validating it (must be root)\n"
 	       "  --timeout <ms>           Set the reply timeout in milliseconds (default is 1000 ms)\n"
 	       "  --list-ui-commands       List all UI commands that can be used with --user-control-pressed\n"
 	       "  --list-devices           List all cec devices\n"
@@ -2506,6 +2509,7 @@ int main(int argc, char **argv)
 		printf("\nTransmit from %s to %s (%d to %d):\n",
 		       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
 		msg.flags = options[OptReplyToFollowers] ? CEC_MSG_FL_REPLY_TO_FOLLOWERS : 0;
+		msg.flags |= options[OptRawMsg] ? CEC_MSG_FL_RAW : 0;
 		msg.timeout = msg.reply ? timeout : 0;
 		log_msg(&msg);
 		if (doioctl(&node, CEC_TRANSMIT, &msg))
