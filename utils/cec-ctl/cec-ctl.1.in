@@ -26,6 +26,11 @@ To wake up the display:
 
 	cec-ctl -d/dev/cecX --to 0 --image-view-on
 
+To switch the TV to our HDMI output (replace the physical address with
+what cec-ctl -d/dev/cecX reported):
+
+	cec-ctl -d/dev/cecX --to 0 --active-source phys-addr=1.0.0.0
+
 Instead of '-d/dev/cecX' you can also write this as '-dX'.
 And instead of '--to 0' you can also write this as '-t0'.
 
