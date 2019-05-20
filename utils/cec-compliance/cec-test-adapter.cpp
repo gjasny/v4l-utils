@@ -189,7 +189,25 @@ int testAdapLogAddrs(struct node *node)
 		if (!res) {
 			struct timeval tv = { 0, 10000 }; // 10 ms
 
-			fail_on_test(ev.flags & CEC_EVENT_FL_INITIAL_STATE);
+			switch (ev.event) {
+			case CEC_EVENT_STATE_CHANGE:
+				fail_on_test(ev.flags & CEC_EVENT_FL_INITIAL_STATE);
+				break;
+			case CEC_EVENT_PIN_CEC_LOW:
+			case CEC_EVENT_PIN_CEC_HIGH:
+			case CEC_EVENT_PIN_HPD_LOW:
+			case CEC_EVENT_PIN_HPD_HIGH:
+			case CEC_EVENT_PIN_5V_LOW:
+			case CEC_EVENT_PIN_5V_HIGH:
+				fail_on_test(!(ev.flags & CEC_EVENT_FL_INITIAL_STATE));
+				break;
+			case CEC_EVENT_LOST_MSGS:
+				fail("Unexpected event %d\n", ev.event);
+				break;
+			default:
+				fail("Unknown event %d\n", ev.event);
+				break;
+			}
 			select(0, NULL, NULL, NULL, &tv);
 		}
 	} while (!res);
