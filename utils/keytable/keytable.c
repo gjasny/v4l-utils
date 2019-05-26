@@ -326,6 +326,10 @@ static bool compare_parameters(struct toml_table_t *a, struct toml_table_t *b)
 	int64_t avalue, bvalue;
 	const char *name, *raw;
 
+	if (a == NULL || b == NULL) {
+		return true;
+	}
+
 	while ((name = toml_key_in(a, i++)) != NULL) {
 		raw = toml_raw_in(a, name);
 		if (!raw)
@@ -1110,6 +1114,27 @@ static struct sysfs_names *find_device(char *name)
 	return names;
 }
 
+static enum sysfs_protocols load_bpf_for_unsupported(enum sysfs_protocols protocols, enum sysfs_protocols supported)
+{
+	const struct protocol_map_entry *pme;
+	struct bpf_protocol *b;
+
+	for (pme = protocol_map; pme->name; pme++) {
+		if (!(protocols & pme->sysfs_protocol) ||
+		    (supported & pme->sysfs_protocol))
+			continue;
+
+		b = malloc(sizeof(*b));
+		b->name = strdup(pme->name);
+		b->toml = NULL;
+		add_bpf_protocol(b);
+
+		protocols &= ~pme->sysfs_protocol;
+	}
+
+	return protocols;
+}
+
 static enum sysfs_protocols v1_get_hw_protocols(char *name)
 {
 	FILE *fp;
@@ -1466,12 +1491,12 @@ static int set_proto(struct rc_device *rc_dev)
 {
 	int rc = 0;
 
-	rc_dev->current &= rc_dev->supported;
-
 	if (rc_dev->version == VERSION_2) {
 		rc = v2_set_protocols(rc_dev);
 		return rc;
 	}
+
+	rc_dev->current &= rc_dev->supported;
 
 	if (rc_dev->type == SOFTWARE_DECODER) {
 		const struct protocol_map_entry *pme;
@@ -2215,7 +2240,8 @@ int main(int argc, char *argv[])
 		if (rc_dev.lirc_name)
 			clear_bpf(rc_dev.lirc_name);
 
-		rc_dev.current = ch_proto;
+		rc_dev.current = load_bpf_for_unsupported(ch_proto, rc_dev.supported);
+
 		if (set_proto(&rc_dev))
 			fprintf(stderr, _("Couldn't change the IR protocols\n"));
 		else {
