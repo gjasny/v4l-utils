@@ -128,6 +128,7 @@ enum sysfs_protocols {
 	SYSFS_CEC		= (1 << 13),
 	SYSFS_IMON		= (1 << 14),
 	SYSFS_RCMM		= (1 << 15),
+	SYSFS_XBOX_DVD		= (1 << 16),
 	SYSFS_INVALID		= 0,
 };
 
@@ -163,6 +164,7 @@ const struct protocol_map_entry protocol_map[] = {
 	{ "cec",	NULL,		SYSFS_CEC	},
 	{ "imon",	NULL,		SYSFS_IMON	},
 	{ "rc-mm",	NULL,		SYSFS_RCMM	},
+	{ "xbox-dvd",	NULL,		SYSFS_XBOX_DVD	},
 	{ NULL,		NULL,		SYSFS_INVALID	},
 };
 
@@ -1622,7 +1624,7 @@ static void print_scancodes(const struct lirc_scancode *scancodes, unsigned coun
 {
 	unsigned i;
 
-	for (i=0; i< count; i++) {
+	for (i = 0; i < count; i++) {
 		const char *p = protocol_name(scancodes[i].rc_proto);
 
 		printf(_("%llu.%06llu: "),

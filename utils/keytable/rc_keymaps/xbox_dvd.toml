@@ -1,6 +1,6 @@
 [[protocols]]
-name = "XBox DVD"
-protocol = "xbox"
+name = "xbox_dvd"
+protocol = "xbox_dvd"
 [protocols.scancodes]
 0xa0b = "KEY_OK"
 0xaa6 = "KEY_UP"

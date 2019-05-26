@@ -375,6 +375,7 @@ static const struct {
 	[RC_PROTO_RCMM12] = { "rc-mm-12", 0x0fff },
 	[RC_PROTO_RCMM24] = { "rc-mm-24", 0xffffff },
 	[RC_PROTO_RCMM32] = { "rc-mm-32", 0xffffffff },
+	[RC_PROTO_XBOX_DVD] = { "xbox-dvd", 0xfff },
 };
 
 static bool str_like(const char *a, const char *b)
