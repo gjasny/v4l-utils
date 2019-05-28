@@ -849,13 +849,16 @@ int testEvents(struct node *node)
 
 		if (node->can_capture) {
 			fail_on_test(doioctl(node, VIDIOC_G_INPUT, &id));
-			if (node->controls.find(V4L2_CID_DV_RX_POWER_PRESENT) == node->controls.end())
+			if (node->is_video &&
+			    node->controls.find(V4L2_CID_DV_RX_POWER_PRESENT) == node->controls.end())
 				warn("V4L2_CID_DV_RX_POWER_PRESENT not found for input %d\n", id);
 		} else {
 			fail_on_test(doioctl(node, VIDIOC_G_OUTPUT, &id));
-			if (node->controls.find(V4L2_CID_DV_TX_HOTPLUG) == node->controls.end())
+			if (node->is_video &&
+			    node->controls.find(V4L2_CID_DV_TX_HOTPLUG) == node->controls.end())
 				warn("V4L2_CID_DV_TX_HOTPLUG not found for output %d\n", id);
-			if (node->controls.find(V4L2_CID_DV_TX_EDID_PRESENT) == node->controls.end())
+			if (node->is_video &&
+			    node->controls.find(V4L2_CID_DV_TX_EDID_PRESENT) == node->controls.end())
 				warn("V4L2_CID_DV_TX_EDID_PRESENT not found for output %d\n", id);
 		}
 		if (node->can_capture) {
