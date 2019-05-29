@@ -21,6 +21,7 @@
 #include "cec-compliance.h"
 
 static const __u8 tx_ok_retry_mask = CEC_TX_STATUS_OK | CEC_TX_STATUS_MAX_RETRIES;
+static const __u32 msg_fl_mask = CEC_MSG_FL_REPLY_TO_FOLLOWERS | CEC_MSG_FL_RAW;
 
 // Flush any pending messages
 static int flush_pending_msgs(struct node *node)
@@ -287,7 +288,7 @@ int testTransmit(struct node *node)
 		msg.len = 1;
 		msg.timeout = 0;
 		msg.reply = 0;
-		msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
+		msg.flags &= ~msg_fl_mask;
 
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 
@@ -329,7 +330,7 @@ int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 1001;
-			msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
+			msg.flags &= ~msg_fl_mask;
 			cec_msg_give_physical_addr(&msg, true);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(!(msg.tx_status & CEC_TX_STATUS_OK));
@@ -357,7 +358,7 @@ int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 0;
-			msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
+			msg.flags &= ~msg_fl_mask;
 			cec_msg_give_physical_addr(&msg, false);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(msg.timeout);
@@ -384,7 +385,7 @@ int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 1002;
-			msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
+			msg.flags &= ~msg_fl_mask;
 			cec_msg_give_physical_addr(&msg, true);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(msg.timeout != 1002);
@@ -408,7 +409,7 @@ int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 0;
-			msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
+			msg.flags &= ~msg_fl_mask;
 			cec_msg_give_physical_addr(&msg, false);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(msg.timeout);
@@ -576,6 +577,7 @@ int testNonBlocking(struct node *node)
 		memset(&msg, 0xff, sizeof(msg));
 		msg.msg[0] = (la << 4) | invalid_remote;
 		msg.timeout = 0;
+		msg.flags &= ~msg_fl_mask;
 		cec_msg_give_physical_addr(&msg, false);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		fail_on_test(msg.len != 2);
@@ -627,7 +629,7 @@ int testNonBlocking(struct node *node)
 		memset(&msg, 0xff, sizeof(msg));
 		msg.msg[0] = (la << 4) | invalid_remote;
 		msg.timeout = 0;
-		msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
+		msg.flags &= ~msg_fl_mask;
 		cec_msg_give_physical_addr(&msg, true);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		fail_on_test(msg.len != 2);
@@ -686,6 +688,7 @@ int testNonBlocking(struct node *node)
 		memset(&msg, 0xff, sizeof(msg));
 		msg.msg[0] = (la << 4) | remote_la;
 		msg.timeout = 0;
+		msg.flags &= ~msg_fl_mask;
 		cec_msg_give_physical_addr(&msg, false);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		fail_on_test(msg.len != 2);
@@ -736,7 +739,7 @@ int testNonBlocking(struct node *node)
 		memset(&msg, 0xff, sizeof(msg));
 		msg.msg[0] = (la << 4) | remote_la;
 		msg.timeout = 0;
-		msg.flags &= ~CEC_MSG_FL_REPLY_TO_FOLLOWERS;
+		msg.flags &= ~msg_fl_mask;
 		cec_msg_give_physical_addr(&msg, true);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		fail_on_test(msg.len != 2);
