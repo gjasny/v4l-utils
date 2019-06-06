@@ -1756,11 +1756,15 @@ int testRequests(struct node *node, bool test_streaming)
 	buffer buf(q);
 
 	fail_on_test(buf.querybuf(node, 0));
-	fail_on_test(buf.qbuf(node));
+	ret = buf.qbuf(node);
+	fail_on_test(ret && ret != EBADR);
 	fail_on_test(buf.querybuf(node, 1));
 	buf.s_flags(V4L2_BUF_FLAG_REQUEST_FD);
 	buf.s_request_fd(buf_req_fds[1]);
-	fail_on_test(!buf.qbuf(node));
+	if (ret == EBADR)
+		fail_on_test(buf.qbuf(node));
+	else
+		fail_on_test(!buf.qbuf(node));
 
 	node->reopen();
 
@@ -1874,7 +1878,13 @@ int testRequests(struct node *node, bool test_streaming)
 						  VIVID_CID_REQ_VALIDATE_ERROR))
 			fail_on_test(doioctl_fd(buf_req_fds[i],
 						MEDIA_REQUEST_IOC_QUEUE, 0) != EINVAL);
-		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0));
+		ret = doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0);
+		if (node->codec_mask & STATELESS_DECODER) {
+			fail_on_test(ret != ENOENT);
+			test_streaming = false;
+			break;
+		}
+		fail_on_test(ret);
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
