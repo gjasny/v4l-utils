@@ -629,11 +629,11 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		if (!memcmp(&f1.fmt.pix, &f2.fmt.pix, sizeof(f1.fmt.pix)))
 			return true;
-		printf("\t\tG_FMT:     %dx%d, %x, %d, %d, %d, %d, %d, %d, %x\n",
-			pix1.width, pix1.height, pix1.pixelformat, pix1.field, pix1.bytesperline,
+		printf("\t\tG_FMT:     %dx%d, %s, %d, %d, %d, %d, %d, %d, %x\n",
+			pix1.width, pix1.height, fcc2s(pix1.pixelformat).c_str(), pix1.field, pix1.bytesperline,
 			pix1.sizeimage, pix1.colorspace, pix1.ycbcr_enc, pix1.quantization, pix1.priv);
-		printf("\t\tTRY/S_FMT: %dx%d, %x, %d, %d, %d, %d, %d, %d, %x\n",
-			pix2.width, pix2.height, pix2.pixelformat, pix2.field, pix2.bytesperline,
+		printf("\t\tTRY/S_FMT: %dx%d, %s, %d, %d, %d, %d, %d, %d, %x\n",
+			pix2.width, pix2.height, fcc2s(pix2.pixelformat).c_str(), pix2.field, pix2.bytesperline,
 			pix2.sizeimage, pix2.colorspace, pix2.ycbcr_enc, pix2.quantization, pix2.priv);
 		return false;
 	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
