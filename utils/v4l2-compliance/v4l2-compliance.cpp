@@ -868,6 +868,8 @@ static std::string make_devname(const char *device, const char *devname,
 
 	unsigned i, ent_id, iface_id = 0;
 
+	std::string result(device);
+
 	if (ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology))
 		goto err;
 
@@ -896,17 +898,14 @@ static std::string make_devname(const char *device, const char *devname,
 	if (i >= topology.num_interfaces)
 		goto err;
 
-	static char newdev[32];
-	sprintf(newdev, "/dev/char/%d:%d",
-		ifaces[i].devnode.major, ifaces[i].devnode.minor);
-	device = newdev;
+	result = mi_media_get_device(ifaces[i].devnode.major, ifaces[i].devnode.minor);
 	
 err:
 	delete [] ents;
 	delete [] links;
 	delete [] ifaces;
 	close(media_fd);
-	return device;
+	return result;
 }
 
 void testNode(struct node &node, struct node &expbuf_node, media_type type,
