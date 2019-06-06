@@ -618,6 +618,9 @@ int testExtendedControls(struct node *node)
 
 		if (is_vivid && V4L2_CTRL_ID2WHICH(qctrl.id) == V4L2_CTRL_CLASS_VIVID)
 			continue;
+		// Skip V4L2_CID_MPEG_VIDEO_FWHT_PARAMS for now
+		if (qctrl.id == (V4L2_CID_MPEG_BASE + 292))
+			continue;
 
 		info("checking extended control '%s' (0x%08x)\n", qctrl.name, qctrl.id);
 		ctrl.id = qctrl.id;
@@ -729,6 +732,9 @@ int testExtendedControls(struct node *node)
 		struct v4l2_ext_control ctrl;
 
 		if (qctrl.flags & (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_WRITE_ONLY))
+			continue;
+		// Skip V4L2_CID_MPEG_VIDEO_FWHT_PARAMS for now
+		if (qctrl.id == (V4L2_CID_MPEG_BASE + 292))
 			continue;
 		ctrl.id = qctrl.id;
 		ctrl.size = 0;
