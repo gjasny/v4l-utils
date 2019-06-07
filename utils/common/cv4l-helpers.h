@@ -769,25 +769,25 @@ public:
 	{
 		return v4l_queue_mmap_bufs(fd->g_v4l_fd(), this, from);
 	}
-	int munmap_bufs(cv4l_fd *fd)
+	int munmap_bufs(cv4l_fd *fd, unsigned from = 0)
 	{
-		return v4l_queue_munmap_bufs(fd->g_v4l_fd(), this);
+		return v4l_queue_munmap_bufs(fd->g_v4l_fd(), this, from);
 	}
 	int alloc_bufs(cv4l_fd *fd, unsigned from = 0)
 	{
 		return v4l_queue_alloc_bufs(fd->g_v4l_fd(), this, from);
 	}
-	int free_bufs()
+	int free_bufs(unsigned from = 0)
 	{
-		return v4l_queue_free_bufs(this);
+		return v4l_queue_free_bufs(this, from);
 	}
 	int obtain_bufs(cv4l_fd *fd, unsigned from = 0)
 	{
 		return v4l_queue_obtain_bufs(fd->g_v4l_fd(), this, from);
 	}
-	int release_bufs(cv4l_fd *fd)
+	int release_bufs(cv4l_fd *fd, unsigned from = 0)
 	{
-		return v4l_queue_release_bufs(fd->g_v4l_fd(), this);
+		return v4l_queue_release_bufs(fd->g_v4l_fd(), this, from);
 	}
 	bool has_expbuf(cv4l_fd *fd)
 	{

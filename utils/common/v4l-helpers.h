@@ -1575,7 +1575,7 @@ static inline int v4l_queue_mmap_bufs(struct v4l_fd *f,
 	if (q->memory != V4L2_MEMORY_MMAP && q->memory != V4L2_MEMORY_DMABUF)
 		return 0;
 
-	for (b = 0; b < v4l_queue_g_buffers(q); b++) {
+	for (b = from; b < v4l_queue_g_buffers(q); b++) {
 		for (p = 0; p < v4l_queue_g_num_planes(q); p++) {
 			void *m = MAP_FAILED;
 
@@ -1593,7 +1593,8 @@ static inline int v4l_queue_mmap_bufs(struct v4l_fd *f,
 	}
 	return 0;
 }
-static inline int v4l_queue_munmap_bufs(struct v4l_fd *f, struct v4l_queue *q)
+static inline int v4l_queue_munmap_bufs(struct v4l_fd *f, struct v4l_queue *q,
+					unsigned from)
 {
 	unsigned b, p;
 	int ret = 0;
@@ -1601,7 +1602,7 @@ static inline int v4l_queue_munmap_bufs(struct v4l_fd *f, struct v4l_queue *q)
 	if (q->memory != V4L2_MEMORY_MMAP && q->memory != V4L2_MEMORY_DMABUF)
 		return 0;
 
-	for (b = 0; b < v4l_queue_g_buffers(q); b++) {
+	for (b = from; b < v4l_queue_g_buffers(q); b++) {
 		for (p = 0; p < v4l_queue_g_num_planes(q); p++) {
 			void *m = v4l_queue_g_mmapping(q, b, p);
 
@@ -1627,7 +1628,7 @@ static inline int v4l_queue_alloc_bufs(struct v4l_fd *f,
 
 	if (q->memory != V4L2_MEMORY_USERPTR)
 		return 0;
-	for (b = 0; b < v4l_queue_g_buffers(q); b++) {
+	for (b = from; b < v4l_queue_g_buffers(q); b++) {
 		for (p = 0; p < v4l_queue_g_num_planes(q); p++) {
 			void *m = malloc(v4l_queue_g_length(q, p));
 
@@ -1639,13 +1640,13 @@ static inline int v4l_queue_alloc_bufs(struct v4l_fd *f,
 	return 0;
 }
 
-static inline int v4l_queue_free_bufs(struct v4l_queue *q)
+static inline int v4l_queue_free_bufs(struct v4l_queue *q, unsigned from)
 {
 	unsigned b, p;
 
 	if (q->memory != V4L2_MEMORY_USERPTR)
 		return 0;
-	for (b = 0; b < v4l_queue_g_buffers(q); b++) {
+	for (b = from; b < v4l_queue_g_buffers(q); b++) {
 		for (p = 0; p < v4l_queue_g_num_planes(q); p++) {
 			free(v4l_queue_g_userptr(q, b, p));
 			v4l_queue_s_userptr(q, b, p, NULL);
@@ -1662,11 +1663,12 @@ static inline int v4l_queue_obtain_bufs(struct v4l_fd *f,
 	return v4l_queue_mmap_bufs(f, q, from);
 }
 
-static inline int v4l_queue_release_bufs(struct v4l_fd *f, struct v4l_queue *q)
+static inline int v4l_queue_release_bufs(struct v4l_fd *f, struct v4l_queue *q,
+					 unsigned from)
 {
 	if (q->memory == V4L2_MEMORY_USERPTR)
-		return v4l_queue_free_bufs(q);
-	return v4l_queue_munmap_bufs(f, q);
+		return v4l_queue_free_bufs(q, from);
+	return v4l_queue_munmap_bufs(f, q, from);
 }
 
 
@@ -1723,7 +1725,7 @@ static inline void v4l_queue_close_exported_fds(struct v4l_queue *q)
 static inline void v4l_queue_free(struct v4l_fd *f, struct v4l_queue *q)
 {
 	v4l_ioctl(f, VIDIOC_STREAMOFF, &q->type);
-	v4l_queue_release_bufs(f, q);
+	v4l_queue_release_bufs(f, q, 0);
 	v4l_queue_close_exported_fds(q);
 	v4l_queue_reqbufs(f, q, 0);
 }
