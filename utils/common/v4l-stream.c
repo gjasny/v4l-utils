@@ -194,6 +194,7 @@ struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned visible_width, unsigned v
 	ctx->state.visible_width = visible_width;
 	ctx->state.visible_height = visible_height;
 	ctx->state.stride = coded_width * info->bytesperline_mult;
+	ctx->state.ref_stride = coded_width * info->luma_alpha_step;
 	ctx->state.info = info;
 	ctx->field = field;
 	ctx->state.colorspace = colorspace;
@@ -202,8 +203,13 @@ struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned visible_width, unsigned v
 	ctx->state.quantization = quantization;
 	ctx->flags = 0;
 	chroma_div = info->width_div * info->height_div;
-	ctx->size = 2 * size + 2 * size / chroma_div;
-	ctx->state.ref_frame.luma = malloc(ctx->size);
+	ctx->size = size;
+	if (info->components_num == 4)
+		ctx->size = 2 * size + 2 * (size / chroma_div);
+	else if (info->components_num == 3)
+		ctx->size = size + 2 * (size / chroma_div);
+	ctx->state.ref_frame.buf = malloc(ctx->size);
+	ctx->state.ref_frame.luma = ctx->state.ref_frame.buf;
 	ctx->comp_max_size = ctx->size + sizeof(struct fwht_cframe_hdr);
 	ctx->state.compressed_frame = malloc(ctx->comp_max_size);
 	if (!ctx->state.ref_frame.luma || !ctx->state.compressed_frame) {
@@ -212,9 +218,19 @@ struct codec_ctx *fwht_alloc(unsigned pixfmt, unsigned visible_width, unsigned v
 		free(ctx);
 		return NULL;
 	}
-	ctx->state.ref_frame.cb = ctx->state.ref_frame.luma + size;
-	ctx->state.ref_frame.cr = ctx->state.ref_frame.cb + size / chroma_div;
-	ctx->state.ref_frame.alpha = ctx->state.ref_frame.cr + size / chroma_div;
+	if (info->components_num >= 3) {
+		ctx->state.ref_frame.cb = ctx->state.ref_frame.luma + size;
+		ctx->state.ref_frame.cr = ctx->state.ref_frame.cb + size / chroma_div;
+	} else {
+		ctx->state.ref_frame.cb = NULL;
+		ctx->state.ref_frame.cr = NULL;
+	}
+
+	if (info->components_num == 4)
+		ctx->state.ref_frame.alpha =
+			ctx->state.ref_frame.cr + size / chroma_div;
+	else
+		ctx->state.ref_frame.alpha = NULL;
 	ctx->state.gop_size = 10;
 	ctx->state.gop_cnt = 0;
 	return ctx;
@@ -234,10 +250,50 @@ __u8 *fwht_compress(struct codec_ctx *ctx, __u8 *buf, unsigned uncomp_size, unsi
 	return ctx->state.compressed_frame;
 }
 
+static void copy_cap_to_ref(const u8 *cap, const struct v4l2_fwht_pixfmt_info *info,
+			    struct v4l2_fwht_state *state)
+{
+	int plane_idx;
+	u8 *p_ref = state->ref_frame.buf;
+	unsigned int cap_stride = state->stride;
+	unsigned int ref_stride = state->ref_stride;
+
+	for (plane_idx = 0; plane_idx < info->planes_num; plane_idx++) {
+		int i;
+		unsigned int h_div = (plane_idx == 1 || plane_idx == 2) ?
+			info->height_div : 1;
+		const u8 *row_cap = cap;
+		u8 *row_ref = p_ref;
+
+		if (info->planes_num == 3 && plane_idx == 1) {
+			cap_stride /= 2;
+			ref_stride /= 2;
+		}
+
+		if (plane_idx == 1 &&
+		    (info->id == V4L2_PIX_FMT_NV24 ||
+		     info->id == V4L2_PIX_FMT_NV42)) {
+			cap_stride *= 2;
+			ref_stride *= 2;
+		}
+
+		for (i = 0; i < state->visible_height / h_div; i++) {
+			memcpy(row_ref, row_cap, ref_stride);
+			row_ref += ref_stride;
+			row_cap += cap_stride;
+		}
+		cap += cap_stride * (state->coded_height / h_div);
+		p_ref += ref_stride * (state->coded_height / h_div);
+	}
+}
+
 bool fwht_decompress(struct codec_ctx *ctx, __u8 *p_in, unsigned comp_size,
 		     __u8 *p_out, unsigned uncomp_size)
 {
 	memcpy(&ctx->state.header, p_in, sizeof(ctx->state.header));
 	p_in += sizeof(ctx->state.header);
-	return !v4l2_fwht_decode(&ctx->state, p_in, p_out);
+	if (v4l2_fwht_decode(&ctx->state, p_in, p_out))
+		return false;
+	copy_cap_to_ref(p_out, ctx->state.info, &ctx->state);
+	return true;
 }
