@@ -1421,7 +1421,6 @@ static int testBasicCrop(struct node *node, unsigned type)
 	};
 	struct v4l2_selection sel_def;
 	struct v4l2_selection sel_bounds;
-	int s_sel_ret = EINVAL;
 
 	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel_crop));
 	fail_on_test(!sel_crop.r.width || !sel_crop.r.height);
@@ -1446,7 +1445,8 @@ static int testBasicCrop(struct node *node, unsigned type)
 
 	// Check handling of invalid type.
 	sel_crop.type = 0xff;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_crop) != s_sel_ret);
+	int s_sel_ret = doioctl(node, VIDIOC_S_SELECTION, &sel_crop);
+	fail_on_test(s_sel_ret != EINVAL && s_sel_ret != ENOTTY);
 	// Check handling of invalid target.
 	sel_crop.type = type;
 	sel_crop.target = 0xffff;
@@ -1556,7 +1556,6 @@ static int testBasicCompose(struct node *node, unsigned type)
 	struct v4l2_selection sel_def;
 	struct v4l2_selection sel_bounds;
 	struct v4l2_selection sel_padded;
-	int s_sel_ret = EINVAL;
 	int ret;
 
 	fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel_compose));
@@ -1590,7 +1589,8 @@ static int testBasicCompose(struct node *node, unsigned type)
 
 	// Check handling of invalid type.
 	sel_compose.type = 0xff;
-	fail_on_test(doioctl(node, VIDIOC_S_SELECTION, &sel_compose) != s_sel_ret);
+	int s_sel_ret = doioctl(node, VIDIOC_S_SELECTION, &sel_compose);
+	fail_on_test(s_sel_ret != EINVAL && s_sel_ret != ENOTTY);
 	// Check handling of invalid target.
 	sel_compose.type = type;
 	sel_compose.target = 0xffff;
