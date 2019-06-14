@@ -119,7 +119,7 @@ void vidcap_cmd(int ch, char *optarg)
 			frmsize.pixel_format = v4l2_fourcc(optarg[0], optarg[1],
 							   optarg[2], optarg[3]);
 			if (be_pixfmt)
-				frmsize.pixel_format |= 1 << 31;
+				frmsize.pixel_format |= 1U << 31;
 		} else if (isdigit(optarg[0])) {
 			frmsize.pixel_format = strtol(optarg, 0L, 0);
 		} else {
@@ -151,7 +151,7 @@ void vidcap_cmd(int ch, char *optarg)
 						v4l2_fourcc(value[0], value[1],
 							    value[2], value[3]);
 					if (be_pixfmt)
-						frmival.pixel_format |= 1 << 31;
+						frmival.pixel_format |= 1U << 31;
 				} else if (isdigit(optarg[0])) {
 					frmival.pixel_format = strtol(value, 0L, 0);
 				} else {

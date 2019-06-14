@@ -51,7 +51,7 @@ static QString pixfmt2s(unsigned id)
 	pixfmt += (char)((id >> 8) & 0x7f);
 	pixfmt += (char)((id >> 16) & 0x7f);
 	pixfmt += (char)((id >> 24) & 0x7f);
-	if (id & (1 << 31))
+	if (id & (1U << 31))
 		pixfmt += "-BE";
 	return pixfmt;
 }

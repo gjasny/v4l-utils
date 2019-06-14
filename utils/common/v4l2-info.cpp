@@ -147,7 +147,7 @@ std::string fcc2s(__u32 val)
 	s += (val >> 8) & 0x7f;
 	s += (val >> 16) & 0x7f;
 	s += (val >> 24) & 0x7f;
-	if (val & (1 << 31))
+	if (val & (1U << 31))
 		s += "-BE";
 	return s;
 }

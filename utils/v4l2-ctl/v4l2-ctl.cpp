@@ -780,7 +780,7 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 					v4l2_fourcc(value[0], value[1],
 						    value[2], value[3]);
 				if (be_pixfmt)
-					pixelformat |= 1 << 31;
+					pixelformat |= 1U << 31;
 			} else if (isdigit(value[0])) {
 				pixelformat = strtol(value, 0L, 0);
 			} else {
