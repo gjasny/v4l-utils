@@ -1318,9 +1318,16 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 		if (node->is_m2m) {
 			if (node->codec_mask & STATEFUL_DECODER) {
 				int fd_flags = fcntl(node->g_fd(), F_GETFL);
+				struct timeval tv = { 1, 0 };
+				fd_set efds;
 				v4l2_event ev;
 
 				fcntl(node->g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
+				FD_ZERO(&efds);
+				FD_SET(node->g_fd(), &efds);
+				ret = select(node->g_fd() + 1, NULL, NULL, &efds, &tv);
+				fail_on_test(ret < 0);
+				fail_on_test(ret == 0);
 				fail_on_test(node->dqevent(ev));
 				fcntl(node->g_fd(), F_SETFL, fd_flags);
 				fail_on_test(ev.type != V4L2_EVENT_SOURCE_CHANGE);
