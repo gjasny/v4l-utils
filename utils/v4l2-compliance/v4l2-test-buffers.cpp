@@ -880,12 +880,12 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 	node->g_fmt(fmt_q, q.g_type());
 	if (node->buftype_pixfmts[q.g_type()][fmt_q.g_pixelformat()] &
 		V4L2_FMT_FLAG_COMPRESSED)
-		valid_output_flags = V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+		valid_output_flags = V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 	if (node->is_m2m) {
 		node->g_fmt(fmt_q, m2m_q.g_type());
 		if (node->buftype_pixfmts[m2m_q.g_type()][fmt_q.g_pixelformat()] &
 			V4L2_FMT_FLAG_COMPRESSED)
-			valid_output_flags = V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+			valid_output_flags = V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 
 		struct v4l2_event_subscription sub = { 0 };
 
@@ -970,10 +970,11 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 		if (ret != EAGAIN) {
 			fail_on_test(ret);
 			if (show_info)
-				printf("\t\t%s Buffer: %d Sequence: %d Field: %s Size: %d Timestamp: %ld.%06lds\n",
+				printf("\t\t%s Buffer: %d Sequence: %d Field: %s Size: %d Flags: %s Timestamp: %ld.%06lds\n",
 				       v4l_type_is_output(buf.g_type()) ? "Out" : "Cap",
 				       buf.g_index(), buf.g_sequence(),
 				       field2s(buf.g_field()).c_str(), buf.g_bytesused(),
+				       bufferflags2s(buf.g_flags()).c_str(),
 				       buf.g_timestamp().tv_sec, buf.g_timestamp().tv_usec);
 			fail_on_test(buf.check(q, last_seq));
 			if (!show_info && !no_progress) {
