@@ -646,6 +646,7 @@ enum Option {
 	OptFeatSinkHasARCTx,
 	OptFeatSourceHasARCRx,
 	OptStressTestPowerCycle,
+	OptTestPowerCycle,
 	OptVendorCommand = 508,
 	OptVendorCommandWithID,
 	OptVendorRemoteButtonDown,
@@ -748,6 +749,7 @@ static struct option long_options[] = {
 	{ "vendor-command", required_argument, 0, OptVendorCommand }, \
 	{ "custom-command", required_argument, 0, OptCustomCommand }, \
 
+	{ "test-power-cycle", no_argument, 0, OptTestPowerCycle }, \
 	{ "stress-test-power-cycle", required_argument, 0, OptStressTestPowerCycle }, \
 
 	{ 0, 0, 0, 0 }
@@ -830,8 +832,12 @@ static void usage(void)
 	       "                           Use - for stdout.\n"
 	       "  --analyze-pin <from>     Analyze the low-level CEC pin changes from the file <from>.\n"
 	       "                           Use - for stdin.\n"
-	       "  --stress-test-power-cycle <count>\n"
-	       "                           Powercycle display <count> times. If 0, then never stop.\n"
+	       "  --test-power-cycle       Test power cycle behavior of the display.\n"
+	       "  --stress-test-power-cycle cnt=<count>[,max-sleep=<secs>]\n"
+	       "                           Power cycle display <count> times. If 0, then never stop.\n"
+	       "                           If <secs> is non-zero (0 is the default), then sleep for\n"
+	       "                           a random number of seconds between 0 and <secs> before\n"
+	       "                           each Standby or Image View On message.\n"
 	       "\n"
 	       CEC_USAGE
 	       "\n"
@@ -1620,7 +1626,7 @@ err:
 	exit(1);
 }
 
-static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
+static bool wait_for_pwr_state(struct node &node, unsigned from, bool on, unsigned &no_reply)
 {
 	struct cec_msg msg;
 	__u8 pwr;
@@ -1639,26 +1645,147 @@ static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
 	if (msg.rx_status & CEC_RX_STATUS_OK) {
 		cec_ops_report_power_status(&msg, &pwr);
 		return pwr == (on ? CEC_OP_POWER_STATUS_ON : CEC_OP_POWER_STATUS_STANDBY);
+	} else {
+		no_reply++;
 	}
 	return !on;
 }
 
-static void stress_test_power_cycle(struct node &node, unsigned from, unsigned cnt)
+static void test_power_cycle(struct node &node, unsigned from)
+{
+	struct cec_msg msg;
+	unsigned tries;
+	unsigned no_reply;
+	__u8 wakeup_la;
+	int ret;
+
+	struct cec_log_addrs laddrs = { };
+	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+	from = laddrs.log_addr[0] & 0xf;
+
+	if (!laddrs.num_log_addrs) {
+		fprintf(stderr, "Adapter is unconfigured, cannot perform test\n");
+		return;
+	}
+	if (!laddrs.log_addr_mask) {
+		printf("No Logical Addresses claimed, assume TV is in Standby\n");
+	} else {
+		printf("Transmit Standby to TV\n");
+		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+		cec_msg_standby(&msg);
+		ret = doioctl(&node, CEC_TRANSMIT, &msg);
+		if (ret) {
+			fprintf(stderr, "Standby Transmit failed: %s\n", strerror(ret));
+			exit(1);
+		}
+
+		tries = no_reply = 0;
+		while (!wait_for_pwr_state(node, from, false, no_reply)) {
+			sleep(1);
+			if (++tries > 60) {
+				fprintf(stderr, "Could not put display in standby\n");
+				exit(1);
+			}
+		}
+	}
+
+	for (unsigned iter = 0; iter <= 21; iter++) {
+		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+		if (laddrs.num_log_addrs)
+			wakeup_la = from;
+		else
+			wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
+		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
+		cec_msg_image_view_on(&msg);
+		ret = doioctl(&node, CEC_TRANSMIT, &msg);
+		if (ret) {
+			fprintf(stderr, "Image View On from Unregistered failed: %s\n", strerror(ret));
+			exit(1);
+		}
+		tries = no_reply = 0;
+		while (!wait_for_pwr_state(node, from, true, no_reply)) {
+			sleep(1);
+			if (++tries > 60)
+				break;
+		}
+
+		if (tries > 60 && wakeup_la == CEC_LOG_ADDR_UNREGISTERED) {
+			wakeup_la = from;
+			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
+			cec_msg_image_view_on(&msg);
+			ret = doioctl(&node, CEC_TRANSMIT, &msg);
+			if (ret) {
+				fprintf(stderr, "Image View On from %s failed: %s\n",
+					la2s(wakeup_la), strerror(ret));
+				exit(1);
+			}
+			tries = no_reply = 0;
+			while (!wait_for_pwr_state(node, from, true, no_reply)) {
+				sleep(1);
+				if (++tries > 60) {
+					fprintf(stderr, "Unable to wake up TV\n");
+					exit(1);
+				}
+			}
+		}
+		printf("Woke up TV after %d seconds using Image View On from LA %s",
+		       tries, la2s(wakeup_la));
+		if (no_reply)
+			printf(" (%d Give Device Power Status messages ignored", no_reply);
+		printf("\n");
+
+		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+		from = laddrs.log_addr[0] & 0xf;
+
+		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+		cec_msg_standby(&msg);
+		ret = doioctl(&node, CEC_TRANSMIT, &msg);
+		if (ret) {
+			fprintf(stderr, "Standby Transmit failed: %s\n", strerror(ret));
+			exit(1);
+		}
+
+		tries = no_reply = 0;
+		while (!wait_for_pwr_state(node, from, false, no_reply)) {
+			sleep(1);
+			if (++tries > 60) {
+				fprintf(stderr, "Could not put display in standby\n");
+				exit(1);
+			}
+		}
+		printf("Put TV in Standby after %d seconds from LA %s",
+		       tries, la2s(from));
+		if (no_reply)
+			printf(" (%d Give Device Power Status messages ignored", no_reply);
+		printf("\n");
+		unsigned secs = iter <= 10 ? iter : 10 + 10 * (iter - 10);
+		printf("Sleep %d seconds\n", secs);
+		sleep(secs);
+	}
+}
+
+static void stress_test_power_cycle(struct node &node, unsigned from,
+				    unsigned cnt, unsigned max_sleep)
 {
 	struct cec_msg msg;
 	unsigned tries = 0;
 	unsigned iter = 0;
+	unsigned no_reply = 0;
+	unsigned mod_usleep = 0;
 	int ret;
+
+	if (max_sleep)
+		mod_usleep = 1000000 * max_sleep + 1;
 
 	if (from == CEC_LOG_ADDR_UNREGISTERED)
 		from = CEC_LOG_ADDR_PLAYBACK_1;
 
-	while (!wait_for_pwr_state(node, from, true)) {
-		if (++tries > 10) {
+	while (!wait_for_pwr_state(node, from, true, no_reply)) {
+		if (++tries > 50) {
 			fprintf(stderr, "Could not wake up display\n");
 			exit(1);
 		}
-		sleep(5);
+		sleep(1);
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_image_view_on(&msg);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
@@ -1673,9 +1800,19 @@ static void stress_test_power_cycle(struct node &node, unsigned from, unsigned c
 	from = laddrs.log_addr[0] & 0xf;
 
 	for (;;) {
+		unsigned usecs1 = mod_usleep ? random() % mod_usleep : 0;
+		unsigned usecs2 = mod_usleep ? random() % mod_usleep : 0;
+
 		iter++;
 
-		printf("Transmit Standby (iteration %u)\n", iter);
+		if (mod_usleep)
+			printf("Sleep %.2fs, then transmit Standby ", usecs1 / 1000000.0);
+		else
+			printf("Transmit Standby ");
+		printf("(iteration %u)\n", iter);
+
+		usleep(usecs1);
+
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_BROADCAST);
 		cec_msg_standby(&msg);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
@@ -1684,23 +1821,29 @@ static void stress_test_power_cycle(struct node &node, unsigned from, unsigned c
 			exit(1);
 		}
 
-		tries = 0;
-		while (!wait_for_pwr_state(node, from, false)) {
-			sleep(5);
-			if (++tries > 10) {
+		tries = no_reply = 0;
+		while (!wait_for_pwr_state(node, from, false, no_reply)) {
+			sleep(1);
+			if (++tries > 50) {
 				fprintf(stderr, "Could not put display in standby\n");
 				exit(1);
 			}
 		}
+		usleep(usecs2);
 
-		printf("Transmit Image View On (iteration %u)\n", iter);
-		tries = 0;
-		while (!wait_for_pwr_state(node, from, true)) {
-			if (++tries > 10) {
+		if (mod_usleep)
+			printf("Sleep %.2fs, then transmit Image View On ", usecs2 / 1000000.0);
+		else
+			printf("Transmit Image View On ");
+		printf("(iteration %u)\n", iter);
+
+		tries = no_reply = 0;
+		while (!wait_for_pwr_state(node, from, true, no_reply)) {
+			if (++tries > 50) {
 				fprintf(stderr, "Display is stuck in standby\n");
 				exit(1);
 			}
-			sleep(5);
+			sleep(1);
 			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 			cec_msg_image_view_on(&msg);
 			ret = doioctl(&node, CEC_TRANSMIT, &msg);
@@ -1824,6 +1967,7 @@ int main(int argc, char **argv)
 	__u32 monitor_time = 0;
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	unsigned int pwr_cycle_cnt = 0;
+	unsigned int max_sleep = 0;
 	__u16 phys_addr;
 	__u8 from = 0, to = 0, first_to = 0xff;
 	__u8 dev_features = 0;
@@ -2194,9 +2338,28 @@ int main(int argc, char **argv)
 			list_devices();
 			break;
 
-		case OptStressTestPowerCycle:
-			pwr_cycle_cnt = strtoul(optarg, NULL, 0);
+		case OptStressTestPowerCycle: {
+			static const char *arg_names[] = {
+				"cnt",
+				"max-sleep",
+				NULL
+			};
+			char *value, *subs = optarg;
+
+			while (*subs != '\0') {
+				switch (parse_subopt(&subs, arg_names, &value)) {
+				case 0:
+					pwr_cycle_cnt = strtoul(value, 0L, 0);
+					break;
+				case 1:
+					max_sleep = strtoul(value, 0L, 0);
+					break;
+				default:
+					exit(1);
+				}
+			}
 			break;
+		}
 
 		default:
 			if (ch >= OptHelpAll) {
@@ -2536,8 +2699,10 @@ int main(int argc, char **argv)
 	if (options[OptNonBlocking])
 		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
 
+	if (options[OptTestPowerCycle])
+		test_power_cycle(node, from);
 	if (options[OptStressTestPowerCycle])
-		stress_test_power_cycle(node, from, pwr_cycle_cnt);
+		stress_test_power_cycle(node, from, pwr_cycle_cnt, max_sleep);
 skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll] ||
 	    options[OptMonitorPin] || options[OptStorePin])
