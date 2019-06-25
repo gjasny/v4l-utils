@@ -53,8 +53,8 @@
        __result; })
 #endif
 
-/* See drivers/media/rc/ir-lirc-codec.c line 23 */
-#define LIRCBUF_SIZE	512
+/* See drivers/media/rc/lirc_dev.c line 22 */
+#define LIRCBUF_SIZE 1024
 #define IR_DEFAULT_TIMEOUT 125000
 
 const char *argp_program_version = "IR raw version " V4L_UTILS_VERSION;
