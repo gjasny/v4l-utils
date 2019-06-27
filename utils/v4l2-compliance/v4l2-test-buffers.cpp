@@ -49,6 +49,7 @@
 #define VIVID_CID_REQ_VALIDATE_ERROR	(VIVID_CID_VIVID_BASE + 72)
 
 static struct cv4l_fmt cur_fmt;
+static struct cv4l_fmt cur_m2m_fmt;
 static int stream_from_fd = -1;
 static bool stream_use_hdr;
 
@@ -261,42 +262,42 @@ public:
 			fill_output_buffer(q, *this);
 		return qbuf(node, false);
 	}
-	int check(const cv4l_queue &q, enum QueryBufMode mode)
+	int check(const cv4l_queue &q, enum QueryBufMode mode, bool is_m2m = false)
 	{
-		int ret = check(q.g_type(), q.g_memory(), g_index(), mode, last_seq);
+		int ret = check(q.g_type(), q.g_memory(), g_index(), mode, last_seq, is_m2m);
 
 		if (!ret)
 			ret = check_planes(q, mode);
 		return ret;
 	}
-	int check(const cv4l_queue &q, enum QueryBufMode mode, __u32 index)
+	int check(const cv4l_queue &q, enum QueryBufMode mode, __u32 index, bool is_m2m = false)
 	{
-		int ret = check(q.g_type(), q.g_memory(), index, mode, last_seq);
+		int ret = check(q.g_type(), q.g_memory(), index, mode, last_seq, is_m2m);
 
 		if (!ret)
 			ret = check_planes(q, mode);
 		return ret;
 	}
-	int check(const cv4l_queue &q, buf_seq &seq)
+	int check(const cv4l_queue &q, buf_seq &seq, bool is_m2m = false)
 	{
-		int ret = check(q.g_type(), q.g_memory(), g_index(), Dequeued, seq);
+		int ret = check(q.g_type(), q.g_memory(), g_index(), Dequeued, seq, is_m2m);
 
 		if (!ret)
 			ret = check_planes(q, Dequeued);
 		return ret;
 	}
-	int check(enum QueryBufMode mode, __u32 index)
+	int check(enum QueryBufMode mode, __u32 index, bool is_m2m = false)
 	{
-		return check(g_type(), g_memory(), index, mode, last_seq);
+		return check(g_type(), g_memory(), index, mode, last_seq, is_m2m);
 	}
-	int check(buf_seq &seq)
+	int check(buf_seq &seq, bool is_m2m = false)
 	{
-		return check(g_type(), g_memory(), g_index(), Dequeued, seq);
+		return check(g_type(), g_memory(), g_index(), Dequeued, seq, is_m2m);
 	}
 
 private:
 	int check(unsigned type, unsigned memory, unsigned index,
-			enum QueryBufMode mode, struct buf_seq &seq);
+			enum QueryBufMode mode, struct buf_seq &seq, bool is_m2m);
 	int check_planes(const cv4l_queue &q, enum QueryBufMode mode);
 	void fill_output_buf(bool fill_bytesused);
 };
@@ -346,13 +347,14 @@ int buffer::check_planes(const cv4l_queue &q, enum QueryBufMode mode)
 }
 
 int buffer::check(unsigned type, unsigned memory, unsigned index,
-			enum QueryBufMode mode, struct buf_seq &seq)
+		  enum QueryBufMode mode, struct buf_seq &seq, bool is_m2m)
 {
 	unsigned timestamp = g_timestamp_type();
 	bool ts_copy = ts_is_copy();
 	unsigned timestamp_src = g_timestamp_src();
 	unsigned frame_types = 0;
 	unsigned buf_states = 0;
+	const struct cv4l_fmt &fmt = is_m2m ? cur_m2m_fmt : cur_fmt;
 
 	fail_on_test(g_type() != type);
 	fail_on_test(g_memory() == 0);
@@ -422,7 +424,7 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 		if (v4l_type_is_video(g_type())) {
 			fail_on_test(g_field() == V4L2_FIELD_ALTERNATE);
 			fail_on_test(g_field() == V4L2_FIELD_ANY);
-			if (cur_fmt.g_field() == V4L2_FIELD_ALTERNATE) {
+			if (fmt.g_field() == V4L2_FIELD_ALTERNATE) {
 				fail_on_test(g_field() != V4L2_FIELD_BOTTOM &&
 						g_field() != V4L2_FIELD_TOP);
 				fail_on_test(g_field() == seq.last_field);
@@ -438,7 +440,7 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 							g_sequence(), seq.last_seq + 1);
 				}
 			} else {
-				fail_on_test(g_field() != cur_fmt.g_field());
+				fail_on_test(g_field() != fmt.g_field());
 				if ((int)g_sequence() != seq.last_seq + 1)
 					warn("got sequence number %u, expected %u\n",
 							g_sequence(), seq.last_seq + 1);
@@ -815,6 +817,7 @@ static int setupM2M(struct node *node, cv4l_queue &q, bool init = true)
 		cv4l_fmt fmt(q.g_type());
 
 		node->g_fmt(fmt);
+		cur_m2m_fmt = fmt;
 		if (init) {
 			last_m2m_seq.last_field = fmt.g_field();
 			if (v4l_type_is_output(q.g_type()))
@@ -1055,11 +1058,12 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 			       buf.g_timestamp().tv_sec, buf.g_timestamp().tv_usec);
 		fail_on_test(ret);
 		if (v4l_type_is_capture(buf.g_type()) && buf.g_bytesused())
-			fail_on_test(buf.check(m2m_q, last_m2m_seq));
+			fail_on_test(buf.check(m2m_q, last_m2m_seq, true));
 		if (v4l_type_is_capture(buf.g_type()) && buf.ts_is_copy() && buf.g_bytesused()) {
 			fail_on_test(buffer_info.find(buf.g_timestamp()) == buffer_info.end());
 			struct v4l2_buffer &orig_buf = buffer_info[buf.g_timestamp()];
-			fail_on_test(buf.g_field() != orig_buf.field);
+			if (cur_fmt.g_field() == cur_m2m_fmt.g_field())
+				fail_on_test(buf.g_field() != orig_buf.field);
 			fail_on_test((buf.g_flags() & valid_output_flags) !=
 					(orig_buf.flags & valid_output_flags));
 			if (buf.g_flags() & V4L2_BUF_FLAG_TIMECODE)
