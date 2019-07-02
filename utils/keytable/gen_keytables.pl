@@ -82,7 +82,17 @@ sub parse_file($$)
 
 	printf "processing file $filename\n" if ($debug);
 	open IN, "<$filename" or die "couldn't find $filename";
-	while (<IN>) {
+	# read the entire file
+	my $file = do { local $/ = undef; <IN> };
+	close IN;
+
+	# remove comments
+	$file =~ s,/\*.*?\*/,,sg;
+	$file =~ s,//[^\n]*,,sg;
+
+	my @lines = split /\n/, $file;
+
+	foreach (@lines) {
 		if (m/struct\s+rc_map_table\s+(\w[\w\d_]+)/) {
 			flush($filename, $legacy);
 
@@ -140,7 +150,6 @@ sub parse_file($$)
 			}
 		}
 	}
-	close IN;
 
 	flush($filename, $legacy);
 
