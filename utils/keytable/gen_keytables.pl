@@ -76,6 +76,7 @@ sub parse_file($$)
 	my $legacy = shift;
 
 	my $num_tables = 0;
+	my %scancodes = ();
 	$warn = 0;
 
 	next if ($filename =~ m/\.mod.c/);
@@ -101,6 +102,7 @@ sub parse_file($$)
 			$keyname =~ s/_table$//;
 			$read = 1;
 			$num_tables++;
+			%scancodes = ();
 			next;
 		}
 		if (m/struct\s+rc_map_list.*=\s+{/) {
@@ -142,7 +144,15 @@ sub parse_file($$)
 
 		if ($read) {
 			if (m/(0x[\dA-Fa-f]+)[\s\,]+(KEY|BTN)(\_[^\s\,\}]+)/) {
-				$out .= "$1 = \"$2$3\"\n";
+				my $scancode = hex($1);
+				my $keycode = "$2$3";
+
+				if (exists($scancodes{$scancode})) {
+					printf STDERR "WARNING: duplicate scancode $1 in file $filename, set to $keycode and $scancodes{$scancode}\n";
+				} else {
+					$out .= "$1 = \"$keycode\"\n";
+					$scancodes{$scancode} = $keycode;
+				}
 				next;
 			}
 			if (m/\}/) {
