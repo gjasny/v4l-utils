@@ -1659,14 +1659,15 @@ static void test_power_cycle(struct node &node, unsigned from)
 	__u8 wakeup_la;
 	int ret;
 
+	if (from == CEC_LOG_ADDR_TV) {
+		fprintf(stderr, "A TV can't run the power cycle test.\n");
+		return;
+	}
+
 	struct cec_log_addrs laddrs = { };
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	from = laddrs.log_addr[0] & 0xf;
 
-	if (!laddrs.num_log_addrs) {
-		fprintf(stderr, "Adapter is unconfigured, cannot perform test\n");
-		return;
-	}
 	if (!laddrs.log_addr_mask) {
 		printf("No Logical Addresses claimed, assume TV is in Standby\n");
 	} else {
@@ -1767,15 +1768,22 @@ static void test_power_cycle(struct node &node, unsigned from)
 static void stress_test_power_cycle(struct node &node, unsigned from,
 				    unsigned cnt, unsigned max_sleep)
 {
+	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
 	unsigned tries = 0;
 	unsigned iter = 0;
 	unsigned no_reply = 0;
 	unsigned mod_usleep = 0;
+	bool found_la = false;
 	int ret;
 
 	if (max_sleep)
 		mod_usleep = 1000000 * max_sleep + 1;
+
+	if (from == CEC_LOG_ADDR_TV) {
+		fprintf(stderr, "A TV can't run the power cycle stress test.\n");
+		return;
+	}
 
 	if (from == CEC_LOG_ADDR_UNREGISTERED)
 		from = CEC_LOG_ADDR_PLAYBACK_1;
@@ -1786,6 +1794,10 @@ static void stress_test_power_cycle(struct node &node, unsigned from,
 			exit(1);
 		}
 		sleep(1);
+
+		if (found_la)
+			continue;
+
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_image_view_on(&msg);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
@@ -1793,9 +1805,11 @@ static void stress_test_power_cycle(struct node &node, unsigned from,
 			msg.msg[0] = (CEC_LOG_ADDR_UNREGISTERED << 4) | CEC_LOG_ADDR_TV;
 			doioctl(&node, CEC_TRANSMIT, &msg);
 		}
+
+		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+		found_la = laddrs.log_addr_mask;
 	}
 
-	struct cec_log_addrs laddrs = { };
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	from = laddrs.log_addr[0] & 0xf;
 
@@ -1838,12 +1852,17 @@ static void stress_test_power_cycle(struct node &node, unsigned from,
 		printf("(iteration %u)\n", iter);
 
 		tries = no_reply = 0;
+		found_la = false;
 		while (!wait_for_pwr_state(node, from, true, no_reply)) {
 			if (++tries > 50) {
 				fprintf(stderr, "Display is stuck in standby\n");
 				exit(1);
 			}
 			sleep(1);
+
+			if (found_la)
+				continue;
+
 			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 			cec_msg_image_view_on(&msg);
 			ret = doioctl(&node, CEC_TRANSMIT, &msg);
@@ -1851,6 +1870,9 @@ static void stress_test_power_cycle(struct node &node, unsigned from,
 				msg.msg[0] = (CEC_LOG_ADDR_UNREGISTERED << 4) | CEC_LOG_ADDR_TV;
 				doioctl(&node, CEC_TRANSMIT, &msg);
 			}
+
+			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+			found_la = laddrs.log_addr_mask;
 		}
 
 		if (cnt && iter == cnt)
@@ -1968,6 +1990,7 @@ int main(int argc, char **argv)
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	unsigned int pwr_cycle_cnt = 0;
 	unsigned int max_sleep = 0;
+	bool warn_if_unconfigured = false;
 	__u16 phys_addr;
 	__u8 from = 0, to = 0, first_to = 0xff;
 	__u8 dev_features = 0;
@@ -2338,6 +2361,10 @@ int main(int argc, char **argv)
 			list_devices();
 			break;
 
+		case OptTestPowerCycle:
+			warn_if_unconfigured = true;
+			break;
+
 		case OptStressTestPowerCycle: {
 			static const char *arg_names[] = {
 				"cnt",
@@ -2358,6 +2385,7 @@ int main(int argc, char **argv)
 					exit(1);
 				}
 			}
+			warn_if_unconfigured = true;
 			break;
 		}
 
@@ -2382,6 +2410,9 @@ int main(int argc, char **argv)
 		usage();
 		return 1;
 	}
+
+	if (msgs.size())
+		warn_if_unconfigured = true;
 
 	if (store_pin && analyze_pin) {
 		fprintf(stderr, "--store-pin and --analyze-pin options cannot be combined.\n\n");
@@ -2626,6 +2657,8 @@ int main(int argc, char **argv)
 		if (options[OptMonitor] || options[OptMonitorAll] ||
 		    options[OptMonitorPin] || options[OptStorePin])
 			goto skip_la;
+		if (warn_if_unconfigured)
+			fprintf(stderr, "\nAdapter is unconfigured, please configure it first.\n");
 		return 0;
 	}
 	if (!options[OptSkipInfo])
