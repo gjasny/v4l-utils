@@ -2146,7 +2146,7 @@ enum stream_type {
 	OUT,
 };
 
-static int capture_setup(cv4l_fd &fd, cv4l_queue &in, cv4l_fd *exp_fd)
+static int capture_setup(cv4l_fd &fd, cv4l_queue &in, cv4l_fd *exp_fd, cv4l_fmt *new_fmt = NULL)
 {
 	if (fd.streamoff(in.g_type())) {
 		fprintf(stderr, "%s: fd.streamoff error\n", __func__);
@@ -2168,6 +2168,10 @@ static int capture_setup(cv4l_fd &fd, cv4l_queue &in, cv4l_fd *exp_fd)
 			return -1;
 		}
 		fd.s_fmt(fmt, in.g_type());
+		if (new_fmt)
+			*new_fmt = fmt;
+	} else if (new_fmt) {
+		fd.g_fmt(*new_fmt, in.g_type());
 	}
 	get_cap_compose_rect(fd);
 
@@ -2367,8 +2371,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 			if (in_source_change_event) {
 				in_source_change_event = false;
 				last_buffer = false;
-				fd.g_fmt(fmt_in, in.g_type());
-				if (capture_setup(fd, in, exp_fd_p))
+				if (capture_setup(fd, in, exp_fd_p, &fmt_in))
 					return;
 				fps_ts[CAP].reset();
 				fps_ts[OUT].reset();
