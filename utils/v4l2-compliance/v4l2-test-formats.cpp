@@ -621,6 +621,8 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 {
 	const struct v4l2_pix_format &pix1 = f1.fmt.pix;
 	const struct v4l2_pix_format &pix2 = f2.fmt.pix;
+	const struct v4l2_window &win1 = f1.fmt.win;
+	const struct v4l2_window &win2 = f2.fmt.win;
 
 	if (f1.type != f2.type)
 		return false;
@@ -638,7 +640,15 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 		return false;
 	case V4L2_BUF_TYPE_VIDEO_OVERLAY:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
-		return !memcmp(&f1.fmt.win, &f2.fmt.win, sizeof(f1.fmt.win));
+		if (!memcmp(&f1.fmt.win, &f2.fmt.win, sizeof(f1.fmt.win)))
+			return true;
+		printf("\t\tG_FMT:     %dx%d@%dx%d, %d, %x, %p, %d, %p, %x\n",
+			win1.w.width, win1.w.height, win1.w.left, win1.w.top, win1.field,
+			win1.chromakey, win1.clips, win1.clipcount, win1.bitmap, win1.global_alpha);
+		printf("\t\tTRY/S_FMT: %dx%d@%dx%d, %d, %x, %p, %d, %p, %x\n",
+			win2.w.width, win2.w.height, win2.w.left, win2.w.top, win2.field,
+			win2.chromakey, win2.clips, win2.clipcount, win2.bitmap, win2.global_alpha);
+		return false;
 	case V4L2_BUF_TYPE_VBI_CAPTURE:
 	case V4L2_BUF_TYPE_VBI_OUTPUT:
 		return !memcmp(&f1.fmt.vbi, &f2.fmt.vbi, sizeof(f1.fmt.vbi));
