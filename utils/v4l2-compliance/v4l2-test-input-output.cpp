@@ -751,9 +751,10 @@ static int checkOutput(struct node *node, const struct v4l2_output &descr, unsig
 		return fail("invalid index\n");
 	if (check_ustring(descr.name, sizeof(descr.name)))
 		return fail("invalid name\n");
-	if (descr.type != V4L2_OUTPUT_TYPE_MODULATOR && descr.type != V4L2_OUTPUT_TYPE_ANALOG)
+	if (descr.type != V4L2_OUTPUT_TYPE_MODULATOR && descr.type != V4L2_OUTPUT_TYPE_ANALOG &&
+	    descr.type != V4L2_OUTPUT_TYPE_ANALOGVGAOVERLAY)
 		return fail("invalid type\n");
-	if (descr.type == V4L2_OUTPUT_TYPE_ANALOG && descr.modulator)
+	if (descr.type != V4L2_OUTPUT_TYPE_MODULATOR && descr.modulator)
 		return fail("invalid modulator\n");
 	if (descr.type == V4L2_OUTPUT_TYPE_MODULATOR && node->modulators == 0)
 		return fail("no modulators found for modulator output\n");
