@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdio.h>
 
 #include <linux/lirc.h>
 
@@ -427,22 +428,61 @@ unsigned protocol_scancode_mask(enum rc_proto proto)
 	return protocols[proto].scancode_mask;
 }
 
-bool protocol_scancode_valid(enum rc_proto p, unsigned s)
+void protocol_scancode_valid(enum rc_proto *p, unsigned *s)
 {
-	if (s & ~protocols[p].scancode_mask)
-		return false;
+	enum rc_proto p2 = *p;
+	unsigned s2 = *s;
 
-	if (p == RC_PROTO_NECX) {
-		return (((s >> 16) ^ ~(s >> 8)) & 0xff) != 0;
-	} else if (p == RC_PROTO_NEC32) {
-		return (((s >> 24) ^ ~(s >> 16)) & 0xff) != 0;
-	} else if (p == RC_PROTO_RC6_MCE) {
-		return (s & 0xffff0000) == 0x800f0000;
-	} else if (p == RC_PROTO_RC6_6A_32) {
-		return (s & 0xffff0000) != 0x800f0000;
+	// rc6_mce is rc6_6a_32 with vendor code 0x800f and
+	if (*p == RC_PROTO_RC6_MCE && (*s & 0xffff0000) != 0x800f0000) {
+		p2 = RC_PROTO_RC6_6A_32;
+	} else if (*p == RC_PROTO_RC6_6A_32 && (*s & 0xffff0000) == 0x800f0000) {
+		p2 = RC_PROTO_RC6_MCE;
+	} else if (*p == RC_PROTO_NEC || *p == RC_PROTO_NECX || *p == RC_PROTO_NEC32) {
+		// nec scancodes may repeat the address and command
+		// in inverted form; the inverted values are not in the
+		// scancode.
+
+		// can 24 bit scancode be represented as 16 bit scancode
+		if (*s > 0x0000ffff && *s <= 0x00ffffff) {
+			if ((((*s >> 16) ^ ~(*s >> 8)) & 0xff) != 0) {
+				// is it necx
+				p2 = RC_PROTO_NECX;
+			} else {
+				// or regular nec
+				s2 = ((*s >> 8) & 0xff00) | (*s & 0x00ff);
+				p2 = RC_PROTO_NEC;
+			}
+		// can 32 bit scancode be represented as 24 or 16 bit scancode
+		} else if (*s > 0x00ffffff) {
+			if (((((*s >> 24) ^ ~(*s >> 16)) & 0xff) == 0) &&
+			    ((((*s >> 8) ^ ~(*s >> 0)) & 0xff) == 0)) {
+				// is it nec
+				s2 = ((*s >> 16) & 0xff00) |
+				     ((*s >> 8) & 0x00ff);
+				p2 = RC_PROTO_NEC;
+			} else if (((((*s >> 24) ^ ~(*s >> 16)) & 0xff) != 0) &&
+			    ((((*s >> 8) ^ ~(*s >> 0)) & 0xff) == 0)) {
+				// is it nec-x
+				s2 = (*s >> 8) & 0xffffff;
+				p2 = RC_PROTO_NECX;
+			} else {
+				// or it has to be nec32
+				p2 = RC_PROTO_NEC32;
+			}
+		}
 	}
 
-	return true;
+	s2 &= protocols[p2].scancode_mask;
+
+	if (*p != p2 || *s != s2) {
+		fprintf(stderr,
+			"warning: `%s:0x%x' will be decoded as `%s:0x%x'\n",
+			protocol_name(*p), *s, protocol_name(p2), s2);
+
+		*p = p2;
+		*s = s2;
+	}
 }
 
 bool protocol_encoder_available(enum rc_proto proto)
