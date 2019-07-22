@@ -265,10 +265,7 @@ static struct file *read_file(struct arguments *args, const char *fname)
 				return NULL;
 			}
 
-			if (!protocol_scancode_valid(proto, scancode)) {
-				fprintf(stderr, _("error: %s:%d: invalid scancode '%s' for protocol '%s'\n"), fname, lineno, scancodestr, protocol_name(proto));
-				return NULL;
-			}
+			protocol_scancode_valid(&proto, &scancode);
 
 			if (len + protocol_max_size(proto) >= LIRCBUF_SIZE) {
 				fprintf(stderr, _("error: %s:%d: too much IR for one transmit\n"), fname, lineno);
@@ -380,10 +377,7 @@ static struct file *read_scancode(const char *name)
 		return NULL;
 	}
 
-	if (!protocol_scancode_valid(proto, scancode)) {
-		fprintf(stderr, _("error: invalid scancode '%s' for protocol '%s'\n"), p + 1, protocol_name(proto));
-		return NULL;
-	}
+	protocol_scancode_valid(&proto, &scancode);
 
 	f = malloc(sizeof(*f));
 	if (f == NULL) {
