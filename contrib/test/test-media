@@ -124,10 +124,17 @@ if [ $kmemleak -eq 1 ]; then
 	echo clear >/sys/kernel/debug/kmemleak
 fi
 
+rmmod vivid 2&>/dev/null
 modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
 sleep 1
 
 tmp=`mktemp`
+
+if ! v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap ; then
+	echo "FAIL: the vivid module failed to load" | tee -a $tmp
+	echo "Grand Total for vivid: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+	exit 0
+fi
 
 v4l2-ctl -z platform:vivid-000 -d vivid-000-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
 v4l2-ctl -z platform:vivid-000 -d vivid-000-vid-out -o1 -x width=3840,height=2160,pixelformat=NV24
@@ -254,10 +261,19 @@ if [ $vivid -eq 1 ]; then
 fi
 
 if [ $vim2m -eq 1 ]; then
+	rmmod vim2m 2&>/dev/null
 	modprobe vim2m
 	sleep 1
 	dmesg -n notice
 	echo
+
+	if ! v4l2-ctl -z platform:vim2m ; then
+		echo "FAIL: the vim2m module failed to load" | tee -a $tmp
+		echo "Grand Total for vim2m: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		rmmod vivid
+		exit 0
+	fi
+
 	echo vim2m compliance tests
 	echo
 	date
@@ -318,9 +334,18 @@ if [ $vim2m -eq 1 ]; then
 fi
 
 if [ $vimc -eq 1 ]; then
+	rmmod vimc 2&>/dev/null
 	modprobe vimc
 	sleep 1
 	dmesg -n notice
+
+	if ! v4l2-ctl -z platform:vimc -d "Sensor A" ; then
+		echo "FAIL: the vimc module failed to load" | tee -a $tmp
+		echo "Grand Total for vimc: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		rmmod vivid
+		exit 0
+	fi
+
 	media-ctl -d platform:vimc -V '"Sensor A":0[fmt:SBGGR8_1X8/640x480]'
 	media-ctl -d platform:vimc -V '"Debayer A":0[fmt:SBGGR8_1X8/640x480]'
 	media-ctl -d platform:vimc -V '"Sensor B":0[fmt:SBGGR8_1X8/640x480]'
@@ -411,10 +436,19 @@ fi
 if [ $vicodec -eq 1 ]; then
 	tmpdir=`mktemp -d`
 
+	rmmod vicodec 2&>/dev/null
 	modprobe vicodec
 	sleep 2
 	dmesg -n notice
 	echo
+
+	if ! v4l2-ctl -z platform:vicodec ; then
+		echo "FAIL: the vicodec module failed to load" | tee -a $tmp
+		echo "Grand Total for vicodec: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		rmmod vivid
+		exit 0
+	fi
+
 	echo vicodec media controller compliance tests
 	echo
 	date
