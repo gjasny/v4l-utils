@@ -133,6 +133,7 @@ tmp=`mktemp`
 if ! v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap ; then
 	echo "FAIL: the vivid module failed to load" | tee -a $tmp
 	echo "Grand Total for vivid: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+	echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
 	exit 0
 fi
 
@@ -175,6 +176,7 @@ if [ $cec -eq 1 ]; then
 	if ! cec-ctl -D vivid -a vivid-000-vid-cap0 >/dev/null ; then
 		echo "FAIL: the vivid module had no cec support" | tee -a $tmp
 		echo "Grand Total for vivid cec: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
 		exit 0
 	fi
 	cec-ctl -D vivid -a vivid-000-vid-cap0 --tv
@@ -275,6 +277,7 @@ if [ $vim2m -eq 1 ]; then
 	if ! v4l2-ctl -z platform:vim2m ; then
 		echo "FAIL: the vim2m module failed to load" | tee -a $tmp
 		echo "Grand Total for vim2m: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
 		rmmod vivid
 		exit 0
 	fi
@@ -347,6 +350,7 @@ if [ $vimc -eq 1 ]; then
 	if ! v4l2-ctl -z platform:vimc -d "Sensor A" ; then
 		echo "FAIL: the vimc module failed to load" | tee -a $tmp
 		echo "Grand Total for vimc: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
 		rmmod vivid
 		exit 0
 	fi
@@ -450,6 +454,7 @@ if [ $vicodec -eq 1 ]; then
 	if ! v4l2-ctl -z platform:vicodec ; then
 		echo "FAIL: the vicodec module failed to load" | tee -a $tmp
 		echo "Grand Total for vicodec: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
 		rmmod vivid
 		exit 0
 	fi
