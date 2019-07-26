@@ -172,6 +172,11 @@ if [ $cec -eq 1 ]; then
 	echo
 	echo vivid cec compliance tests
 	echo
+	if ! cec-ctl -D vivid -a vivid-000-vid-cap0 >/dev/null ; then
+		echo "FAIL: the vivid module had no cec support" | tee -a $tmp
+		echo "Grand Total for vivid cec: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		exit 0
+	fi
 	cec-ctl -D vivid -a vivid-000-vid-cap0 --tv
 	sleep 1
 	cec-ctl -D vivid -a vivid-000-vid-out0 --playback
