@@ -330,7 +330,18 @@ static int standby_resume_standby(struct node *node, unsigned me, unsigned la, b
 
 	fail_on_test(!util_interactive_ensure_power_state(node, me, la, interactive, CEC_OP_POWER_STATUS_ON));
 
+	/*
+	 * Some displays only accept Standby from the Active Source.
+	 * So make us the Active Source before sending Standby.
+	 */
+	if (is_tv(la, node->remote[la].prim_type)) {
+		announce("Sending Active Source message.");
+		cec_msg_init(&msg, me, la);
+		cec_msg_active_source(&msg, node->phys_addr);
+		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+	}
 	announce("Sending Standby message.");
+
 	cec_msg_init(&msg, me, la);
 	cec_msg_standby(&msg);
 	fail_on_test(!transmit_timeout(node, &msg));

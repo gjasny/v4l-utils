@@ -1656,6 +1656,7 @@ static void test_power_cycle(struct node &node, unsigned from)
 	struct cec_msg msg;
 	unsigned tries;
 	unsigned no_reply;
+	__u16 pa;
 	__u8 wakeup_la;
 	int ret;
 
@@ -1671,6 +1672,19 @@ static void test_power_cycle(struct node &node, unsigned from)
 	if (!laddrs.log_addr_mask) {
 		printf("No Logical Addresses claimed, assume TV is in Standby\n");
 	} else {
+		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+		/*
+		 * Some displays only accept Standby from the Active Source.
+		 * So make us the Active Source before sending Standby.
+		 */
+		printf("Transmit Active Source to TV\n");
+		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+		cec_msg_active_source(&msg, pa);
+		ret = doioctl(&node, CEC_TRANSMIT, &msg);
+		if (ret) {
+			fprintf(stderr, "Active Source Transmit failed: %s\n", strerror(ret));
+			exit(1);
+		}
 		printf("Transmit Standby to TV\n");
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_standby(&msg);
@@ -1737,7 +1751,19 @@ static void test_power_cycle(struct node &node, unsigned from)
 
 		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 		from = laddrs.log_addr[0] & 0xf;
+		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
 
+		/*
+		 * Some displays only accept Standby from the Active Source.
+		 * So make us the Active Source before sending Standby.
+		 */
+		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+		cec_msg_active_source(&msg, pa);
+		ret = doioctl(&node, CEC_TRANSMIT, &msg);
+		if (ret) {
+			fprintf(stderr, "Active Source Transmit failed: %s\n", strerror(ret));
+			exit(1);
+		}
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_standby(&msg);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
@@ -1774,6 +1800,7 @@ static void stress_test_power_cycle(struct node &node, unsigned from,
 	unsigned iter = 0;
 	unsigned no_reply = 0;
 	unsigned mod_usleep = 0;
+	__u16 pa;
 	bool found_la = false;
 	int ret;
 
@@ -1812,6 +1839,7 @@ static void stress_test_power_cycle(struct node &node, unsigned from,
 
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	from = laddrs.log_addr[0] & 0xf;
+	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
 
 	for (;;) {
 		unsigned usecs1 = mod_usleep ? random() % mod_usleep : 0;
@@ -1827,7 +1855,17 @@ static void stress_test_power_cycle(struct node &node, unsigned from,
 
 		usleep(usecs1);
 
-		cec_msg_init(&msg, from, CEC_LOG_ADDR_BROADCAST);
+		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+		/*
+		 * Some displays only accept Standby from the Active Source.
+		 * So make us the Active Source before sending Standby.
+		 */
+		cec_msg_active_source(&msg, pa);
+		ret = doioctl(&node, CEC_TRANSMIT, &msg);
+		if (ret) {
+			fprintf(stderr, "Active Source Transmit failed: %s\n", strerror(ret));
+			exit(1);
+		}
 		cec_msg_standby(&msg);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
 		if (ret) {
