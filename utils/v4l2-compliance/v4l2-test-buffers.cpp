@@ -1488,11 +1488,11 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 			if (ret == 0) {
 				fail_on_test(buf.querybuf(node, i));
 				fail_on_test(buf.check(q, Prepared, i));
-			}
-			for (unsigned p = 0; p < buf.g_num_planes(); p++) {
-				buf.s_userptr(0UL, p);
-				buf.s_bytesused(0, p);
-				buf.s_length(0, p);
+				for (unsigned p = 0; p < buf.g_num_planes(); p++) {
+					buf.s_userptr(0UL, p);
+					buf.s_bytesused(0, p);
+					buf.s_length(0, p);
+				}
 			}
 		}
 		if (ret == ENOTTY) {
