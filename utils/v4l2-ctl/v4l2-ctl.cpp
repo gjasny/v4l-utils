@@ -563,6 +563,12 @@ void print_frmsize(const struct v4l2_frmsizeenum &frmsize, const char *prefix)
 	printf("%s\tSize: %s ", prefix, frmtype2s(frmsize.type).c_str());
 	if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
 		printf("%dx%d", frmsize.discrete.width, frmsize.discrete.height);
+	} else if (frmsize.type == V4L2_FRMSIZE_TYPE_CONTINUOUS) {
+		printf("%dx%d - %dx%d",
+				frmsize.stepwise.min_width,
+				frmsize.stepwise.min_height,
+				frmsize.stepwise.max_width,
+				frmsize.stepwise.max_height);
 	} else if (frmsize.type == V4L2_FRMSIZE_TYPE_STEPWISE) {
 		printf("%dx%d - %dx%d with step %d/%d",
 				frmsize.stepwise.min_width,
