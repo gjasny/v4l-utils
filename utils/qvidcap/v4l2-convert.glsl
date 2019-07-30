@@ -139,18 +139,37 @@ void main()
 	urgb.g = texture(tex, vec2((cell.y == xy.y) ? cell.x + texl_w : cell.x, xy.y)).r;
 	urgb.r = texture(tex, cell).r;
 #elif PIXFMT == V4L2_PIX_FMT_RGB32 || PIXFMT == V4L2_PIX_FMT_XRGB32 || PIXFMT == V4L2_PIX_FMT_ARGB32 || \
-	PIXFMT == V4L2_PIX_FMT_RGB444 || PIXFMT == V4L2_PIX_FMT_XRGB444 || PIXFMT == V4L2_PIX_FMT_ARGB444
+      PIXFMT == V4L2_PIX_FMT_RGB444 || PIXFMT == V4L2_PIX_FMT_XRGB444 || PIXFMT == V4L2_PIX_FMT_ARGB444
 	vec4 cell = texture(tex, xy);
 #if V4L2_PIX_FMT_ARGB444 || PIXFMT == V4L2_PIX_FMT_ARGB32
 	alpha = cell.r;
 #endif
 	rgb.rgb = cell.gba;
-#elif PIXFMT == V4L2_PIX_FMT_BGR32 || PIXFMT == V4L2_PIX_FMT_XBGR32 || PIXFMT == V4L2_PIX_FMT_ABGR32
+#elif PIXFMT == V4L2_PIX_FMT_BGR32 || PIXFMT == V4L2_PIX_FMT_XBGR32 || PIXFMT == V4L2_PIX_FMT_ABGR32 || \
+      PIXFMT == V4L2_PIX_FMT_BGRX444 || PIXFMT == V4L2_PIX_FMT_BGRA444 || \
+      PIXFMT == V4L2_PIX_FMT_XBGR555 || PIXFMT == V4L2_PIX_FMT_ABGR555 || \
+      PIXFMT == V4L2_PIX_FMT_RGBX555 || PIXFMT == V4L2_PIX_FMT_RGBA555
 	vec4 cell = texture(tex, xy);
-#if PIXFMT == V4L2_PIX_FMT_ABGR32
+#if PIXFMT == V4L2_PIX_FMT_ABGR32 || PIXFMT == V4L2_PIX_FMT_BGRA444 || PIXFMT == V4L2_PIX_FMT_RGBA555 || PIXFMT == V4L2_PIX_FMT_ABGR555
 	alpha = cell.a;
 #endif
 	rgb.rgb = cell.bgr;
+#elif PIXFMT == V4L2_PIX_FMT_RGBX32 || PIXFMT == V4L2_PIX_FMT_RGBA32 || \
+      PIXFMT == V4L2_PIX_FMT_RGBX444 || PIXFMT == V4L2_PIX_FMT_RGBA444 || \
+      PIXFMT == V4L2_PIX_FMT_RGB555 || PIXFMT == V4L2_PIX_FMT_XRGB555 || PIXFMT == V4L2_PIX_FMT_ARGB555 || \
+      PIXFMT == V4L2_PIX_FMT_BGRX555 || PIXFMT == V4L2_PIX_FMT_BGRA555
+	vec4 cell = texture(tex, xy);
+#if PIXFMT == V4L2_PIX_FMT_RGBA32 || PIXFMT == V4L2_PIX_FMT_RGBA444 || PIXFMT == V4L2_PIX_FMT_ARGB555 || PIXFMT == V4L2_PIX_FMT_BGRA555
+	alpha = cell.a;
+#endif
+	rgb.rgb = cell.rgb;
+#elif PIXFMT == V4L2_PIX_FMT_BGRX32 || PIXFMT == V4L2_PIX_FMT_BGRA32 || \
+      PIXFMT == V4L2_PIX_FMT_XBGR444 || PIXFMT == V4L2_PIX_FMT_ABGR444
+	vec4 cell = texture(tex, xy);
+#if PIXFMT == V4L2_PIX_FMT_BGRA32 || PIXFMT == V4L2_PIX_FMT_ABGR444
+	alpha = cell.r;
+#endif
+	rgb.rgb = cell.abg;
 #elif PIXFMT == V4L2_PIX_FMT_GREY
 	rgb.rgb = vec3(float(texture(tex, xy).r) / 255.0);
 #elif PIXFMT == V4L2_PIX_FMT_Y10
@@ -167,7 +186,9 @@ void main()
 	vec4 color = texture(tex, xy);
 
 // RGB pixel formats with an alpha component
-#if PIXFMT == V4L2_PIX_FMT_ARGB555 || PIXFMT == V4L2_PIX_FMT_ARGB555X
+#if PIXFMT == V4L2_PIX_FMT_ARGB555 || PIXFMT == V4L2_PIX_FMT_ARGB555X || \
+    PIXFMT == V4L2_PIX_FMT_RGBA555 || PIXFMT == V4L2_PIX_FMT_ABGR555 || \
+    PIXFMT == V4L2_PIX_FMT_BGRA555
 	alpha = color.a;
 #endif
 

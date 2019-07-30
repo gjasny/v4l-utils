@@ -133,6 +133,48 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 	case V4L2_PIX_FMT_ARGB555X:
 		v16 = p8[2 * x + 1] + (p8[2 * x] << 8);
 		break;
+	case V4L2_PIX_FMT_RGBX555:
+	case V4L2_PIX_FMT_RGBA555:
+		v16 = p8[2 * x] + (p8[2 * x + 1] << 8);
+		v16 = ((v16 & 1) << 15) | (v16 >> 1);
+		break;
+	case V4L2_PIX_FMT_XBGR555:
+	case V4L2_PIX_FMT_ABGR555:
+		v16 = p8[2 * x] + (p8[2 * x + 1] << 8);
+		v16 = (v16 & 0x8000) |
+		      ((v16 & 0x001f) << 10) |
+		      (v16 & 0x03e0) |
+		      ((v16 & 0x7c00) >> 10);
+		break;
+	case V4L2_PIX_FMT_BGRX555:
+	case V4L2_PIX_FMT_BGRA555:
+		v16 = p8[2 * x] + (p8[2 * x + 1] << 8);
+		v16 = ((v16 & 1) << 15) |
+		      ((v16 & 0x003e) << 9) |
+		      (v16 & 0x07c0) |
+		      ((v16 & 0xf800) >> 11);
+		break;
+	case V4L2_PIX_FMT_XBGR444:
+	case V4L2_PIX_FMT_ABGR444:
+		v16 = p8[2 * x] + (p8[2 * x + 1] << 8);
+		v16 = (v16 & 0xf000) |
+		      ((v16 & 0x0f00) >> 8) |
+		      (v16 & 0x00f0) |
+		      ((v16 & 0x000f) << 8);
+		break;
+	case V4L2_PIX_FMT_RGBX444:
+	case V4L2_PIX_FMT_RGBA444:
+		v16 = p8[2 * x] + (p8[2 * x + 1] << 8);
+		v16 = ((v16 & 0xf) << 12) | ((v16 >> 4) & 0xfff);
+		break;
+	case V4L2_PIX_FMT_BGRX444:
+	case V4L2_PIX_FMT_BGRA444:
+		v16 = p8[2 * x] + (p8[2 * x + 1] << 8);
+		v16 = ((v16 & 0x000f) << 12) |
+		      ((v16 & 0x00f0) << 4) |
+		      ((v16 & 0x0f00) >> 4) |
+		      ((v16 & 0xf000) >> 12);
+		break;
 	case V4L2_PIX_FMT_RGB24:
 		v32 = p8[3 * x + 2] + (p8[3 * x + 1] << 8) +
 		      (p8[3 * x] << 16);
@@ -162,6 +204,16 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 	case V4L2_PIX_FMT_VUYX32:
 		v32 = p8[4 * x] + (p8[4 * x + 1] << 8) +
 		      (p8[4 * x + 2] << 16) + (p8[4 * x + 3] << 24);
+		break;
+	case V4L2_PIX_FMT_RGBX32:
+	case V4L2_PIX_FMT_RGBA32:
+		v32 = p8[4 * x + 2] + (p8[4 * x + 1] << 8) +
+		      (p8[4 * x] << 16) + (p8[4 * x + 3] << 24);
+		break;
+	case V4L2_PIX_FMT_BGRX32:
+	case V4L2_PIX_FMT_BGRA32:
+		v32 = p8[4 * x + 1] + (p8[4 * x + 2] << 8) +
+		      (p8[4 * x + 3] << 16) + (p8[4 * x] << 24);
 		break;
 	case V4L2_PIX_FMT_SBGGR8:
 		p8 = planes[0] + bpl * yeven + xeven;
@@ -272,17 +324,26 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 		c.b = (v16 & 0x1f) / 31.0;
 		break;
 	case V4L2_PIX_FMT_ARGB444:
+	case V4L2_PIX_FMT_ABGR444:
+	case V4L2_PIX_FMT_RGBA444:
+	case V4L2_PIX_FMT_BGRA444:
 		c.a = (v16 >> 12) / 15.0;
 		/* fall through */
-	case V4L2_PIX_FMT_YUV444:
 	case V4L2_PIX_FMT_RGB444:
 	case V4L2_PIX_FMT_XRGB444:
+	case V4L2_PIX_FMT_XBGR444:
+	case V4L2_PIX_FMT_RGBX444:
+	case V4L2_PIX_FMT_BGRX444:
+	case V4L2_PIX_FMT_YUV444:
 		c.r = ((v16 >> 8) & 0xf) / 15.0;
 		c.g = ((v16 >> 4) & 0xf) / 15.0;
 		c.b = (v16 & 0xf) / 15.0;
 		break;
 	case V4L2_PIX_FMT_ARGB555:
 	case V4L2_PIX_FMT_ARGB555X:
+	case V4L2_PIX_FMT_RGBA555:
+	case V4L2_PIX_FMT_ABGR555:
+	case V4L2_PIX_FMT_BGRA555:
 		c.a = v16 >> 15;
 		/* fall through */
 	case V4L2_PIX_FMT_YUV555:
@@ -290,6 +351,9 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 	case V4L2_PIX_FMT_XRGB555:
 	case V4L2_PIX_FMT_RGB555X:
 	case V4L2_PIX_FMT_XRGB555X:
+	case V4L2_PIX_FMT_RGBX555:
+	case V4L2_PIX_FMT_XBGR555:
+	case V4L2_PIX_FMT_BGRX555:
 		c.r = ((v16 >> 10) & 0x1f) / 31.0;
 		c.g = ((v16 >> 5) & 0x1f) / 31.0;
 		c.b = (v16 & 0x1f) / 31.0;
@@ -309,6 +373,8 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 		break;
 	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_ABGR32:
+	case V4L2_PIX_FMT_RGBA32:
+	case V4L2_PIX_FMT_BGRA32:
 		c.a = ((v32 >> 24) & 0xff) / 255.0;
 		/* fall through */
 	default:

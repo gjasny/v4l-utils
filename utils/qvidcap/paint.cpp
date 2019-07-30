@@ -195,9 +195,21 @@ void CaptureWin::paintGL()
 	case V4L2_PIX_FMT_RGB555X:
 	case V4L2_PIX_FMT_XRGB555X:
 	case V4L2_PIX_FMT_ARGB555X:
+	case V4L2_PIX_FMT_RGBX555:
+	case V4L2_PIX_FMT_RGBA555:
+	case V4L2_PIX_FMT_XBGR555:
+	case V4L2_PIX_FMT_ABGR555:
+	case V4L2_PIX_FMT_BGRX555:
+	case V4L2_PIX_FMT_BGRA555:
 	case V4L2_PIX_FMT_RGB444:
 	case V4L2_PIX_FMT_XRGB444:
 	case V4L2_PIX_FMT_ARGB444:
+	case V4L2_PIX_FMT_XBGR444:
+	case V4L2_PIX_FMT_ABGR444:
+	case V4L2_PIX_FMT_RGBX444:
+	case V4L2_PIX_FMT_RGBA444:
+	case V4L2_PIX_FMT_BGRX444:
+	case V4L2_PIX_FMT_BGRA444:
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
 	case V4L2_PIX_FMT_RGB24:
@@ -208,6 +220,10 @@ void CaptureWin::paintGL()
 	case V4L2_PIX_FMT_XBGR32:
 	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_ABGR32:
+	case V4L2_PIX_FMT_RGBX32:
+	case V4L2_PIX_FMT_BGRX32:
+	case V4L2_PIX_FMT_RGBA32:
+	case V4L2_PIX_FMT_BGRA32:
 	case V4L2_PIX_FMT_HSV24:
 	case V4L2_PIX_FMT_HSV32:
 	default:
@@ -342,9 +358,13 @@ static const struct define defines[] = {
 	DEF(V4L2_PIX_FMT_RGB32),
 	DEF(V4L2_PIX_FMT_XRGB32),
 	DEF(V4L2_PIX_FMT_ARGB32),
+	DEF(V4L2_PIX_FMT_RGBX32),
+	DEF(V4L2_PIX_FMT_RGBA32),
 	DEF(V4L2_PIX_FMT_BGR32),
 	DEF(V4L2_PIX_FMT_XBGR32),
 	DEF(V4L2_PIX_FMT_ABGR32),
+	DEF(V4L2_PIX_FMT_BGRX32),
+	DEF(V4L2_PIX_FMT_BGRA32),
 	DEF(V4L2_PIX_FMT_RGB24),
 	DEF(V4L2_PIX_FMT_BGR24),
 	DEF(V4L2_PIX_FMT_RGB565),
@@ -352,12 +372,24 @@ static const struct define defines[] = {
 	DEF(V4L2_PIX_FMT_RGB444),
 	DEF(V4L2_PIX_FMT_XRGB444),
 	DEF(V4L2_PIX_FMT_ARGB444),
+	DEF(V4L2_PIX_FMT_XBGR444),
+	DEF(V4L2_PIX_FMT_ABGR444),
+	DEF(V4L2_PIX_FMT_RGBX444),
+	DEF(V4L2_PIX_FMT_RGBA444),
+	DEF(V4L2_PIX_FMT_BGRX444),
+	DEF(V4L2_PIX_FMT_BGRA444),
 	DEF(V4L2_PIX_FMT_RGB555),
 	DEF(V4L2_PIX_FMT_XRGB555),
 	DEF(V4L2_PIX_FMT_ARGB555),
 	DEF(V4L2_PIX_FMT_RGB555X),
 	DEF(V4L2_PIX_FMT_XRGB555X),
 	DEF(V4L2_PIX_FMT_ARGB555X),
+	DEF(V4L2_PIX_FMT_RGBX555),
+	DEF(V4L2_PIX_FMT_RGBA555),
+	DEF(V4L2_PIX_FMT_XBGR555),
+	DEF(V4L2_PIX_FMT_ABGR555),
+	DEF(V4L2_PIX_FMT_BGRX555),
+	DEF(V4L2_PIX_FMT_BGRA555),
 	DEF(V4L2_PIX_FMT_RGB332),
 	DEF(V4L2_PIX_FMT_BGR666),
 	DEF(V4L2_PIX_FMT_SBGGR8),
@@ -599,15 +631,27 @@ void CaptureWin::changeShader()
 
 	case V4L2_PIX_FMT_RGB332:
 	case V4L2_PIX_FMT_BGR666:
-	case V4L2_PIX_FMT_RGB555:
-	case V4L2_PIX_FMT_XRGB555:
-	case V4L2_PIX_FMT_ARGB555:
 	case V4L2_PIX_FMT_RGB444:
 	case V4L2_PIX_FMT_XRGB444:
 	case V4L2_PIX_FMT_ARGB444:
+	case V4L2_PIX_FMT_XBGR444:
+	case V4L2_PIX_FMT_ABGR444:
+	case V4L2_PIX_FMT_RGBX444:
+	case V4L2_PIX_FMT_RGBA444:
+	case V4L2_PIX_FMT_BGRX444:
+	case V4L2_PIX_FMT_BGRA444:
+	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_XRGB555:
+	case V4L2_PIX_FMT_ARGB555:
 	case V4L2_PIX_FMT_RGB555X:
 	case V4L2_PIX_FMT_XRGB555X:
 	case V4L2_PIX_FMT_ARGB555X:
+	case V4L2_PIX_FMT_RGBX555:
+	case V4L2_PIX_FMT_RGBA555:
+	case V4L2_PIX_FMT_XBGR555:
+	case V4L2_PIX_FMT_ABGR555:
+	case V4L2_PIX_FMT_BGRX555:
+	case V4L2_PIX_FMT_BGRA555:
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
 	case V4L2_PIX_FMT_RGB24:
@@ -618,6 +662,10 @@ void CaptureWin::changeShader()
 	case V4L2_PIX_FMT_XBGR32:
 	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_ABGR32:
+	case V4L2_PIX_FMT_RGBX32:
+	case V4L2_PIX_FMT_BGRX32:
+	case V4L2_PIX_FMT_RGBA32:
+	case V4L2_PIX_FMT_BGRA32:
 	case V4L2_PIX_FMT_GREY:
 	case V4L2_PIX_FMT_Y10:
 	case V4L2_PIX_FMT_Y12:
@@ -745,25 +793,41 @@ void CaptureWin::shader_RGB()
 	GLint internalFmt = m_accepts_srgb ? GL_SRGB8_ALPHA8 : GL_RGBA8;
 
 	switch (m_v4l_fmt.g_pixelformat()) {
-	case V4L2_PIX_FMT_ARGB555:
 	case V4L2_PIX_FMT_RGB555:
 	case V4L2_PIX_FMT_XRGB555:
+	case V4L2_PIX_FMT_ARGB555:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
 			     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, NULL);
 		break;
 
-	case V4L2_PIX_FMT_ARGB444:
 	case V4L2_PIX_FMT_RGB444:
+	case V4L2_PIX_FMT_ARGB444:
 	case V4L2_PIX_FMT_XRGB444:
+	case V4L2_PIX_FMT_ABGR444:
+	case V4L2_PIX_FMT_XBGR444:
+	case V4L2_PIX_FMT_RGBA444:
+	case V4L2_PIX_FMT_RGBX444:
+	case V4L2_PIX_FMT_BGRA444:
+	case V4L2_PIX_FMT_BGRX444:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA4, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
 			     GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, NULL);
 		break;
 
-	case V4L2_PIX_FMT_ARGB555X:
 	case V4L2_PIX_FMT_RGB555X:
 	case V4L2_PIX_FMT_XRGB555X:
+	case V4L2_PIX_FMT_ARGB555X:
+	case V4L2_PIX_FMT_XBGR555:
+	case V4L2_PIX_FMT_ABGR555:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
 			     GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, NULL);
+		break;
+
+	case V4L2_PIX_FMT_RGBX555:
+	case V4L2_PIX_FMT_RGBA555:
+	case V4L2_PIX_FMT_BGRX555:
+	case V4L2_PIX_FMT_BGRA555:
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
+			     GL_BGRA, GL_UNSIGNED_SHORT_5_5_5_1, NULL);
 		break;
 
 	case V4L2_PIX_FMT_BGR666:
@@ -781,13 +845,17 @@ void CaptureWin::shader_RGB()
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB565, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
 			     GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
 		break;
-	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_RGB32:
+	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_XRGB32:
+	case V4L2_PIX_FMT_RGBA32:
+	case V4L2_PIX_FMT_RGBX32:
 	case V4L2_PIX_FMT_HSV32:
-	case V4L2_PIX_FMT_ABGR32:
 	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_ABGR32:
 	case V4L2_PIX_FMT_XBGR32:
+	case V4L2_PIX_FMT_BGRA32:
+	case V4L2_PIX_FMT_BGRX32:
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFmt, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
 			     GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		break;
@@ -1064,17 +1132,16 @@ void CaptureWin::render_RGB(__u32 format)
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 				GL_RGB, GL_UNSIGNED_BYTE_3_3_2, m_curData[0]);
 		break;
-	case V4L2_PIX_FMT_RGB555:
-	case V4L2_PIX_FMT_XRGB555:
-	case V4L2_PIX_FMT_ARGB555:
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, m_v4l_fmt.g_bytesperline() / 2);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
-				GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, m_curData[0]);
-		break;
 
 	case V4L2_PIX_FMT_RGB444:
 	case V4L2_PIX_FMT_XRGB444:
 	case V4L2_PIX_FMT_ARGB444:
+	case V4L2_PIX_FMT_XBGR444:
+	case V4L2_PIX_FMT_ABGR444:
+	case V4L2_PIX_FMT_RGBX444:
+	case V4L2_PIX_FMT_RGBA444:
+	case V4L2_PIX_FMT_BGRX444:
+	case V4L2_PIX_FMT_BGRA444:
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, m_v4l_fmt.g_bytesperline() / 2);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 				GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, m_curData[0]);
@@ -1100,6 +1167,16 @@ void CaptureWin::render_RGB(__u32 format)
 				GL_RED_INTEGER, GL_UNSIGNED_SHORT, m_curData[0]);
 		break;
 
+	case V4L2_PIX_FMT_RGB555:
+	case V4L2_PIX_FMT_XRGB555:
+	case V4L2_PIX_FMT_ARGB555:
+	case V4L2_PIX_FMT_XBGR555:
+	case V4L2_PIX_FMT_ABGR555:
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, m_v4l_fmt.g_bytesperline() / 2);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
+				GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, m_curData[0]);
+		break;
+
 	case V4L2_PIX_FMT_RGB555X:
 	case V4L2_PIX_FMT_XRGB555X:
 	case V4L2_PIX_FMT_ARGB555X:
@@ -1111,6 +1188,15 @@ void CaptureWin::render_RGB(__u32 format)
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 				GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, m_curData[0]);
 		glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
+		break;
+
+	case V4L2_PIX_FMT_RGBX555:
+	case V4L2_PIX_FMT_RGBA555:
+	case V4L2_PIX_FMT_BGRX555:
+	case V4L2_PIX_FMT_BGRA555:
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, m_v4l_fmt.g_bytesperline() / 2);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
+				GL_BGRA, GL_UNSIGNED_SHORT_5_5_5_1, m_curData[0]);
 		break;
 
 	case V4L2_PIX_FMT_RGB565:
@@ -1133,10 +1219,14 @@ void CaptureWin::render_RGB(__u32 format)
 	case V4L2_PIX_FMT_RGB32:
 	case V4L2_PIX_FMT_XRGB32:
 	case V4L2_PIX_FMT_ARGB32:
+	case V4L2_PIX_FMT_RGBX32:
+	case V4L2_PIX_FMT_RGBA32:
 	case V4L2_PIX_FMT_HSV32:
 	case V4L2_PIX_FMT_BGR32:
 	case V4L2_PIX_FMT_XBGR32:
 	case V4L2_PIX_FMT_ABGR32:
+	case V4L2_PIX_FMT_BGRX32:
+	case V4L2_PIX_FMT_BGRA32:
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, m_v4l_fmt.g_bytesperline() / 4);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 				GL_RGBA, GL_UNSIGNED_BYTE, m_curData[0]);
