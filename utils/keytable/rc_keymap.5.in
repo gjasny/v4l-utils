@@ -52,7 +52,8 @@ Protocol \fBrc\-mm\fR has variants \fBrc-mm-12\fR, \fBrc-mm-24\fR, and
 \fBrc-mm-32\fR.
 .SS Scancodes field
 The \fBscancodes\fR table list the scancodes and the mapping to linux input
-key events. Multiple scancodes can map to the same key event.
+key events. Multiple scancodes can map to the same key event. This field
+is not present for \fBraw\fR protocols.
 .PP
 If the scancode start with 0x, it is interpreted as a hexadecimal number. If
 it starts with a 0, it is interpreted as an octal number.
@@ -60,6 +61,16 @@ it starts with a 0, it is interpreted as an octal number.
 The key events are listed in the \fBinput-event-codes.h\fR header file.
 Examples are \fBKEY_ENTER\fR, \fBKEY_ESC\fR or \fBBTN_LEFT\fR for the left
 mouse button.
+.SS Raw field
+If the protocol is \fBraw\fR, the \fBraw\fR field is an array of keycode
+to raw mapping. For each entry, there is a \fBkeycode\fR field and \fBraw\fR
+field. The \fBkeycode\fR is a linux input event, as explained the scancodes
+section.
+.PP
+The \fBraw\fR field is an array of integers. These are the pulse and space
+values of the IR message. The first is a pulse value in microseconds, and
+the second a space, third pulse, etc. There should be an odd number of fields
+so that the last entry is a pulse.
 .SS Remaining fields (BPF parameters)
 If the protocol is a BPF based decoder, it may have any number of numeric
 parameters. These parameters are used to support protocols with non-standard
@@ -74,6 +85,11 @@ Kernel based non-BPF protocol decoders do not have any parameters.
 Some of the BPF protocol decoders are generic and will need parameters to
 work. Other are for specific remotes and should work without any parameters.
 The timing parameters are all in microseconds (µs).
+.SS raw
+This decoder must be used when the keymap is raw; for each key, there is an
+entry in raw array with the pulse and space values for that key. No decoding
+is done, the incoming IR is simply matched against the different pulse and
+space values.
 .SS imon_rsc
 This decoder is specifically for the iMON RSC remote, which was packaged with
 the iMON Station (amongst others). The decoder is for the directional stick in

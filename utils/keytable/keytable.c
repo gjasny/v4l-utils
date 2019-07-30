@@ -80,7 +80,13 @@ struct keytable_entry {
 	struct keytable_entry *next;
 };
 
+// Whenever for each key which has a raw entry rather than a scancode,
+// we need to assign a globally unique scancode for dealing with reading
+// more than keymap with raw entries.
+static int raw_scancode = 0;
+
 struct keytable_entry *keytable = NULL;
+struct raw_entry *rawtable = NULL;
 
 struct uevents {
 	char		*key;
@@ -486,11 +492,120 @@ err_einval:
 	return EINVAL;
 }
 
+static error_t parse_toml_raw_part(const char *fname, struct toml_array_t *raw)
+{
+	struct toml_table_t *t;
+	struct toml_array_t *rawarray;
+	struct raw_entry *re;
+	struct keytable_entry *ke;
+	const char *rkeycode;
+	char *keycode, *p;
+	int ind = 0, length;
+	int value;
+
+	while ((t = toml_table_at(raw, ind++)) != NULL) {
+		rkeycode = toml_raw_in(t, "keycode");
+		if (!rkeycode) {
+			fprintf(stderr, _("%s: invalid keycode for raw entry %d\n"),
+				fname, ind);
+			return EINVAL;
+		}
+
+		if (toml_rtos(rkeycode, &keycode)) {
+			fprintf(stderr, _("%s: bad value `%s' for keycode\n"),
+				fname, rkeycode);
+			return EINVAL;
+		}
+
+		value = parse_code(keycode);
+		if (debug)
+			fprintf(stderr, _("\tvalue=%d\n"), value);
+
+		if (value == -1) {
+			value = strtol(keycode, &p, 0);
+			if (errno || *p) {
+				free(keycode);
+				fprintf(stderr, _("%s: Keycode `%s' not recognised\n"),
+					fname, keycode);
+				continue;
+			}
+		}
+		free(keycode);
+
+		rawarray = toml_array_in(t, "raw");
+		if (!rawarray) {
+			fprintf(stderr, _("%s: missing raw array for entry %d\n"),
+				fname, ind);
+			return EINVAL;
+		}
+
+		// determine length of array
+		length = 0;
+		while (toml_raw_at(rawarray, length) != NULL)
+			length++;
+
+		if (!(length % 2)) {
+			fprintf(stderr, _("%s: raw array must have odd length rather than %d\n"),
+				fname, length);
+			return EINVAL;
+		}
+
+		re = calloc(1, sizeof(*re) + sizeof(re->raw[0]) * length);
+		if (!re) {
+			fprintf(stderr, _("Failed to allocate memory"));
+			return EINVAL;
+		}
+
+		for (int i=0; i<length; i++) {
+			const char *s = toml_raw_at(rawarray, i);
+			int64_t v;
+
+			if (toml_rtoi(s, &v) || v == 0) {
+				fprintf(stderr, _("%s: incorrect raw value `%s'"),
+					fname, s);
+				return EINVAL;
+			}
+
+			if (v <= 0 || v > USHRT_MAX) {
+				fprintf(stderr, _("%s: raw value %d out of range"),
+					fname, value);
+				return EINVAL;
+			}
+
+			re->raw[i] = v;
+		}
+
+		re->raw_length = length;
+
+		ke = calloc(1, sizeof(*ke));
+		if (!re) {
+			fprintf(stderr, _("Failed to allocate memory"));
+			return EINVAL;
+		}
+
+		ke->scancode = raw_scancode;
+		ke->keycode = value;
+		ke->next = keytable;
+		keytable = ke;
+
+		re->scancode = raw_scancode;
+		re->next = rawtable;
+		rawtable = re;
+
+		raw_scancode++;
+	}
+
+	return 0;
+}
+
+
 static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot)
 {
 	struct toml_table_t *scancodes;
+	struct toml_array_t *rawarray;
 	enum sysfs_protocols protocol;
 	const char *raw;
+	bool have_raw_protocol = false;
 	char *p;
 	int i = 0;
 
@@ -510,6 +625,9 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 		struct bpf_protocol *b;
 
 		b = malloc(sizeof(*b));
+		if (!strcmp(p, "raw"))
+			have_raw_protocol = true;
+
 		b->name = p;
 		b->toml = proot;
 		add_bpf_protocol(b);
@@ -517,6 +635,25 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 	else {
 		ch_proto |= protocol;
 		free(p);
+	}
+
+	rawarray = toml_array_in(proot, "raw");
+	if (rawarray) {
+		if (toml_raw_in(proot, "scancodes")) {
+			fprintf(stderr, _("Cannot have both [raw] and [scancode] sections"));
+			return EINVAL;
+		}
+		if (!have_raw_protocol) {
+			fprintf(stderr, _("Keymap with raw entries must have raw protocol"));
+			return EINVAL;
+		}
+		error_t err = parse_toml_raw_part(fname, rawarray);
+		if (err != 0)
+			return err;
+
+	} else if (have_raw_protocol) {
+		fprintf(stderr, _("Keymap with raw protocol must have raw entries"));
+		return EINVAL;
 	}
 
 	scancodes = toml_table_in(proot, "scancodes");
@@ -1907,7 +2044,7 @@ static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct toml_
 		return;
 	}
 
-	load_bpf_file(bpf_prog, fd, toml);
+	load_bpf_file(bpf_prog, fd, toml, rawtable);
 	close(fd);
 }
 

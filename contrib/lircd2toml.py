@@ -146,14 +146,14 @@ class LircdParser:
             a = line.split()
             if a[0] == 'name':
                 if len(codes) > 0:
-                    raw_codes.append({ 'name': name, 'codes': codes })
+                    raw_codes.append({ 'keycode': name, 'raw': codes })
                 name = line.split(maxsplit=2)[1]
                 if not name.startswith('KEY_'):
                     name = 'KEY_' + name.upper()
                 codes = []
             elif a[0] == 'end':
                 if len(codes) > 0:
-                    raw_codes.append({ 'name': name, 'codes': codes })
+                    raw_codes.append({ 'keycode': name, 'raw': codes })
                 return raw_codes
             else:
                 for v in a:
@@ -224,6 +224,8 @@ class Converter:
             return self.convert_rcmm()
         elif 'space_enc' in flags:
             return self.convert_space_enc()
+        elif 'raw_codes' in flags:
+            return self.convert_raw_codes()
         else:
             self.error('Cannot convert remote with flags: {}'.format('|'.join(flags)))
 
@@ -237,7 +239,7 @@ class Converter:
         res  = {
             'protocol': 'pulse_distance',
             'params': {},
-            'map': {}
+            'scancodes': {}
         }
 
         res['name'] = self.remote['name']
@@ -338,7 +340,7 @@ class Converter:
                 elif v != variant:
                     variant = ""
 
-                res['map'][n] = self.remote['codes'][s]
+                res['scancodes'][n] = self.remote['codes'][s]
 
             if variant:
                 res['params']['variant'] = "'" + variant + "'"
@@ -374,14 +376,14 @@ class Converter:
                 elif v != variant:
                     variant = ""
 
-                res['map'][n] = self.remote['codes'][s]
+                res['scancodes'][n] = self.remote['codes'][s]
 
             if variant:
                 res['params']['variant'] = "'" + variant + "'"
         else:
             for s in self.remote['codes']:
                 p = (s<<post_data_bits)|pre_data
-                res['map'][p] = self.remote['codes'][s]
+                res['scancodes'][p] = self.remote['codes'][s]
 
         return res
 
@@ -389,7 +391,7 @@ class Converter:
         res  = {
             'protocol': 'rc-mm',
             'params': {},
-            'map': {}
+            'scancodes': {}
         }
 
         res['name'] = self.remote['name']
@@ -415,9 +417,9 @@ class Converter:
             pre_data = int(self.remote['pre_data'][0]) << bits
             bits += pre_data_bits
             for s in self.remote['codes']:
-                res['map'][s|pre_data] = self.remote['codes'][s]
+                res['scancodes'][s|pre_data] = self.remote['codes'][s]
         else:
-            res['map'] = self.remote['codes']
+            res['scancodes'] = self.remote['codes']
 
         res['params']['bits'] = bits
         res['params']['variant'] = "'rc-mm-" + str(bits) + "'"
@@ -431,7 +433,7 @@ class Converter:
         res = {
             'protocol': 'rc-6',
             'params': { },
-            'map': { }
+            'scancodes': { }
         }
 
         res['name'] = self.remote['name']
@@ -471,7 +473,7 @@ class Converter:
             d = ~(s|pre_data)&mask
             if bits == 32:
                 vendor = d >> 16
-            res['map'][d] = self.remote['codes'][s]
+            res['scancodes'][d] = self.remote['codes'][s]
 
         if bits == 16:
             res['params']['variant'] = "'rc-6-0'"
@@ -494,7 +496,7 @@ class Converter:
         res  = {
             'protocol': 'manchester',
             'params': { },
-            'map': { }
+            'scancodes': { }
         }
 
         res['name'] = self.remote['name']
@@ -560,10 +562,20 @@ class Converter:
                 n = s|pre_data
                 n = (n & 0x3f) | ((n << 2) & 0x1f00)
                 newcodes[n] = self.remote['codes'][s]
-            res['map'] = newcodes
+            res['scancodes'] = newcodes
         else:
             for s in self.remote['codes']:
-                res['map'][s|pre_data] = self.remote['codes'][s]
+                res['scancodes'][s|pre_data] = self.remote['codes'][s]
+
+        return res
+
+    def convert_raw_codes(self):
+        res  = {
+            'protocol': 'raw',
+            'params': {},
+            'raw': self.remote['raw_codes'],
+            'name': self.remote['name']
+        }
 
         return res
 
@@ -576,16 +588,32 @@ def writeTOMLFile(fh, remote):
     print('protocol = {}'.format(escapeString(remote['protocol'])), file=fh)
     for p in remote['params']:
         print('{} = {}'.format(p, remote['params'][p]), file=fh)
-    print('[protocols.scancodes]', file=fh)
-    # find the largest scancode
-    length=1
-    for c in remote['map']:
-        length=max(length, c.bit_length())
 
-    # width seems to include '0x', hence the + 2
-    width = math.ceil(length/4) + 2
-    for c in remote['map']:
-        print('{:#0{width}x} = {}'.format(c, escapeString(remote['map'][c]), width=width), file=fh)
+    if 'scancodes' in remote:
+        print('[protocols.scancodes]', file=fh)
+        # find the largest scancode
+        length=1
+        for c in remote['scancodes']:
+            length=max(length, c.bit_length())
+
+        # width seems to include '0x', hence the + 2
+        width = math.ceil(length/4) + 2
+        for c in remote['scancodes']:
+            print('{:#0{width}x} = {}'.format(c, escapeString(remote['scancodes'][c]), width=width), file=fh)
+
+    elif 'raw' in remote:
+        for raw in remote['raw']:
+            print('[[protocols.raw]]', file=fh)
+            print('keycode = {}\nraw = ['.format(escapeString(raw['keycode'])), file=fh, end='')
+            first = True
+            for v in raw['raw']:
+                if first:
+                    print(' {}'.format(v), file=fh, end='')
+                else:
+                    print(', {}'.format(v), file=fh, end='')
+                first = False
+
+            print(' ]', file=fh)
 
     return True
 

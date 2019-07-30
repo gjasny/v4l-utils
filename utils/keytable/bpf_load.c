@@ -27,6 +27,16 @@
 # define _(string) string
 #endif
 
+// This should match the struct in the raw BPF decoder
+struct raw_pattern {
+	unsigned int scancode;
+	unsigned short raw[0];
+};
+
+// For the raw decoder, these values are calculated based on the raw
+// patterns and need to be patched into the BPF
+int max_length;
+int trail_space;
 
 char bpf_log_buf[BPF_LOG_BUF_SIZE];
 extern int debug;
@@ -68,7 +78,80 @@ static int load_and_attach(int lirc_fd, struct bpf_file *bpf_file, const char *n
 	return 0;
 }
 
-static int load_maps(struct bpf_file *bpf_file)
+static int build_raw_map(struct bpf_map_data *map, struct raw_entry *raw, int numa_node)
+{
+	int no_patterns, value_size, fd, key, i;
+	struct raw_entry *e;
+	struct raw_pattern *p;
+
+	no_patterns = 0;
+
+	for (e = raw; e; e = e->next) {
+		if (e->raw_length > max_length)
+			max_length = e->raw_length;
+		no_patterns++;
+	}
+
+	// pattern needs a trailing 0 to mark the end of
+	// the pattern
+	max_length++;
+
+	value_size = sizeof(struct raw_pattern) + max_length * sizeof(short);
+
+	fd = bpf_create_map_node(map->def.type,
+				 map->name,
+				 map->def.key_size,
+				 value_size,
+				 no_patterns,
+				 map->def.map_flags,
+				 numa_node);
+
+	if (fd < 0) {
+		printf(_("failed to create a map: %d %s\n"),
+		       errno, strerror(errno));
+		return -1;
+	}
+
+	p = malloc(value_size);
+	if (!p) {
+		printf(_("Failed to allocate memory"));
+		return -1;
+	}
+
+	key = 0;
+
+	for (e = raw; e; e = e->next) {
+		p->scancode = e->scancode;
+		for (i = 0; i < e->raw_length; i++) {
+			p->raw[i] = e->raw[i];
+			if (i % 2 && e->raw[i] > trail_space)
+				trail_space = e->raw[i];
+		}
+
+		// Add trailing space and clear rest of the struct
+		while (i < max_length)
+			p->raw[i++] = 0;
+
+		if (bpf_map_update_elem(fd, &key, p, BPF_ANY)) {
+			printf(_("failed to update raw map: %d %s\n"),
+			       errno, strerror(errno));
+			free(p);
+			return -1;
+		}
+
+		key++;
+	}
+	free(p);
+
+	// 1ms extra for trailing space. This also ensure that the
+	// trail_space is larger than largest space + margin in the
+	// decoder
+	trail_space += 1000;
+
+	return fd;
+}
+
+static int load_maps(struct bpf_file *bpf_file, struct raw_entry *raw)
 {
 	struct bpf_map_data *maps = bpf_file->map_data;
 	int i, numa_node;
@@ -89,6 +172,8 @@ static int load_maps(struct bpf_file *bpf_file)
 							maps[i].def.max_entries,
 							maps[i].def.map_flags,
 							numa_node);
+		} else if (!strcmp(maps[i].name, "raw_map")) {
+			bpf_file->map_fd[i] = build_raw_map(&maps[i], raw, numa_node);
 		} else {
 			bpf_file->map_fd[i] = bpf_create_map_node(
 							maps[i].def.type,
@@ -99,6 +184,7 @@ static int load_maps(struct bpf_file *bpf_file)
 							maps[i].def.map_flags,
 							numa_node);
 		}
+
 		if (bpf_file->map_fd[i] < 0) {
 			printf(_("failed to create a map: %d %s\n"),
 			       errno, strerror(errno));
@@ -202,7 +288,17 @@ static int parse_relo_and_apply(struct bpf_file *bpf_file, GElf_Shdr *shdr,
 
 				value = val64;
 			} else if (sym.st_shndx == bpf_file->dataidx) {
-				value = *(int*)((unsigned char*)bpf_file->data->d_buf + sym.st_value);
+				// Value is not overridden on command line
+				// or toml file. For the raw decoder, the
+				// max_length and trail_space needs to be
+				// patched in. Otherwise use value set in
+				// bpf object file from data section.
+				if (!strcmp(sym_name, "max_length") && max_length)
+					value = max_length;
+				else if (!strcmp(sym_name, "trail_space") && trail_space)
+					value = trail_space;
+				else
+					value = *(int*)((unsigned char*)bpf_file->data->d_buf + sym.st_value);
 			}
 
 			if (debug)
@@ -339,7 +435,8 @@ static int load_elf_maps_section(struct bpf_file *bpf_file)
 	return nr_maps;
 }
 
-int load_bpf_file(const char *path, int lirc_fd, struct toml_table_t *toml)
+int load_bpf_file(const char *path, int lirc_fd, struct toml_table_t *toml,
+	          struct raw_entry *raw)
 {
 	struct bpf_file bpf_file = { .toml = toml };
 	int fd, i, ret;
@@ -406,6 +503,9 @@ int load_bpf_file(const char *path, int lirc_fd, struct toml_table_t *toml)
 		goto done;
 	}
 
+	max_length = 0;
+	trail_space = 0;
+
 	if (data_map) {
 		bpf_file.nr_maps = load_elf_maps_section(&bpf_file);
 		if (bpf_file.nr_maps < 0) {
@@ -413,7 +513,7 @@ int load_bpf_file(const char *path, int lirc_fd, struct toml_table_t *toml)
 			       nr_maps, strerror(-nr_maps));
 			goto done;
 		}
-		if (load_maps(&bpf_file))
+		if (load_maps(&bpf_file, raw))
 			goto done;
 
 		bpf_file.processed_sec[bpf_file.maps_shidx] = true;
