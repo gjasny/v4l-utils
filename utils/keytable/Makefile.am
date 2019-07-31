@@ -33,45 +33,7 @@ sync-with-kernel:
 	  exit 1; \
 	fi
 	@echo generating $(srcdir)/parse.h
-	@printf "struct parse_event {\n\tchar *name;\n\tunsigned int value;\n};\n" > $(srcdir)/parse.h
-
-	@printf "struct parse_event events_type[] = {\n" >> $(srcdir)/parse.h
-	@more $(KERNEL_DIR)/usr/include/linux/input-event-codes.h | perl -n \
-	-e 'if (m/^\#define\s+(EV_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
-	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2 if ($$1 ne "EV_VERSION"); }' \
-	>> $(srcdir)/parse.h
-	@printf "\t{ NULL, 0}\n};\n" >> $(srcdir)/parse.h
-
-	@printf "struct parse_event msc_events[] = {\n" >> $(srcdir)/parse.h
-	@more $(KERNEL_DIR)/usr/include/linux/input-event-codes.h | perl -n \
-	-e 'if (m/^\#define\s+(MSC_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
-	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
-	>> $(srcdir)/parse.h
-	@printf "\t{ NULL, 0}\n};\n" >> $(srcdir)/parse.h
-
-	@printf "struct parse_event key_events[] = {\n" >> $(srcdir)/parse.h
-	@more $(KERNEL_DIR)/usr/include/linux/input-event-codes.h | perl -n \
-	-e 'if (m/^\#define\s+(KEY_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
-	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
-	-e 'if (m/^\#define\s+(BTN_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
-	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
-	>> $(srcdir)/parse.h
-	@printf "\t{ NULL, 0}\n};\n" >> $(srcdir)/parse.h
-
-	@printf "struct parse_event rel_events[] = {\n" >> $(srcdir)/parse.h
-	@more $(KERNEL_DIR)/usr/include/linux/input-event-codes.h | perl -n \
-	-e 'if (m/^\#define\s+(REL_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
-	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
-	>> $(srcdir)/parse.h
-	@printf "\t{ NULL, 0}\n};\n" >> $(srcdir)/parse.h
-
-	@printf "struct parse_event abs_events[] = {\n" >> $(srcdir)/parse.h
-	@more $(KERNEL_DIR)/usr/include/linux/input-event-codes.h | perl -n \
-	-e 'if (m/^\#define\s+(ABS_[^\s]+)\s+(0x[\d\w]+|[\d]+)/) ' \
-	-e '{ printf "\t{\"%s\", %s},\n",$$1,$$2; }' \
-	>> $(srcdir)/parse.h
-	@printf "\t{ NULL, 0}\n};\n" >> $(srcdir)/parse.h
-
+	@./gen_input_events.pl < $(KERNEL_DIR)/usr/include/linux/input-event-codes.h  > $(srcdir)/parse.h
 	@-mkdir -p $(srcdir)/rc_keymaps
 	@-rm $(srcdir)/rc_keymaps/*
 	@echo storing existing keymaps at $(srcdir)/rc_keymaps/
