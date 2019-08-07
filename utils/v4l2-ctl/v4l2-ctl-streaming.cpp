@@ -1133,7 +1133,8 @@ restart:
 	return true;
 }
 
-static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf)
+static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf,
+				bool ignore_count_skip)
 {
 	tpg_pixel_aspect aspect = TPG_PIXEL_ASPECT_SQUARE;
 	cv4l_fmt fmt(q.g_type());
@@ -1270,7 +1271,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 			if (!verbose)
 				fprintf(stderr, ">");
 			fflush(stderr);
-			if (stream_count)
+			if (!ignore_count_skip && stream_count)
 				if (!--stream_count)
 					return QUEUE_STOPPED;
 		}
@@ -1451,6 +1452,9 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 	if (ignore_count_skip)
 		return 0;
 
+	if (stream_sleep > 0 && count % stream_sleep == 0)
+		sleep(1);
+
 	if (is_empty_frame || is_error_frame)
 		return 0;
 
@@ -1458,10 +1462,10 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 		stream_skip--;
 		return 0;
 	}
-	if (stream_sleep > 0 && count % stream_sleep == 0)
-		sleep(1);
+
 	if (stream_count == 0)
 		return 0;
+
 	if (--stream_count == 0)
 		return QUEUE_STOPPED;
 
@@ -1470,7 +1474,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 
 static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap,
 			 unsigned &count, fps_timestamps &fps_ts, cv4l_fmt fmt,
-			 bool stopped)
+			 bool stopped, bool ignore_count_skip)
 {
 	cv4l_buffer buf(q);
 	int ret = 0;
@@ -1580,8 +1584,18 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	fflush(stderr);
 
 	count++;
+
+	if (ignore_count_skip)
+		return 0;
+
 	if (stream_sleep > 0 && count % stream_sleep == 0)
 		sleep(1);
+
+	if (stream_skip) {
+		stream_skip--;
+		return 0;
+	}
+
 	if (stream_count == 0)
 		return 0;
 	if (--stream_count == 0)
@@ -2065,10 +2079,7 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 	if (q.obtain_bufs(&fd))
 		goto done;
 
-	if (stream_count)
-		stream_count += q.g_buffers();
-
-	if (do_setup_out_buffers(fd, q, fin, true) < 0)
+	if (do_setup_out_buffers(fd, q, fin, true, false) < 0)
 		goto done;
 
 	fps_ts.determine_field(fd.g_fd(), type);
@@ -2115,7 +2126,7 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 			}
 		}
 		r = do_handle_out(fd, q, fin, NULL,
-				  count, fps_ts, fmt, stopped);
+				  count, fps_ts, fmt, stopped, false);
 		if (r == QUEUE_STOPPED)
 			stopped = true;
 		if (r < 0)
@@ -2217,6 +2228,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 	bool have_eos = subscribe_event(fd, V4L2_EVENT_EOS);
 	bool is_encoder = false;
 	enum codec_type codec_type = get_codec_type(fd);
+	bool ignore_count_skip = codec_type == ENCODER;
 
 	if (have_eos) {
 		cv4l_fmt fmt(in.g_type());
@@ -2231,7 +2243,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 	if (out.reqbufs(&fd, reqbufs_count_out))
 		return;
 
-	switch (do_setup_out_buffers(fd, out, fout, true)) {
+	switch (do_setup_out_buffers(fd, out, fout, true, !ignore_count_skip)) {
 	case 0:
 		break;
 	case QUEUE_STOPPED:
@@ -2310,8 +2322,8 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		if (rd_fds && FD_ISSET(fd.g_fd(), rd_fds)) {
 			r = do_handle_cap(fd, in, fin, NULL,
 					  count[CAP], fps_ts[CAP], fmt_in,
-					  codec_type == ENCODER);
-			if (codec_type != ENCODER && r == QUEUE_STOPPED)
+					  ignore_count_skip);
+			if (r == QUEUE_STOPPED)
 				break;
 			if (r < 0) {
 				rd_fds = NULL;
@@ -2324,7 +2336,8 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 		if (wr_fds && FD_ISSET(fd.g_fd(), wr_fds)) {
 			r = do_handle_out(fd, out, fout, NULL,
-					  count[OUT], fps_ts[OUT], fmt_out, stopped);
+					  count[OUT], fps_ts[OUT], fmt_out, stopped,
+					  !ignore_count_skip);
 			if (r == QUEUE_STOPPED) {
 				stopped = true;
 				if (have_eos) {
@@ -2420,7 +2433,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		return;
 	}
 
-	if (do_setup_out_buffers(fd, out, fout, true) == QUEUE_ERROR) {
+	if (do_setup_out_buffers(fd, out, fout, true, true) == QUEUE_ERROR) {
 		fprintf(stderr, "%s: do_setup_out_buffers failed\n", __func__);
 		return;
 	}
@@ -2523,7 +2536,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 		if (!stopped) {
 			rc = do_handle_out(fd, out, fout, NULL, count[OUT],
-					   fps_ts[OUT], fmt_out, false);
+					   fps_ts[OUT], fmt_out, false, true);
 			if (rc) {
 				stopped = true;
 				if (rc != QUEUE_STOPPED)
@@ -2693,7 +2706,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 
 	if (in.obtain_bufs(&fd) ||
 	    in.queue_all(&fd) ||
-	    do_setup_out_buffers(out_fd, out, file[OUT], false) == QUEUE_ERROR)
+	    do_setup_out_buffers(out_fd, out, file[OUT], false, false) == QUEUE_ERROR)
 		goto done;
 
 	fps_ts[CAP].determine_field(fd.g_fd(), in.g_type());
@@ -2746,7 +2759,8 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 				if (fd.querybuf(buf))
 					break;
 				r = do_handle_out(out_fd, out, file[OUT], &buf,
-						  count[OUT], fps_ts[OUT], fmt[OUT], false);
+						  count[OUT], fps_ts[OUT], fmt[OUT],
+						  false, false);
 			}
 			if (r)
 				fprintf(stderr, "handle out %d\n", r);
