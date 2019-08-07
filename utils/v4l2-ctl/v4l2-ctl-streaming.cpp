@@ -2302,7 +2302,8 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		}
 		if (r == 0) {
 			if (!stopped)
-				fprintf(stderr, "select timeout\n");
+				fprintf(stderr, "select timeout");
+			fprintf(stderr, "\n");
 			return;
 		}
 
