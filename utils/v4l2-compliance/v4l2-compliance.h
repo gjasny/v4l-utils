@@ -258,7 +258,7 @@ int check_string(const char *s, size_t len);
 int check_ustring(const __u8 *s, int len);
 int check_0(const void *p, int len);
 int restoreFormat(struct node *node);
-void testNode(struct node &node, struct node &expbuf_node, media_type type,
+void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_node, media_type type,
 	      unsigned frame_count, unsigned all_fmt_frame_count);
 std::string stream_from(std::string pixelformat, bool &use_hdr);
 
@@ -331,9 +331,23 @@ int testReqBufs(struct node *node);
 int testReadWrite(struct node *node);
 int testExpBuf(struct node *node);
 int testBlockingWait(struct node *node);
-int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode);
-int testUserPtr(struct node *node, unsigned frame_count, enum poll_mode pollmode);
-int testDmaBuf(struct node *expbuf_node, struct node *node, unsigned frame_count,
+/*
+ * struct node node:
+ * 	the current media node being tested
+ *
+ * struct node node_m2m_cap:
+ * 	the capture device to be used when testing loopback or m2m, for
+ * 	instance, if the node we are testing is m2m, then node == node_m2m_cap,
+ * 	but if we have a topology like output->capture, node will be the output
+ * 	and node_m2m_cap will be the capture device that v4l2-compliance will
+ * 	use to test the loop
+ */
+int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
+	     enum poll_mode pollmode);
+int testUserPtr(struct node *node, struct node *node_m2m_cap,
+		unsigned frame_count, enum poll_mode pollmode);
+int testDmaBuf(struct node *expbuf_node, struct node *node,
+	       struct node *node_m2m_cap, unsigned frame_count,
 	       enum poll_mode pollmode);
 int testRequests(struct node *node, bool test_streaming);
 void streamAllFormats(struct node *node, unsigned frame_count);

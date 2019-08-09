@@ -836,7 +836,7 @@ static int setupM2M(struct node *node, cv4l_queue &q, bool init = true)
 	return 0;
 }
 
-static int captureBufs(struct node *node, const cv4l_queue &q,
+static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_queue &q,
 		cv4l_queue &m2m_q, unsigned frame_count, int pollmode,
 		unsigned &capture_count)
 {
@@ -885,8 +885,8 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 		V4L2_FMT_FLAG_COMPRESSED)
 		valid_output_flags = V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 	if (node->is_m2m) {
-		node->g_fmt(fmt_q, m2m_q.g_type());
-		if (node->buftype_pixfmts[m2m_q.g_type()][fmt_q.g_pixelformat()] &
+		node_m2m_cap->g_fmt(fmt_q, m2m_q.g_type());
+		if (node_m2m_cap->buftype_pixfmts[m2m_q.g_type()][fmt_q.g_pixelformat()] &
 			V4L2_FMT_FLAG_COMPRESSED)
 			valid_output_flags = V4L2_BUF_FLAG_TIMECODE | V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 
@@ -1045,7 +1045,7 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 
 		buf.init(m2m_q);
 		do {
-			ret = buf.dqbuf(node);
+			ret = buf.dqbuf(node_m2m_cap);
 		} while (ret == EAGAIN);
 		capture_count++;
 
@@ -1072,16 +1072,16 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 		}
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 		if (!count || stopped) {
-			if (!(node->codec_mask & (STATEFUL_ENCODER | STATEFUL_DECODER)))
+			if (!(node_m2m_cap->codec_mask & (STATEFUL_ENCODER | STATEFUL_DECODER)))
 				break;
 			if (buf.g_flags() & V4L2_BUF_FLAG_LAST) {
-				fail_on_test(buf.dqbuf(node) != EPIPE);
+				fail_on_test(buf.dqbuf(node_m2m_cap) != EPIPE);
 				fail_on_test(!got_eos && !got_source_change);
 				if (!count)
 					break;
-				fail_on_test(node->streamoff(m2m_q.g_type()));
-				m2m_q.munmap_bufs(node);
-				fail_on_test(setupM2M(node, m2m_q, false));
+				fail_on_test(node_m2m_cap->streamoff(m2m_q.g_type()));
+				m2m_q.munmap_bufs(node_m2m_cap);
+				fail_on_test(setupM2M(node_m2m_cap, m2m_q, false));
 				stopped = false;
 				got_source_change = false;
 
@@ -1089,12 +1089,12 @@ static int captureBufs(struct node *node, const cv4l_queue &q,
 
 				memset(&cmd, 0, sizeof(cmd));
 				cmd.cmd = V4L2_DEC_CMD_START;
-				fail_on_test(doioctl(node, VIDIOC_DECODER_CMD, &cmd));
+				fail_on_test(doioctl(node_m2m_cap, VIDIOC_DECODER_CMD, &cmd));
 				continue;
 			}
 		}
 		buf.s_flags(buf.g_flags() & ~V4L2_BUF_FLAG_REQUEST_FD);
-		fail_on_test(buf.qbuf(node, m2m_q));
+		fail_on_test(buf.qbuf(node_m2m_cap, m2m_q));
 		// If the queued buffer is immediately returned as a last
 		// empty buffer, then FLAG_DONE is set here.
 		// Need to look at this more closely.
@@ -1210,7 +1210,8 @@ static int setupMmap(struct node *node, cv4l_queue &q)
 	return 0;
 }
 
-int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
+int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
+	     enum poll_mode pollmode)
 {
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
 	bool have_createbufs = true;
@@ -1338,15 +1339,15 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 				fail_on_test(ev.type != V4L2_EVENT_SOURCE_CHANGE);
 				fail_on_test(!(ev.u.src_change.changes & V4L2_EVENT_SRC_CH_RESOLUTION));
 			}
-			fail_on_test(setupM2M(node, m2m_q));
+			fail_on_test(setupM2M(node_m2m_cap, m2m_q));
 		}
 
-		fail_on_test(captureBufs(node, q, m2m_q, frame_count,
+		fail_on_test(captureBufs(node, node_m2m_cap, q, m2m_q, frame_count,
 					 pollmode, capture_count));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
 		if (node->is_m2m)
-			fail_on_test(node->streamoff(m2m_q.g_type()));
+			fail_on_test(node_m2m_cap->streamoff(m2m_q.g_type()));
 
 		if (node->codec_mask & STATEFUL_ENCODER) {
 			struct v4l2_encoder_cmd cmd;
@@ -1357,7 +1358,7 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 
 			/* No buffers are queued, call STREAMON, then STOP */
 			fail_on_test(node->streamon(q.g_type()));
-			fail_on_test(node->streamon(m2m_q.g_type()));
+			fail_on_test(node_m2m_cap->streamon(m2m_q.g_type()));
 			fail_on_test(doioctl(node, VIDIOC_ENCODER_CMD, &cmd));
 
 			fail_on_test(buf_cap.querybuf(node, 0));
@@ -1367,11 +1368,11 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 			for (unsigned p = 0; p < buf_cap.g_num_planes(); p++)
 				fail_on_test(buf_cap.g_bytesused(p));
 			fail_on_test(node->streamoff(q.g_type()));
-			fail_on_test(node->streamoff(m2m_q.g_type()));
+			fail_on_test(node_m2m_cap->streamoff(m2m_q.g_type()));
 
 			/* Call STREAMON, queue one CAPTURE buffer, then STOP */
 			fail_on_test(node->streamon(q.g_type()));
-			fail_on_test(node->streamon(m2m_q.g_type()));
+			fail_on_test(node_m2m_cap->streamon(m2m_q.g_type()));
 			fail_on_test(buf_cap.querybuf(node, 0));
 			fail_on_test(buf_cap.qbuf(node));
 			fail_on_test(doioctl(node, VIDIOC_ENCODER_CMD, &cmd));
@@ -1381,7 +1382,7 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 			for (unsigned p = 0; p < buf_cap.g_num_planes(); p++)
 				fail_on_test(buf_cap.g_bytesused(p));
 			fail_on_test(node->streamoff(q.g_type()));
-			fail_on_test(node->streamoff(m2m_q.g_type()));
+			fail_on_test(node_m2m_cap->streamoff(m2m_q.g_type()));
 		}
 
 		if (node->codec_mask & STATEFUL_DECODER) {
@@ -1393,7 +1394,7 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 
 			/* No buffers are queued, call STREAMON, then STOP */
 			fail_on_test(node->streamon(q.g_type()));
-			fail_on_test(node->streamon(m2m_q.g_type()));
+			fail_on_test(node_m2m_cap->streamon(m2m_q.g_type()));
 			fail_on_test(doioctl(node, VIDIOC_DECODER_CMD, &cmd));
 
 			fail_on_test(buf_cap.querybuf(node, 0));
@@ -1403,11 +1404,11 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 			for (unsigned p = 0; p < buf_cap.g_num_planes(); p++)
 				fail_on_test(buf_cap.g_bytesused(p));
 			fail_on_test(node->streamoff(q.g_type()));
-			fail_on_test(node->streamoff(m2m_q.g_type()));
+			fail_on_test(node_m2m_cap->streamoff(m2m_q.g_type()));
 
 			/* Call STREAMON, queue one CAPTURE buffer, then STOP */
 			fail_on_test(node->streamon(q.g_type()));
-			fail_on_test(node->streamon(m2m_q.g_type()));
+			fail_on_test(node_m2m_cap->streamon(m2m_q.g_type()));
 			fail_on_test(buf_cap.querybuf(node, 0));
 			fail_on_test(buf_cap.qbuf(node));
 			fail_on_test(doioctl(node, VIDIOC_DECODER_CMD, &cmd));
@@ -1417,7 +1418,7 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 			for (unsigned p = 0; p < buf_cap.g_num_planes(); p++)
 				fail_on_test(buf_cap.g_bytesused(p));
 			fail_on_test(node->streamoff(q.g_type()));
-			fail_on_test(node->streamoff(m2m_q.g_type()));
+			fail_on_test(node_m2m_cap->streamoff(m2m_q.g_type()));
 		}
 
 		if (node->supports_orphaned_bufs) {
@@ -1436,15 +1437,15 @@ int testMmap(struct node *node, unsigned frame_count, enum poll_mode pollmode)
 		if (node->is_m2m) {
 			if (node->supports_orphaned_bufs) {
 				fail_on_test(m2m_q.reqbufs(node, 0));
-				m2m_q.munmap_bufs(node);
+				m2m_q.munmap_bufs(node_m2m_cap);
 			} else if (m2m_q.reqbufs(node, 0) != EBUSY) {
 				// It's either a bug or this driver should set
 				// V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS
 				warn("Can free buffers even if still mmap()ed\n");
 				q.munmap_bufs(node);
 			} else {
-				m2m_q.munmap_bufs(node);
-				fail_on_test(m2m_q.reqbufs(node, 0));
+				m2m_q.munmap_bufs(node_m2m_cap);
+				fail_on_test(m2m_q.reqbufs(node_m2m_cap, 0));
 			}
 			fail_on_test(!capture_count);
 		}
@@ -1528,7 +1529,8 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 	return 0;
 }
 
-int testUserPtr(struct node *node, unsigned frame_count, enum poll_mode pollmode)
+int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
+		enum poll_mode pollmode)
 {
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
 	int type;
@@ -1592,16 +1594,16 @@ int testUserPtr(struct node *node, unsigned frame_count, enum poll_mode pollmode
 				fail_on_test(ev.type != V4L2_EVENT_SOURCE_CHANGE);
 				fail_on_test(!(ev.u.src_change.changes & V4L2_EVENT_SRC_CH_RESOLUTION));
 			}
-			fail_on_test(setupM2M(node, m2m_q));
+			fail_on_test(setupM2M(node_m2m_cap, m2m_q));
 		}
-		fail_on_test(captureBufs(node, q, m2m_q, frame_count,
+		fail_on_test(captureBufs(node, node_m2m_cap, q, m2m_q, frame_count,
 					 pollmode, capture_count));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
 		if (node->is_m2m) {
-			fail_on_test(node->streamoff(m2m_q.g_type()));
-			m2m_q.munmap_bufs(node);
-			fail_on_test(m2m_q.reqbufs(node, 0));
+			fail_on_test(node_m2m_cap->streamoff(m2m_q.g_type()));
+			m2m_q.munmap_bufs(node_m2m_cap);
+			fail_on_test(m2m_q.reqbufs(node_m2m_cap, 0));
 			fail_on_test(!capture_count);
 		}
 		stream_close();
@@ -1670,7 +1672,7 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 	return 0;
 }
 
-int testDmaBuf(struct node *expbuf_node, struct node *node,
+int testDmaBuf(struct node *expbuf_node, struct node *node, struct node *node_m2m_cap,
 	       unsigned frame_count, enum poll_mode pollmode)
 {
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
@@ -1746,9 +1748,9 @@ int testDmaBuf(struct node *expbuf_node, struct node *node,
 				fail_on_test(ev.type != V4L2_EVENT_SOURCE_CHANGE);
 				fail_on_test(!(ev.u.src_change.changes & V4L2_EVENT_SRC_CH_RESOLUTION));
 			}
-			fail_on_test(setupM2M(node, m2m_q));
+			fail_on_test(setupM2M(node_m2m_cap, m2m_q));
 		}
-		fail_on_test(captureBufs(node, q, m2m_q, frame_count,
+		fail_on_test(captureBufs(node, node_m2m_cap, q, m2m_q, frame_count,
 					 pollmode, capture_count));
 		fail_on_test(node->streamoff(q.g_type()));
 		fail_on_test(node->streamoff(q.g_type()));
@@ -1765,18 +1767,18 @@ int testDmaBuf(struct node *expbuf_node, struct node *node,
 			fail_on_test(q.reqbufs(node, 0));
 		}
 		if (node->is_m2m) {
-			fail_on_test(node->streamoff(m2m_q.g_type()));
-			if (node->supports_orphaned_bufs) {
+			fail_on_test(node_m2m_cap->streamoff(m2m_q.g_type()));
+			if (node_m2m_cap->supports_orphaned_bufs) {
 				fail_on_test(m2m_q.reqbufs(node, 0));
-				m2m_q.munmap_bufs(node);
-			} else if (m2m_q.reqbufs(node, 0) != EBUSY) {
+				m2m_q.munmap_bufs(node_m2m_cap);
+			} else if (m2m_q.reqbufs(node_m2m_cap, 0) != EBUSY) {
 				// It's either a bug or this driver should set
 				// V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS
 				warn("Can free buffers even if still mmap()ed\n");
 				q.munmap_bufs(node);
 			} else {
-				m2m_q.munmap_bufs(node);
-				fail_on_test(m2m_q.reqbufs(node, 0));
+				m2m_q.munmap_bufs(node_m2m_cap);
+				fail_on_test(m2m_q.reqbufs(node_m2m_cap, 0));
 			}
 			fail_on_test(!capture_count);
 		}
@@ -2086,7 +2088,7 @@ int testRequests(struct node *node, bool test_streaming)
 	if (test_streaming) {
 		unsigned capture_count;
 
-		fail_on_test(captureBufs(node, q, m2m_q, num_bufs,
+		fail_on_test(captureBufs(node, node, q, m2m_q, num_bufs,
 					 POLL_MODE_SELECT, capture_count));
 	}
 	fail_on_test(node->streamoff(q.g_type()));
@@ -2824,7 +2826,7 @@ static void streamM2MRun(struct node *node, unsigned frame_count)
 	       fcc2s(cap_fmt.g_pixelformat()).c_str(),
 	       pixfmt2s(cap_fmt.g_pixelformat()).c_str(),
 	       cap_fmt.g_width(), cap_fmt.g_height(),
-	       ok(testMmap(node, frame_count, POLL_MODE_SELECT)));
+	       ok(testMmap(node, node, frame_count, POLL_MODE_SELECT)));
 }
 
 static int streamM2MOutFormat(struct node *node, __u32 pixelformat, __u32 w, __u32 h,

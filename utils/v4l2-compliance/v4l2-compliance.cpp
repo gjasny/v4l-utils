@@ -908,7 +908,7 @@ err:
 	return result;
 }
 
-void testNode(struct node &node, struct node &expbuf_node, media_type type,
+void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_node, media_type type,
 	      unsigned frame_count, unsigned all_fmt_frame_count)
 {
 	struct node node2;
@@ -1333,33 +1333,33 @@ void testNode(struct node &node, struct node &expbuf_node, media_type type,
 			node.reopen();
 			if (!(node.codec_mask & (STATEFUL_ENCODER | STATEFUL_DECODER))) {
 				printf("\ttest MMAP (no poll): %s\n",
-				       ok(testMmap(&node, frame_count, POLL_MODE_NONE)));
+				       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_NONE)));
 				node.reopen();
 			}
 			printf("\ttest MMAP (select): %s\n",
-			       ok(testMmap(&node, frame_count, POLL_MODE_SELECT)));
+			       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_SELECT)));
 			node.reopen();
 			printf("\ttest MMAP (epoll): %s\n",
-			       ok(testMmap(&node, frame_count, POLL_MODE_EPOLL)));
+			       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_EPOLL)));
 			node.reopen();
 			if (!(node.codec_mask & (STATEFUL_ENCODER | STATEFUL_DECODER))) {
 				printf("\ttest USERPTR (no poll): %s\n",
-				       ok(testUserPtr(&node, frame_count, POLL_MODE_NONE)));
+				       ok(testUserPtr(&node, &node_m2m_cap, frame_count, POLL_MODE_NONE)));
 				node.reopen();
 			}
 			printf("\ttest USERPTR (select): %s\n",
-			       ok(testUserPtr(&node, frame_count, POLL_MODE_SELECT)));
+			       ok(testUserPtr(&node, &node_m2m_cap, frame_count, POLL_MODE_SELECT)));
 			node.reopen();
 			if (options[OptSetExpBufDevice] ||
 			    !(node.valid_memorytype & (1 << V4L2_MEMORY_DMABUF))) {
 				if (!(node.codec_mask & (STATEFUL_ENCODER | STATEFUL_DECODER))) {
 					printf("\ttest DMABUF (no poll): %s\n",
-					       ok(testDmaBuf(&expbuf_node, &node, frame_count,
-							     POLL_MODE_NONE)));
+					       ok(testDmaBuf(&expbuf_node, &node, &node_m2m_cap,
+							     frame_count, POLL_MODE_NONE)));
 					node.reopen();
 				}
 				printf("\ttest DMABUF (select): %s\n",
-				       ok(testDmaBuf(&expbuf_node, &node, frame_count, POLL_MODE_SELECT)));
+				       ok(testDmaBuf(&expbuf_node, &node, &node_m2m_cap, frame_count, POLL_MODE_SELECT)));
 				node.reopen();
 			} else if (!options[OptSetExpBufDevice]) {
 				printf("\ttest DMABUF: Cannot test, specify --expbuf-device\n");
@@ -1707,7 +1707,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	testNode(node, expbuf_node, type, frame_count, all_fmt_frame_count);
+	testNode(node, node, expbuf_node, type, frame_count, all_fmt_frame_count);
 
 	if (!expbuf_device.empty())
 		expbuf_node.close();
