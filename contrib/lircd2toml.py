@@ -55,8 +55,8 @@ class LircdParser:
                 break
             a = line.split(maxsplit=2)
             if a[0] != 'begin' or a[1] != 'remote':
-                self.error("expected 'begin remote', got '{} {}'".format(a[0], a[1]))
-                return None
+                self.warning("expected 'begin remote', got '{} {}'".format(a[0], a[1]))
+                continue
             if len(a) > 2 and a[2][0] != '#':
                 self.error("unexpected {}".format(a[2]))
                 return None
