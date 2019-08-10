@@ -34,6 +34,7 @@
 #include "ir-encode.h"
 #include "parse.h"
 #include "toml.h"
+#include "keymap.h"
 
 #ifdef HAVE_BPF
 #include "bpf.h"

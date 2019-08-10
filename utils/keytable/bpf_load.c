@@ -14,6 +14,7 @@
 #include <linux/bpf.h>
 #include <assert.h>
 #include "toml.h"
+#include "keymap.h"
 #include "bpf.h"
 #include "bpf_load.h"
 
