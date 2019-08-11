@@ -2,8 +2,6 @@
 #ifndef __BITMAP_H__
 #define __BITMAP_H__
 
-#include "string.h"
-
 #define BITS_PER_LONG 64
 #define BITS_TO_LONG(n) \
 	(((n) + BITS_PER_LONG - 1) / BITS_PER_LONG)

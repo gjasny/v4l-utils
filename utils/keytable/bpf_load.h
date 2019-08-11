@@ -24,13 +24,6 @@ struct bpf_map_data {
 	struct bpf_load_map_def def;
 };
 
-struct raw_entry {
-	struct raw_entry *next;
-	u_int32_t scancode;
-	u_int32_t raw_length;
-	u_int32_t raw[1];
-};
-
 /* parses elf file compiled by llvm .c->.o
  * . parses 'maps' section and creates maps via BPF syscall
  * . parses 'license' section and passes it to syscall
