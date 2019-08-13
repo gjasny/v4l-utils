@@ -1406,6 +1406,7 @@ struct v4l_queue {
 	unsigned type;
 	unsigned memory;
 	unsigned buffers;
+	unsigned mappings;
 	unsigned num_planes;
 	unsigned capabilities;
 
@@ -1432,6 +1433,7 @@ static inline void v4l_queue_init(struct v4l_queue *q,
 static inline unsigned v4l_queue_g_type(const struct v4l_queue *q) { return q->type; }
 static inline unsigned v4l_queue_g_memory(const struct v4l_queue *q) { return q->memory; }
 static inline unsigned v4l_queue_g_buffers(const struct v4l_queue *q) { return q->buffers; }
+static inline unsigned v4l_queue_g_mappings(const struct v4l_queue *q) { return q->mappings; }
 static inline unsigned v4l_queue_g_num_planes(const struct v4l_queue *q) { return q->num_planes; }
 static inline unsigned v4l_queue_g_capabilities(const struct v4l_queue *q) { return q->capabilities; }
 
@@ -1452,7 +1454,7 @@ static inline void v4l_queue_s_mmapping(struct v4l_queue *q, unsigned index, uns
 
 static inline void *v4l_queue_g_mmapping(const struct v4l_queue *q, unsigned index, unsigned plane)
 {
-	if (index >= v4l_queue_g_buffers(q) || plane >= v4l_queue_g_num_planes(q))
+	if (index >= v4l_queue_g_mappings(q) || plane >= v4l_queue_g_num_planes(q))
 		return NULL;
 	return q->mmappings[index][plane];
 }
@@ -1591,6 +1593,7 @@ static inline int v4l_queue_mmap_bufs(struct v4l_fd *f,
 			v4l_queue_s_mmapping(q, b, p, m);
 		}
 	}
+	q->mappings = b;
 	return 0;
 }
 static inline int v4l_queue_munmap_bufs(struct v4l_fd *f, struct v4l_queue *q,
@@ -1602,7 +1605,7 @@ static inline int v4l_queue_munmap_bufs(struct v4l_fd *f, struct v4l_queue *q,
 	if (q->memory != V4L2_MEMORY_MMAP && q->memory != V4L2_MEMORY_DMABUF)
 		return 0;
 
-	for (b = from; b < v4l_queue_g_buffers(q); b++) {
+	for (b = from; b < v4l_queue_g_mappings(q); b++) {
 		for (p = 0; p < v4l_queue_g_num_planes(q); p++) {
 			void *m = v4l_queue_g_mmapping(q, b, p);
 
@@ -1618,6 +1621,7 @@ static inline int v4l_queue_munmap_bufs(struct v4l_fd *f, struct v4l_queue *q,
 			v4l_queue_s_mmapping(q, b, p, NULL);
 		}
 	}
+	q->mappings = from;
 	return 0;
 }
 
