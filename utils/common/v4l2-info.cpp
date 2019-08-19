@@ -367,6 +367,8 @@ std::string service2s(unsigned service)
 static const flag_def fmtdesc_def[] = {
 	{ V4L2_FMT_FLAG_COMPRESSED, "compressed" },
 	{ V4L2_FMT_FLAG_EMULATED, "emulated" },
+	{ V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM, "continuous-bytestream" },
+	{ V4L2_FMT_FLAG_DYN_RESOLUTION, "dyn-resolution" },
 	{ 0, NULL }
 };
 

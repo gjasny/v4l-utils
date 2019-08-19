@@ -259,8 +259,13 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 			return fail("fmtdesc.pixelformat not set\n");
 		if (node->g_direct() && (fmtdesc.flags & V4L2_FMT_FLAG_EMULATED))
 			return fail("drivers must never set the emulated flag\n");
-		if (fmtdesc.flags & ~(V4L2_FMT_FLAG_COMPRESSED | V4L2_FMT_FLAG_EMULATED))
+		if (fmtdesc.flags & ~(V4L2_FMT_FLAG_COMPRESSED | V4L2_FMT_FLAG_EMULATED |
+				      V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM |
+				      V4L2_FMT_FLAG_DYN_RESOLUTION))
 			return fail("unknown flag %08x returned\n", fmtdesc.flags);
+		if (!(fmtdesc.flags & V4L2_FMT_FLAG_COMPRESSED))
+			fail_on_test(fmtdesc.flags & (V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM |
+						      V4L2_FMT_FLAG_DYN_RESOLUTION));
 		ret = testEnumFrameSizes(node, fmtdesc.pixelformat);
 		if (ret)
 			fail_on_test(node->codec_mask & STATEFUL_ENCODER);
