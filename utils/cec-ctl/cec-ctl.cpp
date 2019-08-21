@@ -1626,7 +1626,7 @@ err:
 	exit(1);
 }
 
-static bool wait_for_pwr_state(struct node &node, unsigned from, bool on, unsigned &no_reply)
+static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
 {
 	struct cec_msg msg;
 	__u8 pwr;
@@ -1635,8 +1635,11 @@ static bool wait_for_pwr_state(struct node &node, unsigned from, bool on, unsign
 	cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 	cec_msg_give_device_power_status(&msg, true);
 	ret = doioctl(&node, CEC_TRANSMIT, &msg);
-	if (ret == ENONET)
+	if (ret == ENONET) {
+		printf("X");
+		fflush(stdout);
 		return !on;
+	}
 	if (ret) {
 		fprintf(stderr, "Give Device Power Status Transmit failed: %s\n",
 			strerror(ret));
@@ -1644,115 +1647,244 @@ static bool wait_for_pwr_state(struct node &node, unsigned from, bool on, unsign
 	}
 	if (msg.rx_status & CEC_RX_STATUS_OK) {
 		cec_ops_report_power_status(&msg, &pwr);
+		switch (pwr) {
+		case CEC_OP_POWER_STATUS_ON:
+			printf("+");
+			break;
+		case CEC_OP_POWER_STATUS_STANDBY:
+			printf("-");
+			break;
+		case CEC_OP_POWER_STATUS_TO_ON:
+			printf("/");
+			break;
+		case CEC_OP_POWER_STATUS_TO_STANDBY:
+			printf("\\");
+			break;
+		default:
+			printf(" %d ", pwr);
+			break;
+		}
+		fflush(stdout);
 		return pwr == (on ? CEC_OP_POWER_STATUS_ON : CEC_OP_POWER_STATUS_STANDBY);
-	} else {
-		no_reply++;
 	}
-	return !on;
+	printf("N");
+	fflush(stdout);
+	return false;
 }
 
-static void test_power_cycle(struct node &node, unsigned from)
+static int init_power_cycle_test(struct node &node)
 {
 	struct cec_msg msg;
+	unsigned from;
 	unsigned tries;
-	unsigned no_reply;
+	const unsigned max_tries = 30;
 	__u16 pa;
-	__u8 wakeup_la;
 	int ret;
 
-	if (from == CEC_LOG_ADDR_TV) {
-		fprintf(stderr, "A TV can't run the power cycle test.\n");
-		return;
-	}
+	printf("Legend:\n\n"
+	       "X   No LA claimed (HPD is likely pulled low)\n"
+	       "N   No Report Power Status received\n"
+	       "+   Reported On\n"
+	       "-   Reported In Standby\n"
+	       "/   Reported Transitioning to On\n"
+	       "\\   Reported Transitioning to Standby\n\n");
 
 	struct cec_log_addrs laddrs = { };
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-	from = laddrs.log_addr[0] & 0xf;
+	if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID) {
+		from = laddrs.log_addr[0];
+	} else {
+		switch (laddrs.log_addr_type[0]) {
+		case CEC_LOG_ADDR_TYPE_TV:
+			fprintf(stderr, "A TV can't run the power cycle test.\n");
+			exit(1);
+		case CEC_LOG_ADDR_TYPE_RECORD:
+			from = CEC_LOG_ADDR_RECORD_1;
+			break;
+		case CEC_LOG_ADDR_TYPE_TUNER:
+			from = CEC_LOG_ADDR_TUNER_1;
+			break;
+		case CEC_LOG_ADDR_TYPE_PLAYBACK:
+			from = CEC_LOG_ADDR_PLAYBACK_1;
+			break;
+		case CEC_LOG_ADDR_TYPE_AUDIOSYSTEM:
+			from = CEC_LOG_ADDR_AUDIOSYSTEM;
+			break;
+		case CEC_LOG_ADDR_TYPE_SPECIFIC:
+			from = CEC_LOG_ADDR_SPECIFIC;
+			break;
+		case CEC_LOG_ADDR_TYPE_UNREGISTERED:
+		default:
+			from = CEC_LOG_ADDR_UNREGISTERED;
+			break;
+		}
+	}
 
-	if (!laddrs.log_addr_mask) {
-		printf("No Logical Addresses claimed, assume TV is in Standby\n");
+	if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID) {
+		printf("No Logical Addresses claimed, assume TV is already in Standby\n\n");
 	} else {
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
 		/*
 		 * Some displays only accept Standby from the Active Source.
 		 * So make us the Active Source before sending Standby.
 		 */
-		printf("Transmit Active Source to TV\n");
+		printf("Transmit Active Source to TV: ");
+		fflush(stdout);
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_active_source(&msg, pa);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
 		if (ret) {
-			fprintf(stderr, "Active Source Transmit failed: %s\n", strerror(ret));
+			printf("FAIL: %s\n", strerror(ret));
 			exit(1);
 		}
-		printf("Transmit Standby to TV\n");
+		printf("OK\nTransmit Standby to TV: ");
+		fflush(stdout);
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_standby(&msg);
-		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret) {
-			fprintf(stderr, "Standby Transmit failed: %s\n", strerror(ret));
-			exit(1);
-		}
 
-		tries = no_reply = 0;
-		while (!wait_for_pwr_state(node, from, false, no_reply)) {
+		tries = 0;
+		for (;;) {
+			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+			if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
+				break;
+
+			ret = doioctl(&node, CEC_TRANSMIT, &msg);
+			if (ret) {
+				printf("FAIL: %s\n", strerror(ret));
+				exit(1);
+			}
+
+			if (wait_for_pwr_state(node, from, false))
+				break;
 			sleep(1);
-			if (++tries > 60) {
-				fprintf(stderr, "Could not put display in standby\n");
+			if (++tries > max_tries) {
+				printf(" FAIL: never went into standby\n");
 				exit(1);
 			}
 		}
+		printf(" OK\nTV is in Standby\n");
+		sleep(5);
 	}
+	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+	printf("Physical Address: %x.%x.%x.%x\n\n",
+	       cec_phys_addr_exp(pa));
+	return from;
+}
 
-	for (unsigned iter = 0; iter <= 21; iter++) {
+static void test_power_cycle(struct node &node)
+{
+	struct cec_log_addrs laddrs = { };
+	struct cec_msg msg;
+	unsigned from;
+	unsigned tries;
+	const unsigned max_tries = 30;
+	unsigned secs;
+	__u16 pa, prev_pa;
+	__u8 wakeup_la;
+	int ret;
+
+	from = init_power_cycle_test(node);
+
+	for (unsigned iter = 0; iter <= 2 * 12; iter++) {
+		unsigned i = iter / 2;
+
+		/*
+		 * For sleep values 0-5 run the test twice,
+		 * after that run it only once.
+		 */
+		if (i > 5 && (iter & 1))
+			continue;
+
 		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-		if (laddrs.num_log_addrs)
-			wakeup_la = from;
+		if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+			wakeup_la = from = laddrs.log_addr[0];
 		else
 			wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
+		printf("Wake up TV using Image View On from LA %s: ", la2s(wakeup_la));
+		fflush(stdout);
 		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
 		cec_msg_image_view_on(&msg);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
 		if (ret) {
-			fprintf(stderr, "Image View On from Unregistered failed: %s\n", strerror(ret));
+			printf("FAIL: %s\n", strerror(ret));
 			exit(1);
 		}
-		tries = no_reply = 0;
-		while (!wait_for_pwr_state(node, from, true, no_reply)) {
-			sleep(1);
-			if (++tries > 60)
+		tries = 0;
+		for (;;) {
+			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+			if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+				from = laddrs.log_addr[0];
+			if (wait_for_pwr_state(node, from, true))
 				break;
+			if (++tries > max_tries)
+				break;
+			sleep(1);
+			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+			if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+				continue;
+
+			doioctl(&node, CEC_TRANSMIT, &msg);
 		}
 
-		if (tries > 60 && wakeup_la == CEC_LOG_ADDR_UNREGISTERED) {
+		if (tries > max_tries) {
 			wakeup_la = from;
+			printf("\nFAIL: never woke up, retry\n");
+			printf("Wake up TV using Image View On from LA %s: ", la2s(wakeup_la));
+			fflush(stdout);
 			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
 			cec_msg_image_view_on(&msg);
 			ret = doioctl(&node, CEC_TRANSMIT, &msg);
 			if (ret) {
-				fprintf(stderr, "Image View On from %s failed: %s\n",
-					la2s(wakeup_la), strerror(ret));
+				printf("FAIL: %s\n", strerror(ret));
 				exit(1);
 			}
-			tries = no_reply = 0;
-			while (!wait_for_pwr_state(node, from, true, no_reply)) {
-				sleep(1);
-				if (++tries > 60) {
-					fprintf(stderr, "Unable to wake up TV\n");
+			tries = 0;
+			for (;;) {
+				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+					from = laddrs.log_addr[0];
+				if (wait_for_pwr_state(node, from, true))
+					break;
+				if (++tries > max_tries) {
+					printf("\nFAIL: never woke up\n");
 					exit(1);
 				}
+				sleep(1);
+				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+					continue;
+
+				doioctl(&node, CEC_TRANSMIT, &msg);
 			}
 		}
-		printf("Woke up TV after %d seconds using Image View On from LA %s",
-		       tries, la2s(wakeup_la));
-		if (no_reply)
-			printf(" (%d Give Device Power Status messages ignored", no_reply);
-		printf("\n");
+		printf(" %d second%s\n", tries, tries == 1 ? "" : "s");
 
 		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-		from = laddrs.log_addr[0] & 0xf;
+		if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID) {
+			printf("FAIL: invalid logical address\n");
+			exit(1);
+		}
+		from = laddrs.log_addr[0];
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+		printf("\tPhysical Address: %x.%x.%x.%x LA: %s\n",
+		       cec_phys_addr_exp(pa), la2s(from));
+		if (pa == CEC_PHYS_ADDR_INVALID) {
+			printf("FAIL: invalid physical address\n");
+			exit(1);
+		}
+		prev_pa = pa;
+		secs = i % 10;
+		printf("\tSleep %d seconds\n", secs);
+		sleep(secs);
+		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+		if (pa != prev_pa) {
+			printf("\tFAIL: PA is now %x.%x.%x.%x\n\n",
+			       cec_phys_addr_exp(pa));
+			exit(1);
+		}
 
+		printf("\nPut TV in standby from LA %s: ", la2s(from));
+		fflush(stdout);
 		/*
 		 * Some displays only accept Standby from the Active Source.
 		 * So make us the Active Source before sending Standby.
@@ -1761,85 +1893,78 @@ static void test_power_cycle(struct node &node, unsigned from)
 		cec_msg_active_source(&msg, pa);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
 		if (ret) {
-			fprintf(stderr, "Active Source Transmit failed: %s\n", strerror(ret));
+			printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
 			exit(1);
 		}
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_standby(&msg);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
 		if (ret) {
-			fprintf(stderr, "Standby Transmit failed: %s\n", strerror(ret));
+			printf("FAIL: %s\n", strerror(ret));
 			exit(1);
 		}
 
-		tries = no_reply = 0;
-		while (!wait_for_pwr_state(node, from, false, no_reply)) {
-			sleep(1);
-			if (++tries > 60) {
-				fprintf(stderr, "Could not put display in standby\n");
+		tries = 0;
+		bool first_standby = true;
+		for (;;) {
+			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+			if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
+				break;
+			if (wait_for_pwr_state(node, from, false))
+				break;
+			if (++tries > max_tries) {
+				if (first_standby) {
+					printf("\nFAIL: never went into standby, retry\n");
+					printf("Put TV in standby from LA %s: ", la2s(from));
+					fflush(stdout);
+					first_standby = false;
+					tries = 0;
+					cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+					cec_msg_standby(&msg);
+					ret = doioctl(&node, CEC_TRANSMIT, &msg);
+					if (!ret)
+						continue;
+					printf("FAIL: %s\n", strerror(ret));
+					exit(1);
+				}
+				printf("\nFAIL: never went into standby\n");
 				exit(1);
 			}
+			sleep(1);
 		}
-		printf("Put TV in Standby after %d seconds from LA %s",
-		       tries, la2s(from));
-		if (no_reply)
-			printf(" (%d Give Device Power Status messages ignored", no_reply);
-		printf("\n");
-		unsigned secs = iter <= 10 ? iter : 10 + 10 * (iter - 10);
-		printf("Sleep %d seconds\n", secs);
+		printf(" %d second%s\n", tries, tries == 1 ? "" : "s");
+		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+		printf("\tPhysical Address: %x.%x.%x.%x\n",
+		       cec_phys_addr_exp(pa));
+		prev_pa = pa;
+		secs = i <= 10 ? i : 10 + 10 * (i - 10);
+		printf("\tSleep %d second%s\n", secs, secs == 1 ? "" : "s");
 		sleep(secs);
+		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+		if (pa != prev_pa)
+			printf("\tPhysical Address: %x.%x.%x.%x\n",
+			       cec_phys_addr_exp(pa));
+		printf("\n");
 	}
 }
 
-static void stress_test_power_cycle(struct node &node, unsigned from,
+static void stress_test_power_cycle(struct node &node,
 				    unsigned cnt, unsigned max_sleep)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
+	const unsigned max_tries = 50;
 	unsigned tries = 0;
 	unsigned iter = 0;
-	unsigned no_reply = 0;
 	unsigned mod_usleep = 0;
-	__u16 pa;
-	bool found_la = false;
+	unsigned wakeup_la;
+	__u16 pa, prev_pa;
 	int ret;
 
 	if (max_sleep)
 		mod_usleep = 1000000 * max_sleep + 1;
 
-	if (from == CEC_LOG_ADDR_TV) {
-		fprintf(stderr, "A TV can't run the power cycle stress test.\n");
-		return;
-	}
-
-	if (from == CEC_LOG_ADDR_UNREGISTERED)
-		from = CEC_LOG_ADDR_PLAYBACK_1;
-
-	while (!wait_for_pwr_state(node, from, true, no_reply)) {
-		if (++tries > 50) {
-			fprintf(stderr, "Could not wake up display\n");
-			exit(1);
-		}
-		sleep(1);
-
-		if (found_la)
-			continue;
-
-		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
-		cec_msg_image_view_on(&msg);
-		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret == ENONET) {
-			msg.msg[0] = (CEC_LOG_ADDR_UNREGISTERED << 4) | CEC_LOG_ADDR_TV;
-			doioctl(&node, CEC_TRANSMIT, &msg);
-		}
-
-		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-		found_la = laddrs.log_addr_mask;
-	}
-
-	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-	from = laddrs.log_addr[0] & 0xf;
-	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+	unsigned from = init_power_cycle_test(node);
 
 	for (;;) {
 		unsigned usecs1 = mod_usleep ? random() % mod_usleep : 0;
@@ -1847,13 +1972,75 @@ static void stress_test_power_cycle(struct node &node, unsigned from,
 
 		iter++;
 
+		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+		if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+			wakeup_la = from = laddrs.log_addr[0];
+		else
+			wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
+
 		if (mod_usleep)
-			printf("Sleep %.2fs, then transmit Standby ", usecs1 / 1000000.0);
+			printf("Sleep %.2fs, then transmit Image View On ", usecs1 / 1000000.0);
+		else
+			printf("Transmit Image View On ");
+		printf("from LA %s (iteration %u): ", la2s(wakeup_la), iter);
+		fflush(stdout);
+		usleep(usecs1);
+
+		tries = 0;
+		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
+		cec_msg_image_view_on(&msg);
+		ret = doioctl(&node, CEC_TRANSMIT, &msg);
+		if (ret) {
+			printf("FAIL: %s\n", strerror(ret));
+			exit(1);
+		}
+
+		for (;;) {
+			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+			if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+				from = laddrs.log_addr[0];
+			if (wait_for_pwr_state(node, from, true))
+				break;
+			if (++tries > max_tries) {
+				printf("\nFAIL: never woke up\n");
+				exit(1);
+			}
+			sleep(1);
+			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+			if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+				continue;
+
+			doioctl(&node, CEC_TRANSMIT, &msg);
+		}
+		printf(" %d second%s\n", tries, tries == 1 ? "" : "s");
+		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+		if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID) {
+			printf("FAIL: invalid logical address\n");
+			exit(1);
+		}
+		from = laddrs.log_addr[0];
+		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+		prev_pa = pa;
+		printf("\tPhysical Address: %x.%x.%x.%x LA: %s\n",
+		       cec_phys_addr_exp(pa), la2s(from));
+		if (pa == CEC_PHYS_ADDR_INVALID) {
+			printf("FAIL: invalid physical address\n");
+			exit(1);
+		}
+
+		if (mod_usleep)
+			printf("Sleep %.2fs, then transmit Standby ", usecs2 / 1000000.0);
 		else
 			printf("Transmit Standby ");
-		printf("(iteration %u)\n", iter);
-
-		usleep(usecs1);
+		printf("(iteration %u): ", iter);
+		fflush(stdout);
+		usleep(usecs2);
+		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+		if (pa != prev_pa) {
+			printf("\tFAIL: PA is now %x.%x.%x.%x\n\n",
+			       cec_phys_addr_exp(pa));
+			exit(1);
+		}
 
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		/*
@@ -1863,55 +2050,30 @@ static void stress_test_power_cycle(struct node &node, unsigned from,
 		cec_msg_active_source(&msg, pa);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
 		if (ret) {
-			fprintf(stderr, "Active Source Transmit failed: %s\n", strerror(ret));
+			printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
 			exit(1);
 		}
 		cec_msg_standby(&msg);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
 		if (ret) {
-			fprintf(stderr, "Standby Transmit failed: %s\n", strerror(ret));
+			printf("FAIL: %s\n", strerror(ret));
 			exit(1);
 		}
 
-		tries = no_reply = 0;
-		while (!wait_for_pwr_state(node, from, false, no_reply)) {
-			sleep(1);
-			if (++tries > 50) {
-				fprintf(stderr, "Could not put display in standby\n");
-				exit(1);
-			}
-		}
-		usleep(usecs2);
-
-		if (mod_usleep)
-			printf("Sleep %.2fs, then transmit Image View On ", usecs2 / 1000000.0);
-		else
-			printf("Transmit Image View On ");
-		printf("(iteration %u)\n", iter);
-
-		tries = no_reply = 0;
-		found_la = false;
-		while (!wait_for_pwr_state(node, from, true, no_reply)) {
-			if (++tries > 50) {
-				fprintf(stderr, "Display is stuck in standby\n");
-				exit(1);
-			}
-			sleep(1);
-
-			if (found_la)
-				continue;
-
-			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
-			cec_msg_image_view_on(&msg);
-			ret = doioctl(&node, CEC_TRANSMIT, &msg);
-			if (ret == ENONET) {
-				msg.msg[0] = (CEC_LOG_ADDR_UNREGISTERED << 4) | CEC_LOG_ADDR_TV;
-				doioctl(&node, CEC_TRANSMIT, &msg);
-			}
-
+		tries = 0;
+		for (;;) {
 			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-			found_la = laddrs.log_addr_mask;
+			if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
+				break;
+			if (wait_for_pwr_state(node, from, false))
+				break;
+			if (++tries > max_tries) {
+				printf("\nFAIL: never went into standby\n");
+				exit(1);
+			}
+			sleep(1);
 		}
+		printf(" %d second%s\n", tries, tries == 1 ? "" : "s");
 
 		if (cnt && iter == cnt)
 			break;
@@ -2771,9 +2933,9 @@ int main(int argc, char **argv)
 		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
 
 	if (options[OptTestPowerCycle])
-		test_power_cycle(node, from);
+		test_power_cycle(node);
 	if (options[OptStressTestPowerCycle])
-		stress_test_power_cycle(node, from, pwr_cycle_cnt, max_sleep);
+		stress_test_power_cycle(node, pwr_cycle_cnt, max_sleep);
 skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll] ||
 	    options[OptMonitorPin] || options[OptStorePin])
