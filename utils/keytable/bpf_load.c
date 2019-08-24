@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <linux/bpf.h>
 #include <assert.h>
-#include "toml.h"
 #include "keymap.h"
 #include "bpf.h"
 #include "bpf_load.h"
@@ -55,7 +54,7 @@ struct bpf_file {
 	Elf_Data *data;
 	int strtabidx;
 	Elf_Data *symbols;
-	struct toml_table_t *toml;
+	struct protocol_param *param;
 };
 
 static int load_and_attach(int lirc_fd, struct bpf_file *bpf_file, const char *name, struct bpf_insn *prog, int size)
@@ -271,23 +270,11 @@ static int parse_relo_and_apply(struct bpf_file *bpf_file, GElf_Shdr *shdr,
 			const char *raw = NULL;
 			int value = 0;
 
-			if (!bpf_param(sym_name, &value)) {
-				// done
-			} else if (bpf_file->toml &&
-				   (raw = toml_raw_in(bpf_file->toml, sym_name)) != NULL) {
-				int64_t val64;
-
-				if (toml_rtoi(raw, &val64)) {
-					printf(_("variable %s not a integer: %s\n"), sym_name, raw);
-					return 1;
-				}
-
+			if (!bpf_param(bpf_file->param, sym_name, &value)) {
 				if (value < INT_MIN && value > UINT_MAX) {
 					printf(_("variable %s out of range: %s\n"), sym_name, raw);
 					return 1;
 				}
-
-				value = val64;
 			} else if (sym.st_shndx == bpf_file->dataidx) {
 				// Value is not overridden on command line
 				// or toml file. For the raw decoder, the
@@ -436,10 +423,10 @@ static int load_elf_maps_section(struct bpf_file *bpf_file)
 	return nr_maps;
 }
 
-int load_bpf_file(const char *path, int lirc_fd, struct toml_table_t *toml,
+int load_bpf_file(const char *path, int lirc_fd, struct protocol_param *param,
 	          struct raw_entry *raw)
 {
-	struct bpf_file bpf_file = { .toml = toml };
+	struct bpf_file bpf_file = { .param = param };
 	int fd, i, ret;
 	Elf *elf;
 	GElf_Ehdr ehdr;

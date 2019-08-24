@@ -36,8 +36,8 @@ struct bpf_map_data {
  *
  * returns zero on success
  */
-int load_bpf_file(const char *path, int lirc_fd, struct toml_table_t *toml, struct raw_entry *raw);
+int load_bpf_file(const char *path, int lirc_fd, struct protocol_param *param, struct raw_entry *raw);
 
-int bpf_param(const char *name, int *val);
+int bpf_param(struct protocol_param *param, const char *name, int *val);
 
 #endif

@@ -4,7 +4,7 @@ rc_keymap \- toml file describing remote control keymap
 .SH DESCRIPTION
 An rc_keymap describes a remote control. It list the protocols used, and the
 mapping from decoded IR to linux input events. This file is used by
-ir\-keytable(1).
+ir\-keytable(1) for IR decoding, and by ir-ctl(1) for sending IR.
 .PP
 The file format is toml. Since a remote control can use multiple protocols,
 the top level is an array of protocols. The vast majority of remotes only use
@@ -308,7 +308,7 @@ License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 .SH SEE ALSO
-ir\-keytable(1).
+ir\-keytable(1) and ir\-ctl(1)
 .PP
 https://lwn.net/Articles/759188/
 .PP

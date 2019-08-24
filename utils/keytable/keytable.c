@@ -33,7 +33,6 @@
 
 #include "ir-encode.h"
 #include "parse.h"
-#include "toml.h"
 #include "keymap.h"
 
 #ifdef HAVE_BPF
@@ -291,18 +290,12 @@ static enum sysfs_protocols ch_proto = 0;
 
 struct bpf_protocol {
 	struct bpf_protocol *next;
-	struct toml_table_t *toml;
+	struct protocol_param *param;
 	char *name;
 };
 
-struct bpf_parameter {
-	struct bpf_parameter *next;
-	int value;
-	char name[0];
-};
-
 static struct bpf_protocol *bpf_protocol;
-static struct bpf_parameter *bpf_parameter;
+static struct protocol_param *bpf_parameter;
 
 struct cfgfile cfg = {
 	NULL, NULL, NULL, NULL
@@ -331,33 +324,21 @@ struct rc_device {
 	enum sysfs_protocols supported, current; /* Current and supported IR protocols */
 };
 
-static bool compare_parameters(struct toml_table_t *a, struct toml_table_t *b)
+static bool compare_parameters(struct protocol_param *a, struct protocol_param *b)
 {
-	int i = 0;
-	int64_t avalue, bvalue;
-	const char *name, *raw;
+	struct protocol_param *b2;
 
-	if (a == NULL || b == NULL) {
-		return true;
-	}
+	for (; a; a = a->next) {
+		for (b2 = b; b2; b2 = b2->next) {
+			if (!strcmp(a->name, b2->name) &&
+			    a->value == b2->value) {
+				break;
+			}
+		}
 
-	while ((name = toml_key_in(a, i++)) != NULL) {
-		raw = toml_raw_in(a, name);
-		if (!raw)
-			continue;
-
-		if (toml_rtoi(raw, &avalue))
-			continue;
-
-		raw = toml_raw_in(b, name);
-		if (!raw)
+		if (!b2) {
 			return false;
-
-		if (toml_rtoi(raw, &bvalue))
-			return false;
-
-		if (avalue != bvalue)
-			return false;
+		}
 	}
 
 	return true;
@@ -376,8 +357,8 @@ static void add_bpf_protocol(struct bpf_protocol *new)
 		if (strcmp(a->name, new->name))
 			continue;
 
-		if (compare_parameters(a->toml, new->toml) &&
-		    compare_parameters(new->toml, a->toml))
+		if (compare_parameters(a->param, new->param) &&
+		    compare_parameters(new->param, a->param))
 			return;
 	}
 
@@ -385,399 +366,87 @@ static void add_bpf_protocol(struct bpf_protocol *new)
 	bpf_protocol = new;
 }
 
-static error_t parse_plain_keyfile(char *fname, char **table)
+static int add_keymap(struct keymap *map, const char *fname)
 {
-	FILE *fin;
-	int value, line = 0;
-	char *scancode, *keycode, s[2048];
-	struct keytable_entry *ke;
-
-	*table = NULL;
-
-	if (debug)
-		fprintf(stderr, _("Parsing %s keycode file as plain text\n"), fname);
-
-	fin = fopen(fname, "r");
-	if (!fin) {
-		return errno;
-	}
-
-	while (fgets(s, sizeof(s), fin)) {
-		char *p = s;
-
-		line++;
-		while (*p == ' ' || *p == '\t')
-			p++;
-		if (line==1 && p[0] == '#') {
-			p++;
-			p = strtok(p, "\n\t =:");
-			do {
-				if (!p)
-					goto err_einval;
-				if (!strcmp(p, "table")) {
-					p = strtok(NULL,"\n, ");
-					if (!p)
-						goto err_einval;
-					*table = malloc(strlen(p) + 1);
-					strcpy(*table, p);
-				} else if (!strcmp(p, "type")) {
-					p = strtok(NULL, " ,\n");
-					if (!p)
-						goto err_einval;
-
-					while (p) {
-						enum sysfs_protocols protocol;
-
-						protocol = parse_sysfs_protocol(p, false);
-						if (protocol == SYSFS_INVALID) {
-							fprintf(stderr, _("%s: protocol %s invalid\n"), fname, p);
-							goto err_einval;
-						}
-						ch_proto |= protocol;
-						p = strtok(NULL, " ,\n");
-					}
-				} else {
-					goto err_einval;
-				}
-				p = strtok(NULL, "\n\t =:");
-			} while (p);
-			continue;
-		}
-
-		if (*p == '\n' || *p == '#')
-			continue;
-
-		scancode = strtok(p, "\n\t =:");
-		if (!scancode)
-			goto err_einval;
-		if (!strcasecmp(scancode, "scancode")) {
-			scancode = strtok(NULL, "\n\t =:");
-			if (!scancode)
-				goto err_einval;
-		}
-
-		keycode = strtok(NULL, "\n\t =:(");
-		if (!keycode)
-			goto err_einval;
-
-		if (debug)
-			fprintf(stderr, _("parsing %s=%s:"), scancode, keycode);
-		value = parse_code(keycode);
-		if (debug)
-			fprintf(stderr, _("\tvalue=%d\n"), value);
-
-		if (value == -1) {
-			value = strtol(keycode, NULL, 0);
-			if (errno)
-				perror(_("value"));
-		}
-
-		ke = calloc(1, sizeof(*ke));
-		if (!ke) {
-			perror("parse_keyfile");
-			return ENOMEM;
-		}
-
-		ke->scancode	= strtoul(scancode, NULL, 0);
-		ke->keycode	= value;
-		ke->next	= keytable;
-		keytable	= ke;
-	}
-	fclose(fin);
-
-	return 0;
-
-err_einval:
-	fprintf(stderr, _("Invalid parameter on line %d of %s\n"),
-		line, fname);
-	return EINVAL;
-}
-
-static error_t parse_toml_raw_part(const char *fname, struct toml_array_t *raw)
-{
-	struct toml_table_t *t;
-	struct toml_array_t *rawarray;
-	struct raw_entry *re;
-	struct keytable_entry *ke;
-	const char *rkeycode;
-	char *keycode, *p;
-	int ind = 0, length;
-	int value;
-
-	while ((t = toml_table_at(raw, ind++)) != NULL) {
-		rkeycode = toml_raw_in(t, "keycode");
-		if (!rkeycode) {
-			fprintf(stderr, _("%s: invalid keycode for raw entry %d\n"),
-				fname, ind);
-			return EINVAL;
-		}
-
-		if (toml_rtos(rkeycode, &keycode)) {
-			fprintf(stderr, _("%s: bad value `%s' for keycode\n"),
-				fname, rkeycode);
-			return EINVAL;
-		}
-
-		value = parse_code(keycode);
-		if (debug)
-			fprintf(stderr, _("\tvalue=%d\n"), value);
-
-		if (value == -1) {
-			value = strtol(keycode, &p, 0);
-			if (errno || *p) {
-				free(keycode);
-				fprintf(stderr, _("%s: Keycode `%s' not recognised\n"),
-					fname, keycode);
-				continue;
-			}
-		}
-		free(keycode);
-
-		rawarray = toml_array_in(t, "raw");
-		if (!rawarray) {
-			fprintf(stderr, _("%s: missing raw array for entry %d\n"),
-				fname, ind);
-			return EINVAL;
-		}
-
-		// determine length of array
-		length = 0;
-		while (toml_raw_at(rawarray, length) != NULL)
-			length++;
-
-		if (!(length % 2)) {
-			fprintf(stderr, _("%s: raw array must have odd length rather than %d\n"),
-				fname, length);
-			return EINVAL;
-		}
-
-		re = calloc(1, sizeof(*re) + sizeof(re->raw[0]) * length);
-		if (!re) {
-			fprintf(stderr, _("Failed to allocate memory"));
-			return EINVAL;
-		}
-
-		for (int i=0; i<length; i++) {
-			const char *s = toml_raw_at(rawarray, i);
-			int64_t v;
-
-			if (toml_rtoi(s, &v) || v == 0) {
-				fprintf(stderr, _("%s: incorrect raw value `%s'"),
-					fname, s);
-				return EINVAL;
-			}
-
-			if (v <= 0 || v > USHRT_MAX) {
-				fprintf(stderr, _("%s: raw value %d out of range"),
-					fname, value);
-				return EINVAL;
-			}
-
-			re->raw[i] = v;
-		}
-
-		re->raw_length = length;
-
-		ke = calloc(1, sizeof(*ke));
-		if (!re) {
-			fprintf(stderr, _("Failed to allocate memory"));
-			return EINVAL;
-		}
-
-		ke->scancode = raw_scancode;
-		ke->keycode = value;
-		ke->next = keytable;
-		keytable = ke;
-
-		re->scancode = raw_scancode;
-		re->next = rawtable;
-		rawtable = re;
-
-		raw_scancode++;
-	}
-
-	return 0;
-}
-
-
-static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot)
-{
-	struct toml_table_t *scancodes;
-	struct toml_array_t *rawarray;
-	enum sysfs_protocols protocol;
-	const char *raw;
-	bool have_raw_protocol = false;
-	char *p;
-	int i = 0;
-
-	raw = toml_raw_in(proot, "protocol");
-	if (!raw) {
-		fprintf(stderr, _("%s: protocol missing\n"), fname);
-		return EINVAL;
-	}
-
-	if (toml_rtos(raw, &p)) {
-		fprintf(stderr, _("%s: bad value `%s' for protocol\n"), fname, raw);
-		return EINVAL;
-	}
-
-	protocol = parse_sysfs_protocol(p, false);
-	if (protocol == SYSFS_INVALID) {
-		struct bpf_protocol *b;
-
-		b = malloc(sizeof(*b));
-		if (!strcmp(p, "raw"))
-			have_raw_protocol = true;
-
-		b->name = p;
-		b->toml = proot;
-		add_bpf_protocol(b);
-	}
-	else {
-		ch_proto |= protocol;
-		free(p);
-	}
-
-	rawarray = toml_array_in(proot, "raw");
-	if (rawarray) {
-		if (toml_raw_in(proot, "scancodes")) {
-			fprintf(stderr, _("Cannot have both [raw] and [scancode] sections"));
-			return EINVAL;
-		}
-		if (!have_raw_protocol) {
-			fprintf(stderr, _("Keymap with raw entries must have raw protocol"));
-			return EINVAL;
-		}
-		error_t err = parse_toml_raw_part(fname, rawarray);
-		if (err != 0)
-			return err;
-
-	} else if (have_raw_protocol) {
-		fprintf(stderr, _("Keymap with raw protocol must have raw entries"));
-		return EINVAL;
-	}
-
-	scancodes = toml_table_in(proot, "scancodes");
-	if (!scancodes) {
-		if (debug)
-			fprintf(stderr, _("%s: no [protocols.scancodes] section\n"), fname);
-		return 0;
-	}
-
-	for (;;) {
+	for (; map; map = map->next) {
+		enum sysfs_protocols protocol;
 		struct keytable_entry *ke;
-		const char *scancode;
-		char *keycode;
-		int value;
+		struct scancode_entry *se;
+		struct raw_entry *re, *re_next;
 
-		scancode = toml_key_in(scancodes, i++);
-		if (!scancode)
-			break;
+		protocol = parse_sysfs_protocol(map->protocol, false);
+		if (protocol == SYSFS_INVALID) {
+			struct bpf_protocol *b;
 
-		raw = toml_raw_in(scancodes, scancode);
-		if (!raw) {
-			fprintf(stderr, _("%s: invalid value `%s'\n"), fname, scancode);
-			return EINVAL;
+			b = malloc(sizeof(*b));
+			b->name = strdup(map->protocol);
+			b->param = map->param;
+			/* steal param */
+			map->param = NULL;
+			add_bpf_protocol(b);
+		} else {
+			ch_proto |= protocol;
 		}
 
-		if (toml_rtos(raw, &keycode)) {
-			fprintf(stderr, _("%s: bad value `%s' for keycode\n"),
-				fname, keycode);
-			return EINVAL;
+		for (se = map->scancode; se; se = se->next) {
+			int value;
+			char *p;
+
+			value = parse_code(se->keycode);
+			if (debug)
+				fprintf(stderr, _("\tvalue=%d\n"), value);
+
+			if (value == -1) {
+				value = strtol(se->keycode, &p, 0);
+				if (errno || *p) {
+					fprintf(stderr, _("%s: keycode `%s' not recognised, no mapping for scancode %d\n"), fname, se->keycode, se->scancode);
+					continue;
+				}
+			}
+
+			ke = malloc(sizeof(*ke));
+			ke->scancode = se->scancode;
+			ke->keycode = value;
+			ke->next = keytable;
+
+			keytable = ke;
 		}
 
-		if (debug)
-			fprintf(stderr, _("parsing %s=%s:"), scancode, keycode);
+		for (re = map->raw; re; re = re_next) {
+			int value;
+			char *p;
 
-		value = parse_code(keycode);
-		if (debug)
-			fprintf(stderr, _("\tvalue=%d\n"), value);
+			re_next = re->next;
 
-		if (value == -1) {
-			value = strtol(keycode, &p, 0);
-			if (errno || *p)
-				fprintf(stderr, _("%s: keycode `%s' not recognised, no mapping for scancode %s\n"), fname, keycode, scancode);
+			value = parse_code(re->keycode);
+			if (debug)
+				fprintf(stderr, _("\tvalue=%d\n"), value);
+
+			if (value == -1) {
+				value = strtol(re->keycode, &p, 0);
+				if (errno || *p) {
+					fprintf(stderr, _("%s: keycode `%s' not recognised, no mapping\n"), fname, re->keycode);
+					continue;
+				}
+			}
+
+			ke = malloc(sizeof(*ke));
+			ke->scancode = raw_scancode;
+			ke->keycode = value;
+			ke->next = keytable;
+
+			keytable = ke;
+
+			re->scancode = raw_scancode++;
+			re->next = rawtable;
+			rawtable = re;
 		}
-		free(keycode);
 
-		ke = calloc(1, sizeof(*ke));
-		if (!ke) {
-			perror("parse_keyfile");
-			return ENOMEM;
-		}
-
-		ke->scancode	= strtoul(scancode, NULL, 0);
-		ke->keycode	= value;
-		ke->next	= keytable;
-		keytable	= ke;
+		/* Steal the raw entries */
+		map->raw = NULL;
 	}
 
 	return 0;
-}
-
-static error_t parse_toml_keyfile(char *fname, char **table)
-{
-	struct toml_table_t *root, *proot;
-	struct toml_array_t *arr;
-	int ret, i = 0;
-	char buf[200];
-	FILE *fin;
-
-	*table = NULL;
-
-	if (debug)
-		fprintf(stderr, _("Parsing %s keycode file as toml\n"), fname);
-
-	fin = fopen(fname, "r");
-	if (!fin)
-		return errno;
-
-	root = toml_parse_file(fin, buf, sizeof(buf));
-	fclose(fin);
-	if (!root) {
-		fprintf(stderr, _("%s: failed to parse toml: %s\n"), fname, buf);
-		return EINVAL;
-	}
-
-	arr = toml_array_in(root, "protocols");
-	if (!arr) {
-		fprintf(stderr, _("%s: missing [protocols] section\n"), fname);
-		return EINVAL;
-	}
-
-	for (;;) {
-		proot = toml_table_at(arr, i);
-		if (!proot)
-			break;
-
-		ret = parse_toml_protocol(fname, proot);
-		if (ret)
-			goto out;
-
-		i++;
-	}
-
-	if (i == 0) {
-		fprintf(stderr, _("%s: no protocols found\n"), fname);
-		goto out;
-	}
-
-	// Don't free toml, this is used during bpf loading
-	//toml_free(root);
-	return 0;
-out:
-	toml_free(root);
-	return EINVAL;
-}
-
-static error_t parse_keyfile(char *fname, char **table)
-{
-	size_t len = strlen(fname);
-
-	if (len >= 5 && strcasecmp(fname + len - 5, ".toml") == 0)
-		return parse_toml_keyfile(fname, table);
-	else
-		return parse_plain_keyfile(fname, table);
 }
 
 static error_t parse_cfgfile(char *fname)
@@ -883,13 +552,18 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		readtable++;
 		break;
 	case 'w': {
-		char *name = NULL;
+		struct keymap *map = NULL;
 
-		rc = parse_keyfile(arg, &name);
-		if (rc)
+		rc = parse_keyfile(arg, &map, debug);
+		if (rc) {
 			argp_error(state, _("Failed to read table file %s"), arg);
-		if (name)
-			fprintf(stderr, _("Read %s table\n"), name);
+			break;
+		}
+		if (map->name)
+			fprintf(stderr, _("Read %s table\n"), map->name);
+
+		add_keymap(map, arg);
+		free_keymap(map);
 		break;
 	}
 	case 'a': {
@@ -960,7 +634,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 
 				b = malloc(sizeof(*b));
 				b->name = strdup(p);
-				b->toml = NULL;
+				b->param = NULL;
 				b->next = bpf_protocol;
 				bpf_protocol = b;
 			}
@@ -972,20 +646,20 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	case 'e':
 		p = strtok(arg, ":=");
 		do {
-			struct bpf_parameter *param;
+			struct protocol_param *param;
 
 			if (!p) {
 				argp_error(state, _("Missing parameter name: %s"), arg);
 				break;
 			}
 
-			param = calloc(1, sizeof(*param) + strlen(p) + 1);
+			param = malloc(sizeof(*param));
 			if (!p) {
 				perror(_("No memory!\n"));
 				return ENOMEM;
 			}
 
-			strcpy(param->name, p);
+			param->name = strdup(p);
 
 			p = strtok(NULL, ",;");
 			if (!p) {
@@ -1002,7 +676,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			}
 
 			if (debug)
-				fprintf(stderr, _("parameter %s=%d\n"),
+				fprintf(stderr, _("parameter %s=%ld\n"),
 					param->name, param->value);
 
 			param->next = bpf_parameter;
@@ -1013,11 +687,13 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		break;
 	case 1:
 		test_keymap++;
-		char *name = NULL;
+		struct keymap *map ;
 
-		rc = parse_keyfile(arg, &name);
+		rc = parse_keyfile(arg, &map, debug);
 		if (rc)
 			argp_error(state, _("Failed to read table file %s"), arg);
+		add_keymap(map, arg);
+		free_keymap(map);
 		break;
 	case '?':
 		argp_state_help(state, state->out_stream,
@@ -1275,7 +951,7 @@ static enum sysfs_protocols load_bpf_for_unsupported(enum sysfs_protocols protoc
 
 		b = malloc(sizeof(*b));
 		b->name = strdup(pme->name);
-		b->toml = NULL;
+		b->param = NULL;
 		add_bpf_protocol(b);
 
 		protocols &= ~pme->sysfs_protocol;
@@ -2022,7 +1698,7 @@ static void device_info(int fd, char *prepend)
 
 #ifdef HAVE_BPF
 #define MAX_PROGS 64
-static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct toml_table_t *toml)
+static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct protocol_param *param)
 {
 	unsigned int features;
 	int fd;
@@ -2045,7 +1721,7 @@ static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct toml_
 		return;
 	}
 
-	load_bpf_file(bpf_prog, fd, toml, rawtable);
+	load_bpf_file(bpf_prog, fd, param, rawtable);
 	close(fd);
 }
 
@@ -2238,9 +1914,9 @@ static char *find_bpf_file(const char *name)
 	return fname;
 }
 
-int bpf_param(const char *name, int *val)
+int bpf_param(struct protocol_param *protocol_param, const char *name, int *val)
 {
-	struct bpf_parameter *param = bpf_parameter;
+	struct protocol_param *param = bpf_parameter;
 
 	while (param) {
 		if (strcmp(name, param->name) == 0) {
@@ -2248,6 +1924,14 @@ int bpf_param(const char *name, int *val)
 			return 0;
 		}
 		param = param->next;
+	}
+
+	while (protocol_param) {
+		if (strcmp(name, protocol_param->name) == 0) {
+			*val = protocol_param->value;
+			return 0;
+		}
+		protocol_param = protocol_param->next;
 	}
 
 	return -ENOENT;
@@ -2302,7 +1986,7 @@ int main(int argc, char *argv[])
 
 	if (cfg.next) {
 		struct cfgfile *cur;
-		char *fname, *name;
+		char *fname;
 		int rc;
 		int matches = 0;
 
@@ -2318,29 +2002,36 @@ int main(int argc, char *argv[])
 					cur->fname);
 
 			if (cur->fname[0] == '/' || ((cur->fname[0] == '.') && strchr(cur->fname, '/'))) {
+				struct keymap *map;
 				fname = cur->fname;
-				rc = parse_keyfile(fname, &name);
+				rc = parse_keyfile(fname, &map, debug);
 				if (rc < 0) {
 					fprintf(stderr, _("Can't load %s table\n"), fname);
 					return -1;
 				}
+				add_keymap(map, fname);
+				free_keymap(map);
 			} else {
+				struct keymap *map;
 				fname = malloc(strlen(cur->fname) + strlen(IR_KEYTABLE_USER_DIR) + 2);
 				strcpy(fname, IR_KEYTABLE_USER_DIR);
 				strcat(fname, "/");
 				strcat(fname, cur->fname);
-				rc = parse_keyfile(fname, &name);
+				rc = parse_keyfile(fname, &map, debug);
 				if (rc != 0) {
 					fname = malloc(strlen(cur->fname) + strlen(IR_KEYTABLE_SYSTEM_DIR) + 2);
 					strcpy(fname, IR_KEYTABLE_SYSTEM_DIR);
 					strcat(fname, "/");
 					strcat(fname, cur->fname);
-					rc = parse_keyfile(fname, &name);
+					rc = parse_keyfile(fname, &map, debug);
 				}
 				if (rc != 0) {
 					fprintf(stderr, _("Can't load %s table from %s or %s\n"), cur->fname, IR_KEYTABLE_USER_DIR, IR_KEYTABLE_SYSTEM_DIR);
 					return -1;
 				}
+
+				add_keymap(map, fname);
+				free_keymap(map);
 			}
 			if (!keytable) {
 				fprintf(stderr, _("Empty table %s\n"), fname);
@@ -2414,7 +2105,7 @@ int main(int argc, char *argv[])
 			char *fname = find_bpf_file(b->name);
 
 			if (fname) {
-				attach_bpf(rc_dev.lirc_name, fname, b->toml);
+				attach_bpf(rc_dev.lirc_name, fname, b->param);
 				fprintf(stderr, _("Loaded BPF protocol %s\n"), b->name);
 				free(fname);
 			}
