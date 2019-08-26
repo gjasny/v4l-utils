@@ -30,6 +30,7 @@
 #include <linux/lirc.h>
 
 #include "ir-encode.h"
+#include "keymap.h"
 
 #ifdef ENABLE_NLS
 # define _(string) gettext(string)
@@ -67,6 +68,7 @@ struct file {
 	struct file *next;
 	const char *fname;
 	bool is_scancode;
+	bool is_keycode;
 	union {
 		struct {
 			unsigned carrier;
@@ -77,6 +79,7 @@ struct file {
 			unsigned scancode;
 			unsigned protocol;
 		};
+		char	keycode[1];
 	};
 };
 
@@ -85,6 +88,7 @@ struct arguments {
 	bool features;
 	bool receive;
 	bool verbose;
+	struct keymap *keymap;
 	struct file *send;
 	bool oneshot;
 	char *savetofile;
@@ -104,7 +108,8 @@ static const struct argp_option options[] = {
 	{ "features",	'f',	0,		0,	N_("list lirc device features") },
 	{ "receive",	'r',	N_("FILE"),	OPTION_ARG_OPTIONAL,	N_("receive IR to stdout or file") },
 	{ "send",	's',	N_("FILE"),	0,	N_("send IR pulse and space file") },
-	{ "scancode", 'S',	N_("SCANCODE"),	0,	N_("send IR scancode in protocol specified") },
+	{ "scancode",	'S',	N_("SCANCODE"),	0,	N_("send IR scancode in protocol specified") },
+	{ "keycode",	'K',	N_("KEYCODE"),	0,	N_("send IR keycode from keymap") },
 	{ "verbose",	'v',	0,		0,	N_("verbose output") },
 		{ .doc = N_("Receiving options:") },
 	{ "one-shot",	'1',	0,		0,	N_("end receiving after first message") },
@@ -115,6 +120,7 @@ static const struct argp_option options[] = {
 	{ "no-measure-carrier", 'M', 0,		0,	N_("disable reporting carrier frequency") },
 	{ "timeout",	't',	N_("TIMEOUT"),	0,	N_("set receiving timeout") },
 		{ .doc = N_("Sending options:") },
+	{ "keymap",	'k',	N_("KEYMAP"),	0,	N_("use keymap to send key from") },
 	{ "carrier",	'c',	N_("CARRIER"),	0,	N_("set send carrier") },
 	{ "duty-cycle",	'D',	N_("DUTY"),	0,	N_("set duty cycle") },
 	{ "emitters",	'e',	N_("EMITTERS"),	0,	N_("set send emitters") },
@@ -127,6 +133,7 @@ static const char args_doc[] = N_(
 	"--receive [save to file]\n"
 	"--send [file to send]\n"
 	"--scancode [scancode to send]\n"
+	"--keycode [keycode to send]\n"
 	"[to set lirc option]");
 
 static const char doc[] = N_(
@@ -141,7 +148,9 @@ static const char doc[] = N_(
 	"  GAP      - gap between pulse and files or scancodes in microseconds\n"
 	"  RANGE    - set range of accepted carrier frequencies, e.g. 20000-40000\n"
 	"  TIMEOUT  - set length of space before receiving stops in microseconds\n"
-	"  SCANCODE - protocol:scancode, e.g. nec:0xa814\n\n"
+	"  KEYCODE  - key code in keymap\n"
+	"  SCANCODE - protocol:scancode, e.g. nec:0xa814\n"
+	"  KEYMAP   - a rc keymap file from which to send keys\n\n"
 	"Note that most lirc setting have global state, i.e. the device will remain\n"
 	"in this state until set otherwise.");
 
@@ -214,6 +223,7 @@ static struct file *read_file(struct arguments *args, const char *fname)
 		return NULL;
 	}
 	f->is_scancode = false;
+	f->is_keycode = false;
 	f->carrier = 0;
 	f->fname = fname;
 
@@ -386,6 +396,7 @@ static struct file *read_scancode(const char *name)
 	}
 
 	f->is_scancode = true;
+	f->is_keycode = false;
 	f->scancode = scancode;
 	f->protocol = proto;
 
@@ -395,6 +406,7 @@ static struct file *read_scancode(const char *name)
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
 	struct arguments *arguments = state->input;
+	struct keymap *map;
 	struct file *s;
 
 	switch (k) {
@@ -524,6 +536,38 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		}
 		break;
 
+	case 'K':
+		if (arguments->receive || arguments->features)
+			argp_error(state, _("key send can not be combined with receive or features option"));
+		s = malloc(sizeof(*s) + strlen(arg));
+		if (s == NULL)
+			exit(EX_DATAERR);
+
+		s->next = NULL;
+		strcpy(s->keycode, arg);
+		s->is_scancode = false;
+		s->is_keycode = true;
+		if (arguments->send == NULL)
+			arguments->send = s;
+		else {
+			struct file *p = arguments->send;
+			while (p->next) p = p->next;
+			p->next = s;
+		}
+		break;
+
+	case 'k':
+		if (parse_keyfile(arg, &map, arguments->verbose))
+			exit(EX_DATAERR);
+		if (arguments->keymap == NULL)
+			arguments->keymap = map;
+		else {
+			struct keymap *p = arguments->keymap;
+			while (p->next) p = p->next;
+			p->next = map;
+		}
+		break;
+
 	case ARGP_KEY_END:
 		if (!arguments->work_to_do)
 			argp_usage(state);
@@ -533,10 +577,66 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		return ARGP_ERR_UNKNOWN;
 	}
 
-	if (k != '1' && k != 'd' && k != 'v')
+	if (k != '1' && k != 'd' && k != 'v' && k != 'k')
 		arguments->work_to_do = true;
 
 	return 0;
+}
+
+// FIXME: keymaps can have multiple definitions of the same keycode
+static struct file* convert_keycode(struct keymap *map, const char *keycode)
+{
+	struct file *s;
+
+	while (map) {
+		struct raw_entry *re = map->raw;
+		struct scancode_entry *se = map->scancode;
+
+		while (re) {
+			if (!strcmp(re->keycode, keycode)) {
+				s = malloc(sizeof(*s) + re->raw_length * sizeof(int));
+				s->len = re->raw_length;
+				memcpy(s->buf, re->raw, s->len * sizeof(int));
+				s->is_scancode = false;
+				s->is_keycode = false;
+				s->carrier = keymap_param(map, "carrier", 0);
+				s->next = NULL;
+
+				return s;
+			}
+
+			re = re->next;
+		}
+
+		while (se) {
+			if (!strcmp(se->keycode, keycode)) {
+				enum rc_proto proto;
+				const char *proto_str;
+
+				proto_str = map->variant ?: map->protocol;
+
+				if (!protocol_match(proto_str, &proto)) {
+					fprintf(stderr, _("error: protocol '%s' not suppoted\n"), proto_str);
+					return NULL;
+				}
+
+				s = malloc(sizeof(*s));
+				s->protocol = proto;
+				s->scancode = se->scancode;
+				s->is_scancode = true;
+				s->is_keycode = false;
+				s->next = NULL;
+
+				return s;
+			}
+
+			se = se->next;
+		}
+
+		map = map->next;
+	}
+
+	return NULL;
 }
 
 static const struct argp argp = {
@@ -768,7 +868,27 @@ static int lirc_send(struct arguments *args, int fd, unsigned features, struct f
 		return EX_UNAVAILABLE;
 	}
 
+	if (f->is_keycode) {
+		struct keymap *map = args->keymap;
+		const char *keycode = f->keycode;
+
+		if (!map) {
+			fprintf(stderr, _("error: no keymap specified\n"));
+			return EX_DATAERR;
+		}
+
+		f = convert_keycode(map, keycode);
+		if (!f) {
+			fprintf(stderr, _("error: keycode `%s' not found in keymap\n"), keycode);
+			return EX_DATAERR;
+		}
+	}
+
 	if (f->is_scancode) {
+		if (args->verbose)
+			printf("Sending to kernel encoder protocol:%s scancode:0x%x\n",
+			       protocol_name(f->protocol), f->scancode);
+
 		mode = LIRC_MODE_SCANCODE;
 		rc = ioctl(fd, LIRC_SET_SEND_MODE, &mode);
 		if (rc == 0) {

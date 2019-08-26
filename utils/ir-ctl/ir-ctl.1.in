@@ -15,10 +15,16 @@ ir\-ctl \- a swiss\-knife tool to handle raw IR and to set lirc options
 [\fIOPTION\fR]... \fI\-\-scancode\fR [\fIprotocol and scancode to send\fR]
 .br
 .B ir\-ctl
+[\fIOPTION\fR]... \fI\-\-keycode\fR [\fIkeycode to send\fR]
+.br
+.B ir\-ctl
 [\fIOPTION\fR]... \fI\-\-receive\fR [\fIsave to file\fR]
 .SH DESCRIPTION
 ir\-ctl is a tool that allows one to list the features of a lirc device,
-set its options, receive raw IR, send raw IR or send complete IR scancodes.
+set its options, receive raw IR, and send IR.
+.PP
+IR can be sent as the keycode of a keymap, or using a scancode, or using
+raw IR.
 .PP
 Note: You need to have read or write permissions on the /dev/lirc device
 for options to work.
@@ -44,6 +50,16 @@ Send the IR scancode in the protocol specified. The protocol must one of the
 protocols listed below, followed by a colon and the scancode number. If this
 option is specified multiple times, send all scancodes in\-order with a 125ms
 gap between them. The gap length can be modified with \fB\-\-gap\fR.
+.TP
+\fB-K\fR, \fB\-\-keycode\fR=\fIKEYCODE\fR
+Send the \fBKEYCODE\fR from the keymap which must be specified with
+\fB--keymap\fR. If this option is specified multiple times, send all keycodes
+in\-order with a 125ms gap between them. The gap length can be modified
+with \fB\-\-gap\fR.
+.TP
+\fB-k\fR, \fB\-\-keymap\fR=\fIKEYMAP\fR
+The rc keymap in toml format. The format is described in the rc_keymap(5)
+man page.
 .TP
 \fB\-1\fR, \fB\-\-oneshot\fR
 When receiving, stop receiving after the first message, i.e. after a space or
@@ -224,7 +240,11 @@ To send the pulse and space file \fBplay\fR on emitter 3:
 .PP
 To send the rc-5 hauppauge '1' scancode:
 .br
-	\fBir\-ctl \-S rc5:0x1e01
+	\fBir\-ctl \-S rc5:0x1e01\fR
+.PP
+To send the rc-5 hauppauage '1' key from the hauppauge keymap:
+.br
+	\fBir\-ctl -k hauppauge.toml -K KEY_NUMERIC_0\fR
 .SH BUGS
 Report bugs to \fBLinux Media Mailing List <linux-media@vger.kernel.org>\fR
 .SH COPYRIGHT
@@ -237,3 +257,5 @@ There is NO WARRANTY, to the extent permitted by law.
 .SH SEE ALSO
 To display decoded IR, or set IR decoding options, see
 ir\-keytable(1).
+
+The keymap format is described in rc_keymap(5).
