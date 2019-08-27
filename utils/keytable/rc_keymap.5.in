@@ -67,10 +67,11 @@ to raw mapping. For each entry, there is a \fBkeycode\fR field and \fBraw\fR
 field. The \fBkeycode\fR is a linux input event, as explained the scancodes
 section.
 .PP
-The \fBraw\fR field is an array of integers. These are the pulse and space
-values of the IR message. The first is a pulse value in microseconds, and
-the second a space, third pulse, etc. There should be an odd number of fields
-so that the last entry is a pulse.
+The \fBraw\fR field is an string, which lists pulse and space values,
+separated by whitespace. The first is a pulse value microseconds, and
+the second a space, third pulse, etc. The space values can be preceded by
+a - sign and the pulse value can be preceded by a +sign.
+There should be an odd number of value so that the last entry is a pulse.
 .SS Remaining fields (BPF parameters)
 If the protocol is a BPF based decoder, it may have any number of numeric
 parameters. These parameters are used to support protocols with non-standard

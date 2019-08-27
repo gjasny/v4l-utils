@@ -177,73 +177,113 @@ err_einval:
 	return EINVAL;
 }
 
+static error_t parse_rawir_string(const char *fname, char *str, struct raw_entry **entry)
+{
+	struct raw_entry *re;
+	const char *p;
+	char *copy;
+	int i, size = 0;
+
+	// First do one scan so that we know the length
+	copy = strdup(str);
+	p = strtok(copy, "\n\t\v ,");
+	while (p) {
+		size++;
+		p = strtok(NULL, "\n\t\v ,");
+	}
+
+	re = calloc(1, sizeof(*re) + sizeof(re->raw[0]) * size);
+	if (!re) {
+		fprintf(stderr, _("Failed to allocate memory"));
+		free(copy);
+		return EINVAL;
+	}
+
+	// Second scan to extract values and validate
+	strcpy(copy, str);
+	p = strtok(copy, "\n\t\v ,");
+	i = 0;
+	while (p) {
+		long int value;
+		char *q;
+
+		value = strtoll(p, &q, 10);
+		if (*q || value == 0 || errno) {
+			fprintf(stderr, _("%s: incorrect raw value `%s'"),
+				fname, p);
+			free(copy);
+			return EINVAL;
+		}
+
+		if (value < 0) {
+			if (i % 2)
+				value = -value;
+			else {
+				fprintf(stderr, _("%s: negative raw value `%ld` at position %d only allowed for gaps/spaces"),
+					fname, value, i);
+				free(copy);
+				return EINVAL;
+			}
+		}
+
+		if (value <= 0 || value > USHRT_MAX) {
+			fprintf(stderr, _("%s: raw value %ld out of range"),
+				fname, value);
+			free(copy);
+			return EINVAL;
+		}
+
+		re->raw[i++] = value;
+
+		p = strtok(NULL, "\n\t\v ,");
+	}
+
+	free(copy);
+	re->raw_length = size;
+
+	*entry = re;
+
+	return 0;
+}
+
 static error_t parse_toml_raw_part(const char *fname, struct toml_array_t *raw, struct keymap *map, bool verbose)
 {
+	char *keycode, *raw_str;
 	struct toml_table_t *t;
-	struct toml_array_t *rawarray;
 	struct raw_entry *re;
-	const char *rkeycode;
-	int ind = 0, length;
-	char *keycode;
+	const char *traw;
+	int ind = 0;
 
 	while ((t = toml_table_at(raw, ind++)) != NULL) {
-		rkeycode = toml_raw_in(t, "keycode");
-		if (!rkeycode) {
+		traw = toml_raw_in(t, "keycode");
+		if (!traw) {
 			fprintf(stderr, _("%s: invalid keycode for raw entry %d\n"),
 				fname, ind);
 			return EINVAL;
 		}
 
-		if (toml_rtos(rkeycode, &keycode)) {
+		if (toml_rtos(traw, &keycode)) {
 			fprintf(stderr, _("%s: bad value `%s' for keycode\n"),
-				fname, rkeycode);
+				fname, traw);
 			return EINVAL;
 		}
 
-		rawarray = toml_array_in(t, "raw");
-		if (!rawarray) {
-			fprintf(stderr, _("%s: missing raw array for entry %d\n"),
+		traw = toml_raw_in(t, "raw");
+		if (!traw) {
+			fprintf(stderr, _("%s: missing raw value for entry %d\n"),
 				fname, ind);
 			return EINVAL;
 		}
 
-		// determine length of array
-		length = 0;
-		while (toml_raw_at(rawarray, length) != NULL)
-			length++;
-
-		if (!(length % 2)) {
-			fprintf(stderr, _("%s: raw array must have odd length rather than %d\n"),
-				fname, length);
+		if (toml_rtos(traw, &raw_str)) {
+			fprintf(stderr, _("%s: bad value `%s' for keycode\n"),
+				fname, traw);
 			return EINVAL;
 		}
 
-		re = calloc(1, sizeof(*re) + sizeof(re->raw[0]) * length);
-		if (!re) {
-			fprintf(stderr, _("Failed to allocate memory"));
+		if (parse_rawir_string(fname, raw_str, &re))
 			return EINVAL;
-		}
 
-		for (int i=0; i<length; i++) {
-			const char *s = toml_raw_at(rawarray, i);
-			int64_t v;
-
-			if (toml_rtoi(s, &v) || v == 0) {
-				fprintf(stderr, _("%s: incorrect raw value `%s'"),
-					fname, s);
-				return EINVAL;
-			}
-
-			if (v <= 0 || v > USHRT_MAX) {
-				fprintf(stderr, _("%s: raw value %ld out of range"),
-					fname, v);
-				return EINVAL;
-			}
-
-			re->raw[i] = v;
-		}
-
-		re->raw_length = length;
 		re->keycode = strdup(keycode);
 		re->next = map->raw;
 		map->raw = re;

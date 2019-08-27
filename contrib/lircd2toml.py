@@ -604,16 +604,16 @@ def writeTOMLFile(fh, remote):
     elif 'raw' in remote:
         for raw in remote['raw']:
             print('[[protocols.raw]]', file=fh)
-            print('keycode = {}\nraw = ['.format(escapeString(raw['keycode'])), file=fh, end='')
-            first = True
-            for v in raw['raw']:
-                if first:
-                    print(' {}'.format(v), file=fh, end='')
+            print('keycode = {}\nraw = \''.format(escapeString(raw['keycode'])), file=fh, end='')
+            for i, v in enumerate(raw['raw']):
+                if i == 0:
+                    print('+{}'.format(v), file=fh, end='')
+                elif i % 2 == 1:
+                    print(' -{}'.format(v), file=fh, end='')
                 else:
-                    print(', {}'.format(v), file=fh, end='')
-                first = False
+                    print(' +{}'.format(v), file=fh, end='')
 
-            print(' ]', file=fh)
+            print('\'', file=fh)
 
     return True
 
