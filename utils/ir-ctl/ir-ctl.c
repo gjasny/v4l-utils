@@ -64,8 +64,8 @@ const char *argp_program_bug_address = "Sean Young <sean@mess.org>";
 /*
  * Since this program drives the lirc interface, use the same terminology
  */
-struct file {
-	struct file *next;
+struct send {
+	struct send *next;
 	const char *fname;
 	bool is_scancode;
 	bool is_keycode;
@@ -88,8 +88,9 @@ struct arguments {
 	bool features;
 	bool receive;
 	bool verbose;
+	bool mode2;
 	struct keymap *keymap;
-	struct file *send;
+	struct send *send;
 	bool oneshot;
 	char *savetofile;
 	int wideband;
@@ -113,6 +114,7 @@ static const struct argp_option options[] = {
 	{ "verbose",	'v',	0,		0,	N_("verbose output") },
 		{ .doc = N_("Receiving options:") },
 	{ "one-shot",	'1',	0,		0,	N_("end receiving after first message") },
+	{ "mode2",	2,	0,		0,	N_("output in mode2 format") },
 	{ "wideband",	'w',	0,		0,	N_("use wideband receiver aka learning mode") },
 	{ "narrowband",	'n',	0,		0,	N_("use narrowband receiver, disable learning mode") },
 	{ "carrier-range", 'R', N_("RANGE"),	0,	N_("set receiver carrier range") },
@@ -122,7 +124,7 @@ static const struct argp_option options[] = {
 		{ .doc = N_("Sending options:") },
 	{ "keymap",	'k',	N_("KEYMAP"),	0,	N_("use keymap to send key from") },
 	{ "carrier",	'c',	N_("CARRIER"),	0,	N_("set send carrier") },
-	{ "duty-cycle",	'D',	N_("DUTY"),	0,	N_("set duty cycle") },
+	{ "duty-cycle",	'D',	N_("DUTY"),	0,	N_("set send duty cycle") },
 	{ "emitters",	'e',	N_("EMITTERS"),	0,	N_("set send emitters") },
 	{ "gap",	'g',	N_("GAP"),	0,	N_("set gap between files or scancodes") },
 	{ }
@@ -145,7 +147,7 @@ static const char doc[] = N_(
 	"  CARRIER  - the carrier frequency to use for sending\n"
 	"  DUTY     - the duty cycle to use for sending\n"
 	"  EMITTERS - comma separated list of emitters to use for sending, e.g. 1,2\n"
-	"  GAP      - gap between pulse and files or scancodes in microseconds\n"
+	"  GAP      - gap between sending in microseconds\n"
 	"  RANGE    - set range of accepted carrier frequencies, e.g. 20000-40000\n"
 	"  TIMEOUT  - set length of space before receiving stops in microseconds\n"
 	"  KEYCODE  - key code in keymap\n"
@@ -201,21 +203,14 @@ static unsigned parse_emitters(char *p)
 	return emit;
 }
 
-static struct file *read_file(struct arguments *args, const char *fname)
+static struct send *read_file_pulse_space(struct arguments *args, const char *fname, FILE *input)
 {
 	bool expect_pulse = true;
 	int lineno = 0, lastspace = 0;
 	char line[1024];
 	int len = 0;
-	static const char *whitespace = " \n\r\t";
-	struct file *f;
-
-	FILE *input = fopen(fname, "r");
-
-	if (!input) {
-		fprintf(stderr, _("%s: could not open: %m\n"), fname);
-		return NULL;
-	}
+	static const char whitespace[] = " \n\r\t";
+	struct send *f;
 
 	f = malloc(sizeof(*f));
 	if (f == NULL) {
@@ -255,6 +250,8 @@ static struct file *read_file(struct arguments *args, const char *fname)
 			scancodestr = strchr(p, ':');
 			if (!scancodestr) {
 				fprintf(stderr, _("error: %s:%d: scancode argument '%s' should in protocol:scancode format\n"), fname, lineno, p);
+				fclose(input);
+				free(f);
 				return NULL;
 			}
 
@@ -262,16 +259,22 @@ static struct file *read_file(struct arguments *args, const char *fname)
 
 			if (!protocol_match(p, &proto)) {
 				fprintf(stderr, _("error: %s:%d: protocol '%s' not found\n"), fname, lineno, p);
+				fclose(input);
+				free(f);
 				return NULL;
 			}
 
 			if (!strtoscancode(scancodestr, &scancode)) {
 				fprintf(stderr, _("error: %s:%d: invalid scancode '%s'\n"), fname, lineno, scancodestr);
+				fclose(input);
+				free(f);
 				return NULL;
 			}
 
 			if (!protocol_encoder_available(proto)) {
 				fprintf(stderr, _("error: %s:%d: no encoder available for `%s'\n"), fname, lineno, protocol_name(proto));
+				fclose(input);
+				free(f);
 				return NULL;
 			}
 
@@ -279,6 +282,8 @@ static struct file *read_file(struct arguments *args, const char *fname)
 
 			if (len + protocol_max_size(proto) >= LIRCBUF_SIZE) {
 				fprintf(stderr, _("error: %s:%d: too much IR for one transmit\n"), fname, lineno);
+				fclose(input);
+				free(f);
 				return NULL;
 			}
 
@@ -360,10 +365,145 @@ static struct file *read_file(struct arguments *args, const char *fname)
 	return f;
 }
 
-static struct file *read_scancode(const char *name)
+static struct send *read_file_raw(struct arguments *args, const char *fname, FILE *input)
+{
+	int lineno = 0, lastspace = 0;
+	char line[1024];
+	int len = 0;
+	static const char whitespace[] = " \n\r\t,";
+	struct send *f;
+
+	f = malloc(sizeof(*f));
+	if (f == NULL) {
+		fprintf(stderr, _("Failed to allocate memory\n"));
+		fclose(input);
+		return NULL;
+	}
+	f->is_scancode = false;
+	f->is_keycode = false;
+	f->carrier = 0;
+	f->fname = fname;
+
+	while (fgets(line, sizeof(line), input)) {
+		long int value;
+		char *p, *saveptr;
+		lineno++;
+		char *keyword = strtok_r(line, whitespace, &saveptr);
+
+		for (;;) {
+			if (keyword == NULL || *keyword == 0 || *keyword == '#' ||
+			    (keyword[0] == '/' && keyword[1] == '/'))
+				break;
+
+			value = strtol(keyword, &p, 10);
+			if (errno || *p) {
+				fprintf(stderr, _("%s:%d: error: expected integer, got `%s'\n"),
+					fname, lineno, keyword);
+				fclose(input);
+				free(f);
+				return NULL;
+			}
+
+			if (len % 2) {
+				if (keyword[0] == '+') {
+					fprintf(stderr, _("%s:%d: error: pulse found where space expected `%s'\n"), fname, lineno, keyword);
+					free(f);
+					return NULL;
+				}
+				if (keyword[0] == '-')
+					value = -value;
+			} else {
+				if (keyword[0] == '-') {
+					fprintf(stderr, _("%s:%d: error: space found where pulse expected `%s'\n"), fname, lineno, keyword);
+					fclose(input);
+					free(f);
+					return NULL;
+				}
+				lastspace = lineno;
+			}
+
+			if (value <= 0 || value >= LIRC_VALUE_MASK) {
+				fprintf(stderr, _("%s:%d: error: value `%s' out of range\n"), fname, lineno, keyword);
+				fclose(input);
+				free(f);
+				return NULL;
+			}
+
+			f->buf[len++] = value;
+
+			if (len >= LIRCBUF_SIZE) {
+				fprintf(stderr, _("warning: %s:%d: IR cannot exceed %u edges\n"), fname, lineno, LIRCBUF_SIZE);
+				break;
+			}
+
+			keyword = strtok_r(NULL, whitespace, &saveptr);
+		}
+	}
+
+	fclose(input);
+
+	if (len == 0) {
+		fprintf(stderr, _("%s: no pulses or spaces found\n"), fname);
+		free(f);
+		return NULL;
+	}
+
+	if ((len % 2) == 0) {
+		fprintf(stderr, _("warning: %s:%d: trailing space ignored\n"),
+							fname, lastspace);
+		len--;
+	}
+
+	f->len = len;
+
+	return f;
+}
+
+static struct send *read_file(struct arguments *args, const char *fname)
+{
+	FILE *input = fopen(fname, "r");
+	char line[1024];
+
+	if (!input) {
+		fprintf(stderr, _("%s: could not open: %m\n"), fname);
+		return NULL;
+	}
+
+	while (fgets(line, sizeof(line), input)) {
+		int start = 0;
+
+		while (isspace(line[start]))
+			start++;
+
+		switch (line[start]) {
+		case '/':
+			if (line[start+1] != '/')
+				break;
+		case 0:
+		case '#':
+			continue;
+		case '+':
+		case '-':
+		case '0' ... '9':
+			rewind(input);
+			return read_file_raw(args, fname, input);
+		default:
+			rewind(input);
+			return read_file_pulse_space(args, fname, input);
+		}
+	}
+
+	fclose(input);
+
+	fprintf(stderr, _("%s: file is empty\n"), fname);
+
+	return NULL;
+}
+
+static struct send *read_scancode(const char *name)
 {
 	enum rc_proto proto;
-	struct file *f;
+	struct send *f;
 	unsigned scancode;
 	char *pstr;
 	char *p = strchr(name, ':');
@@ -407,7 +547,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
 	struct arguments *arguments = state->input;
 	struct keymap *map;
-	struct file *s;
+	struct send *s;
 
 	switch (k) {
 	case 'f':
@@ -430,6 +570,9 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		break;
 	case '1':
 		arguments->oneshot = true;
+		break;
+	case 2:
+		arguments->mode2 = true;
 		break;
 	case 'v':
 		arguments->verbose = true;
@@ -514,7 +657,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		if (arguments->send == NULL)
 			arguments->send = s;
 		else {
-			struct file *p = arguments->send;
+			struct send *p = arguments->send;
 			while (p->next) p = p->next;
 			p->next = s;
 		}
@@ -530,7 +673,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		if (arguments->send == NULL)
 			arguments->send = s;
 		else {
-			struct file *p = arguments->send;
+			struct send *p = arguments->send;
 			while (p->next) p = p->next;
 			p->next = s;
 		}
@@ -550,7 +693,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		if (arguments->send == NULL)
 			arguments->send = s;
 		else {
-			struct file *p = arguments->send;
+			struct send *p = arguments->send;
 			while (p->next) p = p->next;
 			p->next = s;
 		}
@@ -562,6 +705,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		if (arguments->keymap == NULL)
 			arguments->keymap = map;
 		else {
+			// add to end of list of keymaps
 			struct keymap *p = arguments->keymap;
 			while (p->next) p = p->next;
 			p->next = map;
@@ -577,16 +721,16 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		return ARGP_ERR_UNKNOWN;
 	}
 
-	if (k != '1' && k != 'd' && k != 'v' && k != 'k')
+	if (k != '1' && k != 'd' && k != 'v' && k != 'k' && k != 2)
 		arguments->work_to_do = true;
 
 	return 0;
 }
 
 // FIXME: keymaps can have multiple definitions of the same keycode
-static struct file* convert_keycode(struct keymap *map, const char *keycode)
+static struct send* convert_keycode(struct keymap *map, const char *keycode)
 {
-	struct file *s;
+	struct send *s;
 
 	while (map) {
 		struct raw_entry *re = map->raw;
@@ -857,7 +1001,7 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 	}
 }
 
-static int lirc_send(struct arguments *args, int fd, unsigned features, struct file *f)
+static int lirc_send(struct arguments *args, int fd, unsigned features, struct send *f)
 {
 	const char *dev = args->device;
 	int rc, mode;
@@ -930,9 +1074,10 @@ static int lirc_send(struct arguments *args, int fd, unsigned features, struct f
 	size_t size = f->len * sizeof(unsigned);
 	if (args->verbose) {
 		int i;
-		printf("Sending:\n");
+		printf("Sending:");
 		for (i=0; i<f->len; i++)
-			printf("%s %u\n", i & 1 ? "space" : "pulse", f->buf[i]);
+			printf("%s%u", i & 1 ? " -" : " +", f->buf[i]);
+		putchar('\n');
 	}
 	ret = TEMP_FAILURE_RETRY(write(fd, f->buf, size));
 	if (ret < 0) {
@@ -982,6 +1127,7 @@ int lirc_receive(struct arguments *args, int fd, unsigned features)
 
 	bool keep_reading = true;
 	bool leading_space = true;
+	unsigned carrier = 0;
 
 	while (keep_reading) {
 		ssize_t ret = TEMP_FAILURE_RETRY(read(fd, buf, sizeof(buf)));
@@ -1015,20 +1161,42 @@ int lirc_receive(struct arguments *args, int fd, unsigned features)
 				break;
 			}
 
-			switch (msg) {
-			case LIRC_MODE2_TIMEOUT:
-				fprintf(out, "timeout %u\n", val);
-				leading_space = true;
-				break;
-			case LIRC_MODE2_PULSE:
-				fprintf(out, "pulse %u\n", val);
-				break;
-			case LIRC_MODE2_SPACE:
-				fprintf(out, "space %u\n", val);
-				break;
-			case LIRC_MODE2_FREQUENCY:
-				fprintf(out, "carrier %u\n", val);
-				break;
+			if (args->mode2) {
+				switch (msg) {
+				case LIRC_MODE2_TIMEOUT:
+					fprintf(out, "timeout %u\n", val);
+					leading_space = true;
+					break;
+				case LIRC_MODE2_PULSE:
+					fprintf(out, "pulse %u\n", val);
+					break;
+				case LIRC_MODE2_SPACE:
+					fprintf(out, "space %u\n", val);
+					break;
+				case LIRC_MODE2_FREQUENCY:
+					fprintf(out, "carrier %u\n", val);
+					break;
+				}
+			} else {
+				switch (msg) {
+				case LIRC_MODE2_TIMEOUT:
+					if (carrier)
+						fprintf(out, "# carrier %uHz, timeout %u\n", carrier, val);
+					else
+						fprintf(out, "# timeout %u\n", val);
+					leading_space = true;
+					carrier = 0;
+					break;
+				case LIRC_MODE2_PULSE:
+					fprintf(out, "+%u ", val);
+					break;
+				case LIRC_MODE2_SPACE:
+					fprintf(out, "-%u ", val);
+					break;
+				case LIRC_MODE2_FREQUENCY:
+					carrier = val;
+					break;
+				}
 			}
 
 			fflush(out);
@@ -1069,9 +1237,9 @@ int main(int argc, char *argv[])
 	if (rc)
 		exit(EX_IOERR);
 
-	struct file *s = args.send;
+	struct send *s = args.send;
 	while (s) {
-		struct file *next = s->next;
+		struct send *next = s->next;
 		if (s != args.send)
 			usleep(args.gap);
 

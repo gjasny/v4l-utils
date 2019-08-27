@@ -9,7 +9,7 @@ ir\-ctl \- a swiss\-knife tool to handle raw IR and to set lirc options
 [\fIOPTION\fR]... \fI\-\-features\fR
 .br
 .B ir\-ctl
-[\fIOPTION\fR]... \fI\-\-send\fR [\fIpulse and space file to send\fR]
+[\fIOPTION\fR]... \fI\-\-send\fR [\fIfile to send\fR]
 .br
 .B ir\-ctl
 [\fIOPTION\fR]... \fI\-\-scancode\fR [\fIprotocol and scancode to send\fR]
@@ -58,12 +58,15 @@ in\-order with a 125ms gap between them. The gap length can be modified
 with \fB\-\-gap\fR.
 .TP
 \fB-k\fR, \fB\-\-keymap\fR=\fIKEYMAP\fR
-The rc keymap in toml format. The format is described in the rc_keymap(5)
-man page.
+The rc keymap file in toml format. The format is described in the rc_keymap(5)
+man page. This file is used to select the \fBKEYCODE\fR from.
 .TP
 \fB\-1\fR, \fB\-\-oneshot\fR
 When receiving, stop receiving after the first message, i.e. after a space or
 timeout of more than 19ms is received.
+.TP
+\fB\-\-mode2\fR
+When receiving, output IR in mode2 format. One line per space or pulse.
 .TP
 \fB\-w\fR, \fB\-\-wideband\fR
 Use the wideband receiver if available on the hardware. This is also
@@ -118,14 +121,17 @@ Verbose output; this prints the IR before sending.
 \fB\-V\fR, \fB\-\-version\fR
 print the v4l2\-utils version
 .PP
-.SS Format of pulse and space file
-When sending IR, the format of the file should be as follows. A comment
-starts with #. The carrier frequency can be specified as:
+.SS Format of file
+When sending or receiving raw IR, two formats can be used. The first is
+a list of integers representing pulse and space values. A pulse value can be
+prefixed with + and a space with -, but this is optional. The rc-5 scancode
+0x1e01 is encoded so:
 .PP
-	carrier 38000
++889 -889 +1778 -1778 +889 -889 +889 -889 +889 -889 +1778 -889 +889 -889 +889 -889 +889 -889 +889 -889 +889 -1778 +889
 .PP
-The file should contain alternating lines with pulse and space, followed
-by length in microseconds. The following is a rc-5 encoded message:
+The other format mimics the mode2 tool. This produces one line per space
+or pulse. For receiving it can selected by specifying \fB\-\-mode2\fR. Here is
+the same message as above, now encoded in mode2:
 .PP
 	carrier 36000
 .br
@@ -175,9 +181,13 @@ by length in microseconds. The following is a rc-5 encoded message:
 .br
 	pulse 840
 .PP
-Rather than specifying the raw IR, you can also specify the scancode and
-protocol you want to send. This will also automatically set the correct
-carrier. The above can be written as:
+Note that in this format, the carrier can also be specified. This can only
+by done with a separate \fB\-\-carrier=38000\fR command line option with
+the first format.
+.PP
+Rather than specifying just the raw IR, in this format you can also specify
+the scancode and protocol you want to send. This will also automatically set
+the correct carrier. The above can be written as:
 .PP
 	scancode rc5:0x1e01
 .PP
@@ -244,7 +254,7 @@ To send the rc-5 hauppauge '1' scancode:
 .PP
 To send the rc-5 hauppauage '1' key from the hauppauge keymap:
 .br
-	\fBir\-ctl -k hauppauge.toml -K KEY_NUMERIC_0\fR
+	\fBir\-ctl -k hauppauge.toml -K KEY_NUMERIC_1\fR
 .SH BUGS
 Report bugs to \fBLinux Media Mailing List <linux-media@vger.kernel.org>\fR
 .SH COPYRIGHT

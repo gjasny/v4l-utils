@@ -272,19 +272,23 @@ static error_t parse_toml_raw_part(const char *fname, struct toml_array_t *raw, 
 		if (!traw) {
 			fprintf(stderr, _("%s: missing raw value for entry %d\n"),
 				fname, ind);
+			free(keycode);
 			return EINVAL;
 		}
 
 		if (toml_rtos(traw, &raw_str)) {
 			fprintf(stderr, _("%s: bad value `%s' for keycode\n"),
 				fname, traw);
+			free(keycode);
 			return EINVAL;
 		}
 
-		if (parse_rawir_string(fname, raw_str, &re))
+		if (parse_rawir_string(fname, raw_str, &re)) {
+			free(keycode);
 			return EINVAL;
+		}
 
-		re->keycode = strdup(keycode);
+		re->keycode = keycode;
 		re->next = map->raw;
 		map->raw = re;
 	}
