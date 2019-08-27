@@ -1342,7 +1342,7 @@ int dvb_store_channel(struct dvb_file **dvb_file,
 			dvb_log(_("Storing as channel %s"), channel);
 		vchannel = dvb_vchannel(parms, dvb_scan_handler->nit, service->service_id);
 
-		if (dvb_scan_handler->nit->transport) {
+		if (dvb_scan_handler->nit && dvb_scan_handler->nit->transport) {
 			network_id = dvb_scan_handler->nit->transport->network_id;
 			transport_id = dvb_scan_handler->nit->transport->transport_id;
 		}
