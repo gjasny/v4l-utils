@@ -375,7 +375,7 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 	}
 
 	for (i = 0; (key = toml_key_in(proot, i)) != NULL; i++) {
-		long int value;
+		int64_t value;
 
 		raw = toml_raw_in(proot, key);
 		if (!toml_rtoi(raw, &value)) {
