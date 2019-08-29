@@ -727,17 +727,22 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	return 0;
 }
 
-// FIXME: keymaps can have multiple definitions of the same keycode
 static struct send* convert_keycode(struct keymap *map, const char *keycode)
 {
-	struct send *s;
+	struct send *s = NULL;
+	int count = 0;
 
-	while (map) {
-		struct raw_entry *re = map->raw;
-		struct scancode_entry *se = map->scancode;
+	for (;map; map = map->next) {
+		struct scancode_entry *se;
+		struct raw_entry *re;
 
-		while (re) {
-			if (!strcmp(re->keycode, keycode)) {
+		for (re = map->raw; re; re = re->next) {
+			if (strcmp(re->keycode, keycode))
+				continue;
+
+			count++;
+
+			if (!s) {
 				s = malloc(sizeof(*s) + re->raw_length * sizeof(int));
 				s->len = re->raw_length;
 				memcpy(s->buf, re->raw, s->len * sizeof(int));
@@ -745,17 +750,18 @@ static struct send* convert_keycode(struct keymap *map, const char *keycode)
 				s->is_keycode = false;
 				s->carrier = keymap_param(map, "carrier", 0);
 				s->next = NULL;
-
-				return s;
 			}
-
-			re = re->next;
 		}
 
-		while (se) {
-			if (!strcmp(se->keycode, keycode)) {
-				enum rc_proto proto;
+		for (se = map->scancode; se; se = se->next) {
+			if (strcmp(se->keycode, keycode))
+				continue;
+
+			count++;
+
+			if (!s) {
 				const char *proto_str;
+				enum rc_proto proto;
 
 				proto_str = map->variant ?: map->protocol;
 
@@ -770,17 +776,19 @@ static struct send* convert_keycode(struct keymap *map, const char *keycode)
 				s->is_scancode = true;
 				s->is_keycode = false;
 				s->next = NULL;
-
-				return s;
 			}
-
-			se = se->next;
 		}
-
-		map = map->next;
 	}
 
-	return NULL;
+	if (!s) {
+		fprintf(stderr, _("error: keycode `%s' not found in keymap\n"), keycode);
+		return NULL;
+	}
+
+	if (count > 1)
+		fprintf(stderr, _("warning: keycode `%s' has %d definitions in keymaps, using first\n"), keycode, count);
+
+	return s;
 }
 
 static const struct argp argp = {
@@ -1022,10 +1030,8 @@ static int lirc_send(struct arguments *args, int fd, unsigned features, struct s
 		}
 
 		f = convert_keycode(map, keycode);
-		if (!f) {
-			fprintf(stderr, _("error: keycode `%s' not found in keymap\n"), keycode);
+		if (!f)
 			return EX_DATAERR;
-		}
 	}
 
 	if (f->is_scancode) {

@@ -391,6 +391,8 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 		}
 	}
 
+	struct scancode_entry **next = &map->scancode;
+
 	for (;;) {
 		struct scancode_entry *se;
 		const char *scancode;
@@ -420,8 +422,8 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 
 		se->scancode = strtoul(scancode, NULL, 0);
 		se->keycode = keycode;
-		se->next = map->scancode;
-		map->scancode = se;
+		*next = se;
+		next = &se->next;
 	}
 
 	return 0;
