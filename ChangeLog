@@ -1,3 +1,10 @@
+v4l-utils-1.16.7
+----------------
+
+Mauro Carvalho Chehab (1):
+      libdvbv5: Don't assume that NIT table was parsed
+
+
 v4l-utils-1.16.6
 ----------------
 
