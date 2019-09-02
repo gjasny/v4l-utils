@@ -1829,7 +1829,7 @@ static void clear_bpf(const char *lirc_name)
 		fprintf(stderr, _("BPF protocols removed\n"));
 }
 #else
-static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct toml_table_t *toml)
+static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct protocol_param *param)
 {
 	fprintf(stderr, _("error: ir-keytable was compiled without BPF support\n"));
 }
