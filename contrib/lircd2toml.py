@@ -145,20 +145,29 @@ class LircdParser:
 
             a = line.split()
             if a[0] == 'name':
-                if len(codes) > 0:
+                codes = raw_codes_sanitise(codes)
+                if codes:
                     raw_codes.append({ 'keycode': name, 'raw': codes })
                 name = line.split(maxsplit=2)[1]
                 if not name.startswith('KEY_'):
                     name = 'KEY_' + name.upper()
                 codes = []
             elif a[0] == 'end':
-                if len(codes) > 0:
+                codes = raw_codes_sanitise(codes)
+                if codes:
                     raw_codes.append({ 'keycode': name, 'raw': codes })
                 return raw_codes
             else:
                 for v in a:
                     codes.append(int(v))
 
+def raw_codes_sanitise(codes):
+    if len(codes) == 0:
+        return None
+    if len(codes) % 2 == 0:
+        return codes[:-1]
+
+    return codes
 
 def eq_margin(duration, expected, margin):
     if duration >= (expected - margin) and duration <= (expected + margin):
