@@ -25,6 +25,7 @@
 #include <linux/lirc.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <argp.h>
@@ -1852,9 +1853,14 @@ static void device_info(int fd, char *prepend)
 
 #ifdef HAVE_BPF
 #define MAX_PROGS 64
+// This value is what systemd sets PID 1 to, see:
+// https://github.com/systemd/systemd/blob/master/src/basic/def.h#L60
+#define HIGH_RLIMIT_MEMLOCK (1024ULL*1024ULL*64ULL)
+
 static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct toml_table_t *toml)
 {
 	unsigned int features;
+	struct rlimit rl;
 	int fd;
 
 	fd = open(lirc_name, O_RDONLY);
@@ -1874,6 +1880,14 @@ static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct toml_
 		close(fd);
 		return;
 	}
+
+	// BPF programs are charged against RLIMIT_MEMLOCK. We'll need pages
+	// for the state, program text, and any raw IR. None of these are
+	// particularly large. However, the kernel defaults to 64KB
+	// memlock, which is only 16 pages which are mostly used by the
+	// time we are trying to load our BPF program.
+	rl.rlim_cur = rl.rlim_max = HIGH_RLIMIT_MEMLOCK;
+	(void) setrlimit(RLIMIT_MEMLOCK, &rl);
 
 	load_bpf_file(bpf_prog, fd, toml);
 	close(fd);
