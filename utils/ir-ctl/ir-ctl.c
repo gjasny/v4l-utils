@@ -700,7 +700,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		break;
 
 	case 'k':
-		if (parse_keyfile(arg, &map, arguments->verbose))
+		if (parse_keymap(arg, &map, arguments->verbose))
 			exit(EX_DATAERR);
 		if (arguments->keymap == NULL)
 			arguments->keymap = map;
@@ -1020,20 +1020,6 @@ static int lirc_send(struct arguments *args, int fd, unsigned features, struct s
 		return EX_UNAVAILABLE;
 	}
 
-	if (f->is_keycode) {
-		struct keymap *map = args->keymap;
-		const char *keycode = f->keycode;
-
-		if (!map) {
-			fprintf(stderr, _("error: no keymap specified\n"));
-			return EX_DATAERR;
-		}
-
-		f = convert_keycode(map, keycode);
-		if (!f)
-			return EX_DATAERR;
-	}
-
 	if (f->is_scancode) {
 		if (args->verbose)
 			printf("Sending to kernel encoder protocol:%s scancode:0x%x\n",
@@ -1249,6 +1235,22 @@ int main(int argc, char *argv[])
 		if (s != args.send)
 			usleep(args.gap);
 
+		if (s->is_keycode) {
+			struct send *k;
+
+			if (!args.keymap) {
+				fprintf(stderr, _("error: no keymap specified\n"));
+				exit(EX_DATAERR);
+			}
+
+			k = convert_keycode(args.keymap, s->keycode);
+			if (!k)
+				exit(EX_DATAERR);
+
+			free(s);
+			s = k;
+		}
+
 		rc = lirc_send(&args, fd, features, s);
 		if (rc) {
 			close(fd);
@@ -1270,6 +1272,7 @@ int main(int argc, char *argv[])
 	if (args.features)
 		lirc_features(&args, fd, features);
 
+	free_keymap(args.keymap);
 	close(fd);
 
 	return 0;

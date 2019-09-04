@@ -69,7 +69,7 @@ void free_keymap(struct keymap *map)
 	}
 }
 
-static error_t parse_plain_keyfile(char *fname, struct keymap **keymap, bool verbose)
+static error_t parse_plain_keymap(char *fname, struct keymap **keymap, bool verbose)
 {
 	FILE *fin;
 	int line = 0;
@@ -79,7 +79,7 @@ static error_t parse_plain_keyfile(char *fname, struct keymap **keymap, bool ver
 
 	map = calloc(1, sizeof(*map));
 	if (!map) {
-		perror("parse_keyfile");
+		perror("parse_keymap");
 		return ENOMEM;
 	}
 
@@ -154,7 +154,7 @@ static error_t parse_plain_keyfile(char *fname, struct keymap **keymap, bool ver
 		se = calloc(1, sizeof(*se));
 		if (!se) {
 			free_keymap(map);
-			perror("parse_keyfile");
+			perror("parse_keymap");
 			fclose(fin);
 			return ENOMEM;
 		}
@@ -180,16 +180,17 @@ err_einval:
 static error_t parse_rawir_string(const char *fname, char *str, struct raw_entry **entry)
 {
 	struct raw_entry *re;
+	const char sep[] = "\n\r\t\v ,";
 	const char *p;
 	char *copy;
 	int i, size = 0;
 
 	// First do one scan so that we know the length
 	copy = strdup(str);
-	p = strtok(copy, "\n\t\v ,");
+	p = strtok(copy, sep);
 	while (p) {
 		size++;
-		p = strtok(NULL, "\n\t\v ,");
+		p = strtok(NULL, sep);
 	}
 
 	re = calloc(1, sizeof(*re) + sizeof(re->raw[0]) * size);
@@ -201,7 +202,7 @@ static error_t parse_rawir_string(const char *fname, char *str, struct raw_entry
 
 	// Second scan to extract values and validate
 	strcpy(copy, str);
-	p = strtok(copy, "\n\t\v ,");
+	p = strtok(copy, sep);
 	i = 0;
 	while (p) {
 		long int value;
@@ -212,6 +213,7 @@ static error_t parse_rawir_string(const char *fname, char *str, struct raw_entry
 			fprintf(stderr, _("%s: incorrect raw value `%s'"),
 				fname, p);
 			free(copy);
+			free(re);
 			return EINVAL;
 		}
 
@@ -222,6 +224,7 @@ static error_t parse_rawir_string(const char *fname, char *str, struct raw_entry
 				fprintf(stderr, _("%s: negative raw value `%ld` at position %d only allowed for gaps/spaces"),
 					fname, value, i);
 				free(copy);
+				free(re);
 				return EINVAL;
 			}
 		}
@@ -230,12 +233,13 @@ static error_t parse_rawir_string(const char *fname, char *str, struct raw_entry
 			fprintf(stderr, _("%s: raw value %ld out of range"),
 				fname, value);
 			free(copy);
+			free(re);
 			return EINVAL;
 		}
 
 		re->raw[i++] = value;
 
-		p = strtok(NULL, "\n\t\v ,");
+		p = strtok(NULL, sep);
 	}
 
 	free(copy);
@@ -285,9 +289,11 @@ static error_t parse_toml_raw_part(const char *fname, struct toml_array_t *raw, 
 
 		if (parse_rawir_string(fname, raw_str, &re)) {
 			free(keycode);
+			free(raw_str);
 			return EINVAL;
 		}
 
+		free(raw_str);
 		re->keycode = keycode;
 		re->next = map->raw;
 		map->raw = re;
@@ -324,7 +330,7 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 		return EINVAL;
 	}
 
-	map->protocol = strdup(p);
+	map->protocol = p;
 	if (!strcmp(p, "raw"))
 		have_raw_protocol = true;
 
@@ -332,38 +338,44 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 	if (raw) {
 		if (toml_rtos(raw, &p)) {
 			fprintf(stderr, _("%s: bad value `%s' for variant\n"), fname, raw);
+			free_keymap(map);
 			return EINVAL;
 		}
 
-		map->variant = strdup(p);
+		map->variant = p;
 	}
 
 	raw = toml_raw_in(proot, "name");
 	if (raw) {
 		if (toml_rtos(raw, &p)) {
 			fprintf(stderr, _("%s: bad value `%s' for name\n"), fname, raw);
+			free_keymap(map);
 			return EINVAL;
 		}
 
-		map->name = strdup(p);
+		map->name = p;
 	}
 
 	rawarray = toml_array_in(proot, "raw");
 	if (rawarray) {
 		if (toml_raw_in(proot, "scancodes")) {
 			fprintf(stderr, _("Cannot have both [raw] and [scancode] sections"));
+			free_keymap(map);
 			return EINVAL;
 		}
 		if (!have_raw_protocol) {
 			fprintf(stderr, _("Keymap with raw entries must have raw protocol"));
+			free_keymap(map);
 			return EINVAL;
 		}
 		error_t err = parse_toml_raw_part(fname, rawarray, map, verbose);
-		if (err != 0)
+		if (err != 0) {
+			free_keymap(map);
 			return err;
-
+		}
 	} else if (have_raw_protocol) {
 		fprintf(stderr, _("Keymap with raw protocol must have raw entries"));
+		free_keymap(map);
 		return EINVAL;
 	}
 
@@ -411,12 +423,15 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 		if (toml_rtos(raw, &keycode)) {
 			fprintf(stderr, _("%s: bad value `%s' for keycode\n"),
 				fname, keycode);
+			free_keymap(map);
 			return EINVAL;
 		}
 
 		se = calloc(1, sizeof(*se));
 		if (!se) {
-			perror("parse_keyfile");
+			perror("parse_keymap");
+			free(keycode);
+			free_keymap(map);
 			return ENOMEM;
 		}
 
@@ -429,7 +444,7 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 	return 0;
 }
 
-static error_t parse_toml_keyfile(char *fname, struct keymap **keymap, bool verbose)
+static error_t parse_toml_keymap(char *fname, struct keymap **keymap, bool verbose)
 {
 	struct toml_table_t *root, *proot;
 	struct toml_array_t *arr;
@@ -492,14 +507,14 @@ out:
 	return EINVAL;
 }
 
-error_t parse_keyfile(char *fname, struct keymap **keymap, bool verbose)
+error_t parse_keymap(char *fname, struct keymap **keymap, bool verbose)
 {
 	size_t len = strlen(fname);
 
 	if (len >= 5 && strcasecmp(fname + len - 5, ".toml") == 0)
-		return parse_toml_keyfile(fname, keymap, verbose);
+		return parse_toml_keymap(fname, keymap, verbose);
 	else
-		return parse_plain_keyfile(fname, keymap, verbose);
+		return parse_plain_keymap(fname, keymap, verbose);
 }
 
 int keymap_param(struct keymap *map, const char *name, int fallback)

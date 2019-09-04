@@ -33,7 +33,7 @@ struct raw_entry {
 };
 
 void free_keymap(struct keymap *map);
-error_t parse_keyfile(char *fname, struct keymap **keymap, bool verbose);
+error_t parse_keymap(char *fname, struct keymap **keymap, bool verbose);
 int keymap_param(struct keymap *map, const char *name, int fallback);
 
 #endif
