@@ -404,6 +404,7 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 	}
 
 	struct scancode_entry **next = &map->scancode;
+	i = 0;
 
 	for (;;) {
 		struct scancode_entry *se;

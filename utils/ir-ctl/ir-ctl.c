@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -31,6 +32,7 @@
 
 #include "ir-encode.h"
 #include "keymap.h"
+#include "bpf_encoder.h"
 
 #ifdef ENABLE_NLS
 # define _(string) gettext(string)
@@ -754,28 +756,39 @@ static struct send* convert_keycode(struct keymap *map, const char *keycode)
 		}
 
 		for (se = map->scancode; se; se = se->next) {
+			int buf[LIRCBUF_SIZE], length;
+			const char *proto_str;
+			enum rc_proto proto;
+
 			if (strcmp(se->keycode, keycode))
 				continue;
 
 			count++;
 
-			if (!s) {
-				const char *proto_str;
-				enum rc_proto proto;
+			if (s)
+				continue;
 
-				proto_str = map->variant ?: map->protocol;
+			proto_str = map->variant ?: map->protocol;
 
-				if (!protocol_match(proto_str, &proto)) {
-					fprintf(stderr, _("error: protocol '%s' not suppoted\n"), proto_str);
-					return NULL;
-				}
-
+			if (protocol_match(proto_str, &proto)) {
 				s = malloc(sizeof(*s));
 				s->protocol = proto;
 				s->scancode = se->scancode;
 				s->is_scancode = true;
 				s->is_keycode = false;
 				s->next = NULL;
+			} else if (encode_bpf_protocol(map, se->scancode,
+						       buf, &length)) {
+				s = malloc(sizeof(*s) + sizeof(int) * length);
+				s->len = length;
+				memcpy(s->buf, buf, length * sizeof(int));
+				s->is_scancode = false;
+				s->is_keycode = false;
+				s->carrier = keymap_param(map, "carrier", 0);
+				s->next = NULL;
+			} else {
+				fprintf(stderr, _("error: protocol '%s' not supported\n"), proto_str);
+				return NULL;
 			}
 		}
 	}

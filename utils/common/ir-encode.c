@@ -342,6 +342,30 @@ static int rc6_encode(enum rc_proto proto, unsigned scancode, unsigned *buf)
 	return (n % 2) ? n : n + 1;
 }
 
+static int xbox_dvd_encode(enum rc_proto proto, unsigned scancode, unsigned *buf)
+{
+	int len = 0;
+
+	buf[len++] = 4000;
+	buf[len++] = 3900;
+
+	scancode &= 0xfff;
+	scancode |= (~scancode << 12) & 0xfff000;
+
+	for (int i=23; i >=0; i--) {
+		buf[len++] = 550;
+
+		if (scancode & (1 << i))
+			buf[len++] = 1900;
+		else
+			buf[len++] = 900;
+	}
+
+	buf[len++]= 550;
+
+	return len;
+}
+
 static const struct {
 	char name[10];
 	unsigned scancode_mask;
@@ -376,7 +400,7 @@ static const struct {
 	[RC_PROTO_RCMM12] = { "rc-mm-12", 0x0fff },
 	[RC_PROTO_RCMM24] = { "rc-mm-24", 0xffffff },
 	[RC_PROTO_RCMM32] = { "rc-mm-32", 0xffffffff },
-	[RC_PROTO_XBOX_DVD] = { "xbox-dvd", 0xfff },
+	[RC_PROTO_XBOX_DVD] = { "xbox-dvd", 0xfff, 68, 38000, xbox_dvd_encode },
 };
 
 static bool str_like(const char *a, const char *b)
