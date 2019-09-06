@@ -1703,28 +1703,28 @@ static void device_info(int fd, char *prepend)
 // https://github.com/systemd/systemd/blob/master/src/basic/def.h#L60
 #define HIGH_RLIMIT_MEMLOCK (1024ULL*1024ULL*64ULL)
 
-static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct protocol_param *param)
+static bool attach_bpf(const char *lirc_name, const char *bpf_prog, struct protocol_param *param)
 {
 	unsigned int features;
 	struct rlimit rl;
-	int fd;
+	int fd, ret;
 
 	fd = open(lirc_name, O_RDONLY);
 	if (fd == -1) {
 		perror(lirc_name);
-		return;
+		return false;
 	}
 
 	if (ioctl(fd, LIRC_GET_FEATURES, &features)) {
 		perror(lirc_name);
 		close(fd);
-		return;
+		return false;
 	}
 
 	if (!(features & LIRC_CAN_REC_MODE2)) {
 		fprintf(stderr, _("%s: not a raw IR receiver\n"), lirc_name);
 		close(fd);
-		return;
+		return false;
 	}
 
 	// BPF programs are charged against RLIMIT_MEMLOCK. We'll need pages
@@ -1735,8 +1735,10 @@ static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct proto
 	rl.rlim_cur = rl.rlim_max = HIGH_RLIMIT_MEMLOCK;
 	(void) setrlimit(RLIMIT_MEMLOCK, &rl);
 
-	load_bpf_file(bpf_prog, fd, param, rawtable);
+	ret = load_bpf_file(bpf_prog, fd, param, rawtable);
 	close(fd);
+
+	return ret == 0;
 }
 
 static void show_bpf(const char *lirc_name)
@@ -1843,9 +1845,10 @@ static void clear_bpf(const char *lirc_name)
 		fprintf(stderr, _("BPF protocols removed\n"));
 }
 #else
-static void attach_bpf(const char *lirc_name, const char *bpf_prog, struct protocol_param *param)
+static bool attach_bpf(const char *lirc_name, const char *bpf_prog, struct protocol_param *param)
 {
 	fprintf(stderr, _("error: ir-keytable was compiled without BPF support\n"));
+	return false;
 }
 static void show_bpf(const char *lirc_name) {}
 static void clear_bpf(const char *lirc_name) {}
@@ -2119,8 +2122,8 @@ int main(int argc, char *argv[])
 			char *fname = find_bpf_file(b->name);
 
 			if (fname) {
-				attach_bpf(rc_dev.lirc_name, fname, b->param);
-				fprintf(stderr, _("Loaded BPF protocol %s\n"), b->name);
+				if (attach_bpf(rc_dev.lirc_name, fname, b->param))
+					fprintf(stderr, _("Loaded BPF protocol %s\n"), b->name);
 				free(fname);
 			}
 		}

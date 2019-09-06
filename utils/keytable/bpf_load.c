@@ -66,7 +66,7 @@ static int load_and_attach(int lirc_fd, struct bpf_file *bpf_file, const char *n
 			      name, bpf_file->license, 0,
 			      bpf_log_buf, BPF_LOG_BUF_SIZE);
 	if (fd < 0) {
-		printf("bpf_load_program() err=%d\n%s", errno, bpf_log_buf);
+		printf("bpf_load_program() err=%m\n%s", bpf_log_buf);
 		return -1;
 	}
 
