@@ -516,6 +516,12 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		case 0x43:
 			node->state.mute = !node->state.mute;
 			break;
+		case 0x65:
+			node->state.mute = true;
+			break;
+		case 0x66:
+			node->state.mute = false;
+			break;
 		case 0x6B:
 			if (!enter_standby(node))
 				exit_standby(node);
