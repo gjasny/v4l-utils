@@ -88,7 +88,8 @@ static error_t parse_plain_keymap(char *fname, struct keymap **keymap, bool verb
 
 	fin = fopen(fname, "r");
 	if (!fin) {
-		return errno;
+		fprintf(stderr, _("%s: error: cannot open: %m\n"), fname);
+		return EINVAL;
 	}
 
 	while (fgets(s, sizeof(s), fin)) {
@@ -457,8 +458,10 @@ static error_t parse_toml_keymap(char *fname, struct keymap **keymap, bool verbo
 		fprintf(stderr, _("Parsing %s keycode file as toml\n"), fname);
 
 	fin = fopen(fname, "r");
-	if (!fin)
-		return errno;
+	if (!fin) {
+		fprintf(stderr, _("%s: error: cannot open: %m\n"), fname);
+		return EINVAL;
+	}
 
 	root = toml_parse_file(fin, buf, sizeof(buf));
 	fclose(fin);
