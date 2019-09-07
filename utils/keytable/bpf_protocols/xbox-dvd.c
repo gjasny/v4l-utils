@@ -51,7 +51,7 @@ static inline int eq_margin(unsigned d1, unsigned d2)
 	return ((d1 > (d2 - BPF_PARAM(margin))) && (d1 < (d2 + BPF_PARAM(margin))));
 }
 
-SEC("xbox-dvd")
+SEC("xbox_dvd")
 int bpf_decoder(unsigned int *sample)
 {
 	unsigned int key = 0;
