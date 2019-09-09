@@ -165,17 +165,17 @@ static int arc_initiate_tx(struct node *node, unsigned me, unsigned la, bool int
 	cec_msg_initiate_arc(&msg, true);
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (timed_out(&msg)) {
-		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].has_arc_tx);
+		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].sink_has_arc_tx);
 		warn("Timed out waiting for Report ARC Initiated/Terminated.\n");
 		return PRESUMED_OK;
 	}
 	if (unrecognized_op(&msg)) {
-		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].has_arc_tx);
+		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].sink_has_arc_tx);
 		return NOTSUPPORTED;
 	}
 	if (cec_msg_opcode(&msg) == CEC_MSG_REPORT_ARC_INITIATED) {
 		fail_on_test(!pa_are_adjacent(node->phys_addr, node->remote[la].phys_addr));
-		fail_on_test_v2(node->remote[la].cec_version, !node->remote[la].has_arc_tx);
+		fail_on_test_v2(node->remote[la].cec_version, !node->remote[la].sink_has_arc_tx);
 		node->remote[la].arc_initiated = true;
 	}
 	else if (cec_msg_opcode(&msg) == CEC_MSG_REPORT_ARC_TERMINATED)
@@ -248,11 +248,11 @@ static int arc_initiate_rx(struct node *node, unsigned me, unsigned la, bool int
 		}
 	}
 	if (unsupported) {
-		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].has_arc_rx);
+		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].source_has_arc_rx);
 		return NOTSUPPORTED;
 	}
 	fail_on_test(!pa_are_adjacent(node->phys_addr, node->remote[la].phys_addr));
-	fail_on_test_v2(node->remote[la].cec_version, !node->remote[la].has_arc_rx);
+	fail_on_test_v2(node->remote[la].cec_version, !node->remote[la].source_has_arc_rx);
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_report_arc_initiated(&msg);

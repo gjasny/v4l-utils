@@ -753,7 +753,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		/* Audio Return Channel Control */
 
 	case CEC_MSG_INITIATE_ARC:
-		if (node->has_arc_tx) {
+		if (node->sink_has_arc_tx) {
 			if (!pa_is_upstream_from(node->phys_addr, remote_pa) ||
 			    !pa_are_adjacent(node->phys_addr, remote_pa)) {
 				cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_REFUSED);
@@ -769,7 +769,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		}
 		break;
 	case CEC_MSG_TERMINATE_ARC:
-		if (node->has_arc_tx) {
+		if (node->sink_has_arc_tx) {
 			if (!pa_is_upstream_from(node->phys_addr, remote_pa) ||
 			    !pa_are_adjacent(node->phys_addr, remote_pa)) {
 				cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_REFUSED);
@@ -785,7 +785,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		}
 		break;
 	case CEC_MSG_REQUEST_ARC_INITIATION:
-		if (node->has_arc_rx) {
+		if (node->source_has_arc_rx) {
 			if (pa_is_upstream_from(node->phys_addr, remote_pa) ||
 			    !pa_are_adjacent(node->phys_addr, remote_pa)) {
 				cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_REFUSED);
@@ -800,7 +800,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		}
 		break;
 	case CEC_MSG_REQUEST_ARC_TERMINATION:
-		if (node->has_arc_rx) {
+		if (node->source_has_arc_rx) {
 			if (pa_is_upstream_from(node->phys_addr, remote_pa) ||
 			    !pa_are_adjacent(node->phys_addr, remote_pa)) {
 				cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_REFUSED);

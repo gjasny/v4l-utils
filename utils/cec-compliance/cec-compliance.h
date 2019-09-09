@@ -137,8 +137,8 @@ struct remote {
 	bool has_text_view_on;
 	bool in_standby;
 	bool has_remote_control_passthrough;
-	bool has_arc_rx;
-	bool has_arc_tx;
+	bool source_has_arc_rx;
+	bool sink_has_arc_tx;
 	bool arc_initiated;
 	bool has_sys_audio_mode_req;
 	bool has_set_sys_audio_mode;

@@ -64,8 +64,8 @@ struct node {
 	struct state state;
 	__u16 phys_addr;
 	__u8 cec_version;
-	bool has_arc_rx;
-	bool has_arc_tx;
+	bool source_has_arc_rx;
+	bool sink_has_arc_tx;
 	bool has_aud_rate;
 	bool has_deck_ctl;
 	bool has_rec_tv;

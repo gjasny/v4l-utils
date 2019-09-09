@@ -1038,9 +1038,9 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 		node->remote[i].rc_profile = *rc_profile;
 		node->remote[i].dev_features = *dev_features;
 		node->remote[i].all_device_types = all_device_types;
-		node->remote[i].has_arc_rx =
+		node->remote[i].source_has_arc_rx =
 			(*dev_features & CEC_OP_FEAT_DEV_SOURCE_HAS_ARC_RX) != 0;
-		node->remote[i].has_arc_tx =
+		node->remote[i].sink_has_arc_tx =
 			(*dev_features & CEC_OP_FEAT_DEV_SINK_HAS_ARC_TX) != 0;
 		node->remote[i].has_aud_rate =
 			(*dev_features & CEC_OP_FEAT_DEV_HAS_SET_AUDIO_RATE) != 0;
