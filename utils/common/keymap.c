@@ -323,11 +323,13 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 	raw = toml_raw_in(proot, "protocol");
 	if (!raw) {
 		fprintf(stderr, _("%s: protocol missing\n"), fname);
+		free_keymap(map);
 		return EINVAL;
 	}
 
 	if (toml_rtos(raw, &p)) {
 		fprintf(stderr, _("%s: bad value `%s' for protocol\n"), fname, raw);
+		free_keymap(map);
 		return EINVAL;
 	}
 
@@ -419,6 +421,7 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 		raw = toml_raw_in(scancodes, scancode);
 		if (!raw) {
 			fprintf(stderr, _("%s: invalid value `%s'\n"), fname, scancode);
+			free_keymap(map);
 			return EINVAL;
 		}
 
@@ -466,14 +469,14 @@ static error_t parse_toml_keymap(char *fname, struct keymap **keymap, bool verbo
 	root = toml_parse_file(fin, buf, sizeof(buf));
 	fclose(fin);
 	if (!root) {
-		fprintf(stderr, _("%s: failed to parse toml: %s\n"), fname, buf);
+		fprintf(stderr, _("%s: error: %s\n"), fname, buf);
 		return EINVAL;
 	}
 
 	arr = toml_array_in(root, "protocols");
 	if (!arr) {
 		fprintf(stderr, _("%s: missing [protocols] section\n"), fname);
-		return EINVAL;
+		goto out;
 	}
 
 	struct keymap *map = NULL;

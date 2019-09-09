@@ -60,7 +60,7 @@
 #define LIRCBUF_SIZE 1024
 #define IR_DEFAULT_TIMEOUT 125000
 
-const char *argp_program_version = "IR raw version " V4L_UTILS_VERSION;
+const char *argp_program_version = "IR ctl version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Sean Young <sean@mess.org>";
 
 /*
@@ -251,7 +251,7 @@ static struct send *read_file_pulse_space(struct arguments *args, const char *fn
 
 			scancodestr = strchr(p, ':');
 			if (!scancodestr) {
-				fprintf(stderr, _("error: %s:%d: scancode argument '%s' should in protocol:scancode format\n"), fname, lineno, p);
+				fprintf(stderr, _("error: %s:%d: scancode argument '%s' should be in protocol:scancode format\n"), fname, lineno, p);
 				fclose(input);
 				free(f);
 				return NULL;
