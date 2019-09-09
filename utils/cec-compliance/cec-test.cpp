@@ -172,6 +172,10 @@ int system_info_give_features(struct node *node, unsigned me, unsigned la, bool 
 		return fail("Only Playback and Recording devices shall set the Supports Deck Control bit\n");
 	if (!cec_has_tv(1 << la) && node->remote[la].has_rec_tv)
 		return fail("Only TVs shall set the Record TV Screen bit\n");
+	if (cec_has_playback(1 << la) && node->remote[la].sink_has_arc_tx)
+		return fail("A Playback device cannot set the Sink Supports ARC Tx bit\n");
+	if (cec_has_tv(1 << la) && node->remote[la].source_has_arc_rx)
+		return fail("A TV cannot set the Source Supports ARC Rx bit\n");
 
 	fail_on_test(node->remote[la].rc_profile != *rc_profile);
 	fail_on_test(node->remote[la].dev_features != *dev_features);
