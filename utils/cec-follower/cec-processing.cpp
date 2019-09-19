@@ -211,7 +211,7 @@ static void log_event(struct cec_event &ev, bool wallclock)
 		printf("\tTimestamp: %s\n", ts2s(ev.ts, wallclock).c_str());
 }
 
-static void reply_feature_abort(struct node *node, struct cec_msg *msg, __u8 reason = CEC_OP_ABORT_UNRECOGNIZED_OP)
+void reply_feature_abort(struct node *node, struct cec_msg *msg, __u8 reason)
 {
 	unsigned la = cec_msg_initiator(msg);
 	__u8 opcode = cec_msg_opcode(msg);
@@ -608,7 +608,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 	case CEC_MSG_DECK_STATUS:
 		return;
 
-	/* Tuner Centric Messages */
+	/* Tuner/Record/Timer Messages */
 
 	case CEC_MSG_GIVE_TUNER_DEVICE_STATUS:
 	case CEC_MSG_TUNER_DEVICE_STATUS:
@@ -630,7 +630,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 	case CEC_MSG_TIMER_CLEARED_STATUS:
 	case CEC_MSG_TIMER_STATUS:
 		process_tuner_record_timer_msgs(node, msg, me);
-		break;
+		return;
 
 		/* Dynamic Auto Lipsync */
 

@@ -9,6 +9,8 @@
 
 void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, unsigned me)
 {
+	bool is_bcast = cec_msg_is_broadcast(&msg);
+
 	switch (msg.msg[1]) {
 
 
@@ -136,4 +138,9 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 	default:
 		break;
 	}
+
+	if (is_bcast)
+		return;
+
+	reply_feature_abort(node, &msg);
 }

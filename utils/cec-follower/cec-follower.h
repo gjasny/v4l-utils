@@ -223,6 +223,8 @@ void sad_encode(const struct short_audio_desc *sad, __u32 *descriptor);
 void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, unsigned me);
 
 // CEC processing
+void reply_feature_abort(struct node *node, struct cec_msg *msg,
+			 __u8 reason = CEC_OP_ABORT_UNRECOGNIZED_OP);
 void testProcessing(struct node *node, bool wallclock);
 
 // cec-log.c
