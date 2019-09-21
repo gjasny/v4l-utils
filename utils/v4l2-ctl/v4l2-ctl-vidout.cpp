@@ -19,6 +19,7 @@
 static unsigned set_fmts_out;
 static __u32 width, height, pixfmt, field, colorspace, xfer_func, ycbcr, quantization, flags;
 static __u32 bytesperline[VIDEO_MAX_PLANES];
+static __u32 sizeimage[VIDEO_MAX_PLANES];
 
 void vidout_usage(void)
 {
@@ -33,12 +34,13 @@ void vidout_usage(void)
 	       "  -x, --set-fmt-video-out\n"
 	       "  --try-fmt-video-out width=<w>,height=<h>,pixelformat=<pf>,field=<f>,colorspace=<c>,\n"
 	       "                      xfer=<xf>,ycbcr=<y>,hsv=<hsv>,quantization=<q>,\n"
-	       "                      premul-alpha,bytesperline=<bpl>\n"
+	       "                      premul-alpha,bytesperline=<bpl>,sizeimage=<sz>\n"
 	       "                     set/try the video output format [VIDIOC_S/TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
 	       "                       --list-formats-out, or the fourcc value as a string.\n"
 	       "                     premul-alpha sets V4L2_PIX_FMT_FLAG_PREMUL_ALPHA.\n"
-	       "                     The bytesperline option can be used multiple times, once for each plane.\n"
+	       "                     The bytesperline and sizeimage options can be used multiple times,\n"
+	       "                       once for each plane.\n"
 	       "                     <f> can be one of the following field layouts:\n"
 	       "                       any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
 	       "                       alternate, interlaced_tb, interlaced_bt\n"
@@ -93,7 +95,8 @@ void vidout_cmd(int ch, char *optarg)
 	case OptSetVideoOutFormat:
 	case OptTryVideoOutFormat:
 		set_fmts_out = parse_fmt(optarg, width, height, pixfmt, field,
-				colorspace, xfer_func, ycbcr, quantization, flags, bytesperline);
+				colorspace, xfer_func, ycbcr, quantization, flags, bytesperline,
+				sizeimage);
 		if (!set_fmts_out) {
 			vidcap_usage();
 			exit(1);
@@ -150,6 +153,11 @@ void vidout_set(cv4l_fd &_fd)
 					for (unsigned i = 0; i < vfmt.fmt.pix_mp.num_planes; i++)
 						vfmt.fmt.pix_mp.plane_fmt[i].bytesperline = 0;
 				}
+				if (set_fmts_out & FmtSizeImage) {
+					for (unsigned i = 0; i < VIDEO_MAX_PLANES; i++)
+						vfmt.fmt.pix_mp.plane_fmt[i].sizeimage =
+							sizeimage[i];
+				}
 			} else {
 				if (set_fmts_out & FmtWidth)
 					vfmt.fmt.pix.width = width;
@@ -183,6 +191,8 @@ void vidout_set(cv4l_fd &_fd)
 					 * to the closest value for the new width. */
 					vfmt.fmt.pix.bytesperline = 0;
 				}
+				if (set_fmts_out & FmtSizeImage)
+					vfmt.fmt.pix.sizeimage = sizeimage[0];
 			}
 
 			if ((set_fmts_out & FmtPixelFormat) &&

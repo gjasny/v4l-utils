@@ -296,6 +296,7 @@ typedef struct {
 #define FmtFlags		(1L<<11)
 #define FmtBytesPerLine		(1L<<12)
 #define FmtXferFunc		(1L<<13)
+#define FmtSizeImage		(1L<<14)
 
 // v4l2-ctl.cpp
 int doioctl_name(int fd, unsigned long int request, void *parm, const char *name);
@@ -309,7 +310,8 @@ __u32 parse_hsv(const char *s);
 __u32 parse_quantization(const char *s);
 int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 	      __u32 &field, __u32 &colorspace, __u32 &xfer, __u32 &ycbcr,
-	      __u32 &quantization, __u32 &flags, __u32 *bytesperline);
+	      __u32 &quantization, __u32 &flags, __u32 *bytesperline,
+	      __u32 *sizeimage);
 int parse_selection_target(const char *s, unsigned int &target);
 int parse_selection_flags(const char *s);
 void print_selection(const struct v4l2_selection &sel);

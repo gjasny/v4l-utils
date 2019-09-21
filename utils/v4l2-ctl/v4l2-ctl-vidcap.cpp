@@ -21,6 +21,7 @@ static struct v4l2_frmivalenum frmival; /* list frame intervals */
 static unsigned set_fmts;
 static __u32 width, height, pixfmt, field, flags;
 static __u32 bytesperline[VIDEO_MAX_PLANES];
+static __u32 sizeimage[VIDEO_MAX_PLANES];
 
 void vidcap_usage(void)
 {
@@ -42,11 +43,12 @@ void vidcap_usage(void)
 	       "  -v, --set-fmt-video\n"
 	       "  --try-fmt-video width=<w>,height=<h>,pixelformat=<pf>,field=<f>,colorspace=<c>,\n"
 	       "                  xfer=<xf>,ycbcr=<y>,hsv=<hsv>,quantization=<q>,\n"
-	       "                  premul-alpha,bytesperline=<bpl>\n"
+	       "                  premul-alpha,bytesperline=<bpl>,sizeimage=<sz>\n"
 	       "                     set/try the video capture format [VIDIOC_S/TRY_FMT]\n"
 	       "                     pixelformat is either the format index as reported by\n"
 	       "                       --list-formats, or the fourcc value as a string.\n"
-	       "                     The bytesperline option can be used multiple times, once for each plane.\n"
+	       "                     The bytesperline and sizeimage options can be used multiple times,\n"
+	       "                       once for each plane.\n"
 	       "                     premul-alpha sets V4L2_PIX_FMT_FLAG_PREMUL_ALPHA.\n"
 	       "                     <f> can be one of the following field layouts:\n"
 	       "                       any, none, top, bottom, interlaced, seq_tb, seq_bt,\n"
@@ -106,7 +108,8 @@ void vidcap_cmd(int ch, char *optarg)
 	case OptSetVideoFormat:
 	case OptTryVideoFormat:
 		set_fmts = parse_fmt(optarg, width, height, pixfmt, field, colorspace,
-				xfer_func, ycbcr, quantization, flags, bytesperline);
+				xfer_func, ycbcr, quantization, flags, bytesperline,
+				sizeimage);
 		if (!set_fmts ||
 		    (set_fmts & (FmtColorspace | FmtYCbCr | FmtQuantization | FmtXferFunc))) {
 			vidcap_usage();
@@ -211,6 +214,11 @@ int vidcap_get_and_update_fmt(cv4l_fd &_fd, struct v4l2_format &vfmt)
 			for (unsigned i = 0; i < vfmt.fmt.pix_mp.num_planes; i++)
 				vfmt.fmt.pix_mp.plane_fmt[i].bytesperline = 0;
 		}
+		if (set_fmts & FmtSizeImage) {
+			for (unsigned i = 0; i < VIDEO_MAX_PLANES; i++)
+				vfmt.fmt.pix_mp.plane_fmt[i].sizeimage =
+					sizeimage[i];
+		}
 	} else {
 		if (set_fmts & FmtWidth)
 			vfmt.fmt.pix.width = width;
@@ -238,6 +246,8 @@ int vidcap_get_and_update_fmt(cv4l_fd &_fd, struct v4l2_format &vfmt)
 			 */
 			vfmt.fmt.pix.bytesperline = 0;
 		}
+		if (set_fmts & FmtSizeImage)
+			vfmt.fmt.pix.sizeimage = sizeimage[0];
 	}
 
 	if ((set_fmts & FmtPixelFormat) &&

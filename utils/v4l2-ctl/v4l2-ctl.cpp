@@ -744,11 +744,13 @@ __u32 parse_quantization(const char *s)
 
 int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 	      __u32 &field, __u32 &colorspace, __u32 &xfer_func, __u32 &ycbcr,
-	      __u32 &quantization, __u32 &flags, __u32 *bytesperline)
+	      __u32 &quantization, __u32 &flags, __u32 *bytesperline,
+	      __u32 *sizeimage)
 {
 	char *value, *subs;
 	int fmts = 0;
 	unsigned bpl_index = 0;
+	unsigned sizeimage_index = 0;
 	bool be_pixfmt;
 
 	field = V4L2_FIELD_ANY;
@@ -767,6 +769,7 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			"premul-alpha",
 			"quantization",
 			"xfer",
+			"sizeimage",
 			NULL
 		};
 
@@ -834,6 +837,11 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 		case 10:
 			xfer_func = parse_xfer_func(value);
 			fmts |= FmtXferFunc;
+			break;
+		case 11:
+			sizeimage[sizeimage_index] = strtoul(value, 0L, 0);
+			sizeimage_index++;
+			fmts |= FmtSizeImage;
 			break;
 		default:
 			return 0;
