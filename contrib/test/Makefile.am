@@ -67,4 +67,8 @@ sync-with-kernel:
 	./gen_ioctl_list.pl >ioctl-test.h
 
 EXTRA_DIST = \
-	gen_ioctl_list.pl
+	gen_ioctl_list.pl \
+	test-media \
+	test-media-unload.pl \
+	vim2m_test_with_gstreamer.sh \
+	vim2m_test_with_qvidcap.sh
