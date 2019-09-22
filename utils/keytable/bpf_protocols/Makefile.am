@@ -15,7 +15,7 @@ PROTOCOLS = grundig.o pulse_distance.o pulse_length.o rc_mm.o manchester.o xbox-
 all: $(PROTOCOLS)
 
 CLEANFILES = $(PROTOCOLS)
-EXTRA_DIST = $(PROTOCOLS:%.o=%.c) bpf_helpers.h
+EXTRA_DIST = $(PROTOCOLS:%.o=%.c) bitmap.h bpf_helpers.h
 
 # custom target
 install-data-local:
