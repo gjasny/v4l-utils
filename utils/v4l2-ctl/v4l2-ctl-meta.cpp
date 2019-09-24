@@ -127,3 +127,42 @@ void meta_list(cv4l_fd &fd)
 		print_video_formats(fd, V4L2_BUF_TYPE_META_OUTPUT);
 	}
 }
+
+struct vivid_uvc_meta_buf {
+	__u64 ns;
+	__u16 sof;
+	__u8 length;
+	__u8 flags;
+	__u8 buf[10];
+};
+
+#define UVC_STREAM_SCR	(1 << 3)
+#define UVC_STREAM_PTS	(1 << 2)
+
+void print_meta_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt, cv4l_queue &q)
+{
+	struct vivid_uvc_meta_buf *vbuf;
+	int buf_off = 0;
+
+	switch (fmt.g_pixelformat()) {
+	case V4L2_META_FMT_UVC:
+		fprintf(f, "UVC: ");
+		vbuf = (vivid_uvc_meta_buf *)q.g_dataptr(buf.g_index(), 0);
+
+		fprintf(f, "%.6fs sof: %4d len: %u flags: 0x%02x",
+			(double)vbuf->ns / 1000000000.0,
+			vbuf->sof,
+			vbuf->length,
+			vbuf->flags);
+		if (vbuf->flags & UVC_STREAM_PTS) {
+			fprintf(f, " PTS: %u", le32toh(*(__u32*)(vbuf->buf)));
+			buf_off = 4;
+		}
+		if (vbuf->flags & UVC_STREAM_SCR)
+			fprintf(f, " STC: %u SOF counter: %u",
+				le32toh(*(__u32*)(vbuf->buf + buf_off)),
+				le16toh(*(__u16*)(vbuf->buf + buf_off + 4)));
+		fprintf(f, "\n");
+		break;
+	}
+}
