@@ -298,6 +298,7 @@ void state_init(struct node &node)
 	node.state.sac_active = false;
 	node.state.volume = 50;
 	node.state.mute = false;
+	analog_tuner_init(&node.state.tuner_dev_info);
 }
 
 int main(int argc, char **argv)
