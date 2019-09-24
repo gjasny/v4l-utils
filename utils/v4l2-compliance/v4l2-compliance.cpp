@@ -956,7 +956,8 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		       driver.c_str(), node.device, node.g_direct() ? "" : " (using libv4l2)");
 
 	if (node.g_caps() & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
-			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_SLICED_VBI_CAPTURE))
+			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_SLICED_VBI_CAPTURE |
+			 V4L2_CAP_META_CAPTURE))
 		node.has_inputs = true;
 	if (node.g_caps() & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VBI_OUTPUT |
 			 V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_SLICED_VBI_OUTPUT))

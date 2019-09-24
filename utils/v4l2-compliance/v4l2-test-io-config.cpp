@@ -205,7 +205,7 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 		fail_on_test(g_timings.bt.width != enumtimings.timings.bt.width);
 		fail_on_test(g_timings.bt.height != enumtimings.timings.bt.height);
 
-		if (node->is_vbi)
+		if (node->is_vbi || node->is_meta)
 			continue;
 		fmt.type = type;
 		fail_on_test(doioctl(node, VIDIOC_G_FMT, &fmt));
