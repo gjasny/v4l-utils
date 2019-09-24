@@ -516,7 +516,6 @@ if [ $vicodec -eq 1 ]; then
 	echo
 	echo stateless decode
 	echo
-	cp $tmpdir/comp.yu12.1280.24 /home/hans
 	v4l2-ctl $decless_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24.stateless
 	cmp $tmpdir/raw.yu12.1280.24 $tmpdir/raw.yu12.1280.24.stateless
 
@@ -535,9 +534,6 @@ if [ $vicodec -eq 1 ]; then
 	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
 	v4l2-ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6.stateless
 	cmp $tmpdir/raw.yu12.mix.4.6 $tmpdir/raw.yu12.mix.4.6.stateless
-
-	ls -l $tmpdir
-	cp $tmpdir/* /home/hans/tmp
 
 	rm -rf $tmpdir
 	echo
