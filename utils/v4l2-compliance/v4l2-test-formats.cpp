@@ -305,14 +305,16 @@ int testEnumFormats(struct node *node)
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		case V4L2_BUF_TYPE_SDR_CAPTURE:
 		case V4L2_BUF_TYPE_SDR_OUTPUT:
-		case V4L2_BUF_TYPE_META_CAPTURE:
-		case V4L2_BUF_TYPE_META_OUTPUT:
 			if (ret && (node->g_caps() & buftype2cap[type]))
 				return fail("%s cap set, but no %s formats defined\n",
 						buftype2s(type).c_str(), buftype2s(type).c_str());
 			if (!ret && !(node->g_caps() & buftype2cap[type]))
 				return fail("%s cap not set, but %s formats defined\n",
 						buftype2s(type).c_str(), buftype2s(type).c_str());
+			break;
+		case V4L2_BUF_TYPE_META_CAPTURE:
+		case V4L2_BUF_TYPE_META_OUTPUT:
+			/* Metadata formats need not be present for the current input/output */
 			break;
 		default:
 			if (!ret)
@@ -599,13 +601,20 @@ int testGetFormats(struct node *node)
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		case V4L2_BUF_TYPE_SDR_CAPTURE:
 		case V4L2_BUF_TYPE_SDR_OUTPUT:
-		case V4L2_BUF_TYPE_META_CAPTURE:
-		case V4L2_BUF_TYPE_META_OUTPUT:
 			if (ret && (node->g_caps() & buftype2cap[type]))
 				return fail("%s cap set, but no %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
 			if (!ret && !(node->g_caps() & buftype2cap[type]))
 				return fail("%s cap not set, but %s formats defined\n",
+					buftype2s(type).c_str(), buftype2s(type).c_str());
+			break;
+		case V4L2_BUF_TYPE_META_CAPTURE:
+		case V4L2_BUF_TYPE_META_OUTPUT:
+			if (ret && !node->buftype_pixfmts[type].empty())
+				return fail("%s G_FMT failed, but %s formats defined\n",
+					buftype2s(type).c_str(), buftype2s(type).c_str());
+			if (!ret && node->buftype_pixfmts[type].empty())
+				return fail("%s G_FMT success, but no %s formats defined\n",
 					buftype2s(type).c_str(), buftype2s(type).c_str());
 			break;
 		default:
