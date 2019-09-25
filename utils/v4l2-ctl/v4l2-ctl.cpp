@@ -299,6 +299,7 @@ static void usage_all(void)
        vbi_usage();
        sdr_usage();
        meta_usage();
+       subdev_usage();
        selection_usage();
        misc_usage();
        streaming_usage();
