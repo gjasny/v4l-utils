@@ -73,6 +73,9 @@ enum poll_mode {
 #define STATELESS_ENCODER (1 << 4)
 #define STATELESS_DECODER (1 << 5)
 
+#define IS_ENCODER(node) ((node)->codec_mask & (JPEG_ENCODER | STATEFUL_ENCODER | STATELESS_ENCODER))
+#define IS_DECODER(node) ((node)->codec_mask & (JPEG_DECODER | STATEFUL_DECODER | STATELESS_DECODER))
+
 struct test_query_ext_ctrl: v4l2_query_ext_ctrl {
 	__u64 menu_mask;
 };

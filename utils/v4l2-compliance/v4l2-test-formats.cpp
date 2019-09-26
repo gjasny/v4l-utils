@@ -1554,10 +1554,14 @@ int testCropping(struct node *node)
 	if (ret_cap && ret_out)
 		return ret_cap;
 
-	if (!ret_cap)
+	if (!ret_cap) {
+		fail_on_test(IS_ENCODER(node));
 		fail_on_test(testBasicCrop(node, V4L2_BUF_TYPE_VIDEO_CAPTURE));
-	if (!ret_out)
+	}
+	if (!ret_out) {
+		fail_on_test(IS_DECODER(node));
 		fail_on_test(testBasicCrop(node, V4L2_BUF_TYPE_VIDEO_OUTPUT));
+	}
 
 	return 0;
 }
@@ -1645,10 +1649,14 @@ int testComposing(struct node *node)
 	if (ret_cap && ret_out)
 		return ret_cap;
 
-	if (!ret_cap)
+	if (!ret_cap) {
+		fail_on_test(IS_ENCODER(node));
 		fail_on_test(testBasicCompose(node, V4L2_BUF_TYPE_VIDEO_CAPTURE));
-	if (!ret_out)
+	}
+	if (!ret_out) {
+		fail_on_test(IS_DECODER(node));
 		fail_on_test(testBasicCompose(node, V4L2_BUF_TYPE_VIDEO_OUTPUT));
+	}
 
 	return 0;
 }
