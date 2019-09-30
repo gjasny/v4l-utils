@@ -297,6 +297,7 @@ int cec_named_ioctl(struct node *node, const char *name,
 
 #define doioctl(n, r, p) cec_named_ioctl(n, #r, r, p)
 
+const char *opcode2s(__u8 opcode);
 std::string opcode2s(const struct cec_msg *msg);
 
 static inline bool is_tv(unsigned la, unsigned prim_type)
@@ -400,6 +401,9 @@ int testLostMsgs(struct node *node);
 void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
 		 const char *device);
 
+// CEC fuzzing test
+int testFuzzing(struct node &node, unsigned me, unsigned la);
+
 // CEC core tests
 int testCore(struct node *node);
 int core_unknown(struct node *node, unsigned me, unsigned la, bool interactive);
@@ -419,7 +423,7 @@ int testProcessing(struct node *node, unsigned me);
 void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			     bool interactive);
 
-// cec-audio.cpp
+// cec-test-audio.cpp
 extern struct remote_subtest sac_subtests[];
 extern const unsigned sac_subtests_size;
 extern struct remote_subtest dal_subtests[];
@@ -429,7 +433,7 @@ extern const unsigned arc_subtests_size;
 extern struct remote_subtest audio_rate_ctl_subtests[];
 extern const unsigned audio_rate_ctl_subtests_size;
 
-// cec-power.cpp
+// cec-test-power.cpp
 bool util_interactive_ensure_power_state(struct node *node, unsigned me, unsigned la, bool interactive,
 					 __u8 target_pwr);
 extern struct remote_subtest standby_subtests[];

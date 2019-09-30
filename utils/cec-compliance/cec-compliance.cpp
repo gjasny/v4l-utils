@@ -40,6 +40,7 @@ enum Option {
 	OptSetDevice = 'd',
 	OptSetDriver = 'D',
 	OptExitOnFail = 'E',
+	OptTestFuzzing = 'F',
 	OptHelp = 'h',
 	OptInteractive = 'i',
 	OptNoWarnings = 'n',
@@ -129,6 +130,7 @@ static struct option long_options[] = {
 	{"reply-threshold", required_argument, 0, OptReplyThreshold},
 
 	{"test-adapter", no_argument, 0, OptTestAdapter},
+	{"test-fuzzing", no_argument, 0, OptTestFuzzing},
 	{"test-core", no_argument, 0, OptTestCore},
 	{"test-audio-rate-control", no_argument, 0, OptTestAudioRateControl},
 	{"test-audio-return-channel-control", no_argument, 0, OptTestARCControl},
@@ -186,6 +188,7 @@ static void usage(void)
 	       "  -t, --timeout <secs> Set the standby/resume timeout to <secs>. Default is 60s.\n"
 	       "\n"
 	       "  -A, --test-adapter                  Test the CEC adapter API\n"
+	       "  -F, --test-fuzzing                  Test by fuzzing CEC messages\n"
 	       "  --test-core                         Test the core functionality\n"
 	       "\n"
 	       "By changing --test to --skip-test in the following options you can skip tests\n"
@@ -584,6 +587,15 @@ const char *cdc_errcode2s(__u8 cdc_errcode)
 	default:
 		return "Unknown";
 	}
+}
+
+const char *opcode2s(__u8 opcode)
+{
+	for (unsigned i = 0; i < ARRAY_SIZE(msgtable); i++) {
+		if (msgtable[i].opcode == opcode)
+			return msgtable[i].name;
+	}
+	return NULL;
 }
 
 std::string opcode2s(const struct cec_msg *msg)
@@ -1398,6 +1410,9 @@ int main(int argc, char **argv)
 		if (node.remote_la_mask & (1 << i))
 			topology_probe_device(&node, i, node.log_addr[0]);
 	printf("\n");
+
+	if (options[OptTestFuzzing] && remote_la >= 0)
+		exit(testFuzzing(node, laddrs.log_addr[0], remote_la));
 
 	unsigned remote_la_mask = node.remote_la_mask;
 

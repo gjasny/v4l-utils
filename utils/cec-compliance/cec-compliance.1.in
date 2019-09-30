@@ -129,6 +129,10 @@ Set the standby/resume timeout to the given number of seconds. Default is 60s.
 \fB\-A\fR, \fB\-\-test\-adapter\fR
 Test the CEC adapter API
 .TP
+\fB\-F\fR, \fB\-\-test\-fuzzing\fR
+Test the remote CEC adapter by randomly creating CEC messages.
+This runs forever until an error occurs.
+.TP
 \fB\-\-test\-core\fR
 Test the core functionality
 .TP
