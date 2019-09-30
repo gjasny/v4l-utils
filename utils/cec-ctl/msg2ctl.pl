@@ -81,7 +81,7 @@ sub process_func
 		}
 		if ($cdc_case) {
 			$cdcmsgtable .= "\t{ $cec_msg, \"$msg_name\" },\n";
-		} else {
+		} elsif (!$htng_case) {
 			$msgtable .= "\t{ $cec_msg, \"$msg_name\" },\n";
 		}
 		if (@args == 0) {
