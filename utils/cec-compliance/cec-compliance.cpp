@@ -924,16 +924,16 @@ static int poll_remote_devs(struct node *node)
 static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 {
 	struct cec_msg msg = { };
-	bool ok;
+	bool unknown;
 
 	printf("\tSystem Information for device %d (%s) from device %d (%s):\n",
 	       i, la2s(i), la, la2s(la));
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_get_cec_version(&msg, true);
-	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
+	unknown = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tCEC Version                : ");
-	if (ok) {
+	if (unknown) {
 		printf("%s\n", status2s(msg).c_str());
 		node->remote[i].cec_version = CEC_OP_CEC_VERSION_1_4;
 	}
@@ -954,9 +954,9 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_give_physical_addr(&msg, true);
-	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
+	unknown = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tPhysical Address           : ");
-	if (ok) {
+	if (unknown) {
 		printf("%s\n", status2s(msg).c_str());
 		node->remote[i].phys_addr = CEC_PHYS_ADDR_INVALID;
 	}
@@ -971,9 +971,9 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_give_device_vendor_id(&msg, true);
-	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
+	unknown = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tVendor ID                  : ");
-	if (ok) {
+	if (unknown) {
 		printf("%s\n", status2s(msg).c_str());
 		node->remote[i].vendor_id = CEC_VENDOR_ID_NONE;
 	} else {
@@ -985,9 +985,9 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_give_osd_name(&msg, true);
-	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
+	unknown = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tOSD Name                   : ");
-	if (ok) {
+	if (unknown) {
 		printf("%s\n", status2s(msg).c_str());
 	} else {
 		cec_ops_set_osd_name(&msg, node->remote[i].osd_name);
@@ -1004,9 +1004,9 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_give_device_power_status(&msg, true);
-	ok = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
+	unknown = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tPower Status               : ");
-	if (ok) {
+	if (unknown) {
 		printf("%s\n", status2s(msg).c_str());
 	} else {
 		__u8 pwr;
