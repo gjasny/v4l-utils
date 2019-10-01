@@ -92,13 +92,15 @@ static unsigned int analog_freqs_khz[3][9][NUM_ANALOG_FREQS] =
 
 void analog_tuner_init(struct cec_op_tuner_device_info *info)
 {
+	unsigned int freq_khz;
+
 	info->rec_flag = CEC_OP_REC_FLAG_NOT_USED;
 	info->tuner_display_info = CEC_OP_TUNER_DISPLAY_INFO_ANALOGUE;
 	info->is_analog = true;
 	info->analog.ana_bcast_type = CEC_OP_ANA_BCAST_TYPE_CABLE;
 	info->analog.bcast_system = CEC_OP_BCAST_SYSTEM_PAL_BG;
-	info->analog.ana_freq =
-		analog_freqs_khz[info->analog.ana_bcast_type][info->analog.bcast_system][0];
+	freq_khz = analog_freqs_khz[info->analog.ana_bcast_type][info->analog.bcast_system][0];
+	info->analog.ana_freq = (freq_khz * 10) / 625;
 }
 
 static unsigned int analog_get_nearest_freq(__u8 ana_bcast_type, __u8 ana_bcast_system,
@@ -123,7 +125,7 @@ static bool analog_set_tuner_dev_info(struct node *node, struct cec_msg *msg)
 	__u8 system;
 
 	cec_ops_select_analogue_service(msg, &type, &freq, &system);
-	if (info->analog.ana_bcast_type < 3 && info->analog.bcast_system < 9) {
+	if (type < 3 && system < 9) {
 		int freq_khz = (freq * 625) / 10;
 		unsigned int nearest = analog_get_nearest_freq(type, system,
 							       freq_khz);
