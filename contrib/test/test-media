@@ -397,30 +397,20 @@ if [ $vimc -eq 1 ]; then
 	echo
 	echo second unbind vimc
 	echo
+	# Max sleep time is 6 + 8 = 14s
 	for i in `v4l2-ctl -z platform:vimc --list-devices`; do
 		let "t = 6 + $RANDOM / 4096"
 		echo $i: sleep ${t}s
 		sleep $t <$i &
 	done
-	# There are media controller lifetime issues that will cause a crash if this
-	# is enabled. Fixing that is quite a major undertaking so for now disable this
-	# test.
-	#v4l2-ctl -z platform:vimc -d "Raw Capture 0" --stream-mmap --sleep 5 &
+	v4l2-ctl -z platform:vimc -d "Raw Capture 0" --stream-mmap --sleep 5 &
 	sleep 1
-	for i in /sys/bus/platform/drivers/vimc-*; do
-		for j in $i/vimc-*; do
-			echo unbind ${j##*/} of $i
-			echo -n ${j##*/} >$i/unbind
-		 done
-	done
-	sleep 5
-	echo
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/unbind
-	sleep $reunbind_time
+	sleep 14
 	echo
 	echo rmmod vimc
 	echo
-	rmmod vimc vimc_scaler vimc_debayer vimc_capture vimc_sensor vimc_streamer vimc_common
+	rmmod vimc
 	sleep $rmmod_time
 	if [ $kmemleak -eq 1 ]; then
 		echo
