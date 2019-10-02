@@ -428,7 +428,7 @@ static int wakeup_rc(struct node *node, unsigned me, unsigned la)
 
 	/* Todo: A release should be sent after this */
 	cec_msg_init(&msg, me, la);
-	rc_press.ui_cmd = 0x6D;  /* Power On Function */
+	rc_press.ui_cmd = CEC_OP_UI_CMD_POWER_ON_FUNCTION;
 	cec_msg_user_control_pressed(&msg, &rc_press);
 	fail_on_test(!transmit_timeout(node, &msg));
 	fail_on_test(cec_msg_status_is_abort(&msg));

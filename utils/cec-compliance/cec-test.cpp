@@ -537,7 +537,7 @@ static int rc_passthrough_user_ctrl_pressed(struct node *node, unsigned me, unsi
 	struct cec_op_ui_command rc_press;
 
 	cec_msg_init(&msg, me, la);
-	rc_press.ui_cmd = 0x41; // Volume up key (the key is not crucial here)
+	rc_press.ui_cmd = CEC_OP_UI_CMD_VOLUME_UP; // Volume up key (the key is not crucial here)
 	cec_msg_user_control_pressed(&msg, &rc_press);
 	fail_on_test(!transmit_timeout(node, &msg));
 	/* Mandatory for all except devices which have taken logical address 15 */

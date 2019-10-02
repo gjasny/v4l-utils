@@ -410,35 +410,35 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		node->state.rc_press_rx_ts = msg.rx_ts;
 
 		switch (rc_press.ui_cmd) {
-		case 0x41:
+		case CEC_OP_UI_CMD_VOLUME_UP:
 			if (node->state.volume < VOLUME_MAX)
 				node->state.volume++;
 			break;
-		case 0x42:
+		case CEC_OP_UI_CMD_VOLUME_DOWN:
 			if (node->state.volume > VOLUME_MIN)
 				node->state.volume--;
 			break;
-		case 0x43:
+		case CEC_OP_UI_CMD_MUTE:
 			node->state.mute = !node->state.mute;
 			break;
-		case 0x65:
+		case CEC_OP_UI_CMD_MUTE_FUNCTION:
 			node->state.mute = true;
 			break;
-		case 0x66:
+		case CEC_OP_UI_CMD_RESTORE_VOLUME_FUNCTION:
 			node->state.mute = false;
 			break;
-		case 0x6B:
+		case CEC_OP_UI_CMD_POWER_TOGGLE_FUNCTION:
 			if (!enter_standby(node))
 				exit_standby(node);
 			break;
-		case 0x6C:
+		case CEC_OP_UI_CMD_POWER_OFF_FUNCTION:
 			enter_standby(node);
 			break;
-		case 0x6D:
+		case CEC_OP_UI_CMD_POWER_ON_FUNCTION:
 			exit_standby(node);
 			break;
 		}
-		if (rc_press.ui_cmd >= 0x41 && rc_press.ui_cmd <= 0x43) {
+		if (rc_press.ui_cmd >= CEC_OP_UI_CMD_VOLUME_UP && rc_press.ui_cmd <= CEC_OP_UI_CMD_MUTE) {
 			dev_info("Volume: %d%s\n", node->state.volume, node->state.mute ? ", muted" : "");
 			cec_msg_set_reply_to(&msg, &msg);
 			cec_msg_report_audio_status(&msg, node->state.mute ? 1 : 0, node->state.volume);
