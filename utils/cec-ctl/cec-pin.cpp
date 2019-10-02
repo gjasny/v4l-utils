@@ -31,24 +31,22 @@
 #endif
 
 #include "cec-ctl.h"
-#include "cec-pin-gen.h"
+#include "cec-log.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 static std::string find_opcode_name(__u8 opcode)
 {
-	for (unsigned i = 0; i < ARRAY_SIZE(msgtable); i++)
-		if (msgtable[i].opcode == opcode)
-			return std::string(": ") + msgtable[i].name;
-	return "";
+	const char *name = cec_opcode2s(opcode);
+
+	return name ? std::string(": ") + name : "";
 }
 
 static std::string find_cdc_opcode_name(__u8 opcode)
 {
-	for (unsigned i = 0; i < ARRAY_SIZE(cdcmsgtable); i++)
-		if (cdcmsgtable[i].opcode == opcode)
-			return std::string(": ") + cdcmsgtable[i].name;
-	return "";
+	const char *name = cec_cdc_opcode2s(opcode);
+
+	return name ? std::string(": ") + name : "";
 }
 
 enum cec_state {
@@ -197,8 +195,8 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 
 		if (byte_cnt == 0) {
 			bcast = (byte & 0xf) == 0xf;
-			s = ": " + std::string(la2s(byte >> 4)) +
-			    " to " + (bcast ? "All" : la2s(byte & 0xf));
+			s = ": " + std::string(cec_la2s(byte >> 4)) +
+			    " to " + (bcast ? "All" : cec_la2s(byte & 0xf));
 		} else if (byte_cnt == 1) {
 			s = find_opcode_name(byte);
 		} else if (cdc && byte_cnt == 4) {
@@ -228,10 +226,10 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 			msg.rx_status = CEC_RX_STATUS_OK;
 			msg.rx_ts = ev_ts;
 			printf("\nTransmit from %s to %s (%d to %d):\n",
-			       la2s(cec_msg_initiator(&msg)),
-			       cec_msg_is_broadcast(&msg) ? "all" : la2s(cec_msg_destination(&msg)),
+			       cec_la2s(cec_msg_initiator(&msg)),
+			       cec_msg_is_broadcast(&msg) ? "all" : cec_la2s(cec_msg_destination(&msg)),
 			       cec_msg_initiator(&msg), cec_msg_destination(&msg));
-			log_msg(&msg);
+			cec_log_msg(&msg);
 		}
 	}
 	rx_bit++;
