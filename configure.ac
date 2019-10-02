@@ -33,6 +33,7 @@ AC_CONFIG_FILES([Makefile
 	utils/v4l2-dbg/Makefile
 	utils/v4l2-sysfs-path/Makefile
 	utils/qv4l2/Makefile
+	utils/libcecutil/Makefile
 	utils/cec-ctl/Makefile
 	utils/cec-ctl/cec-ctl.1
 	utils/cec-compliance/Makefile

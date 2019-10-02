@@ -9,6 +9,7 @@ SUBDIRS = \
 	v4l2-ctl \
 	v4l2-dbg \
 	v4l2-sysfs-path \
+	libcecutil \
 	cec-ctl \
 	cec-compliance \
 	cec-follower \
