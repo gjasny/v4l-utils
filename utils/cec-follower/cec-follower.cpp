@@ -23,8 +23,6 @@
 #include "version.h"
 #endif
 
-#include "cec-table.h"
-
 /* Short option list
 
    Please keep in alphabetical order.
@@ -229,22 +227,22 @@ std::string opcode2s(const struct cec_msg *msg)
 {
 	std::stringstream oss;
 	__u8 opcode = msg->msg[1];
+	const char *name;
 
 	if (opcode == CEC_MSG_CDC_MESSAGE) {
 		__u8 cdc_opcode = msg->msg[4];
+		name = cec_cdc_opcode2s(cdc_opcode);
 
-		for (unsigned i = 0; i < ARRAY_SIZE(cdcmsgtable); i++) {
-			if (cdcmsgtable[i].opcode == cdc_opcode)
-				return cdcmsgtable[i].name;
-		}
+		if (name)
+			return name;
 		oss << "CDC: 0x" << std::hex << (unsigned)cdc_opcode;
 		return oss.str();
 	}
 
-	for (unsigned i = 0; i < ARRAY_SIZE(msgtable); i++) {
-		if (msgtable[i].opcode == opcode)
-			return msgtable[i].name;
-	}
+	name = cec_opcode2s(opcode);
+
+	if (name)
+		return name;
 	oss << "0x" << std::hex << (unsigned)opcode;
 	return oss.str();
 }

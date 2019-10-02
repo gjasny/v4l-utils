@@ -50,7 +50,7 @@ static struct timeval start_timeofday;
 
 static const char *get_ui_cmd_string(__u8 ui_cmd)
 {
-	return ui_cmd_string(ui_cmd) ? : "Unknown";
+	return cec_log_ui_cmd_string(ui_cmd) ? : "Unknown";
 }
 
 static std::string ts2s(__u64 ts, bool wallclock)
@@ -131,7 +131,7 @@ void reply_feature_abort(struct node *node, struct cec_msg *msg, __u8 reason)
 			   the same message to the same Follower again at that time to avoid saturating
 			   the bus. */
 			warn("Received message %s from LA %d (%s) shortly after\n",
-			     opcode2s(msg).c_str(), la, la2s(la));
+			     opcode2s(msg).c_str(), la, cec_la2s(la));
 			warn("replying Feature Abort [Unrecognized Opcode] to the same message.\n");
 		}
 	}
@@ -915,15 +915,15 @@ void testProcessing(struct node *node, bool wallclock)
 			    la_info[from].feature_aborted[opcode].ts &&
 			    ts_to_ms(get_ts() - la_info[from].feature_aborted[opcode].ts) < 200) {
 				warn("Received message %s from LA %d (%s) less than 200 ms after\n",
-				     opcode2s(&msg).c_str(), from, la2s(from));
+				     opcode2s(&msg).c_str(), from, cec_la2s(from));
 				warn("replying Feature Abort (not [Unrecognized Opcode]) to the same message.\n");
 			}
 			if (from != CEC_LOG_ADDR_UNREGISTERED && !la_info[from].ts)
-				dev_info("Logical address %d (%s) discovered.\n", from, la2s(from));
+				dev_info("Logical address %d (%s) discovered.\n", from, cec_la2s(from));
 			if (show_msgs) {
 				printf("    %s to %s (%d to %d): ",
-				       la2s(from), to == 0xf ? "all" : la2s(to), from, to);
-				log_msg(&msg);
+				       cec_la2s(from), to == 0xf ? "all" : cec_la2s(to), from, to);
+				cec_log_msg(&msg);
 				if (show_info)
 					printf("\tSequence: %u Rx Timestamp: %s\n",
 					       msg.sequence, ts2s(msg.rx_ts, wallclock).c_str());

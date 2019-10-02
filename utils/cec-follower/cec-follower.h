@@ -22,7 +22,7 @@
 #endif
 
 #include <cec-info.h>
-#include "../common/cec-log.h"
+#include <cec-log.h>
 
 #define ARRAY_SIZE(a) \
 	(sizeof(a) / sizeof(*a))

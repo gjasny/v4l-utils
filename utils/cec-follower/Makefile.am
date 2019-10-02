@@ -1,27 +1,11 @@
 bin_PROGRAMS = cec-follower
 man_MANS = cec-follower.1
 
-cec_follower_SOURCES = cec-follower.cpp cec-follower.h cec-processing.cpp cec-tuner.cpp cec-log.cpp cec-info.cpp
-cec_follower_CPPFLAGS = -I$(top_srcdir)/utils/common
-cec_follower_LDFLAGS = -lrt
+cec_follower_SOURCES = cec-follower.cpp cec-follower.h cec-processing.cpp cec-tuner.cpp
+cec_follower_CPPFLAGS = -I$(top_srcdir)/utils/libcecutil -I$(top_srcdir)/utils/common
+cec_follower_LDFLAGS = -lrt ../libcecutil/libcecutil.la
 
-cec-log.cpp: cec-log-gen.h
-
-cec-log-gen.h: $(top_srcdir)/utils/cec-ctl/msg2ctl.pl $(top_srcdir)/include/linux/cec.h \
-		$(top_srcdir)/utils/common/cec-htng.h $(top_srcdir)/include/linux/cec-funcs.h \
-		$(top_srcdir)/utils/common/cec-htng-funcs.h
-	$(top_srcdir)/utils/cec-ctl/msg2ctl.pl 1 $(top_srcdir)/include/linux/cec.h \
-		$(top_srcdir)/utils/common/cec-htng.h $(top_srcdir)/include/linux/cec-funcs.h \
-		$(top_srcdir)/utils/common/cec-htng-funcs.h >$@
-
-cec-follower.cpp: cec-table.h version.h
-
-cec-table.h: $(top_srcdir)/utils/cec-ctl/msg2ctl.pl $(top_srcdir)/include/linux/cec.h \
-		$(top_srcdir)/utils/common/cec-htng.h $(top_srcdir)/include/linux/cec-funcs.h \
-		$(top_srcdir)/utils/common/cec-htng-funcs.h
-	$(top_srcdir)/utils/cec-ctl/msg2ctl.pl 2 $(top_srcdir)/include/linux/cec.h \
-		$(top_srcdir)/utils/common/cec-htng.h $(top_srcdir)/include/linux/cec-funcs.h \
-		$(top_srcdir)/utils/common/cec-htng-funcs.h >$@
+cec-follower.cpp: version.h
 
 version.h:
 	@if [ -d $(top_srcdir)/.git ]; then \
@@ -32,6 +16,6 @@ version.h:
 	fi
 
 clean-local:
-	-rm -vf cec-log-gen.h cec-table.h version.h
+	-rm -vf version.h
 
 EXTRA_DIST = cec-follower.1
