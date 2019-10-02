@@ -22,6 +22,7 @@
 #endif
 
 #include <cec-info.h>
+#include <cec-log.h>
 
 #define ARRAY_SIZE(a) \
 	(sizeof(a) / sizeof(*a))
@@ -228,8 +229,5 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 void reply_feature_abort(struct node *node, struct cec_msg *msg,
 			 __u8 reason = CEC_OP_ABORT_UNRECOGNIZED_OP);
 void testProcessing(struct node *node, bool wallclock);
-
-// cec-log.c
-void log_msg(const struct cec_msg *msg);
 
 #endif

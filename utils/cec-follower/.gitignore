@@ -1,5 +1,5 @@
 cec-follower
 cec-follower.1
-cec-log.h
+cec-log-gen.h
 cec-table.h
 version.h

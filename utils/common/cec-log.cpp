@@ -13,6 +13,7 @@
 #include <linux/cec-funcs.h>
 #include "cec-htng-funcs.h"
 #include "cec-info.h"
+#include "cec-log.h"
 
 #define CEC_MAX_ARGS 16
 
@@ -130,7 +131,7 @@ static void log_u8_array(const char *arg_name, unsigned num, const __u8 *vals);
 static void log_unknown_msg(const struct cec_msg *msg);
 static void log_htng_unknown_msg(const struct cec_msg *msg);
 
-#include "cec-log.h"
+#include "cec-log-gen.h"
 
 static void log_digital(const char *arg_name, const struct cec_op_digital_service_id *digital)
 {
@@ -331,4 +332,13 @@ static void log_unknown_msg(const struct cec_msg *msg)
 		printf("\n");
 		break;
 	}
+}
+
+const char *ui_cmd_string(__u8 ui_cmd)
+{
+	for (unsigned i = 0; i < arg_ui_cmd.num_enum_values; i++) {
+		if (type_ui_cmd[i].value == ui_cmd)
+			return type_ui_cmd[i].type_name;
+	}
+	return NULL;
 }
