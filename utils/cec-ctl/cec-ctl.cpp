@@ -951,10 +951,11 @@ static void log_event(struct cec_event &ev, bool show)
 	case CEC_EVENT_STATE_CHANGE:
 		pa = ev.state_change.phys_addr;
 		if (show)
-			printf("Event: State Change: PA: %x.%x.%x.%x, LA mask: 0x%04x\n",
+			printf("Event: State Change: PA: %x.%x.%x.%x, LA mask: 0x%04x, Conn Info: %s\n",
 			       pa >> 12, (pa >> 8) & 0xf,
 			       (pa >> 4) & 0xf, pa & 0xf,
-			       ev.state_change.log_addr_mask);
+			       ev.state_change.log_addr_mask,
+			       ev.state_change.have_conn_info ? "yes" : "no");
 		break;
 	case CEC_EVENT_LOST_MSGS:
 		if (show)
@@ -2745,8 +2746,13 @@ int main(int argc, char **argv)
 			phys_addrs[la] = (phys_addr << 8) | la;
 	}
 
-	if (!options[OptSkipInfo])
-		cec_driver_info(caps, laddrs, phys_addr);
+	if (!options[OptSkipInfo]) {
+		struct cec_connector_info conn_info = {};
+
+		doioctl(&node, CEC_ADAP_G_CONNECTOR_INFO, &conn_info);
+
+		cec_driver_info(caps, laddrs, phys_addr, conn_info);
+	}
 
 	if (node.num_log_addrs == 0) {
 		if (options[OptMonitor] || options[OptMonitorAll] ||

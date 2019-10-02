@@ -443,7 +443,13 @@ int main(int argc, char **argv)
 	node.cec_version = laddrs.cec_version;
 
 	printf("\n");
-	cec_driver_info(caps, laddrs, node.phys_addr);
+
+	struct cec_connector_info conn_info = {};
+
+	doioctl(&node, CEC_ADAP_G_CONNECTOR_INFO, &conn_info);
+
+	cec_driver_info(caps, laddrs, node.phys_addr, conn_info);
+
 	if (laddrs.cec_version >= CEC_OP_CEC_VERSION_2_0) {
 		bool is_dev_feat = false;
 

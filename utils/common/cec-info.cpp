@@ -33,6 +33,8 @@ static std::string caps2s(unsigned caps)
 		s += "\t\tNeeds HPD\n";
 	if (caps & CEC_CAP_MONITOR_PIN)
 		s += "\t\tMonitor Pin\n";
+	if (caps & CEC_CAP_CONNECTOR_INFO)
+		s += "\t\tConnector Info\n";
 	return s;
 }
 
@@ -360,7 +362,8 @@ std::string status2s(const struct cec_msg &msg)
 }
 
 void cec_driver_info(const struct cec_caps &caps,
-		     const struct cec_log_addrs &laddrs, __u16 phys_addr)
+		     const struct cec_log_addrs &laddrs, __u16 phys_addr,
+		     const struct cec_connector_info &conn_info)
 {
 	printf("Driver Info:\n");
 	printf("\tDriver Name                : %s\n", caps.driver);
@@ -373,6 +376,19 @@ void cec_driver_info(const struct cec_caps &caps,
 			caps.version & 0xff);
 	printf("\tAvailable Logical Addresses: %u\n",
 	       caps.available_log_addrs);
+	switch (conn_info.type) {
+	case CEC_CONNECTOR_TYPE_NO_CONNECTOR:
+		printf("\tConnector Info             : None\n");
+		break;
+	case CEC_CONNECTOR_TYPE_DRM:
+		printf("\tDRM Connector Info         : card %u, connector %u\n",
+		       conn_info.drm.card_no, conn_info.drm.connector_id);
+		break;
+	default:
+		printf("\tConnector Info             : Type %u\n",
+		       conn_info.type);
+		break;
+	}
 
 	printf("\tPhysical Address           : %x.%x.%x.%x\n",
 	       cec_phys_addr_exp(phys_addr));

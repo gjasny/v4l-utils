@@ -1359,10 +1359,15 @@ int main(int argc, char **argv)
 
 	}
 
-	if (options[OptSkipInfo])
+	if (options[OptSkipInfo]) {
 		printf("\n");
-	else
-		cec_driver_info(caps, laddrs, node.phys_addr);
+	} else {
+		struct cec_connector_info conn_info = {};
+
+		doioctl(&node, CEC_ADAP_G_CONNECTOR_INFO, &conn_info);
+
+		cec_driver_info(caps, laddrs, node.phys_addr, conn_info);
+	}
 
 	bool missing_pa = node.phys_addr == CEC_PHYS_ADDR_INVALID && (node.caps & CEC_CAP_PHYS_ADDR);
 	bool missing_la = laddrs.num_log_addrs == 0 && (node.caps & CEC_CAP_LOG_ADDRS);
