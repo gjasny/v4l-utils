@@ -13,7 +13,7 @@
 #include <linux/cec-funcs.h>
 #include "cec-htng-funcs.h"
 #include "cec-info.h"
-#include "cec-log.h"
+#include "../common/cec-log.h"
 
 #define CEC_MAX_ARGS 16
 
