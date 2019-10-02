@@ -135,9 +135,6 @@ the reply.
 \fB\-\-timeout\fR \fI<ms>\fR
 Set the reply timeout in milliseconds (default is 1000 ms).
 .TP
-\fB\-\-list\-ui\-commands\fR
-List all UI commands that can be used with option \fB\-\-control\-pressed\fR.
-.TP
 \fB\-\-tv\fR
 Configure the CEC adapter as a TV.
 .TP

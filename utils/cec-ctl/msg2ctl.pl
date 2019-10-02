@@ -249,11 +249,7 @@ sub process_func
 				$arg_names .= ", ";
 				$arg_ptrs .= ", ";
 			}
-			if ($name eq "ui_cmd") {
-				$arg_ptrs .= "&arg_rc_$name";
-			} else {
-				$arg_ptrs .= "&arg_$name";
-			}
+			$arg_ptrs .= "&arg_$name";
 			$name =~ s/_/-/g;
 			$arg_names .= '"' . $name . '"';
 		}
