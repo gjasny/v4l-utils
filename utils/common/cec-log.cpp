@@ -212,31 +212,31 @@ static void log_ui_command(const char *arg_name,
 	if (!ui_cmd->has_opt_arg)
 		return;
 	switch (ui_cmd->ui_cmd) {
-	case 0x56:
+	case CEC_OP_UI_CMD_SELECT_BROADCAST_TYPE:
 		log_arg(&arg_ui_bcast_type, "ui-broadcast-type",
 			ui_cmd->ui_broadcast_type);
 		break;
-	case 0x57:
+	case CEC_OP_UI_CMD_SELECT_SOUND_PRESENTATION:
 		log_arg(&arg_ui_snd_pres_ctl, "ui-sound-presentation-control",
 			ui_cmd->ui_sound_presentation_control);
 		break;
-	case 0x60:
+	case CEC_OP_UI_CMD_PLAY_FUNCTION:
 		log_arg(&arg_u8, "play-mode", ui_cmd->play_mode);
 		break;
-	case 0x68:
-		log_arg(&arg_u8, "ui-function-media", ui_cmd->ui_function_media);
-		break;
-	case 0x69:
-		log_arg(&arg_u8, "ui-function-select-av-input", ui_cmd->ui_function_select_av_input);
-		break;
-	case 0x6a:
-		log_arg(&arg_u8, "ui-function-select-audio-input", ui_cmd->ui_function_select_audio_input);
-		break;
-	case 0x67:
+	case CEC_OP_UI_CMD_TUNE_FUNCTION:
 		log_arg(&arg_channel_number_fmt, "channel-number-fmt",
 			ui_cmd->channel_identifier.channel_number_fmt);
 		log_arg(&arg_u16, "major", ui_cmd->channel_identifier.major);
 		log_arg(&arg_u16, "minor", ui_cmd->channel_identifier.minor);
+		break;
+	case CEC_OP_UI_CMD_SELECT_MEDIA_FUNCTION:
+		log_arg(&arg_u8, "ui-function-media", ui_cmd->ui_function_media);
+		break;
+	case CEC_OP_UI_CMD_SELECT_AV_INPUT_FUNCTION:
+		log_arg(&arg_u8, "ui-function-select-av-input", ui_cmd->ui_function_select_av_input);
+		break;
+	case CEC_OP_UI_CMD_SELECT_AUDIO_INPUT_FUNCTION:
+		log_arg(&arg_u8, "ui-function-select-audio-input", ui_cmd->ui_function_select_audio_input);
 		break;
 	}
 }
