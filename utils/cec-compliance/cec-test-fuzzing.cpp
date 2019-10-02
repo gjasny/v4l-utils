@@ -22,7 +22,7 @@
 int testFuzzing(struct node &node, unsigned me, unsigned la)
 {
 	printf("test fuzzing CEC local LA %d (%s) to remote LA %d (%s):\n\n",
-	       me, la2s(me), la, la2s(la));
+	       me, cec_la2s(me), la, cec_la2s(la));
 
 	if (node.remote[la].in_standby) {
 		announce("The remote device is in standby. It should be powered on when fuzzing. Aborting.");
@@ -56,7 +56,7 @@ int testFuzzing(struct node &node, unsigned me, unsigned la)
 		if (msg.len > CEC_MAX_MSG_SIZE)
 			continue;
 
-		const char *name = opcode2s(msg.msg[1]);
+		const char *name = cec_opcode2s(msg.msg[1]);
 
 		printf("Send message %u:", cnt);
 		for (unsigned int i = 0; i < offset; i++)

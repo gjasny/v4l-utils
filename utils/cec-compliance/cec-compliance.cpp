@@ -24,8 +24,6 @@
 #include "version.h"
 #endif
 
-#include "cec-table.h"
-
 /* Short option list
 
    Please keep in alphabetical order.
@@ -589,38 +587,29 @@ const char *cdc_errcode2s(__u8 cdc_errcode)
 	}
 }
 
-const char *opcode2s(__u8 opcode)
-{
-	for (unsigned i = 0; i < ARRAY_SIZE(msgtable); i++) {
-		if (msgtable[i].opcode == opcode)
-			return msgtable[i].name;
-	}
-	return NULL;
-}
-
 std::string opcode2s(const struct cec_msg *msg)
 {
 	std::stringstream oss;
 	__u8 opcode = msg->msg[1];
+	const char *name;
 
 	if (msg->len == 1)
 		return "MSG_POLL";
 
 	if (opcode == CEC_MSG_CDC_MESSAGE) {
 		__u8 cdc_opcode = msg->msg[4];
+		name = cec_cdc_opcode2s(cdc_opcode);
 
-		for (unsigned i = 0; i < ARRAY_SIZE(cdcmsgtable); i++) {
-			if (cdcmsgtable[i].opcode == cdc_opcode)
-				return cdcmsgtable[i].name;
-		}
+		if (name)
+			return name;
 		oss << "CDC: 0x" << std::hex << (unsigned)cdc_opcode;
 		return oss.str();
 	}
 
-	for (unsigned i = 0; i < ARRAY_SIZE(msgtable); i++) {
-		if (msgtable[i].opcode == opcode)
-			return msgtable[i].name;
-	}
+	name = cec_opcode2s(opcode);
+
+	if (name)
+		return name;
 	oss << "0x" << std::hex << (unsigned)opcode;
 	return oss.str();
 }
@@ -691,7 +680,7 @@ int cec_named_ioctl(struct node *node, const char *name,
 		}
 		if ((msg->tx_status & ~CEC_TX_STATUS_OK) ||
 		    (msg->rx_status & ~CEC_RX_STATUS_OK))
-			printf("\t\t\tStatus: %s\n", status2s(*msg).c_str());
+			printf("\t\t\tStatus: %s\n", cec_status2s(*msg).c_str());
 		if (msg->tx_status & CEC_TX_STATUS_TIMEOUT)
 			warn("CEC_TX_STATUS_TIMEOUT was set, should not happen.\n");
 	}
@@ -924,7 +913,7 @@ static int poll_remote_devs(struct node *node)
 		} else {
 			if (!(msg.tx_status & CEC_TX_STATUS_ARB_LOST))
 				warn("retry poll due to unexpected status: %s\n",
-				     status2s(msg).c_str());
+				     cec_status2s(msg).c_str());
 			retries++;
 			fail_on_test(retries > 10);
 			i--;
@@ -939,14 +928,14 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 	bool unknown;
 
 	printf("\tSystem Information for device %d (%s) from device %d (%s):\n",
-	       i, la2s(i), la, la2s(la));
+	       i, cec_la2s(i), la, cec_la2s(la));
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_get_cec_version(&msg, true);
 	unknown = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tCEC Version                : ");
 	if (unknown) {
-		printf("%s\n", status2s(msg).c_str());
+		printf("%s\n", cec_status2s(msg).c_str());
 		node->remote[i].cec_version = CEC_OP_CEC_VERSION_1_4;
 	}
 	/* This needs to be kept in sync with newer CEC versions */
@@ -961,7 +950,7 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 			warn("The reported CEC version is greater than 2.0. The device will be tested as a CEC 2.0 compliant device.\n");
 		}
 		else
-			printf("%s\n", version2s(msg.msg[2]));
+			printf("%s\n", cec_version2s(msg.msg[2]));
 	}
 
 	cec_msg_init(&msg, la, i);
@@ -969,7 +958,7 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 	unknown = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tPhysical Address           : ");
 	if (unknown) {
-		printf("%s\n", status2s(msg).c_str());
+		printf("%s\n", cec_status2s(msg).c_str());
 		node->remote[i].phys_addr = CEC_PHYS_ADDR_INVALID;
 	}
 	else {
@@ -978,7 +967,7 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 		       cec_phys_addr_exp(node->remote[i].phys_addr));
 		node->remote[i].prim_type = msg.msg[4];
 		printf("\t\tPrimary Device Type        : %s\n",
-		       prim_type2s(node->remote[i].prim_type));
+		       cec_prim_type2s(node->remote[i].prim_type));
 	}
 
 	cec_msg_init(&msg, la, i);
@@ -986,13 +975,13 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 	unknown = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tVendor ID                  : ");
 	if (unknown) {
-		printf("%s\n", status2s(msg).c_str());
+		printf("%s\n", cec_status2s(msg).c_str());
 		node->remote[i].vendor_id = CEC_VENDOR_ID_NONE;
 	} else {
 		node->remote[i].vendor_id = (msg.msg[2] << 16) |
 			(msg.msg[3] << 8) | msg.msg[4];
 		printf("0x%06x %s\n", node->remote[i].vendor_id,
-		       vendor2s(node->remote[i].vendor_id));
+		       cec_vendor2s(node->remote[i].vendor_id));
 	}
 
 	cec_msg_init(&msg, la, i);
@@ -1000,7 +989,7 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 	unknown = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tOSD Name                   : ");
 	if (unknown) {
-		printf("%s\n", status2s(msg).c_str());
+		printf("%s\n", cec_status2s(msg).c_str());
 	} else {
 		cec_ops_set_osd_name(&msg, node->remote[i].osd_name);
 		printf("'%s'\n", node->remote[i].osd_name);
@@ -1019,7 +1008,7 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 	unknown = !transmit_timeout(node, &msg) || timed_out_or_abort(&msg);
 	printf("\t\tPower Status               : ");
 	if (unknown) {
-		printf("%s\n", status2s(msg).c_str());
+		printf("%s\n", cec_status2s(msg).c_str());
 	} else {
 		__u8 pwr;
 
