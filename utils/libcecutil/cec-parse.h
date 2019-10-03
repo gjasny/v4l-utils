@@ -6,7 +6,7 @@
 #ifndef _CEC_PARSE_H_
 #define _CEC_PARSE_H_
 
-#include "cec-parse-gen.h"
+#include "../libcecutil/cec-parse-gen.h"
 
 void cec_parse_usage_options(const char *options);
 void cec_parse_msg_args(struct cec_msg &msg, int reply, const struct cec_msg_args *opt, int ch);

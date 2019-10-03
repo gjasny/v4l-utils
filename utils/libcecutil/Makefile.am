@@ -15,7 +15,7 @@ cec-log.cpp: cec-log-gen.h
 cec-parse.cpp: cec-parse-gen.h cec-parse-src-gen.h
 
 cec-msgs-gen.h cec-log-gen.h cec-parse-src-gen.h cec-parse-gen.h: cec-gen.pl $(CEC_GEN_PREREQS)
-	cec-gen.pl $@ $(CEC_GEN_PREREQS) >$@
+	$(top_srcdir)/utils/libcecutil/cec-gen.pl $@ $(CEC_GEN_PREREQS) >$@
 
 clean-local:
 	-rm -vf cec-log-gen.h cec-parse-gen.h cec-parse-src-gen.h cec-table-gen.h
