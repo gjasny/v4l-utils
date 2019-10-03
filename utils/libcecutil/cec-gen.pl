@@ -297,8 +297,6 @@ sub process_func
 	push @{$feature_usage{$feature}}, $msg;
 }
 
-$to_header = shift;
-
 while (<>) {
 	last if /\/\* Messages \*\//;
 }
@@ -410,71 +408,70 @@ while (<>) {
 
 $options .= "\tOptHelpAll,\n";
 
-if ($to_header eq "cec-parse-src-gen.h") {
-	print "\n\n";
-	foreach (sort keys %feature_usage) {
-		$name = $_;
-		s/ /_/g;
-		s/([A-Z])/\l\1/g;
-		$usage_var = $_ . "_usage";
-		printf "static const char *$usage_var =\n";
-		$usage = "";
-		foreach (@{$feature_usage{$name}}) {
-			$usage .= $usage_msg{$_};
-		}
-		foreach (@{$feature_also{$name}}) {
-			$usage .= $usage_msg{$_};
-		}
-		chop $usage;
-		$usage =~ s/"  --vendor-remote-button-up/VENDOR_EXTRA\n\t"  --vendor-remote-button-up/;
-		printf "%s;\n\n", $usage;
-		s/_/-/g;
-		$opt = "OptHelp" . $name;
-		$opt =~ s/ //g;
-		$help .= "\tif (options[OptHelpAll] || options\[$opt\]) {\n";
-		$help .= "\t\tprintf(\"$name Feature:\\n\\n\");\n";
-		$help .= "\t\tprintf(\"\%s\\n\", $usage_var);\n\t}\n";
-	}
+open(my $fh, '>', 'cec-parse-src-gen.h') or die "Could not open cec-parse-src-gen.h for writing";
 
-	printf "void cec_parse_usage_options(const char *options)\n{\n";
-	printf "%s}\n\n", $help;
-	printf "void cec_parse_msg_args(struct cec_msg &msg, int reply, const cec_msg_args *opt, int ch)\n{\n";
-	printf "\tchar *value, *subs = optarg;\n\n";
-	printf "\tswitch (ch) {\n";
-	$switch =~ s/(service_id_method, dig_bcast_system, transport_id, service_id, orig_network_id, program_number, channel_number_fmt, major, minor)/args2digital_service_id(\1)/g;
-	$switch =~ s/(ui_cmd, has_opt_arg, play_mode, ui_function_media, ui_function_select_av_input, ui_function_select_audio_input, ui_bcast_type, ui_snd_pres_ctl, channel_number_fmt, major, minor)/args2ui_command(\1)/g;
-	$switch =~ s/(descriptor1, descriptor2, descriptor3, descriptor4)/args2short_descrs(\1)/g;
-	$switch =~ s/(audio_format_id1, audio_format_code1, audio_format_id2, audio_format_code2, audio_format_id3, audio_format_code3, audio_format_id4, audio_format_code4)/args2short_aud_fmt_ids(audio_format_id1, audio_format_id2, audio_format_id3, audio_format_id4), args2short_aud_fmt_codes(audio_format_code1, audio_format_code2, audio_format_code3, audio_format_code4)/g;
-	printf "%s", $switch;
-	printf "\t}\n};\n\n";
-	exit 0;
+print $fh "\n\n";
+foreach (sort keys %feature_usage) {
+	$name = $_;
+	s/ /_/g;
+	s/([A-Z])/\l\1/g;
+	$usage_var = $_ . "_usage";
+	printf $fh "static const char *$usage_var =\n";
+	$usage = "";
+	foreach (@{$feature_usage{$name}}) {
+		$usage .= $usage_msg{$_};
+	}
+	foreach (@{$feature_also{$name}}) {
+		$usage .= $usage_msg{$_};
+	}
+	chop $usage;
+	$usage =~ s/"  --vendor-remote-button-up/VENDOR_EXTRA\n\t"  --vendor-remote-button-up/;
+	printf $fh "%s;\n\n", $usage;
+	s/_/-/g;
+	$opt = "OptHelp" . $name;
+	$opt =~ s/ //g;
+	$help .= "\tif (options[OptHelpAll] || options\[$opt\]) {\n";
+	$help .= "\t\tprintf(\"$name Feature:\\n\\n\");\n";
+	$help .= "\t\tprintf(\"\%s\\n\", $usage_var);\n\t}\n";
 }
 
-if ($to_header eq "cec-parse-gen.h") {
-	foreach (sort keys %feature_usage) {
-		$name = $_;
-		s/ /_/g;
-		s/([A-Z])/\l\1/g;
-		$help_features .= sprintf("\t\"  --help-%-28s Show help for the $name feature\\n\" \\\n", $_);
-		$opt = "OptHelp" . $name;
-		$opt =~ s/ //g;
-		$options .= "\t$opt,\n";
-		$long_opts .= "\t{ \"help-$_\", no_argument, 0, $opt }, \\\n";
-	}
-	print "enum cec_parse_options {\n\tOptMessages = 255,\n";
-	printf "%s\n\tOptLast = 512\n};\n\n", $options;
+printf $fh "void cec_parse_usage_options(const char *options)\n{\n";
+printf $fh "%s}\n\n", $help;
+printf $fh "void cec_parse_msg_args(struct cec_msg &msg, int reply, const cec_msg_args *opt, int ch)\n{\n";
+printf $fh "\tchar *value, *subs = optarg;\n\n";
+printf $fh "\tswitch (ch) {\n";
+$switch =~ s/(service_id_method, dig_bcast_system, transport_id, service_id, orig_network_id, program_number, channel_number_fmt, major, minor)/args2digital_service_id(\1)/g;
+$switch =~ s/(ui_cmd, has_opt_arg, play_mode, ui_function_media, ui_function_select_av_input, ui_function_select_audio_input, ui_bcast_type, ui_snd_pres_ctl, channel_number_fmt, major, minor)/args2ui_command(\1)/g;
+$switch =~ s/(descriptor1, descriptor2, descriptor3, descriptor4)/args2short_descrs(\1)/g;
+$switch =~ s/(audio_format_id1, audio_format_code1, audio_format_id2, audio_format_code2, audio_format_id3, audio_format_code3, audio_format_id4, audio_format_code4)/args2short_aud_fmt_ids(audio_format_id1, audio_format_id2, audio_format_id3, audio_format_id4), args2short_aud_fmt_codes(audio_format_code1, audio_format_code2, audio_format_code3, audio_format_code4)/g;
+printf $fh "%s", $switch;
+printf $fh "\t}\n};\n\n";
+close $fh;
 
-	printf "#define CEC_PARSE_LONG_OPTS \\\n%s\n\n", $long_opts;
-	printf "#define CEC_PARSE_USAGE \\\n%s\n\n", $help_features;
-	exit 0;
+open(my $fh, '>', 'cec-parse-gen.h') or die "Could not open cec-parse-gen.h for writing";
+foreach (sort keys %feature_usage) {
+	$name = $_;
+	s/ /_/g;
+	s/([A-Z])/\l\1/g;
+	$help_features .= sprintf("\t\"  --help-%-28s Show help for the $name feature\\n\" \\\n", $_);
+	$opt = "OptHelp" . $name;
+	$opt =~ s/ //g;
+	$options .= "\t$opt,\n";
+	$long_opts .= "\t{ \"help-$_\", no_argument, 0, $opt }, \\\n";
 }
+print $fh "enum cec_parse_options {\n\tOptMessages = 255,\n";
+printf $fh "%s\n\tOptLast = 512\n};\n\n", $options;
 
-if ($to_header eq "cec-log-gen.h") {
-	printf "%s%s\n", $enums, $arg_structs;
-	printf "static const struct cec_msg_args messages[] = {\n\t{\n";
-	printf "%s\t}\n};\n\n", $messages;
+printf $fh "#define CEC_PARSE_LONG_OPTS \\\n%s\n\n", $long_opts;
+printf $fh "#define CEC_PARSE_USAGE \\\n%s\n\n", $help_features;
+close $fh;
 
-	print <<'EOF';
+open(my $fh, '>', 'cec-log-gen.h') or die "Could not open cec-log-gen.h for writing";
+printf $fh "%s%s\n", $enums, $arg_structs;
+printf $fh "static const struct cec_msg_args messages[] = {\n\t{\n";
+printf $fh "%s\t}\n};\n\n", $messages;
+
+print $fh <<'EOF';
 void cec_log_msg(const struct cec_msg *msg)
 {
 	if (msg->len == 1) {
@@ -484,8 +481,8 @@ void cec_log_msg(const struct cec_msg *msg)
 
 	switch (msg->msg[1]) {
 EOF
-	printf "%s", $std_logswitch;
-	print <<'EOF';
+printf $fh "%s", $std_logswitch;
+print $fh <<'EOF';
 	default:
 		log_unknown_msg(msg);
 		break;
@@ -514,34 +511,32 @@ void log_htng_msg(const struct cec_msg *msg)
 
 	switch (msg->msg[5]) {
 EOF
-	printf "%s", $logswitch;
-	print <<'EOF';
+printf $fh "%s", $logswitch;
+print $fh <<'EOF';
 	default:
 		log_htng_unknown_msg(msg);
 		break;
 	}
 }
 EOF
-	exit 0;
-}
+close $fh;
 
-if ($to_header eq "cec-msgs-gen.h") {
-	printf "struct msgtable {\n";
-	printf "\t__u8 opcode;\n";
-	printf "\tconst char *name;\n";
-	printf "};\n\n";
-	printf "static const struct msgtable msgtable[] = {\n";
-	printf "%s", $msgtable;
-	printf "\t{ CEC_MSG_VENDOR_COMMAND, \"VENDOR_COMMAND\" },\n";
-	printf "\t{ CEC_MSG_VENDOR_COMMAND_WITH_ID, \"VENDOR_COMMAND_WITH_ID\" },\n";
-	printf "\t{ CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN, \"VENDOR_REMOTE_BUTTON_DOWN\" },\n";
-	printf "\t{ CEC_MSG_CDC_MESSAGE, \"CDC_MESSAGE\" },\n";
-	printf "};\n\n";
-	printf "static const struct msgtable cdcmsgtable[] = {\n";
-	printf "%s", $cdcmsgtable;
-	printf "};\n\n";
-	printf "static const struct msgtable htngmsgtable[] = {\n";
-	printf "%s", $htngmsgtable;
-	printf "};\n";
-	exit 0;
-}
+open(my $fh, '>', 'cec-msgs-gen.h') or die "Could not open cec-msgs-gen.h for writing";
+printf $fh "struct msgtable {\n";
+printf $fh "\t__u8 opcode;\n";
+printf $fh "\tconst char *name;\n";
+printf $fh "};\n\n";
+printf $fh "static const struct msgtable msgtable[] = {\n";
+printf $fh "%s", $msgtable;
+printf $fh "\t{ CEC_MSG_VENDOR_COMMAND, \"VENDOR_COMMAND\" },\n";
+printf $fh "\t{ CEC_MSG_VENDOR_COMMAND_WITH_ID, \"VENDOR_COMMAND_WITH_ID\" },\n";
+printf $fh "\t{ CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN, \"VENDOR_REMOTE_BUTTON_DOWN\" },\n";
+printf $fh "\t{ CEC_MSG_CDC_MESSAGE, \"CDC_MESSAGE\" },\n";
+printf $fh "};\n\n";
+printf $fh "static const struct msgtable cdcmsgtable[] = {\n";
+printf $fh "%s", $cdcmsgtable;
+printf $fh "};\n\n";
+printf $fh "static const struct msgtable htngmsgtable[] = {\n";
+printf $fh "%s", $htngmsgtable;
+printf $fh "};\n";
+close $fh;

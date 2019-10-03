@@ -7,17 +7,18 @@ libcecutil_la_LDFLAGS = -static
 
 CEC_GEN_PREREQS = $(top_srcdir)/include/linux/cec.h $(top_srcdir)/utils/libcecutil/cec-htng.h \
 		$(top_srcdir)/include/linux/cec-funcs.h $(top_srcdir)/utils/libcecutil/cec-htng-funcs.h
+CEC_GEN_HDRS = cec-log-gen.h cec-parse-gen.h cec-parse-src-gen.h cec-msgs-gen.h
 
-cec-info.cpp: cec-msgs-gen.h
+cec-info.cpp cec-log.cpp cec-parse.cpp: $(CEC_GEN_HDRS)
 
-cec-log.cpp: cec-log-gen.h
+$(CEC_GEN_HDRS): gen.intermediate ;
 
-cec-parse.cpp: cec-parse-gen.h cec-parse-src-gen.h
+.INTERMEDIATE: gen.intermediate
 
-cec-msgs-gen.h cec-log-gen.h cec-parse-src-gen.h cec-parse-gen.h: cec-gen.pl $(CEC_GEN_PREREQS)
-	$(top_srcdir)/utils/libcecutil/cec-gen.pl $@ $(CEC_GEN_PREREQS) >$@ || rm $@
+gen.intermediate: cec-gen.pl $(CEC_GEN_PREREQS)
+	$(top_srcdir)/utils/libcecutil/cec-gen.pl $(CEC_GEN_PREREQS)
 
 clean-local:
-	-rm -vf cec-log-gen.h cec-parse-gen.h cec-parse-src-gen.h cec-table-gen.h
+	-rm -vf $(CEC_GEN_HDRS)
 
 EXTRA_DIST = TODO
