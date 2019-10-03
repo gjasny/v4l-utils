@@ -966,13 +966,16 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 			printf(_(" - Use wideband receiver\n"));
 		if (features & LIRC_CAN_MEASURE_CARRIER)
 			printf(_(" - Can measure carrier\n"));
-		if (features & LIRC_CAN_SET_REC_TIMEOUT) {
-			unsigned min_timeout, max_timeout, timeout;
 
-			// This ioctl is only supported from kernel 4.18 onwards
-			int rc = ioctl(fd, LIRC_GET_REC_TIMEOUT, &timeout);
-			if (rc == 0)
-				printf(_(" - Receiving timeout %u microseconds\n"), timeout);
+		// This ioctl is only supported from kernel 4.18 onwards
+		unsigned timeout;
+		int rc = ioctl(fd, LIRC_GET_REC_TIMEOUT, &timeout);
+		if (rc == 0)
+			printf(_(" - Receiving timeout %u microseconds\n"), timeout);
+
+		if (features & LIRC_CAN_SET_REC_TIMEOUT) {
+			unsigned min_timeout, max_timeout;
+
 			rc = ioctl(fd, LIRC_GET_MIN_TIMEOUT, &min_timeout);
 			if (rc) {
 				fprintf(stderr, _("warning: %s: device supports setting receiving timeout but LIRC_GET_MIN_TIMEOUT returns: %m\n"), dev);
