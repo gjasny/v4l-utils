@@ -8,7 +8,8 @@
 
 #include "cec-follower.h"
 
-#define NUM_ANALOG_FREQS	3
+#define NUM_ANALOG_FREQS 3
+#define TOT_ANALOG_FREQS (sizeof(analog_freqs_khz) / sizeof(analog_freqs_khz[0][0][0]))
 
 /*
  * This table contains analog television channel frequencies in KHz.  There are
@@ -90,10 +91,12 @@ static unsigned int analog_freqs_khz[3][9][NUM_ANALOG_FREQS] =
 	}
 };
 
-void analog_tuner_init(struct cec_op_tuner_device_info *info)
+void analog_tuner_init(struct state *state)
 {
+	struct cec_op_tuner_device_info *info = &state->tuner_dev_info;
 	unsigned int freq_khz;
 
+	state->freq_idx = 0;
 	info->rec_flag = CEC_OP_REC_FLAG_NOT_USED;
 	info->tuner_display_info = CEC_OP_TUNER_DISPLAY_INFO_ANALOGUE;
 	info->is_analog = true;
@@ -103,35 +106,52 @@ void analog_tuner_init(struct cec_op_tuner_device_info *info)
 	info->analog.ana_freq = (freq_khz * 10) / 625;
 }
 
-static unsigned int analog_get_nearest_freq(__u8 ana_bcast_type, __u8 ana_bcast_system,
-                                            int ana_freq_khz)
+static unsigned int analog_get_nearest_freq_idx(__u8 ana_bcast_type, __u8 ana_bcast_system,
+						int ana_freq_khz)
 {
 	int nearest = analog_freqs_khz[ana_bcast_type][ana_bcast_system][0];
+	unsigned int offset = 0;
 
 	for (int i = 0; i < NUM_ANALOG_FREQS; i++) {
 		int freq = analog_freqs_khz[ana_bcast_type][ana_bcast_system][i];
 
-		if (abs(ana_freq_khz - freq) < abs(ana_freq_khz - nearest))
+		if (abs(ana_freq_khz - freq) < abs(ana_freq_khz - nearest)) {
 			nearest = freq;
+			offset = i;
+		}
 	}
-	return nearest;
+	return NUM_ANALOG_FREQS * ((ana_bcast_type * 9) + ana_bcast_system) + offset;
+}
+
+static void analog_update_tuner_dev_info(struct node *node, unsigned int idx)
+{
+	struct cec_op_tuner_device_info *info = &node->state.tuner_dev_info;
+	unsigned int tot_freqs = NUM_ANALOG_FREQS * 9;
+	unsigned int offset;
+	unsigned int freq_khz;
+
+	node->state.freq_idx = idx;
+	info->analog.ana_bcast_type = node->state.freq_idx / tot_freqs;
+	info->analog.bcast_system =
+		(node->state.freq_idx - (tot_freqs * info->analog.ana_bcast_type)) / NUM_ANALOG_FREQS;
+	offset = node->state.freq_idx % NUM_ANALOG_FREQS;
+	freq_khz = analog_freqs_khz[info->analog.ana_bcast_type][info->analog.bcast_system][offset];
+	info->analog.ana_freq = (freq_khz * 10) / 625;
 }
 
 static bool analog_set_tuner_dev_info(struct node *node, struct cec_msg *msg)
 {
-	struct cec_op_tuner_device_info *info = &node->state.tuner_dev_info;
 	__u8 type;
 	__u16 freq;
 	__u8 system;
+	unsigned int idx;
 
 	cec_ops_select_analogue_service(msg, &type, &freq, &system);
 	if (type < 3 && system < 9) {
 		int freq_khz = (freq * 625) / 10;
-		unsigned int nearest = analog_get_nearest_freq(type, system,
-							       freq_khz);
-		info->analog.ana_bcast_type = type;
-		info->analog.ana_freq = (nearest * 10) / 625;
-		info->analog.bcast_system = system;
+
+		idx = analog_get_nearest_freq_idx(type, system, freq_khz);
+		analog_update_tuner_dev_info(node, idx);
 		return true;
 	}
 	return false;
@@ -180,12 +200,29 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		return;
 
 	case CEC_MSG_SELECT_DIGITAL_SERVICE:
-	case CEC_MSG_TUNER_STEP_DECREMENT:
-	case CEC_MSG_TUNER_STEP_INCREMENT:
-		if (!cec_has_tuner(1 << me))
+	case CEC_MSG_TUNER_STEP_DECREMENT: {
+		if (!cec_has_tuner(1 << me) && !cec_has_tv(1 << me))
 			break;
-		return;
 
+		if (node->state.freq_idx == 0)
+			node->state.freq_idx = TOT_ANALOG_FREQS - 1;
+		else
+			node->state.freq_idx--;
+		analog_update_tuner_dev_info(node, node->state.freq_idx);
+		return;
+	}
+
+	case CEC_MSG_TUNER_STEP_INCREMENT: {
+		if (!cec_has_tuner(1 << me) && !cec_has_tv(1 << me))
+			break;
+
+		if (node->state.freq_idx == TOT_ANALOG_FREQS - 1)
+			node->state.freq_idx = 0;
+		else
+			node->state.freq_idx++;
+		analog_update_tuner_dev_info(node, node->state.freq_idx);
+		return;
+	}
 
 		/*
 		  One Touch Record
