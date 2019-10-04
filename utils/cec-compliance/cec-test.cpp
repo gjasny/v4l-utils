@@ -16,6 +16,7 @@
 #include <sys/ioctl.h>
 #include <config.h>
 #include <sstream>
+#include <vector>
 
 #include "cec-compliance.h"
 
@@ -728,9 +729,235 @@ static struct remote_subtest deck_ctl_subtests[] = {
 
 /* Tuner Control */
 
-/*
-  TODO: These are very rudimentary tests which should be expanded.
- */
+static const char *bcast_type2s(__u8 bcast_type)
+{
+	switch (bcast_type) {
+	case CEC_OP_ANA_BCAST_TYPE_CABLE:
+		return "Cable";
+	case CEC_OP_ANA_BCAST_TYPE_SATELLITE:
+		return "Satellite";
+	case CEC_OP_ANA_BCAST_TYPE_TERRESTRIAL:
+		return "Terrestrial";
+	default:
+		return "Future use";
+	}
+}
+
+static int log_tuner_service(const struct cec_op_tuner_device_info &info,
+			     const char *prefix = "")
+{
+	printf("\t\t%s", prefix);
+
+	if (info.is_analog) {
+		double freq_mhz = (info.analog.ana_freq * 625) / 10000.0;
+
+		switch (info.analog.bcast_system) {
+		case CEC_OP_BCAST_SYSTEM_PAL_BG:
+		case CEC_OP_BCAST_SYSTEM_SECAM_LQ:
+		case CEC_OP_BCAST_SYSTEM_PAL_M:
+		case CEC_OP_BCAST_SYSTEM_NTSC_M:
+		case CEC_OP_BCAST_SYSTEM_PAL_I:
+		case CEC_OP_BCAST_SYSTEM_SECAM_DK:
+		case CEC_OP_BCAST_SYSTEM_SECAM_BG:
+		case CEC_OP_BCAST_SYSTEM_SECAM_L:
+		case CEC_OP_BCAST_SYSTEM_PAL_DK:
+			break;
+		default:
+			fail("invalid analog bcast_system");
+			break;
+		}
+		fail_on_test(info.analog.ana_bcast_type > CEC_OP_ANA_BCAST_TYPE_TERRESTRIAL);
+		fail_on_test(!info.analog.ana_freq);
+		printf("Analog Channel %.2f MHz (%s, %s)\n", freq_mhz,
+		       bcast_system2s(info.analog.bcast_system),
+		       bcast_type2s(info.analog.ana_bcast_type));
+		return 0;
+	}
+
+	__u8 system = info.digital.dig_bcast_system;
+
+	switch (system) {
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_GEN:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_GEN:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_GEN:
+		warn_once("generic digital broadcast systems should not be used");
+		break;
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_BS:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_CS:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_T:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_CABLE:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_SAT:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_T:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_C:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S2:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_T:
+		break;
+	default:
+		fail("invalid digital broadcast system");
+		break;
+	}
+
+	fail_on_test(info.digital.service_id_method > CEC_OP_SERVICE_ID_METHOD_BY_CHANNEL);
+
+	printf("%s Channel ", dig_bcast_system2s(system));
+	if (info.digital.service_id_method) {
+		__u16 major = info.digital.channel.major;
+		__u16 minor = info.digital.channel.minor;
+
+		switch (info.digital.channel.channel_number_fmt) {
+		case CEC_OP_CHANNEL_NUMBER_FMT_2_PART:
+			printf("%u.%u\n", major, minor);
+			break;
+		case CEC_OP_CHANNEL_NUMBER_FMT_1_PART:
+			printf("%u\n", minor);
+			break;
+		default:
+			fail("invalid service ID method\n");
+			break;
+		}
+		return 0;
+	}
+
+
+	switch (system) {
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_GEN:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_BS:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_CS:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_T: {
+		__u16 tsid = info.digital.arib.transport_id;
+		__u16 sid = info.digital.arib.service_id;
+		__u16 onid = info.digital.arib.orig_network_id;
+
+		printf("TSID: %u, SID: %u, ONID: %u\n", tsid, sid, onid);
+		break;
+	}
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_GEN:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_SAT:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_CABLE:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_T: {
+		__u16 tsid = info.digital.atsc.transport_id;
+		__u16 pn = info.digital.atsc.program_number;
+
+		printf("TSID: %u, Program Number: %u\n", tsid, pn);
+		break;
+	}
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_GEN:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S2:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_C:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_T: {
+		__u16 tsid = info.digital.dvb.transport_id;
+		__u16 sid = info.digital.dvb.service_id;
+		__u16 onid = info.digital.dvb.orig_network_id;
+
+		printf("TSID: %u, SID: %u, ONID: %u\n", tsid, sid, onid);
+		break;
+	}
+	default:
+		break;
+	}
+	return 0;
+}
+
+static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool interactive)
+{
+	struct cec_msg msg = {};
+	struct cec_op_tuner_device_info info = {};
+	std::vector<struct cec_op_tuner_device_info> info_vec;
+	bool has_tuner = (1 << la) & (CEC_LOG_ADDR_MASK_TV | CEC_LOG_ADDR_MASK_TUNER);
+	int ret;
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_give_tuner_device_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(!has_tuner && !timed_out_or_abort(&msg));
+	if (!has_tuner)
+		return NOTSUPPORTED;
+	if (timed_out(&msg) || unrecognized_op(&msg))
+		return NOTSUPPORTED;
+	if (cec_msg_status_is_abort(&msg))
+		return REFUSED;
+
+	printf("\t    Start Channel Scan\n");
+	cec_ops_tuner_device_status(&msg, &info);
+	info_vec.push_back(info);
+	ret = log_tuner_service(info);
+	if (ret)
+		return ret;
+
+	while (1) {
+		cec_msg_init(&msg, me, la);
+		cec_msg_tuner_step_increment(&msg);
+		fail_on_test(!transmit(node, &msg));
+		fail_on_test(cec_msg_status_is_abort(&msg));
+		if (cec_msg_status_is_abort(&msg)) {
+			fail_on_test(abort_reason(&msg) == CEC_OP_ABORT_UNRECOGNIZED_OP);
+			if (abort_reason(&msg) == CEC_OP_ABORT_REFUSED) {
+				warn("Tuner step increment does not wrap.\n");
+				break;
+			} else {
+				warn("Tuner at end of service list did not receive feature abort refused.\n");
+				break;
+			}
+		}
+		cec_msg_init(&msg, me, la);
+		cec_msg_give_tuner_device_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
+		fail_on_test(!transmit_timeout(node, &msg));
+		fail_on_test(timed_out_or_abort(&msg));
+		info = {};
+		cec_ops_tuner_device_status(&msg, &info);
+		if (!memcmp(&info, &info_vec[0], sizeof(info)))
+			break;
+		ret = log_tuner_service(info);
+		if (ret)
+			return ret;
+		info_vec.push_back(info);
+	}
+	printf("\t    Finished Channel Scan\n");
+
+	printf("\t    Start Channel Test\n");
+	for (std::vector<struct cec_op_tuner_device_info>::iterator iter = info_vec.begin();
+			iter != info_vec.end(); iter++) {
+		cec_msg_init(&msg, me, la);
+		log_tuner_service(*iter, "Select ");
+		if (iter->is_analog)
+			cec_msg_select_analogue_service(&msg, iter->analog.ana_bcast_type,
+				iter->analog.ana_freq, iter->analog.bcast_system);
+		else
+			cec_msg_select_digital_service(&msg, &iter->digital);
+		fail_on_test(!transmit(node, &msg));
+		fail_on_test(cec_msg_status_is_abort(&msg));
+		cec_msg_init(&msg, me, la);
+		cec_msg_give_tuner_device_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
+		fail_on_test(!transmit_timeout(node, &msg));
+		fail_on_test(timed_out_or_abort(&msg));
+		info = {};
+		cec_ops_tuner_device_status(&msg, &info);
+		fail_on_test(memcmp(&info, &(*iter), sizeof(info)));
+	}
+	printf("\t    Finished Channel Test\n");
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_select_analogue_service(&msg, 3, 16000, 9);
+	printf("\t\tSelect invalid analog channel\n");
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(!cec_msg_status_is_abort(&msg));
+	fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP);
+	cec_msg_init(&msg, me, la);
+	info.digital.service_id_method = CEC_OP_SERVICE_ID_METHOD_BY_DIG_ID;
+	info.digital.dig_bcast_system = CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S2;
+	info.digital.dvb.transport_id = 0;
+	info.digital.dvb.service_id = 0;
+	info.digital.dvb.orig_network_id = 0;
+	cec_msg_select_digital_service(&msg, &info.digital);
+	printf("\t\tSelect invalid digital channel\n");
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(!cec_msg_status_is_abort(&msg));
+	fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP);
+
+	return 0;
+}
 
 static int tuner_ctl_give_status(struct node *node, unsigned me, unsigned la, bool interactive)
 {
@@ -895,6 +1122,7 @@ static int tuner_ctl_step_inc(struct node *node, unsigned me, unsigned la, bool 
 }
 
 static struct remote_subtest tuner_ctl_subtests[] = {
+	{ "Tuner Control", CEC_LOG_ADDR_MASK_TUNER | CEC_LOG_ADDR_MASK_TV, tuner_ctl_test },
 	{ "Give Tuner Device Status", CEC_LOG_ADDR_MASK_TUNER, tuner_ctl_give_status },
 	{ "Select Analogue Service", CEC_LOG_ADDR_MASK_TUNER, tuner_ctl_sel_analog_service },
 	{ "Select Digital Service", CEC_LOG_ADDR_MASK_TUNER, tuner_ctl_sel_digital_service },
