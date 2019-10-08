@@ -451,7 +451,7 @@ close $fh;
 open(my $fh, '>', 'cec-parse-gen.h') or die "Could not open cec-parse-gen.h for writing";
 foreach (sort keys %feature_usage) {
 	$name = $_;
-	s/ /_/g;
+	s/ /-/g;
 	s/([A-Z])/\l\1/g;
 	$help_features .= sprintf("\t\"  --help-%-28s Show help for the $name feature\\n\" \\\n", $_);
 	$opt = "OptHelp" . $name;
