@@ -97,6 +97,41 @@ static const struct service_info digital_atsc_data[2][NUM_DIGITAL_CHANS] =
 };
 
 /*
+ * This table contains the digital television channels for DVB.  There are a
+ * total of three channels that are identified by digital IDs or by channel.
+ *
+ * CEC 17 of the 1.4 specification lists the available digital identification
+ * methods, IDs, and channel data.
+ *
+ * Digital channel data for DVB-S2 is from:
+ *
+ * https://www.satellite-calculations.com/DVB/getchannellist.php?1west/Swedish_Nordig_Channel_List.htm
+ *
+ * Digital channel data for DVB-T is from:
+ *
+ * https://sichbopvr.com/frequency-tables/Denmark/Hovedstaden/Copenhagen
+ * https://sichbopvr.com/frequency-tables/Sweden/Skane%20Lan/Malm%c3%b6
+ *
+ */
+static const struct service_info digital_dvb_data[2][NUM_DIGITAL_CHANS] =
+{
+	// satellite, dvb-s2
+	{
+		// tsid, onid, sid, fmt, major, minor
+		{ 61, 70, 7193, 1, 0, 24 },
+		{ 65, 70, 7040, 1, 0, 72 },
+		{ 28, 70, 7012, 1, 0, 101 }
+	},
+	// terrestrial, dvb-t
+	{
+		// tsid, onid, sid, fmt, major, minor
+		{ 1002, 8400, 2025, 1, 0, 21 },
+		{ 1004, 8400, 84, 1, 0, 31 },
+		{ 1004, 8945, 1040, 1, 0, 1040 }
+	}
+};
+
+/*
  * This table contains analog television channel frequencies in KHz.  There are
  * a total of three frequencies per analog broadcast type and broadcast system.
  *
