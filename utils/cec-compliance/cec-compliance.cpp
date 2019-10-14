@@ -898,9 +898,9 @@ int util_receive(struct node *node, unsigned la, unsigned timeout,
 
 	while (get_ts_ms() - ts_start < timeout) {
 		memset(msg, 0, sizeof(*msg));
-		msg->timeout = 1;
+		msg->timeout = 20;
 		if (doioctl(node, CEC_RECEIVE, msg))
-			break;
+			continue;
 		if (cec_msg_initiator(msg) != la)
 			continue;
 
