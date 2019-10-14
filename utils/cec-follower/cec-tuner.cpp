@@ -131,6 +131,8 @@ static void analog_update_tuner_dev_info(struct node *node, unsigned int idx)
 	unsigned int freq_khz;
 
 	node->state.freq_idx = idx;
+	info->tuner_display_info = CEC_OP_TUNER_DISPLAY_INFO_ANALOGUE;
+	info->is_analog = true;
 	info->analog.ana_bcast_type = node->state.freq_idx / tot_freqs;
 	info->analog.bcast_system =
 		(node->state.freq_idx - (tot_freqs * info->analog.ana_bcast_type)) / NUM_ANALOG_FREQS;
