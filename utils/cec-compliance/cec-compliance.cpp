@@ -891,6 +891,33 @@ retry:
 	return true;
 }
 
+bool util_receive(struct node *node, unsigned la, struct cec_msg *msg,
+		  __u8 sent_msg, __u8 reply1, __u8 reply2)
+{
+        while (1) {
+		memset(msg, 0, sizeof(*msg));
+		msg->timeout = 1;
+		if (doioctl(node, CEC_RECEIVE, msg))
+			break;
+		if (cec_msg_initiator(msg) != la)
+			continue;
+
+		if (msg->msg[1] == CEC_MSG_FEATURE_ABORT) {
+			__u8 reason, abort_msg;
+
+			cec_ops_feature_abort(msg, &abort_msg, &reason);
+			if (abort_msg != sent_msg)
+				continue;
+			return true;
+		}
+
+		if (msg->msg[1] == reply1 || (reply2 && msg->msg[1] == reply2))
+			return true;
+	}
+
+	return false;
+}
+
 static int poll_remote_devs(struct node *node)
 {
 	unsigned retries = 0;
