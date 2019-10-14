@@ -53,7 +53,7 @@ struct state {
 	unsigned rc_press_hold_count;
 	unsigned rc_duration_sum;
 	struct cec_op_tuner_device_info tuner_dev_info;
-	unsigned int freq_idx;
+	unsigned int service_idx;
 };
 
 struct node {
