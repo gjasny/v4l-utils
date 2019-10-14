@@ -226,6 +226,181 @@ void analog_tuner_init(struct state *state)
 	info->analog.ana_freq = (freq_khz * 10) / 625;
 }
 
+static int digital_get_service_offset(const struct service_info *info,
+				      const struct cec_op_digital_service_id *digital)
+{
+	__u8 method = digital->service_id_method;
+	const struct cec_op_arib_data *arib = &digital->arib;
+	const struct cec_op_atsc_data *atsc = &digital->atsc;
+	const struct cec_op_dvb_data *dvb = &digital->dvb;
+	const struct cec_op_channel_data *channel = &digital->channel;
+
+	for (int i = 0; i < NUM_DIGITAL_CHANS; i++, info++) {
+		switch (method) {
+		case CEC_OP_SERVICE_ID_METHOD_BY_DIG_ID:
+			switch (digital->dig_bcast_system) {
+			case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_BS:
+			case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_T:
+				if (arib->transport_id == info->tsid &&
+				    arib->service_id == info->sid &&
+				    arib->orig_network_id == info->onid)
+					return i;
+				break;
+			case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_SAT:
+			case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_T:
+				if (atsc->transport_id == info->tsid &&
+				    atsc->program_number == info->sid)
+					return i;
+				break;
+			case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S2:
+			case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_T:
+				if (dvb->transport_id == info->tsid &&
+				    dvb->service_id == info->sid &&
+				    dvb->orig_network_id == info->onid)
+					return i;
+				break;
+			}
+			break;
+		case CEC_OP_SERVICE_ID_METHOD_BY_CHANNEL:
+			switch (channel->channel_number_fmt) {
+			case CEC_OP_CHANNEL_NUMBER_FMT_1_PART:
+				if (channel->minor == info->minor)
+					return i;
+				break;
+			case CEC_OP_CHANNEL_NUMBER_FMT_2_PART:
+				if (channel->major == info->major &&
+				    channel->minor == info->minor)
+					return i;
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	return -1;
+}
+
+static int digital_get_service_idx(struct cec_op_digital_service_id *digital)
+{
+	const struct service_info *info;
+	bool is_terrestrial = false;
+	unsigned offset;
+	int idx;
+
+	switch (digital->dig_bcast_system) {
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_T:
+		is_terrestrial = true;
+		/* fall through */
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_BS:
+		info = &digital_arib_data[is_terrestrial][0];
+		offset = is_terrestrial * NUM_DIGITAL_CHANS;
+		break;
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_T:
+		is_terrestrial = true;
+		/* fall through */
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_SAT:
+		info = &digital_atsc_data[is_terrestrial][0];
+		offset = (2 + is_terrestrial) * NUM_DIGITAL_CHANS;
+		break;
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_T:
+		is_terrestrial = true;
+		/* fall through */
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S2:
+		info = &digital_dvb_data[is_terrestrial][0];
+		offset = (4 + is_terrestrial) * NUM_DIGITAL_CHANS;
+		break;
+	default:
+		return -1;
+	}
+	idx = digital_get_service_offset(info, digital);
+	return idx >= 0 ? idx + offset : -1;
+}
+
+static bool digital_update_tuner_dev_info(struct node *node, int idx)
+{
+	if (idx < 0)
+		return false;
+
+	struct cec_op_tuner_device_info *info = &node->state.tuner_dev_info;
+	struct cec_op_digital_service_id *digital = &info->digital;
+	struct cec_op_arib_data *arib = &digital->arib;
+	struct cec_op_dvb_data *dvb = &digital->dvb;
+	struct cec_op_atsc_data *atsc = &digital->atsc;
+	struct cec_op_channel_data *channel = &digital->channel;
+	unsigned int tbl = idx / (NUM_DIGITAL_CHANS * 2);
+	unsigned int sys = (idx % (NUM_DIGITAL_CHANS * 2)) / NUM_DIGITAL_CHANS;
+	unsigned int offset = idx % NUM_DIGITAL_CHANS;
+
+	node->state.service_idx = idx;
+	info->tuner_display_info = CEC_OP_TUNER_DISPLAY_INFO_DIGITAL;
+	info->is_analog = false;
+	digital->service_id_method = node->state.service_by_dig_id ?
+		CEC_OP_SERVICE_ID_METHOD_BY_DIG_ID :
+		CEC_OP_SERVICE_ID_METHOD_BY_CHANNEL;
+
+	switch (tbl) {
+	case 0: {
+		if (sys)
+			digital->dig_bcast_system = CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_T;
+		else
+			digital->dig_bcast_system = CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_BS;
+		if (node->state.service_by_dig_id) {
+			arib->transport_id = digital_arib_data[sys][offset].tsid;
+			arib->orig_network_id = digital_arib_data[sys][offset].onid;
+			arib->service_id = digital_arib_data[sys][offset].sid;
+		} else {
+			channel->channel_number_fmt = digital_arib_data[sys][offset].fmt;
+			channel->major = digital_arib_data[sys][offset].major;
+			channel->minor = digital_arib_data[sys][offset].minor;
+		}
+		break;
+	}
+	case 1: {
+		if (sys)
+			digital->dig_bcast_system = CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_T;
+		else
+			digital->dig_bcast_system = CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_SAT;
+		if (node->state.service_by_dig_id) {
+			atsc->transport_id = digital_atsc_data[sys][offset].tsid;
+			atsc->program_number = digital_atsc_data[sys][offset].sid;
+		} else {
+			channel->channel_number_fmt = digital_atsc_data[sys][offset].fmt;
+			channel->major = digital_atsc_data[sys][offset].major;
+			channel->minor = digital_atsc_data[sys][offset].minor;
+		}
+		break;
+	}
+	case 2: {
+		if (sys)
+			digital->dig_bcast_system = CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_T;
+		else
+			digital->dig_bcast_system = CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S2;
+		if (node->state.service_by_dig_id) {
+			dvb->transport_id = digital_dvb_data[sys][offset].tsid;
+			dvb->orig_network_id = digital_dvb_data[sys][offset].onid;
+			dvb->service_id = digital_dvb_data[sys][offset].sid;
+		} else {
+			channel->channel_number_fmt = digital_dvb_data[sys][offset].fmt;
+			channel->major = digital_dvb_data[sys][offset].major;
+			channel->minor = digital_dvb_data[sys][offset].minor;
+		}
+		break;
+	}
+	default:
+		break;
+	}
+	return true;
+}
+
+static bool digital_set_tuner_dev_info(struct node *node, struct cec_msg *msg)
+{
+	struct cec_op_digital_service_id digital = {};
+
+	cec_ops_select_digital_service(msg, &digital);
+	return digital_update_tuner_dev_info(node, digital_get_service_idx(&digital));
+}
+
 static unsigned int analog_get_nearest_service_idx(__u8 ana_bcast_type, __u8 ana_bcast_system,
 						   int ana_freq_khz)
 {
@@ -322,6 +497,19 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		return;
 
 	case CEC_MSG_SELECT_DIGITAL_SERVICE:
+		if (!cec_has_tuner(1 << me) && !cec_has_tv(1 << me))
+			break;
+
+		if (node->state.tuner_dev_info.rec_flag == CEC_OP_REC_FLAG_USED) {
+			reply_feature_abort(node, &msg, CEC_OP_ABORT_REFUSED);
+			return;
+		}
+		if (!digital_set_tuner_dev_info(node, &msg)) {
+			reply_feature_abort(node, &msg, CEC_OP_ABORT_INVALID_OP);
+			return;
+		}
+		return;
+
 	case CEC_MSG_TUNER_STEP_DECREMENT: {
 		if (!cec_has_tuner(1 << me) && !cec_has_tv(1 << me))
 			break;

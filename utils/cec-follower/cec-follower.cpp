@@ -41,7 +41,8 @@ enum Option {
 	OptShowMsgs = 'm',
 	OptShowState = 's',
 	OptWallClock = 'w',
-	OptLast = 128
+	OptServiceByDigID = 128,
+	OptLast = 256
 };
 
 static char options[OptLast];
@@ -53,18 +54,19 @@ bool show_warnings = true;
 unsigned warnings;
 
 static struct option long_options[] = {
-	{"device", required_argument, 0, OptSetDevice},
-	{"adapter", required_argument, 0, OptSetAdapter},
-	{"driver", required_argument, 0, OptSetDriver},
-	{"help", no_argument, 0, OptHelp},
-	{"no-warnings", no_argument, 0, OptNoWarnings},
-	{"trace", no_argument, 0, OptTrace},
-	{"verbose", no_argument, 0, OptVerbose},
-	{"show-msgs", no_argument, 0, OptShowMsgs},
-	{"show-state", no_argument, 0, OptShowState},
-	{"wall-clock", no_argument, 0, OptWallClock},
+	{ "device", required_argument, 0, OptSetDevice },
+	{ "adapter", required_argument, 0, OptSetAdapter },
+	{ "driver", required_argument, 0, OptSetDriver },
+	{ "help", no_argument, 0, OptHelp },
+	{ "no-warnings", no_argument, 0, OptNoWarnings },
+	{ "trace", no_argument, 0, OptTrace },
+	{ "verbose", no_argument, 0, OptVerbose },
+	{ "show-msgs", no_argument, 0, OptShowMsgs },
+	{ "show-state", no_argument, 0, OptShowState },
+	{ "wall-clock", no_argument, 0, OptWallClock },
+	{ "service-by-dig-id", no_argument, 0, OptServiceByDigID },
 
-	{0, 0, 0, 0}
+	{ 0, 0, 0, 0 }
 };
 
 static void usage(void)
@@ -81,6 +83,7 @@ static void usage(void)
 	       "  -w, --wall-clock    Show timestamps as wall-clock time (implies -v)\n"
 	       "  -m, --show-msgs     Show received messages\n"
 	       "  -s, --show-state    Show state changes from the emulated device\n"
+	       "  --service-by-dig-id Report digital services by digital ID instead of by channel\n"
 	       );
 }
 
@@ -423,6 +426,7 @@ int main(int argc, char **argv)
 	doioctl(&node, CEC_ADAP_G_CAPS, &caps);
 	node.caps = caps.capabilities;
 	node.available_log_addrs = caps.available_log_addrs;
+	node.state.service_by_dig_id = options[OptServiceByDigID];
 	state_init(node);
 
 #ifdef SHA

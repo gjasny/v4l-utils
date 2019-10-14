@@ -54,6 +54,7 @@ struct state {
 	unsigned rc_duration_sum;
 	struct cec_op_tuner_device_info tuner_dev_info;
 	unsigned int service_idx;
+	bool service_by_dig_id;
 };
 
 struct node {
