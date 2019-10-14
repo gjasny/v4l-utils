@@ -311,6 +311,22 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		dev_info("New active source: %x.%x.%x.%x\n", cec_phys_addr_exp(phys_addr));
 		return;
 	}
+	case CEC_MSG_INACTIVE_SOURCE: {
+		__u16 phys_addr;
+
+		if (node->phys_addr)
+			break;
+
+		cec_ops_active_source(&msg, &phys_addr);
+		if (node->state.active_source_pa != phys_addr)
+			break;
+		node->state.active_source_pa = 0;
+		cec_msg_init(&msg, me, CEC_LOG_ADDR_BROADCAST);
+		cec_msg_active_source(&msg, node->phys_addr);
+		transmit(node, &msg);
+		dev_info("New active source: 0.0.0.0\n");
+		return;
+	}
 	case CEC_MSG_IMAGE_VIEW_ON:
 	case CEC_MSG_TEXT_VIEW_ON:
 		if (!cec_has_tv(1 << me))
