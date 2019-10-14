@@ -619,7 +619,8 @@ static int sac_util_send_user_control_press(struct node *node, unsigned me, unsi
 	cec_msg_init(&msg, me, la);
 	cec_msg_user_control_released(&msg);
 	fail_on_test(!transmit_timeout(node, &msg));
-	got_response = util_receive(node, la, &msg, CEC_MSG_USER_CONTROL_PRESSED, CEC_MSG_REPORT_AUDIO_STATUS);
+	got_response = util_receive(node, la, 1000, &msg,
+				    CEC_MSG_USER_CONTROL_PRESSED, CEC_MSG_REPORT_AUDIO_STATUS) >= 0;
 	mode = CEC_MODE_INITIATOR;
 	doioctl(node, CEC_S_MODE, &mode);
 

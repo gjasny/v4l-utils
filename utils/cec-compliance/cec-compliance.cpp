@@ -891,10 +891,12 @@ retry:
 	return true;
 }
 
-bool util_receive(struct node *node, unsigned la, struct cec_msg *msg,
-		  __u8 sent_msg, __u8 reply1, __u8 reply2)
+int util_receive(struct node *node, unsigned la, unsigned timeout,
+		 struct cec_msg *msg, __u8 sent_msg, __u8 reply1, __u8 reply2)
 {
-        while (1) {
+	unsigned ts_start = get_ts_ms();
+
+	while (get_ts_ms() - ts_start < timeout) {
 		memset(msg, 0, sizeof(*msg));
 		msg->timeout = 1;
 		if (doioctl(node, CEC_RECEIVE, msg))
@@ -908,14 +910,14 @@ bool util_receive(struct node *node, unsigned la, struct cec_msg *msg,
 			cec_ops_feature_abort(msg, &abort_msg, &reason);
 			if (abort_msg != sent_msg)
 				continue;
-			return true;
+			return 0;
 		}
 
 		if (msg->msg[1] == reply1 || (reply2 && msg->msg[1] == reply2))
-			return true;
+			return msg->msg[1];
 	}
 
-	return false;
+	return -1;
 }
 
 static int poll_remote_devs(struct node *node)

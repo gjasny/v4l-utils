@@ -387,8 +387,9 @@ const char *host_func_state2s(__u8 hfs);
 const char *enc_func_state2s(__u8 efs);
 const char *cdc_errcode2s(__u8 cdc_errcode);
 int check_0(const void *p, int len);
-bool util_receive(struct node *node, unsigned la, struct cec_msg *msg,
-		  __u8 sent_msg, __u8 reply1, __u8 reply2 = 0);
+int util_receive(struct node *node, unsigned la, unsigned timeout,
+		 struct cec_msg *msg, __u8 sent_msg,
+		 __u8 reply1, __u8 reply2 = 0);
 
 // CEC adapter tests
 int testCap(struct node *node);
