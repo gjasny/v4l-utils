@@ -9,7 +9,53 @@
 #include "cec-follower.h"
 
 #define NUM_ANALOG_FREQS 3
+#define NUM_DIGITAL_CHANS 3
 #define TOT_ANALOG_FREQS (sizeof(analog_freqs_khz) / sizeof(analog_freqs_khz[0][0][0]))
+
+struct service_info {
+	unsigned tsid;
+	unsigned onid;
+	unsigned sid;
+	unsigned fmt;
+	unsigned major;
+	unsigned minor;
+};
+
+/*
+ * This table contains the digital television channels for ARIB (ISDB).  There
+ * are a total of three channels that are identified by digital IDs or by
+ * channel.
+ *
+ * CEC 17 of the 1.4 specification lists the available digital identification
+ * methods, IDs, and channel data.
+ *
+ * Digital channel data for ARIB-BS is from:
+ *
+ * https://sichbopvr.com/frequency-tables/19-20E
+ *
+ * No public data was found for ARIB-BS so data is just copied.
+ *
+ * Digital channel data for ARIB-T is from:
+ *
+ * https://sichbopvr.com/frequency-tables/Brazil/Rio%20de%20Janeiro/Rio%20De%20Janeiro
+ */
+static const struct service_info digital_arib_data[2][NUM_DIGITAL_CHANS] =
+{
+	// satellite, arib-bs
+	{
+		// tsid, onid, sid, fmt, major, minor
+		{ 1032, 1, 30203, 1, 0, 30203 },
+		{ 1046, 1, 30505, 1, 0, 30505 },
+		{ 1060, 1, 30609, 1, 0, 30609 }
+	},
+	// terrestrial, arib-t
+	{
+		// tsid, onid, sid, fmt, major, minor
+		{ 1519, 1519, 48608, 1, 0, 48608 },
+		{ 1624, 1624, 51992, 1, 0, 51992 },
+		{ 1905, 1905, 60960, 1, 0, 60960 }
+	}
+};
 
 /*
  * This table contains analog television channel frequencies in KHz.  There are
