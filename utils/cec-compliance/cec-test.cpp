@@ -434,19 +434,27 @@ static struct remote_subtest osd_string_subtests[] = {
 
 static int routing_control_inactive_source(struct node *node, unsigned me, unsigned la, bool interactive)
 {
+	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
 	struct cec_msg msg = {};
+	int response;
 
+	doioctl(node, CEC_S_MODE, &mode);
 	interactive_info(true, "Please make sure that the TV is currently viewing this source.");
 	cec_msg_init(&msg, me, la);
 	cec_msg_inactive_source(&msg, node->phys_addr);
-	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(!transmit(node, &msg));
 	if (unrecognized_op(&msg))
 		return NOTSUPPORTED;
 	if (refused(&msg))
 		return REFUSED;
 	// It may take a bit of time for the Inactive Source message to take
 	// effect, so sleep a bit.
-	sleep(3);
+	response = util_receive(node, CEC_LOG_ADDR_TV, 3000, &msg,
+				CEC_MSG_INACTIVE_SOURCE,
+				CEC_MSG_ACTIVE_SOURCE, CEC_MSG_SET_STREAM_PATH);
+	mode = CEC_MODE_INITIATOR;
+	doioctl(node, CEC_S_MODE, &mode);
+	fail_on_test(response < 0);
 	fail_on_test(interactive && !question("Did the TV switch away from or stop showing this source?"));
 
 	if (interactive)
@@ -522,9 +530,9 @@ static int routing_control_set_stream_path(struct node *node, unsigned me, unsig
 }
 
 static struct remote_subtest routing_control_subtests[] = {
-	{ "Inactive Source", CEC_LOG_ADDR_MASK_TV, routing_control_inactive_source },
 	{ "Active Source", CEC_LOG_ADDR_MASK_TV, routing_control_active_source },
 	{ "Request Active Source", CEC_LOG_ADDR_MASK_ALL, routing_control_req_active_source },
+	{ "Inactive Source", CEC_LOG_ADDR_MASK_TV, routing_control_inactive_source },
 	{ "Set Stream Path", CEC_LOG_ADDR_MASK_ALL, routing_control_set_stream_path },
 };
 
