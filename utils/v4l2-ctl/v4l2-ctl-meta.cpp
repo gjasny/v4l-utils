@@ -139,10 +139,18 @@ struct vivid_uvc_meta_buf {
 #define UVC_STREAM_SCR	(1 << 3)
 #define UVC_STREAM_PTS	(1 << 2)
 
+struct vivid_meta_out_buf {
+        __u16	brightness;
+        __u16	contrast;
+        __u16	saturation;
+        __s16	hue;
+};
+
 void print_meta_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt, cv4l_queue &q)
 {
 	struct vivid_uvc_meta_buf *vbuf;
 	int buf_off = 0;
+	struct vivid_meta_out_buf *vbuf_out;
 
 	switch (fmt.g_pixelformat()) {
 	case V4L2_META_FMT_UVC:
@@ -164,5 +172,28 @@ void print_meta_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt, cv4l_queue &q)
 				le16toh(*(__u16*)(vbuf->buf + buf_off + 4)));
 		fprintf(f, "\n");
 		break;
+	case V4L2_META_FMT_VIVID:
+		fprintf(f, "VIVID:");
+		vbuf_out = (vivid_meta_out_buf *)q.g_dataptr(buf.g_index(), 0);
+
+		fprintf(f, " brightness: %u contrast: %u saturation: %u  hue: %d\n",
+			vbuf_out->brightness, vbuf_out->contrast,
+			vbuf_out->saturation, vbuf_out->hue);
+		break;
+	}
+}
+
+void meta_fillbuffer(cv4l_buffer &buf, cv4l_fmt &fmt, cv4l_queue &q)
+{
+	struct vivid_meta_out_buf *vbuf;
+
+	switch (fmt.g_pixelformat()) {
+		case V4L2_META_FMT_VIVID:
+			vbuf = (vivid_meta_out_buf *)q.g_dataptr(buf.g_index(), 0);
+			vbuf->brightness = buf.g_sequence() % 192 + 64;
+			vbuf->contrast = (buf.g_sequence() + 10) % 192 + 64;
+			vbuf->saturation = (buf.g_sequence() + 20) % 256;
+			vbuf->hue = buf.g_sequence() % 257 - 128;
+			break;
 	}
 }

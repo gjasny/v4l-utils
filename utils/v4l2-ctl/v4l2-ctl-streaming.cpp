@@ -1146,6 +1146,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 	bool can_fill = false;
 	bool is_video = q.g_type() == V4L2_BUF_TYPE_VIDEO_OUTPUT ||
 			q.g_type() == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	bool is_meta = q.g_type() == V4L2_BUF_TYPE_META_OUTPUT;
 
 	if (q.obtain_bufs(&fd))
 		return QUEUE_ERROR;
@@ -1241,6 +1242,9 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 					tpg_fillbuffer(&tpg, stream_out_std, j, (u8 *)q.g_dataptr(i, j));
 			}
 		}
+		if (is_meta)
+			meta_fillbuffer(buf, fmt, q);
+
 		if (fin && !fill_buffer_from_file(fd, q, buf, fmt, fin))
 			return QUEUE_STOPPED;
 
@@ -1480,6 +1484,7 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 			 bool stopped, bool ignore_count_skip)
 {
 	cv4l_buffer buf(q);
+	bool is_meta = q.g_type() == V4L2_BUF_TYPE_META_OUTPUT;
 	int ret = 0;
 
 	if (cap) {
@@ -1542,6 +1547,8 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 			tpg_fillbuffer(&tpg, stream_out_std, j,
 				       (u8 *)q.g_dataptr(buf.g_index(), j));
 	}
+	if (is_meta)
+		meta_fillbuffer(buf, fmt, q);
 
 	if (fmt.g_pixelformat() == V4L2_PIX_FMT_FWHT_STATELESS) {
 		if (ioctl(buf.g_request_fd(), MEDIA_REQUEST_IOC_REINIT, NULL)) {
@@ -2039,7 +2046,7 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 
 	if (!(capabilities & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 			      V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT |
-			      V4L2_CAP_SDR_OUTPUT |
+			      V4L2_CAP_SDR_OUTPUT | V4L2_CAP_META_OUTPUT |
 			      V4L2_CAP_VIDEO_M2M | V4L2_CAP_VIDEO_M2M_MPLANE))) {
 		fprintf(stderr, "unsupported stream type\n");
 		return;
