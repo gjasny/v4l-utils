@@ -768,26 +768,29 @@ int testReadWrite(struct node *node)
 	bool can_rw = node->g_caps() & V4L2_CAP_READWRITE;
 	int fd_flags = fcntl(node->g_fd(), F_GETFL);
 	char buf = 0;
-	int ret;
-
-	if (v4l_has_vbi(node->g_v4l_fd()) &&
-	    !(node->cur_io_caps & V4L2_IN_CAP_STD)) {
-		return 0;
-	}
+	int ret, ret2;
+	int err, err2;
 
 	fcntl(node->g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
+	errno = 0;
 	if (node->can_capture)
 		ret = node->read(&buf, 1);
 	else
 		ret = node->write(&buf, 1);
+	err = errno;
+	fail_on_test(v4l_has_vbi(node->g_v4l_fd()) &&
+		     !(node->cur_io_caps & V4L2_IN_CAP_STD) && ret >= 0);
+
 	// Note: RDS can only return multiples of 3, so we accept
 	// both 0 and 1 as return code.
 	// EBUSY can be returned when attempting to read/write to a
 	// multiplanar format.
+	// EINVAL can be returned if read()/write() is not supported
+	// for the current input/output.
 	if (can_rw)
-		fail_on_test((ret < 0 && errno != EAGAIN && errno != EBUSY) || ret > 1);
+		fail_on_test((ret < 0 && err != EAGAIN && err != EBUSY && err != EINVAL) || ret > 1);
 	else
-		fail_on_test(ret >= 0 || errno != EINVAL);
+		fail_on_test(ret >= 0 || err != EINVAL);
 	if (!can_rw)
 		return ENOTTY;
 
@@ -795,11 +798,13 @@ int testReadWrite(struct node *node)
 	fcntl(node->g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
 
 	/* check that the close cleared the busy flag */
+	errno = 0;
 	if (node->can_capture)
-		ret = node->read(&buf, 1);
+		ret2 = node->read(&buf, 1);
 	else
-		ret = node->write(&buf, 1);
-	fail_on_test((ret < 0 && errno != EAGAIN && errno != EBUSY) || ret > 1);
+		ret2 = node->write(&buf, 1);
+	err2 = errno;
+	fail_on_test(ret2 != ret || err2 != err);
 	return 0;
 }
 
