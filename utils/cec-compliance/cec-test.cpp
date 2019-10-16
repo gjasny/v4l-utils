@@ -323,7 +323,7 @@ int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool i
 }
 
 static struct remote_subtest device_osd_transfer_subtests[] = {
-	{ "Set OSD Name", CEC_LOG_ADDR_MASK_TV, device_osd_transfer_set },
+	{ "Set OSD Name", CEC_LOG_ADDR_MASK_ALL, device_osd_transfer_set },
 	{ "Give OSD Name", CEC_LOG_ADDR_MASK_ALL, device_osd_transfer_give },
 };
 
