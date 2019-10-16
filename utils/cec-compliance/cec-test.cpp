@@ -454,13 +454,15 @@ static int routing_control_inactive_source(struct node *node, unsigned me, unsig
 				CEC_MSG_ACTIVE_SOURCE, CEC_MSG_SET_STREAM_PATH);
 	mode = CEC_MODE_INITIATOR;
 	doioctl(node, CEC_S_MODE, &mode);
-	fail_on_test(response < 0);
-	fail_on_test(interactive && !question("Did the TV switch away from or stop showing this source?"));
+	if (me == CEC_LOG_ADDR_TV) {
+		// Inactive Source should be ignored by all other devices
+		fail_on_test(response >= 0);
+	} else {
+		fail_on_test(response < 0);
+		fail_on_test(interactive && !question("Did the TV switch away from or stop showing this source?"));
+	}
 
-	if (interactive)
-		return 0;
-	else
-		return PRESUMED_OK;
+	return 0;
 }
 
 static int routing_control_active_source(struct node *node, unsigned me, unsigned la, bool interactive)
