@@ -9,7 +9,6 @@
 
 enum state {
 	STATE_INACTIVE,
-	STATE_HEADER_SPACE,
 	STATE_BITS_SPACE,
 	STATE_BITS_PULSE,
 };
@@ -33,7 +32,7 @@ struct bpf_map_def SEC("maps") decoder_state_map = {
 // an int, so that the compiler emits a mov immediate for the address
 // but uses it as an int. The bpf loader replaces the relocation with the
 // actual value (either overridden or taken from the data segment).
-int margin = 250;
+int margin = 325;
 
 #define BPF_PARAM(x) (int)(&(x))
 
@@ -68,7 +67,7 @@ int bpf_decoder(unsigned int *sample)
 	case STATE_INACTIVE:
 		if (pulse && (eq_margin(duration, 2000) ||
 			      eq_margin(duration, 3250))) {
-			s->state = STATE_HEADER_SPACE;
+			s->state = STATE_BITS_SPACE;
 			s->bits = 0;
 			s->count = 0;
 		}
@@ -80,48 +79,53 @@ int bpf_decoder(unsigned int *sample)
 		else
 			s->state = STATE_INACTIVE;
 		break;
-	case STATE_HEADER_SPACE:
-		if (!pulse && eq_margin(duration, 1875)) {
-			s->state = STATE_BITS_PULSE;
-			break;
-		}
+
 	case STATE_BITS_SPACE:
 		if (pulse) {
 			s->state = STATE_INACTIVE;
 			break;
 		}
 
-		if (s->count == 4) {
+		if (duration > 2400) {
 			int x = 0, y = 0;
-			switch (s->bits) {
-			case 0:  x = 0;  y = -4; break;
-			case 8:  x = 0;  y =  4; break;
-			case 4:  x = 4;  y =  0; break;
-			case 12: x = -4; y =  0; break;
 
-			case 2:  x = 4;  y = -4; break;
-			case 10: x = -4; y =  4; break;
-			case 6:  x = 4;  y =  4; break;
-			case 14: x = -4; y = -4; break;
-
-			case  1: x = 4;  y = -2; break;
-			case  9: x = -4; y =  2; break;
-			case  5: x = 2;  y =  4; break;
-			case 13: x = -2; y = -4; break;
-
-			case 3:  x = 2;  y = -4; break;
-			case 11: x = -2; y =  4; break;
-			case 7:  x = 4;  y =  2; break;
-			case 15: x = -4; y = -2; break;
+			if (!(s->count == 5 || s->count == 4)) {
+				s->state = STATE_INACTIVE;
+				break;
 			}
+
+			switch (s->bits & 0x0f) {
+			case 0x0: x =  0; y = -4; break;
+			case 0x1: x =  0; y =  4; break;
+			case 0x2: x =  4; y =  0; break;
+			case 0x3: x = -4; y =  0; break;
+
+			case 0x4: x =  4; y = -4; break;
+			case 0x5: x = -4; y =  4; break;
+			case 0x6: x =  4; y =  4; break;
+			case 0x7: x = -4; y = -4; break;
+
+			case 0xc: x =  4; y = -2; break;
+			case 0xd: x = -4; y =  2; break;
+			case 0xe: x =  2; y =  4; break;
+			case 0xf: x = -2; y = -4; break;
+
+			case 0x8: x =  2; y = -4; break;
+			case 0x9: x = -2; y =  4; break;
+			case 0xa: x =  4; y =  2; break;
+			case 0xb: x = -4; y = -2; break;
+			}
+
 			bpf_rc_pointer_rel(sample, x, y);
 
 			s->state = STATE_INACTIVE;
 			break;
 		}
 
-		if (eq_margin(duration, 1700))
-			s->bits |= 1 << s->count;
+		s->bits <<= 1;
+
+		if (eq_margin(duration, 1800))
+			s->bits |= 1;
 		else if (!eq_margin(duration, 625)) {
 			s->state = STATE_INACTIVE;
 			break;
