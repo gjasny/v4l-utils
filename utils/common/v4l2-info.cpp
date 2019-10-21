@@ -205,6 +205,7 @@ static const flag_def bufcap_def[] = {
 	{ V4L2_BUF_CAP_SUPPORTS_DMABUF, "dmabuf" },
 	{ V4L2_BUF_CAP_SUPPORTS_REQUESTS, "requests" },
 	{ V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS, "orphaned-bufs" },
+	{ V4L2_BUF_CAP_SUPPORTS_M2M_HOLD_CAPTURE_BUF, "m2m-hold-capture-buf" },
 	{ 0, NULL }
 };
 
@@ -677,6 +678,7 @@ static const flag_def buffer_flags_def[] = {
 	{ V4L2_BUF_FLAG_BFRAME, "B-frame" },
 	{ V4L2_BUF_FLAG_ERROR, "error" },
 	{ V4L2_BUF_FLAG_TIMECODE, "timecode" },
+	{ V4L2_BUF_FLAG_M2M_HOLD_CAPTURE_BUF, "m2m-hold-capture-buf" },
 	{ V4L2_BUF_FLAG_PREPARED, "prepared" },
 	{ V4L2_BUF_FLAG_NO_CACHE_INVALIDATE, "no-cache-invalidate" },
 	{ V4L2_BUF_FLAG_NO_CACHE_CLEAN, "no-cache-clean" },
