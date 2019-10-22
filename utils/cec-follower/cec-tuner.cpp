@@ -329,7 +329,8 @@ static int digital_get_service_idx(struct cec_op_digital_service_id *digital)
 	return idx >= 0 ? idx + offset : -1;
 }
 
-static bool digital_update_tuner_dev_info(struct node *node, int idx)
+static bool digital_update_tuner_dev_info(struct node *node, int idx,
+					  struct cec_msg *msg)
 {
 	if (idx < 0)
 		return false;
@@ -344,7 +345,6 @@ static bool digital_update_tuner_dev_info(struct node *node, int idx)
 	unsigned int sys = (idx % (NUM_DIGITAL_CHANS * 2)) / NUM_DIGITAL_CHANS;
 	unsigned int offset = idx % NUM_DIGITAL_CHANS;
 
-	node->state.service_idx = idx;
 	info->tuner_display_info = CEC_OP_TUNER_DISPLAY_INFO_DIGITAL;
 	info->is_analog = false;
 	digital->service_id_method = node->state.service_by_dig_id ?
@@ -402,6 +402,12 @@ static bool digital_update_tuner_dev_info(struct node *node, int idx)
 	default:
 		break;
 	}
+	if (node->state.service_idx != (unsigned)idx && node->state.tuner_report_changes) {
+		cec_msg_set_reply_to(msg, msg);
+		cec_msg_tuner_device_status(msg, &node->state.tuner_dev_info);
+		transmit(node, msg);
+	}
+	node->state.service_idx = idx;
 	return true;
 }
 
@@ -410,7 +416,7 @@ static bool digital_set_tuner_dev_info(struct node *node, struct cec_msg *msg)
 	struct cec_op_digital_service_id digital = {};
 
 	cec_ops_select_digital_service(msg, &digital);
-	return digital_update_tuner_dev_info(node, digital_get_service_idx(&digital));
+	return digital_update_tuner_dev_info(node, digital_get_service_idx(&digital), msg);
 }
 
 static unsigned int analog_get_nearest_service_idx(__u8 ana_bcast_type, __u8 ana_bcast_system,
@@ -431,14 +437,14 @@ static unsigned int analog_get_nearest_service_idx(__u8 ana_bcast_type, __u8 ana
 		offset + TOT_DIGITAL_CHANS;
 }
 
-static void analog_update_tuner_dev_info(struct node *node, unsigned int idx)
+static void analog_update_tuner_dev_info(struct node *node, unsigned int idx,
+					 struct cec_msg *msg)
 {
 	struct cec_op_tuner_device_info *info = &node->state.tuner_dev_info;
 	unsigned int sys_freqs = NUM_ANALOG_FREQS * 9;
 	unsigned int offset;
 	unsigned int freq_khz;
 
-	node->state.service_idx = idx;
 	info->tuner_display_info = CEC_OP_TUNER_DISPLAY_INFO_ANALOGUE;
 	info->is_analog = true;
 	info->analog.ana_bcast_type = (node->state.service_idx - TOT_DIGITAL_CHANS) / sys_freqs;
@@ -448,6 +454,12 @@ static void analog_update_tuner_dev_info(struct node *node, unsigned int idx)
 	offset = node->state.service_idx % NUM_ANALOG_FREQS;
 	freq_khz = analog_freqs_khz[info->analog.ana_bcast_type][info->analog.bcast_system][offset];
 	info->analog.ana_freq = (freq_khz * 10) / 625;
+	if (node->state.service_idx != idx && node->state.tuner_report_changes) {
+		cec_msg_set_reply_to(msg, msg);
+		cec_msg_tuner_device_status(msg, &node->state.tuner_dev_info);
+		transmit(node, msg);
+	}
+	node->state.service_idx = idx;
 }
 
 static bool analog_set_tuner_dev_info(struct node *node, struct cec_msg *msg)
@@ -462,7 +474,7 @@ static bool analog_set_tuner_dev_info(struct node *node, struct cec_msg *msg)
 		int freq_khz = (freq * 625) / 10;
 
 		idx = analog_get_nearest_service_idx(type, system, freq_khz);
-		analog_update_tuner_dev_info(node, idx);
+		analog_update_tuner_dev_info(node, idx, msg);
 		return true;
 	}
 	return false;
@@ -475,17 +487,24 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 	switch (msg.msg[1]) {
 
 
-		/*
-		  Tuner Control
-
-		  This is only a basic implementation.
-
-		  TODO: Device state should change when selecting services etc.
-		*/
-
+	/* Tuner Control */
 	case CEC_MSG_GIVE_TUNER_DEVICE_STATUS: {
+		__u8 status_req;
+
 		if (!cec_has_tuner(1 << me) && !cec_has_tv(1 << me))
 			break;
+
+		cec_ops_give_tuner_device_status(&msg, &status_req);
+		if (status_req < CEC_OP_STATUS_REQ_ON ||
+		    status_req > CEC_OP_STATUS_REQ_ONCE) {
+			reply_feature_abort(node, &msg, CEC_OP_ABORT_INVALID_OP);
+			return;
+		}
+		if (status_req != CEC_OP_STATUS_REQ_ONCE)
+			node->state.tuner_report_changes =
+				status_req == CEC_OP_STATUS_REQ_ON;
+		if (status_req == CEC_OP_STATUS_REQ_OFF)
+			return;
 
 		cec_msg_set_reply_to(&msg, &msg);
 		cec_msg_tuner_device_status(&msg, &node->state.tuner_dev_info);
@@ -534,9 +553,9 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		else
 			node->state.service_idx--;
 		if (node->state.service_idx < TOT_DIGITAL_CHANS)
-			digital_update_tuner_dev_info(node, node->state.service_idx);
+			digital_update_tuner_dev_info(node, node->state.service_idx, &msg);
 		else
-			analog_update_tuner_dev_info(node, node->state.service_idx);
+			analog_update_tuner_dev_info(node, node->state.service_idx, &msg);
 		return;
 	}
 
@@ -550,9 +569,9 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		else
 			node->state.service_idx++;
 		if (node->state.service_idx < TOT_DIGITAL_CHANS)
-			digital_update_tuner_dev_info(node, node->state.service_idx);
+			digital_update_tuner_dev_info(node, node->state.service_idx, &msg);
 		else
-			analog_update_tuner_dev_info(node, node->state.service_idx);
+			analog_update_tuner_dev_info(node, node->state.service_idx, &msg);
 		return;
 	}
 

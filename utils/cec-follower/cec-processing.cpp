@@ -512,6 +512,19 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 
 	case CEC_MSG_GIVE_DECK_STATUS:
 		if (node->has_deck_ctl) {
+			__u8 status_req;
+
+			cec_ops_give_deck_status(&msg, &status_req);
+			if (status_req < CEC_OP_STATUS_REQ_ON ||
+			    status_req > CEC_OP_STATUS_REQ_ONCE) {
+				reply_feature_abort(node, &msg, CEC_OP_ABORT_INVALID_OP);
+				return;
+			}
+			if (status_req != CEC_OP_STATUS_REQ_ONCE)
+				node->state.deck_report_changes =
+					status_req == CEC_OP_STATUS_REQ_ON;
+			if (status_req == CEC_OP_STATUS_REQ_OFF)
+				return;
 			cec_msg_set_reply_to(&msg, &msg);
 			cec_msg_deck_status(&msg, CEC_OP_DECK_INFO_STOP);
 			transmit(node, &msg);

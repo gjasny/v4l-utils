@@ -55,6 +55,8 @@ struct state {
 	struct cec_op_tuner_device_info tuner_dev_info;
 	unsigned int service_idx;
 	bool service_by_dig_id;
+	bool tuner_report_changes;
+	bool deck_report_changes;
 };
 
 struct node {
