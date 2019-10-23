@@ -447,11 +447,10 @@ static void analog_update_tuner_dev_info(struct node *node, unsigned int idx,
 
 	info->tuner_display_info = CEC_OP_TUNER_DISPLAY_INFO_ANALOGUE;
 	info->is_analog = true;
-	info->analog.ana_bcast_type = (node->state.service_idx - TOT_DIGITAL_CHANS) / sys_freqs;
+	info->analog.ana_bcast_type = (idx - TOT_DIGITAL_CHANS) / sys_freqs;
 	info->analog.bcast_system =
-		(node->state.service_idx -
-		 (sys_freqs * info->analog.ana_bcast_type + TOT_DIGITAL_CHANS)) / NUM_ANALOG_FREQS;
-	offset = node->state.service_idx % NUM_ANALOG_FREQS;
+		(idx - (sys_freqs * info->analog.ana_bcast_type + TOT_DIGITAL_CHANS)) / NUM_ANALOG_FREQS;
+	offset = idx % NUM_ANALOG_FREQS;
 	freq_khz = analog_freqs_khz[info->analog.ana_bcast_type][info->analog.bcast_system][offset];
 	info->analog.ana_freq = (freq_khz * 10) / 625;
 	if (node->state.service_idx != idx && node->state.tuner_report_changes) {
