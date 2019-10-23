@@ -362,6 +362,11 @@ AC_ARG_WITH(udevdir,
    	[],
 	[with_udevdir=`$PKG_CONFIG --variable=udevdir udev || echo /lib/udev`])
 
+AC_ARG_WITH(systemdsystemunitdir,
+	AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [set systemd system unit directory]),
+	[],
+	[with_systemdsystemunitdir=`$PKG_CONFIG --variable=systemdsystemunitdir systemd || echo /lib/systemd/system`])
+
 # Generic check: works with most distributions
 def_gconv_dir=`for i in /lib64 /usr/lib64 /usr/local/lib64 /lib /usr/lib /usr/local/lib; do if @<:@ -d \$i/gconv @:>@; then echo \$i/gconv; break; fi; done`
 
@@ -384,6 +389,7 @@ AC_SUBST([libv4lconvertprivdir], [$libdir/$with_libv4lconvertsubdir])
 AC_SUBST([keytablesystemdir], [$with_udevdir/rc_keymaps])
 AC_SUBST([keytableuserdir], [$sysconfdir/rc_keymaps])
 AC_SUBST([udevrulesdir], [$with_udevdir/rules.d])
+AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir/systemd-udevd.service.d/])
 AC_SUBST([pkgconfigdir], [$libdir/pkgconfig])
 AC_SUBST([gconvsysdir], [$with_gconvdir])
 

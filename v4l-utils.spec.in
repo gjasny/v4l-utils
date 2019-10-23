@@ -121,6 +121,7 @@ make doxygen-run
 
 %install
 %{!?_udevrulesdir: %global _udevrulesdir /lib/udev/rules.d}
+%{!?_systemdsystemunitdir: %global _systemdsystemunitdir /lib/systemd/system}
 %make_install
 find $RPM_BUILD_ROOT -name '*.la' -exec rm -f {} ';'
 rm -f $RPM_BUILD_ROOT%{_libdir}/{v4l1compat.so,v4l2convert.so}
@@ -142,6 +143,7 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/qv4l2.desktop
 %config(noreplace) %{_sysconfdir}/rc_maps.cfg
 %{_udevrulesdir}/70-infrared.rules
 %{_udevrulesdir}/../rc_keymaps/*
+%{_systemdsystemunitdir}/50-rc_keymap.conf
 %{_bindir}/cx18-ctl
 %{_bindir}/cec*
 %{_bindir}/dvb*
